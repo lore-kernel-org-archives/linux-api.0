@@ -1,245 +1,79 @@
-From: Ivan Khoronzhuk <ivan.khoronzhuk@linaro.org>
-Subject: Re: [dmidecode] [Patch v3] firmware: dmi-sysfs: add SMBIOS entry
- point area raw attribute
-Date: Wed, 28 Jan 2015 17:56:25 +0200
-Message-ID: <54C906A9.1050001@linaro.org>
-References: <1422448763-17583-1-git-send-email-ivan.khoronzhuk@linaro.org>
-Reply-To: dmidecode-devel@nongnu.org
+From: Ben Hutchings <ben@decadent.org.uk>
+Subject: Re: [PATCH net-next v1 01/18] net: ethtool: propagate get_settings
+ error
+Date: Wed, 28 Jan 2015 16:30:30 +0000
+Message-ID: <1422462630.2709.23.camel@decadent.org.uk>
+References: <1422322574-6188-1-git-send-email-ddecotig@gmail.com>
+	 <1422322574-6188-2-git-send-email-ddecotig@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dmidecode-devel-bounces+ghsdd-dmidecode-devel=m.gmane.org@nongnu.org>
-In-Reply-To: <1422448763-17583-1-git-send-email-ivan.khoronzhuk@linaro.org>
-List-Unsubscribe: <https://lists.nongnu.org/mailman/options/dmidecode-devel>,
-	<mailto:dmidecode-devel-request@nongnu.org?subject=unsubscribe>
-List-Archive: <http://lists.nongnu.org/archive/html/dmidecode-devel>
-List-Post: <mailto:dmidecode-devel@nongnu.org>
-List-Help: <mailto:dmidecode-devel-request@nongnu.org?subject=help>
-List-Subscribe: <https://lists.nongnu.org/mailman/listinfo/dmidecode-devel>,
-	<mailto:dmidecode-devel-request@nongnu.org?subject=subscribe>
-Errors-To: dmidecode-devel-bounces+ghsdd-dmidecode-devel=m.gmane.org@nongnu.org
-Sender: dmidecode-devel-bounces+ghsdd-dmidecode-devel=m.gmane.org@nongnu.org
-To: linux-kernel@vger.kernel.org, ard.biesheuvel@linaro.org, grant.likely@linaro.org, matt.fleming@intel.com, linux-api@vger.kernel.org, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>
-Cc: dmidecode-devel@nongnu.org, leif.lindholm@linaro.org
+Content-Type: multipart/signed; micalg="pgp-sha512";
+	protocol="application/pgp-signature"; boundary="=-+UcI3RAOAqXFNkoXi8f6"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1422322574-6188-2-git-send-email-ddecotig@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Decotigny <ddecotig@gmail.com>
+Cc: "David S. Miller" <davem@davemloft.net>, Amir Vadai <amirv@mellanox.com>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, Eric Dumazet <edumazet@google.com>, Eugenia Emantayev <eugenia@mellanox.co.il>, Or Gerlitz <ogerlitz@mellanox.com>, Ido Shamay <idos@mellanox.com>, Joe Perches <joe@perches.com>, Saeed Mahameed <saeedm@mellanox.com>, Govindarajulu Varadarajan <_govind@gmx.com>, Venkata Duvvuru <VenkatKumar.Duvvuru@Emulex.Com>, Jeff Kirsher <jeffrey.t.kirsher@intel.com>, Eyal Perry <eyalpe@mellanox.com>, Pravin B Shelar <pshelar@nicira.com>, Ed Swierk <eswierk@skyportsystems.com>, David Decotigny <decot@googlers.com>
 List-Id: linux-api@vger.kernel.org
 
-+ linux-api@vger.kernel.org
-+ linux-doc@vger.kernel.org
 
-On 01/28/2015 02:39 PM, Ivan Khoronzhuk wrote:
-> Some utils, like dmidecode and smbios, needs to access SMBIOS entry
-> table area in order to get information like SMBIOS version, size, etc.
-> Currently it's done via /dev/mem. But for situation when /dev/mem
-> usage is disabled, the utils have to use dmi sysfs instead, which
-> doesn't represent SMBIOS entry. So this patch adds SMBIOS area to
-> dmi-sysfs in order to allow utils in question to work correctly with
-> dmi sysfs interface.
->
-> Reviewed-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-> Signed-off-by: Ivan Khoronzhuk <ivan.khoronzhuk@linaro.org>
+--=-+UcI3RAOAqXFNkoXi8f6
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+On Mon, 2015-01-26 at 17:35 -0800, David Decotigny wrote:
+> From: David Decotigny <decot@googlers.com>
+>=20
+> Signed-off-by: David Decotigny <decot@googlers.com>
 > ---
->
-> v1: https://lkml.org/lkml/2015/1/23/643
-> v2: https://lkml.org/lkml/2015/1/26/345
->
-> v3..v2:
->    firmware: dmi_scan: add symbol to get SMBIOS entry area
->    firmware: dmi-sysfs: add SMBIOS entry point area attribute
-> 	combined in one patch
-> 	added SMBIOS information to ABI sysfs-dmi documentaton
->
-> v2..v1:
->    firmware: dmi_scan: add symbol to get SMBIOS entry area
-> 	- used additional static var to hold SMBIOS raw table size
-> 	- changed format of get_smbios_entry_area symbol
-> 	  returned pointer on const smbios table
->
->    firmware: dmi-sysfs: add SMBIOS entry point area attribute
-> 	- adopted to updated get_smbios_entry_area symbol
->    	- removed redundant array to save smbios table
->
->
->   Documentation/ABI/testing/sysfs-firmware-dmi | 10 +++++++
->   drivers/firmware/dmi-sysfs.c                 | 42 ++++++++++++++++++++++++++++
->   drivers/firmware/dmi_scan.c                  | 26 +++++++++++++++++
->   include/linux/dmi.h                          |  3 ++
->   4 files changed, 81 insertions(+)
->
-> diff --git a/Documentation/ABI/testing/sysfs-firmware-dmi b/Documentation/ABI/testing/sysfs-firmware-dmi
-> index c78f9ab..3a9ffe8 100644
-> --- a/Documentation/ABI/testing/sysfs-firmware-dmi
-> +++ b/Documentation/ABI/testing/sysfs-firmware-dmi
-> @@ -12,6 +12,16 @@ Description:
->   		cannot ensure that the data as exported to userland is
->   		without error either.
->   
-> +		The firmware provides DMI structures as a packed list of
-> +		data referenced by a SMBIOS table entry point. The SMBIOS
-> +		entry point contains general information, like SMBIOS
-> +		version, DMI table size, etc. The structure, content and
-> +		size of SMBIOS entry point is dependent on SMBIOS version.
-> +		That's why SMBIOS entry point is represented in dmi sysfs
-> +		like a raw attribute and is accessible via
-> +		/sys/firmware/dmi/smbios_raw_header. The format of SMBIOS
-> +		entry point header can be read in SMBIOS specification.
-> +
->   		DMI is structured as a large table of entries, where
->   		each entry has a common header indicating the type and
->   		length of the entry, as well as a firmware-provided
-> diff --git a/drivers/firmware/dmi-sysfs.c b/drivers/firmware/dmi-sysfs.c
-> index e0f1cb3..61b6a38 100644
-> --- a/drivers/firmware/dmi-sysfs.c
-> +++ b/drivers/firmware/dmi-sysfs.c
-> @@ -29,6 +29,8 @@
->   #define MAX_ENTRY_TYPE 255 /* Most of these aren't used, but we consider
->   			      the top entry type is only 8 bits */
->   
-> +static const u8 *smbios_raw_header;
-> +
->   struct dmi_sysfs_entry {
->   	struct dmi_header dh;
->   	struct kobject kobj;
-> @@ -646,9 +648,37 @@ static void cleanup_entry_list(void)
->   	}
->   }
->   
-> +static ssize_t smbios_entry_area_raw_read(struct file *filp,
-> +					  struct kobject *kobj,
-> +					  struct bin_attribute *bin_attr,
-> +					  char *buf, loff_t pos, size_t count)
-> +{
-> +	ssize_t size;
-> +
-> +	size = bin_attr->size;
-> +
-> +	if (size > pos)
-> +		size -= pos;
-> +	else
-> +		return 0;
-> +
-> +	if (count < size)
-> +		size = count;
-> +
-> +	memcpy(buf, &smbios_raw_header[pos], size);
-> +
-> +	return size;
-> +}
-> +
-> +static struct bin_attribute smbios_raw_area_attr = {
-> +	.read = smbios_entry_area_raw_read,
-> +	.attr = {.name = "smbios_raw_header", .mode = 0400},
-> +};
-> +
->   static int __init dmi_sysfs_init(void)
->   {
->   	int error = -ENOMEM;
-> +	int size;
->   	int val;
->   
->   	/* Set up our directory */
-> @@ -669,6 +699,18 @@ static int __init dmi_sysfs_init(void)
->   		goto err;
->   	}
->   
-> +	smbios_raw_header = dmi_get_smbios_entry_area(&size);
-> +	if (!smbios_raw_header) {
-> +		pr_debug("dmi-sysfs: SMBIOS raw data is not available.\n");
-> +		error = -ENODATA;
-> +		goto err;
-> +	}
-> +
-> +	/* Create the raw binary file to access the entry area */
-> +	smbios_raw_area_attr.size = size;
-> +	if (sysfs_create_bin_file(dmi_kobj, &smbios_raw_area_attr))
-> +		goto err;
-> +
->   	pr_debug("dmi-sysfs: loaded.\n");
->   
->   	return 0;
-> diff --git a/drivers/firmware/dmi_scan.c b/drivers/firmware/dmi_scan.c
-> index 420c8d8..d94c6b7 100644
-> --- a/drivers/firmware/dmi_scan.c
-> +++ b/drivers/firmware/dmi_scan.c
-> @@ -113,6 +113,8 @@ static void dmi_table(u8 *buf, int len, int num,
->   	}
->   }
->   
-> +static unsigned char smbios_header[32];
-> +static int smbios_header_size;
->   static phys_addr_t dmi_base;
->   static u16 dmi_len;
->   static u16 dmi_num;
-> @@ -474,6 +476,8 @@ static int __init dmi_present(const u8 *buf)
->   	if (memcmp(buf, "_SM_", 4) == 0 &&
->   	    buf[5] < 32 && dmi_checksum(buf, buf[5])) {
->   		smbios_ver = get_unaligned_be16(buf + 6);
-> +		smbios_header_size = buf[5];
-> +		memcpy(smbios_header, buf, smbios_header_size);
->   
->   		/* Some BIOS report weird SMBIOS version, fix that up */
->   		switch (smbios_ver) {
-> @@ -505,6 +509,8 @@ static int __init dmi_present(const u8 *buf)
->   				pr_info("SMBIOS %d.%d present.\n",
->   				       dmi_ver >> 8, dmi_ver & 0xFF);
->   			} else {
-> +				smbios_header_size = 15;
-> +				memcpy(smbios_header, buf, smbios_header_size);
->   				dmi_ver = (buf[14] & 0xF0) << 4 |
->   					   (buf[14] & 0x0F);
->   				pr_info("Legacy DMI %d.%d present.\n",
-> @@ -531,6 +537,8 @@ static int __init dmi_smbios3_present(const u8 *buf)
->   		dmi_ver &= 0xFFFFFF;
->   		dmi_len = get_unaligned_le32(buf + 12);
->   		dmi_base = get_unaligned_le64(buf + 16);
-> +		smbios_header_size = buf[6];
-> +		memcpy(smbios_header, buf, smbios_header_size);
->   
->   		/*
->   		 * The 64-bit SMBIOS 3.0 entry point no longer has a field
-> @@ -944,3 +952,21 @@ void dmi_memdev_name(u16 handle, const char **bank, const char **device)
->   	}
->   }
->   EXPORT_SYMBOL_GPL(dmi_memdev_name);
-> +
-> +/**
-> + * dmi_get_smbios_entry_area - copy SMBIOS entry point area to array.
-> + * @size - pointer to assign actual size of SMBIOS entry point area.
-> + *
-> + * returns NULL if table is not available, otherwise returns pointer on
-> + * SMBIOS entry point area array.
-> + */
-> +const u8 *dmi_get_smbios_entry_area(int *size)
-> +{
-> +	if (!smbios_header_size || !dmi_available)
-> +		return NULL;
-> +
-> +	*size = smbios_header_size;
-> +
-> +	return smbios_header;
-> +}
-> +EXPORT_SYMBOL_GPL(dmi_get_smbios_entry_area);
-> diff --git a/include/linux/dmi.h b/include/linux/dmi.h
-> index f820f0a..8e1a28d 100644
-> --- a/include/linux/dmi.h
-> +++ b/include/linux/dmi.h
-> @@ -109,6 +109,7 @@ extern int dmi_walk(void (*decode)(const struct dmi_header *, void *),
->   	void *private_data);
->   extern bool dmi_match(enum dmi_field f, const char *str);
->   extern void dmi_memdev_name(u16 handle, const char **bank, const char **device);
-> +const u8 *dmi_get_smbios_entry_area(int *size);
->   
->   #else
->   
-> @@ -140,6 +141,8 @@ static inline void dmi_memdev_name(u16 handle, const char **bank,
->   		const char **device) { }
->   static inline const struct dmi_system_id *
->   	dmi_first_match(const struct dmi_system_id *list) { return NULL; }
-> +static inline const u8 *dmi_get_smbios_entry_area(int *size)
-> +	{ return NULL; }
->   
->   #endif
->   
+>  net/core/ethtool.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>=20
+> diff --git a/net/core/ethtool.c b/net/core/ethtool.c
+> index 91f74f3..52efb7e 100644
+> --- a/net/core/ethtool.c
+> +++ b/net/core/ethtool.c
+> @@ -364,7 +364,7 @@ static int ethtool_get_settings(struct net_device *de=
+v, void __user *useraddr)
+> =20
+>  	if (copy_to_user(useraddr, &cmd, sizeof(cmd)))
+>  		return -EFAULT;
+> -	return 0;
+> +	return err;
 
+err cannnot be negative at this point (and if it's positive, that's a
+bug in the get_settings implementation which we happen to fix up).
 
-_______________________________________________
-https://lists.nongnu.org/mailman/listinfo/dmidecode-devel
+Ben.
+
+>  }
+> =20
+>  static int ethtool_set_settings(struct net_device *dev, void __user *use=
+raddr)
+
+--=20
+Ben Hutchings
+Teamwork is essential - it allows you to blame someone else.
+
+--=-+UcI3RAOAqXFNkoXi8f6
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIVAwUAVMkOq+e/yOyVhhEJAQqV5Q/9HQltpXHuRfZqtnbHPvWQGD/zxSl4x4NS
+rFWrVYBlr9wdb250PSLuum7ixYWYS46BC6ON00yMV3IaU4Y5J48Y+comJEV7DnQ8
+rq0B9D1uJI1v6kQbgPzovU6i1E8RdZUI24JEBbN2hALuHwNznXj3ouoM06RPg5z1
+NZGNg40ucuk9r8IQAjk2UuNPJeHo+7NvOVeT0VeAvcQHGZwJdjxRgpITnbJ/6zOB
+hkxYzuRo7k1su4D2IDvsHo0OiufUna9pQVmEY5CI7/yfNq1JUZ7mN/TvZhxncwUY
+HS5jchcurqrnsUI80nNyq5k6QEC0A067HdrfMiVi9J12OynpOKd6gKHXqggWUnlc
+F7bxpsLGILuORekUyFYWNWgJxXJfMwtK0VsirEKjsswx/y5X2eFHlKCmXcojybVV
+gHsX3JWhLGirwPobEuwgivFtd0IjkjJdsLQjBrtD6+D2EZZ/sZJ1AOflZdPDBHgA
+akfERt+BQV2VpeG+6PCKNd4gWX+9e8cbUg/8K46Km5i0cOrGaW2yl4JMEZdf7gtf
+hTS5qFx+rzwka0NaTXxm2lxXly6jHpTzfTGjtv+dP608W5NX6j/WsBLKKOpWvdNp
+KiL5gLatujtfl87cBdeqtODWDPXsA2FlDnWlFATtF6CXaJarJn/nWkks5ddqqaik
+nGpp836Ye1U=
+=IaPK
+-----END PGP SIGNATURE-----
+
+--=-+UcI3RAOAqXFNkoXi8f6--
