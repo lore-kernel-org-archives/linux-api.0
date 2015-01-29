@@ -1,114 +1,65 @@
-From: Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH v10 2/2] tty/serial: Add Spreadtrum sc9836-uart driver
- support
-Date: Thu, 29 Jan 2015 11:16:15 -0500
-Message-ID: <54CA5CCF.6040208@hurleysoftware.com>
-References: <sc9836-serial-v10> <1422443324-25082-1-git-send-email-chunyan.zhang@spreadtrum.com> <1422443324-25082-3-git-send-email-chunyan.zhang@spreadtrum.com> <54CA5128.8050500@gmail.com> <54CA568E.6080306@hurleysoftware.com> <54CA59F1.3060008@gmail.com>
+From: "Elliott, Robert (Server Storage)" <Elliott-VXdhtT5mjnY@public.gmane.org>
+Subject: RE: [RESEND] [PATCH] block: create ioctl to discard-or-zeroout a
+ range of blocks
+Date: Thu, 29 Jan 2015 16:28:13 +0000
+Message-ID: <94D0CD8314A33A4D9D801C0FE68B40295A764B84@G9W0745.americas.hpqcorp.net>
+References: <20150129020025.GE9981@birch.djwong.org>
+ <2747023.BlTyJ4fNVf@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54CA59F1.3060008-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Varka Bhadram <varkabhadram-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org
-Cc: robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org, jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org, florian.vaussard-p8DiymsW2f8@public.gmane.org, andrew-g2DYL2Zd6BY@public.gmane.org, hytszk-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, antonynpavlov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, shawn.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, orsonzhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, geng.ren-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, zhizhou.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, lanqing.liu-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, wei.qiao-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <2747023.BlTyJ4fNVf@wuerfel>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 01/29/2015 11:04 AM, Varka Bhadram wrote:
-> Hi Peter,
-> 
-> On Thursday 29 January 2015 09:19 PM, Peter Hurley wrote:
->> Hi Varka,
->>
->> On 01/29/2015 10:26 AM, Varka Bhadram wrote:
->>> Hi,
->>>
->>> On Wednesday 28 January 2015 04:38 PM, Chunyan Zhang wrote:
->>>> Add a full sc9836-uart driver for SC9836 SoC which is based on the
->>>> spreadtrum sharkl64 platform.
->>>> This driver also support earlycon.
->>>>
->>>> Originally-by: Lanqing Liu <lanqing.liu-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
->>>> Signed-off-by: Orson Zhai <orson.zhai-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
->>>> Signed-off-by: Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>
->>>> Acked-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
->>>> Reviewed-by: Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
->>>> ---
->>>>   drivers/tty/serial/Kconfig       |   18 +
->>>>   drivers/tty/serial/Makefile      |    1 +
->>>>   drivers/tty/serial/sprd_serial.c |  793 ++++++++++++++++++++++++++++++++++++++
->>>>   include/uapi/linux/serial_core.h |    3 +
->>>>   4 files changed, 815 insertions(+)
->>>>   create mode 100644 drivers/tty/serial/sprd_serial.c
->>>>
->>> (...)
->>>
->>>> +static int sprd_probe(struct platform_device *pdev)
->>>> +{
->>>> +    struct resource *res;
->>>> +    struct uart_port *up;
->>>> +    struct clk *clk;
->>>> +    int irq;
->>>> +    int index;
->>>> +    int ret;
->>>> +
->>>> +    for (index = 0; index < ARRAY_SIZE(sprd_port); index++)
->>>> +        if (sprd_port[index] == NULL)
->>>> +            break;
->>>> +
->>>> +    if (index == ARRAY_SIZE(sprd_port))
->>>> +        return -EBUSY;
->>>> +
->>>> +    index = sprd_probe_dt_alias(index, &pdev->dev);
->>>> +
->>>> +    sprd_port[index] = devm_kzalloc(&pdev->dev,
->>>> +        sizeof(*sprd_port[index]), GFP_KERNEL);
->>>> +    if (!sprd_port[index])
->>>> +        return -ENOMEM;
->>>> +
->>>> +    up = &sprd_port[index]->port;
->>>> +    up->dev = &pdev->dev;
->>>> +    up->line = index;
->>>> +    up->type = PORT_SPRD;
->>>> +    up->iotype = SERIAL_IO_PORT;
->>>> +    up->uartclk = SPRD_DEF_RATE;
->>>> +    up->fifosize = SPRD_FIFO_SIZE;
->>>> +    up->ops = &serial_sprd_ops;
->>>> +    up->flags = UPF_BOOT_AUTOCONF;
->>>> +
->>>> +    clk = devm_clk_get(&pdev->dev, NULL);
->>>> +    if (!IS_ERR(clk))
->>>> +        up->uartclk = clk_get_rate(clk);
->>>> +
->>>> +    res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
->>>> +    if (!res) {
->>>> +        dev_err(&pdev->dev, "not provide mem resource\n");
->>>> +        return -ENODEV;
->>>> +    }
->>> This check is not required. It will be done by devm_ioremap_resource()
->> I disagree. devm_ioremap_resource() interprets the NULL resource as
->> a bad parameter and returns -EINVAL which is then forwarded as the
->> return value from the probe.
->>
->> -ENODEV is the correct return value from the probe if the expected
->> resource is not available (either because it doesn't exist or was already
->> claimed by another driver).
-> 
-> Check on the resource happening with evm_ioremap_resource.
-> 
-> Not necessary to check multiple times.
-> 
-> I did series for all the drivers. see [1]
-> 
-> [1]: https://lkml.org/lkml/2014/11/3/986 <https://lkml.org/lkml/2014/11/3/986>
 
-That's a usb series. Did you do a serial driver series I missed?
-I don't see anything related in Greg's tty-next tree...
 
-Regards,
-Peter Hurley
+> -----Original Message-----
+> From: linux-kernel-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org [mailto:linux-kernel-
+> owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org] On Behalf Of Arnd Bergmann
+> Sent: Thursday, 29 January, 2015 4:03 AM
+> To: Darrick J. Wong
+> Cc: Jens Axboe; Christoph Hellwig; linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; linux-
+> fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; Jeff Layton; J. Bruce
+> Fields
+> Subject: Re: [RESEND] [PATCH] block: create ioctl to discard-or-zeroout a
+> range of blocks
+> 
+> On Wednesday 28 January 2015 18:00:25 Darrick J. Wong wrote:
+> > Create a new ioctl to expose the block layer's newfound ability to
+> > issue either a zeroing discard, a WRITE SAME with a zero page, or a
+> > regular write with the zero page.  This BLKZEROOUT2 ioctl takes
+> > {start, length, flags} as parameters.  So far, the only flag available
+> > is to enable the zeroing discard part -- without it, the call invokes
+> > the old BLKZEROOUT behavior.  start and length have the same meaning
+> > as in BLKZEROOUT.
+> >
+> > Furthermore, because BLKZEROOUT2 issues commands directly to the
+> > storage device, we must invalidate the page cache (as a regular
+> > O_DIRECT write would do) to avoid returning stale cache contents at a
+> > later time.
+> >
+> > This patch depends on "block: Add discard flag to
+> > blkdev_issue_zeroout() function" in Jens' for-3.20/core branch.
+> >
+> > Signed-off-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> >
+> 
+> Would this work ok for devices that fill discarded areas with all-ones
+> instead of all-zeroes? I believe SD cards can do either.
+> 
+> 	Arnd
 
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+RAID software stacks need predictable data, and 0 is a lot easier to
+deal with than 0xff in Galois field (XOR-based) math.
+
+The SCSI and ATA standards both define bits to report if the device is
+designed to return 0 after discard; they don't have a way to report
+that any other particular non-zero value is returned.
+
+---
+Rob Elliott    HP Server Storage
