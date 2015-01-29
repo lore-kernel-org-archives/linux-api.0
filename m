@@ -1,176 +1,68 @@
-From: Stephan Mueller <smueller@chronox.de>
-Subject: [PATCH v12 0/2] crypto: AF_ALG: add AEAD and RNG support
-Date: Thu, 29 Jan 2015 21:23:38 +0100
-Message-ID: <1681008.mocmysOoQU@tachyon.chronox.de>
+From: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v1 1/5] IB/uverbs: ex_query_device: answer must not
+ depend on request's comp_mask
+Date: Thu, 29 Jan 2015 21:50:38 +0100
+Message-ID: <1422564638.3133.198.camel@opteya.com>
+References: <cover.1422553023.git.ydroneaud@opteya.com>
+	 <24ceb1fc5b2b6563532e5776b1b2320b1ae37543.1422553023.git.ydroneaud@opteya.com>
+	 <20150129182800.GH11842@obsidianresearch.com>
+	 <1422557009.3133.172.camel@opteya.com>
+	 <20150129191801.GM11842@obsidianresearch.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: 'Herbert Xu' <herbert@gondor.apana.org.au>
-Cc: 'Quentin Gouchet' <quentin.gouchet@gmail.com>, Daniel Borkmann <dborkman@redhat.com>, 'LKML' <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org, 'Linux API' <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150129191801.GM11842-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Cc: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 Hi,
 
-This patch set adds AEAD and RNG support to the AF_ALG interface
-exported by the kernel crypto API. By extending AF_ALG with AEAD and RNG
-support, all cipher types the kernel crypto API allows access to are
-now accessible from userspace.
+Le jeudi 29 janvier 2015 =C3=A0 12:18 -0700, Jason Gunthorpe a =C3=A9cr=
+it :
+> On Thu, Jan 29, 2015 at 07:43:29PM +0100, Yann Droneaud wrote:
+>=20
+> > The write() syscall must return the size buffer passed to it, or
+> > less, but in such case it would ask for trouble as userspace would
+> > be allowed to write() the remaining bytes.  Returning a size bigger
+> > than the one passed to write() is not acceptable and would break an=
+y
+> > expectation.
+>=20
+> By that logic the 0 return is still wrong, and it should be ucore->in=
+_len
+>=20
 
-Both, AEAD and RNG implementations are stand-alone and do not depend
-other AF_ALG interfaces (like hash or skcipher).
+This is handled by ib_uverbs_write() in
+drivers/infiniband/core/uverbs_main.c:
 
-The AEAD implementation uses the same approach as provided with
-skcipher by offering the following interfaces:
+    709                 if (err)
+    710                         return err;
+    711=20
+    712                 return written_count;
 
-	* sendmsg and recvmsg interfaces allowing multiple
-	  invocations supporting a threaded user space. To support
-	  multi-threaded user space, kernel-side buffering
-	  is implemented similarly to skcipher.
 
-	* splice / vmsplice interfaces allowing a zero-copy
-	  invocation
+> But I think we can return less without risking anything breaking, it
+> already violates the invariant associated with write() - it mutates
+> the buffer passed in!
+>=20
 
-The RNG interface only implements the recvmsg interface as
-zero-copy is not applicable.
+I don't think so, as only the response buffer is written to and the
+response buffer pointer is provided in the buffer given to write().
 
-The new AEAD and RNG interfaces are fully tested with the test application
-provided at [1]. That test application exercises all newly added user space
-interfaces. The testing covers:
+AFAIK, no uverbs ever change the content of the input buffer (eg. the
+request): I've managed to declare the various input buffers "const" so
+it would surprising to find it use for writing to userspace.
 
-	* use of the sendmsg/recvmsg interface
+Anyway, I recognize that uverb way of abusing write() syscall is=20
+borderline (at best) regarding other Linux subsystems and Unix paradigm=
+=20
+in general. But it's not enough to screw it more.
 
-	* use of the splice / vmsplice interface
+Regards.
 
-	* invocation of all AF_ALG types (aead, rng, skcipher, hash)
-
-	* using all types of operation (encryption, decryption, keyed MD,
-	  MD, random numbers, AEAD decryption with positive and negative
-	  authentication verification)
-
-	* stress testing by running all tests for 30 minutes in an
-	  endless loop
-
-	* test execution on 64 bit and 32 bit
-
-[1] http://www.chronox.de/libkcapi.html
-
-Changes v2:
-* rebase to current cryptodev-2.6 tree
-* use memzero_explicit to zeroize AEAD associated data
-* use sizeof for determining length of AEAD associated data
-* update algif_rng.c covering all suggestions from Daniel Borkmann
-  <dborkman@redhat.com>
-* addition of patch 9: add digestsize interface for hashes
-* addition of patch to update documentation covering the userspace interface
-* change numbers of getsockopt options: separate them from sendmsg interface
-  definitions
-
-Changes v3:
-* remove getsockopt interface
-* AEAD: associated data is set prepended to the plain/ciphertext
-* AEAD: allowing arbitrary associated data lengths
-* remove setkey patch as protection was already in the existing code
-
-Changes v4:
-* stand-alone implementation of AEAD
-* testing of all interfaces offered by AEAD
-* stress testing of AEAD and RNG
-
-Changes v5:
-* AEAD: add outer while(size) loop in aead_sendmsg to ensure all data is
-  copied into the kernel (reporter Herbert Xu)
-* AEAD: aead_sendmsg bug fix: change size -= len; to size -= plen;
-* AF_ALG / AEAD: add aead_setauthsize and associated extension to
-  struct af_alg_type as well as alg_setsockopt (reporter Herbert Xu)
-* RNG: rng_recvmsg: use 128 byte stack variable for output of RNG instead
-  of ctx->result (reporter Herbert Xu)
-* RNG / AF_ALG: allow user space to seed RNG via setsockopt
-* RNG: rng_recvmsg bug fix: use genlen as result variable for
-  crypto_rng_get_bytes as previously no negative errors were obtained
-* AF_ALG: alg_setop: zeroize buffer before free
-
-Changes v6:
-* AEAD/RNG: port to 3.19-rc1 with the iov_iter handling
-* RNG: use the setkey interface to obtain the seed and drop the patch adding
-  a separate reseeding interface
-* extract the zeroization patch for alg_setkey into a stand-alone patch
-  submission
-* fix bug in aead_sufficient_data (reporter Herbert Xu)
-* testing of all interfaces with test application provided with libkcapi version
-  0.6.2
-
-Changes v7:
-* AEAD: aead_recvmsg: change error code from ENOMEM to EINVAL
-* AEAD: drop aead_readable/aead_sufficient_data and only use ctx->more to decide
-  whether the read side shall become active. This change requires that the
-  patch for crypto_aead_decrypt ensuring that the ciphertext contains the
-  authentication tag was added -- see https://lkml.org/lkml/2014/12/30/200.
-  Otherwise, user space can trigger a kernel crash.
-* RNG: patch dropped as it was applied
-* AEAD: port Kconfig/Makefile patch forward to current code base
-
-Changes v8:
-* Removed check for aead_assoclen in aead_sendmsg
-* Fix endless loop bug in aead_sendmsg (check for sgl->cur > ALG_MAX_PAGES in
-  while condition removed -- this condition is checked within the loop already)
-* Resurrect aead_sufficient_data and call it in aead_sendmsg, aead_sendpage to
-  notify caller about wrong invocation
-* Re-add aead_sufficient_data to aead_recvmsg to verify user input data before
-  using them to ensure the kernel protects against malicious parameters
-* Allow arbitrary size of AD (i.e. up to the maximum buffer size of
-  ALG_MAX_PAGES)
-* When aead_recvmsg receives an error from decryption, release all pages if the
-  error is EBADMSG -- this error implies that a proper decryption was performed
-  but the integrity of the message is lost. This error is considered to be a
-  valid decryption result.
-* Add test cases for sendmsg and splice interface to test large AD sizes (in
-  case of sendmsg, use 65504 bytes AD and 32 bytes plaintext; in case of splice
-  use 15 pages AD and 32 bytes in the 16th page for plaintext). See [1] for
-  updated test case.
-
-Changes v9:
-* if socket is not writable during sendmsg/sendpage due to insufficient memory
-  and a recvmsg operation is forced, inform userspace about truncated operation
-  via MSG_TRUNC
-* use -EMSGSIZE in case insufficient data was provided in sendmsg/sendpage
-* release all buffers in case insufficient data was provided in sendmsg/sendpage
-* bug fix in sendmsg: when a new page is allocated, reset sg->offset to 0 --
-  the error is visible with the new tests in [1] when using the -d flag
-  with the test application
-
-Changes v10:
-* initialize ctx->trunc in aead_accept_parent to zero
-* fix one line with code formatting problems
-
-Changes v11:
-* return an error if user space sends too much data instead of waiting until
-  reader side catches up with operation (suggested by Herbert Xu)
-* remove now unneeded aead_wait_for_wmem service function
-* remove now unneeded ctx->trunc and MSG_TRUNC error return
-
-Changes v12:
-* check ctx->used in aead_data_wakeup (reported by Herbert Xu)
-* free socket buffers in case userspace sends too much data (reported by
-  Herbert Xu)
-* allow up to 16 IOVECs in recvmsg for the output buffer -- the code can handle
-  an arbitrary number of IOVECs (just change RSGL_MAX_ENTRIES). Though, when
-  changing the value, the maximum memory user space can cause the kernel to
-  allocate should be considered as documented in the comment. The test code in
-  [1] is updated to invoke recvmsg with 16 IOVECs (reported by Herbert Xu)
-* prevent an edge condition error case in sendmsg (reported by Herbert Xu)
-* correct some formatting as suggested by checkpatch.pl
-
-Stephan Mueller (2):
-  crypto: AF_ALG: add AEAD support
-  crypto: AF_ALG: enable AEAD interface compilation
-
- crypto/Kconfig      |   9 +
- crypto/Makefile     |   1 +
- crypto/algif_aead.c | 666 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 676 insertions(+)
- create mode 100644 crypto/algif_aead.c
-
--- 
-2.1.0
+--=20
+Yann Droneaud
+OPTEYA
