@@ -1,66 +1,58 @@
-From: Darren Hart <dvhart@infradead.org>
-Subject: Re: [PATCH v2] samsung-laptop: enable better lid handling
-Date: Wed, 28 Jan 2015 21:20:22 -0800
-Message-ID: <20150129052021.GA115032@vmdeb7>
-References: <1418332715-10547-1-git-send-email-julijonas.kikutis@gmail.com>
- <1422365168-2428-1-git-send-email-julijonas.kikutis@gmail.com>
+From: Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH v2 linux-trace 1/8] tracing: attach eBPF programs to tracepoints
+ and syscalls
+Date: Thu, 29 Jan 2015 14:39:19 +0900
+Message-ID: <54C9C787.1040706@hitachi.com>
+References: <CAMEtUuz+N52ms4ZFh8+fSGhg1UaXpBdk9RVPU_zBDCjaZ4bj4A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <platform-driver-x86-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1422365168-2428-1-git-send-email-julijonas.kikutis@gmail.com>
-Sender: platform-driver-x86-owner@vger.kernel.org
-To: Julijonas Kikutis <julijonas.kikutis@gmail.com>
-Cc: Corentin Chary <corentin.chary@gmail.com>, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "open list:SAMSUNG LAPTOP DR..." <platform-driver-x86@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAMEtUuz+N52ms4ZFh8+fSGhg1UaXpBdk9RVPU_zBDCjaZ4bj4A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 27, 2015 at 01:26:06PM +0000, Julijonas Kikutis wrote:
-> Some Samsung laptops with SABI3 delay the sleep for 10 seconds after
-> the lid is closed and do not wake up from sleep after the lid is opened.
-> A SABI command is needed to enable the better behavior.
+(2015/01/29 13:40), Alexei Starovoitov wrote:
+> On Wed, Jan 28, 2015 at 4:46 PM, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>>>
+>>> +static int event_filter_release(struct inode *inode, struct file *filp)
+>>> +{
+>>> +     struct ftrace_event_file *file;
+>>> +     char buf[2] = "0";
+>>> +
+>>> +     mutex_lock(&event_mutex);
+>>> +     file = event_file_data(filp);
+>>> +     if (file) {
+>>> +             if (file->flags & TRACE_EVENT_FL_BPF) {
+>>> +                     /* auto-disable the filter */
+>>> +                     ftrace_event_enable_disable(file, 0);
+>>
+>> Hmm.. what if user already enabled an event, attached a bpf filter and
+>> then detached the filter - I'm not sure we can always auto-disable
+>> it..
 > 
-> Command = 0x6e, d0 = 0x81 enables this behavior. Returns d0 = 0x01.
-> Command = 0x6e, d0 = 0x80 disables this behavior. Returns d0 = 0x00.
-> 
-> Command = 0x6d and any d0 queries the state. This returns:
-> d0 = 0x00000*01, d1 = 0x00, d2 = 0x00, d3 = 0x0* when it is enabled.
-> d0 = 0x00000*00, d1 = 0x00, d2 = 0x00, d3 = 0x0* when it is disabled.
-> Where * is 0 - laptop has never slept or hibernated after switch on,
->            1 - laptop has hibernated just before,
->            2 - laptop has slept just before.
-> 
-> Patch addresses bug https://bugzilla.kernel.org/show_bug.cgi?id=75901 .
-> It adds a sysfs attribute lid_handling with a description and also an
-> addition to the quirks structure to enable the mode by default.
-> 
-> A user with another laptop in the bug report says that "power button has
-> to be pressed twice to wake the machine" when he or she enabled the mode
-> manually using the SABI command. Therefore, it is enabled by default
-> only for the single laptop that I have tested.
-> 
-> Signed-off-by: Julijonas Kikutis <julijonas.kikutis@gmail.com>
-> ---
->  .../ABI/testing/sysfs-driver-samsung-laptop        |   8 ++
->  drivers/platform/x86/samsung-laptop.c              | 120 ++++++++++++++++++++-
->  2 files changed, 127 insertions(+), 1 deletion(-)
-> 
+> why not?
+> I think it makes sense auto enable/disable, since that
+> is cleaner user experience.
 
-Patch is generally fine, thanks for addressing my comments. Prior to merging I
-always run checkpatch.pl just in case I missed anything obvious:
+Maybe, would we need a reference counter for each event? :)
 
-$ scripts/checkpatch.pl ~/samsung/01-lid-handling.patch 
-WARNING: Prefer kstrto<type> to single variable sscanf
-#219: FILE: drivers/platform/x86/samsung-laptop.c:900:
-+       if (!count || sscanf(buf, "%i", &value) != 1)
-+               return -EINVAL;
+Actually, ftrace event is not similar to perf-event which ktap
+is based on, ftrace event interface is always exported via
+debugfs, this means users can share the event for different
+usage.
 
-total: 0 errors, 1 warnings, 219 lines checked
+One possible other solution is to add a instance-lock interface
+for each ftrace instance and lock it by bpf. Then, other users
+can not enable/disable the events in the instance.
 
-Please always run checkpatch.pl. It isn't sufficient and doesn't catch
-everything, but it is a minimum bar kind of thing.
+Thank you,
 
-Thanks,
 
 -- 
-Darren Hart
-Intel Open Source Technology Center
+Masami HIRAMATSU
+Software Platform Research Dept. Linux Technology Research Center
+Hitachi, Ltd., Yokohama Research Laboratory
+E-mail: masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org
