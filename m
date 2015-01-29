@@ -1,76 +1,69 @@
-From: =?utf-8?B?U8O2cmVu?= Brinkmann <soren.brinkmann@xilinx.com>
-Subject: Re: [PATCH v4] gpio: lib-sysfs: Add 'wakeup' attribute
-Date: Thu, 29 Jan 2015 09:23:14 -0800
-Message-ID: <bb967ff02726449ab6525d33bccde7e4@BL2FFO11FD014.protection.gbl>
-References: <1421351389-11660-1-git-send-email-soren.brinkmann@xilinx.com>
- <20150116111108.GG30960@localhost>
- <a4610e13d0094d40b7e0574992509ec6@BN1AFFO11FD044.protection.gbl>
- <CAAVeFu+K0W96mi0=QR8JGSe9BpH2nC5WV_9qbSvm6LJGA8gc7Q@mail.gmail.com>
- <CACRpkdZ4CekD2xeJYM+UUtuGuwS2uB++XprSueWnshEVk=79Fw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-gpio-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CACRpkdZ4CekD2xeJYM+UUtuGuwS2uB++XprSueWnshEVk=79Fw@mail.gmail.com>
-Sender: linux-gpio-owner@vger.kernel.org
-To: Linus Walleij <linus.walleij@linaro.org>
-Cc: Alexandre Courbot <gnurou@gmail.com>, Johan Hovold <johan@kernel.org>, linux-api@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "linux-gpio@vger.kernel.org" <linux-gpio@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>
+From: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v1 0/5] IB/core: extended query device caps cleanup for v3.19
+Date: Thu, 29 Jan 2015 18:59:57 +0100
+Message-ID: <cover.1422553023.git.ydroneaud@opteya.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Linus,
+Hi,
 
-On Mon, 2015-01-19 at 09:54AM +0100, Linus Walleij wrote:
-> On Mon, Jan 19, 2015 at 5:20 AM, Alexandre Courbot <gnurou@gmail.com>=
- wrote:
-> > On Sat, Jan 17, 2015 at 1:49 AM, S=C3=B6ren Brinkmann <soren.brinkm=
-ann@xilinx.com> wrote:
-> >> On Fri, 2015-01-16 at 12:11PM +0100, Johan Hovold wrote:
->=20
-> >>> Implementing proper wakeup support for unclaimed GPIOs would take=
- some
-> >>> work (if at all desired), but that is not a reason to be adding c=
-ustom
-> >>> implementations that violates the kernel's power policies and new=
- ABIs
-> >>> that would need to be maintained forever.
-> (...)
-> >>> Meanwhile you can (should) use gpio-keys if you need to wake your=
- system
-> >>> on gpio events.
-> >>
-> >> We had that discussion and I don't think GPIO keys is the right so=
-lution
-> >> for every use-case.
-> >
-> > Sorry, it has been a while - can you remind us of why?
->=20
-> There are such cases. Of course keys should be handled by GPIO-keys
-> and these will trigger the right wakeup events in such cases.
->=20
-> This is for more esoteric cases: we cannot have a kernel module for
-> everything people want to do with GPIOs, and the use case I accept
-> is GPIOs used in automatic control etc, think factory lines or doors.
-> We can't have a "door" driver or "punch arm" or "fire alarm" driver
-> in the kernel. Those are userspace things.
->=20
-> Still such embedded systems need to be able to go to idle and
-> sleep to conerve power, and then they need to put wakeups on
-> these GPIOs.
->=20
-> So it is a feature userspace needs, though as with much of the
-> sysfs ABI it is very often abused for things like keys and LEDs which
-> is an abomination but we can't do much about it :(
+Following discussions in thread "[PATCH v3 06/17] IB/core: Add support
+for extended query device caps" [1] and further comments on previous
+patch in "[PATCH 3/4] IB/uverbs: ex_query_device: check request's
+comp_mask" thread [2], I'm proposing an updated patchset to implement
+a slighly different behavior to handle the request parameters in
+ib_uverbs_ex_query_device() in order to restore the current behavior
+of ib_copy_to_udata().
 
-Thanks for clearing that up.
-What does that mean for this patch? Are we going ahead, accepting the
-extension of this API or do all these use-cases have to wait for the
-rewrite of a proper GPIO userspace interface?
+I think we found an agreement on the scheme to be implemented in
+Haggai Eran's response [3]:
 
-	Thanks,
-	S=C3=B6ren
---
-To unsubscribe from this list: send the line "unsubscribe linux-gpio" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+- input's comp_mask is currently not used, so it must be 0;
+- the response buffer size is checked so that the base answer
+  can be returned without being truncated;
+- the extended feature (odp) information are returned
+  if, and only if, there's enough space in the response buffer,
+  allowing older programs to get only the features they would
+  expect. Newer programs are expected to provide more space,
+  but as the response's comp_mask will describe only the available
+  fields, newer program cannot be surprized to not get information
+  when run on older kernel (if we want to support this use case).
+
+I feel even more confident this behavior would allow a better
+maintainability. Additionally, it's still looking more like the
+behavior already implemented by other InfiniBand/RDMA kernel <->
+userspace interfaces.
+
+I hope this would go in v3.19 before its release so that the extended
+QUERY_DEVICE uverbs won't hurt us being part of an official release:
+in it's current shape it won't be easy to support it.
+
+Regards.
+
+Changes from v0 [4]
+- don't use input's comp_mask to conditionnaly build the response
+- ensure input's comp_mask is set 0
+
+[1] http://mid.gmane.org/1418733236.2779.26.camel-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org
+[2] http://mid.gmane.org/063956366559d6919693aabb324bab83d676bc28.1421931555.git.ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org
+[3] http://mid.gmane.org/54C902E4.5010600-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org
+[4] http://mid.gmane.org/cover.1421931555.git.ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org
+
+Yann Droneaud (5):
+  IB/uverbs: ex_query_device: answer must not depend on request's
+    comp_mask
+  IB/uverbs: ex_query_device: check request's comp_mask
+  IB/uverbs: ex_query_device: answer must depend on response buffer's
+    size
+  IB/uverbs: ex_query_device: no need to clear the whole structure
+  IB/core: ib_copy_to_udata(): don't silently truncate response
+
+ drivers/infiniband/core/uverbs_cmd.c | 39 +++++++++++++++++++++++++-----------
+ include/rdma/ib_verbs.h              |  5 +----
+ 2 files changed, 28 insertions(+), 16 deletions(-)
+
+-- 
+2.1.0
