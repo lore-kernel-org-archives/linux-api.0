@@ -1,63 +1,124 @@
-From: Arnaldo Carvalho de Melo <acme@kernel.org>
-Subject: Re: [PATCH v2 linux-trace 4/8] samples: bpf: simple tracing example
- in C
-Date: Wed, 28 Jan 2015 13:24:15 -0300
-Message-ID: <20150128162415.GO7220@kernel.org>
-References: <1422417973-10195-1-git-send-email-ast@plumgrid.com>
- <1422417973-10195-5-git-send-email-ast@plumgrid.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: [RESEND] [PATCH] block: create ioctl to discard-or-zeroout a range
+ of blocks
+Date: Wed, 28 Jan 2015 18:00:25 -0800
+Message-ID: <20150129020025.GE9981@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1422417973-10195-5-git-send-email-ast@plumgrid.com>
-Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@plumgrid.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Namhyung Kim <namhyung@kernel.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>
+Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, "J. Bruce Fields" <bfields@fieldses.org>
 List-Id: linux-api@vger.kernel.org
 
-Em Tue, Jan 27, 2015 at 08:06:09PM -0800, Alexei Starovoitov escreveu:
-> diff --git a/samples/bpf/tracex1_kern.c b/samples/bpf/tracex1_kern.c
-> new file mode 100644
-> index 000000000000..7849ceb4bce6
-> --- /dev/null
-> +++ b/samples/bpf/tracex1_kern.c
-> @@ -0,0 +1,28 @@
-> +#include <linux/skbuff.h>
-> +#include <linux/netdevice.h>
-> +#include <uapi/linux/bpf.h>
-> +#include <trace/bpf_trace.h>
-> +#include "bpf_helpers.h"
-> +
-> +SEC("events/net/netif_receive_skb")
-> +int bpf_prog1(struct bpf_context *ctx)
-> +{
-> +	/*
-> +	 * attaches to /sys/kernel/debug/tracing/events/net/netif_receive_skb
-> +	 * prints events for loobpack device only
-> +	 */
-> +	char devname[] = "lo";
-> +	struct net_device *dev;
-> +	struct sk_buff *skb = 0;
-> +
-> +	skb = (struct sk_buff *) ctx->arg1;
-> +	dev = bpf_fetch_ptr(&skb->dev);
-> +	if (bpf_memcmp(dev->name, devname, 2) == 0)
+Create a new ioctl to expose the block layer's newfound ability to
+issue either a zeroing discard, a WRITE SAME with a zero page, or a
+regular write with the zero page.  This BLKZEROOUT2 ioctl takes
+{start, length, flags} as parameters.  So far, the only flag available
+is to enable the zeroing discard part -- without it, the call invokes
+the old BLKZEROOUT behavior.  start and length have the same meaning
+as in BLKZEROOUT.
 
-I'm only starting to look at all this, so bear with me... But why do we
-need to have it as "bpf_memcmp"? Can't we simply use it as "memcmp" and
-have it use the right function?
+Furthermore, because BLKZEROOUT2 issues commands directly to the
+storage device, we must invalidate the page cache (as a regular
+O_DIRECT write would do) to avoid returning stale cache contents at a
+later time.
 
-Less typing, perhaps we would need to have a:
+This patch depends on "block: Add discard flag to
+blkdev_issue_zeroout() function" in Jens' for-3.20/core branch.
 
-#define memcmp bpf_memcmp(s1, s2, n) bpf_memcmp(s1, s2, n)
+Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+---
+ block/ioctl.c           |   45 ++++++++++++++++++++++++++++++++++++++-------
+ include/uapi/linux/fs.h |    7 +++++++
+ 2 files changed, 45 insertions(+), 7 deletions(-)
 
-in bpf_helpers.h to have it work?
-
-- Arnaldo
-
-> +		/* print event using default tracepoint format */
-> +		return 1;
-> +
-> +	/* drop event */
-> +	return 0;
-> +}
+diff --git a/block/ioctl.c b/block/ioctl.c
+index 7d8befd..ff623d5 100644
+--- a/block/ioctl.c
++++ b/block/ioctl.c
+@@ -186,19 +186,39 @@ static int blk_ioctl_discard(struct block_device *bdev, uint64_t start,
+ }
+ 
+ static int blk_ioctl_zeroout(struct block_device *bdev, uint64_t start,
+-			     uint64_t len)
++			     uint64_t len, uint32_t flags)
+ {
++	int ret;
++	struct address_space *mapping;
++	uint64_t end = start + len - 1;
++
++	if (flags & ~BLKZEROOUT2_DISCARD_OK)
++		return -EINVAL;
+ 	if (start & 511)
+ 		return -EINVAL;
+ 	if (len & 511)
+ 		return -EINVAL;
+-	start >>= 9;
+-	len >>= 9;
+-
+-	if (start + len > (i_size_read(bdev->bd_inode) >> 9))
++	if (end >= i_size_read(bdev->bd_inode))
+ 		return -EINVAL;
+ 
+-	return blkdev_issue_zeroout(bdev, start, len, GFP_KERNEL, false);
++	/* Invalidate the page cache, including dirty pages */
++	mapping = bdev->bd_inode->i_mapping;
++	truncate_inode_pages_range(mapping, start, end);
++
++	ret = blkdev_issue_zeroout(bdev, start >> 9, len >> 9, GFP_KERNEL,
++				   flags & BLKZEROOUT2_DISCARD_OK);
++	if (ret)
++		goto out;
++
++	/*
++	 * Invalidate again; if someone wandered in and dirtied a page,
++	 * the caller will be given -EBUSY.
++	 */
++	ret = invalidate_inode_pages2_range(mapping,
++					    start >> PAGE_CACHE_SHIFT,
++					    end >> PAGE_CACHE_SHIFT);
++out:
++	return ret;
+ }
+ 
+ static int put_ushort(unsigned long arg, unsigned short val)
+@@ -326,7 +346,18 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
+ 		if (copy_from_user(range, (void __user *)arg, sizeof(range)))
+ 			return -EFAULT;
+ 
+-		return blk_ioctl_zeroout(bdev, range[0], range[1]);
++		return blk_ioctl_zeroout(bdev, range[0], range[1], 0);
++	}
++	case BLKZEROOUT2: {
++		struct blkzeroout2 p;
++
++		if (!(mode & FMODE_WRITE))
++			return -EBADF;
++
++		if (copy_from_user(&p, (void __user *)arg, sizeof(p)))
++			return -EFAULT;
++
++		return blk_ioctl_zeroout(bdev, p.start, p.length, p.flags);
+ 	}
+ 
+ 	case HDIO_GETGEO: {
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index 3735fa0..54d24ea 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -150,6 +150,13 @@ struct inodes_stat_t {
+ #define BLKSECDISCARD _IO(0x12,125)
+ #define BLKROTATIONAL _IO(0x12,126)
+ #define BLKZEROOUT _IO(0x12,127)
++struct blkzeroout2 {
++	__u64 start;
++	__u64 length;
++	__u32 flags;
++};
++#define BLKZEROOUT2_DISCARD_OK	1
++#define BLKZEROOUT2 _IOR(0x12, 127, struct blkzeroout2)
+ 
+ #define BMAP_IOCTL 1		/* obsolete - kept for compatibility */
+ #define FIBMAP	   _IO(0x00,1)	/* bmap access */
