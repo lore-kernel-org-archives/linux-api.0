@@ -1,87 +1,63 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH 01/13] kdbus: add documentation
-Date: Thu, 29 Jan 2015 04:09:56 -0800
-Message-ID: <CALCETrXD41=ohFSkCmBD8zPHFVUtr49QXMhYnChAxqQtmUjJYw@mail.gmail.com>
-References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
- <1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>
- <54BE5DC8.70706@gmail.com> <54BE9D08.7010804@zonque.org> <54BF805B.4000609@gmail.com>
- <54BFDAAA.50203@zonque.org> <54C0CE8A.5080805@gmail.com> <CANq1E4S=3qNw599L85uj-8aXwxeV+mcurB_Nu_rHH8opAeePjw@mail.gmail.com>
- <54C10DDC.9000503@gmail.com> <20150123160854.GA5210@kroah.com>
- <54C65346.5070504@gmail.com> <CANq1E4SkHhs1pWUe-TzG7bzk1M-Q++mB2vmQGuYx0RMF53wg4Q@mail.gmail.com>
- <CALCETrU1O6LjhrXSH2aXWFt2WGh=ssrq4K9HD10f_Z55iT=Otw@mail.gmail.com>
- <54C9F525.4040703@zonque.org> <CALCETrV6P+Lx5FRLyDNubG18tqCTLprkXJf=82aa5DsRHjkuKA@mail.gmail.com>
- <54CA1CA2.9060005@zonque.org>
+From: Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 linux-trace 1/8] tracing: attach eBPF programs to
+ tracepoints and syscalls
+Date: Thu, 29 Jan 2015 21:35:44 +0900
+Message-ID: <CAM9d7chgjWh6CyTiNHJX+kWbk29ANEHWSPgY4ga3BpkFbPwgiQ@mail.gmail.com>
+References: <CAMEtUuzSDYYWneoTy9=AmMa9=x4owWbWsXod=Do54+yj4Je3=Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <54CA1CA2.9060005@zonque.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Mack <daniel@zonque.org>
-Cc: Arnd Bergmann <arnd@arndb.de>, Ted Ts'o <tytso@mit.edu>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Tom Gundersen <teg@jklm.no>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-kernel <linux-kernel@vger.kernel.org>, David Herrmann <dh.herrmann@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Djalal Harouni <tixxdz@opendz.org>, Johannes Stezenbach <js@sig21.net>, Christoph Hellwig <hch@infradead.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAMEtUuzSDYYWneoTy9=AmMa9=x4owWbWsXod=Do54+yj4Je3=Q@mail.gmail.com>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Jan 29, 2015 6:42 AM, "Daniel Mack" <daniel@zonque.org> wrote:
+On Thu, Jan 29, 2015 at 4:04 PM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
+> On Wed, Jan 28, 2015 at 10:41 PM, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>>
+>> I think it's not a problem of bpf.  An user process can be killed
+>> anytime while it enabed events without bpf.  The only thing it should
+>> care is the auto-unload IMHO.
 >
-> On 01/29/2015 12:25 PM, Andy Lutomirski wrote:
-> > On Jan 29, 2015 3:53 AM, "Daniel Mack" <daniel@zonque.org> wrote:
->
-> >> Also note that if a receiving peer opts in for a certain piece of
-> >> metadata, it should do that that for a good reason, because it needs
-> >> that data to process a request. Letting kdbus do the work of providing
-> >> such information is still a lot faster than having the receiving peer
-> >> gather it itself, as that would involve more syscalls and more context
-> >> switches (let alone the fact that doing so is inherently racy, as
-> >> explained in earlier threads).
->
-> > Given that I see almost no advantage to send-time metadata, and I see
-> > three disadvantages (slower, inconsistent with the basic POSIX model,
-> > and inconsistent with existing user-space dbus), I still don't see why
-> > you designed it this way.
->
-> Because effective information about tasks may change over time, and
-> D-Bus is a connection-less protocol that has no notion of peer-to-peer
-> connections.
->
-> As we explained before, currently, D-Bus peers do collect the same
-> information already if they need to have them, but they have to do deal
-> with the inherit races in such cases. kdbus is closing the gap by
-> optionally providing the same information along with each message, if
-> requested.
+> ok. I think it does indeed make sense to decouple the logic.
+> We can add 'auto_enable' file to achieve desired Ctrl-C behavior.
+> While the 'auto_enable' file is open the event will be enabled
+> and writes to 'enable' file will be ignored.
+> As soon as file closes, the event is auto-disabled.
+> Then user space will use 'bpf' file to attach/auto-unload
+> and 'auto_enable' file together.
+> Seem there would be a use for such 'auto_enable'
+> without bpf as well.
 
-In all these discussions, no one ever gave a decent example use case.
-If a process drops some privilege, it must close all fds it has that
-captured its old privilege.  This has nothing to do with kdbus.  With
-kdbus, you still need to close and reopen your kdbus fd, unless you've
-disabled that bit of metadata, so using send-time metadata hasn't
-bought you benefit that I can see.
+Why do you want such an 'auto_enable' feature?  I guess it's enough
+just to keep an event in the soft-disabled state and run a bpf program
+before the check.
 
-I agree that the design seems to have improved to a state of being at
-least decent, but that doesn't mean that using send-time metadata is a
-good idea for systemd or for anything else.
 
 >
-> > There's an added disadvantage of the current design: if a kdbus user
-> > is communicating with a traditional d-bus user using the proxy, then
-> > IIUC the credentials at the time of connection get used.
+>> I'm okay for not calling bpf program in NMI but not for disabling events.
+>>
+>> Suppose an user was collecting an event (including in NMI) and then
+>> [s]he also wanted to run a bpf program.  So [s]he wrote a program
+>> always return 1.  But after attaching the program, it didn't record
+>> the event in NMI..  Isn't that a problem?
 >
-> That's not quite true any more. After our discussion in v2, we agreed on
-> dropping this detail. If you're using the proxy, no metadata is attached
-> to messages any more. Userspace has to gather this information in the
-> traditional, racy way in such cases. You are right - metadata about the
-> proxy task is of no interest here, and hence dropping the information
-> altogether is the most consistent thing we can do.
->
-> But again - that metadata thing just an optional feature. People
-> developing with the bare kernel-level API are free to ignore all that
-> and just just kdbus as low-level protocol for reliable multicast. Note
-> that in such cases, you would still be able to retrieve the connect-time
-> metadata if that's needed.
->
+> ok, I think 'if (in_nmi()) return 1;' will work then, right?
+> Or you're thinking something else ?
 
-It's an optional feature that will get used, non-optionally, thousands
-of times on each boot, apparently.  Keep in mind that it's also a
-scalability problem because it takes locks.  If it ever gets used
-thousands of times per CPU on a big thousand-core machine, it's going
-to suck, and you'll have backed yourself into a corner.
+Nope, returning 1 would be okay..
 
---Andy
+
+>
+>> Right.  I think bpf programs belong to a user process but events are
+>> global resource.  Maybe you also need to consider attaching bpf
+>> program via perf (ioctl?) interface..
+>
+> yes. I did. Please see my reply to Masami.
+> ioctl only works for tracepoints.
+
+What was the problem of kprobes then? :)
+
+Thanks,
+Namhyung
