@@ -1,36 +1,57 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: [PATCH v2 linux-trace 1/8] tracing: attach eBPF programs to
- tracepoints and syscalls
-Date: Thu, 29 Jan 2015 10:55:07 -0800
-Message-ID: <CAMEtUuxHqpz0ERaKbdciX5p7xwoBrpUK0dFRCHxF_o1PfgKh+Q@mail.gmail.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RESEND] [PATCH] block: create ioctl to discard-or-zeroout a
+ range of blocks
+Date: Thu, 29 Jan 2015 11:01:02 -0800
+Message-ID: <20150129190102.GF9981@birch.djwong.org>
+References: <20150129020025.GE9981@birch.djwong.org>
+ <2747023.BlTyJ4fNVf@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Namhyung Kim <namhyung@kernel.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <2747023.BlTyJ4fNVf@wuerfel>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 29, 2015 at 4:35 AM, Namhyung Kim <namhyung@kernel.org> wrote:
->>> Right.  I think bpf programs belong to a user process but events are
->>> global resource.  Maybe you also need to consider attaching bpf
->>> program via perf (ioctl?) interface..
->>
->> yes. I did. Please see my reply to Masami.
->> ioctl only works for tracepoints.
->
-> What was the problem of kprobes then? :)
+On Thu, Jan 29, 2015 at 11:02:58AM +0100, Arnd Bergmann wrote:
+> On Wednesday 28 January 2015 18:00:25 Darrick J. Wong wrote:
+> > Create a new ioctl to expose the block layer's newfound ability to
+> > issue either a zeroing discard, a WRITE SAME with a zero page, or a
+> > regular write with the zero page.  This BLKZEROOUT2 ioctl takes
+> > {start, length, flags} as parameters.  So far, the only flag available
+> > is to enable the zeroing discard part -- without it, the call invokes
+> > the old BLKZEROOUT behavior.  start and length have the same meaning
+> > as in BLKZEROOUT.
+> > 
+> > Furthermore, because BLKZEROOUT2 issues commands directly to the
+> > storage device, we must invalidate the page cache (as a regular
+> > O_DIRECT write would do) to avoid returning stale cache contents at a
+> > later time.
+> > 
+> > This patch depends on "block: Add discard flag to
+> > blkdev_issue_zeroout() function" in Jens' for-3.20/core branch.
+> > 
+> > Signed-off-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> > 
+> 
+> Would this work ok for devices that fill discarded areas with all-ones
+> instead of all-zeroes? I believe SD cards can do either.
 
-Looks like I misread the logic of attaching a filter via perf ioctl.
-Looking at it again it seems to be a major change in design:
-Instead of adding into ftrace_raw_* helpers, I would add
-to perf_trace_* helpers which are very stack heavy
-because of 'pt_regs'
-Ex: perf_trace_kfree_skb() is using 224 bytes of stack
-whereas ftrace_raw_event_kfree_skb() only 80.
-which doesn't help in my quest for lowest overhead.
-And the discussion about soft- and auto- enable/disable
-becomes meaningless, since there is no such things
-when it goes through perf events.
-I guess it means no hooks through tracefs...
-Anyway, I'll hook it up and see which way is cleaner.
+It won't do all-ones, because the underlying blkdev_issue_zeroout call only
+knows how to tell the device to write zeroes or perform a discard if the flag
+is set and the device is whitelisted.  This patch only exposes the existing
+kernel call to userspace.
+
+(All-ones could be plumbed into the storage stack, but that would have to be a
+separate patch.)
+
+--D
+
+> 
+> 	Arnd
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
