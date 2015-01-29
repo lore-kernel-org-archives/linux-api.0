@@ -1,106 +1,172 @@
-From: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
-Subject: Re: [PATCH 3/4] IB/uverbs: ex_query_device: check request's comp_mask
-Date: Thu, 29 Jan 2015 14:34:36 -0700
-Message-ID: <20150129213436.GB22099@obsidianresearch.com>
-References: <cover.1421931555.git.ydroneaud@opteya.com>
- <063956366559d6919693aabb324bab83d676bc28.1421931555.git.ydroneaud@opteya.com>
- <54C50A67.6040306@mellanox.com>
- <1422271029.3133.68.camel@opteya.com>
- <54C73549.5000003@mellanox.com>
- <1422451151.3133.130.camel@opteya.com>
- <20150129180956.GG11842@obsidianresearch.com>
- <1422556514.3133.165.camel@opteya.com>
- <20150129191423.GL11842@obsidianresearch.com>
- <1422566069.3133.218.camel@opteya.com>
+From: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v1 1/5] IB/uverbs: ex_query_device: answer must not
+ depend on request's comp_mask
+Date: Thu, 29 Jan 2015 22:59:01 +0100
+Message-ID: <1422568741.3133.247.camel@opteya.com>
+References: <cover.1422553023.git.ydroneaud@opteya.com>
+	 <24ceb1fc5b2b6563532e5776b1b2320b1ae37543.1422553023.git.ydroneaud@opteya.com>
+	 <20150129182800.GH11842@obsidianresearch.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1422566069.3133.218.camel-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
-Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
-Cc: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tzahi Oved <tzahio-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Or Gerlitz <ogerlitz-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150129182800.GH11842-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Cc: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 29, 2015 at 10:14:29PM +0100, Yann Droneaud wrote:
-> > > Unfortunately, the userspace don't get the size of the returned data:
-> > > it's only a single "write()" syscall after all.
-> > 
-> > A write syscall that behaves nothing like write() actually should, so
-> > I don't see why we can't have
-> > 
-> > resp_len = write(fd,inout_buf,sizeof(input_len));
-> > 
-> > Returning 0 from write makes no sense at all.
+Hi,
 
-Okay, yes, I see, the flow is different for the ex versions from the
-non-ex versions.
+Le jeudi 29 janvier 2015 =C3=A0 11:28 -0700, Jason Gunthorpe a =C3=A9cr=
+it :
+> On Thu, Jan 29, 2015 at 06:59:58PM +0100, Yann Droneaud wrote:
+> > As specified in "Extending Verbs API" presentation [1] by Tzahi Ove=
+d
+> > during OFA International Developer Workshop 2013, the request's
+> > comp_mask should describe the request data: it's describe the
+> > availability of extended fields in the request.
+> > Conversely, the response's comp_mask should describe the presence
+> > of extended fields in the response.
+>=20
+> Roland: I agree with Yann, these patches need to go in, or the ODP
+> patches reverted.
+>=20
 
-> > In the fullness of your patchset it will maintain the invariant that
-> > resp_len <= sizeof(input_len)
+Reverting all On Demand Paging patches seems overkill:
+if something as to be reverted it should be commit 5a77abf9a97a
+("IB/core: Add support for extended query device caps") and the part of
+commit 860f10a799c8 ("IB/core: Add flags for on demand paging support")
+which modify ib_uverbs_ex_query_device().
 
-> I don't catch your point: the response can be bigger than the request.
+But I wonder about this part of commit 860f10a799c8:
 
-Indeed, I forgot the scheme used that indirection buffer with
-pointers. My comments on write() result are all wrong. Sorry
+diff --git a/drivers/infiniband/core/uverbs_cmd.c b/drivers/infiniband/=
+core/uverbs_cmd.c
+index c7a43624c96b..f9326ccda4b5 100644
+--- a/drivers/infiniband/core/uverbs_cmd.c
++++ b/drivers/infiniband/core/uverbs_cmd.c
+@@ -953,6 +953,18 @@ ssize_t ib_uverbs_reg_mr(struct ib_uverbs_file *fi=
+le,
+                goto err_free;
+        }
+=20
++       if (cmd.access_flags & IB_ACCESS_ON_DEMAND) {
++               struct ib_device_attr attr;
++
++               ret =3D ib_query_device(pd->device, &attr);
++               if (ret || !(attr.device_cap_flags &
++                               IB_DEVICE_ON_DEMAND_PAGING)) {
++                       pr_debug("ODP support not available\n");
++                       ret =3D -EINVAL;
++                       goto err_put;
++               }
++       }
++
 
-> > It was never the intent that the size should be computed from
-> > comp_mask. If the size is necessary it must be explicit.
-> > 
-> > In this instance if the size is not returned then libibverbs will have
-> > to zero the entire user buffer before passing it to the kernel,
-> > because it has to ensure any tail for the user app is 0'd.
->
-> The proposed patch ensure the integrity of the response regarding
-> comp_mask: if a bit is set in response's comp_mask that means the
-> related fields are presents (and valid).
+AFAICT (1 << 6) bit from struct ib_uverbs_reg_mr access_flags field
+was not enforced to be 0 previously, as ib_check_mr_access() only check=
+=20
+for some coherency between a subset of the bits (it's not a function
+dedicated to check flags provided by userspace):
 
-The patch it is good, but sitting this into the larger framework where
-we have libibverbs consumers compiled against arbitrary versions of
-the structure creates a broader complexity that someone has to deal
-with.
+include/rdma/ib_verbs.h:
 
-libibverbs needs to ensure the trailer portion of the structure from
-the end user is 0'd.
+   1094 enum ib_access_flags {
+   1095         IB_ACCESS_LOCAL_WRITE   =3D 1,
+   1096         IB_ACCESS_REMOTE_WRITE  =3D (1<<1),
+   1097         IB_ACCESS_REMOTE_READ   =3D (1<<2),
+   1098         IB_ACCESS_REMOTE_ATOMIC =3D (1<<3),
+   1099         IB_ACCESS_MW_BIND       =3D (1<<4),
+   1100         IB_ZERO_BASED           =3D (1<<5),
+   1101         IB_ACCESS_ON_DEMAND     =3D (1<<6),
+   1102 };
 
-> > Remember for santity we want comp mask bits for things that can't be 0
-> 
-> For me, it's better if a bit is set in response's comp_mask by the 
-> kernel when the kernel have written something in the related fields
-> even if the those fields are all 0.
+drivers/infiniband/core/uverbs_cmd.c: ib_uverbs_reg_mr()
 
-Yes, but my point is that comp mask bit should only be used to protect
-fields where 0 is not an acceptable 'do not support' answer.
+    961         ret =3D ib_check_mr_access(cmd.access_flags);
+    962         if (ret)
+    963                 return ret;
 
-Primarily we should rely on memset(0) to provide compatibility, and
-only when really necessary introduce a comp mask bit.
+include/rdma/ib_verbs.h:
 
-This is why the size is important, we can't deduce the size from
-comp_mask, and without the size we can't know where the kernel stopped
-writing and the whole thing becomes a little more fragile.
+   2643 static inline int ib_check_mr_access(int flags)
+   2644 {
+   2645         /*
+   2646          * Local write permission is required if remote write o=
+r
+   2647          * remote atomic permission is also requested.
+   2648          */
+   2649         if (flags & (IB_ACCESS_REMOTE_ATOMIC | IB_ACCESS_REMOTE=
+_WRITE) &&
+   2650             !(flags & IB_ACCESS_LOCAL_WRITE))
+   2651                 return -EINVAL;
+   2652=20
+   2653         return 0;
+   2654 }
 
-Zeroing the response buffer before calling into the kernel is not a
-great general pattern.
+drivers/infiniband/core/uverbs_cmd.c: ib_uverbs_reg_mr()
 
-Perhaps having the kernel zero the trailing portion it doesn't write
-too is okay, but it still feels like not telling user space the size
-is asking for future trouble.
+    990         mr =3D pd->device->reg_user_mr(pd, cmd.start, cmd.lengt=
+h, cmd.hca_va,
+    991                                      cmd.access_flags, &udata);
 
-> > Ideally we want to minimize the number of COMP bits because it is a
-> > huge burden on the end user to work with them.
-> 
-> Sure. So I think comp_mask is just an overly complicated way of
-> expressing the version and the size of the response.
+reg_user_mr() functions may call ib_umem_get() and pass access_flags to
+it:
 
-Yes. But understand it is selected to try and provide a good end user
-experience, exposing structure versions or size directly to the user
-is very difficult to work with.
+drivers/infiniband/core/umem.c: ib_umem_get()
 
-Ideally the end user will not see many comp mask bits (ie I would drop
-the ODP one) and things will 'just work' as compiled.
+    114         /*
+    115          * We ask for writable memory if any of the following
+    116          * access flags are set.  "Local write" and "remote wri=
+te"
+    117          * obviously require write access.  "Remote atomic" can=
+ do
+    118          * things like fetch and add, which will modify memory,=
+ and
+    119          * "MW bind" can change permissions by binding a window=
+=2E
+    120          */
+    121         umem->writable  =3D !!(access &
+    122                 (IB_ACCESS_LOCAL_WRITE   | IB_ACCESS_REMOTE_WRI=
+TE |
+    123                  IB_ACCESS_REMOTE_ATOMIC | IB_ACCESS_MW_BIND));
+    124=20
+    125         if (access & IB_ACCESS_ON_DEMAND) {
+    126                 ret =3D ib_umem_odp_get(context, umem);
+    127                 if (ret) {
+    128                         kfree(umem);
+    129                         return ERR_PTR(ret);
+    130                 }
+    131                 return umem;
+    132         }
 
-Jason
---
-To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+As you can see only a few bits in access_flags are checked in the end,
+so it may exist a very unlikely possibility that an existing userspace
+program is setting this IB_ACCESS_ON_DEMAND bit without the intention
+of enabling on demand paging as this would be unnoticed by older kernel=
+=2E
+
+In the other hand, a newer program built with on-demand-paging in mind
+will set the bit, but when run on older kernel, it will be a no-op,
+allowing the program to continue, perhaps thinking on-demand-paging
+is available.
+
+That should be avoided as much as possible.
+
+Unfortunately, I think this cannot be fixed as it's was long since=20
+IB_ZERO_BASED was added by commit 7083e42ee2 ("IB/core: Add "type 2"=20
+memory windows support").
+Anyway there was no check for IB_ACCESS_REMOTE_READ, nor=20
+IB_ACCESS_MW_BIND in the uverb layer either.
+
+So, just as the second argument of open() syscall (remember O_TMPFILE,
+see http://lwn.net/Articles/562294/ ), we will have to live with and be
+careful ...
+
+Regards.
+
+--=20
+Yann Droneaud
+OPTEYA
