@@ -1,48 +1,76 @@
-From: Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH v10 2/2] tty/serial: Add Spreadtrum sc9836-uart driver
- support
-Date: Thu, 29 Jan 2015 11:34:26 -0500
-Message-ID: <54CA6112.9020805@hurleysoftware.com>
-References: <sc9836-serial-v10> <1422443324-25082-1-git-send-email-chunyan.zhang@spreadtrum.com> <1422443324-25082-3-git-send-email-chunyan.zhang@spreadtrum.com> <54CA5128.8050500@gmail.com> <54CA568E.6080306@hurleysoftware.com> <20150129160553.GC26493@n2100.arm.linux.org.uk>
+From: =?utf-8?B?U8O2cmVu?= Brinkmann <soren.brinkmann@xilinx.com>
+Subject: Re: [PATCH v4] gpio: lib-sysfs: Add 'wakeup' attribute
+Date: Thu, 29 Jan 2015 09:23:14 -0800
+Message-ID: <bb967ff02726449ab6525d33bccde7e4@BL2FFO11FD014.protection.gbl>
+References: <1421351389-11660-1-git-send-email-soren.brinkmann@xilinx.com>
+ <20150116111108.GG30960@localhost>
+ <a4610e13d0094d40b7e0574992509ec6@BN1AFFO11FD044.protection.gbl>
+ <CAAVeFu+K0W96mi0=QR8JGSe9BpH2nC5WV_9qbSvm6LJGA8gc7Q@mail.gmail.com>
+ <CACRpkdZ4CekD2xeJYM+UUtuGuwS2uB++XprSueWnshEVk=79Fw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150129160553.GC26493-l+eeeJia6m9vn6HldHNs0ANdhmdF6hFW@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Russell King - ARM Linux <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Varka Bhadram <varkabhadram-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org, andrew-g2DYL2Zd6BY@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, lanqing.liu-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, zhizhou.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, geng.ren-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, antonynpavlov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, orsonzhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, florian.vaussard-p8DiymsW2f8@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, hytszk-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, wei.qiao-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, shawn.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-gpio-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CACRpkdZ4CekD2xeJYM+UUtuGuwS2uB++XprSueWnshEVk=79Fw@mail.gmail.com>
+Sender: linux-gpio-owner@vger.kernel.org
+To: Linus Walleij <linus.walleij@linaro.org>
+Cc: Alexandre Courbot <gnurou@gmail.com>, Johan Hovold <johan@kernel.org>, linux-api@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "linux-gpio@vger.kernel.org" <linux-gpio@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 01/29/2015 11:05 AM, Russell King - ARM Linux wrote:
-> On Thu, Jan 29, 2015 at 10:49:34AM -0500, Peter Hurley wrote:
->> Hi Varka,
->>
->> On 01/29/2015 10:26 AM, Varka Bhadram wrote:
->>> This check is not required. It will be done by devm_ioremap_resource()
->>
->> I disagree. devm_ioremap_resource() interprets the NULL resource as
->> a bad parameter and returns -EINVAL which is then forwarded as the
->> return value from the probe.
->>
->> -ENODEV is the correct return value from the probe if the expected
->> resource is not available (either because it doesn't exist or was already
->> claimed by another driver).
-> 
-> (Adding Thierry as the author of this function.)
-> 
-> I believe devm_ioremap_resource() was explicitly designed to remove such
-> error handling from drivers, and to give drivers a unified error response
-> to such things as missing resources.
-> 
-> See the comments for this function in lib/devres.c.
+Hi Linus,
 
-Maybe the purpose would be better served by wrapping the idiom in a single
-function.
+On Mon, 2015-01-19 at 09:54AM +0100, Linus Walleij wrote:
+> On Mon, Jan 19, 2015 at 5:20 AM, Alexandre Courbot <gnurou@gmail.com>=
+ wrote:
+> > On Sat, Jan 17, 2015 at 1:49 AM, S=C3=B6ren Brinkmann <soren.brinkm=
+ann@xilinx.com> wrote:
+> >> On Fri, 2015-01-16 at 12:11PM +0100, Johan Hovold wrote:
+>=20
+> >>> Implementing proper wakeup support for unclaimed GPIOs would take=
+ some
+> >>> work (if at all desired), but that is not a reason to be adding c=
+ustom
+> >>> implementations that violates the kernel's power policies and new=
+ ABIs
+> >>> that would need to be maintained forever.
+> (...)
+> >>> Meanwhile you can (should) use gpio-keys if you need to wake your=
+ system
+> >>> on gpio events.
+> >>
+> >> We had that discussion and I don't think GPIO keys is the right so=
+lution
+> >> for every use-case.
+> >
+> > Sorry, it has been a while - can you remind us of why?
+>=20
+> There are such cases. Of course keys should be handled by GPIO-keys
+> and these will trigger the right wakeup events in such cases.
+>=20
+> This is for more esoteric cases: we cannot have a kernel module for
+> everything people want to do with GPIOs, and the use case I accept
+> is GPIOs used in automatic control etc, think factory lines or doors.
+> We can't have a "door" driver or "punch arm" or "fire alarm" driver
+> in the kernel. Those are userspace things.
+>=20
+> Still such embedded systems need to be able to go to idle and
+> sleep to conerve power, and then they need to put wakeups on
+> these GPIOs.
+>=20
+> So it is a feature userspace needs, though as with much of the
+> sysfs ABI it is very often abused for things like keys and LEDs which
+> is an abomination but we can't do much about it :(
 
-Regards,
-Peter Hurley
+Thanks for clearing that up.
+What does that mean for this patch? Are we going ahead, accepting the
+extension of this API or do all these use-cases have to wait for the
+rewrite of a proper GPIO userspace interface?
+
+	Thanks,
+	S=C3=B6ren
 --
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To unsubscribe from this list: send the line "unsubscribe linux-gpio" i=
+n
+the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
