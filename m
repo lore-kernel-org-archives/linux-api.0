@@ -1,76 +1,69 @@
-From: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v1 2/5] IB/uverbs: ex_query_device: check request's
- comp_mask
-Date: Thu, 29 Jan 2015 20:22:58 +0100
-Message-ID: <1422559378.3133.178.camel@opteya.com>
+From: Yann Droneaud <yann-WYdEh2jsUj5Wk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH v1 1/5] IB/uverbs: ex_query_device: answer must not
+ depend on request's comp_mask
+Date: Thu, 29 Jan 2015 21:42:11 +0100
+Message-ID: <1422564131.3133.191.camel@droneaud.com>
 References: <cover.1422553023.git.ydroneaud@opteya.com>
-	 <335da45738872e446f63db338ca766a34608c90a.1422553023.git.ydroneaud@opteya.com>
-	 <20150129183648.GI11842@obsidianresearch.com>
+	 <24ceb1fc5b2b6563532e5776b1b2320b1ae37543.1422553023.git.ydroneaud@opteya.com>
+	 <20150129182800.GH11842@obsidianresearch.com>
+	 <1422557009.3133.172.camel@opteya.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150129183648.GI11842-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
-Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1422557009.3133.172.camel-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
 Cc: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Le jeudi 29 janvier 2015 =C3=A0 19:43 +0100, Yann Droneaud a =C3=A9crit=
+ :
+> Le jeudi 29 janvier 2015 =C3=A0 11:28 -0700, Jason Gunthorpe a =C3=A9=
+crit :
+> > On Thu, Jan 29, 2015 at 06:59:58PM +0100, Yann Droneaud wrote:
 
-Le jeudi 29 janvier 2015 =C3=A0 11:36 -0700, Jason Gunthorpe a =C3=A9cr=
-it :
-> On Thu, Jan 29, 2015 at 06:59:59PM +0100, Yann Droneaud wrote:
-> > This patch ensures the extended QUERY_DEVICE uverbs request's
-> > comp_mask has only known and supported bits (currently none).
+> > > -		resp.odp_caps.general_caps =3D attr.odp_caps.general_caps;
+> > > -		resp.odp_caps.per_transport_caps.rc_odp_caps =3D
+> > > -			attr.odp_caps.per_transport_caps.rc_odp_caps;
+> > > -		resp.odp_caps.per_transport_caps.uc_odp_caps =3D
+> > > -			attr.odp_caps.per_transport_caps.uc_odp_caps;
+> > > -		resp.odp_caps.per_transport_caps.ud_odp_caps =3D
+> > > -			attr.odp_caps.per_transport_caps.ud_odp_caps;
+> > > -		resp.comp_mask |=3D IB_USER_VERBS_EX_QUERY_DEVICE_ODP;
+> > > -	}
+> > > +	resp.odp_caps.general_caps =3D attr.odp_caps.general_caps;
+> > > +	resp.odp_caps.per_transport_caps.rc_odp_caps =3D
+> > > +		attr.odp_caps.per_transport_caps.rc_odp_caps;
+> > > +	resp.odp_caps.per_transport_caps.uc_odp_caps =3D
+> > > +		attr.odp_caps.per_transport_caps.uc_odp_caps;
+> > > +	resp.odp_caps.per_transport_caps.ud_odp_caps =3D
+> > > +		attr.odp_caps.per_transport_caps.ud_odp_caps;
+> > >  #endif
+> > > +	resp.comp_mask |=3D IB_USER_VERBS_EX_QUERY_DEVICE_ODP;
+> >=20
+> > Not sure about this - if 0 is a valid null answer for all the _caps
+> > then it is fine, and the comp_mask bit should just be removed as th=
+e
+> > size alone should be enough.
+> >=20
 >=20
-> I think I would be happy to see the input comp_mask removed
-> entirely. I can't see a possible use for input data to a QUERY comman=
-d
-> that wouldn't be better served by creating a new command
->=20
-> But forcing the value to 0 seems reasonable as well.
->=20
-
-I cannot forsee the future, but having at least one unused bit
-available allow for any kind of yet unknown extension: having this
-bit/these bits checked now, permit fixing mistake later.
-
-So let it be.
-
-> Reviewed-By: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
->=20
-
-Thanks.
-
-> Also, the _ex varients were supposed to be supersets of the base call=
-,
-> so it is wrong that query_device_ex doesn't return all the same data
-> as query_device, layed out so that the original response structure is
-> a prefix of the extended response structure.
->=20
-> The other _ex calls in verbs were designed that way so it will be
-> surprising to the user that this one is different.
+> That's difficult to say. But I hope 0 are valids answers in this case=
+=2E
 >=20
 
-It seems to me it has the layout you're expecting:
+Hum, according to include/rdma/ib_verbs.h, there's a bit set
+for ODP support:
 
-    224 struct ib_uverbs_ex_query_device_resp {
-    225         struct ib_uverbs_query_device_resp base;
-    226         __u32 comp_mask;
-    227         __u32 reserved;
-    228         struct ib_uverbs_odp_caps odp_caps;
-    229 };
+    148 enum ib_odp_general_cap_bits {
+    149         IB_ODP_SUPPORT =3D 1 << 0,
+    150 };
+
+So it should be safe to set everything to 0 in struct
+ib_uverbs_odp_caps.
 
 Regards.
 
 --=20
 Yann Droneaud
 OPTEYA
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rdma" i=
-n
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
