@@ -1,33 +1,36 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [RESEND] [PATCH] block: create ioctl to discard-or-zeroout a range of blocks
-Date: Thu, 29 Jan 2015 23:19:11 +0100
-Message-ID: <6288705.r5DnSskuxD@wuerfel>
-References: <20150129020025.GE9981@birch.djwong.org> <2747023.BlTyJ4fNVf@wuerfel> <20150129190102.GF9981@birch.djwong.org>
+From: Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v1 1/5] IB/uverbs: ex_query_device: answer must not depend
+ on request's comp_mask
+Date: Thu, 29 Jan 2015 15:17:16 -0800
+Message-ID: <CAG4TOxN4DpTMMsCM-1oe6-w+5xYR4YHdJeL7p2nQpUy9gYCSjA@mail.gmail.com>
+References: <cover.1422553023.git.ydroneaud@opteya.com> <24ceb1fc5b2b6563532e5776b1b2320b1ae37543.1422553023.git.ydroneaud@opteya.com>
+ <20150129182800.GH11842@obsidianresearch.com> <1422568741.3133.247.camel@opteya.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150129190102.GF9981@birch.djwong.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, "J. Bruce Fields" <bfields@fieldses.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1422568741.3133.247.camel-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Cc: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thursday 29 January 2015 11:01:02 Darrick J. Wong wrote:
-> It won't do all-ones, because the underlying blkdev_issue_zeroout call only
-> knows how to tell the device to write zeroes or perform a discard if the flag
-> is set and the device is whitelisted.  This patch only exposes the existing
-> kernel call to userspace.
->
-> (All-ones could be plumbed into the storage stack, but that would have to be a
-> separate patch.)
+On Thu, Jan 29, 2015 at 1:59 PM, Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org> wrote:
+>> Roland: I agree with Yann, these patches need to go in, or the ODP
+>> patches reverted.
 
-I see. I've just checked the code in the mmc core and it seems to
-get the correct information for both mmc and sd devices (they use
-different bits to announce the feature).
+> Reverting all On Demand Paging patches seems overkill:
+> if something as to be reverted it should be commit 5a77abf9a97a
+> ("IB/core: Add support for extended query device caps") and the part of
+> commit 860f10a799c8 ("IB/core: Add flags for on demand paging support")
+> which modify ib_uverbs_ex_query_device().
 
-So as long as the devices follow the spec, everything is fine here.
+Thank you and Jason for taking on this interface.
 
-Thanks Darrick and Robert for the quick reply!
+At this point I feel like I do about the IPoIB changes -- we should
+revert the broken stuff and get it right for 3.20.
 
-	Arnd
+If we revert the two things you describe above, is everything else OK
+to leave in 3.19 with respect to ABI?
+
+Thanks,
+  Roland
