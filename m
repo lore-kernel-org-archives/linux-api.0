@@ -1,54 +1,36 @@
-From: Scot Doyle <lkml14@scotdoyle.com>
-Subject: Re: [PATCH v2] tpm: fix suspend/resume paths for TPM 2.0
-Date: Thu, 29 Jan 2015 18:43:12 +0000 (UTC)
-Message-ID: <alpine.DEB.2.11.1501291832460.1678@localhost.localdomain>
-References: <1422510227-23256-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH v2 linux-trace 1/8] tracing: attach eBPF programs to
+ tracepoints and syscalls
+Date: Thu, 29 Jan 2015 10:55:07 -0800
+Message-ID: <CAMEtUuxHqpz0ERaKbdciX5p7xwoBrpUK0dFRCHxF_o1PfgKh+Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-1048875714-1422556658=:1678"
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1422510227-23256-1-git-send-email-jarkko.sakkinen@linux.intel.com>
-Content-ID: <alpine.DEB.2.11.1501291838020.1678@localhost.localdomain>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Cc: Peter Huewe <peterhuewe@gmx.de>, Ashley Lai <ashley@ashleylai.com>, tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, josh@joshtriplett.org, christophe.ricard@gmail.com, jason.gunthorpe@obsidianresearch.com, stefanb@linux.vnet.ibm.com, linux-api@vger.kernel.org, trousers-tech@lists.sourceforge.net
+To: Namhyung Kim <namhyung@kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Thu, Jan 29, 2015 at 4:35 AM, Namhyung Kim <namhyung@kernel.org> wrote:
+>>> Right.  I think bpf programs belong to a user process but events are
+>>> global resource.  Maybe you also need to consider attaching bpf
+>>> program via perf (ioctl?) interface..
+>>
+>> yes. I did. Please see my reply to Masami.
+>> ioctl only works for tracepoints.
+>
+> What was the problem of kprobes then? :)
 
---8323328-1048875714-1422556658=:1678
-Content-Type: TEXT/PLAIN; CHARSET=ISO-8859-15
-Content-Transfer-Encoding: 8BIT
-Content-ID: <alpine.DEB.2.11.1501291838021.1678@localhost.localdomain>
-
-On Thu, 29 Jan 2015, Jarkko Sakkinen wrote:
-> Fixed suspend/resume paths for TPM 2.0 and consolidated all the
-> associated code to the tpm_pm_suspend() and tpm_pm_resume()
-> functions. Resume path should be handled by the firmware, i.e.
-> Startup(CLEAR) for hibernate and Startup(STATE) for suspend.
-> 
-> There might be some non-PC embedded devices in the future where
-> Startup() is not the handled by the FW but fixing the code for
-> those IMHO should be postponed until there is hardware available
-> to test the fixes although extra Startup in the driver code is
-> essentially a NOP.
-> 
-> Added Shutdown(CLEAR) to the remove paths of TIS and CRB drivers.
-> Changed tpm2_shutdown() to a void function because there isn't
-> much you can do except print an error message if this fails with
-> a system error.
-> 
-> Reported-by: Peter Hüwe <PeterHuewe@gmx.de>
-> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-> ---
->  drivers/char/tpm/tpm-interface.c |  6 ++++--
->  drivers/char/tpm/tpm.h           |  2 +-
->  drivers/char/tpm/tpm2-cmd.c      | 19 +++++++++++--------
->  drivers/char/tpm/tpm_crb.c       | 20 +++++---------------
->  drivers/char/tpm/tpm_tis.c       | 26 +++++++++++++-------------
->  5 files changed, 34 insertions(+), 39 deletions(-)
-
-Resume still functions on TPM 1.2 chip, with and without CONFIG_TCG_CRB.
-
-Tested-by: Scot Doyle <lkml14@scotdoyle.com>
---8323328-1048875714-1422556658=:1678--
+Looks like I misread the logic of attaching a filter via perf ioctl.
+Looking at it again it seems to be a major change in design:
+Instead of adding into ftrace_raw_* helpers, I would add
+to perf_trace_* helpers which are very stack heavy
+because of 'pt_regs'
+Ex: perf_trace_kfree_skb() is using 224 bytes of stack
+whereas ftrace_raw_event_kfree_skb() only 80.
+which doesn't help in my quest for lowest overhead.
+And the discussion about soft- and auto- enable/disable
+becomes meaningless, since there is no such things
+when it goes through perf events.
+I guess it means no hooks through tracefs...
+Anyway, I'll hook it up and see which way is cleaner.
