@@ -1,29 +1,58 @@
-From: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
-Subject: Re: [PATCH v1 2/5] IB/uverbs: ex_query_device: check request's
- comp_mask
-Date: Thu, 29 Jan 2015 13:24:29 -0700
-Message-ID: <20150129202429.GA21916@obsidianresearch.com>
-References: <cover.1422553023.git.ydroneaud@opteya.com>
- <335da45738872e446f63db338ca766a34608c90a.1422553023.git.ydroneaud@opteya.com>
- <20150129183648.GI11842@obsidianresearch.com>
+From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Subject: [PATCH v12 2/2] crypto: AF_ALG: enable AEAD interface compilation
+Date: Thu, 29 Jan 2015 21:26:11 +0100
+Message-ID: <1564998.LyJoUsdg60@tachyon.chronox.de>
+References: <1681008.mocmysOoQU@tachyon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150129183648.GI11842-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+In-Reply-To: <1681008.mocmysOoQU-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
-Cc: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: 'Herbert Xu' <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Cc: 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, 'Linux API' <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 29, 2015 at 11:36:48AM -0700, Jason Gunthorpe wrote:
+Enable compilation of the AEAD AF_ALG support and provide a Kconfig
+option to compile the AEAD AF_ALG support.
 
-> Also, the _ex varients were supposed to be supersets of the base call,
-> so it is wrong that query_device_ex doesn't return all the same data
-> as query_device, layed out so that the original response structure is
-> a prefix of the extended response structure.
+Signed-off-by: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+---
+ crypto/Kconfig  | 9 +++++++++
+ crypto/Makefile | 1 +
+ 2 files changed, 10 insertions(+)
 
-Never mind this, I see the copy_query_dev_fields call now!
-
-Thanks,
-Jason
+diff --git a/crypto/Kconfig b/crypto/Kconfig
+index 50f4da4..41a3fc5 100644
+--- a/crypto/Kconfig
++++ b/crypto/Kconfig
+@@ -1523,6 +1523,15 @@ config CRYPTO_USER_API_RNG
+ 	  This option enables the user-spaces interface for random
+ 	  number generator algorithms.
+ 
++config CRYPTO_USER_API_AEAD
++	tristate "User-space interface for AEAD cipher algorithms"
++	depends on NET
++	select CRYPTO_AEAD
++	select CRYPTO_USER_API
++	help
++	  This option enables the user-spaces interface for AEAD
++	  cipher algorithms.
++
+ config CRYPTO_HASH_INFO
+ 	bool
+ 
+diff --git a/crypto/Makefile b/crypto/Makefile
+index ba19465..97b7d3a 100644
+--- a/crypto/Makefile
++++ b/crypto/Makefile
+@@ -100,6 +100,7 @@ obj-$(CONFIG_CRYPTO_USER_API) += af_alg.o
+ obj-$(CONFIG_CRYPTO_USER_API_HASH) += algif_hash.o
+ obj-$(CONFIG_CRYPTO_USER_API_SKCIPHER) += algif_skcipher.o
+ obj-$(CONFIG_CRYPTO_USER_API_RNG) += algif_rng.o
++obj-$(CONFIG_CRYPTO_USER_API_AEAD) += algif_aead.o
+ 
+ #
+ # generic algorithms and the async_tx api
+-- 
+2.1.0
