@@ -1,36 +1,36 @@
-From: Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v1 1/5] IB/uverbs: ex_query_device: answer must not depend
- on request's comp_mask
-Date: Thu, 29 Jan 2015 15:17:16 -0800
-Message-ID: <CAG4TOxN4DpTMMsCM-1oe6-w+5xYR4YHdJeL7p2nQpUy9gYCSjA@mail.gmail.com>
-References: <cover.1422553023.git.ydroneaud@opteya.com> <24ceb1fc5b2b6563532e5776b1b2320b1ae37543.1422553023.git.ydroneaud@opteya.com>
- <20150129182800.GH11842@obsidianresearch.com> <1422568741.3133.247.camel@opteya.com>
+From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RESEND] [PATCH] block: create ioctl to discard-or-zeroout a range of blocks
+Date: Thu, 29 Jan 2015 19:48:06 -0500
+Message-ID: <yq161bpgkl5.fsf@sermon.lab.mkp.net>
+References: <20150129020025.GE9981@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1422568741.3133.247.camel-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20150129020025.GE9981-PTl6brltDGh4DFYR7WNSRA@public.gmane.org> (Darrick J. Wong's
+	message of "Wed, 28 Jan 2015 18:00:25 -0800")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
-Cc: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 29, 2015 at 1:59 PM, Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org> wrote:
->> Roland: I agree with Yann, these patches need to go in, or the ODP
->> patches reverted.
+>>>>> "Darrick" == Darrick J Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> writes:
 
-> Reverting all On Demand Paging patches seems overkill:
-> if something as to be reverted it should be commit 5a77abf9a97a
-> ("IB/core: Add support for extended query device caps") and the part of
-> commit 860f10a799c8 ("IB/core: Add flags for on demand paging support")
-> which modify ib_uverbs_ex_query_device().
+Darrick> Create a new ioctl to expose the block layer's newfound ability
+Darrick> to issue either a zeroing discard, a WRITE SAME with a zero
+Darrick> page, or a regular write with the zero page.  This BLKZEROOUT2
+Darrick> ioctl takes {start, length, flags} as parameters.  So far, the
+Darrick> only flag available is to enable the zeroing discard part --
+Darrick> without it, the call invokes the old BLKZEROOUT behavior.
+Darrick> start and length have the same meaning as in BLKZEROOUT.
 
-Thank you and Jason for taking on this interface.
+Darrick> Furthermore, because BLKZEROOUT2 issues commands directly to
+Darrick> the storage device, we must invalidate the page cache (as a
+Darrick> regular O_DIRECT write would do) to avoid returning stale cache
+Darrick> contents at a later time.
 
-At this point I feel like I do about the IPoIB changes -- we should
-revert the broken stuff and get it right for 3.20.
+Looks good to me, Darrick.
 
-If we revert the two things you describe above, is everything else OK
-to leave in 3.19 with respect to ABI?
+Reviewed-by: Martin K. Petersen <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 
-Thanks,
-  Roland
+-- 
+Martin K. Petersen	Oracle Linux Engineering
