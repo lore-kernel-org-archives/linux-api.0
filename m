@@ -1,133 +1,124 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [RFC][PATCH v2] procfs: Always expose /proc/<pid>/map_files/ and
- make it readable
-Date: Thu, 29 Jan 2015 17:30:03 -0800
-Message-ID: <CAGXu5j+wa2-CCGaktPzDec=HF0CizP__HVVjZKcjGuJJOvLFyg@mail.gmail.com>
-References: <1421194829-28696-1-git-send-email-calvinowens@fb.com>
-	<20150114152501.GB9820@node.dhcp.inet.fi>
-	<20150114153323.GF2253@moon>
-	<20150114204653.GA26698@mail.thefacebook.com>
-	<20150114211613.GH2253@moon>
-	<20150122024554.GB23762@mail.thefacebook.com>
-	<20150124031544.GA1992748@mail.thefacebook.com>
-	<20150126124731.GA26916@node.dhcp.inet.fi>
-	<20150126210054.GG651@moon>
-	<20150126154346.c63c512e5821e9e0ea31f759@linux-foundation.org>
-	<20150128043832.GA2266262@mail.thefacebook.com>
+From: Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v10 2/2] tty/serial: Add Spreadtrum sc9836-uart driver
+ support
+Date: Fri, 30 Jan 2015 11:18:39 +0100
+Message-ID: <20150130101838.GC16744@ulmo>
+References: <sc9836-serial-v10>
+ <1422443324-25082-1-git-send-email-chunyan.zhang@spreadtrum.com>
+ <1422443324-25082-3-git-send-email-chunyan.zhang@spreadtrum.com>
+ <54CA5128.8050500@gmail.com>
+ <54CA568E.6080306@hurleysoftware.com>
+ <20150129160553.GC26493@n2100.arm.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150128043832.GA2266262-ZEWhMxyTXSP95iwofa7G/laTQe2KTcn/@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Calvin Owens <calvinowens-b10kYP2dOMg@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Peter Feiner <pfeiner-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Siddhesh Poyarekar <siddhesh.poyarekar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="HG+GLK89HZ1zG0kk"
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150129160553.GC26493-l+eeeJia6m9vn6HldHNs0ANdhmdF6hFW@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Russell King - ARM Linux <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+Cc: Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>, Varka Bhadram <varkabhadram-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org, andrew-g2DYL2Zd6BY@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, lanqing.liu-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, zhizhou.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, geng.ren-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, antonynpavlov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, orsonzhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, florian.vaussard-p8DiymsW2f8@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, hytszk-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, wei.qiao-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, shawn.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 27, 2015 at 8:38 PM, Calvin Owens <calvinowens-b10kYP2dOMg@public.gmane.org> wrote:
-> On Monday 01/26 at 15:43 -0800, Andrew Morton wrote:
->> On Tue, 27 Jan 2015 00:00:54 +0300 Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->>
->> > On Mon, Jan 26, 2015 at 02:47:31PM +0200, Kirill A. Shutemov wrote:
->> > > On Fri, Jan 23, 2015 at 07:15:44PM -0800, Calvin Owens wrote:
->> > > > Currently, /proc/<pid>/map_files/ is restricted to CAP_SYS_ADMIN, and
->> > > > is only exposed if CONFIG_CHECKPOINT_RESTORE is set. This interface
->> > > > is very useful for enumerating the files mapped into a process when
->> > > > the more verbose information in /proc/<pid>/maps is not needed.
->>
->> This is the main (actually only) justification for the patch, and it it
->> far too thin.  What does "not needed" mean.  Why can't people just use
->> /proc/pid/maps?
->
-> The biggest difference is that if you do something like this:
->
->         fd = open("/stuff", O_BLAH);
->         map = mmap(NULL, 4096, PROT_BLAH, MAP_SHARED, fd, 0);
->         close(fd);
->         unlink("/stuff");
->
-> ...then map_files/ gives you a way to get a file descriptor for
-> "/stuff", which you couldn't do with /proc/pid/maps.
->
-> It's also something of a win if you just want to see what is mapped at a
-> specific address, since you can just readlink() the symlink for the
-> address range you care about and it will go grab the appropriate VMA and
-> give you the answer. /proc/pid/maps requires walking the VMA tree, which
-> is quite expensive for processes with many thousands of threads, even
-> without the O(N^2) issue.
->
-> (You have to know what address range you want though, since readdir() on
-> map_files/ obviously has to walk the VMA tree just like /proc/N/maps.)
->
->> > > > This patch moves the folder out from behind CHECKPOINT_RESTORE, and
->> > > > removes the CAP_SYS_ADMIN restrictions. Following the links requires
->> > > > the ability to ptrace the process in question, so this doesn't allow
->> > > > an attacker to do anything they couldn't already do before.
->> > > >
->> > > > Signed-off-by: Calvin Owens <calvinowens-b10kYP2dOMg@public.gmane.org>
->> > >
->> > > Cc +linux-api@
->> >
->> > Looks good to me, thanks! Though I would really appreciate if someone
->> > from security camp take a look as well.
->>
->> hm, who's that.  Kees comes to mind.
->>
->> And reviewers' task would be a heck of a lot easier if they knew what
->> /proc/pid/map_files actually does.  This:
->>
->> akpm3:/usr/src/25> grep -r map_files Documentation
->> akpm3:/usr/src/25>
->>
->> does not help.
->>
->> The 640708a2cff7f81 changelog says:
->>
->> :     This one behaves similarly to the /proc/<pid>/fd/ one - it contains
->> :     symlinks one for each mapping with file, the name of a symlink is
->> :     "vma->vm_start-vma->vm_end", the target is the file.  Opening a symlink
->> :     results in a file that point exactly to the same inode as them vma's one.
->> :
->> :     For example the ls -l of some arbitrary /proc/<pid>/map_files/
->> :
->> :      | lr-x------ 1 root root 64 Aug 26 06:40 7f8f80403000-7f8f80404000 -> /lib64/libc-2.5.so
->> :      | lr-x------ 1 root root 64 Aug 26 06:40 7f8f8061e000-7f8f80620000 -> /lib64/libselinux.so.1
->> :      | lr-x------ 1 root root 64 Aug 26 06:40 7f8f80826000-7f8f80827000 -> /lib64/libacl.so.1.1.0
->> :      | lr-x------ 1 root root 64 Aug 26 06:40 7f8f80a2f000-7f8f80a30000 -> /lib64/librt-2.5.so
->> :      | lr-x------ 1 root root 64 Aug 26 06:40 7f8f80a30000-7f8f80a4c000 -> /lib64/ld-2.5.so
->>
->> afacit this info is also available in /proc/pid/maps, so things
->> shouldn't get worse if the /proc/pid/map_files permissions are at least
->> as restrictive as the /proc/pid/maps permissions.  Is that the case?
->> (Please add to changelog).
->
-> Yes, the only difference is that you can follow the link as per above.
-> I'll resend with a new message explaining that and the deletion thing.
->
->> There's one other problem here: we're assuming that the map_files
->> implementation doesn't have bugs.  If it does have bugs then relaxing
->> permissions like this will create new vulnerabilities.  And the
->> map_files implementation is surprisingly complex.  Is it bug-free?
->
-> While I was messing with it I used it a good bit and didn't see any
-> issues, although I didn't actively try to fuzz it or anything. I'd be
-> happy to write something to test hammering it in weird ways if you like.
-> I'm also happy to write testcases for namespaces.
->
-> So far as security issues, as others have pointed out you can't follow
-> the links unless you can ptrace the process in question, which seems
-> like a pretty solid guarantee. As Cyrill pointed out in the discussion
-> about the documentation, that's the same protection as /proc/N/fd/*, and
-> those links function in the same way.
 
-My concern here is that fd/* are connected as streams, and while that
-has a certain level of badness as an external-to-the-process attacker,
-PTRACE_MODE_READ is much weaker than PTRACE_MODE_ATTACH (which is
-required for access to /proc/N/mem). Since these fds are the things
-mapped into memory on a process, writing to them is a subset of access
-to /proc/N/mem, and I don't feel that PTRACE_MODE_READ is sufficient.
+--HG+GLK89HZ1zG0kk
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
--Kees
+On Thu, Jan 29, 2015 at 04:05:53PM +0000, Russell King - ARM Linux wrote:
+> On Thu, Jan 29, 2015 at 10:49:34AM -0500, Peter Hurley wrote:
+> > Hi Varka,
+> >=20
+> > On 01/29/2015 10:26 AM, Varka Bhadram wrote:
+> > > This check is not required. It will be done by devm_ioremap_resource()
+> >=20
+> > I disagree. devm_ioremap_resource() interprets the NULL resource as
+> > a bad parameter and returns -EINVAL which is then forwarded as the
+> > return value from the probe.
+> >=20
+> > -ENODEV is the correct return value from the probe if the expected
+> > resource is not available (either because it doesn't exist or was alrea=
+dy
+> > claimed by another driver).
+>=20
+> (Adding Thierry as the author of this function.)
+>=20
+> I believe devm_ioremap_resource() was explicitly designed to remove such
+> error handling from drivers, and to give drivers a unified error response
+> to such things as missing resources.
+>=20
+> See the comments for this function in lib/devres.c.
 
--- 
-Kees Cook
-Chrome OS Security
+Right. Before the introduction of this function drivers would copy the
+same boilerplate but would use completely inconsistent return codes.
+Well, to be correct devm_request_and_ioremap() was introduced first to
+reduce the boilerplate, but one of the problems was that it returned a
+NULL pointer on failure, so it was impossible to distinguish between
+specific error conditions. It also had the negative side-effect of not
+giving drivers any directions on what to do with the NULL return value
+other than the example in the kerneldoc. But most people just didn't
+seem to look at that, so instead of using -EADDRNOTAVAIL they'd again
+go and do completely inconsistent things everywhere.
+
+When we introduced devm_ioremap_resource(), the idea was to remove any
+of these inconsistencies once and for all. You call the function and if
+it fails you simply propagate the error code, so you get consistent
+behaviour everywhere.
+
+If I remember correctly the error codes for the various conditions were
+discussed quite extensively, and what we currently have is what we got
+by concensus.
+
+-ENODEV is certainly not the correct return value if a resource is not
+available. It translates to "no such device", but the device must
+clearly be there, otherwise the ->probe() shouldn't have been called.
+Or if it really isn't there, then you'd at least need a memory region
+to probe, otherwise you can't determine whether it's there or not. So
+=66rom the perspective of a device driver I think a missing, or NULL,
+resource, is indeed an "invalid argument".
+
+I understand that people might see some ambiguity there, and -EINVAL is
+certainly not a very accurate description, but such is the nature of
+error codes. You pick what fits best. -ENXIO and -EADDRNOTAVAIL had been
+under discussion as well if I remember correctly, but they both equally
+ambiguous. -ENODATA might have been a better fit, but that too has a
+different meaning in other contexts.
+
+Besides, there's an error message that goes along with the error code
+return, that should remove any ambiguity for people looking at dmesg.
+
+All of that said, the original assertion that the check is not required
+is still valid. We can argue at length about the specific error code but
+if we decide that it needs to change, then we should modify
+devm_ioremap_resource() rather than requiring all callers to perform the
+extra check again.
+
+Thierry
+
+--HG+GLK89HZ1zG0kk
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBAgAGBQJUy1p+AAoJEN0jrNd/PrOhlOAQAJAOOOtXZTykDbT92gVURmOI
+iFGHQ8E7AX8XGwBH4wJ5qqVUGWfosb2I5u0ssxVYXRQoO+7lD2kC11SDmYMH/4YT
+VhiI4ik5BrBeC7kurNTIL6FY8l72N4R/1h1aKmgvQJrrzTU6mRIC7Wpv9cd1ajJB
+H8+mPR8CNJAsspKCKi17i4RzAqwOvd5+W1AK+rlBdJK/QP2Oek4qO8k/kOledPaF
+mJuqTBxZ9/xHHdqe+PNhrQO8E9anbaoJT70cZmBp2N3ECpoDq46FnOaJwXy/tveU
+/9fU/B3Cm7QM4LmQbivOYQIW96Re73H0Z3Dggd6pqrUDj39658+RB4qALNUI8OWZ
+ZQ8TS+mpqU6Rcv+MP4p1BjPFLVZNlIGpGXuJV6U6GRaYafTKxDdusYQf/f+aP3rf
+cAxQyow7j/v/Gwk9aQdFw7SOLUx4+J8f65whhVU/6ljNcyDUfzwPbJv41e5rTNgP
+hmp/TN0mpshmNVZd4fOUYFXGLwlQpMzrJ/ksPBXoXhRLlj+W9k4YfqXf77pIyRRZ
+O9HZj/tESXWhaNepgoEu0RqDvmkKF+6iD8n6hI2NWABybiYVCC6C6jsddP4RVvFE
+jcfHqZliXoxl8TavGCrHf0yL6Pd4vBl1EBfco7xAVLQ784KO1NhU28Ncg/OSqreQ
+7v0BX0yJDTiRHkvifMZY
+=65CJ
+-----END PGP SIGNATURE-----
+
+--HG+GLK89HZ1zG0kk--
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
