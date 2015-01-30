@@ -1,109 +1,158 @@
-From: Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH v10 2/2] tty/serial: Add Spreadtrum sc9836-uart driver
- support
-Date: Fri, 30 Jan 2015 07:03:03 -0500
-Message-ID: <54CB72F7.8060706@hurleysoftware.com>
-References: <sc9836-serial-v10> <1422443324-25082-1-git-send-email-chunyan.zhang@spreadtrum.com> <1422443324-25082-3-git-send-email-chunyan.zhang@spreadtrum.com> <54CA5128.8050500@gmail.com> <54CA568E.6080306@hurleysoftware.com> <20150129160553.GC26493@n2100.arm.linux.org.uk> <20150130101838.GC16744@ulmo>
+From: Baptiste Reynal <b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+Subject: [PATCH v13 02/18] vfio: platform: probe to devices on the platform bus
+Date: Fri, 30 Jan 2015 14:46:08 +0100
+Message-ID: <1422625584-3741-3-git-send-email-b.reynal@virtualopensystems.com>
+References: <1422625584-3741-1-git-send-email-b.reynal@virtualopensystems.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150130101838.GC16744@ulmo>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Russell King - ARM Linux <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
-Cc: Varka Bhadram <varkabhadram-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Chunyan Zhang <chunyan.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org>, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, heiko-4mtYJXux2i+zQB+pC5nmwQ@public.gmane.org, andrew-g2DYL2Zd6BY@public.gmane.org, jslaby-AlSwsSmVLrQ@public.gmane.org, lanqing.liu-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, zhizhou.zhang-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, geng.ren-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, antonynpavlov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, orsonzhai-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, florian.vaussard-p8DiymsW2f8@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jason-NLaQJdtUoK4Be96aLqz0jA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, hytszk-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, wei.qiao-lxIno14LUO0EEoCn2XhGlw@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, shawn.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <1422625584-3741-1-git-send-email-b.reynal-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: kim.phillips-KZfg59tc24xl57MIdRCFDg@public.gmane.org, "open list:VFIO DRIVER" <kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, eric.auger-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, will.deacon-5wv7dgnIgG8@public.gmane.org, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>, tech-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 01/30/2015 05:18 AM, Thierry Reding wrote:
-> On Thu, Jan 29, 2015 at 04:05:53PM +0000, Russell King - ARM Linux wrote:
->> On Thu, Jan 29, 2015 at 10:49:34AM -0500, Peter Hurley wrote:
->>> Hi Varka,
->>>
->>> On 01/29/2015 10:26 AM, Varka Bhadram wrote:
->>>> This check is not required. It will be done by devm_ioremap_resource()
->>>
->>> I disagree. devm_ioremap_resource() interprets the NULL resource as
->>> a bad parameter and returns -EINVAL which is then forwarded as the
->>> return value from the probe.
->>>
->>> -ENODEV is the correct return value from the probe if the expected
->>> resource is not available (either because it doesn't exist or was already
->>> claimed by another driver).
->>
->> (Adding Thierry as the author of this function.)
->>
->> I believe devm_ioremap_resource() was explicitly designed to remove such
->> error handling from drivers, and to give drivers a unified error response
->> to such things as missing resources.
->>
->> See the comments for this function in lib/devres.c.
-> 
-> Right. Before the introduction of this function drivers would copy the
-> same boilerplate but would use completely inconsistent return codes.
-> Well, to be correct devm_request_and_ioremap() was introduced first to
-> reduce the boilerplate, but one of the problems was that it returned a
-> NULL pointer on failure, so it was impossible to distinguish between
-> specific error conditions. It also had the negative side-effect of not
-> giving drivers any directions on what to do with the NULL return value
-> other than the example in the kerneldoc. But most people just didn't
-> seem to look at that, so instead of using -EADDRNOTAVAIL they'd again
-> go and do completely inconsistent things everywhere.
-> 
-> When we introduced devm_ioremap_resource(), the idea was to remove any
-> of these inconsistencies once and for all. You call the function and if
-> it fails you simply propagate the error code, so you get consistent
-> behaviour everywhere.
-> 
-> If I remember correctly the error codes for the various conditions were
-> discussed quite extensively, and what we currently have is what we got
-> by concensus.
-> 
-> -ENODEV is certainly not the correct return value if a resource is not
-> available. It translates to "no such device", but the device must
-> clearly be there, otherwise the ->probe() shouldn't have been called.
+From: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
 
--ENODEV is the appropriate return from the probe(); there is no device.
-That returning that value doesn't make sense from devm_ioremap_resource
-is simply a reflection of the awkward construct.
+Driver to bind to Linux platform devices, and callbacks to discover their
+resources to be used by the main VFIO PLATFORM code.
 
-> Or if it really isn't there, then you'd at least need a memory region
-> to probe, otherwise you can't determine whether it's there or not. So
-> from the perspective of a device driver I think a missing, or NULL,
-> resource, is indeed an "invalid argument".
+Signed-off-by: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
+---
+ drivers/vfio/platform/vfio_platform.c | 103 ++++++++++++++++++++++++++++++++++
+ include/uapi/linux/vfio.h             |   1 +
+ 2 files changed, 104 insertions(+)
+ create mode 100644 drivers/vfio/platform/vfio_platform.c
 
-Trying to argue that a missing host bus window is an "invalid argument"
-to probe() is just trying to make the shoe fit.
-
-> I understand that people might see some ambiguity there, and -EINVAL is
-> certainly not a very accurate description, but such is the nature of
-> error codes. You pick what fits best. -ENXIO and -EADDRNOTAVAIL had been
-> under discussion as well if I remember correctly, but they both equally
-> ambiguous. -ENODATA might have been a better fit, but that too has a
-> different meaning in other contexts.
-> 
-> Besides, there's an error message that goes along with the error code
-> return, that should remove any ambiguity for people looking at dmesg.
-> 
-> All of that said, the original assertion that the check is not required
-> is still valid. We can argue at length about the specific error code but
-> if we decide that it needs to change, then we should modify
-> devm_ioremap_resource() rather than requiring all callers to perform the
-> extra check again.
-
-None of the devm_ioremap_resource() changes have been submitted for
-serial drivers. I see no problem with accepting the Spreadtrum driver
-as is, and if someone wants to do a massive changeset to rework the
-platform_get_resource()/devm_ioremap_resource() idiom for serial drivers
-for 3.21, then the Spreadtrum driver would be included then.
-
-That said, I'd prefer to see that idiom wrapped in a single function
-rather than what's being suggested.
-
-Regards,
-Peter Hurley
-
-
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/drivers/vfio/platform/vfio_platform.c b/drivers/vfio/platform/vfio_platform.c
+new file mode 100644
+index 0000000..cef645c
+--- /dev/null
++++ b/drivers/vfio/platform/vfio_platform.c
+@@ -0,0 +1,103 @@
++/*
++ * Copyright (C) 2013 - Virtual Open Systems
++ * Author: Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License, version 2, as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include <linux/module.h>
++#include <linux/slab.h>
++#include <linux/vfio.h>
++#include <linux/platform_device.h>
++
++#include "vfio_platform_private.h"
++
++#define DRIVER_VERSION  "0.10"
++#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis-lrHrjnjw1UfHK3s98zE1ajGjJy/sRE9J@public.gmane.org>"
++#define DRIVER_DESC     "VFIO for platform devices - User Level meta-driver"
++
++/* probing devices from the linux platform bus */
++
++static struct resource *get_platform_resource(struct vfio_platform_device *vdev,
++					      int num)
++{
++	struct platform_device *dev = (struct platform_device *) vdev->opaque;
++	int i;
++
++	for (i = 0; i < dev->num_resources; i++) {
++		struct resource *r = &dev->resource[i];
++
++		if (resource_type(r) & (IORESOURCE_MEM|IORESOURCE_IO)) {
++			if (!num)
++				return r;
++
++			num--;
++		}
++	}
++	return NULL;
++}
++
++static int get_platform_irq(struct vfio_platform_device *vdev, int i)
++{
++	struct platform_device *pdev = (struct platform_device *) vdev->opaque;
++
++	return platform_get_irq(pdev, i);
++}
++
++static int vfio_platform_probe(struct platform_device *pdev)
++{
++	struct vfio_platform_device *vdev;
++	int ret;
++
++	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
++	if (!vdev)
++		return -ENOMEM;
++
++	vdev->opaque = (void *) pdev;
++	vdev->name = pdev->name;
++	vdev->flags = VFIO_DEVICE_FLAGS_PLATFORM;
++	vdev->get_resource = get_platform_resource;
++	vdev->get_irq = get_platform_irq;
++
++	ret = vfio_platform_probe_common(vdev, &pdev->dev);
++	if (ret)
++		kfree(vdev);
++
++	return ret;
++}
++
++static int vfio_platform_remove(struct platform_device *pdev)
++{
++	struct vfio_platform_device *vdev;
++
++	vdev = vfio_platform_remove_common(&pdev->dev);
++	if (vdev) {
++		kfree(vdev);
++		return 0;
++	}
++
++	return -EINVAL;
++}
++
++static struct platform_driver vfio_platform_driver = {
++	.probe		= vfio_platform_probe,
++	.remove		= vfio_platform_remove,
++	.driver	= {
++		.name	= "vfio-platform",
++		.owner	= THIS_MODULE,
++	},
++};
++
++module_platform_driver(vfio_platform_driver);
++
++MODULE_VERSION(DRIVER_VERSION);
++MODULE_LICENSE("GPL v2");
++MODULE_AUTHOR(DRIVER_AUTHOR);
++MODULE_DESCRIPTION(DRIVER_DESC);
+diff --git a/include/uapi/linux/vfio.h b/include/uapi/linux/vfio.h
+index 9ade02b..4e93a97 100644
+--- a/include/uapi/linux/vfio.h
++++ b/include/uapi/linux/vfio.h
+@@ -159,6 +159,7 @@ struct vfio_device_info {
+ 	__u32	flags;
+ #define VFIO_DEVICE_FLAGS_RESET	(1 << 0)	/* Device supports reset */
+ #define VFIO_DEVICE_FLAGS_PCI	(1 << 1)	/* vfio-pci device */
++#define VFIO_DEVICE_FLAGS_PLATFORM (1 << 2)	/* vfio-platform device */
+ 	__u32	num_regions;	/* Max region index + 1 */
+ 	__u32	num_irqs;	/* Max IRQ index + 1 */
+ };
+-- 
+2.2.2
