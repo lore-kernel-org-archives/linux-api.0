@@ -1,141 +1,64 @@
 From: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v1 1/5] IB/uverbs: ex_query_device: answer must not depend
- on request's comp_mask
-Date: Sun, 1 Feb 2015 10:04:14 +0200
-Message-ID: <54CDDDFE.80803@mellanox.com>
+Subject: Re: [PATCH v1 2/5] IB/uverbs: ex_query_device: check request's comp_mask
+Date: Sun, 1 Feb 2015 10:12:20 +0200
+Message-ID: <54CDDFE4.7030003@mellanox.com>
 References: <cover.1422553023.git.ydroneaud@opteya.com>
-	 <24ceb1fc5b2b6563532e5776b1b2320b1ae37543.1422553023.git.ydroneaud@opteya.com>
-	 <20150129182800.GH11842@obsidianresearch.com>
- <1422568741.3133.247.camel@opteya.com>
+ <335da45738872e446f63db338ca766a34608c90a.1422553023.git.ydroneaud@opteya.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1422568741.3133.247.camel-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <335da45738872e446f63db338ca766a34608c90a.1422553023.git.ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
-Cc: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>, Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 29/01/2015 23:59, Yann Droneaud wrote:
-> But I wonder about this part of commit 860f10a799c8:
+On 29/01/2015 19:59, Yann Droneaud wrote:
+> This patch ensures the extended QUERY_DEVICE uverbs request's
+> comp_mask has only known and supported bits (currently none).
+> 
+> If userspace set unknown features bits, -EINVAL will be returned,
+> ensuring current programs are not allowed to set random feature
+> bits: such bits could enable new extended features in future kernel
+> versions and those features can trigger a behavior not unsupported
+> by the older programs or make the newer kernels return an error
+> for a request which was valid on older kernels.
+> 
+> Additionally, returning an error for unsupported feature would
+> allow userspace to probe/discover which extended features are
+> currently supported by a kernel.
+
+As I wrote before, I hope in the future we don't force userspace to
+probe features this way, because it may be unnecessarily complex.
+
+I agree though that we should have a way to extend this verb in the future.
+
+Reviewed-by: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+
+> 
+> Link: http://mid.gmane.org/cover.1422553023.git.ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org
+> Cc: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+> Cc: Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+> Cc: Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+> Cc: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+> Signed-off-by: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+> ---
+>  drivers/infiniband/core/uverbs_cmd.c | 3 +++
+>  1 file changed, 3 insertions(+)
 > 
 > diff --git a/drivers/infiniband/core/uverbs_cmd.c b/drivers/infiniband/core/uverbs_cmd.c
-> index c7a43624c96b..f9326ccda4b5 100644
+> index 6ef06a9b4362..fbcc54b86795 100644
 > --- a/drivers/infiniband/core/uverbs_cmd.c
 > +++ b/drivers/infiniband/core/uverbs_cmd.c
-> @@ -953,6 +953,18 @@ ssize_t ib_uverbs_reg_mr(struct ib_uverbs_file *file,
->                 goto err_free;
->         }
+> @@ -3312,6 +3312,9 @@ int ib_uverbs_ex_query_device(struct ib_uverbs_file *file,
+>  	if (err)
+>  		return err;
 >  
-> +       if (cmd.access_flags & IB_ACCESS_ON_DEMAND) {
-> +               struct ib_device_attr attr;
+> +	if (cmd.comp_mask)
+> +		return -EINVAL;
 > +
-> +               ret = ib_query_device(pd->device, &attr);
-> +               if (ret || !(attr.device_cap_flags &
-> +                               IB_DEVICE_ON_DEMAND_PAGING)) {
-> +                       pr_debug("ODP support not available\n");
-> +                       ret = -EINVAL;
-> +                       goto err_put;
-> +               }
-> +       }
-> +
+>  	if (cmd.reserved)
+>  		return -EINVAL;
+>  
 > 
-> AFAICT (1 << 6) bit from struct ib_uverbs_reg_mr access_flags field
-> was not enforced to be 0 previously, as ib_check_mr_access() only check 
-> for some coherency between a subset of the bits (it's not a function
-> dedicated to check flags provided by userspace):
-> 
-> include/rdma/ib_verbs.h:
-> 
->    1094 enum ib_access_flags {
->    1095         IB_ACCESS_LOCAL_WRITE   = 1,
->    1096         IB_ACCESS_REMOTE_WRITE  = (1<<1),
->    1097         IB_ACCESS_REMOTE_READ   = (1<<2),
->    1098         IB_ACCESS_REMOTE_ATOMIC = (1<<3),
->    1099         IB_ACCESS_MW_BIND       = (1<<4),
->    1100         IB_ZERO_BASED           = (1<<5),
->    1101         IB_ACCESS_ON_DEMAND     = (1<<6),
->    1102 };
-> 
-> drivers/infiniband/core/uverbs_cmd.c: ib_uverbs_reg_mr()
-> 
->     961         ret = ib_check_mr_access(cmd.access_flags);
->     962         if (ret)
->     963                 return ret;
-> 
-> include/rdma/ib_verbs.h:
-> 
->    2643 static inline int ib_check_mr_access(int flags)
->    2644 {
->    2645         /*
->    2646          * Local write permission is required if remote write or
->    2647          * remote atomic permission is also requested.
->    2648          */
->    2649         if (flags & (IB_ACCESS_REMOTE_ATOMIC | IB_ACCESS_REMOTE_WRITE) &&
->    2650             !(flags & IB_ACCESS_LOCAL_WRITE))
->    2651                 return -EINVAL;
->    2652 
->    2653         return 0;
->    2654 }
-> 
-> drivers/infiniband/core/uverbs_cmd.c: ib_uverbs_reg_mr()
-> 
->     990         mr = pd->device->reg_user_mr(pd, cmd.start, cmd.length, cmd.hca_va,
->     991                                      cmd.access_flags, &udata);
-> 
-> reg_user_mr() functions may call ib_umem_get() and pass access_flags to
-> it:
-> 
-> drivers/infiniband/core/umem.c: ib_umem_get()
-> 
->     114         /*
->     115          * We ask for writable memory if any of the following
->     116          * access flags are set.  "Local write" and "remote write"
->     117          * obviously require write access.  "Remote atomic" can do
->     118          * things like fetch and add, which will modify memory, and
->     119          * "MW bind" can change permissions by binding a window.
->     120          */
->     121         umem->writable  = !!(access &
->     122                 (IB_ACCESS_LOCAL_WRITE   | IB_ACCESS_REMOTE_WRITE |
->     123                  IB_ACCESS_REMOTE_ATOMIC | IB_ACCESS_MW_BIND));
->     124 
->     125         if (access & IB_ACCESS_ON_DEMAND) {
->     126                 ret = ib_umem_odp_get(context, umem);
->     127                 if (ret) {
->     128                         kfree(umem);
->     129                         return ERR_PTR(ret);
->     130                 }
->     131                 return umem;
->     132         }
-> 
-> 
-> As you can see only a few bits in access_flags are checked in the end,
-> so it may exist a very unlikely possibility that an existing userspace
-> program is setting this IB_ACCESS_ON_DEMAND bit without the intention
-> of enabling on demand paging as this would be unnoticed by older kernel.
->
-> In the other hand, a newer program built with on-demand-paging in mind
-> will set the bit, but when run on older kernel, it will be a no-op,
-> allowing the program to continue, perhaps thinking on-demand-paging
-> is available.
-
-This is why we added a method for userspace to check the kernel
-capabilities both when adding the memory windows support and with ODP.
-User-space can still send garbage to the kernel, but if it does so
-without checking the kernel supports its request, it's user-space's problem.
-
-> That should be avoided as much as possible.
-> 
-> Unfortunately, I think this cannot be fixed as it's was long since 
-> IB_ZERO_BASED was added by commit 7083e42ee2 ("IB/core: Add "type 2" 
-> memory windows support").
-> Anyway there was no check for IB_ACCESS_REMOTE_READ, nor 
-> IB_ACCESS_MW_BIND in the uverb layer either.
-
-I think it would be perfectly fine to add a check today that validates
-the MR access flags input is known. Because the newer feature require
-user-space to check capabilities, I don't think it would matter if we
-returned an error on newer kernels that do not support these features.
-
-Haggai
