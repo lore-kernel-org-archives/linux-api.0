@@ -1,85 +1,93 @@
-From: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v1 1/5] IB/uverbs: ex_query_device: answer must not depend
- on request's comp_mask
-Date: Sun, 1 Feb 2015 13:25:15 +0200
-Message-ID: <54CE0D1B.400@mellanox.com>
+From: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v1 2/5] IB/uverbs: ex_query_device: check request's
+ comp_mask
+Date: Sun, 01 Feb 2015 12:55:01 +0100
+Message-ID: <1422791701.3030.30.camel@opteya.com>
 References: <cover.1422553023.git.ydroneaud@opteya.com>
-	 <24ceb1fc5b2b6563532e5776b1b2320b1ae37543.1422553023.git.ydroneaud@opteya.com>
-	 <20150129182800.GH11842@obsidianresearch.com>
-	 <1422568741.3133.247.camel@opteya.com>
-	 <CAG4TOxN4DpTMMsCM-1oe6-w+5xYR4YHdJeL7p2nQpUy9gYCSjA@mail.gmail.com>
- <1422638760.3133.260.camel@opteya.com>
+	 <335da45738872e446f63db338ca766a34608c90a.1422553023.git.ydroneaud@opteya.com>
+	 <54CDDFE4.7030003@mellanox.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1422638760.3133.260.camel-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <54CDDFE4.7030003-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Cc: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 30/01/2015 19:26, Yann Droneaud wrote:
-> Hi,
+Hi,
+
+Le dimanche 01 f=C3=A9vrier 2015 =C3=A0 10:12 +0200, Haggai Eran a =C3=A9=
+crit :
+> On 29/01/2015 19:59, Yann Droneaud wrote:
+> > This patch ensures the extended QUERY_DEVICE uverbs request's
+> > comp_mask has only known and supported bits (currently none).
+> >=20
+> > If userspace set unknown features bits, -EINVAL will be returned,
+> > ensuring current programs are not allowed to set random feature
+> > bits: such bits could enable new extended features in future kernel
+> > versions and those features can trigger a behavior not unsupported
+> > by the older programs or make the newer kernels return an error
+> > for a request which was valid on older kernels.
+> >=20
+> > Additionally, returning an error for unsupported feature would
+> > allow userspace to probe/discover which extended features are
+> > currently supported by a kernel.
 >=20
-> Le jeudi 29 janvier 2015 =C3=A0 15:17 -0800, Roland Dreier a =C3=A9cr=
-it :
->> On Thu, Jan 29, 2015 at 1:59 PM, Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org=
-> wrote:
->>>> Roland: I agree with Yann, these patches need to go in, or the ODP
->>>> patches reverted.
->>
->>> Reverting all On Demand Paging patches seems overkill:
->>> if something as to be reverted it should be commit 5a77abf9a97a
->>> ("IB/core: Add support for extended query device caps") and the par=
-t of
->>> commit 860f10a799c8 ("IB/core: Add flags for on demand paging suppo=
-rt")
->>> which modify ib_uverbs_ex_query_device().
->>
->> Thank you and Jason for taking on this interface.
->>
->> At this point I feel like I do about the IPoIB changes -- we should
->> revert the broken stuff and get it right for 3.20.
->>
->> If we revert the two things you describe above, is everything else O=
-K
->> to leave in 3.19 with respect to ABI?
->>
+> As I wrote before, I hope in the future we don't force userspace to
+> probe features this way, because it may be unnecessarily complex.
 >=20
-> I've tried to review every changes since v3.18 on drivers/infiniband
-> include/rdma and include/uapi/rdma with respect to ABI issues.
+
+I believe that most use cases won't need probing as applications are
+often built according to the current kernel features in mind.
+
+If applications need to use new features, it seems to be a small price
+to pay to be prepared to get -EINVAL.
+
+In another word: backward compatibility from application point of view:
+a newer application wanting to run on older kernel must be prepared to.
+
+> I agree though that we should have a way to extend this verb in the f=
+uture.
 >=20
-> I've noticed no other issue, but I have to admit I've not well review=
-ed
-> the drivers (hw/) internal changes.
+> Reviewed-by: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 >=20
-> If the IB_USER_VERBS_EX_CMD_QUERY_DEVICE and ib_uverbs_ex_query_devic=
-e
-> changes are going to be reverted for v3.19, the on-demand-paging
-> feature will be available (IB_DEVICE_ON_DEMAND_PAGING will be set=20
-> device_cap_flags in response to non extended QUERY_DEVICE for mlx5 HC=
-A
-> and IB_ACCESS_ON_DEMAND access flag will be effective for REG_MR=20
-> uverbs), but its parameters won't be.=20
 
-=46or user-space to make use of on demand paging, it should verify the
-specific transport and operation is supported. If they don't, they will
-encounter errors when a page fault occurs.
+Thanks.
 
-> I don't know if it's a no-go for=20
-> the usage of on-demand paging by userspace: I have not the chance
-> of owning HCA with the support for this feature, nor the patches
-> libibverbs / libmlx5 ... (anyway I would not have the time to test).
-> I've hoped people from Mellanox would have commented on the revert=20
-> option too.
-
-I would prefer it if Yann's patches are accepted. I understand it is
-very late, but they are quite short, and I think they provide the right
-semantic for this new verb.
-
-As a second option, in case you prefer to revert the extended query
-device patch, I will send a patch shortly to do that.
-
-Regards,
-Haggai
+> >=20
+> > Link: http://mid.gmane.org/cover.1422553023.git.ydroneaud-RlY5vtjFyJ1hl2p70BpVqQ@public.gmane.org=
+m
+> > Cc: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+> > Cc: Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+> > Cc: Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+> > Cc: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+> > Signed-off-by: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+> > ---
+> >  drivers/infiniband/core/uverbs_cmd.c | 3 +++
+> >  1 file changed, 3 insertions(+)
+> >=20
+> > diff --git a/drivers/infiniband/core/uverbs_cmd.c b/drivers/infinib=
+and/core/uverbs_cmd.c
+> > index 6ef06a9b4362..fbcc54b86795 100644
+> > --- a/drivers/infiniband/core/uverbs_cmd.c
+> > +++ b/drivers/infiniband/core/uverbs_cmd.c
+> > @@ -3312,6 +3312,9 @@ int ib_uverbs_ex_query_device(struct ib_uverb=
+s_file *file,
+> >  	if (err)
+> >  		return err;
+> > =20
+> > +	if (cmd.comp_mask)
+> > +		return -EINVAL;
+> > +
+> >  	if (cmd.reserved)
+> >  		return -EINVAL;
+> > =20
+> >=20
+>=20
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" =
+in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
