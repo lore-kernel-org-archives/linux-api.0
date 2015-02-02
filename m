@@ -1,40 +1,48 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH-v9 0/3] add support for lazytime mount option
-Date: Mon, 2 Feb 2015 16:40:28 +0100
-Message-ID: <CAKgNAki1Kttu6j=7qWDW=uMqWPSk0A1EW8r5wTb1fv8FGrngdg@mail.gmail.com>
-References: <1422855422-7444-1-git-send-email-tytso@mit.edu>
- <CAHO5Pa0ySnLb_UGUw3deVyZEr8gdzzdeyMP5rXcT1MLOeccLGg@mail.gmail.com> <20150202144833.GB2509@thunk.org>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH v5] perf: Use monotonic clock as a source for timestamps
+Date: Mon, 02 Feb 2015 16:52:46 +0000
+Message-ID: <1422895966.4944.25.camel@arm.com>
+References: <1415292718-19785-2-git-send-email-pawel.moll@arm.com>
+	 <1421872037-12559-1-git-send-email-pawel.moll@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150202144833.GB2509-AKGzg7BKzIDYtjvyW6yDsg@public.gmane.org>
+In-Reply-To: <1421872037-12559-1-git-send-email-pawel.moll-5wv7dgnIgG8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
-Cc: Linux Filesystem Development List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Ted,
+Afternoon, Peter,
 
-On 2 February 2015 at 15:48, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org> wrote:
-> On Mon, Feb 02, 2015 at 07:03:11AM +0100, Michael Kerrisk wrote:
->> Hi Ted,
->>
->> Since this is an API change, linux-api@ shouls be CCed, Added.
->
-> I didn't realize a mount option would be considered an API change.
+On Wed, 2015-01-21 at 20:27 +0000, Pawel Moll wrote:
+> Until now, perf framework never defined the meaning of the timestamps
+> captured as PERF_SAMPLE_TIME sample type. The values were obtaining
+> from local (sched) clock, which is unavailable in userspace. This made
+> it impossible to correlate perf data with any other events. Other
+> tracing solutions have the source configurable (ftrace) or just share
+> a common time domain between kernel and userspace (LTTng).
+> 
+> Follow the trend by using monotonic clock, which is readily available
+> as POSIX CLOCK_MONOTONIC.
+> 
+> Also add a sysctl "perf_sample_time_clk_id" attribute (usually available
+> as "/proc/sys/kernel/perf_sample_time_clk_id") which can be used by the
+> user to obtain the clk_id to be used with POSIX clock API (eg.
+> clock_gettime()) to obtain a time value comparable with perf samples.
+> 
+> Old behaviour can be restored by using "perf_use_local_clock" kernel
+> parameter.
+> 
+> Signed-off-by: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
 
-Well, inasmuch as it's exposed via a system call, sure it is.
+I know that you're busy with other stuff, but it's already rc7 time
+again... We can leave the other two patches from the series for later,
+but how about getting this one merged for 3.20 and ending the 2 or 3
+years long struggle? I'm not saying that everyone is happy about it, but
+no one seems to be unhappy enough to speak :-)
 
-> The man page project isn't documenting these things, are they?
+Cheers!
 
-Indeed it is. See http://man7.org/linux/man-pages/man2/mount.2.html.
-
-Thanks,
-
-Michael
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Pawel
