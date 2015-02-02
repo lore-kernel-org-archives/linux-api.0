@@ -1,212 +1,114 @@
-From: Michael Kerrisk <mtk.manpages@gmail.com>
-Subject: Re: [PATCH-v9 3/3] ext4: add optimization for the lazytime mount option
-Date: Mon, 2 Feb 2015 07:03:59 +0100
-Message-ID: <CAHO5Pa1LVTLnu8Xecfyujpp7Py4dgP9+bZjYLn1F-HpgAbf7bw@mail.gmail.com>
-References: <1422855422-7444-1-git-send-email-tytso@mit.edu> <1422855422-7444-4-git-send-email-tytso@mit.edu>
+From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH-v9 2/3] vfs: add find_inode_nowait() function
+Date: Mon, 2 Feb 2015 07:04:16 +0100
+Message-ID: <CAHO5Pa0Ptjq9jpr_GVoJVt=Djuim94GDGMViUVF5KMrs0NoFnQ@mail.gmail.com>
+References: <1422855422-7444-1-git-send-email-tytso@mit.edu> <1422855422-7444-3-git-send-email-tytso@mit.edu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1422855422-7444-4-git-send-email-tytso@mit.edu>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Theodore Ts'o <tytso@mit.edu>
-Cc: Linux Filesystem Development List <linux-fsdevel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1422855422-7444-3-git-send-email-tytso-3s7WtUTddSA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Cc: Linux Filesystem Development List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 [CC += linux-api@]
 
-On Mon, Feb 2, 2015 at 6:37 AM, Theodore Ts'o <tytso@mit.edu> wrote:
-> Add an optimization for the MS_LAZYTIME mount option so that we will
-> opportunistically write out any inodes with the I_DIRTY_TIME flag set
-> in a particular inode table block when we need to update some inode in
-> that inode table block anyway.
+On Mon, Feb 2, 2015 at 6:37 AM, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org> wrote:
+> Add a new function find_inode_nowait() which is an even more general
+> version of ilookup5_nowait().  It is designed for callers which need
+> very fine grained control over when the function is allowed to block
+> or increment the inode's reference count.
 >
-> Also add some temporary code so that we can set the lazytime mount
-> option without needing a modified /sbin/mount program which can set
-> MS_LAZYTIME.  We can eventually make this go away once util-linux has
-> added support.
->
-> Google-Bug-Id: 18297052
->
-> Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+> Signed-off-by: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
 > ---
->  fs/ext4/inode.c             | 64 +++++++++++++++++++++++++++++++++++++++++++--
->  fs/ext4/super.c             | 10 +++++++
->  include/trace/events/ext4.h | 30 +++++++++++++++++++++
->  3 files changed, 102 insertions(+), 2 deletions(-)
+>  fs/inode.c         | 50 ++++++++++++++++++++++++++++++++++++++++++++++++++
+>  include/linux/fs.h |  5 +++++
+>  2 files changed, 55 insertions(+)
 >
-> diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-> index 628df5b..9193ea1 100644
-> --- a/fs/ext4/inode.c
-> +++ b/fs/ext4/inode.c
-> @@ -4139,6 +4139,65 @@ static int ext4_inode_blocks_set(handle_t *handle,
->         return 0;
+> diff --git a/fs/inode.c b/fs/inode.c
+> index 4feb85c..740cba7 100644
+> --- a/fs/inode.c
+> +++ b/fs/inode.c
+> @@ -1284,6 +1284,56 @@ struct inode *ilookup(struct super_block *sb, unsigned long ino)
 >  }
+>  EXPORT_SYMBOL(ilookup);
 >
-> +struct other_inode {
-> +       unsigned long           orig_ino;
-> +       struct ext4_inode       *raw_inode;
-> +};
-> +
-> +static int other_inode_match(struct inode * inode, unsigned long ino,
-> +                            void *data)
-> +{
-> +       struct other_inode *oi = (struct other_inode *) data;
-> +
-> +       if ((inode->i_ino != ino) ||
-> +           (inode->i_state & (I_FREEING | I_WILL_FREE | I_NEW |
-> +                              I_DIRTY_SYNC | I_DIRTY_DATASYNC)) ||
-> +           ((inode->i_state & I_DIRTY_TIME) == 0))
-> +               return 0;
-> +       spin_lock(&inode->i_lock);
-> +       if (((inode->i_state & (I_FREEING | I_WILL_FREE | I_NEW |
-> +                               I_DIRTY_SYNC | I_DIRTY_DATASYNC)) == 0) &&
-> +           (inode->i_state & I_DIRTY_TIME)) {
-> +               struct ext4_inode_info  *ei = EXT4_I(inode);
-> +
-> +               inode->i_state &= ~(I_DIRTY_TIME | I_DIRTY_TIME_EXPIRED);
-> +               spin_unlock(&inode->i_lock);
-> +
-> +               spin_lock(&ei->i_raw_lock);
-> +               EXT4_INODE_SET_XTIME(i_ctime, inode, oi->raw_inode);
-> +               EXT4_INODE_SET_XTIME(i_mtime, inode, oi->raw_inode);
-> +               EXT4_INODE_SET_XTIME(i_atime, inode, oi->raw_inode);
-> +               ext4_inode_csum_set(inode, oi->raw_inode, ei);
-> +               spin_unlock(&ei->i_raw_lock);
-> +               trace_ext4_other_inode_update_time(inode, oi->orig_ino);
-> +               return -1;
-> +       }
-> +       spin_unlock(&inode->i_lock);
-> +       return -1;
-> +}
-> +
-> +/*
-> + * Opportunistically update the other time fields for other inodes in
-> + * the same inode table block.
+> +/**
+> + * find_inode_nowait - find an inode in the inode cache
+> + * @sb:                super block of file system to search
+> + * @hashval:   hash value (usually inode number) to search for
+> + * @match:     callback used for comparisons between inodes
+> + * @data:      opaque data pointer to pass to @match
+> + *
+> + * Search for the inode specified by @hashval and @data in the inode
+> + * cache, where the helper function @match will return 0 if the inode
+> + * does not match, 1 if the inode does match, and -1 if the search
+> + * should be stopped.  The @match function must be responsible for
+> + * taking the i_lock spin_lock and checking i_state for an inode being
+> + * freed or being initialized, and incrementing the reference count
+> + * before returning 1.  It also must not sleep, since it is called with
+> + * the inode_hash_lock spinlock held.
+> + *
+> + * This is a even more generalized version of ilookup5() when the
+> + * function must never block --- find_inode() can block in
+> + * __wait_on_freeing_inode() --- or when the caller can not increment
+> + * the reference count because the resulting iput() might cause an
+> + * inode eviction.  The tradeoff is that the @match funtion must be
+> + * very carefully implemented.
 > + */
-> +static void ext4_update_other_inodes_time(struct super_block *sb,
-> +                                         unsigned long orig_ino, char *buf)
+> +struct inode *find_inode_nowait(struct super_block *sb,
+> +                               unsigned long hashval,
+> +                               int (*match)(struct inode *, unsigned long,
+> +                                            void *),
+> +                               void *data)
 > +{
-> +       struct other_inode oi;
-> +       unsigned long ino;
-> +       int i, inodes_per_block = EXT4_SB(sb)->s_inodes_per_block;
-> +       int inode_size = EXT4_INODE_SIZE(sb);
+> +       struct hlist_head *head = inode_hashtable + hash(sb, hashval);
+> +       struct inode *inode, *ret_inode = NULL;
+> +       int mval;
 > +
-> +       oi.orig_ino = orig_ino;
-> +       ino = orig_ino & ~(inodes_per_block - 1);
-> +       for (i = 0; i < inodes_per_block; i++, ino++, buf += inode_size) {
-> +               if (ino == orig_ino)
+> +       spin_lock(&inode_hash_lock);
+> +       hlist_for_each_entry(inode, head, i_hash) {
+> +               if (inode->i_sb != sb)
 > +                       continue;
-> +               oi.raw_inode = (struct ext4_inode *) buf;
-> +               (void) find_inode_nowait(sb, ino, other_inode_match, &oi);
+> +               mval = match(inode, hashval, data);
+> +               if (mval == 0)
+> +                       continue;
+> +               if (mval == 1)
+> +                       ret_inode = inode;
+> +               goto out;
 > +       }
+> +out:
+> +       spin_unlock(&inode_hash_lock);
+> +       return ret_inode;
 > +}
+> +EXPORT_SYMBOL(find_inode_nowait);
 > +
->  /*
->   * Post the struct inode info into an on-disk inode location in the
->   * buffer-cache.  This gobbles the caller's reference to the
-> @@ -4248,10 +4307,11 @@ static int ext4_do_update_inode(handle_t *handle,
->                                 cpu_to_le16(ei->i_extra_isize);
->                 }
->         }
-> -
->         ext4_inode_csum_set(inode, raw_inode, ei);
-> -
->         spin_unlock(&ei->i_raw_lock);
-> +       if (inode->i_sb->s_flags & MS_LAZYTIME)
-> +               ext4_update_other_inodes_time(inode->i_sb, inode->i_ino,
-> +                                             bh->b_data);
+>  int insert_inode_locked(struct inode *inode)
+>  {
+>         struct super_block *sb = inode->i_sb;
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 5ca285f..af810cc 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -2441,6 +2441,11 @@ extern struct inode *ilookup(struct super_block *sb, unsigned long ino);
 >
->         BUFFER_TRACE(bh, "call ext4_handle_dirty_metadata");
->         rc = ext4_handle_dirty_metadata(handle, NULL, bh);
-> diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-> index 74c5f53..362b23c 100644
-> --- a/fs/ext4/super.c
-> +++ b/fs/ext4/super.c
-> @@ -1139,6 +1139,7 @@ enum {
->         Opt_noquota, Opt_barrier, Opt_nobarrier, Opt_err,
->         Opt_usrquota, Opt_grpquota, Opt_i_version,
->         Opt_stripe, Opt_delalloc, Opt_nodelalloc, Opt_mblk_io_submit,
-> +       Opt_lazytime, Opt_nolazytime,
->         Opt_nomblk_io_submit, Opt_block_validity, Opt_noblock_validity,
->         Opt_inode_readahead_blks, Opt_journal_ioprio,
->         Opt_dioread_nolock, Opt_dioread_lock,
-> @@ -1202,6 +1203,8 @@ static const match_table_t tokens = {
->         {Opt_i_version, "i_version"},
->         {Opt_stripe, "stripe=%u"},
->         {Opt_delalloc, "delalloc"},
-> +       {Opt_lazytime, "lazytime"},
-> +       {Opt_nolazytime, "nolazytime"},
->         {Opt_nodelalloc, "nodelalloc"},
->         {Opt_removed, "mblk_io_submit"},
->         {Opt_removed, "nomblk_io_submit"},
-> @@ -1459,6 +1462,12 @@ static int handle_mount_opt(struct super_block *sb, char *opt, int token,
->         case Opt_i_version:
->                 sb->s_flags |= MS_I_VERSION;
->                 return 1;
-> +       case Opt_lazytime:
-> +               sb->s_flags |= MS_LAZYTIME;
-> +               return 1;
-> +       case Opt_nolazytime:
-> +               sb->s_flags &= ~MS_LAZYTIME;
-> +               return 1;
->         }
->
->         for (m = ext4_mount_opts; m->token != Opt_err; m++)
-> @@ -5020,6 +5029,7 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
->         }
->  #endif
->
-> +       *flags = (*flags & ~MS_LAZYTIME) | (sb->s_flags & MS_LAZYTIME);
->         ext4_msg(sb, KERN_INFO, "re-mounted. Opts: %s", orig_data);
->         kfree(orig_data);
->         return 0;
-> diff --git a/include/trace/events/ext4.h b/include/trace/events/ext4.h
-> index 6cfb841..6e5abd6 100644
-> --- a/include/trace/events/ext4.h
-> +++ b/include/trace/events/ext4.h
-> @@ -73,6 +73,36 @@ struct extent_status;
->         { FALLOC_FL_ZERO_RANGE,         "ZERO_RANGE"})
->
->
-> +TRACE_EVENT(ext4_other_inode_update_time,
-> +       TP_PROTO(struct inode *inode, ino_t orig_ino),
-> +
-> +       TP_ARGS(inode, orig_ino),
-> +
-> +       TP_STRUCT__entry(
-> +               __field(        dev_t,  dev                     )
-> +               __field(        ino_t,  ino                     )
-> +               __field(        ino_t,  orig_ino                )
-> +               __field(        uid_t,  uid                     )
-> +               __field(        gid_t,  gid                     )
-> +               __field(        __u16, mode                     )
-> +       ),
-> +
-> +       TP_fast_assign(
-> +               __entry->orig_ino = orig_ino;
-> +               __entry->dev    = inode->i_sb->s_dev;
-> +               __entry->ino    = inode->i_ino;
-> +               __entry->uid    = i_uid_read(inode);
-> +               __entry->gid    = i_gid_read(inode);
-> +               __entry->mode   = inode->i_mode;
-> +       ),
-> +
-> +       TP_printk("dev %d,%d orig_ino %lu ino %lu mode 0%o uid %u gid %u",
-> +                 MAJOR(__entry->dev), MINOR(__entry->dev),
-> +                 (unsigned long) __entry->orig_ino,
-> +                 (unsigned long) __entry->ino, __entry->mode,
-> +                 __entry->uid, __entry->gid)
-> +);
-> +
->  TRACE_EVENT(ext4_free_inode,
->         TP_PROTO(struct inode *inode),
->
+>  extern struct inode * iget5_locked(struct super_block *, unsigned long, int (*test)(struct inode *, void *), int (*set)(struct inode *, void *), void *);
+>  extern struct inode * iget_locked(struct super_block *, unsigned long);
+> +extern struct inode *find_inode_nowait(struct super_block *,
+> +                                      unsigned long,
+> +                                      int (*match)(struct inode *,
+> +                                                   unsigned long, void *),
+> +                                      void *data);
+>  extern int insert_inode_locked4(struct inode *, unsigned long, int (*test)(struct inode *, void *), void *);
+>  extern int insert_inode_locked(struct inode *);
+>  #ifdef CONFIG_DEBUG_LOCK_ALLOC
 > --
 > 2.1.0
 >
 > --
 > To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
-> the body of a message to majordomo@vger.kernel.org
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
 
