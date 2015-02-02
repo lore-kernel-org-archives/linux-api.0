@@ -1,93 +1,172 @@
-From: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v1 2/5] IB/uverbs: ex_query_device: check request's
- comp_mask
-Date: Sun, 01 Feb 2015 12:55:01 +0100
-Message-ID: <1422791701.3030.30.camel@opteya.com>
-References: <cover.1422553023.git.ydroneaud@opteya.com>
-	 <335da45738872e446f63db338ca766a34608c90a.1422553023.git.ydroneaud@opteya.com>
-	 <54CDDFE4.7030003@mellanox.com>
+From: Michael Kerrisk <mtk.manpages@gmail.com>
+Subject: Re: [PATCH-v9 0/3] add support for lazytime mount option
+Date: Mon, 2 Feb 2015 07:03:11 +0100
+Message-ID: <CAHO5Pa0ySnLb_UGUw3deVyZEr8gdzzdeyMP5rXcT1MLOeccLGg@mail.gmail.com>
+References: <1422855422-7444-1-git-send-email-tytso@mit.edu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54CDDFE4.7030003-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Cc: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1422855422-7444-1-git-send-email-tytso@mit.edu>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Theodore Ts'o <tytso@mit.edu>
+Cc: Linux Filesystem Development List <linux-fsdevel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Hi Ted,
 
-Le dimanche 01 f=C3=A9vrier 2015 =C3=A0 10:12 +0200, Haggai Eran a =C3=A9=
-crit :
-> On 29/01/2015 19:59, Yann Droneaud wrote:
-> > This patch ensures the extended QUERY_DEVICE uverbs request's
-> > comp_mask has only known and supported bits (currently none).
-> >=20
-> > If userspace set unknown features bits, -EINVAL will be returned,
-> > ensuring current programs are not allowed to set random feature
-> > bits: such bits could enable new extended features in future kernel
-> > versions and those features can trigger a behavior not unsupported
-> > by the older programs or make the newer kernels return an error
-> > for a request which was valid on older kernels.
-> >=20
-> > Additionally, returning an error for unsupported feature would
-> > allow userspace to probe/discover which extended features are
-> > currently supported by a kernel.
->=20
-> As I wrote before, I hope in the future we don't force userspace to
-> probe features this way, because it may be unnecessarily complex.
->=20
+Since this is an API change, linux-api@ shouls be CCed, Added.
 
-I believe that most use cases won't need probing as applications are
-often built according to the current kernel features in mind.
+Thanks,
 
-If applications need to use new features, it seems to be a small price
-to pay to be prepared to get -EINVAL.
+Michael
 
-In another word: backward compatibility from application point of view:
-a newer application wanting to run on older kernel must be prepared to.
 
-> I agree though that we should have a way to extend this verb in the f=
-uture.
->=20
-> Reviewed-by: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
->=20
-
-Thanks.
-
-> >=20
-> > Link: http://mid.gmane.org/cover.1422553023.git.ydroneaud-RlY5vtjFyJ1hl2p70BpVqQ@public.gmane.org=
-m
-> > Cc: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-> > Cc: Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-> > Cc: Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-> > Cc: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-> > Signed-off-by: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
-> > ---
-> >  drivers/infiniband/core/uverbs_cmd.c | 3 +++
-> >  1 file changed, 3 insertions(+)
-> >=20
-> > diff --git a/drivers/infiniband/core/uverbs_cmd.c b/drivers/infinib=
-and/core/uverbs_cmd.c
-> > index 6ef06a9b4362..fbcc54b86795 100644
-> > --- a/drivers/infiniband/core/uverbs_cmd.c
-> > +++ b/drivers/infiniband/core/uverbs_cmd.c
-> > @@ -3312,6 +3312,9 @@ int ib_uverbs_ex_query_device(struct ib_uverb=
-s_file *file,
-> >  	if (err)
-> >  		return err;
-> > =20
-> > +	if (cmd.comp_mask)
-> > +		return -EINVAL;
-> > +
-> >  	if (cmd.reserved)
-> >  		return -EINVAL;
-> > =20
-> >=20
->=20
+On Mon, Feb 2, 2015 at 6:36 AM, Theodore Ts'o <tytso@mit.edu> wrote:
+> This is an updated version of what had originally been an
+> ext4-specific patch which significantly improves performance by lazily
+> writing timestamp updates (and in particular, mtime updates) to disk.
+> The in-memory timestamps are always correct, but they are only written
+> to disk when required for correctness.
+>
+> This provides a huge performance boost for ext4 due to how it handles
+> journalling, but it's valuable for all file systems running on flash
+> storage or drive-managed SMR disks by reducing the metadata write
+> load.  So upon request, I've moved the functionality to the VFS layer.
+> Once the /sbin/mount program adds support for MS_LAZYTIME, all file
+> systems should be able to benefit from this optimization.
+>
+> There is still an ext4-specific optimization, which may be applicable
+> for other file systems which store more than one inode in a block, but
+> it will require file system specific code.  It is purely optional,
+> however.
+>
+> For people interested seeing how timestamp updates are held back, the
+> following example commands to enable the tracepoints debugging may be
+> helpful:
+>
+>   mount -o remount,lazytime /
+>   cd /sys/kernel/debug/tracing
+>   echo 1 > events/writeback/writeback_lazytime/enable
+>   echo 1 > events/writeback/writeback_lazytime_iput/enable
+>   echo "state & 2048" > events/writeback/writeback_dirty_inode_enqueue/filter
+>   echo 1 > events/writeback/writeback_dirty_inode_enqueue/enable
+>   echo 1 > events/ext4/ext4_other_inode_update_time/enable
+>   cat trace_pipe
+>
+> You can also see how many lazytime inodes are in memory by looking in
+> /sys/kernel/debug/bdi/<bdi>/stats
+>
+> Changes since -v8:
+>   - in ext4_update_other_inodes_time() clear I_DIRTY_TIME_EXPIRED as
+>     well as I_DIRTY_TIME
+>   - Fixed a bug which broke writeback in some cases (introduced in -v7)
+>
+> Changes since -v7:
+>    - Fix comment typos
+>    - Clear the I_DIRTY_TIME flag if I_DIRTY_INODE gets added in
+>      __mark_inode_dirty()
+>    - Fix a bug accidentally introduced in -v7 which broke lazytime altogether
+>
+> Changes since -v6:
+>    - Add a new tracepoint writeback_dirty_inode_enqueue
+>    - Move generic handling of update_time() to generic_update_time(),
+>      so filesystems can more easily hook or modify update_time()
+>    - The file system's dirty_inode() will now always get called with
+>      I_DIRTY_TIME when the inode time is updated.   (I_DIRTY_SYNC will
+>      also be set if the inode should be updated right away.)   This allows
+>      file systems such as XFS to update its on-disk copy of the inode if
+>      I_DIRTY_TIME is set.
+>
+> Changes since -v5:
+>    - Tweak move_expired_inodes to handle sync() and syncfs(), and drop
+>      flush_sb_dirty_time().
+>    - Move logic for handling the b_dirty_time list into
+>      __mark_inode_dirty().
+>    - Move I_DIRTY back to its original definition, and use I_DIRTY_ALL
+>      for I_DIRTY plus I_DIRTY_TIME.
+>    - Fold some patches together to make the first patch easier to
+>      review (and modify/update).
+>    - Use the pre-existing writeback tracepoints instead of creating a new
+>      fs tracepoints.
+>
+> Changes since -v4:
+>    - Fix ext4 optimization so it does not need to increment (and more
+>      problematically, decrement) the inode reference count
+>    - Per Christoph's suggestion, drop support for btrfs and xfs for now,
+>      issues with how btrfs and xfs handle dirty inode tracking.  We can add
+>      btrfs and xfs support back later or at the end of this series if we
+>      want to revisit this decision.
+>    - Miscellaneous cleanups
+>
+> Changes since -v3:
+>    - inodes with I_DIRTY_TIME set are placed on a new bdi list,
+>         b_dirty_time.  This allows filesystem-level syncs to more
+>         easily iterate over those inodes that need to have their
+>         timestamps written to disk.
+>    - dirty timestamps will be written out asynchronously on the final
+>         iput, instead of when the inode gets evicted.
+>    - separate the definition of the new function
+>         find_active_inode_nowait() to a separate patch
+>    - create separate flag masks: I_DIRTY_WB and I_DIRTY_INODE, which
+>        indicate whether the inode needs to be on the write back lists,
+>        or whether the inode itself is dirty, while I_DIRTY means any one
+>        of the inode dirty flags are set.  This simplifies the fs
+>        writeback logic which needs to test for different combinations of
+>        the inode dirty flags in different places.
+>
+> Changes since -v2:
+>    - If update_time() updates i_version, it will not use lazytime (i..e,
+>        the inode will be marked dirty so the change will be persisted on to
+>        disk sooner rather than later).  Yes, this eliminates the
+>        benefits of lazytime if the user is experting the file system via
+>        NFSv4.  Sad, but NFS's requirements seem to mandate this.
+>    - Fix time wrapping bug 49 days after the system boots (on a system
+>         with a 32-bit jiffies).   Use get_monotonic_boottime() instead.
+>    - Clean up type warning in include/tracing/ext4.h
+>    - Added explicit parenthesis for stylistic reasons
+>    - Added an is_readonly() inode operations method so btrfs doesn't
+>        have to duplicate code in update_time().
+>
+> Changes since -v1:
+>    - Added explanatory comments in update_time() regarding i_ts_dirty_days
+>    - Fix type used for days_since_boot
+>    - Improve SMP scalability in update_time and ext4_update_other_inodes_time
+>    - Added tracepoints to help test and characterize how often and under
+>          what circumstances inodes have their timestamps lazily updated
+>
+> Theodore Ts'o (3):
+>   vfs: add support for a lazytime mount option
+>   vfs: add find_inode_nowait() function
+>   ext4: add optimization for the lazytime mount option
+>
+>  fs/ext4/inode.c                  |  70 +++++++++++++++++++++++++-
+>  fs/ext4/super.c                  |  10 ++++
+>  fs/fs-writeback.c                |  62 +++++++++++++++++++----
+>  fs/gfs2/file.c                   |   4 +-
+>  fs/inode.c                       | 106 +++++++++++++++++++++++++++++++++------
+>  fs/jfs/file.c                    |   2 +-
+>  fs/libfs.c                       |   2 +-
+>  fs/proc_namespace.c              |   1 +
+>  fs/sync.c                        |   8 +++
+>  include/linux/backing-dev.h      |   1 +
+>  include/linux/fs.h               |  10 ++++
+>  include/trace/events/ext4.h      |  30 +++++++++++
+>  include/trace/events/writeback.h |  60 +++++++++++++++++++++-
+>  include/uapi/linux/fs.h          |   4 +-
+>  mm/backing-dev.c                 |  10 +++-
+>  15 files changed, 343 insertions(+), 37 deletions(-)
+>
 > --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" =
-in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> 2.1.0
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
+> the body of a message to majordomo@vger.kernel.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
+
+-- 
+Michael Kerrisk Linux man-pages maintainer;
+http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface", http://blog.man7.org/
