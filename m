@@ -1,119 +1,39 @@
-From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH-v9 2/3] vfs: add find_inode_nowait() function
-Date: Mon, 2 Feb 2015 07:04:16 +0100
-Message-ID: <CAHO5Pa0Ptjq9jpr_GVoJVt=Djuim94GDGMViUVF5KMrs0NoFnQ@mail.gmail.com>
-References: <1422855422-7444-1-git-send-email-tytso@mit.edu> <1422855422-7444-3-git-send-email-tytso@mit.edu>
+From: Bart Van Assche <bart.vanassche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH] fcntl.h: Fix a typo
+Date: Mon, 02 Feb 2015 08:43:16 +0100
+Message-ID: <54CF2A94.9080107@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1422855422-7444-3-git-send-email-tytso-3s7WtUTddSA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
-Cc: Linux Filesystem Development List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-[CC += linux-api@]
+In the source file fs/fcntl.c and also in the fcntl() man page one
+can see that the FD_CLOEXEC flag can be manipulated via F_GETFD and
+F_SETFD. Update the comment in <fcntl.h> accordingly.
 
-On Mon, Feb 2, 2015 at 6:37 AM, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org> wrote:
-> Add a new function find_inode_nowait() which is an even more general
-> version of ilookup5_nowait().  It is designed for callers which need
-> very fine grained control over when the function is allowed to block
-> or increment the inode's reference count.
->
-> Signed-off-by: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
-> ---
->  fs/inode.c         | 50 ++++++++++++++++++++++++++++++++++++++++++++++++++
->  include/linux/fs.h |  5 +++++
->  2 files changed, 55 insertions(+)
->
-> diff --git a/fs/inode.c b/fs/inode.c
-> index 4feb85c..740cba7 100644
-> --- a/fs/inode.c
-> +++ b/fs/inode.c
-> @@ -1284,6 +1284,56 @@ struct inode *ilookup(struct super_block *sb, unsigned long ino)
->  }
->  EXPORT_SYMBOL(ilookup);
->
-> +/**
-> + * find_inode_nowait - find an inode in the inode cache
-> + * @sb:                super block of file system to search
-> + * @hashval:   hash value (usually inode number) to search for
-> + * @match:     callback used for comparisons between inodes
-> + * @data:      opaque data pointer to pass to @match
-> + *
-> + * Search for the inode specified by @hashval and @data in the inode
-> + * cache, where the helper function @match will return 0 if the inode
-> + * does not match, 1 if the inode does match, and -1 if the search
-> + * should be stopped.  The @match function must be responsible for
-> + * taking the i_lock spin_lock and checking i_state for an inode being
-> + * freed or being initialized, and incrementing the reference count
-> + * before returning 1.  It also must not sleep, since it is called with
-> + * the inode_hash_lock spinlock held.
-> + *
-> + * This is a even more generalized version of ilookup5() when the
-> + * function must never block --- find_inode() can block in
-> + * __wait_on_freeing_inode() --- or when the caller can not increment
-> + * the reference count because the resulting iput() might cause an
-> + * inode eviction.  The tradeoff is that the @match funtion must be
-> + * very carefully implemented.
-> + */
-> +struct inode *find_inode_nowait(struct super_block *sb,
-> +                               unsigned long hashval,
-> +                               int (*match)(struct inode *, unsigned long,
-> +                                            void *),
-> +                               void *data)
-> +{
-> +       struct hlist_head *head = inode_hashtable + hash(sb, hashval);
-> +       struct inode *inode, *ret_inode = NULL;
-> +       int mval;
-> +
-> +       spin_lock(&inode_hash_lock);
-> +       hlist_for_each_entry(inode, head, i_hash) {
-> +               if (inode->i_sb != sb)
-> +                       continue;
-> +               mval = match(inode, hashval, data);
-> +               if (mval == 0)
-> +                       continue;
-> +               if (mval == 1)
-> +                       ret_inode = inode;
-> +               goto out;
-> +       }
-> +out:
-> +       spin_unlock(&inode_hash_lock);
-> +       return ret_inode;
-> +}
-> +EXPORT_SYMBOL(find_inode_nowait);
-> +
->  int insert_inode_locked(struct inode *inode)
->  {
->         struct super_block *sb = inode->i_sb;
-> diff --git a/include/linux/fs.h b/include/linux/fs.h
-> index 5ca285f..af810cc 100644
-> --- a/include/linux/fs.h
-> +++ b/include/linux/fs.h
-> @@ -2441,6 +2441,11 @@ extern struct inode *ilookup(struct super_block *sb, unsigned long ino);
->
->  extern struct inode * iget5_locked(struct super_block *, unsigned long, int (*test)(struct inode *, void *), int (*set)(struct inode *, void *), void *);
->  extern struct inode * iget_locked(struct super_block *, unsigned long);
-> +extern struct inode *find_inode_nowait(struct super_block *,
-> +                                      unsigned long,
-> +                                      int (*match)(struct inode *,
-> +                                                   unsigned long, void *),
-> +                                      void *data);
->  extern int insert_inode_locked4(struct inode *, unsigned long, int (*test)(struct inode *, void *), void *);
->  extern int insert_inode_locked(struct inode *);
->  #ifdef CONFIG_DEBUG_LOCK_ALLOC
-> --
-> 2.1.0
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Signed-off-by: Bart Van Assche <bart.vanassche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>
+Cc: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>
+---
+ include/uapi/asm-generic/fcntl.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-
-
+diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
+index e063eff..584fa2b 100644
+--- a/include/uapi/asm-generic/fcntl.h
++++ b/include/uapi/asm-generic/fcntl.h
+@@ -157,7 +157,7 @@ struct f_owner_ex {
+ 	__kernel_pid_t	pid;
+ };
+ 
+-/* for F_[GET|SET]FL */
++/* for F_[GET|SET]FD */
+ #define FD_CLOEXEC	1	/* actually anything with low bit set goes */
+ 
+ /* for posix fcntl() and lockf() */
 -- 
-Michael Kerrisk Linux man-pages maintainer;
-http://www.kernel.org/doc/man-pages/
-Author of "The Linux Programming Interface", http://blog.man7.org/
+2.1.4
