@@ -1,175 +1,42 @@
-From: Michal Hocko <mhocko@suse.cz>
-Subject: [RFC PATCH] fork: report pid reservation failure properly
-Date: Tue, 3 Feb 2015 16:05:57 +0100
-Message-ID: <20150203150557.GB8907@dhcp22.suse.cz>
+From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: MADV_DONTNEED semantics? Was: [RFC PATCH] mm: madvise: Ignore
+ repeated MADV_DONTNEED hints
+Date: Tue, 3 Feb 2015 16:21:21 +0100
+Message-ID: <20150203152121.GC8914@dhcp22.suse.cz>
+References: <20150202165525.GM2395@suse.de>
+ <54CFF8AC.6010102@intel.com>
+ <54D08483.40209@suse.cz>
+ <20150203111600.GR2395@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linux API <linux-api@vger.kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Michael Kerrisk <mtk.manpages@gmail.com>, LKML <linux-kernel@vger.kernel.org>
+In-Reply-To: <20150203111600.GR2395-l3A5Bk7waGM@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>
+Cc: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
-while debugging an unexpected ENOMEM from fork (there was no memory
-pressure and OVERCOMMIT_ALWAYS) I have found out that fork returns
-ENOMEM even when not short on memory.
+On Tue 03-02-15 11:16:00, Mel Gorman wrote:
+> On Tue, Feb 03, 2015 at 09:19:15AM +0100, Vlastimil Babka wrote:
+[...]
+> > And if we agree that there is indeed no guarantee, what's the actual semantic
+> > difference from MADV_FREE? I guess none? So there's only a possible perfomance
+> > difference?
+> > 
+> 
+> Timing. MADV_DONTNEED if it has an effect is immediate, is a heavier
+> operations and RSS is reduced. MADV_FREE only has an impact in the future
+> if there is memory pressure.
 
-In this particular case it was due to depleted pid space which is
-documented to return EAGAIN in man pages.
-
-Here is a quick fix up. I am sending that as a RFC because I am not
-entirely sure about interaction with pid namespace which might cause
-fork to fail. pid_ns_prepare_proc might return few error codes which are
-not documented by man page but I am not sure whether that is actually
-going to happen on a properly configured system.
-
-There doesn't seem to be a good error code for an already "closed"
-namespace (PIDNS_HASH_ADDING disabled) as well.  I've chosen EBUSY but
-that might be completely wrong.  I am also wondering how would this
-error case happen in the first place because parent should still exist
-while fork is going on so the pid namespace shouldn't go away but I
-smell this might have something to do with setns or something similar.
-
-Any feedback would be appreciated.
----
->From 2a576175345fffa04da19cd51a25b7d94187b5f9 Mon Sep 17 00:00:00 2001
-From: Michal Hocko <mhocko@suse.cz>
-Date: Fri, 30 Jan 2015 14:50:15 +0100
-Subject: [PATCH] fork: report pid reservation failure properly
-
-copy_process will report any failure in alloc_pid as ENOMEM currently
-which is misleading because the pid allocation might fail not only when
-the memory is short but also when the pid space is consumed already.
-
-The current man page even mentions this case:
-"
-EAGAIN
-
-      A system-imposed limit on the number of threads was encountered.
-      There are a number of limits that may trigger this error: the
-      RLIMIT_NPROC soft resource limit (set via setrlimit(2)), which
-      limits the number of processes and threads for a real user ID, was
-      reached; the kernel's system-wide limit on the number of processes
-      and threads, /proc/sys/kernel/threads-max, was reached (see
-      proc(5)); or the maximum number of PIDs, /proc/sys/kernel/pid_max,
-      was reached (see proc(5)).
-"
-
-so the current behavior is also incorrect wrt. documentation. This patch
-simply propagates error code from alloc_pid and makes sure we return
--EAGAIN due to reservation failure.
-
-There is one side effect of the change which might be unexpected.
-alloc_pid might fail even when the repear in the pid namespace is dead
-(the namespace basically disallows all new processes) and there is no
-good error code which would match documented ones. I've taken EBUSY
-because it felt like a best fit for the condition - namespace is busy
-tearing down all the infrastructure.
-
-Signed-off-by: Michal Hocko <mhocko@suse.cz>
----
- kernel/fork.c |  5 +++--
- kernel/pid.c  | 19 +++++++++++--------
- 2 files changed, 14 insertions(+), 10 deletions(-)
-
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 3ce8d57cff09..c37b88a162c5 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -1405,10 +1405,11 @@ static struct task_struct *copy_process(unsigned long clone_flags,
- 		goto bad_fork_cleanup_io;
- 
- 	if (pid != &init_struct_pid) {
--		retval = -ENOMEM;
- 		pid = alloc_pid(p->nsproxy->pid_ns_for_children);
--		if (!pid)
-+		if (IS_ERR(pid)) {
-+			retval = PTR_ERR(pid);
- 			goto bad_fork_cleanup_io;
-+		}
- 	}
- 
- 	p->set_child_tid = (clone_flags & CLONE_CHILD_SETTID) ? child_tidptr : NULL;
-diff --git a/kernel/pid.c b/kernel/pid.c
-index 82430c858d69..c1a5875bd1ab 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -207,7 +207,7 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
- 		}
- 		pid = mk_pid(pid_ns, map, offset);
- 	}
--	return -1;
-+	return -EAGAIN;
- }
- 
- int next_pidmap(struct pid_namespace *pid_ns, unsigned int last)
-@@ -298,17 +298,20 @@ struct pid *alloc_pid(struct pid_namespace *ns)
- 	int i, nr;
- 	struct pid_namespace *tmp;
- 	struct upid *upid;
-+	int retval;
- 
- 	pid = kmem_cache_alloc(ns->pid_cachep, GFP_KERNEL);
- 	if (!pid)
--		goto out;
-+		return ERR_PTR(-ENOMEM);
- 
- 	tmp = ns;
- 	pid->level = ns->level;
- 	for (i = ns->level; i >= 0; i--) {
- 		nr = alloc_pidmap(tmp);
--		if (nr < 0)
-+		if (IS_ERR_VALUE(nr)) {
-+			retval = nr;
- 			goto out_free;
-+		}
- 
- 		pid->numbers[i].nr = nr;
- 		pid->numbers[i].ns = tmp;
-@@ -316,7 +319,7 @@ struct pid *alloc_pid(struct pid_namespace *ns)
- 	}
- 
- 	if (unlikely(is_child_reaper(pid))) {
--		if (pid_ns_prepare_proc(ns))
-+		if ((retval = pid_ns_prepare_proc(ns)))
- 			goto out_free;
- 	}
- 
-@@ -327,8 +330,10 @@ struct pid *alloc_pid(struct pid_namespace *ns)
- 
- 	upid = pid->numbers + ns->level;
- 	spin_lock_irq(&pidmap_lock);
--	if (!(ns->nr_hashed & PIDNS_HASH_ADDING))
-+	if (!(ns->nr_hashed & PIDNS_HASH_ADDING)) {
-+		retval = -EBUSY;
- 		goto out_unlock;
-+	}
- 	for ( ; upid >= pid->numbers; --upid) {
- 		hlist_add_head_rcu(&upid->pid_chain,
- 				&pid_hash[pid_hashfn(upid->nr, upid->ns)]);
-@@ -336,7 +341,6 @@ struct pid *alloc_pid(struct pid_namespace *ns)
- 	}
- 	spin_unlock_irq(&pidmap_lock);
- 
--out:
- 	return pid;
- 
- out_unlock:
-@@ -348,8 +352,7 @@ out_free:
- 		free_pidmap(pid->numbers + i);
- 
- 	kmem_cache_free(ns->pid_cachep, pid);
--	pid = NULL;
--	goto out;
-+	return ERR_PTR(retval);
- }
- 
- void disable_pid_allocation(struct pid_namespace *ns)
--- 
-2.1.4
-
+JFTR. the man page for MADV_FREE has been proposed already
+(https://lkml.org/lkml/2014/12/5/63 should be the last version AFAIR). I
+do not see it in the man-pages git tree but the patch was not in time
+for 3.19 so I guess it will only appear in 3.20.
 -- 
 Michal Hocko
 SUSE Labs
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
