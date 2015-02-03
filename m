@@ -1,103 +1,123 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH v17 1/7] mm: support madvise(MADV_FREE)
-Date: Tue, 03 Feb 2015 17:39:24 +0100
-Message-ID: <54D0F9BC.4060306@gmail.com>
-References: <1413799924-17946-1-git-send-email-minchan@kernel.org> <1413799924-17946-2-git-send-email-minchan@kernel.org> <20141127144725.GB19157@dhcp22.suse.cz> <20141130235652.GA10333@bbox> <20141202100125.GD27014@dhcp22.suse.cz> <20141203000026.GA30217@bbox> <20141203101329.GB23236@dhcp22.suse.cz> <20141205070816.GB3358@bbox> <20141205083249.GA2321@dhcp22.suse.cz>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [RFC PATCH] fork: report pid reservation failure properly
+Date: Tue, 03 Feb 2015 14:44:31 -0600
+Message-ID: <87bnlalo7k.fsf@x220.int.ebiederm.org>
+References: <20150203150557.GB8907@dhcp22.suse.cz>
+	<CAKgNAkjiz6Uop_QVBNyyHFu8kgAR46nB1HWi0yOKt4ZX=666vg@mail.gmail.com>
+	<20150203155248.GD8907@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20141205083249.GA2321@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@suse.cz>, Minchan Kim <minchan@kernel.org>
-Cc: mtk.manpages@gmail.com, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150203155248.GD8907@dhcp22.suse.cz> (Michal Hocko's message of
+	"Tue, 3 Feb 2015 16:52:48 +0100")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michal Hocko <mhocko@suse.cz>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Minchan (and Michal)
+Michal Hocko <mhocko@suse.cz> writes:
 
-I did not see this patch until just now when Michael explicitly
-mentioned it in another discussion because
-(a) it was buried in an LMKL thread that started a topic
-    that was not about a man-pages patch.
-(b) linux-man@ was not CCed.
+> On Tue 03-02-15 16:33:03, Michael Kerrisk wrote:
+>> Hi Michal,
+>> 
+>> 
+>> On 3 February 2015 at 16:05, Michal Hocko <mhocko@suse.cz> wrote:
+>> > Hi,
+>> > while debugging an unexpected ENOMEM from fork (there was no memory
+>> > pressure and OVERCOMMIT_ALWAYS) I have found out that fork returns
+>> > ENOMEM even when not short on memory.
+>> >
+>> > In this particular case it was due to depleted pid space which is
+>> > documented to return EAGAIN in man pages.
+>> >
+>> > Here is a quick fix up.
+>> 
+>> Could you summarize briefly what the user-space visible change is
+>> here?
+>
+> The user visible change is that the userspace will get EAGAIN when
+> calling fork and the pid space is depleted because of a system wide
+> limit as per man page description rather than ENOMEM which we return
+> currently.
 
-When resubmitting this patch, could you please To:me and CC linux-man@
-and give the mail a suitable subject line indicating a man-pages patch.
+I don't think that EAGAIN is any better than ENOMEM,
+nor do I know that it is safe to return EBUSY from fork.  What nonsense
+will applications do when they see an unexpected error code.
 
-On 12/05/2014 09:32 AM, Michal Hocko wrote:
-> On Fri 05-12-14 16:08:16, Minchan Kim wrote:
-> [...]
->> From cfa212d4fb307ae772b08cf564cab7e6adb8f4fc Mon Sep 17 00:00:00 2001
->> From: Minchan Kim <minchan@kernel.org>
->> Date: Mon, 1 Dec 2014 08:53:55 +0900
->> Subject: [PATCH] madvise.2: Document MADV_FREE
->>
->> Signed-off-by: Minchan Kim <minchan@kernel.org>
-> 
-> Reviewed-by: Michal Hocko <mhocko@suse.cz>
-> 
-> Thanks!
-> 
->> ---
->>  man2/madvise.2 | 12 ++++++++++++
->>  1 file changed, 12 insertions(+)
->>
->> diff --git a/man2/madvise.2 b/man2/madvise.2
->> index 032ead7..fc1aaca 100644
->> --- a/man2/madvise.2
->> +++ b/man2/madvise.2
->> @@ -265,6 +265,18 @@ file (see
->>  .BR MADV_DODUMP " (since Linux 3.4)"
->>  Undo the effect of an earlier
->>  .BR MADV_DONTDUMP .
->> +.TP
->> +.BR MADV_FREE " (since Linux 3.19)"
->> +Tell the kernel that contents in the specified address range are no
->> +longer important and the range will be overwritten. When there is
->> +demand for memory, the system will free pages associated with the
->> +specified address range. In this instance, the next time a page in the
->> +address range is referenced, it will contain all zeroes.  Otherwise,
->> +it will contain the data that was there prior to the MADV_FREE call.
->> +References made to the address range will not make the system read
->> +from backing store (swap space) until the page is modified again.
->> +It works only with private anonymous pages (see
->> +.BR mmap (2)).
->>  .SH RETURN VALUE
->>  On success
->>  .BR madvise ()
+>> It is not so obvious from your message. I believe you're turning
+>> some cases of ENOMEM into EAGAIN, right?
+>
+> Yes, except for the case mentioned below which discusses a potential
+> error code for pid namespace triggered failures.
+>
+>> Note, by the way, that if I understandwhat you intend, this change
+>> would bring the implementation closer to POSIX, which specifies:
+>
+> True.
+>
+> HTH.
+>
+>>        EAGAIN The  system  lacked  the  necessary  resources  to  create
+>>               another  process, or the system-imposed limit on the total
+>>               number of processes under execution system-wide  or  by  a
+>>               single user {CHILD_MAX} would be exceeded.
+>> 
 
-If I'm reading the conversation right, the initially proposed text 
-was from the BSD man page (which would be okay), but most of the 
-text above seems  to have come straight from the page here:
-http://www.lehman.cuny.edu/cgi-bin/man-cgi?madvise+3
+Note.  All of those documented errors documented to return EAGAIN
+are the kind of errors that if you wait a while you can reasonably
+expect fork to succeed later.
 
-Right?
+With respecting to dealing with errors from fork, fork
+is a major pain.  Fork only has only two return codes documented,
+and fork is one of the most complicated system calls in the kernel with
+the most failure modes of any system call I am familiar with.  Mapping 
+a plethora of failure modes onto two error codes is always going to be
+problematic from some view point.
 
-Unfortunately, I don't think we can use that text. It's from the 
-Solaris man page as far as I can tell, and I doubt that it's 
-under a license that we can use.
+EAGAIN is a bad idea in general because that means try again and if you
+have hit a fixed limit trying again is wrong.
 
-If that's the case, we need to go back and come up with an
-original text. It might draw inspiration from the Solaris page,
-and take actual text from the BSD page (which is under a free
-license), and it might also draw inspiration from Jon Corbet's 
-description at http://lwn.net/Articles/590991/. 
+Frankly I think posix is probably borked to recommend EAGAIN instead of
+ENOMEM.
 
-Could you take another shot this please!
+Everyone in the world uses fork which makes is quite tricky to figure
+out which assumptions on the return values of fork exist in the wild,
+so it is not clear if it is safe to add new more descriptive return
+messages.
 
-Thanks,
+With respect to the case where PIDNS_HASH_ADDING would cause fork to
+fail, that only happens after init has exited in a pid namespace, so it
+is very much a permanent failure, and there are no longer any processes
+in the specific pid namespace nor will there ever be any more processes
+in that pid namespace.  EINVAL might actually makes sense.  Of course
+a sensible error code from fork does not seem to be allowed.
 
-Michael
+Of the two return codes that are allowed for fork, EAGAIN and ENOMEM
+ENOMEM seems to be better as it is a more permanement failure.
 
+I agree it is a little confusing, but I don't see anything that is other
+than a little confusing.
 
+Other than someone doing:
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+unshare(CLONE_NEWPID);
+pid = fork();
+waitpid(pid);
+fork();   /* returns ENOMEM */
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Was there any other real world issue that started this goal to fix fork?
+
+I think there is a reasonable argument for digging into the fork return
+code situation.  Perhaps it is just a matter of returning exotic return
+codes for the weird and strange cases like trying to create a pid in a
+dead pid namespace.
+
+But what we have works, and I don't know of anything bad that happens
+except when people are developing new code they get confused.
+
+Further we can't count on people to read their man pages because this
+behavior of returning ENOMEM is documented in pid_namespaces(7).  Which
+makes me really thinking changing the code to match the manpage is more
+likely to break code than to fix code.
+
+Eric
