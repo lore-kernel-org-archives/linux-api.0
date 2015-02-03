@@ -1,83 +1,28 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: MADV_DONTNEED semantics? Was: [RFC PATCH] mm: madvise: Ignore repeated
- MADV_DONTNEED hints
-Date: Tue, 03 Feb 2015 09:19:15 +0100
-Message-ID: <54D08483.40209@suse.cz>
-References: <20150202165525.GM2395@suse.de> <54CFF8AC.6010102@intel.com>
+From: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH v5] perf: Use monotonic clock as a source for timestamps
+Date: Tue, 03 Feb 2015 09:20:45 +0000
+Message-ID: <1422955245.4944.26.camel@arm.com>
+References: <1415292718-19785-2-git-send-email-pawel.moll@arm.com>
+	 <1421872037-12559-1-git-send-email-pawel.moll@arm.com>
+	 <1422895966.4944.25.camel@arm.com>
+	 <CAN+dfcT_6zZZ4oeyngUE5N0Wtx2B9CvXsfU71m+cuyXpq2KBdw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <54CFF8AC.6010102@intel.com>
-Sender: owner-linux-mm@kvack.org
-To: Dave Hansen <dave.hansen@intel.com>, Mel Gorman <mgorman@suse.de>, linux-mm@kvack.org
-Cc: Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, mtk.manpages@gmail.com, linux-man@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAN+dfcT_6zZZ4oeyngUE5N0Wtx2B9CvXsfU71m+cuyXpq2KBdw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: ajh mls <ajhmls-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "adrian.hunter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <adrian.hunter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-[CC linux-api, man pages]
+On Tue, 2015-02-03 at 08:30 +0000, ajh mls wrote:
+> There is still
+>
+> http://marc.info/?l=linux-kernel&m=142141223902303
 
-On 02/02/2015 11:22 PM, Dave Hansen wrote:
-> On 02/02/2015 08:55 AM, Mel Gorman wrote:
->> This patch identifies when a thread is frequently calling MADV_DONTNEED
->> on the same region of memory and starts ignoring the hint. On an 8-core
->> single-socket machine this was the impact on ebizzy using glibc 2.19.
-> 
-> The manpage, at least, claims that we zero-fill after MADV_DONTNEED is
-> called:
-> 
->>      MADV_DONTNEED
->>               Do  not  expect  access in the near future.  (For the time being, the application is finished with the given range, so the kernel can free resources
->>               associated with it.)  Subsequent accesses of pages in this range will succeed, but will result either in reloading of the memory contents  from  the
->>               underlying mapped file (see mmap(2)) or zero-fill-on-demand pages for mappings without an underlying file.
-> 
-> So if we have anything depending on the behavior that it's _always_
-> zero-filled after an MADV_DONTNEED, this will break it.
+Uh. I have no idea why, but I haven't got this mail at all :-(
 
-OK, so that's a third person (including me) who understood it as a zero-fill
-guarantee. I think the man page should be clarified (if it's indeed not
-guaranteed), or we have a bug.
+Thanks for pointing it out!
 
-The implementation actually skips MADV_DONTNEED for
-VM_LOCKED|VM_HUGETLB|VM_PFNMAP vma's.
-
-I'm not sure about VM_PFNMAP, these are probably special enough. For mlock, one
-could expect that mlocking and MADV_DONTNEED would be in some opposition, but
-it's not documented in the manpage AFAIK. Neither is the hugetlb case, which
-could be really unexpected by the user.
-
-Next, what the man page says about guarantees:
-
-"The kernel is free to ignore the advice."
-
-- that would suggest that nothing is guaranteed
-
-"This call does not influence the semantics of the application (except in the
-case of MADV_DONTNEED)"
-
-- that depends if the reader understands it as "does influence by MADV_DONTNEED"
-or "may influence by MADV_DONTNEED"
-
-- btw, isn't MADV_DONTFORK another exception that does influence the semantics?
-And since it's mentioned as a workaround for some hardware, is it OK to ignore
-this advice?
-
-And the part you already cited:
-
-"Subsequent accesses of pages in this range will succeed, but will result either
-in reloading of the memory contents from the underlying mapped file (see
-mmap(2)) or zero-fill on-demand pages for mappings without an underlying file."
-
-- The word "will result" did sound as a guarantee at least to me. So here it
-could be changed to "may result (unless the advice is ignored)"?
-
-And if we agree that there is indeed no guarantee, what's the actual semantic
-difference from MADV_FREE? I guess none? So there's only a possible perfomance
-difference?
-
-Vlastimil
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Pawel
