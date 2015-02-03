@@ -1,42 +1,43 @@
-From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: MADV_DONTNEED semantics? Was: [RFC PATCH] mm: madvise: Ignore
- repeated MADV_DONTNEED hints
-Date: Tue, 3 Feb 2015 16:21:21 +0100
-Message-ID: <20150203152121.GC8914@dhcp22.suse.cz>
-References: <20150202165525.GM2395@suse.de>
- <54CFF8AC.6010102@intel.com>
- <54D08483.40209@suse.cz>
- <20150203111600.GR2395@suse.de>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH v2] selftests/exec: Check if the syscall exists and bail
+ if not
+Date: Tue, 03 Feb 2015 08:32:43 -0700
+Message-ID: <54D0EA1B.1000508@osg.samsung.com>
+References: <1422935588-9973-1-git-send-email-mpe@ellerman.id.au> <CAHse=S9iLWK68mUSaVMEAwsaOEt4sTaM7XMBY-mv+ofk6sfT+g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150203111600.GR2395-l3A5Bk7waGM@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>
-Cc: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAHse=S9iLWK68mUSaVMEAwsaOEt4sTaM7XMBY-mv+ofk6sfT+g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue 03-02-15 11:16:00, Mel Gorman wrote:
-> On Tue, Feb 03, 2015 at 09:19:15AM +0100, Vlastimil Babka wrote:
-[...]
-> > And if we agree that there is indeed no guarantee, what's the actual semantic
-> > difference from MADV_FREE? I guess none? So there's only a possible perfomance
-> > difference?
-> > 
+On 02/03/2015 12:58 AM, David Drysdale wrote:
+> On Tue, Feb 3, 2015 at 3:53 AM, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org> wrote:
+>> On systems which don't implement sys_execveat(), this test produces a
+>> lot of output.
+>>
+>> Add a check at the beginning to see if the syscall is present, and if
+>> not just note one error and return.
+>>
+>> When we run on a system that doesn't implement the syscall we will get
+>> ENOSYS back from the kernel, so change the logic that handles
+>> __NR_execveat not being defined to also use ENOSYS rather than -ENOSYS.
+>>
+>> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 > 
-> Timing. MADV_DONTNEED if it has an effect is immediate, is a heavier
-> operations and RSS is reduced. MADV_FREE only has an impact in the future
-> if there is memory pressure.
+> Acked-by: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-JFTR. the man page for MADV_FREE has been proposed already
-(https://lkml.org/lkml/2014/12/5/63 should be the last version AFAIR). I
-do not see it in the man-pages git tree but the patch was not in time
-for 3.19 so I guess it will only appear in 3.20.
+Thanks Michael, and David. I will queue this for 3.20
+
+-- Shuah
+
+
 -- 
-Michal Hocko
-SUSE Labs
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
