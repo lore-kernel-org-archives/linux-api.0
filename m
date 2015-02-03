@@ -1,59 +1,50 @@
-From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 01/13] kdbus: add documentation
-Date: Tue, 03 Feb 2015 11:09:47 +0100
-Message-ID: <54D09E6B.2020903@zonque.org>
-References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org> <1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org> <54BE5DC8.70706@gmail.com> <54BE9D08.7010804@zonque.org> <54BF805B.4000609@gmail.com> <54BFDAAA.50203@zonque.org> <54C0CE8A.5080805@gmail.com> <CANq1E4S=3qNw599L85uj-8aXwxeV+mcurB_Nu_rHH8opAeePjw@mail.gmail.com> <54C10DDC.9000503@gmail.com> <20150123160854.GA5210@kroah.com> <54C65346.5070504@gmail.com> <CANq1E4SkHhs1pWUe-TzG7bzk1M-Q++mB2vmQGuYx0RMF53wg4Q@mail.gmail.com> <CALCETrU1O6LjhrXSH2aXWFt2WGh=ssrq4K9HD10f_Z55iT=Otw@mail.gmail.com> <54C9F525.4040703@zonque.org> <CALCETrV6P+Lx5FRLyDNubG18tqCTLprkXJf=82aa5DsRHjkuKA@mail.gmail.com> <54CA1CA2.9060005@zonque.org> <CALCETrXD41=ohFSkCmBD8zPHFVUtr49QXMhYnChAxqQtmUjJYw@mail.gmail.com> <54CF44B9.8000005@zonq
- ue.org> <CALCETrUh1Mse4CBQ4bfkJf+ew=kdpn46hMLS2QafLhfRTzQoBQ@mail.gmail.com>
+From: Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>
+Subject: Re: [Patch v3] firmware: dmi-sysfs: add SMBIOS entry point area raw
+ attribute
+Date: Tue, 3 Feb 2015 10:49:53 +0000
+Message-ID: <20150203104953.GA6461@codeblueprint.co.uk>
+References: <1422448763-17583-1-git-send-email-ivan.khoronzhuk@linaro.org>
+ <54C906A9.1050001@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrUh1Mse4CBQ4bfkJf+ew=kdpn46hMLS2QafLhfRTzQoBQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <54C906A9.1050001-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+To: Ivan Khoronzhuk <ivan.khoronzhuk-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, dmidecode-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Andy,
+On Wed, 28 Jan, at 05:56:25PM, Ivan Khoronzhuk wrote:
+> >diff --git a/drivers/firmware/dmi-sysfs.c b/drivers/firmware/dmi-sysfs.c
+> >index e0f1cb3..61b6a38 100644
+> >--- a/drivers/firmware/dmi-sysfs.c
+> >+++ b/drivers/firmware/dmi-sysfs.c
+> >@@ -29,6 +29,8 @@
+> >  #define MAX_ENTRY_TYPE 255 /* Most of these aren't used, but we consider
+> >  			      the top entry type is only 8 bits */
+> >+static const u8 *smbios_raw_header;
 
-On 02/02/2015 09:12 PM, Andy Lutomirski wrote:
-> On Feb 2, 2015 1:34 AM, "Daniel Mack" <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org> wrote:
+There appears to be a mixture of u8 and unsigned char going on here, cf.
+'smbios_header'.
 
->> That's right, but again - if an application wants to gather this kind of
->> information about tasks it interacts with, it can do so today by looking
->> at /proc or similar sources. Desktop machines do exactly that already,
->> and the kernel code executed in such cases very much resembles that in
->> metadata.c, and is certainly not cheaper. kdbus just makes such
->> information more accessible when requested. Which information is
->> collected is defined by bit-masks on both the sender and the receiver
->> connection, and most applications will effectively only use a very
->> limited set by default if they go through one of the more high-level
->> libraries.
-> 
-> I should rephrase a bit.  Kdbus doesn't require use of send-time
-> metadata.  It does, however, strongly encourage it, and it sounds like
+While I'm pretty sure all architectures typedef them to be equivalent,
+semantically, as a reviewer this makes me think there are type issues.
 
-On the kernel level, kdbus just *offers* that, just like sockets offer
-SO_PASSCRED. On the userland level, kdbus helps applications get that
-information race-free, easier and faster than they would otherwise.
+Is there any way to use one data type for the SMBIOS header?
 
-> systemd and other major users will use send-time metadata.  Once that
-> happens, it's ABI (even if it's purely in userspace), and changing it
-> is asking for security holes to pop up.  So you'll be mostly stuck
-> with it.
+> >@@ -669,6 +699,18 @@ static int __init dmi_sysfs_init(void)
+> >  		goto err;
+> >  	}
+> >+	smbios_raw_header = dmi_get_smbios_entry_area(&size);
+> >+	if (!smbios_raw_header) {
+> >+		pr_debug("dmi-sysfs: SMBIOS raw data is not available.\n");
+> >+		error = -ENODATA;
+> >+		goto err;
 
-We know we can't break the ABI. At most, we could deprecate item types
-and introduce new ones, but we want to avoid that by all means of
-course. However, I fail to see how that is related to send time
-metadata, or even to kdbus in general, as all ABIs have to be kept stable.
+Perhaps this should be -EINVAL? -ENODATA implies that if you try again
+in the future data might be available, i.e. it's a temporary failure.
+That's not the case here since the header is invalid.
 
-> Do you have some simple benchmark code you can share?  I'd like to
-> play with it a bit.
-
-Sure, it's part of the self-test suite. Call it with "-t benchmark" to
-run the benchmark as isolated test with verbose output. The code for
-that lives in test-benchmark.c.
-
-
-Thanks,
-Daniel
+-- 
+Matt Fleming, Intel Open Source Technology Center
