@@ -1,132 +1,103 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [PATCH v17 1/7] mm: support madvise(MADV_FREE)
-Date: Wed, 4 Feb 2015 08:47:22 +0900
-Message-ID: <20150203234722.GB3583@blaptop>
-References: <1413799924-17946-1-git-send-email-minchan@kernel.org>
- <1413799924-17946-2-git-send-email-minchan@kernel.org>
- <20141127144725.GB19157@dhcp22.suse.cz>
- <20141130235652.GA10333@bbox>
- <20141202100125.GD27014@dhcp22.suse.cz>
- <20141203000026.GA30217@bbox>
- <20141203101329.GB23236@dhcp22.suse.cz>
- <20141205070816.GB3358@bbox>
- <20141205083249.GA2321@dhcp22.suse.cz>
- <54D0F9BC.4060306@gmail.com>
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: MADV_DONTNEED semantics? Was: [RFC PATCH] mm: madvise: Ignore
+ repeated MADV_DONTNEED hints
+Date: Wed, 4 Feb 2015 09:09:21 +0900
+Message-ID: <20150204000921.GC3583@blaptop>
+References: <20150202165525.GM2395@suse.de>
+ <54CFF8AC.6010102@intel.com>
+ <54D08483.40209@suse.cz>
+ <20150203105301.GC14259@node.dhcp.inet.fi>
+ <54D0B43D.8000209@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <54D0F9BC.4060306@gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Michal Hocko <mhocko@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+In-Reply-To: <54D0B43D.8000209-AlSwsSmVLrQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Cc: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello, Michael
-
-On Tue, Feb 03, 2015 at 05:39:24PM +0100, Michael Kerrisk (man-pages) wrote:
-> Hello Minchan (and Michal)
-> 
-> I did not see this patch until just now when Michael explicitly
-> mentioned it in another discussion because
-> (a) it was buried in an LMKL thread that started a topic
->     that was not about a man-pages patch.
-> (b) linux-man@ was not CCed.
-
-Sorry about that.
-
-> 
-> When resubmitting this patch, could you please To:me and CC linux-man@
-> and give the mail a suitable subject line indicating a man-pages patch.
-
-Sure.
-
-> 
-> On 12/05/2014 09:32 AM, Michal Hocko wrote:
-> > On Fri 05-12-14 16:08:16, Minchan Kim wrote:
-> > [...]
-> >> From cfa212d4fb307ae772b08cf564cab7e6adb8f4fc Mon Sep 17 00:00:00 2001
-> >> From: Minchan Kim <minchan@kernel.org>
-> >> Date: Mon, 1 Dec 2014 08:53:55 +0900
-> >> Subject: [PATCH] madvise.2: Document MADV_FREE
-> >>
-> >> Signed-off-by: Minchan Kim <minchan@kernel.org>
+On Tue, Feb 03, 2015 at 12:42:53PM +0100, Vlastimil Babka wrote:
+> On 02/03/2015 11:53 AM, Kirill A. Shutemov wrote:
+> > On Tue, Feb 03, 2015 at 09:19:15AM +0100, Vlastimil Babka wrote:
+> >> [CC linux-api, man pages]
+> >> 
+> >> On 02/02/2015 11:22 PM, Dave Hansen wrote:
+> >> > On 02/02/2015 08:55 AM, Mel Gorman wrote:
+> >> >> This patch identifies when a thread is frequently calling MADV_DONTNEED
+> >> >> on the same region of memory and starts ignoring the hint. On an 8-core
+> >> >> single-socket machine this was the impact on ebizzy using glibc 2.19.
+> >> > 
+> >> > The manpage, at least, claims that we zero-fill after MADV_DONTNEED is
+> >> > called:
+> >> > 
+> >> >>      MADV_DONTNEED
+> >> >>               Do  not  expect  access in the near future.  (For the time being, the application is finished with the given range, so the kernel can free resources
+> >> >>               associated with it.)  Subsequent accesses of pages in this range will succeed, but will result either in reloading of the memory contents  from  the
+> >> >>               underlying mapped file (see mmap(2)) or zero-fill-on-demand pages for mappings without an underlying file.
+> >> > 
+> >> > So if we have anything depending on the behavior that it's _always_
+> >> > zero-filled after an MADV_DONTNEED, this will break it.
+> >> 
+> >> OK, so that's a third person (including me) who understood it as a zero-fill
+> >> guarantee. I think the man page should be clarified (if it's indeed not
+> >> guaranteed), or we have a bug.
+> >> 
+> >> The implementation actually skips MADV_DONTNEED for
+> >> VM_LOCKED|VM_HUGETLB|VM_PFNMAP vma's.
 > > 
-> > Reviewed-by: Michal Hocko <mhocko@suse.cz>
+> > It doesn't skip. It fails with -EINVAL. Or I miss something.
+> 
+> No, I missed that. Thanks for pointing out. The manpage also explains EINVAL in
+> this case:
+> 
+> *  The application is attempting to release locked or shared pages (with
+> MADV_DONTNEED).
+> 
+> - that covers mlocking ok, not sure if the rest fits the "shared pages" case
+> though. I dont see any check for other kinds of shared pages in the code.
+> 
+> >> - The word "will result" did sound as a guarantee at least to me. So here it
+> >> could be changed to "may result (unless the advice is ignored)"?
 > > 
-> > Thanks!
-> > 
-> >> ---
-> >>  man2/madvise.2 | 12 ++++++++++++
-> >>  1 file changed, 12 insertions(+)
-> >>
-> >> diff --git a/man2/madvise.2 b/man2/madvise.2
-> >> index 032ead7..fc1aaca 100644
-> >> --- a/man2/madvise.2
-> >> +++ b/man2/madvise.2
-> >> @@ -265,6 +265,18 @@ file (see
-> >>  .BR MADV_DODUMP " (since Linux 3.4)"
-> >>  Undo the effect of an earlier
-> >>  .BR MADV_DONTDUMP .
-> >> +.TP
-> >> +.BR MADV_FREE " (since Linux 3.19)"
-> >> +Tell the kernel that contents in the specified address range are no
-> >> +longer important and the range will be overwritten. When there is
-> >> +demand for memory, the system will free pages associated with the
-> >> +specified address range. In this instance, the next time a page in the
-> >> +address range is referenced, it will contain all zeroes.  Otherwise,
-> >> +it will contain the data that was there prior to the MADV_FREE call.
-> >> +References made to the address range will not make the system read
-> >> +from backing store (swap space) until the page is modified again.
-> >> +It works only with private anonymous pages (see
-> >> +.BR mmap (2)).
-> >>  .SH RETURN VALUE
-> >>  On success
-> >>  .BR madvise ()
+> > It's too late to fix documentation. Applications already depends on the
+> > beheviour.
 > 
-> If I'm reading the conversation right, the initially proposed text 
-> was from the BSD man page (which would be okay), but most of the 
-> text above seems  to have come straight from the page here:
-> http://www.lehman.cuny.edu/cgi-bin/man-cgi?madvise+3
+> Right, so as long as they check for EINVAL, it should be safe. It appears that
+> jemalloc does.
 > 
-> Right?
+> I still wouldnt be sure just by reading the man page that the clearing is
+> guaranteed whenever I dont get an error return value, though,
+> 
 
-True. Solaris man page was really straightforward/clear rather than BSD.
+IMHO,
 
-> 
-> Unfortunately, I don't think we can use that text. It's from the 
-> Solaris man page as far as I can tell, and I doubt that it's 
-> under a license that we can use.
-> 
-> If that's the case, we need to go back and come up with an
-> original text. It might draw inspiration from the Solaris page,
-> and take actual text from the BSD page (which is under a free
-> license), and it might also draw inspiration from Jon Corbet's 
-> description at http://lwn.net/Articles/590991/. 
-> 
-> Could you take another shot this please!
+Man page said
+"MADV_DONTNEED: Subsequent accesses of pages in this range will succeed,
+ but will result either in reloading of  the memory contents from the
+ underlying mapped file (see mmap(2)) or  zero-fill-on-demand pages
+ for mappings without an underlying file."
 
-No problem. I will test my essay writing skill.
-Thanks. 
+Heap by allocated by malloc(3) is anonymous page so it's a mapping
+withtout an underlying file so userspace can expect zero-fill.
 
-> 
-> Thanks,
-> 
-> Michael
-> 
-> 
-> 
-> -- 
-> Michael Kerrisk
-> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-> Linux/UNIX System Programming Training: http://man7.org/training/
+Man page said
+"EINVAL: The application is attempting to release locked or
+shared pages (with MADV_DONTNEED)"
+
+So, user can expect the call on area by allocated by malloc(3)
+if he doesn't call mlock will always be successful.
+
+Man page said
+"madivse: This call does not influence the semantics of the application
+(except in the case of MADV_DONTNEED)"
+
+So, we shouldn't break MADV_DONTNEED's semantic which free pages
+instantly. It's a long time semantic and it was one of arguable issues
+on MADV_FREE Rik had tried long time ago to replace MADV_DONTNEED
+with MADV_FREE.
 
 -- 
 Kind regards,
 Minchan Kim
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
