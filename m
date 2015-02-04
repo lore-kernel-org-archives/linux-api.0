@@ -1,58 +1,106 @@
-From: =?ISO-8859-15?Q?Luk=E1=A8_Czerner?= <lczerner@redhat.com>
-Subject: Re: [PATCH 1/5] WIP: Add syscall unlinkat_s (currently x86* only)
-Date: Wed, 4 Feb 2015 17:25:31 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.1502041724180.26766@localhost.localdomain>
-References: <1422896713-25367-1-git-send-email-holler@ahsoftware.de> <1422896713-25367-2-git-send-email-holler@ahsoftware.de> <20150203060542.GZ29656@ZenIV.linux.org.uk> <54D071AA.1030302@ahsoftware.de> <20150203075616.GA29656@ZenIV.linux.org.uk>
- <54D08BF4.3000903@ahsoftware.de> <54D093A0.7090201@ahsoftware.de> <54D0C3B8.2050507@ahsoftware.de> <20150203174839.GD2509@thunk.org> <54D10D0E.8090204@ahsoftware.de> <20150203233332.GE29656@ZenIV.linux.org.uk> <54D1F215.9030404@ahsoftware.de>
- <alpine.LFD.2.00.1502041247530.23002@localhost.localdomain> <54D20F02.5050700@ahsoftware.de> <CAHO5Pa0_2HE23dPU5Fg-sUgi2-e-szCpqoR98Vd6zE70_yd8Sw@mail.gmail.com> <54D21CC8.4020705@ahsoftware.de> <alpine.LFD.2.00.1502041533130.26766@localhost.localdomain>
- <54D24504.6080201@ahsoftware.de>
+From: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] IB/core: Temporarily disable ex_query_device uverb
+Date: Wed, 04 Feb 2015 17:31:43 +0100
+Message-ID: <1423067503.3030.83.camel@opteya.com>
+References: <1422797730-14571-1-git-send-email-haggaie@mellanox.com>
+	 <1422882626.3030.56.camel@opteya.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-881818462-1423067134=:26766"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <54D24504.6080201@ahsoftware.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexander Holler <holler@ahsoftware.de>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1422882626.3030.56.camel-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Cc: Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Or Gerlitz <ogerlitz-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Hi,
 
---8323328-881818462-1423067134=:26766
-Content-Type: TEXT/PLAIN; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Le lundi 02 f=C3=A9vrier 2015 =C3=A0 14:10 +0100, Yann Droneaud a =C3=A9=
+crit :
+> Le dimanche 01 f=C3=A9vrier 2015 =C3=A0 15:35 +0200, Haggai Eran a =C3=
+=A9crit :
+> > Commit 5a77abf9a97a ("IB/core: Add support for extended query devic=
+e caps")
+> > added a new extended verb to query the capabilities of RDMA devices=
+, but the
+> > semantics of this verb are still under debate [1].
+> >=20
+> > Block access to this verb from user-space until the new semantics a=
+re in
+> > place.
+> >=20
+> > Cc: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+> > Cc: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+> > Cc: Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+> >=20
+> > [1] [PATCH v1 0/5] IB/core: extended query device caps cleanup for =
+v3.19
+> >     http://www.spinics.net/lists/linux-rdma/msg22904.html
+> >=20
+> > Signed-off-by: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+>=20
+> Reviewed-by: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
 
-On Wed, 4 Feb 2015, Alexander Holler wrote:
+> >  drivers/infiniband/core/uverbs_main.c | 1 -
+> >  1 file changed, 1 deletion(-)
+> >=20
+> > diff --git a/drivers/infiniband/core/uverbs_main.c b/drivers/infini=
+band/core/uverbs_main.c
+> > index e6c23b9eab33..5db1a8cc388d 100644
+> > --- a/drivers/infiniband/core/uverbs_main.c
+> > +++ b/drivers/infiniband/core/uverbs_main.c
+> > @@ -123,7 +123,6 @@ static int (*uverbs_ex_cmd_table[])(struct ib_u=
+verbs_file *file,
+> >  				    struct ib_udata *uhw) =3D {
+> >  	[IB_USER_VERBS_EX_CMD_CREATE_FLOW]	=3D ib_uverbs_ex_create_flow,
+> >  	[IB_USER_VERBS_EX_CMD_DESTROY_FLOW]	=3D ib_uverbs_ex_destroy_flow=
+,
+> > -	[IB_USER_VERBS_EX_CMD_QUERY_DEVICE]	=3D ib_uverbs_ex_query_device
+> >  };
+> > =20
+> >  static void ib_uverbs_add_one(struct ib_device *device);
+>=20
+> That's the smallest (and smartest) patch to be applied instead of
+> reverting.
+>=20
 
-> Date: Wed, 04 Feb 2015 17:12:52 +0100
-> From: Alexander Holler <holler@ahsoftware.de>
-> To: Lukáš Czerner <lczerner@redhat.com>
-> Cc: Michael Kerrisk <mtk.manpages@gmail.com>,
->     Al Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>,
->     Linux-Fsdevel <linux-fsdevel@vger.kernel.org>,
->     Linux Kernel <linux-kernel@vger.kernel.org>,
->     Linux API <linux-api@vger.kernel.org>
-> Subject: Re: [PATCH 1/5] WIP: Add syscall unlinkat_s (currently x86* only)
-> 
-> Am 04.02.2015 um 15:52 schrieb Lukáš Czerner:
-> > On Wed, 4 Feb 2015, Alexander Holler wrote:
-> 
-> >> I'm happy for all the feedback. But it doesn't help me. I'm not going to spend
-> >> the necessary time unpaid.
-> > 
-> > Right, you'd much rather have someone else to spend the time on your
-> > request unpaid. That's understandable, but unreasonable. You want
-> > it, implement it, or pay someone else to do it for you.
-> 
-> Maybe you should attach a big fat red warning to the kernels bugzilla
-> that filing a bug means either to fix it yourself or pay somone to do that.
-> 
-> I've never demanded that someone else fixes it.
-> 
-> I've just explained a problem.
-> 
-> Unbelievable how someone could do such without paying someone else to
-> fix it or by fixing it themself ...
+Unfortunately, I've missed the issue I was complaining about in the
+first place [1]. And I feel a bit guilty having missed the issue.
 
-It's not a bug, you're requesting a feature.
---8323328-881818462-1423067134=:26766--
+The present patch is fine as it fully disable the new extended=20
+QUERY_DEVICE uverb, but it doesn't disable the broken logic added in
+ib_copy_to_udata() by commit 5a77abf9a97a ('IB/core: Add support for
+extended query device caps'):
+
+  diff --git a/include/rdma/ib_verbs.h b/include/rdma/ib_verbs.h
+  index 470a011d6fa4..97a999f9e4d8 100644
+  --- a/include/rdma/ib_verbs.h
+  +++ b/include/rdma/ib_verbs.h
+  @@ -1662,7 +1662,10 @@ static inline int ib_copy_from_udata(void *des=
+t, struct ib_udata *udata, size_t
+  =20
+   static inline int ib_copy_to_udata(struct ib_udata *udata, void *src=
+, size_t len)
+   {
+  -	return copy_to_user(udata->outbuf, src, len) ? -EFAULT : 0;
+  +	size_t copy_sz;
+  +
+  +	copy_sz =3D min_t(size_t, len, udata->outlen);
+  +	return copy_to_user(udata->outbuf, src, copy_sz) ? -EFAULT : 0;
+   }
+
+That part of commit 5a77abf9a97a should be reverted as I'm not sure
+it doesn't introduce regressions, especially difficult to notice ones.
+
+Regards.
+
+[1] Re: [PATCH v3 06/17] IB/core: Add support for extended query device=
+ caps
+    http://mid.gmane.org/1418733236.2779.26.camel-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org
+
+Regards.
+
+--=20
+Yann Droneaud
+OPTEYA
