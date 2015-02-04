@@ -1,155 +1,158 @@
-From: Calvin Owens <calvinowens-b10kYP2dOMg@public.gmane.org>
-Subject: Re: [RFC][PATCH v2] procfs: Always expose /proc/<pid>/map_files/ and
- make it readable
-Date: Tue, 3 Feb 2015 19:53:41 -0800
-Message-ID: <20150204035341.GB3290085@mail.thefacebook.com>
-References: <20150114211613.GH2253@moon>
- <20150122024554.GB23762@mail.thefacebook.com>
- <20150124031544.GA1992748@mail.thefacebook.com>
- <20150126124731.GA26916@node.dhcp.inet.fi>
- <20150126210054.GG651@moon>
- <20150126154346.c63c512e5821e9e0ea31f759@linux-foundation.org>
- <20150128043832.GA2266262@mail.thefacebook.com>
- <CAGXu5j+wa2-CCGaktPzDec=HF0CizP__HVVjZKcjGuJJOvLFyg@mail.gmail.com>
- <20150131015842.GA431662@mail.thefacebook.com>
- <54CF832A.7010707@gmail.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH 01/13] kdbus: add documentation
+Date: Wed, 04 Feb 2015 00:30:48 -0600
+Message-ID: <874mr2b33b.fsf@x220.int.ebiederm.org>
+References: <CALCETrU1O6LjhrXSH2aXWFt2WGh=ssrq4K9HD10f_Z55iT=Otw@mail.gmail.com>
+	<54C9F525.4040703@zonque.org>
+	<CALCETrV6P+Lx5FRLyDNubG18tqCTLprkXJf=82aa5DsRHjkuKA@mail.gmail.com>
+	<54CA1CA2.9060005@zonque.org>
+	<CALCETrXD41=ohFSkCmBD8zPHFVUtr49QXMhYnChAxqQtmUjJYw@mail.gmail.com>
+	<54CF44B9.8000005@zonque.org>
+	<CALCETrUh1Mse4CBQ4bfkJf+ew=kdpn46hMLS2QafLhfRTzQoBQ@mail.gmail.com>
+	<54D09E6B.2020903@zonque.org>
+	<CALCETrV_q9Y4OWC6fA78WsD+XFhsdGHrqH6OK-hc=Vvj2F5C5w@mail.gmail.com>
+	<87siemgzoo.fsf@x220.int.ebiederm.org>
+	<20150204031437.GB32207@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <54CF832A.7010707-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <20150204031437.GB32207-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org> (Greg Kroah-Hartman's message
+	of "Tue, 3 Feb 2015 19:14:37 -0800")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Peter Feiner <pfeiner-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Siddhesh Poyarekar <siddhesh.poyarekar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, Pavel Emelyanov <xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Monday 02/02 at 09:01 -0500, Austin S Hemmelgarn wrote:
-> On 2015-01-30 20:58, Calvin Owens wrote:
-> >On Thursday 01/29 at 17:30 -0800, Kees Cook wrote:
-> >>On Tue, Jan 27, 2015 at 8:38 PM, Calvin Owens <calvinowens-b10kYP2dOMg@public.gmane.org> wrote:
-> >>>On Monday 01/26 at 15:43 -0800, Andrew Morton wrote:
-> >>>>On Tue, 27 Jan 2015 00:00:54 +0300 Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> >>>>
-> >>>>>On Mon, Jan 26, 2015 at 02:47:31PM +0200, Kirill A. Shutemov wrote:
-> >>>>>>On Fri, Jan 23, 2015 at 07:15:44PM -0800, Calvin Owens wrote:
-> >>>>>>>Currently, /proc/<pid>/map_files/ is restricted to CAP_SYS_ADMIN, and
-> >>>>>>>is only exposed if CONFIG_CHECKPOINT_RESTORE is set. This interface
-> >>>>>>>is very useful for enumerating the files mapped into a process when
-> >>>>>>>the more verbose information in /proc/<pid>/maps is not needed.
-> >>>>
-> >>>>This is the main (actually only) justification for the patch, and it it
-> >>>>far too thin.  What does "not needed" mean.  Why can't people just use
-> >>>>/proc/pid/maps?
-> >>>
-> >>>The biggest difference is that if you do something like this:
-> >>>
-> >>>         fd = open("/stuff", O_BLAH);
-> >>>         map = mmap(NULL, 4096, PROT_BLAH, MAP_SHARED, fd, 0);
-> >>>         close(fd);
-> >>>         unlink("/stuff");
-> >>>
-> >>>...then map_files/ gives you a way to get a file descriptor for
-> >>>"/stuff", which you couldn't do with /proc/pid/maps.
-> >>>
-> >>>It's also something of a win if you just want to see what is mapped at a
-> >>>specific address, since you can just readlink() the symlink for the
-> >>>address range you care about and it will go grab the appropriate VMA and
-> >>>give you the answer. /proc/pid/maps requires walking the VMA tree, which
-> >>>is quite expensive for processes with many thousands of threads, even
-> >>>without the O(N^2) issue.
-> >>>
-> >>>(You have to know what address range you want though, since readdir() on
-> >>>map_files/ obviously has to walk the VMA tree just like /proc/N/maps.)
-> >>>
-> >>>>>>>This patch moves the folder out from behind CHECKPOINT_RESTORE, and
-> >>>>>>>removes the CAP_SYS_ADMIN restrictions. Following the links requires
-> >>>>>>>the ability to ptrace the process in question, so this doesn't allow
-> >>>>>>>an attacker to do anything they couldn't already do before.
-> >>>>>>>
-> >>>>>>>Signed-off-by: Calvin Owens <calvinowens-b10kYP2dOMg@public.gmane.org>
-> >>>>>>
-> >>>>>>Cc +linux-api@
-> >>>>>
-> >>>>>Looks good to me, thanks! Though I would really appreciate if someone
-> >>>>>from security camp take a look as well.
-> >>>>
-> >>>>hm, who's that.  Kees comes to mind.
-> >>>>
-> >>>>And reviewers' task would be a heck of a lot easier if they knew what
-> >>>>/proc/pid/map_files actually does.  This:
-> >>>>
-> >>>>akpm3:/usr/src/25> grep -r map_files Documentation
-> >>>>akpm3:/usr/src/25>
-> >>>>
-> >>>>does not help.
-> >>>>
-> >>>>The 640708a2cff7f81 changelog says:
-> >>>>
-> >>>>:     This one behaves similarly to the /proc/<pid>/fd/ one - it contains
-> >>>>:     symlinks one for each mapping with file, the name of a symlink is
-> >>>>:     "vma->vm_start-vma->vm_end", the target is the file.  Opening a symlink
-> >>>>:     results in a file that point exactly to the same inode as them vma's one.
-> >>>>:
-> >>>>:     For example the ls -l of some arbitrary /proc/<pid>/map_files/
-> >>>>:
-> >>>>:      | lr-x------ 1 root root 64 Aug 26 06:40 7f8f80403000-7f8f80404000 -> /lib64/libc-2.5.so
-> >>>>:      | lr-x------ 1 root root 64 Aug 26 06:40 7f8f8061e000-7f8f80620000 -> /lib64/libselinux.so.1
-> >>>>:      | lr-x------ 1 root root 64 Aug 26 06:40 7f8f80826000-7f8f80827000 -> /lib64/libacl.so.1.1.0
-> >>>>:      | lr-x------ 1 root root 64 Aug 26 06:40 7f8f80a2f000-7f8f80a30000 -> /lib64/librt-2.5.so
-> >>>>:      | lr-x------ 1 root root 64 Aug 26 06:40 7f8f80a30000-7f8f80a4c000 -> /lib64/ld-2.5.so
-> >>>>
-> >>>>afacit this info is also available in /proc/pid/maps, so things
-> >>>>shouldn't get worse if the /proc/pid/map_files permissions are at least
-> >>>>as restrictive as the /proc/pid/maps permissions.  Is that the case?
-> >>>>(Please add to changelog).
-> >>>
-> >>>Yes, the only difference is that you can follow the link as per above.
-> >>>I'll resend with a new message explaining that and the deletion thing.
-> >>>
-> >>>>There's one other problem here: we're assuming that the map_files
-> >>>>implementation doesn't have bugs.  If it does have bugs then relaxing
-> >>>>permissions like this will create new vulnerabilities.  And the
-> >>>>map_files implementation is surprisingly complex.  Is it bug-free?
-> >>>
-> >>>While I was messing with it I used it a good bit and didn't see any
-> >>>issues, although I didn't actively try to fuzz it or anything. I'd be
-> >>>happy to write something to test hammering it in weird ways if you like.
-> >>>I'm also happy to write testcases for namespaces.
-> >>>
-> >>>So far as security issues, as others have pointed out you can't follow
-> >>>the links unless you can ptrace the process in question, which seems
-> >>>like a pretty solid guarantee. As Cyrill pointed out in the discussion
-> >>>about the documentation, that's the same protection as /proc/N/fd/*, and
-> >>>those links function in the same way.
-> >>
-> >>My concern here is that fd/* are connected as streams, and while that
-> >>has a certain level of badness as an external-to-the-process attacker,
-> >>PTRACE_MODE_READ is much weaker than PTRACE_MODE_ATTACH (which is
-> >>required for access to /proc/N/mem). Since these fds are the things
-> >>mapped into memory on a process, writing to them is a subset of access
-> >>to /proc/N/mem, and I don't feel that PTRACE_MODE_READ is sufficient.
-> >
-> >If you haven't done close() on a mmapped file, doesn't fd/* allow the
-> >same access to the corresponding regions of memory? Or am I missing
-> >something?
-> >
-> >But that said, I can't think of any reason making it MODE_ATTACH would
-> >be a problem. Would you rather that be enforced on follow_link() like
-> >the original patch did, or enforce it for the whole directory?
-> >
-> >
-> Whole directory would probably be better, as even just the mapped
-> ranges could be considered sensitive information. 
+Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> writes:
 
-You can already get the ranges that are mapped from /proc/N/maps with
-PTRACE_MODE_READ, so that part isn't new information.
+> On Tue, Feb 03, 2015 at 08:47:51PM -0600, Eric W. Biederman wrote:
+>> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
+>> 
+>> > On Tue, Feb 3, 2015 at 2:09 AM, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org> wrote:
+>> >> Hi Andy,
+>> >>
+>> >> On 02/02/2015 09:12 PM, Andy Lutomirski wrote:
+>> >>> On Feb 2, 2015 1:34 AM, "Daniel Mack" <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org> wrote:
+>> >>
+>> >>>> That's right, but again - if an application wants to gather this kind of
+>> >>>> information about tasks it interacts with, it can do so today by looking
+>> >>>> at /proc or similar sources. Desktop machines do exactly that already,
+>> >>>> and the kernel code executed in such cases very much resembles that in
+>> >>>> metadata.c, and is certainly not cheaper. kdbus just makes such
+>> >>>> information more accessible when requested. Which information is
+>> >>>> collected is defined by bit-masks on both the sender and the receiver
+>> >>>> connection, and most applications will effectively only use a very
+>> >>>> limited set by default if they go through one of the more high-level
+>> >>>> libraries.
+>> >>>
+>> >>> I should rephrase a bit.  Kdbus doesn't require use of send-time
+>> >>> metadata.  It does, however, strongly encourage it, and it sounds like
+>> >>
+>> >> On the kernel level, kdbus just *offers* that, just like sockets offer
+>> >> SO_PASSCRED. On the userland level, kdbus helps applications get that
+>> >> information race-free, easier and faster than they would otherwise.
+>> >>
+>> >>> systemd and other major users will use send-time metadata.  Once that
+>> >>> happens, it's ABI (even if it's purely in userspace), and changing it
+>> >>> is asking for security holes to pop up.  So you'll be mostly stuck
+>> >>> with it.
+>> >>
+>> >> We know we can't break the ABI. At most, we could deprecate item types
+>> >> and introduce new ones, but we want to avoid that by all means of
+>> >> course. However, I fail to see how that is related to send time
+>> >> metadata, or even to kdbus in general, as all ABIs have to be kept stable.
+>> >
+>> > I should have said it differently.  ABI is the wrong term -- it's more
+>> > of a protocol issue.
+>> >
+>> > It looks like, with the current code, the kernel will provide
+>> > (optional) send-time metadata, and the sd-bus library will use it.
+>> > The result will be that the communication protocol between clients and
+>> > udev, systemd, systemd-logind, g-s-d, etc, will likely involve
+>> > send-time metadata.  This may end up being a bottleneck.
+>> 
+>> A quick note on a couple of things I have seen in this conversation.
+>> 
+>> - The reason for kdbus is performance.
+>
+> No, that's not the only reason for kdbus, don't focus only on this.  I
+> set out a long list of things for why we created kdbus, speed was only
+> one of the things.  Security is also one, and the ability to gather
+> these attributes in an atomic and secure way is very important as
+> userspace wants this.
 
-> Ideally, the check should be done on both follow_link(), and the
-> directory itself.
+Perhaps I should have said the predominant reason.  Certainly that seems
+to be most of what I have seen talked about.
 
-Oh, I didn't mean restricting readdir(), I meant restricting any access
-through the directory similar to how the original CAP_SYS_ADMIN check
-was done.
- 
-Thanks,
-Calvin
+Regardless looking at the performance in the design and removing any
+substantial obstacle to making things go fast.
+
+Further.  I had this conversation earlier in an earlier round of the
+review and I was told that in fact existing dbus applications do not
+want or need these attributes.   I think I heard journald wants them for
+pretty printing things.
+
+If security is your concern I really think per message attributes
+collected and sent when a message is sent is a bad idea.  It has been a
+nasty anti-pattern in the kernel code.  Lots and lots of meta-data
+copyed from a task and sent to someone else has significant performance,
+maintenance, and security impacts.
+
+Code written in that pattern is complex and hard to analyze, and hard to
+think about.  Consider debugging why a message does not get the expected
+treatment from your suid application because someone changed the euid
+over that particular call and had not thought about it's consequences.
+Frankly I have been there and done that and it is a mess. 
+
+So no I do not think breaking encapsulation and having weird side
+effects affecting your new primitive will have any security benefits
+whatsover.   It will just result in brittle complex code.
+
+If you want to avoid the races causing sends through a file descriptor
+to fail that don't have the expected attributes (my constructive
+suggestion earlier) is a very different thing from a performance and
+mainteance standpoint.  That does not increase the code complexity
+nearly as much in the implementation or in use, and unexpected failures
+happen right away.
+
+>> - pipes rather than unix domain sockets are likely the standard to meet.
+>>   If you can't equal unix domain sockets for simple things you are
+>>   likely leaving a lot of stops in.  Last I looked pipes in general were
+>>   notiably faster than unix domain sockets.
+>> 
+>>   The performance numbers I saw posted up-thread were horrible.  I have
+>>   seen faster numbers across a network of machines.  If your ping-pong
+>>   latency isn't measured in nano-seconds you are probably doing
+>>   something wrong.
+>
+> It all depends on what you are passing on that "ping-pong", a real
+> D-Bus connection has real data and meta data that has to be sent.
+> Trying to make a fake benchmark number isn't going to show anything.
+
+All that I was intending to convey is that the numbers I have seen have
+been orders of magnitude slower than I would expect.  And 10x to 100x
+slower than the code should be is a reason to ask why.
+
+In my experience being efficient with small messages are important
+because (a) they are the hardest to make go fast (b) they are surprising
+common.  Remote X application start-up times are very slow because of
+these.
+
+People have a distressing habit of writing applications that
+send a small message and synchronously waits for it.  Over time these
+small ipc calls build up and you are limited by  how fast they will go.
+
+>> - syscalls remove overhead.  So since performance is kdbus's reason for existence
+>>   let's remove some ridiculous stops, and get a fast path into the kernel.
+>
+> Again, not the only reason, see my first post in this thread for
+> details.
+
+But performance is important, and performance is a good reason to use
+system calls.
+
+Security is another reason to have real system calls, as there is less
+going on (compared to an ioctl multiplexer) so the code is easier to
+audit.
+
+Eric
