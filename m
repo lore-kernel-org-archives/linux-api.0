@@ -1,74 +1,144 @@
-From: Fam Zheng <famz@redhat.com>
-Subject: [PATCH RFC v2 3/7] epoll: Extract ep_ctl_do
-Date: Wed,  4 Feb 2015 18:36:49 +0800
-Message-ID: <1423046213-7043-4-git-send-email-famz@redhat.com>
-References: <1423046213-7043-1-git-send-email-famz@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1423046213-7043-1-git-send-email-famz@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <mszeredi@suse.cz>, David Drysdale <drysdale@google.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Theodore Ts'o <tytso@mit.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Rashika Kheria <rashika.kheria@gmail.com>, Hugh Dickins <hughd@google.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Fam Zheng <famz@redhat.com>, Peter Zijlstra <peter>
+From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+Subject: [PATCH] fork: report pid reservation failure properly
+Date: Wed,  4 Feb 2015 11:43:48 +0100
+Message-ID: <1423046628-23638-1-git-send-email-mhocko@suse.cz>
+References: <20150204102719.GB29434@dhcp22.suse.cz>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150204102719.GB29434-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This is a common part from epoll_ctl implementation which will be shared with
-the coming epoll_ctl_wait.
+copy_process will report any failure in alloc_pid as ENOMEM currently
+which is misleading because the pid allocation might fail not only when
+the memory is short but also when the pid space is consumed already.
 
-Signed-off-by: Fam Zheng <famz@redhat.com>
+The current man page even mentions this case:
+"
+EAGAIN
+
+      A system-imposed limit on the number of threads was encountered.
+      There are a number of limits that may trigger this error: the
+      RLIMIT_NPROC soft resource limit (set via setrlimit(2)), which
+      limits the number of processes and threads for a real user ID, was
+      reached; the kernel's system-wide limit on the number of processes
+      and threads, /proc/sys/kernel/threads-max, was reached (see
+      proc(5)); or the maximum number of PIDs, /proc/sys/kernel/pid_max,
+      was reached (see proc(5)).
+"
+
+so the current behavior is also incorrect wrt. documentation. POSIX man
+page also suggest returing EAGAIN when the process count limit is
+reached.
+
+This patch simply propagates error code from alloc_pid and makes sure we
+return -EAGAIN due to reservation failure. This will make behavior of
+fork closer to both our documentation and POSIX.
+
+alloc_pid might alsoo fail when the reaper in the pid namespace is dead
+(the namespace basically disallows all new processes) and there is no
+good error code which would match documented ones. We have traditionally
+returned ENOMEM for this case which is misleading as well but as per
+Eric W. Biederman this behavior is documented in man pid_namespaces(7)
+"
+If the "init" process of a PID namespace terminates, the kernel
+terminates all of the processes in the namespace via a SIGKILL signal.
+This behavior reflects the fact that the "init" process is essential for
+the correct operation of a PID namespace.  In this case, a subsequent
+fork(2) into this PID namespace will fail with the error ENOMEM; it is
+not possible to create a new processes in a PID namespace whose "init"
+process has terminated.
+"
+and introducing a new error code would be too risky so let's stick to
+ENOMEM for this case.
+
+Signed-off-by: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
 ---
- fs/eventpoll.c | 26 ++++++++++++++++++--------
- 1 file changed, 18 insertions(+), 8 deletions(-)
+ kernel/fork.c |  5 +++--
+ kernel/pid.c  | 15 ++++++++-------
+ 2 files changed, 11 insertions(+), 9 deletions(-)
 
-diff --git a/fs/eventpoll.c b/fs/eventpoll.c
-index 01f469a..a1c313c 100644
---- a/fs/eventpoll.c
-+++ b/fs/eventpoll.c
-@@ -1808,22 +1808,15 @@ SYSCALL_DEFINE1(epoll_create, int, size)
-  * the eventpoll file that enables the insertion/removal/change of
-  * file descriptors inside the interest set.
-  */
--SYSCALL_DEFINE4(epoll_ctl, int, epfd, int, op, int, fd,
--		struct epoll_event __user *, event)
-+int ep_ctl_do(int epfd, int op, int fd, struct epoll_event epds)
- {
- 	int error;
- 	int full_check = 0;
- 	struct fd f, tf;
- 	struct eventpoll *ep;
- 	struct epitem *epi;
--	struct epoll_event epds;
- 	struct eventpoll *tep = NULL;
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 3ce8d57cff09..c37b88a162c5 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1405,10 +1405,11 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 		goto bad_fork_cleanup_io;
  
--	error = -EFAULT;
--	if (ep_op_has_event(op) &&
--	    copy_from_user(&epds, event, sizeof(struct epoll_event)))
--		goto error_return;
--
- 	error = -EBADF;
- 	f = fdget(epfd);
- 	if (!f.file)
-@@ -1945,6 +1938,23 @@ error_return:
- 	return error;
+ 	if (pid != &init_struct_pid) {
+-		retval = -ENOMEM;
+ 		pid = alloc_pid(p->nsproxy->pid_ns_for_children);
+-		if (!pid)
++		if (IS_ERR(pid)) {
++			retval = PTR_ERR(pid);
+ 			goto bad_fork_cleanup_io;
++		}
+ 	}
+ 
+ 	p->set_child_tid = (clone_flags & CLONE_CHILD_SETTID) ? child_tidptr : NULL;
+diff --git a/kernel/pid.c b/kernel/pid.c
+index 82430c858d69..bbb805ccd893 100644
+--- a/kernel/pid.c
++++ b/kernel/pid.c
+@@ -179,7 +179,7 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
+ 			spin_unlock_irq(&pidmap_lock);
+ 			kfree(page);
+ 			if (unlikely(!map->page))
+-				break;
++				return -ENOMEM;
+ 		}
+ 		if (likely(atomic_read(&map->nr_free))) {
+ 			for ( ; ; ) {
+@@ -207,7 +207,7 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
+ 		}
+ 		pid = mk_pid(pid_ns, map, offset);
+ 	}
+-	return -1;
++	return -EAGAIN;
  }
  
-+/*
-+ * The following function implements the controller interface for
-+ * the eventpoll file that enables the insertion/removal/change of
-+ * file descriptors inside the interest set.
-+ */
-+SYSCALL_DEFINE4(epoll_ctl, int, epfd, int, op, int, fd,
-+		struct epoll_event __user *, event)
-+{
-+	struct epoll_event epds;
-+
-+	if (ep_op_has_event(op) &&
-+	    copy_from_user(&epds, event, sizeof(struct epoll_event)))
-+		return -EFAULT;
-+
-+	return ep_ctl_do(epfd, op, fd, epds);
-+}
-+
- static inline int epoll_wait_do(int epfd, struct epoll_event __user *events,
- 				int maxevents, int clockid,
- 				const ktime_t timeout)
+ int next_pidmap(struct pid_namespace *pid_ns, unsigned int last)
+@@ -298,17 +298,20 @@ struct pid *alloc_pid(struct pid_namespace *ns)
+ 	int i, nr;
+ 	struct pid_namespace *tmp;
+ 	struct upid *upid;
++	int retval = -ENOMEM;
+ 
+ 	pid = kmem_cache_alloc(ns->pid_cachep, GFP_KERNEL);
+ 	if (!pid)
+-		goto out;
++		return ERR_PTR(retval);
+ 
+ 	tmp = ns;
+ 	pid->level = ns->level;
+ 	for (i = ns->level; i >= 0; i--) {
+ 		nr = alloc_pidmap(tmp);
+-		if (nr < 0)
++		if (IS_ERR_VALUE(nr)) {
++			retval = nr;
+ 			goto out_free;
++		}
+ 
+ 		pid->numbers[i].nr = nr;
+ 		pid->numbers[i].ns = tmp;
+@@ -336,7 +339,6 @@ struct pid *alloc_pid(struct pid_namespace *ns)
+ 	}
+ 	spin_unlock_irq(&pidmap_lock);
+ 
+-out:
+ 	return pid;
+ 
+ out_unlock:
+@@ -348,8 +350,7 @@ out_free:
+ 		free_pidmap(pid->numbers + i);
+ 
+ 	kmem_cache_free(ns->pid_cachep, pid);
+-	pid = NULL;
+-	goto out;
++	return ERR_PTR(retval);
+ }
+ 
+ void disable_pid_allocation(struct pid_namespace *ns)
 -- 
-1.9.3
+2.1.4
