@@ -1,103 +1,102 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: MADV_DONTNEED semantics? Was: [RFC PATCH] mm: madvise: Ignore
- repeated MADV_DONTNEED hints
-Date: Wed, 4 Feb 2015 09:09:21 +0900
-Message-ID: <20150204000921.GC3583@blaptop>
-References: <20150202165525.GM2395@suse.de>
- <54CFF8AC.6010102@intel.com>
- <54D08483.40209@suse.cz>
- <20150203105301.GC14259@node.dhcp.inet.fi>
- <54D0B43D.8000209@suse.cz>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH 01/13] kdbus: add documentation
+Date: Tue, 3 Feb 2015 16:41:04 -0800
+Message-ID: <CALCETrV_q9Y4OWC6fA78WsD+XFhsdGHrqH6OK-hc=Vvj2F5C5w@mail.gmail.com>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
+ <1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>
+ <54BE5DC8.70706@gmail.com> <54BE9D08.7010804@zonque.org> <54BF805B.4000609@gmail.com>
+ <54BFDAAA.50203@zonque.org> <54C0CE8A.5080805@gmail.com> <CANq1E4S=3qNw599L85uj-8aXwxeV+mcurB_Nu_rHH8opAeePjw@mail.gmail.com>
+ <54C10DDC.9000503@gmail.com> <20150123160854.GA5210@kroah.com>
+ <54C65346.5070504@gmail.com> <CANq1E4SkHhs1pWUe-TzG7bzk1M-Q++mB2vmQGuYx0RMF53wg4Q@mail.gmail.com>
+ <CALCETrU1O6LjhrXSH2aXWFt2WGh=ssrq4K9HD10f_Z55iT=Otw@mail.gmail.com>
+ <54C9F525.4040703@zonque.org> <CALCETrV6P+Lx5FRLyDNubG18tqCTLprkXJf=82aa5DsRHjkuKA@mail.gmail.com>
+ <54CA1CA2.9060005@zonque.org> <CALCETrXD41=ohFSkCmBD8zPHFVUtr49QXMhYnChAxqQtmUjJYw@mail.gmail.com>
+ <54CF44B9.8000005@zonque.org> <CALCETrUh1Mse4CBQ4bfkJf+ew=kdpn46hMLS2QafLhfRTzQoBQ@mail.gmail.com>
+ <54D09E6B.2020903@zonque.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <54D0B43D.8000209-AlSwsSmVLrQ@public.gmane.org>
+In-Reply-To: <54D09E6B.2020903-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Cc: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 03, 2015 at 12:42:53PM +0100, Vlastimil Babka wrote:
-> On 02/03/2015 11:53 AM, Kirill A. Shutemov wrote:
-> > On Tue, Feb 03, 2015 at 09:19:15AM +0100, Vlastimil Babka wrote:
-> >> [CC linux-api, man pages]
-> >> 
-> >> On 02/02/2015 11:22 PM, Dave Hansen wrote:
-> >> > On 02/02/2015 08:55 AM, Mel Gorman wrote:
-> >> >> This patch identifies when a thread is frequently calling MADV_DONTNEED
-> >> >> on the same region of memory and starts ignoring the hint. On an 8-core
-> >> >> single-socket machine this was the impact on ebizzy using glibc 2.19.
-> >> > 
-> >> > The manpage, at least, claims that we zero-fill after MADV_DONTNEED is
-> >> > called:
-> >> > 
-> >> >>      MADV_DONTNEED
-> >> >>               Do  not  expect  access in the near future.  (For the time being, the application is finished with the given range, so the kernel can free resources
-> >> >>               associated with it.)  Subsequent accesses of pages in this range will succeed, but will result either in reloading of the memory contents  from  the
-> >> >>               underlying mapped file (see mmap(2)) or zero-fill-on-demand pages for mappings without an underlying file.
-> >> > 
-> >> > So if we have anything depending on the behavior that it's _always_
-> >> > zero-filled after an MADV_DONTNEED, this will break it.
-> >> 
-> >> OK, so that's a third person (including me) who understood it as a zero-fill
-> >> guarantee. I think the man page should be clarified (if it's indeed not
-> >> guaranteed), or we have a bug.
-> >> 
-> >> The implementation actually skips MADV_DONTNEED for
-> >> VM_LOCKED|VM_HUGETLB|VM_PFNMAP vma's.
-> > 
-> > It doesn't skip. It fails with -EINVAL. Or I miss something.
-> 
-> No, I missed that. Thanks for pointing out. The manpage also explains EINVAL in
-> this case:
-> 
-> *  The application is attempting to release locked or shared pages (with
-> MADV_DONTNEED).
-> 
-> - that covers mlocking ok, not sure if the rest fits the "shared pages" case
-> though. I dont see any check for other kinds of shared pages in the code.
-> 
-> >> - The word "will result" did sound as a guarantee at least to me. So here it
-> >> could be changed to "may result (unless the advice is ignored)"?
-> > 
-> > It's too late to fix documentation. Applications already depends on the
-> > beheviour.
-> 
-> Right, so as long as they check for EINVAL, it should be safe. It appears that
-> jemalloc does.
-> 
-> I still wouldnt be sure just by reading the man page that the clearing is
-> guaranteed whenever I dont get an error return value, though,
-> 
+On Tue, Feb 3, 2015 at 2:09 AM, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org> wrote:
+> Hi Andy,
+>
+> On 02/02/2015 09:12 PM, Andy Lutomirski wrote:
+>> On Feb 2, 2015 1:34 AM, "Daniel Mack" <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org> wrote:
+>
+>>> That's right, but again - if an application wants to gather this kind of
+>>> information about tasks it interacts with, it can do so today by looking
+>>> at /proc or similar sources. Desktop machines do exactly that already,
+>>> and the kernel code executed in such cases very much resembles that in
+>>> metadata.c, and is certainly not cheaper. kdbus just makes such
+>>> information more accessible when requested. Which information is
+>>> collected is defined by bit-masks on both the sender and the receiver
+>>> connection, and most applications will effectively only use a very
+>>> limited set by default if they go through one of the more high-level
+>>> libraries.
+>>
+>> I should rephrase a bit.  Kdbus doesn't require use of send-time
+>> metadata.  It does, however, strongly encourage it, and it sounds like
+>
+> On the kernel level, kdbus just *offers* that, just like sockets offer
+> SO_PASSCRED. On the userland level, kdbus helps applications get that
+> information race-free, easier and faster than they would otherwise.
+>
+>> systemd and other major users will use send-time metadata.  Once that
+>> happens, it's ABI (even if it's purely in userspace), and changing it
+>> is asking for security holes to pop up.  So you'll be mostly stuck
+>> with it.
+>
+> We know we can't break the ABI. At most, we could deprecate item types
+> and introduce new ones, but we want to avoid that by all means of
+> course. However, I fail to see how that is related to send time
+> metadata, or even to kdbus in general, as all ABIs have to be kept stable.
 
-IMHO,
+I should have said it differently.  ABI is the wrong term -- it's more
+of a protocol issue.
 
-Man page said
-"MADV_DONTNEED: Subsequent accesses of pages in this range will succeed,
- but will result either in reloading of  the memory contents from the
- underlying mapped file (see mmap(2)) or  zero-fill-on-demand pages
- for mappings without an underlying file."
+It looks like, with the current code, the kernel will provide
+(optional) send-time metadata, and the sd-bus library will use it.
+The result will be that the communication protocol between clients and
+udev, systemd, systemd-logind, g-s-d, etc, will likely involve
+send-time metadata.  This may end up being a bottleneck.
 
-Heap by allocated by malloc(3) is anonymous page so it's a mapping
-withtout an underlying file so userspace can expect zero-fill.
+Once this happens, changing the protocol will be very hard without
+introducing security bugs.  If people start switching to
+connection-time metadata to gain performance, then they'll break both
+the communication protocol and the expectations of client code.  (In
+fact, it'll break twice, sort of, since I think that the current
+protocols are connect-time.)
 
-Man page said
-"EINVAL: The application is attempting to release locked or
-shared pages (with MADV_DONTNEED)"
+To me, this seems like a down-side of using send-time metadata, albeit
+possibly not a huge downside at least in the near term.  I don't see a
+corresponding benefit, though.
 
-So, user can expect the call on area by allocated by malloc(3)
-if he doesn't call mlock will always be successful.
+>
+>> Do you have some simple benchmark code you can share?  I'd like to
+>> play with it a bit.
+>
+> Sure, it's part of the self-test suite. Call it with "-t benchmark" to
+> run the benchmark as isolated test with verbose output. The code for
+> that lives in test-benchmark.c.
+>
 
-Man page said
-"madivse: This call does not influence the semantics of the application
-(except in the case of MADV_DONTNEED)"
+I'll try to play with this soon.  Thanks.
 
-So, we shouldn't break MADV_DONTNEED's semantic which free pages
-instantly. It's a long time semantic and it was one of arguable issues
-on MADV_FREE Rik had tried long time ago to replace MADV_DONTNEED
-with MADV_FREE.
+--Andy
+
+>
+> Thanks,
+> Daniel
+>
+>
+
+
 
 -- 
-Kind regards,
-Minchan Kim
+Andy Lutomirski
+AMA Capital Management, LLC
