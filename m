@@ -1,64 +1,96 @@
-From: David Decotigny <ddecotig@gmail.com>
-Subject: [PATCH net-next v2 11/17] net: rdma: use __ethtool_get_ksettings
-Date: Wed,  4 Feb 2015 11:53:35 -0800
-Message-ID: <1423079621-1374-12-git-send-email-ddecotig@gmail.com>
-References: <1423079621-1374-1-git-send-email-ddecotig@gmail.com>
-Return-path: <linux-mips-bounce@linux-mips.org>
-In-Reply-To: <1423079621-1374-1-git-send-email-ddecotig@gmail.com>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
-To: "David S. Miller" <davem@davemloft.net>, Ben Hutchings <ben@decadent.org.uk>, Amir Vadai <amirv@mellanox.com>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-mips@linux-mips.org, fcoe-devel@open-fcoe.org
-Cc: Eric Dumazet <edumazet@google.com>, Eugenia Emantayev <eugenia@mellanox.co.il>, Or Gerlitz <ogerlitz@mellanox.com>, Ido Shamay <idos@mellanox.com>, Joe Perches <joe@perches.com>, Saeed Mahameed <saeedm@mellanox.com>, Govindarajulu Varadarajan <_govind@gmx.com>, Venkata Duvvuru <VenkatKumar.Duvvuru@Emulex.Com>, Jeff Kirsher <jeffrey.t.kirsher@intel.com>, Eyal Perry <eyalpe@mellanox.com>, Pravin B Shelar <pshelar@nicira.com>, Ed Swierk <eswierk@skyportsystems.com>, Upinder Malhi <umalhi@cisco.com>, Robert Love <robert.w.love@intel.com>, "James E.J. Bottomley" <JBottomley@parallels.com>, David Decotigny <decot@googlers.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH RFC v2 0/7] epoll: Introduce new syscalls, epoll_ctl_batch
+ and epoll_pwait1
+Date: Wed, 4 Feb 2015 13:38:09 -0800
+Message-ID: <CALCETrV731w37pxM0fzFZ3HHkn=9uoJX0-Rj6XqOf+hCRfnx8w@mail.gmail.com>
+References: <1423046213-7043-1-git-send-email-famz@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1423046213-7043-1-git-send-email-famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, Rashika Kheria <rashika.kheria-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <pe>
 List-Id: linux-api@vger.kernel.org
 
-From: David Decotigny <decot@googlers.com>
+On Wed, Feb 4, 2015 at 2:36 AM, Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> 2) epoll_pwait1
+> ---------------
+>
+> NAME
+>        epoll_pwait1 - wait for an I/O event on an epoll file descriptor
+>
+> SYNOPSIS
+>
+>        #include <sys/epoll.h>
+>
+>        int epoll_pwait1(int epfd, int flags,
+>                         struct epoll_event *events,
+>                         int maxevents,
+>                         struct timespec *timeout,
+>                         struct sigargs *sig);
+>
+> DESCRIPTION
+>
+>        The epoll_pwait1 system call differs from epoll_pwait only in parameter
+>        types. The first difference is timeout, a pointer to timespec structure
+>        which allows nanosecond presicion; the second difference, which should
+>        probably be wrapper by glibc and only expose a sigset_t pointer as in
+>        pselect6.
+>
+>        If timeout is NULL, it's treated as if 0 is specified in epoll_pwait
+>        (return immediately). Otherwise it's converted to nanosecond scalar,
+>        again, with the same convention as epoll_pwait's timeout.
 
-Signed-off-by: David Decotigny <decot@googlers.com>
----
- include/rdma/ib_addr.h | 14 ++++++--------
- 1 file changed, 6 insertions(+), 8 deletions(-)
+Is the timeout absolute or relative?
 
-diff --git a/include/rdma/ib_addr.h b/include/rdma/ib_addr.h
-index ce55906..782bb8c 100644
---- a/include/rdma/ib_addr.h
-+++ b/include/rdma/ib_addr.h
-@@ -241,24 +241,22 @@ static inline enum ib_mtu iboe_get_mtu(int mtu)
- 
- static inline int iboe_get_rate(struct net_device *dev)
- {
--	struct ethtool_cmd cmd;
--	u32 speed;
-+	struct ethtool_ksettings cmd;
- 	int err;
- 
- 	rtnl_lock();
--	err = __ethtool_get_settings(dev, &cmd);
-+	err = __ethtool_get_ksettings(dev, &cmd);
- 	rtnl_unlock();
- 	if (err)
- 		return IB_RATE_PORT_CURRENT;
- 
--	speed = ethtool_cmd_speed(&cmd);
--	if (speed >= 40000)
-+	if (cmd.parent.speed >= 40000)
- 		return IB_RATE_40_GBPS;
--	else if (speed >= 30000)
-+	else if (cmd.parent.speed >= 30000)
- 		return IB_RATE_30_GBPS;
--	else if (speed >= 20000)
-+	else if (cmd.parent.speed >= 20000)
- 		return IB_RATE_20_GBPS;
--	else if (speed >= 10000)
-+	else if (cmd.parent.speed >= 10000)
- 		return IB_RATE_10_GBPS;
- 	else
- 		return IB_RATE_PORT_CURRENT;
+I'd kind of like the ability to set timeouts on multiple clocks at the
+same time, but I can live without that.
+
+--Andy
+
+>
+> RETURN VALUE
+>
+>        The same as said in epoll_pwait(2).
+>
+> ERRORS
+>
+>        The same as said in man epoll_pwait(2), plus:
+>
+>        EINVAL flags is not zero.
+>
+>
+> CONFORMING TO
+>
+>        epoll_pwait1() is Linux-specific.
+>
+> SEE ALSO
+>
+>        epoll_create(2), epoll_ctl(2), epoll_wait(2), epoll_pwait(2), epoll(7)
+>
+> Fam Zheng (7):
+>   epoll: Extract epoll_wait_do and epoll_pwait_do
+>   epoll: Specify clockid explicitly
+>   epoll: Extract ep_ctl_do
+>   epoll: Add implementation for epoll_ctl_batch
+>   x86: Hook up epoll_ctl_batch syscall
+>   epoll: Add implementation for epoll_pwait1
+>   x86: Hook up epoll_pwait1 syscall
+>
+>  arch/x86/syscalls/syscall_32.tbl |   2 +
+>  arch/x86/syscalls/syscall_64.tbl |   2 +
+>  fs/eventpoll.c                   | 241 ++++++++++++++++++++++++++-------------
+>  include/linux/syscalls.h         |   9 ++
+>  include/uapi/linux/eventpoll.h   |  11 ++
+>  5 files changed, 186 insertions(+), 79 deletions(-)
+>
+> --
+> 1.9.3
+>
+
+
+
 -- 
-2.2.0.rc0.207.ga3a616c
+Andy Lutomirski
+AMA Capital Management, LLC
