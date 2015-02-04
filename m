@@ -1,61 +1,84 @@
-From: Alexander Holler <holler-SXC+2es9fhnfWeYVQQPykw@public.gmane.org>
-Subject: Re: [PATCH 1/5] WIP: Add syscall unlinkat_s (currently x86* only)
-Date: Wed, 04 Feb 2015 17:53:08 +0100
-Message-ID: <54D24E74.9010103@ahsoftware.de>
-References: <1422896713-25367-1-git-send-email-holler@ahsoftware.de> <1422896713-25367-2-git-send-email-holler@ahsoftware.de> <20150203060542.GZ29656@ZenIV.linux.org.uk> <54D071AA.1030302@ahsoftware.de> <20150203075616.GA29656@ZenIV.linux.org.uk> <54D08BF4.3000903@ahsoftware.de> <54D093A0.7090201@ahsoftware.de> <54D0C3B8.2050507@ahsoftware.de> <20150203174839.GD2509@thunk.org> <54D10D0E.8090204@ahsoftware.de> <20150203233332.GE29656@ZenIV.linux.org.uk> <54D1F215.9030404@ahsoftware.de> <alpine.LFD.2.00.1502041247530.23002@localhost.localdomain> <54D20F02.5050700@ahsoftware.de> <CAHO5Pa0_2HE23dPU5Fg-sUgi2-e-szCpqoR98Vd6zE70_yd8Sw@mail.gmail.com> <54D21CC8.4020705@ahsoftware.de> <alpine.LFD.2.00.1502041533130.26766@localhost.localdomain> <54D24504.6080201@ahsoftware.de> <alpine.LFD.2.00.15020
- 41724180.26766@localhost.localdomain> <54D24CA5.6080603@ahsoftware.de>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: MADV_DONTNEED semantics? Was: [RFC PATCH] mm: madvise: Ignore
+ repeated MADV_DONTNEED hints
+Date: Wed, 04 Feb 2015 18:02:02 +0100
+Message-ID: <54D2508A.9030804@suse.cz>
+References: <20150202165525.GM2395@suse.de> <54CFF8AC.6010102@intel.com> <54D08483.40209@suse.cz> <20150203105301.GC14259@node.dhcp.inet.fi> <54D0B43D.8000209@suse.cz> <54D0F56A.9050003@gmail.com> <54D22298.3040504@suse.cz> <CAKgNAkgOOCuzJz9whoVfFjqhxM0zYsz94B1+oH58SthC5Ut9sg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54D24CA5.6080603-SXC+2es9fhnfWeYVQQPykw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?UTF-8?B?THVrw6HFoSBDemVybmVy?= <lczerner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CAKgNAkgOOCuzJz9whoVfFjqhxM0zYsz94B1+oH58SthC5Ut9sg@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: mtk.manpages@gmail.com
+Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, Dave Hansen <dave.hansen@intel.com>, Mel Gorman <mgorman@suse.de>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Hugh Dickins <hughd@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Am 04.02.2015 um 17:45 schrieb Alexander Holler:
-> Am 04.02.2015 um 17:25 schrieb Luk=C3=A1=C5=A1 Czerner:
->> On Wed, 4 Feb 2015, Alexander Holler wrote:
+On 02/04/2015 03:00 PM, Michael Kerrisk (man-pages) wrote:
+> Hello Vlastimil,
 >
->>> Am 04.02.2015 um 15:52 schrieb Luk=C3=A1=C5=A1 Czerner:
->>>> On Wed, 4 Feb 2015, Alexander Holler wrote:
+> On 4 February 2015 at 14:46, Vlastimil Babka <vbabka@suse.cz> wrote:
+>>>> - that covers mlocking ok, not sure if the rest fits the "shared pages"
+>>>> case
+>>>> though. I dont see any check for other kinds of shared pages in the code.
 >>>
->>>>> I'm happy for all the feedback. But it doesn't help me. I'm not
->>>>> going to spend
->>>>> the necessary time unpaid.
->>>>
->>>> Right, you'd much rather have someone else to spend the time on yo=
-ur
->>>> request unpaid. That's understandable, but unreasonable. You want
->>>> it, implement it, or pay someone else to do it for you.
->>>
->>> Maybe you should attach a big fat red warning to the kernels bugzil=
-la
->>> that filing a bug means either to fix it yourself or pay somone to =
-do
->>> that.
->>>
->>> I've never demanded that someone else fixes it.
->>>
->>> I've just explained a problem.
->>>
->>> Unbelievable how someone could do such without paying someone else =
-to
->>> fix it or by fixing it themself ...
+>>> Agreed. "shared" here seems confused. I've removed it. And I've
+>>> added mention of "Huge TLB pages" for this error.
 >>
->> It's not a bug, you're requesting a feature.
->>
+>> Thanks.
 >
-> Ok, I'm guilty.
->
-> May I ask if there's somewhere a feature request tracker which doesn'=
-t
-> cruzify someone because he suggest a (maybe wrong) solution and tries=
- to
-> show that this might work with some prelimary, broken, silly, quick a=
-nd
-> dirty patches?
+> I also added those cases for MADV_REMOVE, BTW.
 
-I guess the answer is FreeBSD or similiar. ;)
+Right. There's also the following for MADV_REMOVE that needs updating:
+
+"Currently, only shmfs/tmpfs supports this; other filesystems return 
+with the error ENOSYS."
+
+- it's not just shmem/tmpfs anymore. It should be best to refer to 
+fallocate(2) option FALLOC_FL_PUNCH_HOLE which seems to be (more) up to 
+date.
+
+- AFAICS it doesn't return ENOSYS but EOPNOTSUPP. Also neither error 
+code is listed in the ERRORS section.
+
+>>>>>> - The word "will result" did sound as a guarantee at least to me. So
+>>>>>> here it
+>>>>>> could be changed to "may result (unless the advice is ignored)"?
+>>>>>
+>>>>> It's too late to fix documentation. Applications already depends on the
+>>>>> beheviour.
+>>>>
+>>>> Right, so as long as they check for EINVAL, it should be safe. It appears
+>>>> that
+>>>> jemalloc does.
+>>>
+>>>
+>>> So, first a brief question: in the cases where the call does not error
+>>> out,
+>>> are we agreed that in the current implementation, MADV_DONTNEED will
+>>> always result in zero-filled pages when the region is faulted back in
+>>> (when we consider pages that are not backed by a file)?
+>>
+>>
+>> I'd agree at this point.
+>
+> Thanks for the confirmation.
+>
+>> Also we should probably mention anonymously shared pages (shmem). I think
+>> they behave the same as file here.
+>
+> You mean tmpfs here, right? (I don't keep all of the synonyms straight.)
+
+shmem is tmpfs (that by itself would fit under "files" just fine), but 
+also sys V segments created by shmget(2) and also mappings created by 
+mmap with MAP_SHARED | MAP_ANONYMOUS. I'm not sure if there's a single 
+manpage to refer to the full list.
+
+Thanks,
+Vlastimil
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
