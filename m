@@ -1,53 +1,124 @@
-From: Alexander Holler <holler-SXC+2es9fhnfWeYVQQPykw@public.gmane.org>
-Subject: Re: [PATCH 1/5] WIP: Add syscall unlinkat_s (currently x86* only)
-Date: Wed, 04 Feb 2015 15:19:15 +0100
-Message-ID: <54D22A63.7090603@ahsoftware.de>
-References: <1422896713-25367-1-git-send-email-holler@ahsoftware.de> <1422896713-25367-2-git-send-email-holler@ahsoftware.de> <20150203060542.GZ29656@ZenIV.linux.org.uk> <54D071AA.1030302@ahsoftware.de> <20150203075616.GA29656@ZenIV.linux.org.uk> <54D08BF4.3000903@ahsoftware.de> <54D093A0.7090201@ahsoftware.de> <54D0C3B8.2050507@ahsoftware.de> <20150203174839.GD2509@thunk.org> <54D10D0E.8090204@ahsoftware.de> <20150203233332.GE29656@ZenIV.linux.org.uk> <54D1F215.9030404@ahsoftware.de> <alpine.LFD.2.00.1502041247530.23002@localhost.localdomain> <54D20F02.5050700@ahsoftware.de> <CAHO5Pa0_2HE23dPU5Fg-sUgi2-e-szCpqoR98Vd6zE70_yd8Sw@mail.gmail.com> <54D21CC8.4020705@ahsoftware.de> <54D21EB8.6020208@ahsoftware.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH] tpm, tpm_tis: fix TPM 2.0 probing
+Date: Wed,  4 Feb 2015 16:21:09 +0200
+Message-ID: <1423059669-31734-1-git-send-email-jarkko.sakkinen@linux.intel.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54D21EB8.6020208-SXC+2es9fhnfWeYVQQPykw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: =?UTF-8?B?THVrw6HFoSBDemVybmVy?= <lczerner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Peter Huewe <peterhuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>
+Cc: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Am 04.02.2015 um 14:29 schrieb Alexander Holler:
-> Am 04.02.2015 um 14:21 schrieb Alexander Holler:
->
->>> I tell you that discussions of APIs should CC linux-api, which I am
->>> now CCing into this thread, again, because, again, you're not
->>> listening to feedback.
->>
->> Please don't confuse "not listening" with "unable to fulfill Linux
->> kernel maintainer requests".
->
-> I really wonder what do you expect from people not getting paid to spend
-> time for fulfilling maintainer request?
->
-> I've written bugs and even offered some patches (regardless how usefull
-> there are in your eyes, it's more than most other people can do).
->
-> And all what it brought me is that I receive flames like your one.
->
-> Do you really think that's the right way to stimulate people in helping
-> to make Linux better?
+If during transmission system error was returned, the logic was to
+incorrectly deduce that chip is a TPM 1.x chip. This patch fixes this
+issue. Also, this patch changes probing so that message tag is used as the
+measure for TPM 2.x, which should be much more stable. A separate function
+called tpm2_probe() is encapsulated because it can be used with any
+chipset.
 
-I'm really sorry that I can't spend several unpaid months with reading 
-and understanding ever changing linux kernel sources in order to become 
-a Linux filesystem expert and send some fully working perfect patches 
-which do fix the problem in question.
+Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+---
+ drivers/char/tpm/tpm.h      |  3 ++-
+ drivers/char/tpm/tpm2-cmd.c | 40 +++++++++++++++++++++++++++++++++-------
+ drivers/char/tpm/tpm_tis.c  | 11 ++++-------
+ 3 files changed, 39 insertions(+), 15 deletions(-)
 
-And I can't spend the necessary time to play remote keyboard for kernel 
-maintainers which might be willing to explain me what has to be done 
-according to their view. I've already offered what I was willing to do, 
-for the price of having to defend myself over and over. And 
-unfortunately that wasn't the first time I've ended up with having to 
-defend myself.
-
-My conclusion is that I'm a real fool having posted multiple times 
-patches to this list. It just doesn't make any sense and most of the 
-time the only reward are flames.
-
-Alexander Holler
+diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
+index 7b0727c..a4b0f5e 100644
+--- a/drivers/char/tpm/tpm.h
++++ b/drivers/char/tpm/tpm.h
+@@ -435,4 +435,5 @@ extern int tpm2_startup(struct tpm_chip *chip, u16 startup_type);
+ extern int tpm2_shutdown(struct tpm_chip *chip, u16 shutdown_type);
+ extern unsigned long tpm2_calc_ordinal_duration(struct tpm_chip *, u32);
+ extern int tpm2_do_selftest(struct tpm_chip *chip);
+-extern int tpm2_gen_interrupt(struct tpm_chip *chip, bool quiet);
++extern int tpm2_gen_interrupt(struct tpm_chip *chip);
++extern int tpm2_probe(struct tpm_chip *chip);
+diff --git a/drivers/char/tpm/tpm2-cmd.c b/drivers/char/tpm/tpm2-cmd.c
+index 1abe650..49cd354 100644
+--- a/drivers/char/tpm/tpm2-cmd.c
++++ b/drivers/char/tpm/tpm2-cmd.c
+@@ -598,20 +598,46 @@ EXPORT_SYMBOL_GPL(tpm2_do_selftest);
+ /**
+  * tpm2_gen_interrupt() - generate an interrupt
+  * @chip: TPM chip to use
+- * @quiet: surpress the error message
+  *
+  * 0 is returned when the operation is successful. If a negative number is
+  * returned it remarks a POSIX error code. If a positive number is returned
+  * it remarks a TPM error.
+  */
+-int tpm2_gen_interrupt(struct tpm_chip *chip, bool quiet)
++int tpm2_gen_interrupt(struct tpm_chip *chip)
+ {
+-	const char *desc = NULL;
+ 	u32 dummy;
+ 
+-	if (!quiet)
+-		desc = "attempting to generate an interrupt";
+-
+-	return tpm2_get_tpm_pt(chip, TPM2_CAP_TPM_PROPERTIES, &dummy, desc);
++	return tpm2_get_tpm_pt(chip, 0x100, &dummy,
++			       "attempting to generate an interrupt");
+ }
+ EXPORT_SYMBOL_GPL(tpm2_gen_interrupt);
++
++/**
++ * tpm2_probe() - probe TPM 2.0
++ * @chip: TPM chip to use
++ *
++ * Send idempotent TPM 2.0 command and see whether TPM 2.0 chip replied based on
++ * the reply tag.
++ */
++int tpm2_probe(struct tpm_chip *chip)
++{
++	struct tpm2_cmd cmd;
++	int rc;
++
++	cmd.header.in = tpm2_get_tpm_pt_header;
++	cmd.params.get_tpm_pt_in.cap_id = cpu_to_be32(TPM2_CAP_TPM_PROPERTIES);
++	cmd.params.get_tpm_pt_in.property_id = cpu_to_be32(0x100);
++	cmd.params.get_tpm_pt_in.property_cnt = cpu_to_be32(1);
++
++	rc = tpm_transmit(chip, (const char *) &cmd, sizeof(cmd));
++	if (rc <  0)
++		return rc;
++	else if (rc < TPM_HEADER_SIZE)
++		return -EFAULT;
++
++	if (be16_to_cpu(cmd.header.out.tag) == TPM2_ST_NO_SESSIONS)
++		chip->flags |= TPM_CHIP_FLAG_TPM2;
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(tpm2_probe);
+diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
+index 6725bef..ee6e0bd 100644
+--- a/drivers/char/tpm/tpm_tis.c
++++ b/drivers/char/tpm/tpm_tis.c
+@@ -639,12 +639,9 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+ 		goto out_err;
+ 	}
+ 
+-	/* Every TPM 2.x command has a higher ordinal than TPM 1.x commands.
+-	 * Therefore, we can use an idempotent TPM 2.x command to probe TPM 2.x.
+-	 */
+-	rc = tpm2_gen_interrupt(chip, true);
+-	if (rc == 0 || rc == TPM2_RC_INITIALIZE)
+-		chip->flags |= TPM_CHIP_FLAG_TPM2;
++	rc = tpm2_probe(chip);
++	if (rc)
++		goto out_err;
+ 
+ 	vendor = ioread32(chip->vendor.iobase + TPM_DID_VID(0));
+ 	chip->vendor.manufacturer_id = vendor;
+@@ -747,7 +744,7 @@ static int tpm_tis_init(struct device *dev, acpi_handle acpi_dev_handle,
+ 
+ 			/* Generate Interrupts */
+ 			if (chip->flags & TPM_CHIP_FLAG_TPM2)
+-				tpm2_gen_interrupt(chip, false);
++				tpm2_gen_interrupt(chip);
+ 			else
+ 				tpm_gen_interrupt(chip);
+ 
+-- 
+2.1.4
