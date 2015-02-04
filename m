@@ -1,55 +1,79 @@
-From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v17 1/7] mm: support madvise(MADV_FREE)
-Date: Wed, 4 Feb 2015 13:52:18 +0100
-Message-ID: <20150204125218.GE29434@dhcp22.suse.cz>
-References: <1413799924-17946-1-git-send-email-minchan@kernel.org>
- <1413799924-17946-2-git-send-email-minchan@kernel.org>
- <20141127144725.GB19157@dhcp22.suse.cz>
- <20141130235652.GA10333@bbox>
- <20141202100125.GD27014@dhcp22.suse.cz>
- <20141203000026.GA30217@bbox>
- <20141203101329.GB23236@dhcp22.suse.cz>
- <20141205070816.GB3358@bbox>
- <20141205083249.GA2321@dhcp22.suse.cz>
- <54D0F9BC.4060306@gmail.com>
+From: Michael Kerrisk <mtk.manpages@gmail.com>
+Subject: Re: [PATCH 1/5] WIP: Add syscall unlinkat_s (currently x86* only)
+Date: Wed, 4 Feb 2015 14:06:14 +0100
+Message-ID: <CAHO5Pa0_2HE23dPU5Fg-sUgi2-e-szCpqoR98Vd6zE70_yd8Sw@mail.gmail.com>
+References: <1422896713-25367-1-git-send-email-holler@ahsoftware.de>
+ <1422896713-25367-2-git-send-email-holler@ahsoftware.de> <20150203060542.GZ29656@ZenIV.linux.org.uk>
+ <54D071AA.1030302@ahsoftware.de> <20150203075616.GA29656@ZenIV.linux.org.uk>
+ <54D08BF4.3000903@ahsoftware.de> <54D093A0.7090201@ahsoftware.de>
+ <54D0C3B8.2050507@ahsoftware.de> <20150203174839.GD2509@thunk.org>
+ <54D10D0E.8090204@ahsoftware.de> <20150203233332.GE29656@ZenIV.linux.org.uk>
+ <54D1F215.9030404@ahsoftware.de> <alpine.LFD.2.00.1502041247530.23002@localhost.localdomain>
+ <54D20F02.5050700@ahsoftware.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <54D0F9BC.4060306-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <54D20F02.5050700@ahsoftware.de>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Alexander Holler <holler@ahsoftware.de>
+Cc: =?UTF-8?B?THVrw6HFoSBDemVybmVy?= <lczerner@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue 03-02-15 17:39:24, Michael Kerrisk wrote:
-[...]
-> If I'm reading the conversation right, the initially proposed text 
-> was from the BSD man page (which would be okay), but most of the 
-> text above seems  to have come straight from the page here:
-> http://www.lehman.cuny.edu/cgi-bin/man-cgi?madvise+3
-> 
-> Right?
-> 
-> Unfortunately, I don't think we can use that text. It's from the 
-> Solaris man page as far as I can tell, and I doubt that it's 
-> under a license that we can use.
+Alexander,
 
-Ohh, I wasn't aware of that restriction and didn't notice anything at
-the man page nor http://www.lehman.cuny.edu/cgi-bin/man-cgi.
-But you are definitely right that it would be better to not use this
-source. Sorry about that, I should have noticed that myself.
+On Wed, Feb 4, 2015 at 1:22 PM, Alexander Holler <holler@ahsoftware.de>=
+ wrote:
+> Am 04.02.2015 um 13:07 schrieb Luk=C3=A1=C5=A1 Czerner:
+>
+>> The fact is that the current patches are useless for anything other
+>> than proof-of-concept. Now you know more that needs to be done or
+>
+>
+> That's wrong. The patches already work. If you delete a file which is=
+n't in
+> use by something else, the current contents will be wiped on traditio=
+nal
+> harddrives. I assume that already fulfills more than 50% of use cases=
+ of
+> ordinary people.
 
-> If that's the case, we need to go back and come up with an
-> original text. It might draw inspiration from the Solaris page,
-> and take actual text from the BSD page (which is under a free
-> license), and it might also draw inspiration from Jon Corbet's 
-> description at http://lwn.net/Articles/590991/. 
-> 
-> Could you take another shot this please!
+You are getting various feedback from people, that you seem to be ignor=
+ing.
 
-Minchan is obviously working on one and I will review it once he is done
-with it.
--- 
-Michal Hocko
-SUSE Labs
+Al Viro, in his curmedgeonly way, points out that the problems are
+much deeper than you realize. He does not say so explicitly, but I
+imagine his point is that he does not want to see the kernel cluttered
+with "partial" solutions that will simply increase the maintenance
+burden in the long term, and leave bugs to be fixed further down the
+line. You seem not to be listening.
+
+Luk=C3=A1=C5=A1 points out to you that getting a feature like this into=
+ the
+kernel is complex process. You seem unwilling to hear that, and still
+just want your partial solution.
+
+I tell you that discussions of APIs should CC linux-api, which I am
+now CCing into this thread, again, because, again, you're not
+listening to feedback.
+
+Nobody is asking for "high towers"; they just have their eyes on the
+big picture. And the people here are just "ordinary people" with a
+*lot* of experience dealing with kernel code (I exclude myself) . They
+see many complexities that you don't. Getting intersting features into
+the kernel requires a lot of work, and careful listening.
+
+Thanks,
+
+Michael
+
+
+--=20
+Michael Kerrisk Linux man-pages maintainer;
+http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface", http://blog.man7.org/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
+" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
