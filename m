@@ -1,7 +1,7 @@
 From: Fam Zheng <famz@redhat.com>
-Subject: [PATCH RFC v2 7/7] x86: Hook up epoll_pwait1 syscall
-Date: Wed,  4 Feb 2015 18:36:53 +0800
-Message-ID: <1423046213-7043-8-git-send-email-famz@redhat.com>
+Subject: [PATCH RFC v2 3/7] epoll: Extract ep_ctl_do
+Date: Wed,  4 Feb 2015 18:36:49 +0800
+Message-ID: <1423046213-7043-4-git-send-email-famz@redhat.com>
 References: <1423046213-7043-1-git-send-email-famz@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1423046213-7043-1-git-send-email-famz@redhat.com>
@@ -10,32 +10,65 @@ To: linux-kernel@vger.kernel.org
 Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <mszeredi@suse.cz>, David Drysdale <drysdale@google.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Theodore Ts'o <tytso@mit.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Rashika Kheria <rashika.kheria@gmail.com>, Hugh Dickins <hughd@google.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Fam Zheng <famz@redhat.com>, Peter Zijlstra <peter>
 List-Id: linux-api@vger.kernel.org
 
+This is a common part from epoll_ctl implementation which will be shared with
+the coming epoll_ctl_wait.
+
 Signed-off-by: Fam Zheng <famz@redhat.com>
 ---
- arch/x86/syscalls/syscall_32.tbl | 1 +
- arch/x86/syscalls/syscall_64.tbl | 1 +
- 2 files changed, 2 insertions(+)
+ fs/eventpoll.c | 26 ++++++++++++++++++--------
+ 1 file changed, 18 insertions(+), 8 deletions(-)
 
-diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
-index fe809f6..bf912d8 100644
---- a/arch/x86/syscalls/syscall_32.tbl
-+++ b/arch/x86/syscalls/syscall_32.tbl
-@@ -366,3 +366,4 @@
- 357	i386	bpf			sys_bpf
- 358	i386	execveat		sys_execveat			stub32_execveat
- 359	i386	epoll_ctl_batch		sys_epoll_ctl_batch
-+360	i386	epoll_pwait1		sys_epoll_pwait1
-diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
-index 67b2ea4..9246ad5 100644
---- a/arch/x86/syscalls/syscall_64.tbl
-+++ b/arch/x86/syscalls/syscall_64.tbl
-@@ -330,6 +330,7 @@
- 321	common	bpf			sys_bpf
- 322	64	execveat		stub_execveat
- 323	64	epoll_ctl_batch		sys_epoll_ctl_batch
-+324	64	epoll_pwait1		sys_epoll_pwait1
+diff --git a/fs/eventpoll.c b/fs/eventpoll.c
+index 01f469a..a1c313c 100644
+--- a/fs/eventpoll.c
++++ b/fs/eventpoll.c
+@@ -1808,22 +1808,15 @@ SYSCALL_DEFINE1(epoll_create, int, size)
+  * the eventpoll file that enables the insertion/removal/change of
+  * file descriptors inside the interest set.
+  */
+-SYSCALL_DEFINE4(epoll_ctl, int, epfd, int, op, int, fd,
+-		struct epoll_event __user *, event)
++int ep_ctl_do(int epfd, int op, int fd, struct epoll_event epds)
+ {
+ 	int error;
+ 	int full_check = 0;
+ 	struct fd f, tf;
+ 	struct eventpoll *ep;
+ 	struct epitem *epi;
+-	struct epoll_event epds;
+ 	struct eventpoll *tep = NULL;
  
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
+-	error = -EFAULT;
+-	if (ep_op_has_event(op) &&
+-	    copy_from_user(&epds, event, sizeof(struct epoll_event)))
+-		goto error_return;
+-
+ 	error = -EBADF;
+ 	f = fdget(epfd);
+ 	if (!f.file)
+@@ -1945,6 +1938,23 @@ error_return:
+ 	return error;
+ }
+ 
++/*
++ * The following function implements the controller interface for
++ * the eventpoll file that enables the insertion/removal/change of
++ * file descriptors inside the interest set.
++ */
++SYSCALL_DEFINE4(epoll_ctl, int, epfd, int, op, int, fd,
++		struct epoll_event __user *, event)
++{
++	struct epoll_event epds;
++
++	if (ep_op_has_event(op) &&
++	    copy_from_user(&epds, event, sizeof(struct epoll_event)))
++		return -EFAULT;
++
++	return ep_ctl_do(epfd, op, fd, epds);
++}
++
+ static inline int epoll_wait_do(int epfd, struct epoll_event __user *events,
+ 				int maxevents, int clockid,
+ 				const ktime_t timeout)
 -- 
 1.9.3
