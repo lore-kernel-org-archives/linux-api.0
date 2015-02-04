@@ -1,333 +1,155 @@
-From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC] mremap: add MREMAP_NOHOLE flag
-Date: Wed, 4 Feb 2015 11:22:40 +0100
-Message-ID: <CAHO5Pa2WZuSNuwhX77fsS+q1KFLJ0Y2s7_f14zTdZWRrG65TdA@mail.gmail.com>
-References: <7064772f72049de8a79383105f49b5db84a946e5.1422990665.git.shli@fb.com>
+From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [RFC PATCH] fork: report pid reservation failure properly
+Date: Wed, 4 Feb 2015 11:27:19 +0100
+Message-ID: <20150204102719.GB29434@dhcp22.suse.cz>
+References: <20150203150557.GB8907@dhcp22.suse.cz>
+ <CAKgNAkjiz6Uop_QVBNyyHFu8kgAR46nB1HWi0yOKt4ZX=666vg@mail.gmail.com>
+ <20150203155248.GD8907@dhcp22.suse.cz>
+ <87bnlalo7k.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <7064772f72049de8a79383105f49b5db84a946e5.1422990665.git.shli-b10kYP2dOMg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <87bnlalo7k.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shaohua Li <shli-b10kYP2dOMg@public.gmane.org>
-Cc: linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Kernel-team-b10kYP2dOMg@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-[CC += linux-api]
+On Tue 03-02-15 14:44:31, Eric W. Biederman wrote:
+> Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org> writes:
+> 
+> > On Tue 03-02-15 16:33:03, Michael Kerrisk wrote:
+> >> Hi Michal,
+> >> 
+> >> 
+> >> On 3 February 2015 at 16:05, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org> wrote:
+> >> > Hi,
+> >> > while debugging an unexpected ENOMEM from fork (there was no memory
+> >> > pressure and OVERCOMMIT_ALWAYS) I have found out that fork returns
+> >> > ENOMEM even when not short on memory.
+> >> >
+> >> > In this particular case it was due to depleted pid space which is
+> >> > documented to return EAGAIN in man pages.
+> >> >
+> >> > Here is a quick fix up.
+> >> 
+> >> Could you summarize briefly what the user-space visible change is
+> >> here?
+> >
+> > The user visible change is that the userspace will get EAGAIN when
+> > calling fork and the pid space is depleted because of a system wide
+> > limit as per man page description rather than ENOMEM which we return
+> > currently.
+> 
+> I don't think that EAGAIN is any better than ENOMEM,
 
-Hello Shaohua Li,
+Well, EAGAIN is what the documentation says (both POSIX and ours).
+I do not want to get to language lawyering but we should either change
+the documentation and reason why we differ from POSIX or change the
+behavior. I find the later option more viable because ENOMEM is really
+hard to debug when there is not a lack of memory.
 
-Since this is an API change, please CC linux-api@. (The kernel source
-file Documentation/SubmitChecklist notes that all Linux kernel patches
-that change userspace interfaces should be CCed to
-linux-api-u79uwXL29TaiAVqoAR/hOA@public.gmane.org See also
-https://www.kernel.org/doc/man-pages/linux-api-ml.html)
+> nor do I know that it is safe to return EBUSY from fork.  What nonsense
+> will applications do when they see an unexpected error code.
 
-Thanks,
+Agreed, any new error code might be confusing.
 
-Michael
+> >> It is not so obvious from your message. I believe you're turning
+> >> some cases of ENOMEM into EAGAIN, right?
+> >
+> > Yes, except for the case mentioned below which discusses a potential
+> > error code for pid namespace triggered failures.
+> >
+> >> Note, by the way, that if I understandwhat you intend, this change
+> >> would bring the implementation closer to POSIX, which specifies:
+> >
+> > True.
+> >
+> > HTH.
+> >
+> >>        EAGAIN The  system  lacked  the  necessary  resources  to  create
+> >>               another  process, or the system-imposed limit on the total
+> >>               number of processes under execution system-wide  or  by  a
+> >>               single user {CHILD_MAX} would be exceeded.
+> >> 
+> 
+> Note.  All of those documented errors documented to return EAGAIN
+> are the kind of errors that if you wait a while you can reasonably
+> expect fork to succeed later.
+> 
+> With respecting to dealing with errors from fork, fork
+> is a major pain.  Fork only has only two return codes documented,
+> and fork is one of the most complicated system calls in the kernel with
+> the most failure modes of any system call I am familiar with.  Mapping 
+> a plethora of failure modes onto two error codes is always going to be
+> problematic from some view point.
 
+Agreed.
 
-On Tue, Feb 3, 2015 at 8:19 PM, Shaohua Li <shli-b10kYP2dOMg@public.gmane.org> wrote:
-> There was a similar patch posted before, but it doesn't get merged. I'd like
-> to try again if there are more discussions.
-> http://marc.info/?l=linux-mm&m=141230769431688&w=2
->
-> mremap can be used to accelerate realloc. The problem is mremap will
-> punch a hole in original VMA, which makes specific memory allocator
-> unable to utilize it. Jemalloc is an example. It manages memory in 4M
-> chunks. mremap a range of the chunk will punch a hole, which other
-> mmap() syscall can fill into. The 4M chunk is then fragmented, jemalloc
-> can't handle it.
->
-> This patch adds a new flag for mremap. With it, mremap will not punch the
-> hole. page tables of original vma will be zapped in the same way, but
-> vma is still there. That is original vma will look like a vma without
-> pagefault. Behavior of new vma isn't changed.
->
-> For private vma, accessing original vma will cause
-> page fault and just like the address of the vma has never been accessed.
-> So for anonymous, new page/zero page will be fault in. For file mapping,
-> new page will be allocated with file reading for cow, or pagefault will
-> use existing page cache.
->
-> For shared vma, original and new vma will map to the same file. We can
-> optimize this without zaping original vma's page table in this case, but
-> this patch doesn't do it yet.
->
-> Since with MREMAP_NOHOLE, original vma still exists. pagefault handler
-> for special vma might not able to handle pagefault for mremap'd area.
-> The patch doesn't allow vmas with VM_PFNMAP|VM_MIXEDMAP flags do NOHOLE
-> mremap.
->
-> Cc: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-> Cc: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-> Signed-off-by: Shaohua Li <shli-b10kYP2dOMg@public.gmane.org>
-> ---
->  include/uapi/linux/mman.h |  1 +
->  mm/mremap.c               | 97 ++++++++++++++++++++++++++++++++---------------
->  2 files changed, 67 insertions(+), 31 deletions(-)
->
-> diff --git a/include/uapi/linux/mman.h b/include/uapi/linux/mman.h
-> index ade4acd..9ee9a15 100644
-> --- a/include/uapi/linux/mman.h
-> +++ b/include/uapi/linux/mman.h
-> @@ -5,6 +5,7 @@
->
->  #define MREMAP_MAYMOVE 1
->  #define MREMAP_FIXED   2
-> +#define MREMAP_NOHOLE  4
->
->  #define OVERCOMMIT_GUESS               0
->  #define OVERCOMMIT_ALWAYS              1
-> diff --git a/mm/mremap.c b/mm/mremap.c
-> index 3b886dc..ea3f40d 100644
-> --- a/mm/mremap.c
-> +++ b/mm/mremap.c
-> @@ -236,7 +236,8 @@ unsigned long move_page_tables(struct vm_area_struct *vma,
->
->  static unsigned long move_vma(struct vm_area_struct *vma,
->                 unsigned long old_addr, unsigned long old_len,
-> -               unsigned long new_len, unsigned long new_addr, bool *locked)
-> +               unsigned long new_len, unsigned long new_addr, bool *locked,
-> +               bool nohole)
->  {
->         struct mm_struct *mm = vma->vm_mm;
->         struct vm_area_struct *new_vma;
-> @@ -292,7 +293,7 @@ static unsigned long move_vma(struct vm_area_struct *vma,
->                 vma->vm_file->f_op->mremap(vma->vm_file, new_vma);
->
->         /* Conceal VM_ACCOUNT so old reservation is not undone */
-> -       if (vm_flags & VM_ACCOUNT) {
-> +       if ((vm_flags & VM_ACCOUNT) && !nohole) {
->                 vma->vm_flags &= ~VM_ACCOUNT;
->                 excess = vma->vm_end - vma->vm_start - old_len;
->                 if (old_addr > vma->vm_start &&
-> @@ -312,11 +313,18 @@ static unsigned long move_vma(struct vm_area_struct *vma,
->         hiwater_vm = mm->hiwater_vm;
->         vm_stat_account(mm, vma->vm_flags, vma->vm_file, new_len>>PAGE_SHIFT);
->
-> -       if (do_munmap(mm, old_addr, old_len) < 0) {
-> +       if (!nohole && do_munmap(mm, old_addr, old_len) < 0) {
->                 /* OOM: unable to split vma, just get accounts right */
->                 vm_unacct_memory(excess >> PAGE_SHIFT);
->                 excess = 0;
->         }
-> +
-> +       if (nohole && (new_addr & ~PAGE_MASK)) {
-> +               /* caller will unaccount */
-> +               vma->vm_flags &= ~VM_ACCOUNT;
-> +               do_munmap(mm, old_addr, old_len);
-> +       }
-> +
->         mm->hiwater_vm = hiwater_vm;
->
->         /* Restore VM_ACCOUNT if one or two pieces of vma left */
-> @@ -334,14 +342,13 @@ static unsigned long move_vma(struct vm_area_struct *vma,
->         return new_addr;
->  }
->
-> -static struct vm_area_struct *vma_to_resize(unsigned long addr,
-> -       unsigned long old_len, unsigned long new_len, unsigned long *p)
-> +static unsigned long validate_vma_and_charge(struct vm_area_struct *vma,
-> +       unsigned long addr,
-> +       unsigned long old_len, unsigned long new_len, unsigned long *p,
-> +       bool nohole)
->  {
->         struct mm_struct *mm = current->mm;
-> -       struct vm_area_struct *vma = find_vma(mm, addr);
-> -
-> -       if (!vma || vma->vm_start > addr)
-> -               goto Efault;
-> +       unsigned long diff;
->
->         if (is_vm_hugetlb_page(vma))
->                 goto Einval;
-> @@ -350,6 +357,9 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
->         if (old_len > vma->vm_end - addr)
->                 goto Efault;
->
-> +       if (nohole && (vma->vm_flags & (VM_PFNMAP | VM_MIXEDMAP)))
-> +               goto Einval;
-> +
->         /* Need to be careful about a growing mapping */
->         if (new_len > old_len) {
->                 unsigned long pgoff;
-> @@ -362,39 +372,45 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
->                         goto Einval;
->         }
->
-> +       if (nohole)
-> +               diff = new_len;
-> +       else
-> +               diff = new_len - old_len;
-> +
->         if (vma->vm_flags & VM_LOCKED) {
->                 unsigned long locked, lock_limit;
->                 locked = mm->locked_vm << PAGE_SHIFT;
->                 lock_limit = rlimit(RLIMIT_MEMLOCK);
-> -               locked += new_len - old_len;
-> +               locked += diff;
->                 if (locked > lock_limit && !capable(CAP_IPC_LOCK))
->                         goto Eagain;
->         }
->
-> -       if (!may_expand_vm(mm, (new_len - old_len) >> PAGE_SHIFT))
-> +       if (!may_expand_vm(mm, diff >> PAGE_SHIFT))
->                 goto Enomem;
->
->         if (vma->vm_flags & VM_ACCOUNT) {
-> -               unsigned long charged = (new_len - old_len) >> PAGE_SHIFT;
-> +               unsigned long charged = diff >> PAGE_SHIFT;
->                 if (security_vm_enough_memory_mm(mm, charged))
->                         goto Efault;
->                 *p = charged;
->         }
->
-> -       return vma;
-> +       return 0;
->
->  Efault:        /* very odd choice for most of the cases, but... */
-> -       return ERR_PTR(-EFAULT);
-> +       return -EFAULT;
->  Einval:
-> -       return ERR_PTR(-EINVAL);
-> +       return -EINVAL;
->  Enomem:
-> -       return ERR_PTR(-ENOMEM);
-> +       return -ENOMEM;
->  Eagain:
-> -       return ERR_PTR(-EAGAIN);
-> +       return -EAGAIN;
->  }
->
->  static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
-> -               unsigned long new_addr, unsigned long new_len, bool *locked)
-> +               unsigned long new_addr, unsigned long new_len, bool *locked,
-> +               bool nohole)
->  {
->         struct mm_struct *mm = current->mm;
->         struct vm_area_struct *vma;
-> @@ -422,17 +438,23 @@ static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
->                 goto out;
->
->         if (old_len >= new_len) {
-> -               ret = do_munmap(mm, addr+new_len, old_len - new_len);
-> -               if (ret && old_len != new_len)
-> -                       goto out;
-> +               if (!nohole) {
-> +                       ret = do_munmap(mm, addr+new_len, old_len - new_len);
-> +                       if (ret && old_len != new_len)
-> +                               goto out;
-> +               }
->                 old_len = new_len;
->         }
->
-> -       vma = vma_to_resize(addr, old_len, new_len, &charged);
-> -       if (IS_ERR(vma)) {
-> -               ret = PTR_ERR(vma);
-> +       vma = find_vma(mm, addr);
-> +       if (!vma || vma->vm_start > addr) {
-> +               ret = -EFAULT;
->                 goto out;
->         }
-> +       ret = validate_vma_and_charge(vma, addr, old_len, new_len, &charged,
-> +               nohole);
-> +       if (ret)
-> +               goto out;
->
->         map_flags = MAP_FIXED;
->         if (vma->vm_flags & VM_MAYSHARE)
-> @@ -444,7 +466,7 @@ static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
->         if (ret & ~PAGE_MASK)
->                 goto out1;
->
-> -       ret = move_vma(vma, addr, old_len, new_len, new_addr, locked);
-> +       ret = move_vma(vma, addr, old_len, new_len, new_addr, locked, nohole);
->         if (!(ret & ~PAGE_MASK))
->                 goto out;
->  out1:
-> @@ -483,8 +505,9 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
->         unsigned long ret = -EINVAL;
->         unsigned long charged = 0;
->         bool locked = false;
-> +       bool nohole = flags & MREMAP_NOHOLE;
->
-> -       if (flags & ~(MREMAP_FIXED | MREMAP_MAYMOVE))
-> +       if (flags & ~(MREMAP_FIXED | MREMAP_MAYMOVE | MREMAP_NOHOLE))
->                 return ret;
->
->         if (flags & MREMAP_FIXED && !(flags & MREMAP_MAYMOVE))
-> @@ -508,7 +531,7 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
->
->         if (flags & MREMAP_FIXED) {
->                 ret = mremap_to(addr, old_len, new_addr, new_len,
-> -                               &locked);
-> +                               &locked, nohole);
->                 goto out;
->         }
->
-> @@ -528,9 +551,9 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
->         /*
->          * Ok, we need to grow..
->          */
-> -       vma = vma_to_resize(addr, old_len, new_len, &charged);
-> -       if (IS_ERR(vma)) {
-> -               ret = PTR_ERR(vma);
-> +       vma = find_vma(mm, addr);
-> +       if (!vma || vma->vm_start > addr) {
-> +               ret = -EFAULT;
->                 goto out;
->         }
->
-> @@ -541,6 +564,12 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
->                 if (vma_expandable(vma, new_len - old_len)) {
->                         int pages = (new_len - old_len) >> PAGE_SHIFT;
->
-> +                       ret = validate_vma_and_charge(vma, addr, old_len, new_len,
-> +                               &charged, false);
-> +                       if (ret) {
-> +                               BUG_ON(charged != 0);
-> +                               goto out;
-> +                       }
->                         if (vma_adjust(vma, vma->vm_start, addr + new_len,
->                                        vma->vm_pgoff, NULL)) {
->                                 ret = -ENOMEM;
-> @@ -558,6 +587,11 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
->                 }
->         }
->
-> +       ret = validate_vma_and_charge(vma, addr, old_len, new_len,
-> +               &charged, nohole);
-> +       if (ret)
-> +               goto out;
-> +
->         /*
->          * We weren't able to just expand or shrink the area,
->          * we need to create a new one and move it..
-> @@ -577,7 +611,8 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
->                         goto out;
->                 }
->
-> -               ret = move_vma(vma, addr, old_len, new_len, new_addr, &locked);
-> +               ret = move_vma(vma, addr, old_len, new_len, new_addr, &locked,
-> +                       nohole);
->         }
->  out:
->         if (ret & ~PAGE_MASK)
-> --
-> 1.8.1
->
-> --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=mailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
+> EAGAIN is a bad idea in general because that means try again and if you
+> have hit a fixed limit trying again is wrong.
 
+I don't know what was the justification for EAGAIN but it was like that
+for ages so I assume there is a code which relies on that.
 
+> Frankly I think posix is probably borked to recommend EAGAIN instead of
+> ENOMEM.
+>
+> Everyone in the world uses fork which makes is quite tricky to figure
+> out which assumptions on the return values of fork exist in the wild,
+> so it is not clear if it is safe to add new more descriptive return
+> messages.
+> 
+> With respect to the case where PIDNS_HASH_ADDING would cause fork to
+> fail, that only happens after init has exited in a pid namespace, so it
+> is very much a permanent failure, and there are no longer any processes
+> in the specific pid namespace nor will there ever be any more processes
+> in that pid namespace.  EINVAL might actually makes sense.  Of course
+> a sensible error code from fork does not seem to be allowed.
+> 
+> Of the two return codes that are allowed for fork, EAGAIN and ENOMEM
+> ENOMEM seems to be better as it is a more permanement failure.
 
+Yes, if a new error code is really a nogo I would go for ENOMEM.
+
+> I agree it is a little confusing, but I don't see anything that is other
+> than a little confusing.
+> 
+> Other than someone doing:
+> 
+> unshare(CLONE_NEWPID);
+> pid = fork();
+> waitpid(pid);
+> fork();   /* returns ENOMEM */
+
+Ohh, I got it finally. unshare itself doesn't move the calling process
+into a new namsepace.
+
+> Was there any other real world issue that started this goal to fix fork?
+
+I haven't seen any real world issue wrt. PIDNS_HASH_ADDING. It came out
+from the error code propagation.
+But I have seen ENOMEM when pid space was depleted and that confused
+people and they reported it as a bug. Exactly because there was a ton of
+memory free and no overcommit.
+
+> I think there is a reasonable argument for digging into the fork return
+> code situation.  Perhaps it is just a matter of returning exotic return
+> codes for the weird and strange cases like trying to create a pid in a
+> dead pid namespace.
+> 
+> But what we have works, and I don't know of anything bad that happens
+> except when people are developing new code they get confused.
+> 
+> Further we can't count on people to read their man pages because this
+> behavior of returning ENOMEM is documented in pid_namespaces(7).  Which
+> makes me really thinking changing the code to match the manpage is more
+> likely to break code than to fix code.
+
+OK, I will remove the pid namespace related error code propagation and
+keep it returning ENOMEM but I think the EAGAIN part is still worth fixing.
+Will post a new patch.
 -- 
-Michael Kerrisk Linux man-pages maintainer;
-http://www.kernel.org/doc/man-pages/
-Author of "The Linux Programming Interface", http://blog.man7.org/
+Michal Hocko
+SUSE Labs
