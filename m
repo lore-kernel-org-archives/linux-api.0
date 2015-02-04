@@ -1,231 +1,55 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH RFC v2 0/7] epoll: Introduce new syscalls, epoll_ctl_batch
- and epoll_pwait1
-Date: Wed, 04 Feb 2015 13:44:27 +0100
-Message-ID: <54D2142B.8090105@gmail.com>
-References: <1423046213-7043-1-git-send-email-famz@redhat.com>
+From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v17 1/7] mm: support madvise(MADV_FREE)
+Date: Wed, 4 Feb 2015 13:52:18 +0100
+Message-ID: <20150204125218.GE29434@dhcp22.suse.cz>
+References: <1413799924-17946-1-git-send-email-minchan@kernel.org>
+ <1413799924-17946-2-git-send-email-minchan@kernel.org>
+ <20141127144725.GB19157@dhcp22.suse.cz>
+ <20141130235652.GA10333@bbox>
+ <20141202100125.GD27014@dhcp22.suse.cz>
+ <20141203000026.GA30217@bbox>
+ <20141203101329.GB23236@dhcp22.suse.cz>
+ <20141205070816.GB3358@bbox>
+ <20141205083249.GA2321@dhcp22.suse.cz>
+ <54D0F9BC.4060306@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1423046213-7043-1-git-send-email-famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <54D0F9BC.4060306-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, Rashika Kheria <rashika.kheria-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peterz@infrad>
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Fam Zheng,
+On Tue 03-02-15 17:39:24, Michael Kerrisk wrote:
+[...]
+> If I'm reading the conversation right, the initially proposed text 
+> was from the BSD man page (which would be okay), but most of the 
+> text above seems  to have come straight from the page here:
+> http://www.lehman.cuny.edu/cgi-bin/man-cgi?madvise+3
+> 
+> Right?
+> 
+> Unfortunately, I don't think we can use that text. It's from the 
+> Solaris man page as far as I can tell, and I doubt that it's 
+> under a license that we can use.
 
-On 02/04/2015 11:36 AM, Fam Zheng wrote:
-> Changes from v1 (https://lkml.org/lkml/2015/1/20/189):
-> 
->   - As discussed in previous thread [1], split the call to epoll_ctl_batch and
->     epoll_pwait. [Michael]
-> 
->   - Fix memory leaks. [Omar]
-> 
->   - Add a short comment about the ignored copy_to_user failure. [Omar]
-> 
->   - Cover letter rewritten.
-> 
-> This adds two new system calls as described below. I mentioned glibc wrapping
-> of sigarg in epoll_pwait1 description, so don't read it as end user man page
-> yet.
+Ohh, I wasn't aware of that restriction and didn't notice anything at
+the man page nor http://www.lehman.cuny.edu/cgi-bin/man-cgi.
+But you are definitely right that it would be better to not use this
+source. Sorry about that, I should have noticed that myself.
 
-Fair enough. But I think it would be helpful to say a little more already.
-See my comment below.
+> If that's the case, we need to go back and come up with an
+> original text. It might draw inspiration from the Solaris page,
+> and take actual text from the BSD page (which is under a free
+> license), and it might also draw inspiration from Jon Corbet's 
+> description at http://lwn.net/Articles/590991/. 
+> 
+> Could you take another shot this please!
 
-> One caveat is the possible failure of the last copy_to_user in epoll_ctl_batch,
-> which returns per command error code. Ideas to improve that are welcome!
->
-> 1) epoll_ctl_batch
-> ------------------
-> 
-> NAME
->        epoll_ctl_batch - modify an epoll descriptor in batch
-> 
-> SYNOPSIS
-> 
->        #include <sys/epoll.h>
-> 
->        int epoll_ctl_batch(int epfd, int flags,
->                            int ncmds, struct epoll_ctl_cmd *cmds);
-> 
-> DESCRIPTION
-> 
->        The system call performs a batch of epoll_ctl operations. It allows
->        efficient update of events on this epoll descriptor.
-> 
->        Flags is reserved and must be 0.
-> 
->        Each operation is specified as an element in the cmds array, defined as:
-> 
->            struct epoll_ctl_cmd {
-> 
->                   /* Reserved flags for future extension, must be 0. */
->                   int flags;
-> 
->                   /* The same as epoll_ctl() op parameter. */
->                   int op;
-> 
->                   /* The same as epoll_ctl() fd parameter. */
->                   int fd;
-> 
->                   /* The same as the "events" field in struct epoll_event. */
->                   uint32_t events;
-> 
->                   /* The same as the "data" field in struct epoll_event. */
->                   uint64_t data;
-> 
->                   /* Output field, will be set to the return code after this
->                    * command is executed by kernel */
->                   int error_hint;
-
-Why 'error_hint', rather than just stay 'status' or 'result'? I mean
-is it really a "hint"? Also, it can be 0 meaning "success" (no error).
-
->            };
-> 
->        Commands are executed in their order in cmds, and if one of them failed,
->        the rest after it are not tried.
-> 
->        Not that this call isn't atomic in terms of updating the epoll
->        descriptor, which means a second epoll_ctl or epoll_ctl_batch call
->        during the first epoll_ctl_batch may make the operation sequence
->        interleaved. However, each single epoll_ctl_cmd operation has the same
->        semantics as a epoll_ctl call.
-
-(Good to include that warning!)
-
-> RETURN VALUE
-> 
->        If one or more of the parameters are incorrect, -1 is returned and errno
->        is set appropriately. Otherwise, the number of succeeded commands is
->        returned.
-> 
->        Each error_hint field may be set to the error code or 0, depending on
->        the result of the command. If there is some error in returning the error
->        to user, it may also be unchanged, even though the command may actually
->        be executed. In this case, it's still ensured that the i-th (i = ret)
->        command is the failed command.
-
-Sorry -- I'm not clear here. Can you say some more here? What sort
-of error might there be when "returning the error to the user"?
- 
-> ERRORS
-> 
->        Errors for the overall system call (in errno) are:
-> 
->        EINVAL flags is non-zero, or ncmds is less than or equal to zero, or
->               cmds is NULL.
-> 
->        ENOMEM There was insufficient memory to handle the requested op control
->               operation.
-> 
->        EFAULT The memory area pointed to by cmds is not accessible with write
->               permissions.
-> 
-> 
->        Errors for each command (in error_hint) are:
-> 
->        EBADF  epfd or fd is not a valid file descriptor.
-> 
->        EEXIST op was EPOLL_CTL_ADD, and the supplied file descriptor fd is
->               already registered with this epoll instance.
-> 
->        EINVAL epfd is not an epoll file descriptor, or fd is the same as epfd,
->               or the requested operation op is not supported by this interface.
-> 
->        ENOENT op was EPOLL_CTL_MOD or EPOLL_CTL_DEL, and fd is not registered
->               with this epoll instance.
-> 
->        ENOMEM There was insufficient memory to handle the requested op control
->               operation.
-> 
->        ENOSPC The limit imposed by /proc/sys/fs/epoll/max_user_watches was
->               encountered while trying to register (EPOLL_CTL_ADD) a new file
->               descriptor on an epoll instance.  See epoll(7) for further
->               details.
-> 
->        EPERM  The target file fd does not support epoll.
-> 
-> CONFORMING TO
-> 
->        epoll_ctl_batch() is Linux-specific.
-> 
-> SEE ALSO
-> 
->        epoll_create(2), epoll_ctl(2), epoll_wait(2), epoll_pwait(2), epoll(7)
-> 
-> 
-> 2) epoll_pwait1
-> ---------------
-> 
-> NAME
->        epoll_pwait1 - wait for an I/O event on an epoll file descriptor
-> 
-> SYNOPSIS
-> 
->        #include <sys/epoll.h>
-> 
->        int epoll_pwait1(int epfd, int flags,
->                         struct epoll_event *events,
->                         int maxevents,
->                         struct timespec *timeout,
->                         struct sigargs *sig);
-> 
-> DESCRIPTION
-> 
->        The epoll_pwait1 system call differs from epoll_pwait only in parameter
->        types. The first difference is timeout, a pointer to timespec structure
->        which allows nanosecond presicion; the second difference, which should
->        probably be wrapper by glibc and only expose a sigset_t pointer as in
->        pselect6.
-
-Here I think it still helps to explain that 'struct sigags' is a sigset_t* +
-the size of the pointed-to set.
-
->        If timeout is NULL, it's treated as if 0 is specified in epoll_pwait
-
-The convention I would expect here is that NULL means infinite timeout,
-like select(), and timeout == {0,0} would get the "return immediately"
-behavior. Why did you choose your convention? And, how does one otherwise 
-request an infinite timeout?
-
->        (return immediately). Otherwise it's converted to nanosecond scalar,
->        again, with the same convention as epoll_pwait's timeout.
-> 
-> RETURN VALUE
-> 
->        The same as said in epoll_pwait(2).
-> 
-> ERRORS
-> 
->        The same as said in man epoll_pwait(2), plus:
-> 
->        EINVAL flags is not zero.
-> 
-> 
-> CONFORMING TO
-> 
->        epoll_pwait1() is Linux-specific.
-> 
-> SEE ALSO
-> 
->        epoll_create(2), epoll_ctl(2), epoll_wait(2), epoll_pwait(2), epoll(7)
-
-In your earlier patch set, there was the ability to select the clock
-used for timeouts. Why did this go away? I'm not sure whether we need
-that functionality or not, but it would be good to know why you
-dropped it this time.
-
-Thanks,
-
-Michael
-
-
-
+Minchan is obviously working on one and I will review it once he is done
+with it.
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Michal Hocko
+SUSE Labs
