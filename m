@@ -1,106 +1,50 @@
-From: =?ISO-8859-15?Q?Luk=E1=A8_Czerner?= <lczerner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH 1/5] WIP: Add syscall unlinkat_s (currently x86* only)
-Date: Wed, 4 Feb 2015 15:52:02 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.1502041533130.26766@localhost.localdomain>
-References: <1422896713-25367-1-git-send-email-holler@ahsoftware.de> <1422896713-25367-2-git-send-email-holler@ahsoftware.de> <20150203060542.GZ29656@ZenIV.linux.org.uk> <54D071AA.1030302@ahsoftware.de> <20150203075616.GA29656@ZenIV.linux.org.uk>
- <54D08BF4.3000903@ahsoftware.de> <54D093A0.7090201@ahsoftware.de> <54D0C3B8.2050507@ahsoftware.de> <20150203174839.GD2509@thunk.org> <54D10D0E.8090204@ahsoftware.de> <20150203233332.GE29656@ZenIV.linux.org.uk> <54D1F215.9030404@ahsoftware.de>
- <alpine.LFD.2.00.1502041247530.23002@localhost.localdomain> <54D20F02.5050700@ahsoftware.de> <CAHO5Pa0_2HE23dPU5Fg-sUgi2-e-szCpqoR98Vd6zE70_yd8Sw@mail.gmail.com> <54D21CC8.4020705@ahsoftware.de>
+Date: Wed, 04 Feb 2015 10:00:32 -0500
+Message-ID: <54D23410.3050006@gmail.com>
+References: <1422896713-25367-1-git-send-email-holler@ahsoftware.de> <1422896713-25367-2-git-send-email-holler@ahsoftware.de> <20150203060542.GZ29656@ZenIV.linux.org.uk> <54D071AA.1030302@ahsoftware.de> <20150203075616.GA29656@ZenIV.linux.org.uk> <54D08BF4.3000903@ahsoftware.de> <54D093A0.7090201@ahsoftware.de> <54D0C3B8.2050507@ahsoftware.de> <20150203174839.GD2509@thunk.org> <54D10D0E.8090204@ahsoftware.de> <20150203233332.GE29656@ZenIV.linux.org.uk> <54D1F215.9030404@ahsoftware.de> <alpine.LFD.2.00.1502041247530.23002@localhost.localdomain> <54D20F02.5050700@ahsoftware.de> <CAHO5Pa0_2HE23dPU5Fg-sUgi2-e-szCpqoR98Vd6zE70_yd8Sw@mail.gmail.com> <54D21CC8.4020705@ahsoftware.de> <54D21EB8.6020208@ahsoftware.de> <54D22A63.7090603@ahsoftware.de>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-2100170863-1423061526=:26766"
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54D21CC8.4020705-SXC+2es9fhnfWeYVQQPykw@public.gmane.org>
+In-Reply-To: <54D22A63.7090603-SXC+2es9fhnfWeYVQQPykw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Alexander Holler <holler-SXC+2es9fhnfWeYVQQPykw@public.gmane.org>
-Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, =?UTF-8?B?THVrw6HFoSBDemVybg==?= =?UTF-8?B?ZXI=?= <lczerner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On 2015-02-04 09:19, Alexander Holler wrote:
+> Am 04.02.2015 um 14:29 schrieb Alexander Holler:
+> I'm really sorry that I can't spend several unpaid months with reading
+> and understanding ever changing linux kernel sources in order to become
+> a Linux filesystem expert and send some fully working perfect patches
+> which do fix the problem in question.
+You aren't expected to do so.  Code review is an integral part of the 
+development process here, and only truly trivial patches (stuff like 
+fixing typos in kernel messages and documentation) get merged without 
+it.  If you pay attention to the list itself, even the veteran kernel 
+developers almost never manage to produce a patch that is deemed 
+absolutely perfect, and end up revising things multiple times before 
+they get merged.
+> And I can't spend the necessary time to play remote keyboard for kernel
+> maintainers which might be willing to explain me what has to be done
+> according to their view. I've already offered what I was willing to do,
+> for the price of having to defend myself over and over. And
+> unfortunately that wasn't the first time I've ended up with having to
+> defend myself.
+You seem to fail to understand that open source development runs 
+primarily on volunteer work (yes there are people paid to work on open 
+source software, but that is a generally exceptional case).  A large 
+majority of the people who are kernel maintainers are donating their 
+free time to the project.
+> My conclusion is that I'm a real fool having posted multiple times
+> patches to this list. It just doesn't make any sense and most of the
+> time the only reward are flames.
+If you aren't serious about trying to get something into the mainline 
+kernel, you should be tagging _all_ of the e-mails in that patch-set 
+with [RFC] in the subject line.
 
---8323328-2100170863-1423061526=:26766
-Content-Type: TEXT/PLAIN; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-
-On Wed, 4 Feb 2015, Alexander Holler wrote:
-
-> Date: Wed, 04 Feb 2015 14:21:12 +0100
-> From: Alexander Holler <holler-SXC+2es9fhnfWeYVQQPykw@public.gmane.org>
-> To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> Cc: Lukáš Czerner <lczerner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>,
->     Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>,
->     Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
->     Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
->     Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-> Subject: Re: [PATCH 1/5] WIP: Add syscall unlinkat_s (currently x86* only)
-> 
-> Am 04.02.2015 um 14:06 schrieb Michael Kerrisk:
-> > Alexander,
-> > 
-> > On Wed, Feb 4, 2015 at 1:22 PM, Alexander Holler <holler-SXC+2es9fhnfWeYVQQPykw@public.gmane.org>
-> > wrote:
-> > > Am 04.02.2015 um 13:07 schrieb Lukáš Czerner:
-> > > 
-> > > > The fact is that the current patches are useless for anything other
-> > > > than proof-of-concept. Now you know more that needs to be done or
-> > > 
-> > > 
-> > > That's wrong. The patches already work. If you delete a file which isn't
-> > > in
-> > > use by something else, the current contents will be wiped on traditional
-> > > harddrives. I assume that already fulfills more than 50% of use cases of
-> > > ordinary people.
-> > 
-> > You are getting various feedback from people, that you seem to be ignoring.
-> 
-> I'm happy for all the feedback. But it doesn't help me. I'm not going to spend
-> the necessary time unpaid.
-
-Right, you'd much rather have someone else to spend the time on your
-request unpaid. That's understandable, but unreasonable. You want
-it, implement it, or pay someone else to do it for you.
-
-> .
-> > Al Viro, in his curmedgeonly way, points out that the problems are
-> > much deeper than you realize. He does not say so explicitly, but I
-> > imagine his point is that he does not want to see the kernel cluttered
-> > with "partial" solutions that will simply increase the maintenance
-> > burden in the long term, and leave bugs to be fixed further down the
-> > line. You seem not to be listening.
-> 
-> It doesn't help me nor anyone else. As Eric Sandeen made me aware through in
-> bug, look at http://lwn.net/Articles/462437/ what already happened.
-
-That's what people have been trying to tell you. It's not an easy
-task and there are plenty of cases to think about. As you can see
-IBM tasked their developer to do it, but they did not succeed. And
-here you come with your simplistic patches crying about "high
-towers. But you're the one apparently interested in this feature
-and you've been warned that's it's not a simple task.
-
-But if you really want it I really do encourage you to try. I'd be
-happy to have a working and reliable secure delete feature but it's
-not my priority at all.
-
--Lukas
-
-> 
-> > Lukáš points out to you that getting a feature like this into the
-> > kernel is complex process. You seem unwilling to hear that, and still
-> > just want your partial solution.
-> 
-> Wrong. I don't want my partial solution to be part of the official kernel. I
-> don't care. I offered it for other users because I'm aware that has become
-> almost impossible for normal people to get something into the kernel without
-> spending an unbelievable amount of time most people can't afford to spend.
-> 
-> > I tell you that discussions of APIs should CC linux-api, which I am
-> > now CCing into this thread, again, because, again, you're not
-> > listening to feedback.
-> 
-> Please don't confuse "not listening" with "unable to fulfill Linux kernel
-> maintainer requests".
-> 
-> Alexander Holler
-> 
-> 
---8323328-2100170863-1423061526=:26766--
+In none of the responses that I've seen has anyone been anything but 
+polite (albeit in some cases moderately annoyed).  If you really 
+consider such attempts at constructive criticism to be flames, then a 
+development mailing list isn't the place you should be posting patches.
