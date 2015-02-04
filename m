@@ -1,230 +1,95 @@
-From: Ivan Khoronzhuk <ivan.khoronzhuk-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: [Patch v4] firmware: dmi-sysfs: add SMBIOS entry point area attribute
-Date: Wed,  4 Feb 2015 19:06:03 +0200
-Message-ID: <1423069563-26467-1-git-send-email-ivan.khoronzhuk@linaro.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: dmidecode-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, msalter-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Ivan Khoronzhuk <ivan.khoronzhuk-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+From: =?utf-8?B?U8O2cmVu?= Brinkmann <soren.brinkmann@xilinx.com>
+Subject: Re: [PATCH v4] gpio: lib-sysfs: Add 'wakeup' attribute
+Date: Wed, 4 Feb 2015 10:27:15 -0800
+Message-ID: <ce91ced9e1f0481f8af03a168eda48b9@BN1AFFO11FD048.protection.gbl>
+References: <1421351389-11660-1-git-send-email-soren.brinkmann@xilinx.com>
+ <20150116111108.GG30960@localhost>
+ <a4610e13d0094d40b7e0574992509ec6@BN1AFFO11FD044.protection.gbl>
+ <CAAVeFu+K0W96mi0=QR8JGSe9BpH2nC5WV_9qbSvm6LJGA8gc7Q@mail.gmail.com>
+ <CACRpkdZ4CekD2xeJYM+UUtuGuwS2uB++XprSueWnshEVk=79Fw@mail.gmail.com>
+ <bb967ff02726449ab6525d33bccde7e4@BL2FFO11FD014.protection.gbl>
+ <CACRpkdYuHdbQ7aaeCQTwZO63LjWpKyZnPQRNCBmRybntXYJxFQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CACRpkdYuHdbQ7aaeCQTwZO63LjWpKyZnPQRNCBmRybntXYJxFQ@mail.gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Linus Walleij <linus.walleij@linaro.org>
+Cc: Alexandre Courbot <gnurou@gmail.com>, Johan Hovold <johan@kernel.org>, linux-api@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "linux-gpio@vger.kernel.org" <linux-gpio@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Some utils, like dmidecode and smbios, need to access SMBIOS entry
-table area in order to get information like SMBIOS version, size, etc.
-Currently it's done via /dev/mem. But for situation when /dev/mem
-usage is disabled, the utils have to use dmi sysfs instead, which
-doesn't represent SMBIOS entry. So this patch adds SMBIOS area to
-dmi-sysfs in order to allow utils in question to work correctly with
-dmi sysfs interface.
+On Wed, 2015-02-04 at 10:19AM +0100, Linus Walleij wrote:
+> On Thu, Jan 29, 2015 at 6:23 PM, S=C3=B6ren Brinkmann
+> <soren.brinkmann@xilinx.com> wrote:
+> > On Mon, 2015-01-19 at 09:54AM +0100, Linus Walleij wrote:
+> >> On Mon, Jan 19, 2015 at 5:20 AM, Alexandre Courbot <gnurou@gmail.c=
+om> wrote:
+> >> > On Sat, Jan 17, 2015 at 1:49 AM, S=C3=B6ren Brinkmann <soren.bri=
+nkmann@xilinx.com> wrote:
+> >> >> On Fri, 2015-01-16 at 12:11PM +0100, Johan Hovold wrote:
+> >>
+> >> >>> Implementing proper wakeup support for unclaimed GPIOs would t=
+ake some
+> >> >>> work (if at all desired), but that is not a reason to be addin=
+g custom
+> >> >>> implementations that violates the kernel's power policies and =
+new ABIs
+> >> >>> that would need to be maintained forever.
+> >> (...)
+> >> >>> Meanwhile you can (should) use gpio-keys if you need to wake y=
+our system
+> >> >>> on gpio events.
+> >> >>
+> >> >> We had that discussion and I don't think GPIO keys is the right=
+ solution
+> >> >> for every use-case.
+> >> >
+> >> > Sorry, it has been a while - can you remind us of why?
+> >>
+> >> There are such cases. Of course keys should be handled by GPIO-key=
+s
+> >> and these will trigger the right wakeup events in such cases.
+> >>
+> >> This is for more esoteric cases: we cannot have a kernel module fo=
+r
+> >> everything people want to do with GPIOs, and the use case I accept
+> >> is GPIOs used in automatic control etc, think factory lines or doo=
+rs.
+> >> We can't have a "door" driver or "punch arm" or "fire alarm" drive=
+r
+> >> in the kernel. Those are userspace things.
+> >>
+> >> Still such embedded systems need to be able to go to idle and
+> >> sleep to conerve power, and then they need to put wakeups on
+> >> these GPIOs.
+> >>
+> >> So it is a feature userspace needs, though as with much of the
+> >> sysfs ABI it is very often abused for things like keys and LEDs wh=
+ich
+> >> is an abomination but we can't do much about it :(
+> >
+> > Thanks for clearing that up.
+> > What does that mean for this patch? Are we going ahead, accepting t=
+he
+> > extension of this API or do all these use-cases have to wait for th=
+e
+> > rewrite of a proper GPIO userspace interface?
+>=20
+> What needs to happen (IMHO) is to make gpio_chips properly obeying
+> the device model, and then add the attributes for fiddling around wit=
+h
+> GPIOs to either the *real* device or create a new char device interfa=
+ce.
+> Whatever works best. These mock devices are fragile and never
+> worked properly especially in the removal path as Johans recent
+> fixes has shown.
 
-Reviewed-by: Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Signed-off-by: Ivan Khoronzhuk <ivan.khoronzhuk-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
----
+Sure, that would be a nice long-term solution. But until then this patc=
+h
+would probably be welcomed by some people, without making the brokennes=
+s
+of this interface much worse.
 
-v1: https://lkml.org/lkml/2015/1/23/643
-v2: https://lkml.org/lkml/2015/1/26/345
-v3: https://lkml.org/lkml/2015/1/28/768
-
-v4..v2:
-  firmware: dmi_scan: add symbol to get SMBIOS entry area
-  	- used u8 type for smbios_header var
-  firmware: dmi-sysfs: add SMBIOS entry point area attribute
-  	- replaced -ENODATA on -EINVAL
-
-v3..v2:
-  firmware: dmi_scan: add symbol to get SMBIOS entry area
-  firmware: dmi-sysfs: add SMBIOS entry point area attribute
-	- combined in one patch
-	- added SMBIOS information to ABI sysfs-dmi documentaton
-
-v2..v1:
-  firmware: dmi_scan: add symbol to get SMBIOS entry area
-	- used additional static var to hold SMBIOS raw table size
-	- changed format of get_smbios_entry_area symbol
-	  returned pointer on const smbios table
-
-  firmware: dmi-sysfs: add SMBIOS entry point area attribute
-	- adopted to updated get_smbios_entry_area symbol
-  	- removed redundant array to save smbios table
-
- Documentation/ABI/testing/sysfs-firmware-dmi | 10 +++++++
- drivers/firmware/dmi-sysfs.c                 | 42 ++++++++++++++++++++++++++++
- drivers/firmware/dmi_scan.c                  | 26 +++++++++++++++++
- include/linux/dmi.h                          |  3 ++
- 4 files changed, 81 insertions(+)
-
-diff --git a/Documentation/ABI/testing/sysfs-firmware-dmi b/Documentation/ABI/testing/sysfs-firmware-dmi
-index c78f9ab..3a9ffe8 100644
---- a/Documentation/ABI/testing/sysfs-firmware-dmi
-+++ b/Documentation/ABI/testing/sysfs-firmware-dmi
-@@ -12,6 +12,16 @@ Description:
- 		cannot ensure that the data as exported to userland is
- 		without error either.
- 
-+		The firmware provides DMI structures as a packed list of
-+		data referenced by a SMBIOS table entry point. The SMBIOS
-+		entry point contains general information, like SMBIOS
-+		version, DMI table size, etc. The structure, content and
-+		size of SMBIOS entry point is dependent on SMBIOS version.
-+		That's why SMBIOS entry point is represented in dmi sysfs
-+		like a raw attribute and is accessible via
-+		/sys/firmware/dmi/smbios_raw_header. The format of SMBIOS
-+		entry point header can be read in SMBIOS specification.
-+
- 		DMI is structured as a large table of entries, where
- 		each entry has a common header indicating the type and
- 		length of the entry, as well as a firmware-provided
-diff --git a/drivers/firmware/dmi-sysfs.c b/drivers/firmware/dmi-sysfs.c
-index e0f1cb3..9b396d7 100644
---- a/drivers/firmware/dmi-sysfs.c
-+++ b/drivers/firmware/dmi-sysfs.c
-@@ -29,6 +29,8 @@
- #define MAX_ENTRY_TYPE 255 /* Most of these aren't used, but we consider
- 			      the top entry type is only 8 bits */
- 
-+static const u8 *smbios_raw_header;
-+
- struct dmi_sysfs_entry {
- 	struct dmi_header dh;
- 	struct kobject kobj;
-@@ -646,9 +648,37 @@ static void cleanup_entry_list(void)
- 	}
- }
- 
-+static ssize_t smbios_entry_area_raw_read(struct file *filp,
-+					  struct kobject *kobj,
-+					  struct bin_attribute *bin_attr,
-+					  char *buf, loff_t pos, size_t count)
-+{
-+	ssize_t size;
-+
-+	size = bin_attr->size;
-+
-+	if (size > pos)
-+		size -= pos;
-+	else
-+		return 0;
-+
-+	if (count < size)
-+		size = count;
-+
-+	memcpy(buf, &smbios_raw_header[pos], size);
-+
-+	return size;
-+}
-+
-+static struct bin_attribute smbios_raw_area_attr = {
-+	.read = smbios_entry_area_raw_read,
-+	.attr = {.name = "smbios_raw_header", .mode = 0400},
-+};
-+
- static int __init dmi_sysfs_init(void)
- {
- 	int error = -ENOMEM;
-+	int size;
- 	int val;
- 
- 	/* Set up our directory */
-@@ -669,6 +699,18 @@ static int __init dmi_sysfs_init(void)
- 		goto err;
- 	}
- 
-+	smbios_raw_header = dmi_get_smbios_entry_area(&size);
-+	if (!smbios_raw_header) {
-+		pr_debug("dmi-sysfs: SMBIOS raw data is not available.\n");
-+		error = -EINVAL;
-+		goto err;
-+	}
-+
-+	/* Create the raw binary file to access the entry area */
-+	smbios_raw_area_attr.size = size;
-+	if (sysfs_create_bin_file(dmi_kobj, &smbios_raw_area_attr))
-+		goto err;
-+
- 	pr_debug("dmi-sysfs: loaded.\n");
- 
- 	return 0;
-diff --git a/drivers/firmware/dmi_scan.c b/drivers/firmware/dmi_scan.c
-index 420c8d8..99c5f6c 100644
---- a/drivers/firmware/dmi_scan.c
-+++ b/drivers/firmware/dmi_scan.c
-@@ -113,6 +113,8 @@ static void dmi_table(u8 *buf, int len, int num,
- 	}
- }
- 
-+static u8 smbios_header[32];
-+static int smbios_header_size;
- static phys_addr_t dmi_base;
- static u16 dmi_len;
- static u16 dmi_num;
-@@ -474,6 +476,8 @@ static int __init dmi_present(const u8 *buf)
- 	if (memcmp(buf, "_SM_", 4) == 0 &&
- 	    buf[5] < 32 && dmi_checksum(buf, buf[5])) {
- 		smbios_ver = get_unaligned_be16(buf + 6);
-+		smbios_header_size = buf[5];
-+		memcpy(smbios_header, buf, smbios_header_size);
- 
- 		/* Some BIOS report weird SMBIOS version, fix that up */
- 		switch (smbios_ver) {
-@@ -505,6 +509,8 @@ static int __init dmi_present(const u8 *buf)
- 				pr_info("SMBIOS %d.%d present.\n",
- 				       dmi_ver >> 8, dmi_ver & 0xFF);
- 			} else {
-+				smbios_header_size = 15;
-+				memcpy(smbios_header, buf, smbios_header_size);
- 				dmi_ver = (buf[14] & 0xF0) << 4 |
- 					   (buf[14] & 0x0F);
- 				pr_info("Legacy DMI %d.%d present.\n",
-@@ -531,6 +537,8 @@ static int __init dmi_smbios3_present(const u8 *buf)
- 		dmi_ver &= 0xFFFFFF;
- 		dmi_len = get_unaligned_le32(buf + 12);
- 		dmi_base = get_unaligned_le64(buf + 16);
-+		smbios_header_size = buf[6];
-+		memcpy(smbios_header, buf, smbios_header_size);
- 
- 		/*
- 		 * The 64-bit SMBIOS 3.0 entry point no longer has a field
-@@ -944,3 +952,21 @@ void dmi_memdev_name(u16 handle, const char **bank, const char **device)
- 	}
- }
- EXPORT_SYMBOL_GPL(dmi_memdev_name);
-+
-+/**
-+ * dmi_get_smbios_entry_area - copy SMBIOS entry point area to array.
-+ * @size - pointer to assign actual size of SMBIOS entry point area.
-+ *
-+ * returns NULL if table is not available, otherwise returns pointer on
-+ * SMBIOS entry point area array.
-+ */
-+const u8 *dmi_get_smbios_entry_area(int *size)
-+{
-+	if (!smbios_header_size || !dmi_available)
-+		return NULL;
-+
-+	*size = smbios_header_size;
-+
-+	return smbios_header;
-+}
-+EXPORT_SYMBOL_GPL(dmi_get_smbios_entry_area);
-diff --git a/include/linux/dmi.h b/include/linux/dmi.h
-index f820f0a..8e1a28d 100644
---- a/include/linux/dmi.h
-+++ b/include/linux/dmi.h
-@@ -109,6 +109,7 @@ extern int dmi_walk(void (*decode)(const struct dmi_header *, void *),
- 	void *private_data);
- extern bool dmi_match(enum dmi_field f, const char *str);
- extern void dmi_memdev_name(u16 handle, const char **bank, const char **device);
-+const u8 *dmi_get_smbios_entry_area(int *size);
- 
- #else
- 
-@@ -140,6 +141,8 @@ static inline void dmi_memdev_name(u16 handle, const char **bank,
- 		const char **device) { }
- static inline const struct dmi_system_id *
- 	dmi_first_match(const struct dmi_system_id *list) { return NULL; }
-+static inline const u8 *dmi_get_smbios_entry_area(int *size)
-+	{ return NULL; }
- 
- #endif
- 
--- 
-1.9.1
+	S=C3=B6ren
