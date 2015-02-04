@@ -1,155 +1,204 @@
-From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [RFC PATCH] fork: report pid reservation failure properly
-Date: Wed, 4 Feb 2015 11:27:19 +0100
-Message-ID: <20150204102719.GB29434@dhcp22.suse.cz>
-References: <20150203150557.GB8907@dhcp22.suse.cz>
- <CAKgNAkjiz6Uop_QVBNyyHFu8kgAR46nB1HWi0yOKt4ZX=666vg@mail.gmail.com>
- <20150203155248.GD8907@dhcp22.suse.cz>
- <87bnlalo7k.fsf@x220.int.ebiederm.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <87bnlalo7k.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Fam Zheng <famz@redhat.com>
+Subject: [PATCH RFC v2 0/7] epoll: Introduce new syscalls, epoll_ctl_batch and epoll_pwait1
+Date: Wed,  4 Feb 2015 18:36:46 +0800
+Message-ID: <1423046213-7043-1-git-send-email-famz@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <mszeredi@suse.cz>, David Drysdale <drysdale@google.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Theodore Ts'o <tytso@mit.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Rashika Kheria <rashika.kheria@gmail.com>, Hugh Dickins <hughd@google.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Fam Zheng <famz@redhat.com>, Peter Zijlstra <peter>
 List-Id: linux-api@vger.kernel.org
 
-On Tue 03-02-15 14:44:31, Eric W. Biederman wrote:
-> Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org> writes:
-> 
-> > On Tue 03-02-15 16:33:03, Michael Kerrisk wrote:
-> >> Hi Michal,
-> >> 
-> >> 
-> >> On 3 February 2015 at 16:05, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org> wrote:
-> >> > Hi,
-> >> > while debugging an unexpected ENOMEM from fork (there was no memory
-> >> > pressure and OVERCOMMIT_ALWAYS) I have found out that fork returns
-> >> > ENOMEM even when not short on memory.
-> >> >
-> >> > In this particular case it was due to depleted pid space which is
-> >> > documented to return EAGAIN in man pages.
-> >> >
-> >> > Here is a quick fix up.
-> >> 
-> >> Could you summarize briefly what the user-space visible change is
-> >> here?
-> >
-> > The user visible change is that the userspace will get EAGAIN when
-> > calling fork and the pid space is depleted because of a system wide
-> > limit as per man page description rather than ENOMEM which we return
-> > currently.
-> 
-> I don't think that EAGAIN is any better than ENOMEM,
+Changes from v1 (https://lkml.org/lkml/2015/1/20/189):
 
-Well, EAGAIN is what the documentation says (both POSIX and ours).
-I do not want to get to language lawyering but we should either change
-the documentation and reason why we differ from POSIX or change the
-behavior. I find the later option more viable because ENOMEM is really
-hard to debug when there is not a lack of memory.
+  - As discussed in previous thread [1], split the call to epoll_ctl_batch and
+    epoll_pwait. [Michael]
 
-> nor do I know that it is safe to return EBUSY from fork.  What nonsense
-> will applications do when they see an unexpected error code.
+  - Fix memory leaks. [Omar]
 
-Agreed, any new error code might be confusing.
+  - Add a short comment about the ignored copy_to_user failure. [Omar]
 
-> >> It is not so obvious from your message. I believe you're turning
-> >> some cases of ENOMEM into EAGAIN, right?
-> >
-> > Yes, except for the case mentioned below which discusses a potential
-> > error code for pid namespace triggered failures.
-> >
-> >> Note, by the way, that if I understandwhat you intend, this change
-> >> would bring the implementation closer to POSIX, which specifies:
-> >
-> > True.
-> >
-> > HTH.
-> >
-> >>        EAGAIN The  system  lacked  the  necessary  resources  to  create
-> >>               another  process, or the system-imposed limit on the total
-> >>               number of processes under execution system-wide  or  by  a
-> >>               single user {CHILD_MAX} would be exceeded.
-> >> 
-> 
-> Note.  All of those documented errors documented to return EAGAIN
-> are the kind of errors that if you wait a while you can reasonably
-> expect fork to succeed later.
-> 
-> With respecting to dealing with errors from fork, fork
-> is a major pain.  Fork only has only two return codes documented,
-> and fork is one of the most complicated system calls in the kernel with
-> the most failure modes of any system call I am familiar with.  Mapping 
-> a plethora of failure modes onto two error codes is always going to be
-> problematic from some view point.
+  - Cover letter rewritten.
 
-Agreed.
+This adds two new system calls as described below. I mentioned glibc wrapping
+of sigarg in epoll_pwait1 description, so don't read it as end user man page
+yet.
 
-> EAGAIN is a bad idea in general because that means try again and if you
-> have hit a fixed limit trying again is wrong.
+One caveat is the possible failure of the last copy_to_user in epoll_ctl_batch,
+which returns per command error code. Ideas to improve that are welcome!
 
-I don't know what was the justification for EAGAIN but it was like that
-for ages so I assume there is a code which relies on that.
+1) epoll_ctl_batch
+------------------
 
-> Frankly I think posix is probably borked to recommend EAGAIN instead of
-> ENOMEM.
->
-> Everyone in the world uses fork which makes is quite tricky to figure
-> out which assumptions on the return values of fork exist in the wild,
-> so it is not clear if it is safe to add new more descriptive return
-> messages.
-> 
-> With respect to the case where PIDNS_HASH_ADDING would cause fork to
-> fail, that only happens after init has exited in a pid namespace, so it
-> is very much a permanent failure, and there are no longer any processes
-> in the specific pid namespace nor will there ever be any more processes
-> in that pid namespace.  EINVAL might actually makes sense.  Of course
-> a sensible error code from fork does not seem to be allowed.
-> 
-> Of the two return codes that are allowed for fork, EAGAIN and ENOMEM
-> ENOMEM seems to be better as it is a more permanement failure.
+NAME
+       epoll_ctl_batch - modify an epoll descriptor in batch
 
-Yes, if a new error code is really a nogo I would go for ENOMEM.
+SYNOPSIS
 
-> I agree it is a little confusing, but I don't see anything that is other
-> than a little confusing.
-> 
-> Other than someone doing:
-> 
-> unshare(CLONE_NEWPID);
-> pid = fork();
-> waitpid(pid);
-> fork();   /* returns ENOMEM */
+       #include <sys/epoll.h>
 
-Ohh, I got it finally. unshare itself doesn't move the calling process
-into a new namsepace.
+       int epoll_ctl_batch(int epfd, int flags,
+                           int ncmds, struct epoll_ctl_cmd *cmds);
 
-> Was there any other real world issue that started this goal to fix fork?
+DESCRIPTION
 
-I haven't seen any real world issue wrt. PIDNS_HASH_ADDING. It came out
-from the error code propagation.
-But I have seen ENOMEM when pid space was depleted and that confused
-people and they reported it as a bug. Exactly because there was a ton of
-memory free and no overcommit.
+       The system call performs a batch of epoll_ctl operations. It allows
+       efficient update of events on this epoll descriptor.
 
-> I think there is a reasonable argument for digging into the fork return
-> code situation.  Perhaps it is just a matter of returning exotic return
-> codes for the weird and strange cases like trying to create a pid in a
-> dead pid namespace.
-> 
-> But what we have works, and I don't know of anything bad that happens
-> except when people are developing new code they get confused.
-> 
-> Further we can't count on people to read their man pages because this
-> behavior of returning ENOMEM is documented in pid_namespaces(7).  Which
-> makes me really thinking changing the code to match the manpage is more
-> likely to break code than to fix code.
+       Flags is reserved and must be 0.
 
-OK, I will remove the pid namespace related error code propagation and
-keep it returning ENOMEM but I think the EAGAIN part is still worth fixing.
-Will post a new patch.
+       Each operation is specified as an element in the cmds array, defined as:
+
+           struct epoll_ctl_cmd {
+
+                  /* Reserved flags for future extension, must be 0. */
+                  int flags;
+
+                  /* The same as epoll_ctl() op parameter. */
+                  int op;
+
+                  /* The same as epoll_ctl() fd parameter. */
+                  int fd;
+
+                  /* The same as the "events" field in struct epoll_event. */
+                  uint32_t events;
+
+                  /* The same as the "data" field in struct epoll_event. */
+                  uint64_t data;
+
+                  /* Output field, will be set to the return code after this
+                   * command is executed by kernel */
+                  int error_hint;
+           };
+
+       Commands are executed in their order in cmds, and if one of them failed,
+       the rest after it are not tried.
+
+       Not that this call isn't atomic in terms of updating the epoll
+       descriptor, which means a second epoll_ctl or epoll_ctl_batch call
+       during the first epoll_ctl_batch may make the operation sequence
+       interleaved. However, each single epoll_ctl_cmd operation has the same
+       semantics as a epoll_ctl call.
+
+RETURN VALUE
+
+       If one or more of the parameters are incorrect, -1 is returned and errno
+       is set appropriately. Otherwise, the number of succeeded commands is
+       returned.
+
+       Each error_hint field may be set to the error code or 0, depending on
+       the result of the command. If there is some error in returning the error
+       to user, it may also be unchanged, even though the command may actually
+       be executed. In this case, it's still ensured that the i-th (i = ret)
+       command is the failed command.
+
+ERRORS
+
+       Errors for the overall system call (in errno) are:
+
+       EINVAL flags is non-zero, or ncmds is less than or equal to zero, or
+              cmds is NULL.
+
+       ENOMEM There was insufficient memory to handle the requested op control
+              operation.
+
+       EFAULT The memory area pointed to by cmds is not accessible with write
+              permissions.
+
+
+       Errors for each command (in error_hint) are:
+
+       EBADF  epfd or fd is not a valid file descriptor.
+
+       EEXIST op was EPOLL_CTL_ADD, and the supplied file descriptor fd is
+              already registered with this epoll instance.
+
+       EINVAL epfd is not an epoll file descriptor, or fd is the same as epfd,
+              or the requested operation op is not supported by this interface.
+
+       ENOENT op was EPOLL_CTL_MOD or EPOLL_CTL_DEL, and fd is not registered
+              with this epoll instance.
+
+       ENOMEM There was insufficient memory to handle the requested op control
+              operation.
+
+       ENOSPC The limit imposed by /proc/sys/fs/epoll/max_user_watches was
+              encountered while trying to register (EPOLL_CTL_ADD) a new file
+              descriptor on an epoll instance.  See epoll(7) for further
+              details.
+
+       EPERM  The target file fd does not support epoll.
+
+CONFORMING TO
+
+       epoll_ctl_batch() is Linux-specific.
+
+SEE ALSO
+
+       epoll_create(2), epoll_ctl(2), epoll_wait(2), epoll_pwait(2), epoll(7)
+
+
+2) epoll_pwait1
+---------------
+
+NAME
+       epoll_pwait1 - wait for an I/O event on an epoll file descriptor
+
+SYNOPSIS
+
+       #include <sys/epoll.h>
+
+       int epoll_pwait1(int epfd, int flags,
+                        struct epoll_event *events,
+                        int maxevents,
+                        struct timespec *timeout,
+                        struct sigargs *sig);
+
+DESCRIPTION
+
+       The epoll_pwait1 system call differs from epoll_pwait only in parameter
+       types. The first difference is timeout, a pointer to timespec structure
+       which allows nanosecond presicion; the second difference, which should
+       probably be wrapper by glibc and only expose a sigset_t pointer as in
+       pselect6.
+
+       If timeout is NULL, it's treated as if 0 is specified in epoll_pwait
+       (return immediately). Otherwise it's converted to nanosecond scalar,
+       again, with the same convention as epoll_pwait's timeout.
+
+RETURN VALUE
+
+       The same as said in epoll_pwait(2).
+
+ERRORS
+
+       The same as said in man epoll_pwait(2), plus:
+
+       EINVAL flags is not zero.
+
+
+CONFORMING TO
+
+       epoll_pwait1() is Linux-specific.
+
+SEE ALSO
+
+       epoll_create(2), epoll_ctl(2), epoll_wait(2), epoll_pwait(2), epoll(7)
+
+Fam Zheng (7):
+  epoll: Extract epoll_wait_do and epoll_pwait_do
+  epoll: Specify clockid explicitly
+  epoll: Extract ep_ctl_do
+  epoll: Add implementation for epoll_ctl_batch
+  x86: Hook up epoll_ctl_batch syscall
+  epoll: Add implementation for epoll_pwait1
+  x86: Hook up epoll_pwait1 syscall
+
+ arch/x86/syscalls/syscall_32.tbl |   2 +
+ arch/x86/syscalls/syscall_64.tbl |   2 +
+ fs/eventpoll.c                   | 241 ++++++++++++++++++++++++++-------------
+ include/linux/syscalls.h         |   9 ++
+ include/uapi/linux/eventpoll.h   |  11 ++
+ 5 files changed, 186 insertions(+), 79 deletions(-)
+
 -- 
-Michal Hocko
-SUSE Labs
+1.9.3
