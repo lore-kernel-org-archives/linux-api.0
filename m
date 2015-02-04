@@ -1,90 +1,39 @@
-From: Theodore Ts'o <tytso@mit.edu>
-Subject: Re: [PATCH 1/5] WIP: Add syscall unlinkat_s (currently x86* only)
-Date: Wed, 4 Feb 2015 14:33:16 -0500
-Message-ID: <20150204193316.GH2509@thunk.org>
-References: <54D0C3B8.2050507@ahsoftware.de>
- <20150203174839.GD2509@thunk.org>
- <54D10D0E.8090204@ahsoftware.de>
- <20150203233332.GE29656@ZenIV.linux.org.uk>
- <54D1F215.9030404@ahsoftware.de>
- <alpine.LFD.2.00.1502041247530.23002@localhost.localdomain>
- <54D20F02.5050700@ahsoftware.de>
- <CAHO5Pa0_2HE23dPU5Fg-sUgi2-e-szCpqoR98Vd6zE70_yd8Sw@mail.gmail.com>
- <54D21CC8.4020705@ahsoftware.de>
- <alpine.LFD.2.00.1502041533130.26766@localhost.localdomain>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.00.1502041533130.26766@localhost.localdomain>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: =?utf-8?B?THVrw6HFoQ==?= Czerner <lczerner@redhat.com>
-Cc: Alexander Holler <holler@ahsoftware.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+From: David Decotigny <ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH net-next v2 01/17] net: usnic: remove unused call to ethtool_ops::get_settings
+Date: Wed,  4 Feb 2015 11:53:25 -0800
+Message-ID: <1423079621-1374-2-git-send-email-ddecotig@gmail.com>
+References: <1423079621-1374-1-git-send-email-ddecotig@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1423079621-1374-1-git-send-email-ddecotig-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ben Hutchings <ben-/+tVBieCtBitmTQ+vhA3Yw@public.gmane.org>, Amir Vadai <amirv-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, fcoe-devel-s9riP+hp16TNLxjTenLetw@public.gmane.org
+Cc: Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eugenia Emantayev <eugenia-VPRAkNaXOzVS1MOuV/RT9w@public.gmane.org>, Or Gerlitz <ogerlitz-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Ido Shamay <idos-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Saeed Mahameed <saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Govindarajulu Varadarajan <_govind-KK0ffGbhmjU@public.gmane.org>, Venkata Duvvuru <VenkatKumar.Duvvuru-iH1Dq9VlAzfQT0dZR+AlfA@public.gmane.org>, Jeff Kirsher <jeffrey.t.kirsher-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Eyal Perry <eyalpe-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Pravin B Shelar <pshelar-l0M0P4e3n4LQT0dZR+AlfA@public.gmane.org>, Ed Swierk <eswierk-FilZDy9cOaHkQYj/0HfcvtBPR1lH4CV8@public.gmane.org>, Upinder Malhi <umalhi-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Robert Love <robert.w.love-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "James E.J. Bottomley" <JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Feb 04, 2015 at 03:52:02PM +0100, Luk=C3=A1=C5=A1 Czerner wrote=
-:
-> > I'm happy for all the feedback. But it doesn't help me. I'm not goi=
-ng to spend
-> > the necessary time unpaid.
->=20
-> Right, you'd much rather have someone else to spend the time on your
-> request unpaid. That's understandable, but unreasonable. You want
-> it, implement it, or pay someone else to do it for you.
->=20
-> > It doesn't help me nor anyone else. As Eric Sandeen made me aware t=
-hrough in
-> > bug, look at http://lwn.net/Articles/462437/ what already happened.
->=20
-> That's what people have been trying to tell you. It's not an easy
-> task and there are plenty of cases to think about. As you can see
-> IBM tasked their developer to do it, but they did not succeed. And
-> here you come with your simplistic patches crying about "high
-> towers. But you're the one apparently interested in this feature
-> and you've been warned that's it's not a simple task.
+From: David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
 
-And indeed, people who do have salaries paid by companies who care
-about this general problem in actual products have been working on
-addressing it using encryption, such that when the user is removed
-from the device, the key is blasted.  More importantly, when the user
-is not logged in, the key isn't even *available* on the device.  So it
-solves more problems than the one that you are concerned about, and in
-general maintainers prefer solutions that solve multiple problems,
-because that minimizes the number of one-time hacks and partial/toy
-solutions which turn into long-term maintainance headaches.  (After
-all, if you insist on having a partial/toy solution merged, that turns
-into an unfunded mandate which the maintainers effectively have to
-support for free, forever.)
+Signed-off-by: David Decotigny <decot-Ypc/8FJVVoBWk0Htik3J/w@public.gmane.org>
+---
+ drivers/infiniband/hw/usnic/usnic_ib_verbs.c | 2 --
+ 1 file changed, 2 deletions(-)
 
-You've rejected encryption as a proposed solution as not meeting your
-requirements (which if I understand your objections, can be summarized
-as "encryption is too hard").  This is fine, but if you want someone
-*else* to implement your partial toy solution which is less secure,
-then you will either need to pay someone to do it or do it yourself.
-
-> > Wrong. I don't want my partial solution to be part of the official =
-kernel. I
-> > don't care. I offered it for other users because I'm aware that has=
- become
-> > almost impossible for normal people to get something into the kerne=
-l without
-> > spending an unbelievable amount of time most people can't afford to=
- spend.
-
-So you expect other users to just apply your patches and use an
-unofficial system call number that might get reassigned to some other
-user later on?
-
-If that's all you want, then ok, you're done.  The patches have been
-posted to LKML, and you can give people URL's if they want to try
-applying the patches on their own.
-
-Cheers,
-
-						- Ted
---
-To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
-" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/drivers/infiniband/hw/usnic/usnic_ib_verbs.c b/drivers/infiniband/hw/usnic/usnic_ib_verbs.c
+index 53bd6a2..61337c7c 100644
+--- a/drivers/infiniband/hw/usnic/usnic_ib_verbs.c
++++ b/drivers/infiniband/hw/usnic/usnic_ib_verbs.c
+@@ -253,13 +253,11 @@ int usnic_ib_query_device(struct ib_device *ibdev,
+ 	struct usnic_ib_dev *us_ibdev = to_usdev(ibdev);
+ 	union ib_gid gid;
+ 	struct ethtool_drvinfo info;
+-	struct ethtool_cmd cmd;
+ 	int qp_per_vf;
+ 
+ 	usnic_dbg("\n");
+ 	mutex_lock(&us_ibdev->usdev_lock);
+ 	us_ibdev->netdev->ethtool_ops->get_drvinfo(us_ibdev->netdev, &info);
+-	us_ibdev->netdev->ethtool_ops->get_settings(us_ibdev->netdev, &cmd);
+ 	memset(props, 0, sizeof(*props));
+ 	usnic_mac_ip_to_gid(us_ibdev->ufdev->mac, us_ibdev->ufdev->inaddr,
+ 			&gid.raw[0]);
+-- 
+2.2.0.rc0.207.ga3a616c
