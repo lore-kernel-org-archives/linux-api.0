@@ -1,95 +1,128 @@
-From: =?utf-8?B?U8O2cmVu?= Brinkmann <soren.brinkmann@xilinx.com>
-Subject: Re: [PATCH v4] gpio: lib-sysfs: Add 'wakeup' attribute
-Date: Wed, 4 Feb 2015 10:27:15 -0800
-Message-ID: <ce91ced9e1f0481f8af03a168eda48b9@BN1AFFO11FD048.protection.gbl>
-References: <1421351389-11660-1-git-send-email-soren.brinkmann@xilinx.com>
- <20150116111108.GG30960@localhost>
- <a4610e13d0094d40b7e0574992509ec6@BN1AFFO11FD044.protection.gbl>
- <CAAVeFu+K0W96mi0=QR8JGSe9BpH2nC5WV_9qbSvm6LJGA8gc7Q@mail.gmail.com>
- <CACRpkdZ4CekD2xeJYM+UUtuGuwS2uB++XprSueWnshEVk=79Fw@mail.gmail.com>
- <bb967ff02726449ab6525d33bccde7e4@BL2FFO11FD014.protection.gbl>
- <CACRpkdYuHdbQ7aaeCQTwZO63LjWpKyZnPQRNCBmRybntXYJxFQ@mail.gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: MADV_DONTNEED semantics? Was: [RFC PATCH] mm: madvise: Ignore
+ repeated MADV_DONTNEED hints
+Date: Wed, 4 Feb 2015 20:24:27 +0100
+Message-ID: <CAKgNAkhNbHQX7RukSsSe3bMqY11f493rYbDpTOA2jH7vsziNww@mail.gmail.com>
+References: <20150202165525.GM2395@suse.de> <54CFF8AC.6010102@intel.com>
+ <54D08483.40209@suse.cz> <20150203105301.GC14259@node.dhcp.inet.fi>
+ <54D0B43D.8000209@suse.cz> <54D0F56A.9050003@gmail.com> <54D22298.3040504@suse.cz>
+ <CAKgNAkgOOCuzJz9whoVfFjqhxM0zYsz94B1+oH58SthC5Ut9sg@mail.gmail.com> <54D2508A.9030804@suse.cz>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CACRpkdYuHdbQ7aaeCQTwZO63LjWpKyZnPQRNCBmRybntXYJxFQ@mail.gmail.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Linus Walleij <linus.walleij@linaro.org>
-Cc: Alexandre Courbot <gnurou@gmail.com>, Johan Hovold <johan@kernel.org>, linux-api@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "linux-gpio@vger.kernel.org" <linux-gpio@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <54D2508A.9030804-AlSwsSmVLrQ@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Cc: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2015-02-04 at 10:19AM +0100, Linus Walleij wrote:
-> On Thu, Jan 29, 2015 at 6:23 PM, S=C3=B6ren Brinkmann
-> <soren.brinkmann@xilinx.com> wrote:
-> > On Mon, 2015-01-19 at 09:54AM +0100, Linus Walleij wrote:
-> >> On Mon, Jan 19, 2015 at 5:20 AM, Alexandre Courbot <gnurou@gmail.c=
-om> wrote:
-> >> > On Sat, Jan 17, 2015 at 1:49 AM, S=C3=B6ren Brinkmann <soren.bri=
-nkmann@xilinx.com> wrote:
-> >> >> On Fri, 2015-01-16 at 12:11PM +0100, Johan Hovold wrote:
-> >>
-> >> >>> Implementing proper wakeup support for unclaimed GPIOs would t=
-ake some
-> >> >>> work (if at all desired), but that is not a reason to be addin=
-g custom
-> >> >>> implementations that violates the kernel's power policies and =
-new ABIs
-> >> >>> that would need to be maintained forever.
-> >> (...)
-> >> >>> Meanwhile you can (should) use gpio-keys if you need to wake y=
-our system
-> >> >>> on gpio events.
-> >> >>
-> >> >> We had that discussion and I don't think GPIO keys is the right=
- solution
-> >> >> for every use-case.
-> >> >
-> >> > Sorry, it has been a while - can you remind us of why?
-> >>
-> >> There are such cases. Of course keys should be handled by GPIO-key=
-s
-> >> and these will trigger the right wakeup events in such cases.
-> >>
-> >> This is for more esoteric cases: we cannot have a kernel module fo=
-r
-> >> everything people want to do with GPIOs, and the use case I accept
-> >> is GPIOs used in automatic control etc, think factory lines or doo=
-rs.
-> >> We can't have a "door" driver or "punch arm" or "fire alarm" drive=
-r
-> >> in the kernel. Those are userspace things.
-> >>
-> >> Still such embedded systems need to be able to go to idle and
-> >> sleep to conerve power, and then they need to put wakeups on
-> >> these GPIOs.
-> >>
-> >> So it is a feature userspace needs, though as with much of the
-> >> sysfs ABI it is very often abused for things like keys and LEDs wh=
-ich
-> >> is an abomination but we can't do much about it :(
-> >
-> > Thanks for clearing that up.
-> > What does that mean for this patch? Are we going ahead, accepting t=
+On 4 February 2015 at 18:02, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org> wrote:
+> On 02/04/2015 03:00 PM, Michael Kerrisk (man-pages) wrote:
+>>
+>> Hello Vlastimil,
+>>
+>> On 4 February 2015 at 14:46, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org> wrote:
+>>>>>
+>>>>> - that covers mlocking ok, not sure if the rest fits the "shared =
+pages"
+>>>>> case
+>>>>> though. I dont see any check for other kinds of shared pages in t=
 he
-> > extension of this API or do all these use-cases have to wait for th=
-e
-> > rewrite of a proper GPIO userspace interface?
->=20
-> What needs to happen (IMHO) is to make gpio_chips properly obeying
-> the device model, and then add the attributes for fiddling around wit=
-h
-> GPIOs to either the *real* device or create a new char device interfa=
-ce.
-> Whatever works best. These mock devices are fragile and never
-> worked properly especially in the removal path as Johans recent
-> fixes has shown.
+>>>>> code.
+>>>>
+>>>>
+>>>> Agreed. "shared" here seems confused. I've removed it. And I've
+>>>> added mention of "Huge TLB pages" for this error.
+>>>
+>>>
+>>> Thanks.
+>>
+>>
+>> I also added those cases for MADV_REMOVE, BTW.
+>
+>
+> Right. There's also the following for MADV_REMOVE that needs updating=
+:
+>
+> "Currently, only shmfs/tmpfs supports this; other filesystems return =
+with
+> the error ENOSYS."
+>
+> - it's not just shmem/tmpfs anymore. It should be best to refer to
+> fallocate(2) option FALLOC_FL_PUNCH_HOLE which seems to be (more) up =
+to
+> date.
+>
+> - AFAICS it doesn't return ENOSYS but EOPNOTSUPP. Also neither error =
+code is
+> listed in the ERRORS section.
 
-Sure, that would be a nice long-term solution. But until then this patc=
-h
-would probably be welcomed by some people, without making the brokennes=
-s
-of this interface much worse.
+Yup, I recently added that as well, based on a patch from Jan Chaloupka=
+=2E
 
-	S=C3=B6ren
+>>>>>>> - The word "will result" did sound as a guarantee at least to m=
+e. So
+>>>>>>> here it
+>>>>>>> could be changed to "may result (unless the advice is ignored)"=
+?
+>>>>>>
+>>>>>> It's too late to fix documentation. Applications already depends=
+ on
+>>>>>> the
+>>>>>> beheviour.
+>>>>>
+>>>>> Right, so as long as they check for EINVAL, it should be safe. It
+>>>>> appears
+>>>>> that
+>>>>> jemalloc does.
+>>>>
+>>>> So, first a brief question: in the cases where the call does not e=
+rror
+>>>> out,
+>>>> are we agreed that in the current implementation, MADV_DONTNEED wi=
+ll
+>>>> always result in zero-filled pages when the region is faulted back=
+ in
+>>>> (when we consider pages that are not backed by a file)?
+>>>
+>>> I'd agree at this point.
+>>
+>> Thanks for the confirmation.
+>>
+>>> Also we should probably mention anonymously shared pages (shmem). I=
+ think
+>>> they behave the same as file here.
+>>
+>> You mean tmpfs here, right? (I don't keep all of the synonyms straig=
+ht.)
+>
+> shmem is tmpfs (that by itself would fit under "files" just fine), bu=
+t also
+> sys V segments created by shmget(2) and also mappings created by mmap=
+ with
+> MAP_SHARED | MAP_ANONYMOUS. I'm not sure if there's a single manpage =
+to
+> refer to the full list.
+
+So, how about this text:
+
+              After a successful MADV_DONTNEED operation, the seman=E2=80=
+=90
+              tics  of  memory  access  in  the specified region are
+              changed: subsequent accesses of  pages  in  the  range
+              will  succeed,  but will result in either reloading of
+              the memory contents from the  underlying  mapped  file
+              (for  shared file mappings, shared anonymous mappings,
+              and shmem-based techniques such  as  System  V  shared
+              memory  segments)  or  zero-fill-on-demand  pages  for
+              anonymous private mappings.
+
+Thanks,
+
+Michael
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
