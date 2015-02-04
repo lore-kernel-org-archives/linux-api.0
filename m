@@ -1,13 +1,12 @@
 From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 0/5] RFC: Offer a way for userspace to request real
- deletion of files
-Date: Wed, 4 Feb 2015 09:01:23 +0100
-Message-ID: <CAHO5Pa3CFWeCn4iX_THgWkb6LhKTDFq1V==E54ZyQ0+dU20BkA@mail.gmail.com>
-References: <1422896713-25367-1-git-send-email-holler@ahsoftware.de>
+Subject: Re: [PATCH 1/5] WIP: Add syscall unlinkat_s (currently x86* only)
+Date: Wed, 4 Feb 2015 09:01:57 +0100
+Message-ID: <CAHO5Pa3s+QSCVsoGiffgLU-U9gaUbTm7JXe4e1vnefV4Fsx1-w@mail.gmail.com>
+References: <1422896713-25367-1-git-send-email-holler@ahsoftware.de> <1422896713-25367-2-git-send-email-holler@ahsoftware.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1422896713-25367-1-git-send-email-holler-SXC+2es9fhnfWeYVQQPykw@public.gmane.org>
+In-Reply-To: <1422896713-25367-2-git-send-email-holler-SXC+2es9fhnfWeYVQQPykw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Alexander Holler <holler-SXC+2es9fhnfWeYVQQPykw@public.gmane.org>
 Cc: Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -15,120 +14,177 @@ List-Id: linux-api@vger.kernel.org
 
 [CC += linux-api@]
 
-Hello Alexander,
-
-The kernel source file Documentation/SubmitChecklist notes that all
-Linux kernel patches that change userspace interfaces should be CCed
-to linux-api-u79uwXL29TaiAVqoAR/hOA@public.gmane.org See also
-https://www.kernel.org/doc/man-pages/linux-api-ml.html. Please CC
-linux-api@ on future iterations of this patch.
-
-Thanks,
-
-Michael
-
-
 On Mon, Feb 2, 2015 at 6:05 PM, Alexander Holler <holler-SXC+2es9fhnfWeYVQQPykw@public.gmane.org> wrote:
+> Signed-off-by: Alexander Holler <holler-SXC+2es9fhnfWeYVQQPykw@public.gmane.org>
+> ---
+>  arch/x86/syscalls/syscall_32.tbl      |  1 +
+>  arch/x86/syscalls/syscall_64.tbl      |  1 +
+>  fs/namei.c                            | 38 ++++++++++++++++++++++++++++++-----
+>  include/asm-generic/audit_dir_write.h |  1 +
+>  include/linux/fs.h                    |  1 +
+>  include/linux/syscalls.h              |  1 +
+>  include/uapi/asm-generic/unistd.h     |  4 +++-
+>  tools/perf/builtin-trace.c            |  2 ++
+>  8 files changed, 43 insertions(+), 6 deletions(-)
 >
-> Hello,
+> diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
+> index 9fe1b5d..7a3d530 100644
+> --- a/arch/x86/syscalls/syscall_32.tbl
+> +++ b/arch/x86/syscalls/syscall_32.tbl
+> @@ -364,3 +364,4 @@
+>  355    i386    getrandom               sys_getrandom
+>  356    i386    memfd_create            sys_memfd_create
+>  357    i386    bpf                     sys_bpf
+> +359    i386    unlinkat_s              sys_unlinkat_s
+> diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
+> index 281150b..97eaf01 100644
+> --- a/arch/x86/syscalls/syscall_64.tbl
+> +++ b/arch/x86/syscalls/syscall_64.tbl
+> @@ -328,6 +328,7 @@
+>  319    common  memfd_create            sys_memfd_create
+>  320    common  kexec_file_load         sys_kexec_file_load
+>  321    common  bpf                     sys_bpf
+> +322    common  unlinkat_s              sys_unlinkat_s
 >
-> some people already might have noticed that I've got a bit angry that
-> no filesystem nor the posix api nor the linux syscalls are offering
-> the userspace a way to request real deletion of one or more files (there's
-> the 's' bit, see man chattr, but it is ignored by all FS which know it).
+>  #
+>  # x32-specific system call numbers start at 512 to avoid cache impact
+> diff --git a/fs/namei.c b/fs/namei.c
+> index db5fe86..1ad3724 100644
+> --- a/fs/namei.c
+> +++ b/fs/namei.c
+> @@ -3717,7 +3717,7 @@ EXPORT_SYMBOL(vfs_unlink);
+>   * writeout happening, and we don't want to prevent access to the directory
+>   * while waiting on the I/O.
+>   */
+> -static long do_unlinkat(int dfd, const char __user *pathname)
+> +static long do_unlinkat(int dfd, const char __user *pathname, bool secure)
+>  {
+>         int error;
+>         struct filename *name;
+> @@ -3759,8 +3759,25 @@ exit2:
+>                 dput(dentry);
+>         }
+>         mutex_unlock(&nd.path.dentry->d_inode->i_mutex);
+> -       if (inode)
+> -               iput(inode);    /* truncate the inode here */
+> +       if (inode) {
+> +               // TODO:
+> +               // if (inode is file and 's' flag is set)
+> +               //      secure = true;
+> +               if (!secure)
+> +                       iput(inode);    /* truncate the inode here */
+> +               else {
+> +                       struct super_block *sb = inode->i_sb;
+> +                       if (sb->s_op->set_secure_delete)
+> +                               sb->s_op->set_secure_delete(sb, true);
+> +                       // TODO: We should fail if secure isn't supported,
+> +                       // look up how that's possible here.
+> +                       iput(inode);    /* truncate the inode here */
+> +                       // TODO: check if sb is still valid after the inode is gone
+> +                       sync_filesystem(sb);
+> +                       if (sb->s_op->set_secure_delete)
+> +                               sb->s_op->set_secure_delete(sb, false);
+> +               }
+> +       }
+>         inode = NULL;
+>         if (delegated_inode) {
+>                 error = break_deleg_wait(&delegated_inode);
+> @@ -3796,12 +3813,23 @@ SYSCALL_DEFINE3(unlinkat, int, dfd, const char __user *, pathname, int, flag)
+>         if (flag & AT_REMOVEDIR)
+>                 return do_rmdir(dfd, pathname);
 >
-> Almost all filesystems are working such, that deleting a file just
-> means it doesn't appear in the list of files anymore but the contents
-> of the file still might be readable on the storage.
+> -       return do_unlinkat(dfd, pathname);
+> +       return do_unlinkat(dfd, pathname, false);
+>  }
 >
-> So in the last 30 years many tools were created trying to circumvent that
-> inability of all filesystems. Up to encrypting the whole storage which
-> seems to be the current state of art and which many people recently tried
-> to recommend to me.
+>  SYSCALL_DEFINE1(unlink, const char __user *, pathname)
+>  {
+> -       return do_unlinkat(AT_FDCWD, pathname);
+> +       return do_unlinkat(AT_FDCWD, pathname, false);
+> +}
+> +
+> +SYSCALL_DEFINE3(unlinkat_s, int, dfd, const char __user *, pathname, int, flag)
+> +{
+> +       if ((flag & ~AT_REMOVEDIR) != 0)
+> +               return -EINVAL;
+> +
+> +       if (flag & AT_REMOVEDIR)
+> +               return do_rmdir(dfd, pathname);
+> +
+> +       return do_unlinkat(dfd, pathname, true);
+>  }
 >
-> Also I'm using that workaround already myself since many years, I still
-> believe it's a very bad, complictated, cumbersome and very uncomfortable
-> way to make sure contents of files are not readable anymore. Besides that,
-> just relying on encryption might hit back badly, because encryption often
-> suffers from bugs in the implementation, bugs or even backdoors in the
-> design and Moore. That means it's unsure how long the used encryption
-> will defeat any tries to read the contents of a deleted file from storage
-> and the used encryption might be worthless tomorrow. Not to speak about
-> the problems with the necessary key-handling.
+>  int vfs_symlink(struct inode *dir, struct dentry *dentry, const char *oldname)
+> diff --git a/include/asm-generic/audit_dir_write.h b/include/asm-generic/audit_dir_write.h
+> index 7b61db4..5282aba 100644
+> --- a/include/asm-generic/audit_dir_write.h
+> +++ b/include/asm-generic/audit_dir_write.h
+> @@ -29,4 +29,5 @@ __NR_unlinkat,
+>  __NR_renameat,
+>  __NR_linkat,
+>  __NR_symlinkat,
+> +__NR_unlinkat_s,
+>  #endif
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 9ab779e..039e969 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -1594,6 +1594,7 @@ struct super_operations {
+>         int (*bdev_try_to_free_page)(struct super_block*, struct page*, gfp_t);
+>         long (*nr_cached_objects)(struct super_block *, int);
+>         long (*free_cached_objects)(struct super_block *, long, int);
+> +       void (*set_secure_delete) (struct super_block *, bool);
+>  };
 >
-> What's the answer? Easy and obvious, just (try to) overwrite the contents
-> of a file by request from userspace. Filesystems do know where on the
-> storage they have written the contents to, so why not just let them delete
-> that stuff themself instead? It's almost unbelievable that this was not
-> already done in the past 30 years.
+>  /*
+> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> index bda9b81..b88019b 100644
+> --- a/include/linux/syscalls.h
+> +++ b/include/linux/syscalls.h
+> @@ -877,4 +877,5 @@ asmlinkage long sys_seccomp(unsigned int op, unsigned int flags,
+>  asmlinkage long sys_getrandom(char __user *buf, size_t count,
+>                               unsigned int flags);
+>  asmlinkage long sys_bpf(int cmd, union bpf_attr *attr, unsigned int size);
+> +asmlinkage long sys_unlinkat_s(int dfd, const char __user * pathname, int flag);
+>  #endif
+> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+> index 22749c1..2ba072e 100644
+> --- a/include/uapi/asm-generic/unistd.h
+> +++ b/include/uapi/asm-generic/unistd.h
+> @@ -707,9 +707,11 @@ __SYSCALL(__NR_getrandom, sys_getrandom)
+>  __SYSCALL(__NR_memfd_create, sys_memfd_create)
+>  #define __NR_bpf 280
+>  __SYSCALL(__NR_bpf, sys_bpf)
+> +#define __NR_unlinkat_s 281
+> +__SYSCALL(__NR_unlinkat_s, sys_unlinkat_s)
 >
-> So, now, after I've got angry enough, I've tried to do it myself, it seems
-> to work and wasn't really hard.
+>  #undef __NR_syscalls
+> -#define __NR_syscalls 281
+> +#define __NR_syscalls 282
 >
-> Of course, the easy way I think I've found isn't really my achievement.
-> Instead it relies on all the work people have already done to support the
-> trim command of SSDs. So thanks to all of them. You've made the following
-> simple patches possible.
->
-> How does it work:
->
-> - Implement a new syscall named unlinkat_s() with the same signature as
-> unlinkat(). With this syscall filesystems should make the old contents
-> of files unreadable and should fail if they can't. This doesn't really
-> have to be reliable, because it is often impossible for a filesystem to
-> make enough assumptions about the underlying storage to promise secure
-> deletion. But it has to mean that the filesystem tried everything it can
-> to make sure the contents are unreadabler afterwards, e.g. by overwriting
-> them, using secure trim or even just using trim. I've no idea if trim
-> might be enough, if I would have implemented trim, it would clear the
-> trimmed blocks in flash too, making them unreadable. But I haven't done
-> such and I haven't tested if that's the case.
-> The new syscall isn't meant to replace unlinkat() for everyday operations,
-> therefor operation speed is ignored (see below in regard to a side effect).
->
-> - Instruct the filesystem that it should discard or overwrite (all) freed
-> blocks while the unlinkat_s() is at work.
->
-> - Kill the inode while letting the filesystem discard freed blocks or
-> overwrite them. As said before, this was easy through all the work already
-> done by others. There even already existed a sb_issue_zeroout() which could
-> be used instead of sb_issue_discard().
->
-> - Sync the filesystem, to make sure the stuff is written to the storage.
->
->
-> This approach has the side effect that while a call of unlinkat_s() is at
-> work, all freed blocks will be destroyed, even those which aren't beloning
-> to the unlink operation but are freed by possible other running actions.
-> But in my humble opinion, that's nothing to care about and it keeps the
-> implementation of this feature simple. I like KISS and that's imho the
-> main feature of these patches.
->
->
-> Things to be aware of when reading and starting to critisize my patches:
->
-> - I've never had a look before at the kernel sources in fs/*.
-> - They are the result of around half a dozen hours.
-> - I'm aware that these patches are imperfect. Perfectionism does cost time
-> for which I often don't feel the need to spend it unpaid.
-> - I don't care for comments regarding style.
-> - They are a proof of concept and are an offer. They are meant for other
-> users, not maintainers. I wasn't paid for doing them and I don't care much
-> if they will end up in the kernel. I already have and can use them, I'm
-> happy with them and I don't really need them in the official kernel as I'm
-> able to easily rebase them myself (thanks to git).
-> - Don't be disappointed because the patches are that simple. The idea
-> counts. ;)
->
->
-> Regards,
->
-> Alexander Holler
+>  /*
+>   * All syscalls below here should go away really,
+> diff --git a/tools/perf/builtin-trace.c b/tools/perf/builtin-trace.c
+> index fb12645..1507335 100644
+> --- a/tools/perf/builtin-trace.c
+> +++ b/tools/perf/builtin-trace.c
+> @@ -1110,6 +1110,8 @@ static struct syscall_fmt {
+>         { .name     = "uname",      .errmsg = true, .alias = "newuname", },
+>         { .name     = "unlinkat",   .errmsg = true,
+>           .arg_scnprintf = { [0] = SCA_FDAT, /* dfd */ }, },
+> +       { .name     = "unlinkat_s",   .errmsg = true,
+> +         .arg_scnprintf = { [0] = SCA_FDAT, /* dfd */ }, },
+>         { .name     = "utimensat",  .errmsg = true,
+>           .arg_scnprintf = { [0] = SCA_FDAT, /* dirfd */ }, },
+>         { .name     = "write",      .errmsg = true,
+> --
+> 2.1.0
 >
 > --
-> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
 > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
 
 
 
