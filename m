@@ -1,40 +1,118 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [PATCH v2] selftests/exec: Check if the syscall exists and bail
- if not
-Date: Wed, 04 Feb 2015 13:46:32 +1100
-Message-ID: <1423017992.7982.6.camel@ellerman.id.au>
-References: <1422935588-9973-1-git-send-email-mpe@ellerman.id.au>
-	 <CAHse=S9iLWK68mUSaVMEAwsaOEt4sTaM7XMBY-mv+ofk6sfT+g@mail.gmail.com>
-	 <54D0EA1B.1000508@osg.samsung.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH 01/13] kdbus: add documentation
+Date: Tue, 03 Feb 2015 20:47:51 -0600
+Message-ID: <87siemgzoo.fsf@x220.int.ebiederm.org>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
+	<1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>
+	<54BE5DC8.70706@gmail.com> <54BE9D08.7010804@zonque.org>
+	<54BF805B.4000609@gmail.com> <54BFDAAA.50203@zonque.org>
+	<54C0CE8A.5080805@gmail.com>
+	<CANq1E4S=3qNw599L85uj-8aXwxeV+mcurB_Nu_rHH8opAeePjw@mail.gmail.com>
+	<54C10DDC.9000503@gmail.com> <20150123160854.GA5210@kroah.com>
+	<54C65346.5070504@gmail.com>
+	<CANq1E4SkHhs1pWUe-TzG7bzk1M-Q++mB2vmQGuYx0RMF53wg4Q@mail.gmail.com>
+	<CALCETrU1O6LjhrXSH2aXWFt2WGh=ssrq4K9HD10f_Z55iT=Otw@mail.gmail.com>
+	<54C9F525.4040703@zonque.org>
+	<CALCETrV6P+Lx5FRLyDNubG18tqCTLprkXJf=82aa5DsRHjkuKA@mail.gmail.com>
+	<54CA1CA2.9060005@zonque.org>
+	<CALCETrXD41=ohFSkCmBD8zPHFVUtr49QXMhYnChAxqQtmUjJYw@mail.gmail.com>
+	<54CF44B9.8000005@zonque.org>
+	<CALCETrUh1Mse4CBQ4bfkJf+ew=kdpn46hMLS2QafLhfRTzQoBQ@mail.gmail.com>
+	<54D09E6B.2020903@zonque.org>
+	<CALCETrV_q9Y4OWC6fA78WsD+XFhsdGHrqH6OK-hc=Vvj2F5C5w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54D0EA1B.1000508-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <CALCETrV_q9Y4OWC6fA78WsD+XFhsdGHrqH6OK-hc=Vvj2F5C5w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+	(Andy Lutomirski's message of "Tue, 3 Feb 2015 16:41:04 -0800")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2015-02-03 at 08:32 -0700, Shuah Khan wrote:
-> On 02/03/2015 12:58 AM, David Drysdale wrote:
-> > On Tue, Feb 3, 2015 at 3:53 AM, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org> wrote:
-> >> On systems which don't implement sys_execveat(), this test produces a
-> >> lot of output.
-> >>
-> >> Add a check at the beginning to see if the syscall is present, and if
-> >> not just note one error and return.
-> >>
-> >> When we run on a system that doesn't implement the syscall we will get
-> >> ENOSYS back from the kernel, so change the logic that handles
-> >> __NR_execveat not being defined to also use ENOSYS rather than -ENOSYS.
-> >>
-> >> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-> > 
-> > Acked-by: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> 
-> Thanks Michael, and David. I will queue this for 3.20
+Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
 
-Thanks.
+> On Tue, Feb 3, 2015 at 2:09 AM, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org> wrote:
+>> Hi Andy,
+>>
+>> On 02/02/2015 09:12 PM, Andy Lutomirski wrote:
+>>> On Feb 2, 2015 1:34 AM, "Daniel Mack" <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org> wrote:
+>>
+>>>> That's right, but again - if an application wants to gather this kind of
+>>>> information about tasks it interacts with, it can do so today by looking
+>>>> at /proc or similar sources. Desktop machines do exactly that already,
+>>>> and the kernel code executed in such cases very much resembles that in
+>>>> metadata.c, and is certainly not cheaper. kdbus just makes such
+>>>> information more accessible when requested. Which information is
+>>>> collected is defined by bit-masks on both the sender and the receiver
+>>>> connection, and most applications will effectively only use a very
+>>>> limited set by default if they go through one of the more high-level
+>>>> libraries.
+>>>
+>>> I should rephrase a bit.  Kdbus doesn't require use of send-time
+>>> metadata.  It does, however, strongly encourage it, and it sounds like
+>>
+>> On the kernel level, kdbus just *offers* that, just like sockets offer
+>> SO_PASSCRED. On the userland level, kdbus helps applications get that
+>> information race-free, easier and faster than they would otherwise.
+>>
+>>> systemd and other major users will use send-time metadata.  Once that
+>>> happens, it's ABI (even if it's purely in userspace), and changing it
+>>> is asking for security holes to pop up.  So you'll be mostly stuck
+>>> with it.
+>>
+>> We know we can't break the ABI. At most, we could deprecate item types
+>> and introduce new ones, but we want to avoid that by all means of
+>> course. However, I fail to see how that is related to send time
+>> metadata, or even to kdbus in general, as all ABIs have to be kept stable.
+>
+> I should have said it differently.  ABI is the wrong term -- it's more
+> of a protocol issue.
+>
+> It looks like, with the current code, the kernel will provide
+> (optional) send-time metadata, and the sd-bus library will use it.
+> The result will be that the communication protocol between clients and
+> udev, systemd, systemd-logind, g-s-d, etc, will likely involve
+> send-time metadata.  This may end up being a bottleneck.
 
-cheers
+A quick note on a couple of things I have seen in this conversation.
+
+- The reason for kdbus is performance.
+
+- pipes rather than unix domain sockets are likely the standard to meet.
+  If you can't equal unix domain sockets for simple things you are
+  likely leaving a lot of stops in.  Last I looked pipes in general were
+  notiably faster than unix domain sockets.
+
+  The performance numbers I saw posted up-thread were horrible.  I have
+  seen faster numbers across a network of machines.  If your ping-pong
+  latency isn't measured in nano-seconds you are probably doing
+  something wrong.
+
+- syscalls remove overhead.  So since performance is kdbus's reason for existence
+  let's remove some ridiculous stops, and get a fast path into the kernel.
+
+- send-time metadata is a performance nightmare.  SO_PASSCRED is hard
+  to implement in a fast performant way, especially when namespaces
+  get involved.  Over the long term if you use send-time metadata
+  you will grow the kind of compatibility hacks that the user
+  namespace and the pid namespace have on SO_PASSCRED and things will
+  slow down.
+
+  A similar effect that is more performant in general is to enforce that
+  the sender has the expected attributes.
+
+> Once this happens, changing the protocol will be very hard without
+> introducing security bugs.  If people start switching to
+> connection-time metadata to gain performance, then they'll break both
+> the communication protocol and the expectations of client code.  (In
+> fact, it'll break twice, sort of, since I think that the current
+> protocols are connect-time.)
+>
+> To me, this seems like a down-side of using send-time metadata, albeit
+> possibly not a huge downside at least in the near term.  I don't see a
+> corresponding benefit, though.
+
+I think send-time metadata verification is less bad in this regard.
+
+Eric
