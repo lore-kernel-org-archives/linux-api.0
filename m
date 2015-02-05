@@ -1,61 +1,126 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [v8 4/5] ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR
- interface support
-Date: Thu, 5 Feb 2015 17:38:15 +0100
-Message-ID: <20150205163815.GK4258@quack.suse.cz>
-References: <54C11733.7080801@yandex-team.ru>
- <20150123015307.GD24722@dastard>
- <54C23751.7000009@yandex-team.ru>
- <20150123233026.GP16552@dastard>
- <CALCETrXPCrOTrkoAMuW2os=z6anaEfv4F4D2yDxo6VtCuEtRZw@mail.gmail.com>
- <20150127080239.GQ16552@dastard>
- <54C76C3D.4070404@yandex-team.ru>
- <20150128003746.GR16552@dastard>
- <54D23919.3000408@yandex-team.ru>
- <20150204225844.GA12722@dastard>
+From: Darren Hart <dvhart@linux.intel.com>
+Subject: Re: futex(2) man page update help request
+Date: Thu, 05 Feb 2015 11:57:59 -0800
+Message-ID: <D0F90AF2.BBC1A%dvhart@linux.intel.com>
+References: <537346E5.4050407@gmail.com>
+ <CF98E3EF.90564%dvhart@linux.intel.com>
+ <CAKgNAkh+PWzT2SByaLk_OtiAXeZSkWoMgu+ivDOt1dTWVtaatQ@mail.gmail.com>
+ <5373D0CA.2050204@redhat.com>
+ <alpine.DEB.2.02.1405150121230.6261@ionos.tec.linutronix.de>
+ <CAKgNAkjQ5Dd_U9OojXdgeforpRevvPHNFAw99kBFPCwHgf7Ggg@mail.gmail.com>
+ <alpine.DEB.2.02.1405151144390.6261@ionos.tec.linutronix.de>
+ <54B7D87C.3090901@gmail.com>
+ <1422037788.29655.0.camel@triegel.csb>
+ <alpine.DEB.2.11.1501241116160.5526@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150204225844.GA12722@dastard>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Cc: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Content-Type: text/plain;
+	charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.11.1501241116160.5526@nanos>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>, Torvald Riegel <triegel@redhat.com>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Carlos O'Donell <carlos@redhat.com>, Ingo Molnar <mingo@elte.hu>, Jakub Jelinek <jakub@redhat.com>, "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Davidlohr Bueso <davidlohr.bueso@hp.com>, Arnd Bergmann <arnd@arndb.de>, Steven Rostedt <rostedt@goodmis.org>, Peter Zijlstra <peterz@infradead.org>, Linux API <linux-api@vger.kernel.org>, Darren Hart <dvhart@infradead.org>, Anton Blanchard <anton@samba.org>, Petr Baudis <pasky@suse.cz>, Eric Dumazet <edumazet@google.com>, bill o gallmeister <bgallmeister@gmail.com>, Jan Kiszka <jan.kiszka@siemens.com>, Daniel Wagner <wagi@monom.org>, Rich Felker <dalias@libc.org>
 List-Id: linux-api@vger.kernel.org
 
-  Hello,
+On 1/24/15, 3:35 AM, "Thomas Gleixner" <tglx@linutronix.de> wrote:
 
-> Users have *always* been allowed to set the project ID of
-> their own files. How else are they going to set the project ID on
-> files they create in random directories so to account them to the
-> correct project they are working on?
-> 
-> However, you keep making the assumption that project quotas ==
-> directory subtree quotas.  Project quotas are *not limited* to
-> directory subtrees - the subtree quota implementation is just an
-> implementation that *sets the default project ID* on files as they
-> are created.
-> 
-> e.g. there are production systems out there where project quotas are
-> used to track home directory space usage rather than user quotas.
-> This means users can take actions like "this file actually belongs
-> to project X and it shouldn't be accounted against my home
-> directory". Users can create their own sub directories that account
-> everything by default to project X rather than their own home
-> directory.
-> 
-> Again: project quotas are an *accounting* mechanism, not a security
-> mechanism.
-  OK, but now I got confused ;) So if users can change project ID of files
-they own, what's the point of project quotas? If I need to create a file
-and project quota doesn't allow me, I just set its project ID to some
-random number and I'm done with that... So are really project quotas just
-"advisory" - i.e., all users of a system cooperate so that project X
-doesn't use more space than it should (and project quotas make this
-cooperation somewhat simpler) or is there something which limits which
-project IDs user can set? I didn't find anything...
+>On Fri, 23 Jan 2015, Torvald Riegel wrote:
+>> Second, the current documentation for EINTR is that it can happen due to
+>> receiving a signal *or* due to a spurious wake-up.  This is difficult to
+>
+>I don't think so. I went through all callchains again with a fine comb.
+>
+>futex_wait()
+>retry:
+>	ret = futex_wait_setup();
+>	if (ret) {
+>		 /*
+>		  * Possible return codes related to uaddr:
+>		  * -EINVAL:    Not u32 aligned uaddr
+>		  * -EFAULT:    No mapping, no RW
+>		  * -ENOMEM:    Paging ran out of memory
+>		  * -EHWPOISON: Memory hardware error
+>		  *
+>		  * Others:
+>		  * -EWOULDBLOCK: value at uaddr has changed
+>		  */
+>		return ret;
+>	}
+>
+>	futex_wait_queue_me();
+>
+>	if (woken by futex_wake/requeue)
+>	   	return 0;
+>
+>	if (timeout)
+>		return -ETIMEOUT;
+>
+>	/*
+>	 * Spurious wakeup, i.e. no signal pending
+>	 */
+>	if (!signal_pending())
+>		goto retry;
+>
+>	/* Handled in the low level syscall exit code */
+>	if (!timed_wait)
+>		return -ERESTARTSYS;
+>	else
+>		return -ERESTARTBLOCK;
+>
+>Now in the low level syscall exit we try to deliver the signal
+>
+>	if (!signal_delivered())
+>	      restart_syscall();
+>
+>	if (sigaction->flags & SA_RESTART)
+>	      restart_syscall();
+>
+>	ret_to_userspace -EINTR;
+>
+>So we should never see -EINTR in the case of a spurious wakeup here.
+>
+>But, here is the not so good news:
+>
+> I did some archaeology. The restart handling of futex_wait() got
+> introduced in kernel 2.6.22, so anything older than that will have
+> the spurious -EINTR issues.
+>
+>futex_wait_pi() always had the restart handling and glibc folks back
+>then (2006) requested that it should never return -EINTR, so it
+>unconditionally restarts the syscall whether a signal had been
+>delivered or not.
+>
+>So kernels >= 2.6.22 should never return -EINTR spuriously. If that
+>happens it's a bug and needs to be fixed.
+>
+>> Third, I think it would be useful to -- somewhere -- explain which
+>> behavior the futex operations would have conceptually when expressed by
+>> C11 code.  We currently say that they wake up, sleep, etc, and which
+>> values they return.  But we never say how to properly synchronize with
+>> them on the userspace side.  The C11 memory model is probably the best
+>> model to use on the userspace side, so that's why I'm arguing for this.
+>> Basically, I think we need to (1) tell people that they should use
+>> memory_order_relaxed accesses to the futex variable (ie, the memory
+>> location associated with the whole futex construct on the kernel side --
+>> or do we have another name for this?), and (2) give some conceptual
+>> guarantees for the kernel-side synchronization so that one use this to
+>> derive how to use them correctly in userspace.
+>> 
+>> The man pages might not be the right place for this, and maybe we just
+>> need a revision of "Futexes are tricky".  If you have other suggestions
+>> for where to document this, or on the content, let me know.  (I'm also
+>> willing to spend time on this :) ).
+>
+>The current futex code in the kernel has gained documentation about
+>the required memory ordering recently. That should be a good starting
+>point.
 
-								Honza
+Lots of paging in here... If I recall correctly there was something about
+not being able to return to userspace in these events without owning the
+lock (waiters but no owner, breaking pi chains and promotion, etc.), so
+restarting was the preferable path.
+
 -- 
-Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-SUSE Labs, CR
+Darren Hart
+Intel Open Source Technology Center
