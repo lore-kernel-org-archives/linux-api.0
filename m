@@ -1,301 +1,281 @@
-From: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH] Revert "IB/core: Add support for extended query device caps"
-Date: Thu,  5 Feb 2015 22:10:18 +0100
-Message-ID: <1423170618-12315-1-git-send-email-ydroneaud@opteya.com>
-Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Ira Weiny <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] capabilities: Ambient capability set V1
+Date: Thu, 5 Feb 2015 15:56:59 -0600 (CST)
+Message-ID: <alpine.DEB.2.11.1502051554500.4876@gentwo.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-While commit 7e36ef8205ff ("IB/core: Temporarily disable ex_query_device uverb")
-is correct as it make the extended QUERY_DEVICE uverb as integrated as
-part of commit 5a77abf9a97a ("IB/core: Add support for extended query device caps")
-and commit 860f10a799c8 ("IB/core: Add flags for on demand paging support")
-not available to userspace, it doesn't address the initial issue
-regarding ib_copy_to_udata() [1][2].
+Ambient caps are something like restricted root privileges.
+A process has a set of additional capabilities and those
+are inherited without have to set capabilites in other
+binaries involved. This allow the partial use of root
+like features in a controlled way. It is often useful
+to do this for user space device drivers or software that
+needs increased priviledges for networking or to control
+its own scheduling. Ambient caps allow one to avoid
+having to run these with full root priviledges.
 
-Additionally, further discussions around this new uverb seems to
-conclude it would require a different data structure than the one
-currently described in <rdma/ib_user_verbs.h> [3].
+Control over this feature is avaialable via a new
+prctl option called PR_CAP_AMBIENT. The second argument to prctl
+is a the capability number and the third the desired state.
+0 for off. Otherwise on.
 
-Both of these issues require a revert of the changes,
-so this patch partially revert commit 8cdd312cfed7 ("IB/mlx5: Implement the ODP capability query verb"),
-commit 860f10a799c8 ("IB/core: Add flags for on demand paging support")
-and fully revert commit 5a77abf9a97a ("IB/core: Add support for extended query device caps").
+Ambient bits are enabled regardless of the inheritance
+mask of the target binary. They are only restricted
+by the bounding set.
 
-[1] "Re: [PATCH v3 06/17] IB/core: Add support for extended query device caps"
-    http://mid.gmane.org/1418733236.2779.26.camel-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org
+History:
 
-[2] "Re: [PATCH] IB/core: Temporarily disable ex_query_device uverb"
-    http://mid.gmane.org/1423067503.3030.83.camel-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org
+Linux capabilities have suffered from the problem that they are not
+inheritable like unregular process characteristics under Unix. This is
+behavior that is counter intuitive to the expected behavior of processes
+in Unix.
 
-[3] "RE: [PATCH v1 1/5] IB/uverbs: ex_query_device: answer must not depend on request's comp_mask"
-    http://mid.gmane.org/2807E5FD2F6FDA4886F6618EAC48510E0CC12C30-8k97q/ur5Z2krb+BlOpmy7fspsVTdybXVpNB7YpNyf8@public.gmane.org
+In particular there has been recently software that controls NICs from user
+space and provides IP stack like behavior also in user space (DPDK and RDMA
+kernel API based implementations). Those typically need either capabilities
+to allow raw network access or have to be run setsuid. There is scripting and
+LD_PREFLOAD etc involved, arbitrary binaries may be run from those scripts
+including those setting additional capabilites or requiring root access.
 
-Cc: Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Cc: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Cc: Ira Weiny <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
-Cc: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Cc: Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Signed-off-by: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
----
- drivers/infiniband/core/uverbs.h     |   1 -
- drivers/infiniband/core/uverbs_cmd.c | 137 +++++++++++------------------------
- drivers/infiniband/hw/mlx5/main.c    |   2 -
- include/rdma/ib_verbs.h              |   5 +-
- include/uapi/rdma/ib_user_verbs.h    |  27 -------
- 5 files changed, 42 insertions(+), 130 deletions(-)
+That does not go well with having file capabilities set that would enable
+the capabilities. Maybe it would work if one would setup capabilities on
+all executables but that would also defeat a secure design since these
+binaries may only need those caps for certain situations. Ok setting the
+inheritable flags on everything may also get one there (if there would not
+be the issues with LD_PRELOAD, debugging etc etc).
 
-diff --git a/drivers/infiniband/core/uverbs.h b/drivers/infiniband/core/uverbs.h
-index b716b0815644..643c08a025a5 100644
---- a/drivers/infiniband/core/uverbs.h
-+++ b/drivers/infiniband/core/uverbs.h
-@@ -258,6 +258,5 @@ IB_UVERBS_DECLARE_CMD(close_xrcd);
- 
- IB_UVERBS_DECLARE_EX_CMD(create_flow);
- IB_UVERBS_DECLARE_EX_CMD(destroy_flow);
--IB_UVERBS_DECLARE_EX_CMD(query_device);
- 
- #endif /* UVERBS_H */
-diff --git a/drivers/infiniband/core/uverbs_cmd.c b/drivers/infiniband/core/uverbs_cmd.c
-index 532d8eba8b02..b7943ff16ed3 100644
---- a/drivers/infiniband/core/uverbs_cmd.c
-+++ b/drivers/infiniband/core/uverbs_cmd.c
-@@ -400,52 +400,6 @@ err:
- 	return ret;
+The easy solution is to allow some capabilities be inherited like setsuid
+is. We really prefer to use capabilities instead of setsuid (we want to
+limit what damage someone can do after all!). Therefore we have been
+running a patch like this in production for the last 6 years. At some
+point it becomes tedious to run your own custom kernel so we would like
+to have this functionality upstream.
+
+See some of the earlier related discussions on the problems with capability
+inheritance:
+
+0. Recent surprise:
+                https://lkml.org/lkml/2014/1/21/175
+
+1. Attempt to revise caps
+                http://www.madore.org/~david/linux/newcaps/
+
+2. Problems of passing caps through exec
+                http://unix.stackexchange.com/questions/128394/passing-capabilities-through-exec
+
+3. Problems of binding to privileged ports
+                http://stackoverflow.com/questions/413807/is-there-a-way-for-non-root-processes-to-bind-to-privileged-ports-1024-on-l
+
+4. Reviving capabilities
+                http://lwn.net/Articles/199004/
+
+There does not seem to be an alternative on the horizon. Some involved
+in security development under Linux have even stated that they want to
+rip out the whole thing and replace it. Its been a couple of years now
+and we are still suffering from the capabilities mess. Let us just
+fix it. Others have already done implementations like this like Nokia
+for the N900.
+
+
+This patch does not change the default behavior but it allows to set up
+a list of capabilities via prctl that will enable regular
+unix inheritance only for the selected group of capabilities.
+
+With that it is then possible to do something trivial like setting
+CAP_NET_RAW on an executable that can then allow that capability to
+be inherited by others.
+
+Lets have a look at a coding example of a wrapper that enables
+a couple of capabilities:
+
+------------------------------ ambient_test.c
+/*
+ * Test program for the ambient capabilities
+ *
+ *
+ * Compile using:
+ *	gcc -o ambient_test ambient_test.o
+ *
+ * This program must have the following capabilities to run properly:
+ * CAP_SETPCAP, CAP_NET_RAW, CAP_NET_ADMIN, CAP_SYS_NICE
+ *
+ * A command to equip this with the right caps is:
+ *
+ *	setcap cap_setpcap,cap_net_raw,cap_net_admin,cap_sys_nice+eip ambient_test
+ *
+ * To get a shell with additional caps that can be inherited do:
+ *
+ * ./ambient_test /bin/bash
+ *
+ */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <sys/prctl.h>
+#include <linux/capability.h>
+
+/* Defintion to be updated in the user space include files */
+#define PR_CAP_AMBIENT 45
+
+int main(int argc, char **argv)
+{
+	int rc;
+
+	if (prctl(PR_CAP_AMBIENT, CAP_NET_RAW))
+		perror("Cannot set CAP_NET_RAW");
+
+	if (prctl(PR_CAP_AMBIENT, CAP_NET_ADMIN))
+		perror("Cannot set CAP_NET_ADMIN");
+
+	if (prctl(PR_CAP_AMBIENT, CAP_SYS_NICE))
+		perror("Cannot set CAP_SYS_NICE");
+
+	printf("Ambient_test forking shell\n");
+	if (execv(argv[1], argv + 1))
+		perror("Cannot exec");
+
+	return 0;
+}
+-------------------------------- ambient_test.c
+
+Allows the inheritance of CAP_SYS_NICE, CAP_NET_RAW and CAP_NET_ADMIN.
+With that device raw access is possible and also real time priorities
+can be set from user space. This is a frequently needed set of
+priviledged operations in HPC and HFT applications. User space
+processes need to be able to directly access devices as well as
+have full control over scheduling.
+
+Signed-off-by: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+
+Index: linux/security/commoncap.c
+===================================================================
+--- linux.orig/security/commoncap.c	2015-02-05 09:53:43.442883383 -0600
++++ linux/security/commoncap.c	2015-02-05 15:40:31.387388142 -0600
+@@ -347,14 +347,17 @@ static inline int bprm_caps_from_vfs_cap
+ 		*has_cap = true;
+
+ 	CAP_FOR_EACH_U32(i) {
++		__u32 ambient = current_cred()->cap_ambient.cap[i];
+ 		__u32 permitted = caps->permitted.cap[i];
+ 		__u32 inheritable = caps->inheritable.cap[i];
++		__u32 x = new->cap_bset.cap[i];
+
+ 		/*
+-		 * pP' = (X & fP) | (pI & fI)
++		 * pP' = (X & pA) | (X & fP) | (pI & fI)
+ 		 */
+ 		new->cap_permitted.cap[i] =
+-			(new->cap_bset.cap[i] & permitted) |
++			(x & ambient) |
++			(x & permitted) |
+ 			(new->cap_inheritable.cap[i] & inheritable);
+
+ 		if (permitted & ~new->cap_permitted.cap[i])
+@@ -453,9 +456,13 @@ static int get_file_caps(struct linux_bi
+ 		if (rc == -EINVAL)
+ 			printk(KERN_NOTICE "%s: get_vfs_caps_from_disk returned %d for %s\n",
+ 				__func__, rc, bprm->filename);
+-		else if (rc == -ENODATA)
+-			rc = 0;
+-		goto out;
++		else if (rc != -ENODATA)
++			goto out;
++		rc = 0;
++		if (cap_isclear(current_cred()->cap_ambient))
++			goto out;
++		/* Make sure that the ambient caps are enabled */
++		*effective = true;
+ 	}
+
+ 	rc = bprm_caps_from_vfs_caps(&vcaps, bprm, effective, has_cap);
+@@ -577,6 +584,7 @@ skip:
+ 	}
+
+ 	new->securebits &= ~issecure_mask(SECURE_KEEP_CAPS);
++	new->cap_ambient = old->cap_ambient;
+ 	return 0;
  }
- 
--static void copy_query_dev_fields(struct ib_uverbs_file *file,
--				  struct ib_uverbs_query_device_resp *resp,
--				  struct ib_device_attr *attr)
--{
--	resp->fw_ver		= attr->fw_ver;
--	resp->node_guid		= file->device->ib_dev->node_guid;
--	resp->sys_image_guid	= attr->sys_image_guid;
--	resp->max_mr_size	= attr->max_mr_size;
--	resp->page_size_cap	= attr->page_size_cap;
--	resp->vendor_id		= attr->vendor_id;
--	resp->vendor_part_id	= attr->vendor_part_id;
--	resp->hw_ver		= attr->hw_ver;
--	resp->max_qp		= attr->max_qp;
--	resp->max_qp_wr		= attr->max_qp_wr;
--	resp->device_cap_flags	= attr->device_cap_flags;
--	resp->max_sge		= attr->max_sge;
--	resp->max_sge_rd	= attr->max_sge_rd;
--	resp->max_cq		= attr->max_cq;
--	resp->max_cqe		= attr->max_cqe;
--	resp->max_mr		= attr->max_mr;
--	resp->max_pd		= attr->max_pd;
--	resp->max_qp_rd_atom	= attr->max_qp_rd_atom;
--	resp->max_ee_rd_atom	= attr->max_ee_rd_atom;
--	resp->max_res_rd_atom	= attr->max_res_rd_atom;
--	resp->max_qp_init_rd_atom	= attr->max_qp_init_rd_atom;
--	resp->max_ee_init_rd_atom	= attr->max_ee_init_rd_atom;
--	resp->atomic_cap		= attr->atomic_cap;
--	resp->max_ee			= attr->max_ee;
--	resp->max_rdd			= attr->max_rdd;
--	resp->max_mw			= attr->max_mw;
--	resp->max_raw_ipv6_qp		= attr->max_raw_ipv6_qp;
--	resp->max_raw_ethy_qp		= attr->max_raw_ethy_qp;
--	resp->max_mcast_grp		= attr->max_mcast_grp;
--	resp->max_mcast_qp_attach	= attr->max_mcast_qp_attach;
--	resp->max_total_mcast_qp_attach	= attr->max_total_mcast_qp_attach;
--	resp->max_ah			= attr->max_ah;
--	resp->max_fmr			= attr->max_fmr;
--	resp->max_map_per_fmr		= attr->max_map_per_fmr;
--	resp->max_srq			= attr->max_srq;
--	resp->max_srq_wr		= attr->max_srq_wr;
--	resp->max_srq_sge		= attr->max_srq_sge;
--	resp->max_pkeys			= attr->max_pkeys;
--	resp->local_ca_ack_delay	= attr->local_ca_ack_delay;
--	resp->phys_port_cnt		= file->device->ib_dev->phys_port_cnt;
--}
--
- ssize_t ib_uverbs_query_device(struct ib_uverbs_file *file,
- 			       const char __user *buf,
- 			       int in_len, int out_len)
-@@ -466,7 +420,47 @@ ssize_t ib_uverbs_query_device(struct ib_uverbs_file *file,
- 		return ret;
- 
- 	memset(&resp, 0, sizeof resp);
--	copy_query_dev_fields(file, &resp, &attr);
+
+@@ -933,6 +941,23 @@ int cap_task_prctl(int option, unsigned
+ 			new->securebits &= ~issecure_mask(SECURE_KEEP_CAPS);
+ 		return commit_creds(new);
+
++	case PR_CAP_AMBIENT:
++		if (!ns_capable(current_user_ns(), CAP_SETPCAP))
++			return -EPERM;
 +
-+	resp.fw_ver 		       = attr.fw_ver;
-+	resp.node_guid 		       = file->device->ib_dev->node_guid;
-+	resp.sys_image_guid 	       = attr.sys_image_guid;
-+	resp.max_mr_size 	       = attr.max_mr_size;
-+	resp.page_size_cap 	       = attr.page_size_cap;
-+	resp.vendor_id 		       = attr.vendor_id;
-+	resp.vendor_part_id 	       = attr.vendor_part_id;
-+	resp.hw_ver 		       = attr.hw_ver;
-+	resp.max_qp 		       = attr.max_qp;
-+	resp.max_qp_wr 		       = attr.max_qp_wr;
-+	resp.device_cap_flags 	       = attr.device_cap_flags;
-+	resp.max_sge 		       = attr.max_sge;
-+	resp.max_sge_rd 	       = attr.max_sge_rd;
-+	resp.max_cq 		       = attr.max_cq;
-+	resp.max_cqe 		       = attr.max_cqe;
-+	resp.max_mr 		       = attr.max_mr;
-+	resp.max_pd 		       = attr.max_pd;
-+	resp.max_qp_rd_atom 	       = attr.max_qp_rd_atom;
-+	resp.max_ee_rd_atom 	       = attr.max_ee_rd_atom;
-+	resp.max_res_rd_atom 	       = attr.max_res_rd_atom;
-+	resp.max_qp_init_rd_atom       = attr.max_qp_init_rd_atom;
-+	resp.max_ee_init_rd_atom       = attr.max_ee_init_rd_atom;
-+	resp.atomic_cap 	       = attr.atomic_cap;
-+	resp.max_ee 		       = attr.max_ee;
-+	resp.max_rdd 		       = attr.max_rdd;
-+	resp.max_mw 		       = attr.max_mw;
-+	resp.max_raw_ipv6_qp 	       = attr.max_raw_ipv6_qp;
-+	resp.max_raw_ethy_qp 	       = attr.max_raw_ethy_qp;
-+	resp.max_mcast_grp 	       = attr.max_mcast_grp;
-+	resp.max_mcast_qp_attach       = attr.max_mcast_qp_attach;
-+	resp.max_total_mcast_qp_attach = attr.max_total_mcast_qp_attach;
-+	resp.max_ah 		       = attr.max_ah;
-+	resp.max_fmr 		       = attr.max_fmr;
-+	resp.max_map_per_fmr 	       = attr.max_map_per_fmr;
-+	resp.max_srq 		       = attr.max_srq;
-+	resp.max_srq_wr 	       = attr.max_srq_wr;
-+	resp.max_srq_sge 	       = attr.max_srq_sge;
-+	resp.max_pkeys 		       = attr.max_pkeys;
-+	resp.local_ca_ack_delay        = attr.local_ca_ack_delay;
-+	resp.phys_port_cnt	       = file->device->ib_dev->phys_port_cnt;
- 
- 	if (copy_to_user((void __user *) (unsigned long) cmd.response,
- 			 &resp, sizeof resp))
-@@ -3293,52 +3287,3 @@ ssize_t ib_uverbs_destroy_srq(struct ib_uverbs_file *file,
- 
- 	return ret ? ret : in_len;
- }
--
--int ib_uverbs_ex_query_device(struct ib_uverbs_file *file,
--			      struct ib_udata *ucore,
--			      struct ib_udata *uhw)
--{
--	struct ib_uverbs_ex_query_device_resp resp;
--	struct ib_uverbs_ex_query_device  cmd;
--	struct ib_device_attr attr;
--	struct ib_device *device;
--	int err;
--
--	device = file->device->ib_dev;
--	if (ucore->inlen < sizeof(cmd))
--		return -EINVAL;
--
--	err = ib_copy_from_udata(&cmd, ucore, sizeof(cmd));
--	if (err)
--		return err;
--
--	if (cmd.reserved)
--		return -EINVAL;
--
--	err = device->query_device(device, &attr);
--	if (err)
--		return err;
--
--	memset(&resp, 0, sizeof(resp));
--	copy_query_dev_fields(file, &resp.base, &attr);
--	resp.comp_mask = 0;
--
--#ifdef CONFIG_INFINIBAND_ON_DEMAND_PAGING
--	if (cmd.comp_mask & IB_USER_VERBS_EX_QUERY_DEVICE_ODP) {
--		resp.odp_caps.general_caps = attr.odp_caps.general_caps;
--		resp.odp_caps.per_transport_caps.rc_odp_caps =
--			attr.odp_caps.per_transport_caps.rc_odp_caps;
--		resp.odp_caps.per_transport_caps.uc_odp_caps =
--			attr.odp_caps.per_transport_caps.uc_odp_caps;
--		resp.odp_caps.per_transport_caps.ud_odp_caps =
--			attr.odp_caps.per_transport_caps.ud_odp_caps;
--		resp.comp_mask |= IB_USER_VERBS_EX_QUERY_DEVICE_ODP;
--	}
--#endif
--
--	err = ib_copy_to_udata(ucore, &resp, sizeof(resp));
--	if (err)
--		return err;
--
--	return 0;
--}
-diff --git a/drivers/infiniband/hw/mlx5/main.c b/drivers/infiniband/hw/mlx5/main.c
-index 8a87404e9c76..03bf81211a54 100644
---- a/drivers/infiniband/hw/mlx5/main.c
-+++ b/drivers/infiniband/hw/mlx5/main.c
-@@ -1331,8 +1331,6 @@ static void *mlx5_ib_add(struct mlx5_core_dev *mdev)
- 		(1ull << IB_USER_VERBS_CMD_DESTROY_SRQ)		|
- 		(1ull << IB_USER_VERBS_CMD_CREATE_XSRQ)		|
- 		(1ull << IB_USER_VERBS_CMD_OPEN_QP);
--	dev->ib_dev.uverbs_ex_cmd_mask =
--		(1ull << IB_USER_VERBS_EX_CMD_QUERY_DEVICE);
- 
- 	dev->ib_dev.query_device	= mlx5_ib_query_device;
- 	dev->ib_dev.query_port		= mlx5_ib_query_port;
-diff --git a/include/rdma/ib_verbs.h b/include/rdma/ib_verbs.h
-index 0d74f1de99aa..65994a19e840 100644
---- a/include/rdma/ib_verbs.h
-+++ b/include/rdma/ib_verbs.h
-@@ -1707,10 +1707,7 @@ static inline int ib_copy_from_udata(void *dest, struct ib_udata *udata, size_t
- 
- static inline int ib_copy_to_udata(struct ib_udata *udata, void *src, size_t len)
- {
--	size_t copy_sz;
--
--	copy_sz = min_t(size_t, len, udata->outlen);
--	return copy_to_user(udata->outbuf, src, copy_sz) ? -EFAULT : 0;
-+	return copy_to_user(udata->outbuf, src, len) ? -EFAULT : 0;
- }
- 
- /**
-diff --git a/include/uapi/rdma/ib_user_verbs.h b/include/uapi/rdma/ib_user_verbs.h
-index 4275b961bf60..867cc5084afb 100644
---- a/include/uapi/rdma/ib_user_verbs.h
-+++ b/include/uapi/rdma/ib_user_verbs.h
-@@ -90,7 +90,6 @@ enum {
- };
- 
- enum {
--	IB_USER_VERBS_EX_CMD_QUERY_DEVICE = IB_USER_VERBS_CMD_QUERY_DEVICE,
- 	IB_USER_VERBS_EX_CMD_CREATE_FLOW = IB_USER_VERBS_CMD_THRESHOLD,
- 	IB_USER_VERBS_EX_CMD_DESTROY_FLOW,
- };
-@@ -202,32 +201,6 @@ struct ib_uverbs_query_device_resp {
- 	__u8  reserved[4];
- };
- 
--enum {
--	IB_USER_VERBS_EX_QUERY_DEVICE_ODP =		1ULL << 0,
--};
--
--struct ib_uverbs_ex_query_device {
--	__u32 comp_mask;
--	__u32 reserved;
--};
--
--struct ib_uverbs_odp_caps {
--	__u64 general_caps;
--	struct {
--		__u32 rc_odp_caps;
--		__u32 uc_odp_caps;
--		__u32 ud_odp_caps;
--	} per_transport_caps;
--	__u32 reserved;
--};
--
--struct ib_uverbs_ex_query_device_resp {
--	struct ib_uverbs_query_device_resp base;
--	__u32 comp_mask;
--	__u32 reserved;
--	struct ib_uverbs_odp_caps odp_caps;
--};
--
- struct ib_uverbs_query_port {
- 	__u64 response;
- 	__u8  port_num;
--- 
-2.1.0
++		if (!cap_valid(arg2))
++			return -EINVAL;
++
++		if (!ns_capable(current_user_ns(), arg2))
++			return -EPERM;
++
++		new = prepare_creds();
++		if (arg3 == 0)
++			cap_lower(new->cap_ambient, arg2);
++		else
++			cap_raise(new->cap_ambient, arg2);
++		return commit_creds(new);
++
+ 	default:
+ 		/* No functionality available - continue with default */
+ 		return -ENOSYS;
+Index: linux/include/linux/cred.h
+===================================================================
+--- linux.orig/include/linux/cred.h	2015-02-05 09:53:43.442883383 -0600
++++ linux/include/linux/cred.h	2015-02-05 09:53:43.438883512 -0600
+@@ -122,6 +122,7 @@ struct cred {
+ 	kernel_cap_t	cap_permitted;	/* caps we're permitted */
+ 	kernel_cap_t	cap_effective;	/* caps we can actually use */
+ 	kernel_cap_t	cap_bset;	/* capability bounding set */
++	kernel_cap_t	cap_ambient;	/* Ambient capability set */
+ #ifdef CONFIG_KEYS
+ 	unsigned char	jit_keyring;	/* default keyring to attach requested
+ 					 * keys to */
+Index: linux/include/uapi/linux/prctl.h
+===================================================================
+--- linux.orig/include/uapi/linux/prctl.h	2015-02-05 09:53:43.442883383 -0600
++++ linux/include/uapi/linux/prctl.h	2015-02-05 09:53:43.438883512 -0600
+@@ -185,4 +185,7 @@ struct prctl_mm_map {
+ #define PR_MPX_ENABLE_MANAGEMENT  43
+ #define PR_MPX_DISABLE_MANAGEMENT 44
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
++/* Control the ambient capability set */
++#define PR_CAP_AMBIENT 45
++
+ #endif /* _LINUX_PRCTL_H */
+Index: linux/fs/proc/array.c
+===================================================================
+--- linux.orig/fs/proc/array.c	2014-12-12 10:27:49.304801274 -0600
++++ linux/fs/proc/array.c	2015-02-05 11:04:38.546429870 -0600
+@@ -302,7 +302,8 @@ static void render_cap_t(struct seq_file
+ static inline void task_cap(struct seq_file *m, struct task_struct *p)
+ {
+ 	const struct cred *cred;
+-	kernel_cap_t cap_inheritable, cap_permitted, cap_effective, cap_bset;
++	kernel_cap_t cap_inheritable, cap_permitted, cap_effective,
++			cap_bset, cap_ambient;
+
+ 	rcu_read_lock();
+ 	cred = __task_cred(p);
+@@ -310,12 +311,14 @@ static inline void task_cap(struct seq_f
+ 	cap_permitted	= cred->cap_permitted;
+ 	cap_effective	= cred->cap_effective;
+ 	cap_bset	= cred->cap_bset;
++	cap_ambient	= cred->cap_ambient;
+ 	rcu_read_unlock();
+
+ 	render_cap_t(m, "CapInh:\t", &cap_inheritable);
+ 	render_cap_t(m, "CapPrm:\t", &cap_permitted);
+ 	render_cap_t(m, "CapEff:\t", &cap_effective);
+ 	render_cap_t(m, "CapBnd:\t", &cap_bset);
++	render_cap_t(m, "CapAmb:\t", &cap_ambient);
+ }
+
+ static inline void task_seccomp(struct seq_file *m, struct task_struct *p)
