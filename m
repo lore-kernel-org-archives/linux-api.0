@@ -1,94 +1,159 @@
-From: David Herrmann <dh.herrmann@gmail.com>
-Subject: Re: [PATCH 01/13] kdbus: add documentation
-Date: Thu, 5 Feb 2015 01:16:35 +0100
-Message-ID: <CANq1E4ShseFuTp0wPrHM9mFmgA-y9Kqz1m0-FmU9qALuxQ8Qvg@mail.gmail.com>
-References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
-	<1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>
-	<54BE5DC8.70706@gmail.com>
-	<54BE9D08.7010804@zonque.org>
-	<54BF805B.4000609@gmail.com>
-	<54BFDAAA.50203@zonque.org>
-	<54C0CE8A.5080805@gmail.com>
-	<CANq1E4S=3qNw599L85uj-8aXwxeV+mcurB_Nu_rHH8opAeePjw@mail.gmail.com>
-	<54C10DDC.9000503@gmail.com>
-	<20150123160854.GA5210@kroah.com>
-	<54C65346.5070504@gmail.com>
-	<CANq1E4SkHhs1pWUe-TzG7bzk1M-Q++mB2vmQGuYx0RMF53wg4Q@mail.gmail.com>
-	<CALCETrU1O6LjhrXSH2aXWFt2WGh=ssrq4K9HD10f_Z55iT=Otw@mail.gmail.com>
-	<54C9F525.4040703@zonque.org>
-	<CALCETrV6P+Lx5FRLyDNubG18tqCTLprkXJf=82aa5DsRHjkuKA@mail.gmail.com>
-	<54CA1CA2.9060005@zonque.org>
-	<CALCETrXD41=ohFSkCmBD8zPHFVUtr49QXMhYnChAxqQtmUjJYw@mail.gmail.com>
-	<54CF44B9.8000005@zonque.org>
-	<CALCETrUh1Mse4CBQ4bfkJf+ew=kdpn46hMLS2QafLhfRTzQoBQ@mail.gmail.com>
-	<54D09E6B.2020903@zonque.org>
-	<CALCETrXVDWJOvOTeTwCqrF6sn8e8XQfZSUbgg6hRnv+h-eX1Uw@mail.gmail.com>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: MADV_DONTNEED semantics? Was: [RFC PATCH] mm: madvise: Ignore
+ repeated MADV_DONTNEED hints
+Date: Thu, 5 Feb 2015 10:07:58 +0900
+Message-ID: <20150205010757.GA20996@blaptop>
+References: <20150202165525.GM2395@suse.de>
+ <54CFF8AC.6010102@intel.com>
+ <54D08483.40209@suse.cz>
+ <20150203105301.GC14259@node.dhcp.inet.fi>
+ <54D0B43D.8000209@suse.cz>
+ <54D0F56A.9050003@gmail.com>
+ <54D22298.3040504@suse.cz>
+ <CAKgNAkgOOCuzJz9whoVfFjqhxM0zYsz94B1+oH58SthC5Ut9sg@mail.gmail.com>
+ <54D2508A.9030804@suse.cz>
+ <CAKgNAkhNbHQX7RukSsSe3bMqY11f493rYbDpTOA2jH7vsziNww@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrXVDWJOvOTeTwCqrF6sn8e8XQfZSUbgg6hRnv+h-eX1Uw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Daniel Mack <daniel@zonque.org>, Arnd Bergmann <arnd@arndb.de>, Ted Ts'o <tytso@mit.edu>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Tom Gundersen <teg@jklm.no>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-kernel <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Djalal Harouni <tixxdz@opendz.org>, Johannes Stezenbach <js@sig21.net>, Christoph Hellwig <hch@infradead.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <CAKgNAkhNbHQX7RukSsSe3bMqY11f493rYbDpTOA2jH7vsziNww@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill@shutemov.name>, Dave Hansen <dave.hansen@intel.com>, Mel Gorman <mgorman@suse.de>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Hugh Dickins <hughd@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi
+Hello,
 
-On Thu, Feb 5, 2015 at 12:03 AM, Andy Lutomirski <luto@amacapital.net> wrote:
-> I see "latencies" of around 20 microseconds with lockdep and context
-> tracking off.  For example:
+On Wed, Feb 04, 2015 at 08:24:27PM +0100, Michael Kerrisk (man-pages) wro=
+te:
+> On 4 February 2015 at 18:02, Vlastimil Babka <vbabka@suse.cz> wrote:
+> > On 02/04/2015 03:00 PM, Michael Kerrisk (man-pages) wrote:
+> >>
+> >> Hello Vlastimil,
+> >>
+> >> On 4 February 2015 at 14:46, Vlastimil Babka <vbabka@suse.cz> wrote:
+> >>>>>
+> >>>>> - that covers mlocking ok, not sure if the rest fits the "shared =
+pages"
+> >>>>> case
+> >>>>> though. I dont see any check for other kinds of shared pages in t=
+he
+> >>>>> code.
+> >>>>
+> >>>>
+> >>>> Agreed. "shared" here seems confused. I've removed it. And I've
+> >>>> added mention of "Huge TLB pages" for this error.
+> >>>
+> >>>
+> >>> Thanks.
+> >>
+> >>
+> >> I also added those cases for MADV_REMOVE, BTW.
+> >
+> >
+> > Right. There's also the following for MADV_REMOVE that needs updating=
+:
+> >
+> > "Currently, only shmfs/tmpfs supports this; other filesystems return =
+with
+> > the error ENOSYS."
+> >
+> > - it's not just shmem/tmpfs anymore. It should be best to refer to
+> > fallocate(2) option FALLOC_FL_PUNCH_HOLE which seems to be (more) up =
+to
+> > date.
+> >
+> > - AFAICS it doesn't return ENOSYS but EOPNOTSUPP. Also neither error =
+code is
+> > listed in the ERRORS section.
+>=20
+> Yup, I recently added that as well, based on a patch from Jan Chaloupka=
+.
+>=20
+> >>>>>>> - The word "will result" did sound as a guarantee at least to m=
+e. So
+> >>>>>>> here it
+> >>>>>>> could be changed to "may result (unless the advice is ignored)"=
+?
+> >>>>>>
+> >>>>>> It's too late to fix documentation. Applications already depends=
+ on
+> >>>>>> the
+> >>>>>> beheviour.
+> >>>>>
+> >>>>> Right, so as long as they check for EINVAL, it should be safe. It
+> >>>>> appears
+> >>>>> that
+> >>>>> jemalloc does.
+> >>>>
+> >>>> So, first a brief question: in the cases where the call does not e=
+rror
+> >>>> out,
+> >>>> are we agreed that in the current implementation, MADV_DONTNEED wi=
+ll
+> >>>> always result in zero-filled pages when the region is faulted back=
+ in
+> >>>> (when we consider pages that are not backed by a file)?
+> >>>
+> >>> I'd agree at this point.
+> >>
+> >> Thanks for the confirmation.
+> >>
+> >>> Also we should probably mention anonymously shared pages (shmem). I=
+ think
+> >>> they behave the same as file here.
+> >>
+> >> You mean tmpfs here, right? (I don't keep all of the synonyms straig=
+ht.)
+> >
+> > shmem is tmpfs (that by itself would fit under "files" just fine), bu=
+t also
+> > sys V segments created by shmget(2) and also mappings created by mmap=
+ with
+> > MAP_SHARED | MAP_ANONYMOUS. I'm not sure if there's a single manpage =
+to
+> > refer to the full list.
+>=20
+> So, how about this text:
+>=20
+>               After a successful MADV_DONTNEED operation, the seman=E2=80=
+=90
+>               tics  of  memory  access  in  the specified region are
+>               changed: subsequent accesses of  pages  in  the  range
+>               will  succeed,  but will result in either reloading of
+>               the memory contents from the  underlying  mapped  file
+>               (for  shared file mappings, shared anonymous mappings,
+>               and shmem-based techniques such  as  System  V  shared
+>               memory  segments)  or  zero-fill-on-demand  pages  for
+>               anonymous private mappings.
 
-Without metadata nor memfd transmission, I get 2.5us for kdbus, 1.5us
-for UDS (8k payload). With 8-byte payloads, I get 2.2us and 1.2us. I
-suspect you enabled metadata transmission, which I think is not a fair
-comparison.
+Hmm, I'd like to clarify.
 
-A few notes on that:
+Whether it was intention or not, some of userspace developers thought
+about that syscall drop pages instantly if was no-error return so that
+they will see more free pages(ie, rss for the process will be decreased)
+with keeping the VMA. Can we rely on it?
 
-* kdbus is a bus layer. We don't intend to replace UDS, but improve
-dbus. Comparing roundtrip times with UDS is tempting, but in no way
-fair. To the very least, a bus layer has to perform peer-lookup, which
-UDS does not have to do. Imo, 2.5us vs. 1.5us is already pretty nice.
-Compare this to ~77us for dbus1 without marshaling.
+And we should make error section, too.
+"locked" covers mlock(2) and you said you will add hugetlb. Then,
+VM_PFNMAP? In that case, it fails. How can we say about VM_PFNMAP?
+special mapping for some drivers?
 
-* We have not optimized kdbus code-paths for speed, yet. Our main
-concerns are algorithmic challenges, and we believe they've been
-improved considerably with kdbus. I have constantly measured kdbus
-performance with 'perf' and flame-graphs, and there're a lot of
-possible optimizations (especially on locking). However, I think this
-can be done afterwards just fine. Neither API nor ioctl overhead has
-shown up in my measurements. If anyone has counter evidence, please
-let us know. But I'm a bit reluctant to change our API solely based on
-performance guesses.
+One more thing, "The kernel is free to ignore the advice".
+It conflicts "This call does not influence the semantics of the
+application (except in the case of MADV_DONTNEED)" so
+is it okay we can believe "The kernel is free to ingmore the advise
+except MADV_DONTNEED"?
 
-* We're about 50% slower than UDS on 1-byte transmissions. With 32k
-we're on-par. How can a lightweight user-space daemon even get close
-to that?
+Thanks.
+--=20
+Kind regards,
+Minchan Kim
 
-* Broadcast performance is a completely different story. SEND gets
-around 30% faster compared to kdbus unicasts (as most of the
-control-paths are only taken once per message, instead of once per
-destination).
-
-* test-benchmark.c does performance tests in a single process. If the
-bus-layer is implemented in user-space, you need to account for
-context-switches and task wakeups. My UDS and pipe round-trip latency
-tests got around 3x slower if done cross processes (3.7us instead of
-1.2us). With a user-space daemon, those slow-downs are taken two times
-more often for each roundtrip.
-
-* Process time is accounted on the sender, instead of a shared process
-(dbus-daemon). Broadcasts will thus no longer consume time-slices of
-dbus-daemon, but only the sender's.
-
-
-With kdbus, we implement a bus-layer. This is our only target! If your
-target environment does not require a bus, then don't use kdbus. We
-don't intend to replace UDS. On a bus-layer, we need peer-discovery,
-policy-handling, destination-lookups, broadcast-management and more.
-Pipes/UDS do not provide any of this.
-I cannot see how any other existing bus-implementation comes even
-close to kdbus, performance-wise. If someone does, please let us know!
-
-Thanks
-David
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
