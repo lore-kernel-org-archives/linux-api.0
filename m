@@ -1,74 +1,160 @@
-From: Michal Hocko <mhocko@suse.cz>
-Subject: Re: MADV_DONTNEED semantics? Was: [RFC PATCH] mm: madvise: Ignore
- repeated MADV_DONTNEED hints
-Date: Thu, 5 Feb 2015 16:41:02 +0100
-Message-ID: <20150205154102.GA20607@dhcp22.suse.cz>
-References: <20150202165525.GM2395@suse.de>
- <54CFF8AC.6010102@intel.com>
- <54D08483.40209@suse.cz>
- <20150203105301.GC14259@node.dhcp.inet.fi>
- <54D0B43D.8000209@suse.cz>
- <54D0F56A.9050003@gmail.com>
- <54D22298.3040504@suse.cz>
- <CAKgNAkgOOCuzJz9whoVfFjqhxM0zYsz94B1+oH58SthC5Ut9sg@mail.gmail.com>
- <54D2508A.9030804@suse.cz>
- <CAKgNAkhNbHQX7RukSsSe3bMqY11f493rYbDpTOA2jH7vsziNww@mail.gmail.com>
+From: Mathieu Poirier <mathieu.poirier@linaro.org>
+Subject: Re: [PATCH] coresight-stm: adding driver for CoreSight STM component
+Date: Thu, 5 Feb 2015 08:51:51 -0700
+Message-ID: <CANLsYkx-XeiWAMxgMs=dAZc5oMf0NmF_2_6TzYXQtd1JdL5LrA@mail.gmail.com>
+References: <1423088550-15780-1-git-send-email-mathieu.poirier@linaro.org>
+	<1423135651.27378.32.camel@x220>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <CAKgNAkhNbHQX7RukSsSe3bMqY11f493rYbDpTOA2jH7vsziNww@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill@shutemov.name>, Dave Hansen <dave.hansen@intel.com>, Mel Gorman <mgorman@suse.de>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Hugh Dickins <hughd@google.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1423135651.27378.32.camel@x220>
+Sender: linux-doc-owner@vger.kernel.org
+To: Paul Bolle <pebolle@tiscali.nl>
+Cc: corbet@lwn.net, Pratik Patel <pratikp@codeaurora.org>, Al Grant <al.grant@arm.com>, Liviu Dudau <liviu.dudau@arm.com>, Kaixu Xia <kaixu.xia@linaro.org>, Jeenu Viswambharan <jeenu.viswambharan@arm.com>, Greg KH <gregkh@linuxfoundation.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, linux-api@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 04-02-15 20:24:27, Michael Kerrisk wrote:
-[...]
-> So, how about this text:
->=20
->               After a successful MADV_DONTNEED operation, the seman=E2=80=
-=90
->               tics  of  memory  access  in  the specified region are
->               changed: subsequent accesses of  pages  in  the  range
->               will  succeed,  but will result in either reloading of
->               the memory contents from the  underlying  mapped  file
+On 5 February 2015 at 04:27, Paul Bolle <pebolle@tiscali.nl> wrote:
+> On Wed, 2015-02-04 at 15:22 -0700, mathieu.poirier@linaro.org wrote:
+>> From: Pratik Patel <pratikp@codeaurora.org>
+>>
+>> This driver adds support for the STM CoreSight IP block,
+>> allowing any system compoment (HW or SW) to log and
+>> aggregate messages via a single entity.
+>>
+>> The STM exposes an application defined number of channels
+>> called stimulus port.  Configuration is done using entries
+>> in sysfs and channels made available to userspace via devfs.
+>>
+>> Signed-off-by: Pratik Patel <pratikp@codeaurora.org>
+>> Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
+>
+> This needs "coresight: Adding coresight support for arm64
+> architecture" (https://lkml.org/lkml/2015/2/3/677 ) in order to get
+> applied. Perhaps that's obvious to the people working on this.
 
-"
-result in either providing the up-to-date contents of the underlying
-mapped file
-"
+Right, in my tree the code is tailored to use the other patch you're
+referencing but having received no 'ack' for it yet I made this set
+for 32 bit only (aside from the 64bit flags in Kconfig).  As such you
+don't need https://lkml.org/lkml/2015/2/3/677 for this to compile and
+run.
 
-Would be more precise IMO because reload might be interpreted as a major
-fault which is not necessarily the case (see below).
+>
+> A few comments follow.
+>
+>> ---
+>>  .../ABI/testing/sysfs-bus-coresight-devices-stm    |   62 ++
+>>  Documentation/trace/coresight.txt                  |   88 +-
+>>  drivers/coresight/Kconfig                          |   10 +
+>>  drivers/coresight/Makefile                         |    1 +
+>>  drivers/coresight/coresight-stm.c                  | 1090 ++++++++++++++++++++
+>>  include/linux/coresight-stm.h                      |   35 +
+>>  include/uapi/linux/coresight-stm.h                 |   23 +
+>>  7 files changed, 1307 insertions(+), 2 deletions(-)
+>>  create mode 100644 Documentation/ABI/testing/sysfs-bus-coresight-devices-stm
+>>  create mode 100644 drivers/coresight/coresight-stm.c
+>>  create mode 100644 include/linux/coresight-stm.h
+>>  create mode 100644 include/uapi/linux/coresight-stm.h
+>>
+>>[...]
+>> diff --git a/drivers/coresight/Kconfig b/drivers/coresight/Kconfig
+>> index fc1f1ae7a49d..08806cc7d737 100644
+>> --- a/drivers/coresight/Kconfig
+>> +++ b/drivers/coresight/Kconfig
+>> @@ -58,4 +58,14 @@ config CORESIGHT_SOURCE_ETM3X
+>>         which allows tracing the instructions that a processor is executing
+>>         This is primarily useful for instruction level tracing.  Depending
+>>         the ETM version data tracing may also be available.
+>> +
+>> +config CORESIGHT_STM
+>> +     bool "CoreSight System Trace Macrocell driver"
+>> +     depends on (ARM && !(CPU_32v4 || CPU_32v4T)) || ARM64 || (64BIT && COMPILE_TEST)
+>
+> I'm _guessing_ that CPU_32v4 and CPU_32v4T are needed for the ldrd and
+> strd assembler instructions. If that's right a next _guess_ would be
+> that you also need to mention CPU_32v3 here.
+>
+> Furthermore, this file is only sourced by arch/arm/Kconfig.debug and
+> arch/arm64/Kconfig.debug. So 64BIT should always be equal to ARM64 and
+> the
+>      || (64BIT && COMPILE_TEST)
+>
+> part shouldn't be needed, isn't it?
 
->               (for  shared file mappings, shared anonymous mappings,
->               and shmem-based techniques such  as  System  V  shared
->               memory  segments)  or  zero-fill-on-demand  pages  for
->               anonymous private mappings.
+Things have changed in the driver (and accessor functions) since I
+wrote this Kconfig condition - Let me think on the above 2 comments.
 
-Yes, this wording is better because many users are not aware of
-MAP_ANON|MAP_SHARED being file backed in fact and mmap man page doesn't
-mention that.
+>
+>> +     select CORESIGHT_LINKS_AND_SINKS
+>> +     help
+>> +       This driver provides support for hardware assisted software
+>> +       instrumentation based tracing. This is primarily used for
+>> +       logging useful software events or data coming from various entities
+>> +       in the system, possibly running different OSs
+>>  endif
+>>[...]
+>> diff --git a/drivers/coresight/coresight-stm.c b/drivers/coresight/coresight-stm.c
+>> new file mode 100644
+>> index 000000000000..e59b0fe01d87
+>> --- /dev/null
+>> +++ b/drivers/coresight/coresight-stm.c
+>> @@ -0,0 +1,1090 @@
+>>[...]
+>> +#ifndef CONFIG_64BIT
+>> +static inline void __raw_writeq(u64 val, volatile void __iomem *addr)
+>> +{
+>> +     asm volatile("strd %1, %0"
+>> +                  : "+Qo" (*(volatile u64 __force *)addr)
+>> +                  : "r" (val));
+>> +}
+>> +
+>> +static inline u64 __raw_readq(const volatile void __iomem *addr)
+>> +{
+>> +     u64 val;
+>> +
+>> +     asm volatile("ldrd %1, %0"
+>> +                  : "+Qo" (*(volatile u64 __force *)addr),
+>> +                    "=r" (val));
+>> +     return val;
+>> +}
+>> +
+>> +#undef readq_relaxed
+>> +#define readq_relaxed(c) ({ u64 __r = le64_to_cpu((__force __le64) \
+>> +                                     __raw_readq(c)); __r; })
+>
+> I spotted no users of readq_relaxed. Is it needed?
+>
+>> +#undef writeq_relaxed
+>> +#define writeq_relaxed(v, c) __raw_writeq((__force u64) cpu_to_le64(v), c)
+>> +#endif
+>> +
+>> [...]
+>
+>> +static ssize_t entities_show(struct device *dev,
+>> +                          struct device_attribute *attr, char *buf)
+>> +{
+>> +     struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
+>> +     ssize_t len;
+>> +
+>> +     len = bitmap_scnprintf(buf, PAGE_SIZE, drvdata->entities,
+>> +                            STM_ENTITY_MAX);
+>> +
+>
+> bitmap_scnprintf is gone in current linux-next. I changed it to
+>         len = scnprintf(buf, PAGE_SIZE, "%*pb", STM_ENTITY_MAX,
+>                         drvdata->entities);
+>
+> to get this file to compile. (On x86_64, that is, but please don't tell
+> anybody!)
 
-I am just wondering whether it makes sense to mention that MADV_DONTNEED
-for shared mappings might be surprising and not freeing the backing
-pages thus not really freeing memory until there is a memory
-pressure. But maybe this is too implementation specific for a man
-page. What about the following wording on top of yours?
-"
-Please note that the MADV_DONTNEED hint on shared mappings might not
-lead to immediate freeing of pages in the range. The kernel is free to
-delay this until an appropriate moment. RSS of the calling process will
-be reduced however.
-"
---=20
-Michal Hocko
-SUSE Labs
+I was not aware that "bitmap_scnprintf()" had disappeared - thanks for
+pointing this out.  Did you mean cross-compile from an x86_64 host or
+compile for a x86_64 target?  I don't get how you could have in the
+latter case.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
+Thanks for the review,
+Mathieu
+
+>
+>
+> Paul Bolle
+>
