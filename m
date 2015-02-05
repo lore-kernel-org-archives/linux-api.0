@@ -1,138 +1,34 @@
-From: Paul Bolle <pebolle@tiscali.nl>
-Subject: Re: [PATCH] coresight-stm: adding driver for CoreSight STM component
-Date: Thu, 05 Feb 2015 12:27:31 +0100
-Message-ID: <1423135651.27378.32.camel@x220>
-References: <1423088550-15780-1-git-send-email-mathieu.poirier@linaro.org>
+From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Subject: Re: [PATCH v12 1/2] crypto: AF_ALG: add AEAD support
+Date: Thu, 05 Feb 2015 16:10:58 +0100
+Message-ID: <7821728.KTX1G67VgF@tachyon.chronox.de>
+References: <1681008.mocmysOoQU@tachyon.chronox.de> <2035690.30evPElJOm@tachyon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1423088550-15780-1-git-send-email-mathieu.poirier@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: mathieu.poirier@linaro.org
-Cc: corbet@lwn.net, pratikp@codeaurora.org, al.grant@arm.com, liviu.dudau@arm.com, kaixu.xia@linaro.org, jeenu.viswambharan@arm.com, gregkh@linuxfoundation.org, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <2035690.30evPElJOm-PJstQz4BMNNP20K/wil9xYQuADTiUCJX@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: 'Herbert Xu' <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Cc: 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, 'Linux API' <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2015-02-04 at 15:22 -0700, mathieu.poirier@linaro.org wrote:
-> From: Pratik Patel <pratikp@codeaurora.org>
+Am Donnerstag, 29. Januar 2015, 21:24:45 schrieb Stephan Mueller:
+
+Hi Herbert,
+
+> This patch adds the AEAD support for AF_ALG.
 > 
-> This driver adds support for the STM CoreSight IP block,
-> allowing any system compoment (HW or SW) to log and
-> aggregate messages via a single entity.
+> The implementation is based on algif_skcipher, but contains heavy
+> modifications to streamline the interface for AEAD uses.
 > 
-> The STM exposes an application defined number of channels
-> called stimulus port.  Configuration is done using entries
-> in sysfs and channels made available to userspace via devfs.
-> 
-> Signed-off-by: Pratik Patel <pratikp@codeaurora.org>
-> Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
+> To use AEAD, the user space consumer has to use the salg_type named
+> "aead".
 
-This needs "coresight: Adding coresight support for arm64
-architecture" (https://lkml.org/lkml/2015/2/3/677 ) in order to get
-applied. Perhaps that's obvious to the people working on this.
+I just saw Al Viro's patch to use the iov_iter API in algif_skcipher.c. I 
+looked at it but lacked documentation for using it properly. Now I have a 
+template that I will incorporate into algif_aead.c
 
-A few comments follow.
-
-> ---
->  .../ABI/testing/sysfs-bus-coresight-devices-stm    |   62 ++
->  Documentation/trace/coresight.txt                  |   88 +-
->  drivers/coresight/Kconfig                          |   10 +
->  drivers/coresight/Makefile                         |    1 +
->  drivers/coresight/coresight-stm.c                  | 1090 ++++++++++++++++++++
->  include/linux/coresight-stm.h                      |   35 +
->  include/uapi/linux/coresight-stm.h                 |   23 +
->  7 files changed, 1307 insertions(+), 2 deletions(-)
->  create mode 100644 Documentation/ABI/testing/sysfs-bus-coresight-devices-stm
->  create mode 100644 drivers/coresight/coresight-stm.c
->  create mode 100644 include/linux/coresight-stm.h
->  create mode 100644 include/uapi/linux/coresight-stm.h
-> 
->[...]
-> diff --git a/drivers/coresight/Kconfig b/drivers/coresight/Kconfig
-> index fc1f1ae7a49d..08806cc7d737 100644
-> --- a/drivers/coresight/Kconfig
-> +++ b/drivers/coresight/Kconfig
-> @@ -58,4 +58,14 @@ config CORESIGHT_SOURCE_ETM3X
->  	  which allows tracing the instructions that a processor is executing
->  	  This is primarily useful for instruction level tracing.  Depending
->  	  the ETM version data tracing may also be available.
-> +
-> +config CORESIGHT_STM
-> +	bool "CoreSight System Trace Macrocell driver"
-> +	depends on (ARM && !(CPU_32v4 || CPU_32v4T)) || ARM64 || (64BIT && COMPILE_TEST)
-
-I'm _guessing_ that CPU_32v4 and CPU_32v4T are needed for the ldrd and
-strd assembler instructions. If that's right a next _guess_ would be
-that you also need to mention CPU_32v3 here.
-
-Furthermore, this file is only sourced by arch/arm/Kconfig.debug and
-arch/arm64/Kconfig.debug. So 64BIT should always be equal to ARM64 and
-the 
-     || (64BIT && COMPILE_TEST)
-
-part shouldn't be needed, isn't it?
-
-> +	select CORESIGHT_LINKS_AND_SINKS
-> +	help
-> +	  This driver provides support for hardware assisted software
-> +	  instrumentation based tracing. This is primarily used for
-> +	  logging useful software events or data coming from various entities
-> +	  in the system, possibly running different OSs
->  endif
->[...]
-> diff --git a/drivers/coresight/coresight-stm.c b/drivers/coresight/coresight-stm.c
-> new file mode 100644
-> index 000000000000..e59b0fe01d87
-> --- /dev/null
-> +++ b/drivers/coresight/coresight-stm.c
-> @@ -0,0 +1,1090 @@
->[...]
-> +#ifndef CONFIG_64BIT
-> +static inline void __raw_writeq(u64 val, volatile void __iomem *addr)
-> +{
-> +	asm volatile("strd %1, %0"
-> +		     : "+Qo" (*(volatile u64 __force *)addr)
-> +		     : "r" (val));
-> +}
-> +
-> +static inline u64 __raw_readq(const volatile void __iomem *addr)
-> +{
-> +	u64 val;
-> +
-> +	asm volatile("ldrd %1, %0"
-> +		     : "+Qo" (*(volatile u64 __force *)addr),
-> +		       "=r" (val));
-> +	return val;
-> +}
-> +
-> +#undef readq_relaxed
-> +#define readq_relaxed(c) ({ u64 __r = le64_to_cpu((__force __le64) \
-> +					__raw_readq(c)); __r; })
-
-I spotted no users of readq_relaxed. Is it needed?
-
-> +#undef writeq_relaxed
-> +#define writeq_relaxed(v, c)	__raw_writeq((__force u64) cpu_to_le64(v), c)
-> +#endif
-> +
-> [...]
-
-> +static ssize_t entities_show(struct device *dev,
-> +			     struct device_attribute *attr, char *buf)
-> +{
-> +	struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-> +	ssize_t len;
-> +
-> +	len = bitmap_scnprintf(buf, PAGE_SIZE, drvdata->entities,
-> +			       STM_ENTITY_MAX);
-> +
-
-bitmap_scnprintf is gone in current linux-next. I changed it to
-	len = scnprintf(buf, PAGE_SIZE, "%*pb", STM_ENTITY_MAX,
-			drvdata->entities);
-
-to get this file to compile. (On x86_64, that is, but please don't tell
-anybody!)
-
-
-Paul Bolle
+-- 
+Ciao
+Stephan
