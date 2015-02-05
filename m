@@ -1,97 +1,61 @@
-From: Paul Bolle <pebolle@tiscali.nl>
-Subject: Re: [PATCH] coresight-stm: adding driver for CoreSight STM component
-Date: Thu, 05 Feb 2015 17:28:12 +0100
-Message-ID: <1423153692.27378.60.camel@x220>
-References: <1423088550-15780-1-git-send-email-mathieu.poirier@linaro.org>
-	 <1423135651.27378.32.camel@x220>
-	 <CANLsYkx-XeiWAMxgMs=dAZc5oMf0NmF_2_6TzYXQtd1JdL5LrA@mail.gmail.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [v8 4/5] ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR
+ interface support
+Date: Thu, 5 Feb 2015 17:38:15 +0100
+Message-ID: <20150205163815.GK4258@quack.suse.cz>
+References: <54C11733.7080801@yandex-team.ru>
+ <20150123015307.GD24722@dastard>
+ <54C23751.7000009@yandex-team.ru>
+ <20150123233026.GP16552@dastard>
+ <CALCETrXPCrOTrkoAMuW2os=z6anaEfv4F4D2yDxo6VtCuEtRZw@mail.gmail.com>
+ <20150127080239.GQ16552@dastard>
+ <54C76C3D.4070404@yandex-team.ru>
+ <20150128003746.GR16552@dastard>
+ <54D23919.3000408@yandex-team.ru>
+ <20150204225844.GA12722@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CANLsYkx-XeiWAMxgMs=dAZc5oMf0NmF_2_6TzYXQtd1JdL5LrA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Poirier <mathieu.poirier@linaro.org>
-Cc: corbet@lwn.net, Pratik Patel <pratikp@codeaurora.org>, Al Grant <al.grant@arm.com>, Liviu Dudau <liviu.dudau@arm.com>, Kaixu Xia <kaixu.xia@linaro.org>, Jeenu Viswambharan <jeenu.viswambharan@arm.com>, Greg KH <gregkh@linuxfoundation.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, linux-api@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150204225844.GA12722@dastard>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Cc: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2015-02-05 at 08:51 -0700, Mathieu Poirier wrote:
-> On 5 February 2015 at 04:27, Paul Bolle <pebolle@tiscali.nl> wrote:
-> > On Wed, 2015-02-04 at 15:22 -0700, mathieu.poirier@linaro.org wrote:
-> >> @@ -58,4 +58,14 @@ config CORESIGHT_SOURCE_ETM3X
-> >>         which allows tracing the instructions that a processor is executing
-> >>         This is primarily useful for instruction level tracing.  Depending
-> >>         the ETM version data tracing may also be available.
-> >> +
-> >> +config CORESIGHT_STM
-> >> +     bool "CoreSight System Trace Macrocell driver"
-> >> +     depends on (ARM && !(CPU_32v4 || CPU_32v4T)) || ARM64 || (64BIT && COMPILE_TEST)
-> >
-> > I'm _guessing_ that CPU_32v4 and CPU_32v4T are needed for the ldrd and
-> > strd assembler instructions. If that's right a next _guess_ would be
-> > that you also need to mention CPU_32v3 here.
-> >
-> > Furthermore, this file is only sourced by arch/arm/Kconfig.debug and
-> > arch/arm64/Kconfig.debug. So 64BIT should always be equal to ARM64 and
-> > the
-> >      || (64BIT && COMPILE_TEST)
-> >
-> > part shouldn't be needed, isn't it?
+  Hello,
+
+> Users have *always* been allowed to set the project ID of
+> their own files. How else are they going to set the project ID on
+> files they create in random directories so to account them to the
+> correct project they are working on?
 > 
-> Things have changed in the driver (and accessor functions) since I
-> wrote this Kconfig condition - Let me think on the above 2 comments.
-
-In the meantime it occurred to me that the current dependency could be
-written as just
-    !CPU_32v4 && !CPU_32v4T
-
-That shouldn't change anything, neither for both ARM nor for ARM64.
-(This is because exactly one of ARM and ARM64 will always be set.)
-Anyhow, I'll see what you'll come up with.
-
-> >> +     select CORESIGHT_LINKS_AND_SINKS
-> >> +     help
-> >> +       This driver provides support for hardware assisted software
-> >> +       instrumentation based tracing. This is primarily used for
-> >> +       logging useful software events or data coming from various entities
-> >> +       in the system, possibly running different OSs
-> >>  endif
-
-> >> +static ssize_t entities_show(struct device *dev,
-> >> +                          struct device_attribute *attr, char *buf)
-> >> +{
-> >> +     struct stm_drvdata *drvdata = dev_get_drvdata(dev->parent);
-> >> +     ssize_t len;
-> >> +
-> >> +     len = bitmap_scnprintf(buf, PAGE_SIZE, drvdata->entities,
-> >> +                            STM_ENTITY_MAX);
-> >> +
-> >
-> > bitmap_scnprintf is gone in current linux-next. I changed it to
-> >         len = scnprintf(buf, PAGE_SIZE, "%*pb", STM_ENTITY_MAX,
-> >                         drvdata->entities);
-> >
-> > to get this file to compile. (On x86_64, that is, but please don't tell
-> > anybody!)
+> However, you keep making the assumption that project quotas ==
+> directory subtree quotas.  Project quotas are *not limited* to
+> directory subtrees - the subtree quota implementation is just an
+> implementation that *sets the default project ID* on files as they
+> are created.
 > 
-> I was not aware that "bitmap_scnprintf()" had disappeared - thanks for
-> pointing this out.  Did you mean cross-compile from an x86_64 host or
-> compile for a x86_64 target?  I don't get how you could have in the
-> latter case.
+> e.g. there are production systems out there where project quotas are
+> used to track home directory space usage rather than user quotas.
+> This means users can take actions like "this file actually belongs
+> to project X and it shouldn't be accounted against my home
+> directory". Users can create their own sub directories that account
+> everything by default to project X rather than their own home
+> directory.
+> 
+> Again: project quotas are an *accounting* mechanism, not a security
+> mechanism.
+  OK, but now I got confused ;) So if users can change project ID of files
+they own, what's the point of project quotas? If I need to create a file
+and project quota doesn't allow me, I just set its project ID to some
+random number and I'm done with that... So are really project quotas just
+"advisory" - i.e., all users of a system cooperate so that project X
+doesn't use more space than it should (and project quotas make this
+cooperation somewhat simpler) or is there something which limits which
+project IDs user can set? I didn't find anything...
 
-I compiled for the x86_64 target! I used a hack, not sure where it's
-documented, to build object files by bypassing most of the build
-infrastructure:
-     make drivers/coresight/coresight-stm.o
-
-But, since in this case that doesn't handle <linux/coresight-stm.h>
-correctly, I used an ever bigger hack:
-    make EXTRA_CFLAGS="-DCONFIG_CORESIGHT_STM" drivers/coresight/coresight-stm.o
-
-This only works as long as the code doesn't use stuff that can't
-possibly be reached in x86_64 (eg, it doesn't use platform specific
-headers). It's a quick and dirty way to test changes to files normally
-not compiled for your target.
-
-
-Paul Bolle
+								Honza
+-- 
+Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+SUSE Labs, CR
