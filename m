@@ -1,162 +1,142 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: MADV_DONTNEED semantics? Was: [RFC PATCH] mm: madvise: Ignore
- repeated MADV_DONTNEED hints
-Date: Fri, 06 Feb 2015 16:41:12 +0100
-Message-ID: <54D4E098.8050004@gmail.com>
-References: <20150202165525.GM2395@suse.de> <54CFF8AC.6010102@intel.com> <54D08483.40209@suse.cz> <20150203105301.GC14259@node.dhcp.inet.fi> <54D0B43D.8000209@suse.cz> <54D0F56A.9050003@gmail.com> <54D22298.3040504@suse.cz> <CAKgNAkgOOCuzJz9whoVfFjqhxM0zYsz94B1+oH58SthC5Ut9sg@mail.gmail.com> <54D2508A.9030804@suse.cz> <CAKgNAkhNbHQX7RukSsSe3bMqY11f493rYbDpTOA2jH7vsziNww@mail.gmail.com> <20150205010757.GA20996@blaptop>
+From: "Bryn M. Reeves" <bmr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC] implementing tape statistics single file vs multi-file in
+ sysfs
+Date: Fri, 6 Feb 2015 15:41:58 +0000
+Message-ID: <20150206154157.GD1143@localhost.localdomain>
+References: <DDB9C85B850785449757F9914A034FCB3BF3EADA@G9W0766.americas.hpqcorp.net>
+ <20150206125916.GB26247@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150205010757.GA20996@blaptop>
+Content-Disposition: inline
+In-Reply-To: <20150206125916.GB26247-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: "Seymour, Shane M" <shane.seymour-VXdhtT5mjnY@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kai.Makisara-9Aww8k/80nUxHbG02/KK1g@public.gmane.org" <Kai.Makisara-9Aww8k/80nUxHbG02/KK1g@public.gmane.org>, "James E.J. Bottomley (JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org)" <JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Laurence Oberman (loberman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org)" <loberman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 02/05/2015 02:07 AM, Minchan Kim wrote:
-> Hello,
->=20
-> On Wed, Feb 04, 2015 at 08:24:27PM +0100, Michael Kerrisk (man-pages)=
- wrote:
->> On 4 February 2015 at 18:02, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org> wrote:
->>> On 02/04/2015 03:00 PM, Michael Kerrisk (man-pages) wrote:
->>>>
->>>> Hello Vlastimil,
->>>>
->>>> On 4 February 2015 at 14:46, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org> wrot=
-e:
->>>>>>>
->>>>>>> - that covers mlocking ok, not sure if the rest fits the "share=
-d pages"
->>>>>>> case
->>>>>>> though. I dont see any check for other kinds of shared pages in=
- the
->>>>>>> code.
->>>>>>
->>>>>>
->>>>>> Agreed. "shared" here seems confused. I've removed it. And I've
->>>>>> added mention of "Huge TLB pages" for this error.
->>>>>
->>>>>
->>>>> Thanks.
->>>>
->>>>
->>>> I also added those cases for MADV_REMOVE, BTW.
->>>
->>>
->>> Right. There's also the following for MADV_REMOVE that needs updati=
-ng:
->>>
->>> "Currently, only shmfs/tmpfs supports this; other filesystems retur=
-n with
->>> the error ENOSYS."
->>>
->>> - it's not just shmem/tmpfs anymore. It should be best to refer to
->>> fallocate(2) option FALLOC_FL_PUNCH_HOLE which seems to be (more) u=
-p to
->>> date.
->>>
->>> - AFAICS it doesn't return ENOSYS but EOPNOTSUPP. Also neither erro=
-r code is
->>> listed in the ERRORS section.
->>
->> Yup, I recently added that as well, based on a patch from Jan Chalou=
-pka.
->>
->>>>>>>>> - The word "will result" did sound as a guarantee at least to=
- me. So
->>>>>>>>> here it
->>>>>>>>> could be changed to "may result (unless the advice is ignored=
-)"?
->>>>>>>>
->>>>>>>> It's too late to fix documentation. Applications already depen=
-ds on
->>>>>>>> the
->>>>>>>> beheviour.
->>>>>>>
->>>>>>> Right, so as long as they check for EINVAL, it should be safe. =
-It
->>>>>>> appears
->>>>>>> that
->>>>>>> jemalloc does.
->>>>>>
->>>>>> So, first a brief question: in the cases where the call does not=
- error
->>>>>> out,
->>>>>> are we agreed that in the current implementation, MADV_DONTNEED =
-will
->>>>>> always result in zero-filled pages when the region is faulted ba=
-ck in
->>>>>> (when we consider pages that are not backed by a file)?
->>>>>
->>>>> I'd agree at this point.
->>>>
->>>> Thanks for the confirmation.
->>>>
->>>>> Also we should probably mention anonymously shared pages (shmem).=
- I think
->>>>> they behave the same as file here.
->>>>
->>>> You mean tmpfs here, right? (I don't keep all of the synonyms stra=
-ight.)
->>>
->>> shmem is tmpfs (that by itself would fit under "files" just fine), =
-but also
->>> sys V segments created by shmget(2) and also mappings created by mm=
-ap with
->>> MAP_SHARED | MAP_ANONYMOUS. I'm not sure if there's a single manpag=
-e to
->>> refer to the full list.
->>
->> So, how about this text:
->>
->>               After a successful MADV_DONTNEED operation, the seman=E2=
-=80=90
->>               tics  of  memory  access  in  the specified region are
->>               changed: subsequent accesses of  pages  in  the  range
->>               will  succeed,  but will result in either reloading of
->>               the memory contents from the  underlying  mapped  file
->>               (for  shared file mappings, shared anonymous mappings,
->>               and shmem-based techniques such  as  System  V  shared
->>               memory  segments)  or  zero-fill-on-demand  pages  for
->>               anonymous private mappings.
->=20
-> Hmm, I'd like to clarify.
->=20
-> Whether it was intention or not, some of userspace developers thought
-> about that syscall drop pages instantly if was no-error return so tha=
-t
-> they will see more free pages(ie, rss for the process will be decreas=
-ed)
-> with keeping the VMA. Can we rely on it?
+On Fri, Feb 06, 2015 at 04:59:16AM -0800, Greg KH wrote:
+> On Fri, Feb 06, 2015 at 12:20:53AM +0000, Seymour, Shane M wrote:
+> > The current patch that implements tape statistics is here:
+> > 
+> > http://marc.info/?l=linux-scsi&m=142112067313723&w=2
+> 
+> Aside from the "do we want to do this all in a single file" issue that I
+> will say more on below, this patch has issues.  Please don't use a
+> kobject for _ANYTHING_ in sysfs that has a struct device as a parent.
+> If you do that, it can't be seen by userspace tools very well, if at
+> all.
 
-I do not know. Michael?
+I can't speak for Shane but wouldn't spend too much time looking at the
+current v2 patch: it's the result of a pretty ugly compromise suggested
+on linux-scsi.
 
-> And we should make error section, too.
-> "locked" covers mlock(2) and you said you will add hugetlb. Then,
-> VM_PFNMAP? In that case, it fails. How can we say about VM_PFNMAP?
-> special mapping for some drivers?
+This thread was really to try to settle the discussion on the structure
+of the stats files.
 
-I'm open for offers on what to add.
-=20
-> One more thing, "The kernel is free to ignore the advice".
-> It conflicts "This call does not influence the semantics of the
-> application (except in the case of MADV_DONTNEED)" so
-> is it okay we can believe "The kernel is free to ingmore the advise
-> except MADV_DONTNEED"?
+> > Recently there was was another discussion here about one file vs a collection of files for tape statistics:
+> > 
+> > http://marc.info/?l=linux-scsi&m=142316255501550&w=2
+> > 
+> > The result was that I should ask here what method I should use. I
+> > would like to get feedback in relation to tape statistics and one file
+> > vs multi-file in sysfs. I'm happy to keep the existing code or change
+> > to a single file approach.
+> 
+> One of the primary reasons we created sysfs and the "one value per file"
+> rule is that multi-value files just do not work well.  Yes, you get an
+> atomic snapshot, and you save some open/read/close syscall roundtrips,
+> but you do so at the expense of forcing userspace to "know" what the
+> format of the file is.  And once you create it, you can NEVER CHANGE IT
+> AGAIN.
 
-I decided to just drop the sentence
+I am not convinced this is a concern for tape statistics: they are pretty
+much a solved problem. The commercial *nixes have had this for decades.
 
-     The kernel is free to ignore the advice.
+Likewise for disk stats: although fluff like maj:min/name etc. has been
+shuffled a few times the basic fields have remained unchanged for a very
+long time and sysfs already removes the need to include an identity
+field.
+ 
+> Yes, that's right, if you come up with some new statistic in the future,
+> or realize that one of the ones you have now is wrong, you can't change
+> it, you have to make a whole new file, otherwise you could break
+> userspace tools.
 
-It creates misunderstandings, and does not really add information.
+I understand the fact that you can't change them; I just don't think it's
+a big problem in this specific case (and much less than some of the
+more imaginative sysfs content - 2d int arrays with column headers
+anyone?).
 
-Cheers,
+> And yes, open/read/close does take take a few extra cycles, but you
+> can't really measure it for a virtual filesystem like this on any modern
+> system.
 
-Michael
+I'll try to get some numbers when I get back home next week - Shane is
+talking about use cases involving tens of thousands of tape devices. I
+am not certain that the overhead would be unmeasurable in that case: the
+additional context switching & TLB flushes alone seem like they would
+add up.
 
---=20
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+> Hope this helps explain why we have the sysfs rule, and why you should
+> continue to follow it as well.
+>
+> Yes, it's not always followed, but that's usually because people forgot
+> why we had this rule, and no one noticed or pointed it out to me that it
+> was wrong.
+
+Perhaps sysfs.txt should be updated to make the position more clear? The
+current wording seems rather more liberal than this thread would
+suggest. Maybe something like the patch below?
+
+This would help people who are trying to dtrt by reading the documentation.
+
+Regards,
+Bryn.
+
+
+  From 3081aad4cc4d19b68f39499dbeb3837f0642f70e Mon Sep 17 00:00:00 2001
+  From: "Bryn M. Reeves" <bmr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+  Date: Fri, 6 Feb 2015 15:19:39 +0000
+  Subject: [PATCH] docs/sysfs: Specify array valued attribute review
+   requirements
+  
+  Although the linux-api position that one-value-per-file is a strong rule
+  is very clear in mailing list discussions the sysfs.txt documentation
+  suggests a rather more liberal stance:
+  
+  "... it is socially acceptable to express an array of values of the same
+  type."
+  
+  Fix the documentation to make it clear that such uses should be
+  discussed on linux-api first.
+
+Signed-off-by: Bryn M. Reeves <bmr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+---
+ Documentation/filesystems/sysfs.txt | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/Documentation/filesystems/sysfs.txt b/Documentation/filesystems/sysfs.txt
+index b35a64b..494fa78 100644
+--- a/Documentation/filesystems/sysfs.txt
++++ b/Documentation/filesystems/sysfs.txt
+@@ -57,8 +57,15 @@ attributes.
+ 
+ Attributes should be ASCII text files, preferably with only one value
+ per file. It is noted that it may not be efficient to contain only one
+-value per file, so it is socially acceptable to express an array of
+-values of the same type. 
++value per file, so it may be socially acceptable to express an array of
++values of the same type.
++
++If you are considering adding such an array attribute to sysfs please
++discuss it via the linux-api mailing list first to ensure that your
++proposed use is acceptable:
++
++  https://www.kernel.org/doc/man-pages/linux-api-ml.html
++  linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+ 
+ Mixing types, expressing multiple lines of data, and doing fancy
+ formatting of data is heavily frowned upon. Doing these things may get
+-- 
+1.9.3
