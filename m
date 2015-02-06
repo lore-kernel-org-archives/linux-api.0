@@ -1,126 +1,94 @@
-From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Subject: [PATCH 1/2] kernel/fork: handle put_user errors for
- CLONE_CHILD_SETTID/CLEARTID
-Date: Fri, 06 Feb 2015 19:23:01 +0300
-Message-ID: <20150206162301.18031.32251.stgit@buzz>
+From: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+Subject: [PATCH 2/2] kernel/fork: handle put_user errors for
+ CLONE_PARENT_SETTID
+Date: Fri, 06 Feb 2015 19:23:03 +0300
+Message-ID: <20150206162303.18031.37408.stgit@buzz>
+References: <20150206162301.18031.32251.stgit@buzz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org
-Cc: Roman Gushchin <klamm@yandex-team.ru>, Nikita Vetoshkin <nekto0n@yandex-team.ru>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@parallels.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150206162301.18031.32251.stgit@buzz>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Roman Gushchin <klamm-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Nikita Vetoshkin <nekto0n-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Currently kernel ignores put_user() errors when it writes tid for syscall
-clone flags CLONE_CHILD_SETTID and CLONE_CHILD_CLEARTID.
+Handling of flag CLONE_PARENT_SETTID has the same problem: error returned
+from put_user() is ignored. Glibc completely relies on that feature and uses
+value returned from syscall only for error checking.
 
-Unfortunately this code always worked in this way. We cannot abort syscall
-if client tid pointer is invalid.
+Kernels older than v2.6.24 handled that correctly but check has been removed
+in commit 30e49c263e36 ("pid namespaces: allow cloning of new namespace").
+Commit message tells nothing about reason. I guess that was fix for commit
+425fb2b4bf5d ("pid namespaces: move alloc_pid() lower in copy_process()")
+which breaks this logic: after it kernel writes parent pid as child pid.
 
-This patch adds get_user() after failed put_user(): if this address is not
-even readable then we leave it alone: user-space probably don't care about
-pid or error will be noticed soon. If address is readable then application
-might be mislead about it's own pid. In this case CLONE_CHILD_SETTID kills
-child task. In same condition failed CLONE_CHILD_CLEARTID prints warning.
+This patch moves related put_user() from do_fork() back into copy_process()
+where it was before and where error can be handled.
 
-Nikita found script which sometimes hangs inside glibc in function fork()
-in child task right after returning from syscall some glibc assert fails:
+Another problem is that before v2.6.24 CLONE_PARENT_SETTID stored child pid
+both in parent and child memory. Documentation in man clone(2) also tells so.
+In v2.6.24 put_user() was placed after copy_mm(), now only parent sees it.
+LTP test which should check that is buggy too: it clones child with CLONE_VM.
+It seems nobody have noticed this for seven years, probably we should leave
+it as is and document existing behavior.
 
-#0  __lll_lock_wait_private () at ../nptl/sysdeps/unix/sysv/linux/x86_64/lowlevellock.S:93
-#1  0x00007fabcc699087 in _L_lock_11477 at malloc.c:5249
-#2  0x00007fabcc6973ed in __GI___libc_realloc at malloc.c:3054
-#3  0x00007fabcc686dbd in _IO_vasprintf at vasprintf.c:86
-#4  0x00007fabcc667747 in ___asprintf at asprintf.c:37
-#5  0x00007fabcc642cfb in __assert_fail_base at assert.c:59
-#6  0x00007fabcc642e42 in __GI___assert_fail at assert.c:103
-#7  0x00007fabcc6d40b6 in __libc_fork at ../nptl/sysdeps/unix/sysv/linux/x86_64/../fork.c:142
-#8  0x00007fabccad23cd in Perl_pp_system at pp_sys.c:4143c
-#9  0x00007fabcca7fcd6 in Perl_runops_standard at run.c:41
-#10 0x00007fabcca2139a in S_run_body at perl.c:2350
-#11 perl_run at perl.c:2268
-#12 0x0000000000400db9 in main at perlmain.c:120
-
-Assert checks (THREAD_GETMEM (self, tid) != ppid). In child task pid still
-equal to the parent pid! Write for CLONE_CHILD_SETTID had failed silently.
-Unfortunately this assert in glibc is flawed, some internal locks are held
-at this point and task hangs when tries to print out error message.
-
-Usually memory allocations at page-faults are either completely successful
-or task is killed by out of memory killer: buddy allocator handles 0-order
-allocations as GFP_NOFAIL and retries them endlessly. OOM-killer in memory
-cgroup works only for faulting from user-space. If kernel hits memcg limit
-inside page-fault that will be handled as ordinary "Bad address": -EFAULT.
-
-Whole sequence looks like: task calls fork, glibc calls syscall clone with
-CLONE_CHILD_SETTID and passes pointer to TLS THREAD_SELF->tid as argument.
-Child task gets read-only copy of VM including TLS. Child calls put_user()
-to handle CLONE_CHILD_SETTID from schedule_tail(). put_user() trigger page
-fault and it fails because do_wp_page()  hits memcg limit without invoking
-OOM-killer because this is page-fault from kernel-space.  Put_user returns
--EFAULT, which is ignored.  Child returns into user-space and catches here
-assert (THREAD_GETMEM (self, tid) != ppid), glibc tries to print something
-but hangs on deadlock on internal locks. Halt and catch fire.
-
-Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Reported-by: Nikita Vetoshkin <nekto0n@yandex-team.ru>
+Signed-off-by: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
 ---
- kernel/fork.c       |   15 ++++++++++++---
- kernel/sched/core.c |   16 ++++++++++++++--
- 2 files changed, 26 insertions(+), 5 deletions(-)
+ kernel/fork.c |   14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
 
 diff --git a/kernel/fork.c b/kernel/fork.c
-index 4dc2dda..f71305d 100644
+index f71305d..1ea2eae 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -822,11 +822,20 @@ void mm_release(struct task_struct *tsk, struct mm_struct *mm)
- 	if (tsk->clear_child_tid) {
- 		if (!(tsk->flags & PF_SIGNALED) &&
- 		    atomic_read(&mm->mm_users) > 1) {
-+			int dummy;
-+
- 			/*
--			 * We don't check the error code - if userspace has
--			 * not set up a proper pointer then tough luck.
-+			 * We cannot report put_user fails - if userspace has
-+			 * not set up a proper pointer then tough luck. It's
-+			 * much worse if it's failed for some other reason:
-+			 * for example memory shortage in CoW area, somebody
-+			 * will wait us forever. Let's at least print warning.
- 			 */
--			put_user(0, tsk->clear_child_tid);
-+			if (unlikely(put_user(0, tsk->clear_child_tid)) &&
-+			    !get_user(dummy, tsk->clear_child_tid) &&
-+			    !fatal_signal_pending(current))
-+				WARN_ON_ONCE(dummy);
-+
- 			sys_futex(tsk->clear_child_tid, FUTEX_WAKE,
- 					1, NULL, NULL, 0);
- 		}
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index e628cb1..74b33ff 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -2312,8 +2312,20 @@ asmlinkage __visible void schedule_tail(struct task_struct *prev)
- 	post_schedule(rq);
- 	preempt_enable();
+@@ -1194,6 +1194,7 @@ init_task_pid(struct task_struct *task, enum pid_type type, struct pid *pid)
+ static struct task_struct *copy_process(unsigned long clone_flags,
+ 					unsigned long stack_start,
+ 					unsigned long stack_size,
++					int __user *parent_tidptr,
+ 					int __user *child_tidptr,
+ 					struct pid *pid,
+ 					int trace)
+@@ -1416,6 +1417,12 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 			goto bad_fork_cleanup_io;
+ 	}
  
--	if (current->set_child_tid)
--		put_user(task_pid_vnr(current), current->set_child_tid);
-+	if (current->set_child_tid &&
-+	    unlikely(put_user(task_pid_vnr(current), current->set_child_tid))) {
-+		int dummy;
-+
-+		/*
-+		 * If this address is unreadable then userspace has not set
-+		 * proper pointer. Application either doesn't care or will
-+		 * notice this soon. If this address is readable then task
-+		 * will be mislead about its own tid. It's better to die.
-+		 */
-+		if (!get_user(dummy, current->set_child_tid) &&
-+		    !fatal_signal_pending(current))
-+			force_sig(SIGSEGV, current);
++	if (clone_flags & CLONE_PARENT_SETTID) {
++		retval = put_user(pid_vnr(pid), parent_tidptr);
++		if (retval)
++			goto bad_fork_free_pid;
 +	}
- }
++
+ 	p->set_child_tid = (clone_flags & CLONE_CHILD_SETTID) ? child_tidptr : NULL;
+ 	/*
+ 	 * Clear TID on mm_release()?
+@@ -1617,7 +1624,7 @@ static inline void init_idle_pids(struct pid_link *links)
+ struct task_struct *fork_idle(int cpu)
+ {
+ 	struct task_struct *task;
+-	task = copy_process(CLONE_VM, 0, 0, NULL, &init_struct_pid, 0);
++	task = copy_process(CLONE_VM, 0, 0, NULL, NULL, &init_struct_pid, 0);
+ 	if (!IS_ERR(task)) {
+ 		init_idle_pids(task->pids);
+ 		init_idle(task, cpu);
+@@ -1661,7 +1668,7 @@ long do_fork(unsigned long clone_flags,
+ 	}
  
- /*
+ 	p = copy_process(clone_flags, stack_start, stack_size,
+-			 child_tidptr, NULL, trace);
++			 parent_tidptr, child_tidptr, NULL, trace);
+ 	/*
+ 	 * Do this prior waking up the new thread - the thread pointer
+ 	 * might get invalid after that point, if the thread exits quickly.
+@@ -1675,9 +1682,6 @@ long do_fork(unsigned long clone_flags,
+ 		pid = get_task_pid(p, PIDTYPE_PID);
+ 		nr = pid_vnr(pid);
+ 
+-		if (clone_flags & CLONE_PARENT_SETTID)
+-			put_user(nr, parent_tidptr);
+-
+ 		if (clone_flags & CLONE_VFORK) {
+ 			p->vfork_done = &vfork;
+ 			init_completion(&vfork);
