@@ -1,32 +1,45 @@
-From: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC] implementing tape statistics single file vs multi-file in
- sysfs
-Date: Fri, 6 Feb 2015 05:01:11 -0800
-Message-ID: <20150206130111.GC26247@kroah.com>
-References: <DDB9C85B850785449757F9914A034FCB3BF3EADA@G9W0766.americas.hpqcorp.net>
- <20150206091354.GA1143@localhost.localdomain>
+From: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] Revert "IB/core: Add support for extended query device
+ caps"
+Date: Fri, 06 Feb 2015 14:47:54 +0100
+Message-ID: <1423230474.3030.88.camel@opteya.com>
+References: <1423170618-12315-1-git-send-email-ydroneaud@opteya.com>
+	 <CAL1RGDWhNy2h1gqg0FYbnXX0J=ZBXy5uwf_N+gnXreJkLgLCpw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150206091354.GA1143-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Bryn M. Reeves" <bmr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "Seymour, Shane M" <shane.seymour-VXdhtT5mjnY@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kai.Makisara-9Aww8k/80nUxHbG02/KK1g@public.gmane.org" <Kai.Makisara-9Aww8k/80nUxHbG02/KK1g@public.gmane.org>, "James E.J. Bottomley (JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org)" <JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Laurence Oberman (loberman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org)" <loberman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAL1RGDWhNy2h1gqg0FYbnXX0J=ZBXy5uwf_N+gnXreJkLgLCpw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Ira Weiny <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 06, 2015 at 09:13:55AM +0000, Bryn M. Reeves wrote:
-> > The sysfs documentation says that files should contain one item per
-> > file (with some small exceptions):
-> > 
-> > > "Attributes should be ASCII text files, preferably with only one value
-> > > per file. It is noted that it may not be efficient to contain only one
-> > > value per file, so it is socially acceptable to express an array of
-> > > values of the same type."
-> 
-> Right: I think there's good precedent for the array file style when
-> dealing with counter sets.
+Hi,
 
-See my previous reply for why I strongly feel this is incorrect, sorry.
+Le vendredi 06 f=C3=A9vrier 2015 =C3=A0 00:55 -0800, Roland Dreier a =C3=
+=A9crit :
+> Thanks for noticing this at the last moment.
+>=20
 
-greg k-h
+I should have noticed this earlier, but, as small is beautiful,
+I was impressed by the patch from Haggai and thought it would better=20
+than an ugly revert ... Foolish I was.
+
+> I will send this to Linus on Friday.
+
+Thanks a lot. And sorry about this epic adventure in ABI land :/
+
+Regards.
+
+--=20
+Yann Droneaud
+OPTEYA
+
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rdma" i=
+n
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
