@@ -1,94 +1,107 @@
-From: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Subject: [PATCH 2/2] kernel/fork: handle put_user errors for
- CLONE_PARENT_SETTID
-Date: Fri, 06 Feb 2015 19:23:03 +0300
-Message-ID: <20150206162303.18031.37408.stgit@buzz>
-References: <20150206162301.18031.32251.stgit@buzz>
+From: Shaohua Li <shli@kernel.org>
+Subject: Re: [PATCH v17 1/7] mm: support madvise(MADV_FREE)
+Date: Fri, 6 Feb 2015 10:29:18 -0800
+Message-ID: <20150206182918.GA2290@kernel.org>
+References: <20141130235652.GA10333@bbox>
+ <20141202100125.GD27014@dhcp22.suse.cz>
+ <20141203000026.GA30217@bbox>
+ <20141203101329.GB23236@dhcp22.suse.cz>
+ <20141205070816.GB3358@bbox>
+ <20141205083249.GA2321@dhcp22.suse.cz>
+ <54D0F9BC.4060306@gmail.com>
+ <20150203234722.GB3583@blaptop>
+ <20150206003311.GA2347@kernel.org>
+ <20150206055103.GA13244@blaptop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150206162301.18031.32251.stgit@buzz>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Roman Gushchin <klamm-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Nikita Vetoshkin <nekto0n-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20150206055103.GA13244@blaptop>
+Sender: owner-linux-mm@kvack.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Michal Hocko <mhocko@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Handling of flag CLONE_PARENT_SETTID has the same problem: error returned
-from put_user() is ignored. Glibc completely relies on that feature and uses
-value returned from syscall only for error checking.
+On Fri, Feb 06, 2015 at 02:51:03PM +0900, Minchan Kim wrote:
+> Hi Shaohua,
+> 
+> On Thu, Feb 05, 2015 at 04:33:11PM -0800, Shaohua Li wrote:
+> > 
+> > Hi Minchan,
+> > 
+> > Sorry to jump in this thread so later, and if some issues are discussed before.
+> > I'm interesting in this patch, so tried it here. I use a simple test with
+> 
+> No problem at all. Interest is always win over ignorance.
+> 
+> > jemalloc. Obviously this can improve performance when there is no memory
+> > pressure. Did you try setup with memory pressure?
+> 
+> Sure but it was not a huge memory system like yours.
 
-Kernels older than v2.6.24 handled that correctly but check has been removed
-in commit 30e49c263e36 ("pid namespaces: allow cloning of new namespace").
-Commit message tells nothing about reason. I guess that was fix for commit
-425fb2b4bf5d ("pid namespaces: move alloc_pid() lower in copy_process()")
-which breaks this logic: after it kernel writes parent pid as child pid.
+Yes, I'd like to check the symptom in memory pressure, so choose such test.
 
-This patch moves related put_user() from do_fork() back into copy_process()
-where it was before and where error can be handled.
+> > In my test, jemalloc will map 61G vma, and use about 32G memory without
+> > MADV_FREE. If MADV_FREE is enabled, jemalloc will use whole 61G memory because
+> > madvise doesn't reclaim the unused memory. If I disable swap (tweak your patch
+> 
+> Yes, IIUC, jemalloc replaces MADV_DONTNEED with MADV_FREE completely.
 
-Another problem is that before v2.6.24 CLONE_PARENT_SETTID stored child pid
-both in parent and child memory. Documentation in man clone(2) also tells so.
-In v2.6.24 put_user() was placed after copy_mm(), now only parent sees it.
-LTP test which should check that is buggy too: it clones child with CLONE_VM.
-It seems nobody have noticed this for seven years, probably we should leave
-it as is and document existing behavior.
+right.
+> > slightly to make it work without swap), I got oom. If swap is enabled, my
+> 
+> You mean you modified anon aging logic so it works although there is no swap?
+> If so, I have no idea why OOM happens. I guess it should free all of freeable
+> pages during the aging so although system stall happens more, I don't expect
+> OOM. Anyway, with MADV_FREE with no swap, we should consider more things
+> about anonymous aging.
 
-Signed-off-by: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
----
- kernel/fork.c |   14 +++++++++-----
- 1 file changed, 9 insertions(+), 5 deletions(-)
+In the patch, MADV_FREE will be disabled and fallback to DONTNEED if no swap is
+enabled. Our production environment doesn't enable swap, so I tried to delete
+the 'no swap' check and make MADV_FREE always enabled regardless if swap is
+enabled. I didn't change anything else. With such change, I saw oom
+immediately. So definitely we have aging issue, the pages aren't reclaimed
+fast.
 
-diff --git a/kernel/fork.c b/kernel/fork.c
-index f71305d..1ea2eae 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -1194,6 +1194,7 @@ init_task_pid(struct task_struct *task, enum pid_type type, struct pid *pid)
- static struct task_struct *copy_process(unsigned long clone_flags,
- 					unsigned long stack_start,
- 					unsigned long stack_size,
-+					int __user *parent_tidptr,
- 					int __user *child_tidptr,
- 					struct pid *pid,
- 					int trace)
-@@ -1416,6 +1417,12 @@ static struct task_struct *copy_process(unsigned long clone_flags,
- 			goto bad_fork_cleanup_io;
- 	}
- 
-+	if (clone_flags & CLONE_PARENT_SETTID) {
-+		retval = put_user(pid_vnr(pid), parent_tidptr);
-+		if (retval)
-+			goto bad_fork_free_pid;
-+	}
-+
- 	p->set_child_tid = (clone_flags & CLONE_CHILD_SETTID) ? child_tidptr : NULL;
- 	/*
- 	 * Clear TID on mm_release()?
-@@ -1617,7 +1624,7 @@ static inline void init_idle_pids(struct pid_link *links)
- struct task_struct *fork_idle(int cpu)
- {
- 	struct task_struct *task;
--	task = copy_process(CLONE_VM, 0, 0, NULL, &init_struct_pid, 0);
-+	task = copy_process(CLONE_VM, 0, 0, NULL, NULL, &init_struct_pid, 0);
- 	if (!IS_ERR(task)) {
- 		init_idle_pids(task->pids);
- 		init_idle(task, cpu);
-@@ -1661,7 +1668,7 @@ long do_fork(unsigned long clone_flags,
- 	}
- 
- 	p = copy_process(clone_flags, stack_start, stack_size,
--			 child_tidptr, NULL, trace);
-+			 parent_tidptr, child_tidptr, NULL, trace);
- 	/*
- 	 * Do this prior waking up the new thread - the thread pointer
- 	 * might get invalid after that point, if the thread exits quickly.
-@@ -1675,9 +1682,6 @@ long do_fork(unsigned long clone_flags,
- 		pid = get_task_pid(p, PIDTYPE_PID);
- 		nr = pid_vnr(pid);
- 
--		if (clone_flags & CLONE_PARENT_SETTID)
--			put_user(nr, parent_tidptr);
--
- 		if (clone_flags & CLONE_VFORK) {
- 			p->vfork_done = &vfork;
- 			init_completion(&vfork);
+> > system is totally stalled because of swap activity. Without the MADV_FREE,
+> > everything is ok. Considering we definitely don't want to waste too much
+> > memory, a system with memory pressure is normal, so sounds MADV_FREE will
+> > introduce big trouble here.
+> > 
+> > Did you think about move the MADV_FREE pages to the head of inactive LRU, so
+> > they can be reclaimed easily?
+> 
+> I think it's desirable if the page lived in active LRU.
+> The reason I didn't that was caused by volatile ranges system call which
+> was motivaion for MADV_FREE in my mind.
+> In last LSF/MM, there was concern about data's hotness.
+> Some of users want to keep that as it is in LRU position, others want to
+> handle that as cold(tail of inactive list)/warm(head of inactive list)/
+> hot(head of active list), for example.
+> The vrange syscall was just about volatiltiy, not depends on page hotness
+> so the decision on my head was not to change LRU order and let's make new
+> hotness advise if we need it later.
+> 
+> However, MADV_FREE's main customer is allocators and afaik, they want
+> to replace MADV_DONTNEED with MADV_FREE so I think it is really cold,
+> but we couldn't make sure so head of inactive is good compromise.
+> Another concern about tail of inactive list is that there could be
+> plenty of pages in there, which was asynchromos write-backed in
+> previous reclaim path, not-yet reclaimed because of not being able
+> to free the in softirq context of writeback. It means we ends up
+> freeing more potential pages to become workingset in advance
+> than pages VM already decided to evict.
+
+Yes, they are definitely cold pages. I thought We should make sure the
+MADV_FREE pages are reclaimed first before other pages, at least in the anon
+LRU list, though there might be difficult to determine if we should reclaim
+writeback pages first or MADV_FREE pages first.
+
+Thanks,
+Shaohua
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
