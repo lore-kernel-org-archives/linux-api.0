@@ -1,37 +1,93 @@
-From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v17 1/7] mm: support madvise(MADV_FREE)
-Date: Fri, 6 Feb 2015 13:58:25 +0100
-Message-ID: <20150206125825.GA4498@dhcp22.suse.cz>
-References: <20141127144725.GB19157@dhcp22.suse.cz>
- <20141130235652.GA10333@bbox>
- <20141202100125.GD27014@dhcp22.suse.cz>
- <20141203000026.GA30217@bbox>
- <20141203101329.GB23236@dhcp22.suse.cz>
- <20141205070816.GB3358@bbox>
- <20141205083249.GA2321@dhcp22.suse.cz>
- <54D0F9BC.4060306@gmail.com>
- <20150203234722.GB3583@blaptop>
- <20150206003311.GA2347@kernel.org>
+From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [RFC] implementing tape statistics single file vs multi-file in
+ sysfs
+Date: Fri, 6 Feb 2015 04:59:16 -0800
+Message-ID: <20150206125916.GB26247@kroah.com>
+References: <DDB9C85B850785449757F9914A034FCB3BF3EADA@G9W0766.americas.hpqcorp.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150206003311.GA2347-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+In-Reply-To: <DDB9C85B850785449757F9914A034FCB3BF3EADA-4I1V4pQFGigSZAcGdq5asR6epYMZPwEe5NbjCUgZEJk@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Jason Evans <je-b10kYP2dOMg@public.gmane.org>, zhangyanfei-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+To: "Seymour, Shane M" <shane.seymour-VXdhtT5mjnY@public.gmane.org>
+Cc: "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kai.Makisara-9Aww8k/80nUxHbG02/KK1g@public.gmane.org" <Kai.Makisara-9Aww8k/80nUxHbG02/KK1g@public.gmane.org>, "James E.J. Bottomley (JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org)" <JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Laurence Oberman (loberman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org)" <loberman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu 05-02-15 16:33:11, Shaohua Li wrote:
-[...]
-> Did you think about move the MADV_FREE pages to the head of inactive LRU, so
-> they can be reclaimed easily?
+On Fri, Feb 06, 2015 at 12:20:53AM +0000, Seymour, Shane M wrote:
+> Hello linux-api'ers
+> 
+> There has been some ongoing discussion about the best way to implement tape statistics. The original method suggested a long time ago used a single file in sysfs similar to block statistics in sysfs. That lead to an impass about the code on the linux-scsi mailing list.
+> 
+> The sysfs documentation says that files should contain one item per file (with some small exceptions):
+> 
+> > "Attributes should be ASCII text files, preferably with only one value
+> > per file. It is noted that it may not be efficient to contain only one
+> > value per file, so it is socially acceptable to express an array of
+> > values of the same type."
+> 
+> The current patch that implements tape statistics is here:
+> 
+> http://marc.info/?l=linux-scsi&m=142112067313723&w=2
 
-Yes this makes sense for pages living on the active LRU list. I would
-preserve LRU ordering on the inactive list because there is no good
-reason to make the operation more costly for inactive pages. On the
-other hand having tons of to-be-freed pages on the active list clearly
-sucks. Care to send a patch?
--- 
-Michal Hocko
-SUSE Labs
+Aside from the "do we want to do this all in a single file" issue that I
+will say more on below, this patch has issues.  Please don't use a
+kobject for _ANYTHING_ in sysfs that has a struct device as a parent.
+If you do that, it can't be seen by userspace tools very well, if at
+all.
+
+Instead, if you want to create a directory, just use an attribute group,
+which will be created at the proper time (before the device is announced
+to userspace), and then userspace can see it with the tools it is used
+to using (i.e. libudev and friends.)
+
+That should simplify your code a lot, please make that change no matter
+what happens here with the content of the files.
+
+> Recently there was was another discussion here about one file vs a collection of files for tape statistics:
+> 
+> http://marc.info/?l=linux-scsi&m=142316255501550&w=2
+> 
+> The result was that I should ask here what method I should use. I
+> would like to get feedback in relation to tape statistics and one file
+> vs multi-file in sysfs. I'm happy to keep the existing code or change
+> to a single file approach.
+
+One of the primary reasons we created sysfs and the "one value per file"
+rule is that multi-value files just do not work well.  Yes, you get an
+atomic snapshot, and you save some open/read/close syscall roundtrips,
+but you do so at the expense of forcing userspace to "know" what the
+format of the file is.  And once you create it, you can NEVER CHANGE IT
+AGAIN.
+
+Yes, that's right, if you come up with some new statistic in the future,
+or realize that one of the ones you have now is wrong, you can't change
+it, you have to make a whole new file, otherwise you could break
+userspace tools.
+
+Instead, a one-value-per-file rule forces userspace to know that if the
+file is present, it can be opened and read from for a single value.  If
+it isn't there, it should fail properly and move on to the next
+statistic.  If you want to add a new statistic, great, just add a new
+file and you are set.
+
+You aren't dealing with performance-sensitive numbers here that "have"
+to have an atomic snapshot of the state at a specific point in time in
+order to work properly, so just have a bunch of files, all one value per
+file, then all userspace tools will "just work" (i.e. libudev), and
+everyone is happy.
+
+And yes, open/read/close does take take a few extra cycles, but you
+can't really measure it for a virtual filesystem like this on any modern
+system.
+
+Hope this helps explain why we have the sysfs rule, and why you should
+continue to follow it as well.
+
+Yes, it's not always followed, but that's usually because people forgot
+why we had this rule, and no one noticed or pointed it out to me that it
+was wrong.
+
+thanks,
+
+greg k-h
