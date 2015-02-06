@@ -1,111 +1,126 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: MADV_DONTNEED semantics? Was: [RFC PATCH] mm: madvise: Ignore
- repeated MADV_DONTNEED hints
-Date: Fri, 06 Feb 2015 16:57:50 +0100
-Message-ID: <54D4E47E.4020509@gmail.com>
-References: <20150202165525.GM2395@suse.de> <54CFF8AC.6010102@intel.com> <54D08483.40209@suse.cz> <20150203105301.GC14259@node.dhcp.inet.fi> <54D0B43D.8000209@suse.cz> <54D0F56A.9050003@gmail.com> <54D22298.3040504@suse.cz> <CAKgNAkgOOCuzJz9whoVfFjqhxM0zYsz94B1+oH58SthC5Ut9sg@mail.gmail.com> <54D2508A.9030804@suse.cz> <CAKgNAkhNbHQX7RukSsSe3bMqY11f493rYbDpTOA2jH7vsziNww@mail.gmail.com> <20150205154102.GA20607@dhcp22.suse.cz>
+From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Subject: [PATCH 1/2] kernel/fork: handle put_user errors for
+ CLONE_CHILD_SETTID/CLEARTID
+Date: Fri, 06 Feb 2015 19:23:01 +0300
+Message-ID: <20150206162301.18031.32251.stgit@buzz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150205154102.GA20607@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@suse.cz>
-Cc: mtk.manpages@gmail.com, Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill@shutemov.name>, Dave Hansen <dave.hansen@intel.com>, Mel Gorman <mgorman@suse.de>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Hugh Dickins <hughd@google.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org
+Cc: Roman Gushchin <klamm@yandex-team.ru>, Nikita Vetoshkin <nekto0n@yandex-team.ru>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@parallels.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Michael
+Currently kernel ignores put_user() errors when it writes tid for syscall
+clone flags CLONE_CHILD_SETTID and CLONE_CHILD_CLEARTID.
 
-On 02/05/2015 04:41 PM, Michal Hocko wrote:
-> On Wed 04-02-15 20:24:27, Michael Kerrisk wrote:
-> [...]
->> So, how about this text:
->>
->>               After a successful MADV_DONTNEED operation, the seman=E2=
-=80=90
->>               tics  of  memory  access  in  the specified region are
->>               changed: subsequent accesses of  pages  in  the  range
->>               will  succeed,  but will result in either reloading of
->>               the memory contents from the  underlying  mapped  file
->=20
-> "
-> result in either providing the up-to-date contents of the underlying
-> mapped file
-> "
+Unfortunately this code always worked in this way. We cannot abort syscall
+if client tid pointer is invalid.
 
-Thanks! I did something like that. See below.
+This patch adds get_user() after failed put_user(): if this address is not
+even readable then we leave it alone: user-space probably don't care about
+pid or error will be noticed soon. If address is readable then application
+might be mislead about it's own pid. In this case CLONE_CHILD_SETTID kills
+child task. In same condition failed CLONE_CHILD_CLEARTID prints warning.
 
-> Would be more precise IMO because reload might be interpreted as a majo=
-r
-> fault which is not necessarily the case (see below).
->=20
->>               (for  shared file mappings, shared anonymous mappings,
->>               and shmem-based techniques such  as  System  V  shared
->>               memory  segments)  or  zero-fill-on-demand  pages  for
->>               anonymous private mappings.
->=20
-> Yes, this wording is better because many users are not aware of
-> MAP_ANON|MAP_SHARED being file backed in fact and mmap man page doesn't
-> mention that.
+Nikita found script which sometimes hangs inside glibc in function fork()
+in child task right after returning from syscall some glibc assert fails:
 
-(Michal, would you have a text to propose to add to the mmap(2) page?
-Maybe it would be useful to add something there.)
+#0  __lll_lock_wait_private () at ../nptl/sysdeps/unix/sysv/linux/x86_64/lowlevellock.S:93
+#1  0x00007fabcc699087 in _L_lock_11477 at malloc.c:5249
+#2  0x00007fabcc6973ed in __GI___libc_realloc at malloc.c:3054
+#3  0x00007fabcc686dbd in _IO_vasprintf at vasprintf.c:86
+#4  0x00007fabcc667747 in ___asprintf at asprintf.c:37
+#5  0x00007fabcc642cfb in __assert_fail_base at assert.c:59
+#6  0x00007fabcc642e42 in __GI___assert_fail at assert.c:103
+#7  0x00007fabcc6d40b6 in __libc_fork at ../nptl/sysdeps/unix/sysv/linux/x86_64/../fork.c:142
+#8  0x00007fabccad23cd in Perl_pp_system at pp_sys.c:4143c
+#9  0x00007fabcca7fcd6 in Perl_runops_standard at run.c:41
+#10 0x00007fabcca2139a in S_run_body at perl.c:2350
+#11 perl_run at perl.c:2268
+#12 0x0000000000400db9 in main at perlmain.c:120
 
->=20
-> I am just wondering whether it makes sense to mention that MADV_DONTNEE=
-D
-> for shared mappings might be surprising and not freeing the backing
-> pages thus not really freeing memory until there is a memory
-> pressure. But maybe this is too implementation specific for a man
-> page. What about the following wording on top of yours?
-> "
-> Please note that the MADV_DONTNEED hint on shared mappings might not
-> lead to immediate freeing of pages in the range. The kernel is free to
-> delay this until an appropriate moment. RSS of the calling process will
-> be reduced however.
-> "
+Assert checks (THREAD_GETMEM (self, tid) != ppid). In child task pid still
+equal to the parent pid! Write for CLONE_CHILD_SETTID had failed silently.
+Unfortunately this assert in glibc is flawed, some internal locks are held
+at this point and task hangs when tries to print out error message.
 
-Thanks! I added this, but dropped in the word "immediately" in the last=20
-sentence, since I assume that was implied. So now we have:
+Usually memory allocations at page-faults are either completely successful
+or task is killed by out of memory killer: buddy allocator handles 0-order
+allocations as GFP_NOFAIL and retries them endlessly. OOM-killer in memory
+cgroup works only for faulting from user-space. If kernel hits memcg limit
+inside page-fault that will be handled as ordinary "Bad address": -EFAULT.
 
-              After  a  successful MADV_DONTNEED operation, the seman=E2=80=
-=90
-              tics of  memory  access  in  the  specified  region  are
-              changed:  subsequent accesses of pages in the range will
-              succeed, but will result in either repopulating the mem=E2=80=
-=90
-              ory  contents from the up-to-date contents of the under=E2=80=
-=90
-              lying mapped file  (for  shared  file  mappings,  shared
-              anonymous  mappings,  and shmem-based techniques such as
-              System V shared memory segments) or  zero-fill-on-demand
-              pages for anonymous private mappings.
+Whole sequence looks like: task calls fork, glibc calls syscall clone with
+CLONE_CHILD_SETTID and passes pointer to TLS THREAD_SELF->tid as argument.
+Child task gets read-only copy of VM including TLS. Child calls put_user()
+to handle CLONE_CHILD_SETTID from schedule_tail(). put_user() trigger page
+fault and it fails because do_wp_page()  hits memcg limit without invoking
+OOM-killer because this is page-fault from kernel-space.  Put_user returns
+-EFAULT, which is ignored.  Child returns into user-space and catches here
+assert (THREAD_GETMEM (self, tid) != ppid), glibc tries to print something
+but hangs on deadlock on internal locks. Halt and catch fire.
 
-              Note  that,  when applied to shared mappings, MADV_DONT=E2=80=
-=90
-              NEED might not lead to immediate freeing of the pages in
-              the  range.   The  kernel  is  free to delay freeing the
-              pages until an appropriate  moment.   The  resident  set
-              size  (RSS)  of  the calling process will be immediately
-              reduced however.
+Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Reported-by: Nikita Vetoshkin <nekto0n@yandex-team.ru>
+---
+ kernel/fork.c       |   15 ++++++++++++---
+ kernel/sched/core.c |   16 ++++++++++++++--
+ 2 files changed, 26 insertions(+), 5 deletions(-)
 
-The current draft of the page can be found in a branch,
-http://git.kernel.org/cgit/docs/man-pages/man-pages.git/log/?h=3Ddraft_ma=
-dvise
-
-Thanks,
-
-Michael
-
-
-
---=20
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 4dc2dda..f71305d 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -822,11 +822,20 @@ void mm_release(struct task_struct *tsk, struct mm_struct *mm)
+ 	if (tsk->clear_child_tid) {
+ 		if (!(tsk->flags & PF_SIGNALED) &&
+ 		    atomic_read(&mm->mm_users) > 1) {
++			int dummy;
++
+ 			/*
+-			 * We don't check the error code - if userspace has
+-			 * not set up a proper pointer then tough luck.
++			 * We cannot report put_user fails - if userspace has
++			 * not set up a proper pointer then tough luck. It's
++			 * much worse if it's failed for some other reason:
++			 * for example memory shortage in CoW area, somebody
++			 * will wait us forever. Let's at least print warning.
+ 			 */
+-			put_user(0, tsk->clear_child_tid);
++			if (unlikely(put_user(0, tsk->clear_child_tid)) &&
++			    !get_user(dummy, tsk->clear_child_tid) &&
++			    !fatal_signal_pending(current))
++				WARN_ON_ONCE(dummy);
++
+ 			sys_futex(tsk->clear_child_tid, FUTEX_WAKE,
+ 					1, NULL, NULL, 0);
+ 		}
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index e628cb1..74b33ff 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -2312,8 +2312,20 @@ asmlinkage __visible void schedule_tail(struct task_struct *prev)
+ 	post_schedule(rq);
+ 	preempt_enable();
+ 
+-	if (current->set_child_tid)
+-		put_user(task_pid_vnr(current), current->set_child_tid);
++	if (current->set_child_tid &&
++	    unlikely(put_user(task_pid_vnr(current), current->set_child_tid))) {
++		int dummy;
++
++		/*
++		 * If this address is unreadable then userspace has not set
++		 * proper pointer. Application either doesn't care or will
++		 * notice this soon. If this address is readable then task
++		 * will be mislead about its own tid. It's better to die.
++		 */
++		if (!get_user(dummy, current->set_child_tid) &&
++		    !fatal_signal_pending(current))
++			force_sig(SIGSEGV, current);
++	}
+ }
+ 
+ /*
