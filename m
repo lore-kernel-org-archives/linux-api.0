@@ -1,59 +1,47 @@
-From: "Weiny, Ira" <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: RE: [PATCH v1 1/5] IB/uverbs: ex_query_device: answer must not
- depend on request's comp_mask
-Date: Sat, 7 Feb 2015 00:52:53 +0000
-Message-ID: <2807E5FD2F6FDA4886F6618EAC48510E0CC201F7@CRSMSX101.amr.corp.intel.com>
-References: <cover.1422553023.git.ydroneaud@opteya.com>
- <24ceb1fc5b2b6563532e5776b1b2320b1ae37543.1422553023.git.ydroneaud@opteya.com>
- <20150129182800.GH11842@obsidianresearch.com>
- <1422557009.3133.172.camel@opteya.com>
- <20150129191801.GM11842@obsidianresearch.com>
- <1422564638.3133.198.camel@opteya.com>
- <20150129211256.GA22099@obsidianresearch.com>
- <2807E5FD2F6FDA4886F6618EAC48510E0CC12C30@CRSMSX101.amr.corp.intel.com>
- <54D32933.8080307@mellanox.com>
+From: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v3] samsung-laptop: enable better lid handling
+Date: Fri, 6 Feb 2015 18:38:09 -0800
+Message-ID: <20150207023809.GA36295@fury.dvhart.com>
+References: <1418332715-10547-1-git-send-email-julijonas.kikutis@gmail.com>
+ <1422536696-1718-1-git-send-email-julijonas.kikutis@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54D32933.8080307-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <1422536696-1718-1-git-send-email-julijonas.kikutis-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
-Cc: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Julijonas Kikutis <julijonas.kikutis-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Corentin Chary <corentin.chary-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:SAMSUNG LAPTOP DR..." <platform-driver-x86-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Thu, Jan 29, 2015 at 01:04:37PM +0000, Julijonas Kikutis wrote:
+> Some Samsung laptops with SABI3 delay the sleep for 10 seconds after
+> the lid is closed and do not wake up from sleep after the lid is opened.
+> A SABI command is needed to enable the better behavior.
 > 
-> On 05/02/2015 04:54, Weiny, Ira wrote:
-> >>
-> >> On Thu, Jan 29, 2015 at 09:50:38PM +0100, Yann Droneaud wrote:
-> >>
-> >>> Anyway, I recognize that uverb way of abusing write() syscall is
-> >>> borderline (at best) regarding other Linux subsystems and Unix
-> >>> paradigm in general. But it's not enough to screw it more.
-> >>
-> >> Then we must return the correct output size explicitly in the struct.
-> >
-> > I was thinking this very same thing as I read through this thread.
-> >
-> > I too would like to avoid the use of comp_masks if at all possible.  The query
-> call seems to be a verb where the structure size is all you really need to know
-> the set of values returned.
-> >
-> > As Jason says, other calls may require the comp_mask where 0 is not
-> sufficient to indicate "missing".
+> Command = 0x6e, d0 = 0x81 enables this behavior. Returns d0 = 0x01.
+> Command = 0x6e, d0 = 0x80 disables this behavior. Returns d0 = 0x00.
 > 
-> Would it be okay to return it in the ib_uverbs_cmd_hdr.out_words? That would
-> further abuse the write() syscall by writing to the input buffer.
-
-I don't think that is such a great idea.
- 
-> However, the only other alternative I see is to add it explicitly to every uverb
-> response struct.
+> Command = 0x6d and any d0 queries the state. This returns:
+> d0 = 0x00000*01, d1 = 0x00, d2 = 0x00, d3 = 0x0* when it is enabled.
+> d0 = 0x00000*00, d1 = 0x00, d2 = 0x00, d3 = 0x0* when it is disabled.
+> Where * is 0 - laptop has never slept or hibernated after switch on,
+>            1 - laptop has hibernated just before,
+>            2 - laptop has slept just before.
 > 
+> Patch addresses bug https://bugzilla.kernel.org/show_bug.cgi?id=75901 .
+> It adds a sysfs attribute lid_handling with a description and also an
+> addition to the quirks structure to enable the mode by default.
+> 
+> A user with another laptop in the bug report says that "power button has
+> to be pressed twice to wake the machine" when he or she enabled the mode
+> manually using the SABI command. Therefore, it is enabled by default
+> only for the single laptop that I have tested.
+> 
+> Signed-off-by: Julijonas Kikutis <julijonas.kikutis-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-I think this is the best solution.  There is a 32 bit reserved field in ib_uverbs_ex_query_device_resp.  Could we use all or part of that to be the size?
+Queued up, thanks Jujijonas.
 
-For other extended commands I'm not sure what to do.
-
-Ira
+-- 
+Darren Hart
+Intel Open Source Technology Center
