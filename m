@@ -1,51 +1,59 @@
-From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH 2/2] kernel/fork: handle put_user errors for CLONE_PARENT_SETTID
-Date: Fri, 6 Feb 2015 14:10:58 -0800
-Message-ID: <CA+55aFy_C3BzmyJwNT7ExcaOc7GxvSeBRAFf3idYCSEtP8Ntag@mail.gmail.com>
-References: <20150206162301.18031.32251.stgit@buzz>
-	<20150206162303.18031.37408.stgit@buzz>
-	<CA+55aFxBuf-0UkoYCrwH_vNsWFnUkFOz5c9O_Mswe_w0BTkqbQ@mail.gmail.com>
-	<CALYGNiMv021=WC2uXsjo5zT8JwewweZUDdk0x8FGHh9V5j6bFQ@mail.gmail.com>
+From: "Weiny, Ira" <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: RE: [PATCH v1 1/5] IB/uverbs: ex_query_device: answer must not
+ depend on request's comp_mask
+Date: Sat, 7 Feb 2015 00:52:53 +0000
+Message-ID: <2807E5FD2F6FDA4886F6618EAC48510E0CC201F7@CRSMSX101.amr.corp.intel.com>
+References: <cover.1422553023.git.ydroneaud@opteya.com>
+ <24ceb1fc5b2b6563532e5776b1b2320b1ae37543.1422553023.git.ydroneaud@opteya.com>
+ <20150129182800.GH11842@obsidianresearch.com>
+ <1422557009.3133.172.camel@opteya.com>
+ <20150129191801.GM11842@obsidianresearch.com>
+ <1422564638.3133.198.camel@opteya.com>
+ <20150129211256.GA22099@obsidianresearch.com>
+ <2807E5FD2F6FDA4886F6618EAC48510E0CC12C30@CRSMSX101.amr.corp.intel.com>
+ <54D32933.8080307@mellanox.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALYGNiMv021=WC2uXsjo5zT8JwewweZUDdk0x8FGHh9V5j6bFQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <54D32933.8080307-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Roman Gushchin <klamm-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Nikita Vetoshkin <nekto0n-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+To: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Cc: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 6, 2015 at 1:13 PM, Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->
-> Currently that works fine only because kernel retries 0-order allocations
-> endlessly. But pagefault_out_of_memory() is never called for non-user PF.
-> For kernel PF all oom-kills are triggered by buddy-allocator.
+> 
+> On 05/02/2015 04:54, Weiny, Ira wrote:
+> >>
+> >> On Thu, Jan 29, 2015 at 09:50:38PM +0100, Yann Droneaud wrote:
+> >>
+> >>> Anyway, I recognize that uverb way of abusing write() syscall is
+> >>> borderline (at best) regarding other Linux subsystems and Unix
+> >>> paradigm in general. But it's not enough to screw it more.
+> >>
+> >> Then we must return the correct output size explicitly in the struct.
+> >
+> > I was thinking this very same thing as I read through this thread.
+> >
+> > I too would like to avoid the use of comp_masks if at all possible.  The query
+> call seems to be a verb where the structure size is all you really need to know
+> the set of values returned.
+> >
+> > As Jason says, other calls may require the comp_mask where 0 is not
+> sufficient to indicate "missing".
+> 
+> Would it be okay to return it in the ib_uverbs_cmd_hdr.out_words? That would
+> further abuse the write() syscall by writing to the input buffer.
 
-This makes no sense.
+I don't think that is such a great idea.
+ 
+> However, the only other alternative I see is to add it explicitly to every uverb
+> response struct.
+> 
 
-You're trying to fix what you perceive as a problem in the page fault
-handling in some totally different place.
+I think this is the best solution.  There is a 32 bit reserved field in ib_uverbs_ex_query_device_resp.  Could we use all or part of that to be the size?
 
-If *that* is what you are worried about, then damnit, just fix the
-page fault handler for the kernel case to send a signal or something
-for VM_FAULT_ENOMEM. Or, better yet, make it just trigger oom at
-return to user space - we could add a _TIF_OOM flag, for example, and
-make it part of the user-return logic (do_notify_resume), kind of how
-_TIF_SIGPENDING triggers a signal.
+For other extended commands I'm not sure what to do.
 
-Don't try to make horrible code in insane places that have nothing to
-do with the fundamental problem. Why did you pick this particular
-get/put user anyway? There are tons others that we don't test, why did
-you happen pick these and then make it have that horrible and
-senseless error handling?
-
-Because at *NO* point was it obvious that that patch had anything at
-all to do with "out of memory". Not in the code, not in your commit
-messages, *nowhere*.
-
-There is no way in hell I will take that kind of changes when you
-didn't even articulate why you wanted to do them in the commit
-messages, and the patches didn't look like they had anything to do
-with oom either.
-
-                    Linus
+Ira
