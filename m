@@ -1,47 +1,98 @@
-From: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH v3] samsung-laptop: enable better lid handling
-Date: Fri, 6 Feb 2015 18:38:09 -0800
-Message-ID: <20150207023809.GA36295@fury.dvhart.com>
-References: <1418332715-10547-1-git-send-email-julijonas.kikutis@gmail.com>
- <1422536696-1718-1-git-send-email-julijonas.kikutis@gmail.com>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [RFC] implementing tape statistics single file vs multi-file in
+ sysfs
+Date: Sat, 7 Feb 2015 12:07:43 +0800
+Message-ID: <20150207040743.GB29944@kroah.com>
+References: <DDB9C85B850785449757F9914A034FCB3BF3EADA@G9W0766.americas.hpqcorp.net>
+ <20150206125916.GB26247@kroah.com>
+ <20150206154157.GD1143@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1422536696-1718-1-git-send-email-julijonas.kikutis-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Julijonas Kikutis <julijonas.kikutis-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Corentin Chary <corentin.chary-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:SAMSUNG LAPTOP DR..." <platform-driver-x86-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150206154157.GD1143@localhost.localdomain>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Bryn M. Reeves" <bmr@redhat.com>
+Cc: "Seymour, Shane M" <shane.seymour@hp.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Kai.Makisara@kolumbus.fi" <Kai.Makisara@kolumbus.fi>, "James E.J. Bottomley (JBottomley@parallels.com)" <JBottomley@parallels.com>, "Laurence Oberman (loberman@redhat.com)" <loberman@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 29, 2015 at 01:04:37PM +0000, Julijonas Kikutis wrote:
-> Some Samsung laptops with SABI3 delay the sleep for 10 seconds after
-> the lid is closed and do not wake up from sleep after the lid is opened.
-> A SABI command is needed to enable the better behavior.
+On Fri, Feb 06, 2015 at 03:41:58PM +0000, Bryn M. Reeves wrote:
+> On Fri, Feb 06, 2015 at 04:59:16AM -0800, Greg KH wrote:
+> > On Fri, Feb 06, 2015 at 12:20:53AM +0000, Seymour, Shane M wrote:
+> > > The current patch that implements tape statistics is here:
+> > > 
+> > > http://marc.info/?l=linux-scsi&m=142112067313723&w=2
+> > 
+> > Aside from the "do we want to do this all in a single file" issue that I
+> > will say more on below, this patch has issues.  Please don't use a
+> > kobject for _ANYTHING_ in sysfs that has a struct device as a parent.
+> > If you do that, it can't be seen by userspace tools very well, if at
+> > all.
 > 
-> Command = 0x6e, d0 = 0x81 enables this behavior. Returns d0 = 0x01.
-> Command = 0x6e, d0 = 0x80 disables this behavior. Returns d0 = 0x00.
-> 
-> Command = 0x6d and any d0 queries the state. This returns:
-> d0 = 0x00000*01, d1 = 0x00, d2 = 0x00, d3 = 0x0* when it is enabled.
-> d0 = 0x00000*00, d1 = 0x00, d2 = 0x00, d3 = 0x0* when it is disabled.
-> Where * is 0 - laptop has never slept or hibernated after switch on,
->            1 - laptop has hibernated just before,
->            2 - laptop has slept just before.
-> 
-> Patch addresses bug https://bugzilla.kernel.org/show_bug.cgi?id=75901 .
-> It adds a sysfs attribute lid_handling with a description and also an
-> addition to the quirks structure to enable the mode by default.
-> 
-> A user with another laptop in the bug report says that "power button has
-> to be pressed twice to wake the machine" when he or she enabled the mode
-> manually using the SABI command. Therefore, it is enabled by default
-> only for the single laptop that I have tested.
-> 
-> Signed-off-by: Julijonas Kikutis <julijonas.kikutis-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> I can't speak for Shane but wouldn't spend too much time looking at the
+> current v2 patch: it's the result of a pretty ugly compromise suggested
+> on linux-scsi.
 
-Queued up, thanks Jujijonas.
+Fair enough, but please feel free to cc: me on the patch that you do
+feel is correct to get a sysfs-related review.
 
--- 
-Darren Hart
-Intel Open Source Technology Center
+> > > Recently there was was another discussion here about one file vs a collection of files for tape statistics:
+> > > 
+> > > http://marc.info/?l=linux-scsi&m=142316255501550&w=2
+> > > 
+> > > The result was that I should ask here what method I should use. I
+> > > would like to get feedback in relation to tape statistics and one file
+> > > vs multi-file in sysfs. I'm happy to keep the existing code or change
+> > > to a single file approach.
+> > 
+> > One of the primary reasons we created sysfs and the "one value per file"
+> > rule is that multi-value files just do not work well.  Yes, you get an
+> > atomic snapshot, and you save some open/read/close syscall roundtrips,
+> > but you do so at the expense of forcing userspace to "know" what the
+> > format of the file is.  And once you create it, you can NEVER CHANGE IT
+> > AGAIN.
+> 
+> I am not convinced this is a concern for tape statistics: they are pretty
+> much a solved problem. The commercial *nixes have had this for decades.
+> 
+> Likewise for disk stats: although fluff like maj:min/name etc. has been
+> shuffled a few times the basic fields have remained unchanged for a very
+> long time and sysfs already removes the need to include an identity
+> field.
+
+We already handle i/o stats just fine, why create a special sysfs
+interface for just a tape device interface?  What makes them so special?
+
+> > Yes, that's right, if you come up with some new statistic in the future,
+> > or realize that one of the ones you have now is wrong, you can't change
+> > it, you have to make a whole new file, otherwise you could break
+> > userspace tools.
+> 
+> I understand the fact that you can't change them; I just don't think it's
+> a big problem in this specific case (and much less than some of the
+> more imaginative sysfs content - 2d int arrays with column headers
+> anyone?).
+
+What sysfs file is a 2d int array?  I'll be glad to fix it.
+
+Also, everyone doesn't think their solution will ever need to be
+changed.  Until later when it does :)
+
+> > And yes, open/read/close does take take a few extra cycles, but you
+> > can't really measure it for a virtual filesystem like this on any modern
+> > system.
+> 
+> I'll try to get some numbers when I get back home next week - Shane is
+> talking about use cases involving tens of thousands of tape devices. I
+> am not certain that the overhead would be unmeasurable in that case: the
+> additional context switching & TLB flushes alone seem like they would
+> add up.
+
+If you want to measure tens of thousands of tape devices then you
+shouldn't be using sysfs in the first place as it is not designed for
+"speed" at all.  Use the existing i/o rate interfaces instead, don't try
+to cram something into sysfs that doesn't belong there.
+
+thanks,
+
+greg k-h
