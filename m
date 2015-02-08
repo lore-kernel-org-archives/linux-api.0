@@ -1,40 +1,75 @@
-From: =?utf-8?Q?=22Kai_M=C3=A4kisara_=28Kolumbus=29=22?=
-	<kai.makisara@kolumbus.fi>
-Subject: Re: [RFC] implementing tape statistics single file vs multi-file in sysfs
-Date: Sun, 8 Feb 2015 10:32:13 +0200
-Message-ID: <22CE403F-1EF2-4B52-8CA1-3CF18936CD35@kolumbus.fi>
-References: <DDB9C85B850785449757F9914A034FCB3BF3EADA@G9W0766.americas.hpqcorp.net> <20150206125916.GB26247@kroah.com> <20150206154157.GD1143@localhost.localdomain> <20150207040743.GB29944@kroah.com> <ACE69613-157F-4516-8499-EF8242D26736@gmail.com> <20150208024506.GC15396@kroah.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2070.6\))
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20150208024506.GC15396@kroah.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Greg KH <gregkh@linuxfoundation.org>
-Cc: Laurence Oberman <oberman.l@gmail.com>, "Bryn M. Reeves" <bmr@redhat.com>, "Seymour, Shane M" <shane.seymour@hp.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "James E.J. Bottomley (JBottomley@parallels.com)" <JBottomley@parallels.com>, "Laurence Oberman (loberman@redhat.com)" <loberman@redhat.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH 01/13] kdbus: add documentation
+Date: Sun, 8 Feb 2015 08:54:42 -0800
+Message-ID: <CALCETrWOhw+OKUBNaTDUcqmgc21LfZ4EZ5zJvL9vzGoMd4_TmQ@mail.gmail.com>
+References: <1421435777-25306-1-git-send-email-gregkh@linuxfoundation.org>
+ <1421435777-25306-2-git-send-email-gregkh@linuxfoundation.org>
+ <54BE5DC8.70706@gmail.com> <54BE9D08.7010804@zonque.org> <54BF805B.4000609@gmail.com>
+ <54BFDAAA.50203@zonque.org> <54C0CE8A.5080805@gmail.com> <CANq1E4S=3qNw599L85uj-8aXwxeV+mcurB_Nu_rHH8opAeePjw@mail.gmail.com>
+ <54C10DDC.9000503@gmail.com> <20150123160854.GA5210@kroah.com>
+ <54C65346.5070504@gmail.com> <CANq1E4SkHhs1pWUe-TzG7bzk1M-Q++mB2vmQGuYx0RMF53wg4Q@mail.gmail.com>
+ <CALCETrU1O6LjhrXSH2aXWFt2WGh=ssrq4K9HD10f_Z55iT=Otw@mail.gmail.com>
+ <54C9F525.4040703@zonque.org> <CALCETrV6P+Lx5FRLyDNubG18tqCTLprkXJf=82aa5DsRHjkuKA@mail.gmail.com>
+ <54CA1CA2.9060005@zonque.org> <CALCETrXD41=ohFSkCmBD8zPHFVUtr49QXMhYnChAxqQtmUjJYw@mail.gmail.com>
+ <54CF44B9.8000005@zonque.org> <CALCETrUh1Mse4CBQ4bfkJf+ew=kdpn46hMLS2QafLhfRTzQoBQ@mail.gmail.com>
+ <54D09E6B.2020903@zonque.org> <CALCETrXVDWJOvOTeTwCqrF6sn8e8XQfZSUbgg6hRnv+h-eX1Uw@mail.gmail.com>
+ <CANq1E4ShseFuTp0wPrHM9mFmgA-y9Kqz1m0-FmU9qALuxQ8Qvg@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CANq1E4ShseFuTp0wPrHM9mFmgA-y9Kqz1m0-FmU9qALuxQ8Qvg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Johannes Stezenbach <js-FF7aIK3TAVNeoWH0uzbU5w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Feb 4, 2015 4:16 PM, "David Herrmann" <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>
+> Hi
+>
+> On Thu, Feb 5, 2015 at 12:03 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> > I see "latencies" of around 20 microseconds with lockdep and context
+> > tracking off.  For example:
+>
+> Without metadata nor memfd transmission, I get 2.5us for kdbus, 1.5us
+> for UDS (8k payload). With 8-byte payloads, I get 2.2us and 1.2us. I
+> suspect you enabled metadata transmission, which I think is not a fair
+> comparison.
 
-> On 8.2.2015, at 4.45, Greg KH <gregkh@linuxfoundation.org> wrote:
-> 
-> On Sat, Feb 07, 2015 at 09:27:05PM -0500, Laurence Oberman wrote:
->> Hello
->> Its not going to be tens of thousands of devices. That count was an
->> aggregate based on 1000's of servers.
->> In reality its unlikely to ever be more than 100 tapes drives per
->> individual Linux kernel instance.
->> Therefore sysfs will be the valid way to do this and make the data
->> available to user space.
-> 
-> Even if it is only 2 tape drives, again, what's wrong with using the
-> existing i/o statistic interfaces that all block devices have?  Don't go
-> making special one-off interfaces for one type of device if at all
-> possible.
-> 
-The tape driver does not have access to the block device i/o statistics because the tapes are not block devices but character devices. They use the Linux block subsystem enough to do i/o but this does not include access to the statistics counters.
+I tried to disable metadata.  I may have failed.
 
-The purpose of the suggested text vector format patch is to create statistics that have the same format as the existing i/o statistics that the block devices so that the existing tools can be used with minimal modifications. One alternative is, of course, to tie the st driver more into the Linux block device system. I have looked into this several times but have never seen how to do this in a simple enough way.
+Regardless, if metadata is very slow, then that's more reason not to
+use it on send.  And if you shouldn't use it, then maybe the kernel
+shouldn't provide it.
 
-Thanks,
-Kai
+I assumed there was a context switch in there.  I can try to test
+differently.  If UDS is twice as fast *with* a contest switch, then a
+userspace solution should be faster.
 
+Also, UDS can use memfds, too.
+
+>
+> A few notes on that:
+>
+> * kdbus is a bus layer. We don't intend to replace UDS, but improve
+> dbus. Comparing roundtrip times with UDS is tempting, but in no way
+> fair. To the very least, a bus layer has to perform peer-lookup, which
+> UDS does not have to do. Imo, 2.5us vs. 1.5us is already pretty nice.
+> Compare this to ~77us for dbus1 without marshaling.
+
+This makes me wonder what dbus1 is doing wrong.
+
+>
+> * We have not optimized kdbus code-paths for speed, yet. Our main
+> concerns are algorithmic challenges, and we believe they've been
+> improved considerably with kdbus. I have constantly measured kdbus
+> performance with 'perf' and flame-graphs, and there're a lot of
+> possible optimizations (especially on locking). However, I think this
+> can be done afterwards just fine. Neither API nor ioctl overhead has
+> shown up in my measurements. If anyone has counter evidence, please
+> let us know. But I'm a bit reluctant to change our API solely based on
+> performance guesses.
+
+But removal of send-time metadata can't be done after the fact.
+
+--Andy
