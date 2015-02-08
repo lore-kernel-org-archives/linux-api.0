@@ -1,62 +1,40 @@
-From: Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v1 1/5] IB/uverbs: ex_query_device: answer must not depend
- on request's comp_mask
-Date: Sun, 8 Feb 2015 09:27:22 +0200
-Message-ID: <54D70FDA.3000902@mellanox.com>
-References: <cover.1422553023.git.ydroneaud@opteya.com>
- <24ceb1fc5b2b6563532e5776b1b2320b1ae37543.1422553023.git.ydroneaud@opteya.com>
- <20150129182800.GH11842@obsidianresearch.com>
- <1422557009.3133.172.camel@opteya.com>
- <20150129191801.GM11842@obsidianresearch.com>
- <1422564638.3133.198.camel@opteya.com>
- <20150129211256.GA22099@obsidianresearch.com>
- <2807E5FD2F6FDA4886F6618EAC48510E0CC12C30@CRSMSX101.amr.corp.intel.com>
- <54D32933.8080307@mellanox.com>
- <2807E5FD2F6FDA4886F6618EAC48510E0CC201F7@CRSMSX101.amr.corp.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <2807E5FD2F6FDA4886F6618EAC48510E0CC201F7-8k97q/ur5Z2krb+BlOpmy7fspsVTdybXVpNB7YpNyf8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Weiny, Ira" <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
-Cc: Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: =?utf-8?Q?=22Kai_M=C3=A4kisara_=28Kolumbus=29=22?=
+	<kai.makisara@kolumbus.fi>
+Subject: Re: [RFC] implementing tape statistics single file vs multi-file in sysfs
+Date: Sun, 8 Feb 2015 10:32:13 +0200
+Message-ID: <22CE403F-1EF2-4B52-8CA1-3CF18936CD35@kolumbus.fi>
+References: <DDB9C85B850785449757F9914A034FCB3BF3EADA@G9W0766.americas.hpqcorp.net> <20150206125916.GB26247@kroah.com> <20150206154157.GD1143@localhost.localdomain> <20150207040743.GB29944@kroah.com> <ACE69613-157F-4516-8499-EF8242D26736@gmail.com> <20150208024506.GC15396@kroah.com>
+Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2070.6\))
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20150208024506.GC15396@kroah.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Greg KH <gregkh@linuxfoundation.org>
+Cc: Laurence Oberman <oberman.l@gmail.com>, "Bryn M. Reeves" <bmr@redhat.com>, "Seymour, Shane M" <shane.seymour@hp.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "James E.J. Bottomley (JBottomley@parallels.com)" <JBottomley@parallels.com>, "Laurence Oberman (loberman@redhat.com)" <loberman@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On 07/02/2015 02:52, Weiny, Ira wrote:
->>
->> On 05/02/2015 04:54, Weiny, Ira wrote:
->>>>
->>>> On Thu, Jan 29, 2015 at 09:50:38PM +0100, Yann Droneaud wrote:
->>>>
->>>>> Anyway, I recognize that uverb way of abusing write() syscall is
->>>>> borderline (at best) regarding other Linux subsystems and Unix
->>>>> paradigm in general. But it's not enough to screw it more.
->>>>
->>>> Then we must return the correct output size explicitly in the struct.
->>>
->>> I was thinking this very same thing as I read through this thread.
->>>
->>> I too would like to avoid the use of comp_masks if at all possible.  The query
->> call seems to be a verb where the structure size is all you really need to know
->> the set of values returned.
->>>
->>> As Jason says, other calls may require the comp_mask where 0 is not
->> sufficient to indicate "missing".
->>
-...
->  
->> However, the only other alternative I see is to add it explicitly to every uverb
->> response struct.
->>
+
+> On 8.2.2015, at 4.45, Greg KH <gregkh@linuxfoundation.org> wrote:
 > 
-> I think this is the best solution.  There is a 32 bit reserved field in ib_uverbs_ex_query_device_resp.  Could we use all or part of that to be the size?
+> On Sat, Feb 07, 2015 at 09:27:05PM -0500, Laurence Oberman wrote:
+>> Hello
+>> Its not going to be tens of thousands of devices. That count was an
+>> aggregate based on 1000's of servers.
+>> In reality its unlikely to ever be more than 100 tapes drives per
+>> individual Linux kernel instance.
+>> Therefore sysfs will be the valid way to do this and make the data
+>> available to user space.
+> 
+> Even if it is only 2 tape drives, again, what's wrong with using the
+> existing i/o statistic interfaces that all block devices have?  Don't go
+> making special one-off interfaces for one type of device if at all
+> possible.
+> 
+The tape driver does not have access to the block device i/o statistics because the tapes are not block devices but character devices. They use the Linux block subsystem enough to do i/o but this does not include access to the statistics counters.
 
-Yes, I think 32-bit for the response length are more than enough.
-
-I will send patches for 3.20 to re-introduce ib_uverbs_ex_query_device
-with the response size instead of the reserved field, and with Yann's
-changes.
+The purpose of the suggested text vector format patch is to create statistics that have the same format as the existing i/o statistics that the block devices so that the existing tools can be used with minimal modifications. One alternative is, of course, to tie the st driver more into the Linux block device system. I have looked into this several times but have never seen how to do this in a simple enough way.
 
 Thanks,
-Haggai
+Kai
+
