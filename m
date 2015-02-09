@@ -1,144 +1,296 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [PATCH v17 1/7] mm: support madvise(MADV_FREE)
-Date: Mon, 9 Feb 2015 16:15:53 +0900
-Message-ID: <20150209071553.GC32300@blaptop>
-References: <20141202100125.GD27014@dhcp22.suse.cz>
- <20141203000026.GA30217@bbox>
- <20141203101329.GB23236@dhcp22.suse.cz>
- <20141205070816.GB3358@bbox>
- <20141205083249.GA2321@dhcp22.suse.cz>
- <54D0F9BC.4060306@gmail.com>
- <20150203234722.GB3583@blaptop>
- <20150206003311.GA2347@kernel.org>
- <20150206055103.GA13244@blaptop>
- <20150206182918.GA2290@kernel.org>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: [PATCH 3.14 13/20] arm64: Fix up /proc/cpuinfo
+Date: Mon,  9 Feb 2015 16:34:05 +0800
+Message-ID: <20150209083042.937818171@linuxfoundation.org>
+References: <20150209083042.033412726@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150206182918.GA2290@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: Shaohua Li <shli@kernel.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Michal Hocko <mhocko@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+Content-Type: text/plain; charset=ISO-8859-15
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150209083042.033412726@linuxfoundation.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, stable@vger.kernel.org, Greg Hackmann <ghackmann@google.com>, Ian Campbell <ijc@hellion.org.uk>, Serban Constantinescu <serban.constantinescu@arm.com>, Will Deacon <will.deacon@arm.com>, cross-distro@lists.linaro.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, Catalin Marinas <catalin.marinas@arm.com>, Mark Rutland <mark.rutland@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 06, 2015 at 10:29:18AM -0800, Shaohua Li wrote:
-> On Fri, Feb 06, 2015 at 02:51:03PM +0900, Minchan Kim wrote:
-> > Hi Shaohua,
-> > 
-> > On Thu, Feb 05, 2015 at 04:33:11PM -0800, Shaohua Li wrote:
-> > > 
-> > > Hi Minchan,
-> > > 
-> > > Sorry to jump in this thread so later, and if some issues are discussed before.
-> > > I'm interesting in this patch, so tried it here. I use a simple test with
-> > 
-> > No problem at all. Interest is always win over ignorance.
-> > 
-> > > jemalloc. Obviously this can improve performance when there is no memory
-> > > pressure. Did you try setup with memory pressure?
-> > 
-> > Sure but it was not a huge memory system like yours.
-> 
-> Yes, I'd like to check the symptom in memory pressure, so choose such test.
-> 
-> > > In my test, jemalloc will map 61G vma, and use about 32G memory without
-> > > MADV_FREE. If MADV_FREE is enabled, jemalloc will use whole 61G memory because
-> > > madvise doesn't reclaim the unused memory. If I disable swap (tweak your patch
-> > 
-> > Yes, IIUC, jemalloc replaces MADV_DONTNEED with MADV_FREE completely.
-> 
-> right.
-> > > slightly to make it work without swap), I got oom. If swap is enabled, my
-> > 
-> > You mean you modified anon aging logic so it works although there is no swap?
-> > If so, I have no idea why OOM happens. I guess it should free all of freeable
-> > pages during the aging so although system stall happens more, I don't expect
-> > OOM. Anyway, with MADV_FREE with no swap, we should consider more things
-> > about anonymous aging.
-> 
-> In the patch, MADV_FREE will be disabled and fallback to DONTNEED if no swap is
-> enabled. Our production environment doesn't enable swap, so I tried to delete
-> the 'no swap' check and make MADV_FREE always enabled regardless if swap is
-> enabled. I didn't change anything else. With such change, I saw oom
-> immediately. So definitely we have aging issue, the pages aren't reclaimed
-> fast.
+3.14-stable review patch.  If anyone has any objections, please let me know.
 
-In current VM implementation, it doesn't age anonymous LRU list if we have no
-swap. That's the reason to drop freeing pages instantly.
-I think it could be enhanced later.
-http://lists.infradead.org/pipermail/linux-arm-kernel/2014-December/311591.html
+------------------
 
-> 
-> > > system is totally stalled because of swap activity. Without the MADV_FREE,
-> > > everything is ok. Considering we definitely don't want to waste too much
-> > > memory, a system with memory pressure is normal, so sounds MADV_FREE will
-> > > introduce big trouble here.
-> > > 
-> > > Did you think about move the MADV_FREE pages to the head of inactive LRU, so
-> > > they can be reclaimed easily?
-> > 
-> > I think it's desirable if the page lived in active LRU.
-> > The reason I didn't that was caused by volatile ranges system call which
-> > was motivaion for MADV_FREE in my mind.
-> > In last LSF/MM, there was concern about data's hotness.
-> > Some of users want to keep that as it is in LRU position, others want to
-> > handle that as cold(tail of inactive list)/warm(head of inactive list)/
-> > hot(head of active list), for example.
-> > The vrange syscall was just about volatiltiy, not depends on page hotness
-> > so the decision on my head was not to change LRU order and let's make new
-> > hotness advise if we need it later.
-> > 
-> > However, MADV_FREE's main customer is allocators and afaik, they want
-> > to replace MADV_DONTNEED with MADV_FREE so I think it is really cold,
-> > but we couldn't make sure so head of inactive is good compromise.
-> > Another concern about tail of inactive list is that there could be
-> > plenty of pages in there, which was asynchromos write-backed in
-> > previous reclaim path, not-yet reclaimed because of not being able
-> > to free the in softirq context of writeback. It means we ends up
-> > freeing more potential pages to become workingset in advance
-> > than pages VM already decided to evict.
-> 
-> Yes, they are definitely cold pages. I thought We should make sure the
-> MADV_FREE pages are reclaimed first before other pages, at least in the anon
-> LRU list, though there might be difficult to determine if we should reclaim
-> writeback pages first or MADV_FREE pages first.
+From: Mark Rutland <mark.rutland@arm.com>
 
-Frankly speaking, the issue with writeback page is just hurdle of
-implementation, not design so if we could fix it, we might move
-cold pages into tail of the inactive LRU. I tried it but don't have
-time slot to continue these days. Hope to get a time to look soon.
-https://lkml.org/lkml/2014/7/1/628
-Even, it wouldn't be critical problem although we couldn't fix
-the problem of writeback pages because they are already all
-cold pages so it might be not important to keep order in LRU so
-we could save working set and effort of VM to reclaim them
-at the cost of moving all of hinting pages into tail of the LRU
-whenever the syscall is called.
+commit 44b82b7700d05a52cd983799d3ecde1a976b3bed upstream.
 
-However, significant problem from my mind is we couldn't make
-sure they are really cold pages. It would be true for allocators
-but it's cache-friendly pages so it might be better to discard
-tail pages of inactive LRU, which are really cold.
-In addition, we couldn't expect all of usecase for MADV_FREE
-so some of users might want to treat them as warm, not cold.
+Commit d7a49086f263164a (arm64: cpuinfo: print info for all CPUs)
+attempted to clean up /proc/cpuinfo, but due to concerns regarding
+further changes was reverted in commit 5e39977edf6500fd (Revert "arm64:
+cpuinfo: print info for all CPUs").
 
-With moving them into inactive list's head, if we still see
-a lot stall, I think it's a sign to add other logic, for example,
-we could drop MADV_FREEed pages instantly if the zone is below
-low min watermark when the syscall is called. Because everybody
-doesn't like direct reclaim.
+There are two major issues with the arm64 /proc/cpuinfo format
+currently:
 
-> 
-> Thanks,
-> Shaohua
+* The "Features" line describes (only) the 64-bit hwcaps, which is
+  problematic for some 32-bit applications which attempt to parse it. As
+  the same names are used for analogous ISA features (e.g. aes) despite
+  these generally being architecturally unrelated, it is not possible to
+  simply append the 64-bit and 32-bit hwcaps in a manner that might not
+  be misleading to some applications.
 
--- 
-Kind regards,
-Minchan Kim
+  Various potential solutions have appeared in vendor kernels. Typically
+  the format of the Features line varies depending on whether the task
+  is 32-bit.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+* Information is only printed regarding a single CPU. This does not
+  match the ARM format, and does not provide sufficient information in
+  big.LITTLE systems where CPUs are heterogeneous. The CPU information
+  printed is queried from the current CPU's registers, which is racy
+  w.r.t. cross-cpu migration.
+
+This patch attempts to solve these issues. The following changes are
+made:
+
+* When a task with a LINUX32 personality attempts to read /proc/cpuinfo,
+  the "Features" line contains the decoded 32-bit hwcaps, as with the
+  arm port. Otherwise, the decoded 64-bit hwcaps are shown. This aligns
+  with the behaviour of COMPAT_UTS_MACHINE and COMPAT_ELF_PLATFORM. In
+  the absense of compat support, the Features line is empty.
+
+  The set of hwcaps injected into a task's auxval are unaffected.
+
+* Properties are printed per-cpu, as with the ARM port. The per-cpu
+  information is queried from pre-recorded cpu information (as used by
+  the sanity checks).
+
+* As with the previous attempt at fixing up /proc/cpuinfo, the hardware
+  field is removed. The only users so far are 32-bit applications tied
+  to particular boards, so no portable applications should be affected,
+  and this should prevent future tying to particular boards.
+
+The following differences remain:
+
+* No model_name is printed, as this cannot be queried from the hardware
+  and cannot be provided in a stable fashion. Use of the CPU
+  {implementor,variant,part,revision} fields is sufficient to identify a
+  CPU and is portable across arm and arm64.
+
+* The following system-wide properties are not provided, as they are not
+  possible to provide generally. Programs relying on these are already
+  tied to particular (32-bit only) boards:
+  - Hardware
+  - Revision
+  - Serial
+
+No software has yet been identified for which these remaining
+differences are problematic.
+
+Cc: Greg Hackmann <ghackmann@google.com>
+Cc: Ian Campbell <ijc@hellion.org.uk>
+Cc: Serban Constantinescu <serban.constantinescu@arm.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: cross-distro@lists.linaro.org
+Cc: linux-api@vger.kernel.org
+Cc: linux-arm-kernel@lists.infradead.org
+Cc: linux-kernel@vger.kernel.org
+Acked-by: Catalin Marinas <catalin.marinas@arm.com>
+Signed-off-by: Mark Rutland <mark.rutland@arm.com>
+Signed-off-by: Will Deacon <will.deacon@arm.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+---
+ arch/arm64/include/asm/cputype.h |    2 
+ arch/arm64/kernel/setup.c        |   99 ++++++++++++++++++++++++++++-----------
+ arch/arm64/kernel/smp.c          |    5 +
+ 3 files changed, 80 insertions(+), 26 deletions(-)
+
+--- a/arch/arm64/include/asm/cputype.h
++++ b/arch/arm64/include/asm/cputype.h
+@@ -77,6 +77,8 @@ static inline u32 __attribute_const__ re
+ 	return read_cpuid(CTR_EL0);
+ }
+ 
++void cpuinfo_store_cpu(void);
++
+ #endif /* __ASSEMBLY__ */
+ 
+ #endif
+--- a/arch/arm64/kernel/setup.c
++++ b/arch/arm64/kernel/setup.c
+@@ -41,6 +41,7 @@
+ #include <linux/memblock.h>
+ #include <linux/of_fdt.h>
+ #include <linux/of_platform.h>
++#include <linux/personality.h>
+ 
+ #include <asm/cputype.h>
+ #include <asm/elf.h>
+@@ -73,7 +74,6 @@ unsigned int compat_elf_hwcap __read_mos
+ #endif
+ 
+ static const char *cpu_name;
+-static const char *machine_name;
+ phys_addr_t __fdt_pointer __initdata;
+ 
+ /*
+@@ -193,6 +193,19 @@ static void __init smp_build_mpidr_hash(
+ }
+ #endif
+ 
++struct cpuinfo_arm64 {
++	struct cpu	cpu;
++	u32		reg_midr;
++};
++
++static DEFINE_PER_CPU(struct cpuinfo_arm64, cpu_data);
++
++void cpuinfo_store_cpu(void)
++{
++	struct cpuinfo_arm64 *info = this_cpu_ptr(&cpu_data);
++	info->reg_midr = read_cpuid_id();
++}
++
+ static void __init setup_processor(void)
+ {
+ 	struct cpu_info *cpu_info;
+@@ -213,6 +226,8 @@ static void __init setup_processor(void)
+ 	sprintf(init_utsname()->machine, ELF_PLATFORM);
+ 	elf_hwcap = 0;
+ 
++	cpuinfo_store_cpu();
++
+ 	/*
+ 	 * ID_AA64ISAR0_EL1 contains 4-bit wide signed feature blocks.
+ 	 * The blocks we test below represent incremental functionality
+@@ -257,8 +272,6 @@ static void __init setup_machine_fdt(phy
+ 		while (true)
+ 			cpu_relax();
+ 	}
+-
+-	machine_name = of_flat_dt_get_machine_name();
+ }
+ 
+ /*
+@@ -363,14 +376,12 @@ static int __init arm64_device_init(void
+ }
+ arch_initcall(arm64_device_init);
+ 
+-static DEFINE_PER_CPU(struct cpu, cpu_data);
+-
+ static int __init topology_init(void)
+ {
+ 	int i;
+ 
+ 	for_each_possible_cpu(i) {
+-		struct cpu *cpu = &per_cpu(cpu_data, i);
++		struct cpu *cpu = &per_cpu(cpu_data.cpu, i);
+ 		cpu->hotpluggable = 1;
+ 		register_cpu(cpu, i);
+ 	}
+@@ -391,14 +402,41 @@ static const char *hwcap_str[] = {
+ 	NULL
+ };
+ 
++#ifdef CONFIG_COMPAT
++static const char *compat_hwcap_str[] = {
++	"swp",
++	"half",
++	"thumb",
++	"26bit",
++	"fastmult",
++	"fpa",
++	"vfp",
++	"edsp",
++	"java",
++	"iwmmxt",
++	"crunch",
++	"thumbee",
++	"neon",
++	"vfpv3",
++	"vfpv3d16",
++	"tls",
++	"vfpv4",
++	"idiva",
++	"idivt",
++	"vfpd32",
++	"lpae",
++	"evtstrm"
++};
++#endif /* CONFIG_COMPAT */
++
+ static int c_show(struct seq_file *m, void *v)
+ {
+-	int i;
+-
+-	seq_printf(m, "Processor\t: %s rev %d (%s)\n",
+-		   cpu_name, read_cpuid_id() & 15, ELF_PLATFORM);
++	int i, j;
+ 
+ 	for_each_online_cpu(i) {
++		struct cpuinfo_arm64 *cpuinfo = &per_cpu(cpu_data, i);
++		u32 midr = cpuinfo->reg_midr;
++
+ 		/*
+ 		 * glibc reads /proc/cpuinfo to determine the number of
+ 		 * online processors, looking for lines beginning with
+@@ -407,24 +445,33 @@ static int c_show(struct seq_file *m, vo
+ #ifdef CONFIG_SMP
+ 		seq_printf(m, "processor\t: %d\n", i);
+ #endif
+-	}
+-
+-	/* dump out the processor features */
+-	seq_puts(m, "Features\t: ");
+-
+-	for (i = 0; hwcap_str[i]; i++)
+-		if (elf_hwcap & (1 << i))
+-			seq_printf(m, "%s ", hwcap_str[i]);
+-
+-	seq_printf(m, "\nCPU implementer\t: 0x%02x\n", read_cpuid_id() >> 24);
+-	seq_printf(m, "CPU architecture: AArch64\n");
+-	seq_printf(m, "CPU variant\t: 0x%x\n", (read_cpuid_id() >> 20) & 15);
+-	seq_printf(m, "CPU part\t: 0x%03x\n", (read_cpuid_id() >> 4) & 0xfff);
+-	seq_printf(m, "CPU revision\t: %d\n", read_cpuid_id() & 15);
+ 
+-	seq_puts(m, "\n");
++		/*
++		 * Dump out the common processor features in a single line.
++		 * Userspace should read the hwcaps with getauxval(AT_HWCAP)
++		 * rather than attempting to parse this, but there's a body of
++		 * software which does already (at least for 32-bit).
++		 */
++		seq_puts(m, "Features\t:");
++		if (personality(current->personality) == PER_LINUX32) {
++#ifdef CONFIG_COMPAT
++			for (j = 0; compat_hwcap_str[j]; j++)
++				if (compat_elf_hwcap & (1 << j))
++					seq_printf(m, " %s", compat_hwcap_str[j]);
++#endif /* CONFIG_COMPAT */
++		} else {
++			for (j = 0; hwcap_str[j]; j++)
++				if (elf_hwcap & (1 << j))
++					seq_printf(m, " %s", hwcap_str[j]);
++		}
++		seq_puts(m, "\n");
+ 
+-	seq_printf(m, "Hardware\t: %s\n", machine_name);
++		seq_printf(m, "CPU implementer\t: 0x%02x\n", (midr >> 24));
++		seq_printf(m, "CPU architecture: 8\n");
++		seq_printf(m, "CPU variant\t: 0x%x\n", ((midr >> 20) & 0xf));
++		seq_printf(m, "CPU part\t: 0x%03x\n", ((midr >> 4) & 0xfff));
++		seq_printf(m, "CPU revision\t: %d\n\n", (midr & 0xf));
++	}
+ 
+ 	return 0;
+ }
+--- a/arch/arm64/kernel/smp.c
++++ b/arch/arm64/kernel/smp.c
+@@ -148,6 +148,11 @@ asmlinkage void secondary_start_kernel(v
+ 		cpu_ops[cpu]->cpu_postboot();
+ 
+ 	/*
++	 * Log the CPU info before it is marked online and might get read.
++	 */
++	cpuinfo_store_cpu();
++
++	/*
+ 	 * Enable GIC and timers.
+ 	 */
+ 	notify_cpu_starting(cpu);
