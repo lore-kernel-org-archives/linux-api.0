@@ -1,138 +1,205 @@
-From: Peter =?iso-8859-15?q?H=FCwe?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
-Subject: Re: [PATCH] tpm, tpm_tis: fix TPM 2.0 probing
-Date: Mon, 9 Feb 2015 00:08:46 +0100
-Message-ID: <201502090008.47986.PeterHuewe@gmx.de>
-References: <1423059669-31734-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: MADV_DONTNEED semantics? Was: [RFC PATCH] mm: madvise: Ignore
+ repeated MADV_DONTNEED hints
+Date: Mon, 9 Feb 2015 15:46:00 +0900
+Message-ID: <20150209064600.GA32300@blaptop>
+References: <54D08483.40209@suse.cz>
+ <20150203105301.GC14259@node.dhcp.inet.fi>
+ <54D0B43D.8000209@suse.cz>
+ <54D0F56A.9050003@gmail.com>
+ <54D22298.3040504@suse.cz>
+ <CAKgNAkgOOCuzJz9whoVfFjqhxM0zYsz94B1+oH58SthC5Ut9sg@mail.gmail.com>
+ <54D2508A.9030804@suse.cz>
+ <CAKgNAkhNbHQX7RukSsSe3bMqY11f493rYbDpTOA2jH7vsziNww@mail.gmail.com>
+ <20150205010757.GA20996@blaptop>
+ <54D4E098.8050004@gmail.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-15"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1423059669-31734-1-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <54D4E098.8050004-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Am Mittwoch, 4. Februar 2015, 15:21:09 schrieb Jarkko Sakkinen:
-> If during transmission system error was returned, the logic was to
-> incorrectly deduce that chip is a TPM 1.x chip. This patch fixes this
-> issue. Also, this patch changes probing so that message tag is used as the
-> measure for TPM 2.x, which should be much more stable.
-Is it aware that some TPMs may respond with 0x00C1 as TAG for TPM1.2 commands?
+Hello, Michael
 
+On Fri, Feb 06, 2015 at 04:41:12PM +0100, Michael Kerrisk (man-pages) w=
+rote:
+> On 02/05/2015 02:07 AM, Minchan Kim wrote:
+> > Hello,
+> >=20
+> > On Wed, Feb 04, 2015 at 08:24:27PM +0100, Michael Kerrisk (man-page=
+s) wrote:
+> >> On 4 February 2015 at 18:02, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org> wrot=
+e:
+> >>> On 02/04/2015 03:00 PM, Michael Kerrisk (man-pages) wrote:
+> >>>>
+> >>>> Hello Vlastimil,
+> >>>>
+> >>>> On 4 February 2015 at 14:46, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org> wr=
+ote:
+> >>>>>>>
+> >>>>>>> - that covers mlocking ok, not sure if the rest fits the "sha=
+red pages"
+> >>>>>>> case
+> >>>>>>> though. I dont see any check for other kinds of shared pages =
+in the
+> >>>>>>> code.
+> >>>>>>
+> >>>>>>
+> >>>>>> Agreed. "shared" here seems confused. I've removed it. And I'v=
+e
+> >>>>>> added mention of "Huge TLB pages" for this error.
+> >>>>>
+> >>>>>
+> >>>>> Thanks.
+> >>>>
+> >>>>
+> >>>> I also added those cases for MADV_REMOVE, BTW.
+> >>>
+> >>>
+> >>> Right. There's also the following for MADV_REMOVE that needs upda=
+ting:
+> >>>
+> >>> "Currently, only shmfs/tmpfs supports this; other filesystems ret=
+urn with
+> >>> the error ENOSYS."
+> >>>
+> >>> - it's not just shmem/tmpfs anymore. It should be best to refer t=
+o
+> >>> fallocate(2) option FALLOC_FL_PUNCH_HOLE which seems to be (more)=
+ up to
+> >>> date.
+> >>>
+> >>> - AFAICS it doesn't return ENOSYS but EOPNOTSUPP. Also neither er=
+ror code is
+> >>> listed in the ERRORS section.
+> >>
+> >> Yup, I recently added that as well, based on a patch from Jan Chal=
+oupka.
+> >>
+> >>>>>>>>> - The word "will result" did sound as a guarantee at least =
+to me. So
+> >>>>>>>>> here it
+> >>>>>>>>> could be changed to "may result (unless the advice is ignor=
+ed)"?
+> >>>>>>>>
+> >>>>>>>> It's too late to fix documentation. Applications already dep=
+ends on
+> >>>>>>>> the
+> >>>>>>>> beheviour.
+> >>>>>>>
+> >>>>>>> Right, so as long as they check for EINVAL, it should be safe=
+=2E It
+> >>>>>>> appears
+> >>>>>>> that
+> >>>>>>> jemalloc does.
+> >>>>>>
+> >>>>>> So, first a brief question: in the cases where the call does n=
+ot error
+> >>>>>> out,
+> >>>>>> are we agreed that in the current implementation, MADV_DONTNEE=
+D will
+> >>>>>> always result in zero-filled pages when the region is faulted =
+back in
+> >>>>>> (when we consider pages that are not backed by a file)?
+> >>>>>
+> >>>>> I'd agree at this point.
+> >>>>
+> >>>> Thanks for the confirmation.
+> >>>>
+> >>>>> Also we should probably mention anonymously shared pages (shmem=
+). I think
+> >>>>> they behave the same as file here.
+> >>>>
+> >>>> You mean tmpfs here, right? (I don't keep all of the synonyms st=
+raight.)
+> >>>
+> >>> shmem is tmpfs (that by itself would fit under "files" just fine)=
+, but also
+> >>> sys V segments created by shmget(2) and also mappings created by =
+mmap with
+> >>> MAP_SHARED | MAP_ANONYMOUS. I'm not sure if there's a single manp=
+age to
+> >>> refer to the full list.
+> >>
+> >> So, how about this text:
+> >>
+> >>               After a successful MADV_DONTNEED operation, the sema=
+n=E2=80=90
+> >>               tics  of  memory  access  in  the specified region a=
+re
+> >>               changed: subsequent accesses of  pages  in  the  ran=
+ge
+> >>               will  succeed,  but will result in either reloading =
+of
+> >>               the memory contents from the  underlying  mapped  fi=
+le
+> >>               (for  shared file mappings, shared anonymous mapping=
+s,
+> >>               and shmem-based techniques such  as  System  V  shar=
+ed
+> >>               memory  segments)  or  zero-fill-on-demand  pages  f=
+or
+> >>               anonymous private mappings.
+> >=20
+> > Hmm, I'd like to clarify.
+> >=20
+> > Whether it was intention or not, some of userspace developers thoug=
+ht
+> > about that syscall drop pages instantly if was no-error return so t=
+hat
+> > they will see more free pages(ie, rss for the process will be decre=
+ased)
+> > with keeping the VMA. Can we rely on it?
+>=20
+> I do not know. Michael?
 
-> A separate function
-> called tpm2_probe() is encapsulated because it can be used with any
-> chipset.
+It's important to identify difference between MADV_DONTNEED and MADV_FR=
+EE
+so it would be better to clear out in this chance.
 
-> 
-> Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> ---
->  drivers/char/tpm/tpm.h      |  3 ++-
->  drivers/char/tpm/tpm2-cmd.c | 40 +++++++++++++++++++++++++++++++++-------
->  drivers/char/tpm/tpm_tis.c  | 11 ++++-------
->  3 files changed, 39 insertions(+), 15 deletions(-)
-> 
-> diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
-> index 7b0727c..a4b0f5e 100644
-> --- a/drivers/char/tpm/tpm.h
-> +++ b/drivers/char/tpm/tpm.h
-> @@ -435,4 +435,5 @@ extern int tpm2_startup(struct tpm_chip *chip, u16
-> startup_type); extern int tpm2_shutdown(struct tpm_chip *chip, u16
-> shutdown_type); extern unsigned long tpm2_calc_ordinal_duration(struct
-> tpm_chip *, u32); extern int tpm2_do_selftest(struct tpm_chip *chip);
-> -extern int tpm2_gen_interrupt(struct tpm_chip *chip, bool quiet);
-> +extern int tpm2_gen_interrupt(struct tpm_chip *chip);
-> +extern int tpm2_probe(struct tpm_chip *chip);
-> diff --git a/drivers/char/tpm/tpm2-cmd.c b/drivers/char/tpm/tpm2-cmd.c
-> index 1abe650..49cd354 100644
-> --- a/drivers/char/tpm/tpm2-cmd.c
-> +++ b/drivers/char/tpm/tpm2-cmd.c
-> @@ -598,20 +598,46 @@ EXPORT_SYMBOL_GPL(tpm2_do_selftest);
->  /**
->   * tpm2_gen_interrupt() - generate an interrupt
->   * @chip: TPM chip to use
-> - * @quiet: surpress the error message
->   *
->   * 0 is returned when the operation is successful. If a negative number is
->   * returned it remarks a POSIX error code. If a positive number is
-> returned * it remarks a TPM error.
->   */
-> -int tpm2_gen_interrupt(struct tpm_chip *chip, bool quiet)
-> +int tpm2_gen_interrupt(struct tpm_chip *chip)
->  {
-> -	const char *desc = NULL;
->  	u32 dummy;
-> 
-> -	if (!quiet)
-> -		desc = "attempting to generate an interrupt";
-> -
-> -	return tpm2_get_tpm_pt(chip, TPM2_CAP_TPM_PROPERTIES, &dummy, desc);
-> +	return tpm2_get_tpm_pt(chip, 0x100, &dummy,
-> +			       "attempting to generate an interrupt");
-Why the change from TPM2_CAP_TPM_PROPERTIES = 6 to 0x100 and what does 0x100 
-stand for?
+>=20
+> > And we should make error section, too.
+> > "locked" covers mlock(2) and you said you will add hugetlb. Then,
+> > VM_PFNMAP? In that case, it fails. How can we say about VM_PFNMAP?
+> > special mapping for some drivers?
+>=20
+> I'm open for offers on what to add.
 
+I suggests from quote "LWN" http://lwn.net/Articles/162860/
+"*special mapping* which is not made up of "normal" pages.
+It is usually created by device drivers which map special memory areas
+into user space"
 
->  }
->  EXPORT_SYMBOL_GPL(tpm2_gen_interrupt);
-> +
-> +/**
-> + * tpm2_probe() - probe TPM 2.0
-> + * @chip: TPM chip to use
-> + *
-> + * Send idempotent TPM 2.0 command and see whether TPM 2.0 chip replied
-> based on + * the reply tag.
-> + */
-> +int tpm2_probe(struct tpm_chip *chip)
-> +{
-> +	struct tpm2_cmd cmd;
-> +	int rc;
-> +
-> +	cmd.header.in = tpm2_get_tpm_pt_header;
-> +	cmd.params.get_tpm_pt_in.cap_id = cpu_to_be32(TPM2_CAP_TPM_PROPERTIES);
-> +	cmd.params.get_tpm_pt_in.property_id = cpu_to_be32(0x100);
-> +	cmd.params.get_tpm_pt_in.property_cnt = cpu_to_be32(1);
-> +
-> +	rc = tpm_transmit(chip, (const char *) &cmd, sizeof(cmd));
-> +	if (rc <  0)
-> +		return rc;
-> +	else if (rc < TPM_HEADER_SIZE)
-> +		return -EFAULT;
-> +
-> +	if (be16_to_cpu(cmd.header.out.tag) == TPM2_ST_NO_SESSIONS)
-> +		chip->flags |= TPM_CHIP_FLAG_TPM2;
-> +
-> +	return 0;
-> +}
-> +EXPORT_SYMBOL_GPL(tpm2_probe);
-> diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
-> index 6725bef..ee6e0bd 100644
-> --- a/drivers/char/tpm/tpm_tis.c
-> +++ b/drivers/char/tpm/tpm_tis.c
-> @@ -639,12 +639,9 @@ static int tpm_tis_init(struct device *dev,
-> acpi_handle acpi_dev_handle, goto out_err;
->  	}
-> 
-> -	/* Every TPM 2.x command has a higher ordinal than TPM 1.x commands.
-> -	 * Therefore, we can use an idempotent TPM 2.x command to probe TPM 2.x.
-> -	 */
-> -	rc = tpm2_gen_interrupt(chip, true);
-> -	if (rc == 0 || rc == TPM2_RC_INITIALIZE)
-> -		chip->flags |= TPM_CHIP_FLAG_TPM2;
-> +	rc = tpm2_probe(chip);
-> +	if (rc)
-> +		goto out_err;
-> 
->  	vendor = ioread32(chip->vendor.iobase + TPM_DID_VID(0));
->  	chip->vendor.manufacturer_id = vendor;
-> @@ -747,7 +744,7 @@ static int tpm_tis_init(struct device *dev, acpi_handle
-> acpi_dev_handle,
-> 
->  			/* Generate Interrupts */
->  			if (chip->flags & TPM_CHIP_FLAG_TPM2)
-> -				tpm2_gen_interrupt(chip, false);
-> +				tpm2_gen_interrupt(chip);
->  			else
->  				tpm_gen_interrupt(chip);
+> =20
+> > One more thing, "The kernel is free to ignore the advice".
+> > It conflicts "This call does not influence the semantics of the
+> > application (except in the case of MADV_DONTNEED)" so
+> > is it okay we can believe "The kernel is free to ingmore the advise
+> > except MADV_DONTNEED"?
+>=20
+> I decided to just drop the sentence
+>=20
+>      The kernel is free to ignore the advice.
+>=20
+> It creates misunderstandings, and does not really add information.
+
+Sounds good.
+
+>=20
+> Cheers,
+>=20
+> Michael
+>=20
+> --=20
+> Michael Kerrisk
+> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+> Linux/UNIX System Programming Training: http://man7.org/training/
+
+--=20
+Kind regards,
+Minchan Kim
