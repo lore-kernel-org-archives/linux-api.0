@@ -1,138 +1,103 @@
-From: Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>
-Subject: Re: [RFC PATCH] iio: Export userspace IIO headers
-Date: Mon, 09 Feb 2015 18:05:01 +0100
-Message-ID: <54D8E8BD.3090904@metafoo.de>
-References: <1423500586-26480-1-git-send-email-daniel.baluta@intel.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [GIT PULL] Kselftest updates for 3.20-rc1
+Date: Mon, 09 Feb 2015 11:36:12 -0700
+Message-ID: <54D8FE1C.5040303@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1423500586-26480-1-git-send-email-daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, knaack.h-Mmb7MZpHnFY@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org
-Cc: irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, roberta.dobrescu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 02/09/2015 05:49 PM, Daniel Baluta wrote:
-> After UAPI header file split [1] all user-kernel interfaces were
-> placed under include/uapi/.
->
-> This patch moves IIO user specific API from:
-> 	* include/linux/iio/events.h => include/uapi/linux/iio/events.h
-> 	* include/linux/iio/types.h => include/uapi/linux/iio/types.h
->
-> Now there is no need for nasty tricks to compile userspace programs
-> (e.g iio_event_monitor). Just installing the kernel headers with
-> make headers_install command does the job.
->
-> [1] http://lwn.net/Articles/507794/
+Hi Linus,
 
-Thanks for taking care of this, this is something that should have done a 
-while ago.
+Please pull the following Kselftest updates for 3.20-rc1
 
-[...]
-> index 580ed5b..146cda1 100644
-> --- a/include/linux/iio/types.h
-> +++ b/include/linux/iio/types.h
-> @@ -10,97 +10,5 @@
->   #ifndef _IIO_TYPES_H_
->   #define _IIO_TYPES_H_
->
-> -enum iio_chan_type {
-> -	IIO_VOLTAGE,
-> -	IIO_CURRENT,
-> -	IIO_POWER,
-> -	IIO_ACCEL,
-> -	IIO_ANGL_VEL,
-> -	IIO_MAGN,
-> -	IIO_LIGHT,
-> -	IIO_INTENSITY,
-> -	IIO_PROXIMITY,
-> -	IIO_TEMP,
-> -	IIO_INCLI,
-> -	IIO_ROT,
-> -	IIO_ANGL,
-> -	IIO_TIMESTAMP,
-> -	IIO_CAPACITANCE,
-> -	IIO_ALTVOLTAGE,
-> -	IIO_CCT,
-> -	IIO_PRESSURE,
-> -	IIO_HUMIDITYRELATIVE,
-> -	IIO_ACTIVITY,
-> -	IIO_STEPS,
-> -	IIO_ENERGY,
-> -	IIO_DISTANCE,
-> -	IIO_VELOCITY,
-> -};
-> -
-> -enum iio_modifier {
-> -	IIO_NO_MOD,
-> -	IIO_MOD_X,
-> -	IIO_MOD_Y,
-> -	IIO_MOD_Z,
-> -	IIO_MOD_X_AND_Y,
-> -	IIO_MOD_X_AND_Z,
-> -	IIO_MOD_Y_AND_Z,
-> -	IIO_MOD_X_AND_Y_AND_Z,
-> -	IIO_MOD_X_OR_Y,
-> -	IIO_MOD_X_OR_Z,
-> -	IIO_MOD_Y_OR_Z,
-> -	IIO_MOD_X_OR_Y_OR_Z,
-> -	IIO_MOD_LIGHT_BOTH,
-> -	IIO_MOD_LIGHT_IR,
-> -	IIO_MOD_ROOT_SUM_SQUARED_X_Y,
-> -	IIO_MOD_SUM_SQUARED_X_Y_Z,
-> -	IIO_MOD_LIGHT_CLEAR,
-> -	IIO_MOD_LIGHT_RED,
-> -	IIO_MOD_LIGHT_GREEN,
-> -	IIO_MOD_LIGHT_BLUE,
-> -	IIO_MOD_QUATERNION,
-> -	IIO_MOD_TEMP_AMBIENT,
-> -	IIO_MOD_TEMP_OBJECT,
-> -	IIO_MOD_NORTH_MAGN,
-> -	IIO_MOD_NORTH_TRUE,
-> -	IIO_MOD_NORTH_MAGN_TILT_COMP,
-> -	IIO_MOD_NORTH_TRUE_TILT_COMP,
-> -	IIO_MOD_RUNNING,
-> -	IIO_MOD_JOGGING,
-> -	IIO_MOD_WALKING,
-> -	IIO_MOD_STILL,
-> -	IIO_MOD_ROOT_SUM_SQUARED_X_Y_Z,
-> -};
-> -
-> -enum iio_event_type {
-> -	IIO_EV_TYPE_THRESH,
-> -	IIO_EV_TYPE_MAG,
-> -	IIO_EV_TYPE_ROC,
-> -	IIO_EV_TYPE_THRESH_ADAPTIVE,
-> -	IIO_EV_TYPE_MAG_ADAPTIVE,
-> -	IIO_EV_TYPE_CHANGE,
-> -};
+thanks,
+-- Shuah
 
-I think everything in this file below is not part of the ABI and should not 
-be exported to userspace.
+The following changes since commit 97bf6af1f928216fd6c5a66e8a57bfa95a659672:
 
-> -
-> -enum iio_event_info {
-> -	IIO_EV_INFO_ENABLE,
-> -	IIO_EV_INFO_VALUE,
-> -	IIO_EV_INFO_HYSTERESIS,
-> -	IIO_EV_INFO_PERIOD,
-> -};
-> -
-> -enum iio_event_direction {
-> -	IIO_EV_DIR_EITHER,
-> -	IIO_EV_DIR_RISING,
-> -	IIO_EV_DIR_FALLING,
-> -	IIO_EV_DIR_NONE,
-> -};
-> -
-> -#define IIO_VAL_INT 1
-> -#define IIO_VAL_INT_PLUS_MICRO 2
-> -#define IIO_VAL_INT_PLUS_NANO 3
-> -#define IIO_VAL_INT_PLUS_MICRO_DB 4
-> -#define IIO_VAL_INT_MULTIPLE 5
-> -#define IIO_VAL_FRACTIONAL 10
-> -#define IIO_VAL_FRACTIONAL_LOG2 11
-> -
-[...]
+  Linux 3.19-rc1 (2014-12-20 17:08:50 -0800)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/shuah/linux-kselftest
+tags/linux-kselftest-3.20-rc1
+
+for you to fetch changes up to 6ddf898c23d62c974e148efd9e509731324a167a:
+
+  selftests/exec: Check if the syscall exists and bail if not
+(2015-02-04 10:17:35 -0700)
+
+----------------------------------------------------------------
+Kselftest updates for 3.20-rc1
+
+This update adds:
+- Kselftest install target feature
+- Fix for selftests/exec test
+
+----------------------------------------------------------------
+Michael Ellerman (1):
+      selftests/exec: Check if the syscall exists and bail if not
+
+Shuah Khan (20):
+      selftests/breakpoints: add install target to enable test install
+      selftests/cpu-hotplug: add install target to enable test install
+      selftests/efivarfs: add install target to enable test install
+      selftests/firmware: add install target to enable test install
+      selftests/ftrace: add install target to enable test install
+      selftests/ipc: add install target to enable test install
+      selftests/kcmp: add install target to enable test install
+      selftests/memfd: add install target to enable test install
+      selftests/memory-hotplug: add install target to enable test install
+      selftests/mount: add install target to enable test install
+      selftests/mqueue: add install target to enable test install
+      selftests/net: add install target to enable test install
+      selftests/ptrace: add install target to enable test install
+      selftests/size: add install target to enable test install
+      selftests/sysctl: add install target to enable test install
+      selftests/timers: add install target to enable test install
+      selftests/user: add install target to enable test install
+      selftests/vm: add install target to enable test install
+      selftests: add install target to enable test install
+      kbuild: add a new kselftest_install make target to install selftests
+
+ Makefile                                           | 14 +++++-
+ tools/testing/selftests/Makefile                   | 54
++++++++++++++++++++++-
+ tools/testing/selftests/breakpoints/Makefile       | 19 +++++++-
+ tools/testing/selftests/cpu-hotplug/Makefile       | 14 +++++-
+ .../{on-off-test.sh => cpu-on-off-test.sh}         |  0
+ tools/testing/selftests/efivarfs/Makefile          | 16 ++++++-
+ tools/testing/selftests/exec/execveat.c            | 10 +++-
+ tools/testing/selftests/firmware/Makefile          | 43 ++++++++++-------
+ tools/testing/selftests/ftrace/Makefile            | 13 +++++-
+ tools/testing/selftests/ipc/Makefile               | 19 +++++++-
+ tools/testing/selftests/kcmp/Makefile              | 13 +++++-
+ tools/testing/selftests/memfd/Makefile             | 17 +++++--
+ tools/testing/selftests/memory-hotplug/Makefile    | 14 +++++-
+ .../{on-off-test.sh => mem-on-off-test.sh}         |  0
+ tools/testing/selftests/mount/Makefile             | 12 ++++-
+ tools/testing/selftests/mqueue/Makefile            | 18 ++++++--
+ tools/testing/selftests/net/Makefile               | 20 ++++++--
+ tools/testing/selftests/ptrace/Makefile            | 16 +++++--
+ tools/testing/selftests/size/Makefile              | 12 ++++-
+ tools/testing/selftests/sysctl/Makefile            | 17 ++++++-
+ tools/testing/selftests/timers/Makefile            | 12 ++++-
+ tools/testing/selftests/user/Makefile              | 12 ++++-
+ tools/testing/selftests/vm/Makefile                | 11 ++++-
+ 23 files changed, 326 insertions(+), 50 deletions(-)
+ rename tools/testing/selftests/cpu-hotplug/{on-off-test.sh =>
+cpu-on-off-test.sh} (100%)
+ rename tools/testing/selftests/memory-hotplug/{on-off-test.sh =>
+mem-on-off-test.sh} (100%)
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
