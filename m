@@ -1,18 +1,27 @@
 From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 3.14 13/20] arm64: Fix up /proc/cpuinfo
-Date: Mon,  9 Feb 2015 16:34:05 +0800
-Message-ID: <20150209083042.937818171@linuxfoundation.org>
-References: <20150209083042.033412726@linuxfoundation.org>
+Subject: [PATCH 3.10 09/17] arm64: Fix up /proc/cpuinfo
+Date: Mon,  9 Feb 2015 16:33:36 +0800
+Message-ID: <20150209083040.217202212@linuxfoundation.org>
+References: <20150209083039.240170510@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150209083042.033412726@linuxfoundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <20150209083039.240170510@linuxfoundation.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
 To: linux-kernel@vger.kernel.org
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, stable@vger.kernel.org, Greg Hackmann <ghackmann@google.com>, Ian Campbell <ijc@hellion.org.uk>, Serban Constantinescu <serban.constantinescu@arm.com>, Will Deacon <will.deacon@arm.com>, cross-distro@lists.linaro.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, Catalin Marinas <catalin.marinas@arm.com>, Mark Rutland <mark.rutland@arm.com>
+Cc: Mark Rutland <mark.rutland@arm.com>, cross-distro@lists.linaro.org, Catalin Marinas <catalin.marinas@arm.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Serban Constantinescu <serban.constantinescu@arm.com>, Will Deacon <will.deacon@arm.com>, Greg Hackmann <ghackmann@google.com>, stable@vger.kernel.org, Ian Campbell <ijc@hellion.org.uk>, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-3.14-stable review patch.  If anyone has any objections, please let me know.
+3.10-stable review patch.  If anyone has any objections, please let me know.
 
 ------------------
 
@@ -91,20 +100,21 @@ Cc: linux-api@vger.kernel.org
 Cc: linux-arm-kernel@lists.infradead.org
 Cc: linux-kernel@vger.kernel.org
 Acked-by: Catalin Marinas <catalin.marinas@arm.com>
+[Mark: backport to v3.10.x]
 Signed-off-by: Mark Rutland <mark.rutland@arm.com>
 Signed-off-by: Will Deacon <will.deacon@arm.com>
 Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
 ---
  arch/arm64/include/asm/cputype.h |    2 
- arch/arm64/kernel/setup.c        |   99 ++++++++++++++++++++++++++++-----------
+ arch/arm64/kernel/setup.c        |  100 +++++++++++++++++++++++++++++----------
  arch/arm64/kernel/smp.c          |    5 +
- 3 files changed, 80 insertions(+), 26 deletions(-)
+ 3 files changed, 82 insertions(+), 25 deletions(-)
 
 --- a/arch/arm64/include/asm/cputype.h
 +++ b/arch/arm64/include/asm/cputype.h
-@@ -77,6 +77,8 @@ static inline u32 __attribute_const__ re
- 	return read_cpuid(CTR_EL0);
+@@ -74,6 +74,8 @@ static inline u32 __attribute_const__ re
+ 	return read_cpuid(ID_CTR_EL0);
  }
  
 +void cpuinfo_store_cpu(void);
@@ -122,17 +132,9 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  
  #include <asm/cputype.h>
  #include <asm/elf.h>
-@@ -73,7 +74,6 @@ unsigned int compat_elf_hwcap __read_mos
- #endif
- 
- static const char *cpu_name;
--static const char *machine_name;
- phys_addr_t __fdt_pointer __initdata;
- 
- /*
-@@ -193,6 +193,19 @@ static void __init smp_build_mpidr_hash(
+@@ -97,6 +98,19 @@ void __init early_print(const char *str,
+ 	printk("%s", buf);
  }
- #endif
  
 +struct cpuinfo_arm64 {
 +	struct cpu	cpu;
@@ -150,25 +152,16 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  static void __init setup_processor(void)
  {
  	struct cpu_info *cpu_info;
-@@ -213,6 +226,8 @@ static void __init setup_processor(void)
- 	sprintf(init_utsname()->machine, ELF_PLATFORM);
- 	elf_hwcap = 0;
+@@ -127,6 +141,8 @@ static void __init setup_machine_fdt(phy
+ 	struct boot_param_header *devtree;
+ 	unsigned long dt_root;
  
 +	cpuinfo_store_cpu();
 +
- 	/*
- 	 * ID_AA64ISAR0_EL1 contains 4-bit wide signed feature blocks.
- 	 * The blocks we test below represent incremental functionality
-@@ -257,8 +272,6 @@ static void __init setup_machine_fdt(phy
- 		while (true)
- 			cpu_relax();
- 	}
--
--	machine_name = of_flat_dt_get_machine_name();
- }
- 
- /*
-@@ -363,14 +376,12 @@ static int __init arm64_device_init(void
+ 	/* Check we have a non-NULL DT pointer */
+ 	if (!dt_phys) {
+ 		early_print("\n"
+@@ -290,14 +306,12 @@ static int __init arm64_device_init(void
  }
  arch_initcall(arm64_device_init);
  
@@ -184,7 +177,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  		cpu->hotpluggable = 1;
  		register_cpu(cpu, i);
  	}
-@@ -391,14 +402,41 @@ static const char *hwcap_str[] = {
+@@ -312,14 +326,41 @@ static const char *hwcap_str[] = {
  	NULL
  };
  
@@ -230,15 +223,19 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  		/*
  		 * glibc reads /proc/cpuinfo to determine the number of
  		 * online processors, looking for lines beginning with
-@@ -407,24 +445,33 @@ static int c_show(struct seq_file *m, vo
+@@ -328,27 +369,36 @@ static int c_show(struct seq_file *m, vo
  #ifdef CONFIG_SMP
  		seq_printf(m, "processor\t: %d\n", i);
  #endif
+-		seq_printf(m, "BogoMIPS\t: %lu.%02lu\n\n",
++		seq_printf(m, "BogoMIPS\t: %lu.%02lu\n",
+ 			   loops_per_jiffy / (500000UL/HZ),
+ 			   loops_per_jiffy / (5000UL/HZ) % 100);
 -	}
 -
 -	/* dump out the processor features */
 -	seq_puts(m, "Features\t: ");
--
+ 
 -	for (i = 0; hwcap_str[i]; i++)
 -		if (elf_hwcap & (1 << i))
 -			seq_printf(m, "%s ", hwcap_str[i]);
@@ -248,8 +245,10 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 -	seq_printf(m, "CPU variant\t: 0x%x\n", (read_cpuid_id() >> 20) & 15);
 -	seq_printf(m, "CPU part\t: 0x%03x\n", (read_cpuid_id() >> 4) & 0xfff);
 -	seq_printf(m, "CPU revision\t: %d\n", read_cpuid_id() & 15);
- 
+-
 -	seq_puts(m, "\n");
+-
+-	seq_printf(m, "Hardware\t: %s\n", machine_name);
 +		/*
 +		 * Dump out the common processor features in a single line.
 +		 * Userspace should read the hwcaps with getauxval(AT_HWCAP)
@@ -260,7 +259,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 +		if (personality(current->personality) == PER_LINUX32) {
 +#ifdef CONFIG_COMPAT
 +			for (j = 0; compat_hwcap_str[j]; j++)
-+				if (compat_elf_hwcap & (1 << j))
++				if (COMPAT_ELF_HWCAP & (1 << j))
 +					seq_printf(m, " %s", compat_hwcap_str[j]);
 +#endif /* CONFIG_COMPAT */
 +		} else {
@@ -269,8 +268,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 +					seq_printf(m, " %s", hwcap_str[j]);
 +		}
 +		seq_puts(m, "\n");
- 
--	seq_printf(m, "Hardware\t: %s\n", machine_name);
++
 +		seq_printf(m, "CPU implementer\t: 0x%02x\n", (midr >> 24));
 +		seq_printf(m, "CPU architecture: 8\n");
 +		seq_printf(m, "CPU variant\t: 0x%x\n", ((midr >> 20) & 0xf));
@@ -282,8 +280,8 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  }
 --- a/arch/arm64/kernel/smp.c
 +++ b/arch/arm64/kernel/smp.c
-@@ -148,6 +148,11 @@ asmlinkage void secondary_start_kernel(v
- 		cpu_ops[cpu]->cpu_postboot();
+@@ -200,6 +200,11 @@ asmlinkage void __cpuinit secondary_star
+ 	raw_spin_unlock(&boot_lock);
  
  	/*
 +	 * Log the CPU info before it is marked online and might get read.
@@ -291,6 +289,6 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 +	cpuinfo_store_cpu();
 +
 +	/*
- 	 * Enable GIC and timers.
- 	 */
- 	notify_cpu_starting(cpu);
+ 	 * OK, now it's safe to let the boot CPU continue.  Wait for
+ 	 * the CPU migration code to notice that the CPU is online
+ 	 * before we continue.
