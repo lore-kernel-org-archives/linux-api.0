@@ -1,238 +1,166 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 3.18 29/39] arm64: Fix up /proc/cpuinfo
-Date: Mon,  9 Feb 2015 16:34:12 +0800
-Message-ID: <20150209083330.163609674@linuxfoundation.org>
-References: <20150209083328.753647350@linuxfoundation.org>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: Re: [PATCH] tpm, tpm_tis: fix TPM 2.0 probing
+Date: Mon, 9 Feb 2015 10:39:47 +0200
+Message-ID: <20150209083947.GC29987@intel.com>
+References: <1423059669-31734-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <201502090008.47986.PeterHuewe@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150209083328.753647350@linuxfoundation.org>
+Content-Disposition: inline
+In-Reply-To: <201502090008.47986.PeterHuewe@gmx.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, stable@vger.kernel.org, Greg Hackmann <ghackmann@google.com>, Ian Campbell <ijc@hellion.org.uk>, Serban Constantinescu <serban.constantinescu@arm.com>, Will Deacon <will.deacon@arm.com>, cross-distro@lists.linaro.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, Catalin Marinas <catalin.marinas@arm.com>, Mark Rutland <mark.rutland@arm.com>
+To: Peter =?iso-8859-1?Q?H=FCwe?= <PeterHuewe@gmx.de>
+Cc: Ashley Lai <ashley@ashleylai.com>, Marcel Selhorst <tpmdd@selhorst.net>, tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, josh@joshtriplett.org, christophe.ricard@gmail.com, jason.gunthorpe@obsidianresearch.com, stefanb@linux.vnet.ibm.com, linux-api@vger.kernel.org, trousers-tech@lists.sourceforge.net
 List-Id: linux-api@vger.kernel.org
 
-3.18-stable review patch.  If anyone has any objections, please let me know.
+On Mon, Feb 09, 2015 at 12:08:46AM +0100, Peter H=FCwe wrote:
+> Am Mittwoch, 4. Februar 2015, 15:21:09 schrieb Jarkko Sakkinen:
+> > If during transmission system error was returned, the logic was to
+> > incorrectly deduce that chip is a TPM 1.x chip. This patch fixes th=
+is
+> > issue. Also, this patch changes probing so that message tag is used=
+ as the
+> > measure for TPM 2.x, which should be much more stable.
+> Is it aware that some TPMs may respond with 0x00C1 as TAG for TPM1.2 =
+commands?
 
-------------------
+I guess none of the TPM 1.2 command answer with the tag 0x8002?
 
-From: Mark Rutland <mark.rutland@arm.com>
+> > A separate function
+> > called tpm2_probe() is encapsulated because it can be used with any
+> > chipset.
+>=20
+> >=20
+> > Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+> > ---
+> >  drivers/char/tpm/tpm.h      |  3 ++-
+> >  drivers/char/tpm/tpm2-cmd.c | 40 +++++++++++++++++++++++++++++++++=
+-------
+> >  drivers/char/tpm/tpm_tis.c  | 11 ++++-------
+> >  3 files changed, 39 insertions(+), 15 deletions(-)
+> >=20
+> > diff --git a/drivers/char/tpm/tpm.h b/drivers/char/tpm/tpm.h
+> > index 7b0727c..a4b0f5e 100644
+> > --- a/drivers/char/tpm/tpm.h
+> > +++ b/drivers/char/tpm/tpm.h
+> > @@ -435,4 +435,5 @@ extern int tpm2_startup(struct tpm_chip *chip, =
+u16
+> > startup_type); extern int tpm2_shutdown(struct tpm_chip *chip, u16
+> > shutdown_type); extern unsigned long tpm2_calc_ordinal_duration(str=
+uct
+> > tpm_chip *, u32); extern int tpm2_do_selftest(struct tpm_chip *chip=
+);
+> > -extern int tpm2_gen_interrupt(struct tpm_chip *chip, bool quiet);
+> > +extern int tpm2_gen_interrupt(struct tpm_chip *chip);
+> > +extern int tpm2_probe(struct tpm_chip *chip);
+> > diff --git a/drivers/char/tpm/tpm2-cmd.c b/drivers/char/tpm/tpm2-cm=
+d.c
+> > index 1abe650..49cd354 100644
+> > --- a/drivers/char/tpm/tpm2-cmd.c
+> > +++ b/drivers/char/tpm/tpm2-cmd.c
+> > @@ -598,20 +598,46 @@ EXPORT_SYMBOL_GPL(tpm2_do_selftest);
+> >  /**
+> >   * tpm2_gen_interrupt() - generate an interrupt
+> >   * @chip: TPM chip to use
+> > - * @quiet: surpress the error message
+> >   *
+> >   * 0 is returned when the operation is successful. If a negative n=
+umber is
+> >   * returned it remarks a POSIX error code. If a positive number is
+> > returned * it remarks a TPM error.
+> >   */
+> > -int tpm2_gen_interrupt(struct tpm_chip *chip, bool quiet)
+> > +int tpm2_gen_interrupt(struct tpm_chip *chip)
+> >  {
+> > -	const char *desc =3D NULL;
+> >  	u32 dummy;
+> >=20
+> > -	if (!quiet)
+> > -		desc =3D "attempting to generate an interrupt";
+> > -
+> > -	return tpm2_get_tpm_pt(chip, TPM2_CAP_TPM_PROPERTIES, &dummy, des=
+c);
+> > +	return tpm2_get_tpm_pt(chip, 0x100, &dummy,
+> > +			       "attempting to generate an interrupt");
+> Why the change from TPM2_CAP_TPM_PROPERTIES =3D 6 to 0x100 and what d=
+oes 0x100=20
+> stand for?
 
-commit 44b82b7700d05a52cd983799d3ecde1a976b3bed upstream.
+In TPM 2.0 there are two levels: capabilities and properties. Using
+capability ID of "TPM properties" property set was a sloppy mistake
+although it didn't matter because interrupt is still generate.
 
-Commit d7a49086f263164a (arm64: cpuinfo: print info for all CPUs)
-attempted to clean up /proc/cpuinfo, but due to concerns regarding
-further changes was reverted in commit 5e39977edf6500fd (Revert "arm64:
-cpuinfo: print info for all CPUs").
+The properties in the "TPM properties" property set start with the
+index 0x100.
 
-There are two major issues with the arm64 /proc/cpuinfo format
-currently:
+> >  }
+> >  EXPORT_SYMBOL_GPL(tpm2_gen_interrupt);
+> > +
+> > +/**
+> > + * tpm2_probe() - probe TPM 2.0
+> > + * @chip: TPM chip to use
+> > + *
+> > + * Send idempotent TPM 2.0 command and see whether TPM 2.0 chip re=
+plied
+> > based on + * the reply tag.
+> > + */
+> > +int tpm2_probe(struct tpm_chip *chip)
+> > +{
+> > +	struct tpm2_cmd cmd;
+> > +	int rc;
+> > +
+> > +	cmd.header.in =3D tpm2_get_tpm_pt_header;
+> > +	cmd.params.get_tpm_pt_in.cap_id =3D cpu_to_be32(TPM2_CAP_TPM_PROP=
+ERTIES);
+> > +	cmd.params.get_tpm_pt_in.property_id =3D cpu_to_be32(0x100);
+> > +	cmd.params.get_tpm_pt_in.property_cnt =3D cpu_to_be32(1);
+> > +
+> > +	rc =3D tpm_transmit(chip, (const char *) &cmd, sizeof(cmd));
+> > +	if (rc <  0)
+> > +		return rc;
+> > +	else if (rc < TPM_HEADER_SIZE)
+> > +		return -EFAULT;
+> > +
+> > +	if (be16_to_cpu(cmd.header.out.tag) =3D=3D TPM2_ST_NO_SESSIONS)
+> > +		chip->flags |=3D TPM_CHIP_FLAG_TPM2;
+> > +
+> > +	return 0;
+> > +}
+> > +EXPORT_SYMBOL_GPL(tpm2_probe);
+> > diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.=
+c
+> > index 6725bef..ee6e0bd 100644
+> > --- a/drivers/char/tpm/tpm_tis.c
+> > +++ b/drivers/char/tpm/tpm_tis.c
+> > @@ -639,12 +639,9 @@ static int tpm_tis_init(struct device *dev,
+> > acpi_handle acpi_dev_handle, goto out_err;
+> >  	}
+> >=20
+> > -	/* Every TPM 2.x command has a higher ordinal than TPM 1.x comman=
+ds.
+> > -	 * Therefore, we can use an idempotent TPM 2.x command to probe T=
+PM 2.x.
+> > -	 */
+> > -	rc =3D tpm2_gen_interrupt(chip, true);
+> > -	if (rc =3D=3D 0 || rc =3D=3D TPM2_RC_INITIALIZE)
+> > -		chip->flags |=3D TPM_CHIP_FLAG_TPM2;
+> > +	rc =3D tpm2_probe(chip);
+> > +	if (rc)
+> > +		goto out_err;
+> >=20
+> >  	vendor =3D ioread32(chip->vendor.iobase + TPM_DID_VID(0));
+> >  	chip->vendor.manufacturer_id =3D vendor;
+> > @@ -747,7 +744,7 @@ static int tpm_tis_init(struct device *dev, acp=
+i_handle
+> > acpi_dev_handle,
+> >=20
+> >  			/* Generate Interrupts */
+> >  			if (chip->flags & TPM_CHIP_FLAG_TPM2)
+> > -				tpm2_gen_interrupt(chip, false);
+> > +				tpm2_gen_interrupt(chip);
+> >  			else
+> >  				tpm_gen_interrupt(chip);
 
-* The "Features" line describes (only) the 64-bit hwcaps, which is
-  problematic for some 32-bit applications which attempt to parse it. As
-  the same names are used for analogous ISA features (e.g. aes) despite
-  these generally being architecturally unrelated, it is not possible to
-  simply append the 64-bit and 32-bit hwcaps in a manner that might not
-  be misleading to some applications.
-
-  Various potential solutions have appeared in vendor kernels. Typically
-  the format of the Features line varies depending on whether the task
-  is 32-bit.
-
-* Information is only printed regarding a single CPU. This does not
-  match the ARM format, and does not provide sufficient information in
-  big.LITTLE systems where CPUs are heterogeneous. The CPU information
-  printed is queried from the current CPU's registers, which is racy
-  w.r.t. cross-cpu migration.
-
-This patch attempts to solve these issues. The following changes are
-made:
-
-* When a task with a LINUX32 personality attempts to read /proc/cpuinfo,
-  the "Features" line contains the decoded 32-bit hwcaps, as with the
-  arm port. Otherwise, the decoded 64-bit hwcaps are shown. This aligns
-  with the behaviour of COMPAT_UTS_MACHINE and COMPAT_ELF_PLATFORM. In
-  the absense of compat support, the Features line is empty.
-
-  The set of hwcaps injected into a task's auxval are unaffected.
-
-* Properties are printed per-cpu, as with the ARM port. The per-cpu
-  information is queried from pre-recorded cpu information (as used by
-  the sanity checks).
-
-* As with the previous attempt at fixing up /proc/cpuinfo, the hardware
-  field is removed. The only users so far are 32-bit applications tied
-  to particular boards, so no portable applications should be affected,
-  and this should prevent future tying to particular boards.
-
-The following differences remain:
-
-* No model_name is printed, as this cannot be queried from the hardware
-  and cannot be provided in a stable fashion. Use of the CPU
-  {implementor,variant,part,revision} fields is sufficient to identify a
-  CPU and is portable across arm and arm64.
-
-* The following system-wide properties are not provided, as they are not
-  possible to provide generally. Programs relying on these are already
-  tied to particular (32-bit only) boards:
-  - Hardware
-  - Revision
-  - Serial
-
-No software has yet been identified for which these remaining
-differences are problematic.
-
-Cc: Greg Hackmann <ghackmann@google.com>
-Cc: Ian Campbell <ijc@hellion.org.uk>
-Cc: Serban Constantinescu <serban.constantinescu@arm.com>
-Cc: Will Deacon <will.deacon@arm.com>
-Cc: cross-distro@lists.linaro.org
-Cc: linux-api@vger.kernel.org
-Cc: linux-arm-kernel@lists.infradead.org
-Cc: linux-kernel@vger.kernel.org
-Acked-by: Catalin Marinas <catalin.marinas@arm.com>
-Signed-off-by: Mark Rutland <mark.rutland@arm.com>
-Signed-off-by: Will Deacon <will.deacon@arm.com>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-
----
- arch/arm64/kernel/setup.c |   94 ++++++++++++++++++++++++++++++++++------------
- 1 file changed, 71 insertions(+), 23 deletions(-)
-
---- a/arch/arm64/kernel/setup.c
-+++ b/arch/arm64/kernel/setup.c
-@@ -43,6 +43,7 @@
- #include <linux/of_fdt.h>
- #include <linux/of_platform.h>
- #include <linux/efi.h>
-+#include <linux/personality.h>
- 
- #include <asm/fixmap.h>
- #include <asm/cpu.h>
-@@ -79,7 +80,6 @@ unsigned int compat_elf_hwcap2 __read_mo
- #endif
- 
- static const char *cpu_name;
--static const char *machine_name;
- phys_addr_t __fdt_pointer __initdata;
- 
- /*
-@@ -311,8 +311,6 @@ static void __init setup_machine_fdt(phy
- 		while (true)
- 			cpu_relax();
- 	}
--
--	machine_name = of_flat_dt_get_machine_name();
- }
- 
- /*
-@@ -449,14 +447,50 @@ static const char *hwcap_str[] = {
- 	NULL
- };
- 
-+#ifdef CONFIG_COMPAT
-+static const char *compat_hwcap_str[] = {
-+	"swp",
-+	"half",
-+	"thumb",
-+	"26bit",
-+	"fastmult",
-+	"fpa",
-+	"vfp",
-+	"edsp",
-+	"java",
-+	"iwmmxt",
-+	"crunch",
-+	"thumbee",
-+	"neon",
-+	"vfpv3",
-+	"vfpv3d16",
-+	"tls",
-+	"vfpv4",
-+	"idiva",
-+	"idivt",
-+	"vfpd32",
-+	"lpae",
-+	"evtstrm"
-+};
-+
-+static const char *compat_hwcap2_str[] = {
-+	"aes",
-+	"pmull",
-+	"sha1",
-+	"sha2",
-+	"crc32",
-+	NULL
-+};
-+#endif /* CONFIG_COMPAT */
-+
- static int c_show(struct seq_file *m, void *v)
- {
--	int i;
--
--	seq_printf(m, "Processor\t: %s rev %d (%s)\n",
--		   cpu_name, read_cpuid_id() & 15, ELF_PLATFORM);
-+	int i, j;
- 
- 	for_each_online_cpu(i) {
-+		struct cpuinfo_arm64 *cpuinfo = &per_cpu(cpu_data, i);
-+		u32 midr = cpuinfo->reg_midr;
-+
- 		/*
- 		 * glibc reads /proc/cpuinfo to determine the number of
- 		 * online processors, looking for lines beginning with
-@@ -465,24 +499,38 @@ static int c_show(struct seq_file *m, vo
- #ifdef CONFIG_SMP
- 		seq_printf(m, "processor\t: %d\n", i);
- #endif
--	}
--
--	/* dump out the processor features */
--	seq_puts(m, "Features\t: ");
--
--	for (i = 0; hwcap_str[i]; i++)
--		if (elf_hwcap & (1 << i))
--			seq_printf(m, "%s ", hwcap_str[i]);
--
--	seq_printf(m, "\nCPU implementer\t: 0x%02x\n", read_cpuid_id() >> 24);
--	seq_printf(m, "CPU architecture: AArch64\n");
--	seq_printf(m, "CPU variant\t: 0x%x\n", (read_cpuid_id() >> 20) & 15);
--	seq_printf(m, "CPU part\t: 0x%03x\n", (read_cpuid_id() >> 4) & 0xfff);
--	seq_printf(m, "CPU revision\t: %d\n", read_cpuid_id() & 15);
- 
--	seq_puts(m, "\n");
-+		/*
-+		 * Dump out the common processor features in a single line.
-+		 * Userspace should read the hwcaps with getauxval(AT_HWCAP)
-+		 * rather than attempting to parse this, but there's a body of
-+		 * software which does already (at least for 32-bit).
-+		 */
-+		seq_puts(m, "Features\t:");
-+		if (personality(current->personality) == PER_LINUX32) {
-+#ifdef CONFIG_COMPAT
-+			for (j = 0; compat_hwcap_str[j]; j++)
-+				if (compat_elf_hwcap & (1 << j))
-+					seq_printf(m, " %s", compat_hwcap_str[j]);
-+
-+			for (j = 0; compat_hwcap2_str[j]; j++)
-+				if (compat_elf_hwcap2 & (1 << j))
-+					seq_printf(m, " %s", compat_hwcap2_str[j]);
-+#endif /* CONFIG_COMPAT */
-+		} else {
-+			for (j = 0; hwcap_str[j]; j++)
-+				if (elf_hwcap & (1 << j))
-+					seq_printf(m, " %s", hwcap_str[j]);
-+		}
-+		seq_puts(m, "\n");
- 
--	seq_printf(m, "Hardware\t: %s\n", machine_name);
-+		seq_printf(m, "CPU implementer\t: 0x%02x\n",
-+			   MIDR_IMPLEMENTOR(midr));
-+		seq_printf(m, "CPU architecture: 8\n");
-+		seq_printf(m, "CPU variant\t: 0x%x\n", MIDR_VARIANT(midr));
-+		seq_printf(m, "CPU part\t: 0x%03x\n", MIDR_PARTNUM(midr));
-+		seq_printf(m, "CPU revision\t: %d\n\n", MIDR_REVISION(midr));
-+	}
- 
- 	return 0;
- }
+/Jarkko
