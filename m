@@ -1,108 +1,353 @@
-From: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
-Subject: Re: memcg && uaccess (Was: [PATCH 1/2] kernel/fork: handle put_user
- errors for CLONE_CHILD_SETTID/CLEARTID)
-Date: Tue, 10 Feb 2015 11:19:41 -0500
-Message-ID: <20150210161941.GB11212@phnom.home.cmpxchg.org>
-References: <20150206162301.18031.32251.stgit@buzz>
- <20150206194405.GA13960@redhat.com>
- <20150206195529.GA15517@redhat.com>
- <20150206203246.GA16924@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v2] iio: Export userspace IIO headers
+Date: Tue, 10 Feb 2015 18:33:51 +0200
+Message-ID: <1423586031-25199-1-git-send-email-daniel.baluta@intel.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150206203246.GA16924-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, KAMEZAWA Hiroyuki <kamezawa.hiroyu-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Roman Gushchin <klamm-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Nikita Vetoshkin <nekto0n-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+To: jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, knaack.h-Mmb7MZpHnFY@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org
+Cc: irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, roberta.dobrescu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 06, 2015 at 09:32:46PM +0100, Oleg Nesterov wrote:
-> Add cc's.
-> 
-> On 02/06, Oleg Nesterov wrote:
-> >
-> > And in fact I think that this is not set_child_tid/etc-specific. Perhaps
-> > I am totally confused, but I think that put_user() simply should not fail
-> > this way. Say, why a syscall should return -EFAULT if memory allocation
-> > "silently" fails? Confused.
-> 
-> Seriously. I must have missed something, but I can't understand 519e52473eb
-> "mm: memcg: enable memcg OOM killer only for user faults".
-> 
-> The changelog says:
-> 
-> 	System calls and kernel faults (uaccess, gup) can handle an out of
-> 	memory situation gracefully and just return -ENOMEM.
+After UAPI header file split [1] all user-kernel interfaces were
+placed under include/uapi/.
 
-The cover letter of the original patch series is hidden in the
-changelog a few commits before this one:
+This patch moves IIO user specific API from:
+	* include/linux/iio/events.h => include/uapi/linux/iio/events.h
+	* include/linux/types.h => include/uapi/linux/types.h
 
-commit 94bce453c78996cc4373d5da6cfabe07fcc6d9f9
-Author: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
-Date:   Thu Sep 12 15:13:36 2013 -0700
+Now there is no need for nasty tricks to compile userspace programs
+(e.g iio_event_monitor). Just installing the kernel headers with
+make headers_install command does the job.
 
-    arch: mm: remove obsolete init OOM protection
-    
-    The memcg code can trap tasks in the context of the failing allocation
-    until an OOM situation is resolved.  They can hold all kinds of locks
-    (fs, mm) at this point, which makes it prone to deadlocking.
-    
-    This series converts memcg OOM handling into a two step process that is
-    started in the charge context, but any waiting is done after the fault
-    stack is fully unwound.
-    
-    Patches 1-4 prepare architecture handlers to support the new memcg
-    requirements, but in doing so they also remove old cruft and unify
-    out-of-memory behavior across architectures.
-    
-    Patch 5 disables the memcg OOM handling for syscalls, readahead, kernel
-    faults, because they can gracefully unwind the stack with -ENOMEM.  OOM
-    handling is restricted to user triggered faults that have no other
-    option.
+[1] http://lwn.net/Articles/507794/
 
-We had reports of systems deadlocking because the allocating task
-would wait for the OOM killer to make progress, and the OOM-killed
-task would wait for a lock held by the allocating task.  It's
-important to note here that the OOM killer currently does not kill a
-second task until the current victim has exited, because that victim
-has special rights to access to emergency reserves and we don't want
-to risk overcommitting those.
+Signed-off-by: Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+---
+Changes since v1:
+	* keep enum iio_event_info and IIO_VAL_* constants in
+	include/linux/iio/types.h since they aren't part of the
+	ABI.
 
-To address that deadlock, I decided to no longer invoke memcg OOM
-handling from the allocation context directly, but instead remember
-the situation in the task_struct and handle it before restarting the
-fault.  However, in-kernel faults do not restart, maybe even succeed
-despite allocation failures (i.e. readahead), so under the assumption
-that they have to handle error returns anyway, I disabled invoking the
-memcg OOM killer for in-kernel faults altogether.
+ include/linux/iio/events.h      | 30 +-------------
+ include/linux/iio/types.h       | 78 +----------------------------------
+ include/uapi/linux/Kbuild       |  1 +
+ include/uapi/linux/iio/Kbuild   |  3 ++
+ include/uapi/linux/iio/events.h | 43 +++++++++++++++++++
+ include/uapi/linux/iio/types.h  | 91 +++++++++++++++++++++++++++++++++++++++++
+ 6 files changed, 140 insertions(+), 106 deletions(-)
+ create mode 100644 include/uapi/linux/iio/Kbuild
+ create mode 100644 include/uapi/linux/iio/events.h
+ create mode 100644 include/uapi/linux/iio/types.h
 
-> How can a system call know it should return -ENOMEM if put_user() can only
-> return -EFAULT ?
-
-I see the problem, but allocations can not be guaranteed to succeed,
-not even the OOM killer can reliably make progress, depending on the
-state the faulting process is in, the locks it is holding.  So what
-can we do if that allocation fails?  Even if we go the route that
-Linus proposes and make OOM situations more generic and check them on
-*every* return to userspace, the OOM handler at that point might still
-kill a task more suited to free memory than the faulting one, and so
-we still have to communicate the proper error value to the syscall.
-
-However, I think we could go back to invoking OOM from all allocation
-contexts again as long as we change allocator and OOM killer to not
-wait for individual OOM victims to exit indefinitely (unless it's a
-__GFP_NOFAIL context).  Maybe wait for some time on the first victim
-before moving on to the next one.  That would reduce the likelihood of
-failing allocations without reinstating the original deadlock.
-put_user() could still technically fail due to allocation failure, but
-it wouldn't be a very likely event.  Would that be okay?
-
-This does not just apply to memcg allocations, btw.  Physical page
-allocations have recently been reported to deadlock in a similar
-fashion because of low orders implying __GFP_NOFAIL.  Making the OOM
-killer more robust and more eager to make progress would allow us to
-remove the implied __GFP_NOFAIL while maintaining reasonable quality
-of service in the allocator.
-
-What do you think?
+diff --git a/include/linux/iio/events.h b/include/linux/iio/events.h
+index 03fa332..8ad87d1 100644
+--- a/include/linux/iio/events.h
++++ b/include/linux/iio/events.h
+@@ -9,22 +9,8 @@
+ #ifndef _IIO_EVENTS_H_
+ #define _IIO_EVENTS_H_
+ 
+-#include <linux/ioctl.h>
+-#include <linux/types.h>
+ #include <linux/iio/types.h>
+-
+-/**
+- * struct iio_event_data - The actual event being pushed to userspace
+- * @id:		event identifier
+- * @timestamp:	best estimate of time of event occurrence (often from
+- *		the interrupt handler)
+- */
+-struct iio_event_data {
+-	__u64	id;
+-	__s64	timestamp;
+-};
+-
+-#define IIO_GET_EVENT_FD_IOCTL _IOR('i', 0x90, int)
++#include <uapi/linux/iio/events.h>
+ 
+ /**
+  * IIO_EVENT_CODE() - create event identifier
+@@ -70,18 +56,4 @@ struct iio_event_data {
+ #define IIO_UNMOD_EVENT_CODE(chan_type, number, type, direction)	\
+ 	IIO_EVENT_CODE(chan_type, 0, 0, direction, type, number, 0, 0)
+ 
+-#define IIO_EVENT_CODE_EXTRACT_TYPE(mask) ((mask >> 56) & 0xFF)
+-
+-#define IIO_EVENT_CODE_EXTRACT_DIR(mask) ((mask >> 48) & 0x7F)
+-
+-#define IIO_EVENT_CODE_EXTRACT_CHAN_TYPE(mask) ((mask >> 32) & 0xFF)
+-
+-/* Event code number extraction depends on which type of event we have.
+- * Perhaps review this function in the future*/
+-#define IIO_EVENT_CODE_EXTRACT_CHAN(mask) ((__s16)(mask & 0xFFFF))
+-#define IIO_EVENT_CODE_EXTRACT_CHAN2(mask) ((__s16)(((mask) >> 16) & 0xFFFF))
+-
+-#define IIO_EVENT_CODE_EXTRACT_MODIFIER(mask) ((mask >> 40) & 0xFF)
+-#define IIO_EVENT_CODE_EXTRACT_DIFF(mask) (((mask) >> 55) & 0x1)
+-
+ #endif
+diff --git a/include/linux/iio/types.h b/include/linux/iio/types.h
+index 580ed5b..942b6de 100644
+--- a/include/linux/iio/types.h
++++ b/include/linux/iio/types.h
+@@ -10,76 +10,7 @@
+ #ifndef _IIO_TYPES_H_
+ #define _IIO_TYPES_H_
+ 
+-enum iio_chan_type {
+-	IIO_VOLTAGE,
+-	IIO_CURRENT,
+-	IIO_POWER,
+-	IIO_ACCEL,
+-	IIO_ANGL_VEL,
+-	IIO_MAGN,
+-	IIO_LIGHT,
+-	IIO_INTENSITY,
+-	IIO_PROXIMITY,
+-	IIO_TEMP,
+-	IIO_INCLI,
+-	IIO_ROT,
+-	IIO_ANGL,
+-	IIO_TIMESTAMP,
+-	IIO_CAPACITANCE,
+-	IIO_ALTVOLTAGE,
+-	IIO_CCT,
+-	IIO_PRESSURE,
+-	IIO_HUMIDITYRELATIVE,
+-	IIO_ACTIVITY,
+-	IIO_STEPS,
+-	IIO_ENERGY,
+-	IIO_DISTANCE,
+-	IIO_VELOCITY,
+-};
+-
+-enum iio_modifier {
+-	IIO_NO_MOD,
+-	IIO_MOD_X,
+-	IIO_MOD_Y,
+-	IIO_MOD_Z,
+-	IIO_MOD_X_AND_Y,
+-	IIO_MOD_X_AND_Z,
+-	IIO_MOD_Y_AND_Z,
+-	IIO_MOD_X_AND_Y_AND_Z,
+-	IIO_MOD_X_OR_Y,
+-	IIO_MOD_X_OR_Z,
+-	IIO_MOD_Y_OR_Z,
+-	IIO_MOD_X_OR_Y_OR_Z,
+-	IIO_MOD_LIGHT_BOTH,
+-	IIO_MOD_LIGHT_IR,
+-	IIO_MOD_ROOT_SUM_SQUARED_X_Y,
+-	IIO_MOD_SUM_SQUARED_X_Y_Z,
+-	IIO_MOD_LIGHT_CLEAR,
+-	IIO_MOD_LIGHT_RED,
+-	IIO_MOD_LIGHT_GREEN,
+-	IIO_MOD_LIGHT_BLUE,
+-	IIO_MOD_QUATERNION,
+-	IIO_MOD_TEMP_AMBIENT,
+-	IIO_MOD_TEMP_OBJECT,
+-	IIO_MOD_NORTH_MAGN,
+-	IIO_MOD_NORTH_TRUE,
+-	IIO_MOD_NORTH_MAGN_TILT_COMP,
+-	IIO_MOD_NORTH_TRUE_TILT_COMP,
+-	IIO_MOD_RUNNING,
+-	IIO_MOD_JOGGING,
+-	IIO_MOD_WALKING,
+-	IIO_MOD_STILL,
+-	IIO_MOD_ROOT_SUM_SQUARED_X_Y_Z,
+-};
+-
+-enum iio_event_type {
+-	IIO_EV_TYPE_THRESH,
+-	IIO_EV_TYPE_MAG,
+-	IIO_EV_TYPE_ROC,
+-	IIO_EV_TYPE_THRESH_ADAPTIVE,
+-	IIO_EV_TYPE_MAG_ADAPTIVE,
+-	IIO_EV_TYPE_CHANGE,
+-};
++#include <uapi/linux/iio/types.h>
+ 
+ enum iio_event_info {
+ 	IIO_EV_INFO_ENABLE,
+@@ -88,13 +19,6 @@ enum iio_event_info {
+ 	IIO_EV_INFO_PERIOD,
+ };
+ 
+-enum iio_event_direction {
+-	IIO_EV_DIR_EITHER,
+-	IIO_EV_DIR_RISING,
+-	IIO_EV_DIR_FALLING,
+-	IIO_EV_DIR_NONE,
+-};
+-
+ #define IIO_VAL_INT 1
+ #define IIO_VAL_INT_PLUS_MICRO 2
+ #define IIO_VAL_INT_PLUS_NANO 3
+diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+index 00b10002..5bfc5bd 100644
+--- a/include/uapi/linux/Kbuild
++++ b/include/uapi/linux/Kbuild
+@@ -6,6 +6,7 @@ header-y += caif/
+ header-y += dvb/
+ header-y += hdlc/
+ header-y += hsi/
++header-y += iio/
+ header-y += isdn/
+ header-y += mmc/
+ header-y += nfsd/
+diff --git a/include/uapi/linux/iio/Kbuild b/include/uapi/linux/iio/Kbuild
+new file mode 100644
+index 0000000..86f76d8
+--- /dev/null
++++ b/include/uapi/linux/iio/Kbuild
+@@ -0,0 +1,3 @@
++# UAPI Header export list
++header-y += events.h
++header-y += types.h
+diff --git a/include/uapi/linux/iio/events.h b/include/uapi/linux/iio/events.h
+new file mode 100644
+index 0000000..4b06477
+--- /dev/null
++++ b/include/uapi/linux/iio/events.h
+@@ -0,0 +1,43 @@
++/* The industrial I/O - event passing to userspace
++ *
++ * Copyright (c) 2008-2011 Jonathan Cameron
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 as published by
++ * the Free Software Foundation.
++ */
++#ifndef _UAPI_IIO_EVENTS_H_
++#define _UAPI_IIO_EVENTS_H_
++
++#include <linux/ioctl.h>
++#include <linux/types.h>
++
++/**
++ * struct iio_event_data - The actual event being pushed to userspace
++ * @id:		event identifier
++ * @timestamp:	best estimate of time of event occurrence (often from
++ *		the interrupt handler)
++ */
++struct iio_event_data {
++	__u64	id;
++	__s64	timestamp;
++};
++
++#define IIO_GET_EVENT_FD_IOCTL _IOR('i', 0x90, int)
++
++#define IIO_EVENT_CODE_EXTRACT_TYPE(mask) ((mask >> 56) & 0xFF)
++
++#define IIO_EVENT_CODE_EXTRACT_DIR(mask) ((mask >> 48) & 0x7F)
++
++#define IIO_EVENT_CODE_EXTRACT_CHAN_TYPE(mask) ((mask >> 32) & 0xFF)
++
++/* Event code number extraction depends on which type of event we have.
++ * Perhaps review this function in the future*/
++#define IIO_EVENT_CODE_EXTRACT_CHAN(mask) ((__s16)(mask & 0xFFFF))
++#define IIO_EVENT_CODE_EXTRACT_CHAN2(mask) ((__s16)(((mask) >> 16) & 0xFFFF))
++
++#define IIO_EVENT_CODE_EXTRACT_MODIFIER(mask) ((mask >> 40) & 0xFF)
++#define IIO_EVENT_CODE_EXTRACT_DIFF(mask) (((mask) >> 55) & 0x1)
++
++#endif /* _UAPI_IIO_EVENTS_H_ */
++
+diff --git a/include/uapi/linux/iio/types.h b/include/uapi/linux/iio/types.h
+new file mode 100644
+index 0000000..56a1529
+--- /dev/null
++++ b/include/uapi/linux/iio/types.h
+@@ -0,0 +1,91 @@
++/* industrial I/O data types needed both in and out of kernel
++ *
++ * Copyright (c) 2008 Jonathan Cameron
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 as published by
++ * the Free Software Foundation.
++ */
++
++#ifndef _UAPI_IIO_TYPES_H_
++#define _UAPI_IIO_TYPES_H_
++
++enum iio_chan_type {
++	IIO_VOLTAGE,
++	IIO_CURRENT,
++	IIO_POWER,
++	IIO_ACCEL,
++	IIO_ANGL_VEL,
++	IIO_MAGN,
++	IIO_LIGHT,
++	IIO_INTENSITY,
++	IIO_PROXIMITY,
++	IIO_TEMP,
++	IIO_INCLI,
++	IIO_ROT,
++	IIO_ANGL,
++	IIO_TIMESTAMP,
++	IIO_CAPACITANCE,
++	IIO_ALTVOLTAGE,
++	IIO_CCT,
++	IIO_PRESSURE,
++	IIO_HUMIDITYRELATIVE,
++	IIO_ACTIVITY,
++	IIO_STEPS,
++	IIO_ENERGY,
++	IIO_DISTANCE,
++	IIO_VELOCITY,
++};
++
++enum iio_modifier {
++	IIO_NO_MOD,
++	IIO_MOD_X,
++	IIO_MOD_Y,
++	IIO_MOD_Z,
++	IIO_MOD_X_AND_Y,
++	IIO_MOD_X_AND_Z,
++	IIO_MOD_Y_AND_Z,
++	IIO_MOD_X_AND_Y_AND_Z,
++	IIO_MOD_X_OR_Y,
++	IIO_MOD_X_OR_Z,
++	IIO_MOD_Y_OR_Z,
++	IIO_MOD_X_OR_Y_OR_Z,
++	IIO_MOD_LIGHT_BOTH,
++	IIO_MOD_LIGHT_IR,
++	IIO_MOD_ROOT_SUM_SQUARED_X_Y,
++	IIO_MOD_SUM_SQUARED_X_Y_Z,
++	IIO_MOD_LIGHT_CLEAR,
++	IIO_MOD_LIGHT_RED,
++	IIO_MOD_LIGHT_GREEN,
++	IIO_MOD_LIGHT_BLUE,
++	IIO_MOD_QUATERNION,
++	IIO_MOD_TEMP_AMBIENT,
++	IIO_MOD_TEMP_OBJECT,
++	IIO_MOD_NORTH_MAGN,
++	IIO_MOD_NORTH_TRUE,
++	IIO_MOD_NORTH_MAGN_TILT_COMP,
++	IIO_MOD_NORTH_TRUE_TILT_COMP,
++	IIO_MOD_RUNNING,
++	IIO_MOD_JOGGING,
++	IIO_MOD_WALKING,
++	IIO_MOD_STILL,
++	IIO_MOD_ROOT_SUM_SQUARED_X_Y_Z,
++};
++
++enum iio_event_type {
++	IIO_EV_TYPE_THRESH,
++	IIO_EV_TYPE_MAG,
++	IIO_EV_TYPE_ROC,
++	IIO_EV_TYPE_THRESH_ADAPTIVE,
++	IIO_EV_TYPE_MAG_ADAPTIVE,
++	IIO_EV_TYPE_CHANGE,
++};
++
++enum iio_event_direction {
++	IIO_EV_DIR_EITHER,
++	IIO_EV_DIR_RISING,
++	IIO_EV_DIR_FALLING,
++	IIO_EV_DIR_NONE,
++};
++
++#endif /* _UAPI_IIO_TYPES_H_ */
+-- 
+1.9.1
