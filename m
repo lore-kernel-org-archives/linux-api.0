@@ -1,53 +1,67 @@
-From: Eric Wong <normalperson@yhbt.net>
-Subject: Re: [PATCH 2/2] epoll: introduce EPOLLEXCLUSIVE and EPOLLROUNDROBIN
-Date: Tue, 10 Feb 2015 19:32:47 +0000
-Message-ID: <20150210193247.GA12953@dcvr.yhbt.net>
-References: <cover.1423509605.git.jbaron@akamai.com>
- <68a0ad4a99551ea3bfff89da461bb490d63b0ca8.1423509605.git.jbaron@akamai.com>
- <54D915FC.7010003@amacapital.net>
- <54D92780.4000303@akamai.com>
- <CALCETrUQZHHE_PJYoMw8g9C5AAxSdF-jU85EF317O4Krk+bV9w@mail.gmail.com>
- <54D98209.2080901@akamai.com>
- <20150210044939.GA15616@dcvr.yhbt.net>
- <54DA592A.3050102@akamai.com>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: memcg && uaccess (Was: [PATCH 1/2] kernel/fork: handle
+	put_user errors for CLONE_CHILD_SETTID/CLEARTID)
+Date: Tue, 10 Feb 2015 20:47:43 +0100
+Message-ID: <20150210194743.GA17333@redhat.com>
+References: <20150206162301.18031.32251.stgit@buzz> <20150206194405.GA13960@redhat.com> <20150206195529.GA15517@redhat.com> <20150206203246.GA16924@redhat.com> <20150210161941.GB11212@phnom.home.cmpxchg.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <54DA592A.3050102@akamai.com>
+In-Reply-To: <20150210161941.GB11212@phnom.home.cmpxchg.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jason Baron <jbaron@akamai.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Davide Libenzi <davidel@xmailserver.org>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>
+To: Johannes Weiner <hannes@cmpxchg.org>
+Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Michal Hocko <mhocko@suse.cz>, KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, Roman Gushchin <klamm@yandex-team.ru>, Nikita Vetoshkin <nekto0n@yandex-team.ru>, Pavel Emelyanov <xemul@parallels.com>
 List-Id: linux-api@vger.kernel.org
 
-Jason Baron <jbaron@akamai.com> wrote:
-> On 02/09/2015 11:49 PM, Eric Wong wrote:
-> > Do you have a userland use case to share?
-> 
-> I've been trying to describe the use case, maybe I haven't been doing a good
-> job :(
+On 02/10, Johannes Weiner wrote:
+>
+> We had reports of systems deadlocking because
 
-Sorry, I meant if you had any public code.
+Yes, yes, to some degree I understand why it was done this way. Not
+that I understand the details of course. Thanks for your explanations.
 
-Anyways, I've restarted work on another project which I'll hopefully be
-able to share in a few weeks which might be a good public candidate for
-epoll performance testing.
+> > How can a system call know it should return -ENOMEM if put_user() can only
+> > return -EFAULT ?
+>
+> I see the problem, but allocations can not be guaranteed to succeed,
+> not even the OOM killer can reliably make progress,
 
-> > Did you try my suggestion of using a dedicated thread (or thread pool)
-> > which does nothing but loop on accept() + EPOLL_CTL_ADD?
-> >
-> > Those dedicated threads could do its own round-robin in userland to pick
-> > a different epollfd to call EPOLL_CTL_ADD on.
-> 
-> Thanks for your suggestion! I'm not actively working on the user-space
-> code here, but I will pass it along.
-> 
-> I would prefer though not to have to context switch the 'accept' thread
-> on and off the cpu every time there is a new connection. So the approach
-> suggested here essentially moves this dedicated thread (threads), down
-> into the kernel and avoids the creation of these threads entirely.
+Yes sure,
 
-For cmogstored, I stopped using TCP_DEFER_ACCEPT when using the
-dedicated thread.  This approach offloads to epoll and ends up giving
-similar behavior to what used to be infinite in TCP_DEFER_ACCEPT in
-Linux <= 2.6.31
+> So what
+> can we do if that allocation fails?  Even if we go the route that
+> Linus proposes and make OOM situations more generic and check them on
+> *every* return to userspace, the OOM handler at that point might still
+> kill a task more suited to free memory than the faulting one, and so
+> we still have to communicate the proper error value to the syscall.
+
+Yes. To me this means that if a page fault from kernel-space fails because
+of VM_FAULT_OOM the task should be killed in any case. Except we should
+obviously exclude gup/kthreads.
+
+We can't retry in this case and (say) schedule_tail() simply can't report
+or handle the failure. Imho it would be better to kill the task loudly,
+perhaps with a warning.
+
+To avoid the confusion. Of course, it is not that I am trying to simply
+add send_sig(SIGKILL) into the failure paths. My only point is that,
+whatever we do, the "silent" or misleading failure is worse than SIGKILL.
+
+The application can't really "handle an out of memory situation gracefully"
+as the changlelog says. Even if put_user() (and thus syscall) could return
+-ENOMEM, this doesn't really matter I think.
+
+> However, I think we could go back to invoking OOM from all allocation
+> contexts again as long as we change allocator and OOM killer to not
+> wait for individual OOM victims to exit indefinitely (unless it's a
+> __GFP_NOFAIL context).  Maybe wait for some time on the first victim
+> before moving on to the next one.
+
+perhaps... can't really comment, at least right now.
+
+> What do you think?
+
+So far I only think that this problem is not trivial ;)
+
+Oleg.
