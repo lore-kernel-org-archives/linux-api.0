@@ -1,87 +1,238 @@
-From: Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH] iio: Export userspace IIO headers
-Date: Tue, 10 Feb 2015 10:05:06 +0200
-Message-ID: <CAEnQRZBWRmWcSe1izK7cEikwfG_oAEty05eCQXxWr71=8jbDEw@mail.gmail.com>
-References: <1423500586-26480-1-git-send-email-daniel.baluta@intel.com>
-	<54D8E8BD.3090904@metafoo.de>
+From: Ivan Khoronzhuk <ivan.khoronzhuk@linaro.org>
+Subject: Re: [Patch v4] firmware: dmi-sysfs: add SMBIOS entry point area attribute
+Date: Tue, 10 Feb 2015 11:51:44 +0200
+Message-ID: <54D9D4B0.7020803@linaro.org>
+References: <1423069563-26467-1-git-send-email-ivan.khoronzhuk@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54D8E8BD.3090904-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>
-Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>
-Cc: Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Irina Tirdea <irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Roberta Dobrescu <roberta.dobrescu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1423069563-26467-1-git-send-email-ivan.khoronzhuk@linaro.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: matt@codeblueprint.co.uk, Grant Likely <grant.likely@linaro.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, Leif Lindholm <leif.lindholm@linaro.org>, Mark Salter <msalter@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 9, 2015 at 7:05 PM, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org> wrote:
-> On 02/09/2015 05:49 PM, Daniel Baluta wrote:
->>
->> After UAPI header file split [1] all user-kernel interfaces were
->> placed under include/uapi/.
->>
->> This patch moves IIO user specific API from:
->>         * include/linux/iio/events.h => include/uapi/linux/iio/events.h
->>         * include/linux/iio/types.h => include/uapi/linux/iio/types.h
->>
->> Now there is no need for nasty tricks to compile userspace programs
->> (e.g iio_event_monitor). Just installing the kernel headers with
->> make headers_install command does the job.
->>
->> [1] http://lwn.net/Articles/507794/
+Hi Matt,
+
+On 02/04/2015 07:06 PM, Ivan Khoronzhuk wrote:
+> Some utils, like dmidecode and smbios, need to access SMBIOS entry
+> table area in order to get information like SMBIOS version, size, etc.
+> Currently it's done via /dev/mem. But for situation when /dev/mem
+> usage is disabled, the utils have to use dmi sysfs instead, which
+> doesn't represent SMBIOS entry. So this patch adds SMBIOS area to
+> dmi-sysfs in order to allow utils in question to work correctly with
+> dmi sysfs interface.
 >
+> Reviewed-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+> Signed-off-by: Ivan Khoronzhuk <ivan.khoronzhuk@linaro.org>
+> ---
 >
-> Thanks for taking care of this, this is something that should have done a
-> while ago.
-
-Hi Lars,
-
-Thanks for the feedback!
+> v1: https://lkml.org/lkml/2015/1/23/643
+> v2: https://lkml.org/lkml/2015/1/26/345
+> v3: https://lkml.org/lkml/2015/1/28/768
 >
-> [...]
+> v4..v2:
+>    firmware: dmi_scan: add symbol to get SMBIOS entry area
+>    	- used u8 type for smbios_header var
+>    firmware: dmi-sysfs: add SMBIOS entry point area attribute
+>    	- replaced -ENODATA on -EINVAL
 >
->> index 580ed5b..146cda1 100644
-
-<snip>
-
+> v3..v2:
+>    firmware: dmi_scan: add symbol to get SMBIOS entry area
+>    firmware: dmi-sysfs: add SMBIOS entry point area attribute
+> 	- combined in one patch
+> 	- added SMBIOS information to ABI sysfs-dmi documentaton
 >
+> v2..v1:
+>    firmware: dmi_scan: add symbol to get SMBIOS entry area
+> 	- used additional static var to hold SMBIOS raw table size
+> 	- changed format of get_smbios_entry_area symbol
+> 	  returned pointer on const smbios table
 >
-> I think everything in this file below is not part of the ABI and should not
-> be exported to userspace.
-
-I agree about iio_event_info and IIO_VAL_* constants.
-
+>    firmware: dmi-sysfs: add SMBIOS entry point area attribute
+> 	- adopted to updated get_smbios_entry_area symbol
+>    	- removed redundant array to save smbios table
 >
->> -
->> -enum iio_event_info {
->> -       IIO_EV_INFO_ENABLE,
->> -       IIO_EV_INFO_VALUE,
->> -       IIO_EV_INFO_HYSTERESIS,
->> -       IIO_EV_INFO_PERIOD,
->> -};
->> -
->> -enum iio_event_direction {
->> -       IIO_EV_DIR_EITHER,
->> -       IIO_EV_DIR_RISING,
->> -       IIO_EV_DIR_FALLING,
->> -       IIO_EV_DIR_NONE,
->> -};
+>   Documentation/ABI/testing/sysfs-firmware-dmi | 10 +++++++
+>   drivers/firmware/dmi-sysfs.c                 | 42 ++++++++++++++++++++++++++++
+>   drivers/firmware/dmi_scan.c                  | 26 +++++++++++++++++
+>   include/linux/dmi.h                          |  3 ++
+>   4 files changed, 81 insertions(+)
+>
+> diff --git a/Documentation/ABI/testing/sysfs-firmware-dmi b/Documentation/ABI/testing/sysfs-firmware-dmi
+> index c78f9ab..3a9ffe8 100644
+> --- a/Documentation/ABI/testing/sysfs-firmware-dmi
+> +++ b/Documentation/ABI/testing/sysfs-firmware-dmi
+> @@ -12,6 +12,16 @@ Description:
+>   		cannot ensure that the data as exported to userland is
+>   		without error either.
+>   
+> +		The firmware provides DMI structures as a packed list of
+> +		data referenced by a SMBIOS table entry point. The SMBIOS
+> +		entry point contains general information, like SMBIOS
+> +		version, DMI table size, etc. The structure, content and
+> +		size of SMBIOS entry point is dependent on SMBIOS version.
+> +		That's why SMBIOS entry point is represented in dmi sysfs
+> +		like a raw attribute and is accessible via
+> +		/sys/firmware/dmi/smbios_raw_header. The format of SMBIOS
+> +		entry point header can be read in SMBIOS specification.
+> +
+>   		DMI is structured as a large table of entries, where
+>   		each entry has a common header indicating the type and
+>   		length of the entry, as well as a firmware-provided
+> diff --git a/drivers/firmware/dmi-sysfs.c b/drivers/firmware/dmi-sysfs.c
+> index e0f1cb3..9b396d7 100644
+> --- a/drivers/firmware/dmi-sysfs.c
+> +++ b/drivers/firmware/dmi-sysfs.c
+> @@ -29,6 +29,8 @@
+>   #define MAX_ENTRY_TYPE 255 /* Most of these aren't used, but we consider
+>   			      the top entry type is only 8 bits */
+>   
+> +static const u8 *smbios_raw_header;
+> +
+>   struct dmi_sysfs_entry {
+>   	struct dmi_header dh;
+>   	struct kobject kobj;
+> @@ -646,9 +648,37 @@ static void cleanup_entry_list(void)
+>   	}
+>   }
+>   
+> +static ssize_t smbios_entry_area_raw_read(struct file *filp,
+> +					  struct kobject *kobj,
+> +					  struct bin_attribute *bin_attr,
+> +					  char *buf, loff_t pos, size_t count)
+> +{
+> +	ssize_t size;
+> +
+> +	size = bin_attr->size;
+> +
+> +	if (size > pos)
+> +		size -= pos;
+> +	else
+> +		return 0;
+> +
+> +	if (count < size)
+> +		size = count;
+> +
+> +	memcpy(buf, &smbios_raw_header[pos], size);
+> +
+> +	return size;
+> +}
+> +
+> +static struct bin_attribute smbios_raw_area_attr = {
+> +	.read = smbios_entry_area_raw_read,
+> +	.attr = {.name = "smbios_raw_header", .mode = 0400},
+> +};
+> +
+>   static int __init dmi_sysfs_init(void)
+>   {
+>   	int error = -ENOMEM;
+> +	int size;
+>   	int val;
+>   
+>   	/* Set up our directory */
+> @@ -669,6 +699,18 @@ static int __init dmi_sysfs_init(void)
+>   		goto err;
+>   	}
+>   
+> +	smbios_raw_header = dmi_get_smbios_entry_area(&size);
+> +	if (!smbios_raw_header) {
+> +		pr_debug("dmi-sysfs: SMBIOS raw data is not available.\n");
+> +		error = -EINVAL;
+> +		goto err;
+> +	}
+> +
+> +	/* Create the raw binary file to access the entry area */
+> +	smbios_raw_area_attr.size = size;
+> +	if (sysfs_create_bin_file(dmi_kobj, &smbios_raw_area_attr))
+> +		goto err;
+> +
+>   	pr_debug("dmi-sysfs: loaded.\n");
+>   
+>   	return 0;
+> diff --git a/drivers/firmware/dmi_scan.c b/drivers/firmware/dmi_scan.c
+> index 420c8d8..99c5f6c 100644
+> --- a/drivers/firmware/dmi_scan.c
+> +++ b/drivers/firmware/dmi_scan.c
+> @@ -113,6 +113,8 @@ static void dmi_table(u8 *buf, int len, int num,
+>   	}
+>   }
+>   
+> +static u8 smbios_header[32];
+> +static int smbios_header_size;
+>   static phys_addr_t dmi_base;
+>   static u16 dmi_len;
+>   static u16 dmi_num;
+> @@ -474,6 +476,8 @@ static int __init dmi_present(const u8 *buf)
+>   	if (memcmp(buf, "_SM_", 4) == 0 &&
+>   	    buf[5] < 32 && dmi_checksum(buf, buf[5])) {
+>   		smbios_ver = get_unaligned_be16(buf + 6);
+> +		smbios_header_size = buf[5];
+> +		memcpy(smbios_header, buf, smbios_header_size);
+>   
+>   		/* Some BIOS report weird SMBIOS version, fix that up */
+>   		switch (smbios_ver) {
+> @@ -505,6 +509,8 @@ static int __init dmi_present(const u8 *buf)
+>   				pr_info("SMBIOS %d.%d present.\n",
+>   				       dmi_ver >> 8, dmi_ver & 0xFF);
+>   			} else {
+> +				smbios_header_size = 15;
+> +				memcpy(smbios_header, buf, smbios_header_size);
+>   				dmi_ver = (buf[14] & 0xF0) << 4 |
+>   					   (buf[14] & 0x0F);
+>   				pr_info("Legacy DMI %d.%d present.\n",
+> @@ -531,6 +537,8 @@ static int __init dmi_smbios3_present(const u8 *buf)
+>   		dmi_ver &= 0xFFFFFF;
+>   		dmi_len = get_unaligned_le32(buf + 12);
+>   		dmi_base = get_unaligned_le64(buf + 16);
+> +		smbios_header_size = buf[6];
+> +		memcpy(smbios_header, buf, smbios_header_size);
+>   
+>   		/*
+>   		 * The 64-bit SMBIOS 3.0 entry point no longer has a field
+> @@ -944,3 +952,21 @@ void dmi_memdev_name(u16 handle, const char **bank, const char **device)
+>   	}
+>   }
+>   EXPORT_SYMBOL_GPL(dmi_memdev_name);
+> +
+> +/**
+> + * dmi_get_smbios_entry_area - copy SMBIOS entry point area to array.
+> + * @size - pointer to assign actual size of SMBIOS entry point area.
+> + *
+> + * returns NULL if table is not available, otherwise returns pointer on
+> + * SMBIOS entry point area array.
+> + */
+> +const u8 *dmi_get_smbios_entry_area(int *size)
+> +{
+> +	if (!smbios_header_size || !dmi_available)
+> +		return NULL;
+> +
+> +	*size = smbios_header_size;
+> +
+> +	return smbios_header;
+> +}
+> +EXPORT_SYMBOL_GPL(dmi_get_smbios_entry_area);
+> diff --git a/include/linux/dmi.h b/include/linux/dmi.h
+> index f820f0a..8e1a28d 100644
+> --- a/include/linux/dmi.h
+> +++ b/include/linux/dmi.h
+> @@ -109,6 +109,7 @@ extern int dmi_walk(void (*decode)(const struct dmi_header *, void *),
+>   	void *private_data);
+>   extern bool dmi_match(enum dmi_field f, const char *str);
+>   extern void dmi_memdev_name(u16 handle, const char **bank, const char **device);
+> +const u8 *dmi_get_smbios_entry_area(int *size);
+>   
+>   #else
+>   
+> @@ -140,6 +141,8 @@ static inline void dmi_memdev_name(u16 handle, const char **bank,
+>   		const char **device) { }
+>   static inline const struct dmi_system_id *
+>   	dmi_first_match(const struct dmi_system_id *list) { return NULL; }
+> +static inline const u8 *dmi_get_smbios_entry_area(int *size)
+> +	{ return NULL; }
+>   
+>   #endif
+>   
 
-iio_event_direction is exported to userspace via IIO_EVENT_CODE and
-I think it belongs to this file.
-
->> -
->> -#define IIO_VAL_INT 1
->> -#define IIO_VAL_INT_PLUS_MICRO 2
->> -#define IIO_VAL_INT_PLUS_NANO 3
->> -#define IIO_VAL_INT_PLUS_MICRO_DB 4
->> -#define IIO_VAL_INT_MULTIPLE 5
->> -#define IIO_VAL_FRACTIONAL 10
->> -#define IIO_VAL_FRACTIONAL_LOG2 11
->> -
-
-I will send v2 in few hours, hopefully I'll get more feedback meanwhile.
-
-Do you thing should I remove the RFC tag?
-
-thanks,
-Daniel.
+If you are Ok with this patch, could you please pickup it?
