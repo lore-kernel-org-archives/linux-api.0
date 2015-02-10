@@ -1,90 +1,50 @@
-From: Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>
-Subject: Re: [RFC PATCH] iio: Export userspace IIO headers
-Date: Tue, 10 Feb 2015 10:57:12 +0100
-Message-ID: <54D9D5F8.9020700@metafoo.de>
-References: <1423500586-26480-1-git-send-email-daniel.baluta@intel.com>	<54D8E8BD.3090904@metafoo.de> <CAEnQRZBWRmWcSe1izK7cEikwfG_oAEty05eCQXxWr71=8jbDEw@mail.gmail.com>
+From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH] tpm, tpm_tis: fix TPM 2.0 probing
+Date: Tue, 10 Feb 2015 07:16:32 -0500
+Message-ID: <54D9F6A0.9010905@linux.vnet.ibm.com>
+References: <1423059669-31734-1-git-send-email-jarkko.sakkinen@linux.intel.com> <201502090008.47986.PeterHuewe@gmx.de> <20150209083947.GC29987@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=windows-1252;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAEnQRZBWRmWcSe1izK7cEikwfG_oAEty05eCQXxWr71=8jbDEw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20150209083947.GC29987-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Irina Tirdea <irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Roberta Dobrescu <roberta.dobrescu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, =?windows-1252?Q?Peter_H=FCwe?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>
+Cc: Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 02/10/2015 09:05 AM, Daniel Baluta wrote:
-> On Mon, Feb 9, 2015 at 7:05 PM, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org> wrote:
->> On 02/09/2015 05:49 PM, Daniel Baluta wrote:
->>>
->>> After UAPI header file split [1] all user-kernel interfaces were
->>> placed under include/uapi/.
->>>
->>> This patch moves IIO user specific API from:
->>>          * include/linux/iio/events.h => include/uapi/linux/iio/events.h
->>>          * include/linux/iio/types.h => include/uapi/linux/iio/types.h
->>>
->>> Now there is no need for nasty tricks to compile userspace programs
->>> (e.g iio_event_monitor). Just installing the kernel headers with
->>> make headers_install command does the job.
->>>
->>> [1] http://lwn.net/Articles/507794/
->>
->>
->> Thanks for taking care of this, this is something that should have done a
->> while ago.
->
-> Hi Lars,
->
-> Thanks for the feedback!
->>
->> [...]
->>
->>> index 580ed5b..146cda1 100644
->
-> <snip>
->
->>
->>
->> I think everything in this file below is not part of the ABI and should not
->> be exported to userspace.
->
-> I agree about iio_event_info and IIO_VAL_* constants.
->
->>
->>> -
->>> -enum iio_event_info {
->>> -       IIO_EV_INFO_ENABLE,
->>> -       IIO_EV_INFO_VALUE,
->>> -       IIO_EV_INFO_HYSTERESIS,
->>> -       IIO_EV_INFO_PERIOD,
->>> -};
->>> -
->>> -enum iio_event_direction {
->>> -       IIO_EV_DIR_EITHER,
->>> -       IIO_EV_DIR_RISING,
->>> -       IIO_EV_DIR_FALLING,
->>> -       IIO_EV_DIR_NONE,
->>> -};
->
-> iio_event_direction is exported to userspace via IIO_EVENT_CODE and
-> I think it belongs to this file.
+On 02/09/2015 03:39 AM, Jarkko Sakkinen wrote:
+> On Mon, Feb 09, 2015 at 12:08:46AM +0100, Peter H=FCwe wrote:
+>> Am Mittwoch, 4. Februar 2015, 15:21:09 schrieb Jarkko Sakkinen:
+>>> If during transmission system error was returned, the logic was to
+>>> incorrectly deduce that chip is a TPM 1.x chip. This patch fixes th=
+is
+>>> issue. Also, this patch changes probing so that message tag is used=
+ as the
+>>> measure for TPM 2.x, which should be much more stable.
+>> Is it aware that some TPMs may respond with 0x00C1 as TAG for TPM1.2=
+ commands?
+> I guess none of the TPM 1.2 command answer with the tag 0x8002?
 
-Right.
 
->
->>> -
->>> -#define IIO_VAL_INT 1
->>> -#define IIO_VAL_INT_PLUS_MICRO 2
->>> -#define IIO_VAL_INT_PLUS_NANO 3
->>> -#define IIO_VAL_INT_PLUS_MICRO_DB 4
->>> -#define IIO_VAL_INT_MULTIPLE 5
->>> -#define IIO_VAL_FRACTIONAL 10
->>> -#define IIO_VAL_FRACTIONAL_LOG2 11
->>> -
->
-> I will send v2 in few hours, hopefully I'll get more feedback meanwhile.
->
-> Do you thing should I remove the RFC tag?
+=46YI: pdf page 26 , section 6.1 explains the predictable return value =
+for=20
+a TPM1.2 command seen by a TPM2
 
-Patch looks good to me.
+http://www.trustedcomputinggroup.org/files/static_page_files/8C68ADA8-1=
+A4B-B294-D0FC06D3773F7DAA/TPM%20Rev%202.0%20Part%203%20-%20Commands%200=
+1.16-code.pdf
+
+=46ollowing this:
+
+Sending a TPM1.2 command to a TPM2 should return a TPM1.2 header (tag =3D=
+=20
+0xc4) and error code (TPM_BADTAG =3D 0x1e)
+
+Sending a TPM 2 command to a TPM 2 will give a TPM 2 tag in the header.
+Sending a TPM 2 command to a TPM 1.2 will give a TPM 1.2 tag in the=20
+header and an error code.
+
+
+    Stefan
