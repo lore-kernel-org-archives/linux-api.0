@@ -1,79 +1,45 @@
-From: "Bryn M. Reeves" <bmr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC] implementing tape statistics single file vs multi-file in
- sysfs
-Date: Tue, 10 Feb 2015 14:27:20 +0000
-Message-ID: <20150210142719.GA1437@localhost.localdomain>
-References: <DDB9C85B850785449757F9914A034FCB3BF3EADA@G9W0766.americas.hpqcorp.net>
- <20150206125916.GB26247@kroah.com>
- <20150206154157.GD1143@localhost.localdomain>
- <20150207040743.GB29944@kroah.com>
+From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Subject: Re: [PATCH v3 linux-trace 0/8] tracing: attach eBPF programs to
+ tracepoints/syscalls/kprobe
+Date: Tue, 10 Feb 2015 09:55:12 -0500
+Message-ID: <20150210095512.42d8dede@grimm.local.home>
+References: <1423539961-21792-1-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150207040743.GB29944-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <1423539961-21792-1-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: "Seymour, Shane M" <shane.seymour-VXdhtT5mjnY@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kai.Makisara-9Aww8k/80nUxHbG02/KK1g@public.gmane.org" <Kai.Makisara-9Aww8k/80nUxHbG02/KK1g@public.gmane.org>, "James E.J. Bottomley (JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org)" <JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Laurence Oberman (loberman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org)" <loberman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Feb 07, 2015 at 12:07:43PM +0800, Greg KH wrote:
-> On Fri, Feb 06, 2015 at 03:41:58PM +0000, Bryn M. Reeves wrote:
-> > I can't speak for Shane but wouldn't spend too much time looking at the
-> > current v2 patch: it's the result of a pretty ugly compromise suggested
-> > on linux-scsi.
-> 
-> Fair enough, but please feel free to cc: me on the patch that you do
-> feel is correct to get a sysfs-related review.
+On Mon,  9 Feb 2015 19:45:53 -0800
+Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
 
-Will do; I'm back from travels this week & will have some time to look at
-this.
- 
-> > Likewise for disk stats: although fluff like maj:min/name etc. has been
-> > shuffled a few times the basic fields have remained unchanged for a very
-> > long time and sysfs already removes the need to include an identity
-> > field.
-> 
-> We already handle i/o stats just fine, why create a special sysfs
-> interface for just a tape device interface?  What makes them so special?
+> So the overhead of realistic bpf program is 5.05963/4.80074 = ~5%
+> which is faster than perf_event filtering: 5.69732/4.80074 = ~18%
+> or ftrace filtering: 6.50091/4.80074 = ~35%
 
-But the iostats use exactly the sort of array file we're talking about:
+Come to think of it, this is comparing apples to oranges, as you move
+the filtering before the recording. It would be interesting to see the
+ftrace speed up, if it were to use eBPF instead of its own filtering.
+Maybe that 35% is the filter part, and not the discard part.
 
-$ cat /sys/block/sda/stat 
-  127644    20869  4320505  2305697   154045    30056  3834036  9065092        0   931842 11371357
+I just tried the dd test with count==1234 and count!=1234 and the one
+that drops events is only slightly slower. In this case it does seem
+that the most overhead is in the filter logic.
 
-And we can't simply extend these to tapes as they are not block devices.
- 
-> > I understand the fact that you can't change them; I just don't think it's
-> > a big problem in this specific case (and much less than some of the
-> > more imaginative sysfs content - 2d int arrays with column headers
-> > anyone?).
-> 
-> What sysfs file is a 2d int array?  I'll be glad to fix it.
+But by moving it before the recording, we can not use the fields
+defined in the format files, as the parameters and the fields do not
+match in most trace points. And to use the parameters, as I have
+stated, there's no interface to know what those parameters are, then
+filtering on them is a one shot deal. Might as well write a module and
+hook directly to the tracepoint and do the filtering natively. That
+would be faster than BPF too.
 
-$ cat /sys/fs/selinux/avc/cache_stats 
-lookups hits misses allocations reclaims frees
-18938916 18921707 17209 17209 17328 22215
-38164283 38146514 17769 17769 16800 19049
-18078108 18056991 21117 21117 21344 19305
-15168204 15150079 18125 18125 17776 13149
-0 0 0 0 0 0
-0 0 0 0 0 0
-0 0 0 0 0 0
-0 0 0 0 0 0
+My point is, what's the use case? If you filter before recording, you
+can not use the fields of the tracepoint. That limits you to filtering
+only syscalls, and perhaps kprobes.
 
-$ cat /sys/fs/selinux/avc/hash_stats
-entries: 506
-buckets used: 290/512
-longest chain: 5
-
-> If you want to measure tens of thousands of tape devices then you
-> shouldn't be using sysfs in the first place as it is not designed for
-> "speed" at all.  Use the existing i/o rate interfaces instead, don't try
-> to cram something into sysfs that doesn't belong there.
-
-So far as I'm aware there is no other way to obtain performance data
-for the SCSI tape subsystem (without resorting to ftrace/systemtap).
-
-Regards,
-Bryn.
+-- Steve
