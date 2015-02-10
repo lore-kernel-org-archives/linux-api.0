@@ -1,56 +1,87 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v3 linux-trace 1/8] tracing: attach eBPF programs to
- tracepoints and syscalls
-Date: Mon, 9 Feb 2015 22:10:45 -0800
-Message-ID: <CAMEtUuztTca2jC9Su0YkTHEUHsD4p2PBRyukabrjGO0WfFzdfA@mail.gmail.com>
+From: Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH] iio: Export userspace IIO headers
+Date: Tue, 10 Feb 2015 10:05:06 +0200
+Message-ID: <CAEnQRZBWRmWcSe1izK7cEikwfG_oAEty05eCQXxWr71=8jbDEw@mail.gmail.com>
+References: <1423500586-26480-1-git-send-email-daniel.baluta@intel.com>
+	<54D8E8BD.3090904@metafoo.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <54D8E8BD.3090904-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>
+Cc: Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Irina Tirdea <irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Roberta Dobrescu <roberta.dobrescu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 9, 2015 at 9:13 PM, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org> wrote:
->>                                                                       \
->> +     if (prog) {                                                     \
->> +             __maybe_unused const u64 z = 0;                         \
->> +             struct bpf_context __ctx = ((struct bpf_context) {      \
->> +                             __BPF_CAST6(args, z, z, z, z, z)        \
+On Mon, Feb 9, 2015 at 7:05 PM, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org> wrote:
+> On 02/09/2015 05:49 PM, Daniel Baluta wrote:
+>>
+>> After UAPI header file split [1] all user-kernel interfaces were
+>> placed under include/uapi/.
+>>
+>> This patch moves IIO user specific API from:
+>>         * include/linux/iio/events.h => include/uapi/linux/iio/events.h
+>>         * include/linux/iio/types.h => include/uapi/linux/iio/types.h
+>>
+>> Now there is no need for nasty tricks to compile userspace programs
+>> (e.g iio_event_monitor). Just installing the kernel headers with
+>> make headers_install command does the job.
+>>
+>> [1] http://lwn.net/Articles/507794/
 >
-> Note, there is no guarantee that args is at most 6. For example, in
-> drivers/net/wireless/brcm80211/brcmsmac/brcms_trace_events.h, the
-> trace_event brcms_txstatus has 8 args.
 >
-> But I guess that's OK if you do not need those last args, right?
+> Thanks for taking care of this, this is something that should have done a
+> while ago.
 
-yeah, some tracepoints pass a lot of things.
-That's rare and in most of the cases they can be fetched
-from parent structure.
+Hi Lars,
 
-> I'm nervous about showing args of tracepoints too, because we don't want
-> that to become a strict ABI either.
+Thanks for the feedback!
+>
+> [...]
+>
+>> index 580ed5b..146cda1 100644
 
-One can argue that current TP_printk format is already an ABI,
-because somebody might be parsing the text output.
-so in some cases we cannot change tracepoints without
-somebody complaining that his tool broke.
-In other cases tracepoints are used for debugging only
-and no one will notice when they change...
-It was and still a grey area.
-bpf doesn't change any of that.
-It actually makes addition of new tracepoints easier.
-In the future we might add a tracepoint and pass a single
-pointer to interesting data struct to it. bpf programs will walk
-data structures 'as safe modules' via bpf_fetch*() methods
-without exposing it as ABI.
-whereas today we pass a lot of fields to tracepoints and
-make all of these fields immutable.
+<snip>
 
-To me tracepoints are like gdb breakpoints.
-and bpf programs like live debugger that examine things.
+>
+>
+> I think everything in this file below is not part of the ABI and should not
+> be exported to userspace.
 
-the next step is to be able to write bpf scripts on the fly
-without leaving debugger. Something like perf probe +
-editor + live execution. Truly like gdb for kernel.
-while kernel is running.
+I agree about iio_event_info and IIO_VAL_* constants.
+
+>
+>> -
+>> -enum iio_event_info {
+>> -       IIO_EV_INFO_ENABLE,
+>> -       IIO_EV_INFO_VALUE,
+>> -       IIO_EV_INFO_HYSTERESIS,
+>> -       IIO_EV_INFO_PERIOD,
+>> -};
+>> -
+>> -enum iio_event_direction {
+>> -       IIO_EV_DIR_EITHER,
+>> -       IIO_EV_DIR_RISING,
+>> -       IIO_EV_DIR_FALLING,
+>> -       IIO_EV_DIR_NONE,
+>> -};
+
+iio_event_direction is exported to userspace via IIO_EVENT_CODE and
+I think it belongs to this file.
+
+>> -
+>> -#define IIO_VAL_INT 1
+>> -#define IIO_VAL_INT_PLUS_MICRO 2
+>> -#define IIO_VAL_INT_PLUS_NANO 3
+>> -#define IIO_VAL_INT_PLUS_MICRO_DB 4
+>> -#define IIO_VAL_INT_MULTIPLE 5
+>> -#define IIO_VAL_FRACTIONAL 10
+>> -#define IIO_VAL_FRACTIONAL_LOG2 11
+>> -
+
+I will send v2 in few hours, hopefully I'll get more feedback meanwhile.
+
+Do you thing should I remove the RFC tag?
+
+thanks,
+Daniel.
