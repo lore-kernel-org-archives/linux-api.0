@@ -1,353 +1,116 @@
-From: Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v2] iio: Export userspace IIO headers
-Date: Tue, 10 Feb 2015 18:33:51 +0200
-Message-ID: <1423586031-25199-1-git-send-email-daniel.baluta@intel.com>
+From: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 2/2] epoll: introduce EPOLLEXCLUSIVE and EPOLLROUNDROBIN
+Date: Tue, 10 Feb 2015 14:16:58 -0500
+Message-ID: <54DA592A.3050102@akamai.com>
+References: <cover.1423509605.git.jbaron@akamai.com> <68a0ad4a99551ea3bfff89da461bb490d63b0ca8.1423509605.git.jbaron@akamai.com> <54D915FC.7010003@amacapital.net> <54D92780.4000303@akamai.com> <CALCETrUQZHHE_PJYoMw8g9C5AAxSdF-jU85EF317O4Krk+bV9w@mail.gmail.com> <54D98209.2080901@akamai.com> <20150210044939.GA15616@dcvr.yhbt.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150210044939.GA15616-yBiyF41qdooeIZ0/mPfg9Q@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, knaack.h-Mmb7MZpHnFY@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org
-Cc: irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, roberta.dobrescu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Eric Wong <normalperson-rMlxZR9MS24@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-After UAPI header file split [1] all user-kernel interfaces were
-placed under include/uapi/.
+On 02/09/2015 11:49 PM, Eric Wong wrote:
+> Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org> wrote:
+>> On 02/09/2015 05:45 PM, Andy Lutomirski wrote:
+>>> On Mon, Feb 9, 2015 at 1:32 PM, Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org> wrote:
+>>>> On 02/09/2015 03:18 PM, Andy Lutomirski wrote:
+>>>>> On 02/09/2015 12:06 PM, Jason Baron wrote:
+>>>>>> Epoll file descriptors that are added to a shared wakeup source are always
+>>>>>> added in a non-exclusive manner. That means that when we have multiple epoll
+>>>>>> fds attached to a shared wakeup source they are all woken up. This can
+>>>>>> lead to excessive cpu usage and uneven load distribution.
+>>>>>>
+>>>>>> This patch introduces two new 'events' flags that are intended to be used
+>>>>>> with EPOLL_CTL_ADD operations. EPOLLEXCLUSIVE, adds the epoll fd to the event
+>>>>>> source in an exclusive manner such that the minimum number of threads are
+>>>>>> woken. EPOLLROUNDROBIN, which depends on EPOLLEXCLUSIVE also being set, can
+>>>>>> also be added to the 'events' flag, such that we round robin around the set
+>>>>>> of waiting threads.
+>>>>>>
+>>>>>> An implementation note is that in the epoll wakeup routine,
+>>>>>> 'ep_poll_callback()', if EPOLLROUNDROBIN is set, we return 1, for a successful
+>>>>>> wakeup, only when there are current waiters. The idea is to use this additional
+>>>>>> heuristic in order minimize wakeup latencies.
+>>>>> I don't understand what this is intended to do.
+>>>>>
+>>>>> If an event has EPOLLONESHOT, then this only one thread should be woken regardless, right?  If not, isn't that just a bug that should be fixed?
+>>>>>
+>>>> hmm...so with EPOLLONESHOT you basically get notified once about an event. If i have multiple epoll fds (say 1 per-thread) attached to a single source in EPOLLONESHOT, then all threads will potentially get woken up once per event. Then, I would have to re-arm all of them. So I don't think this addresses this particular usecase...what I am trying to avoid is this mass wakeup or thundering herd for a shared event source.
+>>> Now I understand.  Why are you using multiple epollfds?
+>>>
+>>> --Andy
+>> So the multiple epollfds is really a way to partition the set of
+>> events. Otherwise, I have all the threads contending on all the events
+>> that are being generated. So I'm not sure if that is scalable.
+> I wonder if EPOLLONESHOT + epoll_wait with a sufficiently large
+> maxevents value is sufficient for you.  All events would be shared, so
+> they can migrate between threads(*).  Each thread takes a largish set of
+> events on every epoll_wait call and doesn't call epoll_wait again until
+> it's done with the whole set it got.
+>
+> You'll hit more contention on EPOLL_CTL_MOD with shared events and a
+> single epoll, but I think it's a better goal to make that lock-free.
 
-This patch moves IIO user specific API from:
-	* include/linux/iio/events.h => include/uapi/linux/iio/events.h
-	* include/linux/types.h => include/uapi/linux/types.h
+Its not just EPOLL_CTL_MOD, but there's also going to be contention on
+epoll add and remove since there is only 1 epoll fd in this case. I'm also
+concerned about the balancing of the workload among threads in the single
+queue case. I think its quite reasonable to have user-space partition
+the set
+of events among threads as it sees fit using multiple epoll fds.
 
-Now there is no need for nasty tricks to compile userspace programs
-(e.g iio_event_monitor). Just installing the kernel headers with
-make headers_install command does the job.
+However, currently this multiple epoll fd scheme does not handle events from
+a shared event source well. As I mentioned there is a thundering herd wakeup
+in this case, and the wakeups are unbalanced. In fact, we have an
+application
+that currently does EPOLL_CTL_REMOVEs followed by EPOLL_CTL_ADDs
+periodically against a shared wakeup source in order to re-balance the
+wakeup
+queues. This solves the balancing issues to an extent, but not the
+thundering
+herd. I'd like to move this logic down into the kernel with this patch set.
 
-[1] http://lwn.net/Articles/507794/
+> (*) Too large a maxevents will lead to head-of-line blocking, but from
+> what I'm inferring, you already risk that with multiple epollfds and
+> separate threads working on them.
+>
+> Do you have a userland use case to share?
 
-Signed-off-by: Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
----
-Changes since v1:
-	* keep enum iio_event_info and IIO_VAL_* constants in
-	include/linux/iio/types.h since they aren't part of the
-	ABI.
+I've been trying to describe the use case, maybe I haven't been doing a good
+job :(
 
- include/linux/iio/events.h      | 30 +-------------
- include/linux/iio/types.h       | 78 +----------------------------------
- include/uapi/linux/Kbuild       |  1 +
- include/uapi/linux/iio/Kbuild   |  3 ++
- include/uapi/linux/iio/events.h | 43 +++++++++++++++++++
- include/uapi/linux/iio/types.h  | 91 +++++++++++++++++++++++++++++++++++++++++
- 6 files changed, 140 insertions(+), 106 deletions(-)
- create mode 100644 include/uapi/linux/iio/Kbuild
- create mode 100644 include/uapi/linux/iio/events.h
- create mode 100644 include/uapi/linux/iio/types.h
+>> In the use-case I'm trying to describe, I've partitioned a large set
+>> of the events, but there may still be some event sources that we wish
+>> to share among all of the threads (or even subsets of them), so as not
+>> to overload any one in particular.
+>  
+>> More specifically, in the case of a single listen socket, its natural
+>> to call accept() on the thread that has been woken up, but without
+>> doing round robin, you quickly get into a very unbalanced load, and in
+>> addition you waste a lot of cpu doing unnecessary wakeups. There are
+>> other approaches to solve this, specifically using SO_REUSEPORT, which
+>> creates a separate socket per-thread and gets one back to the
+>> separately partitioned events case previously described. However,
+>> SO_REUSEPORT, I believe is very specific to tcp/udp, and in addition
+>> does not have knowledge of the threads that are actively waiting as
+>> the epoll code does.
+> Did you try my suggestion of using a dedicated thread (or thread pool)
+> which does nothing but loop on accept() + EPOLL_CTL_ADD?
+>
+> Those dedicated threads could do its own round-robin in userland to pick
+> a different epollfd to call EPOLL_CTL_ADD on.
 
-diff --git a/include/linux/iio/events.h b/include/linux/iio/events.h
-index 03fa332..8ad87d1 100644
---- a/include/linux/iio/events.h
-+++ b/include/linux/iio/events.h
-@@ -9,22 +9,8 @@
- #ifndef _IIO_EVENTS_H_
- #define _IIO_EVENTS_H_
- 
--#include <linux/ioctl.h>
--#include <linux/types.h>
- #include <linux/iio/types.h>
--
--/**
-- * struct iio_event_data - The actual event being pushed to userspace
-- * @id:		event identifier
-- * @timestamp:	best estimate of time of event occurrence (often from
-- *		the interrupt handler)
-- */
--struct iio_event_data {
--	__u64	id;
--	__s64	timestamp;
--};
--
--#define IIO_GET_EVENT_FD_IOCTL _IOR('i', 0x90, int)
-+#include <uapi/linux/iio/events.h>
- 
- /**
-  * IIO_EVENT_CODE() - create event identifier
-@@ -70,18 +56,4 @@ struct iio_event_data {
- #define IIO_UNMOD_EVENT_CODE(chan_type, number, type, direction)	\
- 	IIO_EVENT_CODE(chan_type, 0, 0, direction, type, number, 0, 0)
- 
--#define IIO_EVENT_CODE_EXTRACT_TYPE(mask) ((mask >> 56) & 0xFF)
--
--#define IIO_EVENT_CODE_EXTRACT_DIR(mask) ((mask >> 48) & 0x7F)
--
--#define IIO_EVENT_CODE_EXTRACT_CHAN_TYPE(mask) ((mask >> 32) & 0xFF)
--
--/* Event code number extraction depends on which type of event we have.
-- * Perhaps review this function in the future*/
--#define IIO_EVENT_CODE_EXTRACT_CHAN(mask) ((__s16)(mask & 0xFFFF))
--#define IIO_EVENT_CODE_EXTRACT_CHAN2(mask) ((__s16)(((mask) >> 16) & 0xFFFF))
--
--#define IIO_EVENT_CODE_EXTRACT_MODIFIER(mask) ((mask >> 40) & 0xFF)
--#define IIO_EVENT_CODE_EXTRACT_DIFF(mask) (((mask) >> 55) & 0x1)
--
- #endif
-diff --git a/include/linux/iio/types.h b/include/linux/iio/types.h
-index 580ed5b..942b6de 100644
---- a/include/linux/iio/types.h
-+++ b/include/linux/iio/types.h
-@@ -10,76 +10,7 @@
- #ifndef _IIO_TYPES_H_
- #define _IIO_TYPES_H_
- 
--enum iio_chan_type {
--	IIO_VOLTAGE,
--	IIO_CURRENT,
--	IIO_POWER,
--	IIO_ACCEL,
--	IIO_ANGL_VEL,
--	IIO_MAGN,
--	IIO_LIGHT,
--	IIO_INTENSITY,
--	IIO_PROXIMITY,
--	IIO_TEMP,
--	IIO_INCLI,
--	IIO_ROT,
--	IIO_ANGL,
--	IIO_TIMESTAMP,
--	IIO_CAPACITANCE,
--	IIO_ALTVOLTAGE,
--	IIO_CCT,
--	IIO_PRESSURE,
--	IIO_HUMIDITYRELATIVE,
--	IIO_ACTIVITY,
--	IIO_STEPS,
--	IIO_ENERGY,
--	IIO_DISTANCE,
--	IIO_VELOCITY,
--};
--
--enum iio_modifier {
--	IIO_NO_MOD,
--	IIO_MOD_X,
--	IIO_MOD_Y,
--	IIO_MOD_Z,
--	IIO_MOD_X_AND_Y,
--	IIO_MOD_X_AND_Z,
--	IIO_MOD_Y_AND_Z,
--	IIO_MOD_X_AND_Y_AND_Z,
--	IIO_MOD_X_OR_Y,
--	IIO_MOD_X_OR_Z,
--	IIO_MOD_Y_OR_Z,
--	IIO_MOD_X_OR_Y_OR_Z,
--	IIO_MOD_LIGHT_BOTH,
--	IIO_MOD_LIGHT_IR,
--	IIO_MOD_ROOT_SUM_SQUARED_X_Y,
--	IIO_MOD_SUM_SQUARED_X_Y_Z,
--	IIO_MOD_LIGHT_CLEAR,
--	IIO_MOD_LIGHT_RED,
--	IIO_MOD_LIGHT_GREEN,
--	IIO_MOD_LIGHT_BLUE,
--	IIO_MOD_QUATERNION,
--	IIO_MOD_TEMP_AMBIENT,
--	IIO_MOD_TEMP_OBJECT,
--	IIO_MOD_NORTH_MAGN,
--	IIO_MOD_NORTH_TRUE,
--	IIO_MOD_NORTH_MAGN_TILT_COMP,
--	IIO_MOD_NORTH_TRUE_TILT_COMP,
--	IIO_MOD_RUNNING,
--	IIO_MOD_JOGGING,
--	IIO_MOD_WALKING,
--	IIO_MOD_STILL,
--	IIO_MOD_ROOT_SUM_SQUARED_X_Y_Z,
--};
--
--enum iio_event_type {
--	IIO_EV_TYPE_THRESH,
--	IIO_EV_TYPE_MAG,
--	IIO_EV_TYPE_ROC,
--	IIO_EV_TYPE_THRESH_ADAPTIVE,
--	IIO_EV_TYPE_MAG_ADAPTIVE,
--	IIO_EV_TYPE_CHANGE,
--};
-+#include <uapi/linux/iio/types.h>
- 
- enum iio_event_info {
- 	IIO_EV_INFO_ENABLE,
-@@ -88,13 +19,6 @@ enum iio_event_info {
- 	IIO_EV_INFO_PERIOD,
- };
- 
--enum iio_event_direction {
--	IIO_EV_DIR_EITHER,
--	IIO_EV_DIR_RISING,
--	IIO_EV_DIR_FALLING,
--	IIO_EV_DIR_NONE,
--};
--
- #define IIO_VAL_INT 1
- #define IIO_VAL_INT_PLUS_MICRO 2
- #define IIO_VAL_INT_PLUS_NANO 3
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 00b10002..5bfc5bd 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -6,6 +6,7 @@ header-y += caif/
- header-y += dvb/
- header-y += hdlc/
- header-y += hsi/
-+header-y += iio/
- header-y += isdn/
- header-y += mmc/
- header-y += nfsd/
-diff --git a/include/uapi/linux/iio/Kbuild b/include/uapi/linux/iio/Kbuild
-new file mode 100644
-index 0000000..86f76d8
---- /dev/null
-+++ b/include/uapi/linux/iio/Kbuild
-@@ -0,0 +1,3 @@
-+# UAPI Header export list
-+header-y += events.h
-+header-y += types.h
-diff --git a/include/uapi/linux/iio/events.h b/include/uapi/linux/iio/events.h
-new file mode 100644
-index 0000000..4b06477
---- /dev/null
-+++ b/include/uapi/linux/iio/events.h
-@@ -0,0 +1,43 @@
-+/* The industrial I/O - event passing to userspace
-+ *
-+ * Copyright (c) 2008-2011 Jonathan Cameron
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License version 2 as published by
-+ * the Free Software Foundation.
-+ */
-+#ifndef _UAPI_IIO_EVENTS_H_
-+#define _UAPI_IIO_EVENTS_H_
-+
-+#include <linux/ioctl.h>
-+#include <linux/types.h>
-+
-+/**
-+ * struct iio_event_data - The actual event being pushed to userspace
-+ * @id:		event identifier
-+ * @timestamp:	best estimate of time of event occurrence (often from
-+ *		the interrupt handler)
-+ */
-+struct iio_event_data {
-+	__u64	id;
-+	__s64	timestamp;
-+};
-+
-+#define IIO_GET_EVENT_FD_IOCTL _IOR('i', 0x90, int)
-+
-+#define IIO_EVENT_CODE_EXTRACT_TYPE(mask) ((mask >> 56) & 0xFF)
-+
-+#define IIO_EVENT_CODE_EXTRACT_DIR(mask) ((mask >> 48) & 0x7F)
-+
-+#define IIO_EVENT_CODE_EXTRACT_CHAN_TYPE(mask) ((mask >> 32) & 0xFF)
-+
-+/* Event code number extraction depends on which type of event we have.
-+ * Perhaps review this function in the future*/
-+#define IIO_EVENT_CODE_EXTRACT_CHAN(mask) ((__s16)(mask & 0xFFFF))
-+#define IIO_EVENT_CODE_EXTRACT_CHAN2(mask) ((__s16)(((mask) >> 16) & 0xFFFF))
-+
-+#define IIO_EVENT_CODE_EXTRACT_MODIFIER(mask) ((mask >> 40) & 0xFF)
-+#define IIO_EVENT_CODE_EXTRACT_DIFF(mask) (((mask) >> 55) & 0x1)
-+
-+#endif /* _UAPI_IIO_EVENTS_H_ */
-+
-diff --git a/include/uapi/linux/iio/types.h b/include/uapi/linux/iio/types.h
-new file mode 100644
-index 0000000..56a1529
---- /dev/null
-+++ b/include/uapi/linux/iio/types.h
-@@ -0,0 +1,91 @@
-+/* industrial I/O data types needed both in and out of kernel
-+ *
-+ * Copyright (c) 2008 Jonathan Cameron
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License version 2 as published by
-+ * the Free Software Foundation.
-+ */
-+
-+#ifndef _UAPI_IIO_TYPES_H_
-+#define _UAPI_IIO_TYPES_H_
-+
-+enum iio_chan_type {
-+	IIO_VOLTAGE,
-+	IIO_CURRENT,
-+	IIO_POWER,
-+	IIO_ACCEL,
-+	IIO_ANGL_VEL,
-+	IIO_MAGN,
-+	IIO_LIGHT,
-+	IIO_INTENSITY,
-+	IIO_PROXIMITY,
-+	IIO_TEMP,
-+	IIO_INCLI,
-+	IIO_ROT,
-+	IIO_ANGL,
-+	IIO_TIMESTAMP,
-+	IIO_CAPACITANCE,
-+	IIO_ALTVOLTAGE,
-+	IIO_CCT,
-+	IIO_PRESSURE,
-+	IIO_HUMIDITYRELATIVE,
-+	IIO_ACTIVITY,
-+	IIO_STEPS,
-+	IIO_ENERGY,
-+	IIO_DISTANCE,
-+	IIO_VELOCITY,
-+};
-+
-+enum iio_modifier {
-+	IIO_NO_MOD,
-+	IIO_MOD_X,
-+	IIO_MOD_Y,
-+	IIO_MOD_Z,
-+	IIO_MOD_X_AND_Y,
-+	IIO_MOD_X_AND_Z,
-+	IIO_MOD_Y_AND_Z,
-+	IIO_MOD_X_AND_Y_AND_Z,
-+	IIO_MOD_X_OR_Y,
-+	IIO_MOD_X_OR_Z,
-+	IIO_MOD_Y_OR_Z,
-+	IIO_MOD_X_OR_Y_OR_Z,
-+	IIO_MOD_LIGHT_BOTH,
-+	IIO_MOD_LIGHT_IR,
-+	IIO_MOD_ROOT_SUM_SQUARED_X_Y,
-+	IIO_MOD_SUM_SQUARED_X_Y_Z,
-+	IIO_MOD_LIGHT_CLEAR,
-+	IIO_MOD_LIGHT_RED,
-+	IIO_MOD_LIGHT_GREEN,
-+	IIO_MOD_LIGHT_BLUE,
-+	IIO_MOD_QUATERNION,
-+	IIO_MOD_TEMP_AMBIENT,
-+	IIO_MOD_TEMP_OBJECT,
-+	IIO_MOD_NORTH_MAGN,
-+	IIO_MOD_NORTH_TRUE,
-+	IIO_MOD_NORTH_MAGN_TILT_COMP,
-+	IIO_MOD_NORTH_TRUE_TILT_COMP,
-+	IIO_MOD_RUNNING,
-+	IIO_MOD_JOGGING,
-+	IIO_MOD_WALKING,
-+	IIO_MOD_STILL,
-+	IIO_MOD_ROOT_SUM_SQUARED_X_Y_Z,
-+};
-+
-+enum iio_event_type {
-+	IIO_EV_TYPE_THRESH,
-+	IIO_EV_TYPE_MAG,
-+	IIO_EV_TYPE_ROC,
-+	IIO_EV_TYPE_THRESH_ADAPTIVE,
-+	IIO_EV_TYPE_MAG_ADAPTIVE,
-+	IIO_EV_TYPE_CHANGE,
-+};
-+
-+enum iio_event_direction {
-+	IIO_EV_DIR_EITHER,
-+	IIO_EV_DIR_RISING,
-+	IIO_EV_DIR_FALLING,
-+	IIO_EV_DIR_NONE,
-+};
-+
-+#endif /* _UAPI_IIO_TYPES_H_ */
--- 
-1.9.1
+Thanks for your suggestion! I'm not actively working on the user-space
+code here, but I will pass it along.
+
+I would prefer though not to have to context switch the 'accept' thread
+on and off the cpu every time there is a new connection. So the approach
+suggested here essentially moves this dedicated thread (threads), down
+into the kernel and avoids the creation of these threads entirely.
+
+Thanks,
+
+-Jason
