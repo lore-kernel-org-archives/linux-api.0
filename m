@@ -1,148 +1,365 @@
-From: Shaohua Li <shli@kernel.org>
-Subject: Re: [PATCH v17 1/7] mm: support madvise(MADV_FREE)
-Date: Tue, 10 Feb 2015 14:38:26 -0800
-Message-ID: <20150210223826.GA2342@kernel.org>
-References: <20141203000026.GA30217@bbox>
- <20141203101329.GB23236@dhcp22.suse.cz>
- <20141205070816.GB3358@bbox>
- <20141205083249.GA2321@dhcp22.suse.cz>
- <54D0F9BC.4060306@gmail.com>
- <20150203234722.GB3583@blaptop>
- <20150206003311.GA2347@kernel.org>
- <20150206055103.GA13244@blaptop>
- <20150206182918.GA2290@kernel.org>
- <20150209071553.GC32300@blaptop>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150209071553.GC32300@blaptop>
-Sender: owner-linux-mm@kvack.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Michal Hocko <mhocko@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: [RFC] simple_char: New infrastructure to simplify chardev management
+Date: Tue, 10 Feb 2015 15:44:05 -0800
+Message-ID: <d3ab93173d51cebf00dd2263fd0ce9f8cd6258f7.1423609645.git.luto@amacapital.net>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 09, 2015 at 04:15:53PM +0900, Minchan Kim wrote:
-> On Fri, Feb 06, 2015 at 10:29:18AM -0800, Shaohua Li wrote:
-> > On Fri, Feb 06, 2015 at 02:51:03PM +0900, Minchan Kim wrote:
-> > > Hi Shaohua,
-> > > 
-> > > On Thu, Feb 05, 2015 at 04:33:11PM -0800, Shaohua Li wrote:
-> > > > 
-> > > > Hi Minchan,
-> > > > 
-> > > > Sorry to jump in this thread so later, and if some issues are discussed before.
-> > > > I'm interesting in this patch, so tried it here. I use a simple test with
-> > > 
-> > > No problem at all. Interest is always win over ignorance.
-> > > 
-> > > > jemalloc. Obviously this can improve performance when there is no memory
-> > > > pressure. Did you try setup with memory pressure?
-> > > 
-> > > Sure but it was not a huge memory system like yours.
-> > 
-> > Yes, I'd like to check the symptom in memory pressure, so choose such test.
-> > 
-> > > > In my test, jemalloc will map 61G vma, and use about 32G memory without
-> > > > MADV_FREE. If MADV_FREE is enabled, jemalloc will use whole 61G memory because
-> > > > madvise doesn't reclaim the unused memory. If I disable swap (tweak your patch
-> > > 
-> > > Yes, IIUC, jemalloc replaces MADV_DONTNEED with MADV_FREE completely.
-> > 
-> > right.
-> > > > slightly to make it work without swap), I got oom. If swap is enabled, my
-> > > 
-> > > You mean you modified anon aging logic so it works although there is no swap?
-> > > If so, I have no idea why OOM happens. I guess it should free all of freeable
-> > > pages during the aging so although system stall happens more, I don't expect
-> > > OOM. Anyway, with MADV_FREE with no swap, we should consider more things
-> > > about anonymous aging.
-> > 
-> > In the patch, MADV_FREE will be disabled and fallback to DONTNEED if no swap is
-> > enabled. Our production environment doesn't enable swap, so I tried to delete
-> > the 'no swap' check and make MADV_FREE always enabled regardless if swap is
-> > enabled. I didn't change anything else. With such change, I saw oom
-> > immediately. So definitely we have aging issue, the pages aren't reclaimed
-> > fast.
-> 
-> In current VM implementation, it doesn't age anonymous LRU list if we have no
-> swap. That's the reason to drop freeing pages instantly.
-> I think it could be enhanced later.
-> http://lists.infradead.org/pipermail/linux-arm-kernel/2014-December/311591.html
-> 
-> > 
-> > > > system is totally stalled because of swap activity. Without the MADV_FREE,
-> > > > everything is ok. Considering we definitely don't want to waste too much
-> > > > memory, a system with memory pressure is normal, so sounds MADV_FREE will
-> > > > introduce big trouble here.
-> > > > 
-> > > > Did you think about move the MADV_FREE pages to the head of inactive LRU, so
-> > > > they can be reclaimed easily?
-> > > 
-> > > I think it's desirable if the page lived in active LRU.
-> > > The reason I didn't that was caused by volatile ranges system call which
-> > > was motivaion for MADV_FREE in my mind.
-> > > In last LSF/MM, there was concern about data's hotness.
-> > > Some of users want to keep that as it is in LRU position, others want to
-> > > handle that as cold(tail of inactive list)/warm(head of inactive list)/
-> > > hot(head of active list), for example.
-> > > The vrange syscall was just about volatiltiy, not depends on page hotness
-> > > so the decision on my head was not to change LRU order and let's make new
-> > > hotness advise if we need it later.
-> > > 
-> > > However, MADV_FREE's main customer is allocators and afaik, they want
-> > > to replace MADV_DONTNEED with MADV_FREE so I think it is really cold,
-> > > but we couldn't make sure so head of inactive is good compromise.
-> > > Another concern about tail of inactive list is that there could be
-> > > plenty of pages in there, which was asynchromos write-backed in
-> > > previous reclaim path, not-yet reclaimed because of not being able
-> > > to free the in softirq context of writeback. It means we ends up
-> > > freeing more potential pages to become workingset in advance
-> > > than pages VM already decided to evict.
-> > 
-> > Yes, they are definitely cold pages. I thought We should make sure the
-> > MADV_FREE pages are reclaimed first before other pages, at least in the anon
-> > LRU list, though there might be difficult to determine if we should reclaim
-> > writeback pages first or MADV_FREE pages first.
-> 
-> Frankly speaking, the issue with writeback page is just hurdle of
-> implementation, not design so if we could fix it, we might move
-> cold pages into tail of the inactive LRU. I tried it but don't have
-> time slot to continue these days. Hope to get a time to look soon.
-> https://lkml.org/lkml/2014/7/1/628
-> Even, it wouldn't be critical problem although we couldn't fix
-> the problem of writeback pages because they are already all
-> cold pages so it might be not important to keep order in LRU so
-> we could save working set and effort of VM to reclaim them
-> at the cost of moving all of hinting pages into tail of the LRU
-> whenever the syscall is called.
-> 
-> However, significant problem from my mind is we couldn't make
-> sure they are really cold pages. It would be true for allocators
-> but it's cache-friendly pages so it might be better to discard
-> tail pages of inactive LRU, which are really cold.
-> In addition, we couldn't expect all of usecase for MADV_FREE
-> so some of users might want to treat them as warm, not cold.
-> 
-> With moving them into inactive list's head, if we still see
-> a lot stall, I think it's a sign to add other logic, for example,
-> we could drop MADV_FREEed pages instantly if the zone is below
-> low min watermark when the syscall is called. Because everybody
-> doesn't like direct reclaim.
+This isn't adequately tested, and I don't have a demonstration (yet).
+It's here for review for whether it's a good idea in the first place
+and for weather the fully_dynamic mechanism is a good idea.
 
-So I tried move the MADV_FREE pages to inactive list head or tail. It helps a
-little. But there are still stalls/oom. kswapd isn't fast enough to free the
-pages, App enters direct reclaim frequently. In one machine, no swap trigger,
-but MADV_FREE is 5x slower than MADV_DONTNEED. In another machine, MADV_FREE
-trigers a lot of swap and sometimes even oom. app enters direct reclaim and has
-a lot of lock contention because of excessive direct reclaim, so there are a
-lot of stalls.
+The current character device interfaces are IMO awful.  There's a
+reservation mechanism (alloc_chrdev_region, etc), a bizarre
+sort-of-hashtable lookup mechanism that character drivers need to
+interact with (cdev_add, etc), and number of lookup stages on open
+with various levels of optimization.  Despite all the code, there's no
+core infrastructure to map from a dev_t back to a kobject, struct
+device, or any other useful device pointer.
 
-Thanks,
-Shaohua
+This means that lots of drivers need to implement all of this
+themselves.  The drivers don't even all seem to do it right.  For
+example, the UIO code seems to be missing any protection against
+chardev open racing against device removal.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+On top of the complexity of writing a chardev driver, the user
+interface is odd.  We have /proc/devices, which nothing should use,
+since it conveys no information about minor numbers, and minors are
+mostly dynamic these days.  Even the major numbers aren't terribly
+useful, since sysfs refers to (major, minor) pairs.
+
+This adds simple helpers simple_char_minor_create and
+simple_char_minor_free to create and destroy chardev minors.  Common
+code handles minor allocation and lookup and provides a simple helper
+to allow (and even mostly require!) users to reference count their
+devices correctly.
+
+Users can either allocation a traditional dynamic major using
+simple_char_major_create, or they can use a global "fully_dynamic"
+major and avoid thinking about major numbers at all.
+
+This currently does not integrate with the driver core at all.
+Users are responsible for plugging the dev_t into their struct
+devices manually.  I couldn't see a clean way to fix this without
+integrating all of this into the driver core.
+
+Thoughts?  I want to use this for the u2f driver, which will either be
+a chardev driver in its own right or use a simple new iso7816 class.
+
+Ideally we could convert a bunch of drivers to use this, at least
+where there are no legacy minor number considerations.
+
+(Note: simple_char users will *not* have their devicename%d indices
+match their minor numbers unless they specifically arrange for this to
+be the case.  For new drivers, this shouldn't be a problem at all.  I
+don't know whether it matters for old drivers.)
+
+Signed-off-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+---
+
+ drivers/base/Makefile       |   2 +-
+ drivers/base/simple_char.c  | 231 ++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/simple_char.h |  38 ++++++++
+ 3 files changed, 270 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/base/simple_char.c
+ create mode 100644 include/linux/simple_char.h
+
+diff --git a/drivers/base/Makefile b/drivers/base/Makefile
+index 6922cd6850a2..d3832749f74c 100644
+--- a/drivers/base/Makefile
++++ b/drivers/base/Makefile
+@@ -4,7 +4,7 @@ obj-y			:= component.o core.o bus.o dd.o syscore.o \
+ 			   driver.o class.o platform.o \
+ 			   cpu.o firmware.o init.o map.o devres.o \
+ 			   attribute_container.o transport_class.o \
+-			   topology.o container.o
++			   topology.o container.o simple_char.o
+ obj-$(CONFIG_DEVTMPFS)	+= devtmpfs.o
+ obj-$(CONFIG_DMA_CMA) += dma-contiguous.o
+ obj-y			+= power/
+diff --git a/drivers/base/simple_char.c b/drivers/base/simple_char.c
+new file mode 100644
+index 000000000000..f3205ef9e44b
+--- /dev/null
++++ b/drivers/base/simple_char.c
+@@ -0,0 +1,231 @@
++/*
++ * A simple way to create character devices
++ *
++ * Copyright (c) 2015 Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
++ *
++ * Loosely based, somewhat arbitrarily, on the UIO driver, which is one
++ * of many copies of essentially identical boilerplate.
++ *
++ * Licensed under the GPLv2.
++ */
++
++#include <linux/simple_char.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/poll.h>
++#include <linux/device.h>
++#include <linux/slab.h>
++#include <linux/mm.h>
++#include <linux/idr.h>
++#include <linux/sched.h>
++#include <linux/string.h>
++#include <linux/kobject.h>
++#include <linux/cdev.h>
++
++#define MAX_MINORS (1U << MINORBITS)
++
++struct simple_char_major {
++	struct cdev cdev;
++	unsigned majornum;
++	struct idr idr;
++	struct mutex lock;
++};
++
++static struct simple_char_major *fully_dynamic_major;
++static DEFINE_MUTEX(fully_dynamic_major_lock);
++
++static int simple_char_open(struct inode *inode, struct file *filep)
++{
++	struct simple_char_major *major =
++		container_of(inode->i_cdev, struct simple_char_major,
++			     cdev);
++	void *private;
++	const struct simple_char_ops *ops;
++	int ret = 0;
++
++	mutex_lock(&major->lock);
++
++	{
++		/*
++		 * This is a separate block to make the locking entirely
++		 * clear.  The only thing keeping minor alive is major->lock.
++		 * We need to be completely done with the simple_char_minor
++		 * by the time we release the lock.
++		 */
++		struct simple_char_minor *minor;
++		minor = idr_find(&major->idr, iminor(inode));
++		if (!minor || !minor->ops->reference(minor->private)) {
++			mutex_unlock(&major->lock);
++			return -ENODEV;
++		}
++		private = minor->private;
++		ops = minor->ops;
++	}
++
++	mutex_unlock(&major->lock);
++
++	replace_fops(filep, ops->fops);
++	filep->private_data = private;
++	if (ops->fops->open)
++		ret = ops->fops->open(inode, filep);
++
++	return ret;
++}
++
++static const struct file_operations simple_char_fops = {
++	.open = simple_char_open,
++	.llseek = noop_llseek,
++};
++
++struct simple_char_major *simple_char_major_create(const char *name)
++{
++	struct simple_char_major *major = NULL;
++	dev_t devt;
++	int ret;
++
++	ret = alloc_chrdev_region(&devt, 0, MAX_MINORS, name);
++	if (ret)
++		goto out;
++
++	ret = -ENOMEM;
++	major = kmalloc(sizeof(struct simple_char_major), GFP_KERNEL);
++	if (!major)
++		goto out_unregister;
++	cdev_init(&major->cdev, &simple_char_fops);
++	kobject_set_name(&major->cdev.kobj, "%s", name);
++
++	ret = cdev_add(&major->cdev, devt, MAX_MINORS);
++	if (ret)
++		goto out_free;
++
++	major->majornum = MAJOR(devt);
++	idr_init(&major->idr);
++	return major;
++
++out_free:
++	cdev_del(&major->cdev);
++	kfree(major);
++out_unregister:
++	unregister_chrdev_region(devt, MAX_MINORS);
++out:
++	return ERR_PTR(ret);
++}
++EXPORT_SYMBOL(simple_char_major_create);
++
++void simple_char_major_free(struct simple_char_major *major)
++{
++	BUG_ON(!idr_is_empty(&major->idr));
++
++	cdev_del(&major->cdev);
++	unregister_chrdev_region(MKDEV(major->majornum, 0), MAX_MINORS);
++	idr_destroy(&major->idr);
++	kfree(major);
++}
++
++static struct simple_char_major *get_fully_dynamic_major(void)
++{
++	struct simple_char_major *major =
++		smp_load_acquire(&fully_dynamic_major);
++	if (major)
++		return major;
++
++	mutex_lock(&fully_dynamic_major_lock);
++
++	if (fully_dynamic_major) {
++		major = fully_dynamic_major;
++		goto out;
++	}
++
++	major = simple_char_major_create("fully_dynamic");
++	if (!IS_ERR(major))
++		smp_store_release(&fully_dynamic_major, major);
++
++out:
++	mutex_unlock(&fully_dynamic_major_lock);
++	return major;
++	
++}
++
++/**
++ * simple_char_minor_create() - create a chardev minor
++ * @major:	Major to use or NULL for a fully dynamic chardev.
++ * @ops:	simple_char_ops to associate with the minor.
++ * @private:	opaque pointer for @ops's use.
++ *
++ * simple_char_minor_create() creates a minor chardev.  For new code,
++ * @major should be NULL; this will create a minor chardev with fully
++ * dynamic major and minor numbers and without a useful name in
++ * /proc/devices.  (All recent user code should be using sysfs
++ * exclusively to map between devices and device numbers.)  For legacy
++ * code, @major can come from simple_char_major_create().
++ *
++ * The chardev will use @ops->fops for its file operations.  Before any
++ * of those operations are called, the struct file's private_data will
++ * be set to @private.
++ *
++ * To simplify reference counting, @ops->reference will be called before
++ * @ops->fops->open.  @ops->reference should take any needed references
++ * and return true if the object being opened still exists, and it
++ * should return false without taking references if the object is dying.
++ * @ops->reference is called with locks held, so it should neither sleep
++ * nor take heavy locks.
++ *
++ * @ops->fops->release (and @ops->fops->open, if it exists and fails)
++ * are responsible for releasing any references takes by @ops->reference.
++ *
++ * The minor must be destroyed by @simple_char_minor_free.  After
++ * @simple_char_minor_free returns, @ops->reference will not be called.
++ */
++struct simple_char_minor *
++simple_char_minor_create(struct simple_char_major *major,
++			 const struct simple_char_ops *ops,
++			 void *private)
++{
++	int ret;
++	struct simple_char_minor *minor = NULL;
++
++	if (!major) {
++		major = get_fully_dynamic_major();
++		if (IS_ERR(major))
++			return (void *)major;
++	}
++
++	minor = kmalloc(sizeof(struct simple_char_minor), GFP_KERNEL);
++	if (!minor)
++		return ERR_PTR(-ENOMEM);
++
++	mutex_lock(&major->lock);
++	ret = idr_alloc(&major->idr, minor, 0, MAX_MINORS, GFP_KERNEL);
++	if (ret >= 0) {
++		minor->devt = MKDEV(major->majornum, ret);
++		ret = 0;
++	}
++	/* Warn on ENOSPC?  It's embarrassing if it ever happens. */
++	mutex_unlock(&major->lock);
++
++	if (ret) {
++		kfree(minor);
++		return ERR_PTR(ret);
++	}
++
++	minor->major = major;
++	minor->private = private;
++	minor->ops = ops;
++	return minor;
++}
++
++/**
++ * simple_char_minor_free() - Free a simple_char chardev minor
++ * @minor:	the minor to free.
++ *
++ * This frees a chardev minor and prevents that minor's @ops->reference
++ * op from being called in the future.
++ */
++void simple_char_minor_free(struct simple_char_minor *minor)
++{
++	mutex_lock(&minor->major->lock);
++	idr_remove(&minor->major->idr, MINOR(minor->devt));
++	mutex_unlock(&minor->major->lock);
++	kfree(minor);
++}
++EXPORT_SYMBOL(simple_char_minor_free);
+diff --git a/include/linux/simple_char.h b/include/linux/simple_char.h
+new file mode 100644
+index 000000000000..8f391e7b50af
+--- /dev/null
++++ b/include/linux/simple_char.h
+@@ -0,0 +1,38 @@
++/*
++ * A simple way to create character devices
++ *
++ * Copyright (c) 2015 Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
++ *
++ * Licensed under the GPLv2.
++ */
++
++#include <linux/types.h>
++#include <linux/kobject.h>
++#include <linux/file.h>
++
++struct simple_char_major;
++
++struct simple_char_ops {
++	bool (*reference)(void *private);
++	const struct file_operations *fops;
++};
++
++struct simple_char_minor {
++	struct simple_char_major *major;
++	const struct simple_char_ops *ops;
++	void *private;
++	dev_t devt;
++};
++
++extern struct simple_char_minor *
++simple_char_minor_create(struct simple_char_major *major,
++			 const struct simple_char_ops *ops,
++			 void *private);
++extern void simple_char_minor_free(struct simple_char_minor *minor);
++
++extern void simple_char_file_release(struct file *filep, struct kobject *kobj);
++
++/* These exist only to support legacy classes that need their own major. */
++extern struct simple_char_major *simple_char_major_create(const char *name);
++extern void simple_char_major_free(struct simple_char_major *major);
++
+-- 
+2.1.0
