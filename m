@@ -1,63 +1,53 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: [PATCH v3 linux-trace 2/8] tracing: allow eBPF programs to call ktime_get_ns()
-Date: Mon,  9 Feb 2015 19:45:55 -0800
-Message-ID: <1423539961-21792-3-git-send-email-ast@plumgrid.com>
-References: <1423539961-21792-1-git-send-email-ast@plumgrid.com>
+From: Jason Baron <jbaron@akamai.com>
+Subject: Re: [PATCH 2/2] epoll: introduce EPOLLEXCLUSIVE and EPOLLROUNDROBIN
+Date: Mon, 09 Feb 2015 22:59:05 -0500
+Message-ID: <54D98209.2080901@akamai.com>
+References: <cover.1423509605.git.jbaron@akamai.com> <68a0ad4a99551ea3bfff89da461bb490d63b0ca8.1423509605.git.jbaron@akamai.com> <54D915FC.7010003@amacapital.net> <54D92780.4000303@akamai.com> <CALCETrUQZHHE_PJYoMw8g9C5AAxSdF-jU85EF317O4Krk+bV9w@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1423539961-21792-1-git-send-email-ast@plumgrid.com>
+In-Reply-To: <CALCETrUQZHHE_PJYoMw8g9C5AAxSdF-jU85EF317O4Krk+bV9w@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ingo Molnar <mingo@kernel.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>, Linux API <linux-api@vger.kernel.org>
+Cc: Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Eric Wong <normalperson@yhbt.net>, Davide Libenzi <davidel@xmailserver.org>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-bpf_ktime_get_ns() is used by programs to compue time delta between events
-or as a timestamp
+On 02/09/2015 05:45 PM, Andy Lutomirski wrote:
+> On Mon, Feb 9, 2015 at 1:32 PM, Jason Baron <jbaron@akamai.com> wrote:
+>> On 02/09/2015 03:18 PM, Andy Lutomirski wrote:
+>>> On 02/09/2015 12:06 PM, Jason Baron wrote:
+>>>> Epoll file descriptors that are added to a shared wakeup source are always
+>>>> added in a non-exclusive manner. That means that when we have multiple epoll
+>>>> fds attached to a shared wakeup source they are all woken up. This can
+>>>> lead to excessive cpu usage and uneven load distribution.
+>>>>
+>>>> This patch introduces two new 'events' flags that are intended to be used
+>>>> with EPOLL_CTL_ADD operations. EPOLLEXCLUSIVE, adds the epoll fd to the event
+>>>> source in an exclusive manner such that the minimum number of threads are
+>>>> woken. EPOLLROUNDROBIN, which depends on EPOLLEXCLUSIVE also being set, can
+>>>> also be added to the 'events' flag, such that we round robin around the set
+>>>> of waiting threads.
+>>>>
+>>>> An implementation note is that in the epoll wakeup routine,
+>>>> 'ep_poll_callback()', if EPOLLROUNDROBIN is set, we return 1, for a successful
+>>>> wakeup, only when there are current waiters. The idea is to use this additional
+>>>> heuristic in order minimize wakeup latencies.
+>>> I don't understand what this is intended to do.
+>>>
+>>> If an event has EPOLLONESHOT, then this only one thread should be woken regardless, right?  If not, isn't that just a bug that should be fixed?
+>>>
+>> hmm...so with EPOLLONESHOT you basically get notified once about an event. If i have multiple epoll fds (say 1 per-thread) attached to a single source in EPOLLONESHOT, then all threads will potentially get woken up once per event. Then, I would have to re-arm all of them. So I don't think this addresses this particular usecase...what I am trying to avoid is this mass wakeup or thundering herd for a shared event source.
+> Now I understand.  Why are you using multiple epollfds?
+>
+> --Andy
 
-Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
----
- include/uapi/linux/bpf.h |    1 +
- kernel/trace/bpf_trace.c |   10 ++++++++++
- 2 files changed, 11 insertions(+)
+So the multiple epollfds is really a way to partition the set of events. Otherwise, I have all the threads contending on all the events that are being generated. So I'm not sure if that is scalable.
 
-diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
-index d73d7d0abe6e..ecae21e58ba3 100644
---- a/include/uapi/linux/bpf.h
-+++ b/include/uapi/linux/bpf.h
-@@ -169,6 +169,7 @@ enum bpf_func_id {
- 	BPF_FUNC_fetch_u16,       /* u16 bpf_fetch_u16(void *unsafe_ptr) */
- 	BPF_FUNC_fetch_u8,        /* u8 bpf_fetch_u8(void *unsafe_ptr) */
- 	BPF_FUNC_probe_memcmp,    /* int bpf_probe_memcmp(unsafe_ptr, safe_ptr, size) */
-+	BPF_FUNC_ktime_get_ns,    /* u64 bpf_ktime_get_ns(void) */
- 	__BPF_FUNC_MAX_ID,
- };
- 
-diff --git a/kernel/trace/bpf_trace.c b/kernel/trace/bpf_trace.c
-index ec065e0a364e..e3196266b72f 100644
---- a/kernel/trace/bpf_trace.c
-+++ b/kernel/trace/bpf_trace.c
-@@ -69,6 +69,11 @@ static u64 bpf_probe_memcmp(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
- 	return -1;
- }
- 
-+static u64 bpf_ktime_get_ns(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
-+{
-+	return ktime_get_ns();
-+}
-+
- static struct bpf_func_proto tp_prog_funcs[] = {
- #define FETCH(SIZE)				\
- 	[BPF_FUNC_fetch_##SIZE] = {		\
-@@ -90,6 +95,11 @@ static struct bpf_func_proto tp_prog_funcs[] = {
- 		.arg2_type = ARG_PTR_TO_STACK,
- 		.arg3_type = ARG_CONST_STACK_SIZE,
- 	},
-+	[BPF_FUNC_ktime_get_ns] = {
-+		.func = bpf_ktime_get_ns,
-+		.gpl_only = true,
-+		.ret_type = RET_INTEGER,
-+	},
- };
- 
- static const struct bpf_func_proto *tp_prog_func_proto(enum bpf_func_id func_id)
--- 
-1.7.9.5
+In the use-case I'm trying to describe, I've partitioned a large set of the events, but there may still be some event sources that we wish to share among all of the threads (or even subsets of them), so as not to overload any one in particular.
+
+More specifically, in the case of a single listen socket, its natural to call accept() on the thread that has been woken up, but without doing round robin, you quickly get into a very unbalanced load, and in addition you waste a lot of cpu doing unnecessary wakeups. There are other approaches to solve this, specifically using SO_REUSEPORT, which creates a separate socket per-thread and gets one back to the separately partitioned events case previously described. However, SO_REUSEPORT, I believe is very specific to tcp/udp, and in addition does not have knowledge of the threads that are actively waiting as the epoll code does.
+
+Thanks,
+
+-Jason
