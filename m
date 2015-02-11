@@ -1,91 +1,88 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: [PATCH v3 linux-trace 1/8] tracing: attach eBPF programs to
- tracepoints and syscalls
-Date: Tue, 10 Feb 2015 19:04:55 -0800
-Message-ID: <CAMEtUuy+B9aXP-8m7tA6aNxnS4SKRhMpfGEdWMcbxbj7ggOATw@mail.gmail.com>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv3 8/8] cgroup: Add documentation for cgroup namespaces
+Date: Wed, 11 Feb 2015 04:46:16 +0100
+Message-ID: <20150211034616.GA25022@mail.hallyn.com>
+References: <54ACFC38.5070007@nod.at>
+ <87fvbmir9q.fsf@x220.int.ebiederm.org>
+ <20150107193059.GA1857@mail.hallyn.com>
+ <87bnma6xwv.fsf@x220.int.ebiederm.org>
+ <20150107224430.GA28414@htj.dyndns.org>
+ <878uhe42km.fsf@x220.int.ebiederm.org>
+ <20150107230615.GA28630@htj.dyndns.org>
+ <87fvbm2nni.fsf@x220.int.ebiederm.org>
+ <87y4peyxw5.fsf@x220.int.ebiederm.org>
+ <20150107233553.GC28630@htj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ingo Molnar <mingo@kernel.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, "Eric W. Biederman" <ebiederm@xmission.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150107233553.GC28630-Gd/HAXX7CRxy/B6EtB590w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, cgroups mailinglist <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 10, 2015 at 4:50 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
->
->> >> But some maintainers think of them as ABI, whereas others
->> >> are using them freely. imo it's time to remove ambiguity.
->> >
->> > I would love to, and have brought this up at Kernel Summit more than
->> > once with no solution out of it.
->>
->> let's try it again at plumbers in august?
->
-> Well, we need a statement from Linus. And it would be nice if we could
-> also get Ingo involved in the discussion, but he seldom comes to
-> anything but Kernel Summit.
+Quoting Tejun Heo (tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org):
+> On Wed, Jan 07, 2015 at 05:27:38PM -0600, Eric W. Biederman wrote:
+> > >> The -o SUBSYS option doesn't exist.  Jesus, at least get yourself
+> > >> familiar with the basics before claiming random stuff.
+> > 
+> > Oh let's see I got that command line option out of /proc/mounts and yes
+> > it works.  Perhaps it doesn't if I invoke unified hiearchies but the
+> > option does in fact exist and work.
+> 
+> I meant the -o SUBSYS doesn't exist for unified hierarchy.
+> 
+> > Now I really do need to test report regressions, and send probably send
+> > regression fixes.  If I understand your strange ranting I think you just
+> > told me that option that -o SUBSYS does work with unified hierarchies.
+> 
+> What?  Why would -O SUBSYS exist for unified hierarchy?  It's unified
+> for all controllers.
+> 
+> > Tejun.  I asked you specifically about this case 2 years ago at plumbers
+> > and you personally told me this would continue to work.  I am going to
+> > hold you to that.
+> 
+> I have no idea what you're talking about in *THIS* thread.  I'm fully
+> aware of what was discussed *THEN*.
+> 
+> > Fixing bugs is one thing.  Gratuitious regressions that make supporting
+> > existing user space applications insane is another.
+> 
+> Can you explain what problem you're actually trying to talk about
+> without spouting random claims about regressions?
 
-+1
+A few weeks ago, in order to test the cgroup namespace patchset with lxc,
+I went through the motions of getting lxc to work with unified hierarchy.
+A few of the things I had to change:
 
-> BTW, I wonder if I could make a simple compiler in the kernel that
-> would translate the current ftrace filters into a BPF program, where it
-> could use the program and not use the current filter logic.
+1. Hierarchy_num in /proc/cgroups and /proc/self/cgroup start at 0.  Used
+to start with 1.  I expect many userspace parsers to be broken by this.
 
-yep. I've sent that patch last year.
-It converted pred_tree into bpf program.
-I can try to dig it up. It doesn't provide extra programmability
-though, just makes filtering logic much faster.
+2. After creating every non-leaf cgroup, we must fill in the
+cgroup.subtree_cgroups file.  This is extra work which userspace
+doesn't have to do right now.
 
->> imo the solution is DEFINE_EVENT_BPF that doesn't
->> print anything and a bpf program to process it.
->
-> You mean to be completely invisible to ftrace? And the debugfs/tracefs
-> directory?
+3. Let's say we want to create a freezer cgroup /foo/bar for some set of
+tasks, which they will administer.  In fact let's assume we are going to
+use cgroup namespaces.  We have to put the tasks into /foo/bar, unshare
+the cgroup ns, then create /foo/bar/leaf, move the tasks into /foo/bar/leaf,
+and then write 'freezer' into /foo/bar.  (If we're not using cgroup
+namespaces, then we have to do a similar thing to let the tasks administer
+/foo/bar while placing them under /foo/bar/leaf).  The oddness I'm pointing
+to is where the tasks have to know that they can create cgroups in "..".
 
-I mean it will be seen in tracefs to get 'id', but without enable/format/filter
+For containers this becomes odd.  We tend to group containers by the
+tasks in and under a cgroup.  We now will have to assume a convention
+where we know to check for tasks in and under "..", since by definition
+pid 1's cgroup (in a container) cannot have children.
 
->> I'm not suggesting to preserve the meaning of 'pid' semantically
->> in all cases. That's not what users would want anyway.
->> I want to allow programs to access important fields and print
->> them in more generic way than current TP_printk does.
->> Then exposed ABI of such tracepoint_bpf is smaller than
->> with current tracepoints.
->
-> Again, this would mean they become invisible to ftrace, and even
-> ftrace_dump_on_oops.
+4. The per-cgroup "tasks" file not existing seems odd, although certainly
+unexpected by much current software.
 
-yes, since these new tracepoints have no meat inside them.
-They're placeholders sitting idle and waiting for bpf to do
-something useful with them.
+So, if the unified hierarchy is going to not cause undue pain, existing
+software really needs to start working now to use it.  It's going to be
+a sizeable task for lxc.
 
-> I'm not fully understanding what is to be exported by this new ABI. If
-> the fields available, will always be available, then why can't the
-> appear in a TP_printk()?
-
-say, we define trace_netif_rx_entry() as this new tracepoint_bpf.
-It will have only one argument 'skb'.
-bpf program will read and print skb fields the way it likes
-for particular tracing scenario.
-So instead of making
-TP_printk("dev=%s napi_id=%#x queue_mapping=%u skbaddr=%p
-vlan_tagged=%d vlan_proto=0x%04x vlan_tci=0x%04x protocol=0x%04x
-ip_summed=%d hash=0x%08x l4_hash=%d len=%u data_len=%u truesize=%u
-mac_header_valid=%d mac_header=%d nr_frags=%d gso_size=%d
-gso_type=%#x",...
-the abi exposed via trace_pipe (as it is today),
-the new tracepoint_bpf abi is presence of 'skb' pointer as one
-and only argument to bpf program.
-Future refactoring of netif_rx would need to guarantee
-that trace_netif_rx_entry(skb) is called. that's it.
-imo such tracepoints are much easier to deal with during
-code changes.
-
-May be some of the existing tracepoints like this one that
-takes one argument can be marked 'bpf-ready', so that
-programs can attach to them only.
-
->> let's start slow then with bpf+syscall and bpf+kprobe only.
->
-> I'm fine with that.
-
-thanks. will wait for merge window to close and will repost.
+-serge
