@@ -1,46 +1,60 @@
-From: "Serge E. Hallyn" <serge@hallyn.com>
-Subject: Re: [PATCHv3 8/8] cgroup: Add documentation for cgroup namespaces
-Date: Wed, 11 Feb 2015 17:18:51 +0100
-Message-ID: <20150211161851.GB1579@mail.hallyn.com>
-References: <87fvbm2nni.fsf@x220.int.ebiederm.org>
- <87y4peyxw5.fsf@x220.int.ebiederm.org>
- <20150107233553.GC28630@htj.dyndns.org>
- <20150211034616.GA25022@mail.hallyn.com>
- <20150211040957.GC21356@htj.duckdns.org>
- <20150211042942.GA27931@mail.hallyn.com>
- <87oap1qbv3.fsf@x220.int.ebiederm.org>
- <20150211051704.GB24897@mtj.duckdns.org>
- <20150211160023.GA1579@mail.hallyn.com>
- <20150211160347.GE21356@htj.duckdns.org>
+From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH] tpm, tpm_tis: fix TPM 2.0 probing
+Date: Wed, 11 Feb 2015 13:47:01 -0500
+Message-ID: <54DBA3A5.7090306@linux.vnet.ibm.com>
+References: <1423059669-31734-1-git-send-email-jarkko.sakkinen@linux.intel.com> <201502090008.47986.PeterHuewe@gmx.de> <20150209083947.GC29987@intel.com> <54D9F6A0.9010905@linux.vnet.ibm.com> <20150210125037.GB4313@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150211160347.GE21356@htj.duckdns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Richard Weinberger <richard@nod.at>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, cgroups mailinglist <cgroups@vger.kernel.org>, Ingo Molnar <mingo@redhat.com>
+Content-Type: text/plain; charset=windows-1252;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150210125037.GB4313-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: =?windows-1252?Q?Peter_H=FCwe?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Quoting Tejun Heo (tj@kernel.org):
-> On Wed, Feb 11, 2015 at 05:00:23PM +0100, Serge E. Hallyn wrote:
-> > We absolutely would love to use cgroup namespaces to run older
-> > userspace in containers.  I don't know that it's actually possible
-> > to do both that and use unified hierarchy at the same time though,
-> > which is unfortunate.  So an Ubuntu 12.04 container will never, afaics,
-> > be able to run inside an ubuntu 16.04 host that is using unified
-> > hierarchy, without using backported newer versions of lxc (etc) in
-> > the container.
-> 
-> So, the constraint there are the controllers.  A controller can't be
-> attached to two hierarchies at the same time for obvious reasons, so
-> regardless of NS, you can't use the same controller on a unified
-> hierarchy *and* a traditional hierarchy.  NS doesn't adds or
-> substracts from the situation.  If you decide to attach a controller
-> to a traditional hierarchy, that's where it's gonna be available.  If
-> you attach it to the unified hierarchy, the same story.
+On 02/10/2015 07:50 AM, Jarkko Sakkinen wrote:
+> On Tue, Feb 10, 2015 at 07:16:32AM -0500, Stefan Berger wrote:
+>> On 02/09/2015 03:39 AM, Jarkko Sakkinen wrote:
+>>> On Mon, Feb 09, 2015 at 12:08:46AM +0100, Peter H=FCwe wrote:
+>>>> Am Mittwoch, 4. Februar 2015, 15:21:09 schrieb Jarkko Sakkinen:
+>>>>> If during transmission system error was returned, the logic was t=
+o
+>>>>> incorrectly deduce that chip is a TPM 1.x chip. This patch fixes =
+this
+>>>>> issue. Also, this patch changes probing so that message tag is us=
+ed as the
+>>>>> measure for TPM 2.x, which should be much more stable.
+>>>> Is it aware that some TPMs may respond with 0x00C1 as TAG for TPM1=
+=2E2 commands?
+>>> I guess none of the TPM 1.2 command answer with the tag 0x8002?
+>>
+>> FYI: pdf page 26 , section 6.1 explains the predictable return value=
+ for a
+>> TPM1.2 command seen by a TPM2
+>>
+>> http://www.trustedcomputinggroup.org/files/static_page_files/8C68ADA=
+8-1A4B-B294-D0FC06D3773F7DAA/TPM%20Rev%202.0%20Part%203%20-%20Commands%=
+2001.16-code.pdf
+>>
+>> Following this:
+>>
+>> Sending a TPM1.2 command to a TPM2 should return a TPM1.2 header (ta=
+g =3D
+>> 0xc4) and error code (TPM_BADTAG =3D 0x1e)
+>>
+>> Sending a TPM 2 command to a TPM 2 will give a TPM 2 tag in the head=
+er.
+>> Sending a TPM 2 command to a TPM 1.2 will give a TPM 1.2 tag in the =
+header
+>> and an error code.
+> Thank you for the information. Do you think that for some reason
+> tpm2_probe() shoould instead check that value is not this error
+> instead of checking that tag is 0x80002?
 
-Right, exactly.
+=46ollowing your path, you are checking for TPM2_ST_NO_SESSION (0x8001)=
+,=20
+which looks correct to me. A TPM1.2 would never send this tag back.
 
-thanks,
--serge
+     Stefan
