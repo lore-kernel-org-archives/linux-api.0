@@ -1,50 +1,54 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH v3 linux-trace 1/8] tracing: attach eBPF programs to
- tracepoints and syscalls
-Date: Wed, 11 Feb 2015 11:28:52 +0100
-Message-ID: <20150211102852.GQ23123@twins.programming.kicks-ass.net>
-References: <CAMEtUuwAf4AFeWVEdJB4VQz_=2fWY=q8=rbkFg38rtVtNVCHxg@mail.gmail.com>
- <20150210165359.34cc53d9@gandalf.local.home>
+From: "Bryn M. Reeves" <bmr@redhat.com>
+Subject: Re: [RFC] implementing tape statistics single file vs multi-file in
+ sysfs
+Date: Wed, 11 Feb 2015 11:32:01 +0000
+Message-ID: <20150211113200.GA5864@localhost.localdomain>
+References: <DDB9C85B850785449757F9914A034FCB3BF3EADA@G9W0766.americas.hpqcorp.net>
+ <20150206125916.GB26247@kroah.com>
+ <20150206154157.GD1143@localhost.localdomain>
+ <20150207040743.GB29944@kroah.com>
+ <20150210142719.GA1437@localhost.localdomain>
+ <20150210223027.GA27269@kroah.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150210165359.34cc53d9-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org
+In-Reply-To: <20150210223027.GA27269@kroah.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Greg KH <gregkh@linuxfoundation.org>
+Cc: "Seymour, Shane M" <shane.seymour@hp.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Kai.Makisara@kolumbus.fi" <Kai.Makisara@kolumbus.fi>, "James E.J. Bottomley (JBottomley@parallels.com)" <JBottomley@parallels.com>, "Laurence Oberman (loberman@redhat.com)" <loberman@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 10, 2015 at 04:53:59PM -0500, Steven Rostedt wrote:
-> > >> In the future we might add a tracepoint and pass a single
-> > >> pointer to interesting data struct to it. bpf programs will walk
-> > >> data structures 'as safe modules' via bpf_fetch*() methods
-> > >> without exposing it as ABI.
-> > >
-> > > Will this work if that structure changes? When the field we are looking
-> > > for no longer exists?
+On Wed, Feb 11, 2015 at 06:30:27AM +0800, Greg KH wrote:
+> On Tue, Feb 10, 2015 at 02:27:20PM +0000, Bryn M. Reeves wrote:
+> > On Sat, Feb 07, 2015 at 12:07:43PM +0800, Greg KH wrote:
 > > 
-> > bpf_fetch*() is the same mechanism as perf probe.
-> > If there is a mistake by user space tools, the program
-> > will be reading some junk, but it won't be crashing.
+> > $ cat /sys/fs/selinux/avc/cache_stats 
+> > lookups hits misses allocations reclaims frees
+> > 18938916 18921707 17209 17209 17328 22215
+> > 38164283 38146514 17769 17769 16800 19049
+> > 18078108 18056991 21117 21117 21344 19305
+> > 15168204 15150079 18125 18125 17776 13149
+> > 0 0 0 0 0 0
+> > 0 0 0 0 0 0
+> > 0 0 0 0 0 0
+> > 0 0 0 0 0 0
+> > 
+> > $ cat /sys/fs/selinux/avc/hash_stats
+> > entries: 506
+> > buckets used: 290/512
+> > longest chain: 5
 > 
-> But what if the userspace tool depends on that value returning
-> something meaningful. If it was meaningful in the past, it will have to
-> be meaningful in the future, even if the internals of the kernel make
-> it otherwise.
+> Ugh, those look like they should be debugfs interfaces.  Thanks, I'll
+> add them to my list of things to nag people about...
 
-We're compiling the BPF stuff against the 'current' kernel headers
-right? So would enforcing module versioning not be sufficient?
+Actually looking properly these are outside sysfs:
 
-We already break out-of-tree modules without a second thought, the
-module interface is not guaranteed. They just need to cope with it.
+$ mount | grep selinux
+selinuxfs on /sys/fs/selinux type selinuxfs (rw,relatime)
 
-Anything using the kernel headers to look into the kernel guts should be
-bound to the same rules.
+So everything below the mount point is in their own vfstype.
 
-So if we think of BFP stuff as out-of-tree modules, and treat them the
-same, I see no problem.
+Regards,
+Bryn.
 
-I'm sure some BFP 'scripts' will turn in the same right mess that
-out-of-tree modules are, with endless #ifdef version checks, but hey,
-not my problem ;-)
