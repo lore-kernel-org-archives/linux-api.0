@@ -1,53 +1,50 @@
 From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Subject: Re: [PATCH v3 linux-trace 1/8] tracing: attach eBPF programs to
  tracepoints and syscalls
-Date: Wed, 11 Feb 2015 11:15:21 +0100
-Message-ID: <20150211101521.GP23123@twins.programming.kicks-ass.net>
-References: <CAMEtUuzY_Po=WtFEFg1aqzJ8dEF4rHGcWDsaS44KYgACMNPPgA@mail.gmail.com>
+Date: Wed, 11 Feb 2015 11:28:52 +0100
+Message-ID: <20150211102852.GQ23123@twins.programming.kicks-ass.net>
+References: <CAMEtUuwAf4AFeWVEdJB4VQz_=2fWY=q8=rbkFg38rtVtNVCHxg@mail.gmail.com>
+ <20150210165359.34cc53d9@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAMEtUuzY_Po=WtFEFg1aqzJ8dEF4rHGcWDsaS44KYgACMNPPgA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20150210165359.34cc53d9-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Cc: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 10, 2015 at 04:22:50PM -0800, Alexei Starovoitov wrote:
-> > It would need to do more that that. It may have to calculate the value
-> > that it returns, as the internal value may be different with different
-> > kernels.
+On Tue, Feb 10, 2015 at 04:53:59PM -0500, Steven Rostedt wrote:
+> > >> In the future we might add a tracepoint and pass a single
+> > >> pointer to interesting data struct to it. bpf programs will walk
+> > >> data structures 'as safe modules' via bpf_fetch*() methods
+> > >> without exposing it as ABI.
+> > >
+> > > Will this work if that structure changes? When the field we are looking
+> > > for no longer exists?
+> > 
+> > bpf_fetch*() is the same mechanism as perf probe.
+> > If there is a mistake by user space tools, the program
+> > will be reading some junk, but it won't be crashing.
 > 
-> back to 'prio'... the 'prio' accessible from the program
-> should be the same 'prio' that we're storing inside task_struct.
+> But what if the userspace tool depends on that value returning
+> something meaningful. If it was meaningful in the past, it will have to
+> be meaningful in the future, even if the internals of the kernel make
+> it otherwise.
 
-Its not, task_struct::prio is an entirely different value than the one
-used in sched_param::sched_priority / sched_attr::sched_priority.
+We're compiling the BPF stuff against the 'current' kernel headers
+right? So would enforcing module versioning not be sufficient?
 
-And the 'problem' is, prio is only relevant to SCHED_RR/SCHED_FIFO
-tasks, we have more classes.
+We already break out-of-tree modules without a second thought, the
+module interface is not guaranteed. They just need to cope with it.
 
-> No extra conversions.
+Anything using the kernel headers to look into the kernel guts should be
+bound to the same rules.
 
-We're not going to add runtime/space overhead to the kernel just because
-someone might maybe someday trace the kernel.
+So if we think of BFP stuff as out-of-tree modules, and treat them the
+same, I see no problem.
 
-That leaves the option of either tracing the kernel internal value and
-userspace will just have to deal with it, or making the tracepoint more
-expensive by having it do the conversion.
-
-Now the big question is, what do we do when we add/extend a scheduling
-class and have more parameters? We cannot change the tracepoint because
-userspace assumes format. And I simply refuse to add a second -- because
-that will end up being a third and fourth etc.. -- tracepoint right next
-to it with a different layout.
-
-Note that we just did add a class, we grew SCHED_DEADLINE a few releases
-ago, and that has 3 parameters (or 6 depending on how you look at it).
-You currently cannot 'debug' that with the existing tracepoints.
-
-In short, I loathe traceevents, they're more trouble than they're worth.
-
-Now I do love the infrastructure, its very useful debugging, but that's
-all with local hacks that will never see the light of day.
+I'm sure some BFP 'scripts' will turn in the same right mess that
+out-of-tree modules are, with endless #ifdef version checks, but hey,
+not my problem ;-)
