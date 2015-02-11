@@ -1,107 +1,178 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 1/2] proc.5: Document /proc/[pid]/setgroups
-Date: Wed, 11 Feb 2015 09:01:57 +0100
-Message-ID: <CAKgNAkgWnZ=7E4bk3JhzFS88CJ32szYCYcm_Sx166yVuWKhhUA@mail.gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH 2/2] user_namespaces.7: Update the documention to reflect
+ the fixes for negative groups
+Date: Wed, 11 Feb 2015 09:02:30 +0100
+Message-ID: <CAKgNAkhmwK02DJQV84S+dEdrUDjzRuR32j+2gcKkgeDq8jTkuQ@mail.gmail.com>
 References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>
-	<CALCETrXWx2-ZejEHmOi7aSoF-qJMRGR5yseeMhuurZwJRrQbUg@mail.gmail.com>
-	<87h9x5re41.fsf_-_@x220.int.ebiederm.org>
-	<87mw6xpzb0.fsf_-_@x220.int.ebiederm.org>
-	<CALCETrU-o5mPr1jCaLXDuuF6J2N470zAtx=8Fa-SjF=ZpdE8mQ@mail.gmail.com>
-	<87ppbtn4mv.fsf@x220.int.ebiederm.org>
-	<CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>
-	<87a92xn2io.fsf@x220.int.ebiederm.org>
-	<87r3w8liw4.fsf@x220.int.ebiederm.org>
-	<87iohklfvj.fsf_-_@x220.int.ebiederm.org>
-	<87fvcok11h.fsf_-_@x220.int.ebiederm.org>
-	<CALCETrVfKiXuY=KY_=nHpkTyLWgpy_3DK=4Mr2mhpyX9z1TzrA@mail.gmail.com>
-	<971ad3f6-90fd-4e3f-916c-8988af3c826d@email.android.com>
-	<CALCETrWpzvNm=fjOa3_+4QOqYP8qZUJvQAd6AsRZ71xyHZQRCg@mail.gmail.com>
-	<87wq5zf83t.fsf@x220.int.ebiederm.org>
-	<87iohh3c9c.fsf@x220.int.ebiederm.org>
-	<8761dh3b7k.fsf_-_@x220.int.ebiederm.org>
-	<878uicy1r9.fsf_-_@x220.int.ebiederm.org>
-	<87vblg1qme.fsf@x220.int.ebiederm.org> <54CF9995.1050409@gmail.com>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+ <CALCETrXWx2-ZejEHmOi7aSoF-qJMRGR5yseeMhuurZwJRrQbUg@mail.gmail.com>
+ <87h9x5re41.fsf_-_@x220.int.ebiederm.org> <87mw6xpzb0.fsf_-_@x220.int.ebiederm.org>
+ <CALCETrU-o5mPr1jCaLXDuuF6J2N470zAtx=8Fa-SjF=ZpdE8mQ@mail.gmail.com>
+ <87ppbtn4mv.fsf@x220.int.ebiederm.org> <CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>
+ <87a92xn2io.fsf@x220.int.ebiederm.org> <87r3w8liw4.fsf@x220.int.ebiederm.org>
+ <87iohklfvj.fsf_-_@x220.int.ebiederm.org> <87fvcok11h.fsf_-_@x220.int.ebiederm.org>
+ <CALCETrVfKiXuY=KY_=nHpkTyLWgpy_3DK=4Mr2mhpyX9z1TzrA@mail.gmail.com>
+ <971ad3f6-90fd-4e3f-916c-8988af3c826d@email.android.com> <CALCETrWpzvNm=fjOa3_+4QOqYP8qZUJvQAd6AsRZ71xyHZQRCg@mail.gmail.com>
+ <87wq5zf83t.fsf@x220.int.ebiederm.org> <87iohh3c9c.fsf@x220.int.ebiederm.org>
+ <8761dh3b7k.fsf_-_@x220.int.ebiederm.org> <878uicy1r9.fsf_-_@x220.int.ebiederm.org>
+ <87ppbo1ql4.fsf_-_@x220.int.ebiederm.org> <54CF99BF.8050401@gmail.com>
+Reply-To: mtk.manpages@gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <54CF9995.1050409-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <54CF99BF.8050401@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Linux Containers <containers@lists.linux-foundation.org>, Josh Triplett <josh@joshtriplett.org>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, LSM <linux-security-module@vger.kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, "Serge E. Hallyn" <serge@hallyn.com>, Richard Weinberger <richard@nod.at>, Kenton Varda <kenton@sandstorm.io>, stable <stable@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-SGkgRXJpYywKClBpbmchCgpDaGVlcnMsCgpNaWNoYWVsCgoKCk9uIDIgRmVicnVhcnkgMjAxNSBh
-dCAxNjozNiwgTWljaGFlbCBLZXJyaXNrIChtYW4tcGFnZXMpCjxtdGsubWFucGFnZXNAZ21haWwu
-Y29tPiB3cm90ZToKPiBbQWRkaW5nIEpvc2ggdG8gQ0MgaW4gY2FzZSBoZSBoYXMgYW55dGhpbmcg
-dG8gYWRkLl0KPgo+IE9uIDEyLzEyLzIwMTQgMTA6NTQgUE0sIEVyaWMgVy4gQmllZGVybWFuIHdy
-b3RlOgo+Pgo+PiBTaWduZWQtb2ZmLWJ5OiBFcmljIFcuIEJpZWRlcm1hbiA8ZWJpZWRlcm1AeG1p
-c3Npb24uY29tPgo+PiAtLS0KPj4gIG1hbjUvcHJvYy41IHwgMTUgKysrKysrKysrKysrKysrCj4+
-ICAxIGZpbGUgY2hhbmdlZCwgMTUgaW5zZXJ0aW9ucygrKQo+Pgo+PiBkaWZmIC0tZ2l0IGEvbWFu
-NS9wcm9jLjUgYi9tYW41L3Byb2MuNQo+PiBpbmRleCA5NjA3N2QwZGQxOTUuLmQ2NjFlOGNmZWFj
-OSAxMDA2NDQKPj4gLS0tIGEvbWFuNS9wcm9jLjUKPj4gKysrIGIvbWFuNS9wcm9jLjUKPj4gQEAg
-LTEwOTcsNiArMTA5NywyMSBAQCBhcmUgbm90IGF2YWlsYWJsZSBpZiB0aGUgbWFpbiB0aHJlYWQg
-aGFzIGFscmVhZHkgdGVybWluYXRlZAo+PiAgLlwiICAgICAgIEFkZGVkIGluIDIuNi45Cj4+ICAu
-XCIgICAgICAgQ09ORklHX1NDSEVEU1RBVFMKPj4gIC5UUAo+PiArLklSIC9wcm9jL1twaWRdL3Nl
-dGdyb3VwcyAiIChzaW5jZSBMaW51eCAzLjE5LXJjMSkiCj4+ICtUaGlzIGZpbGUgcmVwb3J0cwo+
-PiArLkJSIGFsbG93Cj4+ICtpZiB0aGUgc2V0Z3JvdXBzIHN5c3RlbSBjYWxsIGlzIGFsbG93ZWQg
-aW4gdGhlIGN1cnJlbnQgdXNlciBuYW1lc3BhY2UuCj4+ICtUaGlzIGZpbGUgcmVwb3J0cwo+PiAr
-LkJSIGRlbnkKPj4gK2lmIHRoZSBzZXRncm91cHMgc3lzdGVtIGNhbGwgaXMgbm90IGFsbG93ZWQg
-aW4gdGhlIGN1cnJlbnQgdXNlciBuYW1lc3BhY2UuCj4+ICtUaGlzIGZpbGUgbWF5IGJlIHdyaXR0
-ZW4gdG8gd2l0aCB2YWx1ZXMgb2YKPj4gKy5CUiBhbGxvdwo+PiArYW5kCj4+ICsuQlIgZGVueQo+
-PiArYmVmb3JlCj4+ICsuSVIgL3Byb2MvW3BpZF0vZ2lkX21hcAo+PiAraXMgd3JpdHRlbiB0byAo
-ZW5hYmxpbmcgc2V0Z3JvdXBzKSBpbiBhIHVzZXIgbmFtZXNwYWNlLgo+PiArLlRQCj4+ICAuSVIg
-L3Byb2MvW3BpZF0vc21hcHMgIiAoc2luY2UgTGludXggMi42LjE0KSIKPj4gIFRoaXMgZmlsZSBz
-aG93cyBtZW1vcnkgY29uc3VtcHRpb24gZm9yIGVhY2ggb2YgdGhlIHByb2Nlc3MncyBtYXBwaW5n
-cy4KPj4gIChUaGUKPgo+IEhpIEVyaWMsCj4KPiBUaGFua3MgZm9yIHRoaXMgcGF0Y2guIEkgYXBw
-bGllZCBpdCwgYW5kIHRoZW4gdHJpZWQgdG8gd29yayBpbgo+IHF1aXRlIGEgZmV3IG90aGVyIGRl
-dGFpbHMgZ2xlYW5lZCBmcm9tIHRoZSBzb3VyY2UgY29kZSBhbmQgY29tbWl0Cj4gbWVzc2FnZSwg
-YW5kIEpvbiBDb3JiZXQncyBhcnRpY2xlIGF0IGh0dHA6Ly9sd24ubmV0L0FydGljbGVzLzYyNjY2
-NS8uCj4gQ291bGQgeW91IHBsZWFzZSBsZXQgbWUga25vdyBpZiB0aGUgZm9sbG93aW5nIGlzIGNv
-cnJlY3Q6Cj4KPiAgICAgL3Byb2MvW3BpZF0vc2V0Z3JvdXBzIChzaW5jZSBMaW51eCAzLjE5KQo+
-ICAgICAgICAgICAgVGhpcyBmaWxlIGRpc3BsYXlzIHRoZSBzdHJpbmcgImFsbG93IiAgaWYgIHBy
-b2Nlc3NlcyAgaW4KPiAgICAgICAgICAgIHRoZSAgdXNlciAgbmFtZXNwYWNlICB0aGF0ICBjb250
-YWlucyB0aGUgcHJvY2VzcyBwaWQgYXJlCj4gICAgICAgICAgICBwZXJtaXR0ZWQgdG8gZW1wbG95
-IHRoZSBzZXRncm91cHMoMikgIHN5c3RlbSAgY2FsbCwgIGFuZAo+ICAgICAgICAgICAgImRlbnki
-ICBpZiAgc2V0Z3JvdXBzKDIpICBpcyAgbm90IHBlcm1pdHRlZCBpbiB0aGF0IHVzZXIKPiAgICAg
-ICAgICAgIG5hbWVzcGFjZS4KPgo+ICAgICAgICAgICAgQSBwcml2aWxlZ2VkIHByb2Nlc3MgKG9u
-ZSB3aXRoIHRoZSAgQ0FQX1NZU19BRE1JTiAgY2FwYeKAkAo+ICAgICAgICAgICAgYmlsaXR5IGlu
-IHRoZSBuYW1lc3BhY2UpIG1heSB3cml0ZSBlaXRoZXIgb2YgdGhlIHN0cmluZ3MKPiAgICAgICAg
-ICAgICJhbGxvdyIgb3IgImRlbnkiIHRvIHRoaXMgZmlsZSBiZWZvcmUgd3JpdGluZyBhIGdyb3Vw
-IElECj4gICAgICAgICAgICBtYXBwaW5nICAgZm9yICAgdGhpcyAgIHVzZXIgICBuYW1lc3BhY2Ug
-ICB0byAgIHRoZSAgZmlsZQo+ICAgICAgICAgICAgL3Byb2MvW3BpZF0vZ2lkX21hcC4gIFdyaXRp
-bmcgdGhlIHN0cmluZyAiZGVueSIgcHJldmVudHMKPiAgICAgICAgICAgIGFueSAgcHJvY2VzcyAg
-aW4gIHRoZSB1c2VyIG5hbWVzcGFjZSBmcm9tIGVtcGxveWluZyBzZXTigJAKPiAgICAgICAgICAg
-IGdyb3VwcygyKS4KPgo+ICAgICAgICAgICAgVGhlIGRlZmF1bHQgdmFsdWUgb2YgIHRoaXMgIGZp
-bGUgIGluICB0aGUgIGluaXRpYWwgIHVzZXIKPiAgICAgICAgICAgIG5hbWVzcGFjZSBpcyAiYWxs
-b3ciLgo+Cj4gICAgICAgICAgICBPbmNlICAvcHJvYy9bcGlkXS9naWRfbWFwIGhhcyBiZWVuIHdy
-aXR0ZW4gdG8gKHdoaWNoIGhhcwo+ICAgICAgICAgICAgdGhlIGVmZmVjdCBvZiBlbmFibGluZyBz
-ZXRncm91cHMoMikgaW4gdGhlICB1c2VyICBuYW1lc+KAkAo+ICAgICAgICAgICAgcGFjZSksICBp
-dCBpcyBubyBsb25nZXIgcG9zc2libGUgdG8gZGVueSBzZXRncm91cHMoMikgYnkKPiAgICAgICAg
-ICAgIHdyaXRpbmcgdG8gL3Byb2MvW3BpZF0vc2V0Z3JvdXBzLgo+Cj4gICAgICAgICAgICBBIGNo
-aWxkIHVzZXIgbmFtZXNwYWNlIGluaGVyaXRzIHRoZSAgL3Byb2MvW3BpZF0vZ2lkX21hcAo+ICAg
-ICAgICAgICAgc2V0dGluZyBmcm9tIGl0cyBwYXJlbnQuCj4KPiAgICAgICAgICAgIElmICB0aGUg
-IHNldGdyb3VwcyAgZmlsZSAgaGFzIHRoZSB2YWx1ZSAiZGVueSIsIHRoZW4gdGhlCj4gICAgICAg
-ICAgICBzZXRncm91cHMoMikgc3lzdGVtIGNhbGwgY2FuJ3Qgc3Vic2VxdWVudGx5IGJlIHJlZW5h
-YmxlZAo+ICAgICAgICAgICAgKGJ5IHdyaXRpbmcgImFsbG93IiB0byB0aGUgZmlsZSkgaW4gdGhp
-cyB1c2VyIG5hbWVzcGFjZS4KPiAgICAgICAgICAgIFRoaXMgcmVzdHJpY3Rpb24gYWxzbyBwcm9w
-YWdhdGVzIGRvd24gdG8gYWxsIGNoaWxkICB1c2VyCj4gICAgICAgICAgICBuYW1lc3BhY2VzIG9m
-IHRoaXMgdXNlciBuYW1lc3BhY2UuCj4KPiBUaGFua3MsCj4KPiBNaWNoYWVsCj4KPiAtLQo+IE1p
-Y2hhZWwgS2Vycmlzawo+IExpbnV4IG1hbi1wYWdlcyBtYWludGFpbmVyOyBodHRwOi8vd3d3Lmtl
-cm5lbC5vcmcvZG9jL21hbi1wYWdlcy8KPiBMaW51eC9VTklYIFN5c3RlbSBQcm9ncmFtbWluZyBU
-cmFpbmluZzogaHR0cDovL21hbjcub3JnL3RyYWluaW5nLwoKCgotLSAKTWljaGFlbCBLZXJyaXNr
-CkxpbnV4IG1hbi1wYWdlcyBtYWludGFpbmVyOyBodHRwOi8vd3d3Lmtlcm5lbC5vcmcvZG9jL21h
-bi1wYWdlcy8KTGludXgvVU5JWCBTeXN0ZW0gUHJvZ3JhbW1pbmcgVHJhaW5pbmc6IGh0dHA6Ly9t
-YW43Lm9yZy90cmFpbmluZy8KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX18KQ29udGFpbmVycyBtYWlsaW5nIGxpc3QKQ29udGFpbmVyc0BsaXN0cy5saW51eC1m
-b3VuZGF0aW9uLm9yZwpodHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcvbWFpbG1hbi9s
-aXN0aW5mby9jb250YWluZXJz
+Hi Eric,
+
+Ping!
+
+Cheers,
+
+Michael
+
+
+On 2 February 2015 at 16:37, Michael Kerrisk (man-pages)
+<mtk.manpages@gmail.com> wrote:
+> Hi Eric,
+>
+> Thanks for writing this up!
+>
+> On 12/12/2014 10:54 PM, Eric W. Biederman wrote:
+>>
+>> Files with access permissions such as ---rwx---rwx give fewer
+>> permissions to their group then they do to everyone else.  Which means
+>> dropping groups with setgroups(0, NULL) actually grants a process
+>> privileges.
+>>
+>> The uprivileged setting of gid_map turned out not to be safe after
+>> this change.  Privilege setting of gid_map can be interpreted as
+>> meaning yes it is ok to drop groups.
+>
+> I had trouble to parse that sentence (and I'd like to make sure that
+> the right sentence ends up in the commit message). Did you mean:
+>
+>     "*Unprivileged* setting of gid_map can be interpreted as meaning
+>      yes it is ok to drop groups"
+>
+> ?
+>
+> Or something else?
+>
+>> To prevent this problem and future problems user namespaces were
+>> changed in such a way as to guarantee a user can not obtain
+>> credentials without privilege they could not obtain without the
+>> help of user namespaces.
+>>
+>> This meant testing the effective user ID and not the filesystem user
+>> ID as setresuid and setregid allow setting any process uid or gid
+>> (except the supplemental groups) to the effective ID.
+>>
+>> Furthermore to preserve in some form the useful applications that have
+>> been setting gid_map without privilege the file /proc/[pid]/setgroups
+>> was added to allow disabling setgroups.  With the setgroups system
+>> call permanently disabled in a user namespace it again becomes safe to
+>> allow writes to gid_map without privilege.
+>>
+>> Here is my meager attempt to update user_namespaces.7 to reflect these
+>> issues.
+>
+> It looked pretty serviceable as patch, IMO. So, thanks again. I've applied,
+> tweaking some wordings afterward, but changing nothing essential. See below
+> for a question.
+>
+>> Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+>> ---
+>>  man7/user_namespaces.7 | 52 +++++++++++++++++++++++++++++++++++++++++++++++---
+>>  1 file changed, 49 insertions(+), 3 deletions(-)
+>>
+>> diff --git a/man7/user_namespaces.7 b/man7/user_namespaces.7
+>> index d76721d9a0a1..f8333a762308 100644
+>> --- a/man7/user_namespaces.7
+>> +++ b/man7/user_namespaces.7
+>> @@ -533,11 +533,16 @@ One of the following is true:
+>>  The data written to
+>>  .I uid_map
+>>  .RI ( gid_map )
+>> -consists of a single line that maps the writing process's filesystem user ID
+>> +consists of a single line that maps the writing process's effective user ID
+>>  (group ID) in the parent user namespace to a user ID (group ID)
+>>  in the user namespace.
+>> -The usual case here is that this single line provides a mapping for user ID
+>> -of the process that created the namespace.
+>> +The writing process must have the same effective user ID as the process
+>> +that created the user namespace.
+>> +In the case of
+>> +.I gid_map
+>> +the
+>> +.I setgroups
+>> +file must have been written to earlier and disabled the setgroups system call.
+>>  .IP * 3
+>>  The opening process has the
+>>  .BR CAP_SETUID
+>> @@ -552,6 +557,47 @@ Writes that violate the above rules fail with the error
+>>  .\"
+>>  .\" ============================================================
+>>  .\"
+>> +.SS Interaction with system calls that change the uid or gid values
+>> +When in a user namespace where the
+>> +.I uid_map
+>> +or
+>> +.I gid_map
+>> +file has not been written the system calls that change user IDs
+>> +or group IDs respectively will fail.  After the
+>> +.I uid_map
+>> +and
+>> +.I gid_map
+>> +file have been written only the mapped values may be used in
+>> +system calls that change user IDs and group IDs.
+>> +
+>> +For user IDs these system calls include
+>> +.BR setuid ,
+>> +.BR setfsuid ,
+>> +.BR setreuid ,
+>> +and
+>> +.BR setresuid .
+>> +
+>> +For group IDs these system calls include
+>> +.BR setgid ,
+>> +.BR setfsgid ,
+>> +.BR setregid ,
+>> +.BR setresgid ,
+>> +and
+>> +.BR setgroups.
+>> +
+>> +Writing
+>> +.BR deny
+>> +to the
+>> +.I /proc/[pid]/setgroups
+>> +file before writing to
+>> +.I /proc/[pid]/gid_map
+>> +will permanently disable the setgroups system call in a user namespace
+>> +and allow writing to
+>> +.I /proc/[pid]/gid_map
+>> +without
+>> +.BR CAP_SETGID
+>> +in the parent user namespace.
+>
+> I just want to double check: you really did mean to write "*parent* namespace"
+> above, right?
+>
+> Thanks,
+>
+> Michael
+>
+>
+> --
+> Michael Kerrisk
+> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+> Linux/UNIX System Programming Training: http://man7.org/training/
+
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
