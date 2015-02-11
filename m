@@ -1,60 +1,53 @@
-From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH] tpm, tpm_tis: fix TPM 2.0 probing
-Date: Wed, 11 Feb 2015 13:47:01 -0500
-Message-ID: <54DBA3A5.7090306@linux.vnet.ibm.com>
-References: <1423059669-31734-1-git-send-email-jarkko.sakkinen@linux.intel.com> <201502090008.47986.PeterHuewe@gmx.de> <20150209083947.GC29987@intel.com> <54D9F6A0.9010905@linux.vnet.ibm.com> <20150210125037.GB4313@intel.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [RFC] simple_char: New infrastructure to simplify chardev management
+Date: Wed, 11 Feb 2015 12:04:32 -0800
+Message-ID: <CALCETrWaFd3xyv-E0VrnBEab6OtDptf6q=V16H52jwK7M-uyTg@mail.gmail.com>
+References: <d3ab93173d51cebf00dd2263fd0ce9f8cd6258f7.1423609645.git.luto@amacapital.net>
+ <20150211004459.GA30746@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150210125037.GB4313-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <20150211004459.GA30746-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: =?windows-1252?Q?Peter_H=FCwe?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 02/10/2015 07:50 AM, Jarkko Sakkinen wrote:
-> On Tue, Feb 10, 2015 at 07:16:32AM -0500, Stefan Berger wrote:
->> On 02/09/2015 03:39 AM, Jarkko Sakkinen wrote:
->>> On Mon, Feb 09, 2015 at 12:08:46AM +0100, Peter H=FCwe wrote:
->>>> Am Mittwoch, 4. Februar 2015, 15:21:09 schrieb Jarkko Sakkinen:
->>>>> If during transmission system error was returned, the logic was t=
-o
->>>>> incorrectly deduce that chip is a TPM 1.x chip. This patch fixes =
-this
->>>>> issue. Also, this patch changes probing so that message tag is us=
-ed as the
->>>>> measure for TPM 2.x, which should be much more stable.
->>>> Is it aware that some TPMs may respond with 0x00C1 as TAG for TPM1=
-=2E2 commands?
->>> I guess none of the TPM 1.2 command answer with the tag 0x8002?
+On Tue, Feb 10, 2015 at 4:44 PM, Greg Kroah-Hartman
+<gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> wrote:
+> On Tue, Feb 10, 2015 at 03:44:05PM -0800, Andy Lutomirski wrote:
+>> This isn't adequately tested, and I don't have a demonstration (yet).
+>> It's here for review for whether it's a good idea in the first place
+>> and for weather the fully_dynamic mechanism is a good idea.
 >>
->> FYI: pdf page 26 , section 6.1 explains the predictable return value=
- for a
->> TPM1.2 command seen by a TPM2
->>
->> http://www.trustedcomputinggroup.org/files/static_page_files/8C68ADA=
-8-1A4B-B294-D0FC06D3773F7DAA/TPM%20Rev%202.0%20Part%203%20-%20Commands%=
-2001.16-code.pdf
->>
->> Following this:
->>
->> Sending a TPM1.2 command to a TPM2 should return a TPM1.2 header (ta=
-g =3D
->> 0xc4) and error code (TPM_BADTAG =3D 0x1e)
->>
->> Sending a TPM 2 command to a TPM 2 will give a TPM 2 tag in the head=
-er.
->> Sending a TPM 2 command to a TPM 1.2 will give a TPM 1.2 tag in the =
-header
->> and an error code.
-> Thank you for the information. Do you think that for some reason
-> tpm2_probe() shoould instead check that value is not this error
-> instead of checking that tag is 0x80002?
+>> The current character device interfaces are IMO awful.
+>
+> That's a total understatement.  Redoing the char interface has been in
+> my todo list for a decade now.  It's the complexity that happens to be
+> used by just a handful of drivers that have prevented me from doing the
+> rework in the past.  Creating a "new" interface that we then port code
+> to is a very good idea, as it can happen over time in a much more
+> orderly way.
+>
+> And we can throw the kernel-janitors people at it once it's working, to
+> convert the rest of the tree, providing them a useful outlet for their
+> need for patch cleanups :)
+>
+> So yes, I'm all for this, thanks so much for looking into this.  I'm at
+> a conference this week, but will go over it on the plane home and give
+> you some review comments.
 
-=46ollowing your path, you are checking for TPM2_ST_NO_SESSION (0x8001)=
-,=20
-which looks correct to me. A TPM1.2 would never send this tag back.
+It would be nice to make the reference counting cleaner, perhaps by
+tying a chardev minor more directly to a struct device, but I wasn't
+sure how to do that usefully.
 
-     Stefan
+--Andy
+
+>
+> greg k-h
+
+
+
+-- 
+Andy Lutomirski
+AMA Capital Management, LLC
