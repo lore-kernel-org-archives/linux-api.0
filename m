@@ -1,31 +1,53 @@
-From: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [RFC] simple_char: New infrastructure to simplify chardev
- management
-Date: Wed, 11 Feb 2015 11:10:00 +0100 (CET)
-Message-ID: <alpine.LNX.2.00.1502111029310.10719@pobox.suse.cz>
-References: <d3ab93173d51cebf00dd2263fd0ce9f8cd6258f7.1423609645.git.luto@amacapital.net>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v3 linux-trace 1/8] tracing: attach eBPF programs to
+ tracepoints and syscalls
+Date: Wed, 11 Feb 2015 11:15:21 +0100
+Message-ID: <20150211101521.GP23123@twins.programming.kicks-ass.net>
+References: <CAMEtUuzY_Po=WtFEFg1aqzJ8dEF4rHGcWDsaS44KYgACMNPPgA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <d3ab93173d51cebf00dd2263fd0ce9f8cd6258f7.1423609645.git.luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAMEtUuzY_Po=WtFEFg1aqzJ8dEF4rHGcWDsaS44KYgACMNPPgA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 10 Feb 2015, Andy Lutomirski wrote:
+On Tue, Feb 10, 2015 at 04:22:50PM -0800, Alexei Starovoitov wrote:
+> > It would need to do more that that. It may have to calculate the value
+> > that it returns, as the internal value may be different with different
+> > kernels.
+> 
+> back to 'prio'... the 'prio' accessible from the program
+> should be the same 'prio' that we're storing inside task_struct.
 
-> This isn't adequately tested, and I don't have a demonstration (yet).
-> It's here for review for whether it's a good idea in the first place
-> and for weather the fully_dynamic mechanism is a good idea.
-[ ... snip ... ]
-> Signed-off-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Its not, task_struct::prio is an entirely different value than the one
+used in sched_param::sched_priority / sched_attr::sched_priority.
 
-Andy, thanks a lot, this really *is* needed. I am willing to port things I 
-am responsible for (such as hidraw) to this once this gets merged.
+And the 'problem' is, prio is only relevant to SCHED_RR/SCHED_FIFO
+tasks, we have more classes.
 
-Acked-by: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
+> No extra conversions.
 
--- 
-Jiri Kosina
-SUSE Labs
+We're not going to add runtime/space overhead to the kernel just because
+someone might maybe someday trace the kernel.
+
+That leaves the option of either tracing the kernel internal value and
+userspace will just have to deal with it, or making the tracepoint more
+expensive by having it do the conversion.
+
+Now the big question is, what do we do when we add/extend a scheduling
+class and have more parameters? We cannot change the tracepoint because
+userspace assumes format. And I simply refuse to add a second -- because
+that will end up being a third and fourth etc.. -- tracepoint right next
+to it with a different layout.
+
+Note that we just did add a class, we grew SCHED_DEADLINE a few releases
+ago, and that has 3 parameters (or 6 depending on how you look at it).
+You currently cannot 'debug' that with the existing tracepoints.
+
+In short, I loathe traceevents, they're more trouble than they're worth.
+
+Now I do love the infrastructure, its very useful debugging, but that's
+all with local hacks that will never see the light of day.
