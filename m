@@ -1,133 +1,125 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 1/2] proc.5: Document /proc/[pid]/setgroups
-Date: Thu, 12 Feb 2015 14:53:29 +0100
-Message-ID: <54DCB059.2020305@gmail.com>
-References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>	<CALCETrU-o5mPr1jCaLXDuuF6J2N470zAtx=8Fa-SjF=ZpdE8mQ@mail.gmail.com>	<87ppbtn4mv.fsf@x220.int.ebiederm.org>	<CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>	<87a92xn2io.fsf@x220.int.ebiederm.org>	<87r3w8liw4.fsf@x220.int.ebiederm.org>	<87iohklfvj.fsf_-_@x220.int.ebiederm.org>	<87fvcok11h.fsf_-_@x220.int.ebiederm.org>	<CALCETrVfKiXuY=KY_=nHpkTyLWgpy_3DK=4Mr2mhpyX9z1TzrA@mail.gmail.com>	<971ad3f6-90fd-4e3f-916c-8988af3c826d@email.android.com>	<CALCETrWpzvNm=fjOa3_+4QOqYP8qZUJvQAd6AsRZ71xyHZQRCg@mail.gmail.com>	<87wq5zf83t.fsf@x220.int.ebiederm.org>	<87iohh3c9c.fsf@x220.int.ebiederm.org>	<8761dh3b7k.fsf_-_@x220.int.ebiederm.org>	<878uicy1r9.fsf_-_@x220.int.ebiederm.org>	<87vblg1qme.fs
- f@x220.int.ebiederm.org>
-	<54CF9995.1050409@gmail.com>	<CAKgNAkgWnZ=7E4bk3JhzFS88CJ32szYCYcm_Sx166yVuWKhhUA@mail.gmail.com>
-	<8761b8lfoz.fsf@x220.int.ebiederm.org>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v5] perf: Use monotonic clock as a source for timestamps
+Date: Thu, 12 Feb 2015 16:38:08 +0100
+Message-ID: <20150212153808.GR24151@twins.programming.kicks-ass.net>
+References: <1415292718-19785-2-git-send-email-pawel.moll@arm.com>
+ <1421872037-12559-1-git-send-email-pawel.moll@arm.com>
+ <1422895966.4944.25.camel@arm.com>
+ <CAN+dfcT_6zZZ4oeyngUE5N0Wtx2B9CvXsfU71m+cuyXpq2KBdw@mail.gmail.com>
+ <1422955245.4944.26.camel@arm.com>
+ <20150211161256.GH2896@worktop.programming.kicks-ass.net>
+ <54DC7AC6.5010605@intel.com>
+ <20150212102814.GK2896@worktop.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <8761b8lfoz.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150212102814.GK2896-IIpfhp3q70z/8w/KjCw3T+5/BudmfyzbbVWyRVo5IupeoWH0uzbU5w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Adrian Hunter <adrian.hunter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, ajh mls <ajhmls-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-SGVsbG8gRXJpYywKCk9uIDAyLzExLzIwMTUgMDI6NTEgUE0sIEVyaWMgVy4gQmllZGVybWFuIHdy
-b3RlOgo+ICJNaWNoYWVsIEtlcnJpc2sgKG1hbi1wYWdlcykiIDxtdGsubWFucGFnZXNAZ21haWwu
-Y29tPiB3cml0ZXM6Cj4gCj4+IEhpIEVyaWMsCj4+Cj4+IFBpbmchCj4+Cj4+IENoZWVycywKPj4K
-Pj4gTWljaGFlbAo+IAo+IE15IGFwb2xvZ2llcy4gIFlvdSBkZXNjcmlwdGlvbiB3YXNuJ3Qgd3Jv
-bmcgYnV0IGl0IG1heSBiZSBhIGJpdAo+IG1pc2xlYWRpbmcsIGV4cGxhbmF0aW9uIGJlbG93LiAg
-WW91IHdpbGwgaGF2ZSB0byBmaWd1cmUgb3V0IGhvdyB0byB3b3JrCj4gdGhhdCBpbnRvIHlvdXIg
-cHJvcG9zZWQgdGV4dC4KPiAKPj4gT24gMiBGZWJydWFyeSAyMDE1IGF0IDE2OjM2LCBNaWNoYWVs
-IEtlcnJpc2sgKG1hbi1wYWdlcykKPj4gPG10ay5tYW5wYWdlc0BnbWFpbC5jb20+IHdyb3RlOgo+
-Pj4gW0FkZGluZyBKb3NoIHRvIENDIGluIGNhc2UgaGUgaGFzIGFueXRoaW5nIHRvIGFkZC5dCj4+
-Pgo+Pj4gT24gMTIvMTIvMjAxNCAxMDo1NCBQTSwgRXJpYyBXLiBCaWVkZXJtYW4gd3JvdGU6Cj4+
-Pj4KPj4+PiBTaWduZWQtb2ZmLWJ5OiBFcmljIFcuIEJpZWRlcm1hbiA8ZWJpZWRlcm1AeG1pc3Np
-b24uY29tPgo+Pj4+IC0tLQo+Pj4+ICBtYW41L3Byb2MuNSB8IDE1ICsrKysrKysrKysrKysrKwo+
-Pj4+ICAxIGZpbGUgY2hhbmdlZCwgMTUgaW5zZXJ0aW9ucygrKQo+Pj4+Cj4+Pj4gZGlmZiAtLWdp
-dCBhL21hbjUvcHJvYy41IGIvbWFuNS9wcm9jLjUKPj4+PiBpbmRleCA5NjA3N2QwZGQxOTUuLmQ2
-NjFlOGNmZWFjOSAxMDA2NDQKPj4+PiAtLS0gYS9tYW41L3Byb2MuNQo+Pj4+ICsrKyBiL21hbjUv
-cHJvYy41Cj4+Pj4gQEAgLTEwOTcsNiArMTA5NywyMSBAQCBhcmUgbm90IGF2YWlsYWJsZSBpZiB0
-aGUgbWFpbiB0aHJlYWQgaGFzIGFscmVhZHkgdGVybWluYXRlZAo+Pj4+ICAuXCIgICAgICAgQWRk
-ZWQgaW4gMi42LjkKPj4+PiAgLlwiICAgICAgIENPTkZJR19TQ0hFRFNUQVRTCj4+Pj4gIC5UUAo+
-Pj4+ICsuSVIgL3Byb2MvW3BpZF0vc2V0Z3JvdXBzICIgKHNpbmNlIExpbnV4IDMuMTktcmMxKSIK
-Pj4+PiArVGhpcyBmaWxlIHJlcG9ydHMKPj4+PiArLkJSIGFsbG93Cj4+Pj4gK2lmIHRoZSBzZXRn
-cm91cHMgc3lzdGVtIGNhbGwgaXMgYWxsb3dlZCBpbiB0aGUgY3VycmVudCB1c2VyIG5hbWVzcGFj
-ZS4KPj4+PiArVGhpcyBmaWxlIHJlcG9ydHMKPj4+PiArLkJSIGRlbnkKPj4+PiAraWYgdGhlIHNl
-dGdyb3VwcyBzeXN0ZW0gY2FsbCBpcyBub3QgYWxsb3dlZCBpbiB0aGUgY3VycmVudCB1c2VyIG5h
-bWVzcGFjZS4KPj4+PiArVGhpcyBmaWxlIG1heSBiZSB3cml0dGVuIHRvIHdpdGggdmFsdWVzIG9m
-Cj4+Pj4gKy5CUiBhbGxvdwo+Pj4+ICthbmQKPj4+PiArLkJSIGRlbnkKPj4+PiArYmVmb3JlCj4+
-Pj4gKy5JUiAvcHJvYy9bcGlkXS9naWRfbWFwCj4+Pj4gK2lzIHdyaXR0ZW4gdG8gKGVuYWJsaW5n
-IHNldGdyb3VwcykgaW4gYSB1c2VyIG5hbWVzcGFjZS4KPj4+PiArLlRQCj4+Pj4gIC5JUiAvcHJv
-Yy9bcGlkXS9zbWFwcyAiIChzaW5jZSBMaW51eCAyLjYuMTQpIgo+Pj4+ICBUaGlzIGZpbGUgc2hv
-d3MgbWVtb3J5IGNvbnN1bXB0aW9uIGZvciBlYWNoIG9mIHRoZSBwcm9jZXNzJ3MgbWFwcGluZ3Mu
-Cj4+Pj4gIChUaGUKPj4+Cj4+PiBIaSBFcmljLAo+Pj4KPj4+IFRoYW5rcyBmb3IgdGhpcyBwYXRj
-aC4gSSBhcHBsaWVkIGl0LCBhbmQgdGhlbiB0cmllZCB0byB3b3JrIGluCj4+PiBxdWl0ZSBhIGZl
-dyBvdGhlciBkZXRhaWxzIGdsZWFuZWQgZnJvbSB0aGUgc291cmNlIGNvZGUgYW5kIGNvbW1pdAo+
-Pj4gbWVzc2FnZSwgYW5kIEpvbiBDb3JiZXQncyBhcnRpY2xlIGF0IGh0dHA6Ly9sd24ubmV0L0Fy
-dGljbGVzLzYyNjY2NS8uCj4+PiBDb3VsZCB5b3UgcGxlYXNlIGxldCBtZSBrbm93IGlmIHRoZSBm
-b2xsb3dpbmcgaXMgY29ycmVjdDoKPiAKPiBJdCBpcyBjbG9zZSBidXQgaXQgbWF5IGJlIG1pc2xl
-YWRpbmcuCj4gCj4+PiAgICAgL3Byb2MvW3BpZF0vc2V0Z3JvdXBzIChzaW5jZSBMaW51eCAzLjE5
-KQo+Pj4gICAgICAgICAgICBUaGlzIGZpbGUgZGlzcGxheXMgdGhlIHN0cmluZyAiYWxsb3ciICBp
-ZiAgcHJvY2Vzc2VzICBpbgo+Pj4gICAgICAgICAgICB0aGUgIHVzZXIgIG5hbWVzcGFjZSAgdGhh
-dCAgY29udGFpbnMgdGhlIHByb2Nlc3MgcGlkIGFyZQo+Pj4gICAgICAgICAgICBwZXJtaXR0ZWQg
-dG8gZW1wbG95IHRoZSBzZXRncm91cHMoMikgIHN5c3RlbSAgY2FsbCwgIGFuZAo+Pj4gICAgICAg
-ICAgICAiZGVueSIgIGlmICBzZXRncm91cHMoMikgIGlzICBub3QgcGVybWl0dGVkIGluIHRoYXQg
-dXNlcgo+Pj4gICAgICAgICAgICBuYW1lc3BhY2UuCj4gCj4gV2l0aCB0aGUgY2F2ZWF0IHRoYXQg
-d2hlbiBnaWRfbWFwIGlzIG5vdCBzZXQgdGhhdCBzZXRncm91cHMgaXMgYWxzbyBub3QKPiBhbGxv
-d2VkLgoKT2theSAtLSBJYWRkZWQgdGhhdCBwb2ludC4KCj4+PiAgICAgICAgICAgIEEgcHJpdmls
-ZWdlZCBwcm9jZXNzIChvbmUgd2l0aCB0aGUgIENBUF9TWVNfQURNSU4gIGNhcGHigJAKPj4+ICAg
-ICAgICAgICAgYmlsaXR5IGluIHRoZSBuYW1lc3BhY2UpIG1heSB3cml0ZSBlaXRoZXIgb2YgdGhl
-IHN0cmluZ3MKPj4+ICAgICAgICAgICAgImFsbG93IiBvciAiZGVueSIgdG8gdGhpcyBmaWxlIGJl
-Zm9yZSB3cml0aW5nIGEgZ3JvdXAgSUQKPj4+ICAgICAgICAgICAgbWFwcGluZyAgIGZvciAgIHRo
-aXMgICB1c2VyICAgbmFtZXNwYWNlICAgdG8gICB0aGUgIGZpbGUKPj4+ICAgICAgICAgICAgL3By
-b2MvW3BpZF0vZ2lkX21hcC4gIFdyaXRpbmcgdGhlIHN0cmluZyAiZGVueSIgcHJldmVudHMKPj4+
-ICAgICAgICAgICAgYW55ICBwcm9jZXNzICBpbiAgdGhlIHVzZXIgbmFtZXNwYWNlIGZyb20gZW1w
-bG95aW5nIHNldOKAkAo+Pj4gICAgICAgICAgICBncm91cHMoMikuCj4gCj4gT3IgbW9yZSBzdWNj
-aW50bHkuICBZb3UgYXJlIGFsbG93ZWQgdG8gd3JpdGUgdG8gL3Byb2MvW3BpZF0vc2V0Z3JvdXBz
-Cj4gd2hlbiBjYWxsaW5nIHNldGdyb3VwcyBpcyBub3QgYWxsb3dlZCBiZWNhdXNlIGdpZF9tYXAg
-aXMgdW5zZXQuICBUaGlzCj4gZW5zdXJlcyB3ZSBkbyBub3QgaGF2ZSBhbnkgdHJhbnNpdGlvbnMg
-ZnJvbSBhIHN0YXRlIHdoZXJlIHNldGdyb3Vwcwo+IGlzIGFsbG93ZWQgdG8gYSBzdGF0ZSB3aGVy
-ZSBzZXRncm91cHMgaXMgZGVuaWVkLiAgVGhlcmUgYXJlIG9ubHkKPiB0cmFuc2l0aW9ucyBmcm9t
-IHNldGdyb3VwcyBub3QtYWxsb3dlZCB0byBzZXRncm91cHMgYWxsb3dlZC4KCkFuZCBJJ3ZlIHdv
-cmtlZCBpbiB0aGUgYWJvdmUgcG9pbnQsIHJld29yZGluZyBhIGJpdCBhbG9uZyB0aGUgd2F5LgpT
-bywgaG93IGRvZXMgdGhlIGZvbGxvd2luZyBsb29rIChvbmx5IHRoZSBmaXJzdCB0d28gcGFyYWdy
-YXBocyBoYXZlCmNoYW5nZWQpPwoKICAgICAgIC9wcm9jL1twaWRdL3NldGdyb3VwcyAoc2luY2Ug
-TGludXggMy4xOSkKICAgICAgICAgICAgICBUaGlzIGZpbGUgZGlzcGxheXMgdGhlIHN0cmluZyAi
-YWxsb3ciICBpZiAgcHJvY2Vzc2VzICBpbgogICAgICAgICAgICAgIHRoZSAgdXNlciAgbmFtZXNw
-YWNlICB0aGF0ICBjb250YWlucyB0aGUgcHJvY2VzcyBwaWQgYXJlCiAgICAgICAgICAgICAgcGVy
-bWl0dGVkIHRvIGVtcGxveSB0aGUgc2V0Z3JvdXBzKDIpICBzeXN0ZW0gIGNhbGwsICBhbmQKICAg
-ICAgICAgICAgICAiZGVueSIgIGlmICBzZXRncm91cHMoMikgIGlzICBub3QgcGVybWl0dGVkIGlu
-IHRoYXQgdXNlcgogICAgICAgICAgICAgIG5hbWVzcGFjZS4gIChOb3RlLCBob3dldmVyLCB0aGF0
-IGNhbGxzICB0byAgc2V0Z3JvdXBzKDIpCiAgICAgICAgICAgICAgYXJlICBhbHNvICBub3QgIHBl
-cm1pdHRlZCBpZiAvcHJvYy9bcGlkXS9naWRfbWFwIGhhcyBub3QKICAgICAgICAgICAgICB5ZXQg
-YmVlbiBzZXQuKQoKICAgICAgICAgICAgICBBIHByaXZpbGVnZWQgcHJvY2VzcyAob25lIHdpdGgg
-dGhlICBDQVBfU1lTX0FETUlOICBjYXBh4oCQCiAgICAgICAgICAgICAgYmlsaXR5IGluIHRoZSBu
-YW1lc3BhY2UpIG1heSB3cml0ZSBlaXRoZXIgb2YgdGhlIHN0cmluZ3MKICAgICAgICAgICAgICAi
-YWxsb3ciIG9yICJkZW55IiB0byB0aGlzIGZpbGUgYmVmb3JlIHdyaXRpbmcgYSBncm91cCBJRAog
-ICAgICAgICAgICAgIG1hcHBpbmcgICBmb3IgICB0aGlzICAgdXNlciAgIG5hbWVzcGFjZSAgIHRv
-ICAgdGhlICBmaWxlCiAgICAgICAgICAgICAgL3Byb2MvW3BpZF0vZ2lkX21hcC4gIFdyaXRpbmcg
-dGhlIHN0cmluZyAiZGVueSIgcHJldmVudHMKICAgICAgICAgICAgICBhbnkgIHByb2Nlc3MgIGlu
-ICB0aGUgdXNlciBuYW1lc3BhY2UgZnJvbSBlbXBsb3lpbmcgc2V04oCQCiAgICAgICAgICAgICAg
-Z3JvdXBzKDIpLiAgSW4gb3RoZXIgd29yZHMsIGl0IGlzIHBlcm1pdHRlZCB0byB3cml0ZSAgdG8K
-ICAgICAgICAgICAgICAvcHJvYy9bcGlkXS9zZXRncm91cHMgc28gbG9uZyBhcyBjYWxsaW5nIHNl
-dGdyb3VwcygyKSBpcwogICAgICAgICAgICAgIG5vdCBhbGxvd2VkIGJlY2F1c2UgL3Byb2MvW3Bp
-ZF1naWRfbWFwIGhhcyBub3QgYmVlbiBzZXQuCiAgICAgICAgICAgICAgVGhpcyAgZW5zdXJlcyAg
-dGhhdCAgYSAgcHJvY2VzcyBjYW5ub3QgdHJhbnNpdGlvbiBmcm9tIGEKICAgICAgICAgICAgICBz
-dGF0ZSB3aGVyZSBzZXRncm91cHMoMikgaXMgYWxsb3dlZCAgdG8gIGEgIHN0YXRlICB3aGVyZQog
-ICAgICAgICAgICAgIHNldGdyb3VwcygyKSAgaXMgIGRlbmllZDsgIGEgcHJvY2VzcyBjYW4gb25s
-eSB0cmFic2l0aW9uCiAgICAgICAgICAgICAgZnJvbSBzZXRncm91cHMoMikgYmVpbmcgZGlzYWxs
-b3dlZCB0byBzZXRncm91cHMoMikgYmVpbmcKICAgICAgICAgICAgICBhbGxvd2VkLgoKICAgICAg
-ICAgICAgICBUaGUgIGRlZmF1bHQgIHZhbHVlICBvZiAgdGhpcyAgZmlsZSAgaW4gdGhlIGluaXRp
-YWwgdXNlcgogICAgICAgICAgICAgIG5hbWVzcGFjZSBpcyAiYWxsb3ciLgoKICAgICAgICAgICAg
-ICBPbmNlIC9wcm9jL1twaWRdL2dpZF9tYXAgaGFzIGJlZW4gd3JpdHRlbiB0byAod2hpY2ggIGhh
-cwogICAgICAgICAgICAgIHRoZSAgZWZmZWN0ICBvZiBlbmFibGluZyBzZXRncm91cHMoMikgaW4g
-dGhlIHVzZXIgbmFtZXPigJAKICAgICAgICAgICAgICBwYWNlKSwgaXQgaXMgbm8gbG9uZ2VyIHBv
-c3NpYmxlIHRvIGRlbnkgc2V0Z3JvdXBzKDIpICBieQogICAgICAgICAgICAgIHdyaXRpbmcgdG8g
-L3Byb2MvW3BpZF0vc2V0Z3JvdXBzLgoKICAgICAgICAgICAgICBBICBjaGlsZCB1c2VyIG5hbWVz
-cGFjZSBpbmhlcml0cyB0aGUgL3Byb2MvW3BpZF0vZ2lkX21hcAogICAgICAgICAgICAgIHNldHRp
-bmcgZnJvbSBpdHMgcGFyZW50LgoKICAgICAgICAgICAgICBJZiB0aGUgc2V0Z3JvdXBzIGZpbGUg
-aGFzIHRoZSAgdmFsdWUgICJkZW55IiwgIHRoZW4gIHRoZQogICAgICAgICAgICAgIHNldGdyb3Vw
-cygyKSBzeXN0ZW0gY2FsbCBjYW4ndCBzdWJzZXF1ZW50bHkgYmUgcmVlbmFibGVkCiAgICAgICAg
-ICAgICAgKGJ5IHdyaXRpbmcgImFsbG93IiB0byB0aGUgZmlsZSkgaW4gdGhpcyB1c2VyIG5hbWVz
-cGFjZS4KICAgICAgICAgICAgICBUaGlzICByZXN0cmljdGlvbiBhbHNvIHByb3BhZ2F0ZXMgZG93
-biB0byBhbGwgY2hpbGQgdXNlcgogICAgICAgICAgICAgIG5hbWVzcGFjZXMgb2YgdGhpcyB1c2Vy
-IG5hbWVzcGFjZS4KCkNoZWVycywKCk1pY2hhZWwKCgoKLS0gCk1pY2hhZWwgS2VycmlzawpMaW51
-eCBtYW4tcGFnZXMgbWFpbnRhaW5lcjsgaHR0cDovL3d3dy5rZXJuZWwub3JnL2RvYy9tYW4tcGFn
-ZXMvCkxpbnV4L1VOSVggU3lzdGVtIFByb2dyYW1taW5nIFRyYWluaW5nOiBodHRwOi8vbWFuNy5v
-cmcvdHJhaW5pbmcvCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fCkNvbnRhaW5lcnMgbWFpbGluZyBsaXN0CkNvbnRhaW5lcnNAbGlzdHMubGludXgtZm91bmRh
-dGlvbi5vcmcKaHR0cHM6Ly9saXN0cy5saW51eGZvdW5kYXRpb24ub3JnL21haWxtYW4vbGlzdGlu
-Zm8vY29udGFpbmVycw==
+On Thu, Feb 12, 2015 at 11:28:14AM +0100, Peter Zijlstra wrote:
+> > and you would have to check the clocksource is TSC.
+> 
+> It implicitly does that; it has that sched_clock_stable() thing, but
+> yeah I suppose someone could change the clocksource even though the tsc
+> is stable.
+> 
+> Not using TSC when its available is quite crazy though.. but sure.
+
+Something like this on top then.. it might have a few header issues, the
+whole asm/tsc.h vs clocksource.h thing looks like pain.
+
+I haven't tried to compile it, maybe we can move cycle_t into types and
+fwd declare struct clocksource or whatnot.
+
+Of course, all this is quite horrible on the timekeeping side; it might
+be tglx and/or jstutlz are having spasms just reading it :-)
+
+---
+--- a/arch/x86/kernel/cpu/perf_event.c
++++ b/arch/x86/kernel/cpu/perf_event.c
+@@ -1967,17 +1967,19 @@ static void local_clock_user_time(struct
+ 	cyc2ns_read_end(data);
+ }
+ 
+-extern void notrace __ktime_get_mono_fast(u64 *offset, u32 *mult, u16 *shift);
++extern bool notrace __ktime_get_mono_fast(cycle_t (*read)(struct clocksource *cs),
++		u64 *offset, u32 *mult, u16 *shift);
+ 
+ static void ktime_fast_mono_user_time(struct perf_event_mmap_page *userpg, u64 now)
+ {
++	if (!__ktime_get_mono_fast(read_tsc, &userpg->time_zero,
++				   &userpg->time_mult,
++				   &userpg->time_shift))
++		return;
++
+ 	userpg->cap_user_time = 1;
+ 	userpg->cap_user_time_zero = 1;
+ 
+-	__ktime_get_mono_fast(&userpg->time_zero,
+-			      &userpg->time_mult,
+-			      &userpg->time_shift);
+-
+ 	userpg->offset = userpg->time_zero - now;
+ }
+ 
+--- a/kernel/time/timekeeping.c
++++ b/kernel/time/timekeeping.c
+@@ -334,7 +334,8 @@ u64 notrace ktime_get_mono_fast_ns(void)
+ }
+ EXPORT_SYMBOL_GPL(ktime_get_mono_fast_ns);
+ 
+-void notrace __ktime_get_mono_fast(u64 *offset, u32 *mult, u16 *shift)
++bool notrace __ktime_get_mono_fast(cycle_t (*read)(struct clocksource *),
++				   u64 *offset, u32 *mult, u16 *shift)
+ {
+ 	struct tk_read_base *tkr;
+ 	unsigned int seq;
+@@ -345,6 +346,9 @@ void notrace __ktime_get_mono_fast(u64 *
+ 		seq = raw_read_seqcount(&tk_fast_mono.seq);
+ 		tkr = tk_fast_mono.base + (seq & 0x01);
+ 
++		if (tkr->read != read)
++			return false;
++
+ 		cycle_now = tkr->read(tkr->clock);
+ 		delta = clocksource_delta(cycle_now, tkr->cycle_last, tkr->mask);
+ 
+@@ -362,6 +366,8 @@ void notrace __ktime_get_mono_fast(u64 *
+ 		*offset = now - nsec;
+ 
+ 	} while (read_seqcount_retry(&tk_fast_mono.seq, seq));
++
++	return true;
+ }
+ 
+ #ifdef CONFIG_GENERIC_TIME_VSYSCALL_OLD
+diff --git a/arch/x86/include/asm/tsc.h b/arch/x86/include/asm/tsc.h
+index 94605c0e9cee..68e4039a58ea 100644
+--- a/arch/x86/include/asm/tsc.h
++++ b/arch/x86/include/asm/tsc.h
+@@ -32,6 +32,8 @@ static inline cycles_t get_cycles(void)
+ 	return ret;
+ }
+ 
++extern void cycle_t read_tsc(struct clocksource *);
++
+ static __always_inline cycles_t vget_cycles(void)
+ {
+ 	/*
+diff --git a/arch/x86/kernel/tsc.c b/arch/x86/kernel/tsc.c
+index 505449700e0c..c580998f0160 100644
+--- a/arch/x86/kernel/tsc.c
++++ b/arch/x86/kernel/tsc.c
+@@ -965,7 +965,7 @@ static struct clocksource clocksource_tsc;
+  * checking the result of read_tsc() - cycle_last for being negative.
+  * That works because CLOCKSOURCE_MASK(64) does not mask out any bit.
+  */
+-static cycle_t read_tsc(struct clocksource *cs)
++cycle_t read_tsc(struct clocksource *cs)
+ {
+ 	return (cycle_t)get_cycles();
+ }
