@@ -1,70 +1,161 @@
-From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [PATCH] tpm, tpm_tis: fix TPM 2.0 probing
-Date: Thu, 12 Feb 2015 07:25:53 +0200
-Message-ID: <20150212052553.GB7314@intel.com>
-References: <1423059669-31734-1-git-send-email-jarkko.sakkinen@linux.intel.com>
- <201502090008.47986.PeterHuewe@gmx.de>
- <20150209083947.GC29987@intel.com>
- <54D9F6A0.9010905@linux.vnet.ibm.com>
- <20150210125037.GB4313@intel.com>
- <54DBA3A5.7090306@linux.vnet.ibm.com>
+From: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH 2/5] Documentation/ABI: Add file describing the sysfs
+ entries for toshiba_acpi
+Date: Wed, 11 Feb 2015 21:38:07 -0800
+Message-ID: <20150212053807.GD30527@fury.dvhart.com>
+References: <1423637040-6813-1-git-send-email-coproscefalo@gmail.com>
+ <1423637040-6813-3-git-send-email-coproscefalo@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <54DBA3A5.7090306-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+In-Reply-To: <1423637040-6813-3-git-send-email-coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: Peter =?iso-8859-1?Q?H=FCwe?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: platform-driver-x86-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Feb 11, 2015 at 01:47:01PM -0500, Stefan Berger wrote:
-> On 02/10/2015 07:50 AM, Jarkko Sakkinen wrote:
-> >On Tue, Feb 10, 2015 at 07:16:32AM -0500, Stefan Berger wrote:
-> >>On 02/09/2015 03:39 AM, Jarkko Sakkinen wrote:
-> >>>On Mon, Feb 09, 2015 at 12:08:46AM +0100, Peter H=FCwe wrote:
-> >>>>Am Mittwoch, 4. Februar 2015, 15:21:09 schrieb Jarkko Sakkinen:
-> >>>>>If during transmission system error was returned, the logic was =
-to
-> >>>>>incorrectly deduce that chip is a TPM 1.x chip. This patch fixes=
- this
-> >>>>>issue. Also, this patch changes probing so that message tag is u=
-sed as the
-> >>>>>measure for TPM 2.x, which should be much more stable.
-> >>>>Is it aware that some TPMs may respond with 0x00C1 as TAG for TPM=
-1.2 commands?
-> >>>I guess none of the TPM 1.2 command answer with the tag 0x8002?
-> >>
-> >>FYI: pdf page 26 , section 6.1 explains the predictable return valu=
-e for a
-> >>TPM1.2 command seen by a TPM2
-> >>
-> >>http://www.trustedcomputinggroup.org/files/static_page_files/8C68AD=
-A8-1A4B-B294-D0FC06D3773F7DAA/TPM%20Rev%202.0%20Part%203%20-%20Commands=
-%2001.16-code.pdf
-> >>
-> >>Following this:
-> >>
-> >>Sending a TPM1.2 command to a TPM2 should return a TPM1.2 header (t=
-ag =3D
-> >>0xc4) and error code (TPM_BADTAG =3D 0x1e)
-> >>
-> >>Sending a TPM 2 command to a TPM 2 will give a TPM 2 tag in the hea=
-der.
-> >>Sending a TPM 2 command to a TPM 1.2 will give a TPM 1.2 tag in the=
- header
-> >>and an error code.
-> >Thank you for the information. Do you think that for some reason
-> >tpm2_probe() shoould instead check that value is not this error
-> >instead of checking that tag is 0x80002?
->=20
-> Following your path, you are checking for TPM2_ST_NO_SESSION (0x8001)=
-, which
-> looks correct to me. A TPM1.2 would never send this tag back.
+On Tue, Feb 10, 2015 at 11:43:57PM -0700, Azael Avalos wrote:
+> This patch adds a new file describing the sysfs entries for the
+> toshiba_acpi driver.
+> 
 
-OK, perfect :)
++linux-api list
 
->     Stefan
+I've queued this for 3.20 through platform-drivers-x86. Any objections?
 
-/Jarkko
+
+> Signed-off-by: Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> ---
+>  .../ABI/testing/sysfs-driver-toshiba_acpi          | 114 +++++++++++++++++++++
+>  1 file changed, 114 insertions(+)
+>  create mode 100644 Documentation/ABI/testing/sysfs-driver-toshiba_acpi
+> 
+> diff --git a/Documentation/ABI/testing/sysfs-driver-toshiba_acpi b/Documentation/ABI/testing/sysfs-driver-toshiba_acpi
+> new file mode 100644
+> index 0000000..ca9c71a
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-driver-toshiba_acpi
+> @@ -0,0 +1,114 @@
+> +What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/kbd_backlight_mode
+> +Date:		June 8, 2014
+> +KernelVersion:	3.15
+> +Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> +Description:	This file controls the keyboard backlight operation mode, valid
+> +		values are:
+> +			* 0x1  -> FN-Z
+> +			* 0x2  -> AUTO (also called TIMER)
+> +			* 0x8  -> ON
+> +			* 0x10 -> OFF
+> +		Note that the kernel 3.16 onwards this file accepts all listed
+> +		parameters, kernel 3.15 only accepts the first two (FN-Z and
+> +		AUTO).
+> +Users:		KToshiba
+> +
+> +What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/kbd_backlight_timeout
+> +Date:		June 8, 2014
+> +KernelVersion:	3.15
+> +Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> +Description:	This file controls the timeout of the keyboard backlight
+> +		whenever the operation mode is set to AUTO (or TIMER),
+> +		valid values range from 0-60.
+> +		Note that the kernel 3.15 only had support for the first
+> +		keyboard type, the kernel 3.16 added support for the second
+> +		type and the range accepted for type 2 is 1-60.
+> +		See the entry named "kbd_type"
+> +Users:		KToshiba
+> +
+> +What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/position
+> +Date:		June 8, 2014
+> +KernelVersion:	3.15
+> +Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> +Description:	This file shows the absolute position of the built-in
+> +		accelereometer.
+> +
+> +What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/touchpad
+> +Date:		June 8, 2014
+> +KernelVersion:	3.15
+> +Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> +Description:	This files controls the status of the touchpad and pointing
+> +		stick (if available), valid values are:
+> +			* 0 -> OFF
+> +			* 1 -> ON
+> +Users:		KToshiba
+> +
+> +What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/available_kbd_modes
+> +Date:		August 3, 2014
+> +KernelVersion:	3.16
+> +Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> +Description:	This file shows the supported keyboard backlight modes
+> +		the system supports, which can be:
+> +			* 0x1  -> FN-Z
+> +			* 0x2  -> AUTO (also called TIMER)
+> +			* 0x8  -> ON
+> +			* 0x10 -> OFF
+> +		Note that not all keyboard types support the listed modes.
+> +		See the entry named "available_kbd_modes"
+> +Users:		KToshiba
+> +
+> +What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/kbd_type
+> +Date:		August 3, 2014
+> +KernelVersion:	3.16
+> +Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> +Description:	This file shows the current keyboard backlight type,
+> +		which can be:
+> +			* 1 -> Type 1, supporting modes FN-Z and AUTO
+> +			* 2 -> Type 2, supporting modes TIMER, ON and OFF
+> +Users:		KToshiba
+> +
+> +What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/version
+> +Date:		February, 2015
+> +KernelVersion:	3.20
+> +Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> +Description:	This file shows the current version of the driver
+> +
+> +What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/fan
+> +Date:		February, 2015
+> +KernelVersion:	3.20
+> +Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> +Description:	This file controls the state of the internal fan, valid
+> +		values are:
+> +			* 0 -> OFF
+> +			* 1 -> ON
+> +
+> +What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/kbd_function_keys
+> +Date:		February, 2015
+> +KernelVersion:	3.20
+> +Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> +Description:	This file controls the Special Functions (hotkeys) operation
+> +		mode, valid values are:
+> +			* 0 -> Normal Operation
+> +			* 1 -> Special Functions
+> +		In the "Normal Operation" mode, the F{1-12} keys are as usual
+> +		and the hotkeys are accessed via FN-F{1-12}.
+> +		In the "Special Functions" mode, the F{1-12} keys trigger the
+> +		hotkey and the F{1-12} keys are accessed via FN-F{1-12}.
+> +
+> +What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/panel_power_on
+> +Date:		February, 2015
+> +KernelVersion:	3.20
+> +Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> +Description:	This file controls whether the laptop should turn ON whenever
+> +		the LID is opened, valid values are:
+> +			* 0 -> Disabled
+> +			* 1 -> Enabled
+> +
+> +What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/usb_three
+> +Date:		February, 2015
+> +KernelVersion:	3.20
+> +Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> +Description:	This file controls whether the USB 3 functionality, valid
+> +		values are:
+> +			* 0 -> Disabled (Acts as a regular USB 2)
+> +			* 1 -> Enabled (Full USB 3 functionality)
+> -- 
+> 2.2.2
+> 
+> 
+
+-- 
+Darren Hart
+Intel Open Source Technology Center
