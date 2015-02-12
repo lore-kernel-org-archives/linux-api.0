@@ -1,78 +1,44 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH 2/2] user_namespaces.7: Update the documention to reflect
- the fixes for negative groups
-Date: Thu, 12 Feb 2015 11:11:09 +0100
-Message-ID: <54DC7C3D.4040100@gmail.com>
-References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>	<CALCETrU-o5mPr1jCaLXDuuF6J2N470zAtx=8Fa-SjF=ZpdE8mQ@mail.gmail.com>	<87ppbtn4mv.fsf@x220.int.ebiederm.org>	<CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>	<87a92xn2io.fsf@x220.int.ebiederm.org>	<87r3w8liw4.fsf@x220.int.ebiederm.org>	<87iohklfvj.fsf_-_@x220.int.ebiederm.org>	<87fvcok11h.fsf_-_@x220.int.ebiederm.org>	<CALCETrVfKiXuY=KY_=nHpkTyLWgpy_3DK=4Mr2mhpyX9z1TzrA@mail.gmail.com>	<971ad3f6-90fd-4e3f-916c-8988af3c826d@email.android.com>	<CALCETrWpzvNm=fjOa3_+4QOqYP8qZUJvQAd6AsRZ71xyHZQRCg@mail.gmail.com>	<87wq5zf83t.fsf@x220.int.ebiederm.org>	<87iohh3c9c.fsf@x220.int.ebiederm.org>	<8761dh3b7k.fsf_-_@x220.int.ebiederm.org>	<878uicy1r9.fsf_-_@x220.int.ebiederm.org>	<87ppbo1ql4.fs
- f_-_@x220.int.ebiederm.org> <54CF99BF.8050401@gmail.com>	<CAKgNAkhmwK02DJQV84S+dEdrUDjzRuR32j+2gcKkgeDq8jTkuQ@mail.gmail.com> <87egpwk0n3.fsf@x220.int.ebiederm.org>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v5] perf: Use monotonic clock as a source for timestamps
+Date: Thu, 12 Feb 2015 11:28:14 +0100
+Message-ID: <20150212102814.GK2896@worktop.programming.kicks-ass.net>
+References: <1415292718-19785-2-git-send-email-pawel.moll@arm.com>
+ <1421872037-12559-1-git-send-email-pawel.moll@arm.com>
+ <1422895966.4944.25.camel@arm.com>
+ <CAN+dfcT_6zZZ4oeyngUE5N0Wtx2B9CvXsfU71m+cuyXpq2KBdw@mail.gmail.com>
+ <1422955245.4944.26.camel@arm.com>
+ <20150211161256.GH2896@worktop.programming.kicks-ass.net>
+ <54DC7AC6.5010605@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <87egpwk0n3.fsf@x220.int.ebiederm.org>
-Sender: stable-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: mtk.manpages@gmail.com, Linux Containers <containers@lists.linux-foundation.org>, Josh Triplett <josh@joshtriplett.org>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, LSM <linux-security-module@vger.kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, "Serge E. Hallyn" <serge@hallyn.com>, Richard Weinberger <richard@nod.at>, Kenton Varda <kenton@sandstorm.io>, stable <stable@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <54DC7AC6.5010605-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Adrian Hunter <adrian.hunter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, ajh mls <ajhmls-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 02/11/2015 03:01 PM, Eric W. Biederman wrote:
-> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
+On Thu, Feb 12, 2015 at 12:04:54PM +0200, Adrian Hunter wrote:
+> On 11/02/15 18:12, Peter Zijlstra wrote:
+> > 
+> > How about something like the below? I _think_ it should mostly work for
+> > x86, where the tsc is a 64bit wide cycle counter.
 > 
->> Hi Eric,
->>
->> Ping!
->>
->> Cheers,
->>
->> Michael
->>
->>
->> On 2 February 2015 at 16:37, Michael Kerrisk (man-pages)
->> <mtk.manpages@gmail.com> wrote:
->>> Hi Eric,
->>>
->>> Thanks for writing this up!
->>>
->>> On 12/12/2014 10:54 PM, Eric W. Biederman wrote:
->>>>
->>>> Files with access permissions such as ---rwx---rwx give fewer
->>>> permissions to their group then they do to everyone else.  Which means
->>>> dropping groups with setgroups(0, NULL) actually grants a process
->>>> privileges.
->>>>
->>>> The uprivileged setting of gid_map turned out not to be safe after
->         ^^^^^^^^^^^
-> unprivileged  -- typo fix
+> It would have to be based on CLOCK_MONOTONIC_RAW not CLOCK_MONOTONIC 
 
-Thanks for confirming.
+Why?
 
->>>> this change.  Privilege setting of gid_map can be interpreted as
->>>> meaning yes it is ok to drop groups.
->>>
->>> I had trouble to parse that sentence (and I'd like to make sure that
->>> the right sentence ends up in the commit message). Did you mean:
->>>
->>>     "*Unprivileged* setting of gid_map can be interpreted as meaning
->>>      yes it is ok to drop groups"
->>> ?
->>>
->>> Or something else?
-> 
-> 
-> I meant:  Setting of gid_map with privilege has been clarified to mean
-> that dropping groups is ok.  This allows existing programs that set
-> gid_map with privilege to work without changes.  That is newgidmap
-> continues to work unchanged.
+> and you would have to check the clocksource is TSC.
 
-Thanks. I added that text to the changelog message.
+It implicitly does that; it has that sched_clock_stable() thing, but
+yeah I suppose someone could change the clocksource even though the tsc
+is stable.
 
-Cheers,
+Not using TSC when its available is quite crazy though.. but sure.
 
-Michael
+> Why is CLOCK_MONOTONIC preferred anyway - I would have thought any
+> adjustment would skew performance timings?
 
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Because you can do inter-machine stuff with MONOTONIC and that's
+entirely impossible with MONO_RAW.
