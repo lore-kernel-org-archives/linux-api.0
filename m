@@ -1,180 +1,283 @@
-From: Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 2/5] Documentation/ABI: Add file describing the sysfs
- entries for toshiba_acpi
-Date: Wed, 11 Feb 2015 22:42:53 -0700
-Message-ID: <CAGdLNWE=oYhk+GXUJSoE9KuLA=Lm0V9tjdsnL6YyV7AAk8u3ig@mail.gmail.com>
-References: <1423637040-6813-1-git-send-email-coproscefalo@gmail.com>
-	<1423637040-6813-3-git-send-email-coproscefalo@gmail.com>
-	<20150212053807.GD30527@fury.dvhart.com>
+From: Adrian Hunter <adrian.hunter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v5] perf: Use monotonic clock as a source for timestamps
+Date: Thu, 12 Feb 2015 12:04:54 +0200
+Message-ID: <54DC7AC6.5010605@intel.com>
+References: <1415292718-19785-2-git-send-email-pawel.moll@arm.com> <1421872037-12559-1-git-send-email-pawel.moll@arm.com> <1422895966.4944.25.camel@arm.com> <CAN+dfcT_6zZZ4oeyngUE5N0Wtx2B9CvXsfU71m+cuyXpq2KBdw@mail.gmail.com> <1422955245.4944.26.camel@arm.com> <20150211161256.GH2896@worktop.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150212053807.GD30527-JIrPihikzLEQaXB9iyTzyw@public.gmane.org>
+In-Reply-To: <20150211161256.GH2896-IIpfhp3q70z/8w/KjCw3T+5/BudmfyzbbVWyRVo5IupeoWH0uzbU5w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: "platform-driver-x86-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <platform-driver-x86-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>
+Cc: ajh mls <ajhmls-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Darren,
+On 11/02/15 18:12, Peter Zijlstra wrote:
+> 
+> How about something like the below? I _think_ it should mostly work for
+> x86, where the tsc is a 64bit wide cycle counter.
 
-2015-02-11 22:38 GMT-07:00 Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>:
-> On Tue, Feb 10, 2015 at 11:43:57PM -0700, Azael Avalos wrote:
->> This patch adds a new file describing the sysfs entries for the
->> toshiba_acpi driver.
->>
->
-> +linux-api list
+It would have to be based on CLOCK_MONOTONIC_RAW not CLOCK_MONOTONIC and you
+would have to check the clocksource is TSC.
 
-Just CC me, because I'm not subscribed to that list, in case something
-needs to be changed.
+Why is CLOCK_MONOTONIC preferred anyway - I would have thought any
+adjustment would skew performance timings?
 
->
-> I've queued this for 3.20 through platform-drivers-x86. Any objections?
-
-Not at all, and given that this patch is managed on another list,
-let's see if there are any problems with this file.
-
-Cheers
-Azael
-
->
->
->> Signed-off-by: Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> ---
->>  .../ABI/testing/sysfs-driver-toshiba_acpi          | 114 +++++++++++++++++++++
->>  1 file changed, 114 insertions(+)
->>  create mode 100644 Documentation/ABI/testing/sysfs-driver-toshiba_acpi
->>
->> diff --git a/Documentation/ABI/testing/sysfs-driver-toshiba_acpi b/Documentation/ABI/testing/sysfs-driver-toshiba_acpi
->> new file mode 100644
->> index 0000000..ca9c71a
->> --- /dev/null
->> +++ b/Documentation/ABI/testing/sysfs-driver-toshiba_acpi
->> @@ -0,0 +1,114 @@
->> +What:                /sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/kbd_backlight_mode
->> +Date:                June 8, 2014
->> +KernelVersion:       3.15
->> +Contact:     Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> +Description: This file controls the keyboard backlight operation mode, valid
->> +             values are:
->> +                     * 0x1  -> FN-Z
->> +                     * 0x2  -> AUTO (also called TIMER)
->> +                     * 0x8  -> ON
->> +                     * 0x10 -> OFF
->> +             Note that the kernel 3.16 onwards this file accepts all listed
->> +             parameters, kernel 3.15 only accepts the first two (FN-Z and
->> +             AUTO).
->> +Users:               KToshiba
->> +
->> +What:                /sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/kbd_backlight_timeout
->> +Date:                June 8, 2014
->> +KernelVersion:       3.15
->> +Contact:     Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> +Description: This file controls the timeout of the keyboard backlight
->> +             whenever the operation mode is set to AUTO (or TIMER),
->> +             valid values range from 0-60.
->> +             Note that the kernel 3.15 only had support for the first
->> +             keyboard type, the kernel 3.16 added support for the second
->> +             type and the range accepted for type 2 is 1-60.
->> +             See the entry named "kbd_type"
->> +Users:               KToshiba
->> +
->> +What:                /sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/position
->> +Date:                June 8, 2014
->> +KernelVersion:       3.15
->> +Contact:     Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> +Description: This file shows the absolute position of the built-in
->> +             accelereometer.
->> +
->> +What:                /sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/touchpad
->> +Date:                June 8, 2014
->> +KernelVersion:       3.15
->> +Contact:     Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> +Description: This files controls the status of the touchpad and pointing
->> +             stick (if available), valid values are:
->> +                     * 0 -> OFF
->> +                     * 1 -> ON
->> +Users:               KToshiba
->> +
->> +What:                /sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/available_kbd_modes
->> +Date:                August 3, 2014
->> +KernelVersion:       3.16
->> +Contact:     Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> +Description: This file shows the supported keyboard backlight modes
->> +             the system supports, which can be:
->> +                     * 0x1  -> FN-Z
->> +                     * 0x2  -> AUTO (also called TIMER)
->> +                     * 0x8  -> ON
->> +                     * 0x10 -> OFF
->> +             Note that not all keyboard types support the listed modes.
->> +             See the entry named "available_kbd_modes"
->> +Users:               KToshiba
->> +
->> +What:                /sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/kbd_type
->> +Date:                August 3, 2014
->> +KernelVersion:       3.16
->> +Contact:     Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> +Description: This file shows the current keyboard backlight type,
->> +             which can be:
->> +                     * 1 -> Type 1, supporting modes FN-Z and AUTO
->> +                     * 2 -> Type 2, supporting modes TIMER, ON and OFF
->> +Users:               KToshiba
->> +
->> +What:                /sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/version
->> +Date:                February, 2015
->> +KernelVersion:       3.20
->> +Contact:     Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> +Description: This file shows the current version of the driver
->> +
->> +What:                /sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/fan
->> +Date:                February, 2015
->> +KernelVersion:       3.20
->> +Contact:     Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> +Description: This file controls the state of the internal fan, valid
->> +             values are:
->> +                     * 0 -> OFF
->> +                     * 1 -> ON
->> +
->> +What:                /sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/kbd_function_keys
->> +Date:                February, 2015
->> +KernelVersion:       3.20
->> +Contact:     Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> +Description: This file controls the Special Functions (hotkeys) operation
->> +             mode, valid values are:
->> +                     * 0 -> Normal Operation
->> +                     * 1 -> Special Functions
->> +             In the "Normal Operation" mode, the F{1-12} keys are as usual
->> +             and the hotkeys are accessed via FN-F{1-12}.
->> +             In the "Special Functions" mode, the F{1-12} keys trigger the
->> +             hotkey and the F{1-12} keys are accessed via FN-F{1-12}.
->> +
->> +What:                /sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/panel_power_on
->> +Date:                February, 2015
->> +KernelVersion:       3.20
->> +Contact:     Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> +Description: This file controls whether the laptop should turn ON whenever
->> +             the LID is opened, valid values are:
->> +                     * 0 -> Disabled
->> +                     * 1 -> Enabled
->> +
->> +What:                /sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/usb_three
->> +Date:                February, 2015
->> +KernelVersion:       3.20
->> +Contact:     Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> +Description: This file controls whether the USB 3 functionality, valid
->> +             values are:
->> +                     * 0 -> Disabled (Acts as a regular USB 2)
->> +                     * 1 -> Enabled (Full USB 3 functionality)
->> --
->> 2.2.2
->>
->>
->
-> --
-> Darren Hart
-> Intel Open Source Technology Center
-
-
-
--- 
--- El mundo apesta y vosotros apestais tambien --
+> 
+> I suppose we should extend the perf userpage time data with
+> time_last_cycle and time_mask if/when we want to make this work on
+> something with a short counter.
+> 
+> Of course, at that time we also need to somehow deal with that counter
+> wrapping, its hardly practical to go iterate all possible userpg
+> instances from a timer handler.
+> 
+> 
+> ---
+>  Documentation/kernel-parameters.txt |  9 +++++++
+>  arch/x86/kernel/cpu/perf_event.c    | 44 ++++++++++++++++++++++++---------
+>  include/linux/perf_event.h          |  6 +++++
+>  kernel/events/core.c                | 49 ++++++++++++++++++++++++++++++++++---
+>  kernel/time/timekeeping.c           | 30 +++++++++++++++++++++++
+>  5 files changed, 123 insertions(+), 15 deletions(-)
+> 
+> diff --git a/Documentation/kernel-parameters.txt b/Documentation/kernel-parameters.txt
+> index 176d4fe4f076..52255676b6e2 100644
+> --- a/Documentation/kernel-parameters.txt
+> +++ b/Documentation/kernel-parameters.txt
+> @@ -91,6 +91,7 @@ the beginning of each description states the restrictions within which a
+>  	NUMA	NUMA support is enabled.
+>  	NFS	Appropriate NFS support is enabled.
+>  	OSS	OSS sound support is enabled.
+> +	PERF	Performance events and counters support is enabled.
+>  	PV_OPS	A paravirtualized kernel is enabled.
+>  	PARIDE	The ParIDE (parallel port IDE) subsystem is enabled.
+>  	PARISC	The PA-RISC architecture is enabled.
+> @@ -2796,6 +2797,14 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
+>  			allocator.  This parameter is primarily	for debugging
+>  			and performance comparison.
+>  
+> +	perf_use_local_clock
+> +			[PERF]
+> +			Use local_clock() as a source for perf timestamps
+> +			generation. This was be the default behaviour and
+> +			this parameter can be used to maintain backward
+> +			compatibility or on older hardware with expensive
+> +			monotonic clock source.
+> +
+>  	pf.		[PARIDE]
+>  			See Documentation/blockdev/paride.txt.
+>  
+> diff --git a/arch/x86/kernel/cpu/perf_event.c b/arch/x86/kernel/cpu/perf_event.c
+> index b71a7f86d68a..436a66632f76 100644
+> --- a/arch/x86/kernel/cpu/perf_event.c
+> +++ b/arch/x86/kernel/cpu/perf_event.c
+> @@ -1952,6 +1952,35 @@ static struct pmu pmu = {
+>  	.flush_branch_stack	= x86_pmu_flush_branch_stack,
+>  };
+>  
+> +static void local_clock_user_time(struct perf_event_mmap_page *userpg, u64 now)
+> +{
+> +	data = cyc2ns_read_begin();
+> +
+> +	userpg->cap_user_time = 1;
+> +	userpg->time_mult = data->cyc2ns_mul;
+> +	userpg->time_shift = data->cyc2ns_shift;
+> +	userpg->time_offset = data->cyc2ns_offset - now;
+> +
+> +	userpg->cap_user_time_zero = 1;
+> +	userpg->time_zero = data->cyc2ns_offset;
+> +
+> +	cyc2ns_read_end(data);
+> +}
+> +
+> +extern void notrace __ktime_get_mono_fast(u64 *offset, u32 *mult, u16 *shift);
+> +
+> +static void ktime_fast_mono_user_time(struct perf_event_mmap_page *userpg, u64 now)
+> +{
+> +	userpg->cap_user_time = 1;
+> +	userpg->cap_user_time_zero = 1;
+> +
+> +	__ktime_get_mono_fast(&userpg->time_zero,
+> +			      &userpg->time_mult,
+> +			      &userpg->time_shift);
+> +
+> +	userpg->offset = userpg->time_zero - now;
+> +}
+> +
+>  void arch_perf_update_userpage(struct perf_event *event,
+>  			       struct perf_event_mmap_page *userpg, u64 now)
+>  {
+> @@ -1966,17 +1995,10 @@ void arch_perf_update_userpage(struct perf_event *event,
+>  	if (!sched_clock_stable())
+>  		return;
+>  
+> -	data = cyc2ns_read_begin();
+> -
+> -	userpg->cap_user_time = 1;
+> -	userpg->time_mult = data->cyc2ns_mul;
+> -	userpg->time_shift = data->cyc2ns_shift;
+> -	userpg->time_offset = data->cyc2ns_offset - now;
+> -
+> -	userpg->cap_user_time_zero = 1;
+> -	userpg->time_zero = data->cyc2ns_offset;
+> -
+> -	cyc2ns_read_end(data);
+> +	if (static_key_false(&perf_use_local_clock_key))
+> +		local_clock_user_time(userpg, now);
+> +	else
+> +		ktime_fast_mono_user_time(userpg, now);
+>  }
+>  
+>  /*
+> diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
+> index 33262004c310..1d61f968113a 100644
+> --- a/include/linux/perf_event.h
+> +++ b/include/linux/perf_event.h
+> @@ -561,6 +561,12 @@ extern void perf_pmu_enable(struct pmu *pmu);
+>  extern int perf_event_task_disable(void);
+>  extern int perf_event_task_enable(void);
+>  extern int perf_event_refresh(struct perf_event *event, int refresh);
+> +
+> +extern struct static_key perf_use_local_clock_key = STATIC_KEY_INIT_FALSE;
+> +extern void __weak
+> +arch_perf_update_userpage(struct perf_event *event,
+> +			  struct perf_event_mmap_page *userpg, u64 now);
+> +
+>  extern void perf_event_update_userpage(struct perf_event *event);
+>  extern int perf_event_release_kernel(struct perf_event *event);
+>  extern struct perf_event *
+> diff --git a/kernel/events/core.c b/kernel/events/core.c
+> index 13209a90b751..7bad385103ea 100644
+> --- a/kernel/events/core.c
+> +++ b/kernel/events/core.c
+> @@ -42,6 +42,8 @@
+>  #include <linux/module.h>
+>  #include <linux/mman.h>
+>  #include <linux/compat.h>
+> +#include <linux/sysctl.h>
+> +#include <linux/jump_label.h>
+>  
+>  #include "internal.h"
+>  
+> @@ -322,9 +324,43 @@ extern __weak const char *perf_pmu_name(void)
+>  	return "pmu";
+>  }
+>  
+> +struct static_key perf_use_local_clock_key = STATIC_KEY_INIT_FALSE;
+> +static bool perf_use_local_clock_param __initdata;
+> +static int __init perf_use_local_clock_setup(char *__unused)
+> +{
+> +	perf_use_local_clock_param = true;
+> +	return 1;
+> +}
+> +__setup("perf_use_local_clock", perf_use_local_clock_setup);
+> +
+> +static int sysctl_perf_sample_time_clk_id = CLOCK_MONOTONIC;
+> +
+> +static struct ctl_table perf_sample_time_kern_table[] = {
+> +	{
+> +		.procname       = "perf_sample_time_clk_id",
+> +		.data           = &sysctl_perf_sample_time_clk_id,
+> +		.maxlen         = sizeof(int),
+> +		.mode           = 0444,
+> +		.proc_handler   = proc_dointvec,
+> +	},
+> +	{}
+> +};
+> +
+> +static struct ctl_table perf_sample_time_root_table[] = {
+> +	{
+> +		.procname	= "kernel",
+> +		.mode		= 0555,
+> +		.child		= perf_sample_time_kern_table,
+> +	},
+> +	{}
+> +};
+> +
+>  static inline u64 perf_clock(void)
+>  {
+> -	return local_clock();
+> +	if (static_key_false(&perf_use_local_clock_key))
+> +		return local_clock();
+> +	else
+> +		return ktime_get_mono_fast_ns();
+>  }
+>  
+>  static inline struct perf_cpu_context *
+> @@ -4101,8 +4137,8 @@ static void perf_event_init_userpage(struct perf_event *event)
+>  	rcu_read_unlock();
+>  }
+>  
+> -void __weak arch_perf_update_userpage(
+> -	struct perf_event *event, struct perf_event_mmap_page *userpg, u64 now)
+> +void __weak arch_perf_update_userpage(struct perf_event *event,
+> +				      struct perf_event_mmap_page *userpg, u64 now)
+>  {
+>  }
+>  
+> @@ -4487,7 +4523,7 @@ static int perf_mmap(struct file *file, struct vm_area_struct *vma)
+>  	if (vma->vm_flags & VM_WRITE)
+>  		flags |= RING_BUFFER_WRITABLE;
+>  
+> -	rb = rb_alloc(nr_pages, 
+> +	rb = rb_alloc(nr_pages,
+>  		event->attr.watermark ? event->attr.wakeup_watermark : 0,
+>  		event->cpu, flags);
+>  
+> @@ -8516,6 +8552,11 @@ void __init perf_event_init(void)
+>  	 */
+>  	BUILD_BUG_ON((offsetof(struct perf_event_mmap_page, data_head))
+>  		     != 1024);
+> +
+> +	if (perf_use_local_clock_param)
+> +		static_key_slow_inc(&perf_use_local_clock_key);
+> +	else
+> +		register_sysctl_table(perf_sample_time_root_table);
+>  }
+>  
+>  static int __init perf_event_sysfs_init(void)
+> diff --git a/kernel/time/timekeeping.c b/kernel/time/timekeeping.c
+> index b124af259800..37bed5931a91 100644
+> --- a/kernel/time/timekeeping.c
+> +++ b/kernel/time/timekeeping.c
+> @@ -334,6 +334,36 @@ u64 notrace ktime_get_mono_fast_ns(void)
+>  }
+>  EXPORT_SYMBOL_GPL(ktime_get_mono_fast_ns);
+>  
+> +void notrace __ktime_get_mono_fast(u64 *offset, u32 *mult, u16 *shift)
+> +{
+> +	struct tk_read_base *tkr;
+> +	unsigned int seq;
+> +	cycle_t cycle_now, delta;
+> +	u64 nsecs, now;
+> +
+> +	do {
+> +		seq = raw_read_seqcount(&tk_fast_mono.seq);
+> +		tkr = tk_fast_mono.base + (seq & 0x01);
+> +
+> +		cycle_now = tkr->read(tkr->clock);
+> +		delta = clocksource_delta(cycle_now, tkr->cycle_last, tkr->mask);
+> +
+> +		nsec = delta * tkr->mult + tkr->xtime_nsec;
+> +		nsec >>= tkr->shift;
+> +		nsec += arch_gettimeoffset();
+> +
+> +		now = ktime_to_ns(tkr->base_mono) + nsec;
+> +
+> +		*mult = tkr->mult;
+> +		*shift = tkr->shift;
+> +
+> +		nsec = mul_u64_u32_shr(cycle_now, tkr->mult, tkr->shift);
+> +
+> +		*offset = now - nsec;
+> +
+> +	} while (read_seqcount_retry(&tk_fast_mono.seq, seq));
+> +}
+> +
+>  #ifdef CONFIG_GENERIC_TIME_VSYSCALL_OLD
+>  
+>  static inline void update_vsyscall(struct timekeeper *tk)
+> 
+> 
