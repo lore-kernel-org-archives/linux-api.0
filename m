@@ -1,39 +1,70 @@
-From: Hekuang <hekuang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v3 linux-trace 1/8] tracing: attach eBPF programs to tracepoints
- and syscalls
-Date: Thu, 12 Feb 2015 12:58:27 +0800
-Message-ID: <54DC32F3.7040403@huawei.com>
-References: <CAMEtUuzY_Po=WtFEFg1aqzJ8dEF4rHGcWDsaS44KYgACMNPPgA@mail.gmail.com>
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH] tpm, tpm_tis: fix TPM 2.0 probing
+Date: Thu, 12 Feb 2015 07:25:53 +0200
+Message-ID: <20150212052553.GB7314@intel.com>
+References: <1423059669-31734-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+ <201502090008.47986.PeterHuewe@gmx.de>
+ <20150209083947.GC29987@intel.com>
+ <54D9F6A0.9010905@linux.vnet.ibm.com>
+ <20150210125037.GB4313@intel.com>
+ <54DBA3A5.7090306@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAMEtUuzY_Po=WtFEFg1aqzJ8dEF4rHGcWDsaS44KYgACMNPPgA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <54DBA3A5.7090306-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, wangnan0-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
+To: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Cc: Peter =?iso-8859-1?Q?H=FCwe?= <PeterHuewe-Mmb7MZpHnFY@public.gmane.org>, Ashley Lai <ashley-fm2HMyfA2y6tG0bUXCXiUA@public.gmane.org>, Marcel Selhorst <tpmdd-yWjUBOtONefk1uMJSBkQmQ@public.gmane.org>, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, christophe.ricard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jason.gunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, trousers-tech-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On Wed, Feb 11, 2015 at 01:47:01PM -0500, Stefan Berger wrote:
+> On 02/10/2015 07:50 AM, Jarkko Sakkinen wrote:
+> >On Tue, Feb 10, 2015 at 07:16:32AM -0500, Stefan Berger wrote:
+> >>On 02/09/2015 03:39 AM, Jarkko Sakkinen wrote:
+> >>>On Mon, Feb 09, 2015 at 12:08:46AM +0100, Peter H=FCwe wrote:
+> >>>>Am Mittwoch, 4. Februar 2015, 15:21:09 schrieb Jarkko Sakkinen:
+> >>>>>If during transmission system error was returned, the logic was =
+to
+> >>>>>incorrectly deduce that chip is a TPM 1.x chip. This patch fixes=
+ this
+> >>>>>issue. Also, this patch changes probing so that message tag is u=
+sed as the
+> >>>>>measure for TPM 2.x, which should be much more stable.
+> >>>>Is it aware that some TPMs may respond with 0x00C1 as TAG for TPM=
+1.2 commands?
+> >>>I guess none of the TPM 1.2 command answer with the tag 0x8002?
+> >>
+> >>FYI: pdf page 26 , section 6.1 explains the predictable return valu=
+e for a
+> >>TPM1.2 command seen by a TPM2
+> >>
+> >>http://www.trustedcomputinggroup.org/files/static_page_files/8C68AD=
+A8-1A4B-B294-D0FC06D3773F7DAA/TPM%20Rev%202.0%20Part%203%20-%20Commands=
+%2001.16-code.pdf
+> >>
+> >>Following this:
+> >>
+> >>Sending a TPM1.2 command to a TPM2 should return a TPM1.2 header (t=
+ag =3D
+> >>0xc4) and error code (TPM_BADTAG =3D 0x1e)
+> >>
+> >>Sending a TPM 2 command to a TPM 2 will give a TPM 2 tag in the hea=
+der.
+> >>Sending a TPM 2 command to a TPM 1.2 will give a TPM 1.2 tag in the=
+ header
+> >>and an error code.
+> >Thank you for the information. Do you think that for some reason
+> >tpm2_probe() shoould instead check that value is not this error
+> >instead of checking that tag is 0x80002?
+>=20
+> Following your path, you are checking for TPM2_ST_NO_SESSION (0x8001)=
+, which
+> looks correct to me. A TPM1.2 would never send this tag back.
 
->> eBPF is very flexible, which means it is bound to have someone use it
->> in a way you never dreamed of, and that will be what bites you in the
->> end (pun intended).
-> understood :)
-> let's start slow then with bpf+syscall and bpf+kprobe only.
+OK, perfect :)
 
+>     Stefan
 
-I think BPF + system calls/kprobes can meet our use case
-(https://lkml.org/lkml/2015/2/6/44), but there're some issues to be
-improved.
-
-I suggest that you can improve bpf+kprobes when attached to function
-headers(or TRACE_MARKERS), make it converts pt-regs to bpf_ctx->arg1,
-arg2.., then top models and architectures can be separated by bpf.
-
-BPF bytecode is cross-platform, but what we can get by using bpf+kprobes
-is a 'regs->rdx' kind of information, such information is both
-architecture and kernel version related.
-
-We hope to establish some models for describing kernel procedures such
-as IO and network, which requires that it does not rely on architecture
-and does not rely to a specific kernel version as much as possible.
+/Jarkko
