@@ -1,53 +1,53 @@
-From: Adrian Hunter <adrian.hunter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v5] perf: Use monotonic clock as a source for timestamps
-Date: Fri, 13 Feb 2015 09:07:36 +0200
-Message-ID: <54DDA2B8.6040208@intel.com>
-References: <1415292718-19785-2-git-send-email-pawel.moll@arm.com> <1421872037-12559-1-git-send-email-pawel.moll@arm.com> <1422895966.4944.25.camel@arm.com> <CAN+dfcT_6zZZ4oeyngUE5N0Wtx2B9CvXsfU71m+cuyXpq2KBdw@mail.gmail.com> <1422955245.4944.26.camel@arm.com> <20150211161256.GH2896@worktop.programming.kicks-ass.net> <54DC7AC6.5010605@intel.com> <20150212102814.GK2896@worktop.programming.kicks-ass.net>
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Subject: Re: [PATCH 02/14] ARM: ARMv7M: Enlarge vector table to 256 entries
+Date: Fri, 13 Feb 2015 09:42:46 +0100
+Message-ID: <CALszF6BDa9pUb534YN2z9DbYA+hPCnG8XYy5YbjJwSiseKz4xg@mail.gmail.com>
+References: <1423763164-5606-1-git-send-email-mcoquelin.stm32@gmail.com>
+	<1423763164-5606-3-git-send-email-mcoquelin.stm32@gmail.com>
+	<CAMuHMdWESyPktOSBfVoZCb35stUbhNpbbpzSW4JfORdObgg5jw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150212102814.GK2896-IIpfhp3q70z/8w/KjCw3T+5/BudmfyzbbVWyRVo5IupeoWH0uzbU5w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, ajh mls <ajhmls-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Tomeu Vizoso <tomeu-XCtybt49RKsYaV1qd6yewg@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <CAMuHMdWESyPktOSBfVoZCb35stUbhNpbbpzSW4JfORdObgg5jw@mail.gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Geert Uytterhoeven <geert@linux-m68k.org>
+Cc: Jonathan Corbet <corbet@lwn.net>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Philipp Zabel <p.zabel@pengutronix.de>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees
 List-Id: linux-api@vger.kernel.org
 
-On 12/02/15 12:28, Peter Zijlstra wrote:
-> On Thu, Feb 12, 2015 at 12:04:54PM +0200, Adrian Hunter wrote:
->> On 11/02/15 18:12, Peter Zijlstra wrote:
->>>
->>> How about something like the below? I _think_ it should mostly work for
->>> x86, where the tsc is a 64bit wide cycle counter.
+Hi Geert,
+
+2015-02-12 21:34 GMT+01:00 Geert Uytterhoeven <geert@linux-m68k.org>:
+> On Thu, Feb 12, 2015 at 6:45 PM, Maxime Coquelin
+> <mcoquelin.stm32@gmail.com> wrote:
+>> From Cortex-M4 and M7 reference manuals, the nvic supports up to 240
+>> interrupts. So the number of entries in vectors table is 256.
 >>
->> It would have to be based on CLOCK_MONOTONIC_RAW not CLOCK_MONOTONIC 
-> 
-> Why?
+>> This patch adds the missing entries, and change the alignement, so that
+>> vector_table remains naturally aligned.
+>
+> Shouldn't this depend on ARCH_STM32, or some other M4 or M7 specific
+> Kconfig option, to avoid wasting the space on other CPUs?
 
-In the CLOCK_MONOTONIC case, the components of the calculation (mult and
-shift etc) are subject to change, so the calculation would be increasingly
-inaccurate the greater the time between reading those values the reading TSC
-or capturing perf events.
+Actually, the STM32F429 has 90 interrupts, so it would need 106
+entries in the vector table.
+The maximum of supported interrupts is not only for Cortex-M4 and M7,
+this is also true for Cortex-M3.
 
-Accuracy is important for matching sideband events against Intel PT. e.g.
-did a mmap event happen before or after a given TSC timestamp.
+I see two possibilities:
+ 1 - We declare the vector table for the maximum supported number of
+IRQs, as this patch does.
+        - Pro: it will be functionnal with all Cortex-M MCUs
+        - Con: Waste of less than 1KB for memory
+ 2 - We introduce a config flag that provides the number of interrupts
+        - Pro: No more memory waste
+        - Con: Need to declare a per MCU model config flag.
 
-Adding another sample value (Pawel's patch 3) is more accurate and simpler
-to understand. It just needs to be extended to allow TSC.
+Then, regarding the natural alignment, is there a way to ensure it
+depending on the value of a config flag?
+Or we should keep it at the maximum value possible?
 
-> 
->> and you would have to check the clocksource is TSC.
-> 
-> It implicitly does that; it has that sched_clock_stable() thing, but
-> yeah I suppose someone could change the clocksource even though the tsc
-> is stable.
-> 
-> Not using TSC when its available is quite crazy though.. but sure.
-> 
->> Why is CLOCK_MONOTONIC preferred anyway - I would have thought any
->> adjustment would skew performance timings?
-> 
-> Because you can do inter-machine stuff with MONOTONIC and that's
-> entirely impossible with MONO_RAW.
+Any feedback will be appreciated, especially from Uwe who maintains
+the efm32 machine.
 
-Ok, the man page does not make it sound as bad as that.
+Kind regards,
+Maxime
