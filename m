@@ -1,7 +1,7 @@
 From: Fam Zheng <famz@redhat.com>
-Subject: [PATCH RFC v3 5/7] x86: Hook up epoll_ctl_batch syscall
-Date: Fri, 13 Feb 2015 17:04:01 +0800
-Message-ID: <1423818243-15410-6-git-send-email-famz@redhat.com>
+Subject: [PATCH RFC v3 7/7] x86: Hook up epoll_pwait1 syscall
+Date: Fri, 13 Feb 2015 17:04:03 +0800
+Message-ID: <1423818243-15410-8-git-send-email-famz@redhat.com>
 References: <1423818243-15410-1-git-send-email-famz@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1423818243-15410-1-git-send-email-famz@redhat.com>
@@ -17,23 +17,23 @@ Signed-off-by: Fam Zheng <famz@redhat.com>
  2 files changed, 2 insertions(+)
 
 diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
-index b3560ec..fe809f6 100644
+index fe809f6..bf912d8 100644
 --- a/arch/x86/syscalls/syscall_32.tbl
 +++ b/arch/x86/syscalls/syscall_32.tbl
-@@ -365,3 +365,4 @@
- 356	i386	memfd_create		sys_memfd_create
+@@ -366,3 +366,4 @@
  357	i386	bpf			sys_bpf
  358	i386	execveat		sys_execveat			stub32_execveat
-+359	i386	epoll_ctl_batch		sys_epoll_ctl_batch
+ 359	i386	epoll_ctl_batch		sys_epoll_ctl_batch
++360	i386	epoll_pwait1		sys_epoll_pwait1
 diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
-index 8d656fb..67b2ea4 100644
+index 67b2ea4..9246ad5 100644
 --- a/arch/x86/syscalls/syscall_64.tbl
 +++ b/arch/x86/syscalls/syscall_64.tbl
-@@ -329,6 +329,7 @@
- 320	common	kexec_file_load		sys_kexec_file_load
+@@ -330,6 +330,7 @@
  321	common	bpf			sys_bpf
  322	64	execveat		stub_execveat
-+323	64	epoll_ctl_batch		sys_epoll_ctl_batch
+ 323	64	epoll_ctl_batch		sys_epoll_ctl_batch
++324	64	epoll_pwait1		sys_epoll_pwait1
  
  #
  # x32-specific system call numbers start at 512 to avoid cache impact
