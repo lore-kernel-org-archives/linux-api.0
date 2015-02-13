@@ -1,138 +1,263 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [RESEND] [PATCH] block: create ioctl to discard-or-zeroout a
- range of blocks
-Date: Fri, 13 Feb 2015 00:51:19 -0800
-Message-ID: <20150213085119.GB11034@birch.djwong.org>
-References: <20150129020025.GE9981@birch.djwong.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150129020025.GE9981@birch.djwong.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>
-Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, "J. Bruce Fields" <bfields@fieldses.org>
+From: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH RFC v3 1/7] epoll: Extract epoll_wait_do and epoll_pwait_do
+Date: Fri, 13 Feb 2015 17:03:57 +0800
+Message-ID: <1423818243-15410-2-git-send-email-famz@redhat.com>
+References: <1423818243-15410-1-git-send-email-famz@redhat.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1423818243-15410-1-git-send-email-famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, Rashika Kheria <rashika.kheria-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peter>
 List-Id: linux-api@vger.kernel.org
 
-So, uh, it's been a couple of weeks...
+In preparation of new epoll syscalls, this patch allows reusing the code from
+epoll_pwait implementation. The new functions uses ktime_t for more accuracy.
 
-Jens: Any comments?  Nobody's objected to either the function or the interface;
-can this go in -next?
+Signed-off-by: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+---
+ fs/eventpoll.c | 162 ++++++++++++++++++++++++++-------------------------------
+ 1 file changed, 75 insertions(+), 87 deletions(-)
 
---D
-
-On Wed, Jan 28, 2015 at 06:00:25PM -0800, Darrick J. Wong wrote:
-> Create a new ioctl to expose the block layer's newfound ability to
-> issue either a zeroing discard, a WRITE SAME with a zero page, or a
-> regular write with the zero page.  This BLKZEROOUT2 ioctl takes
-> {start, length, flags} as parameters.  So far, the only flag available
-> is to enable the zeroing discard part -- without it, the call invokes
-> the old BLKZEROOUT behavior.  start and length have the same meaning
-> as in BLKZEROOUT.
-> 
-> Furthermore, because BLKZEROOUT2 issues commands directly to the
-> storage device, we must invalidate the page cache (as a regular
-> O_DIRECT write would do) to avoid returning stale cache contents at a
-> later time.
-> 
-> This patch depends on "block: Add discard flag to
-> blkdev_issue_zeroout() function" in Jens' for-3.20/core branch.
-> 
-> Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-> ---
->  block/ioctl.c           |   45 ++++++++++++++++++++++++++++++++++++++-------
->  include/uapi/linux/fs.h |    7 +++++++
->  2 files changed, 45 insertions(+), 7 deletions(-)
-> 
-> diff --git a/block/ioctl.c b/block/ioctl.c
-> index 7d8befd..ff623d5 100644
-> --- a/block/ioctl.c
-> +++ b/block/ioctl.c
-> @@ -186,19 +186,39 @@ static int blk_ioctl_discard(struct block_device *bdev, uint64_t start,
->  }
->  
->  static int blk_ioctl_zeroout(struct block_device *bdev, uint64_t start,
-> -			     uint64_t len)
-> +			     uint64_t len, uint32_t flags)
->  {
-> +	int ret;
-> +	struct address_space *mapping;
-> +	uint64_t end = start + len - 1;
-> +
-> +	if (flags & ~BLKZEROOUT2_DISCARD_OK)
-> +		return -EINVAL;
->  	if (start & 511)
->  		return -EINVAL;
->  	if (len & 511)
->  		return -EINVAL;
-> -	start >>= 9;
-> -	len >>= 9;
-> -
-> -	if (start + len > (i_size_read(bdev->bd_inode) >> 9))
-> +	if (end >= i_size_read(bdev->bd_inode))
->  		return -EINVAL;
->  
-> -	return blkdev_issue_zeroout(bdev, start, len, GFP_KERNEL, false);
-> +	/* Invalidate the page cache, including dirty pages */
-> +	mapping = bdev->bd_inode->i_mapping;
-> +	truncate_inode_pages_range(mapping, start, end);
-> +
-> +	ret = blkdev_issue_zeroout(bdev, start >> 9, len >> 9, GFP_KERNEL,
-> +				   flags & BLKZEROOUT2_DISCARD_OK);
-> +	if (ret)
-> +		goto out;
-> +
-> +	/*
-> +	 * Invalidate again; if someone wandered in and dirtied a page,
-> +	 * the caller will be given -EBUSY.
-> +	 */
-> +	ret = invalidate_inode_pages2_range(mapping,
-> +					    start >> PAGE_CACHE_SHIFT,
-> +					    end >> PAGE_CACHE_SHIFT);
-> +out:
-> +	return ret;
->  }
->  
->  static int put_ushort(unsigned long arg, unsigned short val)
-> @@ -326,7 +346,18 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
->  		if (copy_from_user(range, (void __user *)arg, sizeof(range)))
->  			return -EFAULT;
->  
-> -		return blk_ioctl_zeroout(bdev, range[0], range[1]);
-> +		return blk_ioctl_zeroout(bdev, range[0], range[1], 0);
-> +	}
-> +	case BLKZEROOUT2: {
-> +		struct blkzeroout2 p;
-> +
-> +		if (!(mode & FMODE_WRITE))
-> +			return -EBADF;
-> +
-> +		if (copy_from_user(&p, (void __user *)arg, sizeof(p)))
-> +			return -EFAULT;
-> +
-> +		return blk_ioctl_zeroout(bdev, p.start, p.length, p.flags);
->  	}
->  
->  	case HDIO_GETGEO: {
-> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-> index 3735fa0..54d24ea 100644
-> --- a/include/uapi/linux/fs.h
-> +++ b/include/uapi/linux/fs.h
-> @@ -150,6 +150,13 @@ struct inodes_stat_t {
->  #define BLKSECDISCARD _IO(0x12,125)
->  #define BLKROTATIONAL _IO(0x12,126)
->  #define BLKZEROOUT _IO(0x12,127)
-> +struct blkzeroout2 {
-> +	__u64 start;
-> +	__u64 length;
-> +	__u32 flags;
-> +};
-> +#define BLKZEROOUT2_DISCARD_OK	1
-> +#define BLKZEROOUT2 _IOR(0x12, 127, struct blkzeroout2)
->  
->  #define BMAP_IOCTL 1		/* obsolete - kept for compatibility */
->  #define FIBMAP	   _IO(0x00,1)	/* bmap access */
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/fs/eventpoll.c b/fs/eventpoll.c
+index d77f944..4cf359d 100644
+--- a/fs/eventpoll.c
++++ b/fs/eventpoll.c
+@@ -1554,17 +1554,6 @@ static int ep_send_events(struct eventpoll *ep,
+ 	return ep_scan_ready_list(ep, ep_send_events_proc, &esed, 0, false);
+ }
+ 
+-static inline struct timespec ep_set_mstimeout(long ms)
+-{
+-	struct timespec now, ts = {
+-		.tv_sec = ms / MSEC_PER_SEC,
+-		.tv_nsec = NSEC_PER_MSEC * (ms % MSEC_PER_SEC),
+-	};
+-
+-	ktime_get_ts(&now);
+-	return timespec_add_safe(now, ts);
+-}
+-
+ /**
+  * ep_poll - Retrieves ready events, and delivers them to the caller supplied
+  *           event buffer.
+@@ -1573,17 +1562,15 @@ static inline struct timespec ep_set_mstimeout(long ms)
+  * @events: Pointer to the userspace buffer where the ready events should be
+  *          stored.
+  * @maxevents: Size (in terms of number of events) of the caller event buffer.
+- * @timeout: Maximum timeout for the ready events fetch operation, in
+- *           milliseconds. If the @timeout is zero, the function will not block,
+- *           while if the @timeout is less than zero, the function will block
+- *           until at least one event has been retrieved (or an error
+- *           occurred).
++ * @timeout: Maximum timeout for the ready events fetch operation.  If 0, the
++ *           function will not block. If negative, the function will block until
++ *           at least one event has been retrieved (or an error occurred).
+  *
+  * Returns: Returns the number of ready events which have been fetched, or an
+  *          error code, in case of error.
+  */
+ static int ep_poll(struct eventpoll *ep, struct epoll_event __user *events,
+-		   int maxevents, long timeout)
++		   int maxevents, const ktime_t timeout)
+ {
+ 	int res = 0, eavail, timed_out = 0;
+ 	unsigned long flags;
+@@ -1591,13 +1578,7 @@ static int ep_poll(struct eventpoll *ep, struct epoll_event __user *events,
+ 	wait_queue_t wait;
+ 	ktime_t expires, *to = NULL;
+ 
+-	if (timeout > 0) {
+-		struct timespec end_time = ep_set_mstimeout(timeout);
+-
+-		slack = select_estimate_accuracy(&end_time);
+-		to = &expires;
+-		*to = timespec_to_ktime(end_time);
+-	} else if (timeout == 0) {
++	if (!ktime_to_ns(timeout)) {
+ 		/*
+ 		 * Avoid the unnecessary trip to the wait queue loop, if the
+ 		 * caller specified a non blocking operation.
+@@ -1605,6 +1586,15 @@ static int ep_poll(struct eventpoll *ep, struct epoll_event __user *events,
+ 		timed_out = 1;
+ 		spin_lock_irqsave(&ep->lock, flags);
+ 		goto check_events;
++	} else if (ktime_to_ns(timeout) > 0) {
++		struct timespec now, end_time;
++
++		ktime_get_ts(&now);
++		end_time = timespec_add_safe(now, ktime_to_timespec(timeout));
++
++		slack = select_estimate_accuracy(&end_time);
++		to = &expires;
++		*to = timespec_to_ktime(end_time);
+ 	}
+ 
+ fetch_events:
+@@ -1954,12 +1944,8 @@ error_return:
+ 	return error;
+ }
+ 
+-/*
+- * Implement the event wait interface for the eventpoll file. It is the kernel
+- * part of the user space epoll_wait(2).
+- */
+-SYSCALL_DEFINE4(epoll_wait, int, epfd, struct epoll_event __user *, events,
+-		int, maxevents, int, timeout)
++static inline int epoll_wait_do(int epfd, struct epoll_event __user *events,
++				int maxevents, const ktime_t timeout)
+ {
+ 	int error;
+ 	struct fd f;
+@@ -2002,91 +1988,93 @@ error_fput:
+ 
+ /*
+  * Implement the event wait interface for the eventpoll file. It is the kernel
++ * part of the user space epoll_wait(2).
++ */
++SYSCALL_DEFINE4(epoll_wait, int, epfd, struct epoll_event __user *, events,
++		int, maxevents, int, timeout)
++{
++	ktime_t kt = ms_to_ktime(timeout);
++	return epoll_wait_do(epfd, events, maxevents, kt);
++}
++
++static inline int epoll_pwait_do(int epfd, struct epoll_event __user *events,
++				 int maxevents, ktime_t timeout,
++				 sigset_t *sigmask, size_t sigsetsize)
++{
++	int error;
++	sigset_t sigsaved;
++
++	/*
++	 * If the caller wants a certain signal mask to be set during the wait,
++	 * we apply it here.
++	 */
++	if (sigmask) {
++		sigsaved = current->blocked;
++		set_current_blocked(sigmask);
++	}
++
++	error = epoll_wait_do(epfd, events, maxevents, timeout);
++
++	/*
++	 * If we changed the signal mask, we need to restore the original one.
++	 * In case we've got a signal while waiting, we do not restore the
++	 * signal mask yet, and we allow do_signal() to deliver the signal on
++	 * the way back to userspace, before the signal mask is restored.
++	 */
++	if (sigmask) {
++		if (error == -EINTR) {
++			memcpy(&current->saved_sigmask, &sigsaved,
++			       sizeof(sigsaved));
++			set_restore_sigmask();
++		} else
++			set_current_blocked(&sigsaved);
++	}
++
++	return error;
++}
++
++/*
++ * Implement the event wait interface for the eventpoll file. It is the kernel
+  * part of the user space epoll_pwait(2).
+  */
+ SYSCALL_DEFINE6(epoll_pwait, int, epfd, struct epoll_event __user *, events,
+ 		int, maxevents, int, timeout, const sigset_t __user *, sigmask,
+ 		size_t, sigsetsize)
+ {
+-	int error;
+-	sigset_t ksigmask, sigsaved;
++	ktime_t kt = ms_to_ktime(timeout);
++	sigset_t ksigmask;
+ 
+-	/*
+-	 * If the caller wants a certain signal mask to be set during the wait,
+-	 * we apply it here.
+-	 */
+ 	if (sigmask) {
+ 		if (sigsetsize != sizeof(sigset_t))
+ 			return -EINVAL;
+ 		if (copy_from_user(&ksigmask, sigmask, sizeof(ksigmask)))
+ 			return -EFAULT;
+-		sigsaved = current->blocked;
+-		set_current_blocked(&ksigmask);
+ 	}
+-
+-	error = sys_epoll_wait(epfd, events, maxevents, timeout);
+-
+-	/*
+-	 * If we changed the signal mask, we need to restore the original one.
+-	 * In case we've got a signal while waiting, we do not restore the
+-	 * signal mask yet, and we allow do_signal() to deliver the signal on
+-	 * the way back to userspace, before the signal mask is restored.
+-	 */
+-	if (sigmask) {
+-		if (error == -EINTR) {
+-			memcpy(&current->saved_sigmask, &sigsaved,
+-			       sizeof(sigsaved));
+-			set_restore_sigmask();
+-		} else
+-			set_current_blocked(&sigsaved);
+-	}
+-
+-	return error;
++	return epoll_pwait_do(epfd, events, maxevents, kt,
++			      sigmask ? &ksigmask : NULL, sigsetsize);
+ }
+ 
+ #ifdef CONFIG_COMPAT
+ COMPAT_SYSCALL_DEFINE6(epoll_pwait, int, epfd,
+-			struct epoll_event __user *, events,
+-			int, maxevents, int, timeout,
+-			const compat_sigset_t __user *, sigmask,
+-			compat_size_t, sigsetsize)
++		       struct epoll_event __user *, events,
++		       int, maxevents, int, timeout,
++		       const compat_sigset_t __user *, sigmask,
++		       compat_size_t, sigsetsize)
+ {
+-	long err;
+ 	compat_sigset_t csigmask;
+-	sigset_t ksigmask, sigsaved;
++	sigset_t ksigmask;
++	ktime_t kt = ms_to_ktime(timeout);
+ 
+-	/*
+-	 * If the caller wants a certain signal mask to be set during the wait,
+-	 * we apply it here.
+-	 */
+ 	if (sigmask) {
+ 		if (sigsetsize != sizeof(compat_sigset_t))
+ 			return -EINVAL;
+ 		if (copy_from_user(&csigmask, sigmask, sizeof(csigmask)))
+ 			return -EFAULT;
+ 		sigset_from_compat(&ksigmask, &csigmask);
+-		sigsaved = current->blocked;
+-		set_current_blocked(&ksigmask);
+ 	}
+ 
+-	err = sys_epoll_wait(epfd, events, maxevents, timeout);
+-
+-	/*
+-	 * If we changed the signal mask, we need to restore the original one.
+-	 * In case we've got a signal while waiting, we do not restore the
+-	 * signal mask yet, and we allow do_signal() to deliver the signal on
+-	 * the way back to userspace, before the signal mask is restored.
+-	 */
+-	if (sigmask) {
+-		if (err == -EINTR) {
+-			memcpy(&current->saved_sigmask, &sigsaved,
+-			       sizeof(sigsaved));
+-			set_restore_sigmask();
+-		} else
+-			set_current_blocked(&sigsaved);
+-	}
+-
+-	return err;
++	return epoll_pwait_do(epfd, events, maxevents, kt,
++			      sigmask ? &ksigmask : NULL, sigsetsize);
+ }
+ #endif
+ 
+-- 
+1.9.3
