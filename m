@@ -1,130 +1,121 @@
 From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH 02/14] ARM: ARMv7M: Enlarge vector table to 256 entries
-Date: Sun, 15 Feb 2015 15:34:54 +0100
-Message-ID: <CALszF6CLUVp4ST5J_1oR4MKByXALO9eK48z9sw_7V417MiSouQ@mail.gmail.com>
+Subject: Re: [PATCH 12/14] ARM: dts: Introduce STM32F429 MCU
+Date: Sun, 15 Feb 2015 15:36:29 +0100
+Message-ID: <CALszF6CxQcJ6NDy_4P-PDPf1=+zQ_QcUBB9qYn=n02XFKNG2Rw@mail.gmail.com>
 References: <1423763164-5606-1-git-send-email-mcoquelin.stm32@gmail.com>
-	<1423763164-5606-3-git-send-email-mcoquelin.stm32@gmail.com>
-	<CAMuHMdWESyPktOSBfVoZCb35stUbhNpbbpzSW4JfORdObgg5jw@mail.gmail.com>
-	<CALszF6BDa9pUb534YN2z9DbYA+hPCnG8XYy5YbjJwSiseKz4xg@mail.gmail.com>
-	<20150213100050.GM10842@pengutronix.de>
+	<1423763164-5606-13-git-send-email-mcoquelin.stm32@gmail.com>
+	<1423828078.4182.17.camel@pengutronix.de>
+	<CALszF6D+5mXajUWarwq8M4yL_Nc+x1Bmu4D7_HxDRy2kGRXNVQ@mail.gmail.com>
+	<1423844735.4182.52.camel@pengutronix.de>
+	<CALszF6Ad93BgT4UsJudVKpfhhL2dbtKTTRno1XqQ5=eANkwXzA@mail.gmail.com>
+	<1423855102.4182.63.camel@pengutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-gpio-owner@vger.kernel.org>
-In-Reply-To: <20150213100050.GM10842@pengutronix.de>
-Sender: linux-gpio-owner@vger.kernel.org
-To: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, Russell King <linux@arm.linux.org.uk>
-Cc: Geert Uytterhoeven <geert@linux-m68k.org>, Jonathan Corbet <corbet@lwn.net>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Philipp Zabel <p.zabel@pengutronix.de>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>K
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1423855102.4182.63.camel@pengutronix.de>
+Sender: linux-doc-owner@vger.kernel.org
+To: Philipp Zabel <p.zabel@pengutronix.de>
+Cc: Jonathan Corbet <corbet@lwn.net>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees Cook <keescook@chromium.org>, Michal
 List-Id: linux-api@vger.kernel.org
 
-2015-02-13 11:00 GMT+01:00 Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengu=
-tronix.de>:
-> On Fri, Feb 13, 2015 at 09:42:46AM +0100, Maxime Coquelin wrote:
->> Hi Geert,
->>
->> 2015-02-12 21:34 GMT+01:00 Geert Uytterhoeven <geert@linux-m68k.org>=
-:
->> > On Thu, Feb 12, 2015 at 6:45 PM, Maxime Coquelin
->> > <mcoquelin.stm32@gmail.com> wrote:
->> >> From Cortex-M4 and M7 reference manuals, the nvic supports up to =
-240
->> >> interrupts. So the number of entries in vectors table is 256.
->> >>
->> >> This patch adds the missing entries, and change the alignement, s=
-o that
->> >> vector_table remains naturally aligned.
+Hi Philipp,
+
+2015-02-13 20:18 GMT+01:00 Philipp Zabel <p.zabel@pengutronix.de>:
+> Am Freitag, den 13.02.2015, 17:41 +0100 schrieb Maxime Coquelin:
+>> 2015-02-13 17:25 GMT+01:00 Philipp Zabel <p.zabel@pengutronix.de>:
+>> > Hi Maxime,
 >> >
->> > Shouldn't this depend on ARCH_STM32, or some other M4 or M7 specif=
-ic
->> > Kconfig option, to avoid wasting the space on other CPUs?
+>> > Am Freitag, den 13.02.2015, 16:59 +0100 schrieb Maxime Coquelin:
+>> >> Hi Philipp,
+>> >>
+>> >> 2015-02-13 12:47 GMT+01:00 Philipp Zabel <p.zabel@pengutronix.de>:
+>> >> > Hi Maxime,
+>> >> >
+>> >> > Am Donnerstag, den 12.02.2015, 18:46 +0100 schrieb Maxime Coquelin:
+>> >> > [...]
+>> >> >> +     soc {
+>> >> >> +             reset_ahb1: reset@40023810 {
+>> >> >> +                     #reset-cells = <1>;
+>> >> >> +                     compatible = "st,stm32-reset";
+>> >> >> +                     reg = <0x40023810 0x4>;
+>> >> >> +             };
+>> >> >> +
+>> >> >> +             reset_ahb2: reset@40023814 {
+>> >> >> +                     #reset-cells = <1>;
+>> >> >> +                     compatible = "st,stm32-reset";
+>> >> >> +                     reg = <0x40023814 0x4>;
+>> >> >> +             };
+>> >> >> +
+>> >> >> +             reset_ahb3: reset@40023818 {
+>> >> >> +                     #reset-cells = <1>;
+>> >> >> +                     compatible = "st,stm32-reset";
+>> >> >> +                     reg = <0x40023818 0x4>;
+>> >> >> +             };
+>> >> >> +
+>> >> >> +             reset_apb1: reset@40023820 {
+>> >> >> +                     #reset-cells = <1>;
+>> >> >> +                     compatible = "st,stm32-reset";
+>> >> >> +                     reg = <0x40023820 0x4>;
+>> >> >> +             };
+>> >> >> +
+>> >> >> +             reset_apb2: reset@40023824 {
+>> >> >> +                     #reset-cells = <1>;
+>> >> >> +                     compatible = "st,stm32-reset";
+>> >> >> +                     reg = <0x40023824 0x4>;
+>> >> >> +             };
+>> >> >
+>> >> > These are mostly consecutive, single registers. I wonder if these are
+>> >> > part of the same IP block and thus should be grouped together into the
+>> >> > same reset controller node?
+>> >>
+>> >> What I could to is to have two instances. One for AHB and one for APB domain.
+>> >> Doing this, I will have one instance per domain, and only consecutive registers.
+>> >> Is it fine for you?
+>> >
+>> > Looking at
+>> > http://www.st.com/web/en/resource/technical/document/reference_manual/DM00031020.pdf
+>> > Table 34 (RCC register map and reset values), I'd say there is a single
+>> > "Reset and Clock Control" device at 0x40023800 - 0x40023884:
+>> >
+>> >         soc {
+>> >                 rcc: rcc@40023800 {
+>> >                         #clock-cells = <1>;
+>> >                         #reset-cells = <1>;
+>> >                         compatible = "st,stm32-rcc";
+>> >                         reg = <0x40023800 0x84>;
+>> >                 };
+>> >
+>> >                 ...
+>> >
+>> > If you really want to describe the reset controller parts (offsets +0x10
+>> > to +0x24) in a separate node, I won't argue against it too long,
+>> > although this is a somewhat arbitrary decision.
+>> >
+>> > In any case, the whole register at offset +0x1c is reserved, so there is
+>> > no reason to split the reset controller. It is ok to have unused ranges
+>> > as is already the case with reserved bits inside the used registers.
 >>
->> Actually, the STM32F429 has 90 interrupts, so it would need 106
->> entries in the vector table.
->> The maximum of supported interrupts is not only for Cortex-M4 and M7=
-,
->> this is also true for Cortex-M3.
+>> Ok. I understand your point.
+>> But it will be more difficult at usage, because the node referencing
+>> the fourth reset bit of apb2 register will have to pass 164 as
+>> parameter.
+>> It is error prone IMHO.
 >>
->> I see two possibilities:
->>  1 - We declare the vector table for the maximum supported number of
->> IRQs, as this patch does.
->>         - Pro: it will be functionnal with all Cortex-M MCUs
->>         - Con: Waste of less than 1KB for memory
->>  2 - We introduce a config flag that provides the number of interrup=
-ts
->>         - Pro: No more memory waste
->>         - Con: Need to declare a per MCU model config flag.
-> I'd vote for 2, something like:
+>> Other solution would be to add some defines for each reset line in the
+>> DT-Bindings, as we do today for STi platform.
+>> But it is giving an unneeded constraint between DT and reset trees.
 >
->         config CPUV7M_NUM_IRQ
->                 int
->                 default 90 if STM32F429
->                 default 38 if EFM32GG
->                 default 240
->
-> then there is a working default and platforms being short on memory c=
-an
-> configure as appropriate. (The only down side is that if we create
-> multi-platfrom images at some time in the future either all or none o=
-f
-> the supported platforms must provide a value here.)
+> That is a bit unfortunate, but providing the named constants in
+> include/dt-bindings/reset/ makes for a much better readable device tree,
+> so I'd prefer that solution, even if it means having to coordinate pull
+> requests.
 
-Ok, I'm fine doing this way.
-I will implement this in the v2 if Russel is fine with the proposal too=
-=2E
-
->
->> Then, regarding the natural alignment, is there a way to ensure it
->> depending on the value of a config flag?
-> The exact wording in ARMARMv7-M is:
->
->         The Vector table must be naturally aligned to a power of two
->         whose alignment value is greater than or equal
->         to (Number of Exceptions supported x 4), with a minimum
->         alignment of 128 bytes.
->
->> Or we should keep it at the maximum value possible?
-> So we need:
->
->         .align x
->
-> with x being max(7, ceil(log((CPUV7M_NUM_IRQ + 16) * 4, 2))). So the
-> alignment needed is between 7 and 10.
->
-> If the assembler supports an expression here I'd use that. But before
-> adding strange hacks to generate the right value there better go for =
-a
-> static value like:
->
->         /* The vector table must be naturally aligned */
->         #if CONFIG_CPUV7M_NUM_IRQ <=3D 112
->         .align 9 /* log2((112 + 16) * 4) */
->         #else
->         .align 10
->         #endif
->
-> Further steps would be:
->
->         CONFIG_CPUV7M_NUM_IRQ <=3D 48 -> .align 8
->         CONFIG_CPUV7M_NUM_IRQ <=3D 16 -> .align 7
->
-> Probably it's not worth to add the respective #ifdefs here.
-
-I will go for the  #ifdefs.
+Ok, I will add constants in include/dt-bindings/reset/
 
 Thanks,
 Maxime
 
 >
-> Best regards
-> Uwe
+> regards
+> Philipp
 >
-> --
-> Pengutronix e.K.                           | Uwe Kleine-K=C3=B6nig   =
-         |
-> Industrial Linux Solutions                 | http://www.pengutronix.d=
-e/  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-gpio" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
