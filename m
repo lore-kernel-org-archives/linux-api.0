@@ -1,121 +1,173 @@
-From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH 12/14] ARM: dts: Introduce STM32F429 MCU
-Date: Sun, 15 Feb 2015 15:36:29 +0100
-Message-ID: <CALszF6CxQcJ6NDy_4P-PDPf1=+zQ_QcUBB9qYn=n02XFKNG2Rw@mail.gmail.com>
+From: =?windows-1252?Q?Andreas_F=E4rber?= <afaerber@suse.de>
+Subject: Re: [PATCH 00/14] Add support to STMicroelectronics STM32 family
+Date: Sun, 15 Feb 2015 16:14:12 +0100
+Message-ID: <54E0B7C4.7050900@suse.de>
 References: <1423763164-5606-1-git-send-email-mcoquelin.stm32@gmail.com>
-	<1423763164-5606-13-git-send-email-mcoquelin.stm32@gmail.com>
-	<1423828078.4182.17.camel@pengutronix.de>
-	<CALszF6D+5mXajUWarwq8M4yL_Nc+x1Bmu4D7_HxDRy2kGRXNVQ@mail.gmail.com>
-	<1423844735.4182.52.camel@pengutronix.de>
-	<CALszF6Ad93BgT4UsJudVKpfhhL2dbtKTTRno1XqQ5=eANkwXzA@mail.gmail.com>
-	<1423855102.4182.63.camel@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1423855102.4182.63.camel@pengutronix.de>
-Sender: linux-doc-owner@vger.kernel.org
-To: Philipp Zabel <p.zabel@pengutronix.de>
-Cc: Jonathan Corbet <corbet@lwn.net>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees Cook <keescook@chromium.org>, Michal
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="95i9U1kwvGuqWFIAJoHA3lRp5dcDBiePX"
+Return-path: <linux-gpio-owner@vger.kernel.org>
+In-Reply-To: <1423763164-5606-1-git-send-email-mcoquelin.stm32@gmail.com>
+Sender: linux-gpio-owner@vger.kernel.org
+To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Cc: Jonathan Corbet <corbet@lwn.net>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Philipp Zabel <p.zabel@pengutronix.de>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees
 List-Id: linux-api@vger.kernel.org
 
-Hi Philipp,
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--95i9U1kwvGuqWFIAJoHA3lRp5dcDBiePX
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: quoted-printable
 
-2015-02-13 20:18 GMT+01:00 Philipp Zabel <p.zabel@pengutronix.de>:
-> Am Freitag, den 13.02.2015, 17:41 +0100 schrieb Maxime Coquelin:
->> 2015-02-13 17:25 GMT+01:00 Philipp Zabel <p.zabel@pengutronix.de>:
->> > Hi Maxime,
->> >
->> > Am Freitag, den 13.02.2015, 16:59 +0100 schrieb Maxime Coquelin:
->> >> Hi Philipp,
->> >>
->> >> 2015-02-13 12:47 GMT+01:00 Philipp Zabel <p.zabel@pengutronix.de>:
->> >> > Hi Maxime,
->> >> >
->> >> > Am Donnerstag, den 12.02.2015, 18:46 +0100 schrieb Maxime Coquelin:
->> >> > [...]
->> >> >> +     soc {
->> >> >> +             reset_ahb1: reset@40023810 {
->> >> >> +                     #reset-cells = <1>;
->> >> >> +                     compatible = "st,stm32-reset";
->> >> >> +                     reg = <0x40023810 0x4>;
->> >> >> +             };
->> >> >> +
->> >> >> +             reset_ahb2: reset@40023814 {
->> >> >> +                     #reset-cells = <1>;
->> >> >> +                     compatible = "st,stm32-reset";
->> >> >> +                     reg = <0x40023814 0x4>;
->> >> >> +             };
->> >> >> +
->> >> >> +             reset_ahb3: reset@40023818 {
->> >> >> +                     #reset-cells = <1>;
->> >> >> +                     compatible = "st,stm32-reset";
->> >> >> +                     reg = <0x40023818 0x4>;
->> >> >> +             };
->> >> >> +
->> >> >> +             reset_apb1: reset@40023820 {
->> >> >> +                     #reset-cells = <1>;
->> >> >> +                     compatible = "st,stm32-reset";
->> >> >> +                     reg = <0x40023820 0x4>;
->> >> >> +             };
->> >> >> +
->> >> >> +             reset_apb2: reset@40023824 {
->> >> >> +                     #reset-cells = <1>;
->> >> >> +                     compatible = "st,stm32-reset";
->> >> >> +                     reg = <0x40023824 0x4>;
->> >> >> +             };
->> >> >
->> >> > These are mostly consecutive, single registers. I wonder if these are
->> >> > part of the same IP block and thus should be grouped together into the
->> >> > same reset controller node?
->> >>
->> >> What I could to is to have two instances. One for AHB and one for APB domain.
->> >> Doing this, I will have one instance per domain, and only consecutive registers.
->> >> Is it fine for you?
->> >
->> > Looking at
->> > http://www.st.com/web/en/resource/technical/document/reference_manual/DM00031020.pdf
->> > Table 34 (RCC register map and reset values), I'd say there is a single
->> > "Reset and Clock Control" device at 0x40023800 - 0x40023884:
->> >
->> >         soc {
->> >                 rcc: rcc@40023800 {
->> >                         #clock-cells = <1>;
->> >                         #reset-cells = <1>;
->> >                         compatible = "st,stm32-rcc";
->> >                         reg = <0x40023800 0x84>;
->> >                 };
->> >
->> >                 ...
->> >
->> > If you really want to describe the reset controller parts (offsets +0x10
->> > to +0x24) in a separate node, I won't argue against it too long,
->> > although this is a somewhat arbitrary decision.
->> >
->> > In any case, the whole register at offset +0x1c is reserved, so there is
->> > no reason to split the reset controller. It is ok to have unused ranges
->> > as is already the case with reserved bits inside the used registers.
->>
->> Ok. I understand your point.
->> But it will be more difficult at usage, because the node referencing
->> the fourth reset bit of apb2 register will have to pass 164 as
->> parameter.
->> It is error prone IMHO.
->>
->> Other solution would be to add some defines for each reset line in the
->> DT-Bindings, as we do today for STi platform.
->> But it is giving an unneeded constraint between DT and reset trees.
->
-> That is a bit unfortunate, but providing the named constants in
-> include/dt-bindings/reset/ makes for a much better readable device tree,
-> so I'd prefer that solution, even if it means having to coordinate pull
-> requests.
+Hi Maxime,
 
-Ok, I will add constants in include/dt-bindings/reset/
+Am 12.02.2015 um 18:45 schrieb Maxime Coquelin:
+> This patchset adds basic support for STMicroelectronics STM32 series MC=
+Us.
+>=20
+> STM32 MCUs are Cortex-M CPU, used in various applications (consumer
+> electronics, industrial applications, hobbyists...).
+> Datasheets, user and programming manuals are publicly available on
+> STMicroelectronics website.
+>=20
+> With this series applied, the STM32F419 Discovery can boot succesfully.=
 
-Thanks,
-Maxime
+>=20
+> Once this series accepted, next steps will be to add DMA support, as US=
+ART,
+> I2C and SPI IPs don't have any FIFO. Then will come the clock driver, a=
+s today
+> the bootloader has to be patched to enable the needed clocks.
 
->
-> regards
-> Philipp
->
+This is somewhat unfortunate, as I have been working on the same thing
+and have demonstrated the STM32F429 Discovery Kit at ARM TechSymposium
+Europe in December and submitted a talk for LinuxCon Japan.
+
+https://github.com/afaerber/afboot-stm32
+https://github.com/afaerber/linux/commits/stm32
+
+On a brief look, it seems you are further along in terms of code quality
+and documenting. Do you spot anything that's missing in your series and
+could be added from my branch? The clk controller maybe? Also I already
+started looking into gpio and usb drivers. Me too, I skipped DMA support
+though.
+
+Regards,
+Andreas
+
+>=20
+> Maxime Coquelin (14):
+>   scripts: link-vmlinux: Don't pass page offset to kallsyms if XIP
+>     Kernel
+>   ARM: ARMv7M: Enlarge vector table to 256 entries
+>   clocksource: Add ARM System timer driver
+>   reset: Add reset_controller_of_init() function
+>   ARM: call reset_controller_of_init from default time_init handler
+>   drivers: reset: Add STM32 reset driver
+>   clockevent: Add STM32 Timer driver
+>   pinctrl: Add pinctrl driver for STM32 MCUs
+>   serial: stm32-usart: Add STM32 USART Driver
+>   ARM: Add STM32 family machine
+>   ARM: dts: Add ARM System timer as clockevent in armv7m
+>   ARM: dts: Introduce STM32F429 MCU
+>   ARM: configs: Add STM32 defconfig
+>   MAINTAINERS: Add entry for STM32 MCUs
+>=20
+>  Documentation/arm/stm32/overview.txt               |  32 +
+>  Documentation/arm/stm32/stm32f429-overview.txt     |  22 +
+>  .../devicetree/bindings/arm/system_timer.txt       |  15 +
+>  .../devicetree/bindings/pinctrl/pinctrl-stm32.txt  |  99 +++
+>  .../devicetree/bindings/reset/st,stm32-reset.txt   |  19 +
+>  .../devicetree/bindings/serial/st,stm32-usart.txt  |  18 +
+>  .../devicetree/bindings/timer/st,stm32-timer.txt   |  19 +
+>  MAINTAINERS                                        |   7 +
+>  arch/arm/Kconfig                                   |  22 +
+>  arch/arm/Makefile                                  |   1 +
+>  arch/arm/boot/dts/Makefile                         |   1 +
+>  arch/arm/boot/dts/armv7-m.dtsi                     |   7 +
+>  arch/arm/boot/dts/stm32f429-disco.dts              |  41 ++
+>  arch/arm/boot/dts/stm32f429.dtsi                   | 279 ++++++++
+>  arch/arm/configs/stm32_defconfig                   |  72 ++
+>  arch/arm/kernel/entry-v7m.S                        |   8 +-
+>  arch/arm/kernel/time.c                             |   4 +
+>  arch/arm/mach-stm32/Makefile                       |   1 +
+>  arch/arm/mach-stm32/Makefile.boot                  |   0
+>  arch/arm/mach-stm32/board-dt.c                     |  19 +
+>  drivers/clocksource/Kconfig                        |  16 +
+>  drivers/clocksource/Makefile                       |   2 +
+>  drivers/clocksource/arm_system_timer.c             |  74 ++
+>  drivers/clocksource/timer-stm32.c                  | 187 +++++
+>  drivers/pinctrl/Kconfig                            |   9 +
+>  drivers/pinctrl/Makefile                           |   1 +
+>  drivers/pinctrl/pinctrl-stm32.c                    | 779 +++++++++++++=
+++++++++
+>  drivers/reset/Makefile                             |   1 +
+>  drivers/reset/core.c                               |  20 +
+>  drivers/reset/reset-stm32.c                        | 124 ++++
+>  drivers/tty/serial/Kconfig                         |  17 +
+>  drivers/tty/serial/Makefile                        |   1 +
+>  drivers/tty/serial/stm32-usart.c                   | 695 +++++++++++++=
++++++
+>  include/asm-generic/vmlinux.lds.h                  |   4 +-
+>  include/dt-bindings/pinctrl/pinctrl-stm32.h        |  43 ++
+>  include/linux/reset-controller.h                   |   6 +
+>  include/uapi/linux/serial_core.h                   |   3 +
+>  scripts/link-vmlinux.sh                            |   2 +-
+>  38 files changed, 2664 insertions(+), 6 deletions(-)
+>  create mode 100644 Documentation/arm/stm32/overview.txt
+>  create mode 100644 Documentation/arm/stm32/stm32f429-overview.txt
+>  create mode 100644 Documentation/devicetree/bindings/arm/system_timer.=
+txt
+>  create mode 100644 Documentation/devicetree/bindings/pinctrl/pinctrl-s=
+tm32.txt
+>  create mode 100644 Documentation/devicetree/bindings/reset/st,stm32-re=
+set.txt
+>  create mode 100644 Documentation/devicetree/bindings/serial/st,stm32-u=
+sart.txt
+>  create mode 100644 Documentation/devicetree/bindings/timer/st,stm32-ti=
+mer.txt
+>  create mode 100644 arch/arm/boot/dts/stm32f429-disco.dts
+>  create mode 100644 arch/arm/boot/dts/stm32f429.dtsi
+>  create mode 100644 arch/arm/configs/stm32_defconfig
+>  create mode 100644 arch/arm/mach-stm32/Makefile
+>  create mode 100644 arch/arm/mach-stm32/Makefile.boot
+>  create mode 100644 arch/arm/mach-stm32/board-dt.c
+>  create mode 100644 drivers/clocksource/arm_system_timer.c
+>  create mode 100644 drivers/clocksource/timer-stm32.c
+>  create mode 100644 drivers/pinctrl/pinctrl-stm32.c
+>  create mode 100644 drivers/reset/reset-stm32.c
+>  create mode 100644 drivers/tty/serial/stm32-usart.c
+>  create mode 100644 include/dt-bindings/pinctrl/pinctrl-stm32.h
+>=20
+
+
+--=20
+SUSE Linux GmbH, Maxfeldstr. 5, 90409 N=FCrnberg, Germany
+GF: Felix Imend=F6rffer, Jane Smithard, Jennifer Guild, Dilip Upmanyu,
+Graham Norton; HRB 21284 (AG N=FCrnberg)
+
+
+--95i9U1kwvGuqWFIAJoHA3lRp5dcDBiePX
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBAgAGBQJU4LfEAAoJEPou0S0+fgE//zYP/0EeKpvBKU08wt7+ELInpcJP
+ak50cp7i1usajMEgEjeEH7VeM+0MiGWLvEfFUOTnqidzo07aRG66svOL8orTVcW3
+GZL5MGm3zFsGGnZqff19CnRMcz2ys3BoqylCw4ya9iFD3tycqGthp7Zl6J7sZORD
+bi6Jk75LB4QEaMxAueQ8GbAQ/tswioGua7GByW0seRe2HiLS4/nDrgWnfkfdsobc
+TpyUvNCBz3HLg7/5VomZ+CfnEK0jjH2AJ3I3+y+RHVerbGN6QxcyPc7j1Lprre+N
+SafndVvs3pKb5jfgwDV4UUmzGxV4B0Tx4B336X+Zz0QhdzuWRJ4zfumQi1V8l6iD
+b8fh1TMxhluOcP6V0rwhpWLBFVzyOZjcA9hAJ+3ul0udLGvqVofGui6FCjpNNhVu
+BP8J4gb78HIao+bPImCs32xfSJ+EQdZIoGCXt6iFA6Co2pOUyn3dqoC200JqNoL3
+UOmU30VqfEvf3xyvyhSVl65XZnlkOw+HDKAbtJYaAFnHlNNzuxF4B7khcumbbPiz
+afWKJJXFfun50Y80SdZCzaf4E3kZ43j0c9KxjA0NZf1FlC1XqixQ6LkI9BRaaRnH
+GfHvjnBwPznT5/6F2DT2Na7GqbGkxCCKHNO01vZuJNX47sUPSTOO1Kkjszs6SrVt
+sbkXP7xSgMjDuE/BcIOg
+=yIcJ
+-----END PGP SIGNATURE-----
+
+--95i9U1kwvGuqWFIAJoHA3lRp5dcDBiePX--
