@@ -1,54 +1,130 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v3 linux-trace 1/8] tracing: attach eBPF programs to
- tracepoints and syscalls
-Date: Sat, 14 Feb 2015 18:02:41 -0500
-Message-ID: <CAMEtUuy42YvUVpecTcJpmqgmRQ=fpR3C+pTD0ij+R_5COYg6zQ@mail.gmail.com>
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Subject: Re: [PATCH 02/14] ARM: ARMv7M: Enlarge vector table to 256 entries
+Date: Sun, 15 Feb 2015 15:34:54 +0100
+Message-ID: <CALszF6CLUVp4ST5J_1oR4MKByXALO9eK48z9sw_7V417MiSouQ@mail.gmail.com>
+References: <1423763164-5606-1-git-send-email-mcoquelin.stm32@gmail.com>
+	<1423763164-5606-3-git-send-email-mcoquelin.stm32@gmail.com>
+	<CAMuHMdWESyPktOSBfVoZCb35stUbhNpbbpzSW4JfORdObgg5jw@mail.gmail.com>
+	<CALszF6BDa9pUb534YN2z9DbYA+hPCnG8XYy5YbjJwSiseKz4xg@mail.gmail.com>
+	<20150213100050.GM10842@pengutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Hekuang <hekuang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, wangnan0-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-gpio-owner@vger.kernel.org>
+In-Reply-To: <20150213100050.GM10842@pengutronix.de>
+Sender: linux-gpio-owner@vger.kernel.org
+To: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, Russell King <linux@arm.linux.org.uk>
+Cc: Geert Uytterhoeven <geert@linux-m68k.org>, Jonathan Corbet <corbet@lwn.net>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Philipp Zabel <p.zabel@pengutronix.de>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>K
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Feb 11, 2015 at 11:58 PM, Hekuang <hekuang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org> wrote:
->
->>> eBPF is very flexible, which means it is bound to have someone use it
->>> in a way you never dreamed of, and that will be what bites you in the
->>> end (pun intended).
+2015-02-13 11:00 GMT+01:00 Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengu=
+tronix.de>:
+> On Fri, Feb 13, 2015 at 09:42:46AM +0100, Maxime Coquelin wrote:
+>> Hi Geert,
 >>
->> understood :)
->> let's start slow then with bpf+syscall and bpf+kprobe only.
+>> 2015-02-12 21:34 GMT+01:00 Geert Uytterhoeven <geert@linux-m68k.org>=
+:
+>> > On Thu, Feb 12, 2015 at 6:45 PM, Maxime Coquelin
+>> > <mcoquelin.stm32@gmail.com> wrote:
+>> >> From Cortex-M4 and M7 reference manuals, the nvic supports up to =
+240
+>> >> interrupts. So the number of entries in vectors table is 256.
+>> >>
+>> >> This patch adds the missing entries, and change the alignement, s=
+o that
+>> >> vector_table remains naturally aligned.
+>> >
+>> > Shouldn't this depend on ARCH_STM32, or some other M4 or M7 specif=
+ic
+>> > Kconfig option, to avoid wasting the space on other CPUs?
+>>
+>> Actually, the STM32F429 has 90 interrupts, so it would need 106
+>> entries in the vector table.
+>> The maximum of supported interrupts is not only for Cortex-M4 and M7=
+,
+>> this is also true for Cortex-M3.
+>>
+>> I see two possibilities:
+>>  1 - We declare the vector table for the maximum supported number of
+>> IRQs, as this patch does.
+>>         - Pro: it will be functionnal with all Cortex-M MCUs
+>>         - Con: Waste of less than 1KB for memory
+>>  2 - We introduce a config flag that provides the number of interrup=
+ts
+>>         - Pro: No more memory waste
+>>         - Con: Need to declare a per MCU model config flag.
+> I'd vote for 2, something like:
 >
+>         config CPUV7M_NUM_IRQ
+>                 int
+>                 default 90 if STM32F429
+>                 default 38 if EFM32GG
+>                 default 240
 >
-> I think BPF + system calls/kprobes can meet our use case
-> (https://lkml.org/lkml/2015/2/6/44), but there're some issues to be
-> improved.
->
-> I suggest that you can improve bpf+kprobes when attached to function
-> headers(or TRACE_MARKERS), make it converts pt-regs to bpf_ctx->arg1,
-> arg2.., then top models and architectures can be separated by bpf.
->
-> BPF bytecode is cross-platform, but what we can get by using bpf+kprobes
-> is a 'regs->rdx' kind of information, such information is both
-> architecture and kernel version related.
+> then there is a working default and platforms being short on memory c=
+an
+> configure as appropriate. (The only down side is that if we create
+> multi-platfrom images at some time in the future either all or none o=
+f
+> the supported platforms must provide a value here.)
 
-for kprobes in the middle of the function, kernel cannot
-convert pt_regs into argN. Placement was decided by compiler
-and can only be found in debug info.
-I think bpf+kprobe will be using it when it is available.
-When there is no debug info, kprobes will be limited
-to function entry and mapping of regs/stack into
-argN can be done by user space depending on architecture.
-So user tracing scripts in some higher level language
-can be kernel/arch independent when 'perf probe+bpf'
-is loading them on the fly on the given machine.
+Ok, I'm fine doing this way.
+I will implement this in the v2 if Russel is fine with the proposal too=
+=2E
 
-> We hope to establish some models for describing kernel procedures such
-> as IO and network, which requires that it does not rely on architecture
-> and does not rely to a specific kernel version as much as possible.
+>
+>> Then, regarding the natural alignment, is there a way to ensure it
+>> depending on the value of a config flag?
+> The exact wording in ARMARMv7-M is:
+>
+>         The Vector table must be naturally aligned to a power of two
+>         whose alignment value is greater than or equal
+>         to (Number of Exceptions supported x 4), with a minimum
+>         alignment of 128 bytes.
+>
+>> Or we should keep it at the maximum value possible?
+> So we need:
+>
+>         .align x
+>
+> with x being max(7, ceil(log((CPUV7M_NUM_IRQ + 16) * 4, 2))). So the
+> alignment needed is between 7 and 10.
+>
+> If the assembler supports an expression here I'd use that. But before
+> adding strange hacks to generate the right value there better go for =
+a
+> static value like:
+>
+>         /* The vector table must be naturally aligned */
+>         #if CONFIG_CPUV7M_NUM_IRQ <=3D 112
+>         .align 9 /* log2((112 + 16) * 4) */
+>         #else
+>         .align 10
+>         #endif
+>
+> Further steps would be:
+>
+>         CONFIG_CPUV7M_NUM_IRQ <=3D 48 -> .align 8
+>         CONFIG_CPUV7M_NUM_IRQ <=3D 16 -> .align 7
+>
+> Probably it's not worth to add the respective #ifdefs here.
 
-That's obviously a goal, but it requires a new approach to tracepoints.
-I think a lot of great ideas were discussed in this thread, so I'm
-hopeful that we'll come up with solution that will satisfy even
-strictest Peter's requirements :)
+I will go for the  #ifdefs.
+
+Thanks,
+Maxime
+
+>
+> Best regards
+> Uwe
+>
+> --
+> Pengutronix e.K.                           | Uwe Kleine-K=C3=B6nig   =
+         |
+> Industrial Linux Solutions                 | http://www.pengutronix.d=
+e/  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-gpio" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
