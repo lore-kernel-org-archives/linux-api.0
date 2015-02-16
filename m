@@ -1,44 +1,45 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH 15/45] dm-log-userspace.h: include stdint.h in userspace
-Date: Tue, 17 Feb 2015 00:05:18 +0100
-Message-ID: <1424127948-22484-16-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH 11/45] via_drm.h: include linux/types.h instead of non-existing via_drmclient.h
+Date: Tue, 17 Feb 2015 00:05:14 +0100
+Message-ID: <1424127948-22484-12-git-send-email-mikko.rapeli@iki.fi>
 References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-api@vger.kernel.org
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, David Airlie <airlied@linux.ie>, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes compilation error:
+Fixes compiler error:
 
-linux/dm-log-userspace.h:416:2: error: unknown type name =E2=80=98uint6=
-4_t=E2=80=99
+drm/via_drm.h:36:27: fatal error: via_drmclient.h: No such file or directory
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/linux/dm-log-userspace.h | 5 +++++
- 1 file changed, 5 insertions(+)
+ include/uapi/drm/via_drm.h | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-diff --git a/include/uapi/linux/dm-log-userspace.h b/include/uapi/linux=
-/dm-log-userspace.h
-index 0fa0d9e..7b9684e 100644
---- a/include/uapi/linux/dm-log-userspace.h
-+++ b/include/uapi/linux/dm-log-userspace.h
-@@ -7,6 +7,11 @@
- #ifndef __DM_LOG_USERSPACE_H__
- #define __DM_LOG_USERSPACE_H__
-=20
-+#ifdef __KERNEL__
+diff --git a/include/uapi/drm/via_drm.h b/include/uapi/drm/via_drm.h
+index 8b0533c..791531e 100644
+--- a/include/uapi/drm/via_drm.h
++++ b/include/uapi/drm/via_drm.h
+@@ -24,6 +24,7 @@
+ #ifndef _VIA_DRM_H_
+ #define _VIA_DRM_H_
+ 
 +#include <linux/types.h>
-+#else
-+#include <stdint.h>
-+#endif
- #include <linux/dm-ioctl.h> /* For DM_UUID_LEN */
-=20
- /*
---=20
+ #include <drm/drm.h>
+ 
+ /* WARNING: These defines must be the same as what the Xserver uses.
+@@ -33,9 +34,6 @@
+ #ifndef _VIA_DEFINES_
+ #define _VIA_DEFINES_
+ 
+-#ifndef __KERNEL__
+-#include "via_drmclient.h"
+-#endif
+ 
+ #define VIA_NR_SAREA_CLIPRECTS		8
+ #define VIA_NR_XVMC_PORTS               10
+-- 
 2.1.4
