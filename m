@@ -1,86 +1,39 @@
-From: =?windows-1252?Q?Andreas_F=E4rber?= <afaerber@suse.de>
-Subject: Re: [PATCH 06/14] drivers: reset: Add STM32 reset driver
-Date: Mon, 16 Feb 2015 00:59:18 +0100
-Message-ID: <54E132D6.6010608@suse.de>
-References: <1423763164-5606-1-git-send-email-mcoquelin.stm32@gmail.com> <1423763164-5606-7-git-send-email-mcoquelin.stm32@gmail.com>
+From: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH RFC v3 0/7] epoll: Introduce new syscalls,
+ epoll_ctl_batch and epoll_pwait1
+Date: Mon, 16 Feb 2015 09:02:24 +0800
+Message-ID: <20150216010224.GA32421@ad.nay.redhat.com>
+References: <1423818243-15410-1-git-send-email-famz@redhat.com>
+ <20150215150011.0340686c@lwn.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-gpio-owner@vger.kernel.org>
-In-Reply-To: <1423763164-5606-7-git-send-email-mcoquelin.stm32@gmail.com>
-Sender: linux-gpio-owner@vger.kernel.org
-To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Cc: Jonathan Corbet <corbet@lwn.net>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Philipp Zabel <p.zabel@pengutronix.de>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150215150011.0340686c-T1hC0tSOHrs@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, Rashika Kheria <rashika.kheria-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peter>
 List-Id: linux-api@vger.kernel.org
 
-Am 12.02.2015 um 18:45 schrieb Maxime Coquelin:
-> The STM32 MCUs family IP can be reset by accessing some shared regist=
-ers.
->=20
-> The specificity is that some reset lines are used by the timers.
-> At timer initialization time, the timer has to be reset, that's why
-> we cannot use a regular driver.
->=20
-> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-> ---
->  .../devicetree/bindings/reset/st,stm32-reset.txt   |  19 ++++
->  drivers/reset/Makefile                             |   1 +
->  drivers/reset/reset-stm32.c                        | 124 +++++++++++=
-++++++++++
->  3 files changed, 144 insertions(+)
->  create mode 100644 Documentation/devicetree/bindings/reset/st,stm32-=
-reset.txt
->  create mode 100644 drivers/reset/reset-stm32.c
->=20
-> diff --git a/Documentation/devicetree/bindings/reset/st,stm32-reset.t=
-xt b/Documentation/devicetree/bindings/reset/st,stm32-reset.txt
-> new file mode 100644
-> index 0000000..add1298
-> --- /dev/null
-> +++ b/Documentation/devicetree/bindings/reset/st,stm32-reset.txt
-> @@ -0,0 +1,19 @@
-> +STMicroelectronics STM32 Peripheral Reset Controller
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D
-> +
-> +Please also refer to reset.txt in this directory for common reset
-> +controller binding usage.
-> +
-> +Required properties:
-> +- compatible: Should be "st,stm32-reset"
-> +- reg: should be register base and length as documented in the
-> +  datasheet
-> +- #reset-cells: 1, see below
-> +
-> +example:
-> +
-> +reset_ahb1: reset@40023810 {
-> +	#reset-cells =3D <1>;
-> +	compatible =3D "st,stm32-reset";
-> +	reg =3D <0x40023810 0x4>;
-> +};
-[snip]
+On Sun, 02/15 15:00, Jonathan Corbet wrote:
+> On Fri, 13 Feb 2015 17:03:56 +0800
+> Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> 
+> > SYNOPSIS
+> > 
+> >        #include <sys/epoll.h>
+> > 
+> >        int epoll_pwait1(int epfd, int flags,
+> >                         struct epoll_event *events,
+> >                         int maxevents,
+> >                         struct epoll_wait_params *params);
+> 
+> Quick, possibly dumb question: might it make sense to also pass in 
+> sizeof(struct epoll_wait_params)?  That way, when somebody wants to add
+> another parameter in the future, the kernel can tell which version is in
+> use and they won't have to do an epoll_pwait2()?
+> 
 
-RM0090 has two different chapters on the RCC IP:
-* Reset and clock control for STM32F42xxx and STM32F43xxx (RCC)
-* Reset and clock control for STM32F405xx/07xx and STM32F415xx/17xx(RCC=
-)
+Flags can be used for that, if the change is not radically different.
 
-I therefore feel it is wrong to use "stm32-" here; instead I used
-"st,stm32f429-rcc" (also relates to 12/14 discussion). This may apply t=
-o
-other identifiers, too.
-
-Regards,
-Andreas
-
---=20
-SUSE Linux GmbH, Maxfeldstr. 5, 90409 N=FCrnberg, Germany
-GF: Felix Imend=F6rffer, Jane Smithard, Jennifer Guild, Dilip Upmanyu,
-Graham Norton; HRB 21284 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-gpio" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Fam
