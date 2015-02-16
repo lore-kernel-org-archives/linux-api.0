@@ -1,39 +1,40 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH 39/45] include/uapi/sound/asequencer.h: include sound/asound.h
-Date: Tue, 17 Feb 2015 00:05:42 +0100
-Message-ID: <1424127948-22484-40-git-send-email-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: [PATCH 43/45] include/uapi/linux/netfilter_bridge.h: include if.h
+Date: Tue, 17 Feb 2015 00:05:46 +0100
+Message-ID: <1424127948-22484-44-git-send-email-mikko.rapeli@iki.fi>
 References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1424127948-22484-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, Takashi Iwai <tiwai-l3A5Bk7waGM@public.gmane.org>, alsa-devel-K7yf7f+aM1XWsZ/bQMPhNw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, Pablo Neira Ayuso <pablo@netfilter.org>, Patrick McHardy <kaber@trash.net>, Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>, netfilter-devel@vger.kernel.org, coreteam@netfilter.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compilation error:
-error: unknown type name =E2=80=98snd_seq_client_type_t=E2=80=99
-snd_seq_client_type_t type; /* client type */
+=46ixes userspace compilation errors like:
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+error: field =E2=80=98in=E2=80=99 has incomplete type
+struct in_addr in;
+
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/sound/asequencer.h | 1 +
+ include/uapi/linux/netfilter_bridge.h | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/include/uapi/sound/asequencer.h b/include/uapi/sound/asequ=
-encer.h
-index 09c8a00..5a5fa49 100644
---- a/include/uapi/sound/asequencer.h
-+++ b/include/uapi/sound/asequencer.h
-@@ -22,6 +22,7 @@
- #ifndef _UAPI__SOUND_ASEQUENCER_H
- #define _UAPI__SOUND_ASEQUENCER_H
+diff --git a/include/uapi/linux/netfilter_bridge.h b/include/uapi/linux=
+/netfilter_bridge.h
+index a5eda6d..5bb0528 100644
+--- a/include/uapi/linux/netfilter_bridge.h
++++ b/include/uapi/linux/netfilter_bridge.h
+@@ -4,6 +4,7 @@
+ /* bridge-specific defines for netfilter.=20
+  */
 =20
-+#include <sound/asound.h>
-=20
- /** version of the sequencer */
- #define SNDRV_SEQ_VERSION SNDRV_PROTOCOL_VERSION (1, 0, 1)
++#include <linux/if.h>
+ #include <linux/netfilter.h>
+ #include <linux/if_ether.h>
+ #include <linux/if_vlan.h>
 --=20
 2.1.4
