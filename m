@@ -1,39 +1,58 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: Re: [PATCH 15/45] dm-log-userspace.h: include stdint.h in userspace
-Date: Tue, 17 Feb 2015 01:48:13 +0200
-Message-ID: <20150216234813.GJ12550@lakka.kapsi.fi>
-References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
- <1424127948-22484-16-git-send-email-mikko.rapeli@iki.fi>
- <20150216233254.GA23033@redhat.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH RESEND 1/12] fs: Add support FALLOC_FL_INSERT_RANGE for
+ fallocate
+Date: Tue, 17 Feb 2015 10:53:47 +1100
+Message-ID: <20150216235346.GD4251@dastard>
+References: <1424101680-3301-1-git-send-email-linkinjeon@gmail.com>
+ <1424101680-3301-2-git-send-email-linkinjeon@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150216233254.GA23033-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <1424101680-3301-2-git-send-email-linkinjeon@gmail.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Namjae Jeon <linkinjeon@gmail.com>
+Cc: tytso@mit.edu, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, a.sangwan@samsung.com, bfoster@redhat.com, mtk.manpages@gmail.com, linux-man@vger.kernel.org, linux-api@vger.kernel.org, Namjae Jeon <namjae.jeon@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 16, 2015 at 06:32:54PM -0500, Mike Snitzer wrote:
-> On Mon, Feb 16 2015 at  6:05pm -0500,
-> Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wrote:
->=20
-> > Fixes compilation error:
-> >=20
-> > linux/dm-log-userspace.h:416:2: error: unknown type name =E2=80=98u=
-int64_t=E2=80=99
->=20
-> What userspace code are you compiling?  Do you have a feel for when t=
-his
-> stopped working?
+On Tue, Feb 17, 2015 at 12:47:48AM +0900, Namjae Jeon wrote:
+> From: Namjae Jeon <namjae.jeon@samsung.com>
+> 
+> FALLOC_FL_INSERT_RANGE command is the opposite command of
+> FALLOC_FL_COLLAPSE_RANGE that is needed for advertisers or someone who want to
+> add some data in the middle of file. FALLOC_FL_INSERT_RANGE will create space
+> for writing new data within a file after shifting extents to right as given
+> length. and this command also has same limitation as FALLOC_FL_COLLAPSE_RANGE,
+> that is block boundary and use ftruncate(2) for crosses EOF.
+> 
+> Signed-off-by: Namjae Jeon <namjae.jeon@samsung.com>
+> Signed-off-by: Ashish Sangwan <a.sangwan@samsung.com>
+> Cc: Brian Foster<bfoster@redhat.com>
+> ---
+>  fs/open.c                   |    8 +++++++-
+>  include/uapi/linux/falloc.h |   17 +++++++++++++++++
+>  2 files changed, 24 insertions(+), 1 deletion(-)
+> 
+> diff --git a/fs/open.c b/fs/open.c
+> index 813be03..762fb45 100644
+> --- a/fs/open.c
+> +++ b/fs/open.c
+> @@ -232,7 +232,8 @@ int vfs_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
+>  
+>  	/* Return error if mode is not supported */
+>  	if (mode & ~(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |
+> -		     FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_ZERO_RANGE))
+> +		     FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_ZERO_RANGE |
+> +		     FALLOC_FL_INSERT_RANGE))
+>  		return -EOPNOTSUPP;
 
-See Message-Id: <1424127948-22484-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-or https://lkml.org/lkml/2015/2/16/521
+Can we create a FALLOC_FL_SUPPORTED_MASK define in falloc.h
+so that we only need to add new flags to the mask in rather than
+change this code every time we add a new flag?
 
-The failure comes from a test which tries to compile each exported head=
-er file
-in userspace one at a time.
+Cheers,
 
--Mikko
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
