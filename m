@@ -1,62 +1,39 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH 41/45] include/uapi/sound/emu10k1.h: hide gpr_valid, tram_valid and code_valid in userspace
-Date: Tue, 17 Feb 2015 00:05:44 +0100
-Message-ID: <1424127948-22484-42-git-send-email-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Subject: [PATCH 39/45] include/uapi/sound/asequencer.h: include sound/asound.h
+Date: Tue, 17 Feb 2015 00:05:42 +0100
+Message-ID: <1424127948-22484-40-git-send-email-mikko.rapeli@iki.fi>
 References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, Jaroslav Kysela <perex@perex.cz>, Takashi Iwai <tiwai@suse.de>, alsa-devel@alsa-project.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1424127948-22484-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, Takashi Iwai <tiwai-l3A5Bk7waGM@public.gmane.org>, alsa-devel-K7yf7f+aM1XWsZ/bQMPhNw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-The DECLARE_BITMAP macro is not available in userspace headers.
-=46ixes userspace compile error:
-error: expected specifier-qualifier-list before =E2=80=98DECLARE_BITMAP=
-=E2=80=99
+=46ixes userspace compilation error:
+error: unknown type name =E2=80=98snd_seq_client_type_t=E2=80=99
+snd_seq_client_type_t type; /* client type */
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 ---
- include/uapi/sound/emu10k1.h | 6 ++++++
- 1 file changed, 6 insertions(+)
+ include/uapi/sound/asequencer.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/include/uapi/sound/emu10k1.h b/include/uapi/sound/emu10k1.=
-h
-index ec1535b..f2fd870 100644
---- a/include/uapi/sound/emu10k1.h
-+++ b/include/uapi/sound/emu10k1.h
-@@ -300,7 +300,9 @@ struct snd_emu10k1_fx8010_control_old_gpr {
- struct snd_emu10k1_fx8010_code {
- 	char name[128];
+diff --git a/include/uapi/sound/asequencer.h b/include/uapi/sound/asequ=
+encer.h
+index 09c8a00..5a5fa49 100644
+--- a/include/uapi/sound/asequencer.h
++++ b/include/uapi/sound/asequencer.h
+@@ -22,6 +22,7 @@
+ #ifndef _UAPI__SOUND_ASEQUENCER_H
+ #define _UAPI__SOUND_ASEQUENCER_H
 =20
-+#ifdef __KERNEL__
- 	DECLARE_BITMAP(gpr_valid, 0x200); /* bitmask of valid initializers */
-+#endif
- 	__u32 __user *gpr_map;		/* initializers */
++#include <sound/asound.h>
 =20
- 	unsigned int gpr_add_control_count; /* count of GPR controls to add/r=
-eplace */
-@@ -313,11 +315,15 @@ struct snd_emu10k1_fx8010_code {
- 	unsigned int gpr_list_control_total; /* total count of GPR controls *=
-/
- 	struct snd_emu10k1_fx8010_control_gpr __user *gpr_list_controls; /* l=
-isted GPR controls */
-=20
-+#ifdef __KERNEL__
- 	DECLARE_BITMAP(tram_valid, 0x100); /* bitmask of valid initializers *=
-/
-+#endif
- 	__u32 __user *tram_data_map;	  /* data initializers */
- 	__u32 __user *tram_addr_map;	  /* map initializers */
-=20
-+#ifdef __KERNEL__
- 	DECLARE_BITMAP(code_valid, 1024); /* bitmask of valid instructions */
-+#endif
- 	__u32 __user *code;		  /* one instruction - 64 bits */
- };
-=20
+ /** version of the sequencer */
+ #define SNDRV_SEQ_VERSION SNDRV_PROTOCOL_VERSION (1, 0, 1)
 --=20
 2.1.4
