@@ -1,43 +1,41 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH 25/45] gntalloc.h: include stdint.h in userspace
-Date: Tue, 17 Feb 2015 00:05:28 +0100
-Message-ID: <1424127948-22484-26-git-send-email-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Subject: [PATCH 29/45] include/uapi/asm-generic/msgbuf.h: include asm/ipcbuf.h
+Date: Tue, 17 Feb 2015 00:05:32 +0100
+Message-ID: <1424127948-22484-30-git-send-email-mikko.rapeli@iki.fi>
 References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, Boris Ostrovsky <boris.ostrovsky@oracle.com>, David Vrabel <david.vrabel@citrix.com>, xen-devel@lists.xenproject.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1424127948-22484-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes compilation error:
+=46ixes userspace compilation errors like:
 
-xen/gntalloc.h:22:2: error: unknown type name =E2=80=98uint16_t=E2=80=99
+error: field =E2=80=98msg_perm=E2=80=99 has incomplete type
+struct ipc64_perm msg_perm
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 ---
- include/uapi/xen/gntalloc.h | 6 ++++++
- 1 file changed, 6 insertions(+)
+ include/uapi/asm-generic/msgbuf.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/include/uapi/xen/gntalloc.h b/include/uapi/xen/gntalloc.h
-index 76bd580..184df7e 100644
---- a/include/uapi/xen/gntalloc.h
-+++ b/include/uapi/xen/gntalloc.h
-@@ -11,6 +11,12 @@
- #ifndef __LINUX_PUBLIC_GNTALLOC_H__
- #define __LINUX_PUBLIC_GNTALLOC_H__
+diff --git a/include/uapi/asm-generic/msgbuf.h b/include/uapi/asm-gener=
+ic/msgbuf.h
+index f55ecc4..f5fbd8e 100644
+--- a/include/uapi/asm-generic/msgbuf.h
++++ b/include/uapi/asm-generic/msgbuf.h
+@@ -2,6 +2,8 @@
+ #define __ASM_GENERIC_MSGBUF_H
 =20
-+#ifdef __KERNEL__
-+#include <linux/types.h>
-+#else
-+#include <stdint.h>
-+#endif
+ #include <asm/bitsperlong.h>
++#include <asm/ipcbuf.h>
 +
  /*
-  * Allocates a new page and creates a new grant reference.
-  */
+  * generic msqid64_ds structure.
+  *
 --=20
 2.1.4
