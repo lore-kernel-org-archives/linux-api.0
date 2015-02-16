@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH 37/45] include/uapi/linux/socket.h: include sys/socket.h in userspace
-Date: Tue, 17 Feb 2015 00:05:40 +0100
-Message-ID: <1424127948-22484-38-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH 33/45] include/uapi/asm-generic/signal.h: include stdlib.h in userspace
+Date: Tue, 17 Feb 2015 00:05:36 +0100
+Message-ID: <1424127948-22484-34-git-send-email-mikko.rapeli@iki.fi>
 References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,33 +10,32 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, linux-api@vger.kernel.org
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, Arnd Bergmann <arnd@arndb.de>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This libc header has sockaddr definition for userspace.
-=46ixes compilation errors like:
-error: field =E2=80=98ifru_addr=E2=80=99 has incomplete type
-struct sockaddr ifru_addr;
+=46ixes compiler warning:
+error: unknown type name =E2=80=98size_t=E2=80=99
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/linux/socket.h | 4 ++++
+ include/uapi/asm-generic/signal.h | 4 ++++
  1 file changed, 4 insertions(+)
 
-diff --git a/include/uapi/linux/socket.h b/include/uapi/linux/socket.h
-index 76ab0c6..8a81197 100644
---- a/include/uapi/linux/socket.h
-+++ b/include/uapi/linux/socket.h
-@@ -1,6 +1,10 @@
- #ifndef _UAPI_LINUX_SOCKET_H
- #define _UAPI_LINUX_SOCKET_H
+diff --git a/include/uapi/asm-generic/signal.h b/include/uapi/asm-gener=
+ic/signal.h
+index 9df61f1..8a341a2 100644
+--- a/include/uapi/asm-generic/signal.h
++++ b/include/uapi/asm-generic/signal.h
+@@ -3,6 +3,10 @@
+=20
+ #include <linux/types.h>
 =20
 +#ifndef __KERNEL__
-+#include <sys/socket.h>
++#include <stdlib.h>
 +#endif
 +
- /*
-  * Desired design of maximum size and alignment (see RFC2553)
-  */
+ #define _NSIG		64
+ #define _NSIG_BPW	__BITS_PER_LONG
+ #define _NSIG_WORDS	(_NSIG / _NSIG_BPW)
 --=20
 2.1.4
