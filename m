@@ -1,37 +1,44 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH 13/45] savage_drm.h: include <drm/drm.h>
-Date: Tue, 17 Feb 2015 00:05:16 +0100
-Message-ID: <1424127948-22484-14-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH 17/45] ebtables.h: include stdint.h in userspace
+Date: Tue, 17 Feb 2015 00:05:20 +0100
+Message-ID: <1424127948-22484-18-git-send-email-mikko.rapeli@iki.fi>
 References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, David Airlie <airlied@linux.ie>, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Fixes compiler error:
+=46ixes compilation error:
 
-drm/savage_drm.h:50:24: error: array type has incomplete element type
-  struct drm_tex_region texList[SAVAGE_NR_TEX_HEAPS][SAVAGE_NR_TEX_REGIONS +
+linux/netfilter_bridge/ebtables.h:38:2: error: unknown type name =E2=80=
+=98uint64_t=E2=80=99
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/drm/savage_drm.h | 2 ++
- 1 file changed, 2 insertions(+)
+ include/uapi/linux/netfilter_bridge/ebtables.h | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/include/uapi/drm/savage_drm.h b/include/uapi/drm/savage_drm.h
-index 818d49b..9dc9dc1 100644
---- a/include/uapi/drm/savage_drm.h
-+++ b/include/uapi/drm/savage_drm.h
-@@ -26,6 +26,8 @@
- #ifndef __SAVAGE_DRM_H__
- #define __SAVAGE_DRM_H__
- 
-+#include <drm/drm.h>
-+
- #ifndef __SAVAGE_SAREA_DEFINES__
- #define __SAVAGE_SAREA_DEFINES__
- 
--- 
+diff --git a/include/uapi/linux/netfilter_bridge/ebtables.h b/include/u=
+api/linux/netfilter_bridge/ebtables.h
+index ba99336..9e8d6b4 100644
+--- a/include/uapi/linux/netfilter_bridge/ebtables.h
++++ b/include/uapi/linux/netfilter_bridge/ebtables.h
+@@ -12,6 +12,11 @@
+=20
+ #ifndef _UAPI__LINUX_BRIDGE_EFF_H
+ #define _UAPI__LINUX_BRIDGE_EFF_H
++#ifdef __KERNEL__
++#include <linux/types.h>
++#else
++#include <stdint.h>
++#endif
+ #include <linux/if.h>
+ #include <linux/netfilter_bridge.h>
+ #include <linux/if_ether.h>
+--=20
 2.1.4
