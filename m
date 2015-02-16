@@ -1,41 +1,41 @@
-From: Peter Rosin <peda@lysator.liu.se>
-Subject: [PATCH 0/2] ASoC: pcm512x: Add knobs to allow and control overclocking
-Date: Mon, 16 Feb 2015 22:02:46 +0100
-Message-ID: <1424120568-24648-2-git-send-email-peda@lysator.liu.se>
-References: <1424120568-24648-1-git-send-email-peda@lysator.liu.se>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: [PATCH 05/45] drm.h: include stdlib.h in userspace
+Date: Tue, 17 Feb 2015 00:05:08 +0100
+Message-ID: <1424127948-22484-6-git-send-email-mikko.rapeli@iki.fi>
+References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1424120568-24648-1-git-send-email-peda@lysator.liu.se>
+In-Reply-To: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
 Sender: linux-kernel-owner@vger.kernel.org
-To: alsa-devel@alsa-project.org
-Cc: Peter Rosin <peda@axentia.se>, Liam Girdwood <lgirdwood@gmail.com>, Mark Brown <broonie@kernel.org>, Jaroslav Kysela <perex@perex.cz>, Takashi Iwai <tiwai@suse.de>, Lars-Peter Clausen <lars@metafoo.de>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, David Airlie <airlied@linux.ie>, dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Peter Rosin <peda@axentia.se>
+=46ixes <drm/drm.h> compilation error:
 
-Hi!
+drm/drm.h:132:2: error: unknown type name =E2=80=98size_t=E2=80=99
 
-I wasn't sure if I should add Documentation/* for these sysfs knobs
-or not? A lot of knobs do not have docs... And I'm not sure how I
-should name the doc-file since the pcm512x driver handles devices
-connected with both i2c and spi. So, this isn't perfect, suggestions
-welcome.
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+---
+ include/uapi/drm/drm.h | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-The first patch is a preparatory patch that makes 2/2 slightly simpler.
-I can fold them together if that's desired. Or I could split 2/2 up in
-three logical pieces, one for each of the independent PLL/DSP/DAC
-knob. Whatever...
-
-Cheers,
-Peter
-
-Peter Rosin (2):
-  ASoC: pcm512x: Rearrange to not repeat dacsrc_rate / dac_div
-  ASoC: pcm512x: Allow independently overclocking PLL, DAC and DSP
-
- Documentation/ABI/testing/sysfs-i2c-pcm512x |   35 +++++
- sound/soc/codecs/pcm512x.c                  |  189 ++++++++++++++++++++++++---
- 2 files changed, 205 insertions(+), 19 deletions(-)
- create mode 100644 Documentation/ABI/testing/sysfs-i2c-pcm512x
-
--- 
-1.7.10.4
+diff --git a/include/uapi/drm/drm.h b/include/uapi/drm/drm.h
+index b0b8556..8f4488f 100644
+--- a/include/uapi/drm/drm.h
++++ b/include/uapi/drm/drm.h
+@@ -42,6 +42,10 @@
+ #include <asm/ioctl.h>
+ typedef unsigned int drm_handle_t;
+=20
++#ifndef __KERNEL__
++#include <stdlib.h>
++#endif
++
+ #else /* One of the BSDs */
+=20
+ #include <sys/ioccom.h>
+--=20
+2.1.4
