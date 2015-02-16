@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH 18/45] cld.h: include stdint.h in userspace
-Date: Tue, 17 Feb 2015 00:05:21 +0100
-Message-ID: <1424127948-22484-19-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH 16/45] hsi_char.h: include stdint.h in userspace
+Date: Tue, 17 Feb 2015 00:05:19 +0100
+Message-ID: <1424127948-22484-17-git-send-email-mikko.rapeli@iki.fi>
 References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,27 +10,31 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, Sebastian Reichel <sre@kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes compilation error:
+=46ixes compiler error:
 
-linux/nfsd/cld.h:40:2: error: unknown type name =E2=80=98uint16_t=E2=80=
-=99
+linux/hsi/hsi_char.h:51:2: error: unknown type name =E2=80=98uint32_t=E2=
+=80=99
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/linux/nfsd/cld.h | 6 ++++++
- 1 file changed, 6 insertions(+)
+ include/uapi/linux/hsi/hsi_char.h | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/include/uapi/linux/nfsd/cld.h b/include/uapi/linux/nfsd/cl=
-d.h
-index f14a9ab..9f60f9c 100644
---- a/include/uapi/linux/nfsd/cld.h
-+++ b/include/uapi/linux/nfsd/cld.h
-@@ -22,6 +22,12 @@
- #ifndef _NFSD_CLD_H
- #define _NFSD_CLD_H
+diff --git a/include/uapi/linux/hsi/hsi_char.h b/include/uapi/linux/hsi=
+/hsi_char.h
+index 76160b4..9fa8f91 100644
+--- a/include/uapi/linux/hsi/hsi_char.h
++++ b/include/uapi/linux/hsi/hsi_char.h
+@@ -20,10 +20,15 @@
+  * 02110-1301 USA
+  */
+=20
+-
+ #ifndef __HSI_CHAR_H
+ #define __HSI_CHAR_H
 =20
 +#ifdef __KERNEL__
 +#include <linux/types.h>
@@ -38,8 +42,8 @@ index f14a9ab..9f60f9c 100644
 +#include <stdint.h>
 +#endif
 +
- /* latest upcall version available */
- #define CLD_UPCALL_VERSION 1
-=20
+ #define HSI_CHAR_MAGIC		'k'
+ #define HSC_IOW(num, dtype)	_IOW(HSI_CHAR_MAGIC, num, dtype)
+ #define HSC_IOR(num, dtype)	_IOR(HSI_CHAR_MAGIC, num, dtype)
 --=20
 2.1.4
