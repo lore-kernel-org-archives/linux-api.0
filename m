@@ -1,46 +1,64 @@
-From: Peter Rosin <peda-SamgB31n2u5IcsJQ0EH25Q@public.gmane.org>
-Subject: [PATCH 0/2] ASoC: pcm512x: Add knobs to allow and control overclocking
-Date: Mon, 16 Feb 2015 22:02:45 +0100
-Message-ID: <1424120568-24648-1-git-send-email-peda@lysator.liu.se>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: alsa-devel-K7yf7f+aM1XWsZ/bQMPhNw@public.gmane.org
-Cc: Peter Rosin <peda-koto5C5qi+TLoDKTGw+V6w@public.gmane.org>, Liam Girdwood <lgirdwood-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, Takashi Iwai <tiwai-l3A5Bk7waGM@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Peter Rosin <peda@lysator.liu.se>
+Subject: [PATCH 1/2] ASoC: pcm512x: Rearrange to not repeat dacsrc_rate / dac_div
+Date: Mon, 16 Feb 2015 22:02:47 +0100
+Message-ID: <1424120568-24648-3-git-send-email-peda@lysator.liu.se>
+References: <1424120568-24648-1-git-send-email-peda@lysator.liu.se>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1424120568-24648-1-git-send-email-peda@lysator.liu.se>
+Sender: linux-kernel-owner@vger.kernel.org
+To: alsa-devel@alsa-project.org
+Cc: Peter Rosin <peda@axentia.se>, Liam Girdwood <lgirdwood@gmail.com>, Mark Brown <broonie@kernel.org>, Jaroslav Kysela <perex@perex.cz>, Takashi Iwai <tiwai@suse.de>, Lars-Peter Clausen <lars@metafoo.de>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Peter Rosin <peda-koto5C5qi+TLoDKTGw+V6w@public.gmane.org>
+From: Peter Rosin <peda@axentia.se>
 
-Hi!
+Signed-off-by: Peter Rosin <peda@axentia.se>
+---
+ sound/soc/codecs/pcm512x.c |   19 ++++++++++---------
+ 1 file changed, 10 insertions(+), 9 deletions(-)
 
-I wasn't sure if I should add Documentation/* for these sysfs knobs
-or not? A lot of knobs do not seem to have docs (no specific example,
-just a gut feeling). And I'm not sure how I should name the doc-file
-since the pcm512x driver handles devices connected with both i2c and
-spi. And what KernelVersion should I enter? That depends... So, this
-isn't perfect, suggestions welcome.
-
-The first patch is a preparatory patch that makes 2/2 slightly simpler.
-I can fold them together if that's desired. Or I could split 2/2 up in
-three logical patches, one for each of the independent PLL/DSP/DAC
-knobs.
-
-Another "feature" that one might want, is that attempts to change the
-overclocking should fail with EBUSY when the device is already in use.
-But I haven't invested enough time to find out how I should determine
-when to fail, so for this version the driver accepts the change but
-doesn't enforce the new limit until the clock rates are recalculated.
-
-Cheers,
-Peter
-
-Peter Rosin (2):
-  ASoC: pcm512x: Rearrange to not repeat dacsrc_rate / dac_div
-  ASoC: pcm512x: Allow independently overclocking PLL, DAC and DSP
-
- Documentation/ABI/testing/sysfs-i2c-pcm512x |   35 +++++
- sound/soc/codecs/pcm512x.c                  |  189 ++++++++++++++++++++++++---
- 2 files changed, 205 insertions(+), 19 deletions(-)
- create mode 100644 Documentation/ABI/testing/sysfs-i2c-pcm512x
-
+diff --git a/sound/soc/codecs/pcm512x.c b/sound/soc/codecs/pcm512x.c
+index 884784fb1566..f13ff7578c78 100644
+--- a/sound/soc/codecs/pcm512x.c
++++ b/sound/soc/codecs/pcm512x.c
+@@ -863,28 +863,29 @@ static int pcm512x_set_dividers(struct snd_soc_dai *dai,
+ 		dacsrc_rate = sck_rate;
+ 	}
+ 
++	osr_div = DIV_ROUND_CLOSEST(dac_rate, osr_rate);
++	if (osr_div > 128) {
++		dev_err(dev, "Failed to find OSR divider\n");
++		return -EINVAL;
++	}
++
+ 	dac_div = DIV_ROUND_CLOSEST(dacsrc_rate, dac_rate);
+ 	if (dac_div > 128) {
+ 		dev_err(dev, "Failed to find DAC divider\n");
+ 		return -EINVAL;
+ 	}
++	dac_rate = dacsrc_rate / dac_div;
+ 
+-	ncp_div = DIV_ROUND_CLOSEST(dacsrc_rate / dac_div, 1536000);
+-	if (ncp_div > 128 || dacsrc_rate / dac_div / ncp_div > 2048000) {
++	ncp_div = DIV_ROUND_CLOSEST(dac_rate, 1536000);
++	if (ncp_div > 128 || dac_rate / ncp_div > 2048000) {
+ 		/* run NCP no faster than 2048000 Hz, but why? */
+-		ncp_div = DIV_ROUND_UP(dacsrc_rate / dac_div, 2048000);
++		ncp_div = DIV_ROUND_UP(dac_rate, 2048000);
+ 		if (ncp_div > 128) {
+ 			dev_err(dev, "Failed to find NCP divider\n");
+ 			return -EINVAL;
+ 		}
+ 	}
+ 
+-	osr_div = DIV_ROUND_CLOSEST(dac_rate, osr_rate);
+-	if (osr_div > 128) {
+-		dev_err(dev, "Failed to find OSR divider\n");
+-		return -EINVAL;
+-	}
+-
+ 	idac = mck_rate / (dsp_div * sample_rate);
+ 
+ 	ret = regmap_write(pcm512x->regmap, PCM512x_DSP_CLKDIV, dsp_div - 1);
 -- 
 1.7.10.4
