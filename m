@@ -1,219 +1,283 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [PATCH v17 1/7] mm: support madvise(MADV_FREE)
-Date: Mon, 16 Feb 2015 13:36:44 +0900
-Message-ID: <20150216043644.GA19630@blaptop>
-References: <20141205083249.GA2321@dhcp22.suse.cz>
- <54D0F9BC.4060306@gmail.com>
- <20150203234722.GB3583@blaptop>
- <20150206003311.GA2347@kernel.org>
- <20150206055103.GA13244@blaptop>
- <20150206182918.GA2290@kernel.org>
- <20150209071553.GC32300@blaptop>
- <20150210223826.GA2342@kernel.org>
- <20150211005620.GA4078@blaptop>
- <20150212001403.GA2380@kernel.org>
+From: "Seymour, Shane M" <shane.seymour@hp.com>
+Subject: RE: [PATCH RFC v3 0/7] epoll: Introduce new syscalls,
+ epoll_ctl_batch and epoll_pwait1
+Date: Mon, 16 Feb 2015 07:25:40 +0000
+Message-ID: <DDB9C85B850785449757F9914A034FCB3BF41130@G9W0766.americas.hpqcorp.net>
+References: <1423818243-15410-1-git-send-email-famz@redhat.com>
+ <20150215150011.0340686c@lwn.net> <20150216010224.GA32421@ad.nay.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150212001403.GA2380@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Shaohua Li <shli@kernel.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Michal Hocko <mhocko@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Rik van Riel <riel@redhat.com>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Mel Gorman <mgorman@suse.de>, Jason Evans <je@fb.com>, zhangyanfei@cn.fujitsu.com, "Kirill A. Shutemov" <kirill@shutemov.name>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20150216010224.GA32421@ad.nay.redhat.com>
+Content-Language: en-US
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Fam Zheng <famz@redhat.com>, Jonathan Corbet <corbet@lwn.net>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, "x86@kernel.org" <x86@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <mszeredi@suse.cz>, David Drysdale <drysdale@google.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Theodore Ts'o <tytso@mit.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Rashika Kheria <rashika.kheria@gmail.com>, Hugh Dickins <hughd@google.com>, Mathieu
 List-Id: linux-api@vger.kernel.org
 
-Hi Shaohua,
+I found the manual pages really confusing so I had a go at rewriting
+them - there were places in the manual page that didn't match the
+functionality provided by your code as well as I could tell).
 
-On Wed, Feb 11, 2015 at 04:14:03PM -0800, Shaohua Li wrote:
-> On Wed, Feb 11, 2015 at 09:56:20AM +0900, Minchan Kim wrote:
-> > Hi Shaohua,
-> > 
-> > On Tue, Feb 10, 2015 at 02:38:26PM -0800, Shaohua Li wrote:
-> > > On Mon, Feb 09, 2015 at 04:15:53PM +0900, Minchan Kim wrote:
-> > > > On Fri, Feb 06, 2015 at 10:29:18AM -0800, Shaohua Li wrote:
-> > > > > On Fri, Feb 06, 2015 at 02:51:03PM +0900, Minchan Kim wrote:
-> > > > > > Hi Shaohua,
-> > > > > > 
-> > > > > > On Thu, Feb 05, 2015 at 04:33:11PM -0800, Shaohua Li wrote:
-> > > > > > > 
-> > > > > > > Hi Minchan,
-> > > > > > > 
-> > > > > > > Sorry to jump in this thread so later, and if some issues are discussed before.
-> > > > > > > I'm interesting in this patch, so tried it here. I use a simple test with
-> > > > > > 
-> > > > > > No problem at all. Interest is always win over ignorance.
-> > > > > > 
-> > > > > > > jemalloc. Obviously this can improve performance when there is no memory
-> > > > > > > pressure. Did you try setup with memory pressure?
-> > > > > > 
-> > > > > > Sure but it was not a huge memory system like yours.
-> > > > > 
-> > > > > Yes, I'd like to check the symptom in memory pressure, so choose such test.
-> > > > > 
-> > > > > > > In my test, jemalloc will map 61G vma, and use about 32G memory without
-> > > > > > > MADV_FREE. If MADV_FREE is enabled, jemalloc will use whole 61G memory because
-> > > > > > > madvise doesn't reclaim the unused memory. If I disable swap (tweak your patch
-> > > > > > 
-> > > > > > Yes, IIUC, jemalloc replaces MADV_DONTNEED with MADV_FREE completely.
-> > > > > 
-> > > > > right.
-> > > > > > > slightly to make it work without swap), I got oom. If swap is enabled, my
-> > > > > > 
-> > > > > > You mean you modified anon aging logic so it works although there is no swap?
-> > > > > > If so, I have no idea why OOM happens. I guess it should free all of freeable
-> > > > > > pages during the aging so although system stall happens more, I don't expect
-> > > > > > OOM. Anyway, with MADV_FREE with no swap, we should consider more things
-> > > > > > about anonymous aging.
-> > > > > 
-> > > > > In the patch, MADV_FREE will be disabled and fallback to DONTNEED if no swap is
-> > > > > enabled. Our production environment doesn't enable swap, so I tried to delete
-> > > > > the 'no swap' check and make MADV_FREE always enabled regardless if swap is
-> > > > > enabled. I didn't change anything else. With such change, I saw oom
-> > > > > immediately. So definitely we have aging issue, the pages aren't reclaimed
-> > > > > fast.
-> > > > 
-> > > > In current VM implementation, it doesn't age anonymous LRU list if we have no
-> > > > swap. That's the reason to drop freeing pages instantly.
-> > > > I think it could be enhanced later.
-> > > > http://lists.infradead.org/pipermail/linux-arm-kernel/2014-December/311591.html
-> > > > 
-> > > > > 
-> > > > > > > system is totally stalled because of swap activity. Without the MADV_FREE,
-> > > > > > > everything is ok. Considering we definitely don't want to waste too much
-> > > > > > > memory, a system with memory pressure is normal, so sounds MADV_FREE will
-> > > > > > > introduce big trouble here.
-> > > > > > > 
-> > > > > > > Did you think about move the MADV_FREE pages to the head of inactive LRU, so
-> > > > > > > they can be reclaimed easily?
-> > > > > > 
-> > > > > > I think it's desirable if the page lived in active LRU.
-> > > > > > The reason I didn't that was caused by volatile ranges system call which
-> > > > > > was motivaion for MADV_FREE in my mind.
-> > > > > > In last LSF/MM, there was concern about data's hotness.
-> > > > > > Some of users want to keep that as it is in LRU position, others want to
-> > > > > > handle that as cold(tail of inactive list)/warm(head of inactive list)/
-> > > > > > hot(head of active list), for example.
-> > > > > > The vrange syscall was just about volatiltiy, not depends on page hotness
-> > > > > > so the decision on my head was not to change LRU order and let's make new
-> > > > > > hotness advise if we need it later.
-> > > > > > 
-> > > > > > However, MADV_FREE's main customer is allocators and afaik, they want
-> > > > > > to replace MADV_DONTNEED with MADV_FREE so I think it is really cold,
-> > > > > > but we couldn't make sure so head of inactive is good compromise.
-> > > > > > Another concern about tail of inactive list is that there could be
-> > > > > > plenty of pages in there, which was asynchromos write-backed in
-> > > > > > previous reclaim path, not-yet reclaimed because of not being able
-> > > > > > to free the in softirq context of writeback. It means we ends up
-> > > > > > freeing more potential pages to become workingset in advance
-> > > > > > than pages VM already decided to evict.
-> > > > > 
-> > > > > Yes, they are definitely cold pages. I thought We should make sure the
-> > > > > MADV_FREE pages are reclaimed first before other pages, at least in the anon
-> > > > > LRU list, though there might be difficult to determine if we should reclaim
-> > > > > writeback pages first or MADV_FREE pages first.
-> > > > 
-> > > > Frankly speaking, the issue with writeback page is just hurdle of
-> > > > implementation, not design so if we could fix it, we might move
-> > > > cold pages into tail of the inactive LRU. I tried it but don't have
-> > > > time slot to continue these days. Hope to get a time to look soon.
-> > > > https://lkml.org/lkml/2014/7/1/628
-> > > > Even, it wouldn't be critical problem although we couldn't fix
-> > > > the problem of writeback pages because they are already all
-> > > > cold pages so it might be not important to keep order in LRU so
-> > > > we could save working set and effort of VM to reclaim them
-> > > > at the cost of moving all of hinting pages into tail of the LRU
-> > > > whenever the syscall is called.
-> > > > 
-> > > > However, significant problem from my mind is we couldn't make
-> > > > sure they are really cold pages. It would be true for allocators
-> > > > but it's cache-friendly pages so it might be better to discard
-> > > > tail pages of inactive LRU, which are really cold.
-> > > > In addition, we couldn't expect all of usecase for MADV_FREE
-> > > > so some of users might want to treat them as warm, not cold.
-> > > > 
-> > > > With moving them into inactive list's head, if we still see
-> > > > a lot stall, I think it's a sign to add other logic, for example,
-> > > > we could drop MADV_FREEed pages instantly if the zone is below
-> > > > low min watermark when the syscall is called. Because everybody
-> > > > doesn't like direct reclaim.
-> > > 
-> > > So I tried move the MADV_FREE pages to inactive list head or tail. It helps a
-> > > little. But there are still stalls/oom. kswapd isn't fast enough to free the
-> > > pages, App enters direct reclaim frequently. In one machine, no swap trigger,
-> > > but MADV_FREE is 5x slower than MADV_DONTNEED. In another machine, MADV_FREE
-> > 
-> > It's expected. MADV_DONTNEED and MADV_FREE is really different.
-> > MADV_DONTNEED is self-sacrificy for others in the system while MADV_FREE is
-> > greedy approach for itself because random process asking the memory could
-> > enter direct reclaim.
-> > However, as I said earlier, we could mitigate the problem by checking
-> > min_free_kbytes. If memory in the system is under min_free_kbytes, it is
-> > pointless to impose reclaim overhead for hinted pages because we alreay
-> > know the hint is "please free when you are trouble with memory" and we got
-> > know it already.
-> > 
-> > When I test below patch on my 3G machine + 12 CPU + 8G swap with below test
-> > test: 12 processes(each process does 5 iteration: mmap 512M + memset + madvise),
-> > 
-> > 1. MADV_DONTNEED : 41.884sec, sys:3m4.552
-> > 2. MADV_FREE : 1m28sec, sys: 5m23
-> > 3. MADV_FREE + below patch : 37.188s, sys: 2m20
-> > 
-> > Could you test?
-> >         
-> > diff --git a/mm/madvise.c b/mm/madvise.c
-> > index 6d0fcb8..da15f8f 100644
-> > --- a/mm/madvise.c
-> > +++ b/mm/madvise.c
-> > @@ -523,7 +523,7 @@ madvise_vma(struct vm_area_struct *vma, struct vm_area_struct **prev,
-> >  		 * XXX: In this implementation, MADV_FREE works like
-> >  		 * MADV_DONTNEED on swapless system or full swap.
-> >  		 */
-> > -		if (get_nr_swap_pages() > 0)
-> > +		if (get_nr_swap_pages() > 0 && min_free_kbytes < nr_free_pages())
-> >  			return madvise_free(vma, prev, start, end);
-> >  		/* passthrough */
-> >  	case MADV_DONTNEED:
-> 
-> The throttling makes a lot of sense, definitely should be included in the
-> patch. At least my jemalloc test has similar performance result with/without
+My apologies for a few formatting issues though. I still don't like
+parts of epoll_pwait1 but it's less confusing than it was.
 
-Yeb, I will post it with a little modification after long vacation.
+You are free to take some or all or none of the changes.
 
-> the patch in memory pressure case. So overall I'm pretty happy with it.
+I did have a question I marked with **** below about what you
+describe and what your code does.
 
-Thanks for the testing.
+1) epoll_ctl_batch
+------------------
 
-> However, this only solves half of the problem. pages which are MADV_FREE before
-> watermark is hit are still hard to be reclaimed later if there are other
-> allocations. I'm not sure how severe this issue is. My jemalloc test frequently
-> does madvise (fallback to DONTNEED with above change), so itself can free a lot
-> of memory in memory pressure. If application uses MADV_FREE before watermark is
-> hit, but don't use it after watermark is hit, we will have trouble.
+NAME
+       epoll_ctl_batch - batch control interface for an epoll descriptor
 
-Fair enough. It might make those pages close to inactive LRU's tail
-be unlikely to free, instead rotate back to active LRU.
-Hmm, I don't know how such anonymous LRU scanning without freeing makes
-trobule in huge system.
+SYNOPSIS
 
-Anyway, one of the idea is we could use COW so that it could move recent
-dirtied pages into active LRU's head. Although it adds more overhead for
-MADV_FREE than now, it could solve above issue.
+       #include <sys/epoll.h>
 
-As well, I think we could make MADV_FREE support on swapless system easier.
-On swapless system, we don't move pages in active LRU to inactive so
-when MADV_FREE is called on, we could move those pages in inactive's LRU
-and if recent access happens on those pages before discarding by VM,
-we could move them from inactive to active list. So, inactive LRU list
-could have mostly freeable pages(if swapoff race happens, some of
-non-freeable pages remains inactive list) so it's not a performan
-problem only if VM does aging if there are anonymous pages
-in inactive LRU list on swapless system.
+       int epoll_ctl_batch(int epfd, int flags,
+                           int ncmds, struct epoll_ctl_cmd *cmds);
 
-> 
-> Thanks,
-> Shaohua
+DESCRIPTION
 
--- 
-Kind regards,
-Minchan Kim
+       This system call is an extension of epoll_ctl(). The primary
+       difference is that this system call allows you to batch multiple
+       operations with the one system call. This provides a more efficient
+       interface for updating events on this epoll file descriptor epfd.
+
+       The flags argument is reserved and must be 0.
+
+       The argument ncmds is the number of cmds entries being passed in.
+       This number must be greater than 0.
+
+       Each operation is specified as an element in the cmds array, defined as:
+
+           struct epoll_ctl_cmd {
+
+                  /* Reserved flags for future extension, must be 0. */
+                  int flags;
+
+                  /* The same as epoll_ctl() op parameter. */
+                  int op;
+
+                  /* The same as epoll_ctl() fd parameter. */
+                  int fd;
+
+                  /* The same as the "events" field in struct epoll_event. */
+                  uint32_t events;
+
+                  /* The same as the "data" field in struct epoll_event. */
+                  uint64_t data;
+
+                  /* Output field, will be set to the return code after this
+                   * command is executed by kernel */
+                  int result;
+           };
+
+       This system call is not atomic when updating the epoll descriptor.
+       All entries in cmds are executed in the order provided. If any cmds
+       entry fails to be processed no further entries are processed and 
+       the number of successfully processed entries is returned.
+
+       Each single operation defined by a struct epoll_ctl_cmd has the same 
+       semantics as an epoll_ctl(2) call. See the epoll_ctl() manual page
+       for more information about how to correctly setup the members of a
+       struct epoll_ctl_cmd.
+
+       Upon completion of the call the result member of each struct epoll_ctl_cmd
+       may be set to 0 (sucessfully completed) or an error code depending on the
+       result of the command. If the kernel fails to change the result (for
+       example the location of the cmds argument is fully or partly read only)
+       the result member of each struct epoll_ctl_cmd may be unchanged. 
+
+RETURN VALUE
+
+       epoll_ctl_batch() returns a number greater than 0 to indicate the number
+       of cmnd entries processed. If all entries have been processed this will
+       equal the ncmds parameter passed in.
+
+       If one or more parameters are incorrect the value returned is -1 with
+       errno set appropriately - no cmds entries have been processed when this
+       happens.
+
+       If processing any entry in the cmds argument results in an error the
+       number returned is the number of the failing entry - this number will be
+       less than ncmds. Since ncmds must be greater than 0 a return value of
+       0 indicates an error associated with the very first cmds entry. 
+       A return value of 0 does not indicate a successful system call.
+
+       To correctly test the return value from epoll_ctl_batch() use code similar
+       to the following:
+
+		ret=epoll_ctl_batch(epfd, flags, ncmds, &cmds);
+		if (ret < ncmds) {
+			if (ret == -1) {
+				/* An argument was invalid */
+			} else {
+				/* ret contains the number of successful entries
+                                 * processed. If you (mis?)use it as a C index it
+                                 * will index directly to the failing entry to
+                                 * get the result use cmds[ret].result which may 
+                                 * contain the errno value associated with the
+                                 * entry.
+                                 */
+			}
+		} else {
+			/* Success */
+		}
+
+ERRORS
+
+       EINVAL flags is non-zero, or ncmds is less than or equal to zero, or
+              cmds is NULL.
+
+       ENOMEM There was insufficient memory to handle the requested op control
+              operation.
+
+       EFAULT The memory area pointed to by cmds is not accessible with read
+              permissions.
+
+       In the event that the return value is not the same as the ncmds parameter
+       the result member of the failing struct epoll_ctl_cmd will contain a
+       negative errno value related to the error. The errno values that can be set
+       are those documented on the epoll_ctl(2) manual page.
+
+CONFORMING TO
+
+       epoll_ctl_batch() is Linux-specific.
+
+SEE ALSO
+
+       epoll_create(2), epoll_ctl(2), epoll_wait(2), epoll_pwait(2), epoll(7)
+
+
+2) epoll_pwait1
+---------------
+
+NAME
+       epoll_pwait1 - wait for an I/O event on an epoll file descriptor
+
+SYNOPSIS
+
+       #include <sys/epoll.h>
+
+       int epoll_pwait1(int epfd, int flags,
+                        struct epoll_event *events,
+                        int maxevents,
+                        struct epoll_wait_params *params);
+
+DESCRIPTION
+
+       The epoll_pwait1() syscall differs from epoll_pwait() only in
+       parameter list. The epfd, events and maxevents parameters are the same
+       as in epoll_wait() and epoll_pwait(). The flags and params are new.
+
+       The flags is reserved and must be zero.
+
+       The params is a pointer to a struct epoll_wait_params which is
+       defined as:
+
+           struct epoll_wait_params {
+               int clockid;
+               struct timespec timeout;
+               sigset_t *sigmask;
+               size_t sigsetsize;
+           };
+
+       The clockid member must be either CLOCK_REALTIME or CLOCK_MONOTONIC.
+       This will choose the clock type to use for timeout. This differs to
+       epoll_pwait(2) which has an implicit clock type of CLOCK_MONOTONIC.
+       
+       The timeout member specifies the minimum time that epoll_wait(2) will
+       block. The time spent waiting will be rounded up to the clock
+       granularity. Kernel scheduling delays mean that the blocking
+       interval may overrun by a small amount. Specifying a -1 for either
+       tv_sec or tv_nsec member of the struct timespec timeout will cause
+       causes epoll_pwait1(2) to block indefinitely. Specifying a timeout
+       equal to zero (both tv_sec or tv_nsec member of the struct timespec
+       timeout are zero) causes epoll_wait(2) to return immediately, even
+       if no events are available.
+
+**** Are you really really sure about this for the -1 stuff? your code copies in the timespec and just passes it to timespec_to_ktime:
+
++	if (copy_from_user(&p, params, sizeof(p)))
++		return -EFAULT;
+...
++	kt = timespec_to_ktime(p.timeout);
+
+Compare that to something like the futex syscall which does this:
+
+		if (copy_from_user(&ts, utime, sizeof(ts)) != 0)
+			return -EFAULT;
+		if (!timespec_valid(&ts))
+			return -EINVAL;
+
+		t = timespec_to_ktime(ts);
+
+If the timespec is not valid it returns -EINVAL back to user space. With your settings of tv_sec and/or tv_usec to -1 are you relying on a side effect of the conversion that could break your code in the future if in the unlikely event someone changes timespec_to_ktime() and should it be:
+
++	if (copy_from_user(&p, params, sizeof(p)))
++		return -EFAULT;
++       if ((p.timeout.tv_sec == -1) || (p.timeout.tv_nsec == -1)) {
++  /* this is off the top of my head no idea if it will compile */
++		p.timeout.tv_sec = KTIME_SEC_MAX;
++		p.timeout.tv_nsec = 0;
++	}
++       if (!timespec_valid(&p.timeout))
++       	return -EINVAL;
+...
++	kt = timespec_to_ktime(p.timeout);
+
+I could of course be worried about nothing here is what I've suggested the right thing to do? Anyone feel free to chime in.
+
+       Both sigmask and sigsetsize have the same semantics as epoll_pwait(2). The
+       sigmask field may be specified as NULL, in which case epoll_pwait1(2)
+       will behave like epoll_wait(2).
+
+   User visibility of sigsetsize
+
+       In epoll_pwait(2) and other syscalls, sigsetsize is not visible to
+       an application developer as glibc has a wrapper around epoll_pwait(2).
+       Now we pack several parameters in epoll_wait_params. In
+       order to hide sigsetsize from application code this system call also
+       needs to be wrapped either by expanding parameters and building the
+       structure in the wrapper function, or by only asking application to
+       provide this part of the structure:
+
+           struct epoll_wait_params_user {
+               int clockid;
+               struct timespec timeout;
+               sigset_t *sigmask;
+           };
+
+      In the wrapper function it would be copied to a full structure and
+      sigsetsize filled in.
+
+RETURN VALUE
+
+       When successful, epoll_wait1() returns the number of file descriptors
+       ready for the requested I/O, or zero if no file descriptor became ready
+       during the requested timeout nanoseconds. When an error occurs, 
+       epoll_wait1() returns -1 and errno is set appropriately.
+
+ERRORS
+
+       This system call can set errno to the same values as epoll_pwait(2), 
+       as well as the following additional reasons:
+
+       EINVAL flags is not zero, or clockid is not one of CLOCK_REALTIME or
+              CLOCK_MONOTONIC.
+
+       EFAULT The memory area pointed to by params is not accessible.
+
+
+CONFORMING TO
+
+       epoll_pwait1() is Linux-specific.
+
+SEE ALSO
+
+       epoll_create(2), epoll_ctl(2), epoll_wait(2), epoll_pwait(2), epoll(7)
