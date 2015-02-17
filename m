@@ -1,44 +1,69 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH RESEND 3/12] ext4: Add support FALLOC_FL_INSERT_RANGE for
- fallocate
-Date: Tue, 17 Feb 2015 12:02:20 +1100
-Message-ID: <20150217010220.GH4251@dastard>
+From: Namjae Jeon <namjae.jeon@samsung.com>
+Subject: RE: [PATCH RESEND 11/12] xfstests: fsx: Add fallocate insert range
+ operation
+Date: Tue, 17 Feb 2015 10:43:52 +0900
+Message-ID: <001101d04a53$2ed730a0$8c8591e0$@samsung.com>
 References: <1424101680-3301-1-git-send-email-linkinjeon@gmail.com>
- <1424101680-3301-4-git-send-email-linkinjeon@gmail.com>
+ <1424101680-3301-12-git-send-email-linkinjeon@gmail.com>
+ <20150217010033.GG4251@dastard>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1424101680-3301-4-git-send-email-linkinjeon@gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Namjae Jeon <linkinjeon@gmail.com>
-Cc: tytso@mit.edu, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, a.sangwan@samsung.com, bfoster@redhat.com, mtk.manpages@gmail.com, linux-man@vger.kernel.org, linux-api@vger.kernel.org, Namjae Jeon <namjae.jeon@samsung.com>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-reply-to: <20150217010033.GG4251@dastard>
+Content-language: ko
+Sender: linux-kernel-owner@vger.kernel.org
+To: 'Dave Chinner' <david@fromorbit.com>, 'Namjae Jeon' <linkinjeon@gmail.com>
+Cc: tytso@mit.edu, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, a.sangwan@samsung.com, bfoster@redhat.com, mtk.manpages@gmail.com, linux-man@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 17, 2015 at 12:47:50AM +0900, Namjae Jeon wrote:
-> From: Namjae Jeon <namjae.jeon@samsung.com>
 > 
-> This patch implements fallocate's FALLOC_FL_INSERT_RANGE for Ext4.
+> On Tue, Feb 17, 2015 at 12:47:58AM +0900, Namjae Jeon wrote:
+> > From: Namjae Jeon <namjae.jeon@samsung.com>
+> >
+> > This commit adds fallocate FALLOC_FL_INSERT_RANGE support for fsx.
+> >
+> > Signed-off-by: Namjae Jeon <namjae.jeon@samsung.com>
+> > Signed-off-by: Ashish Sangwan <a.sangwan@samsung.com>
+> > Reviewed-by: Brian Foster <bfoster@redhat.com>
+> > ---
+> >  ltp/fsx.c |  124 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
+> >  1 file changed, 114 insertions(+), 10 deletions(-)
+> .....
+> > @@ -339,6 +341,14 @@ logdump(void)
+> >  						     lp->args[0] + lp->args[1])
+> >  				prt("\t******CCCC");
+> >  			break;
+> > +		case OP_INSERT_RANGE:
+> > +			prt("INSERT 0x%x thru 0x%x\t(0x%x bytes)",
+> > +			    lp->args[0], lp->args[0] + lp->args[1] - 1,
+> > +			    lp->args[1]);
+> > +			if (badoff >= lp->args[0] && badoff <
+> > +						     lp->args[0] + lp->args[1])
+> > +				prt("\t******CCCC");
 > 
-> 1) Make sure that both offset and len are block size aligned.
-> 2) Update the i_size of inode by len bytes.
-> 3) Compute the file's logical block number against offset. If the computed
->    block number is not the starting block of the extent, split the extent
->    such that the block number is the starting block of the extent.
-> 4) Shift all the extents which are lying bewteen [offset, last allocated extent]
->    towards right by len bytes. This step will make a hole of len bytes
->    at offset.
+Hi Dave,
+> Probably should output "*****IIII" so we can distinguish it from
+> collapse operations easily.
+Right. I will change it.
 > 
-> Signed-off-by: Namjae Jeon <namjae.jeon@samsung.com>
-> Signed-off-by: Ashish Sangwan <a.sangwan@samsung.com>
+> > @@ -1307,6 +1403,9 @@ usage(void)
+> >  #ifdef FALLOC_FL_COLLAPSE_RANGE
+> >  "	-C: Do not use collapse range calls\n"
+> >  #endif
+> > +#ifdef FALLOC_FL_INSERT_RANGE
+> > +"	-i: Do not use insert range calls\n"
+> > +#endif
+> 
+> I'd make that "-I" rather than "-i" so it matches with the "-C" of
+> collapse range.
+Okay.
 
-I'll leave this for the ext4 folk to review. If I don't get a review
-by the time we're ready to merge the VFS and XFS code, then I'll
-leave it out and let Ted merge it inhis own time.
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+Thanks for your review!
+> 
+> Cheers,
+> 
+> Dave.
+> --
+> Dave Chinner
+> david@fromorbit.com
