@@ -1,153 +1,179 @@
 From: Andrey Vagin <avagin@openvz.org>
-Subject: [PATCH 0/7] [RFC] kernel: add a netlink interface to get information about processes
-Date: Tue, 17 Feb 2015 11:20:19 +0300
-Message-ID: <1424161226-15176-1-git-send-email-avagin@openvz.org>
+Subject: [PATCH 5/7] kernel: add ability to iterate children of a specified task
+Date: Tue, 17 Feb 2015 11:20:24 +0300
+Message-ID: <1424161226-15176-6-git-send-email-avagin@openvz.org>
+References: <1424161226-15176-1-git-send-email-avagin@openvz.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1424161226-15176-1-git-send-email-avagin@openvz.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Cc: linux-api@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Cyrill Gorcunov <gorcunov@openvz.org>, Pavel Emelyanov <xemul@parallels.com>, Roger Luethi <rl@hellgate.ch>, Andrey Vagin <avagin@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-Here is a preview version. It provides restricted set of functionality.
-I would like to collect feedback about this idea.
-
-Currently we use the proc file system, where all information are
-presented in text files, what is convenient for humans.  But if we need
-to get information about processes from code (e.g. in C), the procfs
-doesn't look so cool.
-
->From code we would prefer to get information in binary format and to be
-able to specify which information and for which tasks are required. Here
-is a new interface with all these features, which is called task_diag.
-In addition it's much faster than procfs.
-
-task_diag is based on netlink sockets and looks like socket-diag, which
-is used to get information about sockets.
-
-A request is described by the task_diag_pid structure:
-
-struct task_diag_pid {
-       __u64   show_flags;	/* specify which information are required */
-       __u64   dump_stratagy;   /* specify a group of processes */
-
-       __u32   pid;
-};
-
-A respone is a set of netlink messages. Each message describes one task.
-All task properties are divided on groups. A message contains the
-TASK_DIAG_MSG group and other groups if they have been requested in
-show_flags. For example, if show_flags contains TASK_DIAG_SHOW_CRED, a
-response will contain the TASK_DIAG_CRED group which is described by the
-task_diag_creds structure.
-
-struct task_diag_msg {
-	__u32	tgid;
-	__u32	pid;
-	__u32	ppid;
-	__u32	tpid;
-	__u32	sid;
-	__u32	pgid;
-	__u8	state;
-	char	comm[TASK_DIAG_COMM_LEN];
-};
-
-Another good feature of task_diag is an ability to request information
-for a few processes. Currently here are two stratgies
-TASK_DIAG_DUMP_ALL	- get information for all tasks
-TASK_DIAG_DUMP_CHILDREN	- get information for children of a specified
-			  tasks
-
-The task diag is much faster than the proc file system. We don't need to
-create a new file descriptor for each task. We need to send a request
-and get a response. It allows to get information for a few task in one
-request-response iteration.
-
-I have compared performance of procfs and task-diag for the
-"ps ax -o pid,ppid" command.
-
-A test stand contains 10348 processes.
-$ ps ax -o pid,ppid | wc -l
-10348
-
-$ time ps ax -o pid,ppid > /dev/null
-
-real	0m1.073s
-user	0m0.086s
-sys	0m0.903s
-
-$ time ./task_diag_all > /dev/null
-
-real	0m0.037s
-user	0m0.004s
-sys	0m0.020s
-
-And here are statistics about syscalls which were called by each
-command.
-$ perf stat -e syscalls:sys_exit* -- ps ax -o pid,ppid  2>&1 | grep syscalls | sort -n -r | head -n 5
-            20,713      syscalls:sys_exit_open
-            20,710      syscalls:sys_exit_close
-            20,708      syscalls:sys_exit_read
-            10,348      syscalls:sys_exit_newstat
-                31      syscalls:sys_exit_write
-
-$ perf stat -e syscalls:sys_exit* -- ./task_diag_all  2>&1 | grep syscalls | sort -n -r | head -n 5
-               114      syscalls:sys_exit_recvfrom
-                49      syscalls:sys_exit_write
-                 8      syscalls:sys_exit_mmap
-                 4      syscalls:sys_exit_mprotect
-                 3      syscalls:sys_exit_newfstat
-
-You can find the test program from this experiment in the last patch.
-
-The idea of this functionality was suggested by Pavel Emelyanov
-(xemul@), when he found that operations with /proc forms a significant
-part of a checkpointing time.
-
-Ten years ago here was attempt to add a netlink interface to access to /proc
-information:
-http://lwn.net/Articles/99600/
+The interface is similar with the tgid iterator. It is used in
+procfs and it will be used in task_diag.
 
 Signed-off-by: Andrey Vagin <avagin@openvz.org>
+---
+ fs/proc/array.c         | 58 +++++++++++++------------------------------------
+ include/linux/proc_fs.h |  6 +++++
+ kernel/pid.c            | 55 ++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 76 insertions(+), 43 deletions(-)
 
-git repo: https://github.com/avagin/linux-task-diag
-
-Andrey Vagin (7):
-  [RFC] kernel: add a netlink interface to get information about tasks
-  kernel: move next_tgid from fs/proc
-  task-diag: add ability to get information about all tasks
-  task-diag: add a new group to get process credentials
-  kernel: add ability to iterate children of a specified task
-  task_diag: add ability to dump children
-  selftest: check the task_diag functinonality
-
- fs/proc/array.c                                    |  58 +---
- fs/proc/base.c                                     |  43 ---
- include/linux/proc_fs.h                            |  13 +
- include/uapi/linux/taskdiag.h                      |  89 ++++++
- init/Kconfig                                       |  12 +
- kernel/Makefile                                    |   1 +
- kernel/pid.c                                       |  94 ++++++
- kernel/taskdiag.c                                  | 343 +++++++++++++++++++++
- tools/testing/selftests/task_diag/Makefile         |  16 +
- tools/testing/selftests/task_diag/task_diag.c      |  59 ++++
- tools/testing/selftests/task_diag/task_diag_all.c  |  82 +++++
- tools/testing/selftests/task_diag/task_diag_comm.c | 195 ++++++++++++
- tools/testing/selftests/task_diag/task_diag_comm.h |  47 +++
- tools/testing/selftests/task_diag/taskdiag.h       |   1 +
- 14 files changed, 967 insertions(+), 86 deletions(-)
- create mode 100644 include/uapi/linux/taskdiag.h
- create mode 100644 kernel/taskdiag.c
- create mode 100644 tools/testing/selftests/task_diag/Makefile
- create mode 100644 tools/testing/selftests/task_diag/task_diag.c
- create mode 100644 tools/testing/selftests/task_diag/task_diag_all.c
- create mode 100644 tools/testing/selftests/task_diag/task_diag_comm.c
- create mode 100644 tools/testing/selftests/task_diag/task_diag_comm.h
- create mode 120000 tools/testing/selftests/task_diag/taskdiag.h
-
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Cyrill Gorcunov <gorcunov@openvz.org>
-Cc: Pavel Emelyanov <xemul@parallels.com>
-Cc: Roger Luethi <rl@hellgate.ch>
+diff --git a/fs/proc/array.c b/fs/proc/array.c
+index bd117d0..7197c6a 100644
+--- a/fs/proc/array.c
++++ b/fs/proc/array.c
+@@ -579,54 +579,26 @@ get_children_pid(struct inode *inode, struct pid *pid_prev, loff_t pos)
+ {
+ 	struct task_struct *start, *task;
+ 	struct pid *pid = NULL;
++	struct child_iter iter;
+ 
+-	read_lock(&tasklist_lock);
+-
+-	start = pid_task(proc_pid(inode), PIDTYPE_PID);
++	start = get_proc_task(inode);
+ 	if (!start)
+-		goto out;
++		return NULL;
+ 
+-	/*
+-	 * Lets try to continue searching first, this gives
+-	 * us significant speedup on children-rich processes.
+-	 */
+-	if (pid_prev) {
+-		task = pid_task(pid_prev, PIDTYPE_PID);
+-		if (task && task->real_parent == start &&
+-		    !(list_empty(&task->sibling))) {
+-			if (list_is_last(&task->sibling, &start->children))
+-				goto out;
+-			task = list_first_entry(&task->sibling,
+-						struct task_struct, sibling);
+-			pid = get_pid(task_pid(task));
+-			goto out;
+-		}
+-	}
++	if (pid_prev)
++		task = get_pid_task(pid_prev, PIDTYPE_PID);
++	else
++		task = NULL;
+ 
+-	/*
+-	 * Slow search case.
+-	 *
+-	 * We might miss some children here if children
+-	 * are exited while we were not holding the lock,
+-	 * but it was never promised to be accurate that
+-	 * much.
+-	 *
+-	 * "Just suppose that the parent sleeps, but N children
+-	 *  exit after we printed their tids. Now the slow paths
+-	 *  skips N extra children, we miss N tasks." (c)
+-	 *
+-	 * So one need to stop or freeze the leader and all
+-	 * its children to get a precise result.
+-	 */
+-	list_for_each_entry(task, &start->children, sibling) {
+-		if (pos-- == 0) {
+-			pid = get_pid(task_pid(task));
+-			break;
+-		}
+-	}
++	iter.parent = start;
++	iter.task = task;
++	iter.pos = pos;
++
++	iter = next_child(iter);
+ 
+-out:
+-	read_unlock(&tasklist_lock);
++	put_task_struct(start);
++	if (iter.task)
++		pid = get_pid(task_pid(iter.task));
+ 	return pid;
+ }
+ 
+diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
+index 136b6ed..eba98bc 100644
+--- a/include/linux/proc_fs.h
++++ b/include/linux/proc_fs.h
+@@ -89,4 +89,10 @@ struct tgid_iter {
+ 
+ struct tgid_iter next_tgid(struct pid_namespace *ns, struct tgid_iter iter);
+ 
++struct child_iter {
++	struct task_struct      *task, *parent;
++	unsigned int		pos;
++};
++
++struct child_iter next_child(struct child_iter iter);
+ #endif /* _LINUX_PROC_FS_H */
+diff --git a/kernel/pid.c b/kernel/pid.c
+index 082307a..6e3e42a 100644
+--- a/kernel/pid.c
++++ b/kernel/pid.c
+@@ -606,6 +606,61 @@ retry:
+ 	return iter;
+ }
+ 
++struct child_iter next_child(struct child_iter iter)
++{
++	struct task_struct *task;
++	loff_t pos = iter.pos;
++
++	read_lock(&tasklist_lock);
++
++	/*
++	 * Lets try to continue searching first, this gives
++	 * us significant speedup on children-rich processes.
++	 */
++	if (iter.task) {
++		task = iter.task;
++		if (task && task->real_parent == iter.parent &&
++		    !(list_empty(&task->sibling))) {
++			if (list_is_last(&task->sibling, &iter.parent->children)) {
++				task = NULL;
++				goto out;
++			}
++			task = list_first_entry(&task->sibling,
++						struct task_struct, sibling);
++			goto out;
++		}
++	}
++
++	/*
++	 * Slow search case.
++	 *
++	 * We might miss some children here if children
++	 * are exited while we were not holding the lock,
++	 * but it was never promised to be accurate that
++	 * much.
++	 *
++	 * "Just suppose that the parent sleeps, but N children
++	 *  exit after we printed their tids. Now the slow paths
++	 *  skips N extra children, we miss N tasks." (c)
++	 *
++	 * So one need to stop or freeze the leader and all
++	 * its children to get a precise result.
++	 */
++	list_for_each_entry(task, &iter.parent->children, sibling) {
++		if (pos-- == 0)
++			goto out;
++	}
++	task = NULL;
++out:
++	if (iter.task)
++		put_task_struct(iter.task);
++	if (task)
++		get_task_struct(task);
++	iter.task = task;
++	read_unlock(&tasklist_lock);
++	return iter;
++}
++
+ /*
+  * The pid hash table is scaled according to the amount of memory in the
+  * machine.  From a minimum of 16 slots up to 4096 slots at one gigabyte or
 -- 
 2.1.0
