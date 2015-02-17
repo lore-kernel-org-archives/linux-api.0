@@ -1,33 +1,38 @@
 From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH 0/7] [RFC] kernel: add a netlink interface to get information about processes
-Date: Tue, 17 Feb 2015 09:53:09 +0100
-Message-ID: <3238376.TxgiSSEfbZ@wuerfel>
-References: <1424161226-15176-1-git-send-email-avagin@openvz.org>
+Subject: Re: [PATCH 15/45] dm-log-userspace.h: include stdint.h in userspace
+Date: Tue, 17 Feb 2015 10:08:56 +0100
+Message-ID: <2309592.iOl8K3u7d8@wuerfel>
+References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi> <1424127948-22484-16-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1424161226-15176-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+In-Reply-To: <1424127948-22484-16-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>
+To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday 17 February 2015 11:20:19 Andrey Vagin wrote:
-> task_diag is based on netlink sockets and looks like socket-diag, which
-> is used to get information about sockets.
+On Tuesday 17 February 2015 00:05:18 Mikko Rapeli wrote:
+> --- a/include/uapi/linux/dm-log-userspace.h
+> +++ b/include/uapi/linux/dm-log-userspace.h
+> @@ -7,6 +7,11 @@
+>  #ifndef __DM_LOG_USERSPACE_H__
+>  #define __DM_LOG_USERSPACE_H__
+>  
+> +#ifdef __KERNEL__
+> +#include <linux/types.h>
+> +#else
+> +#include <stdint.h>
+> +#endif
+>  #include <linux/dm-ioctl.h> /* For DM_UUID_LEN */
 > 
-> A request is described by the task_diag_pid structure:
-> 
-> struct task_diag_pid {
->        __u64   show_flags;      /* specify which information are required */
->        __u64   dump_stratagy;   /* specify a group of processes */
-> 
->        __u32   pid;
-> };
 
-Can you explain how the interface relates to the 'taskstats' genetlink
-API? Did you consider extending that interface to provide the
-information you need instead of basing on the socket-diag?
+The normal way to do this in kernel headers is to use linux/types.h
+but change the data structures to use __u64 instead of uint64_t
+to avoid the build error.
+
+It's possible that the maintainers of this code have a strong opinion
+on this matter, but try doing that first.
 
 	Arnd
