@@ -1,46 +1,50 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH 15/45] dm-log-userspace.h: include stdint.h in userspace
-Date: Tue, 17 Feb 2015 14:55:49 +0100
-Message-ID: <2286739.alIuOL4vnt@wuerfel>
-References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi> <2309592.iOl8K3u7d8@wuerfel> <20150217133806.GA5220@agk-dp.fab.redhat.com>
+From: David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 0/7] [RFC] kernel: add a netlink interface to get information
+ about processes
+Date: Tue, 17 Feb 2015 09:09:47 -0700
+Message-ID: <54E367CB.9030309@gmail.com>
+References: <1424161226-15176-1-git-send-email-avagin@openvz.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150217133806.GA5220-FDJ95KluN3Z0klwcnFlA1dvLeJWuRmrY@public.gmane.org>
+In-Reply-To: <1424161226-15176-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday 17 February 2015 13:38:06 Alasdair G Kergon wrote:
-> On Tue, Feb 17, 2015 at 10:08:56AM +0100, Arnd Bergmann wrote:
-> > The normal way to do this in kernel headers is to use linux/types.h
-> > but change the data structures to use __u64 instead of uint64_t
-> > to avoid the build error.
->  
-> That's what happened to dm-ioctl.h.
+On 2/17/15 1:20 AM, Andrey Vagin wrote:
+> And here are statistics about syscalls which were called by each
+> command.
+> $ perf stat -e syscalls:sys_exit* -- ps ax -o pid,ppid  2>&1 | grep syscalls | sort -n -r | head -n 5
+>              20,713      syscalls:sys_exit_open
+>              20,710      syscalls:sys_exit_close
+>              20,708      syscalls:sys_exit_read
+>              10,348      syscalls:sys_exit_newstat
+>                  31      syscalls:sys_exit_write
+>
+> $ perf stat -e syscalls:sys_exit* -- ./task_diag_all  2>&1 | grep syscalls | sort -n -r | head -n 5
+>                 114      syscalls:sys_exit_recvfrom
+>                  49      syscalls:sys_exit_write
+>                   8      syscalls:sys_exit_mmap
+>                   4      syscalls:sys_exit_mprotect
+>                   3      syscalls:sys_exit_newfstat
 
-Ah, indeed. It turns out that it was my own change that did this:
+'perf trace -s' gives the summary with stats.
+e.g., perf trace -s --  ps ax -o pid,ppid
 
+  ps (23850), 3117 events, 99.3%, 0.000 msec
 
-commit 9adfbfb611307060db54691bc7e6d53fdc12312b
-Author: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Date:   Thu Feb 26 00:51:40 2009 +0100
-
-    make most exported headers use strict integer types
-    
-    This takes care of all files that have only a small number
-    of non-strict integer type uses.
-
-> (Or someone could adjust linux/types.h to include these as standard.)
-
-No, that wouldn't work. The C user space headers are not meant to
-be included implicitly by any standard headers, which might pull
-in linux/types.h implicitly.
-
-I think it would be best to change all patches in the new series
-in the same way for consistency and try to avoid using stdint.h
-as much as we can.
-
-	Arnd
+    syscall            calls      min       avg       max      stddev
+                                (msec)    (msec)    (msec)        (%)
+    --------------- -------- --------- --------- ---------     ------
+    read                 353     0.000     0.010     0.035      3.14%
+    write                166     0.006     0.012     0.045      3.03%
+    open                 365     0.002     0.005     0.178     11.29%
+    close                354     0.001     0.002     0.024      3.57%
+    stat                 170     0.002     0.007     0.662     52.99%
+    fstat                 19     0.002     0.003     0.003      2.31%
+    lseek                  2     0.003     0.003     0.003      6.49%
+    mmap                  50     0.004     0.006     0.013      3.40%
+...
