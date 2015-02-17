@@ -1,143 +1,33 @@
-From: Andrey Vagin <avagin@openvz.org>
-Subject: [PATCH 2/7] kernel: move next_tgid from fs/proc
-Date: Tue, 17 Feb 2015 11:20:21 +0300
-Message-ID: <1424161226-15176-3-git-send-email-avagin@openvz.org>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [PATCH 0/7] [RFC] kernel: add a netlink interface to get information about processes
+Date: Tue, 17 Feb 2015 09:53:09 +0100
+Message-ID: <3238376.TxgiSSEfbZ@wuerfel>
 References: <1424161226-15176-1-git-send-email-avagin@openvz.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1424161226-15176-1-git-send-email-avagin@openvz.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Cyrill Gorcunov <gorcunov@openvz.org>, Pavel Emelyanov <xemul@parallels.com>, Roger Luethi <rl@hellgate.ch>, Andrey Vagin <avagin@openvz.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1424161226-15176-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This function will be used in task_diag.
+On Tuesday 17 February 2015 11:20:19 Andrey Vagin wrote:
+> task_diag is based on netlink sockets and looks like socket-diag, which
+> is used to get information about sockets.
+> 
+> A request is described by the task_diag_pid structure:
+> 
+> struct task_diag_pid {
+>        __u64   show_flags;      /* specify which information are required */
+>        __u64   dump_stratagy;   /* specify a group of processes */
+> 
+>        __u32   pid;
+> };
 
-Signed-off-by: Andrey Vagin <avagin@openvz.org>
----
- fs/proc/base.c          | 43 -------------------------------------------
- include/linux/proc_fs.h |  7 +++++++
- kernel/pid.c            | 39 +++++++++++++++++++++++++++++++++++++++
- 3 files changed, 46 insertions(+), 43 deletions(-)
+Can you explain how the interface relates to the 'taskstats' genetlink
+API? Did you consider extending that interface to provide the
+information you need instead of basing on the socket-diag?
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 3f3d7ae..24ed43d 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -2795,49 +2795,6 @@ out:
- 	return ERR_PTR(result);
- }
- 
--/*
-- * Find the first task with tgid >= tgid
-- *
-- */
--struct tgid_iter {
--	unsigned int tgid;
--	struct task_struct *task;
--};
--static struct tgid_iter next_tgid(struct pid_namespace *ns, struct tgid_iter iter)
--{
--	struct pid *pid;
--
--	if (iter.task)
--		put_task_struct(iter.task);
--	rcu_read_lock();
--retry:
--	iter.task = NULL;
--	pid = find_ge_pid(iter.tgid, ns);
--	if (pid) {
--		iter.tgid = pid_nr_ns(pid, ns);
--		iter.task = pid_task(pid, PIDTYPE_PID);
--		/* What we to know is if the pid we have find is the
--		 * pid of a thread_group_leader.  Testing for task
--		 * being a thread_group_leader is the obvious thing
--		 * todo but there is a window when it fails, due to
--		 * the pid transfer logic in de_thread.
--		 *
--		 * So we perform the straight forward test of seeing
--		 * if the pid we have found is the pid of a thread
--		 * group leader, and don't worry if the task we have
--		 * found doesn't happen to be a thread group leader.
--		 * As we don't care in the case of readdir.
--		 */
--		if (!iter.task || !has_group_leader_pid(iter.task)) {
--			iter.tgid += 1;
--			goto retry;
--		}
--		get_task_struct(iter.task);
--	}
--	rcu_read_unlock();
--	return iter;
--}
--
- #define TGID_OFFSET (FIRST_PROCESS_ENTRY + 2)
- 
- /* for the /proc/ directory itself, after non-process stuff has been done */
-diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
-index b97bf2e..136b6ed 100644
---- a/include/linux/proc_fs.h
-+++ b/include/linux/proc_fs.h
-@@ -82,4 +82,11 @@ static inline struct proc_dir_entry *proc_net_mkdir(
- 	return proc_mkdir_data(name, 0, parent, net);
- }
- 
-+struct tgid_iter {
-+	unsigned int tgid;
-+	struct task_struct *task;
-+};
-+
-+struct tgid_iter next_tgid(struct pid_namespace *ns, struct tgid_iter iter);
-+
- #endif /* _LINUX_PROC_FS_H */
-diff --git a/kernel/pid.c b/kernel/pid.c
-index cd36a5e..082307a 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -568,6 +568,45 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
- }
- 
- /*
-+ * Find the first task with tgid >= tgid
-+ *
-+ */
-+struct tgid_iter next_tgid(struct pid_namespace *ns, struct tgid_iter iter)
-+{
-+	struct pid *pid;
-+
-+	if (iter.task)
-+		put_task_struct(iter.task);
-+	rcu_read_lock();
-+retry:
-+	iter.task = NULL;
-+	pid = find_ge_pid(iter.tgid, ns);
-+	if (pid) {
-+		iter.tgid = pid_nr_ns(pid, ns);
-+		iter.task = pid_task(pid, PIDTYPE_PID);
-+		/* What we to know is if the pid we have find is the
-+		 * pid of a thread_group_leader.  Testing for task
-+		 * being a thread_group_leader is the obvious thing
-+		 * todo but there is a window when it fails, due to
-+		 * the pid transfer logic in de_thread.
-+		 *
-+		 * So we perform the straight forward test of seeing
-+		 * if the pid we have found is the pid of a thread
-+		 * group leader, and don't worry if the task we have
-+		 * found doesn't happen to be a thread group leader.
-+		 * As we don't care in the case of readdir.
-+		 */
-+		if (!iter.task || !has_group_leader_pid(iter.task)) {
-+			iter.tgid += 1;
-+			goto retry;
-+		}
-+		get_task_struct(iter.task);
-+	}
-+	rcu_read_unlock();
-+	return iter;
-+}
-+
-+/*
-  * The pid hash table is scaled according to the amount of memory in the
-  * machine.  From a minimum of 16 slots up to 4096 slots at one gigabyte or
-  * more.
--- 
-2.1.0
+	Arnd
