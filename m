@@ -1,167 +1,152 @@
-From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 4/7] task-diag: add a new group to get process credentials
-Date: Tue, 17 Feb 2015 11:20:23 +0300
-Message-ID: <1424161226-15176-5-git-send-email-avagin@openvz.org>
+From: Andrey Vagin <avagin@openvz.org>
+Subject: [PATCH 6/7] task_diag: add ability to dump children
+Date: Tue, 17 Feb 2015 11:20:25 +0300
+Message-ID: <1424161226-15176-7-git-send-email-avagin@openvz.org>
 References: <1424161226-15176-1-git-send-email-avagin@openvz.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1424161226-15176-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1424161226-15176-1-git-send-email-avagin@openvz.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Cyrill Gorcunov <gorcunov@openvz.org>, Pavel Emelyanov <xemul@parallels.com>, Roger Luethi <rl@hellgate.ch>, Andrey Vagin <avagin@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-A response is represented by the task_diag_creds structure:
+Now we can dump all task or children of a specified task.
+It's an example how this interface can be expanded for different
+use-cases.
 
-struct task_diag_creds {
-       struct task_diag_caps cap_inheritable;
-       struct task_diag_caps cap_permitted;
-       struct task_diag_caps cap_effective;
-       struct task_diag_caps cap_bset;
-
-       __u32 uid;
-       __u32 euid;
-       __u32 suid;
-       __u32 fsuid;
-       __u32 gid;
-       __u32 egid;
-       __u32 sgid;
-       __u32 fsgid;
-};
-
-This group is optional and it filled only if show_flags contains
-TASK_DIAG_SHOW_CRED.
-
-Signed-off-by: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Signed-off-by: Andrey Vagin <avagin@openvz.org>
 ---
- include/uapi/linux/taskdiag.h | 23 ++++++++++++++++++
- kernel/taskdiag.c             | 55 ++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 77 insertions(+), 1 deletion(-)
+ include/uapi/linux/taskdiag.h |  1 +
+ kernel/taskdiag.c             | 83 +++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 73 insertions(+), 11 deletions(-)
 
 diff --git a/include/uapi/linux/taskdiag.h b/include/uapi/linux/taskdiag.h
-index e1feb35..db12f6d 100644
+index db12f6d..d8a9e92 100644
 --- a/include/uapi/linux/taskdiag.h
 +++ b/include/uapi/linux/taskdiag.h
-@@ -9,11 +9,14 @@
+@@ -68,6 +68,7 @@ enum {
+ #define TASKDIAG_CMD_MAX (__TASKDIAG_CMD_MAX - 1)
  
- enum {
- 	/* optional attributes which can be specified in show_flags */
-+	TASK_DIAG_CRED,
+ #define TASK_DIAG_DUMP_ALL	0
++#define TASK_DIAG_DUMP_CHILDREN	1
  
- 	/* other attributes */
- 	TASK_DIAG_MSG = 64,
- };
- 
-+#define TASK_DIAG_SHOW_CRED (1ULL << TASK_DIAG_CRED)
-+
- enum {
- 	TASK_DIAG_RUNNING,
- 	TASK_DIAG_INTERRUPTIBLE,
-@@ -37,6 +40,26 @@ struct task_diag_msg {
- 	char	comm[TASK_DIAG_COMM_LEN];
- };
- 
-+struct task_diag_caps {
-+	__u32 cap[_LINUX_CAPABILITY_U32S_3];
-+};
-+
-+struct task_diag_creds {
-+	struct task_diag_caps cap_inheritable;
-+	struct task_diag_caps cap_permitted;
-+	struct task_diag_caps cap_effective;
-+	struct task_diag_caps cap_bset;
-+
-+	__u32 uid;
-+	__u32 euid;
-+	__u32 suid;
-+	__u32 fsuid;
-+	__u32 gid;
-+	__u32 egid;
-+	__u32 sgid;
-+	__u32 fsgid;
-+};
-+
- enum {
- 	TASKDIAG_CMD_UNSPEC = 0,	/* Reserved */
- 	TASKDIAG_CMD_GET,
+ struct task_diag_pid {
+ 	__u64	show_flags;
 diff --git a/kernel/taskdiag.c b/kernel/taskdiag.c
-index da4a51b..6ccbcaf 100644
+index 6ccbcaf..951ecbd 100644
 --- a/kernel/taskdiag.c
 +++ b/kernel/taskdiag.c
-@@ -15,7 +15,14 @@ static struct genl_family family = {
- 
- static size_t taskdiag_packet_size(u64 show_flags)
- {
--	return nla_total_size(sizeof(struct task_diag_msg));
-+	size_t size;
-+
-+	size = nla_total_size(sizeof(struct task_diag_msg));
-+
-+	if (show_flags & TASK_DIAG_SHOW_CRED)
-+		size += nla_total_size(sizeof(struct task_diag_creds));
-+
-+	return size;
+@@ -155,12 +155,71 @@ err:
+ 	return err;
  }
  
- /*
-@@ -82,6 +89,46 @@ static int fill_task_msg(struct task_struct *p, struct sk_buff *skb)
- 	return 0;
- }
- 
-+static inline void caps2diag(struct task_diag_caps *diag, const kernel_cap_t *cap)
++struct task_iter {
++	struct task_diag_pid *req;
++	struct pid_namespace *ns;
++	struct netlink_callback *cb;
++
++	union {
++		struct tgid_iter tgid;
++		struct child_iter child;
++	};
++};
++
++static struct task_struct *iter_start(struct task_iter *iter)
 +{
-+	int i;
++	switch (iter->req->dump_stratagy) {
++	case TASK_DIAG_DUMP_CHILDREN:
++		rcu_read_lock();
++		iter->child.parent = find_task_by_pid_ns(iter->req->pid, iter->ns);
++		if (iter->child.parent)
++			get_task_struct(iter->child.parent);
++		rcu_read_unlock();
 +
-+	for (i = 0; i < _LINUX_CAPABILITY_U32S_3; i++)
-+		diag->cap[i] = cap->cap[i];
-+}
++		if (iter->child.parent == NULL)
++			return ERR_PTR(-ESRCH);
 +
-+static int fill_creds(struct task_struct *p, struct sk_buff *skb)
-+{
-+	struct user_namespace *user_ns = current_user_ns();
-+	struct task_diag_creds *diag_cred;
-+	const struct cred *cred;
-+	struct nlattr *attr;
++		iter->child.pos = iter->cb->args[0];
++		iter->child.task = NULL;
++		iter->child = next_child(iter->child);
++		return iter->child.task;
 +
-+	attr = nla_reserve(skb, TASK_DIAG_CRED, sizeof(struct task_diag_creds));
-+	if (!attr)
-+		return -EMSGSIZE;
-+
-+	diag_cred = nla_data(attr);
-+
-+	cred = get_task_cred(p);
-+
-+	caps2diag(&diag_cred->cap_inheritable, &cred->cap_inheritable);
-+	caps2diag(&diag_cred->cap_permitted, &cred->cap_permitted);
-+	caps2diag(&diag_cred->cap_effective, &cred->cap_effective);
-+	caps2diag(&diag_cred->cap_bset, &cred->cap_bset);
-+
-+	diag_cred->uid   = from_kuid_munged(user_ns, cred->uid);
-+	diag_cred->euid  = from_kuid_munged(user_ns, cred->euid);
-+	diag_cred->suid  = from_kuid_munged(user_ns, cred->suid);
-+	diag_cred->fsuid = from_kuid_munged(user_ns, cred->fsuid);
-+	diag_cred->gid   = from_kgid_munged(user_ns, cred->gid);
-+	diag_cred->egid  = from_kgid_munged(user_ns, cred->egid);
-+	diag_cred->sgid  = from_kgid_munged(user_ns, cred->sgid);
-+	diag_cred->fsgid = from_kgid_munged(user_ns, cred->fsgid);
-+
-+	return 0;
-+}
-+
- static int task_diag_fill(struct task_struct *tsk, struct sk_buff *skb,
- 				u64 show_flags, u32 portid, u32 seq)
- {
-@@ -96,6 +143,12 @@ static int task_diag_fill(struct task_struct *tsk, struct sk_buff *skb,
- 	if (err)
- 		goto err;
- 
-+	if (show_flags & TASK_DIAG_SHOW_CRED) {
-+		err = fill_creds(tsk, skb);
-+		if (err)
-+			goto err;
++	case TASK_DIAG_DUMP_ALL:
++		iter->tgid.tgid = iter->cb->args[0];
++		iter->tgid.task = NULL;
++		iter->tgid = next_tgid(iter->ns, iter->tgid);
++		return iter->tgid.task;
 +	}
 +
- 	return genlmsg_end(skb, reply);
- err:
- 	genlmsg_cancel(skb, reply);
++	return ERR_PTR(-EINVAL);
++}
++
++static struct task_struct *iter_next(struct task_iter *iter)
++{
++	switch (iter->req->dump_stratagy) {
++	case TASK_DIAG_DUMP_CHILDREN:
++		iter->child.pos += 1;
++		iter->child = next_child(iter->child);
++		iter->cb->args[0] = iter->child.pos;
++		return iter->child.task;
++
++	case TASK_DIAG_DUMP_ALL:
++		iter->tgid.tgid += 1;
++		iter->tgid = next_tgid(iter->ns, iter->tgid);
++		iter->cb->args[0] = iter->tgid.tgid;
++		return iter->tgid.task;
++	}
++
++	return NULL;
++}
++
+ static int taskdiag_dumpid(struct sk_buff *skb, struct netlink_callback *cb)
+ {
+ 	struct pid_namespace *ns = task_active_pid_ns(current);
+-	struct tgid_iter iter;
++	struct task_iter iter;
+ 	struct nlattr *na;
+ 	struct task_diag_pid *req;
++	struct task_struct *task;
+ 	int rc;
+ 
+ 	if (nlmsg_len(cb->nlh) < GENL_HDRLEN + sizeof(*req))
+@@ -172,26 +231,28 @@ static int taskdiag_dumpid(struct sk_buff *skb, struct netlink_callback *cb)
+ 
+ 	req = (struct task_diag_pid *) nla_data(na);
+ 
+-	iter.tgid = cb->args[0];
+-	iter.task = NULL;
+-	for (iter = next_tgid(ns, iter);
+-	     iter.task;
+-	     iter.tgid += 1, iter = next_tgid(ns, iter)) {
+-		if (!ptrace_may_access(iter.task, PTRACE_MODE_READ))
++	iter.req = req;
++	iter.ns  = ns;
++	iter.cb  = cb;
++
++	task = iter_start(&iter);
++	if (IS_ERR(task) < 0)
++		return PTR_ERR(task);
++
++	for (; task; task = iter_next(&iter)) {
++		if (!ptrace_may_access(task, PTRACE_MODE_READ))
+ 			continue;
+ 
+-		rc = task_diag_fill(iter.task, skb, req->show_flags,
++		rc = task_diag_fill(task, skb, req->show_flags,
+ 				NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq);
+ 		if (rc < 0) {
+-			put_task_struct(iter.task);
++			put_task_struct(task);
+ 			if (rc != -EMSGSIZE)
+ 				return rc;
+ 			break;
+ 		}
+ 	}
+ 
+-	cb->args[0] = iter.tgid;
+-
+ 	return skb->len;
+ }
+ 
 -- 
 2.1.0
