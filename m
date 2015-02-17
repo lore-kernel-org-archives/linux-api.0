@@ -1,58 +1,28 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH RESEND 1/12] fs: Add support FALLOC_FL_INSERT_RANGE for
- fallocate
-Date: Tue, 17 Feb 2015 10:53:47 +1100
-Message-ID: <20150216235346.GD4251@dastard>
-References: <1424101680-3301-1-git-send-email-linkinjeon@gmail.com>
- <1424101680-3301-2-git-send-email-linkinjeon@gmail.com>
+From: Jan Engelhardt <jengelh@inai.de>
+Subject: Re: [PATCH 43/45] include/uapi/linux/netfilter_bridge.h: include
+ if.h
+Date: Tue, 17 Feb 2015 01:02:50 +0100 (CET)
+Message-ID: <alpine.LSU.2.11.1502170101520.32748@nerf60.vanv.qr>
+References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi> <1424127948-22484-44-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1424101680-3301-2-git-send-email-linkinjeon@gmail.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Namjae Jeon <linkinjeon@gmail.com>
-Cc: tytso@mit.edu, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, a.sangwan@samsung.com, bfoster@redhat.com, mtk.manpages@gmail.com, linux-man@vger.kernel.org, linux-api@vger.kernel.org, Namjae Jeon <namjae.jeon@samsung.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1424127948-22484-44-git-send-email-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikko Rapeli <mikko.rapeli@iki.fi>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Netfilter Developer Mailing List <netfilter-devel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 17, 2015 at 12:47:48AM +0900, Namjae Jeon wrote:
-> From: Namjae Jeon <namjae.jeon@samsung.com>
-> 
-> FALLOC_FL_INSERT_RANGE command is the opposite command of
-> FALLOC_FL_COLLAPSE_RANGE that is needed for advertisers or someone who want to
-> add some data in the middle of file. FALLOC_FL_INSERT_RANGE will create space
-> for writing new data within a file after shifting extents to right as given
-> length. and this command also has same limitation as FALLOC_FL_COLLAPSE_RANGE,
-> that is block boundary and use ftruncate(2) for crosses EOF.
-> 
-> Signed-off-by: Namjae Jeon <namjae.jeon@samsung.com>
-> Signed-off-by: Ashish Sangwan <a.sangwan@samsung.com>
-> Cc: Brian Foster<bfoster@redhat.com>
-> ---
->  fs/open.c                   |    8 +++++++-
->  include/uapi/linux/falloc.h |   17 +++++++++++++++++
->  2 files changed, 24 insertions(+), 1 deletion(-)
-> 
-> diff --git a/fs/open.c b/fs/open.c
-> index 813be03..762fb45 100644
-> --- a/fs/open.c
-> +++ b/fs/open.c
-> @@ -232,7 +232,8 @@ int vfs_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
->  
->  	/* Return error if mode is not supported */
->  	if (mode & ~(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |
-> -		     FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_ZERO_RANGE))
-> +		     FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_ZERO_RANGE |
-> +		     FALLOC_FL_INSERT_RANGE))
->  		return -EOPNOTSUPP;
+On Tuesday 2015-02-17 00:05, Mikko Rapeli wrote:
 
-Can we create a FALLOC_FL_SUPPORTED_MASK define in falloc.h
-so that we only need to add new flags to the mask in rather than
-change this code every time we add a new flag?
+>Fixes userspace compilation errors like:
+>
+>error: field =E2=80=98in=E2=80=99 has incomplete type
+>struct in_addr in;
+>=20
+>+#include <linux/if.h>
 
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+Patch 36/45 included linux/in.h instead of linux/if.h for addressing "i=
+n has incomplete
+type". Should this be used here too?
