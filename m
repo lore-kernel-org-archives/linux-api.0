@@ -1,83 +1,61 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH RFC v3 0/7] epoll: Introduce new syscalls,
- epoll_ctl_batch and epoll_pwait1
-Date: Wed, 18 Feb 2015 19:49:34 +0100
-Message-ID: <20150218184934.GA7493@gmail.com>
-References: <1423818243-15410-1-git-send-email-famz@redhat.com>
- <20150215150011.0340686c@lwn.net>
- <20150216010224.GA32421@ad.nay.redhat.com>
+From: Eric Wong <normalperson-rMlxZR9MS24@public.gmane.org>
+Subject: Re: [PATCH v2 2/2] epoll: introduce EPOLLEXCLUSIVE and
+ EPOLLROUNDROBIN
+Date: Wed, 18 Feb 2015 22:18:08 +0000
+Message-ID: <20150218221808.GA3799@dcvr.yhbt.net>
+References: <cover.1424200151.git.jbaron@akamai.com>
+ <7956874bfdc7403f37afe8a75e50c24221039bd2.1424200151.git.jbaron@akamai.com>
+ <20150218080740.GA10199@gmail.com>
+ <54E4B2D0.8020706@akamai.com>
+ <20150218163300.GA28007@gmail.com>
+ <54E4CE14.5010708@akamai.com>
+ <20150218174533.GB31566@gmail.com>
+ <20150218175123.GA31878@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150216010224.GA32421@ad.nay.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Fam Zheng <famz@redhat.com>
-Cc: Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <mszeredi@suse.cz>, David Drysdale <drysdale@google.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Theodore Ts'o <tytso@mit.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Rashika Kheria <rashika.kheria@gmail.com>, Hugh Dickins <hughd@google.com>, Mathieu Desnoyers <mathieu.desnoyers@effi>
+In-Reply-To: <20150218175123.GA31878-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-
-* Fam Zheng <famz@redhat.com> wrote:
-
-> On Sun, 02/15 15:00, Jonathan Corbet wrote:
-> > On Fri, 13 Feb 2015 17:03:56 +0800
-> > Fam Zheng <famz@redhat.com> wrote:
-> > 
-> > > SYNOPSIS
-> > > 
-> > >        #include <sys/epoll.h>
-> > > 
-> > >        int epoll_pwait1(int epfd, int flags,
-> > >                         struct epoll_event *events,
-> > >                         int maxevents,
-> > >                         struct epoll_wait_params *params);
-> > 
-> > Quick, possibly dumb question: might it make sense to also pass in 
-> > sizeof(struct epoll_wait_params)?  That way, when somebody wants to add
-> > another parameter in the future, the kernel can tell which version is in
-> > use and they won't have to do an epoll_pwait2()?
-> > 
+Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
 > 
-> Flags can be used for that, if the change is not 
-> radically different.
+> * Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> 
+> > > [...] However, I think the userspace API change is less 
+> > > clear since epoll_wait() doesn't currently have an 
+> > > 'input' events argument as epoll_ctl() does.
+> > 
+> > ... but the change would be a bit clearer and somewhat 
+> > more flexible: LIFO or FIFO queueing, right?
+> > 
+> > But having the queueing model as part of the epoll 
+> > context is a legitimate approach as well.
+> 
+> Btw., there's another optimization that the networking code 
+> already does when processing incoming packets: waking up a 
+> thread on the local CPU, where the wakeup is running.
+> 
+> Doing the same on epoll would have real scalability 
+> advantages where incoming events are IRQ driven and are 
+> distributed amongst multiple CPUs.
 
-Passing in size is generally better than flags, because 
-that way an extension of the ABI (new field[s]) 
-automatically signals towards the kernel what to do with 
-old binaries - while extending the functionality of new 
-binaries, without sacrificing functionality.
+Right.  One thing in the back of my mind has been to have CPU
+affinity for epoll.  Either having everything in an epoll set
+favor a certain CPU or even having affinity down to the epitem
+level (so concurrent epoll_wait callers end up favoring the
+same epitems).
 
-With flags you are either limited to the same structure 
-size - or have to decode a 'size' value from the flags 
-value - which is fragile (and in which case a real 'size' 
-parameter is better).
+I'm not convinced this series is worth doing without a
+comparison against my previous suggestion to use a dedicated
+thread which only makes blocking accept4 + EPOLL_CTL_ADD calls.
 
-in the perf ABI we use something like that: there's a 
-perf_attr.size parameter that iterates the ABI forward, 
-while still being binary compatible with older software.
-
-If old binaries pass in a smaller structure to a newer 
-kernel then the kernel pads the new fields with zero by 
-default - that way the kernel internals are never burdened 
-with compatibility details and data format versions.
-
-If new user-space passes in a large structure than the 
-kernel can handle then the kernel returns an error - this 
-way user-space can transparently support conditional 
-features and fallback logic.
-
-It works really well, we've done literally a hundred perf 
-ABI extensions this way in the last 4+ years, in a pretty 
-natural fashion, without littering the kernel (or 
-user-space) with version legacies and without breaking 
-existing perf tooling.
-
-Other syscall ABIs already get painful when trying to 
-handle 2-3 data structure versions, so people either give 
-up, or add flags kludges or go to new syscall entries: 
-which is painful in its own fashion and adds unnecessary 
-latency to feature introduction as well.
-
-Thanks,
-
-	Ingo
+The majority of epoll events in a typical server should not be
+for listen sockets, so I'd rather not bloat existing code paths
+for them.  For web servers nowadays, the benefits of maintaining
+long-lived connections to avoid handshakes is even more
+beneficial with increasing HTTPS and HTTP2 adoption; so
+listen socket events should become less common.
