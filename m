@@ -1,49 +1,82 @@
 From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH v2 2/2] epoll: introduce EPOLLEXCLUSIVE and
- EPOLLROUNDROBIN
-Date: Wed, 18 Feb 2015 18:51:23 +0100
-Message-ID: <20150218175123.GA31878@gmail.com>
-References: <cover.1424200151.git.jbaron@akamai.com>
- <7956874bfdc7403f37afe8a75e50c24221039bd2.1424200151.git.jbaron@akamai.com>
- <20150218080740.GA10199@gmail.com>
- <54E4B2D0.8020706@akamai.com>
- <20150218163300.GA28007@gmail.com>
- <54E4CE14.5010708@akamai.com>
- <20150218174533.GB31566@gmail.com>
+Subject: Re: [PATCH RFC v3 0/7] epoll: Introduce new syscalls,
+ epoll_ctl_batch and epoll_pwait1
+Date: Wed, 18 Feb 2015 19:49:34 +0100
+Message-ID: <20150218184934.GA7493@gmail.com>
+References: <1423818243-15410-1-git-send-email-famz@redhat.com>
+ <20150215150011.0340686c@lwn.net>
+ <20150216010224.GA32421@ad.nay.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150218174533.GB31566@gmail.com>
+In-Reply-To: <20150216010224.GA32421@ad.nay.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jason Baron <jbaron@akamai.com>
-Cc: peterz@infradead.org, mingo@redhat.com, viro@zeniv.linux.org.uk, akpm@linux-foundation.org, normalperson@yhbt.net, davidel@xmailserver.org, mtk.manpages@gmail.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <a.p.zijlstra@chello.nl>
+To: Fam Zheng <famz@redhat.com>
+Cc: Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <mszeredi@suse.cz>, David Drysdale <drysdale@google.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Theodore Ts'o <tytso@mit.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Rashika Kheria <rashika.kheria@gmail.com>, Hugh Dickins <hughd@google.com>, Mathieu Desnoyers <mathieu.desnoyers@effi>
 List-Id: linux-api@vger.kernel.org
 
 
-* Ingo Molnar <mingo@kernel.org> wrote:
+* Fam Zheng <famz@redhat.com> wrote:
 
-> > [...] However, I think the userspace API change is less 
-> > clear since epoll_wait() doesn't currently have an 
-> > 'input' events argument as epoll_ctl() does.
+> On Sun, 02/15 15:00, Jonathan Corbet wrote:
+> > On Fri, 13 Feb 2015 17:03:56 +0800
+> > Fam Zheng <famz@redhat.com> wrote:
+> > 
+> > > SYNOPSIS
+> > > 
+> > >        #include <sys/epoll.h>
+> > > 
+> > >        int epoll_pwait1(int epfd, int flags,
+> > >                         struct epoll_event *events,
+> > >                         int maxevents,
+> > >                         struct epoll_wait_params *params);
+> > 
+> > Quick, possibly dumb question: might it make sense to also pass in 
+> > sizeof(struct epoll_wait_params)?  That way, when somebody wants to add
+> > another parameter in the future, the kernel can tell which version is in
+> > use and they won't have to do an epoll_pwait2()?
+> > 
 > 
-> ... but the change would be a bit clearer and somewhat 
-> more flexible: LIFO or FIFO queueing, right?
-> 
-> But having the queueing model as part of the epoll 
-> context is a legitimate approach as well.
+> Flags can be used for that, if the change is not 
+> radically different.
 
-Btw., there's another optimization that the networking code 
-already does when processing incoming packets: waking up a 
-thread on the local CPU, where the wakeup is running.
+Passing in size is generally better than flags, because 
+that way an extension of the ABI (new field[s]) 
+automatically signals towards the kernel what to do with 
+old binaries - while extending the functionality of new 
+binaries, without sacrificing functionality.
 
-Doing the same on epoll would have real scalability 
-advantages where incoming events are IRQ driven and are 
-distributed amongst multiple CPUs.
+With flags you are either limited to the same structure 
+size - or have to decode a 'size' value from the flags 
+value - which is fragile (and in which case a real 'size' 
+parameter is better).
 
-Where events are task driven the scheduler will already try 
-to pair up waker and wakee so it might not show up in 
-measurements that markedly.
+in the perf ABI we use something like that: there's a 
+perf_attr.size parameter that iterates the ABI forward, 
+while still being binary compatible with older software.
+
+If old binaries pass in a smaller structure to a newer 
+kernel then the kernel pads the new fields with zero by 
+default - that way the kernel internals are never burdened 
+with compatibility details and data format versions.
+
+If new user-space passes in a large structure than the 
+kernel can handle then the kernel returns an error - this 
+way user-space can transparently support conditional 
+features and fallback logic.
+
+It works really well, we've done literally a hundred perf 
+ABI extensions this way in the last 4+ years, in a pretty 
+natural fashion, without littering the kernel (or 
+user-space) with version legacies and without breaking 
+existing perf tooling.
+
+Other syscall ABIs already get painful when trying to 
+handle 2-3 data structure versions, so people either give 
+up, or add flags kludges or go to new syscall entries: 
+which is painful in its own fashion and adds unnecessary 
+latency to feature introduction as well.
 
 Thanks,
 
