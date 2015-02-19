@@ -1,668 +1,242 @@
-From: Andrew Lunn <andrew-g2DYL2Zd6BY@public.gmane.org>
-Subject: Re: [RFC PATCH 1/3] eeprom: Add a simple EEPROM framework
-Date: Thu, 19 Feb 2015 19:12:30 +0100
-Message-ID: <20150219181230.GC795@lunn.ch>
-References: <1424365639-26634-1-git-send-email-srinivas.kandagatla@linaro.org>
- <1424365708-26681-1-git-send-email-srinivas.kandagatla@linaro.org>
+From: Andrew Vagin <avagin-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Subject: Re: [PATCH 0/7] [RFC] kernel: add a netlink interface to get
+ information about processes
+Date: Fri, 20 Feb 2015 00:39:30 +0300
+Message-ID: <20150219213929.GA16250@paralelels.com>
+References: <1424161226-15176-1-git-send-email-avagin@openvz.org>
+ <CALCETrWyQpr-x=No4mK_95gSANL-_fTr3qC7WjT_5TyFQb_rGw@mail.gmail.com>
+ <20150218142718.GA30542@paralelels.com>
+ <CALCETrU5B+1g9B3GH2WpPMaB98thXxpL1fAsHjssK1t_fDM_ZQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="koi8-r"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1424365708-26681-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+In-Reply-To: <CALCETrU5B+1g9B3GH2WpPMaB98thXxpL1fAsHjssK1t_fDM_ZQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 19, 2015 at 05:08:28PM +0000, Srinivas Kandagatla wrote:
-> From: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+On Wed, Feb 18, 2015 at 05:18:38PM -0800, Andy Lutomirski wrote:
+> On Feb 18, 2015 6:27 AM, "Andrew Vagin" <avagin-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org> wrote:
+> >
+> > On Tue, Feb 17, 2015 at 11:05:31AM -0800, Andy Lutomirski wrote:
+> > > On Feb 17, 2015 12:40 AM, "Andrey Vagin" <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> wrote:
+> > > >
+> > > > Here is a preview version. It provides restricted set of functionality.
+> > > > I would like to collect feedback about this idea.
+> > > >
+> > > > Currently we use the proc file system, where all information are
+> > > > presented in text files, what is convenient for humans.  But if we need
+> > > > to get information about processes from code (e.g. in C), the procfs
+> > > > doesn't look so cool.
+> > > >
+> > > > From code we would prefer to get information in binary format and to be
+> > > > able to specify which information and for which tasks are required. Here
+> > > > is a new interface with all these features, which is called task_diag.
+> > > > In addition it's much faster than procfs.
+> > > >
+> > > > task_diag is based on netlink sockets and looks like socket-diag, which
+> > > > is used to get information about sockets.
+> > > >
+> > > > A request is described by the task_diag_pid structure:
+> > > >
+> > > > struct task_diag_pid {
+> > > >        __u64   show_flags;      /* specify which information are required */
+> > > >        __u64   dump_stratagy;   /* specify a group of processes */
+> > > >
+> > > >        __u32   pid;
+> > > > };
+> > > >
+> > > > A respone is a set of netlink messages. Each message describes one task.
+> > > > All task properties are divided on groups. A message contains the
+> > > > TASK_DIAG_MSG group and other groups if they have been requested in
+> > > > show_flags. For example, if show_flags contains TASK_DIAG_SHOW_CRED, a
+> > > > response will contain the TASK_DIAG_CRED group which is described by the
+> > > > task_diag_creds structure.
+> > > >
+> > > > struct task_diag_msg {
+> > > >         __u32   tgid;
+> > > >         __u32   pid;
+> > > >         __u32   ppid;
+> > > >         __u32   tpid;
+> > > >         __u32   sid;
+> > > >         __u32   pgid;
+> > > >         __u8    state;
+> > > >         char    comm[TASK_DIAG_COMM_LEN];
+> > > > };
+> > > >
+> > > > Another good feature of task_diag is an ability to request information
+> > > > for a few processes. Currently here are two stratgies
+> > > > TASK_DIAG_DUMP_ALL      - get information for all tasks
+> > > > TASK_DIAG_DUMP_CHILDREN - get information for children of a specified
+> > > >                           tasks
+> > > >
+> > > > The task diag is much faster than the proc file system. We don't need to
+> > > > create a new file descriptor for each task. We need to send a request
+> > > > and get a response. It allows to get information for a few task in one
+> > > > request-response iteration.
+> > > >
+> > > > I have compared performance of procfs and task-diag for the
+> > > > "ps ax -o pid,ppid" command.
+> > > >
+> > > > A test stand contains 10348 processes.
+> > > > $ ps ax -o pid,ppid | wc -l
+> > > > 10348
+> > > >
+> > > > $ time ps ax -o pid,ppid > /dev/null
+> > > >
+> > > > real    0m1.073s
+> > > > user    0m0.086s
+> > > > sys     0m0.903s
+> > > >
+> > > > $ time ./task_diag_all > /dev/null
+> > > >
+> > > > real    0m0.037s
+> > > > user    0m0.004s
+> > > > sys     0m0.020s
+> > > >
+> > > > And here are statistics about syscalls which were called by each
+> > > > command.
+> > > > $ perf stat -e syscalls:sys_exit* -- ps ax -o pid,ppid  2>&1 | grep syscalls | sort -n -r | head -n 5
+> > > >             20,713      syscalls:sys_exit_open
+> > > >             20,710      syscalls:sys_exit_close
+> > > >             20,708      syscalls:sys_exit_read
+> > > >             10,348      syscalls:sys_exit_newstat
+> > > >                 31      syscalls:sys_exit_write
+> > > >
+> > > > $ perf stat -e syscalls:sys_exit* -- ./task_diag_all  2>&1 | grep syscalls | sort -n -r | head -n 5
+> > > >                114      syscalls:sys_exit_recvfrom
+> > > >                 49      syscalls:sys_exit_write
+> > > >                  8      syscalls:sys_exit_mmap
+> > > >                  4      syscalls:sys_exit_mprotect
+> > > >                  3      syscalls:sys_exit_newfstat
+> > > >
+> > > > You can find the test program from this experiment in the last patch.
+> > > >
+> > > > The idea of this functionality was suggested by Pavel Emelyanov
+> > > > (xemul@), when he found that operations with /proc forms a significant
+> > > > part of a checkpointing time.
+> > > >
+> > > > Ten years ago here was attempt to add a netlink interface to access to /proc
+> > > > information:
+> > > > http://lwn.net/Articles/99600/
+> > >
+> > > I don't suppose this could use real syscalls instead of netlink.  If
+> > > nothing else, netlink seems to conflate pid and net namespaces.
+> >
+> > What do you mean by "conflate pid and net namespaces"?
 > 
-> Up until now, EEPROM drivers were stored in drivers/misc, where they all had to
-> duplicate pretty much the same code to register a sysfs file, allow in-kernel
-> users to access the content of the devices they were driving, etc.
+> A netlink socket is bound to a network namespace, but you should be
+> returning data specific to a pid namespace.
+
+Here is a good question. When we mount a procfs instance, the current
+pidns is saved on a superblock. Then if we read data from
+this procfs from another pidns, we will see pid-s from the pidns where
+this procfs has been mounted.
+
+$ unshare -p -- bash -c '(bash)'
+$ cat /proc/self/status | grep ^Pid:
+Pid:	15770
+$ echo $$
+1
+
+A similar situation with socket_diag. A socket_diag socket is bound to a
+network namespace. If we open a socket_diag socket and change a network
+namespace, it will return infromation about the initial netns.
+
+In this version I always use a current pid namespace.
+But to be consistant with other kernel logic, a socket diag has to be
+linked with a pidns where it has been created.
+
 > 
-> This was also a problem as far as other in-kernel users were involved, since
-> the solutions used were pretty much different from on driver to another, there
-> was a rather big abstraction leak.
+> On a related note, how does this interact with hidepid?  More
+
+Currently it always work as procfs with hidepid = 2 (highest level of
+security).
+
+> generally, what privileges are you requiring to obtain what data?
+
+It dumps information only if ptrace_may_access(tsk, PTRACE_MODE_READ) returns true
+
 > 
-> This introduction of this framework aims at solving this. It also introduces DT
-> representation for consumer devices to go get the data they require (MAC
-> Addresses, SoC/Revision ID, part numbers, and so on) from the EEPROMs.
+> >
+> > >
+> > > Also, using an asynchronous interface (send, poll?, recv) for
+> > > something that's inherently synchronous (as the kernel a local
+> > > question) seems awkward to me.
+> >
+> > Actually all requests are handled synchronously. We call sendmsg to send
+> > a request and it is handled in this syscall.
+> >  2)               |  netlink_sendmsg() {
+> >  2)               |    netlink_unicast() {
+> >  2)               |      taskdiag_doit() {
+> >  2)   2.153 us    |        task_diag_fill();
+> >  2)               |        netlink_unicast() {
+> >  2)   0.185 us    |          netlink_attachskb();
+> >  2)   0.291 us    |          __netlink_sendskb();
+> >  2)   2.452 us    |        }
+> >  2) + 33.625 us   |      }
+> >  2) + 54.611 us   |    }
+> >  2) + 76.370 us   |  }
+> >  2)               |  netlink_recvmsg() {
+> >  2)   1.178 us    |    skb_recv_datagram();
+> >  2) + 46.953 us   |  }
+> >
+> > If we request information for a group of tasks (NLM_F_DUMP), a first
+> > portion of data is filled from the sendmsg syscall. And then when we read
+> > it, the kernel fills the next portion.
+> >
+> >  3)               |  netlink_sendmsg() {
+> >  3)               |    __netlink_dump_start() {
+> >  3)               |      netlink_dump() {
+> >  3)               |        taskdiag_dumpid() {
+> >  3)   0.685 us    |          task_diag_fill();
+> > ...
+> >  3)   0.224 us    |          task_diag_fill();
+> >  3) + 74.028 us   |        }
+> >  3) + 88.757 us   |      }
+> >  3) + 89.296 us   |    }
+> >  3) + 98.705 us   |  }
+> >  3)               |  netlink_recvmsg() {
+> >  3)               |    netlink_dump() {
+> >  3)               |      taskdiag_dumpid() {
+> >  3)   0.594 us    |        task_diag_fill();
+> > ...
+> >  3)   0.242 us    |        task_diag_fill();
+> >  3) + 60.634 us   |      }
+> >  3) + 72.803 us   |    }
+> >  3) + 88.005 us   |  }
+> >  3)               |  netlink_recvmsg() {
+> >  3)               |    netlink_dump() {
+> >  3)   2.403 us    |      taskdiag_dumpid();
+> >  3) + 26.236 us   |    }
+> >  3) + 40.522 us   |  }
+> >  0) + 20.407 us   |  netlink_recvmsg();
+> >
+> >
+> > netlink is really good for this type of tasks.  It allows to create an
+> > extendable interface which can be easy customized for different needs.
+> >
+> > I don't think that we would want to create another similar interface
+> > just to be independent from network subsystem.
 > 
-> Having regmap interface to this framework would give much better
-> abstraction for eeproms on different buses.
+> I guess this is a bit streamy in that you ask one question and get
+> multiple answers.
+
+It's like seq_file in procfs. The kernel allocates a buffer then fills
+it, copies it into userspace, fills it again, ... repeats these actions.
+And we can read data from file by portions.
+
+Actually here is one more analogy. When we open a file in procfs,
+we sends a request to the kernel and a file path is a request body in
+this case. But in case of procfs, we can't construct requests, we only
+have a set of predefined requests.
+
 > 
-> Signed-off-by: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-> [srinivas.kandagatla: Moved to regmap based and cleanedup apis]
-> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-> ---
->  .../devicetree/bindings/eeprom/eeprom.txt          |  48 ++++
->  drivers/Kconfig                                    |   2 +
->  drivers/Makefile                                   |   1 +
->  drivers/eeprom/Kconfig                             |  19 ++
->  drivers/eeprom/Makefile                            |   9 +
->  drivers/eeprom/core.c                              | 290 +++++++++++++++++++++
->  include/linux/eeprom-consumer.h                    |  73 ++++++
->  include/linux/eeprom-provider.h                    |  51 ++++
->  8 files changed, 493 insertions(+)
->  create mode 100644 Documentation/devicetree/bindings/eeprom/eeprom.txt
->  create mode 100644 drivers/eeprom/Kconfig
->  create mode 100644 drivers/eeprom/Makefile
->  create mode 100644 drivers/eeprom/core.c
->  create mode 100644 include/linux/eeprom-consumer.h
->  create mode 100644 include/linux/eeprom-provider.h
-> 
-> diff --git a/Documentation/devicetree/bindings/eeprom/eeprom.txt b/Documentation/devicetree/bindings/eeprom/eeprom.txt
-> new file mode 100644
-> index 0000000..9ec1ec2
-> --- /dev/null
-> +++ b/Documentation/devicetree/bindings/eeprom/eeprom.txt
-> @@ -0,0 +1,48 @@
-> += EEPROM Data Device Tree Bindings =
-> +
-> +This binding is intended to represent the location of hardware
-> +configuration data stored in EEPROMs.
-> +
-> +On a significant proportion of boards, the manufacturer has stored
-> +some data on an EEPROM-like device, for the OS to be able to retrieve
-> +these information and act upon it. Obviously, the OS has to know
-> +about where to retrieve these data from, and where they are stored on
-> +the storage device.
-> +
-> +This document is here to document this.
-> +
-> += Data providers =
-> +
-> +Required properties:
-> +#eeprom-cells:	Number of cells in an eeprom specifier; The common
-> +		case is 2.
-> +
-> +For example:
-> +
-> +	at24: eeprom@42 {
-> +		#eeprom-cells = <2>;
-> +	};
-> +
-> += Data consumers =
-> +
-> +Required properties:
-> +
-> +eeproms: List of phandle and data cell specifier triplet, one triplet
-> +	 for each data cell the device might be interested in. The
-> +	 triplet consists of the phandle to the eeprom provider, then
-> +	 the offset in byte within that storage device, and the length
-
-bytes
-
-> +	 in byte of the data we care about.
-
-bytes
-
-> +
-> +Optional properties:
-> +
-> +eeprom-names: List of data cell name strings sorted in the same order
-> + 	      as the resets property. Consumers drivers will use
-
-resets? I guess this text was cut/paste from the reset documentation?\
-
-> + 	      eeprom-names to differentiate between multiple cells,
-> + 	      and hence being able to know what these cells are for.
-> +
-> +For example:
-> +
-> +	device {
-> +		eeproms = <&at24 14 42>;
-
-I like to use 42, but is it realistic to have a soc-rev-id which is 42
-bytes long?  How about using 42 as the offset and a sensible length of
-say 4?
-
-> +		eeprom-names = "soc-rev-id";
-> +	};
-> diff --git a/drivers/Kconfig b/drivers/Kconfig
-> index c70d6e4..d7afc82 100644
-> --- a/drivers/Kconfig
-> +++ b/drivers/Kconfig
-> @@ -184,4 +184,6 @@ source "drivers/thunderbolt/Kconfig"
->  
->  source "drivers/android/Kconfig"
->  
-> +source "drivers/eeprom/Kconfig"
-> +
->  endmenu
-> diff --git a/drivers/Makefile b/drivers/Makefile
-> index 527a6da..57eb5b0 100644
-> --- a/drivers/Makefile
-> +++ b/drivers/Makefile
-> @@ -165,3 +165,4 @@ obj-$(CONFIG_RAS)		+= ras/
->  obj-$(CONFIG_THUNDERBOLT)	+= thunderbolt/
->  obj-$(CONFIG_CORESIGHT)		+= coresight/
->  obj-$(CONFIG_ANDROID)		+= android/
-> +obj-$(CONFIG_EEPROM)		+= eeprom/
-> diff --git a/drivers/eeprom/Kconfig b/drivers/eeprom/Kconfig
-> new file mode 100644
-> index 0000000..2c5452a
-> --- /dev/null
-> +++ b/drivers/eeprom/Kconfig
-> @@ -0,0 +1,19 @@
-> +menuconfig EEPROM
-> +	bool "EEPROM Support"
-> +	depends on OF
-> +	help
-> +	  Support for EEPROM alike devices.
-
-like.
-
-> +
-> +	  This framework is designed to provide a generic interface to EEPROM
-
-EPROMs
-
-> +	  from both the Linux Kernel and the userspace.
-> +
-> +	  If unsure, say no.
-> +
-> +if EEPROM
-> +
-> +config EEPROM_DEBUG
-> +	bool "EEPROM debug support"
-> +	help
-> +	  Say yes here to enable debugging support.
-> +
-> +endif
-> diff --git a/drivers/eeprom/Makefile b/drivers/eeprom/Makefile
-> new file mode 100644
-> index 0000000..e130079
-> --- /dev/null
-> +++ b/drivers/eeprom/Makefile
-> @@ -0,0 +1,9 @@
-> +#
-> +# Makefile for eeprom drivers.
-> +#
-> +
-> +ccflags-$(CONFIG_EEPROM_DEBUG) += -DDEBUG
-> +
-> +obj-$(CONFIG_EEPROM)		+= core.o
-> +
-> +# Devices
-> diff --git a/drivers/eeprom/core.c b/drivers/eeprom/core.c
-> new file mode 100644
-> index 0000000..bc877a6
-> --- /dev/null
-> +++ b/drivers/eeprom/core.c
-> @@ -0,0 +1,290 @@
-> +/*
-> + * EEPROM framework core.
-> + *
-> + * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-> + * Copyright (C) 2013 Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-> + *
-> + * This file is licensed under the terms of the GNU General Public
-> + * License version 2.  This program is licensed "as is" without any
-> + * warranty of any kind, whether express or implied.
-> + */
-> +
-> +#include <linux/device.h>
-> +#include <linux/eeprom-provider.h>
-> +#include <linux/eeprom-consumer.h>
-> +#include <linux/export.h>
-> +#include <linux/fs.h>
-> +#include <linux/idr.h>
-> +#include <linux/init.h>
-> +#include <linux/module.h>
-> +#include <linux/of.h>
-> +#include <linux/slab.h>
-> +#include <linux/uaccess.h>
-> +
-> +struct eeprom_cell {
-> +	struct eeprom_device *eeprom;
-> +	loff_t offset;
-> +	size_t count;
-> +};
-> +
-> +static DEFINE_MUTEX(eeprom_list_mutex);
-> +static LIST_HEAD(eeprom_list);
-> +static DEFINE_IDA(eeprom_ida);
-> +
-> +static ssize_t bin_attr_eeprom_read_write(struct kobject *kobj,
-> +				    char *buf, loff_t offset,
-> +				    size_t count, bool read)
-> +{
-> +	struct device *dev = container_of(kobj, struct device, kobj);
-> +	struct eeprom_device *eeprom = container_of(dev, struct eeprom_device,
-> +						    edev);
-> +	int rc;
-> +
-> +	if (offset > eeprom->size)
-> +		return 0;
-> +
-> +	if (offset + count > eeprom->size)
-> +		count = eeprom->size - offset;
-> +
-> +	if (read)
-> +		rc = regmap_bulk_read(eeprom->regmap, offset,
-> +				      buf, count/eeprom->stride);
-
-This division will round down, so you could get one less byte than
-what you expected, and the value you actually return. It seems like
-there should be a check here, the count is a multiple of stride and
-return an error if it is not.
-
-> +	else
-> +		rc = regmap_bulk_write(eeprom->regmap, offset,
-> +				       buf, count/eeprom->stride);
-> +
-> +	if (IS_ERR_VALUE(rc))
-> +		return 0;
-> +
-
-I don't think returning 0 here, and above is the best thing to
-do. Return the real error code from regmap, or EINVAL or some other
-error code for going off the end of the eerpom.
-
-> +	return count;
-> +}
-> +
-> +static ssize_t bin_attr_eeprom_read(struct file *filp, struct kobject *kobj,
-> +				    struct bin_attribute *attr,
-> +				    char *buf, loff_t offset, size_t count)
-> +{
-> +	return bin_attr_eeprom_read_write(kobj, buf, offset, count, true);
-> +}
-> +
-> +static ssize_t bin_attr_eeprom_write(struct file *filp, struct kobject *kobj,
-> +				     struct bin_attribute *attr,
-> +				     char *buf, loff_t offset, size_t count)
-> +{
-> +	return bin_attr_eeprom_read_write(kobj, buf, offset, count, false);
-> +}
-> 
-
-These two functions seem to be identical. So just have one of them?
-
-+
-> +static struct bin_attribute bin_attr_eeprom = {
-> +	.attr	= {
-> +		.name	= "eeprom",
-> +		.mode	= 0660,
-
-Symbolic values like S_IRUGO | S_IWUSR would be better.
-
-Are you also sure you want group write?
-
-> +	},
-> +	.read	= bin_attr_eeprom_read,
-> +	.write	= bin_attr_eeprom_write,
-> +};
-> +
-> +static struct bin_attribute *eeprom_bin_attributes[] = {
-> +	&bin_attr_eeprom,
-> +	NULL,
-> +};
-> +
-> +static const struct attribute_group eeprom_bin_group = {
-> +	.bin_attrs	= eeprom_bin_attributes,
-> +};
-> +
-> +static const struct attribute_group *eeprom_dev_groups[] = {
-> +	&eeprom_bin_group,
-> +	NULL,
-> +};
-> +
-> +static struct class eeprom_class = {
-> +	.name		= "eeprom",
-> +	.dev_groups	= eeprom_dev_groups,
-> +};
-> +
-> +int eeprom_register(struct eeprom_device *eeprom)
-> +{
-> +	int rval;
-> +
-> +	if (!eeprom->regmap || !eeprom->size) {
-> +		dev_err(eeprom->dev, "Regmap not found\n");
-> +		return -EINVAL;
-> +	}
-> +
-> +	eeprom->id = ida_simple_get(&eeprom_ida, 0, 0, GFP_KERNEL);
-> +	if (eeprom->id < 0)
-> +		return eeprom->id;
-> +
-> +	eeprom->edev.class = &eeprom_class;
-> +	eeprom->edev.parent = eeprom->dev;
-> +	eeprom->edev.of_node = eeprom->dev ? eeprom->dev->of_node : NULL;
-> +	dev_set_name(&eeprom->edev, "eeprom%d", eeprom->id);
-> +
-> +	device_initialize(&eeprom->edev);
-> +
-> +	dev_dbg(&eeprom->edev, "Registering eeprom device %s\n",
-> +		dev_name(&eeprom->edev));
-> +
-> +	rval = device_add(&eeprom->edev);
-> +	if (rval)
-> +		return rval;
-> +
-> +	mutex_lock(&eeprom_list_mutex);
-> +	list_add(&eeprom->list, &eeprom_list);
-> +	mutex_unlock(&eeprom_list_mutex);
-> +
-> +	return 0;
-> +}
-> +EXPORT_SYMBOL(eeprom_register);
-> +
-> +int eeprom_unregister(struct eeprom_device *eeprom)
-> +{
-> +	device_del(&eeprom->edev);
-> +
-> +	mutex_lock(&eeprom_list_mutex);
-> +	list_del(&eeprom->list);
-> +	mutex_unlock(&eeprom_list_mutex);
-> +
-> +	return 0;
-> +}
-> +EXPORT_SYMBOL(eeprom_unregister);
-> +
-> +static struct eeprom_cell *__eeprom_cell_get(struct device_node *node,
-> +					     int index)
-> +{
-> +	struct of_phandle_args args;
-> +	struct eeprom_cell *cell;
-> +	struct eeprom_device *e, *eeprom = NULL;
-> +	int ret;
-> +
-> +	ret = of_parse_phandle_with_args(node, "eeproms",
-> +					 "#eeprom-cells", index, &args);
-> +	if (ret)
-> +		return ERR_PTR(ret);
-> +
-> +	if (args.args_count != 2)
-> +		return ERR_PTR(-EINVAL);
-> +
-> +	mutex_lock(&eeprom_list_mutex);
-> +
-> +	list_for_each_entry(e, &eeprom_list, list) {
-> +		if (args.np == e->edev.of_node) {
-> +			eeprom = e;
-> +			break;
-> +		}
-> +	}
-> +	mutex_unlock(&eeprom_list_mutex);
-
-Shouldn't you increment a reference count to the eeprom here?  You are
-going to have trouble if the eeprom is unregistered and there is a
-call still referring to it.
-
-> +
-> +	if (!eeprom)
-> +		return ERR_PTR(-EPROBE_DEFER);
-> +
-> +	cell = kzalloc(sizeof(*cell), GFP_KERNEL);
-> +	if (!cell)
-> +		return ERR_PTR(-ENOMEM);
-> +
-> +	cell->eeprom = eeprom;
-> +	cell->offset = args.args[0];
-> +	cell->count = args.args[1];
-> +
-> +	return cell;
-> +}
-> +
-> +static struct eeprom_cell *__eeprom_cell_get_byname(struct device_node *node,
-> +						    const char *id)
-> +{
-> +	int index = 0;
-> +
-> +	if (id)
-> +		index = of_property_match_string(node,
-> +						 "eeprom-names",
-> +						 id);
-> +	return __eeprom_cell_get(node, index);
-> +
-> +}
-> +
-> +struct eeprom_cell *eeprom_cell_get(struct device *dev, int index)
-> +{
-> +	if (!dev)
-> +		return ERR_PTR(-EINVAL);
-> +
-> +	/* First, attempt to retrieve the cell through the DT */
-> +	if (dev->of_node)
-> +		return __eeprom_cell_get(dev->of_node, index);
-> +
-> +	/* We don't support anything else yet */
-> +	return ERR_PTR(-ENODEV);
-> +}
-> +EXPORT_SYMBOL(eeprom_cell_get);
-> +
-> +struct eeprom_cell *eeprom_cell_get_byname(struct device *dev, const char *id)
-> +{
-> +	if (!dev)
-> +		return ERR_PTR(-EINVAL);
-> +
-> +	if (id && dev->of_node)
-> +		return __eeprom_cell_get_byname(dev->of_node, id);
-> +
-> +	/* We don't support anything else yet */
-> +	return ERR_PTR(-ENODEV);
-> +}
-> +EXPORT_SYMBOL(eeprom_cell_get_byname);
-> +
-> +void eeprom_cell_put(struct eeprom_cell *cell)
-> +{
-> +	kfree(cell);
-> +}
-> +EXPORT_SYMBOL(eeprom_cell_put);
-> +
-> +char *eeprom_cell_read(struct eeprom_cell *cell, ssize_t *len)
-> +{
-> +	struct eeprom_device *eeprom = cell->eeprom;
-> +	char *buf;
-> +	int rc;
-> +
-> +	if (!eeprom || !eeprom->regmap)
-> +		return ERR_PTR(-EINVAL);
-> +
-> +	buf = kzalloc(cell->count, GFP_KERNEL);
-> +	if (!buf)
-> +		return ERR_PTR(-ENOMEM);
-> +
-> +	rc = regmap_bulk_read(eeprom->regmap, cell->offset,
-> +			      buf, cell->count/eeprom->stride);
-
-Same comment as above.
-
-> +	if (IS_ERR_VALUE(rc)) {
-> +		kfree(buf);
-> +		return ERR_PTR(rc);
-> +	}
-> +
-> +	*len = cell->count;
-> +
-> +	return buf;
-> +}
-> +EXPORT_SYMBOL(eeprom_cell_read);
-> +
-> +int eeprom_cell_write(struct eeprom_cell *cell, const char *buf, ssize_t len)
-> +{
-> +	struct eeprom_device *eeprom = cell->eeprom;
-> +
-> +	if (!eeprom || !eeprom->regmap)
-> +		return -EINVAL;
-> +
-> +	return regmap_bulk_write(eeprom->regmap, cell->offset,
-> +				 buf, cell->count/eeprom->stride);
-> +}
-> +EXPORT_SYMBOL(eeprom_cell_write);
-> +
-> +static int eeprom_init(void)
-> +{
-> +	return class_register(&eeprom_class);
-> +}
-> +
-> +static void eeprom_exit(void)
-> +{
-> +	class_unregister(&eeprom_class);
-> +}
-> +
-> +subsys_initcall(eeprom_init);
-> +module_exit(eeprom_exit);
-> +
-> +MODULE_AUTHOR("Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org");
-> +MODULE_DESCRIPTION("EEPROM Driver Core");
-> +MODULE_LICENSE("GPL");
-> diff --git a/include/linux/eeprom-consumer.h b/include/linux/eeprom-consumer.h
-> new file mode 100644
-> index 0000000..706ae9d
-> --- /dev/null
-> +++ b/include/linux/eeprom-consumer.h
-> @@ -0,0 +1,73 @@
-> +/*
-> + * EEPROM framework consumer.
-> + *
-> + * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-> + * Copyright (C) 2013 Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-> + *
-> + * This file is licensed under the terms of the GNU General Public
-> + * License version 2.  This program is licensed "as is" without any
-> + * warranty of any kind, whether express or implied.
-> + */
-> +
-> +#ifndef _LINUX_EEPROM_CONSUMER_H
-> +#define _LINUX_EEPROM_CONSUMER_H
-> +
-> +struct eeprom_cell;
-> +
-> +/**
-> + * eeprom_cell_get(): Get eeprom cell of device form a given index.
-
-of a device for a 
-
-> + *
-> + * @dev: Device that will be interacted with
-> + * @index: Index of the eeprom cell.
-> + *
-> + * The return value will be an ERR_PTR() on error or a valid pointer
-> + * to a struct eeprom_cell.  The eeprom_cell will be freed by the
-> + * eeprom_cell_put().
-> + */
-> +struct eeprom_cell *eeprom_cell_get(struct device *dev, int index);
-> +
-> +/**
-> + * eeprom_cell_get(): Get eeprom cell of device form a given name.
-
-same again
-
-> + *
-> + * @dev: Device that will be interacted with
-> + * @name: Name of the eeprom cell.
-> + *
-> + * The return value will be an ERR_PTR() on error or a valid pointer
-> + * to a struct eeprom_cell.  The eeprom_cell will be freed by the
-> + * eeprom_cell_put().
-> + */
-> +struct eeprom_cell *eeprom_cell_get_byname(struct device *dev,
-> +					   const char *name);
-> +
-> +/**
-> + * eeprom_cell_put(): Release previously allocated eeprom cell.
-> + *
-> + * @cell: Previously allocated eeprom cell by eeprom_cell_get()
-> + * or eeprom_cell_get_byname().
-> + */
-> +void eeprom_cell_put(struct eeprom_cell *cell);
-> +
-> +/**
-> + * eeprom_cell_read(): Read a given eeprom cell
-> + *
-> + * @cell: eeprom cell to be read.
-> + * @len: pointer to length of cell which will be populated on successful read.
-> + *
-> + * The return value will be an ERR_PTR() on error or a valid pointer
-> + * to a char * bufffer.  The buffer should be freed by the consumer with a
-> + * kfree().
-> + */
-> +char *eeprom_cell_read(struct eeprom_cell *cell, ssize_t *len);
-
-Would void * be better than char *? I guess the contents is mostly
-data, not strings.
-
-      Andrew
- 
-> +
-> +/**
-> + * eeprom_cell_write(): Write to a given eeprom cell
-> + *
-> + * @cell: eeprom cell to be written.
-> + * @buf: Buffer to be written.
-> + * @len: length of buffer to be written to eeprom cell.
-> + *
-> + * The return value will be an non zero on error or a zero on successful write.
-> + */
-> +int eeprom_cell_write(struct eeprom_cell *cell, const char *buf, ssize_t len);
-> +
-> +#endif  /* ifndef _LINUX_EEPROM_CONSUMER_H */
-> diff --git a/include/linux/eeprom-provider.h b/include/linux/eeprom-provider.h
-> new file mode 100644
-> index 0000000..3943c2f
-> --- /dev/null
-> +++ b/include/linux/eeprom-provider.h
-> @@ -0,0 +1,51 @@
-> +/*
-> + * EEPROM framework provider.
-> + *
-> + * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-> + * Copyright (C) 2013 Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-> + *
-> + * This file is licensed under the terms of the GNU General Public
-> + * License version 2.  This program is licensed "as is" without any
-> + * warranty of any kind, whether express or implied.
-> + */
-> +
-> +#ifndef _LINUX_EEPROM_PROVIDER_H
-> +#define _LINUX_EEPROM_PROVIDER_H
-> +
-> +#include <linux/device.h>
-> +#include <linux/regmap.h>
-> +#include <linux/list.h>
-> +
-> +struct eeprom_device {
-> +	struct regmap		*regmap;
-> +	int			stride;
-> +	size_t			size;
-> +	struct device		*dev;
-> +
-> +	/* Internal to framework */
-> +	struct device		edev;
-> +	int			id;
-> +	struct list_head	list;
-> +};
-> +
-> +/**
-> + * eeprom_register(): Register a eeprom device for given eeprom.
-> + * Also creates an binary entry in /sys/class/eeprom/eeprom[id]/eeprom
-> + *
-> + * @eeprom: eeprom device that needs to be created
-> + *
-> + * The return value will be an error code on error or a zero on success.
-> + * The eeprom_device and sysfs entery will be freed by the eeprom_unregister().
-> + */
-> +int eeprom_register(struct eeprom_device *eeprom);
-> +
-> +/**
-> + * eeprom_unregister(): Unregister previously registered eeprom device
-> + *
-> + * @eeprom: Pointer to previously registered eeprom device.
-> + *
-> + * The return value will be an non zero on error or a zero on success.
-> + */
-> +int eeprom_unregister(struct eeprom_device *eeprom);
-> +
-> +#endif  /* ifndef _LINUX_EEPROM_PROVIDER_H */
-> -- 
-> 1.9.1
-> 
-> 
-> _______________________________________________
-> linux-arm-kernel mailing list
-> linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
-> http://lists.infradead.org/mailman/listinfo/linux-arm-kernel
+> >
+> > Thanks,
+> > Andrew
+> >
+> > >
+> > > --Andy
