@@ -1,7 +1,7 @@
 From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: [RFC PATCH 1/3] eeprom: Add a simple EEPROM framework
-Date: Thu, 19 Feb 2015 17:08:28 +0000
-Message-ID: <1424365708-26681-1-git-send-email-srinivas.kandagatla@linaro.org>
+Subject: [RFC PATCH 2/3] eeprom: sunxi: Move the SID driver to the eeprom framework
+Date: Thu, 19 Feb 2015 17:08:40 +0000
+Message-ID: <1424365720-26725-1-git-send-email-srinivas.kandagatla@linaro.org>
 References: <1424365639-26634-1-git-send-email-srinivas.kandagatla@linaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1424365639-26634-1-git-send-email-srinivas.kandagatla@linaro.org>
@@ -12,166 +12,93 @@ List-Id: linux-api@vger.kernel.org
 
 From: Maxime Ripard <maxime.ripard@free-electrons.com>
 
-Up until now, EEPROM drivers were stored in drivers/misc, where they all had to
-duplicate pretty much the same code to register a sysfs file, allow in-kernel
-users to access the content of the devices they were driving, etc.
-
-This was also a problem as far as other in-kernel users were involved, since
-the solutions used were pretty much different from on driver to another, there
-was a rather big abstraction leak.
-
-This introduction of this framework aims at solving this. It also introduces DT
-representation for consumer devices to go get the data they require (MAC
-Addresses, SoC/Revision ID, part numbers, and so on) from the EEPROMs.
-
-Having regmap interface to this framework would give much better
-abstraction for eeproms on different buses.
+Now that we have the EEPROM framework, we can consolidate the common driver
+code. Move the driver to the framework, and hopefully, it will fix the sysfs
+file creation race.
 
 Signed-off-by: Maxime Ripard <maxime.ripard@free-electrons.com>
-[srinivas.kandagatla: Moved to regmap based and cleanedup apis]
+[srinivas.kandagatla: Moved to regmap based EEPROM framework]
 Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 ---
- .../devicetree/bindings/eeprom/eeprom.txt          |  48 ++++
- drivers/Kconfig                                    |   2 +
- drivers/Makefile                                   |   1 +
- drivers/eeprom/Kconfig                             |  19 ++
- drivers/eeprom/Makefile                            |   9 +
- drivers/eeprom/core.c                              | 290 +++++++++++++++++++++
- include/linux/eeprom-consumer.h                    |  73 ++++++
- include/linux/eeprom-provider.h                    |  51 ++++
- 8 files changed, 493 insertions(+)
- create mode 100644 Documentation/devicetree/bindings/eeprom/eeprom.txt
- create mode 100644 drivers/eeprom/Kconfig
- create mode 100644 drivers/eeprom/Makefile
- create mode 100644 drivers/eeprom/core.c
- create mode 100644 include/linux/eeprom-consumer.h
- create mode 100644 include/linux/eeprom-provider.h
+ Documentation/ABI/testing/sysfs-driver-sunxi-sid |  22 ----
+ drivers/eeprom/Kconfig                           |  10 ++
+ drivers/eeprom/Makefile                          |   1 +
+ drivers/eeprom/eeprom-sunxi-sid.c                | 125 ++++++++++++++++++
+ drivers/misc/eeprom/Kconfig                      |  13 --
+ drivers/misc/eeprom/Makefile                     |   1 -
+ drivers/misc/eeprom/sunxi_sid.c                  | 156 -----------------------
+ 7 files changed, 136 insertions(+), 192 deletions(-)
+ delete mode 100644 Documentation/ABI/testing/sysfs-driver-sunxi-sid
+ create mode 100644 drivers/eeprom/eeprom-sunxi-sid.c
+ delete mode 100644 drivers/misc/eeprom/sunxi_sid.c
 
-diff --git a/Documentation/devicetree/bindings/eeprom/eeprom.txt b/Documentation/devicetree/bindings/eeprom/eeprom.txt
-new file mode 100644
-index 0000000..9ec1ec2
---- /dev/null
-+++ b/Documentation/devicetree/bindings/eeprom/eeprom.txt
-@@ -0,0 +1,48 @@
-+= EEPROM Data Device Tree Bindings =
-+
-+This binding is intended to represent the location of hardware
-+configuration data stored in EEPROMs.
-+
-+On a significant proportion of boards, the manufacturer has stored
-+some data on an EEPROM-like device, for the OS to be able to retrieve
-+these information and act upon it. Obviously, the OS has to know
-+about where to retrieve these data from, and where they are stored on
-+the storage device.
-+
-+This document is here to document this.
-+
-+= Data providers =
-+
-+Required properties:
-+#eeprom-cells:	Number of cells in an eeprom specifier; The common
-+		case is 2.
-+
-+For example:
-+
-+	at24: eeprom@42 {
-+		#eeprom-cells = <2>;
-+	};
-+
-+= Data consumers =
-+
-+Required properties:
-+
-+eeproms: List of phandle and data cell specifier triplet, one triplet
-+	 for each data cell the device might be interested in. The
-+	 triplet consists of the phandle to the eeprom provider, then
-+	 the offset in byte within that storage device, and the length
-+	 in byte of the data we care about.
-+
-+Optional properties:
-+
-+eeprom-names: List of data cell name strings sorted in the same order
-+ 	      as the resets property. Consumers drivers will use
-+ 	      eeprom-names to differentiate between multiple cells,
-+ 	      and hence being able to know what these cells are for.
-+
-+For example:
-+
-+	device {
-+		eeproms = <&at24 14 42>;
-+		eeprom-names = "soc-rev-id";
-+	};
-diff --git a/drivers/Kconfig b/drivers/Kconfig
-index c70d6e4..d7afc82 100644
---- a/drivers/Kconfig
-+++ b/drivers/Kconfig
-@@ -184,4 +184,6 @@ source "drivers/thunderbolt/Kconfig"
- 
- source "drivers/android/Kconfig"
- 
-+source "drivers/eeprom/Kconfig"
-+
- endmenu
-diff --git a/drivers/Makefile b/drivers/Makefile
-index 527a6da..57eb5b0 100644
---- a/drivers/Makefile
-+++ b/drivers/Makefile
-@@ -165,3 +165,4 @@ obj-$(CONFIG_RAS)		+= ras/
- obj-$(CONFIG_THUNDERBOLT)	+= thunderbolt/
- obj-$(CONFIG_CORESIGHT)		+= coresight/
- obj-$(CONFIG_ANDROID)		+= android/
-+obj-$(CONFIG_EEPROM)		+= eeprom/
+diff --git a/Documentation/ABI/testing/sysfs-driver-sunxi-sid b/Documentation/ABI/testing/sysfs-driver-sunxi-sid
+deleted file mode 100644
+index ffb9536..0000000
+--- a/Documentation/ABI/testing/sysfs-driver-sunxi-sid
++++ /dev/null
+@@ -1,22 +0,0 @@
+-What:		/sys/devices/*/<our-device>/eeprom
+-Date:		August 2013
+-Contact:	Oliver Schinagl <oliver@schinagl.nl>
+-Description:	read-only access to the SID (Security-ID) on current
+-		A-series SoC's from Allwinner. Currently supports A10, A10s, A13
+-		and A20 CPU's. The earlier A1x series of SoCs exports 16 bytes,
+-		whereas the newer A20 SoC exposes 512 bytes split into sections.
+-		Besides the 16 bytes of SID, there's also an SJTAG area,
+-		HDMI-HDCP key and some custom keys. Below a quick overview, for
+-		details see the user manual:
+-		0x000  128 bit root-key (sun[457]i)
+-		0x010  128 bit boot-key (sun7i)
+-		0x020   64 bit security-jtag-key (sun7i)
+-		0x028   16 bit key configuration (sun7i)
+-		0x02b   16 bit custom-vendor-key (sun7i)
+-		0x02c  320 bit low general key (sun7i)
+-		0x040   32 bit read-control access (sun7i)
+-		0x064  224 bit low general key (sun7i)
+-		0x080 2304 bit HDCP-key (sun7i)
+-		0x1a0  768 bit high general key (sun7i)
+-Users:		any user space application which wants to read the SID on
+-		Allwinner's A-series of CPU's.
 diff --git a/drivers/eeprom/Kconfig b/drivers/eeprom/Kconfig
-new file mode 100644
-index 0000000..2c5452a
---- /dev/null
+index 2c5452a..39235a9 100644
+--- a/drivers/eeprom/Kconfig
 +++ b/drivers/eeprom/Kconfig
-@@ -0,0 +1,19 @@
-+menuconfig EEPROM
-+	bool "EEPROM Support"
-+	depends on OF
+@@ -16,4 +16,14 @@ config EEPROM_DEBUG
+ 	help
+ 	  Say yes here to enable debugging support.
+ 
++config EEPROM_SUNXI_SID
++	depends on ARCH_SUNXI
++	tristate "Allwinner SoCs SID support"
 +	help
-+	  Support for EEPROM alike devices.
++	  This is a driver for the 'security ID' available on various Allwinner
++	  devices.
 +
-+	  This framework is designed to provide a generic interface to EEPROM
-+	  from both the Linux Kernel and the userspace.
++	  This driver can also be built as a module. If so, the module
++	  will be called sunxi_sid.
 +
-+	  If unsure, say no.
-+
-+if EEPROM
-+
-+config EEPROM_DEBUG
-+	bool "EEPROM debug support"
-+	help
-+	  Say yes here to enable debugging support.
-+
-+endif
+ endif
 diff --git a/drivers/eeprom/Makefile b/drivers/eeprom/Makefile
-new file mode 100644
-index 0000000..e130079
---- /dev/null
+index e130079..661422c 100644
+--- a/drivers/eeprom/Makefile
 +++ b/drivers/eeprom/Makefile
-@@ -0,0 +1,9 @@
-+#
-+# Makefile for eeprom drivers.
-+#
-+
-+ccflags-$(CONFIG_EEPROM_DEBUG) += -DDEBUG
-+
-+obj-$(CONFIG_EEPROM)		+= core.o
-+
-+# Devices
-diff --git a/drivers/eeprom/core.c b/drivers/eeprom/core.c
+@@ -7,3 +7,4 @@ ccflags-$(CONFIG_EEPROM_DEBUG) += -DDEBUG
+ obj-$(CONFIG_EEPROM)		+= core.o
+ 
+ # Devices
++obj-$(CONFIG_EEPROM_SUNXI_SID)	+= eeprom-sunxi-sid.o
+diff --git a/drivers/eeprom/eeprom-sunxi-sid.c b/drivers/eeprom/eeprom-sunxi-sid.c
 new file mode 100644
-index 0000000..bc877a6
+index 0000000..f2939b9
 --- /dev/null
-+++ b/drivers/eeprom/core.c
-@@ -0,0 +1,290 @@
++++ b/drivers/eeprom/eeprom-sunxi-sid.c
+@@ -0,0 +1,125 @@
 +/*
-+ * EEPROM framework core.
++ * Allwinner sunXi SoCs Security ID support.
 + *
-+ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-+ * Copyright (C) 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
++ * Copyright (c) 2013 Oliver Schinagl <oliver@schinagl.nl>
++ * Copyright (C) 2014 Maxime Ripard <maxime.ripard@free-electrons.com>
 + *
 + * This file is licensed under the terms of the GNU General Public
 + * License version 2.  This program is licensed "as is" without any
@@ -180,418 +107,311 @@ index 0000000..bc877a6
 +
 +#include <linux/device.h>
 +#include <linux/eeprom-provider.h>
-+#include <linux/eeprom-consumer.h>
-+#include <linux/export.h>
-+#include <linux/fs.h>
-+#include <linux/idr.h>
-+#include <linux/init.h>
++#include <linux/io.h>
 +#include <linux/module.h>
-+#include <linux/of.h>
-+#include <linux/slab.h>
-+#include <linux/uaccess.h>
++#include <linux/of_device.h>
++#include <linux/platform_device.h>
 +
-+struct eeprom_cell {
++struct eeprom_sid {
++	void __iomem	*membase;
++	struct eeprom_device eeprom;
++};
++
++/* We read the entire key, due to a 32 bit read alignment requirement. Since we
++ * want to return the requested byte, this results in somewhat slower code and
++ * uses 4 times more reads as needed but keeps code simpler. Since the SID is
++ * only very rarely probed, this is not really an issue.
++ */
++static int sunxi_sid_reg_read(void *context,
++			      unsigned int offset, unsigned int *val)
++{
++	struct eeprom_sid *sid  = context;
++	u32 sid_key;
++
++	sid_key = ioread32be(sid->membase + round_down(offset, 4));
++	sid_key >>= (offset % 4) * 8;
++
++	*val = sid_key;
++
++	return 0;
++}
++
++static bool sunxi_sid_writeable_reg(struct device *dev, unsigned int reg)
++{
++	return false;
++}
++
++static const struct of_device_id sunxi_sid_of_match[] = {
++	{ .compatible = "allwinner,sun4i-a10-sid", .data = (void *)16},
++	{ .compatible = "allwinner,sun7i-a20-sid", .data = (void *)512},
++	{/* sentinel */},
++};
++MODULE_DEVICE_TABLE(of, sunxi_sid_of_match);
++
++static struct regmap_config sunxi_sid_regmap_config = {
++	.reg_bits = 32,
++	.val_bits = 8,
++	.reg_stride = 1,
++	.reg_read = sunxi_sid_reg_read,
++	.writeable_reg = sunxi_sid_writeable_reg,
++};
++
++static int sunxi_sid_probe(struct platform_device *pdev)
++{
++	const struct of_device_id *device;
++	struct eeprom_sid *sid;
++	struct resource *res;
 +	struct eeprom_device *eeprom;
-+	loff_t offset;
-+	size_t count;
-+};
-+
-+static DEFINE_MUTEX(eeprom_list_mutex);
-+static LIST_HEAD(eeprom_list);
-+static DEFINE_IDA(eeprom_ida);
-+
-+static ssize_t bin_attr_eeprom_read_write(struct kobject *kobj,
-+				    char *buf, loff_t offset,
-+				    size_t count, bool read)
-+{
-+	struct device *dev = container_of(kobj, struct device, kobj);
-+	struct eeprom_device *eeprom = container_of(dev, struct eeprom_device,
-+						    edev);
-+	int rc;
-+
-+	if (offset > eeprom->size)
-+		return 0;
-+
-+	if (offset + count > eeprom->size)
-+		count = eeprom->size - offset;
-+
-+	if (read)
-+		rc = regmap_bulk_read(eeprom->regmap, offset,
-+				      buf, count/eeprom->stride);
-+	else
-+		rc = regmap_bulk_write(eeprom->regmap, offset,
-+				       buf, count/eeprom->stride);
-+
-+	if (IS_ERR_VALUE(rc))
-+		return 0;
-+
-+	return count;
-+}
-+
-+static ssize_t bin_attr_eeprom_read(struct file *filp, struct kobject *kobj,
-+				    struct bin_attribute *attr,
-+				    char *buf, loff_t offset, size_t count)
-+{
-+	return bin_attr_eeprom_read_write(kobj, buf, offset, count, true);
-+}
-+
-+static ssize_t bin_attr_eeprom_write(struct file *filp, struct kobject *kobj,
-+				     struct bin_attribute *attr,
-+				     char *buf, loff_t offset, size_t count)
-+{
-+	return bin_attr_eeprom_read_write(kobj, buf, offset, count, false);
-+}
-+
-+static struct bin_attribute bin_attr_eeprom = {
-+	.attr	= {
-+		.name	= "eeprom",
-+		.mode	= 0660,
-+	},
-+	.read	= bin_attr_eeprom_read,
-+	.write	= bin_attr_eeprom_write,
-+};
-+
-+static struct bin_attribute *eeprom_bin_attributes[] = {
-+	&bin_attr_eeprom,
-+	NULL,
-+};
-+
-+static const struct attribute_group eeprom_bin_group = {
-+	.bin_attrs	= eeprom_bin_attributes,
-+};
-+
-+static const struct attribute_group *eeprom_dev_groups[] = {
-+	&eeprom_bin_group,
-+	NULL,
-+};
-+
-+static struct class eeprom_class = {
-+	.name		= "eeprom",
-+	.dev_groups	= eeprom_dev_groups,
-+};
-+
-+int eeprom_register(struct eeprom_device *eeprom)
-+{
++	struct device *dev = &pdev->dev;
 +	int rval;
 +
-+	if (!eeprom->regmap || !eeprom->size) {
-+		dev_err(eeprom->dev, "Regmap not found\n");
-+		return -EINVAL;
-+	}
++	sid = devm_kzalloc(dev, sizeof(*sid), GFP_KERNEL);
++	if (!sid)
++		return -ENOMEM;
 +
-+	eeprom->id = ida_simple_get(&eeprom_ida, 0, 0, GFP_KERNEL);
-+	if (eeprom->id < 0)
-+		return eeprom->id;
++	eeprom = &sid->eeprom;
 +
-+	eeprom->edev.class = &eeprom_class;
-+	eeprom->edev.parent = eeprom->dev;
-+	eeprom->edev.of_node = eeprom->dev ? eeprom->dev->of_node : NULL;
-+	dev_set_name(&eeprom->edev, "eeprom%d", eeprom->id);
++	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	sid->membase = devm_ioremap_resource(dev, res);
++	if (IS_ERR(sid->membase))
++		return PTR_ERR(sid->membase);
 +
-+	device_initialize(&eeprom->edev);
++	device = of_match_device(sunxi_sid_of_match, dev);
++	if (!device)
++		return -ENODEV;
 +
-+	dev_dbg(&eeprom->edev, "Registering eeprom device %s\n",
-+		dev_name(&eeprom->edev));
++	sunxi_sid_regmap_config.max_register = (unsigned int)device->data - 1;
 +
-+	rval = device_add(&eeprom->edev);
++	eeprom->regmap = devm_regmap_init(dev, NULL,
++					  sid, &sunxi_sid_regmap_config);
++	if (IS_ERR(eeprom->regmap))
++		return PTR_ERR(eeprom->regmap);
++
++	eeprom->dev = dev;
++	eeprom->stride = sunxi_sid_regmap_config.reg_stride;
++	eeprom->size = sunxi_sid_regmap_config.max_register;
++	rval = eeprom_register(eeprom);
 +	if (rval)
 +		return rval;
 +
-+	mutex_lock(&eeprom_list_mutex);
-+	list_add(&eeprom->list, &eeprom_list);
-+	mutex_unlock(&eeprom_list_mutex);
++	platform_set_drvdata(pdev, eeprom);
 +
 +	return 0;
 +}
-+EXPORT_SYMBOL(eeprom_register);
 +
-+int eeprom_unregister(struct eeprom_device *eeprom)
++static int sunxi_sid_remove(struct platform_device *pdev)
 +{
-+	device_del(&eeprom->edev);
++	struct eeprom_device *eeprom = platform_get_drvdata(pdev);
 +
-+	mutex_lock(&eeprom_list_mutex);
-+	list_del(&eeprom->list);
-+	mutex_unlock(&eeprom_list_mutex);
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL(eeprom_unregister);
-+
-+static struct eeprom_cell *__eeprom_cell_get(struct device_node *node,
-+					     int index)
-+{
-+	struct of_phandle_args args;
-+	struct eeprom_cell *cell;
-+	struct eeprom_device *e, *eeprom = NULL;
-+	int ret;
-+
-+	ret = of_parse_phandle_with_args(node, "eeproms",
-+					 "#eeprom-cells", index, &args);
-+	if (ret)
-+		return ERR_PTR(ret);
-+
-+	if (args.args_count != 2)
-+		return ERR_PTR(-EINVAL);
-+
-+	mutex_lock(&eeprom_list_mutex);
-+
-+	list_for_each_entry(e, &eeprom_list, list) {
-+		if (args.np == e->edev.of_node) {
-+			eeprom = e;
-+			break;
-+		}
-+	}
-+	mutex_unlock(&eeprom_list_mutex);
-+
-+	if (!eeprom)
-+		return ERR_PTR(-EPROBE_DEFER);
-+
-+	cell = kzalloc(sizeof(*cell), GFP_KERNEL);
-+	if (!cell)
-+		return ERR_PTR(-ENOMEM);
-+
-+	cell->eeprom = eeprom;
-+	cell->offset = args.args[0];
-+	cell->count = args.args[1];
-+
-+	return cell;
++	return eeprom_unregister(eeprom);
 +}
 +
-+static struct eeprom_cell *__eeprom_cell_get_byname(struct device_node *node,
-+						    const char *id)
-+{
-+	int index = 0;
-+
-+	if (id)
-+		index = of_property_match_string(node,
-+						 "eeprom-names",
-+						 id);
-+	return __eeprom_cell_get(node, index);
-+
-+}
-+
-+struct eeprom_cell *eeprom_cell_get(struct device *dev, int index)
-+{
-+	if (!dev)
-+		return ERR_PTR(-EINVAL);
-+
-+	/* First, attempt to retrieve the cell through the DT */
-+	if (dev->of_node)
-+		return __eeprom_cell_get(dev->of_node, index);
-+
-+	/* We don't support anything else yet */
-+	return ERR_PTR(-ENODEV);
-+}
-+EXPORT_SYMBOL(eeprom_cell_get);
-+
-+struct eeprom_cell *eeprom_cell_get_byname(struct device *dev, const char *id)
-+{
-+	if (!dev)
-+		return ERR_PTR(-EINVAL);
-+
-+	if (id && dev->of_node)
-+		return __eeprom_cell_get_byname(dev->of_node, id);
-+
-+	/* We don't support anything else yet */
-+	return ERR_PTR(-ENODEV);
-+}
-+EXPORT_SYMBOL(eeprom_cell_get_byname);
-+
-+void eeprom_cell_put(struct eeprom_cell *cell)
-+{
-+	kfree(cell);
-+}
-+EXPORT_SYMBOL(eeprom_cell_put);
-+
-+char *eeprom_cell_read(struct eeprom_cell *cell, ssize_t *len)
-+{
-+	struct eeprom_device *eeprom = cell->eeprom;
-+	char *buf;
-+	int rc;
-+
-+	if (!eeprom || !eeprom->regmap)
-+		return ERR_PTR(-EINVAL);
-+
-+	buf = kzalloc(cell->count, GFP_KERNEL);
-+	if (!buf)
-+		return ERR_PTR(-ENOMEM);
-+
-+	rc = regmap_bulk_read(eeprom->regmap, cell->offset,
-+			      buf, cell->count/eeprom->stride);
-+	if (IS_ERR_VALUE(rc)) {
-+		kfree(buf);
-+		return ERR_PTR(rc);
-+	}
-+
-+	*len = cell->count;
-+
-+	return buf;
-+}
-+EXPORT_SYMBOL(eeprom_cell_read);
-+
-+int eeprom_cell_write(struct eeprom_cell *cell, const char *buf, ssize_t len)
-+{
-+	struct eeprom_device *eeprom = cell->eeprom;
-+
-+	if (!eeprom || !eeprom->regmap)
-+		return -EINVAL;
-+
-+	return regmap_bulk_write(eeprom->regmap, cell->offset,
-+				 buf, cell->count/eeprom->stride);
-+}
-+EXPORT_SYMBOL(eeprom_cell_write);
-+
-+static int eeprom_init(void)
-+{
-+	return class_register(&eeprom_class);
-+}
-+
-+static void eeprom_exit(void)
-+{
-+	class_unregister(&eeprom_class);
-+}
-+
-+subsys_initcall(eeprom_init);
-+module_exit(eeprom_exit);
-+
-+MODULE_AUTHOR("Maxime Ripard <maxime.ripard@free-electrons.com");
-+MODULE_DESCRIPTION("EEPROM Driver Core");
-+MODULE_LICENSE("GPL");
-diff --git a/include/linux/eeprom-consumer.h b/include/linux/eeprom-consumer.h
-new file mode 100644
-index 0000000..706ae9d
---- /dev/null
-+++ b/include/linux/eeprom-consumer.h
-@@ -0,0 +1,73 @@
-+/*
-+ * EEPROM framework consumer.
-+ *
-+ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-+ * Copyright (C) 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
-+ *
-+ * This file is licensed under the terms of the GNU General Public
-+ * License version 2.  This program is licensed "as is" without any
-+ * warranty of any kind, whether express or implied.
-+ */
-+
-+#ifndef _LINUX_EEPROM_CONSUMER_H
-+#define _LINUX_EEPROM_CONSUMER_H
-+
-+struct eeprom_cell;
-+
-+/**
-+ * eeprom_cell_get(): Get eeprom cell of device form a given index.
-+ *
-+ * @dev: Device that will be interacted with
-+ * @index: Index of the eeprom cell.
-+ *
-+ * The return value will be an ERR_PTR() on error or a valid pointer
-+ * to a struct eeprom_cell.  The eeprom_cell will be freed by the
-+ * eeprom_cell_put().
-+ */
-+struct eeprom_cell *eeprom_cell_get(struct device *dev, int index);
-+
-+/**
-+ * eeprom_cell_get(): Get eeprom cell of device form a given name.
-+ *
-+ * @dev: Device that will be interacted with
-+ * @name: Name of the eeprom cell.
-+ *
-+ * The return value will be an ERR_PTR() on error or a valid pointer
-+ * to a struct eeprom_cell.  The eeprom_cell will be freed by the
-+ * eeprom_cell_put().
-+ */
-+struct eeprom_cell *eeprom_cell_get_byname(struct device *dev,
-+					   const char *name);
-+
-+/**
-+ * eeprom_cell_put(): Release previously allocated eeprom cell.
-+ *
-+ * @cell: Previously allocated eeprom cell by eeprom_cell_get()
-+ * or eeprom_cell_get_byname().
-+ */
-+void eeprom_cell_put(struct eeprom_cell *cell);
-+
-+/**
-+ * eeprom_cell_read(): Read a given eeprom cell
-+ *
-+ * @cell: eeprom cell to be read.
-+ * @len: pointer to length of cell which will be populated on successful read.
-+ *
-+ * The return value will be an ERR_PTR() on error or a valid pointer
-+ * to a char * bufffer.  The buffer should be freed by the consumer with a
-+ * kfree().
-+ */
-+char *eeprom_cell_read(struct eeprom_cell *cell, ssize_t *len);
-+
-+/**
-+ * eeprom_cell_write(): Write to a given eeprom cell
-+ *
-+ * @cell: eeprom cell to be written.
-+ * @buf: Buffer to be written.
-+ * @len: length of buffer to be written to eeprom cell.
-+ *
-+ * The return value will be an non zero on error or a zero on successful write.
-+ */
-+int eeprom_cell_write(struct eeprom_cell *cell, const char *buf, ssize_t len);
-+
-+#endif  /* ifndef _LINUX_EEPROM_CONSUMER_H */
-diff --git a/include/linux/eeprom-provider.h b/include/linux/eeprom-provider.h
-new file mode 100644
-index 0000000..3943c2f
---- /dev/null
-+++ b/include/linux/eeprom-provider.h
-@@ -0,0 +1,51 @@
-+/*
-+ * EEPROM framework provider.
-+ *
-+ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-+ * Copyright (C) 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
-+ *
-+ * This file is licensed under the terms of the GNU General Public
-+ * License version 2.  This program is licensed "as is" without any
-+ * warranty of any kind, whether express or implied.
-+ */
-+
-+#ifndef _LINUX_EEPROM_PROVIDER_H
-+#define _LINUX_EEPROM_PROVIDER_H
-+
-+#include <linux/device.h>
-+#include <linux/regmap.h>
-+#include <linux/list.h>
-+
-+struct eeprom_device {
-+	struct regmap		*regmap;
-+	int			stride;
-+	size_t			size;
-+	struct device		*dev;
-+
-+	/* Internal to framework */
-+	struct device		edev;
-+	int			id;
-+	struct list_head	list;
++static struct platform_driver sunxi_sid_driver = {
++	.probe = sunxi_sid_probe,
++	.remove = sunxi_sid_remove,
++	.driver = {
++		.name = "sunxi-sid",
++		.of_match_table = sunxi_sid_of_match,
++	},
 +};
++module_platform_driver(sunxi_sid_driver);
 +
-+/**
-+ * eeprom_register(): Register a eeprom device for given eeprom.
-+ * Also creates an binary entry in /sys/class/eeprom/eeprom[id]/eeprom
-+ *
-+ * @eeprom: eeprom device that needs to be created
-+ *
-+ * The return value will be an error code on error or a zero on success.
-+ * The eeprom_device and sysfs entery will be freed by the eeprom_unregister().
-+ */
-+int eeprom_register(struct eeprom_device *eeprom);
-+
-+/**
-+ * eeprom_unregister(): Unregister previously registered eeprom device
-+ *
-+ * @eeprom: Pointer to previously registered eeprom device.
-+ *
-+ * The return value will be an non zero on error or a zero on success.
-+ */
-+int eeprom_unregister(struct eeprom_device *eeprom);
-+
-+#endif  /* ifndef _LINUX_EEPROM_PROVIDER_H */
++MODULE_AUTHOR("Oliver Schinagl <oliver@schinagl.nl>");
++MODULE_DESCRIPTION("Allwinner sunxi security id driver");
++MODULE_LICENSE("GPL");
+diff --git a/drivers/misc/eeprom/Kconfig b/drivers/misc/eeprom/Kconfig
+index 9536852f..04f2e1f 100644
+--- a/drivers/misc/eeprom/Kconfig
++++ b/drivers/misc/eeprom/Kconfig
+@@ -96,17 +96,4 @@ config EEPROM_DIGSY_MTC_CFG
+ 
+ 	  If unsure, say N.
+ 
+-config EEPROM_SUNXI_SID
+-	tristate "Allwinner sunxi security ID support"
+-	depends on ARCH_SUNXI && SYSFS
+-	help
+-	  This is a driver for the 'security ID' available on various Allwinner
+-	  devices.
+-
+-	  Due to the potential risks involved with changing e-fuses,
+-	  this driver is read-only.
+-
+-	  This driver can also be built as a module. If so, the module
+-	  will be called sunxi_sid.
+-
+ endmenu
+diff --git a/drivers/misc/eeprom/Makefile b/drivers/misc/eeprom/Makefile
+index 9507aec..fc1e81d 100644
+--- a/drivers/misc/eeprom/Makefile
++++ b/drivers/misc/eeprom/Makefile
+@@ -4,5 +4,4 @@ obj-$(CONFIG_EEPROM_LEGACY)	+= eeprom.o
+ obj-$(CONFIG_EEPROM_MAX6875)	+= max6875.o
+ obj-$(CONFIG_EEPROM_93CX6)	+= eeprom_93cx6.o
+ obj-$(CONFIG_EEPROM_93XX46)	+= eeprom_93xx46.o
+-obj-$(CONFIG_EEPROM_SUNXI_SID)	+= sunxi_sid.o
+ obj-$(CONFIG_EEPROM_DIGSY_MTC_CFG) += digsy_mtc_eeprom.o
+diff --git a/drivers/misc/eeprom/sunxi_sid.c b/drivers/misc/eeprom/sunxi_sid.c
+deleted file mode 100644
+index 8385177..0000000
+--- a/drivers/misc/eeprom/sunxi_sid.c
++++ /dev/null
+@@ -1,156 +0,0 @@
+-/*
+- * Copyright (c) 2013 Oliver Schinagl <oliver@schinagl.nl>
+- * http://www.linux-sunxi.org
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License as published by
+- * the Free Software Foundation; either version 2 of the License, or
+- * (at your option) any later version.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- *
+- * This driver exposes the Allwinner security ID, efuses exported in byte-
+- * sized chunks.
+- */
+-
+-#include <linux/compiler.h>
+-#include <linux/device.h>
+-#include <linux/err.h>
+-#include <linux/export.h>
+-#include <linux/fs.h>
+-#include <linux/io.h>
+-#include <linux/kernel.h>
+-#include <linux/kobject.h>
+-#include <linux/module.h>
+-#include <linux/of_device.h>
+-#include <linux/platform_device.h>
+-#include <linux/random.h>
+-#include <linux/slab.h>
+-#include <linux/stat.h>
+-#include <linux/sysfs.h>
+-#include <linux/types.h>
+-
+-#define DRV_NAME "sunxi-sid"
+-
+-struct sunxi_sid_data {
+-	void __iomem *reg_base;
+-	unsigned int keysize;
+-};
+-
+-/* We read the entire key, due to a 32 bit read alignment requirement. Since we
+- * want to return the requested byte, this results in somewhat slower code and
+- * uses 4 times more reads as needed but keeps code simpler. Since the SID is
+- * only very rarely probed, this is not really an issue.
+- */
+-static u8 sunxi_sid_read_byte(const struct sunxi_sid_data *sid_data,
+-			      const unsigned int offset)
+-{
+-	u32 sid_key;
+-
+-	if (offset >= sid_data->keysize)
+-		return 0;
+-
+-	sid_key = ioread32be(sid_data->reg_base + round_down(offset, 4));
+-	sid_key >>= (offset % 4) * 8;
+-
+-	return sid_key; /* Only return the last byte */
+-}
+-
+-static ssize_t sid_read(struct file *fd, struct kobject *kobj,
+-			struct bin_attribute *attr, char *buf,
+-			loff_t pos, size_t size)
+-{
+-	struct platform_device *pdev;
+-	struct sunxi_sid_data *sid_data;
+-	int i;
+-
+-	pdev = to_platform_device(kobj_to_dev(kobj));
+-	sid_data = platform_get_drvdata(pdev);
+-
+-	if (pos < 0 || pos >= sid_data->keysize)
+-		return 0;
+-	if (size > sid_data->keysize - pos)
+-		size = sid_data->keysize - pos;
+-
+-	for (i = 0; i < size; i++)
+-		buf[i] = sunxi_sid_read_byte(sid_data, pos + i);
+-
+-	return i;
+-}
+-
+-static struct bin_attribute sid_bin_attr = {
+-	.attr = { .name = "eeprom", .mode = S_IRUGO, },
+-	.read = sid_read,
+-};
+-
+-static int sunxi_sid_remove(struct platform_device *pdev)
+-{
+-	device_remove_bin_file(&pdev->dev, &sid_bin_attr);
+-	dev_dbg(&pdev->dev, "driver unloaded\n");
+-
+-	return 0;
+-}
+-
+-static const struct of_device_id sunxi_sid_of_match[] = {
+-	{ .compatible = "allwinner,sun4i-a10-sid", .data = (void *)16},
+-	{ .compatible = "allwinner,sun7i-a20-sid", .data = (void *)512},
+-	{/* sentinel */},
+-};
+-MODULE_DEVICE_TABLE(of, sunxi_sid_of_match);
+-
+-static int sunxi_sid_probe(struct platform_device *pdev)
+-{
+-	struct sunxi_sid_data *sid_data;
+-	struct resource *res;
+-	const struct of_device_id *of_dev_id;
+-	u8 *entropy;
+-	unsigned int i;
+-
+-	sid_data = devm_kzalloc(&pdev->dev, sizeof(struct sunxi_sid_data),
+-				GFP_KERNEL);
+-	if (!sid_data)
+-		return -ENOMEM;
+-
+-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+-	sid_data->reg_base = devm_ioremap_resource(&pdev->dev, res);
+-	if (IS_ERR(sid_data->reg_base))
+-		return PTR_ERR(sid_data->reg_base);
+-
+-	of_dev_id = of_match_device(sunxi_sid_of_match, &pdev->dev);
+-	if (!of_dev_id)
+-		return -ENODEV;
+-	sid_data->keysize = (int)of_dev_id->data;
+-
+-	platform_set_drvdata(pdev, sid_data);
+-
+-	sid_bin_attr.size = sid_data->keysize;
+-	if (device_create_bin_file(&pdev->dev, &sid_bin_attr))
+-		return -ENODEV;
+-
+-	entropy = kzalloc(sizeof(u8) * sid_data->keysize, GFP_KERNEL);
+-	for (i = 0; i < sid_data->keysize; i++)
+-		entropy[i] = sunxi_sid_read_byte(sid_data, i);
+-	add_device_randomness(entropy, sid_data->keysize);
+-	kfree(entropy);
+-
+-	dev_dbg(&pdev->dev, "loaded\n");
+-
+-	return 0;
+-}
+-
+-static struct platform_driver sunxi_sid_driver = {
+-	.probe = sunxi_sid_probe,
+-	.remove = sunxi_sid_remove,
+-	.driver = {
+-		.name = DRV_NAME,
+-		.of_match_table = sunxi_sid_of_match,
+-	},
+-};
+-module_platform_driver(sunxi_sid_driver);
+-
+-MODULE_AUTHOR("Oliver Schinagl <oliver@schinagl.nl>");
+-MODULE_DESCRIPTION("Allwinner sunxi security id driver");
+-MODULE_LICENSE("GPL");
 -- 
 1.9.1
