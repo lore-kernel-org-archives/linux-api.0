@@ -1,89 +1,169 @@
-From: Jason Baron <jbaron@akamai.com>
-Subject: Re: [PATCH v2 2/2] epoll: introduce EPOLLEXCLUSIVE and EPOLLROUNDROBIN
-Date: Wed, 18 Feb 2015 22:26:07 -0500
-Message-ID: <54E557CF.8080702@akamai.com>
-References: <cover.1424200151.git.jbaron@akamai.com> <7956874bfdc7403f37afe8a75e50c24221039bd2.1424200151.git.jbaron@akamai.com> <20150218080740.GA10199@gmail.com> <54E4B2D0.8020706@akamai.com> <20150218163300.GA28007@gmail.com> <54E4CE14.5010708@akamai.com> <20150218174533.GB31566@gmail.com> <20150218175123.GA31878@gmail.com>
+From: Andrew Vagin <avagin@parallels.com>
+Subject: Re: [PATCH 0/7] [RFC] kernel: add a netlink interface to get
+ information about processes
+Date: Thu, 19 Feb 2015 17:04:20 +0300
+Message-ID: <20150219140420.GA22693@paralelels.com>
+References: <1424161226-15176-1-git-send-email-avagin@openvz.org>
+ <2631974.u59Ona1mDt@wuerfel>
+ <20150218123659.GA24098@paralelels.com>
+ <2264653.BOMoOiAVWc@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="koi8-r"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150218175123.GA31878@gmail.com>
+Content-Disposition: inline
+In-Reply-To: <2264653.BOMoOiAVWc@wuerfel>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Ingo Molnar <mingo@kernel.org>
-Cc: peterz@infradead.org, mingo@redhat.com, viro@zeniv.linux.org.uk, akpm@linux-foundation.org, normalperson@yhbt.net, davidel@xmailserver.org, mtk.manpages@gmail.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "luto@amacapital.net >> Andy Lutomirski" <luto@amacapital.net>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Andrey Vagin <avagin@openvz.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Cyrill Gorcunov <gorcunov@openvz.org>, Pavel Emelyanov <xemul@parallels.com>, Roger Luethi <rl@hellgate.ch>
 List-Id: linux-api@vger.kernel.org
 
-On 02/18/2015 12:51 PM, Ingo Molnar wrote:
-> * Ingo Molnar <mingo@kernel.org> wrote:
->
->>> [...] However, I think the userspace API change is less 
->>> clear since epoll_wait() doesn't currently have an 
->>> 'input' events argument as epoll_ctl() does.
->> ... but the change would be a bit clearer and somewhat 
->> more flexible: LIFO or FIFO queueing, right?
->>
->> But having the queueing model as part of the epoll 
->> context is a legitimate approach as well.
-> Btw., there's another optimization that the networking code 
-> already does when processing incoming packets: waking up a 
-> thread on the local CPU, where the wakeup is running.
->
-> Doing the same on epoll would have real scalability 
-> advantages where incoming events are IRQ driven and are 
-> distributed amongst multiple CPUs.
->
-> Where events are task driven the scheduler will already try 
-> to pair up waker and wakee so it might not show up in 
-> measurements that markedly.
->
+On Wed, Feb 18, 2015 at 03:46:31PM +0100, Arnd Bergmann wrote:
+> On Wednesday 18 February 2015 15:42:11 Andrew Vagin wrote:
+> > On Wed, Feb 18, 2015 at 12:06:40PM +0100, Arnd Bergmann wrote:
+> > > On Wednesday 18 February 2015 00:33:13 Andrew Vagin wrote:
+> > > > On Tue, Feb 17, 2015 at 09:53:09AM +0100, Arnd Bergmann wrote:
+> > > > > On Tuesday 17 February 2015 11:20:19 Andrey Vagin wrote:
+> > > > > > task_diag is based on netlink sockets and looks like socket-diag, which
+> > > > > > is used to get information about sockets.
+> > > > > > 
+> > > > > > A request is described by the task_diag_pid structure:
+> > > > > > 
+> > > > > > struct task_diag_pid {
+> > > > > >        __u64   show_flags;      /* specify which information are required */
+> > > > > >        __u64   dump_stratagy;   /* specify a group of processes */
+> > > > > > 
+> > > > > >        __u32   pid;
+> > > > > > };
+> > > > > 
+> > > > > Can you explain how the interface relates to the 'taskstats' genetlink
+> > > > > API? Did you consider extending that interface to provide the
+> > > > > information you need instead of basing on the socket-diag?
+> > > > 
+> > > > It isn't based on the socket-diag, it looks like socket-diag.
+> > > > 
+> > > > Current task_diag registers a new genl family, but we can use the taskstats
+> > > > family and add task_diag commands to it.
+> > > 
+> > > What I meant was more along the lines of making it look like taskstats
+> > > by adding new fields to 'struct taskstat' for what you want return.
+> > > I don't know if that is possible or a good idea for the information
+> > > you want to get out of the kernel, but it seems like a more natural
+> > > interface, as it already has some of the same data (comm, gid, pid,
+> > > ppid, ...).
+> > 
+> > Now I see what you mean. task_diag has more flexible and universal
+> > interface than taskstat. A response of taskstat only contains a
+> > taskstats structure. A response of taskdiag can contains a few types of
+> > properties. Each type is described by its own structure.
+> 
+> Right, so the question is whether that flexibility is actually required
+> here. Independent of which design you personally prefer, what are the
+> downsides of extending the existing but less flexible interface?
 
-Right, so this makes me think that we may want to potentially
-support a variety of wakeup policies. Adding these to the
-generic wake up code is just going to be too messy. So, perhaps
-a better approach here would be to register a single
-wait_queue_t with the event source queue that will always
-be woken up, and then layer any epoll balancing/irq affinity
-policies on top of that. So in essence we end up with sort of
-two queues layers, but I think it provides much nicer isolation
-between layers. Also, the bulk of the changes are going to be
-isolated to the epoll code, and we avoid Andy's concern about
-missing, or starving out wakeups.
+I have looked at taskstat once again.
 
-So here's a stab at how this API could look:
+The format of response messages for taskstat and taskdiag are the same.
+It's a netlink message with a set of nested attributes. New attributes
+can be added without breaking backward compatibility.
 
-1. ep1 = epoll_create1(EPOLL_POLICY);
+The request can be expanded to be able to specified which information is
+required and for which tasks.
 
-So EPOLL_POLICY here could the round robin policy described
-here, or the irq affinity or other ideas. The idea is to create
-an fd that is local to the process, such that other processes
-can not subsequently attach to it and affect our policy.
+These two features allow to significantly improve performance, because
+in this case we don't need to do a system call for each task.
 
-2. epoll_ctl(ep1, EPOLL_CTL_ADD, fd_source, NULL);
+I have done a few experiments to prove these words.
 
-This associates ep1 with the event source. ep1 can be
-associated with or added to at most 1 wakeup source. This call
-would largely just form the association, but not queue anything
-to the fd_source wait queue.
+task_proc_all reads /proc/pid/stat for each tast
+$ time ./task_proc_all > /dev/null
 
-3. epoll_ctl(ep2, EPOLL_CTL_ADD, ep1, event);
-    epoll_ctl(ep3, EPOLL_CTL_ADD, ep1, event);
-    epoll_ctl(ep4, EPOLL_CTL_ADD, ep1, event);
-     .
-     .
-     .
+real	0m1.528s
+user	0m0.016s
+sys	0m1.341s
 
-Finally, we add the epoll sets to the event source (indirectly via
-ep1). So the first add would actually queue the callback to the
-fd_source. While the subsequent calls would simply queue things
-to the 'nested' wakeup queue associated with ep1.
+task_diag uses task_diag and requests information for each task
+separately.
+$ time ./task_diag > /dev/null
 
-So any existing epoll/poll/select calls could be queued as well
-to fd_source and will operate independenly from this mechanism,
-as the fd_source queue continues to be 'wake all'. Also, there
-should be no changes necessary to __wake_up_common(), other
-than potentially passing more back though the
-wait_queue_func_t, such as 'nr_exclusive'.
+real	0m1.166s
+user	0m0.024s
+sys	0m1.127s
+
+task_diag_all uses task_diag and requests information for all tasks in
+one request.
+$ time ./task_diag_all > /dev/null
+
+real	0m0.077s
+user	0m0.018s
+sys	0m0.053s
+
+So you can see that the ability to request information for a group of
+tasks allows to be more effective.
+
+The summary of this message is that we can use the interface of
+taskstats with some extensions.
+
+Arnd, thank you for your opinion and suggestions.
+
+> 
+> If it's good enough, that would seem to provide a more consistent
+> API, which in turn helps users understand the interface and use it
+> correctly.
+> 
+> > Curently here are only two groups of parameters: task_diag_msg and
+> > task_diag_creds.
+> > 
+> > task_diag_msg contains a few basic parameters.
+> > task_diag_creds contains credentials.
+> > 
+> > I'm going to add other groups to describe all kind of task properties
+> > which currently are presented in procfs (e.g. /proc/pid/maps,
+> > /proc/pid/fding/*, /proc/pid/status, etc).
+> > 
+> > One of features of task_diag is an ability to choose which information
+> > are required. This allows to minimize a response size and a time, which
+> > is requred to fill this response.
+> 
+> I realize that you are trying to optimize for performance, but it
+> would be nice to quantify this if you want to argue for requiring
+> a split interface.
+> 
+> > struct task_diag_msg {
+> >         __u32   tgid;
+> >         __u32   pid;
+> >         __u32   ppid;
+> >         __u32   tpid;
+> >         __u32   sid;
+> >         __u32   pgid;
+> >         __u8    state;
+> >         char    comm[TASK_DIAG_COMM_LEN];
+> > };
+> 
+> I guess this part would be a very natural extension to the
+> existing taskstats structure, and we should only add a new
+> one here if there are extremely good reasons for it.
+
+The task_diag_msg structure contains properties which are used more
+frequently than statistics from the taststats structure.
+
+The size of the task_diag_msg structure is 44 bytes, the size of the
+taststats structure 328.  If we have more data, we need to do more
+system calls. So I have done one more experiment to look how it affects
+perfomance:
+
+If we use the task_diag_msg structure:
+$ time ./task_diag_all > /dev/null
+
+real	0m0.077s
+user	0m0.018s
+sys	0m0.053s
+
+If we use the taststats structure:
+$ time ./task_diag_all > /dev/null
+
+real	0m0.117s
+user	0m0.029s
+sys	0m0.085s
 
 Thanks,
-
--Jason
+Andrew
