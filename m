@@ -1,34 +1,96 @@
-From: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v2 01/18] scripts: link-vmlinux: Don't pass page offset to kallsyms if XIP Kernel
-Date: Fri, 20 Feb 2015 19:01:00 +0100
-Message-ID: <1424455277-29983-2-git-send-email-mcoquelin.stm32__7301.83074852011$1424455703$gmane$org@gmail.com>
-References: <1424455277-29983-1-git-send-email-mcoquelin.stm32@gmail.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1424455277-29983-1-git-send-email-mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Antti Palosaari <crope-X3B1VOXEql0@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Will
+From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Subject: Re: [RFC PATCH 1/3] eeprom: Add a simple EEPROM framework
+Date: Fri, 20 Feb 2015 19:00:22 +0000
+Message-ID: <54E78446.8050800@linaro.org>
+References: <1424365639-26634-1-git-send-email-srinivas.kandagatla@linaro.org> <1424365708-26681-1-git-send-email-srinivas.kandagatla@linaro.org> <20150220174641.GI8656@n2100.arm.linux.org.uk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150220174641.GI8656@n2100.arm.linux.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Russell King - ARM Linux <linux@arm.linux.org.uk>
+Cc: linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Pawel Moll <pawel.moll@arm.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, broonie@kernel.org, Stephen Boyd <sboyd@codeaurora.org>, linux-kernel@vger.kernel.org, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Maxime Ripard <maxime.ripard@free-electrons.com>
 List-Id: linux-api@vger.kernel.org
 
-When Kernel is executed in place from ROM, the symbol addresses can be
-lower than the page offset.
 
-Signed-off-by: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- scripts/link-vmlinux.sh | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
-index 86a4fe7..b055d9d 100755
---- a/scripts/link-vmlinux.sh
-+++ b/scripts/link-vmlinux.sh
-@@ -82,7 +82,7 @@ kallsyms()
- 		kallsymopt="${kallsymopt} --all-symbols"
- 	fi
- 
--	if [ -n "${CONFIG_ARM}" ] && [ -n "${CONFIG_PAGE_OFFSET}" ]; then
-+	if [ -n "${CONFIG_ARM}" ] && [ -z "${CONFIG_XIP_KERNEL}" ] && [ -n "${CONFIG_PAGE_OFFSET}" ]; then
- 		kallsymopt="${kallsymopt} --page-offset=$CONFIG_PAGE_OFFSET"
- 	fi
- 
--- 
-1.9.1
+On 20/02/15 17:46, Russell King - ARM Linux wrote:
+> On Thu, Feb 19, 2015 at 05:08:28PM +0000, Srinivas Kandagatla wrote:
+>> +static struct class eeprom_class = {
+>> +	.name		= "eeprom",
+>> +	.dev_groups	= eeprom_dev_groups,
+>> +};
+>> +
+>> +int eeprom_register(struct eeprom_device *eeprom)
+>> +{
+>> +	int rval;
+>> +
+>> +	if (!eeprom->regmap || !eeprom->size) {
+>> +		dev_err(eeprom->dev, "Regmap not found\n");
+>> +		return -EINVAL;
+>> +	}
+>> +
+>> +	eeprom->id = ida_simple_get(&eeprom_ida, 0, 0, GFP_KERNEL);
+>> +	if (eeprom->id < 0)
+>> +		return eeprom->id;
+>> +
+>> +	eeprom->edev.class = &eeprom_class;
+>> +	eeprom->edev.parent = eeprom->dev;
+>> +	eeprom->edev.of_node = eeprom->dev ? eeprom->dev->of_node : NULL;
+>> +	dev_set_name(&eeprom->edev, "eeprom%d", eeprom->id);
+>> +
+>> +	device_initialize(&eeprom->edev);
+>> +
+>> +	dev_dbg(&eeprom->edev, "Registering eeprom device %s\n",
+>> +		dev_name(&eeprom->edev));
+>> +
+>> +	rval = device_add(&eeprom->edev);
+>> +	if (rval)
+>> +		return rval;
+>> +
+>> +	mutex_lock(&eeprom_list_mutex);
+>> +	list_add(&eeprom->list, &eeprom_list);
+>> +	mutex_unlock(&eeprom_list_mutex);
+>> +
+>> +	return 0;
+>> +}
+>> +EXPORT_SYMBOL(eeprom_register);
+>> +
+>> +int eeprom_unregister(struct eeprom_device *eeprom)
+>> +{
+>> +	device_del(&eeprom->edev);
+>> +
+>> +	mutex_lock(&eeprom_list_mutex);
+>> +	list_del(&eeprom->list);
+>> +	mutex_unlock(&eeprom_list_mutex);
+>> +
+>> +	return 0;
+>
+> There's problems with this.  "edev" is embedded into eeprom, and "edev"
+> is a refcounted structure - it has a lifetime, and the lifetime of
+> eeprom is thus determined by edev.
+>
+> What this means is that calling eeprom_unregister() and then freeing
+> the eeprom structure is a potentially unsafe operation - the memory
+> backing edev must only be freed when the release method for the
+> struct device has been called.
+
+Thats a good catch, Yes I see the issue.
+
+Moving the struct eeprom_device allocation to eeprom core.c should 
+address this issue. This makes eeprom self contained and can safely free 
+the eeprom_device memory in eeprom_class.eeprom_release().
+
+Will fix this in next version.
+
+>
+>> +struct eeprom_device {
+>> +	struct regmap		*regmap;
+>> +	int			stride;
+>> +	size_t			size;
+>> +	struct device		*dev;
+>
+> Failing to understand and address the driver model life time issues is
+> a major blocker for this patch.  Sorry.
+>
