@@ -1,226 +1,144 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: [PATCH v2 14/18] ARM: Add STM32 family machine
-Date: Fri, 20 Feb 2015 21:00:19 +0100
-Message-ID: <20150220200019.GU19388@pengutronix.de>
-References: <1424455277-29983-1-git-send-email-mcoquelin.stm32@gmail.com>
- <1424455277-29983-15-git-send-email-mcoquelin.stm32@gmail.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH 0/7] [RFC] kernel: add a netlink interface to get
+ information about processes
+Date: Fri, 20 Feb 2015 12:33:31 -0800
+Message-ID: <CALCETrU5BWUrityiHnSnz5fJLynfkEBLrvU9G1RxYFdPzgbGrg@mail.gmail.com>
+References: <1424161226-15176-1-git-send-email-avagin@openvz.org>
+ <CALCETrWyQpr-x=No4mK_95gSANL-_fTr3qC7WjT_5TyFQb_rGw@mail.gmail.com>
+ <20150218142718.GA30542@paralelels.com> <CALCETrU5B+1g9B3GH2WpPMaB98thXxpL1fAsHjssK1t_fDM_ZQ@mail.gmail.com>
+ <20150219213929.GA16250@paralelels.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1424455277-29983-15-git-send-email-mcoquelin.stm32@gmail.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Cc: afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rust
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150219213929.GA16250-yYYamFZzV1regbzhZkK2zA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Vagin <avagin-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+On Thu, Feb 19, 2015 at 1:39 PM, Andrew Vagin <avagin-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org> wrote:
+> On Wed, Feb 18, 2015 at 05:18:38PM -0800, Andy Lutomirski wrote:
+>> > > I don't suppose this could use real syscalls instead of netlink.  If
+>> > > nothing else, netlink seems to conflate pid and net namespaces.
+>> >
+>> > What do you mean by "conflate pid and net namespaces"?
+>>
+>> A netlink socket is bound to a network namespace, but you should be
+>> returning data specific to a pid namespace.
+>
+> Here is a good question. When we mount a procfs instance, the current
+> pidns is saved on a superblock. Then if we read data from
+> this procfs from another pidns, we will see pid-s from the pidns where
+> this procfs has been mounted.
+>
+> $ unshare -p -- bash -c '(bash)'
+> $ cat /proc/self/status | grep ^Pid:
+> Pid:    15770
+> $ echo $$
+> 1
+>
+> A similar situation with socket_diag. A socket_diag socket is bound to a
+> network namespace. If we open a socket_diag socket and change a network
+> namespace, it will return infromation about the initial netns.
+>
+> In this version I always use a current pid namespace.
+> But to be consistant with other kernel logic, a socket diag has to be
+> linked with a pidns where it has been created.
+>
 
-On Fri, Feb 20, 2015 at 07:01:13PM +0100, Maxime Coquelin wrote:
-> STMicrolectronics's STM32 series is a family of Cortex-M
-> microcontrollers. It is used in various applications, and
-> proposes a wide range of peripherals.
->=20
-> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-> ---
->  Documentation/arm/stm32/overview.txt           | 32 ++++++++++++++++=
-++++++++++
->  Documentation/arm/stm32/stm32f429-overview.txt | 22 ++++++++++++++++=
-++
->  arch/arm/Kconfig                               | 22 ++++++++++++++++=
-++
->  arch/arm/Makefile                              |  1 +
->  arch/arm/mach-stm32/Makefile                   |  1 +
->  arch/arm/mach-stm32/Makefile.boot              |  0
->  arch/arm/mach-stm32/board-dt.c                 | 31 ++++++++++++++++=
-+++++++++
->  7 files changed, 109 insertions(+)
->  create mode 100644 Documentation/arm/stm32/overview.txt
->  create mode 100644 Documentation/arm/stm32/stm32f429-overview.txt
->  create mode 100644 arch/arm/mach-stm32/Makefile
->  create mode 100644 arch/arm/mach-stm32/Makefile.boot
->  create mode 100644 arch/arm/mach-stm32/board-dt.c
->=20
-> diff --git a/Documentation/arm/stm32/overview.txt b/Documentation/arm=
-/stm32/overview.txt
-> new file mode 100644
-> index 0000000..d8bf6bb
-> --- /dev/null
-> +++ b/Documentation/arm/stm32/overview.txt
-> @@ -0,0 +1,32 @@
-> +			STM32 ARM Linux Overview
-> +			=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D
-> +
-> +Introduction
-> +------------
-> +
-> +  The STMicroelectronics family of Cortex-M based MCUs are supported=
- by the
-> +  'STM32' platform of ARM Linux. Currently only the STM32F429 is sup=
-ported.
-> +
-> +
-> +Configuration
-> +-------------
-> +
-> +  A generic configuration is provided for STM32 family, and can be u=
-sed as the
-> +  default by
-> +	make stm32_defconfig
-> +
-> +Layout
-> +------
-> +
-> +  All the files for multiple machine families are located in the pla=
-tform code
-> +  contained in arch/arm/mach-stm32
-> +
-> +  There is a generic board board-dt.c in the mach folder which suppo=
-rt
-> +  Flattened Device Tree, which means, It works with any compatible b=
-oard with
-> +  Device Trees.
-> +
-> +
-> +Document Author
-> +---------------
-> +
-> +  Maxime Coquelin <mcoquelin.stm32@gmail.com>
-> diff --git a/Documentation/arm/stm32/stm32f429-overview.txt b/Documen=
-tation/arm/stm32/stm32f429-overview.txt
-> new file mode 100644
-> index 0000000..5206822
-> --- /dev/null
-> +++ b/Documentation/arm/stm32/stm32f429-overview.txt
-> @@ -0,0 +1,22 @@
-> +			STM32F429 Overview
-> +			=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> +
-> +  Introduction
-> +  ------------
-> +	The STM32F429 is a Cortex-M4 MCU aimed at various applications.
-> +	It features:
-> +	- ARM Cortex-M4 up to 180MHz with FPU
-> +	- 2MB internal Flash Memory
-> +	- External memory support through FMC controller (PSRAM, SDRAM, NOR=
-, NAND)
-> +	- I2C, SPI, SAI, CAN, USB OTG, Ethernet controllers
-> +	- LCD controller & Camera interface
-> +	- Cryptographic processor
-> +
-> +  Resources
-> +  ---------
-> +	Datasheet and reference manual are publicly available on ST website=
-:
-> +	- http://www.st.com/web/en/catalog/mmc/FM141/SC1169/SS1577/LN1806?e=
-cmp=3Dstm32f429-439_pron_pr-ces2014_nov2013
-> +
-> +  Document Author
-> +  ---------------
-> +	Maxime Coquelin <mcoquelin.stm32@gmail.com>
-> diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-> index 97d07ed..cfd9532 100644
-> --- a/arch/arm/Kconfig
-> +++ b/arch/arm/Kconfig
-> @@ -774,6 +774,28 @@ config ARCH_OMAP1
->  	help
->  	  Support for older TI OMAP1 (omap7xx, omap15xx or omap16xx)
-> =20
-> +config ARCH_STM32
-> +	bool "STMicrolectronics STM32"
-> +	depends on !MMU
-> +	select ARCH_REQUIRE_GPIOLIB
-> +	select ARM_NVIC
-> +	select AUTO_ZRELADDR
-> +	select ARCH_HAS_RESET_CONTROLLER
-> +	select RESET_CONTROLLER
-> +	select PINCTRL
-> +	select PINCTRL_STM32
-> +	select CLKSRC_OF
-> +	select ARMV7M_SYSTICK
-> +	select COMMON_CLK
-> +	select CPU_V7M
-> +	select GENERIC_CLOCKEVENTS
-> +	select NO_DMA
-> +	select NO_IOPORT_MAP
-> +	select SPARSE_IRQ
-> +	select USE_OF
-Please sort this list alphabetically.
+Attaching a pidns to every freshly created netlink socket seems odd,
+but I don't see a better solution that still uses netlink.
 
-> +	help
-> +	  Support for STMicorelectronics STM32 processors.
-> +
->  endchoice
-> =20
->  menu "Multiple platform selection"
-> diff --git a/arch/arm/Makefile b/arch/arm/Makefile
-> index c1785ee..7d00659 100644
-> --- a/arch/arm/Makefile
-> +++ b/arch/arm/Makefile
-> @@ -196,6 +196,7 @@ machine-$(CONFIG_ARCH_SHMOBILE) 	+=3D shmobile
->  machine-$(CONFIG_ARCH_SIRF)		+=3D prima2
->  machine-$(CONFIG_ARCH_SOCFPGA)		+=3D socfpga
->  machine-$(CONFIG_ARCH_STI)		+=3D sti
-> +machine-$(CONFIG_ARCH_STM32)		+=3D stm32
->  machine-$(CONFIG_ARCH_SUNXI)		+=3D sunxi
->  machine-$(CONFIG_ARCH_TEGRA)		+=3D tegra
->  machine-$(CONFIG_ARCH_U300)		+=3D u300
-> diff --git a/arch/arm/mach-stm32/Makefile b/arch/arm/mach-stm32/Makef=
-ile
-> new file mode 100644
-> index 0000000..bd0b7b5
-> --- /dev/null
-> +++ b/arch/arm/mach-stm32/Makefile
-> @@ -0,0 +1 @@
-> +obj-y +=3D board-dt.o
-> diff --git a/arch/arm/mach-stm32/Makefile.boot b/arch/arm/mach-stm32/=
-Makefile.boot
-> new file mode 100644
-> index 0000000..e69de29
-Maybe note there why this file exists and can be empty. Feel free to
-copy the content of efm32's Makefile.boot.
+>>
+>> On a related note, how does this interact with hidepid?  More
+>
+> Currently it always work as procfs with hidepid = 2 (highest level of
+> security).
+>
+>> generally, what privileges are you requiring to obtain what data?
+>
+> It dumps information only if ptrace_may_access(tsk, PTRACE_MODE_READ) returns true
 
-> diff --git a/arch/arm/mach-stm32/board-dt.c b/arch/arm/mach-stm32/boa=
-rd-dt.c
-> new file mode 100644
-> index 0000000..1d681b3
-> --- /dev/null
-> +++ b/arch/arm/mach-stm32/board-dt.c
-> @@ -0,0 +1,31 @@
-> +/*
-> + * Copyright (C) Maxime Coquelin 2015
-> + * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
-> + * License terms:  GNU General Public License (GPL), version 2
-> + */
-> +
-> +#include <linux/kernel.h>
-> +#include <linux/clk-provider.h>
-> +#include <linux/clocksource.h>
-> +#include <linux/reset-controller.h>
-> +#include <asm/v7m.h>
-> +#include <asm/mach/arch.h>
-> +
-> +static const char *const stm32_compat[] __initconst =3D {
-> +	"st,stm32f429",
-> +	NULL
-> +};
-> +
-> +static void __init stm32_timer_init(void)
-> +{
-> +	of_clk_init(NULL);
-> +	reset_controller_of_init();
-> +	clocksource_of_init();
-Hmm, if reset_controller_of_init was called automatically you wouldn't
-need that, right? Maybe arange for that instead?
+Sounds good to me.
 
-Best regards
-Uwe
+>
+>>
+>> >
+>> > >
+>> > > Also, using an asynchronous interface (send, poll?, recv) for
+>> > > something that's inherently synchronous (as the kernel a local
+>> > > question) seems awkward to me.
+>> >
+>> > Actually all requests are handled synchronously. We call sendmsg to send
+>> > a request and it is handled in this syscall.
+>> >  2)               |  netlink_sendmsg() {
+>> >  2)               |    netlink_unicast() {
+>> >  2)               |      taskdiag_doit() {
+>> >  2)   2.153 us    |        task_diag_fill();
+>> >  2)               |        netlink_unicast() {
+>> >  2)   0.185 us    |          netlink_attachskb();
+>> >  2)   0.291 us    |          __netlink_sendskb();
+>> >  2)   2.452 us    |        }
+>> >  2) + 33.625 us   |      }
+>> >  2) + 54.611 us   |    }
+>> >  2) + 76.370 us   |  }
+>> >  2)               |  netlink_recvmsg() {
+>> >  2)   1.178 us    |    skb_recv_datagram();
+>> >  2) + 46.953 us   |  }
+>> >
+>> > If we request information for a group of tasks (NLM_F_DUMP), a first
+>> > portion of data is filled from the sendmsg syscall. And then when we read
+>> > it, the kernel fills the next portion.
+>> >
+>> >  3)               |  netlink_sendmsg() {
+>> >  3)               |    __netlink_dump_start() {
+>> >  3)               |      netlink_dump() {
+>> >  3)               |        taskdiag_dumpid() {
+>> >  3)   0.685 us    |          task_diag_fill();
+>> > ...
+>> >  3)   0.224 us    |          task_diag_fill();
+>> >  3) + 74.028 us   |        }
+>> >  3) + 88.757 us   |      }
+>> >  3) + 89.296 us   |    }
+>> >  3) + 98.705 us   |  }
+>> >  3)               |  netlink_recvmsg() {
+>> >  3)               |    netlink_dump() {
+>> >  3)               |      taskdiag_dumpid() {
+>> >  3)   0.594 us    |        task_diag_fill();
+>> > ...
+>> >  3)   0.242 us    |        task_diag_fill();
+>> >  3) + 60.634 us   |      }
+>> >  3) + 72.803 us   |    }
+>> >  3) + 88.005 us   |  }
+>> >  3)               |  netlink_recvmsg() {
+>> >  3)               |    netlink_dump() {
+>> >  3)   2.403 us    |      taskdiag_dumpid();
+>> >  3) + 26.236 us   |    }
+>> >  3) + 40.522 us   |  }
+>> >  0) + 20.407 us   |  netlink_recvmsg();
+>> >
+>> >
+>> > netlink is really good for this type of tasks.  It allows to create an
+>> > extendable interface which can be easy customized for different needs.
+>> >
+>> > I don't think that we would want to create another similar interface
+>> > just to be independent from network subsystem.
+>>
+>> I guess this is a bit streamy in that you ask one question and get
+>> multiple answers.
+>
+> It's like seq_file in procfs. The kernel allocates a buffer then fills
+> it, copies it into userspace, fills it again, ... repeats these actions.
+> And we can read data from file by portions.
+>
+> Actually here is one more analogy. When we open a file in procfs,
+> we sends a request to the kernel and a file path is a request body in
+> this case. But in case of procfs, we can't construct requests, we only
+> have a set of predefined requests.
 
---=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
+Fair enough.  Procfs is also a bit absurd and only makes sense because
+it's compatible with lots of tools.  In a totally sane world, I would
+argue that you should issue one syscall asking questions about a bit
+and you should get answers immediately.
+
+--Andy
