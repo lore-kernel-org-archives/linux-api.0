@@ -1,119 +1,138 @@
-From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH 1/3] eeprom: Add a simple EEPROM framework
-Date: Fri, 20 Feb 2015 16:01:55 -0600
-Message-ID: <CAL_Jsq+mvpRjYfL_8OseTDCB-6aBhwhNKLBQXXJeVQLDwWm8Nw@mail.gmail.com>
-References: <1424365639-26634-1-git-send-email-srinivas.kandagatla@linaro.org>
- <1424365708-26681-1-git-send-email-srinivas.kandagatla@linaro.org>
- <CAL_Jsq+SeuoojgTpv1y_aPJ_jzDr3HqZhYEBQ3_vYGBHvcccug@mail.gmail.com> <54E78A31.9020306@linaro.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 1/2] proc.5: Document /proc/[pid]/setgroups
+Date: Sat, 21 Feb 2015 08:57:09 +0100
+Message-ID: <54E83A55.9080408@gmail.com>
+References: <52e0643bd47b1e5c65921d6e00aea1f724bb510a.1417281801.git.luto@amacapital.net>	<CALCETrU-o5mPr1jCaLXDuuF6J2N470zAtx=8Fa-SjF=ZpdE8mQ@mail.gmail.com>	<87ppbtn4mv.fsf@x220.int.ebiederm.org>	<CALCETrXSScp77BUJR5NSTh5-RnEZ9rqELSGJBeEzgdQ-OtohuQ@mail.gmail.com>	<87a92xn2io.fsf@x220.int.ebiederm.org>	<87r3w8liw4.fsf@x220.int.ebiederm.org>	<87iohklfvj.fsf_-_@x220.int.ebiederm.org>	<87fvcok11h.fsf_-_@x220.int.ebiederm.org>	<CALCETrVfKiXuY=KY_=nHpkTyLWgpy_3DK=4Mr2mhpyX9z1TzrA@mail.gmail.com>	<971ad3f6-90fd-4e3f-916c-8988af3c826d@email.android.com>	<CALCETrWpzvNm=fjOa3_+4QOqYP8qZUJvQAd6AsRZ71xyHZQRCg@mail.gmail.com>	<87wq5zf83t.fsf@x220.int.ebiederm.org>	<87iohh3c9c.fsf@x220.int.ebiederm.org>	<8761dh3b7k.fsf_-_@x220.int.ebiederm.org>	<878uicy1r9.fsf_-_@x220.int.ebiederm.org>	<87vblg1qme.fs
+ f@x220.int.ebiederm.org>
+	<54CF9995.1050409@gmail.com>	<CAKgNAkgWnZ=7E4bk3JhzFS88CJ32szYCYcm_Sx166yVuWKhhUA@mail.gmail.com>
+	<8761b8lfoz.fsf@x220.int.ebiederm.org> <54DCB059.2020305@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54E78A31.9020306-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <54DCB059.2020305-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 20, 2015 at 1:25 PM, Srinivas Kandagatla
-<srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
->
->
-> On 20/02/15 17:21, Rob Herring wrote:
->>
->> On Thu, Feb 19, 2015 at 11:08 AM, Srinivas Kandagatla
->> <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
->>>
->>> From: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
->>>
->>> Up until now, EEPROM drivers were stored in drivers/misc, where they all
->>> had to
->>> duplicate pretty much the same code to register a sysfs file, allow
->>> in-kernel
->>> users to access the content of the devices they were driving, etc.
->>>
->>> This was also a problem as far as other in-kernel users were involved,
->>> since
->>> the solutions used were pretty much different from on driver to another,
->>> there
->>> was a rather big abstraction leak.
->>>
->>> This introduction of this framework aims at solving this. It also
->>> introduces DT
->>> representation for consumer devices to go get the data they require (MAC
->>> Addresses, SoC/Revision ID, part numbers, and so on) from the EEPROMs.
->>>
->>> Having regmap interface to this framework would give much better
->>> abstraction for eeproms on different buses.
->>>
->>> Signed-off-by: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
->>> [srinivas.kandagatla: Moved to regmap based and cleanedup apis]
->>> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
->>> ---
->>>   .../devicetree/bindings/eeprom/eeprom.txt          |  48 ++++
->>>   drivers/Kconfig                                    |   2 +
->>>   drivers/Makefile                                   |   1 +
->>>   drivers/eeprom/Kconfig                             |  19 ++
->>>   drivers/eeprom/Makefile                            |   9 +
->>>   drivers/eeprom/core.c                              | 290
->>> +++++++++++++++++++++
->>>   include/linux/eeprom-consumer.h                    |  73 ++++++
->>>   include/linux/eeprom-provider.h                    |  51 ++++
->>
->>
->> Who is going to be the maintainer for this?
->
->
-> Am happy to be one.
-
-So please add a MAINTAINERS entry.
-
-[...]
-
->>> += Data consumers =
->>> +
->>> +Required properties:
->>> +
->>> +eeproms: List of phandle and data cell specifier triplet, one triplet
->>> +        for each data cell the device might be interested in. The
->>> +        triplet consists of the phandle to the eeprom provider, then
->>> +        the offset in byte within that storage device, and the length
->>> +        in byte of the data we care about.
->>
->>
->> The problem with this is it assumes you know who the consumer is and
->> that it is a DT node. For example, how would you describe a serial
->> number?
->
-> Correct me if I miss understood.
-> Is serial number any different?
-> Am hoping that the eeprom consumer would be aware of offset and size of
-> serial number in the eeprom
->
-> Cant the consumer do:
->
-> eeprom-consumer {
->         eeproms = <&at24 0 4>;
->         eeprom-names = "device-serial-number";
-
-Yes, but who is "eeprom-consumer"? DT nodes generally describe a h/w
-block, but it this case, the consumer depends on the OS, not the h/w.
-I'm not saying you can't describe where things are, but I don't think
-you should imply who is the consumer and doing so is unnecessarily
-complicated.
-
-Also, the layout of EEPROM is likely very much platform specific. Some
-could have a more complex structure perhaps with key ids and linked
-list structure.
-
-I would do something more simple that is just a list of keys and their
-location like this:
-
-device-serial-number = <start size>;
-key1 = <start size>;
-key2 = <start size>;
-
-Rob
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+SGkgRXJpYywKClBpbmchCgpDaGVlcnMsCgpNaWNoYWVsCgoKT24gMDIvMTIvMjAxNSAwMjo1MyBQ
+TSwgTWljaGFlbCBLZXJyaXNrIChtYW4tcGFnZXMpIHdyb3RlOgo+IEhlbGxvIEVyaWMsCj4gCj4g
+T24gMDIvMTEvMjAxNSAwMjo1MSBQTSwgRXJpYyBXLiBCaWVkZXJtYW4gd3JvdGU6Cj4+ICJNaWNo
+YWVsIEtlcnJpc2sgKG1hbi1wYWdlcykiIDxtdGsubWFucGFnZXNAZ21haWwuY29tPiB3cml0ZXM6
+Cj4+Cj4+PiBIaSBFcmljLAo+Pj4KPj4+IFBpbmchCj4+Pgo+Pj4gQ2hlZXJzLAo+Pj4KPj4+IE1p
+Y2hhZWwKPj4KPj4gTXkgYXBvbG9naWVzLiAgWW91IGRlc2NyaXB0aW9uIHdhc24ndCB3cm9uZyBi
+dXQgaXQgbWF5IGJlIGEgYml0Cj4+IG1pc2xlYWRpbmcsIGV4cGxhbmF0aW9uIGJlbG93LiAgWW91
+IHdpbGwgaGF2ZSB0byBmaWd1cmUgb3V0IGhvdyB0byB3b3JrCj4+IHRoYXQgaW50byB5b3VyIHBy
+b3Bvc2VkIHRleHQuCj4+Cj4+PiBPbiAyIEZlYnJ1YXJ5IDIwMTUgYXQgMTY6MzYsIE1pY2hhZWwg
+S2VycmlzayAobWFuLXBhZ2VzKQo+Pj4gPG10ay5tYW5wYWdlc0BnbWFpbC5jb20+IHdyb3RlOgo+
+Pj4+IFtBZGRpbmcgSm9zaCB0byBDQyBpbiBjYXNlIGhlIGhhcyBhbnl0aGluZyB0byBhZGQuXQo+
+Pj4+Cj4+Pj4gT24gMTIvMTIvMjAxNCAxMDo1NCBQTSwgRXJpYyBXLiBCaWVkZXJtYW4gd3JvdGU6
+Cj4+Pj4+Cj4+Pj4+IFNpZ25lZC1vZmYtYnk6IEVyaWMgVy4gQmllZGVybWFuIDxlYmllZGVybUB4
+bWlzc2lvbi5jb20+Cj4+Pj4+IC0tLQo+Pj4+PiAgbWFuNS9wcm9jLjUgfCAxNSArKysrKysrKysr
+KysrKysKPj4+Pj4gIDEgZmlsZSBjaGFuZ2VkLCAxNSBpbnNlcnRpb25zKCspCj4+Pj4+Cj4+Pj4+
+IGRpZmYgLS1naXQgYS9tYW41L3Byb2MuNSBiL21hbjUvcHJvYy41Cj4+Pj4+IGluZGV4IDk2MDc3
+ZDBkZDE5NS4uZDY2MWU4Y2ZlYWM5IDEwMDY0NAo+Pj4+PiAtLS0gYS9tYW41L3Byb2MuNQo+Pj4+
+PiArKysgYi9tYW41L3Byb2MuNQo+Pj4+PiBAQCAtMTA5Nyw2ICsxMDk3LDIxIEBAIGFyZSBub3Qg
+YXZhaWxhYmxlIGlmIHRoZSBtYWluIHRocmVhZCBoYXMgYWxyZWFkeSB0ZXJtaW5hdGVkCj4+Pj4+
+ICAuXCIgICAgICAgQWRkZWQgaW4gMi42LjkKPj4+Pj4gIC5cIiAgICAgICBDT05GSUdfU0NIRURT
+VEFUUwo+Pj4+PiAgLlRQCj4+Pj4+ICsuSVIgL3Byb2MvW3BpZF0vc2V0Z3JvdXBzICIgKHNpbmNl
+IExpbnV4IDMuMTktcmMxKSIKPj4+Pj4gK1RoaXMgZmlsZSByZXBvcnRzCj4+Pj4+ICsuQlIgYWxs
+b3cKPj4+Pj4gK2lmIHRoZSBzZXRncm91cHMgc3lzdGVtIGNhbGwgaXMgYWxsb3dlZCBpbiB0aGUg
+Y3VycmVudCB1c2VyIG5hbWVzcGFjZS4KPj4+Pj4gK1RoaXMgZmlsZSByZXBvcnRzCj4+Pj4+ICsu
+QlIgZGVueQo+Pj4+PiAraWYgdGhlIHNldGdyb3VwcyBzeXN0ZW0gY2FsbCBpcyBub3QgYWxsb3dl
+ZCBpbiB0aGUgY3VycmVudCB1c2VyIG5hbWVzcGFjZS4KPj4+Pj4gK1RoaXMgZmlsZSBtYXkgYmUg
+d3JpdHRlbiB0byB3aXRoIHZhbHVlcyBvZgo+Pj4+PiArLkJSIGFsbG93Cj4+Pj4+ICthbmQKPj4+
+Pj4gKy5CUiBkZW55Cj4+Pj4+ICtiZWZvcmUKPj4+Pj4gKy5JUiAvcHJvYy9bcGlkXS9naWRfbWFw
+Cj4+Pj4+ICtpcyB3cml0dGVuIHRvIChlbmFibGluZyBzZXRncm91cHMpIGluIGEgdXNlciBuYW1l
+c3BhY2UuCj4+Pj4+ICsuVFAKPj4+Pj4gIC5JUiAvcHJvYy9bcGlkXS9zbWFwcyAiIChzaW5jZSBM
+aW51eCAyLjYuMTQpIgo+Pj4+PiAgVGhpcyBmaWxlIHNob3dzIG1lbW9yeSBjb25zdW1wdGlvbiBm
+b3IgZWFjaCBvZiB0aGUgcHJvY2VzcydzIG1hcHBpbmdzLgo+Pj4+PiAgKFRoZQo+Pj4+Cj4+Pj4g
+SGkgRXJpYywKPj4+Pgo+Pj4+IFRoYW5rcyBmb3IgdGhpcyBwYXRjaC4gSSBhcHBsaWVkIGl0LCBh
+bmQgdGhlbiB0cmllZCB0byB3b3JrIGluCj4+Pj4gcXVpdGUgYSBmZXcgb3RoZXIgZGV0YWlscyBn
+bGVhbmVkIGZyb20gdGhlIHNvdXJjZSBjb2RlIGFuZCBjb21taXQKPj4+PiBtZXNzYWdlLCBhbmQg
+Sm9uIENvcmJldCdzIGFydGljbGUgYXQgaHR0cDovL2x3bi5uZXQvQXJ0aWNsZXMvNjI2NjY1Ly4K
+Pj4+PiBDb3VsZCB5b3UgcGxlYXNlIGxldCBtZSBrbm93IGlmIHRoZSBmb2xsb3dpbmcgaXMgY29y
+cmVjdDoKPj4KPj4gSXQgaXMgY2xvc2UgYnV0IGl0IG1heSBiZSBtaXNsZWFkaW5nLgo+Pgo+Pj4+
+ICAgICAvcHJvYy9bcGlkXS9zZXRncm91cHMgKHNpbmNlIExpbnV4IDMuMTkpCj4+Pj4gICAgICAg
+ICAgICBUaGlzIGZpbGUgZGlzcGxheXMgdGhlIHN0cmluZyAiYWxsb3ciICBpZiAgcHJvY2Vzc2Vz
+ICBpbgo+Pj4+ICAgICAgICAgICAgdGhlICB1c2VyICBuYW1lc3BhY2UgIHRoYXQgIGNvbnRhaW5z
+IHRoZSBwcm9jZXNzIHBpZCBhcmUKPj4+PiAgICAgICAgICAgIHBlcm1pdHRlZCB0byBlbXBsb3kg
+dGhlIHNldGdyb3VwcygyKSAgc3lzdGVtICBjYWxsLCAgYW5kCj4+Pj4gICAgICAgICAgICAiZGVu
+eSIgIGlmICBzZXRncm91cHMoMikgIGlzICBub3QgcGVybWl0dGVkIGluIHRoYXQgdXNlcgo+Pj4+
+ICAgICAgICAgICAgbmFtZXNwYWNlLgo+Pgo+PiBXaXRoIHRoZSBjYXZlYXQgdGhhdCB3aGVuIGdp
+ZF9tYXAgaXMgbm90IHNldCB0aGF0IHNldGdyb3VwcyBpcyBhbHNvIG5vdAo+PiBhbGxvd2VkLgo+
+IAo+IE9rYXkgLS0gSWFkZGVkIHRoYXQgcG9pbnQuCj4gCj4+Pj4gICAgICAgICAgICBBIHByaXZp
+bGVnZWQgcHJvY2VzcyAob25lIHdpdGggdGhlICBDQVBfU1lTX0FETUlOICBjYXBh4oCQCj4+Pj4g
+ICAgICAgICAgICBiaWxpdHkgaW4gdGhlIG5hbWVzcGFjZSkgbWF5IHdyaXRlIGVpdGhlciBvZiB0
+aGUgc3RyaW5ncwo+Pj4+ICAgICAgICAgICAgImFsbG93IiBvciAiZGVueSIgdG8gdGhpcyBmaWxl
+IGJlZm9yZSB3cml0aW5nIGEgZ3JvdXAgSUQKPj4+PiAgICAgICAgICAgIG1hcHBpbmcgICBmb3Ig
+ICB0aGlzICAgdXNlciAgIG5hbWVzcGFjZSAgIHRvICAgdGhlICBmaWxlCj4+Pj4gICAgICAgICAg
+ICAvcHJvYy9bcGlkXS9naWRfbWFwLiAgV3JpdGluZyB0aGUgc3RyaW5nICJkZW55IiBwcmV2ZW50
+cwo+Pj4+ICAgICAgICAgICAgYW55ICBwcm9jZXNzICBpbiAgdGhlIHVzZXIgbmFtZXNwYWNlIGZy
+b20gZW1wbG95aW5nIHNldOKAkAo+Pj4+ICAgICAgICAgICAgZ3JvdXBzKDIpLgo+Pgo+PiBPciBt
+b3JlIHN1Y2NpbnRseS4gIFlvdSBhcmUgYWxsb3dlZCB0byB3cml0ZSB0byAvcHJvYy9bcGlkXS9z
+ZXRncm91cHMKPj4gd2hlbiBjYWxsaW5nIHNldGdyb3VwcyBpcyBub3QgYWxsb3dlZCBiZWNhdXNl
+IGdpZF9tYXAgaXMgdW5zZXQuICBUaGlzCj4+IGVuc3VyZXMgd2UgZG8gbm90IGhhdmUgYW55IHRy
+YW5zaXRpb25zIGZyb20gYSBzdGF0ZSB3aGVyZSBzZXRncm91cHMKPj4gaXMgYWxsb3dlZCB0byBh
+IHN0YXRlIHdoZXJlIHNldGdyb3VwcyBpcyBkZW5pZWQuICBUaGVyZSBhcmUgb25seQo+PiB0cmFu
+c2l0aW9ucyBmcm9tIHNldGdyb3VwcyBub3QtYWxsb3dlZCB0byBzZXRncm91cHMgYWxsb3dlZC4K
+PiAKPiBBbmQgSSd2ZSB3b3JrZWQgaW4gdGhlIGFib3ZlIHBvaW50LCByZXdvcmRpbmcgYSBiaXQg
+YWxvbmcgdGhlIHdheS4KPiBTbywgaG93IGRvZXMgdGhlIGZvbGxvd2luZyBsb29rIChvbmx5IHRo
+ZSBmaXJzdCB0d28gcGFyYWdyYXBocyBoYXZlCj4gY2hhbmdlZCk/Cj4gCj4gICAgICAgIC9wcm9j
+L1twaWRdL3NldGdyb3VwcyAoc2luY2UgTGludXggMy4xOSkKPiAgICAgICAgICAgICAgIFRoaXMg
+ZmlsZSBkaXNwbGF5cyB0aGUgc3RyaW5nICJhbGxvdyIgIGlmICBwcm9jZXNzZXMgIGluCj4gICAg
+ICAgICAgICAgICB0aGUgIHVzZXIgIG5hbWVzcGFjZSAgdGhhdCAgY29udGFpbnMgdGhlIHByb2Nl
+c3MgcGlkIGFyZQo+ICAgICAgICAgICAgICAgcGVybWl0dGVkIHRvIGVtcGxveSB0aGUgc2V0Z3Jv
+dXBzKDIpICBzeXN0ZW0gIGNhbGwsICBhbmQKPiAgICAgICAgICAgICAgICJkZW55IiAgaWYgIHNl
+dGdyb3VwcygyKSAgaXMgIG5vdCBwZXJtaXR0ZWQgaW4gdGhhdCB1c2VyCj4gICAgICAgICAgICAg
+ICBuYW1lc3BhY2UuICAoTm90ZSwgaG93ZXZlciwgdGhhdCBjYWxscyAgdG8gIHNldGdyb3Vwcygy
+KQo+ICAgICAgICAgICAgICAgYXJlICBhbHNvICBub3QgIHBlcm1pdHRlZCBpZiAvcHJvYy9bcGlk
+XS9naWRfbWFwIGhhcyBub3QKPiAgICAgICAgICAgICAgIHlldCBiZWVuIHNldC4pCj4gCj4gICAg
+ICAgICAgICAgICBBIHByaXZpbGVnZWQgcHJvY2VzcyAob25lIHdpdGggdGhlICBDQVBfU1lTX0FE
+TUlOICBjYXBh4oCQCj4gICAgICAgICAgICAgICBiaWxpdHkgaW4gdGhlIG5hbWVzcGFjZSkgbWF5
+IHdyaXRlIGVpdGhlciBvZiB0aGUgc3RyaW5ncwo+ICAgICAgICAgICAgICAgImFsbG93IiBvciAi
+ZGVueSIgdG8gdGhpcyBmaWxlIGJlZm9yZSB3cml0aW5nIGEgZ3JvdXAgSUQKPiAgICAgICAgICAg
+ICAgIG1hcHBpbmcgICBmb3IgICB0aGlzICAgdXNlciAgIG5hbWVzcGFjZSAgIHRvICAgdGhlICBm
+aWxlCj4gICAgICAgICAgICAgICAvcHJvYy9bcGlkXS9naWRfbWFwLiAgV3JpdGluZyB0aGUgc3Ry
+aW5nICJkZW55IiBwcmV2ZW50cwo+ICAgICAgICAgICAgICAgYW55ICBwcm9jZXNzICBpbiAgdGhl
+IHVzZXIgbmFtZXNwYWNlIGZyb20gZW1wbG95aW5nIHNldOKAkAo+ICAgICAgICAgICAgICAgZ3Jv
+dXBzKDIpLiAgSW4gb3RoZXIgd29yZHMsIGl0IGlzIHBlcm1pdHRlZCB0byB3cml0ZSAgdG8KPiAg
+ICAgICAgICAgICAgIC9wcm9jL1twaWRdL3NldGdyb3VwcyBzbyBsb25nIGFzIGNhbGxpbmcgc2V0
+Z3JvdXBzKDIpIGlzCj4gICAgICAgICAgICAgICBub3QgYWxsb3dlZCBiZWNhdXNlIC9wcm9jL1tw
+aWRdZ2lkX21hcCBoYXMgbm90IGJlZW4gc2V0Lgo+ICAgICAgICAgICAgICAgVGhpcyAgZW5zdXJl
+cyAgdGhhdCAgYSAgcHJvY2VzcyBjYW5ub3QgdHJhbnNpdGlvbiBmcm9tIGEKPiAgICAgICAgICAg
+ICAgIHN0YXRlIHdoZXJlIHNldGdyb3VwcygyKSBpcyBhbGxvd2VkICB0byAgYSAgc3RhdGUgIHdo
+ZXJlCj4gICAgICAgICAgICAgICBzZXRncm91cHMoMikgIGlzICBkZW5pZWQ7ICBhIHByb2Nlc3Mg
+Y2FuIG9ubHkgdHJhYnNpdGlvbgo+ICAgICAgICAgICAgICAgZnJvbSBzZXRncm91cHMoMikgYmVp
+bmcgZGlzYWxsb3dlZCB0byBzZXRncm91cHMoMikgYmVpbmcKPiAgICAgICAgICAgICAgIGFsbG93
+ZWQuCj4gCj4gICAgICAgICAgICAgICBUaGUgIGRlZmF1bHQgIHZhbHVlICBvZiAgdGhpcyAgZmls
+ZSAgaW4gdGhlIGluaXRpYWwgdXNlcgo+ICAgICAgICAgICAgICAgbmFtZXNwYWNlIGlzICJhbGxv
+dyIuCj4gCj4gICAgICAgICAgICAgICBPbmNlIC9wcm9jL1twaWRdL2dpZF9tYXAgaGFzIGJlZW4g
+d3JpdHRlbiB0byAod2hpY2ggIGhhcwo+ICAgICAgICAgICAgICAgdGhlICBlZmZlY3QgIG9mIGVu
+YWJsaW5nIHNldGdyb3VwcygyKSBpbiB0aGUgdXNlciBuYW1lc+KAkAo+ICAgICAgICAgICAgICAg
+cGFjZSksIGl0IGlzIG5vIGxvbmdlciBwb3NzaWJsZSB0byBkZW55IHNldGdyb3VwcygyKSAgYnkK
+PiAgICAgICAgICAgICAgIHdyaXRpbmcgdG8gL3Byb2MvW3BpZF0vc2V0Z3JvdXBzLgo+IAo+ICAg
+ICAgICAgICAgICAgQSAgY2hpbGQgdXNlciBuYW1lc3BhY2UgaW5oZXJpdHMgdGhlIC9wcm9jL1tw
+aWRdL2dpZF9tYXAKPiAgICAgICAgICAgICAgIHNldHRpbmcgZnJvbSBpdHMgcGFyZW50Lgo+IAo+
+ICAgICAgICAgICAgICAgSWYgdGhlIHNldGdyb3VwcyBmaWxlIGhhcyB0aGUgIHZhbHVlICAiZGVu
+eSIsICB0aGVuICB0aGUKPiAgICAgICAgICAgICAgIHNldGdyb3VwcygyKSBzeXN0ZW0gY2FsbCBj
+YW4ndCBzdWJzZXF1ZW50bHkgYmUgcmVlbmFibGVkCj4gICAgICAgICAgICAgICAoYnkgd3JpdGlu
+ZyAiYWxsb3ciIHRvIHRoZSBmaWxlKSBpbiB0aGlzIHVzZXIgbmFtZXNwYWNlLgo+ICAgICAgICAg
+ICAgICAgVGhpcyAgcmVzdHJpY3Rpb24gYWxzbyBwcm9wYWdhdGVzIGRvd24gdG8gYWxsIGNoaWxk
+IHVzZXIKPiAgICAgICAgICAgICAgIG5hbWVzcGFjZXMgb2YgdGhpcyB1c2VyIG5hbWVzcGFjZS4K
+PiAKPiBDaGVlcnMsCj4gCj4gTWljaGFlbAo+IAo+IAo+IAoKCi0tIApNaWNoYWVsIEtlcnJpc2sK
+TGludXggbWFuLXBhZ2VzIG1haW50YWluZXI7IGh0dHA6Ly93d3cua2VybmVsLm9yZy9kb2MvbWFu
+LXBhZ2VzLwpMaW51eC9VTklYIFN5c3RlbSBQcm9ncmFtbWluZyBUcmFpbmluZzogaHR0cDovL21h
+bjcub3JnL3RyYWluaW5nLwpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fXwpDb250YWluZXJzIG1haWxpbmcgbGlzdApDb250YWluZXJzQGxpc3RzLmxpbnV4LWZv
+dW5kYXRpb24ub3JnCmh0dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xp
+c3RpbmZvL2NvbnRhaW5lcnM=
