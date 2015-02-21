@@ -1,40 +1,82 @@
-From: Namjae Jeon <linkinjeon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v10 6/12] xfstests: generic/060: Delayed allocation insert range
-Date: Sun, 22 Feb 2015 00:45:48 +0900
-Message-ID: <1424533554-28024-7-git-send-email-linkinjeon@gmail.com>
+From: Namjae Jeon <linkinjeon@gmail.com>
+Subject: [PATCH v10 5/12] xfstests: generic/058: Standard insert range tests
+Date: Sun, 22 Feb 2015 00:45:47 +0900
+Message-ID: <1424533554-28024-6-git-send-email-linkinjeon@gmail.com>
 References: <1424533554-28024-1-git-send-email-linkinjeon@gmail.com>
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1424533554-28024-1-git-send-email-linkinjeon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, a.sangwan-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, bfoster-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Namjae Jeon <linkinjeon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
+In-Reply-To: <1424533554-28024-1-git-send-email-linkinjeon@gmail.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: david@fromorbit.com, tytso@mit.edu
+Cc: linux-man@vger.kernel.org, Namjae Jeon <linkinjeon@gmail.com>, Namjae Jeon <namjae.jeon@samsung.com>, linux-api@vger.kernel.org, bfoster@redhat.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, mtk.manpages@gmail.com, a.sangwan@samsung.com, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+From: Namjae Jeon <namjae.jeon@samsung.com>
 
-This testcase(060) tries to test various corner cases with delayed extents
-for finsert range functionality over different type of extents.
+This testcase(058) tries to test various corner cases for finsert range
+functionality over different type of extents.
 
-Signed-off-by: Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Signed-off-by: Ashish Sangwan <a.sangwan-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Signed-off-by: Namjae Jeon <namjae.jeon@samsung.com>
+Signed-off-by: Ashish Sangwan <a.sangwan@samsung.com>
 ---
- tests/generic/060     |   65 +++++++++++++++++++++++++++++++++++++++++
- tests/generic/060.out |   78 +++++++++++++++++++++++++++++++++++++++++++++++++
+ common/punch          |    5 ++++
+ common/rc             |    2 +-
+ tests/generic/058     |   65 +++++++++++++++++++++++++++++++++++++++++
+ tests/generic/058.out |   78 +++++++++++++++++++++++++++++++++++++++++++++++++
  tests/generic/group   |    1 +
- 3 files changed, 144 insertions(+)
- create mode 100644 tests/generic/060
- create mode 100644 tests/generic/060.out
+ 5 files changed, 150 insertions(+), 1 deletion(-)
+ create mode 100644 tests/generic/058
+ create mode 100644 tests/generic/058.out
 
-diff --git a/tests/generic/060 b/tests/generic/060
+diff --git a/common/punch b/common/punch
+index 237b4d8..a75f4cf 100644
+--- a/common/punch
++++ b/common/punch
+@@ -527,6 +527,11 @@ _test_generic_punch()
+ 		return
+ 	fi
+ 
++	# If zero_cmd is finsert, don't check unaligned offsets
++	if [ "$zero_cmd" == "finsert" ]; then
++		return
++	fi
++
+ 	echo "	16. data -> cache cold ->hole"
+ 	if [ "$remove_testfile" ]; then
+ 		rm -f $testfile
+diff --git a/common/rc b/common/rc
+index 7449a1d..f173eab 100644
+--- a/common/rc
++++ b/common/rc
+@@ -1520,7 +1520,7 @@ _require_xfs_io_command()
+ 	"falloc" )
+ 		testio=`$XFS_IO_PROG -F -f -c "falloc 0 1m" $testfile 2>&1`
+ 		;;
+-	"fpunch" | "fcollapse" | "zero" | "fzero" )
++	"fpunch" | "fcollapse" | "zero" | "fzero" | "finsert" )
+ 		testio=`$XFS_IO_PROG -F -f -c "pwrite 0 20k" -c "fsync" \
+ 			-c "$command 4k 8k" $testfile 2>&1`
+ 		;;
+diff --git a/tests/generic/058 b/tests/generic/058
 new file mode 100644
-index 0000000..4493ba2
+index 0000000..4a39a05
 --- /dev/null
-+++ b/tests/generic/060
++++ b/tests/generic/058
 @@ -0,0 +1,65 @@
 +#! /bin/bash
-+# FS QA Test No. generic/060
++# FS QA Test No. generic/058
 +#
-+# Delayed allocation insert range tests
++# Standard insert range tests
 +# This testcase is one of the 4 testcases which tries to
 +# test various corner cases for finsert range functionality over different
 +# type of extents. These tests are based on generic/255 test case.
@@ -91,18 +133,18 @@ index 0000000..4493ba2
 +
 +testfile=$TEST_DIR/$seq.$$
 +
-+_test_generic_punch -d falloc fpunch finsert fiemap _filter_hole_fiemap $testfile
++_test_generic_punch falloc fpunch finsert fiemap _filter_hole_fiemap $testfile
 +_check_test_fs
 +
 +status=0
 +exit
-diff --git a/tests/generic/060.out b/tests/generic/060.out
+diff --git a/tests/generic/058.out b/tests/generic/058.out
 new file mode 100644
-index 0000000..909b578
+index 0000000..b15308d
 --- /dev/null
-+++ b/tests/generic/060.out
++++ b/tests/generic/058.out
 @@ -0,0 +1,78 @@
-+QA output created by 060
++QA output created by 058
 +	1. into a hole
 +cf845a781c107ec1346e849c9dd1b7e8
 +	2. into allocated space
@@ -181,21 +223,21 @@ index 0000000..909b578
 +1: [16..55]: extent
 +86c9d033be2761385c9cfa203c426bb2
 diff --git a/tests/generic/group b/tests/generic/group
-index e0d8bc1..4bf4e86 100644
+index f2eb87a..e0d8bc1 100644
 --- a/tests/generic/group
 +++ b/tests/generic/group
-@@ -62,6 +62,7 @@
+@@ -60,6 +60,7 @@
+ 055 log v2log auto quota stress
+ 056 metadata auto quick
  057 metadata auto quick
- 058 auto quick prealloc
++058 auto quick prealloc
  059 metadata auto quick
-+060 auto quick prealloc
  062 attr udf auto quick
  068 other auto freeze dangerous stress
- 069 rw udf auto quick
 -- 
 1.7.9.5
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
