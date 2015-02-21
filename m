@@ -1,82 +1,40 @@
 From: Namjae Jeon <linkinjeon@gmail.com>
-Subject: [PATCH v10 5/12] xfstests: generic/058: Standard insert range tests
-Date: Sun, 22 Feb 2015 00:45:47 +0900
-Message-ID: <1424533554-28024-6-git-send-email-linkinjeon@gmail.com>
+Subject: [PATCH v10 7/12] xfstests: generic/061: Multi insert range tests
+Date: Sun, 22 Feb 2015 00:45:49 +0900
+Message-ID: <1424533554-28024-8-git-send-email-linkinjeon@gmail.com>
 References: <1424533554-28024-1-git-send-email-linkinjeon@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1424533554-28024-1-git-send-email-linkinjeon@gmail.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: david@fromorbit.com, tytso@mit.edu
-Cc: linux-man@vger.kernel.org, Namjae Jeon <linkinjeon@gmail.com>, Namjae Jeon <namjae.jeon@samsung.com>, linux-api@vger.kernel.org, bfoster@redhat.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, mtk.manpages@gmail.com, a.sangwan@samsung.com, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, a.sangwan@samsung.com, bfoster@redhat.com, mtk.manpages@gmail.com, linux-man@vger.kernel.org, linux-api@vger.kernel.org, Namjae Jeon <linkinjeon@gmail.com>, Namjae Jeon <namjae.jeon@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
 From: Namjae Jeon <namjae.jeon@samsung.com>
 
-This testcase(058) tries to test various corner cases for finsert range
-functionality over different type of extents.
+This testcase(061) tries to test various corner cases with pre-existing holes
+for finsert range functionality over different type of extents.
 
 Signed-off-by: Namjae Jeon <namjae.jeon@samsung.com>
 Signed-off-by: Ashish Sangwan <a.sangwan@samsung.com>
 ---
- common/punch          |    5 ++++
- common/rc             |    2 +-
- tests/generic/058     |   65 +++++++++++++++++++++++++++++++++++++++++
- tests/generic/058.out |   78 +++++++++++++++++++++++++++++++++++++++++++++++++
+ tests/generic/061     |   65 ++++++++++++++++++++++++++++++++++++++++
+ tests/generic/061.out |   80 +++++++++++++++++++++++++++++++++++++++++++++++++
  tests/generic/group   |    1 +
- 5 files changed, 150 insertions(+), 1 deletion(-)
- create mode 100644 tests/generic/058
- create mode 100644 tests/generic/058.out
+ 3 files changed, 146 insertions(+)
+ create mode 100644 tests/generic/061
+ create mode 100644 tests/generic/061.out
 
-diff --git a/common/punch b/common/punch
-index 237b4d8..a75f4cf 100644
---- a/common/punch
-+++ b/common/punch
-@@ -527,6 +527,11 @@ _test_generic_punch()
- 		return
- 	fi
- 
-+	# If zero_cmd is finsert, don't check unaligned offsets
-+	if [ "$zero_cmd" == "finsert" ]; then
-+		return
-+	fi
-+
- 	echo "	16. data -> cache cold ->hole"
- 	if [ "$remove_testfile" ]; then
- 		rm -f $testfile
-diff --git a/common/rc b/common/rc
-index 7449a1d..f173eab 100644
---- a/common/rc
-+++ b/common/rc
-@@ -1520,7 +1520,7 @@ _require_xfs_io_command()
- 	"falloc" )
- 		testio=`$XFS_IO_PROG -F -f -c "falloc 0 1m" $testfile 2>&1`
- 		;;
--	"fpunch" | "fcollapse" | "zero" | "fzero" )
-+	"fpunch" | "fcollapse" | "zero" | "fzero" | "finsert" )
- 		testio=`$XFS_IO_PROG -F -f -c "pwrite 0 20k" -c "fsync" \
- 			-c "$command 4k 8k" $testfile 2>&1`
- 		;;
-diff --git a/tests/generic/058 b/tests/generic/058
+diff --git a/tests/generic/061 b/tests/generic/061
 new file mode 100644
-index 0000000..4a39a05
+index 0000000..f5e5076
 --- /dev/null
-+++ b/tests/generic/058
++++ b/tests/generic/061
 @@ -0,0 +1,65 @@
 +#! /bin/bash
-+# FS QA Test No. generic/058
++# FS QA Test No. generic/061
 +#
-+# Standard insert range tests
++# Multi insert range tests
 +# This testcase is one of the 4 testcases which tries to
 +# test various corner cases for finsert range functionality over different
 +# type of extents. These tests are based on generic/255 test case.
@@ -133,18 +91,18 @@ index 0000000..4a39a05
 +
 +testfile=$TEST_DIR/$seq.$$
 +
-+_test_generic_punch falloc fpunch finsert fiemap _filter_hole_fiemap $testfile
++_test_generic_punch -k falloc fpunch finsert fiemap _filter_hole_fiemap $testfile
 +_check_test_fs
 +
 +status=0
 +exit
-diff --git a/tests/generic/058.out b/tests/generic/058.out
+diff --git a/tests/generic/061.out b/tests/generic/061.out
 new file mode 100644
-index 0000000..b15308d
+index 0000000..78d6c6d
 --- /dev/null
-+++ b/tests/generic/058.out
-@@ -0,0 +1,78 @@
-+QA output created by 058
++++ b/tests/generic/061.out
+@@ -0,0 +1,80 @@
++QA output created by 061
 +	1. into a hole
 +cf845a781c107ec1346e849c9dd1b7e8
 +	2. into allocated space
@@ -156,46 +114,48 @@ index 0000000..b15308d
 +0: [0..7]: extent
 +1: [8..23]: hole
 +2: [24..55]: extent
-+cf845a781c107ec1346e849c9dd1b7e8
++22b7303d274481990b5401b6263effe0
 +	4. hole -> data
-+0: [0..31]: hole
-+1: [32..47]: extent
-+2: [48..55]: hole
-+adb08a6d94a3b5eff90fdfebb2366d31
++0: [0..7]: extent
++1: [8..31]: hole
++2: [32..55]: extent
++c4fef62ba1de9d91a977cfeec6632f19
 +	5. hole -> unwritten
-+0: [0..31]: hole
-+1: [32..47]: extent
-+2: [48..55]: hole
-+cf845a781c107ec1346e849c9dd1b7e8
++0: [0..7]: extent
++1: [8..31]: hole
++2: [32..55]: extent
++1ca74f7572a0f4ab477fdbb5682e5f61
 +	6. data -> hole
 +0: [0..7]: extent
 +1: [8..23]: hole
 +2: [24..31]: extent
-+3: [32..55]: hole
++3: [32..47]: hole
++4: [48..55]: extent
 +be0f35d4292a20040766d87883b0abd1
 +	7. data -> unwritten
 +0: [0..7]: extent
 +1: [8..23]: hole
 +2: [24..47]: extent
 +3: [48..55]: hole
-+be0f35d4292a20040766d87883b0abd1
++bddb1f3895268acce30d516a99cb0f2f
 +	8. unwritten -> hole
 +0: [0..7]: extent
 +1: [8..23]: hole
 +2: [24..31]: extent
-+3: [32..55]: hole
-+cf845a781c107ec1346e849c9dd1b7e8
++3: [32..39]: hole
++4: [40..55]: extent
++f8fc47adc45b7cf72f988b3ddf5bff64
 +	9. unwritten -> data
 +0: [0..7]: extent
 +1: [8..23]: hole
 +2: [24..47]: extent
 +3: [48..55]: hole
-+adb08a6d94a3b5eff90fdfebb2366d31
++c4fef62ba1de9d91a977cfeec6632f19
 +	10. hole -> data -> hole
-+0: [0..39]: hole
-+1: [40..47]: extent
-+2: [48..63]: hole
-+0487b3c52810f994c541aa166215375f
++0: [0..7]: extent
++1: [8..39]: hole
++2: [40..63]: extent
++52af1bfcbf43f28af2328de32e0567e5
 +	11. data -> hole -> data
 +0: [0..7]: extent
 +1: [8..31]: hole
@@ -207,7 +167,7 @@ index 0000000..b15308d
 +0: [0..7]: extent
 +1: [8..31]: hole
 +2: [32..63]: extent
-+0487b3c52810f994c541aa166215375f
++52af1bfcbf43f28af2328de32e0567e5
 +	13. data -> unwritten -> data
 +0: [0..7]: extent
 +1: [8..31]: hole
@@ -223,21 +183,16 @@ index 0000000..b15308d
 +1: [16..55]: extent
 +86c9d033be2761385c9cfa203c426bb2
 diff --git a/tests/generic/group b/tests/generic/group
-index f2eb87a..e0d8bc1 100644
+index 4bf4e86..9c6f7e7 100644
 --- a/tests/generic/group
 +++ b/tests/generic/group
-@@ -60,6 +60,7 @@
- 055 log v2log auto quota stress
- 056 metadata auto quick
- 057 metadata auto quick
-+058 auto quick prealloc
+@@ -63,6 +63,7 @@
+ 058 auto quick prealloc
  059 metadata auto quick
+ 060 auto quick prealloc
++061 auto quick prealloc
  062 attr udf auto quick
  068 other auto freeze dangerous stress
+ 069 rw udf auto quick
 -- 
 1.7.9.5
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
