@@ -1,106 +1,124 @@
-From: Eric Wong <normalperson@yhbt.net>
-Subject: Re: [PATCH v2 2/2] epoll: introduce EPOLLEXCLUSIVE and
- EPOLLROUNDROBIN
-Date: Sun, 22 Feb 2015 00:24:32 +0000
-Message-ID: <20150222002432.GA9031@dcvr.yhbt.net>
-References: <cover.1424200151.git.jbaron@akamai.com>
- <7956874bfdc7403f37afe8a75e50c24221039bd2.1424200151.git.jbaron@akamai.com>
- <20150218080740.GA10199@gmail.com>
- <54E4B2D0.8020706@akamai.com>
- <20150218163300.GA28007@gmail.com>
- <54E4CE14.5010708@akamai.com>
- <20150218174533.GB31566@gmail.com>
- <20150218175123.GA31878@gmail.com>
- <54E557CF.8080702@akamai.com>
+From: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Subject: Re: [RFC PATCH 1/3] eeprom: Add a simple EEPROM framework
+Date: Sun, 22 Feb 2015 15:32:11 +0100
+Message-ID: <20150222143211.GX25269@lukather>
+References: <1424365639-26634-1-git-send-email-srinivas.kandagatla@linaro.org>
+ <1424365708-26681-1-git-send-email-srinivas.kandagatla@linaro.org>
+ <CAL_Jsq+SeuoojgTpv1y_aPJ_jzDr3HqZhYEBQ3_vYGBHvcccug@mail.gmail.com>
+ <54E78A31.9020306@linaro.org>
+ <CAL_Jsq+mvpRjYfL_8OseTDCB-6aBhwhNKLBQXXJeVQLDwWm8Nw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="7WMexqIhC8AwFtpM"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <54E557CF.8080702@akamai.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Jason Baron <jbaron@akamai.com>
-Cc: Ingo Molnar <mingo@kernel.org>, peterz@infradead.org, mingo@redhat.com, viro@zeniv.linux.org.uk, akpm@linux-foundation.org, davidel@xmailserver.org, mtk.manpages@gmail.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "luto@amacapital.net >> Andy Lutomirski" <luto@amacapital.net>
+In-Reply-To: <CAL_Jsq+mvpRjYfL_8OseTDCB-6aBhwhNKLBQXXJeVQLDwWm8Nw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Jason Baron <jbaron@akamai.com> wrote:
-> On 02/18/2015 12:51 PM, Ingo Molnar wrote:
-> > * Ingo Molnar <mingo@kernel.org> wrote:
-> >
-> >>> [...] However, I think the userspace API change is less 
-> >>> clear since epoll_wait() doesn't currently have an 
-> >>> 'input' events argument as epoll_ctl() does.
-> >> ... but the change would be a bit clearer and somewhat 
-> >> more flexible: LIFO or FIFO queueing, right?
+
+--7WMexqIhC8AwFtpM
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Fri, Feb 20, 2015 at 04:01:55PM -0600, Rob Herring wrote:
+> [...]
+>=20
+> >>> +=3D Data consumers =3D
+> >>> +
+> >>> +Required properties:
+> >>> +
+> >>> +eeproms: List of phandle and data cell specifier triplet, one triplet
+> >>> +        for each data cell the device might be interested in. The
+> >>> +        triplet consists of the phandle to the eeprom provider, then
+> >>> +        the offset in byte within that storage device, and the length
+> >>> +        in byte of the data we care about.
 > >>
-> >> But having the queueing model as part of the epoll 
-> >> context is a legitimate approach as well.
-> > Btw., there's another optimization that the networking code 
-> > already does when processing incoming packets: waking up a 
-> > thread on the local CPU, where the wakeup is running.
+> >>
+> >> The problem with this is it assumes you know who the consumer is and
+> >> that it is a DT node. For example, how would you describe a serial
+> >> number?
 > >
-> > Doing the same on epoll would have real scalability 
-> > advantages where incoming events are IRQ driven and are 
-> > distributed amongst multiple CPUs.
+> > Correct me if I miss understood.
+> > Is serial number any different?
+> > Am hoping that the eeprom consumer would be aware of offset and size of
+> > serial number in the eeprom
 > >
-> > Where events are task driven the scheduler will already try 
-> > to pair up waker and wakee so it might not show up in 
-> > measurements that markedly.
+> > Cant the consumer do:
 > >
-> 
-> Right, so this makes me think that we may want to potentially
-> support a variety of wakeup policies. Adding these to the
-> generic wake up code is just going to be too messy. So, perhaps
-> a better approach here would be to register a single
-> wait_queue_t with the event source queue that will always
-> be woken up, and then layer any epoll balancing/irq affinity
-> policies on top of that. So in essence we end up with sort of
-> two queues layers, but I think it provides much nicer isolation
-> between layers. Also, the bulk of the changes are going to be
-> isolated to the epoll code, and we avoid Andy's concern about
-> missing, or starving out wakeups.
-> 
-> So here's a stab at how this API could look:
-> 
-> 1. ep1 = epoll_create1(EPOLL_POLICY);
-> 
-> So EPOLL_POLICY here could the round robin policy described
-> here, or the irq affinity or other ideas. The idea is to create
-> an fd that is local to the process, such that other processes
-> can not subsequently attach to it and affect our policy.
+> > eeprom-consumer {
+> >         eeproms =3D <&at24 0 4>;
+> >         eeprom-names =3D "device-serial-number";
+>=20
+> Yes, but who is "eeprom-consumer"?
 
-I'm not against defining more policies if needed.
-Maybe FIFO vs LIFO is a good case for this.
+Any device that should lookup values in one of the EEPROM.
 
-For affinity, it could probably be done transparently based on
-epoll_wait retrievals + EPOLL_CTL_MOD operations.
+> DT nodes generally describe a h/w block, but it this case, the
+> consumer depends on the OS, not the h/w.=20
 
-> 2. epoll_ctl(ep1, EPOLL_CTL_ADD, fd_source, NULL);
-> 
-> This associates ep1 with the event source. ep1 can be
-> associated with or added to at most 1 wakeup source. This call
-> would largely just form the association, but not queue anything
-> to the fd_source wait queue.
+Not really, or at least, not more than any similar binding we
+currently have.
 
-This would mean one extra FD for every fd_source, but that's
-only a handful of FDs (listen sockets), correct?
+The fact that a MAC-address for the first ethernet chip is stored at a
+given offset in a given eeprom has nothing to do with the OS.
 
-> 3. epoll_ctl(ep2, EPOLL_CTL_ADD, ep1, event);
->     epoll_ctl(ep3, EPOLL_CTL_ADD, ep1, event);
->     epoll_ctl(ep4, EPOLL_CTL_ADD, ep1, event);
->      .
->      .
->      .
-> 
-> Finally, we add the epoll sets to the event source (indirectly via
-> ep1). So the first add would actually queue the callback to the
-> fd_source. While the subsequent calls would simply queue things
-> to the 'nested' wakeup queue associated with ep1.
+> I'm not saying you can't describe where things are, but I don't
+> think you should imply who is the consumer and doing so is
+> unnecessarily complicated.
 
-I'm not sure I follow, wouldn't this increase the number of wakeups?
+If you only take the case of a serial number, indeed. If you take
+other usage into account, you can't really do without it.
 
-> So any existing epoll/poll/select calls could be queued as well
-> to fd_source and will operate independenly from this mechanism,
-> as the fd_source queue continues to be 'wake all'. Also, there
-> should be no changes necessary to __wake_up_common(), other
-> than potentially passing more back though the
-> wait_queue_func_t, such as 'nr_exclusive'.
+> Also, the layout of EEPROM is likely very much platform specific.
+
+Indeed, which is why it should be in the DT.
+
+> Some could have a more complex structure perhaps with key ids and
+> linked list structure.
+
+Then just request the size of the whole list, and parse it afterwards
+in your driver?
+
+> I would do something more simple that is just a list of keys and their
+> location like this:
+>=20
+> device-serial-number =3D <start size>;
+> key1 =3D <start size>;
+> key2 =3D <start size>;
+
+I'm sorry, but what's the difference?
+
+Maxime
+
+--=20
+Maxime Ripard, Free Electrons
+Embedded Linux, Kernel and Android engineering
+http://free-electrons.com
+
+--7WMexqIhC8AwFtpM
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJU6ehqAAoJEBx+YmzsjxAgzvoP/3krU3TAK3RrWI6sp78v0ccX
+AOae/LuZTMjoxWRi7qebL5ffSoC9CKDahg7fVtFM3EDj9NOutEgJJgZsfbfCgTWS
+i1J0NG1rLSWXMNKJbwQ+28Mc7LEoxxsf4BmSrGW4zRGslzbkcytVhW3irW1kS9Je
+j0quEjm/cfMYuEMn5DUpBnO4gsNEFRFZYbxtfyG72AXZIBjPGXkOa+Hu99b1BVgp
+H3D80FcNP0z4EVeU+vZm/w0wOwcP9vB4yiVfXf8Y1S/4YTinfgQ2NyM5mfphB7Ax
+9gtyvo8oHebXPlQM412y1tiYzLPn+GQKALk/vNkI5RmyqfP8pGDQRoAjJz2bvhY6
+Yu7pWIDjxkp+zW12kXvAlaO2nVPmhQNu4XBPLufGD6hHHLeBnw6qpyQvP2twhQdl
+Y34Ttj/dU+VapjMWBZXkiP0L9VwPpqvuTdfXZ7jNG3czy+N3xCkixSmNDvpQKMkI
+v4xzcxoIZppX0XaFthHoORntHdi87yZqjtP7VAxqFDs2Tvmvcvs8wWryHE0MovJB
+Or94janCx80k0VRq+i9PLKOf6N+gLahbFATYI8Chv1HljfmlsXRrlbEHj4W6rLyl
+R6FXh5CFdfkBJOLILYHGj3nv/O/pjvXy68L53VehhB8Mn3h/pWuPlVdy1lDHi75O
+t67tr2HpzgriH8YSP9Tp
+=vjrF
+-----END PGP SIGNATURE-----
+
+--7WMexqIhC8AwFtpM--
