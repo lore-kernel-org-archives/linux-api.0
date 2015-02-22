@@ -1,125 +1,56 @@
-From: Namjae Jeon <linkinjeon@gmail.com>
-Subject: [PATCH v10 10/12] xfstests: fsstress: Add fallocate insert range
-	operation
-Date: Sun, 22 Feb 2015 00:45:52 +0900
-Message-ID: <1424533554-28024-11-git-send-email-linkinjeon@gmail.com>
-References: <1424533554-28024-1-git-send-email-linkinjeon@gmail.com>
+From: Peter Rosin <peda@axentia.se>
+Subject: RE: [PATCH 2/2] ASoC: pcm512x: Allow independently overclocking
+ PLL, DAC and DSP
+Date: Sun, 22 Feb 2015 00:24:12 +0000
+Message-ID: <88616b158f38499fa5a466f31d25aa80@EMAIL.axentia.se>
+References: <1424120568-24648-1-git-send-email-peda@lysator.liu.se>
+ <1424120568-24648-4-git-send-email-peda@lysator.liu.se>
+ <20150221093328.GF6236@finisterre.sirena.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <1424533554-28024-1-git-send-email-linkinjeon@gmail.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: david@fromorbit.com, tytso@mit.edu
-Cc: linux-man@vger.kernel.org, Namjae Jeon <linkinjeon@gmail.com>, Namjae Jeon <namjae.jeon@samsung.com>, linux-api@vger.kernel.org, bfoster@redhat.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, mtk.manpages@gmail.com, a.sangwan@samsung.com, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150221093328.GF6236@finisterre.sirena.org.uk>
+Content-Language: sv-SE
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mark Brown <broonie@kernel.org>, Peter Rosin <peda@lysator.liu.se>
+Cc: "alsa-devel@alsa-project.org" <alsa-devel@alsa-project.org>, Liam Girdwood <lgirdwood@gmail.com>, Jaroslav Kysela <perex@perex.cz>, Takashi Iwai <tiwai@suse.de>, Lars-Peter Clausen <lars@metafoo.de>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Namjae Jeon <namjae.jeon@samsung.com>
+Mark Brown wrote:
+> On Mon, Feb 16, 2015 at 10:02:48PM +0100, Peter Rosin wrote:
+> > From: Peter Rosin <peda@axentia.se>
+> >
+> > When using non-standard rates, a relatively small amount of
+> > overclocking can make a big difference to a number of cases.
+> 
+> This is all basically fine but I'm wondering why this is being configured via
+> sysfs and not via ALSA controls?  It's going to be more fiddly for people to
+> have to work with both control methods when they need to configure these
+> things.
 
-This commit adds insert operation support for fsstress, which is
-meant to exercise fallocate FALLOC_FL_INSERT_RANGE support.
+Originally, I had the limits in .config. Then Lars-Peter suggested
+sysfs (on irc) and perhaps some way to disable overclocking. ALSA
+controls were never on the table, but now that you mention it, it sounds
+about right. So, I'm fine with having it as ALSA-controls...
 
-Signed-off-by: Namjae Jeon <namjae.jeon@samsung.com>
-Signed-off-by: Ashish Sangwan <a.sangwan@samsung.com>
-Reviewed-by: Brian Foster <bfoster@redhat.com>
----
- ltp/fsstress.c |   19 ++++++++++++++++---
- src/global.h   |    4 ++++
- 2 files changed, 20 insertions(+), 3 deletions(-)
+*time passes*
 
-diff --git a/ltp/fsstress.c b/ltp/fsstress.c
-index b56fe5c..aa3e0c3 100644
---- a/ltp/fsstress.c
-+++ b/ltp/fsstress.c
-@@ -72,6 +72,7 @@ typedef enum {
- 	OP_PUNCH,
- 	OP_ZERO,
- 	OP_COLLAPSE,
-+	OP_INSERT,
- 	OP_READ,
- 	OP_READLINK,
- 	OP_RENAME,
-@@ -170,6 +171,7 @@ void	mknod_f(int, long);
- void	punch_f(int, long);
- void	zero_f(int, long);
- void	collapse_f(int, long);
-+void	insert_f(int, long);
- void	read_f(int, long);
- void	readlink_f(int, long);
- void	rename_f(int, long);
-@@ -209,6 +211,7 @@ opdesc_t	ops[] = {
- 	{ OP_PUNCH, "punch", punch_f, 1, 1 },
- 	{ OP_ZERO, "zero", zero_f, 1, 1 },
- 	{ OP_COLLAPSE, "collapse", collapse_f, 1, 1 },
-+	{ OP_INSERT, "insert", insert_f, 1, 1 },
- 	{ OP_READ, "read", read_f, 1, 0 },
- 	{ OP_READLINK, "readlink", readlink_f, 1, 0 },
- 	{ OP_RENAME, "rename", rename_f, 2, 1 },
-@@ -2176,6 +2179,7 @@ struct print_flags falloc_flags [] = {
- 	{ FALLOC_FL_NO_HIDE_STALE, "NO_HIDE_STALE"},
- 	{ FALLOC_FL_COLLAPSE_RANGE, "COLLAPSE_RANGE"},
- 	{ FALLOC_FL_ZERO_RANGE, "ZERO_RANGE"},
-+	{ FALLOC_FL_INSERT_RANGE, "INSERT_RANGE"},
- 	{ -1, NULL}
- };
- 
-@@ -2227,10 +2231,11 @@ do_fallocate(int opno, long r, int mode)
- 	off %= maxfsize;
- 	len = (off64_t)(random() % (1024 * 1024));
- 	/*
--	 * Collapse range requires off and len to be block aligned, make it
--	 * more likely to be the case.
-+	 * Collapse/insert range requires off and len to be block aligned,
-+	 * make it more likely to be the case.
- 	 */
--	if ((mode & FALLOC_FL_COLLAPSE_RANGE) && (opno % 2)) {
-+	if ((mode & (FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_INSERT_RANGE)) &&
-+		(opno % 2)) {
- 		off = ((off + stb.st_blksize - 1) & ~(stb.st_blksize - 1));
- 		len = ((len + stb.st_blksize - 1) & ~(stb.st_blksize - 1));
- 	}
-@@ -2656,6 +2661,14 @@ collapse_f(int opno, long r)
- }
- 
- void
-+insert_f(int opno, long r)
-+{
-+#ifdef HAVE_LINUX_FALLOC_H
-+	do_fallocate(opno, r, FALLOC_FL_INSERT_RANGE);
-+#endif
-+}
-+
-+void
- read_f(int opno, long r)
- {
- 	char		*buf;
-diff --git a/src/global.h b/src/global.h
-index 8180f66..f63246b 100644
---- a/src/global.h
-+++ b/src/global.h
-@@ -172,6 +172,10 @@
- #define FALLOC_FL_ZERO_RANGE		0x10
- #endif
- 
-+#ifndef FALLOC_FL_INSERT_RANGE
-+#define FALLOC_FL_INSERT_RANGE		0x20
-+#endif
-+
- #endif /* HAVE_LINUX_FALLOC_H */
- 
- #endif /* GLOBAL_H */
--- 
-1.7.9.5
+...but I'm not sure everybody agrees that overclocking games should
+be allowed by any and all users?
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+If you still want me to convert to ALSA controls, what control do you
+suggest? SOC_SINGLE_EXT? Or should I use an enumeration, because
+mixers tend to present volume controls as a percentage of max, which
+will be confusing: You are now at "volume" 75% (of max 40), when the
+value is 30. Eeek. But enumerations from 0% to 40% sounds tedious.
+
+And how would you suggest that I name the controls?
+"Max Overclock DAC", "Max Overclock DSP" and "Max Overclock PLL"?
+
+BTW, the only troubles I've had with overclocking "too much" is that it
+has stopped working. I have not managed to fry any chip. But that is no
+guarantee, of course.
+
+Cheers,
+Peter
