@@ -1,56 +1,106 @@
-From: Peter Rosin <peda@axentia.se>
-Subject: RE: [PATCH 2/2] ASoC: pcm512x: Allow independently overclocking
- PLL, DAC and DSP
-Date: Sun, 22 Feb 2015 00:24:12 +0000
-Message-ID: <88616b158f38499fa5a466f31d25aa80@EMAIL.axentia.se>
-References: <1424120568-24648-1-git-send-email-peda@lysator.liu.se>
- <1424120568-24648-4-git-send-email-peda@lysator.liu.se>
- <20150221093328.GF6236@finisterre.sirena.org.uk>
+From: Eric Wong <normalperson@yhbt.net>
+Subject: Re: [PATCH v2 2/2] epoll: introduce EPOLLEXCLUSIVE and
+ EPOLLROUNDROBIN
+Date: Sun, 22 Feb 2015 00:24:32 +0000
+Message-ID: <20150222002432.GA9031@dcvr.yhbt.net>
+References: <cover.1424200151.git.jbaron@akamai.com>
+ <7956874bfdc7403f37afe8a75e50c24221039bd2.1424200151.git.jbaron@akamai.com>
+ <20150218080740.GA10199@gmail.com>
+ <54E4B2D0.8020706@akamai.com>
+ <20150218163300.GA28007@gmail.com>
+ <54E4CE14.5010708@akamai.com>
+ <20150218174533.GB31566@gmail.com>
+ <20150218175123.GA31878@gmail.com>
+ <54E557CF.8080702@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150221093328.GF6236@finisterre.sirena.org.uk>
-Content-Language: sv-SE
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mark Brown <broonie@kernel.org>, Peter Rosin <peda@lysator.liu.se>
-Cc: "alsa-devel@alsa-project.org" <alsa-devel@alsa-project.org>, Liam Girdwood <lgirdwood@gmail.com>, Jaroslav Kysela <perex@perex.cz>, Takashi Iwai <tiwai@suse.de>, Lars-Peter Clausen <lars@metafoo.de>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <54E557CF.8080702@akamai.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Jason Baron <jbaron@akamai.com>
+Cc: Ingo Molnar <mingo@kernel.org>, peterz@infradead.org, mingo@redhat.com, viro@zeniv.linux.org.uk, akpm@linux-foundation.org, davidel@xmailserver.org, mtk.manpages@gmail.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "luto@amacapital.net >> Andy Lutomirski" <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-Mark Brown wrote:
-> On Mon, Feb 16, 2015 at 10:02:48PM +0100, Peter Rosin wrote:
-> > From: Peter Rosin <peda@axentia.se>
+Jason Baron <jbaron@akamai.com> wrote:
+> On 02/18/2015 12:51 PM, Ingo Molnar wrote:
+> > * Ingo Molnar <mingo@kernel.org> wrote:
 > >
-> > When using non-standard rates, a relatively small amount of
-> > overclocking can make a big difference to a number of cases.
+> >>> [...] However, I think the userspace API change is less 
+> >>> clear since epoll_wait() doesn't currently have an 
+> >>> 'input' events argument as epoll_ctl() does.
+> >> ... but the change would be a bit clearer and somewhat 
+> >> more flexible: LIFO or FIFO queueing, right?
+> >>
+> >> But having the queueing model as part of the epoll 
+> >> context is a legitimate approach as well.
+> > Btw., there's another optimization that the networking code 
+> > already does when processing incoming packets: waking up a 
+> > thread on the local CPU, where the wakeup is running.
+> >
+> > Doing the same on epoll would have real scalability 
+> > advantages where incoming events are IRQ driven and are 
+> > distributed amongst multiple CPUs.
+> >
+> > Where events are task driven the scheduler will already try 
+> > to pair up waker and wakee so it might not show up in 
+> > measurements that markedly.
+> >
 > 
-> This is all basically fine but I'm wondering why this is being configured via
-> sysfs and not via ALSA controls?  It's going to be more fiddly for people to
-> have to work with both control methods when they need to configure these
-> things.
+> Right, so this makes me think that we may want to potentially
+> support a variety of wakeup policies. Adding these to the
+> generic wake up code is just going to be too messy. So, perhaps
+> a better approach here would be to register a single
+> wait_queue_t with the event source queue that will always
+> be woken up, and then layer any epoll balancing/irq affinity
+> policies on top of that. So in essence we end up with sort of
+> two queues layers, but I think it provides much nicer isolation
+> between layers. Also, the bulk of the changes are going to be
+> isolated to the epoll code, and we avoid Andy's concern about
+> missing, or starving out wakeups.
+> 
+> So here's a stab at how this API could look:
+> 
+> 1. ep1 = epoll_create1(EPOLL_POLICY);
+> 
+> So EPOLL_POLICY here could the round robin policy described
+> here, or the irq affinity or other ideas. The idea is to create
+> an fd that is local to the process, such that other processes
+> can not subsequently attach to it and affect our policy.
 
-Originally, I had the limits in .config. Then Lars-Peter suggested
-sysfs (on irc) and perhaps some way to disable overclocking. ALSA
-controls were never on the table, but now that you mention it, it sounds
-about right. So, I'm fine with having it as ALSA-controls...
+I'm not against defining more policies if needed.
+Maybe FIFO vs LIFO is a good case for this.
 
-*time passes*
+For affinity, it could probably be done transparently based on
+epoll_wait retrievals + EPOLL_CTL_MOD operations.
 
-...but I'm not sure everybody agrees that overclocking games should
-be allowed by any and all users?
+> 2. epoll_ctl(ep1, EPOLL_CTL_ADD, fd_source, NULL);
+> 
+> This associates ep1 with the event source. ep1 can be
+> associated with or added to at most 1 wakeup source. This call
+> would largely just form the association, but not queue anything
+> to the fd_source wait queue.
 
-If you still want me to convert to ALSA controls, what control do you
-suggest? SOC_SINGLE_EXT? Or should I use an enumeration, because
-mixers tend to present volume controls as a percentage of max, which
-will be confusing: You are now at "volume" 75% (of max 40), when the
-value is 30. Eeek. But enumerations from 0% to 40% sounds tedious.
+This would mean one extra FD for every fd_source, but that's
+only a handful of FDs (listen sockets), correct?
 
-And how would you suggest that I name the controls?
-"Max Overclock DAC", "Max Overclock DSP" and "Max Overclock PLL"?
+> 3. epoll_ctl(ep2, EPOLL_CTL_ADD, ep1, event);
+>     epoll_ctl(ep3, EPOLL_CTL_ADD, ep1, event);
+>     epoll_ctl(ep4, EPOLL_CTL_ADD, ep1, event);
+>      .
+>      .
+>      .
+> 
+> Finally, we add the epoll sets to the event source (indirectly via
+> ep1). So the first add would actually queue the callback to the
+> fd_source. While the subsequent calls would simply queue things
+> to the 'nested' wakeup queue associated with ep1.
 
-BTW, the only troubles I've had with overclocking "too much" is that it
-has stopped working. I have not managed to fry any chip. But that is no
-guarantee, of course.
+I'm not sure I follow, wouldn't this increase the number of wakeups?
 
-Cheers,
-Peter
+> So any existing epoll/poll/select calls could be queued as well
+> to fd_source and will operate independenly from this mechanism,
+> as the fd_source queue continues to be 'wake all'. Also, there
+> should be no changes necessary to __wake_up_common(), other
+> than potentially passing more back though the
+> wait_queue_func_t, such as 'nr_exclusive'.
