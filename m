@@ -1,141 +1,232 @@
 From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
 Subject: Re: [PATCH 1/3] media: Fix ALSA and DVB representation at media controller API
-Date: Mon, 23 Feb 2015 23:20:15 +0200
-Message-ID: <2073043.Yp0nzaPjZq@avalon>
-References: <cover.1422273497.git.mchehab@osg.samsung.com> <CAGoCfiwi0nj_9sYNzEFOp5BvedFe+HphJ2bVtx_bnBw3d-Bsyw@mail.gmail.com> <20150223105508.54c730fc@recife.lan>
+Date: Tue, 24 Feb 2015 00:58:23 +0200
+Message-ID: <2131864.KjrDFSJfqE@avalon>
+References: <cover.1422273497.git.mchehab@osg.samsung.com> <20150126113416.311fb376@recife.lan> <54C64421.1030302@xs4all.nl>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
 Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <20150223105508.54c730fc@recife.lan>
+In-Reply-To: <54C64421.1030302@xs4all.nl>
 Sender: linux-media-owner@vger.kernel.org
-To: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Cc: Devin Heitmueller <dheitmueller@kernellabs.com>, Hans Verkuil <hverkuil@xs4all.nl>, Linux Media Mailing List <linux-media@vger.kernel.org>, Mauro Carvalho Chehab <mchehab@infradead.org>, Hans Verkuil <hans.verkuil@cisco.com>, Sakari Ailus <sakari.ailus@linux.intel.com>, Antti Palosaari <crope@iki.fi>, Ricardo Ribalda <ricardo.ribalda@gmail.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Ramakrishnan Muthukrishnan <ramakrmu@cisco.com>, linux-api@vger.kernel.org
+To: Hans Verkuil <hverkuil@xs4all.nl>
+Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Linux Media Mailing List <linux-media@vger.kernel.org>, Mauro Carvalho Chehab <mchehab@infradead.org>, Hans Verkuil <hans.verkuil@cisco.com>, Sakari Ailus <sakari.ailus@linux.intel.com>, Antti Palosaari <crope@iki.fi>, Ricardo Ribalda <ricardo.ribalda@gmail.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Ramakrishnan Muthukrishnan <ramakrmu@cisco.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Mauro,
+Hi Mauro and Hans,
 
-On Monday 23 February 2015 10:55:08 Mauro Carvalho Chehab wrote:
-> Em Mon, 26 Jan 2015 09:41:41 -0500 Devin Heitmueller escreveu:
-> >> It is actually trivial to get the device nodes once you have the
-> >> major/minor. The media-ctl library does that for you. See:
-> >
-> > No objection then.
+On Monday 26 January 2015 14:41:53 Hans Verkuil wrote:
+> On 01/26/2015 02:34 PM, Mauro Carvalho Chehab wrote:
+> > Em Mon, 26 Jan 2015 14:11:50 +0100 Hans Verkuil escreveu:
+> >> On 01/26/2015 01:47 PM, Mauro Carvalho Chehab wrote:
+> >>> The previous provision for DVB media controller support were to
+> >>> define an ID (likely meaning the adapter number) for the DVB
+> >>> devnodes.
+> >>> 
+> >>> This is just plain wrong. Just like V4L, DVB devices (and ALSA,
+> >>> or whatever) are identified via a (major, minor) tuple.
+> >>> 
+> >>> This is enough to uniquely identify a devnode, no matter what
+> >>> API it implements.
+> >>> 
+> >>> So, before we go too far, let's mark the old v4l, dvb and alsa
+> >>> "devnode" info as deprecated, and just call it as "dev".
+> >>> 
+> >>> As we don't want to break compilation on already existing apps,
+> >>> let's just keep the old definitions as-is, adding a note that
+> >>> those are deprecated at media-entity.h.
+> >>> 
+> >>> Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+
+[snip]
+
+> >>> diff --git a/include/media/media-entity.h b/include/media/media-entity.h
+> >>> index e00459185d20..d6d74bcfe183 100644
+> >>> --- a/include/media/media-entity.h
+> >>> +++ b/include/media/media-entity.h
+> >>> @@ -87,17 +87,7 @@ struct media_entity {
+> >>>  		struct {
+> >>>  			u32 major;
+> >>>  			u32 minor;
+> >>> -		} v4l;
+> >>> -		struct {
+> >>> -			u32 major;
+> >>> -			u32 minor;
+> >>> -		} fb;
+> >>> -		struct {
+> >>> -			u32 card;
+> >>> -			u32 device;
+> >>> -			u32 subdevice;
+> >>> -		} alsa;
+> >> 
+> >> I don't think the alsa entity information can be replaced by major/minor.
+> >> In particular you will loose the subdevice information which you need as
+> >> well. In addition, alsa devices are almost never referenced via major and
+> >> minor numbers, but always by card/device/subdevice numbers.
 > > 
-> > On a related note, you would be very well served to consider testing
-> > your dvb changes with a device that has more than one DVB tuner (such
-> > as the hvr-2200/2250).  That will help you shake out any edge cases
-> > related to ensuring that the different DVB nodes appear in different
-> > groups.
+> > For media-ctl, it is easier to handle major/minor, in order to identify
+> > the associated devnode name. Btw, media-ctl currently assumes that all
+> > devnode devices are specified by v4l.major/v4l.minor.
+> > 
+> > Ok, maybe for alsa we'll need also card/device/subdevice, but I think this
+> > should be mapped elsewhere, if this can't be retrieved via its sysfs/udev
+> > interface (with seems to be doubtful).
 > 
-> Hi Devin,
-> 
-> I did some tests (and fixes) for WinTV Nova-TD, with has two adapters.
-> 
-> I saw two alternatives for it:
-> 
-> 1) to create a media controller device for each adapter;
-> 2) to create just one media controller.
-> 
-> I actually implemented (1), as, in the case of this device, AFAIKT, the
-> two devices are indepentent, e. g. it is not possible to, for example,
-> share the same tuner with two demods:
-> 
-> $ ls -la /dev/media?
-> crw-rw----. 1 root video 249, 0 Fev 23 10:02 /dev/media0
-> crw-rw----. 1 root video 249, 1 Fev 23 10:02 /dev/media1
-> 
-> The adapter 0 corresponds to /dev/media0, and the adapter 1
-> to /dev/media1:
-> 
-> $ media-ctl --print-dot -d /dev/media0
-> digraph board {
-> 	rankdir=TB
-> 	n00000001 [label="dvb-demux\n/dev/dvb/adapter0/demux0", shape=box,
-> style=filled, fillcolor=yellow] n00000001 -> n00000002
-> 	n00000002 [label="dvb-dvr\n/dev/dvb/adapter0/dvr0", shape=box,
-> style=filled, fillcolor=yellow] n00000003
-> [label="dvb-net\n/dev/dvb/adapter0/net0", shape=box, style=filled,
-> fillcolor=yellow] n00000004 [label="DiBcom
-> 7000PC\n/dev/dvb/adapter0/frontend0", shape=box, style=filled,
-> fillcolor=yellow] n00000004 -> n00000001
-> }
-> 
-> $ media-ctl --print-dot -d /dev/media1
-> digraph board {
-> 	rankdir=TB
-> 	n00000001 [label="dvb-demux\n/dev/dvb/adapter1/demux0", shape=box,
-> style=filled, fillcolor=yellow] n00000001 -> n00000002
-> 	n00000002 [label="dvb-dvr\n/dev/dvb/adapter1/dvr0", shape=box,
-> style=filled, fillcolor=yellow] n00000003
-> [label="dvb-net\n/dev/dvb/adapter1/net0", shape=box, style=filled,
-> fillcolor=yellow] n00000004 [label="DiBcom
-> 7000PC\n/dev/dvb/adapter1/frontend0", shape=box, style=filled,
-> fillcolor=yellow] n00000004 -> n00000001
-> }
-> 
-> On a more complex hardware where some components may be rewired
-> on a different way, however, using just one media controller
-> would be a better approach.
-> 
-> Comments?
+> The card/device tuple can likely be mapped to major/minor, but not
+> subdevice. And since everything inside alsa is based on card/device I
+> wouldn't change that.
 
-A few, yes :-)
+I think we'll likely need changes for ALSA, but I don't think we know which 
+ones yet. For that reason I'd avoid creating any ALSA-specific API for now 
+until we implement proper support for ALSA devices. I'm fine, however, with 
+deprecating the ALSA API we have now, before it gets (ab)used.
 
-There's surprisingly many "details" that are not fully specified in MC, and 
-this is one of them. Historically the design idea was to create one media 
-device per instance of master video device. For PCI devices that's roughly one 
-media device per card, for platform devices one media device per master IP 
-core (or group of IP cores) instance, and for USB devices one media device per 
-USB control interface.
+> >>> -		int dvb;
+> >>> +		} dev;
+> >>> 
+> >>>  		/* Sub-device specifications */
+> >>>  		/* Nothing needed yet */
+> >>> diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+> >>> index d847c760e8f0..418f4fec391a 100644
+> >>> --- a/include/uapi/linux/media.h
+> >>> +++ b/include/uapi/linux/media.h
+> >>> @@ -78,6 +78,20 @@ struct media_entity_desc {
+> >>>  		struct {
+> >>>  			__u32 major;
+> >>>  			__u32 minor;
+> >>> +		} dev;
+> >>> +
+> >>> +#if 1
+> >>> +		/*
+> >>> +		 * DEPRECATED: previous node specifications. Kept just to
+> >>> +		 * avoid breaking compilation, but media_entity_desc.dev
+> >>> +		 * should be used instead. In particular, alsa and dvb
+> >>> +		 * fields below are wrong: for all devnodes, there should
+> >>> +		 * be just major/minor inside the struct, as this is enough
+> >>> +		 * to represent any devnode, no matter what type.
+> >>> +		 */
+> >>> +		struct {
+> >>> +			__u32 major;
+> >>> +			__u32 minor;
+> >>>  		} v4l;
+> >>>  		struct {
+> >>>  			__u32 major;
+> >>> @@ -89,6 +103,7 @@ struct media_entity_desc {
+> >>>  			__u32 subdevice;
+> >>>  		} alsa;
+> >>>  		int dvb;
+> >> 
+> >> I wouldn't merge all the v4l/fb/etc. structs into one struct. That will
+> >> make it difficult in the future if you need to add a field for e.g. v4l
+> >> entities.
 
-We can depart from that model in two ways.
+This is something Hans and I have discussed at the FOSDEM, and ended up 
+disagreeing.
 
-As you mentioned above, it could make sense to create separate media device 
-instances for a single master device (USB in this case) when the master device 
-contains several completely independent pipelines. Completely independent 
-means that no data link connects the two pipelines, and that no resource is 
-shared between them in a way that affects the device's behaviour.
+I like the single struct dev here, but I believe it should be moved before the 
+union, or, as Hans proposed, that the reserved bytes should be moved after the 
+union. However, the reason why I like your proposal has probably nothing to do 
+with your intents.
 
-In the example above the only shared hardware resource seems to be the USB 
-bridge chip, which implements two independent DMA channels through the same 
-USB interface. If the DMA channels are really independent, in the sense that 
-they have no influence on each other such as e.g. bandwidth sharing, then two 
-media devices could be created. Note that there's no requirement to do so, 
-creating a single media device in this case is still perfectly valid.
+To start directly with the big news, I believe the MC device node entity types 
+are bogus. They should never have been created in the first place, and your 
+proposal for DVB support in MC clearly shows it in my opinion.
 
-It should also be noted that split pipelines could be difficult to represent 
-as independent media devices when an external chip is shared between the two 
-pipelines, even if that chip is itself split in two independent parts. This is 
-caused by how the kernel APIs used to manage composite devices (v4l2-async and 
-the component framework) handle components. For instance, in the DT case, we 
-can't use v4l2-async to bind to one of the subdevs create for a single I2C 
-chip or IP core, as they would share the same hardware identifier (device 
-name, DT node, ...) used to match subdevs. Arguably that's a framework issue 
-that should be fixed, but it wouldn't be trivial.
+The media controller model is supposed to describe the device hardware 
+topology, or at least a logical view of that topology mapped to the operating 
+system from a hardware point of view. Device nodes, on the other hand, are 
+purely Linux concepts, and have nothing to do with the hardware topology. What 
+we have tried to describe with the MEDIA_ENT_T_DEVNODE_V4L entity type is 
+essentially a DMA engine. As DMA engines are mapped 1:1 to device nodes in 
+V4L2, we have mixed the two concepts and have called those entities device 
+nodes, while they should really have been called DMA engines.
 
-The second way to depart from the existing model is unrelated to the DVB 
-examples above, but is still worth mentioning for completeness. When several 
-master devices share resources (either on-chip or off-chip), a single media 
-device is required. I've discussed such a case with Jean-Michel Hautbois and 
-Hans Verkuil at the FOSDEM for the i.MX6 SoC. The chip includes two 
-independent IPUs (Image Processing Units), with two independent parallel 
-receivers but one shared CSI-2 receiver. On the system Jean-Michel is working 
-with, an external FPGA is connected to the two parallel receivers. The 
-resulting media pipeline thus includes the FPGA, the CSI-2 receiver and the 
-two IPUs, requiring a single media device to cover both IPUs. As the IPU 
-driver is the master driver in this case, it would normally create one media 
-device per hardware device instance.
+One additional clue that made me realize this is that we now have device nodes 
+for subdevs, which we don't report through the MC API. That's wrong, and 
+should be fixed. We could simply consider that V4L2 subdevs, as they're V4L2 
+entities, can use the media_entity_desc v4l union and report the device node 
+major and minor there, but I think that would be a short-term solution.
 
-A similar situation occurs when video capture devices, memory to memory 
-devices and/or display devices are connected together through deep pipelining. 
-Such an example can be found in the Renesas R-Car Gen2 SoCs, where a memory to 
-memory video processing device (VSP1) has one output connected directly to the 
-display engine (DU). The VSP1 and DU are otherwise completely separate IP 
-cores, with the former supported by a V4L2 driver and the latter by a DRM/KMS 
-driver. We also need a single media device to cover the whole graph, without 
-intrusive changes in either the VSP1 or the DU driver as the two devices can 
-operate completely independently and without both being present.
+Instead, I believe we should start describing our media entities based on the 
+hardware point of view, and consider device nodes to be an entity property 
+instead of an entity identity. In other words, a V4L2 DMA engine is not a 
+device node by hardware nature, but has the property of exposing a device node 
+to userspace. The same applies to other entities, such as V4L2 subdevices or 
+DVB entities.
+
+I've used the word property for a reason, as we've discussed numerous times in 
+the past an MC API extension to report detailed entity properties. However, 
+considering that exposing a device node is a very common property for 
+entities, I believe it makes sense to report that information through 
+media_entity_desc instead of requiring a separate, not implemented yet ioctl.
+
+For those reasons, I believe that we should have a single struct dev in struct 
+media_entity_desc used to report the "entity exposes a device node" property. 
+This isn't linked to v4l, fb, dvb or alsa, and is independent from the entity 
+type as such, so I wouldn't describe that property with subsystem-specific 
+structures.
+
+This doesn't preclude struct media_entity_desc from exposing subsystem-
+specific information in v4l, fb, dvb or alsa structures, even though I 
+currently believe that only core properties should be exposed through that 
+structure, and subsystem-specific properties would likely not qualified, but 
+that should be decided on a case-by-case basis. The struct dev, however, isn't 
+a subsystem-specific property, and I would thus like it to be reported as 
+such. A flag could also be used to report whether the entity has a device 
+node, although that could be inferred from major:minor not being equal to 0:0.
+
+With the above explanation hopefully clear, I believe that the following DVB 
+entity types are wrong.
+
+#define MEDIA_ENT_T_DEVNODE_DVB_FE      (MEDIA_ENT_T_DEVNODE + 4)
+#define MEDIA_ENT_T_DEVNODE_DVB_DEMUX   (MEDIA_ENT_T_DEVNODE + 5)
+#define MEDIA_ENT_T_DEVNODE_DVB_DVR     (MEDIA_ENT_T_DEVNODE + 6)
+#define MEDIA_ENT_T_DEVNODE_DVB_CA      (MEDIA_ENT_T_DEVNODE + 7)
+#define MEDIA_ENT_T_DEVNODE_DVB_NET     (MEDIA_ENT_T_DEVNODE + 8)
+
+We should get rid of DEVNODE_ there.
+
+Let's take http://linuxtv.org/downloads/presentations/cx231xx.ps as an 
+example. If I understand it correctly, the frontend has a dedicated device 
+node for control purposes (it has no DMA engine, no data can be transferred 
+through that device node), while the demux and dvr have DMA engines. The demux 
+can pass data to the dvr DMA engine, and also capture "raw" data directly. 
+Please correct me if that's not correct.
+
+The frontend should in my opinion be represented as a green box, not a yellow 
+box, as it's a processing entity and not a DMA engine. It should, however, 
+expose its device node property through struct dev.
+
+The dvr, on the other side, is a DMA engine, for which a yellow box is thus 
+correct. Its device node used for data transmission (and I suppose also some 
+DMA-related configuration) should also be exposed through struct dev.
+
+The demux is, if my understanding is correct, a hybrid beast, with both 
+processing and DMA capabilities. I lack proper DVB knowledge here, but based 
+on what I understand it might make sense to split it in two entities, one to 
+handle the data processing capability, and the other one to handle the DMA 
+engine. The processing entity could have one sink pad and two source pads, one 
+connected to the dvr and the other one connected to the demux DMA engine 
+entity.
+
+This model departs from your proposal, but I think it would be a better base 
+for future developments, for DVB but also other subsystems.
+
+> > No. You could just create another union for the API-specific bits, using
+> > the reserved bytes.
+> > 
+> >> So I would keep the v4l, fb and alsa structs, and just add a new struct
+> >> for dvb. I wonder if the dvb field can't just be replaced since I doubt
+> >> anyone is using it. And even if someone does, then it can't be right
+> >> since a single int isn't enough and never worked anyway.
+> > 
+> > All devnodes have major/minor. Making it standard for all devices makes
+> > easy for userspace to properly get the data it requires to work.
+> 
+> I think you are making assumptions here that may not be true. I don't see
+> any reason to make a 'dev' struct here. The real problem is the dvb int, so
+> that's what needs to be addressed. Changing anything else will cause API
+> headaches for no good reason.
 
 -- 
 Regards,
