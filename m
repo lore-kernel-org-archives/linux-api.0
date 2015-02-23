@@ -1,18 +1,125 @@
-From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] capabilities: Ambient capability set V1
-Date: Mon, 23 Feb 2015 08:58:06 -0600 (CST)
-Message-ID: <alpine.DEB.2.11.1502230856400.21238@gentwo.org>
-References: <alpine.DEB.2.11.1502051554500.4876@gentwo.org>
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+From: Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC PATCH 1/3] eeprom: Add a simple EEPROM framework
+Date: Tue, 24 Feb 2015 00:04:15 +0900
+Message-ID: <20150223150415.GF6236@finisterre.sirena.org.uk>
+References: <1424365639-26634-1-git-send-email-srinivas.kandagatla@linaro.org>
+ <1424365708-26681-1-git-send-email-srinivas.kandagatla@linaro.org>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="Iv4H2WyLgK50POYH"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.11.1502051554500.4876-gkYfJU5Cukgdnm+yROfE0A@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1424365708-26681-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Ok 4.0-rc1 is out and this patch has been sitting here for a couple of
-weeks without comment after an intensive discussion about the RFCs.
 
-Since there were no objections: Is there any chance to get this into -next
-somehow?
+--Iv4H2WyLgK50POYH
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+
+On Thu, Feb 19, 2015 at 05:08:28PM +0000, Srinivas Kandagatla wrote:
+
+>  .../devicetree/bindings/eeprom/eeprom.txt          |  48 ++++
+>  drivers/Kconfig                                    |   2 +
+>  drivers/Makefile                                   |   1 +
+>  drivers/eeprom/Kconfig                             |  19 ++
+>  drivers/eeprom/Makefile                            |   9 +
+>  drivers/eeprom/core.c                              | 290 +++++++++++++++++++++
+>  include/linux/eeprom-consumer.h                    |  73 ++++++
+>  include/linux/eeprom-provider.h                    |  51 ++++
+
+This seems to have a bunch of different things in it - there's some
+binding, there's some framework code, there's some user code for the
+framework...  splitting it up more would probably help with review.
+I'd at least make sure the framework is split from the DT code, that
+will cut down on the bulk and help make sure the framework isn't too DT
+tied.
+
+> +	if (read)
+> +		rc = regmap_bulk_read(eeprom->regmap, offset,
+> +				      buf, count/eeprom->stride);
+> +	else
+> +		rc = regmap_bulk_write(eeprom->regmap, offset,
+> +				       buf, count/eeprom->stride);
+> +
+> +	if (IS_ERR_VALUE(rc))
+> +		return 0;
+> +
+> +	return count;
+> +}
+
+> +static ssize_t bin_attr_eeprom_read(struct file *filp, struct kobject *kobj,
+> +				    struct bin_attribute *attr,
+> +				    char *buf, loff_t offset, size_t count)
+> +{
+> +	return bin_attr_eeprom_read_write(kobj, buf, offset, count, true);
+> +}
+
+I'm not sure the factoring out is actually helping the clarity here TBH.
+
+> +int eeprom_unregister(struct eeprom_device *eeprom)
+> +{
+> +	device_del(&eeprom->edev);
+> +
+> +	mutex_lock(&eeprom_list_mutex);
+> +	list_del(&eeprom->list);
+> +	mutex_unlock(&eeprom_list_mutex);
+> +
+> +	return 0;
+> +}
+> +EXPORT_SYMBOL(eeprom_unregister);
+
+Here we return having dropped the lock without doing anything else with
+the eeprom, meaning the caller could delete it.
+
+> +	mutex_lock(&eeprom_list_mutex);
+> +
+> +	list_for_each_entry(e, &eeprom_list, list) {
+> +		if (args.np == e->edev.of_node) {
+> +			eeprom = e;
+> +			break;
+> +		}
+> +	}
+> +	mutex_unlock(&eeprom_list_mutex);
+
+Here we iterate the list, find the relevant eeprom and drop the lock
+while still holding a reference to the eeprom we just found.  This means
+that a removal could race with us and free the eeprom underneath us.
+I'm also not seeing anything stopping or even noticing a device being
+removed with a cell active on it.
+
+> +/**
+> + * eeprom_cell_get(): Get eeprom cell of device form a given index.
+> + *
+> + * @dev: Device that will be interacted with
+> + * @index: Index of the eeprom cell.
+> + *
+> + * The return value will be an ERR_PTR() on error or a valid pointer
+> + * to a struct eeprom_cell.  The eeprom_cell will be freed by the
+> + * eeprom_cell_put().
+> + */
+> +struct eeprom_cell *eeprom_cell_get(struct device *dev, int index);
+
+Normally the kerneldoc goes with the function definition, not the
+prototype.
+
+--Iv4H2WyLgK50POYH
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQEcBAEBCAAGBQJU60FvAAoJECTWi3JdVIfQryAH/Rr1MGb6HyqDz6NN63n4t8r5
+fdn6InVXNDf1tgkiuxb0Kzrz2G1wGfy3twGE5eldm27YEG9WTQ7rTlrZeaRZ8PpU
+Ikvq61bOWMIVj0sYdGmj9cTYWdcRxFkcF1NHtGgV6tgPkLH3Du0uXNesDuOdUw7N
+LyGwUZHRXj78IJPP7TjZwjI0CPGrEFIPhm7F23tg43eqeZ4xw/c+ATZ7bMlN9NFx
+El6ZTkKodFER9U0Hqk/AQRMClFk5+nnGr7PeRhBVUruOerj9PDK1e0mqAWhzNf4R
+5SK6zooRrVGT0WP/I1SwqLeenwqlU9O3cCf46Dn67j4dcwQhwHULTEJYL/HAfHo=
+=mRbM
+-----END PGP SIGNATURE-----
+
+--Iv4H2WyLgK50POYH--
