@@ -1,105 +1,161 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [GIT PULL RESEND] kselftest-3.20-rc1 (4.0-rc1)
-Date: Mon, 23 Feb 2015 12:23:45 -0700
-Message-ID: <54EB7E41.5050606@osg.samsung.com>
+From: Michal Hocko <mhocko@suse.cz>
+Subject: Re: [PATCH] fork: report pid reservation failure properly
+Date: Mon, 23 Feb 2015 21:17:01 +0100
+Message-ID: <20150223201701.GA28639@dhcp22.suse.cz>
+References: <20150204102719.GB29434@dhcp22.suse.cz>
+ <1423046628-23638-1-git-send-email-mhocko@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1423046628-23638-1-git-send-email-mhocko@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: torvalds@linux-foundation.org
-Cc: linux-kernel@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>, linux-api@vger.kernel.org
+To: linux-api@vger.kernel.org
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Michael Kerrisk <mtk.manpages@gmail.com>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Linus,
+ping on this one? Should I just resend (your way Andrew)? Or are there
+any objections to the patch as is.
 
-I sent the following pull request in time for rc-1. I didn't see
-it included in 4.0-rc1. Wondering what happened? Resending just
-in case it got lost.
-
-thanks,
--- Shuah
-
-The following changes since commit 97bf6af1f928216fd6c5a66e8a57bfa95a659672:
-
-  Linux 3.19-rc1 (2014-12-20 17:08:50 -0800)
-
-are available in the git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/shuah/linux-kselftest
-tags/linux-kselftest-3.20-rc1
-
-for you to fetch changes up to 6ddf898c23d62c974e148efd9e509731324a167a:
-
-  selftests/exec: Check if the syscall exists and bail if not
-(2015-02-04 10:17:35 -0700)
-
-----------------------------------------------------------------
-Kselftest updates for 3.20-rc1
-
-This update adds:
-- Kselftest install target feature
-- Fix for selftests/exec test
-
-----------------------------------------------------------------
-Michael Ellerman (1):
-      selftests/exec: Check if the syscall exists and bail if not
-
-Shuah Khan (20):
-      selftests/breakpoints: add install target to enable test install
-      selftests/cpu-hotplug: add install target to enable test install
-      selftests/efivarfs: add install target to enable test install
-      selftests/firmware: add install target to enable test install
-      selftests/ftrace: add install target to enable test install
-      selftests/ipc: add install target to enable test install
-      selftests/kcmp: add install target to enable test install
-      selftests/memfd: add install target to enable test install
-      selftests/memory-hotplug: add install target to enable test install
-      selftests/mount: add install target to enable test install
-      selftests/mqueue: add install target to enable test install
-      selftests/net: add install target to enable test install
-      selftests/ptrace: add install target to enable test install
-      selftests/size: add install target to enable test install
-      selftests/sysctl: add install target to enable test install
-      selftests/timers: add install target to enable test install
-      selftests/user: add install target to enable test install
-      selftests/vm: add install target to enable test install
-      selftests: add install target to enable test install
-      kbuild: add a new kselftest_install make target to install selftests
-
- Makefile                                           | 14 +++++-
- tools/testing/selftests/Makefile                   | 54
-+++++++++++++++++++++-
- tools/testing/selftests/breakpoints/Makefile       | 19 +++++++-
- tools/testing/selftests/cpu-hotplug/Makefile       | 14 +++++-
- .../{on-off-test.sh => cpu-on-off-test.sh}         |  0
- tools/testing/selftests/efivarfs/Makefile          | 16 ++++++-
- tools/testing/selftests/exec/execveat.c            | 10 +++-
- tools/testing/selftests/firmware/Makefile          | 43 ++++++++++-------
- tools/testing/selftests/ftrace/Makefile            | 13 +++++-
- tools/testing/selftests/ipc/Makefile               | 19 +++++++-
- tools/testing/selftests/kcmp/Makefile              | 13 +++++-
- tools/testing/selftests/memfd/Makefile             | 17 +++++--
- tools/testing/selftests/memory-hotplug/Makefile    | 14 +++++-
- .../{on-off-test.sh => mem-on-off-test.sh}         |  0
- tools/testing/selftests/mount/Makefile             | 12 ++++-
- tools/testing/selftests/mqueue/Makefile            | 18 ++++++--
- tools/testing/selftests/net/Makefile               | 20 ++++++--
- tools/testing/selftests/ptrace/Makefile            | 16 +++++--
- tools/testing/selftests/size/Makefile              | 12 ++++-
- tools/testing/selftests/sysctl/Makefile            | 17 ++++++-
- tools/testing/selftests/timers/Makefile            | 12 ++++-
- tools/testing/selftests/user/Makefile              | 12 ++++-
- tools/testing/selftests/vm/Makefile                | 11 ++++-
- 23 files changed, 326 insertions(+), 50 deletions(-)
- rename tools/testing/selftests/cpu-hotplug/{on-off-test.sh =>
-cpu-on-off-test.sh} (100%)
- rename tools/testing/selftests/memory-hotplug/{on-off-test.sh =>
-mem-on-off-test.sh} (100%)
+On Wed 04-02-15 11:43:48, Michal Hocko wrote:
+> copy_process will report any failure in alloc_pid as ENOMEM currently
+> which is misleading because the pid allocation might fail not only when
+> the memory is short but also when the pid space is consumed already.
+> 
+> The current man page even mentions this case:
+> "
+> EAGAIN
+> 
+>       A system-imposed limit on the number of threads was encountered.
+>       There are a number of limits that may trigger this error: the
+>       RLIMIT_NPROC soft resource limit (set via setrlimit(2)), which
+>       limits the number of processes and threads for a real user ID, was
+>       reached; the kernel's system-wide limit on the number of processes
+>       and threads, /proc/sys/kernel/threads-max, was reached (see
+>       proc(5)); or the maximum number of PIDs, /proc/sys/kernel/pid_max,
+>       was reached (see proc(5)).
+> "
+> 
+> so the current behavior is also incorrect wrt. documentation. POSIX man
+> page also suggest returing EAGAIN when the process count limit is
+> reached.
+> 
+> This patch simply propagates error code from alloc_pid and makes sure we
+> return -EAGAIN due to reservation failure. This will make behavior of
+> fork closer to both our documentation and POSIX.
+> 
+> alloc_pid might alsoo fail when the reaper in the pid namespace is dead
+> (the namespace basically disallows all new processes) and there is no
+> good error code which would match documented ones. We have traditionally
+> returned ENOMEM for this case which is misleading as well but as per
+> Eric W. Biederman this behavior is documented in man pid_namespaces(7)
+> "
+> If the "init" process of a PID namespace terminates, the kernel
+> terminates all of the processes in the namespace via a SIGKILL signal.
+> This behavior reflects the fact that the "init" process is essential for
+> the correct operation of a PID namespace.  In this case, a subsequent
+> fork(2) into this PID namespace will fail with the error ENOMEM; it is
+> not possible to create a new processes in a PID namespace whose "init"
+> process has terminated.
+> "
+> and introducing a new error code would be too risky so let's stick to
+> ENOMEM for this case.
+> 
+> Signed-off-by: Michal Hocko <mhocko@suse.cz>
+> ---
+>  kernel/fork.c |  5 +++--
+>  kernel/pid.c  | 15 ++++++++-------
+>  2 files changed, 11 insertions(+), 9 deletions(-)
+> 
+> diff --git a/kernel/fork.c b/kernel/fork.c
+> index 3ce8d57cff09..c37b88a162c5 100644
+> --- a/kernel/fork.c
+> +++ b/kernel/fork.c
+> @@ -1405,10 +1405,11 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+>  		goto bad_fork_cleanup_io;
+>  
+>  	if (pid != &init_struct_pid) {
+> -		retval = -ENOMEM;
+>  		pid = alloc_pid(p->nsproxy->pid_ns_for_children);
+> -		if (!pid)
+> +		if (IS_ERR(pid)) {
+> +			retval = PTR_ERR(pid);
+>  			goto bad_fork_cleanup_io;
+> +		}
+>  	}
+>  
+>  	p->set_child_tid = (clone_flags & CLONE_CHILD_SETTID) ? child_tidptr : NULL;
+> diff --git a/kernel/pid.c b/kernel/pid.c
+> index 82430c858d69..bbb805ccd893 100644
+> --- a/kernel/pid.c
+> +++ b/kernel/pid.c
+> @@ -179,7 +179,7 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
+>  			spin_unlock_irq(&pidmap_lock);
+>  			kfree(page);
+>  			if (unlikely(!map->page))
+> -				break;
+> +				return -ENOMEM;
+>  		}
+>  		if (likely(atomic_read(&map->nr_free))) {
+>  			for ( ; ; ) {
+> @@ -207,7 +207,7 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
+>  		}
+>  		pid = mk_pid(pid_ns, map, offset);
+>  	}
+> -	return -1;
+> +	return -EAGAIN;
+>  }
+>  
+>  int next_pidmap(struct pid_namespace *pid_ns, unsigned int last)
+> @@ -298,17 +298,20 @@ struct pid *alloc_pid(struct pid_namespace *ns)
+>  	int i, nr;
+>  	struct pid_namespace *tmp;
+>  	struct upid *upid;
+> +	int retval = -ENOMEM;
+>  
+>  	pid = kmem_cache_alloc(ns->pid_cachep, GFP_KERNEL);
+>  	if (!pid)
+> -		goto out;
+> +		return ERR_PTR(retval);
+>  
+>  	tmp = ns;
+>  	pid->level = ns->level;
+>  	for (i = ns->level; i >= 0; i--) {
+>  		nr = alloc_pidmap(tmp);
+> -		if (nr < 0)
+> +		if (IS_ERR_VALUE(nr)) {
+> +			retval = nr;
+>  			goto out_free;
+> +		}
+>  
+>  		pid->numbers[i].nr = nr;
+>  		pid->numbers[i].ns = tmp;
+> @@ -336,7 +339,6 @@ struct pid *alloc_pid(struct pid_namespace *ns)
+>  	}
+>  	spin_unlock_irq(&pidmap_lock);
+>  
+> -out:
+>  	return pid;
+>  
+>  out_unlock:
+> @@ -348,8 +350,7 @@ out_free:
+>  		free_pidmap(pid->numbers + i);
+>  
+>  	kmem_cache_free(ns->pid_cachep, pid);
+> -	pid = NULL;
+> -	goto out;
+> +	return ERR_PTR(retval);
+>  }
+>  
+>  void disable_pid_allocation(struct pid_namespace *ns)
+> -- 
+> 2.1.4
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
 -- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+Michal Hocko
+SUSE Labs
