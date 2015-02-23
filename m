@@ -1,78 +1,38 @@
-From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH v2 02/18] ARM: ARMv7M: Enlarge vector table to 256 entries
-Date: Mon, 23 Feb 2015 11:33:31 +0100
-Message-ID: <CALszF6CB9YU7ashQ-y_zx58Mkf=sbrBfa2dAOdQm7FkmcuE7PA@mail.gmail.com>
-References: <1424455277-29983-1-git-send-email-mcoquelin.stm32@gmail.com>
-	<1424455277-29983-3-git-send-email-mcoquelin.stm32@gmail.com>
-	<20150220194756.GS19388@pengutronix.de>
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Subject: Re: [PATCH 05/45] drm.h: include stdlib.h in userspace
+Date: Mon, 23 Feb 2015 12:35:49 +0200
+Message-ID: <20150223103548.GT12550@lakka.kapsi.fi>
+References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
+ <1424127948-22484-6-git-send-email-mikko.rapeli@iki.fi>
+ <54EB0072.8020909@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20150220194756.GS19388@pengutronix.de>
-Sender: linux-arch-owner@vger.kernel.org
-To: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>
-Cc: =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <54EB0072.8020909-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-2015-02-20 20:47 GMT+01:00 Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengu=
-tronix.de>:
-> On Fri, Feb 20, 2015 at 07:01:01PM +0100, Maxime Coquelin wrote:
->> From Cortex-M reference manuals, the nvic supports up to 240 interru=
-pts.
->> So the number of entries in vectors table is up to 256.
->>
->> This patch adds a new config flag to specify the number of external =
-interrupts.
->> Some ifdeferies are added in order to respect the natural alignment =
-without
->> wasting too much space on smaller systems.
->>
->> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
->> ---
->>  arch/arm/kernel/entry-v7m.S | 13 +++++++++----
->>  arch/arm/mm/Kconfig         | 15 +++++++++++++++
->>  2 files changed, 24 insertions(+), 4 deletions(-)
->>
->> diff --git a/arch/arm/kernel/entry-v7m.S b/arch/arm/kernel/entry-v7m=
-=2ES
->> index 8944f49..68cde36 100644
->> --- a/arch/arm/kernel/entry-v7m.S
->> +++ b/arch/arm/kernel/entry-v7m.S
->> @@ -117,9 +117,14 @@ ENTRY(__switch_to)
->>  ENDPROC(__switch_to)
->>
->>       .data
->> -     .align  8
->> +#if CONFIG_CPUV7M_NUM_IRQ <=3D 112
-> I would have called this CONFIG_CPU_V7M_NUM_IRQ to match the already
-> existing CPU_V7M symbol.
+On Mon, Feb 23, 2015 at 10:26:58AM +0000, Emil Velikov wrote:
+> On 16/02/15 23:05, Mikko Rapeli wrote:
+> > Fixes <drm/drm.h> compilation error:
+> >=20
+> > drm/drm.h:132:2: error: unknown type name =E2=80=98size_t=E2=80=99
+> >=20
+> Hi Mikko,
+>=20
+> Can you let us know how you're getting these (series-wise) errors ? I=
+'ve
+> been meaning to sync the uapi/drm and libdrm headers and would be nic=
+e
+> to have an extra step to test things.
 
-That's better indeed.
-It will be changed in v3.
+This should have everything needed to reproduce these compile errors,
+though some of the errors hide behind other errors and fixes:
 
->
->> +     .align  9
->> +#else
->> +     .align  10
->> +#endif
->> +
->
-> Other than that:
-> Acked-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
->
-> Who do you target to apply this series?
+https://lkml.org/lkml/2015/2/16/525
 
-I guess it should go through Russell's Patch Tracking System?
-
-Thanks,
-Maxime
->
-> Best regards
-> Uwe
->
-> --
-> Pengutronix e.K.                           | Uwe Kleine-K=C3=B6nig   =
-         |
-> Industrial Linux Solutions                 | http://www.pengutronix.d=
-e/  |
+-Mikko
