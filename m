@@ -1,45 +1,56 @@
-From: Serge Hallyn <serge.hallyn@ubuntu.com>
-Subject: Re: [PATCH] capabilities: Ambient capability set V1
-Date: Mon, 23 Feb 2015 16:16:25 +0000
-Message-ID: <20150223161625.GD25477@ubuntumail>
-References: <alpine.DEB.2.11.1502051554500.4876@gentwo.org>
- <alpine.DEB.2.11.1502230856400.21238@gentwo.org>
+From: Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: Documenting MS_LAZYTIME
+Date: Mon, 23 Feb 2015 10:24:54 -0600
+Message-ID: <54EB5456.5030607@redhat.com>
+References: <CAHO5Pa0k7QkV_6BDjwTVxa7LV9tFyN9nGFFcSvOC6HYO08wfrw@mail.gmail.com> <54E7578E.4090809@redhat.com> <20150221025636.GB7922@thunk.org> <54EB1B19.8050808@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.11.1502230856400.21238@gentwo.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Lameter <cl@linux.com>
-Cc: Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, Aaron Jones <aaronmdjones@gmail.com>, Ted Ts'o <tytso@mit.edu>, linux-security-module@vger.kernel.org, akpm@linuxfoundation.org, "Andrew G. Morgan" <morgan@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Markku Savela <msa@moth.iki.fi>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Jonathan Corbet <corbet@lwn.net>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <54EB1B19.8050808-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux btrfs Developers List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Christoph Lameter (cl@linux.com):
-> Ok 4.0-rc1 is out and this patch has been sitting here for a couple of
-> weeks without comment after an intensive discussion about the RFCs.
-> 
-> Since there were no objections: Is there any chance to get this into -next
-> somehow?
+On 2/23/15 6:20 AM, Austin S Hemmelgarn wrote:
+> On 2015-02-20 21:56, Theodore Ts'o wrote:
+>> On Fri, Feb 20, 2015 at 09:49:34AM -0600, Eric Sandeen wrote:
+>>>
+>>>>                This mount option significantly reduces  writes  to  the
+>>>>                inode  table  for workloads that perform frequent random
+>>>>                writes to preallocated files.
+>>>
+>>> This seems like an overly specific description of a single workload out
+>>> of many which may benefit, but what do others think?  "inode table" is also
+>>> fairly extN-specific.
+>>
+>> How about somethign like "This mount significantly reduces writes
+>> needed to update the inode's timestamps, especially mtime and actime.
+>> Examples of workloads where this could be a large win include frequent
+>> random writes to preallocated files, as well as cases where the
+>> MS_STRICTATIME mount option is enabled."?
+>>
+>> (The advantage of MS_STRICTATIME | MS_LAZYTIME is that stat system
+>> calls will return the correctly updated atime, but those atime updates
+>> won't get flushed to disk unless the inode needs to be updated for
+>> file system / data consistency reasons, or when the inode is pushed
+>> out of memory, or when the file system is unmounted.)
+>>
+> If you want to list some specific software, it should help with
+> anything that uses sqlite (which notably includes firefox and
+> chrome), as well as most RDMS software and systemd-journald.
 
-Andrew Morgan and Andy Lutomirski appear to have a similar concern
-but competing ideas on how to address them.  We need them to agree
-on an approach.
+I'm really uneasy with starting to list specific workloads and applications
+here. It's going to get dated quickly, and will lead to endless cargo-cult
+tuning.
 
-The core concern for amorgan is that an unprivileged user not be
-able to cause a privileged program to run in a way that it fails to
-drop privilege before running unprivileged-user-provided code.
+I'd strongly prefer to just describe what it does (reduces the number of
+certain metadata writes to disk) and leave it at that....
 
-Andy Lutomirski's concern is simply that code which is currently
-doing the right thing to drop privilege not be run in a way that
-it thinks it is dropping privilege, but in fact is not.
+-Eric
 
-(Please correct me where I've mis-spoken or misunderstood)
-
-Since your desire is precisely for a mode where dropping privilege
-works as usual, but exec then re-gains some or all of that privilege,
-we need to either agree on a way to enter that mode that ordinary
-use caes can't be tricked into using, or find a way for legacy
-users to be tpiped off as to what's going on (without having to be
-re-written)
-
--serge
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
