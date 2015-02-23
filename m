@@ -1,38 +1,105 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v3 linux-trace 1/8] tracing: attach eBPF programs to
- tracepoints and syscalls
-Date: Mon, 23 Feb 2015 13:55:12 -0500
-Message-ID: <CAMEtUuwqhUpxVrKn_Km_JE76hco+y7Ev4ESzvbmAERBTuidY=A@mail.gmail.com>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: [GIT PULL RESEND] kselftest-3.20-rc1 (4.0-rc1)
+Date: Mon, 23 Feb 2015 12:23:45 -0700
+Message-ID: <54EB7E41.5050606@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: He Kuang <hekuang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, wangnan0-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: torvalds@linux-foundation.org
+Cc: linux-kernel@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 16, 2015 at 6:26 AM, He Kuang <hekuang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org> wrote:
-> Hi, Alexei
->
-> Another suggestion on bpf syscall interface. Currently, BPF +
-> syscalls/kprobes depends on CONFIG_BPF_SYSCALL. In kernel used on
-> commercial products, CONFIG_BPF_SYSCALL is probably disabled, in this
-> case, bpf bytecode cannot be loaded to the kernel.
+Hi Linus,
 
-I'm seeing a flurry of use cases for bpf in ovs, tc, tracing, etc
-When it's all ready, we can turn that config on by default.
+I sent the following pull request in time for rc-1. I didn't see
+it included in 4.0-rc1. Wondering what happened? Resending just
+in case it got lost.
 
-> If we turn the functionality of BPF_SYSCALL into a loadable module, then
-> we can use it without any dependencies on the kernel. What about change
-> bpf syscall to a /dev node or /sys file which can be exported by a
-> kernel module?
+thanks,
+-- Shuah
 
-I don't think we will allow extending bpf by modules.
-'bpf in modules' is an interface that is too easy to abuse.
-So all of bpf core, helper functions and program types will be builtin.
+The following changes since commit 97bf6af1f928216fd6c5a66e8a57bfa95a659672:
 
-As far as bpf+tracing the plan is to do bpf+kprobe and bpf+syscalls
-first. Then add right set of helpers to make sure that use cases
-like 'tcp stack instrumentation' are fully addressed.
-Then there were few great ideas of accelerating kprobes
-with trace markers and debug tracepoints that we can do later.
+  Linux 3.19-rc1 (2014-12-20 17:08:50 -0800)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/shuah/linux-kselftest
+tags/linux-kselftest-3.20-rc1
+
+for you to fetch changes up to 6ddf898c23d62c974e148efd9e509731324a167a:
+
+  selftests/exec: Check if the syscall exists and bail if not
+(2015-02-04 10:17:35 -0700)
+
+----------------------------------------------------------------
+Kselftest updates for 3.20-rc1
+
+This update adds:
+- Kselftest install target feature
+- Fix for selftests/exec test
+
+----------------------------------------------------------------
+Michael Ellerman (1):
+      selftests/exec: Check if the syscall exists and bail if not
+
+Shuah Khan (20):
+      selftests/breakpoints: add install target to enable test install
+      selftests/cpu-hotplug: add install target to enable test install
+      selftests/efivarfs: add install target to enable test install
+      selftests/firmware: add install target to enable test install
+      selftests/ftrace: add install target to enable test install
+      selftests/ipc: add install target to enable test install
+      selftests/kcmp: add install target to enable test install
+      selftests/memfd: add install target to enable test install
+      selftests/memory-hotplug: add install target to enable test install
+      selftests/mount: add install target to enable test install
+      selftests/mqueue: add install target to enable test install
+      selftests/net: add install target to enable test install
+      selftests/ptrace: add install target to enable test install
+      selftests/size: add install target to enable test install
+      selftests/sysctl: add install target to enable test install
+      selftests/timers: add install target to enable test install
+      selftests/user: add install target to enable test install
+      selftests/vm: add install target to enable test install
+      selftests: add install target to enable test install
+      kbuild: add a new kselftest_install make target to install selftests
+
+ Makefile                                           | 14 +++++-
+ tools/testing/selftests/Makefile                   | 54
++++++++++++++++++++++-
+ tools/testing/selftests/breakpoints/Makefile       | 19 +++++++-
+ tools/testing/selftests/cpu-hotplug/Makefile       | 14 +++++-
+ .../{on-off-test.sh => cpu-on-off-test.sh}         |  0
+ tools/testing/selftests/efivarfs/Makefile          | 16 ++++++-
+ tools/testing/selftests/exec/execveat.c            | 10 +++-
+ tools/testing/selftests/firmware/Makefile          | 43 ++++++++++-------
+ tools/testing/selftests/ftrace/Makefile            | 13 +++++-
+ tools/testing/selftests/ipc/Makefile               | 19 +++++++-
+ tools/testing/selftests/kcmp/Makefile              | 13 +++++-
+ tools/testing/selftests/memfd/Makefile             | 17 +++++--
+ tools/testing/selftests/memory-hotplug/Makefile    | 14 +++++-
+ .../{on-off-test.sh => mem-on-off-test.sh}         |  0
+ tools/testing/selftests/mount/Makefile             | 12 ++++-
+ tools/testing/selftests/mqueue/Makefile            | 18 ++++++--
+ tools/testing/selftests/net/Makefile               | 20 ++++++--
+ tools/testing/selftests/ptrace/Makefile            | 16 +++++--
+ tools/testing/selftests/size/Makefile              | 12 ++++-
+ tools/testing/selftests/sysctl/Makefile            | 17 ++++++-
+ tools/testing/selftests/timers/Makefile            | 12 ++++-
+ tools/testing/selftests/user/Makefile              | 12 ++++-
+ tools/testing/selftests/vm/Makefile                | 11 ++++-
+ 23 files changed, 326 insertions(+), 50 deletions(-)
+ rename tools/testing/selftests/cpu-hotplug/{on-off-test.sh =>
+cpu-on-off-test.sh} (100%)
+ rename tools/testing/selftests/memory-hotplug/{on-off-test.sh =>
+mem-on-off-test.sh} (100%)
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
