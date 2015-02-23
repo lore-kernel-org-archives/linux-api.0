@@ -1,161 +1,143 @@
-From: Michal Hocko <mhocko@suse.cz>
-Subject: Re: [PATCH] fork: report pid reservation failure properly
-Date: Mon, 23 Feb 2015 21:17:01 +0100
-Message-ID: <20150223201701.GA28639@dhcp22.suse.cz>
-References: <20150204102719.GB29434@dhcp22.suse.cz>
- <1423046628-23638-1-git-send-email-mhocko@suse.cz>
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Subject: Re: [PATCH 1/3] media: Fix ALSA and DVB representation at media controller API
+Date: Mon, 23 Feb 2015 23:20:15 +0200
+Message-ID: <2073043.Yp0nzaPjZq@avalon>
+References: <cover.1422273497.git.mchehab@osg.samsung.com> <CAGoCfiwi0nj_9sYNzEFOp5BvedFe+HphJ2bVtx_bnBw3d-Bsyw@mail.gmail.com> <20150223105508.54c730fc@recife.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1423046628-23638-1-git-send-email-mhocko@suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-api@vger.kernel.org
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Michael Kerrisk <mtk.manpages@gmail.com>, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-media-owner@vger.kernel.org>
+In-Reply-To: <20150223105508.54c730fc@recife.lan>
+Sender: linux-media-owner@vger.kernel.org
+To: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Cc: Devin Heitmueller <dheitmueller@kernellabs.com>, Hans Verkuil <hverkuil@xs4all.nl>, Linux Media Mailing List <linux-media@vger.kernel.org>, Mauro Carvalho Chehab <mchehab@infradead.org>, Hans Verkuil <hans.verkuil@cisco.com>, Sakari Ailus <sakari.ailus@linux.intel.com>, Antti Palosaari <crope@iki.fi>, Ricardo Ribalda <ricardo.ribalda@gmail.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Ramakrishnan Muthukrishnan <ramakrmu@cisco.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-ping on this one? Should I just resend (your way Andrew)? Or are there
-any objections to the patch as is.
+Hi Mauro,
 
-On Wed 04-02-15 11:43:48, Michal Hocko wrote:
-> copy_process will report any failure in alloc_pid as ENOMEM currently
-> which is misleading because the pid allocation might fail not only when
-> the memory is short but also when the pid space is consumed already.
+On Monday 23 February 2015 10:55:08 Mauro Carvalho Chehab wrote:
+> Em Mon, 26 Jan 2015 09:41:41 -0500 Devin Heitmueller escreveu:
+> >> It is actually trivial to get the device nodes once you have the
+> >> major/minor. The media-ctl library does that for you. See:
+> >
+> > No objection then.
+> > 
+> > On a related note, you would be very well served to consider testing
+> > your dvb changes with a device that has more than one DVB tuner (such
+> > as the hvr-2200/2250).  That will help you shake out any edge cases
+> > related to ensuring that the different DVB nodes appear in different
+> > groups.
 > 
-> The current man page even mentions this case:
-> "
-> EAGAIN
+> Hi Devin,
 > 
->       A system-imposed limit on the number of threads was encountered.
->       There are a number of limits that may trigger this error: the
->       RLIMIT_NPROC soft resource limit (set via setrlimit(2)), which
->       limits the number of processes and threads for a real user ID, was
->       reached; the kernel's system-wide limit on the number of processes
->       and threads, /proc/sys/kernel/threads-max, was reached (see
->       proc(5)); or the maximum number of PIDs, /proc/sys/kernel/pid_max,
->       was reached (see proc(5)).
-> "
+> I did some tests (and fixes) for WinTV Nova-TD, with has two adapters.
 > 
-> so the current behavior is also incorrect wrt. documentation. POSIX man
-> page also suggest returing EAGAIN when the process count limit is
-> reached.
+> I saw two alternatives for it:
 > 
-> This patch simply propagates error code from alloc_pid and makes sure we
-> return -EAGAIN due to reservation failure. This will make behavior of
-> fork closer to both our documentation and POSIX.
+> 1) to create a media controller device for each adapter;
+> 2) to create just one media controller.
 > 
-> alloc_pid might alsoo fail when the reaper in the pid namespace is dead
-> (the namespace basically disallows all new processes) and there is no
-> good error code which would match documented ones. We have traditionally
-> returned ENOMEM for this case which is misleading as well but as per
-> Eric W. Biederman this behavior is documented in man pid_namespaces(7)
-> "
-> If the "init" process of a PID namespace terminates, the kernel
-> terminates all of the processes in the namespace via a SIGKILL signal.
-> This behavior reflects the fact that the "init" process is essential for
-> the correct operation of a PID namespace.  In this case, a subsequent
-> fork(2) into this PID namespace will fail with the error ENOMEM; it is
-> not possible to create a new processes in a PID namespace whose "init"
-> process has terminated.
-> "
-> and introducing a new error code would be too risky so let's stick to
-> ENOMEM for this case.
+> I actually implemented (1), as, in the case of this device, AFAIKT, the
+> two devices are indepentent, e. g. it is not possible to, for example,
+> share the same tuner with two demods:
 > 
-> Signed-off-by: Michal Hocko <mhocko@suse.cz>
-> ---
->  kernel/fork.c |  5 +++--
->  kernel/pid.c  | 15 ++++++++-------
->  2 files changed, 11 insertions(+), 9 deletions(-)
+> $ ls -la /dev/media?
+> crw-rw----. 1 root video 249, 0 Fev 23 10:02 /dev/media0
+> crw-rw----. 1 root video 249, 1 Fev 23 10:02 /dev/media1
 > 
-> diff --git a/kernel/fork.c b/kernel/fork.c
-> index 3ce8d57cff09..c37b88a162c5 100644
-> --- a/kernel/fork.c
-> +++ b/kernel/fork.c
-> @@ -1405,10 +1405,11 @@ static struct task_struct *copy_process(unsigned long clone_flags,
->  		goto bad_fork_cleanup_io;
->  
->  	if (pid != &init_struct_pid) {
-> -		retval = -ENOMEM;
->  		pid = alloc_pid(p->nsproxy->pid_ns_for_children);
-> -		if (!pid)
-> +		if (IS_ERR(pid)) {
-> +			retval = PTR_ERR(pid);
->  			goto bad_fork_cleanup_io;
-> +		}
->  	}
->  
->  	p->set_child_tid = (clone_flags & CLONE_CHILD_SETTID) ? child_tidptr : NULL;
-> diff --git a/kernel/pid.c b/kernel/pid.c
-> index 82430c858d69..bbb805ccd893 100644
-> --- a/kernel/pid.c
-> +++ b/kernel/pid.c
-> @@ -179,7 +179,7 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
->  			spin_unlock_irq(&pidmap_lock);
->  			kfree(page);
->  			if (unlikely(!map->page))
-> -				break;
-> +				return -ENOMEM;
->  		}
->  		if (likely(atomic_read(&map->nr_free))) {
->  			for ( ; ; ) {
-> @@ -207,7 +207,7 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
->  		}
->  		pid = mk_pid(pid_ns, map, offset);
->  	}
-> -	return -1;
-> +	return -EAGAIN;
->  }
->  
->  int next_pidmap(struct pid_namespace *pid_ns, unsigned int last)
-> @@ -298,17 +298,20 @@ struct pid *alloc_pid(struct pid_namespace *ns)
->  	int i, nr;
->  	struct pid_namespace *tmp;
->  	struct upid *upid;
-> +	int retval = -ENOMEM;
->  
->  	pid = kmem_cache_alloc(ns->pid_cachep, GFP_KERNEL);
->  	if (!pid)
-> -		goto out;
-> +		return ERR_PTR(retval);
->  
->  	tmp = ns;
->  	pid->level = ns->level;
->  	for (i = ns->level; i >= 0; i--) {
->  		nr = alloc_pidmap(tmp);
-> -		if (nr < 0)
-> +		if (IS_ERR_VALUE(nr)) {
-> +			retval = nr;
->  			goto out_free;
-> +		}
->  
->  		pid->numbers[i].nr = nr;
->  		pid->numbers[i].ns = tmp;
-> @@ -336,7 +339,6 @@ struct pid *alloc_pid(struct pid_namespace *ns)
->  	}
->  	spin_unlock_irq(&pidmap_lock);
->  
-> -out:
->  	return pid;
->  
->  out_unlock:
-> @@ -348,8 +350,7 @@ out_free:
->  		free_pidmap(pid->numbers + i);
->  
->  	kmem_cache_free(ns->pid_cachep, pid);
-> -	pid = NULL;
-> -	goto out;
-> +	return ERR_PTR(retval);
->  }
->  
->  void disable_pid_allocation(struct pid_namespace *ns)
-> -- 
-> 2.1.4
+> The adapter 0 corresponds to /dev/media0, and the adapter 1
+> to /dev/media1:
 > 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> $ media-ctl --print-dot -d /dev/media0
+> digraph board {
+> 	rankdir=TB
+> 	n00000001 [label="dvb-demux\n/dev/dvb/adapter0/demux0", shape=box,
+> style=filled, fillcolor=yellow] n00000001 -> n00000002
+> 	n00000002 [label="dvb-dvr\n/dev/dvb/adapter0/dvr0", shape=box,
+> style=filled, fillcolor=yellow] n00000003
+> [label="dvb-net\n/dev/dvb/adapter0/net0", shape=box, style=filled,
+> fillcolor=yellow] n00000004 [label="DiBcom
+> 7000PC\n/dev/dvb/adapter0/frontend0", shape=box, style=filled,
+> fillcolor=yellow] n00000004 -> n00000001
+> }
+> 
+> $ media-ctl --print-dot -d /dev/media1
+> digraph board {
+> 	rankdir=TB
+> 	n00000001 [label="dvb-demux\n/dev/dvb/adapter1/demux0", shape=box,
+> style=filled, fillcolor=yellow] n00000001 -> n00000002
+> 	n00000002 [label="dvb-dvr\n/dev/dvb/adapter1/dvr0", shape=box,
+> style=filled, fillcolor=yellow] n00000003
+> [label="dvb-net\n/dev/dvb/adapter1/net0", shape=box, style=filled,
+> fillcolor=yellow] n00000004 [label="DiBcom
+> 7000PC\n/dev/dvb/adapter1/frontend0", shape=box, style=filled,
+> fillcolor=yellow] n00000004 -> n00000001
+> }
+> 
+> On a more complex hardware where some components may be rewired
+> on a different way, however, using just one media controller
+> would be a better approach.
+> 
+> Comments?
+
+A few, yes :-)
+
+There's surprisingly many "details" that are not fully specified in MC, and 
+this is one of them. Historically the design idea was to create one media 
+device per instance of master video device. For PCI devices that's roughly one 
+media device per card, for platform devices one media device per master IP 
+core (or group of IP cores) instance, and for USB devices one media device per 
+USB control interface.
+
+We can depart from that model in two ways.
+
+As you mentioned above, it could make sense to create separate media device 
+instances for a single master device (USB in this case) when the master device 
+contains several completely independent pipelines. Completely independent 
+means that no data link connects the two pipelines, and that no resource is 
+shared between them in a way that affects the device's behaviour.
+
+In the example above the only shared hardware resource seems to be the USB 
+bridge chip, which implements two independent DMA channels through the same 
+USB interface. If the DMA channels are really independent, in the sense that 
+they have no influence on each other such as e.g. bandwidth sharing, then two 
+media devices could be created. Note that there's no requirement to do so, 
+creating a single media device in this case is still perfectly valid.
+
+It should also be noted that split pipelines could be difficult to represent 
+as independent media devices when an external chip is shared between the two 
+pipelines, even if that chip is itself split in two independent parts. This is 
+caused by how the kernel APIs used to manage composite devices (v4l2-async and 
+the component framework) handle components. For instance, in the DT case, we 
+can't use v4l2-async to bind to one of the subdevs create for a single I2C 
+chip or IP core, as they would share the same hardware identifier (device 
+name, DT node, ...) used to match subdevs. Arguably that's a framework issue 
+that should be fixed, but it wouldn't be trivial.
+
+The second way to depart from the existing model is unrelated to the DVB 
+examples above, but is still worth mentioning for completeness. When several 
+master devices share resources (either on-chip or off-chip), a single media 
+device is required. I've discussed such a case with Jean-Michel Hautbois and 
+Hans Verkuil at the FOSDEM for the i.MX6 SoC. The chip includes two 
+independent IPUs (Image Processing Units), with two independent parallel 
+receivers but one shared CSI-2 receiver. On the system Jean-Michel is working 
+with, an external FPGA is connected to the two parallel receivers. The 
+resulting media pipeline thus includes the FPGA, the CSI-2 receiver and the 
+two IPUs, requiring a single media device to cover both IPUs. As the IPU 
+driver is the master driver in this case, it would normally create one media 
+device per hardware device instance.
+
+A similar situation occurs when video capture devices, memory to memory 
+devices and/or display devices are connected together through deep pipelining. 
+Such an example can be found in the Renesas R-Car Gen2 SoCs, where a memory to 
+memory video processing device (VSP1) has one output connected directly to the 
+display engine (DU). The VSP1 and DU are otherwise completely separate IP 
+cores, with the former supported by a V4L2 driver and the latter by a DRM/KMS 
+driver. We also need a single media device to cover the whole graph, without 
+intrusive changes in either the VSP1 or the DU driver as the two devices can 
+operate completely independently and without both being present.
 
 -- 
-Michal Hocko
-SUSE Labs
+Regards,
+
+Laurent Pinchart
