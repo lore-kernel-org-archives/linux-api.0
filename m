@@ -1,48 +1,34 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+From: Christoph Lameter <cl@linux.com>
 Subject: Re: [PATCH] capabilities: Ambient capability set V1
-Date: Tue, 24 Feb 2015 09:47:15 -0600
-Message-ID: <20150224154715.GA20682@mail.hallyn.com>
-References: <alpine.DEB.2.11.1502051554500.4876@gentwo.org>
- <alpine.DEB.2.11.1502230856400.21238@gentwo.org>
- <20150223161625.GD25477@ubuntumail>
- <alpine.DEB.2.11.1502231041580.21784@gentwo.org>
- <20150223164623.GB32181@mail.hallyn.com>
- <alpine.DEB.2.11.1502231049110.21926@gentwo.org>
- <20150223181553.GE25477@ubuntumail>
- <20150224051928.GA14755@mail.hallyn.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150224051928.GA14755-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Cc: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Date: Tue, 24 Feb 2015 09:48:48 -0600 (CST)
+Message-ID: <alpine.DEB.2.11.1502240948001.28901@gentwo.org>
+References: <alpine.DEB.2.11.1502051554500.4876@gentwo.org> <alpine.DEB.2.11.1502230856400.21238@gentwo.org> <CALCETrWJCcBBGGp21C4cdtiU79K-P3t+6rFJUWcXcLR1jqrrFQ@mail.gmail.com> <alpine.DEB.2.11.1502230950440.21238@gentwo.org>
+ <CALCETrUR7+44ie2fiy0BzC3ktLQ2dcArSL-O3AHnp8kFF92fjg@mail.gmail.com> <alpine.DEB.2.11.1502231040270.21784@gentwo.org> <CALCETrXnBvxG7i9A1Q8oS7kr8TG+FuGJMRVBQ_gFsxM6u=qdDA@mail.gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CALCETrXnBvxG7i9A1Q8oS7kr8TG+FuGJMRVBQ_gFsxM6u=qdDA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Andrew G. Morgan" <morgan@kernel.org>, Andrew Morton <akpm@linuxfoundation.org>, LSM List <linux-security-module@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, Markku Savela <msa@moth.iki.fi>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 23, 2015 at 11:19:29PM -0600, Serge E. Hallyn wrote:
-> On Mon, Feb 23, 2015 at 06:15:53PM +0000, Serge Hallyn wrote:
-> > Quoting Christoph Lameter (cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org):
-> > > On Mon, 23 Feb 2015, Serge E. Hallyn wrote:
-> > > 
-> > > > > I do not see a problem with dropping privilege since the ambient set
-> > > > > is supposed to be preserved across a drop of priviledge.
-> > > >
-> > > > Because you're tricking the program into thinking it has dropped
-> > > > the privilege, when in fact it has not.
-> > > 
-> > > So the cap was dropped from the cap perm set but it is still active
-> > > in the ambient set?
-> > 
-> > Right, and the legacy program doesn't know to check the new set.
-> 
-> we've been assuming the ambient set must be like fP.  is there any
-> reason why it doesn't suffice for them to be or'ed with fI instead at
-> exec?  then the bits would need to ne in pI. this might sufice for
-> Christoph's use case, as pI will generally not change.  and for programs
-> that really care, they can check pI.
+On Mon, 23 Feb 2015, Andy Lutomirski wrote:
 
-The other way to look at it then is that it's basically as though the
-privileged task (which has CAP_SETFCAP) could've just added fI=full to
-all binaries on the filesystem;  instead it's using the ambient set
-so that the risk from fI=full is contained to its own process tree.
+> On Feb 23, 2015 8:41 AM, "Christoph Lameter" <cl@linux.com> wrote:
+> >
+> > On Mon, 23 Feb 2015, Andy Lutomirski wrote:
+> >
+> > > If you set ambient caps and then run a setuid program (without
+> > > no_new_privs), then the ambient set *must* be cleared by the kernel
+> > > because that's what the setuid program expects.  Yes, the whole
+> >
+> > Why would a setuid program expect that? I'd say we expect the ambient set
+> > to remain in effect. What would break if the ambient set would stay
+> > active?
+> >
+>
+> On a total guess: exim, sendmail, sudo, Apache suexec, etc.  Basically
+> anything that expects setresuid(nonzero values); execve to drop caps.
+
+Really? We have been running these things for years with the approach of
+leaving these caps active.
