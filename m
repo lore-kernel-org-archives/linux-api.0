@@ -1,44 +1,68 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [PATCH] capabilities: Ambient capability set V1
-Date: Tue, 24 Feb 2015 11:28:48 -0600 (CST)
-Message-ID: <alpine.DEB.2.11.1502241120270.29416@gentwo.org>
-References: <alpine.DEB.2.11.1502051554500.4876@gentwo.org> <alpine.DEB.2.11.1502230856400.21238@gentwo.org> <20150223161625.GD25477@ubuntumail> <alpine.DEB.2.11.1502231041580.21784@gentwo.org> <20150223164623.GB32181@mail.hallyn.com>
- <alpine.DEB.2.11.1502231049110.21926@gentwo.org> <20150223181553.GE25477@ubuntumail> <20150224051928.GA14755@mail.hallyn.com> <20150224154715.GA20682@mail.hallyn.com> <alpine.DEB.2.11.1502240956400.29006@gentwo.org> <20150224164429.GB29685@ubuntumail>
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+From: Jason Baron <jbaron@akamai.com>
+Subject: [PATCH v3 2/3] epoll: restrict wakeups to the overflow list
+Date: Tue, 24 Feb 2015 21:25:45 +0000 (GMT)
+Message-ID: <fb6e00a97110f31e9b4919a5e85be9373caa3a37.1424805740.git.jbaron@akamai.com>
+References: <cover.1424805740.git.jbaron@akamai.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150224164429.GB29685@ubuntumail>
+In-Reply-To: <cover.1424805740.git.jbaron@akamai.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Serge Hallyn <serge.hallyn@ubuntu.com>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, Aaron Jones <aaronmdjones@gmail.com>, Ted Ts'o <tytso@mit.edu>, linux-security-module@vger.kernel.org, akpm@linuxfoundation.org, "Andrew G. Morgan" <morgan@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Markku Savela <msa@moth.iki.fi>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Jonathan Corbet <corbet@lwn.net>
+To: peterz@infradead.org, mingo@redhat.com, viro@zeniv.linux.org.uk
+Cc: akpm@linux-foundation.org, normalperson@yhbt.net, davidel@xmailserver.org, mtk.manpages@gmail.com, luto@amacapital.net, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 24 Feb 2015, Serge Hallyn wrote:
+During ep_scan_ready_list(), when the ep->mtx is dropped, we queue new
+events to the ep->ovflist. However, instead of just issuing wakeup for these
+newly encountered events, we instead proceed to issue wakeups even if
+nothing new is being propagated.
 
-> Unless I'm misunderstanding what you are saying, apps do have surprises.
-> They drop capabilities, execute a file, and the result has capabilities
-> which the app couldn't have expected.  At least if the bits have to be
-> in fI to become part of pP', the app has a clue.
+Normally, this simply results in unnecessary calls to wakeup. However,
+now that we want to add wakeup queues that have 'state', this results in
+unnecessary state transitions. That is, with the current default behavior
+of always waking up all threads, the extra calls to wakeup do not affect
+things adversely (besides the extra call overheads). However, we wish to
+add policies that are stateful (for example rotating wakeups among epoll
+sets), and these unnecessary wakeups cause unwanted transitions.
 
-Well yes but the surprises do not occur in the cap bits they are
-manipulating or inspecting via prctl.
+Signed-off-by: Jason Baron <jbaron@akamai.com>
+---
+ fs/eventpoll.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
 
-> To be clear, I'm suggesting that the rules at exec become:
->
-> pI' = pI
-
-Ok that is new and on its own may solve the issue?
-
-> pA' = pA  (pA is ambient)
-
-Thats what this patch does
-
-> pP' = (X & fP) | (pI & (fI | pA))
-
-Hmmm... fP is empty for the file not having caps. so
-
-pP' = pI & pA
-
-> pE' = pP' & fE
-
-fE? So the inherited caps are not effective? fE would be empty for a file
-not having caps thus the ambient caps would not be available in the child.
+diff --git a/fs/eventpoll.c b/fs/eventpoll.c
+index d77f944..da84712 100644
+--- a/fs/eventpoll.c
++++ b/fs/eventpoll.c
+@@ -594,7 +594,7 @@ static int ep_scan_ready_list(struct eventpoll *ep,
+ 					   struct list_head *, void *),
+ 			      void *priv, int depth, bool ep_locked)
+ {
+-	int error, pwake = 0;
++	int error, pwake = 0, newly_ready = 0;
+ 	unsigned long flags;
+ 	struct epitem *epi, *nepi;
+ 	LIST_HEAD(txlist);
+@@ -634,6 +634,13 @@ static int ep_scan_ready_list(struct eventpoll *ep,
+ 	for (nepi = ep->ovflist; (epi = nepi) != NULL;
+ 	     nepi = epi->next, epi->next = EP_UNACTIVE_PTR) {
+ 		/*
++		 * We only need to perform wakeups if new events have arrived
++		 * while the ep->lock was dropped. We should have already
++		 * issued the wakeups for an existing events.
++		 */
++		if (!newly_ready)
++			newly_ready = 1;
++		/*
+ 		 * We need to check if the item is already in the list.
+ 		 * During the "sproc" callback execution time, items are
+ 		 * queued into ->ovflist but the "txlist" might already
+@@ -657,7 +664,7 @@ static int ep_scan_ready_list(struct eventpoll *ep,
+ 	list_splice(&txlist, &ep->rdllist);
+ 	__pm_relax(ep->ws);
+ 
+-	if (!list_empty(&ep->rdllist)) {
++	if (newly_ready) {
+ 		/*
+ 		 * Wake up (if active) both the eventpoll wait list and
+ 		 * the ->poll() wait list (delayed after we release the lock).
+-- 
+1.8.2.rc2
