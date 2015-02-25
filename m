@@ -1,196 +1,98 @@
-From: Stephen Boyd <sboyd@codeaurora.org>
-Subject: Re: [RFC PATCH 1/3] eeprom: Add a simple EEPROM framework
-Date: Tue, 24 Feb 2015 17:30:49 -0800
-Message-ID: <20150225013049.GJ24928@codeaurora.org>
-References: <1424365639-26634-1-git-send-email-srinivas.kandagatla@linaro.org>
- <1424365708-26681-1-git-send-email-srinivas.kandagatla@linaro.org>
- <CAL_Jsq+SeuoojgTpv1y_aPJ_jzDr3HqZhYEBQ3_vYGBHvcccug@mail.gmail.com>
- <54E78A31.9020306@linaro.org>
- <CAL_Jsq+mvpRjYfL_8OseTDCB-6aBhwhNKLBQXXJeVQLDwWm8Nw@mail.gmail.com>
- <20150222143211.GX25269@lukather>
- <CAL_JsqLqqw5DyUqCaOTSKPwF-Ms5EU4f_OPoW9YVpMCo8A_bbw@mail.gmail.com>
- <54EBB3AC.30000@codeaurora.org>
- <20150224092155.GO25269@lukather>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150224092155.GO25269@lukather>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Maxime Ripard <maxime.ripard@free-electrons.com>
-Cc: Rob Herring <robherring2@gmail.com>, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Kumar Gala <galak@codeaurora.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Mark Brown <broonie@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+From: Mitchell Erblich <erblichs-ihVZJaRskl1bRRN4PJnoQQ@public.gmane.org>
+Subject: Notification and Proposals to changes of the Scheduling subsystem
+Date: Tue, 24 Feb 2015 17:20:22 -0800
+Message-ID: <71F17C8D-ECCA-4B37-9278-81DFCB79A556@earthlink.net>
+Mime-Version: 1.0 (Mac OS X Mail 7.3 \(1878.6\))
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, jbeulich-UKVsQwr1y4U@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 02/24, Maxime Ripard wrote:
-> On Mon, Feb 23, 2015 at 03:11:40PM -0800, Stephen Boyd wrote:
-> > >>> I would do something more simple that is just a list of keys and
-> > >>> their location like this:
-> > >>>
-> > >>> device-serial-number = <start size>;
-> > >>> key1 = <start size>;
-> > >>> key2 = <start size>;
-> > >> I'm sorry, but what's the difference?
-> > > It can describe the layout completely whether the fields are tied to a
-> > > h/w device or not.
-> > >
-> > > What I would like to see here is the entire layout described covering
-> > > both types of fields.
-> > >
-> > 
-> > I was thinking the DT might be like this on the provider side:
-> > 
-> >    qfprom@1000000 {
-> >       reg = <0x1000000 0x1000>;
-> >       ranges = <0 0x1000000 0x1000>;
-> >       compatible = "qcom,qfprom-msm8960"
-> > 
-> >       pvs-data: pvs-data@40 {
-> >             compatible = "qcom,pvs-a";
-> >             reg = <0x40 0x20>,
-> > 	    #eeprom-cells = <0>;
-> >       };
-> > 
-> >        tsens-data: tmdata@10 {
-> >             compatible = "qcom,tsens-data-msm8960";
-> >             reg = <0x10 4>, <0x16 4>;
-> > 	    #eeprom-cells = <0>;
-> > 
-> >       };
-> > 
-> >       serial-number: serial@50 {
-> >             compatible = "qcom,serial-msm8960";
-> >             reg = <0x50 4>, <0x60 4>;
-> > 	    #eeprom-cells = <0>;
-> > 
-> >       };
-> >    };
-> 
-> I'm not sure the compatible is really needed.
-> 
-> A label of some sort, just like the MTD partitions do would do just
-> fine, and wouldn't have the implicit expectation that a driver will be
-> probed from that node.
+Please note that this engineer only receives memory subsystem patches a=
+nd thus please include my email on responses.
 
-I wasn't aware that compatible meant driver probe. I thought
-compatible just meant some software entity can understand what
-I've described within this node. For example, compatible for
-reserved-memory nodes doesn't mean we're going to probe a device.
+Please note that this proposal is from this engineer.
 
-> 
-> > and then on the consumer side:
-> > 
-> > 	device {
-> > 		eeproms = <&serial-number>;
-> > 		eeprom-names = "soc-rev-id";
-> > 	};
-> > 
-> > 
-> > This would solve a problem where the consumer device is some standard
-> > off-the-shelf IP block that needs to get some SoC specific calibration
-> > data from the eeprom. I may want to interpret the bits differently
-> > depending on which eeprom is connected to my SoC. Sometimes that data
-> > format may be the same across many variations of the SoC (e.g. the
-> > qcom,pvs-a node) or it may be completely different for a given SoC (e.g.
-> > qcom,serial-msm8960 node). I imagine for other SoCs out there it could
-> > be different depending on which eeprom the board manufacturer decides to
-> > wire onto their board and how they choose to program the data.
-> 
-> Oh, so you'd like to infer the data format it's stored in from the
-> compatible?
-> 
-> AFAICT, this format will be highly depending on the board itself,
-> rather than on the SoC, do you think it will scale enough?
-> 
-> > So this is where I think the eeprom-cells and offset + length starts to
-> > fall apart. It forces us to make up a bunch of different compatible
-> > strings for our consumer device just so that we can parse the eeprom
-> > that we decided to use for some SoC/board specific data. Instead I'd
-> > like to see some framework that expresses exactly which eeprom is on my
-> > board and how to interpret the bits in a way that doesn't require me to
-> > keep refining the compatible string for my generic IP block.
-> 
-> Hmmmm, apparently you don't :)
-> 
-> > I worry that if we put all those details in DT we'll end up having to
-> > describe individual bits like serial-number-bit-2, serial-number-bit-3,
-> > etc. because sometimes these pieces of data are scattered all around the
-> > eeprom and aren't contiguous or aligned on a byte boundary. It may be
-> > easier to just have a way to express that this is an eeprom with this
-> > specific layout and my device has data stored in there. Then the driver
-> > can be told what layout it is (via compatible or some other string based
-> > means if we're not using DT?) and match that up with some driver data if
-> > it needs to know how to understand the bits it can read with the
-> > eeprom_read() API.
-> 
-> I'm half convinced that the layout information will actually work for
-> more complex cases, like the linked list Rob described.
-> 
-> If such a structure is ever to be found, it would feel wrong to have
-> that in the EEPROM driver, but it would feel just as wrong to put that
-> in the client driver, that would have to handle the parsing of raw
-> data coming flashed by one single crazy board vendor.
-> 
-> Maybe we can have each cell carry a property that defines the format
-> it's stored in, and match that to some parsers plugins, starting with
-> the generic and trivial cases but still allowing for custom parsers to
-> be defined?
-> 
-> Something like
-> 
-> eeprom@42 {
-> 	compatible = "atmel,at24something";
-> 	reg = <0x42>;
-> 
-> 	serial@0 {
-> 		label = "board serial";
-> 		reg = <0x0 0x10>;
-> 		format = "packed";
-> 	};
-> 
-> 	opps@10 {
-> 		label = "board serial";
-> 		reg = <0x10 0x10>, <0x40 0x10>, <0x80 0x10>;
-> 		format = "random-vendor,opp-linked-list";
-> 	};
-> };
-> 
-> That would make eeprom_read always return the same format of data to
-> the client drivers, without cripling the generic EEPROM drivers
-> either.
-> 
+This also fulfills any legal notification of work done, but not submitt=
+ed.
 
-Is the goal here to make eeprom_read() figure out how to return
-the next byte of data and hide the parsing logic behind the
-eeprom APIs? I imagine "random-vendor,opp-linked-list" would be
-handled by the eeprom driver and that would return OPPs byte by
-byte across the different reg properties to the eeprom consumer?
 
-This approach concerns me because every eeprom_read() call needs
-to fit the format that the client driver is expecting. How do we
-validate that? What do we do if we have a random OPP client #1
-that expects to get the data from eeprom_read() with OPPs in
-ascending order and random OPP client #2 that expects to get the
-data from eeprom_read() with OPPs in descending order?
+	Notification & Proposal of Feasibility to Support System V Release 4 D=
+efacto Standard Scheduling Extensions, etc within Linux
 
-It feels like we're making the eeprom framework too smart without
-a well defined abstraction. If we were to make it so that
-eeprom_get_opps() knew what to do and parsed/populated the OPPs,
-it might work. But if we're just exporting raw data across a
-read/write API with some implementation specific mangling it
-sounds like it's going to get messy fast. And if the API is well
-defined, it would start to become rather large with many
-different types of data that need to be parsed and sometimes data
-that's only specific to a single SoC.
 
-I wonder how much we could get away with this approach though. If
-the eeprom driver probed and populated OPPs, made a serial number
-available via the soc device, and then we made up framework(s)
-for things like our thermal sensor calibration data and display
-panel calibration data, I would guess that covers most of my
-use-cases. The client drivers would need some sort of 'wait for
-eeprom to populate things' API or we'd need to work that into the
-new calibration framework.
+SCHED_IA
+	Over 10 years ago, System V Release 4 was enhanced with additional fea=
+tures by Sun Microsystems. One of the more minor extensions dealt with =
+the subdivision of process=92s scheduling characteristics and was known=
+ as he INTERACTIVE /IA scheduling class. This scheduling class was targ=
+eted to frequent sleepers, with the mouse icon being one the first proc=
+esses/tasks..
 
--- 
-Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum,
-a Linux Foundation Collaborative Project
+	Linux has no explicit SCHED_IA scheduling policy, but does alter sched=
+uling characteristics based on some sleep behavior (example: GENTLE_FAI=
+R_SLEEPERS) within the fair share scheduling configuration option. Proc=
+esses / tasks that are CPU bound that fit into a SLEEPER behavior can h=
+ave a hybrid behavior over time where during any one scheduling period,=
+ it may consume its variable length allocated time. This can alter its =
+expected short latency to be current / ONPROC. To simplify the implemen=
+tation, it is suggested that SCHED_IA be a sub scheduling policy of SCH=
+ED_NORMAL. Shouldn=92t an administrator be able to classify that the NO=
+RMAL long term behavior of a task, be one as a FIXED sleeper?=20
+
+	Thus, the first Proposal is to explicitly support the SCHED_IA schedul=
+ing policy within the Linux kernel. After kernel support, any applicati=
+on that has the same functionality as priocntl(1) then needs to be alte=
+red to support this new scheduling policy.
+
+
+Note: Administrator in this context should be a task with a UID, EUID, =
+GID, EGID, etc, that has the proper CAPABILITY to alter scheduling beha=
+vior.
+
+
+SCHED_UNFAIR
+		UNIX / Linux scheduling has in the most part attempt to achieve some =
+level of process / task scheduling fairness with Linux using the fair s=
+hare scheduling class. Exceptions do exist, but are not being discussed=
+ below. In general this type of scheduling is acceptable in a generic i=
+mplementation, but has weaknesses when UNIX / Linux is moved into a dif=
+ferent environment. Many companies use UNIX / Linux in heavy networking=
+ environments where one or more tasks can infrequently attempt to consu=
+me more than its fair share.
+
+		This proposal is to acknowledge that =93nice=94 and a few other sched=
+uling workarounds do no always suffice to allow this temporary inequali=
+ty to exist. Yes, a cpumask could be set that allows only certain tasks=
+ to run on specific nodes, however the implied assumption is that they =
+only infrequently need to have inequality / greater =93time slice=94 th=
+an their fair share. A network protocol example is a convergence task t=
+hat needs to run until it is finished and until that happens needed rou=
+ting changes will not occur. The time window in which all tasks need to=
+ be run, SHOULD not need this task in consecutive time windows, thus ov=
+er longer periods of time, it still fulfills the fair scheduling policy=
+=2E Again the proper CAPABILITY needs to be specified with the priocntl=
+(1) like application as running many tasks per CPU COULD then effect th=
+e performance of the system.
+
+		Thus, explicit support for a new SCHED_UNFAIR scheduling policy is pr=
+oposed / suggested within the Linux kernel. Again it can be a sub sched=
+uling policy of SCHED_NORMAL.
+
+Thank you,
+		Mitchell Erblich
+		UNIX Kernel Engineer
+=09
+
+
+=09
+
+
+=09
+			--
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
