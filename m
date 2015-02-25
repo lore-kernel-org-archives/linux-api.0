@@ -1,65 +1,48 @@
-From: Serge Hallyn <serge.hallyn@ubuntu.com>
-Subject: Re: [PATCH] capabilities: Ambient capability set V1
-Date: Wed, 25 Feb 2015 03:32:47 +0000
-Message-ID: <20150225033247.GC29685@ubuntumail>
-References: <20150223161625.GD25477@ubuntumail>
- <alpine.DEB.2.11.1502231041580.21784@gentwo.org>
- <20150223164623.GB32181@mail.hallyn.com>
- <alpine.DEB.2.11.1502231049110.21926@gentwo.org>
- <20150223181553.GE25477@ubuntumail>
- <20150224051928.GA14755@mail.hallyn.com>
- <20150224154715.GA20682@mail.hallyn.com>
- <alpine.DEB.2.11.1502240956400.29006@gentwo.org>
- <20150224164429.GB29685@ubuntumail>
- <alpine.DEB.2.11.1502241120270.29416@gentwo.org>
+From: Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: RE: [PATCH v10 10/12] xfstests: fsstress: Add fallocate insert range
+ operation
+Date: Wed, 25 Feb 2015 13:15:49 +0900
+Message-ID: <003201d050b1$bcae7e10$360b7a30$@samsung.com>
+References: <1424533554-28024-1-git-send-email-linkinjeon@gmail.com>
+ <1424533554-28024-11-git-send-email-linkinjeon@gmail.com>
+ <20150225030451.GG4251@dastard>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-security-module-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.11.1502241120270.29416@gentwo.org>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Christoph Lameter <cl@linux.com>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, Aaron Jones <aaronmdjones@gmail.com>, Ted Ts'o <tytso@mit.edu>, linux-security-module@vger.kernel.org, akpm@linuxfoundation.org, "Andrew G. Morgan" <morgan@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Markku Savela <msa@moth.iki.fi>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Jonathan Corbet <corbet@lwn.net>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-reply-to: <20150225030451.GG4251@dastard>
+Content-language: ko
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: 'Dave Chinner' <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Cc: tytso-3s7WtUTddSA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, a.sangwan-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, bfoster-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, 'Namjae Jeon' <linkinjeon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Christoph Lameter (cl@linux.com):
-> On Tue, 24 Feb 2015, Serge Hallyn wrote:
-> 
-> > Unless I'm misunderstanding what you are saying, apps do have surprises.
-> > They drop capabilities, execute a file, and the result has capabilities
-> > which the app couldn't have expected.  At least if the bits have to be
-> > in fI to become part of pP', the app has a clue.
-> 
-> Well yes but the surprises do not occur in the cap bits they are
-> manipulating or inspecting via prctl.
-> 
-> > To be clear, I'm suggesting that the rules at exec become:
+
+> On Sun, Feb 22, 2015 at 12:45:52AM +0900, Namjae Jeon wrote:
+> > From: Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 > >
-> > pI' = pI
+> > This commit adds insert operation support for fsstress, which is
+> > meant to exercise fallocate FALLOC_FL_INSERT_RANGE support.
 > 
-> Ok that is new and on its own may solve the issue?
-
-No that's not new.
-
-> > pA' = pA  (pA is ambient)
+> This causes xfs/068 to fail because it changes the file creation
+> pattern that results from a specific fsstress random seed. As such,
+> I added this to xfs/068:
 > 
-> Thats what this patch does
+> FSSTRESS_AVOID="-f insert=0 $FSSTRESS_AVOID"
 > 
-> > pP' = (X & fP) | (pI & (fI | pA))
+> To turn off the insert operation for that test and hence produce the
+> expected tree of files.
+Thanks for your notice :) I will check other TCs as well as insert range
+TC next time.
 > 
-> Hmmm... fP is empty for the file not having caps. so
+> Cheers,
 > 
-> pP' = pI & pA
+> Dave.
+> --
+> Dave Chinner
+> david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
 
-Right.
-
-> > pE' = pP' & fE
-> 
-> fE? So the inherited caps are not effective? fE would be empty for a file
-> not having caps thus the ambient caps would not be available in the child.
-
-Yeah we could make this
-
-pE' = pP' & (fE | pA)
-
--serge
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
