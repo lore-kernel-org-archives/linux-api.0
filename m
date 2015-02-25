@@ -1,42 +1,90 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [PATCH v10 10/12] xfstests: fsstress: Add fallocate insert range
- operation
-Date: Wed, 25 Feb 2015 14:04:51 +1100
-Message-ID: <20150225030451.GG4251@dastard>
-References: <1424533554-28024-1-git-send-email-linkinjeon@gmail.com>
- <1424533554-28024-11-git-send-email-linkinjeon@gmail.com>
+From: Fam Zheng <famz@redhat.com>
+Subject: Re: [PATCH RFC v3 0/7] epoll: Introduce new syscalls,
+ epoll_ctl_batch and epoll_pwait1
+Date: Wed, 25 Feb 2015 11:30:09 +0800
+Message-ID: <20150225033009.GA20485@ad.nay.redhat.com>
+References: <1423818243-15410-1-git-send-email-famz@redhat.com>
+ <20150215150011.0340686c@lwn.net>
+ <20150216010224.GA32421@ad.nay.redhat.com>
+ <20150218184934.GA7493@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1424533554-28024-11-git-send-email-linkinjeon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Namjae Jeon <linkinjeon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: tytso-3s7WtUTddSA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, a.sangwan-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, bfoster-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+In-Reply-To: <20150218184934.GA7493@gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Ingo Molnar <mingo@kernel.org>
+Cc: Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <mszeredi@suse.cz>, David Drysdale <drysdale@google.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Theodore Ts'o <tytso@mit.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Rashika Kheria <rashika.kheria@gmail.com>, Hugh Dickins <hughd@google.com>, Mathieu Desnoyers <mathieu.desnoyers@ef>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Feb 22, 2015 at 12:45:52AM +0900, Namjae Jeon wrote:
-> From: Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+On Wed, 02/18 19:49, Ingo Molnar wrote:
 > 
-> This commit adds insert operation support for fsstress, which is
-> meant to exercise fallocate FALLOC_FL_INSERT_RANGE support.
+> * Fam Zheng <famz@redhat.com> wrote:
+> 
+> > On Sun, 02/15 15:00, Jonathan Corbet wrote:
+> > > On Fri, 13 Feb 2015 17:03:56 +0800
+> > > Fam Zheng <famz@redhat.com> wrote:
+> > > 
+> > > > SYNOPSIS
+> > > > 
+> > > >        #include <sys/epoll.h>
+> > > > 
+> > > >        int epoll_pwait1(int epfd, int flags,
+> > > >                         struct epoll_event *events,
+> > > >                         int maxevents,
+> > > >                         struct epoll_wait_params *params);
+> > > 
+> > > Quick, possibly dumb question: might it make sense to also pass in 
+> > > sizeof(struct epoll_wait_params)?  That way, when somebody wants to add
+> > > another parameter in the future, the kernel can tell which version is in
+> > > use and they won't have to do an epoll_pwait2()?
+> > > 
+> > 
+> > Flags can be used for that, if the change is not 
+> > radically different.
+> 
+> Passing in size is generally better than flags, because 
+> that way an extension of the ABI (new field[s]) 
+> automatically signals towards the kernel what to do with 
+> old binaries - while extending the functionality of new 
+> binaries, without sacrificing functionality.
+> 
+> With flags you are either limited to the same structure 
+> size - or have to decode a 'size' value from the flags 
+> value - which is fragile (and in which case a real 'size' 
+> parameter is better).
+> 
+> in the perf ABI we use something like that: there's a 
+> perf_attr.size parameter that iterates the ABI forward, 
+> while still being binary compatible with older software.
+> 
+> If old binaries pass in a smaller structure to a newer 
+> kernel then the kernel pads the new fields with zero by 
+> default - that way the kernel internals are never burdened 
+> with compatibility details and data format versions.
+> 
+> If new user-space passes in a large structure than the 
+> kernel can handle then the kernel returns an error - this 
+> way user-space can transparently support conditional 
+> features and fallback logic.
+> 
+> It works really well, we've done literally a hundred perf 
+> ABI extensions this way in the last 4+ years, in a pretty 
+> natural fashion, without littering the kernel (or 
+> user-space) with version legacies and without breaking 
+> existing perf tooling.
+> 
+> Other syscall ABIs already get painful when trying to 
+> handle 2-3 data structure versions, so people either give 
+> up, or add flags kludges or go to new syscall entries: 
+> which is painful in its own fashion and adds unnecessary 
+> latency to feature introduction as well.
+> 
 
-This causes xfs/068 to fail because it changes the file creation
-pattern that results from a specific fsstress random seed. As such,
-I added this to xfs/068:
+Excellent. This now makes a lot of sense to me, thanks to your explanations,
+Ingo.
 
-FSSTRESS_AVOID="-f insert=0 $FSSTRESS_AVOID"
+I'll add the "size" field in the next revision.
 
-To turn off the insert operation for that test and hence produce the
-expected tree of files.
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thanks,
+Fam
