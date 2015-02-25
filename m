@@ -1,27 +1,22 @@
-From: Russell King - ARM Linux <linux@arm.linux.org.uk>
-Subject: Re: [PATCH] coresight-stm: adding driver for CoreSight STM component
-Date: Wed, 25 Feb 2015 17:16:58 +0000
-Message-ID: <20150225171658.GF8656@n2100.arm.linux.org.uk>
-References: <1423088550-15780-1-git-send-email-mathieu.poirier@linaro.org>
- <1423135651.27378.32.camel@x220>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1423135651.27378.32.camel@x220>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Bolle <pebolle@tiscali.nl>
-Cc: mathieu.poirier@linaro.org, al.grant@arm.com, linux-doc@vger.kernel.org, jeenu.viswambharan@arm.com, gregkh@linuxfoundation.org, corbet@lwn.net, liviu.dudau@arm.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, pratikp@codeaurora.org, linux-arm-kernel@lists.infradead.org, kaixu.xia@linaro.org
+From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] capabilities: Ambient capability set V1
+Date: Wed, 25 Feb 2015 14:25:19 -0600 (CST)
+Message-ID: <alpine.DEB.2.11.1502251423580.13489@gentwo.org>
+References: <20150223161625.GD25477@ubuntumail> <alpine.DEB.2.11.1502231041580.21784@gentwo.org> <20150223164623.GB32181@mail.hallyn.com> <alpine.DEB.2.11.1502231049110.21926@gentwo.org> <20150223181553.GE25477@ubuntumail> <20150224051928.GA14755@mail.hallyn.com>
+ <20150224154715.GA20682@mail.hallyn.com> <alpine.DEB.2.11.1502240956400.29006@gentwo.org> <20150224164429.GB29685@ubuntumail> <alpine.DEB.2.11.1502241120270.29416@gentwo.org> <20150225033247.GC29685@ubuntumail>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150225033247.GC29685@ubuntumail>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 05, 2015 at 12:27:31PM +0100, Paul Bolle wrote:
-> I'm _guessing_ that CPU_32v4 and CPU_32v4T are needed for the ldrd and
-> strd assembler instructions. If that's right a next _guess_ would be
-> that you also need to mention CPU_32v3 here.
+On Wed, 25 Feb 2015, Serge Hallyn wrote:
 
-No.  Double word instructions are available in some ARMv5 (ARMv5TE and
-up) and from ARMv6.
+> Yeah we could make this
 
--- 
-FTTC broadband for 0.8mile line: currently at 10.5Mbps down 400kbps up
-according to speedtest.net.
+Well doing that breaks su. Its best to leave perm bits untouched.
+
+christoph@fujitsu-haswell:~$ su
+setgid: Operation not permitted
