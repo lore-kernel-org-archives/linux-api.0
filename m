@@ -1,78 +1,97 @@
-From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH v2 14/18] ARM: Add STM32 family machine
-Date: Wed, 25 Feb 2015 13:04:47 +0100
-Message-ID: <CALszF6CGT35V71QKTrDx+1Ltrctv5F7t8Zq6Tq15zn2bZGQXwQ@mail.gmail.com>
-References: <1424455277-29983-1-git-send-email-mcoquelin.stm32@gmail.com>
-	<1424455277-29983-15-git-send-email-mcoquelin.stm32@gmail.com>
-	<20150220200019.GU19388@pengutronix.de>
-	<1424468240.24292.5.camel@x220>
+From: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2 2/2] epoll: introduce EPOLLEXCLUSIVE and EPOLLROUNDROBIN
+Date: Wed, 25 Feb 2015 10:48:18 -0500
+Message-ID: <54EDEEC2.2040201@akamai.com>
+References: <cover.1424200151.git.jbaron@akamai.com> <7956874bfdc7403f37afe8a75e50c24221039bd2.1424200151.git.jbaron@akamai.com> <20150218080740.GA10199@gmail.com> <54E4B2D0.8020706@akamai.com> <20150218163300.GA28007@gmail.com> <54E4CE14.5010708@akamai.com> <20150218174533.GB31566@gmail.com> <20150218175123.GA31878@gmail.com> <54E557CF.8080702@akamai.com> <20150222002432.GA9031@dcvr.yhbt.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1424468240.24292.5.camel@x220>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Bolle <pebolle@tiscali.nl>
-Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150222002432.GA9031-yBiyF41qdooeIZ0/mPfg9Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Eric Wong <normalperson-rMlxZR9MS24@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, "luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org >> Andy Lutomirski" <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-2015-02-20 22:37 GMT+01:00 Paul Bolle <pebolle@tiscali.nl>:
-> On Fri, 2015-02-20 at 21:00 +0100, Uwe Kleine-K=C3=B6nig wrote:
->> On Fri, Feb 20, 2015 at 07:01:13PM +0100, Maxime Coquelin wrote:
->> > diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
->> > index 97d07ed..cfd9532 100644
->> > --- a/arch/arm/Kconfig
->> > +++ b/arch/arm/Kconfig
->> > @@ -774,6 +774,28 @@ config ARCH_OMAP1
->> >     help
->> >       Support for older TI OMAP1 (omap7xx, omap15xx or omap16xx)
->> >
->> > +config ARCH_STM32
->> > +   bool "STMicrolectronics STM32"
->> > +   depends on !MMU
->> > +   select ARCH_REQUIRE_GPIOLIB
->> > +   select ARM_NVIC
->> > +   select AUTO_ZRELADDR
->> > +   select ARCH_HAS_RESET_CONTROLLER
->> > +   select RESET_CONTROLLER
->> > +   select PINCTRL
->> > +   select PINCTRL_STM32
->> > +   select CLKSRC_OF
->> > +   select ARMV7M_SYSTICK
->> > +   select COMMON_CLK
->> > +   select CPU_V7M
->> > +   select GENERIC_CLOCKEVENTS
->> > +   select NO_DMA
->> > +   select NO_IOPORT_MAP
->> > +   select SPARSE_IRQ
->> > +   select USE_OF
->> Please sort this list alphabetically.
+On 02/21/2015 07:24 PM, Eric Wong wrote:
+> Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org> wrote:
+>> On 02/18/2015 12:51 PM, Ingo Molnar wrote:
+>>> * Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>>>
+>>>>> [...] However, I think the userspace API change is less 
+>>>>> clear since epoll_wait() doesn't currently have an 
+>>>>> 'input' events argument as epoll_ctl() does.
+>>>> ... but the change would be a bit clearer and somewhat 
+>>>> more flexible: LIFO or FIFO queueing, right?
+>>>>
+>>>> But having the queueing model as part of the epoll 
+>>>> context is a legitimate approach as well.
+>>> Btw., there's another optimization that the networking code 
+>>> already does when processing incoming packets: waking up a 
+>>> thread on the local CPU, where the wakeup is running.
+>>>
+>>> Doing the same on epoll would have real scalability 
+>>> advantages where incoming events are IRQ driven and are 
+>>> distributed amongst multiple CPUs.
+>>>
+>>> Where events are task driven the scheduler will already try 
+>>> to pair up waker and wakee so it might not show up in 
+>>> measurements that markedly.
+>>>
+>> Right, so this makes me think that we may want to potentially
+>> support a variety of wakeup policies. Adding these to the
+>> generic wake up code is just going to be too messy. So, perhaps
+>> a better approach here would be to register a single
+>> wait_queue_t with the event source queue that will always
+>> be woken up, and then layer any epoll balancing/irq affinity
+>> policies on top of that. So in essence we end up with sort of
+>> two queues layers, but I think it provides much nicer isolation
+>> between layers. Also, the bulk of the changes are going to be
+>> isolated to the epoll code, and we avoid Andy's concern about
+>> missing, or starving out wakeups.
+>>
+>> So here's a stab at how this API could look:
+>>
+>> 1. ep1 = epoll_create1(EPOLL_POLICY);
+>>
+>> So EPOLL_POLICY here could the round robin policy described
+>> here, or the irq affinity or other ideas. The idea is to create
+>> an fd that is local to the process, such that other processes
+>> can not subsequently attach to it and affect our policy.
+> I'm not against defining more policies if needed.
+> Maybe FIFO vs LIFO is a good case for this.
 >
-> And drop
->     select NO_DMA
+> For affinity, it could probably be done transparently based on
+> epoll_wait retrievals + EPOLL_CTL_MOD operations.
 >
-> You copied that from ARCH_EFM32, but it's pointless on arm (as arch/a=
-rm/
-> doesn't provide a NO_DMA Kconfig symbol).
+>> 2. epoll_ctl(ep1, EPOLL_CTL_ADD, fd_source, NULL);
+>>
+>> This associates ep1 with the event source. ep1 can be
+>> associated with or added to at most 1 wakeup source. This call
+>> would largely just form the association, but not queue anything
+>> to the fd_source wait queue.
+> This would mean one extra FD for every fd_source, but that's
+> only a handful of FDs (listen sockets), correct?
 
-You are right, I will drop NO_DMA in v3.
+Yes, one extra epoll fd per shared wakeup source, so this should
+result in very few additional fds.
+
+>> 3. epoll_ctl(ep2, EPOLL_CTL_ADD, ep1, event);
+>>     epoll_ctl(ep3, EPOLL_CTL_ADD, ep1, event);
+>>     epoll_ctl(ep4, EPOLL_CTL_ADD, ep1, event);
+>>      .
+>>      .
+>>      .
+>>
+>> Finally, we add the epoll sets to the event source (indirectly via
+>> ep1). So the first add would actually queue the callback to the
+>> fd_source. While the subsequent calls would simply queue things
+>> to the 'nested' wakeup queue associated with ep1.
+> I'm not sure I follow, wouldn't this increase the number of wakeups?
+
+I agree, my text there is confusing...I've posted this idea as
+v3 of this series, so hopefully that clarifies this approach.
 
 Thanks,
-Maxime
 
->
-> I submitted a patch last year to drop it from ARCH_EFM32, which Uwe
-> Acked, but then nothing happened. I'm to blame, as I should have sent=
- a
-> reminder.
->
->> > +   help
->> > +     Support for STMicorelectronics STM32 processors.
->> > +
->> >  endchoice
->> >
->> >  menu "Multiple platform selection"
->
->
-> Paul Bolle
->
+-Jason
