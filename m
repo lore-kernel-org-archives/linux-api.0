@@ -1,27 +1,33 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH] fork: report pid reservation failure properly
-Date: Thu, 26 Feb 2015 14:49:08 -0800
-Message-ID: <20150226144908.5e3d354d7b24174e90089721@linux-foundation.org>
-References: <20150204102719.GB29434@dhcp22.suse.cz>
-	<1423046628-23638-1-git-send-email-mhocko@suse.cz>
-	<20150223201701.GA28639@dhcp22.suse.cz>
+From: Russell King - ARM Linux <linux@arm.linux.org.uk>
+Subject: Re: [PATCH v2] coresight-stm: adding driver for CoreSight STM
+ component
+Date: Thu, 26 Feb 2015 22:58:53 +0000
+Message-ID: <20150226225853.GM8656@n2100.arm.linux.org.uk>
+References: <1424907152-18808-1-git-send-email-mathieu.poirier@linaro.org>
+ <CAL_Jsq+JYc5DBXqEcpJ0O=RdO-uuz_-GR99YsgVqT=uG6CLqJg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150223201701.GA28639@dhcp22.suse.cz>
+Content-Disposition: inline
+In-Reply-To: <CAL_Jsq+JYc5DBXqEcpJ0O=RdO-uuz_-GR99YsgVqT=uG6CLqJg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@suse.cz>
-Cc: linux-api@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Michael Kerrisk <mtk.manpages@gmail.com>, LKML <linux-kernel@vger.kernel.org>
+To: Rob Herring <robherring2@gmail.com>
+Cc: Mathieu Poirier <mathieu.poirier@linaro.org>, Will Deacon <will.deacon@arm.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Jonathan Corbet <corbet@lwn.net>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 23 Feb 2015 21:17:01 +0100 Michal Hocko <mhocko@suse.cz> wrote:
+On Thu, Feb 26, 2015 at 04:24:53PM -0600, Rob Herring wrote:
+> We really shouldn't do private implementation here. It there really
+> any reason not to allow readq/writeq generically for 32-bit or just
+> for arm32?
 
-> ping on this one? Should I just resend (your way Andrew)? Or are there
-> any objections to the patch as is.
+My argument has always been that drivers should do the emulation of
+64-bit accesses when there is no native support.
 
-Were Eric's concerns all addressed?
+IO registers tend to have side effects when read/written.  How do we
+know whether the low-half or the high-half should be written first?
+This isn't something that an architecture can really dictate.  What
+may be right for one hardware device may not be correct for another.
 
-Oleg: wake up ;)
-
-Overall it looks like a pretty minor issue?
+-- 
+FTTC broadband for 0.8mile line: currently at 10.5Mbps down 400kbps up
+according to speedtest.net.
