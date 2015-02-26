@@ -1,37 +1,71 @@
-From: Shawn Guo <shawn.guo@linaro.org>
-Subject: Re: [PATCH v2] coresight-stm: adding driver for CoreSight STM
- component
-Date: Thu, 26 Feb 2015 13:53:23 +0800
-Message-ID: <20150226055320.GA20385@dragon>
-References: <1424907152-18808-1-git-send-email-mathieu.poirier@linaro.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Documenting MS_LAZYTIME
+Date: Thu, 26 Feb 2015 09:49:39 +0100
+Message-ID: <54EEDE23.6080009@gmail.com>
+References: <CAHO5Pa0k7QkV_6BDjwTVxa7LV9tFyN9nGFFcSvOC6HYO08wfrw@mail.gmail.com> <54E7578E.4090809@redhat.com> <20150221025636.GB7922@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1424907152-18808-1-git-send-email-mathieu.poirier@linaro.org>
-Sender: linux-doc-owner@vger.kernel.org
-To: Mathieu Poirier <mathieu.poirier@linaro.org>
-Cc: corbet@lwn.net, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150221025636.GB7922-AKGzg7BKzIDYtjvyW6yDsg@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux btrfs Developers List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Feb 25, 2015 at 04:32:32PM -0700, Mathieu Poirier wrote:
-> diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-stm b/Documentation/ABI/testing/sysfs-bus-coresight-devices-stm
-> new file mode 100644
-> index 000000000000..3ddb676831ab
-> --- /dev/null
-> +++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-stm
-> @@ -0,0 +1,62 @@
-> +What:		/sys/bus/coresight/devices/<memory_map>.stm/enable_source
-> +Date:		February 2015
-> +KernelVersion:	3.20
+Ted,
 
-A random comment - there will never be a v3.20 kernel.
+On 02/21/2015 03:56 AM, Theodore Ts'o wrote:
+> On Fri, Feb 20, 2015 at 09:49:34AM -0600, Eric Sandeen wrote:
+>>
+>>>               This mount option significantly reduces  writes  to  the
+>>>               inode  table  for workloads that perform frequent random
+>>>               writes to preallocated files.
+>>
+>> This seems like an overly specific description of a single workload out
+>> of many which may benefit, but what do others think?  "inode table" is also
+>> fairly extN-specific.
+> 
+> How about somethign like "This mount significantly reduces writes
+> needed to update the inode's timestamps, especially mtime and actime.
 
-Shawn
+What is "actime" in the preceding line? Should it be "ctime"?
 
-> +Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-> +Description:	(RW) Enable/disable tracing on this specific trace macrocell.
-> +		Enabling the trace macrocell implies it has been configured
-> +		properly and a sink has been identidifed for it.  The path
-> +		of coresight components linking the source to the sink is
-> +		configured and managed automatically by the coresight framework.
+> Examples of workloads where this could be a large win include frequent
+> random writes to preallocated files, as well as cases where the
+> MS_STRICTATIME mount option is enabled."?
+
+I think some version of the following text could also usefully go 
+into the page, but...
+
+> (The advantage of MS_STRICTATIME | MS_LAZYTIME is that stat system
+> calls will return the correctly updated atime, but those atime updates
+> won't get flushed to disk unless the inode needs to be updated for
+> file system / data consistency reasons, or when the inode is pushed
+> out of memory, or when the file system is unmounted.)
+
+I find the wording of there a little confusing. Is the following 
+a correct rewrite:
+
+    The advantage of MS_STRICTATIME | MS_LAZYTIME is that stat(2)
+    will return the correctly updated atime, but the atime updates
+    will be flushed to disk only when (1) the inode needs to be 
+    updated for filesystem / data consistency reasons or (2) the 
+    inode is pushed out of memory, or (3) the filesystem is 
+    unmounted.)
+
+?
+
+Thanks,
+
+Michael
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
