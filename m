@@ -1,39 +1,65 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [PATCH] capabilities: Ambient capability set V1
-Date: Thu, 26 Feb 2015 15:37:56 -0600 (CST)
-Message-ID: <alpine.DEB.2.11.1502261536460.8563@gentwo.org>
-References: <20150225033247.GC29685@ubuntumail> <alpine.DEB.2.11.1502251423580.13489@gentwo.org> <20150226153524.GC15182@mail.hallyn.com> <alpine.DEB.2.11.1502261224580.7451@gentwo.org> <20150226193200.GA17709@mail.hallyn.com> <alpine.DEB.2.11.1502261412250.7451@gentwo.org>
- <20150226203405.GB18926@mail.hallyn.com> <alpine.DEB.2.11.1502261507450.8274@gentwo.org> <20150226211324.GB19273@mail.hallyn.com> <alpine.DEB.2.11.1502261522300.8444@gentwo.org> <20150226213236.GA19753@mail.hallyn.com>
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <20150226213236.GA19753@mail.hallyn.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: Serge Hallyn <serge.hallyn@ubuntu.com>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, Aaron Jones <aaronmdjones@gmail.com>, Ted Ts'o <tytso@mit.edu>, linux-security-module@vger.kernel.org, akpm@linuxfoundation.org, "Andrew G. Morgan" <morgan@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Markku Savela <msa@moth.iki.fi>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Jonathan Corbet <corbet@lwn.net>
+From: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+Subject: Re: [PATCH 2/2] fbcon: expose cursor blink interval via sysfs
+Date: Thu, 26 Feb 2015 23:02:43 +0100
+Message-ID: <20150226220243.GC9935@amd>
+References: <alpine.DEB.2.11.1501262034380.1945@localhost.localdomain>
+ <alpine.DEB.2.11.1501262040380.2052@localhost.localdomain>
+ <20150225094946.GA24627@amd>
+ <alpine.LNX.2.11.1502252319330.276@localhost>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LNX.2.11.1502252319330.276@localhost>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
+Cc: Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Tomi Valkeinen <tomi.valkeinen-l0cyMroinI0@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 26 Feb 2015, Serge E. Hallyn wrote:
+On Wed 2015-02-25 23:32:00, Scot Doyle wrote:
+> On Wed, 25 Feb 2015, Pavel Machek wrote:
+> > On Mon 2015-01-26 20:41:53, Scot Doyle wrote:
+> > > The fbcon cursor, when set to blink, is hardcoded to toggle display state
+> > > five times per second. Expose this setting via
+> > > /sys/class/graphics/fbcon/cursor_blink_ms
+> > > 
+> > > Values written to the interface set the approximate time interval in
+> > > milliseconds between cursor toggles, from 1 to 32767. Since the interval
+> > > is stored internally as a number of jiffies, the millisecond value read
+> > > from the interface may not exactly match the entered value.
+> > > 
+> > > An outstanding blink timer is reset after a new value is entered.
+> > > 
+> > > If the cursor blink is disabled, either via the 'cursor_blink' boolean
+> > > setting or some other mechanism, the 'cursor_blink_ms' setting may still
+> > > be modified. The new value will be used if the blink is reactivated.
+> > > 
+> > > Signed-off-by: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
+> > 
+> > Normally, this would be set by ansi escape sequences, no? We can hide
+> > cursor using them, set its appearance.. makes sense to change timing
+> > value there, too....
+> > 									Pavel
+> 
+> Hi Pavel, what about something like this? For example,
+> "echo -e '\033[16;500]' would set the blink interval to 500 milliseconds.
+> 
+> The duration is stored twice to avoid locking the console in
+> cursor_timer_handler().
 
-> > There is nothing in get_vfs_caps_from_disk that does this and the magic
-> > vanishes after this function is done.
->
-> get_vfs_caps_from_disk does:
->
->         cpu_caps->magic_etc = magic_etc = le32_to_cpu(caps.magic_etc);
->
-> then bprm_caps_from_vfs_caps does:
->
->         if (caps->magic_etc & VFS_CAP_FLAGS_EFFECTIVE)
->                 *effective = true;
+Yes, I'd say this matches the existing code better.
 
-Ahhh.. I was wondering what that is.
+Acked-by: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
 
-> and finally cap_bprm_set_creds does:
->
->         if (effective)
->                 new->cap_effective = new->cap_permitted;
->         else
->                 cap_clear(new->cap_effective);
+> +		case 16: /* set cursor blink duration in msec */
+> +			if (vc->vc_npar >= 1 && vc->vc_par[1] > 0 &&
+> +					vc->vc_par[1] <= USHRT_MAX)
+> +				vc->vc_cur_blink_ms = vc->vc_par[1];
+> +			else
 
-Ok. I took that out thats why it worked.
-
+Actually, vc_cur_blink_ms less then about 50 probably does not make
+sense (and may overload the system). Should that be checked?
+									Pavel
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
