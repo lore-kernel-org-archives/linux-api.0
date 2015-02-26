@@ -1,71 +1,41 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: Documenting MS_LAZYTIME
-Date: Thu, 26 Feb 2015 14:36:33 +0100
-Message-ID: <54EF2161.90607@gmail.com>
-References: <CAHO5Pa0k7QkV_6BDjwTVxa7LV9tFyN9nGFFcSvOC6HYO08wfrw@mail.gmail.com>
-	<54E7578E.4090809@redhat.com> <20150221025636.GB7922@thunk.org>
-	<54EEDE23.6080009@gmail.com> <20150226133113.GD11217@thunk.org>
+From: Mathieu Poirier <mathieu.poirier@linaro.org>
+Subject: Re: [PATCH v2] coresight-stm: adding driver for CoreSight STM component
+Date: Thu, 26 Feb 2015 07:22:45 -0700
+Message-ID: <CANLsYkz6c8rN21C_JDaarJCEyaNb6C3VeqBH=_y_ERBiNLtPMw@mail.gmail.com>
+References: <1424907152-18808-1-git-send-email-mathieu.poirier@linaro.org>
+	<20150226055320.GA20385@dragon>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <20150226133113.GD11217@thunk.org>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Theodore Ts'o <tytso@mit.edu>
-Cc: Eric Sandeen <sandeen@redhat.com>, linux-man@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, mtk.manpages@gmail.com, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, Linux btrfs Developers List <linux-btrfs@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150226055320.GA20385@dragon>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Shawn Guo <shawn.guo@linaro.org>
+Cc: Jon Corbet <corbet@lwn.net>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, linux-api@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 02/26/2015 02:31 PM, Theodore Ts'o wrote:
-> On Thu, Feb 26, 2015 at 09:49:39AM +0100, Michael Kerrisk (man-pages) wrote:
->>> How about somethign like "This mount significantly reduces writes
->>> needed to update the inode's timestamps, especially mtime and actime.
->>
->> What is "actime" in the preceding line? Should it be "ctime"?
-> 
-> Sorry, no, it should be "atime".
+On 25 February 2015 at 22:53, Shawn Guo <shawn.guo@linaro.org> wrote:
+> On Wed, Feb 25, 2015 at 04:32:32PM -0700, Mathieu Poirier wrote:
+>> diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-stm b/Documentation/ABI/testing/sysfs-bus-coresight-devices-stm
+>> new file mode 100644
+>> index 000000000000..3ddb676831ab
+>> --- /dev/null
+>> +++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-stm
+>> @@ -0,0 +1,62 @@
+>> +What:                /sys/bus/coresight/devices/<memory_map>.stm/enable_source
+>> +Date:                February 2015
+>> +KernelVersion:       3.20
+>
+> A random comment - there will never be a v3.20 kernel.
 
-Thanks.
+That's pretty funny!  That part was obviously minted before there was
+even an hint of moving to 4.0.  Thanks for pointing it out.
 
->> I find the wording of there a little confusing. Is the following 
->> a correct rewrite:
->>
->>     The advantage of MS_STRICTATIME | MS_LAZYTIME is that stat(2)
->>     will return the correctly updated atime, but the atime updates
->>     will be flushed to disk only when (1) the inode needs to be 
->>     updated for filesystem / data consistency reasons or (2) the 
->>     inode is pushed out of memory, or (3) the filesystem is 
->>     unmounted.)
-> 
-> Yes, that's correct.  The only other thing I might add is that in the
-> case of a crash, the atime (or mtime) fields on disk might be out of
-> date by at most 24 hours.
-
-So in other words, add a sentence to that last para:
-
-    The disadvantage of MS_STRICTATIME | MS_LAZYTIME is that
-    in the case of a system crash, the atime and mtime fields
-    on disk might be out of date by at most 24 hours.
-
-Right?
-
-Cheers,
-
-Michael
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+>
+> Shawn
+>
+>> +Contact:     Mathieu Poirier <mathieu.poirier@linaro.org>
+>> +Description: (RW) Enable/disable tracing on this specific trace macrocell.
+>> +             Enabling the trace macrocell implies it has been configured
+>> +             properly and a sink has been identidifed for it.  The path
+>> +             of coresight components linking the source to the sink is
+>> +             configured and managed automatically by the coresight framework.
