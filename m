@@ -1,231 +1,293 @@
-From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: Re: [RFC PATCH 1/3] eeprom: Add a simple EEPROM framework
-Date: Thu, 26 Feb 2015 09:16:27 +0000
-Message-ID: <54EEE46B.6090905@linaro.org>
-References: <1424365639-26634-1-git-send-email-srinivas.kandagatla@linaro.org> <1424365708-26681-1-git-send-email-srinivas.kandagatla@linaro.org> <CAL_Jsq+SeuoojgTpv1y_aPJ_jzDr3HqZhYEBQ3_vYGBHvcccug@mail.gmail.com> <54E78A31.9020306@linaro.org> <CAL_Jsq+mvpRjYfL_8OseTDCB-6aBhwhNKLBQXXJeVQLDwWm8Nw@mail.gmail.com> <20150222143211.GX25269@lukather> <CAL_JsqLqqw5DyUqCaOTSKPwF-Ms5EU4f_OPoW9YVpMCo8A_bbw@mail.gmail.com> <54EBB3AC.30000@codeaurora.org> <20150224092155.GO25269@lukather> <20150225013049.GJ24928@codeaurora.org>
+From: Jean Delvare <jdelvare@suse.de>
+Subject: Re: [dmidecode] [Patch v4] firmware: dmi-sysfs: add SMBIOS entry
+ point area attribute
+Date: Thu, 26 Feb 2015 10:36:22 +0100
+Message-ID: <20150226103622.09b9870a@endymion.delvare>
+References: <1423069563-26467-1-git-send-email-ivan.khoronzhuk@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150225013049.GJ24928@codeaurora.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Stephen Boyd <sboyd@codeaurora.org>, Maxime Ripard <maxime.ripard@free-electrons.com>
-Cc: Rob Herring <robherring2@gmail.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Kumar Gala <galak@codeaurora.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Mark Brown <broonie@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1423069563-26467-1-git-send-email-ivan.khoronzhuk@linaro.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: Ivan Khoronzhuk <ivan.khoronzhuk@linaro.org>
+Cc: linux-kernel@vger.kernel.org, ard.biesheuvel@linaro.org, grant.likely@linaro.org, matt.fleming@intel.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, dmidecode-devel@nongnu.org, leif.lindholm@linaro.org, msalter@redhat.com
 List-Id: linux-api@vger.kernel.org
 
+Hi Ivan,
 
+Sorry for the late review.
 
-On 25/02/15 01:30, Stephen Boyd wrote:
-> On 02/24, Maxime Ripard wrote:
->> On Mon, Feb 23, 2015 at 03:11:40PM -0800, Stephen Boyd wrote:
->>>>>> I would do something more simple that is just a list of keys and
->>>>>> their location like this:
->>>>>>
->>>>>> device-serial-number = <start size>;
->>>>>> key1 = <start size>;
->>>>>> key2 = <start size>;
->>>>> I'm sorry, but what's the difference?
->>>> It can describe the layout completely whether the fields are tied to a
->>>> h/w device or not.
->>>>
->>>> What I would like to see here is the entire layout described covering
->>>> both types of fields.
->>>>
->>>
->>> I was thinking the DT might be like this on the provider side:
->>>
->>>     qfprom@1000000 {
->>>        reg = <0x1000000 0x1000>;
->>>        ranges = <0 0x1000000 0x1000>;
->>>        compatible = "qcom,qfprom-msm8960"
->>>
->>>        pvs-data: pvs-data@40 {
->>>              compatible = "qcom,pvs-a";
->>>              reg = <0x40 0x20>,
->>> 	    #eeprom-cells = <0>;
->>>        };
->>>
->>>         tsens-data: tmdata@10 {
->>>              compatible = "qcom,tsens-data-msm8960";
->>>              reg = <0x10 4>, <0x16 4>;
->>> 	    #eeprom-cells = <0>;
->>>
->>>        };
->>>
->>>        serial-number: serial@50 {
->>>              compatible = "qcom,serial-msm8960";
->>>              reg = <0x50 4>, <0x60 4>;
->>> 	    #eeprom-cells = <0>;
->>>
->>>        };
->>>     };
->>
->> I'm not sure the compatible is really needed.
->>
->> A label of some sort, just like the MTD partitions do would do just
->> fine, and wouldn't have the implicit expectation that a driver will be
->> probed from that node.
->
-> I wasn't aware that compatible meant driver probe. I thought
-> compatible just meant some software entity can understand what
-> I've described within this node. For example, compatible for
-> reserved-memory nodes doesn't mean we're going to probe a device.
->
->>
->>> and then on the consumer side:
->>>
->>> 	device {
->>> 		eeproms = <&serial-number>;
->>> 		eeprom-names = "soc-rev-id";
->>> 	};
->>>
->>>
->>> This would solve a problem where the consumer device is some standard
->>> off-the-shelf IP block that needs to get some SoC specific calibration
->>> data from the eeprom. I may want to interpret the bits differently
->>> depending on which eeprom is connected to my SoC. Sometimes that data
->>> format may be the same across many variations of the SoC (e.g. the
->>> qcom,pvs-a node) or it may be completely different for a given SoC (e.g.
->>> qcom,serial-msm8960 node). I imagine for other SoCs out there it could
->>> be different depending on which eeprom the board manufacturer decides to
->>> wire onto their board and how they choose to program the data.
->>
->> Oh, so you'd like to infer the data format it's stored in from the
->> compatible?
->>
->> AFAICT, this format will be highly depending on the board itself,
->> rather than on the SoC, do you think it will scale enough?
->>
->>> So this is where I think the eeprom-cells and offset + length starts to
->>> fall apart. It forces us to make up a bunch of different compatible
->>> strings for our consumer device just so that we can parse the eeprom
->>> that we decided to use for some SoC/board specific data. Instead I'd
->>> like to see some framework that expresses exactly which eeprom is on my
->>> board and how to interpret the bits in a way that doesn't require me to
->>> keep refining the compatible string for my generic IP block.
->>
->> Hmmmm, apparently you don't :)
->>
->>> I worry that if we put all those details in DT we'll end up having to
->>> describe individual bits like serial-number-bit-2, serial-number-bit-3,
->>> etc. because sometimes these pieces of data are scattered all around the
->>> eeprom and aren't contiguous or aligned on a byte boundary. It may be
->>> easier to just have a way to express that this is an eeprom with this
->>> specific layout and my device has data stored in there. Then the driver
->>> can be told what layout it is (via compatible or some other string based
->>> means if we're not using DT?) and match that up with some driver data if
->>> it needs to know how to understand the bits it can read with the
->>> eeprom_read() API.
->>
->> I'm half convinced that the layout information will actually work for
->> more complex cases, like the linked list Rob described.
->>
->> If such a structure is ever to be found, it would feel wrong to have
->> that in the EEPROM driver, but it would feel just as wrong to put that
->> in the client driver, that would have to handle the parsing of raw
->> data coming flashed by one single crazy board vendor.
->>
->> Maybe we can have each cell carry a property that defines the format
->> it's stored in, and match that to some parsers plugins, starting with
->> the generic and trivial cases but still allowing for custom parsers to
->> be defined?
->>
->> Something like
->>
->> eeprom@42 {
->> 	compatible = "atmel,at24something";
->> 	reg = <0x42>;
->>
->> 	serial@0 {
->> 		label = "board serial";
->> 		reg = <0x0 0x10>;
->> 		format = "packed";
->> 	};
->>
->> 	opps@10 {
->> 		label = "board serial";
->> 		reg = <0x10 0x10>, <0x40 0x10>, <0x80 0x10>;
->> 		format = "random-vendor,opp-linked-list";
->> 	};
->> };
->>
->> That would make eeprom_read always return the same format of data to
->> the client drivers, without cripling the generic EEPROM drivers
->> either.
->>
->
-> Is the goal here to make eeprom_read() figure out how to return
-> the next byte of data and hide the parsing logic behind the
-> eeprom APIs? I imagine "random-vendor,opp-linked-list" would be
-> handled by the eeprom driver and that would return OPPs byte by
-> byte across the different reg properties to the eeprom consumer?
->
-> This approach concerns me because every eeprom_read() call needs
-> to fit the format that the client driver is expecting. How do we
-> validate that? What do we do if we have a random OPP client #1
-> that expects to get the data from eeprom_read() with OPPs in
-> ascending order and random OPP client #2 that expects to get the
-> data from eeprom_read() with OPPs in descending order?
->
-> It feels like we're making the eeprom framework too smart without
-> a well defined abstraction. If we were to make it so that
-> eeprom_get_opps() knew what to do and parsed/populated the OPPs,
-> it might work. But if we're just exporting raw data across a
-> read/write API with some implementation specific mangling it
-> sounds like it's going to get messy fast. And if the API is well
-> defined, it would start to become rather large with many
-> different types of data that need to be parsed and sometimes data
-> that's only specific to a single SoC.
->
-> I wonder how much we could get away with this approach though. If
-> the eeprom driver probed and populated OPPs, made a serial number
-> available via the soc device, and then we made up framework(s)
-> for things like our thermal sensor calibration data and display
-> panel calibration data, I would guess that covers most of my
-> use-cases. The client drivers would need some sort of 'wait for
-> eeprom to populate things' API or we'd need to work that into the
-> new calibration framework.
->
-I think we are making simple eeprom framework too smart which will break 
-in future.
+On Wed,  4 Feb 2015 19:06:03 +0200, Ivan Khoronzhuk wrote:
+> Some utils, like dmidecode and smbios, need to access SMBIOS entry
+> table area in order to get information like SMBIOS version, size, etc.
+> Currently it's done via /dev/mem. But for situation when /dev/mem
+> usage is disabled, the utils have to use dmi sysfs instead, which
+> doesn't represent SMBIOS entry. So this patch adds SMBIOS area to
+> dmi-sysfs in order to allow utils in question to work correctly with
+> dmi sysfs interface.
+> 
+> Reviewed-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+> Signed-off-by: Ivan Khoronzhuk <ivan.khoronzhuk@linaro.org>
+> ---
+> 
+> v1: https://lkml.org/lkml/2015/1/23/643
+> v2: https://lkml.org/lkml/2015/1/26/345
+> v3: https://lkml.org/lkml/2015/1/28/768
+> 
+> v4..v2:
 
-IMHO, Anything on top of eeprom interface that interprets the data 
-should not go into the eeprom framework itself, it can either live some 
-parsers/SOC specific drivers/interfaces.
+Please always provide a list of changes from the previous version of
+the patch, otherwise it's quite confusing.
 
-As Stephen pointed out earlier lets start with something like this, 
-which would provide a better abstraction to the discussed use cases like 
-serial-number and packed data in eeprom.
+>   firmware: dmi_scan: add symbol to get SMBIOS entry area
+>   	- used u8 type for smbios_header var
+>   firmware: dmi-sysfs: add SMBIOS entry point area attribute
+>   	- replaced -ENODATA on -EINVAL
+> 
+> v3..v2:
+>   firmware: dmi_scan: add symbol to get SMBIOS entry area
+>   firmware: dmi-sysfs: add SMBIOS entry point area attribute
+> 	- combined in one patch
+> 	- added SMBIOS information to ABI sysfs-dmi documentaton
+> 
+> v2..v1:
+>   firmware: dmi_scan: add symbol to get SMBIOS entry area
+> 	- used additional static var to hold SMBIOS raw table size
+> 	- changed format of get_smbios_entry_area symbol
+> 	  returned pointer on const smbios table
+> 
+>   firmware: dmi-sysfs: add SMBIOS entry point area attribute
+> 	- adopted to updated get_smbios_entry_area symbol
+>   	- removed redundant array to save smbios table
+> 
+>  Documentation/ABI/testing/sysfs-firmware-dmi | 10 +++++++
+>  drivers/firmware/dmi-sysfs.c                 | 42 ++++++++++++++++++++++++++++
+>  drivers/firmware/dmi_scan.c                  | 26 +++++++++++++++++
+>  include/linux/dmi.h                          |  3 ++
+>  4 files changed, 81 insertions(+)
+> 
+> diff --git a/Documentation/ABI/testing/sysfs-firmware-dmi b/Documentation/ABI/testing/sysfs-firmware-dmi
+> index c78f9ab..3a9ffe8 100644
+> --- a/Documentation/ABI/testing/sysfs-firmware-dmi
+> +++ b/Documentation/ABI/testing/sysfs-firmware-dmi
+> @@ -12,6 +12,16 @@ Description:
+>  		cannot ensure that the data as exported to userland is
+>  		without error either.
+>  
+> +		The firmware provides DMI structures as a packed list of
+> +		data referenced by a SMBIOS table entry point. The SMBIOS
+> +		entry point contains general information, like SMBIOS
+> +		version, DMI table size, etc. The structure, content and
+> +		size of SMBIOS entry point is dependent on SMBIOS version.
+> +		That's why SMBIOS entry point is represented in dmi sysfs
+> +		like a raw attribute and is accessible via
+> +		/sys/firmware/dmi/smbios_raw_header. The format of SMBIOS
 
-    qfprom@1000000 {
-       reg = <0x1000000 0x1000>;
-       ranges = <0 0x1000000 0x1000>;
-       compatible = "qcom,qfprom-msm8960"
+As mentioned before, I don't like the name "smbios_raw_header". I think
+it should be "smbios_entry_point" or similar.
 
-       pvs-data: pvs-data@40 {
-             compatible = "qcom,pvs-a";
-             reg = <0x40 0x20>,
-       };
+> +		entry point header can be read in SMBIOS specification.
+> +
+>  		DMI is structured as a large table of entries, where
+>  		each entry has a common header indicating the type and
+>  		length of the entry, as well as a firmware-provided
+> diff --git a/drivers/firmware/dmi-sysfs.c b/drivers/firmware/dmi-sysfs.c
+> index e0f1cb3..9b396d7 100644
+> --- a/drivers/firmware/dmi-sysfs.c
+> +++ b/drivers/firmware/dmi-sysfs.c
+> @@ -29,6 +29,8 @@
+>  #define MAX_ENTRY_TYPE 255 /* Most of these aren't used, but we consider
+>  			      the top entry type is only 8 bits */
+>  
+> +static const u8 *smbios_raw_header;
+> +
+>  struct dmi_sysfs_entry {
+>  	struct dmi_header dh;
+>  	struct kobject kobj;
+> @@ -646,9 +648,37 @@ static void cleanup_entry_list(void)
+>  	}
+>  }
+>  
+> +static ssize_t smbios_entry_area_raw_read(struct file *filp,
 
-        tsens-data: tmdata@10 {
-             reg = <0x10 40>;
-       };
+This is confusing again, now it's named "entry_area"? Please be
+consistent and use entry_point everywhere.
 
-       serial-number: serial@50 {
-             compatible = "qcom,serial-msm8960";
-             reg = <0x50 4>, <0x60 4>;
-       };
+As mentioned before I believe that this code should live in dmi_scan
+and not dmi-sysfs.
 
-    };
+> +					  struct kobject *kobj,
+> +					  struct bin_attribute *bin_attr,
+> +					  char *buf, loff_t pos, size_t count)
+> +{
+> +	ssize_t size;
+> +
+> +	size = bin_attr->size;
+> +
+> +	if (size > pos)
+> +		size -= pos;
+> +	else
+> +		return 0;
+> +
+> +	if (count < size)
+> +		size = count;
+> +
+> +	memcpy(buf, &smbios_raw_header[pos], size);
+> +
+> +	return size;
+> +}
+> +
+> +static struct bin_attribute smbios_raw_area_attr = {
+> +	.read = smbios_entry_area_raw_read,
+> +	.attr = {.name = "smbios_raw_header", .mode = 0400},
+> +};
+> +
+>  static int __init dmi_sysfs_init(void)
+>  {
+>  	int error = -ENOMEM;
+> +	int size;
+>  	int val;
+>  
+>  	/* Set up our directory */
+> @@ -669,6 +699,18 @@ static int __init dmi_sysfs_init(void)
+>  		goto err;
+>  	}
+>  
+> +	smbios_raw_header = dmi_get_smbios_entry_area(&size);
+> +	if (!smbios_raw_header) {
+> +		pr_debug("dmi-sysfs: SMBIOS raw data is not available.\n");
+> +		error = -EINVAL;
+> +		goto err;
+> +	}
 
-and then on the consumer side:
+I don't think this should have been a fatal error. Just because for
+some reason dmi_get_smbios_entry_area() returned NULL is no good reason
+for nor exposing /sys/firmware/dmi/entries as we used to.
 
-	device {
-		eeproms = <&serial-number>;
-		eeprom-names = "soc-rev-id";
-	};
-	
-driver side:
+But anyway this is no longer relevant if the code is moved to dmi_scan
+as I suggested.
 
-	eeprom_get_cell()
-	eeprom_read();
+> +
+> +	/* Create the raw binary file to access the entry area */
+> +	smbios_raw_area_attr.size = size;
+> +	if (sysfs_create_bin_file(dmi_kobj, &smbios_raw_area_attr))
+> +		goto err;
+
+I think this should have had a corresponding call to
+sysfs_remove_bin_file() in dmi_sysfs_exit(). (Again no longer relevant
+if the code is moved.)
+
+> +
+>  	pr_debug("dmi-sysfs: loaded.\n");
+>  
+>  	return 0;
+> diff --git a/drivers/firmware/dmi_scan.c b/drivers/firmware/dmi_scan.c
+> index 420c8d8..99c5f6c 100644
+> --- a/drivers/firmware/dmi_scan.c
+> +++ b/drivers/firmware/dmi_scan.c
+> @@ -113,6 +113,8 @@ static void dmi_table(u8 *buf, int len, int num,
+>  	}
+>  }
+>  
+> +static u8 smbios_header[32];
+> +static int smbios_header_size;
+>  static phys_addr_t dmi_base;
+>  static u16 dmi_len;
+>  static u16 dmi_num;
+> @@ -474,6 +476,8 @@ static int __init dmi_present(const u8 *buf)
+>  	if (memcmp(buf, "_SM_", 4) == 0 &&
+>  	    buf[5] < 32 && dmi_checksum(buf, buf[5])) {
+>  		smbios_ver = get_unaligned_be16(buf + 6);
+> +		smbios_header_size = buf[5];
+> +		memcpy(smbios_header, buf, smbios_header_size);
+>  
+>  		/* Some BIOS report weird SMBIOS version, fix that up */
+>  		switch (smbios_ver) {
+> @@ -505,6 +509,8 @@ static int __init dmi_present(const u8 *buf)
+>  				pr_info("SMBIOS %d.%d present.\n",
+>  				       dmi_ver >> 8, dmi_ver & 0xFF);
+>  			} else {
+> +				smbios_header_size = 15;
+> +				memcpy(smbios_header, buf, smbios_header_size);
+>  				dmi_ver = (buf[14] & 0xF0) << 4 |
+>  					   (buf[14] & 0x0F);
+>  				pr_info("Legacy DMI %d.%d present.\n",
+> @@ -531,6 +537,8 @@ static int __init dmi_smbios3_present(const u8 *buf)
+>  		dmi_ver &= 0xFFFFFF;
+>  		dmi_len = get_unaligned_le32(buf + 12);
+>  		dmi_base = get_unaligned_le64(buf + 16);
+> +		smbios_header_size = buf[6];
+> +		memcpy(smbios_header, buf, smbios_header_size);
+>  
+>  		/*
+>  		 * The 64-bit SMBIOS 3.0 entry point no longer has a field
+> @@ -944,3 +952,21 @@ void dmi_memdev_name(u16 handle, const char **bank, const char **device)
+>  	}
+>  }
+>  EXPORT_SYMBOL_GPL(dmi_memdev_name);
+> +
+> +/**
+> + * dmi_get_smbios_entry_area - copy SMBIOS entry point area to array.
+> + * @size - pointer to assign actual size of SMBIOS entry point area.
+> + *
+> + * returns NULL if table is not available, otherwise returns pointer on
+> + * SMBIOS entry point area array.
+> + */
+> +const u8 *dmi_get_smbios_entry_area(int *size)
+> +{
+> +	if (!smbios_header_size || !dmi_available)
+
+I don't see why you need to check for !dmi_available. If
+smbios_header_size is non-zero then the required data is available. It
+is independent from dmi_walk_early() having succeeded or not.
+
+If you really believe that this function should return NULL if
+dmi_walk_early() failed (I don't), then you should be consistent and
+only fill up smbios_header after dmi_walk_early() has been successfully
+called.
+
+> +		return NULL;
+> +
+> +	*size = smbios_header_size;
+> +
+> +	return smbios_header;
+> +}
+> +EXPORT_SYMBOL_GPL(dmi_get_smbios_entry_area);
+> diff --git a/include/linux/dmi.h b/include/linux/dmi.h
+> index f820f0a..8e1a28d 100644
+> --- a/include/linux/dmi.h
+> +++ b/include/linux/dmi.h
+> @@ -109,6 +109,7 @@ extern int dmi_walk(void (*decode)(const struct dmi_header *, void *),
+>  	void *private_data);
+>  extern bool dmi_match(enum dmi_field f, const char *str);
+>  extern void dmi_memdev_name(u16 handle, const char **bank, const char **device);
+> +const u8 *dmi_get_smbios_entry_area(int *size);
+>  
+>  #else
+>  
+> @@ -140,6 +141,8 @@ static inline void dmi_memdev_name(u16 handle, const char **bank,
+>  		const char **device) { }
+>  static inline const struct dmi_system_id *
+>  	dmi_first_match(const struct dmi_system_id *list) { return NULL; }
+> +static inline const u8 *dmi_get_smbios_entry_area(int *size)
+> +	{ return NULL; }
+>  
+>  #endif
+>  
+
+There's one thing I do not understand. I seem to understand that the
+goal behind this patch is to be able to run dmidecode without /dev/mem.
+Dmidecode currently reads 2 areas from /dev/mem: the 0xF0000-0xFFFFF
+area in search of the entry point, and the DMI data table itself. With
+this patch you make the entry point available through sysfs. But
+dmidecode will still need to access /dev/mem to access the DMI data
+table. So that does not really solve anything, does it?
+
+If we expose the raw DMI/SMBIOS entry point through sysfs, I believe we
+want to expose the DMI table there too.
+
+Thanks,
+-- 
+Jean Delvare
+SUSE L3 Support
