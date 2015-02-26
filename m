@@ -1,71 +1,82 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
 Subject: Re: Documenting MS_LAZYTIME
-Date: Thu, 26 Feb 2015 09:49:39 +0100
-Message-ID: <54EEDE23.6080009@gmail.com>
-References: <CAHO5Pa0k7QkV_6BDjwTVxa7LV9tFyN9nGFFcSvOC6HYO08wfrw@mail.gmail.com> <54E7578E.4090809@redhat.com> <20150221025636.GB7922@thunk.org>
+Date: Thu, 26 Feb 2015 09:53:51 +0100
+Message-ID: <54EEDF1F.1000703@gmail.com>
+References: <CAHO5Pa0k7QkV_6BDjwTVxa7LV9tFyN9nGFFcSvOC6HYO08wfrw@mail.gmail.com>
+	<54E7578E.4090809@redhat.com> <20150221025636.GB7922@thunk.org>
+	<54EB1B19.8050808@gmail.com> <54EB5456.5030607@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150221025636.GB7922-AKGzg7BKzIDYtjvyW6yDsg@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux btrfs Developers List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <xfs-bounces@oss.sgi.com>
+In-Reply-To: <54EB5456.5030607@redhat.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Eric Sandeen <sandeen@redhat.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Theodore Ts'o <tytso@mit.edu>
+Cc: linux-man@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, mtk.manpages@gmail.com, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, Linux btrfs Developers List <linux-btrfs@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Ted,
-
-On 02/21/2015 03:56 AM, Theodore Ts'o wrote:
-> On Fri, Feb 20, 2015 at 09:49:34AM -0600, Eric Sandeen wrote:
->>
->>>               This mount option significantly reduces  writes  to  the
->>>               inode  table  for workloads that perform frequent random
->>>               writes to preallocated files.
->>
->> This seems like an overly specific description of a single workload out
->> of many which may benefit, but what do others think?  "inode table" is also
->> fairly extN-specific.
+On 02/23/2015 05:24 PM, Eric Sandeen wrote:
+> On 2/23/15 6:20 AM, Austin S Hemmelgarn wrote:
+>> On 2015-02-20 21:56, Theodore Ts'o wrote:
+>>> On Fri, Feb 20, 2015 at 09:49:34AM -0600, Eric Sandeen wrote:
+>>>>
+>>>>>                This mount option significantly reduces  writes  to  the
+>>>>>                inode  table  for workloads that perform frequent random
+>>>>>                writes to preallocated files.
+>>>>
+>>>> This seems like an overly specific description of a single workload out
+>>>> of many which may benefit, but what do others think?  "inode table" is also
+>>>> fairly extN-specific.
+>>>
+>>> How about somethign like "This mount significantly reduces writes
+>>> needed to update the inode's timestamps, especially mtime and actime.
+>>> Examples of workloads where this could be a large win include frequent
+>>> random writes to preallocated files, as well as cases where the
+>>> MS_STRICTATIME mount option is enabled."?
+>>>
+>>> (The advantage of MS_STRICTATIME | MS_LAZYTIME is that stat system
+>>> calls will return the correctly updated atime, but those atime updates
+>>> won't get flushed to disk unless the inode needs to be updated for
+>>> file system / data consistency reasons, or when the inode is pushed
+>>> out of memory, or when the file system is unmounted.)
+>>>
+>> If you want to list some specific software, it should help with
+>> anything that uses sqlite (which notably includes firefox and
+>> chrome), as well as most RDMS software and systemd-journald.
 > 
-> How about somethign like "This mount significantly reduces writes
-> needed to update the inode's timestamps, especially mtime and actime.
+> I'm really uneasy with starting to list specific workloads and applications
+> here. It's going to get dated quickly, and will lead to endless cargo-cult
+> tuning.
+>
+> I'd strongly prefer to just describe what it does (reduces the number of
+> certain metadata writes to disk) and leave it at that....
 
-What is "actime" in the preceding line? Should it be "ctime"?
+I'm inclined to agree that it's probably not useful to list
+specific applications, but I think giving some examples
+of workloads, as Ted proposed does help the reader get an idea.
+It helps some people (e.g., me) better understand what the
+point of the feature is.
 
-> Examples of workloads where this could be a large win include frequent
-> random writes to preallocated files, as well as cases where the
-> MS_STRICTATIME mount option is enabled."?
-
-I think some version of the following text could also usefully go 
-into the page, but...
-
-> (The advantage of MS_STRICTATIME | MS_LAZYTIME is that stat system
-> calls will return the correctly updated atime, but those atime updates
-> won't get flushed to disk unless the inode needs to be updated for
-> file system / data consistency reasons, or when the inode is pushed
-> out of memory, or when the file system is unmounted.)
-
-I find the wording of there a little confusing. Is the following 
-a correct rewrite:
-
-    The advantage of MS_STRICTATIME | MS_LAZYTIME is that stat(2)
-    will return the correctly updated atime, but the atime updates
-    will be flushed to disk only when (1) the inode needs to be 
-    updated for filesystem / data consistency reasons or (2) the 
-    inode is pushed out of memory, or (3) the filesystem is 
-    unmounted.)
-
-?
-
-Thanks,
+Cheers,
 
 Michael
+
 
 
 -- 
 Michael Kerrisk
 Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
 Linux/UNIX System Programming Training: http://man7.org/training/
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
