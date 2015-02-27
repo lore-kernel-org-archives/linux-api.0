@@ -1,40 +1,65 @@
-From: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v2 2/2] epoll: introduce EPOLLEXCLUSIVE and EPOLLROUNDROBIN
-Date: Fri, 27 Feb 2015 17:24:29 -0500
-Message-ID: <54F0EE9D.5010502@akamai.com>
-References: <cover.1424200151.git.jbaron@akamai.com>	<7956874bfdc7403f37afe8a75e50c24221039bd2.1424200151.git.jbaron@akamai.com> <CAPh34mcPNQELwZCDTHej+HK=bpWgJ=jb1LeCtKoUHVgoDJOJoQ@mail.gmail.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH v3 0/3] epoll: introduce round robin wakeup mode
+Date: Fri, 27 Feb 2015 14:31:58 -0800
+Message-ID: <20150227143158.afa4ec39d49d5815cbbd6a6c@linux-foundation.org>
+References: <cover.1424805740.git.jbaron@akamai.com>
+	<20150225073814.GA14558@gmail.com>
+	<54EDF7D8.60201@akamai.com>
+	<20150227131034.2f2787dcabf285191a1f6ffa@linux-foundation.org>
+	<54F0E93C.3010306@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAPh34mcPNQELwZCDTHej+HK=bpWgJ=jb1LeCtKoUHVgoDJOJoQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Hagen Paul Pfeifer <hagen-GvnIQ6b/HdU@public.gmane.org>
-Cc: normalperson-rMlxZR9MS24@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <54F0E93C.3010306@akamai.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jason Baron <jbaron@akamai.com>
+Cc: Ingo Molnar <mingo@kernel.org>, peterz@infradead.org, mingo@redhat.com, viro@zeniv.linux.org.uk, normalperson@yhbt.net, davidel@xmailserver.org, mtk.manpages@gmail.com, luto@amacapital.net, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Alexander Viro <viro@ftp.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+On Fri, 27 Feb 2015 17:01:32 -0500 Jason Baron <jbaron@akamai.com> wrote:
 
-v3 of this series implements this idea using using a different
-approach:
+> 
+> >
+> > I don't really understand the need for rotation/round-robin.  We can
+> > solve the thundering herd via exclusive wakeups, but what is the point
+> > in choosing to wake the task which has been sleeping for the longest
+> > time?  Why is that better than waking the task which has been sleeping
+> > for the *least* time?  That's probably faster as that task's data is
+> > more likely to still be in cache.
+> >
+> > The changelogs talks about "starvation" but they don't really say what
+> > this term means in this context, nor why it is a bad thing.
+> >
 
-http://lkml.iu.edu/hypermail/linux/kernel/1502.3/00667.html
+I'm still not getting it.
 
-If that still meets your needs it would be helpful to know in
-order to move this forward.
+> So the idea with the 'rotation' is to try and distribute the
+> workload more evenly across the worker threads.
 
-Looking back at your posting, I was concerned about the
-test case not lining up with the kernel code change.
+Why?
 
-Thanks,
+> We currently
+> tend to wake up the 'head' of the queue over and over and
+> thus the workload for us is not evenly distributed.
 
--Jason
+What's wrong with that?
 
-On 02/27/2015 03:56 PM, Hagen Paul Pfeifer wrote:
->
-> Applause! Nice patch, sad that I submitted this patch ~3 years ago with
-> exactly the same naming (EPOLLEXCLUSIVE) & nearly exact commit message and
-> you rejected the patch ...
->
-> Hagen
->
+> In fact, we
+> have a workload where we have to remove all the epoll sets
+> and then re-add them in a different order to improve the situation.
+
+Why?
+
+> We are trying to avoid this workaround and in addition avoid
+> thundering wakeups when possible (using exclusive as you
+> mention).
+
+
+A better way to describe a patchset like this is to start out
+describing what the user sees: what is wrong with the current kernel
+behaviour and how will it be improved?  Once that is understood then
+start getting into kernel internal details.
+
+
+Jon's explanation was much more useful.  Was it accurate?
