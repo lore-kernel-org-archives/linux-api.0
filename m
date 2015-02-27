@@ -1,56 +1,43 @@
-From: Radim =?utf-8?B?S3LEjW3DocWZ?= <rkrcmar-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH RFC 0/3] Drivers: hv: utils: re-implement the
- kernel/userspace communication layer
-Date: Fri, 27 Feb 2015 22:07:44 +0100
-Message-ID: <20150227210744.GA11904@potion.brq.redhat.com>
-References: <1425053665-635-1-git-send-email-vkuznets@redhat.com>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH v3 0/3] epoll: introduce round robin wakeup mode
+Date: Fri, 27 Feb 2015 13:10:34 -0800
+Message-ID: <20150227131034.2f2787dcabf285191a1f6ffa@linux-foundation.org>
+References: <cover.1424805740.git.jbaron@akamai.com>
+	<20150225073814.GA14558@gmail.com>
+	<54EDF7D8.60201@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1425053665-635-1-git-send-email-vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <54EDF7D8.60201-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vitaly Kuznetsov <vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "K. Y. Srinivasan" <kys-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, devel-tBiZLqfeLfOHmIFyCCdPziST3g8Odh+X@public.gmane.org, Haiyang Zhang <haiyangz-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dexuan Cui <decui-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, normalperson-rMlxZR9MS24@public.gmane.org, davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexander Viro <viro-rfM+Q5joDG/XmaaqVzeoHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-2015-02-27 17:14+0100, Vitaly Kuznetsov:
-> This series converts kvp/vss daemons to use misc char devices instead of
-> netlink for userspace/kernel communication and then updates fcopy to be
-> consistent with kvp/vss.
-> 
-> Userspace/kernel communication via netlink has a number of issues:
-> - It is hard for userspace to figure out if the kernel part was loaded or not
->   and this fact can change as there is a way to enable/disable the service from
->   host side.
+On Wed, 25 Feb 2015 11:27:04 -0500 Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org> wrote:
 
-(Hm, this should be just a message to the userspace daemon, but netlink
- probably makes it complicated anyway.)
+> > Libenzi inactive eventpoll appears to be without a 
+> > dedicated maintainer since 2011 or so. Is there anyone who 
+> > knows the code and its usages in detail and does final ABI 
+> > decisions on eventpoll - Andrew, Al or Linus?
+> >
+> Generally, Andrew and Al do more 'final' reviews here,
+> and a lot of others on lkml are always very helpful in
+> looking at this code. However, its not always clear, at
+> least to me, who I should pester.
 
->              Racy daemon startup is also a problem.
+Yes, it's a difficult situation.
 
-(Is it significantly worse than what we need to protect devices?)
+The 3/3 changelog refers to "EPOLLROUNDROBIN" which I assume is
+a leftover from some earlier revision?
 
-> - When the userspace daemon restarts/dies kernel part doesn't receive a
->   notification.
+I don't really understand the need for rotation/round-robin.  We can
+solve the thundering herd via exclusive wakeups, but what is the point
+in choosing to wake the task which has been sleeping for the longest
+time?  Why is that better than waking the task which has been sleeping
+for the *least* time?  That's probably faster as that task's data is
+more likely to still be in cache.
 
-(True, we could use a other-side-closed callback.)
-
-> - Netlink communication is not stable under heavy load.
-
-(The message order changes?)
-
-> RFC: I'm a bit puzzled on how to split commits 1 and 2 avoiding breakages.
-
-Split the userspace part -- it won't break bisects.
-
-And then, you could refactor drivers first ... the way we communicate
-with userspace should have little impact on what the rest does (or how).
-At first sight, there are three units, apart from glue,
- 1) communication with host
- 2) communication with userspace
- 3) repacking of data between first two
-
-With an API for userspace communication, the amount of code to replace
-netlink could be lower and resulting patches definitely easier to
-review.  (And with extra work, both ABIs could even live side-by-side ;)
+The changelogs talks about "starvation" but they don't really say what
+this term means in this context, nor why it is a bad thing.
