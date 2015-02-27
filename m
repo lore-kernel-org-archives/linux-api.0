@@ -1,59 +1,44 @@
-From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Subject: Re: [PATCH v12 1/2] crypto: AF_ALG: add AEAD support
-Date: Fri, 27 Feb 2015 19:54:23 +0100
-Message-ID: <3379989.bRI419NncO@tachyon.chronox.de>
-References: <1681008.mocmysOoQU@tachyon.chronox.de> <2021530.t7zNty0mPn@tauon> <54F0B8BD.30600@intel.com>
+From: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
+Subject: [PATCH 0/2] add cursor blink interval terminal escape sequence
+Date: Fri, 27 Feb 2015 19:10:05 +0000 (UTC)
+Message-ID: <alpine.LNX.2.11.1502271905580.4212@localhost>
+References: <alpine.DEB.2.11.1501262034380.1945@localhost.localdomain> <alpine.DEB.2.11.1501262040380.2052@localhost.localdomain> <20150225094946.GA24627@amd> <alpine.LNX.2.11.1502252319330.276@localhost> <20150226220243.GC9935@amd>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54F0B8BD.30600-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tadeusz Struk <tadeusz.struk-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'LKML' <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, 'Linux API' <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150226220243.GC9935@amd>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Tomi Valkeinen <tomi.valkeinen-l0cyMroinI0@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Am Freitag, 27. Februar 2015, 10:34:37 schrieb Tadeusz Struk:
+Greg, the first patch of this series is for the tty tree.
 
-Hi Tadeusz,
+Tomi, the second patch of this series is for your tree, but it depends on
+the first patch. Also, will you remove these two previously queued patches?
+"fbcon: store cursor blink interval in fbcon_ops"
+"fbcon: expose cursor blink interval via sysfs"
 
-> On 02/27/2015 02:26 AM, Stephan Mueller wrote:
-> >>>> This patch adds the AEAD support for AF_ALG.
-> >>>> 
-> >>>> >> > The implementation is based on algif_skcipher, but contains heavy
-> >>>> >> > modifications to streamline the interface for AEAD uses.
-> >>>> >> > 
-> >>>> >> > To use AEAD, the user space consumer has to use the salg_type
-> >>>> >> > named
-> >>>> >> > "aead".
-> >>> >> 
-> >>> >> I just saw Al Viro's patch to use the iov_iter API in
-> >>> >> algif_skcipher.c. I looked at it but lacked documentation for using
-> >>> >> it properly. Now I have a template that I will incorporate into
-> >>> >> algif_aead.c
-> >> >
-> >> >Please resubmit once you have done this.
-> > 
-> > I have done that, but as indicated with an email to Al, I cannot get his
-> > patch for skcipher and hash to work. Similarly, my modification for the
-> > AEAD does not work either. So, I do not see that Al's patch can be
-> > merged as is.
-> > 
-> > Therefore, I have not submitted my patch as Al mentioned he wanted to
-> > look into his patchset.
-> 
-> Hi Stephan,
-> There was a problem with the iov_iter changes, but it has been fixed on
-> netdev during merging window. The algif_skcipher works fine for me on the
-> latest (4.0.0-rc1+) cryptodev.
+Michael, I plan to send a documentation patch if these are accepted.
 
-Great, thanks for the hint. I will check my implementation and release it 
-shortly.
-> 
-> Regards,
-> Tadeusz
+This patch series adds an escape sequence to specify the current console's
+cursor blink interval. The default interval is set to fbcon's currently 
+hardcoded 200 msecs.
 
+Scot Doyle (2):
+  vt: add cursor blink interval escape sequence
+  fbcon: use the cursor blink interval provided by vt
+
+ drivers/tty/vt/vt.c            |  9 +++++++++
+ drivers/video/console/fbcon.c  | 10 +++++-----
+ drivers/video/console/fbcon.h  |  1 +
+ include/linux/console_struct.h |  1 +
+ 4 files changed, 16 insertions(+), 5 deletions(-)
 
 -- 
-Ciao
-Stephan
+2.3.0
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
