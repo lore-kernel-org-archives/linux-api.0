@@ -1,33 +1,33 @@
-From: Russell King - ARM Linux <linux@arm.linux.org.uk>
-Subject: Re: [PATCH v2] coresight-stm: adding driver for CoreSight STM
- component
-Date: Thu, 26 Feb 2015 22:58:53 +0000
-Message-ID: <20150226225853.GM8656@n2100.arm.linux.org.uk>
-References: <1424907152-18808-1-git-send-email-mathieu.poirier@linaro.org>
- <CAL_Jsq+JYc5DBXqEcpJ0O=RdO-uuz_-GR99YsgVqT=uG6CLqJg@mail.gmail.com>
+From: Theodore Ts'o <tytso@mit.edu>
+Subject: Re: Documenting MS_LAZYTIME
+Date: Thu, 26 Feb 2015 19:04:09 -0500
+Message-ID: <20150227000409.GC17174@thunk.org>
+References: <CAHO5Pa0k7QkV_6BDjwTVxa7LV9tFyN9nGFFcSvOC6HYO08wfrw@mail.gmail.com>
+ <54E7578E.4090809@redhat.com>
+ <20150221025636.GB7922@thunk.org>
+ <54EEDE23.6080009@gmail.com>
+ <20150226133113.GD11217@thunk.org>
+ <54EF2161.90607@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAL_Jsq+JYc5DBXqEcpJ0O=RdO-uuz_-GR99YsgVqT=uG6CLqJg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Rob Herring <robherring2@gmail.com>
-Cc: Mathieu Poirier <mathieu.poirier@linaro.org>, Will Deacon <will.deacon@arm.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Jonathan Corbet <corbet@lwn.net>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>
+In-Reply-To: <54EF2161.90607@gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Eric Sandeen <sandeen@redhat.com>, Ext4 Developers List <linux-ext4@vger.kernel.org>, Linux btrfs Developers List <linux-btrfs@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, linux-man@vger.kernel.org, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 26, 2015 at 04:24:53PM -0600, Rob Herring wrote:
-> We really shouldn't do private implementation here. It there really
-> any reason not to allow readq/writeq generically for 32-bit or just
-> for arm32?
+On Thu, Feb 26, 2015 at 02:36:33PM +0100, Michael Kerrisk (man-pages) wrote:
+> 
+>     The disadvantage of MS_STRICTATIME | MS_LAZYTIME is that
+>     in the case of a system crash, the atime and mtime fields
+>     on disk might be out of date by at most 24 hours.
 
-My argument has always been that drivers should do the emulation of
-64-bit accesses when there is no native support.
+I'd change to "The disadvantage of MS_LAZYTIME is that..."  and
+perhaps move that so it's clear it applies to any use of MS_LAZYTIME
+has this as a downside.
 
-IO registers tend to have side effects when read/written.  How do we
-know whether the low-half or the high-half should be written first?
-This isn't something that an architecture can really dictate.  What
-may be right for one hardware device may not be correct for another.
+Does that make sense?
 
--- 
-FTTC broadband for 0.8mile line: currently at 10.5Mbps down 400kbps up
-according to speedtest.net.
+						- Ted
