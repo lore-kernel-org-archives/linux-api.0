@@ -1,33 +1,45 @@
-From: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
-Subject: Re: Documenting MS_LAZYTIME
-Date: Fri, 27 Feb 2015 09:18:11 -0500
-Message-ID: <20150227141811.GA5404@thunk.org>
-References: <CAHO5Pa0k7QkV_6BDjwTVxa7LV9tFyN9nGFFcSvOC6HYO08wfrw@mail.gmail.com>
- <54E7578E.4090809@redhat.com>
- <20150221025636.GB7922@thunk.org>
- <54EEDE23.6080009@gmail.com>
- <20150226133113.GD11217@thunk.org>
- <54EF2161.90607@gmail.com>
- <20150227000409.GC17174@thunk.org>
- <54F02446.2050008@gmail.com>
- <20150227080800.GA20442@mew>
- <54F02C73.5090601@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <54F02C73.5090601-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Omar Sandoval <osandov-nWWhXC5lh1RBDgjK7y7TUQ@public.gmane.org>, Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux btrfs Developers List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Vitaly Kuznetsov <vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH RFC 0/3] Drivers: hv: utils: re-implement the kernel/userspace communication layer
+Date: Fri, 27 Feb 2015 17:14:22 +0100
+Message-ID: <1425053665-635-1-git-send-email-vkuznets@redhat.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "K. Y. Srinivasan" <kys-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, devel-tBiZLqfeLfOHmIFyCCdPziST3g8Odh+X@public.gmane.org
+Cc: Haiyang Zhang <haiyangz-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dexuan Cui <decui-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, =?UTF-8?q?Radim=20Kr=C4=8Dm=C3=A1=C5=99?= <rkrcmar-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-With Omar's suggestions, this looks great.
+This series converts kvp/vss daemons to use misc char devices instead of
+netlink for userspace/kernel communication and then updates fcopy to be
+consistent with kvp/vss.
 
-Thanks!!
+Userspace/kernel communication via netlink has a number of issues:
+- It is hard for userspace to figure out if the kernel part was loaded or not
+  and this fact can change as there is a way to enable/disable the service from
+  host side. Racy daemon startup is also a problem.
+- When the userspace daemon restarts/dies kernel part doesn't receive a
+  notification.
+- Netlink communication is not stable under heavy load.
+- ...
 
-					- Ted
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+RFC: I'm a bit puzzled on how to split commits 1 and 2 avoiding breakages.
+Commit 3 can definitely be split, however, it is consistent with commits 1 and
+2 at this moment and I'm not sure such split will simplify the review.
+
+Vitaly Kuznetsov (3):
+  Drivers: hv: kvp: convert userspace/kernel communication to using char
+    device
+  Drivers: hv: vss: convert userspace/kernel communication to using char
+    device
+  Drivers: hv: fcopy: make it consistent with vss/kvp
+
+ drivers/hv/hv_fcopy.c       | 395 +++++++++++++++++++++++++------------------
+ drivers/hv/hv_kvp.c         | 396 +++++++++++++++++++++++++++-----------------
+ drivers/hv/hv_snapshot.c    | 335 +++++++++++++++++++++++++++----------
+ include/uapi/linux/hyperv.h |  10 ++
+ tools/hv/hv_fcopy_daemon.c  |  48 ++++--
+ tools/hv/hv_kvp_daemon.c    | 187 ++++-----------------
+ tools/hv/hv_vss_daemon.c    | 141 +++-------------
+ 7 files changed, 824 insertions(+), 688 deletions(-)
+
+-- 
+1.9.3
