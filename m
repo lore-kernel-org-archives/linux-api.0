@@ -1,351 +1,135 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] capabilities: Ambient capability set V2
-Date: Sat, 28 Feb 2015 22:44:07 -0600
-Message-ID: <20150301044407.GA14196@mail.hallyn.com>
-References: <alpine.DEB.2.11.1502261612370.8994@gentwo.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Subject: [PATCH v5 tip 0/7] tracing: attach eBPF programs to kprobes
+Date: Sun,  1 Mar 2015 15:27:38 -0800
+Message-ID: <1425252465-27527-1-git-send-email-ast@plumgrid.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.11.1502261612370.8994-gkYfJU5Cukgdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 26, 2015 at 04:14:33PM -0600, Christoph Lameter wrote:
-> 
-> V1->V2:
->  - Fix up the processing of the caps bits after discussions
->    with Any and Serge. Make patch less intrusive.
-> 
-> Ambient caps are something like restricted root privileges.
-> A process has a set of additional capabilities and those
-> are inherited without have to set capabilites in other
-> binaries involved. This allow the partial use of root
-> like features in a controlled way. It is often useful
-> to do this for user space device drivers or software that
-> needs increased priviledges for networking or to control
-> its own scheduling. Ambient caps allow one to avoid
-> having to run these with full root priviledges.
-> 
-> Control over this feature is avaialable via a new
-> prctl option called PR_CAP_AMBIENT. The second argument to prctl
-> is a the capability number and the third the desired state.
-> 0 for off. Otherwise on.
-> 
-> Ambient bits are enabled regardless of the inheritance
-> mask of the target binary. They are only restricted
-> by the bounding set.
-> 
-> History:
-> 
-> Linux capabilities have suffered from the problem that they are not
-> inheritable like unregular process characteristics under Unix. This is
-> behavior that is counter intuitive to the expected behavior of processes
-> in Unix.
-> 
-> In particular there has been recently software that controls NICs from user
-> space and provides IP stack like behavior also in user space (DPDK and RDMA
-> kernel API based implementations). Those typically need either capabilities
-> to allow raw network access or have to be run setsuid. There is scripting and
-> LD_PREFLOAD etc involved, arbitrary binaries may be run from those scripts
-> including those setting additional capabilites or requiring root access.
-> 
-> That does not go well with having file capabilities set that would enable
-> the capabilities. Maybe it would work if one would setup capabilities on
-> all executables but that would also defeat a secure design since these
-> binaries may only need those caps for certain situations. Ok setting the
-> inheritable flags on everything may also get one there (if there would not
-> be the issues with LD_PRELOAD, debugging etc etc).
-> 
-> The easy solution is to allow some capabilities be inherited like setsuid
-> is. We really prefer to use capabilities instead of setsuid (we want to
-> limit what damage someone can do after all!). Therefore we have been
-> running a patch like this in production for the last 6 years. At some
-> point it becomes tedious to run your own custom kernel so we would like
-> to have this functionality upstream.
-> 
-> See some of the earlier related discussions on the problems with capability
-> inheritance:
-> 
-> 0. Recent surprise:
->                 https://lkml.org/lkml/2014/1/21/175
-> 
-> 1. Attempt to revise caps
->                 http://www.madore.org/~david/linux/newcaps/
-> 
-> 2. Problems of passing caps through exec
->                 http://unix.stackexchange.com/questions/128394/passing-capabilities-through-exec
-> 
-> 3. Problems of binding to privileged ports
->                 http://stackoverflow.com/questions/413807/is-there-a-way-for-non-root-processes-to-bind-to-privileged-ports-1024-on-l
-> 
-> 4. Reviving capabilities
->                 http://lwn.net/Articles/199004/
-> 
-> There does not seem to be an alternative on the horizon. Some involved
-> in security development under Linux have even stated that they want to
-> rip out the whole thing and replace it. Its been a couple of years now
-> and we are still suffering from the capabilities mess. Let us just
-> fix it. Others have already done implementations like this like Nokia
-> for the N900.
-> 
-> 
-> This patch does not change the default behavior but it allows to set up
-> a list of capabilities via prctl that will enable regular
-> unix inheritance only for the selected group of capabilities.
-> 
-> With that it is then possible to do something trivial like setting
-> CAP_NET_RAW on an executable that can then allow that capability to
-> be inherited by others.
-> 
-> Lets have a look at a coding example of a wrapper that enables
-> a couple of capabilities:
-> 
-> ------------------------------ ambient_test.c
-> /*
->  * Test program for the ambient capabilities
->  *
->  *
->  * Compile using:
->  *	gcc -o ambient_test ambient_test.o
->  *
->  * This program must have the following capabilities to run properly:
->  * CAP_SETPCAP, CAP_NET_RAW, CAP_NET_ADMIN, CAP_SYS_NICE
->  *
->  * A command to equip this with the right caps is:
->  *
->  *	setcap cap_setpcap,cap_net_raw,cap_net_admin,cap_sys_nice+eip ambient_test
->  *
->  * To get a shell with additional caps that can be inherited do:
->  *
->  * ./ambient_test /bin/bash
->  *
->  */
-> 
-> #include <stdlib.h>
-> #include <stdio.h>
-> #include <errno.h>
-> #include <sys/prctl.h>
-> #include <linux/capability.h>
-> 
-> /* Defintion to be updated in the user space include files */
-> #define PR_CAP_AMBIENT 45
-> 
-> int main(int argc, char **argv)
-> {
-> 	int rc;
-> 
-> 	if (prctl(PR_CAP_AMBIENT, CAP_NET_RAW))
-> 		perror("Cannot set CAP_NET_RAW");
-> 
-> 	if (prctl(PR_CAP_AMBIENT, CAP_NET_ADMIN))
-> 		perror("Cannot set CAP_NET_ADMIN");
-> 
-> 	if (prctl(PR_CAP_AMBIENT, CAP_SYS_NICE))
-> 		perror("Cannot set CAP_SYS_NICE");
-> 
+Peter, Steven,
+I think this set addresses everything we've discussed.
+Please review/ack. Thanks!
 
-Your example program is not filling in pI though?
+V4->V5:
+- switched to ktime_get_mono_fast_ns() as suggested by Peter
+- in libbpf.c fixed zero init of 'union bpf_attr' padding
+- fresh rebase on tip/master
 
-Ah, i see why.  In get_file_caps() you are still assigning
+Hi All,
 
-	fP = pA
+This is targeting 'tip' tree, since most of the changes are perf_event related.
+There will be a small conflict between net-next and tip, since they both
+add new bpf_prog_type (BPF_PROG_TYPE_SCHED_CLS and BPF_PROG_TYPE_KPROBE).
 
-if the file has no file capabilities.  so then you are actually
-doing
+V3 discussion:
+https://lkml.org/lkml/2015/2/9/738
 
-	 pP' = (X & (fP | pA)) | (pI & (fI | pA))
-rather than
-	 pP' = (X & fP) | (pI & (fI | pA))
+V3->V4:
+- since the boundary of stable ABI in bpf+tracepoints is not clear yet,
+  I've dropped them for now.
+- bpf+syscalls are ok from stable ABI point of view, but bpf+seccomp
+  would want to do very similar analysis of syscalls, so I've dropped
+  them as well to take time and define common bpf+syscalls and bpf+seccomp
+  infra in the future.
+- so only bpf+kprobes left. kprobes by definition is not a stable ABI,
+  so bpf+kprobe is not stable ABI either. To stress on that point added
+  kernel version attribute that user space must pass along with the program
+  and kernel will reject programs when version code doesn't match.
+  So bpf+kprobe is very similar to kernel modules, but unlike modules
+  version check is not used for safety, but for enforcing 'non-ABI-ness'.
+  (version check doesn't apply to bpf+sockets which are stable)
 
-Other than that, the patch is looking good to me.  We should
-consider emitting an audit record when a task fills in its
-pA, and I do still wonder whether we should be requiring
-CAP_SETFCAP (unsure how best to think of it).  But assuming the
-fP = pA was not intended, I think this largely does the right
-thing.
+Patch 1 is in net-next and needs to be in tip too, since patch 2 depends on it.
 
-> 	printf("Ambient_test forking shell\n");
-> 	if (execv(argv[1], argv + 1))
-> 		perror("Cannot exec");
-> 
-> 	return 0;
-> }
-> -------------------------------- ambient_test.c
-> 
-> Allows the inheritance of CAP_SYS_NICE, CAP_NET_RAW and CAP_NET_ADMIN.
-> With that device raw access is possible and also real time priorities
-> can be set from user space. This is a frequently needed set of
-> priviledged operations in HPC and HFT applications. User space
-> processes need to be able to directly access devices as well as
-> have full control over scheduling.
-> 
-> Signed-off-by: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-> 
-> Index: linux/security/commoncap.c
-> ===================================================================
-> --- linux.orig/security/commoncap.c	2015-02-25 13:43:06.929973954 -0600
-> +++ linux/security/commoncap.c	2015-02-26 16:10:02.347913397 -0600
-> @@ -347,15 +347,17 @@ static inline int bprm_caps_from_vfs_cap
->  		*has_cap = true;
-> 
->  	CAP_FOR_EACH_U32(i) {
-> +		__u32 ambient = current_cred()->cap_ambient.cap[i];
->  		__u32 permitted = caps->permitted.cap[i];
->  		__u32 inheritable = caps->inheritable.cap[i];
-> 
->  		/*
-> -		 * pP' = (X & fP) | (pI & fI)
-> +		 * pP' = (X & fP) | (pI & (fI | pA))
->  		 */
->  		new->cap_permitted.cap[i] =
->  			(new->cap_bset.cap[i] & permitted) |
-> -			(new->cap_inheritable.cap[i] & inheritable);
-> +			(new->cap_inheritable.cap[i] &
-> +					(inheritable | ambient));
-> 
->  		if (permitted & ~new->cap_permitted.cap[i])
->  			/* insufficient to execute correctly */
-> @@ -453,8 +455,18 @@ static int get_file_caps(struct linux_bi
->  		if (rc == -EINVAL)
->  			printk(KERN_NOTICE "%s: get_vfs_caps_from_disk returned %d for %s\n",
->  				__func__, rc, bprm->filename);
-> -		else if (rc == -ENODATA)
-> +		else if (rc == -ENODATA) {
->  			rc = 0;
-> +			if (!cap_isclear(current_cred()->cap_ambient)) {
-> +				/*
-> +				 * The ambient caps are permitted for
-> +				 * files that have no caps
-> +				 */
-> +				bprm->cred->cap_permitted =
-> +					current_cred()->cap_ambient;
-> +				*effective = true;
-> +			}
-> +		}
->  		goto out;
->  	}
-> 
-> @@ -549,9 +561,20 @@ skip:
->  	new->sgid = new->fsgid = new->egid;
-> 
->  	if (effective)
-> +		/*
-> +		 * pE' = pP' & (fE | pA)
-> +		 *
-> +		 * fE is implicity all set if effective == true.
-> +		 * Therefore the above reduces to
-> +		 *
-> +		 * pE' = pP'
-> +		 */
->  		new->cap_effective = new->cap_permitted;
->  	else
->  		cap_clear(new->cap_effective);
-> +
-> +	/* pA' = pA */
-> +	new->cap_ambient = old->cap_ambient;
->  	bprm->cap_effective = effective;
-> 
->  	/*
-> @@ -566,7 +589,7 @@ skip:
->  	 * Number 1 above might fail if you don't have a full bset, but I think
->  	 * that is interesting information to audit.
->  	 */
-> -	if (!cap_isclear(new->cap_effective)) {
-> +	if (!cap_issubset(new->cap_effective, new->cap_ambient)) {
->  		if (!cap_issubset(CAP_FULL_SET, new->cap_effective) ||
->  		    !uid_eq(new->euid, root_uid) || !uid_eq(new->uid, root_uid) ||
->  		    issecure(SECURE_NOROOT)) {
-> @@ -598,7 +621,7 @@ int cap_bprm_secureexec(struct linux_bin
->  	if (!uid_eq(cred->uid, root_uid)) {
->  		if (bprm->cap_effective)
->  			return 1;
-> -		if (!cap_isclear(cred->cap_permitted))
-> +		if (!cap_issubset(cred->cap_permitted, cred->cap_ambient))
->  			return 1;
->  	}
-> 
-> @@ -933,6 +956,23 @@ int cap_task_prctl(int option, unsigned
->  			new->securebits &= ~issecure_mask(SECURE_KEEP_CAPS);
->  		return commit_creds(new);
-> 
-> +	case PR_CAP_AMBIENT:
-> +		if (!ns_capable(current_user_ns(), CAP_SETPCAP))
-> +			return -EPERM;
-> +
-> +		if (!cap_valid(arg2))
-> +			return -EINVAL;
-> +
-> +		if (!ns_capable(current_user_ns(), arg2))
-> +			return -EPERM;
-> +
-> +		new = prepare_creds();
-> +		if (arg3 == 0)
-> +			cap_lower(new->cap_ambient, arg2);
-> +		else
-> +			cap_raise(new->cap_ambient, arg2);
-> +		return commit_creds(new);
-> +
->  	default:
->  		/* No functionality available - continue with default */
->  		return -ENOSYS;
-> Index: linux/include/linux/cred.h
-> ===================================================================
-> --- linux.orig/include/linux/cred.h	2015-02-25 13:43:06.929973954 -0600
-> +++ linux/include/linux/cred.h	2015-02-25 13:43:06.925972078 -0600
-> @@ -122,6 +122,7 @@ struct cred {
->  	kernel_cap_t	cap_permitted;	/* caps we're permitted */
->  	kernel_cap_t	cap_effective;	/* caps we can actually use */
->  	kernel_cap_t	cap_bset;	/* capability bounding set */
-> +	kernel_cap_t	cap_ambient;	/* Ambient capability set */
->  #ifdef CONFIG_KEYS
->  	unsigned char	jit_keyring;	/* default keyring to attach requested
->  					 * keys to */
-> Index: linux/include/uapi/linux/prctl.h
-> ===================================================================
-> --- linux.orig/include/uapi/linux/prctl.h	2015-02-25 13:43:06.929973954 -0600
-> +++ linux/include/uapi/linux/prctl.h	2015-02-25 13:43:06.925972078 -0600
-> @@ -185,4 +185,7 @@ struct prctl_mm_map {
->  #define PR_MPX_ENABLE_MANAGEMENT  43
->  #define PR_MPX_DISABLE_MANAGEMENT 44
-> 
-> +/* Control the ambient capability set */
-> +#define PR_CAP_AMBIENT 45
-> +
->  #endif /* _LINUX_PRCTL_H */
-> Index: linux/fs/proc/array.c
-> ===================================================================
-> --- linux.orig/fs/proc/array.c	2015-02-25 13:43:06.929973954 -0600
-> +++ linux/fs/proc/array.c	2015-02-25 13:43:06.925972078 -0600
-> @@ -302,7 +302,8 @@ static void render_cap_t(struct seq_file
->  static inline void task_cap(struct seq_file *m, struct task_struct *p)
->  {
->  	const struct cred *cred;
-> -	kernel_cap_t cap_inheritable, cap_permitted, cap_effective, cap_bset;
-> +	kernel_cap_t cap_inheritable, cap_permitted, cap_effective,
-> +			cap_bset, cap_ambient;
-> 
->  	rcu_read_lock();
->  	cred = __task_cred(p);
-> @@ -310,12 +311,14 @@ static inline void task_cap(struct seq_f
->  	cap_permitted	= cred->cap_permitted;
->  	cap_effective	= cred->cap_effective;
->  	cap_bset	= cred->cap_bset;
-> +	cap_ambient	= cred->cap_ambient;
->  	rcu_read_unlock();
-> 
->  	render_cap_t(m, "CapInh:\t", &cap_inheritable);
->  	render_cap_t(m, "CapPrm:\t", &cap_permitted);
->  	render_cap_t(m, "CapEff:\t", &cap_effective);
->  	render_cap_t(m, "CapBnd:\t", &cap_bset);
-> +	render_cap_t(m, "CapAmb:\t", &cap_ambient);
->  }
-> 
->  static inline void task_seccomp(struct seq_file *m, struct task_struct *p)
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+Patch 2 actually adds bpf+kprobe infra:
+programs receive 'struct pt_regs' on input and can walk data structures
+using bpf_probe_read() helper which is a wrapper of probe_kernel_read()
+
+Programs are attached to kprobe events via API:
+
+prog_fd = bpf_prog_load(...);
+struct perf_event_attr attr = {
+  .type = PERF_TYPE_TRACEPOINT,
+  .config = event_id, /* ID of just created kprobe event */
+};
+event_fd = perf_event_open(&attr,...);
+ioctl(event_fd, PERF_EVENT_IOC_SET_BPF, prog_fd);
+
+Patch 3 adds bpf_ktime_get_ns() helper function, so that bpf programs can
+measure time delta between events to compute disk io latency, etc.
+
+Patch 4 adds bpf_trace_printk() helper that is used to debug programs.
+When bpf verifier sees that program is calling bpf_trace_printk() it inits
+trace_printk buffers which emits nasty 'this is debug only' banner.
+That's exactly what we want. bpf_trace_printk() is for debugging only.
+
+Patch 5 sample code that shows how to use bpf_probe_read/bpf_trace_printk
+
+Patch 6 sample code - combination of kfree_skb and sys_write tracing.
+
+Patch 7 sample code that computes disk io latency and prints it as 'heatmap'
+
+Interesting bit is that patch 6 has log2() function implemented in C
+and patch 7 has another log2() function using different algorithm in C.
+In the future if 'log2' usage becomes common, we can add it as in-kernel
+helper function, but for now bpf programs can implement them on bpf side.
+
+Another interesting bit from patch 7 is that it does approximation of
+floating point log10(X)*10 using integer arithmetic, which demonstrates
+the power of C->BPF vs traditional tracing language alternatives,
+where one would need to introduce new helper functions to add functionality,
+whereas bpf can just implement such things in C as part of the program.
+
+Next step is to prototype TCP stack instrumentation (like web10g) using
+bpf+kprobe, but without adding any new code tcp stack.
+Though kprobes are slow comparing to tracepoints, they are good enough
+for prototyping and trace_marker/debug_tracepoint ideas can accelerate
+them in the future.
+
+Alexei Starovoitov (6):
+  tracing: attach BPF programs to kprobes
+  tracing: allow BPF programs to call bpf_ktime_get_ns()
+  tracing: allow BPF programs to call bpf_trace_printk()
+  samples: bpf: simple non-portable kprobe filter example
+  samples: bpf: counting example for kfree_skb and write syscall
+  samples: bpf: IO latency analysis (iosnoop/heatmap)
+
+Daniel Borkmann (1):
+  bpf: make internal bpf API independent of CONFIG_BPF_SYSCALL ifdefs
+
+ include/linux/bpf.h             |   20 ++++-
+ include/linux/ftrace_event.h    |   14 +++
+ include/uapi/linux/bpf.h        |    5 ++
+ include/uapi/linux/perf_event.h |    1 +
+ kernel/bpf/syscall.c            |    7 +-
+ kernel/events/core.c            |   59 +++++++++++++
+ kernel/trace/Makefile           |    1 +
+ kernel/trace/bpf_trace.c        |  178 +++++++++++++++++++++++++++++++++++++++
+ kernel/trace/trace_kprobe.c     |   10 ++-
+ samples/bpf/Makefile            |   12 +++
+ samples/bpf/bpf_helpers.h       |    6 ++
+ samples/bpf/bpf_load.c          |  112 ++++++++++++++++++++++--
+ samples/bpf/bpf_load.h          |    3 +
+ samples/bpf/libbpf.c            |   14 ++-
+ samples/bpf/libbpf.h            |    5 +-
+ samples/bpf/sock_example.c      |    2 +-
+ samples/bpf/test_verifier.c     |    2 +-
+ samples/bpf/tracex1_kern.c      |   50 +++++++++++
+ samples/bpf/tracex1_user.c      |   25 ++++++
+ samples/bpf/tracex2_kern.c      |   86 +++++++++++++++++++
+ samples/bpf/tracex2_user.c      |   95 +++++++++++++++++++++
+ samples/bpf/tracex3_kern.c      |   89 ++++++++++++++++++++
+ samples/bpf/tracex3_user.c      |  150 +++++++++++++++++++++++++++++++++
+ 23 files changed, 930 insertions(+), 16 deletions(-)
+ create mode 100644 kernel/trace/bpf_trace.c
+ create mode 100644 samples/bpf/tracex1_kern.c
+ create mode 100644 samples/bpf/tracex1_user.c
+ create mode 100644 samples/bpf/tracex2_kern.c
+ create mode 100644 samples/bpf/tracex2_user.c
+ create mode 100644 samples/bpf/tracex3_kern.c
+ create mode 100644 samples/bpf/tracex3_user.c
+
+-- 
+1.7.9.5
