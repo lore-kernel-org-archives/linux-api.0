@@ -1,717 +1,351 @@
-From: Stephan Mueller <smueller@chronox.de>
-Subject: [PATCH v13 1/2] crypto: AF_ALG: add AEAD support
-Date: Sat, 28 Feb 2015 20:50 +0100
-Message-ID: <14853152.iudhcNpbrH@tachyon.chronox.de>
-References: <2180298.gqj58NYuqx@tachyon.chronox.de>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] capabilities: Ambient capability set V2
+Date: Sat, 28 Feb 2015 22:44:07 -0600
+Message-ID: <20150301044407.GA14196@mail.hallyn.com>
+References: <alpine.DEB.2.11.1502261612370.8994@gentwo.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2180298.gqj58NYuqx@tachyon.chronox.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: 'Herbert Xu <herbert@gondor.apana.org.au>
-Cc: 'Quentin Gouchet' <quentin.gouchet@gmail.com>, Daniel Borkmann <dborkman@redhat.com>, linux-api@vger.kernel.org, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.11.1502261612370.8994-gkYfJU5Cukgdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds the AEAD support for AF_ALG.
+On Thu, Feb 26, 2015 at 04:14:33PM -0600, Christoph Lameter wrote:
+> 
+> V1->V2:
+>  - Fix up the processing of the caps bits after discussions
+>    with Any and Serge. Make patch less intrusive.
+> 
+> Ambient caps are something like restricted root privileges.
+> A process has a set of additional capabilities and those
+> are inherited without have to set capabilites in other
+> binaries involved. This allow the partial use of root
+> like features in a controlled way. It is often useful
+> to do this for user space device drivers or software that
+> needs increased priviledges for networking or to control
+> its own scheduling. Ambient caps allow one to avoid
+> having to run these with full root priviledges.
+> 
+> Control over this feature is avaialable via a new
+> prctl option called PR_CAP_AMBIENT. The second argument to prctl
+> is a the capability number and the third the desired state.
+> 0 for off. Otherwise on.
+> 
+> Ambient bits are enabled regardless of the inheritance
+> mask of the target binary. They are only restricted
+> by the bounding set.
+> 
+> History:
+> 
+> Linux capabilities have suffered from the problem that they are not
+> inheritable like unregular process characteristics under Unix. This is
+> behavior that is counter intuitive to the expected behavior of processes
+> in Unix.
+> 
+> In particular there has been recently software that controls NICs from user
+> space and provides IP stack like behavior also in user space (DPDK and RDMA
+> kernel API based implementations). Those typically need either capabilities
+> to allow raw network access or have to be run setsuid. There is scripting and
+> LD_PREFLOAD etc involved, arbitrary binaries may be run from those scripts
+> including those setting additional capabilites or requiring root access.
+> 
+> That does not go well with having file capabilities set that would enable
+> the capabilities. Maybe it would work if one would setup capabilities on
+> all executables but that would also defeat a secure design since these
+> binaries may only need those caps for certain situations. Ok setting the
+> inheritable flags on everything may also get one there (if there would not
+> be the issues with LD_PRELOAD, debugging etc etc).
+> 
+> The easy solution is to allow some capabilities be inherited like setsuid
+> is. We really prefer to use capabilities instead of setsuid (we want to
+> limit what damage someone can do after all!). Therefore we have been
+> running a patch like this in production for the last 6 years. At some
+> point it becomes tedious to run your own custom kernel so we would like
+> to have this functionality upstream.
+> 
+> See some of the earlier related discussions on the problems with capability
+> inheritance:
+> 
+> 0. Recent surprise:
+>                 https://lkml.org/lkml/2014/1/21/175
+> 
+> 1. Attempt to revise caps
+>                 http://www.madore.org/~david/linux/newcaps/
+> 
+> 2. Problems of passing caps through exec
+>                 http://unix.stackexchange.com/questions/128394/passing-capabilities-through-exec
+> 
+> 3. Problems of binding to privileged ports
+>                 http://stackoverflow.com/questions/413807/is-there-a-way-for-non-root-processes-to-bind-to-privileged-ports-1024-on-l
+> 
+> 4. Reviving capabilities
+>                 http://lwn.net/Articles/199004/
+> 
+> There does not seem to be an alternative on the horizon. Some involved
+> in security development under Linux have even stated that they want to
+> rip out the whole thing and replace it. Its been a couple of years now
+> and we are still suffering from the capabilities mess. Let us just
+> fix it. Others have already done implementations like this like Nokia
+> for the N900.
+> 
+> 
+> This patch does not change the default behavior but it allows to set up
+> a list of capabilities via prctl that will enable regular
+> unix inheritance only for the selected group of capabilities.
+> 
+> With that it is then possible to do something trivial like setting
+> CAP_NET_RAW on an executable that can then allow that capability to
+> be inherited by others.
+> 
+> Lets have a look at a coding example of a wrapper that enables
+> a couple of capabilities:
+> 
+> ------------------------------ ambient_test.c
+> /*
+>  * Test program for the ambient capabilities
+>  *
+>  *
+>  * Compile using:
+>  *	gcc -o ambient_test ambient_test.o
+>  *
+>  * This program must have the following capabilities to run properly:
+>  * CAP_SETPCAP, CAP_NET_RAW, CAP_NET_ADMIN, CAP_SYS_NICE
+>  *
+>  * A command to equip this with the right caps is:
+>  *
+>  *	setcap cap_setpcap,cap_net_raw,cap_net_admin,cap_sys_nice+eip ambient_test
+>  *
+>  * To get a shell with additional caps that can be inherited do:
+>  *
+>  * ./ambient_test /bin/bash
+>  *
+>  */
+> 
+> #include <stdlib.h>
+> #include <stdio.h>
+> #include <errno.h>
+> #include <sys/prctl.h>
+> #include <linux/capability.h>
+> 
+> /* Defintion to be updated in the user space include files */
+> #define PR_CAP_AMBIENT 45
+> 
+> int main(int argc, char **argv)
+> {
+> 	int rc;
+> 
+> 	if (prctl(PR_CAP_AMBIENT, CAP_NET_RAW))
+> 		perror("Cannot set CAP_NET_RAW");
+> 
+> 	if (prctl(PR_CAP_AMBIENT, CAP_NET_ADMIN))
+> 		perror("Cannot set CAP_NET_ADMIN");
+> 
+> 	if (prctl(PR_CAP_AMBIENT, CAP_SYS_NICE))
+> 		perror("Cannot set CAP_SYS_NICE");
+> 
 
-The implementation is based on algif_skcipher, but contains heavy
-modifications to streamline the interface for AEAD uses.
+Your example program is not filling in pI though?
 
-To use AEAD, the user space consumer has to use the salg_type named
-"aead".
+Ah, i see why.  In get_file_caps() you are still assigning
 
-The AEAD implementation includes some overhead to calculate the size of
-the ciphertext, because the AEAD implementation of the kernel crypto API
-makes implied assumption on the location of the authentication tag. When
-performing an encryption, the tag will be added to the created
-ciphertext (note, the tag is placed adjacent to the ciphertext). For
-decryption, the caller must hand in the ciphertext with the tag appended
-to the ciphertext. Therefore, the selection of the used memory
-needs to add/subtract the tag size from the source/destination buffers
-depending on the encryption type. The code is provided with comments
-explaining when and how that operation is performed.
+	fP = pA
 
-A fully working example using all aspects of AEAD is provided at
-http://www.chronox.de/libkcapi.html
+if the file has no file capabilities.  so then you are actually
+doing
 
-Signed-off-by: Stephan Mueller <smueller@chronox.de>
----
- crypto/algif_aead.c | 666 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 666 insertions(+)
- create mode 100644 crypto/algif_aead.c
+	 pP' = (X & (fP | pA)) | (pI & (fI | pA))
+rather than
+	 pP' = (X & fP) | (pI & (fI | pA))
 
-diff --git a/crypto/algif_aead.c b/crypto/algif_aead.c
-new file mode 100644
-index 0000000..527d27b
---- /dev/null
-+++ b/crypto/algif_aead.c
-@@ -0,0 +1,666 @@
-+/*
-+ * algif_aead: User-space interface for AEAD algorithms
-+ *
-+ * Copyright (C) 2014, Stephan Mueller <smueller@chronox.de>
-+ *
-+ * This file provides the user-space API for AEAD ciphers.
-+ *
-+ * This file is derived from algif_skcipher.c.
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License as published by the Free
-+ * Software Foundation; either version 2 of the License, or (at your option)
-+ * any later version.
-+ */
-+
-+#include <crypto/scatterwalk.h>
-+#include <crypto/if_alg.h>
-+#include <linux/init.h>
-+#include <linux/list.h>
-+#include <linux/kernel.h>
-+#include <linux/mm.h>
-+#include <linux/module.h>
-+#include <linux/net.h>
-+#include <net/sock.h>
-+
-+struct aead_sg_list {
-+	unsigned int cur;
-+	struct scatterlist sg[ALG_MAX_PAGES];
-+};
-+
-+struct aead_ctx {
-+	struct aead_sg_list tsgl;
-+	/*
-+	 * RSGL_MAX_ENTRIES is an artificial limit where user space at maximum
-+	 * can cause the kernel to allocate RSGL_MAX_ENTRIES * ALG_MAX_PAGES
-+	 * bytes
-+	 */
-+#define RSGL_MAX_ENTRIES ALG_MAX_PAGES
-+	struct af_alg_sgl rsgl[RSGL_MAX_ENTRIES];
-+
-+	void *iv;
-+
-+	struct af_alg_completion completion;
-+
-+	unsigned long used;
-+
-+	unsigned int len;
-+	bool more;
-+	bool merge;
-+	bool enc;
-+
-+	size_t aead_assoclen;
-+	struct aead_request aead_req;
-+};
-+
-+static inline int aead_sndbuf(struct sock *sk)
-+{
-+	struct alg_sock *ask = alg_sk(sk);
-+	struct aead_ctx *ctx = ask->private;
-+
-+	return max_t(int, max_t(int, sk->sk_sndbuf & PAGE_MASK, PAGE_SIZE) -
-+			  ctx->used, 0);
-+}
-+
-+static inline bool aead_writable(struct sock *sk)
-+{
-+	return PAGE_SIZE <= aead_sndbuf(sk);
-+}
-+
-+static inline bool aead_sufficient_data(struct aead_ctx *ctx)
-+{
-+	unsigned as = crypto_aead_authsize(crypto_aead_reqtfm(&ctx->aead_req));
-+
-+	return (ctx->used >= (ctx->aead_assoclen + (ctx->enc ? 0 : as)));
-+}
-+
-+static void aead_put_sgl(struct sock *sk)
-+{
-+	struct alg_sock *ask = alg_sk(sk);
-+	struct aead_ctx *ctx = ask->private;
-+	struct aead_sg_list *sgl = &ctx->tsgl;
-+	struct scatterlist *sg = sgl->sg;
-+	unsigned int i;
-+
-+	for (i = 0; i < sgl->cur; i++) {
-+		if (!sg_page(sg + i))
-+			continue;
-+
-+		put_page(sg_page(sg + i));
-+		sg_assign_page(sg + i, NULL);
-+	}
-+	sgl->cur = 0;
-+	ctx->used = 0;
-+	ctx->more = 0;
-+	ctx->merge = 0;
-+}
-+
-+static void aead_wmem_wakeup(struct sock *sk)
-+{
-+	struct socket_wq *wq;
-+
-+	if (!aead_writable(sk))
-+		return;
-+
-+	rcu_read_lock();
-+	wq = rcu_dereference(sk->sk_wq);
-+	if (wq_has_sleeper(wq))
-+		wake_up_interruptible_sync_poll(&wq->wait, POLLIN |
-+							   POLLRDNORM |
-+							   POLLRDBAND);
-+	sk_wake_async(sk, SOCK_WAKE_WAITD, POLL_IN);
-+	rcu_read_unlock();
-+}
-+
-+static int aead_wait_for_data(struct sock *sk, unsigned flags)
-+{
-+	struct alg_sock *ask = alg_sk(sk);
-+	struct aead_ctx *ctx = ask->private;
-+	long timeout;
-+	DEFINE_WAIT(wait);
-+	int err = -ERESTARTSYS;
-+
-+	if (flags & MSG_DONTWAIT)
-+		return -EAGAIN;
-+
-+	set_bit(SOCK_ASYNC_WAITDATA, &sk->sk_socket->flags);
-+
-+	for (;;) {
-+		if (signal_pending(current))
-+			break;
-+		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
-+		timeout = MAX_SCHEDULE_TIMEOUT;
-+		if (sk_wait_event(sk, &timeout, !ctx->more)) {
-+			err = 0;
-+			break;
-+		}
-+	}
-+	finish_wait(sk_sleep(sk), &wait);
-+
-+	clear_bit(SOCK_ASYNC_WAITDATA, &sk->sk_socket->flags);
-+
-+	return err;
-+}
-+
-+static void aead_data_wakeup(struct sock *sk)
-+{
-+	struct alg_sock *ask = alg_sk(sk);
-+	struct aead_ctx *ctx = ask->private;
-+	struct socket_wq *wq;
-+
-+	if (ctx->more)
-+		return;
-+	if (!ctx->used)
-+		return;
-+
-+	rcu_read_lock();
-+	wq = rcu_dereference(sk->sk_wq);
-+	if (wq_has_sleeper(wq))
-+		wake_up_interruptible_sync_poll(&wq->wait, POLLOUT |
-+							   POLLRDNORM |
-+							   POLLRDBAND);
-+	sk_wake_async(sk, SOCK_WAKE_SPACE, POLL_OUT);
-+	rcu_read_unlock();
-+}
-+
-+static int aead_sendmsg(struct kiocb *unused, struct socket *sock,
-+			struct msghdr *msg, size_t size)
-+{
-+	struct sock *sk = sock->sk;
-+	struct alg_sock *ask = alg_sk(sk);
-+	struct aead_ctx *ctx = ask->private;
-+	unsigned ivsize =
-+		crypto_aead_ivsize(crypto_aead_reqtfm(&ctx->aead_req));
-+	struct aead_sg_list *sgl = &ctx->tsgl;
-+	struct af_alg_control con = {};
-+	long copied = 0;
-+	bool enc = 0;
-+	bool init = 0;
-+	int err = -EINVAL;
-+
-+	if (msg->msg_controllen) {
-+		err = af_alg_cmsg_send(msg, &con);
-+		if (err)
-+			return err;
-+
-+		init = 1;
-+		switch (con.op) {
-+		case ALG_OP_ENCRYPT:
-+			enc = 1;
-+			break;
-+		case ALG_OP_DECRYPT:
-+			enc = 0;
-+			break;
-+		default:
-+			return -EINVAL;
-+		}
-+
-+		if (con.iv && con.iv->ivlen != ivsize)
-+			return -EINVAL;
-+	}
-+
-+	lock_sock(sk);
-+	if (!ctx->more && ctx->used)
-+		goto unlock;
-+
-+	if (init) {
-+		ctx->enc = enc;
-+		if (con.iv)
-+			memcpy(ctx->iv, con.iv->iv, ivsize);
-+
-+		ctx->aead_assoclen = con.aead_assoclen;
-+	}
-+
-+	while (size) {
-+		unsigned long len = size;
-+		struct scatterlist *sg = NULL;
-+
-+		/* use the existing memory in an allocated page */
-+		if (ctx->merge) {
-+			sg = sgl->sg + sgl->cur - 1;
-+			len = min_t(unsigned long, len,
-+				    PAGE_SIZE - sg->offset - sg->length);
-+			err = memcpy_from_msg(page_address(sg_page(sg)) +
-+					      sg->offset + sg->length,
-+					      msg, len);
-+			if (err)
-+				goto unlock;
-+
-+			sg->length += len;
-+			ctx->merge = (sg->offset + sg->length) &
-+				     (PAGE_SIZE - 1);
-+
-+			ctx->used += len;
-+			copied += len;
-+			size -= len;
-+			continue;
-+		}
-+
-+		if (!aead_writable(sk)) {
-+			/* user space sent too much data */
-+			aead_put_sgl(sk);
-+			err = -EMSGSIZE;
-+			goto unlock;
-+		}
-+
-+		/* allocate a new page */
-+		len = min_t(unsigned long, size, aead_sndbuf(sk));
-+		while (len) {
-+			int plen = 0;
-+
-+			if (sgl->cur >= ALG_MAX_PAGES) {
-+				aead_put_sgl(sk);
-+				err = -E2BIG;
-+				goto unlock;
-+			}
-+
-+			sg = sgl->sg + sgl->cur;
-+			plen = min_t(int, len, PAGE_SIZE);
-+
-+			sg_assign_page(sg, alloc_page(GFP_KERNEL));
-+			err = -ENOMEM;
-+			if (!sg_page(sg))
-+				goto unlock;
-+
-+			err = memcpy_from_msg(page_address(sg_page(sg)),
-+					      msg, plen);
-+			if (err) {
-+				__free_page(sg_page(sg));
-+				sg_assign_page(sg, NULL);
-+				goto unlock;
-+			}
-+
-+			sg->offset = 0;
-+			sg->length = plen;
-+			len -= plen;
-+			ctx->used += plen;
-+			copied += plen;
-+			sgl->cur++;
-+			size -= plen;
-+			ctx->merge = plen & (PAGE_SIZE - 1);
-+		}
-+	}
-+
-+	err = 0;
-+
-+	ctx->more = msg->msg_flags & MSG_MORE;
-+	if (!ctx->more && !aead_sufficient_data(ctx)) {
-+		aead_put_sgl(sk);
-+		err = -EMSGSIZE;
-+	}
-+
-+unlock:
-+	aead_data_wakeup(sk);
-+	release_sock(sk);
-+
-+	return err ?: copied;
-+}
-+
-+static ssize_t aead_sendpage(struct socket *sock, struct page *page,
-+			     int offset, size_t size, int flags)
-+{
-+	struct sock *sk = sock->sk;
-+	struct alg_sock *ask = alg_sk(sk);
-+	struct aead_ctx *ctx = ask->private;
-+	struct aead_sg_list *sgl = &ctx->tsgl;
-+	int err = -EINVAL;
-+
-+	if (flags & MSG_SENDPAGE_NOTLAST)
-+		flags |= MSG_MORE;
-+
-+	if (sgl->cur >= ALG_MAX_PAGES)
-+		return -E2BIG;
-+
-+	lock_sock(sk);
-+	if (!ctx->more && ctx->used)
-+		goto unlock;
-+
-+	if (!size)
-+		goto done;
-+
-+	if (!aead_writable(sk)) {
-+		/* user space sent too much data */
-+		aead_put_sgl(sk);
-+		err = -EMSGSIZE;
-+		goto unlock;
-+	}
-+
-+	ctx->merge = 0;
-+
-+	get_page(page);
-+	sg_set_page(sgl->sg + sgl->cur, page, size, offset);
-+	sgl->cur++;
-+	ctx->used += size;
-+
-+	err = 0;
-+
-+done:
-+	ctx->more = flags & MSG_MORE;
-+	if (!ctx->more && !aead_sufficient_data(ctx)) {
-+		aead_put_sgl(sk);
-+		err = -EMSGSIZE;
-+	}
-+
-+unlock:
-+	aead_data_wakeup(sk);
-+	release_sock(sk);
-+
-+	return err ?: size;
-+}
-+
-+static int aead_recvmsg(struct kiocb *unused, struct socket *sock,
-+			struct msghdr *msg, size_t ignored, int flags)
-+{
-+	struct sock *sk = sock->sk;
-+	struct alg_sock *ask = alg_sk(sk);
-+	struct aead_ctx *ctx = ask->private;
-+	unsigned bs = crypto_aead_blocksize(crypto_aead_reqtfm(&ctx->aead_req));
-+	unsigned as = crypto_aead_authsize(crypto_aead_reqtfm(&ctx->aead_req));
-+	struct aead_sg_list *sgl = &ctx->tsgl;
-+	struct scatterlist *sg = NULL;
-+	struct scatterlist assoc[ALG_MAX_PAGES];
-+	size_t assoclen = 0;
-+	unsigned int i = 0;
-+	int err = -EINVAL;
-+	unsigned long used = 0;
-+	size_t outlen = 0;
-+	size_t usedpages = 0;
-+	unsigned int cnt = 0;
-+
-+	/* Limit number of IOV blocks to be accessed below */
-+	if (msg->msg_iter.nr_segs > RSGL_MAX_ENTRIES)
-+		return -ENOMSG;
-+
-+	lock_sock(sk);
-+
-+	/*
-+	 * AEAD memory structure: For encryption, the tag is appended to the
-+	 * ciphertext which implies that the memory allocated for the ciphertext
-+	 * must be increased by the tag length. For decryption, the tag
-+	 * is expected to be concatenated to the ciphertext. The plaintext
-+	 * therefore has a memory size of the ciphertext minus the tag length.
-+	 *
-+	 * The memory structure for cipher operation has the following
-+	 * structure:
-+	 *	AEAD encryption input:  assoc data || plaintext
-+	 *	AEAD encryption output: cipherntext || auth tag
-+	 *	AEAD decryption input:  assoc data || ciphertext || auth tag
-+	 *	AEAD decryption output: plaintext
-+	 */
-+
-+	if (ctx->more) {
-+		err = aead_wait_for_data(sk, flags);
-+		if (err)
-+			goto unlock;
-+	}
-+
-+	used = ctx->used;
-+
-+	/*
-+	 * Make sure sufficient data is present -- note, the same check is
-+	 * is also present in sendmsg/sendpage. The checks in sendpage/sendmsg
-+	 * shall provide an information to the data sender that something is
-+	 * wrong, but they are irrelevant to maintain the kernel integrity.
-+	 * We need this check here too in case user space decides to not honor
-+	 * the error message in sendmsg/sendpage and still call recvmsg. This
-+	 * check here protects the kernel integrity.
-+	 */
-+	if (!aead_sufficient_data(ctx))
-+		goto unlock;
-+
-+	/*
-+	 * The cipher operation input data is reduced by the associated data
-+	 * length as this data is processed separately later on.
-+	 */
-+	used -= ctx->aead_assoclen;
-+
-+	if (ctx->enc) {
-+		/* round up output buffer to multiple of block size */
-+		outlen = ((used + bs - 1) / bs * bs);
-+		/* add the size needed for the auth tag to be created */
-+		outlen += as;
-+	} else {
-+		/* output data size is input without the authentication tag */
-+		outlen = used - as;
-+		/* round up output buffer to multiple of block size */
-+		outlen = ((outlen + bs - 1) / bs * bs);
-+	}
-+
-+	/* convert iovecs of output buffers into scatterlists */
-+	while (iov_iter_count(&msg->msg_iter)) {
-+		size_t seglen = min_t(size_t, iov_iter_count(&msg->msg_iter),
-+				      (outlen - usedpages));
-+
-+		/* make one iovec available as scatterlist */
-+		err = af_alg_make_sg(&ctx->rsgl[cnt], &msg->msg_iter,
-+				     seglen);
-+		if (err < 0)
-+			goto unlock;
-+		usedpages += err;
-+		/* chain the new scatterlist with initial list */
-+		if (cnt)
-+			scatterwalk_crypto_chain(ctx->rsgl[0].sg,
-+					ctx->rsgl[cnt].sg, 1,
-+					sg_nents(ctx->rsgl[cnt-1].sg));
-+		/* we do not need more iovecs as we have sufficient memory */
-+		if (outlen <= usedpages)
-+			break;
-+		iov_iter_advance(&msg->msg_iter, err);
-+		cnt++;
-+	}
-+
-+	err = -EINVAL;
-+	/* ensure output buffer is sufficiently large */
-+	if (usedpages < outlen)
-+		goto unlock;
-+
-+	sg_init_table(assoc, ALG_MAX_PAGES);
-+	assoclen = ctx->aead_assoclen;
-+	/*
-+	 * Split scatterlist into two: first part becomes AD, second part
-+	 * is plaintext / ciphertext. The first part is assigned to assoc
-+	 * scatterlist. When this loop finishes, sg points to the start of the
-+	 * plaintext / ciphertext.
-+	 */
-+	for (i = 0; i < ctx->tsgl.cur; i++) {
-+		sg = sgl->sg + i;
-+		if (sg->length <= assoclen) {
-+			/* AD is larger than one page */
-+			sg_set_page(assoc + i, sg_page(sg),
-+				    sg->length, sg->offset);
-+			assoclen -= sg->length;
-+			if (i >= ctx->tsgl.cur)
-+				goto unlock;
-+		} else if (!assoclen) {
-+			/* current page is to start of plaintext / ciphertext */
-+			if (i)
-+				/* AD terminates at page boundary */
-+				sg_mark_end(assoc + i - 1);
-+			else
-+				/* AD size is zero */
-+				sg_mark_end(assoc);
-+			break;
-+		} else {
-+			/* AD does not terminate at page boundary */
-+			sg_set_page(assoc + i, sg_page(sg),
-+				    assoclen, sg->offset);
-+			sg_mark_end(assoc + i);
-+			/* plaintext / ciphertext starts after AD */
-+			sg->length -= assoclen;
-+			sg->offset += assoclen;
-+			break;
-+		}
-+	}
-+
-+	aead_request_set_assoc(&ctx->aead_req, assoc, ctx->aead_assoclen);
-+	aead_request_set_crypt(&ctx->aead_req, sg, ctx->rsgl[0].sg, used,
-+			       ctx->iv);
-+
-+	err = af_alg_wait_for_completion(ctx->enc ?
-+					 crypto_aead_encrypt(&ctx->aead_req) :
-+					 crypto_aead_decrypt(&ctx->aead_req),
-+					 &ctx->completion);
-+
-+	if (err) {
-+		/* EBADMSG implies a valid cipher operation took place */
-+		if (err == -EBADMSG)
-+			aead_put_sgl(sk);
-+		goto unlock;
-+	}
-+
-+	aead_put_sgl(sk);
-+
-+	err = 0;
-+
-+unlock:
-+	for (i = 0; i < cnt; i++)
-+		af_alg_free_sg(&ctx->rsgl[i]);
-+
-+	aead_wmem_wakeup(sk);
-+	release_sock(sk);
-+
-+	return err ? err : outlen;
-+}
-+
-+static unsigned int aead_poll(struct file *file, struct socket *sock,
-+			      poll_table *wait)
-+{
-+	struct sock *sk = sock->sk;
-+	struct alg_sock *ask = alg_sk(sk);
-+	struct aead_ctx *ctx = ask->private;
-+	unsigned int mask;
-+
-+	sock_poll_wait(file, sk_sleep(sk), wait);
-+	mask = 0;
-+
-+	if (!ctx->more)
-+		mask |= POLLIN | POLLRDNORM;
-+
-+	if (aead_writable(sk))
-+		mask |= POLLOUT | POLLWRNORM | POLLWRBAND;
-+
-+	return mask;
-+}
-+
-+static struct proto_ops algif_aead_ops = {
-+	.family		=	PF_ALG,
-+
-+	.connect	=	sock_no_connect,
-+	.socketpair	=	sock_no_socketpair,
-+	.getname	=	sock_no_getname,
-+	.ioctl		=	sock_no_ioctl,
-+	.listen		=	sock_no_listen,
-+	.shutdown	=	sock_no_shutdown,
-+	.getsockopt	=	sock_no_getsockopt,
-+	.mmap		=	sock_no_mmap,
-+	.bind		=	sock_no_bind,
-+	.accept		=	sock_no_accept,
-+	.setsockopt	=	sock_no_setsockopt,
-+
-+	.release	=	af_alg_release,
-+	.sendmsg	=	aead_sendmsg,
-+	.sendpage	=	aead_sendpage,
-+	.recvmsg	=	aead_recvmsg,
-+	.poll		=	aead_poll,
-+};
-+
-+static void *aead_bind(const char *name, u32 type, u32 mask)
-+{
-+	return crypto_alloc_aead(name, type, mask);
-+}
-+
-+static void aead_release(void *private)
-+{
-+	crypto_free_aead(private);
-+}
-+
-+static int aead_setauthsize(void *private, unsigned int authsize)
-+{
-+	return crypto_aead_setauthsize(private, authsize);
-+}
-+
-+static int aead_setkey(void *private, const u8 *key, unsigned int keylen)
-+{
-+	return crypto_aead_setkey(private, key, keylen);
-+}
-+
-+static void aead_sock_destruct(struct sock *sk)
-+{
-+	struct alg_sock *ask = alg_sk(sk);
-+	struct aead_ctx *ctx = ask->private;
-+	unsigned int ivlen = crypto_aead_ivsize(
-+				crypto_aead_reqtfm(&ctx->aead_req));
-+
-+	aead_put_sgl(sk);
-+	sock_kzfree_s(sk, ctx->iv, ivlen);
-+	sock_kfree_s(sk, ctx, ctx->len);
-+	af_alg_release_parent(sk);
-+}
-+
-+static int aead_accept_parent(void *private, struct sock *sk)
-+{
-+	struct aead_ctx *ctx;
-+	struct alg_sock *ask = alg_sk(sk);
-+	unsigned int len = sizeof(*ctx) + crypto_aead_reqsize(private);
-+	unsigned int ivlen = crypto_aead_ivsize(private);
-+
-+	ctx = sock_kmalloc(sk, len, GFP_KERNEL);
-+	if (!ctx)
-+		return -ENOMEM;
-+	memset(ctx, 0, len);
-+
-+	ctx->iv = sock_kmalloc(sk, ivlen, GFP_KERNEL);
-+	if (!ctx->iv) {
-+		sock_kfree_s(sk, ctx, len);
-+		return -ENOMEM;
-+	}
-+	memset(ctx->iv, 0, ivlen);
-+
-+	ctx->len = len;
-+	ctx->used = 0;
-+	ctx->more = 0;
-+	ctx->merge = 0;
-+	ctx->enc = 0;
-+	ctx->tsgl.cur = 0;
-+	ctx->aead_assoclen = 0;
-+	af_alg_init_completion(&ctx->completion);
-+	sg_init_table(ctx->tsgl.sg, ALG_MAX_PAGES);
-+
-+	ask->private = ctx;
-+
-+	aead_request_set_tfm(&ctx->aead_req, private);
-+	aead_request_set_callback(&ctx->aead_req, CRYPTO_TFM_REQ_MAY_BACKLOG,
-+				  af_alg_complete, &ctx->completion);
-+
-+	sk->sk_destruct = aead_sock_destruct;
-+
-+	return 0;
-+}
-+
-+static const struct af_alg_type algif_type_aead = {
-+	.bind		=	aead_bind,
-+	.release	=	aead_release,
-+	.setkey		=	aead_setkey,
-+	.setauthsize	=	aead_setauthsize,
-+	.accept		=	aead_accept_parent,
-+	.ops		=	&algif_aead_ops,
-+	.name		=	"aead",
-+	.owner		=	THIS_MODULE
-+};
-+
-+static int __init algif_aead_init(void)
-+{
-+	return af_alg_register_type(&algif_type_aead);
-+}
-+
-+static void __exit algif_aead_exit(void)
-+{
-+	int err = af_alg_unregister_type(&algif_type_aead);
-+	BUG_ON(err);
-+}
-+
-+module_init(algif_aead_init);
-+module_exit(algif_aead_exit);
-+MODULE_LICENSE("GPL");
-+MODULE_AUTHOR("Stephan Mueller <smueller@chronox.de>");
-+MODULE_DESCRIPTION("AEAD kernel crypto API user space interface");
--- 
-2.1.0
+Other than that, the patch is looking good to me.  We should
+consider emitting an audit record when a task fills in its
+pA, and I do still wonder whether we should be requiring
+CAP_SETFCAP (unsure how best to think of it).  But assuming the
+fP = pA was not intended, I think this largely does the right
+thing.
+
+> 	printf("Ambient_test forking shell\n");
+> 	if (execv(argv[1], argv + 1))
+> 		perror("Cannot exec");
+> 
+> 	return 0;
+> }
+> -------------------------------- ambient_test.c
+> 
+> Allows the inheritance of CAP_SYS_NICE, CAP_NET_RAW and CAP_NET_ADMIN.
+> With that device raw access is possible and also real time priorities
+> can be set from user space. This is a frequently needed set of
+> priviledged operations in HPC and HFT applications. User space
+> processes need to be able to directly access devices as well as
+> have full control over scheduling.
+> 
+> Signed-off-by: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+> 
+> Index: linux/security/commoncap.c
+> ===================================================================
+> --- linux.orig/security/commoncap.c	2015-02-25 13:43:06.929973954 -0600
+> +++ linux/security/commoncap.c	2015-02-26 16:10:02.347913397 -0600
+> @@ -347,15 +347,17 @@ static inline int bprm_caps_from_vfs_cap
+>  		*has_cap = true;
+> 
+>  	CAP_FOR_EACH_U32(i) {
+> +		__u32 ambient = current_cred()->cap_ambient.cap[i];
+>  		__u32 permitted = caps->permitted.cap[i];
+>  		__u32 inheritable = caps->inheritable.cap[i];
+> 
+>  		/*
+> -		 * pP' = (X & fP) | (pI & fI)
+> +		 * pP' = (X & fP) | (pI & (fI | pA))
+>  		 */
+>  		new->cap_permitted.cap[i] =
+>  			(new->cap_bset.cap[i] & permitted) |
+> -			(new->cap_inheritable.cap[i] & inheritable);
+> +			(new->cap_inheritable.cap[i] &
+> +					(inheritable | ambient));
+> 
+>  		if (permitted & ~new->cap_permitted.cap[i])
+>  			/* insufficient to execute correctly */
+> @@ -453,8 +455,18 @@ static int get_file_caps(struct linux_bi
+>  		if (rc == -EINVAL)
+>  			printk(KERN_NOTICE "%s: get_vfs_caps_from_disk returned %d for %s\n",
+>  				__func__, rc, bprm->filename);
+> -		else if (rc == -ENODATA)
+> +		else if (rc == -ENODATA) {
+>  			rc = 0;
+> +			if (!cap_isclear(current_cred()->cap_ambient)) {
+> +				/*
+> +				 * The ambient caps are permitted for
+> +				 * files that have no caps
+> +				 */
+> +				bprm->cred->cap_permitted =
+> +					current_cred()->cap_ambient;
+> +				*effective = true;
+> +			}
+> +		}
+>  		goto out;
+>  	}
+> 
+> @@ -549,9 +561,20 @@ skip:
+>  	new->sgid = new->fsgid = new->egid;
+> 
+>  	if (effective)
+> +		/*
+> +		 * pE' = pP' & (fE | pA)
+> +		 *
+> +		 * fE is implicity all set if effective == true.
+> +		 * Therefore the above reduces to
+> +		 *
+> +		 * pE' = pP'
+> +		 */
+>  		new->cap_effective = new->cap_permitted;
+>  	else
+>  		cap_clear(new->cap_effective);
+> +
+> +	/* pA' = pA */
+> +	new->cap_ambient = old->cap_ambient;
+>  	bprm->cap_effective = effective;
+> 
+>  	/*
+> @@ -566,7 +589,7 @@ skip:
+>  	 * Number 1 above might fail if you don't have a full bset, but I think
+>  	 * that is interesting information to audit.
+>  	 */
+> -	if (!cap_isclear(new->cap_effective)) {
+> +	if (!cap_issubset(new->cap_effective, new->cap_ambient)) {
+>  		if (!cap_issubset(CAP_FULL_SET, new->cap_effective) ||
+>  		    !uid_eq(new->euid, root_uid) || !uid_eq(new->uid, root_uid) ||
+>  		    issecure(SECURE_NOROOT)) {
+> @@ -598,7 +621,7 @@ int cap_bprm_secureexec(struct linux_bin
+>  	if (!uid_eq(cred->uid, root_uid)) {
+>  		if (bprm->cap_effective)
+>  			return 1;
+> -		if (!cap_isclear(cred->cap_permitted))
+> +		if (!cap_issubset(cred->cap_permitted, cred->cap_ambient))
+>  			return 1;
+>  	}
+> 
+> @@ -933,6 +956,23 @@ int cap_task_prctl(int option, unsigned
+>  			new->securebits &= ~issecure_mask(SECURE_KEEP_CAPS);
+>  		return commit_creds(new);
+> 
+> +	case PR_CAP_AMBIENT:
+> +		if (!ns_capable(current_user_ns(), CAP_SETPCAP))
+> +			return -EPERM;
+> +
+> +		if (!cap_valid(arg2))
+> +			return -EINVAL;
+> +
+> +		if (!ns_capable(current_user_ns(), arg2))
+> +			return -EPERM;
+> +
+> +		new = prepare_creds();
+> +		if (arg3 == 0)
+> +			cap_lower(new->cap_ambient, arg2);
+> +		else
+> +			cap_raise(new->cap_ambient, arg2);
+> +		return commit_creds(new);
+> +
+>  	default:
+>  		/* No functionality available - continue with default */
+>  		return -ENOSYS;
+> Index: linux/include/linux/cred.h
+> ===================================================================
+> --- linux.orig/include/linux/cred.h	2015-02-25 13:43:06.929973954 -0600
+> +++ linux/include/linux/cred.h	2015-02-25 13:43:06.925972078 -0600
+> @@ -122,6 +122,7 @@ struct cred {
+>  	kernel_cap_t	cap_permitted;	/* caps we're permitted */
+>  	kernel_cap_t	cap_effective;	/* caps we can actually use */
+>  	kernel_cap_t	cap_bset;	/* capability bounding set */
+> +	kernel_cap_t	cap_ambient;	/* Ambient capability set */
+>  #ifdef CONFIG_KEYS
+>  	unsigned char	jit_keyring;	/* default keyring to attach requested
+>  					 * keys to */
+> Index: linux/include/uapi/linux/prctl.h
+> ===================================================================
+> --- linux.orig/include/uapi/linux/prctl.h	2015-02-25 13:43:06.929973954 -0600
+> +++ linux/include/uapi/linux/prctl.h	2015-02-25 13:43:06.925972078 -0600
+> @@ -185,4 +185,7 @@ struct prctl_mm_map {
+>  #define PR_MPX_ENABLE_MANAGEMENT  43
+>  #define PR_MPX_DISABLE_MANAGEMENT 44
+> 
+> +/* Control the ambient capability set */
+> +#define PR_CAP_AMBIENT 45
+> +
+>  #endif /* _LINUX_PRCTL_H */
+> Index: linux/fs/proc/array.c
+> ===================================================================
+> --- linux.orig/fs/proc/array.c	2015-02-25 13:43:06.929973954 -0600
+> +++ linux/fs/proc/array.c	2015-02-25 13:43:06.925972078 -0600
+> @@ -302,7 +302,8 @@ static void render_cap_t(struct seq_file
+>  static inline void task_cap(struct seq_file *m, struct task_struct *p)
+>  {
+>  	const struct cred *cred;
+> -	kernel_cap_t cap_inheritable, cap_permitted, cap_effective, cap_bset;
+> +	kernel_cap_t cap_inheritable, cap_permitted, cap_effective,
+> +			cap_bset, cap_ambient;
+> 
+>  	rcu_read_lock();
+>  	cred = __task_cred(p);
+> @@ -310,12 +311,14 @@ static inline void task_cap(struct seq_f
+>  	cap_permitted	= cred->cap_permitted;
+>  	cap_effective	= cred->cap_effective;
+>  	cap_bset	= cred->cap_bset;
+> +	cap_ambient	= cred->cap_ambient;
+>  	rcu_read_unlock();
+> 
+>  	render_cap_t(m, "CapInh:\t", &cap_inheritable);
+>  	render_cap_t(m, "CapPrm:\t", &cap_permitted);
+>  	render_cap_t(m, "CapEff:\t", &cap_effective);
+>  	render_cap_t(m, "CapBnd:\t", &cap_bset);
+> +	render_cap_t(m, "CapAmb:\t", &cap_ambient);
+>  }
+> 
+>  static inline void task_seccomp(struct seq_file *m, struct task_struct *p)
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
