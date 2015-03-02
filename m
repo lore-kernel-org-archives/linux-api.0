@@ -1,94 +1,55 @@
 From: Sebastian Reichel <sre@kernel.org>
-Subject: [PATCH 2/9] HSI: cmt_speech: Avoid GFP_ATOMIC in cs_char_open
-Date: Mon,  2 Mar 2015 05:38:52 +0100
-Message-ID: <1425271139-24715-3-git-send-email-sre@kernel.org>
+Subject: [PATCH 4/9] HSI: cmt_speech: Fix build for 4.0 kernel
+Date: Mon,  2 Mar 2015 05:38:54 +0100
+Message-ID: <1425271139-24715-5-git-send-email-sre@kernel.org>
 References: <1425271139-24715-1-git-send-email-sre@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1425271139-24715-1-git-send-email-sre@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Sebastian Reichel <sre@kernel.org>
-Cc: Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pavel Machek <pavel@ucw.cz>, Pali Rohar <pali.rohar@gmail.com>, Aaro Koskinen <aaro.koskinen@iki.fi>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Kai Vehmanen <kai.vehmanen@nokia.com>, Joni Lapilainen <joni.lapilainen@gmail.com>
+Cc: Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pavel Machek <pavel@ucw.cz>, Pali Rohar <pali.rohar@gmail.com>, Aaro Koskinen <aaro.koskinen@iki.fi>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Kai Vehmanen <kai.vehmanen@nokia.com>
+Fix building of the old out-of-tree code.
 
-Also fixes a bug in updating 'opened' state in case cs_hsi_start()
-fails when opening the char device.
-
-Signed-off-by: Kai Vehmanen <kai.vehmanen@nokia.com>
-Signed-off-by: Joni Lapilainen <joni.lapilainen@gmail.com>
 Signed-off-by: Sebastian Reichel <sre@kernel.org>
 ---
- drivers/hsi/clients/cmt_speech.c | 43 +++++++++++++++++++++++-----------------
- 1 file changed, 25 insertions(+), 18 deletions(-)
+ drivers/hsi/clients/cmt_speech.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/hsi/clients/cmt_speech.c b/drivers/hsi/clients/cmt_speech.c
-index 7c0f711..389eafb 100644
+index 56846c9..6d852ea 100644
 --- a/drivers/hsi/clients/cmt_speech.c
 +++ b/drivers/hsi/clients/cmt_speech.c
-@@ -1271,38 +1271,45 @@ static int cs_char_mmap(struct file *file, struct vm_area_struct *vma)
- static int cs_char_open(struct inode *unused, struct file *file)
- {
- 	int ret = 0;
-+	unsigned long p;
+@@ -34,9 +34,9 @@
+ #include <linux/sched.h>
+ #include <linux/ioctl.h>
+ #include <linux/uaccess.h>
+-#include <linux/pm_qos_params.h>
++#include <linux/pm_qos.h>
+ #include <linux/hsi/hsi.h>
+-#include <linux/hsi/ssip_slave.h>
++#include <linux/hsi/ssi_protocol.h>
+ #include <linux/cs-protocol.h>
  
- 	spin_lock_bh(&cs_char_data.lock);
- 	if (cs_char_data.opened) {
- 		ret = -EBUSY;
- 		spin_unlock_bh(&cs_char_data.lock);
--		goto out;
--	}
--	cs_char_data.mmap_base = get_zeroed_page(GFP_ATOMIC);
--	if (!cs_char_data.mmap_base) {
--		dev_err(&cs_char_data.cl->device,
--					"Shared memory allocation failed.\n");
--		ret = -ENOMEM;
--		spin_unlock_bh(&cs_char_data.lock);
--		goto out;
-+		goto out1;
- 	}
--	cs_char_data.mmap_size = CS_MMAP_SIZE;
--	cs_char_data.dataind_pending = 0;
- 	cs_char_data.opened = 1;
--	file->private_data = &cs_char_data;
-+	cs_char_data.dataind_pending = 0;
- 	spin_unlock_bh(&cs_char_data.lock);
+ #define CS_MMAP_SIZE	PAGE_SIZE
+@@ -126,7 +126,7 @@ struct cs_hsi_iface {
+ 	struct hsi_msg			*data_tx_msg;
+ 	wait_queue_head_t		datawait;
  
--	BUG_ON(cs_char_data.hi);
-+	p = get_zeroed_page(GFP_KERNEL);
-+	if (!p) {
-+		ret = -ENOMEM;
-+		goto out2;
-+	}
+-	struct pm_qos_request_list      pm_qos_req;
++	struct pm_qos_request           pm_qos_req;
  
--	ret = cs_hsi_start(&cs_char_data.hi, cs_char_data.cl,
--				cs_char_data.mmap_base, cs_char_data.mmap_size);
-+	ret = cs_hsi_start(&cs_char_data.hi, cs_char_data.cl, p, CS_MMAP_SIZE);
- 	if (ret) {
- 		dev_err(&cs_char_data.cl->device, "Unable to initialize HSI\n");
--		free_page(cs_char_data.mmap_base);
--		goto out;
-+		goto out3;
- 	}
+ 	spinlock_t			lock;
+ };
+@@ -1268,7 +1268,7 @@ static int cs_char_mmap(struct file *file, struct vm_area_struct *vma)
+ 	if (((vma->vm_end - vma->vm_start) >> PAGE_SHIFT) != 1)
+ 		return -EINVAL;
  
--out:
-+	/* these are only used in release so lock not needed */
-+	cs_char_data.mmap_base = p;
-+	cs_char_data.mmap_size = CS_MMAP_SIZE;
-+
-+	file->private_data = &cs_char_data;
-+
-+	return 0;
-+
-+out3:
-+	free_page(p);
-+out2:
-+	spin_lock_bh(&cs_char_data.lock);
-+	cs_char_data.opened = 0;
-+	spin_unlock_bh(&cs_char_data.lock);
-+out1:
- 	return ret;
- }
+-	vma->vm_flags |= VM_RESERVED;
++	vma->vm_flags |= VM_IO | VM_DONTDUMP | VM_DONTEXPAND;
+ 	vma->vm_ops = &cs_char_vm_ops;
+ 	vma->vm_private_data = file->private_data;
  
 -- 
 2.1.4
