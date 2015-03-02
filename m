@@ -1,98 +1,73 @@
-From: Pali =?utf-8?q?Roh=C3=A1r?= <pali.rohar@gmail.com>
+From: Sebastian Reichel <sre@kernel.org>
 Subject: Re: [PATCH 0/9] N900 Modem Speech Support
-Date: Mon, 2 Mar 2015 20:05:31 +0100
-Message-ID: <201503022005.31729@pali>
+Date: Mon, 2 Mar 2015 21:51:48 +0100
+Message-ID: <20150302205148.GA24744@earth>
 References: <1425271139-24715-1-git-send-email-sre@kernel.org>
+ <201503022005.31729@pali>
 Mime-Version: 1.0
-Content-Type: multipart/signed;
-  boundary="nextPart2018451.B1vUd1Vyav";
-  protocol="application/pgp-signature";
-  micalg=pgp-sha1
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="x+6KMIRAuhnl3hBn"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1425271139-24715-1-git-send-email-sre@kernel.org>
+Content-Disposition: inline
+In-Reply-To: <201503022005.31729@pali>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Sebastian Reichel <sre@kernel.org>
+To: Pali =?iso-8859-1?Q?Roh=E1r?= <pali.rohar@gmail.com>
 Cc: Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pavel Machek <pavel@ucw.cz>, Aaro Koskinen <aaro.koskinen@iki.fi>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
---nextPart2018451.B1vUd1Vyav
-Content-Type: Text/Plain;
-  charset="utf-8"
+
+--x+6KMIRAuhnl3hBn
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On Monday 02 March 2015 05:38:50 Sebastian Reichel wrote:
-> Hi,
->=20
-> This patchset contains the missing speech data support for the
-> Nokia N900 modem.
->=20
-> Userland access goes via /dev/cmt_speech. The API is
-> implemented in libcmtspeechdata, which is used by ofono and
-> the freesmartphone.org project. Apart from that the device is
-> also used by the phone binaries distributed with Maemo. So
-> while this is a new userland ABI for the mainline kernel it
-> has been tested in the wild for some years.
->=20
-> Simple Testing of the API can be done by checking out
-> libcmtspeechdata [0], building the test tool and executing
-> it. The tool will loop back audio data received from the
-> caller.
->=20
-> I have prepared a kernel branch, which includes these changes
-> at [1].
->=20
-> [0] https://lkml.org/lkml/2015/2/11/526
-> [1]
-> git://git.kernel.org/pub/scm/linux/kernel/git/sre/linux-hsi.g
-> it branch/cmt-speech
->=20
-> -- Sebastian
->=20
-> Kai Vehmanen (3):
->   HSI: cmt_speech: Add cmt-speech driver
->   HSI: cmt_speech: Avoid GFP_ATOMIC in cs_char_open
->   HSI: cmt_speech: Return error if HSI port not configured
->=20
-> Sebastian Reichel (6):
->   HSI: cmt_speech: Fix build for 4.0 kernel
->   HSI: cmt_speech: Cleanup initialisation
->   HSI: cmt_speech: Rename driver to cmt-speech
->   HSI: cmt_speech: Move cs-protocol.h to
-> include/uapi/linux/hsi HSI: cmt_speech: Remove hardcoded
-> channel numbers
->   HSI: nokia-modem: Add cmt_speech support
->=20
->  drivers/hsi/clients/Kconfig          |   11 +-
->  drivers/hsi/clients/Makefile         |    1 +
->  drivers/hsi/clients/cmt_speech.c     | 1451
-> ++++++++++++++++++++++++++++++++++
-> drivers/hsi/clients/nokia-modem.c    |   31 +-
->  include/uapi/linux/hsi/Kbuild        |    2 +-
->  include/uapi/linux/hsi/cs-protocol.h |  113 +++
->  6 files changed, 1606 insertions(+), 3 deletions(-)
->  create mode 100644 drivers/hsi/clients/cmt_speech.c
->  create mode 100644 include/uapi/linux/hsi/cs-protocol.h
+Hi,
 
-Hello, do you have also DT patches? Or no DT changes are needed?
+On Mon, Mar 02, 2015 at 08:05:31PM +0100, Pali Roh=E1r wrote:
+> On Monday 02 March 2015 05:38:50 Sebastian Reichel wrote:
+> > This patchset contains the missing speech data support for the
+> > Nokia N900 modem.
+> > [...]
+>=20
+> Hello, do you have also DT patches? Or no DT changes are needed?
 
-Is this cmt_speech version one from linux-n900 git tree? or it is=20
-new or modified?
+No DT changes are needed. The DT already contains the n900-modem endpoint
+(look for compatible =3D "nokia,n900-modem"), which is handled by
+drivers/hsi/clients/nokia-modem.c.
 
-=2D-=20
-Pali Roh=C3=A1r
-pali.rohar@gmail.com
+The nokia-modem driver currently takes care of gpios, irqs, pinctrl
+and loads ssi-protocol. After this patchset it also loads
+cmt-speech.
 
---nextPart2018451.B1vUd1Vyav
-Content-Type: application/pgp-signature; name=signature.asc 
-Content-Description: This is a digitally signed message part.
+> Is this cmt_speech version one from linux-n900 git tree? or it is=20
+> new or modified?
+
+The first 3 patches are from linux-n900 git tree, the other patches
+are cleanups and fixups for mainline. Some of those are partly
+available in the linux-n900 git tree.
+
+-- Sebastian
+
+--x+6KMIRAuhnl3hBn
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
+Version: GnuPG v1
 
-iEYEABECAAYFAlT0tHsACgkQi/DJPQPkQ1KoswCeId01KEN2jOQVoyaaetjcFOVb
-ZrMAn3kuKPow0Y4KpK88y1HI8AKc5qlz
-=qG+E
+iQIcBAEBCgAGBQJU9M1hAAoJENju1/PIO/qadRUP/0Bfnv7cj/YM9Mb55hRkb5OM
+d9IVZo5QM20uG2Dsk72yyng06ESTom5tw7ks75Z/g7VDzNuBMIPkXRxvpmdEYLsd
+ECRg+PtZoZJS3STFnI+8rhTw257p/FaD23OQMAfAJ1Ey2YvncfoHCUV/11kjuLK2
+c2Oaki715t9Lg8mpgjiqgIVe/HcawUY53nlLgqWkQ2chNHPS75QLz9yQrWzt61Pf
+dfNFyfWb7ewYWwYmWU1F1V8C0+SnGRgI1BlzuvEl0+pgpT3+HERYcK8TFXXdlzD7
+d+VMhFRnZT3LzpD3KvJvEUIf35HeW8qD3Yf8YNi9V3GN5PgFHHln9GGAl7DSiBjE
+CDdZP3dgpp4qAM6Pob6YIBb18oDni0zVPf/5r2erI5JPe93dSYspzpVKD4kyF7vi
+e4cWTHbpA8rF81b6zGFh8PfWaWbO/Z/wwb3j8s1NT1YHMTlsxOxRkBr1gqJnd5Xb
+OUEEr7kS9sus/1aqxoTs3QlkpbN2uTi2pr6/8IgUqd0d4Lr6uxDTfOIAV6+dqCX1
+7ygj4riYPZ5UO+18kPVzr6QAmQ3/aOwWJgVPJFMBfVRHceicbeiuf3dhfvtalVdu
+gjlbfx7KkuZreB7Xn6tlGArAaboQSilRJPV1KlH4is+t18cMhNzgHMsf5JjC56ZQ
+MU8rGGphmY23u6imjvv5
+=phwu
 -----END PGP SIGNATURE-----
 
---nextPart2018451.B1vUd1Vyav--
+--x+6KMIRAuhnl3hBn--
