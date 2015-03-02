@@ -1,7 +1,7 @@
 From: Sebastian Reichel <sre@kernel.org>
-Subject: [PATCH 8/9] HSI: cmt_speech: Remove hardcoded channel numbers
-Date: Mon,  2 Mar 2015 05:38:58 +0100
-Message-ID: <1425271139-24715-9-git-send-email-sre@kernel.org>
+Subject: [PATCH 9/9] HSI: nokia-modem: Add cmt_speech support
+Date: Mon,  2 Mar 2015 05:38:59 +0100
+Message-ID: <1425271139-24715-10-git-send-email-sre@kernel.org>
 References: <1425271139-24715-1-git-send-email-sre@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1425271139-24715-1-git-send-email-sre@kernel.org>
@@ -10,87 +10,122 @@ To: Sebastian Reichel <sre@kernel.org>
 Cc: Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pavel Machek <pavel@ucw.cz>, Pali Rohar <pali.rohar@gmail.com>, Aaro Koskinen <aaro.koskinen@iki.fi>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-cmt-speech channel numbers should be coming from Device Tree
-instead of being hardcoded.
+This adds cmt_speech support to the nokia-modem driver
+and adds Kconfig entries for cmt_speech, so that it can
+be built.
 
 Signed-off-by: Sebastian Reichel <sre@kernel.org>
 ---
- drivers/hsi/clients/cmt_speech.c | 28 ++++++++++++++++++++++------
- 1 file changed, 22 insertions(+), 6 deletions(-)
+ drivers/hsi/clients/Kconfig       | 11 ++++++++++-
+ drivers/hsi/clients/Makefile      |  1 +
+ drivers/hsi/clients/nokia-modem.c | 31 ++++++++++++++++++++++++++++++-
+ 3 files changed, 41 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/hsi/clients/cmt_speech.c b/drivers/hsi/clients/cmt_speech.c
-index 69dc37f..a017292 100644
---- a/drivers/hsi/clients/cmt_speech.c
-+++ b/drivers/hsi/clients/cmt_speech.c
-@@ -59,6 +59,9 @@ struct cs_char {
- 	spinlock_t		lock;
- 	struct fasync_struct	*async_queue;
- 	wait_queue_head_t	wait;
-+	/* hsi channel ids */
-+	int                     channel_id_cmd;
-+	int                     channel_id_data;
+diff --git a/drivers/hsi/clients/Kconfig b/drivers/hsi/clients/Kconfig
+index bc60dec..77ee7bc 100644
+--- a/drivers/hsi/clients/Kconfig
++++ b/drivers/hsi/clients/Kconfig
+@@ -6,13 +6,22 @@ comment "HSI clients"
+ 
+ config NOKIA_MODEM
+ 	tristate "Nokia Modem"
+-	depends on HSI && SSI_PROTOCOL
++	depends on HSI && SSI_PROTOCOL && CMT_SPEECH
+ 	help
+ 	Say Y here if you want to add support for the modem on Nokia
+ 	N900 (Nokia RX-51) hardware.
+ 
+ 	If unsure, say N.
+ 
++config CMT_SPEECH
++	tristate "CMT speech"
++	depends on HSI && PHONET && OMAP_SSI
++	help
++	If you say Y here, you will enable the CMT speech protocol used
++	by Nokia modems.
++
++	If unsure, say N.
++
+ config SSI_PROTOCOL
+ 	tristate "SSI protocol"
+ 	depends on HSI && PHONET && OMAP_SSI
+diff --git a/drivers/hsi/clients/Makefile b/drivers/hsi/clients/Makefile
+index 4d5bc0e..2607232 100644
+--- a/drivers/hsi/clients/Makefile
++++ b/drivers/hsi/clients/Makefile
+@@ -4,4 +4,5 @@
+ 
+ obj-$(CONFIG_NOKIA_MODEM)	+= nokia-modem.o
+ obj-$(CONFIG_SSI_PROTOCOL)	+= ssi_protocol.o
++obj-$(CONFIG_CMT_SPEECH)	+= cmt_speech.o
+ obj-$(CONFIG_HSI_CHAR)		+= hsi_char.o
+diff --git a/drivers/hsi/clients/nokia-modem.c b/drivers/hsi/clients/nokia-modem.c
+index 9be4867..ef6ebda 100644
+--- a/drivers/hsi/clients/nokia-modem.c
++++ b/drivers/hsi/clients/nokia-modem.c
+@@ -46,6 +46,7 @@ struct nokia_modem_device {
+ 	struct nokia_modem_gpio	*gpios;
+ 	int			gpio_amount;
+ 	struct hsi_client	*ssi_protocol;
++	struct hsi_client	*cmt_speech;
  };
  
- #define SSI_CHANNEL_STATE_READING	1
-@@ -66,9 +69,6 @@ struct cs_char {
- #define SSI_CHANNEL_STATE_POLL		(1 << 2)
- #define SSI_CHANNEL_STATE_ERROR		(1 << 3)
+ static void do_nokia_modem_rst_ind_tasklet(unsigned long data)
+@@ -149,6 +150,7 @@ static int nokia_modem_probe(struct device *dev)
+ 	struct hsi_port *port = hsi_get_port(cl);
+ 	int irq, pflags, err;
+ 	struct hsi_board_info ssip;
++	struct hsi_board_info cmtspeech;
  
--#define CONTROL_HSI_CH			1
--#define DATA_HSI_CH			2
--
- #define TARGET_MASK			0xf000000
- #define TARGET_REMOTE			(1 << CS_DOMAIN_SHIFT)
- #define TARGET_LOCAL			0
-@@ -296,7 +296,7 @@ static int cs_alloc_cmds(struct cs_hsi_iface *hi)
- 			goto out;
- 		}
- 		sg_init_one(msg->sgt.sgl, buf, sizeof(*buf));
--		msg->channel = CONTROL_HSI_CH;
-+		msg->channel = cs_char_data.channel_id_cmd;
- 		msg->context = hi;
- 		list_add_tail(&msg->link, &hi->cmdqueue);
+ 	np = dev->of_node;
+ 	if (!np) {
+@@ -214,12 +216,34 @@ static int nokia_modem_probe(struct device *dev)
+ 		goto error3;
  	}
-@@ -342,7 +342,7 @@ static int cs_hsi_alloc_data(struct cs_hsi_iface *hi)
- 		res = -ENOMEM;
- 		goto out1;
- 	}
--	rxmsg->channel = DATA_HSI_CH;
-+	rxmsg->channel = cs_char_data.channel_id_data;
- 	rxmsg->destructor = cs_hsi_data_destructor;
- 	rxmsg->context = hi;
  
-@@ -351,7 +351,7 @@ static int cs_hsi_alloc_data(struct cs_hsi_iface *hi)
- 		res = -ENOMEM;
- 		goto out2;
- 	}
--	txmsg->channel = DATA_HSI_CH;
-+	txmsg->channel = cs_char_data.channel_id_data;
- 	txmsg->destructor = cs_hsi_data_destructor;
- 	txmsg->context = hi;
- 
-@@ -1382,6 +1382,22 @@ static int cs_hsi_client_probe(struct device *dev)
- 	INIT_LIST_HEAD(&cs_char_data.chardev_queue);
- 	INIT_LIST_HEAD(&cs_char_data.dataind_queue);
- 
-+	cs_char_data.channel_id_cmd = hsi_get_channel_id_by_name(cl,
-+		"speech-control");
-+	if (cs_char_data.channel_id_cmd < 0) {
-+		err = cs_char_data.channel_id_cmd;
-+		dev_err(dev, "Could not get cmd channel (%d)\n", err);
-+		return err;
+-	/* TODO: register cmt-speech hsi client */
++	cmtspeech.name = "cmt-speech";
++	cmtspeech.tx_cfg = cl->tx_cfg;
++	cmtspeech.rx_cfg = cl->rx_cfg;
++	cmtspeech.platform_data = NULL;
++	cmtspeech.archdata = NULL;
++
++	modem->cmt_speech = hsi_new_client(port, &cmtspeech);
++	if (!modem->cmt_speech) {
++		dev_err(dev, "Could not register cmt-speech device\n");
++		goto error3;
 +	}
 +
-+	cs_char_data.channel_id_data = hsi_get_channel_id_by_name(cl,
-+		"speech-data");
-+	if (cs_char_data.channel_id_data < 0) {
-+		err = cs_char_data.channel_id_data;
-+		dev_err(dev, "Could not get data channel (%d)\n", err);
-+		return err;
++	err = device_attach(&modem->cmt_speech->device);
++	if (err == 0) {
++		dev_err(dev, "Missing cmt-speech driver\n");
++		err = -EPROBE_DEFER;
++		goto error4;
++	} else if (err < 0) {
++		dev_err(dev, "Could not load cmt-speech driver (%d)\n", err);
++		goto error4;
++	}
+ 
+ 	dev_info(dev, "Registered Nokia HSI modem\n");
+ 
+ 	return 0;
+ 
++error4:
++	hsi_remove_client(&modem->cmt_speech->device, NULL);
+ error3:
+ 	hsi_remove_client(&modem->ssi_protocol->device, NULL);
+ error2:
+@@ -238,6 +262,11 @@ static int nokia_modem_remove(struct device *dev)
+ 	if (!modem)
+ 		return 0;
+ 
++	if (modem->cmt_speech) {
++		hsi_remove_client(&modem->cmt_speech->device, NULL);
++		modem->cmt_speech = NULL;
 +	}
 +
- 	err = misc_register(&cs_char_miscdev);
- 	if (err)
- 		dev_err(dev, "Failed to register: %d\n", err);
+ 	if (modem->ssi_protocol) {
+ 		hsi_remove_client(&modem->ssi_protocol->device, NULL);
+ 		modem->ssi_protocol = NULL;
 -- 
 2.1.4
