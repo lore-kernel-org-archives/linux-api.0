@@ -1,57 +1,89 @@
-From: Daniel Borkmann <daniel@iogearbox.net>
-Subject: Re: [PATCH v5 tip 1/7] bpf: make internal bpf API independent of
- CONFIG_BPF_SYSCALL ifdefs
-Date: Mon, 02 Mar 2015 13:26:17 +0100
-Message-ID: <54F456E9.1000702@iogearbox.net>
-References: <1425252465-27527-1-git-send-email-ast@plumgrid.com> <1425252465-27527-2-git-send-email-ast@plumgrid.com> <54F44115.40505@hitachi.com> <54F4451B.8000703@iogearbox.net> <54F44EC3.4070504@hitachi.com>
+From: Vitaly Kuznetsov <vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH RFC 0/3] Drivers: hv: utils: re-implement the kernel/userspace communication layer
+Date: Mon, 02 Mar 2015 14:33:20 +0100
+Message-ID: <87a8zvjzhb.fsf@vitty.brq.redhat.com>
+References: <1425053665-635-1-git-send-email-vkuznets@redhat.com>
+	<20150227210744.GA11904@potion.brq.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-2022-jp
-Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <54F44EC3.4070504@hitachi.com>
-Sender: netdev-owner@vger.kernel.org
-To: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
-Cc: Alexei Starovoitov <ast@plumgrid.com>, Ingo Molnar <mingo@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, "David S. Miller" <davem@davemloft.net>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150227210744.GA11904-KfRq7+sF/6zkZJWtSm8s3NvLeJWuRmrY@public.gmane.org> ("Radim
+ \=\?utf-8\?B\?S3LEjW3DocWZIidz\?\=
+	message of "Fri, 27 Feb 2015 22:07:44 +0100")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Radim =?utf-8?B?S3LEjW3DocWZ?= <rkrcmar-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: "K. Y. Srinivasan" <kys-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, devel-tBiZLqfeLfOHmIFyCCdPziST3g8Odh+X@public.gmane.org, Haiyang Zhang <haiyangz-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dexuan Cui <decui-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/02/2015 12:51 PM, Masami Hiramatsu wrote:
-> (2015/03/02 20:10), Daniel Borkmann wrote:
->> On 03/02/2015 11:53 AM, Masami Hiramatsu wrote:
->> ...
->>> Hmm, it seems that this still doesn't hide some APIs which is provided
->>> only when CONFIG_BPF_SYSCALL. For example bpf_register_map_type etc.
->>> I think all those APIs should be hidden in #ifdef or at least be commented
->>> so that the user doesn't refer that without the kconfig.
->>> (I don't think we need to provide dummy functions for those APIs,
->>>    but it's better to clarify which API we can use with which kconfig)
->>
->> Well, currently all possible map types (hash table, array map) that
->> would actually call into bpf_register_map_type() are only built when
->> CONFIG_BPF_SYSCALL is enabled (see kernel/bpf/Makefile). I don't think
->> new map additions should be added that are not under kernel/bpf/ and/or
->> enabled outside the CONFIG_BPF_SYSCALL, as it should be considered
->> part of the eBPF core code.
->>
->> The difference here (this patch) is simply that we don't want users to
->> build ifdef spaghetti constructs in user code, so the API that is
->> actually used by eBPF _users_ is being properly ifdef'ed in the headers.
->>
->> So, I don't think this is a big problem, but we could move these bits
->> under the ifdef CONFIG_BPF_SYSCALL w/o providing a dummy in the else part.
->> I can do that outside of the scope of this set.
-> 
-> Or, maybe we'd better move them into new include/linux/bpf_prog.h which
-> includes basic include/linux/bpf.h. Then, user can include the bpf_prog.h
-> instead of bpf.h. Also, we can check CONFIG_BPF_SYSCAL=y at the top of
-> bpf_prog.h. This makes things clearer :)
+Radim Kr=C4=8Dm=C3=A1=C5=99 <rkrcmar-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
 
-I'm preferring the 1st variant, though. We have currently two native eBPF
-users, that is, socket filters and tc's cls_bpf (queued in net-next) and
-looking at the code/API usage, it's really not that hard, where it would
-justify to move this to an extra header file, really.
+> 2015-02-27 17:14+0100, Vitaly Kuznetsov:
+>> This series converts kvp/vss daemons to use misc char devices instea=
+d of
+>> netlink for userspace/kernel communication and then updates fcopy to=
+ be
+>> consistent with kvp/vss.
+>>=20
+>> Userspace/kernel communication via netlink has a number of issues:
+>> - It is hard for userspace to figure out if the kernel part was load=
+ed or not
+>>   and this fact can change as there is a way to enable/disable the s=
+ervice from
+>>   host side.
+>
+> (Hm, this should be just a message to the userspace daemon, but netli=
+nk
+>  probably makes it complicated anyway.)
+>
+>>              Racy daemon startup is also a problem.
+>
+> (Is it significantly worse than what we need to protect devices?)
+>
+>> - When the userspace daemon restarts/dies kernel part doesn't receiv=
+e a
+>>   notification.
+>
+> (True, we could use a other-side-closed callback.)
 
-I'm cooking a patch for net-next right now with the first variant (which is
-on top of this patch that resides in net-next as-is as well).
+With normal devices we can use e.g. udev/systemd machinery to start/sto=
+p
+service on device hotplug/hotunplug (and these devices are actually
+pluggable/unpluggable from host side) without any special code in
+kernel/userspace parts and I'd like to use that.
 
-Thanks,
-Daniel
+>
+>> - Netlink communication is not stable under heavy load.
+>
+> (The message order changes?)
+>
+
+It is a disaster if it does (the whole transaction will get lost). Same
+if any of these messages gets lost.
+
+>> RFC: I'm a bit puzzled on how to split commits 1 and 2 avoiding brea=
+kages.
+>
+> Split the userspace part -- it won't break bisects.
+>
+
+Sure if it simplifies the review.
+
+> And then, you could refactor drivers first ... the way we communicate
+> with userspace should have little impact on what the rest does (or ho=
+w).
+> At first sight, there are three units, apart from glue,
+>  1) communication with host
+>  2) communication with userspace
+>  3) repacking of data between first two
+>
+> With an API for userspace communication, the amount of code to replac=
+e
+> netlink could be lower and resulting patches definitely easier to
+> review.  (And with extra work, both ABIs could even live side-by-side=
+ ;)
+
+Ok, thanks!
+
+--=20
+  Vitaly
