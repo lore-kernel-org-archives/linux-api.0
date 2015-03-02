@@ -1,57 +1,94 @@
 From: Sebastian Reichel <sre@kernel.org>
-Subject: [PATCH 0/9] N900 Modem Speech Support
-Date: Mon,  2 Mar 2015 05:38:50 +0100
-Message-ID: <1425271139-24715-1-git-send-email-sre@kernel.org>
+Subject: [PATCH 2/9] HSI: cmt_speech: Avoid GFP_ATOMIC in cs_char_open
+Date: Mon,  2 Mar 2015 05:38:52 +0100
+Message-ID: <1425271139-24715-3-git-send-email-sre@kernel.org>
+References: <1425271139-24715-1-git-send-email-sre@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1425271139-24715-1-git-send-email-sre@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Sebastian Reichel <sre@kernel.org>
-Cc: Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pavel Machek <pavel@ucw.cz>, Pali Rohar <pali.rohar@gmail.com>, Aaro Koskinen <aaro.koskinen@iki.fi>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pavel Machek <pavel@ucw.cz>, Pali Rohar <pali.rohar@gmail.com>, Aaro Koskinen <aaro.koskinen@iki.fi>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Kai Vehmanen <kai.vehmanen@nokia.com>, Joni Lapilainen <joni.lapilainen@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+From: Kai Vehmanen <kai.vehmanen@nokia.com>
 
-This patchset contains the missing speech data support for the
-Nokia N900 modem.
+Also fixes a bug in updating 'opened' state in case cs_hsi_start()
+fails when opening the char device.
 
-Userland access goes via /dev/cmt_speech. The API is implemented in
-libcmtspeechdata, which is used by ofono and the freesmartphone.org project.
-Apart from that the device is also used by the phone binaries distributed
-with Maemo. So while this is a new userland ABI for the mainline kernel it
-has been tested in the wild for some years.
+Signed-off-by: Kai Vehmanen <kai.vehmanen@nokia.com>
+Signed-off-by: Joni Lapilainen <joni.lapilainen@gmail.com>
+Signed-off-by: Sebastian Reichel <sre@kernel.org>
+---
+ drivers/hsi/clients/cmt_speech.c | 43 +++++++++++++++++++++++-----------------
+ 1 file changed, 25 insertions(+), 18 deletions(-)
 
-Simple Testing of the API can be done by checking out libcmtspeechdata [0],
-building the test tool and executing it. The tool will loop back audio data
-received from the caller.
-
-I have prepared a kernel branch, which includes these changes at [1].
-
-[0] https://lkml.org/lkml/2015/2/11/526
-[1] git://git.kernel.org/pub/scm/linux/kernel/git/sre/linux-hsi.git branch/cmt-speech
-
--- Sebastian
-
-Kai Vehmanen (3):
-  HSI: cmt_speech: Add cmt-speech driver
-  HSI: cmt_speech: Avoid GFP_ATOMIC in cs_char_open
-  HSI: cmt_speech: Return error if HSI port not configured
-
-Sebastian Reichel (6):
-  HSI: cmt_speech: Fix build for 4.0 kernel
-  HSI: cmt_speech: Cleanup initialisation
-  HSI: cmt_speech: Rename driver to cmt-speech
-  HSI: cmt_speech: Move cs-protocol.h to include/uapi/linux/hsi
-  HSI: cmt_speech: Remove hardcoded channel numbers
-  HSI: nokia-modem: Add cmt_speech support
-
- drivers/hsi/clients/Kconfig          |   11 +-
- drivers/hsi/clients/Makefile         |    1 +
- drivers/hsi/clients/cmt_speech.c     | 1451 ++++++++++++++++++++++++++++++++++
- drivers/hsi/clients/nokia-modem.c    |   31 +-
- include/uapi/linux/hsi/Kbuild        |    2 +-
- include/uapi/linux/hsi/cs-protocol.h |  113 +++
- 6 files changed, 1606 insertions(+), 3 deletions(-)
- create mode 100644 drivers/hsi/clients/cmt_speech.c
- create mode 100644 include/uapi/linux/hsi/cs-protocol.h
-
+diff --git a/drivers/hsi/clients/cmt_speech.c b/drivers/hsi/clients/cmt_speech.c
+index 7c0f711..389eafb 100644
+--- a/drivers/hsi/clients/cmt_speech.c
++++ b/drivers/hsi/clients/cmt_speech.c
+@@ -1271,38 +1271,45 @@ static int cs_char_mmap(struct file *file, struct vm_area_struct *vma)
+ static int cs_char_open(struct inode *unused, struct file *file)
+ {
+ 	int ret = 0;
++	unsigned long p;
+ 
+ 	spin_lock_bh(&cs_char_data.lock);
+ 	if (cs_char_data.opened) {
+ 		ret = -EBUSY;
+ 		spin_unlock_bh(&cs_char_data.lock);
+-		goto out;
+-	}
+-	cs_char_data.mmap_base = get_zeroed_page(GFP_ATOMIC);
+-	if (!cs_char_data.mmap_base) {
+-		dev_err(&cs_char_data.cl->device,
+-					"Shared memory allocation failed.\n");
+-		ret = -ENOMEM;
+-		spin_unlock_bh(&cs_char_data.lock);
+-		goto out;
++		goto out1;
+ 	}
+-	cs_char_data.mmap_size = CS_MMAP_SIZE;
+-	cs_char_data.dataind_pending = 0;
+ 	cs_char_data.opened = 1;
+-	file->private_data = &cs_char_data;
++	cs_char_data.dataind_pending = 0;
+ 	spin_unlock_bh(&cs_char_data.lock);
+ 
+-	BUG_ON(cs_char_data.hi);
++	p = get_zeroed_page(GFP_KERNEL);
++	if (!p) {
++		ret = -ENOMEM;
++		goto out2;
++	}
+ 
+-	ret = cs_hsi_start(&cs_char_data.hi, cs_char_data.cl,
+-				cs_char_data.mmap_base, cs_char_data.mmap_size);
++	ret = cs_hsi_start(&cs_char_data.hi, cs_char_data.cl, p, CS_MMAP_SIZE);
+ 	if (ret) {
+ 		dev_err(&cs_char_data.cl->device, "Unable to initialize HSI\n");
+-		free_page(cs_char_data.mmap_base);
+-		goto out;
++		goto out3;
+ 	}
+ 
+-out:
++	/* these are only used in release so lock not needed */
++	cs_char_data.mmap_base = p;
++	cs_char_data.mmap_size = CS_MMAP_SIZE;
++
++	file->private_data = &cs_char_data;
++
++	return 0;
++
++out3:
++	free_page(p);
++out2:
++	spin_lock_bh(&cs_char_data.lock);
++	cs_char_data.opened = 0;
++	spin_unlock_bh(&cs_char_data.lock);
++out1:
+ 	return ret;
+ }
+ 
 -- 
 2.1.4
