@@ -1,63 +1,54 @@
-From: Tomi Valkeinen <tomi.valkeinen@ti.com>
-Subject: Re: [PATCH 0/2] add cursor blink interval terminal escape sequence
-Date: Mon, 2 Mar 2015 13:15:34 +0200
-Message-ID: <54F44656.8090107@ti.com>
-References: <alpine.DEB.2.11.1501262034380.1945@localhost.localdomain> <alpine.DEB.2.11.1501262040380.2052@localhost.localdomain> <20150225094946.GA24627@amd> <alpine.LNX.2.11.1502252319330.276@localhost> <20150226220243.GC9935@amd> <alpine.LNX.2.11.1502271905580.4212@localhost>
+From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Subject: Re: [PATCH v5 tip 1/7] bpf: make internal bpf API independent of
+ CONFIG_BPF_SYSCALL ifdefs
+Date: Mon, 02 Mar 2015 20:51:31 +0900
+Message-ID: <54F44EC3.4070504@hitachi.com>
+References: <1425252465-27527-1-git-send-email-ast@plumgrid.com> <1425252465-27527-2-git-send-email-ast@plumgrid.com> <54F44115.40505@hitachi.com> <54F4451B.8000703@iogearbox.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature";
-	boundary="MrqmfubdwnxbboBpPv8hwnhoD0MJu87mT"
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LNX.2.11.1502271905580.4212@localhost>
+In-Reply-To: <54F4451B.8000703@iogearbox.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Scot Doyle <lkml14@scotdoyle.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Pavel Machek <pavel@ucw.cz>, Geert Uytterhoeven <geert@linux-m68k.org>, linux-kernel@vger.kernel.org, linux-fbdev@vger.kernel.org, linux-api@vger.kernel.org, linux-man@vger.kernel.org
+To: Daniel Borkmann <daniel@iogearbox.net>
+Cc: Alexei Starovoitov <ast@plumgrid.com>, Ingo Molnar <mingo@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, "David S. Miller" <davem@davemloft.net>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
---MrqmfubdwnxbboBpPv8hwnhoD0MJu87mT
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
+(2015/03/02 20:10), Daniel Borkmann wrote:
+> On 03/02/2015 11:53 AM, Masami Hiramatsu wrote:
+> ...
+>> Hmm, it seems that this still doesn't hide some APIs which is provided
+>> only when CONFIG_BPF_SYSCALL. For example bpf_register_map_type etc.
+>> I think all those APIs should be hidden in #ifdef or at least be commented
+>> so that the user doesn't refer that without the kconfig.
+>> (I don't think we need to provide dummy functions for those APIs,
+>>   but it's better to clarify which API we can use with which kconfig)
+> 
+> Well, currently all possible map types (hash table, array map) that
+> would actually call into bpf_register_map_type() are only built when
+> CONFIG_BPF_SYSCALL is enabled (see kernel/bpf/Makefile). I don't think
+> new map additions should be added that are not under kernel/bpf/ and/or
+> enabled outside the CONFIG_BPF_SYSCALL, as it should be considered
+> part of the eBPF core code.
+> 
+> The difference here (this patch) is simply that we don't want users to
+> build ifdef spaghetti constructs in user code, so the API that is
+> actually used by eBPF _users_ is being properly ifdef'ed in the headers.
+> 
+> So, I don't think this is a big problem, but we could move these bits
+> under the ifdef CONFIG_BPF_SYSCALL w/o providing a dummy in the else part.
+> I can do that outside of the scope of this set.
 
-On 27/02/15 21:10, Scot Doyle wrote:
-> Greg, the first patch of this series is for the tty tree.
->=20
-> Tomi, the second patch of this series is for your tree, but it depends =
-on
-> the first patch. Also, will you remove these two previously queued patc=
-hes?
-> "fbcon: store cursor blink interval in fbcon_ops"
-> "fbcon: expose cursor blink interval via sysfs"
+Or, maybe we'd better move them into new include/linux/bpf_prog.h which
+includes basic include/linux/bpf.h. Then, user can include the bpf_prog.h
+instead of bpf.h. Also, we can check CONFIG_BPF_SYSCAL=y at the top of
+bpf_prog.h. This makes things clearer :)
 
-I have dropped those two patches from fbdev tree.
-
-I don't know much about the console side, so I can't comment anything on
-that.
-
- Tomi
+Thank you,
 
 
-
---MrqmfubdwnxbboBpPv8hwnhoD0MJu87mT
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJU9EZWAAoJEPo9qoy8lh719NgQAI4zzovgCtPyc+YUtbbLAaVG
-hBGkhGm7b2LXFvPnYZd+FtVkzzUZ/ZD/kTNIhJRfzNc3hipRMKLzeYYics8IDE7y
-/0geDZb252Sbzkg5FYMwbBglvjo2FcYOG4fXMMs5rWIpL+0XZi4ssB6JfTHTGUsP
-/ZYpQ3Lb/y+BFpbvtBV8ye3Du8pIg0JwOKCgZTLklw6SsR77t64lQcbJzFDAPEDq
-DswnJ8tdhuva2oP7ucK92NvbtFF8EOPAbfa9zjG/MxvODeQ7C/ioWYeHxPlVA7XU
-h5cZEgimoKLgt19gW+u90X4CZzRXm5Tgi+GEcPMGD4q+scZs76CdATtDv/wouKuh
-hncTwfpDwuTZvhC1nVPv6h67ZJcW9SVL6uFG4k7ugdrFXTKE8oWkVjQEN+xLNyml
-3ezHvWllGci9/HhqMsZ0IKkU4eqzT6U6k8GT01U7DYMfk/Jw7khW2540lN/ea4CB
-U/vsyzVqo7zo0sLxOBUP9yGjKQUfR4aGL5MRE9bX+gUowMKvBgsCVH2Q3KYOjDyA
-EgelvshvHpxU5APyLRACVp5roqDGUSMt6Z50fovfLQIzlssnJPFHXnxZMYuuym4b
-F6p6USsfEgiC3cfG8iwrwxRiCWMZXK4KaYaWCCYqgOtwd77iktfijsXmrUGPFtH0
-WoM9mt1siUA9Qd/UUlio
-=oUUI
------END PGP SIGNATURE-----
-
---MrqmfubdwnxbboBpPv8hwnhoD0MJu87mT--
+-- 
+Masami HIRAMATSU
+Software Platform Research Dept. Linux Technology Research Center
+Hitachi, Ltd., Yokohama Research Laboratory
+E-mail: masami.hiramatsu.pt@hitachi.com
