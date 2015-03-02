@@ -1,549 +1,249 @@
-From: Gilad Broner <gbroner@codeaurora.org>
-Subject: [PATCH v4 1/4] scsi: ufs: add ioctl interface for query request
-Date: Mon,  2 Mar 2015 16:56:40 +0200
-Message-ID: <1425308203-20695-2-git-send-email-gbroner@codeaurora.org>
-References: <1425308203-20695-1-git-send-email-gbroner@codeaurora.org>
+From: Sebastian Reichel <sre@kernel.org>
+Subject: Re: [PATCH 1/9] HSI: cmt_speech: Add cmt-speech driver
+Date: Mon, 2 Mar 2015 16:26:53 +0100
+Message-ID: <20150302152652.GB2834@earth>
+References: <1425271139-24715-1-git-send-email-sre@kernel.org>
+ <1425271139-24715-2-git-send-email-sre@kernel.org>
+ <1425291753.2014.5.camel@neukum.org>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="SkvwRMAIpAhPCcCJ"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1425308203-20695-1-git-send-email-gbroner@codeaurora.org>
+Content-Disposition: inline
+In-Reply-To: <1425291753.2014.5.camel@neukum.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: James.Bottomley@HansenPartnership.com
-Cc: linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-arm-msm@vger.kernel.org, santoshsy@gmail.com, linux-scsi-owner@vger.kernel.org, subhashj@codeaurora.org, ygardi@codeaurora.org, draviv@codeaurora.org, Noa Rubens <noag@codeaurora.org>, Raviv Shvili <rshvili@codeaurora.org>, Vinayak Holikatti <vinholikatti@gmail.com>, "James E.J. Bottomley" <JBottomley@parallels.com>, "open list:ABI/API" <linux-api@vger.kernel.org>
+To: Oliver Neukum <oliver@neukum.org>
+Cc: Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pavel Machek <pavel@ucw.cz>, Pali Rohar <pali.rohar@gmail.com>, Aaro Koskinen <aaro.koskinen@iki.fi>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Joni Lapilainen <joni.lapilainen@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Dolev Raviv <draviv@codeaurora.org>
 
-This patch exposes the ioctl interface for UFS driver via SCSI device
-ioctl interface. As of now UFS driver would provide the ioctl for query
-interface to connected UFS device.
+--SkvwRMAIpAhPCcCJ
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Signed-off-by: Dolev Raviv <draviv@codeaurora.org>
-Signed-off-by: Noa Rubens <noag@codeaurora.org>
-Signed-off-by: Raviv Shvili <rshvili@codeaurora.org>
-Signed-off-by: Yaniv Gardi <ygardi@codeaurora.org>
----
- drivers/scsi/ufs/ufs.h        |  53 +++-------
- drivers/scsi/ufs/ufshcd.c     | 225 +++++++++++++++++++++++++++++++++++++++++-
- include/uapi/scsi/Kbuild      |   1 +
- include/uapi/scsi/ufs/Kbuild  |   3 +
- include/uapi/scsi/ufs/ioctl.h |  57 +++++++++++
- include/uapi/scsi/ufs/ufs.h   |  66 +++++++++++++
- 6 files changed, 361 insertions(+), 44 deletions(-)
- create mode 100644 include/uapi/scsi/ufs/Kbuild
- create mode 100644 include/uapi/scsi/ufs/ioctl.h
- create mode 100644 include/uapi/scsi/ufs/ufs.h
+Hi Oliver,
 
-diff --git a/drivers/scsi/ufs/ufs.h b/drivers/scsi/ufs/ufs.h
-index 42c459a..1f023c4 100644
---- a/drivers/scsi/ufs/ufs.h
-+++ b/drivers/scsi/ufs/ufs.h
-@@ -38,6 +38,7 @@
- 
- #include <linux/mutex.h>
- #include <linux/types.h>
-+#include <scsi/ufs/ufs.h>
- 
- #define MAX_CDB_SIZE	16
- #define GENERAL_UPIU_REQUEST_SIZE 32
-@@ -71,6 +72,16 @@ enum {
- 	UFS_UPIU_RPMB_WLUN		= 0xC4,
- };
- 
-+/**
-+ * ufs_is_valid_unit_desc_lun - checks if the given LUN has a unit descriptor
-+ * @lun: LU number to check
-+ * @return: true if the lun has a matching unit descriptor, false otherwise
-+ */
-+static inline bool ufs_is_valid_unit_desc_lun(u8 lun)
-+{
-+	return (lun == UFS_UPIU_RPMB_WLUN || (lun < UFS_UPIU_MAX_GENERAL_LUN));
-+}
-+
- /*
-  * UFS Protocol Information Unit related definitions
-  */
-@@ -126,35 +137,6 @@ enum {
- 	UPIU_QUERY_FUNC_STANDARD_WRITE_REQUEST          = 0x81,
- };
- 
--/* Flag idn for Query Requests*/
--enum flag_idn {
--	QUERY_FLAG_IDN_FDEVICEINIT      = 0x01,
--	QUERY_FLAG_IDN_PWR_ON_WPE	= 0x03,
--	QUERY_FLAG_IDN_BKOPS_EN         = 0x04,
--};
--
--/* Attribute idn for Query requests */
--enum attr_idn {
--	QUERY_ATTR_IDN_ACTIVE_ICC_LVL	= 0x03,
--	QUERY_ATTR_IDN_BKOPS_STATUS	= 0x05,
--	QUERY_ATTR_IDN_EE_CONTROL	= 0x0D,
--	QUERY_ATTR_IDN_EE_STATUS	= 0x0E,
--};
--
--/* Descriptor idn for Query requests */
--enum desc_idn {
--	QUERY_DESC_IDN_DEVICE		= 0x0,
--	QUERY_DESC_IDN_CONFIGURAION	= 0x1,
--	QUERY_DESC_IDN_UNIT		= 0x2,
--	QUERY_DESC_IDN_RFU_0		= 0x3,
--	QUERY_DESC_IDN_INTERCONNECT	= 0x4,
--	QUERY_DESC_IDN_STRING		= 0x5,
--	QUERY_DESC_IDN_RFU_1		= 0x6,
--	QUERY_DESC_IDN_GEOMETRY		= 0x7,
--	QUERY_DESC_IDN_POWER		= 0x8,
--	QUERY_DESC_IDN_MAX,
--};
--
- enum desc_header_offset {
- 	QUERY_DESC_LENGTH_OFFSET	= 0x00,
- 	QUERY_DESC_DESC_TYPE_OFFSET	= 0x01,
-@@ -247,19 +229,6 @@ enum bkops_status {
- 	BKOPS_STATUS_MAX		 = BKOPS_STATUS_CRITICAL,
- };
- 
--/* UTP QUERY Transaction Specific Fields OpCode */
--enum query_opcode {
--	UPIU_QUERY_OPCODE_NOP		= 0x0,
--	UPIU_QUERY_OPCODE_READ_DESC	= 0x1,
--	UPIU_QUERY_OPCODE_WRITE_DESC	= 0x2,
--	UPIU_QUERY_OPCODE_READ_ATTR	= 0x3,
--	UPIU_QUERY_OPCODE_WRITE_ATTR	= 0x4,
--	UPIU_QUERY_OPCODE_READ_FLAG	= 0x5,
--	UPIU_QUERY_OPCODE_SET_FLAG	= 0x6,
--	UPIU_QUERY_OPCODE_CLEAR_FLAG	= 0x7,
--	UPIU_QUERY_OPCODE_TOGGLE_FLAG	= 0x8,
--};
--
- /* Query response result code */
- enum {
- 	QUERY_RESULT_SUCCESS                    = 0x00,
-diff --git a/drivers/scsi/ufs/ufshcd.c b/drivers/scsi/ufs/ufshcd.c
-index 5d60a86..cb357f8 100644
---- a/drivers/scsi/ufs/ufshcd.c
-+++ b/drivers/scsi/ufs/ufshcd.c
-@@ -3,7 +3,7 @@
-  *
-  * This code is based on drivers/scsi/ufs/ufshcd.c
-  * Copyright (C) 2011-2013 Samsung India Software Operations
-- * Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
-+ * Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
-  *
-  * Authors:
-  *	Santosh Yaraganavi <santosh.sy@samsung.com>
-@@ -39,6 +39,7 @@
- 
- #include <linux/async.h>
- #include <linux/devfreq.h>
-+#include <scsi/ufs/ioctl.h>
- 
- #include "ufshcd.h"
- #include "unipro.h"
-@@ -74,6 +75,9 @@
- /* Interrupt aggregation default timeout, unit: 40us */
- #define INT_AGGR_DEF_TO	0x02
- 
-+/* IOCTL opcode for command - ufs set device read only */
-+#define UFS_IOCTL_BLKROSET      BLKROSET
-+
- #define ufshcd_toggle_vreg(_dev, _vreg, _on)				\
- 	({                                                              \
- 		int _ret;                                               \
-@@ -1882,7 +1886,7 @@ static inline int ufshcd_read_unit_desc_param(struct ufs_hba *hba,
- 	 * Unit descriptors are only available for general purpose LUs (LUN id
- 	 * from 0 to 7) and RPMB Well known LU.
- 	 */
--	if (lun != UFS_UPIU_RPMB_WLUN && (lun >= UFS_UPIU_MAX_GENERAL_LUN))
-+	if (!ufs_is_valid_unit_desc_lun(lun))
- 		return -EOPNOTSUPP;
- 
- 	return ufshcd_read_desc_param(hba, QUERY_DESC_IDN_UNIT, lun,
-@@ -4201,6 +4205,222 @@ static void ufshcd_async_scan(void *data, async_cookie_t cookie)
- 	ufshcd_probe_hba(hba);
- }
- 
-+/**
-+ * ufshcd_query_ioctl - perform user read queries
-+ * @hba: per-adapter instance
-+ * @lun: used for lun specific queries
-+ * @buffer: user space buffer for reading and submitting query data and params
-+ * @return: 0 for success negative error code otherwise
-+ *
-+ * Expected/Submitted buffer structure is struct ufs_ioctl_query_data.
-+ * It will read the opcode, idn and buf_length parameters, and, put the
-+ * response in the buffer field while updating the used size in buf_length.
-+ */
-+static int ufshcd_query_ioctl(struct ufs_hba *hba, u8 lun, void __user *buffer)
-+{
-+	struct ufs_ioctl_query_data *ioctl_data;
-+	int err = 0;
-+	int length = 0;
-+	void *data_ptr;
-+	bool flag;
-+	u32 att;
-+	u8 index;
-+	u8 *desc = NULL;
-+
-+	ioctl_data = kzalloc(sizeof(struct ufs_ioctl_query_data), GFP_KERNEL);
-+	if (!ioctl_data) {
-+		err = -ENOMEM;
-+		goto out;
-+	}
-+
-+	/* extract params from user buffer */
-+	err = copy_from_user(ioctl_data, buffer,
-+			sizeof(struct ufs_ioctl_query_data));
-+	if (err) {
-+		dev_err(hba->dev,
-+			"%s: Failed copying buffer from user, err %d\n",
-+			__func__, err);
-+		goto out_release_mem;
-+	}
-+
-+	/* verify legal parameters & send query */
-+	switch (ioctl_data->opcode) {
-+	case UPIU_QUERY_OPCODE_READ_DESC:
-+		switch (ioctl_data->idn) {
-+		case QUERY_DESC_IDN_DEVICE:
-+		case QUERY_DESC_IDN_CONFIGURAION:
-+		case QUERY_DESC_IDN_INTERCONNECT:
-+		case QUERY_DESC_IDN_GEOMETRY:
-+		case QUERY_DESC_IDN_POWER:
-+			index = 0;
-+			break;
-+		case QUERY_DESC_IDN_UNIT:
-+			if (!ufs_is_valid_unit_desc_lun(lun)) {
-+				dev_err(hba->dev,
-+					"%s: No unit descriptor for lun 0x%x\n",
-+					__func__, lun);
-+				err = -EINVAL;
-+				goto out_release_mem;
-+			}
-+			index = lun;
-+			break;
-+		default:
-+			goto out_einval;
-+		}
-+		length = min_t(int, QUERY_DESC_MAX_SIZE,
-+				ioctl_data->buf_size);
-+		desc = kzalloc(length, GFP_KERNEL);
-+		if (!desc) {
-+			dev_err(hba->dev, "%s: Failed allocating %d bytes\n",
-+					__func__, length);
-+			err = -ENOMEM;
-+			goto out_release_mem;
-+		}
-+		err = ufshcd_query_descriptor(hba, ioctl_data->opcode,
-+				ioctl_data->idn, index, 0, desc, &length);
-+		break;
-+	case UPIU_QUERY_OPCODE_READ_ATTR:
-+		switch (ioctl_data->idn) {
-+		case QUERY_ATTR_IDN_BOOT_LU_EN:
-+		case QUERY_ATTR_IDN_POWER_MODE:
-+		case QUERY_ATTR_IDN_ACTIVE_ICC_LVL:
-+		case QUERY_ATTR_IDN_OOO_DATA_EN:
-+		case QUERY_ATTR_IDN_BKOPS_STATUS:
-+		case QUERY_ATTR_IDN_PURGE_STATUS:
-+		case QUERY_ATTR_IDN_MAX_DATA_IN:
-+		case QUERY_ATTR_IDN_MAX_DATA_OUT:
-+		case QUERY_ATTR_IDN_REF_CLK_FREQ:
-+		case QUERY_ATTR_IDN_CONF_DESC_LOCK:
-+		case QUERY_ATTR_IDN_MAX_NUM_OF_RTT:
-+		case QUERY_ATTR_IDN_EE_CONTROL:
-+		case QUERY_ATTR_IDN_EE_STATUS:
-+		case QUERY_ATTR_IDN_SECONDS_PASSED:
-+			index = 0;
-+			break;
-+		case QUERY_ATTR_IDN_DYN_CAP_NEEDED:
-+		case QUERY_ATTR_IDN_CORR_PRG_BLK_NUM:
-+			index = lun;
-+			break;
-+		default:
-+			goto out_einval;
-+		}
-+		err = ufshcd_query_attr(hba, ioctl_data->opcode,
-+					ioctl_data->idn, index, 0, &att);
-+		break;
-+	case UPIU_QUERY_OPCODE_READ_FLAG:
-+		switch (ioctl_data->idn) {
-+		case QUERY_FLAG_IDN_FDEVICEINIT:
-+		case QUERY_FLAG_IDN_PERMANENT_WPE:
-+		case QUERY_FLAG_IDN_PWR_ON_WPE:
-+		case QUERY_FLAG_IDN_BKOPS_EN:
-+		case QUERY_FLAG_IDN_PURGE_ENABLE:
-+		case QUERY_FLAG_IDN_FPHYRESOURCEREMOVAL:
-+		case QUERY_FLAG_IDN_BUSY_RTC:
-+			break;
-+		default:
-+			goto out_einval;
-+		}
-+		err = ufshcd_query_flag(hba, ioctl_data->opcode,
-+					ioctl_data->idn, &flag);
-+		break;
-+	default:
-+		goto out_einval;
-+	}
-+
-+	if (err) {
-+		dev_err(hba->dev, "%s: Query for idn %d failed\n", __func__,
-+					ioctl_data->idn);
-+		goto out_release_mem;
-+	}
-+
-+	/*
-+	 * copy response data
-+	 * As we might end up reading less data then what is specified in
-+	 * "ioct_data->buf_size". So we are updating "ioct_data->
-+	 * buf_size" to what exactly we have read.
-+	 */
-+	switch (ioctl_data->opcode) {
-+	case UPIU_QUERY_OPCODE_READ_DESC:
-+		ioctl_data->buf_size = min_t(int, ioctl_data->buf_size, length);
-+		data_ptr = desc;
-+		break;
-+	case UPIU_QUERY_OPCODE_READ_ATTR:
-+		ioctl_data->buf_size = sizeof(u32);
-+		data_ptr = &att;
-+		break;
-+	case UPIU_QUERY_OPCODE_READ_FLAG:
-+		ioctl_data->buf_size = 1;
-+		data_ptr = &flag;
-+		break;
-+	default:
-+		BUG_ON(true);
-+	}
-+
-+	/* copy to user */
-+	err = copy_to_user(buffer, ioctl_data,
-+			sizeof(struct ufs_ioctl_query_data));
-+	if (err)
-+		dev_err(hba->dev, "%s: Failed copying back to user.\n",
-+			__func__);
-+	err = copy_to_user(buffer + sizeof(struct ufs_ioctl_query_data),
-+			data_ptr, ioctl_data->buf_size);
-+	if (err)
-+		dev_err(hba->dev, "%s: err %d copying back to user.\n",
-+				__func__, err);
-+	goto out_release_mem;
-+
-+out_einval:
-+	dev_err(hba->dev,
-+		"%s: illegal ufs query ioctl data, opcode 0x%x, idn 0x%x\n",
-+		__func__, ioctl_data->opcode, (unsigned int)ioctl_data->idn);
-+	err = -EINVAL;
-+out_release_mem:
-+	kfree(ioctl_data);
-+	kfree(desc);
-+out:
-+	return err;
-+}
-+
-+/**
-+ * ufshcd_ioctl - ufs ioctl callback registered in scsi_host
-+ * @dev: scsi device required for per LUN queries
-+ * @cmd: command opcode
-+ * @buffer: user space buffer for transferring data
-+ *
-+ * Supported commands:
-+ * UFS_IOCTL_QUERY
-+ */
-+static int ufshcd_ioctl(struct scsi_device *dev, int cmd, void __user *buffer)
-+{
-+	struct ufs_hba *hba = shost_priv(dev->host);
-+	int err = 0;
-+
-+	BUG_ON(!hba);
-+	if (!buffer) {
-+		dev_err(hba->dev, "%s: User buffer is NULL!\n", __func__);
-+		return -EINVAL;
-+	}
-+
-+	switch (cmd) {
-+	case UFS_IOCTL_QUERY:
-+		pm_runtime_get_sync(hba->dev);
-+		err = ufshcd_query_ioctl(hba, ufshcd_scsi_to_upiu_lun(dev->lun),
-+				buffer);
-+		pm_runtime_put_sync(hba->dev);
-+		break;
-+	case UFS_IOCTL_BLKROSET:
-+		err = -ENOIOCTLCMD;
-+		break;
-+	default:
-+		err = -EINVAL;
-+		dev_err(hba->dev, "%s: Illegal ufs-IOCTL cmd %d\n", __func__,
-+				cmd);
-+		break;
-+	}
-+
-+	return err;
-+}
-+
- static struct scsi_host_template ufshcd_driver_template = {
- 	.module			= THIS_MODULE,
- 	.name			= UFSHCD,
-@@ -4213,6 +4433,7 @@ static struct scsi_host_template ufshcd_driver_template = {
- 	.eh_abort_handler	= ufshcd_abort,
- 	.eh_device_reset_handler = ufshcd_eh_device_reset_handler,
- 	.eh_host_reset_handler   = ufshcd_eh_host_reset_handler,
-+	.ioctl			= ufshcd_ioctl,
- 	.this_id		= -1,
- 	.sg_tablesize		= SG_ALL,
- 	.cmd_per_lun		= UFSHCD_CMD_PER_LUN,
-diff --git a/include/uapi/scsi/Kbuild b/include/uapi/scsi/Kbuild
-index 75746d5..d404525 100644
---- a/include/uapi/scsi/Kbuild
-+++ b/include/uapi/scsi/Kbuild
-@@ -1,5 +1,6 @@
- # UAPI Header export list
- header-y += fc/
-+header-y += ufs/
- header-y += scsi_bsg_fc.h
- header-y += scsi_netlink.h
- header-y += scsi_netlink_fc.h
-diff --git a/include/uapi/scsi/ufs/Kbuild b/include/uapi/scsi/ufs/Kbuild
-new file mode 100644
-index 0000000..cc3ef20
---- /dev/null
-+++ b/include/uapi/scsi/ufs/Kbuild
-@@ -0,0 +1,3 @@
-+# UAPI Header export list
-+header-y += ioctl.h
-+header-y += ufs.h
-diff --git a/include/uapi/scsi/ufs/ioctl.h b/include/uapi/scsi/ufs/ioctl.h
-new file mode 100644
-index 0000000..bc4eed7
---- /dev/null
-+++ b/include/uapi/scsi/ufs/ioctl.h
-@@ -0,0 +1,57 @@
-+#ifndef UAPI_UFS_IOCTL_H_
-+#define UAPI_UFS_IOCTL_H_
-+
-+#include <linux/types.h>
-+
-+/*
-+ *  IOCTL opcode for ufs queries has the following opcode after
-+ *  SCSI_IOCTL_GET_PCI
-+ */
-+#define UFS_IOCTL_QUERY			0x5388
-+
-+/**
-+ * struct ufs_ioctl_query_data - used to transfer data to and from user via ioctl
-+ * @opcode: type of data to query (descriptor/attribute/flag)
-+ * @idn: id of the data structure
-+ * @buf_size: number of allocated bytes/data size on return
-+ * @buffer: data location
-+ *
-+ * Received: buffer and buf_size (available space for transferred data)
-+ * Submitted: opcode, idn, length, buf_size
-+ */
-+struct ufs_ioctl_query_data {
-+	/*
-+	 * User should select one of the opcode defined in "enum query_opcode".
-+	 * Please check include/uapi/scsi/ufs/ufs.h for the definition of it.
-+	 * Note that only UPIU_QUERY_OPCODE_READ_DESC,
-+	 * UPIU_QUERY_OPCODE_READ_ATTR & UPIU_QUERY_OPCODE_READ_FLAG are
-+	 * supported as of now. All other query_opcode would be considered
-+	 * invalid.
-+	 * As of now only read query operations are supported.
-+	 */
-+	__u32 opcode;
-+	/*
-+	 * User should select one of the idn from "enum flag_idn" or "enum
-+	 * attr_idn" or "enum desc_idn" based on whether opcode above is
-+	 * attribute, flag or descriptor.
-+	 * Please check include/uapi/scsi/ufs/ufs.h for the definition of it.
-+	 */
-+	__u8 idn;
-+	/*
-+	 * User should specify the size of the buffer (buffer[0] below) where
-+	 * it wants to read the query data (attribute/flag/descriptor).
-+	 * As we might end up reading less data then what is specified in
-+	 * buf_size. So we are updating buf_size to what exactly we have read.
-+	 */
-+	__u16 buf_size;
-+	/*
-+	 * placeholder for the start of the data buffer where kernel will copy
-+	 * the query data (attribute/flag/descriptor) read from the UFS device
-+	 * Note:
-+	 * For Read Attribute you will have to allocate 4 bytes
-+	 * For Read Flag you will have to allocate 1 byte
-+	 */
-+	__u8 buffer[0];
-+};
-+
-+#endif /* UAPI_UFS_IOCTL_H_ */
-diff --git a/include/uapi/scsi/ufs/ufs.h b/include/uapi/scsi/ufs/ufs.h
-new file mode 100644
-index 0000000..894ea45
---- /dev/null
-+++ b/include/uapi/scsi/ufs/ufs.h
-@@ -0,0 +1,66 @@
-+#ifndef UAPI_UFS_H_
-+#define UAPI_UFS_H_
-+
-+/* Flag idn for Query Requests*/
-+enum flag_idn {
-+	QUERY_FLAG_IDN_FDEVICEINIT		= 0x01,
-+	QUERY_FLAG_IDN_PERMANENT_WPE		= 0x02,
-+	QUERY_FLAG_IDN_PWR_ON_WPE		= 0x03,
-+	QUERY_FLAG_IDN_BKOPS_EN			= 0x04,
-+	QUERY_FLAG_IDN_RESERVED1		= 0x05,
-+	QUERY_FLAG_IDN_PURGE_ENABLE		= 0x06,
-+	QUERY_FLAG_IDN_RESERVED2		= 0x07,
-+	QUERY_FLAG_IDN_FPHYRESOURCEREMOVAL      = 0x08,
-+	QUERY_FLAG_IDN_BUSY_RTC			= 0x09,
-+};
-+
-+/* Attribute idn for Query requests */
-+enum attr_idn {
-+	QUERY_ATTR_IDN_BOOT_LU_EN		= 0x00,
-+	QUERY_ATTR_IDN_RESERVED			= 0x01,
-+	QUERY_ATTR_IDN_POWER_MODE		= 0x02,
-+	QUERY_ATTR_IDN_ACTIVE_ICC_LVL		= 0x03,
-+	QUERY_ATTR_IDN_OOO_DATA_EN		= 0x04,
-+	QUERY_ATTR_IDN_BKOPS_STATUS		= 0x05,
-+	QUERY_ATTR_IDN_PURGE_STATUS		= 0x06,
-+	QUERY_ATTR_IDN_MAX_DATA_IN		= 0x07,
-+	QUERY_ATTR_IDN_MAX_DATA_OUT		= 0x08,
-+	QUERY_ATTR_IDN_DYN_CAP_NEEDED		= 0x09,
-+	QUERY_ATTR_IDN_REF_CLK_FREQ		= 0x0A,
-+	QUERY_ATTR_IDN_CONF_DESC_LOCK		= 0x0B,
-+	QUERY_ATTR_IDN_MAX_NUM_OF_RTT		= 0x0C,
-+	QUERY_ATTR_IDN_EE_CONTROL		= 0x0D,
-+	QUERY_ATTR_IDN_EE_STATUS		= 0x0E,
-+	QUERY_ATTR_IDN_SECONDS_PASSED		= 0x0F,
-+	QUERY_ATTR_IDN_CNTX_CONF		= 0x10,
-+	QUERY_ATTR_IDN_CORR_PRG_BLK_NUM		= 0x11,
-+};
-+
-+/* Descriptor idn for Query requests */
-+enum desc_idn {
-+	QUERY_DESC_IDN_DEVICE		= 0x0,
-+	QUERY_DESC_IDN_CONFIGURAION	= 0x1,
-+	QUERY_DESC_IDN_UNIT		= 0x2,
-+	QUERY_DESC_IDN_RFU_0		= 0x3,
-+	QUERY_DESC_IDN_INTERCONNECT	= 0x4,
-+	QUERY_DESC_IDN_STRING		= 0x5,
-+	QUERY_DESC_IDN_RFU_1		= 0x6,
-+	QUERY_DESC_IDN_GEOMETRY		= 0x7,
-+	QUERY_DESC_IDN_POWER		= 0x8,
-+	QUERY_DESC_IDN_RFU_2		= 0x9,
-+	QUERY_DESC_IDN_MAX,
-+};
-+
-+/* UTP QUERY Transaction Specific Fields OpCode */
-+enum query_opcode {
-+	UPIU_QUERY_OPCODE_NOP		= 0x0,
-+	UPIU_QUERY_OPCODE_READ_DESC	= 0x1,
-+	UPIU_QUERY_OPCODE_WRITE_DESC	= 0x2,
-+	UPIU_QUERY_OPCODE_READ_ATTR	= 0x3,
-+	UPIU_QUERY_OPCODE_WRITE_ATTR	= 0x4,
-+	UPIU_QUERY_OPCODE_READ_FLAG	= 0x5,
-+	UPIU_QUERY_OPCODE_SET_FLAG	= 0x6,
-+	UPIU_QUERY_OPCODE_CLEAR_FLAG	= 0x7,
-+	UPIU_QUERY_OPCODE_TOGGLE_FLAG	= 0x8,
-+};
-+#endif /* UAPI_UFS_H_ */
--- 
-Qualcomm Israel, on behalf of Qualcomm Innovation Center, Inc.
-The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum,
-a Linux Foundation Collaborative Project
+On Mon, Mar 02, 2015 at 11:22:33AM +0100, Oliver Neukum wrote:
+> > +static ssize_t cs_char_read(struct file *file, char __user *buf, size_=
+t count,
+> > +								loff_t *unused)
+> > +{
+> > +	struct cs_char *csdata =3D file->private_data;
+> > +	u32 data;
+> > +	ssize_t retval;
+> > +
+> > +	if (count < sizeof(data))
+> > +		return -EINVAL;
+> > +
+> > +	for ( ; ; ) {
+> > +		DEFINE_WAIT(wait);
+> > +
+> > +		spin_lock_bh(&csdata->lock);
+> > +		if (!list_empty(&csdata->chardev_queue)) {
+> > +			data =3D cs_pop_entry(&csdata->chardev_queue);
+> > +		} else if (!list_empty(&csdata->dataind_queue)) {
+> > +			data =3D cs_pop_entry(&csdata->dataind_queue);
+> > +			--csdata->dataind_pending;
+> > +
+> > +		} else {
+> > +			data =3D 0;
+> > +		}
+> > +		spin_unlock_bh(&csdata->lock);
+> > +
+> > +		if (data)
+> > +			break;
+> > +		if (file->f_flags & O_NONBLOCK) {
+> > +			retval =3D -EAGAIN;
+> > +			goto out;
+> > +		} else if (signal_pending(current)) {
+> > +			retval =3D -ERESTARTSYS;
+> > +			goto out;
+> > +		}
+> > +		prepare_to_wait_exclusive(&csdata->wait, &wait,
+> > +						TASK_INTERRUPTIBLE);
+> > +		schedule();
+> > +		finish_wait(&csdata->wait, &wait);
+> > +	}
+> > +
+> > +	retval =3D put_user(data, (u32 __user *)buf);
+> > +	if (!retval)
+> > +		retval =3D sizeof(data);
+> > +
+> > +out:
+> > +	return retval;
+> > +}
+> > +
+> > +static ssize_t cs_char_write(struct file *file, const char __user *buf,
+> > +						size_t count, loff_t *unused)
+> > +{
+> > +	struct cs_char *csdata =3D file->private_data;
+> > +	u32 data;
+> > +	int err;
+> > +	ssize_t	retval;
+> > +
+> > +	if (count < sizeof(data))
+> > +		return -EINVAL;
+> > +
+> > +	if (get_user(data, (u32 __user *)buf))
+> > +		retval =3D -EFAULT;
+> > +	else
+> > +		retval =3D count;
+>=20
+> You want to execute the command even if you got -EFAULT?
+> That is highly unusual.
+
+I will change this in PATCHv2.
+
+> > +
+> > +	err =3D cs_hsi_command(csdata->hi, data);
+> > +	if (err < 0)
+> > +		retval =3D err;
+> > +
+> > +	return retval;
+> > +}
+> > +
+> > +static long cs_char_ioctl(struct file *file, unsigned int cmd,
+> > +				unsigned long arg)
+> > +{
+> > +	struct cs_char *csdata =3D file->private_data;
+> > +	int r =3D 0;
+> > +
+> > +	switch (cmd) {
+> > +	case CS_GET_STATE: {
+> > +		unsigned int state;
+> > +
+> > +		state =3D cs_hsi_get_state(csdata->hi);
+> > +		if (copy_to_user((void __user *)arg, &state, sizeof(state)))
+> > +			r =3D -EFAULT;
+> > +	}
+> > +		break;
+> > +	case CS_SET_WAKELINE: {
+> > +		unsigned int state;
+> > +
+> > +		if (copy_from_user(&state, (void __user *)arg, sizeof(state)))
+> > +			r =3D -EFAULT;
+> > +		else
+> > +			cs_hsi_set_wakeline(csdata->hi, state);
+>=20
+> No sanity checking for state?
+
+Will be added in PATCHv2, so that -EINVAL is returned for values > 1.
+
+> > +	}
+> > +		break;
+> > +	case CS_GET_IF_VERSION: {
+> > +		unsigned int ifver =3D CS_IF_VERSION;
+> > +
+> > +		if (copy_to_user((void __user *)arg, &ifver, sizeof(ifver)))
+> > +			r =3D -EFAULT;
+> > +		break;
+> > +	}
+> > +	case CS_CONFIG_BUFS: {
+> > +		struct cs_buffer_config buf_cfg;
+> > +
+> > +		if (copy_from_user(&buf_cfg, (void __user *)arg,
+> > +							sizeof(buf_cfg)))
+> > +			r =3D -EFAULT;
+> > +		else
+> > +			r =3D cs_hsi_buf_config(csdata->hi, &buf_cfg);
+>=20
+> Sanity checking?
+
+cs_hsi_buf_config() calls check_buf_params().
+
+> > +		break;
+> > +	}
+> > +	default:
+> > +		r =3D -ENOTTY;
+> > +		break;
+> > +	}
+> > +
+> > +	return r;
+> > +}
+> > +
+> > +static int cs_char_mmap(struct file *file, struct vm_area_struct *vma)
+> > +{
+> > +	if (vma->vm_end < vma->vm_start)
+> > +		return -EINVAL;
+> > +
+> > +	if (((vma->vm_end - vma->vm_start) >> PAGE_SHIFT) !=3D 1)
+> > +		return -EINVAL;
+> > +
+> > +	vma->vm_flags |=3D VM_RESERVED;
+> > +	vma->vm_ops =3D &cs_char_vm_ops;
+> > +	vma->vm_private_data =3D file->private_data;
+> > +
+> > +	return 0;
+> > +}
+> > +
+> > +static int cs_char_open(struct inode *unused, struct file *file)
+> > +{
+> > +	int ret =3D 0;
+> > +
+> > +	spin_lock_bh(&cs_char_data.lock);
+> > +	if (cs_char_data.opened) {
+> > +		ret =3D -EBUSY;
+> > +		spin_unlock_bh(&cs_char_data.lock);
+> > +		goto out;
+> > +	}
+> > +	cs_char_data.mmap_base =3D get_zeroed_page(GFP_ATOMIC);
+>=20
+> This could be moved outside the locked sectionand use GFP_KERNEL.
+
+Right, this is fixed by a follow up patch. I kept the patchset split
+to keep authorship information. I guess I can squash the first three
+patches, though.
+
+> > +	if (!cs_char_data.mmap_base) {
+> > +		dev_err(&cs_char_data.cl->device,
+> > +					"Shared memory allocation failed.\n");
+> > +		ret =3D -ENOMEM;
+> > +		spin_unlock_bh(&cs_char_data.lock);
+> > +		goto out;
+> > +	}
+> > +	cs_char_data.mmap_size =3D CS_MMAP_SIZE;
+> > +	cs_char_data.dataind_pending =3D 0;
+> > +	cs_char_data.opened =3D 1;
+> > +	file->private_data =3D &cs_char_data;
+> > +	spin_unlock_bh(&cs_char_data.lock);
+> > +
+> > +	BUG_ON(cs_char_data.hi);
+> > +
+> > +	ret =3D cs_hsi_start(&cs_char_data.hi, cs_char_data.cl,
+> > +				cs_char_data.mmap_base, cs_char_data.mmap_size);
+> > +	if (ret) {
+> > +		dev_err(&cs_char_data.cl->device, "Unable to initialize HSI\n");
+> > +		free_page(cs_char_data.mmap_base);
+> > +		goto out;
+> > +	}
+> > +
+> > +out:
+> > +	return ret;
+> > +}
+
+-- Sebastian
+
+--SkvwRMAIpAhPCcCJ
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBCgAGBQJU9IE5AAoJENju1/PIO/qaD7wP/3gW73rCOETtwOhVRx8NG+vZ
+Chr4qAJ2uEmB+9OFq9Bm4InMuLePzXL2d5akdpCxhYCxOBHPB4YC9V+nUyCN6ATK
+rd8RDV6zmp79Rry8jmv0EeOsl3VC81jl/AkedpboBDBWgEkd6sPuA/BJt/YJIHCt
+7yj2RGAi2w+tqHB87iPpI+l1A4jP9Vxl5Uf59/W5JHSF3lE/TqtNABM5NxIZM2Cy
+OMURi02/8nXEoVT8ngvSstk+mY/oSo5K34d3f5jSeYPXoInlxeir+2NkFZO9UIBG
+hJYmrH1sdtMg4A+c//BdoH4SgDsI5t6UNBJvJ8R+rUZdz6F2r+D1hN/b5CtRVbWM
+yP5UYYcndNKqJT+qPWVyDxp/UPzTPcuVSAKH2mRALl4Cu2jtSSRmEx/1atpqA1av
+oC2UnQiteSxF9NyHI2caY8KM3yzF6f3JumyXxNMNs3iH+i1nuGjeFfCGsZi6vpZN
+jnXe7G+74+3SwmAq1IExnow0emRkK7b4OGVsl7VfIEUciFM8+6obk3haTjhi9Udy
+ar9BDAPkLJaaUAhSKzn4anf0d0jF6a2R3nEVOIZuPCwHruWO76pt4UnerpRCOiep
+ESVTvNjJkHrm2uyY6o+9qKSZVAEuBaIU7bz2sRTPE5+9/nvEplnrr9WgtDpv/171
+4pHpMMpcYklXaHZGQOCO
+=uGX9
+-----END PGP SIGNATURE-----
+
+--SkvwRMAIpAhPCcCJ--
