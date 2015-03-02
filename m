@@ -1,202 +1,95 @@
-From: Oliver Neukum <oliver-GvhC2dPhHPQdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 1/9] HSI: cmt_speech: Add cmt-speech driver
-Date: Mon, 02 Mar 2015 11:22:33 +0100
-Message-ID: <1425291753.2014.5.camel@neukum.org>
-References: <1425271139-24715-1-git-send-email-sre@kernel.org>
-	 <1425271139-24715-2-git-send-email-sre@kernel.org>
+From: Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH v5 tip 1/7] bpf: make internal bpf API independent
+ of CONFIG_BPF_SYSCALL ifdefs
+Date: Mon, 02 Mar 2015 19:53:09 +0900
+Message-ID: <54F44115.40505@hitachi.com>
+References: <1425252465-27527-1-git-send-email-ast@plumgrid.com> <1425252465-27527-2-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1425271139-24715-2-git-send-email-sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+In-Reply-To: <1425252465-27527-2-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Peter Ujfalusi <peter.ujfalusi-l0cyMroinI0@public.gmane.org>, Kai Vehmanen <kvcontact-nQfqiRJ1PMYxHbG02/KK1g@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Pali Rohar <pali.rohar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Aaro Koskinen <aaro.koskinen-X3B1VOXEql0@public.gmane.org>, Ivaylo Dimitrov <ivo.g.dimitrov.75-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-omap-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kai Vehmanen <kai.vehmanen-xNZwKgViW5gAvxtiuMwx3w@public.gmane.org>, Carlos Chinea <carlos.chinea-xNZwKgViW5gAvxtiuMwx3w@public.gmane.org>, Joni Lapilainen <joni.lapilainen-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+(2015/03/02 8:27), Alexei Starovoitov wrote:
+> From: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+> 
+> Socket filter code and other subsystems with upcoming eBPF support should
+> not need to deal with the fact that we have CONFIG_BPF_SYSCALL defined or
+> not.
+> 
+> Having the bpf syscall as a config option is a nice thing and I'd expect
+> it to stay that way for expert users (I presume one day the default setting
+> of it might change, though), but code making use of it should not care if
+> it's actually enabled or not.
 
-> +static ssize_t cs_char_read(struct file *file, char __user *buf, size_t count,
-> +								loff_t *unused)
+Hmm, it seems that this still doesn't hide some APIs which is provided
+only when CONFIG_BPF_SYSCALL. For example bpf_register_map_type etc.
+I think all those APIs should be hidden in #ifdef or at least be commented
+so that the user doesn't refer that without the kconfig.
+(I don't think we need to provide dummy functions for those APIs,
+ but it's better to clarify which API we can use with which kconfig)
+
+Thank you,
+
+> 
+> Instead, hide this via header files and let the rest deal with it.
+> 
+> Signed-off-by: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+> ---
+>  include/linux/bpf.h |   20 ++++++++++++++++----
+>  1 file changed, 16 insertions(+), 4 deletions(-)
+> 
+> diff --git a/include/linux/bpf.h b/include/linux/bpf.h
+> index bbfceb756452..c2e21113ecc0 100644
+> --- a/include/linux/bpf.h
+> +++ b/include/linux/bpf.h
+> @@ -113,8 +113,6 @@ struct bpf_prog_type_list {
+>  	enum bpf_prog_type type;
+>  };
+>  
+> -void bpf_register_prog_type(struct bpf_prog_type_list *tl);
+> -
+>  struct bpf_prog;
+>  
+>  struct bpf_prog_aux {
+> @@ -129,11 +127,25 @@ struct bpf_prog_aux {
+>  };
+>  
+>  #ifdef CONFIG_BPF_SYSCALL
+> +void bpf_register_prog_type(struct bpf_prog_type_list *tl);
+> +
+>  void bpf_prog_put(struct bpf_prog *prog);
+> +struct bpf_prog *bpf_prog_get(u32 ufd);
+>  #else
+> -static inline void bpf_prog_put(struct bpf_prog *prog) {}
+> +static inline void bpf_register_prog_type(struct bpf_prog_type_list *tl)
 > +{
-> +	struct cs_char *csdata = file->private_data;
-> +	u32 data;
-> +	ssize_t retval;
-> +
-> +	if (count < sizeof(data))
-> +		return -EINVAL;
-> +
-> +	for ( ; ; ) {
-> +		DEFINE_WAIT(wait);
-> +
-> +		spin_lock_bh(&csdata->lock);
-> +		if (!list_empty(&csdata->chardev_queue)) {
-> +			data = cs_pop_entry(&csdata->chardev_queue);
-> +		} else if (!list_empty(&csdata->dataind_queue)) {
-> +			data = cs_pop_entry(&csdata->dataind_queue);
-> +			--csdata->dataind_pending;
-> +
-> +		} else {
-> +			data = 0;
-> +		}
-> +		spin_unlock_bh(&csdata->lock);
-> +
-> +		if (data)
-> +			break;
-> +		if (file->f_flags & O_NONBLOCK) {
-> +			retval = -EAGAIN;
-> +			goto out;
-> +		} else if (signal_pending(current)) {
-> +			retval = -ERESTARTSYS;
-> +			goto out;
-> +		}
-> +		prepare_to_wait_exclusive(&csdata->wait, &wait,
-> +						TASK_INTERRUPTIBLE);
-> +		schedule();
-> +		finish_wait(&csdata->wait, &wait);
-> +	}
-> +
-> +	retval = put_user(data, (u32 __user *)buf);
-> +	if (!retval)
-> +		retval = sizeof(data);
-> +
-> +out:
-> +	return retval;
 > +}
 > +
-> +static ssize_t cs_char_write(struct file *file, const char __user *buf,
-> +						size_t count, loff_t *unused)
+> +static inline struct bpf_prog *bpf_prog_get(u32 ufd)
 > +{
-> +	struct cs_char *csdata = file->private_data;
-> +	u32 data;
-> +	int err;
-> +	ssize_t	retval;
-> +
-> +	if (count < sizeof(data))
-> +		return -EINVAL;
-> +
-> +	if (get_user(data, (u32 __user *)buf))
-> +		retval = -EFAULT;
-> +	else
-> +		retval = count;
-
-You want to execute the command even if you got -EFAULT?
-That is highly unusual.
-
-> +
-> +	err = cs_hsi_command(csdata->hi, data);
-> +	if (err < 0)
-> +		retval = err;
-> +
-> +	return retval;
+> +	return ERR_PTR(-EOPNOTSUPP);
 > +}
 > +
-> +static long cs_char_ioctl(struct file *file, unsigned int cmd,
-> +				unsigned long arg)
+> +static inline void bpf_prog_put(struct bpf_prog *prog)
 > +{
-> +	struct cs_char *csdata = file->private_data;
-> +	int r = 0;
-> +
-> +	switch (cmd) {
-> +	case CS_GET_STATE: {
-> +		unsigned int state;
-> +
-> +		state = cs_hsi_get_state(csdata->hi);
-> +		if (copy_to_user((void __user *)arg, &state, sizeof(state)))
-> +			r = -EFAULT;
-> +	}
-> +		break;
-> +	case CS_SET_WAKELINE: {
-> +		unsigned int state;
-> +
-> +		if (copy_from_user(&state, (void __user *)arg, sizeof(state)))
-> +			r = -EFAULT;
-> +		else
-> +			cs_hsi_set_wakeline(csdata->hi, state);
-
-No sanity checking for state?
-
-> +	}
-> +		break;
-> +	case CS_GET_IF_VERSION: {
-> +		unsigned int ifver = CS_IF_VERSION;
-> +
-> +		if (copy_to_user((void __user *)arg, &ifver, sizeof(ifver)))
-> +			r = -EFAULT;
-> +		break;
-> +	}
-> +	case CS_CONFIG_BUFS: {
-> +		struct cs_buffer_config buf_cfg;
-> +
-> +		if (copy_from_user(&buf_cfg, (void __user *)arg,
-> +							sizeof(buf_cfg)))
-> +			r = -EFAULT;
-> +		else
-> +			r = cs_hsi_buf_config(csdata->hi, &buf_cfg);
-
-Sanity checking?
-
-> +		break;
-> +	}
-> +	default:
-> +		r = -ENOTTY;
-> +		break;
-> +	}
-> +
-> +	return r;
 > +}
+>  #endif
+> -struct bpf_prog *bpf_prog_get(u32 ufd);
 > +
-> +static int cs_char_mmap(struct file *file, struct vm_area_struct *vma)
-> +{
-> +	if (vma->vm_end < vma->vm_start)
-> +		return -EINVAL;
-> +
-> +	if (((vma->vm_end - vma->vm_start) >> PAGE_SHIFT) != 1)
-> +		return -EINVAL;
-> +
-> +	vma->vm_flags |= VM_RESERVED;
-> +	vma->vm_ops = &cs_char_vm_ops;
-> +	vma->vm_private_data = file->private_data;
-> +
-> +	return 0;
-> +}
-> +
-> +static int cs_char_open(struct inode *unused, struct file *file)
-> +{
-> +	int ret = 0;
-> +
-> +	spin_lock_bh(&cs_char_data.lock);
-> +	if (cs_char_data.opened) {
-> +		ret = -EBUSY;
-> +		spin_unlock_bh(&cs_char_data.lock);
-> +		goto out;
-> +	}
-> +	cs_char_data.mmap_base = get_zeroed_page(GFP_ATOMIC);
+>  /* verify correctness of eBPF program */
+>  int bpf_check(struct bpf_prog *fp, union bpf_attr *attr);
+>  
+> 
 
-This could be moved outside the locked sectionand use GFP_KERNEL.
 
-> +	if (!cs_char_data.mmap_base) {
-> +		dev_err(&cs_char_data.cl->device,
-> +					"Shared memory allocation failed.\n");
-> +		ret = -ENOMEM;
-> +		spin_unlock_bh(&cs_char_data.lock);
-> +		goto out;
-> +	}
-> +	cs_char_data.mmap_size = CS_MMAP_SIZE;
-> +	cs_char_data.dataind_pending = 0;
-> +	cs_char_data.opened = 1;
-> +	file->private_data = &cs_char_data;
-> +	spin_unlock_bh(&cs_char_data.lock);
-> +
-> +	BUG_ON(cs_char_data.hi);
-> +
-> +	ret = cs_hsi_start(&cs_char_data.hi, cs_char_data.cl,
-> +				cs_char_data.mmap_base, cs_char_data.mmap_size);
-> +	if (ret) {
-> +		dev_err(&cs_char_data.cl->device, "Unable to initialize HSI\n");
-> +		free_page(cs_char_data.mmap_base);
-> +		goto out;
-> +	}
-> +
-> +out:
-> +	return ret;
-> +}
+-- 
+Masami HIRAMATSU
+Software Platform Research Dept. Linux Technology Research Center
+Hitachi, Ltd., Yokohama Research Laboratory
+E-mail: masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org
