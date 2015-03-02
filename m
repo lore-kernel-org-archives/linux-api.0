@@ -1,45 +1,61 @@
 From: Sebastian Reichel <sre@kernel.org>
-Subject: [PATCH 3/9] HSI: cmt_speech: Return error if HSI port not configured
-Date: Mon,  2 Mar 2015 05:38:53 +0100
-Message-ID: <1425271139-24715-4-git-send-email-sre@kernel.org>
+Subject: [PATCH 6/9] HSI: cmt_speech: Rename driver to cmt-speech
+Date: Mon,  2 Mar 2015 05:38:56 +0100
+Message-ID: <1425271139-24715-7-git-send-email-sre@kernel.org>
 References: <1425271139-24715-1-git-send-email-sre@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1425271139-24715-1-git-send-email-sre@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Sebastian Reichel <sre@kernel.org>
-Cc: Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pavel Machek <pavel@ucw.cz>, Pali Rohar <pali.rohar@gmail.com>, Aaro Koskinen <aaro.koskinen@iki.fi>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Kai Vehmanen <kai.vehmanen@nokia.com>, Joni Lapilainen <joni.lapilainen@gmail.com>
+Cc: Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pavel Machek <pavel@ucw.cz>, Pali Rohar <pali.rohar@gmail.com>, Aaro Koskinen <aaro.koskinen@iki.fi>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Kai Vehmanen <kai.vehmanen@nokia.com>
+Rename driver and platform alias to cmt-speech, so that
+it's consistent with the ssi-protocol driver.
 
-If HSI port is not configured by ssi_protocol, return an error from
-char device open.
-
-Signed-off-by: Kai Vehmanen <kai.vehmanen@nokia.com>
-Acked-by: Carlos Chinea <carlos.chinea@nokia.com>
-Signed-off-by: Joni Lapilainen <joni.lapilainen@gmail.com>
 Signed-off-by: Sebastian Reichel <sre@kernel.org>
 ---
- drivers/hsi/clients/cmt_speech.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+ drivers/hsi/clients/cmt_speech.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/hsi/clients/cmt_speech.c b/drivers/hsi/clients/cmt_speech.c
-index 389eafb..56846c9 100644
+index 8d9860b..52001ed 100644
 --- a/drivers/hsi/clients/cmt_speech.c
 +++ b/drivers/hsi/clients/cmt_speech.c
-@@ -1037,6 +1037,13 @@ static int cs_hsi_start(struct cs_hsi_iface **hi, struct hsi_client *cl,
- 		dev_err(&cl->device, "Could not get HSI master client\n");
- 		goto leave4;
- 	}
-+	if (!ssip_slave_running(hsi_if->master)) {
-+		err = -ENODEV;
-+		dev_err(&cl->device,
-+				"HSI port not initialized\n");
-+		goto leave4;
-+	}
-+
- 	hsi_if->iface_state = CS_STATE_OPENED;
- 	local_bh_disable();
- 	cs_hsi_read_on_control(hsi_if);
+@@ -40,7 +40,6 @@
+ #include <linux/cs-protocol.h>
+ 
+ #define CS_MMAP_SIZE	PAGE_SIZE
+-#define DRIVER_NAME	"cmt_speech"
+ 
+ struct char_queue {
+ 	struct list_head	list;
+@@ -1365,7 +1364,7 @@ static const struct file_operations cs_char_fops = {
+ 
+ static struct miscdevice cs_char_miscdev = {
+ 	.minor	= MISC_DYNAMIC_MINOR,
+-	.name	= DRIVER_NAME,
++	.name	= "cmt_speech",
+ 	.fops	= &cs_char_fops
+ };
+ 
+@@ -1408,7 +1407,7 @@ static int cs_hsi_client_remove(struct device *dev)
+ 
+ static struct hsi_client_driver cs_hsi_driver = {
+ 	.driver = {
+-		.name	= DRIVER_NAME,
++		.name	= "cmt-speech",
+ 		.owner	= THIS_MODULE,
+ 		.probe	= cs_hsi_client_probe,
+ 		.remove	= cs_hsi_client_remove,
+@@ -1429,7 +1428,7 @@ static void __exit cs_char_exit(void)
+ }
+ module_exit(cs_char_exit);
+ 
+-MODULE_ALIAS("hsi:cmt_speech");
++MODULE_ALIAS("hsi:cmt-speech");
+ MODULE_AUTHOR("Kai Vehmanen <kai.vehmanen@nokia.com>");
+ MODULE_AUTHOR("Peter Ujfalusi <peter.ujfalusi@nokia.com>");
+ MODULE_DESCRIPTION("CMT speech driver");
 -- 
 2.1.4
