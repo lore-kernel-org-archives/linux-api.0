@@ -1,114 +1,57 @@
-From: KY Srinivasan <kys@microsoft.com>
-Subject: RE: [PATCH RFC 0/3] Drivers: hv: utils: re-implement the
- kernel/userspace communication layer
-Date: Mon, 2 Mar 2015 02:11:53 +0000
-Message-ID: <BY2PR0301MB071107C31972876159BB360CA0100@BY2PR0301MB0711.namprd03.prod.outlook.com>
-References: <1425053665-635-1-git-send-email-vkuznets@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-2
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Sebastian Reichel <sre@kernel.org>
+Subject: [PATCH 0/9] N900 Modem Speech Support
+Date: Mon,  2 Mar 2015 05:38:50 +0100
+Message-ID: <1425271139-24715-1-git-send-email-sre@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1425053665-635-1-git-send-email-vkuznets@redhat.com>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vitaly Kuznetsov <vkuznets@redhat.com>, "devel@linuxdriverproject.org" <devel@linuxdriverproject.org>
-Cc: Haiyang Zhang <haiyangz@microsoft.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Dexuan Cui <decui@microsoft.com>, =?iso-8859-2?Q?Radim_Kr=E8m=E1=F8?= <rkrcmar@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+To: Sebastian Reichel <sre@kernel.org>
+Cc: Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pavel Machek <pavel@ucw.cz>, Pali Rohar <pali.rohar@gmail.com>, Aaro Koskinen <aaro.koskinen@iki.fi>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+Hi,
 
+This patchset contains the missing speech data support for the
+Nokia N900 modem.
 
-> -----Original Message-----
-> From: Vitaly Kuznetsov [mailto:vkuznets@redhat.com]
-> Sent: Friday, February 27, 2015 8:14 AM
-> To: KY Srinivasan; devel@linuxdriverproject.org
-> Cc: Haiyang Zhang; linux-kernel@vger.kernel.org; Dexuan Cui; Radim Kr=
-=E8m=E1=F8;
-> Greg Kroah-Hartman; linux-api@vger.kernel.org
-> Subject: [PATCH RFC 0/3] Drivers: hv: utils: re-implement the
-> kernel/userspace communication layer
->=20
-> This series converts kvp/vss daemons to use misc char devices instead=
- of
-> netlink for userspace/kernel communication and then updates fcopy to =
-be
-> consistent with kvp/vss.
->=20
-> Userspace/kernel communication via netlink has a number of issues:
-> - It is hard for userspace to figure out if the kernel part was loade=
-d or not
->   and this fact can change as there is a way to enable/disable the se=
-rvice from
->   host side. Racy daemon startup is also a problem.
-> - When the userspace daemon restarts/dies kernel part doesn't receive=
- a
->   notification.
-> - Netlink communication is not stable under heavy load.
-> - ...
->=20
-> RFC: I'm a bit puzzled on how to split commits 1 and 2 avoiding break=
-ages.
-> Commit 3 can definitely be split, however, it is consistent with comm=
-its 1 and
-> 2 at this moment and I'm not sure such split will simplify the review=
-=2E
->=20
-> Vitaly Kuznetsov (3):
->   Drivers: hv: kvp: convert userspace/kernel communication to using c=
-har
->     device
->   Drivers: hv: vss: convert userspace/kernel communication to using c=
-har
->     device
->   Drivers: hv: fcopy: make it consistent with vss/kvp
+Userland access goes via /dev/cmt_speech. The API is implemented in
+libcmtspeechdata, which is used by ofono and the freesmartphone.org project.
+Apart from that the device is also used by the phone binaries distributed
+with Maemo. So while this is a new userland ABI for the mainline kernel it
+has been tested in the wild for some years.
 
-Vitaly,
+Simple Testing of the API can be done by checking out libcmtspeechdata [0],
+building the test tool and executing it. The tool will loop back audio data
+received from the caller.
 
-Thank you for working on this. Before I give you detailed comments on y=
-our
-patches, I wanted to understand if the cost of maintaining compatibilit=
-y was
-carefully considered. As a first step we could look at cleanly abstract=
-ing the=20
-transport (between user level and the kernel) out of the kernel driver =
-code=20
-as well as the new daemon
-code. What are your thoughts on this. Version negotiation is obviously =
-key to
-maintaining compatibility. One of the options we can explore is to cont=
-inue to
-use netlink for version negotiation and for appropriate daemon versions=
-, we could use
-the char device mechanism for transporting the payload.
+I have prepared a kernel branch, which includes these changes at [1].
 
-I like the new state machine you have defined and this is orthogonal to=
- the transport
-options we have. You have sought feedback on how we can split up these =
-changes into
-smaller patches. This is how I would proceed here:
+[0] https://lkml.org/lkml/2015/2/11/526
+[1] git://git.kernel.org/pub/scm/linux/kernel/git/sre/linux-hsi.git branch/cmt-speech
 
-Patch(es) to clean up  the current code:=20
-	Patch(es) to clean up the state machine.
-	Patch(es) to isolate the kernel/user transport
-Patch(es) to implement the new transport
-=20
-Regards,
+-- Sebastian
 
-K. Y
->=20
->  drivers/hv/hv_fcopy.c       | 395 +++++++++++++++++++++++++---------=
-------
-> ---
->  drivers/hv/hv_kvp.c         | 396 +++++++++++++++++++++++++++-------=
-------
-> ----
->  drivers/hv/hv_snapshot.c    | 335 +++++++++++++++++++++++++++-------=
---
-> -
->  include/uapi/linux/hyperv.h |  10 ++
->  tools/hv/hv_fcopy_daemon.c  |  48 ++++--
->  tools/hv/hv_kvp_daemon.c    | 187 ++++-----------------
->  tools/hv/hv_vss_daemon.c    | 141 +++-------------
->  7 files changed, 824 insertions(+), 688 deletions(-)
->=20
-> --
-> 1.9.3
+Kai Vehmanen (3):
+  HSI: cmt_speech: Add cmt-speech driver
+  HSI: cmt_speech: Avoid GFP_ATOMIC in cs_char_open
+  HSI: cmt_speech: Return error if HSI port not configured
+
+Sebastian Reichel (6):
+  HSI: cmt_speech: Fix build for 4.0 kernel
+  HSI: cmt_speech: Cleanup initialisation
+  HSI: cmt_speech: Rename driver to cmt-speech
+  HSI: cmt_speech: Move cs-protocol.h to include/uapi/linux/hsi
+  HSI: cmt_speech: Remove hardcoded channel numbers
+  HSI: nokia-modem: Add cmt_speech support
+
+ drivers/hsi/clients/Kconfig          |   11 +-
+ drivers/hsi/clients/Makefile         |    1 +
+ drivers/hsi/clients/cmt_speech.c     | 1451 ++++++++++++++++++++++++++++++++++
+ drivers/hsi/clients/nokia-modem.c    |   31 +-
+ include/uapi/linux/hsi/Kbuild        |    2 +-
+ include/uapi/linux/hsi/cs-protocol.h |  113 +++
+ 6 files changed, 1606 insertions(+), 3 deletions(-)
+ create mode 100644 drivers/hsi/clients/cmt_speech.c
+ create mode 100644 include/uapi/linux/hsi/cs-protocol.h
+
+-- 
+2.1.4
