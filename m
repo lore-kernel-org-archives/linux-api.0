@@ -1,91 +1,62 @@
-From: Vitaly Kuznetsov <vkuznets@redhat.com>
-Subject: Re: [PATCH RFC 0/3] Drivers: hv: utils: re-implement the
- kernel/userspace communication layer
-Date: Mon, 02 Mar 2015 14:37:22 +0100
-Message-ID: <8761ajjzal.fsf@vitty.brq.redhat.com>
-References: <1425053665-635-1-git-send-email-vkuznets@redhat.com>
- <BY2PR0301MB071107C31972876159BB360CA0100@BY2PR0301MB0711.namprd03.prod.outlook.com>
+From: Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v1 1/5] IB/uverbs: ex_query_device: answer must not
+ depend on request's comp_mask
+Date: Mon, 02 Mar 2015 15:08:15 +0100
+Message-ID: <1425305295.3069.10.camel@opteya.com>
+References: <cover.1422553023.git.ydroneaud@opteya.com>
+	 <24ceb1fc5b2b6563532e5776b1b2320b1ae37543.1422553023.git.ydroneaud@opteya.com>
+	 <20150129182800.GH11842@obsidianresearch.com>
+	 <1422568741.3133.247.camel@opteya.com>
+	 <CAG4TOxN4DpTMMsCM-1oe6-w+5xYR4YHdJeL7p2nQpUy9gYCSjA@mail.gmail.com>
+	 <1422638760.3133.260.camel@opteya.com>
+	 <CAJ3xEMhDtD7MpJ+1Y3z2yMpTrb9C5SaUa94E8xpVLHN4pHe3fw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <BY2PR0301MB071107C31972876159BB360CA0100@BY2PR0301MB0711.namprd03.prod.outlook.com>
- (KY Srinivasan's message of "Mon, 2 Mar 2015 02:11:53 +0000")
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: KY Srinivasan <kys@microsoft.com>
-Cc: Radim =?utf-8?B?S3LEjW3DocWZ?= <rkrcmar@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Haiyang Zhang <haiyangz@microsoft.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "devel@linuxdriverproject.org" <devel@linuxdriverproject.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAJ3xEMhDtD7MpJ+1Y3z2yMpTrb9C5SaUa94E8xpVLHN4pHe3fw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Or Gerlitz <gerlitz.or-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Or Gerlitz <ogerlitz-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Cc: Roland Dreier <roland-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Sagi Grimberg <sagig-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Shachar Raindel <raindel-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Eli Cohen <eli-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Haggai Eran <haggaie-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-S1kgU3Jpbml2YXNhbiA8a3lzQG1pY3Jvc29mdC5jb20+IHdyaXRlczoKCj4+IC0tLS0tT3JpZ2lu
-YWwgTWVzc2FnZS0tLS0tCj4+IEZyb206IFZpdGFseSBLdXpuZXRzb3YgW21haWx0bzp2a3V6bmV0
-c0ByZWRoYXQuY29tXQo+PiBTZW50OiBGcmlkYXksIEZlYnJ1YXJ5IDI3LCAyMDE1IDg6MTQgQU0K
-Pj4gVG86IEtZIFNyaW5pdmFzYW47IGRldmVsQGxpbnV4ZHJpdmVycHJvamVjdC5vcmcKPj4gQ2M6
-IEhhaXlhbmcgWmhhbmc7IGxpbnV4LWtlcm5lbEB2Z2VyLmtlcm5lbC5vcmc7IERleHVhbiBDdWk7
-IFJhZGltIEtyxI1tw6HFmTsKPj4gR3JlZyBLcm9haC1IYXJ0bWFuOyBsaW51eC1hcGlAdmdlci5r
-ZXJuZWwub3JnCj4+IFN1YmplY3Q6IFtQQVRDSCBSRkMgMC8zXSBEcml2ZXJzOiBodjogdXRpbHM6
-IHJlLWltcGxlbWVudCB0aGUKPj4ga2VybmVsL3VzZXJzcGFjZSBjb21tdW5pY2F0aW9uIGxheWVy
-Cj4+IAo+PiBUaGlzIHNlcmllcyBjb252ZXJ0cyBrdnAvdnNzIGRhZW1vbnMgdG8gdXNlIG1pc2Mg
-Y2hhciBkZXZpY2VzIGluc3RlYWQgb2YKPj4gbmV0bGluayBmb3IgdXNlcnNwYWNlL2tlcm5lbCBj
-b21tdW5pY2F0aW9uIGFuZCB0aGVuIHVwZGF0ZXMgZmNvcHkgdG8gYmUKPj4gY29uc2lzdGVudCB3
-aXRoIGt2cC92c3MuCj4+IAo+PiBVc2Vyc3BhY2Uva2VybmVsIGNvbW11bmljYXRpb24gdmlhIG5l
-dGxpbmsgaGFzIGEgbnVtYmVyIG9mIGlzc3VlczoKPj4gLSBJdCBpcyBoYXJkIGZvciB1c2Vyc3Bh
-Y2UgdG8gZmlndXJlIG91dCBpZiB0aGUga2VybmVsIHBhcnQgd2FzIGxvYWRlZCBvciBub3QKPj4g
-ICBhbmQgdGhpcyBmYWN0IGNhbiBjaGFuZ2UgYXMgdGhlcmUgaXMgYSB3YXkgdG8gZW5hYmxlL2Rp
-c2FibGUgdGhlIHNlcnZpY2UgZnJvbQo+PiAgIGhvc3Qgc2lkZS4gUmFjeSBkYWVtb24gc3RhcnR1
-cCBpcyBhbHNvIGEgcHJvYmxlbS4KPj4gLSBXaGVuIHRoZSB1c2Vyc3BhY2UgZGFlbW9uIHJlc3Rh
-cnRzL2RpZXMga2VybmVsIHBhcnQgZG9lc24ndCByZWNlaXZlIGEKPj4gICBub3RpZmljYXRpb24u
-Cj4+IC0gTmV0bGluayBjb21tdW5pY2F0aW9uIGlzIG5vdCBzdGFibGUgdW5kZXIgaGVhdnkgbG9h
-ZC4KPj4gLSAuLi4KPj4gCj4+IFJGQzogSSdtIGEgYml0IHB1enpsZWQgb24gaG93IHRvIHNwbGl0
-IGNvbW1pdHMgMSBhbmQgMiBhdm9pZGluZyBicmVha2FnZXMuCj4+IENvbW1pdCAzIGNhbiBkZWZp
-bml0ZWx5IGJlIHNwbGl0LCBob3dldmVyLCBpdCBpcyBjb25zaXN0ZW50IHdpdGggY29tbWl0cyAx
-IGFuZAo+PiAyIGF0IHRoaXMgbW9tZW50IGFuZCBJJ20gbm90IHN1cmUgc3VjaCBzcGxpdCB3aWxs
-IHNpbXBsaWZ5IHRoZSByZXZpZXcuCj4+IAo+PiBWaXRhbHkgS3V6bmV0c292ICgzKToKPj4gICBE
-cml2ZXJzOiBodjoga3ZwOiBjb252ZXJ0IHVzZXJzcGFjZS9rZXJuZWwgY29tbXVuaWNhdGlvbiB0
-byB1c2luZyBjaGFyCj4+ICAgICBkZXZpY2UKPj4gICBEcml2ZXJzOiBodjogdnNzOiBjb252ZXJ0
-IHVzZXJzcGFjZS9rZXJuZWwgY29tbXVuaWNhdGlvbiB0byB1c2luZyBjaGFyCj4+ICAgICBkZXZp
-Y2UKPj4gICBEcml2ZXJzOiBodjogZmNvcHk6IG1ha2UgaXQgY29uc2lzdGVudCB3aXRoIHZzcy9r
-dnAKPgo+IFZpdGFseSwKPgo+IFRoYW5rIHlvdSBmb3Igd29ya2luZyBvbiB0aGlzLiBCZWZvcmUg
-SSBnaXZlIHlvdSBkZXRhaWxlZCBjb21tZW50cyBvbiB5b3VyCj4gcGF0Y2hlcywgSSB3YW50ZWQg
-dG8gdW5kZXJzdGFuZCBpZiB0aGUgY29zdCBvZiBtYWludGFpbmluZyBjb21wYXRpYmlsaXR5IHdh
-cwo+IGNhcmVmdWxseSBjb25zaWRlcmVkLiBBcyBhIGZpcnN0IHN0ZXAgd2UgY291bGQgbG9vayBh
-dCBjbGVhbmx5IGFic3RyYWN0aW5nIHRoZSAKPiB0cmFuc3BvcnQgKGJldHdlZW4gdXNlciBsZXZl
-bCBhbmQgdGhlIGtlcm5lbCkgb3V0IG9mIHRoZSBrZXJuZWwgZHJpdmVyIGNvZGUgCj4gYXMgd2Vs
-bCBhcyB0aGUgbmV3IGRhZW1vbiBjb2RlLiBXaGF0IGFyZSB5b3VyIHRob3VnaHRzIG9uCj4gdGhp
-cy4gVmVyc2lvbiBuZWdvdGlhdGlvbiAgaXMgb2J2aW91c2x5IGtleSB0byBtYWludGFpbmluZwo+
-IGNvbXBhdGliaWxpdHkuIE9uZSBvZiB0aGUgIG9wdGlvbnMgd2UgY2FuIGV4cGxvcmUgaXMgdG8g
-Y29udGludWUgdG8KPiB1c2UgbmV0bGluayBmb3IgdmVyc2lvbiBuZWdvdGlhdGlvbiBhbmQgZm9y
-IGFwcHJvcHJpYXRlIGRhZW1vbiB2ZXJzaW9ucywgd2UgY291bGQgdXNlCj4gdGhlIGNoYXIgZGV2
-aWNlIG1lY2hhbmlzbSBmb3IgdHJhbnNwb3J0aW5nIHRoZSBwYXlsb2FkLgoKT2ssIEknbGwgdHJ5
-IG1ha2luZyBpdCBiYWNrd2FyZHMgY29tcGF0aWJsZSAodGhvdWdoIEknZCBvcHQgZm9yCmZ1bGwg
-bWlncmF0aW90IHRvIGNoYXIgZGV2aWNlcyBvbmUgZGF5IGFuZCB0aHVzIGhhdmluZyBuZWdvdGlh
-dGlvbgpwb3NzaWJsZSB2aWEgdGhlIHNhbWUgZGV2aWNlIGFzIHdlbGwgYXMgdmlhIG5ldGxpbmsg
-Zm9yIG5vdykuCgo+Cj4gSSBsaWtlIHRoZSBuZXcgc3RhdGUgbWFjaGluZSB5b3UgaGF2ZSBkZWZp
-bmVkIGFuZCB0aGlzIGlzIG9ydGhvZ29uYWwgdG8gdGhlIHRyYW5zcG9ydAo+IG9wdGlvbnMgd2Ug
-aGF2ZS4gWW91IGhhdmUgc291Z2h0IGZlZWRiYWNrIG9uIGhvdyB3ZSBjYW4gc3BsaXQgdXAgdGhl
-c2UgY2hhbmdlcyBpbnRvCj4gc21hbGxlciBwYXRjaGVzLiBUaGlzIGlzIGhvdyBJIHdvdWxkIHBy
-b2NlZWQgaGVyZToKPgo+IFBhdGNoKGVzKSB0byBjbGVhbiB1cCAgdGhlIGN1cnJlbnQgY29kZTog
-Cj4gCVBhdGNoKGVzKSB0byBjbGVhbiB1cCB0aGUgc3RhdGUgbWFjaGluZS4KPiAJUGF0Y2goZXMp
-IHRvIGlzb2xhdGUgdGhlIGtlcm5lbC91c2VyIHRyYW5zcG9ydAo+IFBhdGNoKGVzKSB0byBpbXBs
-ZW1lbnQgdGhlIG5ldyB0cmFuc3BvcnQKClRoYW5rcywgSSdsbCBwcm9jZWVkIGluIHRoaXMgd2F5
-LgoKPgo+IFJlZ2FyZHMsCj4KPiBLLiBZCj4+IAo+PiAgZHJpdmVycy9odi9odl9mY29weS5jICAg
-ICAgIHwgMzk1ICsrKysrKysrKysrKysrKysrKysrKysrKystLS0tLS0tLS0tLS0tLS0KPj4gLS0t
-Cj4+ICBkcml2ZXJzL2h2L2h2X2t2cC5jICAgICAgICAgfCAzOTYgKysrKysrKysrKysrKysrKysr
-KysrKysrKysrLS0tLS0tLS0tLS0tLQo+PiAtLS0tCj4+ICBkcml2ZXJzL2h2L2h2X3NuYXBzaG90
-LmMgICAgfCAzMzUgKysrKysrKysrKysrKysrKysrKysrKysrKysrLS0tLS0tLS0tCj4+IC0KPj4g
-IGluY2x1ZGUvdWFwaS9saW51eC9oeXBlcnYuaCB8ICAxMCArKwo+PiAgdG9vbHMvaHYvaHZfZmNv
-cHlfZGFlbW9uLmMgIHwgIDQ4ICsrKystLQo+PiAgdG9vbHMvaHYvaHZfa3ZwX2RhZW1vbi5jICAg
-IHwgMTg3ICsrKystLS0tLS0tLS0tLS0tLS0tLQo+PiAgdG9vbHMvaHYvaHZfdnNzX2RhZW1vbi5j
-ICAgIHwgMTQxICsrKy0tLS0tLS0tLS0tLS0KPj4gIDcgZmlsZXMgY2hhbmdlZCwgODI0IGluc2Vy
-dGlvbnMoKyksIDY4OCBkZWxldGlvbnMoLSkKPj4gCj4+IC0tCj4+IDEuOS4zCgotLSAKICBWaXRh
-bHkKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZGV2ZWwg
-bWFpbGluZyBsaXN0CmRldmVsQGxpbnV4ZHJpdmVycHJvamVjdC5vcmcKaHR0cDovL2RyaXZlcmRl
-di5saW51eGRyaXZlcnByb2plY3Qub3JnL21haWxtYW4vbGlzdGluZm8vZHJpdmVyZGV2LWRldmVs
-Cg==
+Hi Or,
+
+Le samedi 31 janvier 2015 =C3=A0 22:09 +0200, Or Gerlitz a =C3=A9crit :
+> On Fri, Jan 30, 2015, Yann Droneaud <ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org> wrote:
+> > [..] I have not the chance
+> > of owning HCA with the support for this feature, nor the patches
+> > libibverbs / libmlx5 ... (anyway I would not have the time to test)=
+=2E [...]
+>=20
+> Yann, have you ever run Linux over RDMA capable HW (IB, RoCE, iWARP o=
+r alike?)
+
+That was a silly question.
+
+So I've took a little time to consider answering it,
+perhaps you were gently kidding me.
+
+Anyway, please take the following links as an answer to your question:
+
+"rdma_create_qp() and max_send_wr"
+<http://mid.gmane.org/1303404264.2243.19.camel-H/AUWmsJYVeqvyCYKW+Xr6xOck334EZe@public.gmane.org>
+
+"ibv_create_qp() and max_inline_data behavior"
+<http://mid.gmane.org/d7685e13978f93890b2939c5ac2d5c7f-zgzEX58YAwA@public.gmane.org>
+
+"[PATCH librdmacm 0/3] no IBV_SEND_INLINE thus memory registration
+required on QLogic/Intel HCA"
+<http://mid.gmane.org/cover.1376746185.git.ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+
+"[PATCH 00/22] infiniband: improve userspace input check"
+<http://mid.gmane.org/cover.1376847403.git.ydroneaud-RlY5vtjFyJ3QT0dZR+AlfA@public.gmane.org>
+
+I hope this would be enough to join the gang^Wclub. Where're the
+by-laws ?
+
+Regards.
+
+--=20
+Yann Droneaud
+OPTEYA
