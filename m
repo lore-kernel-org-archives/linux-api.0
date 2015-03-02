@@ -1,89 +1,91 @@
-From: Vitaly Kuznetsov <vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH RFC 0/3] Drivers: hv: utils: re-implement the kernel/userspace communication layer
-Date: Mon, 02 Mar 2015 14:33:20 +0100
-Message-ID: <87a8zvjzhb.fsf@vitty.brq.redhat.com>
+From: Vitaly Kuznetsov <vkuznets@redhat.com>
+Subject: Re: [PATCH RFC 0/3] Drivers: hv: utils: re-implement the
+ kernel/userspace communication layer
+Date: Mon, 02 Mar 2015 14:37:22 +0100
+Message-ID: <8761ajjzal.fsf@vitty.brq.redhat.com>
 References: <1425053665-635-1-git-send-email-vkuznets@redhat.com>
-	<20150227210744.GA11904@potion.brq.redhat.com>
+ <BY2PR0301MB071107C31972876159BB360CA0100@BY2PR0301MB0711.namprd03.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150227210744.GA11904-KfRq7+sF/6zkZJWtSm8s3NvLeJWuRmrY@public.gmane.org> ("Radim
- \=\?utf-8\?B\?S3LEjW3DocWZIidz\?\=
-	message of "Fri, 27 Feb 2015 22:07:44 +0100")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Radim =?utf-8?B?S3LEjW3DocWZ?= <rkrcmar-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "K. Y. Srinivasan" <kys-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, devel-tBiZLqfeLfOHmIFyCCdPziST3g8Odh+X@public.gmane.org, Haiyang Zhang <haiyangz-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dexuan Cui <decui-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <BY2PR0301MB071107C31972876159BB360CA0100@BY2PR0301MB0711.namprd03.prod.outlook.com>
+ (KY Srinivasan's message of "Mon, 2 Mar 2015 02:11:53 +0000")
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: KY Srinivasan <kys@microsoft.com>
+Cc: Radim =?utf-8?B?S3LEjW3DocWZ?= <rkrcmar@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Haiyang Zhang <haiyangz@microsoft.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "devel@linuxdriverproject.org" <devel@linuxdriverproject.org>
 List-Id: linux-api@vger.kernel.org
 
-Radim Kr=C4=8Dm=C3=A1=C5=99 <rkrcmar-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
-
-> 2015-02-27 17:14+0100, Vitaly Kuznetsov:
->> This series converts kvp/vss daemons to use misc char devices instea=
-d of
->> netlink for userspace/kernel communication and then updates fcopy to=
- be
->> consistent with kvp/vss.
->>=20
->> Userspace/kernel communication via netlink has a number of issues:
->> - It is hard for userspace to figure out if the kernel part was load=
-ed or not
->>   and this fact can change as there is a way to enable/disable the s=
-ervice from
->>   host side.
->
-> (Hm, this should be just a message to the userspace daemon, but netli=
-nk
->  probably makes it complicated anyway.)
->
->>              Racy daemon startup is also a problem.
->
-> (Is it significantly worse than what we need to protect devices?)
->
->> - When the userspace daemon restarts/dies kernel part doesn't receiv=
-e a
->>   notification.
->
-> (True, we could use a other-side-closed callback.)
-
-With normal devices we can use e.g. udev/systemd machinery to start/sto=
-p
-service on device hotplug/hotunplug (and these devices are actually
-pluggable/unpluggable from host side) without any special code in
-kernel/userspace parts and I'd like to use that.
-
->
->> - Netlink communication is not stable under heavy load.
->
-> (The message order changes?)
->
-
-It is a disaster if it does (the whole transaction will get lost). Same
-if any of these messages gets lost.
-
->> RFC: I'm a bit puzzled on how to split commits 1 and 2 avoiding brea=
-kages.
->
-> Split the userspace part -- it won't break bisects.
->
-
-Sure if it simplifies the review.
-
-> And then, you could refactor drivers first ... the way we communicate
-> with userspace should have little impact on what the rest does (or ho=
-w).
-> At first sight, there are three units, apart from glue,
->  1) communication with host
->  2) communication with userspace
->  3) repacking of data between first two
->
-> With an API for userspace communication, the amount of code to replac=
-e
-> netlink could be lower and resulting patches definitely easier to
-> review.  (And with extra work, both ABIs could even live side-by-side=
- ;)
-
-Ok, thanks!
-
---=20
-  Vitaly
+S1kgU3Jpbml2YXNhbiA8a3lzQG1pY3Jvc29mdC5jb20+IHdyaXRlczoKCj4+IC0tLS0tT3JpZ2lu
+YWwgTWVzc2FnZS0tLS0tCj4+IEZyb206IFZpdGFseSBLdXpuZXRzb3YgW21haWx0bzp2a3V6bmV0
+c0ByZWRoYXQuY29tXQo+PiBTZW50OiBGcmlkYXksIEZlYnJ1YXJ5IDI3LCAyMDE1IDg6MTQgQU0K
+Pj4gVG86IEtZIFNyaW5pdmFzYW47IGRldmVsQGxpbnV4ZHJpdmVycHJvamVjdC5vcmcKPj4gQ2M6
+IEhhaXlhbmcgWmhhbmc7IGxpbnV4LWtlcm5lbEB2Z2VyLmtlcm5lbC5vcmc7IERleHVhbiBDdWk7
+IFJhZGltIEtyxI1tw6HFmTsKPj4gR3JlZyBLcm9haC1IYXJ0bWFuOyBsaW51eC1hcGlAdmdlci5r
+ZXJuZWwub3JnCj4+IFN1YmplY3Q6IFtQQVRDSCBSRkMgMC8zXSBEcml2ZXJzOiBodjogdXRpbHM6
+IHJlLWltcGxlbWVudCB0aGUKPj4ga2VybmVsL3VzZXJzcGFjZSBjb21tdW5pY2F0aW9uIGxheWVy
+Cj4+IAo+PiBUaGlzIHNlcmllcyBjb252ZXJ0cyBrdnAvdnNzIGRhZW1vbnMgdG8gdXNlIG1pc2Mg
+Y2hhciBkZXZpY2VzIGluc3RlYWQgb2YKPj4gbmV0bGluayBmb3IgdXNlcnNwYWNlL2tlcm5lbCBj
+b21tdW5pY2F0aW9uIGFuZCB0aGVuIHVwZGF0ZXMgZmNvcHkgdG8gYmUKPj4gY29uc2lzdGVudCB3
+aXRoIGt2cC92c3MuCj4+IAo+PiBVc2Vyc3BhY2Uva2VybmVsIGNvbW11bmljYXRpb24gdmlhIG5l
+dGxpbmsgaGFzIGEgbnVtYmVyIG9mIGlzc3VlczoKPj4gLSBJdCBpcyBoYXJkIGZvciB1c2Vyc3Bh
+Y2UgdG8gZmlndXJlIG91dCBpZiB0aGUga2VybmVsIHBhcnQgd2FzIGxvYWRlZCBvciBub3QKPj4g
+ICBhbmQgdGhpcyBmYWN0IGNhbiBjaGFuZ2UgYXMgdGhlcmUgaXMgYSB3YXkgdG8gZW5hYmxlL2Rp
+c2FibGUgdGhlIHNlcnZpY2UgZnJvbQo+PiAgIGhvc3Qgc2lkZS4gUmFjeSBkYWVtb24gc3RhcnR1
+cCBpcyBhbHNvIGEgcHJvYmxlbS4KPj4gLSBXaGVuIHRoZSB1c2Vyc3BhY2UgZGFlbW9uIHJlc3Rh
+cnRzL2RpZXMga2VybmVsIHBhcnQgZG9lc24ndCByZWNlaXZlIGEKPj4gICBub3RpZmljYXRpb24u
+Cj4+IC0gTmV0bGluayBjb21tdW5pY2F0aW9uIGlzIG5vdCBzdGFibGUgdW5kZXIgaGVhdnkgbG9h
+ZC4KPj4gLSAuLi4KPj4gCj4+IFJGQzogSSdtIGEgYml0IHB1enpsZWQgb24gaG93IHRvIHNwbGl0
+IGNvbW1pdHMgMSBhbmQgMiBhdm9pZGluZyBicmVha2FnZXMuCj4+IENvbW1pdCAzIGNhbiBkZWZp
+bml0ZWx5IGJlIHNwbGl0LCBob3dldmVyLCBpdCBpcyBjb25zaXN0ZW50IHdpdGggY29tbWl0cyAx
+IGFuZAo+PiAyIGF0IHRoaXMgbW9tZW50IGFuZCBJJ20gbm90IHN1cmUgc3VjaCBzcGxpdCB3aWxs
+IHNpbXBsaWZ5IHRoZSByZXZpZXcuCj4+IAo+PiBWaXRhbHkgS3V6bmV0c292ICgzKToKPj4gICBE
+cml2ZXJzOiBodjoga3ZwOiBjb252ZXJ0IHVzZXJzcGFjZS9rZXJuZWwgY29tbXVuaWNhdGlvbiB0
+byB1c2luZyBjaGFyCj4+ICAgICBkZXZpY2UKPj4gICBEcml2ZXJzOiBodjogdnNzOiBjb252ZXJ0
+IHVzZXJzcGFjZS9rZXJuZWwgY29tbXVuaWNhdGlvbiB0byB1c2luZyBjaGFyCj4+ICAgICBkZXZp
+Y2UKPj4gICBEcml2ZXJzOiBodjogZmNvcHk6IG1ha2UgaXQgY29uc2lzdGVudCB3aXRoIHZzcy9r
+dnAKPgo+IFZpdGFseSwKPgo+IFRoYW5rIHlvdSBmb3Igd29ya2luZyBvbiB0aGlzLiBCZWZvcmUg
+SSBnaXZlIHlvdSBkZXRhaWxlZCBjb21tZW50cyBvbiB5b3VyCj4gcGF0Y2hlcywgSSB3YW50ZWQg
+dG8gdW5kZXJzdGFuZCBpZiB0aGUgY29zdCBvZiBtYWludGFpbmluZyBjb21wYXRpYmlsaXR5IHdh
+cwo+IGNhcmVmdWxseSBjb25zaWRlcmVkLiBBcyBhIGZpcnN0IHN0ZXAgd2UgY291bGQgbG9vayBh
+dCBjbGVhbmx5IGFic3RyYWN0aW5nIHRoZSAKPiB0cmFuc3BvcnQgKGJldHdlZW4gdXNlciBsZXZl
+bCBhbmQgdGhlIGtlcm5lbCkgb3V0IG9mIHRoZSBrZXJuZWwgZHJpdmVyIGNvZGUgCj4gYXMgd2Vs
+bCBhcyB0aGUgbmV3IGRhZW1vbiBjb2RlLiBXaGF0IGFyZSB5b3VyIHRob3VnaHRzIG9uCj4gdGhp
+cy4gVmVyc2lvbiBuZWdvdGlhdGlvbiAgaXMgb2J2aW91c2x5IGtleSB0byBtYWludGFpbmluZwo+
+IGNvbXBhdGliaWxpdHkuIE9uZSBvZiB0aGUgIG9wdGlvbnMgd2UgY2FuIGV4cGxvcmUgaXMgdG8g
+Y29udGludWUgdG8KPiB1c2UgbmV0bGluayBmb3IgdmVyc2lvbiBuZWdvdGlhdGlvbiBhbmQgZm9y
+IGFwcHJvcHJpYXRlIGRhZW1vbiB2ZXJzaW9ucywgd2UgY291bGQgdXNlCj4gdGhlIGNoYXIgZGV2
+aWNlIG1lY2hhbmlzbSBmb3IgdHJhbnNwb3J0aW5nIHRoZSBwYXlsb2FkLgoKT2ssIEknbGwgdHJ5
+IG1ha2luZyBpdCBiYWNrd2FyZHMgY29tcGF0aWJsZSAodGhvdWdoIEknZCBvcHQgZm9yCmZ1bGwg
+bWlncmF0aW90IHRvIGNoYXIgZGV2aWNlcyBvbmUgZGF5IGFuZCB0aHVzIGhhdmluZyBuZWdvdGlh
+dGlvbgpwb3NzaWJsZSB2aWEgdGhlIHNhbWUgZGV2aWNlIGFzIHdlbGwgYXMgdmlhIG5ldGxpbmsg
+Zm9yIG5vdykuCgo+Cj4gSSBsaWtlIHRoZSBuZXcgc3RhdGUgbWFjaGluZSB5b3UgaGF2ZSBkZWZp
+bmVkIGFuZCB0aGlzIGlzIG9ydGhvZ29uYWwgdG8gdGhlIHRyYW5zcG9ydAo+IG9wdGlvbnMgd2Ug
+aGF2ZS4gWW91IGhhdmUgc291Z2h0IGZlZWRiYWNrIG9uIGhvdyB3ZSBjYW4gc3BsaXQgdXAgdGhl
+c2UgY2hhbmdlcyBpbnRvCj4gc21hbGxlciBwYXRjaGVzLiBUaGlzIGlzIGhvdyBJIHdvdWxkIHBy
+b2NlZWQgaGVyZToKPgo+IFBhdGNoKGVzKSB0byBjbGVhbiB1cCAgdGhlIGN1cnJlbnQgY29kZTog
+Cj4gCVBhdGNoKGVzKSB0byBjbGVhbiB1cCB0aGUgc3RhdGUgbWFjaGluZS4KPiAJUGF0Y2goZXMp
+IHRvIGlzb2xhdGUgdGhlIGtlcm5lbC91c2VyIHRyYW5zcG9ydAo+IFBhdGNoKGVzKSB0byBpbXBs
+ZW1lbnQgdGhlIG5ldyB0cmFuc3BvcnQKClRoYW5rcywgSSdsbCBwcm9jZWVkIGluIHRoaXMgd2F5
+LgoKPgo+IFJlZ2FyZHMsCj4KPiBLLiBZCj4+IAo+PiAgZHJpdmVycy9odi9odl9mY29weS5jICAg
+ICAgIHwgMzk1ICsrKysrKysrKysrKysrKysrKysrKysrKystLS0tLS0tLS0tLS0tLS0KPj4gLS0t
+Cj4+ICBkcml2ZXJzL2h2L2h2X2t2cC5jICAgICAgICAgfCAzOTYgKysrKysrKysrKysrKysrKysr
+KysrKysrKysrLS0tLS0tLS0tLS0tLQo+PiAtLS0tCj4+ICBkcml2ZXJzL2h2L2h2X3NuYXBzaG90
+LmMgICAgfCAzMzUgKysrKysrKysrKysrKysrKysrKysrKysrKysrLS0tLS0tLS0tCj4+IC0KPj4g
+IGluY2x1ZGUvdWFwaS9saW51eC9oeXBlcnYuaCB8ICAxMCArKwo+PiAgdG9vbHMvaHYvaHZfZmNv
+cHlfZGFlbW9uLmMgIHwgIDQ4ICsrKystLQo+PiAgdG9vbHMvaHYvaHZfa3ZwX2RhZW1vbi5jICAg
+IHwgMTg3ICsrKystLS0tLS0tLS0tLS0tLS0tLQo+PiAgdG9vbHMvaHYvaHZfdnNzX2RhZW1vbi5j
+ICAgIHwgMTQxICsrKy0tLS0tLS0tLS0tLS0KPj4gIDcgZmlsZXMgY2hhbmdlZCwgODI0IGluc2Vy
+dGlvbnMoKyksIDY4OCBkZWxldGlvbnMoLSkKPj4gCj4+IC0tCj4+IDEuOS4zCgotLSAKICBWaXRh
+bHkKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZGV2ZWwg
+bWFpbGluZyBsaXN0CmRldmVsQGxpbnV4ZHJpdmVycHJvamVjdC5vcmcKaHR0cDovL2RyaXZlcmRl
+di5saW51eGRyaXZlcnByb2plY3Qub3JnL21haWxtYW4vbGlzdGluZm8vZHJpdmVyZGV2LWRldmVs
+Cg==
