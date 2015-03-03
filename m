@@ -1,103 +1,41 @@
-From: Jiri Pirko <jiri@resnulli.us>
-Subject: Re: [PATCH] ipv6: expose RFC4191 route preference via rtnetlink
-Date: Tue, 3 Mar 2015 16:17:15 +0100
-Message-ID: <20150303151715.GA2020@nanopsycho.lan>
-References: <1425376912-31983-1-git-send-email-lkundrak@v3.sk>
+From: Eric Dumazet <eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] net: add SO_MAX_DGRAM_QLEN for AF_UNIX SOCK_DGRAM
+ sockets
+Date: Tue, 03 Mar 2015 07:56:15 -0800
+Message-ID: <1425398175.5130.188.camel@edumazet-glaptop2.roam.corp.google.com>
+References: <1425342774-32667-1-git-send-email-christian@iwakd.de>
+	 <20150302.213807.367185406305242762.davem@davemloft.net>
+	 <0b5908020d83bcbaa7f4938e5cb433ea@iwakd.de>
+	 <1425393019.5130.181.camel@edumazet-glaptop2.roam.corp.google.com>
+	 <55ee39bff7875967acb06f25fa695f95@iwakd.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1425376912-31983-1-git-send-email-lkundrak@v3.sk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Lubomir Rintel <lkundrak@v3.sk>
-Cc: netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <55ee39bff7875967acb06f25fa695f95-+GPkE3DhqnY@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christian Seiler <christian-+GPkE3DhqnY@public.gmane.org>
+Cc: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dan-+z8lB9qDZjnk1uMJSBkQmQ@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Tue, Mar 03, 2015 at 11:01:52AM CET, lkundrak@v3.sk wrote:
->This makes it possible to retain the route preference when RAs are handled in
->userspace.
->
->Signed-off-by: Lubomir Rintel <lkundrak@v3.sk>
->---
-> include/uapi/linux/rtnetlink.h |  1 +
-> net/ipv6/route.c               | 16 +++++++++++++++-
-> 2 files changed, 16 insertions(+), 1 deletion(-)
->
->diff --git a/include/uapi/linux/rtnetlink.h b/include/uapi/linux/rtnetlink.h
->index 5cc5d66..0671524 100644
->--- a/include/uapi/linux/rtnetlink.h
->+++ b/include/uapi/linux/rtnetlink.h
->@@ -303,6 +303,7 @@ enum rtattr_type_t {
-> 	RTA_TABLE,
-> 	RTA_MARK,
-> 	RTA_MFC_STATS,
->+	RTA_PREF,
-> 	__RTA_MAX
-> };
-> 
->diff --git a/net/ipv6/route.c b/net/ipv6/route.c
->index 47b5109..08f689e 100644
->--- a/net/ipv6/route.c
->+++ b/net/ipv6/route.c
->@@ -2401,6 +2401,7 @@ static const struct nla_policy rtm_ipv6_policy[RTA_MAX+1] = {
-> 	[RTA_PRIORITY]          = { .type = NLA_U32 },
-> 	[RTA_METRICS]           = { .type = NLA_NESTED },
-> 	[RTA_MULTIPATH]		= { .len = sizeof(struct rtnexthop) },
->+	[RTA_PREF]              = { .type = NLA_U8 },
-> };
-> 
-> static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
->@@ -2408,6 +2409,7 @@ static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
-> {
-> 	struct rtmsg *rtm;
-> 	struct nlattr *tb[RTA_MAX+1];
->+	unsigned int pref;
-> 	int err;
-> 
-> 	err = nlmsg_parse(nlh, sizeof(*rtm), tb, RTA_MAX, rtm_ipv6_policy);
->@@ -2483,6 +2485,14 @@ static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
-> 		cfg->fc_mp_len = nla_len(tb[RTA_MULTIPATH]);
-> 	}
-> 
->+	if (tb[RTA_PREF]) {
->+		pref = nla_get_u8(tb[RTA_PREF]);
->+		if (pref == ICMPV6_ROUTER_PREF_LOW ||
->+		    pref == ICMPV6_ROUTER_PREF_MEDIUM ||
->+		    pref == ICMPV6_ROUTER_PREF_HIGH)
->+			cfg->fc_flags |= RTF_PREF(pref);
+On Tue, 2015-03-03 at 16:05 +0100, Christian Seiler wrote:
 
-Don't we want to do "goto errout;" in case pref is invalid ?
+> Doesn't this assume a typical datagram size of 256 bytes? Isn't that
+> something that should be left up to the user? Also, suddenly the RCVBUF
+> size of UNIX domain sockets suddenly becomes relevant, even though it
+> is never actually checked when it comes to queuing the messages (only
+> the SNDBUF size of the sending socket is checked). This creates really
+> inconsistent semantics in my eyes where the receive buffer is useful
+> for some things, but not for others.
 
+Simple : If limit is expressed in term of packets, not in term of memory
+usage, then the limit is in number of packets, not in bytes.
 
->+	}
->+
-> 	err = 0;
-> errout:
-> 	return err;
->@@ -2586,7 +2596,8 @@ static inline size_t rt6_nlmsg_size(void)
-> 	       + nla_total_size(4) /* RTA_PRIORITY */
-> 	       + RTAX_MAX * nla_total_size(4) /* RTA_METRICS */
-> 	       + nla_total_size(sizeof(struct rta_cacheinfo))
->-	       + nla_total_size(TCP_CA_NAME_MAX); /* RTAX_CC_ALGO */
->+	       + nla_total_size(TCP_CA_NAME_MAX) /* RTAX_CC_ALGO */
->+	       + nla_total_size(1); /* RTA_PREF */
-> }
-> 
-> static int rt6_fill_node(struct net *net,
->@@ -2727,6 +2738,9 @@ static int rt6_fill_node(struct net *net,
-> 	if (rtnl_put_cacheinfo(skb, &rt->dst, 0, expires, rt->dst.error) < 0)
-> 		goto nla_put_failure;
-> 
->+	if (nla_put_u8(skb, RTA_PREF, IPV6_EXTRACT_PREF(rt->rt6i_flags)))
->+		goto nla_put_failure;
->+
-> 	nlmsg_end(skb, nlh);
-> 	return 0;
-> 
->-- 
->2.1.0
->
->--
->To unsubscribe from this list: send the line "unsubscribe netdev" in
->the body of a message to majordomo@vger.kernel.org
->More majordomo info at  http://vger.kernel.org/majordomo-info.html
+This is the reason we have pfifo and bfifo qdisc :
+Admin can choose what he wants to limit on a device : packets or bytes.
+
+If you want to allow the limitation being done in same SO_RCVBUF spirit,
+you need to submit a patch for that.
+
+(Using skb_set_owner_r() and tracking sk->sk_rmem_alloc instead of
+skb_queue_len(&sk->sk_receive_queue) )
