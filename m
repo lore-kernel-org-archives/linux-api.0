@@ -1,81 +1,35 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [GIT PULL] Kselftest updates for 3.20-rc1
-Date: Tue, 03 Mar 2015 11:53:30 +1100
-Message-ID: <1425344010.31211.5.camel@ellerman.id.au>
-References: <54D8FE1C.5040303@osg.samsung.com>
-	 <1423528239.19657.3.camel@ellerman.id.au>
-	 <54D95271.7070708@osg.samsung.com>
-	 <1423529039.19657.6.camel@ellerman.id.au>
-	 <54D958A0.1020404@osg.samsung.com>
-	 <1423538165.19657.8.camel@ellerman.id.au>
-	 <20150302211947.GA2184@codemonkey.org.uk>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH] net: add SO_MAX_DGRAM_QLEN for AF_UNIX SOCK_DGRAM
+ sockets
+Date: Mon, 02 Mar 2015 21:38:07 -0500 (EST)
+Message-ID: <20150302.213807.367185406305242762.davem@davemloft.net>
+References: <1425342774-32667-1-git-send-email-christian@iwakd.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150302211947.GA2184-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Jones <davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org>
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <1425342774-32667-1-git-send-email-christian@iwakd.de>
+Sender: netdev-owner@vger.kernel.org
+To: christian@iwakd.de
+Cc: netdev@vger.kernel.org, dan@mindstab.net, edumazet@google.com, hannes@stressinduktion.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2015-03-02 at 16:19 -0500, Dave Jones wrote:
-> On Tue, Feb 10, 2015 at 02:16:05PM +1100, Michael Ellerman wrote:
->  
->  > > On 02/09/2015 05:43 PM, Michael Ellerman wrote:
->  > > > On Mon, 2015-02-09 at 17:36 -0700, Shuah Khan wrote:
->  > > >> On 02/09/2015 05:30 PM, Michael Ellerman wrote:
->  > > >>> On Mon, 2015-02-09 at 11:36 -0700, Shuah Khan wrote:
->  > > >>>> Hi Linus,
->  > > >>>>
->  > > >>>> Please pull the following Kselftest updates for 3.20-rc1
->  > > >>>>
->  > > >>>> thanks,
->  > > >>>> -- Shuah
->  > > >>>>
->  > > >>> ...
->  > > >>>
->  > > >>> I don't understand why you insist on merging this series with the logic copied
->  > > >>> 18 times.
->  > > >>>
->  > > >>> I'm happy to tweak my series that uses an include file, but I don't see the
->  > > >>> point of merging this series first when almost every line will be removed when
->  > > >>> my series goes in.
->  > > >>
->  > > >> Please work on the suggestions I made and rework the patches
->  > > >> and resend. As I mentioned earlier, I want to enable this work
->  > > >> and them make improvements.
->  > > > 
->  > > > Yes I would like install to work to. I'd also like it to work for the powerpc
->  > > > tests you ignored. But I don't want it to involve copying the same logic into
->  > > > every Makefile in the tree.
->  > > 
->  > > > My series was sent over a month ago, with plenty of time for you to merge it
->  > > > instead of this cut-and-paste solution.
->  > > 
->  > > I asked you to re-work the patches based on my suggestions
->  > > and resend. I didn't see any patches from you that addressed
->  > > the comments. I can't merge the patches you sent without
->  > > addressing the comments.
->  > 
->  > Your comments were "please rebase on my series", and as I explained that is
->  > pointless because my series replaces your series.
-> 
-> Michael's series also has a bunch of features this pull doesn't.
-> I had started implementing some of these features myself before realizing
-> this stuff was in limbo. (Especially the ability to install to a
-> different directory: our use case involves packaging up the latest
-> selftests for use to be run against a long-term stable kernel).
-> 
-> What needs to happen to unblock this, given that nothing has been
-> merged so far.
-> 
-> Working on selftests is sort of frustrating with all this stuff pending
-> given the potential conflicts.
+From: Christian Seiler <christian@iwakd.de>
+Date: Tue,  3 Mar 2015 01:32:54 +0100
 
-Thanks for chiming in Dave, and sorry that this has gotten into such a mess.
+> Rationale: applications may want to control how many datagrams the
+> kernel buffers before senders are blocked. A prominent example would be
+> to create a socket for syslog early at boot but only consume messages
+> once enough of the system has been set up. The default queue length of
+> 11 messages (= 10 + 1) is too low for this kind of application.
 
-I'll post a rebased version of my series and we can discuss the merits of each
-approach.
+I never like arguments that talk about forcing the kernel to do
+excessive buffering for an application.
 
-cheers
+Queue this stuff in the userspace side, then you can have as many
+messages backlogged as you like _without_ consuming unswappable kernel
+memory.
+
+I'm tossing this, you're going to have to do a much better job
+explaining to me why userspace cannot take upon itself the burdon of
+queueing data until it can be sent.
