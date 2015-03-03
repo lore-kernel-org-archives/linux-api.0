@@ -1,52 +1,88 @@
-From: Vitaly Kuznetsov <vkuznets@redhat.com>
-Subject: Re: [PATCH RFC 1/3] Drivers: hv: kvp: convert userspace/kernel
- communication to using char device
-Date: Tue, 03 Mar 2015 10:53:19 +0100
-Message-ID: <87pp8qif00.fsf@vitty.brq.redhat.com>
-References: <1425053665-635-1-git-send-email-vkuznets@redhat.com>
- <1425053665-635-2-git-send-email-vkuznets@redhat.com>
- <20150227202715.GF2034@potion.brq.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <20150227202715.GF2034@potion.brq.redhat.com> ("Radim
- \=\?utf-8\?B\?S3LEjW3DocWZIidz\?\=
- message of "Fri, 27 Feb 2015 21:27:15 +0100")
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: Radim =?utf-8?B?S3LEjW3DocWZ?= <rkrcmar@redhat.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Haiyang Zhang <haiyangz@microsoft.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, devel@linuxdriverproject.org
+From: Lubomir Rintel <lkundrak@v3.sk>
+Subject: [PATCH] ipv6: expose RFC4191 route preference via rtnetlink
+Date: Tue,  3 Mar 2015 11:01:52 +0100
+Message-ID: <1425376912-31983-1-git-send-email-lkundrak@v3.sk>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: netdev@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>, Lubomir Rintel <lkundrak@v3.sk>
 List-Id: linux-api@vger.kernel.org
 
-UmFkaW0gS3LEjW3DocWZIDxya3JjbWFyQHJlZGhhdC5jb20+IHdyaXRlczoKCj4gMjAxNS0wMi0y
-NyAxNzoxNCswMTAwLCBWaXRhbHkgS3V6bmV0c292Ogo+PiBSZS1pbXBsZW1lbnQgdGhlIGNvbW11
-bmljYXRpb24gdXNpbmcgbWlzYyBjaGFyIGRldmljZS4gVXNlIGlvY3RsIHRvIGRvCj4+IGtlcm5l
-bC91c2Vyc3BhY2UgdmVyc2lvbiBuZWdvdGlhdGlvbiAoZG9lc24ndCBtYWtlIG11Y2ggc2Vuc2Ug
-YXQgdGhpcyBtb21lbnQKPj4gYXMgd2UncmUgYnJlYWtpbmcgYmFja3dhcmRzIGNvbXBhdGliaWxp
-dHkgYnV0IGNhbiBiZSB1c2VkIGluIGZ1dHVyZSkuCj4KPiBUaGUgbWFpbiBxdWVzdGlvbiBpcyB3
-aGV0aGVyIHdlIHdhbnQgdG8gYWJvbGlzaCBiYWNrd2FyZCBjb21wYXRpYmlsaXR5Owo+IGtlcm5l
-bCBydWxlcyBhcmUgdXN1YWxseSBhZ2FpbnN0IGJyZWFrYWdlcyBhbmQgaXQncyBoYXJkIHRvIHBy
-b3ZlIHRoYXQKPiB0aGUgYnVuZGxlZCBkYWVtb24gaXMgYSBzb2xlIHVzZXIgYW5kIGdldHMgdXBk
-YXRlZCBhdCB0aGUgc2FtZSB0aW1lLgo+IChOb3RlOiBJJ2QgZ2xhZGx5IGJyZWFrIGFueXRoaW5n
-LikKPgo+IFRoZSBpb2N0bCBpcyB1c2VkIHRvbyBjcmVhdGl2ZWx5IGZvciBteSBsaWtpbmc6IGFz
-IGFuIG91dC1vZi1iYW5kCj4gY29tbXVuaWNhdGlvbiB0aGF0IGlzIHJlcXVpcmVkIGFmdGVyIHRo
-ZSBtYWluIGNoYW5uZWwgaGFzIGJlZW4gb3BlbmVkLgo+IEl0IHdvdWxkIGJlIHNpbXBsZXIgdG8g
-aW5qZWN0IHRoZSB2ZXJzaW9uIGludG8gZmlyc3QgeCBieXRlcyBvZiB0aGUKPiBzdHJlYW0sIG1h
-a2luZyBhIHJlYWQoKSBhZnRlciBvcGVuKCkgbWFuZGF0b3J5LgoKV2UgbmVlZCB0byBwZXJmb3Jt
-IGEgaGFuZHNoYWtlIC0ga2VybmVsIHBhcnQgc2VuZHMgaXRzIHZlcnNpb24gYW5kCnJlY2VpdmVz
-IGRhZW1vbidzIHZlcnNpb24uIFdlIGNhbiBkZWZpbml0ZWxseSBwYWNrIGV2ZXJ5dGhpbmcgaW4g
-dGhlCmRhdGEgc3RyZWFtIGJ1dCB3aHkgZG8gd2UgbmVlZCB0byBhdm9pZCBpb2N0bHM/IEl0IHNl
-ZW1zIHRvIG1lIHRoZQpoYW5kc2hha2Ugd2UncmUgcGVyZm9ybWluZyBoZXJlIGJlbG9uZ3MgdG8g
-YSAnY29udHJvbCcgc3RyZWFtLCBub3QKJ2RhdGEnIHN0cmVhbS4KCj4KPiAoSSd2ZSBvbmx5IGRv
-bmUgYSBoaWdoIGxldmVsIG92ZXJ2aWV3IHNvIGZhci4pCgpUaGFua3MhCgotLSAKICBWaXRhbHkK
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZGV2ZWwgbWFp
-bGluZyBsaXN0CmRldmVsQGxpbnV4ZHJpdmVycHJvamVjdC5vcmcKaHR0cDovL2RyaXZlcmRldi5s
-aW51eGRyaXZlcnByb2plY3Qub3JnL21haWxtYW4vbGlzdGluZm8vZHJpdmVyZGV2LWRldmVsCg==
+This makes it possible to retain the route preference when RAs are handled in
+userspace.
+
+Signed-off-by: Lubomir Rintel <lkundrak@v3.sk>
+---
+ include/uapi/linux/rtnetlink.h |  1 +
+ net/ipv6/route.c               | 16 +++++++++++++++-
+ 2 files changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/include/uapi/linux/rtnetlink.h b/include/uapi/linux/rtnetlink.h
+index 5cc5d66..0671524 100644
+--- a/include/uapi/linux/rtnetlink.h
++++ b/include/uapi/linux/rtnetlink.h
+@@ -303,6 +303,7 @@ enum rtattr_type_t {
+ 	RTA_TABLE,
+ 	RTA_MARK,
+ 	RTA_MFC_STATS,
++	RTA_PREF,
+ 	__RTA_MAX
+ };
+ 
+diff --git a/net/ipv6/route.c b/net/ipv6/route.c
+index 47b5109..08f689e 100644
+--- a/net/ipv6/route.c
++++ b/net/ipv6/route.c
+@@ -2401,6 +2401,7 @@ static const struct nla_policy rtm_ipv6_policy[RTA_MAX+1] = {
+ 	[RTA_PRIORITY]          = { .type = NLA_U32 },
+ 	[RTA_METRICS]           = { .type = NLA_NESTED },
+ 	[RTA_MULTIPATH]		= { .len = sizeof(struct rtnexthop) },
++	[RTA_PREF]              = { .type = NLA_U8 },
+ };
+ 
+ static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
+@@ -2408,6 +2409,7 @@ static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
+ {
+ 	struct rtmsg *rtm;
+ 	struct nlattr *tb[RTA_MAX+1];
++	unsigned int pref;
+ 	int err;
+ 
+ 	err = nlmsg_parse(nlh, sizeof(*rtm), tb, RTA_MAX, rtm_ipv6_policy);
+@@ -2483,6 +2485,14 @@ static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
+ 		cfg->fc_mp_len = nla_len(tb[RTA_MULTIPATH]);
+ 	}
+ 
++	if (tb[RTA_PREF]) {
++		pref = nla_get_u8(tb[RTA_PREF]);
++		if (pref == ICMPV6_ROUTER_PREF_LOW ||
++		    pref == ICMPV6_ROUTER_PREF_MEDIUM ||
++		    pref == ICMPV6_ROUTER_PREF_HIGH)
++			cfg->fc_flags |= RTF_PREF(pref);
++	}
++
+ 	err = 0;
+ errout:
+ 	return err;
+@@ -2586,7 +2596,8 @@ static inline size_t rt6_nlmsg_size(void)
+ 	       + nla_total_size(4) /* RTA_PRIORITY */
+ 	       + RTAX_MAX * nla_total_size(4) /* RTA_METRICS */
+ 	       + nla_total_size(sizeof(struct rta_cacheinfo))
+-	       + nla_total_size(TCP_CA_NAME_MAX); /* RTAX_CC_ALGO */
++	       + nla_total_size(TCP_CA_NAME_MAX) /* RTAX_CC_ALGO */
++	       + nla_total_size(1); /* RTA_PREF */
+ }
+ 
+ static int rt6_fill_node(struct net *net,
+@@ -2727,6 +2738,9 @@ static int rt6_fill_node(struct net *net,
+ 	if (rtnl_put_cacheinfo(skb, &rt->dst, 0, expires, rt->dst.error) < 0)
+ 		goto nla_put_failure;
+ 
++	if (nla_put_u8(skb, RTA_PREF, IPV6_EXTRACT_PREF(rt->rt6i_flags)))
++		goto nla_put_failure;
++
+ 	nlmsg_end(skb, nlh);
+ 	return 0;
+ 
+-- 
+2.1.0
