@@ -1,87 +1,103 @@
-From: Christian Seiler <christian@iwakd.de>
-Subject: Re: [PATCH] net: add =?UTF-8?Q?SO=5FMAX=5FDGRAM=5FQLEN=20for=20AF?=
- =?UTF-8?Q?=5FUNIX=20SOCK=5FDGRAM=20sockets?=
-Date: Tue, 03 Mar 2015 16:05:13 +0100
-Message-ID: <55ee39bff7875967acb06f25fa695f95@iwakd.de>
-References: <1425342774-32667-1-git-send-email-christian@iwakd.de>
- <20150302.213807.367185406305242762.davem@davemloft.net>
- <0b5908020d83bcbaa7f4938e5cb433ea@iwakd.de>
- <1425393019.5130.181.camel@edumazet-glaptop2.roam.corp.google.com>
+From: Jiri Pirko <jiri@resnulli.us>
+Subject: Re: [PATCH] ipv6: expose RFC4191 route preference via rtnetlink
+Date: Tue, 3 Mar 2015 16:17:15 +0100
+Message-ID: <20150303151715.GA2020@nanopsycho.lan>
+References: <1425376912-31983-1-git-send-email-lkundrak@v3.sk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
- format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <1425393019.5130.181.camel@edumazet-glaptop2.roam.corp.google.com>
-Sender: netdev-owner@vger.kernel.org
-To: Eric Dumazet <eric.dumazet@gmail.com>
-Cc: David Miller <davem@davemloft.net>, netdev@vger.kernel.org, dan@mindstab.net, edumazet@google.com, hannes@stressinduktion.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1425376912-31983-1-git-send-email-lkundrak@v3.sk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Lubomir Rintel <lkundrak@v3.sk>
+Cc: netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>
 List-Id: linux-api@vger.kernel.org
 
-Am 2015-03-03 15:30, schrieb Eric Dumazet:
->> Also note that if I have a stream socket, by default I can buffer up 
->> to
->> 256 kiB of data in the kernel. I did some test measurements on 
->> x86_64
->> and including overhead of internal bookkeeping structures, I can fit 
->> up
->> to 555 datagrams in there if each is at most 192 bytes long, at 
->> least
->> 333 datagrams if each is at most 704 bytes long and at least 185
->> datagrams if each is at most 1728 bytes long. If I compare these
->> numbers to 11, that's an order of magnitude in difference.
+Tue, Mar 03, 2015 at 11:01:52AM CET, lkundrak@v3.sk wrote:
+>This makes it possible to retain the route preference when RAs are handled in
+>userspace.
 >
-> Problem about AF_UNIX socket is file descriptor passing.
+>Signed-off-by: Lubomir Rintel <lkundrak@v3.sk>
+>---
+> include/uapi/linux/rtnetlink.h |  1 +
+> net/ipv6/route.c               | 16 +++++++++++++++-
+> 2 files changed, 16 insertions(+), 1 deletion(-)
 >
-> Increasing the 10 limit allows attackers to OOM host faster I guess.
+>diff --git a/include/uapi/linux/rtnetlink.h b/include/uapi/linux/rtnetlink.h
+>index 5cc5d66..0671524 100644
+>--- a/include/uapi/linux/rtnetlink.h
+>+++ b/include/uapi/linux/rtnetlink.h
+>@@ -303,6 +303,7 @@ enum rtattr_type_t {
+> 	RTA_TABLE,
+> 	RTA_MARK,
+> 	RTA_MFC_STATS,
+>+	RTA_PREF,
+> 	__RTA_MAX
+> };
+> 
+>diff --git a/net/ipv6/route.c b/net/ipv6/route.c
+>index 47b5109..08f689e 100644
+>--- a/net/ipv6/route.c
+>+++ b/net/ipv6/route.c
+>@@ -2401,6 +2401,7 @@ static const struct nla_policy rtm_ipv6_policy[RTA_MAX+1] = {
+> 	[RTA_PRIORITY]          = { .type = NLA_U32 },
+> 	[RTA_METRICS]           = { .type = NLA_NESTED },
+> 	[RTA_MULTIPATH]		= { .len = sizeof(struct rtnexthop) },
+>+	[RTA_PREF]              = { .type = NLA_U8 },
+> };
+> 
+> static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
+>@@ -2408,6 +2409,7 @@ static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
+> {
+> 	struct rtmsg *rtm;
+> 	struct nlattr *tb[RTA_MAX+1];
+>+	unsigned int pref;
+> 	int err;
+> 
+> 	err = nlmsg_parse(nlh, sizeof(*rtm), tb, RTA_MAX, rtm_ipv6_policy);
+>@@ -2483,6 +2485,14 @@ static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
+> 		cfg->fc_mp_len = nla_len(tb[RTA_MULTIPATH]);
+> 	}
+> 
+>+	if (tb[RTA_PREF]) {
+>+		pref = nla_get_u8(tb[RTA_PREF]);
+>+		if (pref == ICMPV6_ROUTER_PREF_LOW ||
+>+		    pref == ICMPV6_ROUTER_PREF_MEDIUM ||
+>+		    pref == ICMPV6_ROUTER_PREF_HIGH)
+>+			cfg->fc_flags |= RTF_PREF(pref);
 
-But what's really preventing that currently? Sure, there's a limit to
-the maximum number of file descriptors a process may create, but that's
-usually high enough that one could create just a bunch of sockets and
-queue stuff in all of them. Sure, if the limit is increased, this could
-occur earlier, but my guess is that one would have to put
-unrealistically tight restrictions on number of FDs / etc. in order to
-really prevent OOM currently. And because modern applications tend to
-use a ton of FDs, distros tend to set the FD number limits really high
-by default. And my patch does allow the second limit to be changed.
+Don't we want to do "goto errout;" in case pref is invalid ?
 
-> You could extend the limit if we were sure queued messages were 
-> without
-> passed fds.
 
-How about this? Add a flag that allows the user to specify that
-SCM_RIGHTS will never be used on this socket, and that if the user
-wants to increase the queue length beyond the initial limit, the
-process has to either be privileged or that flag has to be set (and can
-then not be unset again). On the other hand, decreasing below the
-current value will not enforce this flag.
-
-> Then, we could either increase sysctl_max_dgram_qlen or do something
-> like :
+>+	}
+>+
+> 	err = 0;
+> errout:
+> 	return err;
+>@@ -2586,7 +2596,8 @@ static inline size_t rt6_nlmsg_size(void)
+> 	       + nla_total_size(4) /* RTA_PRIORITY */
+> 	       + RTAX_MAX * nla_total_size(4) /* RTA_METRICS */
+> 	       + nla_total_size(sizeof(struct rta_cacheinfo))
+>-	       + nla_total_size(TCP_CA_NAME_MAX); /* RTAX_CC_ALGO */
+>+	       + nla_total_size(TCP_CA_NAME_MAX) /* RTAX_CC_ALGO */
+>+	       + nla_total_size(1); /* RTA_PREF */
+> }
+> 
+> static int rt6_fill_node(struct net *net,
+>@@ -2727,6 +2738,9 @@ static int rt6_fill_node(struct net *net,
+> 	if (rtnl_put_cacheinfo(skb, &rt->dst, 0, expires, rt->dst.error) < 0)
+> 		goto nla_put_failure;
+> 
+>+	if (nla_put_u8(skb, RTA_PREF, IPV6_EXTRACT_PREF(rt->rt6i_flags)))
+>+		goto nla_put_failure;
+>+
+> 	nlmsg_end(skb, nlh);
+> 	return 0;
+> 
+>-- 
+>2.1.0
 >
-> diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
-> index 526b6edab018..a608317e7dd4 100644
-> --- a/net/unix/af_unix.c
-> +++ b/net/unix/af_unix.c
-> @@ -643,7 +643,9 @@ static struct sock *unix_create1(struct net *net,
-> struct socket *sock)
->  				&af_unix_sk_receive_queue_lock_key);
->
->  	sk->sk_write_space	= unix_write_space;
-> -	sk->sk_max_ack_backlog	= net->unx.sysctl_max_dgram_qlen;
-> +	sk->sk_max_ack_backlog	= max_t(u32,
-> +					net->unx.sysctl_max_dgram_qlen,
-> +					sk->sk_rcvbuf / SKB_TRUESIZE(256));
->  	sk->sk_destruct		= unix_sock_destructor;
->  	u	  = unix_sk(sk);
->  	u->path.dentry = NULL;
-
-Doesn't this assume a typical datagram size of 256 bytes? Isn't that
-something that should be left up to the user? Also, suddenly the RCVBUF
-size of UNIX domain sockets suddenly becomes relevant, even though it
-is never actually checked when it comes to queuing the messages (only
-the SNDBUF size of the sending socket is checked). This creates really
-inconsistent semantics in my eyes where the receive buffer is useful
-for some things, but not for others.
-
-Christian
+>--
+>To unsubscribe from this list: send the line "unsubscribe netdev" in
+>the body of a message to majordomo@vger.kernel.org
+>More majordomo info at  http://vger.kernel.org/majordomo-info.html
