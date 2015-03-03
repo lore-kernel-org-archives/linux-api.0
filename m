@@ -1,51 +1,71 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Documenting MS_LAZYTIME
-Date: Tue, 03 Mar 2015 08:14:08 +0100
-Message-ID: <54F55F40.6010508@gmail.com>
-References: <CAHO5Pa0k7QkV_6BDjwTVxa7LV9tFyN9nGFFcSvOC6HYO08wfrw@mail.gmail.com> <54E7578E.4090809@redhat.com> <20150221025636.GB7922@thunk.org> <54EEDE23.6080009@gmail.com> <20150226133113.GD11217@thunk.org> <54EF2161.90607@gmail.com> <20150227000409.GC17174@thunk.org> <54F02446.2050008@gmail.com> <20150227175159.GC11031@birch.djwong.org>
+From: Christian Seiler <christian@iwakd.de>
+Subject: Re: [PATCH] net: add =?UTF-8?Q?SO=5FMAX=5FDGRAM=5FQLEN=20for=20AF?=
+ =?UTF-8?Q?=5FUNIX=20SOCK=5FDGRAM=20sockets?=
+Date: Tue, 03 Mar 2015 10:04:10 +0100
+Message-ID: <0b5908020d83bcbaa7f4938e5cb433ea@iwakd.de>
+References: <1425342774-32667-1-git-send-email-christian@iwakd.de>
+ <20150302.213807.367185406305242762.davem@davemloft.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=UTF-8;
+ format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150227175159.GC11031-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux btrfs Developers List <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20150302.213807.367185406305242762.davem@davemloft.net>
+Sender: netdev-owner@vger.kernel.org
+To: David Miller <davem@davemloft.net>
+Cc: netdev@vger.kernel.org, dan@mindstab.net, edumazet@google.com, hannes@stressinduktion.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 02/27/2015 06:51 PM, Darrick J. Wong wrote:
-> On Fri, Feb 27, 2015 at 09:01:10AM +0100, Michael Kerrisk (man-pages) wrote:
->> On 02/27/2015 01:04 AM, Theodore Ts'o wrote:
->>> On Thu, Feb 26, 2015 at 02:36:33PM +0100, Michael Kerrisk (man-pages) wrote:
->>>>
->>>>     The disadvantage of MS_STRICTATIME | MS_LAZYTIME is that
->>>>     in the case of a system crash, the atime and mtime fields
->>>>     on disk might be out of date by at most 24 hours.
->>>
->>> I'd change to "The disadvantage of MS_LAZYTIME is that..."  and
->>> perhaps move that so it's clear it applies to any use of MS_LAZYTIME
->>> has this as a downside.
->>>
->>> Does that make sense?
->>
->> Thanks, Ted. Got it. So, now we have:
->>
->>        MS_LAZYTIME (since Linux 3.20)
-> 
-> "since Linux 4.0".
+Am 2015-03-03 03:38, schrieb David Miller:
+>> Rationale: applications may want to control how many datagrams the
+>> kernel buffers before senders are blocked. A prominent example would 
+>> be
+>> to create a socket for syslog early at boot but only consume 
+>> messages
+>> once enough of the system has been set up. The default queue length 
+>> of
+>> 11 messages (= 10 + 1) is too low for this kind of application.
+>
+> I never like arguments that talk about forcing the kernel to do
+> excessive buffering for an application.
+>
+> Queue this stuff in the userspace side, then you can have as many
+> messages backlogged as you like _without_ consuming unswappable 
+> kernel
+> memory.
+>
+> I'm tossing this, you're going to have to do a much better job
+> explaining to me why userspace cannot take upon itself the burdon of
+> queueing data until it can be sent.
 
-D'oh! Yes, thanks. Fixed.
+There are certain things that can't be done in userspace:
 
-Cheers,
+  - If SO_PASSCRED is active, a userspace process relaying the messages
+    can't fake the PID of the original process unless that one is still
+    around (sendmsg will return -ESRCH). Also, one needs CAP_SYS_ADMIN
+    to do this (and CAP_SETUID/CAP_SETGID to fake uid/gid as well).
 
-Michael
+  - More importantly, timestamps of messages can't be faked at all. So
+    in the example of a socket used for syslog purposes, all the
+    timestamps on the messages queued would be wrong.
 
+Also note that if I have a stream socket, by default I can buffer up to
+256 kiB of data in the kernel. I did some test measurements on x86_64
+and including overhead of internal bookkeeping structures, I can fit up
+to 555 datagrams in there if each is at most 192 bytes long, at least
+333 datagrams if each is at most 704 bytes long and at least 185
+datagrams if each is at most 1728 bytes long. If I compare these
+numbers to 11, that's an order of magnitude in difference.
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I'm not asking to be able to use a lot of memory, I'm just asking to be
+able to raise an artificial limit that doesn't apply to other types of
+sockets.
+
+Finally, increasing the queue length is not the only use case, some
+applications might want to decrease it. For example, if the value is
+set to zero, only a single datagram can be queued at a time (and all
+else blocks or fails with -EAGAIN), which might be interesting if the
+application processing the datagrams takes a long time to do so for
+each one of them.
+
+Christian
