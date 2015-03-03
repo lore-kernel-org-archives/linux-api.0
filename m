@@ -1,38 +1,53 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH 0/9] N900 Modem Speech Support
-Date: Tue, 3 Mar 2015 14:33:24 +0100
-Message-ID: <20150303133324.GA12360@amd>
-References: <1425271139-24715-1-git-send-email-sre@kernel.org>
+From: Eric Dumazet <eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] net: add SO_MAX_DGRAM_QLEN for AF_UNIX SOCK_DGRAM
+ sockets
+Date: Tue, 03 Mar 2015 06:30:19 -0800
+Message-ID: <1425393019.5130.181.camel@edumazet-glaptop2.roam.corp.google.com>
+References: <1425342774-32667-1-git-send-email-christian@iwakd.de>
+	 <20150302.213807.367185406305242762.davem@davemloft.net>
+	 <0b5908020d83bcbaa7f4938e5cb433ea@iwakd.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1425271139-24715-1-git-send-email-sre@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Sebastian Reichel <sre@kernel.org>
-Cc: Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pali Rohar <pali.rohar@gmail.com>, Aaro Koskinen <aaro.koskinen@iki.fi>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <0b5908020d83bcbaa7f4938e5cb433ea-+GPkE3DhqnY@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christian Seiler <christian-+GPkE3DhqnY@public.gmane.org>
+Cc: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dan-+z8lB9qDZjnk1uMJSBkQmQ@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, hannes-tFNcAqjVMyqKXQKiL6tip0B+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi!
+On Tue, 2015-03-03 at 10:04 +0100, Christian Seiler wrote:
 
-> This patchset contains the missing speech data support for the
-> Nokia N900 modem.
-> 
-> Userland access goes via /dev/cmt_speech. The API is implemented in
-> libcmtspeechdata, which is used by ofono and the freesmartphone.org project.
-> Apart from that the device is also used by the phone binaries distributed
-> with Maemo. So while this is a new userland ABI for the mainline kernel it
-> has been tested in the wild for some years.
-> 
-> Simple Testing of the API can be done by checking out libcmtspeechdata [0],
-> building the test tool and executing it. The tool will loop back audio data
-> received from the caller.
+> Also note that if I have a stream socket, by default I can buffer up to
+> 256 kiB of data in the kernel. I did some test measurements on x86_64
+> and including overhead of internal bookkeeping structures, I can fit up
+> to 555 datagrams in there if each is at most 192 bytes long, at least
+> 333 datagrams if each is at most 704 bytes long and at least 185
+> datagrams if each is at most 1728 bytes long. If I compare these
+> numbers to 11, that's an order of magnitude in difference.
 
-Tested-by: Pavel Machek <pavel@ucw.cz>
+Problem about AF_UNIX socket is file descriptor passing.
 
-Audio is borken on 4.0-rc1 on n900 mainline, so I used pulseaudio remote for a
-test.
-									Pavel
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+Increasing the 10 limit allows attackers to OOM host faster I guess.
+
+You could extend the limit if we were sure queued messages were without
+passed fds.
+
+Then, we could either increase sysctl_max_dgram_qlen or do something
+like :
+
+diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
+index 526b6edab018..a608317e7dd4 100644
+--- a/net/unix/af_unix.c
++++ b/net/unix/af_unix.c
+@@ -643,7 +643,9 @@ static struct sock *unix_create1(struct net *net, struct socket *sock)
+ 				&af_unix_sk_receive_queue_lock_key);
+ 
+ 	sk->sk_write_space	= unix_write_space;
+-	sk->sk_max_ack_backlog	= net->unx.sysctl_max_dgram_qlen;
++	sk->sk_max_ack_backlog	= max_t(u32,
++					net->unx.sysctl_max_dgram_qlen,
++					sk->sk_rcvbuf / SKB_TRUESIZE(256));
+ 	sk->sk_destruct		= unix_sock_destructor;
+ 	u	  = unix_sk(sk);
+ 	u->path.dentry = NULL;
