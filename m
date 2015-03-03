@@ -1,56 +1,104 @@
 From: Sebastian Reichel <sre@kernel.org>
-Subject: [PATCHv2 0/2] N900 Modem Speech Support
-Date: Tue,  3 Mar 2015 01:44:12 +0100
-Message-ID: <1425343454-6551-1-git-send-email-sre@kernel.org>
+Subject: [PATCHv2 2/2] HSI: nokia-modem: Add cmt-speech support
+Date: Tue,  3 Mar 2015 01:44:14 +0100
+Message-ID: <1425343454-6551-3-git-send-email-sre@kernel.org>
+References: <1425343454-6551-1-git-send-email-sre@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1425343454-6551-1-git-send-email-sre@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Sebastian Reichel <sre@kernel.org>
 Cc: Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pavel Machek <pavel@ucw.cz>, Pali Rohar <pali.rohar@gmail.com>, Aaro Koskinen <aaro.koskinen@iki.fi>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Register cmt-speech driver in nokia-modem driver and forward
+hsi channel information.
 
-This patchset contains the missing speech data support for the
-Nokia N900 modem.
+Signed-off-by: Sebastian Reichel <sre@kernel.org>
+---
+ drivers/hsi/clients/Kconfig       |  2 +-
+ drivers/hsi/clients/nokia-modem.c | 31 ++++++++++++++++++++++++++++++-
+ 2 files changed, 31 insertions(+), 2 deletions(-)
 
-Userland access goes via /dev/cmt_speech. The API is implemented in
-libcmtspeechdata, which is used by ofono and the freesmartphone.org project.
-Apart from that the device is also used by the phone binaries distributed
-with Maemo. So while this is a new userland ABI for the mainline kernel it
-has been tested in the wild for some years.
-
-Simple Testing of the API can be done by checking out libcmtspeechdata [0],
-building the test tool and executing it. The tool will loop back audio data
-received from the caller.
-
-I have prepared a kernel branch for this patchset, which can be found at [1].
-
-Changes since PATCHv1 [2]:
- * Squash cmt-speech patches together
- * cs_alloc_cmds(): GFP_ATOMIC -> GFP_KERNEL
- * CS_SET_WAKELINE ioctl: Add sanity check
-
-[0] https://lkml.org/lkml/2015/2/11/526
-[1] git://git.kernel.org/pub/scm/linux/kernel/git/sre/linux-hsi.git branch/cmt-speech-2
-[2] https://lkml.org/lkml/2015/3/1/282
-
--- Sebastian
-
-Kai Vehmanen (1):
-  HSI: cmt_speech: Add cmt-speech driver
-
-Sebastian Reichel (1):
-  HSI: nokia-modem: Add cmt-speech support
-
- drivers/hsi/clients/Kconfig          |   11 +-
- drivers/hsi/clients/Makefile         |    1 +
- drivers/hsi/clients/cmt_speech.c     | 1457 ++++++++++++++++++++++++++++++++++
- drivers/hsi/clients/nokia-modem.c    |   31 +-
- include/uapi/linux/hsi/Kbuild        |    2 +-
- include/uapi/linux/hsi/cs-protocol.h |  113 +++
- 6 files changed, 1612 insertions(+), 3 deletions(-)
- create mode 100644 drivers/hsi/clients/cmt_speech.c
- create mode 100644 include/uapi/linux/hsi/cs-protocol.h
-
+diff --git a/drivers/hsi/clients/Kconfig b/drivers/hsi/clients/Kconfig
+index 26f62f8..77ee7bc 100644
+--- a/drivers/hsi/clients/Kconfig
++++ b/drivers/hsi/clients/Kconfig
+@@ -6,7 +6,7 @@ comment "HSI clients"
+ 
+ config NOKIA_MODEM
+ 	tristate "Nokia Modem"
+-	depends on HSI && SSI_PROTOCOL
++	depends on HSI && SSI_PROTOCOL && CMT_SPEECH
+ 	help
+ 	Say Y here if you want to add support for the modem on Nokia
+ 	N900 (Nokia RX-51) hardware.
+diff --git a/drivers/hsi/clients/nokia-modem.c b/drivers/hsi/clients/nokia-modem.c
+index 9be4867..ef6ebda 100644
+--- a/drivers/hsi/clients/nokia-modem.c
++++ b/drivers/hsi/clients/nokia-modem.c
+@@ -46,6 +46,7 @@ struct nokia_modem_device {
+ 	struct nokia_modem_gpio	*gpios;
+ 	int			gpio_amount;
+ 	struct hsi_client	*ssi_protocol;
++	struct hsi_client	*cmt_speech;
+ };
+ 
+ static void do_nokia_modem_rst_ind_tasklet(unsigned long data)
+@@ -149,6 +150,7 @@ static int nokia_modem_probe(struct device *dev)
+ 	struct hsi_port *port = hsi_get_port(cl);
+ 	int irq, pflags, err;
+ 	struct hsi_board_info ssip;
++	struct hsi_board_info cmtspeech;
+ 
+ 	np = dev->of_node;
+ 	if (!np) {
+@@ -214,12 +216,34 @@ static int nokia_modem_probe(struct device *dev)
+ 		goto error3;
+ 	}
+ 
+-	/* TODO: register cmt-speech hsi client */
++	cmtspeech.name = "cmt-speech";
++	cmtspeech.tx_cfg = cl->tx_cfg;
++	cmtspeech.rx_cfg = cl->rx_cfg;
++	cmtspeech.platform_data = NULL;
++	cmtspeech.archdata = NULL;
++
++	modem->cmt_speech = hsi_new_client(port, &cmtspeech);
++	if (!modem->cmt_speech) {
++		dev_err(dev, "Could not register cmt-speech device\n");
++		goto error3;
++	}
++
++	err = device_attach(&modem->cmt_speech->device);
++	if (err == 0) {
++		dev_err(dev, "Missing cmt-speech driver\n");
++		err = -EPROBE_DEFER;
++		goto error4;
++	} else if (err < 0) {
++		dev_err(dev, "Could not load cmt-speech driver (%d)\n", err);
++		goto error4;
++	}
+ 
+ 	dev_info(dev, "Registered Nokia HSI modem\n");
+ 
+ 	return 0;
+ 
++error4:
++	hsi_remove_client(&modem->cmt_speech->device, NULL);
+ error3:
+ 	hsi_remove_client(&modem->ssi_protocol->device, NULL);
+ error2:
+@@ -238,6 +262,11 @@ static int nokia_modem_remove(struct device *dev)
+ 	if (!modem)
+ 		return 0;
+ 
++	if (modem->cmt_speech) {
++		hsi_remove_client(&modem->cmt_speech->device, NULL);
++		modem->cmt_speech = NULL;
++	}
++
+ 	if (modem->ssi_protocol) {
+ 		hsi_remove_client(&modem->ssi_protocol->device, NULL);
+ 		modem->ssi_protocol = NULL;
 -- 
 2.1.4
