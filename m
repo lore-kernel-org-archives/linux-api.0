@@ -1,7 +1,7 @@
 From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: [PATCH 9/9] selftests/mount: Use implicit rules
-Date: Tue,  3 Mar 2015 15:51:42 +1100
-Message-ID: <1425358302-16680-9-git-send-email-mpe@ellerman.id.au>
+Subject: [PATCH 8/9] selftests/mqueue: Use implicit rules
+Date: Tue,  3 Mar 2015 15:51:41 +1100
+Message-ID: <1425358302-16680-8-git-send-email-mpe@ellerman.id.au>
 References: <1425358302-16680-1-git-send-email-mpe@ellerman.id.au>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1425358302-16680-1-git-send-email-mpe@ellerman.id.au>
@@ -16,30 +16,41 @@ This has the nice side effect of enabling cross compilation.
 
 Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
 ---
- tools/testing/selftests/mount/Makefile | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ tools/testing/selftests/mqueue/Makefile | 15 +++++++++------
+ 1 file changed, 9 insertions(+), 6 deletions(-)
 
-diff --git a/tools/testing/selftests/mount/Makefile b/tools/testing/selftests/mount/Makefile
-index a5b367f032ba..a6c62bedb0d9 100644
---- a/tools/testing/selftests/mount/Makefile
-+++ b/tools/testing/selftests/mount/Makefile
-@@ -1,13 +1,13 @@
- # Makefile for mount selftests.
- 
--all: unprivileged-remount-test
-+TEST_PROGS := unprivileged-remount-test
+diff --git a/tools/testing/selftests/mqueue/Makefile b/tools/testing/selftests/mqueue/Makefile
+index 6ca7261b55dc..ed85a1d7ee36 100644
+--- a/tools/testing/selftests/mqueue/Makefile
++++ b/tools/testing/selftests/mqueue/Makefile
+@@ -1,6 +1,11 @@
+-all:
+-	gcc -O2 mq_open_tests.c -o mq_open_tests -lrt
+-	gcc -O2 -o mq_perf_tests mq_perf_tests.c -lrt -lpthread -lpopt
++TEST_PROGS := mq_open_tests mq_perf_tests
 +
-+CFLAGS += -O2 -Wall
- 
--unprivileged-remount-test: unprivileged-remount-test.c
--	gcc -Wall -O2 unprivileged-remount-test.c -o unprivileged-remount-test
++CFLAGS += -O2
++LDLIBS += -lrt
++
++mq_perf_tests: LDLIBS += -lpthread -lpopt
++
 +all: $(TEST_PROGS)
  
  include ../lib.mk
  
--TEST_PROGS := unprivileged-remount-test
- override RUN_TESTS := if [ -f /proc/self/uid_map ] ; then ./unprivileged-remount-test ; fi
- override EMIT_TESTS := echo "$(RUN_TESTS)"
+@@ -9,12 +14,10 @@ override define RUN_TESTS
+ 	@./mq_perf_tests || echo "selftests: mq_perf_tests [FAIL]"
+ endef
  
+-TEST_PROGS := mq_open_tests mq_perf_tests
+-
+ override define EMIT_TESTS
+ 	echo "./mq_open_tests /test1 || echo \"selftests: mq_open_tests [FAIL]\""
+ 	echo "./mq_perf_tests || echo \"selftests: mq_perf_tests [FAIL]\""
+ endef
+ 
+ clean:
+-	rm -f mq_open_tests mq_perf_tests
++	rm -f $(TEST_PROGS)
 -- 
 2.1.0
