@@ -1,71 +1,52 @@
-From: Christian Seiler <christian@iwakd.de>
-Subject: Re: [PATCH] net: add =?UTF-8?Q?SO=5FMAX=5FDGRAM=5FQLEN=20for=20AF?=
- =?UTF-8?Q?=5FUNIX=20SOCK=5FDGRAM=20sockets?=
-Date: Tue, 03 Mar 2015 10:04:10 +0100
-Message-ID: <0b5908020d83bcbaa7f4938e5cb433ea@iwakd.de>
-References: <1425342774-32667-1-git-send-email-christian@iwakd.de>
- <20150302.213807.367185406305242762.davem@davemloft.net>
+From: Vitaly Kuznetsov <vkuznets@redhat.com>
+Subject: Re: [PATCH RFC 1/3] Drivers: hv: kvp: convert userspace/kernel
+ communication to using char device
+Date: Tue, 03 Mar 2015 10:53:19 +0100
+Message-ID: <87pp8qif00.fsf@vitty.brq.redhat.com>
+References: <1425053665-635-1-git-send-email-vkuznets@redhat.com>
+ <1425053665-635-2-git-send-email-vkuznets@redhat.com>
+ <20150227202715.GF2034@potion.brq.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
- format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20150302.213807.367185406305242762.davem@davemloft.net>
-Sender: netdev-owner@vger.kernel.org
-To: David Miller <davem@davemloft.net>
-Cc: netdev@vger.kernel.org, dan@mindstab.net, edumazet@google.com, hannes@stressinduktion.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <20150227202715.GF2034@potion.brq.redhat.com> ("Radim
+ \=\?utf-8\?B\?S3LEjW3DocWZIidz\?\=
+ message of "Fri, 27 Feb 2015 21:27:15 +0100")
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: Radim =?utf-8?B?S3LEjW3DocWZ?= <rkrcmar@redhat.com>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Haiyang Zhang <haiyangz@microsoft.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, devel@linuxdriverproject.org
 List-Id: linux-api@vger.kernel.org
 
-Am 2015-03-03 03:38, schrieb David Miller:
->> Rationale: applications may want to control how many datagrams the
->> kernel buffers before senders are blocked. A prominent example would 
->> be
->> to create a socket for syslog early at boot but only consume 
->> messages
->> once enough of the system has been set up. The default queue length 
->> of
->> 11 messages (= 10 + 1) is too low for this kind of application.
->
-> I never like arguments that talk about forcing the kernel to do
-> excessive buffering for an application.
->
-> Queue this stuff in the userspace side, then you can have as many
-> messages backlogged as you like _without_ consuming unswappable 
-> kernel
-> memory.
->
-> I'm tossing this, you're going to have to do a much better job
-> explaining to me why userspace cannot take upon itself the burdon of
-> queueing data until it can be sent.
-
-There are certain things that can't be done in userspace:
-
-  - If SO_PASSCRED is active, a userspace process relaying the messages
-    can't fake the PID of the original process unless that one is still
-    around (sendmsg will return -ESRCH). Also, one needs CAP_SYS_ADMIN
-    to do this (and CAP_SETUID/CAP_SETGID to fake uid/gid as well).
-
-  - More importantly, timestamps of messages can't be faked at all. So
-    in the example of a socket used for syslog purposes, all the
-    timestamps on the messages queued would be wrong.
-
-Also note that if I have a stream socket, by default I can buffer up to
-256 kiB of data in the kernel. I did some test measurements on x86_64
-and including overhead of internal bookkeeping structures, I can fit up
-to 555 datagrams in there if each is at most 192 bytes long, at least
-333 datagrams if each is at most 704 bytes long and at least 185
-datagrams if each is at most 1728 bytes long. If I compare these
-numbers to 11, that's an order of magnitude in difference.
-
-I'm not asking to be able to use a lot of memory, I'm just asking to be
-able to raise an artificial limit that doesn't apply to other types of
-sockets.
-
-Finally, increasing the queue length is not the only use case, some
-applications might want to decrease it. For example, if the value is
-set to zero, only a single datagram can be queued at a time (and all
-else blocks or fails with -EAGAIN), which might be interesting if the
-application processing the datagrams takes a long time to do so for
-each one of them.
-
-Christian
+UmFkaW0gS3LEjW3DocWZIDxya3JjbWFyQHJlZGhhdC5jb20+IHdyaXRlczoKCj4gMjAxNS0wMi0y
+NyAxNzoxNCswMTAwLCBWaXRhbHkgS3V6bmV0c292Ogo+PiBSZS1pbXBsZW1lbnQgdGhlIGNvbW11
+bmljYXRpb24gdXNpbmcgbWlzYyBjaGFyIGRldmljZS4gVXNlIGlvY3RsIHRvIGRvCj4+IGtlcm5l
+bC91c2Vyc3BhY2UgdmVyc2lvbiBuZWdvdGlhdGlvbiAoZG9lc24ndCBtYWtlIG11Y2ggc2Vuc2Ug
+YXQgdGhpcyBtb21lbnQKPj4gYXMgd2UncmUgYnJlYWtpbmcgYmFja3dhcmRzIGNvbXBhdGliaWxp
+dHkgYnV0IGNhbiBiZSB1c2VkIGluIGZ1dHVyZSkuCj4KPiBUaGUgbWFpbiBxdWVzdGlvbiBpcyB3
+aGV0aGVyIHdlIHdhbnQgdG8gYWJvbGlzaCBiYWNrd2FyZCBjb21wYXRpYmlsaXR5Owo+IGtlcm5l
+bCBydWxlcyBhcmUgdXN1YWxseSBhZ2FpbnN0IGJyZWFrYWdlcyBhbmQgaXQncyBoYXJkIHRvIHBy
+b3ZlIHRoYXQKPiB0aGUgYnVuZGxlZCBkYWVtb24gaXMgYSBzb2xlIHVzZXIgYW5kIGdldHMgdXBk
+YXRlZCBhdCB0aGUgc2FtZSB0aW1lLgo+IChOb3RlOiBJJ2QgZ2xhZGx5IGJyZWFrIGFueXRoaW5n
+LikKPgo+IFRoZSBpb2N0bCBpcyB1c2VkIHRvbyBjcmVhdGl2ZWx5IGZvciBteSBsaWtpbmc6IGFz
+IGFuIG91dC1vZi1iYW5kCj4gY29tbXVuaWNhdGlvbiB0aGF0IGlzIHJlcXVpcmVkIGFmdGVyIHRo
+ZSBtYWluIGNoYW5uZWwgaGFzIGJlZW4gb3BlbmVkLgo+IEl0IHdvdWxkIGJlIHNpbXBsZXIgdG8g
+aW5qZWN0IHRoZSB2ZXJzaW9uIGludG8gZmlyc3QgeCBieXRlcyBvZiB0aGUKPiBzdHJlYW0sIG1h
+a2luZyBhIHJlYWQoKSBhZnRlciBvcGVuKCkgbWFuZGF0b3J5LgoKV2UgbmVlZCB0byBwZXJmb3Jt
+IGEgaGFuZHNoYWtlIC0ga2VybmVsIHBhcnQgc2VuZHMgaXRzIHZlcnNpb24gYW5kCnJlY2VpdmVz
+IGRhZW1vbidzIHZlcnNpb24uIFdlIGNhbiBkZWZpbml0ZWxseSBwYWNrIGV2ZXJ5dGhpbmcgaW4g
+dGhlCmRhdGEgc3RyZWFtIGJ1dCB3aHkgZG8gd2UgbmVlZCB0byBhdm9pZCBpb2N0bHM/IEl0IHNl
+ZW1zIHRvIG1lIHRoZQpoYW5kc2hha2Ugd2UncmUgcGVyZm9ybWluZyBoZXJlIGJlbG9uZ3MgdG8g
+YSAnY29udHJvbCcgc3RyZWFtLCBub3QKJ2RhdGEnIHN0cmVhbS4KCj4KPiAoSSd2ZSBvbmx5IGRv
+bmUgYSBoaWdoIGxldmVsIG92ZXJ2aWV3IHNvIGZhci4pCgpUaGFua3MhCgotLSAKICBWaXRhbHkK
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZGV2ZWwgbWFp
+bGluZyBsaXN0CmRldmVsQGxpbnV4ZHJpdmVycHJvamVjdC5vcmcKaHR0cDovL2RyaXZlcmRldi5s
+aW51eGRyaXZlcnByb2plY3Qub3JnL21haWxtYW4vbGlzdGluZm8vZHJpdmVyZGV2LWRldmVsCg==
