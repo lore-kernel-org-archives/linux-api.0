@@ -1,46 +1,32 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCHv2 0/2] N900 Modem Speech Support
-Date: Wed, 4 Mar 2015 20:55:48 +0100
-Message-ID: <20150304195548.GA26114@amd>
-References: <1425343454-6551-1-git-send-email-sre@kernel.org>
- <20150304192419.GA8981@amd>
- <20150304193650.GA587@fuloong-minipc.musicnaut.iki.fi>
+From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v5 tip 0/7] tracing: attach eBPF programs to kprobes
+Date: Wed, 4 Mar 2015 21:33:16 +0100
+Message-ID: <20150304203316.GA7142@gmail.com>
+References: <1425252465-27527-1-git-send-email-ast@plumgrid.com>
+ <CAMEtUuzOQqyXgZaytwOPxAfn5ucu08HjAMrFUgeSaLRVg9E0rg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150304193650.GA587@fuloong-minipc.musicnaut.iki.fi>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Aaro Koskinen <aaro.koskinen@iki.fi>
-Cc: Sebastian Reichel <sre@kernel.org>, Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pali Rohar <pali.rohar@gmail.com>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+In-Reply-To: <CAMEtUuzOQqyXgZaytwOPxAfn5ucu08HjAMrFUgeSaLRVg9E0rg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 2015-03-04 21:36:50, Aaro Koskinen wrote:
-> On Wed, Mar 04, 2015 at 08:24:19PM +0100, Pavel Machek wrote:
-> > @@ -1239,8 +1234,8 @@ static long cs_char_ioctl(struct file *file, unsigned int cmd,
-> >  
-> >  		if (copy_to_user((void __user *)arg, &ifver, sizeof(ifver)))
-> >  			r = -EFAULT;
-> > -		break;
-> >  	}
-> > +		break;
-> >  	case CS_CONFIG_BUFS: {
-> >  		struct cs_buffer_config buf_cfg;
-> >  
-> > @@ -1249,8 +1244,8 @@ static long cs_char_ioctl(struct file *file, unsigned int cmd,
-> >  			r = -EFAULT;
-> >  		else
-> >  			r = cs_hsi_buf_config(csdata->hi, &buf_cfg);
-> > -		break;
-> >  	}
-> > +		break;
-> 
-> I think having the break inside the block is more readable.
-> Now the indendation is mess.
 
-Half the function does it one way, one the other way. I don't care
-which way, but it should be consistent.
-									Pavel
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+* Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
+
+> On Sun, Mar 1, 2015 at 3:27 PM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
+> > Peter, Steven,
+> > I think this set addresses everything we've discussed.
+> > Please review/ack. Thanks!
+> 
+> icmp echo request
+
+I'd really like to have an Acked-by from Steve (propagated into the 
+changelogs) before looking at applying these patches.
+
+Thanks,
+
+	Ingo
