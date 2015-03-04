@@ -1,211 +1,56 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: [PATCH v3 2/7] selftests: Add install target
-Date: Wed,  4 Mar 2015 21:41:29 +1100
-Message-ID: <1425465694-27095-2-git-send-email-mpe@ellerman.id.au>
-References: <1425465694-27095-1-git-send-email-mpe@ellerman.id.au>
+From: Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>
+Subject: Re: [PATCHv2 1/2] HSI: cmt_speech: Add cmt-speech driver
+Date: Wed, 04 Mar 2015 12:09:16 +0100
+Message-ID: <1425467356.2798.8.camel@tiscali.nl>
+References: <1425343454-6551-1-git-send-email-sre@kernel.org>
+	 <1425343454-6551-2-git-send-email-sre@kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1425465694-27095-1-git-send-email-mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+In-Reply-To: <1425343454-6551-2-git-send-email-sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Peter Ujfalusi <peter.ujfalusi-l0cyMroinI0@public.gmane.org>, Kai Vehmanen <kvcontact-nQfqiRJ1PMYxHbG02/KK1g@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Pali Rohar <pali.rohar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Aaro Koskinen <aaro.koskinen-X3B1VOXEql0@public.gmane.org>, Ivaylo Dimitrov <ivo.g.dimitrov.75-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-omap-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kai Vehmanen <kai.vehmanen-xNZwKgViW5gAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This adds make install support to selftests. The basic usage is:
+A license nit only.
 
-$ cd tools/testing/selftests
-$ make install
+Sebastian Reichel schreef op di 03-03-2015 om 01:44 [+0100]:
+> --- /dev/null
+> +++ b/drivers/hsi/clients/cmt_speech.c
+> @@ -0,0 +1,1457 @@
+> +/*
+> + * cmt_speech.c - HSI CMT speech driver
+> + *
+> + * Copyright (C) 2008,2009,2010 Nokia Corporation. All rights reserved.
+> + *
+> + * Contact: Kai Vehmanen <kai.vehmanen-xNZwKgViW5gAvxtiuMwx3w@public.gmane.org>
+> + * Original author: Peter Ujfalusi <peter.ujfalusi-xNZwKgViW5gAvxtiuMwx3w@public.gmane.org>
+> + *
+> + * This program is free software; you can redistribute it and/or
+> + * modify it under the terms of the GNU General Public License
+> + * version 2 as published by the Free Software Foundation.
+> + *
+> + * This program is distributed in the hope that it will be useful, but
+> + * WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+> + * General Public License for more details.
+> + *
+> + * You should have received a copy of the GNU General Public License
+> + * along with this program; if not, write to the Free Software
+> + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+> + * 02110-1301 USA
+> + */
 
-That installs into tools/testing/selftests/install, which can then be
-copied where ever necessary.
+This states the license is GPL v2.
 
-The install destination is also configurable using eg:
+> +MODULE_LICENSE("GPL");
 
-$ INSTALL_PATH=/mnt/selftests make install
+So you probably want 
+    MODULE_LICENSE("GPL v2");
 
-The implementation uses two targets in the child makefiles. The first
-"install" is expected to install all files into $(INSTALL_PATH).
+here.
 
-The second, "emit_tests", is expected to emit the test instructions (ie.
-bash script) on stdout. Separating this from install means the child
-makefiles need no knowledge of the location of the test script.
 
-Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
----
-
-v3: Rebase onto 4.0-rc2.
-    Rename all.sh to run_kselftest.sh.
-    Add --no-print-directory to emit_tests invocation.
-
- tools/testing/selftests/Makefile                | 33 +++++++++++++++++++++++++
- tools/testing/selftests/exec/Makefile           |  3 +++
- tools/testing/selftests/lib.mk                  | 23 ++++++++++++++++-
- tools/testing/selftests/memory-hotplug/Makefile |  2 ++
- tools/testing/selftests/mount/Makefile          |  2 ++
- tools/testing/selftests/mqueue/Makefile         |  7 ++++++
- tools/testing/selftests/net/Makefile            |  1 +
- tools/testing/selftests/sysctl/Makefile         |  1 +
- 8 files changed, 71 insertions(+), 1 deletion(-)
-
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 4e511221a0c1..afba23fa8cfd 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -47,7 +47,40 @@ clean_hotplug:
- 		make -C $$TARGET clean; \
- 	done;
- 
-+INSTALL_PATH ?= install
-+INSTALL_PATH := $(abspath $(INSTALL_PATH))
-+ALL_SCRIPT := $(INSTALL_PATH)/run_kselftest.sh
-+
-+install:
-+ifdef INSTALL_PATH
-+	@# Ask all targets to install their files
-+	mkdir -p $(INSTALL_PATH)
-+	for TARGET in $(TARGETS); do \
-+		mkdir -p $(INSTALL_PATH)/$$TARGET ; \
-+		make -C $$TARGET INSTALL_PATH=$(INSTALL_PATH)/$$TARGET install; \
-+	done;
-+
-+	@# Ask all targets to emit their test scripts
-+	echo "#!/bin/bash\n\n" > $(ALL_SCRIPT)
-+	echo "cd \$$(dirname \$$0)" >> $(ALL_SCRIPT)
-+	echo "ROOT=\$$PWD\n" >> $(ALL_SCRIPT)
-+
-+	for TARGET in $(TARGETS); do \
-+		echo "echo ; echo Running tests in $$TARGET" >> $(ALL_SCRIPT); \
-+		echo "echo ========================================" >> $(ALL_SCRIPT); \
-+		echo "cd $$TARGET" >> $(ALL_SCRIPT); \
-+		make -s --no-print-directory -C $$TARGET emit_tests >> $(ALL_SCRIPT); \
-+		echo "cd \$$ROOT\n" >> $(ALL_SCRIPT); \
-+	done;
-+
-+	chmod u+x $(ALL_SCRIPT)
-+else
-+	$(error Error: set INSTALL_PATH to use install)
-+endif
-+
- clean:
- 	for TARGET in $(TARGETS); do \
- 		make -C $$TARGET clean; \
- 	done;
-+
-+.PHONY: install
-diff --git a/tools/testing/selftests/exec/Makefile b/tools/testing/selftests/exec/Makefile
-index a0098daeb73d..886cabe307b1 100644
---- a/tools/testing/selftests/exec/Makefile
-+++ b/tools/testing/selftests/exec/Makefile
-@@ -19,8 +19,11 @@ execveat.denatured: execveat
- 	$(CC) $(CFLAGS) -o $@ $^
- 
- TEST_PROGS := execveat
-+TEST_FILES := $(DEPS)
- 
- include ../lib.mk
- 
-+override EMIT_TESTS := echo "mkdir -p subdir; (./execveat && echo \"selftests: execveat [PASS]\") || echo \"selftests: execveat [FAIL]\""
-+
- clean:
- 	rm -rf $(BINARIES) $(DEPS) subdir.moved execveat.moved xxxxx*
-diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
-index b30c5a49cb61..7bd3dabe2846 100644
---- a/tools/testing/selftests/lib.mk
-+++ b/tools/testing/selftests/lib.mk
-@@ -7,4 +7,25 @@ endef
- run_tests: all
- 	$(RUN_TESTS)
- 
--.PHONY: run_tests all clean
-+define INSTALL_RULE
-+	mkdir -p $(INSTALL_PATH)
-+	install -t $(INSTALL_PATH) $(TEST_PROGS) $(TEST_FILES)
-+endef
-+
-+install: all
-+ifdef INSTALL_PATH
-+	$(INSTALL_RULE)
-+else
-+	$(error Error: set INSTALL_PATH to use install)
-+endif
-+
-+define EMIT_TESTS
-+	@for TEST in $(TEST_PROGS); do \
-+		echo "(./$$TEST && echo \"selftests: $$TEST [PASS]\") || echo \"selftests: $$TEST [FAIL]\""; \
-+	done;
-+endef
-+
-+emit_tests:
-+	$(EMIT_TESTS)
-+
-+.PHONY: run_tests all clean install emit_tests
-diff --git a/tools/testing/selftests/memory-hotplug/Makefile b/tools/testing/selftests/memory-hotplug/Makefile
-index 8f7dea66ecac..598a1f68f534 100644
---- a/tools/testing/selftests/memory-hotplug/Makefile
-+++ b/tools/testing/selftests/memory-hotplug/Makefile
-@@ -2,7 +2,9 @@ all:
- 
- include ../lib.mk
- 
-+TEST_PROGS := on-off-test.sh
- override RUN_TESTS := ./on-off-test.sh -r 2 || echo "selftests: memory-hotplug [FAIL]"
-+override EMIT_TESTS := echo "$(RUN_TESTS)"
- 
- run_full_test:
- 	@/bin/bash ./on-off-test.sh || echo "memory-hotplug selftests: [FAIL]"
-diff --git a/tools/testing/selftests/mount/Makefile b/tools/testing/selftests/mount/Makefile
-index 06931dfd3ef0..a5b367f032ba 100644
---- a/tools/testing/selftests/mount/Makefile
-+++ b/tools/testing/selftests/mount/Makefile
-@@ -7,7 +7,9 @@ unprivileged-remount-test: unprivileged-remount-test.c
- 
- include ../lib.mk
- 
-+TEST_PROGS := unprivileged-remount-test
- override RUN_TESTS := if [ -f /proc/self/uid_map ] ; then ./unprivileged-remount-test ; fi
-+override EMIT_TESTS := echo "$(RUN_TESTS)"
- 
- clean:
- 	rm -f unprivileged-remount-test
-diff --git a/tools/testing/selftests/mqueue/Makefile b/tools/testing/selftests/mqueue/Makefile
-index cbc300ef11bf..6ca7261b55dc 100644
---- a/tools/testing/selftests/mqueue/Makefile
-+++ b/tools/testing/selftests/mqueue/Makefile
-@@ -9,5 +9,12 @@ override define RUN_TESTS
- 	@./mq_perf_tests || echo "selftests: mq_perf_tests [FAIL]"
- endef
- 
-+TEST_PROGS := mq_open_tests mq_perf_tests
-+
-+override define EMIT_TESTS
-+	echo "./mq_open_tests /test1 || echo \"selftests: mq_open_tests [FAIL]\""
-+	echo "./mq_perf_tests || echo \"selftests: mq_perf_tests [FAIL]\""
-+endef
-+
- clean:
- 	rm -f mq_open_tests mq_perf_tests
-diff --git a/tools/testing/selftests/net/Makefile b/tools/testing/selftests/net/Makefile
-index fa8187ff15e6..6ba2ac7bbb0d 100644
---- a/tools/testing/selftests/net/Makefile
-+++ b/tools/testing/selftests/net/Makefile
-@@ -12,6 +12,7 @@ all: $(NET_PROGS)
- 	$(CC) $(CFLAGS) -o $@ $^
- 
- TEST_PROGS := run_netsocktests run_afpackettests test_bpf.sh
-+TEST_FILES := $(NET_PROGS)
- 
- include ../lib.mk
- 
-diff --git a/tools/testing/selftests/sysctl/Makefile b/tools/testing/selftests/sysctl/Makefile
-index c9660f5ef9f9..b3c33e071f10 100644
---- a/tools/testing/selftests/sysctl/Makefile
-+++ b/tools/testing/selftests/sysctl/Makefile
-@@ -5,6 +5,7 @@
- all:
- 
- TEST_PROGS := run_numerictests run_stringtests
-+TEST_FILES := common_tests
- 
- include ../lib.mk
- 
--- 
-2.1.0
+Paul Bolle
