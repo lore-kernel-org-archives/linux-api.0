@@ -1,7 +1,7 @@
 From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: [PATCH v3 7/7] selftests/mount: Use implicit rules
-Date: Wed,  4 Mar 2015 21:41:34 +1100
-Message-ID: <1425465694-27095-7-git-send-email-mpe@ellerman.id.au>
+Subject: [PATCH v3 5/7] selftests/timers: Use implicit rules
+Date: Wed,  4 Mar 2015 21:41:32 +1100
+Message-ID: <1425465694-27095-5-git-send-email-mpe@ellerman.id.au>
 References: <1425465694-27095-1-git-send-email-mpe@ellerman.id.au>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1425465694-27095-1-git-send-email-mpe@ellerman.id.au>
@@ -16,30 +16,26 @@ This has the nice side effect of enabling cross compilation.
 
 Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
 ---
- tools/testing/selftests/mount/Makefile | 8 ++++----
+ tools/testing/selftests/timers/Makefile | 8 ++++----
  1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/tools/testing/selftests/mount/Makefile b/tools/testing/selftests/mount/Makefile
-index a5b367f032ba..a6c62bedb0d9 100644
---- a/tools/testing/selftests/mount/Makefile
-+++ b/tools/testing/selftests/mount/Makefile
-@@ -1,13 +1,13 @@
- # Makefile for mount selftests.
- 
--all: unprivileged-remount-test
-+TEST_PROGS := unprivileged-remount-test
+diff --git a/tools/testing/selftests/timers/Makefile b/tools/testing/selftests/timers/Makefile
+index 149cee3b7b8a..87340405e4b3 100644
+--- a/tools/testing/selftests/timers/Makefile
++++ b/tools/testing/selftests/timers/Makefile
+@@ -1,9 +1,9 @@
+-all:
+-	gcc posix_timers.c -o posix_timers -lrt
+-
+ TEST_PROGS := posix_timers
++LDLIBS += -lrt
 +
-+CFLAGS += -O2 -Wall
- 
--unprivileged-remount-test: unprivileged-remount-test.c
--	gcc -Wall -O2 unprivileged-remount-test.c -o unprivileged-remount-test
 +all: $(TEST_PROGS)
  
  include ../lib.mk
  
--TEST_PROGS := unprivileged-remount-test
- override RUN_TESTS := if [ -f /proc/self/uid_map ] ; then ./unprivileged-remount-test ; fi
- override EMIT_TESTS := echo "$(RUN_TESTS)"
- 
+ clean:
+-	rm -f ./posix_timers
++	rm -f $(TEST_PROGS)
 -- 
 2.1.0
