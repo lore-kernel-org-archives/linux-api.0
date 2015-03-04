@@ -1,56 +1,51 @@
-From: Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>
-Subject: Re: [PATCHv2 1/2] HSI: cmt_speech: Add cmt-speech driver
-Date: Wed, 04 Mar 2015 12:09:16 +0100
-Message-ID: <1425467356.2798.8.camel@tiscali.nl>
-References: <1425343454-6551-1-git-send-email-sre@kernel.org>
-	 <1425343454-6551-2-git-send-email-sre@kernel.org>
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Subject: Re: [PATCH v2 04/18] clocksource: Add ARM System timer driver
+Date: Wed, 4 Mar 2015 13:08:02 +0100
+Message-ID: <CALszF6AEThPrRe7c7nJ6q7yb2fhLMFuHJUV10sf=w0TMcqVVaw@mail.gmail.com>
+References: <1424455277-29983-1-git-send-email-mcoquelin.stm32@gmail.com>
+	<1424455277-29983-5-git-send-email-mcoquelin.stm32@gmail.com>
+	<20150220195437.GT19388@pengutronix.de>
+	<1424468908.24292.10.camel@x220>
+	<CALszF6Bm_Y4ZLednjpmP-hMix3gA23FwLm5hViEjr1QojUY+Mg@mail.gmail.com>
+	<1425411786.2606.24.camel@tiscali.nl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1425343454-6551-2-git-send-email-sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Peter Ujfalusi <peter.ujfalusi-l0cyMroinI0@public.gmane.org>, Kai Vehmanen <kvcontact-nQfqiRJ1PMYxHbG02/KK1g@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Pali Rohar <pali.rohar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Aaro Koskinen <aaro.koskinen-X3B1VOXEql0@public.gmane.org>, Ivaylo Dimitrov <ivo.g.dimitrov.75-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-omap-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kai Vehmanen <kai.vehmanen-xNZwKgViW5gAvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-gpio-owner@vger.kernel.org>
+In-Reply-To: <1425411786.2606.24.camel@tiscali.nl>
+Sender: linux-gpio-owner@vger.kernel.org
+To: Paul Bolle <pebolle@tiscali.nl>
+Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti
 List-Id: linux-api@vger.kernel.org
 
-A license nit only.
+2015-03-03 20:43 GMT+01:00 Paul Bolle <pebolle@tiscali.nl>:
+> Maxime Coquelin schreef op ma 02-03-2015 om 17:53 [+0100]:
+>> Do you agree if I define it like this:
+>>
+>> config ARMV7M_SYSTICK
+>>     bool "Clocksource driver for ARMv7-M System timer"
+>>     depends on OF && (CPU_V7M || COMPILE_TEST)
+>>     select CLKSRC_OF
+>>     select CLKSRC_MMIO
+>>     help
+>>       This options enables clocksource support for the ARMv7-M system
+>>       timer unit.
+>
+> I don't really have strong feelings on whatever way you choose to fix
+> the, well, minor problem I pointed out.
+>
+> Having said that, if a Kconfig entry without a prompt (and therefor,
+> without help) actually does what you want it to do, why bother adding a
+> prompt and a one line help text?
 
-Sebastian Reichel schreef op di 03-03-2015 om 01:44 [+0100]:
-> --- /dev/null
-> +++ b/drivers/hsi/clients/cmt_speech.c
-> @@ -0,0 +1,1457 @@
-> +/*
-> + * cmt_speech.c - HSI CMT speech driver
-> + *
-> + * Copyright (C) 2008,2009,2010 Nokia Corporation. All rights reserved.
-> + *
-> + * Contact: Kai Vehmanen <kai.vehmanen-xNZwKgViW5gAvxtiuMwx3w@public.gmane.org>
-> + * Original author: Peter Ujfalusi <peter.ujfalusi-xNZwKgViW5gAvxtiuMwx3w@public.gmane.org>
-> + *
-> + * This program is free software; you can redistribute it and/or
-> + * modify it under the terms of the GNU General Public License
-> + * version 2 as published by the Free Software Foundation.
-> + *
-> + * This program is distributed in the hope that it will be useful, but
-> + * WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-> + * General Public License for more details.
-> + *
-> + * You should have received a copy of the GNU General Public License
-> + * along with this program; if not, write to the Free Software
-> + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-> + * 02110-1301 USA
-> + */
+This is because I added also support for COMPILE_TEST coverage as per
+Uwe advice,
+and thought it was necessary to have an entry for this.
+Maybe I'm just wrong?
 
-This states the license is GPL v2.
+Thanks,
+Maxime
 
-> +MODULE_LICENSE("GPL");
-
-So you probably want 
-    MODULE_LICENSE("GPL v2");
-
-here.
-
-
-Paul Bolle
+>
+>
+> Paul Bolle
+>
