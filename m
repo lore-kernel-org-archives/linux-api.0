@@ -1,179 +1,454 @@
-From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: Re: [PATCH] selftests: Add install, generate tar, and run_kselftest
- tools
-Date: Wed, 04 Mar 2015 21:19:57 +1100
-Message-ID: <1425464397.32154.1.camel@ellerman.id.au>
-References: <1425358088-9667-1-git-send-email-shuahkh@osg.samsung.com>
-	 <20150303144916.GA24111@codemonkey.org.uk>
-	 <54F5EA38.4010306@osg.samsung.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <54F5EA38.4010306@osg.samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: Dave Jones <davej@codemonkey.org.uk>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, mmarek@suse.cz
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: [PATCH v3 1/7] selftests: Introduce minimal shared logic for running tests
+Date: Wed,  4 Mar 2015 21:41:28 +1100
+Message-ID: <1425465694-27095-1-git-send-email-mpe@ellerman.id.au>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2015-03-03 at 10:07 -0700, Shuah Khan wrote:
-> On 03/03/2015 07:49 AM, Dave Jones wrote:
-> > On Mon, Mar 02, 2015 at 09:48:08PM -0700, Shuah Khan wrote:
-> >  > kselftest_install.sh tool adds support for installing selftests
-> >  > at user specified location/kselftest. By default this tool
-> >  > will install selftests in the selftests/kselftest directory.
-> >  > For example, kselftest_install /tmp will install tests under
-> >  > /tmp/kselftest
-> >  
-> > How is this an improvement over having each test install method isolated
-> > to its own Makefile ?
-> 
-> Dave/Michael,
-> 
-> Makefile approach requires changes to all the existing test Makefiles.
-> After looking at the churn to individual Makefiles, I have the following
-> concerns.
-> 
-> I am concerned about maintenance and potential for mistakes in install
-> logic in individual Makefiles when new tests get added. I keep seeing
-> run_tests target breaking when new tests get added and also when
-> existing tests get modified.
+This adds a Make include file which most selftests can then include to
+get the run_tests logic.
 
-With most of the logic isolated in lib.mk I don't think this is a concern.
+On its own this has the advantage of some reduction in repetition, and
+also means the pass/fail message is defined in fewer places.
 
-As an example here is the minimal Makefile required for a simple new test:
+However the key advantage is it will allow us to implement install very
+simply in a subsequent patch.
 
-	$ cat tools/testing/selftests/hello-world/Makefile
-	TEST_PROGS := hello-world
-	
-	all: $(TEST_PROGS)
-	
-	include ../lib.mk
-	
-	clean:
-		rm -f $(TEST_PROGS)
+The default implementation just executes each program in $(TEST_PROGS).
 
+We use a variable to hold the default implementation of $(RUN_TESTS)
+because that gives us a clean way to override it if necessary, ie. using
+override. The mount, memory-hotplug and mqueue tests use that to provide
+a different implementation.
 
-That will build, work with run_tests and work with install.
+Tests are not run via /bin/bash, so if they are scripts they must be
+executable, we add a+x to several.
 
-In fact we can merge a template directory like the above with an example
-Makefile to make it super easy for people to add new tests with the right
-logic.
+Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+---
 
+v3: Rebase onto 4.0-rc2, add +x to more scripts that need it.
 
-> That said, I looked at Michael's patches and Michael's work does address
-> several of my concerns. Hence, the following plan:
-> 
-> I will take the following patches from Michael after requested
-> changes are made:
-> 
-> - [PATCH 1/9] selftests: Introduce minimal shared logic for
->   running tests
->   This improves current run_tests logic. Will need changes to
->   account for duplicate cpu and memory hot-plug scripts. Both are
->   named on-off-test.sh - won't make a difference for this patch,
->   but will for install logic
+ tools/testing/selftests/breakpoints/Makefile         |  5 +++--
+ tools/testing/selftests/cpu-hotplug/Makefile         |  5 +++--
+ tools/testing/selftests/cpu-hotplug/on-off-test.sh   |  0
+ tools/testing/selftests/efivarfs/Makefile            |  5 +++--
+ tools/testing/selftests/efivarfs/efivarfs.sh         |  0
+ tools/testing/selftests/exec/Makefile                |  5 +++--
+ tools/testing/selftests/firmware/Makefile            | 20 ++------------------
+ tools/testing/selftests/firmware/fw_filesystem.sh    |  0
+ tools/testing/selftests/firmware/fw_userhelper.sh    |  0
+ tools/testing/selftests/ftrace/Makefile              |  5 +++--
+ tools/testing/selftests/ipc/Makefile                 |  5 +++--
+ tools/testing/selftests/kcmp/Makefile                |  5 +++--
+ tools/testing/selftests/lib.mk                       | 10 ++++++++++
+ tools/testing/selftests/memfd/Makefile               |  6 +++---
+ tools/testing/selftests/memory-hotplug/Makefile      |  5 +++--
+ .../testing/selftests/memory-hotplug/on-off-test.sh  |  0
+ tools/testing/selftests/mount/Makefile               |  8 ++------
+ tools/testing/selftests/mqueue/Makefile              |  9 ++++++---
+ tools/testing/selftests/net/Makefile                 |  8 ++++----
+ tools/testing/selftests/net/run_afpackettests        |  0
+ tools/testing/selftests/net/run_netsocktests         |  0
+ tools/testing/selftests/ptrace/Makefile              |  5 +++--
+ tools/testing/selftests/size/Makefile                |  5 +++--
+ tools/testing/selftests/sysctl/Makefile              | 11 ++---------
+ tools/testing/selftests/sysctl/run_numerictests      |  0
+ tools/testing/selftests/sysctl/run_stringtests       |  0
+ tools/testing/selftests/timers/Makefile              |  5 +++--
+ tools/testing/selftests/user/Makefile                |  5 +++--
+ tools/testing/selftests/vm/Makefile                  |  5 +++--
+ tools/testing/selftests/vm/run_vmtests               |  0
+ 30 files changed, 68 insertions(+), 69 deletions(-)
+ mode change 100644 => 100755 tools/testing/selftests/cpu-hotplug/on-off-test.sh
+ mode change 100644 => 100755 tools/testing/selftests/efivarfs/efivarfs.sh
+ mode change 100644 => 100755 tools/testing/selftests/firmware/fw_filesystem.sh
+ mode change 100644 => 100755 tools/testing/selftests/firmware/fw_userhelper.sh
+ create mode 100644 tools/testing/selftests/lib.mk
+ mode change 100644 => 100755 tools/testing/selftests/memory-hotplug/on-off-test.sh
+ mode change 100644 => 100755 tools/testing/selftests/net/run_afpackettests
+ mode change 100644 => 100755 tools/testing/selftests/net/run_netsocktests
+ mode change 100644 => 100755 tools/testing/selftests/sysctl/run_numerictests
+ mode change 100644 => 100755 tools/testing/selftests/sysctl/run_stringtests
+ mode change 100644 => 100755 tools/testing/selftests/vm/run_vmtests
 
-The duplicate names don't matter because I put the installed tests in a sub
-directory:
-
-$ cd tools/testing/selftests
-$ find install/ -name on-off-test.sh
-install/memory-hotplug/on-off-test.sh
-install/cpu-hotplug/on-off-test.sh
-
-
-> Note: I am seeing failures when I run sudo make kselftest after
-> applying this patch
-> 
-> /bin/sh: 1: ./run_netsocktests: Permission denied
-> selftests: run_netsocktests [FAIL]
-> /bin/sh: 1: ./run_afpackettests: Permission denied
-> selftests: run_afpackettests [FAIL]
-> 
-> /bin/sh: 1: ./run_numerictests: Permission denied
-> selftests: run_numerictests [FAIL]
-> /bin/sh: 1: ./run_stringtests: Permission denied
-> selftests: run_stringtests [FAIL]
-> 
-> /bin/sh: 1: ./run_vmtests: Permission denied
-
-Ah sorry, I lost the change to the permission bits somewhere along the line.
-Thanks for testing. Fixed in v3.
-
-
->   Please make sure make kselftest doesn't regress when run
->   as root as well as user. In addition, the following don't
->   regress:
-> 
->   make -C tools/testing/selftests TARGETS=test1 run_tests
->   make -C tools/testing/selftests TARGETS="test1 test2" run_tests
->   make -C tools/testing/selftests run_hotplug
-> 
->   Please see Documentation/kselftest.txt - don't want to regress
->   the current use-cases.
-
-None of those have regressed as far as I can see.
-
-
-> - [PATCH 2/9] selftests: Add install target
->   Looks like lib.mk logic is addressing some of my concerns about the
->   individual Makefile install logic.
->   I would like to see 1. the all script name changed to run_kselftest.sh
-
-I don't see why it needs "kselftest" in the name, it's *inside* the install
-directory, but I'll rename it because I don't care that much.
-
-
-> - [PATCH 5/9] kbuild: Don't pass -rR to selftest makefiles
->   Drop kselftest_install from this patch. There is no need.
->   More on this below.
-
-OK. That makes this patch orthogonal to the rest, and it's actually a bug fix,
-so I'll send it separately and ideally you can merge it for 4.0.
-
-
-> - [PATCH 7/9] selftests/timers: Use implicit rules
->   Please check John Stultz's timers test work to make sure there is no
->   conflict. Please see: [PATCH 01/19] selftests/timers: Cleanup
->   Makefile to make it easier to add future tests
->   https://lkml.org/lkml/2015/2/5/56
-
-There will definitely be a conflict. As the maintainer you should either fixup
-the conflict, or if you can't, merge one series and then ask the author of the
-other series to base their work on top of the other.
-
-In this case the two patches are very similar, so it probably doesn't matter
-which you merge first. You'll just have to incorporate the CFLAGS changes from
-John's patch into the final result.
-
-> Drop these patches:
-> - [PATCH 4/9] kbuild: add a new kselftest_install make target to install selftests
->   I am not seeing any value in adding install target to the main
->   Makefile.
-
-Fine by me.
-
-
-> I still want a wrapper script for install, so:
-> 
-> - I will change kselftest_install.sh to leverage the above work. It can
->   just invoke make install at the selftests directory after figuring
->   base directory logic etc. This will be based on the above patches.
-> 
-> - Keep  gen_kselftest_tar.sh as is - no changes need.
-> 
-> - I can drop run_kselftest tool completely, since emit logic in
->   Michael's work takes care of it.
-> 
-> Comments and questions? I am cc'ing Michal Marek to keep him in
-> the loop.
-> 
-> Michael! Please let me know if you want to see responses to your
-> individual patches, in addition to this email.
-
-No that's fine.
-
-I'll repost the series shortly.
-
-cheers
+diff --git a/tools/testing/selftests/breakpoints/Makefile b/tools/testing/selftests/breakpoints/Makefile
+index e18b42b254af..182235640209 100644
+--- a/tools/testing/selftests/breakpoints/Makefile
++++ b/tools/testing/selftests/breakpoints/Makefile
+@@ -16,8 +16,9 @@ else
+ 	echo "Not an x86 target, can't build breakpoints selftests"
+ endif
+ 
+-run_tests:
+-	@./breakpoint_test || echo "breakpoints selftests: [FAIL]"
++TEST_PROGS := breakpoint_test
++
++include ../lib.mk
+ 
+ clean:
+ 	rm -fr breakpoint_test
+diff --git a/tools/testing/selftests/cpu-hotplug/Makefile b/tools/testing/selftests/cpu-hotplug/Makefile
+index e9c28d8dc84b..15f02591d22c 100644
+--- a/tools/testing/selftests/cpu-hotplug/Makefile
++++ b/tools/testing/selftests/cpu-hotplug/Makefile
+@@ -1,7 +1,8 @@
+ all:
+ 
+-run_tests:
+-	@/bin/bash ./on-off-test.sh || echo "cpu-hotplug selftests: [FAIL]"
++TEST_PROGS := on-off-test.sh
++
++include ../lib.mk
+ 
+ run_full_test:
+ 	@/bin/bash ./on-off-test.sh -a || echo "cpu-hotplug selftests: [FAIL]"
+diff --git a/tools/testing/selftests/cpu-hotplug/on-off-test.sh b/tools/testing/selftests/cpu-hotplug/on-off-test.sh
+old mode 100644
+new mode 100755
+diff --git a/tools/testing/selftests/efivarfs/Makefile b/tools/testing/selftests/efivarfs/Makefile
+index 29e8c6bc81b0..3052d0bda24b 100644
+--- a/tools/testing/selftests/efivarfs/Makefile
++++ b/tools/testing/selftests/efivarfs/Makefile
+@@ -5,8 +5,9 @@ test_objs = open-unlink create-read
+ 
+ all: $(test_objs)
+ 
+-run_tests: all
+-	@/bin/bash ./efivarfs.sh || echo "efivarfs selftests: [FAIL]"
++TEST_PROGS := efivarfs.sh
++
++include ../lib.mk
+ 
+ clean:
+ 	rm -f $(test_objs)
+diff --git a/tools/testing/selftests/efivarfs/efivarfs.sh b/tools/testing/selftests/efivarfs/efivarfs.sh
+old mode 100644
+new mode 100755
+diff --git a/tools/testing/selftests/exec/Makefile b/tools/testing/selftests/exec/Makefile
+index 66dfc2ce1788..a0098daeb73d 100644
+--- a/tools/testing/selftests/exec/Makefile
++++ b/tools/testing/selftests/exec/Makefile
+@@ -18,8 +18,9 @@ execveat.denatured: execveat
+ %: %.c
+ 	$(CC) $(CFLAGS) -o $@ $^
+ 
+-run_tests: all
+-	./execveat
++TEST_PROGS := execveat
++
++include ../lib.mk
+ 
+ clean:
+ 	rm -rf $(BINARIES) $(DEPS) subdir.moved execveat.moved xxxxx*
+diff --git a/tools/testing/selftests/firmware/Makefile b/tools/testing/selftests/firmware/Makefile
+index e23cce0bbc3a..9bf82234855b 100644
+--- a/tools/testing/selftests/firmware/Makefile
++++ b/tools/testing/selftests/firmware/Makefile
+@@ -3,25 +3,9 @@
+ # No binaries, but make sure arg-less "make" doesn't trigger "run_tests"
+ all:
+ 
+-fw_filesystem:
+-	@if /bin/sh ./fw_filesystem.sh ; then \
+-                echo "fw_filesystem: ok"; \
+-        else \
+-                echo "fw_filesystem: [FAIL]"; \
+-                exit 1; \
+-        fi
++TEST_PROGS := fw_filesystem.sh fw_userhelper.sh
+ 
+-fw_userhelper:
+-	@if /bin/sh ./fw_userhelper.sh ; then \
+-                echo "fw_userhelper: ok"; \
+-        else \
+-                echo "fw_userhelper: [FAIL]"; \
+-                exit 1; \
+-        fi
+-
+-run_tests: all fw_filesystem fw_userhelper
++include ../lib.mk
+ 
+ # Nothing to clean up.
+ clean:
+-
+-.PHONY: all clean run_tests fw_filesystem fw_userhelper
+diff --git a/tools/testing/selftests/firmware/fw_filesystem.sh b/tools/testing/selftests/firmware/fw_filesystem.sh
+old mode 100644
+new mode 100755
+diff --git a/tools/testing/selftests/firmware/fw_userhelper.sh b/tools/testing/selftests/firmware/fw_userhelper.sh
+old mode 100644
+new mode 100755
+diff --git a/tools/testing/selftests/ftrace/Makefile b/tools/testing/selftests/ftrace/Makefile
+index 76cc9f156267..346720639d1d 100644
+--- a/tools/testing/selftests/ftrace/Makefile
++++ b/tools/testing/selftests/ftrace/Makefile
+@@ -1,7 +1,8 @@
+ all:
+ 
+-run_tests:
+-	@/bin/sh ./ftracetest || echo "ftrace selftests: [FAIL]"
++TEST_PROGS := ftracetest
++
++include ../lib.mk
+ 
+ clean:
+ 	rm -rf logs/*
+diff --git a/tools/testing/selftests/ipc/Makefile b/tools/testing/selftests/ipc/Makefile
+index 74bbefdeaf4c..3b6013da4f59 100644
+--- a/tools/testing/selftests/ipc/Makefile
++++ b/tools/testing/selftests/ipc/Makefile
+@@ -18,8 +18,9 @@ else
+ 	echo "Not an x86 target, can't build msgque selftest"
+ endif
+ 
+-run_tests: all
+-	./msgque_test
++TEST_PROGS := msgque_test
++
++include ../lib.mk
+ 
+ clean:
+ 	rm -fr ./msgque_test
+diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
+index ff0eefdc6ceb..0eecd183058c 100644
+--- a/tools/testing/selftests/kcmp/Makefile
++++ b/tools/testing/selftests/kcmp/Makefile
+@@ -3,8 +3,9 @@ CFLAGS += -I../../../../usr/include/
+ 
+ all: kcmp_test
+ 
+-run_tests: all
+-	@./kcmp_test || echo "kcmp_test: [FAIL]"
++TEST_PROGS := kcmp_test
++
++include ../lib.mk
+ 
+ clean:
+ 	$(RM) kcmp_test kcmp-test-file
+diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
+new file mode 100644
+index 000000000000..b30c5a49cb61
+--- /dev/null
++++ b/tools/testing/selftests/lib.mk
+@@ -0,0 +1,10 @@
++define RUN_TESTS
++	@for TEST in $(TEST_PROGS); do \
++		(./$$TEST && echo "selftests: $$TEST [PASS]") || echo "selftests: $$TEST [FAIL]"; \
++	done;
++endef
++
++run_tests: all
++	$(RUN_TESTS)
++
++.PHONY: run_tests all clean
+diff --git a/tools/testing/selftests/memfd/Makefile b/tools/testing/selftests/memfd/Makefile
+index b80cd10d53ba..191dee9d6fd3 100644
+--- a/tools/testing/selftests/memfd/Makefile
++++ b/tools/testing/selftests/memfd/Makefile
+@@ -5,9 +5,9 @@ CFLAGS += -I../../../../include/
+ all:
+ 	gcc $(CFLAGS) memfd_test.c -o memfd_test
+ 
+-run_tests: all
+-	gcc $(CFLAGS) memfd_test.c -o memfd_test
+-	@./memfd_test || echo "memfd_test: [FAIL]"
++TEST_PROGS := memfd_test
++
++include ../lib.mk
+ 
+ build_fuse:
+ 	gcc $(CFLAGS) fuse_mnt.c `pkg-config fuse --cflags --libs` -o fuse_mnt
+diff --git a/tools/testing/selftests/memory-hotplug/Makefile b/tools/testing/selftests/memory-hotplug/Makefile
+index d46b8d489cd2..8f7dea66ecac 100644
+--- a/tools/testing/selftests/memory-hotplug/Makefile
++++ b/tools/testing/selftests/memory-hotplug/Makefile
+@@ -1,7 +1,8 @@
+ all:
+ 
+-run_tests:
+-	@/bin/bash ./on-off-test.sh -r 2 || echo "memory-hotplug selftests: [FAIL]"
++include ../lib.mk
++
++override RUN_TESTS := ./on-off-test.sh -r 2 || echo "selftests: memory-hotplug [FAIL]"
+ 
+ run_full_test:
+ 	@/bin/bash ./on-off-test.sh || echo "memory-hotplug selftests: [FAIL]"
+diff --git a/tools/testing/selftests/memory-hotplug/on-off-test.sh b/tools/testing/selftests/memory-hotplug/on-off-test.sh
+old mode 100644
+new mode 100755
+diff --git a/tools/testing/selftests/mount/Makefile b/tools/testing/selftests/mount/Makefile
+index 337d853c2b72..06931dfd3ef0 100644
+--- a/tools/testing/selftests/mount/Makefile
++++ b/tools/testing/selftests/mount/Makefile
+@@ -5,13 +5,9 @@ all: unprivileged-remount-test
+ unprivileged-remount-test: unprivileged-remount-test.c
+ 	gcc -Wall -O2 unprivileged-remount-test.c -o unprivileged-remount-test
+ 
+-# Allow specific tests to be selected.
+-test_unprivileged_remount: unprivileged-remount-test
+-	@if [ -f /proc/self/uid_map ] ; then ./unprivileged-remount-test ; fi
++include ../lib.mk
+ 
+-run_tests: all test_unprivileged_remount
++override RUN_TESTS := if [ -f /proc/self/uid_map ] ; then ./unprivileged-remount-test ; fi
+ 
+ clean:
+ 	rm -f unprivileged-remount-test
+-
+-.PHONY: all test_unprivileged_remount
+diff --git a/tools/testing/selftests/mqueue/Makefile b/tools/testing/selftests/mqueue/Makefile
+index 8056e2e68fa4..cbc300ef11bf 100644
+--- a/tools/testing/selftests/mqueue/Makefile
++++ b/tools/testing/selftests/mqueue/Makefile
+@@ -2,9 +2,12 @@ all:
+ 	gcc -O2 mq_open_tests.c -o mq_open_tests -lrt
+ 	gcc -O2 -o mq_perf_tests mq_perf_tests.c -lrt -lpthread -lpopt
+ 
+-run_tests:
+-	@./mq_open_tests /test1 || echo "mq_open_tests: [FAIL]"
+-	@./mq_perf_tests || echo "mq_perf_tests: [FAIL]"
++include ../lib.mk
++
++override define RUN_TESTS
++	@./mq_open_tests /test1 || echo "selftests: mq_open_tests [FAIL]"
++	@./mq_perf_tests || echo "selftests: mq_perf_tests [FAIL]"
++endef
+ 
+ clean:
+ 	rm -f mq_open_tests mq_perf_tests
+diff --git a/tools/testing/selftests/net/Makefile b/tools/testing/selftests/net/Makefile
+index 62f22cc9941c..fa8187ff15e6 100644
+--- a/tools/testing/selftests/net/Makefile
++++ b/tools/testing/selftests/net/Makefile
+@@ -11,9 +11,9 @@ all: $(NET_PROGS)
+ %: %.c
+ 	$(CC) $(CFLAGS) -o $@ $^
+ 
+-run_tests: all
+-	@/bin/sh ./run_netsocktests || echo "sockettests: [FAIL]"
+-	@/bin/sh ./run_afpackettests || echo "afpackettests: [FAIL]"
+-	./test_bpf.sh
++TEST_PROGS := run_netsocktests run_afpackettests test_bpf.sh
++
++include ../lib.mk
++
+ clean:
+ 	$(RM) $(NET_PROGS)
+diff --git a/tools/testing/selftests/net/run_afpackettests b/tools/testing/selftests/net/run_afpackettests
+old mode 100644
+new mode 100755
+diff --git a/tools/testing/selftests/net/run_netsocktests b/tools/testing/selftests/net/run_netsocktests
+old mode 100644
+new mode 100755
+diff --git a/tools/testing/selftests/ptrace/Makefile b/tools/testing/selftests/ptrace/Makefile
+index 47ae2d385ce8..453927fea90c 100644
+--- a/tools/testing/selftests/ptrace/Makefile
++++ b/tools/testing/selftests/ptrace/Makefile
+@@ -6,5 +6,6 @@ all: peeksiginfo
+ clean:
+ 	rm -f peeksiginfo
+ 
+-run_tests: all
+-	@./peeksiginfo || echo "peeksiginfo selftests: [FAIL]"
++TEST_PROGS := peeksiginfo
++
++include ../lib.mk
+diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
+index 04dc25e4fa92..e4353d74ea6e 100644
+--- a/tools/testing/selftests/size/Makefile
++++ b/tools/testing/selftests/size/Makefile
+@@ -5,8 +5,9 @@ all: get_size
+ get_size: get_size.c
+ 	$(CC) -static -ffreestanding -nostartfiles -s $< -o $@
+ 
+-run_tests: all
+-	./get_size
++TEST_PROGS := get_size
++
++include ../lib.mk
+ 
+ clean:
+ 	$(RM) get_size
+diff --git a/tools/testing/selftests/sysctl/Makefile b/tools/testing/selftests/sysctl/Makefile
+index 0a92adaf0865..c9660f5ef9f9 100644
+--- a/tools/testing/selftests/sysctl/Makefile
++++ b/tools/testing/selftests/sysctl/Makefile
+@@ -4,16 +4,9 @@
+ # No binaries, but make sure arg-less "make" doesn't trigger "run_tests".
+ all:
+ 
+-# Allow specific tests to be selected.
+-test_num:
+-	@/bin/sh ./run_numerictests
++TEST_PROGS := run_numerictests run_stringtests
+ 
+-test_string:
+-	@/bin/sh ./run_stringtests
+-
+-run_tests: all test_num test_string
++include ../lib.mk
+ 
+ # Nothing to clean up.
+ clean:
+-
+-.PHONY: all run_tests clean test_num test_string
+diff --git a/tools/testing/selftests/sysctl/run_numerictests b/tools/testing/selftests/sysctl/run_numerictests
+old mode 100644
+new mode 100755
+diff --git a/tools/testing/selftests/sysctl/run_stringtests b/tools/testing/selftests/sysctl/run_stringtests
+old mode 100644
+new mode 100755
+diff --git a/tools/testing/selftests/timers/Makefile b/tools/testing/selftests/timers/Makefile
+index eb2859f4ad21..149cee3b7b8a 100644
+--- a/tools/testing/selftests/timers/Makefile
++++ b/tools/testing/selftests/timers/Makefile
+@@ -1,8 +1,9 @@
+ all:
+ 	gcc posix_timers.c -o posix_timers -lrt
+ 
+-run_tests: all
+-	./posix_timers
++TEST_PROGS := posix_timers
++
++include ../lib.mk
+ 
+ clean:
+ 	rm -f ./posix_timers
+diff --git a/tools/testing/selftests/user/Makefile b/tools/testing/selftests/user/Makefile
+index 12c9d15bab07..d401b63c5b1a 100644
+--- a/tools/testing/selftests/user/Makefile
++++ b/tools/testing/selftests/user/Makefile
+@@ -3,5 +3,6 @@
+ # No binaries, but make sure arg-less "make" doesn't trigger "run_tests"
+ all:
+ 
+-run_tests: all
+-	./test_user_copy.sh
++TEST_PROGS := test_user_copy.sh
++
++include ../lib.mk
+diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
+index 077828c889f1..90e56090b0ed 100644
+--- a/tools/testing/selftests/vm/Makefile
++++ b/tools/testing/selftests/vm/Makefile
+@@ -9,8 +9,9 @@ all: $(BINARIES)
+ %: %.c
+ 	$(CC) $(CFLAGS) -o $@ $^ -lrt
+ 
+-run_tests: all
+-	@/bin/sh ./run_vmtests || (echo "vmtests: [FAIL]"; exit 1)
++TEST_PROGS := run_vmtests
++
++include ../lib.mk
+ 
+ clean:
+ 	$(RM) $(BINARIES)
+diff --git a/tools/testing/selftests/vm/run_vmtests b/tools/testing/selftests/vm/run_vmtests
+old mode 100644
+new mode 100755
+-- 
+2.1.0
