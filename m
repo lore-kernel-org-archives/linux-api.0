@@ -1,56 +1,34 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
+From: Stephan Mueller <smueller@chronox.de>
 Subject: Re: [PATCH v13 0/2] crypto: AF_ALG: add AEAD support
-Date: Wed, 4 Mar 2015 22:16:32 +1300
-Message-ID: <20150304091632.GB9195@gondor.apana.org.au>
-References: <2180298.gqj58NYuqx@tachyon.chronox.de>
+Date: Wed, 04 Mar 2015 10:25:45 +0100
+Message-ID: <1581016.jkoGcLxvE9@tauon>
+References: <2180298.gqj58NYuqx@tachyon.chronox.de> <20150304091632.GB9195@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <2180298.gqj58NYuqx@tachyon.chronox.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Stephan Mueller <smueller@chronox.de>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20150304091632.GB9195@gondor.apana.org.au>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: 'Quentin Gouchet' <quentin.gouchet@gmail.com>, Daniel Borkmann <dborkman@redhat.com>, linux-api@vger.kernel.org, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Feb 28, 2015 at 08:49:22PM +0100, Stephan Mueller wrote:
-> Hi,
-> 
-> This patch set adds AEAD support to the AF_ALG interface
-> exported by the kernel crypto API.
-> 
-> The AEAD implementation uses the same approach as provided with
-> skcipher by offering the following interfaces:
-> 
-> 	* sendmsg and recvmsg interfaces allowing multiple
-> 	  invocations supporting a threaded user space. To support
-> 	  multi-threaded user space, kernel-side buffering
-> 	  is implemented similarly to skcipher.
-> 
-> 	* splice / vmsplice interfaces allowing a zero-copy
-> 	  invocation
-> 
-> The new AEAD interface is fully tested with the test application
-> provided at [1]. That test application exercises all newly added user space
-> interfaces. The testing covers:
-> 
-> 	* use of the sendmsg/recvmsg interface
-> 
-> 	* use of the splice / vmsplice interface
-> 
-> 	* invocation of all AF_ALG types (aead, rng, skcipher, hash)
-> 
-> 	* using all types of operation (encryption, decryption, keyed MD,
-> 	  MD, random numbers, AEAD decryption with positive and negative
-> 	  authentication verification)
-> 
-> 	* stress testing by running all tests for 30 minutes in an
-> 	  endless loop
-> 
-> 	* test execution on 64 bit and 32 bit
+Am Mittwoch, 4. M=E4rz 2015, 22:16:32 schrieb Herbert Xu:
 
-All applied.  Thanks a lot for your hard work!
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+Hi Herbert,
+
+>On Sat, Feb 28, 2015 at 08:49:22PM +0100, Stephan Mueller wrote:
+>> Hi,
+>>=20
+>> This patch set adds AEAD support to the AF_ALG interface
+>> exported by the kernel crypto API.
+>>=20
+>
+>All applied.  Thanks a lot for your hard work!
+
+And thank you a lot for your patience with me! I am glad that it=20
+received such hard assessment as it is a user space interface.
+
+
+Ciao
+Stephan
