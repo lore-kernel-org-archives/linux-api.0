@@ -1,7 +1,7 @@
 From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: [PATCH 17/21] userfaultfd: remap_pages: swp_entry_swapcount() preparation
-Date: Thu,  5 Mar 2015 18:18:00 +0100
-Message-ID: <1425575884-2574-18-git-send-email-aarcange@redhat.com>
+Subject: [PATCH 20/21] userfaultfd: UFFDIO_REMAP
+Date: Thu,  5 Mar 2015 18:18:03 +0100
+Message-ID: <1425575884-2574-21-git-send-email-aarcange@redhat.com>
 References: <1425575884-2574-1-git-send-email-aarcange@redhat.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1425575884-2574-1-git-send-email-aarcange@redhat.com>
@@ -10,66 +10,87 @@ To: qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, li
 Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry.adamushko@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Provide a new swapfile method for remap_pages() to verify the swap
-entry is mapped only in one vma before relocating the swap entry in a
-different virtual address. Otherwise if the swap entry is mapped in
-multiple vmas, when the page is swapped back in, it could get mapped
-in a non linear way in some anon_vma.
+This remap ioctl allows to atomically move a page in or out of an
+userfaultfd address space. It's more expensive than "copy" (and of
+course more expensive than "zerofill") as it requires a TLB flush on
+the source range for each ioctl, which is an expensive operation on
+SMP. Especially if copying only a few pages at time, copying without
+TLB flush is faster.
 
 Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
 ---
- include/linux/swap.h |  6 ++++++
- mm/swapfile.c        | 13 +++++++++++++
- 2 files changed, 19 insertions(+)
+ fs/userfaultfd.c | 51 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 51 insertions(+)
 
-diff --git a/include/linux/swap.h b/include/linux/swap.h
-index 4759491..9adda11 100644
---- a/include/linux/swap.h
-+++ b/include/linux/swap.h
-@@ -436,6 +436,7 @@ extern unsigned int count_swap_pages(int, int);
- extern sector_t map_swap_page(struct page *, struct block_device **);
- extern sector_t swapdev_block(int, pgoff_t);
- extern int page_swapcount(struct page *);
-+extern int swp_entry_swapcount(swp_entry_t entry);
- extern struct swap_info_struct *page_swap_info(struct page *);
- extern int reuse_swap_page(struct page *);
- extern int try_to_free_swap(struct page *);
-@@ -527,6 +528,11 @@ static inline int page_swapcount(struct page *page)
- 	return 0;
+diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
+index 6230f22..b4c7f25 100644
+--- a/fs/userfaultfd.c
++++ b/fs/userfaultfd.c
+@@ -892,6 +892,54 @@ out:
+ 	return ret;
  }
  
-+static inline int swp_entry_swapcount(swp_entry_t entry)
++static int userfaultfd_remap(struct userfaultfd_ctx *ctx,
++			     unsigned long arg)
 +{
-+	return 0;
-+}
++	__s64 ret;
++	struct uffdio_remap uffdio_remap;
++	struct uffdio_remap __user *user_uffdio_remap;
++	struct userfaultfd_wake_range range;
 +
- #define reuse_swap_page(page)	(page_mapcount(page) == 1)
- 
- static inline int try_to_free_swap(struct page *page)
-diff --git a/mm/swapfile.c b/mm/swapfile.c
-index 63f55cc..04c7621 100644
---- a/mm/swapfile.c
-+++ b/mm/swapfile.c
-@@ -874,6 +874,19 @@ int page_swapcount(struct page *page)
- 	return count;
- }
- 
-+int swp_entry_swapcount(swp_entry_t entry)
-+{
-+	int count = 0;
-+	struct swap_info_struct *p;
++	user_uffdio_remap = (struct uffdio_remap __user *) arg;
 +
-+	p = swap_info_get(entry);
-+	if (p) {
-+		count = swap_count(p->swap_map[swp_offset(entry)]);
-+		spin_unlock(&p->lock);
++	ret = -EFAULT;
++	if (copy_from_user(&uffdio_remap, user_uffdio_remap,
++			   /* don't copy "remap" and "wake" last field */
++			   sizeof(uffdio_remap)-sizeof(__s64)*2))
++		goto out;
++
++	ret = validate_range(ctx->mm, uffdio_remap.dst, uffdio_remap.len);
++	if (ret)
++		goto out;
++	ret = validate_range(current->mm, uffdio_remap.src, uffdio_remap.len);
++	if (ret)
++		goto out;
++	ret = -EINVAL;
++	if (uffdio_remap.mode & ~(UFFDIO_REMAP_MODE_ALLOW_SRC_HOLES|
++				  UFFDIO_REMAP_MODE_DONTWAKE))
++		goto out;
++
++	ret = remap_pages(ctx->mm, current->mm,
++			  uffdio_remap.dst, uffdio_remap.src,
++			  uffdio_remap.len, uffdio_remap.mode);
++	if (unlikely(put_user(ret, &user_uffdio_remap->remap)))
++		return -EFAULT;
++	if (ret < 0)
++		goto out;
++	/* len == 0 would wake all */
++	BUG_ON(!ret);
++	range.len = ret;
++	if (!(uffdio_remap.mode & UFFDIO_REMAP_MODE_DONTWAKE)) {
++		range.start = uffdio_remap.dst;
++		ret = wake_userfault(ctx, &range);
++		if (unlikely(put_user(ret, &user_uffdio_remap->wake)))
++			return -EFAULT;
 +	}
-+	return count;
++	ret = range.len == uffdio_remap.len ? 0 : -EAGAIN;
++out:
++	return ret;
 +}
 +
  /*
-  * We can write to an anon page without COW if there are no other references
-  * to it.  And as a side-effect, free up its swap: because the old content
+  * userland asks for a certain API version and we return which bits
+  * and ioctl commands are implemented in this kernel for such API
+@@ -955,6 +1003,9 @@ static long userfaultfd_ioctl(struct file *file, unsigned cmd,
+ 	case UFFDIO_ZEROPAGE:
+ 		ret = userfaultfd_zeropage(ctx, arg);
+ 		break;
++	case UFFDIO_REMAP:
++		ret = userfaultfd_remap(ctx, arg);
++		break;
+ 	}
+ 	return ret;
+ }
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
