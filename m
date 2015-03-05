@@ -1,85 +1,88 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: [PATCH 18/21] userfaultfd: UFFDIO_REMAP uABI
-Date: Thu,  5 Mar 2015 18:18:01 +0100
-Message-ID: <1425575884-2574-19-git-send-email-aarcange@redhat.com>
-References: <1425575884-2574-1-git-send-email-aarcange@redhat.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1425575884-2574-1-git-send-email-aarcange@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Android Kernel Team <kernel-team@android.com>
-Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry.adamushko@gmail.com>
+From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v1 3/6] eeprom: Add bindings for simple eeprom framework
+Date: Thu, 05 Mar 2015 22:34:30 +0000
+Message-ID: <54F8D9F6.3040003@linaro.org>
+References: <1425548685-12887-1-git-send-email-srinivas.kandagatla@linaro.org> <1425548765-13019-1-git-send-email-srinivas.kandagatla@linaro.org> <CAL_Jsq+wrZYn82otDfLsTVpgmhLFWtzRHQ4v+qn-Ks--ZpXR8Q@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAL_Jsq+wrZYn82otDfLsTVpgmhLFWtzRHQ4v+qn-Ks--ZpXR8Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Andrew Lunn <andrew-g2DYL2Zd6BY@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This implements the uABI of UFFDIO_REMAP.
+>> +
+>> +For example:
+>> +
+>> +       /* Provider */
+>> +       qfprom: qfprom@00700000 {
+>> +               compatible      = "qcom,qfprom";
+>> +               reg             = <0x00700000 0x1000>;
+>> +               ...
+>> +
+>> +               /* Data cells */
+>> +               tsens_calibration: calib@404 {
+>> +                       reg = <0x404 0x10>;
+>> +               };
+>> +
+>> +               serial_number: sn {
+>> +                       reg = <0x104 0x4>, <0x204 0x4>, <0x30c 0x4>;
+>> +
+>> +               };
+>> +               ...
+>> +       };
+>> +
+>> += Data consumers =
+>> +Are drivers which consume eeprom data cells.
+>
+> s/drivers/device nodes/
+>
+Thats true, "device nodes" makes sense.
+>> +
+>> +Required properties:
+>> +
+>> +eeproms: List of phandle and data cell the device might be interested in.
+>> +
+>> +Optional properties:
+>> +
+>> +eeprom-names: List of data cell name strings sorted in the same order
+>> +             as the resets property. Consumers drivers will use
+>
+> resets?
+Opps..
+I remember fixing this, I will take care of it in next version.
+>
+>> +             eeprom-names to differentiate between multiple cells,
+>> +             and hence being able to know what these cells are for.
+>
+> Is this still needed? The sub-node name defines the name. Or you can
+> use reg-names with-in the sub-node.
+Yes, eeprom-names is needed in the consumer nodes, where there are 
+multiple eeproms cells, its easy to lookup by name rather than 
+index,which depends on the order of the entries.
 
-Notably one mode bitflag is also forwarded (and in turn known) by the
-lowlevel remap_pages method.
+reg-names inside the "data cells" is ok, but I can't think of its use 
+immediately. May be useful for debug?
 
-Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
----
- include/uapi/linux/userfaultfd.h | 27 ++++++++++++++++++++++++++-
- 1 file changed, 26 insertions(+), 1 deletion(-)
-
-diff --git a/include/uapi/linux/userfaultfd.h b/include/uapi/linux/userfaultfd.h
-index 61251e6..db6e99a 100644
---- a/include/uapi/linux/userfaultfd.h
-+++ b/include/uapi/linux/userfaultfd.h
-@@ -19,7 +19,8 @@
- #define UFFD_API_RANGE_IOCTLS			\
- 	((__u64)1 << _UFFDIO_WAKE |		\
- 	 (__u64)1 << _UFFDIO_COPY |		\
--	 (__u64)1 << _UFFDIO_ZEROPAGE)
-+	 (__u64)1 << _UFFDIO_ZEROPAGE |		\
-+	 (__u64)1 << _UFFDIO_REMAP)
- 
- /*
-  * Valid ioctl command number range with this API is from 0x00 to
-@@ -34,6 +35,7 @@
- #define _UFFDIO_WAKE			(0x02)
- #define _UFFDIO_COPY			(0x03)
- #define _UFFDIO_ZEROPAGE		(0x04)
-+#define _UFFDIO_REMAP			(0x05)
- #define _UFFDIO_API			(0x3F)
- 
- /* userfaultfd ioctl ids */
-@@ -50,6 +52,8 @@
- 				      struct uffdio_copy)
- #define UFFDIO_ZEROPAGE		_IOWR(UFFDIO, _UFFDIO_ZEROPAGE,	\
- 				      struct uffdio_zeropage)
-+#define UFFDIO_REMAP		_IOWR(UFFDIO, _UFFDIO_REMAP,	\
-+				      struct uffdio_remap)
- 
- /*
-  * Valid bits below PAGE_SHIFT in the userfault address read through
-@@ -122,4 +126,25 @@ struct uffdio_zeropage {
- 	__s64 wake;
- };
- 
-+struct uffdio_remap {
-+	__u64 dst;
-+	__u64 src;
-+	__u64 len;
-+	/*
-+	 * Especially if used to atomically remove memory from the
-+	 * address space the wake on the dst range is not needed.
-+	 */
-+#define UFFDIO_REMAP_MODE_DONTWAKE		((__u64)1<<0)
-+#define UFFDIO_REMAP_MODE_ALLOW_SRC_HOLES	((__u64)1<<1)
-+	__u64 mode;
-+
-+	/*
-+	 * "remap" and "wake" are written by the ioctl and must be at
-+	 * the end: the copy_from_user will not read the last 16
-+	 * bytes.
-+	 */
-+	__s64 remap;
-+	__s64 wake;
-+};
-+
- #endif /* _LINUX_USERFAULTFD_H */
-
+--srini
+ >
+>
+> Rob
+>
+>> +
+>> +For example:
+>> +
+>> +       tsens {
+>> +               ...
+>> +               eeproms = <&tsens_calibration>;
+>> +               eeprom-names = "calibration";
+>> +       };
+>> --
+>> 1.9.1
+>>
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
