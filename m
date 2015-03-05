@@ -1,114 +1,195 @@
-From: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 16/21] userfaultfd: remap_pages: rmap preparation
-Date: Thu,  5 Mar 2015 18:17:59 +0100
-Message-ID: <1425575884-2574-17-git-send-email-aarcange@redhat.com>
-References: <1425575884-2574-1-git-send-email-aarcange@redhat.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1425575884-2574-1-git-send-email-aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
-Cc: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Sanidhya Kashyap <sanidhya.gatech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, zhang.zhanghailiang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Feiner <pfeiner-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Dr. David Alan Gilbert" <dgilbert-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Robert Love <rlove-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dmitry Adamushko <dmitry.adamushko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Mike Hommey <mh-YmoObPS1fuhg9hUCZPvPmw@public.gmane.org>, Taras Glek <tglek-4eJtQOnFJqFBDgjK7y7TUQ@public.gmane.org>, Jan
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: [PATCH 00/21] RFC: userfaultfd v3
+Date: Thu,  5 Mar 2015 18:17:43 +0100
+Message-ID: <1425575884-2574-1-git-send-email-aarcange@redhat.com>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Android Kernel Team <kernel-team@android.com>
+Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry.adamushko@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-As far as the rmap code is concerned, rmap_pages only alters the
-page->mapping and page->index. It does it while holding the page
-lock. However there are a few places that in presence of anon pages
-are allowed to do rmap walks without the page lock (split_huge_page
-and page_referenced_anon). Those places that are doing rmap walks
-without taking the page lock first, must be updated to re-check that
-the page->mapping didn't change after they obtained the anon_vma
-lock. remap_pages takes the anon_vma lock for writing before altering
-the page->mapping, so if the page->mapping is still the same after
-obtaining the anon_vma lock (without the page lock), the rmap walks
-can go ahead safely (and remap_pages will wait them to complete before
-proceeding).
+Hello everyone,
 
-remap_pages serializes against itself with the page lock.
+This is a RFC for the userfaultfd syscall API v3 that addresses the
+feedback received for the previous v2 submit.
 
-All other places taking the anon_vma lock while holding the mmap_sem
-for writing, don't need to check if the page->mapping has changed
-after taking the anon_vma lock, regardless of the page lock, because
-remap_pages holds the mmap_sem for reading.
+The main change from the v2 is that MADV_USERFAULT/NOUSERFAULT
+disappeared (they're replaced by the UFFDIO_REGISTER/UNREGISTER
+ioctls). In short userfaults are now only possible through the
+userfaultfd. The remap_anon_pages syscall also disappeared replaced by
+the UFFDIO_REMAP ioctl which is in turn mostly obsoleted by the newer
+UFFDIO_COPY and UFFDIO_ZEROPAGE ioctls that are indeed more efficient
+by never having to flush the TLB. The suggestion to copy the data
+instead of moving it, in order to resolve the userfault, was
+immediately agreed.
 
-There's one constraint enforced to allow this simplification: the
-source pages passed to remap_pages must be mapped only in one vma, but
-this is not a limitation when used to handle userland page faults. The
-source addresses passed to remap_pages should be set as VM_DONTCOPY
-with MADV_DONTFORK to avoid any risk of the mapcount of the pages
-increasing, if fork runs in parallel in another thread, before or
-while remap_pages runs.
+The latest code can also be cloned here:
 
-Signed-off-by: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
----
- mm/huge_memory.c | 23 +++++++++++++++++++----
- mm/rmap.c        |  9 +++++++++
- 2 files changed, 28 insertions(+), 4 deletions(-)
+git clone --reference linux -b userfault git://git.kernel.org/pub/scm/linux/kernel/git/andrea/aa.git
 
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 8f1b6a5..1e25cb3 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1902,6 +1902,7 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
- {
- 	struct anon_vma *anon_vma;
- 	int ret = 1;
-+	struct address_space *mapping;
- 
- 	BUG_ON(is_huge_zero_page(page));
- 	BUG_ON(!PageAnon(page));
-@@ -1913,10 +1914,24 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
- 	 * page_lock_anon_vma_read except the write lock is taken to serialise
- 	 * against parallel split or collapse operations.
- 	 */
--	anon_vma = page_get_anon_vma(page);
--	if (!anon_vma)
--		goto out;
--	anon_vma_lock_write(anon_vma);
-+	for (;;) {
-+		mapping = ACCESS_ONCE(page->mapping);
-+		anon_vma = page_get_anon_vma(page);
-+		if (!anon_vma)
-+			goto out;
-+		anon_vma_lock_write(anon_vma);
-+		/*
-+		 * We don't hold the page lock here so
-+		 * remap_pages_huge_pmd can change the anon_vma from
-+		 * under us until we obtain the anon_vma lock. Verify
-+		 * that we obtained the anon_vma lock before
-+		 * remap_pages did.
-+		 */
-+		if (likely(mapping == ACCESS_ONCE(page->mapping)))
-+			break;
-+		anon_vma_unlock_write(anon_vma);
-+		put_anon_vma(anon_vma);
-+	}
- 
- 	ret = 0;
- 	if (!PageCompound(page))
-diff --git a/mm/rmap.c b/mm/rmap.c
-index 5e3e090..5ab2df1 100644
---- a/mm/rmap.c
-+++ b/mm/rmap.c
-@@ -492,6 +492,7 @@ struct anon_vma *page_lock_anon_vma_read(struct page *page)
- 	struct anon_vma *root_anon_vma;
- 	unsigned long anon_mapping;
- 
-+repeat:
- 	rcu_read_lock();
- 	anon_mapping = (unsigned long) ACCESS_ONCE(page->mapping);
- 	if ((anon_mapping & PAGE_MAPPING_FLAGS) != PAGE_MAPPING_ANON)
-@@ -530,6 +531,14 @@ struct anon_vma *page_lock_anon_vma_read(struct page *page)
- 	rcu_read_unlock();
- 	anon_vma_lock_read(anon_vma);
- 
-+	/* check if remap_anon_pages changed the anon_vma */
-+	if (unlikely((unsigned long) ACCESS_ONCE(page->mapping) != anon_mapping)) {
-+		anon_vma_unlock_read(anon_vma);
-+		put_anon_vma(anon_vma);
-+		anon_vma = NULL;
-+		goto repeat;
-+	}
-+
- 	if (atomic_dec_and_test(&anon_vma->refcount)) {
- 		/*
- 		 * Oops, we held the last refcount, release the lock
+
+Userfaults allow to implement on demand paging from userland and more
+generally they allow userland to more efficiently take control on
+various types of page faults.
+
+For example userfaults allows a proper and more optimal implementation
+of the PROT_NONE+SIGSEGV trick.
+
+There has been interest from multiple users for different use cases:
+
+1) KVM postcopy live migration (one form of cloud memory
+   externalization). KVM postcopy live migration is the primary driver
+   of this work:
+   http://blog.zhaw.ch/icclab/setting-up-post-copy-live-migration-in-openstack/
+   http://lists.gnu.org/archive/html/qemu-devel/2015-02/msg04873.html
+   )
+
+2) KVM postcopy live snapshotting (allowing to limit/throttle the
+   memory usage, unlike fork would, plus the avoidance of fork
+   overhead in the first place).
+
+   The syscall API is already contemplating the wrprotect fault
+   tracking and it's generic enough to allow its later implementation
+   in a backwards compatible fashion.
+
+3) KVM userfaults on shared memory. The UFFDIO_COPY lowlevel method
+   should be extended to work also on tmpfs and then the
+   uffdio_register.ioctls will notify userland that UFFDIO_COPY is
+   available even when the registered virtual memory range is tmpfs
+   backed.
+
+4) alternate mechanism to notify web browsers or apps on embedded
+   devices that volatile pages have been reclaimed. This basically
+   avoids the need to run a syscall before the app can access with the
+   CPU the virtual regions marked volatile. This also requires point 3)
+   to be fulfilled, as volatile pages happily apply to tmpfs.
+
+5) postcopy live migration of binaries inside linux containers.
+
+Even though there wasn't a real use case requesting it yet, the new
+API also allows to implement distributed shared memory in a way that
+readonly shared mappings can exist simultaneously in different hosts
+and they can be become exclusive at the first wrprotect fault.
+
+The UFFDIO_REMAP method is still present in the patchset but it's
+provided primarily to remove (add not) memory from the userfault
+range. The addition of the UFFDIO_REMAP method is intentionally kept
+at the end of the patchset. The postcopy live migration qemu code will
+only use UFFDIO_COPY and UFFDIO_ZEROPAGE. UFFDIO_REMAP isn't intended
+to be merged upstream in the short term, and it can be dropped later
+if there's an agreement it's a bad idea to keep it around in the
+patchset.
+
+David run some KVM postcopy live migration benchmarks on a 8-way CPU
+system and he measured that using UFFDIO_COPY instead of UFFDIO_REMAP
+resulted in a roughly a -20% reduction in latency which is good. The
+standard deviation error on the latency measurement decreased
+significantly as well (because the number of CPUs that required IPI
+delivery was variable, while the copy always takes roughly the same
+time). A bigger improvement is expectable if measured on a larger host
+with more CPUs.
+
+All UFFDIO_COPY/ZEROPAGE/REMAP methods already support CRIU postcopy
+live migration and the UFFD can be passed to a manager process through
+unix domain sockets to satisfy point 5).
+
+I look forward to discuss this further next week at the LSF/MM
+summit, if you're attending the summit see you soon!
+
+Comments welcome, thanks,
+Andrea
+
+Credits: partially funded by the Orbit EU project.
+
+PS. There is one TODO detail worth mentioning for completeness that
+affects usage 2) and UFFDIO_REMAP if used to remove memory from the
+userfault range: handle_userfault() is only effective if
+FAULT_FLAG_ALLOW_RETRY is set... but that is only set at the first
+attempted page fault. If by accident some thread was already faulting
+in the range and the first page fault attempt returned VM_FAULT_RETRY
+and UFFDIO_REMAP or UFFDIO_WP jumps in to arm the userfault just
+before the second attempt starts, a SIGBUS would be raised by the page
+fault. Stopping all thread access to the userfault ranges during
+UFFDIO_REMAP/WP while possible, isn't optimal. Currently (excluding
+real filebacked mappings and handle_userfault() itself which is
+clearly no problem) only tmpfs or a swapin can return
+VM_FAULT_RETRY. To close this SIGBUS window for all usages, the
+simplest solution would be that if FAULT_FLAG_TRIED is set
+VM_FAULT_RETRY can still be returned (but only by handle_userfault
+that has a legitimate reason for insisting a second time in a row with
+VM_FAULT_RETRY). That would require some change to the FAULT_FLAG
+semantics. Again userland could cope with this detail but it'd be
+inefficient to solve it in userland. This would be a fully backwards
+compatible change and it's only strictly required by the wrprotect
+tracking mode, so it's no problem to solve this later. Because of its
+inherent racy nature, nobody could possibly depend on a racy SIGBUS
+being raised now, when it won't be raised anymore later.
+
+Andrea Arcangeli (21):
+  userfaultfd: waitqueue: add nr wake parameter to __wake_up_locked_key
+  userfaultfd: linux/Documentation/vm/userfaultfd.txt
+  userfaultfd: uAPI
+  userfaultfd: linux/userfaultfd_k.h
+  userfaultfd: add vm_userfaultfd_ctx to the vm_area_struct
+  userfaultfd: add VM_UFFD_MISSING and VM_UFFD_WP
+  userfaultfd: call handle_userfault() for userfaultfd_missing() faults
+  userfaultfd: teach vma_merge to merge across vma->vm_userfaultfd_ctx
+  userfaultfd: prevent khugepaged to merge if userfaultfd is armed
+  userfaultfd: add new syscall to provide memory externalization
+  userfaultfd: buildsystem activation
+  userfaultfd: activate syscall
+  userfaultfd: UFFDIO_COPY|UFFDIO_ZEROPAGE uAPI
+  userfaultfd: mcopy_atomic|mfill_zeropage: UFFDIO_COPY|UFFDIO_ZEROPAGE
+    preparation
+  userfaultfd: UFFDIO_COPY and UFFDIO_ZEROPAGE
+  userfaultfd: remap_pages: rmap preparation
+  userfaultfd: remap_pages: swp_entry_swapcount() preparation
+  userfaultfd: UFFDIO_REMAP uABI
+  userfaultfd: remap_pages: UFFDIO_REMAP preparation
+  userfaultfd: UFFDIO_REMAP
+  userfaultfd: add userfaultfd_wp mm helpers
+
+ Documentation/ioctl/ioctl-number.txt   |    1 +
+ Documentation/vm/userfaultfd.txt       |   97 +++
+ arch/powerpc/include/asm/systbl.h      |    1 +
+ arch/powerpc/include/asm/unistd.h      |    2 +-
+ arch/powerpc/include/uapi/asm/unistd.h |    1 +
+ arch/x86/syscalls/syscall_32.tbl       |    1 +
+ arch/x86/syscalls/syscall_64.tbl       |    1 +
+ fs/Makefile                            |    1 +
+ fs/userfaultfd.c                       | 1128 ++++++++++++++++++++++++++++++++
+ include/linux/mm.h                     |    4 +-
+ include/linux/mm_types.h               |   11 +
+ include/linux/swap.h                   |    6 +
+ include/linux/syscalls.h               |    1 +
+ include/linux/userfaultfd_k.h          |  112 ++++
+ include/linux/wait.h                   |    5 +-
+ include/uapi/linux/userfaultfd.h       |  150 +++++
+ init/Kconfig                           |   11 +
+ kernel/fork.c                          |    3 +-
+ kernel/sched/wait.c                    |    7 +-
+ kernel/sys_ni.c                        |    1 +
+ mm/Makefile                            |    1 +
+ mm/huge_memory.c                       |  217 +++++-
+ mm/madvise.c                           |    3 +-
+ mm/memory.c                            |   16 +
+ mm/mempolicy.c                         |    4 +-
+ mm/mlock.c                             |    3 +-
+ mm/mmap.c                              |   39 +-
+ mm/mprotect.c                          |    3 +-
+ mm/rmap.c                              |    9 +
+ mm/swapfile.c                          |   13 +
+ mm/userfaultfd.c                       |  793 ++++++++++++++++++++++
+ net/sunrpc/sched.c                     |    2 +-
+ 32 files changed, 2593 insertions(+), 54 deletions(-)
+ create mode 100644 Documentation/vm/userfaultfd.txt
+ create mode 100644 fs/userfaultfd.c
+ create mode 100644 include/linux/userfaultfd_k.h
+ create mode 100644 include/uapi/linux/userfaultfd.h
+ create mode 100644 mm/userfaultfd.c
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
