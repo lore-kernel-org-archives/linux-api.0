@@ -1,40 +1,114 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [PATCH] capabilities: Ambient capability set V2
-Date: Thu, 5 Mar 2015 12:41:36 -0600 (CST)
-Message-ID: <alpine.DEB.2.11.1503051235300.32373@gentwo.org>
-References: <alpine.DEB.2.11.1502261612370.8994@gentwo.org> <20150301233359.GA22196@mail.hallyn.com> <alpine.DEB.2.11.1503050917380.31001@gentwo.org> <20150305171326.GA14998@mail.hallyn.com>
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150305171326.GA14998@mail.hallyn.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, Jonathan Corbet <corbet@lwn.net>, Aaron Jones <aaronmdjones@gmail.com>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, akpm@linuxfoundation.org, "Andrew G. Morgan" <morgan@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Markku Savela <msa@moth.iki.fi>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: Re: [PATCH 19/21] userfaultfd: remap_pages: UFFDIO_REMAP preparation
+Date: Thu, 5 Mar 2015 19:51:12 +0100
+Message-ID: <20150305185112.GL4280@redhat.com>
+References: <1425575884-2574-1-git-send-email-aarcange@redhat.com>
+ <1425575884-2574-20-git-send-email-aarcange@redhat.com>
+ <CA+55aFzW=qaO0iKZWK9BWDNHu4eOgiKOJ-=0SvzsmZawuH5_3A@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <CA+55aFzW=qaO0iKZWK9BWDNHu4eOgiKOJ-=0SvzsmZawuH5_3A@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: qemu-devel@nongnu.org, KVM list <kvm@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Android Kernel Team <kernel-team@android.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, Dr. David Alan Gilbert
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 5 Mar 2015, Serge E. Hallyn wrote:
+On Thu, Mar 05, 2015 at 09:39:48AM -0800, Linus Torvalds wrote:
+> Is this really worth it? On real loads? That people are expected to use?
 
-> > >
-> > > So I'd say drop this change ^
-> >
-> > Then the ambient caps get ignored for a executables that have capabilities
-> > seton the file?
->
-> Yes.  Those are assumed to already know what they're doing.
+I fully agree that it's not worth merging upstream UFFDIO_REMAP until
+(and if) a real world usage for it will showup. To further clarify:
+would this not have been an RFC, the patchset would have stopped at
+patch number 15/21 included.
 
-Do they? What if there is a LD_PRELOAD library that redirects socket calls
-and that needs raw device access (there are actually a number of software
-packages like that to reduce the latency of network I/O. See for example
-Solarflare's software products and the current rsocket libary in OFED.
-There are cap issues if the rsocket library should be made useful for
-Ethernet instead of infiniband).
+Merging UFFDIO_REMAP with no real life users, would just increase the
+attack vector surface of the kernel for no good.
 
-> Why?  Do you foresee cases where a file that has fP set needs capabilities
-> that aren't in its fP?
+Thanks for your idea that the UFFDIO_COPY is faster, the userland code
+we submitted for qemu only uses UFFDIO_COPY|ZEROPAGE, it never uses
+UFFDIO_REMAP. I immediately agreed about UFFDIO_COPY being preferable
+after you mentioned it during review of the previous RFC.
 
-Yes due to the library issues.
+However this being a RFC with a large audience, and UFFDIO_REMAP
+allowing to "remove" memory (think like externalizing memory into to
+ceph with deduplication or such), I still added it just in case there
+are real world use cases that may justify me keeping it around (even
+if I would definitely not have submitted it for merging in the short
+term regardless).
 
-> It seems more likely that they'll risk misbehaving due to an unexpected set
-> of caps.
+In addition of dropping the parts that aren't suitable for merging in
+the short term like UFFDIO_REMAP, for any further submits that won't
+substantially alter the API like it happened between the v2 to v3
+RFCs, I'll also shrink the To/Cc list considerably.
 
-The userspace driver code in the library wont work since it does not have
-the caps to access the raw device registers.
+> Considering how we just got rid of one special magic VM remapping
+> thing that nobody actually used, I'd really hate to add a new one.
+
+Having to define an API somehow, I tried to think at all possible
+future usages and make sure the API would allow for those if needed.
+
+> Quite frankly, *if* we ever merge userfaultfd, I would *strongly*
+> argue for not merging the remap parts. I just don't see the point. It
+> doesn't seem to add anything that is semantically very important -
+> it's *potentially* a faster copy, but even that is
+> 
+>   (a) questionable in the first place
+
+Yes, we already measured the UFFDIO_COPY is faster than UFFDIO_REMAP,
+the userfault latency decreases -20%.
+
+> 
+> and
+> 
+>  (b) unclear why anybody would ever care about performance of
+> infrastructure that nobody actually uses today, and future use isn't
+> even clear or shown to be particualrly performance-sensitive.
+
+The only potential _theoretical_ case that justify the existence of
+UFFDIO_REMAP is about "removing" memory from the address space. To
+"add" memory UFFDIO_COPY and UFFDIO_ZEROPAGE are always preferable
+like you suggested.
+
+> So basically I'd like to see better documentation, a few real use
+> cases (and by real I very much do *not* mean "you can use it for
+> this", but actual patches to actual projects that matter and that are
+> expected to care and merge them), and a simplified series that doesn't
+> do the remap thing.
+
+So far I wrote some doc in 2/21 and in the cover letter, but certainly
+more docs are necessary. Trinity is also needed (I got trinity running
+on the v2 API but I haven't adapted to the new API yet).
+
+About the real world usages, this is the primary one:
+
+http://lists.gnu.org/archive/html/qemu-devel/2015-02/msg04873.html
+
+And it actually cannot be merged in qemu until userfaultfd is merged
+in the kernel. There's simply no safe way to implement postcopy live
+migration without something equivalent to the userfaultfd if all Linux
+VM features are intended to be retained in the destination node.
+
+> Because *every* time we add a new clever interface, we end up with
+> approximately zero users and just pain down the line. Examples:
+> splice, mremap, yadda yadda.
+
+Aside from mremap which I think is widely used, I totally agree in
+principle.
+
+For now I can quite comfortably guarantee the above real life user for
+userfaultfd (qemu), but there are potential 5 of them. And none needs
+UFFDIO_REMAP, which is again why I totally agree of not submitting it
+for merging and it was intended it only for the initial RFC to share
+the idea of "removing" the memory with a larger audience before I
+shrink the Cc/To list for further updates.
+
+Thanks,
+Andrea
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
