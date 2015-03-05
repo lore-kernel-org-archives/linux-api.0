@@ -1,203 +1,486 @@
-From: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 14/21] userfaultfd: mcopy_atomic|mfill_zeropage: UFFDIO_COPY|UFFDIO_ZEROPAGE preparation
-Date: Thu,  5 Mar 2015 18:17:57 +0100
-Message-ID: <1425575884-2574-15-git-send-email-aarcange@redhat.com>
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: [PATCH 19/21] userfaultfd: remap_pages: UFFDIO_REMAP preparation
+Date: Thu,  5 Mar 2015 18:18:02 +0100
+Message-ID: <1425575884-2574-20-git-send-email-aarcange@redhat.com>
 References: <1425575884-2574-1-git-send-email-aarcange@redhat.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1425575884-2574-1-git-send-email-aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
-Cc: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Sanidhya Kashyap <sanidhya.gatech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, zhang.zhanghailiang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Feiner <pfeiner-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Dr. David Alan Gilbert" <dgilbert-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christopher Covington <cov-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Robert Love <rlove-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dmitry Adamushko <dmitry.adamushko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Mike Hommey <mh-YmoObPS1fuhg9hUCZPvPmw@public.gmane.org>, Taras Glek <tglek-4eJtQOnFJqFBDgjK7y7TUQ@public.gmane.org>, Jan
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1425575884-2574-1-git-send-email-aarcange@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Android Kernel Team <kernel-team@android.com>
+Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry.adamushko@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-This implements mcopy_atomic and mfill_zeropage that are the lowlevel
-VM methods that are invoked respectively by the UFFDIO_COPY and
-UFFDIO_ZEROPAGE userfaultfd commands.
+remap_pages is the lowlevel mm helper needed to implement
+UFFDIO_REMAP.
 
-Signed-off-by: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
 ---
- include/linux/userfaultfd_k.h |   6 +
- mm/Makefile                   |   1 +
- mm/userfaultfd.c              | 267 ++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 274 insertions(+)
- create mode 100644 mm/userfaultfd.c
+ include/linux/userfaultfd_k.h |  17 ++
+ mm/huge_memory.c              | 120 ++++++++++
+ mm/userfaultfd.c              | 526 ++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 663 insertions(+)
 
 diff --git a/include/linux/userfaultfd_k.h b/include/linux/userfaultfd_k.h
-index e1e4360..587480a 100644
+index 587480a..3c39a4f 100644
 --- a/include/linux/userfaultfd_k.h
 +++ b/include/linux/userfaultfd_k.h
-@@ -30,6 +30,12 @@
- extern int handle_userfault(struct vm_area_struct *vma, unsigned long address,
- 			    unsigned int flags, unsigned long reason);
+@@ -36,6 +36,23 @@ extern ssize_t mfill_zeropage(struct mm_struct *dst_mm,
+ 			      unsigned long dst_start,
+ 			      unsigned long len);
  
-+extern ssize_t mcopy_atomic(struct mm_struct *dst_mm, unsigned long dst_start,
-+			    unsigned long src_start, unsigned long len);
-+extern ssize_t mfill_zeropage(struct mm_struct *dst_mm,
-+			      unsigned long dst_start,
-+			      unsigned long len);
++/* remap_pages */
++extern void double_pt_lock(spinlock_t *ptl1, spinlock_t *ptl2);
++extern void double_pt_unlock(spinlock_t *ptl1, spinlock_t *ptl2);
++extern ssize_t remap_pages(struct mm_struct *dst_mm,
++			   struct mm_struct *src_mm,
++			   unsigned long dst_start,
++			   unsigned long src_start,
++			   unsigned long len, __u64 flags);
++extern int remap_pages_huge_pmd(struct mm_struct *dst_mm,
++				struct mm_struct *src_mm,
++				pmd_t *dst_pmd, pmd_t *src_pmd,
++				pmd_t dst_pmdval,
++				struct vm_area_struct *dst_vma,
++				struct vm_area_struct *src_vma,
++				unsigned long dst_addr,
++				unsigned long src_addr);
 +
  /* mm helpers */
  static inline bool is_mergeable_vm_userfaultfd_ctx(struct vm_area_struct *vma,
  					struct vm_userfaultfd_ctx vm_ctx)
-diff --git a/mm/Makefile b/mm/Makefile
-index 3c1caa2..ea9828e 100644
---- a/mm/Makefile
-+++ b/mm/Makefile
-@@ -76,3 +76,4 @@ obj-$(CONFIG_GENERIC_EARLY_IOREMAP) += early_ioremap.o
- obj-$(CONFIG_CMA)	+= cma.o
- obj-$(CONFIG_MEMORY_BALLOON) += balloon_compaction.o
- obj-$(CONFIG_PAGE_EXTENSION) += page_ext.o
-+obj-$(CONFIG_USERFAULTFD) += userfaultfd.o
-diff --git a/mm/userfaultfd.c b/mm/userfaultfd.c
-new file mode 100644
-index 0000000..3f4c0ef
---- /dev/null
-+++ b/mm/userfaultfd.c
-@@ -0,0 +1,267 @@
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 1e25cb3..08c8afc 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1531,6 +1531,124 @@ int change_huge_pmd(struct vm_area_struct *vma, pmd_t *pmd,
+ 	return ret;
+ }
+ 
++#ifdef CONFIG_USERFAULTFD
 +/*
-+ *  mm/userfaultfd.c
-+ *
-+ *  Copyright (C) 2015  Red Hat, Inc.
-+ *
-+ *  This work is licensed under the terms of the GNU GPL, version 2. See
-+ *  the COPYING file in the top-level directory.
++ * The PT lock for src_pmd and the mmap_sem for reading are held by
++ * the caller, but it must return after releasing the
++ * page_table_lock. We're guaranteed the src_pmd is a pmd_trans_huge
++ * until the PT lock of the src_pmd is released. Just move the page
++ * from src_pmd to dst_pmd if possible. Return zero if succeeded in
++ * moving the page, -EAGAIN if it needs to be repeated by the caller,
++ * or other errors in case of failure.
 + */
-+
-+#include <linux/mm.h>
-+#include <linux/pagemap.h>
-+#include <linux/rmap.h>
-+#include <linux/swap.h>
-+#include <linux/swapops.h>
-+#include <linux/userfaultfd_k.h>
-+#include <linux/mmu_notifier.h>
-+#include <asm/tlbflush.h>
-+#include "internal.h"
-+
-+static int mcopy_atomic_pte(struct mm_struct *dst_mm,
-+			    pmd_t *dst_pmd,
-+			    struct vm_area_struct *dst_vma,
-+			    unsigned long dst_addr,
-+			    unsigned long src_addr)
++int remap_pages_huge_pmd(struct mm_struct *dst_mm,
++			 struct mm_struct *src_mm,
++			 pmd_t *dst_pmd, pmd_t *src_pmd,
++			 pmd_t dst_pmdval,
++			 struct vm_area_struct *dst_vma,
++			 struct vm_area_struct *src_vma,
++			 unsigned long dst_addr,
++			 unsigned long src_addr)
 +{
-+	struct mem_cgroup *memcg;
-+	pte_t _dst_pte, *dst_pte;
-+	spinlock_t *ptl;
-+	struct page *page;
-+	void *page_kaddr;
-+	int ret;
++	pmd_t _dst_pmd, src_pmdval;
++	struct page *src_page;
++	struct anon_vma *src_anon_vma, *dst_anon_vma;
++	spinlock_t *src_ptl, *dst_ptl;
++	pgtable_t pgtable;
 +
-+	ret = -ENOMEM;
-+	page = alloc_page_vma(GFP_HIGHUSER_MOVABLE, dst_vma, dst_addr);
-+	if (!page)
-+		goto out;
++	src_pmdval = *src_pmd;
++	src_ptl = pmd_lockptr(src_mm, src_pmd);
 +
-+	page_kaddr = kmap(page);
-+	ret = -EFAULT;
-+	if (copy_from_user(page_kaddr, (const void __user *) src_addr,
-+			   PAGE_SIZE))
-+		goto out_kunmap_release;
-+	kunmap(page);
++	BUG_ON(!pmd_trans_huge(src_pmdval));
++	BUG_ON(pmd_trans_splitting(src_pmdval));
++	BUG_ON(!pmd_none(dst_pmdval));
++	BUG_ON(!spin_is_locked(src_ptl));
++	BUG_ON(!rwsem_is_locked(&src_mm->mmap_sem));
++	BUG_ON(!rwsem_is_locked(&dst_mm->mmap_sem));
++
++	src_page = pmd_page(src_pmdval);
++	BUG_ON(!PageHead(src_page));
++	BUG_ON(!PageAnon(src_page));
++	if (unlikely(page_mapcount(src_page) != 1)) {
++		spin_unlock(src_ptl);
++		return -EBUSY;
++	}
++
++	get_page(src_page);
++	spin_unlock(src_ptl);
++
++	mmu_notifier_invalidate_range_start(src_mm, src_addr,
++					    src_addr + HPAGE_PMD_SIZE);
++
++	/* block all concurrent rmap walks */
++	lock_page(src_page);
 +
 +	/*
-+	 * The memory barrier inside __SetPageUptodate makes sure that
-+	 * preceeding stores to the page contents become visible before
-+	 * the set_pte_at() write.
++	 * split_huge_page walks the anon_vma chain without the page
++	 * lock. Serialize against it with the anon_vma lock, the page
++	 * lock is not enough.
 +	 */
-+	__SetPageUptodate(page);
++	src_anon_vma = page_get_anon_vma(src_page);
++	if (!src_anon_vma) {
++		unlock_page(src_page);
++		put_page(src_page);
++		mmu_notifier_invalidate_range_end(src_mm, src_addr,
++						  src_addr + HPAGE_PMD_SIZE);
++		return -EAGAIN;
++	}
++	anon_vma_lock_write(src_anon_vma);
 +
-+	ret = -ENOMEM;
-+	if (mem_cgroup_try_charge(page, dst_mm, GFP_KERNEL, &memcg))
-+		goto out_release;
++	dst_ptl = pmd_lockptr(dst_mm, dst_pmd);
++	double_pt_lock(src_ptl, dst_ptl);
++	if (unlikely(!pmd_same(*src_pmd, src_pmdval) ||
++		     !pmd_same(*dst_pmd, dst_pmdval) ||
++		     page_mapcount(src_page) != 1)) {
++		double_pt_unlock(src_ptl, dst_ptl);
++		anon_vma_unlock_write(src_anon_vma);
++		put_anon_vma(src_anon_vma);
++		unlock_page(src_page);
++		put_page(src_page);
++		mmu_notifier_invalidate_range_end(src_mm, src_addr,
++						  src_addr + HPAGE_PMD_SIZE);
++		return -EAGAIN;
++	}
 +
-+	_dst_pte = mk_pte(page, dst_vma->vm_page_prot);
-+	if (dst_vma->vm_flags & VM_WRITE)
-+		_dst_pte = pte_mkwrite(pte_mkdirty(_dst_pte));
++	BUG_ON(!PageHead(src_page));
++	BUG_ON(!PageAnon(src_page));
++	/* the PT lock is enough to keep the page pinned now */
++	put_page(src_page);
 +
-+	ret = -EEXIST;
-+	dst_pte = pte_offset_map_lock(dst_mm, dst_pmd, dst_addr, &ptl);
-+	if (!pte_none(*dst_pte))
-+		goto out_release_uncharge_unlock;
++	dst_anon_vma = (void *) dst_vma->anon_vma + PAGE_MAPPING_ANON;
++	ACCESS_ONCE(src_page->mapping) = (struct address_space *) dst_anon_vma;
++	ACCESS_ONCE(src_page->index) = linear_page_index(dst_vma, dst_addr);
 +
-+	inc_mm_counter(dst_mm, MM_ANONPAGES);
-+	page_add_new_anon_rmap(page, dst_vma, dst_addr);
-+	mem_cgroup_commit_charge(page, memcg, false);
-+	lru_cache_add_active_or_unevictable(page, dst_vma);
++	if (!pmd_same(pmdp_clear_flush(src_vma, src_addr, src_pmd),
++		      src_pmdval))
++		BUG();
++	_dst_pmd = mk_huge_pmd(src_page, dst_vma->vm_page_prot);
++	_dst_pmd = maybe_pmd_mkwrite(pmd_mkdirty(_dst_pmd), dst_vma);
++	set_pmd_at(dst_mm, dst_addr, dst_pmd, _dst_pmd);
 +
-+	set_pte_at(dst_mm, dst_addr, dst_pte, _dst_pte);
++	pgtable = pgtable_trans_huge_withdraw(src_mm, src_pmd);
++	pgtable_trans_huge_deposit(dst_mm, dst_pmd, pgtable);
++	if (dst_mm != src_mm) {
++		add_mm_counter(dst_mm, MM_ANONPAGES, HPAGE_PMD_NR);
++		add_mm_counter(src_mm, MM_ANONPAGES, -HPAGE_PMD_NR);
++	}
++	double_pt_unlock(src_ptl, dst_ptl);
 +
-+	/* No need to invalidate - it was non-present before */
-+	update_mmu_cache(dst_vma, dst_addr, dst_pte);
++	anon_vma_unlock_write(src_anon_vma);
++	put_anon_vma(src_anon_vma);
 +
-+	pte_unmap_unlock(dst_pte, ptl);
-+	ret = 0;
-+out:
-+	return ret;
-+out_release_uncharge_unlock:
-+	pte_unmap_unlock(dst_pte, ptl);
-+	mem_cgroup_cancel_charge(page, memcg);
-+out_release:
-+	page_cache_release(page);
-+	goto out;
-+out_kunmap_release:
-+	kunmap(page);
-+	goto out_release;
++	/* unblock rmap walks */
++	unlock_page(src_page);
++
++	mmu_notifier_invalidate_range_end(src_mm, src_addr,
++					  src_addr + HPAGE_PMD_SIZE);
++	return 0;
++}
++#endif /* CONFIG_USERFAULTFD */
++
+ /*
+  * Returns 1 if a given pmd maps a stable (not under splitting) thp.
+  * Returns -1 if it maps a thp under splitting. Returns 0 otherwise.
+@@ -2484,6 +2602,8 @@ static void collapse_huge_page(struct mm_struct *mm,
+ 	 * Prevent all access to pagetables with the exception of
+ 	 * gup_fast later hanlded by the ptep_clear_flush and the VM
+ 	 * handled by the anon_vma lock + PG_lock.
++	 *
++	 * remap_pages is prevented to race as well thanks to the mmap_sem.
+ 	 */
+ 	down_write(&mm->mmap_sem);
+ 	if (unlikely(khugepaged_test_exit(mm)))
+diff --git a/mm/userfaultfd.c b/mm/userfaultfd.c
+index 3f4c0ef..49521af 100644
+--- a/mm/userfaultfd.c
++++ b/mm/userfaultfd.c
+@@ -265,3 +265,529 @@ ssize_t mfill_zeropage(struct mm_struct *dst_mm, unsigned long start,
+ {
+ 	return __mcopy_atomic(dst_mm, start, 0, len, true);
+ }
++
++void double_pt_lock(spinlock_t *ptl1,
++		    spinlock_t *ptl2)
++	__acquires(ptl1)
++	__acquires(ptl2)
++{
++	spinlock_t *ptl_tmp;
++
++	if (ptl1 > ptl2) {
++		/* exchange ptl1 and ptl2 */
++		ptl_tmp = ptl1;
++		ptl1 = ptl2;
++		ptl2 = ptl_tmp;
++	}
++	/* lock in virtual address order to avoid lock inversion */
++	spin_lock(ptl1);
++	if (ptl1 != ptl2)
++		spin_lock_nested(ptl2, SINGLE_DEPTH_NESTING);
++	else
++		__acquire(ptl2);
 +}
 +
-+static int mfill_zeropage_pte(struct mm_struct *dst_mm,
-+			      pmd_t *dst_pmd,
-+			      struct vm_area_struct *dst_vma,
-+			      unsigned long dst_addr)
++void double_pt_unlock(spinlock_t *ptl1,
++		      spinlock_t *ptl2)
++	__releases(ptl1)
++	__releases(ptl2)
 +{
-+	pte_t _dst_pte, *dst_pte;
-+	spinlock_t *ptl;
-+	int ret;
-+
-+	_dst_pte = pte_mkspecial(pfn_pte(my_zero_pfn(dst_addr),
-+					 dst_vma->vm_page_prot));
-+	ret = -EEXIST;
-+	dst_pte = pte_offset_map_lock(dst_mm, dst_pmd, dst_addr, &ptl);
-+	if (!pte_none(*dst_pte))
-+		goto out_unlock;
-+	set_pte_at(dst_mm, dst_addr, dst_pte, _dst_pte);
-+	/* No need to invalidate - it was non-present before */
-+	update_mmu_cache(dst_vma, dst_addr, dst_pte);
-+	ret = 0;
-+out_unlock:
-+	pte_unmap_unlock(dst_pte, ptl);
-+	return ret;
++	spin_unlock(ptl1);
++	if (ptl1 != ptl2)
++		spin_unlock(ptl2);
++	else
++		__release(ptl2);
 +}
 +
-+static pmd_t *mm_alloc_pmd(struct mm_struct *mm, unsigned long address)
++/*
++ * The mmap_sem for reading is held by the caller. Just move the page
++ * from src_pmd to dst_pmd if possible, and return true if succeeded
++ * in moving the page.
++ */
++static int remap_pages_pte(struct mm_struct *dst_mm,
++			   struct mm_struct *src_mm,
++			   pte_t *dst_pte, pte_t *src_pte, pmd_t *src_pmd,
++			   struct vm_area_struct *dst_vma,
++			   struct vm_area_struct *src_vma,
++			   unsigned long dst_addr,
++			   unsigned long src_addr,
++			   spinlock_t *dst_ptl,
++			   spinlock_t *src_ptl,
++			   __u64 mode)
 +{
-+	pgd_t *pgd;
-+	pud_t *pud;
-+	pmd_t *pmd = NULL;
++	struct page *src_page;
++	swp_entry_t entry;
++	pte_t orig_src_pte, orig_dst_pte;
++	struct anon_vma *src_anon_vma, *dst_anon_vma;
 +
-+	pgd = pgd_offset(mm, address);
-+	pud = pud_alloc(mm, pgd, address);
-+	if (pud)
++	spin_lock(dst_ptl);
++	orig_dst_pte = *dst_pte;
++	spin_unlock(dst_ptl);
++	if (!pte_none(orig_dst_pte))
++		return -EEXIST;
++
++	spin_lock(src_ptl);
++	orig_src_pte = *src_pte;
++	spin_unlock(src_ptl);
++	if (pte_none(orig_src_pte)) {
++		if (!(mode & UFFDIO_REMAP_MODE_ALLOW_SRC_HOLES))
++			return -ENOENT;
++		else
++			/* nothing to do to remap an hole */
++			return 0;
++	}
++
++	if (pte_present(orig_src_pte)) {
 +		/*
-+		 * Note that we didn't run this because the pmd was
-+		 * missing, the *pmd may be already established and in
-+		 * turn it may also be a trans_huge_pmd.
++		 * Pin the page while holding the lock to be sure the
++		 * page isn't freed under us
 +		 */
-+		pmd = pmd_alloc(mm, pud, address);
-+	return pmd;
++		spin_lock(src_ptl);
++		if (!pte_same(orig_src_pte, *src_pte)) {
++			spin_unlock(src_ptl);
++			return -EAGAIN;
++		}
++		src_page = vm_normal_page(src_vma, src_addr, orig_src_pte);
++		if (!src_page || !PageAnon(src_page) ||
++		    page_mapcount(src_page) != 1) {
++			spin_unlock(src_ptl);
++			return -EBUSY;
++		}
++
++		get_page(src_page);
++		spin_unlock(src_ptl);
++
++		/* block all concurrent rmap walks */
++		lock_page(src_page);
++
++		/*
++		 * page_referenced_anon walks the anon_vma chain
++		 * without the page lock. Serialize against it with
++		 * the anon_vma lock, the page lock is not enough.
++		 */
++		src_anon_vma = page_get_anon_vma(src_page);
++		if (!src_anon_vma) {
++			/* page was unmapped from under us */
++			unlock_page(src_page);
++			put_page(src_page);
++			return -EAGAIN;
++		}
++		anon_vma_lock_write(src_anon_vma);
++
++		double_pt_lock(dst_ptl, src_ptl);
++
++		if (!pte_same(*src_pte, orig_src_pte) ||
++		    !pte_same(*dst_pte, orig_dst_pte) ||
++		    page_mapcount(src_page) != 1) {
++			double_pt_unlock(dst_ptl, src_ptl);
++			anon_vma_unlock_write(src_anon_vma);
++			put_anon_vma(src_anon_vma);
++			unlock_page(src_page);
++			put_page(src_page);
++			return -EAGAIN;
++		}
++
++		BUG_ON(!PageAnon(src_page));
++		/* the PT lock is enough to keep the page pinned now */
++		put_page(src_page);
++
++		dst_anon_vma = (void *) dst_vma->anon_vma + PAGE_MAPPING_ANON;
++		ACCESS_ONCE(src_page->mapping) = ((struct address_space *)
++						  dst_anon_vma);
++		ACCESS_ONCE(src_page->index) = linear_page_index(dst_vma,
++								 dst_addr);
++
++		if (!pte_same(ptep_clear_flush(src_vma, src_addr, src_pte),
++			      orig_src_pte))
++			BUG();
++
++		orig_dst_pte = mk_pte(src_page, dst_vma->vm_page_prot);
++		orig_dst_pte = maybe_mkwrite(pte_mkdirty(orig_dst_pte),
++					     dst_vma);
++
++		set_pte_at(dst_mm, dst_addr, dst_pte, orig_dst_pte);
++
++		if (dst_mm != src_mm) {
++			inc_mm_counter(dst_mm, MM_ANONPAGES);
++			dec_mm_counter(src_mm, MM_ANONPAGES);
++		}
++
++		double_pt_unlock(dst_ptl, src_ptl);
++
++		anon_vma_unlock_write(src_anon_vma);
++		put_anon_vma(src_anon_vma);
++
++		/* unblock rmap walks */
++		unlock_page(src_page);
++
++		mmu_notifier_invalidate_page(src_mm, src_addr);
++	} else {
++		entry = pte_to_swp_entry(orig_src_pte);
++		if (non_swap_entry(entry)) {
++			if (is_migration_entry(entry)) {
++				migration_entry_wait(src_mm, src_pmd,
++						     src_addr);
++				return -EAGAIN;
++			}
++			return -EFAULT;
++		}
++
++		if (swp_entry_swapcount(entry) != 1)
++			return -EBUSY;
++
++		double_pt_lock(dst_ptl, src_ptl);
++
++		if (!pte_same(*src_pte, orig_src_pte) ||
++		    !pte_same(*dst_pte, orig_dst_pte) ||
++		    swp_entry_swapcount(entry) != 1) {
++			double_pt_unlock(dst_ptl, src_ptl);
++			return -EAGAIN;
++		}
++
++		if (pte_val(ptep_get_and_clear(src_mm, src_addr, src_pte)) !=
++		    pte_val(orig_src_pte))
++			BUG();
++		set_pte_at(dst_mm, dst_addr, dst_pte, orig_src_pte);
++
++		if (dst_mm != src_mm) {
++			inc_mm_counter(dst_mm, MM_ANONPAGES);
++			dec_mm_counter(src_mm, MM_ANONPAGES);
++		}
++
++		double_pt_unlock(dst_ptl, src_ptl);
++	}
++
++	return 0;
 +}
 +
-+static ssize_t __mcopy_atomic(struct mm_struct *dst_mm, unsigned long dst_start,
-+			      unsigned long src_start, unsigned long len,
-+			      bool zeropage)
++/**
++ * remap_pages - remap arbitrary anonymous pages of an existing vma
++ * @dst_start: start of the destination virtual memory range
++ * @src_start: start of the source virtual memory range
++ * @len: length of the virtual memory range
++ *
++ * remap_pages() remaps arbitrary anonymous pages atomically in zero
++ * copy. It only works on non shared anonymous pages because those can
++ * be relocated without generating non linear anon_vmas in the rmap
++ * code.
++ *
++ * It is the ideal mechanism to handle userspace page faults. Normally
++ * the destination vma will have VM_USERFAULT set with
++ * madvise(MADV_USERFAULT) while the source vma will have VM_DONTCOPY
++ * set with madvise(MADV_DONTFORK).
++ *
++ * The thread receiving the page during the userland page fault
++ * (MADV_USERFAULT) will receive the faulting page in the source vma
++ * through the network, storage or any other I/O device (MADV_DONTFORK
++ * in the source vma avoids remap_pages() to fail with -EBUSY if the
++ * process forks before remap_pages() is called), then it will call
++ * remap_pages() to map the page in the faulting address in the
++ * destination vma.
++ *
++ * This userfaultfd command works purely via pagetables, so it's the
++ * most efficient way to move physical non shared anonymous pages
++ * across different virtual addresses. Unlike mremap()/mmap()/munmap()
++ * it does not create any new vmas. The mapping in the destination
++ * address is atomic.
++ *
++ * It only works if the vma protection bits are identical from the
++ * source and destination vma.
++ *
++ * It can remap non shared anonymous pages within the same vma too.
++ *
++ * If the source virtual memory range has any unmapped holes, or if
++ * the destination virtual memory range is not a whole unmapped hole,
++ * remap_pages() will fail respectively with -ENOENT or -EEXIST. This
++ * provides a very strict behavior to avoid any chance of memory
++ * corruption going unnoticed if there are userland race
++ * conditions. Only one thread should resolve the userland page fault
++ * at any given time for any given faulting address. This means that
++ * if two threads try to both call remap_pages() on the same
++ * destination address at the same time, the second thread will get an
++ * explicit error from this command.
++ *
++ * The command retval will return "len" is succesful. The command
++ * however can be interrupted by fatal signals or errors. If
++ * interrupted it will return the number of bytes successfully
++ * remapped before the interruption if any, or the negative error if
++ * none. It will never return zero. Either it will return an error or
++ * an amount of bytes successfully moved. If the retval reports a
++ * "short" remap, the remap_pages() command should be repeated by
++ * userland with src+retval, dst+reval, len-retval if it wants to know
++ * about the error that interrupted it.
++ *
++ * The UFFDIO_REMAP_MODE_ALLOW_SRC_HOLES flag can be specified to
++ * prevent -ENOENT errors to materialize if there are holes in the
++ * source virtual range that is being remapped. The holes will be
++ * accounted as successfully remapped in the retval of the
++ * command. This is mostly useful to remap hugepage naturally aligned
++ * virtual regions without knowing if there are transparent hugepage
++ * in the regions or not, but preventing the risk of having to split
++ * the hugepmd during the remap.
++ *
++ * If there's any rmap walk that is taking the anon_vma locks without
++ * first obtaining the page lock (for example split_huge_page and
++ * page_referenced_anon), they will have to verify if the
++ * page->mapping has changed after taking the anon_vma lock. If it
++ * changed they should release the lock and retry obtaining a new
++ * anon_vma, because it means the anon_vma was changed by
++ * remap_pages() before the lock could be obtained. This is the only
++ * additional complexity added to the rmap code to provide this
++ * anonymous page remapping functionality.
++ */
++ssize_t remap_pages(struct mm_struct *dst_mm, struct mm_struct *src_mm,
++		    unsigned long dst_start, unsigned long src_start,
++		    unsigned long len, __u64 mode)
 +{
-+	struct vm_area_struct *dst_vma;
-+	ssize_t err;
-+	pmd_t *dst_pmd;
++	struct vm_area_struct *src_vma, *dst_vma;
++	long err = -EINVAL;
++	pmd_t *src_pmd, *dst_pmd;
++	pte_t *src_pte, *dst_pte;
++	spinlock_t *dst_ptl, *src_ptl;
 +	unsigned long src_addr, dst_addr;
-+	long copied = 0;
++	int thp_aligned = -1;
++	ssize_t moved = 0;
 +
 +	/*
 +	 * Sanitize the command parameters:
 +	 */
++	BUG_ON(src_start & ~PAGE_MASK);
 +	BUG_ON(dst_start & ~PAGE_MASK);
 +	BUG_ON(len & ~PAGE_MASK);
 +
@@ -205,13 +488,26 @@ index 0000000..3f4c0ef
 +	BUG_ON(src_start + len <= src_start);
 +	BUG_ON(dst_start + len <= dst_start);
 +
++	/*
++	 * Because these are read sempahores there's no risk of lock
++	 * inversion.
++	 */
 +	down_read(&dst_mm->mmap_sem);
++	if (dst_mm != src_mm)
++		down_read(&src_mm->mmap_sem);
 +
 +	/*
-+	 * Make sure the vma is not shared, that the dst range is
-+	 * both valid and fully within a single existing vma.
++	 * Make sure the vma is not shared, that the src and dst remap
++	 * ranges are both valid and fully within a single existing
++	 * vma.
 +	 */
-+	err = -EINVAL;
++	src_vma = find_vma(src_mm, src_start);
++	if (!src_vma || (src_vma->vm_flags & VM_SHARED))
++		goto out;
++	if (src_start < src_vma->vm_start ||
++	    src_start + len > src_vma->vm_end)
++		goto out;
++
 +	dst_vma = find_vma(dst_mm, dst_start);
 +	if (!dst_vma || (dst_vma->vm_flags & VM_SHARED))
 +		goto out;
@@ -219,23 +515,38 @@ index 0000000..3f4c0ef
 +	    dst_start + len > dst_vma->vm_end)
 +		goto out;
 +
-+	/*
-+	 * Be strict and only allow __mcopy_atomic on userfaultfd
-+	 * registered ranges to prevent userland errors going
-+	 * unnoticed. As far as the VM consistency is concerned, it
-+	 * would be perfectly safe to remove this check, but there's
-+	 * no useful usage for __mcopy_atomic ouside of userfaultfd
-+	 * registered ranges. This is after all why these are ioctls
-+	 * belonging to the userfaultfd and not syscalls.
-+	 */
-+	if (!dst_vma->vm_userfaultfd_ctx.ctx)
++	if (pgprot_val(src_vma->vm_page_prot) !=
++	    pgprot_val(dst_vma->vm_page_prot))
++		goto out;
++
++	/* only allow remapping if both are mlocked or both aren't */
++	if ((src_vma->vm_flags & VM_LOCKED) ^ (dst_vma->vm_flags & VM_LOCKED))
 +		goto out;
 +
 +	/*
-+	 * FIXME: only allow copying on anonymous vmas, tmpfs should
-+	 * be added.
++	 * Be strict and only allow remap_pages if either the src or
++	 * dst range is registered in the userfaultfd to prevent
++	 * userland errors going unnoticed. As far as the VM
++	 * consistency is concerned, it would be perfectly safe to
++	 * remove this check, but there's no useful usage for
++	 * remap_pages ouside of userfaultfd registered ranges. This
++	 * is after all why it is an ioctl belonging to the
++	 * userfaultfd and not a syscall.
++	 *
++	 * Allow both vmas to be registered in the userfaultfd, just
++	 * in case somebody finds a way to make such a case useful.
++	 * Normally only one of the two vmas would be registered in
++	 * the userfaultfd.
 +	 */
-+	if (dst_vma->vm_ops)
++	if (!dst_vma->vm_userfaultfd_ctx.ctx &&
++	    !src_vma->vm_userfaultfd_ctx.ctx)
++		goto out;
++
++	/*
++	 * FIXME: only allow remapping across anonymous vmas,
++	 * tmpfs should be added.
++	 */
++	if (src_vma->vm_ops || dst_vma->vm_ops)
 +		goto out;
 +
 +	/*
@@ -249,8 +560,22 @@ index 0000000..3f4c0ef
 +
 +	for (src_addr = src_start, dst_addr = dst_start;
 +	     src_addr < src_start + len; ) {
++		spinlock_t *ptl;
 +		pmd_t dst_pmdval;
 +		BUG_ON(dst_addr >= dst_start + len);
++		src_pmd = mm_find_pmd(src_mm, src_addr);
++		if (unlikely(!src_pmd)) {
++			if (!(mode & UFFDIO_REMAP_MODE_ALLOW_SRC_HOLES)) {
++				err = -ENOENT;
++				break;
++			} else {
++				src_pmd = mm_alloc_pmd(src_mm, src_addr);
++				if (unlikely(!src_pmd)) {
++					err = -ENOMEM;
++					break;
++				}
++			}
++		}
 +		dst_pmd = mm_alloc_pmd(dst_mm, dst_addr);
 +		if (unlikely(!dst_pmd)) {
 +			err = -ENOMEM;
@@ -266,6 +591,80 @@ index 0000000..3f4c0ef
 +			err = -EEXIST;
 +			break;
 +		}
++		if (pmd_trans_huge_lock(src_pmd, src_vma, &ptl) == 1) {
++			/*
++			 * Check if we can move the pmd without
++			 * splitting it. First check the address
++			 * alignment to be the same in src/dst.  These
++			 * checks don't actually need the PT lock but
++			 * it's good to do it here to optimize this
++			 * block away at build time if
++			 * CONFIG_TRANSPARENT_HUGEPAGE is not set.
++			 */
++			if (thp_aligned == -1)
++				thp_aligned = ((src_addr & ~HPAGE_PMD_MASK) ==
++					       (dst_addr & ~HPAGE_PMD_MASK));
++			if (!thp_aligned || (src_addr & ~HPAGE_PMD_MASK) ||
++			    !pmd_none(dst_pmdval) ||
++			    src_start + len - src_addr < HPAGE_PMD_SIZE) {
++				spin_unlock(ptl);
++				/* Fall through */
++				split_huge_page_pmd(src_vma, src_addr,
++						    src_pmd);
++			} else {
++				BUG_ON(dst_addr & ~HPAGE_PMD_MASK);
++				err = remap_pages_huge_pmd(dst_mm,
++							   src_mm,
++							   dst_pmd,
++							   src_pmd,
++							   dst_pmdval,
++							   dst_vma,
++							   src_vma,
++							   dst_addr,
++							   src_addr);
++				cond_resched();
++
++				if (!err) {
++					dst_addr += HPAGE_PMD_SIZE;
++					src_addr += HPAGE_PMD_SIZE;
++					moved += HPAGE_PMD_SIZE;
++				}
++
++				if ((!err || err == -EAGAIN) &&
++				    fatal_signal_pending(current))
++					err = -EINTR;
++
++				if (err && err != -EAGAIN)
++					break;
++
++				continue;
++			}
++		}
++
++		if (pmd_none(*src_pmd)) {
++			if (!(mode & UFFDIO_REMAP_MODE_ALLOW_SRC_HOLES)) {
++				err = -ENOENT;
++				break;
++			} else {
++				if (unlikely(__pte_alloc(src_mm, src_vma,
++							 src_pmd, src_addr))) {
++					err = -ENOMEM;
++					break;
++				}
++			}
++		}
++
++		/*
++		 * We held the mmap_sem for reading so MADV_DONTNEED
++		 * can zap transparent huge pages under us, or the
++		 * transparent huge page fault can establish new
++		 * transparent huge pages under us.
++		 */
++		if (unlikely(pmd_trans_unstable(src_pmd))) {
++			err = -EFAULT;
++			break;
++		}
++
 +		if (unlikely(pmd_none(dst_pmdval)) &&
 +		    unlikely(__pte_alloc(dst_mm, dst_vma, dst_pmd,
 +					 dst_addr))) {
@@ -279,45 +678,51 @@ index 0000000..3f4c0ef
 +		}
 +
 +		BUG_ON(pmd_none(*dst_pmd));
++		BUG_ON(pmd_none(*src_pmd));
 +		BUG_ON(pmd_trans_huge(*dst_pmd));
++		BUG_ON(pmd_trans_huge(*src_pmd));
 +
-+		if (!zeropage)
-+			err = mcopy_atomic_pte(dst_mm, dst_pmd, dst_vma,
-+					       dst_addr, src_addr);
-+		else
-+			err = mfill_zeropage_pte(dst_mm, dst_pmd, dst_vma,
-+						 dst_addr);
++		dst_pte = pte_offset_map(dst_pmd, dst_addr);
++		src_pte = pte_offset_map(src_pmd, src_addr);
++		dst_ptl = pte_lockptr(dst_mm, dst_pmd);
++		src_ptl = pte_lockptr(src_mm, src_pmd);
 +
++		err = remap_pages_pte(dst_mm, src_mm,
++				      dst_pte, src_pte, src_pmd,
++				      dst_vma, src_vma,
++				      dst_addr, src_addr,
++				      dst_ptl, src_ptl, mode);
++
++		pte_unmap(dst_pte);
++		pte_unmap(src_pte);
 +		cond_resched();
 +
 +		if (!err) {
 +			dst_addr += PAGE_SIZE;
 +			src_addr += PAGE_SIZE;
-+			copied += PAGE_SIZE;
-+
-+			if (fatal_signal_pending(current))
-+				err = -EINTR;
++			moved += PAGE_SIZE;
 +		}
-+		if (err)
++
++		if ((!err || err == -EAGAIN) &&
++		    fatal_signal_pending(current))
++			err = -EINTR;
++
++		if (err && err != -EAGAIN)
 +			break;
 +	}
 +
 +out:
 +	up_read(&dst_mm->mmap_sem);
-+	BUG_ON(copied < 0);
++	if (dst_mm != src_mm)
++		up_read(&src_mm->mmap_sem);
++	BUG_ON(moved < 0);
 +	BUG_ON(err > 0);
-+	BUG_ON(!copied && !err);
-+	return copied ? copied : err;
++	BUG_ON(!moved && !err);
++	return moved ? moved : err;
 +}
-+
-+ssize_t mcopy_atomic(struct mm_struct *dst_mm, unsigned long dst_start,
-+		     unsigned long src_start, unsigned long len)
-+{
-+	return __mcopy_atomic(dst_mm, dst_start, src_start, len, false);
-+}
-+
-+ssize_t mfill_zeropage(struct mm_struct *dst_mm, unsigned long start,
-+		       unsigned long len)
-+{
-+	return __mcopy_atomic(dst_mm, start, 0, len, true);
-+}
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
