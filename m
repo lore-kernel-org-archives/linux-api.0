@@ -1,59 +1,146 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH v3 0/3] epoll: introduce round robin wakeup mode
-Date: Thu, 5 Mar 2015 10:15:17 +0100
-Message-ID: <20150305091517.GA25158@gmail.com>
-References: <cover.1424805740.git.jbaron@akamai.com>
- <20150225073814.GA14558@gmail.com>
- <54EDF7D8.60201@akamai.com>
- <20150227131034.2f2787dcabf285191a1f6ffa@linux-foundation.org>
- <54F0E93C.3010306@akamai.com>
- <20150227143158.afa4ec39d49d5815cbbd6a6c@linux-foundation.org>
- <20150305000225.GA27592@gmail.com>
- <54F7D343.5090106@akamai.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Subject: [PATCH v1 0/6] Add simple EEPROM Framework via regmap.
+Date: Thu,  5 Mar 2015 09:44:45 +0000
+Message-ID: <1425548685-12887-1-git-send-email-srinivas.kandagatla@linaro.org>
+References: <1424365639-26634-1-git-send-email-srinivas.kandagatla@linaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <54F7D343.5090106@akamai.com>
+In-Reply-To: <1424365639-26634-1-git-send-email-srinivas.kandagatla@linaro.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jason Baron <jbaron@akamai.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, peterz@infradead.org, mingo@redhat.com, viro@zeniv.linux.org.uk, normalperson@yhbt.net, davidel@xmailserver.org, mtk.manpages@gmail.com, luto@amacapital.net, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Alexander Viro <viro@ftp.linux.org.uk>
+To: linux-arm-kernel@lists.infradead.org
+Cc: Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Kumar Gala <galak@codeaurora.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, Stephen Boyd <sboyd@codeaurora.org>, Arnd Bergmann <arnd@arndb.de>, broonie@kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, andrew@lunn.ch, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
+Thankyou all for providing inputs and comments on RFC patchset.
+Here is the v1 of the patchset addressing all the issues raised as
+part of RFC review.
 
-* Jason Baron <jbaron@akamai.com> wrote:
+This patchset adds a new simple EEPROM framework to kernel.
 
-> 2) We are using the wakeup in this case to 'assign' work more 
-> permanently to the thread. That is, in the case of a listen socket 
-> we then add the connected socket to the woken up threads local set 
-> of epoll events. So the load persists past the wake up. And in this 
-> case, doing the round robin wakeups, simply allows us to access more 
-> cpu bandwidth. (I'm also looking into potentially using cpu affinity 
-> to do the wakeups as well as you suggested.)
+Up until now, EEPROM drivers were stored in drivers/misc, where they all had to
+duplicate pretty much the same code to register a sysfs file, allow in-kernel
+users to access the content of the devices they were driving, etc.
+    
+This was also a problem as far as other in-kernel users were involved, since
+the solutions used were pretty much different from on driver to another, there
+was a rather big abstraction leak.
+    
+This introduction of this framework aims at solving this. It also introduces DT
+representation for consumer devices to go get the data they require (MAC
+Addresses, SoC/Revision ID, part numbers, and so on) from the EEPROMs.
+    
+Having regmap interface to this framework would give much better
+abstraction for eeproms on different buses.
 
-So this is the part that I still don't understand.
+patch 1-4 Introduces the EEPROM framework.
+Patch 5 migrates an existing driver to eeprom framework.
+Patch 6 Adds Qualcomm specific qfprom driver.
 
-What difference does LIFO versus FIFO wakeups make to CPU utilization: 
-a thread waiting for work is idle, no matter whether it ran most 
-recently or least recently.
+Its also possible to migrate other eeprom drivers to this framework.
+Patch 6 can also be made a generic mmio-eeprom driver.
 
-Once an idle worker thread is woken it will compute its own work, for 
-whatever time it needs to, and won't be bothered by epoll again until 
-it finished its work and starts waiting again.
+Providers APIs:
+	eeprom_register/unregister();
 
-So regardless the wakeup order it's the same principal bandwidth 
-utilization, modulo caching artifacts [*] and modulo scheduling 
-artifacts [**]:
+Consumers APIs:
+	eeprom_cell_get()/of_eeprom_cell_get()/of_eeprom_cell_get_byname();
+	eeprom_cell_read()/eeprom_cell_write();
 
-[*]  Caching artifacts: in that sense Andrew's point stands: given 
-     multiple equivalent choices it's more beneficial to pick a thread 
-     that was most recently used (and is thus most cache-hot - i.e. 
-     the current wakeup behavior), versus a thread that was least 
-     recently used (and is thus the most cache-cold - i.e. the 
-     round-robin wakeup you introduce).
+Device Tree:
 
-[**] The hack patch I posted in my previous reply.
+	/* Provider */
+	qfprom: qfprom@00700000 {
+		compatible 	= "qcom,qfprom";
+		reg		= <0x00700000 0x1000>;
+		...
+
+		/* Data cells */
+		tsens_calibration: calib@404 {
+			reg = <0x404 0x10>;
+		};
+
+		serial_number: sn {
+			reg = <0x104 0x4>, <0x204 0x4>, <0x30c 0x4>;
+
+		};
+		...
+	};
+	
+	/* Consumer node */
+	tsens: tsens {
+		...
+		eeproms = <&tsens_calibration>;
+		eeprom-names = "calib";
+		...
+	};
+
+userspace interface:
+
+hexdump /sys/class/eeprom/qfprom0/eeprom
+                                                                                                                                                                                                                  
+0000000 0000 0000 0000 0000 0000 0000 0000 0000
+*
+00000a0 db10 2240 0000 e000 0c00 0c00 0000 0c00
+0000000 0000 0000 0000 0000 0000 0000 0000 0000
+...
+*
+0001000
+
+
+Changes since RFC(https://lkml.org/lkml/2015/2/19/307)
+ * Fix documentation and error checks in read/write spotted by Andrew Lunn
+ * Kconfig fix suggested by Stephen Boyd.
+ * Add module owner suggested by Stephen Boyd and others.
+ * Fix unsafe handling of eeprom in unregister spotted by Russell and Mark Brown.
+ * seperate bindings patch as suggested by Rob.
+ * Add MAINTAINERS as suggested by Rob.
+ * Added support to allow reading eeprom for things like serial number which
+ * canbe scatters across.
+ * Added eeprom data using reg property suggested by Sascha and Stephen.
+ * Added non-DT support.
+ * Move kerneldoc to the src files spotted by Mark Brown.
+ * Remove local list and do eeprom lookup by using class_find_device()
+
 
 Thanks,
+srini
 
-	Ingo
+
+Maxime Ripard (1):
+  eeprom: sunxi: Move the SID driver to the eeprom framework
+
+Srinivas Kandagatla (5):
+  eeprom: Add a simple EEPROM framework for eeprom providers
+  eeprom: Add a simple EEPROM framework for eeprom consumers
+  eeprom: Add bindings for simple eeprom framework
+  eeprom: qfprom: Add Qualcomm QFPROM support.
+  eeprom: Add to MAINTAINERS for eeprom framework
+
+ Documentation/ABI/testing/sysfs-driver-sunxi-sid   |  22 -
+ .../devicetree/bindings/eeprom/eeprom.txt          |  70 +++
+ MAINTAINERS                                        |   9 +
+ drivers/Kconfig                                    |   2 +
+ drivers/Makefile                                   |   1 +
+ drivers/eeprom/Kconfig                             |  38 ++
+ drivers/eeprom/Makefile                            |  11 +
+ drivers/eeprom/core.c                              | 506 +++++++++++++++++++++
+ drivers/eeprom/eeprom-sunxi-sid.c                  | 129 ++++++
+ drivers/eeprom/qfprom.c                            |  74 +++
+ drivers/misc/eeprom/Kconfig                        |  13 -
+ drivers/misc/eeprom/Makefile                       |   1 -
+ drivers/misc/eeprom/sunxi_sid.c                    | 156 -------
+ include/linux/eeprom-consumer.h                    |  67 +++
+ include/linux/eeprom-provider.h                    |  47 ++
+ 15 files changed, 954 insertions(+), 192 deletions(-)
+ delete mode 100644 Documentation/ABI/testing/sysfs-driver-sunxi-sid
+ create mode 100644 Documentation/devicetree/bindings/eeprom/eeprom.txt
+ create mode 100644 drivers/eeprom/Kconfig
+ create mode 100644 drivers/eeprom/Makefile
+ create mode 100644 drivers/eeprom/core.c
+ create mode 100644 drivers/eeprom/eeprom-sunxi-sid.c
+ create mode 100644 drivers/eeprom/qfprom.c
+ delete mode 100644 drivers/misc/eeprom/sunxi_sid.c
+ create mode 100644 include/linux/eeprom-consumer.h
+ create mode 100644 include/linux/eeprom-provider.h
+
+-- 
+1.9.1
