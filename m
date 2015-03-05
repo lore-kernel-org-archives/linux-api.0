@@ -1,100 +1,129 @@
-From: "Serge E. Hallyn" <serge@hallyn.com>
-Subject: Re: [PATCH] capabilities: Ambient capability set V2
-Date: Thu, 5 Mar 2015 11:13:26 -0600
-Message-ID: <20150305171326.GA14998@mail.hallyn.com>
-References: <alpine.DEB.2.11.1502261612370.8994@gentwo.org>
- <20150301233359.GA22196@mail.hallyn.com>
- <alpine.DEB.2.11.1503050917380.31001@gentwo.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-security-module-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.11.1503050917380.31001@gentwo.org>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Christoph Lameter <cl@linux.com>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, Jonathan Corbet <corbet@lwn.net>, Aaron Jones <aaronmdjones@gmail.com>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, akpm@linuxfoundation.org, "Andrew G. Morgan" <morgan@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Markku Savela <msa@moth.iki.fi>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: [PATCH 02/21] userfaultfd: linux/Documentation/vm/userfaultfd.txt
+Date: Thu,  5 Mar 2015 18:17:45 +0100
+Message-ID: <1425575884-2574-3-git-send-email-aarcange@redhat.com>
+References: <1425575884-2574-1-git-send-email-aarcange@redhat.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1425575884-2574-1-git-send-email-aarcange@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Android Kernel Team <kernel-team@android.com>
+Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry.adamushko@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 05, 2015 at 09:26:24AM -0600, Christoph Lameter wrote:
-> On Sun, 1 Mar 2015, Serge E. Hallyn wrote:
-> 
-> > > +++ linux/security/commoncap.c	2015-02-26 16:10:02.347913397 -0600
-> > > @@ -347,15 +347,17 @@ static inline int bprm_caps_from_vfs_cap
-> > >  		*has_cap = true;
-> > >
-> > >  	CAP_FOR_EACH_U32(i) {
-> > > +		__u32 ambient = current_cred()->cap_ambient.cap[i];
-> > >  		__u32 permitted = caps->permitted.cap[i];
-> > >  		__u32 inheritable = caps->inheritable.cap[i];
-> > >
-> > >  		/*
-> > > -		 * pP' = (X & fP) | (pI & fI)
-> > > +		 * pP' = (X & fP) | (pI & (fI | pA))
-> > >  		 */
-> > >  		new->cap_permitted.cap[i] =
-> > >  			(new->cap_bset.cap[i] & permitted) |
-> > > -			(new->cap_inheritable.cap[i] & inheritable);
-> > > +			(new->cap_inheritable.cap[i] &
-> > > +					(inheritable | ambient));
-> >
-> > So I'd say drop this change ^
-> 
-> Then the ambient caps get ignored for a executables that have capabilities
-> seton the file?
+Add documentation.
 
-Yes.  Those are assumed to already know what they're doing.
+Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
+---
+ Documentation/vm/userfaultfd.txt | 97 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 97 insertions(+)
+ create mode 100644 Documentation/vm/userfaultfd.txt
 
-> I think we need to keep this one.
+diff --git a/Documentation/vm/userfaultfd.txt b/Documentation/vm/userfaultfd.txt
+new file mode 100644
+index 0000000..2ec296c
+--- /dev/null
++++ b/Documentation/vm/userfaultfd.txt
+@@ -0,0 +1,97 @@
++= Userfaultfd =
++
++== Objective ==
++
++Userfaults allow to implement on demand paging from userland and more
++generally they allow userland to take control various memory page
++faults, something otherwise only the kernel code could do.
++
++For example userfaults allows a proper and more optimal implementation
++of the PROT_NONE+SIGSEGV trick.
++
++== Design ==
++
++Userfaults are delivered and resolved through the userfaultfd syscall.
++
++The userfaultfd (aside from registering and unregistering virtual
++memory ranges) provides for two primary functionalities:
++
++1) read/POLLIN protocol to notify an userland thread of the faults
++   happening
++
++2) various UFFDIO_* ioctls that can mangle over the virtual memory
++   regions registered in the userfaultfd that allows userland to
++   efficiently resolve the userfaults it receives via 1) or to mangle
++   the virtual memory in the background
++
++The real advantage of userfaults if compared to regular virtual memory
++management of mremap/mprotect is that the userfaults in all their
++operations never involve heavyweight structures like vmas (in fact the
++userfaultfd runtime load never takes the mmap_sem for writing).
++
++Vmas are not suitable for page(or hugepage)-granular fault tracking
++when dealing with virtual address spaces that could span
++Terabytes. Too many vmas would be needed for that.
++
++The userfaultfd once opened by invoking the syscall, can also be
++passed using unix domain sockets to a manager process, so the same
++manager process could handle the userfaults of a multitude of
++different process without them being aware about what is going on
++(well of course unless they later try to use the userfaultfd themself
++on the same region the manager is already tracking, which is a corner
++case that would currently return -EBUSY).
++
++== API ==
++
++When first opened the userfaultfd must be enabled invoking the
++UFFDIO_API ioctl specifying an uffdio_api.api value set to UFFD_API
++which will specify the read/POLLIN protocol userland intends to speak
++on the UFFD. The UFFDIO_API ioctl if successful (i.e. if the requested
++uffdio_api.api is spoken also by the running kernel), will return into
++uffdio_api.bits and uffdio_api.ioctls two 64bit bitmasks of
++respectively the activated feature bits below PAGE_SHIFT in the
++userfault addresses returned by read(2) and the generic ioctl
++available.
++
++Once the userfaultfd has been enabled the UFFDIO_REGISTER ioctl should
++be invoked (if present in the returned uffdio_api.ioctls bitmask) to
++register a memory range in the userfaultfd by setting the
++uffdio_register structure accordingly. The uffdio_register.mode
++bitmask will specify to the kernel which kind of faults to track for
++the range (UFFDIO_REGISTER_MODE_MISSING would track missing
++pages). The UFFDIO_REGISTER ioctl will return the
++uffdio_register.ioctls bitmask of ioctls that are suitable to resolve
++userfaults on the range reigstered. Not all ioctls will necessarily be
++supported for all memory types depending on the underlying virtual
++memory backend (anonymous memory vs tmpfs vs real filebacked
++mappings).
++
++Userland can use the uffdio_register.ioctls to mangle the virtual
++address space in the background (to add or potentially also remove
++memory from the userfaultfd registered range). This means an userfault
++could be triggering just before userland maps in the background the
++user-faulted page. To avoid POLLIN resulting in an unexpected blocking
++read (if the UFFD is not opened in nonblocking mode in the first
++place), we don't allow the background thread to wake userfaults that
++haven't been read by userland yet. If we would do that likely the
++UFFDIO_WAKE ioctl could be dropped. This may change in the future
++(with a UFFD_API protocol bumb combined with the removal of the
++UFFDIO_WAKE ioctl) if it'll be demonstrated that it's a valid
++optimization and worthy to force userland to use the UFFD always in
++nonblocking mode if combined with POLLIN.
++
++userfaultfd is also a generic enough feature, that it allows KVM to
++implement postcopy live migration (one form of memory externalization
++consisting of a virtual machine running with part or all of its memory
++residing on a different node in the cloud) without having to modify a
++single line of KVM kernel code. Guest async page faults, FOLL_NOWAIT
++and all other GUP features works just fine in combination with
++userfaults (userfaults trigger async page faults in the guest
++scheduler so those guest processes that aren't waiting for userfaults
++can keep running in the guest vcpus).
++
++The primary ioctl to resolve userfaults is UFFDIO_COPY. That
++atomically copies a page into the userfault registered range and wakes
++up the blocked userfaults (unless uffdio_copy.mode &
++UFFDIO_COPY_MODE_DONTWAKE is set). Other ioctl works similarly to
++UFFDIO_COPY.
 
-Why?  Do you foresee cases where a file that has fP set needs capabilities
-that aren't in its fP?
-
-It seems more likely that they'll risk misbehaving due to an unexpected set 
-of caps.
-
-If you have a good use case I'm not entirely opposed, but it just seems
-unneeded and a potentially bad idea.
-
-> > > @@ -453,8 +455,18 @@ static int get_file_caps(struct linux_bi
-> > >  		if (rc == -EINVAL)
-> > >  			printk(KERN_NOTICE "%s: get_vfs_caps_from_disk returned %d for %s\n",
-> > >  				__func__, rc, bprm->filename);
-> > > -		else if (rc == -ENODATA)
-> > > +		else if (rc == -ENODATA) {
-> > >  			rc = 0;
-> > > +			if (!cap_isclear(current_cred()->cap_ambient)) {
-> > > +				/*
-> > > +				 * The ambient caps are permitted for
-> > > +				 * files that have no caps
-> > > +				 */
-> > > +				bprm->cred->cap_permitted =
-> > > +					current_cred()->cap_ambient;
-> >
-> > and here set vcaps inheritable to current_cred()->ambient.
-> 
-> We do not call bprm_caps_from_vfs_cap() for files that have no caps so
-> this would have no effect. But we could set cap_inheritable here?
-> 
-> Fixup patch:
-> 
-> 
-> 
-> Subject: ambient_caps: Set inheritable bits too
-> 
-> We were not setting the inheritable bits as they ought to be set.
-> 
-> Signed-off-by: Christoph Lameter <cl@linux.com>
-> 
-> Index: linux/security/commoncap.c
-> ===================================================================
-> --- linux.orig/security/commoncap.c	2015-03-05 09:22:32.123047869 -0600
-> +++ linux/security/commoncap.c	2015-03-05 09:22:32.119048001 -0600
-> @@ -461,6 +461,8 @@ static int get_file_caps(struct linux_bi
->  				 */
->  				bprm->cred->cap_permitted =
->  					current_cred()->cap_ambient;
-> +				bprm->cred->cap_inheritable =
-> +					current_cred()->cap_ambient;
->  				*effective = true;
->  			}
->  		}
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
