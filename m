@@ -1,385 +1,82 @@
-From: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
-Subject: Re: [PATCHv2 0/2] N900 Modem Speech Support
-Date: Thu, 5 Mar 2015 12:30:13 +0100
-Message-ID: <20150305113013.GA3867@amd>
-References: <1425343454-6551-1-git-send-email-sre@kernel.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1425343454-6551-1-git-send-email-sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Peter Ujfalusi <peter.ujfalusi-l0cyMroinI0@public.gmane.org>, Kai Vehmanen <kvcontact-nQfqiRJ1PMYxHbG02/KK1g@public.gmane.org>, Pali Rohar <pali.rohar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Aaro Koskinen <aaro.koskinen-X3B1VOXEql0@public.gmane.org>, Ivaylo Dimitrov <ivo.g.dimitrov.75-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-omap-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [PATCH] capabilities: Ambient capability set V2
+Date: Thu, 5 Mar 2015 09:26:24 -0600 (CST)
+Message-ID: <alpine.DEB.2.11.1503050917380.31001@gentwo.org>
+References: <alpine.DEB.2.11.1502261612370.8994@gentwo.org> <20150301233359.GA22196@mail.hallyn.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150301233359.GA22196@mail.hallyn.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Serge E. Hallyn" <serge@hallyn.com>
+Cc: Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, Jonathan Corbet <corbet@lwn.net>, Aaron Jones <aaronmdjones@gmail.com>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, akpm@linuxfoundation.org, "Andrew G. Morgan" <morgan@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Markku Savela <msa@moth.iki.fi>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi!
+On Sun, 1 Mar 2015, Serge E. Hallyn wrote:
 
-> Userland access goes via /dev/cmt_speech. The API is implemented in
-> libcmtspeechdata, which is used by ofono and the freesmartphone.org project.
-> Apart from that the device is also used by the phone binaries distributed
-> with Maemo. So while this is a new userland ABI for the mainline kernel it
-> has been tested in the wild for some years.
+> > +++ linux/security/commoncap.c	2015-02-26 16:10:02.347913397 -0600
+> > @@ -347,15 +347,17 @@ static inline int bprm_caps_from_vfs_cap
+> >  		*has_cap = true;
+> >
+> >  	CAP_FOR_EACH_U32(i) {
+> > +		__u32 ambient = current_cred()->cap_ambient.cap[i];
+> >  		__u32 permitted = caps->permitted.cap[i];
+> >  		__u32 inheritable = caps->inheritable.cap[i];
+> >
+> >  		/*
+> > -		 * pP' = (X & fP) | (pI & fI)
+> > +		 * pP' = (X & fP) | (pI & (fI | pA))
+> >  		 */
+> >  		new->cap_permitted.cap[i] =
+> >  			(new->cap_bset.cap[i] & permitted) |
+> > -			(new->cap_inheritable.cap[i] & inheritable);
+> > +			(new->cap_inheritable.cap[i] &
+> > +					(inheritable | ambient));
+>
+> So I'd say drop this change ^
 
-I'm sorry, Dave. I can't let you do that.
+Then the ambient caps get ignored for a executables that have capabilities
+seton the file? I think we need to keep this one.
 
-Yes, the ABI is "tested" for some years, but it is not documented, and
-it is very wrong ABI.
+> > @@ -453,8 +455,18 @@ static int get_file_caps(struct linux_bi
+> >  		if (rc == -EINVAL)
+> >  			printk(KERN_NOTICE "%s: get_vfs_caps_from_disk returned %d for %s\n",
+> >  				__func__, rc, bprm->filename);
+> > -		else if (rc == -ENODATA)
+> > +		else if (rc == -ENODATA) {
+> >  			rc = 0;
+> > +			if (!cap_isclear(current_cred()->cap_ambient)) {
+> > +				/*
+> > +				 * The ambient caps are permitted for
+> > +				 * files that have no caps
+> > +				 */
+> > +				bprm->cred->cap_permitted =
+> > +					current_cred()->cap_ambient;
+>
+> and here set vcaps inheritable to current_cred()->ambient.
 
-I'm not sure what they do with the "read()". I was assuming it is
-meant for passing voice data, but it can return at most 4 bytes,
-AFAICT.
+We do not call bprm_caps_from_vfs_cap() for files that have no caps so
+this would have no effect. But we could set cap_inheritable here?
 
-We already have perfectly good ABI for passing voice data around. It
-is called "ALSA". libcmtspeech will then become unneccessary, and the
-daemon routing voice data will be as simple as "read sample from
-ALSA/modem, write sample to ALSA/rx-51_soundcard" & "read sample from
-ALSA/rx-51_soundcard, write sample to ALSA/modem" & .
-
-Should this driver be merged to drivers/staging while the interface is
-fixed? Big part of driver should stay the same, userspace interface is
-only small part of the driver...
-
-Sorry about that,
-									Pavel
-
-Signed-off-by: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
-
-diff --git a/drivers/hsi/clients/cmt_speech.c b/drivers/hsi/clients/cmt_speech.c
-index 5dbbc67..06dc81c 100644
---- a/drivers/hsi/clients/cmt_speech.c
-+++ b/drivers/hsi/clients/cmt_speech.c
-@@ -21,6 +21,8 @@
-  * 02110-1301 USA
-  */
- 
-+/* Thanks to http://ben-collins.blogspot.cz/2010/05/writing-alsa-driver-basics.html */
-+
- #include <linux/errno.h>
- #include <linux/module.h>
- #include <linux/types.h>
-@@ -39,6 +41,11 @@
- #include <linux/hsi/ssi_protocol.h>
- #include <linux/hsi/cs-protocol.h>
- 
-+#include <sound/initval.h>
-+#include <sound/core.h>
-+#include <sound/memalloc.h>
-+#include <sound/pcm.h>
-+
- #define CS_MMAP_SIZE	PAGE_SIZE
- 
- struct char_queue {
-@@ -62,8 +69,12 @@ struct cs_char {
- 	/* hsi channel ids */
- 	int                     channel_id_cmd;
- 	int                     channel_id_data;
-+	/* alsa */
-+	struct snd_card *card;
- };
- 
-+#define cs_char cs_char
-+
- #define SSI_CHANNEL_STATE_READING	1
- #define SSI_CHANNEL_STATE_WRITING	(1 << 1)
- #define SSI_CHANNEL_STATE_POLL		(1 << 2)
-@@ -168,6 +179,8 @@ static void cs_notify(u32 message, struct list_head *head)
- 	wake_up_interruptible(&cs_char_data.wait);
- 	kill_fasync(&cs_char_data.async_queue, SIGIO, POLL_IN);
- 
-+	/* snd_pcm_period_elapsed(my_dev->ss); ?? FIXME */
-+
- out:
- 	return;
- }
-@@ -1134,10 +1147,8 @@ static unsigned int cs_char_poll(struct file *file, poll_table *wait)
- 	return ret;
- }
- 
--static ssize_t cs_char_read(struct file *file, char __user *buf, size_t count,
--								loff_t *unused)
-+static ssize_t __cs_char_read(struct cs_char *csdata, char __user *buf, size_t count, int nonblock)
- {
--	struct cs_char *csdata = file->private_data;
- 	u32 data;
- 	ssize_t retval;
- 
-@@ -1161,7 +1172,7 @@ static ssize_t cs_char_read(struct file *file, char __user *buf, size_t count,
- 
- 		if (data)
- 			break;
--		if (file->f_flags & O_NONBLOCK) {
-+		if (nonblock) {
- 			retval = -EAGAIN;
- 			goto out;
- 		} else if (signal_pending(current)) {
-@@ -1182,10 +1193,17 @@ out:
- 	return retval;
- }
- 
--static ssize_t cs_char_write(struct file *file, const char __user *buf,
--						size_t count, loff_t *unused)
-+
-+static ssize_t cs_char_read(struct file *file, char __user *buf, size_t count,
-+								loff_t *unused)
- {
- 	struct cs_char *csdata = file->private_data;
-+	return __cs_char_read(csdata, buf, count, file->f_flags & O_NONBLOCK);
-+}
-+
-+static ssize_t __cs_char_write(struct cs_char *csdata, const char __user *buf,
-+						size_t count)
-+{
- 	u32 data;
- 	int err;
- 	ssize_t	retval;
-@@ -1205,6 +1223,13 @@ static ssize_t cs_char_write(struct file *file, const char __user *buf,
- 	return retval;
- }
- 
-+static ssize_t cs_char_write(struct file *file, const char __user *buf,
-+						size_t count, loff_t *unused)
-+{
-+	struct cs_char *csdata = file->private_data;
-+	return __cs_char_write(csdata, buf, count);
-+}
-+
- static long cs_char_ioctl(struct file *file, unsigned int cmd,
- 				unsigned long arg)
- {
-@@ -1269,7 +1294,7 @@ static int cs_char_mmap(struct file *file, struct vm_area_struct *vma)
- 	return 0;
- }
- 
--static int cs_char_open(struct inode *unused, struct file *file)
-+static int __cs_char_open(void)
- {
- 	int ret = 0;
- 	unsigned long p;
-@@ -1300,8 +1325,6 @@ static int cs_char_open(struct inode *unused, struct file *file)
- 	cs_char_data.mmap_base = p;
- 	cs_char_data.mmap_size = CS_MMAP_SIZE;
- 
--	file->private_data = &cs_char_data;
--
- 	return 0;
- 
- out3:
-@@ -1314,6 +1337,13 @@ out1:
- 	return ret;
- }
- 
-+static int cs_char_open(struct inode *unused, struct file *file)
-+{
-+	file->private_data = &cs_char_data;
-+
-+	return __cs_char_open();
-+}
-+
- static void cs_free_char_queue(struct list_head *head)
- {
- 	struct char_queue *entry;
-@@ -1329,10 +1359,8 @@ static void cs_free_char_queue(struct list_head *head)
- 
- }
- 
--static int cs_char_release(struct inode *unused, struct file *file)
-+static int __cs_char_release(struct cs_char *csdata)
- {
--	struct cs_char *csdata = file->private_data;
--
- 	cs_hsi_stop(csdata->hi);
- 	spin_lock_bh(&csdata->lock);
- 	csdata->hi = NULL;
-@@ -1345,6 +1373,13 @@ static int cs_char_release(struct inode *unused, struct file *file)
- 	return 0;
- }
- 
-+static int cs_char_release(struct inode *unused, struct file *file)
-+{
-+	struct cs_char *csdata = file->private_data;
-+
-+	return __cs_char_release(csdata);
-+}
-+
- static const struct file_operations cs_char_fops = {
- 	.owner		= THIS_MODULE,
- 	.read		= cs_char_read,
-@@ -1363,6 +1398,112 @@ static struct miscdevice cs_char_miscdev = {
- 	.fops	= &cs_char_fops
- };
- 
-+static struct snd_pcm_hardware my_pcm_hw = {
-+	.info = (SNDRV_PCM_INFO_MMAP |
-+		 SNDRV_PCM_INFO_INTERLEAVED |
-+		 SNDRV_PCM_INFO_BLOCK_TRANSFER |
-+		 SNDRV_PCM_INFO_MMAP_VALID),
-+	.formats          = SNDRV_PCM_FMTBIT_U8,
-+	.rates            = SNDRV_PCM_RATE_8000,
-+	.rate_min         = 8000,
-+	.rate_max         = 8000,
-+	.channels_min     = 1,
-+	.channels_max     = 1,
-+	.buffer_bytes_max = (32 * 48),
-+	.period_bytes_min = 48,
-+	.period_bytes_max = 48,
-+	.periods_min      = 1,
-+	.periods_max      = 32,
-+};
-+#define MAX_BUFFER 1024
-+
-+static int my_pcm_open(struct snd_pcm_substream *ss)
-+{
-+	ss->runtime->hw = my_pcm_hw;
-+	ss->private_data = &cs_char_data;
-+
-+	printk("my_pcm_open\n");
-+
-+	return 0;
-+}
-+
-+static int my_pcm_close(struct snd_pcm_substream *ss)
-+{
-+	ss->private_data = NULL;
-+
-+	printk("my_pcm_close\n");	
-+
-+	return 0;
-+}
-+
-+static int my_hw_params(struct snd_pcm_substream *ss,
-+			struct snd_pcm_hw_params *hw_params)
-+{
-+	return snd_pcm_lib_malloc_pages(ss,
-+					params_buffer_bytes(hw_params));
-+}
-+
-+static int my_hw_free(struct snd_pcm_substream *ss)
-+{
-+	return snd_pcm_lib_free_pages(ss);
-+}
-+
-+static int my_pcm_prepare(struct snd_pcm_substream *ss)
-+{
-+	return 0;
-+}
-+
-+static int my_pcm_trigger(struct snd_pcm_substream *ss,
-+			  int cmd)
-+{
-+	struct cs_char *my_dev = snd_pcm_substream_chip(ss);
-+	int ret = 0;
-+
-+	switch (cmd) {
-+	case SNDRV_PCM_TRIGGER_START:
-+		// Start the hardware capture
-+		break;
-+	case SNDRV_PCM_TRIGGER_STOP:
-+		// Stop the hardware capture
-+		break;
-+	default:
-+		ret = -EINVAL;
-+	}
-+
-+	return ret;
-+}
-+
-+static snd_pcm_uframes_t my_pcm_pointer(struct snd_pcm_substream *ss)
-+{
-+	struct cs_char *my_dev = snd_pcm_substream_chip(ss);
-+
-+//	return my_dev->hw_idx;
-+	return 0;
-+}
-+
-+static int my_pcm_copy(struct snd_pcm_substream *ss,
-+		       int channel, snd_pcm_uframes_t pos,
-+		       void __user *dst,
-+		       snd_pcm_uframes_t count)
-+{
-+	struct cs_char *my_dev = snd_pcm_substream_chip(ss);
-+
-+	//return copy_to_user(dst, my_dev->buffer + pos, count);
-+	return -EFAULT;
-+}
-+
-+static struct snd_pcm_ops my_pcm_ops = {
-+	.open      = my_pcm_open,
-+	.close     = my_pcm_close,
-+	.ioctl     = snd_pcm_lib_ioctl,
-+	.hw_params = my_hw_params,
-+	.hw_free   = my_hw_free,
-+	.prepare   = my_pcm_prepare,
-+	.trigger   = my_pcm_trigger,
-+	.pointer   = my_pcm_pointer,
-+	.copy      = my_pcm_copy,
-+};
-+
- static int cs_hsi_client_probe(struct device *dev)
- {
- 	int err = 0;
-@@ -1398,14 +1539,48 @@ static int cs_hsi_client_probe(struct device *dev)
- 		dev_err(dev, "Failed to register: %d\n", err);
- 
- 	printk("Registering sound card\n");
--#if 0
-+#if 1
- 	{
- 	struct snd_card *card;
- 	int ret;
--	ret = snd_card_create(SNDRV_DEFAULT_IDX1, "Nokia HSI modem",
-+	ret = snd_card_new(dev, SNDRV_DEFAULT_IDX1, "Nokia HSI modem",
- 			      THIS_MODULE, 0, &card);
- 	if (ret < 0)
- 		return ret;
-+
-+	strcpy(card->driver, "cmt_speech");
-+	strcpy(card->shortname, "HSI modem");
-+	sprintf(card->longname, "Nokia HSI modem");
-+	snd_card_set_dev(card, dev);
-+
-+	static struct snd_device_ops ops = { NULL };
-+	ret = snd_device_new(card, SNDRV_DEV_LOWLEVEL, dev, &ops);
-+	if (ret < 0)
-+		return ret;
-+
-+	struct snd_pcm *pcm;
-+	ret = snd_pcm_new(card, card->driver, 0, 0, 1,
-+			  &pcm);
-+	if (ret < 0)
-+		return ret;
-+
-+	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE,
-+			&my_pcm_ops);
-+	pcm->private_data = dev;
-+	pcm->info_flags = 0;
-+	strcpy(pcm->name, card->shortname);
-+
-+	ret = snd_pcm_lib_preallocate_pages_for_all(pcm,
-+						    SNDRV_DMA_TYPE_CONTINUOUS,
-+						    snd_dma_continuous_data(GFP_KERNEL),
-+						    MAX_BUFFER, MAX_BUFFER);
-+	if (ret < 0)
-+		return ret;
-+	
-+	if ((ret = snd_card_register(card)) < 0)
-+		return ret;
-+
-+	cs_char_data.card = card;
- 	}
- #endif
- 
-@@ -1417,6 +1592,8 @@ static int cs_hsi_client_remove(struct device *dev)
- 	struct cs_hsi_iface *hi;
- 
- 	dev_dbg(dev, "hsi_client_remove\n");
-+
-+	snd_card_free(cs_char_data.card);
- 	misc_deregister(&cs_char_miscdev);
- 	spin_lock_bh(&cs_char_data.lock);
- 	hi = cs_char_data.hi;
+Fixup patch:
 
 
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+
+Subject: ambient_caps: Set inheritable bits too
+
+We were not setting the inheritable bits as they ought to be set.
+
+Signed-off-by: Christoph Lameter <cl@linux.com>
+
+Index: linux/security/commoncap.c
+===================================================================
+--- linux.orig/security/commoncap.c	2015-03-05 09:22:32.123047869 -0600
++++ linux/security/commoncap.c	2015-03-05 09:22:32.119048001 -0600
+@@ -461,6 +461,8 @@ static int get_file_caps(struct linux_bi
+ 				 */
+ 				bprm->cred->cap_permitted =
+ 					current_cred()->cap_ambient;
++				bprm->cred->cap_inheritable =
++					current_cred()->cap_ambient;
+ 				*effective = true;
+ 			}
+ 		}
