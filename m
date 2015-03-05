@@ -1,7 +1,7 @@
 From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: [PATCH 20/21] userfaultfd: UFFDIO_REMAP
-Date: Thu,  5 Mar 2015 18:18:03 +0100
-Message-ID: <1425575884-2574-21-git-send-email-aarcange@redhat.com>
+Subject: [PATCH 21/21] userfaultfd: add userfaultfd_wp mm helpers
+Date: Thu,  5 Mar 2015 18:18:04 +0100
+Message-ID: <1425575884-2574-22-git-send-email-aarcange@redhat.com>
 References: <1425575884-2574-1-git-send-email-aarcange@redhat.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1425575884-2574-1-git-send-email-aarcange@redhat.com>
@@ -10,87 +10,42 @@ To: qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, li
 Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave@sr71.net>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, Sasha Levin <sasha.levin@oracle.com>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Christopher Covington <cov@codeaurora.org>, Johannes Weiner <hannes@cmpxchg.org>, Robert Love <rlove@google.com>, Dmitry Adamushko <dmitry.adamushko@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-This remap ioctl allows to atomically move a page in or out of an
-userfaultfd address space. It's more expensive than "copy" (and of
-course more expensive than "zerofill") as it requires a TLB flush on
-the source range for each ioctl, which is an expensive operation on
-SMP. Especially if copying only a few pages at time, copying without
-TLB flush is faster.
+These helpers will be used to know if to call handle_userfault() during
+wrprotect faults in order to deliver the wrprotect faults to userland.
 
 Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
 ---
- fs/userfaultfd.c | 51 +++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 51 insertions(+)
+ include/linux/userfaultfd_k.h | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-index 6230f22..b4c7f25 100644
---- a/fs/userfaultfd.c
-+++ b/fs/userfaultfd.c
-@@ -892,6 +892,54 @@ out:
- 	return ret;
+diff --git a/include/linux/userfaultfd_k.h b/include/linux/userfaultfd_k.h
+index 3c39a4f..81f0d11 100644
+--- a/include/linux/userfaultfd_k.h
++++ b/include/linux/userfaultfd_k.h
+@@ -65,6 +65,11 @@ static inline bool userfaultfd_missing(struct vm_area_struct *vma)
+ 	return vma->vm_flags & VM_UFFD_MISSING;
  }
  
-+static int userfaultfd_remap(struct userfaultfd_ctx *ctx,
-+			     unsigned long arg)
++static inline bool userfaultfd_wp(struct vm_area_struct *vma)
 +{
-+	__s64 ret;
-+	struct uffdio_remap uffdio_remap;
-+	struct uffdio_remap __user *user_uffdio_remap;
-+	struct userfaultfd_wake_range range;
-+
-+	user_uffdio_remap = (struct uffdio_remap __user *) arg;
-+
-+	ret = -EFAULT;
-+	if (copy_from_user(&uffdio_remap, user_uffdio_remap,
-+			   /* don't copy "remap" and "wake" last field */
-+			   sizeof(uffdio_remap)-sizeof(__s64)*2))
-+		goto out;
-+
-+	ret = validate_range(ctx->mm, uffdio_remap.dst, uffdio_remap.len);
-+	if (ret)
-+		goto out;
-+	ret = validate_range(current->mm, uffdio_remap.src, uffdio_remap.len);
-+	if (ret)
-+		goto out;
-+	ret = -EINVAL;
-+	if (uffdio_remap.mode & ~(UFFDIO_REMAP_MODE_ALLOW_SRC_HOLES|
-+				  UFFDIO_REMAP_MODE_DONTWAKE))
-+		goto out;
-+
-+	ret = remap_pages(ctx->mm, current->mm,
-+			  uffdio_remap.dst, uffdio_remap.src,
-+			  uffdio_remap.len, uffdio_remap.mode);
-+	if (unlikely(put_user(ret, &user_uffdio_remap->remap)))
-+		return -EFAULT;
-+	if (ret < 0)
-+		goto out;
-+	/* len == 0 would wake all */
-+	BUG_ON(!ret);
-+	range.len = ret;
-+	if (!(uffdio_remap.mode & UFFDIO_REMAP_MODE_DONTWAKE)) {
-+		range.start = uffdio_remap.dst;
-+		ret = wake_userfault(ctx, &range);
-+		if (unlikely(put_user(ret, &user_uffdio_remap->wake)))
-+			return -EFAULT;
-+	}
-+	ret = range.len == uffdio_remap.len ? 0 : -EAGAIN;
-+out:
-+	return ret;
++	return vma->vm_flags & VM_UFFD_WP;
 +}
 +
- /*
-  * userland asks for a certain API version and we return which bits
-  * and ioctl commands are implemented in this kernel for such API
-@@ -955,6 +1003,9 @@ static long userfaultfd_ioctl(struct file *file, unsigned cmd,
- 	case UFFDIO_ZEROPAGE:
- 		ret = userfaultfd_zeropage(ctx, arg);
- 		break;
-+	case UFFDIO_REMAP:
-+		ret = userfaultfd_remap(ctx, arg);
-+		break;
- 	}
- 	return ret;
+ static inline bool userfaultfd_armed(struct vm_area_struct *vma)
+ {
+ 	return vma->vm_flags & (VM_UFFD_MISSING | VM_UFFD_WP);
+@@ -92,6 +97,11 @@ static inline bool userfaultfd_missing(struct vm_area_struct *vma)
+ 	return false;
  }
+ 
++static inline bool userfaultfd_wp(struct vm_area_struct *vma)
++{
++	return false;
++}
++
+ static inline bool userfaultfd_armed(struct vm_area_struct *vma)
+ {
+ 	return false;
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
