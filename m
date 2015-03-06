@@ -1,40 +1,59 @@
 From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH 14/14] MAINTAINERS: Add entry for STM32 MCUs
-Date: Fri, 6 Mar 2015 10:55:08 +0100
-Message-ID: <CALszF6Bz978KA1DAxcKtmA55X=vJWEcVDa9fLOF=uNatYS+b+Q@mail.gmail.com>
-References: <1423763164-5606-1-git-send-email-mcoquelin.stm32@gmail.com>
-	<1423763164-5606-15-git-send-email-mcoquelin.stm32@gmail.com>
-	<CACRpkdaM0BwMcq77MO=0-dVaqwobD5Pt+11j7ZZ4c3yKM=AkeA@mail.gmail.com>
+Subject: Re: [PATCH v2 11/18] pinctrl: Add pinctrl driver for STM32 MCUs
+Date: Fri, 6 Mar 2015 10:57:08 +0100
+Message-ID: <CALszF6C2qESwxmZ=q+QKdAooQnttpv49yheAiWVUEaGWeGSubA@mail.gmail.com>
+References: <1424455277-29983-1-git-send-email-mcoquelin.stm32@gmail.com>
+	<1424455277-29983-12-git-send-email-mcoquelin.stm32@gmail.com>
+	<CACRpkdbuJ5B_GwvRXax2Y4V37ihh5e6H7=2no0fYTMZPXwDdCw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <CACRpkdaM0BwMcq77MO=0-dVaqwobD5Pt+11j7ZZ4c3yKM=AkeA@mail.gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <CACRpkdbuJ5B_GwvRXax2Y4V37ihh5e6H7=2no0fYTMZPXwDdCw@mail.gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
 To: Linus Walleij <linus.walleij@linaro.org>
-Cc: Jonathan Corbet <corbet@lwn.net>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Philipp Zabel <p.zabel@pengutronix.de>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees Cook <keescook@chromium.org>, Michal
+Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-2015-03-06 10:03 GMT+01:00 Linus Walleij <linus.walleij@linaro.org>:
-> On Thu, Feb 12, 2015 at 6:46 PM, Maxime Coquelin
+2015-03-06 10:24 GMT+01:00 Linus Walleij <linus.walleij@linaro.org>:
+> On Fri, Feb 20, 2015 at 7:01 PM, Maxime Coquelin
 > <mcoquelin.stm32@gmail.com> wrote:
 >
->> Add a MAINTAINER entry covering all STM32 machine and drivers files.
+>> This driver adds pinctrl and GPIO support to STMicrolectronic's
+>> STM32 family of MCUs.
+>>
+>> Pin muxing and GPIO handling have been tested on STM32F429
+>> based Discovery board.
 >>
 >> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
 >
 > (...)
->> +F:     drivers/clocksource/arm_system_timer.c
+>> +config PINCTRL_STM32
+>> +       bool "STMicroelectronics STM32 pinctrl driver"
+>> +       depends on OF
+>> +       depends on ARCH_STM32 || COMPILE_TEST
+>> +       select PINMUX
+>> +       select PINCONF
+>> +       select GPIOLIB_IRQCHIP
+>> +       help
+>> +         This selects the device tree based generic pinctrl driver for STM32.
 >
-> Is that all? And that is not even a STM32 specific driver.
+> Good start! Especially that you use GPIOLIB_IRQCHIP.
+>
+> But this (as discussed earlier) should select GENERIC_PINCONF
+>
+> Stopping review here so you can reengineer it a bit using GENERIC_PINCONF
+> for next submission.
+>
+> Also think about pinmux in single registers, whether you want to do this
+> with a single value for a register or using strings to identify groups
+> and functions.
 
-For the ARM System Timer, I'm fine to add a new entry.
-Or remove the line, and let the maintain-ship to clocksource maintainers.
+Thanks for the review.
+I will digest all this, and come back with another solution :)
 
-All the STM32 files are covered by this line:
-+N:     stm32
-
-Thanks,
+Best regards,
 Maxime
+
 >
 > Yours,
 > Linus Walleij
