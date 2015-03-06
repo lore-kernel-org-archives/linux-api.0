@@ -1,223 +1,42 @@
-From: Eric Blake <eblake@redhat.com>
-Subject: Re: [Qemu-devel] [PATCH 02/21] userfaultfd: linux/Documentation/vm/userfaultfd.txt
-Date: Fri, 06 Mar 2015 08:39:30 -0700
-Message-ID: <54F9CA32.3050407@redhat.com>
-References: <1425575884-2574-1-git-send-email-aarcange@redhat.com> <1425575884-2574-3-git-send-email-aarcange@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="noF7tnHsD61G0LuwSVKVHrkMBnWhfn9Jv"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1425575884-2574-3-git-send-email-aarcange@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrea Arcangeli <aarcange@redhat.com>, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Android Kernel Team <kernel-team@android.com>
-Cc: Robert Love <rlove@google.com>, Dave Hansen <dave@sr71.net>, Jan Kara <jack@suse.cz>, Neil Brown <neilb@suse.de>, Stefan Hajnoczi <stefanha@gmail.com>, Andrew Jones <drjones@redhat.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, KOSAKI Motohiro <kosaki.motohiro@gmail.com>, Michel Lespinasse <walken@google.com>, Taras Glek <tglek@mozilla.com>, zhang.zhanghailiang@huawei.com, Pavel Emelyanov <xemul@parallels.com>, Hugh Dickins <hughd@google.com>, Mel Gorman <mgorman@suse.de>, Sasha Levin <sasha.levin@oracle.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>, Andres Lagar-Cavilla <andreslc@google.com>, Christopher Covington <cov@codeaurora.org>, Anthony Liguori <anthony@codemonkey.ws>, Paolo Bonzini <pbonzini@redh>
+From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] capabilities: Ambient capability set V2
+Date: Fri, 6 Mar 2015 09:47:54 -0600 (CST)
+Message-ID: <alpine.DEB.2.11.1503060944570.8136@gentwo.org>
+References: <alpine.DEB.2.11.1502261612370.8994@gentwo.org> <20150301233359.GA22196@mail.hallyn.com> <alpine.DEB.2.11.1503050917380.31001@gentwo.org> <20150305171326.GA14998@mail.hallyn.com> <alpine.DEB.2.11.1503051235300.32373@gentwo.org>
+ <CALCETrUVrfPBpb69WFyptzFoJ8Sx4LwhhjirVx=KQ11ofCcwYg@mail.gmail.com>
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-2063140391-1425656874=:8136"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrUVrfPBpb69WFyptzFoJ8Sx4LwhhjirVx=KQ11ofCcwYg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---noF7tnHsD61G0LuwSVKVHrkMBnWhfn9Jv
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-On 03/05/2015 10:17 AM, Andrea Arcangeli wrote:
-> Add documentation.
->=20
-> Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
-> ---
->  Documentation/vm/userfaultfd.txt | 97 ++++++++++++++++++++++++++++++++=
-++++++++
->  1 file changed, 97 insertions(+)
->  create mode 100644 Documentation/vm/userfaultfd.txt
+--8323329-2063140391-1425656874=:8136
+Content-Type: TEXT/PLAIN; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
-Just a grammar review (no analysis of technical correctness)
+On Thu, 5 Mar 2015, Andy Lutomirski wrote:
 
->=20
-> diff --git a/Documentation/vm/userfaultfd.txt b/Documentation/vm/userfa=
-ultfd.txt
-> new file mode 100644
-> index 0000000..2ec296c
-> --- /dev/null
-> +++ b/Documentation/vm/userfaultfd.txt
-> @@ -0,0 +1,97 @@
-> +=3D Userfaultfd =3D
-> +
-> +=3D=3D Objective =3D=3D
-> +
-> +Userfaults allow to implement on demand paging from userland and more
+> > Yes due to the library issues.
+>
+> You can't LD_PRELOAD and fP together.  And I'm still unconvinced that
+> ambient caps can ever be safe in conjunction with fP.  I'll grill you
+> next week on what you're trying to do that makes you want this :)
 
-s/to implement/the implementation of/
-and maybe: s/on demand/on-demand/
+>From the ld.so manpage:
 
-> +generally they allow userland to take control various memory page
-> +faults, something otherwise only the kernel code could do.
-> +
-> +For example userfaults allows a proper and more optimal implementation=
+    LD_PRELOAD
+              A whitespace-separated list of additional, user-specified, ELF shared
+              libraries to be loaded before all others.  This can be used to selec‐
+              tively override functions in other shared libraries.  For setuid/set‐
+              gid ELF binaries, only libraries in the standard  search  directories
+              that are also setgid will be loaded.
 
-> +of the PROT_NONE+SIGSEGV trick.
-> +
-> +=3D=3D Design =3D=3D
-> +
-> +Userfaults are delivered and resolved through the userfaultfd syscall.=
+So this mechanism has not been made to work for binaries with caps? We
+have to keep using setuid?
 
-> +
-> +The userfaultfd (aside from registering and unregistering virtual
-> +memory ranges) provides for two primary functionalities:
-
-s/provides for/provides/
-
-> +
-> +1) read/POLLIN protocol to notify an userland thread of the faults
-
-s/an userland/a userland/ (remember, 'a unicorn gets an umbrella' - if
-the 'u' is pronounced 'you' the correct article is 'a')
-
-> +   happening
-> +
-> +2) various UFFDIO_* ioctls that can mangle over the virtual memory
-> +   regions registered in the userfaultfd that allows userland to
-> +   efficiently resolve the userfaults it receives via 1) or to mangle
-> +   the virtual memory in the background
-
-maybe: s/mangle/manage/2
-
-> +
-> +The real advantage of userfaults if compared to regular virtual memory=
-
-> +management of mremap/mprotect is that the userfaults in all their
-> +operations never involve heavyweight structures like vmas (in fact the=
-
-> +userfaultfd runtime load never takes the mmap_sem for writing).
-> +
-> +Vmas are not suitable for page(or hugepage)-granular fault tracking
-
-s/page(or hugepage)-granular/page- (or hugepage-) granular/
-
-> +when dealing with virtual address spaces that could span
-> +Terabytes. Too many vmas would be needed for that.
-> +
-> +The userfaultfd once opened by invoking the syscall, can also be
-> +passed using unix domain sockets to a manager process, so the same
-> +manager process could handle the userfaults of a multitude of
-> +different process without them being aware about what is going on
-
-s/process/processes/
-
-> +(well of course unless they later try to use the userfaultfd themself
-
-s/themself/themselves/
-
-> +on the same region the manager is already tracking, which is a corner
-> +case that would currently return -EBUSY).
-> +
-> +=3D=3D API =3D=3D
-> +
-> +When first opened the userfaultfd must be enabled invoking the
-> +UFFDIO_API ioctl specifying an uffdio_api.api value set to UFFD_API
-
-s/an uffdio/a uffdio/
-
-> +which will specify the read/POLLIN protocol userland intends to speak
-> +on the UFFD. The UFFDIO_API ioctl if successful (i.e. if the requested=
-
-> +uffdio_api.api is spoken also by the running kernel), will return into=
-
-> +uffdio_api.bits and uffdio_api.ioctls two 64bit bitmasks of
-> +respectively the activated feature bits below PAGE_SHIFT in the
-> +userfault addresses returned by read(2) and the generic ioctl
-> +available.
-> +
-> +Once the userfaultfd has been enabled the UFFDIO_REGISTER ioctl should=
-
-> +be invoked (if present in the returned uffdio_api.ioctls bitmask) to
-> +register a memory range in the userfaultfd by setting the
-> +uffdio_register structure accordingly. The uffdio_register.mode
-> +bitmask will specify to the kernel which kind of faults to track for
-> +the range (UFFDIO_REGISTER_MODE_MISSING would track missing
-> +pages). The UFFDIO_REGISTER ioctl will return the
-> +uffdio_register.ioctls bitmask of ioctls that are suitable to resolve
-> +userfaults on the range reigstered. Not all ioctls will necessarily be=
-
-
-s/reigstered/registered/
-
-> +supported for all memory types depending on the underlying virtual
-> +memory backend (anonymous memory vs tmpfs vs real filebacked
-> +mappings).
-> +
-> +Userland can use the uffdio_register.ioctls to mangle the virtual
-
-maybe s/mangle/manage/
-
-> +address space in the background (to add or potentially also remove
-> +memory from the userfaultfd registered range). This means an userfault=
-
-
-s/an/a/
-
-> +could be triggering just before userland maps in the background the
-> +user-faulted page. To avoid POLLIN resulting in an unexpected blocking=
-
-> +read (if the UFFD is not opened in nonblocking mode in the first
-> +place), we don't allow the background thread to wake userfaults that
-> +haven't been read by userland yet. If we would do that likely the
-> +UFFDIO_WAKE ioctl could be dropped. This may change in the future
-> +(with a UFFD_API protocol bumb combined with the removal of the
-
-s/bumb/bump/
-
-> +UFFDIO_WAKE ioctl) if it'll be demonstrated that it's a valid
-> +optimization and worthy to force userland to use the UFFD always in
-> +nonblocking mode if combined with POLLIN.
-> +
-> +userfaultfd is also a generic enough feature, that it allows KVM to
-> +implement postcopy live migration (one form of memory externalization
-> +consisting of a virtual machine running with part or all of its memory=
-
-> +residing on a different node in the cloud) without having to modify a
-> +single line of KVM kernel code. Guest async page faults, FOLL_NOWAIT
-> +and all other GUP features works just fine in combination with
-> +userfaults (userfaults trigger async page faults in the guest
-> +scheduler so those guest processes that aren't waiting for userfaults
-> +can keep running in the guest vcpus).
-> +
-> +The primary ioctl to resolve userfaults is UFFDIO_COPY. That
-> +atomically copies a page into the userfault registered range and wakes=
-
-> +up the blocked userfaults (unless uffdio_copy.mode &
-> +UFFDIO_COPY_MODE_DONTWAKE is set). Other ioctl works similarly to
-> +UFFDIO_COPY.
->=20
->=20
->=20
-
---=20
-Eric Blake   eblake redhat com    +1-919-301-3266
-Libvirt virtualization library http://libvirt.org
-
-
---noF7tnHsD61G0LuwSVKVHrkMBnWhfn9Jv
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-Comment: Public key at http://people.redhat.com/eblake/eblake.gpg
-Comment: Using GnuPG with Thunderbird - http://www.enigmail.net/
-
-iQEcBAEBCAAGBQJU+coyAAoJEKeha0olJ0NqrXsIAILrBkZemsV+IvQTydQFd1vT
-aQ0XfU5RHlHZ5YEunNWrHmOGJDkSlC+VKXq6FwGiLym3UwW66BGw8AX3hQQr3TKP
-oUOoSWrmtwqy26zIP5dUJNQUkodfKBMxe0NISqRx6D55VkTSdThXGWlhzyjApgW6
-lsnvoNQi68eWApIxiXO2m+qSpSfj27sVxhm6haQywKFbtRqIEb+jNKSp+EZB7DOr
-eCbfgztTgPC2VPpraMWYDRi6DFHCBd4k+f+xt3CqTKADgN4FRBVj0sL2razi3Dw5
-1s21Db3zFEiNVWc18273YZALkjAU1ZYMW3fHzb4aXOR/TweFuIZYFjCGsrdFsgg=
-=VRG0
------END PGP SIGNATURE-----
-
---noF7tnHsD61G0LuwSVKVHrkMBnWhfn9Jv--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+--8323329-2063140391-1425656874=:8136--
