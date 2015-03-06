@@ -1,52 +1,29 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH] capabilities: Ambient capability set V2
-Date: Thu, 5 Mar 2015 15:07:26 -0800
-Message-ID: <CALCETrUVrfPBpb69WFyptzFoJ8Sx4LwhhjirVx=KQ11ofCcwYg@mail.gmail.com>
-References: <alpine.DEB.2.11.1502261612370.8994@gentwo.org>
- <20150301233359.GA22196@mail.hallyn.com> <alpine.DEB.2.11.1503050917380.31001@gentwo.org>
- <20150305171326.GA14998@mail.hallyn.com> <alpine.DEB.2.11.1503051235300.32373@gentwo.org>
+From: Linus Walleij <linus.walleij@linaro.org>
+Subject: Re: [PATCH 07/14] clockevent: Add STM32 Timer driver
+Date: Fri, 6 Mar 2015 09:57:12 +0100
+Message-ID: <CACRpkdZ4MeAR14W+Jr6GYY+oeVJZgKEu+Sr=OXriUPAC43ur-Q@mail.gmail.com>
+References: <1423763164-5606-1-git-send-email-mcoquelin.stm32@gmail.com>
+	<1423763164-5606-8-git-send-email-mcoquelin.stm32@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.11.1503051235300.32373@gentwo.org>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Christoph Lameter <cl@linux.com>
-Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Andrew Morton <akpm@linuxfoundation.org>, LSM List <linux-security-module@vger.kernel.org>, "Andrew G. Morgan" <morgan@kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.vnet.ibm.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, "Serge E. Hallyn" <serge@hallyn.com>, Markku Savela <msa@moth.iki.fi>, Linux API <linux-api@vger.kernel.org>, Jonathan Corbet <corbet@lwn.net>
+Return-path: <linux-gpio-owner@vger.kernel.org>
+In-Reply-To: <1423763164-5606-8-git-send-email-mcoquelin.stm32@gmail.com>
+Sender: linux-gpio-owner@vger.kernel.org
+To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Cc: Jonathan Corbet <corbet@lwn.net>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Philipp Zabel <p.zabel@pengutronix.de>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees Cook <keescook@chromium.org>, Michal
 List-Id: linux-api@vger.kernel.org
 
-On Mar 5, 2015 10:41 AM, "Christoph Lameter" <cl@linux.com> wrote:
->
-> On Thu, 5 Mar 2015, Serge E. Hallyn wrote:
->
-> > > >
-> > > > So I'd say drop this change ^
-> > >
-> > > Then the ambient caps get ignored for a executables that have capabilities
-> > > seton the file?
-> >
-> > Yes.  Those are assumed to already know what they're doing.
->
-> Do they? What if there is a LD_PRELOAD library that redirects socket calls
-> and that needs raw device access (there are actually a number of software
-> packages like that to reduce the latency of network I/O. See for example
-> Solarflare's software products and the current rsocket libary in OFED.
-> There are cap issues if the rsocket library should be made useful for
-> Ethernet instead of infiniband).
->
-> > Why?  Do you foresee cases where a file that has fP set needs capabilities
-> > that aren't in its fP?
->
-> Yes due to the library issues.
+On Thu, Feb 12, 2015 at 6:45 PM, Maxime Coquelin
+<mcoquelin.stm32@gmail.com> wrote:
 
-You can't LD_PRELOAD and fP together.  And I'm still unconvinced that
-ambient caps can ever be safe in conjunction with fP.  I'll grill you
-next week on what you're trying to do that makes you want this :)
-
---Andy
-
+> STM32 MCUs feature 16 and 32 bits general purpose timers with prescalers.
+> The drivers detects whether the time is 16 or 32 bits, and applies a
+> 1024 prescaler value if it is 16 bits.
 >
-> > It seems more likely that they'll risk misbehaving due to an unexpected set
-> > of caps.
->
-> The userspace driver code in the library wont work since it does not have
-> the caps to access the raw device registers.
+> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+
+This is a nice driver.
+Reviewed-by: Linus Walleij <linus.walleij@linaro.org>
+
+Yours,
+Linus Walleij
