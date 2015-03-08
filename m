@@ -1,83 +1,50 @@
-From: Paul Bolle <pebolle@tiscali.nl>
-Subject: Re: [PATCH v0 01/11] stm class: Introduce an abstraction for System
- Trace Module devices
-Date: Sat, 07 Mar 2015 23:26:32 +0100
-Message-ID: <1425767192.2300.37.camel@x220>
-References: <1425728161-164217-1-git-send-email-alexander.shishkin@linux.intel.com>
-	 <1425728161-164217-2-git-send-email-alexander.shishkin@linux.intel.com>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH v5 tip 0/7] tracing: attach eBPF programs to kprobes
+Date: Sat, 07 Mar 2015 16:21:19 -0800
+Message-ID: <54FB95FF.3060502@plumgrid.com>
+References: <1425252465-27527-1-git-send-email-ast@plumgrid.com>	<CAMEtUuzOQqyXgZaytwOPxAfn5ucu08HjAMrFUgeSaLRVg9E0rg@mail.gmail.com>	<20150304203316.GA7142@gmail.com>	<20150304154824.5f165c6d@gandalf.local.home> <20150306200938.6a6387c0@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1425728161-164217-2-git-send-email-alexander.shishkin@linux.intel.com>
+In-Reply-To: <20150306200938.6a6387c0@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexander Shishkin <alexander.shishkin@linux.intel.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-kernel@vger.kernel.org, Pratik Patel <pratikp@codeaurora.org>, mathieu.poirier@linaro.org, peter.lachner@intel.com, norbert.schulz@intel.com, keven.boell@intel.com, yann.fouassier@intel.com, laurent.fert@intel.com, linux-api@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>
+Cc: Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Linux API <linux-api@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, 2015-03-07 at 13:35 +0200, Alexander Shishkin wrote:
->  Documentation/ABI/testing/configfs-stp-policy    |  44 ++
+On 3/6/15 5:09 PM, Steven Rostedt wrote:
+> On Wed, 4 Mar 2015 15:48:24 -0500
+> Steven Rostedt <rostedt@goodmis.org> wrote:
+>
+>> On Wed, 4 Mar 2015 21:33:16 +0100
+>> Ingo Molnar <mingo@kernel.org> wrote:
+>>
+>>>
+>>> * Alexei Starovoitov <ast@plumgrid.com> wrote:
+>>>
+>>>> On Sun, Mar 1, 2015 at 3:27 PM, Alexei Starovoitov <ast@plumgrid.com> wrote:
+>>>>> Peter, Steven,
+>>>>> I think this set addresses everything we've discussed.
+>>>>> Please review/ack. Thanks!
+>>>>
+>>>> icmp echo request
+>>>
+>>> I'd really like to have an Acked-by from Steve (propagated into the
+>>> changelogs) before looking at applying these patches.
+>>
+>> I'll have to look at this tomorrow. I'm a bit swamped with other things
+>> at the moment :-/
+>>
+>
+> Just an update. I started looking at it but then was pulled off to do
+> other things. I'll make this a priority next week. Sorry for the delay.
 
-git am whined about this file when I tried to apply this patch:
-    Applying: stm class: Introduce an abstraction for System Trace Module devices
-    [...]/.git/rebase-apply/patch:77: new blank line at EOF.
-
->  Documentation/ABI/testing/sysfs-class-stm        |  14 +
->  Documentation/ABI/testing/sysfs-class-stm_source |  11 +
->  Documentation/trace/stm.txt                      |  77 +++
->  drivers/Kconfig                                  |   2 +
->  drivers/Makefile                                 |   1 +
->  drivers/stm/Kconfig                              |   8 +
->  drivers/stm/Makefile                             |   3 +
->  drivers/stm/core.c                               | 839 +++++++++++++++++++++++
->  drivers/stm/policy.c                             | 470 +++++++++++++
->  drivers/stm/stm.h                                |  77 +++
->  include/linux/stm.h                              |  87 +++
->  include/uapi/linux/stm.h                         |  47 ++
-
-> --- /dev/null
-> +++ b/drivers/stm/Kconfig
-> @@ -0,0 +1,8 @@
-> +config STM
-> +	tristate "System Trace Module devices"
-> +	help
-> +	  A System Trace Module (STM) is a device exporting data in System
-> +	  Trace Protocol (STP) format as defined by MIPI STP standards.
-> +	  Examples of such devices are Intel Trace Hub and Coresight STM.
-> +
-> +	  Say Y here to enable System Trace Module device support.
-> diff --git a/drivers/stm/Makefile b/drivers/stm/Makefile
-> new file mode 100644
-> index 0000000000..adec701649
-> --- /dev/null
-> +++ b/drivers/stm/Makefile
-> @@ -0,0 +1,3 @@
-> +obj-$(CONFIG_STM)	+= stm_core.o
-> +
-> +stm_core-y		:= core.o policy.o
-
-I tried to compile this as a module:
-    $ make -C ../.. M=$PWD CONFIG_STM=m stm_core.ko
-    make: Entering directory `[...]'
-      LD [M]  [...]/drivers/stm/stm_core.o
-    [...]/drivers/stm/policy.o: In function `stp_configfs_init':
-    policy.c:(.text+0x5f0): multiple definition of `init_module'
-    [...]/drivers/stm/core.o:core.c:(.init.text+0x0): first defined here
-    make[1]: *** [[...]/drivers/stm/stm_core.o] Error 1
-    make: *** [stm_core.ko] Error 2
-    make: Leaving directory `[...]'
-
-I think that's because
-    postcore_initcall(stm_core_init);
-
-in core.c becomes
-    module_init(stm_core_init);
-
-if this driver is compiled as a module. And that will clash with
-    module_init(stp_configfs_init);
-
-in policy.c. Am I missing something obvious or should STM not be a
-tristate symbol?
-
-
-Paul Bolle
+There is no rush. Please let me know if I need to clarify anything.
+One thing I just caught which I'm planning to address in the follow on
+patch is missing 'recursion check'. Since attaching programs to kprobes
+means that root may create loops by adding a kprobe somewhere in
+the call chain invoked from bpf program. So far I'm thinking to do
+simple stack_trace_call()-like check. I don't think it's a blocker
+for this set, but if I'm done coding recursion soon, I'll just
+roll it in and respin this set :)
