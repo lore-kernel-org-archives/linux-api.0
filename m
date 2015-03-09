@@ -1,76 +1,50 @@
 From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH 2/9] selftests: Add install target
-Date: Mon, 09 Mar 2015 16:29:20 -0600
-Message-ID: <54FE1EC0.6000201@osg.samsung.com>
-References: <1425358302-16680-1-git-send-email-mpe@ellerman.id.au> <1425358302-16680-2-git-send-email-mpe@ellerman.id.au> <20150305185326.GA30620@codemonkey.org.uk> <54FDAC4A.9080703@osg.samsung.com>
+Subject: Re: [PATCH] kbuild: Don't pass -rR to selftest makefiles
+Date: Mon, 09 Mar 2015 16:49:27 -0600
+Message-ID: <54FE2377.9040709@osg.samsung.com>
+References: <1425464362-28876-1-git-send-email-mpe@ellerman.id.au> <54FDAE28.6050801@osg.samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54FDAC4A.9080703-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <54FDAE28.6050801-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Jones <davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, mmarek-AlSwsSmVLrQ@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/09/2015 08:20 AM, Shuah Khan wrote:
-> On 03/05/2015 11:53 AM, Dave Jones wrote:
->> On Tue, Mar 03, 2015 at 03:51:35PM +1100, Michael Ellerman wrote:
->>  > This adds make install support to selftests. The basic usage is:
->>  > 
->>  > $ cd tools/testing/selftests
->>  > $ make install
->>  > 
->>  > That installs into tools/testing/selftests/install, which can then be
->>  > copied where ever necessary.
->>  > 
->>  > The install destination is also configurable using eg:
->>  > 
->>  > $ INSTALL_PATH=/mnt/selftests make install
+On 03/09/2015 08:28 AM, Shuah Khan wrote:
+> On 03/04/2015 03:19 AM, Michael Ellerman wrote:
+>> The makefiles under tools/testing/selftests are not real kbuild
+>> makefiles, they are regular stand alone makefiles. As such they *do*
+>> want all the standard implicit rules and variables defined.
 >>
->>  ...
+>> So before calling those makefiles, filter -rR out of MAKEFLAGS.
 >>
->>  > +	@# Ask all targets to emit their test scripts
->>  > +	echo "#!/bin/bash\n\n" > $(ALL_SCRIPT)
+>> Without this not all the selftests are built correctly when called v=
+ia
+>> the top-level Makefile.
 >>
->> $ ./all.sh 
->> -bash: ./all.sh: /bin/bash\n\n: bad interpreter: No such file or directory
->>
->> Removing the \n\n fixes it.
->>
->>  > +		echo "cd \$$ROOT\n" >> $(ALL_SCRIPT); \
->>
->> ditto
->>
->> 	Dave
-> 
-> Michael,
-> 
-> Could you please fix these problems and send the patch.
-> 
+>> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+>=20
+> Hi Michal,
+>=20
+> Could you please take this patch in your tree.
+>=20
+> Acked-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+>=20
 
-Michael,
+I am changing this to a Nack. This is not fully cooked.
+I am seeing new failures on some tests.
 
-Did you happen to run run_kselftest.sh from the install
-directory to make sure all the dependent executables
-are installed? You are missing a few required dependencies.
-efivars test for example.
-
-Please run kselftest_install.sh I sent out for review and
-compare the following:
-
-- contents of install directory created with your patch vs.
-  my kselftest_install.sh tool
-- Compare your run_kselftest.sh run with the one that gets
-  generated with my kselftest_install.sh tool
-
-General rule is all tests that get run when run_tests target
-is run should run from the install directory using the
-run_kselftest.sh generated during install.
+gcc: error: elf_x86_64: No such file or directory
+gcc: error: unrecognized command line option =91-m=92
 
 thanks,
 -- Shuah
 
--- 
+
+--=20
 Shuah Khan
 Sr. Linux Kernel Developer
 Open Source Innovation Group
