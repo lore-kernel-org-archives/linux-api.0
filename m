@@ -1,91 +1,42 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCHv3 man-pages 3/3] open.2: describe O_BENEATH flag
-Date: Mon, 09 Mar 2015 15:32:54 +0100
-Message-ID: <54FDAF16.2030407@gmail.com>
-References: <1425909612-28034-1-git-send-email-drysdale@google.com> <1425909612-28034-4-git-send-email-drysdale@google.com>
+From: "Serge E. Hallyn" <serge@hallyn.com>
+Subject: Re: [PATCH] capabilities: Ambient capability set V2
+Date: Mon, 9 Mar 2015 09:36:53 -0500
+Message-ID: <20150309143653.GA29594@mail.hallyn.com>
+References: <alpine.DEB.2.11.1503050917380.31001@gentwo.org>
+ <20150305171326.GA14998@mail.hallyn.com>
+ <alpine.DEB.2.11.1503060948460.8207@gentwo.org>
+ <20150306163443.GA28386@mail.hallyn.com>
+ <alpine.DEB.2.11.1503061244130.9804@gentwo.org>
+ <CALCETrVQF22rkZFD8VAW_xrVQOjwpej6W4TJS9gbN9B431TEKg@mail.gmail.com>
+ <20150306200838.GA29198@mail.hallyn.com>
+ <alpine.DEB.2.11.1503070907330.15173@gentwo.org>
+ <20150307213554.GB9833@mail.hallyn.com>
+ <alpine.DEB.2.11.1503090704230.25725@gentwo.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1425909612-28034-4-git-send-email-drysdale@google.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.11.1503090704230.25725@gentwo.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>, linux-kernel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Kees Cook <keescook@chromium.org>, "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: mtk.manpages@gmail.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Meredydd Luff <meredydd@senatehouse.org>, Will Drewry <wad@chromium.org>, Jorge Lucangeli Obes <jorgelo@google.com>, Ricky Zhou <rickyz@google.com>, Lee Campbell <leecam@google.com>, Julien Tinnes <jln@google.com>, Mike Depinet <mdepinet@google.com>, James Morris <james.l.morris@oracle.com>, Andy Lutomirski <luto@amacapital.net>, Paolo Bonzini <pbonzini@redhat.com>, Paul Moore <paul@paul-moore.com>, Christoph Hellwig <hch@infradead.org>, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, fstests@vger.kernel.org
+To: Christoph Lameter <cl@linux.com>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>, Andy Lutomirski <luto@amacapital.net>, Serge Hallyn <serge.hallyn@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Aaron Jones <aaronmdjones@gmail.com>, LSM List <linux-security-module@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linuxfoundation.org>, "Andrew G. Morgan" <morgan@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Markku Savela <msa@moth.iki.fi>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On 03/09/2015 03:00 PM, David Drysdale wrote:
-> Signed-off-by: David Drysdale <drysdale@google.com>
-
-Hi David,
-
-The text looks good insofar as it goes. But, it would be helpful
-to have sentence or to that explains why this flag exists.
-Could you add that, please?
-
-Thanks,
-
-Michael
-
-> ---
->  man2/open.2 | 32 ++++++++++++++++++++++++++++++++
->  1 file changed, 32 insertions(+)
+On Mon, Mar 09, 2015 at 07:05:24AM -0500, Christoph Lameter wrote:
+> On Sat, 7 Mar 2015, Serge E. Hallyn wrote:
 > 
-> diff --git a/man2/open.2 b/man2/open.2
-> index 956531b24b26..be40dd7710df 100644
-> --- a/man2/open.2
-> +++ b/man2/open.2
-> @@ -716,6 +716,31 @@ XFS support was added
->  .\" commit ab29743117f9f4c22ac44c13c1647fb24fb2bafe
->  in Linux 3.15.
->  .TP
-> +.B O_BENEATH " (since Linux 3.??)"
-> +Ensure that the
-> +.I pathname
-> +is beneath the current working directory (for
-> +.BR open (2))
-> +or the
-> +.I dirfd
-> +(for
-> +.BR openat (2)).
-> +If the
-> +.I pathname
-> +is absolute or contains a path component of "..", the
-> +.BR open ()
-> +fails with the error
-> +.BR EPERM.
-> +This occurs even if ".." path component would not actually
-> +escape the original directory; for example, a
-> +.I pathname
-> +of "subdir/../filename" would be rejected.
-> +Path components that are symbolic links to absolute paths, or that are
-> +relative paths containing a ".." component, will also cause the
-> +.BR open ()
-> +operation to fail with the error
-> +.BR EPERM.
-> +.TP
->  .B O_TRUNC
->  If the file already exists and is a regular file and the access mode allows
->  writing (i.e., is
-> @@ -984,6 +1009,13 @@ did not match the owner of the file and the caller was not privileged
->  The operation was prevented by a file seal; see
->  .BR fcntl (2).
->  .TP
-> +.B EPERM
-> +The
-> +.B O_BENEATH
-> +flag was specified and the
-> +.I pathname
-> +was not beneath the relevant directory.
-> +.TP
->  .B EROFS
->  .I pathname
->  refers to a file on a read-only filesystem and write access was
-> --
-> 2.2.0.rc0.207.ga3a616c
+> > > The ancestor here is ambient_test and when it is run pI will not be set
+> > > despite the cap setting.
+> >
+> > ambient_test is supposed to set it.
 > 
+> I thought the setcap +i would do it.
+> 
+> So the setcap and setting of the file inheritance bits has no effect on
+> pI? When the process starts pI is off despite fI being set?
 
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Correct, pI must be set through capset().  Again, x in fI is saying
+that the certain trusted users may have x in pP when they run the
+binary;  x in pi means that the users may have x in pP when they run
+certain files.  Other users running the file won't have x in pP, and
+the special user running other files won't have x in pP.
