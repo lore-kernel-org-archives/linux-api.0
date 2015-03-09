@@ -1,1614 +1,7500 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 06/14] kdbus: add node and filesystem implementation
-Date: Mon,  9 Mar 2015 14:09:12 +0100
-Message-ID: <1425906560-13798-7-git-send-email-gregkh@linuxfoundation.org>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: [PATCH 01/14] kdbus: add documentation
+Date: Mon,  9 Mar 2015 14:09:07 +0100
+Message-ID: <1425906560-13798-2-git-send-email-gregkh@linuxfoundation.org>
 References: <1425906560-13798-1-git-send-email-gregkh@linuxfoundation.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1425906560-13798-1-git-send-email-gregkh@linuxfoundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: arnd@arndb.de, ebiederm@xmission.com, gnomes@lxorguk.ukuu.org.uk, teg@jklm.no, jkosina@suse.cz, luto@amacapital.net, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: daniel@zonque.org, dh.herrmann@gmail.com, tixxdz@opendz.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1425906560-13798-1-git-send-email-gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Daniel Mack <daniel@zonque.org>
+From: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
 
-kdbusfs is a filesystem that will expose a fresh kdbus domain context
-each time it is mounted. Per mount point, there will be a 'control'
-node, which can be used to create buses. fs.c contains the
-implementation of that pseudo-fs. Exported inodes of 'file' type have
-their i_fop set to either kdbus_handle_control_ops or
-kdbus_handle_ep_ops, depending on their type. The actual dispatching
-of file operations is done from handle.c
+kdbus is a system for low-latency, low-overhead, easy to use
+interprocess communication (IPC).
 
-node.c is an implementation of a kdbus object that has an id and
-children, organized in an R/B tree. The tree is used by the filesystem
-code for lookup and iterator functions, and to deactivate children
-once the parent is deactivated. Every inode exported by kdbusfs is
-backed by a kdbus_node, hence it is embedded in struct kdbus_ep,
-struct kdbus_bus and struct kdbus_domain.
+The interface to all functions in this driver is implemented via ioctls
+on files exposed through a filesystem called 'kdbusfs'. The default
+mount point of kdbusfs is /sys/fs/kdbus. This patch adds detailed
+documentation about the kernel level API design.
 
-Signed-off-by: Daniel Mack <daniel@zonque.org>
-Signed-off-by: David Herrmann <dh.herrmann@gmail.com>
-Signed-off-by: Djalal Harouni <tixxdz@opendz.org>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+This patch adds a set of comprehensive set of DocBook files which
+can be turned into man-pages using 'make mandocs', or into HTML
+files with 'make htmldocs'.
+
+Signed-off-by: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+Signed-off-by: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 ---
- include/uapi/linux/magic.h |   2 +
- ipc/kdbus/fs.c             | 510 +++++++++++++++++++++++++
- ipc/kdbus/fs.h             |  28 ++
- ipc/kdbus/node.c           | 910 +++++++++++++++++++++++++++++++++++++++++++++
- ipc/kdbus/node.h           |  84 +++++
- 5 files changed, 1534 insertions(+)
- create mode 100644 ipc/kdbus/fs.c
- create mode 100644 ipc/kdbus/fs.h
- create mode 100644 ipc/kdbus/node.c
- create mode 100644 ipc/kdbus/node.h
+ Documentation/Makefile                   |    2 +-
+ Documentation/kdbus/Makefile             |   30 +
+ Documentation/kdbus/kdbus.bus.xml        |  360 +++++++++
+ Documentation/kdbus/kdbus.connection.xml | 1252 +++++++++++++++++++++++++++++
+ Documentation/kdbus/kdbus.endpoint.xml   |  436 ++++++++++
+ Documentation/kdbus/kdbus.fs.xml         |  124 +++
+ Documentation/kdbus/kdbus.item.xml       |  840 ++++++++++++++++++++
+ Documentation/kdbus/kdbus.match.xml      |  553 +++++++++++++
+ Documentation/kdbus/kdbus.message.xml    | 1277 ++++++++++++++++++++++++++++++
+ Documentation/kdbus/kdbus.name.xml       |  711 +++++++++++++++++
+ Documentation/kdbus/kdbus.policy.xml     |  406 ++++++++++
+ Documentation/kdbus/kdbus.pool.xml       |  320 ++++++++
+ Documentation/kdbus/kdbus.xml            | 1012 +++++++++++++++++++++++
+ Documentation/kdbus/stylesheet.xsl       |   16 +
+ Makefile                                 |    1 +
+ 15 files changed, 7339 insertions(+), 1 deletion(-)
+ create mode 100644 Documentation/kdbus/Makefile
+ create mode 100644 Documentation/kdbus/kdbus.bus.xml
+ create mode 100644 Documentation/kdbus/kdbus.connection.xml
+ create mode 100644 Documentation/kdbus/kdbus.endpoint.xml
+ create mode 100644 Documentation/kdbus/kdbus.fs.xml
+ create mode 100644 Documentation/kdbus/kdbus.item.xml
+ create mode 100644 Documentation/kdbus/kdbus.match.xml
+ create mode 100644 Documentation/kdbus/kdbus.message.xml
+ create mode 100644 Documentation/kdbus/kdbus.name.xml
+ create mode 100644 Documentation/kdbus/kdbus.policy.xml
+ create mode 100644 Documentation/kdbus/kdbus.pool.xml
+ create mode 100644 Documentation/kdbus/kdbus.xml
+ create mode 100644 Documentation/kdbus/stylesheet.xsl
 
-diff --git a/include/uapi/linux/magic.h b/include/uapi/linux/magic.h
-index 7d664ea85ebd..1cf05c066158 100644
---- a/include/uapi/linux/magic.h
-+++ b/include/uapi/linux/magic.h
-@@ -74,4 +74,6 @@
- #define BTRFS_TEST_MAGIC	0x73727279
- #define NSFS_MAGIC		0x6e736673
+diff --git a/Documentation/Makefile b/Documentation/Makefile
+index 6883a1b9b351..5e3fde632d03 100644
+--- a/Documentation/Makefile
++++ b/Documentation/Makefile
+@@ -1,4 +1,4 @@
+ subdir-y := accounting arm auxdisplay blackfin connector \
+-	filesystems filesystems ia64 laptops mic misc-devices \
++	filesystems filesystems ia64 kdbus laptops mic misc-devices \
+ 	networking pcmcia prctl ptp spi timers vDSO video4linux \
+ 	watchdog
+diff --git a/Documentation/kdbus/Makefile b/Documentation/kdbus/Makefile
+new file mode 100644
+index 000000000000..cd6b48ee41bf
+--- /dev/null
++++ b/Documentation/kdbus/Makefile
+@@ -0,0 +1,30 @@
++DOCS :=	\
++	kdbus.xml		\
++	kdbus.bus.xml		\
++	kdbus.connection.xml	\
++	kdbus.endpoint.xml	\
++	kdbus.fs.xml		\
++	kdbus.item.xml		\
++	kdbus.match.xml		\
++	kdbus.message.xml	\
++	kdbus.name.xml		\
++	kdbus.policy.xml	\
++	kdbus.pool.xml
++
++XMLFILES := $(addprefix $(obj)/,$(DOCS))
++MANFILES := $(patsubst %.xml, %.7, $(XMLFILES))
++HTMLFILES := $(patsubst %.xml, %.html, $(XMLFILES))
++
++XMLTO_ARGS := -m $(obj)/stylesheet.xsl
++
++%.7: %.xml
++	xmlto man $(XMLTO_ARGS) -o . $<
++
++%.html: %.xml
++	xmlto html-nochunks $(XMLTO_ARGS) -o . $<
++
++mandocs: $(MANFILES)
++
++htmldocs: $(HTMLFILES)
++
++clean-files := $(MANFILES) $(HTMLFILES)
+diff --git a/Documentation/kdbus/kdbus.bus.xml b/Documentation/kdbus/kdbus.bus.xml
+new file mode 100644
+index 000000000000..4d875e59ac02
+--- /dev/null
++++ b/Documentation/kdbus/kdbus.bus.xml
+@@ -0,0 +1,360 @@
++<?xml version='1.0'?> <!--*-nxml-*-->
++<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
++        "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
++
++<refentry id="kdbus.bus">
++
++  <refentryinfo>
++    <title>kdbus.bus</title>
++    <productname>kdbus.bus</productname>
++  </refentryinfo>
++
++  <refmeta>
++    <refentrytitle>kdbus.bus</refentrytitle>
++    <manvolnum>7</manvolnum>
++  </refmeta>
++
++  <refnamediv>
++    <refname>kdbus.bus</refname>
++    <refpurpose>kdbus bus</refpurpose>
++  </refnamediv>
++
++  <refsect1>
++    <title>Description</title>
++
++    <para>
++      A bus is a resource that is shared between connections in order to
++      transmit messages (see
++      <citerefentry>
++        <refentrytitle>kdbus.message</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      ).
++      Each bus is independent, and operations on the bus will not have any
++      effect on other buses. A bus is a management entity that controls the
++      addresses of its connections, their policies and message transactions
++      performed via this bus.
++    </para>
++    <para>
++      Each bus is bound to the mount instance it was created on. It has a
++      custom name that is unique across all buses of a domain. In
++      <citerefentry>
++        <refentrytitle>kdbus.fs</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      , a bus is presented as a directory. No operations can be performed on
++      the bus itself; instead you need to perform the operations on an endpoint
++      associated with the bus. Endpoints are accessible as files underneath the
++      bus directory. A default endpoint called <constant>bus</constant> is
++      provided on each bus.
++    </para>
++    <para>
++      Bus names may be chosen freely except for one restriction: the name must
++      be prefixed with the numeric effective UID of the creator and a dash. This
++      is required to avoid namespace clashes between different users. When
++      creating a bus, the name that is passed in must be properly formatted, or
++      the kernel will refuse creation of the bus. Example:
++      <literal>1047-foobar</literal> is an acceptable name for a bus
++      registered by a user with UID 1047. However,
++      <literal>1024-foobar</literal> is not, and neither is
++      <literal>foobar</literal>. The UID must be provided in the
++      user-namespace of the bus owner.
++    </para>
++    <para>
++      To create a new bus, you need to open the control file of a domain and
++      employ the <constant>KDBUS_CMD_BUS_MAKE</constant> ioctl. The control
++      file descriptor that was used to issue
++      <constant>KDBUS_CMD_BUS_MAKE</constant> must not previously have been
++      used for any other control-ioctl and must be kept open for the entire
++      life-time of the created bus. Closing it will immediately cleanup the
++      entire bus and all its associated resources and endpoints. Every control
++      file descriptor can only be used to create a single new bus; from that
++      point on, it is not used for any further communication until the final
++      <citerefentry>
++        <refentrytitle>close</refentrytitle>
++        <manvolnum>2</manvolnum>
++      </citerefentry>
++      .
++    </para>
++    <para>
++      Each bus will generate a random, 128-bit UUID upon creation. This UUID
++      will be returned to creators of connections through
++      <varname>kdbus_cmd_hello.id128</varname> and can be used to uniquely
++      identify buses, even across different machines or containers. The UUID
++      will have its variant bits set to <literal>DCE</literal>, and denote
++      version 4 (random). For more details on UUIDs, see <ulink
++      url="https://en.wikipedia.org/wiki/Universally_unique_identifier">
++      the Wikipedia article on UUIDs</ulink>.
++    </para>
++
++  </refsect1>
++
++  <refsect1>
++    <title>Creating buses</title>
++    <para>
++      To create a new bus, the <constant>KDBUS_CMD_BUS_MAKE</constant>
++      command is used. It takes a <type>struct kdbus_cmd</type> argument.
++    </para>
++    <programlisting>
++struct kdbus_cmd {
++  __u64 size;
++  __u64 flags;
++  __u64 return_flags;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>The flags for creation.</para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_MAKE_ACCESS_GROUP</constant></term>
++              <listitem>
++                <para>Make the bus file group-accessible.</para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_MAKE_ACCESS_WORLD</constant></term>
++              <listitem>
++                <para>Make the bus file world-accessible.</para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_FLAG_NEGOTIATE</constant></term>
++              <listitem>
++                <para>
++                  Requests a set of valid flags for this ioctl. When this bit is
++                  set, no action is taken; the ioctl will return
++                  <errorcode>0</errorcode>, and the <varname>flags</varname>
++                  field will have all bits set that are valid for this command.
++                  The <constant>KDBUS_FLAG_NEGOTIATE</constant> bit will be
++                  cleared by the operation.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem><para>
++          Flags returned by the kernel. Currently unused and always set to
++          <constant>0</constant> by the kernel.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            The following items (see
++            <citerefentry>
++              <refentrytitle>kdbus.item</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            ) are expected for <constant>KDBUS_CMD_BUS_MAKE</constant>.
++          </para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_MAKE_NAME</constant></term>
++              <listitem>
++                <para>
++                  Contains a null-terminated string that identifies the
++                  bus. The name must be unique across the kdbus domain and
++                  must start with the effective UID of the caller, followed by
++                  a '<literal>-</literal>' (dash). This item is mandatory.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_BLOOM_PARAMETER</constant></term>
++              <listitem>
++                <para>
++                  Bus-wide bloom parameters passed in a
++                  <type>struct kdbus_bloom_parameter</type>. These settings are
++                  copied back to new connections verbatim. This item is
++                  mandatory. See
++                  <citerefentry>
++                    <refentrytitle>kdbus.item</refentrytitle>
++                    <manvolnum>7</manvolnum>
++                  </citerefentry>
++                  for a more detailed description of this item.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_ATTACH_FLAGS_RECV</constant></term>
++              <listitem>
++                <para>
++                  An optional item that contains a set of required attach flags
++                  that connections must allow. This item is used as a
++                  negotiation measure during connection creation. If connections
++                  do not satisfy the bus requirements, they are not allowed on
++                  the bus. If not set, the bus does not require any metadata to
++                  be attached; in this case connections are free to set their
++                  own attach flags.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_ATTACH_FLAGS_SEND</constant></term>
++              <listitem>
++                <para>
++                  An optional item that contains a set of attach flags that are
++                  returned to connections when they query the bus creator
++                  metadata. If not set, no metadata is returned.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_NEGOTIATE</constant></term>
++              <listitem><para>
++                With this item, programs can <emphasis>probe</emphasis> the
++                kernel for known item types. See
++                <citerefentry>
++                  <refentrytitle>kdbus.item</refentrytitle>
++                  <manvolnum>7</manvolnum>
++                </citerefentry>
++                for more details.
++              </para></listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      Unrecognized items are rejected, and the ioctl will fail with
++      <varname>errno</varname> set to <constant>EINVAL</constant>.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Return value</title>
++    <para>
++      On success, all mentioned ioctl commands return <errorcode>0</errorcode>;
++      on error, <errorcode>-1</errorcode> is returned, and
++      <varname>errno</varname> is set to indicate the error.
++      If the issued ioctl is illegal for the file descriptor used,
++      <varname>errno</varname> will be set to <constant>ENOTTY</constant>.
++    </para>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_BUS_MAKE</constant> may fail with the following
++        errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>EBADMSG</constant></term>
++          <listitem><para>
++            A mandatory item is missing.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            The flags supplied in the <constant>struct kdbus_cmd</constant>
++            are invalid or the supplied name does not start with the current
++            UID and a '<literal>-</literal>' (dash).
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EEXIST</constant></term>
++          <listitem><para>
++            A bus of that name already exists.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ESHUTDOWN</constant></term>
++          <listitem><para>
++            The kdbus mount instance for the bus was already shut down.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EMFILE</constant></term>
++          <listitem><para>
++            The maximum number of buses for the current user is exhausted.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++  </refsect1>
++
++  <refsect1>
++    <title>See Also</title>
++    <simplelist type="inline">
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.connection</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.endpoint</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.fs</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.item</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.message</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.name</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.pool</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++    </simplelist>
++  </refsect1>
++</refentry>
+diff --git a/Documentation/kdbus/kdbus.connection.xml b/Documentation/kdbus/kdbus.connection.xml
+new file mode 100644
+index 000000000000..09852125b2d4
+--- /dev/null
++++ b/Documentation/kdbus/kdbus.connection.xml
+@@ -0,0 +1,1252 @@
++<?xml version='1.0'?> <!--*-nxml-*-->
++<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
++        "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
++
++<refentry id="kdbus.connection">
++
++  <refentryinfo>
++    <title>kdbus.connection</title>
++    <productname>kdbus.connection</productname>
++  </refentryinfo>
++
++  <refmeta>
++    <refentrytitle>kdbus.connection</refentrytitle>
++    <manvolnum>7</manvolnum>
++  </refmeta>
++
++  <refnamediv>
++    <refname>kdbus.connection</refname>
++    <refpurpose>kdbus connection</refpurpose>
++  </refnamediv>
++
++  <refsect1>
++    <title>Description</title>
++
++    <para>
++      Connections are identified by their <emphasis>connection ID</emphasis>,
++      internally implemented as a <type>uint64_t</type> counter.
++      The IDs of every newly created bus start at <constant>1</constant>, and
++      every new connection will increment the counter by <constant>1</constant>.
++      The IDs are not reused.
++    </para>
++    <para>
++      In higher level tools, the user visible representation of a connection is
++      defined by the D-Bus protocol specification as
++      <constant>":1.&lt;ID&gt;"</constant>.
++    </para>
++    <para>
++      Messages with a specific <type>uint64_t</type> destination ID are
++      directly delivered to the connection with the corresponding ID. Signal
++      messages (see
++      <citerefentry>
++        <refentrytitle>kdbus.message</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>)
++      may be addressed to the special destination ID
++      <constant>KDBUS_DST_ID_BROADCAST</constant> (~0ULL) and will then
++      potentially be delivered to all currently active connections on the bus.
++      However, in order to receive any signal messages, clients must subscribe
++      to them by installing a match (see
++      <citerefentry>
++        <refentrytitle>kdbus.match</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      ).
++    </para>
++    <para>
++      Messages synthesized and sent directly by the kernel will carry the
++      special source ID <constant>KDBUS_SRC_ID_KERNEL</constant> (0).
++    </para>
++    <para>
++      In addition to the unique <type>uint64_t</type> connection ID,
++      established connections can request the ownership of
++      <emphasis>well-known names</emphasis>, under which they can be found and
++      addressed by other bus clients. A well-known name is associated with one
++      and only one connection at a time. See
++      <citerefentry>
++        <refentrytitle>kdbus.name</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      on name acquisition, the name registry, and the validity of names.
++    </para>
++    <para>
++      Messages can specify the special destination ID
++      <constant>KDBUS_DST_ID_NAME</constant> (0) and carry a well-known name
++      in the message data. Such a message is delivered to the destination
++      connection which owns that well-known name.
++    </para>
++
++    <programlisting><![CDATA[
++  +-------------------------------------------------------------------------+
++  | +---------------+     +---------------------------+                     |
++  | | Connection    |     | Message                   | -----------------+  |
++  | | :1.22         | --> | src: 22                   |                  |  |
++  | |               |     | dst: 25                   |                  |  |
++  | |               |     |                           |                  |  |
++  | |               |     |                           |                  |  |
++  | |               |     +---------------------------+                  |  |
++  | |               |                                                    |  |
++  | |               | <--------------------------------------+           |  |
++  | +---------------+                                        |           |  |
++  |                                                          |           |  |
++  | +---------------+     +---------------------------+      |           |  |
++  | | Connection    |     | Message                   | -----+           |  |
++  | | :1.25         | --> | src: 25                   |                  |  |
++  | |               |     | dst: 0xffffffffffffffff   | -------------+   |  |
++  | |               |     |  (KDBUS_DST_ID_BROADCAST) |              |   |  |
++  | |               |     |                           | ---------+   |   |  |
++  | |               |     +---------------------------+          |   |   |  |
++  | |               |                                            |   |   |  |
++  | |               | <--------------------------------------------------+  |
++  | +---------------+                                            |   |      |
++  |                                                              |   |      |
++  | +---------------+     +---------------------------+          |   |      |
++  | | Connection    |     | Message                   | --+      |   |      |
++  | | :1.55         | --> | src: 55                   |   |      |   |      |
++  | |               |     | dst: 0 / org.foo.bar      |   |      |   |      |
++  | |               |     |                           |   |      |   |      |
++  | |               |     |                           |   |      |   |      |
++  | |               |     +---------------------------+   |      |   |      |
++  | |               |                                     |      |   |      |
++  | |               | <------------------------------------------+   |      |
++  | +---------------+                                     |          |      |
++  |                                                       |          |      |
++  | +---------------+                                     |          |      |
++  | | Connection    |                                     |          |      |
++  | | :1.81         |                                     |          |      |
++  | | org.foo.bar   |                                     |          |      |
++  | |               |                                     |          |      |
++  | |               |                                     |          |      |
++  | |               | <-----------------------------------+          |      |
++  | |               |                                                |      |
++  | |               | <----------------------------------------------+      |
++  | +---------------+                                                       |
++  +-------------------------------------------------------------------------+
++    ]]></programlisting>
++  </refsect1>
++
++  <refsect1>
++    <title>Privileged connections</title>
++    <para>
++      A connection is considered <emphasis>privileged</emphasis> if the user
++      it was created by is the same that created the bus, or if the creating
++      task had <constant>CAP_IPC_OWNER</constant> set when it called
++      <constant>KDBUS_CMD_HELLO</constant> (see below).
++    </para>
++    <para>
++      Privileged connections have permission to employ certain restricted
++      functions and commands, which are explained below and in other kdbus
++      man-pages.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Activator and policy holder connection</title>
++    <para>
++      An <emphasis>activator</emphasis> connection is a placeholder for a
++      <emphasis>well-known name</emphasis>. Messages sent to such a connection
++      can be used to start an implementer connection, which will then get all
++      the messages from the activator copied over. An activator connection
++      cannot be used to send any message.
++    </para>
++    <para>
++      A <emphasis>policy holder</emphasis> connection only installs a policy
++      for one or more names. These policy entries are kept active as long as
++      the connection is alive, and are removed once it terminates. Such a
++      policy connection type can be used to deploy restrictions for names that
++      are not yet active on the bus. A policy holder connection cannot be used
++      to send any message.
++    </para>
++    <para>
++      The creation of activator or policy holder connections is restricted to
++      privileged users on the bus (see above).
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Monitor connections</title>
++    <para>
++      Monitors are eavesdropping connections that receive all the traffic on the
++      bus, but is invisible to other connections. Such connections have all
++      properties of any other, regular connection, except for the following
++      details:
++    </para>
++
++    <itemizedlist>
++      <listitem><para>
++        They will get every message sent over the bus, both unicasts and
++        broadcasts.
++      </para></listitem>
++
++      <listitem><para>
++        Installing matches for signal messages is neither necessary
++        nor allowed.
++      </para></listitem>
++
++      <listitem><para>
++        They cannot send messages or be directly addressed as receiver.
++      </para></listitem>
++
++      <listitem><para>
++        They cannot own well-known names. Therefore, they also can't operate as
++        activators.
++      </para></listitem>
++
++      <listitem><para>
++        Their creation and destruction will not cause
++        <constant>KDBUS_ITEM_ID_{ADD,REMOVE}</constant> (see
++        <citerefentry>
++          <refentrytitle>kdbus.item</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>).
++      </para></listitem>
++
++      <listitem><para>
++        They are not listed with their unique name in name registry dumps
++        (see <constant>KDBUS_CMD_NAME_LIST</constant> in
++        <citerefentry>
++          <refentrytitle>kdbus.name</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>), so other connections cannot detect the presence of
++	a monitor.
++      </para></listitem>
++    </itemizedlist>
++    <para>
++      The creation of monitor connections is restricted to privileged users on
++      the bus (see above).
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Creating connections</title>
++    <para>
++      A connection to a bus is created by opening an endpoint file (see
++      <citerefentry>
++        <refentrytitle>kdbus.endpoint</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>)
++      of a bus and becoming an active client with the
++      <constant>KDBUS_CMD_HELLO</constant> ioctl. Every connection has a unique
++      identifier on the bus and can address messages to every other connection
++      on the same bus by using the peer's connection ID as the destination.
++    </para>
++    <para>
++      The <constant>KDBUS_CMD_HELLO</constant> ioctl takes a <type>struct
++      kdbus_cmd_hello</type> as argument.
++    </para>
++
++    <programlisting>
++struct kdbus_cmd_hello {
++  __u64 size;
++  __u64 flags;
++  __u64 return_flags;
++  __u64 attach_flags_send;
++  __u64 attach_flags_recv;
++  __u64 bus_flags;
++  __u64 id;
++  __u64 pool_size;
++  __u64 offset;
++  __u8 id128[16];
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem>
++          <para>Flags to apply to this connection</para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_HELLO_ACCEPT_FD</constant></term>
++              <listitem>
++                <para>
++                  When this flag is set, the connection can be sent file
++                  descriptors as message payload of unicast messages. If it's
++                  not set, an attempt to send file descriptors will result in
++                  <constant>-ECOMM</constant> on the sender's side.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_HELLO_ACTIVATOR</constant></term>
++              <listitem>
++                <para>
++                  Make this connection an activator (see above). With this bit
++                  set, an item of type <constant>KDBUS_ITEM_NAME</constant> has
++                  to be attached. This item describes the well-known name this
++                  connection should be an activator for.
++                  A connection can not be an activator and a policy holder at
++                  the same time time, so this bit is not allowed together with
++                  <constant>KDBUS_HELLO_POLICY_HOLDER</constant>.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_HELLO_POLICY_HOLDER</constant></term>
++              <listitem>
++                <para>
++                  Make this connection a policy holder (see above). With this
++                  bit set, an item of type <constant>KDBUS_ITEM_NAME</constant>
++                  has to be attached. This item describes the well-known name
++                  this connection should hold a policy for.
++                  A connection can not be an activator and a policy holder at
++                  the same time time, so this bit is not allowed together with
++                  <constant>KDBUS_HELLO_ACTIVATOR</constant>.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_HELLO_MONITOR</constant></term>
++              <listitem>
++                <para>
++                  Make this connection a monitor connection (see above).
++                </para>
++                <para>
++                  This flag can only be set by privileged bus connections. See
++                  below for more information.
++                  A connection can not be monitor and an activator or a policy
++                  holder at the same time time, so this bit is not allowed
++                  together with <constant>KDBUS_HELLO_ACTIVATOR</constant> or
++                  <constant>KDBUS_HELLO_POLICY_HOLDER</constant>.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_FLAG_NEGOTIATE</constant></term>
++              <listitem>
++                <para>
++                  Requests a set of valid flags for this ioctl. When this bit is
++                  set, no action is taken; the ioctl will return
++                  <errorcode>0</errorcode>, and the <varname>flags</varname>
++                  field will have all bits set that are valid for this command.
++                  The <constant>KDBUS_FLAG_NEGOTIATE</constant> bit will be
++                  cleared by the operation.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem><para>
++          Flags returned by the kernel. Currently unused and always set to
++          <constant>0</constant> by the kernel.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>attach_flags_send</varname></term>
++        <listitem><para>
++          Set the bits for metadata this connection permits to be sent to the
++          receiving peer. Only metadata items that are both allowed to be sent
++          by the sender and that are requested by the receiver will be attached
++          to the message. Note, however, that the bus may optionally require
++          some of those bits to be set. If the match fails, the ioctl will fail
++          with <varname>errno</varname> set to
++          <constant>ECONNREFUSED</constant>. In either case, when returning the
++          field will be set to the mask of metadata items that are enforced by
++          the bus with the <constant>KDBUS_FLAGS_KERNEL</constant> bit set as
++          well.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>attach_flags_recv</varname></term>
++        <listitem><para>
++          Request the attachment of metadata for each message received by this
++          connection. See
++          <citerefentry>
++            <refentrytitle>kdbus</refentrytitle>
++            <manvolnum>7</manvolnum>
++          </citerefentry>
++          for information about metadata, and
++          <citerefentry>
++            <refentrytitle>kdbus.item</refentrytitle>
++            <manvolnum>7</manvolnum>
++          </citerefentry>
++          regarding items in general.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>bus_flags</varname></term>
++        <listitem><para>
++          Upon successful completion of the ioctl, this member will contain the
++          flags of the bus it connected to.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>id</varname></term>
++        <listitem><para>
++          Upon successful completion of the command, this member will contain
++          the numerical ID of the new connection.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>pool_size</varname></term>
++        <listitem><para>
++          The size of the communication pool, in bytes. The pool can be
++          accessed by calling
++          <citerefentry>
++            <refentrytitle>mmap</refentrytitle>
++            <manvolnum>2</manvolnum>
++          </citerefentry>
++          on the file descriptor that was used to issue the
++          <constant>KDBUS_CMD_HELLO</constant> ioctl.
++          The pool size of a connection must be greater than
++          <constant>0</constant> and a multiple of
++          <constant>PAGE_SIZE</constant>. See
++          <citerefentry>
++            <refentrytitle>kdbus.pool</refentrytitle>
++            <manvolnum>7</manvolnum>
++          </citerefentry>
++          for more information.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>offset</varname></term>
++        <listitem><para>
++          The kernel will return the offset in the pool where returned details
++          will be stored. See below.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>id128</varname></term>
++        <listitem><para>
++          Upon successful completion of the ioctl, this member will contain the
++          <emphasis>128-bit UUID</emphasis> of the connected bus.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            Variable list of items containing optional additional information.
++            The following items are currently expected/valid:
++          </para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_CONN_DESCRIPTION</constant></term>
++              <listitem>
++                <para>
++                  Contains a string that describes this connection, so it can
++                  be identified later.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_NAME</constant></term>
++              <term><constant>KDBUS_ITEM_POLICY_ACCESS</constant></term>
++              <listitem>
++                <para>
++                  For activators and policy holders only, combinations of
++                  these two items describe policy access entries. See
++                  <citerefentry>
++                    <refentrytitle>kdbus.policy</refentrytitle>
++                    <manvolnum>7</manvolnum>
++                  </citerefentry>
++                  for further details.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_CREDS</constant></term>
++              <term><constant>KDBUS_ITEM_PIDS</constant></term>
++              <term><constant>KDBUS_ITEM_SECLABEL</constant></term>
++              <listitem>
++                <para>
++                  Privileged bus users may submit these types in order to
++                  create connections with faked credentials. This information
++                  will be returned when peer information is queried by
++                  <constant>KDBUS_CMD_CONN_INFO</constant>. See below for more
++                  information on retrieving information on connections.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_NEGOTIATE</constant></term>
++              <listitem><para>
++                With this item, programs can <emphasis>probe</emphasis> the
++                kernel for known item types. See
++                <citerefentry>
++                  <refentrytitle>kdbus.item</refentrytitle>
++                  <manvolnum>7</manvolnum>
++                </citerefentry>
++                for more details.
++              </para></listitem>
++            </varlistentry>
++          </variablelist>
++
++          <para>
++            Unrecognized items are rejected, and the ioctl will fail with
++            <varname>errno</varname> set to <constant>EINVAL</constant>.
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      At the offset returned in the <varname>offset</varname> field of
++      <type>struct kdbus_cmd_hello</type>, the kernel will store items
++      of the following types:
++    </para>
++
++    <variablelist>
++      <varlistentry>
++        <term><constant>KDBUS_ITEM_BLOOM_PARAMETER</constant></term>
++        <listitem>
++          <para>
++            Bloom filter parameter as defined by the bus creator.
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      The offset in the pool has to be freed with the
++      <constant>KDBUS_CMD_FREE</constant> ioctl. See
++      <citerefentry>
++        <refentrytitle>kdbus.pool</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for further information.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Retrieving information on a connection</title>
++    <para>
++      The <constant>KDBUS_CMD_CONN_INFO</constant> ioctl can be used to
++      retrieve credentials and properties of the initial creator of a
++      connection. This ioctl uses the following struct.
++    </para>
++
++    <programlisting>
++struct kdbus_cmd_info {
++  __u64 size;
++  __u64 flags;
++  __u64 return_flags;
++  __u64 id;
++  __u64 attach_flags;
++  __u64 offset;
++  __u64 info_size;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>
++          Currently, no flags are supported.
++          <constant>KDBUS_FLAG_NEGOTIATE</constant> is accepted to probe for
++          valid flags. If set, the ioctl will return <errorcode>0</errorcode>,
++          and the <varname>flags</varname> field is set to
++          <constant>0</constant>.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem><para>
++          Flags returned by the kernel. Currently unused and always set to
++          <constant>0</constant> by the kernel.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>id</varname></term>
++        <listitem><para>
++          The numerical ID of the connection for which information is to be
++          retrieved. If set to a non-zero value, the
++          <constant>KDBUS_ITEM_OWNED_NAME</constant> item is ignored.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>
++          Specifies which metadata items should be attached to the answer. See
++          <citerefentry>
++            <refentrytitle>kdbus.message</refentrytitle>
++            <manvolnum>7</manvolnum>
++          </citerefentry>
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>offset</varname></term>
++        <listitem><para>
++          When the ioctl returns, this field will contain the offset of the
++          connection information inside the caller's pool. See
++          <citerefentry>
++            <refentrytitle>kdbus.pool</refentrytitle>
++            <manvolnum>7</manvolnum>
++          </citerefentry>
++          for further information.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>info_size</varname></term>
++        <listitem><para>
++          The kernel will return the size of the returned information, so
++          applications can optionally
++          <citerefentry>
++            <refentrytitle>mmap</refentrytitle>
++            <manvolnum>2</manvolnum>
++          </citerefentry>
++          specific parts of the pool. See
++          <citerefentry>
++            <refentrytitle>kdbus.pool</refentrytitle>
++            <manvolnum>7</manvolnum>
++          </citerefentry>
++          for further information.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            The following items are expected for
++            <constant>KDBUS_CMD_CONN_INFO</constant>.
++          </para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_OWNED_NAME</constant></term>
++              <listitem>
++                <para>
++                  Contains the well-known name of the connection to look up as.
++                  This item is mandatory if the <varname>id</varname> field is
++                  set to 0.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_NEGOTIATE</constant></term>
++              <listitem><para>
++                With this item, programs can <emphasis>probe</emphasis> the
++                kernel for known item types. See
++                <citerefentry>
++                  <refentrytitle>kdbus.item</refentrytitle>
++                  <manvolnum>7</manvolnum>
++                </citerefentry>
++                for more details.
++              </para></listitem>
++            </varlistentry>
++          </variablelist>
++          <para>
++            Unrecognized items are rejected, and the ioctl will fail with
++            <varname>errno</varname> set to <constant>EINVAL</constant>.
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      When the ioctl returns, the following struct will be stored in the
++      caller's pool at <varname>offset</varname>. The fields in this struct
++      are described below.
++    </para>
++
++    <programlisting>
++struct kdbus_info {
++  __u64 size;
++  __u64 id;
++  __u64 flags;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>id</varname></term>
++        <listitem><para>
++          The connection's unique ID.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>
++          The connection's flags as specified when it was created.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            Depending on the <varname>flags</varname> field in
++            <type>struct kdbus_cmd_info</type>, items of types
++            <constant>KDBUS_ITEM_OWNED_NAME</constant> and
++            <constant>KDBUS_ITEM_CONN_DESCRIPTION</constant> may follow here.
++            <constant>KDBUS_ITEM_NEGOTIATE</constant> is also allowed.
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      Once the caller is finished with parsing the return buffer, it needs to
++      employ the <constant>KDBUS_CMD_FREE</constant> command for the offset, in
++      order to free the buffer part. See
++      <citerefentry>
++        <refentrytitle>kdbus.pool</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for further information.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Getting information about a connection's bus creator</title>
++    <para>
++      The <constant>KDBUS_CMD_BUS_CREATOR_INFO</constant> ioctl takes the same
++      struct as <constant>KDBUS_CMD_CONN_INFO</constant>, but is used to
++      retrieve information about the creator of the bus the connection is
++      attached to. The metadata returned by this call is collected during the
++      creation of the bus and is never altered afterwards, so it provides
++      pristine information on the task that created the bus, at the moment when
++      it did so.
++    </para>
++    <para>
++      In response to this call, a slice in the connection's pool is allocated
++      and filled with an object of type <type>struct kdbus_info</type>,
++      pointed to by the ioctl's <varname>offset</varname> field.
++    </para>
++
++    <programlisting>
++struct kdbus_info {
++  __u64 size;
++  __u64 id;
++  __u64 flags;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>id</varname></term>
++        <listitem><para>
++          The bus ID.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>
++          The bus flags as specified when it was created.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            Metadata information is stored in items here. The item list
++            contains a <constant>KDBUS_ITEM_MAKE_NAME</constant> item that
++            indicates the bus name of the calling connection.
++            <constant>KDBUS_ITEM_NEGOTIATE</constant> is allowed to probe
++            for known item types.
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      Once the caller is finished with parsing the return buffer, it needs to
++      employ the <constant>KDBUS_CMD_FREE</constant> command for the offset, in
++      order to free the buffer part. See
++      <citerefentry>
++        <refentrytitle>kdbus.pool</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for further information.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Updating connection details</title>
++    <para>
++      Some of a connection's details can be updated with the
++      <constant>KDBUS_CMD_CONN_UPDATE</constant> ioctl, using the file
++      descriptor that was used to create the connection. The update command
++      uses the following struct.
++    </para>
++
++    <programlisting>
++struct kdbus_cmd {
++  __u64 size;
++  __u64 flags;
++  __u64 return_flags;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>
++          Currently, no flags are supported.
++          <constant>KDBUS_FLAG_NEGOTIATE</constant> is accepted to probe for
++          valid flags. If set, the ioctl will return <errorcode>0</errorcode>,
++          and the <varname>flags</varname> field is set to
++          <constant>0</constant>.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem><para>
++          Flags returned by the kernel. Currently unused and always set to
++          <constant>0</constant> by the kernel.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            Items to describe the connection details to be updated. The
++            following item types are supported.
++          </para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_ATTACH_FLAGS_SEND</constant></term>
++              <listitem>
++                <para>
++                  Supply a new set of metadata items that this connection
++                  permits to be sent along with messages.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_ATTACH_FLAGS_RECV</constant></term>
++              <listitem>
++                <para>
++                  Supply a new set of metadata items that this connection
++                  requests to be attached to each message.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_NAME</constant></term>
++              <term><constant>KDBUS_ITEM_POLICY_ACCESS</constant></term>
++              <listitem>
++                <para>
++                  Policy holder connections may supply a new set of policy
++                  information with these items. For other connection types,
++                  <constant>EOPNOTSUPP</constant> is returned in
++                  <varname>errno</varname>.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_NEGOTIATE</constant></term>
++              <listitem><para>
++                With this item, programs can <emphasis>probe</emphasis> the
++                kernel for known item types. See
++                <citerefentry>
++                  <refentrytitle>kdbus.item</refentrytitle>
++                  <manvolnum>7</manvolnum>
++                </citerefentry>
++                for more details.
++              </para></listitem>
++            </varlistentry>
++          </variablelist>
++
++          <para>
++            Unrecognized items are rejected, and the ioctl will fail with
++            <varname>errno</varname> set to <constant>EINVAL</constant>.
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++  </refsect1>
++
++  <refsect1>
++    <title>Termination of connections</title>
++    <para>
++      A connection can be terminated by simply calling
++      <citerefentry>
++        <refentrytitle>close</refentrytitle>
++        <manvolnum>2</manvolnum>
++      </citerefentry>
++      on its file descriptor. All pending incoming messages will be discarded,
++      and the memory allocated by the pool will be freed.
++    </para>
++
++    <para>
++      An alternative way of closing down a connection is via the
++      <constant>KDBUS_CMD_BYEBYE</constant> ioctl. This ioctl will succeed only
++      if the message queue of the connection is empty at the time of closing;
++      otherwise, the ioctl will fail with <varname>errno</varname> set to
++      <constant>EBUSY</constant>. When this ioctl returns
++      successfully, the connection has been terminated and won't accept any new
++      messages from remote peers. This way, a connection can be terminated
++      race-free, without losing any messages. The ioctl takes an argument of
++      type <type>struct kdbus_cmd</type>.
++    </para>
++
++    <programlisting>
++struct kdbus_cmd {
++  __u64 size;
++  __u64 flags;
++  __u64 return_flags;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>
++          Currently, no flags are supported.
++          <constant>KDBUS_FLAG_NEGOTIATE</constant> is accepted to probe for
++          valid flags. If set, the ioctl will fail with
++          <varname>errno</varname> set to <constant>EPROTO</constant>, and
++          the <varname>flags</varname> field is set to <constant>0</constant>.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem><para>
++          Flags returned by the kernel. Currently unused and always set to
++          <constant>0</constant> by the kernel.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            Items to describe the connection details to be updated. The
++            following item types are supported.
++          </para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_NEGOTIATE</constant></term>
++              <listitem><para>
++                With this item, programs can <emphasis>probe</emphasis> the
++                kernel for known item types. See
++                <citerefentry>
++                  <refentrytitle>kdbus.item</refentrytitle>
++                  <manvolnum>7</manvolnum>
++                </citerefentry>
++                for more details.
++              </para></listitem>
++            </varlistentry>
++          </variablelist>
++
++          <para>
++            Unrecognized items are rejected, and the ioctl will fail with
++            <varname>errno</varname> set to <constant>EINVAL</constant>.
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++  </refsect1>
++
++  <refsect1>
++    <title>Return value</title>
++    <para>
++      On success, all mentioned ioctl commands return <errorcode>0</errorcode>;
++      on error, <errorcode>-1</errorcode> is returned, and
++      <varname>errno</varname> is set to indicate the error.
++      If the issued ioctl is illegal for the file descriptor used,
++      <varname>errno</varname> will be set to <constant>ENOTTY</constant>.
++    </para>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_HELLO</constant> may fail with the following
++        errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>EFAULT</constant></term>
++          <listitem><para>
++            The supplied pool size was 0 or not a multiple of the page size.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            The flags supplied in <type>struct kdbus_cmd_hello</type>
++            are invalid.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            An illegal combination of
++            <constant>KDBUS_HELLO_MONITOR</constant>,
++            <constant>KDBUS_HELLO_ACTIVATOR</constant> and
++            <constant>KDBUS_HELLO_POLICY_HOLDER</constant> was passed in
++            <varname>flags</varname>.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            An invalid set of items was supplied.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ECONNREFUSED</constant></term>
++          <listitem><para>
++            The attach_flags_send field did not satisfy the requirements of
++            the bus.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EPERM</constant></term>
++          <listitem><para>
++            A <constant>KDBUS_ITEM_CREDS</constant> items was supplied, but the
++            current user is not privileged.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ESHUTDOWN</constant></term>
++          <listitem><para>
++            The bus you were trying to connect to has already been shut down.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EMFILE</constant></term>
++          <listitem><para>
++            The maximum number of connections on the bus has been reached.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EOPNOTSUPP</constant></term>
++          <listitem><para>
++            The endpoint does not support the connection flags supplied in
++            <type>struct kdbus_cmd_hello</type>.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_BYEBYE</constant> may fail with the following
++        errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>EALREADY</constant></term>
++          <listitem><para>
++            The connection has already been shut down.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EBUSY</constant></term>
++          <listitem><para>
++            There are still messages queued up in the connection's pool.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_CONN_INFO</constant> may fail with the following
++        errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            Invalid flags, or neither an ID nor a name was provided, or the
++            name is invalid.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ESRCH</constant></term>
++          <listitem><para>
++            Connection lookup by name failed.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ENXIO</constant></term>
++          <listitem><para>
++            No connection with the provided connection ID found.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_CONN_UPDATE</constant> may fail with the following
++        errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            Illegal flags or items.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            Wildcards submitted in policy entries, or illegal sequence
++            of policy items.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EOPNOTSUPP</constant></term>
++          <listitem><para>
++            Operation not supported by connection.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>E2BIG</constant></term>
++          <listitem><para>
++            Too many policy items attached.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++  </refsect1>
++
++  <refsect1>
++    <title>See Also</title>
++    <simplelist type="inline">
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.bus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.endpoint</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.message</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.name</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.policy</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.pool</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.item</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++    </simplelist>
++  </refsect1>
++</refentry>
+diff --git a/Documentation/kdbus/kdbus.endpoint.xml b/Documentation/kdbus/kdbus.endpoint.xml
+new file mode 100644
+index 000000000000..76e325d4e931
+--- /dev/null
++++ b/Documentation/kdbus/kdbus.endpoint.xml
+@@ -0,0 +1,436 @@
++<?xml version='1.0'?> <!--*-nxml-*-->
++<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
++        "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
++
++<refentry id="kdbus.endpoint">
++
++  <refentryinfo>
++    <title>kdbus.endpoint</title>
++    <productname>kdbus.endpoint</productname>
++  </refentryinfo>
++
++  <refmeta>
++    <refentrytitle>kdbus.endpoint</refentrytitle>
++    <manvolnum>7</manvolnum>
++  </refmeta>
++
++  <refnamediv>
++    <refname>kdbus.endpoint</refname>
++    <refpurpose>kdbus endpoint</refpurpose>
++  </refnamediv>
++
++  <refsect1>
++    <title>Description</title>
++
++    <para>
++      Endpoints are entry points to a bus (see
++      <citerefentry>
++        <refentrytitle>kdbus.bus</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>).
++      By default, each bus has a default
++      endpoint called 'bus'. The bus owner has the ability to create custom
++      endpoints with specific names, permissions, and policy databases
++      (see below). An endpoint is presented as file underneath the directory
++      of the parent bus.
++    </para>
++    <para>
++      To create a custom endpoint, open the default endpoint
++      (<literal>bus</literal>) and use the
++      <constant>KDBUS_CMD_ENDPOINT_MAKE</constant> ioctl with
++      <type>struct kdbus_cmd</type>. Custom endpoints always have a policy
++      database that, by default, forbids any operation. You have to explicitly
++      install policy entries to allow any operation on this endpoint.
++    </para>
++    <para>
++      Once <constant>KDBUS_CMD_ENDPOINT_MAKE</constant> succeeded, the new
++      endpoint will appear in the filesystem
++      (<citerefentry>
++        <refentrytitle>kdbus.bus</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>), and the used file descriptor will manage the
++      newly created endpoint resource. It cannot be used to manage further
++      resources and must be kept open as long as the endpoint is needed. The
++      endpoint will be terminated as soon as the file descriptor is closed.
++    </para>
++    <para>
++      Endpoint names may be chosen freely except for one restriction: the name
++      must be prefixed with the numeric effective UID of the creator and a dash.
++      This is required to avoid namespace clashes between different users. When
++      creating an endpoint, the name that is passed in must be properly
++      formatted or the kernel will refuse creation of the endpoint. Example:
++      <literal>1047-my-endpoint</literal> is an acceptable name for an
++      endpoint registered by a user with UID 1047. However,
++      <literal>1024-my-endpoint</literal> is not, and neither is
++      <literal>my-endpoint</literal>. The UID must be provided in the
++      user-namespace of the bus.
++    </para>
++    <para>
++      To create connections to a bus, use <constant>KDBUS_CMD_HELLO</constant>
++      on a file descriptor returned by <function>open()</function> on an
++      endpoint node. See
++      <citerefentry>
++        <refentrytitle>kdbus.connection</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for further details.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Creating custom endpoints</title>
++    <para>
++      To create a new endpoint, the
++      <constant>KDBUS_CMD_ENDPOINT_MAKE</constant> command is used. Along with
++      the endpoint's name, which will be used to expose the endpoint in the
++      <citerefentry>
++        <refentrytitle>kdbus.fs</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>,
++      the command also optionally takes items to set up the endpoint's
++      <citerefentry>
++        <refentrytitle>kdbus.policy</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>.
++      <constant>KDBUS_CMD_ENDPOINT_MAKE</constant> takes a
++      <type>struct kdbus_cmd</type> argument.
++    </para>
++    <programlisting>
++struct kdbus_cmd {
++  __u64 size;
++  __u64 flags;
++  __u64 return_flags;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>The flags for creation.</para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_MAKE_ACCESS_GROUP</constant></term>
++              <listitem>
++                <para>Make the endpoint file group-accessible.</para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_MAKE_ACCESS_WORLD</constant></term>
++              <listitem>
++                <para>Make the endpoint file world-accessible.</para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_FLAG_NEGOTIATE</constant></term>
++              <listitem>
++                <para>
++                  Requests a set of valid flags for this ioctl. When this bit is
++                  set, no action is taken; the ioctl will return
++                  <errorcode>0</errorcode>, and the <varname>flags</varname>
++                  field will have all bits set that are valid for this command.
++                  The <constant>KDBUS_FLAG_NEGOTIATE</constant> bit will be
++                  cleared by the operation.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem><para>
++          Flags returned by the kernel. Currently unused and always set to
++          <constant>0</constant> by the kernel.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            The following items are expected for
++            <constant>KDBUS_CMD_ENDPOINT_MAKE</constant>.
++          </para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_MAKE_NAME</constant></term>
++              <listitem>
++                <para>Contains a string to identify the endpoint name.</para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_NAME</constant></term>
++              <term><constant>KDBUS_ITEM_POLICY_ACCESS</constant></term>
++              <listitem>
++                <para>
++                  These items are used to set the policy attached to the
++                  endpoint. For more details on bus and endpoint policies, see
++                  <citerefentry>
++                    <refentrytitle>kdbus.policy</refentrytitle>
++                    <manvolnum>7</manvolnum>
++                  </citerefentry>.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++          <para>
++            Unrecognized items are rejected, and the ioctl will fail with
++            <varname>errno</varname> set to <varname>EINVAL</varname>.
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++  </refsect1>
++
++  <refsect1>
++    <title>Updating endpoints</title>
++    <para>
++      To update an existing endpoint, the
++      <constant>KDBUS_CMD_ENDPOINT_UPDATE</constant> command is used on the file
++      descriptor that was used to create the update, using
++      <constant>KDBUS_CMD_ENDPOINT_MAKE</constant>. The only relevant detail of
++      the endpoint that can be updated is the policy. When the command is
++      employed, the policy of the endpoint is <emphasis>replaced</emphasis>
++      atomically with the new set of rules.
++      The command takes a <type>struct kdbus_cmd</type> argument.
++    </para>
++    <programlisting>
++struct kdbus_cmd {
++  __u64 size;
++  __u64 flags;
++  __u64 return_flags;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>
++          Unused for this command.
++          <constant>KDBUS_FLAG_NEGOTIATE</constant> is accepted to probe for
++          valid flags. If set, the ioctl will return <errorcode>0</errorcode>,
++          and the <varname>flags</varname> field is set to
++          <constant>0</constant>.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem><para>
++          Flags returned by the kernel. Currently unused and always set to
++          <constant>0</constant> by the kernel.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            The following items are expected for
++            <constant>KDBUS_CMD_ENDPOINT_UPDATE</constant>.
++          </para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_NAME</constant></term>
++              <term><constant>KDBUS_ITEM_POLICY_ACCESS</constant></term>
++              <listitem>
++                <para>
++                  These items are used to set the policy attached to the
++                  endpoint. For more details on bus and endpoint policies, see
++                  <citerefentry>
++                    <refentrytitle>kdbus.policy</refentrytitle>
++                    <manvolnum>7</manvolnum>
++                  </citerefentry>.
++                  Existing policy is atomically replaced with the new rules
++                  provided.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_NEGOTIATE</constant></term>
++              <listitem><para>
++                With this item, programs can <emphasis>probe</emphasis> the
++                kernel for known item types. See
++                <citerefentry>
++                  <refentrytitle>kdbus.item</refentrytitle>
++                  <manvolnum>7</manvolnum>
++                </citerefentry>
++                for more details.
++              </para></listitem>
++            </varlistentry>
++          </variablelist>
++          <para>
++            Unrecognized items are rejected, and the ioctl will fail with
++            <varname>errno</varname> set to <constant>EINVAL</constant>.
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++  </refsect1>
++
++  <refsect1>
++    <title>Return value</title>
++    <para>
++      On success, all mentioned ioctl commands return <errorcode>0</errorcode>;
++      on error, <errorcode>-1</errorcode> is returned, and
++      <varname>errno</varname> is set to indicate the error.
++      If the issued ioctl is illegal for the file descriptor used,
++      <varname>errno</varname> will be set to <constant>ENOTTY</constant>.
++    </para>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_ENDPOINT_MAKE</constant> may fail with the
++        following errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            The flags supplied in the <type>struct kdbus_cmd</type>
++            are invalid.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            Illegal combination of <constant>KDBUS_ITEM_NAME</constant> and
++            <constant>KDBUS_ITEM_POLICY_ACCESS</constant> was provided.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EEXIST</constant></term>
++          <listitem><para>
++            An endpoint of that name already exists.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EPERM</constant></term>
++          <listitem><para>
++            The calling user is not privileged. See
++            <citerefentry>
++              <refentrytitle>kdbus</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for information about privileged users.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_ENDPOINT_UPDATE</constant> may fail with the
++        following errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            The flags supplied in <type>struct kdbus_cmd</type>
++            are invalid.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            Illegal combination of <constant>KDBUS_ITEM_NAME</constant> and
++            <constant>KDBUS_ITEM_POLICY_ACCESS</constant> was provided.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EEXIST</constant></term>
++          <listitem><para>
++            An endpoint of that name already exists.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++  </refsect1>
++
++  <refsect1>
++    <title>See Also</title>
++    <simplelist type="inline">
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.bus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.endpoint</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.fs</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.item</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.message</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.name</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.pool</refentrytitle>
++           <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++    </simplelist>
++  </refsect1>
++</refentry>
+diff --git a/Documentation/kdbus/kdbus.fs.xml b/Documentation/kdbus/kdbus.fs.xml
+new file mode 100644
+index 000000000000..8c2a90e10b66
+--- /dev/null
++++ b/Documentation/kdbus/kdbus.fs.xml
+@@ -0,0 +1,124 @@
++<?xml version='1.0'?> <!--*-nxml-*-->
++<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
++        "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
++
++<refentry id="kdbus_fs">
++
++  <refentryinfo>
++    <title>kdbus.fs</title>
++    <productname>kdbus.fs</productname>
++  </refentryinfo>
++
++  <refmeta>
++    <refentrytitle>kdbus.fs</refentrytitle>
++    <manvolnum>7</manvolnum>
++  </refmeta>
++
++  <refnamediv>
++    <refname>kdbus.fs</refname>
++    <refpurpose>kdbus file system</refpurpose>
++  </refnamediv>
++
++  <refsect1>
++    <title>File-system Layout</title>
++
++    <para>
++      The <emphasis>kdbusfs</emphasis> pseudo filesystem provides access to
++      kdbus entities, such as <emphasis>buses</emphasis> and
++      <emphasis>endpoints</emphasis>. Each time the filesystem is mounted,
++      a new, isolated kdbus instance is created, which is independent from the
++      other instances.
++    </para>
++    <para>
++      The system-wide standard mount point for <emphasis>kdbusfs</emphasis> is
++      <constant>/sys/fs/kdbus</constant>.
++    </para>
++
++    <para>
++      Buses are represented as directories in the file system layout, whereas
++      endpoints are exposed as files inside these directories. At the top-level,
++      a <emphasis>control</emphasis> node is present, which can be opened to
++      create new buses via the <constant>KDBUS_CMD_BUS_MAKE</constant> ioctl.
++      Each <emphasis>bus</emphasis> shows a default endpoint called
++      <varname>bus</varname>, which can be opened to either create a connection
++      with the <constant>KDBUS_CMD_HELLO</constant> ioctl, or to create new
++      custom endpoints for the bus with
++      <constant>KDBUS_CMD_ENDPOINT_MAKE</constant>. See
++      <citerefentry>
++        <refentrytitle>kdbus.bus</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>,
++      <citerefentry>
++        <refentrytitle>kdbus.connection</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry> and
++      <citerefentry>
++        <refentrytitle>kdbus.endpoint</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for more details.
++    </para>
++
++    <para>Following, you can see an example layout of the
++    <emphasis>kdbusfs</emphasis> filesystem:</para>
++
++<programlisting>
++        /sys/fs/kdbus/                          ; mount-point
++        |-- 0-system                            ; bus directory
++        |   |-- bus                             ; default endpoint
++        |   `-- 1017-custom                     ; custom endpoint
++        |-- 1000-user                           ; bus directory
++        |   |-- bus                             ; default endpoint
++        |   |-- 1000-service-A                  ; custom endpoint
++        |   `-- 1000-service-B                  ; custom endpoint
++        `-- control                             ; control file
++</programlisting>
++  </refsect1>
++
++  <refsect1>
++    <title>Mounting instances</title>
++    <para>
++      In order to get a new and separate kdbus environment, a new instance
++      of <emphasis>kdbusfs</emphasis> can be mounted like this:
++    </para>
++<programlisting>
++  # mount -t kdbusfs kdbusfs /tmp/new_kdbus/
++</programlisting>
++  </refsect1>
++
++  <refsect1>
++    <title>See Also</title>
++    <simplelist type="inline">
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.bus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.connection</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.endpoint</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>mount</refentrytitle>
++          <manvolnum>8</manvolnum>
++        </citerefentry>
++      </member>
++    </simplelist>
++  </refsect1>
++</refentry>
+diff --git a/Documentation/kdbus/kdbus.item.xml b/Documentation/kdbus/kdbus.item.xml
+new file mode 100644
+index 000000000000..bfe47362097f
+--- /dev/null
++++ b/Documentation/kdbus/kdbus.item.xml
+@@ -0,0 +1,840 @@
++<?xml version='1.0'?> <!--*-nxml-*-->
++<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
++        "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
++
++<refentry id="kdbus">
++
++  <refentryinfo>
++    <title>kdbus.item</title>
++    <productname>kdbus item</productname>
++  </refentryinfo>
++
++  <refmeta>
++    <refentrytitle>kdbus.item</refentrytitle>
++    <manvolnum>7</manvolnum>
++  </refmeta>
++
++  <refnamediv>
++    <refname>kdbus.item</refname>
++    <refpurpose>kdbus item structure, layout and usage</refpurpose>
++  </refnamediv>
++
++  <refsect1>
++    <title>Description</title>
++
++    <para>
++      To flexibly augment transport structures, data blobs of type
++      <type>struct kdbus_item</type> can be attached to the structs passed
++      into the ioctls. Some ioctls make items of certain types mandatory,
++      others are optional. Items that are unsupported by ioctls they are
++      attached to will cause the ioctl to fail with <varname>errno</varname>
++      set to <constant>EINVAL</constant>.
++      Items are also used for information stored in a connection's
++      <emphasis>pool</emphasis>, such as received messages, name lists or
++      requested connection or bus owner information. Depending on the type of
++      an item, its total size is either fixed or variable.
++    </para>
++
++    <refsect2>
++      <title>Chaining items</title>
++      <para>
++        Whenever items are used as part of the kdbus kernel API, they are
++        embedded in structs that are embedded inside structs that themselves
++        include a size field containing the overall size of the structure.
++        This allows multiple items to be chained up, and an item iterator
++        (see below) is capable of detecting the end of an item chain.
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Alignment</title>
++      <para>
++        The kernel expects all items to be aligned to 8-byte boundaries.
++        Unaligned items will cause the ioctl they are used with to fail
++        with <varname>errno</varname> set to <constant>EINVAL</constant>.
++        An item that has an unaligned size itself hence needs to be padded
++        if it is followed by another item.
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Iterating items</title>
++      <para>
++        A simple iterator would iterate over the items until the items have
++        reached the embedding structure's overall size. An example
++        implementation is shown below.
++      </para>
++
++      <programlisting><![CDATA[
++#define KDBUS_ALIGN8(val) (((val) + 7) & ~7)
++
++#define KDBUS_ITEM_NEXT(item) \
++    (typeof(item))(((uint8_t *)item) + KDBUS_ALIGN8((item)->size))
++
++#define KDBUS_ITEM_FOREACH(item, head, first)                      \
++    for (item = (head)->first;                                     \
++         ((uint8_t *)(item) < (uint8_t *)(head) + (head)->size) && \
++          ((uint8_t *)(item) >= (uint8_t *)(head));                \
++         item = KDBUS_ITEM_NEXT(item))
++      ]]></programlisting>
++    </refsect2>
++  </refsect1>
++
++  <refsect1>
++    <title>Item layout</title>
++    <para>
++      A <type>struct kdbus_item</type> consists of a
++      <varname>size</varname> field, describing its overall size, and a
++      <varname>type</varname> field, both 64 bit wide. They are followed by
++      a union to store information that is specific to the item's type.
++      The struct layout is shown below.
++    </para>
++
++    <programlisting>
++struct kdbus_item {
++  __u64 size;
++  __u64 type;
++  /* item payload - see below */
++  union {
++    __u8 data[0];
++    __u32 data32[0];
++    __u64 data64[0];
++    char str[0];
++
++    __u64 id;
++    struct kdbus_vec vec;
++    struct kdbus_creds creds;
++    struct kdbus_pids pids;
++    struct kdbus_audit audit;
++    struct kdbus_caps caps;
++    struct kdbus_timestamp timestamp;
++    struct kdbus_name name;
++    struct kdbus_bloom_parameter bloom_parameter;
++    struct kdbus_bloom_filter bloom_filter;
++    struct kdbus_memfd memfd;
++    int fds[0];
++    struct kdbus_notify_name_change name_change;
++    struct kdbus_notify_id_change id_change;
++    struct kdbus_policy_access policy_access;
++  };
++};
++    </programlisting>
++
++    <para>
++      <type>struct kdbus_item</type> should never be used to allocate
++      an item instance, as its size may grow in future releases of the API.
++      Instead, it should be manually assembled by storing the
++      <varname>size</varname>, <varname>type</varname> and payload to a
++      struct of its own.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Item types</title>
++
++    <refsect2>
++      <title>Negotiation item</title>
++      <variablelist>
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_NEGOTIATE</constant></term>
++          <listitem><para>
++            With this item is attached to any ioctl, programs can
++            <emphasis>probe</emphasis> the kernel for known item items.
++            The item carries an array of <type>uint64_t</type> values in
++            <varname>item.data64</varname>, each set to an item type to
++            probe. The kernel will reset each member of this array that is
++            not recognized as valid item type to <constant>0</constant>.
++            This way, users can negotiate kernel features at start-up to
++            keep newer userspace compatible with older kernels. This item
++            is never attached by the kernel in response to any command.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++
++    <refsect2>
++      <title>Command specific items</title>
++      <variablelist>
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_PAYLOAD_VEC</constant></term>
++          <term><constant>KDBUS_ITEM_PAYLOAD_OFF</constant></term>
++          <listitem><para>
++            Messages are directly copied by the sending process into the
++            receiver's
++            <citerefentry>
++              <refentrytitle>kdbus.pool</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>.
++            This way, two peers can exchange data by effectively doing a
++            single-copy from one process to another; the kernel will not buffer
++            the data anywhere else. <constant>KDBUS_ITEM_PAYLOAD_VEC</constant>
++            is used when <emphasis>sending</emphasis> message. The item
++            references a memory address when the payload data can be found.
++            <constant>KDBUS_ITEM_PAYLOAD_OFF</constant> is used when messages
++            are <emphasis>received</emphasis>, and the
++            <constant>offset</constant> value describes the offset inside the
++            receiving connection's
++            <citerefentry>
++              <refentrytitle>kdbus.pool</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            where the message payload can be found. See
++            <citerefentry>
++              <refentrytitle>kdbus.message</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information on passing of payload data along with a
++            message.
++            <programlisting>
++struct kdbus_vec {
++  __u64 size;
++  union {
++    __u64 address;
++    __u64 offset;
++  };
++};
++            </programlisting>
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_PAYLOAD_MEMFD</constant></term>
++          <listitem><para>
++            Transports a file descriptor of a <emphasis>memfd</emphasis> in
++            <type>struct kdbus_memfd</type> in <varname>item.memfd</varname>.
++            The <varname>size</varname> field has to match the actual size of
++            the memfd that was specified when it was created. The
++            <varname>start</varname> parameter denotes the offset inside the
++            memfd at which the referenced payload starts. See
++            <citerefentry>
++              <refentrytitle>kdbus.message</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information on passing of payload data along with a
++            message.
++            <programlisting>
++struct kdbus_memfd {
++  __u64 start;
++  __u64 size;
++  int fd;
++  __u32 __pad;
++};
++            </programlisting>
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_FDS</constant></term>
++          <listitem><para>
++            Contains an array of <emphasis>file descriptors</emphasis>.
++            When used with <constant>KDBUS_CMD_SEND</constant>, the values of
++            this array must be filled with valid file descriptor numbers.
++            When received as item attached to a message, the array will
++            contain the numbers of the installed file descriptors, or
++            <constant>-1</constant> in case an error occurred.
++            file descriptor.
++            In either case, the number of entries in the array is derived from
++            the item's total size. See
++            <citerefentry>
++              <refentrytitle>kdbus.message</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++
++    <refsect2>
++      <title>Items specific to some commands</title>
++      <variablelist>
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_CANCEL_FD</constant></term>
++          <listitem><para>
++            Transports a file descriptor that can be used to cancel a
++            synchronous <constant>KDBUS_CMD_SEND</constant> operation by
++            writing to it. The file descriptor is stored in
++            <varname>item.fd[0]</varname>. The item may only contain one
++            file descriptor. See
++            <citerefentry>
++              <refentrytitle>kdbus.message</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information on this item and how to use it.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_BLOOM_PARAMETER</constant></term>
++          <listitem><para>
++            Contains a set of <emphasis>bloom parameters</emphasis> as
++            <type>struct kdbus_bloom_parameter</type> in
++            <varname>item.bloom_parameter</varname>.
++            The item is passed from userspace to kernel during the
++            <constant>KDBUS_CMD_BUS_MAKE</constant> ioctl, and returned
++            verbatim when <constant>KDBUS_CMD_HELLO</constant> is called.
++            The kernel does not use the bloom parameters, but they need to
++            be known by each connection on the bus in order to define the
++            bloom filter hash details. See
++            <citerefentry>
++              <refentrytitle>kdbus.match</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information on matching and bloom filters.
++            <programlisting>
++struct kdbus_bloom_parameter {
++  __u64 size;
++  __u64 n_hash;
++};
++            </programlisting>
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_BLOOM_FILTER</constant></term>
++          <listitem><para>
++            Carries a <emphasis>bloom filter</emphasis> as
++            <type>struct kdbus_bloom_filter</type> in
++            <varname>item.bloom_filter</varname>. It is mandatory to send this
++            item attached to a <type>struct kdbus_msg</type>, in case the
++            message is a signal. This item is never transported from kernel to
++            userspace. See
++            <citerefentry>
++              <refentrytitle>kdbus.match</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information on matching and bloom filters.
++            <programlisting>
++struct kdbus_bloom_filter {
++  __u64 generation;
++  __u64 data[0];
++};
++            </programlisting>
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_BLOOM_MASK</constant></term>
++          <listitem><para>
++            Transports a <emphasis>bloom mask</emphasis> as binary data blob
++            stored in <varname>item.data</varname>. This item is used to
++            describe a match into a connection's match database. See
++            <citerefentry>
++              <refentrytitle>kdbus.match</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information on matching and bloom filters.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_DST_NAME</constant></term>
++          <listitem><para>
++            Contains a <emphasis>well-known name</emphasis> to send a
++            message to, as null-terminated string in
++            <varname>item.str</varname>. This item is used with
++            <constant>KDBUS_CMD_SEND</constant>. See
++            <citerefentry>
++              <refentrytitle>kdbus.message</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information on how to send a message.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_MAKE_NAME</constant></term>
++          <listitem><para>
++            Contains a <emphasis>bus name</emphasis> or
++            <emphasis>endpoint name</emphasis>, stored as null-terminated
++            string in <varname>item.str</varname>. This item is sent from
++            userspace to kernel when buses or endpoints are created, and
++            returned back to userspace when the bus creator information is
++            queried. See
++            <citerefentry>
++              <refentrytitle>kdbus.bus</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            and
++            <citerefentry>
++              <refentrytitle>kdbus.endpoint</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_ATTACH_FLAGS_SEND</constant></term>
++          <term><constant>KDBUS_ITEM_ATTACH_FLAGS_RECV</constant></term>
++          <listitem><para>
++            Contains a set of <emphasis>attach flags</emphasis> at
++            <emphasis>send</emphasis> or <emphasis>receive</emphasis> time. See
++            <citerefentry>
++              <refentrytitle>kdbus</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>,
++            <citerefentry>
++              <refentrytitle>kdbus.bus</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry> and
++            <citerefentry>
++              <refentrytitle>kdbus.connection</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information on attach flags.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_ID</constant></term>
++          <listitem><para>
++            Transports a connection's <emphasis>numerical ID</emphasis> of
++            a connection as <type>uint64_t</type> value in
++            <varname>item.id</varname>.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_NAME</constant></term>
++          <listitem><para>
++            Transports a name associated with the
++            <emphasis>name registry</emphasis> as null-terminated string as
++            <type>struct kdbus_name</type> in
++            <varname>item.name</varname>. The <varname>flags</varname>
++            contains the flags of the name. See
++            <citerefentry>
++              <refentrytitle>kdbus.name</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information on how to access the name registry of a bus.
++            <programlisting>
++struct kdbus_name {
++  __u64 flags;
++  char name[0];
++};
++            </programlisting>
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++
++    <refsect2>
++      <title>Items attached by the kernel as metadata</title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_TIMESTAMP</constant></term>
++          <listitem><para>
++            Contains both the <emphasis>monotonic</emphasis> and the
++            <emphasis>realtime</emphasis> timestamp, taken when the message
++            was processed on the kernel side.
++            Stored as <type>struct kdbus_timestamp</type> in
++            <varname>item.timestamp</varname>.
++            <programlisting>
++struct kdbus_timestamp {
++  __u64 seqnum;
++  __u64 monotonic_ns;
++  __u64 realtime_ns;
++};
++            </programlisting>
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_CREDS</constant></term>
++          <listitem><para>
++            Contains a set of <emphasis>user</emphasis> and
++            <emphasis>group</emphasis> information as 32-bit values, in the
++            usual four flavors: real, effective, saved and filesystem related.
++            Stored as <type>struct kdbus_creds</type> in
++            <varname>item.creds</varname>.
++            <programlisting>
++struct kdbus_creds {
++  __u32 uid;
++  __u32 euid;
++  __u32 suid;
++  __u32 fsuid;
++  __u32 gid;
++  __u32 egid;
++  __u32 sgid;
++  __u32 fsgid;
++};
++            </programlisting>
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_PIDS</constant></term>
++          <listitem><para>
++            Contains the <emphasis>PID</emphasis>, <emphasis>TID</emphasis>
++            and <emphasis>parent PID (PPID)</emphasis> of a remote peer.
++            Stored as <type>struct kdbus_pids</type> in
++            <varname>item.pids</varname>.
++            <programlisting>
++struct kdbus_pids {
++  __u64 pid;
++  __u64 tid;
++  __u64 ppid;
++};
++            </programlisting>
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_AUXGROUPS</constant></term>
++          <listitem><para>
++            Contains the <emphasis>auxiliary (supplementary) groups</emphasis>
++            a remote peer is a member of, stored as array of
++            <type>uint32_t</type> values in <varname>item.data32</varname>.
++            The array length can be determined by looking at the item's total
++            size, subtracting the size of the header and and dividing the
++            remainder by <constant>sizeof(uint32_t)</constant>.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_OWNED_NAME</constant></term>
++          <listitem><para>
++            Contains a <emphasis>well-known name</emphasis> currently owned
++            by a connection. The name is stored as null-terminated string in
++            <varname>item.str</varname>. Its length can also be derived from
++            the item's total size.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_TID_COMM</constant> [*]</term>
++          <listitem><para>
++            Contains the <emphasis>comm</emphasis> string of a task's
++            <emphasis>TID</emphasis> (thread ID), stored as null-terminated
++            string in <varname>item.str</varname>. Its length can also be
++            derived from the item's total size. Receivers of this item should
++            not use its contents for any kind of security measures. See below.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_PID_COMM</constant> [*]</term>
++          <listitem><para>
++            Contains the <emphasis>comm</emphasis> string of a task's
++            <emphasis>PID</emphasis> (process ID), stored as null-terminated
++            string in <varname>item.str</varname>. Its length can also be
++            derived from the item's total size. Receivers of this item should
++            not use its contents for any kind of security measures. See below.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_EXE</constant> [*]</term>
++          <listitem><para>
++            Contains the <emphasis>path to the executable</emphasis> of a task,
++            stored as null-terminated string in <varname>item.str</varname>. Its
++            length can also be derived from the item's total size. Receivers of
++            this item should not use its contents for any kind of security
++            measures. See below.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_CMDLINE</constant> [*]</term>
++          <listitem><para>
++            Contains the <emphasis>command line arguments</emphasis> of a
++            task, stored as an <emphasis>array</emphasis> of null-terminated
++            strings in <varname>item.str</varname>. The total length of all
++            strings in the array can be derived from the item's total size.
++            Receivers of this item should not use its contents for any kind
++            of security measures. See below.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_CGROUP</constant></term>
++          <listitem><para>
++            Contains the <emphasis>cgroup path</emphasis> of a task, stored
++            as null-terminated string in <varname>item.str</varname>. Its
++            length can also be derived from the item's total size.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_CAPS</constant></term>
++          <listitem><para>
++            Contains sets of <emphasis>capabilities</emphasis>, stored as
++            <type>struct kdbus_caps</type> in <varname>item.caps</varname>.
++            As the item size may increase in the future, programs should be
++            written in a way that it takes
++            <varname>item.caps.last_cap</varname> into account, and derive
++            the number of sets and rows from the item size and the reported
++            number of valid capability bits.
++            <programlisting>
++struct kdbus_caps {
++  __u32 last_cap;
++  __u32 caps[0];
++};
++            </programlisting>
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_SECLABEL</constant></term>
++          <listitem><para>
++            Contains the <emphasis>LSM label</emphasis> of a task, stored as
++            null-terminated string in <varname>item.str</varname>. Its length
++            can also be derived from the item's total size.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_AUDIT</constant></term>
++          <listitem><para>
++            Contains the audit <emphasis>sessionid</emphasis> and
++            <emphasis>loginuid</emphasis> of a task, stored as
++            <type>struct kdbus_audit</type> in
++            <varname>item.audit</varname>.
++            <programlisting>
++struct kdbus_audit {
++  __u32 sessionid;
++  __u32 loginuid;
++};
++            </programlisting>
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_CONN_DESCRIPTION</constant></term>
++          <listitem><para>
++            Contains the <emphasis>connection description</emphasis>, as set
++            by <constant>KDBUS_CMD_HELLO</constant> or
++            <constant>KDBUS_CMD_CONN_UPDATE</constant>, stored as
++            null-terminated string in <varname>item.str</varname>. Its length
++            can also be derived from the item's total size.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++
++      <para>
++        All metadata is automatically translated into the
++        <emphasis>namespaces</emphasis> of the task that receives them. See
++        <citerefentry>
++          <refentrytitle>kdbus.message</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++        for more information.
++      </para>
++
++      <para>
++        [*] Note that the content stored in metadata items of type
++        <constant>KDBUS_ITEM_TID_COMM</constant>,
++        <constant>KDBUS_ITEM_PID_COMM</constant>,
++        <constant>KDBUS_ITEM_EXE</constant> and
++        <constant>KDBUS_ITEM_CMDLINE</constant>
++        can easily be tampered by the sending tasks. Therefore, they should
++        <emphasis>not</emphasis> be used for any sort of security relevant
++        assumptions. The only reason they are transmitted is to let
++        receivers know about details that were set when metadata was
++        collected, even though the task they were collected from is not
++        active any longer when the items are received.
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Items used for policy entries, matches and notifications</title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_POLICY_ACCESS</constant></term>
++          <listitem><para>
++            This item describes a <emphasis>policy access</emphasis> entry to
++            access the policy database of a
++            <citerefentry>
++              <refentrytitle>kdbus.bus</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry> or
++            <citerefentry>
++              <refentrytitle>kdbus.endpoint</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>.
++            Please refer to
++            <citerefentry>
++              <refentrytitle>kdbus.policy</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information on the policy database and how to access it.
++            <programlisting>
++struct kdbus_policy_access {
++  __u64 type;
++  __u64 access;
++  __u64 id;
++};
++            </programlisting>
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_ID_ADD</constant></term>
++          <term><constant>KDBUS_ITEM_ID_REMOVE</constant></term>
++          <listitem><para>
++            This item is sent as attachment to a
++            <emphasis>kernel notification</emphasis> and indicates that a
++            new connection was created on the bus, or that a connection was
++            disconnected, respectively. It stores a
++            <type>struct kdbus_notify_id_change</type> in
++            <varname>item.id_change</varname>.
++            The <varname>id</varname> field contains the numeric ID of the
++            connection that was added or removed, and <varname>flags</varname>
++            is set to the connection flags, as passed by
++            <constant>KDBUS_CMD_HELLO</constant>. See
++            <citerefentry>
++              <refentrytitle>kdbus.match</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            and
++            <citerefentry>
++              <refentrytitle>kdbus.message</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information on matches and notification messages.
++            <programlisting>
++struct kdbus_notify_id_change {
++  __u64 id;
++  __u64 flags;
++};
++            </programlisting>
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_NAME_ADD</constant></term>
++          <term><constant>KDBUS_ITEM_NAME_REMOVE</constant></term>
++          <term><constant>KDBUS_ITEM_NAME_CHANGE</constant></term>
++          <listitem><para>
++            This item is sent as attachment to a
++            <emphasis>kernel notification</emphasis> and indicates that a
++            <emphasis>well-known name</emphasis> appeared, disappeared or
++            transferred to another owner on the bus. It stores a
++            <type>struct kdbus_notify_name_change</type> in
++            <varname>item.name_change</varname>.
++            <varname>old_id</varname> describes the former owner of the name
++            and is set to <constant>0</constant> values in case of
++            <constant>KDBUS_ITEM_NAME_ADD</constant>.
++            <varname>new_id</varname> describes the new owner of the name and
++            is set to <constant>0</constant> values in case of
++            <constant>KDBUS_ITEM_NAME_REMOVE</constant>.
++            The <varname>name</varname> field contains the well-known name the
++            notification is about, as null-terminated string. See
++            <citerefentry>
++              <refentrytitle>kdbus.match</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            and
++            <citerefentry>
++              <refentrytitle>kdbus.message</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information on matches and notification messages.
++            <programlisting>
++struct kdbus_notify_name_change {
++  struct kdbus_notify_id_change old_id;
++  struct kdbus_notify_id_change new_id;
++  char name[0];
++};
++            </programlisting>
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_REPLY_TIMEOUT</constant></term>
++          <listitem><para>
++            This item is sent as attachment to a
++            <emphasis>kernel notification</emphasis>. It informs the receiver
++            that an expected reply to a message was not received in time.
++            The remote peer ID and the message cookie is stored in the message
++            header. See
++            <citerefentry>
++              <refentrytitle>kdbus.message</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information about messages, timeouts and notifications.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ITEM_REPLY_DEAD</constant></term>
++          <listitem><para>
++            This item is sent as attachment to a
++            <emphasis>kernel notification</emphasis>. It informs the receiver
++            that a remote connection a reply is expected from was disconnected
++            before that reply was sent. The remote peer ID and the message
++            cookie is stored in the message header. See
++            <citerefentry>
++              <refentrytitle>kdbus.message</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for more information about messages, timeouts and notifications.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++  </refsect1>
++
++  <refsect1>
++    <title>See Also</title>
++    <simplelist type="inline">
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.bus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.connection</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.endpoint</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.fs</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.message</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.name</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.pool</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>memfd_create</refentrytitle>
++          <manvolnum>2</manvolnum>
++        </citerefentry>
++      </member>
++    </simplelist>
++  </refsect1>
++
++</refentry>
+diff --git a/Documentation/kdbus/kdbus.match.xml b/Documentation/kdbus/kdbus.match.xml
+new file mode 100644
+index 000000000000..ef77b64e5890
+--- /dev/null
++++ b/Documentation/kdbus/kdbus.match.xml
+@@ -0,0 +1,553 @@
++<?xml version='1.0'?> <!--*-nxml-*-->
++<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
++        "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
++
++<refentry id="kdbus.match">
++
++  <refentryinfo>
++    <title>kdbus.match</title>
++    <productname>kdbus.match</productname>
++  </refentryinfo>
++
++  <refmeta>
++    <refentrytitle>kdbus.match</refentrytitle>
++    <manvolnum>7</manvolnum>
++  </refmeta>
++
++  <refnamediv>
++    <refname>kdbus.match</refname>
++    <refpurpose>kdbus match</refpurpose>
++  </refnamediv>
++
++  <refsect1>
++    <title>Description</title>
++
++    <para>
++      kdbus connections can install matches in order to subscribe to signal
++      messages sent on the bus. Such signal messages can be either directed
++      to a single connection (by setting a specific connection ID in
++      <varname>struct kdbus_msg.dst_id</varname> or by sending it to a
++      well-known name), or to potentially <emphasis>all</emphasis> currently
++      active connections on the bus (by setting
++      <varname>struct kdbus_msg.dst_id</varname> to
++      <constant>KDBUS_DST_ID_BROADCAST</constant>).
++      A signal message always has the <constant>KDBUS_MSG_SIGNAL</constant>
++      bit set in the <varname>flags</varname> bitfield.
++      Also, signal messages can originate from either the kernel (called
++      <emphasis>notifications</emphasis>), or from other bus connections.
++      In either case, a bus connection needs to have a suitable
++      <emphasis>match</emphasis> installed in order to receive any signal
++      message. Without any rules installed in the connection, no signal message
++      will be received.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Matches for signal messages from other connections</title>
++    <para>
++      Matches for messages from other connections (not kernel notifications)
++      are implemented as bloom filters (see below). The sender adds certain
++      properties of the message as elements to a bloom filter bit field, and
++      sends that along with the signal message.
++
++      The receiving connection adds the message properties it is interested in
++      as elements to a bloom mask bit field, and uploads the mask as match rule,
++      possibly along with some other rules to further limit the match.
++
++      The kernel will match the signal message's bloom filter against the
++      connections bloom mask (simply by &amp;-ing it), and will decide whether
++      the message should be delivered to a connection.
++    </para>
++    <para>
++      The kernel has no notion of any specific properties of the signal message,
++      all it sees are the bit fields of the bloom filter and the mask to match
++      against. The use of bloom filters allows simple and efficient matching,
++      without exposing any message properties or internals to the kernel side.
++      Clients need to deal with the fact that they might receive signal messages
++      which they did not subscribe to, as the bloom filter might allow
++      false-positives to pass the filter.
++
++      To allow the future extension of the set of elements in the bloom filter,
++      the filter specifies a <emphasis>generation</emphasis> number. A later
++      generation must always contain all elements of the set of the previous
++      generation, but can add new elements to the set. The match rules mask can
++      carry an array with all previous generations of masks individually stored.
++      When the filter and mask are matched by the kernel, the mask with the
++      closest matching generation is selected as the index into the mask array.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Bloom filters</title>
++    <para>
++      Bloom filters allow checking whether a given word is present in a
++      dictionary.  This allows connections to set up a mask for information it
++      is interested in, and will be delivered signal messages that have a
++      matching filter.
++
++      For general information, see
++      <ulink url="https://en.wikipedia.org/wiki/Bloom_filter">the Wikipedia
++      article on bloom filters</ulink>.
++    </para>
++    <para>
++      The size of the bloom filter is defined per bus when it is created, in
++      <varname>kdbus_bloom_parameter.size</varname>. All bloom filters attached
++      to signal messages on the bus must match this size, and all bloom filter
++      matches uploaded by connections must also match the size, or a multiple
++      thereof (see below).
++
++      The calculation of the mask has to be done in userspace applications. The
++      kernel just checks the bitmasks to decide whether or not to let the
++      message pass. All bits in the mask must match the filter in and bit-wise
++      <emphasis>AND</emphasis> logic, but the mask may have more bits set than
++      the filter. Consequently, false positive matches are expected to happen,
++      and programs must deal with that fact by checking the contents of the
++      payload again at receive time.
++    </para>
++    <para>
++      Masks are entities that are always passed to the kernel as part of a
++      match (with an item of type <constant>KDBUS_ITEM_BLOOM_MASK</constant>),
++      and filters can be attached to signals, with an item of type
++      <constant>KDBUS_ITEM_BLOOM_FILTER</constant>. For a filter to match, all
++      its bits have to be set in the match mask as well.
++    </para>
++    <para>
++      For example, consider a bus that has a bloom size of 8 bytes, and the
++      following mask/filter combinations:
++    </para>
++    <programlisting><![CDATA[
++          filter  0x0101010101010101
++          mask    0x0101010101010101
++                  -> matches
++
++          filter  0x0303030303030303
++          mask    0x0101010101010101
++                  -> doesn't match
++
++          filter  0x0101010101010101
++          mask    0x0303030303030303
++                  -> matches
++    ]]></programlisting>
++
++    <para>
++      Hence, in order to catch all messages, a mask filled with
++      <constant>0xff</constant> bytes can be installed as a wildcard match rule.
++    </para>
++
++    <refsect2>
++      <title>Generations</title>
++
++      <para>
++        Uploaded matches may contain multiple masks, which have are as large as
++        the bloom size defined by the bus. Each block of a mask is called a
++        <emphasis>generation</emphasis>, starting at index 0.
++
++        At match time, when a signal is about to be delivered, a bloom mask
++        generation is passed, which denotes which of the bloom masks the filter
++        should be matched against. This allows programs to provide backward
++        compatible masks at upload time, while older clients can still match
++        against older versions of filters.
++      </para>
++    </refsect2>
++  </refsect1>
++
++  <refsect1>
++    <title>Matches for kernel notifications</title>
++    <para>
++      To receive kernel generated notifications (see
++      <citerefentry>
++        <refentrytitle>kdbus.message</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>),
++      a connection must install match rules that are different from
++      the bloom filter matches described in the section above. They can be
++      filtered by the connection ID that caused the notification to be sent, by
++      one of the names it currently owns, or by the type of the notification
++      (ID/name add/remove/change).
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Adding a match</title>
++    <para>
++      To add a match, the <constant>KDBUS_CMD_MATCH_ADD</constant> ioctl is
++      used, which takes a struct of the struct described below.
++
++      Note that each of the items attached to this command will internally
++      create one match <emphasis>rule</emphasis>, and the collection of them,
++      which is submitted as one block via the ioctl, is called a
++      <emphasis>match</emphasis>. To allow a message to pass, all rules of a
++      match have to be satisfied. Hence, adding more items to the command will
++      only narrow the possibility of a match to effectively let the message
++      pass, and will decrease the chance that the connection's process will be
++      woken up needlessly.
++
++      Multiple matches can be installed per connection. As long as one of it has
++      a set of rules which allows the message to pass, this one will be
++      decisive.
++    </para>
++
++    <programlisting>
++struct kdbus_cmd_match {
++  __u64 size;
++  __u64 flags;
++  __u64 return_flags;
++  __u64 cookie;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>Flags to control the behavior of the ioctl.</para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_MATCH_REPLACE</constant></term>
++              <listitem>
++                <para>Make the endpoint file group-accessible</para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_FLAG_NEGOTIATE</constant></term>
++              <listitem>
++                <para>
++                  Requests a set of valid flags for this ioctl. When this bit is
++                  set, no action is taken; the ioctl will return
++                  <errorcode>0</errorcode>, and the <varname>flags</varname>
++                  field will have all bits set that are valid for this command.
++                  The <constant>KDBUS_FLAG_NEGOTIATE</constant> bit will be
++                  cleared by the operation.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem><para>
++          Flags returned by the kernel. Currently unused and always set to
++          <constant>0</constant> by the kernel.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>cookie</varname></term>
++        <listitem><para>
++          A cookie which identifies the match, so it can be referred to when
++          removing it.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++        <para>
++          Items to define the actual rules of the matches. The following item
++          types are expected. Each item will create one new match rule.
++        </para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_BLOOM_MASK</constant></term>
++              <listitem>
++                <para>
++                  An item that carries the bloom filter mask to match against
++                  in its data field. The payload size must match the bloom
++                  filter size that was specified when the bus was created.
++                  See the section below for more information on bloom filters.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_NAME</constant></term>
++              <listitem>
++                <para>
++                  When used as part of kernel notifications, this item specifies
++                  a name that is acquired, lost or that changed its owner (see
++                  below). When used as part of a match for user-generated signal
++                  messages, it specifies a name that the sending connection must
++                  own at the time of sending the signal.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_ID</constant></term>
++              <listitem>
++                <para>
++                  Specify a sender connection's ID that will match this rule.
++                  For kernel notifications, this specifies the ID of a
++                  connection that was added to or removed from the bus.
++                  For used-generated signals, it specifies the ID of the
++                  connection that sent the signal message.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_NAME_ADD</constant></term>
++              <term><constant>KDBUS_ITEM_NAME_REMOVE</constant></term>
++              <term><constant>KDBUS_ITEM_NAME_CHANGE</constant></term>
++              <listitem>
++                <para>
++                  These items request delivery of kernel notifications that
++                  describe a name acquisition, loss, or change. The details
++                  are stored in the item's
++                  <varname>kdbus_notify_name_change</varname> member.
++                  All information specified must be matched in order to make
++                  the message pass. Use
++                  <constant>KDBUS_MATCH_ID_ANY</constant> to
++                  match against any unique connection ID.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_ID_ADD</constant></term>
++              <term><constant>KDBUS_ITEM_ID_REMOVE</constant></term>
++              <listitem>
++                <para>
++                  These items request delivery of kernel notifications that are
++                  generated when a connection is created or terminated.
++                  <type>struct kdbus_notify_id_change</type> is used to
++                  store the actual match information. This item can be used to
++                  monitor one particular connection ID, or, when the ID field
++                  is set to <constant>KDBUS_MATCH_ID_ANY</constant>,
++                  all of them.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_NEGOTIATE</constant></term>
++              <listitem><para>
++                With this item, programs can <emphasis>probe</emphasis> the
++                kernel for known item types. See
++                <citerefentry>
++                  <refentrytitle>kdbus.item</refentrytitle>
++                  <manvolnum>7</manvolnum>
++                </citerefentry>
++                for more details.
++              </para></listitem>
++            </varlistentry>
++          </variablelist>
++
++          <para>
++            Unrecognized items are rejected, and the ioctl will fail with
++            <varname>errno</varname> set to <constant>EINVAL</constant>.
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      Refer to
++      <citerefentry>
++        <refentrytitle>kdbus.message</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for more information on message types.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Removing a match</title>
++    <para>
++      Matches can be removed with the
++      <constant>KDBUS_CMD_MATCH_REMOVE</constant> ioctl, which takes
++      <type>struct kdbus_cmd_match</type> as argument, but its fields
++      usage slightly differs compared to that of
++      <constant>KDBUS_CMD_MATCH_ADD</constant>.
++    </para>
++
++    <programlisting>
++struct kdbus_cmd_match {
++  __u64 size;
++  __u64 cookie;
++  __u64 flags;
++  __u64 return_flags;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>cookie</varname></term>
++        <listitem><para>
++          The cookie of the match, as it was passed when the match was added.
++          All matches that have this cookie will be removed.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>
++          No flags are supported for this use case.
++          <constant>KDBUS_FLAG_NEGOTIATE</constant> is accepted to probe for
++          valid flags. If set, the ioctl will fail with
++          <errorcode>-1</errorcode>, <varname>errno</varname> is set to
++          <constant>EPROTO</constant>, and the <varname>flags</varname> field
++          is set to <constant>0</constant>.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem><para>
++          Flags returned by the kernel. Currently unused and always set to
++          <constant>0</constant> by the kernel.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            No items are supported for this use case, but
++            <constant>KDBUS_ITEM_NEGOTIATE</constant> is allowed nevertheless.
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++  </refsect1>
++
++  <refsect1>
++    <title>Return value</title>
++    <para>
++      On success, all mentioned ioctl commands return <errorcode>0</errorcode>;
++      on error, <errorcode>-1</errorcode> is returned, and
++      <varname>errno</varname> is set to indicate the error.
++      If the issued ioctl is illegal for the file descriptor used,
++      <varname>errno</varname> will be set to <constant>ENOTTY</constant>.
++    </para>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_MATCH_ADD</constant> may fail with the following
++        errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            Illegal flags or items.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EDOM</constant></term>
++          <listitem><para>
++            Illegal bloom filter size.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EMFILE</constant></term>
++          <listitem><para>
++            Too many matches for this connection.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_MATCH_REMOVE</constant> may fail with the following
++        errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            Illegal flags.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EBADSLT</constant></term>
++          <listitem><para>
++            A match entry with the given cookie could not be found.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++  </refsect1>
++
++  <refsect1>
++    <title>See Also</title>
++    <simplelist type="inline">
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.bus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.match</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.fs</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.item</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.message</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.name</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.pool</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++    </simplelist>
++  </refsect1>
++</refentry>
+diff --git a/Documentation/kdbus/kdbus.message.xml b/Documentation/kdbus/kdbus.message.xml
+new file mode 100644
+index 000000000000..c25000dcfbc7
+--- /dev/null
++++ b/Documentation/kdbus/kdbus.message.xml
+@@ -0,0 +1,1277 @@
++<?xml version='1.0'?> <!--*-nxml-*-->
++<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
++        "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
++
++<refentry id="kdbus.message">
++
++  <refentryinfo>
++    <title>kdbus.message</title>
++    <productname>kdbus.message</productname>
++  </refentryinfo>
++
++  <refmeta>
++    <refentrytitle>kdbus.message</refentrytitle>
++    <manvolnum>7</manvolnum>
++  </refmeta>
++
++  <refnamediv>
++    <refname>kdbus.message</refname>
++    <refpurpose>kdbus message</refpurpose>
++  </refnamediv>
++
++  <refsect1>
++    <title>Description</title>
++
++    <para>
++      A kdbus message is used to exchange information between two connections
++      on a bus, or to transport notifications from the kernel to one or many
++      connections. This document describes the layout of messages, how payload
++      is added to them and how they are sent and received.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Message layout</title>
++
++    <para>The layout of a message is shown below.</para>
++
++    <programlisting>
++  +-------------------------------------------------------------------------+
++  | Message                                                                 |
++  | +---------------------------------------------------------------------+ |
++  | | Header                                                              | |
++  | | size:          overall message size, including the data records     | |
++  | | destination:   connection ID of the receiver                        | |
++  | | source:        connection ID of the sender (set by kernel)          | |
++  | | payload_type:  "DBusDBus" textual identifier stored as uint64_t     | |
++  | +---------------------------------------------------------------------+ |
++  | +---------------------------------------------------------------------+ |
++  | | Data Record                                                         | |
++  | | size:  overall record size (without padding)                        | |
++  | | type:  type of data                                                 | |
++  | | data:  reference to data (address or file descriptor)               | |
++  | +---------------------------------------------------------------------+ |
++  | +---------------------------------------------------------------------+ |
++  | | padding bytes to the next 8 byte alignment                          | |
++  | +---------------------------------------------------------------------+ |
++  | +---------------------------------------------------------------------+ |
++  | | Data Record                                                         | |
++  | | size:  overall record size (without padding)                        | |
++  | | ...                                                                 | |
++  | +---------------------------------------------------------------------+ |
++  | +---------------------------------------------------------------------+ |
++  | | padding bytes to the next 8 byte alignment                          | |
++  | +---------------------------------------------------------------------+ |
++  | +---------------------------------------------------------------------+ |
++  | | Data Record                                                         | |
++  | | size:  overall record size                                          | |
++  | | ...                                                                 | |
++  | +---------------------------------------------------------------------+ |
++  |   ... further data records ...                                          |
++  +-------------------------------------------------------------------------+
++    </programlisting>
++  </refsect1>
++
++  <refsect1>
++    <title>Message payload</title>
++
++    <para>
++      When connecting to the bus, receivers request a memory pool of a given
++      size, large enough to carry all backlog of data enqueued for the
++      connection. The pool is internally backed by a shared memory file which
++      can be <function>mmap()</function>ed by the receiver. See
++      <citerefentry>
++        <refentrytitle>kdbus.pool</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for more information.
++    </para>
++
++    <para>
++      Message payload must be described in items attached to a message when
++      it is sent. A receiver can access the payload by looking at the items
++      that are attached to a message in its pool. The following items are used.
++    </para>
++
++    <variablelist>
++      <varlistentry>
++        <term><constant>KDBUS_ITEM_PAYLOAD_VEC</constant></term>
++        <listitem>
++          <para>
++            This item references a piece of memory on the sender side which is
++            directly copied into the receiver's pool. This way, two peers can
++            exchange data by effectively doing a single-copy from one process
++            to another; the kernel will not buffer the data anywhere else.
++            This item is never found in a message received by a connection.
++          </para>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><constant>KDBUS_ITEM_PAYLOAD_OFF</constant></term>
++        <listitem>
++          <para>
++            This item is attached to messages on the receiving side and points
++            to a memory area inside the receiver's pool. The
++            <varname>offset</varname> variable in the item denotes the memory
++            location relative to the message itself.
++          </para>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><constant>KDBUS_ITEM_PAYLOAD_MEMFD</constant></term>
++        <listitem>
++          <para>
++            Messages can reference <emphasis>memfd</emphasis> files which
++            contain the data. memfd files are tmpfs-backed files that allow
++            sealing of the content of the file, which prevents all writable
++            access to the file content.
++          </para>
++          <para>
++            Only memfds that have
++            <constant>(F_SEAL_SHRINK|F_SEAL_GROW|F_SEAL_WRITE|F_SEAL_SEAL)
++            </constant>
++            set are accepted as payload data, which enforces reliable passing of
++            data. The receiver can assume that neither the sender nor anyone
++            else can alter the content after the message is sent. If those
++            seals are not set on the memfd, the ioctl will fail with
++            <errorcode>-1</errorcode>, and <varname>errno</varname> will be
++            set to <constant>ETXTBUSY</constant>.
++          </para>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><constant>KDBUS_ITEM_FDS</constant></term>
++        <listitem>
++          <para>
++            Messages can transport regular file descriptors via
++            <constant>KDBUS_ITEM_FDS</constant>. This item carries an array
++            of <type>int</type> values in <varname>item.fd</varname>. The
++            maximum number of file descriptors in the item is
++            <constant>253</constant>, and only one item of this type is
++            accepted per message. All passed values must be valid file
++            descriptors; the open count of each file descriptors is increased
++            by installing it to the receiver's task. This item can only be
++            used for directed messages, not for broadcasts, and only to
++            remote peers that have opted-in for receiving file descriptors
++            at connection time (<constant>KDBUS_HELLO_ACCEPT_FD</constant>).
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      The sender must not make any assumptions on the type in which data is
++      received by the remote peer. The kernel is free to re-pack multiple
++      <constant>KDBUS_ITEM_PAYLOAD_VEC</constant> and
++      <constant>KDBUS_ITEM_PAYLOAD_MEMFD</constant> payloads. For instance, the
++      kernel may decide to merge multiple <constant>VECs</constant> into a
++      single <constant>VEC</constant>, inline <constant>MEMFD</constant>
++      payloads into memory, or merge all passed <constant>VECs</constant> into a
++      single <constant>MEMFD</constant>. However, the kernel preserves the order
++      of passed data. This means that the order of all <constant>VEC</constant>
++      and <constant>MEMFD</constant> items is not changed in respect to each
++      other. In other words: All passed <constant>VEC</constant> and
++      <constant>MEMFD</constant> data payloads are treated as a single stream
++      of data that may be received by the remote peer in a different set of
++      chunks than it was sent as.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Sending messages</title>
++
++    <para>
++      Messages are passed to the kernel with the
++      <constant>KDBUS_CMD_SEND</constant> ioctl. Depending on the destination
++      address of the message, the kernel delivers the message to the specific
++      destination connection, or to some subset of all connections on the same
++      bus. Sending messages across buses is not possible. Messages are always
++      queued in the memory pool of the destination connection (see above).
++    </para>
++
++    <para>
++      The <constant>KDBUS_CMD_SEND</constant> ioctl uses a
++      <type>struct kdbus_cmd_send</type> to describe the message
++      transfer.
++    </para>
++    <programlisting>
++struct kdbus_cmd_send {
++  __u64 size;
++  __u64 flags;
++  __u64 return_flags;
++  __u64 msg_address;
++  struct kdbus_msg_info reply;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>Flags for message delivery</para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_SEND_SYNC_REPLY</constant></term>
++              <listitem>
++                <para>
++                  By default, all calls to kdbus are considered asynchronous,
++                  non-blocking. However, as there are many use cases that need
++                  to wait for a remote peer to answer a method call, there's a
++                  way to send a message and wait for a reply in a synchronous
++                  fashion. This is what the
++                  <constant>KDBUS_SEND_SYNC_REPLY</constant> controls. The
++                  <constant>KDBUS_CMD_SEND</constant> ioctl will block until the
++                  reply has arrived, the timeout limit is reached, in case the
++                  remote connection was shut down, or if interrupted by a signal
++                  before any reply; see
++                  <citerefentry>
++                    <refentrytitle>signal</refentrytitle>
++                    <manvolnum>7</manvolnum>
++                  </citerefentry>.
++
++                  The offset of the reply message in the sender's pool is stored
++                  in in <varname>offset_reply</varname> when the ioctl has
++                  returned without error. Hence, there is no need for another
++                  <constant>KDBUS_CMD_RECV</constant> ioctl or anything else to
++                  receive the reply.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_FLAG_NEGOTIATE</constant></term>
++              <listitem>
++                <para>
++                  Request a set of valid flags for this ioctl. When this bit is
++                  set, no action is taken; the ioctl will fail with
++                  <errorcode>-1</errorcode>, <varname>errno</varname>
++                  is set to <constant>EPROTO</constant>.
++                  Once the ioctl returned, the <varname>flags</varname>
++                  field will have all bits set that the kernel recognizes as
++                  valid for this command.
++                  The <constant>KDBUS_FLAG_NEGOTIATE</constant> bit will be
++                  cleared by the operation.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem><para>
++          Flags returned by the kernel. Currently unused and always set to
++          <constant>0</constant> by the kernel.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>msg_address</varname></term>
++        <listitem><para>
++          In this field, users have to provide a pointer to a message
++          (<type>struct kdbus_msg</type>) to send. See below for a
++          detailed description.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>reply</varname></term>
++        <listitem><para>
++          Only used for synchronous replies. See description of
++          <type>struct kdbus_cmd_recv</type> for more details.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            The following items are currently recognized.
++          </para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_CANCEL_FD</constant></term>
++              <listitem>
++                <para>
++                  When this optional item is passed in, and the call is
++                  executed as SYNC call, the passed in file descriptor can be
++                  used as alternative cancellation point. The kernel will call
++                  <citerefentry>
++                    <refentrytitle>poll</refentrytitle>
++                    <manvolnum>2</manvolnum>
++                  </citerefentry>
++                  on this file descriptor, and once it reports any incoming
++                  bytes, the blocking send operation will be canceled; the
++                  blocking, synchronous ioctl call will return
++                  <errorcode>-1</errorcode>, and <varname>errno</varname> will
++                  be set to <errorname>ECANCELED</errorname>.
++                  Any type of file descriptor on which
++                  <citerefentry>
++                    <refentrytitle>poll</refentrytitle>
++                    <manvolnum>2</manvolnum>
++                  </citerefentry>
++                  can be called on can be used as payload to this item; for
++                  example, an eventfd can be used for this purpose, see
++                  <citerefentry>
++                    <refentrytitle>eventfd</refentrytitle>
++                    <manvolnum>2</manvolnum>
++                  </citerefentry>.
++                  For asynchronous message sending, this item is allowed but
++                  ignored.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++          <para>
++            Unrecognized items are rejected, and the ioctl will fail with
++            <varname>errno</varname> set to <constant>EINVAL</constant>.
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      The fields in this struct are described below.
++      The message referenced the <varname>msg_address</varname> above has
++      the following layout.
++    </para>
++
++    <programlisting>
++struct kdbus_msg {
++  __u64 size;
++  __u64 flags;
++  __s64 priority;
++  __u64 dst_id;
++  __u64 src_id;
++  __u64 payload_type;
++  __u64 cookie;
++  __u64 timeout_ns;
++  __u64 cookie_reply;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>Flags to describe message details.</para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_MSG_EXPECT_REPLY</constant></term>
++              <listitem>
++                <para>
++                  Expect a reply to this message from the remote peer. With
++                  this bit set, the timeout_ns field must be set to a non-zero
++                  number of nanoseconds in which the receiving peer is expected
++                  to reply. If such a reply is not received in time, the sender
++                  will be notified with a timeout message (see below). The
++                  value must be an absolute value, in nanoseconds and based on
++                  <constant>CLOCK_MONOTONIC</constant>.
++                </para><para>
++                  For a message to be accepted as reply, it must be a direct
++                  message to the original sender (not a broadcast and not a
++                  signal message), and its
++                  <varname>kdbus_msg.reply_cookie</varname> must match the
++                  previous message's <varname>kdbus_msg.cookie</varname>.
++                </para><para>
++                  Expected replies also temporarily open the policy of the
++                  sending connection, so the other peer is allowed to respond
++                  within the given time window.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_MSG_NO_AUTO_START</constant></term>
++              <listitem>
++                <para>
++                  By default, when a message is sent to an activator
++                  connection, the activator is notified and will start an
++                  implementer. This flag inhibits that behavior. With this bit
++                  set, and the remote being an activator, the ioctl will fail
++                  with <varname>errno</varname> set to
++                  <constant>EADDRNOTAVAIL</constant>.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_FLAG_NEGOTIATE</constant></term>
++              <listitem>
++                <para>
++                  Requests a set of valid flags for this ioctl. When this bit is
++                  set, no action is taken; the ioctl will return
++                  <errorcode>0</errorcode>, and the <varname>flags</varname>
++                  field will have all bits set that are valid for this command.
++                  The <constant>KDBUS_FLAG_NEGOTIATE</constant> bit will be
++                  cleared by the operation.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>priority</varname></term>
++        <listitem><para>
++          The priority of this message. Receiving messages (see below) may
++          optionally be constrained to messages of a minimal priority. This
++          allows for use cases where timing critical data is interleaved with
++          control data on the same connection. If unused, the priority field
++          should be set to <constant>0</constant>.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>dst_id</varname></term>
++        <listitem><para>
++          The numeric ID of the destination connection, or
++          <constant>KDBUS_DST_ID_BROADCAST</constant>
++          (~0ULL) to address every peer on the bus, or
++          <constant>KDBUS_DST_ID_NAME</constant> (0) to look
++          it up dynamically from the bus' name registry.
++          In the latter case, an item of type
++          <constant>KDBUS_ITEM_DST_NAME</constant> is mandatory.
++          Also see
++          <citerefentry>
++            <refentrytitle>kdbus.name</refentrytitle>
++            <manvolnum>7</manvolnum>
++          </citerefentry>
++          .
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>src_id</varname></term>
++        <listitem><para>
++          Upon return of the ioctl, this member will contain the sending
++          connection's numerical ID. Should be 0 at send time.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>payload_type</varname></term>
++        <listitem><para>
++          Type of the payload in the actual data records. Currently, only
++          <constant>KDBUS_PAYLOAD_DBUS</constant> is accepted as input value
++          of this field. When receiving messages that are generated by the
++          kernel (notifications), this field will contain
++          <constant>KDBUS_PAYLOAD_KERNEL</constant>.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>cookie</varname></term>
++        <listitem><para>
++          Cookie of this message, for later recognition. Also, when replying
++          to a message (see above), the <varname>cookie_reply</varname>
++          field must match this value.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>timeout_ns</varname></term>
++        <listitem><para>
++          If the message sent requires a reply from the remote peer (see above),
++          this field contains the timeout in absolute nanoseconds based on
++          <constant>CLOCK_MONOTONIC</constant>. Also see
++          <citerefentry>
++            <refentrytitle>clock_gettime</refentrytitle>
++            <manvolnum>2</manvolnum>
++          </citerefentry>.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>cookie_reply</varname></term>
++        <listitem><para>
++          If the message sent is a reply to another message, this field must
++          match the cookie of the formerly received message.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            A dynamically sized list of items to contain additional information.
++            The following items are expected/valid:
++          </para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_PAYLOAD_VEC</constant></term>
++              <term><constant>KDBUS_ITEM_PAYLOAD_MEMFD</constant></term>
++              <term><constant>KDBUS_ITEM_FDS</constant></term>
++              <listitem>
++                <para>
++                  Actual data records containing the payload. See section
++                  "Passing of Payload Data".
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_BLOOM_FILTER</constant></term>
++              <listitem>
++                <para>
++                  Bloom filter for matches (see below).
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_ITEM_DST_NAME</constant></term>
++              <listitem>
++                <para>
++                  Well-known name to send this message to. Required if
++                  <varname>dst_id</varname> is set to
++                  <constant>KDBUS_DST_ID_NAME</constant>.
++                  If a connection holding the given name can't be found,
++                  the ioctl will fail with <varname>errno</varname> set to
++                  <constant>ESRCH</constant> is returned.
++                </para>
++                <para>
++                  For messages to a unique name (ID), this item is optional. If
++                  present, the kernel will make sure the name owner matches the
++                  given unique name. This allows programs to tie the message
++                  sending to the condition that a name is currently owned by a
++                  certain unique name.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      The message will be augmented by the requested metadata items when
++      queued into the receiver's pool. See
++      <citerefentry>
++        <refentrytitle>kdbus.connection</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      and
++      <citerefentry>
++        <refentrytitle>kdbus.item</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for more information on metadata.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Receiving messages</title>
++
++    <para>
++      Messages are received by the client with the
++      <constant>KDBUS_CMD_RECV</constant> ioctl. The endpoint file of the bus
++      supports <function>poll()/epoll()/select()</function>; when new messages
++      are available on the connection's file descriptor,
++      <constant>POLLIN</constant> is reported. For compatibility reasons,
++      <constant>POLLOUT</constant> is always reported as well. Note, however,
++      that the latter does not guarantee that a message can in fact be sent, as
++      this depends on how many pending messages the receiver has in its pool.
++    </para>
++
++    <para>
++      With the <constant>KDBUS_CMD_RECV</constant> ioctl, a
++      <type>struct kdbus_cmd_recv</type> is used.
++    </para>
++
++    <programlisting>
++struct kdbus_cmd_recv {
++  __u64 size;
++  __u64 flags;
++  __u64 return_flags;
++  __s64 priority;
++  __u64 dropped_msgs;
++  struct kdbus_msg_info msg;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>Flags to control the receive command.</para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_RECV_PEEK</constant></term>
++              <listitem>
++                <para>
++                  Just return the location of the next message. Do not install
++                  file descriptors or anything else. This is usually used to
++                  determine the sender of the next queued message.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_RECV_DROP</constant></term>
++              <listitem>
++                <para>
++                  Drop the next message without doing anything else with it,
++                  and free the pool slice. This a short-cut for
++                  <constant>KDBUS_RECV_PEEK</constant> and
++                  <constant>KDBUS_CMD_FREE</constant>.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_RECV_USE_PRIORITY</constant></term>
++              <listitem>
++                <para>
++                  Dequeue the messages ordered by their priority, and filtering
++                  them with the priority field (see below).
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_FLAG_NEGOTIATE</constant></term>
++              <listitem>
++                <para>
++                  Request a set of valid flags for this ioctl. When this bit is
++                  set, no action is taken; the ioctl will fail with
++                  <errorcode>-1</errorcode>, <varname>errno</varname>
++                  is set to <constant>EPROTO</constant>.
++                  Once the ioctl returned, the <varname>flags</varname>
++                  field will have all bits set that the kernel recognizes as
++                  valid for this command.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem><para>
++          Flags returned by the kernel. If the <varname>dropped_msgs</varname>
++          field is non-zero, <constant>KDBUS_RECV_RETURN_DROPPED_MSGS</constant>
++          is set. If a file descriptor could not be installed, the
++          <constant>KDBUS_RECV_RETURN_INCOMPLETE_FDS</constant> flag is set.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>priority</varname></term>
++        <listitem><para>
++          With <constant>KDBUS_RECV_USE_PRIORITY</constant> set in
++          <varname>flags</varname>, messages will be dequeued ordered by their
++          priority, starting with the highest value. Also, messages will be
++          filtered by the value given in this field, so the returned message
++          will at least have the requested priority. If no such message is
++          waiting in the queue, the ioctl will fail, and
++          <varname>errno</varname> will be set to <constant>EAGAIN</constant>.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>dropped_msgs</varname></term>
++        <listitem><para>
++          Whenever a message with <constant>KDBUS_MSG_SIGNAL</constant> is sent
++          but cannot be queued on a peer (e.g., as it contains FDs but the peer
++          does not support FDs, or there is no space left in the peer's pool..)
++          the 'dropped_msgs' counter of the peer is incremented. On the next
++          RECV ioctl, the 'dropped_msgs' field is copied into the ioctl struct
++          and cleared on the peer. If it was non-zero, the
++          <constant>KDBUS_RECV_RETURN_DROPPED_MSGS</constant> flag will be set
++          in <varname>return_flags</varname>. Note that this will only happen
++          if the ioctl succeeded or failed with <constant>EAGAIN</constant>. In
++          other error cases, the 'dropped_msgs' field of the peer is left
++          untouched.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>msg</varname></term>
++        <listitem><para>
++          Embedded struct containing information on the received message when
++          this command succeeded (see below).
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem><para>
++          Items to specify further details for the receive command.
++          Currently unused, and all items will be rejected with
++          <varname>errno</varname> set to <constant>EINVAL</constant>.
++        </para></listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      Both <type>struct kdbus_cmd_recv</type> and
++      <type>struct kdbus_cmd_send</type> embed
++      <type>struct kdbus_msg_info</type>.
++      For the <constant>KDBUS_CMD_SEND</constant> ioctl, it is used to catch
++      synchronous replies, if one was requested, and is unused otherwise.
++    </para>
++
++    <programlisting>
++struct kdbus_msg_info {
++  __u64 offset;
++  __u64 msg_size;
++  __u64 return_flags;
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>offset</varname></term>
++        <listitem><para>
++          Upon return of the ioctl, this field contains the offset in the
++          receiver's memory pool. The memory must be freed with
++          <constant>KDBUS_CMD_FREE</constant>. See
++          <citerefentry>
++            <refentrytitle>kdbus.pool</refentrytitle>
++            <manvolnum>7</manvolnum>
++          </citerefentry>
++          for further details.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>msg_size</varname></term>
++        <listitem><para>
++          Upon successful return of the ioctl, this field contains the size of
++          the allocated slice at offset <varname>offset</varname>.
++          It is the combination of the size of the stored
++          <type>struct kdbus_msg</type> object plus all appended VECs.
++          You can use it in combination with <varname>offset</varname> to map
++          a single message, instead of mapping the entire pool. See
++          <citerefentry>
++            <refentrytitle>kdbus.pool</refentrytitle>
++            <manvolnum>7</manvolnum>
++          </citerefentry>
++          for further details.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem>
++          <para>
++            Kernel-provided return flags. Currently, the following flags are
++            defined.
++          </para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_RECV_RETURN_INCOMPLETE_FDS</constant></term>
++              <listitem>
++                <para>
++                  The message contained memfds or file descriptors, and the
++                  kernel failed to install one or more of them at receive time.
++                  Most probably that happened because the maximum number of
++                  file descriptors for the receiver's task were exceeded.
++                  In such cases, the message is still delivered, so this is not
++                  a fatal condition. File descriptors numbers inside the
++                  <constant>KDBUS_ITEM_FDS</constant> item or memfd files
++                  referenced by <constant>KDBUS_ITEM_PAYLOAD_MEMFD</constant>
++                  items which could not be installed will be set to
++                  <constant>-1</constant>.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      Unless <constant>KDBUS_RECV_DROP</constant> was passed, the
++      <varname>offset</varname> field contains the location of the new message
++      inside the receiver's pool after the <constant>KDBUS_CMD_RECV</constant>
++      ioctl was employed. The message is stored as <type>struct kdbus_msg</type>
++      at this offset, and can be interpreted with the semantics described above.
++    </para>
++    <para>
++      Also, if the connection allowed for file descriptor to be passed
++      (<constant>KDBUS_HELLO_ACCEPT_FD</constant>), and if the message contained
++      any, they will be installed into the receiving process when the
++      <constant>KDBUS_CMD_RECV</constant> ioctl is called.
++      <emphasis>memfds</emphasis> may always be part of the message payload.
++      The receiving task is obliged to close all file descriptors appropriately
++      once no longer needed. If <constant>KDBUS_RECV_PEEK</constant> is set, no
++      file descriptors are installed. This allows for peeking at a message,
++      looking at its metadata only and dropping it via
++      <constant>KDBUS_RECV_DROP</constant>, without installing any of the file
++      descriptors into the receiving process.
++    </para>
++    <para>
++      The caller is obliged to call the <constant>KDBUS_CMD_FREE</constant>
++      ioctl with the returned offset when the memory is no longer needed.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Notifications</title>
++    <para>
++      A kernel notification is a regular kdbus message with the following
++      details.
++    </para>
++
++    <itemizedlist>
++      <listitem><para>
++          kdbus_msg.src_id == <constant>KDBUS_SRC_ID_KERNEL</constant>
++      </para></listitem>
++      <listitem><para>
++        kdbus_msg.dst_id == <constant>KDBUS_DST_ID_BROADCAST</constant>
++      </para></listitem>
++      <listitem><para>
++        kdbus_msg.payload_type == <constant>KDBUS_PAYLOAD_KERNEL</constant>
++      </para></listitem>
++      <listitem><para>
++        Has exactly one of the items attached that are described below.
++      </para></listitem>
++      <listitem><para>
++        Always has a timestamp item (<constant>KDBUS_ITEM_TIMESTAMP</constant>)
++        attached.
++      </para></listitem>
++    </itemizedlist>
++
++    <para>
++      The kernel will notify its users of the following events.
++    </para>
++
++    <itemizedlist>
++      <listitem><para>
++        When connection <emphasis>A</emphasis> is terminated while connection
++        <emphasis>B</emphasis> is waiting for a reply from it, connection
++        <emphasis>B</emphasis> is notified with a message with an item of
++        type <constant>KDBUS_ITEM_REPLY_DEAD</constant>.
++      </para></listitem>
++
++      <listitem><para>
++        When connection <emphasis>A</emphasis> does not receive a reply from
++        connection <emphasis>B</emphasis> within the specified timeout window,
++        connection <emphasis>A</emphasis> will receive a message with an
++        item of type <constant>KDBUS_ITEM_REPLY_TIMEOUT</constant>.
++      </para></listitem>
++
++      <listitem><para>
++        When an ordinary connection (not a monitor) is created on or removed
++        from a bus, messages with an item of type
++        <constant>KDBUS_ITEM_ID_ADD</constant> or
++        <constant>KDBUS_ITEM_ID_REMOVE</constant>, respectively, are delivered
++        to all bus members that match these messages through their match
++        database. Eavesdroppers (monitor connections) do not cause such
++        notifications to be sent. They are invisible on the bus.
++      </para></listitem>
++
++      <listitem><para>
++        When a connection gains or loses ownership of a name, messages with an
++        item of type <constant>KDBUS_ITEM_NAME_ADD</constant>,
++        <constant>KDBUS_ITEM_NAME_REMOVE</constant> or
++        <constant>KDBUS_ITEM_NAME_CHANGE</constant> are delivered to all bus
++        members that match these messages through their match database.
++      </para></listitem>
++    </itemizedlist>
++  </refsect1>
++
++  <refsect1>
++    <title>Return value</title>
++    <para>
++      On success, all mentioned ioctl commands return <errorcode>0</errorcode>;
++      on error, <errorcode>-1</errorcode> is returned, and
++      <varname>errno</varname> is set to indicate the error.
++      If the issued ioctl is illegal for the file descriptor used,
++      <varname>errno</varname> will be set to <constant>ENOTTY</constant>.
++    </para>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_SEND</constant> may fail with the following
++        errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>EOPNOTSUPP</constant></term>
++          <listitem><para>
++            The connection is not an ordinary connection, or the passed
++            file descriptors in <constant>KDBUS_ITEM_FDS</constant> item are
++            either kdbus handles or unix domain sockets. Both are currently
++            unsupported.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            The submitted payload type is
++            <constant>KDBUS_PAYLOAD_KERNEL</constant>,
++            <constant>KDBUS_MSG_EXPECT_REPLY</constant> was set without timeout
++            or cookie values, <constant>KDBUS_SEND_SYNC_REPLY</constant> was
++            set without <constant>KDBUS_MSG_EXPECT_REPLY</constant>, an invalid
++            item was supplied, <constant>src_id</constant> was non-zero and was
++            different from the current connection's ID, a supplied memfd had a
++            size of 0, or a string was not properly null-terminated.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ENOTUNIQ</constant></term>
++          <listitem><para>
++            The supplied destination is
++            <constant>KDBUS_DST_ID_BROADCAST</constant> and either
++            file descriptors were passed, or
++            <constant>KDBUS_MSG_EXPECT_REPLY</constant> was set,
++            or a timeout was given.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>E2BIG</constant></term>
++          <listitem><para>
++            Too many items
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EMSGSIZE</constant></term>
++          <listitem><para>
++            The size of the message header and items or the payload vector
++            is excessive.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EEXIST</constant></term>
++          <listitem><para>
++            Multiple <constant>KDBUS_ITEM_FDS</constant>,
++            <constant>KDBUS_ITEM_BLOOM_FILTER</constant> or
++            <constant>KDBUS_ITEM_DST_NAME</constant> items were supplied.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EBADF</constant></term>
++          <listitem><para>
++            The supplied <constant>KDBUS_ITEM_FDS</constant> or
++            <constant>KDBUS_ITEM_PAYLOAD_MEMFD</constant> items
++            contained an illegal file descriptor.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EMEDIUMTYPE</constant></term>
++          <listitem><para>
++            The supplied memfd is not a sealed kdbus memfd.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EMFILE</constant></term>
++          <listitem><para>
++            Too many file descriptors inside a
++            <constant>KDBUS_ITEM_FDS</constant>.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EBADMSG</constant></term>
++          <listitem><para>
++            An item had illegal size, both a <constant>dst_id</constant> and a
++            <constant>KDBUS_ITEM_DST_NAME</constant> was given, or both a name
++            and a bloom filter was given.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ETXTBSY</constant></term>
++          <listitem><para>
++            The supplied kdbus memfd file cannot be sealed or the seal
++            was removed, because it is shared with other processes or
++            still mapped with
++            <citerefentry>
++              <refentrytitle>mmap</refentrytitle>
++              <manvolnum>2</manvolnum>
++            </citerefentry>.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ECOMM</constant></term>
++          <listitem><para>
++            A peer does not accept the file descriptors addressed to it.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EFAULT</constant></term>
++          <listitem><para>
++            The supplied bloom filter size was not 64-bit aligned, or supplied
++            memory could not be accessed by the kernel.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EDOM</constant></term>
++          <listitem><para>
++            The supplied bloom filter size did not match the bloom filter
++            size of the bus.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EDESTADDRREQ</constant></term>
++          <listitem><para>
++            <constant>dst_id</constant> was set to
++            <constant>KDBUS_DST_ID_NAME</constant>, but no
++            <constant>KDBUS_ITEM_DST_NAME</constant> was attached.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ESRCH</constant></term>
++          <listitem><para>
++            The name to look up was not found in the name registry.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EADDRNOTAVAIL</constant></term>
++          <listitem><para>
++            <constant>KDBUS_MSG_NO_AUTO_START</constant> was given but the
++            destination connection is an activator.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ENXIO</constant></term>
++          <listitem><para>
++            The passed numeric destination connection ID couldn't be found,
++            or is not connected.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ECONNRESET</constant></term>
++          <listitem><para>
++            The destination connection is no longer active.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ETIMEDOUT</constant></term>
++          <listitem><para>
++            Timeout while synchronously waiting for a reply.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EINTR</constant></term>
++          <listitem><para>
++            Interrupted system call while synchronously waiting for a reply.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EPIPE</constant></term>
++          <listitem><para>
++            When sending a message, a synchronous reply from the receiving
++            connection was expected but the connection died before answering.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ENOBUFS</constant></term>
++          <listitem><para>
++            Too many pending messages on the receiver side.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EREMCHG</constant></term>
++          <listitem><para>
++            Both a well-known name and a unique name (ID) was given, but
++            the name is not currently owned by that connection.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EXFULL</constant></term>
++          <listitem><para>
++            The memory pool of the receiver is full.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EREMOTEIO</constant></term>
++          <listitem><para>
++            While synchronously waiting for a reply, the remote peer
++            failed with an I/O error.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_RECV</constant> may fail with the following
++        errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>EOPNOTSUPP</constant></term>
++          <listitem><para>
++            The connection is not an ordinary connection, or the passed
++            file descriptors are either kdbus handles or unix domain
++            sockets. Both are currently unsupported.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            Invalid flags or offset.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EAGAIN</constant></term>
++          <listitem><para>
++            No message found in the queue
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++  </refsect1>
++
++  <refsect1>
++    <title>See Also</title>
++    <simplelist type="inline">
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.bus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.connection</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.endpoint</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.fs</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.item</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.name</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.pool</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>clock_gettime</refentrytitle>
++          <manvolnum>2</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>ioctl</refentrytitle>
++          <manvolnum>2</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>poll</refentrytitle>
++          <manvolnum>2</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>select</refentrytitle>
++          <manvolnum>2</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>epoll</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>eventfd</refentrytitle>
++          <manvolnum>2</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>memfd_create</refentrytitle>
++          <manvolnum>2</manvolnum>
++        </citerefentry>
++      </member>
++    </simplelist>
++  </refsect1>
++</refentry>
+diff --git a/Documentation/kdbus/kdbus.name.xml b/Documentation/kdbus/kdbus.name.xml
+new file mode 100644
+index 000000000000..3f5f6a6c5ed6
+--- /dev/null
++++ b/Documentation/kdbus/kdbus.name.xml
+@@ -0,0 +1,711 @@
++<?xml version='1.0'?> <!--*-nxml-*-->
++<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
++        "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
++
++<refentry id="kdbus.name">
++
++  <refentryinfo>
++    <title>kdbus.name</title>
++    <productname>kdbus.name</productname>
++  </refentryinfo>
++
++  <refmeta>
++    <refentrytitle>kdbus.name</refentrytitle>
++    <manvolnum>7</manvolnum>
++  </refmeta>
++
++  <refnamediv>
++    <refname>kdbus.name</refname>
++    <refpurpose>kdbus.name</refpurpose>
++  </refnamediv>
++
++  <refsect1>
++    <title>Description</title>
++    <para>
++      Each
++      <citerefentry>
++        <refentrytitle>kdbus.bus</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      instantiates a name registry to resolve well-known names into unique
++      connection IDs for message delivery. The registry will be queried when a
++      message is sent with <varname>kdbus_msg.dst_id</varname> set to
++      <constant>KDBUS_DST_ID_NAME</constant>, or when a registry dump is
++      requested with <constant>KDBUS_CMD_NAME_LIST</constant>.
++    </para>
++
++    <para>
++      All of the below is subject to policy rules for <emphasis>SEE</emphasis>
++      and <emphasis>OWN</emphasis> permissions. See
++      <citerefentry>
++        <refentrytitle>kdbus.policy</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for more information.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Name validity</title>
++    <para>
++      A name has to comply with the following rules in order to be considered
++      valid.
++    </para>
++
++    <itemizedlist>
++      <listitem>
++        <para>
++          The name has two or more elements separated by a
++          '<literal>.</literal>' (period) character.
++        </para>
++      </listitem>
++      <listitem>
++        <para>
++          All elements must contain at least one character.
++        </para>
++      </listitem>
++      <listitem>
++        <para>
++          Each element must only contain the ASCII characters
++          <literal>[A-Z][a-z][0-9]_</literal> and must not begin with a
++          digit.
++        </para>
++      </listitem>
++      <listitem>
++        <para>
++          The name must contain at least one '<literal>.</literal>' (period)
++          character (and thus at least two elements).
++        </para>
++      </listitem>
++      <listitem>
++        <para>
++          The name must not begin with a '<literal>.</literal>' (period)
++          character.
++        </para>
++      </listitem>
++      <listitem>
++        <para>
++          The name must not exceed <constant>255</constant> characters in
++          length.
++        </para>
++      </listitem>
++    </itemizedlist>
++  </refsect1>
++
++  <refsect1>
++    <title>Acquiring a name</title>
++    <para>
++      To acquire a name, a client uses the
++      <constant>KDBUS_CMD_NAME_ACQUIRE</constant> ioctl with
++      <type>struct kdbus_cmd</type> as argument.
++    </para>
++
++    <programlisting>
++struct kdbus_cmd {
++  __u64 size;
++  __u64 flags;
++  __u64 return_flags;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>Flags to control details in the name acquisition.</para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_NAME_REPLACE_EXISTING</constant></term>
++              <listitem>
++                <para>
++                  Acquiring a name that is already present usually fails,
++                  unless this flag is set in the call, and
++                  <constant>KDBUS_NAME_ALLOW_REPLACEMENT</constant> (see below)
++                  was set when the current owner of the name acquired it, or
++                  if the current owner is an activator connection (see
++                  <citerefentry>
++                    <refentrytitle>kdbus.connection</refentrytitle>
++                    <manvolnum>7</manvolnum>
++                  </citerefentry>).
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_NAME_ALLOW_REPLACEMENT</constant></term>
++              <listitem>
++                <para>
++                  Allow other connections to take over this name. When this
++                  happens, the former owner of the connection will be notified
++                  of the name loss.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_NAME_QUEUE</constant></term>
++              <listitem>
++                <para>
++                  A name that is already acquired by a connection can not be
++                  acquired again (unless the
++                  <constant>KDBUS_NAME_ALLOW_REPLACEMENT</constant> flag was
++                  set during acquisition; see above).
++                  However, a connection can put itself in a queue of
++                  connections waiting for the name to be released. Once that
++                  happens, the first connection in that queue becomes the new
++                  owner and is notified accordingly.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_FLAG_NEGOTIATE</constant></term>
++              <listitem>
++                <para>
++                  Request a set of valid flags for this ioctl. When this bit is
++                  set, no action is taken; the ioctl will fail with
++                  <errorcode>-1</errorcode>, and <varname>errno</varname>
++                  is set to <constant>EPROTO</constant>.
++                  Once the ioctl returned, the <varname>flags</varname>
++                  field will have all bits set that the kernel recognizes as
++                  valid for this command.
++                  The <constant>KDBUS_FLAG_NEGOTIATE</constant> bit will be
++                  cleared by the operation.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem>
++          <para>
++            Flags returned by the kernel. Currently, the following may be
++            returned by the kernel.
++          </para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_NAME_IN_QUEUE</constant></term>
++              <listitem>
++                <para>
++                  The name was not acquired yet, but the connection was
++                  placed in the queue of peers waiting for the name.
++                  This can only happen if <constant>KDBUS_NAME_QUEUE</constant>
++                  was set in the <varname>flags</varname> member (see above).
++                  The connection will receive a name owner change notification
++                  once the current owner has given up the name and its
++                  ownership was transferred.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            Items to submit the name. Currently, one item of type
++            <constant>KDBUS_ITEM_NAME</constant> is expected and allowed, and
++            the contained string must be a valid bus name.
++            <constant>KDBUS_ITEM_NEGOTIATE</constant> may be used to probe for
++            valid item types. See
++            <citerefentry>
++              <refentrytitle>kdbus.item</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for a detailed description of how this item is used.
++          </para>
++          <para>
++            Unrecognized items are rejected, and the ioctl will fail with
++            <varname>errno</varname> set to <errorname>>EINVAL</errorname>.
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++  </refsect1>
++
++  <refsect1>
++    <title>Releasing a name</title>
++    <para>
++      A connection may release a name explicitly with the
++      <constant>KDBUS_CMD_NAME_RELEASE</constant> ioctl. If the connection was
++      an implementer of an activatable name, its pending messages are moved
++      back to the activator. If there are any connections queued up as waiters
++      for the name, the first one in the queue (the oldest entry) will become
++      the new owner. The same happens implicitly for all names once a
++      connection terminates. See
++      <citerefentry>
++        <refentrytitle>kdbus.connection</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for more information on connections.
++    </para>
++    <para>
++      The <constant>KDBUS_CMD_NAME_RELEASE</constant> ioctl uses the same data
++      structure as the acquisition call
++      (<constant>KDBUS_CMD_NAME_ACQUIRE</constant>),
++      but with slightly different field usage.
++    </para>
++
++    <programlisting>
++struct kdbus_cmd {
++  __u64 size;
++  __u64 flags;
++  __u64 return_flags;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>
++          Flags to the command. Currently unused.
++          <constant>KDBUS_FLAG_NEGOTIATE</constant> is accepted to probe for
++          valid flags. If set, the ioctl will return <errorcode>0</errorcode>,
++          and the <varname>flags</varname> field is set to
++          <constant>0</constant>.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem><para>
++          Flags returned by the kernel. Currently unused and always set to
++          <constant>0</constant> by the kernel.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            Items to submit the name. Currently, one item of type
++            <constant>KDBUS_ITEM_NAME</constant> is expected and allowed, and
++            the contained string must be a valid bus name.
++            <constant>KDBUS_ITEM_NEGOTIATE</constant> may be used to probe for
++            valid item types. See
++            <citerefentry>
++              <refentrytitle>kdbus.item</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++            for a detailed description of how this item is used.
++          </para>
++          <para>
++            Unrecognized items are rejected, and the ioctl will fail with
++            <varname>errno</varname> set to <constant>EINVAL</constant>.
++          </para>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++  </refsect1>
++
++  <refsect1>
++    <title>Dumping the name registry</title>
++    <para>
++      A connection may request a complete or filtered dump of currently active
++      bus names with the <constant>KDBUS_CMD_LIST</constant> ioctl, which
++      takes a <type>struct kdbus_cmd_list</type> as argument.
++    </para>
++
++    <programlisting>
++struct kdbus_cmd_list {
++  __u64 flags;
++  __u64 return_flags;
++  __u64 offset;
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem>
++          <para>
++            Any combination of flags to specify which names should be dumped.
++          </para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_LIST_UNIQUE</constant></term>
++              <listitem>
++                <para>
++                  List the unique (numeric) IDs of the connection, whether it
++                  owns a name or not.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_LIST_NAMES</constant></term>
++              <listitem>
++                <para>
++                  List well-known names stored in the database which are
++                  actively owned by a real connection (not an activator).
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_LIST_ACTIVATORS</constant></term>
++              <listitem>
++                <para>
++                  List names that are owned by an activator.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_LIST_QUEUED</constant></term>
++              <listitem>
++                <para>
++                  List connections that are not yet owning a name but are
++                  waiting for it to become available.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_FLAG_NEGOTIATE</constant></term>
++              <listitem>
++                <para>
++                  Request a set of valid flags for this ioctl. When this bit is
++                  set, no action is taken; the ioctl will fail with
++                  <errorcode>-1</errorcode>, and <varname>errno</varname>
++                  is set to <constant>EPROTO</constant>.
++                  Once the ioctl returned, the <varname>flags</varname>
++                  field will have all bits set that the kernel recognizes as
++                  valid for this command.
++                  The <constant>KDBUS_FLAG_NEGOTIATE</constant> bit will be
++                  cleared by the operation.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem><para>
++          Flags returned by the kernel. Currently unused and always set to
++          <constant>0</constant> by the kernel.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>offset</varname></term>
++        <listitem><para>
++          When the ioctl returns successfully, the offset to the name registry
++          dump inside the connection's pool will be stored in this field.
++        </para></listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      The returned list of names is stored in a <type>struct kdbus_list</type>
++      that in turn contains an array of type <type>struct kdbus_info</type>,
++      The array-size in bytes is given as <varname>list_size</varname>.
++      The fields inside <type>struct kdbus_info</type> is described next.
++    </para>
++
++    <programlisting>
++struct kdbus_info {
++  __u64 size;
++  __u64 id;
++  __u64 flags;
++  struct kdbus_item items[0];
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>id</varname></term>
++        <listitem><para>
++          The owning connection's unique ID.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>
++          The flags of the owning connection.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem>
++          <para>
++            Items containing the actual name. Currently, one item of type
++            <constant>KDBUS_ITEM_OWNED_NAME</constant> will be attached,
++            including the name's flags. In that item, the flags field of the
++            name may carry the following bits:
++          </para>
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_NAME_ALLOW_REPLACEMENT</constant></term>
++              <listitem>
++                <para>
++                  Other connections are allowed to take over this name from the
++                  connection that owns it.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_NAME_IN_QUEUE</constant></term>
++              <listitem>
++                <para>
++                  When retrieving a list of currently acquired names in the
++                  registry, this flag indicates whether the connection
++                  actually owns the name or is currently waiting for it to
++                  become available.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_NAME_ACTIVATOR</constant></term>
++              <listitem>
++                <para>
++                  An activator connection owns a name as a placeholder for an
++                  implementer, which is started on demand by programs as soon
++                  as the first message arrives. There's some more information
++                  on this topic in
++                  <citerefentry>
++                    <refentrytitle>kdbus.connection</refentrytitle>
++                    <manvolnum>7</manvolnum>
++                  </citerefentry>
++                  .
++                </para>
++                <para>
++                  In contrast to
++                  <constant>KDBUS_NAME_REPLACE_EXISTING</constant>,
++                  when a name is taken over from an activator connection, all
++                  the messages that have been queued in the activator
++                  connection will be moved over to the new owner. The activator
++                  connection will still be tracked for the name and will take
++                  control again if the implementer connection terminates.
++                </para>
++                <para>
++                  This flag can not be used when acquiring a name, but is
++                  implicitly set through <constant>KDBUS_CMD_HELLO</constant>
++                  with <constant>KDBUS_HELLO_ACTIVATOR</constant> set in
++                  <varname>kdbus_cmd_hello.conn_flags</varname>.
++                </para>
++              </listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_FLAG_NEGOTIATE</constant></term>
++              <listitem>
++                <para>
++                  Requests a set of valid flags for this ioctl. When this bit is
++                  set, no action is taken; the ioctl will return
++                  <errorcode>0</errorcode>, and the <varname>flags</varname>
++                  field will have all bits set that are valid for this command.
++                  The <constant>KDBUS_FLAG_NEGOTIATE</constant> bit will be
++                  cleared by the operation.
++                </para>
++              </listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      The returned buffer must be freed with the
++      <constant>KDBUS_CMD_FREE</constant> ioctl when the user is finished with
++      it. See
++      <citerefentry>
++        <refentrytitle>kdbus.pool</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for more information.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Return value</title>
++    <para>
++      On success, all mentioned ioctl commands return <errorcode>0</errorcode>;
++      on error, <errorcode>-1</errorcode> is returned, and
++      <varname>errno</varname> is set to indicate the error.
++      If the issued ioctl is illegal for the file descriptor used,
++      <varname>errno</varname> will be set to <constant>ENOTTY</constant>.
++    </para>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_NAME_ACQUIRE</constant> may fail with the following
++        errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            Illegal command flags, illegal name provided, or an activator
++            tried to acquire a second name.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EPERM</constant></term>
++          <listitem><para>
++            Policy prohibited name ownership.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EALREADY</constant></term>
++          <listitem><para>
++            Connection already owns that name.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EEXIST</constant></term>
++          <listitem><para>
++            The name already exists and can not be taken over.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>E2BIG</constant></term>
++          <listitem><para>
++            The maximum number of well-known names per connection is exhausted.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_NAME_RELEASE</constant>
++        may fail with the following errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            Invalid command flags, or invalid name provided.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ESRCH</constant></term>
++          <listitem><para>
++            Name is not found in the registry.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EADDRINUSE</constant></term>
++          <listitem><para>
++            Name is owned by a different connection and can't be released.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_LIST</constant> may fail with the following
++        errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            Invalid command flags
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>ENOBUFS</constant></term>
++          <listitem><para>
++            No available memory in the connection's pool.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++  </refsect1>
++
++  <refsect1>
++    <title>See Also</title>
++    <simplelist type="inline">
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.bus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.connection</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.item</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.policy</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.pool</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++    </simplelist>
++  </refsect1>
++</refentry>
+diff --git a/Documentation/kdbus/kdbus.policy.xml b/Documentation/kdbus/kdbus.policy.xml
+new file mode 100644
+index 000000000000..67324163880a
+--- /dev/null
++++ b/Documentation/kdbus/kdbus.policy.xml
+@@ -0,0 +1,406 @@
++<?xml version='1.0'?> <!--*-nxml-*-->
++<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
++        "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
++
++<refentry id="kdbus.policy">
++
++  <refentryinfo>
++    <title>kdbus.policy</title>
++    <productname>kdbus.policy</productname>
++  </refentryinfo>
++
++  <refmeta>
++    <refentrytitle>kdbus.policy</refentrytitle>
++    <manvolnum>7</manvolnum>
++  </refmeta>
++
++  <refnamediv>
++    <refname>kdbus.policy</refname>
++    <refpurpose>kdbus policy</refpurpose>
++  </refnamediv>
++
++  <refsect1>
++    <title>Description</title>
++
++    <para>
++      A kdbus policy restricts the possibilities of connections to own, see and
++      talk to well-known names. A policy can be associated with a bus (through a
++      policy holder connection) or a custom endpoint. kdbus stores its policy
++      information in a database that can be accessed through the following
++      ioctl commands:
++    </para>
++
++    <variablelist>
++      <varlistentry>
++        <term><constant>KDBUS_CMD_HELLO</constant></term>
++        <listitem><para>
++          When creating, or updating, a policy holder connection. See
++          <citerefentry>
++            <refentrytitle>kdbus.connection</refentrytitle>
++            <manvolnum>7</manvolnum>
++          </citerefentry>.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><constant>KDBUS_CMD_ENDPOINT_MAKE</constant></term>
++        <term><constant>KDBUS_CMD_ENDPOINT_UPDATE</constant></term>
++        <listitem><para>
++          When creating, or updating, a bus custom endpoint. See
++          <citerefentry>
++            <refentrytitle>kdbus.endpoint</refentrytitle>
++            <manvolnum>7</manvolnum>
++          </citerefentry>.
++        </para></listitem>
++      </varlistentry>
++    </variablelist>
++
++    <para>
++      In all cases, the name and policy access information is stored in items
++      of type <constant>KDBUS_ITEM_NAME</constant> and
++      <constant>KDBUS_ITEM_POLICY_ACCESS</constant>. For this transport, the
++      following rules apply.
++    </para>
++
++    <itemizedlist>
++      <listitem>
++        <para>
++          An item of type <constant>KDBUS_ITEM_NAME</constant> must be followed
++          by at least one <constant>KDBUS_ITEM_POLICY_ACCESS</constant> item.
++        </para>
++      </listitem>
++
++      <listitem>
++        <para>
++          An item of type <constant>KDBUS_ITEM_NAME</constant> can be followed
++          by an arbitrary number of
++          <constant>KDBUS_ITEM_POLICY_ACCESS</constant> items.
++        </para>
++      </listitem>
++
++      <listitem>
++        <para>
++          An arbitrary number of groups of names and access levels can be given.
++        </para>
++      </listitem>
++    </itemizedlist>
++
++    <para>
++      Names passed in items of type <constant>KDBUS_ITEM_NAME</constant> must
++      comply to the rules of valid kdbus.name. See
++      <citerefentry>
++        <refentrytitle>kdbus.name</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for more information.
++
++      The payload of an item of type
++      <constant>KDBUS_ITEM_POLICY_ACCESS</constant> is defined by the following
++      struct. For more information on the layout of items, please refer to
++      <citerefentry>
++        <refentrytitle>kdbus.item</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>.
++    </para>
++
++    <programlisting>
++struct kdbus_policy_access {
++  __u64 type;
++  __u64 access;
++  __u64 id;
++};
++    </programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>type</varname></term>
++        <listitem>
++          <para>
++            One of the following.
++          </para>
++
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_POLICY_ACCESS_USER</constant></term>
++              <listitem><para>
++                Grant access to a user with the UID stored in the
++                <varname>id</varname> field.
++              </para></listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_POLICY_ACCESS_GROUP</constant></term>
++              <listitem><para>
++                Grant access to a user with the GID stored in the
++                <varname>id</varname> field.
++              </para></listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_POLICY_ACCESS_WORLD</constant></term>
++              <listitem><para>
++                Grant access to everyone. The <varname>id</varname> field
++                is ignored.
++              </para></listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>access</varname></term>
++        <listitem>
++          <para>
++            The access to grant. One of the following.
++          </para>
++
++          <variablelist>
++            <varlistentry>
++              <term><constant>KDBUS_POLICY_SEE</constant></term>
++              <listitem><para>
++                Allow the name to be seen.
++              </para></listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_POLICY_TALK</constant></term>
++              <listitem><para>
++                Allow the name to be talked to.
++              </para></listitem>
++            </varlistentry>
++
++            <varlistentry>
++              <term><constant>KDBUS_POLICY_OWN</constant></term>
++              <listitem><para>
++                Allow the name to be owned.
++              </para></listitem>
++            </varlistentry>
++          </variablelist>
++        </listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>id</varname></term>
++        <listitem><para>
++           For <constant>KDBUS_POLICY_ACCESS_USER</constant>, stores the UID.
++           For <constant>KDBUS_POLICY_ACCESS_GROUP</constant>, stores the GID.
++        </para></listitem>
++      </varlistentry>
++
++    </variablelist>
++
++    <para>
++      All endpoints of buses have an empty policy database by default.
++      Therefore, unless policy rules are added, all operations will also be
++      denied by default. Also see
++      <citerefentry>
++        <refentrytitle>kdbus.endpoint</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Wildcard names</title>
++    <para>
++      Policy holder connections may upload names that contain the wildcard
++      suffix (<literal>".*"</literal>). Such a policy entry is effective for
++      every well-known name that extends the provided name by exactly one more
++      level.
++
++      For example, the name <literal>foo.bar.*</literal> matches both
++      <literal>"foo.bar.baz"</literal> and
++      <literal>"foo.bar.bazbaz"</literal> are, but not
++      <literal>"foo.bar.baz.baz"</literal>.
++
++      This allows connections to take control over multiple names that the
++      policy holder doesn't need to know about when uploading the policy.
++
++      Such wildcard entries are not allowed for custom endpoints.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Privileged connections</title>
++    <para>
++      The policy database is overruled when action is taken by a privileged
++      connection. Please refer to
++      <citerefentry>
++        <refentrytitle>kdbus.connection</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for more information on what makes a connection privileged.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Examples</title>
++    <para>
++      For instance, a set of policy rules may look like this:
++    </para>
++
++    <programlisting>
++KDBUS_ITEM_NAME: str='org.foo.bar'
++KDBUS_ITEM_POLICY_ACCESS: type=USER, access=OWN, ID=1000
++KDBUS_ITEM_POLICY_ACCESS: type=USER, access=TALK, ID=1001
++KDBUS_ITEM_POLICY_ACCESS: type=WORLD, access=SEE
++
++KDBUS_ITEM_NAME: str='org.blah.baz'
++KDBUS_ITEM_POLICY_ACCESS: type=USER, access=OWN, ID=0
++KDBUS_ITEM_POLICY_ACCESS: type=WORLD, access=TALK
++    </programlisting>
++
++    <para>
++      That means that 'org.foo.bar' may only be owned by UID 1000, but every
++      user on the bus is allowed to see the name. However, only UID 1001 may
++      actually send a message to the connection and receive a reply from it.
++
++      The second rule allows 'org.blah.baz' to be owned by UID 0 only, but
++      every user may talk to it.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>TALK access and multiple well-known names per connection</title>
++    <para>
++      Note that TALK access is checked against all names of a connection. For
++      example, if a connection owns both <constant>'org.foo.bar'</constant> and
++      <constant>'org.blah.baz'</constant>, and the policy database allows
++      <constant>'org.blah.baz'</constant> to be talked to by WORLD, then this
++      permission is also granted to <constant>'org.foo.bar'</constant>. That
++      might sound illogical, but after all, we allow messages to be directed to
++      either the ID or a well-known name, and policy is applied to the
++      connection, not the name. In other words, the effective TALK policy for a
++      connection is the most permissive of all names the connection owns.
++
++      For broadcast messages, the receiver needs TALK permissions to the sender
++      to receive the broadcast.
++    </para>
++    <para>
++      Both the endpoint and the bus policy databases are consulted to allow
++      name registry listing, owning a well-known name and message delivery.
++      If either one fails, the operation is failed with
++      <varname>errno</varname> set to <constant>EPERM</constant>.
++
++      For best practices, connections that own names with a restricted TALK
++      access should not install matches. This avoids cases where the sent
++      message may pass the bloom filter due to false-positives and may also
++      satisfy the policy rules.
++
++      Also see
++      <citerefentry>
++        <refentrytitle>kdbus.match</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Implicit policies</title>
++    <para>
++      Depending on the type of the endpoint, a set of implicit rules that
++      override installed policies might be enforced.
++
++      On default endpoints, the following set is enforced and checked before
++      any user-supplied policy is checked.
++    </para>
++
++    <itemizedlist>
++      <listitem>
++        <para>
++          Privileged connections always override any installed policy. Those
++          connections could easily install their own policies, so there is no
++          reason to enforce installed policies.
++        </para>
++      </listitem>
++      <listitem>
++        <para>
++          Connections can always talk to connections of the same user. This
++          includes broadcast messages.
++        </para>
++      </listitem>
++    </itemizedlist>
++
++    <para>
++      Custom endpoints have stricter policies. The following rules apply:
++    </para>
++
++    <itemizedlist>
++      <listitem>
++        <para>
++          Policy rules are always enforced, even if the connection is a
++          privileged connection.
++        </para>
++      </listitem>
++      <listitem>
++        <para>
++          Policy rules are always enforced for <constant>TALK</constant> access,
++          even if both ends are running under the same user. This includes
++          broadcast messages.
++        </para>
++      </listitem>
++      <listitem>
++        <para>
++          To restrict the set of names that can be seen, endpoint policies can
++          install <constant>SEE</constant> policies.
++        </para>
++      </listitem>
++    </itemizedlist>
++  </refsect1>
++
++  <refsect1>
++    <title>See Also</title>
++    <simplelist type="inline">
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.bus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.endpoint</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.fs</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.item</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.message</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.name</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.pool</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++    </simplelist>
++  </refsect1>
++</refentry>
+diff --git a/Documentation/kdbus/kdbus.pool.xml b/Documentation/kdbus/kdbus.pool.xml
+new file mode 100644
+index 000000000000..05fd01902ad4
+--- /dev/null
++++ b/Documentation/kdbus/kdbus.pool.xml
+@@ -0,0 +1,320 @@
++<?xml version='1.0'?> <!--*-nxml-*-->
++<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
++        "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
++
++<refentry id="kdbus.pool">
++
++  <refentryinfo>
++    <title>kdbus.pool</title>
++    <productname>kdbus.pool</productname>
++  </refentryinfo>
++
++  <refmeta>
++    <refentrytitle>kdbus.pool</refentrytitle>
++    <manvolnum>7</manvolnum>
++  </refmeta>
++
++  <refnamediv>
++    <refname>kdbus.pool</refname>
++    <refpurpose>kdbus pool</refpurpose>
++  </refnamediv>
++
++  <refsect1>
++    <title>Description</title>
++    <para>
++      A pool for data received from the kernel is installed for every
++      <emphasis>connection</emphasis> of the <emphasis>bus</emphasis>, and
++      is sized according to the information stored in the
++      <varname>pool_size</varname> member of <type>struct kdbus_cmd_hello</type>
++      when <constant>KDBUS_CMD_HELLO</constant> is employed. Internally, the
++      pool is segmented into <emphasis>slices</emphasis>, each referenced by its
++      <emphasis>offset</emphasis> in the pool, expressed in <type>bytes</type>.
++      See
++      <citerefentry>
++        <refentrytitle>kdbus.connection</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for more information about <constant>KDBUS_CMD_HELLO</constant>.
++    </para>
++
++    <para>
++      The pool is written to by the kernel when one of the following
++      <emphasis>ioctls</emphasis> is issued:
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>KDBUS_CMD_HELLO</constant></term>
++          <listitem><para>
++            ... to receive details about the bus the connection was made to
++          </para></listitem>
++        </varlistentry>
++        <varlistentry>
++          <term><constant>KDBUS_CMD_RECV</constant></term>
++          <listitem><para>
++            ... to receive a message
++          </para></listitem>
++        </varlistentry>
++        <varlistentry>
++          <term><constant>KDBUS_CMD_LIST</constant></term>
++          <listitem><para>
++            ... to dump the name registry
++          </para></listitem>
++        </varlistentry>
++        <varlistentry>
++          <term><constant>KDBUS_CMD_CONN_INFO</constant></term>
++          <listitem><para>
++            ... to retrieve information on a connection
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++
++    </para>
++    <para>
++      The <varname>offset</varname> fields returned by either one of the
++      aforementioned ioctls describe offsets inside the pool. In order to make
++      the slice available for subsequent calls,
++      <constant>KDBUS_CMD_FREE</constant> has to be called on that offset
++      (see below). Otherwise, the pool will fill up, and the connection won't
++      be able to receive any more information through its pool.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Pool slice allocation</title>
++    <para>
++      Pool slices are allocated by the kernel in order to report information
++      back to a task, such as messages, returned name list etc.
++      Allocation of pool slices cannot be initiated by userspace. See
++      <citerefentry>
++        <refentrytitle>kdbus.connection</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      and
++      <citerefentry>
++        <refentrytitle>kdbus.name</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for examples of commands that use the <emphasis>pool</emphasis> to
++      return data.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Accessing the pool memory</title>
++    <para>
++      Memory in the pool is read-only for userspace and may only be written
++      to by the kernel. To read from the pool memory, the caller is expected to
++      <citerefentry>
++        <refentrytitle>mmap</refentrytitle>
++        <manvolnum>2</manvolnum>
++      </citerefentry>
++      the buffer into its task, like this:
++    </para>
++    <programlisting>
++uint8_t *buf = mmap(NULL, size, PROT_READ, MAP_SHARED, conn_fd, 0);
++    </programlisting>
++
++    <para>
++      In order to map the entire pool, the <varname>size</varname> parameter in
++      the example above should be set to the value of the
++      <varname>pool_size</varname> member of
++      <type>struct kdbus_cmd_hello</type> when
++      <constant>KDBUS_CMD_HELLO</constant> was employed to create the
++      connection (see above).
++    </para>
++
++    <para>
++      The <emphasis>file descriptor</emphasis> used to map the memory must be
++      the one that was used to create the <emphasis>connection</emphasis>.
++      In other words, the one that was used to call
++      <constant>KDBUS_CMD_HELLO</constant>. See
++      <citerefentry>
++        <refentrytitle>kdbus.connection</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>
++      for more details.
++    </para>
++
++    <para>
++      Alternatively, instead of mapping the entire pool buffer, only parts
++      of it can be mapped. Every kdbus command that returns an
++      <emphasis>offset</emphasis> (see above) also reports a
++      <emphasis>size</emphasis> along with it, so programs can be written
++      in a way that it only maps portions of the pool to access a specific
++      <emphasis>slice</emphasis>.
++    </para>
++
++    <para>
++      When access to the pool memory is no longer needed, programs should
++      call <function>munmap()</function> on the pointer returned by
++      <function>mmap()</function>.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Freeing pool slices</title>
++    <para>
++      The <constant>KDBUS_CMD_FREE</constant> ioctl is used to free a slice
++      inside the pool, describing an offset that was returned in an
++      <varname>offset</varname> field of another ioctl struct.
++      The <constant>KDBUS_CMD_FREE</constant> command takes a
++      <type>struct kdbus_cmd_free</type> as argument.
++    </para>
++
++<programlisting>
++struct kdbus_cmd_free {
++  __u64 size;
++  __u64 flags;
++  __u64 return_flags;
++  __u64 offset;
++  struct kdbus_item items[0];
++};
++</programlisting>
++
++    <para>The fields in this struct are described below.</para>
++
++    <variablelist>
++      <varlistentry>
++        <term><varname>size</varname></term>
++        <listitem><para>
++          The overall size of the struct, including its items.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>flags</varname></term>
++        <listitem><para>
++          Currently unused.
++          <constant>KDBUS_FLAG_NEGOTIATE</constant> is accepted to probe for
++          valid flags. If set, the ioctl will return <errorcode>0</errorcode>,
++          and the <varname>flags</varname> field is set to
++          <constant>0</constant>.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>return_flags</varname></term>
++        <listitem><para>
++          Flags returned by the kernel. Currently unused and always set to
++          <constant>0</constant> by the kernel.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>offset</varname></term>
++        <listitem><para>
++          The offset to free, as returned by other ioctls that allocated
++          memory for returned information.
++        </para></listitem>
++      </varlistentry>
++
++      <varlistentry>
++        <term><varname>items</varname></term>
++        <listitem><para>
++          Items to specify further details for the receive command.
++          Currently unused.
++          Unrecognized items are rejected, and the ioctl will fail with
++          <varname>errno</varname> set to <constant>EINVAL</constant>.
++          All items except for
++          <constant>KDBUS_ITEM_NEGOTIATE</constant> (see
++            <citerefentry>
++              <refentrytitle>kdbus.item</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>
++          ) will be rejected.
++        </para></listitem>
++      </varlistentry>
++    </variablelist>
++  </refsect1>
++
++  <refsect1>
++    <title>Return value</title>
++    <para>
++      On success, all mentioned ioctl commands return <errorcode>0</errorcode>;
++      on error, <errorcode>-1</errorcode> is returned, and
++      <varname>errno</varname> is set to indicate the error.
++      If the issued ioctl is illegal for the file descriptor used,
++      <varname>errno</varname> will be set to <constant>ENOTTY</constant>.
++    </para>
++
++    <refsect2>
++      <title>
++        <constant>KDBUS_CMD_FREE</constant> may fail with the following
++        errors
++      </title>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>ENXIO</constant></term>
++          <listitem><para>
++            No pool slice found at given offset.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            Invalid flags provided.
++          </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>EINVAL</constant></term>
++          <listitem><para>
++            The offset is valid, but the user is not allowed to free the slice.
++            This happens, for example, if the offset was retrieved with
++            <constant>KDBUS_RECV_PEEK</constant>.
++          </para></listitem>
++        </varlistentry>
++      </variablelist>
++    </refsect2>
++  </refsect1>
++
++  <refsect1>
++    <title>See Also</title>
++    <simplelist type="inline">
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.bus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.connection</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.endpoint</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.name</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>mmap</refentrytitle>
++            <manvolnum>2</manvolnum>
++          </citerefentry>
++        </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>munmap</refentrytitle>
++          <manvolnum>2</manvolnum>
++        </citerefentry>
++      </member>
++    </simplelist>
++  </refsect1>
++</refentry>
+diff --git a/Documentation/kdbus/kdbus.xml b/Documentation/kdbus/kdbus.xml
+new file mode 100644
+index 000000000000..194abd2e76cc
+--- /dev/null
++++ b/Documentation/kdbus/kdbus.xml
+@@ -0,0 +1,1012 @@
++<?xml version='1.0'?> <!--*-nxml-*-->
++<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
++        "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
++
++<refentry id="kdbus">
++
++  <refentryinfo>
++    <title>kdbus</title>
++    <productname>kdbus</productname>
++  </refentryinfo>
++
++  <refmeta>
++    <refentrytitle>kdbus</refentrytitle>
++    <manvolnum>7</manvolnum>
++  </refmeta>
++
++  <refnamediv>
++    <refname>kdbus</refname>
++    <refpurpose>Kernel Message Bus</refpurpose>
++  </refnamediv>
++
++  <refsect1>
++    <title>Synopsis</title>
++    <para>
++      kdbus is an inter-process communication bus system controlled by the
++      kernel. It provides user-space with an API to create buses and send
++      unicast and multicast messages to one, or many, peers connected to the
++      same bus. It does not enforce any layout on the transmitted data, but
++      only provides the transport layer used for message interchange between
++      peers.
++    </para>
++    <para>
++      This set of man-pages gives a comprehensive overview of the kernel-level
++      API, with all ioctl commands, associated structs and bit masks. However,
++      most people will not use this API level directly, but rather let one of
++      the high-level abstraction libraries help them integrate D-Bus
++      functionality into their applications.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Description</title>
++    <para>
++      kdbus provides a pseudo filesystem called <emphasis>kdbusfs</emphasis>,
++      which is usually mounted on <filename>/sys/fs/kdbus</filename>. Bus
++      primitives can be accessed as files and sub-directories underneath this
++      mount-point. Any advanced operations are done via
++      <function>ioctl()</function> on files created by
++      <emphasis>kdbusfs</emphasis>. Multiple mount-points of
++      <emphasis>kdbusfs</emphasis> are independent of each other. This allows
++      namespacing of kdbus by mounting a new instance of
++      <emphasis>kdbusfs</emphasis> in a new mount-namespace. kdbus calls these
++      mount instances domains and each bus belongs to exactly one domain.
++    </para>
++
++    <para>
++      kdbus was designed as a transport layer for D-Bus, but is in no way
++      limited, nor controlled by the D-Bus protocol specification. The D-Bus
++      protocol is one possible application layer on top of kdbus.
++    </para>
++
++    <para>
++      For the general D-Bus protocol specification, its payload format, its
++      marshaling, and its communication semantics, please refer to the
++      <ulink url="http://dbus.freedesktop.org/doc/dbus-specification.html">
++      D-Bus specification</ulink>.
++    </para>
++
++  </refsect1>
++
++  <refsect1>
++    <title>Terminology</title>
++
++    <refsect2>
++      <title>Domain</title>
++      <para>
++        A domain is a <emphasis>kdbusfs</emphasis> mount-point containing all
++        the bus primitives. Each domain is independent, and separate domains
++        do not affect each other.
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Bus</title>
++      <para>
++        A bus is a named object inside a domain. Clients exchange messages
++        over a bus. Multiple buses themselves have no connection to each other;
++        messages can only be exchanged on the same bus. The default endpoint of
++        a bus, to which clients establish connections, is the "bus" file
++        /sys/fs/kdbus/&lt;bus name&gt;/bus.
++        Common operating system setups create one "system bus" per system,
++        and one "user bus" for every logged-in user. Applications or services
++        may create their own private buses. The kernel driver does not
++        distinguish between different bus types, they are all handled the same
++        way. See
++        <citerefentry>
++          <refentrytitle>kdbus.bus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++        for more details.
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Endpoint</title>
++      <para>
++        An endpoint provides a file to talk to a bus. Opening an endpoint
++        creates a new connection to the bus to which the endpoint belongs. All
++        endpoints have unique names and are accessible as files underneath the
++        directory of a bus, e.g., /sys/fs/kdbus/&lt;bus&gt;/&lt;endpoint&gt;
++        Every bus has a default endpoint called "bus".
++        A bus can optionally offer additional endpoints with custom names
++        to provide restricted access to the bus. Custom endpoints carry
++        additional policy which can be used to create sandboxes with
++        locked-down, limited, filtered access to a bus. See
++        <citerefentry>
++          <refentrytitle>kdbus.endpoint</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++        for more details.
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Connection</title>
++      <para>
++        A connection to a bus is created by opening an endpoint file of a
++        bus. Every ordinary client connection has a unique identifier on the
++        bus and can address messages to every other connection on the same
++        bus by using the peer's connection ID as the destination. See
++        <citerefentry>
++          <refentrytitle>kdbus.connection</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++        for more details.
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Pool</title>
++      <para>
++        Each connection allocates a piece of shmem-backed memory that is
++        used to receive messages and answers to ioctl commands from the kernel.
++        It is never used to send anything to the kernel. In order to access that
++        memory, an application must mmap() it into its address space. See
++        <citerefentry>
++          <refentrytitle>kdbus.pool</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++        for more details.
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Well-known Name</title>
++      <para>
++        A connection can, in addition to its implicit unique connection ID,
++        request the ownership of a textual well-known name. Well-known names are
++        noted in reverse-domain notation, such as com.example.service1. A
++        connection that offers a service on a bus is usually reached by its
++        well-known name. An analogy of connection ID and well-known name is an
++        IP address and a DNS name associated with that address. See
++        <citerefentry>
++          <refentrytitle>kdbus.name</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++        for more details.
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Message</title>
++      <para>
++        Connections can exchange messages with other connections by addressing
++        the peers with their connection ID or well-known name. A message
++        consists of a message header with information on how to route the
++        message, and the message payload, which is a logical byte stream of
++        arbitrary size. Messages can carry additional file descriptors to be
++        passed from one connection to another, just like passing file
++        descriptors over UNIX domain sockets. Every connection can specify which
++        set of metadata the kernel should attach to the message when it is
++        delivered to the receiving connection. Metadata contains information
++        like: system time stamps, UID, GID, TID, proc-starttime, well-known
++        names, process comm, process exe, process argv, cgroup, capabilities,
++        seclabel, audit session, loginuid and the connection's human-readable
++        name. See
++        <citerefentry>
++          <refentrytitle>kdbus.message</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++        for more details.
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Item</title>
++      <para>
++        The API of kdbus implements the notion of items, submitted through and
++        returned by most ioctls, and stored inside data structures in the
++        connection's pool. See
++        <citerefentry>
++          <refentrytitle>kdbus.item</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++        for more details.
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Broadcast, signal, filter, match</title>
++      <para>
++        Signals are messages that a receiver opts in for by installing a blob of
++        bytes, called a 'match'. Signal messages must always carry a
++        counter-part blob, called a 'filter', and signals are only delivered to
++        peers which have a match that white-lists the message's filter. Senders
++        of signal messages can use either a single connection ID as receiver,
++        or the special connection ID
++        <constant>KDBUS_DST_ID_BROADCAST</constant> to potentially send it to
++        all connections of a bus, following the logic described above. See
++        <citerefentry>
++          <refentrytitle>kdbus.match</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++        and
++        <citerefentry>
++          <refentrytitle>kdbus.message</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++        for more details.
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Policy</title>
++      <para>
++        A policy is a set of rules that define which connections can see, talk
++        to, or register a well-known name on the bus. A policy is attached to
++        buses and custom endpoints, and modified by policy holder connections or
++        owners of custom endpoints. See
++        <citerefentry>
++          <refentrytitle>kdbus.policy</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++        for more details.
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Privileged bus users</title>
++      <para>
++        A user connecting to the bus is considered privileged if it is either
++        the creator of the bus, or if it has the CAP_IPC_OWNER capability flag
++        set. See
++        <citerefentry>
++          <refentrytitle>kdbus.connection</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++        for more details.
++      </para>
++    </refsect2>
++  </refsect1>
++
++  <refsect1>
++    <title>Bus Layout</title>
++
++    <para>
++      A <emphasis>bus</emphasis> provides and defines an environment that peers
++      can connect to for message interchange. A bus is created via the kdbus
++      control interface and can be modified by the bus creator. It applies the
++      policy that control all bus operations. The bus creator itself does not
++      participate as a peer. To establish a peer
++      <emphasis>connection</emphasis>, you have to open one of the
++      <emphasis>endpoints</emphasis> of a bus. Each bus provides a default
++      endpoint, but further endpoints can be created on-demand. Endpoints are
++      used to apply additional policies for all connections on this endpoint.
++      Thus, they provide additional filters to further restrict access of
++      specific connections to the bus.
++    </para>
++
++    <para>
++      Following, you can see an example bus layout:
++    </para>
++
++    <programlisting><![CDATA[
++                                  Bus Creator
++                                       |
++                                       |
++                                    +-----+
++                                    | Bus |
++                                    +-----+
++                                       |
++                    __________________/ \__________________
++                   /                                       \
++                   |                                       |
++             +----------+                             +----------+
++             | Endpoint |                             | Endpoint |
++             +----------+                             +----------+
++         _________/|\_________                   _________/|\_________
++        /          |          \                 /          |          \
++        |          |          |                 |          |          |
++        |          |          |                 |          |          |
++   Connection  Connection  Connection      Connection  Connection  Connection
++    ]]></programlisting>
++
++  </refsect1>
++
++  <refsect1>
++    <title>Data structures and interconnections</title>
++    <programlisting><![CDATA[
++  +--------------------------------------------------------------------------+
++  | Domain (Mount Point)                                                     |
++  | /sys/fs/kdbus/control                                                    |
++  | +----------------------------------------------------------------------+ |
++  | | Bus (System Bus)                                                     | |
++  | | /sys/fs/kdbus/0-system/                                              | |
++  | | +-------------------------------+ +--------------------------------+ | |
++  | | | Endpoint                      | | Endpoint                       | | |
++  | | | /sys/fs/kdbus/0-system/bus    | | /sys/fs/kdbus/0-system/ep.app  | | |
++  | | +-------------------------------+ +--------------------------------+ | |
++  | | +--------------+ +--------------+ +--------------+ +---------------+ | |
++  | | | Connection   | | Connection   | | Connection   | | Connection    | | |
++  | | | :1.22        | | :1.25        | | :1.55        | | :1.81         | | |
++  | | +--------------+ +--------------+ +--------------+ +---------------+ | |
++  | +----------------------------------------------------------------------+ |
++  |                                                                          |
++  | +----------------------------------------------------------------------+ |
++  | | Bus (User Bus for UID 2702)                                          | |
++  | | /sys/fs/kdbus/2702-user/                                             | |
++  | | +-------------------------------+ +--------------------------------+ | |
++  | | | Endpoint                      | | Endpoint                       | | |
++  | | | /sys/fs/kdbus/2702-user/bus   | | /sys/fs/kdbus/2702-user/ep.app | | |
++  | | +-------------------------------+ +--------------------------------+ | |
++  | | +--------------+ +--------------+ +--------------+ +---------------+ | |
++  | | | Connection   | | Connection   | | Connection   | | Connection    | | |
++  | | | :1.22        | | :1.25        | | :1.55        | | :1.81         | | |
++  | | +--------------+ +--------------+ +--------------------------------+ | |
++  | +----------------------------------------------------------------------+ |
++  +--------------------------------------------------------------------------+
++    ]]></programlisting>
++  </refsect1>
++
++  <refsect1>
++    <title>Metadata</title>
++
++    <refsect2>
++      <title>When metadata is collected</title>
++      <para>
++        kdbus records data about the system in certain situations. Such metadata
++        can refer to the currently active process (creds, PIDs, current user
++        groups, process names and its executable path, cgroup membership,
++        capabilities, security label and audit information), connection
++        information (description string, currently owned names) and time stamps.
++      </para>
++      <para>
++        Metadata is collected at the following times.
++      </para>
++
++      <itemizedlist>
++        <listitem><para>
++          When a bus is created (<constant>KDBUS_CMD_MAKE</constant>),
++          information about the calling task is collected. This data is returned
++          by the kernel via the <constant>KDBUS_CMD_BUS_CREATOR_INFO</constant>
++          call.
++        </para></listitem>
++
++        <listitem>
++          <para>
++            When a connection is created (<constant>KDBUS_CMD_HELLO</constant>),
++            information about the calling task is collected. Alternatively, a
++            privileged connection may provide 'faked' information about
++            credentials, PIDs and security labels which will be stored instead.
++            This data is returned by the kernel as information on a connection
++            (<constant>KDBUS_CMD_CONN_INFO</constant>). Only metadata that a
++            connection allowed to be sent (by setting its bit in
++            <varname>attach_flags_send</varname>) will be exported in this way.
++          </para>
++        </listitem>
++
++        <listitem>
++          <para>
++            When a message is sent (<constant>KDBUS_CMD_SEND</constant>),
++            information about the sending task and the sending connection are
++            collected. This metadata will be attached to the message when it
++            arrives in the receiver's pool. If the connection sending the
++            message installed faked credentials (see
++            <citerefentry>
++              <refentrytitle>kdbus.connection</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>),
++            the message will not be augmented by any information about the
++            currently sending task. Note that only metadata that was requested
++            by the receiving connection will be collected and attached to
++            messages.
++          </para>
++        </listitem>
++      </itemizedlist>
++
++      <para>
++        Which metadata items are actually delivered depends on the following
++        sets and masks:
++      </para>
++
++      <itemizedlist>
++        <listitem><para>
++          (a) the system-wide kmod creds mask
++          (module parameter <varname>attach_flags_mask</varname>)
++        </para></listitem>
++
++        <listitem><para>
++          (b) the per-connection send creds mask, set by the connecting client
++        </para></listitem>
++
++        <listitem><para>
++          (c) the per-connection receive creds mask, set by the connecting
++          client
++        </para></listitem>
++
++        <listitem><para>
++          (d) the per-bus minimal creds mask, set by the bus creator
++        </para></listitem>
++
++        <listitem><para>
++          (e) the per-bus owner creds mask, set by the bus creator
++        </para></listitem>
++
++        <listitem><para>
++          (f) the mask specified when querying creds of a bus peer
++        </para></listitem>
++
++        <listitem><para>
++          (g) the mask specified when querying creds of a bus owner
++        </para></listitem>
++      </itemizedlist>
++
++      <para>
++        With the following rules:
++      </para>
++
++      <itemizedlist>
++        <listitem>
++          <para>
++            [1] The creds attached to messages are determined as
++            <constant>a &amp; b &amp; c</constant>.
++          </para>
++        </listitem>
++
++        <listitem>
++          <para>
++            [2] When connecting to a bus (<constant>KDBUS_CMD_HELLO</constant>),
++            and <constant>~b &amp; d != 0</constant>, the call will fail with,
++            <errorcode>-1</errorcode>, and <varname>errno</varname> is set to
++            <constant>ECONNREFUSED</constant>.
++          </para>
++        </listitem>
++
++        <listitem>
++          <para>
++            [3] When querying creds of a bus peer, the creds returned are
++            <constant>a &amp; b &amp; f</constant>.
++          </para>
++        </listitem>
++
++        <listitem>
++          <para>
++            [4] When querying creds of a bus owner, the creds returned are
++            <constant>a &amp; e &amp; g</constant>.
++          </para>
++        </listitem>
++      </itemizedlist>
++
++      <para>
++        Hence, programs might not always get all requested metadata items that
++        it requested. Code must be written so that it can cope with this fact.
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Benefits and heads-up</title>
++      <para>
++        Attaching metadata to messages has two major benefits.
++
++        <itemizedlist>
++          <listitem>
++            <para>
++              Metadata attached to messages is gathered at the moment when the
++              other side calls <constant>KDBUS_CMD_SEND</constant>, or,
++              respectively, then the kernel notification is generated. There is
++              no need for the receiving peer to retrieve information about the
++              task in a second step. This closes a race gap that would otherwise
++              be inherent.
++            </para>
++          </listitem>
++          <listitem>
++            <para>
++              As metadata is delivered along with messages in the same data
++              blob, no extra calls to kernel functions etc. are needed to gather
++              them.
++            </para>
++          </listitem>
++        </itemizedlist>
++
++        Note, however, that collecting metadata does come at a price for
++        performance, so developers should carefully assess which metadata to
++        really opt-in for. For best practice, data that is not needed as part
++        of a message should not be requested by the connection in the first
++        place (see <varname>attach_flags_recv</varname> in
++        <constant>KDBUS_CMD_HELLO</constant>).
++      </para>
++    </refsect2>
++
++    <refsect2>
++      <title>Attach flags for metadata items</title>
++      <para>
++        To let the kernel know which metadata information to attach as items
++        to the aforementioned commands, it uses a bitmask. In those, the
++        following <emphasis>attach flags</emphasis> are currently supported.
++        Both the the <varname>attach_flags_recv</varname> and
++        <varname>attach_flags_send</varname> fields of
++        <type>struct kdbus_cmd_hello</type>, as well as the payload of the
++        <constant>KDBUS_ITEM_ATTACH_FLAGS_SEND</constant> and
++        <constant>KDBUS_ITEM_ATTACH_FLAGS_RECV</constant> items follow this
++        scheme.
++      </para>
++
++      <variablelist>
++        <varlistentry>
++          <term><constant>KDBUS_ATTACH_TIMESTAMP</constant></term>
++            <listitem><para>
++              Requests the attachment of an item of type
++              <constant>KDBUS_ITEM_TIMESTAMP</constant>.
++            </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ATTACH_CREDS</constant></term>
++            <listitem><para>
++              Requests the attachment of an item of type
++              <constant>KDBUS_ITEM_CREDS</constant>.
++            </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ATTACH_PIDS</constant></term>
++            <listitem><para>
++              Requests the attachment of an item of type
++              <constant>KDBUS_ITEM_PIDS</constant>.
++            </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ATTACH_AUXGROUPS</constant></term>
++            <listitem><para>
++              Requests the attachment of an item of type
++              <constant>KDBUS_ITEM_AUXGROUPS</constant>.
++            </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ATTACH_NAMES</constant></term>
++            <listitem><para>
++              Requests the attachment of an item of type
++              <constant>KDBUS_ITEM_OWNED_NAME</constant>.
++            </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ATTACH_TID_COMM</constant></term>
++            <listitem><para>
++              Requests the attachment of an item of type
++              <constant>KDBUS_ITEM_TID_COMM</constant>.
++            </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ATTACH_PID_COMM</constant></term>
++            <listitem><para>
++              Requests the attachment of an item of type
++              <constant>KDBUS_ITEM_PID_COMM</constant>.
++            </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ATTACH_EXE</constant></term>
++            <listitem><para>
++              Requests the attachment of an item of type
++              <constant>KDBUS_ITEM_EXE</constant>.
++            </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ATTACH_CMDLINE</constant></term>
++            <listitem><para>
++              Requests the attachment of an item of type
++              <constant>KDBUS_ITEM_CMDLINE</constant>.
++            </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ATTACH_CGROUP</constant></term>
++            <listitem><para>
++              Requests the attachment of an item of type
++              <constant>KDBUS_ITEM_CGROUP</constant>.
++            </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ATTACH_CAPS</constant></term>
++            <listitem><para>
++              Requests the attachment of an item of type
++              <constant>KDBUS_ITEM_CAPS</constant>.
++            </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ATTACH_SECLABEL</constant></term>
++            <listitem><para>
++              Requests the attachment of an item of type
++              <constant>KDBUS_ITEM_SECLABEL</constant>.
++            </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ATTACH_AUDIT</constant></term>
++            <listitem><para>
++              Requests the attachment of an item of type
++              <constant>KDBUS_ITEM_AUDIT</constant>.
++            </para></listitem>
++        </varlistentry>
++
++        <varlistentry>
++          <term><constant>KDBUS_ATTACH_CONN_DESCRIPTION</constant></term>
++            <listitem><para>
++              Requests the attachment of an item of type
++              <constant>KDBUS_ITEM_CONN_DESCRIPTION</constant>.
++            </para></listitem>
++        </varlistentry>
++      </variablelist>
++
++      <para>
++        Please refer to
++        <citerefentry>
++          <refentrytitle>kdbus.item</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++        for detailed information about the layout and payload of items and
++        what metadata should be used to.
++      </para>
++    </refsect2>
++  </refsect1>
++
++  <refsect1>
++    <title>The ioctl interface</title>
++
++    <para>
++      As stated in the 'synopsis' section above, application developers are
++      strongly encouraged to use kdbus through one of the high-level D-Bus
++      abstraction libraries, rather than using the low-level API directly.
++    </para>
++
++    <para>
++      kdbus on the kernel level exposes its functions exclusively through
++      <citerefentry>
++        <refentrytitle>ioctl</refentrytitle>
++        <manvolnum>2</manvolnum>
++      </citerefentry>,
++      employed on file descriptors returned by
++      <citerefentry>
++        <refentrytitle>open</refentrytitle>
++        <manvolnum>2</manvolnum>
++      </citerefentry>
++      on pseudo files exposed by
++      <citerefentry>
++        <refentrytitle>kdbus.fs</refentrytitle>
++        <manvolnum>7</manvolnum>
++      </citerefentry>.
++    </para>
++    <para>
++      Following is a list of all the ioctls, along with the command structs
++      they must be used with.
++    </para>
++
++    <informaltable frame="none">
++      <tgroup cols="3" colsep="1">
++        <thead>
++          <row>
++            <entry>ioctl signature</entry>
++            <entry>command</entry>
++            <entry>transported struct</entry>
++          </row>
++        </thead>
++        <tbody>
++          <row>
++            <entry><constant>0x40189500</constant></entry>
++            <entry><constant>KDBUS_CMD_BUS_MAKE</constant></entry>
++            <entry><type>struct kdbus_cmd *</type></entry>
++          </row><row>
++            <entry><constant>0x40189510</constant></entry>
++            <entry><constant>KDBUS_CMD_ENDPOINT_MAKE</constant></entry>
++            <entry><type>struct kdbus_cmd *</type></entry>
++          </row><row>
++            <entry><constant>0xc0609580</constant></entry>
++            <entry><constant>KDBUS_CMD_HELLO</constant></entry>
++            <entry><type>struct kdbus_cmd_hello *</type></entry>
++          </row><row>
++            <entry><constant>0x40189582</constant></entry>
++            <entry><constant>KDBUS_CMD_BYEBYE</constant></entry>
++            <entry><type>struct kdbus_cmd *</type></entry>
++          </row><row>
++            <entry><constant>0x40389590</constant></entry>
++            <entry><constant>KDBUS_CMD_SEND</constant></entry>
++            <entry><type>struct kdbus_cmd_send *</type></entry>
++          </row><row>
++            <entry><constant>0x80409591</constant></entry>
++            <entry><constant>KDBUS_CMD_RECV</constant></entry>
++            <entry><type>struct kdbus_cmd_recv *</type></entry>
++          </row><row>
++            <entry><constant>0x40209583</constant></entry>
++            <entry><constant>KDBUS_CMD_FREE</constant></entry>
++            <entry><type>struct kdbus_cmd_free *</type></entry>
++          </row><row>
++            <entry><constant>0x401895a0</constant></entry>
++            <entry><constant>KDBUS_CMD_NAME_ACQUIRE</constant></entry>
++            <entry><type>struct kdbus_cmd *</type></entry>
++          </row><row>
++            <entry><constant>0x401895a1</constant></entry>
++            <entry><constant>KDBUS_CMD_NAME_RELEASE</constant></entry>
++            <entry><type>struct kdbus_cmd *</type></entry>
++          </row><row>
++            <entry><constant>0x80289586</constant></entry>
++            <entry><constant>KDBUS_CMD_LIST</constant></entry>
++            <entry><type>struct kdbus_cmd_list *</type></entry>
++          </row><row>
++            <entry><constant>0x80309584</constant></entry>
++            <entry><constant>KDBUS_CMD_CONN_INFO</constant></entry>
++            <entry><type>struct kdbus_cmd_info *</type></entry>
++          </row><row>
++            <entry><constant>0x40209551</constant></entry>
++            <entry><constant>KDBUS_CMD_UPDATE</constant></entry>
++            <entry><type>struct kdbus_cmd *</type></entry>
++          </row><row>
++            <entry><constant>0x80309585</constant></entry>
++            <entry><constant>KDBUS_CMD_BUS_CREATOR_INFO</constant></entry>
++            <entry><type>struct kdbus_cmd_info *</type></entry>
++          </row><row>
++            <entry><constant>0x40189511</constant></entry>
++            <entry><constant>KDBUS_CMD_ENDPOINT_UPDATE</constant></entry>
++            <entry><type>struct kdbus_cmd *</type></entry>
++          </row><row>
++            <entry><constant>0x402095b0</constant></entry>
++            <entry><constant>KDBUS_CMD_MATCH_ADD</constant></entry>
++            <entry><type>struct kdbus_cmd_match *</type></entry>
++          </row><row>
++            <entry><constant>0x402095b1</constant></entry>
++            <entry><constant>KDBUS_CMD_MATCH_REMOVE</constant></entry>
++            <entry><type>struct kdbus_cmd_match *</type></entry>
++          </row>
++        </tbody>
++      </tgroup>
++    </informaltable>
++
++    <para>
++      Depending on the type of <emphasis>kdbusfs</emphasis> node that was
++      opened and what ioctls have been executed on a file descriptor before,
++      a different sub-set of ioctl commands is allowed.
++    </para>
++
++    <itemizedlist>
++      <listitem>
++        <para>
++          On a file descriptor resulting from opening a
++          <emphasis>control node</emphasis>, only the
++          <constant>KDBUS_CMD_BUS_MAKE</constant> ioctl may be executed.
++        </para>
++      </listitem>
++      <listitem>
++        <para>
++          On a file descriptor resulting from opening a
++          <emphasis>bus endpoint node</emphasis>, only the
++          <constant>KDBUS_CMD_ENDPOINT_MAKE</constant> and
++          <constant>KDBUS_CMD_HELLO</constant> ioctls may be executed.
++        </para>
++      </listitem>
++      <listitem>
++        <para>
++          A file descriptor that was used to create a bus
++          (via <constant>KDBUS_CMD_BUS_MAKE</constant>) is called a
++          <emphasis>bus owner</emphasis> file descriptor. The bus will be
++          active as long as the file descriptor is kept open.
++          A bus owner file descriptor can not be used to
++          employ any further ioctls. As soon as
++          <citerefentry>
++            <refentrytitle>close</refentrytitle>
++            <manvolnum>2</manvolnum>
++          </citerefentry>
++          is called on it, the bus will be shut down, along will all associated
++          endpoints and connections. See
++          <citerefentry>
++            <refentrytitle>kdbus.bus</refentrytitle>
++            <manvolnum>7</manvolnum>
++          </citerefentry>
++          for more details.
++        </para>
++      </listitem>
++      <listitem>
++        <para>
++          A file descriptor that was used to create an endpoint
++          (via <constant>KDBUS_CMD_ENDPOINT_MAKE</constant>) is called an
++          <emphasis>endpoint owner</emphasis> file descriptor. The endpoint
++          will be active as long as the file descriptor is kept open.
++          An endpoint owner file descriptor can only be used
++          to update details of an endpoint through the
++          <constant>KDBUS_CMD_ENDPOINT_UPDATE</constant> ioctl. As soon as
++          <citerefentry>
++            <refentrytitle>close</refentrytitle>
++            <manvolnum>2</manvolnum>
++          </citerefentry>
++          is called on it, the endpoint will be removed from the bus, and all
++          connections that are connected to the bus through it are shut down.
++          See
++          <citerefentry>
++            <refentrytitle>kdbus.endpoint</refentrytitle>
++            <manvolnum>7</manvolnum>
++          </citerefentry>
++          for more details.
++        </para>
++      </listitem>
++      <listitem>
++        <para>
++          A file descriptor that was used to create a connection
++          (via <constant>KDBUS_CMD_HELLO</constant>) is called a
++          <emphasis>connection owner</emphasis> file descriptor. The connection
++          will be active as long as the file descriptor is kept open.
++          A connection owner file descriptor may be used to
++          issue any of the following ioctls.
++        </para>
++
++        <itemizedlist>
++          <listitem><para>
++            <constant>KDBUS_CMD_UPDATE</constant> to tweak details of the
++            connection. See
++            <citerefentry>
++              <refentrytitle>kdbus.connection</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>.
++          </para></listitem>
++
++          <listitem><para>
++            <constant>KDBUS_CMD_BYEBYE</constant> to shut down a connection
++            without losing messages. See
++            <citerefentry>
++              <refentrytitle>kdbus.connection</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>.
++          </para></listitem>
++
++          <listitem><para>
++            <constant>KDBUS_CMD_FREE</constant> to free a slice of memory in
++            the pool. See
++            <citerefentry>
++              <refentrytitle>kdbus.pool</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>.
++          </para></listitem>
++
++          <listitem><para>
++            <constant>KDBUS_CMD_CONN_INFO</constant> to retrieve information
++            on other connections on the bus. See
++            <citerefentry>
++              <refentrytitle>kdbus.connection</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>.
++          </para></listitem>
++
++          <listitem><para>
++            <constant>KDBUS_CMD_BUS_CREATOR_INFO</constant> to retrieve
++            information on the bus creator. See
++            <citerefentry>
++              <refentrytitle>kdbus.connection</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>.
++          </para></listitem>
++
++          <listitem><para>
++            <constant>KDBUS_CMD_LIST</constant> to retrieve a list of
++            currently active well-known names and unique IDs on the bus. See
++            <citerefentry>
++              <refentrytitle>kdbus.name</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>.
++          </para></listitem>
++
++          <listitem><para>
++            <constant>KDBUS_CMD_SEND</constant> and
++            <constant>KDBUS_CMD_RECV</constant> to send or receive a message.
++            See
++            <citerefentry>
++              <refentrytitle>kdbus.message</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>.
++          </para></listitem>
++
++          <listitem><para>
++            <constant>KDBUS_CMD_NAME_ACQUIRE</constant> and
++            <constant>KDBUS_CMD_NAME_RELEASE</constant> to acquire or release
++            a well-known name on the bus. See
++            <citerefentry>
++              <refentrytitle>kdbus.name</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>.
++          </para></listitem>
++
++          <listitem><para>
++            <constant>KDBUS_CMD_MATCH_ADD</constant> and
++            <constant>KDBUS_CMD_MATCH_REMOVE</constant> to add or remove
++            a match for signal messages. See
++            <citerefentry>
++              <refentrytitle>kdbus.match</refentrytitle>
++              <manvolnum>7</manvolnum>
++            </citerefentry>.
++          </para></listitem>
++        </itemizedlist>
++      </listitem>
++    </itemizedlist>
++
++    <para>
++      These ioctls, along with the structs they transport, are explained in
++      detail in the other documents linked to in the 'see also' section below.
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>See Also</title>
++    <simplelist type="inline">
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.bus</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.connection</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.endpoint</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.fs</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.item</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.message</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.name</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>kdbus.pool</refentrytitle>
++          <manvolnum>7</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>ioctl</refentrytitle>
++          <manvolnum>2</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>mmap</refentrytitle>
++          <manvolnum>2</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>open</refentrytitle>
++          <manvolnum>2</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <citerefentry>
++          <refentrytitle>close</refentrytitle>
++          <manvolnum>2</manvolnum>
++        </citerefentry>
++      </member>
++      <member>
++        <ulink url="http://freedesktop.org/wiki/Software/dbus">D-Bus</ulink>
++      </member>
++    </simplelist>
++  </refsect1>
++
++</refentry>
+diff --git a/Documentation/kdbus/stylesheet.xsl b/Documentation/kdbus/stylesheet.xsl
+new file mode 100644
+index 000000000000..52565eac7d0d
+--- /dev/null
++++ b/Documentation/kdbus/stylesheet.xsl
+@@ -0,0 +1,16 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<stylesheet xmlns="http://www.w3.org/1999/XSL/Transform" version="1.0">
++	<param name="chunk.quietly">1</param>
++	<param name="funcsynopsis.style">ansi</param>
++	<param name="funcsynopsis.tabular.threshold">80</param>
++	<param name="callout.graphics">0</param>
++	<param name="paper.type">A4</param>
++	<param name="generate.section.toc.level">2</param>
++	<param name="use.id.as.filename">1</param>
++	<param name="citerefentry.link">1</param>
++	<strip-space elements="*"/>
++	<template name="generate.citerefentry.link">
++		<value-of select="refentrytitle"/>
++		<text>.html</text>
++	</template>
++</stylesheet>
+diff --git a/Makefile b/Makefile
+index 1100ff3c77e3..08c98188a37a 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1350,6 +1350,7 @@ $(help-board-dirs): help-%:
+ %docs: scripts_basic FORCE
+ 	$(Q)$(MAKE) $(build)=scripts build_docproc
+ 	$(Q)$(MAKE) $(build)=Documentation/DocBook $@
++	$(Q)$(MAKE) $(build)=Documentation/kdbus $@
  
-+#define KDBUS_SUPER_MAGIC	0x44427573
-+
- #endif /* __LINUX_MAGIC_H__ */
-diff --git a/ipc/kdbus/fs.c b/ipc/kdbus/fs.c
-new file mode 100644
-index 000000000000..d01f33baaa0d
---- /dev/null
-+++ b/ipc/kdbus/fs.c
-@@ -0,0 +1,510 @@
-+/*
-+ * Copyright (C) 2013-2015 Kay Sievers
-+ * Copyright (C) 2013-2015 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-+ * Copyright (C) 2013-2015 Daniel Mack <daniel@zonque.org>
-+ * Copyright (C) 2013-2015 David Herrmann <dh.herrmann@gmail.com>
-+ * Copyright (C) 2013-2015 Linux Foundation
-+ *
-+ * kdbus is free software; you can redistribute it and/or modify it under
-+ * the terms of the GNU Lesser General Public License as published by the
-+ * Free Software Foundation; either version 2.1 of the License, or (at
-+ * your option) any later version.
-+ */
-+
-+#include <linux/dcache.h>
-+#include <linux/fs.h>
-+#include <linux/fsnotify.h>
-+#include <linux/init.h>
-+#include <linux/ipc_namespace.h>
-+#include <linux/magic.h>
-+#include <linux/module.h>
-+#include <linux/mount.h>
-+#include <linux/mutex.h>
-+#include <linux/namei.h>
-+#include <linux/pagemap.h>
-+#include <linux/sched.h>
-+#include <linux/slab.h>
-+
-+#include "bus.h"
-+#include "domain.h"
-+#include "endpoint.h"
-+#include "fs.h"
-+#include "handle.h"
-+#include "node.h"
-+
-+#define kdbus_node_from_dentry(_dentry) \
-+	((struct kdbus_node *)(_dentry)->d_fsdata)
-+
-+static struct inode *fs_inode_get(struct super_block *sb,
-+				  struct kdbus_node *node);
-+
-+/*
-+ * Directory Management
-+ */
-+
-+static inline unsigned char kdbus_dt_type(struct kdbus_node *node)
-+{
-+	switch (node->type) {
-+	case KDBUS_NODE_DOMAIN:
-+	case KDBUS_NODE_BUS:
-+		return DT_DIR;
-+	case KDBUS_NODE_CONTROL:
-+	case KDBUS_NODE_ENDPOINT:
-+		return DT_REG;
-+	}
-+
-+	return DT_UNKNOWN;
-+}
-+
-+static int fs_dir_fop_iterate(struct file *file, struct dir_context *ctx)
-+{
-+	struct dentry *dentry = file->f_path.dentry;
-+	struct kdbus_node *parent = kdbus_node_from_dentry(dentry);
-+	struct kdbus_node *old, *next = file->private_data;
-+
-+	/*
-+	 * kdbusfs directory iterator (modelled after sysfs/kernfs)
-+	 * When iterating kdbusfs directories, we iterate all children of the
-+	 * parent kdbus_node object. We use ctx->pos to store the hash of the
-+	 * child and file->private_data to store a reference to the next node
-+	 * object. If ctx->pos is not modified via llseek while you iterate a
-+	 * directory, then we use the file->private_data node pointer to
-+	 * directly access the next node in the tree.
-+	 * However, if you directly seek on the directory, we have to find the
-+	 * closest node to that position and cannot use our node pointer. This
-+	 * means iterating the rb-tree to find the closest match and start over
-+	 * from there.
-+	 * Note that hash values are not neccessarily unique. Therefore, llseek
-+	 * is not guaranteed to seek to the same node that you got when you
-+	 * retrieved the position. Seeking to 0, 1, 2 and >=INT_MAX is safe,
-+	 * though. We could use the inode-number as position, but this would
-+	 * require another rb-tree for fast access. Kernfs and others already
-+	 * ignore those conflicts, so we should be fine, too.
-+	 */
-+
-+	if (!dir_emit_dots(file, ctx))
-+		return 0;
-+
-+	/* acquire @next; if deactivated, or seek detected, find next node */
-+	old = next;
-+	if (next && ctx->pos == next->hash) {
-+		if (kdbus_node_acquire(next))
-+			kdbus_node_ref(next);
-+		else
-+			next = kdbus_node_next_child(parent, next);
-+	} else {
-+		next = kdbus_node_find_closest(parent, ctx->pos);
-+	}
-+	kdbus_node_unref(old);
-+
-+	while (next) {
-+		/* emit @next */
-+		file->private_data = next;
-+		ctx->pos = next->hash;
-+
-+		kdbus_node_release(next);
-+
-+		if (!dir_emit(ctx, next->name, strlen(next->name), next->id,
-+			      kdbus_dt_type(next)))
-+			return 0;
-+
-+		/* find next node after @next */
-+		old = next;
-+		next = kdbus_node_next_child(parent, next);
-+		kdbus_node_unref(old);
-+	}
-+
-+	file->private_data = NULL;
-+	ctx->pos = INT_MAX;
-+
-+	return 0;
-+}
-+
-+static loff_t fs_dir_fop_llseek(struct file *file, loff_t offset, int whence)
-+{
-+	struct inode *inode = file_inode(file);
-+	loff_t ret;
-+
-+	/* protect f_off against fop_iterate */
-+	mutex_lock(&inode->i_mutex);
-+	ret = generic_file_llseek(file, offset, whence);
-+	mutex_unlock(&inode->i_mutex);
-+
-+	return ret;
-+}
-+
-+static int fs_dir_fop_release(struct inode *inode, struct file *file)
-+{
-+	kdbus_node_unref(file->private_data);
-+	return 0;
-+}
-+
-+static const struct file_operations fs_dir_fops = {
-+	.read		= generic_read_dir,
-+	.iterate	= fs_dir_fop_iterate,
-+	.llseek		= fs_dir_fop_llseek,
-+	.release	= fs_dir_fop_release,
-+};
-+
-+static struct dentry *fs_dir_iop_lookup(struct inode *dir,
-+					struct dentry *dentry,
-+					unsigned int flags)
-+{
-+	struct dentry *dnew = NULL;
-+	struct kdbus_node *parent;
-+	struct kdbus_node *node;
-+	struct inode *inode;
-+
-+	parent = kdbus_node_from_dentry(dentry->d_parent);
-+	if (!kdbus_node_acquire(parent))
-+		return NULL;
-+
-+	/* returns reference to _acquired_ child node */
-+	node = kdbus_node_find_child(parent, dentry->d_name.name);
-+	if (node) {
-+		dentry->d_fsdata = node;
-+		inode = fs_inode_get(dir->i_sb, node);
-+		if (IS_ERR(inode))
-+			dnew = ERR_CAST(inode);
-+		else
-+			dnew = d_splice_alias(inode, dentry);
-+
-+		kdbus_node_release(node);
-+	}
-+
-+	kdbus_node_release(parent);
-+	return dnew;
-+}
-+
-+static const struct inode_operations fs_dir_iops = {
-+	.permission	= generic_permission,
-+	.lookup		= fs_dir_iop_lookup,
-+};
-+
-+/*
-+ * Inode Management
-+ */
-+
-+static const struct inode_operations fs_inode_iops = {
-+	.permission	= generic_permission,
-+};
-+
-+static struct inode *fs_inode_get(struct super_block *sb,
-+				  struct kdbus_node *node)
-+{
-+	struct inode *inode;
-+
-+	inode = iget_locked(sb, node->id);
-+	if (!inode)
-+		return ERR_PTR(-ENOMEM);
-+	if (!(inode->i_state & I_NEW))
-+		return inode;
-+
-+	inode->i_private = kdbus_node_ref(node);
-+	inode->i_mapping->a_ops = &empty_aops;
-+	inode->i_mode = node->mode & S_IALLUGO;
-+	inode->i_atime = inode->i_ctime = inode->i_mtime = CURRENT_TIME;
-+	inode->i_uid = node->uid;
-+	inode->i_gid = node->gid;
-+
-+	switch (node->type) {
-+	case KDBUS_NODE_DOMAIN:
-+	case KDBUS_NODE_BUS:
-+		inode->i_mode |= S_IFDIR;
-+		inode->i_op = &fs_dir_iops;
-+		inode->i_fop = &fs_dir_fops;
-+		set_nlink(inode, 2);
-+		break;
-+	case KDBUS_NODE_CONTROL:
-+	case KDBUS_NODE_ENDPOINT:
-+		inode->i_mode |= S_IFREG;
-+		inode->i_op = &fs_inode_iops;
-+		inode->i_fop = &kdbus_handle_ops;
-+		break;
-+	}
-+
-+	unlock_new_inode(inode);
-+
-+	return inode;
-+}
-+
-+/*
-+ * Superblock Management
-+ */
-+
-+static int fs_super_dop_revalidate(struct dentry *dentry, unsigned int flags)
-+{
-+	struct kdbus_node *node;
-+
-+	/* Force lookup on negatives */
-+	if (!dentry->d_inode)
-+		return 0;
-+
-+	node = kdbus_node_from_dentry(dentry);
-+
-+	/* see whether the node has been removed */
-+	if (!kdbus_node_is_active(node))
-+		return 0;
-+
-+	return 1;
-+}
-+
-+static void fs_super_dop_release(struct dentry *dentry)
-+{
-+	kdbus_node_unref(dentry->d_fsdata);
-+}
-+
-+static const struct dentry_operations fs_super_dops = {
-+	.d_revalidate	= fs_super_dop_revalidate,
-+	.d_release	= fs_super_dop_release,
-+};
-+
-+static void fs_super_sop_evict_inode(struct inode *inode)
-+{
-+	struct kdbus_node *node = kdbus_node_from_inode(inode);
-+
-+	truncate_inode_pages_final(&inode->i_data);
-+	clear_inode(inode);
-+	kdbus_node_unref(node);
-+}
-+
-+static const struct super_operations fs_super_sops = {
-+	.statfs		= simple_statfs,
-+	.drop_inode	= generic_delete_inode,
-+	.evict_inode	= fs_super_sop_evict_inode,
-+};
-+
-+static int fs_super_fill(struct super_block *sb)
-+{
-+	struct kdbus_domain *domain = sb->s_fs_info;
-+	struct inode *inode;
-+	int ret;
-+
-+	sb->s_blocksize = PAGE_CACHE_SIZE;
-+	sb->s_blocksize_bits = PAGE_CACHE_SHIFT;
-+	sb->s_magic = KDBUS_SUPER_MAGIC;
-+	sb->s_maxbytes = MAX_LFS_FILESIZE;
-+	sb->s_op = &fs_super_sops;
-+	sb->s_time_gran = 1;
-+
-+	inode = fs_inode_get(sb, &domain->node);
-+	if (IS_ERR(inode))
-+		return PTR_ERR(inode);
-+
-+	sb->s_root = d_make_root(inode);
-+	if (!sb->s_root) {
-+		/* d_make_root iput()s the inode on failure */
-+		return -ENOMEM;
-+	}
-+
-+	/* sb holds domain reference */
-+	sb->s_root->d_fsdata = &domain->node;
-+	sb->s_d_op = &fs_super_dops;
-+
-+	/* sb holds root reference */
-+	domain->dentry = sb->s_root;
-+
-+	if (!kdbus_node_activate(&domain->node))
-+		return -ESHUTDOWN;
-+
-+	ret = kdbus_domain_populate(domain, KDBUS_MAKE_ACCESS_WORLD);
-+	if (ret < 0)
-+		return ret;
-+
-+	sb->s_flags |= MS_ACTIVE;
-+	return 0;
-+}
-+
-+static void fs_super_kill(struct super_block *sb)
-+{
-+	struct kdbus_domain *domain = sb->s_fs_info;
-+
-+	if (domain) {
-+		kdbus_node_deactivate(&domain->node);
-+		domain->dentry = NULL;
-+	}
-+
-+	kill_anon_super(sb);
-+
-+	if (domain)
-+		kdbus_domain_unref(domain);
-+}
-+
-+static int fs_super_set(struct super_block *sb, void *data)
-+{
-+	int ret;
-+
-+	ret = set_anon_super(sb, data);
-+	if (!ret)
-+		sb->s_fs_info = data;
-+
-+	return ret;
-+}
-+
-+static struct dentry *fs_super_mount(struct file_system_type *fs_type,
-+				     int flags, const char *dev_name,
-+				     void *data)
-+{
-+	struct kdbus_domain *domain;
-+	struct super_block *sb;
-+	int ret;
-+
-+	domain = kdbus_domain_new(KDBUS_MAKE_ACCESS_WORLD);
-+	if (IS_ERR(domain))
-+		return ERR_CAST(domain);
-+
-+	sb = sget(fs_type, NULL, fs_super_set, flags, domain);
-+	if (IS_ERR(sb)) {
-+		kdbus_node_deactivate(&domain->node);
-+		kdbus_domain_unref(domain);
-+		return ERR_CAST(sb);
-+	}
-+
-+	WARN_ON(sb->s_fs_info != domain);
-+	WARN_ON(sb->s_root);
-+
-+	ret = fs_super_fill(sb);
-+	if (ret < 0) {
-+		/* calls into ->kill_sb() when done */
-+		deactivate_locked_super(sb);
-+		return ERR_PTR(ret);
-+	}
-+
-+	return dget(sb->s_root);
-+}
-+
-+static struct file_system_type fs_type = {
-+	.name		= KBUILD_MODNAME "fs",
-+	.owner		= THIS_MODULE,
-+	.mount		= fs_super_mount,
-+	.kill_sb	= fs_super_kill,
-+	.fs_flags	= FS_USERNS_MOUNT,
-+};
-+
-+/**
-+ * kdbus_fs_init() - register kdbus filesystem
-+ *
-+ * This registers a filesystem with the VFS layer. The filesystem is called
-+ * `KBUILD_MODNAME "fs"', which usually resolves to `kdbusfs'. The nameing
-+ * scheme allows to set KBUILD_MODNAME to "kdbus2" and you will get an
-+ * independent filesystem for developers.
-+ *
-+ * Each mount of the kdbusfs filesystem has an kdbus_domain attached.
-+ * Operations on this mount will only affect the attached domain. On each mount
-+ * a new domain is automatically created and used for this mount exclusively.
-+ * If you want to share a domain across multiple mounts, you need to bind-mount
-+ * it.
-+ *
-+ * Mounts of kdbusfs (with a different domain each) are unrelated to each other
-+ * and will never have any effect on any domain but their own.
-+ *
-+ * Return: 0 on success, negative error otherwise.
-+ */
-+int kdbus_fs_init(void)
-+{
-+	return register_filesystem(&fs_type);
-+}
-+
-+/**
-+ * kdbus_fs_exit() - unregister kdbus filesystem
-+ *
-+ * This does the reverse to kdbus_fs_init(). It unregisters the kdbusfs
-+ * filesystem from VFS and cleans up any allocated resources.
-+ */
-+void kdbus_fs_exit(void)
-+{
-+	unregister_filesystem(&fs_type);
-+}
-+
-+/* acquire domain of @node, making sure all ancestors are active */
-+static struct kdbus_domain *fs_acquire_domain(struct kdbus_node *node)
-+{
-+	struct kdbus_domain *domain;
-+	struct kdbus_node *iter;
-+
-+	/* caller must guarantee that @node is linked */
-+	for (iter = node; iter->parent; iter = iter->parent)
-+		if (!kdbus_node_is_active(iter->parent))
-+			return NULL;
-+
-+	/* root nodes are always domains */
-+	if (WARN_ON(iter->type != KDBUS_NODE_DOMAIN))
-+		return NULL;
-+
-+	domain = kdbus_domain_from_node(iter);
-+	if (!kdbus_node_acquire(&domain->node))
-+		return NULL;
-+
-+	return domain;
-+}
-+
-+/**
-+ * kdbus_fs_flush() - flush dcache entries of a node
-+ * @node:		Node to flush entries of
-+ *
-+ * This flushes all VFS filesystem cache entries for a node and all its
-+ * children. This should be called whenever a node is destroyed during
-+ * runtime. It will flush the cache entries so the linked objects can be
-+ * deallocated.
-+ *
-+ * This is a no-op if you call it on active nodes (they really should stay in
-+ * cache) or on nodes with deactivated parents (flushing the parent is enough).
-+ * Furthermore, there is no need to call it on nodes whose lifetime is bound to
-+ * their parents'. In those cases, the parent-flush will always also flush the
-+ * children.
-+ */
-+void kdbus_fs_flush(struct kdbus_node *node)
-+{
-+	struct dentry *dentry, *parent_dentry = NULL;
-+	struct kdbus_domain *domain;
-+	struct qstr name;
-+
-+	/* active nodes should remain in cache */
-+	if (!kdbus_node_is_deactivated(node))
-+		return;
-+
-+	/* nodes that were never linked were never instantiated */
-+	if (!node->parent)
-+		return;
-+
-+	/* acquire domain and verify all ancestors are active */
-+	domain = fs_acquire_domain(node);
-+	if (!domain)
-+		return;
-+
-+	switch (node->type) {
-+	case KDBUS_NODE_ENDPOINT:
-+		if (WARN_ON(!node->parent || !node->parent->name))
-+			goto exit;
-+
-+		name.name = node->parent->name;
-+		name.len = strlen(node->parent->name);
-+		parent_dentry = d_hash_and_lookup(domain->dentry, &name);
-+		if (IS_ERR_OR_NULL(parent_dentry))
-+			goto exit;
-+
-+		/* fallthrough */
-+	case KDBUS_NODE_BUS:
-+		if (WARN_ON(!node->name))
-+			goto exit;
-+
-+		name.name = node->name;
-+		name.len = strlen(node->name);
-+		dentry = d_hash_and_lookup(parent_dentry ? : domain->dentry,
-+					   &name);
-+		if (!IS_ERR_OR_NULL(dentry)) {
-+			d_invalidate(dentry);
-+			dput(dentry);
-+		}
-+
-+		dput(parent_dentry);
-+		break;
-+
-+	default:
-+		/* all other types are bound to their parent lifetime */
-+		break;
-+	}
-+
-+exit:
-+	kdbus_node_release(&domain->node);
-+}
-diff --git a/ipc/kdbus/fs.h b/ipc/kdbus/fs.h
-new file mode 100644
-index 000000000000..62f7d6abf11e
---- /dev/null
-+++ b/ipc/kdbus/fs.h
-@@ -0,0 +1,28 @@
-+/*
-+ * Copyright (C) 2013-2015 Kay Sievers
-+ * Copyright (C) 2013-2015 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-+ * Copyright (C) 2013-2015 Daniel Mack <daniel@zonque.org>
-+ * Copyright (C) 2013-2015 David Herrmann <dh.herrmann@gmail.com>
-+ * Copyright (C) 2013-2015 Linux Foundation
-+ *
-+ * kdbus is free software; you can redistribute it and/or modify it under
-+ * the terms of the GNU Lesser General Public License as published by the
-+ * Free Software Foundation; either version 2.1 of the License, or (at
-+ * your option) any later version.
-+ */
-+
-+#ifndef __KDBUSFS_H
-+#define __KDBUSFS_H
-+
-+#include <linux/kernel.h>
-+
-+struct kdbus_node;
-+
-+int kdbus_fs_init(void);
-+void kdbus_fs_exit(void);
-+void kdbus_fs_flush(struct kdbus_node *node);
-+
-+#define kdbus_node_from_inode(_inode) \
-+	((struct kdbus_node *)(_inode)->i_private)
-+
-+#endif
-diff --git a/ipc/kdbus/node.c b/ipc/kdbus/node.c
-new file mode 100644
-index 000000000000..520df00e676a
---- /dev/null
-+++ b/ipc/kdbus/node.c
-@@ -0,0 +1,910 @@
-+/*
-+ * Copyright (C) 2013-2015 Kay Sievers
-+ * Copyright (C) 2013-2015 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-+ * Copyright (C) 2013-2015 Daniel Mack <daniel@zonque.org>
-+ * Copyright (C) 2013-2015 David Herrmann <dh.herrmann@gmail.com>
-+ * Copyright (C) 2013-2015 Linux Foundation
-+ *
-+ * kdbus is free software; you can redistribute it and/or modify it under
-+ * the terms of the GNU Lesser General Public License as published by the
-+ * Free Software Foundation; either version 2.1 of the License, or (at
-+ * your option) any later version.
-+ */
-+
-+#include <linux/atomic.h>
-+#include <linux/fs.h>
-+#include <linux/idr.h>
-+#include <linux/kdev_t.h>
-+#include <linux/rbtree.h>
-+#include <linux/rwsem.h>
-+#include <linux/sched.h>
-+#include <linux/slab.h>
-+#include <linux/wait.h>
-+
-+#include "bus.h"
-+#include "domain.h"
-+#include "endpoint.h"
-+#include "fs.h"
-+#include "handle.h"
-+#include "node.h"
-+#include "util.h"
-+
-+/**
-+ * DOC: kdbus nodes
-+ *
-+ * Nodes unify lifetime management across exposed kdbus objects and provide a
-+ * hierarchy. Each kdbus object, that might be exposed to user-space, has a
-+ * kdbus_node object embedded and is linked into the hierarchy. Each node can
-+ * have any number (0-n) of child nodes linked. Each child retains a reference
-+ * to its parent node. For root-nodes, the parent is NULL.
-+ *
-+ * Each node object goes through a bunch of states during it's lifetime:
-+ *     * NEW
-+ *       * LINKED    (can be skipped by NEW->FREED transition)
-+ *         * ACTIVE  (can be skipped by LINKED->INACTIVE transition)
-+ *       * INACTIVE
-+ *       * DRAINED
-+ *     * FREED
-+ *
-+ * Each node is allocated by the caller and initialized via kdbus_node_init().
-+ * This never fails and sets the object into state NEW. From now on, ref-counts
-+ * on the node manage its lifetime. During init, the ref-count is set to 1. Once
-+ * it drops to 0, the node goes to state FREED and the node->free_cb() callback
-+ * is called to deallocate any memory.
-+ *
-+ * After initializing a node, you usually link it into the hierarchy. You need
-+ * to provide a parent node and a name. The node will be linked as child to the
-+ * parent and a globally unique ID is assigned to the child. The name of the
-+ * child must be unique for all children of this parent. Otherwise, linking the
-+ * child will fail with -EEXIST.
-+ * Note that the child is not marked active, yet. Admittedly, it prevents any
-+ * other node from being linked with the same name (thus, it reserves that
-+ * name), but any child-lookup (via name or unique ID) will never return this
-+ * child unless it has been marked active.
-+ *
-+ * Once successfully linked, you can use kdbus_node_activate() to activate a
-+ * child. This will mark the child active. This state can be skipped by directly
-+ * deactivating the child via kdbus_node_deactivate() (see below).
-+ * By activating a child, you enable any lookups on this child to succeed from
-+ * now on. Furthermore, any code that got its hands on a reference to the node,
-+ * can from now on "acquire" the node.
-+ *
-+ *     Active References (or: 'acquiring' and 'releasing' a node)
-+ *     Additionally to normal object references, nodes support something we call
-+ *     "active references". An active reference can be acquired via
-+ *     kdbus_node_acquire() and released via kdbus_node_release(). A caller
-+ *     _must_ own a normal object reference whenever calling those functions.
-+ *     Unlike object references, acquiring an active reference can fail (by
-+ *     returning 'false' from kdbus_node_acquire()). An active reference can
-+ *     only be acquired if the node is marked active. If it is not marked
-+ *     active, yet, or if it was already deactivated, no more active references
-+ *     can be acquired, ever!
-+ *     Active references are used to track tasks working on a node. Whenever a
-+ *     task enters kernel-space to perform an action on a node, it acquires an
-+ *     active reference, performs the action and releases the reference again.
-+ *     While holding an active reference, the node is guaranteed to stay active.
-+ *     If the node is deactivated in parallel, the node is marked as
-+ *     deactivated, then we wait for all active references to be dropped, before
-+ *     we finally proceed with any cleanups. That is, if you hold an active
-+ *     reference to a node, any resources that are bound to the "active" state
-+ *     are guaranteed to stay accessible until you release your reference.
-+ *
-+ *     Active-references are very similar to rw-locks, where acquiring a node is
-+ *     equal to try-read-lock and releasing to read-unlock. Deactivating a node
-+ *     means write-lock and never releasing it again.
-+ *     Unlike rw-locks, the 'active reference' concept is more versatile and
-+ *     avoids unusual rw-lock usage (never releasing a write-lock..).
-+ *
-+ *     It is safe to acquire multiple active-references recursively. But you
-+ *     need to check the return value of kdbus_node_acquire() on _each_ call. It
-+ *     may stop granting references at _any_ time.
-+ *
-+ *     You're free to perform any operations you want while holding an active
-+ *     reference, except sleeping for an indefinite period. Sleeping for a fixed
-+ *     amount of time is fine, but you usually should not wait on wait-queues
-+ *     without a timeout.
-+ *     For example, if you wait for I/O to happen, you should gather all data
-+ *     and schedule the I/O operation, then release your active reference and
-+ *     wait for it to complete. Then try to acquire a new reference. If it
-+ *     fails, perform any cleanup (the node is now dead). Otherwise, you can
-+ *     finish your operation.
-+ *
-+ * All nodes can be deactivated via kdbus_node_deactivate() at any time. You can
-+ * call this multiple times, even in parallel or on nodes that were never
-+ * linked, and it will just work. The only restriction is, you must not hold an
-+ * active reference when calling kdbus_node_deactivate().
-+ * By deactivating a node, it is immediately marked inactive. Then, we wait for
-+ * all active references to be released (called 'draining' the node). This
-+ * shouldn't take very long as we don't perform long-lasting operations while
-+ * holding an active reference. Note that once the node is marked inactive, no
-+ * new active references can be acquired.
-+ * Once all active references are dropped, the node is considered 'drained'. Now
-+ * kdbus_node_deactivate() is called on each child of the node before we
-+ * continue deactvating our node. That is, once all children are entirely
-+ * deactivated, we call ->release_cb() of our node. ->release_cb() can release
-+ * any resources on that node which are bound to the "active" state of a node.
-+ * When done, we unlink the node from its parent rb-tree, mark it as
-+ * 'released' and return.
-+ * If kdbus_node_deactivate() is called multiple times (even in parallel), all
-+ * but one caller will just wait until the node is fully deactivated. That is,
-+ * one random caller of kdbus_node_deactivate() is selected to call
-+ * ->release_cb() and cleanup the node. Only once all this is done, all other
-+ * callers will return from kdbus_node_deactivate(). That is, it doesn't matter
-+ * whether you're the selected caller or not, it will only return after
-+ * everything is fully done.
-+ *
-+ * When a node is activated, we acquire a normal object reference to the node.
-+ * This reference is dropped after deactivation is fully done (and only iff the
-+ * node really was activated). This allows callers to link+activate a child node
-+ * and then drop all refs. The node will be deactivated together with the
-+ * parent, and then be freed when this reference is dropped.
-+ *
-+ * Currently, nodes provide a bunch of resources that external code can use
-+ * directly. This includes:
-+ *
-+ *     * node->waitq: Each node has its own wait-queue that is used to manage
-+ *                    the 'active' state. When a node is deactivated, we wait on
-+ *                    this queue until all active refs are dropped. Analogously,
-+ *                    when you release an active reference on a deactivated
-+ *                    node, and the active ref-count drops to 0, we wake up a
-+ *                    single thread on this queue. Furthermore, once the
-+ *                    ->release_cb() callback finished, we wake up all waiters.
-+ *                    The node-owner is free to re-use this wait-queue for other
-+ *                    purposes. As node-management uses this queue only during
-+ *                    deactivation, it is usually totally fine to re-use the
-+ *                    queue for other, preferably low-overhead, use-cases.
-+ *
-+ *     * node->type: This field defines the type of the owner of this node. It
-+ *                   must be set during node initialization and must remain
-+ *                   constant. The node management never looks at this value,
-+ *                   but external users might use to gain access to the owner
-+ *                   object of a node.
-+ *                   It is totally up to the owner of the node to define what
-+ *                   their type means. Usually it means you can access the
-+ *                   parent structure via container_of(), as long as you hold an
-+ *                   active reference to the node.
-+ *
-+ *     * node->free_cb:    callback after all references are dropped
-+ *       node->release_cb: callback during node deactivation
-+ *                         These fields must be set by the node owner during
-+ *                         node initialization. They must remain constant. If
-+ *                         NULL, they're skipped.
-+ *
-+ *     * node->mode: filesystem access modes
-+ *       node->uid:  filesystem owner uid
-+ *       node->gid:  filesystem owner gid
-+ *                   These fields must be set by the node owner during node
-+ *                   initialization. They must remain constant and may be
-+ *                   accessed by other callers to properly initialize
-+ *                   filesystem nodes.
-+ *
-+ *     * node->id: This is an unsigned 32bit integer allocated by an IDR. It is
-+ *                 always kept as small as possible during allocation and is
-+ *                 globally unique across all nodes allocated by this module. 0
-+ *                 is reserved as "not assigned" and is the default.
-+ *                 The ID is assigned during kdbus_node_link() and is kept until
-+ *                 the object is freed. Thus, the ID surpasses the active
-+ *                 lifetime of a node. As long as you hold an object reference
-+ *                 to a node (and the node was linked once), the ID is valid and
-+ *                 unique.
-+ *
-+ *     * node->name: name of this node
-+ *       node->hash: 31bit hash-value of @name (range [2..INT_MAX-1])
-+ *                   These values follow the same lifetime rules as node->id.
-+ *                   They're initialized when the node is linked and then remain
-+ *                   constant until the last object reference is dropped.
-+ *                   Unlike the id, the name is only unique across all siblings
-+ *                   and only until the node is deactivated. Currently, the name
-+ *                   is even unique if linked but not activated, yet. This might
-+ *                   change in the future, though. Code should not rely on this.
-+ *
-+ *     * node->lock:     lock to protect node->children, node->rb, node->parent
-+ *     * node->parent: Reference to parent node. This is set during LINK time
-+ *                     and is dropped during destruction. You must not access
-+ *                     it unless you hold an active reference to the node or if
-+ *                     you know the node is dead.
-+ *     * node->children: rb-tree of all linked children of this node. You must
-+ *                       not access this directly, but use one of the iterator
-+ *                       or lookup helpers.
-+ */
-+
-+/*
-+ * Bias values track states of "active references". They're all negative. If a
-+ * node is active, its active-ref-counter is >=0 and tracks all active
-+ * references. Once a node is deactivaed, we subtract NODE_BIAS. This means, the
-+ * counter is now negative but still counts the active references. Once it drops
-+ * to exactly NODE_BIAS, we know all active references were dropped. Exactly one
-+ * thread will change it to NODE_RELEASE now, perform cleanup and then put it
-+ * into NODE_DRAINED. Once drained, all other threads that tried deactivating
-+ * the node will now be woken up (thus, they wait until the node is fully done).
-+ * The initial state during node-setup is NODE_NEW. If a node is directly
-+ * deactivated without having ever been active, it is put into
-+ * NODE_RELEASE_DIRECT instead of NODE_BIAS. This tracks this one-bit state
-+ * across node-deactivation. The task putting it into NODE_RELEASE now knows
-+ * whether the node was active before or not.
-+ *
-+ * Some archs implement atomic_sub(v) with atomic_add(-v), so reserve INT_MIN
-+ * to avoid overflows if multiplied by -1.
-+ */
-+#define KDBUS_NODE_BIAS			(INT_MIN + 5)
-+#define KDBUS_NODE_RELEASE_DIRECT	(KDBUS_NODE_BIAS - 1)
-+#define KDBUS_NODE_RELEASE		(KDBUS_NODE_BIAS - 2)
-+#define KDBUS_NODE_DRAINED		(KDBUS_NODE_BIAS - 3)
-+#define KDBUS_NODE_NEW			(KDBUS_NODE_BIAS - 4)
-+
-+/* global unique ID mapping for kdbus nodes */
-+static DEFINE_IDR(kdbus_node_idr);
-+static DECLARE_RWSEM(kdbus_node_idr_lock);
-+
-+/**
-+ * kdbus_node_name_hash() - hash a name
-+ * @name:	The string to hash
-+ *
-+ * This computes the hash of @name. It is guaranteed to be in the range
-+ * [2..INT_MAX-1]. The values 1, 2 and INT_MAX are unused as they are reserved
-+ * for the filesystem code.
-+ *
-+ * Return: hash value of the passed string
-+ */
-+static unsigned int kdbus_node_name_hash(const char *name)
-+{
-+	unsigned int hash;
-+
-+	/* reserve hash numbers 0, 1 and >=INT_MAX for magic directories */
-+	hash = kdbus_strhash(name) & INT_MAX;
-+	if (hash < 2)
-+		hash += 2;
-+	if (hash >= INT_MAX)
-+		hash = INT_MAX - 1;
-+
-+	return hash;
-+}
-+
-+/**
-+ * kdbus_node_name_compare() - compare a name with a node's name
-+ * @hash:	hash of the string to compare the node with
-+ * @name:	name to compare the node with
-+ * @node:	node to compare the name with
-+ *
-+ * Return: 0 if @name and @hash exactly match the information in @node, or
-+ * an integer less than or greater than zero if @name is found, respectively,
-+ * to be less than or be greater than the string stored in @node.
-+ */
-+static int kdbus_node_name_compare(unsigned int hash, const char *name,
-+				   const struct kdbus_node *node)
-+{
-+	if (hash != node->hash)
-+		return hash - node->hash;
-+
-+	return strcmp(name, node->name);
-+}
-+
-+/**
-+ * kdbus_node_init() - initialize a kdbus_node
-+ * @node:	Pointer to the node to initialize
-+ * @type:	The type the node will have (KDBUS_NODE_*)
-+ *
-+ * The caller is responsible of allocating @node and initializating it to zero.
-+ * Once this call returns, you must use the node_ref() and node_unref()
-+ * functions to manage this node.
-+ */
-+void kdbus_node_init(struct kdbus_node *node, unsigned int type)
-+{
-+	atomic_set(&node->refcnt, 1);
-+	mutex_init(&node->lock);
-+	node->id = 0;
-+	node->type = type;
-+	RB_CLEAR_NODE(&node->rb);
-+	node->children = RB_ROOT;
-+	init_waitqueue_head(&node->waitq);
-+	atomic_set(&node->active, KDBUS_NODE_NEW);
-+}
-+
-+/**
-+ * kdbus_node_link() - link a node into the nodes system
-+ * @node:	Pointer to the node to initialize
-+ * @parent:	Pointer to a parent node, may be %NULL
-+ * @name:	The name of the node (or NULL if root node)
-+ *
-+ * This links a node into the hierarchy. This must not be called multiple times.
-+ * If @parent is NULL, the node becomes a new root node.
-+ *
-+ * This call will fail if @name is not unique across all its siblings or if no
-+ * ID could be allocated. You must not activate a node if linking failed! It is
-+ * safe to deactivate it, though.
-+ *
-+ * Once you linked a node, you must call kdbus_node_deactivate() before you drop
-+ * the last reference (even if you never activate the node).
-+ *
-+ * Return: 0 on success. negative error otherwise.
-+ */
-+int kdbus_node_link(struct kdbus_node *node, struct kdbus_node *parent,
-+		    const char *name)
-+{
-+	int ret;
-+
-+	if (WARN_ON(node->type != KDBUS_NODE_DOMAIN && !parent))
-+		return -EINVAL;
-+
-+	if (WARN_ON(parent && !name))
-+		return -EINVAL;
-+
-+	if (name) {
-+		node->name = kstrdup(name, GFP_KERNEL);
-+		if (!node->name)
-+			return -ENOMEM;
-+
-+		node->hash = kdbus_node_name_hash(name);
-+	}
-+
-+	down_write(&kdbus_node_idr_lock);
-+	ret = idr_alloc(&kdbus_node_idr, node, 1, 0, GFP_KERNEL);
-+	if (ret >= 0)
-+		node->id = ret;
-+	up_write(&kdbus_node_idr_lock);
-+
-+	if (ret < 0)
-+		return ret;
-+
-+	ret = 0;
-+
-+	if (parent) {
-+		struct rb_node **n, *prev;
-+
-+		if (!kdbus_node_acquire(parent))
-+			return -ESHUTDOWN;
-+
-+		mutex_lock(&parent->lock);
-+
-+		n = &parent->children.rb_node;
-+		prev = NULL;
-+
-+		while (*n) {
-+			struct kdbus_node *pos;
-+			int result;
-+
-+			pos = kdbus_node_from_rb(*n);
-+			prev = *n;
-+			result = kdbus_node_name_compare(node->hash,
-+							 node->name,
-+							 pos);
-+			if (result == 0) {
-+				ret = -EEXIST;
-+				goto exit_unlock;
-+			}
-+
-+			if (result < 0)
-+				n = &pos->rb.rb_left;
-+			else
-+				n = &pos->rb.rb_right;
-+		}
-+
-+		/* add new node and rebalance the tree */
-+		rb_link_node(&node->rb, prev, n);
-+		rb_insert_color(&node->rb, &parent->children);
-+		node->parent = kdbus_node_ref(parent);
-+
-+exit_unlock:
-+		mutex_unlock(&parent->lock);
-+		kdbus_node_release(parent);
-+	}
-+
-+	return ret;
-+}
-+
-+/**
-+ * kdbus_node_ref() - Acquire object reference
-+ * @node:	node to acquire reference to (or NULL)
-+ *
-+ * This acquires a new reference to @node. You must already own a reference when
-+ * calling this!
-+ * If @node is NULL, this is a no-op.
-+ *
-+ * Return: @node is returned
-+ */
-+struct kdbus_node *kdbus_node_ref(struct kdbus_node *node)
-+{
-+	if (node)
-+		atomic_inc(&node->refcnt);
-+	return node;
-+}
-+
-+/**
-+ * kdbus_node_unref() - Drop object reference
-+ * @node:	node to drop reference to (or NULL)
-+ *
-+ * This drops an object reference to @node. You must not access the node if you
-+ * no longer own a reference.
-+ * If the ref-count drops to 0, the object will be destroyed (->free_cb will be
-+ * called).
-+ *
-+ * If you linked or activated the node, you must deactivate the node before you
-+ * drop your last reference! If you didn't link or activate the node, you can
-+ * drop any reference you want.
-+ *
-+ * Note that this calls into ->free_cb() and thus _might_ sleep. The ->free_cb()
-+ * callbacks must not acquire any outer locks, though. So you can safely drop
-+ * references while holding locks.
-+ *
-+ * If @node is NULL, this is a no-op.
-+ *
-+ * Return: This always returns NULL
-+ */
-+struct kdbus_node *kdbus_node_unref(struct kdbus_node *node)
-+{
-+	if (node && atomic_dec_and_test(&node->refcnt)) {
-+		struct kdbus_node safe = *node;
-+
-+		WARN_ON(atomic_read(&node->active) != KDBUS_NODE_DRAINED);
-+		WARN_ON(!RB_EMPTY_NODE(&node->rb));
-+
-+		if (node->free_cb)
-+			node->free_cb(node);
-+
-+		down_write(&kdbus_node_idr_lock);
-+		if (safe.id > 0)
-+			idr_remove(&kdbus_node_idr, safe.id);
-+		/* drop caches after last node to not leak memory on unload */
-+		if (idr_is_empty(&kdbus_node_idr)) {
-+			idr_destroy(&kdbus_node_idr);
-+			idr_init(&kdbus_node_idr);
-+		}
-+		up_write(&kdbus_node_idr_lock);
-+
-+		kfree(safe.name);
-+
-+		/*
-+		 * kdbusfs relies on the parent to be available even after the
-+		 * node was deactivated and unlinked. Therefore, we pin it
-+		 * until a node is destroyed.
-+		 */
-+		kdbus_node_unref(safe.parent);
-+	}
-+
-+	return NULL;
-+}
-+
-+/**
-+ * kdbus_node_is_active() - test whether a node is active
-+ * @node:	node to test
-+ *
-+ * This checks whether @node is active. That means, @node was linked and
-+ * activated by the node owner and hasn't been deactivated, yet. If, and only
-+ * if, a node is active, kdbus_node_acquire() will be able to acquire active
-+ * references.
-+ *
-+ * Note that this function does not give any lifetime guarantees. After this
-+ * call returns, the node might be deactivated immediately. Normally, what you
-+ * want is to acquire a real active reference via kdbus_node_acquire().
-+ *
-+ * Return: true if @node is active, false otherwise
-+ */
-+bool kdbus_node_is_active(struct kdbus_node *node)
-+{
-+	return atomic_read(&node->active) >= 0;
-+}
-+
-+/**
-+ * kdbus_node_is_deactivated() - test whether a node was already deactivated
-+ * @node:	node to test
-+ *
-+ * This checks whether kdbus_node_deactivate() was called on @node. Note that
-+ * this might be true even if you never deactivated the node directly, but only
-+ * one of its ancestors.
-+ *
-+ * Note that even if this returns 'false', the node might get deactivated
-+ * immediately after the call returns.
-+ *
-+ * Return: true if @node was already deactivated, false if not
-+ */
-+bool kdbus_node_is_deactivated(struct kdbus_node *node)
-+{
-+	int v;
-+
-+	v = atomic_read(&node->active);
-+	return v != KDBUS_NODE_NEW && v < 0;
-+}
-+
-+/**
-+ * kdbus_node_activate() - activate a node
-+ * @node:	node to activate
-+ *
-+ * This marks @node as active if, and only if, the node wasn't activated nor
-+ * deactivated, yet, and the parent is still active. Any but the first call to
-+ * kdbus_node_activate() is a no-op.
-+ * If you called kdbus_node_deactivate() before, then even the first call to
-+ * kdbus_node_activate() will be a no-op.
-+ *
-+ * This call doesn't give any lifetime guarantees. The node might get
-+ * deactivated immediately after this call returns. Or the parent might already
-+ * be deactivated, which will make this call a no-op.
-+ *
-+ * If this call successfully activated a node, it will take an object reference
-+ * to it. This reference is dropped after the node is deactivated. Therefore,
-+ * the object owner can safely drop their reference to @node iff they know that
-+ * its parent node will get deactivated at some point. Once the parent node is
-+ * deactivated, it will deactivate all its child and thus drop this reference
-+ * again.
-+ *
-+ * Return: True if this call successfully activated the node, otherwise false.
-+ *         Note that this might return false, even if the node is still active
-+ *         (eg., if you called this a second time).
-+ */
-+bool kdbus_node_activate(struct kdbus_node *node)
-+{
-+	bool res = false;
-+
-+	mutex_lock(&node->lock);
-+	if (atomic_read(&node->active) == KDBUS_NODE_NEW) {
-+		atomic_sub(KDBUS_NODE_NEW, &node->active);
-+		/* activated nodes have ref +1 */
-+		kdbus_node_ref(node);
-+		res = true;
-+	}
-+	mutex_unlock(&node->lock);
-+
-+	return res;
-+}
-+
-+/**
-+ * kdbus_node_deactivate() - deactivate a node
-+ * @node:	The node to deactivate.
-+ *
-+ * This function recursively deactivates this node and all its children. It
-+ * returns only once all children and the node itself were recursively disabled
-+ * (even if you call this function multiple times in parallel).
-+ *
-+ * It is safe to call this function on _any_ node that was initialized _any_
-+ * number of times.
-+ *
-+ * This call may sleep, as it waits for all active references to be dropped.
-+ */
-+void kdbus_node_deactivate(struct kdbus_node *node)
-+{
-+	struct kdbus_node *pos, *child;
-+	struct rb_node *rb;
-+	int v_pre, v_post;
-+
-+	pos = node;
-+
-+	/*
-+	 * To avoid recursion, we perform back-tracking while deactivating
-+	 * nodes. For each node we enter, we first mark the active-counter as
-+	 * deactivated by adding BIAS. If the node as children, we set the first
-+	 * child as current position and start over. If the node has no
-+	 * children, we drain the node by waiting for all active refs to be
-+	 * dropped and then releasing the node.
-+	 *
-+	 * After the node is released, we set its parent as current position
-+	 * and start over. If the current position was the initial node, we're
-+	 * done.
-+	 *
-+	 * Note that this function can be called in parallel by multiple
-+	 * callers. We make sure that each node is only released once, and any
-+	 * racing caller will wait until the other thread fully released that
-+	 * node.
-+	 */
-+
-+	for (;;) {
-+		/*
-+		 * Add BIAS to node->active to mark it as inactive. If it was
-+		 * never active before, immediately mark it as RELEASE_INACTIVE
-+		 * so we remember this state.
-+		 * We cannot remember v_pre as we might iterate into the
-+		 * children, overwriting v_pre, before we can release our node.
-+		 */
-+		mutex_lock(&pos->lock);
-+		v_pre = atomic_read(&pos->active);
-+		if (v_pre >= 0)
-+			atomic_add_return(KDBUS_NODE_BIAS, &pos->active);
-+		else if (v_pre == KDBUS_NODE_NEW)
-+			atomic_set(&pos->active, KDBUS_NODE_RELEASE_DIRECT);
-+		mutex_unlock(&pos->lock);
-+
-+		/* wait until all active references were dropped */
-+		wait_event(pos->waitq,
-+			   atomic_read(&pos->active) <= KDBUS_NODE_BIAS);
-+
-+		mutex_lock(&pos->lock);
-+		/* recurse into first child if any */
-+		rb = rb_first(&pos->children);
-+		if (rb) {
-+			child = kdbus_node_ref(kdbus_node_from_rb(rb));
-+			mutex_unlock(&pos->lock);
-+			pos = child;
-+			continue;
-+		}
-+
-+		/* mark object as RELEASE */
-+		v_post = atomic_read(&pos->active);
-+		if (v_post == KDBUS_NODE_BIAS ||
-+		    v_post == KDBUS_NODE_RELEASE_DIRECT)
-+			atomic_set(&pos->active, KDBUS_NODE_RELEASE);
-+		mutex_unlock(&pos->lock);
-+
-+		/*
-+		 * If this is the thread that marked the object as RELEASE, we
-+		 * perform the actual release. Otherwise, we wait until the
-+		 * release is done and the node is marked as DRAINED.
-+		 */
-+		if (v_post == KDBUS_NODE_BIAS ||
-+		    v_post == KDBUS_NODE_RELEASE_DIRECT) {
-+			if (pos->release_cb)
-+				pos->release_cb(pos, v_post == KDBUS_NODE_BIAS);
-+
-+			if (pos->parent) {
-+				mutex_lock(&pos->parent->lock);
-+				if (!RB_EMPTY_NODE(&pos->rb)) {
-+					rb_erase(&pos->rb,
-+						 &pos->parent->children);
-+					RB_CLEAR_NODE(&pos->rb);
-+				}
-+				mutex_unlock(&pos->parent->lock);
-+			}
-+
-+			/* mark as DRAINED */
-+			atomic_set(&pos->active, KDBUS_NODE_DRAINED);
-+			wake_up_all(&pos->waitq);
-+
-+			/* drop VFS cache */
-+			kdbus_fs_flush(pos);
-+
-+			/*
-+			 * If the node was activated and somone subtracted BIAS
-+			 * from it to deactivate it, we, and only us, are
-+			 * responsible to release the extra ref-count that was
-+			 * taken once in kdbus_node_activate().
-+			 * If the node was never activated, no-one ever
-+			 * subtracted BIAS, but instead skipped that state and
-+			 * immediately went to NODE_RELEASE_DIRECT. In that case
-+			 * we must not drop the reference.
-+			 */
-+			if (v_post == KDBUS_NODE_BIAS)
-+				kdbus_node_unref(pos);
-+		} else {
-+			/* wait until object is DRAINED */
-+			wait_event(pos->waitq,
-+			    atomic_read(&pos->active) == KDBUS_NODE_DRAINED);
-+		}
-+
-+		/*
-+		 * We're done with the current node. Continue on its parent
-+		 * again, which will try deactivating its next child, or itself
-+		 * if no child is left.
-+		 * If we've reached our initial node again, we are done and
-+		 * can safely return.
-+		 */
-+		if (pos == node)
-+			break;
-+
-+		child = pos;
-+		pos = pos->parent;
-+		kdbus_node_unref(child);
-+	}
-+}
-+
-+/**
-+ * kdbus_node_acquire() - Acquire an active ref on a node
-+ * @node:	The node
-+ *
-+ * This acquires an active-reference to @node. This will only succeed if the
-+ * node is active. You must release this active reference via
-+ * kdbus_node_release() again.
-+ *
-+ * See the introduction to "active references" for more details.
-+ *
-+ * Return: %true if @node was non-NULL and active
-+ */
-+bool kdbus_node_acquire(struct kdbus_node *node)
-+{
-+	return node && atomic_inc_unless_negative(&node->active);
-+}
-+
-+/**
-+ * kdbus_node_release() - Release an active ref on a node
-+ * @node:	The node
-+ *
-+ * This releases an active reference that was previously acquired via
-+ * kdbus_node_acquire(). See kdbus_node_acquire() for details.
-+ */
-+void kdbus_node_release(struct kdbus_node *node)
-+{
-+	if (node && atomic_dec_return(&node->active) == KDBUS_NODE_BIAS)
-+		wake_up(&node->waitq);
-+}
-+
-+/**
-+ * kdbus_node_find_child() - Find child by name
-+ * @node:	parent node to search through
-+ * @name:	name of child node
-+ *
-+ * This searches through all children of @node for a child-node with name @name.
-+ * If not found, or if the child is deactivated, NULL is returned. Otherwise,
-+ * the child is acquired and a new reference is returned.
-+ *
-+ * If you're done with the child, you need to release it and drop your
-+ * reference.
-+ *
-+ * This function does not acquire the parent node. However, if the parent was
-+ * already deactivated, then kdbus_node_deactivate() will, at some point, also
-+ * deactivate the child. Therefore, we can rely on the explicit ordering during
-+ * deactivation.
-+ *
-+ * Return: Reference to acquired child node, or NULL if not found / not active.
-+ */
-+struct kdbus_node *kdbus_node_find_child(struct kdbus_node *node,
-+					 const char *name)
-+{
-+	struct kdbus_node *child;
-+	struct rb_node *rb;
-+	unsigned int hash;
-+	int ret;
-+
-+	hash = kdbus_node_name_hash(name);
-+
-+	mutex_lock(&node->lock);
-+	rb = node->children.rb_node;
-+	while (rb) {
-+		child = kdbus_node_from_rb(rb);
-+		ret = kdbus_node_name_compare(hash, name, child);
-+		if (ret < 0)
-+			rb = rb->rb_left;
-+		else if (ret > 0)
-+			rb = rb->rb_right;
-+		else
-+			break;
-+	}
-+	if (rb && kdbus_node_acquire(child))
-+		kdbus_node_ref(child);
-+	else
-+		child = NULL;
-+	mutex_unlock(&node->lock);
-+
-+	return child;
-+}
-+
-+static struct kdbus_node *node_find_closest_unlocked(struct kdbus_node *node,
-+						     unsigned int hash,
-+						     const char *name)
-+{
-+	struct kdbus_node *n, *pos = NULL;
-+	struct rb_node *rb;
-+	int res;
-+
-+	/*
-+	 * Find the closest child with ``node->hash >= hash'', or, if @name is
-+	 * valid, ``node->name >= name'' (where '>=' is the lex. order).
-+	 */
-+
-+	rb = node->children.rb_node;
-+	while (rb) {
-+		n = kdbus_node_from_rb(rb);
-+
-+		if (name)
-+			res = kdbus_node_name_compare(hash, name, n);
-+		else
-+			res = hash - n->hash;
-+
-+		if (res <= 0) {
-+			rb = rb->rb_left;
-+			pos = n;
-+		} else { /* ``hash > n->hash'', ``name > n->name'' */
-+			rb = rb->rb_right;
-+		}
-+	}
-+
-+	return pos;
-+}
-+
-+/**
-+ * kdbus_node_find_closest() - Find closest child-match
-+ * @node:	parent node to search through
-+ * @hash:	hash value to find closest match for
-+ *
-+ * Find the closest child of @node with a hash greater than or equal to @hash.
-+ * The closest match is the left-most child of @node with this property. Which
-+ * means, it is the first child with that hash returned by
-+ * kdbus_node_next_child(), if you'd iterate the whole parent node.
-+ *
-+ * Return: Reference to acquired child, or NULL if none found.
-+ */
-+struct kdbus_node *kdbus_node_find_closest(struct kdbus_node *node,
-+					   unsigned int hash)
-+{
-+	struct kdbus_node *child;
-+	struct rb_node *rb;
-+
-+	mutex_lock(&node->lock);
-+
-+	child = node_find_closest_unlocked(node, hash, NULL);
-+	while (child && !kdbus_node_acquire(child)) {
-+		rb = rb_next(&child->rb);
-+		if (rb)
-+			child = kdbus_node_from_rb(rb);
-+		else
-+			child = NULL;
-+	}
-+	kdbus_node_ref(child);
-+
-+	mutex_unlock(&node->lock);
-+
-+	return child;
-+}
-+
-+/**
-+ * kdbus_node_next_child() - Acquire next child
-+ * @node:	parent node
-+ * @prev:	previous child-node position or NULL
-+ *
-+ * This function returns a reference to the next active child of @node, after
-+ * the passed position @prev. If @prev is NULL, a reference to the first active
-+ * child is returned. If no more active children are found, NULL is returned.
-+ *
-+ * This function acquires the next child it returns. If you're done with the
-+ * returned pointer, you need to release _and_ unref it.
-+ *
-+ * The passed in pointer @prev is not modified by this function, and it does
-+ * *not* have to be active. If @prev was acquired via different means, or if it
-+ * was unlinked from its parent before you pass it in, then this iterator will
-+ * still return the next active child (it will have to search through the
-+ * rb-tree based on the node-name, though).
-+ * However, @prev must not be linked to a different parent than @node!
-+ *
-+ * Return: Reference to next acquired child, or NULL if at the end.
-+ */
-+struct kdbus_node *kdbus_node_next_child(struct kdbus_node *node,
-+					 struct kdbus_node *prev)
-+{
-+	struct kdbus_node *pos = NULL;
-+	struct rb_node *rb;
-+
-+	mutex_lock(&node->lock);
-+
-+	if (!prev) {
-+		/*
-+		 * New iteration; find first node in rb-tree and try to acquire
-+		 * it. If we got it, directly return it as first element.
-+		 * Otherwise, the loop below will find the next active node.
-+		 */
-+		rb = rb_first(&node->children);
-+		if (!rb)
-+			goto exit;
-+		pos = kdbus_node_from_rb(rb);
-+		if (kdbus_node_acquire(pos))
-+			goto exit;
-+	} else if (RB_EMPTY_NODE(&prev->rb)) {
-+		/*
-+		 * The current iterator is no longer linked to the rb-tree. Use
-+		 * its hash value and name to find the next _higher_ node and
-+		 * acquire it. If we got it, return it as next element.
-+		 * Otherwise, the loop below will find the next active node.
-+		 */
-+		pos = node_find_closest_unlocked(node, prev->hash, prev->name);
-+		if (!pos)
-+			goto exit;
-+		if (kdbus_node_acquire(pos))
-+			goto exit;
-+	} else {
-+		/*
-+		 * The current iterator is still linked to the parent. Set it
-+		 * as current position and use the loop below to find the next
-+		 * active element.
-+		 */
-+		pos = prev;
-+	}
-+
-+	/* @pos was already returned or is inactive; find next active node */
-+	do {
-+		rb = rb_next(&pos->rb);
-+		if (rb)
-+			pos = kdbus_node_from_rb(rb);
-+		else
-+			pos = NULL;
-+	} while (pos && !kdbus_node_acquire(pos));
-+
-+exit:
-+	/* @pos is NULL or acquired. Take ref if non-NULL and return it */
-+	kdbus_node_ref(pos);
-+	mutex_unlock(&node->lock);
-+	return pos;
-+}
-diff --git a/ipc/kdbus/node.h b/ipc/kdbus/node.h
-new file mode 100644
-index 000000000000..be125ce4fd58
---- /dev/null
-+++ b/ipc/kdbus/node.h
-@@ -0,0 +1,84 @@
-+/*
-+ * Copyright (C) 2013-2015 Kay Sievers
-+ * Copyright (C) 2013-2015 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-+ * Copyright (C) 2013-2015 Daniel Mack <daniel@zonque.org>
-+ * Copyright (C) 2013-2015 David Herrmann <dh.herrmann@gmail.com>
-+ * Copyright (C) 2013-2015 Linux Foundation
-+ *
-+ * kdbus is free software; you can redistribute it and/or modify it under
-+ * the terms of the GNU Lesser General Public License as published by the
-+ * Free Software Foundation; either version 2.1 of the License, or (at
-+ * your option) any later version.
-+ */
-+
-+#ifndef __KDBUS_NODE_H
-+#define __KDBUS_NODE_H
-+
-+#include <linux/atomic.h>
-+#include <linux/kernel.h>
-+#include <linux/mutex.h>
-+#include <linux/wait.h>
-+
-+struct kdbus_node;
-+
-+enum kdbus_node_type {
-+	KDBUS_NODE_DOMAIN,
-+	KDBUS_NODE_CONTROL,
-+	KDBUS_NODE_BUS,
-+	KDBUS_NODE_ENDPOINT,
-+};
-+
-+typedef void (*kdbus_node_free_t) (struct kdbus_node *node);
-+typedef void (*kdbus_node_release_t) (struct kdbus_node *node, bool was_active);
-+
-+struct kdbus_node {
-+	atomic_t refcnt;
-+	atomic_t active;
-+	wait_queue_head_t waitq;
-+
-+	/* static members */
-+	unsigned int type;
-+	kdbus_node_free_t free_cb;
-+	kdbus_node_release_t release_cb;
-+	umode_t mode;
-+	kuid_t uid;
-+	kgid_t gid;
-+
-+	/* valid once linked */
-+	char *name;
-+	unsigned int hash;
-+	unsigned int id;
-+	struct kdbus_node *parent; /* may be NULL */
-+
-+	/* valid iff active */
-+	struct mutex lock;
-+	struct rb_node rb;
-+	struct rb_root children;
-+};
-+
-+#define kdbus_node_from_rb(_node) rb_entry((_node), struct kdbus_node, rb)
-+
-+void kdbus_node_init(struct kdbus_node *node, unsigned int type);
-+
-+int kdbus_node_link(struct kdbus_node *node, struct kdbus_node *parent,
-+		    const char *name);
-+
-+struct kdbus_node *kdbus_node_ref(struct kdbus_node *node);
-+struct kdbus_node *kdbus_node_unref(struct kdbus_node *node);
-+
-+bool kdbus_node_is_active(struct kdbus_node *node);
-+bool kdbus_node_is_deactivated(struct kdbus_node *node);
-+bool kdbus_node_activate(struct kdbus_node *node);
-+void kdbus_node_deactivate(struct kdbus_node *node);
-+
-+bool kdbus_node_acquire(struct kdbus_node *node);
-+void kdbus_node_release(struct kdbus_node *node);
-+
-+struct kdbus_node *kdbus_node_find_child(struct kdbus_node *node,
-+					 const char *name);
-+struct kdbus_node *kdbus_node_find_closest(struct kdbus_node *node,
-+					   unsigned int hash);
-+struct kdbus_node *kdbus_node_next_child(struct kdbus_node *node,
-+					 struct kdbus_node *prev);
-+
-+#endif
+ else # KBUILD_EXTMOD
+ 
 -- 
 2.3.1
