@@ -1,50 +1,53 @@
 From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH] kbuild: Don't pass -rR to selftest makefiles
-Date: Mon, 09 Mar 2015 16:49:27 -0600
-Message-ID: <54FE2377.9040709@osg.samsung.com>
-References: <1425464362-28876-1-git-send-email-mpe@ellerman.id.au> <54FDAE28.6050801@osg.samsung.com>
+Subject: Re: [PATCH v3 5/7] selftests/timers: Use implicit rules
+Date: Mon, 09 Mar 2015 17:17:11 -0600
+Message-ID: <54FE29F7.2050803@osg.samsung.com>
+References: <1425465694-27095-1-git-send-email-mpe@ellerman.id.au> <1425465694-27095-5-git-send-email-mpe@ellerman.id.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54FDAE28.6050801-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <1425465694-27095-5-git-send-email-mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, mmarek-AlSwsSmVLrQ@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/09/2015 08:28 AM, Shuah Khan wrote:
-> On 03/04/2015 03:19 AM, Michael Ellerman wrote:
->> The makefiles under tools/testing/selftests are not real kbuild
->> makefiles, they are regular stand alone makefiles. As such they *do*
->> want all the standard implicit rules and variables defined.
->>
->> So before calling those makefiles, filter -rR out of MAKEFLAGS.
->>
->> Without this not all the selftests are built correctly when called v=
-ia
->> the top-level Makefile.
->>
->> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
->=20
-> Hi Michal,
->=20
-> Could you please take this patch in your tree.
->=20
-> Acked-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
->=20
+On 03/04/2015 03:41 AM, Michael Ellerman wrote:
+> There's no need to open-code the build rules, use the implicit ones.
+> 
+> This has the nice side effect of enabling cross compilation.
+> 
+> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+> ---
+>  tools/testing/selftests/timers/Makefile | 8 ++++----
+>  1 file changed, 4 insertions(+), 4 deletions(-)
+> 
+> diff --git a/tools/testing/selftests/timers/Makefile b/tools/testing/selftests/timers/Makefile
+> index 149cee3b7b8a..87340405e4b3 100644
+> --- a/tools/testing/selftests/timers/Makefile
+> +++ b/tools/testing/selftests/timers/Makefile
+> @@ -1,9 +1,9 @@
+> -all:
+> -	gcc posix_timers.c -o posix_timers -lrt
+> -
+>  TEST_PROGS := posix_timers
+> +LDLIBS += -lrt
+> +
+> +all: $(TEST_PROGS)
 
-I am changing this to a Nack. This is not fully cooked.
-I am seeing new failures on some tests.
+I can't take this patch. This breaks make kselftest
+run. With this change timers test fails to build
 
-gcc: error: elf_x86_64: No such file or directory
-gcc: error: unrecognized command line option =91-m=92
+make[2]: Nothing to be done for 'all'.
+make[2]: *** No rule to make target 'posix_timers', needed by 'all'.  Stop.
+
 
 thanks,
 -- Shuah
 
 
---=20
+-- 
 Shuah Khan
 Sr. Linux Kernel Developer
 Open Source Innovation Group
