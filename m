@@ -1,80 +1,88 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 02/14] kdbus: add uapi header file
-Date: Mon,  9 Mar 2015 14:09:08 +0100
-Message-ID: <1425906560-13798-3-git-send-email-gregkh@linuxfoundation.org>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: [PATCH 03/14] kdbus: add driver skeleton, ioctl entry points and utility functions
+Date: Mon,  9 Mar 2015 14:09:09 +0100
+Message-ID: <1425906560-13798-4-git-send-email-gregkh@linuxfoundation.org>
 References: <1425906560-13798-1-git-send-email-gregkh@linuxfoundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1425906560-13798-1-git-send-email-gregkh@linuxfoundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: arnd@arndb.de, ebiederm@xmission.com, gnomes@lxorguk.ukuu.org.uk, teg@jklm.no, jkosina@suse.cz, luto@amacapital.net, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: daniel@zonque.org, dh.herrmann@gmail.com, tixxdz@opendz.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1425906560-13798-1-git-send-email-gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, teg-B22kvLQNl6c@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org, dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-=46rom: Daniel Mack <daniel@zonque.org>
+=46rom: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
 
-This patch adds the header file which describes the low-level
-transport protocol used by various ioctls. The header file is located
-in include/uapi/linux/ as it is shared between kernel and userspace,
-and it only contains data structure definitions, enums and defines
-for constants.
+Add the basic driver structure.
 
-The low-level kernel API of kdbus is exposed through ioctls, employed
-on nodes exposed by kdbusfs. We've chosen a ioctl-based implementation
-over syscalls for various reaons:
+handle.c is the main ioctl command dispatcher that calls into other par=
+ts
+of the driver.
 
- * The ioctls kdbus offers are completely specific to nodes exposed by
-   kdbusfs and can not be applied to any other file descriptor in a
-   system.
+main.c contains the code that creates the initial domain at startup, an=
+d
+util.c has utility functions such as item iterators that are shared wit=
+h
+other files.
 
- * The file descriptors derived from opening nodes in kdbusfs can only =
-be
-   used for poll(), close() and the ioctls described in kdbus.h.
+limits.h describes limits on things like maximum data structure sizes,
+number of messages per users and suchlike. Some of the numbers currentl=
+y
+picked are rough ideas of what what might be sufficient and are probabl=
+y
+rather conservative.
 
- * Not all systems will make use of kdbus eventually, and we want to
-   make as many parts of the kernel optional at build time.
-
- * We want to build the kdbus code as module, which is impossible to
-   do when implemented with syscalls.
-
- * The ioctl dispatching logic does not show up in our performance
-   graphs; its overhead is negligible.
-
- * For development, being able to build, load and unload a separate
-   module with a versioned name suffix is essential.
-
-Signed-off-by: Daniel Mack <daniel@zonque.org>
-Signed-off-by: David Herrmann <dh.herrmann@gmail.com>
-Signed-off-by: Djalal Harouni <tixxdz@opendz.org>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Signed-off-by: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
+Signed-off-by: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 ---
- include/uapi/linux/Kbuild  |   1 +
- include/uapi/linux/kdbus.h | 979 +++++++++++++++++++++++++++++++++++++=
+ Documentation/ioctl/ioctl-number.txt |   1 +
+ ipc/kdbus/handle.c                   | 617 +++++++++++++++++++++++++++=
 ++++++++
- 2 files changed, 980 insertions(+)
- create mode 100644 include/uapi/linux/kdbus.h
+ ipc/kdbus/handle.h                   |  85 +++++
+ ipc/kdbus/limits.h                   |  64 ++++
+ ipc/kdbus/main.c                     | 125 +++++++
+ ipc/kdbus/util.c                     | 201 ++++++++++++
+ ipc/kdbus/util.h                     |  74 +++++
+ 7 files changed, 1167 insertions(+)
+ create mode 100644 ipc/kdbus/handle.c
+ create mode 100644 ipc/kdbus/handle.h
+ create mode 100644 ipc/kdbus/limits.h
+ create mode 100644 ipc/kdbus/main.c
+ create mode 100644 ipc/kdbus/util.c
+ create mode 100644 ipc/kdbus/util.h
 
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 68ceb97c458c..ddc413e1959f 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -214,6 +214,7 @@ header-y +=3D ixjuser.h
- header-y +=3D jffs2.h
- header-y +=3D joystick.h
- header-y +=3D kcmp.h
-+header-y +=3D kdbus.h
- header-y +=3D kdev_t.h
- header-y +=3D kd.h
- header-y +=3D kernelcapi.h
-diff --git a/include/uapi/linux/kdbus.h b/include/uapi/linux/kdbus.h
+diff --git a/Documentation/ioctl/ioctl-number.txt b/Documentation/ioctl=
+/ioctl-number.txt
+index 8136e1fd30fd..54e091ebb862 100644
+--- a/Documentation/ioctl/ioctl-number.txt
++++ b/Documentation/ioctl/ioctl-number.txt
+@@ -292,6 +292,7 @@ Code  Seq#(hex)	Include File		Comments
+ 0x92	00-0F	drivers/usb/mon/mon_bin.c
+ 0x93	60-7F	linux/auto_fs.h
+ 0x94	all	fs/btrfs/ioctl.h
++0x95	all	uapi/linux/kdbus.h	kdbus IPC driver
+ 0x97	00-7F	fs/ceph/ioctl.h		Ceph file system
+ 0x99	00-0F				537-Addinboard driver
+ 					<mailto:buk-KMFVLCTwZAcb1SvskN2V4Q@public.gmane.org>
+diff --git a/ipc/kdbus/handle.c b/ipc/kdbus/handle.c
 new file mode 100644
-index 000000000000..fc1d77dd7c93
+index 000000000000..f72dbe513b4a
 --- /dev/null
-+++ b/include/uapi/linux/kdbus.h
-@@ -0,0 +1,979 @@
++++ b/ipc/kdbus/handle.c
+@@ -0,0 +1,617 @@
 +/*
++ * Copyright (C) 2013-2015 Kay Sievers
++ * Copyright (C) 2013-2015 Greg Kroah-Hartman <gregkh@linuxfoundation.=
+org>
++ * Copyright (C) 2013-2015 Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
++ * Copyright (C) 2013-2015 David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
++ * Copyright (C) 2013-2015 Linux Foundation
++ * Copyright (C) 2014-2015 Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
++ *
 + * kdbus is free software; you can redistribute it and/or modify it un=
 der
 + * the terms of the GNU Lesser General Public License as published by =
@@ -83,1004 +91,1265 @@ the
 + * your option) any later version.
 + */
 +
-+#ifndef _KDBUS_UAPI_H_
-+#define _KDBUS_UAPI_H_
++#include <linux/file.h>
++#include <linux/fs.h>
++#include <linux/idr.h>
++#include <linux/init.h>
++#include <linux/kdev_t.h>
++#include <linux/module.h>
++#include <linux/poll.h>
++#include <linux/rwsem.h>
++#include <linux/sched.h>
++#include <linux/sizes.h>
++#include <linux/slab.h>
++#include <linux/uaccess.h>
++#include <linux/syscalls.h>
 +
++#include "bus.h"
++#include "connection.h"
++#include "endpoint.h"
++#include "fs.h"
++#include "handle.h"
++#include "item.h"
++#include "match.h"
++#include "message.h"
++#include "names.h"
++#include "domain.h"
++#include "policy.h"
++
++static int kdbus_args_verify(struct kdbus_args *args)
++{
++	struct kdbus_item *item;
++	size_t i;
++	int ret;
++
++	KDBUS_ITEMS_FOREACH(item, args->items, args->items_size) {
++		struct kdbus_arg *arg =3D NULL;
++
++		if (!KDBUS_ITEM_VALID(item, args->items, args->items_size))
++			return -EINVAL;
++
++		for (i =3D 0; i < args->argc; ++i)
++			if (args->argv[i].type =3D=3D item->type)
++				break;
++		if (i >=3D args->argc)
++			return -EINVAL;
++
++		arg =3D &args->argv[i];
++
++		ret =3D kdbus_item_validate(item);
++		if (ret < 0)
++			return ret;
++
++		if (arg->item && !arg->multiple)
++			return -EINVAL;
++
++		arg->item =3D item;
++	}
++
++	if (!KDBUS_ITEMS_END(item, args->items, args->items_size))
++		return -EINVAL;
++
++	for (i =3D 0; i < args->argc; ++i)
++		if (args->argv[i].mandatory && !args->argv[i].item)
++			return -EINVAL;
++
++	return 0;
++}
++
++static int kdbus_args_negotiate(struct kdbus_args *args)
++{
++	struct kdbus_item __user *user;
++	struct kdbus_item *negotiation;
++	size_t i, j, num;
++
++	/*
++	 * If KDBUS_FLAG_NEGOTIATE is set, we overwrite the flags field with
++	 * the set of supported flags. Furthermore, if an KDBUS_ITEM_NEGOTIAT=
+E
++	 * item is passed, we iterate its payload (array of u64, each set to =
+an
++	 * item type) and clear all unsupported item-types to 0.
++	 * The caller might do this recursively, if other flags or objects ar=
+e
++	 * embedded in the payload itself.
++	 */
++
++	if (args->cmd->flags & KDBUS_FLAG_NEGOTIATE) {
++		if (put_user(args->allowed_flags & ~KDBUS_FLAG_NEGOTIATE,
++			     &args->user->flags))
++			return -EFAULT;
++	}
++
++	if (args->argc < 1 || args->argv[0].type !=3D KDBUS_ITEM_NEGOTIATE ||
++	    !args->argv[0].item)
++		return 0;
++
++	negotiation =3D args->argv[0].item;
++	user =3D (struct kdbus_item __user *)
++		((u8 __user *)args->user +
++		 ((u8 *)negotiation - (u8 *)args->cmd));
++	num =3D KDBUS_ITEM_PAYLOAD_SIZE(negotiation) / sizeof(u64);
++
++	for (i =3D 0; i < num; ++i) {
++		for (j =3D 0; j < args->argc; ++j)
++			if (negotiation->data64[i] =3D=3D args->argv[j].type)
++				break;
++
++		if (j < args->argc)
++			continue;
++
++		/* this item is not supported, clear it out */
++		negotiation->data64[i] =3D 0;
++		if (put_user(negotiation->data64[i], &user->data64[i]))
++			return -EFAULT;
++	}
++
++	return 0;
++}
++
++/**
++ * __kdbus_args_parse() - parse payload of kdbus command
++ * @args:		object to parse data into
++ * @argp:		user-space location of command payload to parse
++ * @type_size:		overall size of command payload to parse
++ * @items_offset:	offset of items array in command payload
++ * @out:		output variable to store pointer to copied payload
++ *
++ * This parses the ioctl payload at user-space location @argp into @ar=
+gs. @args
++ * must be pre-initialized by the caller to reflect the supported flag=
+s and
++ * items of this command. This parser will then copy the command paylo=
+ad into
++ * kernel-space, verify correctness and consistency and cache pointers=
+ to parsed
++ * items and other data in @args.
++ *
++ * If this function succeeded, you must call kdbus_args_clear() to rel=
+ease
++ * allocated resources before destroying @args.
++ *
++ * Return: On failure a negative error code is returned. Otherwise, 1 =
+is
++ * returned if negotiation was requested, 0 if not.
++ */
++int __kdbus_args_parse(struct kdbus_args *args, void __user *argp,
++		       size_t type_size, size_t items_offset, void **out)
++{
++	int ret;
++
++	args->cmd =3D kdbus_memdup_user(argp, type_size, KDBUS_CMD_MAX_SIZE);
++	if (IS_ERR(args->cmd))
++		return PTR_ERR(args->cmd);
++
++	args->cmd->return_flags =3D 0;
++	args->user =3D argp;
++	args->items =3D (void *)((u8 *)args->cmd + items_offset);
++	args->items_size =3D args->cmd->size - items_offset;
++
++	if (args->cmd->flags & ~args->allowed_flags) {
++		ret =3D -EINVAL;
++		goto error;
++	}
++
++	ret =3D kdbus_args_verify(args);
++	if (ret < 0)
++		goto error;
++
++	ret =3D kdbus_args_negotiate(args);
++	if (ret < 0)
++		goto error;
++
++	*out =3D args->cmd;
++	return !!(args->cmd->flags & KDBUS_FLAG_NEGOTIATE);
++
++error:
++	return kdbus_args_clear(args, ret);
++}
++
++/**
++ * kdbus_args_clear() - release allocated command resources
++ * @args:	object to release resources of
++ * @ret:	return value of this command
++ *
++ * This frees all allocated resources on @args and copies the command =
+result
++ * flags into user-space. @ret is usually returned unchanged by this f=
+unction,
++ * so it can be used in the final 'return' statement of the command ha=
+ndler.
++ *
++ * Return: -EFAULT if return values cannot be copied into user-space, =
+otherwise
++ *         @ret is returned unchanged.
++ */
++int kdbus_args_clear(struct kdbus_args *args, int ret)
++{
++	if (!args)
++		return ret;
++
++	if (!IS_ERR_OR_NULL(args->cmd)) {
++		if (put_user(args->cmd->return_flags,
++			     &args->user->return_flags))
++			ret =3D -EFAULT;
++		kfree(args->cmd);
++		args->cmd =3D NULL;
++	}
++
++	return ret;
++}
++
++/**
++ * enum kdbus_handle_type - type an handle can be of
++ * @KDBUS_HANDLE_NONE:		no type set, yet
++ * @KDBUS_HANDLE_BUS_OWNER:	bus owner
++ * @KDBUS_HANDLE_EP_OWNER:	endpoint owner
++ * @KDBUS_HANDLE_CONNECTED:	endpoint connection after HELLO
++ */
++enum kdbus_handle_type {
++	KDBUS_HANDLE_NONE,
++	KDBUS_HANDLE_BUS_OWNER,
++	KDBUS_HANDLE_EP_OWNER,
++	KDBUS_HANDLE_CONNECTED,
++};
++
++/**
++ * struct kdbus_handle - handle to the kdbus system
++ * @rwlock:		handle lock
++ * @type:		type of this handle (KDBUS_HANDLE_*)
++ * @bus_owner:		bus this handle owns
++ * @ep_owner:		endpoint this handle owns
++ * @conn:		connection this handle owns
++ * @privileged:		Flag to mark a handle as privileged
++ */
++struct kdbus_handle {
++	struct rw_semaphore rwlock;
++
++	enum kdbus_handle_type type;
++	union {
++		struct kdbus_bus *bus_owner;
++		struct kdbus_ep *ep_owner;
++		struct kdbus_conn *conn;
++	};
++
++	bool privileged:1;
++};
++
++static int kdbus_handle_open(struct inode *inode, struct file *file)
++{
++	struct kdbus_handle *handle;
++	struct kdbus_node *node;
++	int ret;
++
++	node =3D kdbus_node_from_inode(inode);
++	if (!kdbus_node_acquire(node))
++		return -ESHUTDOWN;
++
++	handle =3D kzalloc(sizeof(*handle), GFP_KERNEL);
++	if (!handle) {
++		ret =3D -ENOMEM;
++		goto exit;
++	}
++
++	init_rwsem(&handle->rwlock);
++	handle->type =3D KDBUS_HANDLE_NONE;
++
++	if (node->type =3D=3D KDBUS_NODE_ENDPOINT) {
++		struct kdbus_ep *ep =3D kdbus_ep_from_node(node);
++		struct kdbus_bus *bus =3D ep->bus;
++
++		/*
++		 * A connection is privileged if it is opened on an endpoint
++		 * without custom policy and either:
++		 *   * the user has CAP_IPC_OWNER in the domain user namespace
++		 * or
++		 *   * the callers euid matches the uid of the bus creator
++		 */
++		if (!ep->user &&
++		    (ns_capable(bus->domain->user_namespace, CAP_IPC_OWNER) ||
++		     uid_eq(file->f_cred->euid, bus->node.uid)))
++			handle->privileged =3D true;
++	}
++
++	file->private_data =3D handle;
++	ret =3D 0;
++
++exit:
++	kdbus_node_release(node);
++	return ret;
++}
++
++static int kdbus_handle_release(struct inode *inode, struct file *file=
+)
++{
++	struct kdbus_handle *handle =3D file->private_data;
++
++	switch (handle->type) {
++	case KDBUS_HANDLE_BUS_OWNER:
++		if (handle->bus_owner) {
++			kdbus_node_deactivate(&handle->bus_owner->node);
++			kdbus_bus_unref(handle->bus_owner);
++		}
++		break;
++	case KDBUS_HANDLE_EP_OWNER:
++		if (handle->ep_owner) {
++			kdbus_node_deactivate(&handle->ep_owner->node);
++			kdbus_ep_unref(handle->ep_owner);
++		}
++		break;
++	case KDBUS_HANDLE_CONNECTED:
++		kdbus_conn_disconnect(handle->conn, false);
++		kdbus_conn_unref(handle->conn);
++		break;
++	case KDBUS_HANDLE_NONE:
++		/* nothing to clean up */
++		break;
++	}
++
++	kfree(handle);
++
++	return 0;
++}
++
++static long kdbus_handle_ioctl_control(struct file *file, unsigned int=
+ cmd,
++				       void __user *argp)
++{
++	struct kdbus_handle *handle =3D file->private_data;
++	struct kdbus_node *node =3D file_inode(file)->i_private;
++	struct kdbus_domain *domain;
++	int ret =3D 0;
++
++	if (!kdbus_node_acquire(node))
++		return -ESHUTDOWN;
++
++	/*
++	 * The parent of control-nodes is always a domain, make sure to pin i=
+t
++	 * so the parent is actually valid.
++	 */
++	domain =3D kdbus_domain_from_node(node->parent);
++	if (!kdbus_node_acquire(&domain->node)) {
++		kdbus_node_release(node);
++		return -ESHUTDOWN;
++	}
++
++	switch (cmd) {
++	case KDBUS_CMD_BUS_MAKE: {
++		struct kdbus_bus *bus;
++
++		bus =3D kdbus_cmd_bus_make(domain, argp);
++		if (IS_ERR_OR_NULL(bus)) {
++			ret =3D PTR_ERR_OR_ZERO(bus);
++			break;
++		}
++
++		handle->type =3D KDBUS_HANDLE_BUS_OWNER;
++		handle->bus_owner =3D bus;
++		break;
++	}
++
++	default:
++		ret =3D -EBADFD;
++		break;
++	}
++
++	kdbus_node_release(&domain->node);
++	kdbus_node_release(node);
++	return ret;
++}
++
++static long kdbus_handle_ioctl_ep(struct file *file, unsigned int cmd,
++				  void __user *buf)
++{
++	struct kdbus_handle *handle =3D file->private_data;
++	struct kdbus_node *node =3D file_inode(file)->i_private;
++	struct kdbus_ep *ep, *file_ep =3D kdbus_ep_from_node(node);
++	struct kdbus_conn *conn;
++	int ret =3D 0;
++
++	if (!kdbus_node_acquire(node))
++		return -ESHUTDOWN;
++
++	switch (cmd) {
++	case KDBUS_CMD_ENDPOINT_MAKE:
++		/* creating custom endpoints is a privileged operation */
++		if (!handle->privileged) {
++			ret =3D -EPERM;
++			break;
++		}
++
++		ep =3D kdbus_cmd_ep_make(file_ep->bus, buf);
++		if (IS_ERR_OR_NULL(ep)) {
++			ret =3D PTR_ERR_OR_ZERO(ep);
++			break;
++		}
++
++		handle->type =3D KDBUS_HANDLE_EP_OWNER;
++		handle->ep_owner =3D ep;
++		break;
++
++	case KDBUS_CMD_HELLO:
++		conn =3D kdbus_cmd_hello(file_ep, handle->privileged, buf);
++		if (IS_ERR_OR_NULL(conn)) {
++			ret =3D PTR_ERR_OR_ZERO(conn);
++			break;
++		}
++
++		handle->type =3D KDBUS_HANDLE_CONNECTED;
++		handle->conn =3D conn;
++		break;
++
++	default:
++		ret =3D -EBADFD;
++		break;
++	}
++
++	kdbus_node_release(node);
++	return ret;
++}
++
++static long kdbus_handle_ioctl_ep_owner(struct file *file, unsigned in=
+t command,
++					void __user *buf)
++{
++	struct kdbus_handle *handle =3D file->private_data;
++	struct kdbus_ep *ep =3D handle->ep_owner;
++	int ret;
++
++	if (!kdbus_node_acquire(&ep->node))
++		return -ESHUTDOWN;
++
++	switch (command) {
++	case KDBUS_CMD_ENDPOINT_UPDATE:
++		ret =3D kdbus_cmd_ep_update(ep, buf);
++		break;
++	default:
++		ret =3D -EBADFD;
++		break;
++	}
++
++	kdbus_node_release(&ep->node);
++	return ret;
++}
++
++static long kdbus_handle_ioctl_connected(struct file *file,
++					 unsigned int command, void __user *buf)
++{
++	struct kdbus_handle *handle =3D file->private_data;
++	struct kdbus_conn *conn =3D handle->conn;
++	struct kdbus_conn *release_conn =3D NULL;
++	int ret;
++
++	release_conn =3D conn;
++	ret =3D kdbus_conn_acquire(release_conn);
++	if (ret < 0)
++		return ret;
++
++	switch (command) {
++	case KDBUS_CMD_BYEBYE:
++		/*
++		 * BYEBYE is special; we must not acquire a connection when
++		 * calling into kdbus_conn_disconnect() or we will deadlock,
++		 * because kdbus_conn_disconnect() will wait for all acquired
++		 * references to be dropped.
++		 */
++		kdbus_conn_release(release_conn);
++		release_conn =3D NULL;
++		ret =3D kdbus_cmd_byebye_unlocked(conn, buf);
++		break;
++	case KDBUS_CMD_NAME_ACQUIRE:
++		ret =3D kdbus_cmd_name_acquire(conn, buf);
++		break;
++	case KDBUS_CMD_NAME_RELEASE:
++		ret =3D kdbus_cmd_name_release(conn, buf);
++		break;
++	case KDBUS_CMD_LIST:
++		ret =3D kdbus_cmd_list(conn, buf);
++		break;
++	case KDBUS_CMD_CONN_INFO:
++		ret =3D kdbus_cmd_conn_info(conn, buf);
++		break;
++	case KDBUS_CMD_BUS_CREATOR_INFO:
++		ret =3D kdbus_cmd_bus_creator_info(conn, buf);
++		break;
++	case KDBUS_CMD_UPDATE:
++		ret =3D kdbus_cmd_update(conn, buf);
++		break;
++	case KDBUS_CMD_MATCH_ADD:
++		ret =3D kdbus_cmd_match_add(conn, buf);
++		break;
++	case KDBUS_CMD_MATCH_REMOVE:
++		ret =3D kdbus_cmd_match_remove(conn, buf);
++		break;
++	case KDBUS_CMD_SEND:
++		ret =3D kdbus_cmd_send(conn, file, buf);
++		break;
++	case KDBUS_CMD_RECV:
++		ret =3D kdbus_cmd_recv(conn, buf);
++		break;
++	case KDBUS_CMD_FREE:
++		ret =3D kdbus_cmd_free(conn, buf);
++		break;
++	default:
++		ret =3D -EBADFD;
++		break;
++	}
++
++	kdbus_conn_release(release_conn);
++	return ret;
++}
++
++static long kdbus_handle_ioctl(struct file *file, unsigned int cmd,
++			       unsigned long arg)
++{
++	struct kdbus_handle *handle =3D file->private_data;
++	struct kdbus_node *node =3D kdbus_node_from_inode(file_inode(file));
++	void __user *argp =3D (void __user *)arg;
++	long ret =3D -EBADFD;
++
++	switch (cmd) {
++	case KDBUS_CMD_BUS_MAKE:
++	case KDBUS_CMD_ENDPOINT_MAKE:
++	case KDBUS_CMD_HELLO:
++		/* bail out early if already typed */
++		if (handle->type !=3D KDBUS_HANDLE_NONE)
++			break;
++
++		down_write(&handle->rwlock);
++		if (handle->type =3D=3D KDBUS_HANDLE_NONE) {
++			if (node->type =3D=3D KDBUS_NODE_CONTROL)
++				ret =3D kdbus_handle_ioctl_control(file, cmd,
++								 argp);
++			else if (node->type =3D=3D KDBUS_NODE_ENDPOINT)
++				ret =3D kdbus_handle_ioctl_ep(file, cmd, argp);
++		}
++		up_write(&handle->rwlock);
++		break;
++
++	case KDBUS_CMD_ENDPOINT_UPDATE:
++	case KDBUS_CMD_BYEBYE:
++	case KDBUS_CMD_NAME_ACQUIRE:
++	case KDBUS_CMD_NAME_RELEASE:
++	case KDBUS_CMD_LIST:
++	case KDBUS_CMD_CONN_INFO:
++	case KDBUS_CMD_BUS_CREATOR_INFO:
++	case KDBUS_CMD_UPDATE:
++	case KDBUS_CMD_MATCH_ADD:
++	case KDBUS_CMD_MATCH_REMOVE:
++	case KDBUS_CMD_SEND:
++	case KDBUS_CMD_RECV:
++	case KDBUS_CMD_FREE:
++		down_read(&handle->rwlock);
++		if (handle->type =3D=3D KDBUS_HANDLE_EP_OWNER)
++			ret =3D kdbus_handle_ioctl_ep_owner(file, cmd, argp);
++		else if (handle->type =3D=3D KDBUS_HANDLE_CONNECTED)
++			ret =3D kdbus_handle_ioctl_connected(file, cmd, argp);
++		up_read(&handle->rwlock);
++		break;
++	default:
++		ret =3D -ENOTTY;
++		break;
++	}
++
++	return ret < 0 ? ret : 0;
++}
++
++static unsigned int kdbus_handle_poll(struct file *file,
++				      struct poll_table_struct *wait)
++{
++	struct kdbus_handle *handle =3D file->private_data;
++	unsigned int mask =3D POLLOUT | POLLWRNORM;
++	int ret;
++
++	/* Only a connected endpoint can read/write data */
++	down_read(&handle->rwlock);
++	if (handle->type !=3D KDBUS_HANDLE_CONNECTED) {
++		up_read(&handle->rwlock);
++		return POLLERR | POLLHUP;
++	}
++	up_read(&handle->rwlock);
++
++	ret =3D kdbus_conn_acquire(handle->conn);
++	if (ret < 0)
++		return POLLERR | POLLHUP;
++
++	poll_wait(file, &handle->conn->wait, wait);
++
++	if (!list_empty(&handle->conn->queue.msg_list) ||
++	    atomic_read(&handle->conn->lost_count) > 0)
++		mask |=3D POLLIN | POLLRDNORM;
++
++	kdbus_conn_release(handle->conn);
++
++	return mask;
++}
++
++static int kdbus_handle_mmap(struct file *file, struct vm_area_struct =
+*vma)
++{
++	struct kdbus_handle *handle =3D file->private_data;
++	int ret =3D -EBADFD;
++
++	if (down_read_trylock(&handle->rwlock)) {
++		if (handle->type =3D=3D KDBUS_HANDLE_CONNECTED)
++			ret =3D kdbus_pool_mmap(handle->conn->pool, vma);
++		up_read(&handle->rwlock);
++	}
++	return ret;
++}
++
++const struct file_operations kdbus_handle_ops =3D {
++	.owner =3D		THIS_MODULE,
++	.open =3D			kdbus_handle_open,
++	.release =3D		kdbus_handle_release,
++	.poll =3D			kdbus_handle_poll,
++	.llseek =3D		noop_llseek,
++	.unlocked_ioctl =3D	kdbus_handle_ioctl,
++	.mmap =3D			kdbus_handle_mmap,
++#ifdef CONFIG_COMPAT
++	.compat_ioctl =3D		kdbus_handle_ioctl,
++#endif
++};
+diff --git a/ipc/kdbus/handle.h b/ipc/kdbus/handle.h
+new file mode 100644
+index 000000000000..93a372d554a2
+--- /dev/null
++++ b/ipc/kdbus/handle.h
+@@ -0,0 +1,85 @@
++/*
++ * Copyright (C) 2013-2015 Kay Sievers
++ * Copyright (C) 2013-2015 Greg Kroah-Hartman <gregkh@linuxfoundation.=
+org>
++ * Copyright (C) 2013-2015 Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
++ * Copyright (C) 2013-2015 David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
++ * Copyright (C) 2013-2015 Linux Foundation
++ *
++ * kdbus is free software; you can redistribute it and/or modify it un=
+der
++ * the terms of the GNU Lesser General Public License as published by =
+the
++ * Free Software Foundation; either version 2.1 of the License, or (at
++ * your option) any later version.
++ */
++
++#ifndef __KDBUS_HANDLE_H
++#define __KDBUS_HANDLE_H
++
++#include <linux/fs.h>
++#include <uapi/linux/kdbus.h>
++
++extern const struct file_operations kdbus_handle_ops;
++
++/**
++ * kdbus_arg - information and state of a single ioctl command item
++ * @type:		item type
++ * @item:		set by the parser to the first found item of this type
++ * @multiple:		whether multiple items of this type are allowed
++ * @mandatory:		whether at least one item of this type is required
++ *
++ * This structure describes a single item in an ioctl command payload.=
+ The
++ * caller has to pre-fill the type and flags, the parser will then use=
+ this
++ * information to verify the ioctl payload. @item is set by the parser=
+ to point
++ * to the first occurrence of the item.
++ */
++struct kdbus_arg {
++	u64 type;
++	struct kdbus_item *item;
++	bool multiple : 1;
++	bool mandatory : 1;
++};
++
++/**
++ * kdbus_args - information and state of ioctl command parser
++ * @allowed_flags:	set of flags this command supports
++ * @argc:		number of items in @argv
++ * @argv:		array of items this command supports
++ * @user:		set by parser to user-space location of current command
++ * @cmd:		set by parser to kernel copy of command payload
++ * @items:		points to item array in @cmd
++ * @items_size:		size of @items in bytes
++ *
++ * This structure is used to parse ioctl command payloads on each invo=
+cation.
++ * The ioctl handler has to pre-fill the flags and allowed items befor=
+e passing
++ * the object to kdbus_args_parse(). The parser will copy the command =
+payload
++ * into kernel-space and verify the correctness of the data.
++ */
++struct kdbus_args {
++	u64 allowed_flags;
++	size_t argc;
++	struct kdbus_arg *argv;
++
++	struct kdbus_cmd __user *user;
++	struct kdbus_cmd *cmd;
++
++	struct kdbus_item *items;
++	size_t items_size;
++};
++
++int __kdbus_args_parse(struct kdbus_args *args, void __user *argp,
++		       size_t type_size, size_t items_offset, void **out);
++int kdbus_args_clear(struct kdbus_args *args, int ret);
++
++#define kdbus_args_parse(_args, _argp, _v)                            =
+  \
++	({                                                              \
++		BUILD_BUG_ON(offsetof(typeof(**(_v)), size) !=3D          \
++			     offsetof(struct kdbus_cmd, size));         \
++		BUILD_BUG_ON(offsetof(typeof(**(_v)), flags) !=3D         \
++			     offsetof(struct kdbus_cmd, flags));        \
++		BUILD_BUG_ON(offsetof(typeof(**(_v)), return_flags) !=3D  \
++			     offsetof(struct kdbus_cmd, return_flags)); \
++		__kdbus_args_parse((_args), (_argp), sizeof(**(_v)),    \
++				   offsetof(typeof(**(_v)), items),     \
++				   (void **)(_v));                      \
++	})
++
++#endif
+diff --git a/ipc/kdbus/limits.h b/ipc/kdbus/limits.h
+new file mode 100644
+index 000000000000..6450f58cffcf
+--- /dev/null
++++ b/ipc/kdbus/limits.h
+@@ -0,0 +1,64 @@
++/*
++ * Copyright (C) 2013-2015 Kay Sievers
++ * Copyright (C) 2013-2015 Greg Kroah-Hartman <gregkh@linuxfoundation.=
+org>
++ * Copyright (C) 2013-2015 Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
++ * Copyright (C) 2013-2015 David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
++ * Copyright (C) 2013-2015 Linux Foundation
++ *
++ * kdbus is free software; you can redistribute it and/or modify it un=
+der
++ * the terms of the GNU Lesser General Public License as published by =
+the
++ * Free Software Foundation; either version 2.1 of the License, or (at
++ * your option) any later version.
++ */
++
++#ifndef __KDBUS_DEFAULTS_H
++#define __KDBUS_DEFAULTS_H
++
++#include <linux/kernel.h>
++
++/* maximum size of message header and items */
++#define KDBUS_MSG_MAX_SIZE		SZ_8K
++
++/* maximum number of message items */
++#define KDBUS_MSG_MAX_ITEMS		128
++
++/* maximum number of memfd items per message */
++#define KDBUS_MSG_MAX_MEMFD_ITEMS	16
++
++/* max size of ioctl command data */
++#define KDBUS_CMD_MAX_SIZE		SZ_32K
++
++/* maximum number of inflight fds in a target queue per user */
++#define KDBUS_CONN_MAX_FDS_PER_USER	16
++
++/* maximum message payload size */
++#define KDBUS_MSG_MAX_PAYLOAD_VEC_SIZE		SZ_2M
++
++/* maximum size of bloom bit field in bytes */
++#define KDBUS_BUS_BLOOM_MAX_SIZE		SZ_4K
++
++/* maximum length of well-known bus name */
++#define KDBUS_NAME_MAX_LEN			255
++
++/* maximum length of bus, domain, ep name */
++#define KDBUS_SYSNAME_MAX_LEN			63
++
++/* maximum number of matches per connection */
++#define KDBUS_MATCH_MAX				256
++
++/* maximum number of queued messages from the same individual user */
++#define KDBUS_CONN_MAX_MSGS			256
++
++/* maximum number of well-known names per connection */
++#define KDBUS_CONN_MAX_NAMES			256
++
++/* maximum number of queued requests waiting for a reply */
++#define KDBUS_CONN_MAX_REQUESTS_PENDING		128
++
++/* maximum number of connections per user in one domain */
++#define KDBUS_USER_MAX_CONN			1024
++
++/* maximum number of buses per user in one domain */
++#define KDBUS_USER_MAX_BUSES			16
++
++#endif
+diff --git a/ipc/kdbus/main.c b/ipc/kdbus/main.c
+new file mode 100644
+index 000000000000..785f529d98b7
+--- /dev/null
++++ b/ipc/kdbus/main.c
+@@ -0,0 +1,125 @@
++/*
++ * Copyright (C) 2013-2015 Kay Sievers
++ * Copyright (C) 2013-2015 Greg Kroah-Hartman <gregkh@linuxfoundation.=
+org>
++ * Copyright (C) 2013-2015 Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
++ * Copyright (C) 2013-2015 David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
++ * Copyright (C) 2013-2015 Linux Foundation
++ *
++ * kdbus is free software; you can redistribute it and/or modify it un=
+der
++ * the terms of the GNU Lesser General Public License as published by =
+the
++ * Free Software Foundation; either version 2.1 of the License, or (at
++ * your option) any later version.
++ */
++
++#define pr_fmt(fmt)    KBUILD_MODNAME ": " fmt
++#include <linux/fs.h>
++#include <linux/init.h>
++#include <linux/module.h>
++#include <linux/moduleparam.h>
++
++#include "util.h"
++#include "fs.h"
++#include "handle.h"
++#include "metadata.h"
++#include "node.h"
++
++/*
++ * This is a simplified outline of the internal kdbus object relations=
+, for
++ * those interested in the inner life of the driver implementation.
++ *
++ * From a mount point's (domain's) perspective:
++ *
++ * struct kdbus_domain
++ *   |=C2=BB struct kdbus_user *user (many, owned)
++ *   '=C2=BB struct kdbus_node node (embedded)
++ *       |=C2=BB struct kdbus_node children (many, referenced)
++ *       |=C2=BB struct kdbus_node *parent (pinned)
++ *       '=C2=BB struct kdbus_bus (many, pinned)
++ *           |=C2=BB struct kdbus_node node (embedded)
++ *           '=C2=BB struct kdbus_ep (many, pinned)
++ *               |=C2=BB struct kdbus_node node (embedded)
++ *               |=C2=BB struct kdbus_bus *bus (pinned)
++ *               |=C2=BB struct kdbus_conn conn_list (many, pinned)
++ *               |   |=C2=BB struct kdbus_ep *ep (pinned)
++ *               |   |=C2=BB struct kdbus_name_entry *activator_of (ow=
+ned)
++ *               |   |=C2=BB struct kdbus_match_db *match_db (owned)
++ *               |   |=C2=BB struct kdbus_meta *meta (owned)
++ *               |   |=C2=BB struct kdbus_match_db *match_db (owned)
++ *               |   |    '=C2=BB struct kdbus_match_entry (many, owne=
+d)
++ *               |   |
++ *               |   |=C2=BB struct kdbus_pool *pool (owned)
++ *               |   |    '=C2=BB struct kdbus_pool_slice *slices (man=
+y, owned)
++ *               |   |       '=C2=BB struct kdbus_pool *pool (pinned)
++ *               |   |
++ *               |   |=C2=BB struct kdbus_user *user (pinned)
++ *               |   `=C2=BB struct kdbus_queue_entry entries (many, e=
+mbedded)
++ *               |        |=C2=BB struct kdbus_pool_slice *slice (pinn=
+ed)
++ *               |        |=C2=BB struct kdbus_conn_reply *reply (owne=
+d)
++ *               |        '=C2=BB struct kdbus_user *user (pinned)
++ *               |
++ *               '=C2=BB struct kdbus_user *user (pinned)
++ *                   '=C2=BB struct kdbus_policy_db policy_db (embedde=
+d)
++ *                        |=C2=BB struct kdbus_policy_db_entry (many, =
+owned)
++ *                        |   |=C2=BB struct kdbus_conn (pinned)
++ *                        |   '=C2=BB struct kdbus_ep (pinned)
++ *                        |
++ *                        '=C2=BB struct kdbus_policy_db_cache_entry (=
+many, owned)
++ *                            '=C2=BB struct kdbus_conn (pinned)
++ *
++ * For the life-time of a file descriptor derived from calling open() =
+on a file
++ * inside the mount point:
++ *
++ * struct kdbus_handle
++ *  |=C2=BB struct kdbus_meta *meta (owned)
++ *  |=C2=BB struct kdbus_ep *ep (pinned)
++ *  |=C2=BB struct kdbus_conn *conn (owned)
++ *  '=C2=BB struct kdbus_ep *ep (owned)
++ */
++
++/* kdbus mount-point /sys/fs/kdbus */
++static struct kobject *kdbus_dir;
++
++/* global module option to apply a mask to exported metadata */
++unsigned long long kdbus_meta_attach_mask =3D KDBUS_ATTACH_TIMESTAMP |
++					    KDBUS_ATTACH_CREDS |
++					    KDBUS_ATTACH_PIDS |
++					    KDBUS_ATTACH_AUXGROUPS |
++					    KDBUS_ATTACH_NAMES |
++					    KDBUS_ATTACH_SECLABEL |
++					    KDBUS_ATTACH_CONN_DESCRIPTION;
++MODULE_PARM_DESC(attach_flags_mask, "Attach-flags mask for exported me=
+tadata");
++module_param_named(attach_flags_mask, kdbus_meta_attach_mask, ullong, =
+0644);
++
++static int __init kdbus_init(void)
++{
++	int ret;
++
++	kdbus_dir =3D kobject_create_and_add(KBUILD_MODNAME, fs_kobj);
++	if (!kdbus_dir)
++		return -ENOMEM;
++
++	ret =3D kdbus_fs_init();
++	if (ret < 0) {
++		pr_err("cannot register filesystem: %d\n", ret);
++		goto exit_dir;
++	}
++
++	pr_info("initialized\n");
++	return 0;
++
++exit_dir:
++	kobject_put(kdbus_dir);
++	return ret;
++}
++
++static void __exit kdbus_exit(void)
++{
++	kdbus_fs_exit();
++	kobject_put(kdbus_dir);
++}
++
++module_init(kdbus_init);
++module_exit(kdbus_exit);
++MODULE_LICENSE("GPL");
++MODULE_DESCRIPTION("D-Bus, powerful, easy to use interprocess communic=
+ation");
++MODULE_ALIAS_FS(KBUILD_MODNAME "fs");
+diff --git a/ipc/kdbus/util.c b/ipc/kdbus/util.c
+new file mode 100644
+index 000000000000..eaa806a27997
+--- /dev/null
++++ b/ipc/kdbus/util.c
+@@ -0,0 +1,201 @@
++/*
++ * Copyright (C) 2013-2015 Kay Sievers
++ * Copyright (C) 2013-2015 Greg Kroah-Hartman <gregkh@linuxfoundation.=
+org>
++ * Copyright (C) 2013-2015 Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
++ * Copyright (C) 2013-2015 David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
++ * Copyright (C) 2013-2015 Linux Foundation
++ * Copyright (C) 2014-2015 Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
++ *
++ * kdbus is free software; you can redistribute it and/or modify it un=
+der
++ * the terms of the GNU Lesser General Public License as published by =
+the
++ * Free Software Foundation; either version 2.1 of the License, or (at
++ * your option) any later version.
++ */
++
++#include <linux/capability.h>
++#include <linux/cred.h>
++#include <linux/ctype.h>
++#include <linux/err.h>
++#include <linux/file.h>
++#include <linux/slab.h>
++#include <linux/string.h>
++#include <linux/uaccess.h>
++#include <linux/uio.h>
++#include <linux/user_namespace.h>
++
++#include "limits.h"
++#include "util.h"
++
++/**
++ * kdbus_copy_from_user() - copy aligned data from user-space
++ * @dest:	target buffer in kernel memory
++ * @user_ptr:	user-provided source buffer
++ * @size:	memory size to copy from user
++ *
++ * This copies @size bytes from @user_ptr into the kernel, just like
++ * copy_from_user() does. But we enforce an 8-byte alignment and rejec=
+t any
++ * unaligned user-space pointers.
++ *
++ * Return: 0 on success, negative error code on failure.
++ */
++int kdbus_copy_from_user(void *dest, void __user *user_ptr, size_t siz=
+e)
++{
++	if (!KDBUS_IS_ALIGNED8((uintptr_t)user_ptr))
++		return -EFAULT;
++
++	if (copy_from_user(dest, user_ptr, size))
++		return -EFAULT;
++
++	return 0;
++}
++
++/**
++ * kdbus_memdup_user() - copy dynamically sized object from user-space
++ * @user_ptr:	user-provided source buffer
++ * @sz_min:	minimum object size
++ * @sz_max:	maximum object size
++ *
++ * This copies a dynamically sized object from user-space into kernel-=
+space. We
++ * require the object to have a 64bit size field at offset 0. We read =
+it out
++ * first, allocate a suitably sized buffer and then copy all data.
++ *
++ * The @sz_min and @sz_max parameters define possible min and max obje=
+ct sizes
++ * so user-space cannot trigger un-bound kernel-space allocations.
++ *
++ * The same alignment-restrictions as described in kdbus_copy_from_use=
+r() apply.
++ *
++ * Return: pointer to dynamically allocated copy, or ERR_PTR() on fail=
+ure.
++ */
++void *kdbus_memdup_user(void __user *user_ptr, size_t sz_min, size_t s=
+z_max)
++{
++	void *ptr;
++	u64 size;
++	int ret;
++
++	ret =3D kdbus_copy_from_user(&size, user_ptr, sizeof(size));
++	if (ret < 0)
++		return ERR_PTR(ret);
++
++	if (size < sz_min)
++		return ERR_PTR(-EINVAL);
++
++	if (size > sz_max)
++		return ERR_PTR(-EMSGSIZE);
++
++	ptr =3D memdup_user(user_ptr, size);
++	if (IS_ERR(ptr))
++		return ptr;
++
++	if (*(u64 *)ptr !=3D size) {
++		kfree(ptr);
++		return ERR_PTR(-EINVAL);
++	}
++
++	return ptr;
++}
++
++/**
++ * kdbus_verify_uid_prefix() - verify UID prefix of a user-supplied na=
+me
++ * @name:	user-supplied name to verify
++ * @user_ns:	user-namespace to act in
++ * @kuid:	Kernel internal uid of user
++ *
++ * This verifies that the user-supplied name @name has their UID as pr=
+efix. This
++ * is the default name-spacing policy we enforce on user-supplied name=
+s for
++ * public kdbus entities like buses and endpoints.
++ *
++ * The user must supply names prefixed with "<UID>-", whereas the UID =
+is
++ * interpreted in the user-namespace of the domain. If the user fails =
+to supply
++ * such a prefixed name, we reject it.
++ *
++ * Return: 0 on success, negative error code on failure
++ */
++int kdbus_verify_uid_prefix(const char *name, struct user_namespace *u=
+ser_ns,
++			    kuid_t kuid)
++{
++	uid_t uid;
++	char prefix[16];
++
++	/*
++	 * The kuid must have a mapping into the userns of the domain
++	 * otherwise do not allow creation of buses nor endpoints.
++	 */
++	uid =3D from_kuid(user_ns, kuid);
++	if (uid =3D=3D (uid_t) -1)
++		return -EINVAL;
++
++	snprintf(prefix, sizeof(prefix), "%u-", uid);
++	if (strncmp(name, prefix, strlen(prefix)) !=3D 0)
++		return -EINVAL;
++
++	return 0;
++}
++
++/**
++ * kdbus_sanitize_attach_flags() - Sanitize attach flags from user-spa=
+ce
++ * @flags:		Attach flags provided by userspace
++ * @attach_flags:	A pointer where to store the valid attach flags
++ *
++ * Convert attach-flags provided by user-space into a valid mask. If t=
+he mask
++ * is invalid, an error is returned. The sanitized attach flags are st=
+ored in
++ * the output parameter.
++ *
++ * Return: 0 on success, negative error on failure.
++ */
++int kdbus_sanitize_attach_flags(u64 flags, u64 *attach_flags)
++{
++	/* 'any' degrades to 'all' for compatibility */
++	if (flags =3D=3D _KDBUS_ATTACH_ANY)
++		flags =3D _KDBUS_ATTACH_ALL;
++
++	/* reject unknown attach flags */
++	if (flags & ~_KDBUS_ATTACH_ALL)
++		return -EINVAL;
++
++	*attach_flags =3D flags;
++	return 0;
++}
++
++/**
++ * kdbus_kvec_set - helper utility to assemble kvec arrays
++ * @kvec:	kvec entry to use
++ * @src:	Source address to set in @kvec
++ * @len:	Number of bytes in @src
++ * @total_len:	Pointer to total length variable
++ *
++ * Set @src and @len in @kvec, and increase @total_len by @len.
++ */
++void kdbus_kvec_set(struct kvec *kvec, void *src, size_t len, u64 *tot=
+al_len)
++{
++	kvec->iov_base =3D src;
++	kvec->iov_len =3D len;
++	*total_len +=3D len;
++}
++
++static const char * const zeros =3D "\0\0\0\0\0\0\0";
++
++/**
++ * kdbus_kvec_pad - conditionally write a padding kvec
++ * @kvec:	kvec entry to use
++ * @len:	Total length used for kvec array
++ *
++ * Check if the current total byte length of the array in @len is alig=
+ned to
++ * 8 bytes. If it isn't, fill @kvec with padding information and incre=
+ase @len
++ * by the number of bytes stored in @kvec.
++ *
++ * Return: the number of added padding bytes.
++ */
++size_t kdbus_kvec_pad(struct kvec *kvec, u64 *len)
++{
++	size_t pad =3D KDBUS_ALIGN8(*len) - *len;
++
++	if (!pad)
++		return 0;
++
++	kvec->iov_base =3D (void *)zeros;
++	kvec->iov_len =3D pad;
++
++	*len +=3D pad;
++
++	return pad;
++}
+diff --git a/ipc/kdbus/util.h b/ipc/kdbus/util.h
+new file mode 100644
+index 000000000000..9caadb337912
+--- /dev/null
++++ b/ipc/kdbus/util.h
+@@ -0,0 +1,74 @@
++/*
++ * Copyright (C) 2013-2015 Kay Sievers
++ * Copyright (C) 2013-2015 Greg Kroah-Hartman <gregkh@linuxfoundation.=
+org>
++ * Copyright (C) 2013-2015 Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>
++ * Copyright (C) 2013-2015 David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
++ * Copyright (C) 2013-2015 Linux Foundation
++ * Copyright (C) 2014-2015 Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
++ *
++ * kdbus is free software; you can redistribute it and/or modify it un=
+der
++ * the terms of the GNU Lesser General Public License as published by =
+the
++ * Free Software Foundation; either version 2.1 of the License, or (at
++ * your option) any later version.
++ */
++
++#ifndef __KDBUS_UTIL_H
++#define __KDBUS_UTIL_H
++
++#include <linux/dcache.h>
 +#include <linux/ioctl.h>
-+#include <linux/types.h>
 +
-+#define KDBUS_IOCTL_MAGIC		0x95
-+#define KDBUS_SRC_ID_KERNEL		(0)
-+#define KDBUS_DST_ID_NAME		(0)
-+#define KDBUS_MATCH_ID_ANY		(~0ULL)
-+#define KDBUS_DST_ID_BROADCAST		(~0ULL)
-+#define KDBUS_FLAG_NEGOTIATE		(1ULL << 63)
++#include "kdbus.h"
++
++/* all exported addresses are 64 bit */
++#define KDBUS_PTR(addr) ((void __user *)(uintptr_t)(addr))
++
++/* all exported sizes are 64 bit and data aligned to 64 bit */
++#define KDBUS_ALIGN8(s) ALIGN((s), 8)
++#define KDBUS_IS_ALIGNED8(s) (IS_ALIGNED(s, 8))
 +
 +/**
-+ * struct kdbus_notify_id_change - name registry change message
-+ * @id:			New or former owner of the name
-+ * @flags:		flags field from KDBUS_HELLO_*
++ * kdbus_member_set_user - write a structure member to user memory
++ * @_s:		Variable to copy from
++ * @_b:		Buffer to write to
++ * @_t:		Structure type
++ * @_m:		Member name in the passed structure
 + *
-+ * Sent from kernel to userspace when the owner or activator of
-+ * a well-known name changes.
++ * Return: the result of copy_to_user()
++ */
++#define kdbus_member_set_user(_s, _b, _t, _m)				\
++({									\
++	u64 __user *_sz =3D						\
++		(void __user *)((u8 __user *)(_b) + offsetof(_t, _m));	\
++	copy_to_user(_sz, _s, sizeof(((_t *)0)->_m));			\
++})
++
++/**
++ * kdbus_strhash - calculate a hash
++ * @str:	String
 + *
-+ * Attached to:
-+ *   KDBUS_ITEM_ID_ADD
-+ *   KDBUS_ITEM_ID_REMOVE
++ * Return: hash value
 + */
-+struct kdbus_notify_id_change {
-+	__u64 id;
-+	__u64 flags;
-+} __attribute__((__aligned__(8)));
++static inline unsigned int kdbus_strhash(const char *str)
++{
++	unsigned long hash =3D init_name_hash();
 +
-+/**
-+ * struct kdbus_notify_name_change - name registry change message
-+ * @old_id:		ID and flags of former owner of a name
-+ * @new_id:		ID and flags of new owner of a name
-+ * @name:		Well-known name
-+ *
-+ * Sent from kernel to userspace when the owner or activator of
-+ * a well-known name changes.
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_NAME_ADD
-+ *   KDBUS_ITEM_NAME_REMOVE
-+ *   KDBUS_ITEM_NAME_CHANGE
-+ */
-+struct kdbus_notify_name_change {
-+	struct kdbus_notify_id_change old_id;
-+	struct kdbus_notify_id_change new_id;
-+	char name[0];
-+} __attribute__((__aligned__(8)));
++	while (*str)
++		hash =3D partial_name_hash(*str++, hash);
 +
-+/**
-+ * struct kdbus_creds - process credentials
-+ * @uid:		User ID
-+ * @euid:		Effective UID
-+ * @suid:		Saved UID
-+ * @fsuid:		Filesystem UID
-+ * @gid:		Group ID
-+ * @egid:		Effective GID
-+ * @sgid:		Saved GID
-+ * @fsgid:		Filesystem GID
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_CREDS
-+ */
-+struct kdbus_creds {
-+	__u64 uid;
-+	__u64 euid;
-+	__u64 suid;
-+	__u64 fsuid;
-+	__u64 gid;
-+	__u64 egid;
-+	__u64 sgid;
-+	__u64 fsgid;
-+} __attribute__((__aligned__(8)));
++	return end_name_hash(hash);
++}
 +
-+/**
-+ * struct kdbus_pids - process identifiers
-+ * @pid:		Process ID
-+ * @tid:		Thread ID
-+ * @ppid:		Parent process ID
-+ *
-+ * The PID and TID of a process.
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_PIDS
-+ */
-+struct kdbus_pids {
-+	__u64 pid;
-+	__u64 tid;
-+	__u64 ppid;
-+} __attribute__((__aligned__(8)));
++int kdbus_verify_uid_prefix(const char *name, struct user_namespace *u=
+ser_ns,
++			    kuid_t kuid);
++int kdbus_sanitize_attach_flags(u64 flags, u64 *attach_flags);
 +
-+/**
-+ * struct kdbus_caps - process capabilities
-+ * @last_cap:	Highest currently known capability bit
-+ * @caps:	Variable number of 32-bit capabilities flags
-+ *
-+ * Contains a variable number of 32-bit capabilities flags.
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_CAPS
-+ */
-+struct kdbus_caps {
-+	__u32 last_cap;
-+	__u32 caps[0];
-+} __attribute__((__aligned__(8)));
++int kdbus_copy_from_user(void *dest, void __user *user_ptr, size_t siz=
+e);
++void *kdbus_memdup_user(void __user *user_ptr, size_t sz_min, size_t s=
+z_max);
 +
-+/**
-+ * struct kdbus_audit - audit information
-+ * @sessionid:		The audit session ID
-+ * @loginuid:		The audit login uid
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_AUDIT
-+ */
-+struct kdbus_audit {
-+	__u32 sessionid;
-+	__u32 loginuid;
-+} __attribute__((__aligned__(8)));
++struct kvec;
 +
-+/**
-+ * struct kdbus_timestamp
-+ * @seqnum:		Global per-domain message sequence number
-+ * @monotonic_ns:	Monotonic timestamp, in nanoseconds
-+ * @realtime_ns:	Realtime timestamp, in nanoseconds
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_TIMESTAMP
-+ */
-+struct kdbus_timestamp {
-+	__u64 seqnum;
-+	__u64 monotonic_ns;
-+	__u64 realtime_ns;
-+} __attribute__((__aligned__(8)));
++void kdbus_kvec_set(struct kvec *kvec, void *src, size_t len, u64 *tot=
+al_len);
++size_t kdbus_kvec_pad(struct kvec *kvec, u64 *len);
 +
-+/**
-+ * struct kdbus_vec - I/O vector for kdbus payload items
-+ * @size:		The size of the vector
-+ * @address:		Memory address of data buffer
-+ * @offset:		Offset in the in-message payload memory,
-+ *			relative to the message head
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_PAYLOAD_VEC, KDBUS_ITEM_PAYLOAD_OFF
-+ */
-+struct kdbus_vec {
-+	__u64 size;
-+	union {
-+		__u64 address;
-+		__u64 offset;
-+	};
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * struct kdbus_bloom_parameter - bus-wide bloom parameters
-+ * @size:		Size of the bit field in bytes (m / 8)
-+ * @n_hash:		Number of hash functions used (k)
-+ */
-+struct kdbus_bloom_parameter {
-+	__u64 size;
-+	__u64 n_hash;
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * struct kdbus_bloom_filter - bloom filter containing n elements
-+ * @generation:		Generation of the element set in the filter
-+ * @data:		Bit field, multiple of 8 bytes
-+ */
-+struct kdbus_bloom_filter {
-+	__u64 generation;
-+	__u64 data[0];
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * struct kdbus_memfd - a kdbus memfd
-+ * @start:		The offset into the memfd where the segment starts
-+ * @size:		The size of the memfd segment
-+ * @fd:			The file descriptor number
-+ * @__pad:		Padding to ensure proper alignment and size
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_PAYLOAD_MEMFD
-+ */
-+struct kdbus_memfd {
-+	__u64 start;
-+	__u64 size;
-+	int fd;
-+	__u32 __pad;
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * struct kdbus_name - a registered well-known name with its flags
-+ * @flags:		Flags from KDBUS_NAME_*
-+ * @name:		Well-known name
-+ *
-+ * Attached to:
-+ *   KDBUS_ITEM_OWNED_NAME
-+ */
-+struct kdbus_name {
-+	__u64 flags;
-+	char name[0];
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * enum kdbus_policy_access_type - permissions of a policy record
-+ * @_KDBUS_POLICY_ACCESS_NULL:	Uninitialized/invalid
-+ * @KDBUS_POLICY_ACCESS_USER:	Grant access to a uid
-+ * @KDBUS_POLICY_ACCESS_GROUP:	Grant access to gid
-+ * @KDBUS_POLICY_ACCESS_WORLD:	World-accessible
-+ */
-+enum kdbus_policy_access_type {
-+	_KDBUS_POLICY_ACCESS_NULL,
-+	KDBUS_POLICY_ACCESS_USER,
-+	KDBUS_POLICY_ACCESS_GROUP,
-+	KDBUS_POLICY_ACCESS_WORLD,
-+};
-+
-+/**
-+ * enum kdbus_policy_access_flags - mode flags
-+ * @KDBUS_POLICY_OWN:		Allow to own a well-known name
-+ *				Implies KDBUS_POLICY_TALK and KDBUS_POLICY_SEE
-+ * @KDBUS_POLICY_TALK:		Allow communication to a well-known name
-+ *				Implies KDBUS_POLICY_SEE
-+ * @KDBUS_POLICY_SEE:		Allow to see a well-known name
-+ */
-+enum kdbus_policy_type {
-+	KDBUS_POLICY_SEE	=3D 0,
-+	KDBUS_POLICY_TALK,
-+	KDBUS_POLICY_OWN,
-+};
-+
-+/**
-+ * struct kdbus_policy_access - policy access item
-+ * @type:		One of KDBUS_POLICY_ACCESS_* types
-+ * @access:		Access to grant
-+ * @id:			For KDBUS_POLICY_ACCESS_USER, the uid
-+ *			For KDBUS_POLICY_ACCESS_GROUP, the gid
-+ */
-+struct kdbus_policy_access {
-+	__u64 type;	/* USER, GROUP, WORLD */
-+	__u64 access;	/* OWN, TALK, SEE */
-+	__u64 id;	/* uid, gid, 0 */
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * enum kdbus_attach_flags - flags for metadata attachments
-+ * @KDBUS_ATTACH_TIMESTAMP:		Timestamp
-+ * @KDBUS_ATTACH_CREDS:			Credentials
-+ * @KDBUS_ATTACH_PIDS:			PIDs
-+ * @KDBUS_ATTACH_AUXGROUPS:		Auxiliary groups
-+ * @KDBUS_ATTACH_NAMES:			Well-known names
-+ * @KDBUS_ATTACH_TID_COMM:		The "comm" process identifier of the TID
-+ * @KDBUS_ATTACH_PID_COMM:		The "comm" process identifier of the PID
-+ * @KDBUS_ATTACH_EXE:			The path of the executable
-+ * @KDBUS_ATTACH_CMDLINE:		The process command line
-+ * @KDBUS_ATTACH_CGROUP:		The croup membership
-+ * @KDBUS_ATTACH_CAPS:			The process capabilities
-+ * @KDBUS_ATTACH_SECLABEL:		The security label
-+ * @KDBUS_ATTACH_AUDIT:			The audit IDs
-+ * @KDBUS_ATTACH_CONN_DESCRIPTION:	The human-readable connection name
-+ * @_KDBUS_ATTACH_ALL:			All of the above
-+ * @_KDBUS_ATTACH_ANY:			Wildcard match to enable any kind of
-+ *					metatdata.
-+ */
-+enum kdbus_attach_flags {
-+	KDBUS_ATTACH_TIMESTAMP		=3D  1ULL <<  0,
-+	KDBUS_ATTACH_CREDS		=3D  1ULL <<  1,
-+	KDBUS_ATTACH_PIDS		=3D  1ULL <<  2,
-+	KDBUS_ATTACH_AUXGROUPS		=3D  1ULL <<  3,
-+	KDBUS_ATTACH_NAMES		=3D  1ULL <<  4,
-+	KDBUS_ATTACH_TID_COMM		=3D  1ULL <<  5,
-+	KDBUS_ATTACH_PID_COMM		=3D  1ULL <<  6,
-+	KDBUS_ATTACH_EXE		=3D  1ULL <<  7,
-+	KDBUS_ATTACH_CMDLINE		=3D  1ULL <<  8,
-+	KDBUS_ATTACH_CGROUP		=3D  1ULL <<  9,
-+	KDBUS_ATTACH_CAPS		=3D  1ULL << 10,
-+	KDBUS_ATTACH_SECLABEL		=3D  1ULL << 11,
-+	KDBUS_ATTACH_AUDIT		=3D  1ULL << 12,
-+	KDBUS_ATTACH_CONN_DESCRIPTION	=3D  1ULL << 13,
-+	_KDBUS_ATTACH_ALL		=3D  (1ULL << 14) - 1,
-+	_KDBUS_ATTACH_ANY		=3D  ~0ULL
-+};
-+
-+/**
-+ * enum kdbus_item_type - item types to chain data in a list
-+ * @_KDBUS_ITEM_NULL:			Uninitialized/invalid
-+ * @_KDBUS_ITEM_USER_BASE:		Start of user items
-+ * @KDBUS_ITEM_NEGOTIATE:		Negotiate supported items
-+ * @KDBUS_ITEM_PAYLOAD_VEC:		Vector to data
-+ * @KDBUS_ITEM_PAYLOAD_OFF:		Data at returned offset to message head
-+ * @KDBUS_ITEM_PAYLOAD_MEMFD:		Data as sealed memfd
-+ * @KDBUS_ITEM_FDS:			Attached file descriptors
-+ * @KDBUS_ITEM_CANCEL_FD:		FD used to cancel a synchronous
-+ *					operation by writing to it from
-+ *					userspace
-+ * @KDBUS_ITEM_BLOOM_PARAMETER:		Bus-wide bloom parameters, used with
-+ *					KDBUS_CMD_BUS_MAKE, carries a
-+ *					struct kdbus_bloom_parameter
-+ * @KDBUS_ITEM_BLOOM_FILTER:		Bloom filter carried with a message,
-+ *					used to match against a bloom mask of a
-+ *					connection, carries a struct
-+ *					kdbus_bloom_filter
-+ * @KDBUS_ITEM_BLOOM_MASK:		Bloom mask used to match against a
-+ *					message'sbloom filter
-+ * @KDBUS_ITEM_DST_NAME:		Destination's well-known name
-+ * @KDBUS_ITEM_MAKE_NAME:		Name of domain, bus, endpoint
-+ * @KDBUS_ITEM_ATTACH_FLAGS_SEND:	Attach-flags, used for updating whic=
-h
-+ *					metadata a connection opts in to send
-+ * @KDBUS_ITEM_ATTACH_FLAGS_RECV:	Attach-flags, used for updating whic=
-h
-+ *					metadata a connection requests to
-+ *					receive for each reeceived message
-+ * @KDBUS_ITEM_ID:			Connection ID
-+ * @KDBUS_ITEM_NAME:			Well-know name with flags
-+ * @_KDBUS_ITEM_ATTACH_BASE:		Start of metadata attach items
-+ * @KDBUS_ITEM_TIMESTAMP:		Timestamp
-+ * @KDBUS_ITEM_CREDS:			Process credentials
-+ * @KDBUS_ITEM_PIDS:			Process identifiers
-+ * @KDBUS_ITEM_AUXGROUPS:		Auxiliary process groups
-+ * @KDBUS_ITEM_OWNED_NAME:		A name owned by the associated
-+ *					connection
-+ * @KDBUS_ITEM_TID_COMM:		Thread ID "comm" identifier
-+ *					(Don't trust this, see below.)
-+ * @KDBUS_ITEM_PID_COMM:		Process ID "comm" identifier
-+ *					(Don't trust this, see below.)
-+ * @KDBUS_ITEM_EXE:			The path of the executable
-+ *					(Don't trust this, see below.)
-+ * @KDBUS_ITEM_CMDLINE:			The process command line
-+ *					(Don't trust this, see below.)
-+ * @KDBUS_ITEM_CGROUP:			The croup membership
-+ * @KDBUS_ITEM_CAPS:			The process capabilities
-+ * @KDBUS_ITEM_SECLABEL:		The security label
-+ * @KDBUS_ITEM_AUDIT:			The audit IDs
-+ * @KDBUS_ITEM_CONN_DESCRIPTION:	The connection's human-readable name
-+ *					(debugging)
-+ * @_KDBUS_ITEM_POLICY_BASE:		Start of policy items
-+ * @KDBUS_ITEM_POLICY_ACCESS:		Policy access block
-+ * @_KDBUS_ITEM_KERNEL_BASE:		Start of kernel-generated message items
-+ * @KDBUS_ITEM_NAME_ADD:		Notification in kdbus_notify_name_change
-+ * @KDBUS_ITEM_NAME_REMOVE:		Notification in kdbus_notify_name_change
-+ * @KDBUS_ITEM_NAME_CHANGE:		Notification in kdbus_notify_name_change
-+ * @KDBUS_ITEM_ID_ADD:			Notification in kdbus_notify_id_change
-+ * @KDBUS_ITEM_ID_REMOVE:		Notification in kdbus_notify_id_change
-+ * @KDBUS_ITEM_REPLY_TIMEOUT:		Timeout has been reached
-+ * @KDBUS_ITEM_REPLY_DEAD:		Destination died
-+ *
-+ * N.B: The process and thread COMM fields, as well as the CMDLINE and
-+ * EXE fields may be altered by unprivileged processes und should
-+ * hence *not* used for security decisions. Peers should make use of
-+ * these items only for informational purposes, such as generating log
-+ * records.
-+ */
-+enum kdbus_item_type {
-+	_KDBUS_ITEM_NULL,
-+	_KDBUS_ITEM_USER_BASE,
-+	KDBUS_ITEM_NEGOTIATE	=3D _KDBUS_ITEM_USER_BASE,
-+	KDBUS_ITEM_PAYLOAD_VEC,
-+	KDBUS_ITEM_PAYLOAD_OFF,
-+	KDBUS_ITEM_PAYLOAD_MEMFD,
-+	KDBUS_ITEM_FDS,
-+	KDBUS_ITEM_CANCEL_FD,
-+	KDBUS_ITEM_BLOOM_PARAMETER,
-+	KDBUS_ITEM_BLOOM_FILTER,
-+	KDBUS_ITEM_BLOOM_MASK,
-+	KDBUS_ITEM_DST_NAME,
-+	KDBUS_ITEM_MAKE_NAME,
-+	KDBUS_ITEM_ATTACH_FLAGS_SEND,
-+	KDBUS_ITEM_ATTACH_FLAGS_RECV,
-+	KDBUS_ITEM_ID,
-+	KDBUS_ITEM_NAME,
-+
-+	/* keep these item types in sync with KDBUS_ATTACH_* flags */
-+	_KDBUS_ITEM_ATTACH_BASE	=3D 0x1000,
-+	KDBUS_ITEM_TIMESTAMP	=3D _KDBUS_ITEM_ATTACH_BASE,
-+	KDBUS_ITEM_CREDS,
-+	KDBUS_ITEM_PIDS,
-+	KDBUS_ITEM_AUXGROUPS,
-+	KDBUS_ITEM_OWNED_NAME,
-+	KDBUS_ITEM_TID_COMM,
-+	KDBUS_ITEM_PID_COMM,
-+	KDBUS_ITEM_EXE,
-+	KDBUS_ITEM_CMDLINE,
-+	KDBUS_ITEM_CGROUP,
-+	KDBUS_ITEM_CAPS,
-+	KDBUS_ITEM_SECLABEL,
-+	KDBUS_ITEM_AUDIT,
-+	KDBUS_ITEM_CONN_DESCRIPTION,
-+
-+	_KDBUS_ITEM_POLICY_BASE	=3D 0x2000,
-+	KDBUS_ITEM_POLICY_ACCESS =3D _KDBUS_ITEM_POLICY_BASE,
-+
-+	_KDBUS_ITEM_KERNEL_BASE	=3D 0x8000,
-+	KDBUS_ITEM_NAME_ADD	=3D _KDBUS_ITEM_KERNEL_BASE,
-+	KDBUS_ITEM_NAME_REMOVE,
-+	KDBUS_ITEM_NAME_CHANGE,
-+	KDBUS_ITEM_ID_ADD,
-+	KDBUS_ITEM_ID_REMOVE,
-+	KDBUS_ITEM_REPLY_TIMEOUT,
-+	KDBUS_ITEM_REPLY_DEAD,
-+};
-+
-+/**
-+ * struct kdbus_item - chain of data blocks
-+ * @size:		Overall data record size
-+ * @type:		Kdbus_item type of data
-+ * @data:		Generic bytes
-+ * @data32:		Generic 32 bit array
-+ * @data64:		Generic 64 bit array
-+ * @str:		Generic string
-+ * @id:			Connection ID
-+ * @vec:		KDBUS_ITEM_PAYLOAD_VEC
-+ * @creds:		KDBUS_ITEM_CREDS
-+ * @audit:		KDBUS_ITEM_AUDIT
-+ * @timestamp:		KDBUS_ITEM_TIMESTAMP
-+ * @name:		KDBUS_ITEM_NAME
-+ * @bloom_parameter:	KDBUS_ITEM_BLOOM_PARAMETER
-+ * @bloom_filter:	KDBUS_ITEM_BLOOM_FILTER
-+ * @memfd:		KDBUS_ITEM_PAYLOAD_MEMFD
-+ * @name_change:	KDBUS_ITEM_NAME_ADD
-+ *			KDBUS_ITEM_NAME_REMOVE
-+ *			KDBUS_ITEM_NAME_CHANGE
-+ * @id_change:		KDBUS_ITEM_ID_ADD
-+ *			KDBUS_ITEM_ID_REMOVE
-+ * @policy:		KDBUS_ITEM_POLICY_ACCESS
-+ */
-+struct kdbus_item {
-+	__u64 size;
-+	__u64 type;
-+	union {
-+		__u8 data[0];
-+		__u32 data32[0];
-+		__u64 data64[0];
-+		char str[0];
-+
-+		__u64 id;
-+		struct kdbus_vec vec;
-+		struct kdbus_creds creds;
-+		struct kdbus_pids pids;
-+		struct kdbus_audit audit;
-+		struct kdbus_caps caps;
-+		struct kdbus_timestamp timestamp;
-+		struct kdbus_name name;
-+		struct kdbus_bloom_parameter bloom_parameter;
-+		struct kdbus_bloom_filter bloom_filter;
-+		struct kdbus_memfd memfd;
-+		int fds[0];
-+		struct kdbus_notify_name_change name_change;
-+		struct kdbus_notify_id_change id_change;
-+		struct kdbus_policy_access policy_access;
-+	};
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * enum kdbus_msg_flags - type of message
-+ * @KDBUS_MSG_EXPECT_REPLY:	Expect a reply message, used for
-+ *				method calls. The userspace-supplied
-+ *				cookie identifies the message and the
-+ *				respective reply carries the cookie
-+ *				in cookie_reply
-+ * @KDBUS_MSG_NO_AUTO_START:	Do not start a service if the addressed
-+ *				name is not currently active. This flag is
-+ *				not looked at by the kernel but only
-+ *				serves as hint for userspace implementations.
-+ * @KDBUS_MSG_SIGNAL:		Treat this message as signal
-+ */
-+enum kdbus_msg_flags {
-+	KDBUS_MSG_EXPECT_REPLY	=3D 1ULL << 0,
-+	KDBUS_MSG_NO_AUTO_START	=3D 1ULL << 1,
-+	KDBUS_MSG_SIGNAL	=3D 1ULL << 2,
-+};
-+
-+/**
-+ * enum kdbus_payload_type - type of payload carried by message
-+ * @KDBUS_PAYLOAD_KERNEL:	Kernel-generated simple message
-+ * @KDBUS_PAYLOAD_DBUS:		D-Bus marshalling "DBusDBus"
-+ *
-+ * Any payload-type is accepted. Common types will get added here once
-+ * established.
-+ */
-+enum kdbus_payload_type {
-+	KDBUS_PAYLOAD_KERNEL,
-+	KDBUS_PAYLOAD_DBUS	=3D 0x4442757344427573ULL,
-+};
-+
-+/**
-+ * struct kdbus_msg - the representation of a kdbus message
-+ * @size:		Total size of the message
-+ * @flags:		Message flags (KDBUS_MSG_*), userspace =E2=86=92 kernel
-+ * @priority:		Message queue priority value
-+ * @dst_id:		64-bit ID of the destination connection
-+ * @src_id:		64-bit ID of the source connection
-+ * @payload_type:	Payload type (KDBUS_PAYLOAD_*)
-+ * @cookie:		Userspace-supplied cookie, for the connection
-+ *			to identify its messages
-+ * @timeout_ns:		The time to wait for a message reply from the peer.
-+ *			If there is no reply, and the send command is
-+ *			executed asynchronously, a kernel-generated message
-+ *			with an attached KDBUS_ITEM_REPLY_TIMEOUT item
-+ *			is sent to @src_id. For synchronously executed send
-+ *			command, the value denotes the maximum time the call
-+ *			blocks to wait for a reply. The timeout is expected in
-+ *			nanoseconds and as absolute CLOCK_MONOTONIC value.
-+ * @cookie_reply:	A reply to the requesting message with the same
-+ *			cookie. The requesting connection can match its
-+ *			request and the reply with this value
-+ * @items:		A list of kdbus_items containing the message payload
-+ */
-+struct kdbus_msg {
-+	__u64 size;
-+	__u64 flags;
-+	__s64 priority;
-+	__u64 dst_id;
-+	__u64 src_id;
-+	__u64 payload_type;
-+	__u64 cookie;
-+	union {
-+		__u64 timeout_ns;
-+		__u64 cookie_reply;
-+	};
-+	struct kdbus_item items[0];
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * struct kdbus_msg_info - returned message container
-+ * @offset:		Offset of kdbus_msg slice in pool
-+ * @msg_size:		Copy of the kdbus_msg.size field
-+ * @return_flags:	Command return flags, kernel =E2=86=92 userspace
-+ */
-+struct kdbus_msg_info {
-+	__u64 offset;
-+	__u64 msg_size;
-+	__u64 return_flags;
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * enum kdbus_send_flags - flags for sending messages
-+ * @KDBUS_SEND_SYNC_REPLY:	Wait for destination connection to
-+ *				reply to this message. The
-+ *				KDBUS_CMD_SEND ioctl() will block
-+ *				until the reply is received, and
-+ *				offset_reply in struct kdbus_msg will
-+ *				yield the offset in the sender's pool
-+ *				where the reply can be found.
-+ *				This flag is only valid if
-+ *				@KDBUS_MSG_EXPECT_REPLY is set as well.
-+ */
-+enum kdbus_send_flags {
-+	KDBUS_SEND_SYNC_REPLY		=3D 1ULL << 0,
-+};
-+
-+/**
-+ * struct kdbus_cmd_send - send message
-+ * @size:		Overall size of this structure
-+ * @flags:		Flags to change send behavior (KDBUS_SEND_*)
-+ * @return_flags:	Command return flags, kernel =E2=86=92 userspace
-+ * @msg_address:	Storage address of the kdbus_msg to send
-+ * @reply:		Storage for message reply if KDBUS_SEND_SYNC_REPLY
-+ *			was given
-+ * @items:		Additional items for this command
-+ */
-+struct kdbus_cmd_send {
-+	__u64 size;
-+	__u64 flags;
-+	__u64 return_flags;
-+	__u64 msg_address;
-+	struct kdbus_msg_info reply;
-+	struct kdbus_item items[0];
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * enum kdbus_recv_flags - flags for de-queuing messages
-+ * @KDBUS_RECV_PEEK:		Return the next queued message without
-+ *				actually de-queuing it, and without installing
-+ *				any file descriptors or other resources. It is
-+ *				usually used to determine the activating
-+ *				connection of a bus name.
-+ * @KDBUS_RECV_DROP:		Drop and free the next queued message and all
-+ *				its resources without actually receiving it.
-+ * @KDBUS_RECV_USE_PRIORITY:	Only de-queue messages with the specified=
- or
-+ *				higher priority (lowest values); if not set,
-+ *				the priority value is ignored.
-+ */
-+enum kdbus_recv_flags {
-+	KDBUS_RECV_PEEK		=3D 1ULL <<  0,
-+	KDBUS_RECV_DROP		=3D 1ULL <<  1,
-+	KDBUS_RECV_USE_PRIORITY	=3D 1ULL <<  2,
-+};
-+
-+/**
-+ * enum kdbus_recv_return_flags - return flags for message receive com=
-mands
-+ * @KDBUS_RECV_RETURN_INCOMPLETE_FDS:	One or more file descriptors cou=
-ld not
-+ *					be installed. These descriptors in
-+ *					KDBUS_ITEM_FDS will carry the value -1.
-+ * @KDBUS_RECV_RETURN_DROPPED_MSGS:	There have been dropped messages s=
-ince
-+ *					the last time a message was received.
-+ *					The 'dropped_msgs' counter contains the
-+ *					number of messages dropped pool
-+ *					overflows or other missed broadcasts.
-+ */
-+enum kdbus_recv_return_flags {
-+	KDBUS_RECV_RETURN_INCOMPLETE_FDS	=3D 1ULL <<  0,
-+	KDBUS_RECV_RETURN_DROPPED_MSGS		=3D 1ULL <<  1,
-+};
-+
-+/**
-+ * struct kdbus_cmd_recv - struct to de-queue a buffered message
-+ * @size:		Overall size of this object
-+ * @flags:		KDBUS_RECV_* flags, userspace =E2=86=92 kernel
-+ * @return_flags:	Command return flags, kernel =E2=86=92 userspace
-+ * @priority:		Minimum priority of the messages to de-queue. Lowest
-+ *			values have the highest priority.
-+ * @dropped_msgs:	In case there were any dropped messages since the la=
-st
-+ *			time a message was received, this will be set to the
-+ *			number of lost messages and
-+ *			KDBUS_RECV_RETURN_DROPPED_MSGS will be set in
-+ *			'return_flags'. This can only happen if the ioctl
-+ *			returns 0 or EAGAIN.
-+ * @msg:		Return storage for received message.
-+ * @items:		Additional items for this command.
-+ *
-+ * This struct is used with the KDBUS_CMD_RECV ioctl.
-+ */
-+struct kdbus_cmd_recv {
-+	__u64 size;
-+	__u64 flags;
-+	__u64 return_flags;
-+	__s64 priority;
-+	__u64 dropped_msgs;
-+	struct kdbus_msg_info msg;
-+	struct kdbus_item items[0];
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * struct kdbus_cmd_free - struct to free a slice of memory in the poo=
-l
-+ * @size:		Overall size of this structure
-+ * @flags:		Flags for the free command, userspace =E2=86=92 kernel
-+ * @return_flags:	Command return flags, kernel =E2=86=92 userspace
-+ * @offset:		The offset of the memory slice, as returned by other
-+ *			ioctls
-+ * @items:		Additional items to modify the behavior
-+ *
-+ * This struct is used with the KDBUS_CMD_FREE ioctl.
-+ */
-+struct kdbus_cmd_free {
-+	__u64 size;
-+	__u64 flags;
-+	__u64 return_flags;
-+	__u64 offset;
-+	struct kdbus_item items[0];
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * enum kdbus_hello_flags - flags for struct kdbus_cmd_hello
-+ * @KDBUS_HELLO_ACCEPT_FD:	The connection allows the reception of
-+ *				any passed file descriptors
-+ * @KDBUS_HELLO_ACTIVATOR:	Special-purpose connection which registers
-+ *				a well-know name for a process to be started
-+ *				when traffic arrives
-+ * @KDBUS_HELLO_POLICY_HOLDER:	Special-purpose connection which regist=
-ers
-+ *				policy entries for a name. The provided name
-+ *				is not activated and not registered with the
-+ *				name database, it only allows unprivileged
-+ *				connections to acquire a name, talk or discover
-+ *				a service
-+ * @KDBUS_HELLO_MONITOR:	Special-purpose connection to monitor
-+ *				bus traffic
-+ */
-+enum kdbus_hello_flags {
-+	KDBUS_HELLO_ACCEPT_FD		=3D  1ULL <<  0,
-+	KDBUS_HELLO_ACTIVATOR		=3D  1ULL <<  1,
-+	KDBUS_HELLO_POLICY_HOLDER	=3D  1ULL <<  2,
-+	KDBUS_HELLO_MONITOR		=3D  1ULL <<  3,
-+};
-+
-+/**
-+ * struct kdbus_cmd_hello - struct to say hello to kdbus
-+ * @size:		The total size of the structure
-+ * @flags:		Connection flags (KDBUS_HELLO_*), userspace =E2=86=92 kern=
-el
-+ * @return_flags:	Command return flags, kernel =E2=86=92 userspace
-+ * @attach_flags_send:	Mask of metadata to attach to each message sent
-+ *			off by this connection (KDBUS_ATTACH_*)
-+ * @attach_flags_recv:	Mask of metadata to attach to each message rece=
-ieved
-+ *			by the new connection (KDBUS_ATTACH_*)
-+ * @bus_flags:		The flags field copied verbatim from the original
-+ *			KDBUS_CMD_BUS_MAKE ioctl. It's intended to be useful
-+ *			to do negotiation of features of the payload that is
-+ *			transferred (kernel =E2=86=92 userspace)
-+ * @id:			The ID of this connection (kernel =E2=86=92 userspace)
-+ * @pool_size:		Size of the connection's buffer where the received
-+ *			messages are placed
-+ * @offset:		Pool offset where items are returned to report
-+ *			additional information about the bus and the newly
-+ *			created connection.
-+ * @items_size:		Size of buffer returned in the pool slice at @offset.
-+ * @id128:		Unique 128-bit ID of the bus (kernel =E2=86=92 userspace)
-+ * @items:		A list of items
-+ *
-+ * This struct is used with the KDBUS_CMD_HELLO ioctl.
-+ */
-+struct kdbus_cmd_hello {
-+	__u64 size;
-+	__u64 flags;
-+	__u64 return_flags;
-+	__u64 attach_flags_send;
-+	__u64 attach_flags_recv;
-+	__u64 bus_flags;
-+	__u64 id;
-+	__u64 pool_size;
-+	__u64 offset;
-+	__u64 items_size;
-+	__u8 id128[16];
-+	struct kdbus_item items[0];
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * struct kdbus_info - connection information
-+ * @size:		total size of the struct
-+ * @id:			64bit object ID
-+ * @flags:		object creation flags
-+ * @items:		list of items
-+ *
-+ * Note that the user is responsible for freeing the allocated memory =
-with
-+ * the KDBUS_CMD_FREE ioctl.
-+ */
-+struct kdbus_info {
-+	__u64 size;
-+	__u64 id;
-+	__u64 flags;
-+	struct kdbus_item items[0];
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * enum kdbus_list_flags - what to include into the returned list
-+ * @KDBUS_LIST_UNIQUE:		active connections
-+ * @KDBUS_LIST_ACTIVATORS:	activator connections
-+ * @KDBUS_LIST_NAMES:		known well-known names
-+ * @KDBUS_LIST_QUEUED:		queued-up names
-+ */
-+enum kdbus_list_flags {
-+	KDBUS_LIST_UNIQUE		=3D 1ULL <<  0,
-+	KDBUS_LIST_NAMES		=3D 1ULL <<  1,
-+	KDBUS_LIST_ACTIVATORS		=3D 1ULL <<  2,
-+	KDBUS_LIST_QUEUED		=3D 1ULL <<  3,
-+};
-+
-+/**
-+ * struct kdbus_cmd_list - list connections
-+ * @size:		overall size of this object
-+ * @flags:		flags for the query (KDBUS_LIST_*), userspace =E2=86=92 ke=
-rnel
-+ * @return_flags:	command return flags, kernel =E2=86=92 userspace
-+ * @offset:		Offset in the caller's pool buffer where an array of
-+ *			kdbus_info objects is stored.
-+ *			The user must use KDBUS_CMD_FREE to free the
-+ *			allocated memory.
-+ * @list_size:		size of returned list in bytes
-+ * @items:		Items for the command. Reserved for future use.
-+ *
-+ * This structure is used with the KDBUS_CMD_LIST ioctl.
-+ */
-+struct kdbus_cmd_list {
-+	__u64 size;
-+	__u64 flags;
-+	__u64 return_flags;
-+	__u64 offset;
-+	__u64 list_size;
-+	struct kdbus_item items[0];
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * struct kdbus_cmd_info - struct used for KDBUS_CMD_CONN_INFO ioctl
-+ * @size:		The total size of the struct
-+ * @flags:		Flags for this ioctl, userspace =E2=86=92 kernel
-+ * @return_flags:	Command return flags, kernel =E2=86=92 userspace
-+ * @id:			The 64-bit ID of the connection. If set to zero, passing
-+ *			@name is required. kdbus will look up the name to
-+ *			determine the ID in this case.
-+ * @attach_flags:	Set of attach flags to specify the set of informatio=
-n
-+ *			to receive, userspace =E2=86=92 kernel
-+ * @offset:		Returned offset in the caller's pool buffer where the
-+ *			kdbus_info struct result is stored. The user must
-+ *			use KDBUS_CMD_FREE to free the allocated memory.
-+ * @info_size:		Output buffer to report size of data at @offset.
-+ * @items:		The optional item list, containing the
-+ *			well-known name to look up as a KDBUS_ITEM_NAME.
-+ *			Only needed in case @id is zero.
-+ *
-+ * On success, the KDBUS_CMD_CONN_INFO ioctl will return 0 and @offset=
- will
-+ * tell the user the offset in the connection pool buffer at which to =
-find the
-+ * result in a struct kdbus_info.
-+ */
-+struct kdbus_cmd_info {
-+	__u64 size;
-+	__u64 flags;
-+	__u64 return_flags;
-+	__u64 id;
-+	__u64 attach_flags;
-+	__u64 offset;
-+	__u64 info_size;
-+	struct kdbus_item items[0];
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * enum kdbus_cmd_match_flags - flags to control the KDBUS_CMD_MATCH_A=
-DD ioctl
-+ * @KDBUS_MATCH_REPLACE:	If entries with the supplied cookie already
-+ *				exists, remove them before installing the new
-+ *				matches.
-+ */
-+enum kdbus_cmd_match_flags {
-+	KDBUS_MATCH_REPLACE	=3D 1ULL <<  0,
-+};
-+
-+/**
-+ * struct kdbus_cmd_match - struct to add or remove matches
-+ * @size:		The total size of the struct
-+ * @flags:		Flags for match command (KDBUS_MATCH_*),
-+ *			userspace =E2=86=92 kernel
-+ * @return_flags:	Command return flags, kernel =E2=86=92 userspace
-+ * @cookie:		Userspace supplied cookie. When removing, the cookie
-+ *			identifies the match to remove
-+ * @items:		A list of items for additional information
-+ *
-+ * This structure is used with the KDBUS_CMD_MATCH_ADD and
-+ * KDBUS_CMD_MATCH_REMOVE ioctl.
-+ */
-+struct kdbus_cmd_match {
-+	__u64 size;
-+	__u64 flags;
-+	__u64 return_flags;
-+	__u64 cookie;
-+	struct kdbus_item items[0];
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * enum kdbus_make_flags - Flags for KDBUS_CMD_{BUS,ENDPOINT}_MAKE
-+ * @KDBUS_MAKE_ACCESS_GROUP:	Make the bus or endpoint node group-acces=
-sible
-+ * @KDBUS_MAKE_ACCESS_WORLD:	Make the bus or endpoint node world-acces=
-sible
-+ */
-+enum kdbus_make_flags {
-+	KDBUS_MAKE_ACCESS_GROUP		=3D 1ULL <<  0,
-+	KDBUS_MAKE_ACCESS_WORLD		=3D 1ULL <<  1,
-+};
-+
-+/**
-+ * enum kdbus_name_flags - flags for KDBUS_CMD_NAME_ACQUIRE
-+ * @KDBUS_NAME_REPLACE_EXISTING:	Try to replace name of other connecti=
-ons
-+ * @KDBUS_NAME_ALLOW_REPLACEMENT:	Allow the replacement of the name
-+ * @KDBUS_NAME_QUEUE:			Name should be queued if busy
-+ * @KDBUS_NAME_IN_QUEUE:		Name is queued
-+ * @KDBUS_NAME_ACTIVATOR:		Name is owned by a activator connection
-+ */
-+enum kdbus_name_flags {
-+	KDBUS_NAME_REPLACE_EXISTING	=3D 1ULL <<  0,
-+	KDBUS_NAME_ALLOW_REPLACEMENT	=3D 1ULL <<  1,
-+	KDBUS_NAME_QUEUE		=3D 1ULL <<  2,
-+	KDBUS_NAME_IN_QUEUE		=3D 1ULL <<  3,
-+	KDBUS_NAME_ACTIVATOR		=3D 1ULL <<  4,
-+};
-+
-+/**
-+ * struct kdbus_cmd - generic ioctl payload
-+ * @size:		Overall size of this structure
-+ * @flags:		Flags for this ioctl, userspace =E2=86=92 kernel
-+ * @return_flags:	Ioctl return flags, kernel =E2=86=92 userspace
-+ * @items:		Additional items to modify the behavior
-+ *
-+ * This is a generic ioctl payload object. It's used by all ioctls tha=
-t only
-+ * take flags and items as input.
-+ */
-+struct kdbus_cmd {
-+	__u64 size;
-+	__u64 flags;
-+	__u64 return_flags;
-+	struct kdbus_item items[0];
-+} __attribute__((__aligned__(8)));
-+
-+/**
-+ * Ioctl API
-+ *
-+ * KDBUS_CMD_BUS_MAKE:		After opening the "control" node, this command
-+ *				creates a new bus with the specified
-+ *				name. The bus is immediately shut down and
-+ *				cleaned up when the opened file descriptor is
-+ *				closed.
-+ *
-+ * KDBUS_CMD_ENDPOINT_MAKE:	Creates a new named special endpoint to ta=
-lk to
-+ *				the bus. Such endpoints usually carry a more
-+ *				restrictive policy and grant restricted access
-+ *				to specific applications.
-+ * KDBUS_CMD_ENDPOINT_UPDATE:	Update the properties of a custom enpoin=
-t. Used
-+ *				to update the policy.
-+ *
-+ * KDBUS_CMD_HELLO:		By opening the bus node, a connection is
-+ *				created. After a HELLO the opened connection
-+ *				becomes an active peer on the bus.
-+ * KDBUS_CMD_UPDATE:		Update the properties of a connection. Used to
-+ *				update the metadata subscription mask and
-+ *				policy.
-+ * KDBUS_CMD_BYEBYE:		Disconnect a connection. If there are no
-+ *				messages queued up in the connection's pool,
-+ *				the call succeeds, and the handle is rendered
-+ *				unusable. Otherwise, -EBUSY is returned without
-+ *				any further side-effects.
-+ * KDBUS_CMD_FREE:		Release the allocated memory in the receiver's
-+ *				pool.
-+ * KDBUS_CMD_CONN_INFO:		Retrieve credentials and properties of the
-+ *				initial creator of the connection. The data was
-+ *				stored at registration time and does not
-+ *				necessarily represent the connected process or
-+ *				the actual state of the process.
-+ * KDBUS_CMD_BUS_CREATOR_INFO:	Retrieve information of the creator of =
-the bus
-+ *				a connection is attached to.
-+ *
-+ * KDBUS_CMD_SEND:		Send a message and pass data from userspace to
-+ *				the kernel.
-+ * KDBUS_CMD_RECV:		Receive a message from the kernel which is
-+ *				placed in the receiver's pool.
-+ *
-+ * KDBUS_CMD_NAME_ACQUIRE:	Request a well-known bus name to associate =
-with
-+ *				the connection. Well-known names are used to
-+ *				address a peer on the bus.
-+ * KDBUS_CMD_NAME_RELEASE:	Release a well-known name the connection
-+ *				currently owns.
-+ * KDBUS_CMD_LIST:		Retrieve the list of all currently registered
-+ *				well-known and unique names.
-+ *
-+ * KDBUS_CMD_MATCH_ADD:		Install a match which broadcast messages shou=
-ld
-+ *				be delivered to the connection.
-+ * KDBUS_CMD_MATCH_REMOVE:	Remove a current match for broadcast messag=
-es.
-+ */
-+enum kdbus_ioctl_type {
-+	/* bus owner (00-0f) */
-+	KDBUS_CMD_BUS_MAKE =3D		_IOW(KDBUS_IOCTL_MAGIC, 0x00,
-+					     struct kdbus_cmd),
-+
-+	/* endpoint owner (10-1f) */
-+	KDBUS_CMD_ENDPOINT_MAKE =3D	_IOW(KDBUS_IOCTL_MAGIC, 0x10,
-+					     struct kdbus_cmd),
-+	KDBUS_CMD_ENDPOINT_UPDATE =3D	_IOW(KDBUS_IOCTL_MAGIC, 0x11,
-+					     struct kdbus_cmd),
-+
-+	/* connection owner (80-ff) */
-+	KDBUS_CMD_HELLO =3D		_IOWR(KDBUS_IOCTL_MAGIC, 0x80,
-+					      struct kdbus_cmd_hello),
-+	KDBUS_CMD_UPDATE =3D		_IOW(KDBUS_IOCTL_MAGIC, 0x81,
-+					     struct kdbus_cmd),
-+	KDBUS_CMD_BYEBYE =3D		_IOW(KDBUS_IOCTL_MAGIC, 0x82,
-+					     struct kdbus_cmd),
-+	KDBUS_CMD_FREE =3D		_IOW(KDBUS_IOCTL_MAGIC, 0x83,
-+					     struct kdbus_cmd_free),
-+	KDBUS_CMD_CONN_INFO =3D		_IOR(KDBUS_IOCTL_MAGIC, 0x84,
-+					     struct kdbus_cmd_info),
-+	KDBUS_CMD_BUS_CREATOR_INFO =3D	_IOR(KDBUS_IOCTL_MAGIC, 0x85,
-+					     struct kdbus_cmd_info),
-+	KDBUS_CMD_LIST =3D		_IOR(KDBUS_IOCTL_MAGIC, 0x86,
-+					     struct kdbus_cmd_list),
-+
-+	KDBUS_CMD_SEND =3D		_IOW(KDBUS_IOCTL_MAGIC, 0x90,
-+					     struct kdbus_cmd_send),
-+	KDBUS_CMD_RECV =3D		_IOR(KDBUS_IOCTL_MAGIC, 0x91,
-+					     struct kdbus_cmd_recv),
-+
-+	KDBUS_CMD_NAME_ACQUIRE =3D	_IOW(KDBUS_IOCTL_MAGIC, 0xa0,
-+					     struct kdbus_cmd),
-+	KDBUS_CMD_NAME_RELEASE =3D	_IOW(KDBUS_IOCTL_MAGIC, 0xa1,
-+					     struct kdbus_cmd),
-+
-+	KDBUS_CMD_MATCH_ADD =3D		_IOW(KDBUS_IOCTL_MAGIC, 0xb0,
-+					     struct kdbus_cmd_match),
-+	KDBUS_CMD_MATCH_REMOVE =3D	_IOW(KDBUS_IOCTL_MAGIC, 0xb1,
-+					     struct kdbus_cmd_match),
-+};
-+
-+#endif /* _KDBUS_UAPI_H_ */
++#endif
 --=20
 2.3.1
