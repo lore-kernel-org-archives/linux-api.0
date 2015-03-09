@@ -1,136 +1,42 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCHv3 man-pages 3/3] open.2: describe O_BENEATH flag
-Date: Mon, 9 Mar 2015 16:54:47 +0100
-Message-ID: <CAKgNAkgoiA92nhYCXaze8KVsd1xw8v0xD=EZ2cD_7HnEtgA7BQ@mail.gmail.com>
-References: <1425909612-28034-1-git-send-email-drysdale@google.com>
- <1425909612-28034-4-git-send-email-drysdale@google.com> <54FDAF16.2030407@gmail.com>
- <CAHse=S_kMkiV8hB5Y1=kVGCi3ZusRm5G=EyXhY_+PRycSt7GSw@mail.gmail.com>
-Reply-To: mtk.manpages@gmail.com
+From: Linus Walleij <linus.walleij@linaro.org>
+Subject: Re: [PATCH 14/14] MAINTAINERS: Add entry for STM32 MCUs
+Date: Mon, 9 Mar 2015 17:47:40 +0100
+Message-ID: <CACRpkdaYVyH-y19yHYp2noq6VhDVJYQfqkevDtLr-7y8gVwdXw@mail.gmail.com>
+References: <1423763164-5606-1-git-send-email-mcoquelin.stm32@gmail.com>
+	<1423763164-5606-15-git-send-email-mcoquelin.stm32@gmail.com>
+	<CACRpkdaM0BwMcq77MO=0-dVaqwobD5Pt+11j7ZZ4c3yKM=AkeA@mail.gmail.com>
+	<CALszF6Bz978KA1DAxcKtmA55X=vJWEcVDa9fLOF=uNatYS+b+Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <fstests-owner@vger.kernel.org>
-In-Reply-To: <CAHse=S_kMkiV8hB5Y1=kVGCi3ZusRm5G=EyXhY_+PRycSt7GSw@mail.gmail.com>
-Sender: fstests-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Kees Cook <keescook@chromium.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Meredydd Luff <meredydd@senatehouse.org>, Will Drewry <wad@chromium.org>, Jorge Lucangeli Obes <jorgelo@google.com>, Ricky Zhou <rickyz@google.com>, Lee Campbell <leecam@google.com>, Julien Tinnes <jln@google.com>, Mike Depinet <mdepinet@google.com>, James Morris <james.l.morris@oracle.com>, Andy Lutomirski <luto@amacapital.net>, Paolo Bonzini <pbonzini@redhat.com>, Paul Moore <paul@paul-moore.com>, Christoph Hellwig <hch@infradead.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, fstests <fstests@vger.kernel.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <CALszF6Bz978KA1DAxcKtmA55X=vJWEcVDa9fLOF=uNatYS+b+Q@mail.gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Cc: Jonathan Corbet <corbet@lwn.net>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Philipp Zabel <p.zabel@pengutronix.de>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees Cook <keescook@chromium.org>, Michal
 List-Id: linux-api@vger.kernel.org
 
-On 9 March 2015 at 16:16, David Drysdale <drysdale@google.com> wrote:
-> On Mon, Mar 9, 2015 at 2:32 PM, Michael Kerrisk (man-pages)
-> <mtk.manpages@gmail.com> wrote:
->> On 03/09/2015 03:00 PM, David Drysdale wrote:
->>> Signed-off-by: David Drysdale <drysdale@google.com>
+On Fri, Mar 6, 2015 at 10:55 AM, Maxime Coquelin
+<mcoquelin.stm32@gmail.com> wrote:
+> 2015-03-06 10:03 GMT+01:00 Linus Walleij <linus.walleij@linaro.org>:
+>> On Thu, Feb 12, 2015 at 6:46 PM, Maxime Coquelin
+>> <mcoquelin.stm32@gmail.com> wrote:
 >>
->> Hi David,
+>>> Add a MAINTAINER entry covering all STM32 machine and drivers files.
+>>>
+>>> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
 >>
->> The text looks good insofar as it goes. But, it would be helpful
->> to have sentence or to that explains why this flag exists.
->> Could you add that, please?
+>> (...)
+>>> +F:     drivers/clocksource/arm_system_timer.c
 >>
->> Thanks,
->>
->> Michael
+>> Is that all? And that is not even a STM32 specific driver.
 >
-> How about something like:
+> For the ARM System Timer, I'm fine to add a new entry.
+> Or remove the line, and let the maintain-ship to clocksource maintainers.
 >
->   This feature allows applications to be sure that the opened file
->   is  within  the  specified directory, regardless of the original
->   source of the pathname argument.  Some  security-conscious  pro=E2=80=
-=90
->   grams  may  further ensure this by imposing a system call filter
->   (with seccomp(2)) that requires this flag for all open()  opera=E2=80=
-=90
->   tions,  so  that the program cannot open files outside of speci=E2=80=
-=90
->   fied directories even if subverted.
->
-> (Also, I realize that I somehow failed to notice that the flags
-> are listed in alphabetical order, so I'll move the text up, as
-> in the updated diff below).
+> All the STM32 files are covered by this line:
+> +N:     stm32
 
-That looks good to me. Thanks!
+Aha you're right, news2me, I'm old and stupid :/
 
-Cheers,
-
-Michael
-
-
-> ---
->  man2/open.2 | 44 ++++++++++++++++++++++++++++++++++++++++++++
->  1 file changed, 44 insertions(+)
->
-> diff --git a/man2/open.2 b/man2/open.2
-> index 956531b24b26..ece1fa90775a 100644
-> --- a/man2/open.2
-> +++ b/man2/open.2
-> @@ -201,6 +201,43 @@ See
->  for further details.
->  See also BUGS, below.
->  .TP
-> +.B O_BENEATH " (since Linux 4.??)"
-> +Ensure that the
-> +.I pathname
-> +is beneath the current working directory (for
-> +.BR open (2))
-> +or the
-> +.I dirfd
-> +(for
-> +.BR openat (2)).
-> +If the
-> +.I pathname
-> +is absolute or contains a path component of "..", the
-> +.BR open ()
-> +fails with the error
-> +.BR EPERM.
-> +This occurs even if ".." path component would not actually
-> +escape the original directory; for example, a
-> +.I pathname
-> +of "subdir/../filename" would be rejected.
-> +Path components that are symbolic links to absolute paths, or that a=
-re
-> +relative paths containing a ".." component, will also cause the
-> +.BR open ()
-> +operation to fail with the error
-> +.BR EPERM.
-> +
-> +This feature allows applications to be sure that the opened file is
-> +within the specified directory, regardless of the original source of=
- the
-> +.I pathname
-> +argument.
-> +Some security-conscious programs may further ensure
-> +this by imposing a system call filter (with
-> +.BR seccomp (2))
-> +that requires this flag for all
-> +.BR open ()
-> +operations, so that the program cannot open files outside of
-> +specified directories even if subverted.
-> +.TP
->  .BR O_CLOEXEC " (since Linux 2.6.23)"
->  .\" NOTE! several other man pages refer to this text
->  Enable the close-on-exec flag for the new file descriptor.
-> @@ -984,6 +1021,13 @@ did not match the owner of the file and the
-> caller was not privileged
->  The operation was prevented by a file seal; see
->  .BR fcntl (2).
->  .TP
-> +.B EPERM
-> +The
-> +.B O_BENEATH
-> +flag was specified and the
-> +.I pathname
-> +was not beneath the relevant directory.
-> +.TP
->  .B EROFS
->  .I pathname
->  refers to a file on a read-only filesystem and write access was
-> --
-> 2.2.0.rc0.207.ga3a616c
-
-
-
---=20
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Thanks,
+Linus Walleij
