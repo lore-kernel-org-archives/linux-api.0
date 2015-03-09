@@ -1,94 +1,42 @@
-From: Stefan Agner <stefan@agner.ch>
-Subject: Re: [PATCH v2 02/18] ARM: ARMv7M: Enlarge vector table to 256 entries
-Date: Mon, 09 Mar 2015 01:29:28 +0100
-Message-ID: <1364122b3b72c50138d81ee4eec2a4c7@agner.ch>
-References: <1424455277-29983-1-git-send-email-mcoquelin.stm32@gmail.com>
- <1424455277-29983-3-git-send-email-mcoquelin.stm32@gmail.com>
+From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v1 1/6] eeprom: Add a simple EEPROM framework for eeprom
+ providers
+Date: Mon, 09 Mar 2015 07:13:17 +0000
+Message-ID: <54FD480D.40604@linaro.org>
+References: <1425548685-12887-1-git-send-email-srinivas.kandagatla@linaro.org> <1425548741-12930-1-git-send-email-srinivas.kandagatla@linaro.org> <20150307150035.GN28806@sirena.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <1424455277-29983-3-git-send-email-mcoquelin.stm32@gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Cc: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150307150035.GN28806-GFdadSzt00ze9xe1eoZjHA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, andrew-g2DYL2Zd6BY@public.gmane.org, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 2015-02-20 19:01, Maxime Coquelin wrote:
-> From Cortex-M reference manuals, the nvic supports up to 240 interrupts.
-> So the number of entries in vectors table is up to 256.
-> 
-> This patch adds a new config flag to specify the number of external interrupts.
-> Some ifdeferies are added in order to respect the natural alignment without
-> wasting too much space on smaller systems.
-> 
-> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-> ---
->  arch/arm/kernel/entry-v7m.S | 13 +++++++++----
->  arch/arm/mm/Kconfig         | 15 +++++++++++++++
->  2 files changed, 24 insertions(+), 4 deletions(-)
-> 
-> diff --git a/arch/arm/kernel/entry-v7m.S b/arch/arm/kernel/entry-v7m.S
-> index 8944f49..68cde36 100644
-> --- a/arch/arm/kernel/entry-v7m.S
-> +++ b/arch/arm/kernel/entry-v7m.S
-> @@ -117,9 +117,14 @@ ENTRY(__switch_to)
->  ENDPROC(__switch_to)
->  
->  	.data
-> -	.align	8
-> +#if CONFIG_CPUV7M_NUM_IRQ <= 112
-> +	.align	9
-> +#else
-> +	.align	10
-> +#endif
-> +
->  /*
-> - * Vector table (64 words => 256 bytes natural alignment)
-> + * Vector table (Natural alignment need to be ensured)
->   */
->  ENTRY(vector_table)
->  	.long	0			@ 0 - Reset stack pointer
-> @@ -138,6 +143,6 @@ ENTRY(vector_table)
->  	.long	__invalid_entry		@ 13 - Reserved
->  	.long	__pendsv_entry		@ 14 - PendSV
->  	.long	__invalid_entry		@ 15 - SysTick
-> -	.rept	64 - 16
-> -	.long	__irq_entry		@ 16..64 - External Interrupts
-> +	.rept	CONFIG_CPUV7M_NUM_IRQ
-> +	.long	__irq_entry		@ External Interrupts
->  	.endr
-> diff --git a/arch/arm/mm/Kconfig b/arch/arm/mm/Kconfig
-> index c43c714..27eb835 100644
-> --- a/arch/arm/mm/Kconfig
-> +++ b/arch/arm/mm/Kconfig
-> @@ -604,6 +604,21 @@ config CPU_USE_DOMAINS
->  	  This option enables or disables the use of domain switching
->  	  via the set_fs() function.
->  
-> +config CPUV7M_NUM_IRQ
-> +	int "Number of external interrupts connected to the NVIC"
-> +	depends on CPU_V7M
-> +	default 90 if ARCH_STM32
-> +	default 38 if ARCH_EFM32
-> +	default 240
-> +	help
-> +	  This option indicates the number of interrupts connected to the NVIC.
-> +	  The value can be larger than the real number of interrupts supported
-> +	  by the system, but must not be lower.
-> +	  The default value is 240, corresponding to the maximum number of
-> +	  interrupts supported by the NVIC on Cortex-M family.
-> +
-> +	  If unsure, keep default value.
-> +
->  #
->  # CPU supports 36-bit I/O
->  #
 
-I sent a patch which extended that vector table some weeks ago:
-https://lkml.org/lkml/2014/12/29/296
 
-But your solution is definitely more flexible, and given that we deal
-with small devices here, it's worth saving memory.
+On 07/03/15 15:00, Mark Brown wrote:
+> On Thu, Mar 05, 2015 at 09:45:41AM +0000, Srinivas Kandagatla wrote:
+>
+>> +
+>> +	return eeprom;
+>> +}
+>> +EXPORT_SYMBOL(eeprom_register);
+>
+> This framework uses regmap but regmap is EXPORT_SYMBOL_GPL() and this is
+> using EXPORT_SYMBOL().
+>
+Thanks for spotting this, I will fix this in next version.
 
-Acked-by: Stefan Agner <stefan@agner.ch>
+>> +int eeprom_unregister(struct eeprom_device *eeprom)
+>> +{
+>> +	mutex_lock(&eeprom_mutex);
+>> +	if (atomic_read(&eeprom->users)) {
+>> +		mutex_unlock(&eeprom_mutex);
+>
+> Atomic reads and a mutex - isn't the mutex enough?  Atomics are
+> generally a recipie for bugs due to the complexity in using them.
+Yes, you are right as long as we protect users variable with mutex, 
+using atomic is really redundant, will fix it in next version.
+>
