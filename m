@@ -1,52 +1,81 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: Re: [Xen-devel] [PATCH 25/45] gntalloc.h: include stdint.h in
- userspace
-Date: Wed, 11 Mar 2015 00:48:49 +0200
-Message-ID: <20150310224849.GY12550@lakka.kapsi.fi>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: Re: [PATCH 33/45] include/uapi/asm-generic/signal.h: include
+ stdlib.h in userspace
+Date: Wed, 11 Mar 2015 00:58:28 +0200
+Message-ID: <20150310225828.GZ12550@lakka.kapsi.fi>
 References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
- <1424127948-22484-26-git-send-email-mikko.rapeli@iki.fi>
- <54E47D32.9040208@citrix.com>
+ <1424127948-22484-34-git-send-email-mikko.rapeli@iki.fi>
+ <2372547.aJh8O9JSDy@wuerfel>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <54E47D32.9040208-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Vrabel <david.vrabel-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <2372547.aJh8O9JSDy@wuerfel>
+Sender: linux-arch-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Feb 18, 2015 at 11:53:22AM +0000, David Vrabel wrote:
-> On 16/02/15 23:05, Mikko Rapeli wrote:
-> > Fixes compilation error:
+On Tue, Feb 17, 2015 at 10:44:48AM +0100, Arnd Bergmann wrote:
+> On Tuesday 17 February 2015 00:05:36 Mikko Rapeli wrote:
+> > Fixes compiler warning:
+> > error: unknown type name =E2=80=98size_t=E2=80=99
 > >=20
-> > xen/gntalloc.h:22:2: error: unknown type name =E2=80=98uint16_t=E2=80=
-=99
-> >=20
-> > Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+> > Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 > > ---
-> >  include/uapi/xen/gntalloc.h | 6 ++++++
-> >  1 file changed, 6 insertions(+)
+> >  include/uapi/asm-generic/signal.h | 4 ++++
+> >  1 file changed, 4 insertions(+)
 > >=20
-> > diff --git a/include/uapi/xen/gntalloc.h b/include/uapi/xen/gntallo=
-c.h
-> > index 76bd580..184df7e 100644
-> > --- a/include/uapi/xen/gntalloc.h
-> > +++ b/include/uapi/xen/gntalloc.h
-> > @@ -11,6 +11,12 @@
-> >  #ifndef __LINUX_PUBLIC_GNTALLOC_H__
-> >  #define __LINUX_PUBLIC_GNTALLOC_H__
+> > diff --git a/include/uapi/asm-generic/signal.h b/include/uapi/asm-g=
+eneric/signal.h
+> > index 9df61f1..8a341a2 100644
+> > --- a/include/uapi/asm-generic/signal.h
+> > +++ b/include/uapi/asm-generic/signal.h
+> > @@ -3,6 +3,10 @@
 > > =20
-> > +#ifdef __KERNEL__
-> > +#include <linux/types.h>
-> > +#else
-> > +#include <stdint.h>
+> >  #include <linux/types.h>
+> > =20
+> > +#ifndef __KERNEL__
+> > +#include <stdlib.h>
 > > +#endif
+> > +
 >=20
-> I think it would be preferrable to #include <linux/types.h> only and
-> switch to using the __u32 etc. types (as others have suggested).
+> Hmm, maybe we should use __kernel_size_t instead?
 
-Yes, I'm changes the patches to these.
+This problem is in several uapi header files on x86:
+
+asm-generic/shmbuf.h
+asm-generic/signal.h
+asm/signal.h
+drm/drm.h
+linux/agpgart.h
+linux/kexec.h
+linux/ncp_fs.h
+linux/nfc.h
+linux/omapfb.h
+linux/reiserfs_xattr.h
+linux/sysctl.h
+sound/asound.h
+
+so I guess using __kernel_size_t is the correct approach for all of the=
+m,
+right?
+
+linux/kexec.h seems suspicious though:
+
+#ifndef __KERNEL__
+/*
+ * This structure is used to hold the arguments that are used when
+ * loading  kernel binaries.
+ */
+struct kexec_segment {
+        const void *buf;
+        size_t bufsz;
+        const void *mem;
+        size_t memsz;
+};
+
+#endif /* __KERNEL__ */
 
 -Mikko
