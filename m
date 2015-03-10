@@ -1,59 +1,29 @@
-From: Rob Herring <robherring2@gmail.com>
-Subject: Re: [PATCH v2 05/18] reset: Add reset_controller_of_init() function
-Date: Tue, 10 Mar 2015 16:30:40 -0500
-Message-ID: <CAL_Jsq+_ridpAaUwpqo91xB6Ea1ctCWfYTYUrcZ=gB_0FiBD4g@mail.gmail.com>
-References: <1424455277-29983-1-git-send-email-mcoquelin.stm32@gmail.com>
- <8729383.kvUZDm4dQz@wuerfel> <CALszF6BkTOLR+VNkRKfvEBG5ZyaYL+9fZ4EAPVu5b_imCvEQoQ@mail.gmail.com>
- <6773745.i9mx5zmPP4@wuerfel>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-gpio-owner@vger.kernel.org>
-In-Reply-To: <6773745.i9mx5zmPP4@wuerfel>
-Sender: linux-gpio-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Maxime Coquelin <mcoquelin.stm32@gmail.com>, Maxime Ripard <maxime.ripard@free-electrons.com>, =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [PATCH 0/3] selftests: ptrace, kcmp, efivars build failure fixes
+Date: Tue, 10 Mar 2015 16:00:56 -0600
+Message-ID: <cover.1426022048.git.shuahkh@osg.samsung.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 10, 2015 at 3:19 PM, Arnd Bergmann <arnd@arndb.de> wrote:
-> On Tuesday 10 March 2015 16:28:44 Maxime Coquelin wrote:
->> 2015-03-10 16:00 GMT+01:00 Arnd Bergmann <arnd@arndb.de>:
->> > On Friday 20 February 2015 19:01:04 Maxime Coquelin wrote:
->> >> Some platforms need to initialize the reset controller before the timers.
->> >>
->> >> This patch introduces a reset_controller_of_init() function that can be
->> >> called before the timers intialization.
->> >>
->> >> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
->> >>
->> >
->> > Not sure about this. It seems like the cleanest approach if we get
->> > a lot of these, but then again it is probably very rare, and I'd
->> > like to avoid adding such infrastructure if it's just for one
->> > SoC. Could we add a hack in the machine initialization instead?
->>
->> Sun6i also need to initialize the reset controller early. Today, they
->> hack the machine initialization.
->> With two SoCs having the same need, what should we do?
->
-> Good question, I'd like to hear some other opinions on this first.
+ptrace, efivars, and kcmp Makefiles don't have explicit build rule.
+As a result, build fails when make is run from top level Makefile
+target kselftest. Without the explicit rule, make works only when
+it is run in the current directory or from selftests directory.
+Fxing the problems by adding an explicit build rule to fix the
+problem.
 
-2 is still far from the common case.
+Shuah Khan (3):
+  selftests: ptrace build fails when invoked from kselftest target
+  selftests: efivars build fails when invoked from kselftest target
+  selftests: kcmp build fails when invoked from kselftest target
 
->> > I think ideally this would be done in the boot loader before we
->> > even start Linux, but I don't know if that's possible for you.
->>
->> From what I understand, the only constraint is to perform it after the
->> clock is enabled.
->> So this should be possible to do it in the bootloader, but it means
->> also adding timers clocks ungating in the bootloader.
->
-> Ungating the timer clock input seems like a reasonable thing to
-> do for the bootloader, I think a lot of platforms rely on this
-> elsewhere (but enough of them don't, which is why we have the
-> early clk init).
+ tools/testing/selftests/efivarfs/Makefile | 2 ++
+ tools/testing/selftests/kcmp/Makefile     | 5 +++--
+ tools/testing/selftests/ptrace/Makefile   | 5 +++--
+ 3 files changed, 8 insertions(+), 4 deletions(-)
 
-+1
-
-If the bootloader is u-boot, then you need a timer anyway.
-
-Rob
+-- 
+2.1.0
