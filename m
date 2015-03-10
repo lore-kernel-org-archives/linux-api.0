@@ -1,56 +1,66 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH 0/3] selftests: ptrace, kcmp, efivars build failure fixes
-Date: Tue, 10 Mar 2015 17:37:34 -0600
-Message-ID: <54FF803E.9030407@osg.samsung.com>
-References: <cover.1426022048.git.shuahkh@osg.samsung.com> <1426030513.20917.2.camel@ellerman.id.au>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [PATCH] kbuild: Don't pass -rR to selftest makefiles
+Date: Tue, 10 Mar 2015 17:39:11 -0600
+Message-ID: <54FF809F.7020205@osg.samsung.com>
+References: <1425464362-28876-1-git-send-email-mpe@ellerman.id.au> <54FDAE28.6050801@osg.samsung.com> <54FE2377.9040709@osg.samsung.com> <1426030567.20917.3.camel@ellerman.id.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426030513.20917.2.camel-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1426030567.20917.3.camel@ellerman.id.au>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michael Ellerman <mpe@ellerman.id.au>
+Cc: mmarek@suse.cz, linux-kernel@vger.kernel.org, davej@codemonkey.org.uk, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/10/2015 05:35 PM, Michael Ellerman wrote:
-> On Tue, 2015-03-10 at 16:00 -0600, Shuah Khan wrote:
->> ptrace, efivars, and kcmp Makefiles don't have explicit build rule.
->> As a result, build fails when make is run from top level Makefile
->> target kselftest. Without the explicit rule, make works only when
->> it is run in the current directory or from selftests directory.
->> Fxing the problems by adding an explicit build rule to fix the
->> problem.
+On 03/10/2015 05:36 PM, Michael Ellerman wrote:
+> On Mon, 2015-03-09 at 16:49 -0600, Shuah Khan wrote:
+>> On 03/09/2015 08:28 AM, Shuah Khan wrote:
+>>> On 03/04/2015 03:19 AM, Michael Ellerman wrote:
+>>>> The makefiles under tools/testing/selftests are not real kbuild
+>>>> makefiles, they are regular stand alone makefiles. As such they *d=
+o*
+>>>> want all the standard implicit rules and variables defined.
+>>>>
+>>>> So before calling those makefiles, filter -rR out of MAKEFLAGS.
+>>>>
+>>>> Without this not all the selftests are built correctly when called=
+ via
+>>>> the top-level Makefile.
+>>>>
+>>>> Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
+>>>
+>>> Hi Michal,
+>>>
+>>> Could you please take this patch in your tree.
+>>>
+>>> Acked-by: Shuah Khan <shuahkh@osg.samsung.com>
+>>>
 >>
->> Shuah Khan (3):
->>   selftests: ptrace build fails when invoked from kselftest target
->>   selftests: efivars build fails when invoked from kselftest target
->>   selftests: kcmp build fails when invoked from kselftest target
+>> I am changing this to a Nack. This is not fully cooked.
+>> I am seeing new failures on some tests.
 >>
->>  tools/testing/selftests/efivarfs/Makefile | 2 ++
->>  tools/testing/selftests/kcmp/Makefile     | 5 +++--
->>  tools/testing/selftests/ptrace/Makefile   | 5 +++--
->>  3 files changed, 8 insertions(+), 4 deletions(-)
-> 
-> What? No. This is the bug my patch to filter the make flags fixes.
-> 
+>> gcc: error: elf_x86_64: No such file or directory
+>> gcc: error: unrecognized command line option =E2=80=98-m=E2=80=99
+>=20
+> I can't reproduce that here. In what way do you think it's related to=
+ this
+> patch?
+>=20
 > cheers
-> 
-> 
 
-Michael,
+I have just your patch on tops of linux 4.0-rc3 and ran
+make kselftest and that's what I see.
 
-Did you see my email from yesterday on how your patch introduced
-more problems. Can you please make sure the patches you send work
-and don't introduce problems. I am having this issue with a lot
-of your patches.
+If you can fix this problem I can take your patch, otherwise,
+I have to go with individual Makefiles fixes.
 
-thanks,
 -- Shuah
 
--- 
+
+--=20
 Shuah Khan
 Sr. Linux Kernel Developer
 Open Source Innovation Group
 Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+shuahkh@osg.samsung.com | (970) 217-8978
