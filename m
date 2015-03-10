@@ -1,36 +1,53 @@
-From: Cyrill Gorcunov <gorcunov@gmail.com>
-Subject: Re: [PATCH 3/3] selftests: kcmp build fails when invoked from
- kselftest target
-Date: Wed, 11 Mar 2015 01:45:00 +0300
-Message-ID: <20150310224500.GO30296@moon>
-References: <cover.1426022048.git.shuahkh@osg.samsung.com>
- <80f321919d8d1f804c4933acac9b044d4c6626eb.1426022048.git.shuahkh@osg.samsung.com>
- <20150310220954.GL30296@moon>
- <54FF7323.2080603@osg.samsung.com>
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Subject: Re: [PATCH 15/45] dm-log-userspace.h: include stdint.h in userspace
+Date: Wed, 11 Mar 2015 00:48:00 +0200
+Message-ID: <20150310224800.GX12550@lakka.kapsi.fi>
+References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
+ <2309592.iOl8K3u7d8@wuerfel>
+ <20150217133806.GA5220@agk-dp.fab.redhat.com>
+ <2286739.alIuOL4vnt@wuerfel>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <54FF7323.2080603@osg.samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: akpm@linux-foundation.org, tranmanphong@gmail.com, mpe@ellerman.id.au, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+In-Reply-To: <2286739.alIuOL4vnt@wuerfel>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 10, 2015 at 04:41:39PM -0600, Shuah Khan wrote:
+On Tue, Feb 17, 2015 at 02:55:49PM +0100, Arnd Bergmann wrote:
+> On Tuesday 17 February 2015 13:38:06 Alasdair G Kergon wrote:
+> > On Tue, Feb 17, 2015 at 10:08:56AM +0100, Arnd Bergmann wrote:
+> > > The normal way to do this in kernel headers is to use linux/types.h
+> > > but change the data structures to use __u64 instead of uint64_t
+> > > to avoid the build error.
+> >  
+> > That's what happened to dm-ioctl.h.
 > 
-> Are you looking for something like this:
+> Ah, indeed. It turns out that it was my own change that did this:
 > 
-> all: kcmp_test
 > 
-> kcmp_test:
-> 	$(CC) $(CFLAGS) kcmp_test.c -o kcmp_test
+> commit 9adfbfb611307060db54691bc7e6d53fdc12312b
+> Author: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+> Date:   Thu Feb 26 00:51:40 2009 +0100
 > 
-> I just simplified it and removed the prerequsite.
-> If you prefer, I can make the change to keep the
-> prereq.
+>     make most exported headers use strict integer types
+>     
+>     This takes care of all files that have only a small number
+>     of non-strict integer type uses.
+> 
+> > (Or someone could adjust linux/types.h to include these as standard.)
+> 
+> No, that wouldn't work. The C user space headers are not meant to
+> be included implicitly by any standard headers, which might pull
+> in linux/types.h implicitly.
+> 
+> I think it would be best to change all patches in the new series
+> in the same way for consistency and try to avoid using stdint.h
+> as much as we can.
 
-Yes please, and you may use internal make var $@ as well
+Ok, I'll change all patches to use __u8 etc types instead of uint8_t etc via
+stdint.h.
 
-kcmp_test:
-	$(CC) $(CFLAGS) kcmp_test.c -o $@
+-Mikko
