@@ -1,88 +1,29 @@
-From: Jiri Pirko <jiri@resnulli.us>
-Subject: Re: [PATCH] ipv6: expose RFC4191 route preference via rtnetlink
-Date: Tue, 10 Mar 2015 17:04:23 +0100
-Message-ID: <20150310160423.GC2016@nanopsycho.orion>
-References: <1425376912-31983-1-git-send-email-lkundrak@v3.sk>
- <20150303151715.GA2020@nanopsycho.lan>
- <1426003013.3963.33.camel@v3.sk>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v2 14/18] ARM: Add STM32 family machine
+Date: Tue, 10 Mar 2015 16:10:21 +0100
+Message-ID: <2736580.bRymLWnSQl@wuerfel>
+References: <1424455277-29983-1-git-send-email-mcoquelin.stm32@gmail.com> <1424455277-29983-15-git-send-email-mcoquelin.stm32@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1426003013.3963.33.camel@v3.sk>
+In-Reply-To: <1424455277-29983-15-git-send-email-mcoquelin.stm32@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Lubomir Rintel <lkundrak@v3.sk>
-Cc: netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>
+To: linux-arm-kernel@lists.infradead.org
+Cc: Maxime Coquelin <mcoquelin.stm32@gmail.com>, u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, N
 List-Id: linux-api@vger.kernel.org
 
-Tue, Mar 10, 2015 at 04:56:53PM CET, lkundrak@v3.sk wrote:
->On Tue, 2015-03-03 at 16:17 +0100, Jiri Pirko wrote:
->> Tue, Mar 03, 2015 at 11:01:52AM CET, lkundrak@v3.sk wrote:
->> >This makes it possible to retain the route preference when RAs are handled in
->> >userspace.
->> >
->> >Signed-off-by: Lubomir Rintel <lkundrak@v3.sk>
->> >---
->> > include/uapi/linux/rtnetlink.h |  1 +
->> > net/ipv6/route.c               | 16 +++++++++++++++-
->> > 2 files changed, 16 insertions(+), 1 deletion(-)
->> >
->> >diff --git a/include/uapi/linux/rtnetlink.h b/include/uapi/linux/rtnetlink.h
->> >index 5cc5d66..0671524 100644
->> >--- a/include/uapi/linux/rtnetlink.h
->> >+++ b/include/uapi/linux/rtnetlink.h
->> >@@ -303,6 +303,7 @@ enum rtattr_type_t {
->> > 	RTA_TABLE,
->> > 	RTA_MARK,
->> > 	RTA_MFC_STATS,
->> >+	RTA_PREF,
->> > 	__RTA_MAX
->> > };
->> > 
->> >diff --git a/net/ipv6/route.c b/net/ipv6/route.c
->> >index 47b5109..08f689e 100644
->> >--- a/net/ipv6/route.c
->> >+++ b/net/ipv6/route.c
->> >@@ -2401,6 +2401,7 @@ static const struct nla_policy rtm_ipv6_policy[RTA_MAX+1] = {
->> > 	[RTA_PRIORITY]          = { .type = NLA_U32 },
->> > 	[RTA_METRICS]           = { .type = NLA_NESTED },
->> > 	[RTA_MULTIPATH]		= { .len = sizeof(struct rtnexthop) },
->> >+	[RTA_PREF]              = { .type = NLA_U8 },
->> > };
->> > 
->> > static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
->> >@@ -2408,6 +2409,7 @@ static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
->> > {
->> > 	struct rtmsg *rtm;
->> > 	struct nlattr *tb[RTA_MAX+1];
->> >+	unsigned int pref;
->> > 	int err;
->> > 
->> > 	err = nlmsg_parse(nlh, sizeof(*rtm), tb, RTA_MAX, rtm_ipv6_policy);
->> >@@ -2483,6 +2485,14 @@ static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
->> > 		cfg->fc_mp_len = nla_len(tb[RTA_MULTIPATH]);
->> > 	}
->> > 
->> >+	if (tb[RTA_PREF]) {
->> >+		pref = nla_get_u8(tb[RTA_PREF]);
->> >+		if (pref == ICMPV6_ROUTER_PREF_LOW ||
->> >+		    pref == ICMPV6_ROUTER_PREF_MEDIUM ||
->> >+		    pref == ICMPV6_ROUTER_PREF_HIGH)
->> >+			cfg->fc_flags |= RTF_PREF(pref);
->> 
->> Don't we want to do "goto errout;" in case pref is invalid ?
->
->I'm not sure. If RFC 4191 suggests that the invalid value ought to be
->ignored (treated as medium). It could be done in the userspace or the
->userspace could just relay whatever it got in the NDP message to the
->kernel.
+On Friday 20 February 2015 19:01:13 Maxime Coquelin wrote:
+> +static void __init stm32_timer_init(void)
+> +{
+> +       of_clk_init(NULL);
+> +       reset_controller_of_init();
+> +       clocksource_of_init();
+> +
+> +}
 
-In that case I would suggest in case of invalid value to set pref to
-ICMPV6_ROUTER_PREF_MEDIUM.
+Don't do that. As I said, I'd rather not introduce reset_controller_of_init()
+at all, but if we end up doing it, it should be run by default for
+any machine that has an empty timer_init callback.
 
->
->What is your opinion on this?
->
->Thank you,
->Lubo
->
+	Arnd
