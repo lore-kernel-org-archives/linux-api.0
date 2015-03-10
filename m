@@ -1,61 +1,74 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH 0/3] selftests: ptrace, kcmp, efivars build failure fixes
-Date: Tue, 10 Mar 2015 17:40:46 -0600
-Message-ID: <54FF80FE.1040708@osg.samsung.com>
-References: <cover.1426022048.git.shuahkh@osg.samsung.com> <1426030513.20917.2.camel@ellerman.id.au> <54FF803E.9030407@osg.samsung.com>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH] kbuild: Don't pass -rR to selftest makefiles
+Date: Wed, 11 Mar 2015 10:49:46 +1100
+Message-ID: <1426031386.20917.4.camel@ellerman.id.au>
+References: <1425464362-28876-1-git-send-email-mpe@ellerman.id.au>
+	 <54FDAE28.6050801@osg.samsung.com> <54FE2377.9040709@osg.samsung.com>
+	 <1426030567.20917.3.camel@ellerman.id.au>
+	 <54FF809F.7020205@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54FF803E.9030407-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <54FF809F.7020205-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: mmarek-AlSwsSmVLrQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/10/2015 05:37 PM, Shuah Khan wrote:
-> On 03/10/2015 05:35 PM, Michael Ellerman wrote:
->> On Tue, 2015-03-10 at 16:00 -0600, Shuah Khan wrote:
->>> ptrace, efivars, and kcmp Makefiles don't have explicit build rule.
->>> As a result, build fails when make is run from top level Makefile
->>> target kselftest. Without the explicit rule, make works only when
->>> it is run in the current directory or from selftests directory.
->>> Fxing the problems by adding an explicit build rule to fix the
->>> problem.
->>>
->>> Shuah Khan (3):
->>>   selftests: ptrace build fails when invoked from kselftest target
->>>   selftests: efivars build fails when invoked from kselftest target
->>>   selftests: kcmp build fails when invoked from kselftest target
->>>
->>>  tools/testing/selftests/efivarfs/Makefile | 2 ++
->>>  tools/testing/selftests/kcmp/Makefile     | 5 +++--
->>>  tools/testing/selftests/ptrace/Makefile   | 5 +++--
->>>  3 files changed, 8 insertions(+), 4 deletions(-)
->>
->> What? No. This is the bug my patch to filter the make flags fixes.
->>
->> cheers
->>
->>
-> 
-> Michael,
-> 
-> Did you see my email from yesterday on how your patch introduced
-> more problems. Can you please make sure the patches you send work
-> and don't introduce problems. I am having this issue with a lot
-> of your patches.
-> 
+On Tue, 2015-03-10 at 17:39 -0600, Shuah Khan wrote:
+> On 03/10/2015 05:36 PM, Michael Ellerman wrote:
+> > On Mon, 2015-03-09 at 16:49 -0600, Shuah Khan wrote:
+> >> On 03/09/2015 08:28 AM, Shuah Khan wrote:
+> >>> On 03/04/2015 03:19 AM, Michael Ellerman wrote:
+> >>>> The makefiles under tools/testing/selftests are not real kbuild
+> >>>> makefiles, they are regular stand alone makefiles. As such they =
+*do*
+> >>>> want all the standard implicit rules and variables defined.
+> >>>>
+> >>>> So before calling those makefiles, filter -rR out of MAKEFLAGS.
+> >>>>
+> >>>> Without this not all the selftests are built correctly when call=
+ed via
+> >>>> the top-level Makefile.
+> >>>>
+> >>>> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+> >>>
+> >>> Hi Michal,
+> >>>
+> >>> Could you please take this patch in your tree.
+> >>>
+> >>> Acked-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> >>>
+> >>
+> >> I am changing this to a Nack. This is not fully cooked.
+> >> I am seeing new failures on some tests.
+> >>
+> >> gcc: error: elf_x86_64: No such file or directory
+> >> gcc: error: unrecognized command line option =E2=80=98-m=E2=80=99
+> >=20
+> > I can't reproduce that here. In what way do you think it's related =
+to this
+> > patch?
+>=20
+> I have just your patch on tops of linux 4.0-rc3 and ran
+> make kselftest and that's what I see.
+>=20
+> If you can fix this problem I can take your patch, otherwise,
+> I have to go with individual Makefiles fixes.
 
-btw your patch doesn't fix the header file include problem. I don't
-see any reason why individual Makefile shouldn't address this problem.
+OK I see it now, only happens on x86.
 
-thanks,
--- Shuah
+It looks like it's coming in via kbuild. Though I can only see it being=
+ set in
+arch/x86/Makefile.um, and I don't know why that is being sourced. But i=
+t must
+be.
 
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+So this is another symptom of running via the top-level Makefile rather=
+ than
+directly.
+
+I'll try and find a fix.
+
+cheers
