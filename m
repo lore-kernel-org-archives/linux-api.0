@@ -1,29 +1,43 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [PATCH 0/3] selftests: ptrace, kcmp, efivars build failure fixes
-Date: Tue, 10 Mar 2015 16:00:56 -0600
-Message-ID: <cover.1426022048.git.shuahkh@osg.samsung.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: [PATCH 3/3] selftests: kcmp build fails when invoked from kselftest target
+Date: Tue, 10 Mar 2015 16:00:59 -0600
+Message-ID: <80f321919d8d1f804c4933acac9b044d4c6626eb.1426022048.git.shuahkh@osg.samsung.com>
+References: <cover.1426022048.git.shuahkh@osg.samsung.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1426022048.git.shuahkh@osg.samsung.com>
+In-Reply-To: <cover.1426022048.git.shuahkh@osg.samsung.com>
+References: <cover.1426022048.git.shuahkh@osg.samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: gorcunov@openvz.org, akpm@linux-foundation.org, tranmanphong@gmail.com, mpe@ellerman.id.au
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-ptrace, efivars, and kcmp Makefiles don't have explicit build rule.
-As a result, build fails when make is run from top level Makefile
-target kselftest. Without the explicit rule, make works only when
-it is run in the current directory or from selftests directory.
-Fxing the problems by adding an explicit build rule to fix the
-problem.
+kcmp Makefile doesn't have an explicit build rule. As a result,
+kcmp build fails, when it is run from top level Makefile target
+kselftest. Without the explicit rule, make works only when it is
+run in the current directory or from selftests directory. Add an
+explicit build rule to fix the problem. In addition, build fails
+as it can't find kcmp.h. Fix it by passing CFLAGS.
 
-Shuah Khan (3):
-  selftests: ptrace build fails when invoked from kselftest target
-  selftests: efivars build fails when invoked from kselftest target
-  selftests: kcmp build fails when invoked from kselftest target
+Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+---
+ tools/testing/selftests/kcmp/Makefile | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
- tools/testing/selftests/efivarfs/Makefile | 2 ++
- tools/testing/selftests/kcmp/Makefile     | 5 +++--
- tools/testing/selftests/ptrace/Makefile   | 5 +++--
- 3 files changed, 8 insertions(+), 4 deletions(-)
-
+diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
+index ff0eefd..83383eb 100644
+--- a/tools/testing/selftests/kcmp/Makefile
++++ b/tools/testing/selftests/kcmp/Makefile
+@@ -1,7 +1,8 @@
+ CC := $(CROSS_COMPILE)$(CC)
+-CFLAGS += -I../../../../usr/include/
++CFLAGS += -I../../../../include/uapi -I../../../../usr/include/
+ 
+-all: kcmp_test
++all:
++	$(CC) $(CFLAGS) kcmp_test.c -o kcmp_test
+ 
+ run_tests: all
+ 	@./kcmp_test || echo "kcmp_test: [FAIL]"
 -- 
 2.1.0
