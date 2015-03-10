@@ -1,81 +1,36 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: Re: [PATCH 33/45] include/uapi/asm-generic/signal.h: include
- stdlib.h in userspace
-Date: Wed, 11 Mar 2015 00:58:28 +0200
-Message-ID: <20150310225828.GZ12550@lakka.kapsi.fi>
-References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
- <1424127948-22484-34-git-send-email-mikko.rapeli@iki.fi>
- <2372547.aJh8O9JSDy@wuerfel>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH 0/3] selftests: ptrace, kcmp, efivars build failure fixes
+Date: Wed, 11 Mar 2015 10:35:13 +1100
+Message-ID: <1426030513.20917.2.camel@ellerman.id.au>
+References: <cover.1426022048.git.shuahkh@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <2372547.aJh8O9JSDy@wuerfel>
-Sender: linux-arch-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1426022048.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 17, 2015 at 10:44:48AM +0100, Arnd Bergmann wrote:
-> On Tuesday 17 February 2015 00:05:36 Mikko Rapeli wrote:
-> > Fixes compiler warning:
-> > error: unknown type name =E2=80=98size_t=E2=80=99
-> >=20
-> > Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
-> > ---
-> >  include/uapi/asm-generic/signal.h | 4 ++++
-> >  1 file changed, 4 insertions(+)
-> >=20
-> > diff --git a/include/uapi/asm-generic/signal.h b/include/uapi/asm-g=
-eneric/signal.h
-> > index 9df61f1..8a341a2 100644
-> > --- a/include/uapi/asm-generic/signal.h
-> > +++ b/include/uapi/asm-generic/signal.h
-> > @@ -3,6 +3,10 @@
-> > =20
-> >  #include <linux/types.h>
-> > =20
-> > +#ifndef __KERNEL__
-> > +#include <stdlib.h>
-> > +#endif
-> > +
->=20
-> Hmm, maybe we should use __kernel_size_t instead?
+On Tue, 2015-03-10 at 16:00 -0600, Shuah Khan wrote:
+> ptrace, efivars, and kcmp Makefiles don't have explicit build rule.
+> As a result, build fails when make is run from top level Makefile
+> target kselftest. Without the explicit rule, make works only when
+> it is run in the current directory or from selftests directory.
+> Fxing the problems by adding an explicit build rule to fix the
+> problem.
+> 
+> Shuah Khan (3):
+>   selftests: ptrace build fails when invoked from kselftest target
+>   selftests: efivars build fails when invoked from kselftest target
+>   selftests: kcmp build fails when invoked from kselftest target
+> 
+>  tools/testing/selftests/efivarfs/Makefile | 2 ++
+>  tools/testing/selftests/kcmp/Makefile     | 5 +++--
+>  tools/testing/selftests/ptrace/Makefile   | 5 +++--
+>  3 files changed, 8 insertions(+), 4 deletions(-)
 
-This problem is in several uapi header files on x86:
+What? No. This is the bug my patch to filter the make flags fixes.
 
-asm-generic/shmbuf.h
-asm-generic/signal.h
-asm/signal.h
-drm/drm.h
-linux/agpgart.h
-linux/kexec.h
-linux/ncp_fs.h
-linux/nfc.h
-linux/omapfb.h
-linux/reiserfs_xattr.h
-linux/sysctl.h
-sound/asound.h
-
-so I guess using __kernel_size_t is the correct approach for all of the=
-m,
-right?
-
-linux/kexec.h seems suspicious though:
-
-#ifndef __KERNEL__
-/*
- * This structure is used to hold the arguments that are used when
- * loading  kernel binaries.
- */
-struct kexec_segment {
-        const void *buf;
-        size_t bufsz;
-        const void *mem;
-        size_t memsz;
-};
-
-#endif /* __KERNEL__ */
-
--Mikko
+cheers
