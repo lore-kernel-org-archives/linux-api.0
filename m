@@ -1,148 +1,549 @@
-From: Jean Delvare <jdelvare-l3A5Bk7waGM@public.gmane.org>
-Subject: Re: [dmidecode] [Patch v4] firmware: dmi-sysfs: add SMBIOS entry
- point area attribute
-Date: Tue, 10 Mar 2015 10:13:27 +0100
-Message-ID: <1425978807.24849.22.camel@chaos.site>
-References: <1423069563-26467-1-git-send-email-ivan.khoronzhuk@linaro.org>
-	 <20150226103622.09b9870a@endymion.delvare> <54F6FAE7.30801@globallogic.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54F6FAE7.30801-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Ivan.khoronzhuk" <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
-Cc: Ivan Khoronzhuk <ivan.khoronzhuk-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dmidecode-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, msalter-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+From: Gilad Broner <gbroner@codeaurora.org>
+Subject: [PATCH v5 1/3] scsi: ufs: add ioctl interface for query request
+Date: Tue, 10 Mar 2015 13:47:13 +0200
+Message-ID: <1425988035-966-2-git-send-email-gbroner@codeaurora.org>
+References: <1425988035-966-1-git-send-email-gbroner@codeaurora.org>
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+In-Reply-To: <1425988035-966-1-git-send-email-gbroner@codeaurora.org>
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: James.Bottomley@HansenPartnership.com
+Cc: linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-arm-msm@vger.kernel.org, santoshsy@gmail.com, linux-scsi-owner@vger.kernel.org, subhashj@codeaurora.org, ygardi@codeaurora.org, draviv@codeaurora.org, Noa Rubens <noag@codeaurora.org>, Raviv Shvili <rshvili@codeaurora.org>, Vinayak Holikatti <vinholikatti@gmail.com>, "James E.J. Bottomley" <JBottomley@parallels.com>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Ivan,
+From: Dolev Raviv <draviv@codeaurora.org>
 
-Sorry for the late reply. I think I addressed some points in other
-replies already, but for completeness let me reply to this post too.
+This patch exposes the ioctl interface for UFS driver via SCSI device
+ioctl interface. As of now UFS driver would provide the ioctl for query
+interface to connected UFS device.
 
-Le Wednesday 04 March 2015 =C3=A0 14:30 +0200, Ivan.khoronzhuk a =C3=A9=
-crit :
-> On 02/26/2015 11:36 AM, Jean Delvare wrote:
-> > On Wed,  4 Feb 2015 19:06:03 +0200, Ivan Khoronzhuk wrote:
-> >> diff --git a/Documentation/ABI/testing/sysfs-firmware-dmi b/Docume=
-ntation/ABI/testing/sysfs-firmware-dmi
-> >> index c78f9ab..3a9ffe8 100644
-> >> --- a/Documentation/ABI/testing/sysfs-firmware-dmi
-> >> +++ b/Documentation/ABI/testing/sysfs-firmware-dmi
-> >> @@ -12,6 +12,16 @@ Description:
-> >>   		cannot ensure that the data as exported to userland is
-> >>   		without error either.
-> >>  =20
-> >> +		The firmware provides DMI structures as a packed list of
-> >> +		data referenced by a SMBIOS table entry point. The SMBIOS
-> >> +		entry point contains general information, like SMBIOS
-> >> +		version, DMI table size, etc. The structure, content and
-> >> +		size of SMBIOS entry point is dependent on SMBIOS version.
-> >> +		That's why SMBIOS entry point is represented in dmi sysfs
-> >> +		like a raw attribute and is accessible via
-> >> +		/sys/firmware/dmi/smbios_raw_header. The format of SMBIOS
-> > As mentioned before, I don't like the name "smbios_raw_header". I t=
-hink
-> > it should be "smbios_entry_point" or similar.
->=20
-> If Matt is OK to get another version,
-> Let it be smbios_entry_point.
-> If it's more convenient, it should be changed while it's possible.
+Signed-off-by: Dolev Raviv <draviv@codeaurora.org>
+Signed-off-by: Noa Rubens <noag@codeaurora.org>
+Signed-off-by: Raviv Shvili <rshvili@codeaurora.org>
+Signed-off-by: Yaniv Gardi <ygardi@codeaurora.org>
+---
+ drivers/scsi/ufs/ufs.h        |  53 +++-------
+ drivers/scsi/ufs/ufshcd.c     | 225 +++++++++++++++++++++++++++++++++++++++++-
+ include/uapi/scsi/Kbuild      |   1 +
+ include/uapi/scsi/ufs/Kbuild  |   3 +
+ include/uapi/scsi/ufs/ioctl.h |  57 +++++++++++
+ include/uapi/scsi/ufs/ufs.h   |  66 +++++++++++++
+ 6 files changed, 361 insertions(+), 44 deletions(-)
+ create mode 100644 include/uapi/scsi/ufs/Kbuild
+ create mode 100644 include/uapi/scsi/ufs/ioctl.h
+ create mode 100644 include/uapi/scsi/ufs/ufs.h
 
-Great, thanks.
-
-> >> @@ -669,6 +699,18 @@ static int __init dmi_sysfs_init(void)
-> >>   		goto err;
-> >>   	}
-> >>  =20
-> >> +	smbios_raw_header =3D dmi_get_smbios_entry_area(&size);
-> >> +	if (!smbios_raw_header) {
-> >> +		pr_debug("dmi-sysfs: SMBIOS raw data is not available.\n");
-> >> +		error =3D -EINVAL;
-> >> +		goto err;
-> >> +	}
-> > I don't think this should have been a fatal error. Just because for
-> > some reason dmi_get_smbios_entry_area() returned NULL is no good re=
-ason
-> > for nor exposing /sys/firmware/dmi/entries as we used to.
->=20
-> It issues an error only in case of when entry table is not available,
-> if entry point is absent then dmi table is not available a fortiori.
-> So there is no reason to continue from that point.
-
-Well it could also fail because of an error in the code ;-) But OK, I
-agree with you here.
-
-> > But anyway this is no longer relevant if the code is moved to dmi_s=
-can
-> > as I suggested.
-> >
-> >> +
-> >> +	/* Create the raw binary file to access the entry area */
-> >> +	smbios_raw_area_attr.size =3D size;
-> >> +	if (sysfs_create_bin_file(dmi_kobj, &smbios_raw_area_attr))
-> >> +		goto err;
-> > I think this should have had a corresponding call to
-> > sysfs_remove_bin_file() in dmi_sysfs_exit(). (Again no longer relev=
-ant
-> > if the code is moved.)
->=20
-> The removing is done in kobject_del().
-> Doesn't it? In another way it should be done for
-> dmi/entries/*/raw attributes also.
-
-It _is_ done for other attributes already:
-
-	kset_unregister(dmi_kset);
-
-Which is exactly why I believe it should be done for
-smbios_raw_area_attr too. All other kernel drivers are calling
-sysfs_create_bin_file() or equivalent in their cleanup function and I
-see no reason why this driver would be an exception.
-
-> > There's one thing I do not understand. I seem to understand that th=
-e
-> > goal behind this patch is to be able to run dmidecode without /dev/=
-mem.
-> > Dmidecode currently reads 2 areas from /dev/mem: the 0xF0000-0xFFFF=
-=46
-> > area in search of the entry point, and the DMI data table itself. W=
-ith
-> > this patch you make the entry point available through sysfs. But
-> > dmidecode will still need to access /dev/mem to access the DMI data
-> > table. So that does not really solve anything, does it?
->=20
-> It's supposed to read DMI table via entries presented by dmi-sysfs.
-> It contains raw attributes that can be used for these purposes.
-> No need to use /dev/mem.
-
-Yes, I understood this meanwhile, sorry.
-
-> Another case if you want to add binary of whole dmi table to be able =
-to
-> read it directly in order to parse in dmidecode w/o any additional he=
-adache
-> with open/close. Well, it partly dupes currently present dmi-sysfs.
-
-In fact dmi-sysfs already duplicates a lot of code which was already
-present in dmidecode and libsmbios. And exporting the raw table will
-require way less code than the implementation you proposed originally.
-So the code duplication argument doesn't hold, sorry.
-
-> But it simplifies dmi table parsing for dmidecode, and who wants to u=
-se
-> dmi-sysfs, let them use it, but dmidecode will be reading raw entry.
-> Well let it be. Why not.
-
-Yes, this is exactly my point.
-
-> If others are OK, for dmidecode, and probably others tools also,
-> kernel can constantly expose two tables under /sys/firmware/dmi/table=
-s/
-> smbios_entry_point and dmi_table. Independently on dmi-sysfs.
-
-That's what I would like to see implemented, yes, thank you very much.
-
---=20
-Jean Delvare
-SUSE L3 Support
+diff --git a/drivers/scsi/ufs/ufs.h b/drivers/scsi/ufs/ufs.h
+index 42c459a..1f023c4 100644
+--- a/drivers/scsi/ufs/ufs.h
++++ b/drivers/scsi/ufs/ufs.h
+@@ -38,6 +38,7 @@
+ 
+ #include <linux/mutex.h>
+ #include <linux/types.h>
++#include <scsi/ufs/ufs.h>
+ 
+ #define MAX_CDB_SIZE	16
+ #define GENERAL_UPIU_REQUEST_SIZE 32
+@@ -71,6 +72,16 @@ enum {
+ 	UFS_UPIU_RPMB_WLUN		= 0xC4,
+ };
+ 
++/**
++ * ufs_is_valid_unit_desc_lun - checks if the given LUN has a unit descriptor
++ * @lun: LU number to check
++ * @return: true if the lun has a matching unit descriptor, false otherwise
++ */
++static inline bool ufs_is_valid_unit_desc_lun(u8 lun)
++{
++	return (lun == UFS_UPIU_RPMB_WLUN || (lun < UFS_UPIU_MAX_GENERAL_LUN));
++}
++
+ /*
+  * UFS Protocol Information Unit related definitions
+  */
+@@ -126,35 +137,6 @@ enum {
+ 	UPIU_QUERY_FUNC_STANDARD_WRITE_REQUEST          = 0x81,
+ };
+ 
+-/* Flag idn for Query Requests*/
+-enum flag_idn {
+-	QUERY_FLAG_IDN_FDEVICEINIT      = 0x01,
+-	QUERY_FLAG_IDN_PWR_ON_WPE	= 0x03,
+-	QUERY_FLAG_IDN_BKOPS_EN         = 0x04,
+-};
+-
+-/* Attribute idn for Query requests */
+-enum attr_idn {
+-	QUERY_ATTR_IDN_ACTIVE_ICC_LVL	= 0x03,
+-	QUERY_ATTR_IDN_BKOPS_STATUS	= 0x05,
+-	QUERY_ATTR_IDN_EE_CONTROL	= 0x0D,
+-	QUERY_ATTR_IDN_EE_STATUS	= 0x0E,
+-};
+-
+-/* Descriptor idn for Query requests */
+-enum desc_idn {
+-	QUERY_DESC_IDN_DEVICE		= 0x0,
+-	QUERY_DESC_IDN_CONFIGURAION	= 0x1,
+-	QUERY_DESC_IDN_UNIT		= 0x2,
+-	QUERY_DESC_IDN_RFU_0		= 0x3,
+-	QUERY_DESC_IDN_INTERCONNECT	= 0x4,
+-	QUERY_DESC_IDN_STRING		= 0x5,
+-	QUERY_DESC_IDN_RFU_1		= 0x6,
+-	QUERY_DESC_IDN_GEOMETRY		= 0x7,
+-	QUERY_DESC_IDN_POWER		= 0x8,
+-	QUERY_DESC_IDN_MAX,
+-};
+-
+ enum desc_header_offset {
+ 	QUERY_DESC_LENGTH_OFFSET	= 0x00,
+ 	QUERY_DESC_DESC_TYPE_OFFSET	= 0x01,
+@@ -247,19 +229,6 @@ enum bkops_status {
+ 	BKOPS_STATUS_MAX		 = BKOPS_STATUS_CRITICAL,
+ };
+ 
+-/* UTP QUERY Transaction Specific Fields OpCode */
+-enum query_opcode {
+-	UPIU_QUERY_OPCODE_NOP		= 0x0,
+-	UPIU_QUERY_OPCODE_READ_DESC	= 0x1,
+-	UPIU_QUERY_OPCODE_WRITE_DESC	= 0x2,
+-	UPIU_QUERY_OPCODE_READ_ATTR	= 0x3,
+-	UPIU_QUERY_OPCODE_WRITE_ATTR	= 0x4,
+-	UPIU_QUERY_OPCODE_READ_FLAG	= 0x5,
+-	UPIU_QUERY_OPCODE_SET_FLAG	= 0x6,
+-	UPIU_QUERY_OPCODE_CLEAR_FLAG	= 0x7,
+-	UPIU_QUERY_OPCODE_TOGGLE_FLAG	= 0x8,
+-};
+-
+ /* Query response result code */
+ enum {
+ 	QUERY_RESULT_SUCCESS                    = 0x00,
+diff --git a/drivers/scsi/ufs/ufshcd.c b/drivers/scsi/ufs/ufshcd.c
+index 5d60a86..cb357f8 100644
+--- a/drivers/scsi/ufs/ufshcd.c
++++ b/drivers/scsi/ufs/ufshcd.c
+@@ -3,7 +3,7 @@
+  *
+  * This code is based on drivers/scsi/ufs/ufshcd.c
+  * Copyright (C) 2011-2013 Samsung India Software Operations
+- * Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
++ * Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
+  *
+  * Authors:
+  *	Santosh Yaraganavi <santosh.sy@samsung.com>
+@@ -39,6 +39,7 @@
+ 
+ #include <linux/async.h>
+ #include <linux/devfreq.h>
++#include <scsi/ufs/ioctl.h>
+ 
+ #include "ufshcd.h"
+ #include "unipro.h"
+@@ -74,6 +75,9 @@
+ /* Interrupt aggregation default timeout, unit: 40us */
+ #define INT_AGGR_DEF_TO	0x02
+ 
++/* IOCTL opcode for command - ufs set device read only */
++#define UFS_IOCTL_BLKROSET      BLKROSET
++
+ #define ufshcd_toggle_vreg(_dev, _vreg, _on)				\
+ 	({                                                              \
+ 		int _ret;                                               \
+@@ -1882,7 +1886,7 @@ static inline int ufshcd_read_unit_desc_param(struct ufs_hba *hba,
+ 	 * Unit descriptors are only available for general purpose LUs (LUN id
+ 	 * from 0 to 7) and RPMB Well known LU.
+ 	 */
+-	if (lun != UFS_UPIU_RPMB_WLUN && (lun >= UFS_UPIU_MAX_GENERAL_LUN))
++	if (!ufs_is_valid_unit_desc_lun(lun))
+ 		return -EOPNOTSUPP;
+ 
+ 	return ufshcd_read_desc_param(hba, QUERY_DESC_IDN_UNIT, lun,
+@@ -4201,6 +4205,222 @@ static void ufshcd_async_scan(void *data, async_cookie_t cookie)
+ 	ufshcd_probe_hba(hba);
+ }
+ 
++/**
++ * ufshcd_query_ioctl - perform user read queries
++ * @hba: per-adapter instance
++ * @lun: used for lun specific queries
++ * @buffer: user space buffer for reading and submitting query data and params
++ * @return: 0 for success negative error code otherwise
++ *
++ * Expected/Submitted buffer structure is struct ufs_ioctl_query_data.
++ * It will read the opcode, idn and buf_length parameters, and, put the
++ * response in the buffer field while updating the used size in buf_length.
++ */
++static int ufshcd_query_ioctl(struct ufs_hba *hba, u8 lun, void __user *buffer)
++{
++	struct ufs_ioctl_query_data *ioctl_data;
++	int err = 0;
++	int length = 0;
++	void *data_ptr;
++	bool flag;
++	u32 att;
++	u8 index;
++	u8 *desc = NULL;
++
++	ioctl_data = kzalloc(sizeof(struct ufs_ioctl_query_data), GFP_KERNEL);
++	if (!ioctl_data) {
++		err = -ENOMEM;
++		goto out;
++	}
++
++	/* extract params from user buffer */
++	err = copy_from_user(ioctl_data, buffer,
++			sizeof(struct ufs_ioctl_query_data));
++	if (err) {
++		dev_err(hba->dev,
++			"%s: Failed copying buffer from user, err %d\n",
++			__func__, err);
++		goto out_release_mem;
++	}
++
++	/* verify legal parameters & send query */
++	switch (ioctl_data->opcode) {
++	case UPIU_QUERY_OPCODE_READ_DESC:
++		switch (ioctl_data->idn) {
++		case QUERY_DESC_IDN_DEVICE:
++		case QUERY_DESC_IDN_CONFIGURAION:
++		case QUERY_DESC_IDN_INTERCONNECT:
++		case QUERY_DESC_IDN_GEOMETRY:
++		case QUERY_DESC_IDN_POWER:
++			index = 0;
++			break;
++		case QUERY_DESC_IDN_UNIT:
++			if (!ufs_is_valid_unit_desc_lun(lun)) {
++				dev_err(hba->dev,
++					"%s: No unit descriptor for lun 0x%x\n",
++					__func__, lun);
++				err = -EINVAL;
++				goto out_release_mem;
++			}
++			index = lun;
++			break;
++		default:
++			goto out_einval;
++		}
++		length = min_t(int, QUERY_DESC_MAX_SIZE,
++				ioctl_data->buf_size);
++		desc = kzalloc(length, GFP_KERNEL);
++		if (!desc) {
++			dev_err(hba->dev, "%s: Failed allocating %d bytes\n",
++					__func__, length);
++			err = -ENOMEM;
++			goto out_release_mem;
++		}
++		err = ufshcd_query_descriptor(hba, ioctl_data->opcode,
++				ioctl_data->idn, index, 0, desc, &length);
++		break;
++	case UPIU_QUERY_OPCODE_READ_ATTR:
++		switch (ioctl_data->idn) {
++		case QUERY_ATTR_IDN_BOOT_LU_EN:
++		case QUERY_ATTR_IDN_POWER_MODE:
++		case QUERY_ATTR_IDN_ACTIVE_ICC_LVL:
++		case QUERY_ATTR_IDN_OOO_DATA_EN:
++		case QUERY_ATTR_IDN_BKOPS_STATUS:
++		case QUERY_ATTR_IDN_PURGE_STATUS:
++		case QUERY_ATTR_IDN_MAX_DATA_IN:
++		case QUERY_ATTR_IDN_MAX_DATA_OUT:
++		case QUERY_ATTR_IDN_REF_CLK_FREQ:
++		case QUERY_ATTR_IDN_CONF_DESC_LOCK:
++		case QUERY_ATTR_IDN_MAX_NUM_OF_RTT:
++		case QUERY_ATTR_IDN_EE_CONTROL:
++		case QUERY_ATTR_IDN_EE_STATUS:
++		case QUERY_ATTR_IDN_SECONDS_PASSED:
++			index = 0;
++			break;
++		case QUERY_ATTR_IDN_DYN_CAP_NEEDED:
++		case QUERY_ATTR_IDN_CORR_PRG_BLK_NUM:
++			index = lun;
++			break;
++		default:
++			goto out_einval;
++		}
++		err = ufshcd_query_attr(hba, ioctl_data->opcode,
++					ioctl_data->idn, index, 0, &att);
++		break;
++	case UPIU_QUERY_OPCODE_READ_FLAG:
++		switch (ioctl_data->idn) {
++		case QUERY_FLAG_IDN_FDEVICEINIT:
++		case QUERY_FLAG_IDN_PERMANENT_WPE:
++		case QUERY_FLAG_IDN_PWR_ON_WPE:
++		case QUERY_FLAG_IDN_BKOPS_EN:
++		case QUERY_FLAG_IDN_PURGE_ENABLE:
++		case QUERY_FLAG_IDN_FPHYRESOURCEREMOVAL:
++		case QUERY_FLAG_IDN_BUSY_RTC:
++			break;
++		default:
++			goto out_einval;
++		}
++		err = ufshcd_query_flag(hba, ioctl_data->opcode,
++					ioctl_data->idn, &flag);
++		break;
++	default:
++		goto out_einval;
++	}
++
++	if (err) {
++		dev_err(hba->dev, "%s: Query for idn %d failed\n", __func__,
++					ioctl_data->idn);
++		goto out_release_mem;
++	}
++
++	/*
++	 * copy response data
++	 * As we might end up reading less data then what is specified in
++	 * "ioct_data->buf_size". So we are updating "ioct_data->
++	 * buf_size" to what exactly we have read.
++	 */
++	switch (ioctl_data->opcode) {
++	case UPIU_QUERY_OPCODE_READ_DESC:
++		ioctl_data->buf_size = min_t(int, ioctl_data->buf_size, length);
++		data_ptr = desc;
++		break;
++	case UPIU_QUERY_OPCODE_READ_ATTR:
++		ioctl_data->buf_size = sizeof(u32);
++		data_ptr = &att;
++		break;
++	case UPIU_QUERY_OPCODE_READ_FLAG:
++		ioctl_data->buf_size = 1;
++		data_ptr = &flag;
++		break;
++	default:
++		BUG_ON(true);
++	}
++
++	/* copy to user */
++	err = copy_to_user(buffer, ioctl_data,
++			sizeof(struct ufs_ioctl_query_data));
++	if (err)
++		dev_err(hba->dev, "%s: Failed copying back to user.\n",
++			__func__);
++	err = copy_to_user(buffer + sizeof(struct ufs_ioctl_query_data),
++			data_ptr, ioctl_data->buf_size);
++	if (err)
++		dev_err(hba->dev, "%s: err %d copying back to user.\n",
++				__func__, err);
++	goto out_release_mem;
++
++out_einval:
++	dev_err(hba->dev,
++		"%s: illegal ufs query ioctl data, opcode 0x%x, idn 0x%x\n",
++		__func__, ioctl_data->opcode, (unsigned int)ioctl_data->idn);
++	err = -EINVAL;
++out_release_mem:
++	kfree(ioctl_data);
++	kfree(desc);
++out:
++	return err;
++}
++
++/**
++ * ufshcd_ioctl - ufs ioctl callback registered in scsi_host
++ * @dev: scsi device required for per LUN queries
++ * @cmd: command opcode
++ * @buffer: user space buffer for transferring data
++ *
++ * Supported commands:
++ * UFS_IOCTL_QUERY
++ */
++static int ufshcd_ioctl(struct scsi_device *dev, int cmd, void __user *buffer)
++{
++	struct ufs_hba *hba = shost_priv(dev->host);
++	int err = 0;
++
++	BUG_ON(!hba);
++	if (!buffer) {
++		dev_err(hba->dev, "%s: User buffer is NULL!\n", __func__);
++		return -EINVAL;
++	}
++
++	switch (cmd) {
++	case UFS_IOCTL_QUERY:
++		pm_runtime_get_sync(hba->dev);
++		err = ufshcd_query_ioctl(hba, ufshcd_scsi_to_upiu_lun(dev->lun),
++				buffer);
++		pm_runtime_put_sync(hba->dev);
++		break;
++	case UFS_IOCTL_BLKROSET:
++		err = -ENOIOCTLCMD;
++		break;
++	default:
++		err = -EINVAL;
++		dev_err(hba->dev, "%s: Illegal ufs-IOCTL cmd %d\n", __func__,
++				cmd);
++		break;
++	}
++
++	return err;
++}
++
+ static struct scsi_host_template ufshcd_driver_template = {
+ 	.module			= THIS_MODULE,
+ 	.name			= UFSHCD,
+@@ -4213,6 +4433,7 @@ static struct scsi_host_template ufshcd_driver_template = {
+ 	.eh_abort_handler	= ufshcd_abort,
+ 	.eh_device_reset_handler = ufshcd_eh_device_reset_handler,
+ 	.eh_host_reset_handler   = ufshcd_eh_host_reset_handler,
++	.ioctl			= ufshcd_ioctl,
+ 	.this_id		= -1,
+ 	.sg_tablesize		= SG_ALL,
+ 	.cmd_per_lun		= UFSHCD_CMD_PER_LUN,
+diff --git a/include/uapi/scsi/Kbuild b/include/uapi/scsi/Kbuild
+index 75746d5..d404525 100644
+--- a/include/uapi/scsi/Kbuild
++++ b/include/uapi/scsi/Kbuild
+@@ -1,5 +1,6 @@
+ # UAPI Header export list
+ header-y += fc/
++header-y += ufs/
+ header-y += scsi_bsg_fc.h
+ header-y += scsi_netlink.h
+ header-y += scsi_netlink_fc.h
+diff --git a/include/uapi/scsi/ufs/Kbuild b/include/uapi/scsi/ufs/Kbuild
+new file mode 100644
+index 0000000..cc3ef20
+--- /dev/null
++++ b/include/uapi/scsi/ufs/Kbuild
+@@ -0,0 +1,3 @@
++# UAPI Header export list
++header-y += ioctl.h
++header-y += ufs.h
+diff --git a/include/uapi/scsi/ufs/ioctl.h b/include/uapi/scsi/ufs/ioctl.h
+new file mode 100644
+index 0000000..bc4eed7
+--- /dev/null
++++ b/include/uapi/scsi/ufs/ioctl.h
+@@ -0,0 +1,57 @@
++#ifndef UAPI_UFS_IOCTL_H_
++#define UAPI_UFS_IOCTL_H_
++
++#include <linux/types.h>
++
++/*
++ *  IOCTL opcode for ufs queries has the following opcode after
++ *  SCSI_IOCTL_GET_PCI
++ */
++#define UFS_IOCTL_QUERY			0x5388
++
++/**
++ * struct ufs_ioctl_query_data - used to transfer data to and from user via ioctl
++ * @opcode: type of data to query (descriptor/attribute/flag)
++ * @idn: id of the data structure
++ * @buf_size: number of allocated bytes/data size on return
++ * @buffer: data location
++ *
++ * Received: buffer and buf_size (available space for transferred data)
++ * Submitted: opcode, idn, length, buf_size
++ */
++struct ufs_ioctl_query_data {
++	/*
++	 * User should select one of the opcode defined in "enum query_opcode".
++	 * Please check include/uapi/scsi/ufs/ufs.h for the definition of it.
++	 * Note that only UPIU_QUERY_OPCODE_READ_DESC,
++	 * UPIU_QUERY_OPCODE_READ_ATTR & UPIU_QUERY_OPCODE_READ_FLAG are
++	 * supported as of now. All other query_opcode would be considered
++	 * invalid.
++	 * As of now only read query operations are supported.
++	 */
++	__u32 opcode;
++	/*
++	 * User should select one of the idn from "enum flag_idn" or "enum
++	 * attr_idn" or "enum desc_idn" based on whether opcode above is
++	 * attribute, flag or descriptor.
++	 * Please check include/uapi/scsi/ufs/ufs.h for the definition of it.
++	 */
++	__u8 idn;
++	/*
++	 * User should specify the size of the buffer (buffer[0] below) where
++	 * it wants to read the query data (attribute/flag/descriptor).
++	 * As we might end up reading less data then what is specified in
++	 * buf_size. So we are updating buf_size to what exactly we have read.
++	 */
++	__u16 buf_size;
++	/*
++	 * placeholder for the start of the data buffer where kernel will copy
++	 * the query data (attribute/flag/descriptor) read from the UFS device
++	 * Note:
++	 * For Read Attribute you will have to allocate 4 bytes
++	 * For Read Flag you will have to allocate 1 byte
++	 */
++	__u8 buffer[0];
++};
++
++#endif /* UAPI_UFS_IOCTL_H_ */
+diff --git a/include/uapi/scsi/ufs/ufs.h b/include/uapi/scsi/ufs/ufs.h
+new file mode 100644
+index 0000000..894ea45
+--- /dev/null
++++ b/include/uapi/scsi/ufs/ufs.h
+@@ -0,0 +1,66 @@
++#ifndef UAPI_UFS_H_
++#define UAPI_UFS_H_
++
++/* Flag idn for Query Requests*/
++enum flag_idn {
++	QUERY_FLAG_IDN_FDEVICEINIT		= 0x01,
++	QUERY_FLAG_IDN_PERMANENT_WPE		= 0x02,
++	QUERY_FLAG_IDN_PWR_ON_WPE		= 0x03,
++	QUERY_FLAG_IDN_BKOPS_EN			= 0x04,
++	QUERY_FLAG_IDN_RESERVED1		= 0x05,
++	QUERY_FLAG_IDN_PURGE_ENABLE		= 0x06,
++	QUERY_FLAG_IDN_RESERVED2		= 0x07,
++	QUERY_FLAG_IDN_FPHYRESOURCEREMOVAL      = 0x08,
++	QUERY_FLAG_IDN_BUSY_RTC			= 0x09,
++};
++
++/* Attribute idn for Query requests */
++enum attr_idn {
++	QUERY_ATTR_IDN_BOOT_LU_EN		= 0x00,
++	QUERY_ATTR_IDN_RESERVED			= 0x01,
++	QUERY_ATTR_IDN_POWER_MODE		= 0x02,
++	QUERY_ATTR_IDN_ACTIVE_ICC_LVL		= 0x03,
++	QUERY_ATTR_IDN_OOO_DATA_EN		= 0x04,
++	QUERY_ATTR_IDN_BKOPS_STATUS		= 0x05,
++	QUERY_ATTR_IDN_PURGE_STATUS		= 0x06,
++	QUERY_ATTR_IDN_MAX_DATA_IN		= 0x07,
++	QUERY_ATTR_IDN_MAX_DATA_OUT		= 0x08,
++	QUERY_ATTR_IDN_DYN_CAP_NEEDED		= 0x09,
++	QUERY_ATTR_IDN_REF_CLK_FREQ		= 0x0A,
++	QUERY_ATTR_IDN_CONF_DESC_LOCK		= 0x0B,
++	QUERY_ATTR_IDN_MAX_NUM_OF_RTT		= 0x0C,
++	QUERY_ATTR_IDN_EE_CONTROL		= 0x0D,
++	QUERY_ATTR_IDN_EE_STATUS		= 0x0E,
++	QUERY_ATTR_IDN_SECONDS_PASSED		= 0x0F,
++	QUERY_ATTR_IDN_CNTX_CONF		= 0x10,
++	QUERY_ATTR_IDN_CORR_PRG_BLK_NUM		= 0x11,
++};
++
++/* Descriptor idn for Query requests */
++enum desc_idn {
++	QUERY_DESC_IDN_DEVICE		= 0x0,
++	QUERY_DESC_IDN_CONFIGURAION	= 0x1,
++	QUERY_DESC_IDN_UNIT		= 0x2,
++	QUERY_DESC_IDN_RFU_0		= 0x3,
++	QUERY_DESC_IDN_INTERCONNECT	= 0x4,
++	QUERY_DESC_IDN_STRING		= 0x5,
++	QUERY_DESC_IDN_RFU_1		= 0x6,
++	QUERY_DESC_IDN_GEOMETRY		= 0x7,
++	QUERY_DESC_IDN_POWER		= 0x8,
++	QUERY_DESC_IDN_RFU_2		= 0x9,
++	QUERY_DESC_IDN_MAX,
++};
++
++/* UTP QUERY Transaction Specific Fields OpCode */
++enum query_opcode {
++	UPIU_QUERY_OPCODE_NOP		= 0x0,
++	UPIU_QUERY_OPCODE_READ_DESC	= 0x1,
++	UPIU_QUERY_OPCODE_WRITE_DESC	= 0x2,
++	UPIU_QUERY_OPCODE_READ_ATTR	= 0x3,
++	UPIU_QUERY_OPCODE_WRITE_ATTR	= 0x4,
++	UPIU_QUERY_OPCODE_READ_FLAG	= 0x5,
++	UPIU_QUERY_OPCODE_SET_FLAG	= 0x6,
++	UPIU_QUERY_OPCODE_CLEAR_FLAG	= 0x7,
++	UPIU_QUERY_OPCODE_TOGGLE_FLAG	= 0x8,
++};
++#endif /* UAPI_UFS_H_ */
+-- 
+Qualcomm Israel, on behalf of Qualcomm Innovation Center, Inc.
+The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum,
+a Linux Foundation Collaborative Project
