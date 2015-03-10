@@ -1,79 +1,95 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v2 11/18] pinctrl: Add pinctrl driver for STM32 MCUs
-Date: Tue, 10 Mar 2015 16:08:26 +0100
-Message-ID: <2464742.YZIRrHto62@wuerfel>
-References: <1424455277-29983-1-git-send-email-mcoquelin.stm32@gmail.com>
- <1424455277-29983-12-git-send-email-mcoquelin.stm32@gmail.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH 2/9] selftests: Add install target
+Date: Tue, 10 Mar 2015 09:11:09 -0600
+Message-ID: <54FF098D.7020106@osg.samsung.com>
+References: <1425358302-16680-1-git-send-email-mpe@ellerman.id.au> <1425358302-16680-2-git-send-email-mpe@ellerman.id.au> <20150305185326.GA30620@codemonkey.org.uk> <54FDAC4A.9080703@osg.samsung.com> <54FE1EC0.6000201@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <1424455277-29983-12-git-send-email-mcoquelin.stm32@gmail.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: linux-arm-kernel@lists.infradead.org
-Cc: Mark Rutland <mark.rutland@arm.com>, linux-doc@vger.kernel.org, Linus Walleij <linus.walleij@linaro.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, linux-api@vger.kernel.org, Jiri Slaby <jslaby@suse.cz>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Kees Cook <keescook@chromium.org>, linux-arch@vger.kernel.org, Russell King <linux@arm.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, Antti Palosaari <crope@iki.fi>, geert@linux-m68k.org, linux-serial@vger.kernel.org, u.kleine-koenig@pengutronix.de, devicetree@vger.kernel.org, Philipp Zabel <p.zabel@pengutronix.de>, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Rusty Russell <rusty@rustcorp.com.au>, Tejun Heo <tj@kernel.org>, Rob Herring <robh+dt@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Michal
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <54FE1EC0.6000201-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Dave Jones <davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org>, mmarek-AlSwsSmVLrQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Friday 20 February 2015 19:01:10 Maxime Coquelin wrote:
-> --- /dev/null
-> +++ b/include/dt-bindings/pinctrl/pinctrl-stm32.h
-> @@ -0,0 +1,43 @@
-> +#ifndef _DT_BINDINGS_PINCTRL_STM32_H
-> +#define _DT_BINDINGS_PINCTRL_STM32_H
-> +
-> +/* Modes */
-> +#define IN             0
-> +#define OUT            1
-> +#define ALT            2
-> +#define ANALOG         3
+On 03/09/2015 04:29 PM, Shuah Khan wrote:
+> On 03/09/2015 08:20 AM, Shuah Khan wrote:
+>> On 03/05/2015 11:53 AM, Dave Jones wrote:
+>>> On Tue, Mar 03, 2015 at 03:51:35PM +1100, Michael Ellerman wrote:
+>>>  > This adds make install support to selftests. The basic usage is:
+>>>  > 
+>>>  > $ cd tools/testing/selftests
+>>>  > $ make install
+>>>  > 
+>>>  > That installs into tools/testing/selftests/install, which can then be
+>>>  > copied where ever necessary.
+>>>  > 
+>>>  > The install destination is also configurable using eg:
+>>>  > 
+>>>  > $ INSTALL_PATH=/mnt/selftests make install
+>>>
+>>>  ...
+>>>
+>>>  > +	@# Ask all targets to emit their test scripts
+>>>  > +	echo "#!/bin/bash\n\n" > $(ALL_SCRIPT)
+>>>
+>>> $ ./all.sh 
+>>> -bash: ./all.sh: /bin/bash\n\n: bad interpreter: No such file or directory
+>>>
+>>> Removing the \n\n fixes it.
+>>>
+>>>  > +		echo "cd \$$ROOT\n" >> $(ALL_SCRIPT); \
+>>>
+>>> ditto
+>>>
+>>> 	Dave
+>>
+>> Michael,
+>>
+>> Could you please fix these problems and send the patch.
+>>
+> 
+> Michael,
+> 
+> Did you happen to run run_kselftest.sh from the install
+> directory to make sure all the dependent executables
+> are installed? You are missing a few required dependencies.
+> efivars test for example.
+> 
+> Please run kselftest_install.sh I sent out for review and
+> compare the following:
+> 
+> - contents of install directory created with your patch vs.
+>   my kselftest_install.sh tool
+> - Compare your run_kselftest.sh run with the one that gets
+>   generated with my kselftest_install.sh tool
+> 
+> General rule is all tests that get run when run_tests target
+> is run should run from the install directory using the
+> run_kselftest.sh generated during install.
+> 
 
-I think it's better to prefix all the names with a
-string to identify what they are for, otherwise these
-are way too generic.
+Couple more things. Please change the install directory name
+to kselftest
 
-> +/* Alternate functions */
-> +#define ALT0           ((0 << 2) | ALT)
-> +#define ALT1           ((1 << 2) | ALT)
-> +#define ALT2           ((2 << 2) | ALT)
-> +#define ALT3           ((3 << 2) | ALT)
-> +#define ALT4           ((4 << 2) | ALT)
-> +#define ALT5           ((5 << 2) | ALT)
-> +#define ALT6           ((6 << 2) | ALT)
-> +#define ALT7           ((7 << 2) | ALT)
-> +#define ALT8           ((8 << 2) | ALT)
-> +#define ALT9           ((9 << 2) | ALT)
-> +#define ALT10          ((10 << 2) | ALT)
-> +#define ALT11          ((11 << 2) | ALT)
-> +#define ALT12          ((12 << 2) | ALT)
-> +#define ALT13          ((13 << 2) | ALT)
-> +#define ALT14          ((14 << 2) | ALT)
-> +#define ALT15          ((15 << 2) | ALT)
+tools/testing/selftests/kselftest
+instead of
+tools/testing/selftests/install
 
-You can have a single macro for these like
+Also please flatten the directory structure under the install
+directory. I don't see any value in creating directory for each
+test for install. Also it is makes it cumbersome for users
+to navigate and work with after the install. This would mean cpu
+and memory hot-plug scripts need unique names.
 
-#define STM32_PIN_ALT(x) ((x << 2) | ALT)
-
-> +/* Pull-Up/Down */
-> +#define NO_PULL                0
-> +#define PULL_UP                1
-> +#define PULL_DOWN      2
-> +
-> +/* Type */
-> +#define PUSH_PULL      (0 << 2)
-> +#define OPEN_DRAIN     (1 << 2)
-> +
-
-These should probably not be stm32 specific at all, they sound
-rather generic, so maybe put the definitions into a common file.
+thanks,
+-- Shuah
 
 
-
-	Arnd
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
