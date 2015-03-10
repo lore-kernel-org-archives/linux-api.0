@@ -1,98 +1,30 @@
-From: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v4 8/9] epoll: Add compat version implementation of epoll_pwait1
-Date: Tue, 10 Mar 2015 09:49:14 +0800
-Message-ID: <1425952155-27603-9-git-send-email-famz@redhat.com>
+From: Fam Zheng <famz@redhat.com>
+Subject: [PATCH v4 9/9] x86: Hook up 32 bit compat epoll_pwait1 syscall
+Date: Tue, 10 Mar 2015 09:49:15 +0800
+Message-ID: <1425952155-27603-10-git-send-email-famz@redhat.com>
 References: <1425952155-27603-1-git-send-email-famz@redhat.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1425952155-27603-1-git-send-email-famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Miklos Szeredi <mszeredi-AlSwsSmVLrQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, Rashika Kheria <rashika.kheria-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peter>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1425952155-27603-1-git-send-email-famz@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <mszeredi@suse.cz>, David Drysdale <drysdale@google.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Theodore Ts'o <tytso@mit.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Rashika Kheria <rashika.kheria@gmail.com>, Hugh Dickins <hughd@google.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Fam Zheng <famz@redhat.com>, Peter Zijlstra <peter>
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Fam Zheng <famz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Fam Zheng <famz@redhat.com>
 ---
- fs/eventpoll.c         | 50 ++++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/compat.h |  6 ++++++
- 2 files changed, 56 insertions(+)
+ arch/x86/syscalls/syscall_32.tbl | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/eventpoll.c b/fs/eventpoll.c
-index 06a59fc..b837ea4 100644
---- a/fs/eventpoll.c
-+++ b/fs/eventpoll.c
-@@ -2178,6 +2178,56 @@ COMPAT_SYSCALL_DEFINE6(epoll_pwait, int, epfd,
- 	return epoll_pwait_do(epfd, events, maxevents, CLOCK_MONOTONIC, kt,
- 			      sigmask ? &ksigmask : NULL);
- }
-+
-+struct compat_epoll_wait_params {
-+	int size;
-+	int clockid;
-+	compat_uptr_t timeout;
-+	compat_uptr_t sigmask;
-+	compat_size_t sigsetsize;
-+} EPOLL_PACKED;
-+
-+COMPAT_SYSCALL_DEFINE5(epoll_pwait1, int, epfd, int, flags,
-+		       struct epoll_event __user *, events,
-+		       int, maxevents,
-+		       struct compat_epoll_wait_params __user *, params)
-+{
-+	struct compat_epoll_wait_params p;
-+
-+	ktime_t kt = { 0 };
-+	sigset_t sigmask;
-+	compat_sigset_t compat_sigmask;
-+	struct timespec timeout;
-+
-+	if (flags)
-+		return -EINVAL;
-+	if (!params)
-+		return -EINVAL;
-+	if (copy_from_user(&p, params, sizeof(p)))
-+		return -EFAULT;
-+	if (p.size != sizeof(p))
-+		return -EINVAL;
-+	if (p.sigmask) {
-+		if (copy_from_user(&compat_sigmask, compat_ptr(p.sigmask),
-+				   sizeof(sigmask)))
-+			return -EFAULT;
-+		if (p.sigsetsize != sizeof(p.sigmask))
-+			return -EINVAL;
-+		sigset_from_compat(&sigmask, &compat_sigmask);
-+	}
-+	if (p.timeout) {
-+		if (compat_get_timespec(&timeout, compat_ptr(p.timeout)))
-+			return -EFAULT;
-+		if (!timespec_valid(&timeout))
-+			return -EINVAL;
-+		kt = timespec_to_ktime(timeout);
-+	} else {
-+		kt = ns_to_ktime(-1);
-+	}
-+
-+	return epoll_pwait_do(epfd, events, maxevents, p.clockid,
-+			      kt, p.sigmask ? &sigmask : NULL);
-+}
- #endif
- 
- static int __init eventpoll_init(void)
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index ab25814..649c5b2 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -452,6 +452,12 @@ asmlinkage long compat_sys_epoll_pwait(int epfd,
- 			const compat_sigset_t __user *sigmask,
- 			compat_size_t sigsetsize);
- 
-+struct compat_epoll_wait_params;
-+asmlinkage long compat_sys_epoll_pwait1(int epfd, int flags,
-+			struct epoll_event __user *events,
-+			int maxevents,
-+			struct compat_epoll_wait_params __user *params);
-+
- asmlinkage long compat_sys_utime(const char __user *filename,
- 				 struct compat_utimbuf __user *t);
- asmlinkage long compat_sys_utimensat(unsigned int dfd,
+diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
+index bf912d8..5728c2e 100644
+--- a/arch/x86/syscalls/syscall_32.tbl
++++ b/arch/x86/syscalls/syscall_32.tbl
+@@ -366,4 +366,4 @@
+ 357	i386	bpf			sys_bpf
+ 358	i386	execveat		sys_execveat			stub32_execveat
+ 359	i386	epoll_ctl_batch		sys_epoll_ctl_batch
+-360	i386	epoll_pwait1		sys_epoll_pwait1
++360	i386	epoll_pwait1		sys_epoll_pwait1		compat_sys_epoll_pwait1
 -- 
 1.9.3
+
