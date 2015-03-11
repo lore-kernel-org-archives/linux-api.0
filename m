@@ -1,44 +1,73 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [PATCH v2] selftests: kcmp build fails when invoked from kselftest target
-Date: Tue, 10 Mar 2015 18:08:32 -0600
-Message-ID: <1426032512-10353-1-git-send-email-shuahkh@osg.samsung.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: Re: [PATCH 24/45] hdspm.h: include stdint.h in userspace
+Date: Wed, 11 Mar 2015 02:28:12 +0200
+Message-ID: <20150311002812.GB12550@lakka.kapsi.fi>
+References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
+ <1424127948-22484-25-git-send-email-mikko.rapeli@iki.fi>
+ <s5hwq3hox1x.wl-tiwai@suse.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <s5hwq3hox1x.wl-tiwai@suse.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Takashi Iwai <tiwai@suse.de>, Arnd Bergmann <arnd@arndb.de>
+Cc: linux-kernel@vger.kernel.org, Jaroslav Kysela <perex@perex.cz>, alsa-devel@alsa-project.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-kcmp Makefile doesn't have an explicit build rule. As a result,
-kcmp build fails, when it is run from top level Makefile target
-kselftest. Without the explicit rule, make works only when it is
-run in the current directory or from selftests directory. Add an
-explicit build rule to fix the problem. In addition, build fails
-as it can't find kcmp.h. Fix it by passing CFLAGS.
+On Tue, Feb 17, 2015 at 07:46:02AM +0100, Takashi Iwai wrote:
+> At Tue, 17 Feb 2015 00:05:27 +0100,
+> Mikko Rapeli wrote:
+> >=20
+> > Fixes compilation error:
+> >=20
+> > sound/hdspm.h:43:2: error: unknown type name =E2=80=98uint32_t=E2=80=
+=99
+> >=20
+> > Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+>=20
+> Applied for 3.21, thanks.
 
-Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
----
-v2: Added deleted pre-requisite back in to address review
-    comments.
+Sorry, but this should maybe be dropped or reverted from the sound tree=
+=2E
 
- tools/testing/selftests/kcmp/Makefile | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+Arnd and others pointed out that kernel headers should be using __u32 e=
+tc
+types from linux/types.h instead of including stdint.h from libc and us=
+ing
+uint32_t et al.
 
-diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
-index ff0eefd..d615e9c 100644
---- a/tools/testing/selftests/kcmp/Makefile
-+++ b/tools/testing/selftests/kcmp/Makefile
-@@ -1,8 +1,11 @@
- CC := $(CROSS_COMPILE)$(CC)
--CFLAGS += -I../../../../usr/include/
-+CFLAGS += -I../../../../include/uapi -I../../../../usr/include/
- 
- all: kcmp_test
- 
-+kcmp_test:
-+	$(CC) $(CFLAGS) kcmp_test.c -o kcmp_test
-+
- run_tests: all
- 	@./kcmp_test || echo "kcmp_test: [FAIL]"
- 
--- 
-2.1.0
+I'll post a new patch version for hdspm.h too in the next revision.
+
+-Mikko
+
+>=20
+> Takashi
+>=20
+> > ---
+> >  include/uapi/sound/hdspm.h | 6 ++++++
+> >  1 file changed, 6 insertions(+)
+> >=20
+> > diff --git a/include/uapi/sound/hdspm.h b/include/uapi/sound/hdspm.=
+h
+> > index d956c35..f799828 100644
+> > --- a/include/uapi/sound/hdspm.h
+> > +++ b/include/uapi/sound/hdspm.h
+> > @@ -20,6 +20,12 @@
+> >   *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+> >   */
+> > =20
+> > +#ifdef __KERNEL__
+> > +#include <linux/types.h>
+> > +#else
+> > +#include <stdint.h>
+> > +#endif
+> > +
+> >  /* Maximum channels is 64 even on 56Mode you have 64playbacks to m=
+atrix */
+> >  #define HDSPM_MAX_CHANNELS      64
+> > =20
+> > --=20
+> > 2.1.4
+> >=20
