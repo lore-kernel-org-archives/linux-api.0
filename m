@@ -1,39 +1,44 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: Re: [PATCH 45/45] include/uapi/asm-generic/ucontext.h: include
- signal.h and sigcontext.h
-Date: Wed, 11 Mar 2015 03:59:31 +0200
-Message-ID: <20150311015931.GG12550@lakka.kapsi.fi>
-References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
- <1424127948-22484-46-git-send-email-mikko.rapeli@iki.fi>
- <3121580.utRRJPcIC6@wuerfel>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <3121580.utRRJPcIC6@wuerfel>
-Sender: linux-arch-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: [PATCH] kbuild: Don't pass LDFLAGS to selftest Makefile
+Date: Wed, 11 Mar 2015 13:15:36 +1100
+Message-ID: <1426040136-28523-1-git-send-email-mpe@ellerman.id.au>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 17, 2015 at 10:10:42AM +0100, Arnd Bergmann wrote:
-> On Tuesday 17 February 2015 00:05:48 Mikko Rapeli wrote:
-> >  #ifndef __ASM_GENERIC_UCONTEXT_H
-> >  #define __ASM_GENERIC_UCONTEXT_H
-> >  
-> > +#include <asm-generic/signal.h>
-> > +#include <asm/sigcontext.h>
-> > +
-> >  struct ucontext {
-> > 
-> 
-> Including another asm-generic header here is a bad idea: it breaks
-> if an architecture overrides asm/signal.h with its own version
-> but wants to use the asm-generic/ucontext.h file.
-> 
-> It would be best to just use linux/signal.h here, which includes
-> the correct architecture specific files.
+The makefile in arch/x86/Makefile.um sets LDFLAGS and exports it, which
+is then propagated to the selftest Makefiles and leads to build errors
+there. The build errors occur because we are passing LDFLAGS to CC, but
+the option set in Makefile.um (-m elf_x86_64) is not understood by CC.
+We could fix that by using -Wl, but that might break the UM build if
+it's actually passing that option to LD directly.
 
-Thanks, I will use asm/signal.h instead.
+We don't actually want the LDFLAGS from kbuild in the selftest Makefile,
+so the simplest fix seems to be to clear LDFLAGS before invoking the
+selftest Makefile.
 
--Mikko
+Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+This is in addition to my other patch "kbuild: Don't pass -rR to selftest
+makefiles".
+
+diff --git a/Makefile b/Makefile
+index 0836e9d628f0..5cef1d4c2ea0 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1085,7 +1085,7 @@ headers_check: headers_install
+ 
+ PHONY += kselftest
+ kselftest:
+-	$(Q)$(MAKE) -C tools/testing/selftests MAKEFLAGS="$(filter-out rR,$(MAKEFLAGS))" run_tests
++	$(Q)$(MAKE) LDFLAGS= -C tools/testing/selftests MAKEFLAGS="$(filter-out rR,$(MAKEFLAGS))" run_tests
+ 
+ # ---------------------------------------------------------------------------
+ # Modules
+-- 
+2.1.0
