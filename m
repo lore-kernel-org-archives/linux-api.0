@@ -1,42 +1,29 @@
-From: Michal Hocko <mhocko@suse.cz>
-Subject: [PATCH 2/2] mmotm: Enable small allocation to fail
-Date: Wed, 11 Mar 2015 16:54:54 -0400
-Message-ID: <1426107294-21551-3-git-send-email-mhocko@suse.cz>
-References: <1426107294-21551-1-git-send-email-mhocko@suse.cz>
+From: Mikael Pettersson <mikpelinux@gmail.com>
+Subject: Re: [PATCH] Don't allow blocking of signals using sigreturn.
+Date: Wed, 11 Mar 2015 22:43:50 +0100
+Message-ID: <21760.46870.338764.599348@gargle.gargle.HOWL>
+References: <20150311174204.GA5712@pc.thejh.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1426107294-21551-1-git-send-email-mhocko@suse.cz>
+In-Reply-To: <20150311174204.GA5712@pc.thejh.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Johannes Weiner <hannes@cmpxchg.org>, Dave Chinner <david@fromorbit.com>, Mel Gorman <mgorman@suse.de>, Rik van Riel <riel@redhat.com>, Wu Fengguang <fengguang.wu@intel.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Jann Horn <jann@thejh.net>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Jeff Dike <jdike@addtoit.com>, Richard Weinberger <richard@nod.at>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-Let's break the universe... for those who are willing and brave enough to
-run mmotm (and ideally linux-next) tree. OOM situations will lead to
-bugs which were hidden for years most probably but it is time we eat our
-own dog food and fix them up finally.
+Jann Horn writes:
+ > Or should I throw this patch away and write a patch
+ > for the prctl() manpage instead that documents that
+ > being able to call sigreturn() implies being able to
+ > effectively call sigprocmask(), at least on some
+ > architectures like X86?
 
-The patch itself is trivial. Simply allow only one allocation retry
-after OOM killer has been triggered.
+Well, that is the semantics of sigreturn().  It is essentially
+setcontext() [which includes the actions of sigprocmask()], but
+with restrictions on parameter placement (at least on x86).
 
-THIS IS NOT a patch to be merged to LINUS TREE. At least not now.
-
-Signed-off-by: Michal Hocko <mhocko@suse.cz>
----
- mm/page_alloc.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 7ae07a5d08df..583f0f27c97e 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -132,7 +132,7 @@ gfp_t gfp_allowed_mask __read_mostly = GFP_BOOT_MASK;
-  * environments are encouraged to lower the value to catch potential
-  * issues which should be fixed.
-  */
--unsigned long sysctl_nr_alloc_retry = ULONG_MAX;
-+unsigned long sysctl_nr_alloc_retry = 1;
- 
- #ifdef CONFIG_PM_SLEEP
- /*
--- 
-2.1.4
+You could introduce some setting to restrict that aspect for
+seccomp processes, but you can't change this for normal processes
+without breaking things.
