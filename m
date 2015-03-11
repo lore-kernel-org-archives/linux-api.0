@@ -1,8 +1,8 @@
 From: Vitaly Kuznetsov <vkuznets@redhat.com>
-Subject: [PATCH RFCv2 03/21] Drivers: hv: kvp: move poll_channel() to
- hyperv_vmbus.h
-Date: Wed, 11 Mar 2015 14:29:16 +0100
-Message-ID: <1426080574-9011-4-git-send-email-vkuznets@redhat.com>
+Subject: [PATCH RFCv2 08/21] Drivers: hv: util: introduce state machine for
+ util drivers
+Date: Wed, 11 Mar 2015 14:29:21 +0100
+Message-ID: <1426080574-9011-9-git-send-email-vkuznets@redhat.com>
 References: <1426080574-9011-1-git-send-email-vkuznets@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,78 +22,33 @@ To: "K. Y. Srinivasan" <kys@microsoft.com>, devel@linuxdriverproject.org
 Cc: Radim Krcmar <rkrcmar@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Haiyang Zhang <haiyangz@microsoft.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-..., make it inline and rename it to hv_poll_channel() so it can be reused
-in other hv_util modules.
+KVP/VSS/FCOPY drivers work in fully serialized mode: we wait till userspace
+daemon registers, wait for a message from the host, send this message to the
+daemon, get the reply, send it back to host, wait for another message.
+Introduce enum hvutil_device_state to represend this state in all 3 drivers.
 
 Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
 ---
- drivers/hv/hv_kvp.c       | 17 +++--------------
- drivers/hv/hyperv_vmbus.h | 12 ++++++++++++
- 2 files changed, 15 insertions(+), 14 deletions(-)
+ drivers/hv/hyperv_vmbus.h | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff --git a/drivers/hv/hv_kvp.c b/drivers/hv/hv_kvp.c
-index caa467d..939c3e7 100644
---- a/drivers/hv/hv_kvp.c
-+++ b/drivers/hv/hv_kvp.c
-@@ -128,17 +128,6 @@ kvp_work_func(struct work_struct *dummy)
- 	kvp_respond_to_host(NULL, HV_E_FAIL);
- }
- 
--static void poll_channel(struct vmbus_channel *channel)
--{
--	if (channel->target_cpu != smp_processor_id())
--		smp_call_function_single(channel->target_cpu,
--					 hv_kvp_onchannelcallback,
--					 channel, true);
--	else
--		hv_kvp_onchannelcallback(channel);
--}
--
--
- static int kvp_handle_handshake(struct hv_kvp_msg *msg)
- {
- 	int ret = 1;
-@@ -166,8 +155,8 @@ static int kvp_handle_handshake(struct hv_kvp_msg *msg)
- 		pr_info("KVP: user-mode registering done.\n");
- 		kvp_register(dm_reg_value);
- 		kvp_transaction.active = false;
--		if (kvp_transaction.kvp_context)
--			poll_channel(kvp_transaction.kvp_context);
-+		hv_poll_channel(kvp_transaction.kvp_context,
-+				hv_kvp_onchannelcallback);
- 	}
- 	return ret;
- }
-@@ -587,7 +576,7 @@ response_done:
- 
- 	vmbus_sendpacket(channel, recv_buffer, buf_len, req_id,
- 				VM_PKT_DATA_INBAND, 0);
--	poll_channel(channel);
-+	hv_poll_channel(channel, hv_kvp_onchannelcallback);
- }
- 
- /*
 diff --git a/drivers/hv/hyperv_vmbus.h b/drivers/hv/hyperv_vmbus.h
-index 0d85dd1..177dbec 100644
+index 177dbec..62efcce 100644
 --- a/drivers/hv/hyperv_vmbus.h
 +++ b/drivers/hv/hyperv_vmbus.h
-@@ -711,5 +711,17 @@ int hv_fcopy_init(struct hv_util_service *);
- void hv_fcopy_deinit(void);
- void hv_fcopy_onchannelcallback(void *);
+@@ -724,4 +724,13 @@ static inline void hv_poll_channel(struct vmbus_channel *channel,
+ 		cb(channel);
+ }
  
-+static inline void hv_poll_channel(struct vmbus_channel *channel,
-+				   void (*cb)(void *))
-+{
-+	if (!channel)
-+		return;
++enum hvutil_device_state {
++	HVUTIL_DEVICE_INIT = 0,  /* driver is loaded, waiting for userspace */
++	HVUTIL_READY,            /* userspace is registered */
++	HVUTIL_HOSTMSG_RECEIVED, /* message from the host was received */
++	HVUTIL_USERSPACE_REQ,    /* request to userspace was sent */
++	HVUTIL_USERSPACE_RECV,   /* reply from userspace was received */
++	HVUTIL_DEVICE_DYING,     /* driver unload is in progress */
++};
 +
-+	if (channel->target_cpu != smp_processor_id())
-+		smp_call_function_single(channel->target_cpu,
-+					 cb, channel, true);
-+	else
-+		cb(channel);
-+}
- 
  #endif /* _HYPERV_VMBUS_H */
 -- 
 1.9.3
