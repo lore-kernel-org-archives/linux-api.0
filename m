@@ -1,382 +1,242 @@
-From: Vitaly Kuznetsov <vkuznets@redhat.com>
-Subject: [PATCH RFCv2 13/21] Drivers: hv: util: introduce hv_utils_transport abstraction
-Date: Wed, 11 Mar 2015 14:29:26 +0100
-Message-ID: <1426080574-9011-14-git-send-email-vkuznets@redhat.com>
+From: Vitaly Kuznetsov <vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH RFCv2 16/21] Drivers: hv: kvp: convert to hv_utils_transport
+Date: Wed, 11 Mar 2015 14:29:29 +0100
+Message-ID: <1426080574-9011-17-git-send-email-vkuznets@redhat.com>
 References: <1426080574-9011-1-git-send-email-vkuznets@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1426080574-9011-1-git-send-email-vkuznets@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "K. Y. Srinivasan" <kys@microsoft.com>, devel@linuxdriverproject.org
-Cc: Haiyang Zhang <haiyangz@microsoft.com>, linux-kernel@vger.kernel.org, Dexuan Cui <decui@microsoft.com>, Radim Krcmar <rkrcmar@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1426080574-9011-1-git-send-email-vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "K. Y. Srinivasan" <kys-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, devel-tBiZLqfeLfOHmIFyCCdPziST3g8Odh+X@public.gmane.org
+Cc: Haiyang Zhang <haiyangz-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dexuan Cui <decui-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Radim Krcmar <rkrcmar-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-The intention is to make KVP/VSS drivers work through misc char devices.
-Introduce an abstraction for kernel/userspace communication to make the
-migration smoother. Transport operational mode (netlink or char device)
-is determined by the first received message. To support driver upgrades
-the switch from netlink to chardev operational mode is supported.
+ ... to support both netlink and /dev/vmbus/hv_kvp communication methods.
 
-Every hv_util daemon is supposed to register 2 callbacks:
-1) on_msg() to get notified when the userspace daemon sent a message;
-2) on_reset() to get notified when the userspace daemon drops the connection.
-
-Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+Signed-off-by: Vitaly Kuznetsov <vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- drivers/hv/Makefile             |   2 +-
- drivers/hv/hv_utils_transport.c | 276 ++++++++++++++++++++++++++++++++++++++++
- drivers/hv/hv_utils_transport.h |  51 ++++++++
- 3 files changed, 328 insertions(+), 1 deletion(-)
- create mode 100644 drivers/hv/hv_utils_transport.c
- create mode 100644 drivers/hv/hv_utils_transport.h
+ drivers/hv/hv_kvp.c | 91 +++++++++++++++++++++++++----------------------------
+ 1 file changed, 42 insertions(+), 49 deletions(-)
 
-diff --git a/drivers/hv/Makefile b/drivers/hv/Makefile
-index 5e4dfa4..39c9b2c 100644
---- a/drivers/hv/Makefile
-+++ b/drivers/hv/Makefile
-@@ -5,4 +5,4 @@ obj-$(CONFIG_HYPERV_BALLOON)	+= hv_balloon.o
- hv_vmbus-y := vmbus_drv.o \
- 		 hv.o connection.o channel.o \
- 		 channel_mgmt.o ring_buffer.o
--hv_utils-y := hv_util.o hv_kvp.o hv_snapshot.o hv_fcopy.o
-+hv_utils-y := hv_util.o hv_kvp.o hv_snapshot.o hv_fcopy.o hv_utils_transport.o
-diff --git a/drivers/hv/hv_utils_transport.c b/drivers/hv/hv_utils_transport.c
-new file mode 100644
-index 0000000..ea7ba5e
---- /dev/null
-+++ b/drivers/hv/hv_utils_transport.c
-@@ -0,0 +1,276 @@
-+/*
-+ * Kernel/userspace transport abstraction for Hyper-V util driver.
-+ *
-+ * Copyright (C) 2015, Vitaly Kuznetsov <vkuznets@redhat.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License version 2 as published
-+ * by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, GOOD TITLE or
-+ * NON INFRINGEMENT.  See the GNU General Public License for more
-+ * details.
-+ *
-+ */
-+
-+#include <linux/slab.h>
-+#include <linux/fs.h>
-+#include <linux/poll.h>
-+
-+#include "hyperv_vmbus.h"
+diff --git a/drivers/hv/hv_kvp.c b/drivers/hv/hv_kvp.c
+index a70d202..baa1208 100644
+--- a/drivers/hv/hv_kvp.c
++++ b/drivers/hv/hv_kvp.c
+@@ -29,6 +29,7 @@
+ #include <linux/hyperv.h>
+ 
+ #include "hyperv_vmbus.h"
 +#include "hv_utils_transport.h"
+ 
+ /*
+  * Pre win8 version numbers used in ws2008 and ws 2008 r2 (win7)
+@@ -83,9 +84,9 @@ static void kvp_register(int);
+ static DECLARE_DELAYED_WORK(kvp_timeout_work, kvp_timeout_func);
+ static DECLARE_WORK(kvp_sendkey_work, kvp_send_key);
+ 
+-static struct cb_id kvp_id = { CN_KVP_IDX, CN_KVP_VAL };
+-static const char kvp_name[] = "kvp_kernel_module";
++static const char kvp_devname[] = "vmbus/hv_kvp";
+ static u8 *recv_buffer;
++static struct hvutil_transport *hvt;
+ /*
+  * Register the kernel component with the user-level daemon.
+  * As part of this registration, pass the LIC version number.
+@@ -97,23 +98,18 @@ static void
+ kvp_register(int reg_value)
+ {
+ 
+-	struct cn_msg *msg;
+ 	struct hv_kvp_msg *kvp_msg;
+ 	char *version;
+ 
+-	msg = kzalloc(sizeof(*msg) + sizeof(struct hv_kvp_msg), GFP_ATOMIC);
++	kvp_msg = kzalloc(sizeof(*kvp_msg), GFP_KERNEL);
+ 
+-	if (msg) {
+-		kvp_msg = (struct hv_kvp_msg *)msg->data;
++	if (kvp_msg) {
+ 		version = kvp_msg->body.kvp_register.version;
+-		msg->id.idx =  CN_KVP_IDX;
+-		msg->id.val = CN_KVP_VAL;
+-
+ 		kvp_msg->kvp_hdr.operation = reg_value;
+ 		strcpy(version, HV_DRV_VERSION);
+-		msg->len = sizeof(struct hv_kvp_msg);
+-		cn_netlink_send(msg, 0, 0, GFP_ATOMIC);
+-		kfree(msg);
 +
-+static DEFINE_SPINLOCK(hvt_list_lock);
-+static struct list_head hvt_list = LIST_HEAD_INIT(hvt_list);
-+
-+static void hvt_reset(struct hvutil_transport *hvt)
-+{
-+	mutex_lock(&hvt->outmsg_lock);
-+	kfree(hvt->outmsg);
-+	hvt->outmsg = NULL;
-+	hvt->outmsg_len = 0;
-+	mutex_unlock(&hvt->outmsg_lock);
-+	if (hvt->on_reset)
-+		hvt->on_reset();
-+}
-+
-+static ssize_t hvt_op_read(struct file *file, char __user *buf,
-+			   size_t count, loff_t *ppos)
-+{
-+	struct hvutil_transport *hvt;
-+	int ret;
-+
-+	hvt = container_of(file->f_op, struct hvutil_transport, fops);
-+
-+	if (wait_event_interruptible(hvt->outmsg_q, hvt->outmsg_len > 0))
-+		return -EINTR;
-+
-+	mutex_lock(&hvt->outmsg_lock);
-+	if (!hvt->outmsg) {
-+		ret = -EAGAIN;
-+		goto out_unlock;
-+	}
-+
-+	if (count < hvt->outmsg_len) {
-+		ret = -EINVAL;
-+		goto out_unlock;
-+	}
-+
-+	if (!copy_to_user(buf, hvt->outmsg, hvt->outmsg_len))
-+		ret = hvt->outmsg_len;
-+	else
-+		ret = -EFAULT;
-+
-+	kfree(hvt->outmsg);
-+	hvt->outmsg = NULL;
-+	hvt->outmsg_len = 0;
-+
-+out_unlock:
-+	mutex_unlock(&hvt->outmsg_lock);
-+	return ret;
-+}
-+
-+static ssize_t hvt_op_write(struct file *file, const char __user *buf,
-+			    size_t count, loff_t *ppos)
-+{
-+	struct hvutil_transport *hvt;
-+	u8 *inmsg;
-+
-+	hvt = container_of(file->f_op, struct hvutil_transport, fops);
-+
-+	inmsg = kzalloc(count, GFP_KERNEL);
-+	if (copy_from_user(inmsg, buf, count)) {
-+		kfree(inmsg);
-+		return -EFAULT;
-+	}
-+	if (hvt->on_msg(inmsg, count))
-+		return -EFAULT;
-+	kfree(inmsg);
-+
-+	return count;
-+}
-+
-+static unsigned int hvt_op_poll(struct file *file, poll_table *wait)
-+{
-+	struct hvutil_transport *hvt;
-+
-+	hvt = container_of(file->f_op, struct hvutil_transport, fops);
-+
-+	poll_wait(file, &hvt->outmsg_q, wait);
-+	if (hvt->outmsg_len > 0)
-+		return POLLIN | POLLRDNORM;
-+
-+	return 0;
-+}
-+
-+static int hvt_op_open(struct inode *inode, struct file *file)
-+{
-+	struct hvutil_transport *hvt;
-+
-+	hvt = container_of(file->f_op, struct hvutil_transport, fops);
-+
-+	/*
-+	 * Switching to CHARDEV mode. We switch bach to INIT when device
-+	 * gets released.
-+	 */
-+	if (hvt->mode == HVUTIL_TRANSPORT_INIT)
-+		hvt->mode = HVUTIL_TRANSPORT_CHARDEV;
-+	else if (hvt->mode == HVUTIL_TRANSPORT_NETLINK) {
-+		/*
-+		 * We're switching from netlink communication to using char
-+		 * device. Issue the reset first.
-+		 */
-+		hvt_reset(hvt);
-+		hvt->mode = HVUTIL_TRANSPORT_CHARDEV;
-+	} else
-+		return -EBUSY;
-+
-+	return 0;
-+}
-+
-+static int hvt_op_release(struct inode *inode, struct file *file)
-+{
-+	struct hvutil_transport *hvt;
-+
-+	hvt = container_of(file->f_op, struct hvutil_transport, fops);
-+
-+	hvt->mode = HVUTIL_TRANSPORT_INIT;
-+	/*
-+	 * Cleanup message buffers to avoid spurious messages when the daemon
-+	 * connects back.
-+	 */
-+	hvt_reset(hvt);
-+
-+	return 0;
-+}
-+
-+static void hvt_cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
-+{
-+	struct hvutil_transport *hvt, *hvt_found = NULL;
-+
-+	spin_lock(&hvt_list_lock);
-+	list_for_each_entry(hvt, &hvt_list, list) {
-+		if (hvt->cn_id.idx == msg->id.idx &&
-+		    hvt->cn_id.val == msg->id.val) {
-+			hvt_found = hvt;
-+			break;
-+		}
-+	}
-+	spin_unlock(&hvt_list_lock);
-+	if (!hvt_found) {
-+		pr_warn("hvt_cn_callback: spurious message received!\n");
-+		return;
-+	}
-+
-+	/*
-+	 * Switching to NETLINK mode. Switching to CHARDEV happens when someone
-+	 * opens the device.
-+	 */
-+	if (hvt->mode == HVUTIL_TRANSPORT_INIT)
-+		hvt->mode = HVUTIL_TRANSPORT_NETLINK;
-+
-+	if (hvt->mode == HVUTIL_TRANSPORT_NETLINK)
-+		hvt_found->on_msg(msg->data, msg->len);
-+	else
-+		pr_warn("hvt_cn_callback: unexpected netlink message!\n");
-+}
-+
-+int hvutil_transport_send(struct hvutil_transport *hvt, void *msg, int len)
-+{
-+	struct cn_msg *cn_msg;
-+	int ret = 0;
-+
-+	if (hvt->mode == HVUTIL_TRANSPORT_INIT) {
++		hvutil_transport_send(hvt, kvp_msg, sizeof(*kvp_msg));
++		kfree(kvp_msg);
+ 	}
+ }
+ 
+@@ -135,8 +131,6 @@ static void kvp_timeout_func(struct work_struct *dummy)
+ 
+ static int kvp_handle_handshake(struct hv_kvp_msg *msg)
+ {
+-	int ret = 1;
+-
+ 	switch (msg->kvp_hdr.operation) {
+ 	case KVP_OP_REGISTER:
+ 		dm_reg_value = KVP_OP_REGISTER;
+@@ -150,18 +144,17 @@ static int kvp_handle_handshake(struct hv_kvp_msg *msg)
+ 		pr_info("KVP: incompatible daemon\n");
+ 		pr_info("KVP: KVP version: %d, Daemon version: %d\n",
+ 			KVP_OP_REGISTER1, msg->kvp_hdr.operation);
+-		ret = 0;
 +		return -EINVAL;
-+	} else if (hvt->mode == HVUTIL_TRANSPORT_NETLINK) {
-+		cn_msg = kzalloc(sizeof(*cn_msg) + len, GFP_ATOMIC);
-+		if (!msg)
-+			return -ENOMEM;
-+		cn_msg->id.idx = hvt->cn_id.idx;
-+		cn_msg->id.val = hvt->cn_id.val;
-+		cn_msg->len = len;
-+		memcpy(cn_msg->data, msg, len);
-+		ret = cn_netlink_send(cn_msg, 0, 0, GFP_ATOMIC);
-+		kfree(cn_msg);
-+		return ret;
-+	}
-+	/* HVUTIL_TRANSPORT_CHARDEV */
-+	mutex_lock(&hvt->outmsg_lock);
-+	if (hvt->outmsg) {
-+		/* Previous message wasn't received */
-+		ret = -EFAULT;
-+		goto out_unlock;
-+	}
-+	hvt->outmsg = kzalloc(len, GFP_KERNEL);
-+	memcpy(hvt->outmsg, msg, len);
-+	hvt->outmsg_len = len;
-+	wake_up_interruptible(&hvt->outmsg_q);
-+out_unlock:
-+	mutex_unlock(&hvt->outmsg_lock);
-+	return ret;
+ 	}
+ 
+-	if (ret) {
+-		/*
+-		 * We have a compatible daemon; complete the handshake.
+-		 */
+-		pr_info("KVP: user-mode registering done.\n");
+-		kvp_register(dm_reg_value);
+-		kvp_transaction.state = HVUTIL_READY;
+-	}
+-	return ret;
++	/*
++	 * We have a compatible daemon; complete the handshake.
++	 */
++	pr_info("KVP: user-mode registering done.\n");
++	kvp_register(dm_reg_value);
++	kvp_transaction.state = HVUTIL_READY;
++
++	return 0;
+ }
+ 
+ 
+@@ -169,14 +162,14 @@ static int kvp_handle_handshake(struct hv_kvp_msg *msg)
+  * Callback when data is received from user mode.
+  */
+ 
+-static void
+-kvp_cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
++static int kvp_on_msg(void *msg, int len)
+ {
+-	struct hv_kvp_msg *message;
++	struct hv_kvp_msg *message = (struct hv_kvp_msg *)msg;
+ 	struct hv_kvp_msg_enumerate *data;
+ 	int	error = 0;
+ 
+-	message = (struct hv_kvp_msg *)msg->data;
++	if (len < sizeof(*message))
++		return -EINVAL;
+ 
+ 	/*
+ 	 * If we are negotiating the version information
+@@ -184,13 +177,13 @@ kvp_cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
+ 	 */
+ 
+ 	if (kvp_transaction.state < HVUTIL_READY) {
+-		kvp_handle_handshake(message);
+-		return;
++		return kvp_handle_handshake(message);
+ 	}
+ 
+ 	/* We didn't send anything to userspace so the reply is spurious */
+ 	if (kvp_transaction.state < HVUTIL_USERSPACE_REQ)
+-		return;
++		return -EINVAL;
++
+ 	kvp_transaction.state = HVUTIL_USERSPACE_RECV;
+ 
+ 	/*
+@@ -228,6 +221,8 @@ kvp_cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
+ 		hv_poll_channel(kvp_transaction.kvp_context,
+ 				hv_kvp_onchannelcallback);
+ 	}
++
++	return 0;
+ }
+ 
+ 
+@@ -344,7 +339,6 @@ static void process_ib_ipinfo(void *in_msg, void *out_msg, int op)
+ static void
+ kvp_send_key(struct work_struct *dummy)
+ {
+-	struct cn_msg *msg;
+ 	struct hv_kvp_msg *message;
+ 	struct hv_kvp_msg *in_msg;
+ 	__u8 operation = kvp_transaction.kvp_msg->kvp_hdr.operation;
+@@ -357,14 +351,7 @@ kvp_send_key(struct work_struct *dummy)
+ 	if (kvp_transaction.state != HVUTIL_HOSTMSG_RECEIVED)
+ 		return;
+ 
+-	msg = kzalloc(sizeof(*msg) + sizeof(struct hv_kvp_msg) , GFP_ATOMIC);
+-	if (!msg)
+-		return;
+-
+-	msg->id.idx =  CN_KVP_IDX;
+-	msg->id.val = CN_KVP_VAL;
+-
+-	message = (struct hv_kvp_msg *)msg->data;
++	message = kzalloc(sizeof(*message), GFP_KERNEL);
+ 	message->kvp_hdr.operation = operation;
+ 	message->kvp_hdr.pool = pool;
+ 	in_msg = kvp_transaction.kvp_msg;
+@@ -451,9 +438,8 @@ kvp_send_key(struct work_struct *dummy)
+ 			break;
+ 	}
+ 
+-	msg->len = sizeof(struct hv_kvp_msg);
+ 	kvp_transaction.state = HVUTIL_USERSPACE_REQ;
+-	rc = cn_netlink_send(msg, 0, 0, GFP_ATOMIC);
++	rc = hvutil_transport_send(hvt, message, sizeof(*message));
+ 	if (rc) {
+ 		pr_debug("KVP: failed to communicate to the daemon: %d\n", rc);
+ 		if (cancel_delayed_work_sync(&kvp_timeout_work)) {
+@@ -462,7 +448,7 @@ kvp_send_key(struct work_struct *dummy)
+ 		}
+ 	}
+ 
+-	kfree(msg);
++	kfree(message);
+ 
+ 	return;
+ }
+@@ -694,14 +680,16 @@ void hv_kvp_onchannelcallback(void *context)
+ 
+ }
+ 
++static void kvp_on_reset(void)
++{
++	if (cancel_delayed_work_sync(&kvp_timeout_work))
++		kvp_respond_to_host(NULL, HV_E_FAIL);
++	kvp_transaction.state = HVUTIL_DEVICE_INIT;
 +}
 +
-+struct hvutil_transport *hvutil_transport_init(const char *name,
-+					       u32 cn_idx, u32 cn_val,
-+					       int (*on_msg)(void *, int),
-+					       void (*on_reset)(void))
-+{
-+	struct hvutil_transport *hvt;
-+
-+	hvt = kzalloc(sizeof(*hvt), GFP_KERNEL);
+ int
+ hv_kvp_init(struct hv_util_service *srv)
+ {
+-	int err;
+-
+-	err = cn_add_callback(&kvp_id, kvp_name, kvp_cn_callback);
+-	if (err)
+-		return err;
+ 	recv_buffer = srv->recv_buffer;
+ 
+ 	/*
+@@ -712,13 +700,18 @@ hv_kvp_init(struct hv_util_service *srv)
+ 	 */
+ 	kvp_transaction.state = HVUTIL_DEVICE_INIT;
+ 
++	hvt = hvutil_transport_init(kvp_devname, CN_KVP_IDX, CN_KVP_VAL,
++				    kvp_on_msg, kvp_on_reset);
 +	if (!hvt)
-+		return NULL;
++		return -EFAULT;
 +
-+	hvt->cn_id.idx = cn_idx;
-+	hvt->cn_id.val = cn_val;
-+
-+	hvt->mdev.minor = MISC_DYNAMIC_MINOR;
-+	hvt->mdev.name = name;
-+
-+	hvt->fops.owner = THIS_MODULE;
-+	hvt->fops.read = hvt_op_read;
-+	hvt->fops.write = hvt_op_write;
-+	hvt->fops.poll = hvt_op_poll;
-+	hvt->fops.open = hvt_op_open;
-+	hvt->fops.release = hvt_op_release;
-+
-+	hvt->mdev.fops = &hvt->fops;
-+
-+	init_waitqueue_head(&hvt->outmsg_q);
-+	mutex_init(&hvt->outmsg_lock);
-+
-+	spin_lock(&hvt_list_lock);
-+	list_add(&hvt->list, &hvt_list);
-+	spin_unlock(&hvt_list_lock);
-+
-+	hvt->on_msg = on_msg;
-+	hvt->on_reset = on_reset;
-+
-+	if (misc_register(&hvt->mdev))
-+		goto err_free_hvt;
-+
-+	/* Use cn_id.idx/cn_id.val to determine if we need to setup netlink */
-+	if (hvt->cn_id.idx > 0 && hvt->cn_id.val > 0 &&
-+	    cn_add_callback(&hvt->cn_id, name, hvt_cn_callback))
-+		goto err_free_hvt;
-+
-+	return hvt;
-+
-+err_free_hvt:
-+	kfree(hvt);
-+	return NULL;
-+}
-+
-+void hvutil_transport_destroy(struct hvutil_transport *hvt)
-+{
-+	spin_lock(&hvt_list_lock);
-+	list_del(&hvt->list);
-+	spin_unlock(&hvt_list_lock);
-+	if (hvt->cn_id.idx > 0 && hvt->cn_id.val > 0)
-+		cn_del_callback(&hvt->cn_id);
-+	misc_deregister(&hvt->mdev);
-+	kfree(hvt->outmsg);
-+	kfree(hvt);
-+}
-diff --git a/drivers/hv/hv_utils_transport.h b/drivers/hv/hv_utils_transport.h
-new file mode 100644
-index 0000000..314c76c
---- /dev/null
-+++ b/drivers/hv/hv_utils_transport.h
-@@ -0,0 +1,51 @@
-+/*
-+ * Kernel/userspace transport abstraction for Hyper-V util driver.
-+ *
-+ * Copyright (C) 2015, Vitaly Kuznetsov <vkuznets@redhat.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License version 2 as published
-+ * by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, GOOD TITLE or
-+ * NON INFRINGEMENT.  See the GNU General Public License for more
-+ * details.
-+ *
-+ */
-+
-+#ifndef _HV_UTILS_TRANSPORT_H
-+#define _HV_UTILS_TRANSPORT_H
-+
-+#include <linux/connector.h>
-+#include <linux/miscdevice.h>
-+
-+enum hvutil_transport_mode {
-+	HVUTIL_TRANSPORT_INIT = 0,
-+	HVUTIL_TRANSPORT_NETLINK,
-+	HVUTIL_TRANSPORT_CHARDEV,
-+};
-+
-+struct hvutil_transport {
-+	int mode;                           /* hvutil_transport_mode */
-+	struct file_operations fops;        /* file operations */
-+	struct miscdevice mdev;             /* misc device */
-+	struct cb_id cn_id;                 /* CN_*_IDX/CN_*_VAL */
-+	struct list_head list;              /* hvt_list */
-+	int (*on_msg)(void *, int);         /* callback on new user message */
-+	void (*on_reset)(void);             /* callback when userspace drops */
-+	u8 *outmsg;                         /* message to the userspace */
-+	int outmsg_len;                     /* its length */
-+	wait_queue_head_t outmsg_q;         /* poll/read wait queue */
-+	struct mutex outmsg_lock;           /* protects outmsg */
-+};
-+
-+struct hvutil_transport *hvutil_transport_init(const char *name,
-+					       u32 cn_idx, u32 cn_val,
-+					       int (*on_msg)(void *, int),
-+					       void (*on_reset)(void));
-+int hvutil_transport_send(struct hvutil_transport *hvt, void *msg, int len);
-+void hvutil_transport_destroy(struct hvutil_transport *hvt);
-+
-+#endif /* _HV_UTILS_TRANSPORT_H */
+ 	return 0;
+ }
+ 
+ void hv_kvp_deinit(void)
+ {
+ 	kvp_transaction.state = HVUTIL_DEVICE_DYING;
+-	cn_del_callback(&kvp_id);
+ 	cancel_delayed_work_sync(&kvp_timeout_work);
+ 	cancel_work_sync(&kvp_sendkey_work);
++	hvutil_transport_destroy(hvt);
+ }
 -- 
 1.9.3
