@@ -1,239 +1,147 @@
-From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: [PATCH v4 4/9] selftests: Add install target
-Date: Wed, 11 Mar 2015 15:06:00 +1100
-Message-ID: <1426046765-19289-4-git-send-email-mpe@ellerman.id.au>
-References: <1426046765-19289-1-git-send-email-mpe@ellerman.id.au>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1426046765-19289-1-git-send-email-mpe@ellerman.id.au>
-Sender: linux-kernel-owner@vger.kernel.org
-To: shuahkh@osg.samsung.com
-Cc: linux-kernel@vger.kernel.org, davej@codemonkey.org.uk, mmarek@suse.cz, linux-api@vger.kernel.org
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: [PATCH v6 tip 0/8] tracing: attach eBPF programs to kprobes
+Date: Tue, 10 Mar 2015 21:18:46 -0700
+Message-ID: <1426047534-8148-1-git-send-email-ast@plumgrid.com>
+Return-path: <netdev-owner@vger.kernel.org>
+Sender: netdev-owner@vger.kernel.org
+To: Ingo Molnar <mingo@kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This adds make install support to selftests. The basic usage is:
+Hi Ingo, Steven, Peter,
 
-$ cd tools/testing/selftests
-$ make install
+Please review/ack. Thanks!
 
-That installs into tools/testing/selftests/install, which can then be
-copied where ever necessary.
+V5->V6:
+- added simple recursion check to trace_call_bpf()
+- added tracex4 example that does kmem_cache_alloc/free tracking.
+  It remembers every allocated object in a map and user space periodically
+  prints a set of old objects. With more work in can be made into
+  simple kmemleak detector.
+  It was used as a test of recursive kmalloc/kfree: attached to
+  kprobe/__kmalloc and let program to call kmalloc again.
 
-The install destination is also configurable using eg:
+V4->V5:
+- switched to ktime_get_mono_fast_ns() as suggested by Peter
+- in libbpf.c fixed zero init of 'union bpf_attr' padding
+- fresh rebase on tip/master
 
-$ INSTALL_PATH=/mnt/selftests make install
+This is targeting 'tip' tree, since most of the changes are perf_event related.
+There will be a small conflict between net-next and tip, since they both
+add new bpf_prog_type (BPF_PROG_TYPE_SCHED_CLS and BPF_PROG_TYPE_KPROBE).
 
-The implementation uses two targets in the child makefiles. The first
-"install" is expected to install all files into $(INSTALL_PATH).
+V3 discussion:
+https://lkml.org/lkml/2015/2/9/738
 
-The second, "emit_tests", is expected to emit the test instructions (ie.
-bash script) on stdout. Separating this from install means the child
-makefiles need no knowledge of the location of the test script.
+V3->V4:
+- since the boundary of stable ABI in bpf+tracepoints is not clear yet,
+  I've dropped them for now.
+- bpf+syscalls are ok from stable ABI point of view, but bpf+seccomp
+  would want to do very similar analysis of syscalls, so I've dropped
+  them as well to take time and define common bpf+syscalls and bpf+seccomp
+  infra in the future.
+- so only bpf+kprobes left. kprobes by definition is not a stable ABI,
+  so bpf+kprobe is not stable ABI either. To stress on that point added
+  kernel version attribute that user space must pass along with the program
+  and kernel will reject programs when version code doesn't match.
+  So bpf+kprobe is very similar to kernel modules, but unlike modules
+  version check is not used for safety, but for enforcing 'non-ABI-ness'.
+  (version check doesn't apply to bpf+sockets which are stable)
 
-Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
----
+Patch 1 is in net-next and needs to be in tip too, since patch 2 depends on it.
 
-v3: Rebase onto 4.0-rc2.
-    Rename all.sh to run_kselftest.sh.
-    Add --no-print-directory to emit_tests invocation.
-v4: Rebase onto 4.0-rc3, add TEST_FILES to efivars and vm tests, remove
-    newlines from echoes.
+Patch 2 actually adds bpf+kprobe infra:
+programs receive 'struct pt_regs' on input and can walk data structures
+using bpf_probe_read() helper which is a wrapper of probe_kernel_read()
 
- tools/testing/selftests/Makefile                | 33 +++++++++++++++++++++++++
- tools/testing/selftests/efivarfs/Makefile       |  1 +
- tools/testing/selftests/exec/Makefile           |  3 +++
- tools/testing/selftests/lib.mk                  | 23 ++++++++++++++++-
- tools/testing/selftests/memory-hotplug/Makefile |  2 ++
- tools/testing/selftests/mount/Makefile          |  2 ++
- tools/testing/selftests/mqueue/Makefile         |  7 ++++++
- tools/testing/selftests/net/Makefile            |  1 +
- tools/testing/selftests/sysctl/Makefile         |  1 +
- tools/testing/selftests/vm/Makefile             |  1 +
- 10 files changed, 73 insertions(+), 1 deletion(-)
+Programs are attached to kprobe events via API:
 
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 4e511221a0c1..9af1df28bb26 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -47,7 +47,40 @@ clean_hotplug:
- 		make -C $$TARGET clean; \
- 	done;
- 
-+INSTALL_PATH ?= install
-+INSTALL_PATH := $(abspath $(INSTALL_PATH))
-+ALL_SCRIPT := $(INSTALL_PATH)/run_kselftest.sh
-+
-+install:
-+ifdef INSTALL_PATH
-+	@# Ask all targets to install their files
-+	mkdir -p $(INSTALL_PATH)
-+	for TARGET in $(TARGETS); do \
-+		mkdir -p $(INSTALL_PATH)/$$TARGET ; \
-+		make -C $$TARGET INSTALL_PATH=$(INSTALL_PATH)/$$TARGET install; \
-+	done;
-+
-+	@# Ask all targets to emit their test scripts
-+	echo "#!/bin/bash" > $(ALL_SCRIPT)
-+	echo "cd \$$(dirname \$$0)" >> $(ALL_SCRIPT)
-+	echo "ROOT=\$$PWD" >> $(ALL_SCRIPT)
-+
-+	for TARGET in $(TARGETS); do \
-+		echo "echo ; echo Running tests in $$TARGET" >> $(ALL_SCRIPT); \
-+		echo "echo ========================================" >> $(ALL_SCRIPT); \
-+		echo "cd $$TARGET" >> $(ALL_SCRIPT); \
-+		make -s --no-print-directory -C $$TARGET emit_tests >> $(ALL_SCRIPT); \
-+		echo "cd \$$ROOT" >> $(ALL_SCRIPT); \
-+	done;
-+
-+	chmod u+x $(ALL_SCRIPT)
-+else
-+	$(error Error: set INSTALL_PATH to use install)
-+endif
-+
- clean:
- 	for TARGET in $(TARGETS); do \
- 		make -C $$TARGET clean; \
- 	done;
-+
-+.PHONY: install
-diff --git a/tools/testing/selftests/efivarfs/Makefile b/tools/testing/selftests/efivarfs/Makefile
-index 3052d0bda24b..9ff04f154bd5 100644
---- a/tools/testing/selftests/efivarfs/Makefile
-+++ b/tools/testing/selftests/efivarfs/Makefile
-@@ -6,6 +6,7 @@ test_objs = open-unlink create-read
- all: $(test_objs)
- 
- TEST_PROGS := efivarfs.sh
-+TEST_FILES := $(test_objs)
- 
- include ../lib.mk
- 
-diff --git a/tools/testing/selftests/exec/Makefile b/tools/testing/selftests/exec/Makefile
-index a0098daeb73d..886cabe307b1 100644
---- a/tools/testing/selftests/exec/Makefile
-+++ b/tools/testing/selftests/exec/Makefile
-@@ -19,8 +19,11 @@ execveat.denatured: execveat
- 	$(CC) $(CFLAGS) -o $@ $^
- 
- TEST_PROGS := execveat
-+TEST_FILES := $(DEPS)
- 
- include ../lib.mk
- 
-+override EMIT_TESTS := echo "mkdir -p subdir; (./execveat && echo \"selftests: execveat [PASS]\") || echo \"selftests: execveat [FAIL]\""
-+
- clean:
- 	rm -rf $(BINARIES) $(DEPS) subdir.moved execveat.moved xxxxx*
-diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
-index b30c5a49cb61..7bd3dabe2846 100644
---- a/tools/testing/selftests/lib.mk
-+++ b/tools/testing/selftests/lib.mk
-@@ -7,4 +7,25 @@ endef
- run_tests: all
- 	$(RUN_TESTS)
- 
--.PHONY: run_tests all clean
-+define INSTALL_RULE
-+	mkdir -p $(INSTALL_PATH)
-+	install -t $(INSTALL_PATH) $(TEST_PROGS) $(TEST_FILES)
-+endef
-+
-+install: all
-+ifdef INSTALL_PATH
-+	$(INSTALL_RULE)
-+else
-+	$(error Error: set INSTALL_PATH to use install)
-+endif
-+
-+define EMIT_TESTS
-+	@for TEST in $(TEST_PROGS); do \
-+		echo "(./$$TEST && echo \"selftests: $$TEST [PASS]\") || echo \"selftests: $$TEST [FAIL]\""; \
-+	done;
-+endef
-+
-+emit_tests:
-+	$(EMIT_TESTS)
-+
-+.PHONY: run_tests all clean install emit_tests
-diff --git a/tools/testing/selftests/memory-hotplug/Makefile b/tools/testing/selftests/memory-hotplug/Makefile
-index 8f7dea66ecac..598a1f68f534 100644
---- a/tools/testing/selftests/memory-hotplug/Makefile
-+++ b/tools/testing/selftests/memory-hotplug/Makefile
-@@ -2,7 +2,9 @@ all:
- 
- include ../lib.mk
- 
-+TEST_PROGS := on-off-test.sh
- override RUN_TESTS := ./on-off-test.sh -r 2 || echo "selftests: memory-hotplug [FAIL]"
-+override EMIT_TESTS := echo "$(RUN_TESTS)"
- 
- run_full_test:
- 	@/bin/bash ./on-off-test.sh || echo "memory-hotplug selftests: [FAIL]"
-diff --git a/tools/testing/selftests/mount/Makefile b/tools/testing/selftests/mount/Makefile
-index 06931dfd3ef0..a5b367f032ba 100644
---- a/tools/testing/selftests/mount/Makefile
-+++ b/tools/testing/selftests/mount/Makefile
-@@ -7,7 +7,9 @@ unprivileged-remount-test: unprivileged-remount-test.c
- 
- include ../lib.mk
- 
-+TEST_PROGS := unprivileged-remount-test
- override RUN_TESTS := if [ -f /proc/self/uid_map ] ; then ./unprivileged-remount-test ; fi
-+override EMIT_TESTS := echo "$(RUN_TESTS)"
- 
- clean:
- 	rm -f unprivileged-remount-test
-diff --git a/tools/testing/selftests/mqueue/Makefile b/tools/testing/selftests/mqueue/Makefile
-index cbc300ef11bf..6ca7261b55dc 100644
---- a/tools/testing/selftests/mqueue/Makefile
-+++ b/tools/testing/selftests/mqueue/Makefile
-@@ -9,5 +9,12 @@ override define RUN_TESTS
- 	@./mq_perf_tests || echo "selftests: mq_perf_tests [FAIL]"
- endef
- 
-+TEST_PROGS := mq_open_tests mq_perf_tests
-+
-+override define EMIT_TESTS
-+	echo "./mq_open_tests /test1 || echo \"selftests: mq_open_tests [FAIL]\""
-+	echo "./mq_perf_tests || echo \"selftests: mq_perf_tests [FAIL]\""
-+endef
-+
- clean:
- 	rm -f mq_open_tests mq_perf_tests
-diff --git a/tools/testing/selftests/net/Makefile b/tools/testing/selftests/net/Makefile
-index fa8187ff15e6..6ba2ac7bbb0d 100644
---- a/tools/testing/selftests/net/Makefile
-+++ b/tools/testing/selftests/net/Makefile
-@@ -12,6 +12,7 @@ all: $(NET_PROGS)
- 	$(CC) $(CFLAGS) -o $@ $^
- 
- TEST_PROGS := run_netsocktests run_afpackettests test_bpf.sh
-+TEST_FILES := $(NET_PROGS)
- 
- include ../lib.mk
- 
-diff --git a/tools/testing/selftests/sysctl/Makefile b/tools/testing/selftests/sysctl/Makefile
-index c9660f5ef9f9..b3c33e071f10 100644
---- a/tools/testing/selftests/sysctl/Makefile
-+++ b/tools/testing/selftests/sysctl/Makefile
-@@ -5,6 +5,7 @@
- all:
- 
- TEST_PROGS := run_numerictests run_stringtests
-+TEST_FILES := common_tests
- 
- include ../lib.mk
- 
-diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
-index 90e56090b0ed..1a49761df6ed 100644
---- a/tools/testing/selftests/vm/Makefile
-+++ b/tools/testing/selftests/vm/Makefile
-@@ -10,6 +10,7 @@ all: $(BINARIES)
- 	$(CC) $(CFLAGS) -o $@ $^ -lrt
- 
- TEST_PROGS := run_vmtests
-+TEST_FILES := $(BINARIES)
- 
- include ../lib.mk
- 
+prog_fd = bpf_prog_load(...);
+struct perf_event_attr attr = {
+  .type = PERF_TYPE_TRACEPOINT,
+  .config = event_id, /* ID of just created kprobe event */
+};
+event_fd = perf_event_open(&attr,...);
+ioctl(event_fd, PERF_EVENT_IOC_SET_BPF, prog_fd);
+
+Patch 3 adds bpf_ktime_get_ns() helper function, so that bpf programs can
+measure time delta between events to compute disk io latency, etc.
+
+Patch 4 adds bpf_trace_printk() helper that is used to debug programs.
+When bpf verifier sees that program is calling bpf_trace_printk() it inits
+trace_printk buffers which emits nasty 'this is debug only' banner.
+That's exactly what we want. bpf_trace_printk() is for debugging only.
+
+Patch 5 sample code that shows how to use bpf_probe_read/bpf_trace_printk
+
+Patch 6 sample code - combination of kfree_skb and sys_write tracing.
+
+Patch 7 sample code that computes disk io latency and prints it as 'heatmap'
+
+Interesting bit is that patch 6 has log2() function implemented in C
+and patch 7 has another log2() function using different algorithm in C.
+In the future if 'log2' usage becomes common, we can add it as in-kernel
+helper function, but for now bpf programs can implement them on bpf side.
+
+Another interesting bit from patch 7 is that it does approximation of
+floating point log10(X)*10 using integer arithmetic, which demonstrates
+the power of C->BPF vs traditional tracing language alternatives,
+where one would need to introduce new helper functions to add functionality,
+whereas bpf can just implement such things in C as part of the program.
+
+Next step is to prototype TCP stack instrumentation (like web10g) using
+bpf+kprobe, but without adding any new code tcp stack.
+Though kprobes are slow comparing to tracepoints, they are good enough
+for prototyping and trace_marker/debug_tracepoint ideas can accelerate
+them in the future.
+
+Alexei Starovoitov (7):
+  tracing: attach BPF programs to kprobes
+  tracing: allow BPF programs to call bpf_ktime_get_ns()
+  tracing: allow BPF programs to call bpf_trace_printk()
+  samples: bpf: simple non-portable kprobe filter example
+  samples: bpf: counting example for kfree_skb and write syscall
+  samples: bpf: IO latency analysis (iosnoop/heatmap)
+  samples: bpf: kmem_alloc/free tracker
+
+Daniel Borkmann (1):
+  bpf: make internal bpf API independent of CONFIG_BPF_SYSCALL ifdefs
+
+ include/linux/bpf.h             |   20 +++-
+ include/linux/ftrace_event.h    |   14 +++
+ include/uapi/linux/bpf.h        |    5 +
+ include/uapi/linux/perf_event.h |    1 +
+ kernel/bpf/syscall.c            |    7 +-
+ kernel/events/core.c            |   59 ++++++++++++
+ kernel/trace/Makefile           |    1 +
+ kernel/trace/bpf_trace.c        |  198 +++++++++++++++++++++++++++++++++++++++
+ kernel/trace/trace_kprobe.c     |   10 +-
+ samples/bpf/Makefile            |   16 ++++
+ samples/bpf/bpf_helpers.h       |    6 ++
+ samples/bpf/bpf_load.c          |  125 ++++++++++++++++++++++--
+ samples/bpf/bpf_load.h          |    3 +
+ samples/bpf/libbpf.c            |   14 ++-
+ samples/bpf/libbpf.h            |    5 +-
+ samples/bpf/sock_example.c      |    2 +-
+ samples/bpf/test_verifier.c     |    2 +-
+ samples/bpf/tracex1_kern.c      |   50 ++++++++++
+ samples/bpf/tracex1_user.c      |   25 +++++
+ samples/bpf/tracex2_kern.c      |   86 +++++++++++++++++
+ samples/bpf/tracex2_user.c      |   95 +++++++++++++++++++
+ samples/bpf/tracex3_kern.c      |   89 ++++++++++++++++++
+ samples/bpf/tracex3_user.c      |  150 +++++++++++++++++++++++++++++
+ samples/bpf/tracex4_kern.c      |   54 +++++++++++
+ samples/bpf/tracex4_user.c      |   69 ++++++++++++++
+ 25 files changed, 1088 insertions(+), 18 deletions(-)
+ create mode 100644 kernel/trace/bpf_trace.c
+ create mode 100644 samples/bpf/tracex1_kern.c
+ create mode 100644 samples/bpf/tracex1_user.c
+ create mode 100644 samples/bpf/tracex2_kern.c
+ create mode 100644 samples/bpf/tracex2_user.c
+ create mode 100644 samples/bpf/tracex3_kern.c
+ create mode 100644 samples/bpf/tracex3_user.c
+ create mode 100644 samples/bpf/tracex4_kern.c
+ create mode 100644 samples/bpf/tracex4_user.c
+
 -- 
-2.1.0
+1.7.9.5
