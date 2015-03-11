@@ -1,43 +1,31 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH] Don't allow blocking of signals using sigreturn.
-Date: Wed, 11 Mar 2015 15:26:13 -0700
-Message-ID: <CALCETrXy=ftik5U7nD9D+u8z-jLBOG_xX20QTDoP-CkV3=U2Vg@mail.gmail.com>
-References: <20150311174204.GA5712@pc.thejh.net> <21760.46870.338764.599348@gargle.gargle.HOWL>
+From: Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 0/2] Move away from non-failing small allocations
+Date: Wed, 11 Mar 2015 18:36:02 -0400
+Message-ID: <5500C352.2060104@oracle.com>
+References: <1426107294-21551-1-git-send-email-mhocko@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <21760.46870.338764.599348-4mDQ13Tdud8Jw5R7aSpS0dP8p4LwMBBS@public.gmane.org>
+In-Reply-To: <1426107294-21551-1-git-send-email-mhocko-AlSwsSmVLrQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mikael Pettersson <mikpelinux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jeff Dike <jdike-OPE4K8JWMJJBDgjK7y7TUQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+To: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Wu Fengguang <fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 11, 2015 at 2:43 PM, Mikael Pettersson <mikpelinux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> Jann Horn writes:
->  > Or should I throw this patch away and write a patch
->  > for the prctl() manpage instead that documents that
->  > being able to call sigreturn() implies being able to
->  > effectively call sigprocmask(), at least on some
->  > architectures like X86?
->
-> Well, that is the semantics of sigreturn().  It is essentially
-> setcontext() [which includes the actions of sigprocmask()], but
-> with restrictions on parameter placement (at least on x86).
->
-> You could introduce some setting to restrict that aspect for
-> seccomp processes, but you can't change this for normal processes
-> without breaking things.
+On 03/11/2015 04:54 PM, Michal Hocko wrote:
+> The second patch is the first step in the transition plan. It changes
+> the default but it is NOT an upstream material. It is aimed for brave
+> testers who can cope with failures. I have talked to Andrew and he
+> was willing to keep that patch in mmotm tree. It would be even better
+> to have this in linux-next because the testing coverage would be even
+> bigger. Dave Chinner has also shown an interest to integrate this into
+> his xfstest farm. It would be great if Fenguang could add it into the
+> zero testing project too (if the pushing the patch into linux-next
+> would be too controversial).
 
-Which leads to the interesting question: does anyone ever call
-sigreturn with a different signal mask than the kernel put there
-during signal delivery or, even more strangely, with a totally made up
-context?  I suspect that the former does happen, even if the latter
-may be rare or completely implausible.
+Stuff in mmotm automatically end up in linux-next.
 
-I certainly have code that modifies GPRs in the context prior to sigreturn.
 
---Andy
-
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
+Thanks,
+Sasha
