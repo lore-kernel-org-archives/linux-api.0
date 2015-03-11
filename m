@@ -1,62 +1,93 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH v2] selftests: kcmp build fails when invoked from kselftest
- target
-Date: Wed, 11 Mar 2015 07:30:18 -0600
-Message-ID: <5500436A.4010802@osg.samsung.com>
-References: <1426032512-10353-1-git-send-email-shuahkh@osg.samsung.com> <1426040377.20917.8.camel@ellerman.id.au>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1426040377.20917.8.camel@ellerman.id.au>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michael Ellerman <mpe@ellerman.id.au>
-Cc: gorcunov@openvz.org, akpm@linux-foundation.org, tranmanphong@gmail.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+From: Lubomir Rintel <lkundrak-NGH9Lh4a5iE@public.gmane.org>
+Subject: [PATCH v2] ipv6: expose RFC4191 route preference via rtnetlink
+Date: Wed, 11 Mar 2015 15:39:21 +0100
+Message-ID: <1426084761-3303-1-git-send-email-lkundrak@v3.sk>
+References: <20150310160423.GC2016@nanopsycho.orion>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150310160423.GC2016-6KJVSR23iU488b5SBfVpbw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Alexey Kuznetsov <kuznet-v/Mj1YrvjDBInbfyfbPRSQ@public.gmane.org>, Jiri Pirko <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, Lubomir Rintel <lkundrak-NGH9Lh4a5iE@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 03/10/2015 08:19 PM, Michael Ellerman wrote:
-> On Tue, 2015-03-10 at 18:08 -0600, Shuah Khan wrote:
->> kcmp Makefile doesn't have an explicit build rule. As a result,
->> kcmp build fails, when it is run from top level Makefile target
->> kselftest. Without the explicit rule, make works only when it is
->> run in the current directory or from selftests directory. Add an
->> explicit build rule to fix the problem. 
-> 
-> This should be fixed properly using my patch to filter -rR or similar.
+This makes it possible to retain the route preference when RAs are handled in
+userspace.
 
-I don't agree with this. Relying on ARCH Makefiles doing the
-right thing for individual tests to build makes it difficult
-to maintain. We will keep running into problems for each of
-the ARCH.
+Signed-off-by: Lubomir Rintel <lkundrak-NGH9Lh4a5iE@public.gmane.org>
+---
+Changes since v1:
+  - In case an invalid value is specified treat it as ICMPV6_ROUTER_PREF_MEDIUM
 
-I would rather have this addressed in the individual Makefiles
-with an explicit rule and if -rR approach works, great. So it
-has to be two pronged approach with individual Makefiles being
-able to work irrespective of ARCH Makefiles doing the right
-thing.
+ include/uapi/linux/rtnetlink.h |  1 +
+ net/ipv6/route.c               | 16 +++++++++++++++-
+ 2 files changed, 16 insertions(+), 1 deletion(-)
 
-> 
->> In addition, build fails
->> as it can't find kcmp.h. Fix it by passing CFLAGS.
-> 
-> That is also wrong. It should *not* be looking in include/uapi.
-> 
-> If it needs headers then it should be using the *exported* headers, which are
-> in ../../../../usr/include as the existing CFLAGS specifiy.
-> 
-> Those headers are installed as part of 'make headers_install'.
-> 
-
-Adding uapi covers both cases where the headers aren't installed yet.
-Also make V=1 doesn't show CFLAGS getting passed in. They need to be
-passed in explicitly even when run from the kcmp directory.
-
--- Shuah
-
-
+diff --git a/include/uapi/linux/rtnetlink.h b/include/uapi/linux/rtnetlink.h
+index 5cc5d66..0671524 100644
+--- a/include/uapi/linux/rtnetlink.h
++++ b/include/uapi/linux/rtnetlink.h
+@@ -303,6 +303,7 @@ enum rtattr_type_t {
+ 	RTA_TABLE,
+ 	RTA_MARK,
+ 	RTA_MFC_STATS,
++	RTA_PREF,
+ 	__RTA_MAX
+ };
+ 
+diff --git a/net/ipv6/route.c b/net/ipv6/route.c
+index 47b5109..8b01d16 100644
+--- a/net/ipv6/route.c
++++ b/net/ipv6/route.c
+@@ -2401,6 +2401,7 @@ static const struct nla_policy rtm_ipv6_policy[RTA_MAX+1] = {
+ 	[RTA_PRIORITY]          = { .type = NLA_U32 },
+ 	[RTA_METRICS]           = { .type = NLA_NESTED },
+ 	[RTA_MULTIPATH]		= { .len = sizeof(struct rtnexthop) },
++	[RTA_PREF]              = { .type = NLA_U8 },
+ };
+ 
+ static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
+@@ -2408,6 +2409,7 @@ static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
+ {
+ 	struct rtmsg *rtm;
+ 	struct nlattr *tb[RTA_MAX+1];
++	unsigned int pref;
+ 	int err;
+ 
+ 	err = nlmsg_parse(nlh, sizeof(*rtm), tb, RTA_MAX, rtm_ipv6_policy);
+@@ -2483,6 +2485,14 @@ static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
+ 		cfg->fc_mp_len = nla_len(tb[RTA_MULTIPATH]);
+ 	}
+ 
++	if (tb[RTA_PREF]) {
++		pref = nla_get_u8(tb[RTA_PREF]);
++		if (pref != ICMPV6_ROUTER_PREF_LOW &&
++		    pref != ICMPV6_ROUTER_PREF_HIGH)
++			pref = ICMPV6_ROUTER_PREF_MEDIUM;
++		cfg->fc_flags |= RTF_PREF(pref);
++	}
++
+ 	err = 0;
+ errout:
+ 	return err;
+@@ -2586,7 +2596,8 @@ static inline size_t rt6_nlmsg_size(void)
+ 	       + nla_total_size(4) /* RTA_PRIORITY */
+ 	       + RTAX_MAX * nla_total_size(4) /* RTA_METRICS */
+ 	       + nla_total_size(sizeof(struct rta_cacheinfo))
+-	       + nla_total_size(TCP_CA_NAME_MAX); /* RTAX_CC_ALGO */
++	       + nla_total_size(TCP_CA_NAME_MAX) /* RTAX_CC_ALGO */
++	       + nla_total_size(1); /* RTA_PREF */
+ }
+ 
+ static int rt6_fill_node(struct net *net,
+@@ -2727,6 +2738,9 @@ static int rt6_fill_node(struct net *net,
+ 	if (rtnl_put_cacheinfo(skb, &rt->dst, 0, expires, rt->dst.error) < 0)
+ 		goto nla_put_failure;
+ 
++	if (nla_put_u8(skb, RTA_PREF, IPV6_EXTRACT_PREF(rt->rt6i_flags)))
++		goto nla_put_failure;
++
+ 	nlmsg_end(skb, nlh);
+ 	return 0;
+ 
 -- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+2.1.0
