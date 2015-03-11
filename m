@@ -1,221 +1,264 @@
-From: James Hogan <james.hogan-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 19/20] MIPS: KVM: Expose MSA registers
-Date: Wed, 11 Mar 2015 14:44:55 +0000
-Message-ID: <1426085096-12932-20-git-send-email-james.hogan@imgtec.com>
+From: James Hogan <james.hogan@imgtec.com>
+Subject: [PATCH 14/20] MIPS: KVM: Expose FPU registers
+Date: Wed, 11 Mar 2015 14:44:50 +0000
+Message-ID: <1426085096-12932-15-git-send-email-james.hogan@imgtec.com>
 References: <1426085096-12932-1-git-send-email-james.hogan@imgtec.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426085096-12932-1-git-send-email-james.hogan-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org
-Cc: James Hogan <james.hogan-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Paul Burton <paul.burton-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, Gleb Natapov <gleb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <kvm-owner@vger.kernel.org>
+In-Reply-To: <1426085096-12932-1-git-send-email-james.hogan@imgtec.com>
+Sender: kvm-owner@vger.kernel.org
+To: Paolo Bonzini <pbonzini@redhat.com>, kvm@vger.kernel.org, linux-mips@linux-mips.org
+Cc: James Hogan <james.hogan@imgtec.com>, Paul Burton <paul.burton@imgtec.com>, Ralf Baechle <ralf@linux-mips.org>, Gleb Natapov <gleb@kernel.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add KVM register numbers for the MIPS SIMD Architecture (MSA) registers,
-and implement access to them with the KVM_GET_ONE_REG / KVM_SET_ONE_REG
-ioctls when the MSA capability is enabled (exposed in a later patch) and
-present in the guest according to its Config3.MSAP bit.
+Add KVM register numbers for the MIPS FPU registers, and implement
+access to them with the KVM_GET_ONE_REG / KVM_SET_ONE_REG ioctls when
+the FPU capability is enabled (exposed in a later patch) and present in
+the guest according to its Config1.FP bit.
 
-The MSA vector registers use the same register numbers as the FPU
-registers except with a different size (128bits). Since MSA depends on
-Status.FR=1, these registers are inaccessible when Status.FR=0. These
-registers are returned as a single native endian 128bit value, rather
-than least significant half first with each 64-bit half native endian as
-the kernel uses internally.
+The registers are accessible in the current mode of the guest, with each
+sized access showing what the guest would see with an equivalent access,
+and like the architecture they may become UNPREDICTABLE if the FR mode
+is changed. When FR=0, odd doubles are inaccessible as they do not exist
+in that mode.
 
-Signed-off-by: James Hogan <james.hogan-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Cc: Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Paul Burton <paul.burton-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Cc: Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
-Cc: Gleb Natapov <gleb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
-Cc: linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org
-Cc: kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Signed-off-by: James Hogan <james.hogan@imgtec.com>
+Cc: Paolo Bonzini <pbonzini@redhat.com>
+Cc: Paul Burton <paul.burton@imgtec.com>
+Cc: Ralf Baechle <ralf@linux-mips.org>
+Cc: Gleb Natapov <gleb@kernel.org>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: linux-mips@linux-mips.org
+Cc: kvm@vger.kernel.org
+Cc: linux-api@vger.kernel.org
+Cc: linux-doc@vger.kernel.org
 ---
- Documentation/virtual/kvm/api.txt |  3 ++
- arch/mips/include/uapi/asm/kvm.h  | 12 ++++++--
- arch/mips/kvm/mips.c              | 65 +++++++++++++++++++++++++++++++++++++++
- 3 files changed, 78 insertions(+), 2 deletions(-)
+ Documentation/virtual/kvm/api.txt | 16 +++++++++
+ arch/mips/include/uapi/asm/kvm.h  | 37 ++++++++++++++------
+ arch/mips/kvm/mips.c              | 72 ++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 114 insertions(+), 11 deletions(-)
 
 diff --git a/Documentation/virtual/kvm/api.txt b/Documentation/virtual/kvm/api.txt
-index 44623688d566..47ddf0475211 100644
+index 1e59515b6d1f..8ba55b9c903e 100644
 --- a/Documentation/virtual/kvm/api.txt
 +++ b/Documentation/virtual/kvm/api.txt
-@@ -1981,8 +1981,11 @@ registers, find a list below:
+@@ -1979,6 +1979,10 @@ registers, find a list below:
+   MIPS  | KVM_REG_MIPS_COUNT_CTL        | 64
+   MIPS  | KVM_REG_MIPS_COUNT_RESUME     | 64
    MIPS  | KVM_REG_MIPS_COUNT_HZ         | 64
-   MIPS  | KVM_REG_MIPS_FPR_32(0..31)    | 32
-   MIPS  | KVM_REG_MIPS_FPR_64(0..31)    | 64
-+  MIPS  | KVM_REG_MIPS_VEC_128(0..31)   | 128
-   MIPS  | KVM_REG_MIPS_FCR_IR           | 32
-   MIPS  | KVM_REG_MIPS_FCR_CSR          | 32
-+  MIPS  | KVM_REG_MIPS_MSA_IR           | 32
-+  MIPS  | KVM_REG_MIPS_MSA_CSR          | 32
++  MIPS  | KVM_REG_MIPS_FPR_32(0..31)    | 32
++  MIPS  | KVM_REG_MIPS_FPR_64(0..31)    | 64
++  MIPS  | KVM_REG_MIPS_FCR_IR           | 32
++  MIPS  | KVM_REG_MIPS_FCR_CSR          | 32
  
  ARM registers are mapped using the lower 32 bits.  The upper 16 of that
  is the register group type, or coprocessor number:
+@@ -2032,6 +2036,18 @@ patterns depending on whether they're 32-bit or 64-bit registers:
+ MIPS KVM control registers (see above) have the following id bit patterns:
+   0x7030 0000 0002 <reg:16>
+ 
++MIPS FPU registers (see KVM_REG_MIPS_FPR_{32,64}() above) have the following
++id bit patterns depending on the size of the register being accessed. They are
++always accessed according to the current guest FPU mode (Status.FR and
++Config5.FRE), i.e. as the guest would see them, and they become unpredictable
++if the guest FPU mode is changed:
++  0x7020 0000 0003 00 <0:3> <reg:5> (32-bit FPU registers)
++  0x7030 0000 0003 00 <0:3> <reg:5> (64-bit FPU registers)
++
++MIPS FPU control registers (see KVM_REG_MIPS_FCR_{IR,CSR} above) have the
++following id bit patterns:
++  0x7020 0000 0003 01 <0:3> <reg:5>
++
+ 
+ 4.69 KVM_GET_ONE_REG
+ 
 diff --git a/arch/mips/include/uapi/asm/kvm.h b/arch/mips/include/uapi/asm/kvm.h
-index 401e6a6f8bb8..6985eb59b085 100644
+index 75d6d8557e57..401e6a6f8bb8 100644
 --- a/arch/mips/include/uapi/asm/kvm.h
 +++ b/arch/mips/include/uapi/asm/kvm.h
-@@ -58,7 +58,7 @@ struct kvm_fpu {
+@@ -36,18 +36,8 @@ struct kvm_regs {
+ 
+ /*
+  * for KVM_GET_FPU and KVM_SET_FPU
+- *
+- * If Status[FR] is zero (32-bit FPU), the upper 32-bits of the FPRs
+- * are zero filled.
+  */
+ struct kvm_fpu {
+-	__u64 fpr[32];
+-	__u32 fir;
+-	__u32 fccr;
+-	__u32 fexr;
+-	__u32 fenr;
+-	__u32 fcsr;
+-	__u32 pad;
+ };
+ 
+ 
+@@ -68,6 +58,8 @@ struct kvm_fpu {
   *
   * Register set = 2: KVM specific registers (see definitions below).
   *
-- * Register set = 3: FPU registers (see definitions below).
-+ * Register set = 3: FPU / MSA registers (see definitions below).
-  *
++ * Register set = 3: FPU registers (see definitions below).
++ *
   * Other sets registers may be added in the future.  Each set would
   * have its own identifier in bits[31..16].
-@@ -148,7 +148,7 @@ struct kvm_fpu {
- 
- 
- /*
-- * KVM_REG_MIPS_FPU - Floating Point registers.
-+ * KVM_REG_MIPS_FPU - Floating Point and MIPS SIMD Architecture (MSA) registers.
-  *
-  *  bits[15..8]  - Register subset (see definitions below).
-  *  bits[7..5]   - Must be zero.
-@@ -157,12 +157,14 @@ struct kvm_fpu {
- 
- #define KVM_REG_MIPS_FPR	(KVM_REG_MIPS_FPU | 0x0000000000000000ULL)
- #define KVM_REG_MIPS_FCR	(KVM_REG_MIPS_FPU | 0x0000000000000100ULL)
-+#define KVM_REG_MIPS_MSACR	(KVM_REG_MIPS_FPU | 0x0000000000000200ULL)
- 
- /*
-  * KVM_REG_MIPS_FPR - Floating point / Vector registers.
   */
- #define KVM_REG_MIPS_FPR_32(n)	(KVM_REG_MIPS_FPR | KVM_REG_SIZE_U32  | (n))
- #define KVM_REG_MIPS_FPR_64(n)	(KVM_REG_MIPS_FPR | KVM_REG_SIZE_U64  | (n))
-+#define KVM_REG_MIPS_VEC_128(n)	(KVM_REG_MIPS_FPR | KVM_REG_SIZE_U128 | (n))
+@@ -75,6 +67,7 @@ struct kvm_fpu {
+ #define KVM_REG_MIPS_GP		(KVM_REG_MIPS | 0x0000000000000000ULL)
+ #define KVM_REG_MIPS_CP0	(KVM_REG_MIPS | 0x0000000000010000ULL)
+ #define KVM_REG_MIPS_KVM	(KVM_REG_MIPS | 0x0000000000020000ULL)
++#define KVM_REG_MIPS_FPU	(KVM_REG_MIPS | 0x0000000000030000ULL)
+ 
  
  /*
-  * KVM_REG_MIPS_FCR - Floating point control registers.
-@@ -170,6 +172,12 @@ struct kvm_fpu {
- #define KVM_REG_MIPS_FCR_IR	(KVM_REG_MIPS_FCR | KVM_REG_SIZE_U32 |  0)
- #define KVM_REG_MIPS_FCR_CSR	(KVM_REG_MIPS_FCR | KVM_REG_SIZE_U32 | 31)
+@@ -155,6 +148,30 @@ struct kvm_fpu {
  
-+/*
-+ * KVM_REG_MIPS_MSACR - MIPS SIMD Architecture (MSA) control registers.
+ 
+ /*
++ * KVM_REG_MIPS_FPU - Floating Point registers.
++ *
++ *  bits[15..8]  - Register subset (see definitions below).
++ *  bits[7..5]   - Must be zero.
++ *  bits[4..0]   - Register number within register subset.
 + */
-+#define KVM_REG_MIPS_MSA_IR	 (KVM_REG_MIPS_MSACR | KVM_REG_SIZE_U32 |  0)
-+#define KVM_REG_MIPS_MSA_CSR	 (KVM_REG_MIPS_MSACR | KVM_REG_SIZE_U32 |  1)
 +
- 
- /*
++#define KVM_REG_MIPS_FPR	(KVM_REG_MIPS_FPU | 0x0000000000000000ULL)
++#define KVM_REG_MIPS_FCR	(KVM_REG_MIPS_FPU | 0x0000000000000100ULL)
++
++/*
++ * KVM_REG_MIPS_FPR - Floating point / Vector registers.
++ */
++#define KVM_REG_MIPS_FPR_32(n)	(KVM_REG_MIPS_FPR | KVM_REG_SIZE_U32  | (n))
++#define KVM_REG_MIPS_FPR_64(n)	(KVM_REG_MIPS_FPR | KVM_REG_SIZE_U64  | (n))
++
++/*
++ * KVM_REG_MIPS_FCR - Floating point control registers.
++ */
++#define KVM_REG_MIPS_FCR_IR	(KVM_REG_MIPS_FCR | KVM_REG_SIZE_U32 |  0)
++#define KVM_REG_MIPS_FCR_CSR	(KVM_REG_MIPS_FCR | KVM_REG_SIZE_U32 | 31)
++
++
++/*
   * KVM MIPS specific structures and definitions
+  *
+  */
 diff --git a/arch/mips/kvm/mips.c b/arch/mips/kvm/mips.c
-index a44a37475156..9319c4360285 100644
+index dd0833833bea..5e41afe15ae8 100644
 --- a/arch/mips/kvm/mips.c
 +++ b/arch/mips/kvm/mips.c
-@@ -531,6 +531,7 @@ static int kvm_mips_get_reg(struct kvm_vcpu *vcpu,
- 	struct mips_fpu_struct *fpu = &vcpu->arch.fpu;
+@@ -526,10 +526,13 @@ static int kvm_mips_get_reg(struct kvm_vcpu *vcpu,
+ 			    const struct kvm_one_reg *reg)
+ {
+ 	struct mips_coproc *cop0 = vcpu->arch.cop0;
++	struct mips_fpu_struct *fpu = &vcpu->arch.fpu;
  	int ret;
  	s64 v;
-+	s64 vs[2];
- 	unsigned int idx;
++	unsigned int idx;
  
  	switch (reg->id) {
-@@ -579,6 +580,35 @@ static int kvm_mips_get_reg(struct kvm_vcpu *vcpu,
- 		v = fpu->fcr31;
++	/* General purpose registers */
+ 	case KVM_REG_MIPS_R0 ... KVM_REG_MIPS_R31:
+ 		v = (long)vcpu->arch.gprs[reg->id - KVM_REG_MIPS_R0];
+ 		break;
+@@ -543,6 +546,38 @@ static int kvm_mips_get_reg(struct kvm_vcpu *vcpu,
+ 		v = (long)vcpu->arch.pc;
  		break;
  
-+	/* MIPS SIMD Architecture (MSA) registers */
-+	case KVM_REG_MIPS_VEC_128(0) ... KVM_REG_MIPS_VEC_128(31):
-+		if (!kvm_mips_guest_has_msa(&vcpu->arch))
++	/* Floating point registers */
++	case KVM_REG_MIPS_FPR_32(0) ... KVM_REG_MIPS_FPR_32(31):
++		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
 +			return -EINVAL;
-+		/* Can't access MSA registers in FR=0 mode */
-+		if (!(kvm_read_c0_guest_status(cop0) & ST0_FR))
-+			return -EINVAL;
-+		idx = reg->id - KVM_REG_MIPS_VEC_128(0);
-+#ifdef CONFIG_CPU_LITTLE_ENDIAN
-+		/* least significant byte first */
-+		vs[0] = get_fpr64(&fpu->fpr[idx], 0);
-+		vs[1] = get_fpr64(&fpu->fpr[idx], 1);
-+#else
-+		/* most significant byte first */
-+		vs[0] = get_fpr64(&fpu->fpr[idx], 1);
-+		vs[1] = get_fpr64(&fpu->fpr[idx], 0);
-+#endif
++		idx = reg->id - KVM_REG_MIPS_FPR_32(0);
++		/* Odd singles in top of even double when FR=0 */
++		if (kvm_read_c0_guest_status(cop0) & ST0_FR)
++			v = get_fpr32(&fpu->fpr[idx], 0);
++		else
++			v = get_fpr32(&fpu->fpr[idx & ~1], idx & 1);
 +		break;
-+	case KVM_REG_MIPS_MSA_IR:
-+		if (!kvm_mips_guest_has_msa(&vcpu->arch))
++	case KVM_REG_MIPS_FPR_64(0) ... KVM_REG_MIPS_FPR_64(31):
++		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
 +			return -EINVAL;
-+		v = boot_cpu_data.msa_id;
++		idx = reg->id - KVM_REG_MIPS_FPR_64(0);
++		/* Can't access odd doubles in FR=0 mode */
++		if (idx & 1 && !(kvm_read_c0_guest_status(cop0) & ST0_FR))
++			return -EINVAL;
++		v = get_fpr64(&fpu->fpr[idx], 0);
 +		break;
-+	case KVM_REG_MIPS_MSA_CSR:
-+		if (!kvm_mips_guest_has_msa(&vcpu->arch))
++	case KVM_REG_MIPS_FCR_IR:
++		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
 +			return -EINVAL;
-+		v = fpu->msacsr;
++		v = boot_cpu_data.fpu_id;
++		break;
++	case KVM_REG_MIPS_FCR_CSR:
++		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
++			return -EINVAL;
++		v = fpu->fcr31;
 +		break;
 +
- 	/* Co-processor 0 registers */
++	/* Co-processor 0 registers */
  	case KVM_REG_MIPS_CP0_INDEX:
  		v = (long)kvm_read_c0_guest_index(cop0);
-@@ -664,6 +694,10 @@ static int kvm_mips_get_reg(struct kvm_vcpu *vcpu,
- 		u32 v32 = (u32)v;
- 
- 		return put_user(v32, uaddr32);
-+	} else if ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U128) {
-+		void __user *uaddr = (void __user *)(long)reg->addr;
-+
-+		return copy_to_user(uaddr, vs, 16);
- 	} else {
- 		return -EINVAL;
- 	}
-@@ -675,6 +709,7 @@ static int kvm_mips_set_reg(struct kvm_vcpu *vcpu,
+ 		break;
+@@ -636,7 +671,9 @@ static int kvm_mips_set_reg(struct kvm_vcpu *vcpu,
+ 			    const struct kvm_one_reg *reg)
+ {
  	struct mips_coproc *cop0 = vcpu->arch.cop0;
- 	struct mips_fpu_struct *fpu = &vcpu->arch.fpu;
- 	s64 v;
-+	s64 vs[2];
- 	unsigned int idx;
+-	u64 v;
++	struct mips_fpu_struct *fpu = &vcpu->arch.fpu;
++	s64 v;
++	unsigned int idx;
  
  	if ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U64) {
-@@ -689,6 +724,10 @@ static int kvm_mips_set_reg(struct kvm_vcpu *vcpu,
- 		if (get_user(v32, uaddr32) != 0)
- 			return -EFAULT;
- 		v = (s64)v32;
-+	} else if ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U128) {
-+		void __user *uaddr = (void __user *)(long)reg->addr;
-+
-+		return copy_from_user(vs, uaddr, 16);
- 	} else {
- 		return -EINVAL;
+ 		u64 __user *uaddr64 = (u64 __user *)(long)reg->addr;
+@@ -655,6 +692,7 @@ static int kvm_mips_set_reg(struct kvm_vcpu *vcpu,
  	}
-@@ -742,6 +781,32 @@ static int kvm_mips_set_reg(struct kvm_vcpu *vcpu,
- 		fpu->fcr31 = v;
+ 
+ 	switch (reg->id) {
++	/* General purpose registers */
+ 	case KVM_REG_MIPS_R0:
+ 		/* Silently ignore requests to set $0 */
+ 		break;
+@@ -671,6 +709,38 @@ static int kvm_mips_set_reg(struct kvm_vcpu *vcpu,
+ 		vcpu->arch.pc = v;
  		break;
  
-+	/* MIPS SIMD Architecture (MSA) registers */
-+	case KVM_REG_MIPS_VEC_128(0) ... KVM_REG_MIPS_VEC_128(31):
-+		if (!kvm_mips_guest_has_msa(&vcpu->arch))
++	/* Floating point registers */
++	case KVM_REG_MIPS_FPR_32(0) ... KVM_REG_MIPS_FPR_32(31):
++		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
 +			return -EINVAL;
-+		idx = reg->id - KVM_REG_MIPS_VEC_128(0);
-+#ifdef CONFIG_CPU_LITTLE_ENDIAN
-+		/* least significant byte first */
-+		set_fpr64(&fpu->fpr[idx], 0, vs[0]);
-+		set_fpr64(&fpu->fpr[idx], 1, vs[1]);
-+#else
-+		/* most significant byte first */
-+		set_fpr64(&fpu->fpr[idx], 1, vs[0]);
-+		set_fpr64(&fpu->fpr[idx], 0, vs[1]);
-+#endif
++		idx = reg->id - KVM_REG_MIPS_FPR_32(0);
++		/* Odd singles in top of even double when FR=0 */
++		if (kvm_read_c0_guest_status(cop0) & ST0_FR)
++			set_fpr32(&fpu->fpr[idx], 0, v);
++		else
++			set_fpr32(&fpu->fpr[idx & ~1], idx & 1, v);
 +		break;
-+	case KVM_REG_MIPS_MSA_IR:
-+		if (!kvm_mips_guest_has_msa(&vcpu->arch))
++	case KVM_REG_MIPS_FPR_64(0) ... KVM_REG_MIPS_FPR_64(31):
++		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
++			return -EINVAL;
++		idx = reg->id - KVM_REG_MIPS_FPR_64(0);
++		/* Can't access odd doubles in FR=0 mode */
++		if (idx & 1 && !(kvm_read_c0_guest_status(cop0) & ST0_FR))
++			return -EINVAL;
++		set_fpr64(&fpu->fpr[idx], 0, v);
++		break;
++	case KVM_REG_MIPS_FCR_IR:
++		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
 +			return -EINVAL;
 +		/* Read-only */
 +		break;
-+	case KVM_REG_MIPS_MSA_CSR:
-+		if (!kvm_mips_guest_has_msa(&vcpu->arch))
++	case KVM_REG_MIPS_FCR_CSR:
++		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
 +			return -EINVAL;
-+		fpu->msacsr = v;
++		fpu->fcr31 = v;
 +		break;
 +
- 	/* Co-processor 0 registers */
++	/* Co-processor 0 registers */
  	case KVM_REG_MIPS_CP0_INDEX:
  		kvm_write_c0_guest_index(cop0, v);
+ 		break;
 -- 
 2.0.5
+
