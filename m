@@ -1,8 +1,8 @@
 From: Vitaly Kuznetsov <vkuznets@redhat.com>
-Subject: [PATCH RFCv2 01/21] Drivers: hv: util: move kvp/vss function
- declarations to hyperv_vmbus.h
-Date: Wed, 11 Mar 2015 14:29:14 +0100
-Message-ID: <1426080574-9011-2-git-send-email-vkuznets@redhat.com>
+Subject: [PATCH RFCv2 05/21] Drivers: hv: vss: process deferred messages when
+ we complete the transaction
+Date: Wed, 11 Mar 2015 14:29:18 +0100
+Message-ID: <1426080574-9011-6-git-send-email-vkuznets@redhat.com>
 References: <1426080574-9011-1-git-send-email-vkuznets@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,79 +22,68 @@ To: "K. Y. Srinivasan" <kys@microsoft.com>, devel@linuxdriverproject.org
 Cc: Radim Krcmar <rkrcmar@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Haiyang Zhang <haiyangz@microsoft.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-These declarations are internal to hv_util module and hv_fcopy_* declarations
-already reside there.
+In theory, the host is not supposed to issue any requests before be reply to
+the previous one. In KVP we, however, support the following scenarios:
+1) A message was received before userspace daemon registered;
+2) A message was received while the previous one is still being processed.
+In VSS we support only the former. Add support for the later, use
+hv_poll_channel() to do the job.
 
 Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
 ---
- drivers/hv/hv_kvp.c       | 1 +
- drivers/hv/hv_snapshot.c  | 2 ++
- drivers/hv/hyperv_vmbus.h | 8 ++++++++
- include/linux/hyperv.h    | 8 --------
- 4 files changed, 11 insertions(+), 8 deletions(-)
+ drivers/hv/hv_snapshot.c | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/hv/hv_kvp.c b/drivers/hv/hv_kvp.c
-index beb8105..a414c83 100644
---- a/drivers/hv/hv_kvp.c
-+++ b/drivers/hv/hv_kvp.c
-@@ -28,6 +28,7 @@
- #include <linux/workqueue.h>
- #include <linux/hyperv.h>
- 
-+#include "hyperv_vmbus.h"
- 
- /*
-  * Pre win8 version numbers used in ws2008 and ws 2008 r2 (win7)
 diff --git a/drivers/hv/hv_snapshot.c b/drivers/hv/hv_snapshot.c
-index 9d5e0d1..c1a3604 100644
+index c1a3604..4bb9b1c 100644
 --- a/drivers/hv/hv_snapshot.c
 +++ b/drivers/hv/hv_snapshot.c
-@@ -24,6 +24,8 @@
- #include <linux/workqueue.h>
- #include <linux/hyperv.h>
+@@ -47,6 +47,7 @@ static struct {
+ 	struct vmbus_channel *recv_channel; /* chn we got the request */
+ 	u64 recv_req_id; /* request ID. */
+ 	struct hv_vss_msg  *msg; /* current message */
++	void *vss_context; /* for the channel callback */
+ } vss_transaction;
  
-+#include "hyperv_vmbus.h"
+ 
+@@ -73,6 +74,9 @@ static void vss_timeout_func(struct work_struct *dummy)
+ 	 */
+ 	pr_warn("VSS: timeout waiting for daemon to reply\n");
+ 	vss_respond_to_host(HV_E_FAIL);
 +
- #define VSS_MAJOR  5
- #define VSS_MINOR  0
- #define VSS_VERSION    (VSS_MAJOR << 16 | VSS_MINOR)
-diff --git a/drivers/hv/hyperv_vmbus.h b/drivers/hv/hyperv_vmbus.h
-index 44b1c94..0d85dd1 100644
---- a/drivers/hv/hyperv_vmbus.h
-+++ b/drivers/hv/hyperv_vmbus.h
-@@ -699,6 +699,14 @@ int vmbus_set_event(struct vmbus_channel *channel);
++	hv_poll_channel(vss_transaction.vss_context,
++			hv_vss_onchannelcallback);
+ }
  
- void vmbus_on_event(unsigned long data);
- 
-+int hv_kvp_init(struct hv_util_service *);
-+void hv_kvp_deinit(void);
-+void hv_kvp_onchannelcallback(void *);
-+
-+int hv_vss_init(struct hv_util_service *);
-+void hv_vss_deinit(void);
-+void hv_vss_onchannelcallback(void *);
-+
- int hv_fcopy_init(struct hv_util_service *);
- void hv_fcopy_deinit(void);
- void hv_fcopy_onchannelcallback(void *);
-diff --git a/include/linux/hyperv.h b/include/linux/hyperv.h
-index 5a2ba67..78cfd65 100644
---- a/include/linux/hyperv.h
-+++ b/include/linux/hyperv.h
-@@ -1206,14 +1206,6 @@ extern bool vmbus_prep_negotiate_resp(struct icmsg_hdr *,
- 					struct icmsg_negotiate *, u8 *, int,
- 					int);
- 
--int hv_kvp_init(struct hv_util_service *);
--void hv_kvp_deinit(void);
--void hv_kvp_onchannelcallback(void *);
+ static void
+@@ -85,13 +89,12 @@ vss_cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
+ 	if (vss_msg->vss_hdr.operation == VSS_OP_REGISTER) {
+ 		pr_info("VSS daemon registered\n");
+ 		vss_transaction.active = false;
+-		if (vss_transaction.recv_channel != NULL)
+-			hv_vss_onchannelcallback(vss_transaction.recv_channel);
+-		return;
 -
--int hv_vss_init(struct hv_util_service *);
--void hv_vss_deinit(void);
--void hv_vss_onchannelcallback(void *);
--
- extern struct resource hyperv_mmio;
+ 	}
+ 	if (cancel_delayed_work_sync(&vss_timeout_work))
+ 		vss_respond_to_host(vss_msg->error);
++
++	hv_poll_channel(vss_transaction.vss_context,
++			hv_vss_onchannelcallback);
+ }
  
- /*
+ 
+@@ -198,9 +201,10 @@ void hv_vss_onchannelcallback(void *context)
+ 		 * We will defer processing this callback once
+ 		 * the current transaction is complete.
+ 		 */
+-		vss_transaction.recv_channel = channel;
++		vss_transaction.vss_context = context;
+ 		return;
+ 	}
++	vss_transaction.vss_context = NULL;
+ 
+ 	vmbus_recvpacket(channel, recv_buffer, PAGE_SIZE * 2, &recvlen,
+ 			 &requestid);
 -- 
 1.9.3
