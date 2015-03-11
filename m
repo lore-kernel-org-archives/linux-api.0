@@ -1,86 +1,99 @@
-From: Vitaly Kuznetsov <vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH RFCv2 06/21] Drivers: hv: kvp: rename kvp_work -> kvp_timeout_work
-Date: Wed, 11 Mar 2015 14:29:19 +0100
-Message-ID: <1426080574-9011-7-git-send-email-vkuznets@redhat.com>
+From: Vitaly Kuznetsov <vkuznets@redhat.com>
+Subject: [PATCH RFCv2 03/21] Drivers: hv: kvp: move poll_channel() to
+ hyperv_vmbus.h
+Date: Wed, 11 Mar 2015 14:29:16 +0100
+Message-ID: <1426080574-9011-4-git-send-email-vkuznets@redhat.com>
 References: <1426080574-9011-1-git-send-email-vkuznets@redhat.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426080574-9011-1-git-send-email-vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "K. Y. Srinivasan" <kys-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, devel-tBiZLqfeLfOHmIFyCCdPziST3g8Odh+X@public.gmane.org
-Cc: Haiyang Zhang <haiyangz-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dexuan Cui <decui-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Radim Krcmar <rkrcmar-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <1426080574-9011-1-git-send-email-vkuznets@redhat.com>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: "K. Y. Srinivasan" <kys@microsoft.com>, devel@linuxdriverproject.org
+Cc: Radim Krcmar <rkrcmar@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Haiyang Zhang <haiyangz@microsoft.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-'kvp_work' (and kvp_work_func) is a misnomer as it sounds like we expect
-this useful work to happen and in reality it is just an emergency escape when
-timeout happens.
+..., make it inline and rename it to hv_poll_channel() so it can be reused
+in other hv_util modules.
 
-Signed-off-by: Vitaly Kuznetsov <vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
 ---
- drivers/hv/hv_kvp.c | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ drivers/hv/hv_kvp.c       | 17 +++--------------
+ drivers/hv/hyperv_vmbus.h | 12 ++++++++++++
+ 2 files changed, 15 insertions(+), 14 deletions(-)
 
 diff --git a/drivers/hv/hv_kvp.c b/drivers/hv/hv_kvp.c
-index 939c3e7..14c62e2 100644
+index caa467d..939c3e7 100644
 --- a/drivers/hv/hv_kvp.c
 +++ b/drivers/hv/hv_kvp.c
-@@ -79,10 +79,10 @@ static void kvp_send_key(struct work_struct *dummy);
- 
- 
- static void kvp_respond_to_host(struct hv_kvp_msg *msg, int error);
--static void kvp_work_func(struct work_struct *dummy);
-+static void kvp_timeout_func(struct work_struct *dummy);
- static void kvp_register(int);
- 
--static DECLARE_DELAYED_WORK(kvp_work, kvp_work_func);
-+static DECLARE_DELAYED_WORK(kvp_timeout_work, kvp_timeout_func);
- static DECLARE_WORK(kvp_sendkey_work, kvp_send_key);
- 
- static struct cb_id kvp_id = { CN_KVP_IDX, CN_KVP_VAL };
-@@ -118,8 +118,8 @@ kvp_register(int reg_value)
- 		kfree(msg);
- 	}
+@@ -128,17 +128,6 @@ kvp_work_func(struct work_struct *dummy)
+ 	kvp_respond_to_host(NULL, HV_E_FAIL);
  }
--static void
--kvp_work_func(struct work_struct *dummy)
+ 
+-static void poll_channel(struct vmbus_channel *channel)
+-{
+-	if (channel->target_cpu != smp_processor_id())
+-		smp_call_function_single(channel->target_cpu,
+-					 hv_kvp_onchannelcallback,
+-					 channel, true);
+-	else
+-		hv_kvp_onchannelcallback(channel);
+-}
+-
+-
+ static int kvp_handle_handshake(struct hv_kvp_msg *msg)
+ {
+ 	int ret = 1;
+@@ -166,8 +155,8 @@ static int kvp_handle_handshake(struct hv_kvp_msg *msg)
+ 		pr_info("KVP: user-mode registering done.\n");
+ 		kvp_register(dm_reg_value);
+ 		kvp_transaction.active = false;
+-		if (kvp_transaction.kvp_context)
+-			poll_channel(kvp_transaction.kvp_context);
++		hv_poll_channel(kvp_transaction.kvp_context,
++				hv_kvp_onchannelcallback);
+ 	}
+ 	return ret;
+ }
+@@ -587,7 +576,7 @@ response_done:
+ 
+ 	vmbus_sendpacket(channel, recv_buffer, buf_len, req_id,
+ 				VM_PKT_DATA_INBAND, 0);
+-	poll_channel(channel);
++	hv_poll_channel(channel, hv_kvp_onchannelcallback);
+ }
+ 
+ /*
+diff --git a/drivers/hv/hyperv_vmbus.h b/drivers/hv/hyperv_vmbus.h
+index 0d85dd1..177dbec 100644
+--- a/drivers/hv/hyperv_vmbus.h
++++ b/drivers/hv/hyperv_vmbus.h
+@@ -711,5 +711,17 @@ int hv_fcopy_init(struct hv_util_service *);
+ void hv_fcopy_deinit(void);
+ void hv_fcopy_onchannelcallback(void *);
+ 
++static inline void hv_poll_channel(struct vmbus_channel *channel,
++				   void (*cb)(void *))
++{
++	if (!channel)
++		return;
 +
-+static void kvp_timeout_func(struct work_struct *dummy)
- {
- 	/*
- 	 * If the timer fires, the user-mode component has not responded;
-@@ -215,7 +215,7 @@ kvp_cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
- 	 * Complete the transaction by forwarding the key value
- 	 * to the host. But first, cancel the timeout.
- 	 */
--	if (cancel_delayed_work_sync(&kvp_work))
-+	if (cancel_delayed_work_sync(&kvp_timeout_work))
- 		kvp_respond_to_host(message, error);
- }
++	if (channel->target_cpu != smp_processor_id())
++		smp_call_function_single(channel->target_cpu,
++					 cb, channel, true);
++	else
++		cb(channel);
++}
  
-@@ -440,7 +440,7 @@ kvp_send_key(struct work_struct *dummy)
- 	rc = cn_netlink_send(msg, 0, 0, GFP_ATOMIC);
- 	if (rc) {
- 		pr_debug("KVP: failed to communicate to the daemon: %d\n", rc);
--		if (cancel_delayed_work_sync(&kvp_work))
-+		if (cancel_delayed_work_sync(&kvp_timeout_work))
- 			kvp_respond_to_host(message, HV_E_FAIL);
- 	}
- 
-@@ -668,7 +668,7 @@ void hv_kvp_onchannelcallback(void *context)
- 			 * user-mode not responding.
- 			 */
- 			schedule_work(&kvp_sendkey_work);
--			schedule_delayed_work(&kvp_work, 5*HZ);
-+			schedule_delayed_work(&kvp_timeout_work, 5*HZ);
- 
- 			return;
- 
-@@ -708,6 +708,6 @@ hv_kvp_init(struct hv_util_service *srv)
- void hv_kvp_deinit(void)
- {
- 	cn_del_callback(&kvp_id);
--	cancel_delayed_work_sync(&kvp_work);
-+	cancel_delayed_work_sync(&kvp_timeout_work);
- 	cancel_work_sync(&kvp_sendkey_work);
- }
+ #endif /* _HYPERV_VMBUS_H */
 -- 
 1.9.3
