@@ -1,46 +1,99 @@
-From: Dave Jones <davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org>
+From: Michael Ellerman <mpe@ellerman.id.au>
 Subject: Re: [PATCH 2/9] selftests: Add install target
-Date: Tue, 10 Mar 2015 23:18:48 -0400
-Message-ID: <20150311031848.GA7763@codemonkey.org.uk>
+Date: Wed, 11 Mar 2015 14:20:19 +1100
+Message-ID: <1426044019.23148.2.camel@ellerman.id.au>
 References: <1425358302-16680-1-git-send-email-mpe@ellerman.id.au>
- <1425358302-16680-2-git-send-email-mpe@ellerman.id.au>
- <20150305185326.GA30620@codemonkey.org.uk>
- <1426043710.23148.1.camel@ellerman.id.au>
+	 <1425358302-16680-2-git-send-email-mpe@ellerman.id.au>
+	 <20150305185326.GA30620@codemonkey.org.uk>
+	 <54FDAC4A.9080703@osg.samsung.com> <54FE1EC0.6000201@osg.samsung.com>
+	 <54FF098D.7020106@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1426043710.23148.1.camel-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <54FF098D.7020106@osg.samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Shuah Khan <shuahkh@osg.samsung.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Dave Jones <davej@codemonkey.org.uk>, mmarek@suse.cz
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 11, 2015 at 02:15:10PM +1100, Michael Ellerman wrote:
- > On Thu, 2015-03-05 at 13:53 -0500, Dave Jones wrote:
- > > $ ./all.sh 
- > > -bash: ./all.sh: /bin/bash\n\n: bad interpreter: No such file or directory
- > > 
- > > Removing the \n\n fixes it.
- > > 
- > >  > +		echo "cd \$$ROOT\n" >> $(ALL_SCRIPT); \
- > > 
- > > ditto
- > 
- > Weird, I don't see that.
- > 
- >   $ make install
- >   $ head install/run_kselftest.sh
- >   #!/bin/bash
- >   
- >   
- >   cd $(dirname $0)
- > 
- > 
- > Does it depend on the shell? I guess none of the newlines are necessary so I'll
- > just remove them.
+On Tue, 2015-03-10 at 09:11 -0600, Shuah Khan wrote:
+> On 03/09/2015 04:29 PM, Shuah Khan wrote:
+> > On 03/09/2015 08:20 AM, Shuah Khan wrote:
+> >> On 03/05/2015 11:53 AM, Dave Jones wrote:
+> >>> On Tue, Mar 03, 2015 at 03:51:35PM +1100, Michael Ellerman wrote:
+> >>>  > This adds make install support to selftests. The basic usage is:
+> >>>  > 
+> >>>  > $ cd tools/testing/selftests
+> >>>  > $ make install
+> >>>  > 
+> >>>  > That installs into tools/testing/selftests/install, which can then be
+> >>>  > copied where ever necessary.
+> >>>  > 
+> >>>  > The install destination is also configurable using eg:
+> >>>  > 
+> >>>  > $ INSTALL_PATH=/mnt/selftests make install
+> >>>
+> >>>  ...
+> >>>
+> >>>  > +	@# Ask all targets to emit their test scripts
+> >>>  > +	echo "#!/bin/bash\n\n" > $(ALL_SCRIPT)
+> >>>
+> >>> $ ./all.sh 
+> >>> -bash: ./all.sh: /bin/bash\n\n: bad interpreter: No such file or directory
+> >>>
+> >>> Removing the \n\n fixes it.
+> >>>
+> >>>  > +		echo "cd \$$ROOT\n" >> $(ALL_SCRIPT); \
+> >>>
+> >>> ditto
+> >>>
+> >>> 	Dave
+> >>
+> >> Michael,
+> >>
+> >> Could you please fix these problems and send the patch.
+> >>
+> > 
+> > Michael,
+> > 
+> > Did you happen to run run_kselftest.sh from the install
+> > directory to make sure all the dependent executables
+> > are installed? You are missing a few required dependencies.
+> > efivars test for example.
+> > 
+> > Please run kselftest_install.sh I sent out for review and
+> > compare the following:
+> > 
+> > - contents of install directory created with your patch vs.
+> >   my kselftest_install.sh tool
+> > - Compare your run_kselftest.sh run with the one that gets
+> >   generated with my kselftest_install.sh tool
+> > 
+> > General rule is all tests that get run when run_tests target
+> > is run should run from the install directory using the
+> > run_kselftest.sh generated during install.
+> > 
+> 
+> Couple more things. Please change the install directory name
+> to kselftest
+> 
+> tools/testing/selftests/kselftest
+> instead of
+> tools/testing/selftests/install
 
-Dunno, bash here too. Maybe the version ? My environment at the office is a little
-dated. (It's based on ye olde ubuntu lts)
+I prefer install, that's what it is after all. I don't know why you're so
+obsessed with the "kselftest" name.
 
-	Dave
+> Also please flatten the directory structure under the install
+> directory. I don't see any value in creating directory for each
+> test for install. Also it is makes it cumbersome for users
+> to navigate and work with after the install. This would mean cpu
+> and memory hot-plug scripts need unique names.
+
+That's not a good idea. To start with different tests might the same name, as
+already happens with the memory & cpu hot-plug tests. They may also have data
+files that would clobber each other. We'd need to make sure all files used in
+all tests have different names, that would be a total mess.
+
+cheers
