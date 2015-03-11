@@ -1,65 +1,43 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH 41/45] include/uapi/sound/emu10k1.h: hide gpr_valid, tram_valid and code_valid in userspace
-Date: Wed, 11 Mar 2015 10:46:29 +0100
-Message-ID: <2168807.4Yxh5gl11Q@wuerfel>
-References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi> <20150311012204.GE12550@lakka.kapsi.fi> <s5h4mpsnjw9.wl-tiwai@suse.de>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH] Don't allow blocking of signals using sigreturn.
+Date: Wed, 11 Mar 2015 15:26:13 -0700
+Message-ID: <CALCETrXy=ftik5U7nD9D+u8z-jLBOG_xX20QTDoP-CkV3=U2Vg@mail.gmail.com>
+References: <20150311174204.GA5712@pc.thejh.net> <21760.46870.338764.599348@gargle.gargle.HOWL>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <s5h4mpsnjw9.wl-tiwai-l3A5Bk7waGM@public.gmane.org>
+In-Reply-To: <21760.46870.338764.599348-4mDQ13Tdud8Jw5R7aSpS0dP8p4LwMBBS@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Takashi Iwai <tiwai-l3A5Bk7waGM@public.gmane.org>
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, alsa-devel-K7yf7f+aM1XWsZ/bQMPhNw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mikael Pettersson <mikpelinux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jeff Dike <jdike-OPE4K8JWMJJBDgjK7y7TUQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday 11 March 2015 07:11:18 Takashi Iwai wrote:
-> At Wed, 11 Mar 2015 03:22:04 +0200,
-> Mikko Rapeli wrote:
-> >=20
-> > On Tue, Feb 17, 2015 at 07:27:38AM +0100, Takashi Iwai wrote:
-> > > At Tue, 17 Feb 2015 00:05:44 +0100,
-> > > Mikko Rapeli wrote:
-> > > >=20
-> > > > The DECLARE_BITMAP macro is not available in userspace headers.
-> > > > Fixes userspace compile error:
-> > > > error: expected specifier-qualifier-list before =E2=80=98DECLAR=
-E_BITMAP=E2=80=99
-> > >=20
-> > > It's nonsense.  This results in an incompatible structure, thus A=
-BI
-> > > would be broken completely (actually this will break the compile =
-of
-> > > ld10k1).
-> >=20
-> > None of the exported headers after 'make headers_install' have defi=
-nition
-> > of DECLARE_BITMAP macro. It is defined in include/linux/types.h whi=
-ch is
-> > different from include/uapi/linux/types.h and missing this definiti=
-on and
-> > a few other things.
-> >=20
-> > One option would be add DECLARE_BITMAP macro to include/uapi/linux/=
-types.h
-> > and add include/linux/bitops.h to uapi.
-> >=20
-> > Thoughts?
->=20
-> Are there any other headers like that?  If this is the only one, leav=
-e
-> it as is.  The only program that reads this are some alsa-tools ones
-> and they have already own DECLARE_BITMAP() definition.  Adding the
-> extra definition here will even break the compilation out of sudden.
+On Wed, Mar 11, 2015 at 2:43 PM, Mikael Pettersson <mikpelinux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> Jann Horn writes:
+>  > Or should I throw this patch away and write a patch
+>  > for the prctl() manpage instead that documents that
+>  > being able to call sigreturn() implies being able to
+>  > effectively call sigprocmask(), at least on some
+>  > architectures like X86?
+>
+> Well, that is the semantics of sigreturn().  It is essentially
+> setcontext() [which includes the actions of sigprocmask()], but
+> with restrictions on parameter placement (at least on x86).
+>
+> You could introduce some setting to restrict that aspect for
+> seccomp processes, but you can't change this for normal processes
+> without breaking things.
 
-I think it's a worthy goal to have the header files be compilable
-standalone, but I don't think we should make the DECLARE_BITMAP()
-macro globally visible in user space, in particular because it will
-clash with every instance in which user space has a macro of the
-same name.
+Which leads to the interesting question: does anyone ever call
+sigreturn with a different signal mask than the kernel put there
+during signal delivery or, even more strangely, with a totally made up
+context?  I suspect that the former does happen, even if the latter
+may be rare or completely implausible.
 
-What we could do here is to add a private copy of the macro to emu10k1.=
-h
-under a different name, such as __EMU10K1_DECLARE_BITMAP().
+I certainly have code that modifies GPRs in the context prior to sigreturn.
 
-	Arnd
+--Andy
+
+-- 
+Andy Lutomirski
+AMA Capital Management, LLC
