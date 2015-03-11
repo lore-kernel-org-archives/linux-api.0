@@ -1,74 +1,49 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [PATCH] kbuild: Don't pass -rR to selftest makefiles
-Date: Wed, 11 Mar 2015 10:49:46 +1100
-Message-ID: <1426031386.20917.4.camel@ellerman.id.au>
-References: <1425464362-28876-1-git-send-email-mpe@ellerman.id.au>
-	 <54FDAE28.6050801@osg.samsung.com> <54FE2377.9040709@osg.samsung.com>
-	 <1426030567.20917.3.camel@ellerman.id.au>
-	 <54FF809F.7020205@osg.samsung.com>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: Re: [PATCH 34/45] include/uapi/asm-generic/signal.h: hide sigset_t
+ definition in userspace
+Date: Wed, 11 Mar 2015 02:05:16 +0200
+Message-ID: <20150311000516.GA12550@lakka.kapsi.fi>
+References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
+ <1424127948-22484-35-git-send-email-mikko.rapeli@iki.fi>
+ <2741317.tcRFXAy9C6@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54FF809F.7020205-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: mmarek-AlSwsSmVLrQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <2741317.tcRFXAy9C6@wuerfel>
+Sender: linux-arch-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2015-03-10 at 17:39 -0600, Shuah Khan wrote:
-> On 03/10/2015 05:36 PM, Michael Ellerman wrote:
-> > On Mon, 2015-03-09 at 16:49 -0600, Shuah Khan wrote:
-> >> On 03/09/2015 08:28 AM, Shuah Khan wrote:
-> >>> On 03/04/2015 03:19 AM, Michael Ellerman wrote:
-> >>>> The makefiles under tools/testing/selftests are not real kbuild
-> >>>> makefiles, they are regular stand alone makefiles. As such they =
-*do*
-> >>>> want all the standard implicit rules and variables defined.
-> >>>>
-> >>>> So before calling those makefiles, filter -rR out of MAKEFLAGS.
-> >>>>
-> >>>> Without this not all the selftests are built correctly when call=
-ed via
-> >>>> the top-level Makefile.
-> >>>>
-> >>>> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-> >>>
-> >>> Hi Michal,
-> >>>
-> >>> Could you please take this patch in your tree.
-> >>>
-> >>> Acked-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-> >>>
-> >>
-> >> I am changing this to a Nack. This is not fully cooked.
-> >> I am seeing new failures on some tests.
-> >>
-> >> gcc: error: elf_x86_64: No such file or directory
-> >> gcc: error: unrecognized command line option =E2=80=98-m=E2=80=99
-> >=20
-> > I can't reproduce that here. In what way do you think it's related =
-to this
-> > patch?
->=20
-> I have just your patch on tops of linux 4.0-rc3 and ran
-> make kselftest and that's what I see.
->=20
-> If you can fix this problem I can take your patch, otherwise,
-> I have to go with individual Makefiles fixes.
+On Tue, Feb 17, 2015 at 10:16:09AM +0100, Arnd Bergmann wrote:
+> On Tuesday 17 February 2015 00:05:37 Mikko Rapeli wrote:
+> > +#ifdef __KERNEL__
+> > +/* already defined in userspace via stdlib.h */
+> >  typedef struct {
+> >         unsigned long sig[_NSIG_WORDS];
+> >  } sigset_t;
+> > +#endif /* __KERNEL__ */
+> 
+> I'm not sure here: Is this structure always identical to the one
+> we see in user space?
+> 
+> If not, we might want to rename the typedef to __kernel_sigset_t
+> instead and use that inside of the uapi headers.
 
-OK I see it now, only happens on x86.
+I was copying this ifdef from the struct sigaction part in the same file:
 
-It looks like it's coming in via kbuild. Though I can only see it being=
- set in
-arch/x86/Makefile.um, and I don't know why that is being sourced. But i=
-t must
-be.
+#ifndef __KERNEL__
+struct sigaction {
+        __sighandler_t sa_handler;
+        unsigned long sa_flags;
+#ifdef SA_RESTORER
+        __sigrestore_t sa_restorer;
+#endif
+        sigset_t sa_mask;               /* mask last for extensibility */
+};
+#endif
 
-So this is another symptom of running via the top-level Makefile rather=
- than
-directly.
+I assumed it had the same problems at some point.
 
-I'll try and find a fix.
-
-cheers
+-Mikko
