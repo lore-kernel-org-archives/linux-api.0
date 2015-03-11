@@ -1,118 +1,95 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH 2/9] selftests: Add install target
-Date: Wed, 11 Mar 2015 07:19:02 -0600
-Message-ID: <550040C6.8030702@osg.samsung.com>
-References: <1425358302-16680-1-git-send-email-mpe@ellerman.id.au> <1425358302-16680-2-git-send-email-mpe@ellerman.id.au> <20150305185326.GA30620@codemonkey.org.uk> <54FDAC4A.9080703@osg.samsung.com> <54FE1EC0.6000201@osg.samsung.com> <54FF098D.7020106@osg.samsung.com> <1426044019.23148.2.camel@ellerman.id.au>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+From: Vitaly Kuznetsov <vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH RFCv2 00/21] Drivers: hv: utils: re-implement the kernel/userspace communication layer
+Date: Wed, 11 Mar 2015 14:29:13 +0100
+Message-ID: <1426080574-9011-1-git-send-email-vkuznets@redhat.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426044019.23148.2.camel-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Jones <davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org>, mmarek-AlSwsSmVLrQ@public.gmane.org
+To: "K. Y. Srinivasan" <kys-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, devel-tBiZLqfeLfOHmIFyCCdPziST3g8Odh+X@public.gmane.org
+Cc: Haiyang Zhang <haiyangz-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dexuan Cui <decui-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Radim Krcmar <rkrcmar-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/10/2015 09:20 PM, Michael Ellerman wrote:
-> On Tue, 2015-03-10 at 09:11 -0600, Shuah Khan wrote:
->> On 03/09/2015 04:29 PM, Shuah Khan wrote:
->>> On 03/09/2015 08:20 AM, Shuah Khan wrote:
->>>> On 03/05/2015 11:53 AM, Dave Jones wrote:
->>>>> On Tue, Mar 03, 2015 at 03:51:35PM +1100, Michael Ellerman wrote:
->>>>>  > This adds make install support to selftests. The basic usage is:
->>>>>  > 
->>>>>  > $ cd tools/testing/selftests
->>>>>  > $ make install
->>>>>  > 
->>>>>  > That installs into tools/testing/selftests/install, which can then be
->>>>>  > copied where ever necessary.
->>>>>  > 
->>>>>  > The install destination is also configurable using eg:
->>>>>  > 
->>>>>  > $ INSTALL_PATH=/mnt/selftests make install
->>>>>
->>>>>  ...
->>>>>
->>>>>  > +	@# Ask all targets to emit their test scripts
->>>>>  > +	echo "#!/bin/bash\n\n" > $(ALL_SCRIPT)
->>>>>
->>>>> $ ./all.sh 
->>>>> -bash: ./all.sh: /bin/bash\n\n: bad interpreter: No such file or directory
->>>>>
->>>>> Removing the \n\n fixes it.
->>>>>
->>>>>  > +		echo "cd \$$ROOT\n" >> $(ALL_SCRIPT); \
->>>>>
->>>>> ditto
->>>>>
->>>>> 	Dave
->>>>
->>>> Michael,
->>>>
->>>> Could you please fix these problems and send the patch.
->>>>
->>>
->>> Michael,
->>>
->>> Did you happen to run run_kselftest.sh from the install
->>> directory to make sure all the dependent executables
->>> are installed? You are missing a few required dependencies.
->>> efivars test for example.
->>>
->>> Please run kselftest_install.sh I sent out for review and
->>> compare the following:
->>>
->>> - contents of install directory created with your patch vs.
->>>   my kselftest_install.sh tool
->>> - Compare your run_kselftest.sh run with the one that gets
->>>   generated with my kselftest_install.sh tool
->>>
->>> General rule is all tests that get run when run_tests target
->>> is run should run from the install directory using the
->>> run_kselftest.sh generated during install.
->>>
->>
->> Couple more things. Please change the install directory name
->> to kselftest
->>
->> tools/testing/selftests/kselftest
->> instead of
->> tools/testing/selftests/install
-> 
-> I prefer install, that's what it is after all. I don't know why you're so
-> obsessed with the "kselftest" name.
+Changes in RFCv2:
+- Preserve backwards compatibility with netlink-speaking daemons. [K. Y. Srinivasan]
+- Introduce transport abstraction layer. [K. Y. Srinivasan]
+- Get rid of ioctls [Radim Krcmar]
+- Make the series reviewable by splitting it into smaller patches.
 
-It is the overall user-interface. I want to be able to call
-install wrapper script and have the right directory generated.
-If user passes in /tmp for example as a main directory, install
-is so generic and doesn't make sense. I see that you sent the
-patch v4 still with install and please change it to kselftest
-> 
->> Also please flatten the directory structure under the install
->> directory. I don't see any value in creating directory for each
->> test for install. Also it is makes it cumbersome for users
->> to navigate and work with after the install. This would mean cpu
->> and memory hot-plug scripts need unique names.
-> 
-> That's not a good idea. To start with different tests might the same name, as
-> already happens with the memory & cpu hot-plug tests. They may also have data
-> files that would clobber each other. We'd need to make sure all files used in
-> all tests have different names, that would be a total mess.
+Anatomy of the series:
+Patches 01 - 07 are cleanup with minor functional change.
+Patch 08 defines the state machine.
+Patches 09-11 convert all 3 drivers to using the state machine.
+Patch 12 fixes a bug in fcopy. This change is going away in Patch 15,
+ I just want to highlight the fix.
+Patch 13 introduces a transport abstraction.
+Patch 14-16 convert all drivers to using the transport abstraction.
+Patches 17-18 switch KVP and VSS daemon to using char devices.
+Patches 19-20 convert FCOPY and VSS to hull handshake (the same we have in
+ KVP). These two can be postponed till we really need to distinguish between
+ different kernels in the daemon code.
+Patch 21 unifies log messages on daemons connect across all drivers and moves
+ these messages to debug level.
 
-No I want the just one container directory for the tests. Again I am
-looking at the bigger picture user-interface angle. Please flatten it,
-and resend it.
+I smoke-tested this series with both old (netlink) and new (char devices)
+daemons and tested the daemon upgrade procedure.
 
-I responded to your patch v4. Please re-do the patch to address my
-comments if you want your patch to be included.
+Original description:
+This series converts kvp/vss daemons to use misc char devices instead of
+netlink for userspace/kernel communication and then updates fcopy to be
+consistent with kvp/vss.
 
-thanks,
--- Shuah
+Userspace/kernel communication via netlink has a number of issues:
+- It is hard for userspace to figure out if the kernel part was loaded or not
+  and this fact can change as there is a way to enable/disable the service from
+  host side. Racy daemon startup is also a problem.
+- When the userspace daemon restarts/dies kernel part doesn't receive a
+  notification.
+- Netlink communication is not stable under heavy load.
+- ...
 
+Vitaly Kuznetsov (21):
+  Drivers: hv: util: move kvp/vss function declarations to
+    hyperv_vmbus.h
+  Drivers: hv: kvp: reset kvp_context
+  Drivers: hv: kvp: move poll_channel() to hyperv_vmbus.h
+  Drivers: hv: fcopy: process deferred messages when we complete the
+    transaction
+  Drivers: hv: vss: process deferred messages when we complete the
+    transaction
+  Drivers: hv: kvp: rename kvp_work -> kvp_timeout_work
+  Drivers: hv: fcopy: rename fcopy_work -> fcopy_timeout_work
+  Drivers: hv: util: introduce state machine for util drivers
+  Drivers: hv: kvp: switch to using the hvutil_device_state state
+    machine
+  Drivers: hv: vss: switch to using the hvutil_device_state state
+    machine
+  Drivers: hv: fcopy: switch to using the hvutil_device_state state
+    machine
+  Drivers: hv: fcopy: set .owner reference for file operations
+  Drivers: hv: util: introduce hv_utils_transport abstraction
+  Drivers: hv: vss: convert to hv_utils_transport
+  Drivers: hv: fcopy: convert to hv_utils_transport
+  Drivers: hv: kvp: convert to hv_utils_transport
+  Tools: hv: kvp: use misc char device to communicate with kernel
+  Tools: hv: vss: use misc char device to communicate with kernel
+  Drivers: hv: vss: full handshake support
+  Drivers: hv: fcopy: full handshake support
+  Drivers: hv: utils: unify driver registration reporting
+
+ drivers/hv/Makefile             |   2 +-
+ drivers/hv/hv_fcopy.c           | 287 ++++++++++++++--------------------------
+ drivers/hv/hv_kvp.c             | 192 +++++++++++++--------------
+ drivers/hv/hv_snapshot.c        | 168 +++++++++++++++--------
+ drivers/hv/hv_utils_transport.c | 276 ++++++++++++++++++++++++++++++++++++++
+ drivers/hv/hv_utils_transport.h |  51 +++++++
+ drivers/hv/hyperv_vmbus.h       |  29 ++++
+ include/linux/hyperv.h          |   8 --
+ include/uapi/linux/hyperv.h     |   8 +-
+ tools/hv/hv_fcopy_daemon.c      |  15 +++
+ tools/hv/hv_kvp_daemon.c        | 166 +++++------------------
+ tools/hv/hv_vss_daemon.c        | 149 ++++++---------------
+ 12 files changed, 752 insertions(+), 599 deletions(-)
+ create mode 100644 drivers/hv/hv_utils_transport.c
+ create mode 100644 drivers/hv/hv_utils_transport.h
 
 -- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+1.9.3
