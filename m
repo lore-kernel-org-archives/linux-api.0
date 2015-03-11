@@ -1,8 +1,8 @@
 From: Vitaly Kuznetsov <vkuznets@redhat.com>
-Subject: [PATCH RFCv2 05/21] Drivers: hv: vss: process deferred messages when
- we complete the transaction
-Date: Wed, 11 Mar 2015 14:29:18 +0100
-Message-ID: <1426080574-9011-6-git-send-email-vkuznets@redhat.com>
+Subject: [PATCH RFCv2 04/21] Drivers: hv: fcopy: process deferred messages
+ when we complete the transaction
+Date: Wed, 11 Mar 2015 14:29:17 +0100
+Message-ID: <1426080574-9011-5-git-send-email-vkuznets@redhat.com>
 References: <1426080574-9011-1-git-send-email-vkuznets@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -26,64 +26,58 @@ In theory, the host is not supposed to issue any requests before be reply to
 the previous one. In KVP we, however, support the following scenarios:
 1) A message was received before userspace daemon registered;
 2) A message was received while the previous one is still being processed.
-In VSS we support only the former. Add support for the later, use
+In FCOPY we support only the former. Add support for the later, use
 hv_poll_channel() to do the job.
 
 Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
 ---
- drivers/hv/hv_snapshot.c | 14 +++++++++-----
- 1 file changed, 9 insertions(+), 5 deletions(-)
+ drivers/hv/hv_fcopy.c | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/hv/hv_snapshot.c b/drivers/hv/hv_snapshot.c
-index c1a3604..4bb9b1c 100644
---- a/drivers/hv/hv_snapshot.c
-+++ b/drivers/hv/hv_snapshot.c
-@@ -47,6 +47,7 @@ static struct {
- 	struct vmbus_channel *recv_channel; /* chn we got the request */
- 	u64 recv_req_id; /* request ID. */
- 	struct hv_vss_msg  *msg; /* current message */
-+	void *vss_context; /* for the channel callback */
- } vss_transaction;
+diff --git a/drivers/hv/hv_fcopy.c b/drivers/hv/hv_fcopy.c
+index cd453e4..8bdf752 100644
+--- a/drivers/hv/hv_fcopy.c
++++ b/drivers/hv/hv_fcopy.c
+@@ -98,6 +98,8 @@ static void fcopy_work_func(struct work_struct *dummy)
+ 	if (down_trylock(&fcopy_transaction.read_sema))
+ 		;
  
- 
-@@ -73,6 +74,9 @@ static void vss_timeout_func(struct work_struct *dummy)
- 	 */
- 	pr_warn("VSS: timeout waiting for daemon to reply\n");
- 	vss_respond_to_host(HV_E_FAIL);
-+
-+	hv_poll_channel(vss_transaction.vss_context,
-+			hv_vss_onchannelcallback);
++	hv_poll_channel(fcopy_transaction.fcopy_context,
++			hv_fcopy_onchannelcallback);
  }
  
- static void
-@@ -85,13 +89,12 @@ vss_cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
- 	if (vss_msg->vss_hdr.operation == VSS_OP_REGISTER) {
- 		pr_info("VSS daemon registered\n");
- 		vss_transaction.active = false;
--		if (vss_transaction.recv_channel != NULL)
--			hv_vss_onchannelcallback(vss_transaction.recv_channel);
--		return;
--
- 	}
- 	if (cancel_delayed_work_sync(&vss_timeout_work))
- 		vss_respond_to_host(vss_msg->error);
-+
-+	hv_poll_channel(vss_transaction.vss_context,
-+			hv_vss_onchannelcallback);
+ static int fcopy_handle_handshake(u32 version)
+@@ -117,8 +119,8 @@ static int fcopy_handle_handshake(u32 version)
+ 	pr_info("FCP: user-mode registering done. Daemon version: %d\n",
+ 		version);
+ 	fcopy_transaction.active = false;
+-	if (fcopy_transaction.fcopy_context)
+-		hv_fcopy_onchannelcallback(fcopy_transaction.fcopy_context);
++	hv_poll_channel(fcopy_transaction.fcopy_context,
++			hv_fcopy_onchannelcallback);
+ 	in_hand_shake = false;
+ 	return 0;
  }
- 
- 
-@@ -198,9 +201,10 @@ void hv_vss_onchannelcallback(void *context)
- 		 * We will defer processing this callback once
- 		 * the current transaction is complete.
- 		 */
--		vss_transaction.recv_channel = channel;
-+		vss_transaction.vss_context = context;
+@@ -226,6 +228,7 @@ void hv_fcopy_onchannelcallback(void *context)
+ 		fcopy_transaction.fcopy_context = context;
  		return;
  	}
-+	vss_transaction.vss_context = NULL;
++	fcopy_transaction.fcopy_context = NULL;
  
  	vmbus_recvpacket(channel, recv_buffer, PAGE_SIZE * 2, &recvlen,
  			 &requestid);
+@@ -333,8 +336,11 @@ static ssize_t fcopy_write(struct file *file, const char __user *buf,
+ 	 * Complete the transaction by forwarding the result
+ 	 * to the host. But first, cancel the timeout.
+ 	 */
+-	if (cancel_delayed_work_sync(&fcopy_work))
++	if (cancel_delayed_work_sync(&fcopy_work)) {
+ 		fcopy_respond_to_host(response);
++		hv_poll_channel(fcopy_transaction.fcopy_context,
++				hv_fcopy_onchannelcallback);
++	}
+ 
+ 	return sizeof(int);
+ }
 -- 
 1.9.3
