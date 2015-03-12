@@ -1,92 +1,67 @@
 From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 Subject: Re: [PATCH v4 4/9] selftests: Add install target
-Date: Thu, 12 Mar 2015 14:11:53 +1100
-Message-ID: <1426129913.25936.2.camel@ellerman.id.au>
+Date: Thu, 12 Mar 2015 14:15:44 +1100
+Message-ID: <1426130144.25936.4.camel@ellerman.id.au>
 References: <1426046765-19289-1-git-send-email-mpe@ellerman.id.au>
 	 <1426046765-19289-4-git-send-email-mpe@ellerman.id.au>
-	 <5500408B.2070604@osg.samsung.com> <5500675A.1000700@osg.samsung.com>
+	 <5500408B.2070604@osg.samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5500675A.1000700-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <5500408B.2070604-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2015-03-11 at 10:03 -0600, Shuah Khan wrote:
-> On 03/11/2015 07:18 AM, Shuah Khan wrote:
+On Wed, 2015-03-11 at 07:18 -0600, Shuah Khan wrote:
+> On 03/10/2015 10:06 PM, Michael Ellerman wrote:
+> > This adds make install support to selftests. The basic usage is:
 > > 
-> > I don't see my comments addressed. If you want me to take
-> > this work, please address the following comments:
+> > $ cd tools/testing/selftests
+> > $ make install
 > > 
-> > - Name install directory kselftest. It should work with the
-> >   the use-case.
+> > That installs into tools/testing/selftests/install, which can then be
+> > copied where ever necessary.
 > > 
-> >   make INSTALL_PATH=/tmp make install
-> >   The install directory should be /tmp/kselftest
+> > The install destination is also configurable using eg:
 > > 
-> > - Flatten the directory with all tests under /tmp/kselftest
+> > $ INSTALL_PATH=/mnt/selftests make install
 > > 
+> > The implementation uses two targets in the child makefiles. The first
+> > "install" is expected to install all files into $(INSTALL_PATH).
+> > 
+> > The second, "emit_tests", is expected to emit the test instructions (ie.
+> > bash script) on stdout. Separating this from install means the child
+> > makefiles need no knowledge of the location of the test script.
+> > 
+> > Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+> > ---
+> > 
+> > v3: Rebase onto 4.0-rc2.
+> >     Rename all.sh to run_kselftest.sh.
+> >     Add --no-print-directory to emit_tests invocation.
+> > v4: Rebase onto 4.0-rc3, add TEST_FILES to efivars and vm tests, remove
+> >     newlines from echoes.
 > 
-> Yes. There is the issue of duplicate executable names and data
-> file to be concerned about. It is a name-space problem. It is
-> not unique to this case, example /usr/bin. This problem is better
-> solved without adding the complexity of hierarchical directory
-> structure.
+> I don't see my comments addressed. If you want me to take
+> this work, please address the following comments:
 > 
-> 1. Individual test Makefiles ensure unique names for their
->    executables and data files. This can be done as a process
->    when new tests are accepted.
-> 2. Install process makes sure they are unique - this patch is
->    solving the problem by creating a directory hierarchy. A simpler
->    way to do it is by adding pre-fix to when there is name space
->    conflict.
+> - Name install directory kselftest. It should work with the
+>   the use-case.
 > 
-> The problem with directory hierarchy is for one thing:
+>   make INSTALL_PATH=/tmp make install
+>   The install directory should be /tmp/kselftest
 > 
-> 1. It is complex and way too many directories get created during
->    install and this problem will mushroom as more and more tests
->    get added.
+> - Flatten the directory with all tests under /tmp/kselftest
+> 
+> I am wasting lot of time because you don't fully address my
+> comments and send patches that dont' work correctly. Please
+> make sure your patches don't generate work for me.
 
-One directory is created for each test directory under selftests. That's not
-"way too many" directories.
+You're wasting a lot of time? You have got to be kidding me. You are wasting a
+lot of *my* time.
 
-Why does it make sense to have directories for the selftest sources, but not
-the installed tests? Why don't we just put all the tests in one directory under
-selftests? A: Because that would be stupid.
-
-$ find tools/testing/selftests/ -maxdepth 1 -type d
-tools/testing/selftests/
-tools/testing/selftests/size
-tools/testing/selftests/memory-hotplug
-tools/testing/selftests/ipc
-tools/testing/selftests/ptrace
-tools/testing/selftests/timers
-tools/testing/selftests/efivarfs
-tools/testing/selftests/net
-tools/testing/selftests/kcmp
-tools/testing/selftests/mqueue
-tools/testing/selftests/ftrace
-tools/testing/selftests/mount
-tools/testing/selftests/vm
-tools/testing/selftests/firmware
-tools/testing/selftests/cpu-hotplug
-tools/testing/selftests/user
-tools/testing/selftests/sysctl
-tools/testing/selftests/powerpc
-tools/testing/selftests/exec
-tools/testing/selftests/memfd
-tools/testing/selftests/breakpoints
-tools/testing/selftests/rcutorture
-
-Oh no directories, they're so complex!
-
-> 2. User won't be able to define a simple path variable to invoke
->    individual tests. This is a user experience problem.
-
-Who cares? No one does that. Many of the tests aren't just simple executables
-that can be run via $PATH, they require test files in the current directory.
-
-cheers
+You have my patches, they're signed off, you can do what you wish with them.
+Good luck.
