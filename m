@@ -1,96 +1,68 @@
-From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH v2 07/18] drivers: reset: Add STM32 reset driver
-Date: Thu, 12 Mar 2015 22:05:24 +0100
-Message-ID: <CALszF6DOtAKLwo=VVYVKRZuhWC_NNvwKrV9R6_GYPdrRqh_0Wg@mail.gmail.com>
+From: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 05/18] reset: Add reset_controller_of_init() function
+Date: Thu, 12 Mar 2015 22:08:13 +0100
+Message-ID: <CALszF6AiZ_9Hgz36hyVTSWdtf06QxHnWKjNEjVdU7v7j8m1GiA@mail.gmail.com>
 References: <1424455277-29983-1-git-send-email-mcoquelin.stm32@gmail.com>
-	<2383270.cAJPOxrkvo@wuerfel>
-	<CALszF6D3XMkjkMTdS-1xnVMFzgAW53NNOKOsfztsCboTdsBaaw@mail.gmail.com>
-	<2455342.zT71E5iyaL@wuerfel>
-	<CALszF6DENRS2L8mHD_iPsPwbAZndbHoB10oHaJ8-E4ajhog=8w@mail.gmail.com>
-	<1426079308.3101.57.camel@pengutronix.de>
+	<8729383.kvUZDm4dQz@wuerfel>
+	<CALszF6BkTOLR+VNkRKfvEBG5ZyaYL+9fZ4EAPVu5b_imCvEQoQ@mail.gmail.com>
+	<6773745.i9mx5zmPP4@wuerfel>
+	<CAL_Jsq+_ridpAaUwpqo91xB6Ea1ctCWfYTYUrcZ=gB_0FiBD4g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <1426079308.3101.57.camel@pengutronix.de>
-Sender: linux-arch-owner@vger.kernel.org
-To: Philipp Zabel <p.zabel@pengutronix.de>
-Cc: Arnd Bergmann <arnd@arndb.de>, =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.o>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAL_Jsq+_ridpAaUwpqo91xB6Ea1ctCWfYTYUrcZ=gB_0FiBD4g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber-l3A5Bk7waGM@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P/iSf3S8Y7g3A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-2015-03-11 14:08 GMT+01:00 Philipp Zabel <p.zabel@pengutronix.de>:
-> Am Dienstag, den 10.03.2015, 22:20 +0100 schrieb Maxime Coquelin:
->> 2015-03-10 21:21 GMT+01:00 Arnd Bergmann <arnd@arndb.de>:
->> > On Tuesday 10 March 2015 16:44:24 Maxime Coquelin wrote:
->> >> 2015-03-10 16:02 GMT+01:00 Arnd Bergmann <arnd@arndb.de>:
->> >> > On Friday 20 February 2015 19:01:06 Maxime Coquelin wrote:
->> >> >> +/* AHB1 */
->> >> >> +#define GPIOA_RESET    0
->> >> >> +#define GPIOB_RESET    1
->> >> >> +#define GPIOC_RESET    2
->> >> >> +#define GPIOD_RESET    3
->> >> >> +#define GPIOE_RESET    4
->> >> >> +#define GPIOF_RESET    5
->> >> >> +#define GPIOG_RESET    6
->> >> >> +#define GPIOH_RESET    7
->> >> >> +#define GPIOI_RESET    8
->> >> >> +#define GPIOJ_RESET    9
->> >> >> +#define GPIOK_RESET    10
->> >> >>
->> >> >
->> >> > As these are just the hardware numbers, it's better to not make=
- them
->> >> > part of the binding at all. Instead, just document in the bindi=
-ng that
->> >> > one is supposed to pass the hardware number as the argument.
->> >>
->> >> The reset controller is part of the RCC (Reset & Clock Controller=
-) IP.
->> >> In this version, I only provided the reset registers to the reset
->> >> controller driver, but as per Andreas F=C3=A4rber remark, I shoul=
-d avec a
->> >> single DT node for both the resets and clocks.
->> >>
->> >> In the next version I am preparing, the defines doesn't look as
->> >> trivial as in this version, GPIOA_RESET being 128 for instance.
->> >>
->> >> Is it fine for you if I keep the defines part of the binding?
->> >>
->> >>
->> >
->> > It's always better to avoid these files entirely, as they are
->> > a frequent source of merge dependencies, and they make it less
->> > obvious what's going on than having binary values in the dtb
->> > that make sense.
+2015-03-10 22:30 GMT+01:00 Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
+> On Tue, Mar 10, 2015 at 3:19 PM, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org> wrote:
+>> On Tuesday 10 March 2015 16:28:44 Maxime Coquelin wrote:
+>>> 2015-03-10 16:00 GMT+01:00 Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>:
+>>> > On Friday 20 February 2015 19:01:04 Maxime Coquelin wrote:
+>>> >> Some platforms need to initialize the reset controller before the timers.
+>>> >>
+>>> >> This patch introduces a reset_controller_of_init() function that can be
+>>> >> called before the timers intialization.
+>>> >>
+>>> >> Signed-off-by: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>>> >>
+>>> >
+>>> > Not sure about this. It seems like the cleanest approach if we get
+>>> > a lot of these, but then again it is probably very rare, and I'd
+>>> > like to avoid adding such infrastructure if it's just for one
+>>> > SoC. Could we add a hack in the machine initialization instead?
+>>>
+>>> Sun6i also need to initialize the reset controller early. Today, they
+>>> hack the machine initialization.
+>>> With two SoCs having the same need, what should we do?
 >>
->> I agree it is always painful to have to have to manage these merge d=
-ependencies.
->> What I will do, if Philipp agrees, is to list all the values in the
->> binding documentation.
+>> Good question, I'd like to hear some other opinions on this first.
+>
+> 2 is still far from the common case.
+>
+>>> > I think ideally this would be done in the boot loader before we
+>>> > even start Linux, but I don't know if that's possible for you.
+>>>
+>>> From what I understand, the only constraint is to perform it after the
+>>> clock is enabled.
+>>> So this should be possible to do it in the bootloader, but it means
+>>> also adding timers clocks ungating in the bootloader.
 >>
->> Doing that, the user of a reset won't have to do the calculation, an=
-d
->> no more merge dependencies.
+>> Ungating the timer clock input seems like a reasonable thing to
+>> do for the bootloader, I think a lot of platforms rely on this
+>> elsewhere (but enough of them don't, which is why we have the
+>> early clk init).
 >
-> I'd prefer to have #defines for the reset bits if they are named in t=
-he
-> documentation and use the names in the dts. But if you want to refere=
-nce
-> reset bits by number in the device tree instead, I won't insist.
+> +1
 >
-> Consider using two cells in the phandle for register and bit offset
-> instead of a single number that arbitrarily starts at 128.
+> If the bootloader is u-boot, then you need a timer anyway.
 
-Thanks for your feedback.
+Ok, I moved it to the bootloader, and use the reset as optional in the
+timer driver.
 
-I would prefer using a single cell, which is less error prone in my opi=
-nion.
-Will you accept this?
-
-Kind regards,
+Thanks,
 Maxime
-
 >
-> regards
-> Philipp
->
+> Rob
