@@ -1,82 +1,109 @@
-From: Jann Horn <jann@thejh.net>
-Subject: [PATCH] seccomp.2: Add note about alarm(2) not being sufficient to
- limit runtime
-Date: Thu, 12 Mar 2015 14:07:01 +0100
-Message-ID: <20150312130701.GA11073@pc.thejh.net>
-References: <20150311174204.GA5712@pc.thejh.net>
- <21760.46870.338764.599348@gargle.gargle.HOWL>
+From: Akinobu Mita <akinobu.mita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v6 1/3] scsi: ufs: add ioctl interface for query request
+Date: Thu, 12 Mar 2015 22:30:36 +0900
+Message-ID: <CAC5umyiry3OEJGeZ2=U21v7gAjsC7XHZVyiZN8UgQusX2KmvpQ@mail.gmail.com>
+References: <1426163262-22014-1-git-send-email-gbroner@codeaurora.org>
+	<1426163262-22014-2-git-send-email-gbroner@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <21760.46870.338764.599348@gargle.gargle.HOWL>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikael Pettersson <mikpelinux@gmail.com>
-Cc: linux-man@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Jeff Dike <jdike@addtoit.com>, Richard Weinberger <richard@nod.at>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1426163262-22014-2-git-send-email-gbroner-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Gilad Broner <gbroner-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Cc: Jej B <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Santosh Y <santoshsy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-scsi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Subhash Jadavani <subhashj-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Yaniv Gardi <ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Dolev Raviv <draviv-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Noa Rubens <noag-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Raviv Shvili <rshvili-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Vinayak Holikatti <vinholikatti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "James E.J. Bottomley" <JBottomley-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 11, 2015 at 10:43:50PM +0100, Mikael Pettersson wrote:
-> Jann Horn writes:
->  > Or should I throw this patch away and write a patch
->  > for the prctl() manpage instead that documents that
->  > being able to call sigreturn() implies being able to
->  > effectively call sigprocmask(), at least on some
->  > architectures like X86?
-> 
-> Well, that is the semantics of sigreturn().  It is essentially
-> setcontext() [which includes the actions of sigprocmask()], but
-> with restrictions on parameter placement (at least on x86).
-> 
-> You could introduce some setting to restrict that aspect for
-> seccomp processes, but you can't change this for normal processes
-> without breaking things.
+2015-03-12 21:27 GMT+09:00 Gilad Broner <gbroner-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>:
+> From: Dolev Raviv <draviv-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+>
+> This patch exposes the ioctl interface for UFS driver via SCSI device
+> ioctl interface. As of now UFS driver would provide the ioctl for query
+> interface to connected UFS device.
+>
+> Signed-off-by: Dolev Raviv <draviv-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+> Signed-off-by: Noa Rubens <noag-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+> Signed-off-by: Raviv Shvili <rshvili-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+> Signed-off-by: Yaniv Gardi <ygardi-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
 
-Then I think it's probably better and easier to just document the existing
-behavior? If a new setting would have to be introduced and developers would
-need to be aware of that, it's probably easier to just tell everyone to use
-SIGKILL.
+Sorry to bother you again.  Could you read two comments below?
 
-Does this manpage patch look good?
+> +/**
+> + * ufshcd_ioctl - ufs ioctl callback registered in scsi_host
+> + * @dev: scsi device required for per LUN queries
+> + * @cmd: command opcode
+> + * @buffer: user space buffer for transferring data
+> + *
+> + * Supported commands:
+> + * UFS_IOCTL_QUERY
+> + */
+> +static int ufshcd_ioctl(struct scsi_device *dev, int cmd, void __user *buffer)
+> +{
+> +       struct ufs_hba *hba = shost_priv(dev->host);
+> +       int err = 0;
+> +
+> +       BUG_ON(!hba);
+> +       if (!buffer) {
+> +               dev_err(hba->dev, "%s: User buffer is NULL!\n", __func__);
+> +               return -EINVAL;
+> +       }
+> +
 
----
- man2/seccomp.2 | 25 +++++++++++++++++++++++++
- 1 file changed, 25 insertions(+)
+Should we remove this check or move it into ufshcd_query_ioctl()?
+For example, BLKFLS ioctl without argument is correct usage, but
+it always triggers this message. (blkdev_ioctl -> __blkdev_driver_ioctl
+-> sd_ioctl -> scsi_ioctl -> ufshcd_ioctl)
 
-diff --git a/man2/seccomp.2 b/man2/seccomp.2
-index 702ceb8..f762d07 100644
---- a/man2/seccomp.2
-+++ b/man2/seccomp.2
-@@ -64,6 +64,31 @@ Strict secure computing mode is useful for number-crunching
- applications that may need to execute untrusted byte code, perhaps
- obtained by reading from a pipe or socket.
- 
-+Note that although the calling thread can no longer call
-+.BR sigprocmask (2),
-+it can use
-+.BR sigreturn (2)
-+to block all signals apart from
-+.BR SIGKILL
-+and
-+.BR SIGSTOP .
-+Therefore, to reliably terminate it,
-+.BR SIGKILL
-+has to be used, meaning that e.g.
-+.BR alarm (2)
-+is not sufficient for restricting its runtime. Instead, use
-+.BR timer_create (2)
-+with
-+.BR SIGEV_SIGNAL
-+and
-+.BR sigev_signo
-+set to
-+.BR SIGKILL
-+or use
-+.BR setrlimit (2)
-+to set the hard limit for
-+.BR RLIMIT_CPU .
-+
- This operation is available only if the kernel is configured with
- .BR CONFIG_SECCOMP
- enabled.
--- 
-2.1.4
+> +       switch (cmd) {
+> +       case UFS_IOCTL_QUERY:
+> +               pm_runtime_get_sync(hba->dev);
+> +               err = ufshcd_query_ioctl(hba, ufshcd_scsi_to_upiu_lun(dev->lun),
+> +                               buffer);
+> +               pm_runtime_put_sync(hba->dev);
+> +               break;
+> +       case UFS_IOCTL_BLKROSET:
+> +               err = -ENOIOCTLCMD;
+> +               break;
+> +       default:
+> +               err = -EINVAL;
+> +               dev_err(hba->dev, "%s: Illegal ufs-IOCTL cmd %d\n", __func__,
+> +                               cmd);
+> +               break;
+> +       }
+> +
+> +       return err;
+> +}
+> +
+>  static struct scsi_host_template ufshcd_driver_template = {
+>         .module                 = THIS_MODULE,
+>         .name                   = UFSHCD,
+> @@ -4213,6 +4433,7 @@ static struct scsi_host_template ufshcd_driver_template = {
+>         .eh_abort_handler       = ufshcd_abort,
+>         .eh_device_reset_handler = ufshcd_eh_device_reset_handler,
+>         .eh_host_reset_handler   = ufshcd_eh_host_reset_handler,
+> +       .ioctl                  = ufshcd_ioctl,
+>         .this_id                = -1,
+>         .sg_tablesize           = SG_ALL,
+>         .cmd_per_lun            = UFSHCD_CMD_PER_LUN,
+
+...
+
+> diff --git a/include/uapi/scsi/ufs/ioctl.h b/include/uapi/scsi/ufs/ioctl.h
+> new file mode 100644
+> index 0000000..bc4eed7
+> --- /dev/null
+> +++ b/include/uapi/scsi/ufs/ioctl.h
+> @@ -0,0 +1,57 @@
+> +#ifndef UAPI_UFS_IOCTL_H_
+> +#define UAPI_UFS_IOCTL_H_
+> +
+> +#include <linux/types.h>
+> +
+> +/*
+> + *  IOCTL opcode for ufs queries has the following opcode after
+> + *  SCSI_IOCTL_GET_PCI
+> + */
+> +#define UFS_IOCTL_QUERY                        0x5388
+
+Should we also need some comments near SCSI_IOCTL_GET_PCI in
+include/scsi/scsi.h in order to avoid someone trying to define
+the same ioctl code in the future?
