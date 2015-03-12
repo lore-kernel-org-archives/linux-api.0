@@ -1,359 +1,68 @@
 From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: [PATCH v3  13/15] ARM: dts: Introduce STM32F429 MCU
-Date: Thu, 12 Mar 2015 22:55:59 +0100
-Message-ID: <1426197361-19290-14-git-send-email-maxime.coquelin@st.com>
+Subject: [PATCH v3 02/15] ARM: ARMv7-M: Enlarge vector table up to 256 entries
+Date: Thu, 12 Mar 2015 22:55:48 +0100
+Message-ID: <1426197361-19290-3-git-send-email-maxime.coquelin@st.com>
 References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
-Return-path: <linux-gpio-owner@vger.kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 In-Reply-To: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
-Sender: linux-gpio-owner@vger.kernel.org
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
 To: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, stefan@agner.ch, pmeerw@pmeerw.net, pebolle@tiscali.nl
-Cc: Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees Cook <keescook@chromium.org>, Michal Marek <mmarek@suse.cz>, linux-doc@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kerne
+Cc: Mark Rutland <mark.rutland@arm.com>, linux-doc@vger.kernel.org, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, linux-api@vger.kernel.org, Jiri Slaby <jslaby@suse.cz>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, linux-arch@vger.kernel.org, Russell King <linux@arm.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, Antti Palosaari <crope@iki.fi>, linux-serial@vger.kernel.org, devicetree@vger.kernel.org, Kees Cook <keescook@chromium.org>, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Rusty Russell <rusty@rustcorp.com.au>, Joe Perches <joe@perches.com>, Thomas Gleixner <tglx@linutronix.de>, linux-arm-kernel@lists.infradead.org, Michal Marek <mmarek@suse.cz>, linux-gpio@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-kernel@vger.kernel.org, mco
 List-Id: linux-api@vger.kernel.org
 
-From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-
-The STMicrolectornics's STM32F419 MCU has the following main features:
- - Cortex-M4 core running up to @180MHz
- - 2MB internal flash, 256KBytes internal RAM
- - FMC controller to connect SDRAM, NOR and NAND memories
- - SD/MMC/SDIO support
- - Ethernet controller
- - USB OTFG FS & HS controllers
- - I2C, SPI, CAN busses support
- - Several 16 & 32 bits general purpose timers
- - Serial Audio interface
- - LCD controller
-
-Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
----
- arch/arm/boot/dts/Makefile            |   1 +
- arch/arm/boot/dts/stm32f429-disco.dts |  71 +++++++++++
- arch/arm/boot/dts/stm32f429.dtsi      | 226 ++++++++++++++++++++++++++++++++++
- 3 files changed, 298 insertions(+)
- create mode 100644 arch/arm/boot/dts/stm32f429-disco.dts
- create mode 100644 arch/arm/boot/dts/stm32f429.dtsi
-
-diff --git a/arch/arm/boot/dts/Makefile b/arch/arm/boot/dts/Makefile
-index a1c776b..e5dbd03 100644
---- a/arch/arm/boot/dts/Makefile
-+++ b/arch/arm/boot/dts/Makefile
-@@ -509,6 +509,7 @@ dtb-$(CONFIG_ARCH_STI) += \
- 	stih416-b2020.dtb \
- 	stih416-b2020e.dtb \
- 	stih418-b2199.dtb
-+dtb-$(CONFIG_ARCH_STM32)+= stm32f429-disco.dtb
- dtb-$(CONFIG_MACH_SUN4I) += \
- 	sun4i-a10-a1000.dtb \
- 	sun4i-a10-ba10-tvbox.dtb \
-diff --git a/arch/arm/boot/dts/stm32f429-disco.dts b/arch/arm/boot/dts/stm32f429-disco.dts
-new file mode 100644
-index 0000000..6b9aa59
---- /dev/null
-+++ b/arch/arm/boot/dts/stm32f429-disco.dts
-@@ -0,0 +1,71 @@
-+/*
-+ * Copyright 2015 - Maxime Coquelin <mcoquelin.stm32@gmail.com>
-+ *
-+ * This file is dual-licensed: you can use it either under the terms
-+ * of the GPL or the X11 license, at your option. Note that this dual
-+ * licensing only applies to this file, and not this project as a
-+ * whole.
-+ *
-+ *  a) This file is free software; you can redistribute it and/or
-+ *     modify it under the terms of the GNU General Public License as
-+ *     published by the Free Software Foundation; either version 2 of the
-+ *     License, or (at your option) any later version.
-+ *
-+ *     This file is distributed in the hope that it will be useful,
-+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *     GNU General Public License for more details.
-+ *
-+ *     You should have received a copy of the GNU General Public
-+ *     License along with this file; if not, write to the Free
-+ *     Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
-+ *     MA 02110-1301 USA
-+ *
-+ * Or, alternatively,
-+ *
-+ *  b) Permission is hereby granted, free of charge, to any person
-+ *     obtaining a copy of this software and associated documentation
-+ *     files (the "Software"), to deal in the Software without
-+ *     restriction, including without limitation the rights to use,
-+ *     copy, modify, merge, publish, distribute, sublicense, and/or
-+ *     sell copies of the Software, and to permit persons to whom the
-+ *     Software is furnished to do so, subject to the following
-+ *     conditions:
-+ *
-+ *     The above copyright notice and this permission notice shall be
-+ *     included in all copies or substantial portions of the Software.
-+ *
-+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-+ *     OTHER DEALINGS IN THE SOFTWARE.
-+ */
-+
-+/dts-v1/;
-+#include "stm32f429.dtsi"
-+
-+/ {
-+	model = "STMicroelectronics STM32F429i-DISCO board";
-+	compatible = "st,stm32f429i-disco", "st,stm32f429";
-+
-+	chosen {
-+		bootargs = "console=ttyS0,115200 root=/dev/ram rdinit=/linuxrc";
-+		linux,stdout-path = &usart1;
-+	};
-+
-+	memory {
-+		reg = <0x90000000 0x800000>;
-+	};
-+
-+	aliases {
-+		serial0 = &usart1;
-+	};
-+};
-+
-+&usart1 {
-+	status = "okay";
-+};
-diff --git a/arch/arm/boot/dts/stm32f429.dtsi b/arch/arm/boot/dts/stm32f429.dtsi
-new file mode 100644
-index 0000000..39ffdb8
---- /dev/null
-+++ b/arch/arm/boot/dts/stm32f429.dtsi
-@@ -0,0 +1,226 @@
-+/*
-+ * Copyright 2015 - Maxime Coquelin <mcoquelin.stm32@gmail.com>
-+ *
-+ * This file is dual-licensed: you can use it either under the terms
-+ * of the GPL or the X11 license, at your option. Note that this dual
-+ * licensing only applies to this file, and not this project as a
-+ * whole.
-+ *
-+ *  a) This file is free software; you can redistribute it and/or
-+ *     modify it under the terms of the GNU General Public License as
-+ *     published by the Free Software Foundation; either version 2 of the
-+ *     License, or (at your option) any later version.
-+ *
-+ *     This file is distributed in the hope that it will be useful,
-+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *     GNU General Public License for more details.
-+ *
-+ *     You should have received a copy of the GNU General Public
-+ *     License along with this file; if not, write to the Free
-+ *     Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
-+ *     MA 02110-1301 USA
-+ *
-+ * Or, alternatively,
-+ *
-+ *  b) Permission is hereby granted, free of charge, to any person
-+ *     obtaining a copy of this software and associated documentation
-+ *     files (the "Software"), to deal in the Software without
-+ *     restriction, including without limitation the rights to use,
-+ *     copy, modify, merge, publish, distribute, sublicense, and/or
-+ *     sell copies of the Software, and to permit persons to whom the
-+ *     Software is furnished to do so, subject to the following
-+ *     conditions:
-+ *
-+ *     The above copyright notice and this permission notice shall be
-+ *     included in all copies or substantial portions of the Software.
-+ *
-+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-+ *     OTHER DEALINGS IN THE SOFTWARE.
-+ */
-+
-+#include "armv7-m.dtsi"
-+
-+/ {
-+	clocks {
-+		clk_sysclk: clk-sysclk {
-+			#clock-cells = <0>;
-+			compatible = "fixed-clock";
-+			clock-frequency = <180000000>;
-+		};
-+
-+		clk_hclk: clk-hclk {
-+			#clock-cells = <0>;
-+			compatible = "fixed-clock";
-+			clock-frequency = <180000000>;
-+		};
-+
-+		clk_pclk1: clk-pclk1 {
-+			#clock-cells = <0>;
-+			compatible = "fixed-clock";
-+			clock-frequency = <45000000>;
-+		};
-+
-+		clk_pclk2: clk-pclk2 {
-+			#clock-cells = <0>;
-+			compatible = "fixed-clock";
-+			clock-frequency = <90000000>;
-+		};
-+
-+		clk_pmtr1: clk-pmtr1 {
-+			#clock-cells = <0>;
-+			compatible = "fixed-clock";
-+			clock-frequency = <90000000>;
-+		};
-+
-+		clk_pmtr2: clk-pmtr2 {
-+			#clock-cells = <0>;
-+			compatible = "fixed-clock";
-+			clock-frequency = <180000000>;
-+		};
-+
-+		clk_systick: clk-systick {
-+			compatible = "fixed-factor-clock";
-+			clocks = <&clk_hclk>;
-+			#clock-cells = <0>;
-+			clock-div = <8>;
-+			clock-mult = <1>;
-+		};
-+	};
-+
-+	soc {
-+		timer2: timer@40000000 {
-+			compatible = "st,stm32-timer";
-+			reg = <0x40000000 0x400>;
-+			interrupts = <28>;
-+			resets = <&rcc 256>;
-+			clocks = <&clk_pmtr1>;
-+			status = "disabled";
-+		};
-+
-+		timer3: timer@40000400 {
-+			compatible = "st,stm32-timer";
-+			reg = <0x40000400 0x400>;
-+			interrupts = <29>;
-+			resets = <&rcc 257>;
-+			clocks = <&clk_pmtr1>;
-+			status = "disabled";
-+		};
-+
-+		timer4: timer@40000800 {
-+			compatible = "st,stm32-timer";
-+			reg = <0x40000800 0x400>;
-+			interrupts = <30>;
-+			resets = <&rcc 258>;
-+			clocks = <&clk_pmtr1>;
-+			status = "disabled";
-+		};
-+
-+		timer5: timer@40000c00 {
-+			compatible = "st,stm32-timer";
-+			reg = <0x40000c00 0x400>;
-+			interrupts = <50>;
-+			resets = <&rcc 259>;
-+			clocks = <&clk_pmtr1>;
-+		};
-+
-+		timer6: timer@40001000 {
-+			compatible = "st,stm32-timer";
-+			reg = <0x40001000 0x400>;
-+			interrupts = <54>;
-+			resets = <&rcc 260>;
-+			clocks = <&clk_pmtr1>;
-+			status = "disabled";
-+		};
-+
-+		timer7: timer@40001400 {
-+			compatible = "st,stm32-timer";
-+			reg = <0x40001400 0x400>;
-+			interrupts = <55>;
-+			resets = <&rcc 261>;
-+			clocks = <&clk_pmtr1>;
-+			status = "disabled";
-+		};
-+
-+		usart2: serial@40004400 {
-+			compatible = "st,stm32-usart", "st,stm32-uart";
-+			reg = <0x40004400 0x400>;
-+			interrupts = <38>;
-+			clocks = <&clk_pclk1>;
-+			status = "disabled";
-+		};
-+
-+		usart3: serial@40004800 {
-+			compatible = "st,stm32-usart", "st,stm32-uart";
-+			reg = <0x40004800 0x400>;
-+			interrupts = <39>;
-+			clocks = <&clk_pclk1>;
-+			status = "disabled";
-+		};
-+
-+		usart4: serial@40004c00 {
-+			compatible = "st,stm32-uart";
-+			reg = <0x40004c00 0x400>;
-+			interrupts = <52>;
-+			clocks = <&clk_pclk1>;
-+			status = "disabled";
-+		};
-+
-+		usart5: serial@40005000 {
-+			compatible = "st,stm32-uart";
-+			reg = <0x40005000 0x400>;
-+			interrupts = <53>;
-+			clocks = <&clk_pclk1>;
-+			status = "disabled";
-+		};
-+
-+		usart7: serial@40007800 {
-+			compatible = "st,stm32-usart", "st,stm32-uart";
-+			reg = <0x40007800 0x400>;
-+			interrupts = <82>;
-+			clocks = <&clk_pclk1>;
-+			status = "disabled";
-+		};
-+
-+		usart8: serial@40007c00 {
-+			compatible = "st,stm32-usart", "st,stm32-uart";
-+			reg = <0x40007c00 0x400>;
-+			interrupts = <83>;
-+			clocks = <&clk_pclk1>;
-+			status = "disabled";
-+		};
-+
-+		usart1: serial@40011000 {
-+			compatible = "st,stm32-usart", "st,stm32-uart";
-+			reg = <0x40011000 0x400>;
-+			interrupts = <37>;
-+			clocks = <&clk_pclk2>;
-+			status = "disabled";
-+		};
-+
-+		usart6: serial@40011400 {
-+			compatible = "st,stm32-usart", "st,stm32-uart";
-+			reg = <0x40011400 0x400>;
-+			interrupts = <71>;
-+			clocks = <&clk_pclk2>;
-+			status = "disabled";
-+		};
-+
-+		rcc: rcc@40023810 {
-+			#reset-cells = <1>;
-+			compatible = "st,stm32-rcc";
-+			reg = <0x40023800 0x400>;
-+		};
-+	};
-+};
-+
-+&systick {
-+	clocks = <&clk_systick>;
-+	status = "okay";
-+};
--- 
-1.9.1
-
+RnJvbTogTWF4aW1lIENvcXVlbGluIDxtY29xdWVsaW4uc3RtMzJAZ21haWwuY29tPgoKRnJvbSBD
+b3J0ZXgtTSByZWZlcmVuY2UgbWFudWFscywgdGhlIG52aWMgc3VwcG9ydHMgdXAgdG8gMjQwIGlu
+dGVycnVwdHMuClNvIHRoZSBudW1iZXIgb2YgZW50cmllcyBpbiB2ZWN0b3JzIHRhYmxlIGlzIHVw
+IHRvIDI1Ni4KClRoaXMgcGF0Y2ggYWRkcyBhIG5ldyBjb25maWcgZmxhZyB0byBzcGVjaWZ5IHRo
+ZSBudW1iZXIgb2YgZXh0ZXJuYWwgaW50ZXJydXB0cy4KU29tZSBpZmRlZmVyaWVzIGFyZSBhZGRl
+ZCBpbiBvcmRlciB0byByZXNwZWN0IHRoZSBuYXR1cmFsIGFsaWdubWVudCB3aXRob3V0Cndhc3Rp
+bmcgdG9vIG11Y2ggc3BhY2Ugb24gc21hbGxlciBzeXN0ZW1zLgoKQWNrZWQtYnk6IFV3ZSBLbGVp
+bmUtS8O2bmlnIDx1LmtsZWluZS1rb2VuaWdAcGVuZ3V0cm9uaXguZGU+CkFja2VkLWJ5OiBTdGVm
+YW4gQWduZXIgPHN0ZWZhbkBhZ25lci5jaD4KU2lnbmVkLW9mZi1ieTogTWF4aW1lIENvcXVlbGlu
+IDxtY29xdWVsaW4uc3RtMzJAZ21haWwuY29tPgotLS0KIGFyY2gvYXJtL2tlcm5lbC9lbnRyeS12
+N20uUyB8IDEzICsrKysrKysrKy0tLS0KIGFyY2gvYXJtL21tL0tjb25maWcgICAgICAgICB8IDE1
+ICsrKysrKysrKysrKysrKwogMiBmaWxlcyBjaGFuZ2VkLCAyNCBpbnNlcnRpb25zKCspLCA0IGRl
+bGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2FyY2gvYXJtL2tlcm5lbC9lbnRyeS12N20uUyBiL2Fy
+Y2gvYXJtL2tlcm5lbC9lbnRyeS12N20uUwppbmRleCA4OTQ0ZjQ5Li5iNmM4YmI5IDEwMDY0NAot
+LS0gYS9hcmNoL2FybS9rZXJuZWwvZW50cnktdjdtLlMKKysrIGIvYXJjaC9hcm0va2VybmVsL2Vu
+dHJ5LXY3bS5TCkBAIC0xMTcsOSArMTE3LDE0IEBAIEVOVFJZKF9fc3dpdGNoX3RvKQogRU5EUFJP
+QyhfX3N3aXRjaF90bykKIAogCS5kYXRhCi0JLmFsaWduCTgKKyNpZiBDT05GSUdfQ1BVX1Y3TV9O
+VU1fSVJRIDw9IDExMgorCS5hbGlnbgk5CisjZWxzZQorCS5hbGlnbgkxMAorI2VuZGlmCisKIC8q
+Ci0gKiBWZWN0b3IgdGFibGUgKDY0IHdvcmRzID0+IDI1NiBieXRlcyBuYXR1cmFsIGFsaWdubWVu
+dCkKKyAqIFZlY3RvciB0YWJsZSAoTmF0dXJhbCBhbGlnbm1lbnQgbmVlZCB0byBiZSBlbnN1cmVk
+KQogICovCiBFTlRSWSh2ZWN0b3JfdGFibGUpCiAJLmxvbmcJMAkJCUAgMCAtIFJlc2V0IHN0YWNr
+IHBvaW50ZXIKQEAgLTEzOCw2ICsxNDMsNiBAQCBFTlRSWSh2ZWN0b3JfdGFibGUpCiAJLmxvbmcJ
+X19pbnZhbGlkX2VudHJ5CQlAIDEzIC0gUmVzZXJ2ZWQKIAkubG9uZwlfX3BlbmRzdl9lbnRyeQkJ
+QCAxNCAtIFBlbmRTVgogCS5sb25nCV9faW52YWxpZF9lbnRyeQkJQCAxNSAtIFN5c1RpY2sKLQku
+cmVwdAk2NCAtIDE2Ci0JLmxvbmcJX19pcnFfZW50cnkJCUAgMTYuLjY0IC0gRXh0ZXJuYWwgSW50
+ZXJydXB0cworCS5yZXB0CUNPTkZJR19DUFVfVjdNX05VTV9JUlEKKwkubG9uZwlfX2lycV9lbnRy
+eQkJQCBFeHRlcm5hbCBJbnRlcnJ1cHRzCiAJLmVuZHIKZGlmZiAtLWdpdCBhL2FyY2gvYXJtL21t
+L0tjb25maWcgYi9hcmNoL2FybS9tbS9LY29uZmlnCmluZGV4IDliNGYyOWUuLmFlYzUzYjQgMTAw
+NjQ0Ci0tLSBhL2FyY2gvYXJtL21tL0tjb25maWcKKysrIGIvYXJjaC9hcm0vbW0vS2NvbmZpZwpA
+QCAtNjA0LDYgKzYwNCwyMSBAQCBjb25maWcgQ1BVX1VTRV9ET01BSU5TCiAJICBUaGlzIG9wdGlv
+biBlbmFibGVzIG9yIGRpc2FibGVzIHRoZSB1c2Ugb2YgZG9tYWluIHN3aXRjaGluZwogCSAgdmlh
+IHRoZSBzZXRfZnMoKSBmdW5jdGlvbi4KIAorY29uZmlnIENQVV9WN01fTlVNX0lSUQorCWludCAi
+TnVtYmVyIG9mIGV4dGVybmFsIGludGVycnVwdHMgY29ubmVjdGVkIHRvIHRoZSBOVklDIgorCWRl
+cGVuZHMgb24gQ1BVX1Y3TQorCWRlZmF1bHQgOTAgaWYgQVJDSF9TVE0zMgorCWRlZmF1bHQgMzgg
+aWYgQVJDSF9FRk0zMgorCWRlZmF1bHQgMjQwCisJaGVscAorCSAgVGhpcyBvcHRpb24gaW5kaWNh
+dGVzIHRoZSBudW1iZXIgb2YgaW50ZXJydXB0cyBjb25uZWN0ZWQgdG8gdGhlIE5WSUMuCisJICBU
+aGUgdmFsdWUgY2FuIGJlIGxhcmdlciB0aGFuIHRoZSByZWFsIG51bWJlciBvZiBpbnRlcnJ1cHRz
+IHN1cHBvcnRlZAorCSAgYnkgdGhlIHN5c3RlbSwgYnV0IG11c3Qgbm90IGJlIGxvd2VyLgorCSAg
+VGhlIGRlZmF1bHQgdmFsdWUgaXMgMjQwLCBjb3JyZXNwb25kaW5nIHRvIHRoZSBtYXhpbXVtIG51
+bWJlciBvZgorCSAgaW50ZXJydXB0cyBzdXBwb3J0ZWQgYnkgdGhlIE5WSUMgb24gQ29ydGV4LU0g
+ZmFtaWx5LgorCisJICBJZiB1bnN1cmUsIGtlZXAgZGVmYXVsdCB2YWx1ZS4KKwogIwogIyBDUFUg
+c3VwcG9ydHMgMzYtYml0IEkvTwogIwotLSAKMS45LjEKCgpfX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fXwpsaW51eC1hcm0ta2VybmVsIG1haWxpbmcgbGlzdAps
+aW51eC1hcm0ta2VybmVsQGxpc3RzLmluZnJhZGVhZC5vcmcKaHR0cDovL2xpc3RzLmluZnJhZGVh
+ZC5vcmcvbWFpbG1hbi9saXN0aW5mby9saW51eC1hcm0ta2VybmVsCg==
