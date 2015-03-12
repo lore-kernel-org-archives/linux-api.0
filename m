@@ -1,11 +1,11 @@
 From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: [PATCH v3 02/15] ARM: ARMv7-M: Enlarge vector table up to 256 entries
-Date: Thu, 12 Mar 2015 22:55:48 +0100
-Message-ID: <1426197361-19290-3-git-send-email-maxime.coquelin@st.com>
+Subject: [PATCH v3  07/15] dt-bindings: Document the STM32 timer bindings
+Date: Thu, 12 Mar 2015 22:55:53 +0100
+Message-ID: <1426197361-19290-8-git-send-email-maxime.coquelin@st.com>
 References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 In-Reply-To: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
 List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
@@ -21,48 +21,44 @@ To: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob 
 Cc: Mark Rutland <mark.rutland@arm.com>, linux-doc@vger.kernel.org, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, linux-api@vger.kernel.org, Jiri Slaby <jslaby@suse.cz>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, linux-arch@vger.kernel.org, Russell King <linux@arm.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, Antti Palosaari <crope@iki.fi>, linux-serial@vger.kernel.org, devicetree@vger.kernel.org, Kees Cook <keescook@chromium.org>, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Rusty Russell <rusty@rustcorp.com.au>, Joe Perches <joe@perches.com>, Thomas Gleixner <tglx@linutronix.de>, linux-arm-kernel@lists.infradead.org, Michal Marek <mmarek@suse.cz>, linux-gpio@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-kernel@vger.kernel.org, mco
 List-Id: linux-api@vger.kernel.org
 
-RnJvbTogTWF4aW1lIENvcXVlbGluIDxtY29xdWVsaW4uc3RtMzJAZ21haWwuY29tPgoKRnJvbSBD
-b3J0ZXgtTSByZWZlcmVuY2UgbWFudWFscywgdGhlIG52aWMgc3VwcG9ydHMgdXAgdG8gMjQwIGlu
-dGVycnVwdHMuClNvIHRoZSBudW1iZXIgb2YgZW50cmllcyBpbiB2ZWN0b3JzIHRhYmxlIGlzIHVw
-IHRvIDI1Ni4KClRoaXMgcGF0Y2ggYWRkcyBhIG5ldyBjb25maWcgZmxhZyB0byBzcGVjaWZ5IHRo
-ZSBudW1iZXIgb2YgZXh0ZXJuYWwgaW50ZXJydXB0cy4KU29tZSBpZmRlZmVyaWVzIGFyZSBhZGRl
-ZCBpbiBvcmRlciB0byByZXNwZWN0IHRoZSBuYXR1cmFsIGFsaWdubWVudCB3aXRob3V0Cndhc3Rp
-bmcgdG9vIG11Y2ggc3BhY2Ugb24gc21hbGxlciBzeXN0ZW1zLgoKQWNrZWQtYnk6IFV3ZSBLbGVp
-bmUtS8O2bmlnIDx1LmtsZWluZS1rb2VuaWdAcGVuZ3V0cm9uaXguZGU+CkFja2VkLWJ5OiBTdGVm
-YW4gQWduZXIgPHN0ZWZhbkBhZ25lci5jaD4KU2lnbmVkLW9mZi1ieTogTWF4aW1lIENvcXVlbGlu
-IDxtY29xdWVsaW4uc3RtMzJAZ21haWwuY29tPgotLS0KIGFyY2gvYXJtL2tlcm5lbC9lbnRyeS12
-N20uUyB8IDEzICsrKysrKysrKy0tLS0KIGFyY2gvYXJtL21tL0tjb25maWcgICAgICAgICB8IDE1
-ICsrKysrKysrKysrKysrKwogMiBmaWxlcyBjaGFuZ2VkLCAyNCBpbnNlcnRpb25zKCspLCA0IGRl
-bGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2FyY2gvYXJtL2tlcm5lbC9lbnRyeS12N20uUyBiL2Fy
-Y2gvYXJtL2tlcm5lbC9lbnRyeS12N20uUwppbmRleCA4OTQ0ZjQ5Li5iNmM4YmI5IDEwMDY0NAot
-LS0gYS9hcmNoL2FybS9rZXJuZWwvZW50cnktdjdtLlMKKysrIGIvYXJjaC9hcm0va2VybmVsL2Vu
-dHJ5LXY3bS5TCkBAIC0xMTcsOSArMTE3LDE0IEBAIEVOVFJZKF9fc3dpdGNoX3RvKQogRU5EUFJP
-QyhfX3N3aXRjaF90bykKIAogCS5kYXRhCi0JLmFsaWduCTgKKyNpZiBDT05GSUdfQ1BVX1Y3TV9O
-VU1fSVJRIDw9IDExMgorCS5hbGlnbgk5CisjZWxzZQorCS5hbGlnbgkxMAorI2VuZGlmCisKIC8q
-Ci0gKiBWZWN0b3IgdGFibGUgKDY0IHdvcmRzID0+IDI1NiBieXRlcyBuYXR1cmFsIGFsaWdubWVu
-dCkKKyAqIFZlY3RvciB0YWJsZSAoTmF0dXJhbCBhbGlnbm1lbnQgbmVlZCB0byBiZSBlbnN1cmVk
-KQogICovCiBFTlRSWSh2ZWN0b3JfdGFibGUpCiAJLmxvbmcJMAkJCUAgMCAtIFJlc2V0IHN0YWNr
-IHBvaW50ZXIKQEAgLTEzOCw2ICsxNDMsNiBAQCBFTlRSWSh2ZWN0b3JfdGFibGUpCiAJLmxvbmcJ
-X19pbnZhbGlkX2VudHJ5CQlAIDEzIC0gUmVzZXJ2ZWQKIAkubG9uZwlfX3BlbmRzdl9lbnRyeQkJ
-QCAxNCAtIFBlbmRTVgogCS5sb25nCV9faW52YWxpZF9lbnRyeQkJQCAxNSAtIFN5c1RpY2sKLQku
-cmVwdAk2NCAtIDE2Ci0JLmxvbmcJX19pcnFfZW50cnkJCUAgMTYuLjY0IC0gRXh0ZXJuYWwgSW50
-ZXJydXB0cworCS5yZXB0CUNPTkZJR19DUFVfVjdNX05VTV9JUlEKKwkubG9uZwlfX2lycV9lbnRy
-eQkJQCBFeHRlcm5hbCBJbnRlcnJ1cHRzCiAJLmVuZHIKZGlmZiAtLWdpdCBhL2FyY2gvYXJtL21t
-L0tjb25maWcgYi9hcmNoL2FybS9tbS9LY29uZmlnCmluZGV4IDliNGYyOWUuLmFlYzUzYjQgMTAw
-NjQ0Ci0tLSBhL2FyY2gvYXJtL21tL0tjb25maWcKKysrIGIvYXJjaC9hcm0vbW0vS2NvbmZpZwpA
-QCAtNjA0LDYgKzYwNCwyMSBAQCBjb25maWcgQ1BVX1VTRV9ET01BSU5TCiAJICBUaGlzIG9wdGlv
-biBlbmFibGVzIG9yIGRpc2FibGVzIHRoZSB1c2Ugb2YgZG9tYWluIHN3aXRjaGluZwogCSAgdmlh
-IHRoZSBzZXRfZnMoKSBmdW5jdGlvbi4KIAorY29uZmlnIENQVV9WN01fTlVNX0lSUQorCWludCAi
-TnVtYmVyIG9mIGV4dGVybmFsIGludGVycnVwdHMgY29ubmVjdGVkIHRvIHRoZSBOVklDIgorCWRl
-cGVuZHMgb24gQ1BVX1Y3TQorCWRlZmF1bHQgOTAgaWYgQVJDSF9TVE0zMgorCWRlZmF1bHQgMzgg
-aWYgQVJDSF9FRk0zMgorCWRlZmF1bHQgMjQwCisJaGVscAorCSAgVGhpcyBvcHRpb24gaW5kaWNh
-dGVzIHRoZSBudW1iZXIgb2YgaW50ZXJydXB0cyBjb25uZWN0ZWQgdG8gdGhlIE5WSUMuCisJICBU
-aGUgdmFsdWUgY2FuIGJlIGxhcmdlciB0aGFuIHRoZSByZWFsIG51bWJlciBvZiBpbnRlcnJ1cHRz
-IHN1cHBvcnRlZAorCSAgYnkgdGhlIHN5c3RlbSwgYnV0IG11c3Qgbm90IGJlIGxvd2VyLgorCSAg
-VGhlIGRlZmF1bHQgdmFsdWUgaXMgMjQwLCBjb3JyZXNwb25kaW5nIHRvIHRoZSBtYXhpbXVtIG51
-bWJlciBvZgorCSAgaW50ZXJydXB0cyBzdXBwb3J0ZWQgYnkgdGhlIE5WSUMgb24gQ29ydGV4LU0g
-ZmFtaWx5LgorCisJICBJZiB1bnN1cmUsIGtlZXAgZGVmYXVsdCB2YWx1ZS4KKwogIwogIyBDUFUg
-c3VwcG9ydHMgMzYtYml0IEkvTwogIwotLSAKMS45LjEKCgpfX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fXwpsaW51eC1hcm0ta2VybmVsIG1haWxpbmcgbGlzdAps
-aW51eC1hcm0ta2VybmVsQGxpc3RzLmluZnJhZGVhZC5vcmcKaHR0cDovL2xpc3RzLmluZnJhZGVh
-ZC5vcmcvbWFpbG1hbi9saXN0aW5mby9saW51eC1hcm0ta2VybmVsCg==
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+
+This adds documentation of device tree bindings for the
+STM32 timer.
+
+Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+---
+ .../devicetree/bindings/timer/st,stm32-timer.txt   | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/timer/st,stm32-timer.txt
+
+diff --git a/Documentation/devicetree/bindings/timer/st,stm32-timer.txt b/Documentation/devicetree/bindings/timer/st,stm32-timer.txt
+new file mode 100644
+index 0000000..d3fdeb0
+--- /dev/null
++++ b/Documentation/devicetree/bindings/timer/st,stm32-timer.txt
+@@ -0,0 +1,22 @@
++. STMicroelectronics STM32 timer
++
++The STM32 MCUs family has several general-purpose 16 and 32 bits timers.
++
++Required properties:
++- compatible : Should be st,stm32-timer"
++- reg : Address and length of the register set
++- clocks : Reference on the timer input clock
++- interrupts : Reference to the timer interrupt
++
++Optional properties:
++- resets: Reference to a reset controller asserting the timer
++
++Example:
++
++timer5: timer@40000c00 {
++	compatible = "st,stm32-timer";
++	reg = <0x40000c00 0x400>;
++	interrupts = <50>;
++	resets = <&rrc 259>;
++	clocks = <&clk_pmtr1>;
++};
+-- 
+1.9.1
