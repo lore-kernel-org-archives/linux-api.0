@@ -1,11 +1,11 @@
 From: Gilad Broner <gbroner@codeaurora.org>
 Subject: [PATCH v7 1/3] scsi: ufs: add ioctl interface for query request
-Date: Thu, 12 Mar 2015 17:54:32 +0200
-Message-ID: <1426175674-23077-2-git-send-email-gbroner@codeaurora.org>
-References: <1426175674-23077-1-git-send-email-gbroner@codeaurora.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1426175674-23077-1-git-send-email-gbroner@codeaurora.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Date: Thu, 12 Mar 2015 17:54:58 +0200
+Message-ID: <1426175700-23152-2-git-send-email-gbroner@codeaurora.org>
+References: <1426175700-23152-1-git-send-email-gbroner@codeaurora.org>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1426175700-23152-1-git-send-email-gbroner@codeaurora.org>
+Sender: linux-scsi-owner@vger.kernel.org
 To: James.Bottomley@HansenPartnership.com
 Cc: linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-arm-msm@vger.kernel.org, santoshsy@gmail.com, linux-scsi-owner@vger.kernel.org, subhashj@codeaurora.org, ygardi@codeaurora.org, draviv@codeaurora.org, Noa Rubens <noag@codeaurora.org>, Raviv Shvili <rshvili@codeaurora.org>, Vinayak Holikatti <vinholikatti@gmail.com>, "James E.J. Bottomley" <JBottomley@parallels.com>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
@@ -561,3 +561,4 @@ index 0000000..894ea45
 Qualcomm Israel, on behalf of Qualcomm Innovation Center, Inc.
 The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum,
 a Linux Foundation Collaborative Project
+
