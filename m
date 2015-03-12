@@ -1,57 +1,56 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH v6 tip 2/8] tracing: attach BPF programs to kprobes
-Date: Thu, 12 Mar 2015 16:15:07 +0100
-Message-ID: <20150312151507.GI2896@worktop.programming.kicks-ass.net>
-References: <1426047534-8148-1-git-send-email-ast@plumgrid.com>
- <1426047534-8148-3-git-send-email-ast@plumgrid.com>
+From: "Gilad Broner" <gbroner@codeaurora.org>
+Subject: Re: [PATCH v6 1/3] scsi: ufs: add ioctl interface for query request
+Date: Thu, 12 Mar 2015 15:27:46 -0000
+Message-ID: <061dedf8cc074e798b8eca4871a080fa.squirrel@codeaurora.org>
+References: <1426163262-22014-1-git-send-email-gbroner@codeaurora.org>
+    <1426163262-22014-2-git-send-email-gbroner@codeaurora.org>
+    <CAC5umyiry3OEJGeZ2=U21v7gAjsC7XHZVyiZN8UgQusX2KmvpQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1426047534-8148-3-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+In-Reply-To: <CAC5umyiry3OEJGeZ2=U21v7gAjsC7XHZVyiZN8UgQusX2KmvpQ@mail.gmail.com>
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: Akinobu Mita <akinobu.mita@gmail.com>
+Cc: Gilad Broner <gbroner@codeaurora.org>, Jej B <james.bottomley@hansenpartnership.com>, LKML <linux-kernel@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, linux-arm-msm@vger.kernel.org, Santosh Y <santoshsy@gmail.com>, linux-scsi-owner@vger.kernel.org, Subhash Jadavani <subhashj@codeaurora.org>, Yaniv Gardi <ygardi@codeaurora.org>, Dolev Raviv <draviv@codeaurora.org>, Noa Rubens <noag@codeaurora.org>, Raviv Shvili <rshvili@codeaurora.org>, Vinayak Holikatti <vinholikatti@gmail.com>, "James E.J. Bottomley" <jbottomley@parallels.com>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 10, 2015 at 09:18:48PM -0700, Alexei Starovoitov wrote:
-> +unsigned int trace_call_bpf(struct bpf_prog *prog, void *ctx)
-> +{
-> +	unsigned int ret;
-> +	int cpu;
-> +
-> +	if (in_nmi()) /* not supported yet */
-> +		return 1;
-> +
-> +	preempt_disable_notrace();
-> +
-> +	cpu = raw_smp_processor_id();
-> +	if (unlikely(per_cpu(bpf_prog_active, cpu)++ != 0)) {
-> +		/* since some bpf program is already running on this cpu,
-> +		 * don't call into another bpf program (same or different)
-> +		 * and don't send kprobe event into ring-buffer,
-> +		 * so return zero here
-> +		 */
-> +		ret = 0;
-> +		goto out;
-> +	}
-> +
-> +	rcu_read_lock();
+>> +       if (!buffer) {
+>> +               dev_err(hba->dev, "%s: User buffer is NULL!\n",
+>> __func__);
+>> +               return -EINVAL;
+>> +       }
+>> +
+>
+> Should we remove this check or move it into ufshcd_query_ioctl()?
+> For example, BLKFLS ioctl without argument is correct usage, but
+> it always triggers this message. (blkdev_ioctl -> __blkdev_driver_ioctl
+> -> sd_ioctl -> scsi_ioctl -> ufshcd_ioctl)
 
-You've so far tried very hard to not get into tracing; and then you call
-rcu_read_lock() :-)
+You're right, I'll move the check to ufshcd_query_ioctl().
 
-So either document why this isn't a problem, provide
-rcu_read_lock_notrace() or switch to RCU-sched and thereby avoid the
-problem.
+>  +++ b/include/uapi/scsi/ufs/ioctl.h
+>> @@ -0,0 +1,57 @@
+>> +#ifndef UAPI_UFS_IOCTL_H_
+>> +#define UAPI_UFS_IOCTL_H_
+>> +
+>> +#include <linux/types.h>
+>> +
+>> +/*
+>> + *  IOCTL opcode for ufs queries has the following opcode after
+>> + *  SCSI_IOCTL_GET_PCI
+>> + */
+>> +#define UFS_IOCTL_QUERY                        0x5388
+>
+> Should we also need some comments near SCSI_IOCTL_GET_PCI in
+> include/scsi/scsi.h in order to avoid someone trying to define
+> the same ioctl code in the future?
+>
+Indeed - I will add a comment.
 
-> +	ret = BPF_PROG_RUN(prog, ctx);
-> +	rcu_read_unlock();
-> +
-> + out:
-> +	per_cpu(bpf_prog_active, cpu)--;
-> +	preempt_enable_notrace();
-> +
-> +	return ret;
-> +}
-> +EXPORT_SYMBOL_GPL(trace_call_bpf);
+Gilad.
+
+-- 
+Qualcomm Israel, on behalf of Qualcomm Innovation Center, Inc.
+The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum,
+a Linux Foundation Collaborative Project
