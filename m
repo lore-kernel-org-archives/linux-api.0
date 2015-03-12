@@ -1,47 +1,57 @@
-From: Jason Baron <jbaron@akamai.com>
-Subject: Re: [PATCH v4 0/9] epoll: Introduce new syscalls, epoll_ctl_batch
- and epoll_pwait1
-Date: Thu, 12 Mar 2015 11:02:03 -0400
-Message-ID: <5501AA6B.2020209@akamai.com>
-References: <1425952155-27603-1-git-send-email-famz@redhat.com>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v6 tip 2/8] tracing: attach BPF programs to kprobes
+Date: Thu, 12 Mar 2015 16:15:07 +0100
+Message-ID: <20150312151507.GI2896@worktop.programming.kicks-ass.net>
+References: <1426047534-8148-1-git-send-email-ast@plumgrid.com>
+ <1426047534-8148-3-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1425952155-27603-1-git-send-email-famz@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Fam Zheng <famz@redhat.com>, linux-kernel@vger.kernel.org
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, David Herrmann <dh.herrmann@gmail.com>, Alexei Starovoitov <ast@plumgrid.com>, Miklos Szeredi <mszeredi@suse.cz>, David Drysdale <drysdale@google.com>, Oleg Nesterov <oleg@redhat.com>, "David S. Miller" <davem@davemloft.net>, Vivek Goyal <vgoyal@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Theodore Ts'o <tytso@mit.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Rashika Kheria <rashika.kheria@gmail.com>, Hugh Dickins <hughd@google.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Peter Zijlstra <peterz@infradead.org>, linux-fsdevel
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1426047534-8148-3-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/09/2015 09:49 PM, Fam Zheng wrote:
->
-> Benchmark for epoll_pwait1
-> ==========================
->
-> By running fio tests inside VM with both original and modified QEMU, we can
-> compare their difference in performance.
->
-> With a small VM setup [t1], the original QEMU (ppoll based) has an 4k read
-> latency overhead around 37 us. In this setup, the main loop polls 10~20 fds.
->
-> With a slightly larger VM instance [t2] - attached a virtio-serial device so
-> that there are 80~90 fds in the main loop - the original QEMU has a latency
-> overhead around 49 us. By adding more such devices [t3], we can see the latency
-> go even higher - 83 us with ~200 FDs.
->
-> Now modify QEMU to use epoll_pwait1 and test again, the latency numbers are
-> repectively 36us, 37us, 47us for t1, t2 and t3.
->
->
+On Tue, Mar 10, 2015 at 09:18:48PM -0700, Alexei Starovoitov wrote:
+> +unsigned int trace_call_bpf(struct bpf_prog *prog, void *ctx)
+> +{
+> +	unsigned int ret;
+> +	int cpu;
+> +
+> +	if (in_nmi()) /* not supported yet */
+> +		return 1;
+> +
+> +	preempt_disable_notrace();
+> +
+> +	cpu = raw_smp_processor_id();
+> +	if (unlikely(per_cpu(bpf_prog_active, cpu)++ != 0)) {
+> +		/* since some bpf program is already running on this cpu,
+> +		 * don't call into another bpf program (same or different)
+> +		 * and don't send kprobe event into ring-buffer,
+> +		 * so return zero here
+> +		 */
+> +		ret = 0;
+> +		goto out;
+> +	}
+> +
+> +	rcu_read_lock();
 
-Hi,
+You've so far tried very hard to not get into tracing; and then you call
+rcu_read_lock() :-)
 
-So it sounds like you are comparing original qemu code (which was using
-ppoll) vs. using epoll with these new syscalls. Curious if you have numbers
-comparing the existing epoll (with say the timerfd in your epoll set), so
-we can see the improvement relative to epoll.
+So either document why this isn't a problem, provide
+rcu_read_lock_notrace() or switch to RCU-sched and thereby avoid the
+problem.
 
-Thanks,
-
--Jason
+> +	ret = BPF_PROG_RUN(prog, ctx);
+> +	rcu_read_unlock();
+> +
+> + out:
+> +	per_cpu(bpf_prog_active, cpu)--;
+> +	preempt_enable_notrace();
+> +
+> +	return ret;
+> +}
+> +EXPORT_SYMBOL_GPL(trace_call_bpf);
