@@ -1,57 +1,135 @@
-From: Andrew Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [RFC] capabilities: Ambient capabilities
-Date: Thu, 12 Mar 2015 15:27:07 -0700
-Message-ID: <CAObL_7HgU-ekb7mJS7C=0=idfrzV6=CSqTrG2LvUgdDtvbJx_w@mail.gmail.com>
-References: <933931146caf5dac58379f50c017bff9f6c47661.1426183417.git.luto@kernel.org>
- <CAGXu5jKfvswdUMcrGbr6+wn1ME_JkySMvdNd0wvvHpbQ1C7HUg@mail.gmail.com> <CALQRfL7b8CjYgUnVy3jykNwv48fOc03T385RKo--cfv25YenBg@mail.gmail.com>
+From: Chanwoo Choi <cw00.choi@samsung.com>
+Subject: Re: [PATCH v3  00/15] Add support to STMicroelectronics STM32 family
+Date: Fri, 13 Mar 2015 08:45:14 +0900
+Message-ID: <5502250A.8090900@samsung.com>
+References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALQRfL7b8CjYgUnVy3jykNwv48fOc03T385RKo--cfv25YenBg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-gpio-owner@vger.kernel.org>
+In-reply-to: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
+Sender: linux-gpio-owner@vger.kernel.org
+To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Cc: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, stefan@agner.ch, pmeerw@pmeerw.net, pebolle@tiscali.nl, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 12, 2015 at 3:10 PM, Andrew G. Morgan <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> I'm unclear why you refer to the inheritable set in this test:
->
-> +               } else {
-> +                       if (arg2 == PR_CAP_AMBIENT_RAISE &&
-> +                           (!cap_raised(current_cred()->cap_permitted, arg3) ||
-> +                            !cap_raised(current_cred()->cap_inheritable,
-> +                                        arg3)))
-> +                               return -EPERM;
+Dear Maxime,
 
-It's to preserve the invariant that pA is always a subset of pI.
+I'm working for STM32 SoC. So, I'm very interesting in this patch-set.
+If you possible, please add me to Cc list on next patch-set.
 
->
-> I'm also unclear how you can turn off this new 'feature' for a process
-> tree? As it is, the code creates an exploit path for a capable (pP !=
-> 0) program with an exploitable flaw to create a privilege escalation
-> for an arbitrary child program.
+Best Regards,
+Chanwoo Choi
 
-Huh?  If you exploit the parent, you already win.  Yes, if a kiddie
-injects shellcode that does system("/bin/bash") into some pP != 0
-program, they don't actually elevate their privileges.  On the other
-hand, by the time an attacker injected shellcode for:
 
-prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_SYS_ADMIN);
-system("/bin/bash");
+On 03/13/2015 06:55 AM, Maxime Coquelin wrote:
+> From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+> 
+> This third round tries to address most of the comments made on previous series.
+> 
+> It contains few less patches, as the reset_controller_of_init() patch has been
+> removed, now that the bootlaoder handles the reset of the timers.
+> 
+> The pinctrl driver has also been removed after Linus review.
+> It will be reworked to use the generic pinconf bindings, and may contain
+> changes for other machines (Mediatek), to add support for pinmux property
+> handling directly in pinconf-generic.
+> 
+> STM32 MCUs are Cortex-M CPU, used in various applications (consumer
+> electronics, industrial applications, hobbyists...).
+> Datasheets, user and programming manuals are publicly available on
+> STMicroelectronics website.
+> 
+> With this series applied, the STM32F419 Discovery can boot succesfully.
+> 
+> 
+> Changes since v2:
+> -----------------
+>  - Remove pinctrl driver from the series. 
+>  - Remove reset_controller_of_init(), and reset the timers in the bootloader
+>  - Add HW flow contrl property for serial driver
+>  - Lots of changes in the DTS file, as per Andreas recommendations
+>  - Some Kconfig clean-ups
+>  - Adapt the config to be compatible with Andreas' bootwrapper, except UART port.
+>  - Various fixes in documentation
+> 
+> Changes since v1:
+> -----------------
+>  - Move bindings documentation in their own patches (Andreas)
+>  - Rename ARM System timer to armv7m-systick (Rob)
+>  - Add clock-frequency property handling in armv7m-systick (Rob)
+>  - Re-factor the reset controllers into a single controller (Philipp)
+>  - Add kerneldoc to reset_controller_of_init (Philipp)
+>  - Add named constants in include/dt-bindings/reset/ (Philipp)
+>  - Make pinctrl driver to depend on ARCH_STM32 or COMPILE_TEST (Geert)
+>  - Introduce CPUV7M_NUM_IRQ config flag to indicate the number of interrupts
+> supported by the MCU, in order to limit memory waste in vectors' table (Uwe)
+> 
+> 
+> Maxime Coquelin (15):
+>   scripts: link-vmlinux: Don't pass page offset to kallsyms if XIP
+>     Kernel
+>   ARM: ARMv7-M: Enlarge vector table up to 256 entries
+>   dt-bindings: Document the ARM System timer bindings
+>   clocksource: Add ARM System timer driver
+>   dt-bindings: Document the STM32 reset bindings
+>   drivers: reset: Add STM32 reset driver
+>   dt-bindings: Document the STM32 timer bindings
+>   clockevent: Add STM32 Timer driver
+>   dt-bindings: Document the STM32 USART bindings
+>   serial: stm32-usart: Add STM32 USART Driver
+>   ARM: Add STM32 family machine
+>   ARM: dts: Add ARM System timer as clockevent in armv7m
+>   ARM: dts: Introduce STM32F429 MCU
+>   ARM: configs: Add STM32 defconfig
+>   MAINTAINERS: Add entry for STM32 MCUs
+> 
+>  Documentation/arm/stm32/overview.txt               |  32 +
+>  Documentation/arm/stm32/stm32f429-overview.txt     |  22 +
+>  .../devicetree/bindings/arm/armv7m_systick.txt     |  26 +
+>  .../devicetree/bindings/reset/st,stm32-rcc.txt     | 102 +++
+>  .../devicetree/bindings/serial/st,stm32-usart.txt  |  32 +
+>  .../devicetree/bindings/timer/st,stm32-timer.txt   |  22 +
+>  MAINTAINERS                                        |   8 +
+>  arch/arm/Kconfig                                   |  18 +
+>  arch/arm/Makefile                                  |   1 +
+>  arch/arm/boot/dts/Makefile                         |   1 +
+>  arch/arm/boot/dts/armv7-m.dtsi                     |   6 +
+>  arch/arm/boot/dts/stm32f429-disco.dts              |  71 +++
+>  arch/arm/boot/dts/stm32f429.dtsi                   | 226 +++++++
+>  arch/arm/configs/stm32_defconfig                   |  71 +++
+>  arch/arm/kernel/entry-v7m.S                        |  13 +-
+>  arch/arm/mach-stm32/Makefile                       |   1 +
+>  arch/arm/mach-stm32/Makefile.boot                  |   3 +
+>  arch/arm/mach-stm32/board-dt.c                     |  19 +
+>  arch/arm/mm/Kconfig                                |  15 +
+>  drivers/clocksource/Kconfig                        |  15 +
+>  drivers/clocksource/Makefile                       |   2 +
+>  drivers/clocksource/armv7m_systick.c               |  78 +++
+>  drivers/clocksource/timer-stm32.c                  | 184 ++++++
+>  drivers/reset/Makefile                             |   1 +
+>  drivers/reset/reset-stm32.c                        | 125 ++++
+>  drivers/tty/serial/Kconfig                         |  17 +
+>  drivers/tty/serial/Makefile                        |   1 +
+>  drivers/tty/serial/stm32-usart.c                   | 695 +++++++++++++++++++++
+>  include/uapi/linux/serial_core.h                   |   3 +
+>  scripts/link-vmlinux.sh                            |   2 +-
+>  30 files changed, 1807 insertions(+), 5 deletions(-)
+>  create mode 100644 Documentation/arm/stm32/overview.txt
+>  create mode 100644 Documentation/arm/stm32/stm32f429-overview.txt
+>  create mode 100644 Documentation/devicetree/bindings/arm/armv7m_systick.txt
+>  create mode 100644 Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
+>  create mode 100644 Documentation/devicetree/bindings/serial/st,stm32-usart.txt
+>  create mode 100644 Documentation/devicetree/bindings/timer/st,stm32-timer.txt
+>  create mode 100644 arch/arm/boot/dts/stm32f429-disco.dts
+>  create mode 100644 arch/arm/boot/dts/stm32f429.dtsi
+>  create mode 100644 arch/arm/configs/stm32_defconfig
+>  create mode 100644 arch/arm/mach-stm32/Makefile
+>  create mode 100644 arch/arm/mach-stm32/Makefile.boot
+>  create mode 100644 arch/arm/mach-stm32/board-dt.c
+>  create mode 100644 drivers/clocksource/armv7m_systick.c
+>  create mode 100644 drivers/clocksource/timer-stm32.c
+>  create mode 100644 drivers/reset/reset-stm32.c
+>  create mode 100644 drivers/tty/serial/stm32-usart.c
+> 
 
-into a target, they can already do whatever they want.
-
-> While I understand that everyone
-> 'knows what they are doing' in implementing this change, I'm convinced
-> that folk that are up to no good also do... Why not provide a lockable
-> secure bit to selectively disable this support?
-
-Show me a legitimate use case and I'll gladly implement a secure bit.
-In the mean time, I don't even believe that there's a legitimate use
-for any of the other secure bits (except keepcaps, and I don't know
-why that's a securebit in the first place).
-
-In the mean time, see CVE-2014-3215 for an example of why securebits
-are probably more trouble than they're worth.
-
---Andy
