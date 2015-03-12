@@ -1,48 +1,30 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
+From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
 Subject: Re: [PATCH v6 tip 2/8] tracing: attach BPF programs to kprobes
-Date: Thu, 12 Mar 2015 09:43:54 -0700
-Message-ID: <5501C24A.30206@plumgrid.com>
-References: <1426047534-8148-1-git-send-email-ast@plumgrid.com>	<1426047534-8148-3-git-send-email-ast@plumgrid.com>	<20150312151507.GI2896@worktop.programming.kicks-ass.net>	<5501BC5A.6000204@plumgrid.com> <20150312122345.0b28c266@gandalf.local.home>
+Date: Thu, 12 Mar 2015 12:47:39 -0400
+Message-ID: <20150312124739.47ef6661@gandalf.local.home>
+References: <1426047534-8148-1-git-send-email-ast@plumgrid.com>
+	<1426047534-8148-3-git-send-email-ast@plumgrid.com>
+	<20150312151507.GI2896@worktop.programming.kicks-ass.net>
+	<5501BC5A.6000204@plumgrid.com>
+	<20150312122345.0b28c266@gandalf.local.home>
+	<5501C24A.30206@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150312122345.0b28c266@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@kernel.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5501C24A.30206-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 3/12/15 9:23 AM, Steven Rostedt wrote:
-> On Thu, 12 Mar 2015 09:18:34 -0700
-> Alexei Starovoitov <ast@plumgrid.com> wrote:
->
->>> You've so far tried very hard to not get into tracing; and then you call
->>> rcu_read_lock() :-)
->>>
->>> So either document why this isn't a problem, provide
->>> rcu_read_lock_notrace() or switch to RCU-sched and thereby avoid the
->>> problem.
->>
->> I don't see the problem.
->> I actually do turn on func and func_graph tracers from time to time to
->> debug bpf core itself. Why would tracing interfere with anything that
->> this patch is doing? When we're inside tracing processing, we need to
->> use only _notrace() helpers otherwise recursion will hurt, but this
->> code is not invoked from there. It's called from
->> kprobe_ftrace_handler|kprobe_int3_handler->kprobe_dispatcher->
->> kprobe_perf_func->trace_call_bpf which all are perfectly traceable.
->> Probably my copy paste of preempt_disable_notrace() line from
->> stack_trace_call() became source of confusion? I believe
->> normal preempt_disable() here will be just fine.
->> It's actually redundant too, since preemption is disabled by kprobe
->> anyway. Please help me understand what I'm missing.
->
-> As Peter stated, "You've so far tried very hard to not get into
-> tracing", which the preempt_disable_notrace() is the source of confusion.
->
-> Just remove the _notrace() part, as it doesn't make sense to have part
-> not traced, and other parts traced for no apparent reason.
+On Thu, 12 Mar 2015 09:43:54 -0700
+Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
 
-sure. consider it done. should I respin right away or you can review
-the rest?
+
+> sure. consider it done. should I respin right away or you can review
+> the rest?
+
+Hold off for a bit, to let the review continue.
+
+-- Steve
