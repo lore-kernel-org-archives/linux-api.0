@@ -1,481 +1,124 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [RFC] capabilities: Ambient capabilities
-Date: Thu, 12 Mar 2015 14:49:14 -0700
-Message-ID: <CAGXu5jKfvswdUMcrGbr6+wn1ME_JkySMvdNd0wvvHpbQ1C7HUg@mail.gmail.com>
-References: <933931146caf5dac58379f50c017bff9f6c47661.1426183417.git.luto@kernel.org>
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Subject: [PATCH v3  00/15] Add support to STMicroelectronics STM32 family
+Date: Thu, 12 Mar 2015 22:55:46 +0100
+Message-ID: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <933931146caf5dac58379f50c017bff9f6c47661.1426183417.git.luto@kernel.org>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Christoph Lameter <cl@linux.com>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, Jonathan Corbet <corbet@lwn.net>, Aaron Jones <aaronmdjones@gmail.com>, Ted Ts'o <tytso@mit.edu>, linux-security-module <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, akpm@linuxfoundation.org, "Andrew G. Morgan" <morgan@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Markku Savela <msa@moth.iki.fi>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, stefan@agner.ch, pmeerw@pmeerw.net, pebolle@tiscali.nl
+Cc: Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees Cook <keescook@chromium.org>, Michal Marek <mmarek@suse.cz>, linux-doc@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kerne
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 12, 2015 at 11:08 AM, Andy Lutomirski <luto@kernel.org> wrote:
-> Credit where credit is due: this idea comes from Christoph Lameter
-> with a lot of valuable input from Serge Hallyn.  This patch is
-> heavily based on Christoph's patch.
->
-> ===== The status quo =====
->
-> On Linux, there are a number of capabilities defined by the kernel.
-> To perform various privileged tasks, processes can wield
-> capabilities that they hold.
->
-> Each task has four capability masks: effective (pE), permitted (pP),
-> inheritable (pI), and a bounding set (X).  When the kernel checks
-> for a capability, it checks pE.  The other capability masks serve to
-> modify what capabilities can be in pE.
->
-> Any task can remove capabilities from pE, pP, or pI at any time.  If
-> a task has a capability in pP, it can add that capability to pE
-> and/or pI.  If a task has CAP_SETPCAP, then it can add any
-> capability to pI, and it can remove capabilities from X.
->
-> Tasks are not the only things that can have capabilities; files can
-> also have capabilities.  A file can have no capabilty information at
-> all [1].  If a file has capability information, then it has a
-> permitted mask (fP) and an inheritable mask (fI) as well as a single
-> effective bit (fE) [2].  File capabilities modify the capabilities
-> of tasks that execve(2) them.
->
-> A task that successfully calls execve has its capabilities modified
-> for the file ultimately being excecuted (i.e. the binary itself if
-> that binary is ELF or for the interpreter if the binary is a
-> script.) [3] In the capability evolution rules, for each mask Z, pZ
-> represents the old value and pZ' represents the new value.  The
-> rules are:
->
->   pP' = (X & fP) | (pI & fI)
->   pI' = pI
->   pE' = (fE ? pP' : 0)
->   X is unchanged
->
-> For setuid binaries, fP, fI, and fE are modified by a moderately
-> complicated set of rules that emulate POSIX behavior.  Similarly, if
-> euid == 0 or ruid == 0, then fP, fI, and fE are modified differently
-> (primary, fP and fI usually end up being the full set).  For nonroot
-> users executing binaries with neither setuid nor file caps, fI and
-> fP are empty and fE is false.
->
-> As an extra complication, if you execute a process as nonroot and fE
-> is set, then the "secure exec" rules are in effect: AT_SECURE gets
-> set, LD_PRELOAD doesn't work, etc.
->
-> This is rather messy.  We've learned that making any changes is
-> dangerous, though: if a new kernel version allows an unprivileged
-> program to change its security state in a way that persists cross
-> execution of a setuid program or a program with file caps, this
-> persistent state is surprisingly likely to allow setuid or
-> file-capped programs to be exploited for privilege escalation.
->
-> ===== The problem =====
->
-> Capability inheritance is basically useless.
->
-> If you aren't root and you execute an ordinary binary, fI is zero,
-> so your capabilities have no effect whatsoever on pP'.  This means
-> that you can't usefully execute a helper process or a shell command
-> with elevated capabilities if you aren't root.
->
-> On current kernels, you can sort of work around this by setting fI
-> to the full set for most or all non-setuid executable files.  This
-> causes pP' = pI for nonroot, and inheritance works.  No one does
-> this because it's a PITA and it isn't even supported on most
-> filesystems.
->
-> If you try this, you'll discover that every nonroot program ends up
-> with secure exec rules, breaking many things.
->
-> This is a problem that has bitten many people who have tried to use
-> capabilities for anything useful.
->
-> ===== The proposed change =====
->
-> This patch adds a fifth capability mask called the ambient mask
-> (pA).  pA does what pI should have done.
->
-> pA obeys the invariant that no bit can ever be set in pA if it is
-> not set in both pP and pI.  Dropping a bit from pP or pI drops that
-> bit from pA.  This ensures that existing programs that try to drop
-> capabilities still do so, with a complication.  Because capability
-> inheritance is so broken, setting KEEPCAPS, using setresuid to
-> switch to nonroot uids, and calling execve effectively drops
-> capabilities.  Therefore, setresuid from root to nonroot
-> unconditionally clears pA.  Processes that don't like this can
-> re-add bits to pA afterwards.
->
-> The capability evolution rules are changed:
->
->   pA' = (file caps or setuid or setgid ? 0 : pA)
->   pP' = (X & fP) | (pI & fI) | pA'
->   pI' = pI
->   pE' = (fE ? pP' : pA')
->   X is unchanged
->
-> If you are nonroot but you have a capability, you can add it to pA.
-> If you do so, your children get that capability in pA, pP, and pE.
-> For example, you can set pA = CAP_NET_BIND_SERVICE, and your
-> children can automatically bind low-numbered ports.  Hallelujah!
->
-> Unprivileged users can create user namespaces, map themselves to a
-> nonzero uid, and create both privileged (relative to their
-> namespace) and unprivileged process trees.  This is currently more
-> or less impossible.  Hallelujah!
->
-> You cannot use pA to try to subvert a setuid, setgid, or file-capped
-> program: if you execute any such program, pA gets cleared and the
-> resulting evolution rules are unchanged by this patch.
->
-> Users with nonzero pA are unlikely to unintentionally leak that
-> capability.  If they run programs that try to drop privileges,
-> dropping privileges will still work.
->
-> It's worth noting that the degree of paranoia in this patch could
-> possibly be relaxed without causing serious problems.  Specifically,
-> if we allowed pA to persist across executing non-pA-aware setuid
-> binaries and across setresuid, then, naively, the only capabilities
-> that could leak as a result would be the capabilities in pA, and any
-> attacker *already* has those capabilities.  This would make me
-> nervous, though -- setuid binaries that tried to privilege-separate
-> might fail to do so, and putting CAP_DAC_READ_SEARCH or
-> CAP_DAC_OVERRIDE into pA could have unexpected side effects.
-> (Whether these unexpected side effects would be exploitable is an
-> open question.)  I've therefore taken the more paranoid route.
->
-> An alternative would be to either require PR_SET_NO_NEW_PRIVS before
-> setting ambient capabilities.  I think that this would be annoying
-> and would make granting otherwise unprivileged users minor ambient
-> capabilities (CAP_NET_BIND_SERVICE or CAP_NET_RAW for example) much
-> less useful than it is with this patch.
->
-> ===== Footnotes =====
->
-> [1] Files that are missing the "security.capability" xattr or that
-> have unrecognized values for that xattr end up with has_cap ==
-> false.  The code that does that appears to be complicated for no
-> good reason.
->
-> [2] The libcap capability mask parsers and formatters are
-> dangerously misleading and the documentation is flat-out wrong.  fE
-> is *not* a mask; it's a single bit.  This has probably confused
-> every single person who has tried to use file capabilities.
->
-> [3] Linux very confusingly processes the script and the interpreter if
-> applicable, for reasons that escape me.  The results from thinking
-> about a script's file capabilities and/or setuid bits are mostly discarded.
->
-> Cc: Kees Cook <keescook@chromium.org>
-> Cc: Christoph Lameter <cl@linux.com>
-> Cc: Serge Hallyn <serge.hallyn@canonical.com>
-> Cc: Andy Lutomirski <luto@amacapital.net>
-> Cc: Jonathan Corbet <corbet@lwn.net>
-> Cc: Aaron Jones <aaronmdjones@gmail.com>
-> CC: Ted Ts'o <tytso@mit.edu>
-> Cc: linux-security-module@vger.kernel.org
-> Cc: linux-kernel@vger.kernel.org
-> Cc: linux-api@vger.kernel.org
-> Cc: akpm@linuxfoundation.org
-> Cc: Andrew G. Morgan <morgan@kernel.org>
-> Cc: Mimi Zohar <zohar@linux.vnet.ibm.com>
-> Cc: Austin S Hemmelgarn <ahferroin7@gmail.com>
-> Cc: Markku Savela <msa@moth.iki.fi>
-> Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-> Signed-off-by: Andy Lutomirski <luto@kernel.org>
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
 
-This would be quite welcome for things we're doing in Chrome OS.
-Presently, we're able to use fscaps to keep non-root caps across exec
-and haven't encountered issues with AT_SECURE (yet), but using pA
-would be much nicer and exactly matches how we want to use it: a
-launcher is creating a tree of processes that are non-root but need
-some capabilities. Right now the tree is very small and we're able to
-sprinkle our fscaps lightly. :) This would be better.
+This third round tries to address most of the comments made on previous series.
 
--Kees
+It contains few less patches, as the reset_controller_of_init() patch has been
+removed, now that the bootlaoder handles the reset of the timers.
 
-> ---
->
-> Preliminary userspace code is here:
->
-> https://git.kernel.org/cgit/linux/kernel/git/luto/util-linux-playground.git/commit/?h=cap_ambient&id=860c73ac1acaaae976bdd3bb83b89b0180f0702a
->
-> fs/proc/array.c              |  5 ++-
->  include/linux/cred.h         | 15 +++++++++
->  include/uapi/linux/prctl.h   |  6 ++++
->  kernel/user_namespace.c      |  1 +
->  security/commoncap.c         | 75 ++++++++++++++++++++++++++++++++++++++------
->  security/keys/process_keys.c |  1 +
->  6 files changed, 92 insertions(+), 11 deletions(-)
->
-> diff --git a/fs/proc/array.c b/fs/proc/array.c
-> index 1295a00ca316..bc15356d6551 100644
-> --- a/fs/proc/array.c
-> +++ b/fs/proc/array.c
-> @@ -282,7 +282,8 @@ static void render_cap_t(struct seq_file *m, const char *header,
->  static inline void task_cap(struct seq_file *m, struct task_struct *p)
->  {
->         const struct cred *cred;
-> -       kernel_cap_t cap_inheritable, cap_permitted, cap_effective, cap_bset;
-> +       kernel_cap_t cap_inheritable, cap_permitted, cap_effective,
-> +                       cap_bset, cap_ambient;
->
->         rcu_read_lock();
->         cred = __task_cred(p);
-> @@ -290,12 +291,14 @@ static inline void task_cap(struct seq_file *m, struct task_struct *p)
->         cap_permitted   = cred->cap_permitted;
->         cap_effective   = cred->cap_effective;
->         cap_bset        = cred->cap_bset;
-> +       cap_ambient     = cred->cap_ambient;
->         rcu_read_unlock();
->
->         render_cap_t(m, "CapInh:\t", &cap_inheritable);
->         render_cap_t(m, "CapPrm:\t", &cap_permitted);
->         render_cap_t(m, "CapEff:\t", &cap_effective);
->         render_cap_t(m, "CapBnd:\t", &cap_bset);
-> +       render_cap_t(m, "CapAmb:\t", &cap_ambient);
->  }
->
->  static inline void task_seccomp(struct seq_file *m, struct task_struct *p)
-> diff --git a/include/linux/cred.h b/include/linux/cred.h
-> index 2fb2ca2127ed..a21bcba6ef84 100644
-> --- a/include/linux/cred.h
-> +++ b/include/linux/cred.h
-> @@ -122,6 +122,7 @@ struct cred {
->         kernel_cap_t    cap_permitted;  /* caps we're permitted */
->         kernel_cap_t    cap_effective;  /* caps we can actually use */
->         kernel_cap_t    cap_bset;       /* capability bounding set */
-> +       kernel_cap_t    cap_ambient;    /* Ambient capability set */
->  #ifdef CONFIG_KEYS
->         unsigned char   jit_keyring;    /* default keyring to attach requested
->                                          * keys to */
-> @@ -197,6 +198,20 @@ static inline void validate_process_creds(void)
->  }
->  #endif
->
-> +static inline void cap_enforce_ambient_invariants(struct cred *cred)
-> +{
-> +       cred->cap_ambient = cap_intersect(cred->cap_ambient,
-> +                                         cap_intersect(cred->cap_permitted,
-> +                                                       cred->cap_inheritable));
-> +}
-> +
-> +static inline bool cap_ambient_invariant_ok(const struct cred *cred)
-> +{
-> +       return cap_issubset(cred->cap_ambient,
-> +                           cap_intersect(cred->cap_permitted,
-> +                                         cred->cap_inheritable));
-> +}
-> +
->  /**
->   * get_new_cred - Get a reference on a new set of credentials
->   * @cred: The new credentials to reference
-> diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-> index 31891d9535e2..65407f867e82 100644
-> --- a/include/uapi/linux/prctl.h
-> +++ b/include/uapi/linux/prctl.h
-> @@ -190,4 +190,10 @@ struct prctl_mm_map {
->  # define PR_FP_MODE_FR         (1 << 0)        /* 64b FP registers */
->  # define PR_FP_MODE_FRE                (1 << 1)        /* 32b compatibility */
->
-> +/* Control the ambient capability set */
-> +#define PR_CAP_AMBIENT         47
-> +# define PR_CAP_AMBIENT_GET    1
-> +# define PR_CAP_AMBIENT_RAISE  2
-> +# define PR_CAP_AMBIENT_LOWER  3
-> +
->  #endif /* _LINUX_PRCTL_H */
-> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-> index 4109f8320684..dab0f808235a 100644
-> --- a/kernel/user_namespace.c
-> +++ b/kernel/user_namespace.c
-> @@ -39,6 +39,7 @@ static void set_cred_user_ns(struct cred *cred, struct user_namespace *user_ns)
->         cred->cap_inheritable = CAP_EMPTY_SET;
->         cred->cap_permitted = CAP_FULL_SET;
->         cred->cap_effective = CAP_FULL_SET;
-> +       cred->cap_ambient = CAP_EMPTY_SET;
->         cred->cap_bset = CAP_FULL_SET;
->  #ifdef CONFIG_KEYS
->         key_put(cred->request_key_auth);
-> diff --git a/security/commoncap.c b/security/commoncap.c
-> index f66713bd7450..b3253886ecad 100644
-> --- a/security/commoncap.c
-> +++ b/security/commoncap.c
-> @@ -272,6 +272,7 @@ int cap_capset(struct cred *new,
->         new->cap_effective   = *effective;
->         new->cap_inheritable = *inheritable;
->         new->cap_permitted   = *permitted;
-> +       cap_enforce_ambient_invariants(new);
->         return 0;
->  }
->
-> @@ -352,6 +353,7 @@ static inline int bprm_caps_from_vfs_caps(struct cpu_vfs_cap_data *caps,
->
->                 /*
->                  * pP' = (X & fP) | (pI & fI)
-> +                * The addition of pA' is handled later.
->                  */
->                 new->cap_permitted.cap[i] =
->                         (new->cap_bset.cap[i] & permitted) |
-> @@ -479,10 +481,12 @@ int cap_bprm_set_creds(struct linux_binprm *bprm)
->  {
->         const struct cred *old = current_cred();
->         struct cred *new = bprm->cred;
-> -       bool effective, has_cap = false;
-> +       bool effective, has_cap = false, is_setid;
->         int ret;
->         kuid_t root_uid;
->
-> +       BUG_ON(!cap_ambient_invariant_ok(old));
-> +
->         effective = false;
->         ret = get_file_caps(bprm, &effective, &has_cap);
->         if (ret < 0)
-> @@ -527,8 +531,9 @@ skip:
->          *
->          * In addition, if NO_NEW_PRIVS, then ensure we get no new privs.
->          */
-> -       if ((!uid_eq(new->euid, old->uid) ||
-> -            !gid_eq(new->egid, old->gid) ||
-> +       is_setid = !uid_eq(new->euid, old->uid) || !gid_eq(new->egid, old->gid);
-> +
-> +       if ((is_setid ||
->              !cap_issubset(new->cap_permitted, old->cap_permitted)) &&
->             bprm->unsafe & ~LSM_UNSAFE_PTRACE_CAP) {
->                 /* downgrade; they get no more than they had, and maybe less */
-> @@ -544,10 +549,23 @@ skip:
->         new->suid = new->fsuid = new->euid;
->         new->sgid = new->fsgid = new->egid;
->
-> +       /* File caps or setid cancel ambient. */
-> +       if (has_cap || is_setid)
-> +               cap_clear(new->cap_ambient);
-> +
-> +       /*
-> +        * Now that we've computed pA', update pP' to give:
-> +        *   pP' = (X & fP) | (pI & fI) | pA'
-> +        */
-> +       new->cap_permitted = cap_combine(new->cap_permitted, new->cap_ambient);
-> +
->         if (effective)
->                 new->cap_effective = new->cap_permitted;
->         else
-> -               cap_clear(new->cap_effective);
-> +               new->cap_effective = new->cap_ambient;
-> +
-> +       BUG_ON(!cap_ambient_invariant_ok(new));
-> +
->         bprm->cap_effective = effective;
->
->         /*
-> @@ -562,7 +580,7 @@ skip:
->          * Number 1 above might fail if you don't have a full bset, but I think
->          * that is interesting information to audit.
->          */
-> -       if (!cap_isclear(new->cap_effective)) {
-> +       if (!cap_issubset(new->cap_effective, new->cap_ambient)) {
->                 if (!cap_issubset(CAP_FULL_SET, new->cap_effective) ||
->                     !uid_eq(new->euid, root_uid) || !uid_eq(new->uid, root_uid) ||
->                     issecure(SECURE_NOROOT)) {
-> @@ -573,6 +591,9 @@ skip:
->         }
->
->         new->securebits &= ~issecure_mask(SECURE_KEEP_CAPS);
-> +
-> +       BUG_ON(!cap_ambient_invariant_ok(new));
-> +
->         return 0;
->  }
->
-> @@ -594,7 +615,7 @@ int cap_bprm_secureexec(struct linux_binprm *bprm)
->         if (!uid_eq(cred->uid, root_uid)) {
->                 if (bprm->cap_effective)
->                         return 1;
-> -               if (!cap_isclear(cred->cap_permitted))
-> +               if (!cap_issubset(cred->cap_permitted, cred->cap_ambient))
->                         return 1;
->         }
->
-> @@ -696,10 +717,18 @@ static inline void cap_emulate_setxuid(struct cred *new, const struct cred *old)
->              uid_eq(old->suid, root_uid)) &&
->             (!uid_eq(new->uid, root_uid) &&
->              !uid_eq(new->euid, root_uid) &&
-> -            !uid_eq(new->suid, root_uid)) &&
-> -           !issecure(SECURE_KEEP_CAPS)) {
-> -               cap_clear(new->cap_permitted);
-> -               cap_clear(new->cap_effective);
-> +            !uid_eq(new->suid, root_uid))) {
-> +               if (!issecure(SECURE_KEEP_CAPS)) {
-> +                       cap_clear(new->cap_permitted);
-> +                       cap_clear(new->cap_effective);
-> +               }
-> +
-> +               /*
-> +                * Pre-ambient programs except setresuid to nonroot followed
-> +                * by exec to drop capabilities.  We should make sure that
-> +                * this remains the case.
-> +                */
-> +               cap_clear(new->cap_ambient);
->         }
->         if (uid_eq(old->euid, root_uid) && !uid_eq(new->euid, root_uid))
->                 cap_clear(new->cap_effective);
-> @@ -929,6 +958,32 @@ int cap_task_prctl(int option, unsigned long arg2, unsigned long arg3,
->                         new->securebits &= ~issecure_mask(SECURE_KEEP_CAPS);
->                 return commit_creds(new);
->
-> +       case PR_CAP_AMBIENT:
-> +               if (((!cap_valid(arg3)) | arg4 | arg5))
-> +                       return -EINVAL;
-> +
-> +               if (arg2 == PR_CAP_AMBIENT_GET) {
-> +                       return !!cap_raised(current_cred()->cap_ambient, arg3);
-> +               } else if (arg2 != PR_CAP_AMBIENT_RAISE &&
-> +                          arg2 != PR_CAP_AMBIENT_LOWER) {
-> +                       return -EINVAL;
-> +               } else {
-> +                       if (arg2 == PR_CAP_AMBIENT_RAISE &&
-> +                           (!cap_raised(current_cred()->cap_permitted, arg3) ||
-> +                            !cap_raised(current_cred()->cap_inheritable,
-> +                                        arg3)))
-> +                               return -EPERM;
-> +
-> +                       new = prepare_creds();
-> +                       if (!new)
-> +                               return -ENOMEM;
-> +                       if (arg2 == PR_CAP_AMBIENT_RAISE)
-> +                               cap_raise(new->cap_ambient, arg3);
-> +                       else
-> +                               cap_lower(new->cap_ambient, arg3);
-> +                       return commit_creds(new);
-> +               }
-> +
->         default:
->                 /* No functionality available - continue with default */
->                 return -ENOSYS;
-> diff --git a/security/keys/process_keys.c b/security/keys/process_keys.c
-> index bd536cb221e2..43b4cddbf2b3 100644
-> --- a/security/keys/process_keys.c
-> +++ b/security/keys/process_keys.c
-> @@ -848,6 +848,7 @@ void key_change_session_keyring(struct callback_head *twork)
->         new->cap_inheritable    = old->cap_inheritable;
->         new->cap_permitted      = old->cap_permitted;
->         new->cap_effective      = old->cap_effective;
-> +       new->cap_ambient        = old->cap_ambient;
->         new->cap_bset           = old->cap_bset;
->
->         new->jit_keyring        = old->jit_keyring;
-> --
-> 2.3.0
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+The pinctrl driver has also been removed after Linus review.
+It will be reworked to use the generic pinconf bindings, and may contain
+changes for other machines (Mediatek), to add support for pinmux property
+handling directly in pinconf-generic.
+
+STM32 MCUs are Cortex-M CPU, used in various applications (consumer
+electronics, industrial applications, hobbyists...).
+Datasheets, user and programming manuals are publicly available on
+STMicroelectronics website.
+
+With this series applied, the STM32F419 Discovery can boot succesfully.
 
 
+Changes since v2:
+-----------------
+ - Remove pinctrl driver from the series. 
+ - Remove reset_controller_of_init(), and reset the timers in the bootloader
+ - Add HW flow contrl property for serial driver
+ - Lots of changes in the DTS file, as per Andreas recommendations
+ - Some Kconfig clean-ups
+ - Adapt the config to be compatible with Andreas' bootwrapper, except UART port.
+ - Various fixes in documentation
+
+Changes since v1:
+-----------------
+ - Move bindings documentation in their own patches (Andreas)
+ - Rename ARM System timer to armv7m-systick (Rob)
+ - Add clock-frequency property handling in armv7m-systick (Rob)
+ - Re-factor the reset controllers into a single controller (Philipp)
+ - Add kerneldoc to reset_controller_of_init (Philipp)
+ - Add named constants in include/dt-bindings/reset/ (Philipp)
+ - Make pinctrl driver to depend on ARCH_STM32 or COMPILE_TEST (Geert)
+ - Introduce CPUV7M_NUM_IRQ config flag to indicate the number of interrupts
+supported by the MCU, in order to limit memory waste in vectors' table (Uwe)
+
+
+Maxime Coquelin (15):
+  scripts: link-vmlinux: Don't pass page offset to kallsyms if XIP
+    Kernel
+  ARM: ARMv7-M: Enlarge vector table up to 256 entries
+  dt-bindings: Document the ARM System timer bindings
+  clocksource: Add ARM System timer driver
+  dt-bindings: Document the STM32 reset bindings
+  drivers: reset: Add STM32 reset driver
+  dt-bindings: Document the STM32 timer bindings
+  clockevent: Add STM32 Timer driver
+  dt-bindings: Document the STM32 USART bindings
+  serial: stm32-usart: Add STM32 USART Driver
+  ARM: Add STM32 family machine
+  ARM: dts: Add ARM System timer as clockevent in armv7m
+  ARM: dts: Introduce STM32F429 MCU
+  ARM: configs: Add STM32 defconfig
+  MAINTAINERS: Add entry for STM32 MCUs
+
+ Documentation/arm/stm32/overview.txt               |  32 +
+ Documentation/arm/stm32/stm32f429-overview.txt     |  22 +
+ .../devicetree/bindings/arm/armv7m_systick.txt     |  26 +
+ .../devicetree/bindings/reset/st,stm32-rcc.txt     | 102 +++
+ .../devicetree/bindings/serial/st,stm32-usart.txt  |  32 +
+ .../devicetree/bindings/timer/st,stm32-timer.txt   |  22 +
+ MAINTAINERS                                        |   8 +
+ arch/arm/Kconfig                                   |  18 +
+ arch/arm/Makefile                                  |   1 +
+ arch/arm/boot/dts/Makefile                         |   1 +
+ arch/arm/boot/dts/armv7-m.dtsi                     |   6 +
+ arch/arm/boot/dts/stm32f429-disco.dts              |  71 +++
+ arch/arm/boot/dts/stm32f429.dtsi                   | 226 +++++++
+ arch/arm/configs/stm32_defconfig                   |  71 +++
+ arch/arm/kernel/entry-v7m.S                        |  13 +-
+ arch/arm/mach-stm32/Makefile                       |   1 +
+ arch/arm/mach-stm32/Makefile.boot                  |   3 +
+ arch/arm/mach-stm32/board-dt.c                     |  19 +
+ arch/arm/mm/Kconfig                                |  15 +
+ drivers/clocksource/Kconfig                        |  15 +
+ drivers/clocksource/Makefile                       |   2 +
+ drivers/clocksource/armv7m_systick.c               |  78 +++
+ drivers/clocksource/timer-stm32.c                  | 184 ++++++
+ drivers/reset/Makefile                             |   1 +
+ drivers/reset/reset-stm32.c                        | 125 ++++
+ drivers/tty/serial/Kconfig                         |  17 +
+ drivers/tty/serial/Makefile                        |   1 +
+ drivers/tty/serial/stm32-usart.c                   | 695 +++++++++++++++++++++
+ include/uapi/linux/serial_core.h                   |   3 +
+ scripts/link-vmlinux.sh                            |   2 +-
+ 30 files changed, 1807 insertions(+), 5 deletions(-)
+ create mode 100644 Documentation/arm/stm32/overview.txt
+ create mode 100644 Documentation/arm/stm32/stm32f429-overview.txt
+ create mode 100644 Documentation/devicetree/bindings/arm/armv7m_systick.txt
+ create mode 100644 Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
+ create mode 100644 Documentation/devicetree/bindings/serial/st,stm32-usart.txt
+ create mode 100644 Documentation/devicetree/bindings/timer/st,stm32-timer.txt
+ create mode 100644 arch/arm/boot/dts/stm32f429-disco.dts
+ create mode 100644 arch/arm/boot/dts/stm32f429.dtsi
+ create mode 100644 arch/arm/configs/stm32_defconfig
+ create mode 100644 arch/arm/mach-stm32/Makefile
+ create mode 100644 arch/arm/mach-stm32/Makefile.boot
+ create mode 100644 arch/arm/mach-stm32/board-dt.c
+ create mode 100644 drivers/clocksource/armv7m_systick.c
+ create mode 100644 drivers/clocksource/timer-stm32.c
+ create mode 100644 drivers/reset/reset-stm32.c
+ create mode 100644 drivers/tty/serial/stm32-usart.c
 
 -- 
-Kees Cook
-Chrome OS Security
+1.9.1
