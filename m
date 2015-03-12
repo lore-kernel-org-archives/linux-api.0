@@ -1,185 +1,102 @@
 From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: [PATCH v3  11/15] ARM: Add STM32 family machine
-Date: Thu, 12 Mar 2015 22:55:57 +0100
-Message-ID: <1426197361-19290-12-git-send-email-maxime.coquelin@st.com>
+Subject: [PATCH v3  14/15] ARM: configs: Add STM32 defconfig
+Date: Thu, 12 Mar 2015 22:56:00 +0100
+Message-ID: <1426197361-19290-15-git-send-email-maxime.coquelin@st.com>
 References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
 In-Reply-To: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
-Sender: linux-doc-owner@vger.kernel.org
+Sender: linux-arch-owner@vger.kernel.org
 To: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, stefan@agner.ch, pmeerw@pmeerw.net, pebolle@tiscali.nl
 Cc: Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees Cook <keescook@chromium.org>, Michal Marek <mmarek@suse.cz>, linux-doc@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kerne
 List-Id: linux-api@vger.kernel.org
 
 From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
 
-STMicrolectronics's STM32 series is a family of Cortex-M
-microcontrollers. It is used in various applications, and
-proposes a wide range of peripherals.
+This patch adds a new config for STM32 MCUs.
+STM32F429 Discovery board boots successfully with this config applied.
 
 Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
 ---
- Documentation/arm/stm32/overview.txt           | 32 ++++++++++++++++++++++++++
- Documentation/arm/stm32/stm32f429-overview.txt | 22 ++++++++++++++++++
- arch/arm/Kconfig                               | 18 +++++++++++++++
- arch/arm/Makefile                              |  1 +
- arch/arm/mach-stm32/Makefile                   |  1 +
- arch/arm/mach-stm32/Makefile.boot              |  3 +++
- arch/arm/mach-stm32/board-dt.c                 | 19 +++++++++++++++
- 7 files changed, 96 insertions(+)
- create mode 100644 Documentation/arm/stm32/overview.txt
- create mode 100644 Documentation/arm/stm32/stm32f429-overview.txt
- create mode 100644 arch/arm/mach-stm32/Makefile
- create mode 100644 arch/arm/mach-stm32/Makefile.boot
- create mode 100644 arch/arm/mach-stm32/board-dt.c
+ arch/arm/configs/stm32_defconfig | 71 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 71 insertions(+)
+ create mode 100644 arch/arm/configs/stm32_defconfig
 
-diff --git a/Documentation/arm/stm32/overview.txt b/Documentation/arm/stm32/overview.txt
+diff --git a/arch/arm/configs/stm32_defconfig b/arch/arm/configs/stm32_defconfig
 new file mode 100644
-index 0000000..09aed55
+index 0000000..412a9f9
 --- /dev/null
-+++ b/Documentation/arm/stm32/overview.txt
-@@ -0,0 +1,32 @@
-+			STM32 ARM Linux Overview
-+			========================
-+
-+Introduction
-+------------
-+
-+  The STMicroelectronics family of Cortex-M based MCUs are supported by the
-+  'STM32' platform of ARM Linux. Currently only the STM32F429 is supported.
-+
-+
-+Configuration
-+-------------
-+
-+  A generic configuration is provided for STM32 family, and can be used as the
-+  default by
-+	make stm32_defconfig
-+
-+Layout
-+------
-+
-+  All the files for multiple machine families are located in the platform code
-+  contained in arch/arm/mach-stm32
-+
-+  There is a generic board board-dt.c in the mach folder which support
-+  Flattened Device Tree, which means, it works with any compatible board with
-+  Device Trees.
-+
-+
-+Document Author
-+---------------
-+
-+  Maxime Coquelin <mcoquelin.stm32@gmail.com>
-diff --git a/Documentation/arm/stm32/stm32f429-overview.txt b/Documentation/arm/stm32/stm32f429-overview.txt
-new file mode 100644
-index 0000000..5206822
---- /dev/null
-+++ b/Documentation/arm/stm32/stm32f429-overview.txt
-@@ -0,0 +1,22 @@
-+			STM32F429 Overview
-+			==================
-+
-+  Introduction
-+  ------------
-+	The STM32F429 is a Cortex-M4 MCU aimed at various applications.
-+	It features:
-+	- ARM Cortex-M4 up to 180MHz with FPU
-+	- 2MB internal Flash Memory
-+	- External memory support through FMC controller (PSRAM, SDRAM, NOR, NAND)
-+	- I2C, SPI, SAI, CAN, USB OTG, Ethernet controllers
-+	- LCD controller & Camera interface
-+	- Cryptographic processor
-+
-+  Resources
-+  ---------
-+	Datasheet and reference manual are publicly available on ST website:
-+	- http://www.st.com/web/en/catalog/mmc/FM141/SC1169/SS1577/LN1806?ecmp=stm32f429-439_pron_pr-ces2014_nov2013
-+
-+  Document Author
-+  ---------------
-+	Maxime Coquelin <mcoquelin.stm32@gmail.com>
-diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index 9f1f09a..5b1157d 100644
---- a/arch/arm/Kconfig
-+++ b/arch/arm/Kconfig
-@@ -776,6 +776,24 @@ config ARCH_OMAP1
- 	help
- 	  Support for older TI OMAP1 (omap7xx, omap15xx or omap16xx)
- 
-+config ARCH_STM32
-+	bool "STMicrolectronics STM32"
-+	depends on !MMU
-+	select ARCH_HAS_RESET_CONTROLLER
-+	select ARM_NVIC
-+	select ARMV7M_SYSTICK
-+	select AUTO_ZRELADDR
-+	select CLKSRC_OF
-+	select COMMON_CLK
-+	select CPU_V7M
-+	select GENERIC_CLOCKEVENTS
-+	select NO_IOPORT_MAP
-+	select RESET_CONTROLLER
-+	select SPARSE_IRQ
-+	select USE_OF
-+	help
-+	  Support for STMicroelectronics STM32 processors.
-+
- endchoice
- 
- menu "Multiple platform selection"
-diff --git a/arch/arm/Makefile b/arch/arm/Makefile
-index 7f99cd6..982c104 100644
---- a/arch/arm/Makefile
-+++ b/arch/arm/Makefile
-@@ -196,6 +196,7 @@ machine-$(CONFIG_ARCH_SHMOBILE) 	+= shmobile
- machine-$(CONFIG_ARCH_SIRF)		+= prima2
- machine-$(CONFIG_ARCH_SOCFPGA)		+= socfpga
- machine-$(CONFIG_ARCH_STI)		+= sti
-+machine-$(CONFIG_ARCH_STM32)		+= stm32
- machine-$(CONFIG_ARCH_SUNXI)		+= sunxi
- machine-$(CONFIG_ARCH_TEGRA)		+= tegra
- machine-$(CONFIG_ARCH_U300)		+= u300
-diff --git a/arch/arm/mach-stm32/Makefile b/arch/arm/mach-stm32/Makefile
-new file mode 100644
-index 0000000..bd0b7b5
---- /dev/null
-+++ b/arch/arm/mach-stm32/Makefile
-@@ -0,0 +1 @@
-+obj-y += board-dt.o
-diff --git a/arch/arm/mach-stm32/Makefile.boot b/arch/arm/mach-stm32/Makefile.boot
-new file mode 100644
-index 0000000..eacfc3f
---- /dev/null
-+++ b/arch/arm/mach-stm32/Makefile.boot
-@@ -0,0 +1,3 @@
-+# Empty file waiting for deletion once Makefile.boot isn't needed any more.
-+# Patch waits for application at
-+# http://www.arm.linux.org.uk/developer/patches/viewpatch.php?id=7889/1 .
-diff --git a/arch/arm/mach-stm32/board-dt.c b/arch/arm/mach-stm32/board-dt.c
-new file mode 100644
-index 0000000..f2ad772
---- /dev/null
-+++ b/arch/arm/mach-stm32/board-dt.c
-@@ -0,0 +1,19 @@
-+/*
-+ * Copyright (C) Maxime Coquelin 2015
-+ * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
-+ * License terms:  GNU General Public License (GPL), version 2
-+ */
-+
-+#include <linux/kernel.h>
-+#include <asm/v7m.h>
-+#include <asm/mach/arch.h>
-+
-+static const char *const stm32_compat[] __initconst = {
-+	"st,stm32f429",
-+	NULL
-+};
-+
-+DT_MACHINE_START(STM32DT, "STM32 (Device Tree Support)")
-+	.dt_compat = stm32_compat,
-+	.restart = armv7m_restart,
-+MACHINE_END
++++ b/arch/arm/configs/stm32_defconfig
+@@ -0,0 +1,71 @@
++CONFIG_HIGH_RES_TIMERS=y
++CONFIG_LOG_BUF_SHIFT=16
++CONFIG_BLK_DEV_INITRD=y
++CONFIG_INITRAMFS_SOURCE="./rootfs.cpio"
++CONFIG_CC_OPTIMIZE_FOR_SIZE=y
++# CONFIG_UID16 is not set
++# CONFIG_BASE_FULL is not set
++# CONFIG_FUTEX is not set
++# CONFIG_EPOLL is not set
++# CONFIG_SIGNALFD is not set
++# CONFIG_EVENTFD is not set
++# CONFIG_AIO is not set
++CONFIG_EMBEDDED=y
++# CONFIG_VM_EVENT_COUNTERS is not set
++# CONFIG_SLUB_DEBUG is not set
++# CONFIG_LBDAF is not set
++# CONFIG_BLK_DEV_BSG is not set
++# CONFIG_IOSCHED_DEADLINE is not set
++# CONFIG_IOSCHED_CFQ is not set
++# CONFIG_MMU is not set
++CONFIG_ARCH_STM32=y
++CONFIG_SET_MEM_PARAM=y
++CONFIG_DRAM_BASE=0x90000000
++CONFIG_FLASH_MEM_BASE=0x08000000
++CONFIG_FLASH_SIZE=0x00200000
++CONFIG_PREEMPT=y
++# CONFIG_ATAGS is not set
++CONFIG_ZBOOT_ROM_TEXT=0x0
++CONFIG_ZBOOT_ROM_BSS=0x0
++CONFIG_XIP_KERNEL=y
++CONFIG_XIP_PHYS_ADDR=0x08008000
++CONFIG_BINFMT_FLAT=y
++CONFIG_BINFMT_SHARED_FLAT=y
++# CONFIG_COREDUMP is not set
++CONFIG_DEVTMPFS=y
++CONFIG_DEVTMPFS_MOUNT=y
++# CONFIG_FW_LOADER is not set
++# CONFIG_BLK_DEV is not set
++CONFIG_EEPROM_93CX6=y
++# CONFIG_INPUT is not set
++# CONFIG_SERIO is not set
++# CONFIG_VT is not set
++# CONFIG_UNIX98_PTYS is not set
++# CONFIG_LEGACY_PTYS is not set
++CONFIG_SERIAL_NONSTANDARD=y
++# CONFIG_DEVKMEM is not set
++CONFIG_SERIAL_STM32=y
++CONFIG_SERIAL_STM32_CONSOLE=y
++# CONFIG_HW_RANDOM is not set
++CONFIG_GPIO_SYSFS=y
++# CONFIG_HWMON is not set
++CONFIG_USB=y
++CONFIG_USB_DWC2=y
++CONFIG_NEW_LEDS=y
++CONFIG_LEDS_CLASS=y
++CONFIG_LEDS_GPIO=y
++CONFIG_LEDS_TRIGGERS=y
++CONFIG_LEDS_TRIGGER_HEARTBEAT=y
++# CONFIG_FILE_LOCKING is not set
++# CONFIG_DNOTIFY is not set
++# CONFIG_INOTIFY_USER is not set
++CONFIG_PRINTK_TIME=y
++CONFIG_DEBUG_INFO=y
++# CONFIG_ENABLE_WARN_DEPRECATED is not set
++# CONFIG_ENABLE_MUST_CHECK is not set
++CONFIG_MAGIC_SYSRQ=y
++# CONFIG_SCHED_DEBUG is not set
++# CONFIG_DEBUG_BUGVERBOSE is not set
++# CONFIG_FTRACE is not set
++CONFIG_CRC_ITU_T=y
++CONFIG_CRC7=y
 -- 
 1.9.1
-
