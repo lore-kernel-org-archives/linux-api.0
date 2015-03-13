@@ -1,70 +1,67 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH 6/6] clone4: Introduce new CLONE_FD flag to get task
-	exit notification via fd
-Date: Fri, 13 Mar 2015 17:21:13 +0100
-Message-ID: <20150313162113.GA25966@redhat.com>
-References: <cover.1426180120.git.josh@joshtriplett.org> <9c39c576e1d9a9912b4aec54d833a73a84d2f592.1426180120.git.josh@joshtriplett.org>
+From: Dave Jones <davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org>
+Subject: Re: [PATCH v4 4/9] selftests: Add install target
+Date: Fri, 13 Mar 2015 12:33:12 -0400
+Message-ID: <20150313163312.GA24666@codemonkey.org.uk>
+References: <1426046765-19289-1-git-send-email-mpe@ellerman.id.au>
+ <1426046765-19289-4-git-send-email-mpe@ellerman.id.au>
+ <5500408B.2070604@osg.samsung.com>
+ <1426130144.25936.4.camel@ellerman.id.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <9c39c576e1d9a9912b4aec54d833a73a84d2f592.1426180120.git.josh@joshtriplett.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Triplett <josh@joshtriplett.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Thiago Macieira <thiago.macieira@intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
+In-Reply-To: <1426130144.25936.4.camel-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Josh,
+On Thu, Mar 12, 2015 at 02:15:44PM +1100, Michael Ellerman wrote:
+ > On Wed, 2015-03-11 at 07:18 -0600, Shuah Khan wrote:
+ > > On 03/10/2015 10:06 PM, Michael Ellerman wrote:
+ > > > This adds make install support to selftests. The basic usage is:
+ > > > 
+ > > > v3: Rebase onto 4.0-rc2.
+ > > >     Rename all.sh to run_kselftest.sh.
+ > > >     Add --no-print-directory to emit_tests invocation.
+ > > > v4: Rebase onto 4.0-rc3, add TEST_FILES to efivars and vm tests, remove
+ > > >     newlines from echoes.
+ > > 
+ > > I don't see my comments addressed. If you want me to take
+ > > this work, please address the following comments:
+ > > 
+ > > - Name install directory kselftest. It should work with the
+ > >   the use-case.
+ > > 
+ > >   make INSTALL_PATH=/tmp make install
+ > >   The install directory should be /tmp/kselftest
+ > > 
+ > > - Flatten the directory with all tests under /tmp/kselftest
+ > > 
+ > > I am wasting lot of time because you don't fully address my
+ > > comments and send patches that dont' work correctly. Please
+ > > make sure your patches don't generate work for me.
+ > 
+ > You're wasting a lot of time? You have got to be kidding me. You are wasting a
+ > lot of *my* time.
+ > 
+ > You have my patches, they're signed off, you can do what you wish with them.
+ > Good luck.
 
-I'll certainly try to read this series, but not before next week.
+This is getting silly. We've spent three months arguing over shell
+scripts and makefiles for what should be a trivial feature.
+We make fundamental changes to the VM code with less contention.
 
-but a couple of nits right now.
+It's not helped that timezones are working against everyone here,
+so even minor changes end up taking a while to get reposted, re-reviewed
+etc, but the level of pushback because something isn't perfect is absurd,
+especially when we're talking about new features.
 
-On 03/12, Josh Triplett wrote:
->
-> When passed CLONE_FD, clone4 will return a file descriptor rather than a
-> PID.  When the child process exits, it gets automatically reaped,
+If you want the in-kernel variant to be perfect every step of the way,
+and move slowly and never introduce subtle breakage along the way that then
+gets fixed up in subsequent changes, maybe a faster moving external project
+that syncs up with the kernel tree is the way forward.
 
-And even I have no idea what you are actually doing, this doesn't look
-right, see below.
+If kselftests is going to evolve into something useful, something has to change.
 
-> +static unsigned int clonefd_poll(struct file *file, poll_table *wait)
-> +{
-> +	struct task_struct *p = file->private_data;
-> +	poll_wait(file, &p->clonefd_wqh, wait);
-> +	return p->exit_state == EXIT_DEAD ? (POLLIN | POLLRDNORM) : 0;
-> +}
-> +
-> +static ssize_t clonefd_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
-> +{
-> +	struct task_struct *p = file->private_data;
-> +	int ret = 0;
-> +
-> +	/* EOF after first read */
-> +	if (*ppos)
-> +		return 0;
-> +
-> +	if (file->f_flags & O_NONBLOCK)
-> +		ret = -EAGAIN;
-> +	else
-> +		ret = wait_event_interruptible(p->clonefd_wqh, p->exit_state == EXIT_DEAD);
-> +
-> +	if (p->exit_state == EXIT_DEAD) {
-
-Again, I simply do not know what this code does at all. But I bet the usage
-of EXIT_DEAD is wrong ;)
-
-OK, OK, I can be wrong. But I simply do not see what protects this task_struct
-if it is EXIT_DEAD (in fact even if it is EXIT_ZOMBIE).
-
-> @@ -598,7 +600,9 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
->  	if (group_dead)
->  		kill_orphaned_pgrp(tsk->group_leader, NULL);
->  
-> -	if (unlikely(tsk->ptrace)) {
-> +	if (tsk->autoreap) {
-> +		autoreap = true;
-
-Debuggers won't be happy. A ptraced task should not autoreap itself.
-
-Oleg.
+	Dave
