@@ -1,43 +1,44 @@
 From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH v4 3/9] selftests: Introduce minimal shared logic for
- running tests
-Date: Fri, 13 Mar 2015 11:19:16 -0600
-Message-ID: <55031C14.1030203@osg.samsung.com>
-References: <1426046765-19289-1-git-send-email-mpe@ellerman.id.au> <1426046765-19289-3-git-send-email-mpe@ellerman.id.au>
+Subject: Re: [PATCH v4 4/9] selftests: Add install target
+Date: Fri, 13 Mar 2015 11:20:56 -0600
+Message-ID: <55031C78.4040609@osg.samsung.com>
+References: <1426046765-19289-1-git-send-email-mpe@ellerman.id.au> <1426046765-19289-4-git-send-email-mpe@ellerman.id.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426046765-19289-3-git-send-email-mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+In-Reply-To: <1426046765-19289-4-git-send-email-mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 03/10/2015 10:05 PM, Michael Ellerman wrote:
-> This adds a Make include file which most selftests can then include to
-> get the run_tests logic.
+On 03/10/2015 10:06 PM, Michael Ellerman wrote:
+> This adds make install support to selftests. The basic usage is:
 > 
-> On its own this has the advantage of some reduction in repetition, and
-> also means the pass/fail message is defined in fewer places.
+> $ cd tools/testing/selftests
+> $ make install
 > 
-> However the key advantage is it will allow us to implement install very
-> simply in a subsequent patch.
+> That installs into tools/testing/selftests/install, which can then be
+> copied where ever necessary.
 > 
-> The default implementation just executes each program in $(TEST_PROGS).
+> The install destination is also configurable using eg:
 > 
-> We use a variable to hold the default implementation of $(RUN_TESTS)
-> because that gives us a clean way to override it if necessary, ie. using
-> override. The mount, memory-hotplug and mqueue tests use that to provide
-> a different implementation.
+> $ INSTALL_PATH=/mnt/selftests make install
 > 
-> Tests are not run via /bin/bash, so if they are scripts they must be
-> executable, we add a+x to several.
+> The implementation uses two targets in the child makefiles. The first
+> "install" is expected to install all files into $(INSTALL_PATH).
+> 
+> The second, "emit_tests", is expected to emit the test instructions (ie.
+> bash script) on stdout. Separating this from install means the child
+> makefiles need no knowledge of the location of the test script.
 > 
 > Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 
-This patch will be applied to next and queued for 4.1.
+Thanks for doing the work. This patch will be applied to next and will
+be queued for 4.1
 
+thanks,
 -- Shuah
 
 
