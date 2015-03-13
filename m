@@ -1,185 +1,404 @@
-From: Chanwoo Choi <cw00.choi@samsung.com>
-Subject: Re: [PATCH v3  06/15] drivers: reset: Add STM32 reset driver
-Date: Fri, 13 Mar 2015 09:11:02 +0900
-Message-ID: <55022B16.7070408@samsung.com>
-References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
- <1426197361-19290-7-git-send-email-maxime.coquelin@st.com>
+From: Josh Triplett <josh@joshtriplett.org>
+Subject: [PATCH 0/6] CLONE_FD: Task exit notification via file descriptor
+Date: Thu, 12 Mar 2015 18:40:03 -0700
+Message-ID: <cover.1426180120.git.josh@joshtriplett.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-reply-to: <1426197361-19290-7-git-send-email-maxime.coquelin@st.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Cc: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, stefan@agner.ch, pmeerw@pmeerw.net, pebolle@tiscali.nl, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Thiago Macieira <thiago.macieira@intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Maxime,
+This patch series introduces a new clone flag, CLONE_FD, which lets the=
+ caller
+handle child process exit notification via a file descriptor rather tha=
+n
+SIGCHLD.  CLONE_FD makes it possible for libraries to safely launch and=
+ manage
+child processes on behalf of their caller, *without* taking over proces=
+s-wide
+SIGCHLD handling (either via signal handler or signalfd).
 
-On 03/13/2015 06:55 AM, Maxime Coquelin wrote:
-> From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-> 
-> The STM32 MCUs family IP can be reset by accessing some shared registers.
-> 
-> The specificity is that some reset lines are used by the timers.
-> At timer initialization time, the timer has to be reset, that's why
-> we cannot use a regular driver.
-> 
-> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-> ---
->  drivers/reset/Makefile      |   1 +
->  drivers/reset/reset-stm32.c | 125 ++++++++++++++++++++++++++++++++++++++++++++
->  2 files changed, 126 insertions(+)
->  create mode 100644 drivers/reset/reset-stm32.c
-> 
-> diff --git a/drivers/reset/Makefile b/drivers/reset/Makefile
-> index 157d421..aed12d1 100644
-> --- a/drivers/reset/Makefile
-> +++ b/drivers/reset/Makefile
-> @@ -1,5 +1,6 @@
->  obj-$(CONFIG_RESET_CONTROLLER) += core.o
->  obj-$(CONFIG_ARCH_SOCFPGA) += reset-socfpga.o
->  obj-$(CONFIG_ARCH_BERLIN) += reset-berlin.o
-> +obj-$(CONFIG_ARCH_STM32) += reset-stm32.o
->  obj-$(CONFIG_ARCH_SUNXI) += reset-sunxi.o
->  obj-$(CONFIG_ARCH_STI) += sti/
-> diff --git a/drivers/reset/reset-stm32.c b/drivers/reset/reset-stm32.c
-> new file mode 100644
-> index 0000000..0d389b1
-> --- /dev/null
-> +++ b/drivers/reset/reset-stm32.c
-> @@ -0,0 +1,125 @@
-> +/*
-> + * Copyright (C) Maxime Coquelin 2015
-> + * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
-> + * License terms:  GNU General Public License (GPL), version 2
-> + *
-> + * Heavily based on sunxi driver from Maxime Ripard.
-> + */
-> +
-> +#include <linux/err.h>
-> +#include <linux/io.h>
-> +#include <linux/module.h>
-> +#include <linux/of.h>
-> +#include <linux/of_address.h>
-> +#include <linux/platform_device.h>
-> +#include <linux/reset-controller.h>
-> +#include <linux/slab.h>
-> +#include <linux/spinlock.h>
-> +#include <linux/types.h>
-> +
-> +struct stm32_reset_data {
-> +	spinlock_t			lock;
-> +	void __iomem			*membase;
-> +	struct reset_controller_dev	rcdev;
-> +};
-> +
-> +static int stm32_reset_assert(struct reset_controller_dev *rcdev,
-> +			      unsigned long id)
-> +{
-> +	struct stm32_reset_data *data = container_of(rcdev,
-> +						     struct stm32_reset_data,
-> +						     rcdev);
-> +	int bank = id / BITS_PER_LONG;
-> +	int offset = id % BITS_PER_LONG;
-> +	unsigned long flags;
-> +	u32 reg;
-> +
-> +	spin_lock_irqsave(&data->lock, flags);
-> +
-> +	reg = readl_relaxed(data->membase + (bank * 4));
-> +	writel_relaxed(reg | BIT(offset), data->membase + (bank * 4));
-> +
-> +	spin_unlock_irqrestore(&data->lock, flags);
-> +
-> +	return 0;
-> +}
-> +
-> +static int stm32_reset_deassert(struct reset_controller_dev *rcdev,
-> +				unsigned long id)
-> +{
-> +	struct stm32_reset_data *data = container_of(rcdev,
-> +						     struct stm32_reset_data,
-> +						     rcdev);
-> +	int bank = id / BITS_PER_LONG;
-> +	int offset = id % BITS_PER_LONG;
-> +	unsigned long flags;
-> +	u32 reg;
-> +
-> +	spin_lock_irqsave(&data->lock, flags);
-> +
-> +	reg = readl_relaxed(data->membase + (bank * 4));
-> +	writel_relaxed(reg & ~BIT(offset), data->membase + (bank * 4));
-> +
-> +	spin_unlock_irqrestore(&data->lock, flags);
-> +
-> +	return 0;
-> +}
-> +
-> +static struct reset_control_ops stm32_reset_ops = {
-> +	.assert		= stm32_reset_assert,
-> +	.deassert	= stm32_reset_deassert,
-> +};
-> +
-> +static const struct of_device_id stm32_reset_dt_ids[] = {
-> +	 { .compatible = "st,stm32-rcc", },
-> +	 { /* sentinel */ },
-> +};
-> +MODULE_DEVICE_TABLE(of, sstm32_reset_dt_ids);
-> +
-> +static int stm32_reset_probe(struct platform_device *pdev)
-> +{
-> +	struct stm32_reset_data *data;
-> +	struct resource *res;
-> +
-> +	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
-> +	if (!data)
-> +		return -ENOMEM;
-> +
-> +	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-> +	data->membase = devm_ioremap_resource(&pdev->dev, res);
-> +	if (IS_ERR(data->membase))
-> +		return PTR_ERR(data->membase);
-> +
-> +	spin_lock_init(&data->lock);
-> +
-> +	data->rcdev.owner = THIS_MODULE;
-> +	data->rcdev.nr_resets = resource_size(res) * 8;
-> +	data->rcdev.ops = &stm32_reset_ops;
-> +	data->rcdev.of_node = pdev->dev.of_node;
-> +
-> +	return reset_controller_register(&data->rcdev);
-> +}
-> +
-> +static int stm32_reset_remove(struct platform_device *pdev)
-> +{
-> +	struct stm32_reset_data *data = platform_get_drvdata(pdev);
-> +
-> +	reset_controller_unregister(&data->rcdev);
-> +
-> +	return 0;
-> +}
-> +
-> +static struct platform_driver stm32_reset_driver = {
-> +	.probe	= stm32_reset_probe,
-> +	.remove	= stm32_reset_remove,
-> +	.driver = {
-> +		.name		= "stm32-rcc-reset",
-> +		.of_match_table	= stm32_reset_dt_ids,
-> +	},
-> +};
-> +module_platform_driver(stm32_reset_driver);
-> +
-> +MODULE_AUTHOR("Maxime Coquelin <maxime.coquelin@gmail.com>");
-> +MODULE_DESCRIPTION("STM32 MCUs Reset Controller Driver");
-> +MODULE_LICENSE("GPL");
-> +
-> 
+Note that signalfd for SIGCHLD does not suffice here, because that stil=
+l
+receives notification for all child processes, and interferes with proc=
+ess-wide
+signal handling.
 
-Last blank line is un-necessary. When I applied this patch for test,
-"new blank line at EOF" happen.
+The CLONE_FD file descriptor uniquely identifies a process on the syste=
+m in a
+race-free way, by holding a reference to the task_struct.  In the futur=
+e, we
+may introduce APIs that support using process file descriptors instead =
+of PIDs.
 
-Thanks,
-Chanwoo Choi
+Introducing CLONE_FD required two additional bits of yak shaving: Since=
+ clone
+has no more usable flags (with the three currently unused flags unusabl=
+e
+because old kernels ignore them without EINVAL), also introduce a new c=
+lone4
+system call with more flag bits and an extensible argument structure.  =
+And
+since the magic pt_regs-based syscall argument processing for clone's t=
+ls
+argument would otherwise prevent introducing a sane clone4 system call,=
+ fix
+that too.
+
+I tested the CLONE_SETTLS changes with a thread-local storage test prog=
+ram (two
+threads independently reading and writing a __thread variable), on both=
+ 32-bit
+and 64-bit, and I observed no issues there.
+
+I tested clone4 and the new CLONE_FD call with several additional test
+programs, launching either a process or thread (in the former case usin=
+g
+syscall(), in the latter case by calling clone4 via assembly and return=
+ing to
+C), sleeping in parent and child to test the case of either exiting fir=
+st, and
+then printing the received clone4_info structure.  Thiago also tested c=
+lone4
+with CLONE_FD with a modified version of libqt's process handling, whic=
+h
+includes a test suite.
+
+I've also included the manpages patch at the end of this series.  (Note=
+ that
+the manpage documents the behavior of the future glibc wrapper as well =
+as the
+raw syscall.)  Here's a formatted plain-text version of the manpage for
+reference:
+
+CLONE4(2)                  Linux Programmer's Manual                 CL=
+ONE4(2)
 
 
+
+NAME
+       clone4 - create a child process
+
+SYNOPSIS
+       /* Prototype for the glibc wrapper function */
+
+       #define _GNU_SOURCE
+       #include <sched.h>
+
+       int clone4(uint64_t flags,
+                  size_t args_size,
+                  struct clone4_args *args,
+                  int (*fn)(void *), void *arg);
+
+       /* Prototype for the raw system call */
+
+       int clone4(unsigned flags_high, unsigned flags_low,
+                  unsigned long args_size,
+                  struct clone4_args *args);
+
+       struct clone4_args {
+           pid_t *ptid;
+           pid_t *ctid;
+           unsigned long stack_start;
+           unsigned long stack_size;
+           unsigned long tls;
+       };
+
+
+DESCRIPTION
+       clone4()  creates  a  new  process,  similar  to  clone(2) and f=
+ork(2).
+       clone4() supports additional flags that clone(2) does not, and  =
+accepts
+       arguments via an extensible structure.
+
+       args  points to a clone4_args structure, and args_size must cont=
+ain the
+       size of that structure, as understood by the  caller.   If  the =
+ caller
+       passes  a  shorter  structure  than  the  kernel expects, the re=
+maining
+       fields will default to 0.  If the caller passes a larger structu=
+re than
+       the  kernel  expects  (such  as one from a newer kernel), clone4=
+() will
+       return EINVAL.  The clone4_args structure may gain additional fi=
+elds at
+       the  end  in  the future, and callers must only pass a size that=
+ encom=E2=80=90
+       passes the number of fields they understand.  If the  caller  pa=
+sses  0
+       for args_size, args is ignored and may be NULL.
+
+       In  the clone4_args structure, ptid, ctid, stack_start, stack_si=
+ze, and
+       tls have the same semantics as they do with clone(2) and clone2(=
+2).
+
+       In the glibc wrapper, fn and arg have the same  semantics  as  t=
+hey  do
+       with clone(2).  As with clone(2), the underlying system call wor=
+ks more
+       like fork(2), returning 0 in the child process; the glibc wrappe=
+r  sim=E2=80=90
+       plifies  thread execution by calling fn(arg) and exiting the chi=
+ld when
+       that function exits.
+
+       The 64-bit  flags  argument  (split  into  the  32-bit  flags_hi=
+gh  and
+       flags_low arguments in the kernel interface) accepts all the sam=
+e flags
+       as  clone(2),  with  the   exception   of   the   obsolete   CLO=
+NE_PID,
+       CLONE_DETACHED, and CLONE_STOPPED.  In addition, flags accepts t=
+he fol=E2=80=90
+       lowing flags:
+
+
+       CLONE_FD
+              Instead of returning a process ID, clone4()  with  the  C=
+LONE_FD
+              flag  returns a file descriptor associated with the new p=
+rocess.
+              When the new process exits, the kernel will not send a si=
+gnal to
+              the  parent process, and will not keep the new process ar=
+ound as
+              a "zombie" process  until  a  call  to  waitpid(2)  or  s=
+imilar.
+              Instead,  the file descriptor will become available for r=
+eading,
+              and the new process will be immediately reaped.
+
+              Unlike using  signalfd(2)  for  the  SIGCHLD  signal,  th=
+e  file
+              descriptor  returned  by  clone4()  with the CLONE_FD fla=
+g works
+              even with SIGCHLD unblocked in one or more threads of the=
+ parent
+              process,  and  allows the process to have different handl=
+ers for
+              different child processes, such as those created by  a  l=
+ibrary,
+              without  introducing  race conditions around process-wide=
+ signal
+              handling.
+
+              clone4() will never return a file descriptor in the range=
+ 0-2 to
+              the caller, to avoid ambiguity with the return of 0 in th=
+e child
+              process.  Only the  calling  process  will  have  the  ne=
+w  file
+              descriptor open; the child process will not.
+
+              Since the kernel does not send a termination signal when =
+a child
+              process created with CLONE_FD exits, the low byte of flag=
+s  does
+              not contain a signal number.  Instead, the low byte of fl=
+ags can
+              contain the following additional flags for use with CLONE=
+_FD:
+
+
+              CLONEFD_CLOEXEC
+                     Set the O_CLOEXEC flag on the new open  file  desc=
+riptor.
+                     See  the description of the O_CLOEXEC flag in open=
+(2) for
+                     reasons why this may be useful.
+
+
+              CLONEFD_NONBLOCK
+                     Set the O_NONBLOCK flag on the new open file  desc=
+riptor.
+                     Using  this flag saves extra calls to fcntl(2) to =
+achieve
+                     the same result.
+
+
+              clone4() with the CLONE_FD flag returns a file  descripto=
+r  that
+              supports the following operations:
+
+              read(2) (and similar)
+                     When  the  new  process  exits,  reading  from  th=
+e  file
+                     descriptor produces a single clonefd_info structur=
+e:
+
+                     struct clonefd_info {
+                         uint32_t code;   /* Signal code */
+                         uint32_t status; /* Exit status or signal */
+                         uint64_t utime;  /* User CPU time */
+                         uint64_t stime;  /* System CPU time */
+                     };
+
+
+                     If the new process has not  yet  exited,  read(2) =
+ either
+                     blocks  until  it does, or fails with the error EA=
+GAIN if
+                     the file descriptor has been made nonblocking.
+
+                     Future kernels may extend clonefd_info by appendin=
+g addi=E2=80=90
+                     tional  fields  to  the end.  Callers should read =
+as many
+                     bytes as they understand; unread data will be  dis=
+carded,
+                     and  subsequent  reads  after  the first will retu=
+rn 0 to
+                     indicate end-of-file.  Callers requesting more byt=
+es than
+                     the  kernel  provides  (such as callers expecting =
+a newer
+                     clonefd_info structure) will receive a shorter  st=
+ructure
+                     from older kernels.
+
+              poll(2), select(2), epoll(7) (and similar)
+                     The  file  descriptor  is readable (the select(2) =
+readfds
+                     argument; the poll(2) POLLIN flag) if the new proc=
+ess has
+                     exited.
+
+              close(2)
+                     When  the file descriptor is no longer required it=
+ should
+                     be closed.  If no process has a file descriptor op=
+en  for
+                     the new process, no process will receive any notif=
+ication
+                     when the new process exits.  The new process  will=
+  still
+                     be immediately reaped.
+
+
+   C library/kernel ABI differences
+       As with clone(2), the raw clone4() system call corresponds more =
+closely
+       to fork(2) in that execution in the child continues from the  po=
+int  of
+       the call.
+
+       Unlike  clone(2),  the  raw  system call interface for clone4() =
+accepts
+       arguments in the same order on all architectures.
+
+       The raw system call accepts flags as two 32-bit  arguments,  fla=
+gs_high
+       and  flags_low, to simplify portability across 32-bit and 64-bit=
+ archi=E2=80=90
+       tectures and calling conventions.  The glibc wrapper accepts fla=
+gs as a
+       single 64-bit argument for convenience.
+
+
+RETURN VALUE
+       For the glibc wrapper, on success, clone4() returns the file des=
+criptor
+       (with CLONE_FD) or new process ID (without  CLONE_FD),  and  the=
+  child
+       process begins running at the specified function.
+
+       For  the  raw syscall, on success, clone4() returns the file des=
+criptor
+       or new process ID to the calling process, and  returns  0  in  t=
+he  new
+       child process.
+
+       On failure, clone4() returns -1 and sets errno accordingly.
+
+
+ERRORS
+       clone4()  can  return any error from clone(2), as well as the fo=
+llowing
+       additional errors:
+
+       EINVAL flags contained an unknown flag.
+
+       EINVAL flags included CLONE_FD, but the kernel configuration  do=
+es  not
+              have the CONFIG_CLONEFD option enabled.
+
+       EMFILE flags  included  CLONE_FD,  but  the  new  file descripto=
+r would
+              exceed the process limit on open file descriptors.
+
+       ENFILE flags included CLONE_FD,  but  the  new  file  descriptor=
+  would
+              exceed the system-wide limit on open file descriptors.
+
+       ENODEV flags  included  CLONE_FD,  but  clone4()  could  not  mo=
+unt the
+              (internal) anonymous inode device.
+
+
+CONFORMING TO
+       clone4() is Linux-specific and should not be used in programs  i=
+ntended
+       to be portable.
+
+
+SEE ALSO
+       clone(2), epoll(7), poll(2), pthreads(7), read(2), select(2)
+
+
+
+Linux                             2015-03-01                         CL=
+ONE4(2)
+
+
+Josh Triplett and Thiago Macieira (6):
+  clone: Support passing tls argument via C rather than pt_regs magic
+  x86: Opt into HAVE_COPY_THREAD_TLS, for both 32-bit and 64-bit
+  Introduce a new clone4 syscall with more flag bits and extensible arg=
+uments
+  signal: Factor out a helper function to process task_struct exit_code
+  fs: Make alloc_fd non-private
+  clone4: Introduce new CLONE_FD flag to get task exit notification via=
+ fd
+
+ arch/Kconfig                     |   7 ++
+ arch/x86/Kconfig                 |   1 +
+ arch/x86/ia32/ia32entry.S        |   3 +-
+ arch/x86/kernel/entry_64.S       |   1 +
+ arch/x86/kernel/process_32.c     |   6 +-
+ arch/x86/kernel/process_64.c     |   8 +--
+ arch/x86/syscalls/syscall_32.tbl |   1 +
+ arch/x86/syscalls/syscall_64.tbl |   2 +
+ fs/file.c                        |   2 +-
+ include/linux/compat.h           |  12 ++++
+ include/linux/file.h             |   1 +
+ include/linux/sched.h            |  20 ++++++
+ include/linux/syscalls.h         |   6 +-
+ include/uapi/linux/sched.h       |  54 ++++++++++++++-
+ init/Kconfig                     |  21 ++++++
+ kernel/Makefile                  |   1 +
+ kernel/clonefd.c                 | 123 +++++++++++++++++++++++++++++++=
+++
+ kernel/clonefd.h                 |  27 ++++++++
+ kernel/exit.c                    |  10 ++-
+ kernel/fork.c                    | 143 +++++++++++++++++++++++++++++++=
++-------
+ kernel/signal.c                  |  24 ++++---
+ kernel/sys_ni.c                  |   1 +
+ 22 files changed, 425 insertions(+), 49 deletions(-)
+ create mode 100644 kernel/clonefd.c
+ create mode 100644 kernel/clonefd.h
+
+--=20
+2.1.4
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
+" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
