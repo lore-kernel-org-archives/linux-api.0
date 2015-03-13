@@ -1,61 +1,25 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH v4 2/9] kbuild: Don't pass LDFLAGS to selftest Makefile
-Date: Fri, 13 Mar 2015 12:06:46 -0600
-Message-ID: <55032736.9010907@osg.samsung.com>
-References: <1426046765-19289-1-git-send-email-mpe@ellerman.id.au> <1426046765-19289-2-git-send-email-mpe@ellerman.id.au>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
+From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC] capabilities: Ambient capabilities
+Date: Fri, 13 Mar 2015 13:52:23 -0500 (CDT)
+Message-ID: <alpine.DEB.2.11.1503131351420.15593@gentwo.org>
+References: <933931146caf5dac58379f50c017bff9f6c47661.1426183417.git.luto@kernel.org> <CAGXu5jKfvswdUMcrGbr6+wn1ME_JkySMvdNd0wvvHpbQ1C7HUg@mail.gmail.com> <CALQRfL7b8CjYgUnVy3jykNwv48fOc03T385RKo--cfv25YenBg@mail.gmail.com>
+ <CAObL_7HgU-ekb7mJS7C=0=idfrzV6=CSqTrG2LvUgdDtvbJx_w@mail.gmail.com> <CALQRfL6HUGMfPtsqLcSed8G14Yqg27R8tpDnMZOKtvQE+rqX0A@mail.gmail.com> <alpine.DEB.2.11.1503131049150.13899@gentwo.org> <CALCETrXcUfbqfm7av9crrxQ5nCBYpdJO8gRo4ZhRA97g27B2iw@mail.gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426046765-19289-2-git-send-email-mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+In-Reply-To: <CALCETrXcUfbqfm7av9crrxQ5nCBYpdJO8gRo4ZhRA97g27B2iw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 03/10/2015 10:05 PM, Michael Ellerman wrote:
-> The makefile in arch/x86/Makefile.um sets LDFLAGS and exports it, which
-> is then propagated to the selftest Makefiles and leads to build errors
-> there. The build errors occur because we are passing LDFLAGS to CC, but
-> the option set in Makefile.um (-m elf_x86_64) is not understood by CC.
-> We could fix that by using -Wl, but that might break the UM build if
-> it's actually passing that option to LD directly.
-> 
-> We don't actually want the LDFLAGS from kbuild in the selftest Makefile,
-> so the simplest fix seems to be to clear LDFLAGS before invoking the
-> selftest Makefile.
-> 
-> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-> ---
->  Makefile | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/Makefile b/Makefile
-> index 0836e9d628f0..5cef1d4c2ea0 100644
-> --- a/Makefile
-> +++ b/Makefile
-> @@ -1085,7 +1085,7 @@ headers_check: headers_install
->  
->  PHONY += kselftest
->  kselftest:
-> -	$(Q)$(MAKE) -C tools/testing/selftests MAKEFLAGS="$(filter-out rR,$(MAKEFLAGS))" run_tests
-> +	$(Q)$(MAKE) LDFLAGS= -C tools/testing/selftests MAKEFLAGS="$(filter-out rR,$(MAKEFLAGS))" run_tests
->  
->  # ---------------------------------------------------------------------------
->  # Modules
-> 
+On Fri, 13 Mar 2015, Andy Lutomirski wrote:
 
-Thanks for finding the problem and fix. I want to handle this in
-the selftests/Makefile level instead. I have a patch ready to send
-out for review.
+> > The functionalty here depends on CAP_SETPCAP. That was intended as some
+> > point to be off by default? You can have distros/kernels with that being
+> > off.
+>
+> Not in my version.  I don't want to further encourage people to hand
+> out CAP_SETPCAP.
 
-thanks,
--- Shuah
-
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+Owww... But if you leave it in then maybe Andrew will be satisfied with
+this approach?
