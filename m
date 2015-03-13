@@ -1,44 +1,91 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [RFC] capabilities: Ambient capabilities
-Date: Fri, 13 Mar 2015 11:06:36 -0500 (CDT)
-Message-ID: <alpine.DEB.2.11.1503131049150.13899@gentwo.org>
-References: <933931146caf5dac58379f50c017bff9f6c47661.1426183417.git.luto@kernel.org> <CAGXu5jKfvswdUMcrGbr6+wn1ME_JkySMvdNd0wvvHpbQ1C7HUg@mail.gmail.com> <CALQRfL7b8CjYgUnVy3jykNwv48fOc03T385RKo--cfv25YenBg@mail.gmail.com>
- <CAObL_7HgU-ekb7mJS7C=0=idfrzV6=CSqTrG2LvUgdDtvbJx_w@mail.gmail.com> <CALQRfL6HUGMfPtsqLcSed8G14Yqg27R8tpDnMZOKtvQE+rqX0A@mail.gmail.com>
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <CALQRfL6HUGMfPtsqLcSed8G14Yqg27R8tpDnMZOKtvQE+rqX0A@mail.gmail.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: "Andrew G. Morgan" <morgan@kernel.org>
-Cc: Andrew Lutomirski <luto@kernel.org>, Kees Cook <keescook@chromium.org>, Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, Jonathan Corbet <corbet@lwn.net>, Aaron Jones <aaronmdjones@gmail.com>, Ted Ts'o <tytso@mit.edu>, linux-security-module <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linuxfoundation.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Markku Savela <msa@moth.iki.fi>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH net-next 1/2] bpf: allow extended BPF programs access
+ skb fields
+Date: Fri, 13 Mar 2015 09:22:48 -0700
+Message-ID: <55030ED8.4020209@plumgrid.com>
+References: <1426213271-8363-1-git-send-email-ast@plumgrid.com> <1426213271-8363-2-git-send-email-ast@plumgrid.com> <5502B48B.7040909@iogearbox.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5502B48B.7040909@iogearbox.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Daniel Borkmann <daniel@iogearbox.net>, "David S. Miller" <davem@davemloft.net>
+Cc: Thomas Graf <tgraf@suug.ch>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 13 Mar 2015, Andrew G. Morgan wrote:
-
-> > prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_SYS_ADMIN);
-> > system("/bin/bash");
+On 3/13/15 2:57 AM, Daniel Borkmann wrote:
+> On 03/13/2015 03:21 AM, Alexei Starovoitov wrote:
+>> introduce user accessible mirror of in-kernel 'struct sk_buff':
 >
-> Let's call the above two lines [a] and [b]. With this patch, you are
-> encouraging folk to write programs that contain a line like [a]
-> already. So, yes, I am saying that you are creating an exploitable
-> path in these programs that says if someone can inject
-> system("/bin/bash") into these programs they can get a new (because of
-> this patch) privilege escalation.
+> For each member, I'd also add BUILD_BUG_ON()s similarly as we have in
+> convert_bpf_extensions(). That way, people won't forget to adjust the
+> code.
 
-Well this is what one naively expects capabilities to give you. An ability
-to avoid full superuser binaries by segmenting off capabilities. Often
-there is really no other choice. If you do not provide this mode then
-the system will be even less secure since people run stuff as root.
+I thought about it, but didn't add it, since we already have them
+in the same file several lines above this spot.
+I think one build error per .c file should be enough to attract
+attention.
+Though I'll add a comment to convert_bpf_extensions() that build_bug_on
+errors should be addressed in two places.
+btw I've tried to do a common converter, but since offsets are different
+and the way instructions are stored are also different it was messy.
 
-This looks to many like the design of capabilties is inherent flawed since
-it does not give you what you need. You experience a go around that leads
-nowhere and just wastes your time.
+> General idea for this offset map looks good, imho. Well defined members
+> that are already exported to uapi e.g. through classic socket filters or
+> other socket api places could be used here.
 
-> In the prevailing model, this kind of privilege escalation (resulting
-> from naive inheritance) is designed out. I recognize that you want to
-> add it back in, but I am concerned that you are not allowing for the
-> possibility that some folk might still want to still be able to
-> prevent it.
+yes. exactly.
 
-The functionalty here depends on CAP_SETPCAP. That was intended as some
-point to be off by default? You can have distros/kernels with that being
-off.
+>> +struct __sk_buff {
+>> +    __u32 len;
+>> +    __u32 pkt_type;
+>> +    __u32 mark;
+>> +    __u32 ifindex;
+>> +    __u32 queue_mapping;
+>> +};
+>
+> I'd add a comment saying that fields may _only_ be safely added at
+> the end of the structure. Rearranging or removing members here,
+> naturally would break user space.
+
+ok. will add a comment.
+
+> The remaining fields we export in classic BPF would be skb->hash,
+> skb->protocol, skb->vlan_tci, are we adding them as well to match
+> up functionality with classic BPF? For example, I can see hash being
+> useful as a key to be used with eBPF maps, etc.
+
+I want to do skb->protocol and skb->vlan_tci differently and hopefully
+more generically than classic did them, so they will come in the
+follow on patches. skb->hash also should be done differently.
+So yes. All of them are subjects of future patches/discussions.
+
+>> +        /* several new insns need to be inserted. Make room for them */
+>> +        insn_cnt += cnt - 1;
+>> +        new_prog = bpf_prog_realloc(env->prog,
+>> +                        bpf_prog_size(insn_cnt),
+>> +                        GFP_USER);
+>> +        if (!new_prog)
+>> +            return -ENOMEM;
+>
+> Seems a bit expensive, do you think we could speculatively allocate a
+> bit more space in bpf_prog_load() when we detect that we have access
+> to ctx that we need to convert?
+
+we already have extra space thanks to your commit 60a3b2253c413 :)))
+The size is rounded up to page size and whole thing is made read-only
+after it passes verifier.
+So 99% of the time we don't reallocate anything.
+
+>> +    case offsetof(struct __sk_buff, ifindex):
+>> +        *insn++ = BPF_LDX_MEM(BPF_W, dst_reg, src_reg,
+>> +                      offsetof(struct sk_buff, skb_iif));
+>> +        break;
+>
+> This would only work for incoming skbs, but not outgoing ones
+> f.e. in case of {cls,act}_bpf.
+
+ahh, ok, will drop this field for now.
+
+Thanks
