@@ -1,40 +1,43 @@
-From: josh@joshtriplett.org
-Subject: Re: [PATCH 6/6] clone4: Introduce new CLONE_FD flag to get task
- exit notification via fd
-Date: Fri, 13 Mar 2015 15:20:52 -0700
-Message-ID: <20150313222052.GC10954@cloud>
-References: <cover.1426180120.git.josh@joshtriplett.org>
- <9c39c576e1d9a9912b4aec54d833a73a84d2f592.1426180120.git.josh@joshtriplett.org>
- <20150313162113.GA25966@redhat.com>
- <20150313195707.GA10487@cloud>
- <CALCETrVkZVa6zsd6gpW_AnQSO2cC___U8M3Dc7c6=PJdEiT9Pg@mail.gmail.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH 6/6] clone4: Introduce new CLONE_FD flag to get task exit
+ notification via fd
+Date: Fri, 13 Mar 2015 15:28:26 -0700
+Message-ID: <CALCETrVRqgsbpi9pPRwy42cuXiDzyPgWRJmfSRSQM7eGFfsZYA@mail.gmail.com>
+References: <cover.1426180120.git.josh@joshtriplett.org> <9c39c576e1d9a9912b4aec54d833a73a84d2f592.1426180120.git.josh@joshtriplett.org>
+ <20150313162113.GA25966@redhat.com> <20150313195707.GA10487@cloud>
+ <CALCETrVkZVa6zsd6gpW_AnQSO2cC___U8M3Dc7c6=PJdEiT9Pg@mail.gmail.com> <20150313222052.GC10954@cloud>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrVkZVa6zsd6gpW_AnQSO2cC___U8M3Dc7c6=PJdEiT9Pg@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Oleg Nesterov <oleg@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Thiago Macieira <thiago.macieira@intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, X86 ML <x86@kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150313222052.GC10954@cloud>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Thiago Macieira <thiago.macieira-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 13, 2015 at 02:34:58PM -0700, Andy Lutomirski wrote:
-> On Fri, Mar 13, 2015 at 12:57 PM,  <josh@joshtriplett.org> wrote:
-> > A process launching a new process with CLONE_FD is explicitly requesting
-> > that the process be automatically reaped without any other process
-> > having to wait on it.  The task needs to not become a zombie, because
-> > otherwise, it'll show up in waitpid(-1, ...) calls in the parent
-> > process, which would break the ability to use this to completely
-> > encapsulate process management within a library and not interfere with
-> > the parent's process handling via SIGCHLD and wait{pid,3,4}.
-> 
-> Wouldn't the correct behavior be to keep it alive as a zombie but
-> *not* show it in waitpid, etc?
+On Fri, Mar 13, 2015 at 3:20 PM,  <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> wrote:
+> On Fri, Mar 13, 2015 at 02:34:58PM -0700, Andy Lutomirski wrote:
+>> On Fri, Mar 13, 2015 at 12:57 PM,  <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> wrote:
+>> > A process launching a new process with CLONE_FD is explicitly requesting
+>> > that the process be automatically reaped without any other process
+>> > having to wait on it.  The task needs to not become a zombie, because
+>> > otherwise, it'll show up in waitpid(-1, ...) calls in the parent
+>> > process, which would break the ability to use this to completely
+>> > encapsulate process management within a library and not interfere with
+>> > the parent's process handling via SIGCHLD and wait{pid,3,4}.
+>>
+>> Wouldn't the correct behavior be to keep it alive as a zombie but
+>> *not* show it in waitpid, etc?
+>
+> That's a significant change to the semantics of waitpid.  And then
+> someone would still need to wait on the process, which we'd like to
+> avoid.  (We don't want to have magic "reap on read(2)" semantics,
+> because among other things, what if we add a means in the future to get
+> an additional file descriptor corresponding to an existing process?)
+>
 
-That's a significant change to the semantics of waitpid.  And then
-someone would still need to wait on the process, which we'd like to
-avoid.  (We don't want to have magic "reap on read(2)" semantics,
-because among other things, what if we add a means in the future to get
-an additional file descriptor corresponding to an existing process?)
+Do we not already have a state "dead, successfully waited on by
+parent, but still around because ptraced"?  If not, shouldn't we?
+Isn't that what PTRACE_SEIZE does?  Or am I just confused?
 
-- Josh Triplett
+--Andy
