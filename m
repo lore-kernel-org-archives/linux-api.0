@@ -1,93 +1,68 @@
-From: josh@joshtriplett.org
-Subject: Re: [PATCH 6/6] clone4: Introduce new CLONE_FD flag to get task
- exit notification via fd
-Date: Fri, 13 Mar 2015 12:57:07 -0700
-Message-ID: <20150313195707.GA10487@cloud>
-References: <cover.1426180120.git.josh@joshtriplett.org>
- <9c39c576e1d9a9912b4aec54d833a73a84d2f592.1426180120.git.josh@joshtriplett.org>
- <20150313162113.GA25966@redhat.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH v4 3/9] selftests: Introduce minimal shared logic for
+ running tests
+Date: Fri, 13 Mar 2015 14:28:34 -0600
+Message-ID: <55034872.7050503@osg.samsung.com>
+References: <1426046765-19289-1-git-send-email-mpe@ellerman.id.au> <1426046765-19289-3-git-send-email-mpe@ellerman.id.au> <55031C14.1030203@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150313162113.GA25966@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Thiago Macieira <thiago.macieira@intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <55031C14.1030203-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 13, 2015 at 05:21:13PM +0100, Oleg Nesterov wrote:
-> Josh,
+On 03/13/2015 11:19 AM, Shuah Khan wrote:
+> On 03/10/2015 10:05 PM, Michael Ellerman wrote:
+>> This adds a Make include file which most selftests can then include to
+>> get the run_tests logic.
+>>
+>> On its own this has the advantage of some reduction in repetition, and
+>> also means the pass/fail message is defined in fewer places.
+>>
+>> However the key advantage is it will allow us to implement install very
+>> simply in a subsequent patch.
+>>
+>> The default implementation just executes each program in $(TEST_PROGS).
+>>
+>> We use a variable to hold the default implementation of $(RUN_TESTS)
+>> because that gives us a clean way to override it if necessary, ie. using
+>> override. The mount, memory-hotplug and mqueue tests use that to provide
+>> a different implementation.
+>>
+>> Tests are not run via /bin/bash, so if they are scripts they must be
+>> executable, we add a+x to several.
+>>
+>> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 > 
-> I'll certainly try to read this series, but not before next week.
-
-Thanks for looking at it.
-
-> but a couple of nits right now.
+> This patch will be applied to next and queued for 4.1.
 > 
-> On 03/12, Josh Triplett wrote:
-> >
-> > When passed CLONE_FD, clone4 will return a file descriptor rather than a
-> > PID.  When the child process exits, it gets automatically reaped,
-> 
-> And even I have no idea what you are actually doing, this doesn't look
-> right, see below.
-> 
-> > +static unsigned int clonefd_poll(struct file *file, poll_table *wait)
-> > +{
-> > +	struct task_struct *p = file->private_data;
-> > +	poll_wait(file, &p->clonefd_wqh, wait);
-> > +	return p->exit_state == EXIT_DEAD ? (POLLIN | POLLRDNORM) : 0;
-> > +}
-> > +
-> > +static ssize_t clonefd_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
-> > +{
-> > +	struct task_struct *p = file->private_data;
-> > +	int ret = 0;
-> > +
-> > +	/* EOF after first read */
-> > +	if (*ppos)
-> > +		return 0;
-> > +
-> > +	if (file->f_flags & O_NONBLOCK)
-> > +		ret = -EAGAIN;
-> > +	else
-> > +		ret = wait_event_interruptible(p->clonefd_wqh, p->exit_state == EXIT_DEAD);
-> > +
-> > +	if (p->exit_state == EXIT_DEAD) {
-> 
-> Again, I simply do not know what this code does at all. But I bet the usage
-> of EXIT_DEAD is wrong ;)
-> 
-> OK, OK, I can be wrong. But I simply do not see what protects this task_struct
-> if it is EXIT_DEAD (in fact even if it is EXIT_ZOMBIE).
 
-If by "what protects" you mean "what keeps it alive", the file
-descriptor holds a reference to the task_struct by calling
-get_task_struct when created and put_task_struct when released.
+This patch is now in linux-kselftest next. Could you please review
+to make sure, it looks right. I had to drop the shared logic from
+timers Makefile because, it changed considerably with the additional
+tests and it wasn't easy to resolve the conflict and keep both changes.
+So at the moment, timers doesn't use the shared logic.
 
-This wait_event_interruptible pairs with the wake_up_all called from
-clonefd_do_notify, which exit_notify calls *after* setting the task to
-TASK_DEAD.
+If lib.mk could provide a way to run additional programs that require
+arguments in addition to RUN_TESTS. In the case of timers, there is one
+test that requires arguments. In some cases, e.g: memory hotplug,
+override works well since it is just one executable. In this case,
+there is a mix.
 
-Apart from that, what about what the code is doing isn't clear?
+Something that can be addressed in a separate patch. For now, I made
+the decision to apply with shared logic patch minus the changes to
+use lib.mk
 
-> > @@ -598,7 +600,9 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
-> >  	if (group_dead)
-> >  		kill_orphaned_pgrp(tsk->group_leader, NULL);
-> >  
-> > -	if (unlikely(tsk->ptrace)) {
-> > +	if (tsk->autoreap) {
-> > +		autoreap = true;
-> 
-> Debuggers won't be happy. A ptraced task should not autoreap itself.
+thanks,
+-- Shuah
 
-A process launching a new process with CLONE_FD is explicitly requesting
-that the process be automatically reaped without any other process
-having to wait on it.  The task needs to not become a zombie, because
-otherwise, it'll show up in waitpid(-1, ...) calls in the parent
-process, which would break the ability to use this to completely
-encapsulate process management within a library and not interfere with
-the parent's process handling via SIGCHLD and wait{pid,3,4}.
 
-- Josh Triplett
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
