@@ -1,33 +1,114 @@
-From: Thiago Macieira <thiago.macieira-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 0/6] CLONE_FD: Task exit notification via file descriptor
-Date: Thu, 12 Mar 2015 19:07:20 -0700
-Message-ID: <3680453.hkn7TyP8Y0@tjmaciei-mobl4>
-References: <cover.1426180120.git.josh@joshtriplett.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Subject: [PATCH net-next 0/2] bpf: allow extended BPF programs access skb fields
+Date: Thu, 12 Mar 2015 19:21:09 -0700
+Message-ID: <1426213271-8363-1-git-send-email-ast@plumgrid.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1426180120.git.josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thursday 12 March 2015 18:40:03 Josh Triplett wrote:
-> This patch series introduces a new clone flag, CLONE_FD, which lets the
-> caller handle child process exit notification via a file descriptor rather
-> than SIGCHLD.  CLONE_FD makes it possible for libraries to safely launch
-> and manage child processes on behalf of their caller, *without* taking over
-> process-wide SIGCHLD handling (either via signal handler or signalfd).
+Hi All,
 
-FYI, the matching use of this feature in Qt can be found at:
+classic BPF has a way to access skb fields, whereas extended BPF didn't.
+This patch introduces this ability.
 
-	https://codereview.qt-project.org/108455
-	https://codereview.qt-project.org/108456
+Classic BPF can access fields via negative SKF_AD_OFF offset.
+Positive bpf_ld_abs N is treated as load from packet, whereas
+bpf_ld_abs -0x1000 + N is treated as skb fields access.
+Many offsets were hard coded over years: SKF_AD_PROTOCOL, SKF_AD_PKTTYPE, etc.
+The problem with this approach was that for every new field classic bpf
+assembler had to be tweaked.
 
-The forkfd.c file this modifies aims at implementing the semantics of CLONE_FD 
-for the fork case when support for CLONE_FD is missing in the kernel.
+I've considered doing the same for extended, but for every new field LLVM
+compiler would have to be modifed. Since it would need to add a new intrinsic.
+It could be done with single intrinsic and magic offset or use of inline
+assembler, but neither are clean from compiler backend point of view, since
+they look like calls but shouldn't scratch caller-saved registers.
+
+Another approach was to introduce a new helper functions like bpf_get_pkt_type()
+for every field that we want to access, but that is equally ugly for kernel
+and slow, since helpers are calls and they are slower then just loads.
+In theory helper calls can be 'inlined' inside kernel into direct loads, but
+since they were calls for user space, compiler would have to spill registers
+around such calls anyway. Teaching compiler to treat such helpers differently
+is even uglier.
+
+They were few other ideas considered. At the end the best seems to be to
+introduce a user accessible mirror of in-kernel sk_buff structure:
+
+struct __sk_buff {
+    __u32 len;
+    __u32 pkt_type;
+    __u32 mark;
+    __u32 ifindex;
+    __u32 queue_mapping;
+};
+
+bpf programs will do:
+
+int bpf_prog1(struct __sk_buff *skb)
+{
+    __u32 var = skb->pkt_type;
+
+which will be compiled to bpf assembler as:
+
+dst_reg = *(u32 *)(src_reg + 4) // 4 == offsetof(struct __sk_buff, pkt_type)
+
+bpf verifier will check validity of access and will convert it to:
+
+dst_reg = *(u8 *)(src_reg + offsetof(struct sk_buff, __pkt_type_offset))
+dst_reg &= 7
+
+since 'pkt_type' is a bitfield.
+
+llvm doesn't need to be modified at all, JITs don't change either and
+verifier already knows when it accesses 'ctx' pointer.
+The only thing needed was to convert user visible offset within __sk_buff
+to kernel internal offset within sk_buff.
+For 'len' and other fields conversion is trivial.
+Converting 'pkt_type' takes 2 or 3 instructions depending on endianness.
+More fields can be exposed by adding to the end of the 'struct __sk_buff'.
+Like vlan_tci and others can be added later.
+
+When pkt_type field is moved around, goes into different structure, removed or
+its size changes, the function sk_filter_convert_ctx_access() would need to be
+updated. Just like the function convert_bpf_extensions() in case of classic bpf.
+
+Patch 2 updates examples to demonstrates how fields are accessed and
+adds new tests for verifier, since it needs to detect a corner case when
+attacker is using single bpf instruction in two branches with different
+register types.
+
+The 5 fields of __sk_buff are already exposed to user space via classic bpf and
+I believe they're useful to access from extended.
+I don't think we need to expose skb->protocol or skb->dev->type, but that's
+a seprate discussion.
+
+Daniel,
+patch 1 includes a bit of code that does prog_realloc and branch adjustment
+to make room for new instructions. I think you'd need the same for your
+'constant blinding' work. If indeed that would be the case, we'll make it
+into a helper function.
+
+Since sk_filter_ops are shared between BPF_PROG_TYPE_SOCKET_FILTER and
+BPF_PROG_TYPE_SCHED_CLS types, cls_bpf will be able to see packet length :)
+
+Alexei Starovoitov (2):
+  bpf: allow extended BPF programs access skb fields
+  samples: bpf: add skb->field examples and tests
+
+ include/linux/bpf.h         |    5 +-
+ include/uapi/linux/bpf.h    |    8 +++
+ kernel/bpf/syscall.c        |    2 +-
+ kernel/bpf/verifier.c       |  152 ++++++++++++++++++++++++++++++++++++++-----
+ net/core/filter.c           |   58 ++++++++++++++++-
+ samples/bpf/sockex1_kern.c  |    8 ++-
+ samples/bpf/sockex1_user.c  |    2 +-
+ samples/bpf/sockex2_kern.c  |   26 +++++---
+ samples/bpf/sockex2_user.c  |   11 +++-
+ samples/bpf/test_verifier.c |   73 +++++++++++++++++++++
+ 10 files changed, 309 insertions(+), 36 deletions(-)
 
 -- 
-Thiago Macieira - thiago.macieira (AT) intel.com
-  Software Architect - Intel Open Source Technology Center
+1.7.9.5
