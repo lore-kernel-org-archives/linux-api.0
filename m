@@ -1,83 +1,51 @@
-From: Josh Triplett <josh@joshtriplett.org>
-Subject: [PATCH 4/6] signal: Factor out a helper function to process
- task_struct exit_code
-Date: Thu, 12 Mar 2015 18:40:45 -0700
-Message-ID: <8a32364b6abda58bd85e08e0e671e3bfb14d489c.1426180120.git.josh@joshtriplett.org>
+From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Subject: [PATCH 5/6] fs: Make alloc_fd non-private
+Date: Thu, 12 Mar 2015 18:40:54 -0700
+Message-ID: <5083dceeba618b421c25042c6343080f09f919f8.1426180120.git.josh@joshtriplett.org>
 References: <cover.1426180120.git.josh@joshtriplett.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <cover.1426180120.git.josh@joshtriplett.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Thiago Macieira <thiago.macieira@intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
+In-Reply-To: <cover.1426180120.git.josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Thiago Macieira <thiago.macieira-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-do_notify_parent includes the code to convert the exit_code field of
-struct task_struct to the code and status fields that accompany SIGCHLD.
-Factor that out into a new helper function task_exit_code_status, to
-allow other methods of task exit notification to share that code.
+This allows callers to allocate a file descriptor with a defined minimum
+value, without directly calling the lower-level __alloc_fd.
 
-Signed-off-by: Josh Triplett <josh@joshtriplett.org>
-Signed-off-by: Thiago Macieira <thiago.macieira@intel.com>
+Signed-off-by: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Signed-off-by: Thiago Macieira <thiago.macieira-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- include/linux/sched.h |  1 +
- kernel/signal.c       | 24 +++++++++++++++---------
- 2 files changed, 16 insertions(+), 9 deletions(-)
+ fs/file.c            | 2 +-
+ include/linux/file.h | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 9ec36fd..668c58f 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -2386,6 +2386,7 @@ extern int kill_pid_info_as_cred(int, struct siginfo *, struct pid *,
- extern int kill_pgrp(struct pid *pid, int sig, int priv);
- extern int kill_pid(struct pid *pid, int sig, int priv);
- extern int kill_proc_info(int, struct siginfo *, pid_t);
-+extern void task_exit_code_status(int exit_code, s32 *code, s32 *status);
- extern __must_check bool do_notify_parent(struct task_struct *, int);
- extern void __wake_up_parent(struct task_struct *p, struct task_struct *parent);
- extern void force_sig(int, struct task_struct *);
-diff --git a/kernel/signal.c b/kernel/signal.c
-index a390499..f959d07 100644
---- a/kernel/signal.c
-+++ b/kernel/signal.c
-@@ -1613,6 +1613,20 @@ ret:
- 	return ret;
+diff --git a/fs/file.c b/fs/file.c
+index ee738ea..583ba46 100644
+--- a/fs/file.c
++++ b/fs/file.c
+@@ -500,7 +500,7 @@ out:
+ 	return error;
  }
  
-+/* Translate exit_code to code and status. */
-+void task_exit_code_status(int exit_code, s32 *code, s32 *status)
-+{
-+	*status = exit_code & 0x7f;
-+	if (exit_code & 0x80)
-+		*code = CLD_DUMPED;
-+	else if (exit_code & 0x7f)
-+		*code = CLD_KILLED;
-+	else {
-+		*code = CLD_EXITED;
-+		*status = exit_code >> 8;
-+	}
-+}
-+
- /*
-  * Let a parent know about the death of a child.
-  * For a stopped/continued status change, use do_notify_parent_cldstop instead.
-@@ -1668,15 +1682,7 @@ bool do_notify_parent(struct task_struct *tsk, int sig)
- 	info.si_utime = cputime_to_clock_t(utime + tsk->signal->utime);
- 	info.si_stime = cputime_to_clock_t(stime + tsk->signal->stime);
+-static int alloc_fd(unsigned start, unsigned flags)
++int alloc_fd(unsigned start, unsigned flags)
+ {
+ 	return __alloc_fd(current->files, start, rlimit(RLIMIT_NOFILE), flags);
+ }
+diff --git a/include/linux/file.h b/include/linux/file.h
+index f87d308..d49f3bd 100644
+--- a/include/linux/file.h
++++ b/include/linux/file.h
+@@ -65,6 +65,7 @@ extern int replace_fd(unsigned fd, struct file *file, unsigned flags);
+ extern void set_close_on_exec(unsigned int fd, int flag);
+ extern bool get_close_on_exec(unsigned int fd);
+ extern void put_filp(struct file *);
++extern int alloc_fd(unsigned start, unsigned flags);
+ extern int get_unused_fd_flags(unsigned flags);
+ extern void put_unused_fd(unsigned int fd);
  
--	info.si_status = tsk->exit_code & 0x7f;
--	if (tsk->exit_code & 0x80)
--		info.si_code = CLD_DUMPED;
--	else if (tsk->exit_code & 0x7f)
--		info.si_code = CLD_KILLED;
--	else {
--		info.si_code = CLD_EXITED;
--		info.si_status = tsk->exit_code >> 8;
--	}
-+	task_exit_code_status(tsk->exit_code, &info.si_code, &info.si_status);
- 
- 	psig = tsk->parent->sighand;
- 	spin_lock_irqsave(&psig->siglock, flags);
 -- 
 2.1.4
