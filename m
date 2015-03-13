@@ -1,81 +1,42 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH v4 4/9] selftests: Add install target
-Date: Fri, 13 Mar 2015 11:08:14 -0600
-Message-ID: <5503197E.2010109@osg.samsung.com>
-References: <1426046765-19289-1-git-send-email-mpe@ellerman.id.au> <1426046765-19289-4-git-send-email-mpe@ellerman.id.au> <5500408B.2070604@osg.samsung.com> <1426130144.25936.4.camel@ellerman.id.au> <20150313163312.GA24666@codemonkey.org.uk>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH net-next 1/2] bpf: allow extended BPF programs access
+ skb fields
+Date: Fri, 13 Mar 2015 10:09:21 -0700
+Message-ID: <550319C1.50209@plumgrid.com>
+References: <1426213271-8363-1-git-send-email-ast@plumgrid.com> <1426213271-8363-2-git-send-email-ast@plumgrid.com> <5502B48B.7040909@iogearbox.net> <55030ED8.4020209@plumgrid.com> <550313B6.2080701@iogearbox.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150313163312.GA24666@codemonkey.org.uk>
+In-Reply-To: <550313B6.2080701@iogearbox.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Jones <davej@codemonkey.org.uk>, Michael Ellerman <mpe@ellerman.id.au>, linux-kernel@vger.kernel.org, mmarek@suse.cz, linux-api@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>
+To: Daniel Borkmann <daniel@iogearbox.net>, "David S. Miller" <davem@davemloft.net>
+Cc: Thomas Graf <tgraf@suug.ch>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/13/2015 10:33 AM, Dave Jones wrote:
-> On Thu, Mar 12, 2015 at 02:15:44PM +1100, Michael Ellerman wrote:
->  > On Wed, 2015-03-11 at 07:18 -0600, Shuah Khan wrote:
->  > > On 03/10/2015 10:06 PM, Michael Ellerman wrote:
->  > > > This adds make install support to selftests. The basic usage is:
->  > > > 
->  > > > v3: Rebase onto 4.0-rc2.
->  > > >     Rename all.sh to run_kselftest.sh.
->  > > >     Add --no-print-directory to emit_tests invocation.
->  > > > v4: Rebase onto 4.0-rc3, add TEST_FILES to efivars and vm tests, remove
->  > > >     newlines from echoes.
->  > > 
->  > > I don't see my comments addressed. If you want me to take
->  > > this work, please address the following comments:
->  > > 
->  > > - Name install directory kselftest. It should work with the
->  > >   the use-case.
->  > > 
->  > >   make INSTALL_PATH=/tmp make install
->  > >   The install directory should be /tmp/kselftest
->  > > 
->  > > - Flatten the directory with all tests under /tmp/kselftest
->  > > 
->  > > I am wasting lot of time because you don't fully address my
->  > > comments and send patches that dont' work correctly. Please
->  > > make sure your patches don't generate work for me.
->  > 
->  > You're wasting a lot of time? You have got to be kidding me. You are wasting a
->  > lot of *my* time.
->  > 
->  > You have my patches, they're signed off, you can do what you wish with them.
->  > Good luck.
-> 
-> This is getting silly. We've spent three months arguing over shell
-> scripts and makefiles for what should be a trivial feature.
-> We make fundamental changes to the VM code with less contention.
+On 3/13/15 9:43 AM, Daniel Borkmann wrote:
+> On 03/13/2015 05:22 PM, Alexei Starovoitov wrote:
+>> On 3/13/15 2:57 AM, Daniel Borkmann wrote:
+>>> On 03/13/2015 03:21 AM, Alexei Starovoitov wrote:
+>>>> introduce user accessible mirror of in-kernel 'struct sk_buff':
+>>>
+>>> For each member, I'd also add BUILD_BUG_ON()s similarly as we have in
+>>> convert_bpf_extensions(). That way, people won't forget to adjust the
+>>> code.
+>>
+>> I thought about it, but didn't add it, since we already have them
+>> in the same file several lines above this spot.
+>> I think one build error per .c file should be enough to attract
+>> attention.
+>> Though I'll add a comment to convert_bpf_extensions() that build_bug_on
+>> errors should be addressed in two places.
+>
+> My concern would be that in case the code gets changed, this spot
+> could easily be overlooked by someone possibly unfamiliar with the
+> code, since no build error triggers there.
+>
+> So I guess it wouldn't hurt or cost us much to also adding the
+> BUILD_BUG_ON()s there instead of a comment.
 
-I really don't think this process has to this contentious. I don't
-believe the changes I am asking for are unreasonable.
-
-> 
-> It's not helped that timezones are working against everyone here,
-> so even minor changes end up taking a while to get reposted, re-reviewed
-> etc, but the level of pushback because something isn't perfect is absurd,
-> especially when we're talking about new features.
-
-Directory structure might seem like a trivial problem, however it is
-important to get the user interface right.
-
-Since Michael doesn't have the bandwidth to make the suggested changes,
-I working on applying his patches. There are some conflicts with the
-
-selftests: Introduce minimal shared logic for running tests
-selftests: Add install target
-
-patches and timer patches. I can fix the directory hierarchy after
-I get these two patches into next.
-
-thanks,
--- Shuah
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+I think it's overkill, but fine, it's minor. Will add another set
+of build_bug_ons and see how it looks.
