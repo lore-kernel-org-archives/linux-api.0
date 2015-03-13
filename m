@@ -1,404 +1,267 @@
 From: Josh Triplett <josh@joshtriplett.org>
-Subject: [PATCH 0/6] CLONE_FD: Task exit notification via file descriptor
-Date: Thu, 12 Mar 2015 18:40:03 -0700
-Message-ID: <cover.1426180120.git.josh@joshtriplett.org>
+Subject: [PATCH 1/6] clone: Support passing tls argument via C rather than
+ pt_regs magic
+Date: Thu, 12 Mar 2015 18:40:13 -0700
+Message-ID: <44ddc1367b23d23e3f8568de7cb76bdfa6ec9d4d.1426180120.git.josh@joshtriplett.org>
+References: <cover.1426180120.git.josh@joshtriplett.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-fsdevel-owner@vger.kernel.org
+In-Reply-To: <cover.1426180120.git.josh@joshtriplett.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Thiago Macieira <thiago.macieira@intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This patch series introduces a new clone flag, CLONE_FD, which lets the=
- caller
-handle child process exit notification via a file descriptor rather tha=
-n
-SIGCHLD.  CLONE_FD makes it possible for libraries to safely launch and=
- manage
-child processes on behalf of their caller, *without* taking over proces=
-s-wide
-SIGCHLD handling (either via signal handler or signalfd).
-
-Note that signalfd for SIGCHLD does not suffice here, because that stil=
-l
-receives notification for all child processes, and interferes with proc=
-ess-wide
-signal handling.
-
-The CLONE_FD file descriptor uniquely identifies a process on the syste=
-m in a
-race-free way, by holding a reference to the task_struct.  In the futur=
-e, we
-may introduce APIs that support using process file descriptors instead =
-of PIDs.
-
-Introducing CLONE_FD required two additional bits of yak shaving: Since=
- clone
-has no more usable flags (with the three currently unused flags unusabl=
-e
-because old kernels ignore them without EINVAL), also introduce a new c=
-lone4
-system call with more flag bits and an extensible argument structure.  =
-And
-since the magic pt_regs-based syscall argument processing for clone's t=
-ls
-argument would otherwise prevent introducing a sane clone4 system call,=
- fix
-that too.
-
-I tested the CLONE_SETTLS changes with a thread-local storage test prog=
-ram (two
-threads independently reading and writing a __thread variable), on both=
- 32-bit
-and 64-bit, and I observed no issues there.
-
-I tested clone4 and the new CLONE_FD call with several additional test
-programs, launching either a process or thread (in the former case usin=
-g
-syscall(), in the latter case by calling clone4 via assembly and return=
-ing to
-C), sleeping in parent and child to test the case of either exiting fir=
-st, and
-then printing the received clone4_info structure.  Thiago also tested c=
-lone4
-with CLONE_FD with a modified version of libqt's process handling, whic=
-h
-includes a test suite.
-
-I've also included the manpages patch at the end of this series.  (Note=
- that
-the manpage documents the behavior of the future glibc wrapper as well =
-as the
-raw syscall.)  Here's a formatted plain-text version of the manpage for
-reference:
-
-CLONE4(2)                  Linux Programmer's Manual                 CL=
-ONE4(2)
-
-
-
-NAME
-       clone4 - create a child process
-
-SYNOPSIS
-       /* Prototype for the glibc wrapper function */
-
-       #define _GNU_SOURCE
-       #include <sched.h>
-
-       int clone4(uint64_t flags,
-                  size_t args_size,
-                  struct clone4_args *args,
-                  int (*fn)(void *), void *arg);
-
-       /* Prototype for the raw system call */
-
-       int clone4(unsigned flags_high, unsigned flags_low,
-                  unsigned long args_size,
-                  struct clone4_args *args);
-
-       struct clone4_args {
-           pid_t *ptid;
-           pid_t *ctid;
-           unsigned long stack_start;
-           unsigned long stack_size;
-           unsigned long tls;
-       };
-
-
-DESCRIPTION
-       clone4()  creates  a  new  process,  similar  to  clone(2) and f=
-ork(2).
-       clone4() supports additional flags that clone(2) does not, and  =
-accepts
-       arguments via an extensible structure.
-
-       args  points to a clone4_args structure, and args_size must cont=
-ain the
-       size of that structure, as understood by the  caller.   If  the =
- caller
-       passes  a  shorter  structure  than  the  kernel expects, the re=
-maining
-       fields will default to 0.  If the caller passes a larger structu=
-re than
-       the  kernel  expects  (such  as one from a newer kernel), clone4=
-() will
-       return EINVAL.  The clone4_args structure may gain additional fi=
-elds at
-       the  end  in  the future, and callers must only pass a size that=
- encom=E2=80=90
-       passes the number of fields they understand.  If the  caller  pa=
-sses  0
-       for args_size, args is ignored and may be NULL.
-
-       In  the clone4_args structure, ptid, ctid, stack_start, stack_si=
-ze, and
-       tls have the same semantics as they do with clone(2) and clone2(=
-2).
-
-       In the glibc wrapper, fn and arg have the same  semantics  as  t=
-hey  do
-       with clone(2).  As with clone(2), the underlying system call wor=
-ks more
-       like fork(2), returning 0 in the child process; the glibc wrappe=
-r  sim=E2=80=90
-       plifies  thread execution by calling fn(arg) and exiting the chi=
-ld when
-       that function exits.
-
-       The 64-bit  flags  argument  (split  into  the  32-bit  flags_hi=
-gh  and
-       flags_low arguments in the kernel interface) accepts all the sam=
-e flags
-       as  clone(2),  with  the   exception   of   the   obsolete   CLO=
-NE_PID,
-       CLONE_DETACHED, and CLONE_STOPPED.  In addition, flags accepts t=
-he fol=E2=80=90
-       lowing flags:
-
-
-       CLONE_FD
-              Instead of returning a process ID, clone4()  with  the  C=
-LONE_FD
-              flag  returns a file descriptor associated with the new p=
-rocess.
-              When the new process exits, the kernel will not send a si=
-gnal to
-              the  parent process, and will not keep the new process ar=
-ound as
-              a "zombie" process  until  a  call  to  waitpid(2)  or  s=
-imilar.
-              Instead,  the file descriptor will become available for r=
-eading,
-              and the new process will be immediately reaped.
-
-              Unlike using  signalfd(2)  for  the  SIGCHLD  signal,  th=
-e  file
-              descriptor  returned  by  clone4()  with the CLONE_FD fla=
-g works
-              even with SIGCHLD unblocked in one or more threads of the=
- parent
-              process,  and  allows the process to have different handl=
-ers for
-              different child processes, such as those created by  a  l=
-ibrary,
-              without  introducing  race conditions around process-wide=
- signal
-              handling.
-
-              clone4() will never return a file descriptor in the range=
- 0-2 to
-              the caller, to avoid ambiguity with the return of 0 in th=
-e child
-              process.  Only the  calling  process  will  have  the  ne=
-w  file
-              descriptor open; the child process will not.
-
-              Since the kernel does not send a termination signal when =
-a child
-              process created with CLONE_FD exits, the low byte of flag=
-s  does
-              not contain a signal number.  Instead, the low byte of fl=
-ags can
-              contain the following additional flags for use with CLONE=
-_FD:
-
-
-              CLONEFD_CLOEXEC
-                     Set the O_CLOEXEC flag on the new open  file  desc=
-riptor.
-                     See  the description of the O_CLOEXEC flag in open=
-(2) for
-                     reasons why this may be useful.
-
-
-              CLONEFD_NONBLOCK
-                     Set the O_NONBLOCK flag on the new open file  desc=
-riptor.
-                     Using  this flag saves extra calls to fcntl(2) to =
-achieve
-                     the same result.
-
-
-              clone4() with the CLONE_FD flag returns a file  descripto=
-r  that
-              supports the following operations:
-
-              read(2) (and similar)
-                     When  the  new  process  exits,  reading  from  th=
-e  file
-                     descriptor produces a single clonefd_info structur=
-e:
-
-                     struct clonefd_info {
-                         uint32_t code;   /* Signal code */
-                         uint32_t status; /* Exit status or signal */
-                         uint64_t utime;  /* User CPU time */
-                         uint64_t stime;  /* System CPU time */
-                     };
-
-
-                     If the new process has not  yet  exited,  read(2) =
- either
-                     blocks  until  it does, or fails with the error EA=
-GAIN if
-                     the file descriptor has been made nonblocking.
-
-                     Future kernels may extend clonefd_info by appendin=
-g addi=E2=80=90
-                     tional  fields  to  the end.  Callers should read =
-as many
-                     bytes as they understand; unread data will be  dis=
-carded,
-                     and  subsequent  reads  after  the first will retu=
-rn 0 to
-                     indicate end-of-file.  Callers requesting more byt=
-es than
-                     the  kernel  provides  (such as callers expecting =
-a newer
-                     clonefd_info structure) will receive a shorter  st=
-ructure
-                     from older kernels.
-
-              poll(2), select(2), epoll(7) (and similar)
-                     The  file  descriptor  is readable (the select(2) =
-readfds
-                     argument; the poll(2) POLLIN flag) if the new proc=
-ess has
-                     exited.
-
-              close(2)
-                     When  the file descriptor is no longer required it=
- should
-                     be closed.  If no process has a file descriptor op=
-en  for
-                     the new process, no process will receive any notif=
-ication
-                     when the new process exits.  The new process  will=
-  still
-                     be immediately reaped.
-
-
-   C library/kernel ABI differences
-       As with clone(2), the raw clone4() system call corresponds more =
-closely
-       to fork(2) in that execution in the child continues from the  po=
-int  of
-       the call.
-
-       Unlike  clone(2),  the  raw  system call interface for clone4() =
-accepts
-       arguments in the same order on all architectures.
-
-       The raw system call accepts flags as two 32-bit  arguments,  fla=
-gs_high
-       and  flags_low, to simplify portability across 32-bit and 64-bit=
- archi=E2=80=90
-       tectures and calling conventions.  The glibc wrapper accepts fla=
-gs as a
-       single 64-bit argument for convenience.
-
-
-RETURN VALUE
-       For the glibc wrapper, on success, clone4() returns the file des=
-criptor
-       (with CLONE_FD) or new process ID (without  CLONE_FD),  and  the=
-  child
-       process begins running at the specified function.
-
-       For  the  raw syscall, on success, clone4() returns the file des=
-criptor
-       or new process ID to the calling process, and  returns  0  in  t=
-he  new
-       child process.
-
-       On failure, clone4() returns -1 and sets errno accordingly.
-
-
-ERRORS
-       clone4()  can  return any error from clone(2), as well as the fo=
-llowing
-       additional errors:
-
-       EINVAL flags contained an unknown flag.
-
-       EINVAL flags included CLONE_FD, but the kernel configuration  do=
-es  not
-              have the CONFIG_CLONEFD option enabled.
-
-       EMFILE flags  included  CLONE_FD,  but  the  new  file descripto=
-r would
-              exceed the process limit on open file descriptors.
-
-       ENFILE flags included CLONE_FD,  but  the  new  file  descriptor=
-  would
-              exceed the system-wide limit on open file descriptors.
-
-       ENODEV flags  included  CLONE_FD,  but  clone4()  could  not  mo=
-unt the
-              (internal) anonymous inode device.
-
-
-CONFORMING TO
-       clone4() is Linux-specific and should not be used in programs  i=
-ntended
-       to be portable.
-
-
-SEE ALSO
-       clone(2), epoll(7), poll(2), pthreads(7), read(2), select(2)
-
-
-
-Linux                             2015-03-01                         CL=
-ONE4(2)
-
-
-Josh Triplett and Thiago Macieira (6):
-  clone: Support passing tls argument via C rather than pt_regs magic
-  x86: Opt into HAVE_COPY_THREAD_TLS, for both 32-bit and 64-bit
-  Introduce a new clone4 syscall with more flag bits and extensible arg=
-uments
-  signal: Factor out a helper function to process task_struct exit_code
-  fs: Make alloc_fd non-private
-  clone4: Introduce new CLONE_FD flag to get task exit notification via=
- fd
-
- arch/Kconfig                     |   7 ++
- arch/x86/Kconfig                 |   1 +
- arch/x86/ia32/ia32entry.S        |   3 +-
- arch/x86/kernel/entry_64.S       |   1 +
- arch/x86/kernel/process_32.c     |   6 +-
- arch/x86/kernel/process_64.c     |   8 +--
- arch/x86/syscalls/syscall_32.tbl |   1 +
- arch/x86/syscalls/syscall_64.tbl |   2 +
- fs/file.c                        |   2 +-
- include/linux/compat.h           |  12 ++++
- include/linux/file.h             |   1 +
- include/linux/sched.h            |  20 ++++++
- include/linux/syscalls.h         |   6 +-
- include/uapi/linux/sched.h       |  54 ++++++++++++++-
- init/Kconfig                     |  21 ++++++
- kernel/Makefile                  |   1 +
- kernel/clonefd.c                 | 123 +++++++++++++++++++++++++++++++=
-++
- kernel/clonefd.h                 |  27 ++++++++
- kernel/exit.c                    |  10 ++-
- kernel/fork.c                    | 143 +++++++++++++++++++++++++++++++=
-+-------
- kernel/signal.c                  |  24 ++++---
- kernel/sys_ni.c                  |   1 +
- 22 files changed, 425 insertions(+), 49 deletions(-)
- create mode 100644 kernel/clonefd.c
- create mode 100644 kernel/clonefd.h
-
---=20
+clone with CLONE_SETTLS accepts an argument to set the thread-local
+storage area for the new thread.  sys_clone declares an int argument
+tls_val in the appropriate point in the argument list (based on the
+various CLONE_BACKWARDS variants), but doesn't actually use or pass
+along that argument.  Instead, sys_clone calls do_fork, which calls
+copy_process, which calls the arch-specific copy_thread, and copy_thread
+pulls the corresponding syscall argument out of the pt_regs captured at
+kernel entry (knowing what argument of clone that architecture passes
+tls in).
+
+Apart from being awful and inscrutable, that also only works because
+only one code path into copy_thread can pass the CLONE_SETTLS flag, and
+that code path comes from sys_clone with its architecture-specific
+argument-passing order.  This prevents introducing a new version of the
+clone system call without propagating the same architecture-specific
+position of the tls argument.
+
+However, there's no reason to pull the argument out of pt_regs when
+sys_clone could just pass it down via C function call arguments.
+
+Introduce a new CONFIG_HAVE_COPY_THREAD_TLS for architectures to opt
+into, and a new copy_thread_tls that accepts the tls parameter as an
+additional unsigned long (syscall-argument-sized) argument.
+Change sys_clone's tls argument to an unsigned long (which does
+not change the ABI), and pass that down to copy_thread_tls.
+
+Architectures that don't opt into copy_thread_tls will continue to
+ignore the C argument to sys_clone in favor of the pt_regs captured at
+kernel entry, and thus will be unable to introduce new versions of the
+clone syscall.
+
+Signed-off-by: Josh Triplett <josh@joshtriplett.org>
+Signed-off-by: Thiago Macieira <thiago.macieira@intel.com>
+---
+ arch/Kconfig             |  7 ++++++
+ include/linux/sched.h    | 14 ++++++++++++
+ include/linux/syscalls.h |  6 +++---
+ kernel/fork.c            | 55 +++++++++++++++++++++++++++++++-----------------
+ 4 files changed, 60 insertions(+), 22 deletions(-)
+
+diff --git a/arch/Kconfig b/arch/Kconfig
+index 05d7a8a..4834a58 100644
+--- a/arch/Kconfig
++++ b/arch/Kconfig
+@@ -484,6 +484,13 @@ config HAVE_IRQ_EXIT_ON_IRQ_STACK
+ 	  This spares a stack switch and improves cache usage on softirq
+ 	  processing.
+ 
++config HAVE_COPY_THREAD_TLS
++	bool
++	help
++	  Architecture provides copy_thread_tls to accept tls argument via
++	  normal C parameter passing, rather than extracting the syscall
++	  argument from pt_regs.
++
+ #
+ # ABI hall of shame
+ #
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 6d77432..9ec36fd 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -2479,8 +2479,22 @@ extern struct mm_struct *mm_access(struct task_struct *task, unsigned int mode);
+ /* Remove the current tasks stale references to the old mm_struct */
+ extern void mm_release(struct task_struct *, struct mm_struct *);
+ 
++#ifdef CONFIG_HAVE_COPY_THREAD_TLS
++extern int copy_thread_tls(unsigned long, unsigned long, unsigned long,
++			struct task_struct *, unsigned long);
++#else
+ extern int copy_thread(unsigned long, unsigned long, unsigned long,
+ 			struct task_struct *);
++
++/* Architectures that haven't opted into copy_thread_tls get the tls argument
++ * via pt_regs, so ignore the tls argument passed via C. */
++static inline int copy_thread_tls(
++		unsigned long clone_flags, unsigned long sp, unsigned long arg,
++		struct task_struct *p, unsigned long tls)
++{
++	return copy_thread(clone_flags, sp, arg, p);
++}
++#endif
+ extern void flush_thread(void);
+ extern void exit_thread(void);
+ 
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 76d1e38..bb51bec 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -827,15 +827,15 @@ asmlinkage long sys_syncfs(int fd);
+ asmlinkage long sys_fork(void);
+ asmlinkage long sys_vfork(void);
+ #ifdef CONFIG_CLONE_BACKWARDS
+-asmlinkage long sys_clone(unsigned long, unsigned long, int __user *, int,
++asmlinkage long sys_clone(unsigned long, unsigned long, int __user *, unsigned long,
+ 	       int __user *);
+ #else
+ #ifdef CONFIG_CLONE_BACKWARDS3
+ asmlinkage long sys_clone(unsigned long, unsigned long, int, int __user *,
+-			  int __user *, int);
++			  int __user *, unsigned long);
+ #else
+ asmlinkage long sys_clone(unsigned long, unsigned long, int __user *,
+-	       int __user *, int);
++	       int __user *, unsigned long);
+ #endif
+ #endif
+ 
+diff --git a/kernel/fork.c b/kernel/fork.c
+index cf65139..b3dadf4 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1192,7 +1192,8 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 					unsigned long stack_size,
+ 					int __user *child_tidptr,
+ 					struct pid *pid,
+-					int trace)
++					int trace,
++					unsigned long tls)
+ {
+ 	int retval;
+ 	struct task_struct *p;
+@@ -1401,7 +1402,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 	retval = copy_io(clone_flags, p);
+ 	if (retval)
+ 		goto bad_fork_cleanup_namespaces;
+-	retval = copy_thread(clone_flags, stack_start, stack_size, p);
++	retval = copy_thread_tls(clone_flags, stack_start, stack_size, p, tls);
+ 	if (retval)
+ 		goto bad_fork_cleanup_io;
+ 
+@@ -1613,7 +1614,7 @@ static inline void init_idle_pids(struct pid_link *links)
+ struct task_struct *fork_idle(int cpu)
+ {
+ 	struct task_struct *task;
+-	task = copy_process(CLONE_VM, 0, 0, NULL, &init_struct_pid, 0);
++	task = copy_process(CLONE_VM, 0, 0, NULL, &init_struct_pid, 0, 0);
+ 	if (!IS_ERR(task)) {
+ 		init_idle_pids(task->pids);
+ 		init_idle(task, cpu);
+@@ -1628,11 +1629,13 @@ struct task_struct *fork_idle(int cpu)
+  * It copies the process, and if successful kick-starts
+  * it and waits for it to finish using the VM if required.
+  */
+-long do_fork(unsigned long clone_flags,
+-	      unsigned long stack_start,
+-	      unsigned long stack_size,
+-	      int __user *parent_tidptr,
+-	      int __user *child_tidptr)
++static long _do_fork(
++		unsigned long clone_flags,
++		unsigned long stack_start,
++		unsigned long stack_size,
++		int __user *parent_tidptr,
++		int __user *child_tidptr,
++		unsigned long tls)
+ {
+ 	struct task_struct *p;
+ 	int trace = 0;
+@@ -1657,7 +1660,7 @@ long do_fork(unsigned long clone_flags,
+ 	}
+ 
+ 	p = copy_process(clone_flags, stack_start, stack_size,
+-			 child_tidptr, NULL, trace);
++			 child_tidptr, NULL, trace, tls);
+ 	/*
+ 	 * Do this prior waking up the new thread - the thread pointer
+ 	 * might get invalid after that point, if the thread exits quickly.
+@@ -1698,20 +1701,34 @@ long do_fork(unsigned long clone_flags,
+ 	return nr;
+ }
+ 
++#ifndef CONFIG_HAVE_COPY_THREAD_TLS
++/* For compatibility with architectures that call do_fork directly rather than
++ * using the syscall entry points below. */
++long do_fork(unsigned long clone_flags,
++	      unsigned long stack_start,
++	      unsigned long stack_size,
++	      int __user *parent_tidptr,
++	      int __user *child_tidptr)
++{
++	return _do_fork(clone_flags, stack_start, stack_size,
++			parent_tidptr, child_tidptr, 0);
++}
++#endif
++
+ /*
+  * Create a kernel thread.
+  */
+ pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
+ {
+-	return do_fork(flags|CLONE_VM|CLONE_UNTRACED, (unsigned long)fn,
+-		(unsigned long)arg, NULL, NULL);
++	return _do_fork(flags|CLONE_VM|CLONE_UNTRACED, (unsigned long)fn,
++		(unsigned long)arg, NULL, NULL, 0);
+ }
+ 
+ #ifdef __ARCH_WANT_SYS_FORK
+ SYSCALL_DEFINE0(fork)
+ {
+ #ifdef CONFIG_MMU
+-	return do_fork(SIGCHLD, 0, 0, NULL, NULL);
++	return _do_fork(SIGCHLD, 0, 0, NULL, NULL, 0);
+ #else
+ 	/* can not support in nommu mode */
+ 	return -EINVAL;
+@@ -1722,8 +1739,8 @@ SYSCALL_DEFINE0(fork)
+ #ifdef __ARCH_WANT_SYS_VFORK
+ SYSCALL_DEFINE0(vfork)
+ {
+-	return do_fork(CLONE_VFORK | CLONE_VM | SIGCHLD, 0,
+-			0, NULL, NULL);
++	return _do_fork(CLONE_VFORK | CLONE_VM | SIGCHLD, 0,
++			0, NULL, NULL, 0);
+ }
+ #endif
+ 
+@@ -1731,27 +1748,27 @@ SYSCALL_DEFINE0(vfork)
+ #ifdef CONFIG_CLONE_BACKWARDS
+ SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
+ 		 int __user *, parent_tidptr,
+-		 int, tls_val,
++		 unsigned long, tls,
+ 		 int __user *, child_tidptr)
+ #elif defined(CONFIG_CLONE_BACKWARDS2)
+ SYSCALL_DEFINE5(clone, unsigned long, newsp, unsigned long, clone_flags,
+ 		 int __user *, parent_tidptr,
+ 		 int __user *, child_tidptr,
+-		 int, tls_val)
++		 unsigned long, tls)
+ #elif defined(CONFIG_CLONE_BACKWARDS3)
+ SYSCALL_DEFINE6(clone, unsigned long, clone_flags, unsigned long, newsp,
+ 		int, stack_size,
+ 		int __user *, parent_tidptr,
+ 		int __user *, child_tidptr,
+-		int, tls_val)
++		unsigned long, tls)
+ #else
+ SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
+ 		 int __user *, parent_tidptr,
+ 		 int __user *, child_tidptr,
+-		 int, tls_val)
++		 unsigned long, tls)
+ #endif
+ {
+-	return do_fork(clone_flags, newsp, 0, parent_tidptr, child_tidptr);
++	return _do_fork(clone_flags, newsp, 0, parent_tidptr, child_tidptr, tls);
+ }
+ #endif
+ 
+-- 
 2.1.4
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
-" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
