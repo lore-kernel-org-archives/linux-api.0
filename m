@@ -1,34 +1,54 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v6 tip 3/8] tracing: allow BPF programs to call bpf_ktime_get_ns()
-Date: Fri, 13 Mar 2015 09:38:37 -0700
-Message-ID: <5503128D.70908@plumgrid.com>
-References: <1426047534-8148-1-git-send-email-ast@plumgrid.com> <1426047534-8148-4-git-send-email-ast@plumgrid.com> <5502C8EB.9070307@huawei.com>
+From: Daniel Borkmann <daniel@iogearbox.net>
+Subject: Re: [PATCH net-next 1/2] bpf: allow extended BPF programs access
+ skb fields
+Date: Fri, 13 Mar 2015 17:43:34 +0100
+Message-ID: <550313B6.2080701@iogearbox.net>
+References: <1426213271-8363-1-git-send-email-ast@plumgrid.com> <1426213271-8363-2-git-send-email-ast@plumgrid.com> <5502B48B.7040909@iogearbox.net> <55030ED8.4020209@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5502C8EB.9070307-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: He Kuang <hekuang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, wangnan0-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <55030ED8.4020209@plumgrid.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexei Starovoitov <ast@plumgrid.com>, "David S. Miller" <davem@davemloft.net>
+Cc: Thomas Graf <tgraf@suug.ch>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 3/13/15 4:24 AM, He Kuang wrote:
-> Hi, Alexei
+On 03/13/2015 05:22 PM, Alexei Starovoitov wrote:
+> On 3/13/15 2:57 AM, Daniel Borkmann wrote:
+>> On 03/13/2015 03:21 AM, Alexei Starovoitov wrote:
+>>> introduce user accessible mirror of in-kernel 'struct sk_buff':
+>>
+>> For each member, I'd also add BUILD_BUG_ON()s similarly as we have in
+>> convert_bpf_extensions(). That way, people won't forget to adjust the
+>> code.
 >
-> I've followed up your bpf version. In bpf filter, sometimes we need to
-> get 'pid' and some other context informations to decide whether to
-> filter or not.
->
-> For example, to trace a vfs read procedure, we can insert bpf program to
-> '__vfs_read(struct file *file, char __user *buf ...)', mark some of
-> 'buf' addresses and only trace the read procedure of these 'buf's. But
-> this parameter is a userspace pointer, the value is meaningless to other
-> processes, so we should also record 'pid' to make sense.
->
-> To a function like __vfs_read, 'pid' can't be extracted from function
-> parameters directly. What's your opinion on this issue?
+> I thought about it, but didn't add it, since we already have them
+> in the same file several lines above this spot.
+> I think one build error per .c file should be enough to attract
+> attention.
+> Though I'll add a comment to convert_bpf_extensions() that build_bug_on
+> errors should be addressed in two places.
 
-yes. it's the next thing on todo list after this set of patches.
-There are several ways to let programs see 'pid'. We'll debate about
-the best approach hopefully soon :)
+My concern would be that in case the code gets changed, this spot
+could easily be overlooked by someone possibly unfamiliar with the
+code, since no build error triggers there.
+
+So I guess it wouldn't hurt or cost us much to also adding the
+BUILD_BUG_ON()s there instead of a comment.
+
+...
+>> The remaining fields we export in classic BPF would be skb->hash,
+>> skb->protocol, skb->vlan_tci, are we adding them as well to match
+>> up functionality with classic BPF? For example, I can see hash being
+>> useful as a key to be used with eBPF maps, etc.
+>
+> I want to do skb->protocol and skb->vlan_tci differently and hopefully
+> more generically than classic did them, so they will come in the
+> follow on patches. skb->hash also should be done differently.
+> So yes. All of them are subjects of future patches/discussions.
+
+Ok, sounds good.
+
+Thanks,
+Daniel
