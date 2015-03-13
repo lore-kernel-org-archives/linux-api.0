@@ -1,69 +1,93 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [RFC] capabilities: Ambient capabilities
-Date: Fri, 13 Mar 2015 12:54:12 -0700
-Message-ID: <CAGXu5jLj5M4FjhxqWy7Kg7qSXmBZ387f2DdwxRvioKaRJ9opXw@mail.gmail.com>
-References: <933931146caf5dac58379f50c017bff9f6c47661.1426183417.git.luto@kernel.org>
-	<CAGXu5jKfvswdUMcrGbr6+wn1ME_JkySMvdNd0wvvHpbQ1C7HUg@mail.gmail.com>
-	<CALQRfL7b8CjYgUnVy3jykNwv48fOc03T385RKo--cfv25YenBg@mail.gmail.com>
-	<CAObL_7HgU-ekb7mJS7C=0=idfrzV6=CSqTrG2LvUgdDtvbJx_w@mail.gmail.com>
-	<CALQRfL6HUGMfPtsqLcSed8G14Yqg27R8tpDnMZOKtvQE+rqX0A@mail.gmail.com>
-	<CALCETrVz39pJmMAEFodBNA8cOZjd0xkH95EzMazY0MWJDtpYgg@mail.gmail.com>
-	<CAGXu5jLiLsXN2-RAbPJh7ZursuTroi5DAs=VTz2kyAZ2urNvgA@mail.gmail.com>
-	<CALCETrV7vDJVhM_AgtGn8ENStcyxZBwCw3zhSn-whArT_XPg8A@mail.gmail.com>
+From: josh@joshtriplett.org
+Subject: Re: [PATCH 6/6] clone4: Introduce new CLONE_FD flag to get task
+ exit notification via fd
+Date: Fri, 13 Mar 2015 12:57:07 -0700
+Message-ID: <20150313195707.GA10487@cloud>
+References: <cover.1426180120.git.josh@joshtriplett.org>
+ <9c39c576e1d9a9912b4aec54d833a73a84d2f592.1426180120.git.josh@joshtriplett.org>
+ <20150313162113.GA25966@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrV7vDJVhM_AgtGn8ENStcyxZBwCw3zhSn-whArT_XPg8A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andrew Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150313162113.GA25966@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Thiago Macieira <thiago.macieira@intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 13, 2015 at 12:03 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> On Fri, Mar 13, 2015 at 11:52 AM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
->>
->> All this said, almost half of the capabilities, if passed to flawed
->> children with attacker controlled execution, can be elevated to full
->> root privileges pretty easily[1], so I think any documentation around
->> this feature should include some pretty dire warnings about using
->> this.
->
-> That's a good point.  I'll make sure to document that.
->
-> It's worth noting that, for many applications, that list is
-> overstated.  For example, many of the suggested privilege escalations
-> don't work if you're in a sufficiently restrictive mount namespace.
->
-> For my own use, I plan on adding only CAP_NET_BIND_SERVICE and
-> CAP_NET_RAW to pA, and I'll be layering seccomp on top to the extent
-> possible.
+On Fri, Mar 13, 2015 at 05:21:13PM +0100, Oleg Nesterov wrote:
+> Josh,
+> 
+> I'll certainly try to read this series, but not before next week.
 
-Right, keeping software authors aware of the fact that their efforts
-for attack surface reducing may need additional confinement beyond
-just the capability reduction.
+Thanks for looking at it.
 
--Kees
+> but a couple of nits right now.
+> 
+> On 03/12, Josh Triplett wrote:
+> >
+> > When passed CLONE_FD, clone4 will return a file descriptor rather than a
+> > PID.  When the child process exits, it gets automatically reaped,
+> 
+> And even I have no idea what you are actually doing, this doesn't look
+> right, see below.
+> 
+> > +static unsigned int clonefd_poll(struct file *file, poll_table *wait)
+> > +{
+> > +	struct task_struct *p = file->private_data;
+> > +	poll_wait(file, &p->clonefd_wqh, wait);
+> > +	return p->exit_state == EXIT_DEAD ? (POLLIN | POLLRDNORM) : 0;
+> > +}
+> > +
+> > +static ssize_t clonefd_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
+> > +{
+> > +	struct task_struct *p = file->private_data;
+> > +	int ret = 0;
+> > +
+> > +	/* EOF after first read */
+> > +	if (*ppos)
+> > +		return 0;
+> > +
+> > +	if (file->f_flags & O_NONBLOCK)
+> > +		ret = -EAGAIN;
+> > +	else
+> > +		ret = wait_event_interruptible(p->clonefd_wqh, p->exit_state == EXIT_DEAD);
+> > +
+> > +	if (p->exit_state == EXIT_DEAD) {
+> 
+> Again, I simply do not know what this code does at all. But I bet the usage
+> of EXIT_DEAD is wrong ;)
+> 
+> OK, OK, I can be wrong. But I simply do not see what protects this task_struct
+> if it is EXIT_DEAD (in fact even if it is EXIT_ZOMBIE).
 
->
-> --Andy
->
->>
->> -Kees
->>
->> [1] https://forums.grsecurity.net/viewtopic.php?f=7&t=2522
->>
->> --
->> Kees Cook
->> Chrome OS Security
->
->
->
-> --
-> Andy Lutomirski
-> AMA Capital Management, LLC
+If by "what protects" you mean "what keeps it alive", the file
+descriptor holds a reference to the task_struct by calling
+get_task_struct when created and put_task_struct when released.
 
+This wait_event_interruptible pairs with the wake_up_all called from
+clonefd_do_notify, which exit_notify calls *after* setting the task to
+TASK_DEAD.
 
+Apart from that, what about what the code is doing isn't clear?
 
--- 
-Kees Cook
-Chrome OS Security
+> > @@ -598,7 +600,9 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
+> >  	if (group_dead)
+> >  		kill_orphaned_pgrp(tsk->group_leader, NULL);
+> >  
+> > -	if (unlikely(tsk->ptrace)) {
+> > +	if (tsk->autoreap) {
+> > +		autoreap = true;
+> 
+> Debuggers won't be happy. A ptraced task should not autoreap itself.
+
+A process launching a new process with CLONE_FD is explicitly requesting
+that the process be automatically reaped without any other process
+having to wait on it.  The task needs to not become a zombie, because
+otherwise, it'll show up in waitpid(-1, ...) calls in the parent
+process, which would break the ability to use this to completely
+encapsulate process management within a library and not interfere with
+the parent's process handling via SIGCHLD and wait{pid,3,4}.
+
+- Josh Triplett
