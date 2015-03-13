@@ -1,68 +1,54 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH v4 4/9] selftests: Add install target
-Date: Fri, 13 Mar 2015 15:32:44 -0600
-Message-ID: <5503577C.9050002@osg.samsung.com>
-References: <1426046765-19289-1-git-send-email-mpe@ellerman.id.au> <1426046765-19289-4-git-send-email-mpe@ellerman.id.au> <55031C78.4040609@osg.samsung.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH 0/6] CLONE_FD: Task exit notification via file descriptor
+Date: Fri, 13 Mar 2015 14:33:44 -0700
+Message-ID: <CALCETrXH+Ui1XqVZjFB=8vDpJLCYeVf+XNUPGWNfwDsNKi_nKg@mail.gmail.com>
+References: <CAHse=S9hnGm=Z8FR4f+z_TFwnrjBLkcV4wVwjDYgKuOSemdVrA@mail.gmail.com>
+ <20150313194252.GA10317@cloud>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55031C78.4040609-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150313194252.GA10317@cloud>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Josh Triplett <josh@joshtriplett.org>
+Cc: David Drysdale <drysdale@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Thiago Macieira <thiago.macieira@intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, X86 ML <x86@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 03/13/2015 11:20 AM, Shuah Khan wrote:
-> On 03/10/2015 10:06 PM, Michael Ellerman wrote:
->> This adds make install support to selftests. The basic usage is:
+On Fri, Mar 13, 2015 at 12:42 PM, Josh Triplett <josh@joshtriplett.org> wrote:
+> On Fri, Mar 13, 2015 at 04:05:29PM +0000, David Drysdale wrote:
+>> On Fri, Mar 13, 2015 at 1:40 AM, Josh Triplett <josh@joshtriplett.org> wrote:
+>> > This patch series introduces a new clone flag, CLONE_FD, which lets the caller
+>> > handle child process exit notification via a file descriptor rather than
+>> > SIGCHLD.  CLONE_FD makes it possible for libraries to safely launch and manage
+>> > child processes on behalf of their caller, *without* taking over process-wide
+>> > SIGCHLD handling (either via signal handler or signalfd).
 >>
->> $ cd tools/testing/selftests
->> $ make install
+>> Hi Josh,
 >>
->> That installs into tools/testing/selftests/install, which can then be
->> copied where ever necessary.
+>> From the overall description (i.e. I haven't looked at the code yet)
+>> this looks very interesting.  However, it seems to cover a lot of the
+>> same ground as the process descriptor feature that was added to FreeBSD
+>> in 9.x/10.x:
+>>   https://www.freebsd.org/cgi/man.cgi?query=pdfork&sektion=2
+>
+> Interesting.
+>
+>> I think it would ideally be nice for a userspace library developer to be
+>> able to do subprocess management (without SIGCHLD) in a similar way
+>> across both platforms, without lots of complicated autoconf shenanigans.
 >>
->> The install destination is also configurable using eg:
->>
->> $ INSTALL_PATH=/mnt/selftests make install
->>
->> The implementation uses two targets in the child makefiles. The first
->> "install" is expected to install all files into $(INSTALL_PATH).
->>
->> The second, "emit_tests", is expected to emit the test instructions (ie.
->> bash script) on stdout. Separating this from install means the child
->> makefiles need no knowledge of the location of the test script.
->>
->> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-> 
-> Thanks for doing the work. This patch will be applied to next and will
-> be queued for 4.1
-> 
+>> So could we look at the overlap and seeing if we can come up with
+>> something that covers your requirements and also allows for something
+>> that looks like FreeBSD's process descriptors?
+>
+> Agreed; however, I think it's reasonable to provide appropriate Linux
+> system calls, and then let glibc or libbsd or similar provide the
+> BSD-compatible calls on top of those.  I don't think the kernel
+> interface needs to exactly match FreeBSD's, as long as it's a superset
+> of the functionality.
 
-ok. linux-kselftest next has both shared logic and install patches
-now. As I mentioned in my reply to shared logic patch, I had to drop
-the changes to timers Makefile to add shared logic, hence timers progs
-don't get installed at the moment.
+We need to be careful with things like read(2), though.  It's hard to
+write a glibc function that makes read(2) do something other than what
+the kernel thinks.  Similarly, poll(2) is defined by the kernel.  It
+would be really nice to be consistent here.
 
-Could you please review to make sure, it looks right.
-
-As I said in the other email, if lib.mk could provide a way to run
-additional programs that require arguments in addition to RUN_TESTS.
-In the case of timers, there is one test that requires arguments. In
-some cases, e.g: memory hotplug, override works well since it is just
-one executable. In this case, there is a mix of executables that don't
-need any special handling and some that need it.
-
-You are welcome to add shared logic and install to timers if you would
-like.
-
-thanks,
--- Shuah
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+--Andy
