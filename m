@@ -1,91 +1,70 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: [PATCH net-next 1/2] bpf: allow extended BPF programs access
- skb fields
-Date: Fri, 13 Mar 2015 09:22:48 -0700
-Message-ID: <55030ED8.4020209@plumgrid.com>
-References: <1426213271-8363-1-git-send-email-ast@plumgrid.com> <1426213271-8363-2-git-send-email-ast@plumgrid.com> <5502B48B.7040909@iogearbox.net>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH 6/6] clone4: Introduce new CLONE_FD flag to get task
+	exit notification via fd
+Date: Fri, 13 Mar 2015 17:21:13 +0100
+Message-ID: <20150313162113.GA25966@redhat.com>
+References: <cover.1426180120.git.josh@joshtriplett.org> <9c39c576e1d9a9912b4aec54d833a73a84d2f592.1426180120.git.josh@joshtriplett.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5502B48B.7040909@iogearbox.net>
+Content-Disposition: inline
+In-Reply-To: <9c39c576e1d9a9912b4aec54d833a73a84d2f592.1426180120.git.josh@joshtriplett.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Borkmann <daniel@iogearbox.net>, "David S. Miller" <davem@davemloft.net>
-Cc: Thomas Graf <tgraf@suug.ch>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Josh Triplett <josh@joshtriplett.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Thiago Macieira <thiago.macieira@intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 3/13/15 2:57 AM, Daniel Borkmann wrote:
-> On 03/13/2015 03:21 AM, Alexei Starovoitov wrote:
->> introduce user accessible mirror of in-kernel 'struct sk_buff':
+Josh,
+
+I'll certainly try to read this series, but not before next week.
+
+but a couple of nits right now.
+
+On 03/12, Josh Triplett wrote:
 >
-> For each member, I'd also add BUILD_BUG_ON()s similarly as we have in
-> convert_bpf_extensions(). That way, people won't forget to adjust the
-> code.
+> When passed CLONE_FD, clone4 will return a file descriptor rather than a
+> PID.  When the child process exits, it gets automatically reaped,
 
-I thought about it, but didn't add it, since we already have them
-in the same file several lines above this spot.
-I think one build error per .c file should be enough to attract
-attention.
-Though I'll add a comment to convert_bpf_extensions() that build_bug_on
-errors should be addressed in two places.
-btw I've tried to do a common converter, but since offsets are different
-and the way instructions are stored are also different it was messy.
+And even I have no idea what you are actually doing, this doesn't look
+right, see below.
 
-> General idea for this offset map looks good, imho. Well defined members
-> that are already exported to uapi e.g. through classic socket filters or
-> other socket api places could be used here.
+> +static unsigned int clonefd_poll(struct file *file, poll_table *wait)
+> +{
+> +	struct task_struct *p = file->private_data;
+> +	poll_wait(file, &p->clonefd_wqh, wait);
+> +	return p->exit_state == EXIT_DEAD ? (POLLIN | POLLRDNORM) : 0;
+> +}
+> +
+> +static ssize_t clonefd_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
+> +{
+> +	struct task_struct *p = file->private_data;
+> +	int ret = 0;
+> +
+> +	/* EOF after first read */
+> +	if (*ppos)
+> +		return 0;
+> +
+> +	if (file->f_flags & O_NONBLOCK)
+> +		ret = -EAGAIN;
+> +	else
+> +		ret = wait_event_interruptible(p->clonefd_wqh, p->exit_state == EXIT_DEAD);
+> +
+> +	if (p->exit_state == EXIT_DEAD) {
 
-yes. exactly.
+Again, I simply do not know what this code does at all. But I bet the usage
+of EXIT_DEAD is wrong ;)
 
->> +struct __sk_buff {
->> +    __u32 len;
->> +    __u32 pkt_type;
->> +    __u32 mark;
->> +    __u32 ifindex;
->> +    __u32 queue_mapping;
->> +};
->
-> I'd add a comment saying that fields may _only_ be safely added at
-> the end of the structure. Rearranging or removing members here,
-> naturally would break user space.
+OK, OK, I can be wrong. But I simply do not see what protects this task_struct
+if it is EXIT_DEAD (in fact even if it is EXIT_ZOMBIE).
 
-ok. will add a comment.
+> @@ -598,7 +600,9 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
+>  	if (group_dead)
+>  		kill_orphaned_pgrp(tsk->group_leader, NULL);
+>  
+> -	if (unlikely(tsk->ptrace)) {
+> +	if (tsk->autoreap) {
+> +		autoreap = true;
 
-> The remaining fields we export in classic BPF would be skb->hash,
-> skb->protocol, skb->vlan_tci, are we adding them as well to match
-> up functionality with classic BPF? For example, I can see hash being
-> useful as a key to be used with eBPF maps, etc.
+Debuggers won't be happy. A ptraced task should not autoreap itself.
 
-I want to do skb->protocol and skb->vlan_tci differently and hopefully
-more generically than classic did them, so they will come in the
-follow on patches. skb->hash also should be done differently.
-So yes. All of them are subjects of future patches/discussions.
-
->> +        /* several new insns need to be inserted. Make room for them */
->> +        insn_cnt += cnt - 1;
->> +        new_prog = bpf_prog_realloc(env->prog,
->> +                        bpf_prog_size(insn_cnt),
->> +                        GFP_USER);
->> +        if (!new_prog)
->> +            return -ENOMEM;
->
-> Seems a bit expensive, do you think we could speculatively allocate a
-> bit more space in bpf_prog_load() when we detect that we have access
-> to ctx that we need to convert?
-
-we already have extra space thanks to your commit 60a3b2253c413 :)))
-The size is rounded up to page size and whole thing is made read-only
-after it passes verifier.
-So 99% of the time we don't reallocate anything.
-
->> +    case offsetof(struct __sk_buff, ifindex):
->> +        *insn++ = BPF_LDX_MEM(BPF_W, dst_reg, src_reg,
->> +                      offsetof(struct sk_buff, skb_iif));
->> +        break;
->
-> This would only work for incoming skbs, but not outgoing ones
-> f.e. in case of {cls,act}_bpf.
-
-ahh, ok, will drop this field for now.
-
-Thanks
+Oleg.
