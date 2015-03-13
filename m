@@ -1,67 +1,34 @@
-From: Dave Jones <davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org>
-Subject: Re: [PATCH v4 4/9] selftests: Add install target
-Date: Fri, 13 Mar 2015 12:33:12 -0400
-Message-ID: <20150313163312.GA24666@codemonkey.org.uk>
-References: <1426046765-19289-1-git-send-email-mpe@ellerman.id.au>
- <1426046765-19289-4-git-send-email-mpe@ellerman.id.au>
- <5500408B.2070604@osg.samsung.com>
- <1426130144.25936.4.camel@ellerman.id.au>
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH v6 tip 3/8] tracing: allow BPF programs to call bpf_ktime_get_ns()
+Date: Fri, 13 Mar 2015 09:38:37 -0700
+Message-ID: <5503128D.70908@plumgrid.com>
+References: <1426047534-8148-1-git-send-email-ast@plumgrid.com> <1426047534-8148-4-git-send-email-ast@plumgrid.com> <5502C8EB.9070307@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1426130144.25936.4.camel-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+In-Reply-To: <5502C8EB.9070307-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: He Kuang <hekuang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, wangnan0-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 12, 2015 at 02:15:44PM +1100, Michael Ellerman wrote:
- > On Wed, 2015-03-11 at 07:18 -0600, Shuah Khan wrote:
- > > On 03/10/2015 10:06 PM, Michael Ellerman wrote:
- > > > This adds make install support to selftests. The basic usage is:
- > > > 
- > > > v3: Rebase onto 4.0-rc2.
- > > >     Rename all.sh to run_kselftest.sh.
- > > >     Add --no-print-directory to emit_tests invocation.
- > > > v4: Rebase onto 4.0-rc3, add TEST_FILES to efivars and vm tests, remove
- > > >     newlines from echoes.
- > > 
- > > I don't see my comments addressed. If you want me to take
- > > this work, please address the following comments:
- > > 
- > > - Name install directory kselftest. It should work with the
- > >   the use-case.
- > > 
- > >   make INSTALL_PATH=/tmp make install
- > >   The install directory should be /tmp/kselftest
- > > 
- > > - Flatten the directory with all tests under /tmp/kselftest
- > > 
- > > I am wasting lot of time because you don't fully address my
- > > comments and send patches that dont' work correctly. Please
- > > make sure your patches don't generate work for me.
- > 
- > You're wasting a lot of time? You have got to be kidding me. You are wasting a
- > lot of *my* time.
- > 
- > You have my patches, they're signed off, you can do what you wish with them.
- > Good luck.
+On 3/13/15 4:24 AM, He Kuang wrote:
+> Hi, Alexei
+>
+> I've followed up your bpf version. In bpf filter, sometimes we need to
+> get 'pid' and some other context informations to decide whether to
+> filter or not.
+>
+> For example, to trace a vfs read procedure, we can insert bpf program to
+> '__vfs_read(struct file *file, char __user *buf ...)', mark some of
+> 'buf' addresses and only trace the read procedure of these 'buf's. But
+> this parameter is a userspace pointer, the value is meaningless to other
+> processes, so we should also record 'pid' to make sense.
+>
+> To a function like __vfs_read, 'pid' can't be extracted from function
+> parameters directly. What's your opinion on this issue?
 
-This is getting silly. We've spent three months arguing over shell
-scripts and makefiles for what should be a trivial feature.
-We make fundamental changes to the VM code with less contention.
-
-It's not helped that timezones are working against everyone here,
-so even minor changes end up taking a while to get reposted, re-reviewed
-etc, but the level of pushback because something isn't perfect is absurd,
-especially when we're talking about new features.
-
-If you want the in-kernel variant to be perfect every step of the way,
-and move slowly and never introduce subtle breakage along the way that then
-gets fixed up in subsequent changes, maybe a faster moving external project
-that syncs up with the kernel tree is the way forward.
-
-If kselftests is going to evolve into something useful, something has to change.
-
-	Dave
+yes. it's the next thing on todo list after this set of patches.
+There are several ways to let programs see 'pid'. We'll debate about
+the best approach hopefully soon :)
