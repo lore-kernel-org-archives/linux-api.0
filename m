@@ -1,60 +1,140 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [PATCH 2/2] selftests/timers: change to use shared logic to run and install tests
-Date: Fri, 13 Mar 2015 16:57:51 -0600
-Message-ID: <e34c7abc6dff5922a45376b7a3085545db66eb6d.1426286799.git.shuahkh@osg.samsung.com>
-References: <cover.1426286799.git.shuahkh@osg.samsung.com>
+From: josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org
+Subject: Re: [PATCH 2/6] x86: Opt into HAVE_COPY_THREAD_TLS, for both
+ 32-bit and 64-bit
+Date: Fri, 13 Mar 2015 16:01:53 -0700
+Message-ID: <20150313230153.GA11441@cloud>
+References: <cover.1426180120.git.josh@joshtriplett.org>
+ <cf79b9f0c40314e6bfda7c634e378015bd7ba037.1426180120.git.josh@joshtriplett.org>
+ <CALCETrUbQJhE8VCTt5yQ+KBZOJnNC5e3yUneKjhwhKxgvfU2Xg@mail.gmail.com>
+ <20150313223139.GD10954@cloud>
+ <CALCETrWspvNcEYxwbo1+ifXSj7Qj7YdcRgmNvZ1RaBrUAK12Zw@mail.gmail.com>
+ <20150313224319.GA11282@cloud>
+ <CALCETrW3kJSVz4ffVC6YdB+ELukhOHNgPFKZSziMq5nn_Nq3Zg@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1426286799.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-In-Reply-To: <cover.1426286799.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-References: <cover.1426286799.git.shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrW3kJSVz4ffVC6YdB+ELukhOHNgPFKZSziMq5nn_Nq3Zg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Thiago Macieira <thiago.macieira-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Change the timers Makefile to make use of shared run and install
-logic in lib.mk. Destructive tests are installed. Regular tests
-are emited to run_kselftest script to match the run_tests behavior.
+On Fri, Mar 13, 2015 at 03:45:16PM -0700, Andy Lutomirski wrote:
+> On Fri, Mar 13, 2015 at 3:43 PM,  <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> wrote:
+> > On Fri, Mar 13, 2015 at 03:38:31PM -0700, Andy Lutomirski wrote:
+> >> On Fri, Mar 13, 2015 at 3:31 PM,  <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> wrote:
+> >> > On Fri, Mar 13, 2015 at 03:01:16PM -0700, Andy Lutomirski wrote:
+> >> >> On Thu, Mar 12, 2015 at 6:40 PM, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> wrote:
+> >> >> > For 32-bit userspace on a 64-bit kernel, this requires modifying
+> >> >> > stub32_clone to actually swap the appropriate arguments to match
+> >> >> > CONFIG_CLONE_BACKWARDS, rather than just leaving the C argument for tls
+> >> >> > broken.
+> >> >> >
+> >> >> > Signed-off-by: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+> >> >> > Signed-off-by: Thiago Macieira <thiago.macieira-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> >> > ---
+> >> >> >  arch/x86/Kconfig             | 1 +
+> >> >> >  arch/x86/ia32/ia32entry.S    | 2 +-
+> >> >> >  arch/x86/kernel/process_32.c | 6 +++---
+> >> >> >  arch/x86/kernel/process_64.c | 8 ++++----
+> >> >> >  4 files changed, 9 insertions(+), 8 deletions(-)
+> >> >> >
+> >> >> > diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+> >> >> > index b7d31ca..4960b0d 100644
+> >> >> > --- a/arch/x86/Kconfig
+> >> >> > +++ b/arch/x86/Kconfig
+> >> >> > @@ -124,6 +124,7 @@ config X86
+> >> >> >         select MODULES_USE_ELF_REL if X86_32
+> >> >> >         select MODULES_USE_ELF_RELA if X86_64
+> >> >> >         select CLONE_BACKWARDS if X86_32
+> >> >> > +       select HAVE_COPY_THREAD_TLS
+> >> >> >         select ARCH_USE_BUILTIN_BSWAP
+> >> >> >         select ARCH_USE_QUEUE_RWLOCK
+> >> >> >         select OLD_SIGSUSPEND3 if X86_32 || IA32_EMULATION
+> >> >> > diff --git a/arch/x86/ia32/ia32entry.S b/arch/x86/ia32/ia32entry.S
+> >> >> > index 156ebca..0286735 100644
+> >> >> > --- a/arch/x86/ia32/ia32entry.S
+> >> >> > +++ b/arch/x86/ia32/ia32entry.S
+> >> >> > @@ -487,7 +487,7 @@ GLOBAL(\label)
+> >> >> >         ALIGN
+> >> >> >  GLOBAL(stub32_clone)
+> >> >> >         leaq sys_clone(%rip),%rax
+> >> >> > -       mov     %r8, %rcx
+> >> >> > +       xchg %r8, %rcx
+> >> >> >         jmp  ia32_ptregs_common
+> >> >>
+> >> >> Do I understand correct that whatever function this is a stub for just
+> >> >> takes its arguments in the wrong order?  If so, can we just fix it
+> >> >> instead of using xchg here?
+> >> >
+> >> > 32-bit x86 and 64-bit x86 take the arguments to clone in a different
+> >> > order, and stub32_clone fixes up the argument order then calls the
+> >> > 64-bit sys_clone.
+> >> >
+> >> > I'd love to see *all* the 32-on-64 compat stubs for clone rewritten in C
+> >> > under CONFIG_COMPAT.  However, doing so would require encoding the
+> >> > knowledge for each 64-bit architecture for how its corresponding 32-bit
+> >> > architecture accepts arguments to clone, which is information that the
+> >> > current CONFIG_CLONE_BACKWARDS{1,2,3} don't include; it would then
+> >> > require cleaning up all the architecture-specific assembly stubs for
+> >> > 32-bit clone entry points.
+> >> >
+> >> > In the meantime, doing that *just* for 32-bit x86 on 64-bit x86 doesn't
+> >> > seem worth it, since it would require adding a new C entry point for
+> >> > compat_sys_clone under arch/x86 somewhere.
+> >> >
+> >> > One cleanup at a time. :)
+> >>
+> >> Fine w/ me.
+> >
+> > Thanks.
+> >
+> >> >
+> >> >> In general, I much prefer C code to new asm where it makes sense to
+> >> >> make this tradeoff.
+> >> >
+> >> > Agreed completely.  However, this is at least conservation-of-asm, or
+> >> > reduction if you consider the pt_regs argument-grabbing hack to be
+> >> > asm-esque code.
+> >> >
+> >> >> Other than that, this is a huge improvement.  You'll have minor
+> >> >> conflicts against -tip, though.
+> >> >
+> >> > Right, I've seen your current changes there.  Should be a trivial merge
+> >> > though.
+> >> >
+> >> > Would you mind providing an ack for the series, or at least for the
+> >> > first two patches?
+> >>
+> >> I can give you an ok-in-principle on the first two.  I'd need to stare
+> >> at the awful code for a bit to understand the @!*&! clone variants to
+> >> really ack them convincingly.
+> >
+> > I'd definitely appreciate the staring. :)
+> >
+> >> OTOH, it would be rather surprising if you messed it up in a way that
+> >> still boots on all three variants (native 32-bit, native 64-bit, and
+> >> compat).
+> >>
+> >> So, for the first two patches:
+> >>
+> >> Acked-by: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> # assuming all bitnesses boot
+> >
+> > I did test all three, not just with booting but with a thread-local
+> > storage test.
+> 
+> And it's fairly clear that no one ever tested clone-based TLS in 32
+> bits from a 64-bit ELF binary, because it was broken until very
+> recently :-/
 
-Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
----
- tools/testing/selftests/timers/Makefile | 20 +++++++++++---------
- 1 file changed, 11 insertions(+), 9 deletions(-)
+I'm not sure *anyone* other than exploit-seekers test 32-bit system
+calls from a 64-bit binary. :)
 
-diff --git a/tools/testing/selftests/timers/Makefile b/tools/testing/selftests/timers/Makefile
-index 9da3498..61e7284 100644
---- a/tools/testing/selftests/timers/Makefile
-+++ b/tools/testing/selftests/timers/Makefile
-@@ -7,19 +7,21 @@ bins = posix_timers nanosleep inconsistency-check nsleep-lat raw_skew \
- 	alarmtimer-suspend change_skew skew_consistency clocksource-switch \
- 	leap-a-day leapcrash set-tai set-2038
- 
-+TEST_PROGS = posix_timers nanosleep nsleep-lat set-timer-lat mqueue-lat \
-+		inconsistency-check raw_skew
-+TEST_FILES = threadtest alarmtimer-suspend valid-adjtimex change_skew \
-+		skew_consistency clocksource-switch leap-a-day leapcrash \
-+		set-tai set-2038
-+
-+RUN_TESTS_WITH_ARGS := ./threadtest -t 30 -n 8 || echo "selftests: threadtest [FAIL]"
-+
-+EMIT_TESTS_WITH_ARGS := echo "$(RUN_TESTS_WITH_ARGS)"
-+
- all: ${bins}
- 
- # these are all "safe" tests that don't modify
- # system time or require escalated privledges
--run_tests: all
--	./posix_timers
--	./nanosleep
--	./nsleep-lat
--	./set-timer-lat
--	./mqueue-lat
--	./inconsistency-check
--	./raw_skew
--	./threadtest -t 30 -n 8
-+include ../lib.mk
- 
- # these tests require escalated privledges
- # and may modify the system time or trigger
--- 
-2.1.0
+> This stuff is too magical and too poorly documented for my tastes.
+
+Agreed.  That was my reaction when I figured out what was happening with
+CLONE_SETTLS and pt_regs, and my goal with the first two patches in this
+series was precisely to make it *less* magical. :)
+
+- Josh Triplett
