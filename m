@@ -1,8 +1,7 @@
 From: Josh Triplett <josh@joshtriplett.org>
-Subject: [PATCH 6/6] clone4: Introduce new CLONE_FD flag to get task exit
- notification via fd
-Date: Thu, 12 Mar 2015 18:41:05 -0700
-Message-ID: <9c39c576e1d9a9912b4aec54d833a73a84d2f592.1426180120.git.josh@joshtriplett.org>
+Subject: [PATCH] clone4.2: New manpage documenting clone4(2)
+Date: Thu, 12 Mar 2015 18:41:16 -0700
+Message-ID: <fda076fb945ac8326acb78840ac6bd50b0cfb993.1426180226.git.josh@joshtriplett.org>
 References: <cover.1426180120.git.josh@joshtriplett.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -10,474 +9,368 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <cover.1426180120.git.josh@joshtriplett.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Thiago Macieira <thiago.macieira@intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
+To: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Thiago Macieira <thiago.macieira@intel.com>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-man@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-When passed CLONE_FD, clone4 will return a file descriptor rather than a
-PID.  When the child process exits, it gets automatically reaped, and
-the file descriptor becomes readable, producing a structure containing
-the exit code and user/system time.  The file descriptor also works in
-epoll, poll, or select.
-
-This allows libraries to safely launch and manage child processes on
-behalf of a caller, without taking over or interfering with process-wide
-signal handling.  Without this, such a library would need to take over
-or cooperate with the entire process's SIGCHLD handling, either via a
-signal handler or a signalfd.
-
-CLONE_FD will never return a file descriptor in the 0-2 range; thus, a 0
-return from clone4 still indicates the child process.
-
-Since a process created with CLONE_FD does not send any exit signal, the
-low byte of the clone flags no longer needs to contain a signal number,
-freeing it up for use as CLONE_FD-specific flags; use that to provide
-the usual CLOEXEC and NONBLOCK flags.
-
-CLONE_FD takes the value of the unused CLONE_PID, so CLONE4_VALID_ARGS
-now includes CLONE_FD; CLONE_VALID_ARGS still doesn't, and sys_clone
-still ignores that flag, as only clone4 can use it.
+Also includes new cross-reference from clone.2.
 
 Signed-off-by: Josh Triplett <josh@joshtriplett.org>
 Signed-off-by: Thiago Macieira <thiago.macieira@intel.com>
 ---
- include/linux/sched.h      |   5 ++
- include/uapi/linux/sched.h |  23 ++++++++-
- init/Kconfig               |  11 ++++
- kernel/Makefile            |   1 +
- kernel/clonefd.c           | 123 +++++++++++++++++++++++++++++++++++++++++++++
- kernel/clonefd.h           |  27 ++++++++++
- kernel/exit.c              |  10 +++-
- kernel/fork.c              |  40 ++++++++++++---
- 8 files changed, 231 insertions(+), 9 deletions(-)
- create mode 100644 kernel/clonefd.c
- create mode 100644 kernel/clonefd.h
+ man2/clone.2  |   1 +
+ man2/clone4.2 | 332 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 333 insertions(+)
+ create mode 100644 man2/clone4.2
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 668c58f..55cf10bb 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1351,6 +1351,9 @@ struct task_struct {
- #if defined(SPLIT_RSS_COUNTING)
- 	struct task_rss_stat	rss_stat;
- #endif
-+#ifdef CONFIG_CLONEFD
-+	wait_queue_head_t clonefd_wqh;
-+#endif
- /* task state */
- 	int exit_state;
- 	int exit_code, exit_signal;
-@@ -1372,6 +1375,8 @@ struct task_struct {
- 	unsigned memcg_kmem_skip_account:1;
- #endif
- 
-+	unsigned autoreap:1; /* Do not become a zombie on exit */
+diff --git a/man2/clone.2 b/man2/clone.2
+index 752c01e..7013885 100644
+--- a/man2/clone.2
++++ b/man2/clone.2
+@@ -1209,6 +1209,7 @@ main(int argc, char *argv[])
+ }
+ .fi
+ .SH SEE ALSO
++.BR clone4 (2),
+ .BR fork (2),
+ .BR futex (2),
+ .BR getpid (2),
+diff --git a/man2/clone4.2 b/man2/clone4.2
+new file mode 100644
+index 0000000..c2ce188
+--- /dev/null
++++ b/man2/clone4.2
+@@ -0,0 +1,332 @@
++.\" Based on clone.2:
++.\" Copyright (c) 1992 Drew Eckhardt <drew@cs.colorado.edu>, March 28, 1992
++.\" and Copyright (c) Michael Kerrisk, 2001, 2002, 2005, 2013
++.\"
++.\" %%%LICENSE_START(GPL_NOVERSION_ONELINE)
++.\" May be distributed under the GNU General Public License.
++.\" %%%LICENSE_END
++.TH CLONE4 2 2015-03-01 "Linux" "Linux Programmer's Manual"
++.SH NAME
++clone4 \- create a child process
++.SH SYNOPSIS
++.nf
++/* Prototype for the glibc wrapper function */
 +
- 	unsigned long atomic_flags; /* Flags needing atomic access. */
- 
- 	struct restart_block restart_block;
-diff --git a/include/uapi/linux/sched.h b/include/uapi/linux/sched.h
-index b5b8012..d2082c61 100644
---- a/include/uapi/linux/sched.h
-+++ b/include/uapi/linux/sched.h
-@@ -38,10 +38,31 @@
- #define CLONE_STOPPED	0x02000000
- 
- /*
-+ * Flags that only work with clone4.
-+ */
-+#define CLONE_FD	0x00001000	/* set if we want a file descriptor rather than a PID */
++.B #define _GNU_SOURCE
++.B #include <sched.h>
 +
-+/*
-  * Valid flags for clone and for clone4
-  */
- #define CLONE_VALID_FLAGS	(0xffffffffULL & ~(CLONE_PID | CLONE_DETACHED | CLONE_STOPPED))
--#define CLONE4_VALID_FLAGS	CLONE_VALID_FLAGS
-+#define CLONE4_VALID_FLAGS	(CLONE_VALID_FLAGS | CLONE_FD)
++.BI "int clone4(uint64_t " flags ,
++.BI "           size_t " args_size ,
++.BI "           struct clone4_args *" args ,
++.BI "           int (*" "fn" ")(void *), void *" arg );
 +
-+/*
-+ * Flags passed in the low byte when using CLONE_FD, in place of the signal.
-+ */
-+#define CLONEFD_CLOEXEC		0x00000001	/* Used with CLONE_FD to set O_CLOEXEC on new fd */
-+#define CLONEFD_NONBLOCK	0x00000002	/* Used with CLONE_FD to set O_NONBLOCK on new fd */
++/* Prototype for the raw system call */
 +
-+/*
-+ * Structure read from CLONE_FD file descriptor after process exits
-+ */
++.BI "int clone4(unsigned " flags_high ", unsigned " flags_low ,
++.BI "           unsigned long " args_size ,
++.BI "           struct clone4_args *" args );
++
++struct clone4_args {
++    pid_t *ptid;
++    pid_t *ctid;
++    unsigned long stack_start;
++    unsigned long stack_size;
++    unsigned long tls;
++};
++
++.SH DESCRIPTION
++.BR clone4 ()
++creates a new process, similar to
++.BR clone (2)
++and
++.BR fork (2).
++.BR clone4 ()
++supports additional flags that
++.BR clone (2)
++does not, and accepts arguments via an extensible structure.
++
++.I args
++points to a
++.I clone4_args
++structure, and
++.I args_size
++must contain the size of that structure, as understood by the caller.  If the
++caller passes a shorter structure than the kernel expects, the remaining fields
++will default to 0.  If the caller passes a larger structure than the kernel
++expects (such as one from a newer kernel),
++.BR clone4 ()
++will return
++.BR EINVAL .
++The
++.I clone4_args
++structure may gain additional fields at the end in the future, and callers must
++only pass a size that encompasses the number of fields they understand.  If the
++caller passes 0 for
++.IR args_size ,
++.I args
++is ignored and may be NULL.
++
++In the
++.I clone4_args
++structure,
++.IR ptid ,
++.IR ctid ,
++.IR stack_start ,
++.IR stack_size ,
++and
++.I tls
++have the same semantics as they do with
++.BR clone (2)
++and
++.BR clone2 (2).
++
++In the glibc wrapper,
++.I fn
++and
++.I arg
++have the same semantics as they do with
++.BR clone (2).
++As with
++.BR clone (2),
++the underlying system call works more like
++.BR fork (2),
++returning 0 in the child process; the glibc wrapper simplifies thread execution
++by calling
++.IR fn ( arg )
++and exiting the child when that function exits.
++
++The 64-bit
++.I flags
++argument (split into the 32-bit
++.I flags_high
++and
++.I flags_low
++arguments in the kernel interface)
++accepts all the same flags as
++.BR clone (2),
++with the exception of the obsolete
++.BR CLONE_PID ,
++.BR CLONE_DETACHED ,
++and
++.BR CLONE_STOPPED .
++In addition,
++.I flags
++accepts the following flags:
++
++.TP
++.B CLONE_FD
++Instead of returning a process ID,
++.BR clone4 ()
++with the
++.B CLONE_FD
++flag returns a file descriptor associated with the new process.
++When the new process exits, the kernel will not send a signal to the parent
++process, and will not keep the new process around as a "zombie" process until a
++call to
++.BR waitpid (2)
++or similar.  Instead, the file descriptor will become available for reading,
++and the new process will be immediately reaped.
++
++Unlike using
++.BR signalfd (2)
++for the
++.B SIGCHLD
++signal,
++the file descriptor returned by
++.BR clone4 ()
++with the
++.B CLONE_FD
++flag works even with
++.B SIGCHLD
++unblocked in one or more threads of the parent process, and allows the process
++to have different handlers for different child processes, such as those created
++by a library, without introducing race conditions around process-wide signal
++handling.
++
++.BR clone4 ()
++will never return a file descriptor in the range 0-2 to the caller, to avoid
++ambiguity with the return of 0 in the child process.  Only the calling process
++will have the new file descriptor open; the child process will not.
++
++Since the kernel does not send a termination signal when a child process
++created with
++.B CLONE_FD
++exits, the low byte of flags does not contain a signal number.  Instead, the
++low byte of flags can contain the following additional flags for use with
++.BR CLONE_FD :
++
++.RS
++.TP
++.B CLONEFD_CLOEXEC
++Set the
++.B O_CLOEXEC
++flag on the new open file descriptor.
++See the description of the
++.B O_CLOEXEC
++flag in
++.BR open (2)
++for reasons why this may be useful.
++
++.TP
++.B CLONEFD_NONBLOCK
++Set the
++.B O_NONBLOCK
++flag on the new open file descriptor.
++Using this flag saves extra calls to
++.BR fcntl (2)
++to achieve the same result.
++.RE
++
++.IP
++.BR clone4 ()
++with the
++.B CLONE_FD
++flag returns a file descriptor that supports the following operations:
++.RS
++.TP
++.BR read "(2) (and similar)"
++When the new process exits, reading from the file descriptor produces
++a single
++.I clonefd_info
++structure:
++.nf
++
 +struct clonefd_info {
-+        __s32 code;
-+        __s32 status;
-+        __u64 utime;
-+        __u64 stime;
-+};
- 
- /*
-  * Structure passed to clone4 for additional arguments.  Initialized to 0,
-diff --git a/init/Kconfig b/init/Kconfig
-index 3ab6649..b444280 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -1521,6 +1521,17 @@ config CLONE4
- 
- 	  If unsure, say Y.
- 
-+config CLONEFD
-+	bool "Enable CLONE_FD flag for clone4()" if EXPERT
-+	depends on CLONE4
-+	select ANON_INODES
-+	default y
-+	help
-+	  Enable the CLONE_FD flag for clone4(), which creates a file descriptor
-+	  to receive child exit events rather than receiving a signal.
-+
-+	  If unsure, say Y.
-+
- # syscall, maps, verifier
- config BPF_SYSCALL
- 	bool "Enable bpf() system call" if EXPERT
-diff --git a/kernel/Makefile b/kernel/Makefile
-index 1408b33..368986c 100644
---- a/kernel/Makefile
-+++ b/kernel/Makefile
-@@ -29,6 +29,7 @@ obj-y += rcu/
- obj-y += livepatch/
- 
- obj-$(CONFIG_CHECKPOINT_RESTORE) += kcmp.o
-+obj-$(CONFIG_CLONEFD) += clonefd.o
- obj-$(CONFIG_FREEZER) += freezer.o
- obj-$(CONFIG_PROFILING) += profile.o
- obj-$(CONFIG_STACKTRACE) += stacktrace.o
-diff --git a/kernel/clonefd.c b/kernel/clonefd.c
-new file mode 100644
-index 0000000..78fb776
---- /dev/null
-+++ b/kernel/clonefd.c
-@@ -0,0 +1,123 @@
-+/*
-+ * Support functions for CLONE_FD
-+ *
-+ * Copyright (c) 2015 Intel Corporation
-+ * Original authors: Josh Triplett <josh@joshtriplett.org>
-+ *                   Thiago Macieira <thiago@macieira.org>
-+ */
-+#include <linux/anon_inodes.h>
-+#include <linux/file.h>
-+#include <linux/fs.h>
-+#include <linux/poll.h>
-+#include <linux/slab.h>
-+#include "clonefd.h"
-+
-+static int clonefd_release(struct inode *inode, struct file *file)
-+{
-+	put_task_struct(file->private_data);
-+	return 0;
-+}
-+
-+static unsigned int clonefd_poll(struct file *file, poll_table *wait)
-+{
-+	struct task_struct *p = file->private_data;
-+	poll_wait(file, &p->clonefd_wqh, wait);
-+	return p->exit_state == EXIT_DEAD ? (POLLIN | POLLRDNORM) : 0;
-+}
-+
-+static ssize_t clonefd_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
-+{
-+	struct task_struct *p = file->private_data;
-+	int ret = 0;
-+
-+	/* EOF after first read */
-+	if (*ppos)
-+		return 0;
-+
-+	if (file->f_flags & O_NONBLOCK)
-+		ret = -EAGAIN;
-+	else
-+		ret = wait_event_interruptible(p->clonefd_wqh, p->exit_state == EXIT_DEAD);
-+
-+	if (p->exit_state == EXIT_DEAD) {
-+		struct clonefd_info info = {};
-+		cputime_t utime, stime;
-+		task_exit_code_status(p->exit_code, &info.code, &info.status);
-+		info.code &= ~__SI_MASK;
-+		task_cputime(p, &utime, &stime);
-+		info.utime = cputime_to_clock_t(utime + p->signal->utime);
-+		info.stime = cputime_to_clock_t(stime + p->signal->stime);
-+		ret = simple_read_from_buffer(buf, count, ppos, &info, sizeof(info));
-+	}
-+	return ret;
-+}
-+
-+static struct file_operations clonefd_fops = {
-+	.release = clonefd_release,
-+	.poll = clonefd_poll,
-+	.read = clonefd_read,
-+	.llseek = no_llseek,
++    uint32_t code;   /* Signal code */
++    uint32_t status; /* Exit status or signal */
++    uint64_t utime;  /* User CPU time */
++    uint64_t stime;  /* System CPU time */
 +};
 +
-+/* Do process exit notification for clonefd. */
-+void clonefd_do_notify(struct task_struct *p)
-+{
-+	if (p->autoreap)
-+		wake_up_all(&p->clonefd_wqh);
-+}
++.fi
++.IP
++If the new process has not yet exited,
++.BR read (2)
++either blocks until it does,
++or fails with the error
++.B EAGAIN
++if the file descriptor has been made nonblocking.
++.IP
++Future kernels may extend
++.I clonefd_info
++by appending additional fields to the end.  Callers should read as many bytes
++as they understand; unread data will be discarded, and subsequent reads after
++the first will return 0 to indicate end-of-file.  Callers requesting more bytes
++than the kernel provides (such as callers expecting a newer
++.I clonefd_info
++structure) will receive a shorter structure from older kernels.
++.TP
++.BR poll "(2), " select "(2), " epoll "(7) (and similar)"
++The file descriptor is readable
++(the
++.BR select (2)
++.I readfds
++argument; the
++.BR poll (2)
++.B POLLIN
++flag)
++if the new process has exited.
++.TP
++.BR close (2)
++When the file descriptor is no longer required it should be closed.  If no
++process has a file descriptor open for the new process, no process will receive
++any notification when the new process exits.  The new process will still be
++immediately reaped.
++.RE
 +
-+/* Handle the CLONE_FD case for copy_process. */
-+int clonefd_do_clone(u64 clone_flags, struct task_struct *p, struct clonefd_setup *setup)
-+{
-+	int flags;
-+	struct file *file;
-+	int fd;
++.SS C library/kernel ABI differences
++As with
++.BR clone (2),
++the raw
++.BR clone4 ()
++system call corresponds more closely to
++.BR fork (2)
++in that execution in the child continues from the point of the call.
 +
-+	if (!(clone_flags & CLONE_FD))
-+		return 0;
++Unlike
++.BR clone (2),
++the raw system call interface for
++.BR clone4 ()
++accepts arguments in the same order on all architectures.
 +
-+	p->autoreap = 1;
-+	init_waitqueue_head(&p->clonefd_wqh);
++The raw system call accepts
++.I flags
++as two 32-bit arguments,
++.I flags_high
++and
++.IR flags_low ,
++to simplify portability across 32-bit and 64-bit architectures and calling
++conventions.  The glibc wrapper accepts
++.I flags
++as a single 64-bit argument for convenience.
 +
-+	get_task_struct(p);
-+	flags = O_RDONLY | FMODE_ATOMIC_POS
-+	      | (clone_flags & CLONEFD_CLOEXEC ? O_CLOEXEC : 0)
-+	      | (clone_flags & CLONEFD_NONBLOCK ? O_NONBLOCK : 0);
-+	file = anon_inode_getfile("[process]", &clonefd_fops, p, flags);
-+	if (IS_ERR(file)) {
-+		put_task_struct(p);
-+		return PTR_ERR(file);
-+	}
++.SH RETURN VALUE
++For the glibc wrapper, on success,
++.BR clone4 ()
++returns the file descriptor (with
++.BR CLONE_FD )
++or new process ID
++(without
++.BR CLONE_FD ),
++and the child process begins running at the specified function.
 +
-+	/*
-+	 * We avoid allocating a low fd so that clone can still return 0 in the
-+	 * child; the child shouldn't have to change just because the parent
-+	 * used CLONE_FD.
-+	 */
-+	fd = alloc_fd(3, flags);
-+	if (fd < 0) {
-+		fput(file);
-+		return fd;
-+	}
++For the raw syscall, on success,
++.BR clone4 ()
++returns the file descriptor or new process ID to the calling process, and
++returns 0 in the new child process.
 +
-+	setup->fd = fd;
-+	setup->file = file;
++On failure,
++.BR clone4 ()
++returns \-1 and sets
++.I errno
++accordingly.
 +
-+	return 0;
-+}
++.SH ERRORS
++.BR clone4 ()
++can return any error from
++.BR clone (2),
++as well as the following additional errors:
++.TP
++.B EINVAL
++.I flags
++contained an unknown flag.
++.TP
++.B EINVAL
++.I flags
++included
++.BR CLONE_FD,
++but the kernel configuration does not have the
++.B CONFIG_CLONEFD
++option enabled.
++.TP
++.B EMFILE
++.I flags
++included
++.BR CLONE_FD,
++but the new file descriptor would exceed the process limit on open file descriptors.
++.TP
++.B ENFILE
++.I flags
++included
++.BR CLONE_FD,
++but the new file descriptor would exceed the system-wide limit on open file descriptors.
++.TP
++.B ENODEV
++.I flags
++included
++.BR CLONE_FD,
++but
++.BR clone4 ()
++could not mount the (internal) anonymous inode device.
 +
-+/* Clean up clonefd information after a partially complete clone */
-+void clonefd_cleanup_failed_clone(struct task_struct *p, struct clonefd_setup *setup)
-+{
-+	if (setup->fd)
-+		put_unused_fd(setup->fd);
-+	if (setup->file)
-+		fput(setup->file);
-+}
++.SH CONFORMING TO
++.BR clone4 ()
++is Linux-specific and should not be used in programs intended to be portable.
 +
-+/* Finish setting up the clonefd */
-+int clonefd_install_fd(struct task_struct *p, struct clonefd_setup *setup)
-+{
-+	fd_install(setup->fd, setup->file);
-+	return setup->fd;
-+}
-diff --git a/kernel/clonefd.h b/kernel/clonefd.h
-new file mode 100644
-index 0000000..07bd31f
---- /dev/null
-+++ b/kernel/clonefd.h
-@@ -0,0 +1,27 @@
-+/*
-+ * Support functions for CLONE_FD
-+ *
-+ * Copyright (c) 2015 Intel Corporation
-+ * Original authors: Josh Triplett <josh@joshtriplett.org>
-+ *                   Thiago Macieira <thiago@macieira.org>
-+ */
-+#pragma once
-+
-+#include <linux/sched.h>
-+
-+#ifdef CONFIG_CLONEFD
-+struct clonefd_setup {
-+	int fd;
-+	struct file *file;
-+};
-+int clonefd_do_clone(u64 clone_flags, struct task_struct *p, struct clonefd_setup *setup);
-+void clonefd_cleanup_failed_clone(struct task_struct *p, struct clonefd_setup *setup);
-+int clonefd_install_fd(struct task_struct *p, struct clonefd_setup *setup);
-+void clonefd_do_notify(struct task_struct *p);
-+#else /* CONFIG_CLONEFD */
-+struct clonefd_setup {};
-+static inline int clonefd_do_clone(u64 clone_flags, struct task_struct *p, struct clonefd_setup *setup) { return 0; }
-+static inline void clonefd_cleanup_failed_clone (struct task_struct *p, struct clonefd_setup *setup) {}
-+static inline int clonefd_install_fd(struct task_struct *p, struct clonefd_setup *setup) { return -EINVAL; }
-+static inline void clonefd_do_notify(struct task_struct *p) {}
-+#endif /* CONFIG_CLONEFD */
-diff --git a/kernel/exit.c b/kernel/exit.c
-index feff10b..a2c8520 100644
---- a/kernel/exit.c
-+++ b/kernel/exit.c
-@@ -59,6 +59,8 @@
- #include <asm/pgtable.h>
- #include <asm/mmu_context.h>
- 
-+#include "clonefd.h"
-+
- static void exit_mm(struct task_struct *tsk);
- 
- static void __unhash_process(struct task_struct *p, bool group_dead)
-@@ -598,7 +600,9 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
- 	if (group_dead)
- 		kill_orphaned_pgrp(tsk->group_leader, NULL);
- 
--	if (unlikely(tsk->ptrace)) {
-+	if (tsk->autoreap) {
-+		autoreap = true;
-+	} else if (unlikely(tsk->ptrace)) {
- 		int sig = thread_group_leader(tsk) &&
- 				thread_group_empty(tsk) &&
- 				!ptrace_reparented(tsk) ?
-@@ -612,8 +616,10 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
- 	}
- 
- 	tsk->exit_state = autoreap ? EXIT_DEAD : EXIT_ZOMBIE;
--	if (tsk->exit_state == EXIT_DEAD)
-+	if (tsk->exit_state == EXIT_DEAD) {
- 		list_add(&tsk->ptrace_entry, &dead);
-+		clonefd_do_notify(tsk);
-+	}
- 
- 	/* mt-exec, de_thread() is waiting for group leader */
- 	if (unlikely(tsk->signal->notify_count < 0))
-diff --git a/kernel/fork.c b/kernel/fork.c
-index e29edea..00cab05 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -87,6 +87,8 @@
- #define CREATE_TRACE_POINTS
- #include <trace/events/task.h>
- 
-+#include "clonefd.h"
-+
- /*
-  * Protected counters by write_lock_irq(&tasklist_lock)
-  */
-@@ -321,6 +323,8 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
- 	if (err)
- 		goto free_ti;
- 
-+	tsk->autoreap = 0;
-+
- 	tsk->stack = ti;
- #ifdef CONFIG_SECCOMP
- 	/*
-@@ -1193,7 +1197,8 @@ static struct task_struct *copy_process(u64 clone_flags,
- 					int __user *child_tidptr,
- 					struct pid *pid,
- 					int trace,
--					unsigned long tls)
-+					unsigned long tls,
-+					struct clonefd_setup *clonefd_setup)
- {
- 	int retval;
- 	struct task_struct *p;
-@@ -1244,6 +1249,16 @@ static struct task_struct *copy_process(u64 clone_flags,
- 			return ERR_PTR(-EINVAL);
- 	}
- 
-+	/*
-+	 * If using CLONE_FD, the low byte is used for additional flags; check
-+	 * for unknown flags.
-+	 */
-+	if (clone_flags & CLONE_FD) {
-+		if (!IS_ENABLED(CONFIG_CLONEFD) ||
-+		    (clone_flags & CSIGNAL & ~(CLONEFD_CLOEXEC | CLONEFD_NONBLOCK)))
-+			return ERR_PTR(-EINVAL);
-+	}
-+
- 	retval = security_task_create(clone_flags);
- 	if (retval)
- 		goto fork_out;
-@@ -1416,6 +1431,10 @@ static struct task_struct *copy_process(u64 clone_flags,
- 			goto bad_fork_cleanup_io;
- 	}
- 
-+	retval = clonefd_do_clone(clone_flags, p, clonefd_setup);
-+	if (retval)
-+		goto bad_fork_free_pid;
-+
- 	p->set_child_tid = (clone_flags & CLONE_CHILD_SETTID) ? child_tidptr : NULL;
- 	/*
- 	 * Clear TID on mm_release()?
-@@ -1456,7 +1475,9 @@ static struct task_struct *copy_process(u64 clone_flags,
- 		p->group_leader = current->group_leader;
- 		p->tgid = current->tgid;
- 	} else {
--		if (clone_flags & CLONE_PARENT)
-+		if (clone_flags & CLONE_FD)
-+			p->exit_signal = 0;
-+		else if (clone_flags & CLONE_PARENT)
- 			p->exit_signal = current->group_leader->exit_signal;
- 		else
- 			p->exit_signal = (clone_flags & CSIGNAL);
-@@ -1508,7 +1529,7 @@ static struct task_struct *copy_process(u64 clone_flags,
- 		spin_unlock(&current->sighand->siglock);
- 		write_unlock_irq(&tasklist_lock);
- 		retval = -ERESTARTNOINTR;
--		goto bad_fork_free_pid;
-+		goto bad_fork_cleanup_clonefd;
- 	}
- 
- 	if (likely(p->pid)) {
-@@ -1560,6 +1581,8 @@ static struct task_struct *copy_process(u64 clone_flags,
- 
- 	return p;
- 
-+bad_fork_cleanup_clonefd:
-+	clonefd_cleanup_failed_clone(p, clonefd_setup);
- bad_fork_free_pid:
- 	if (pid != &init_struct_pid)
- 		free_pid(pid);
-@@ -1617,7 +1640,7 @@ static inline void init_idle_pids(struct pid_link *links)
- struct task_struct *fork_idle(int cpu)
- {
- 	struct task_struct *task;
--	task = copy_process(CLONE_VM, 0, 0, NULL, &init_struct_pid, 0, 0);
-+	task = copy_process(CLONE_VM, 0, 0, NULL, &init_struct_pid, 0, 0, NULL);
- 	if (!IS_ERR(task)) {
- 		init_idle_pids(task->pids);
- 		init_idle(task, cpu);
-@@ -1643,6 +1666,7 @@ static long _do_fork(
- 	struct task_struct *p;
- 	int trace = 0;
- 	long nr;
-+	struct clonefd_setup clonefd_setup = {};
- 
- 	/*
- 	 * Determine whether and which event to report to ptracer.  When
-@@ -1653,7 +1677,8 @@ static long _do_fork(
- 	if (!(clone_flags & CLONE_UNTRACED)) {
- 		if (clone_flags & CLONE_VFORK)
- 			trace = PTRACE_EVENT_VFORK;
--		else if ((clone_flags & CSIGNAL) != SIGCHLD)
-+		else if ((clone_flags & CLONE_FD) ||
-+			 (clone_flags & CSIGNAL) != SIGCHLD)
- 			trace = PTRACE_EVENT_CLONE;
- 		else
- 			trace = PTRACE_EVENT_FORK;
-@@ -1663,7 +1688,7 @@ static long _do_fork(
- 	}
- 
- 	p = copy_process(clone_flags, stack_start, stack_size,
--			 child_tidptr, NULL, trace, tls);
-+			 child_tidptr, NULL, trace, tls, &clonefd_setup);
- 	/*
- 	 * Do this prior waking up the new thread - the thread pointer
- 	 * might get invalid after that point, if the thread exits quickly.
-@@ -1686,6 +1711,9 @@ static long _do_fork(
- 			get_task_struct(p);
- 		}
- 
-+		if (clone_flags & CLONE_FD)
-+			nr = clonefd_install_fd(p, &clonefd_setup);
-+
- 		wake_up_new_task(p);
- 
- 		/* forking complete and child started to run, tell ptracer */
++.SH SEE ALSO
++.BR clone (2),
++.BR epoll (7),
++.BR poll (2),
++.BR pthreads (7),
++.BR read (2),
++.BR select (2)
 -- 
 2.1.4
