@@ -1,42 +1,162 @@
-From: Paul Bolle <pebolle@tiscali.nl>
-Subject: Re: [PATCH v3  10/15] serial: stm32-usart: Add STM32 USART Driver
-Date: Fri, 13 Mar 2015 10:41:23 +0100
-Message-ID: <1426239683.5304.59.camel@x220>
-References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
-	 <1426197361-19290-11-git-send-email-maxime.coquelin@st.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-gpio-owner@vger.kernel.org>
-In-Reply-To: <1426197361-19290-11-git-send-email-maxime.coquelin@st.com>
-Sender: linux-gpio-owner@vger.kernel.org
-To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Cc: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, stefan@agner.ch, pmeerw@pmeerw.net, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <wi>
+From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Subject: [PATCH v2 0/7] Add simple EEPROM Framework via regmap.
+Date: Fri, 13 Mar 2015 09:49:17 +0000
+Message-ID: <1426240157-2383-1-git-send-email-srinivas.kandagatla@linaro.org>
+References: <1425548685-12887-1-git-send-email-srinivas.kandagatla@linaro.org>
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+In-Reply-To: <1425548685-12887-1-git-send-email-srinivas.kandagatla@linaro.org>
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: linux-arm-kernel@lists.infradead.org
+Cc: Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Kumar Gala <galak@codeaurora.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, Stephen Boyd <sboyd@codeaurora.org>, Arnd Bergmann <arnd@arndb.de>, broonie@kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-arm-msm@vger.kernel.org, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-Just a license nit, I'm afraid.
+Thankyou all for providing inputs and comments on previous versions of this
+patchset. Here is the v2 of the patchset addressing all the issues raised as
+part of previous versions review.
 
-On Thu, 2015-03-12 at 22:55 +0100, Maxime Coquelin wrote:
-> --- /dev/null
-> +++ b/drivers/tty/serial/stm32-usart.c
-> @@ -0,0 +1,695 @@
-> +/*
-> + * Copyright (C) Maxime Coquelin 2015
-> + * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
-> + * License terms:  GNU General Public License (GPL), version 2
-> + *
-> + * Inspired by st-asc.c from STMicroelectronics (c)
-> + */
+This patchset adds a new simple EEPROM framework to kernel.
 
-This states the license is GPL v2.
+Up until now, EEPROM drivers were stored in drivers/misc, where they all had to
+duplicate pretty much the same code to register a sysfs file, allow in-kernel
+users to access the content of the devices they were driving, etc.
+    
+This was also a problem as far as other in-kernel users were involved, since
+the solutions used were pretty much different from on driver to another, there
+was a rather big abstraction leak.
+    
+This introduction of this framework aims at solving this. It also introduces DT
+representation for consumer devices to go get the data they require (MAC
+Addresses, SoC/Revision ID, part numbers, and so on) from the EEPROMs.
+    
+Having regmap interface to this framework would give much better
+abstraction for eeproms on different buses.
 
-> +MODULE_LICENSE("GPL");
+patch 1-3 Introduces the EEPROM framework.
+Patch 4 migrates an existing driver to eeprom framework.
+Patch 5-6 Adds Qualcomm specific qfprom driver.
+Patch 7 adds entry in MAINTAINERS.
 
-And
-    MODULE_LICENSE("GPL v2");
+Its also possible to migrate other eeprom drivers to this framework.
+Patch 6 can also be made a generic mmio-eeprom driver.
 
-would match that statement.
+Providers APIs:
+	eeprom_register/unregister();
+
+Consumers APIs:
+	eeprom_cell_get()/of_eeprom_cell_get()/of_eeprom_cell_get_byname();
+	eeprom_cell_read()/eeprom_cell_write();
+
+Device Tree:
+
+	/* Provider */
+	qfprom: qfprom@00700000 {
+		compatible 	= "qcom,qfprom";
+		reg		= <0x00700000 0x1000>;
+		...
+
+		/* Data cells */
+		tsens_calibration: calib@404 {
+			reg = <0x404 0x10>;
+		};
+
+		serial_number: sn {
+			reg = <0x104 0x4>, <0x204 0x4>, <0x30c 0x4>;
+
+		};
+		...
+	};
+	
+	/* Consumer node */
+	tsens: tsens {
+		...
+		eeproms = <&tsens_calibration>;
+		eeprom-names = "calib";
+		...
+	};
+
+userspace interface:
+
+hexdump /sys/class/eeprom/qfprom0/eeprom
+                                                                                                                                                                                                                  
+0000000 0000 0000 0000 0000 0000 0000 0000 0000
+*
+00000a0 db10 2240 0000 e000 0c00 0c00 0000 0c00
+0000000 0000 0000 0000 0000 0000 0000 0000 0000
+...
+*
+0001000
 
 
-Paul Bolle
+Changes since v1(https://lkml.org/lkml/2015/3/5/153)
+ * Fix various Licencing issues spotted by Paul Bolle and Mark Brown
+ * Allow eeprom core to build as module spotted by Paul Bolle.
+ * Fix various kconfig issues spotted by Paul Bolle.
+ * remove unessary atomic varible spotted by Mark Brown.
+ * Few cleanups and common up some of the code in core.
+ * Add qfprom bindings.
 
+Changes since RFC(https://lkml.org/lkml/2015/2/19/307)
+ * Fix documentation and error checks in read/write spotted by Andrew Lunn
+ * Kconfig fix suggested by Stephen Boyd.
+ * Add module owner suggested by Stephen Boyd and others.
+ * Fix unsafe handling of eeprom in unregister spotted by Russell and Mark Brown.
+ * seperate bindings patch as suggested by Rob.
+ * Add MAINTAINERS as suggested by Rob.
+ * Added support to allow reading eeprom for things like serial number which
+  can be scatters across.
+ * Added eeprom data using reg property suggested by Sascha and Stephen.
+ * Added non-DT support.
+ * Move kerneldoc to the src files spotted by Mark Brown.
+ * Remove local list and do eeprom lookup by using class_find_device()
+
+
+Thanks,
+srini
+
+
+Maxime Ripard (1):
+  eeprom: sunxi: Move the SID driver to the eeprom framework
+
+Srinivas Kandagatla (6):
+  eeprom: Add a simple EEPROM framework for eeprom providers
+  eeprom: Add a simple EEPROM framework for eeprom consumers
+  eeprom: Add bindings for simple eeprom framework
+  eeprom: qfprom: Add Qualcomm QFPROM support.
+  eeprom: qfprom: Add bindings for qfprom
+  eeprom: Add to MAINTAINERS for eeprom framework
+
+ Documentation/ABI/testing/sysfs-driver-sunxi-sid   |  22 -
+ .../bindings/eeprom/allwinner,sunxi-sid.txt        |  21 +
+ .../devicetree/bindings/eeprom/eeprom.txt          |  70 +++
+ .../devicetree/bindings/eeprom/qfprom.txt          |  23 +
+ .../bindings/misc/allwinner,sunxi-sid.txt          |  17 -
+ MAINTAINERS                                        |   9 +
+ drivers/Kconfig                                    |   2 +
+ drivers/Makefile                                   |   1 +
+ drivers/eeprom/Kconfig                             |  33 ++
+ drivers/eeprom/Makefile                            |   9 +
+ drivers/eeprom/core.c                              | 517 +++++++++++++++++++++
+ drivers/eeprom/eeprom-sunxi-sid.c                  | 136 ++++++
+ drivers/eeprom/qfprom.c                            |  87 ++++
+ drivers/misc/eeprom/Kconfig                        |  13 -
+ drivers/misc/eeprom/Makefile                       |   1 -
+ drivers/misc/eeprom/sunxi_sid.c                    | 156 -------
+ include/linux/eeprom-consumer.h                    |  67 +++
+ include/linux/eeprom-provider.h                    |  47 ++
+ 18 files changed, 1022 insertions(+), 209 deletions(-)
+ delete mode 100644 Documentation/ABI/testing/sysfs-driver-sunxi-sid
+ create mode 100644 Documentation/devicetree/bindings/eeprom/allwinner,sunxi-sid.txt
+ create mode 100644 Documentation/devicetree/bindings/eeprom/eeprom.txt
+ create mode 100644 Documentation/devicetree/bindings/eeprom/qfprom.txt
+ delete mode 100644 Documentation/devicetree/bindings/misc/allwinner,sunxi-sid.txt
+ create mode 100644 drivers/eeprom/Kconfig
+ create mode 100644 drivers/eeprom/Makefile
+ create mode 100644 drivers/eeprom/core.c
+ create mode 100644 drivers/eeprom/eeprom-sunxi-sid.c
+ create mode 100644 drivers/eeprom/qfprom.c
+ delete mode 100644 drivers/misc/eeprom/sunxi_sid.c
+ create mode 100644 include/linux/eeprom-consumer.h
+ create mode 100644 include/linux/eeprom-provider.h
+
+-- 
+1.9.1
