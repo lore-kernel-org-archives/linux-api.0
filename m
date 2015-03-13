@@ -1,42 +1,49 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: [PATCH net-next 1/2] bpf: allow extended BPF programs access
- skb fields
-Date: Fri, 13 Mar 2015 10:09:21 -0700
-Message-ID: <550319C1.50209@plumgrid.com>
-References: <1426213271-8363-1-git-send-email-ast@plumgrid.com> <1426213271-8363-2-git-send-email-ast@plumgrid.com> <5502B48B.7040909@iogearbox.net> <55030ED8.4020209@plumgrid.com> <550313B6.2080701@iogearbox.net>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH v4 3/9] selftests: Introduce minimal shared logic for
+ running tests
+Date: Fri, 13 Mar 2015 11:19:16 -0600
+Message-ID: <55031C14.1030203@osg.samsung.com>
+References: <1426046765-19289-1-git-send-email-mpe@ellerman.id.au> <1426046765-19289-3-git-send-email-mpe@ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <550313B6.2080701@iogearbox.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Borkmann <daniel@iogearbox.net>, "David S. Miller" <davem@davemloft.net>
-Cc: Thomas Graf <tgraf@suug.ch>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1426046765-19289-3-git-send-email-mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org, mmarek-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 3/13/15 9:43 AM, Daniel Borkmann wrote:
-> On 03/13/2015 05:22 PM, Alexei Starovoitov wrote:
->> On 3/13/15 2:57 AM, Daniel Borkmann wrote:
->>> On 03/13/2015 03:21 AM, Alexei Starovoitov wrote:
->>>> introduce user accessible mirror of in-kernel 'struct sk_buff':
->>>
->>> For each member, I'd also add BUILD_BUG_ON()s similarly as we have in
->>> convert_bpf_extensions(). That way, people won't forget to adjust the
->>> code.
->>
->> I thought about it, but didn't add it, since we already have them
->> in the same file several lines above this spot.
->> I think one build error per .c file should be enough to attract
->> attention.
->> Though I'll add a comment to convert_bpf_extensions() that build_bug_on
->> errors should be addressed in two places.
->
-> My concern would be that in case the code gets changed, this spot
-> could easily be overlooked by someone possibly unfamiliar with the
-> code, since no build error triggers there.
->
-> So I guess it wouldn't hurt or cost us much to also adding the
-> BUILD_BUG_ON()s there instead of a comment.
+On 03/10/2015 10:05 PM, Michael Ellerman wrote:
+> This adds a Make include file which most selftests can then include to
+> get the run_tests logic.
+> 
+> On its own this has the advantage of some reduction in repetition, and
+> also means the pass/fail message is defined in fewer places.
+> 
+> However the key advantage is it will allow us to implement install very
+> simply in a subsequent patch.
+> 
+> The default implementation just executes each program in $(TEST_PROGS).
+> 
+> We use a variable to hold the default implementation of $(RUN_TESTS)
+> because that gives us a clean way to override it if necessary, ie. using
+> override. The mount, memory-hotplug and mqueue tests use that to provide
+> a different implementation.
+> 
+> Tests are not run via /bin/bash, so if they are scripts they must be
+> executable, we add a+x to several.
+> 
+> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 
-I think it's overkill, but fine, it's minor. Will add another set
-of build_bug_ons and see how it looks.
+This patch will be applied to next and queued for 4.1.
+
+-- Shuah
+
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
