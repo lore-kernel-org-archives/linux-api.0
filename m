@@ -1,26 +1,51 @@
-From: Thiago Macieira <thiago.macieira-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 0/6] CLONE_FD: Task exit notification via file descriptor
-Date: Fri, 13 Mar 2015 18:11:32 -0700
-Message-ID: <4467745.tgv2QnPHiH@tjmaciei-mobl4>
-References: <CAHse=S9hnGm=Z8FR4f+z_TFwnrjBLkcV4wVwjDYgKuOSemdVrA@mail.gmail.com> <20150313214556.GB10954@cloud> <CALCETrWwkdWkNCsrcSAn+7f9SJCuYA-TV9=AygWMhXCC9Njp9Q@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrWwkdWkNCsrcSAn+7f9SJCuYA-TV9=AygWMhXCC9Njp9Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: [PATCH] selftests: Fix build failures when invoked from kselftest target
+Date: Fri, 13 Mar 2015 19:45:03 -0600
+Message-ID: <1426297504-14432-1-git-send-email-shuahkh@osg.samsung.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On Friday 13 March 2015 14:51:47 Andy Lutomirski wrote:
-> In any event, we should find out what FreeBSD does in response to
-> read(2) on the fd.
+Several tests that rely on implicit build rules fail to build,
+when invoked from the main Makefile kselftest target. These
+failures are due to --no-builtin-rules and --no-builtin-variables
+options set in the inherited MAKEFLAGS.
 
-I've just successfully installed FreeBSD and compiled qtbase (main package of 
-Qt 5) on it.
+--no-builtin-rules eliminates the use of built-in implicit rules
+and --no-builtin-variables is for not defining built-in variables.
+These two options override the use of implicit rules resulting in
+build failures. In addition, inherited LDFLAGS result in build
+failures and there is no need to define LDFLAGS.  Clear LDFLAGS
+and MAKEFLAG when make is invoked from the main Makefile kselftest
+target. Fixing this at selftests Makefile avoids changing the main
+Makefile and keeps this change self contained at selftests level.
 
-I'll test pdfork during the weekend and report its behaviour.
+Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
+---
+ tools/testing/selftests/Makefile | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+index 4e51122..8e09db7 100644
+--- a/tools/testing/selftests/Makefile
++++ b/tools/testing/selftests/Makefile
+@@ -22,6 +22,15 @@ TARGETS += vm
+ TARGETS_HOTPLUG = cpu-hotplug
+ TARGETS_HOTPLUG += memory-hotplug
+ 
++# Clear LDFLAGS and MAKEFLAGS if called from main
++# Makefile to avoid test build failures when test
++# Makefile doesn't have explicit build rules.
++ifeq (1,$(MAKELEVEL))
++undefine LDFLAGS
++override define MAKEFLAGS =
++endef
++endif
++
+ all:
+ 	for TARGET in $(TARGETS); do \
+ 		make -C $$TARGET; \
 -- 
-Thiago Macieira - thiago.macieira (AT) intel.com
-  Software Architect - Intel Open Source Technology Center
+2.1.0
