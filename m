@@ -1,51 +1,34 @@
 From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH] selftests: Fix build failures when invoked from kselftest target
-Date: Fri, 13 Mar 2015 19:45:03 -0600
-Message-ID: <1426297504-14432-1-git-send-email-shuahkh@osg.samsung.com>
+Subject: [PATCH] selftests: Fix kcmp build to not require headers install
+Date: Fri, 13 Mar 2015 19:45:04 -0600
+Message-ID: <1426297504-14432-2-git-send-email-shuahkh@osg.samsung.com>
+References: <1426297504-14432-1-git-send-email-shuahkh@osg.samsung.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1426297504-14432-1-git-send-email-shuahkh@osg.samsung.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Shuah Khan <shuahkh@osg.samsung.com>
+To: gorcunov@openvz.org, tranmanphong@gmail.com, mpe@ellerman.id.au, akpm@linux-foundation.org
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Several tests that rely on implicit build rules fail to build,
-when invoked from the main Makefile kselftest target. These
-failures are due to --no-builtin-rules and --no-builtin-variables
-options set in the inherited MAKEFLAGS.
-
---no-builtin-rules eliminates the use of built-in implicit rules
-and --no-builtin-variables is for not defining built-in variables.
-These two options override the use of implicit rules resulting in
-build failures. In addition, inherited LDFLAGS result in build
-failures and there is no need to define LDFLAGS.  Clear LDFLAGS
-and MAKEFLAG when make is invoked from the main Makefile kselftest
-target. Fixing this at selftests Makefile avoids changing the main
-Makefile and keeps this change self contained at selftests level.
+Change CFLAGS to look in uapi to allow kcmp to be built without
+requiring headers install. This will make it easier to run tests
+without going through the headers install step.
 
 Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
 ---
- tools/testing/selftests/Makefile | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ tools/testing/selftests/kcmp/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 4e51122..8e09db7 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -22,6 +22,15 @@ TARGETS += vm
- TARGETS_HOTPLUG = cpu-hotplug
- TARGETS_HOTPLUG += memory-hotplug
+diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
+index ff0eefd..d405ad4 100644
+--- a/tools/testing/selftests/kcmp/Makefile
++++ b/tools/testing/selftests/kcmp/Makefile
+@@ -1,5 +1,5 @@
+ CC := $(CROSS_COMPILE)$(CC)
+-CFLAGS += -I../../../../usr/include/
++CFLAGS += -I../../../../include/uapi -I../../../../usr/include/
  
-+# Clear LDFLAGS and MAKEFLAGS if called from main
-+# Makefile to avoid test build failures when test
-+# Makefile doesn't have explicit build rules.
-+ifeq (1,$(MAKELEVEL))
-+undefine LDFLAGS
-+override define MAKEFLAGS =
-+endef
-+endif
-+
- all:
- 	for TARGET in $(TARGETS); do \
- 		make -C $$TARGET; \
+ all: kcmp_test
+ 
 -- 
 2.1.0
