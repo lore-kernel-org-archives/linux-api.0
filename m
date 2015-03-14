@@ -1,47 +1,84 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v2 net-next 1/2] bpf: allow extended BPF programs access
- skb fields
-Date: Sat, 14 Mar 2015 08:55:16 -0700
-Message-ID: <550459E4.1050808@plumgrid.com>
-References: <1426273064-4837-1-git-send-email-ast@plumgrid.com> <1426273064-4837-2-git-send-email-ast@plumgrid.com> <550392F7.9040308@iogearbox.net> <550397B0.5070409@iogearbox.net> <5503981C.6000801@plumgrid.com> <55039A0D.20000@iogearbox.net> <55039C9D.6010602@plumgrid.com> <5503C03F.8020903@plumgrid.com> <550400D8.5060407@iogearbox.net>
+From: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
+Subject: Re: [PATCH 1/2] vt: add cursor blink interval escape sequence
+Date: Sat, 14 Mar 2015 17:48:13 +0000 (GMT)
+Message-ID: <alpine.DEB.2.11.1503141728120.1887@local>
+References: <alpine.DEB.2.11.1501262034380.1945@localhost.localdomain> <alpine.DEB.2.11.1501262040380.2052@localhost.localdomain> <20150225094946.GA24627@amd> <alpine.LNX.2.11.1502252319330.276@localhost> <20150226220243.GC9935@amd> <alpine.LNX.2.11.1502271905580.4212@localhost>
+ <alpine.LNX.2.11.1502271911380.4248@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <550400D8.5060407-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+In-Reply-To: <alpine.LNX.2.11.1502271911380.4248@localhost>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Tomi Valkeinen <tomi.valkeinen-l0cyMroinI0@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 3/14/15 2:35 AM, Daniel Borkmann wrote:
-> On 03/14/2015 05:59 AM, Alexei Starovoitov wrote:
->> also note that this case and twsk_build_assert are different.
->> twsk_build_assert has no other choice then to have one function
->> that covers logic in the whole file, whereas in this patch:
->> +               BUILD_BUG_ON(FIELD_SIZEOF(struct sk_buff, mark) != 4);
->> +               *insn++ = BPF_LDX_MEM(BPF_W, dst_reg, src_reg,
->> +                                     offsetof(struct sk_buff, mark));
->>
->> the build_bug_on protect the line directly below.
->> Separating them just doesn't make sense at all.
->
-> I also like the above approach better, I only suggested that as a
-> possible alternative since you were saying earlier in this thread:
->
->    I thought about it, but didn't add it, since we already have them
->    in the same file several lines above this spot. I think one build
->    error per .c file should be enough to attract attention. Though
->    I'll add a comment to convert_bpf_extensions() that build_bug_on
->    errors should be addressed in two places.
+On Fri, 27 Feb 2015, Scot Doyle wrote:
+> Add an escape sequence to specify the current console's cursor blink
+> interval. The interval is specified as a number of milliseconds until
+> the next cursor display state toggle, from 50 to 65535. /proc/loadavg
+> did not show a difference with a one msec interval, but the lower
+> bound is set to 50 msecs since slower hardware wasn't tested.
+> 
+> Store the interval in the vc_data structure for later access by fbcon,
+> initializing the value to fbcon's current hardcoded value of 200 msecs.
+> 
+> Signed-off-by: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
+> Acked-by: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
 
-and to that you replied:
-"My concern would be that in case the code gets changed, this spot
-could easily be overlooked by someone possibly unfamiliar with the
-code, since no build error triggers there."
+Hi Greg, sorry about your backlog. Is it too soon for a ping?
 
-so from there I saw two options: either copy paste all
-build_bug_on and have the same *insn=... and build_bug_on in
-two places or consolidate them in single helper function.
-Obviously single helper function is a preferred method.
-I'm not sure what are you still arguing about.
+> ---
+>  drivers/tty/vt/vt.c            | 9 +++++++++
+>  include/linux/console_struct.h | 1 +
+>  2 files changed, 10 insertions(+)
+> 
+> diff --git a/drivers/tty/vt/vt.c b/drivers/tty/vt/vt.c
+> index 6e00572..ab1f173 100644
+> --- a/drivers/tty/vt/vt.c
+> +++ b/drivers/tty/vt/vt.c
+> @@ -135,6 +135,7 @@ const struct consw *conswitchp;
+>   */
+>  #define DEFAULT_BELL_PITCH	750
+>  #define DEFAULT_BELL_DURATION	(HZ/8)
+> +#define DEFAULT_CURSOR_BLINK_MS	200
+>  
+>  struct vc vc_cons [MAX_NR_CONSOLES];
+>  
+> @@ -1590,6 +1591,13 @@ static void setterm_command(struct vc_data *vc)
+>  		case 15: /* activate the previous console */
+>  			set_console(last_console);
+>  			break;
+> +		case 16: /* set cursor blink duration in msec */
+> +			if (vc->vc_npar >= 1 && vc->vc_par[1] >= 50 &&
+> +					vc->vc_par[1] <= USHRT_MAX)
+> +				vc->vc_cur_blink_ms = vc->vc_par[1];
+> +			else
+> +				vc->vc_cur_blink_ms = DEFAULT_CURSOR_BLINK_MS;
+> +			break;
+>  	}
+>  }
+>  
+> @@ -1717,6 +1725,7 @@ static void reset_terminal(struct vc_data *vc, int do_clear)
+>  
+>  	vc->vc_bell_pitch = DEFAULT_BELL_PITCH;
+>  	vc->vc_bell_duration = DEFAULT_BELL_DURATION;
+> +	vc->vc_cur_blink_ms = DEFAULT_CURSOR_BLINK_MS;
+>  
+>  	gotoxy(vc, 0, 0);
+>  	save_cur(vc);
+> diff --git a/include/linux/console_struct.h b/include/linux/console_struct.h
+> index e859c98..e329ee2 100644
+> --- a/include/linux/console_struct.h
+> +++ b/include/linux/console_struct.h
+> @@ -104,6 +104,7 @@ struct vc_data {
+>  	unsigned int    vc_resize_user;         /* resize request from user */
+>  	unsigned int	vc_bell_pitch;		/* Console bell pitch */
+>  	unsigned int	vc_bell_duration;	/* Console bell duration */
+> +	unsigned short	vc_cur_blink_ms;	/* Cursor blink duration */
+>  	struct vc_data **vc_display_fg;		/* [!] Ptr to var holding fg console for this display */
+>  	struct uni_pagedir *vc_uni_pagedir;
+>  	struct uni_pagedir **vc_uni_pagedir_loc; /* [!] Location of uni_pagedir variable for this console */
+> -- 
+> 2.3.0
+> 
