@@ -1,60 +1,42 @@
 From: Oleg Nesterov <oleg@redhat.com>
 Subject: Re: [PATCH 6/6] clone4: Introduce new CLONE_FD flag to get task
 	exit notification via fd
-Date: Sat, 14 Mar 2015 21:20:59 +0100
-Message-ID: <20150314202059.GA11012@redhat.com>
-References: <cover.1426180120.git.josh@joshtriplett.org> <20150314141414.GA11062@redhat.com> <20150314143235.GA12086@redhat.com> <28025621.k7WkrfHd4d@tjmaciei-mobl4> <20150314190132.GB22130@thin> <20150314191836.GA8416@redhat.com> <20150314200318.GG22130@thin>
+Date: Sat, 14 Mar 2015 21:30:29 +0100
+Message-ID: <20150314203029.GA11656@redhat.com>
+References: <cover.1426180120.git.josh@joshtriplett.org> <20150314141414.GA11062@redhat.com> <20150314143235.GA12086@redhat.com> <28025621.k7WkrfHd4d@tjmaciei-mobl4> <20150314190132.GB22130@thin> <20150314191836.GA8416@redhat.com> <20150314194721.GA9654@redhat.com> <20150314201402.GH22130@thin>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150314200318.GG22130@thin>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <20150314201402.GH22130@thin>
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: Josh Triplett <josh@joshtriplett.org>
 Cc: Thiago Macieira <thiago.macieira@intel.com>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
 On 03/14, Josh Triplett wrote:
 >
-> On Sat, Mar 14, 2015 at 08:18:36PM +0100, Oleg Nesterov wrote:
+> What I was proposing was that a task that isn't yet dead, but that is
+> going to be autoreaped, is not eligible for waiting either.  All the
+> various wait* familiy of system calls should pretend it doesn't exist at
+> all, because returning an autoreaped task from a wait* call introduces a
+> race condition if the parent tries to *do* anything with the returned
+> PID.  If you launch a process with CLONE_FD, you need to manage it
+> exclusively with that fd, not with the wait* family of system calls.
 >
-> Is there any information somewhere on how this state machine of doom is
-> *supposed* to work? :)
+> That also implies that the child-stop and child-continued mechanisms
+> (do_notify_parent_cldstop, WSTOPPED, WCONTINUED) should ignore the task
+> too.  In the future there could be a flag to clone4 that lets you get
+> stop and continue notifications through the file descriptor.
 
-This looks as if you think that other parts of this kernel differ ;)
+So far I strongly disagree, and I think that "autoreap" feature should
+not depend on CLONE_FD.
 
-> Why would "p->task_state == EXIT_DEAD" mean
-> something different in wait_consider_task?
+However, as I already said, perhaps something like W_IGNORE_AUTOREAP
+for wait* makes sense.
 
-different? but once again, EXIT_DEAD never meant "autoreap". It always
-means "already reaped". OK, more correctly it means "release_task() will
-be called soon, please ignore me".
-
-> Pulling the EXIT_DEAD tasks out of those lists completely does sound
-> like a good simplification.  However, that doesn't seem to be the
-> current expectation in wait_consider_task, which just returns if
-> p->task_state == EXIT_DEAD to skip considering that task.
-
-See above. And another email I sent.
-
-> And an autoreaping task isn't necessarily dead yet; it just shouldn't be
-> waited on.
-
-Yes, sure, but please do not confuse this with EXIT_DEAD. In fact, please
-do not confuse this with ->task_state.
-
-> > However, currently this is TODO. The main problem is the locking in
-> > wait_task_zombie(), we can set EXIT_DEAD and remove the task from list
-                        ^^^^^^
-I mean, "we can't".
-
-> > under read_lock().
->
-> That appears to be only reachable for zombies, which an autoreaping task
-> should never become.
-
-Sure. I meant that other paths which can set EXIT_DEAD are simpler wrt
-"kill the EXIT_DEAD and EXIT_TRACE state" patch we actually want. But lets
-not discuss this here, this is offtopic.
+Plus we should also discuss the reparenting. Ok, let me leave this
+discussion until I read 0/4 at least.
 
 Oleg.
+
