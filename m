@@ -1,36 +1,52 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH] capabilities: Ambient capability set V2
-Date: Sat, 14 Mar 2015 20:04:28 +0100
-Message-ID: <20150314190428.GA24289@amd>
-References: <alpine.DEB.2.11.1502261612370.8994@gentwo.org>
+From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Subject: Re: [PATCH 6/6] clone4: Introduce new CLONE_FD flag to get task exit
+ notification via fd
+Date: Sat, 14 Mar 2015 12:15:00 -0700
+Message-ID: <20150314191500.GC22130@thin>
+References: <cover.1426180120.git.josh@joshtriplett.org>
+ <9c39c576e1d9a9912b4aec54d833a73a84d2f592.1426180120.git.josh@joshtriplett.org>
+ <20150314143558.GB12086@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.11.1502261612370.8994@gentwo.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Lameter <cl@linux.com>
-Cc: Serge Hallyn <serge.hallyn@canonical.com>, Andy Lutomirski <luto@amacapital.net>, Jonathan Corbet <corbet@lwn.net>, Aaron Jones <aaronmdjones@gmail.com>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, akpm@linuxfoundation.org, "Andrew G. Morgan" <morgan@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Markku Savela <msa@moth.iki.fi>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>
+In-Reply-To: <20150314143558.GB12086-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Thiago Macieira <thiago.macieira-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi!
+On Sat, Mar 14, 2015 at 03:35:58PM +0100, Oleg Nesterov wrote:
+> On 03/12, Josh Triplett wrote:
+> >
+> > @@ -598,7 +600,9 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
+> >  	if (group_dead)
+> >  		kill_orphaned_pgrp(tsk->group_leader, NULL);
+> >  
+> > -	if (unlikely(tsk->ptrace)) {
+> > +	if (tsk->autoreap) {
+> > +		autoreap = true;
+> > +	} else if (unlikely(tsk->ptrace)) {
+> >  		int sig = thread_group_leader(tsk) &&
+> >  				thread_group_empty(tsk) &&
+> >  				!ptrace_reparented(tsk) ?
+> > @@ -612,8 +616,10 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
+> >  	}
+> >  
+> >  	tsk->exit_state = autoreap ? EXIT_DEAD : EXIT_ZOMBIE;
+> > -	if (tsk->exit_state == EXIT_DEAD)
+> > +	if (tsk->exit_state == EXIT_DEAD) {
+> >  		list_add(&tsk->ptrace_entry, &dead);
+> > +		clonefd_do_notify(tsk);
+> > +	}
+> 
+> And even ignoring semantics issues, this change looks simply buggy anyway ;)
+> 
+> How can we do list_add(&tsk->ptrace_entry) if it is traced by _another_ task?
+> ->ptrace_entry is used by debugger.
 
->  		return -ENOSYS;
-> Index: linux/include/linux/cred.h
-> ===================================================================
-> --- linux.orig/include/linux/cred.h	2015-02-25 13:43:06.929973954 -0600
-> +++ linux/include/linux/cred.h	2015-02-25 13:43:06.925972078 -0600
-> @@ -122,6 +122,7 @@ struct cred {
->  	kernel_cap_t	cap_permitted;	/* caps we're permitted */
->  	kernel_cap_t	cap_effective;	/* caps we can actually use */
->  	kernel_cap_t	cap_bset;	/* capability bounding set */
-> +	kernel_cap_t	cap_ambient;	/* Ambient capability set */
+That list_add was there before; I didn't change that.  I just added a
+second line inside the EXIT_DEAD case, to call clonefd_do_notify (which
+wakes up potential callers of poll/read).
 
-lowercase "Ambient", for consistency?
-
-Thanks,
-									Pavel
-
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+- Josh Triplett
