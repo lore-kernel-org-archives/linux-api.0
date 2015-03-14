@@ -1,144 +1,110 @@
-From: "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+From: Andy Lutomirski <luto@amacapital.net>
 Subject: Re: [RFC] capabilities: Ambient capabilities
-Date: Sat, 14 Mar 2015 14:09:47 -0700
-Message-ID: <CALQRfL5FGGUnK7+Ss=MSDGmxpAERTUjezardGnH3QouBwhbZ4A@mail.gmail.com>
+Date: Sat, 14 Mar 2015 14:45:55 -0700
+Message-ID: <CALCETrUGASa3Gp6cC1zdAahcS59DOdyLnTtgNX7t7FucMZLmoQ@mail.gmail.com>
 References: <933931146caf5dac58379f50c017bff9f6c47661.1426183417.git.luto@kernel.org>
-	<CAGXu5jKfvswdUMcrGbr6+wn1ME_JkySMvdNd0wvvHpbQ1C7HUg@mail.gmail.com>
-	<CALQRfL7b8CjYgUnVy3jykNwv48fOc03T385RKo--cfv25YenBg@mail.gmail.com>
-	<CAObL_7HgU-ekb7mJS7C=0=idfrzV6=CSqTrG2LvUgdDtvbJx_w@mail.gmail.com>
-	<CALQRfL6HUGMfPtsqLcSed8G14Yqg27R8tpDnMZOKtvQE+rqX0A@mail.gmail.com>
-	<CALCETrVz39pJmMAEFodBNA8cOZjd0xkH95EzMazY0MWJDtpYgg@mail.gmail.com>
+ <CAGXu5jKfvswdUMcrGbr6+wn1ME_JkySMvdNd0wvvHpbQ1C7HUg@mail.gmail.com>
+ <CALQRfL7b8CjYgUnVy3jykNwv48fOc03T385RKo--cfv25YenBg@mail.gmail.com>
+ <CAObL_7HgU-ekb7mJS7C=0=idfrzV6=CSqTrG2LvUgdDtvbJx_w@mail.gmail.com>
+ <CALQRfL6HUGMfPtsqLcSed8G14Yqg27R8tpDnMZOKtvQE+rqX0A@mail.gmail.com>
+ <CALCETrVz39pJmMAEFodBNA8cOZjd0xkH95EzMazY0MWJDtpYgg@mail.gmail.com> <CALQRfL5FGGUnK7+Ss=MSDGmxpAERTUjezardGnH3QouBwhbZ4A@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrVz39pJmMAEFodBNA8cOZjd0xkH95EzMazY0MWJDtpYgg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andrew Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <CALQRfL5FGGUnK7+Ss=MSDGmxpAERTUjezardGnH3QouBwhbZ4A@mail.gmail.com>
+Sender: linux-security-module-owner@vger.kernel.org
+To: "Andrew G. Morgan" <morgan@kernel.org>
+Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, Andrew Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linuxfoundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Christoph Lameter <cl@linux.com>, LKML <linux-kernel@vger.kernel.org>, Serge Hallyn <serge.hallyn@canonical.com>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 13, 2015 at 10:57 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> On Mar 13, 2015 6:24 AM, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+On Sat, Mar 14, 2015 at 2:09 PM, Andrew G. Morgan <morgan@kernel.org> wrote:
+> On Fri, Mar 13, 2015 at 10:57 AM, Andy Lutomirski <luto@amacapital.net> wrote:
+>> On Mar 13, 2015 6:24 AM, "Andrew G. Morgan" <morgan@kernel.org> wrote:
+>>>
+>>> > It's to preserve the invariant that pA is always a subset of pI.
+>>>
+>>> But since a user can always raise a bit in pI if it is present in pP,
+>>> what does this invariant add to your model other than inconvenience?
 >>
->> > It's to preserve the invariant that pA is always a subset of pI.
->>
->> But since a user can always raise a bit in pI if it is present in pP,
->> what does this invariant add to your model other than inconvenience?
+>> The useful part is that dropping a bit from pI also drops it from pA.
+>> To keep the model consistent, I also require that you add the bit to
+>> pI before adding it to pA.
 >
-> The useful part is that dropping a bit from pI also drops it from pA.
-> To keep the model consistent, I also require that you add the bit to
-> pI before adding it to pA.
-
-So you are saying that pA is always a strict subset of pI (and pP)?
-Then why not explicitly implement it as:
-
-  pA' = (file caps or setuid or setgid ? 0 : pA)
-  pP' = (fP & X) | (pI & [fI | (pA' & pP)] )
-
-As it is you have so distributed these constraints that it is hard to
-be sure it will remain that way.
-
->> >> I'm also unclear how you can turn off this new 'feature' for a process
->> >> tree? As it is, the code creates an exploit path for a capable (pP !=
->> >> 0) program with an exploitable flaw to create a privilege escalation
->> >> for an arbitrary child program.
->> >
->> > Huh?  If you exploit the parent, you already win.  Yes, if a kiddie
->> > injects shellcode that does system("/bin/bash") into some pP != 0
->> > program, they don't actually elevate their privileges.  On the other
->> > hand, by the time an attacker injected shellcode for:
->> >
->> > prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_SYS_ADMIN);
->> > system("/bin/bash");
->>
->> Let's call the above two lines [a] and [b]. With this patch, you are
->> encouraging folk to write programs that contain a line like [a]
->> already. So, yes, I am saying that you are creating an exploitable
->> path in these programs that says if someone can inject
->> system("/bin/bash") into these programs they can get a new (because of
->> this patch) privilege escalation.
->>
->> In the prevailing model, this kind of privilege escalation (resulting
->> from naive inheritance) is designed out. I recognize that you want to
->> add it back in, but I am concerned that you are not allowing for the
->> possibility that some folk might still want to still be able to
->> prevent it.
+> So you are saying that pA is always a strict subset of pI (and pP)?
+> Then why not explicitly implement it as:
 >
-> If you have a program that deliberately uses PR_CAP_AMBIENT, then
-> setting such a securebit will break the program, so it still doesn't
-> buy you anything.
-
-Not if you make the bit lockable (like the other bits). If you want to
-run with your model in effect, you lock the enable bit on.
-
->> > into a target, they can already do whatever they want.
->> >
->> >> While I understand that everyone
->> >> 'knows what they are doing' in implementing this change, I'm convinced
->> >> that folk that are up to no good also do... Why not provide a lockable
->> >> secure bit to selectively disable this support?
->> >
->> > Show me a legitimate use case and I'll gladly implement a secure bit.
->>
->> Thanks. I was kind of hoping that you would add a lockable secure bit
->> that defaults this support to off, but can be used to turn it on with
->> or without a lock. That way, you can avoid disturbing the legacy
->> defaults (no surprises).
+>   pA' = (file caps or setuid or setgid ? 0 : pA)
+>   pP' = (fP & X) | (pI & [fI | (pA' & pP)] )
 >
-> I think this thing needs to default on to be useful.
->
+> As it is you have so distributed these constraints that it is hard to
+> be sure it will remain that way.
+
+That would be insecure.  If an attacker had pA = CAP_SYS_ADMIN, pI =
+0, pP = 0 (i.e. no privs but pA is set somehow) then, unless that's
+there's some other protection implemented, they could run some setuid
+program, and that program could switch back to non-root, set pI = 0,
+and call execve.  Unexpectedly, CAP_SYS_ADMIN would be inherited.
+
+So I made the invariant explicit and added an assertion.
+
 >>
->> > In the mean time, I don't even believe that there's a legitimate use
->> > for any of the other secure bits (except keepcaps, and I don't know
->> > why that's a securebit in the first place).
->>
->> Those bits currently make it possible to run a subsystem with no
->> [set]uid-0 support in its process tree.
+>> If you have a program that deliberately uses PR_CAP_AMBIENT, then
+>> setting such a securebit will break the program, so it still doesn't
+>> buy you anything.
 >
-> Not usefully, because even with all the securebits set to their
-> non-legacy modes, caps don't inherit, so it doesn't work.  I've tried.
+> Not if you make the bit lockable (like the other bits). If you want to
+> run with your model in effect, you lock the enable bit on.
 
-Not sure I follow. They work for a definition if inheritable that you
-seem to refuse to accept.
+I don't see the point.  Again, this should be the default.
 
->> > In the mean time, see CVE-2014-3215 for an example of why securebits
->> > are probably more trouble than they're worth.
+
 >>
->> I think it is safe to say that naive privilege inheritance has a fair
->> track record of being exploited orders of magnitude more frequently
->> than this. After all, these are the reasons LD_PRELOAD and shell
->> script setuid bits are suppressed.
+>>>
+>>> > In the mean time, I don't even believe that there's a legitimate use
+>>> > for any of the other secure bits (except keepcaps, and I don't know
+>>> > why that's a securebit in the first place).
+>>>
+>>> Those bits currently make it possible to run a subsystem with no
+>>> [set]uid-0 support in its process tree.
+>>
+>> Not usefully, because even with all the securebits set to their
+>> non-legacy modes, caps don't inherit, so it doesn't work.  I've tried.
 >
-> I don't know what you mean here by naive privilege inheritance.  The
-> examples you're taking about aren't inheritance at all; they're
-> exploring privilege *grants* during execve.  My patch deliberately
-> leaves grants like that alone.
+> Not sure I follow. They work for a definition if inheritable that you
+> seem to refuse to accept.
 
-The pI set is inherited through this exec unmolested. You are adding a
-pA set that is passed through exec somewhat unmolested but allows all
-descendants to have privilege.
+I, and everyone I know who's tried to use inheritable capabilities,
+has run into the near-complete uselessness of the current model.  I
+understand that a defunct POSIX draft specified it, but it's still
+nearly useless.
 
-- Naive inheritance is 'if you had a privilege pre-exec any descendant
-gets it post-exec'. This is what your pA achieves.
+You've objected to changing it, but you've never directly addressed
+any of the reasons why Christoph, Google, and I all believe that we
+can't usefully use it.
 
-- Inheritance, as it is currently implemented, is implemented as a
-handshake between a privileged ancestor (who added a pI bit) and a
-descendant that is ready for it (has a fI bit to match).
-  - the un-naive aspect (if you prefer 'selective' inheritance) of
-this is that only binaries with file capabilities can ever wield
-privilege, and while it can be suppressed by an intermediate
-descendant the grant of inherited privilege can skip generations.
+>>> I think it is safe to say that naive privilege inheritance has a fair
+>>> track record of being exploited orders of magnitude more frequently
+>>> than this. After all, these are the reasons LD_PRELOAD and shell
+>>> script setuid bits are suppressed.
+>>
+>> I don't know what you mean here by naive privilege inheritance.  The
+>> examples you're taking about aren't inheritance at all; they're
+>> exploring privilege *grants* during execve.  My patch deliberately
+>> leaves grants like that alone.
+>
+> The pI set is inherited through this exec unmolested.
 
-I think we can agree that the only place that inheritance can occur is
-through an exec. So 'grants' through exec is sort of a semantic bit of
-smoke masquerading as an argument. Even in the naive inheritance case
-you have to explicitly grant some privilege - you are just choosing
-different rules.
+This is flat-out useless.  Having pI = CAP_NET_BIND_SERVICE doesn't
+let me bind low-numbered ports, full stop.
 
-My Nack remains that you are eliminating the explicit enforcement of
-selective inheritance. A lockable secure bit protecting access to your
-prctl() function would address this concern.
+> My Nack remains that you are eliminating the explicit enforcement of
+> selective inheritance. A lockable secure bit protecting access to your
+> prctl() function would address this concern.
 
-Thanks
+Would a sysctl or securebit that *optionally* allows pA to be disabled
+satisfy you?
 
-Andrew
+I don't understand why lockable is at all useful.  You'd need
+CAP_SETPCAP to flip it regardless.
+
+--Andy
