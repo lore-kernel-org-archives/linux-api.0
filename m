@@ -1,110 +1,104 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [RFC] capabilities: Ambient capabilities
-Date: Sat, 14 Mar 2015 14:45:55 -0700
-Message-ID: <CALCETrUGASa3Gp6cC1zdAahcS59DOdyLnTtgNX7t7FucMZLmoQ@mail.gmail.com>
-References: <933931146caf5dac58379f50c017bff9f6c47661.1426183417.git.luto@kernel.org>
- <CAGXu5jKfvswdUMcrGbr6+wn1ME_JkySMvdNd0wvvHpbQ1C7HUg@mail.gmail.com>
- <CALQRfL7b8CjYgUnVy3jykNwv48fOc03T385RKo--cfv25YenBg@mail.gmail.com>
- <CAObL_7HgU-ekb7mJS7C=0=idfrzV6=CSqTrG2LvUgdDtvbJx_w@mail.gmail.com>
- <CALQRfL6HUGMfPtsqLcSed8G14Yqg27R8tpDnMZOKtvQE+rqX0A@mail.gmail.com>
- <CALCETrVz39pJmMAEFodBNA8cOZjd0xkH95EzMazY0MWJDtpYgg@mail.gmail.com> <CALQRfL5FGGUnK7+Ss=MSDGmxpAERTUjezardGnH3QouBwhbZ4A@mail.gmail.com>
+From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Subject: Re: [PATCH 6/6] clone4: Introduce new CLONE_FD flag to get task exit
+ notification via fd
+Date: Sat, 14 Mar 2015 15:03:08 -0700
+Message-ID: <20150314220307.GI22130@thin>
+References: <cover.1426180120.git.josh@joshtriplett.org>
+ <20150314141414.GA11062@redhat.com>
+ <20150314143235.GA12086@redhat.com>
+ <28025621.k7WkrfHd4d@tjmaciei-mobl4>
+ <20150314185424.GA6813@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <CALQRfL5FGGUnK7+Ss=MSDGmxpAERTUjezardGnH3QouBwhbZ4A@mail.gmail.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: "Andrew G. Morgan" <morgan@kernel.org>
-Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, Andrew Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linuxfoundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Christoph Lameter <cl@linux.com>, LKML <linux-kernel@vger.kernel.org>, Serge Hallyn <serge.hallyn@canonical.com>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150314185424.GA6813-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Thiago Macieira <thiago.macieira-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Mar 14, 2015 at 2:09 PM, Andrew G. Morgan <morgan@kernel.org> wrote:
-> On Fri, Mar 13, 2015 at 10:57 AM, Andy Lutomirski <luto@amacapital.net> wrote:
->> On Mar 13, 2015 6:24 AM, "Andrew G. Morgan" <morgan@kernel.org> wrote:
->>>
->>> > It's to preserve the invariant that pA is always a subset of pI.
->>>
->>> But since a user can always raise a bit in pI if it is present in pP,
->>> what does this invariant add to your model other than inconvenience?
->>
->> The useful part is that dropping a bit from pI also drops it from pA.
->> To keep the model consistent, I also require that you add the bit to
->> pI before adding it to pA.
->
-> So you are saying that pA is always a strict subset of pI (and pP)?
-> Then why not explicitly implement it as:
->
->   pA' = (file caps or setuid or setgid ? 0 : pA)
->   pP' = (fP & X) | (pI & [fI | (pA' & pP)] )
->
-> As it is you have so distributed these constraints that it is hard to
-> be sure it will remain that way.
+On Sat, Mar 14, 2015 at 07:54:24PM +0100, Oleg Nesterov wrote:
+> On 03/14, Thiago Macieira wrote:
+> > On Saturday 14 March 2015 15:32:35 Oleg Nesterov wrote:
+> > > It is not clear to me what do_wait() should do with ->autoreap child, even
+> > > ignoring ptrace.
+> > >
+> > > Just suppose that real_parent has a single "autoreap" child. Should
+> > > wait(NULL) hanf then?
+> >
+> > It should ignore the child that is set to autoreap. wait(NULL) should return -
+> > ECHILD, indicating there are no children waiting to be reaped.
+> 
+> I disagree. I won't really argue now, because I think that this needs
+> a separate discussion.
 
-That would be insecure.  If an attacker had pA = CAP_SYS_ADMIN, pI =
-0, pP = 0 (i.e. no privs but pA is set somehow) then, unless that's
-there's some other protection implemented, they could run some setuid
-program, and that program could switch back to non-root, set pI = 0,
-and call execve.  Unexpectedly, CAP_SYS_ADMIN would be inherited.
+We should certainly discuss it further, but why a "separate" discussion
+rather than just discussing the semantics of autoreap and wait here?
 
-So I made the invariant explicit and added an assertion.
+> And imo "autoreap" should come as a separate feature.
 
->>
->> If you have a program that deliberately uses PR_CAP_AMBIENT, then
->> setting such a securebit will break the program, so it still doesn't
->> buy you anything.
->
-> Not if you make the bit lockable (like the other bits). If you want to
-> run with your model in effect, you lock the enable bit on.
+Thinking about this further, I originally thought that CLONE_FD would
+*have* to imply autoreap, because otherwise the calling process still
+has to call a wait function on the process after getting the exit
+notification via the file descriptor.  However, with the current version
+(which holds a reference to the task via the task_struct and generates
+the data in ->read), it could potentially make sense to have a file
+descriptor for a process that still gets zombified until the parent
+waits on it.
 
-I don't see the point.  Again, this should be the default.
+Autoreap would still be a potentially useful addition to simplify
+process management; it would effectively become "always treat this child
+as though the parent had the signal ignored or SA_NOCLDWAIT set", which
+would just be a simple change to do_notify_parent, rather than a complex
+one to exit_notify that potentially interacts with ptrace.  Matching the
+semantics of SA_NOCLDWAIT seems reasonable.
 
+Thiago, see below for a question about switching to the semantics of
+SA_NOCLDWAIT.
 
->>
->>>
->>> > In the mean time, I don't even believe that there's a legitimate use
->>> > for any of the other secure bits (except keepcaps, and I don't know
->>> > why that's a securebit in the first place).
->>>
->>> Those bits currently make it possible to run a subsystem with no
->>> [set]uid-0 support in its process tree.
->>
->> Not usefully, because even with all the securebits set to their
->> non-legacy modes, caps don't inherit, so it doesn't work.  I've tried.
->
-> Not sure I follow. They work for a definition if inheritable that you
-> seem to refuse to accept.
+> I think that wait(NULL) should hang like it hangs even if the parent ignores
+> SIGCHLD. But in this case the parent should be woken up when the "autoreap"
+> child exits.
 
-I, and everyone I know who's tried to use inheritable capabilities,
-has run into the near-complete uselessness of the current model.  I
-understand that a defunct POSIX draft specified it, but it's still
-nearly useless.
+I had to think about this for a while, but I think it makes sense now.
+wait should *not* ever return the PID of an autoreaped process, because
+that would introduce a race condition (the caller cannot safely do
+*anything* with the PID of an autoreaped process, since by the time it
+does, the process may be gone and the PID may be reused).  However, that
+doesn't mean wait cannot block on the process, and then subsequently
+wake up and return -ECHILD (or keep waiting on some other child process
+if there is one).  That's apparently the semantic used with SA_NOCLDWAIT
+or if you have SIGCHLD set to SIG_IGN, and matching that seems
+appropriate.
 
-You've objected to changing it, but you've never directly addressed
-any of the reasons why Christoph, Google, and I all believe that we
-can't usefully use it.
+Thiago, could your QProcess implementation handle that modified autoreap
+semantic?  The downside there is that if your calling process has a
+process-wide loop that waits for all processes (and explicitly passes
+the Linux-specific __WCLONE or __WALL flag, since your processes
+launched with a 0 signal would count as "clone" children), they'd get
+back the processes you launch, too.  (That would happen with your
+userspace-emulated version too for calls *without* __WCLONE or __WALL.)
+You'd still get the exit status you need via the clonefd, without a
+race, and you wouldn't need to touch process-wide signal handling, so I
+think this should still work and avoid any races.
 
->>> I think it is safe to say that naive privilege inheritance has a fair
->>> track record of being exploited orders of magnitude more frequently
->>> than this. After all, these are the reasons LD_PRELOAD and shell
->>> script setuid bits are suppressed.
->>
->> I don't know what you mean here by naive privilege inheritance.  The
->> examples you're taking about aren't inheritance at all; they're
->> exploring privilege *grants* during execve.  My patch deliberately
->> leaves grants like that alone.
->
-> The pI set is inherited through this exec unmolested.
+I'm going to try implementing that semantic, which should significantly
+simplify the last patch of this series.
 
-This is flat-out useless.  Having pI = CAP_NET_BIND_SERVICE doesn't
-let me bind low-numbered ports, full stop.
+> If nothing else. Suppose that the parent does waitid(WEXITED|WSTOPPED).
+> Should WSTOPPED work? I think it should.
 
-> My Nack remains that you are eliminating the explicit enforcement of
-> selective inheritance. A lockable secure bit protecting access to your
-> prctl() function would address this concern.
+Yeah, I guess it should.  Arguably there ought to be a clone flag that
+lets you receive stop/continue notifications for that process via the
+file descriptor instead (to allow a library to handle job control for a
+process without touching process-wide signal handling), but that can
+come later.
 
-Would a sysctl or securebit that *optionally* allows pA to be disabled
-satisfy you?
+> At the same time, if we add autoreap then probably it also makes sense to add
+> WEXITIED_UNLESS_AUTOREAP.
 
-I don't understand why lockable is at all useful.  You'd need
-CAP_SETPCAP to flip it regardless.
+Potentially, though for many applications you could also just pass a
+signal of 0 and avoid passing __WALL or __WCLONE.
 
---Andy
+- Josh Triplett
