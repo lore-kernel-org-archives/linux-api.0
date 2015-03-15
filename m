@@ -1,61 +1,56 @@
-From: "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [RFC] capabilities: Ambient capabilities
-Date: Sat, 14 Mar 2015 17:04:35 -0700
-Message-ID: <CALQRfL7AyadFcu9JqtC6FGnuuqY7zbnFAL81XnwBvn0o6c6UWQ@mail.gmail.com>
-References: <933931146caf5dac58379f50c017bff9f6c47661.1426183417.git.luto@kernel.org>
-	<CAGXu5jKfvswdUMcrGbr6+wn1ME_JkySMvdNd0wvvHpbQ1C7HUg@mail.gmail.com>
-	<CALQRfL7b8CjYgUnVy3jykNwv48fOc03T385RKo--cfv25YenBg@mail.gmail.com>
-	<CAObL_7HgU-ekb7mJS7C=0=idfrzV6=CSqTrG2LvUgdDtvbJx_w@mail.gmail.com>
-	<CALQRfL6HUGMfPtsqLcSed8G14Yqg27R8tpDnMZOKtvQE+rqX0A@mail.gmail.com>
-	<CALCETrVz39pJmMAEFodBNA8cOZjd0xkH95EzMazY0MWJDtpYgg@mail.gmail.com>
-	<CALQRfL5FGGUnK7+Ss=MSDGmxpAERTUjezardGnH3QouBwhbZ4A@mail.gmail.com>
-	<CALCETrUGASa3Gp6cC1zdAahcS59DOdyLnTtgNX7t7FucMZLmoQ@mail.gmail.com>
-	<CALQRfL6z2dEtPkWiuGydT0a+y4iWm2qw-cY0Rk9hA-K4gPw_qA@mail.gmail.com>
-	<CALCETrWRHRVLotFs=Cpdr=7KjE7q52NdT62GxZg=xjv+LFZBqw@mail.gmail.com>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH v2 net-next 1/2] bpf: allow extended BPF programs access
+ skb fields
+Date: Sat, 14 Mar 2015 19:02:57 -0700
+Message-ID: <5504E851.7000302@plumgrid.com>
+References: <1426273064-4837-1-git-send-email-ast@plumgrid.com> <1426273064-4837-2-git-send-email-ast@plumgrid.com> <550392F7.9040308@iogearbox.net> <550397B0.5070409@iogearbox.net> <5503981C.6000801@plumgrid.com> <55039A0D.20000@iogearbox.net> <55039C9D.6010602@plumgrid.com> <5503C03F.8020903@plumgrid.com> <550400D8.5060407@iogearbox.net> <550459E4.1050808@plumgrid.com> <5504C989.8000800@iogearbox.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrWRHRVLotFs=Cpdr=7KjE7q52NdT62GxZg=xjv+LFZBqw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andrew Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5504C989.8000800@iogearbox.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Daniel Borkmann <daniel@iogearbox.net>, "David S. Miller" <davem@davemloft.net>
+Cc: Thomas Graf <tgraf@suug.ch>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Mar 14, 2015 at 3:55 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> It occurs to me that my previous reply was unnecessarily long and
-> missed the point.  Trying again:
+On 3/14/15 4:51 PM, Daniel Borkmann wrote:
+> On 03/14/2015 04:55 PM, Alexei Starovoitov wrote:
+> ...
+>> so from there I saw two options: either copy paste all
+>> build_bug_on and have the same *insn=... and build_bug_on in
+>> two places or consolidate them in single helper function.
+>> Obviously single helper function is a preferred method.
+>> I'm not sure what are you still arguing about.
 >
-> On Sat, Mar 14, 2015 at 3:17 PM, Andrew G. Morgan <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
->> On Sat, Mar 14, 2015 at 2:45 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->>> On Sat, Mar 14, 2015 at 2:09 PM, Andrew G. Morgan <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
->>>> My Nack remains that you are eliminating the explicit enforcement of
->>>> selective inheritance. A lockable secure bit protecting access to your
->>>> prctl() function would address this concern.
->>>
->>> Would a sysctl or securebit that *optionally* allows pA to be disabled
->>> satisfy you?
->
-> ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
->
-> It would be kind of nice to remove your nack.  I think that the above
-> is the relevant question.  Could you answer it?
+> I'm repeating myself here, but fair enough. To me the v1
+> code in sk_filter_convert_ctx_access() was more sound. So
+> taking out the ifindex issue, that's 4 BUILD_BUG_ON()s in
+> addition.
 
-I thought I did. Please implement a lockable secure bit and I will
-remove my Nack.
+correct. it's 4 build_bug_on to several lines of copy pasted code.
+That copy-paste between two functions was already bugging me
+when I posted v1, but back then I didn't see a way to create
+a common helper.
+Adding this 4 extra lines pushed it over my internal bar of
+'acceptable' copied code :)
+so in v2 I figured a way to create a helper.
 
-I don't understand your confusion. Perhaps you are defining
-*optionally* in a way I don't follow? Perhaps you are saying that you
-want the default behavior of kernels to change to include your new
-feature, and that you want the secure bit, when set, would put it into
-pA suppressed mode?
+> I actually think the current filter code is in a reasonable
+> shape. convert_bpf_extensions() is full of BPF to eBPF
+> conversions, so going over convert_bpf_extensions() some of
+> them would now use convert_skb_access(), some other ``skb
+> accesses''use macros directly in place, the reading-flow of
+> this code now is inconsistent to me and it would have been
+> more sound if that's just left as is in convert_bpf_extensions().
 
-Other folk are probably better at anticipating the ramifications of
-changing default behavior. I'd prefer you default to pA being off, but
-I shall remove my Nack either way if you implement a lockable secure
-bit.
+I still don't see this 'inconsistency'.
+convert_bpf_extensions() has code to convert classic only accesses.
+convert_skb_access() has code to convert both classic and extended.
+sk_filter_convert_ctx_access() has code to convert extended only.
 
-Clear enough?
-
-Thanks
-
-Andrew
+In this patch convert_skb_access() has to deal with 3 fields.
+Later we may allow more field to be accessed by extended, so
+more lines will simply move from convert_bpf_extensions() into
+convert_skb_access(). So it will save us from copy-pasting in the
+future.
