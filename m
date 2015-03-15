@@ -1,217 +1,110 @@
 From: Josh Triplett <josh@joshtriplett.org>
-Subject: [PATCH v2 4/7] kernel/fork.c: Pass arguments to _do_fork and
- copy_process using clone4_args
-Date: Sun, 15 Mar 2015 00:59:54 -0700
-Message-ID: <2d46fa8e483396f7db99266886c996acb01ded35.1426376419.git.josh@joshtriplett.org>
+Subject: [PATCH v2 5/7] clone4: Add a CLONE_AUTOREAP flag to automatically
+ reap the child process
+Date: Sun, 15 Mar 2015 01:00:02 -0700
+Message-ID: <6d002995485d446e659105f6931307f3e532ce89.1426376419.git.josh@joshtriplett.org>
 References: <cover.1426376419.git.josh@joshtriplett.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <cover.1426376419.git.josh@joshtriplett.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Thiago Macieira <thiago.macieira@intel.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Rather than continuing to add arguments to _do_fork and copy_process for
-future clone4 extensions, with corresponding churn in every caller, pass
-the arguments using the clone4_args structure instead.  This allows
-clone4 to avoid unpacking the arguments, and allows other callers to use
-C99 structure initializers to only initialize the arguments they care
-about.  Future extensions to clone4_args will thus not need to touch
-clone4, fork, vfork, or other callers of _do_fork.
+If a process launches a child process with the notification signal set
+to SIGCHLD (e.g. with fork()), and then the parent process either
+ignores SIGCHLD or sets a handler with SA_NOCLDWAIT, the child process
+will get automatically reaped without waiting for the parent to wait on
+it.
+
+However, there's currently no way to get the same autoreaping behavior
+if the signal is not set to SIGCHLD, including in particular if the
+signal is set to 0 to disable notification.  Furthermore, the code
+launching the child process may not own process-wide signal handling for
+the parent process.
+
+Add a CLONE_AUTOREAP flag to request this behavior unconditionally,
+regardless of the notification signal or the state of the parent
+process's signal handling when the process exits.
+
+This is particularly useful for libraries that want to launch unattended
+child processes without interfering with the calling process's signal
+handling or wait loop.
 
 Signed-off-by: Josh Triplett <josh@joshtriplett.org>
 Signed-off-by: Thiago Macieira <thiago.macieira@intel.com>
 ---
- kernel/fork.c | 77 +++++++++++++++++++++++++++++++----------------------------
- 1 file changed, 41 insertions(+), 36 deletions(-)
+ include/linux/sched.h      | 2 ++
+ include/uapi/linux/sched.h | 7 ++++++-
+ kernel/fork.c              | 2 ++
+ kernel/signal.c            | 2 ++
+ 4 files changed, 12 insertions(+), 1 deletion(-)
 
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 9ec36fd..66feeb7 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1372,6 +1372,8 @@ struct task_struct {
+ 	unsigned memcg_kmem_skip_account:1;
+ #endif
+ 
++	unsigned autoreap:1; /* Do not become a zombie on exit */
++
+ 	unsigned long atomic_flags; /* Flags needing atomic access. */
+ 
+ 	struct restart_block restart_block;
+diff --git a/include/uapi/linux/sched.h b/include/uapi/linux/sched.h
+index 7656152..f606c0a 100644
+--- a/include/uapi/linux/sched.h
++++ b/include/uapi/linux/sched.h
+@@ -37,13 +37,18 @@
+ #define CLONE_DETACHED	0x00400000
+ #define CLONE_STOPPED	0x02000000
+ 
++/*
++ * Flags that only work with clone4.
++ */
++#define CLONE_AUTOREAP	0x00001000	/* Automatically reap the process */
++
+ #ifdef __KERNEL__
+ /*
+  * Valid flags for clone and for clone4. Kept in this file next to the flag
+  * list above, but not exposed to userspace.
+  */
+ #define CLONE_VALID_FLAGS	(0xffffffffULL & ~(CLONE_PID | CLONE_DETACHED | CLONE_STOPPED))
+-#define CLONE4_VALID_FLAGS	CLONE_VALID_FLAGS
++#define CLONE4_VALID_FLAGS	(CLONE_VALID_FLAGS | CLONE_AUTOREAP)
+ #endif /* __KERNEL__ */
+ 
+ /*
 diff --git a/kernel/fork.c b/kernel/fork.c
-index 8a21f9e..db9012a 100644
+index db9012a..c297e5e 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -1188,12 +1188,9 @@ init_task_pid(struct task_struct *task, enum pid_type type, struct pid *pid)
-  * flags). The actual kick-off is left to the caller.
-  */
- static struct task_struct *copy_process(u64 clone_flags,
--					unsigned long stack_start,
--					unsigned long stack_size,
--					int __user *child_tidptr,
-+					struct clone4_args *args,
- 					struct pid *pid,
--					int trace,
--					unsigned long tls)
-+					int trace)
- {
- 	int retval;
- 	struct task_struct *p;
-@@ -1405,7 +1402,7 @@ static struct task_struct *copy_process(u64 clone_flags,
- 	retval = copy_io(clone_flags, p);
- 	if (retval)
- 		goto bad_fork_cleanup_namespaces;
--	retval = copy_thread_tls(clone_flags, stack_start, stack_size, p, tls);
-+	retval = copy_thread_tls(clone_flags, args->stack_start, args->stack_size, p, args->tls);
- 	if (retval)
- 		goto bad_fork_cleanup_io;
- 
-@@ -1416,11 +1413,11 @@ static struct task_struct *copy_process(u64 clone_flags,
- 			goto bad_fork_cleanup_io;
+@@ -1461,6 +1461,8 @@ static struct task_struct *copy_process(u64 clone_flags,
+ 		p->tgid = p->pid;
  	}
  
--	p->set_child_tid = (clone_flags & CLONE_CHILD_SETTID) ? child_tidptr : NULL;
-+	p->set_child_tid = (clone_flags & CLONE_CHILD_SETTID) ? args->ctid : NULL;
- 	/*
- 	 * Clear TID on mm_release()?
- 	 */
--	p->clear_child_tid = (clone_flags & CLONE_CHILD_CLEARTID) ? child_tidptr : NULL;
-+	p->clear_child_tid = (clone_flags & CLONE_CHILD_CLEARTID) ? args->ctid : NULL;
- #ifdef CONFIG_BLOCK
- 	p->plug = NULL;
- #endif
-@@ -1617,7 +1614,8 @@ static inline void init_idle_pids(struct pid_link *links)
- struct task_struct *fork_idle(int cpu)
- {
- 	struct task_struct *task;
--	task = copy_process(CLONE_VM, 0, 0, NULL, &init_struct_pid, 0, 0);
-+	struct clone4_args args = {};
-+	task = copy_process(CLONE_VM, &args, &init_struct_pid, 0);
- 	if (!IS_ERR(task)) {
- 		init_idle_pids(task->pids);
- 		init_idle(task, cpu);
-@@ -1632,13 +1630,7 @@ struct task_struct *fork_idle(int cpu)
-  * It copies the process, and if successful kick-starts
-  * it and waits for it to finish using the VM if required.
-  */
--static long _do_fork(
--		u64 clone_flags,
--		unsigned long stack_start,
--		unsigned long stack_size,
--		int __user *parent_tidptr,
--		int __user *child_tidptr,
--		unsigned long tls)
-+static long _do_fork(u64 clone_flags, struct clone4_args *args)
- {
- 	struct task_struct *p;
- 	int trace = 0;
-@@ -1662,8 +1654,7 @@ static long _do_fork(
- 			trace = 0;
++	p->autoreap = !!(clone_flags & CLONE_AUTOREAP);
++
+ 	p->nr_dirtied = 0;
+ 	p->nr_dirtied_pause = 128 >> (PAGE_SHIFT - 10);
+ 	p->dirty_paused_when = 0;
+diff --git a/kernel/signal.c b/kernel/signal.c
+index a390499..c0011c0 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -1702,6 +1702,8 @@ bool do_notify_parent(struct task_struct *tsk, int sig)
+ 		if (psig->action[SIGCHLD-1].sa.sa_handler == SIG_IGN)
+ 			sig = 0;
  	}
- 
--	p = copy_process(clone_flags, stack_start, stack_size,
--			 child_tidptr, NULL, trace, tls);
-+	p = copy_process(clone_flags, args, NULL, trace);
- 	/*
- 	 * Do this prior waking up the new thread - the thread pointer
- 	 * might get invalid after that point, if the thread exits quickly.
-@@ -1678,7 +1669,7 @@ static long _do_fork(
- 		nr = pid_vnr(pid);
- 
- 		if (clone_flags & CLONE_PARENT_SETTID)
--			put_user(nr, parent_tidptr);
-+			put_user(nr, args->ptid);
- 
- 		if (clone_flags & CLONE_VFORK) {
- 			p->vfork_done = &vfork;
-@@ -1722,9 +1713,13 @@ long do_fork(unsigned long clone_flags,
- 	      int __user *parent_tidptr,
- 	      int __user *child_tidptr)
- {
--	return _do_fork(squelch_clone_flags(clone_flags),
--			stack_start, stack_size,
--			parent_tidptr, child_tidptr, 0);
-+	struct clone4_args kargs = {
-+		.ptid = parent_tidptr,
-+		.ctid = child_tidptr,
-+		.stack_start = stack_start,
-+		.stack_start = stack_size,
-+	};
-+	return _do_fork(squelch_clone_flags(clone_flags), &kargs);
- }
- #endif
- 
-@@ -1733,15 +1728,19 @@ long do_fork(unsigned long clone_flags,
-  */
- pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
- {
--	return _do_fork(flags|CLONE_VM|CLONE_UNTRACED, (unsigned long)fn,
--		(unsigned long)arg, NULL, NULL, 0);
-+	struct clone4_args kargs = {
-+		.stack_start = (unsigned long)fn,
-+		.stack_size = (unsigned long)arg,
-+	};
-+	return _do_fork(flags|CLONE_VM|CLONE_UNTRACED, &kargs);
- }
- 
- #ifdef __ARCH_WANT_SYS_FORK
- SYSCALL_DEFINE0(fork)
- {
- #ifdef CONFIG_MMU
--	return _do_fork(SIGCHLD, 0, 0, NULL, NULL, 0);
-+	struct clone4_args kargs = {};
-+	return _do_fork(SIGCHLD, &kargs);
- #else
- 	/* can not support in nommu mode */
- 	return -EINVAL;
-@@ -1752,8 +1751,8 @@ SYSCALL_DEFINE0(fork)
- #ifdef __ARCH_WANT_SYS_VFORK
- SYSCALL_DEFINE0(vfork)
- {
--	return _do_fork(CLONE_VFORK | CLONE_VM | SIGCHLD, 0,
--			0, NULL, NULL, 0);
-+	struct clone4_args kargs = {};
-+	return _do_fork(CLONE_VFORK | CLONE_VM | SIGCHLD, &kargs);
- }
- #endif
- 
-@@ -1781,8 +1780,13 @@ SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
- 		 unsigned long, tls)
- #endif
- {
--	return _do_fork(squelch_clone_flags(clone_flags), newsp, 0,
--			parent_tidptr, child_tidptr, tls);
-+	struct clone4_args kargs = {
-+		.ptid = parent_tidptr,
-+		.ctid = child_tidptr,
-+		.stack_start = newsp,
-+		.tls = tls,
-+	};
-+	return _do_fork(squelch_clone_flags(clone_flags), &kargs);
- }
- #endif
- 
-@@ -1796,8 +1800,7 @@ SYSCALL_DEFINE4(clone4, unsigned, flags_high, unsigned, flags_low,
- 		return -EINVAL;
- 	if (args_size && copy_from_user(&kargs, args, args_size))
- 		return -EFAULT;
--	return _do_fork(flags, kargs.stack_start, kargs.stack_size,
--			kargs.ptid, kargs.ctid, kargs.tls);
-+	return _do_fork(flags, &kargs);
- }
- 
- #ifdef CONFIG_COMPAT
-@@ -1807,15 +1810,17 @@ COMPAT_SYSCALL_DEFINE4(clone4, unsigned, flags_high, unsigned, flags_low,
- {
- 	u64 flags = (u64)flags_high << 32 | flags_low;
- 	struct compat_clone4_args compat_kargs = {};
-+	struct clone4_args kargs = {};
- 	if (args_size > sizeof(compat_kargs))
- 		return -EINVAL;
- 	if (args_size && copy_from_user(&compat_kargs, args, args_size))
- 		return -EFAULT;
--	return _do_fork(flags, compat_kargs.stack_start,
--			compat_kargs.stack_size,
--			compat_ptr(compat_kargs.ptid),
--			compat_ptr(compat_kargs.ctid),
--			compat_kargs.tls);
-+	kargs.ptid = compat_ptr(compat_kargs.ptid);
-+	kargs.ctid = compat_ptr(compat_kargs.ctid);
-+	kargs.stack_start = compat_kargs.stack_start;
-+	kargs.stack_size = compat_kargs.stack_size;
-+	kargs.tls = compat_kargs.tls;
-+	return _do_fork(flags, &kargs);
- }
- #endif /* CONFIG_COMPAT */
- #endif /* CONFIG_CLONE4 */
++	if (!tsk->ptrace && tsk->autoreap)
++		autoreap = true;
+ 	if (valid_signal(sig) && sig)
+ 		__group_send_sig_info(sig, &info, tsk->parent);
+ 	__wake_up_parent(tsk, tsk->parent);
 -- 
 2.1.4
+
