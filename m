@@ -1,314 +1,478 @@
 From: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
-Subject: [RFC/PATCH 4/5] drm/rcar-du: Add VSP1 live source support
-Date: Sun, 15 Mar 2015 23:55:39 +0200
-Message-ID: <1426456540-21006-5-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
+Subject: [RFC/PATCH 1/5] drm: Add live source object
+Date: Sun, 15 Mar 2015 23:55:36 +0200
+Message-ID: <1426456540-21006-2-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
 References: <1426456540-21006-1-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
+Return-path: <linux-media-owner@vger.kernel.org>
 In-Reply-To: <1426456540-21006-1-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+Sender: linux-media-owner@vger.kernel.org
 To: dri-devel@lists.freedesktop.org
-Cc: linux-sh@vger.kernel.org, linux-api@vger.kernel.org, Magnus Damm <magnus.damm@gmail.com>, Daniel Vetter <daniel.vetter@intel.com>, linux-media@vger.kernel.org
+Cc: linux-media@vger.kernel.org, linux-sh@vger.kernel.org, linux-api@vger.kernel.org, Daniel Vetter <daniel.vetter@intel.com>, Rob Clark <robdclark@gmail.com>, Thierry Reding <thierry.reding@gmail.com>, Magnus Damm <magnus.damm@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-UmVnaXN0ZXIgbGl2ZSBzb3VyY2VzIGZvciBWU1BEMCBhbmQgVlNQRDEgYW5kIGNvbmZpZ3VyZSB0
-aGUgcGxhbmUgc291cmNlCmF0IHBsYW5lIHNldHVwIHRpbWUgdG8gc291cmNlIGZyYW1lcyBmcm9t
-IG1lbW9yeSBvciBmcm9tIHRoZSBWU1AxLgoKU2lnbmVkLW9mZi1ieTogTGF1cmVudCBQaW5jaGFy
-dCA8bGF1cmVudC5waW5jaGFydCtyZW5lc2FzQGlkZWFzb25ib2FyZC5jb20+Ci0tLQogZHJpdmVy
-cy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9kcnYuYyAgIHwgICA2ICstCiBkcml2ZXJzL2dwdS9k
-cm0vcmNhci1kdS9yY2FyX2R1X2Rydi5oICAgfCAgIDMgKwogZHJpdmVycy9ncHUvZHJtL3JjYXIt
-ZHUvcmNhcl9kdV9ncm91cC5jIHwgIDE5ICsrLS0KIGRyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3Jj
-YXJfZHVfZ3JvdXAuaCB8ICAgMiArCiBkcml2ZXJzL2dwdS9kcm0vcmNhci1kdS9yY2FyX2R1X2tt
-cy5jICAgfCAgMjIgKysrLQogZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9wbGFuZS5j
-IHwgMTczICsrKysrKysrKysrKysrKysrKysrKysrKystLS0tLS0tCiBkcml2ZXJzL2dwdS9kcm0v
-cmNhci1kdS9yY2FyX2R1X3BsYW5lLmggfCAgIDMgKwogZHJpdmVycy9ncHUvZHJtL3JjYXItZHUv
-cmNhcl9kdV9yZWdzLmggIHwgICAxICsKIDggZmlsZXMgY2hhbmdlZCwgMTc3IGluc2VydGlvbnMo
-KyksIDUyIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvZ3B1L2RybS9yY2FyLWR1
-L3JjYXJfZHVfZHJ2LmMgYi9kcml2ZXJzL2dwdS9kcm0vcmNhci1kdS9yY2FyX2R1X2Rydi5jCmlu
-ZGV4IGRhMTIxNmE3Mzk2OS4uZTE2YTkxMjMyN2I3IDEwMDY0NAotLS0gYS9kcml2ZXJzL2dwdS9k
-cm0vcmNhci1kdS9yY2FyX2R1X2Rydi5jCisrKyBiL2RyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3Jj
-YXJfZHVfZHJ2LmMKQEAgLTU4LDcgKzU4LDggQEAgc3RhdGljIGNvbnN0IHN0cnVjdCByY2FyX2R1
-X2RldmljZV9pbmZvIHJjYXJfZHVfcjhhNzc3OV9pbmZvID0gewogCiBzdGF0aWMgY29uc3Qgc3Ry
-dWN0IHJjYXJfZHVfZGV2aWNlX2luZm8gcmNhcl9kdV9yOGE3NzkwX2luZm8gPSB7CiAJLmZlYXR1
-cmVzID0gUkNBUl9EVV9GRUFUVVJFX0NSVENfSVJRX0NMT0NLCi0JCSAgfCBSQ0FSX0RVX0ZFQVRV
-UkVfRVhUX0NUUkxfUkVHUywKKwkJICB8IFJDQVJfRFVfRkVBVFVSRV9FWFRfQ1RSTF9SRUdTCisJ
-CSAgfCBSQ0FSX0RVX0ZFQVRVUkVfVlNQMV9TT1VSQ0UsCiAJLnF1aXJrcyA9IFJDQVJfRFVfUVVJ
-UktfQUxJR05fMTI4QiB8IFJDQVJfRFVfUVVJUktfTFZEU19MQU5FUywKIAkubnVtX2NydGNzID0g
-MywKIAkucm91dGVzID0gewpAQCAtODYsNyArODcsOCBAQCBzdGF0aWMgY29uc3Qgc3RydWN0IHJj
-YXJfZHVfZGV2aWNlX2luZm8gcmNhcl9kdV9yOGE3NzkwX2luZm8gPSB7CiAKIHN0YXRpYyBjb25z
-dCBzdHJ1Y3QgcmNhcl9kdV9kZXZpY2VfaW5mbyByY2FyX2R1X3I4YTc3OTFfaW5mbyA9IHsKIAku
-ZmVhdHVyZXMgPSBSQ0FSX0RVX0ZFQVRVUkVfQ1JUQ19JUlFfQ0xPQ0sKLQkJICB8IFJDQVJfRFVf
-RkVBVFVSRV9FWFRfQ1RSTF9SRUdTLAorCQkgIHwgUkNBUl9EVV9GRUFUVVJFX0VYVF9DVFJMX1JF
-R1MKKwkJICB8IFJDQVJfRFVfRkVBVFVSRV9WU1AxX1NPVVJDRSwKIAkubnVtX2NydGNzID0gMiwK
-IAkucm91dGVzID0gewogCQkvKiBSOEE3NzkxIGhhcyBvbmUgUkdCIG91dHB1dCwgb25lIExWRFMg
-b3V0cHV0IGFuZCBvbmUKZGlmZiAtLWdpdCBhL2RyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3JjYXJf
-ZHVfZHJ2LmggYi9kcml2ZXJzL2dwdS9kcm0vcmNhci1kdS9yY2FyX2R1X2Rydi5oCmluZGV4IGM3
-YzUzOGRkMmU2OC4uYjViZTE2MDUzZTcxIDEwMDY0NAotLS0gYS9kcml2ZXJzL2dwdS9kcm0vcmNh
-ci1kdS9yY2FyX2R1X2Rydi5oCisrKyBiL2RyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3JjYXJfZHVf
-ZHJ2LmgKQEAgLTI5LDYgKzI5LDcgQEAgc3RydWN0IHJjYXJfZHVfbHZkc2VuYzsKIAogI2RlZmlu
-ZSBSQ0FSX0RVX0ZFQVRVUkVfQ1JUQ19JUlFfQ0xPQ0sJKDEgPDwgMCkJLyogUGVyLUNSVEMgSVJR
-IGFuZCBjbG9jayAqLwogI2RlZmluZSBSQ0FSX0RVX0ZFQVRVUkVfRVhUX0NUUkxfUkVHUwkoMSA8
-PCAxKQkvKiBIYXMgZXh0ZW5kZWQgY29udHJvbCByZWdpc3RlcnMgKi8KKyNkZWZpbmUgUkNBUl9E
-VV9GRUFUVVJFX1ZTUDFfU09VUkNFCSgxIDw8IDIpCS8qIEhhcyBpbnB1dHMgZnJvbSBWU1AxICov
-CiAKICNkZWZpbmUgUkNBUl9EVV9RVUlSS19BTElHTl8xMjhCCSgxIDw8IDApCS8qIEFsaWduIHBp
-dGNoZXMgdG8gMTI4IGJ5dGVzICovCiAjZGVmaW5lIFJDQVJfRFVfUVVJUktfTFZEU19MQU5FUwko
-MSA8PCAxKQkvKiBMVkRTIGxhbmVzIDEgYW5kIDMgaW52ZXJ0ZWQgKi8KQEAgLTg0LDYgKzg1LDgg
-QEAgc3RydWN0IHJjYXJfZHVfZGV2aWNlIHsKIAlzdHJ1Y3QgcmNhcl9kdV9ncm91cCBncm91cHNb
-UkNBUl9EVV9NQVhfR1JPVVBTXTsKIAogCXVuc2lnbmVkIGludCBkcGFkMF9zb3VyY2U7CisJdW5z
-aWduZWQgaW50IHZzcGQxX3Npbms7CisKIAlzdHJ1Y3QgcmNhcl9kdV9sdmRzZW5jICpsdmRzW1JD
-QVJfRFVfTUFYX0xWRFNdOwogCiAJc3RydWN0IHsKZGlmZiAtLWdpdCBhL2RyaXZlcnMvZ3B1L2Ry
-bS9yY2FyLWR1L3JjYXJfZHVfZ3JvdXAuYyBiL2RyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3JjYXJf
-ZHVfZ3JvdXAuYwppbmRleCAxYmRjMGVlMGMyNDguLjcxZjUwYmY0NTU4MSAxMDA2NDQKLS0tIGEv
-ZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9ncm91cC5jCisrKyBiL2RyaXZlcnMvZ3B1
-L2RybS9yY2FyLWR1L3JjYXJfZHVfZ3JvdXAuYwpAQCAtNDksMTAgKzQ5LDEzIEBAIHN0YXRpYyB2
-b2lkIHJjYXJfZHVfZ3JvdXBfc2V0dXBfZGVmcjgoc3RydWN0IHJjYXJfZHVfZ3JvdXAgKnJncnAp
-CiAJdTMyIGRlZnI4ID0gREVGUjhfQ09ERSB8IERFRlI4X0RFRkU4OwogCiAJLyogVGhlIERFRlI4
-IHJlZ2lzdGVyIGZvciB0aGUgZmlyc3QgZ3JvdXAgYWxzbyBjb250cm9scyBSR0Igb3V0cHV0Ci0J
-ICogcm91dGluZyB0byBEUEFEMAorCSAqIHJvdXRpbmcgdG8gRFBBRDAgYW5kIFZTUEQxIHJvdXRp
-bmcgdG8gRFUwLzEvMi4KIAkgKi8KLQlpZiAocmdycC0+aW5kZXggPT0gMCkKKwlpZiAocmdycC0+
-aW5kZXggPT0gMCkgewogCQlkZWZyOCB8PSBERUZSOF9EUkdCU19EVShyZ3JwLT5kZXYtPmRwYWQw
-X3NvdXJjZSk7CisJCWlmIChyZ3JwLT5kZXYtPnZzcGQxX3NpbmsgPT0gMikKKwkJCWRlZnI4IHw9
-IERFRlI4X1ZTQ1M7CisJfQogCiAJcmNhcl9kdV9ncm91cF93cml0ZShyZ3JwLCBERUZSOCwgZGVm
-cjgpOwogfQpAQCAtMTU1LDE3ICsxNTgsMTcgQEAgdm9pZCByY2FyX2R1X2dyb3VwX3Jlc3RhcnQo
-c3RydWN0IHJjYXJfZHVfZ3JvdXAgKnJncnApCiAJX19yY2FyX2R1X2dyb3VwX3N0YXJ0X3N0b3Ao
-cmdycCwgdHJ1ZSk7CiB9CiAKLXN0YXRpYyBpbnQgcmNhcl9kdV9zZXRfZHBhZDBfcm91dGluZyhz
-dHJ1Y3QgcmNhcl9kdV9kZXZpY2UgKnJjZHUpCitpbnQgcmNhcl9kdV9zZXRfZHBhZDBfdnNwMV9y
-b3V0aW5nKHN0cnVjdCByY2FyX2R1X2RldmljZSAqcmNkdSkKIHsKIAlpbnQgcmV0OwogCiAJaWYg
-KCFyY2FyX2R1X2hhcyhyY2R1LCBSQ0FSX0RVX0ZFQVRVUkVfRVhUX0NUUkxfUkVHUykpCiAJCXJl
-dHVybiAwOwogCi0JLyogUkdCIG91dHB1dCByb3V0aW5nIHRvIERQQUQwIGlzIGNvbmZpZ3VyZWQg
-aW4gdGhlIERFRlI4IHJlZ2lzdGVyIG9mCi0JICogdGhlIGZpcnN0IGdyb3VwLiBBcyB0aGlzIGZ1
-bmN0aW9uIGNhbiBiZSBjYWxsZWQgd2l0aCB0aGUgRFUwIGFuZCBEVTEKLQkgKiBDUlRDcyBkaXNh
-YmxlZCwgd2UgbmVlZCB0byBlbmFibGUgdGhlIGZpcnN0IGdyb3VwIGNsb2NrIGJlZm9yZQotCSAq
-IGFjY2Vzc2luZyB0aGUgcmVnaXN0ZXIuCisJLyogUkdCIG91dHB1dCByb3V0aW5nIHRvIERQQUQw
-IGFuZCBWU1AxRCByb3V0aW5nIHRvIERVMC8xLzIgYXJlCisJICogY29uZmlndXJlZCBpbiB0aGUg
-REVGUjggcmVnaXN0ZXIgb2YgdGhlIGZpcnN0IGdyb3VwLiBBcyB0aGlzIGZ1bmN0aW9uCisJICog
-Y2FuIGJlIGNhbGxlZCB3aXRoIHRoZSBEVTAgYW5kIERVMSBDUlRDcyBkaXNhYmxlZCwgd2UgbmVl
-ZCB0byBlbmFibGUKKwkgKiB0aGUgZmlyc3QgZ3JvdXAgY2xvY2sgYmVmb3JlIGFjY2Vzc2luZyB0
-aGUgcmVnaXN0ZXIuCiAJICovCiAJcmV0ID0gY2xrX3ByZXBhcmVfZW5hYmxlKHJjZHUtPmNydGNz
-WzBdLmNsb2NrKTsKIAlpZiAocmV0IDwgMCkKQEAgLTE5Niw1ICsxOTksNSBAQCBpbnQgcmNhcl9k
-dV9ncm91cF9zZXRfcm91dGluZyhzdHJ1Y3QgcmNhcl9kdV9ncm91cCAqcmdycCkKIAogCXJjYXJf
-ZHVfZ3JvdXBfd3JpdGUocmdycCwgRE9SQ1IsIGRvcmNyKTsKIAotCXJldHVybiByY2FyX2R1X3Nl
-dF9kcGFkMF9yb3V0aW5nKHJncnAtPmRldik7CisJcmV0dXJuIHJjYXJfZHVfc2V0X2RwYWQwX3Zz
-cDFfcm91dGluZyhyZ3JwLT5kZXYpOwogfQpkaWZmIC0tZ2l0IGEvZHJpdmVycy9ncHUvZHJtL3Jj
-YXItZHUvcmNhcl9kdV9ncm91cC5oIGIvZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9n
-cm91cC5oCmluZGV4IGVkMzY0MzNmYmU4NC4uM2ZkZjc3MTcxMDM0IDEwMDY0NAotLS0gYS9kcml2
-ZXJzL2dwdS9kcm0vcmNhci1kdS9yY2FyX2R1X2dyb3VwLmgKKysrIGIvZHJpdmVycy9ncHUvZHJt
-L3JjYXItZHUvcmNhcl9kdV9ncm91cC5oCkBAIC01Miw0ICs1Miw2IEBAIHZvaWQgcmNhcl9kdV9n
-cm91cF9zdGFydF9zdG9wKHN0cnVjdCByY2FyX2R1X2dyb3VwICpyZ3JwLCBib29sIHN0YXJ0KTsK
-IHZvaWQgcmNhcl9kdV9ncm91cF9yZXN0YXJ0KHN0cnVjdCByY2FyX2R1X2dyb3VwICpyZ3JwKTsK
-IGludCByY2FyX2R1X2dyb3VwX3NldF9yb3V0aW5nKHN0cnVjdCByY2FyX2R1X2dyb3VwICpyZ3Jw
-KTsKIAoraW50IHJjYXJfZHVfc2V0X2RwYWQwX3ZzcDFfcm91dGluZyhzdHJ1Y3QgcmNhcl9kdV9k
-ZXZpY2UgKnJjZHUpOworCiAjZW5kaWYgLyogX19SQ0FSX0RVX0dST1VQX0hfXyAqLwpkaWZmIC0t
-Z2l0IGEvZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9rbXMuYyBiL2RyaXZlcnMvZ3B1
-L2RybS9yY2FyLWR1L3JjYXJfZHVfa21zLmMKaW5kZXggMTdmODliZmNhOGY4Li5iNzhjZWQzOGI2
-OTYgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3JjYXJfZHVfa21zLmMKKysr
-IGIvZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9rbXMuYwpAQCAtMjE3LDE3ICsyMTcs
-MjUgQEAgc3RhdGljIHZvaWQgcmNhcl9kdV9vdXRwdXRfcG9sbF9jaGFuZ2VkKHN0cnVjdCBkcm1f
-ZGV2aWNlICpkZXYpCiAgKi8KIAogc3RhdGljIGJvb2wgcmNhcl9kdV9wbGFuZV9uZWVkc19yZWFs
-bG9jKHN0cnVjdCByY2FyX2R1X3BsYW5lICpwbGFuZSwKLQkJCQkJc3RydWN0IHJjYXJfZHVfcGxh
-bmVfc3RhdGUgKnN0YXRlKQorCQkJCQlzdHJ1Y3QgcmNhcl9kdV9wbGFuZV9zdGF0ZSAqbmV3X3N0
-YXRlKQogewotCWNvbnN0IHN0cnVjdCByY2FyX2R1X2Zvcm1hdF9pbmZvICpjdXJfZm9ybWF0Owor
-CXN0cnVjdCByY2FyX2R1X3BsYW5lX3N0YXRlICpjdXJfc3RhdGU7CiAKLQljdXJfZm9ybWF0ID0g
-dG9fcmNhcl9kdV9wbGFuZV9zdGF0ZShwbGFuZS0+cGxhbmUuc3RhdGUpLT5mb3JtYXQ7CisJY3Vy
-X3N0YXRlID0gdG9fcmNhcl9kdV9wbGFuZV9zdGF0ZShwbGFuZS0+cGxhbmUuc3RhdGUpOwogCiAJ
-LyogTG93ZXJpbmcgdGhlIG51bWJlciBvZiBwbGFuZXMgZG9lc24ndCBzdHJpY3RseSByZXF1aXJl
-IHJlYWxsb2NhdGlvbgogCSAqIGFzIHRoZSBleHRyYSBoYXJkd2FyZSBwbGFuZSB3aWxsIGJlIGZy
-ZWVkIHdoZW4gY29tbWl0dGluZywgYnV0IGRvaW5nCiAJICogc28gY291bGQgbGVhZCB0byBtb3Jl
-IGZyYWdtZW50YXRpb24uCiAJICovCi0JcmV0dXJuICFjdXJfZm9ybWF0IHx8IGN1cl9mb3JtYXQt
-PnBsYW5lcyAhPSBzdGF0ZS0+Zm9ybWF0LT5wbGFuZXM7CisJaWYgKCFjdXJfc3RhdGUtPmZvcm1h
-dCB8fAorCSAgICBjdXJfc3RhdGUtPmZvcm1hdC0+cGxhbmVzICE9IG5ld19zdGF0ZS0+Zm9ybWF0
-LT5wbGFuZXMpCisJCXJldHVybiB0cnVlOworCisJLyogUmVhbGxvY2F0ZSBoYXJkd2FyZSBwbGFu
-ZXMgaWYgdGhlIHNvdXJjZSBoYXMgY2hhbmdlZC4gKi8KKwlpZiAoY3VyX3N0YXRlLT5zb3VyY2Ug
-IT0gbmV3X3N0YXRlLT5zb3VyY2UpCisJCXJldHVybiB0cnVlOworCisJcmV0dXJuIGZhbHNlOwog
-fQogCiBzdGF0aWMgdW5zaWduZWQgaW50IHJjYXJfZHVfcGxhbmVfaHdtYXNrKHN0cnVjdCByY2Fy
-X2R1X3BsYW5lX3N0YXRlICpzdGF0ZSkKQEAgLTc3Niw2ICs3ODQsMTIgQEAgaW50IHJjYXJfZHVf
-bW9kZXNldF9pbml0KHN0cnVjdCByY2FyX2R1X2RldmljZSAqcmNkdSkKIAogCWRybV9tb2RlX2Nv
-bmZpZ19yZXNldChkZXYpOwogCisJaWYgKHJjYXJfZHVfaGFzKHJjZHUsIFJDQVJfRFVfRkVBVFVS
-RV9WU1AxX1NPVVJDRSkpIHsKKwkJcmV0ID0gcmNhcl9kdV92c3AxX3NvdXJjZXNfaW5pdChyY2R1
-KTsKKwkJaWYgKHJldCA8IDApCisJCQlyZXR1cm4gcmV0OworCX0KKwogCWRybV9rbXNfaGVscGVy
-X3BvbGxfaW5pdChkZXYpOwogCiAJaWYgKGRldi0+bW9kZV9jb25maWcubnVtX2Nvbm5lY3Rvcikg
-ewpkaWZmIC0tZ2l0IGEvZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9wbGFuZS5jIGIv
-ZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9wbGFuZS5jCmluZGV4IDgwZTRkYmE3OGFl
-Zi4uZTc3ZjlkOTNjMWM1IDEwMDY0NAotLS0gYS9kcml2ZXJzL2dwdS9kcm0vcmNhci1kdS9yY2Fy
-X2R1X3BsYW5lLmMKKysrIGIvZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9wbGFuZS5j
-CkBAIC0yMCwyMSArMjAsODQgQEAKICNpbmNsdWRlIDxkcm0vZHJtX3BsYW5lX2hlbHBlci5oPgog
-CiAjaW5jbHVkZSAicmNhcl9kdV9kcnYuaCIKKyNpbmNsdWRlICJyY2FyX2R1X2dyb3VwLmgiCiAj
-aW5jbHVkZSAicmNhcl9kdV9rbXMuaCIKICNpbmNsdWRlICJyY2FyX2R1X3BsYW5lLmgiCiAjaW5j
-bHVkZSAicmNhcl9kdV9yZWdzLmgiCiAKLSNkZWZpbmUgUkNBUl9EVV9DT0xPUktFWV9OT05FCQko
-MCA8PCAyNCkKLSNkZWZpbmUgUkNBUl9EVV9DT0xPUktFWV9TT1VSQ0UJCSgxIDw8IDI0KQotI2Rl
-ZmluZSBSQ0FSX0RVX0NPTE9SS0VZX01BU0sJCSgxIDw8IDI0KQorLyogLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0KKyAqIExpdmUgU291cmNlcworICovCisKK3N0cnVjdCByY2FyX2R1X3ZzcDFfc291cmNl
-IHsKKwlzdHJ1Y3QgZHJtX2xpdmVfc291cmNlIGJhc2U7CisKKwllbnVtIHJjYXJfZHVfcGxhbmVf
-c291cmNlIHNvdXJjZTsKK307CiAKLXN0YXRpYyB1MzIgcmNhcl9kdV9wbGFuZV9yZWFkKHN0cnVj
-dCByY2FyX2R1X2dyb3VwICpyZ3JwLAotCQkJICAgICAgdW5zaWduZWQgaW50IGluZGV4LCB1MzIg
-cmVnKQorc3RhdGljIGlubGluZSBzdHJ1Y3QgcmNhcl9kdV92c3AxX3NvdXJjZSAqCit0b19yY2Fy
-X3ZzcDFfc291cmNlKHN0cnVjdCBkcm1fbGl2ZV9zb3VyY2UgKnNyYykKIHsKLQlyZXR1cm4gcmNh
-cl9kdV9yZWFkKHJncnAtPmRldiwKLQkJCSAgICByZ3JwLT5tbWlvX29mZnNldCArIGluZGV4ICog
-UExBTkVfT0ZGICsgcmVnKTsKKwlyZXR1cm4gY29udGFpbmVyX29mKHNyYywgc3RydWN0IHJjYXJf
-ZHVfdnNwMV9zb3VyY2UsIGJhc2UpOworfQorCitzdGF0aWMgY29uc3Qgc3RydWN0IGRybV9saXZl
-X3NvdXJjZV9mdW5jcyByY2FyX2R1X2xpdmVfc291cmNlX2Z1bmNzID0geworCS5kZXN0cm95ID0g
-ZHJtX2xpdmVfc291cmNlX2NsZWFudXAsCit9OworCitzdGF0aWMgY29uc3QgdWludDMyX3Qgc291
-cmNlX2Zvcm1hdHNbXSA9IHsKKwlEUk1fRk9STUFUX1hSR0I4ODg4LAorfTsKKworaW50IHJjYXJf
-ZHVfdnNwMV9zb3VyY2VzX2luaXQoc3RydWN0IHJjYXJfZHVfZGV2aWNlICpyY2R1KQoreworCXN0
-YXRpYyBjb25zdCBzdHJ1Y3QgeworCQllbnVtIHJjYXJfZHVfcGxhbmVfc291cmNlIHNvdXJjZTsK
-KwkJdW5zaWduZWQgaW50IHBsYW5lczsKKwl9IHNvdXJjZXNbXSA9IHsKKwkJeyBSQ0FSX0RVX1BM
-QU5FX1ZTUEQwLCBCSVQoUkNBUl9EVV9OVU1fS01TX1BMQU5FUyAtIDEpIH0sCisJCXsgUkNBUl9E
-VV9QTEFORV9WU1BEMSwgQklUKFJDQVJfRFVfTlVNX0tNU19QTEFORVMgLSAyKSB8CisJCQkJICAg
-ICAgIEJJVCgyICogUkNBUl9EVV9OVU1fS01TX1BMQU5FUyAtIDEpIH0sCisJfTsKKwl1bnNpZ25l
-ZCBpbnQgcGxhbmVzX21hc2s7CisJdW5zaWduZWQgaW50IG51bV9wbGFuZXM7CisJdW5zaWduZWQg
-aW50IGk7CisKKwludW1fcGxhbmVzID0gUkNBUl9EVV9OVU1fS01TX1BMQU5FUyAqIERJVl9ST1VO
-RF9VUChyY2R1LT5udW1fY3J0Y3MsIDIpOworCXBsYW5lc19tYXNrID0gKDEgPDwgbnVtX3BsYW5l
-cykgLSAxOworCisJZm9yIChpID0gMDsgaSA8IEFSUkFZX1NJWkUoc291cmNlcyk7ICsraSkgewor
-CQlzdHJ1Y3QgcmNhcl9kdV92c3AxX3NvdXJjZSAqc3JjOworCQljaGFyIG5hbWVbNl07CisJCWlu
-dCByZXQ7CisKKwkJc3JjID0gZGV2bV9remFsbG9jKHJjZHUtPmRldiwgc2l6ZW9mKCpzcmMpLCBH
-RlBfS0VSTkVMKTsKKwkJaWYgKHNyYyA9PSBOVUxMKQorCQkJcmV0dXJuIC1FTk9NRU07CisKKwkJ
-c3JjLT5zb3VyY2UgPSBzb3VyY2VzW2ldLnNvdXJjZTsKKworCQlzcHJpbnRmKG5hbWUsICJ2c3Bk
-JXUiLCBpKTsKKwkJcmV0ID0gZHJtX2xpdmVfc291cmNlX2luaXQocmNkdS0+ZGRldiwgJnNyYy0+
-YmFzZSwgbmFtZSwKKwkJCQkJICAgc291cmNlc1tpXS5wbGFuZXMgJiBwbGFuZXNfbWFzaywKKwkJ
-CQkJICAgc291cmNlX2Zvcm1hdHMsCisJCQkJCSAgIEFSUkFZX1NJWkUoc291cmNlX2Zvcm1hdHMp
-LAorCQkJCQkgICAmcmNhcl9kdV9saXZlX3NvdXJjZV9mdW5jcyk7CisJCWlmIChyZXQgPCAwKQor
-CQkJcmV0dXJuIHJldDsKKwl9CisKKwlyZXR1cm4gMDsKIH0KIAorLyogLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0KKyAqIFBsYW5lcworICovCisKKyNkZWZpbmUgUkNBUl9EVV9DT0xPUktFWV9OT05FCQko
-MCA8PCAyNCkKKyNkZWZpbmUgUkNBUl9EVV9DT0xPUktFWV9TT1VSQ0UJCSgxIDw8IDI0KQorI2Rl
-ZmluZSBSQ0FSX0RVX0NPTE9SS0VZX01BU0sJCSgxIDw8IDI0KQorCiBzdGF0aWMgdm9pZCByY2Fy
-X2R1X3BsYW5lX3dyaXRlKHN0cnVjdCByY2FyX2R1X2dyb3VwICpyZ3JwLAogCQkJCXVuc2lnbmVk
-IGludCBpbmRleCwgdTMyIHJlZywgdTMyIGRhdGEpCiB7CkBAIC00MiwzNCArMTA1LDQ3IEBAIHN0
-YXRpYyB2b2lkIHJjYXJfZHVfcGxhbmVfd3JpdGUoc3RydWN0IHJjYXJfZHVfZ3JvdXAgKnJncnAs
-CiAJCSAgICAgIGRhdGEpOwogfQogCi1zdGF0aWMgdm9pZCByY2FyX2R1X3BsYW5lX3NldHVwX2Zi
-KHN0cnVjdCByY2FyX2R1X3BsYW5lICpwbGFuZSkKK3N0YXRpYyB2b2lkIHJjYXJfZHVfcGxhbmVf
-c2V0dXBfc2Nhbm91dChzdHJ1Y3QgcmNhcl9kdV9wbGFuZSAqcGxhbmUpCiB7CiAJc3RydWN0IHJj
-YXJfZHVfcGxhbmVfc3RhdGUgKnN0YXRlID0KIAkJdG9fcmNhcl9kdV9wbGFuZV9zdGF0ZShwbGFu
-ZS0+cGxhbmUuc3RhdGUpOwotCXN0cnVjdCBkcm1fZnJhbWVidWZmZXIgKmZiID0gcGxhbmUtPnBs
-YW5lLnN0YXRlLT5mYjsKIAlzdHJ1Y3QgcmNhcl9kdV9ncm91cCAqcmdycCA9IHBsYW5lLT5ncm91
-cDsKIAl1bnNpZ25lZCBpbnQgc3JjX3ggPSBzdGF0ZS0+c3RhdGUuc3JjX3ggPj4gMTY7CiAJdW5z
-aWduZWQgaW50IHNyY195ID0gc3RhdGUtPnN0YXRlLnNyY195ID4+IDE2OwogCXVuc2lnbmVkIGlu
-dCBpbmRleCA9IHN0YXRlLT5od2luZGV4OwotCXN0cnVjdCBkcm1fZ2VtX2NtYV9vYmplY3QgKmdl
-bTsKKwl1bnNpZ25lZCBpbnQgcGl0Y2g7CiAJYm9vbCBpbnRlcmxhY2VkOwotCXUzMiBtd3I7CisJ
-dTMyIGRtYVsyXTsKIAogCWludGVybGFjZWQgPSBzdGF0ZS0+c3RhdGUuY3J0Yy0+c3RhdGUtPmFk
-anVzdGVkX21vZGUuZmxhZ3MKIAkJICAgJiBEUk1fTU9ERV9GTEFHX0lOVEVSTEFDRTsKIAorCWlm
-IChwbGFuZS0+cGxhbmUuc3RhdGUtPmZiKSB7CisJCXN0cnVjdCBkcm1fZnJhbWVidWZmZXIgKmZi
-ID0gc3RhdGUtPnN0YXRlLmZiOworCQlzdHJ1Y3QgZHJtX2dlbV9jbWFfb2JqZWN0ICpnZW07CisJ
-CXVuc2lnbmVkIGludCBpOworCisJCWlmIChzdGF0ZS0+Zm9ybWF0LT5wbGFuZXMgPT0gMikKKwkJ
-CXBpdGNoID0gZmItPnBpdGNoZXNbMF07CisJCWVsc2UKKwkJCXBpdGNoID0gZmItPnBpdGNoZXNb
-MF0gKiA4IC8gc3RhdGUtPmZvcm1hdC0+YnBwOworCisJCWZvciAoaSA9IDA7IGkgPCBzdGF0ZS0+
-Zm9ybWF0LT5wbGFuZXM7ICsraSkgeworCQkJZ2VtID0gZHJtX2ZiX2NtYV9nZXRfZ2VtX29iaihm
-YiwgaSk7CisJCQlkbWFbaV0gPSBnZW0tPnBhZGRyICsgZmItPm9mZnNldHNbaV07CisJCX0KKwl9
-IGVsc2UgeworCQlwaXRjaCA9IHN0YXRlLT5zdGF0ZS5zcmNfdyA+PiAxNjsKKwkJZG1hWzBdID0g
-MDsKKwkJZG1hWzFdID0gMDsKKwl9CisKIAkvKiBNZW1vcnkgcGl0Y2ggKGV4cHJlc3NlZCBpbiBw
-aXhlbHMpLiBNdXN0IGJlIGRvdWJsZWQgZm9yIGludGVybGFjZWQKIAkgKiBvcGVyYXRpb24gd2l0
-aCAzMmJwcCBmb3JtYXRzLgogCSAqLwotCWlmIChzdGF0ZS0+Zm9ybWF0LT5wbGFuZXMgPT0gMikK
-LQkJbXdyID0gZmItPnBpdGNoZXNbMF07Ci0JZWxzZQotCQltd3IgPSBmYi0+cGl0Y2hlc1swXSAq
-IDggLyBzdGF0ZS0+Zm9ybWF0LT5icHA7Ci0KLQlpZiAoaW50ZXJsYWNlZCAmJiBzdGF0ZS0+Zm9y
-bWF0LT5icHAgPT0gMzIpCi0JCW13ciAqPSAyOwotCi0JcmNhcl9kdV9wbGFuZV93cml0ZShyZ3Jw
-LCBpbmRleCwgUG5NV1IsIG13cik7CisJcmNhcl9kdV9wbGFuZV93cml0ZShyZ3JwLCBpbmRleCwg
-UG5NV1IsCisJCQkgICAgKGludGVybGFjZWQgJiYgc3RhdGUtPmZvcm1hdC0+YnBwID09IDMyKSA/
-CisJCQkgICAgcGl0Y2ggKiAyIDogcGl0Y2gpOwogCiAJLyogVGhlIFkgcG9zaXRpb24gaXMgZXhw
-cmVzc2VkIGluIHJhc3RlciBsaW5lIHVuaXRzIGFuZCBtdXN0IGJlIGRvdWJsZWQKIAkgKiBmb3Ig
-MzJicHAgZm9ybWF0cywgYWNjb3JkaW5nIHRvIHRoZSBSOEE3NzkwIGRhdGFzaGVldC4gTm8gbWVu
-dGlvbiBvZgpAQCAtODcsMjEgKzE2MywxOCBAQCBzdGF0aWMgdm9pZCByY2FyX2R1X3BsYW5lX3Nl
-dHVwX2ZiKHN0cnVjdCByY2FyX2R1X3BsYW5lICpwbGFuZSkKIAlyY2FyX2R1X3BsYW5lX3dyaXRl
-KHJncnAsIGluZGV4LCBQblNQWVIsIHNyY195ICoKIAkJCSAgICAoIWludGVybGFjZWQgJiYgc3Rh
-dGUtPmZvcm1hdC0+YnBwID09IDMyID8gMiA6IDEpKTsKIAotCWdlbSA9IGRybV9mYl9jbWFfZ2V0
-X2dlbV9vYmooZmIsIDApOwotCXJjYXJfZHVfcGxhbmVfd3JpdGUocmdycCwgaW5kZXgsIFBuRFNB
-MFIsIGdlbS0+cGFkZHIgKyBmYi0+b2Zmc2V0c1swXSk7CisJcmNhcl9kdV9wbGFuZV93cml0ZShy
-Z3JwLCBpbmRleCwgUG5EU0EwUiwgZG1hWzBdKTsKIAogCWlmIChzdGF0ZS0+Zm9ybWF0LT5wbGFu
-ZXMgPT0gMikgewogCQlpbmRleCA9IChpbmRleCArIDEpICUgODsKIAotCQlyY2FyX2R1X3BsYW5l
-X3dyaXRlKHJncnAsIGluZGV4LCBQbk1XUiwgZmItPnBpdGNoZXNbMF0pOworCQlyY2FyX2R1X3Bs
-YW5lX3dyaXRlKHJncnAsIGluZGV4LCBQbk1XUiwgcGl0Y2gpOwogCiAJCXJjYXJfZHVfcGxhbmVf
-d3JpdGUocmdycCwgaW5kZXgsIFBuU1BYUiwgc3JjX3gpOwogCQlyY2FyX2R1X3BsYW5lX3dyaXRl
-KHJncnAsIGluZGV4LCBQblNQWVIsIHNyY195ICoKIAkJCQkgICAgKHN0YXRlLT5mb3JtYXQtPmJw
-cCA9PSAxNiA/IDIgOiAxKSAvIDIpOwogCi0JCWdlbSA9IGRybV9mYl9jbWFfZ2V0X2dlbV9vYmoo
-ZmIsIDEpOwotCQlyY2FyX2R1X3BsYW5lX3dyaXRlKHJncnAsIGluZGV4LCBQbkRTQTBSLAotCQkJ
-CSAgICBnZW0tPnBhZGRyICsgZmItPm9mZnNldHNbMV0pOworCQlyY2FyX2R1X3BsYW5lX3dyaXRl
-KHJncnAsIGluZGV4LCBQbkRTQTBSLCBkbWFbMV0pOwogCX0KIH0KIApAQCAtMTY4LDggKzI0MSw4
-IEBAIHN0YXRpYyB2b2lkIHJjYXJfZHVfcGxhbmVfc2V0dXBfbW9kZShzdHJ1Y3QgcmNhcl9kdV9w
-bGFuZSAqcGxhbmUsCiAJfQogfQogCi1zdGF0aWMgdm9pZCBfX3JjYXJfZHVfcGxhbmVfc2V0dXAo
-c3RydWN0IHJjYXJfZHVfcGxhbmUgKnBsYW5lLAotCQkJCSAgdW5zaWduZWQgaW50IGluZGV4KQor
-c3RhdGljIHZvaWQgcmNhcl9kdV9wbGFuZV9zZXR1cF9mb3JtYXQoc3RydWN0IHJjYXJfZHVfcGxh
-bmUgKnBsYW5lLAorCQkJCSAgICAgICB1bnNpZ25lZCBpbnQgaW5kZXgpCiB7CiAJc3RydWN0IHJj
-YXJfZHVfcGxhbmVfc3RhdGUgKnN0YXRlID0KIAkJdG9fcmNhcl9kdV9wbGFuZV9zdGF0ZShwbGFu
-ZS0+cGxhbmUuc3RhdGUpOwpAQCAtMTgyLDEwICsyNTUsNiBAQCBzdGF0aWMgdm9pZCBfX3JjYXJf
-ZHVfcGxhbmVfc2V0dXAoc3RydWN0IHJjYXJfZHVfcGxhbmUgKnBsYW5lLAogCSAqIFRoZSBkYXRh
-IGZvcm1hdCBpcyBzZWxlY3RlZCBieSB0aGUgRERERiBmaWVsZCBpbiBQbk1SIGFuZCB0aGUgRURG
-CiAJICogZmllbGQgaW4gRERDUjQuCiAJICovCi0JZGRjcjQgPSByY2FyX2R1X3BsYW5lX3JlYWQo
-cmdycCwgaW5kZXgsIFBuRERDUjQpOwotCWRkY3I0ICY9IH5QbkREQ1I0X0VERl9NQVNLOwotCWRk
-Y3I0IHw9IHN0YXRlLT5mb3JtYXQtPmVkZiB8IFBuRERDUjRfQ09ERTsKLQogCXJjYXJfZHVfcGxh
-bmVfc2V0dXBfbW9kZShwbGFuZSwgaW5kZXgpOwogCiAJaWYgKHN0YXRlLT5mb3JtYXQtPnBsYW5l
-cyA9PSAyKSB7CkBAIC0yMDQsNiArMjczLDExIEBAIHN0YXRpYyB2b2lkIF9fcmNhcl9kdV9wbGFu
-ZV9zZXR1cChzdHJ1Y3QgcmNhcl9kdV9wbGFuZSAqcGxhbmUsCiAJfQogCiAJcmNhcl9kdV9wbGFu
-ZV93cml0ZShyZ3JwLCBpbmRleCwgUG5ERENSMiwgZGRjcjIpOworCisJZGRjcjQgPSBzdGF0ZS0+
-Zm9ybWF0LT5lZGYgfCBQbkREQ1I0X0NPREU7CisJaWYgKHN0YXRlLT5zb3VyY2UgIT0gUkNBUl9E
-VV9QTEFORV9NRU1PUlkpCisJCWRkY3I0IHw9IFBuRERDUjRfVlNQUzsKKwogCXJjYXJfZHVfcGxh
-bmVfd3JpdGUocmdycCwgaW5kZXgsIFBuRERDUjQsIGRkY3I0KTsKIAogCS8qIERlc3RpbmF0aW9u
-IHBvc2l0aW9uIGFuZCBzaXplICovCkBAIC0yMjQsMTEgKzI5OCwyMSBAQCB2b2lkIHJjYXJfZHVf
-cGxhbmVfc2V0dXAoc3RydWN0IHJjYXJfZHVfcGxhbmUgKnBsYW5lKQogCXN0cnVjdCByY2FyX2R1
-X3BsYW5lX3N0YXRlICpzdGF0ZSA9CiAJCXRvX3JjYXJfZHVfcGxhbmVfc3RhdGUocGxhbmUtPnBs
-YW5lLnN0YXRlKTsKIAotCV9fcmNhcl9kdV9wbGFuZV9zZXR1cChwbGFuZSwgc3RhdGUtPmh3aW5k
-ZXgpOworCXJjYXJfZHVfcGxhbmVfc2V0dXBfZm9ybWF0KHBsYW5lLCBzdGF0ZS0+aHdpbmRleCk7
-CiAJaWYgKHN0YXRlLT5mb3JtYXQtPnBsYW5lcyA9PSAyKQotCQlfX3JjYXJfZHVfcGxhbmVfc2V0
-dXAocGxhbmUsIChzdGF0ZS0+aHdpbmRleCArIDEpICUgOCk7CisJCXJjYXJfZHVfcGxhbmVfc2V0
-dXBfZm9ybWF0KHBsYW5lLCAoc3RhdGUtPmh3aW5kZXggKyAxKSAlIDgpOworCisJcmNhcl9kdV9w
-bGFuZV9zZXR1cF9zY2Fub3V0KHBsYW5lKTsKKworCWlmIChzdGF0ZS0+c291cmNlID09IFJDQVJf
-RFVfUExBTkVfVlNQRDEpIHsKKwkJdW5zaWduZWQgaW50IHZzcGQxX3NpbmsgPSBwbGFuZS0+Z3Jv
-dXAtPmluZGV4ID8gMiA6IDA7CisJCXN0cnVjdCByY2FyX2R1X2RldmljZSAqcmNkdSA9IHBsYW5l
-LT5ncm91cC0+ZGV2OwogCi0JcmNhcl9kdV9wbGFuZV9zZXR1cF9mYihwbGFuZSk7CisJCWlmIChy
-Y2R1LT52c3BkMV9zaW5rICE9IHZzcGQxX3NpbmspIHsKKwkJCXJjZHUtPnZzcGQxX3NpbmsgPSB2
-c3BkMV9zaW5rOworCQkJcmNhcl9kdV9zZXRfZHBhZDBfdnNwMV9yb3V0aW5nKHJjZHUpOworCQl9
-CisJfQogfQogCiBzdGF0aWMgaW50IHJjYXJfZHVfcGxhbmVfYXRvbWljX2NoZWNrKHN0cnVjdCBk
-cm1fcGxhbmUgKnBsYW5lLApAQCAtMjM3LDggKzMyMSw5IEBAIHN0YXRpYyBpbnQgcmNhcl9kdV9w
-bGFuZV9hdG9taWNfY2hlY2soc3RydWN0IGRybV9wbGFuZSAqcGxhbmUsCiAJc3RydWN0IHJjYXJf
-ZHVfcGxhbmVfc3RhdGUgKnJzdGF0ZSA9IHRvX3JjYXJfZHVfcGxhbmVfc3RhdGUoc3RhdGUpOwog
-CXN0cnVjdCByY2FyX2R1X3BsYW5lICpycGxhbmUgPSB0b19yY2FyX3BsYW5lKHBsYW5lKTsKIAlz
-dHJ1Y3QgcmNhcl9kdV9kZXZpY2UgKnJjZHUgPSBycGxhbmUtPmdyb3VwLT5kZXY7CisJdWludDMy
-X3QgcGl4ZWxfZm9ybWF0OwogCi0JaWYgKCFzdGF0ZS0+ZmIgfHwgIXN0YXRlLT5jcnRjKSB7CisJ
-aWYgKCghc3RhdGUtPmZiICYmICFzdGF0ZS0+c3JjKSB8fCAhc3RhdGUtPmNydGMpIHsKIAkJcnN0
-YXRlLT5mb3JtYXQgPSBOVUxMOwogCQlyZXR1cm4gMDsKIAl9CkBAIC0yNDksMTMgKzMzNCwyNSBA
-QCBzdGF0aWMgaW50IHJjYXJfZHVfcGxhbmVfYXRvbWljX2NoZWNrKHN0cnVjdCBkcm1fcGxhbmUg
-KnBsYW5lLAogCQlyZXR1cm4gLUVJTlZBTDsKIAl9CiAKLQlyc3RhdGUtPmZvcm1hdCA9IHJjYXJf
-ZHVfZm9ybWF0X2luZm8oc3RhdGUtPmZiLT5waXhlbF9mb3JtYXQpOworCXBpeGVsX2Zvcm1hdCA9
-IHN0YXRlLT5mYiA/IHN0YXRlLT5mYi0+cGl4ZWxfZm9ybWF0CisJCQkJIDogc3RhdGUtPnNyYy0+
-cGl4ZWxfZm9ybWF0OworCXJzdGF0ZS0+Zm9ybWF0ID0gcmNhcl9kdV9mb3JtYXRfaW5mbyhwaXhl
-bF9mb3JtYXQpOwogCWlmIChyc3RhdGUtPmZvcm1hdCA9PSBOVUxMKSB7CiAJCWRldl9kYmcocmNk
-dS0+ZGV2LCAiJXM6IHVuc3VwcG9ydGVkIGZvcm1hdCAlMDh4XG4iLCBfX2Z1bmNfXywKLQkJCXN0
-YXRlLT5mYi0+cGl4ZWxfZm9ybWF0KTsKKwkJCXBpeGVsX2Zvcm1hdCk7CisJCXJldHVybiAtRUlO
-VkFMOworCX0KKworCWlmIChzdGF0ZS0+c3JjICYmIHJzdGF0ZS0+Zm9ybWF0LT5wbGFuZXMgPiAx
-KSB7CisJCWRldl9kYmcocmNkdS0+ZGV2LAorCQkJIiVzOiB1bnN1cHBvcnRlZCBmb3JtYXQgJTA4
-eCBmb3IgbGl2ZSBzb3VyY2VcbiIsCisJCQlfX2Z1bmNfXywgcGl4ZWxfZm9ybWF0KTsKIAkJcmV0
-dXJuIC1FSU5WQUw7CiAJfQogCisJcnN0YXRlLT5zb3VyY2UgPSBzdGF0ZS0+ZmIgPyBSQ0FSX0RV
-X1BMQU5FX01FTU9SWQorCQkgICAgICAgOiB0b19yY2FyX3ZzcDFfc291cmNlKHN0YXRlLT5zcmMp
-LT5zb3VyY2U7CisKIAlyZXR1cm4gMDsKIH0KIApkaWZmIC0tZ2l0IGEvZHJpdmVycy9ncHUvZHJt
-L3JjYXItZHUvcmNhcl9kdV9wbGFuZS5oIGIvZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9k
-dV9wbGFuZS5oCmluZGV4IDgxYzJkMzYxYTk0Zi4uOWE2MTMyODk5ZDU5IDEwMDY0NAotLS0gYS9k
-cml2ZXJzL2dwdS9kcm0vcmNhci1kdS9yY2FyX2R1X3BsYW5lLmgKKysrIGIvZHJpdmVycy9ncHUv
-ZHJtL3JjYXItZHUvcmNhcl9kdV9wbGFuZS5oCkBAIC0xNyw2ICsxNyw3IEBACiAjaW5jbHVkZSA8
-ZHJtL2RybVAuaD4KICNpbmNsdWRlIDxkcm0vZHJtX2NydGMuaD4KIAorc3RydWN0IHJjYXJfZHVf
-ZGV2aWNlOwogc3RydWN0IHJjYXJfZHVfZm9ybWF0X2luZm87CiBzdHJ1Y3QgcmNhcl9kdV9ncm91
-cDsKIApAQCAtNzAsNiArNzEsOCBAQCB0b19yY2FyX2R1X3BsYW5lX3N0YXRlKHN0cnVjdCBkcm1f
-cGxhbmVfc3RhdGUgKnN0YXRlKQogCXJldHVybiBjb250YWluZXJfb2Yoc3RhdGUsIHN0cnVjdCBy
-Y2FyX2R1X3BsYW5lX3N0YXRlLCBzdGF0ZSk7CiB9CiAKK2ludCByY2FyX2R1X3ZzcDFfc291cmNl
-c19pbml0KHN0cnVjdCByY2FyX2R1X2RldmljZSAqcmNkdSk7CisKIGludCByY2FyX2R1X3BsYW5l
-c19pbml0KHN0cnVjdCByY2FyX2R1X2dyb3VwICpyZ3JwKTsKIAogdm9pZCByY2FyX2R1X3BsYW5l
-X3NldHVwKHN0cnVjdCByY2FyX2R1X3BsYW5lICpwbGFuZSk7CmRpZmYgLS1naXQgYS9kcml2ZXJz
-L2dwdS9kcm0vcmNhci1kdS9yY2FyX2R1X3JlZ3MuaCBiL2RyaXZlcnMvZ3B1L2RybS9yY2FyLWR1
-L3JjYXJfZHVfcmVncy5oCmluZGV4IDcwZmNiYzQ3MWViZC4uYWM5YzNlNTExZTc5IDEwMDY0NAot
-LS0gYS9kcml2ZXJzL2dwdS9kcm0vcmNhci1kdS9yY2FyX2R1X3JlZ3MuaAorKysgYi9kcml2ZXJz
-L2dwdS9kcm0vcmNhci1kdS9yY2FyX2R1X3JlZ3MuaApAQCAtMzg5LDYgKzM4OSw3IEBACiAKICNk
-ZWZpbmUgUG5ERENSNAkJCTB4MDAxOTAKICNkZWZpbmUgUG5ERENSNF9DT0RFCQkoMHg3NzY2IDw8
-IDE2KQorI2RlZmluZSBQbkREQ1I0X1ZTUFMJCSgxIDw8IDEzKQogI2RlZmluZSBQbkREQ1I0X1NE
-RlNfUkdCCSgwIDw8IDQpCiAjZGVmaW5lIFBuRERDUjRfU0RGU19ZQwkJKDUgPDwgNCkKICNkZWZp
-bmUgUG5ERENSNF9TREZTX01BU0sJKDcgPDwgNCkKLS0gCjIuMC41CgpfX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpkcmktZGV2ZWwgbWFpbGluZyBsaXN0CmRy
-aS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9y
-Zy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
+Signed-off-by: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+---
+ drivers/gpu/drm/drm_crtc.c  | 231 ++++++++++++++++++++++++++++++++++++++++++++
+ drivers/gpu/drm/drm_ioctl.c |   3 +
+ include/drm/drm_crtc.h      |  42 ++++++++
+ include/uapi/drm/drm.h      |   4 +
+ include/uapi/drm/drm_mode.h |  32 ++++++
+ 5 files changed, 312 insertions(+)
+
+diff --git a/drivers/gpu/drm/drm_crtc.c b/drivers/gpu/drm/drm_crtc.c
+index 5785336695ca..a510c9742a16 100644
+--- a/drivers/gpu/drm/drm_crtc.c
++++ b/drivers/gpu/drm/drm_crtc.c
+@@ -1261,6 +1261,60 @@ void drm_plane_cleanup(struct drm_plane *plane)
+ }
+ EXPORT_SYMBOL(drm_plane_cleanup);
+ 
++int drm_live_source_init(struct drm_device *dev, struct drm_live_source *src,
++			 const char *name, unsigned long possible_planes,
++			 const uint32_t *formats, uint32_t format_count,
++			 const struct drm_live_source_funcs *funcs)
++{
++	int ret;
++
++	drm_modeset_lock_all(dev);
++
++	ret = drm_mode_object_get(dev, &src->base, DRM_MODE_OBJECT_LIVE_SOURCE);
++	if (ret)
++		goto out;
++
++	src->dev = dev;
++	src->funcs = funcs;
++	if (name)
++		strlcpy(src->name, name, DRM_SOURCE_NAME_LEN);
++	src->possible_planes = possible_planes;
++
++	src->format_types = kmalloc(format_count * sizeof(*src->format_types),
++				    GFP_KERNEL);
++	if (!src->format_types) {
++		DRM_DEBUG_KMS("out of memory when allocating source foramts\n");
++		drm_mode_object_put(dev, &src->base);
++		ret = -ENOMEM;
++		goto out;
++	}
++
++	memcpy(src->format_types, formats,
++	       format_count * sizeof(*src->format_types));
++	src->format_count = format_count;
++
++	list_add_tail(&src->head, &dev->mode_config.live_source_list);
++	dev->mode_config.num_live_source++;
++
++ out:
++	drm_modeset_unlock_all(dev);
++
++	return ret;
++}
++EXPORT_SYMBOL(drm_live_source_init);
++
++void drm_live_source_cleanup(struct drm_live_source *src)
++{
++	struct drm_device *dev = src->dev;
++
++	drm_modeset_lock_all(dev);
++	drm_mode_object_put(dev, &src->base);
++	list_del(&src->head);
++	dev->mode_config.num_live_source--;
++	drm_modeset_unlock_all(dev);
++}
++EXPORT_SYMBOL(drm_live_source_cleanup);
++
+ /**
+  * drm_plane_index - find the index of a registered plane
+  * @plane: plane to find index for
+@@ -2612,6 +2666,176 @@ int drm_mode_setplane(struct drm_device *dev, void *data,
+ }
+ 
+ /**
++ * drm_mode_getsource_res - get live source info
++ * @dev: DRM device
++ * @data: ioctl data
++ * @file_priv: DRM file info
++ *
++ * Return a live source and set of IDs.
++ */
++int drm_mode_getsource_res(struct drm_device *dev, void *data,
++			   struct drm_file *file_priv)
++{
++	struct drm_mode_get_live_source_res *src_resp = data;
++	struct drm_mode_config *config;
++	struct drm_live_source *src;
++	uint32_t __user *src_ptr;
++	int copied = 0, ret = 0;
++
++	if (!drm_core_check_feature(dev, DRIVER_MODESET))
++		return -EINVAL;
++
++	drm_modeset_lock_all(dev);
++	config = &dev->mode_config;
++
++	/*
++	 * This ioctl is called twice, once to determine how much space is
++	 * needed, and the 2nd time to fill it.
++	 */
++	if (config->num_live_source &&
++	    (src_resp->count_sources >= config->num_live_source)) {
++		src_ptr = (uint32_t __user *)(unsigned long)src_resp->source_id_ptr;
++
++		list_for_each_entry(src, &config->live_source_list, head) {
++			if (put_user(src->base.id, src_ptr + copied)) {
++				ret = -EFAULT;
++				goto out;
++			}
++			copied++;
++		}
++	}
++	src_resp->count_sources = config->num_live_source;
++
++out:
++	drm_modeset_unlock_all(dev);
++	return ret;
++}
++
++/**
++ * drm_mode_getsource - get live source info
++ * @dev: DRM device
++ * @data: ioctl data
++ * @file_priv: DRM file info
++ *
++ * Return live source info, including formats supported, ...
++ */
++int drm_mode_getsource(struct drm_device *dev, void *data,
++		       struct drm_file *file_priv)
++{
++	struct drm_mode_get_live_source *src_resp = data;
++	struct drm_mode_object *obj;
++	struct drm_live_source *src;
++	int ret = 0;
++
++	if (!drm_core_check_feature(dev, DRIVER_MODESET))
++		return -EINVAL;
++
++	obj = drm_mode_object_find(dev, src_resp->source_id,
++				   DRM_MODE_OBJECT_LIVE_SOURCE);
++	if (!obj)
++		return -ENOENT;
++	src = obj_to_live_source(obj);
++
++	src_resp->source_id = src->base.id;
++	strlcpy(src_resp->name, src->name, DRM_SOURCE_NAME_LEN);
++	src_resp->possible_planes = src->possible_planes;
++
++	drm_modeset_lock_all(dev);
++
++	if (src->plane)
++		src_resp->plane_id = src->plane->base.id;
++	else
++		src_resp->plane_id = 0;
++
++	src_resp->width = src->width;
++	src_resp->height = src->height;
++	src_resp->pixel_format = src->pixel_format;
++
++	/*
++	 * This ioctl is called twice, once to determine how much space is
++	 * needed, and the 2nd time to fill it.
++	 */
++	if (src->format_count &&
++	    (src_resp->count_format_types >= src->format_count)) {
++		uint32_t __user *format_ptr;
++
++		format_ptr = (uint32_t __user *)(unsigned long)src_resp->format_type_ptr;
++		if (copy_to_user(format_ptr, src->format_types,
++				 sizeof(uint32_t) * src->format_count)) {
++			ret = -EFAULT;
++			goto out;
++		}
++	}
++	src_resp->count_format_types = src->format_count;
++
++out:
++	drm_modeset_unlock_all(dev);
++	return ret;
++}
++
++/**
++ * drm_mode_setsource - set up or tear down a live source
++ * @dev: DRM device
++ * @data: ioctl data*
++ * @file_priv: DRM file info
++ *
++ * Set live source info, including plane, and other factors.
++ * Or pass a NULL plane to disable.
++ */
++int drm_mode_setsource(struct drm_device *dev, void *data,
++		       struct drm_file *file_priv)
++{
++	struct drm_mode_set_live_source *src_req = data;
++	struct drm_mode_object *obj;
++	struct drm_live_source *src;
++	unsigned int i;
++	int ret = 0;
++
++	if (!drm_core_check_feature(dev, DRIVER_MODESET))
++		return -EINVAL;
++
++	/*
++	 * First, find the live source and plane objects. If not available, we
++	 * don't bother to call the driver.
++	 */
++	obj = drm_mode_object_find(dev, src_req->source_id,
++				   DRM_MODE_OBJECT_LIVE_SOURCE);
++	if (!obj) {
++		DRM_DEBUG_KMS("Unknown live source ID %d\n",
++			      src_req->source_id);
++		return -ENOENT;
++	}
++	src = obj_to_live_source(obj);
++
++	drm_modeset_lock_all(dev);
++
++	if (src->plane) {
++		ret = -EBUSY;
++		goto out;
++	}
++
++	/* Check whether this source supports the pixel format. */
++	for (i = 0; i < src->format_count; i++)
++		if (src_req->pixel_format == src->format_types[i])
++			break;
++
++	if (i == src->format_count) {
++		DRM_DEBUG_KMS("Invalid pixel format 0x%08x for source %u\n",
++			      src_req->pixel_format, src->base.id);
++		ret = -EINVAL;
++		goto out;
++	}
++
++	src->width = src_req->width;
++	src->height = src_req->height;
++	src->pixel_format = src_req->pixel_format;
++
++out:
++	drm_modeset_unlock_all(dev);
++	return ret;
++}
++
++/**
+  * drm_mode_set_config_internal - helper to call ->set_config
+  * @set: modeset config to set
+  *
+@@ -5429,6 +5653,7 @@ void drm_mode_config_init(struct drm_device *dev)
+ 	INIT_LIST_HEAD(&dev->mode_config.property_list);
+ 	INIT_LIST_HEAD(&dev->mode_config.property_blob_list);
+ 	INIT_LIST_HEAD(&dev->mode_config.plane_list);
++	INIT_LIST_HEAD(&dev->mode_config.live_source_list);
+ 	idr_init(&dev->mode_config.crtc_idr);
+ 	idr_init(&dev->mode_config.tile_idr);
+ 
+@@ -5468,6 +5693,7 @@ void drm_mode_config_cleanup(struct drm_device *dev)
+ 	struct drm_property *property, *pt;
+ 	struct drm_property_blob *blob, *bt;
+ 	struct drm_plane *plane, *plt;
++	struct drm_live_source *src, *psrc;
+ 
+ 	list_for_each_entry_safe(encoder, enct, &dev->mode_config.encoder_list,
+ 				 head) {
+@@ -5507,6 +5733,11 @@ void drm_mode_config_cleanup(struct drm_device *dev)
+ 		plane->funcs->destroy(plane);
+ 	}
+ 
++	list_for_each_entry_safe(src, psrc, &dev->mode_config.live_source_list,
++				 head) {
++		src->funcs->destroy(src);
++	}
++
+ 	list_for_each_entry_safe(crtc, ct, &dev->mode_config.crtc_list, head) {
+ 		crtc->funcs->destroy(crtc);
+ 	}
+diff --git a/drivers/gpu/drm/drm_ioctl.c b/drivers/gpu/drm/drm_ioctl.c
+index a6d773a61c2d..2cb400a8bc8d 100644
+--- a/drivers/gpu/drm/drm_ioctl.c
++++ b/drivers/gpu/drm/drm_ioctl.c
+@@ -609,10 +609,13 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
+ 	DRM_IOCTL_DEF(DRM_IOCTL_PRIME_FD_TO_HANDLE, drm_prime_fd_to_handle_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
+ 
+ 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPLANERESOURCES, drm_mode_getplane_res, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
++	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETSOURCERESOURCES, drm_mode_getsource_res, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+ 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETCRTC, drm_mode_getcrtc, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+ 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETCRTC, drm_mode_setcrtc, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+ 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPLANE, drm_mode_getplane, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+ 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETPLANE, drm_mode_setplane, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
++	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETSOURCE, drm_mode_getsource, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
++	DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETSOURCE, drm_mode_setsource, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+ 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_CURSOR, drm_mode_cursor_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+ 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETGAMMA, drm_mode_gamma_get_ioctl, DRM_UNLOCKED),
+ 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETGAMMA, drm_mode_gamma_set_ioctl, DRM_MASTER|DRM_UNLOCKED),
+diff --git a/include/drm/drm_crtc.h b/include/drm/drm_crtc.h
+index adc9ea5acf02..775a9a84c5bf 100644
+--- a/include/drm/drm_crtc.h
++++ b/include/drm/drm_crtc.h
+@@ -54,6 +54,7 @@ struct fence;
+ #define DRM_MODE_OBJECT_BLOB 0xbbbbbbbb
+ #define DRM_MODE_OBJECT_PLANE 0xeeeeeeee
+ #define DRM_MODE_OBJECT_BRIDGE 0xbdbdbdbd
++#define DRM_MODE_OBJECT_LIVE_SOURCE 0xe1e1e1e1
+ #define DRM_MODE_OBJECT_ANY 0
+ 
+ struct drm_mode_object {
+@@ -247,6 +248,7 @@ struct drm_pending_vblank_event;
+ struct drm_plane;
+ struct drm_bridge;
+ struct drm_atomic_state;
++struct drm_live_source;
+ 
+ /**
+  * struct drm_crtc_state - mutable CRTC state
+@@ -869,6 +871,30 @@ struct drm_plane {
+ 	struct drm_plane_state *state;
+ };
+ 
++struct drm_live_source_funcs {
++	void (*destroy)(struct drm_live_source *src);
++};
++
++struct drm_live_source {
++	struct drm_device *dev;
++	struct list_head head;
++
++	struct drm_mode_object base;
++
++	char name[DRM_SOURCE_NAME_LEN];
++
++	uint32_t possible_planes;
++	uint32_t *format_types;
++	uint32_t format_count;
++
++	struct drm_plane *plane;
++	unsigned int width;
++	unsigned int height;
++	uint32_t pixel_format;
++
++	const struct drm_live_source_funcs *funcs;
++};
++
+ /**
+  * struct drm_bridge_funcs - drm_bridge control functions
+  * @attach: Called during drm_bridge_attach
+@@ -1087,6 +1113,8 @@ struct drm_mode_config {
+ 	int num_overlay_plane;
+ 	int num_total_plane;
+ 	struct list_head plane_list;
++	int num_live_source;
++	struct list_head live_source_list;
+ 
+ 	int num_crtc;
+ 	struct list_head crtc_list;
+@@ -1186,6 +1214,7 @@ struct drm_mode_config {
+ #define obj_to_property(x) container_of(x, struct drm_property, base)
+ #define obj_to_blob(x) container_of(x, struct drm_property_blob, base)
+ #define obj_to_plane(x) container_of(x, struct drm_plane, base)
++#define obj_to_live_source(x) container_of(x, struct drm_live_source, base)
+ 
+ struct drm_prop_enum_list {
+ 	int type;
+@@ -1276,6 +1305,13 @@ extern int drm_crtc_check_viewport(const struct drm_crtc *crtc,
+ 
+ extern void drm_encoder_cleanup(struct drm_encoder *encoder);
+ 
++extern int drm_live_source_init(struct drm_device *dev,
++				struct drm_live_source *src, const char *name,
++				unsigned long possible_planes,
++				const uint32_t *formats, uint32_t format_count,
++				const struct drm_live_source_funcs *funcs);
++extern void drm_live_source_cleanup(struct drm_live_source *src);
++
+ extern const char *drm_get_connector_status_name(enum drm_connector_status status);
+ extern const char *drm_get_subpixel_order_name(enum subpixel_order order);
+ extern const char *drm_get_dpms_name(int val);
+@@ -1391,6 +1427,8 @@ extern int drm_mode_getresources(struct drm_device *dev,
+ 				 void *data, struct drm_file *file_priv);
+ extern int drm_mode_getplane_res(struct drm_device *dev, void *data,
+ 				   struct drm_file *file_priv);
++extern int drm_mode_getsource_res(struct drm_device *dev, void *data,
++				  struct drm_file *file_priv);
+ extern int drm_mode_getcrtc(struct drm_device *dev,
+ 			    void *data, struct drm_file *file_priv);
+ extern int drm_mode_getconnector(struct drm_device *dev,
+@@ -1402,6 +1440,10 @@ extern int drm_mode_getplane(struct drm_device *dev,
+ 			       void *data, struct drm_file *file_priv);
+ extern int drm_mode_setplane(struct drm_device *dev,
+ 			       void *data, struct drm_file *file_priv);
++extern int drm_mode_getsource(struct drm_device *dev,
++			      void *data, struct drm_file *file_priv);
++extern int drm_mode_setsource(struct drm_device *dev,
++			      void *data, struct drm_file *file_priv);
+ extern int drm_mode_cursor_ioctl(struct drm_device *dev,
+ 				void *data, struct drm_file *file_priv);
+ extern int drm_mode_cursor2_ioctl(struct drm_device *dev,
+diff --git a/include/uapi/drm/drm.h b/include/uapi/drm/drm.h
+index ff6ef62d084b..d60cb8fa034c 100644
+--- a/include/uapi/drm/drm.h
++++ b/include/uapi/drm/drm.h
+@@ -787,6 +787,10 @@ struct drm_prime_handle {
+ #define DRM_IOCTL_MODE_CURSOR2		DRM_IOWR(0xBB, struct drm_mode_cursor2)
+ #define DRM_IOCTL_MODE_ATOMIC		DRM_IOWR(0xBC, struct drm_mode_atomic)
+ 
++#define DRM_IOCTL_MODE_GETSOURCERESOURCES DRM_IOWR(0xBC, struct drm_mode_get_live_source_res)
++#define DRM_IOCTL_MODE_GETSOURCE	DRM_IOWR(0xBD, struct drm_mode_get_live_source)
++#define DRM_IOCTL_MODE_SETSOURCE	DRM_IOWR(0xBE, struct drm_mode_set_live_source)
++
+ /**
+  * Device specific ioctls should only be in their respective headers
+  * The device specific ioctl range is from 0x40 to 0x9f.
+diff --git a/include/uapi/drm/drm_mode.h b/include/uapi/drm/drm_mode.h
+index dbeba949462a..ecc1fa3000f4 100644
+--- a/include/uapi/drm/drm_mode.h
++++ b/include/uapi/drm/drm_mode.h
+@@ -33,6 +33,7 @@
+ #define DRM_CONNECTOR_NAME_LEN	32
+ #define DRM_DISPLAY_MODE_LEN	32
+ #define DRM_PROP_NAME_LEN	32
++#define DRM_SOURCE_NAME_LEN	32
+ 
+ #define DRM_MODE_TYPE_BUILTIN	(1<<0)
+ #define DRM_MODE_TYPE_CLOCK_C	((1<<1) | DRM_MODE_TYPE_BUILTIN)
+@@ -179,6 +180,37 @@ struct drm_mode_get_plane_res {
+ 	__u32 count_planes;
+ };
+ 
++struct drm_mode_set_live_source {
++	__u32 source_id;
++
++	__u32 plane_id;
++
++	__u32 width;
++	__u32 height;
++	__u32 pixel_format;
++};
++
++struct drm_mode_get_live_source {
++	__u32 source_id;
++	char name[DRM_SOURCE_NAME_LEN];
++
++	__u32 plane_id;
++
++	__u32 possible_planes;
++
++	__u32 count_format_types;
++	__u64 format_type_ptr;
++
++	__u32 width;
++	__u32 height;
++	__u32 pixel_format;
++};
++
++struct drm_mode_get_live_source_res {
++	__u64 source_id_ptr;
++	__u32 count_sources;
++};
++
+ #define DRM_MODE_ENCODER_NONE	0
+ #define DRM_MODE_ENCODER_DAC	1
+ #define DRM_MODE_ENCODER_TMDS	2
+-- 
+2.0.5
