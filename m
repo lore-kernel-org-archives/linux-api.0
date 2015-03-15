@@ -1,102 +1,74 @@
-From: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
-Subject: [RFC/PATCH 5/5] drm/rcar-du: Restart the DU group when a plane source
- changes
-Date: Sun, 15 Mar 2015 23:55:40 +0200
-Message-ID: <1426456540-21006-6-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
-References: <1426456540-21006-1-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
+From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Subject: Re: [PATCH v2 5/7] clone4: Add a CLONE_AUTOREAP flag to
+ automatically reap the child process
+Date: Sun, 15 Mar 2015 16:34:40 -0700
+Message-ID: <20150315233439.GA31890@thin>
+References: <cover.1426376419.git.josh@joshtriplett.org>
+ <6d002995485d446e659105f6931307f3e532ce89.1426376419.git.josh@joshtriplett.org>
+ <20150315145223.GA21887@redhat.com>
+ <20150315171855.GA30620@thin>
+ <20150315195506.GA29475@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <1426456540-21006-1-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: dri-devel@lists.freedesktop.org
-Cc: linux-sh@vger.kernel.org, linux-api@vger.kernel.org, Magnus Damm <magnus.damm@gmail.com>, Daniel Vetter <daniel.vetter@intel.com>, linux-media@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150315195506.GA29475-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thiago Macieira <thiago.macieira-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-UGxhbmUgc291cmNlcyBhcmUgY29uZmlndXJlZCBieSB0aGUgVlNQUyBiaXQgaW4gdGhlIFBuRERD
-UjQgcmVnaXN0ZXIuCkFsdGhvdWdoIHRoZSBkYXRhc2hlZXQgc3RhdGVzIHRoYXQgdGhlIGJpdCBp
-cyB1cGRhdGVkIGR1cmluZyB2ZXJ0aWNhbApibGFua2luZywgaXQgc2VlbXMgdGhhdCB1cGRhdGVz
-IG9ubHkgb2NjdXIgd2hlbiB0aGUgRFUgZ3JvdXAgaXMgaGVsZCBpbgpyZXNldCB0aHJvdWdoIHRo
-ZSBEU1lTUi5EUkVTIGJpdC4gUmVzdGFydCB0aGUgZ3JvdXAgaWYgdGhlIHNvdXJjZQpjaGFuZ2Vz
-LgoKU2lnbmVkLW9mZi1ieTogTGF1cmVudCBQaW5jaGFydCA8bGF1cmVudC5waW5jaGFydCtyZW5l
-c2FzQGlkZWFzb25ib2FyZC5jb20+Ci0tLQogZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9k
-dV9jcnRjLmMgIHwgMTAgKysrKysrKystLQogZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9k
-dV9ncm91cC5jIHwgIDIgKysKIGRyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3JjYXJfZHVfcGxhbmUu
-YyB8IDIyICsrKysrKysrKysrKysrKysrKysrLS0KIGRyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3Jj
-YXJfZHVfcGxhbmUuaCB8ICAxICsKIDQgZmlsZXMgY2hhbmdlZCwgMzEgaW5zZXJ0aW9ucygrKSwg
-NCBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9kcml2ZXJzL2dwdS9kcm0vcmNhci1kdS9yY2Fy
-X2R1X2NydGMuYyBiL2RyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3JjYXJfZHVfY3J0Yy5jCmluZGV4
-IDdkMGI4ZWY5YmVhMi4uOTY5ZDQ5YWIwZDA5IDEwMDY0NAotLS0gYS9kcml2ZXJzL2dwdS9kcm0v
-cmNhci1kdS9yY2FyX2R1X2NydGMuYworKysgYi9kcml2ZXJzL2dwdS9kcm0vcmNhci1kdS9yY2Fy
-X2R1X2NydGMuYwpAQCAtMjQ5LDYgKzI0OSw4IEBAIHN0YXRpYyB2b2lkIHJjYXJfZHVfY3J0Y191
-cGRhdGVfcGxhbmVzKHN0cnVjdCByY2FyX2R1X2NydGMgKnJjcnRjKQogCQl9CiAJfQogCisJbXV0
-ZXhfbG9jaygmcmNydGMtPmdyb3VwLT5sb2NrKTsKKwogCS8qIFNlbGVjdCBkaXNwbGF5IHRpbWlu
-ZyBhbmQgZG90IGNsb2NrIGdlbmVyYXRvciAyIGZvciBwbGFuZXMgYXNzb2NpYXRlZAogCSAqIHdp
-dGggc3VwZXJwb3NpdGlvbiBjb250cm9sbGVyIDIuCiAJICovCkBAIC0yNjAsMTUgKzI2MiwxOSBA
-QCBzdGF0aWMgdm9pZCByY2FyX2R1X2NydGNfdXBkYXRlX3BsYW5lcyhzdHJ1Y3QgcmNhcl9kdV9j
-cnRjICpyY3J0YykKIAkJICogc3BsaXQsIG9yIHRocm91Z2ggYSBtb2R1bGUgcGFyYW1ldGVyKS4g
-RmxpY2tlciB3b3VsZCB0aGVuCiAJCSAqIG9jY3VyIG9ubHkgaWYgd2UgbmVlZCB0byBicmVhayB0
-aGUgcHJlLWFzc29jaWF0aW9uLgogCQkgKi8KLQkJbXV0ZXhfbG9jaygmcmNydGMtPmdyb3VwLT5s
-b2NrKTsKIAkJaWYgKHJjYXJfZHVfZ3JvdXBfcmVhZChyY3J0Yy0+Z3JvdXAsIERQVFNSKSAhPSBk
-cHRzcikgewogCQkJcmNhcl9kdV9ncm91cF93cml0ZShyY3J0Yy0+Z3JvdXAsIERQVFNSLCBkcHRz
-cik7CiAJCQlpZiAocmNydGMtPmdyb3VwLT51c2VkX2NydGNzKQogCQkJCXJjYXJfZHVfZ3JvdXBf
-cmVzdGFydChyY3J0Yy0+Z3JvdXApOwogCQl9Ci0JCW11dGV4X3VubG9jaygmcmNydGMtPmdyb3Vw
-LT5sb2NrKTsKIAl9CiAKKwkvKiBSZXN0YXJ0IHRoZSBncm91cCBpZiBwbGFuZSBzb3VyY2VzIGhh
-dmUgY2hhbmdlZC4gKi8KKwlpZiAocmNydGMtPmdyb3VwLT5wbGFuZXMubmVlZF9yZXN0YXJ0KQor
-CQlyY2FyX2R1X2dyb3VwX3Jlc3RhcnQocmNydGMtPmdyb3VwKTsKKworCW11dGV4X3VubG9jaygm
-cmNydGMtPmdyb3VwLT5sb2NrKTsKKwogCXJjYXJfZHVfZ3JvdXBfd3JpdGUocmNydGMtPmdyb3Vw
-LCByY3J0Yy0+aW5kZXggJSAyID8gRFMyUFIgOiBEUzFQUiwKIAkJCSAgICBkc3ByKTsKIH0KZGlm
-ZiAtLWdpdCBhL2RyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3JjYXJfZHVfZ3JvdXAuYyBiL2RyaXZl
-cnMvZ3B1L2RybS9yY2FyLWR1L3JjYXJfZHVfZ3JvdXAuYwppbmRleCA3MWY1MGJmNDU1ODEuLjEw
-MTk5N2U2ZTUzMSAxMDA2NDQKLS0tIGEvZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9n
-cm91cC5jCisrKyBiL2RyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3JjYXJfZHVfZ3JvdXAuYwpAQCAt
-MTU0LDYgKzE1NCw4IEBAIHZvaWQgcmNhcl9kdV9ncm91cF9zdGFydF9zdG9wKHN0cnVjdCByY2Fy
-X2R1X2dyb3VwICpyZ3JwLCBib29sIHN0YXJ0KQogCiB2b2lkIHJjYXJfZHVfZ3JvdXBfcmVzdGFy
-dChzdHJ1Y3QgcmNhcl9kdV9ncm91cCAqcmdycCkKIHsKKwlyZ3JwLT5wbGFuZXMubmVlZF9yZXN0
-YXJ0ID0gZmFsc2U7CisKIAlfX3JjYXJfZHVfZ3JvdXBfc3RhcnRfc3RvcChyZ3JwLCBmYWxzZSk7
-CiAJX19yY2FyX2R1X2dyb3VwX3N0YXJ0X3N0b3AocmdycCwgdHJ1ZSk7CiB9CmRpZmYgLS1naXQg
-YS9kcml2ZXJzL2dwdS9kcm0vcmNhci1kdS9yY2FyX2R1X3BsYW5lLmMgYi9kcml2ZXJzL2dwdS9k
-cm0vcmNhci1kdS9yY2FyX2R1X3BsYW5lLmMKaW5kZXggZTc3ZjlkOTNjMWM1Li41MWE5ZjlkNWZh
-NDYgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3JjYXJfZHVfcGxhbmUuYwor
-KysgYi9kcml2ZXJzL2dwdS9kcm0vcmNhci1kdS9yY2FyX2R1X3BsYW5lLmMKQEAgLTM2MCw5ICsz
-NjAsMjcgQEAgc3RhdGljIHZvaWQgcmNhcl9kdV9wbGFuZV9hdG9taWNfdXBkYXRlKHN0cnVjdCBk
-cm1fcGxhbmUgKnBsYW5lLAogCQkJCQlzdHJ1Y3QgZHJtX3BsYW5lX3N0YXRlICpvbGRfc3RhdGUp
-CiB7CiAJc3RydWN0IHJjYXJfZHVfcGxhbmUgKnJwbGFuZSA9IHRvX3JjYXJfcGxhbmUocGxhbmUp
-OworCXN0cnVjdCByY2FyX2R1X3BsYW5lX3N0YXRlICpvbGRfcnN0YXRlOworCXN0cnVjdCByY2Fy
-X2R1X3BsYW5lX3N0YXRlICpuZXdfcnN0YXRlOwogCi0JaWYgKHBsYW5lLT5zdGF0ZS0+Y3J0YykK
-LQkJcmNhcl9kdV9wbGFuZV9zZXR1cChycGxhbmUpOworCWlmICghcGxhbmUtPnN0YXRlLT5jcnRj
-KQorCQlyZXR1cm47CisKKwlyY2FyX2R1X3BsYW5lX3NldHVwKHJwbGFuZSk7CisKKwkvKiBDaGVj
-ayB3aGV0aGVyIHRoZSBzb3VyY2UgaGFzIGNoYW5nZWQgZnJvbSBtZW1vcnkgdG8gbGl2ZSBzb3Vy
-Y2Ugb3IKKwkgKiBmcm9tIGxpdmUgc291cmNlIHRvIG1lbW9yeS4gVGhlIHNvdXJjZSBoYXMgYmVl
-biBjb25maWd1cmVkIGJ5IHRoZQorCSAqIFZTUFMgYml0IGluIHRoZSBQbkREQ1I0IHJlZ2lzdGVy
-LiBBbHRob3VnaCB0aGUgZGF0YXNoZWV0IHN0YXRlcyB0aGF0CisJICogdGhlIGJpdCBpcyB1cGRh
-dGVkIGR1cmluZyB2ZXJ0aWNhbCBibGFua2luZywgaXQgc2VlbXMgdGhhdCB1cGRhdGVzCisJICog
-b25seSBvY2N1ciB3aGVuIHRoZSBEVSBncm91cCBpcyBoZWxkIGluIHJlc2V0IHRocm91Z2ggdGhl
-IERTWVNSLkRSRVMKKwkgKiBiaXQuIFdlIHRodXMgbmVlZCB0byByZXN0YXJ0IHRoZSBncm91cCBp
-ZiB0aGUgc291cmNlIGNoYW5nZXMuCisJICovCisJb2xkX3JzdGF0ZSA9IHRvX3JjYXJfZHVfcGxh
-bmVfc3RhdGUob2xkX3N0YXRlKTsKKwluZXdfcnN0YXRlID0gdG9fcmNhcl9kdV9wbGFuZV9zdGF0
-ZShwbGFuZS0+c3RhdGUpOworCisJaWYgKChvbGRfcnN0YXRlLT5zb3VyY2UgPT0gUkNBUl9EVV9Q
-TEFORV9NRU1PUlkpICE9CisJICAgIChuZXdfcnN0YXRlLT5zb3VyY2UgPT0gUkNBUl9EVV9QTEFO
-RV9NRU1PUlkpKQorCQlycGxhbmUtPmdyb3VwLT5wbGFuZXMubmVlZF9yZXN0YXJ0ID0gdHJ1ZTsK
-IH0KIAogc3RhdGljIGNvbnN0IHN0cnVjdCBkcm1fcGxhbmVfaGVscGVyX2Z1bmNzIHJjYXJfZHVf
-cGxhbmVfaGVscGVyX2Z1bmNzID0gewpkaWZmIC0tZ2l0IGEvZHJpdmVycy9ncHUvZHJtL3JjYXIt
-ZHUvcmNhcl9kdV9wbGFuZS5oIGIvZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9wbGFu
-ZS5oCmluZGV4IDlhNjEzMjg5OWQ1OS4uNjk0YjQ0YzE1MWI2IDEwMDY0NAotLS0gYS9kcml2ZXJz
-L2dwdS9kcm0vcmNhci1kdS9yY2FyX2R1X3BsYW5lLmgKKysrIGIvZHJpdmVycy9ncHUvZHJtL3Jj
-YXItZHUvcmNhcl9kdV9wbGFuZS5oCkBAIC00Nyw2ICs0Nyw3IEBAIHN0YXRpYyBpbmxpbmUgc3Ry
-dWN0IHJjYXJfZHVfcGxhbmUgKnRvX3JjYXJfcGxhbmUoc3RydWN0IGRybV9wbGFuZSAqcGxhbmUp
-CiAKIHN0cnVjdCByY2FyX2R1X3BsYW5lcyB7CiAJc3RydWN0IHJjYXJfZHVfcGxhbmUgcGxhbmVz
-W1JDQVJfRFVfTlVNX0tNU19QTEFORVNdOworCWJvb2wgbmVlZF9yZXN0YXJ0OwogCiAJc3RydWN0
-IGRybV9wcm9wZXJ0eSAqYWxwaGE7CiAJc3RydWN0IGRybV9wcm9wZXJ0eSAqY29sb3JrZXk7Ci0t
-IAoyLjAuNQoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18K
-ZHJpLWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0
-dHA6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2ZWwK
+On Sun, Mar 15, 2015 at 08:55:06PM +0100, Oleg Nesterov wrote:
+> On 03/15, Josh Triplett wrote:
+> > On Sun, Mar 15, 2015 at 03:52:23PM +0100, Oleg Nesterov wrote:
+> > > On 03/15, Josh Triplett wrote:
+> > > > Add a CLONE_AUTOREAP flag to request this behavior unconditionally,
+> > >
+> > > Yes, CLONE_AUTOREAP is much better. And I agree (mostly) with that
+> > > we should rely on do_notify_parent().
+> > >
+> > > Howver the patch still doesn't look right. First of all, ->autoreap
+> > > should be per-process, not per-thread.
+> >
+> > Ah, you're thinking of the case where the parent process launches a
+> > ...
+> 
+> Not really, although we probably need more sanity checks.
+> 
+> It should be per-process simply because this "autoreap" affects the whole
+> process. And the sub-threads are already "autoreap". And these 2 autoreap's
+> semantics differ, we should not confuse them.
+
+Will the approach I suggested, of having clones with CLONE_THREAD
+inherit the autoreap value rather than setting it from CLONE_AUTOREAP,
+implement the semantics you're looking for?
+
+Also, are you suggesting that CLONE_AUTOREAP with CLONE_THREAD should
+produce -EINVAL, or just that it should be ignored?
+
+> > (As an aside, what *is* the use case for CLONE_PARENT without
+> > CLONE_THREAD?)
+> 
+> To me CLONE_PARENT is another historical mistake and the source of misc
+> problems ;)
+
+I kinda figured. :)
+
+> > > And there are ptrace/mt issues,
+> > > it seems. Just for example, we should avoid EXIT_TRACE if autoreap in
+> > > wait_task_zombie() even if we are going to re-notify parent.
+> >
+> > I don't see how EXIT_TRACE can happen in wait_task_zombie if autoreap is
+> > set.  wait_task_zombie does a cmpxchg with exit_state and doesn't
+> > proceed unless exit_state was EXIT_ZOMBIE, and I don't see how we can
+> > ever reach the EXIT_ZOMBIE state if autoreap.
+> 
+> Because you again forgot about ptrace ;)
+> 
+> Josh. Let me try to summarise this later when I have time. Again, I am
+> not sure, perhaps this is even simpler than I currently think. And let
+> me apologize in advance, most probably I will be busy tomorrow.
+
+I look forward to your later review and feedback.
+
+- Josh Triplett
