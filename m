@@ -1,119 +1,133 @@
-From: Laurent Pinchart <laurent.pinchart+renesas-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
-Subject: [RFC/PATCH 0/5] Add live source objects to DRM
-Date: Sun, 15 Mar 2015 23:55:35 +0200
-Message-ID: <1426456540-21006-1-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
-Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-sh-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Daniel Vetter <daniel.vetter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Magnus Damm <magnus.damm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+Subject: [RFC/PATCH 3/5] drm/rcar-du: Add VSP1 support to the planes allocator
+Date: Sun, 15 Mar 2015 23:55:38 +0200
+Message-ID: <1426456540-21006-4-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
+References: <1426456540-21006-1-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
+Return-path: <linux-media-owner@vger.kernel.org>
+In-Reply-To: <1426456540-21006-1-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
+Sender: linux-media-owner@vger.kernel.org
+To: dri-devel@lists.freedesktop.org
+Cc: linux-media@vger.kernel.org, linux-sh@vger.kernel.org, linux-api@vger.kernel.org, Daniel Vetter <daniel.vetter@intel.com>, Rob Clark <robdclark@gmail.com>, Thierry Reding <thierry.reding@gmail.com>, Magnus Damm <magnus.damm@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+The R8A7790 DU can source frames directly from the VSP1 devices VSPD0
+and VSPD1. VSPD0 feeds DU0/1 plane 0, and VSPD1 feeds either DU2 plane 0
+or DU0/1 plane 1.
 
-I have a feeling that RFC/PATCH will work better than just RFC, so here's a
-patch set that adds a new object named live source to DRM.
+Allocate the correct fixed plane when sourcing frames from VSPD0 or
+VSPD1, and allocate planes in reverse index order otherwise to ensure
+maximum availability of planes 0 and 1.
 
-The need comes from the Renesas R-Car SoCs in which a video processing engine
-(named VSP1) that operates from memory to memory has one output directly
-connected to a plane of the display engine (DU) without going through memory.
+Signed-off-by: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
+---
+ drivers/gpu/drm/rcar-du/rcar_du_kms.c   | 40 ++++++++++++++++++++++++++++-----
+ drivers/gpu/drm/rcar-du/rcar_du_plane.c |  1 +
+ drivers/gpu/drm/rcar-du/rcar_du_plane.h |  7 ++++++
+ 3 files changed, 43 insertions(+), 5 deletions(-)
 
-The VSP1 is supported by a V4L2 driver. While it could be argued that it
-should instead be supported directly by the DRM rcar-du driver, this wouldn't
-be a good idea for at least two reasons. First, the R-Car SoCs contain several
-VSP1 instances, of which only a subset have a direct DU connection. The only
-other instances operate solely in memory to memory mode. Then, the VSP1 is a
-video processing engine and not a display engine. Its features are easily
-supported by the V4L2 API, but don't map to the DRM/KMS API. Significant
-changes to DRM/KMS would be required, beyond what is in my opinion an
-acceptable scope for a display API.
-
-Now that the need to interface two separate devices supported by two different
-drivers in two separate subsystems has been established, we need an API to do
-so. It should be noted that while that API doesn't exist in the mainline
-kernel, the need isn't limited to Renesas SoCs.
-
-This patch set proposes one possible solution for the problem in the form of a
-new DRM object named live source. Live sources are created by drivers to model
-hardware connections between a plane input and an external source, and are
-attached to planes through the KMS userspace API.
-
-Patch 1/5 adds live source objects to DRM, with an in-kernel API for drivers
-to register the sources, and a userspace API to enumerate and configure them.
-Configuring a live source sets the width, height and pixel format of the
-video stream. This should ideally be queried directly from the driver that
-supports the live source device, but I've decided not to implement such
-communication between V4L2 and DRM/KMS at the moment to keep the proposal
-simple.
-
-Patch 2/2 implements connection between live sources and planes. This takes
-different forms depending on whether drivers use the setplane or the atomic
-updates API:
-
-- For setplane, the fb field can now contain a live source ID in addition to
-  a framebuffer ID. As DRM allocates object IDs from a single ID space, the
-  type can be inferred from the ID. This makes specifying both a framebuffer
-  and a live source impossible, which isn't an issue given that such a
-  configuration would be invalid.
-
-  The live source is looked up by the DRM core and passed as a pointer to the
-  .update_plane() operation. Unlike framebuffers live sources are not
-  refcounted as they're created statically at driver initialization time.
-
-- For atomic update, a new SRC_ID property has been added to planes. The live
-  source is looked up from the source ID and stored into the plane state.
-
-Patches 3/5 to 5/5 then implement support for live sources in the R-Car DU
-driver.
-
-Nothing here is set in stone. One point I'm not sure about is whether live
-sources support should be enabled for setplane or only for atomic updates.
-Other parts of the API can certainly be modified as well, and I'm open for
-totally different implementations as well.
-
-Laurent Pinchart (5):
-  drm: Add live source object
-  drm: Connect live source to plane
-  drm/rcar-du: Add VSP1 support to the planes allocator
-  drm/rcar-du: Add VSP1 live source support
-  drm/rcar-du: Restart the DU group when a plane source changes
-
- drivers/gpu/drm/armada/armada_overlay.c     |   2 +-
- drivers/gpu/drm/drm_atomic.c                |   7 +
- drivers/gpu/drm/drm_atomic_helper.c         |   4 +
- drivers/gpu/drm/drm_crtc.c                  | 365 ++++++++++++++++++++++++++--
- drivers/gpu/drm/drm_fops.c                  |   6 +-
- drivers/gpu/drm/drm_ioctl.c                 |   3 +
- drivers/gpu/drm/drm_plane_helper.c          |   1 +
- drivers/gpu/drm/exynos/exynos_drm_crtc.c    |   4 +-
- drivers/gpu/drm/exynos/exynos_drm_plane.c   |   3 +-
- drivers/gpu/drm/exynos/exynos_drm_plane.h   |   3 +-
- drivers/gpu/drm/i915/intel_display.c        |   4 +-
- drivers/gpu/drm/i915/intel_sprite.c         |   2 +-
- drivers/gpu/drm/imx/ipuv3-plane.c           |   3 +-
- drivers/gpu/drm/nouveau/dispnv04/overlay.c  |   6 +-
- drivers/gpu/drm/omapdrm/omap_plane.c        |   1 +
- drivers/gpu/drm/rcar-du/rcar_du_crtc.c      |  10 +-
- drivers/gpu/drm/rcar-du/rcar_du_drv.c       |   6 +-
- drivers/gpu/drm/rcar-du/rcar_du_drv.h       |   3 +
- drivers/gpu/drm/rcar-du/rcar_du_group.c     |  21 +-
- drivers/gpu/drm/rcar-du/rcar_du_group.h     |   2 +
- drivers/gpu/drm/rcar-du/rcar_du_kms.c       |  62 ++++-
- drivers/gpu/drm/rcar-du/rcar_du_plane.c     | 196 ++++++++++++---
- drivers/gpu/drm/rcar-du/rcar_du_plane.h     |  11 +
- drivers/gpu/drm/rcar-du/rcar_du_regs.h      |   1 +
- drivers/gpu/drm/rockchip/rockchip_drm_vop.c |   5 +-
- drivers/gpu/drm/shmobile/shmob_drm_plane.c  |   3 +-
- drivers/gpu/drm/sti/sti_drm_plane.c         |   3 +-
- drivers/gpu/drm/sti/sti_hqvdp.c             |   2 +-
- include/drm/drmP.h                          |   3 +
- include/drm/drm_atomic_helper.h             |   1 +
- include/drm/drm_crtc.h                      |  48 ++++
- include/drm/drm_plane_helper.h              |   1 +
- include/uapi/drm/drm.h                      |   4 +
- include/uapi/drm/drm_mode.h                 |  32 +++
- 34 files changed, 728 insertions(+), 100 deletions(-)
-
+diff --git a/drivers/gpu/drm/rcar-du/rcar_du_kms.c b/drivers/gpu/drm/rcar-du/rcar_du_kms.c
+index fb052bca574f..17f89bfca8f8 100644
+--- a/drivers/gpu/drm/rcar-du/rcar_du_kms.c
++++ b/drivers/gpu/drm/rcar-du/rcar_du_kms.c
+@@ -244,11 +244,41 @@ static unsigned int rcar_du_plane_hwmask(struct rcar_du_plane_state *state)
+ 	return mask;
+ }
+ 
+-static int rcar_du_plane_hwalloc(unsigned int num_planes, unsigned int free)
++/*
++ * The R8A7790 DU can source frames directly from the VSP1 devices VSPD0 and
++ * VSPD1. VSPD0 feeds DU0/1 plane 0, and VSPD1 feeds either DU2 plane 0 or
++ * DU0/1 plane 1.
++ *
++ * Allocate the correct fixed plane when sourcing frames from VSPD0 or VSPD1,
++ * and allocate planes in reverse index order otherwise to ensure maximum
++ * availability of planes 0 and 1.
++ *
++ * The caller is responsible for ensuring that the requested source is
++ * compatible with the DU revision.
++ */
++static int rcar_du_plane_hwalloc(struct rcar_du_plane *plane,
++				 struct rcar_du_plane_state *state,
++				 unsigned int free)
+ {
+-	unsigned int i;
++	unsigned int num_planes = state->format->planes;
++	int fixed = -1;
++	int i;
++
++	if (state->source == RCAR_DU_PLANE_VSPD0) {
++		/* VSPD0 feeds plane 0 on DU0/1. */
++		if (plane->group->index != 0)
++			return -EINVAL;
++
++		fixed = 0;
++	} else if (state->source == RCAR_DU_PLANE_VSPD1) {
++		/* VSPD1 feeds plane 1 on DU0/1 or plane 0 on DU2. */
++		fixed = plane->group->index == 0 ? 1 : 0;
++	}
++
++	if (fixed >= 0)
++		return free & (1 << fixed) ? fixed : -EBUSY;
+ 
+-	for (i = 0; i < RCAR_DU_NUM_HW_PLANES; ++i) {
++	for (i = RCAR_DU_NUM_HW_PLANES - 1; i >= 0; --i) {
+ 		if (!(free & (1 << i)))
+ 			continue;
+ 
+@@ -256,7 +286,7 @@ static int rcar_du_plane_hwalloc(unsigned int num_planes, unsigned int free)
+ 			break;
+ 	}
+ 
+-	return i == RCAR_DU_NUM_HW_PLANES ? -EBUSY : i;
++	return i < 0 ? -EBUSY : i;
+ }
+ 
+ static int rcar_du_atomic_check(struct drm_device *dev,
+@@ -372,7 +402,7 @@ static int rcar_du_atomic_check(struct drm_device *dev,
+ 		    !rcar_du_plane_needs_realloc(plane, plane_state))
+ 			continue;
+ 
+-		idx = rcar_du_plane_hwalloc(plane_state->format->planes,
++		idx = rcar_du_plane_hwalloc(plane, plane_state,
+ 					group_free_planes[plane->group->index]);
+ 		if (idx < 0) {
+ 			dev_dbg(rcdu->dev, "%s: no available hardware plane\n",
+diff --git a/drivers/gpu/drm/rcar-du/rcar_du_plane.c b/drivers/gpu/drm/rcar-du/rcar_du_plane.c
+index 210e5c3fd982..80e4dba78aef 100644
+--- a/drivers/gpu/drm/rcar-du/rcar_du_plane.c
++++ b/drivers/gpu/drm/rcar-du/rcar_du_plane.c
+@@ -288,6 +288,7 @@ static void rcar_du_plane_reset(struct drm_plane *plane)
+ 		return;
+ 
+ 	state->hwindex = -1;
++	state->source = RCAR_DU_PLANE_MEMORY;
+ 	state->alpha = 255;
+ 	state->colorkey = RCAR_DU_COLORKEY_NONE;
+ 	state->zpos = plane->type == DRM_PLANE_TYPE_PRIMARY ? 0 : 1;
+diff --git a/drivers/gpu/drm/rcar-du/rcar_du_plane.h b/drivers/gpu/drm/rcar-du/rcar_du_plane.h
+index abff0ebeb195..81c2d361a94f 100644
+--- a/drivers/gpu/drm/rcar-du/rcar_du_plane.h
++++ b/drivers/gpu/drm/rcar-du/rcar_du_plane.h
+@@ -28,6 +28,12 @@ struct rcar_du_group;
+ #define RCAR_DU_NUM_KMS_PLANES		9
+ #define RCAR_DU_NUM_HW_PLANES		8
+ 
++enum rcar_du_plane_source {
++	RCAR_DU_PLANE_MEMORY,
++	RCAR_DU_PLANE_VSPD0,
++	RCAR_DU_PLANE_VSPD1,
++};
++
+ struct rcar_du_plane {
+ 	struct drm_plane plane;
+ 	struct rcar_du_group *group;
+@@ -51,6 +57,7 @@ struct rcar_du_plane_state {
+ 
+ 	const struct rcar_du_format_info *format;
+ 	int hwindex;		/* 0-based, -1 means unused */
++	enum rcar_du_plane_source source;
+ 
+ 	unsigned int alpha;
+ 	unsigned int colorkey;
 -- 
-Regards,
-
-Laurent Pinchart
+2.0.5
