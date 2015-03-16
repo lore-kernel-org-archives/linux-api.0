@@ -1,244 +1,207 @@
 From: Milosz Tanski <milosz@adfin.com>
-Subject: [PATCH v7 1/5] vfs: Prepare for adding a new preadv/pwritev with user flags.
-Date: Mon, 16 Mar 2015 14:27:11 -0400
-Message-ID: <cbe6f9910ed4603916c1082c47944c96330d4a15.1426528417.git.milosz@adfin.com>
-References: <cover.1426528417.git.milosz@adfin.com>
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <cover.1426528417.git.milosz@adfin.com>
-In-Reply-To: <cover.1426528417.git.milosz@adfin.com>
-References: <cover.1426528417.git.milosz@adfin.com>
-Sender: owner-linux-aio@kvack.org
+Subject: [PATCH v7 0/5] vfs: Non-blockling buffered fs read (page cache only)
+Date: Mon, 16 Mar 2015 14:27:10 -0400
+Message-ID: <cover.1426528417.git.milosz@adfin.com>
+Return-path: <linux-arch-owner@vger.kernel.org>
+Sender: linux-arch-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Cc: Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-Plumbing the flags argument through the vfs code so they can be passed down to
-__generic_file_(read/write)_iter function that do the acctual work.
+This patchset introduces two new syscalls preadv2 and pwritev2. They are the
+same syscalls as preadv and pwrite but with a flag argument. Additionally,
+preadv2 implements an extra RWF_NONBLOCK flag. 
 
-Signed-off-by: Milosz Tanski <milosz@adfin.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Jeff Moyer <jmoyer@redhat.com>
----
- drivers/target/target_core_file.c |  6 +++---
- fs/nfsd/vfs.c                     |  4 ++--
- fs/read_write.c                   | 27 +++++++++++++++------------
- fs/splice.c                       |  2 +-
- include/linux/aio.h               |  2 ++
- include/linux/fs.h                |  4 ++--
- 6 files changed, 25 insertions(+), 20 deletions(-)
+The RWF_NONBLOCK flag in preadv2 introduces an ability to perform a
+non-blocking read from regular files in buffered IO mode. This works by only
+for those filesystems that have data in the page cache.
 
-diff --git a/drivers/target/target_core_file.c b/drivers/target/target_core_file.c
-index 44620fb..fdd0a10 100644
---- a/drivers/target/target_core_file.c
-+++ b/drivers/target/target_core_file.c
-@@ -351,9 +351,9 @@ static int fd_do_rw(struct se_cmd *cmd, struct scatterlist *sgl,
- 	set_fs(get_ds());
- 
- 	if (is_write)
--		ret = vfs_writev(fd, &iov[0], sgl_nents, &pos);
-+		ret = vfs_writev(fd, &iov[0], sgl_nents, &pos, 0);
- 	else
--		ret = vfs_readv(fd, &iov[0], sgl_nents, &pos);
-+		ret = vfs_readv(fd, &iov[0], sgl_nents, &pos, 0);
- 
- 	set_fs(old_fs);
- 
-@@ -534,7 +534,7 @@ fd_execute_write_same(struct se_cmd *cmd)
- 
- 	old_fs = get_fs();
- 	set_fs(get_ds());
--	rc = vfs_writev(f, &iov[0], iov_num, &pos);
-+	rc = vfs_writev(f, &iov[0], iov_num, &pos, 0);
- 	set_fs(old_fs);
- 
- 	vfree(iov);
-diff --git a/fs/nfsd/vfs.c b/fs/nfsd/vfs.c
-index 3685265..1c6faaa 100644
---- a/fs/nfsd/vfs.c
-+++ b/fs/nfsd/vfs.c
-@@ -893,7 +893,7 @@ __be32 nfsd_readv(struct file *file, loff_t offset, struct kvec *vec, int vlen,
- 
- 	oldfs = get_fs();
- 	set_fs(KERNEL_DS);
--	host_err = vfs_readv(file, (struct iovec __user *)vec, vlen, &offset);
-+	host_err = vfs_readv(file, (struct iovec __user *)vec, vlen, &offset, 0);
- 	set_fs(oldfs);
- 	return nfsd_finish_read(file, count, host_err);
- }
-@@ -980,7 +980,7 @@ nfsd_vfs_write(struct svc_rqst *rqstp, struct svc_fh *fhp, struct file *file,
- 
- 	/* Write the data. */
- 	oldfs = get_fs(); set_fs(KERNEL_DS);
--	host_err = vfs_writev(file, (struct iovec __user *)vec, vlen, &pos);
-+	host_err = vfs_writev(file, (struct iovec __user *)vec, vlen, &pos, 0);
- 	set_fs(oldfs);
- 	if (host_err < 0)
- 		goto out_nfserr;
-diff --git a/fs/read_write.c b/fs/read_write.c
-index 8e1b687..b53bb59 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -711,7 +711,8 @@ unsigned long iov_shorten(struct iovec *iov, unsigned long nr_segs, size_t to)
- EXPORT_SYMBOL(iov_shorten);
- 
- static ssize_t do_iter_readv_writev(struct file *filp, int rw, const struct iovec *iov,
--		unsigned long nr_segs, size_t len, loff_t *ppos, iter_fn_t fn)
-+		unsigned long nr_segs, size_t len, loff_t *ppos, iter_fn_t fn,
-+		int flags)
- {
- 	struct kiocb kiocb;
- 	struct iov_iter iter;
-@@ -720,6 +721,7 @@ static ssize_t do_iter_readv_writev(struct file *filp, int rw, const struct iove
- 	init_sync_kiocb(&kiocb, filp);
- 	kiocb.ki_pos = *ppos;
- 	kiocb.ki_nbytes = len;
-+	kiocb.ki_rwflags = flags;
- 
- 	iov_iter_init(&iter, rw, iov, nr_segs, len);
- 	ret = fn(&kiocb, &iter);
-@@ -858,7 +860,8 @@ out:
- 
- static ssize_t do_readv_writev(int type, struct file *file,
- 			       const struct iovec __user * uvector,
--			       unsigned long nr_segs, loff_t *pos)
-+			       unsigned long nr_segs, loff_t *pos,
-+			       int flags)
- {
- 	size_t tot_len;
- 	struct iovec iovstack[UIO_FASTIOV];
-@@ -892,7 +895,7 @@ static ssize_t do_readv_writev(int type, struct file *file,
- 
- 	if (iter_fn)
- 		ret = do_iter_readv_writev(file, type, iov, nr_segs, tot_len,
--						pos, iter_fn);
-+						pos, iter_fn, flags);
- 	else if (fnv)
- 		ret = do_sync_readv_writev(file, iov, nr_segs, tot_len,
- 						pos, fnv);
-@@ -915,27 +918,27 @@ out:
- }
- 
- ssize_t vfs_readv(struct file *file, const struct iovec __user *vec,
--		  unsigned long vlen, loff_t *pos)
-+		  unsigned long vlen, loff_t *pos, int flags)
- {
- 	if (!(file->f_mode & FMODE_READ))
- 		return -EBADF;
- 	if (!(file->f_mode & FMODE_CAN_READ))
- 		return -EINVAL;
- 
--	return do_readv_writev(READ, file, vec, vlen, pos);
-+	return do_readv_writev(READ, file, vec, vlen, pos, flags);
- }
- 
- EXPORT_SYMBOL(vfs_readv);
- 
- ssize_t vfs_writev(struct file *file, const struct iovec __user *vec,
--		   unsigned long vlen, loff_t *pos)
-+		   unsigned long vlen, loff_t *pos, int flags)
- {
- 	if (!(file->f_mode & FMODE_WRITE))
- 		return -EBADF;
- 	if (!(file->f_mode & FMODE_CAN_WRITE))
- 		return -EINVAL;
- 
--	return do_readv_writev(WRITE, file, vec, vlen, pos);
-+	return do_readv_writev(WRITE, file, vec, vlen, pos, flags);
- }
- 
- EXPORT_SYMBOL(vfs_writev);
-@@ -948,7 +951,7 @@ SYSCALL_DEFINE3(readv, unsigned long, fd, const struct iovec __user *, vec,
- 
- 	if (f.file) {
- 		loff_t pos = file_pos_read(f.file);
--		ret = vfs_readv(f.file, vec, vlen, &pos);
-+		ret = vfs_readv(f.file, vec, vlen, &pos, 0);
- 		if (ret >= 0)
- 			file_pos_write(f.file, pos);
- 		fdput_pos(f);
-@@ -968,7 +971,7 @@ SYSCALL_DEFINE3(writev, unsigned long, fd, const struct iovec __user *, vec,
- 
- 	if (f.file) {
- 		loff_t pos = file_pos_read(f.file);
--		ret = vfs_writev(f.file, vec, vlen, &pos);
-+		ret = vfs_writev(f.file, vec, vlen, &pos, 0);
- 		if (ret >= 0)
- 			file_pos_write(f.file, pos);
- 		fdput_pos(f);
-@@ -1000,7 +1003,7 @@ SYSCALL_DEFINE5(preadv, unsigned long, fd, const struct iovec __user *, vec,
- 	if (f.file) {
- 		ret = -ESPIPE;
- 		if (f.file->f_mode & FMODE_PREAD)
--			ret = vfs_readv(f.file, vec, vlen, &pos);
-+			ret = vfs_readv(f.file, vec, vlen, &pos, 0);
- 		fdput(f);
- 	}
- 
-@@ -1024,7 +1027,7 @@ SYSCALL_DEFINE5(pwritev, unsigned long, fd, const struct iovec __user *, vec,
- 	if (f.file) {
- 		ret = -ESPIPE;
- 		if (f.file->f_mode & FMODE_PWRITE)
--			ret = vfs_writev(f.file, vec, vlen, &pos);
-+			ret = vfs_writev(f.file, vec, vlen, &pos, 0);
- 		fdput(f);
- 	}
- 
-@@ -1072,7 +1075,7 @@ static ssize_t compat_do_readv_writev(int type, struct file *file,
- 
- 	if (iter_fn)
- 		ret = do_iter_readv_writev(file, type, iov, nr_segs, tot_len,
--						pos, iter_fn);
-+						pos, iter_fn, 0);
- 	else if (fnv)
- 		ret = do_sync_readv_writev(file, iov, nr_segs, tot_len,
- 						pos, fnv);
-diff --git a/fs/splice.c b/fs/splice.c
-index 7968da9..ee3fd4c 100644
---- a/fs/splice.c
-+++ b/fs/splice.c
-@@ -576,7 +576,7 @@ static ssize_t kernel_readv(struct file *file, const struct iovec *vec,
- 	old_fs = get_fs();
- 	set_fs(get_ds());
- 	/* The cast to a user pointer is valid due to the set_fs() */
--	res = vfs_readv(file, (const struct iovec __user *)vec, vlen, &pos);
-+	res = vfs_readv(file, (const struct iovec __user *)vec, vlen, &pos, 0);
- 	set_fs(old_fs);
- 
- 	return res;
-diff --git a/include/linux/aio.h b/include/linux/aio.h
-index d9c92da..9c1d499 100644
---- a/include/linux/aio.h
-+++ b/include/linux/aio.h
-@@ -52,6 +52,8 @@ struct kiocb {
- 	 * this is the underlying eventfd context to deliver events to.
- 	 */
- 	struct eventfd_ctx	*ki_eventfd;
-+
-+	int			ki_rwflags;
- };
- 
- static inline bool is_sync_kiocb(struct kiocb *kiocb)
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index b4d71b5..c018335 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1619,9 +1619,9 @@ extern ssize_t __vfs_read(struct file *, char __user *, size_t, loff_t *);
- extern ssize_t vfs_read(struct file *, char __user *, size_t, loff_t *);
- extern ssize_t vfs_write(struct file *, const char __user *, size_t, loff_t *);
- extern ssize_t vfs_readv(struct file *, const struct iovec __user *,
--		unsigned long, loff_t *);
-+		unsigned long, loff_t *, int);
- extern ssize_t vfs_writev(struct file *, const struct iovec __user *,
--		unsigned long, loff_t *);
-+		unsigned long, loff_t *, int);
- 
- struct super_operations {
-    	struct inode *(*alloc_inode)(struct super_block *sb);
+We discussed these changes at this year's LSF/MM summit in Boston. More details
+on the Samba use case, the numbers, and presentation is available at this link:
+https://lists.samba.org/archive/samba-technical/2015-March/106290.html
+
+Please stayed tune for man pages patches and xfstest patches. They will be sent
+as In-Reply-To.
+
+
+Latest changes highlight:
+ - Drops RWF_DSYNC from pwritev2, per Christoph and Andrew
+ - Updated man pages
+ - Added tests for this functionality to xfstests, per Dave Chinner
+ - Based on top of 4.1-rc3
+ - Tests / numbers using samba and a CIFS client FIO engine
+
+Forward looking:
+
+ Christoph committed to sending a separate patch series for the RWF_DSYNC for
+ pwritev2 implementation so it can be evaluated independently. This helps
+ with implementing userspace file servers for protocols that have a per operation
+ sync flag (CIFS).
+
+ Additionally, Christoph committed to implementing RWF_NONBLOCK for the write
+ case as well (in pwritev2) at a later date.
+
+
+Background:
+
+ Using a threadpool to emulate non-blocking operations on regular buffered
+ files is a common pattern today (samba, libuv, etc...) Applications split the
+ work between network bound threads (epoll) and IO threadpool. Not every
+ application can use sendfile syscall (TLS / post-processing).
+
+ This common pattern leads to increased request latency. Latency can be due to
+ additional synchronization between the threads or fast (cached data) request
+ stuck behind slow request (large / uncached data).
+
+ The preadv2 syscall with RWF_NONBLOCK lets userspace applications bypass
+ enqueuing operation in the threadpool if it's already available in the
+ pagecache.
+
+
+Performance numbers (newer Samba):
+
+ https://drive.google.com/file/d/0B3maCn0jCvYncndGbXJKbGlhejQ/view?usp=sharing
+ https://docs.google.com/spreadsheets/d/1GGTivi-MfZU0doMzomG4XUo9ioWtRvOGQ5FId042L6s/edit?usp=sharing
+
+
+Performance number (older):
+
+ Some perf data generated using fio comparing the posix aio engine to a version
+ of the posix AIO engine that attempts to performs "fast" reads before
+ submitting the operations to the queue. This workflow is on ext4 partition on
+ raid0 (test / build-rig.) Simulating our database access patern workload using
+ 16kb read accesses. Our database uses a home-spun posix aio like queue (samba
+ does the same thing.)
+
+ f1: ~73% rand read over mostly cached data (zipf med-size dataset)
+ f2: ~18% rand read over mostly un-cached data (uniform large-dataset)
+ f3: ~9% seq-read over large dataset
+
+ before:
+
+ f1:
+     bw (KB  /s): min=   11, max= 9088, per=0.56%, avg=969.54, stdev=827.99
+     lat (msec) : 50=0.01%, 100=1.06%, 250=5.88%, 500=4.08%, 750=12.48%
+     lat (msec) : 1000=17.27%, 2000=49.86%, >=2000=9.42%
+ f2:
+     bw (KB  /s): min=    2, max= 1882, per=0.16%, avg=273.28, stdev=220.26
+     lat (msec) : 250=5.65%, 500=3.31%, 750=15.64%, 1000=24.59%, 2000=46.56%
+     lat (msec) : >=2000=4.33%
+ f3:
+     bw (KB  /s): min=    0, max=265568, per=99.95%, avg=174575.10,
+                  stdev=34526.89
+     lat (usec) : 2=0.01%, 4=0.01%, 10=0.02%, 20=0.27%, 50=10.82%
+     lat (usec) : 100=50.34%, 250=5.05%, 500=7.12%, 750=6.60%, 1000=4.55%
+     lat (msec) : 2=8.73%, 4=3.49%, 10=1.83%, 20=0.89%, 50=0.22%
+     lat (msec) : 100=0.05%, 250=0.02%, 500=0.01%
+ total:
+    READ: io=102365MB, aggrb=174669KB/s, minb=240KB/s, maxb=173599KB/s,
+          mint=600001msec, maxt=600113msec
+
+ after (with fast read using preadv2 before submit):
+
+ f1:
+     bw (KB  /s): min=    3, max=14897, per=1.28%, avg=2276.69, stdev=2930.39
+     lat (usec) : 2=70.63%, 4=0.01%
+     lat (msec) : 250=0.20%, 500=2.26%, 750=1.18%, 2000=0.22%, >=2000=25.53%
+ f2:
+     bw (KB  /s): min=    2, max= 2362, per=0.14%, avg=249.83, stdev=222.00
+     lat (msec) : 250=6.35%, 500=1.78%, 750=9.29%, 1000=20.49%, 2000=52.18%
+     lat (msec) : >=2000=9.99%
+ f3:
+     bw (KB  /s): min=    1, max=245448, per=100.00%, avg=177366.50,
+                  stdev=35995.60
+     lat (usec) : 2=64.04%, 4=0.01%, 10=0.01%, 20=0.06%, 50=0.43%
+     lat (usec) : 100=0.20%, 250=1.27%, 500=2.93%, 750=3.93%, 1000=7.35%
+     lat (msec) : 2=14.27%, 4=2.88%, 10=1.54%, 20=0.81%, 50=0.22%
+     lat (msec) : 100=0.05%, 250=0.02%
+ total:
+    READ: io=103941MB, aggrb=177339KB/s, minb=213KB/s, maxb=176375KB/s,
+          mint=600020msec, maxt=600178msec
+
+ Interpreting the results you can see total bandwidth stays the same but overall
+ request latency is decreased in f1 (random, mostly cached) and f3 (sequential)
+ workloads. There is a slight bump in latency for since it's random data that's
+ unlikely to be cached but we're always trying "fast read".
+
+ In our application we have starting keeping track of "fast read" hits/misses
+ and for files / requests that have a lot hit ratio we don't do "fast reads"
+ mostly getting rid of extra latency in the uncached cases. In our real world
+ work load we were able to reduce average response time by 20 to 30% (depends
+ on amount of IO done by request).
+
+ I've performed other benchmarks and I have no observed any perf regressions in
+ any of the normal (old) code paths.
+
+
+Full change log:
+
+ Version 7 highlight:
+  - Drops RWF_DSYNC from pwritev2, per Christoph and Andrew
+  - Updated man pages
+  - Added tests for this functionality to xfstests, per Dave Chinner
+  - Based on top of 4.1-rc3
+  - Tests / numbers using samba and a CIFS client FIO engine
+
+ Version 6 highlight:
+  - Compat syscall flag checks, per. Jeff.
+  - Minor stylistic suggestions.
+
+ Version 5 highlight:
+  - XFS support for RWF_NONBLOCK. from Christoph.
+  - RWF_DSYNC flag and support for pwritev2, from Christoph.
+  - Implemented compat syscalls, per. Jeff.
+  - Missing nfs, ceph changes from older patchset.
+
+ Version 4 highlight:
+  - Updated for 3.18-rc1.
+  - Performance data from our application.
+  - First stab at man page with Jeff's help. Patch is in-reply to.
+
+ RFC Version 3 highlights:
+  - Down to 2 syscalls from 4; can user fp or argument position.
+  - RWF_NONBLOCK value flag is not the same O_NONBLOCK, per Jeff.
+
+ RFC Version 2 highlights:
+  - Put the flags argument into kiocb (less noise), per. Al Viro
+  - O_DIRECT checking early in the process, per. Jeff Moyer
+  - Resolved duplicate (c&p) code in syscall code, per. Jeff
+  - Included perf data in thread cover letter, per. Jeff
+  - Created a new flag (not O_NONBLOCK) for readv2, perf Jeff
+
+
+I have co-developed these changes with Christoph Hellwig.
+
+
+Christoph Hellwig (1):
+  xfs: add RWF_NONBLOCK support
+
+Milosz Tanski (4):
+  vfs: Prepare for adding a new preadv/pwritev with user flags.
+  vfs: Define new syscalls preadv2,pwritev2
+  x86: wire up preadv2 and pwritev2
+  vfs: RWF_NONBLOCK flag for preadv2
+
+ arch/x86/syscalls/syscall_32.tbl  |   2 +
+ arch/x86/syscalls/syscall_64.tbl  |   2 +
+ drivers/target/target_core_file.c |   6 +-
+ fs/ceph/file.c                    |   2 +
+ fs/cifs/file.c                    |   6 +
+ fs/nfs/file.c                     |   5 +-
+ fs/nfsd/vfs.c                     |   4 +-
+ fs/ocfs2/file.c                   |   6 +
+ fs/pipe.c                         |   3 +-
+ fs/read_write.c                   | 229 +++++++++++++++++++++++++++++---------
+ fs/splice.c                       |   2 +-
+ fs/xfs/xfs_file.c                 |  28 ++++-
+ include/linux/aio.h               |   2 +
+ include/linux/compat.h            |   6 +
+ include/linux/fs.h                |   6 +-
+ include/linux/syscalls.h          |   6 +
+ include/uapi/asm-generic/unistd.h |   6 +-
+ mm/filemap.c                      |  23 +++-
+ mm/shmem.c                        |   4 +
+ 19 files changed, 279 insertions(+), 69 deletions(-)
+
 -- 
 1.9.1
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
