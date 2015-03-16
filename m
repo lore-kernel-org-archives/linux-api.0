@@ -1,113 +1,97 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [PATCHv3 xfstests 2/3] generic: test openat and new O_BENEATH
- flag
-Date: Tue, 17 Mar 2015 10:24:34 +1100
-Message-ID: <20150316232434.GJ28557@dastard>
-References: <1425909612-28034-1-git-send-email-drysdale@google.com>
- <1425909612-28034-3-git-send-email-drysdale@google.com>
+From: josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org
+Subject: Re: [PATCH v2 0/7] CLONE_FD: Task exit notification via file
+ descriptor
+Date: Mon, 16 Mar 2015 16:25:41 -0700
+Message-ID: <20150316232541.GA31751@cloud>
+References: <cover.1426376419.git.josh@joshtriplett.org>
+ <CAGXu5jLmLLgVNCP=cyUiXuiszVXsS88SNUK2iBqArbA2V6vdHA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1425909612-28034-3-git-send-email-drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <CAGXu5jLmLLgVNCP=cyUiXuiszVXsS88SNUK2iBqArbA2V6vdHA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Meredydd Luff <meredydd-zPN50pYk8eUaUu29zAJCuw@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jorge Lucangeli Obes <jorgelo-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Ricky Zhou <rickyz-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Lee Campbell <leecam-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Julien Tinnes <jln-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Depinet <mdepinet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, fstests-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thiago Macieira <thiago.macieira-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 09, 2015 at 02:00:11PM +0000, David Drysdale wrote:
-> Test basic openat(2) behaviour.
-> 
-> Test that if O_BENEATH flag is set, openat() will only
-> open paths that have no .. component and do not start
-> with /.  Symlinks are also checked for the same restrictions.
-> 
-> Signed-off-by: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> ---
->  .gitignore            |   1 +
->  common/openat         |  61 ++++++++++++++++++++++++++++++
->  src/Makefile          |   3 +-
->  src/openat.c          | 100 +++++++++++++++++++++++++++++++++++++++++++++++++
+On Mon, Mar 16, 2015 at 02:44:20PM -0700, Kees Cook wrote:
+> On Sun, Mar 15, 2015 at 12:59 AM, Josh Triplett <josh-iaAMLnmF4Un9QnwtaJ6UQQ@public.gmane.org=
+g> wrote:
+> > - Make poll on a CLONE_FD for an exited task also return POLLHUP, f=
+or
+> >   compatibility with FreeBSD's pdfork.  Thanks to David Drysdale fo=
+r calling
+> >   attention to pdfork.
+>=20
+> I think POLLHUP should be mentioned in the manpage (now it only
+> mentions POLLIN).
 
-This strikes me as something that shoul dbe added to xfs_io for
-testing, as it already supports a heap of other open flags and
-xfstests is already dependent on it.
+Added for v3.
 
->  tests/generic/151     |  89 ++++++++++++++++++++++++++++++++++++++++++++
->  tests/generic/151.out |   9 +++++
->  tests/generic/152     | 101 ++++++++++++++++++++++++++++++++++++++++++++++++++
->  tests/generic/152.out |  23 ++++++++++++
->  tests/generic/group   |   2 +
+> >        CLONE_FD
+> >               Return  a file descriptor associated with the new pro=
+cess, stor=E2=80=90
+> >               ing it in location clonefd in the parent's address sp=
+ace.   When
+> >               the new process exits, the file descriptor will becom=
+e available
+> >               for reading.
+> >
+> >               Unlike using  signalfd(2)  for  the  SIGCHLD  signal,=
+  the  file
+> >               descriptor  returned  by  clone4()  with the CLONE_FD=
+ flag works
+> >               even with SIGCHLD unblocked in one or more threads of=
+ the parent
+> >               process,  allowing  the  process  to have different h=
+andlers for
+> >               different child processes, such as those created by  =
+a  library,
+> >               without  introducing  race conditions around process-=
+wide signal
+> >               handling.
+> >
+> >               clonefd_flags may contain the following additional fl=
+ags for use
+> >               with CLONE_FD:
+> >
+> >
+> >               O_CLOEXEC
+> >                      Set  the  close-on-exec  flag on the new file =
+descriptor.
+> >                      See the description of the O_CLOEXEC flag in o=
+pen(2)  for
+> >                      reasons why this may be useful.
+>=20
+> This begs the question: what happens when all CLONE_FD fds for a
+> process are closed? Will the parent get SIGCHLD instead, will it
+> auto-reap, or will it be un-wait-able (I assume not this...)
 
-I'd also prefer one patch per new test - it's easier to review...
+Whether the parent gets SIGCHLD is determined only by what signal you
+request in clone; if you clone with CLONE_FD | SIGCHLD (or
+CLONE_AUTOREAP | CLONE_FD | SIGCHLD), you'll get notification via both
+clonefd (if you have one) and signal (if you have a handler).  If you
+pass a 0 signal (just CLONE_FD or CLONE_AUTOREAP | CLONE_FD), you'll
+receive no signal, only the notification via clonefd.  Independently, i=
+f
+you have CLONE_AUTOREAP set, the process will autoreap.
 
-> +_openat_setup()
-> +{
-> +	local dir=$1
-> +
-> +	mkdir -p $dir/subdir
-> +	echo 0123456789 > $dir/topfile
-> +	echo 0123456789 > $dir/subdir/bottomfile
-> +
-> +	ln -s subdir/bottomfile $dir/symlinkdown
-> +	ln -s ../topfile $dir/subdir/symlinkup
-> +	ln -s $dir/topfile $dir/subdir/symlinkout
-> +	ln -s bottomfile  $dir/subdir/symlinkin
-> +}
-> +
-> +#
-> +# Check whether the openat wrapper program is available
-> +#
-> +_requires_openat()
-> +{
-> +	OPENAT_PROG=$here/src/openat
-> +        _require_command $OPENAT_PROG
-> +}
+Those are all orthogonal now.
 
-if this is part of xfs_io, then _requires_xfs_io_command "open -b"
-could be used to test if the command is supported, and no need for
-this function at all.
+If you close the clonefd, nothing special happens other than a
+put_task_struct.  While this is conceptually somewhat like a pipe, the
+data is actually generated at read time, so the task exit doesn't care
+whether there's a live clonefd or not.  (Or, in the future, if there ar=
+e
+multiple live clonefds for the same process.)
 
-> +#
-> +# This checks whether the O_BENEATH flag is supported by the openat syscall
-> +#
-> +_requires_o_beneath()
-> +{
-> +	# Kernels that don't support O_BENEATH will silently accept it, so
-> +	# check for O_BENEATH behavior: attempting to open an absolute
-> +	# path should fail with EPERM.
-> +	$OPENAT_PROG -t -b $TEST_DIR
-> +	if [ $? -ne 0 ]; then
-> +		_notrun "kernel doesn't support O_BENEATH flag in openat syscall"
-> +	fi
-> +}
+> Looks promising!
 
-as running the command would tell us if the kernel supports it, too.
+Thanks!
 
-> +#endif
-> +#endif
-> +
-> +void usage(const char *progname)
-> +{
-> +	fprintf(stderr, "Usage: %s [-f dirname] [-b] [-n] [-t] <file>\n",
-> +		progname);
-> +	fprintf(stderr,"    -f dirname : use this dir for dfd\n");
-> +	fprintf(stderr,"    -b         : open with O_BENEATH\n");
-> +	fprintf(stderr,"    -n         : open with O_NOFOLLOW\n");
-> +	fprintf(stderr,"    -t         : test for expected EPERM failure\n");
-> +	fprintf(stderr,"    -h         : show this usage message\n");
-> +	exit(1);
+And thanks for catching the manpage issue.  I'd definitely welcome any
+comments you have on the implementation as well.
 
-Hmm - you're also testing O_NOFOLLOW behaviour too? Perhaps that
-should be mentioned/added to xfs_io, too?
-
-The reason I suggest this, even though it's a little more work, is
-tht we can then re-use the new flags in other tests easily without
-needing to write new helper functions...
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+- Josh Triplett
