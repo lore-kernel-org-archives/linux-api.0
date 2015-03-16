@@ -1,101 +1,71 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH V5] Allow compaction of unevictable pages
-Date: Mon, 16 Mar 2015 11:14:04 +0100
-Message-ID: <5506ACEC.9010403@suse.cz>
-References: <1426267597-25811-1-git-send-email-emunson@akamai.com> <550332CE.7040404@redhat.com> <20150313190915.GA12589@akamai.com> <20150313201954.GB28848@dhcp22.suse.cz>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH] selftests: Fix kcmp build to not require headers install
+Date: Mon, 16 Mar 2015 22:00:39 +1100
+Message-ID: <1426503639.4716.7.camel@ellerman.id.au>
+References: <1426297504-14432-1-git-send-email-shuahkh@osg.samsung.com>
+	 <1426297504-14432-2-git-send-email-shuahkh@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150313201954.GB28848@dhcp22.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@suse.cz>, Eric B Munson <emunson@akamai.com>
-Cc: Rik van Riel <riel@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, Christoph Lameter <cl@linux.com>, Peter Zijlstra <peterz@infradead.org>, Mel Gorman <mgorman@suse.de>, David Rientjes <rientjes@google.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1426297504-14432-2-git-send-email-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-[CC += linux-api@]
+On Fri, 2015-03-13 at 19:45 -0600, Shuah Khan wrote:
+> Change CFLAGS to look in uapi to allow kcmp to be built without
+> requiring headers install. This will make it easier to run tests
+> without going through the headers install step.
+> 
+> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> ---
+>  tools/testing/selftests/kcmp/Makefile | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
+> index ff0eefd..d405ad4 100644
+> --- a/tools/testing/selftests/kcmp/Makefile
+> +++ b/tools/testing/selftests/kcmp/Makefile
+> @@ -1,5 +1,5 @@
+>  CC := $(CROSS_COMPILE)$(CC)
+> -CFLAGS += -I../../../../usr/include/
+> +CFLAGS += -I../../../../include/uapi -I../../../../usr/include/
 
-Since this is a kernel-user-space API change, please CC linux-api@.
-The kernel source file Documentation/SubmitChecklist notes that all
-Linux kernel patches that change userspace interfaces should be CCed
-to linux-api@vger.kernel.org, so that the various parties who are
-interested in API changes are informed. For further information, see
-https://www.kernel.org/doc/man-pages/linux-api-ml.html
+Hi Shuah,
+
+Sorry but this is wrong. The contents of include/uapi are not the same as the
+exported kernel headers.
+
+Mixing the unprocessed kernel headers with user headers leads to all sorts of
+mess, eg:
+
+$ cc -I../../../../include/uapi -I../../../../usr/include/ kcmp_test.c   -o kcmp_test
+In file included from /usr/include/powerpc64le-linux-gnu/asm/ptrace.h:27:0,
+                 from /usr/include/powerpc64le-linux-gnu/asm/sigcontext.h:11,
+                 from /usr/include/powerpc64le-linux-gnu/bits/sigcontext.h:27,
+                 from /usr/include/signal.h:332,
+                 from kcmp_test.c:5:
+../../../../include/uapi/linux/types.h:9:2: warning: #warning "Attempt to use kernel headers from user space, see http://kernelnewbies.org/KernelHeaders" [-Wcpp]
+ #warning "Attempt to use kernel headers from user space, see http://kernelnewbies.org/KernelHeaders"
+  ^
+In file included from ../../../../include/uapi/linux/posix_types.h:4:0,
+                 from ../../../../include/uapi/linux/types.h:13,
+                 from /usr/include/powerpc64le-linux-gnu/asm/ptrace.h:27,
+                 from /usr/include/powerpc64le-linux-gnu/asm/sigcontext.h:11,
+                 from /usr/include/powerpc64le-linux-gnu/bits/sigcontext.h:27,
+                 from /usr/include/signal.h:332,
+                 from kcmp_test.c:5:
+../../../../include/uapi/linux/stddef.h:1:28: fatal error: linux/compiler.h: No such file or directory
+ #include <linux/compiler.h>
+                            ^
+compilation terminated.
+<builtin>: recipe for target 'kcmp_test' failed
+make: *** [kcmp_test] Error 1
 
 
-On 03/13/2015 09:19 PM, Michal Hocko wrote:
-> On Fri 13-03-15 15:09:15, Eric B Munson wrote:
->> On Fri, 13 Mar 2015, Rik van Riel wrote:
->>
->>> On 03/13/2015 01:26 PM, Eric B Munson wrote:
->>>
->>>> --- a/mm/compaction.c
->>>> +++ b/mm/compaction.c
->>>> @@ -1046,6 +1046,8 @@ typedef enum {
->>>>   	ISOLATE_SUCCESS,	/* Pages isolated, migrate */
->>>>   } isolate_migrate_t;
->>>>
->>>> +int sysctl_compact_unevictable;
+If you want to make it easier to build tests that need the kernel headers then
+maybe kselftest should depend on headers_install?
 
-A comment here would be useful I think, as well as explicit default 
-value. Maybe also __read_mostly although I don't know how much that matters.
-
-I also wonder if it might be confusing that "compact_memory" is a 
-write-only trigger that doesn't even show under "sysctl -a", while 
-"compact_unevictable" is a read/write setting. But I don't have a better 
-suggestion right now.
-
->>>> +
->>>>   /*
->>>>    * Isolate all pages that can be migrated from the first suitable block,
->>>>    * starting at the block pointed to by the migrate scanner pfn within
->>>
->>> I suspect that the use cases where users absolutely do not want
->>> unevictable pages migrated are special cases, and it may make
->>> sense to enable sysctl_compact_unevictable by default.
->>
->> Given that sysctl_compact_unevictable=0 is the way the kernel behaves
->> now and the push back against always enabling compaction on unevictable
->> pages, I left the default to be the behavior as it is today.
->
-> The question is _why_ we have this behavior now. Is it intentional?
-
-It's there since 748446bb6 ("mm: compaction: memory compaction core"). 
-Commit c53919adc0 ("mm: vmscan: remove lumpy reclaim") changes the 
-comment in __isolate_lru_page() handling of unevictable pages to mention 
-compaction explicitly. It could have been accidental in 748446bb6 
-though, maybe it just reused __isolate_lru_page() for compaction - it 
-seems that the skipping of unevictable was initially meant to optimize 
-lumpy reclaim.
-
-> e46a28790e59 (CMA: migrate mlocked pages) is a precedence in that
-
-Well, CMA and realtime kernels are probably mutually exclusive enough.
-
-> direction. Vlastimil has then changed that by edc2ca612496 (mm,
-> compaction: move pageblock checks up from isolate_migratepages_range()).
-> There is no mention about mlock pages so I guess it was more an
-> unintentional side effect of the patch. At least that is my current
-> understanding. I might be wrong here.
-
-Although that commit did change unintentionally more details that I 
-would have liked (unfortunately), I think you are wrong on this one. 
-ISOLATE_UNEVICTABLE is still passed from isolate_migratepages_range() 
-which is used by CMA, while the compaction variant 
-isolate_migratepages() does not pass it. So it's kept CMA-specific as 
-before.
-
-> The thing about RT is that it is not usable with the upstream kernel
-> without the RT patchset AFAIU. So the default should be reflect what is
-> better for the standard kernel. RT loads have to tune the system anyway
-> so it is not so surprising they would disable this option as well. We
-> should help those guys and do not require them to touch the code but the
-> knob is reasonable IMHO.
->
-> Especially when your changelog suggests that having this enabled by
-> default is beneficial for the standard kernel.
-
-I agree, but if there's a danger of becoming too of a bikeshed topic, 
-I'm fine with keeping the default same as current behavior and changing 
-it later. Or maybe we should ask some -rt mailing list instead of just 
-Peter and Thomas?
+cheers
