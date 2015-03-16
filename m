@@ -1,64 +1,37 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [PATCH] selftests: Fix build failures when invoked from
- kselftest target
-Date: Mon, 16 Mar 2015 11:38:49 +1100
-Message-ID: <1426466329.21900.2.camel@ellerman.id.au>
-References: <1426297504-14432-1-git-send-email-shuahkh@osg.samsung.com>
+From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Subject: Re: [PATCH v2 net-next 0/2] bpf: allow eBPF access skb fields
+Date: Sun, 15 Mar 2015 22:03:27 -0400 (EDT)
+Message-ID: <20150315.220327.1395688557673633308.davem@davemloft.net>
+References: <1426273064-4837-1-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426297504-14432-1-git-send-email-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <1426273064-4837-1-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org
+Cc: daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org, tgraf-G/eBtMaohhA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2015-03-13 at 19:45 -0600, Shuah Khan wrote:
-> Several tests that rely on implicit build rules fail to build,
-> when invoked from the main Makefile kselftest target. These
-> failures are due to --no-builtin-rules and --no-builtin-variables
-> options set in the inherited MAKEFLAGS.
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Date: Fri, 13 Mar 2015 11:57:41 -0700
+
+> Hi All,
 > 
-> --no-builtin-rules eliminates the use of built-in implicit rules
-> and --no-builtin-variables is for not defining built-in variables.
-> These two options override the use of implicit rules resulting in
-> build failures. In addition, inherited LDFLAGS result in build
-> failures and there is no need to define LDFLAGS.  Clear LDFLAGS
-> and MAKEFLAG when make is invoked from the main Makefile kselftest
-> target. Fixing this at selftests Makefile avoids changing the main
-> Makefile and keeps this change self contained at selftests level.
+> V1->V2:
+> - refactored field access converter into common helper convert_skb_access()
+>   used in both classic and extended BPF
+> - added missing build_bug_on for field 'len'
+> - added comment to uapi/linux/bpf.h as suggested by Daniel
+> - dropped exposing 'ifindex' field for now
 > 
-> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-> ---
->  tools/testing/selftests/Makefile | 9 +++++++++
->  1 file changed, 9 insertions(+)
-> 
-> diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-> index 4e51122..8e09db7 100644
-> --- a/tools/testing/selftests/Makefile
-> +++ b/tools/testing/selftests/Makefile
-> @@ -22,6 +22,15 @@ TARGETS += vm
->  TARGETS_HOTPLUG = cpu-hotplug
->  TARGETS_HOTPLUG += memory-hotplug
->  
-> +# Clear LDFLAGS and MAKEFLAGS if called from main
-> +# Makefile to avoid test build failures when test
-> +# Makefile doesn't have explicit build rules.
-> +ifeq (1,$(MAKELEVEL))
-> +undefine LDFLAGS
-> +override define MAKEFLAGS =
-> +endef
-> +endif
+> classic BPF has a way to access skb fields, whereas extended BPF didn't.
+> This patch introduces this ability.
 
-You shouldn't need to use define/endef here, that is just for multi-line
-variables.
+I've applied this series.
 
-This should be equivalent:
+I guess you guys can argue forever where the SKB offset validation
+checks should be, and if you decide to do things differently than
+it is done in this series just send me a followup patch.
 
-  ifeq (1,$(MAKELEVEL))
-  undefine LDFLAGS
-  override MAKEFLAGS =
-  endif
-
-cheers
+Thanks.
