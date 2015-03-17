@@ -1,37 +1,41 @@
-From: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH 4/5] Documentation: ABI: /sys/firmware/devicetree/overlays
-Date: Tue, 17 Mar 2015 22:30:56 +0200
-Message-ID: <1426624257-23003-5-git-send-email-pantelis.antoniou@konsulko.com>
+From: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+Subject: [PATCH 5/5] MAINTAINERS: Pantelis Antoniou device tree overlay maintainer
+Date: Tue, 17 Mar 2015 22:30:57 +0200
+Message-ID: <1426624257-23003-6-git-send-email-pantelis.antoniou@konsulko.com>
 References: <1426624257-23003-1-git-send-email-pantelis.antoniou@konsulko.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426624257-23003-1-git-send-email-pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matt Porter <matt.porter-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1426624257-23003-1-git-send-email-pantelis.antoniou@konsulko.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Grant Likely <grant.likely@secretlab.ca>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Matt Porter <matt.porter@linaro.org>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, Rob Herring <robherring2@gmail.com>, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Pantelis Antoniou <pantelis.antoniou@konsulko.com>, Pantelis Antoniou <panto@antoniou-consulting.com>
 List-Id: linux-api@vger.kernel.org
 
-Documentation ABI entry for overlays sysfs entries.
+Add me as the device tree overlays maintainer.
 
-Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Signed-off-by: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
 ---
- Documentation/ABI/testing/sysfs-firmware-devicetree-overlays | 9 +++++++++
+ MAINTAINERS | 9 +++++++++
  1 file changed, 9 insertions(+)
- create mode 100644 Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
 
-diff --git a/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays b/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
-new file mode 100644
-index 0000000..5a07499
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
-@@ -0,0 +1,9 @@
-+What:		/sys/firmware/devicetree/overlays/
-+Date:		March 2015
-+Contact:	Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-+Description:
-+		This directory contains the applied device tree overlays of
-+		the running system, as directories of the overlay id.
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 0e1abe8..24aa339 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -7187,6 +7187,15 @@ F:	Documentation/devicetree/
+ F:	arch/*/boot/dts/
+ F:	include/dt-bindings/
+ 
++OPEN FIRMWARE AND DEVICE TREE OVERLAYS
++M:	Pantelis Antoniou <pantelis.antoniou@konsulko.com>
++L:	devicetree@vger.kernel.org
++S:	Maintained
++F:	Documentation/devicetree/dynamic-resolution-notes.txt
++F:	Documentation/devicetree/overlay-notes.txt
++F:	drivers/of/overlay.c
++F:	drivers/of/resolver.c
 +
-+		enable: The master enable switch, by default is 1, and when
-+		        set to 0 it cannot be re-enabled for security reasons.
+ OPENRISC ARCHITECTURE
+ M:	Jonas Bonn <jonas@southpole.se>
+ W:	http://openrisc.net
 -- 
 1.7.12
