@@ -1,78 +1,87 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [v9 1/5] vfs: adds general codes to enforces project quota limits
-Date: Tue, 17 Mar 2015 10:37:40 +0100
-Message-ID: <20150317093740.GB23155@quack.suse.cz>
-References: <1426043003-31043-1-git-send-email-lixi@ddn.com>
- <1426043003-31043-2-git-send-email-lixi@ddn.com>
- <20150316142944.GN4934@quack.suse.cz>
- <20150316214930.GE28557@dastard>
+From: Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH v0 01/11] stm class: Introduce an abstraction for System Trace Module devices
+Date: Tue, 17 Mar 2015 12:13:47 +0200
+Message-ID: <87pp88dj8k.fsf@ashishki-desk.ger.corp.intel.com>
+References: <1425728161-164217-1-git-send-email-alexander.shishkin@linux.intel.com> <1425728161-164217-2-git-send-email-alexander.shishkin@linux.intel.com> <1425767192.2300.37.camel@x220>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150316214930.GE28557@dastard>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Jan Kara <jack@suse.cz>, Li Xi <pkuelelixi@gmail.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org, dchinner@redhat.com
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1425767192.2300.37.camel@x220>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, peter.lachner-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, norbert.schulz-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, keven.boell-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yann.fouassier-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, laurent.fert-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue 17-03-15 08:49:30, Dave Chinner wrote:
-> On Mon, Mar 16, 2015 at 03:29:44PM +0100, Jan Kara wrote:
-> > On Wed 11-03-15 12:03:19, Li Xi wrote:
-> > > This patch adds support for a new quota type PRJQUOTA for project quota
-> > > enforcement. Also a new method get_projid() is added into dquot_operations
-> > > structure.
-> > > 
-> > > Signed-off-by: Li Xi <lixi@ddn.com>
-> > > Signed-off-by: Dmitry Monakhov <dmonakhov@openvz.org>
-> > > Reviewed-by: Jan Kara <jack@suse.cz>
-> > ...
-> > > diff --git a/fs/quota/quota.c b/fs/quota/quota.c
-> > > index 2aa4151..c76b350 100644
-> > > --- a/fs/quota/quota.c
-> > > +++ b/fs/quota/quota.c
-> > > @@ -30,11 +30,15 @@ static int check_quotactl_permission(struct super_block *sb, int type, int cmd,
-> > >  	case Q_XGETQSTATV:
-> > >  	case Q_XQUOTASYNC:
-> > >  		break;
-> > > -	/* allow to query information for dquots we "own" */
-> > > +	/*
-> > > +	 * allow to query information for dquots we "own"
-> > > +	 * always allow querying project quota
-> > > +	 */
-> > >  	case Q_GETQUOTA:
-> > >  	case Q_XGETQUOTA:
-> > >  		if ((type == USRQUOTA && uid_eq(current_euid(), make_kuid(current_user_ns(), id))) ||
-> > > -		    (type == GRPQUOTA && in_egroup_p(make_kgid(current_user_ns(), id))))
-> > > +		    (type == GRPQUOTA && in_egroup_p(make_kgid(current_user_ns(), id))) ||
-> > > +		    (type == PRJQUOTA))
-> > >  			break;
-> >   I wanted to merge this patch but this hunk caught my eye. Why do we
-> > suddently allow querying of project quotas? Traditionally that has been
-> > allowed only with CAP_SYS_ADMIN. I agree it looks too restrictive to me but
-> > unless that's a bug, I think we have to adhere to original behavior and
-> > drop this hunk. Dave, was that behavior of project quotas intended? 
-> 
-> This is for quota reports, right?
-  Yes.
+Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org> writes:
 
-> Project quotas are managed by the administrator as individual users
-> may not even have access to all the files under a project and hence
-> often cannot do anything about running out of quota space. i.e. users
-> don't own project quotas like they "own" user and group quotas.
-> user/group quotas imply the user has permission to access/modify the
-> files within the quota, whereas that is not true of project quotas.
-> 
-> e.g. Think about a project that compartmentalises information along
-> user acess bounds: even if a user can't access parts of the project
-> quota space, allowing them to query the accounting of space used by
-> the project is leaking information about how much data there is in
-> the project they can't access....
-  OK, thanks for the explanation. So Q_GETQUOTA and Q_XGETQUOTA for
-PRJQUOTA have to stay for CAP_SYS_ADMIN capable processes only (at least
-for now).
+> On Sat, 2015-03-07 at 13:35 +0200, Alexander Shishkin wrote:
+>>  Documentation/ABI/testing/configfs-stp-policy    |  44 ++
+>
+> git am whined about this file when I tried to apply this patch:
+>     Applying: stm class: Introduce an abstraction for System Trace Module devices
+>     [...]/.git/rebase-apply/patch:77: new blank line at EOF.
+>
+>>  Documentation/ABI/testing/sysfs-class-stm        |  14 +
+>>  Documentation/ABI/testing/sysfs-class-stm_source |  11 +
+>>  Documentation/trace/stm.txt                      |  77 +++
+>>  drivers/Kconfig                                  |   2 +
+>>  drivers/Makefile                                 |   1 +
+>>  drivers/stm/Kconfig                              |   8 +
+>>  drivers/stm/Makefile                             |   3 +
+>>  drivers/stm/core.c                               | 839 +++++++++++++++++++++++
+>>  drivers/stm/policy.c                             | 470 +++++++++++++
+>>  drivers/stm/stm.h                                |  77 +++
+>>  include/linux/stm.h                              |  87 +++
+>>  include/uapi/linux/stm.h                         |  47 ++
+>
+>> --- /dev/null
+>> +++ b/drivers/stm/Kconfig
+>> @@ -0,0 +1,8 @@
+>> +config STM
+>> +	tristate "System Trace Module devices"
+>> +	help
+>> +	  A System Trace Module (STM) is a device exporting data in System
+>> +	  Trace Protocol (STP) format as defined by MIPI STP standards.
+>> +	  Examples of such devices are Intel Trace Hub and Coresight STM.
+>> +
+>> +	  Say Y here to enable System Trace Module device support.
+>> diff --git a/drivers/stm/Makefile b/drivers/stm/Makefile
+>> new file mode 100644
+>> index 0000000000..adec701649
+>> --- /dev/null
+>> +++ b/drivers/stm/Makefile
+>> @@ -0,0 +1,3 @@
+>> +obj-$(CONFIG_STM)	+= stm_core.o
+>> +
+>> +stm_core-y		:= core.o policy.o
+>
+> I tried to compile this as a module:
+>     $ make -C ../.. M=$PWD CONFIG_STM=m stm_core.ko
+>     make: Entering directory `[...]'
+>       LD [M]  [...]/drivers/stm/stm_core.o
+>     [...]/drivers/stm/policy.o: In function `stp_configfs_init':
+>     policy.c:(.text+0x5f0): multiple definition of `init_module'
+>     [...]/drivers/stm/core.o:core.c:(.init.text+0x0): first defined here
+>     make[1]: *** [[...]/drivers/stm/stm_core.o] Error 1
+>     make: *** [stm_core.ko] Error 2
+>     make: Leaving directory `[...]'
+>
+> I think that's because
+>     postcore_initcall(stm_core_init);
+>
+> in core.c becomes
+>     module_init(stm_core_init);
+>
+> if this driver is compiled as a module. And that will clash with
+>     module_init(stp_configfs_init);
+>
+> in policy.c. Am I missing something obvious or should STM not be a
+> tristate symbol?
 
-								Honza
--- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+My mistake, I think I fancied the policy to be a separate module in the
+beginning. But I don't see why STM shouldn't be a tristate after the
+above is fixed.
+
+Thanks,
+--
+Alex
