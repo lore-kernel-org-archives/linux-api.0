@@ -1,150 +1,181 @@
-From: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH 1/5] of: unittest: overlay: Keep track of created overlays
-Date: Tue, 17 Mar 2015 22:30:53 +0200
-Message-ID: <1426624257-23003-2-git-send-email-pantelis.antoniou@konsulko.com>
+From: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+Subject: [PATCH 2/5] of: overlay: kobjectify overlay objects
+Date: Tue, 17 Mar 2015 22:30:54 +0200
+Message-ID: <1426624257-23003-3-git-send-email-pantelis.antoniou@konsulko.com>
 References: <1426624257-23003-1-git-send-email-pantelis.antoniou@konsulko.com>
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426624257-23003-1-git-send-email-pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matt Porter <matt.porter-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1426624257-23003-1-git-send-email-pantelis.antoniou@konsulko.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Grant Likely <grant.likely@secretlab.ca>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Matt Porter <matt.porter@linaro.org>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, Rob Herring <robherring2@gmail.com>, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Pantelis Antoniou <pantelis.antoniou@konsulko.com>, Pantelis Antoniou <panto@antoniou-consulting.com>
 List-Id: linux-api@vger.kernel.org
 
-During the course of the overlay selftests some of them remain
-applied. While this does not pose a real problem, make sure you track
-them and destroy them at the end of the test.
+We are going to need the overlays to appear on sysfs with runtime
+global properties (like master enable) so turn them into kobjects.
 
-Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Signed-off-by: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
 ---
- drivers/of/unittest.c | 62 +++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 62 insertions(+)
+ drivers/of/base.c       |  5 +++++
+ drivers/of/of_private.h |  9 +++++++++
+ drivers/of/overlay.c    | 52 +++++++++++++++++++++++++++++++++++++++++++++++--
+ 3 files changed, 64 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/of/unittest.c b/drivers/of/unittest.c
-index 4e60682..c711534 100644
---- a/drivers/of/unittest.c
-+++ b/drivers/of/unittest.c
-@@ -23,6 +23,8 @@
- #include <linux/i2c.h>
- #include <linux/i2c-mux.h>
+diff --git a/drivers/of/base.c b/drivers/of/base.c
+index adb8764..9b4d6f9 100644
+--- a/drivers/of/base.c
++++ b/drivers/of/base.c
+@@ -192,6 +192,7 @@ int __of_attach_node_sysfs(struct device_node *np)
+ static int __init of_init(void)
+ {
+ 	struct device_node *np;
++	int ret;
  
-+#include <linux/bitops.h>
+ 	/* Create the kset, and register existing nodes */
+ 	mutex_lock(&of_mutex);
+@@ -208,6 +209,10 @@ static int __init of_init(void)
+ 	if (of_root)
+ 		proc_symlink("device-tree", NULL, "/sys/firmware/devicetree/base");
+ 
++	ret = of_overlay_init();
++	if (ret != 0)
++		pr_warn("of_init: of_overlay_init failed!\n");
 +
+ 	return 0;
+ }
+ core_initcall(of_init);
+diff --git a/drivers/of/of_private.h b/drivers/of/of_private.h
+index 8e882e7..120eb44 100644
+--- a/drivers/of/of_private.h
++++ b/drivers/of/of_private.h
+@@ -90,4 +90,13 @@ extern void __of_detach_node_sysfs(struct device_node *np);
+ #define for_each_transaction_entry_reverse(_oft, _te) \
+ 	list_for_each_entry_reverse(_te, &(_oft)->te_list, node)
+ 
++#if defined(CONFIG_OF_OVERLAY)
++extern int of_overlay_init(void);
++#else
++static inline int of_overlay_init(void)
++{
++	return 0;
++}
++#endif
++
+ #endif /* _LINUX_OF_PRIVATE_H */
+diff --git a/drivers/of/overlay.c b/drivers/of/overlay.c
+index dee9270..f17f5ef 100644
+--- a/drivers/of/overlay.c
++++ b/drivers/of/overlay.c
+@@ -20,6 +20,7 @@
+ #include <linux/slab.h>
+ #include <linux/err.h>
+ #include <linux/idr.h>
++#include <linux/sysfs.h>
+ 
  #include "of_private.h"
  
- static struct selftest_results {
-@@ -1115,6 +1117,59 @@ static const char *overlay_path(int nr)
+@@ -51,6 +52,7 @@ struct of_overlay {
+ 	int count;
+ 	struct of_overlay_info *ovinfo_tab;
+ 	struct of_changeset cset;
++	struct kobject kobj;
+ };
  
- static const char *bus_path = "/testcase-data/overlay-node/test-bus";
+ static int of_overlay_apply_one(struct of_overlay *ov,
+@@ -325,6 +327,24 @@ static int of_free_overlay_info(struct of_overlay *ov)
+ static LIST_HEAD(ov_list);
+ static DEFINE_IDR(ov_idr);
  
-+/* it is guaranteed that overlay ids are assigned in sequence */
-+#define MAX_SELFTEST_OVERLAYS	256
-+static unsigned long overlay_id_bits[BITS_TO_LONGS(MAX_SELFTEST_OVERLAYS)];
-+static int overlay_first_id = -1;
-+
-+static void of_selftest_track_overlay(int id)
++static inline struct of_overlay *kobj_to_overlay(struct kobject *kobj)
 +{
-+	if (overlay_first_id < 0)
-+		overlay_first_id = id;
-+	id -= overlay_first_id;
-+
-+	/* we shouldn't need that many */
-+	BUG_ON(id >= MAX_SELFTEST_OVERLAYS);
-+	overlay_id_bits[BIT_WORD(id)] |= BIT_MASK(id);
++	return container_of(kobj, struct of_overlay, kobj);
 +}
 +
-+static void of_selftest_untrack_overlay(int id)
++void of_overlay_release(struct kobject *kobj)
 +{
-+	if (overlay_first_id < 0)
-+		return;
-+	id -= overlay_first_id;
-+	BUG_ON(id >= MAX_SELFTEST_OVERLAYS);
-+	overlay_id_bits[BIT_WORD(id)] &= ~BIT_MASK(id);
++	struct of_overlay *ov = kobj_to_overlay(kobj);
++
++	kfree(ov);
 +}
 +
-+static void of_selftest_destroy_tracked_overlays(void)
-+{
-+	int id, ret, defers;
++static struct kobj_type of_overlay_ktype = {
++	.release = of_overlay_release,
++};
 +
-+	if (overlay_first_id < 0)
-+		return;
++static struct kset *ov_kset;
 +
-+	/* try until no defers */
-+	do {
-+		defers = 0;
-+		/* remove in reverse order */
-+		for (id = MAX_SELFTEST_OVERLAYS - 1; id >= 0; id--) {
-+			if (!(overlay_id_bits[BIT_WORD(id)] & BIT_MASK(id)))
-+				continue;
-+
-+			ret = of_overlay_destroy(id + overlay_first_id);
-+			if (ret != 0) {
-+				defers++;
-+				pr_warn("%s: overlay destroy failed for #%d\n",
-+					__func__, id + overlay_first_id);
-+				continue;
-+			}
-+
-+			overlay_id_bits[BIT_WORD(id)] &= ~BIT_MASK(id);
-+		}
-+	} while (defers > 0);
-+}
-+
- static int of_selftest_apply_overlay(int selftest_nr, int overlay_nr,
- 		int *overlay_id)
- {
-@@ -1136,6 +1191,7 @@ static int of_selftest_apply_overlay(int selftest_nr, int overlay_nr,
- 		goto out;
- 	}
- 	id = ret;
-+	of_selftest_track_overlay(id);
+ /**
+  * of_overlay_create() - Create and apply an overlay
+  * @tree:	Device node containing all the overlays
+@@ -350,6 +370,9 @@ int of_overlay_create(struct device_node *tree)
  
- 	ret = 0;
+ 	of_changeset_init(&ov->cset);
  
-@@ -1349,6 +1405,7 @@ static void of_selftest_overlay_6(void)
- 			return;
- 		}
- 		ov_id[i] = ret;
-+		of_selftest_track_overlay(ov_id[i]);
++	/* initialize kobject */
++	kobject_init(&ov->kobj, &of_overlay_ktype);
++
+ 	mutex_lock(&of_mutex);
+ 
+ 	id = idr_alloc(&ov_idr, ov, 0, 0, GFP_KERNEL);
+@@ -385,6 +408,14 @@ int of_overlay_create(struct device_node *tree)
+ 		goto err_revert_overlay;
  	}
  
- 	for (i = 0; i < 2; i++) {
-@@ -1373,6 +1430,7 @@ static void of_selftest_overlay_6(void)
- 						PDEV_OVERLAY));
- 			return;
- 		}
-+		of_selftest_untrack_overlay(ov_id[i]);
- 	}
- 
- 	for (i = 0; i < 2; i++) {
-@@ -1417,6 +1475,7 @@ static void of_selftest_overlay_8(void)
- 			return;
- 		}
- 		ov_id[i] = ret;
-+		of_selftest_track_overlay(ov_id[i]);
- 	}
- 
- 	/* now try to remove first overlay (it should fail) */
-@@ -1439,6 +1498,7 @@ static void of_selftest_overlay_8(void)
- 						PDEV_OVERLAY));
- 			return;
- 		}
-+		of_selftest_untrack_overlay(ov_id[i]);
- 	}
- 
- 	selftest(1, "overlay test %d passed\n", 8);
-@@ -1861,6 +1921,8 @@ static void __init of_selftest_overlay(void)
- 	of_selftest_overlay_i2c_cleanup();
- #endif
- 
-+	of_selftest_destroy_tracked_overlays();
++	ov->kobj.kset = ov_kset;
++	err = kobject_add(&ov->kobj, NULL, "%d", id);
++	if (err != 0) {
++		pr_err("%s: kobject_add() failed for tree@%s\n",
++				__func__, tree->full_name);
++		goto err_cancel_overlay;
++	}
 +
- out:
- 	of_node_put(bus_np);
+ 	/* add to the tail of the overlay list */
+ 	list_add_tail(&ov->node, &ov_list);
+ 
+@@ -392,6 +423,8 @@ int of_overlay_create(struct device_node *tree)
+ 
+ 	return id;
+ 
++err_cancel_overlay:
++	of_changeset_revert(&ov->cset);
+ err_revert_overlay:
+ err_abort_trans:
+ 	of_free_overlay_info(ov);
+@@ -512,7 +545,9 @@ int of_overlay_destroy(int id)
+ 	of_free_overlay_info(ov);
+ 	idr_remove(&ov_idr, id);
+ 	of_changeset_destroy(&ov->cset);
+-	kfree(ov);
++
++	kobject_del(&ov->kobj);
++	kobject_put(&ov->kobj);
+ 
+ 	err = 0;
+ 
+@@ -542,7 +577,8 @@ int of_overlay_destroy_all(void)
+ 		of_changeset_revert(&ov->cset);
+ 		of_free_overlay_info(ov);
+ 		idr_remove(&ov_idr, ov->id);
+-		kfree(ov);
++		kobject_del(&ov->kobj);
++		kobject_put(&ov->kobj);
+ 	}
+ 
+ 	mutex_unlock(&of_mutex);
+@@ -550,3 +586,15 @@ int of_overlay_destroy_all(void)
+ 	return 0;
  }
+ EXPORT_SYMBOL_GPL(of_overlay_destroy_all);
++
++/* called from of_init() */
++int of_overlay_init(void)
++{
++	int rc;
++
++	ov_kset = kset_create_and_add("overlays", NULL, &of_kset->kobj);
++	if (!ov_kset)
++		return -ENOMEM;
++
++	return 0;
++}
 -- 
 1.7.12
-
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
