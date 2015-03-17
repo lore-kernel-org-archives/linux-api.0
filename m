@@ -1,45 +1,83 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v2 tip/core/rcu 01/22] smpboot: Add common code for
- notification from dying CPU
-Date: Tue, 17 Mar 2015 17:56:21 +0100
-Message-ID: <20150317165621.GF24151@twins.programming.kicks-ass.net>
-References: <20150316183743.GA21453@linux.vnet.ibm.com>
- <1426531086-23825-1-git-send-email-paulmck@linux.vnet.ibm.com>
- <20150317081807.GQ2896@worktop.programming.kicks-ass.net>
- <20150317113648.GC3589@linux.vnet.ibm.com>
- <20150317140846.GB23123@twins.programming.kicks-ass.net>
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Subject: Re: [PATCH v3 05/15] dt-bindings: Document the STM32 reset bindings
+Date: Tue, 17 Mar 2015 17:57:47 +0100
+Message-ID: <CALszF6AVKnSPzOhyBQaOnQJwo34gx-rwRdb3RgL_pDNaX1FpNg@mail.gmail.com>
+References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
+	<1426197361-19290-6-git-send-email-maxime.coquelin@st.com>
+	<55022AC0.7090403@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150317140846.GB23123@twins.programming.kicks-ass.net>
-Sender: linux-arch-owner@vger.kernel.org
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Cc: linux-kernel@vger.kernel.org, mingo@kernel.org, laijs@cn.fujitsu.com, dipankar@in.ibm.com, akpm@linux-foundation.org, mathieu.desnoyers@efficios.com, josh@joshtriplett.org, tglx@linutronix.de, rostedt@goodmis.org, dhowells@redhat.com, edumazet@google.com, dvhart@linux.intel.com, fweisbec@gmail.com, oleg@redhat.com, bobby.prani@gmail.com, linux-api@vger.kernel.org, linux-arch@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <55022AC0.7090403@samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Chanwoo Choi <cw00.choi@samsung.com>
+Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 17, 2015 at 03:08:46PM +0100, Peter Zijlstra wrote:
-> On Tue, Mar 17, 2015 at 04:36:48AM -0700, Paul E. McKenney wrote:
-> > On Tue, Mar 17, 2015 at 09:18:07AM +0100, Peter Zijlstra wrote:
-> > > On Mon, Mar 16, 2015 at 11:37:45AM -0700, Paul E. McKenney wrote:
-> > > > From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-> > > > 
-> > > > RCU ignores offlined CPUs, so they cannot safely run RCU read-side code.
-> > > > (They -can- use SRCU, but not RCU.)  This means that any use of RCU
-> > > > during or after the call to arch_cpu_idle_dead().  Unfortunately,
-> > > > commit 2ed53c0d6cc99 added a complete() call, which will contain RCU
-> > > > read-side critical sections if there is a task waiting to be awakened.
-> > > 
-> > > Got a little more detail there?
-> > 
-> > Quite possibly.  But exactly what sort of detail are you looking for?
-> 
-> What exact RCU usage you ran into that was problematic. It seems to
-> imply that calling complete() -- from a dead cpu -- which ends up in
-> try_to_wake_up() was the problem?
+Hi Chanwoo,
 
-Hmm, I'm thinking its select_task_rq_*(). And yes, 'fixing' this in the
-wake-up path will penalize everybody for the benefit of the very rare
-case someone is doing a hotplug.
+2015-03-13 1:09 GMT+01:00 Chanwoo Choi <cw00.choi@samsung.com>:
+> Hi Maxime,
+>
+> On 03/13/2015 06:55 AM, Maxime Coquelin wrote:
+>> From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+>>
+>> This adds documentation of device tree bindings for the
+>> STM32 reset controller.
+>>
+>> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+>> ---
+>>  .../devicetree/bindings/reset/st,stm32-rcc.txt     | 102 +++++++++++++++++++++
+>>  1 file changed, 102 insertions(+)
+>>  create mode 100644 Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
+>>
+>> diff --git a/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt b/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
+>> new file mode 100644
+>> index 0000000..962f961
+>> --- /dev/null
+>> +++ b/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
+<snip>
 
-So yeah, maybe this is the best solution.. Ulgy though :/
+>> + - can1: 281
+>> + - can2: 282
+>> + - pwr: 284
+>> + - dac: 285
+>> + - uart7: 286
+>> + - uart8: 287
+>> + - tim1: 288
+>> + - tim8: 289
+>> + - usart1: 292
+>> + - usart6: 293
+>> + - adc: 296
+>> + - sdio: 299
+>> + - spi1: 300
+>> + - spi4: 301
+>> + - syscfg: 302
+>> + - tim9: 304
+>> + - tim10: 305
+>> + - tim11: 306
+>> + - spi5: 308
+>> + - spi6: 309
+>> + - sai1: 310
+>> + - ltdc: 31
+>> +
+>>
+>
+> Last line is un-necessary. When I applied this patch for test
+> "new blank line at EOF" happen.
+
+Thanks, that will be fixed in v4.
+
+Kind regards,
+Maxime
+>
+> +++ b/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
+> @@ -99,4 +99,3 @@ List of indexes for STM32F429:
+>   - spi6: 309
+>   - sai1: 310
+>   - ltdc: 31
+> -
+>
+> Thanks,
+> Chanwoo Choi
+>
