@@ -1,37 +1,34 @@
-From: Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>
-Subject: Re: [PATCH 1/2] drm_modes: videomode: add pos/neg pixel clock
- polarity flag
-Date: Tue, 17 Mar 2015 11:43:39 +0100
-Message-ID: <1426589019.3709.11.camel@pengutronix.de>
-References: <1426526944-16762-1-git-send-email-sebastien.szymanski@armadeus.com>
+From: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH v2 tip/core/rcu 01/22] smpboot: Add common code for
+ notification from dying CPU
+Date: Tue, 17 Mar 2015 04:36:48 -0700
+Message-ID: <20150317113648.GC3589@linux.vnet.ibm.com>
+References: <20150316183743.GA21453@linux.vnet.ibm.com>
+ <1426531086-23825-1-git-send-email-paulmck@linux.vnet.ibm.com>
+ <20150317081807.GQ2896@worktop.programming.kicks-ass.net>
+Reply-To: paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426526944-16762-1-git-send-email-sebastien.szymanski-d2DlULPkwbNWk0Htik3J/w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150317081807.GQ2896-IIpfhp3q70z/8w/KjCw3T+5/BudmfyzbbVWyRVo5IupeoWH0uzbU5w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?ISO-8859-1?Q?S=E9bastien?= Szymanski <sebastien.szymanski-d2DlULPkwbNWk0Htik3J/w@public.gmane.org>
-Cc: David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Steve Longerbeam <steve_longerbeam-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, dipankar-xthvdsQ13ZrQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi S=C3=A9bastien,
+On Tue, Mar 17, 2015 at 09:18:07AM +0100, Peter Zijlstra wrote:
+> On Mon, Mar 16, 2015 at 11:37:45AM -0700, Paul E. McKenney wrote:
+> > From: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+> > 
+> > RCU ignores offlined CPUs, so they cannot safely run RCU read-side code.
+> > (They -can- use SRCU, but not RCU.)  This means that any use of RCU
+> > during or after the call to arch_cpu_idle_dead().  Unfortunately,
+> > commit 2ed53c0d6cc99 added a complete() call, which will contain RCU
+> > read-side critical sections if there is a task waiting to be awakened.
+> 
+> Got a little more detail there?
 
-Am Montag, den 16.03.2015, 18:29 +0100 schrieb S=C3=A9bastien Szymanski=
-:
-> From: Steve Longerbeam <steve_longerbeam-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>
->=20
-> [S=C3=A9bastien - rebase, update drm_display_mode_to_videomode functi=
-on]
->=20
-> Signed-off-by: Steve Longerbeam <steve_longerbeam-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>
-> Signed-off-by: S=C3=A9bastien Szymanski <sebastien.szymanski@armadeus=
-=2Ecom>
+Quite possibly.  But exactly what sort of detail are you looking for?
 
-Thanks for bringing this up again. This is a very crucial bit of
-information that somehow needs to be communicated from the panel driver
-to the crtc/encoder drivers. I vaguely remember that an earlier attempt
-to add this flag to the userspace visible DRM_MODE_FLAGs was met with
-resistance before, but I can't find it right now.
-
-regards
-Philipp
+							Thanx, Paul
