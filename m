@@ -1,55 +1,78 @@
-From: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
-Subject: Re: [PATCH net-next] bpf: allow BPF programs access 'protocol' and
- 'vlan_tci' fields
-Date: Tue, 17 Mar 2015 10:22:27 +0100
-Message-ID: <5507F253.9000806@iogearbox.net>
-References: <1426554362-29991-1-git-send-email-ast@plumgrid.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [v9 1/5] vfs: adds general codes to enforces project quota limits
+Date: Tue, 17 Mar 2015 10:37:40 +0100
+Message-ID: <20150317093740.GB23155@quack.suse.cz>
+References: <1426043003-31043-1-git-send-email-lixi@ddn.com>
+ <1426043003-31043-2-git-send-email-lixi@ddn.com>
+ <20150316142944.GN4934@quack.suse.cz>
+ <20150316214930.GE28557@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426554362-29991-1-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150316214930.GE28557@dastard>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Jan Kara <jack@suse.cz>, Li Xi <pkuelelixi@gmail.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org, dchinner@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On 03/17/2015 02:06 AM, Alexei Starovoitov wrote:
-> as a follow on to patch 70006af95515 ("bpf: allow eBPF access skb fields")
-> this patch allows 'protocol' and 'vlan_tci' fields to be accessible
-> from extended BPF programs.
->
-> The usage of 'protocol', 'vlan_present' and 'vlan_tci' fields is the same as
-> corresponding SKF_AD_PROTOCOL, SKF_AD_VLAN_TAG_PRESENT and SKF_AD_VLAN_TAG
-> accesses in classic BPF.
->
-> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+On Tue 17-03-15 08:49:30, Dave Chinner wrote:
+> On Mon, Mar 16, 2015 at 03:29:44PM +0100, Jan Kara wrote:
+> > On Wed 11-03-15 12:03:19, Li Xi wrote:
+> > > This patch adds support for a new quota type PRJQUOTA for project quota
+> > > enforcement. Also a new method get_projid() is added into dquot_operations
+> > > structure.
+> > > 
+> > > Signed-off-by: Li Xi <lixi@ddn.com>
+> > > Signed-off-by: Dmitry Monakhov <dmonakhov@openvz.org>
+> > > Reviewed-by: Jan Kara <jack@suse.cz>
+> > ...
+> > > diff --git a/fs/quota/quota.c b/fs/quota/quota.c
+> > > index 2aa4151..c76b350 100644
+> > > --- a/fs/quota/quota.c
+> > > +++ b/fs/quota/quota.c
+> > > @@ -30,11 +30,15 @@ static int check_quotactl_permission(struct super_block *sb, int type, int cmd,
+> > >  	case Q_XGETQSTATV:
+> > >  	case Q_XQUOTASYNC:
+> > >  		break;
+> > > -	/* allow to query information for dquots we "own" */
+> > > +	/*
+> > > +	 * allow to query information for dquots we "own"
+> > > +	 * always allow querying project quota
+> > > +	 */
+> > >  	case Q_GETQUOTA:
+> > >  	case Q_XGETQUOTA:
+> > >  		if ((type == USRQUOTA && uid_eq(current_euid(), make_kuid(current_user_ns(), id))) ||
+> > > -		    (type == GRPQUOTA && in_egroup_p(make_kgid(current_user_ns(), id))))
+> > > +		    (type == GRPQUOTA && in_egroup_p(make_kgid(current_user_ns(), id))) ||
+> > > +		    (type == PRJQUOTA))
+> > >  			break;
+> >   I wanted to merge this patch but this hunk caught my eye. Why do we
+> > suddently allow querying of project quotas? Traditionally that has been
+> > allowed only with CAP_SYS_ADMIN. I agree it looks too restrictive to me but
+> > unless that's a bug, I think we have to adhere to original behavior and
+> > drop this hunk. Dave, was that behavior of project quotas intended? 
+> 
+> This is for quota reports, right?
+  Yes.
 
-Ok, code looks good to me.
+> Project quotas are managed by the administrator as individual users
+> may not even have access to all the files under a project and hence
+> often cannot do anything about running out of quota space. i.e. users
+> don't own project quotas like they "own" user and group quotas.
+> user/group quotas imply the user has permission to access/modify the
+> files within the quota, whereas that is not true of project quotas.
+> 
+> e.g. Think about a project that compartmentalises information along
+> user acess bounds: even if a user can't access parts of the project
+> quota space, allowing them to query the accounting of space used by
+> the project is leaking information about how much data there is in
+> the project they can't access....
+  OK, thanks for the explanation. So Q_GETQUOTA and Q_XGETQUOTA for
+PRJQUOTA have to stay for CAP_SYS_ADMIN capable processes only (at least
+for now).
 
-> 1.
-> I was thinking to drop ntohs() from 'protocol' field for extended BPF, since
-> the programs could do:
-> if (skb->protocol == htons(ETH_P_IP))
-> which would have saved one or two cpu cycles.
-> But having similar behavior between classic and extended seems to be better.
-
-I'm thinking that skb->protocol == htons(ETH_P_IP) might actually
-be more obvious, and, as you mentioned, the compiler can already
-resolve the htons() during compile time instead of runtime, which
-would be another plus.
-
-Either behavior we should document later anyway.
-
-The question to me here is, do we need to keep similar behavior?
-
-After all, the way of programming both from a user perspective is
-quite different (i.e. bpf_asm versus C/LLVM).
-
-Similarly, I was wondering, if just exporting raw skb->vlan_tci is
-already sufficient, and the user can e.g. write helpers to extract
-bits himself from that protocol field?
-
-> 2.
-> 'vlan_tci' name is picked to match real sk_buff->vlan_tci field
-> and matches tpacket's tp_vlan_tci field.
+								Honza
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
