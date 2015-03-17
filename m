@@ -1,27 +1,76 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH v2 tip/core/rcu 01/22] smpboot: Add common code for
- notification from dying CPU
-Date: Tue, 17 Mar 2015 09:18:07 +0100
-Message-ID: <20150317081807.GQ2896@worktop.programming.kicks-ass.net>
-References: <20150316183743.GA21453@linux.vnet.ibm.com>
- <1426531086-23825-1-git-send-email-paulmck@linux.vnet.ibm.com>
+From: Michal Hocko <mhocko@suse.cz>
+Subject: Re: [PATCH 0/2] Move away from non-failing small allocations
+Date: Tue, 17 Mar 2015 10:07:38 +0100
+Message-ID: <20150317090738.GB28112@dhcp22.suse.cz>
+References: <1426107294-21551-1-git-send-email-mhocko@suse.cz>
+ <20150316153843.af945a9e452404c22c4db999@linux-foundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <1426531086-23825-1-git-send-email-paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, dipankar-xthvdsQ13ZrQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20150316153843.af945a9e452404c22c4db999@linux-foundation.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Johannes Weiner <hannes@cmpxchg.org>, Dave Chinner <david@fromorbit.com>, Mel Gorman <mgorman@suse.de>, Rik van Riel <riel@redhat.com>, Wu Fengguang <fengguang.wu@intel.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 16, 2015 at 11:37:45AM -0700, Paul E. McKenney wrote:
-> From: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+On Mon 16-03-15 15:38:43, Andrew Morton wrote:
+> On Wed, 11 Mar 2015 16:54:52 -0400 Michal Hocko <mhocko@suse.cz> wrote:
 > 
-> RCU ignores offlined CPUs, so they cannot safely run RCU read-side code.
-> (They -can- use SRCU, but not RCU.)  This means that any use of RCU
-> during or after the call to arch_cpu_idle_dead().  Unfortunately,
-> commit 2ed53c0d6cc99 added a complete() call, which will contain RCU
-> read-side critical sections if there is a task waiting to be awakened.
+> > as per discussion at LSF/MM summit few days back it seems there is a
+> > general agreement on moving away from "small allocations do not fail"
+> > concept.
+> 
+> Such a change affects basically every part of the kernel and every
+> kernel developer.  I expect most developers will say "it works well
+> enough and I'm not getting any bug reports so why should I spend time
+> on this?".  It would help if we were to explain the justification very
+> clearly.  https://lwn.net/Articles/636017/ is Jon's writeup of the
+> conference discussion.
 
-Got a little more detail there?
+OK, I thought that the description in the patch 1/2 was clear about the
+motivation. I can try harder of course. Which part do you miss there? Or
+was it the cover that wasn't specific enough?
+ 
+> Realistically, I don't think this overall effort will be successful -
+> we'll add the knob, it won't get enough testing and any attempt to
+> alter the default will be us deliberately destabilizing the kernel
+> without knowing how badly :(
+
+Without the knob we do not allow users to test this at all though and
+the transition will _never_ happen. Which is IMHO bad.
+ 
+> I wonder if we can alter the behaviour only for filesystem code, so we
+> constrain the new behaviour just to that code where we're having
+> problems.  Most/all fs code goes via vfs methods so there's a reasonably
+> small set of places where we can call
+
+We are seeing issues with the fs code now because the test cases which
+led to the current discussion exercise FS code. The code which does
+lock(); kmalloc(GFP_KERNEL) is not reduced there though. I am pretty sure
+we can find other subsystems if we try hard enough.
+
+> static inline void enter_fs_code(struct super_block *sb)
+> {
+> 	if (sb->my_small_allocations_can_fail)
+> 		current->small_allocations_can_fail++;
+> }
+> 
+> that way (or something similar) we can select the behaviour on a per-fs
+> basis and the rest of the kernel remains unaffected.  Other subsystems
+> can opt in as well.
+
+This is basically leading to GFP_MAYFAIL which is completely backwards
+(the hard requirement should be an exception not a default rule).
+I really do not want to end up with stuffing random may_fail annotations
+all over the kernel.
+
+-- 
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
