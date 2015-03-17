@@ -1,64 +1,157 @@
-From: josh@joshtriplett.org
-Subject: Re: [PATCH v2 0/7] CLONE_FD: Task exit notification via file
- descriptor
-Date: Mon, 16 Mar 2015 16:35:34 -0700
-Message-ID: <20150316233533.GC31751@cloud>
-References: <cover.1426376419.git.josh@joshtriplett.org>
- <CAGXu5jLmLLgVNCP=cyUiXuiszVXsS88SNUK2iBqArbA2V6vdHA@mail.gmail.com>
- <2381173.VxaIO6vGG3@tjmaciei-mobl4>
- <CAGXu5jJr_DieZ281=H0ZNtNvOagO0pm8PRfNvRWKp4YwS=55GA@mail.gmail.com>
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Subject: Re: [RFC/PATCH 0/5] Add live source objects to DRM
+Date: Tue, 17 Mar 2015 02:07:40 +0200
+Message-ID: <64867045.Xjz6COdlBY@avalon>
+References: <1426456540-21006-1-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
+ <20150316083522.GE21993@phenom.ffwll.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAGXu5jJr_DieZ281=H0ZNtNvOagO0pm8PRfNvRWKp4YwS=55GA@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Thiago Macieira <thiago.macieira@intel.com>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <20150316083522.GE21993@phenom.ffwll.local>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Daniel Vetter <daniel@ffwll.ch>
+Cc: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>, linux-sh@vger.kernel.org, linux-api@vger.kernel.org, Magnus Damm <magnus.damm@gmail.com>, dri-devel@lists.freedesktop.org, Daniel Vetter <daniel.vetter@intel.com>, linux-media@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 16, 2015 at 03:36:16PM -0700, Kees Cook wrote:
-> On Mon, Mar 16, 2015 at 3:14 PM, Thiago Macieira
-> <thiago.macieira@intel.com> wrote:
-> > On Monday 16 March 2015 14:44:20 Kees Cook wrote:
-> >> >               O_CLOEXEC
-> >> >                      Set  the  close-on-exec  flag on the new file
-> >> >descriptor. See the description of the O_CLOEXEC flag in open(2)  for
-> >> >reasons why this may be useful.
-> >>
-> >> This begs the question: what happens when all CLONE_FD fds for a
-> >> process are closed? Will the parent get SIGCHLD instead, will it
-> >> auto-reap, or will it be un-wait-able (I assume not this...)
-> >
-> > Depends on CLONE_AUTOREAP. If it's on, then no one gets SIGCHLD, no one can
-> > wait() on it and the process autoreaps itself.
-> >
-> > If it's no active, then the old rules apply: parent gets SIGCHILD and can
-> > wait(). If the parent exited first, then the child gets reparented to init,
-> > which can do the wait().
-> >
-> > A child without CLONE_AUTOREAP should be wait()able. If it gets wait()ed
-> > before the clonefd is read, the clonefd() will return a 0 read. If it gets
-> > read before wait, then wait() reaps another child or returns -ECHILD. That's
-> > no different than two threads doing simultaneous wait() on the same child.
-> 
-> Cool. I think detailing this in the manpage would be helpful.
-> 
-> And just so I understand the races here, what happens in CLONE_FD
-> (without CLONE_AUTOREAP) case where the child dies, but the parent
-> never reads from the CLONE_FD fd, and closes it (or dies)? Will the
-> modes switch that late in the child's lifetime? (i.e. even though the
-> details were written to the fd, they were never read, yet it'll still
-> switch and generate a SIGCHLD, etc?)
-
-This doesn't actually work like a pipe; the details aren't "written" to
-the fd.  The data is generated at read time, and if you never read,
-that's fine.  There's no semantic meaning attached to reading from the
-clonefd; you still have to wait on the process if you don't pass
-CLONE_AUTOREAP.  (Or you can block SIGCHLD or use SA_NOCLDWAIT, if you
-control the calling process's signal handling; AUTOREAP just lets you
-avoid interacting with the calling process's signal handling.)
-
-See my previous response for the rest.
-
-- Josh Triplett
+SGkgRGFuaWVsLAoKT24gTW9uZGF5IDE2IE1hcmNoIDIwMTUgMDk6MzU6MjIgRGFuaWVsIFZldHRl
+ciB3cm90ZToKPiBPbiBTdW4sIE1hciAxNSwgMjAxNSBhdCAxMTo1NTozNVBNICswMjAwLCBMYXVy
+ZW50IFBpbmNoYXJ0IHdyb3RlOgo+ID4gSGVsbG8sCj4gPiAKPiA+IEkgaGF2ZSBhIGZlZWxpbmcg
+dGhhdCBSRkMvUEFUQ0ggd2lsbCB3b3JrIGJldHRlciB0aGFuIGp1c3QgUkZDLCBzbyBoZXJlJ3MK
+PiA+IGEgcGF0Y2ggc2V0IHRoYXQgYWRkcyBhIG5ldyBvYmplY3QgbmFtZWQgbGl2ZSBzb3VyY2Ug
+dG8gRFJNLgo+ID4gCj4gPiBUaGUgbmVlZCBjb21lcyBmcm9tIHRoZSBSZW5lc2FzIFItQ2FyIFNv
+Q3MgaW4gd2hpY2ggYSB2aWRlbyBwcm9jZXNzaW5nCj4gPiBlbmdpbmUgKG5hbWVkIFZTUDEpIHRo
+YXQgb3BlcmF0ZXMgZnJvbSBtZW1vcnkgdG8gbWVtb3J5IGhhcyBvbmUgb3V0cHV0Cj4gPiBkaXJl
+Y3RseSBjb25uZWN0ZWQgdG8gYSBwbGFuZSBvZiB0aGUgZGlzcGxheSBlbmdpbmUgKERVKSB3aXRo
+b3V0IGdvaW5nCj4gPiB0aHJvdWdoIG1lbW9yeS4KPiA+IAo+ID4gVGhlIFZTUDEgaXMgc3VwcG9y
+dGVkIGJ5IGEgVjRMMiBkcml2ZXIuIFdoaWxlIGl0IGNvdWxkIGJlIGFyZ3VlZCB0aGF0IGl0Cj4g
+PiBzaG91bGQgaW5zdGVhZCBiZSBzdXBwb3J0ZWQgZGlyZWN0bHkgYnkgdGhlIERSTSByY2FyLWR1
+IGRyaXZlciwgdGhpcwo+ID4gd291bGRuJ3QgYmUgYSBnb29kIGlkZWEgZm9yIGF0IGxlYXN0IHR3
+byByZWFzb25zLiBGaXJzdCwgdGhlIFItQ2FyIFNvQ3MKPiA+IGNvbnRhaW4gc2V2ZXJhbCBWU1Ax
+IGluc3RhbmNlcywgb2Ygd2hpY2ggb25seSBhIHN1YnNldCBoYXZlIGEgZGlyZWN0IERVCj4gPiBj
+b25uZWN0aW9uLiBUaGUgb25seSBvdGhlciBpbnN0YW5jZXMgb3BlcmF0ZSBzb2xlbHkgaW4gbWVt
+b3J5IHRvIG1lbW9yeQo+ID4gbW9kZS4gVGhlbiwgdGhlIFZTUDEgaXMgYSB2aWRlbyBwcm9jZXNz
+aW5nIGVuZ2luZSBhbmQgbm90IGEgZGlzcGxheQo+ID4gZW5naW5lLiBJdHMgZmVhdHVyZXMgYXJl
+IGVhc2lseSBzdXBwb3J0ZWQgYnkgdGhlIFY0TDIgQVBJLCBidXQgZG9uJ3QgbWFwCj4gPiB0byB0
+aGUgRFJNL0tNUyBBUEkuIFNpZ25pZmljYW50IGNoYW5nZXMgdG8gRFJNL0tNUyB3b3VsZCBiZSBy
+ZXF1aXJlZCwKPiA+IGJleW9uZCB3aGF0IGlzIGluIG15IG9waW5pb24gYW4gYWNjZXB0YWJsZSBz
+Y29wZSBmb3IgYSBkaXNwbGF5IEFQSS4KPiA+IAo+ID4gTm93IHRoYXQgdGhlIG5lZWQgdG8gaW50
+ZXJmYWNlIHR3byBzZXBhcmF0ZSBkZXZpY2VzIHN1cHBvcnRlZCBieSB0d28KPiA+IGRpZmZlcmVu
+dCBkcml2ZXJzIGluIHR3byBzZXBhcmF0ZSBzdWJzeXN0ZW1zIGhhcyBiZWVuIGVzdGFibGlzaGVk
+LCB3ZQo+ID4gbmVlZCBhbiBBUEkgdG8gZG8gc28uIEl0IHNob3VsZCBiZSBub3RlZCB0aGF0IHdo
+aWxlIHRoYXQgQVBJIGRvZXNuJ3QKPiA+IGV4aXN0IGluIHRoZSBtYWlubGluZSBrZXJuZWwsIHRo
+ZSBuZWVkIGlzbid0IGxpbWl0ZWQgdG8gUmVuZXNhcyBTb0NzLgo+ID4gCj4gPiBUaGlzIHBhdGNo
+IHNldCBwcm9wb3NlcyBvbmUgcG9zc2libGUgc29sdXRpb24gZm9yIHRoZSBwcm9ibGVtIGluIHRo
+ZSBmb3JtCj4gPiBvZiBhIG5ldyBEUk0gb2JqZWN0IG5hbWVkIGxpdmUgc291cmNlLiBMaXZlIHNv
+dXJjZXMgYXJlIGNyZWF0ZWQgYnkKPiA+IGRyaXZlcnMgdG8gbW9kZWwgaGFyZHdhcmUgY29ubmVj
+dGlvbnMgYmV0d2VlbiBhIHBsYW5lIGlucHV0IGFuZCBhbgo+ID4gZXh0ZXJuYWwgc291cmNlLCBh
+bmQgYXJlIGF0dGFjaGVkIHRvIHBsYW5lcyB0aHJvdWdoIHRoZSBLTVMgdXNlcnNwYWNlCj4gPiBB
+UEkuCj4gPiAKPiA+IFBhdGNoIDEvNSBhZGRzIGxpdmUgc291cmNlIG9iamVjdHMgdG8gRFJNLCB3
+aXRoIGFuIGluLWtlcm5lbCBBUEkgZm9yCj4gPiBkcml2ZXJzIHRvIHJlZ2lzdGVyIHRoZSBzb3Vy
+Y2VzLCBhbmQgYSB1c2Vyc3BhY2UgQVBJIHRvIGVudW1lcmF0ZSBhbmQKPiA+IGNvbmZpZ3VyZSB0
+aGVtLiBDb25maWd1cmluZyBhIGxpdmUgc291cmNlIHNldHMgdGhlIHdpZHRoLCBoZWlnaHQgYW5k
+Cj4gPiBwaXhlbCBmb3JtYXQgb2YgdGhlIHZpZGVvIHN0cmVhbS4gVGhpcyBzaG91bGQgaWRlYWxs
+eSBiZSBxdWVyaWVkIGRpcmVjdGx5Cj4gPiBmcm9tIHRoZSBkcml2ZXIgdGhhdCBzdXBwb3J0cyB0
+aGUgbGl2ZSBzb3VyY2UgZGV2aWNlLCBidXQgSSd2ZSBkZWNpZGVkCj4gPiBub3QgdG8gaW1wbGVt
+ZW50IHN1Y2ggY29tbXVuaWNhdGlvbiBiZXR3ZWVuIFY0TDIgYW5kIERSTS9LTVMgYXQgdGhlCj4g
+PiBtb21lbnQgdG8ga2VlcCB0aGUgcHJvcG9zYWwgc2ltcGxlLgo+ID4gCj4gPiBQYXRjaCAyLzIg
+aW1wbGVtZW50cyBjb25uZWN0aW9uIGJldHdlZW4gbGl2ZSBzb3VyY2VzIGFuZCBwbGFuZXMuIFRo
+aXMKPiA+IHRha2VzIGRpZmZlcmVudCBmb3JtcyBkZXBlbmRpbmcgb24gd2hldGhlciBkcml2ZXJz
+IHVzZSB0aGUgc2V0cGxhbmUgb3IgdGhlCj4gPiBhdG9taWMgdXBkYXRlcyBBUEk6Cj4gPiAKPiA+
+IC0gRm9yIHNldHBsYW5lLCB0aGUgZmIgZmllbGQgY2FuIG5vdyBjb250YWluIGEgbGl2ZSBzb3Vy
+Y2UgSUQgaW4gYWRkaXRpb24KPiA+ICAgdG8gYSBmcmFtZWJ1ZmZlciBJRC4gQXMgRFJNIGFsbG9j
+YXRlcyBvYmplY3QgSURzIGZyb20gYSBzaW5nbGUgSUQgc3BhY2UsCj4gPiAgIHRoZSB0eXBlIGNh
+biBiZSBpbmZlcnJlZCBmcm9tIHRoZSBJRC4gVGhpcyBtYWtlcyBzcGVjaWZ5aW5nIGJvdGggYQo+
+ID4gICBmcmFtZWJ1ZmZlciBhbmQgYSBsaXZlIHNvdXJjZSBpbXBvc3NpYmxlLCB3aGljaCBpc24n
+dCBhbiBpc3N1ZSBnaXZlbgo+ID4gICB0aGF0IHN1Y2ggYSBjb25maWd1cmF0aW9uIHdvdWxkIGJl
+IGludmFsaWQuCj4gPiAgIAo+ID4gICBUaGUgbGl2ZSBzb3VyY2UgaXMgbG9va2VkIHVwIGJ5IHRo
+ZSBEUk0gY29yZSBhbmQgcGFzc2VkIGFzIGEgcG9pbnRlciB0bwo+ID4gICB0aGUgLnVwZGF0ZV9w
+bGFuZSgpIG9wZXJhdGlvbi4gVW5saWtlIGZyYW1lYnVmZmVycyBsaXZlIHNvdXJjZXMgYXJlIG5v
+dAo+ID4gICByZWZjb3VudGVkIGFzIHRoZXkncmUgY3JlYXRlZCBzdGF0aWNhbGx5IGF0IGRyaXZl
+ciBpbml0aWFsaXphdGlvbiB0aW1lLgo+ID4gCj4gPiAtIEZvciBhdG9taWMgdXBkYXRlLCBhIG5l
+dyBTUkNfSUQgcHJvcGVydHkgaGFzIGJlZW4gYWRkZWQgdG8gcGxhbmVzLiBUaGUKPiA+ICAgbGl2
+ZSBzb3VyY2UgaXMgbG9va2VkIHVwIGZyb20gdGhlIHNvdXJjZSBJRCBhbmQgc3RvcmVkIGludG8g
+dGhlIHBsYW5lCj4gPiAgIHN0YXRlLgo+IAo+IFdoYXQgYWJvdXQgZGlyZWN0bHkgdHJlYXRpbmcg
+bGl2ZSBzb3VyY2VzIGFzICh2ZXJ5KSBzcGVjaWFsIGZyYW1lYnVmZmVycz8KPiBBIGJ1bmNoIG9m
+IHJlYXNvbnM6Cj4gLSBBbGwgdGhlIGFiaSBmdSBhYm92ZSBnZXRzIHJlc29sdmVkIG5hdHVyYWxs
+eS4KPiAtIFlvdSBoYXZlIGxvdCBvZiBkdXBsaWNhdGlvbiBiZXR3ZWVuIGZiIGFuZCBsaXZlIHNv
+dXJjZSB3cnQgc2l6ZSwKPiAgIHBvc3NpYmxlL3NlbGVjdGVkIHBpeGVsIGZvcm1hdCBhbmQgb3Ro
+ZXIgc3R1ZmYuCj4gLSBUaGUgYmFja2luZyBzdG9yYWdlIG9mIGZyYW1lYnVmZmVycyBpcyBmdWxs
+eSBvcGFxdWUgYW55d2F5IC4uLgo+IAo+IEkgdGhpbmsgd2Ugc3RpbGwgbmVlZCBzZXBhcmF0ZSBs
+aXZlIHNvdXJjZSBvYmplY3RzIHRob3VnaCBmb3IgdGhpbmdzIGxpa2UKPiB0ZWxsaW5nIHVzZXJz
+cGFjZSB3aGF0IHY0bCB0aGluZyBpdCBjb3JyZXNwb25kcyB0bywgYW5kIGZvciBnZXR0aW5nIGF0
+IHRoZQo+IHBpeGVsIGZvcm1hdC4gQnV0IGNvbm5lY3RpbmcgdGhlIGxpdmUgc291cmNlIHdpdGgg
+dGhlIHBsYW5lIGNvdWxkIHN0aWxsIGJlCj4gZG9uZSB3aXRoIGEgZnJhbWVidWZmZXIgYW5kIGEg
+c3BlY2lhbCBmbGFnIGluIHRoZSBhZGRmYjIgaW9jdGwgdG8gdXNlCj4gbGl2ZSBzb3VyY2VzIGFz
+IGJhY2tpbmcgc3RvcmFnZSBpZHMgaW5zdGVhZCBvZiBnZW0vdHRtIGhhbmRsZXMuCj4gCj4gVGhh
+dCB3b3VsZCBhbHNvIGdpdmUgeW91IGEgZ29vZCBwb2ludCB0byBlbmZvcmNlIHBpeGVsIGZvcm1h
+dAo+IGNvbXBhdGliaWxpdHk6IEFzIHNvb24gYXMgc29tZW9uZSBjcmVhdGVkIGEgZnJhbWVidWZm
+ZXIgZm9yIGEgbGl2ZSBzb3VyY2UKPiB5b3UgZGlzYWxsb3cgcGl4ZWwgZm9ybWF0IGNoYW5nZXMg
+aW4gdGhlIHY0bCBwaXBlbGluZSB0byBtYWtlIHN1cmUgdGhpbmdzCj4gd2lsbCBmaXQuCgpUaGF0
+J3MgYW4gaW50ZXJlc3RpbmcgaWRlYSwgSSdsbCBnaXZlIGl0IGEgdHJ5LiBUaGlzIHdpbGwgaGF2
+ZSB0byB3YWl0IGEgCmxpdHRsZSBiaXQgdGhvdWdoLCBJJ2xsIGJlIGJ1c3kgd2l0aCBvdGhlciB0
+YXNrcyB0aGlzIHdlZWssIGFuZCBJJ2xsIGJlIAphdHRlbmRpbmcgRUxDIG5leHQgd2Vlay4KClRo
+YW5rIHlvdSBmb3IgdGhlIHF1aWNrIHJldmlldyBhbmQgdGhlIHByb3Bvc2FsLCBpdCdzIHZlcnkg
+YXBwcmVjaWF0ZWQuCgo+ID4gUGF0Y2hlcyAzLzUgdG8gNS81IHRoZW4gaW1wbGVtZW50IHN1cHBv
+cnQgZm9yIGxpdmUgc291cmNlcyBpbiB0aGUgUi1DYXIgRFUKPiA+IGRyaXZlci4KPiA+IAo+ID4g
+Tm90aGluZyBoZXJlIGlzIHNldCBpbiBzdG9uZS4gT25lIHBvaW50IEknbSBub3Qgc3VyZSBhYm91
+dCBpcyB3aGV0aGVyIGxpdmUKPiA+IHNvdXJjZXMgc3VwcG9ydCBzaG91bGQgYmUgZW5hYmxlZCBm
+b3Igc2V0cGxhbmUgb3Igb25seSBmb3IgYXRvbWljIHVwZGF0ZXMuCj4gPiBPdGhlciBwYXJ0cyBv
+ZiB0aGUgQVBJIGNhbiBjZXJ0YWlubHkgYmUgbW9kaWZpZWQgYXMgd2VsbCwgYW5kIEknbSBvcGVu
+IGZvcgo+ID4gdG90YWxseSBkaWZmZXJlbnQgaW1wbGVtZW50YXRpb25zIGFzIHdlbGwuCj4gCj4g
+SW1vIHRoaXMgc2hvdWxkIGJlIGlycmVzcGVjdGl2ZSBvZiBhdG9taWMgb3Igbm90IHJlYWxseS4g
+QW5kIGJ5IHVzaW5nCj4gbWFnaWMgZnJhbWVidWZmZXJzIGFzIHRoZSBsaW5rIHdlJ2QgZ2V0IHRo
+YXQgZm9yIGZyZWUuCj4gCj4gQ2hlZXJzLCBEYW5pZWwKPiAKPiA+IExhdXJlbnQgUGluY2hhcnQg
+KDUpOgo+ID4gICBkcm06IEFkZCBsaXZlIHNvdXJjZSBvYmplY3QKPiA+ICAgZHJtOiBDb25uZWN0
+IGxpdmUgc291cmNlIHRvIHBsYW5lCj4gPiAgIGRybS9yY2FyLWR1OiBBZGQgVlNQMSBzdXBwb3J0
+IHRvIHRoZSBwbGFuZXMgYWxsb2NhdG9yCj4gPiAgIGRybS9yY2FyLWR1OiBBZGQgVlNQMSBsaXZl
+IHNvdXJjZSBzdXBwb3J0Cj4gPiAgIGRybS9yY2FyLWR1OiBSZXN0YXJ0IHRoZSBEVSBncm91cCB3
+aGVuIGEgcGxhbmUgc291cmNlIGNoYW5nZXMKPiA+ICAKPiA+ICBkcml2ZXJzL2dwdS9kcm0vYXJt
+YWRhL2FybWFkYV9vdmVybGF5LmMgICAgIHwgICAyICstCj4gPiAgZHJpdmVycy9ncHUvZHJtL2Ry
+bV9hdG9taWMuYyAgICAgICAgICAgICAgICB8ICAgNyArCj4gPiAgZHJpdmVycy9ncHUvZHJtL2Ry
+bV9hdG9taWNfaGVscGVyLmMgICAgICAgICB8ICAgNCArCj4gPiAgZHJpdmVycy9ncHUvZHJtL2Ry
+bV9jcnRjLmMgICAgICAgICAgICAgICAgICB8IDM2NSArKysrKysrKysrKysrKysrKysrKystLQo+
+ID4gIGRyaXZlcnMvZ3B1L2RybS9kcm1fZm9wcy5jICAgICAgICAgICAgICAgICAgfCAgIDYgKy0K
+PiA+ICBkcml2ZXJzL2dwdS9kcm0vZHJtX2lvY3RsLmMgICAgICAgICAgICAgICAgIHwgICAzICsK
+PiA+ICBkcml2ZXJzL2dwdS9kcm0vZHJtX3BsYW5lX2hlbHBlci5jICAgICAgICAgIHwgICAxICsK
+PiA+ICBkcml2ZXJzL2dwdS9kcm0vZXh5bm9zL2V4eW5vc19kcm1fY3J0Yy5jICAgIHwgICA0ICst
+Cj4gPiAgZHJpdmVycy9ncHUvZHJtL2V4eW5vcy9leHlub3NfZHJtX3BsYW5lLmMgICB8ICAgMyAr
+LQo+ID4gIGRyaXZlcnMvZ3B1L2RybS9leHlub3MvZXh5bm9zX2RybV9wbGFuZS5oICAgfCAgIDMg
+Ky0KPiA+ICBkcml2ZXJzL2dwdS9kcm0vaTkxNS9pbnRlbF9kaXNwbGF5LmMgICAgICAgIHwgICA0
+ICstCj4gPiAgZHJpdmVycy9ncHUvZHJtL2k5MTUvaW50ZWxfc3ByaXRlLmMgICAgICAgICB8ICAg
+MiArLQo+ID4gIGRyaXZlcnMvZ3B1L2RybS9pbXgvaXB1djMtcGxhbmUuYyAgICAgICAgICAgfCAg
+IDMgKy0KPiA+ICBkcml2ZXJzL2dwdS9kcm0vbm91dmVhdS9kaXNwbnYwNC9vdmVybGF5LmMgIHwg
+ICA2ICstCj4gPiAgZHJpdmVycy9ncHUvZHJtL29tYXBkcm0vb21hcF9wbGFuZS5jICAgICAgICB8
+ICAgMSArCj4gPiAgZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9jcnRjLmMgICAgICB8
+ICAxMCArLQo+ID4gIGRyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3JjYXJfZHVfZHJ2LmMgICAgICAg
+fCAgIDYgKy0KPiA+ICBkcml2ZXJzL2dwdS9kcm0vcmNhci1kdS9yY2FyX2R1X2Rydi5oICAgICAg
+IHwgICAzICsKPiA+ICBkcml2ZXJzL2dwdS9kcm0vcmNhci1kdS9yY2FyX2R1X2dyb3VwLmMgICAg
+IHwgIDIxICstCj4gPiAgZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9ncm91cC5oICAg
+ICB8ICAgMiArCj4gPiAgZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9rbXMuYyAgICAg
+ICB8ICA2MiArKysrLQo+ID4gIGRyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3JjYXJfZHVfcGxhbmUu
+YyAgICAgfCAxOTYgKysrKysrKysrKysrLS0tCj4gPiAgZHJpdmVycy9ncHUvZHJtL3JjYXItZHUv
+cmNhcl9kdV9wbGFuZS5oICAgICB8ICAxMSArCj4gPiAgZHJpdmVycy9ncHUvZHJtL3JjYXItZHUv
+cmNhcl9kdV9yZWdzLmggICAgICB8ICAgMSArCj4gPiAgZHJpdmVycy9ncHUvZHJtL3JvY2tjaGlw
+L3JvY2tjaGlwX2RybV92b3AuYyB8ICAgNSArLQo+ID4gIGRyaXZlcnMvZ3B1L2RybS9zaG1vYmls
+ZS9zaG1vYl9kcm1fcGxhbmUuYyAgfCAgIDMgKy0KPiA+ICBkcml2ZXJzL2dwdS9kcm0vc3RpL3N0
+aV9kcm1fcGxhbmUuYyAgICAgICAgIHwgICAzICstCj4gPiAgZHJpdmVycy9ncHUvZHJtL3N0aS9z
+dGlfaHF2ZHAuYyAgICAgICAgICAgICB8ICAgMiArLQo+ID4gIGluY2x1ZGUvZHJtL2RybVAuaCAg
+ICAgICAgICAgICAgICAgICAgICAgICAgfCAgIDMgKwo+ID4gIGluY2x1ZGUvZHJtL2RybV9hdG9t
+aWNfaGVscGVyLmggICAgICAgICAgICAgfCAgIDEgKwo+ID4gIGluY2x1ZGUvZHJtL2RybV9jcnRj
+LmggICAgICAgICAgICAgICAgICAgICAgfCAgNDggKysrKwo+ID4gIGluY2x1ZGUvZHJtL2RybV9w
+bGFuZV9oZWxwZXIuaCAgICAgICAgICAgICAgfCAgIDEgKwo+ID4gIGluY2x1ZGUvdWFwaS9kcm0v
+ZHJtLmggICAgICAgICAgICAgICAgICAgICAgfCAgIDQgKwo+ID4gIGluY2x1ZGUvdWFwaS9kcm0v
+ZHJtX21vZGUuaCAgICAgICAgICAgICAgICAgfCAgMzIgKysrCj4gPiAgMzQgZmlsZXMgY2hhbmdl
+ZCwgNzI4IGluc2VydGlvbnMoKyksIDEwMCBkZWxldGlvbnMoLSkKCi0tIApSZWdhcmRzLAoKTGF1
+cmVudCBQaW5jaGFydAoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX18KZHJpLWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Au
+b3JnCmh0dHA6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2
+ZWwK
