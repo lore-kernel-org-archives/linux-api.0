@@ -1,76 +1,55 @@
-From: Michal Hocko <mhocko@suse.cz>
-Subject: Re: [PATCH 0/2] Move away from non-failing small allocations
-Date: Tue, 17 Mar 2015 10:07:38 +0100
-Message-ID: <20150317090738.GB28112@dhcp22.suse.cz>
-References: <1426107294-21551-1-git-send-email-mhocko@suse.cz>
- <20150316153843.af945a9e452404c22c4db999@linux-foundation.org>
+From: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+Subject: Re: [PATCH net-next] bpf: allow BPF programs access 'protocol' and
+ 'vlan_tci' fields
+Date: Tue, 17 Mar 2015 10:22:27 +0100
+Message-ID: <5507F253.9000806@iogearbox.net>
+References: <1426554362-29991-1-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150316153843.af945a9e452404c22c4db999@linux-foundation.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Johannes Weiner <hannes@cmpxchg.org>, Dave Chinner <david@fromorbit.com>, Mel Gorman <mgorman@suse.de>, Rik van Riel <riel@redhat.com>, Wu Fengguang <fengguang.wu@intel.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1426554362-29991-1-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 16-03-15 15:38:43, Andrew Morton wrote:
-> On Wed, 11 Mar 2015 16:54:52 -0400 Michal Hocko <mhocko@suse.cz> wrote:
-> 
-> > as per discussion at LSF/MM summit few days back it seems there is a
-> > general agreement on moving away from "small allocations do not fail"
-> > concept.
-> 
-> Such a change affects basically every part of the kernel and every
-> kernel developer.  I expect most developers will say "it works well
-> enough and I'm not getting any bug reports so why should I spend time
-> on this?".  It would help if we were to explain the justification very
-> clearly.  https://lwn.net/Articles/636017/ is Jon's writeup of the
-> conference discussion.
+On 03/17/2015 02:06 AM, Alexei Starovoitov wrote:
+> as a follow on to patch 70006af95515 ("bpf: allow eBPF access skb fields")
+> this patch allows 'protocol' and 'vlan_tci' fields to be accessible
+> from extended BPF programs.
+>
+> The usage of 'protocol', 'vlan_present' and 'vlan_tci' fields is the same as
+> corresponding SKF_AD_PROTOCOL, SKF_AD_VLAN_TAG_PRESENT and SKF_AD_VLAN_TAG
+> accesses in classic BPF.
+>
+> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
 
-OK, I thought that the description in the patch 1/2 was clear about the
-motivation. I can try harder of course. Which part do you miss there? Or
-was it the cover that wasn't specific enough?
- 
-> Realistically, I don't think this overall effort will be successful -
-> we'll add the knob, it won't get enough testing and any attempt to
-> alter the default will be us deliberately destabilizing the kernel
-> without knowing how badly :(
+Ok, code looks good to me.
 
-Without the knob we do not allow users to test this at all though and
-the transition will _never_ happen. Which is IMHO bad.
- 
-> I wonder if we can alter the behaviour only for filesystem code, so we
-> constrain the new behaviour just to that code where we're having
-> problems.  Most/all fs code goes via vfs methods so there's a reasonably
-> small set of places where we can call
+> 1.
+> I was thinking to drop ntohs() from 'protocol' field for extended BPF, since
+> the programs could do:
+> if (skb->protocol == htons(ETH_P_IP))
+> which would have saved one or two cpu cycles.
+> But having similar behavior between classic and extended seems to be better.
 
-We are seeing issues with the fs code now because the test cases which
-led to the current discussion exercise FS code. The code which does
-lock(); kmalloc(GFP_KERNEL) is not reduced there though. I am pretty sure
-we can find other subsystems if we try hard enough.
+I'm thinking that skb->protocol == htons(ETH_P_IP) might actually
+be more obvious, and, as you mentioned, the compiler can already
+resolve the htons() during compile time instead of runtime, which
+would be another plus.
 
-> static inline void enter_fs_code(struct super_block *sb)
-> {
-> 	if (sb->my_small_allocations_can_fail)
-> 		current->small_allocations_can_fail++;
-> }
-> 
-> that way (or something similar) we can select the behaviour on a per-fs
-> basis and the rest of the kernel remains unaffected.  Other subsystems
-> can opt in as well.
+Either behavior we should document later anyway.
 
-This is basically leading to GFP_MAYFAIL which is completely backwards
-(the hard requirement should be an exception not a default rule).
-I really do not want to end up with stuffing random may_fail annotations
-all over the kernel.
+The question to me here is, do we need to keep similar behavior?
 
--- 
-Michal Hocko
-SUSE Labs
+After all, the way of programming both from a user perspective is
+quite different (i.e. bpf_asm versus C/LLVM).
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Similarly, I was wondering, if just exporting raw skb->vlan_tci is
+already sufficient, and the user can e.g. write helpers to extract
+bits himself from that protocol field?
+
+> 2.
+> 'vlan_tci' name is picked to match real sk_buff->vlan_tci field
+> and matches tpacket's tp_vlan_tci field.
