@@ -1,68 +1,305 @@
-From: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
-Subject: Re: [PATCH 0/5] of: overlay: Assorted fixes
-Date: Tue, 17 Mar 2015 22:39:48 +0200
-Message-ID: <3161FC57-A73E-4B81-8B37-C12CB6009ABD@konsulko.com>
-References: <1426624257-23003-1-git-send-email-pantelis.antoniou@konsulko.com> <CAL_Jsq+ingowTc_Seun2yHPfHYXQ0Lb+6Bewr9=8HG2teG7hdg@mail.gmail.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2070.6\))
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAL_Jsq+ingowTc_Seun2yHPfHYXQ0Lb+6Bewr9=8HG2teG7hdg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Rob Herring <robherring2@gmail.com>
-Cc: Grant Likely <grant.likely@secretlab.ca>, Andrew Morton <akpm@linux-foundation.org>, Matt Porter <matt.porter@linaro.org>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+From: Shaohua Li <shli-b10kYP2dOMg@public.gmane.org>
+Subject: [PATCH] mremap: add MREMAP_NOHOLE flag --resend
+Date: Tue, 17 Mar 2015 14:09:39 -0700
+Message-ID: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli@fb.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+Cc: danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mel-wPRd99KPJ+uzQB+pC5nmwQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+There was a similar patch posted before, but it doesn't get merged. I'd like
+to try again if there are more discussions.
+http://marc.info/?l=linux-mm&m=141230769431688&w=2
 
-> On Mar 17, 2015, at 22:37 , Rob Herring <robherring2@gmail.com> wrote=
-:
->=20
-> On Tue, Mar 17, 2015 at 3:30 PM, Pantelis Antoniou
-> <pantelis.antoniou@konsulko.com> wrote:
->> The first patch makes sure that no overlays are being left over from
->> the unit tests.
->>=20
->> The second puts the overlays as objects in the sysfs in
->> /sys/firmware/devicetree/overlays while the next one adds a master
->> overlay enable switch (that once is set to disabled can't be re-enab=
-led)
->>=20
->> The next updates the ABI docs and the final one adds me as the
->> maintainer for device tree overlays.
->=20
-> You call this fixes, but it looks like new functionality to me. So
-> this looks like 4.1 material.
->=20
+mremap can be used to accelerate realloc. The problem is mremap will
+punch a hole in original VMA, which makes specific memory allocator
+unable to utilize it. Jemalloc is an example. It manages memory in 4M
+chunks. mremap a range of the chunk will punch a hole, which other
+mmap() syscall can fill into. The 4M chunk is then fragmented, jemalloc
+can't handle it.
 
-Yep, they are not 4.0 material. They are not major functional changes t=
-hough.
+This patch adds a new flag for mremap. With it, mremap will not punch the
+hole. page tables of original vma will be zapped in the same way, but
+vma is still there. That is original vma will look like a vma without
+pagefault. Behavior of new vma isn't changed.
 
-> Rob
->=20
+For private vma, accessing original vma will cause
+page fault and just like the address of the vma has never been accessed.
+So for anonymous, new page/zero page will be fault in. For file mapping,
+new page will be allocated with file reading for cow, or pagefault will
+use existing page cache.
 
-Regards
+For shared vma, original and new vma will map to the same file. We can
+optimize this without zaping original vma's page table in this case, but
+this patch doesn't do it yet.
 
-=E2=80=94 Pantelis
+Since with MREMAP_NOHOLE, original vma still exists. pagefault handler
+for special vma might not able to handle pagefault for mremap'd area.
+The patch doesn't allow vmas with VM_PFNMAP|VM_MIXEDMAP flags do NOHOLE
+mremap.
 
->>=20
->> Pantelis Antoniou (5):
->>  of: unittest: overlay: Keep track of created overlays
->>  of: overlay: kobjectify overlay objects
->>  of: overlay: Master enable switch
->>  Documentation: ABI: /sys/firmware/devicetree/overlays
->>  MAINTAINERS: Pantelis Antoniou device tree overlay maintainer
->>=20
->> .../ABI/testing/sysfs-firmware-devicetree-overlays |   9 ++
->> MAINTAINERS                                        |   9 ++
->> drivers/of/base.c                                  |   5 +
->> drivers/of/of_private.h                            |   9 ++
->> drivers/of/overlay.c                               | 116 +++++++++++=
-+++++++++-
->> drivers/of/unittest.c                              |  62 +++++++++++
->> 6 files changed, 208 insertions(+), 2 deletions(-)
->> create mode 100644 Documentation/ABI/testing/sysfs-firmware-devicetr=
-ee-overlays
->>=20
->> --
->> 1.7.12
->>=20
+Cc: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Mel Gorman <mel-wPRd99KPJ+uzQB+pC5nmwQ@public.gmane.org>
+Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
+Cc: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Signed-off-by: Shaohua Li <shli-b10kYP2dOMg@public.gmane.org>
+---
+ include/uapi/linux/mman.h |  1 +
+ mm/mremap.c               | 97 ++++++++++++++++++++++++++++++++---------------
+ 2 files changed, 67 insertions(+), 31 deletions(-)
+
+diff --git a/include/uapi/linux/mman.h b/include/uapi/linux/mman.h
+index ade4acd..9ee9a15 100644
+--- a/include/uapi/linux/mman.h
++++ b/include/uapi/linux/mman.h
+@@ -5,6 +5,7 @@
+ 
+ #define MREMAP_MAYMOVE	1
+ #define MREMAP_FIXED	2
++#define MREMAP_NOHOLE	4
+ 
+ #define OVERCOMMIT_GUESS		0
+ #define OVERCOMMIT_ALWAYS		1
+diff --git a/mm/mremap.c b/mm/mremap.c
+index 38df67b..4771fd1 100644
+--- a/mm/mremap.c
++++ b/mm/mremap.c
+@@ -234,7 +234,8 @@ unsigned long move_page_tables(struct vm_area_struct *vma,
+ 
+ static unsigned long move_vma(struct vm_area_struct *vma,
+ 		unsigned long old_addr, unsigned long old_len,
+-		unsigned long new_len, unsigned long new_addr, bool *locked)
++		unsigned long new_len, unsigned long new_addr, bool *locked,
++		bool nohole)
+ {
+ 	struct mm_struct *mm = vma->vm_mm;
+ 	struct vm_area_struct *new_vma;
+@@ -290,7 +291,7 @@ static unsigned long move_vma(struct vm_area_struct *vma,
+ 		vma->vm_file->f_op->mremap(vma->vm_file, new_vma);
+ 
+ 	/* Conceal VM_ACCOUNT so old reservation is not undone */
+-	if (vm_flags & VM_ACCOUNT) {
++	if ((vm_flags & VM_ACCOUNT) && !nohole) {
+ 		vma->vm_flags &= ~VM_ACCOUNT;
+ 		excess = vma->vm_end - vma->vm_start - old_len;
+ 		if (old_addr > vma->vm_start &&
+@@ -310,11 +311,18 @@ static unsigned long move_vma(struct vm_area_struct *vma,
+ 	hiwater_vm = mm->hiwater_vm;
+ 	vm_stat_account(mm, vma->vm_flags, vma->vm_file, new_len>>PAGE_SHIFT);
+ 
+-	if (do_munmap(mm, old_addr, old_len) < 0) {
++	if (!nohole && do_munmap(mm, old_addr, old_len) < 0) {
+ 		/* OOM: unable to split vma, just get accounts right */
+ 		vm_unacct_memory(excess >> PAGE_SHIFT);
+ 		excess = 0;
+ 	}
++
++	if (nohole && (new_addr & ~PAGE_MASK)) {
++		/* caller will unaccount */
++		vma->vm_flags &= ~VM_ACCOUNT;
++		do_munmap(mm, old_addr, old_len);
++	}
++
+ 	mm->hiwater_vm = hiwater_vm;
+ 
+ 	/* Restore VM_ACCOUNT if one or two pieces of vma left */
+@@ -332,14 +340,13 @@ static unsigned long move_vma(struct vm_area_struct *vma,
+ 	return new_addr;
+ }
+ 
+-static struct vm_area_struct *vma_to_resize(unsigned long addr,
+-	unsigned long old_len, unsigned long new_len, unsigned long *p)
++static unsigned long validate_vma_and_charge(struct vm_area_struct *vma,
++	unsigned long addr,
++	unsigned long old_len, unsigned long new_len, unsigned long *p,
++	bool nohole)
+ {
+ 	struct mm_struct *mm = current->mm;
+-	struct vm_area_struct *vma = find_vma(mm, addr);
+-
+-	if (!vma || vma->vm_start > addr)
+-		goto Efault;
++	unsigned long diff;
+ 
+ 	if (is_vm_hugetlb_page(vma))
+ 		goto Einval;
+@@ -348,6 +355,9 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
+ 	if (old_len > vma->vm_end - addr)
+ 		goto Efault;
+ 
++	if (nohole && (vma->vm_flags & (VM_PFNMAP | VM_MIXEDMAP)))
++		goto Einval;
++
+ 	/* Need to be careful about a growing mapping */
+ 	if (new_len > old_len) {
+ 		unsigned long pgoff;
+@@ -360,39 +370,45 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
+ 			goto Einval;
+ 	}
+ 
++	if (nohole)
++		diff = new_len;
++	else
++		diff = new_len - old_len;
++
+ 	if (vma->vm_flags & VM_LOCKED) {
+ 		unsigned long locked, lock_limit;
+ 		locked = mm->locked_vm << PAGE_SHIFT;
+ 		lock_limit = rlimit(RLIMIT_MEMLOCK);
+-		locked += new_len - old_len;
++		locked += diff;
+ 		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
+ 			goto Eagain;
+ 	}
+ 
+-	if (!may_expand_vm(mm, (new_len - old_len) >> PAGE_SHIFT))
++	if (!may_expand_vm(mm, diff >> PAGE_SHIFT))
+ 		goto Enomem;
+ 
+ 	if (vma->vm_flags & VM_ACCOUNT) {
+-		unsigned long charged = (new_len - old_len) >> PAGE_SHIFT;
++		unsigned long charged = diff >> PAGE_SHIFT;
+ 		if (security_vm_enough_memory_mm(mm, charged))
+ 			goto Efault;
+ 		*p = charged;
+ 	}
+ 
+-	return vma;
++	return 0;
+ 
+ Efault:	/* very odd choice for most of the cases, but... */
+-	return ERR_PTR(-EFAULT);
++	return -EFAULT;
+ Einval:
+-	return ERR_PTR(-EINVAL);
++	return -EINVAL;
+ Enomem:
+-	return ERR_PTR(-ENOMEM);
++	return -ENOMEM;
+ Eagain:
+-	return ERR_PTR(-EAGAIN);
++	return -EAGAIN;
+ }
+ 
+ static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
+-		unsigned long new_addr, unsigned long new_len, bool *locked)
++		unsigned long new_addr, unsigned long new_len, bool *locked,
++		bool nohole)
+ {
+ 	struct mm_struct *mm = current->mm;
+ 	struct vm_area_struct *vma;
+@@ -420,17 +436,23 @@ static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
+ 		goto out;
+ 
+ 	if (old_len >= new_len) {
+-		ret = do_munmap(mm, addr+new_len, old_len - new_len);
+-		if (ret && old_len != new_len)
+-			goto out;
++		if (!nohole) {
++			ret = do_munmap(mm, addr+new_len, old_len - new_len);
++			if (ret && old_len != new_len)
++				goto out;
++		}
+ 		old_len = new_len;
+ 	}
+ 
+-	vma = vma_to_resize(addr, old_len, new_len, &charged);
+-	if (IS_ERR(vma)) {
+-		ret = PTR_ERR(vma);
++	vma = find_vma(mm, addr);
++	if (!vma || vma->vm_start > addr) {
++		ret = -EFAULT;
+ 		goto out;
+ 	}
++	ret = validate_vma_and_charge(vma, addr, old_len, new_len, &charged,
++		nohole);
++	if (ret)
++		goto out;
+ 
+ 	map_flags = MAP_FIXED;
+ 	if (vma->vm_flags & VM_MAYSHARE)
+@@ -442,7 +464,7 @@ static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
+ 	if (ret & ~PAGE_MASK)
+ 		goto out1;
+ 
+-	ret = move_vma(vma, addr, old_len, new_len, new_addr, locked);
++	ret = move_vma(vma, addr, old_len, new_len, new_addr, locked, nohole);
+ 	if (!(ret & ~PAGE_MASK))
+ 		goto out;
+ out1:
+@@ -481,8 +503,9 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
+ 	unsigned long ret = -EINVAL;
+ 	unsigned long charged = 0;
+ 	bool locked = false;
++	bool nohole = flags & MREMAP_NOHOLE;
+ 
+-	if (flags & ~(MREMAP_FIXED | MREMAP_MAYMOVE))
++	if (flags & ~(MREMAP_FIXED | MREMAP_MAYMOVE | MREMAP_NOHOLE))
+ 		return ret;
+ 
+ 	if (flags & MREMAP_FIXED && !(flags & MREMAP_MAYMOVE))
+@@ -506,7 +529,7 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
+ 
+ 	if (flags & MREMAP_FIXED) {
+ 		ret = mremap_to(addr, old_len, new_addr, new_len,
+-				&locked);
++				&locked, nohole);
+ 		goto out;
+ 	}
+ 
+@@ -526,9 +549,9 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
+ 	/*
+ 	 * Ok, we need to grow..
+ 	 */
+-	vma = vma_to_resize(addr, old_len, new_len, &charged);
+-	if (IS_ERR(vma)) {
+-		ret = PTR_ERR(vma);
++	vma = find_vma(mm, addr);
++	if (!vma || vma->vm_start > addr) {
++		ret = -EFAULT;
+ 		goto out;
+ 	}
+ 
+@@ -539,6 +562,12 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
+ 		if (vma_expandable(vma, new_len - old_len)) {
+ 			int pages = (new_len - old_len) >> PAGE_SHIFT;
+ 
++			ret = validate_vma_and_charge(vma, addr, old_len, new_len,
++				&charged, false);
++			if (ret) {
++				BUG_ON(charged != 0);
++				goto out;
++			}
+ 			if (vma_adjust(vma, vma->vm_start, addr + new_len,
+ 				       vma->vm_pgoff, NULL)) {
+ 				ret = -ENOMEM;
+@@ -556,6 +585,11 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
+ 		}
+ 	}
+ 
++	ret = validate_vma_and_charge(vma, addr, old_len, new_len,
++		&charged, nohole);
++	if (ret)
++		goto out;
++
+ 	/*
+ 	 * We weren't able to just expand or shrink the area,
+ 	 * we need to create a new one and move it..
+@@ -575,7 +609,8 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
+ 			goto out;
+ 		}
+ 
+-		ret = move_vma(vma, addr, old_len, new_len, new_addr, &locked);
++		ret = move_vma(vma, addr, old_len, new_len, new_addr, &locked,
++			nohole);
+ 	}
+ out:
+ 	if (ret & ~PAGE_MASK)
+-- 
+1.8.1
