@@ -1,44 +1,59 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCHv3 xfstests 2/3] generic: test openat and new O_BENEATH flag
-Date: Tue, 17 Mar 2015 08:33:27 -0700
-Message-ID: <CAGXu5jLfrGrVO=9sF6=TK0QQHq4SWRjL0urGu-e+e1H8gk9Y3Q@mail.gmail.com>
-References: <1425909612-28034-1-git-send-email-drysdale@google.com>
-	<1425909612-28034-3-git-send-email-drysdale@google.com>
-	<20150316232434.GJ28557@dastard>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [PATCH v2 tip/core/rcu 01/22] smpboot: Add common code for
+ notification from dying CPU
+Date: Tue, 17 Mar 2015 09:34:58 -0700
+Message-ID: <20150317163457.GI3589@linux.vnet.ibm.com>
+References: <20150316183743.GA21453@linux.vnet.ibm.com>
+ <1426531086-23825-1-git-send-email-paulmck@linux.vnet.ibm.com>
+ <20150317081807.GQ2896@worktop.programming.kicks-ass.net>
+ <20150317113648.GC3589@linux.vnet.ibm.com>
+ <20150317140846.GB23123@twins.programming.kicks-ass.net>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <20150316232434.GJ28557@dastard>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: David Drysdale <drysdale@google.com>, LKML <linux-kernel@vger.kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Meredydd Luff <meredydd@senatehouse.org>, Will Drewry <wad@chromium.org>, Jorge Lucangeli Obes <jorgelo@google.com>, Ricky Zhou <rickyz@google.com>, Lee Campbell <leecam@google.com>, Julien Tinnes <jln@google.com>, Mike Depinet <mdepinet@google.com>, James Morris <james.l.morris@oracle.com>, Andy Lutomirski <luto@amacapital.net>, Paolo Bonzini <pbonzini@redhat.com>, Paul Moore <paul@paul-moore.com>, Christoph Hellwig <hch@infradead.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>, fstests@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150317140846.GB23123@twins.programming.kicks-ass.net>
+Sender: linux-arch-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: linux-kernel@vger.kernel.org, mingo@kernel.org, laijs@cn.fujitsu.com, dipankar@in.ibm.com, akpm@linux-foundation.org, mathieu.desnoyers@efficios.com, josh@joshtriplett.org, tglx@linutronix.de, rostedt@goodmis.org, dhowells@redhat.com, edumazet@google.com, dvhart@linux.intel.com, fweisbec@gmail.com, oleg@redhat.com, bobby.prani@gmail.com, linux-api@vger.kernel.org, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 16, 2015 at 4:24 PM, Dave Chinner <david@fromorbit.com> wrote:
-> On Mon, Mar 09, 2015 at 02:00:11PM +0000, David Drysdale wrote:
->> Test basic openat(2) behaviour.
->>
->> Test that if O_BENEATH flag is set, openat() will only
->> open paths that have no .. component and do not start
->> with /.  Symlinks are also checked for the same restrictions.
->>
->> Signed-off-by: David Drysdale <drysdale@google.com>
->> ---
->>  .gitignore            |   1 +
->>  common/openat         |  61 ++++++++++++++++++++++++++++++
->>  src/Makefile          |   3 +-
->>  src/openat.c          | 100 +++++++++++++++++++++++++++++++++++++++++++++++++
->
-> This strikes me as something that shoul dbe added to xfs_io for
-> testing, as it already supports a heap of other open flags and
-> xfstests is already dependent on it.
+On Tue, Mar 17, 2015 at 03:08:46PM +0100, Peter Zijlstra wrote:
+> On Tue, Mar 17, 2015 at 04:36:48AM -0700, Paul E. McKenney wrote:
+> > On Tue, Mar 17, 2015 at 09:18:07AM +0100, Peter Zijlstra wrote:
+> > > On Mon, Mar 16, 2015 at 11:37:45AM -0700, Paul E. McKenney wrote:
+> > > > From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+> > > > 
+> > > > RCU ignores offlined CPUs, so they cannot safely run RCU read-side code.
+> > > > (They -can- use SRCU, but not RCU.)  This means that any use of RCU
+> > > > during or after the call to arch_cpu_idle_dead().  Unfortunately,
+> > > > commit 2ed53c0d6cc99 added a complete() call, which will contain RCU
+> > > > read-side critical sections if there is a task waiting to be awakened.
+> > > 
+> > > Got a little more detail there?
+> > 
+> > Quite possibly.  But exactly what sort of detail are you looking for?
+> 
+> What exact RCU usage you ran into that was problematic. It seems to
+> imply that calling complete() -- from a dead cpu -- which ends up in
+> try_to_wake_up() was the problem?
 
-While I don't see a problem adding this to xfs_io, I'd still like to
-see this test live in the kernel tree too. Having it in the same
-source means more testing, IMO.
+Yep, that was the one.  At that point, the CPU can disappear without
+any chance to tell RCU anything, so RCU has to have started ignoring
+it beforehand.  This bug has existed for a long time, masked by RCU's
+waiting a jiffy before ignoring already-offline CPUs.  Which would be a
+problem if the CPU took longer than one jiffy to get from stop_machine()
+to arch_cpu_idle_dead().  Which could actually, happen, especially
+in a guest OS.
 
--Kees
+In addition, any tracing or printk()s on that code path (for example,
+via lockdep) can also result in RCU read-side critical sections from an
+offline CPU that RCU is ignoring.
 
--- 
-Kees Cook
-Chrome OS Security
+So you would like me to pull this info into the commit log?  Easy to
+do if so.
+
+Or am I missing your point?
+
+							Thanx, Paul
