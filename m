@@ -1,60 +1,50 @@
-From: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH v2 tip/core/rcu 01/22] smpboot: Add common code for
- notification from dying CPU
-Date: Tue, 17 Mar 2015 10:32:58 -0700
-Message-ID: <20150317173258.GP3589@linux.vnet.ibm.com>
-References: <20150316183743.GA21453@linux.vnet.ibm.com>
- <1426531086-23825-1-git-send-email-paulmck@linux.vnet.ibm.com>
- <20150317081807.GQ2896@worktop.programming.kicks-ass.net>
- <20150317113648.GC3589@linux.vnet.ibm.com>
- <20150317140846.GB23123@twins.programming.kicks-ass.net>
- <20150317165621.GF24151@twins.programming.kicks-ass.net>
-Reply-To: paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Subject: Re: [PATCH v3 10/15] serial: stm32-usart: Add STM32 USART Driver
+Date: Tue, 17 Mar 2015 18:39:33 +0100
+Message-ID: <CALszF6BdgwDQgK_mefCJm9zaDGAfhjh1GYCtJp4awgVb0Es4fA@mail.gmail.com>
+References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
+	<1426197361-19290-11-git-send-email-maxime.coquelin@st.com>
+	<1426239683.5304.59.camel@x220>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150317165621.GF24151-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org, dipankar-xthvdsQ13ZrQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-gpio-owner@vger.kernel.org>
+In-Reply-To: <1426239683.5304.59.camel@x220>
+Sender: linux-gpio-owner@vger.kernel.org
+To: Paul Bolle <pebolle@tiscali.nl>
+Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mch>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 17, 2015 at 05:56:21PM +0100, Peter Zijlstra wrote:
-> On Tue, Mar 17, 2015 at 03:08:46PM +0100, Peter Zijlstra wrote:
-> > On Tue, Mar 17, 2015 at 04:36:48AM -0700, Paul E. McKenney wrote:
-> > > On Tue, Mar 17, 2015 at 09:18:07AM +0100, Peter Zijlstra wrote:
-> > > > On Mon, Mar 16, 2015 at 11:37:45AM -0700, Paul E. McKenney wrote:
-> > > > > From: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-> > > > > 
-> > > > > RCU ignores offlined CPUs, so they cannot safely run RCU read-side code.
-> > > > > (They -can- use SRCU, but not RCU.)  This means that any use of RCU
-> > > > > during or after the call to arch_cpu_idle_dead().  Unfortunately,
-> > > > > commit 2ed53c0d6cc99 added a complete() call, which will contain RCU
-> > > > > read-side critical sections if there is a task waiting to be awakened.
-> > > > 
-> > > > Got a little more detail there?
-> > > 
-> > > Quite possibly.  But exactly what sort of detail are you looking for?
-> > 
-> > What exact RCU usage you ran into that was problematic. It seems to
-> > imply that calling complete() -- from a dead cpu -- which ends up in
-> > try_to_wake_up() was the problem?
-> 
-> Hmm, I'm thinking its select_task_rq_*(). And yes, 'fixing' this in the
-> wake-up path will penalize everybody for the benefit of the very rare
-> case someone is doing a hotplug.
-> 
-> So yeah, maybe this is the best solution.. Ulgy though :/
+2015-03-13 10:41 GMT+01:00 Paul Bolle <pebolle@tiscali.nl>:
+> Just a license nit, I'm afraid.
+Not a problem, it is not the last round anyway.
 
-Ugly indeed!  I end up doing a polling loop for the generic code.  For the
-first round, I updated only architectures that were calling complete().
-If that goes well, I will probably update some of the other architecture
-as a code-consolidation measure.  Some architectures have special hardware
-and firmware hooks, for example, s390 uses a special instruction to do
-the wakeup directly.  Those will of course continue doing their own thing.
+>
+> On Thu, 2015-03-12 at 22:55 +0100, Maxime Coquelin wrote:
+>> --- /dev/null
+>> +++ b/drivers/tty/serial/stm32-usart.c
+>> @@ -0,0 +1,695 @@
+>> +/*
+>> + * Copyright (C) Maxime Coquelin 2015
+>> + * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
+>> + * License terms:  GNU General Public License (GPL), version 2
+>> + *
+>> + * Inspired by st-asc.c from STMicroelectronics (c)
+>> + */
+>
+> This states the license is GPL v2.
+>
+>> +MODULE_LICENSE("GPL");
+>
+> And
+>     MODULE_LICENSE("GPL v2");
+>
+> would match that statement.
 
-The ARM guys are trying to do something specific to their hardware, but
-I have not heard from them lately.  I should ping them...
+Right, it will be fixed in the v4.
 
-							Thanx, Paul
+Thanks,
+Maxime
+>
+>
+> Paul Bolle
+>
