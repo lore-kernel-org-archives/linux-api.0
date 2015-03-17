@@ -1,50 +1,72 @@
-From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH v3 10/15] serial: stm32-usart: Add STM32 USART Driver
-Date: Tue, 17 Mar 2015 18:39:33 +0100
-Message-ID: <CALszF6BdgwDQgK_mefCJm9zaDGAfhjh1GYCtJp4awgVb0Es4fA@mail.gmail.com>
-References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
-	<1426197361-19290-11-git-send-email-maxime.coquelin@st.com>
-	<1426239683.5304.59.camel@x220>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH net-next] bpf: allow BPF programs access 'protocol' and
+ 'vlan_tci' fields
+Date: Tue, 17 Mar 2015 10:56:03 -0700
+Message-ID: <55086AB3.9030405@plumgrid.com>
+References: <1426554362-29991-1-git-send-email-ast@plumgrid.com> <5507F253.9000806@iogearbox.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-gpio-owner@vger.kernel.org>
-In-Reply-To: <1426239683.5304.59.camel@x220>
-Sender: linux-gpio-owner@vger.kernel.org
-To: Paul Bolle <pebolle@tiscali.nl>
-Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mch>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <5507F253.9000806@iogearbox.net>
+Sender: netdev-owner@vger.kernel.org
+To: Daniel Borkmann <daniel@iogearbox.net>, "David S. Miller" <davem@davemloft.net>
+Cc: Thomas Graf <tgraf@suug.ch>, linux-api@vger.kernel.org, netdev@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-2015-03-13 10:41 GMT+01:00 Paul Bolle <pebolle@tiscali.nl>:
-> Just a license nit, I'm afraid.
-Not a problem, it is not the last round anyway.
+On 3/17/15 2:22 AM, Daniel Borkmann wrote:
+> On 03/17/2015 02:06 AM, Alexei Starovoitov wrote:
+>> as a follow on to patch 70006af95515 ("bpf: allow eBPF access skb
+>> fields")
+>> this patch allows 'protocol' and 'vlan_tci' fields to be accessible
+>> from extended BPF programs.
+>>
+>> The usage of 'protocol', 'vlan_present' and 'vlan_tci' fields is the
+>> same as
+>> corresponding SKF_AD_PROTOCOL, SKF_AD_VLAN_TAG_PRESENT and
+>> SKF_AD_VLAN_TAG
+>> accesses in classic BPF.
+>>
+>> Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
+>
+> Ok, code looks good to me.
+>
+>> 1.
+>> I was thinking to drop ntohs() from 'protocol' field for extended BPF,
+>> since
+>> the programs could do:
+>> if (skb->protocol == htons(ETH_P_IP))
+>> which would have saved one or two cpu cycles.
+>> But having similar behavior between classic and extended seems to be
+>> better.
+>
+> I'm thinking that skb->protocol == htons(ETH_P_IP) might actually
+> be more obvious, and, as you mentioned, the compiler can already
+> resolve the htons() during compile time instead of runtime, which
+> would be another plus.
+>
+> Either behavior we should document later anyway.
+>
+> The question to me here is, do we need to keep similar behavior?
+>
+> After all, the way of programming both from a user perspective is
+> quite different (i.e. bpf_asm versus C/LLVM).
 
->
-> On Thu, 2015-03-12 at 22:55 +0100, Maxime Coquelin wrote:
->> --- /dev/null
->> +++ b/drivers/tty/serial/stm32-usart.c
->> @@ -0,0 +1,695 @@
->> +/*
->> + * Copyright (C) Maxime Coquelin 2015
->> + * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
->> + * License terms:  GNU General Public License (GPL), version 2
->> + *
->> + * Inspired by st-asc.c from STMicroelectronics (c)
->> + */
->
-> This states the license is GPL v2.
->
->> +MODULE_LICENSE("GPL");
->
-> And
->     MODULE_LICENSE("GPL v2");
->
-> would match that statement.
+yeah. we don't have to. Somehow I felt that keeping ntohs will make
+it easier for folks moving from classic to extended, but I guess
+they're different enough, so no point wasting run time cycles.
 
-Right, it will be fixed in the v4.
+> Similarly, I was wondering, if just exporting raw skb->vlan_tci is
+> already sufficient, and the user can e.g. write helpers to extract
+> bits himself from that protocol field?
 
-Thanks,
-Maxime
->
->
-> Paul Bolle
->
+yes. I thought about the same. Currently VLAN_TAG_PRESENT bit is not
+officially exposed to user space, but implicitly, since that bit
+is always cleared when we return tci to user space and it's always
+set when drivers indicate that vlan header was present in the packet.
+So I think we can return skb->vlan_tci as-is, since it will save
+one load in bpf program which will be able to do
+if (skb->vlan_tci != 0) /* vlan header is present */
+      vid = skb->vlan_tci & 0x0fff;
+compiler will optimize above two accesses into single load and will
+reuse the register in 2nd line.
