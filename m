@@ -1,52 +1,95 @@
-From: Bastien Nocera <hadess@hadess.net>
-Subject: Re: [PATCH v2] add support for Freescale's MMA8653FC 10 bit
- accelerometer
-Date: Wed, 18 Mar 2015 19:05:34 +0100
-Message-ID: <1426701934.6764.10.camel@hadess.net>
-References: <1426694157-10866-1-git-send-email-martink@posteo.de>
-		 <2231139.ojeyer6qnI@ws-stein> <5509AAE5.1000503@posteo.de>
-	 <1426697978.6764.8.camel@hadess.net> <5509BDA0.9000806@posteo.de>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH v4 00/14] Add kdbus implementation
+Date: Wed, 18 Mar 2015 11:24:17 -0700
+Message-ID: <CALCETrVWbz7YudNQXQD_2PjC1HR0P0cB_1ea8NiYoQPDfQxERg@mail.gmail.com>
+References: <1425906560-13798-1-git-send-email-gregkh@linuxfoundation.org>
+ <CALCETrUjqTH14fZCeqU_OBoKX_6x4B=712WTeSqSAztpgXGiDw@mail.gmail.com> <CANq1E4Tf_6Cn+sxY=BPEbRpEr5WY+-rRX5gipz-_=4PNLa9bnQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-input-owner@vger.kernel.org>
-In-Reply-To: <5509BDA0.9000806@posteo.de>
-Sender: linux-input-owner@vger.kernel.org
-To: Martin Kepplinger <martink@posteo.de>
-Cc: Alexander Stein <alexander.stein@systec-electronic.com>, robh+dt@kernel.org, pawel.moll@arm.com, mark.rutland@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, dmitry.torokhov@gmail.com, akpm@linux-foundation.org, gregkh@linuxfoundation.org, linux-api@vger.kernel.org, devicetree@vger.kernel.org, linux-input@vger.kernel.org, linux-kernel@vger.kernel.org, Martin Kepplinger <martin.kepplinger@theobroma-systems.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CANq1E4Tf_6Cn+sxY=BPEbRpEr5WY+-rRX5gipz-_=4PNLa9bnQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2015-03-18 at 19:02 +0100, Martin Kepplinger wrote:
-> Am 2015-03-18 um 17:59 schrieb Bastien Nocera:
-> > On Wed, 2015-03-18 at 17:42 +0100, Martin Kepplinger wrote:
-> > > 
-> > <snip>
-> > > It could have gone to drivers/iio/accel if it would use an iio  
-> > > interface, which would make more sense, you are right, but I 
-> > > simply  don't have the time to merge it in to iio.
-> > > 
-> > > It doesn't use an input interface either but I don't see a good  
-> > > place for an accelerometer that uses sysfs only.
-> > > 
-> > > It works well, is a relatively recent chip and a clean dirver. 
-> > > But  this is all I can provide.
-> > 
-> > As a person who works on the user-space interaction of those with  
-> > desktops [1]: Urgh.
-> > 
-> > I already have 3 (probably 4) types of accelerometers to contend 
-> > with,  I'm not fond of adding yet another type.
-> > 
-> > Is there any way to get this hardware working outside the SoCs 
-> > it's  designed for (say, a device with I2C like a Raspberry Pi), 
-> > so that a  kind soul could handle getting this using the right 
-> > interfaces?
-> > 
-> 
-> It works on basically any SoC and is in no way limited in this 
-> regard. Sure, userspace has to expicitely support it and I hear you. 
-> Using the iio interface would make more sense. I can only say I'd 
-> love to have the time to move this driver over. I'm very sorry.
+On Wed, Mar 18, 2015 at 6:54 AM, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> Hi
+>
+> On Tue, Mar 17, 2015 at 8:24 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> [...]
+>> Can anyone comment on how fast it actually is.  I'm curious
+>> about:
+>>
+>>  - The time it takes to do the ioctl to send a message
+>>
+>>  - The time it takes to receive a message (poll + whatever ioctls)
+>
+> I'm not sure I can gather useful absolute data here. This highly
+> depends on how you call it, how often you call it, what payloads you
+> pass, what machine you're on.. you know all that.
+>
+> So here's a flamegraph for you (which I use for comparisons to UDS):
+>   http://people.freedesktop.org/~dvdhrm/kdbus_8kb.svg
+>
+> This program sends unicast messages on kdbus and UDS, exactly the same
+> number of times with the same 8kb payload. No parsing, no marshaling
+> is done, just plain message passing. The interesting spikes are
+> sys_read(), sys_write() and the 3 kdbus sys_ioctl(). Everything else
+> should be ignored.
+>
+> sys_read() and sys_ioctl(KDBUS_CMD_RECV) are about the same. But note
+> that we don't copy any payload in RECV, so it scales O(1) compared to
+> message-size.
+>
+> sys_write() is about 3x faster than sys_ioctl(KDBUS_CMD_WRITE).
 
-How can we get the hardware for somebody to use on their own 
-laptops/embedded boards to implement this driver?
+Is that factor of 3 for 8 kb payloads?  If so, I expect it's a factor
+of much worse than 3 for small payloads.
+
+>
+> I see lots of room for improvement in both RECV and SEND. Caching the
+> namespaces on a connection, would get rid of
+> kdbus_queue_entry_install() in RECV, thus speeding it up by ~30%. In
+> SEND, we could merge the kvec and iovec copying, to avoid calling
+> shmem_begin_write() twice. We should also stop allocating management
+> structures that are not used (like for metadata, if no metadata is
+> transmitted). We should use stack-space for small ioctl objects,
+> instead of memdup_user(). And so on.. Oh, and locking can be reduced.
+> We haven't even looked at rcu, yet (though that's mostly interesting
+> for policy and broadcasts, not unicasts).
+>
+>>  - The time it takes to transfer a memfd (I don't care about how long
+>> it takes to create or map a memfd -- that's exactly the same between
+>> kdbus and any other memfds user, I imagine)
+>
+> The time to transmit a memfd is the same as to transmit a 64-byte
+> payload. Ok, you also get to install the fd into the fd-table, but
+> that's true regardless of the transport.
+> Here's a graph for 64byte transfers (otherwise, same as above):
+>   http://people.freedesktop.org/~dvdhrm/kdbus_64b.svg
+>
+>>  - The time it takes to connect
+>
+> No idea, never measured it. Why is it of interest?
+
+Gah, sorry, bad terminology.  I mean the time it takes to send a
+message to a receiver that you haven't sent to before.
+
+(The kdbus terminology is weird.  You don't send to "endpoints", you
+don't "connect" to other participants, and it's not even clear to me
+what a participant in the bus is called.)
+
+>
+>> I'm also interested in whether the current design is actually amenable
+>> to good performance.  I'm told that it is, but ISTM there's a lot of
+>> heavyweight stuff going on with each send operation that will be hard
+>> to remove.
+>
+> I disagree. What heavyweight stuff is going on?
+
+At least metadata generation, metadata free, and policy db checks seem
+expensive.  It could be worth running a bunch of copies of your
+benchmark on different cores and seeing how it scales.
+
+--Andy
