@@ -1,281 +1,579 @@
-From: Li Xi <pkuelelixi@gmail.com>
-Subject: [v10 2/5] ext4: adds project ID support
-Date: Thu, 19 Mar 2015 04:04:54 +0900
-Message-ID: <1426705497-22158-3-git-send-email-lixi@ddn.com>
+From: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [v10 4/5] ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR interface support
+Date: Thu, 19 Mar 2015 04:04:56 +0900
+Message-ID: <1426705497-22158-5-git-send-email-lixi@ddn.com>
 References: <1426705497-22158-1-git-send-email-lixi@ddn.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1426705497-22158-1-git-send-email-lixi@ddn.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1426705497-22158-1-git-send-email-lixi-LfVdkaOWEx8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This patch adds a new internal field of ext4 inode to save project
-identifier. Also a new flag EXT4_INODE_PROJINHERIT is added for
-inheriting project ID from parent directory.
+This patch adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR ioctl interface
+support for ext4. The interface is kept consistent with
+XFS_IOC_FSGETXATTR/XFS_IOC_FSGETXATTR.
 
-Signed-off-by: Li Xi <lixi@ddn.com>
-Reviewed-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Li Xi <lixi-LfVdkaOWEx8@public.gmane.org>
 ---
- fs/ext4/ext4.h          |   21 +++++++++++++++++----
- fs/ext4/ialloc.c        |    5 +++++
- fs/ext4/inode.c         |   29 +++++++++++++++++++++++++++++
- fs/ext4/namei.c         |   18 ++++++++++++++++++
- fs/ext4/super.c         |    1 +
- include/uapi/linux/fs.h |    1 +
- 6 files changed, 71 insertions(+), 4 deletions(-)
+ fs/ext4/ext4.h          |    9 ++
+ fs/ext4/ioctl.c         |  366 +++++++++++++++++++++++++++++++++++-----------
+ fs/xfs/xfs_fs.h         |   47 +++----
+ include/uapi/linux/fs.h |   32 ++++
+ 4 files changed, 336 insertions(+), 118 deletions(-)
 
 diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index 7fec2ef..7acb2da 100644
+index ad650d4..7d67864 100644
 --- a/fs/ext4/ext4.h
 +++ b/fs/ext4/ext4.h
-@@ -378,16 +378,18 @@ struct flex_groups {
- #define EXT4_EA_INODE_FL	        0x00200000 /* Inode used for large EA */
- #define EXT4_EOFBLOCKS_FL		0x00400000 /* Blocks allocated beyond EOF */
- #define EXT4_INLINE_DATA_FL		0x10000000 /* Inode has inline data. */
-+#define EXT4_PROJINHERIT_FL		0x20000000 /* Create with parents projid */
- #define EXT4_RESERVED_FL		0x80000000 /* reserved for ext4 lib */
+@@ -385,6 +385,13 @@ struct flex_groups {
+ #define EXT4_FL_USER_VISIBLE		0x204BDFFF /* User visible flags */
+ #define EXT4_FL_USER_MODIFIABLE		0x204380FF /* User modifiable flags */
  
--#define EXT4_FL_USER_VISIBLE		0x004BDFFF /* User visible flags */
--#define EXT4_FL_USER_MODIFIABLE		0x004380FF /* User modifiable flags */
-+#define EXT4_FL_USER_VISIBLE		0x204BDFFF /* User visible flags */
-+#define EXT4_FL_USER_MODIFIABLE		0x204380FF /* User modifiable flags */
- 
++#define EXT4_FL_XFLAG_VISIBLE		(EXT4_SYNC_FL | \
++					 EXT4_IMMUTABLE_FL | \
++					 EXT4_APPEND_FL | \
++					 EXT4_NODUMP_FL | \
++					 EXT4_NOATIME_FL | \
++					 EXT4_PROJINHERIT_FL)
++
  /* Flags that should be inherited by new inodes from their parent. */
  #define EXT4_FL_INHERITED (EXT4_SECRM_FL | EXT4_UNRM_FL | EXT4_COMPR_FL |\
  			   EXT4_SYNC_FL | EXT4_NODUMP_FL | EXT4_NOATIME_FL |\
- 			   EXT4_NOCOMPR_FL | EXT4_JOURNAL_DATA_FL |\
--			   EXT4_NOTAIL_FL | EXT4_DIRSYNC_FL)
-+			   EXT4_NOTAIL_FL | EXT4_DIRSYNC_FL |\
-+			   EXT4_PROJINHERIT_FL)
+@@ -607,6 +614,8 @@ enum {
+ #define EXT4_IOC_RESIZE_FS		_IOW('f', 16, __u64)
+ #define EXT4_IOC_SWAP_BOOT		_IO('f', 17)
+ #define EXT4_IOC_PRECACHE_EXTENTS	_IO('f', 18)
++#define EXT4_IOC_FSGETXATTR		FS_IOC_FSGETXATTR
++#define EXT4_IOC_FSSETXATTR		FS_IOC_FSSETXATTR
  
- /* Flags that are appropriate for regular files (all but dir-specific ones). */
- #define EXT4_REG_FLMASK (~(EXT4_DIRSYNC_FL | EXT4_TOPDIR_FL))
-@@ -435,6 +437,7 @@ enum {
- 	EXT4_INODE_EA_INODE	= 21,	/* Inode used for large EA */
- 	EXT4_INODE_EOFBLOCKS	= 22,	/* Blocks allocated beyond EOF */
- 	EXT4_INODE_INLINE_DATA	= 28,	/* Data in inode. */
-+	EXT4_INODE_PROJINHERIT	= 29,	/* Create with parents projid */
- 	EXT4_INODE_RESERVED	= 31,	/* reserved for ext4 lib */
- };
- 
-@@ -684,6 +687,7 @@ struct ext4_inode {
- 	__le32  i_crtime;       /* File Creation time */
- 	__le32  i_crtime_extra; /* extra FileCreationtime (nsec << 2 | epoch) */
- 	__le32  i_version_hi;	/* high 32 bits for 64-bit version */
-+	__le32  i_projid;	/* Project ID */
- };
- 
- struct move_extent {
-@@ -939,6 +943,7 @@ struct ext4_inode_info {
- 
- 	/* Precomputed uuid+inum+igen checksum for seeding inode checksums */
- 	__u32 i_csum_seed;
-+	kprojid_t i_projid;
- };
- 
+ #if defined(__KERNEL__) && defined(CONFIG_COMPAT)
  /*
-@@ -1531,6 +1536,7 @@ static inline void ext4_clear_state_flags(struct ext4_inode_info *ei)
-  */
- #define EXT4_FEATURE_RO_COMPAT_METADATA_CSUM	0x0400
- #define EXT4_FEATURE_RO_COMPAT_READONLY		0x1000
-+#define EXT4_FEATURE_RO_COMPAT_PROJECT		0x2000
- 
- #define EXT4_FEATURE_INCOMPAT_COMPRESSION	0x0001
- #define EXT4_FEATURE_INCOMPAT_FILETYPE		0x0002
-@@ -1581,7 +1587,8 @@ static inline void ext4_clear_state_flags(struct ext4_inode_info *ei)
- 					 EXT4_FEATURE_RO_COMPAT_HUGE_FILE |\
- 					 EXT4_FEATURE_RO_COMPAT_BIGALLOC |\
- 					 EXT4_FEATURE_RO_COMPAT_METADATA_CSUM|\
--					 EXT4_FEATURE_RO_COMPAT_QUOTA)
-+					 EXT4_FEATURE_RO_COMPAT_QUOTA |\
-+					 EXT4_FEATURE_RO_COMPAT_PROJECT)
- 
- /*
-  * Default values for user and/or group using reserved blocks
-@@ -1589,6 +1596,11 @@ static inline void ext4_clear_state_flags(struct ext4_inode_info *ei)
- #define	EXT4_DEF_RESUID		0
- #define	EXT4_DEF_RESGID		0
- 
-+/*
-+ * Default project ID
-+ */
-+#define	EXT4_DEF_PROJID		0
-+
- #define EXT4_DEF_INODE_READAHEAD_BLKS	32
- 
- /*
-@@ -2141,6 +2153,7 @@ extern int ext4_zero_partial_blocks(handle_t *handle, struct inode *inode,
- 			     loff_t lstart, loff_t lend);
- extern int ext4_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf);
- extern qsize_t *ext4_get_reserved_space(struct inode *inode);
-+extern int ext4_get_projid(struct inode *inode, kprojid_t *projid);
- extern void ext4_da_update_reserve_space(struct inode *inode,
- 					int used, int quota_claim);
- 
-diff --git a/fs/ext4/ialloc.c b/fs/ext4/ialloc.c
-index ac644c3..10ca9dd 100644
---- a/fs/ext4/ialloc.c
-+++ b/fs/ext4/ialloc.c
-@@ -756,6 +756,11 @@ struct inode *__ext4_new_inode(handle_t *handle, struct inode *dir,
- 		inode->i_gid = dir->i_gid;
- 	} else
- 		inode_init_owner(inode, dir, mode);
-+	if (EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_PROJECT) &&
-+	    ext4_test_inode_flag(dir, EXT4_INODE_PROJINHERIT))
-+		ei->i_projid = EXT4_I(dir)->i_projid;
-+	else
-+		ei->i_projid = make_kprojid(&init_user_ns, EXT4_DEF_PROJID);
- 	dquot_initialize(inode);
- 
- 	if (!goal)
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index 4df6d01..6e4833f 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -3870,6 +3870,14 @@ static inline void ext4_iget_extra_inode(struct inode *inode,
- 		EXT4_I(inode)->i_inline_off = 0;
+diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
+index f58a0d1..b634a19 100644
+--- a/fs/ext4/ioctl.c
++++ b/fs/ext4/ioctl.c
+@@ -14,6 +14,8 @@
+ #include <linux/compat.h>
+ #include <linux/mount.h>
+ #include <linux/file.h>
++#include <linux/quotaops.h>
++#include <linux/quota.h>
+ #include <asm/uaccess.h>
+ #include "ext4_jbd2.h"
+ #include "ext4.h"
+@@ -196,6 +198,226 @@ journal_err_out:
+ 	return err;
  }
  
-+int ext4_get_projid(struct inode *inode, kprojid_t *projid)
++static int ext4_ioctl_setflags(struct inode *inode,
++			       unsigned int flags)
 +{
-+	if (!EXT4_HAS_RO_COMPAT_FEATURE(inode->i_sb, EXT4_FEATURE_RO_COMPAT_PROJECT))
-+		return -EOPNOTSUPP;
-+	*projid = EXT4_I(inode)->i_projid;
-+	return 0;
++	struct ext4_inode_info *ei = EXT4_I(inode);
++	handle_t *handle = NULL;
++	int err = EPERM, migrate = 0;
++	struct ext4_iloc iloc;
++	unsigned int oldflags, mask, i;
++	unsigned int jflag;
++
++	/* Is it quota file? Do not allow user to mess with it */
++	if (IS_NOQUOTA(inode))
++		goto flags_out;
++
++	oldflags = ei->i_flags;
++
++	/* The JOURNAL_DATA flag is modifiable only by root */
++	jflag = flags & EXT4_JOURNAL_DATA_FL;
++
++	/*
++	 * The IMMUTABLE and APPEND_ONLY flags can only be changed by
++	 * the relevant capability.
++	 *
++	 * This test looks nicer. Thanks to Pauline Middelink
++	 */
++	if ((flags ^ oldflags) & (EXT4_APPEND_FL | EXT4_IMMUTABLE_FL)) {
++		if (!capable(CAP_LINUX_IMMUTABLE))
++			goto flags_out;
++	}
++
++	/*
++	 * The JOURNAL_DATA flag can only be changed by
++	 * the relevant capability.
++	 */
++	if ((jflag ^ oldflags) & (EXT4_JOURNAL_DATA_FL)) {
++		if (!capable(CAP_SYS_RESOURCE))
++			goto flags_out;
++	}
++	if ((flags ^ oldflags) & EXT4_EXTENTS_FL)
++		migrate = 1;
++
++	if (flags & EXT4_EOFBLOCKS_FL) {
++		/* we don't support adding EOFBLOCKS flag */
++		if (!(oldflags & EXT4_EOFBLOCKS_FL)) {
++			err = -EOPNOTSUPP;
++			goto flags_out;
++		}
++	} else if (oldflags & EXT4_EOFBLOCKS_FL)
++		ext4_truncate(inode);
++
++	handle = ext4_journal_start(inode, EXT4_HT_INODE, 1);
++	if (IS_ERR(handle)) {
++		err = PTR_ERR(handle);
++		goto flags_out;
++	}
++	if (IS_SYNC(inode))
++		ext4_handle_sync(handle);
++	err = ext4_reserve_inode_write(handle, inode, &iloc);
++	if (err)
++		goto flags_err;
++
++	for (i = 0, mask = 1; i < 32; i++, mask <<= 1) {
++		if (!(mask & EXT4_FL_USER_MODIFIABLE))
++			continue;
++		if (mask & flags)
++			ext4_set_inode_flag(inode, i);
++		else
++			ext4_clear_inode_flag(inode, i);
++	}
++
++	ext4_set_inode_flags(inode);
++	inode->i_ctime = ext4_current_time(inode);
++
++	err = ext4_mark_iloc_dirty(handle, inode, &iloc);
++flags_err:
++	ext4_journal_stop(handle);
++	if (err)
++		goto flags_out;
++
++	if ((jflag ^ oldflags) & (EXT4_JOURNAL_DATA_FL))
++		err = ext4_change_inode_journal_flag(inode, jflag);
++	if (err)
++		goto flags_out;
++	if (migrate) {
++		if (flags & EXT4_EXTENTS_FL)
++			err = ext4_ext_migrate(inode);
++		else
++			err = ext4_ind_migrate(inode);
++	}
++
++flags_out:
++	return err;
 +}
 +
- struct inode *ext4_iget(struct super_block *sb, unsigned long ino)
- {
- 	struct ext4_iloc iloc;
-@@ -3881,6 +3889,7 @@ struct inode *ext4_iget(struct super_block *sb, unsigned long ino)
- 	int block;
- 	uid_t i_uid;
- 	gid_t i_gid;
-+	projid_t i_projid;
- 
- 	inode = iget_locked(sb, ino);
- 	if (!inode)
-@@ -3930,12 +3939,18 @@ struct inode *ext4_iget(struct super_block *sb, unsigned long ino)
- 	inode->i_mode = le16_to_cpu(raw_inode->i_mode);
- 	i_uid = (uid_t)le16_to_cpu(raw_inode->i_uid_low);
- 	i_gid = (gid_t)le16_to_cpu(raw_inode->i_gid_low);
-+	if (EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_PROJECT))
-+		i_projid = (projid_t)le32_to_cpu(raw_inode->i_projid);
-+	else
-+		i_projid = EXT4_DEF_PROJID;
++static int ext4_ioctl_setproject(struct file *filp, __u32 projid)
++{
++	struct inode *inode = file_inode(filp);
++	struct super_block *sb = inode->i_sb;
++	struct ext4_inode_info *ei = EXT4_I(inode);
++	int err;
++	handle_t *handle;
++	kprojid_t kprojid;
++	struct ext4_iloc iloc;
++	struct ext4_inode *raw_inode;
 +
- 	if (!(test_opt(inode->i_sb, NO_UID32))) {
- 		i_uid |= le16_to_cpu(raw_inode->i_uid_high) << 16;
- 		i_gid |= le16_to_cpu(raw_inode->i_gid_high) << 16;
- 	}
- 	i_uid_write(inode, i_uid);
- 	i_gid_write(inode, i_gid);
-+	ei->i_projid = make_kprojid(&init_user_ns, i_projid);;
- 	set_nlink(inode, le16_to_cpu(raw_inode->i_links_count));
- 
- 	ext4_clear_state_flags(ei);	/* Only relevant on 32-bit archs */
-@@ -4165,6 +4180,7 @@ static int ext4_do_update_inode(handle_t *handle,
- 	int need_datasync = 0, set_large_file = 0;
- 	uid_t i_uid;
- 	gid_t i_gid;
-+	projid_t i_projid;
- 
- 	spin_lock(&ei->i_raw_lock);
- 
-@@ -4177,6 +4193,7 @@ static int ext4_do_update_inode(handle_t *handle,
- 	raw_inode->i_mode = cpu_to_le16(inode->i_mode);
- 	i_uid = i_uid_read(inode);
- 	i_gid = i_gid_read(inode);
-+	i_projid = from_kprojid(&init_user_ns, ei->i_projid);
- 	if (!(test_opt(inode->i_sb, NO_UID32))) {
- 		raw_inode->i_uid_low = cpu_to_le16(low_16_bits(i_uid));
- 		raw_inode->i_gid_low = cpu_to_le16(low_16_bits(i_gid));
-@@ -4256,6 +4273,18 @@ static int ext4_do_update_inode(handle_t *handle,
- 		}
- 	}
- 
-+	BUG_ON(!EXT4_HAS_RO_COMPAT_FEATURE(inode->i_sb,
-+			EXT4_FEATURE_RO_COMPAT_PROJECT) &&
-+	       i_projid != EXT4_DEF_PROJID);
-+	if (i_projid != EXT4_DEF_PROJID &&
-+	    (EXT4_INODE_SIZE(inode->i_sb) <= EXT4_GOOD_OLD_INODE_SIZE ||
-+	     (!EXT4_FITS_IN_INODE(raw_inode, ei, i_projid)))) {
-+		spin_unlock(&ei->i_raw_lock);
-+		err = -EFBIG;
-+		goto out_brelse;
++	struct dquot *transfer_to[EXT4_MAXQUOTAS] = { };
++
++	/* Make sure caller can change project. */
++	if (!capable(CAP_SYS_ADMIN))
++		return -EACCES;
++
++	if (!EXT4_HAS_RO_COMPAT_FEATURE(sb,
++			EXT4_FEATURE_RO_COMPAT_PROJECT)) {
++		BUG_ON(__kprojid_val(EXT4_I(inode)->i_projid)
++		       != EXT4_DEF_PROJID);
++		if (projid != EXT4_DEF_PROJID)
++			return -EOPNOTSUPP;
++		else
++			return 0;
 +	}
-+	raw_inode->i_projid = cpu_to_le32(i_projid);
 +
- 	ext4_inode_csum_set(inode, raw_inode, ei);
- 
- 	spin_unlock(&ei->i_raw_lock);
-diff --git a/fs/ext4/namei.c b/fs/ext4/namei.c
-index 2291923..63a9623 100644
---- a/fs/ext4/namei.c
-+++ b/fs/ext4/namei.c
-@@ -2938,6 +2938,11 @@ static int ext4_link(struct dentry *old_dentry,
- 	if (inode->i_nlink >= EXT4_LINK_MAX)
- 		return -EMLINK;
- 
-+	if ((ext4_test_inode_flag(dir, EXT4_INODE_PROJINHERIT)) &&
-+	    (!projid_eq(EXT4_I(dir)->i_projid,
-+			EXT4_I(old_dentry->d_inode)->i_projid)))
-+		return -EXDEV;
++	kprojid = make_kprojid(&init_user_ns, (projid_t)projid);
 +
- 	dquot_initialize(dir);
- 
- retry:
-@@ -3217,6 +3222,11 @@ static int ext4_rename(struct inode *old_dir, struct dentry *old_dentry,
- 	int credits;
- 	u8 old_file_type;
- 
-+	if ((ext4_test_inode_flag(new_dir, EXT4_INODE_PROJINHERIT)) &&
-+	    (!projid_eq(EXT4_I(new_dir)->i_projid,
-+			EXT4_I(old_dentry->d_inode)->i_projid)))
-+		return -EXDEV;
++	if (projid_eq(kprojid, EXT4_I(inode)->i_projid))
++		return 0;
 +
- 	dquot_initialize(old.dir);
- 	dquot_initialize(new.dir);
- 
-@@ -3395,6 +3405,14 @@ static int ext4_cross_rename(struct inode *old_dir, struct dentry *old_dentry,
- 	u8 new_file_type;
- 	int retval;
- 
-+	if ((ext4_test_inode_flag(new_dir, EXT4_INODE_PROJINHERIT) &&
-+	     !projid_eq(EXT4_I(new_dir)->i_projid,
-+			EXT4_I(old_dentry->d_inode)->i_projid)) ||
-+	    (ext4_test_inode_flag(old_dir, EXT4_INODE_PROJINHERIT) &&
-+	     !projid_eq(EXT4_I(old_dir)->i_projid,
-+			EXT4_I(new_dentry->d_inode)->i_projid)))
-+		return -EXDEV;
++	err = mnt_want_write_file(filp);
++	if (err)
++		return err;
 +
- 	dquot_initialize(old.dir);
- 	dquot_initialize(new.dir);
++	err = -EPERM;
++	mutex_lock(&inode->i_mutex);
++	/* Is it quota file? Do not allow user to mess with it */
++	if (IS_NOQUOTA(inode))
++		goto project_out;
++
++	dquot_initialize(inode);
++
++	handle = ext4_journal_start(inode, EXT4_HT_QUOTA,
++		EXT4_QUOTA_INIT_BLOCKS(sb) +
++		EXT4_QUOTA_DEL_BLOCKS(sb) + 3);
++	if (IS_ERR(handle)) {
++		err = PTR_ERR(handle);
++		goto project_out;
++	}
++
++	err = ext4_reserve_inode_write(handle, inode, &iloc);
++	if (err)
++		goto project_stop;
++
++	raw_inode = ext4_raw_inode(&iloc);
++	if ((EXT4_INODE_SIZE(sb) <=
++	     EXT4_GOOD_OLD_INODE_SIZE) ||
++	    (!EXT4_FITS_IN_INODE(raw_inode, ei, i_projid))) {
++	    	err = -EFBIG;
++	    	goto project_stop;
++	}
++
++	transfer_to[PRJQUOTA] = dqget(sb, make_kqid_projid(kprojid));
++	if (!transfer_to[PRJQUOTA])
++		goto project_set;
++
++	err = __dquot_transfer(inode, transfer_to);
++	dqput(transfer_to[PRJQUOTA]);
++	if (err)
++		goto project_stop;
++
++project_set:
++	EXT4_I(inode)->i_projid = kprojid;
++	inode->i_ctime = ext4_current_time(inode);
++	err = ext4_mark_iloc_dirty(handle, inode, &iloc);
++project_stop:
++	ext4_journal_stop(handle);
++project_out:
++	mutex_unlock(&inode->i_mutex);
++	mnt_drop_write_file(filp);
++	return err;
++}
++
++/* Transfer internal flags to xflags */
++static inline __u32 ext4_iflags_to_xflags(unsigned long iflags)
++{
++	__u32 xflags = 0;
++
++	if (iflags & EXT4_SYNC_FL)
++		xflags |= FS_XFLAG_SYNC;
++	if (iflags & EXT4_IMMUTABLE_FL)
++		xflags |= FS_XFLAG_IMMUTABLE;
++	if (iflags & EXT4_APPEND_FL)
++		xflags |= FS_XFLAG_APPEND;
++	if (iflags & EXT4_NODUMP_FL)
++		xflags |= FS_XFLAG_NODUMP;
++	if (iflags & EXT4_NOATIME_FL)
++		xflags |= FS_XFLAG_NOATIME;
++	if (iflags & EXT4_PROJINHERIT_FL)
++		xflags |= FS_XFLAG_PROJINHERIT;
++	return xflags;
++}
++
++/* Transfer xflags flags to internal */
++static inline unsigned long ext4_xflags_to_iflags(__u32 xflags)
++{
++	unsigned long iflags = 0;
++
++	if (xflags & FS_XFLAG_SYNC)
++		iflags |= EXT4_SYNC_FL;
++	if (xflags & FS_XFLAG_IMMUTABLE)
++		iflags |= EXT4_IMMUTABLE_FL;
++	if (xflags & FS_XFLAG_APPEND)
++		iflags |= EXT4_APPEND_FL;
++	if (xflags & FS_XFLAG_NODUMP)
++		iflags |= EXT4_NODUMP_FL;
++	if (xflags & FS_XFLAG_NOATIME)
++		iflags |= EXT4_NOATIME_FL;
++	if (xflags & FS_XFLAG_PROJINHERIT)
++		iflags |= EXT4_PROJINHERIT_FL;
++
++	return iflags;
++}
++
+ long ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ {
+ 	struct inode *inode = file_inode(filp);
+@@ -211,11 +433,7 @@ long ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 		flags = ei->i_flags & EXT4_FL_USER_VISIBLE;
+ 		return put_user(flags, (int __user *) arg);
+ 	case EXT4_IOC_SETFLAGS: {
+-		handle_t *handle = NULL;
+-		int err, migrate = 0;
+-		struct ext4_iloc iloc;
+-		unsigned int oldflags, mask, i;
+-		unsigned int jflag;
++		int err;
  
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index bff3427..04c6cc3 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -1073,6 +1073,7 @@ static const struct dquot_operations ext4_quota_operations = {
- 	.write_info	= ext4_write_info,
- 	.alloc_dquot	= dquot_alloc,
- 	.destroy_dquot	= dquot_destroy,
-+	.get_projid	= ext4_get_projid,
- };
+ 		if (!inode_owner_or_capable(inode))
+ 			return -EACCES;
+@@ -229,91 +447,10 @@ long ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
  
- static const struct quotactl_ops ext4_qctl_operations = {
+ 		flags = ext4_mask_flags(inode->i_mode, flags);
+ 
+-		err = -EPERM;
+ 		mutex_lock(&inode->i_mutex);
+-		/* Is it quota file? Do not allow user to mess with it */
+-		if (IS_NOQUOTA(inode))
+-			goto flags_out;
+-
+-		oldflags = ei->i_flags;
+-
+-		/* The JOURNAL_DATA flag is modifiable only by root */
+-		jflag = flags & EXT4_JOURNAL_DATA_FL;
+-
+-		/*
+-		 * The IMMUTABLE and APPEND_ONLY flags can only be changed by
+-		 * the relevant capability.
+-		 *
+-		 * This test looks nicer. Thanks to Pauline Middelink
+-		 */
+-		if ((flags ^ oldflags) & (EXT4_APPEND_FL | EXT4_IMMUTABLE_FL)) {
+-			if (!capable(CAP_LINUX_IMMUTABLE))
+-				goto flags_out;
+-		}
+-
+-		/*
+-		 * The JOURNAL_DATA flag can only be changed by
+-		 * the relevant capability.
+-		 */
+-		if ((jflag ^ oldflags) & (EXT4_JOURNAL_DATA_FL)) {
+-			if (!capable(CAP_SYS_RESOURCE))
+-				goto flags_out;
+-		}
+-		if ((flags ^ oldflags) & EXT4_EXTENTS_FL)
+-			migrate = 1;
+-
+-		if (flags & EXT4_EOFBLOCKS_FL) {
+-			/* we don't support adding EOFBLOCKS flag */
+-			if (!(oldflags & EXT4_EOFBLOCKS_FL)) {
+-				err = -EOPNOTSUPP;
+-				goto flags_out;
+-			}
+-		} else if (oldflags & EXT4_EOFBLOCKS_FL)
+-			ext4_truncate(inode);
+-
+-		handle = ext4_journal_start(inode, EXT4_HT_INODE, 1);
+-		if (IS_ERR(handle)) {
+-			err = PTR_ERR(handle);
+-			goto flags_out;
+-		}
+-		if (IS_SYNC(inode))
+-			ext4_handle_sync(handle);
+-		err = ext4_reserve_inode_write(handle, inode, &iloc);
+-		if (err)
+-			goto flags_err;
+-
+-		for (i = 0, mask = 1; i < 32; i++, mask <<= 1) {
+-			if (!(mask & EXT4_FL_USER_MODIFIABLE))
+-				continue;
+-			if (mask & flags)
+-				ext4_set_inode_flag(inode, i);
+-			else
+-				ext4_clear_inode_flag(inode, i);
+-		}
+-
+-		ext4_set_inode_flags(inode);
+-		inode->i_ctime = ext4_current_time(inode);
+-
+-		err = ext4_mark_iloc_dirty(handle, inode, &iloc);
+-flags_err:
+-		ext4_journal_stop(handle);
+-		if (err)
+-			goto flags_out;
+-
+-		if ((jflag ^ oldflags) & (EXT4_JOURNAL_DATA_FL))
+-			err = ext4_change_inode_journal_flag(inode, jflag);
+-		if (err)
+-			goto flags_out;
+-		if (migrate) {
+-			if (flags & EXT4_EXTENTS_FL)
+-				err = ext4_ext_migrate(inode);
+-			else
+-				err = ext4_ind_migrate(inode);
+-		}
+-
+-flags_out:
++		err = ext4_ioctl_setflags(inode, flags);
+ 		mutex_unlock(&inode->i_mutex);
+-		mnt_drop_write_file(filp);
++		mnt_drop_write(filp->f_path.mnt);
+ 		return err;
+ 	}
+ 	case EXT4_IOC_GETVERSION:
+@@ -615,7 +752,60 @@ resizefs_out:
+ 	}
+ 	case EXT4_IOC_PRECACHE_EXTENTS:
+ 		return ext4_ext_precache(inode);
++	case EXT4_IOC_FSGETXATTR:
++	{
++		struct fsxattr fa;
+ 
++		memset(&fa, 0, sizeof(struct fsxattr));
++
++		ext4_get_inode_flags(ei);
++		fa.fsx_xflags = ext4_iflags_to_xflags(ei->i_flags & EXT4_FL_USER_VISIBLE);
++
++		if (EXT4_HAS_RO_COMPAT_FEATURE(inode->i_sb,
++				EXT4_FEATURE_RO_COMPAT_PROJECT)) {
++			fa.fsx_projid = (__u32)from_kprojid(&init_user_ns,
++				EXT4_I(inode)->i_projid);
++		}
++
++		if (copy_to_user((struct fsxattr __user *)arg,
++				 &fa, sizeof(fa)))
++			return -EFAULT;
++		return 0;
++	}
++	case EXT4_IOC_FSSETXATTR:
++	{
++		struct fsxattr fa;
++		int err;
++
++		if (!inode_owner_or_capable(inode))
++			return -EACCES;
++
++		if (copy_from_user(&fa, (struct fsxattr __user *)arg,
++				   sizeof(fa)))
++			return -EFAULT;
++
++		err = mnt_want_write_file(filp);
++		if (err)
++			return err;
++
++		flags = ext4_xflags_to_iflags(fa.fsx_xflags);
++		flags = ext4_mask_flags(inode->i_mode, flags);
++
++		mutex_lock(&inode->i_mutex);
++		flags = (ei->i_flags & ~EXT4_FL_XFLAG_VISIBLE) |
++			 (flags & EXT4_FL_XFLAG_VISIBLE);
++		err = ext4_ioctl_setflags(inode, flags);
++		mutex_unlock(&inode->i_mutex);
++		mnt_drop_write(filp->f_path.mnt);
++		if (err)
++			return err;
++
++		err = ext4_ioctl_setproject(filp, fa.fsx_projid);
++		if (err)
++			return err;
++
++		return 0;
++	}
+ 	default:
+ 		return -ENOTTY;
+ 	}
+diff --git a/fs/xfs/xfs_fs.h b/fs/xfs/xfs_fs.h
+index 18dc721..64c7ae6 100644
+--- a/fs/xfs/xfs_fs.h
++++ b/fs/xfs/xfs_fs.h
+@@ -36,38 +36,25 @@ struct dioattr {
+ #endif
+ 
+ /*
+- * Structure for XFS_IOC_FSGETXATTR[A] and XFS_IOC_FSSETXATTR.
+- */
+-#ifndef HAVE_FSXATTR
+-struct fsxattr {
+-	__u32		fsx_xflags;	/* xflags field value (get/set) */
+-	__u32		fsx_extsize;	/* extsize field value (get/set)*/
+-	__u32		fsx_nextents;	/* nextents field value (get)	*/
+-	__u32		fsx_projid;	/* project identifier (get/set) */
+-	unsigned char	fsx_pad[12];
+-};
+-#endif
+-
+-/*
+  * Flags for the bs_xflags/fsx_xflags field
+  * There should be a one-to-one correspondence between these flags and the
+  * XFS_DIFLAG_s.
+  */
+-#define XFS_XFLAG_REALTIME	0x00000001	/* data in realtime volume */
+-#define XFS_XFLAG_PREALLOC	0x00000002	/* preallocated file extents */
+-#define XFS_XFLAG_IMMUTABLE	0x00000008	/* file cannot be modified */
+-#define XFS_XFLAG_APPEND	0x00000010	/* all writes append */
+-#define XFS_XFLAG_SYNC		0x00000020	/* all writes synchronous */
+-#define XFS_XFLAG_NOATIME	0x00000040	/* do not update access time */
+-#define XFS_XFLAG_NODUMP	0x00000080	/* do not include in backups */
+-#define XFS_XFLAG_RTINHERIT	0x00000100	/* create with rt bit set */
+-#define XFS_XFLAG_PROJINHERIT	0x00000200	/* create with parents projid */
+-#define XFS_XFLAG_NOSYMLINKS	0x00000400	/* disallow symlink creation */
+-#define XFS_XFLAG_EXTSIZE	0x00000800	/* extent size allocator hint */
+-#define XFS_XFLAG_EXTSZINHERIT	0x00001000	/* inherit inode extent size */
+-#define XFS_XFLAG_NODEFRAG	0x00002000  	/* do not defragment */
+-#define XFS_XFLAG_FILESTREAM	0x00004000	/* use filestream allocator */
+-#define XFS_XFLAG_HASATTR	0x80000000	/* no DIFLAG for this	*/
++#define XFS_XFLAG_REALTIME	FS_XFLAG_REALTIME	/* data in realtime volume */
++#define XFS_XFLAG_PREALLOC	FS_XFLAG_PREALLOC	/* preallocated file extents */
++#define XFS_XFLAG_IMMUTABLE	FS_XFLAG_IMMUTABLE	/* file cannot be modified */
++#define XFS_XFLAG_APPEND	FS_XFLAG_APPEND		/* all writes append */
++#define XFS_XFLAG_SYNC		FS_XFLAG_SYNC		/* all writes synchronous */
++#define XFS_XFLAG_NOATIME	FS_XFLAG_NOATIME	/* do not update access time */
++#define XFS_XFLAG_NODUMP	FS_XFLAG_NODUMP		/* do not include in backups */
++#define XFS_XFLAG_RTINHERIT	FS_XFLAG_RTINHERIT	/* create with rt bit set */
++#define XFS_XFLAG_PROJINHERIT	FS_XFLAG_PROJINHERIT	/* create with parents projid */
++#define XFS_XFLAG_NOSYMLINKS	FS_XFLAG_NOSYMLINKS	/* disallow symlink creation */
++#define XFS_XFLAG_EXTSIZE	FS_XFLAG_EXTSIZE	/* extent size allocator hint */
++#define XFS_XFLAG_EXTSZINHERIT	FS_XFLAG_EXTSZINHERIT	/* inherit inode extent size */
++#define XFS_XFLAG_NODEFRAG	FS_XFLAG_NODEFRAG  	/* do not defragment */
++#define XFS_XFLAG_FILESTREAM	FS_XFLAG_FILESTREAM	/* use filestream allocator */
++#define XFS_XFLAG_HASATTR	FS_XFLAG_HASATTR	/* no DIFLAG for this	*/
+ 
+ /*
+  * Structure for XFS_IOC_GETBMAP.
+@@ -503,8 +490,8 @@ typedef struct xfs_swapext
+ #define XFS_IOC_ALLOCSP		_IOW ('X', 10, struct xfs_flock64)
+ #define XFS_IOC_FREESP		_IOW ('X', 11, struct xfs_flock64)
+ #define XFS_IOC_DIOINFO		_IOR ('X', 30, struct dioattr)
+-#define XFS_IOC_FSGETXATTR	_IOR ('X', 31, struct fsxattr)
+-#define XFS_IOC_FSSETXATTR	_IOW ('X', 32, struct fsxattr)
++#define XFS_IOC_FSGETXATTR	FS_IOC_FSGETXATTR
++#define XFS_IOC_FSSETXATTR	FS_IOC_FSSETXATTR
+ #define XFS_IOC_ALLOCSP64	_IOW ('X', 36, struct xfs_flock64)
+ #define XFS_IOC_FREESP64	_IOW ('X', 37, struct xfs_flock64)
+ #define XFS_IOC_GETBMAP		_IOWR('X', 38, struct getbmap)
 diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 3735fa0..fcbf647 100644
+index fcbf647..69dda62 100644
 --- a/include/uapi/linux/fs.h
 +++ b/include/uapi/linux/fs.h
-@@ -195,6 +195,7 @@ struct inodes_stat_t {
- #define FS_EXTENT_FL			0x00080000 /* Extents */
- #define FS_DIRECTIO_FL			0x00100000 /* Use direct i/o */
- #define FS_NOCOW_FL			0x00800000 /* Do not cow file */
-+#define FS_PROJINHERIT_FL		0x20000000 /* Create with parents projid */
- #define FS_RESERVED_FL			0x80000000 /* reserved for ext2 lib */
+@@ -58,6 +58,36 @@ struct inodes_stat_t {
+ 	long dummy[5];		/* padding for sysctl ABI compatibility */
+ };
  
- #define FS_FL_USER_VISIBLE		0x0003DFFF /* User visible flags */
++/*
++ * Structure for FS_IOC_FSGETXATTR and FS_IOC_FSSETXATTR.
++ */
++struct fsxattr {
++	__u32		fsx_xflags;	/* xflags field value (get/set) */
++	__u32		fsx_extsize;	/* extsize field value (get/set)*/
++	__u32		fsx_nextents;	/* nextents field value (get)	*/
++	__u32		fsx_projid;	/* project identifier (get/set) */
++	unsigned char	fsx_pad[12];
++};
++
++/*
++ * Flags for the fsx_xflags field
++ */
++#define FS_XFLAG_REALTIME	0x00000001	/* data in realtime volume */
++#define FS_XFLAG_PREALLOC	0x00000002	/* preallocated file extents */
++#define FS_XFLAG_IMMUTABLE	0x00000008	/* file cannot be modified */
++#define FS_XFLAG_APPEND		0x00000010	/* all writes append */
++#define FS_XFLAG_SYNC		0x00000020	/* all writes synchronous */
++#define FS_XFLAG_NOATIME	0x00000040	/* do not update access time */
++#define FS_XFLAG_NODUMP		0x00000080	/* do not include in backups */
++#define FS_XFLAG_RTINHERIT	0x00000100	/* create with rt bit set */
++#define FS_XFLAG_PROJINHERIT	0x00000200	/* create with parents projid */
++#define FS_XFLAG_NOSYMLINKS	0x00000400	/* disallow symlink creation */
++#define FS_XFLAG_EXTSIZE	0x00000800	/* extent size allocator hint */
++#define FS_XFLAG_EXTSZINHERIT	0x00001000	/* inherit inode extent size */
++#define FS_XFLAG_NODEFRAG	0x00002000  	/* do not defragment */
++#define FS_XFLAG_FILESTREAM	0x00004000	/* use filestream allocator */
++#define FS_XFLAG_HASATTR	0x80000000	/* no DIFLAG for this */
++
+ 
+ #define NR_FILE  8192	/* this can well be larger on a larger system */
+ 
+@@ -163,6 +193,8 @@ struct inodes_stat_t {
+ #define	FS_IOC_GETVERSION		_IOR('v', 1, long)
+ #define	FS_IOC_SETVERSION		_IOW('v', 2, long)
+ #define FS_IOC_FIEMAP			_IOWR('f', 11, struct fiemap)
++#define FS_IOC_FSGETXATTR		_IOR('X', 31, struct fsxattr)
++#define FS_IOC_FSSETXATTR		_IOW('X', 32, struct fsxattr)
+ #define FS_IOC32_GETFLAGS		_IOR('f', 1, int)
+ #define FS_IOC32_SETFLAGS		_IOW('f', 2, int)
+ #define FS_IOC32_GETVERSION		_IOR('v', 1, int)
 -- 
 1.7.1
-
