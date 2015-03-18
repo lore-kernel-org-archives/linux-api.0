@@ -1,59 +1,79 @@
-From: "Dov Levenglick" <dovl@codeaurora.org>
-Subject: Re: [PATCH v7 1/3] scsi: ufs: add ioctl interface for query request
-Date: Wed, 18 Mar 2015 13:17:49 -0000
-Message-ID: <d69712a63e353d1c085e0a05e78d965b.squirrel@www.codeaurora.org>
-References: <1426175700-23152-1-git-send-email-gbroner@codeaurora.org>
-    <1426175700-23152-2-git-send-email-gbroner@codeaurora.org>
+From: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 00/14] Add kdbus implementation
+Date: Wed, 18 Mar 2015 14:54:12 +0100
+Message-ID: <CANq1E4Tf_6Cn+sxY=BPEbRpEr5WY+-rRX5gipz-_=4PNLa9bnQ@mail.gmail.com>
+References: <1425906560-13798-1-git-send-email-gregkh@linuxfoundation.org>
+	<CALCETrUjqTH14fZCeqU_OBoKX_6x4B=712WTeSqSAztpgXGiDw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1426175700-23152-2-git-send-email-gbroner@codeaurora.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Gilad Broner <gbroner@codeaurora.org>
-Cc: james.bottomley@hansenpartnership.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-arm-msm@vger.kernel.org, santoshsy@gmail.com, linux-scsi-owner@vger.kernel.org, subhashj@codeaurora.org, ygardi@codeaurora.org, draviv@codeaurora.org, Noa Rubens <noag@codeaurora.org>, Raviv Shvili <rshvili@codeaurora.org>, Vinayak Holikatti <vinholikatti@gmail.com>, "James E.J. Bottomley" <jbottomley@parallels.com>, "open list:ABI/API" <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrUjqTH14fZCeqU_OBoKX_6x4B=712WTeSqSAztpgXGiDw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-> From: Dolev Raviv <draviv@codeaurora.org>
->
-> This patch exposes the ioctl interface for UFS driver via SCSI device
-> ioctl interface. As of now UFS driver would provide the ioctl for query
-> interface to connected UFS device.
->
-> Signed-off-by: Dolev Raviv <draviv@codeaurora.org>
-> Signed-off-by: Noa Rubens <noag@codeaurora.org>
-> Signed-off-by: Raviv Shvili <rshvili@codeaurora.org>
-> Signed-off-by: Yaniv Gardi <ygardi@codeaurora.org>
-> ---
->  drivers/scsi/ufs/ufs.h        |  53 ++--------
->  drivers/scsi/ufs/ufshcd.c     | 226
-> +++++++++++++++++++++++++++++++++++++++++-
->  include/scsi/scsi.h           |   1 +
->  include/uapi/scsi/Kbuild      |   1 +
->  include/uapi/scsi/ufs/Kbuild  |   3 +
->  include/uapi/scsi/ufs/ioctl.h |  57 +++++++++++
->  include/uapi/scsi/ufs/ufs.h   |  66 ++++++++++++
->  7 files changed, 363 insertions(+), 44 deletions(-)
->  create mode 100644 include/uapi/scsi/ufs/Kbuild
->  create mode 100644 include/uapi/scsi/ufs/ioctl.h
->  create mode 100644 include/uapi/scsi/ufs/ufs.h
->
+Hi
 
-[ removed ~530 lines of code]
-Reviewed-by: Dov Levenglick <dovl@codeaurora.org>
-
-> --
-> Qualcomm Israel, on behalf of Qualcomm Innovation Center, Inc.
-> The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum,
-> a Linux Foundation Collaborative Project
+On Tue, Mar 17, 2015 at 8:24 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+[...]
+> Can anyone comment on how fast it actually is.  I'm curious
+> about:
 >
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>  - The time it takes to do the ioctl to send a message
 >
+>  - The time it takes to receive a message (poll + whatever ioctls)
 
+I'm not sure I can gather useful absolute data here. This highly
+depends on how you call it, how often you call it, what payloads you
+pass, what machine you're on.. you know all that.
 
-QUALCOMM ISRAEL, on behalf of Qualcomm Innovation Center, Inc.
-The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum,
-a Linux Foundation Collaborative Project
+So here's a flamegraph for you (which I use for comparisons to UDS):
+  http://people.freedesktop.org/~dvdhrm/kdbus_8kb.svg
+
+This program sends unicast messages on kdbus and UDS, exactly the same
+number of times with the same 8kb payload. No parsing, no marshaling
+is done, just plain message passing. The interesting spikes are
+sys_read(), sys_write() and the 3 kdbus sys_ioctl(). Everything else
+should be ignored.
+
+sys_read() and sys_ioctl(KDBUS_CMD_RECV) are about the same. But note
+that we don't copy any payload in RECV, so it scales O(1) compared to
+message-size.
+
+sys_write() is about 3x faster than sys_ioctl(KDBUS_CMD_WRITE).
+
+I see lots of room for improvement in both RECV and SEND. Caching the
+namespaces on a connection, would get rid of
+kdbus_queue_entry_install() in RECV, thus speeding it up by ~30%. In
+SEND, we could merge the kvec and iovec copying, to avoid calling
+shmem_begin_write() twice. We should also stop allocating management
+structures that are not used (like for metadata, if no metadata is
+transmitted). We should use stack-space for small ioctl objects,
+instead of memdup_user(). And so on.. Oh, and locking can be reduced.
+We haven't even looked at rcu, yet (though that's mostly interesting
+for policy and broadcasts, not unicasts).
+
+>  - The time it takes to transfer a memfd (I don't care about how long
+> it takes to create or map a memfd -- that's exactly the same between
+> kdbus and any other memfds user, I imagine)
+
+The time to transmit a memfd is the same as to transmit a 64-byte
+payload. Ok, you also get to install the fd into the fd-table, but
+that's true regardless of the transport.
+Here's a graph for 64byte transfers (otherwise, same as above):
+  http://people.freedesktop.org/~dvdhrm/kdbus_64b.svg
+
+>  - The time it takes to connect
+
+No idea, never measured it. Why is it of interest?
+
+> I'm also interested in whether the current design is actually amenable
+> to good performance.  I'm told that it is, but ISTM there's a lot of
+> heavyweight stuff going on with each send operation that will be hard
+> to remove.
+
+I disagree. What heavyweight stuff is going on?
+
+Thanks
+David
