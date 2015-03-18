@@ -1,70 +1,61 @@
-From: Charlie Mooney <charliemooney@chromium.org>
-Subject: [PATCH] Input: Add MT_TOOL_PALM
-Date: Wed, 18 Mar 2015 15:26:35 -0700
-Message-ID: <1426717595-1610-1-git-send-email-charliemooney@chromium.org>
-Return-path: <linux-input-owner@vger.kernel.org>
-Sender: linux-input-owner@vger.kernel.org
-To: linux-input@vger.kernel.org
-Cc: Benjamin Tissoires <benjamin.tissoires@gmail.com>, Hans de Goede <hdegoede@redhat.com>, Peter Hutterer <peter.hutterer@who-t.net>, Andrew De Los Reyes <adlr@chromium.org>, Henrik Rydberg <rydberg@bitmath.org>, Jonathan Corbet <corbet@lwn.net>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Charlie Mooney <charliemooney@chromium.org>, Masanari Iida <standby24x7@gmail.com>, Jiri Kosina <jkosina@suse.cz>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH] mremap: add MREMAP_NOHOLE flag --resend
+Date: Wed, 18 Mar 2015 15:31:00 -0700
+Message-ID: <20150318153100.5658b741277f3717b52e42d9@linux-foundation.org>
+References: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli@fb.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli-b10kYP2dOMg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shaohua Li <shli-b10kYP2dOMg@public.gmane.org>
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mel-wPRd99KPJ+uzQB+pC5nmwQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Currently there are only two "tools" that can be specified by a
-multi-touch driver: MT_TOOL_FINGER and MT_TOOL_PEN.  In working with
-Elan (The touch vendor) and discussing their next-gen devices it
-seems that it will be useful to have more tools so that their devices
-can give the upper layers of the stack hints as to what is touching
-the sensor.
+On Tue, 17 Mar 2015 14:09:39 -0700 Shaohua Li <shli-b10kYP2dOMg@public.gmane.org> wrote:
 
-In particular they have new experimental firmware that can better
-differentiate between palms vs fingertips and would like to plumb a
-patch so that we can use their hints in higher-level gesture soft-
-ware.  The firmware on the device can reasonably do a better job of
-palm detection because it has access to all of the raw sensor readings
-as opposed to just the width/pressure/etc that are exposed by the
-driver.  As such, the firmware can characterize what a palm looks like
-in much finer-grained detail and this change would allow such a
-device to share its findings with the kernel.
+> There was a similar patch posted before, but it doesn't get merged. I'd like
+> to try again if there are more discussions.
+> http://marc.info/?l=linux-mm&m=141230769431688&w=2
+> 
+> mremap can be used to accelerate realloc. The problem is mremap will
+> punch a hole in original VMA, which makes specific memory allocator
+> unable to utilize it. Jemalloc is an example. It manages memory in 4M
+> chunks. mremap a range of the chunk will punch a hole, which other
+> mmap() syscall can fill into. The 4M chunk is then fragmented, jemalloc
+> can't handle it.
 
-Signed-off-by: Charlie Mooney <charliemooney@chromium.org>
----
- Documentation/input/multi-touch-protocol.txt | 9 ++++++---
- include/uapi/linux/input.h                   | 3 ++-
- 2 files changed, 8 insertions(+), 4 deletions(-)
+Daniel's changelog had additional details regarding the userspace
+allocators' behaviour.  It would be best to incorporate that into your
+changelog.
 
-diff --git a/Documentation/input/multi-touch-protocol.txt b/Documentation/input/multi-touch-protocol.txt
-index 7b4f59c..b85d000 100644
---- a/Documentation/input/multi-touch-protocol.txt
-+++ b/Documentation/input/multi-touch-protocol.txt
-@@ -312,9 +312,12 @@ ABS_MT_TOOL_TYPE
- 
- The type of approaching tool. A lot of kernel drivers cannot distinguish
- between different tool types, such as a finger or a pen. In such cases, the
--event should be omitted. The protocol currently supports MT_TOOL_FINGER and
--MT_TOOL_PEN [2]. For type B devices, this event is handled by input core;
--drivers should instead use input_mt_report_slot_state().
-+event should be omitted. The protocol currently supports MT_TOOL_FINGER,
-+MT_TOOL_PEN, and MT_TOOL_PALM [2]. For type B devices, this event is handled
-+by input core; drivers should instead use input_mt_report_slot_state().
-+A contact's ABS_MT_TOOL_TYPE may change over time while still touching the
-+device, because the firmware may not be able to determine which tool is being
-+used when it first appears.
- 
- ABS_MT_BLOB_ID
- 
-diff --git a/include/uapi/linux/input.h b/include/uapi/linux/input.h
-index b0a8130..2f62ab2 100644
---- a/include/uapi/linux/input.h
-+++ b/include/uapi/linux/input.h
-@@ -973,7 +973,8 @@ struct input_keymap_entry {
-  */
- #define MT_TOOL_FINGER		0
- #define MT_TOOL_PEN		1
--#define MT_TOOL_MAX		1
-+#define MT_TOOL_PALM		2
-+#define MT_TOOL_MAX		2
- 
- /*
-  * Values describing the status of a force-feedback effect
--- 
-2.1.2
+Daniel also had microbenchmark testing results for glibc and jemalloc. 
+Can you please do this?
 
+I'm not seeing any testing results for tcmalloc and I'm not seeing
+confirmation that this patch will be useful for tcmalloc.  Has anyone
+tried it, or sought input from tcmalloc developers?
+
+> This patch adds a new flag for mremap. With it, mremap will not punch the
+> hole. page tables of original vma will be zapped in the same way, but
+> vma is still there. That is original vma will look like a vma without
+> pagefault. Behavior of new vma isn't changed.
+> 
+> For private vma, accessing original vma will cause
+> page fault and just like the address of the vma has never been accessed.
+> So for anonymous, new page/zero page will be fault in. For file mapping,
+> new page will be allocated with file reading for cow, or pagefault will
+> use existing page cache.
+> 
+> For shared vma, original and new vma will map to the same file. We can
+> optimize this without zaping original vma's page table in this case, but
+> this patch doesn't do it yet.
+> 
+> Since with MREMAP_NOHOLE, original vma still exists. pagefault handler
+> for special vma might not able to handle pagefault for mremap'd area.
+> The patch doesn't allow vmas with VM_PFNMAP|VM_MIXEDMAP flags do NOHOLE
+> mremap.
+
+At some point (preferably an early point) we'd like a manpage update
+and a cc: to linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org please.
