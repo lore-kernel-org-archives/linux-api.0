@@ -1,77 +1,75 @@
-From: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Subject: Re: [PATCH v2] add support for Freescale's MMA8653FC 10 bit
- accelerometer
-Date: Wed, 18 Mar 2015 09:44:54 -0700
-Message-ID: <20150318164454.GA11350@dtor-ws>
-References: <1426694157-10866-1-git-send-email-martink@posteo.de>
- <2231139.ojeyer6qnI@ws-stein>
- <5509AAE5.1000503@posteo.de>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH] selftests: Fix build failures when invoked from kselftest
+ target
+Date: Wed, 18 Mar 2015 10:46:39 -0600
+Message-ID: <5509ABEF.1030203@osg.samsung.com>
+References: <1426297504-14432-1-git-send-email-shuahkh@osg.samsung.com> <1426466329.21900.2.camel@ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-input-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5509AAE5.1000503@posteo.de>
-Sender: linux-input-owner@vger.kernel.org
-To: Martin Kepplinger <martink@posteo.de>
-Cc: Alexander Stein <alexander.stein@systec-electronic.com>, robh+dt@kernel.org, pawel.moll@arm.com, mark.rutland@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, akpm@linux-foundation.org, gregkh@linuxfoundation.org, linux-api@vger.kernel.org, devicetree@vger.kernel.org, linux-input@vger.kernel.org, linux-kernel@vger.kernel.org, Martin Kepplinger <martin.kepplinger@theobroma-systems.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1426466329.21900.2.camel-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 18, 2015 at 05:42:13PM +0100, Martin Kepplinger wrote:
-> Am 2015-03-18 um 17:21 schrieb Alexander Stein:
-> > On Wednesday 18 March 2015 16:55:57, Martin Kepplinger wrote:
-> >> From: Martin Kepplinger <martin.kepplinger@theobroma-systems.com>
-> >>
-> >> The MMA8653FC is a low-power, three-axis, capacitive micromachined
-> >> accelerometer with 10 bits of resolution with flexible user-programmable
-> >> options.
-> >>
-> >> Embedded interrupt functions enable overall power savings, by relieving the
-> >> host processor from continuously polling data, for example using the poll()
-> >> system call.
-> >>
-> >> The device can be configured to generate wake-up interrupt signals from any
-> >> combination of the configurable embedded functions, enabling the MMA8653FC
-> >> to monitor events while remaining in a low-power mode during periods of
-> >> inactivity.
-> >>
-> >> This driver provides devicetree properties to program the device's behaviour
-> >> and a simple, tested and documented sysfs interface. The data sheet and more
-> >> information is available on Freescale's website.
-> >>
-> >> Signed-off-by: Martin Kepplinger <martin.kepplinger@theobroma-systems.com>
-> >> Signed-off-by: Christoph Muellner <christoph.muellner@theobroma-systems.com>
-> >> ---
-> >> applies to v4.0-rc4 and the current -next.
-> >>
-> >> patch revision history
-> >> ......................
-> >> v2 corrects licensing and commit messages and adds appropriate recipients
-> >>
-> >>  .../testing/sysfs-bus-i2c-devices-fsl-mma8653fc    |  39 +
-> >>  .../devicetree/bindings/misc/fsl,mma8653fc.txt     |  96 +++
-> >>  MAINTAINERS                                        |   5 +
-> >>  drivers/input/misc/Kconfig                         |  11 +
-> >>  drivers/input/misc/Makefile                        |   1 +
-> >>  drivers/input/misc/mma8653fc.c                     | 913 +++++++++++++++++++++
-> >>  6 files changed, 1065 insertions(+)
-> >>  create mode 100644 Documentation/ABI/testing/sysfs-bus-i2c-devices-fsl-mma8653fc
-> >>  create mode 100644 Documentation/devicetree/bindings/misc/fsl,mma8653fc.txt
-> >>  create mode 100644 drivers/input/misc/mma8653fc.c
-> > 
-> > Shouldn't this go to drivers/iio/magnetometer instead of defining a new sysfs ABI?
-> > 
+On 03/15/2015 06:38 PM, Michael Ellerman wrote:
+> On Fri, 2015-03-13 at 19:45 -0600, Shuah Khan wrote:
+>> Several tests that rely on implicit build rules fail to build,
+>> when invoked from the main Makefile kselftest target. These
+>> failures are due to --no-builtin-rules and --no-builtin-variables
+>> options set in the inherited MAKEFLAGS.
+>>
+>> --no-builtin-rules eliminates the use of built-in implicit rules
+>> and --no-builtin-variables is for not defining built-in variables.
+>> These two options override the use of implicit rules resulting in
+>> build failures. In addition, inherited LDFLAGS result in build
+>> failures and there is no need to define LDFLAGS.  Clear LDFLAGS
+>> and MAKEFLAG when make is invoked from the main Makefile kselftest
+>> target. Fixing this at selftests Makefile avoids changing the main
+>> Makefile and keeps this change self contained at selftests level.
+>>
+>> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+>> ---
+>>  tools/testing/selftests/Makefile | 9 +++++++++
+>>  1 file changed, 9 insertions(+)
+>>
+>> diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+>> index 4e51122..8e09db7 100644
+>> --- a/tools/testing/selftests/Makefile
+>> +++ b/tools/testing/selftests/Makefile
+>> @@ -22,6 +22,15 @@ TARGETS += vm
+>>  TARGETS_HOTPLUG = cpu-hotplug
+>>  TARGETS_HOTPLUG += memory-hotplug
+>>  
+>> +# Clear LDFLAGS and MAKEFLAGS if called from main
+>> +# Makefile to avoid test build failures when test
+>> +# Makefile doesn't have explicit build rules.
+>> +ifeq (1,$(MAKELEVEL))
+>> +undefine LDFLAGS
+>> +override define MAKEFLAGS =
+>> +endef
+>> +endif
 > 
-> It could have gone to drivers/iio/accel if it would use an iio
-> interface, which would make more sense, you are right, but I simply
-> don't have the time to merge it in to iio.
+> You shouldn't need to use define/endef here, that is just for multi-line
+> variables.
 > 
-> It doesn't use an input interface either but I don't see a good place
-> for an accelerometer that uses sysfs only.
+> This should be equivalent:
+> 
+>   ifeq (1,$(MAKELEVEL))
+>   undefine LDFLAGS
+>   override MAKEFLAGS =
+>   endif
+> 
 
-drivers/misc? Since it is not using input infrastructure (nor should
-it), it does not belong in drivers/input.
+ok. Will send a patch v2 with that change.
 
-Thanks.
+-- Shuah
 
 -- 
-Dmitry
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
