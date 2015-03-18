@@ -1,61 +1,138 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH] mremap: add MREMAP_NOHOLE flag --resend
-Date: Wed, 18 Mar 2015 15:31:00 -0700
-Message-ID: <20150318153100.5658b741277f3717b52e42d9@linux-foundation.org>
-References: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli@fb.com>
+From: Chanwoo Choi <cw00.choi@samsung.com>
+Subject: Re: [PATCH v3  00/15] Add support to STMicroelectronics STM32 family
+Date: Thu, 19 Mar 2015 08:35:09 +0900
+Message-ID: <550A0BAD.2000104@samsung.com>
+References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli-b10kYP2dOMg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shaohua Li <shli-b10kYP2dOMg@public.gmane.org>
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mel-wPRd99KPJ+uzQB+pC5nmwQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Return-path: <linux-gpio-owner@vger.kernel.org>
+In-reply-to: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
+Sender: linux-gpio-owner@vger.kernel.org
+To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Cc: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, stefan@agner.ch, pmeerw@pmeerw.net, pebolle@tiscali.nl, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 17 Mar 2015 14:09:39 -0700 Shaohua Li <shli-b10kYP2dOMg@public.gmane.org> wrote:
+Hi Maxime,
 
-> There was a similar patch posted before, but it doesn't get merged. I'd like
-> to try again if there are more discussions.
-> http://marc.info/?l=linux-mm&m=141230769431688&w=2
+I tested this patch-set on Linux 4.0-rc4 for STM32F429IDISCOVERY board.
+I completed the kernel booting successfully without any modification .
+
+Looks good to me for this patch-set.
+
+Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
+
+Best Regards,
+Chanwoo Choi
+
+On 03/13/2015 06:55 AM, Maxime Coquelin wrote:
+> From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
 > 
-> mremap can be used to accelerate realloc. The problem is mremap will
-> punch a hole in original VMA, which makes specific memory allocator
-> unable to utilize it. Jemalloc is an example. It manages memory in 4M
-> chunks. mremap a range of the chunk will punch a hole, which other
-> mmap() syscall can fill into. The 4M chunk is then fragmented, jemalloc
-> can't handle it.
-
-Daniel's changelog had additional details regarding the userspace
-allocators' behaviour.  It would be best to incorporate that into your
-changelog.
-
-Daniel also had microbenchmark testing results for glibc and jemalloc. 
-Can you please do this?
-
-I'm not seeing any testing results for tcmalloc and I'm not seeing
-confirmation that this patch will be useful for tcmalloc.  Has anyone
-tried it, or sought input from tcmalloc developers?
-
-> This patch adds a new flag for mremap. With it, mremap will not punch the
-> hole. page tables of original vma will be zapped in the same way, but
-> vma is still there. That is original vma will look like a vma without
-> pagefault. Behavior of new vma isn't changed.
+> This third round tries to address most of the comments made on previous series.
 > 
-> For private vma, accessing original vma will cause
-> page fault and just like the address of the vma has never been accessed.
-> So for anonymous, new page/zero page will be fault in. For file mapping,
-> new page will be allocated with file reading for cow, or pagefault will
-> use existing page cache.
+> It contains few less patches, as the reset_controller_of_init() patch has been
+> removed, now that the bootlaoder handles the reset of the timers.
 > 
-> For shared vma, original and new vma will map to the same file. We can
-> optimize this without zaping original vma's page table in this case, but
-> this patch doesn't do it yet.
+> The pinctrl driver has also been removed after Linus review.
+> It will be reworked to use the generic pinconf bindings, and may contain
+> changes for other machines (Mediatek), to add support for pinmux property
+> handling directly in pinconf-generic.
 > 
-> Since with MREMAP_NOHOLE, original vma still exists. pagefault handler
-> for special vma might not able to handle pagefault for mremap'd area.
-> The patch doesn't allow vmas with VM_PFNMAP|VM_MIXEDMAP flags do NOHOLE
-> mremap.
+> STM32 MCUs are Cortex-M CPU, used in various applications (consumer
+> electronics, industrial applications, hobbyists...).
+> Datasheets, user and programming manuals are publicly available on
+> STMicroelectronics website.
+> 
+> With this series applied, the STM32F419 Discovery can boot succesfully.
+> 
+> 
+> Changes since v2:
+> -----------------
+>  - Remove pinctrl driver from the series. 
+>  - Remove reset_controller_of_init(), and reset the timers in the bootloader
+>  - Add HW flow contrl property for serial driver
+>  - Lots of changes in the DTS file, as per Andreas recommendations
+>  - Some Kconfig clean-ups
+>  - Adapt the config to be compatible with Andreas' bootwrapper, except UART port.
+>  - Various fixes in documentation
+> 
+> Changes since v1:
+> -----------------
+>  - Move bindings documentation in their own patches (Andreas)
+>  - Rename ARM System timer to armv7m-systick (Rob)
+>  - Add clock-frequency property handling in armv7m-systick (Rob)
+>  - Re-factor the reset controllers into a single controller (Philipp)
+>  - Add kerneldoc to reset_controller_of_init (Philipp)
+>  - Add named constants in include/dt-bindings/reset/ (Philipp)
+>  - Make pinctrl driver to depend on ARCH_STM32 or COMPILE_TEST (Geert)
+>  - Introduce CPUV7M_NUM_IRQ config flag to indicate the number of interrupts
+> supported by the MCU, in order to limit memory waste in vectors' table (Uwe)
+> 
+> 
+> Maxime Coquelin (15):
+>   scripts: link-vmlinux: Don't pass page offset to kallsyms if XIP
+>     Kernel
+>   ARM: ARMv7-M: Enlarge vector table up to 256 entries
+>   dt-bindings: Document the ARM System timer bindings
+>   clocksource: Add ARM System timer driver
+>   dt-bindings: Document the STM32 reset bindings
+>   drivers: reset: Add STM32 reset driver
+>   dt-bindings: Document the STM32 timer bindings
+>   clockevent: Add STM32 Timer driver
+>   dt-bindings: Document the STM32 USART bindings
+>   serial: stm32-usart: Add STM32 USART Driver
+>   ARM: Add STM32 family machine
+>   ARM: dts: Add ARM System timer as clockevent in armv7m
+>   ARM: dts: Introduce STM32F429 MCU
+>   ARM: configs: Add STM32 defconfig
+>   MAINTAINERS: Add entry for STM32 MCUs
+> 
+>  Documentation/arm/stm32/overview.txt               |  32 +
+>  Documentation/arm/stm32/stm32f429-overview.txt     |  22 +
+>  .../devicetree/bindings/arm/armv7m_systick.txt     |  26 +
+>  .../devicetree/bindings/reset/st,stm32-rcc.txt     | 102 +++
+>  .../devicetree/bindings/serial/st,stm32-usart.txt  |  32 +
+>  .../devicetree/bindings/timer/st,stm32-timer.txt   |  22 +
+>  MAINTAINERS                                        |   8 +
+>  arch/arm/Kconfig                                   |  18 +
+>  arch/arm/Makefile                                  |   1 +
+>  arch/arm/boot/dts/Makefile                         |   1 +
+>  arch/arm/boot/dts/armv7-m.dtsi                     |   6 +
+>  arch/arm/boot/dts/stm32f429-disco.dts              |  71 +++
+>  arch/arm/boot/dts/stm32f429.dtsi                   | 226 +++++++
+>  arch/arm/configs/stm32_defconfig                   |  71 +++
+>  arch/arm/kernel/entry-v7m.S                        |  13 +-
+>  arch/arm/mach-stm32/Makefile                       |   1 +
+>  arch/arm/mach-stm32/Makefile.boot                  |   3 +
+>  arch/arm/mach-stm32/board-dt.c                     |  19 +
+>  arch/arm/mm/Kconfig                                |  15 +
+>  drivers/clocksource/Kconfig                        |  15 +
+>  drivers/clocksource/Makefile                       |   2 +
+>  drivers/clocksource/armv7m_systick.c               |  78 +++
+>  drivers/clocksource/timer-stm32.c                  | 184 ++++++
+>  drivers/reset/Makefile                             |   1 +
+>  drivers/reset/reset-stm32.c                        | 125 ++++
+>  drivers/tty/serial/Kconfig                         |  17 +
+>  drivers/tty/serial/Makefile                        |   1 +
+>  drivers/tty/serial/stm32-usart.c                   | 695 +++++++++++++++++++++
+>  include/uapi/linux/serial_core.h                   |   3 +
+>  scripts/link-vmlinux.sh                            |   2 +-
+>  30 files changed, 1807 insertions(+), 5 deletions(-)
+>  create mode 100644 Documentation/arm/stm32/overview.txt
+>  create mode 100644 Documentation/arm/stm32/stm32f429-overview.txt
+>  create mode 100644 Documentation/devicetree/bindings/arm/armv7m_systick.txt
+>  create mode 100644 Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
+>  create mode 100644 Documentation/devicetree/bindings/serial/st,stm32-usart.txt
+>  create mode 100644 Documentation/devicetree/bindings/timer/st,stm32-timer.txt
+>  create mode 100644 arch/arm/boot/dts/stm32f429-disco.dts
+>  create mode 100644 arch/arm/boot/dts/stm32f429.dtsi
+>  create mode 100644 arch/arm/configs/stm32_defconfig
+>  create mode 100644 arch/arm/mach-stm32/Makefile
+>  create mode 100644 arch/arm/mach-stm32/Makefile.boot
+>  create mode 100644 arch/arm/mach-stm32/board-dt.c
+>  create mode 100644 drivers/clocksource/armv7m_systick.c
+>  create mode 100644 drivers/clocksource/timer-stm32.c
+>  create mode 100644 drivers/reset/reset-stm32.c
+>  create mode 100644 drivers/tty/serial/stm32-usart.c
+> 
 
-At some point (preferably an early point) we'd like a manpage update
-and a cc: to linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org please.
