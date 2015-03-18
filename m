@@ -1,398 +1,140 @@
-From: Mathieu Poirier <mathieu.poirier@linaro.org>
-Subject: Re: [PATCH v0 01/11] stm class: Introduce an abstraction for System
- Trace Module devices
-Date: Wed, 18 Mar 2015 09:07:27 -0600
-Message-ID: <CANLsYkx6+mtTf0gPhu37mfbL84oOj0CkW_yOMwFHh_XyqQ7pAQ@mail.gmail.com>
-References: <1425728161-164217-1-git-send-email-alexander.shishkin@linux.intel.com>
-	<1425728161-164217-2-git-send-email-alexander.shishkin@linux.intel.com>
-	<CANLsYkzmnHSbfoWSEWkDx-UTuypALZv42FsZ0XVWz2bfqdGWZQ@mail.gmail.com>
-	<87mw3bewq8.fsf@ashishki-desk.ger.corp.intel.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH V5] Allow compaction of unevictable pages
+Date: Wed, 18 Mar 2015 11:40:54 -0400
+Message-ID: <20150318154054.GH3042@home.goodmis.org>
+References: <1426267597-25811-1-git-send-email-emunson@akamai.com>
+ <550332CE.7040404@redhat.com>
+ <20150313190915.GA12589@akamai.com>
+ <20150313201954.GB28848@dhcp22.suse.cz>
+ <5506ACEC.9010403@suse.cz>
+ <20150316134956.GA15324@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87mw3bewq8.fsf@ashishki-desk.ger.corp.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexander Shishkin <alexander.shishkin@linux.intel.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Pratik Patel <pratikp@codeaurora.org>, peter.lachner@intel.com, norbert.schulz@intel.com, keven.boell@intel.com, yann.fouassier@intel.com, laurent.fert@intel.com, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20150316134956.GA15324@akamai.com>
+Sender: owner-linux-mm@kvack.org
+To: Eric B Munson <emunson@akamai.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>, Michal Hocko <mhocko@suse.cz>, Rik van Riel <riel@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, Christoph Lameter <cl@linux.com>, Peter Zijlstra <peterz@infradead.org>, Mel Gorman <mgorman@suse.de>, David Rientjes <rientjes@google.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, linux-rt-users@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 17 March 2015 at 04:37, Alexander Shishkin
-<alexander.shishkin@linux.intel.com> wrote:
-> Mathieu Poirier <mathieu.poirier@linaro.org> writes:
->
->> On 7 March 2015 at 04:35, Alexander Shishkin
->> <alexander.shishkin@linux.intel.com> wrote:
->>> A System Trace Module (STM) is a device exporting data in System Trace
->>> Protocol (STP) format as defined by MIPI STP standards. Examples of such
->>> devices are Intel Trace Hub and Coresight STM.
->>>
->>> This abstraction provides a unified interface for software trace sources
->>> to send their data over an STM device to a debug host. In order to do
->>> that, such a trace source needs to be assigned a pair of master/channel
->>> identifiers that all the data from this source will be tagged with. The
->>> STP decoder on the debug host side will use these master/channel tags to
->>> distinguish different trace streams from one another inside one STP
->>> stream.
->>>
->>> This abstraction provides a configfs-based policy management mechanism
->>> for dynamic allocation of these master/channel pairs based on trace
->>> source-supplied string identifier. It has the flexibility of being
->>> defined at runtime and at the same time (provided that the policy
->>> definition is aligned with the decoding end) consistency.
->>>
->>> For userspace trace sources, this abstraction provides write()-based and
->>> mmap()-based (if the underlying stm device allows this) output mechanism.
->>>
->>> For kernel-side trace sources, we provide "stm_source" device class that
->>> can be connected to an stm device at run time.
->>>
->>> Cc: linux-api@vger.kernel.org
->>> Cc: Pratik Patel <pratikp@codeaurora.org>
->>> Cc: Mathieu Poirier <mathieu.poirier@linaro.org>
->>> Signed-off-by: Alexander Shishkin <alexander.shishkin@linux.intel.com>
->>> ---
->>>  Documentation/ABI/testing/configfs-stp-policy    |  44 ++
->>>  Documentation/ABI/testing/sysfs-class-stm        |  14 +
->>>  Documentation/ABI/testing/sysfs-class-stm_source |  11 +
->>>  Documentation/trace/stm.txt                      |  77 +++
->>>  drivers/Kconfig                                  |   2 +
->>>  drivers/Makefile                                 |   1 +
->>>  drivers/stm/Kconfig                              |   8 +
->>>  drivers/stm/Makefile                             |   3 +
->>>  drivers/stm/core.c                               | 839 +++++++++++++++++++++++
->>>  drivers/stm/policy.c                             | 470 +++++++++++++
->>>  drivers/stm/stm.h                                |  77 +++
->>>  include/linux/stm.h                              |  87 +++
->>>  include/uapi/linux/stm.h                         |  47 ++
->>>  13 files changed, 1680 insertions(+)
->>>  create mode 100644 Documentation/ABI/testing/configfs-stp-policy
->>>  create mode 100644 Documentation/ABI/testing/sysfs-class-stm
->>>  create mode 100644 Documentation/ABI/testing/sysfs-class-stm_source
->>>  create mode 100644 Documentation/trace/stm.txt
->>>  create mode 100644 drivers/stm/Kconfig
->>>  create mode 100644 drivers/stm/Makefile
->>>  create mode 100644 drivers/stm/core.c
->>>  create mode 100644 drivers/stm/policy.c
->>>  create mode 100644 drivers/stm/stm.h
->>>  create mode 100644 include/linux/stm.h
->>>  create mode 100644 include/uapi/linux/stm.h
->>>
->>
->> [Snip...]
->>
->>> +
->>> +static int stm_output_assign(struct stm_device *stm, unsigned int width,
->>> +                            struct stp_policy_node *policy_node,
->>> +                            struct stm_output *output)
->>> +{
->>> +       unsigned int midx, cidx, mend, cend;
->>> +       int ret = -EBUSY;
->>> +
->>> +       if (width > stm->data->sw_nchannels)
->>> +               return -EINVAL;
->>> +
->>> +       if (policy_node) {
->>
->> Where does this get set?  All I found is code that is switching on it.
->
-> It comes from stp_policy_node_lookup() in stm_file_assign() or
-> stm_source_link_add().
->
->>> +               stp_policy_node_get_ranges(policy_node,
->>> +                                          &midx, &mend, &cidx, &cend);
->>> +       } else {
->>> +               midx = stm->data->sw_start;
->>> +               cidx = 0;
->>> +               mend = stm->data->sw_end;
->>> +               cend = stm->data->sw_nchannels - 1;
->>> +       }
->>> +
->>> +       spin_lock(&stm->mc_lock);
->>> +       if (output->nr_chans)
->>> +               goto unlock;
->>> +
->>> +       ret = stm_find_master_chan(stm, width, &midx, mend, &cidx, cend);
->>> +       if (ret)
->>> +               goto unlock;
->>> +
->>> +       output->master = midx;
->>> +       output->channel = cidx;
->>> +       output->nr_chans = width;
->>> +       stm_output_claim(stm, output);
->>> +       dev_dbg(stm->dev, "assigned %u:%u (+%u)\n", midx, cidx, width);
->>> +
->>> +       ret = 0;
->>> +unlock:
->>> +       spin_unlock(&stm->mc_lock);
->>> +
->>> +       return ret;
->>> +}
->>> +
->>
->> [Snip...]
->>
->>> +
->>> +/**
->>> + * stm_source_register_device() - register an stm_source device
->>> + * @parent:    parent device
->>> + * @data:      device description structure
->>> + *
->>> + * This will create a device of stm_source class that can write
->>> + * data to an stm device once linked.
->>> + *
->>> + * Return:     0 on success, -errno otherwise.
->>> + */
->>> +int stm_source_register_device(struct device *parent,
->>> +                              struct stm_source_data *data)
->>> +{
->>> +       struct stm_source_device *src;
->>> +       struct device *dev;
->>> +
->>> +       if (!stm_core_up)
->>> +               return -EPROBE_DEFER;
->>> +
->>> +       src = kzalloc(sizeof(*src), GFP_KERNEL);
->>> +       if (!src)
->>> +               return -ENOMEM;
->>> +
->>> +       dev = device_create(&stm_source_class, parent, MKDEV(0, 0), NULL, "%s",
->>> +                           data->name);
->>> +       if (IS_ERR(dev)) {
->>> +               kfree(src);
->>> +               return PTR_ERR(dev);
->>> +       }
->>> +
->>> +       spin_lock_init(&src->link_lock);
->>> +       INIT_LIST_HEAD(&src->link_entry);
->>> +       src->dev = dev;
->>> +       src->data = data;
->>> +       data->src = src;
->>> +       dev_set_drvdata(dev, src);
->>> +
->>> +       return 0;
->>> +}
->>> +EXPORT_SYMBOL_GPL(stm_source_register_device);
->>> +
->>
->> [Snip...]
->>
->> It's really not clear (at least to me) how stm_source_device works.
->> They make a bridge between the kernel and the STM devices but the
->> "link" between them is not obvious.  More documentation perhaps?
->
-> Sure, I need to elaborate on this a bit. The idea the stm_source device
-> gets "linked" to an stm device by way of writing that stm device name to
-> its stm_source_link attribute and if everything's fine, stm_sounrce's
-> .link callback is called, after which it can start sending data out with
-> stm_sounce_write().
->
->>> +/**
->>> + * struct stm_data - STM device description and callbacks
->>> + * @name:              device name
->>> + * @stm:               internal structure, only used by stm class code
->>> + * @sw_start:          first STP master
->>> + * @sw_end:            last STP master
->>> + * @sw_nchannels:      number of STP channels per master
->>> + * @sw_mmiosz:         size of one channel's IO space, for mmap, optional
->>> + * @write:             write callback
->>> + * @mmio_addr:         mmap callback, optional
->>> + *
->>> + * Fill out this structure before calling stm_register_device() to create
->>> + * an STM device and stm_unregister_device() to destroy it. It will also be
->>> + * passed back to write() and mmio_addr() callbacks.
->>> + */
->>> +struct stm_data {
->>> +       const char              *name;
->>> +       struct stm_device       *stm;
->>> +       unsigned int            sw_start;
->>> +       unsigned int            sw_end;
->>
->> The above kernel doc is the only place where "sw_start" and "sw_end"
->> are described as first and last STP masters.  Other than that it takes
->> a really long time to figure out what they really are.  I think a
->> better naming convention can be chosen here.
->
-> The idea is that only a certain subset of masters is available for
-> software (others being statically assigned to different hw blocks or
-> otherwise unavailable to software). These two mark start and end of this
-> subset.
->
->>
->>> +       unsigned int            sw_nchannels;
->>> +       unsigned int            sw_mmiosz;
->>> +       ssize_t                 (*write)(struct stm_data *, unsigned int,
->>> +                                        unsigned int, const char *, size_t);
->>> +       phys_addr_t             (*mmio_addr)(struct stm_data *, unsigned int,
->>> +                                            unsigned int, unsigned int);
->>> +       void                    (*link)(struct stm_data *, unsigned int,
->>> +                                       unsigned int);
->>> +       void                    (*unlink)(struct stm_data *, unsigned int,
->>> +                                         unsigned int);
->>
->> It is really not clear to me what the "link" and "unlink" functions do
->> - documenting what they're for and explain when to use them and (not
->> use them) would be appreciated.
->
-> Will do.
->
->> I think we should also add two things to this structure:  1) a private
->> field and 2) a (*stm_drv_ioctl) stub.
->> The private field would be filled by the registrant and left alone by
->> the generic-stm core.  When parsing the commands in
->> "stm_char_ioctl()", data->stm_drv_ioctl(private, cmd, arg) could be
->> called to let architecture specific drivers deal with it.  That way
->> applications can deal with a single configuration file descriptor.
->
-> Indeed, good idea.
->
->>
->>> +};
->>> +
->>> +int stm_register_device(struct device *parent, struct stm_data *stm_data,
->>> +                       struct module *owner);
->>> +void stm_unregister_device(struct stm_data *stm_data);
->>> +
->>> +struct stm_source_device;
->>> +
->>> +/**
->>> + * struct stm_source_data - STM source device description and callbacks
->>> + * @name:      device name, will be used for policy lookup
->>> + * @src:       internal structure, only used by stm class code
->>> + * @nr_chans:  number of channels to allocate
->>> + * @link:      called when STM device gets linked to this source
->>> + * @unlink:    called when STH device is about to be unlinked
->>> + *
->>> + * Fill in this structure before calling stm_source_register_device() to
->>> + * register a source device. Also pass it to unregister and write calls.
->>> + */
->>> +struct stm_source_data {
->>> +       const char              *name;
->>> +       struct stm_source_device *src;
->>> +       unsigned int            percpu;
->>> +       unsigned int            nr_chans;
->>> +       int                     (*link)(struct stm_source_data *data);
->>> +       void                    (*unlink)(struct stm_source_data *data);
->>> +};
->>> +
->>
->> I didn't get the linking/unlinking process - it is also not clear as
->> to why we need struct stm_data and struct stm_source_data.  More
->> explanation on this would be good.
->
-> My idea is that connecting stm to stm_source device is done via sysfs
-> attribute write like so:
->
-> $ echo dummy_stm > /sys/class/stm_source/stm_console/stm_source_link
->
-> This will result in stm_source's .link getting called, at which point
-> stm_console, for example, will do a register_console().
->
-> stm_data is there for stm devices to pass their parameters and callbacks
-> to stm_register_device(); stm_source data is that for stm_source
-> devices. I'll try to be more elaborate about these in my followup.
->
->>> +int stm_source_register_device(struct device *parent,
->>> +                              struct stm_source_data *data);
->>> +void stm_source_unregister_device(struct stm_source_data *data);
->>> +
->>> +int stm_source_write(struct stm_source_data *data, unsigned int chan,
->>> +                    const char *buf, size_t count);
->>> +
->>> +#endif /* _STM_H_ */
->>> diff --git a/include/uapi/linux/stm.h b/include/uapi/linux/stm.h
->>> new file mode 100644
->>> index 0000000000..042b58b53b
->>> --- /dev/null
->>> +++ b/include/uapi/linux/stm.h
->>> @@ -0,0 +1,47 @@
->>> +/*
->>> + * System Trace Module (STM) userspace interfaces
->>> + * Copyright (c) 2014, Intel Corporation.
->>> + *
->>> + * This program is free software; you can redistribute it and/or modify it
->>> + * under the terms and conditions of the GNU General Public License,
->>> + * version 2, as published by the Free Software Foundation.
->>> + *
->>> + * This program is distributed in the hope it will be useful, but WITHOUT
->>> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
->>> + * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
->>> + * more details.
->>> + *
->>> + * STM class implements generic infrastructure for  System Trace Module devices
->>> + * as defined in MIPI STPv2 specification.
->>> + */
->>> +
->>> +#ifndef _UAPI_LINUX_STM_H
->>> +#define _UAPI_LINUX_STM_H
->>> +
->>> +/**
->>> + * struct stp_policy_id - identification for the STP policy
->>> + * @size:      size of the structure including real id[] length
->>> + * @master:    assigned master
->>> + * @channel:   first assigned channel
->>> + * @width:     number of requested channels
->>> + * @id:                identification string
->>> + *
->>> + * User must calculate the total size of the structure and put it into
->>> + * @size field, fill out the @id and desired @width. In return, kernel
->>> + * fills out @master, @channel and @width.
->>> + */
->>> +struct stp_policy_id {
->>> +       __u32           size;
->>> +       __u16           master;
->>> +       __u16           channel;
->>> +       __u16           width;
->>> +       /* padding */
->>> +       __u16           __reserved_0;
->>> +       __u32           __reserved_1;
->>> +       char            id[0];
->>> +};
->>> +
->>> +#define STP_POLICY_ID_SET      _IOWR('%', 0, struct stp_policy_id)
->>> +#define STP_POLICY_ID_GET      _IOR('%', 1, struct stp_policy_id)
->>> +
->>> +#endif /* _UAPI_LINUX_STM_H */
->>> --
->>> 2.1.4
->>>
->>
->> Aside from the above points I think this is all very good work.  The
->> patchset should likely be broken up in two sets, one for the generic
->> STM architecture wrapper and another for the Intel TH part.  That way
->> things can be worked on independently.
->
-> The Intel TH part is very much dependent on the STM part; I could split
-> out the stm-dependant patch from Intel TH, but that just seems to make
-> it more complex for me and reviewers. I'd prefer to keep them together
-> unless there are strong objections.
->
->> On my side I will get a prototype going that folds the current
->> coresight-stm driver in this new mindset - I'll let you know how
->> things go.
->
-> Thanks a lot!
->
-> Regards,
+On Mon, Mar 16, 2015 at 09:49:56AM -0400, Eric B Munson wrote:
+> On Mon, 16 Mar 2015, Vlastimil Babka wrote:
+> 
+> > [CC += linux-api@]
+> > 
+> > Since this is a kernel-user-space API change, please CC linux-api@.
+> > The kernel source file Documentation/SubmitChecklist notes that all
+> > Linux kernel patches that change userspace interfaces should be CCed
+> > to linux-api@vger.kernel.org, so that the various parties who are
+> > interested in API changes are informed. For further information, see
+> > https://urldefense.proofpoint.com/v2/url?u=https-3A__www.kernel.org_doc_man-2Dpages_linux-2Dapi-2Dml.html&d=AwIC-g&c=96ZbZZcaMF4w0F4jpN6LZg&r=aUmMDRRT0nx4IfILbQLv8xzE0wB9sQxTHI3QrQ2lkBU&m=GUotTNnv26L0HxtXrBgiHqu6kwW3ufx2_TQpXIA216c&s=IFFYQ7Zr-4SIaF3slOZqiSP_noyva42kCwVRxxDm5wo&e=
+> 
+> Added to the Cc list, thanks.
+> 
+> > 
+> > 
+> > On 03/13/2015 09:19 PM, Michal Hocko wrote:
+> > >On Fri 13-03-15 15:09:15, Eric B Munson wrote:
+> > >>On Fri, 13 Mar 2015, Rik van Riel wrote:
+> > >>
+> > >>>On 03/13/2015 01:26 PM, Eric B Munson wrote:
+> > >>>
+> > >>>>--- a/mm/compaction.c
+> > >>>>+++ b/mm/compaction.c
+> > >>>>@@ -1046,6 +1046,8 @@ typedef enum {
+> > >>>>  	ISOLATE_SUCCESS,	/* Pages isolated, migrate */
+> > >>>>  } isolate_migrate_t;
+> > >>>>
+> > >>>>+int sysctl_compact_unevictable;
+> > 
+> > A comment here would be useful I think, as well as explicit default
+> > value. Maybe also __read_mostly although I don't know how much that
+> > matters.
+> 
+> I am going to sit on V6 for a couple of days incase anyone from rt wants
+> to chime in.  But these will be in V6.
+> 
+> > 
+> > I also wonder if it might be confusing that "compact_memory" is a
+> > write-only trigger that doesn't even show under "sysctl -a", while
+> > "compact_unevictable" is a read/write setting. But I don't have a
+> > better suggestion right now.
+> 
+> Does allow_unevictable_compaction sound better?  It feels too much like
+> variable naming conventions from other languages which seems to
+> encourage verbosity to me, but does indicate a difference from
+> compact_memory.
+> 
+> > 
+> > >>>>+
+> > >>>>  /*
+> > >>>>   * Isolate all pages that can be migrated from the first suitable block,
+> > >>>>   * starting at the block pointed to by the migrate scanner pfn within
+> > >>>
+> > >>>I suspect that the use cases where users absolutely do not want
+> > >>>unevictable pages migrated are special cases, and it may make
+> > >>>sense to enable sysctl_compact_unevictable by default.
+> > >>
+> > >>Given that sysctl_compact_unevictable=0 is the way the kernel behaves
+> > >>now and the push back against always enabling compaction on unevictable
+> > >>pages, I left the default to be the behavior as it is today.
+> > >
+> > >The question is _why_ we have this behavior now. Is it intentional?
+> > 
+> > It's there since 748446bb6 ("mm: compaction: memory compaction
+> > core"). Commit c53919adc0 ("mm: vmscan: remove lumpy reclaim")
+> > changes the comment in __isolate_lru_page() handling of unevictable
+> > pages to mention compaction explicitly. It could have been
+> > accidental in 748446bb6 though, maybe it just reused
+> > __isolate_lru_page() for compaction - it seems that the skipping of
+> > unevictable was initially meant to optimize lumpy reclaim.
+> > 
+> > >e46a28790e59 (CMA: migrate mlocked pages) is a precedence in that
+> > 
+> > Well, CMA and realtime kernels are probably mutually exclusive enough.
+> > 
+> > >direction. Vlastimil has then changed that by edc2ca612496 (mm,
+> > >compaction: move pageblock checks up from isolate_migratepages_range()).
+> > >There is no mention about mlock pages so I guess it was more an
+> > >unintentional side effect of the patch. At least that is my current
+> > >understanding. I might be wrong here.
+> > 
+> > Although that commit did change unintentionally more details that I
+> > would have liked (unfortunately), I think you are wrong on this one.
+> > ISOLATE_UNEVICTABLE is still passed from
+> > isolate_migratepages_range() which is used by CMA, while the
+> > compaction variant isolate_migratepages() does not pass it. So it's
+> > kept CMA-specific as before.
+> > 
+> > >The thing about RT is that it is not usable with the upstream kernel
+> > >without the RT patchset AFAIU. So the default should be reflect what is
+> > >better for the standard kernel. RT loads have to tune the system anyway
+> > >so it is not so surprising they would disable this option as well. We
+> > >should help those guys and do not require them to touch the code but the
+> > >knob is reasonable IMHO.
+> > >
+> > >Especially when your changelog suggests that having this enabled by
+> > >default is beneficial for the standard kernel.
+> > 
+> > I agree, but if there's a danger of becoming too of a bikeshed
+> > topic, I'm fine with keeping the default same as current behavior
+> > and changing it later. Or maybe we should ask some -rt mailing list
+> > instead of just Peter and Thomas?
+> 
+> According to the rt wiki, there is no -rt development list so lkml is
+> it.  I will change the default to 1 for V6 if I don't hear otherwise by
+> the time I get back around to spinning V6.
+> 
 
-I forgot to mention in my previous email...  I think the hierarchy of
-our respective tracing module along with the generic-stm probably
-needs a review.
+For kernel development, yes. But this change affects users. Cc'ing the
+linux-rt-users mailing list (which I did) is appropriate in this case.
 
-Currently we have drivers/coresight, drivers/intel_th and drivers/stm.
+-- Steve
 
-To me it doesn't scale - what happens when other architectures come
-out with their own hw tracing technologies?
 
-I suggest we move everything under drivers/hwtracing and as such have:
-
-drivers/hwtracing
-drivers/hwtracing/intel_ht
-drivers/hwtracing/coresight
-drivers/hwtracing/stm
-
-That way other architectures can add drivers for their own hw tracing
-technology without further polluting the drivers/ directory and
-concentrating everything in the same area.  What's your view on that?
-
-> --
-> Alex
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
