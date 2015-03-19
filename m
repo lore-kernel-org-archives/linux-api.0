@@ -1,115 +1,145 @@
-From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH v3 10/15] serial: stm32-usart: Add STM32 USART Driver
-Date: Thu, 19 Mar 2015 14:55:38 +0100
-Message-ID: <CALszF6A5Zu7i0hxSLTS-nfOAXmd0__jLjB=fHxK93Ex5Vbi9LA@mail.gmail.com>
-References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
-	<1426197361-19290-11-git-send-email-maxime.coquelin@st.com>
-	<CAHp75Vd7+oLiLLuyocYh95TebtocWrRho6xNjuSUt8fYGp8npg@mail.gmail.com>
-	<CALszF6BWuUYRh+3rWnSQLApkAHA5dQXw=6x6D_evRtb+5B_ukA@mail.gmail.com>
-	<CAHp75Vdf6=z1d5+eYJ+QGTko9kkZf-oPfoWaf8FRoTdqcdWxjw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <CAHp75Vdf6=z1d5+eYJ+QGTko9kkZf-oPfoWaf8FRoTdqcdWxjw@mail.gmail.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Andy Shevchenko <andy.shevchenko@gmail.com>
-Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft>
+From: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH V6] Allow compaction of unevictable pages
+Date: Thu, 19 Mar 2015 09:57:10 -0400
+Message-ID: <1426773430-31052-1-git-send-email-emunson@akamai.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-2015-03-17 18:56 GMT+01:00 Andy Shevchenko <andy.shevchenko@gmail.com>:
-> On Tue, Mar 17, 2015 at 7:32 PM, Maxime Coquelin
-> <mcoquelin.stm32@gmail.com> wrote:
->> 2015-03-13 15:19 GMT+01:00 Andy Shevchenko <andy.shevchenko@gmail.com>:
->
->>>> +static void stm32_set_termios(struct uart_port *port, struct ktermios *termios,
->>>> +                           struct ktermios *old)
->>>> +{
->>>> +       unsigned int baud;
->>>> +       u32 usardiv, mantissa, fraction;
->>>> +       tcflag_t cflag;
->>>> +       u32 cr1, cr2, cr3;
->>>> +       unsigned long flags;
->>>> +
->>>> +       baud = uart_get_baud_rate(port, termios, old, 0, port->uartclk / 16);
->>>> +       cflag = termios->c_cflag;
->>>> +
->>>> +       spin_lock_irqsave(&port->lock, flags);
->>>> +
->>>> +       /* Stop serial port and reset value */
->>>> +       writel_relaxed(0, port->membase + USART_CR1);
->>>> +
->>>> +       cr1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE;
->>>> +
->>>> +       if (cflag & CSTOPB)
->>>> +               cr2 = USART_CR2_STOP_2B;
->>>> +
->>>> +       if (cflag & PARENB) {
->>>> +               cr1 |= USART_CR1_PCE;
->>>> +               if ((cflag & CSIZE) == CS8)
->>>> +                       cr1 |= USART_CR1_M;
->>>> +       }
->>>> +
->>>> +       if (cflag & PARODD)
->>>> +               cr1 |= USART_CR1_PS;
->>>> +
->>>> +       if (cflag & CRTSCTS)
->>>> +               cr3 = USART_CR3_RTSE | USART_CR3_CTSE;
->>>> +
->>>> +       usardiv = (port->uartclk * 25) / (baud * 4);
->>>> +       mantissa = (usardiv / 100) << USART_BRR_DIV_M_SHIFT;
->>>> +       fraction = DIV_ROUND_CLOSEST((usardiv % 100) * 16, 100);
->>>> +       if (fraction & ~USART_BRR_DIV_F_MASK) {
->>>> +               fraction = 0;
->>>> +               mantissa += (1 << USART_BRR_DIV_M_SHIFT);
->>>> +       }
->>>
->>> So, it's a fractional divider. right? Could it be then fractional
->>> divider clock in this first place (see
->>> drivers/clk/clk-fractional-divider.c)?
->>>
->>
->> I'm not sure it makes sense to represent this baudrate divider within
->> the UART IP as a clock.
->
-> You have it already. I mean it should be fractional divider clock.
->
-> stm32port->clk = devm_clk_get(&pdev->dev, NULL);
-> +
-> +       if (WARN_ON(IS_ERR(stm32port->clk)))
-> +               return -EINVAL;
-> +
-> +       /* ensure that clk rate is correct by enabling the clk */
-> +       clk_prepare_enable(stm32port->clk);
-> +       stm32port->port.uartclk = clk_get_rate(stm32port->clk);
+Currently, pages which are marked as unevictable are protected from
+compaction, but not from other types of migration.  The POSIX real time
+extension explicitly states that mlock() will prevent a major page
+fault, but the spirit of is is that mlock() should give a process the
+ability to control sources of latency, including minor page faults.
+However, the mlock manpage only explicitly says that a locked page will
+not be written to swap and this can cause some confusion.  The
+compaction code today, does not give a developer who wants to avoid swap
+but wants to have large contiguous areas available any method to achieve
+this state.  This patch introduces a sysctl for controlling compaction
+behavoir with respect to the unevictable lru.  Users that demand no page
+faults after a page is present can set compact_unevictable to 0 and
+users who need the large contiguous areas can enable compaction on
+locked memory by leaving the default value of 1.
 
-No I don't have it already.
-The clock I get here is coming from outside the IP, so this driver is
-a clock consumer.
-If I follow your advice, this driver will become both the clock
-provider and the only clock consumer of this clock.
-I think this is something that should be avoided.
+To illustrate this problem I wrote a quick test program that mmaps a
+large number of 1MB files filled with random data.  These maps are
+created locked and read only.  Then every other mmap is unmapped and I
+attempt to allocate huge pages to the static huge page pool.  When the
+compact_unevictable sysctl is 0, I cannot allocate hugepages after
+fragmenting memory.  When the value is set to 1, allocations succeed.
 
-Also, it would require to add another clock in between (a by-16 fixed
-divider), because the formula is:
-baud = fck / (16 * usart_div)
+Signed-off-by: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>
+Cc: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+Cc: linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+---
+Changes from V5:
+* Default sysctl value is now 1
+* Used more descriptive sysctl name
+* documentation calss out default value
 
-Finally, representing this as a clock is not really matching the
-reality, because we are generating a baud rate, not a frequency.
+ Documentation/sysctl/vm.txt |   11 +++++++++++
+ include/linux/compaction.h  |    1 +
+ kernel/sysctl.c             |    9 +++++++++
+ mm/compaction.c             |    7 +++++++
+ 4 files changed, 28 insertions(+)
 
-Really, I would prefer keeping this fractional divider as it is
-implemented today.
-
-Kind regards,
-Maxime
-
->
->> What would be the gain?
->
-> Remove custom implementation of the calculations. It will be just one
-> line to refresh the baud rate. I think we have a lot of duplicates
-> here and there in the kernel. It would be nice not to bring another
-> one.
->
-> --
-> With Best Regards,
-> Andy Shevchenko
+diff --git a/Documentation/sysctl/vm.txt b/Documentation/sysctl/vm.txt
+index 902b457..9832ec5 100644
+--- a/Documentation/sysctl/vm.txt
++++ b/Documentation/sysctl/vm.txt
+@@ -21,6 +21,7 @@ Currently, these files are in /proc/sys/vm:
+ - admin_reserve_kbytes
+ - block_dump
+ - compact_memory
++- compact_unevictable_allowed
+ - dirty_background_bytes
+ - dirty_background_ratio
+ - dirty_bytes
+@@ -106,6 +107,16 @@ huge pages although processes will also directly compact memory as required.
+ 
+ ==============================================================
+ 
++compact_unevictable_allowed
++
++Available only when CONFIG_COMPACTION is set. When set to 1, compaction is
++allowed to examine the unevictable lru (mlocked pages) for pages to compact.
++This should be used on systems where stalls for minor page faults are an
++acceptable trade for large contiguous free memory.  Set to 0 to prevent
++compaction from moving pages that are unevictable.  Default value is 1.
++
++==============================================================
++
+ dirty_background_bytes
+ 
+ Contains the amount of dirty memory at which the background kernel
+diff --git a/include/linux/compaction.h b/include/linux/compaction.h
+index a014559..aa8f61c 100644
+--- a/include/linux/compaction.h
++++ b/include/linux/compaction.h
+@@ -34,6 +34,7 @@ extern int sysctl_compaction_handler(struct ctl_table *table, int write,
+ extern int sysctl_extfrag_threshold;
+ extern int sysctl_extfrag_handler(struct ctl_table *table, int write,
+ 			void __user *buffer, size_t *length, loff_t *ppos);
++extern int sysctl_compact_unevictable_allowed;
+ 
+ extern int fragmentation_index(struct zone *zone, unsigned int order);
+ extern unsigned long try_to_compact_pages(gfp_t gfp_mask, unsigned int order,
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index 88ea2d6..2f6c880 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
+@@ -1313,6 +1313,15 @@ static struct ctl_table vm_table[] = {
+ 		.extra1		= &min_extfrag_threshold,
+ 		.extra2		= &max_extfrag_threshold,
+ 	},
++	{
++		.procname	= "compact_unevictable_allowed",
++		.data		= &sysctl_compact_unevictable_allowed,
++		.maxlen		= sizeof(int),
++		.mode		= 0644,
++		.proc_handler	= proc_dointvec,
++		.extra1		= &zero,
++		.extra2		= &one,
++	},
+ 
+ #endif /* CONFIG_COMPACTION */
+ 	{
+diff --git a/mm/compaction.c b/mm/compaction.c
+index 8c0d945..ad88a8c 100644
+--- a/mm/compaction.c
++++ b/mm/compaction.c
+@@ -1047,6 +1047,12 @@ typedef enum {
+ } isolate_migrate_t;
+ 
+ /*
++ * Allow userspace to control policy on scanning the unevictable LRU for
++ * compactable pages.
++ */
++int sysctl_compact_unevictable_allowed __read_mostly = 1;
++
++/*
+  * Isolate all pages that can be migrated from the first suitable block,
+  * starting at the block pointed to by the migrate scanner pfn within
+  * compact_control.
+@@ -1057,6 +1063,7 @@ static isolate_migrate_t isolate_migratepages(struct zone *zone,
+ 	unsigned long low_pfn, end_pfn;
+ 	struct page *page;
+ 	const isolate_mode_t isolate_mode =
++		(sysctl_compact_unevictable_allowed ? ISOLATE_UNEVICTABLE : 0) |
+ 		(cc->mode == MIGRATE_ASYNC ? ISOLATE_ASYNC_MIGRATE : 0);
+ 
+ 	/*
+-- 
+1.7.9.5
