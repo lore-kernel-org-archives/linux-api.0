@@ -1,53 +1,42 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH V6] Allow compaction of unevictable pages
-Date: Thu, 19 Mar 2015 15:56:14 +0100
-Message-ID: <550AE38E.7090006@suse.cz>
-References: <1426773430-31052-1-git-send-email-emunson@akamai.com>
+From: Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH v3 10/15] serial: stm32-usart: Add STM32 USART Driver
+Date: Thu, 19 Mar 2015 10:58:36 -0400
+Message-ID: <550AE41C.8070803@hurleysoftware.com>
+References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>	<1426197361-19290-11-git-send-email-maxime.coquelin@st.com>	<CAHp75Vd7+oLiLLuyocYh95TebtocWrRho6xNjuSUt8fYGp8npg@mail.gmail.com>	<CALszF6BWuUYRh+3rWnSQLApkAHA5dQXw=6x6D_evRtb+5B_ukA@mail.gmail.com>	<CAHp75Vdf6=z1d5+eYJ+QGTko9kkZf-oPfoWaf8FRoTdqcdWxjw@mail.gmail.com> <CALszF6A5Zu7i0hxSLTS-nfOAXmd0__jLjB=fHxK93Ex5Vbi9LA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-2
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426773430-31052-1-git-send-email-emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALszF6A5Zu7i0hxSLTS-nfOAXmd0__jLjB=fHxK93Ex5Vbi9LA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Shevchenko <andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, =?UTF-8?B?QW5kcmVhcyBGw6RyYmVy?= <afaerber-l3A5Bk7waGM@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "David S. Miller" <davem@davemlo>
 List-Id: linux-api@vger.kernel.org
 
-On 03/19/2015 02:57 PM, Eric B Munson wrote:
-> Currently, pages which are marked as unevictable are protected from
-> compaction, but not from other types of migration.  The POSIX real time
-> extension explicitly states that mlock() will prevent a major page
-> fault, but the spirit of is is that mlock() should give a process the
-> ability to control sources of latency, including minor page faults.
-> However, the mlock manpage only explicitly says that a locked page will
-> not be written to swap and this can cause some confusion.  The
-> compaction code today, does not give a developer who wants to avoid swap
-> but wants to have large contiguous areas available any method to achieve
-> this state.  This patch introduces a sysctl for controlling compaction
-> behavoir with respect to the unevictable lru.  Users that demand no page
+On 03/19/2015 09:55 AM, Maxime Coquelin wrote:
+>>>>> +static void stm32_set_termios(struct uart_port *port, struct ktermios *termios,
+>>>>> +                           struct ktermios *old)
+[...]
+>>>>> +       usardiv = (port->uartclk * 25) / (baud * 4);
+>>>>> +       mantissa = (usardiv / 100) << USART_BRR_DIV_M_SHIFT;
+>>>>> +       fraction = DIV_ROUND_CLOSEST((usardiv % 100) * 16, 100);
+>>>>> +       if (fraction & ~USART_BRR_DIV_F_MASK) {
+>>>>> +               fraction = 0;
+>>>>> +               mantissa += (1 << USART_BRR_DIV_M_SHIFT);
+>>>>> +       }
+[...]
+> Really, I would prefer keeping this fractional divider as it is
+> implemented today.
 
-  behavior
+You have to admit that's basically an unintelligible mess;
+how would anyone ever be able to refactor and replace that with a
+common divider implementation?
 
-> faults after a page is present can set compact_unevictable to 0 and
+At the very least, please comment on the formula and format.
 
-                                        compact_unevictable_allowed
-
-> users who need the large contiguous areas can enable compaction on
-> locked memory by leaving the default value of 1.
-> 
-> To illustrate this problem I wrote a quick test program that mmaps a
-> large number of 1MB files filled with random data.  These maps are
-> created locked and read only.  Then every other mmap is unmapped and I
-> attempt to allocate huge pages to the static huge page pool.  When the
-> compact_unevictable sysctl is 0, I cannot allocate hugepages after
-
-compact_unevictable_allowed
-
-> fragmenting memory.  When the value is set to 1, allocations succeed.
-> 
-> Signed-off-by: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-> Cc: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-
-Acked-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-
-Thanks.
+Regards,
+Peter Hurley
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
