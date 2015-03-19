@@ -1,148 +1,54 @@
-From: "Ivan.khoronzhuk" <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
-Subject: Re: [dmidecode] [Patch v4] firmware: dmi-sysfs: add SMBIOS entry
- point area attribute
-Date: Thu, 19 Mar 2015 19:33:56 +0200
-Message-ID: <550B0884.6010902@globallogic.com>
-References: <1423069563-26467-1-git-send-email-ivan.khoronzhuk@linaro.org>	 <20150226103622.09b9870a@endymion.delvare> <54F6FAE7.30801@globallogic.com> <1425978807.24849.22.camel@chaos.site>
+From: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3 10/15] serial: stm32-usart: Add STM32 USART Driver
+Date: Thu, 19 Mar 2015 18:35:30 +0100
+Message-ID: <CALszF6DX2pz_US6uqQwBjmZhfgjw5PP1UAy9H+c-_Kgkk_Z72w@mail.gmail.com>
+References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
+	<1426197361-19290-11-git-send-email-maxime.coquelin@st.com>
+	<CAHp75Vd7+oLiLLuyocYh95TebtocWrRho6xNjuSUt8fYGp8npg@mail.gmail.com>
+	<CALszF6BWuUYRh+3rWnSQLApkAHA5dQXw=6x6D_evRtb+5B_ukA@mail.gmail.com>
+	<CAHp75Vdf6=z1d5+eYJ+QGTko9kkZf-oPfoWaf8FRoTdqcdWxjw@mail.gmail.com>
+	<CALszF6A5Zu7i0hxSLTS-nfOAXmd0__jLjB=fHxK93Ex5Vbi9LA@mail.gmail.com>
+	<550AE41C.8070803@hurleysoftware.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1425978807.24849.22.camel-H7Kp9ZFCxt/N0uC3ymp8PA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jean Delvare <jdelvare-l3A5Bk7waGM@public.gmane.org>
-Cc: Ivan Khoronzhuk <ivan.khoronzhuk-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dmidecode-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, msalter-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <550AE41C.8070803-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
+Cc: Andy Shevchenko <andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber-l3A5Bk7waGM@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm@linux-founda>
 List-Id: linux-api@vger.kernel.org
 
+2015-03-19 15:58 GMT+01:00 Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>:
+> On 03/19/2015 09:55 AM, Maxime Coquelin wrote:
+>>>>>> +static void stm32_set_termios(struct uart_port *port, struct ktermios *termios,
+>>>>>> +                           struct ktermios *old)
+> [...]
+>>>>>> +       usardiv = (port->uartclk * 25) / (baud * 4);
+>>>>>> +       mantissa = (usardiv / 100) << USART_BRR_DIV_M_SHIFT;
+>>>>>> +       fraction = DIV_ROUND_CLOSEST((usardiv % 100) * 16, 100);
+>>>>>> +       if (fraction & ~USART_BRR_DIV_F_MASK) {
+>>>>>> +               fraction = 0;
+>>>>>> +               mantissa += (1 << USART_BRR_DIV_M_SHIFT);
+>>>>>> +       }
+> [...]
+>> Really, I would prefer keeping this fractional divider as it is
+>> implemented today.
+>
+> You have to admit that's basically an unintelligible mess;
+> how would anyone ever be able to refactor and replace that with a
+> common divider implementation?
+>
+> At the very least, please comment on the formula and format.
 
+Ok, I will refactor the implementation, and comment it.
 
-On 10.03.15 11:13, Jean Delvare wrote:
-> Hi Ivan,
->
-> Sorry for the late reply. I think I addressed some points in other
-> replies already, but for completeness let me reply to this post too.
->
-> Le Wednesday 04 March 2015 =C3=A0 14:30 +0200, Ivan.khoronzhuk a =C3=A9=
-crit :
->> On 02/26/2015 11:36 AM, Jean Delvare wrote:
->>> On Wed,  4 Feb 2015 19:06:03 +0200, Ivan Khoronzhuk wrote:
->>>> diff --git a/Documentation/ABI/testing/sysfs-firmware-dmi b/Docume=
-ntation/ABI/testing/sysfs-firmware-dmi
->>>> index c78f9ab..3a9ffe8 100644
->>>> --- a/Documentation/ABI/testing/sysfs-firmware-dmi
->>>> +++ b/Documentation/ABI/testing/sysfs-firmware-dmi
->>>> @@ -12,6 +12,16 @@ Description:
->>>>    		cannot ensure that the data as exported to userland is
->>>>    		without error either.
->>>>   =20
->>>> +		The firmware provides DMI structures as a packed list of
->>>> +		data referenced by a SMBIOS table entry point. The SMBIOS
->>>> +		entry point contains general information, like SMBIOS
->>>> +		version, DMI table size, etc. The structure, content and
->>>> +		size of SMBIOS entry point is dependent on SMBIOS version.
->>>> +		That's why SMBIOS entry point is represented in dmi sysfs
->>>> +		like a raw attribute and is accessible via
->>>> +		/sys/firmware/dmi/smbios_raw_header. The format of SMBIOS
->>> As mentioned before, I don't like the name "smbios_raw_header". I t=
-hink
->>> it should be "smbios_entry_point" or similar.
->> If Matt is OK to get another version,
->> Let it be smbios_entry_point.
->> If it's more convenient, it should be changed while it's possible.
-> Great, thanks.
->
->>>> @@ -669,6 +699,18 @@ static int __init dmi_sysfs_init(void)
->>>>    		goto err;
->>>>    	}
->>>>   =20
->>>> +	smbios_raw_header =3D dmi_get_smbios_entry_area(&size);
->>>> +	if (!smbios_raw_header) {
->>>> +		pr_debug("dmi-sysfs: SMBIOS raw data is not available.\n");
->>>> +		error =3D -EINVAL;
->>>> +		goto err;
->>>> +	}
->>> I don't think this should have been a fatal error. Just because for
->>> some reason dmi_get_smbios_entry_area() returned NULL is no good re=
-ason
->>> for nor exposing /sys/firmware/dmi/entries as we used to.
->> It issues an error only in case of when entry table is not available=
-,
->> if entry point is absent then dmi table is not available a fortiori.
->> So there is no reason to continue from that point.
-> Well it could also fail because of an error in the code ;-) But OK, I
-> agree with you here.
->
->>> But anyway this is no longer relevant if the code is moved to dmi_s=
-can
->>> as I suggested.
->>>
->>>> +
->>>> +	/* Create the raw binary file to access the entry area */
->>>> +	smbios_raw_area_attr.size =3D size;
->>>> +	if (sysfs_create_bin_file(dmi_kobj, &smbios_raw_area_attr))
->>>> +		goto err;
->>> I think this should have had a corresponding call to
->>> sysfs_remove_bin_file() in dmi_sysfs_exit(). (Again no longer relev=
-ant
->>> if the code is moved.)
->> The removing is done in kobject_del().
->> Doesn't it? In another way it should be done for
->> dmi/entries/*/raw attributes also.
-> It _is_ done for other attributes already:
->
-> 	kset_unregister(dmi_kset);
->
-> Which is exactly why I believe it should be done for
-> smbios_raw_area_attr too. All other kernel drivers are calling
-> sysfs_create_bin_file() or equivalent in their cleanup function and I
-> see no reason why this driver would be an exception.
-
-kset_unregister() uses kobject_del()
-no see difference.
-
->
->>> There's one thing I do not understand. I seem to understand that th=
-e
->>> goal behind this patch is to be able to run dmidecode without /dev/=
-mem.
->>> Dmidecode currently reads 2 areas from /dev/mem: the 0xF0000-0xFFFF=
-=46
->>> area in search of the entry point, and the DMI data table itself. W=
-ith
->>> this patch you make the entry point available through sysfs. But
->>> dmidecode will still need to access /dev/mem to access the DMI data
->>> table. So that does not really solve anything, does it?
->> It's supposed to read DMI table via entries presented by dmi-sysfs.
->> It contains raw attributes that can be used for these purposes.
->> No need to use /dev/mem.
-> Yes, I understood this meanwhile, sorry.
->
->> Another case if you want to add binary of whole dmi table to be able=
- to
->> read it directly in order to parse in dmidecode w/o any additional h=
-eadache
->> with open/close. Well, it partly dupes currently present dmi-sysfs.
-> In fact dmi-sysfs already duplicates a lot of code which was already
-> present in dmidecode and libsmbios. And exporting the raw table will
-> require way less code than the implementation you proposed originally=
-=2E
-> So the code duplication argument doesn't hold, sorry.
->
->> But it simplifies dmi table parsing for dmidecode, and who wants to =
-use
->> dmi-sysfs, let them use it, but dmidecode will be reading raw entry.
->> Well let it be. Why not.
-> Yes, this is exactly my point.
->
->> If others are OK, for dmidecode, and probably others tools also,
->> kernel can constantly expose two tables under /sys/firmware/dmi/tabl=
-es/
->> smbios_entry_point and dmi_table. Independently on dmi-sysfs.
-> That's what I would like to see implemented, yes, thank you very much=
-=2E
->
-
---=20
 Regards,
-Ivan Khoronzhuk
+Maxime
+
+>
+> Regards,
+> Peter Hurley
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
