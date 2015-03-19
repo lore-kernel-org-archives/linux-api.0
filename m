@@ -1,76 +1,148 @@
-From: David Herrmann <dh.herrmann@gmail.com>
-Subject: Re: [PATCH 1/1] Add virtio-input driver.
-Date: Thu, 19 Mar 2015 18:16:37 +0100
-Message-ID: <CANq1E4Sh74p0+U36FUWNctr=jiKkuSgK6w-9FiSsOZ7PbtJG5g@mail.gmail.com>
-References: <1426756391-26585-1-git-send-email-kraxel@redhat.com>
-	<1426756391-26585-2-git-send-email-kraxel@redhat.com>
-	<CANq1E4TDj4pq3J_BVc=Yuzo5dVR=QcNexVUqaqwjg7Qi5_xX4Q@mail.gmail.com>
-	<20150319162704.GE30732@dtor-ws>
+From: "Ivan.khoronzhuk" <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
+Subject: Re: [dmidecode] [Patch v4] firmware: dmi-sysfs: add SMBIOS entry
+ point area attribute
+Date: Thu, 19 Mar 2015 19:33:56 +0200
+Message-ID: <550B0884.6010902@globallogic.com>
+References: <1423069563-26467-1-git-send-email-ivan.khoronzhuk@linaro.org>	 <20150226103622.09b9870a@endymion.delvare> <54F6FAE7.30801@globallogic.com> <1425978807.24849.22.camel@chaos.site>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150319162704.GE30732@dtor-ws>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Cc: Gerd Hoffmann <kraxel@redhat.com>, virtio-dev@lists.oasis-open.org, virtualization@lists.linux-foundation.org, mst@redhat.com, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1425978807.24849.22.camel-H7Kp9ZFCxt/N0uC3ymp8PA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jean Delvare <jdelvare-l3A5Bk7waGM@public.gmane.org>
+Cc: Ivan Khoronzhuk <ivan.khoronzhuk-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dmidecode-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, msalter-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hey
 
-On Thu, Mar 19, 2015 at 5:27 PM, Dmitry Torokhov
-<dmitry.torokhov@gmail.com> wrote:
-> On Thu, Mar 19, 2015 at 01:29:49PM +0100, David Herrmann wrote:
-[...]
->> > +static int virtinput_probe(struct virtio_device *vdev)
->> > +{
->> > +       struct virtio_input *vi;
->> > +       size_t size;
->> > +       int abs, err;
->> > +
->> > +       vi = kzalloc(sizeof(*vi), GFP_KERNEL);
->> > +       if (!vi) {
->> > +               err = -ENOMEM;
->> > +               goto out1;
->> > +       }
->> > +       vdev->priv = vi;
->> > +       vi->vdev = vdev;
->> > +
->> > +       err = virtinput_init_vqs(vi);
->> > +       if (err)
->> > +               goto out2;
->> > +
->> > +       vi->idev = input_allocate_device();
->> > +       if (!vi->idev) {
->> > +               err = -ENOMEM;
->> > +               goto out3;
->> > +       }
->> > +       input_set_drvdata(vi->idev, vi);
->> > +
->> > +       size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ID_NAME, 0);
->> > +       virtio_cread_bytes(vi->vdev, offsetof(struct virtio_input_config, u),
->> > +                          vi->name, min(size, sizeof(vi->name)));
->> > +       size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ID_SERIAL, 0);
->> > +       virtio_cread_bytes(vi->vdev, offsetof(struct virtio_input_config, u),
->> > +                          vi->serial, min(size, sizeof(vi->serial)));
->> > +       snprintf(vi->phys, sizeof(vi->phys),
->> > +                "virtio%d/input0", vdev->index);
->> > +
->> > +       virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_PROP_BITS, 0,
->> > +                          vi->idev->propbit, INPUT_PROP_CNT);
->> > +       size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_REP);
->> > +       if (size)
->> > +               set_bit(EV_REP, vi->idev->evbit);
->> > +
->> > +       vi->idev->name = vi->name;
->> > +       vi->idev->phys = vi->phys;
->>
->> Can you set vi->idev->uniq to the virtio-bus path?
+
+On 10.03.15 11:13, Jean Delvare wrote:
+> Hi Ivan,
 >
-> No, uniq can't be phys as phys is unique within the system while uniq is
-> like serial number or UUID and should never repeat.
+> Sorry for the late reply. I think I addressed some points in other
+> replies already, but for completeness let me reply to this post too.
+>
+> Le Wednesday 04 March 2015 =C3=A0 14:30 +0200, Ivan.khoronzhuk a =C3=A9=
+crit :
+>> On 02/26/2015 11:36 AM, Jean Delvare wrote:
+>>> On Wed,  4 Feb 2015 19:06:03 +0200, Ivan Khoronzhuk wrote:
+>>>> diff --git a/Documentation/ABI/testing/sysfs-firmware-dmi b/Docume=
+ntation/ABI/testing/sysfs-firmware-dmi
+>>>> index c78f9ab..3a9ffe8 100644
+>>>> --- a/Documentation/ABI/testing/sysfs-firmware-dmi
+>>>> +++ b/Documentation/ABI/testing/sysfs-firmware-dmi
+>>>> @@ -12,6 +12,16 @@ Description:
+>>>>    		cannot ensure that the data as exported to userland is
+>>>>    		without error either.
+>>>>   =20
+>>>> +		The firmware provides DMI structures as a packed list of
+>>>> +		data referenced by a SMBIOS table entry point. The SMBIOS
+>>>> +		entry point contains general information, like SMBIOS
+>>>> +		version, DMI table size, etc. The structure, content and
+>>>> +		size of SMBIOS entry point is dependent on SMBIOS version.
+>>>> +		That's why SMBIOS entry point is represented in dmi sysfs
+>>>> +		like a raw attribute and is accessible via
+>>>> +		/sys/firmware/dmi/smbios_raw_header. The format of SMBIOS
+>>> As mentioned before, I don't like the name "smbios_raw_header". I t=
+hink
+>>> it should be "smbios_entry_point" or similar.
+>> If Matt is OK to get another version,
+>> Let it be smbios_entry_point.
+>> If it's more convenient, it should be changed while it's possible.
+> Great, thanks.
+>
+>>>> @@ -669,6 +699,18 @@ static int __init dmi_sysfs_init(void)
+>>>>    		goto err;
+>>>>    	}
+>>>>   =20
+>>>> +	smbios_raw_header =3D dmi_get_smbios_entry_area(&size);
+>>>> +	if (!smbios_raw_header) {
+>>>> +		pr_debug("dmi-sysfs: SMBIOS raw data is not available.\n");
+>>>> +		error =3D -EINVAL;
+>>>> +		goto err;
+>>>> +	}
+>>> I don't think this should have been a fatal error. Just because for
+>>> some reason dmi_get_smbios_entry_area() returned NULL is no good re=
+ason
+>>> for nor exposing /sys/firmware/dmi/entries as we used to.
+>> It issues an error only in case of when entry table is not available=
+,
+>> if entry point is absent then dmi table is not available a fortiori.
+>> So there is no reason to continue from that point.
+> Well it could also fail because of an error in the code ;-) But OK, I
+> agree with you here.
+>
+>>> But anyway this is no longer relevant if the code is moved to dmi_s=
+can
+>>> as I suggested.
+>>>
+>>>> +
+>>>> +	/* Create the raw binary file to access the entry area */
+>>>> +	smbios_raw_area_attr.size =3D size;
+>>>> +	if (sysfs_create_bin_file(dmi_kobj, &smbios_raw_area_attr))
+>>>> +		goto err;
+>>> I think this should have had a corresponding call to
+>>> sysfs_remove_bin_file() in dmi_sysfs_exit(). (Again no longer relev=
+ant
+>>> if the code is moved.)
+>> The removing is done in kobject_del().
+>> Doesn't it? In another way it should be done for
+>> dmi/entries/*/raw attributes also.
+> It _is_ done for other attributes already:
+>
+> 	kset_unregister(dmi_kset);
+>
+> Which is exactly why I believe it should be done for
+> smbios_raw_area_attr too. All other kernel drivers are calling
+> sysfs_create_bin_file() or equivalent in their cleanup function and I
+> see no reason why this driver would be an exception.
 
-...sorry, my bad! We should still forward it from the host, imo. It's
-really handy for applications to re-detect devices.
+kset_unregister() uses kobject_del()
+no see difference.
 
-Thanks
-David
+>
+>>> There's one thing I do not understand. I seem to understand that th=
+e
+>>> goal behind this patch is to be able to run dmidecode without /dev/=
+mem.
+>>> Dmidecode currently reads 2 areas from /dev/mem: the 0xF0000-0xFFFF=
+=46
+>>> area in search of the entry point, and the DMI data table itself. W=
+ith
+>>> this patch you make the entry point available through sysfs. But
+>>> dmidecode will still need to access /dev/mem to access the DMI data
+>>> table. So that does not really solve anything, does it?
+>> It's supposed to read DMI table via entries presented by dmi-sysfs.
+>> It contains raw attributes that can be used for these purposes.
+>> No need to use /dev/mem.
+> Yes, I understood this meanwhile, sorry.
+>
+>> Another case if you want to add binary of whole dmi table to be able=
+ to
+>> read it directly in order to parse in dmidecode w/o any additional h=
+eadache
+>> with open/close. Well, it partly dupes currently present dmi-sysfs.
+> In fact dmi-sysfs already duplicates a lot of code which was already
+> present in dmidecode and libsmbios. And exporting the raw table will
+> require way less code than the implementation you proposed originally=
+=2E
+> So the code duplication argument doesn't hold, sorry.
+>
+>> But it simplifies dmi table parsing for dmidecode, and who wants to =
+use
+>> dmi-sysfs, let them use it, but dmidecode will be reading raw entry.
+>> Well let it be. Why not.
+> Yes, this is exactly my point.
+>
+>> If others are OK, for dmidecode, and probably others tools also,
+>> kernel can constantly expose two tables under /sys/firmware/dmi/tabl=
+es/
+>> smbios_entry_point and dmi_table. Independently on dmi-sysfs.
+> That's what I would like to see implemented, yes, thank you very much=
+=2E
+>
+
+--=20
+Regards,
+Ivan Khoronzhuk
