@@ -1,301 +1,217 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [PATCH] selftests: Fix kcmp build to not require headers install
-Date: Thu, 19 Mar 2015 11:51:08 +1100
-Message-ID: <1426726268.14101.5.camel@ellerman.id.au>
-References: <1426297504-14432-1-git-send-email-shuahkh@osg.samsung.com>
-	 <1426297504-14432-2-git-send-email-shuahkh@osg.samsung.com>
-	 <1426503639.4716.7.camel@ellerman.id.au> <55099415.5060400@osg.samsung.com>
-	 <1426723357.14101.1.camel@ellerman.id.au>
-	 <550A15EB.1060900@osg.samsung.com>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: [PATCH 0/3] idle memory tracking
+Date: Thu, 19 Mar 2015 11:13:37 +0900
+Message-ID: <20150319021337.GD9153@blaptop>
+References: <cover.1426706637.git.vdavydov@parallels.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <550A15EB.1060900-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <cover.1426706637.git.vdavydov@parallels.com>
+Sender: owner-linux-mm@kvack.org
+To: Vladimir Davydov <vdavydov@parallels.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2015-03-18 at 18:18 -0600, Shuah Khan wrote:
-> On 03/18/2015 06:02 PM, Michael Ellerman wrote:
-> > On Wed, 2015-03-18 at 09:04 -0600, Shuah Khan wrote:
-> >> On 03/16/2015 05:00 AM, Michael Ellerman wrote:
-> >>> On Fri, 2015-03-13 at 19:45 -0600, Shuah Khan wrote:
-> >>>> Change CFLAGS to look in uapi to allow kcmp to be built without
-> >>>> requiring headers install. This will make it easier to run tests
-> >>>> without going through the headers install step.
-> >>>>
-> >>>> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-> >>>> ---
-> >>>>  tools/testing/selftests/kcmp/Makefile | 2 +-
-> >>>>  1 file changed, 1 insertion(+), 1 deletion(-)
-> >>>>
-> >>>> diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
-> >>>> index ff0eefd..d405ad4 100644
-> >>>> --- a/tools/testing/selftests/kcmp/Makefile
-> >>>> +++ b/tools/testing/selftests/kcmp/Makefile
-> >>>> @@ -1,5 +1,5 @@
-> >>>>  CC := $(CROSS_COMPILE)$(CC)
-> >>>> -CFLAGS += -I../../../../usr/include/
-> >>>> +CFLAGS += -I../../../../include/uapi -I../../../../usr/include/
-> >>>
-> >>> Hi Shuah,
-> >>>
-> >>> Sorry but this is wrong. The contents of include/uapi are not the same as the
-> >>> exported kernel headers.
-> >>>
-> >>> Mixing the unprocessed kernel headers with user headers leads to all sorts of
-> >>> mess, eg:
-> >>>
-> >>> $ cc -I../../../../include/uapi -I../../../../usr/include/ kcmp_test.c   -o kcmp_test
-> >>
-> >> Do you see this error when you run the compile using kcmp Makefile
-> >> or using make ksefltest target?
-> > 
-> > $ cd tools/testing/selftests
-> > $ make TARGETS=kcmp
-> > for TARGET in kcmp; do \
-> > 	make -C $TARGET; \
-> > done;
-> > make[1]: Entering directory '/home/michael/work/topics/powerpc-maint/src/misc-test/tools/testing/selftests/kcmp'
-> > ppc64-cc -I../../../../include/uapi -I../../../../usr/include/    kcmp_test.c   -o kcmp_test
-> > In file included from /usr/powerpc-linux-gnu/include/asm/ptrace.h:27:0,
-> >                  from /usr/powerpc-linux-gnu/include/asm/sigcontext.h:11,
-> >                  from /usr/powerpc-linux-gnu/include/bits/sigcontext.h:27,
-> >                  from /usr/powerpc-linux-gnu/include/signal.h:332,
-> >                  from kcmp_test.c:5:
-> > ../../../../include/uapi/linux/types.h:9:2: warning: #warning "Attempt to use kernel headers from user space, see http://kernelnewbies.org/KernelHeaders" [-Wcpp]
-> >  #warning "Attempt to use kernel headers from user space, see http://kernelnewbies.org/KernelHeaders"
-> >   ^
-> > 
+Hello,
+
+On Wed, Mar 18, 2015 at 11:44:33PM +0300, Vladimir Davydov wrote:
+> Hi,
 > 
-> Hmm..  I don't see this when I run it on x86
+> Knowing the portion of memory that is not used by a certain application
+> or memory cgroup (idle memory) can be useful for partitioning the system
+> efficiently. Currently, the only means to estimate the amount of idle
+> memory provided by the kernel is /proc/PID/clear_refs. However, it has
+> two serious shortcomings:
 > 
-> make TARGETS=kcmp
-> for TARGET in kcmp; do \
-> 	make -C $TARGET; \
-> done;
-> make[1]: Entering directory
-> '/lkml/linux-kselftest/tools/testing/selftests/kcmp'
-> cc -I../../../../include/uapi -I../../../../usr/include/    kcmp_test.c
->   -o kcmp_test
-> make[1]: Leaving directory
-> '/lkml/linux-kselftest/tools/testing/selftests/kcmp'
+>  - it does not count unmapped file pages
+>  - it affects the reclaimer logic
+> 
+> Back in 2011 an attempt was made by Michel Lespinasse to improve the
+> situation (see http://lwn.net/Articles/459269/). He proposed a kernel
+> space daemon which would periodically scan physical address range,
+> testing and clearing ACCESS/YOUNG PTE bits, and counting pages that had
+> not been referenced since the last scan. The daemon avoided interference
+> with the page reclaimer by setting the new PG_young flag on referenced
+> pages and making page_referenced() return >= 1 if PG_young was set.
+> 
+> This patch set reuses the idea of Michel's patch set, but the
+> implementation is quite different. Instead of introducing a kernel space
+> daemon, it only provides the userspace with the necessary means to
+> estimate the amount of idle memory, leaving the daemon to be implemented
+> in the userspace. In order to achieve that, it adds two new proc files,
+> /proc/kpagecgroup and /proc/sys/vm/set_idle, and extends the clear_refs
+> interface.
+> 
+> 
+>  1. Write 1 to /proc/sys/vm/set_idle.
+> 
+>     This will set the IDLE flag for all user pages. The IDLE flag is cleared
+>     when the page is read or the ACCESS/YOUNG bit is cleared in any PTE pointing
+>     to the page. It is also cleared when the page is freed.
 
-Yeah, but that's basically just luck.
+We should scan all of pages periodically? I understand why you did but
+someone might not take care of unmapped pages so I hope it should be optional.
+if someone just want to catch mapped file+anon pages, he can do it
+by scanning of address space of the process he selects.
+Even, someone might want to scan just part of address space rather than
+all address space of the process. Acutally, I have such scenario.
 
-$ cc -w -H -I../../../../include/uapi -I../../../../usr/include/    kcmp_test.c   -o kcmp_test
-. /usr/include/stdio.h
-.. /usr/include/features.h
-... /usr/include/x86_64-linux-gnu/sys/cdefs.h
-.... /usr/include/x86_64-linux-gnu/bits/wordsize.h
-... /usr/include/x86_64-linux-gnu/gnu/stubs.h
-.... /usr/include/x86_64-linux-gnu/gnu/stubs-64.h
-.. /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stddef.h
-.. /usr/include/x86_64-linux-gnu/bits/types.h
-... /usr/include/x86_64-linux-gnu/bits/wordsize.h
-... /usr/include/x86_64-linux-gnu/bits/typesizes.h
-.. /usr/include/libio.h
-... /usr/include/_G_config.h
-.... /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stddef.h
-.... /usr/include/wchar.h
-... /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stdarg.h
-.. /usr/include/x86_64-linux-gnu/bits/stdio_lim.h
-.. /usr/include/x86_64-linux-gnu/bits/sys_errlist.h
-. /usr/include/stdlib.h
-.. /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stddef.h
-.. /usr/include/x86_64-linux-gnu/bits/waitflags.h
-.. /usr/include/x86_64-linux-gnu/bits/waitstatus.h
-... /usr/include/endian.h
-.... /usr/include/x86_64-linux-gnu/bits/endian.h
-.... /usr/include/x86_64-linux-gnu/bits/byteswap.h
-..... /usr/include/x86_64-linux-gnu/bits/wordsize.h
-..... /usr/include/x86_64-linux-gnu/bits/byteswap-16.h
-.. /usr/include/xlocale.h
-.. /usr/include/x86_64-linux-gnu/sys/types.h
-... /usr/include/time.h
-... /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stddef.h
-... /usr/include/x86_64-linux-gnu/sys/select.h
-.... /usr/include/x86_64-linux-gnu/bits/select.h
-..... /usr/include/x86_64-linux-gnu/bits/wordsize.h
-.... /usr/include/x86_64-linux-gnu/bits/sigset.h
-.... /usr/include/time.h
-.... /usr/include/x86_64-linux-gnu/bits/time.h
-... /usr/include/x86_64-linux-gnu/sys/sysmacros.h
-... /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h
-.... /usr/include/x86_64-linux-gnu/bits/wordsize.h
-.. /usr/include/alloca.h
-... /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stddef.h
-.. /usr/include/x86_64-linux-gnu/bits/stdlib-float.h
-. /usr/include/signal.h
-.. /usr/include/x86_64-linux-gnu/bits/sigset.h
-.. /usr/include/x86_64-linux-gnu/bits/signum.h
-.. /usr/include/time.h
-.. /usr/include/x86_64-linux-gnu/bits/siginfo.h
-... /usr/include/x86_64-linux-gnu/bits/wordsize.h
-.. /usr/include/x86_64-linux-gnu/bits/sigaction.h
-.. /usr/include/x86_64-linux-gnu/bits/sigcontext.h
-.. /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stddef.h
-.. /usr/include/x86_64-linux-gnu/bits/sigstack.h
-.. /usr/include/x86_64-linux-gnu/sys/ucontext.h
-... /usr/include/signal.h
-.. /usr/include/x86_64-linux-gnu/bits/sigthread.h
-. /usr/lib/gcc/x86_64-linux-gnu/4.9/include-fixed/limits.h
-.. /usr/lib/gcc/x86_64-linux-gnu/4.9/include-fixed/syslimits.h
-... /usr/lib/gcc/x86_64-linux-gnu/4.9/include-fixed/limits.h
-.... /usr/include/limits.h
-..... /usr/include/x86_64-linux-gnu/bits/posix1_lim.h
-...... /usr/include/x86_64-linux-gnu/bits/local_lim.h
-....... ../../../../include/uapi/linux/limits.h
-..... /usr/include/x86_64-linux-gnu/bits/posix2_lim.h
-..... /usr/include/x86_64-linux-gnu/bits/xopen_lim.h
-...... /usr/include/x86_64-linux-gnu/bits/stdio_lim.h
-. /usr/include/unistd.h
-.. /usr/include/x86_64-linux-gnu/bits/posix_opt.h
-.. /usr/include/x86_64-linux-gnu/bits/environments.h
-... /usr/include/x86_64-linux-gnu/bits/wordsize.h
-.. /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stddef.h
-.. /usr/include/x86_64-linux-gnu/bits/confname.h
-.. /usr/include/getopt.h
-. /usr/include/errno.h
-.. /usr/include/x86_64-linux-gnu/bits/errno.h
-... ../../../../include/uapi/linux/errno.h
-.... /usr/include/x86_64-linux-gnu/asm/errno.h
-..... ../../../../include/uapi/asm-generic/errno.h
-...... ../../../../include/uapi/asm-generic/errno-base.h
-. /usr/include/string.h
-.. /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stddef.h
-. /usr/include/fcntl.h
-.. /usr/include/x86_64-linux-gnu/bits/fcntl.h
-... /usr/include/x86_64-linux-gnu/bits/fcntl-linux.h
-.... /usr/include/x86_64-linux-gnu/bits/uio.h
-.. /usr/include/time.h
-.. /usr/include/x86_64-linux-gnu/bits/stat.h
-. ../../../../include/uapi/linux/unistd.h
-.. /usr/include/x86_64-linux-gnu/asm/unistd.h
-... /usr/include/x86_64-linux-gnu/asm/unistd_64.h
-. ../../../../include/uapi/linux/kcmp.h
-. /usr/include/x86_64-linux-gnu/sys/syscall.h
-.. /usr/include/x86_64-linux-gnu/bits/syscall.h
-. /usr/include/x86_64-linux-gnu/sys/stat.h
-.. /usr/include/time.h
-.. /usr/include/x86_64-linux-gnu/bits/stat.h
-. /usr/include/x86_64-linux-gnu/sys/wait.h
-.. /usr/include/x86_64-linux-gnu/bits/siginfo.h
-... /usr/include/x86_64-linux-gnu/bits/wordsize.h
-. ../kselftest.h
-Multiple include guards may be useful for:
-../../../../include/uapi/linux/errno.h
-/usr/include/errno.h
-/usr/include/limits.h
-/usr/include/wchar.h
-/usr/include/x86_64-linux-gnu/asm/errno.h
-/usr/include/x86_64-linux-gnu/bits/byteswap-16.h
-/usr/include/x86_64-linux-gnu/bits/byteswap.h
-/usr/include/x86_64-linux-gnu/bits/confname.h
-/usr/include/x86_64-linux-gnu/bits/endian.h
-/usr/include/x86_64-linux-gnu/bits/environments.h
-/usr/include/x86_64-linux-gnu/bits/errno.h
-/usr/include/x86_64-linux-gnu/bits/fcntl-linux.h
-/usr/include/x86_64-linux-gnu/bits/fcntl.h
-/usr/include/x86_64-linux-gnu/bits/local_lim.h
-/usr/include/x86_64-linux-gnu/bits/select.h
-/usr/include/x86_64-linux-gnu/bits/sigaction.h
-/usr/include/x86_64-linux-gnu/bits/signum.h
-/usr/include/x86_64-linux-gnu/bits/sigstack.h
-/usr/include/x86_64-linux-gnu/bits/stdlib-float.h
-/usr/include/x86_64-linux-gnu/bits/sys_errlist.h
-/usr/include/x86_64-linux-gnu/bits/syscall.h
-/usr/include/x86_64-linux-gnu/bits/time.h
-/usr/include/x86_64-linux-gnu/bits/typesizes.h
-/usr/include/x86_64-linux-gnu/bits/uio.h
-/usr/include/x86_64-linux-gnu/bits/waitflags.h
-/usr/include/x86_64-linux-gnu/bits/waitstatus.h
-/usr/include/x86_64-linux-gnu/gnu/stubs-64.h
-/usr/include/x86_64-linux-gnu/gnu/stubs.h
-/usr/lib/gcc/x86_64-linux-gnu/4.9/include-fixed/syslimits.h
+> 
+>  2. Wait some time.
+> 
+>  3. Write 6 to /proc/PID/clear_refs for each PID of interest.
+> 
+>     This will clear the IDLE flag for recently accessed pages.
+> 
+>  4. Count the number of idle pages as reported by /proc/kpageflags. One may use
+>     /proc/PID/pagemap and/or /proc/kpagecgroup to filter pages that belong to a
+>     certain application/container.
+> 
 
+Adding two new page flags? I don't know it's okay for 64bit but there is no
+room for 32bit. Please take care of 32 bit. It would be good feature for
+embedded. How about using page_ext if you couldn't make room for page->flags
+for 32bit? You would add per-page meta data in there.
 
-As you can see it uses a few uapi headers, but not many, and we seem to get
-away with it.
+Your suggestion is generic so my concern is overhead. On every iteration,
+we should set/clear/investigate page flags. I don't know how much overhead
+is in there but it surely could be big if memory is big.
+Couldn't we do that at one go? Maybe, like mincore
 
-On powerpc instead we have:
+        int idlecore(pid_t pid, void *addr, size_t length, unsigned char *vec)
 
-$ ppc64-cc -w -H -I../../../../include/uapi -I../../../../usr/include/    kcmp_test.c   -o kcmp_test
-. /usr/powerpc-linux-gnu/include/stdio.h
-.. /usr/powerpc-linux-gnu/include/features.h
-... /usr/powerpc-linux-gnu/include/sys/cdefs.h
-.... /usr/powerpc-linux-gnu/include/bits/wordsize.h
-... /usr/powerpc-linux-gnu/include/gnu/stubs.h
-.... /usr/powerpc-linux-gnu/include/bits/wordsize.h
-.... /usr/powerpc-linux-gnu/include/gnu/stubs-32.h
-.. /usr/lib/gcc-cross/powerpc-linux-gnu/4.9/include/stddef.h
-.. /usr/powerpc-linux-gnu/include/bits/types.h
-... /usr/powerpc-linux-gnu/include/bits/wordsize.h
-... /usr/powerpc-linux-gnu/include/bits/typesizes.h
-.. /usr/powerpc-linux-gnu/include/libio.h
-... /usr/powerpc-linux-gnu/include/_G_config.h
-.... /usr/lib/gcc-cross/powerpc-linux-gnu/4.9/include/stddef.h
-.... /usr/powerpc-linux-gnu/include/wchar.h
-... /usr/lib/gcc-cross/powerpc-linux-gnu/4.9/include/stdarg.h
-.. /usr/powerpc-linux-gnu/include/bits/stdio_lim.h
-.. /usr/powerpc-linux-gnu/include/bits/sys_errlist.h
-. /usr/powerpc-linux-gnu/include/stdlib.h
-.. /usr/lib/gcc-cross/powerpc-linux-gnu/4.9/include/stddef.h
-.. /usr/powerpc-linux-gnu/include/bits/waitflags.h
-.. /usr/powerpc-linux-gnu/include/bits/waitstatus.h
-... /usr/powerpc-linux-gnu/include/endian.h
-.... /usr/powerpc-linux-gnu/include/bits/endian.h
-.... /usr/powerpc-linux-gnu/include/bits/byteswap.h
-..... /usr/powerpc-linux-gnu/include/bits/byteswap-16.h
-.. /usr/powerpc-linux-gnu/include/xlocale.h
-.. /usr/powerpc-linux-gnu/include/sys/types.h
-... /usr/powerpc-linux-gnu/include/time.h
-... /usr/lib/gcc-cross/powerpc-linux-gnu/4.9/include/stddef.h
-... /usr/powerpc-linux-gnu/include/sys/select.h
-.... /usr/powerpc-linux-gnu/include/bits/select.h
-.... /usr/powerpc-linux-gnu/include/bits/sigset.h
-.... /usr/powerpc-linux-gnu/include/time.h
-.... /usr/powerpc-linux-gnu/include/bits/time.h
-... /usr/powerpc-linux-gnu/include/sys/sysmacros.h
-... /usr/powerpc-linux-gnu/include/bits/pthreadtypes.h
-.... /usr/powerpc-linux-gnu/include/bits/wordsize.h
-.. /usr/powerpc-linux-gnu/include/alloca.h
-... /usr/lib/gcc-cross/powerpc-linux-gnu/4.9/include/stddef.h
-.. /usr/powerpc-linux-gnu/include/bits/stdlib-float.h
-. /usr/powerpc-linux-gnu/include/signal.h
-.. /usr/powerpc-linux-gnu/include/bits/sigset.h
-.. /usr/powerpc-linux-gnu/include/bits/signum.h
-.. /usr/powerpc-linux-gnu/include/time.h
-.. /usr/powerpc-linux-gnu/include/bits/siginfo.h
-... /usr/powerpc-linux-gnu/include/bits/wordsize.h
-.. /usr/powerpc-linux-gnu/include/bits/sigaction.h
-.. /usr/powerpc-linux-gnu/include/bits/sigcontext.h
-... /usr/powerpc-linux-gnu/include/asm/sigcontext.h
-.... /usr/powerpc-linux-gnu/include/asm/ptrace.h
-..... ../../../../include/uapi/linux/types.h
-...... /usr/powerpc-linux-gnu/include/asm/types.h
-....... ../../../../include/uapi/asm-generic/int-ll64.h
-........ /usr/powerpc-linux-gnu/include/asm/bitsperlong.h
-......... ../../../../include/uapi/asm-generic/bitsperlong.h
-...... ../../../../include/uapi/linux/posix_types.h
-....... ../../../../include/uapi/linux/stddef.h
-In file included from ../../../../include/uapi/linux/posix_types.h:4:0,
-                 from ../../../../include/uapi/linux/types.h:13,
-                 from /usr/powerpc-linux-gnu/include/asm/ptrace.h:27,
-                 from /usr/powerpc-linux-gnu/include/asm/sigcontext.h:11,
-                 from /usr/powerpc-linux-gnu/include/bits/sigcontext.h:27,
-                 from /usr/powerpc-linux-gnu/include/signal.h:332,
-                 from kcmp_test.c:5:
-../../../../include/uapi/linux/stddef.h:1:28: fatal error: linux/compiler.h: No such file or directory
- #include <linux/compiler.h>
-                            ^
-compilation terminated.
+So, we could know what pages of the process[pid] were idle by vec in
+[addr, lentgh] and reset idle of the pages for the process
+in the system call at one go.
 
+Anyway, Thanks for the good feature.
 
-So things start to go badly when we include asm/sigcontext.h. It just comes
-down to the exact sequence the headers are included, and we can't do much about
-that.
+> An example of using this new interface is below. It is a script that
+> counts the number of pages charged to a specified cgroup that have not
+> been accessed for a given time interval.
+> 
+> ---- BEGIN SCRIPT ----
+> #! /usr/bin/python
+> #
+> 
+> import struct
+> import sys
+> import os
+> import stat
+> import time
+> 
+> def get_end_pfn():
+>     f = open("/proc/zoneinfo", "r")
+>     end_pfn = 0
+>     for l in f.readlines():
+>         l = l.split()
+>         if l[0] == "spanned":
+>             end_pfn = int(l[1])
+>         elif l[0] == "start_pfn:":
+>             end_pfn += int(l[1])
+>     return end_pfn
+> 
+> def set_idle():
+>     open("/proc/sys/vm/set_idle", "w").write("1")
+> 
+> def clear_refs(target_cg_path):
+>     procs = open(target_cg_path + "/cgroup.procs", "r")
+>     for pid in procs.readlines():
+>         try:
+>             with open("/proc/" + pid.rstrip() + "/clear_refs", "w") as f:
+>                 f.write("6")
+>         except IOError as e:
+>             print "Failed to clear_refs for pid " + pid + ": " + str(e)
+> 
+> def count_idle(target_cg_path):
+>     target_cg_ino = os.stat(target_cg_path)[stat.ST_INO]
+> 
+>     pgflags = open("/proc/kpageflags", "rb")
+>     pgcgroup = open("/proc/kpagecgroup", "rb")
+> 
+>     nidle = 0
+> 
+>     for i in range(0, get_end_pfn()):
+>         cg_ino = struct.unpack('Q', pgcgroup.read(8))[0]
+>         flags = struct.unpack('Q', pgflags.read(8))[0]
+> 
+>         if cg_ino != target_cg_ino:
+>             continue
+> 
+>         # unevictable?
+>         if (flags >> 18) & 1 != 0:
+>             continue
+> 
+>         # huge?
+>         if (flags >> 22) & 1 != 0:
+>             npages = 512
+>         else:
+>             npages = 1
+> 
+>         # idle?
+>         if (flags >> 25) & 1 != 0:
+>             nidle += npages
+> 
+>     return nidle
+> 
+> if len(sys.argv) <> 3:
+>     print "Usage: %s cgroup_path scan_interval" % sys.argv[0]
+>     exit(1)
+> 
+> cg_path = sys.argv[1]
+> scan_interval = int(sys.argv[2])
+> 
+> while True:
+>     set_idle()
+>     time.sleep(scan_interval)
+>     clear_refs(cg_path)
+>     print count_idle(cg_path)
+> ---- END SCRIPT ----
+> 
+> Thanks,
+> 
+> Vladimir Davydov (3):
+>   memcg: add page_cgroup_ino helper
+>   proc: add kpagecgroup file
+>   mm: idle memory tracking
+> 
+>  Documentation/filesystems/proc.txt     |    3 +
+>  Documentation/vm/00-INDEX              |    2 +
+>  Documentation/vm/idle_mem_tracking.txt |   23 +++++++
+>  Documentation/vm/pagemap.txt           |   10 ++-
+>  fs/proc/Kconfig                        |    5 +-
+>  fs/proc/page.c                         |  107 ++++++++++++++++++++++++++++++++
+>  fs/proc/task_mmu.c                     |   22 ++++++-
+>  include/linux/memcontrol.h             |    8 +--
+>  include/linux/page-flags.h             |   12 ++++
+>  include/uapi/linux/kernel-page-flags.h |    1 +
+>  kernel/sysctl.c                        |   14 +++++
+>  mm/Kconfig                             |   12 ++++
+>  mm/debug.c                             |    4 ++
+>  mm/hwpoison-inject.c                   |    5 +-
+>  mm/memcontrol.c                        |   61 ++++++++----------
+>  mm/memory-failure.c                    |   16 +----
+>  mm/rmap.c                              |    7 +++
+>  mm/swap.c                              |    2 +
+>  18 files changed, 248 insertions(+), 66 deletions(-)
+>  create mode 100644 Documentation/vm/idle_mem_tracking.txt
+> 
+> -- 
+> 1.7.10.4
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo@kvack.org.  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
 
-cheers
+-- 
+Kind regards,
+Minchan Kim
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
