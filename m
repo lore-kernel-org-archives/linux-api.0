@@ -1,92 +1,82 @@
-From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH] coresight: moving to new "hwtracing" directory
-Date: Thu, 19 Mar 2015 23:27:41 +0100
-Message-ID: <20150319222741.GA24999@kroah.com>
-References: <1426802522-25743-1-git-send-email-mathieu.poirier@linaro.org>
+From: Peter Hutterer <peter.hutterer@who-t.net>
+Subject: Re: [PATCH] Input: Add MT_TOOL_PALM
+Date: Fri, 20 Mar 2015 08:41:55 +1000
+Message-ID: <20150319224155.GA32380@jelly.redhat.com>
+References: <1426717595-1610-1-git-send-email-charliemooney@chromium.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1426802522-25743-1-git-send-email-mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, catalin.marinas-5wv7dgnIgG8@public.gmane.org, will.deacon-5wv7dgnIgG8@public.gmane.org, alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, peter.lachner-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, norbert.schulz-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, keven.boell-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yann.fouassier-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, laurent.fert-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+In-Reply-To: <1426717595-1610-1-git-send-email-charliemooney@chromium.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Charlie Mooney <charliemooney@chromium.org>
+Cc: linux-input@vger.kernel.org, Benjamin Tissoires <benjamin.tissoires@gmail.com>, Hans de Goede <hdegoede@redhat.com>, Andrew De Los Reyes <adlr@chromium.org>, Henrik Rydberg <rydberg@bitmath.org>, Jonathan Corbet <corbet@lwn.net>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Masanari Iida <standby24x7@gmail.com>, Jiri Kosina <jkosina@suse.cz>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 19, 2015 at 04:02:02PM -0600, Mathieu Poirier wrote:
-> Keeping drivers related to HW tracing on ARM, i.e coresight,
-> under "drivers/coresight" doesn't make sense when other
-> architectures start rolling out technologies of the same
-> nature.
+On Wed, Mar 18, 2015 at 03:26:35PM -0700, Charlie Mooney wrote:
+> Currently there are only two "tools" that can be specified by a
+> multi-touch driver: MT_TOOL_FINGER and MT_TOOL_PEN.  In working with
+> Elan (The touch vendor) and discussing their next-gen devices it
+> seems that it will be useful to have more tools so that their devices
+> can give the upper layers of the stack hints as to what is touching
+> the sensor.
 > 
-> As such creating a new "drivers/hwtracing" directory where all
-> drivers of the same kind can reside, reducing namespace
-> pollution under "drivers/".
+> In particular they have new experimental firmware that can better
+> differentiate between palms vs fingertips and would like to plumb a
+> patch so that we can use their hints in higher-level gesture soft-
+> ware.  The firmware on the device can reasonably do a better job of
+> palm detection because it has access to all of the raw sensor readings
+> as opposed to just the width/pressure/etc that are exposed by the
+> driver.  As such, the firmware can characterize what a palm looks like
+> in much finer-grained detail and this change would allow such a
+> device to share its findings with the kernel.
 > 
-> Signed-off-by: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+> Signed-off-by: Charlie Mooney <charliemooney@chromium.org>
+
+Acked-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+Cheers,
+   Peter
+
 > ---
->  MAINTAINERS                                        |    2 +-
->  arch/arm/Kconfig.debug                             |    2 +-
->  arch/arm64/Kconfig.debug                           |    2 +-
->  drivers/Makefile                                   |    2 +-
->  drivers/coresight/Kconfig                          |   61 -
->  drivers/coresight/Makefile                         |   11 -
->  drivers/coresight/coresight-etb10.c                |  527 ------
->  drivers/coresight/coresight-etm-cp14.c             |  591 ------
->  drivers/coresight/coresight-etm.h                  |  251 ---
->  drivers/coresight/coresight-etm3x.c                | 1932 --------------------
->  drivers/coresight/coresight-funnel.c               |  258 ---
->  drivers/coresight/coresight-priv.h                 |   63 -
->  drivers/coresight/coresight-replicator.c           |  137 --
->  drivers/coresight/coresight-tmc.c                  |  822 ---------
->  drivers/coresight/coresight-tpiu.c                 |  207 ---
->  drivers/coresight/coresight.c                      |  720 --------
->  drivers/coresight/of_coresight.c                   |  200 --
->  drivers/hwtracing/coresight/Kconfig                |   61 +
->  drivers/hwtracing/coresight/Makefile               |   11 +
->  drivers/hwtracing/coresight/coresight-etb10.c      |  527 ++++++
->  drivers/hwtracing/coresight/coresight-etm-cp14.c   |  591 ++++++
->  drivers/hwtracing/coresight/coresight-etm.h        |  251 +++
->  drivers/hwtracing/coresight/coresight-etm3x.c      | 1932 ++++++++++++++++++++
->  drivers/hwtracing/coresight/coresight-funnel.c     |  258 +++
->  drivers/hwtracing/coresight/coresight-priv.h       |   63 +
->  drivers/hwtracing/coresight/coresight-replicator.c |  137 ++
->  drivers/hwtracing/coresight/coresight-tmc.c        |  822 +++++++++
->  drivers/hwtracing/coresight/coresight-tpiu.c       |  207 +++
->  drivers/hwtracing/coresight/coresight.c            |  720 ++++++++
->  drivers/hwtracing/coresight/of_coresight.c         |  200 ++
->  30 files changed, 5784 insertions(+), 5784 deletions(-)
->  delete mode 100644 drivers/coresight/Kconfig
->  delete mode 100644 drivers/coresight/Makefile
->  delete mode 100644 drivers/coresight/coresight-etb10.c
->  delete mode 100644 drivers/coresight/coresight-etm-cp14.c
->  delete mode 100644 drivers/coresight/coresight-etm.h
->  delete mode 100644 drivers/coresight/coresight-etm3x.c
->  delete mode 100644 drivers/coresight/coresight-funnel.c
->  delete mode 100644 drivers/coresight/coresight-priv.h
->  delete mode 100644 drivers/coresight/coresight-replicator.c
->  delete mode 100644 drivers/coresight/coresight-tmc.c
->  delete mode 100644 drivers/coresight/coresight-tpiu.c
->  delete mode 100644 drivers/coresight/coresight.c
->  delete mode 100644 drivers/coresight/of_coresight.c
->  create mode 100644 drivers/hwtracing/coresight/Kconfig
->  create mode 100644 drivers/hwtracing/coresight/Makefile
->  create mode 100644 drivers/hwtracing/coresight/coresight-etb10.c
->  create mode 100644 drivers/hwtracing/coresight/coresight-etm-cp14.c
->  create mode 100644 drivers/hwtracing/coresight/coresight-etm.h
->  create mode 100644 drivers/hwtracing/coresight/coresight-etm3x.c
->  create mode 100644 drivers/hwtracing/coresight/coresight-funnel.c
->  create mode 100644 drivers/hwtracing/coresight/coresight-priv.h
->  create mode 100644 drivers/hwtracing/coresight/coresight-replicator.c
->  create mode 100644 drivers/hwtracing/coresight/coresight-tmc.c
->  create mode 100644 drivers/hwtracing/coresight/coresight-tpiu.c
->  create mode 100644 drivers/hwtracing/coresight/coresight.c
->  create mode 100644 drivers/hwtracing/coresight/of_coresight.c
-
-This looks good to me, but please create your patches with -M option to
-git, so it just moves the code, and we can easily see that it is a move
-and nothing else changed.
-
-thanks,
-
-greg k-h
+>  Documentation/input/multi-touch-protocol.txt | 9 ++++++---
+>  include/uapi/linux/input.h                   | 3 ++-
+>  2 files changed, 8 insertions(+), 4 deletions(-)
+> 
+> diff --git a/Documentation/input/multi-touch-protocol.txt b/Documentation/input/multi-touch-protocol.txt
+> index 7b4f59c..b85d000 100644
+> --- a/Documentation/input/multi-touch-protocol.txt
+> +++ b/Documentation/input/multi-touch-protocol.txt
+> @@ -312,9 +312,12 @@ ABS_MT_TOOL_TYPE
+>  
+>  The type of approaching tool. A lot of kernel drivers cannot distinguish
+>  between different tool types, such as a finger or a pen. In such cases, the
+> -event should be omitted. The protocol currently supports MT_TOOL_FINGER and
+> -MT_TOOL_PEN [2]. For type B devices, this event is handled by input core;
+> -drivers should instead use input_mt_report_slot_state().
+> +event should be omitted. The protocol currently supports MT_TOOL_FINGER,
+> +MT_TOOL_PEN, and MT_TOOL_PALM [2]. For type B devices, this event is handled
+> +by input core; drivers should instead use input_mt_report_slot_state().
+> +A contact's ABS_MT_TOOL_TYPE may change over time while still touching the
+> +device, because the firmware may not be able to determine which tool is being
+> +used when it first appears.
+>  
+>  ABS_MT_BLOB_ID
+>  
+> diff --git a/include/uapi/linux/input.h b/include/uapi/linux/input.h
+> index b0a8130..2f62ab2 100644
+> --- a/include/uapi/linux/input.h
+> +++ b/include/uapi/linux/input.h
+> @@ -973,7 +973,8 @@ struct input_keymap_entry {
+>   */
+>  #define MT_TOOL_FINGER		0
+>  #define MT_TOOL_PEN		1
+> -#define MT_TOOL_MAX		1
+> +#define MT_TOOL_PALM		2
+> +#define MT_TOOL_MAX		2
+>  
+>  /*
+>   * Values describing the status of a force-feedback effect
+> -- 
+> 2.1.2
+> 
