@@ -1,67 +1,86 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v7 tip 2/8] tracing: attach BPF programs to kprobes
-Date: Thu, 19 Mar 2015 08:33:24 -0700
-Message-ID: <550AEC44.3060107@plumgrid.com>
-References: <1426542584-9406-1-git-send-email-ast@plumgrid.com>	<1426542584-9406-3-git-send-email-ast@plumgrid.com> <20150319110742.7dc9473d@gandalf.local.home>
+From: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH V6] Allow compaction of unevictable pages
+Date: Thu, 19 Mar 2015 11:34:35 -0400
+Message-ID: <550AEC8B.1080806@akamai.com>
+References: <1426773430-31052-1-git-send-email-emunson@akamai.com> <550AE38E.7090006@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=iso-8859-2
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150319110742.7dc9473d-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
+In-Reply-To: <550AE38E.7090006-AlSwsSmVLrQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 3/19/15 8:07 AM, Steven Rostedt wrote:
->>   struct trace_print_flags {
->>   	unsigned long		mask;
->> @@ -252,6 +253,7 @@ enum {
->>   	TRACE_EVENT_FL_WAS_ENABLED_BIT,
->>   	TRACE_EVENT_FL_USE_CALL_FILTER_BIT,
->>   	TRACE_EVENT_FL_TRACEPOINT_BIT,
->> +	TRACE_EVENT_FL_KPROBE_BIT,
->
-> I think this should be broken up into two patches. One that adds the
-> KPROBE_BIT flag to kprobe events, and the other that adds the bpf
-> program.
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-sure. will do.
+On 03/19/2015 10:56 AM, Vlastimil Babka wrote:
+> On 03/19/2015 02:57 PM, Eric B Munson wrote:
+>> Currently, pages which are marked as unevictable are protected
+>> from compaction, but not from other types of migration.  The
+>> POSIX real time extension explicitly states that mlock() will
+>> prevent a major page fault, but the spirit of is is that mlock()
+>> should give a process the ability to control sources of latency,
+>> including minor page faults. However, the mlock manpage only
+>> explicitly says that a locked page will not be written to swap
+>> and this can cause some confusion.  The compaction code today,
+>> does not give a developer who wants to avoid swap but wants to
+>> have large contiguous areas available any method to achieve this
+>> state.  This patch introduces a sysctl for controlling
+>> compaction behavoir with respect to the unevictable lru.  Users
+>> that demand no page
+> 
+> behavior
+> 
+>> faults after a page is present can set compact_unevictable to 0
+>> and
+> 
+> compact_unevictable_allowed
+> 
+>> users who need the large contiguous areas can enable compaction
+>> on locked memory by leaving the default value of 1.
+>> 
+>> To illustrate this problem I wrote a quick test program that
+>> mmaps a large number of 1MB files filled with random data.  These
+>> maps are created locked and read only.  Then every other mmap is
+>> unmapped and I attempt to allocate huge pages to the static huge
+>> page pool.  When the compact_unevictable sysctl is 0, I cannot
+>> allocate hugepages after
+> 
+> compact_unevictable_allowed
+> 
+>> fragmenting memory.  When the value is set to 1, allocations
+>> succeed.
+>> 
+>> Signed-off-by: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org> Cc: Vlastimil
+>> Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+> 
+> Acked-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+> 
+> Thanks.
+> 
 
->
-> There should be kerneldoc comments above this function.
->
->> +unsigned int trace_call_bpf(struct bpf_prog *prog, void *ctx)
+Thanks, I have a version with the changelog fixed up to actually make
+sense and can submit that if the patch is acceptable otherwise.
 
-ok.
+Eric
 
->> +	per_cpu(bpf_prog_active, cpu)--;
->
-> Hmm, as cpu == smp_processor_id(), you should be using
-> __this_cpu_inc_return(), and __this_cpu_dec().
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
 
-yeah. picked a wrong place to copy paste from.
-will do. good point.
-
->
-> Why not just make kprobe_prog_funcs[] = {
-> 	[BPF_FUNC_map_lookup_elem] = &bpf_map_lookup_elem_proto,
-> 	[BPF_FUNC_map_update_elem] = &bpf_map_update_elem_proto,
-> 	[BPF_FUNC_map_delete_elem] = &bpf_map_delete_elem_proto,
-> 	[BPF_FUNC_probe_read] = &kprobe_prog_proto,
->
-> And define kprobe_prog_proto separately.
->
-> And then you don't need the switch statement, you could just use the
-> if (func_id < 0 || func_id >= ARRAY_SIZE(kprobe_prog_funcs))
-> 	return kprobe_prog_funcs[func_id];
->
-> I think there's several advantages to my approach. One, is that you are
-> not wasting memory with empty objects in the array. Also, if the array
-> gets out of sync with the enum, it would be possible to return an empty
-> object. That is, &kprobe_prog_funcs[out_of_sync_func_id], would not be
-> NULL if in the future someone added an enum before BPF_FUNC_probe_read,
-> and the func_id passed in is that enum.
-
-yes! There will be gaps in func_ids, so that would have
-been a bug. Thanks for catching it!
+iQIcBAEBAgAGBQJVCuyHAAoJELbVsDOpoOa95w0QAIia0yPziiFJRx9uJlGwIfuM
+IPHeQ1g201OJiKHxYpZI9FqSu+QJb9UFSPS7ewCH7xE+1aPxEL2pLDZxI5w8OPbY
+KYxrVWBdTNesN5Xu8kb0yCXWlk5wGbf65jqMyBJlT9Y+GSiI3zK0AIQgu9Es8zep
+YCcig4xfeojzzwGelszsBQ+iDpwqeiS76hCO20yuI5z5G5Le1h7MjxErXZ/uSwlv
++8CHgJWtISjjOYLnbFSEciQmvvcSXtGDmXJ2ru6tgLRoWyIcu3lCyvl/9zi4PuJz
+hBtZ5TjQDbyBfj7Vyop90SA9/vwQL8F0wgi9yZXTklebB5cY5b+dWuFdcf14dn2o
+uXalxBd1MBQ1hpGXGOLuQCoBows/REjPgKGu+0xGknPL56DXKmoWBeSpjnJKcqIA
+bavYJ3bE7HSBI/zjaN2ZiP2Kxl3Y2fV3nmSoXVDJ6hPnYSZUMr1/dBRy5g+kTJ52
+wrJt9gMi17alZZFNxsn+EnpagmghwQ89UHLG+ssOViW1DX0j6OxfFDpUlMbso6GS
+KW4faaPpIlGbD03f8zZzuCG859rVDiah5WZLVWHG30mVevxvut5QSQo9FEpc2yCk
+SG7jghV6Pj3m/F7tdOtwO2PpVSIA0tvxiX734H+z2NoU1Ozfwhofb0hGeEZyp7jm
+oAKnxZkkaDbdiaSrNoRM
+=bs7n
+-----END PGP SIGNATURE-----
