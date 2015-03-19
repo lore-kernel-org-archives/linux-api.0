@@ -1,94 +1,211 @@
-From: Vladimir Davydov <vdavydov@parallels.com>
-Subject: Re: [PATCH 0/3] idle memory tracking
-Date: Thu, 19 Mar 2015 11:08:18 +0300
-Message-ID: <20150319080818.GD29416@esperanza>
-References: <cover.1426706637.git.vdavydov@parallels.com>
- <20150319021337.GD9153@blaptop>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [v10 1/5] vfs: adds general codes to enforces project quota
+ limits
+Date: Thu, 19 Mar 2015 10:06:18 +0100
+Message-ID: <20150319090618.GC28368@quack.suse.cz>
+References: <1426705497-22158-1-git-send-email-lixi@ddn.com>
+ <1426705497-22158-2-git-send-email-lixi@ddn.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150319021337.GD9153@blaptop>
-Sender: owner-linux-mm@kvack.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
+In-Reply-To: <1426705497-22158-2-git-send-email-lixi-LfVdkaOWEx8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 19, 2015 at 11:13:37AM +0900, Minchan Kim wrote:
-> On Wed, Mar 18, 2015 at 11:44:33PM +0300, Vladimir Davydov wrote:
-> >  1. Write 1 to /proc/sys/vm/set_idle.
-> > 
-> >     This will set the IDLE flag for all user pages. The IDLE flag is cleared
-> >     when the page is read or the ACCESS/YOUNG bit is cleared in any PTE pointing
-> >     to the page. It is also cleared when the page is freed.
+On Thu 19-03-15 04:04:53, Li Xi wrote:
+> This patch adds support for a new quota type PRJQUOTA for project quota
+> enforcement. Also a new method get_projid() is added into dquot_operations
+> structure.
 > 
-> We should scan all of pages periodically? I understand why you did but
-> someone might not take care of unmapped pages so I hope it should be optional.
-> if someone just want to catch mapped file+anon pages, he can do it
-> by scanning of address space of the process he selects.
-> Even, someone might want to scan just part of address space rather than
-> all address space of the process. Acutally, I have such scenario.
+> Signed-off-by: Li Xi <lixi-LfVdkaOWEx8@public.gmane.org>
+> Signed-off-by: Dmitry Monakhov <dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+> Reviewed-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+  Thanks. I've added this patch to my tree and will push it to Linus in the
+next merge window (I had to modify it a bit to work with changes in my tree).
+This patch is independent of the dispute with Konstantin so however that is
+resolved this should go in.
 
-You still can estimate the working set size of a particular process, or
-even by a part of its address space, by setting the IDLE bit for all
-user pages, but clearing refs for and analyzing only those pages you are
-interested in. You can filter them by scanning /proc/PID/pagemap.
+								Honza
 
-If you are concerned about performance, I don't think it would be an
-issue: on my test machine setting the IDLE bit for 20 GB of user pages
-takes about 150 ms. Provided that this kind of work is supposed to be
-done relatively rarely (every several minutes or so), the overhead looks
-negligible to me. Anyway, we can introduce /proc/PID/set_mem_idle for
-setting the IDLE bit only on pages of a particular address space.
-
+> ---
+>  fs/quota/dquot.c           |   35 ++++++++++++++++++++++++++++++-----
+>  fs/quota/quota.c           |    5 ++++-
+>  fs/quota/quotaio_v2.h      |    6 ++++--
+>  include/linux/quota.h      |    2 ++
+>  include/uapi/linux/quota.h |    6 ++++--
+>  5 files changed, 44 insertions(+), 10 deletions(-)
 > 
-> > 
-> >  2. Wait some time.
-> > 
-> >  3. Write 6 to /proc/PID/clear_refs for each PID of interest.
-> > 
-> >     This will clear the IDLE flag for recently accessed pages.
-> > 
-> >  4. Count the number of idle pages as reported by /proc/kpageflags. One may use
-> >     /proc/PID/pagemap and/or /proc/kpagecgroup to filter pages that belong to a
-> >     certain application/container.
-> > 
+> diff --git a/fs/quota/dquot.c b/fs/quota/dquot.c
+> index 8f0acef..a02bb68 100644
+> --- a/fs/quota/dquot.c
+> +++ b/fs/quota/dquot.c
+> @@ -1159,8 +1159,8 @@ static int need_print_warning(struct dquot_warn *warn)
+>  			return uid_eq(current_fsuid(), warn->w_dq_id.uid);
+>  		case GRPQUOTA:
+>  			return in_group_p(warn->w_dq_id.gid);
+> -		case PRJQUOTA:	/* Never taken... Just make gcc happy */
+> -			return 0;
+> +		case PRJQUOTA:
+> +			return 1;
+>  	}
+>  	return 0;
+>  }
+> @@ -1399,6 +1399,9 @@ static void __dquot_initialize(struct inode *inode, int type)
+>  	/* First get references to structures we might need. */
+>  	for (cnt = 0; cnt < MAXQUOTAS; cnt++) {
+>  		struct kqid qid;
+> +		kprojid_t projid;
+> +		int rc;
+> +
+>  		got[cnt] = NULL;
+>  		if (type != -1 && cnt != type)
+>  			continue;
+> @@ -1409,6 +1412,10 @@ static void __dquot_initialize(struct inode *inode, int type)
+>  		 */
+>  		if (i_dquot(inode)[cnt])
+>  			continue;
+> +
+> +		if (!sb_has_quota_active(sb, cnt))
+> +			continue;
+> +
+>  		init_needed = 1;
+>  
+>  		switch (cnt) {
+> @@ -1418,6 +1425,12 @@ static void __dquot_initialize(struct inode *inode, int type)
+>  		case GRPQUOTA:
+>  			qid = make_kqid_gid(inode->i_gid);
+>  			break;
+> +		case PRJQUOTA:
+> +			rc = inode->i_sb->dq_op->get_projid(inode, &projid);
+> +			if (rc)
+> +				continue;
+> +			qid = make_kqid_projid(projid);
+> +			break;
+>  		}
+>  		got[cnt] = dqget(sb, qid);
+>  	}
+> @@ -2161,7 +2174,8 @@ static int vfs_load_quota_inode(struct inode *inode, int type, int format_id,
+>  		error = -EROFS;
+>  		goto out_fmt;
+>  	}
+> -	if (!sb->s_op->quota_write || !sb->s_op->quota_read) {
+> +	if (!sb->s_op->quota_write || !sb->s_op->quota_read ||
+> +	    (type == PRJQUOTA && sb->dq_op->get_projid == NULL)) {
+>  		error = -EINVAL;
+>  		goto out_fmt;
+>  	}
+> @@ -2402,8 +2416,19 @@ static void do_get_dqblk(struct dquot *dquot, struct fs_disk_quota *di)
+>  
+>  	memset(di, 0, sizeof(*di));
+>  	di->d_version = FS_DQUOT_VERSION;
+> -	di->d_flags = dquot->dq_id.type == USRQUOTA ?
+> -			FS_USER_QUOTA : FS_GROUP_QUOTA;
+> +	switch (dquot->dq_id.type) {
+> +	case USRQUOTA:
+> +		di->d_flags = FS_USER_QUOTA;
+> +		break;
+> +	case GRPQUOTA:
+> +		di->d_flags = FS_GROUP_QUOTA;
+> +		break;
+> +	case PRJQUOTA:
+> +		di->d_flags = FS_PROJ_QUOTA;
+> +		break;
+> +	default:
+> +		BUG();
+> +	}
+>  	di->d_id = from_kqid_munged(current_user_ns(), dquot->dq_id);
+>  
+>  	spin_lock(&dq_data_lock);
+> diff --git a/fs/quota/quota.c b/fs/quota/quota.c
+> index 2aa4151..33b30b1 100644
+> --- a/fs/quota/quota.c
+> +++ b/fs/quota/quota.c
+> @@ -30,7 +30,10 @@ static int check_quotactl_permission(struct super_block *sb, int type, int cmd,
+>  	case Q_XGETQSTATV:
+>  	case Q_XQUOTASYNC:
+>  		break;
+> -	/* allow to query information for dquots we "own" */
+> +	/*
+> +	 * allow to query information for dquots we "own"
+> +	 * always allow querying project quota
+> +	 */
+>  	case Q_GETQUOTA:
+>  	case Q_XGETQUOTA:
+>  		if ((type == USRQUOTA && uid_eq(current_euid(), make_kuid(current_user_ns(), id))) ||
+> diff --git a/fs/quota/quotaio_v2.h b/fs/quota/quotaio_v2.h
+> index f1966b4..4e95430 100644
+> --- a/fs/quota/quotaio_v2.h
+> +++ b/fs/quota/quotaio_v2.h
+> @@ -13,12 +13,14 @@
+>   */
+>  #define V2_INITQMAGICS {\
+>  	0xd9c01f11,	/* USRQUOTA */\
+> -	0xd9c01927	/* GRPQUOTA */\
+> +	0xd9c01927,	/* GRPQUOTA */\
+> +	0xd9c03f14,	/* PRJQUOTA */\
+>  }
+>  
+>  #define V2_INITQVERSIONS {\
+>  	1,		/* USRQUOTA */\
+> -	1		/* GRPQUOTA */\
+> +	1,		/* GRPQUOTA */\
+> +	1,		/* PRJQUOTA */\
+>  }
+>  
+>  /* First generic header */
+> diff --git a/include/linux/quota.h b/include/linux/quota.h
+> index 50978b7..ba51f7e 100644
+> --- a/include/linux/quota.h
+> +++ b/include/linux/quota.h
+> @@ -50,6 +50,7 @@
+>  
+>  #undef USRQUOTA
+>  #undef GRPQUOTA
+> +#undef PRJQUOTA
+>  enum quota_type {
+>  	USRQUOTA = 0,		/* element used for user quotas */
+>  	GRPQUOTA = 1,		/* element used for group quotas */
+> @@ -317,6 +318,7 @@ struct dquot_operations {
+>  	/* get reserved quota for delayed alloc, value returned is managed by
+>  	 * quota code only */
+>  	qsize_t *(*get_reserved_space) (struct inode *);
+> +	int (*get_projid) (struct inode *, kprojid_t *);/* Get project ID */
+>  };
+>  
+>  struct path;
+> diff --git a/include/uapi/linux/quota.h b/include/uapi/linux/quota.h
+> index 3b6cfbe..b2d9486 100644
+> --- a/include/uapi/linux/quota.h
+> +++ b/include/uapi/linux/quota.h
+> @@ -36,11 +36,12 @@
+>  #include <linux/errno.h>
+>  #include <linux/types.h>
+>  
+> -#define __DQUOT_VERSION__	"dquot_6.5.2"
+> +#define __DQUOT_VERSION__	"dquot_6.6.0"
+>  
+> -#define MAXQUOTAS 2
+> +#define MAXQUOTAS 3
+>  #define USRQUOTA  0		/* element used for user quotas */
+>  #define GRPQUOTA  1		/* element used for group quotas */
+> +#define PRJQUOTA  2		/* element used for project quotas */
+>  
+>  /*
+>   * Definitions for the default names of the quotas files.
+> @@ -48,6 +49,7 @@
+>  #define INITQFNAMES { \
+>  	"user",    /* USRQUOTA */ \
+>  	"group",   /* GRPQUOTA */ \
+> +	"project", /* PRJQUOTA */ \
+>  	"undefined", \
+>  };
+>  
+> -- 
+> 1.7.1
 > 
-> Adding two new page flags? I don't know it's okay for 64bit but there is no
-> room for 32bit. Please take care of 32 bit. It would be good feature for
-> embedded. How about using page_ext if you couldn't make room for page->flags
-> for 32bit? You would add per-page meta data in there.
-
-For the time being, I made it dependant on 64BIT explicitly, because I
-am only interested in analyzing working set size of containers running
-on big machines, but I admit one could use page_ext for storing the
-additional flags if compiled for 32 bit.
-
-> 
-> Your suggestion is generic so my concern is overhead. On every iteration,
-> we should set/clear/investigate page flags. I don't know how much overhead
-> is in there but it surely could be big if memory is big.
-> Couldn't we do that at one go? Maybe, like mincore
-> 
->         int idlecore(pid_t pid, void *addr, size_t length, unsigned char *vec)
-> 
-> So, we could know what pages of the process[pid] were idle by vec in
-> [addr, lentgh] and reset idle of the pages for the process
-> in the system call at one go.
-
-I don't think adding yet another syscall for such a specialized feature
-is a good idea. Besides, I want to keep the interface consistent with
-/proc/PID/clear_refs, which IMO suits perfectly well for clearing the
-IDLE flag on referenced pages. As I mentioned above, to reduce the
-overhead in case the user is not interested in unmapped file pages, we
-could introduce /proc/PID/set_mem_idle, though I think this only should
-be done if there are complains about /proc/sys/vm/set_idle performance.
-
-Thanks,
-Vladimir
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+SUSE Labs, CR
