@@ -1,113 +1,94 @@
-From: Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] mremap: add MREMAP_NOHOLE flag --resend
-Date: Thu, 19 Mar 2015 01:34:48 -0400
-Message-ID: <550A5FF8.90504@gmail.com>
-References: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli@fb.com> <20150318153100.5658b741277f3717b52e42d9@linux-foundation.org>
+From: Vladimir Davydov <vdavydov@parallels.com>
+Subject: Re: [PATCH 0/3] idle memory tracking
+Date: Thu, 19 Mar 2015 11:08:18 +0300
+Message-ID: <20150319080818.GD29416@esperanza>
+References: <cover.1426706637.git.vdavydov@parallels.com>
+ <20150319021337.GD9153@blaptop>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="2ucVuBgLn6NdbLVigBgjwxBu69u8dihma"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150318153100.5658b741277f3717b52e42d9-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Shaohua Li <shli-b10kYP2dOMg@public.gmane.org>
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mel-wPRd99KPJ+uzQB+pC5nmwQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Aliaksey Kandratsenka <alkondratenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20150319021337.GD9153@blaptop>
+Sender: owner-linux-mm@kvack.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---2ucVuBgLn6NdbLVigBgjwxBu69u8dihma
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
+On Thu, Mar 19, 2015 at 11:13:37AM +0900, Minchan Kim wrote:
+> On Wed, Mar 18, 2015 at 11:44:33PM +0300, Vladimir Davydov wrote:
+> >  1. Write 1 to /proc/sys/vm/set_idle.
+> > 
+> >     This will set the IDLE flag for all user pages. The IDLE flag is cleared
+> >     when the page is read or the ACCESS/YOUNG bit is cleared in any PTE pointing
+> >     to the page. It is also cleared when the page is freed.
+> 
+> We should scan all of pages periodically? I understand why you did but
+> someone might not take care of unmapped pages so I hope it should be optional.
+> if someone just want to catch mapped file+anon pages, he can do it
+> by scanning of address space of the process he selects.
+> Even, someone might want to scan just part of address space rather than
+> all address space of the process. Acutally, I have such scenario.
 
-On 18/03/15 06:31 PM, Andrew Morton wrote:
-> On Tue, 17 Mar 2015 14:09:39 -0700 Shaohua Li <shli-b10kYP2dOMg@public.gmane.org> wrote:
->=20
->> There was a similar patch posted before, but it doesn't get merged. I'=
-d like
->> to try again if there are more discussions.
->> http://marc.info/?l=3Dlinux-mm&m=3D141230769431688&w=3D2
->>
->> mremap can be used to accelerate realloc. The problem is mremap will
->> punch a hole in original VMA, which makes specific memory allocator
->> unable to utilize it. Jemalloc is an example. It manages memory in 4M
->> chunks. mremap a range of the chunk will punch a hole, which other
->> mmap() syscall can fill into. The 4M chunk is then fragmented, jemallo=
-c
->> can't handle it.
->=20
-> Daniel's changelog had additional details regarding the userspace
-> allocators' behaviour.  It would be best to incorporate that into your
-> changelog.
->
-> Daniel also had microbenchmark testing results for glibc and jemalloc. =
+You still can estimate the working set size of a particular process, or
+even by a part of its address space, by setting the IDLE bit for all
+user pages, but clearing refs for and analyzing only those pages you are
+interested in. You can filter them by scanning /proc/PID/pagemap.
 
-> Can you please do this?
->=20
-> I'm not seeing any testing results for tcmalloc and I'm not seeing
-> confirmation that this patch will be useful for tcmalloc.  Has anyone
-> tried it, or sought input from tcmalloc developers?
+If you are concerned about performance, I don't think it would be an
+issue: on my test machine setting the IDLE bit for 20 GB of user pages
+takes about 150 ms. Provided that this kind of work is supposed to be
+done relatively rarely (every several minutes or so), the overhead looks
+negligible to me. Anyway, we can introduce /proc/PID/set_mem_idle for
+setting the IDLE bit only on pages of a particular address space.
 
-TCMalloc and jemalloc are currently equally slow in this benchmark, as
-neither makes use of mremap. They're ~2-3x slower than glibc. I CC'ed
-the currently most active TCMalloc developer so they can give input
-into whether this patch would let them use it.
+> 
+> > 
+> >  2. Wait some time.
+> > 
+> >  3. Write 6 to /proc/PID/clear_refs for each PID of interest.
+> > 
+> >     This will clear the IDLE flag for recently accessed pages.
+> > 
+> >  4. Count the number of idle pages as reported by /proc/kpageflags. One may use
+> >     /proc/PID/pagemap and/or /proc/kpagecgroup to filter pages that belong to a
+> >     certain application/container.
+> > 
+> 
+> Adding two new page flags? I don't know it's okay for 64bit but there is no
+> room for 32bit. Please take care of 32 bit. It would be good feature for
+> embedded. How about using page_ext if you couldn't make room for page->flags
+> for 32bit? You would add per-page meta data in there.
 
-#include <string.h>
-#include <stdlib.h>
+For the time being, I made it dependant on 64BIT explicitly, because I
+am only interested in analyzing working set size of containers running
+on big machines, but I admit one could use page_ext for storing the
+additional flags if compiled for 32 bit.
 
-int main(void) {
-  void *ptr =3D NULL;
-  size_t old_size =3D 0;
-  for (size_t size =3D 4 * 1024 * 1024; size < 1024 * 1024 * 1024; size *=
-=3D 2) {
-    ptr =3D realloc(ptr, size);
-    if (!ptr) return 1;
-    memset(ptr, 0xff, size - old_size);
-    old_size =3D size;
-  }
-  free(ptr);
-}
+> 
+> Your suggestion is generic so my concern is overhead. On every iteration,
+> we should set/clear/investigate page flags. I don't know how much overhead
+> is in there but it surely could be big if memory is big.
+> Couldn't we do that at one go? Maybe, like mincore
+> 
+>         int idlecore(pid_t pid, void *addr, size_t length, unsigned char *vec)
+> 
+> So, we could know what pages of the process[pid] were idle by vec in
+> [addr, lentgh] and reset idle of the pages for the process
+> in the system call at one go.
 
-If an outer loop is wrapped around this, jemalloc's master branch will
-at least be able to do in-place resizing for everything after the 1st
-run, but that's much rarer in the real world where there are many users
-of the allocator. The lack of mremap still ends up hurting a lot.
+I don't think adding yet another syscall for such a specialized feature
+is a good idea. Besides, I want to keep the interface consistent with
+/proc/PID/clear_refs, which IMO suits perfectly well for clearing the
+IDLE flag on referenced pages. As I mentioned above, to reduce the
+overhead in case the user is not interested in unmapped file pages, we
+could introduce /proc/PID/set_mem_idle, though I think this only should
+be done if there are complains about /proc/sys/vm/set_idle performance.
 
-FWIW, jemalloc is now the default allocator on Android so there are an
-increasing number of Linux machines unable to leverage mremap. It could
-be worked around by attempting to use an mmap hint to get the memory
-back, but that can fail as it's a race with the other threads and that
-leads increases fragmentation over the long term.
+Thanks,
+Vladimir
 
-It's especially problematic if a large range of virtual memory is
-reserved and divided up between per-CPU arenas for concurrency, but
-only garbage collectors tend to do stuff like this at the moment. This
-can still be dealt with by checking internal uses of mmap and returning
-any memory from the reserved range to the right place, but it shouldn't
-have to be that ugly.
-
-
---2ucVuBgLn6NdbLVigBgjwxBu69u8dihma
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBCAAGBQJVCl/4AAoJEPnnEuWa9fIqLu0P/07zNGlp+Y382TApAl4IohXu
-rH6/q1kLbdBVSFv3wRG/JN0Zh6pb3Mwk/5YVhxEwq59gTtjY47IX987OV8EaXASj
-fszO3FiISkiOwsCpr0SPyfs2zQ+IJ3ePRH2ZN10gpfjyWQctFt8KRn9rQfe3eF82
-zq7YONnBMPAnF/ub2ets79LLCcfx6LbXrdKT7w5//77d6M3GqqcePZpB7JLZIzGK
-IQip8SzKO3qr9D1C0FU0AqwQshFkQgXNiiQsBfdhZEBvGrC4KdnDduOJTy0rKyuO
-ZVUX4aXEkiehHfvE8W9VM8V1rtlb+WYW7mhbUZzc2qQD32yiL3YUeE2FbvJkp4hw
-K+keYB55z85jrgQN3DZ0TvC5oCiorxdmY50zjmET9b9C9apy8OUshzCgjdfedX8Z
-Jtza1hlClVaGzzlk+dXJuFkA7cjqdbYEytq8uvykmuGvxpYsPKwXsz+S7f//ptzW
-hl2KX9Owk3W44xrbILpqGauZeRg8YDp7iTvW3bWgJ+cEFl7EscOUgFHlvdon9IUa
-QM7T1T2v/Dk0QnCrfiiiOqr/3hdnJq9rEHCUAKSuzQJGyeVxHBMr0r76H0MZSHKs
-//VuW2Xv6rNBH20OpjQ7qADyngg9oCJ3M+ufmlZXyF7d4UqRbtTG5KsCWqfCxGLl
-U+T/kv6Y31lMP70pGIy+
-=0Q5H
------END PGP SIGNATURE-----
-
---2ucVuBgLn6NdbLVigBgjwxBu69u8dihma--
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
