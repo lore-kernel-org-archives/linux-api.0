@@ -1,43 +1,58 @@
 From: Jan Kara <jack@suse.cz>
-Subject: Re: [v10 3/5] ext4: adds project quota support
-Date: Thu, 19 Mar 2015 10:41:10 +0100
-Message-ID: <20150319094110.GE28368@quack.suse.cz>
+Subject: Re: [v10 4/5] ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR
+ interface support
+Date: Thu, 19 Mar 2015 10:56:34 +0100
+Message-ID: <20150319095634.GF28368@quack.suse.cz>
 References: <1426705497-22158-1-git-send-email-lixi@ddn.com>
- <1426705497-22158-4-git-send-email-lixi@ddn.com>
+ <1426705497-22158-5-git-send-email-lixi@ddn.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1426705497-22158-4-git-send-email-lixi@ddn.com>
-Sender: linux-ext4-owner@vger.kernel.org
+In-Reply-To: <1426705497-22158-5-git-send-email-lixi@ddn.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: Li Xi <pkuelelixi@gmail.com>
 Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu 19-03-15 04:04:55, Li Xi wrote:
-> This patch adds mount options for enabling/disabling project quota
-> accounting and enforcement. A new specific inode is also used for
-> project quota accounting.
-  Here we still don't have resolved the problem that inode number 11 may be
-used. Please note that in the changelog as FIXME so that we don't forget.
+On Thu 19-03-15 04:04:56, Li Xi wrote:
+> This patch adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR ioctl interface
+> support for ext4. The interface is kept consistent with
+> XFS_IOC_FSGETXATTR/XFS_IOC_FSGETXATTR.
+  Two more comments below.
 
-> @@ -987,6 +988,7 @@ struct ext4_inode_info {
->  #define EXT4_MOUNT_DIOREAD_NOLOCK	0x400000 /* Enable support for dio read nolocking */
->  #define EXT4_MOUNT_JOURNAL_CHECKSUM	0x800000 /* Journal checksums */
->  #define EXT4_MOUNT_JOURNAL_ASYNC_COMMIT	0x1000000 /* Journal Async Commit */
-> +#define EXT4_MOUNT_PRJJQUOTA		0x2000000 /* Journaled Project quota */
->  #define EXT4_MOUNT_DELALLOC		0x8000000 /* Delalloc support */
->  #define EXT4_MOUNT_DATA_ERR_ABORT	0x10000000 /* Abort on file data write */
->  #define EXT4_MOUNT_BLOCK_VALIDITY	0x20000000 /* Block validity checking */
-  I'm ok with the fact that you removed support for project quota files not
-in system files. However why do you keep the PRJJQUOTA mount option then?
-Quota tools are clever enough to query kernel for enabled quota without
-checking for mount options these days. So they don't need the mount option
-for anything. And kernel doesn't need the option for anything either
-(usrquota and grpquota mount options are there only for quota in standard
-files case).
+> 
+> Signed-off-by: Li Xi <lixi@ddn.com>
+...
+> +static int ext4_ioctl_setproject(struct file *filp, __u32 projid)
+> +{
+> +	struct inode *inode = file_inode(filp);
+> +	struct super_block *sb = inode->i_sb;
+> +	struct ext4_inode_info *ei = EXT4_I(inode);
+> +	int err;
+> +	handle_t *handle;
+> +	kprojid_t kprojid;
+> +	struct ext4_iloc iloc;
+> +	struct ext4_inode *raw_inode;
+> +
+> +	struct dquot *transfer_to[EXT4_MAXQUOTAS] = { };
+> +
+> +	/* Make sure caller can change project. */
+> +	if (!capable(CAP_SYS_ADMIN))
+> +		return -EACCES;
+  Why do you test capabilities here when you already test permission in
+EXT4_IOC_FSSETXATTR? Furthermore this test is too restrictive. Just delete
+it.
 
-								Honza
+...
+> -flags_out:
+> +		err = ext4_ioctl_setflags(inode, flags);
+>  		mutex_unlock(&inode->i_mutex);
+> -		mnt_drop_write_file(filp);
+> +		mnt_drop_write(filp->f_path.mnt);
+  Why did you change this? mnt_drop_write_file() should stay here.
+
+									Honza
 -- 
 Jan Kara <jack@suse.cz>
 SUSE Labs, CR
