@@ -1,58 +1,46 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [v10 4/5] ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR
- interface support
-Date: Thu, 19 Mar 2015 10:56:34 +0100
-Message-ID: <20150319095634.GF28368@quack.suse.cz>
-References: <1426705497-22158-1-git-send-email-lixi@ddn.com>
- <1426705497-22158-5-git-send-email-lixi@ddn.com>
+From: Cyrill Gorcunov <gorcunov@gmail.com>
+Subject: Re: [PATCH 3/3] mm: idle memory tracking
+Date: Thu, 19 Mar 2015 13:12:05 +0300
+Message-ID: <20150319101205.GC27066@moon>
+References: <cover.1426706637.git.vdavydov@parallels.com>
+ <0b70e70137aa5232cce44a69c0b5e320f2745f7d.1426706637.git.vdavydov@parallels.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <1426705497-22158-5-git-send-email-lixi@ddn.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Li Xi <pkuelelixi@gmail.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
+In-Reply-To: <0b70e70137aa5232cce44a69c0b5e320f2745f7d.1426706637.git.vdavydov@parallels.com>
+Sender: owner-linux-mm@kvack.org
+To: Vladimir Davydov <vdavydov@parallels.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu 19-03-15 04:04:56, Li Xi wrote:
-> This patch adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR ioctl interface
-> support for ext4. The interface is kept consistent with
-> XFS_IOC_FSGETXATTR/XFS_IOC_FSGETXATTR.
-  Two more comments below.
-
+On Wed, Mar 18, 2015 at 11:44:36PM +0300, Vladimir Davydov wrote:
+> Knowing the portion of memory that is not used by a certain application
+> or memory cgroup (idle memory) can be useful for partitioning the system
+> efficiently. Currently, the only means to estimate the amount of idle
+> memory provided by the kernel is /proc/PID/clear_refs. However, it has
+> two serious shortcomings:
 > 
-> Signed-off-by: Li Xi <lixi@ddn.com>
+>  - it does not count unmapped file pages
+>  - it affects the reclaimer logic
+> 
+> This patch attempts to provide the userspace with the means to track
+> idle memory without the above mentioned limitations.
 ...
-> +static int ext4_ioctl_setproject(struct file *filp, __u32 projid)
+> +static void set_mem_idle(void)
 > +{
-> +	struct inode *inode = file_inode(filp);
-> +	struct super_block *sb = inode->i_sb;
-> +	struct ext4_inode_info *ei = EXT4_I(inode);
-> +	int err;
-> +	handle_t *handle;
-> +	kprojid_t kprojid;
-> +	struct ext4_iloc iloc;
-> +	struct ext4_inode *raw_inode;
+> +	int nid;
 > +
-> +	struct dquot *transfer_to[EXT4_MAXQUOTAS] = { };
-> +
-> +	/* Make sure caller can change project. */
-> +	if (!capable(CAP_SYS_ADMIN))
-> +		return -EACCES;
-  Why do you test capabilities here when you already test permission in
-EXT4_IOC_FSSETXATTR? Furthermore this test is too restrictive. Just delete
-it.
+> +	for_each_online_node(nid)
+> +		set_mem_idle_node(nid);
+> +}
 
-...
-> -flags_out:
-> +		err = ext4_ioctl_setflags(inode, flags);
->  		mutex_unlock(&inode->i_mutex);
-> -		mnt_drop_write_file(filp);
-> +		mnt_drop_write(filp->f_path.mnt);
-  Why did you change this? mnt_drop_write_file() should stay here.
+Vladimir, might we need get_online_mems/put_online_mems here,
+or if node gets offline this wont be a problem? (Asking
+because i don't know).
 
-									Honza
--- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
