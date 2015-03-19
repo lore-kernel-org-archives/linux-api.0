@@ -1,90 +1,42 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH] selftests: Add tool to generate kselftest tar archive
-Date: Thu, 19 Mar 2015 14:57:59 -0600
-Message-ID: <1426798679-8676-2-git-send-email-shuahkh@osg.samsung.com>
-References: <1426798679-8676-1-git-send-email-shuahkh@osg.samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1426798679-8676-1-git-send-email-shuahkh@osg.samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Shuah Khan <shuahkh@osg.samsung.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH v2] selftests/timers: Use shared logic to run and install
+ tests
+Date: Thu, 19 Mar 2015 15:52:38 -0600
+Message-ID: <550B4526.8060301@osg.samsung.com>
+References: <1426724440-12439-1-git-send-email-mpe@ellerman.id.au>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1426724440-12439-1-git-send-email-mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-gen_kselftest_tar.sh tool generates kselftest tar archive. This tool
-supports uncompressed tar, gz, bz, and xz compression formats and the
-default compression format is gzip. This tool runs kselftest install
-tool as its back-end.
+On 03/18/2015 06:20 PM, Michael Ellerman wrote:
+> Change the timers Makefile to make use of shared run and install logic
+> in lib.mk. Destructive tests are installed but not run by default.
+> 
+> Add a new variable, TEST_PROGS_EXTENDED, which is a list of extra
+> programs to install, but which are not run by the default run_tests
+> logic.
+> 
+> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+> ---
+> 
+> v2: Add and use TEST_PROGS_EXTENDED.
+>     Just use the standard run_tests/install/emit_tests, this relies on the
+>     patch from John to change the defaults for threadtest.
 
-Usage:
-cd tools/testing/selftests
-./gen_kselftest_tar [ tar | targz | tarbz2 | tarxz ]
+Applied to next for 4.1
 
-Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
----
- tools/testing/selftests/gen_kselftest_tar.sh | 55 ++++++++++++++++++++++++++++
- 1 file changed, 55 insertions(+)
- create mode 100755 tools/testing/selftests/gen_kselftest_tar.sh
+-- Shuah
 
-diff --git a/tools/testing/selftests/gen_kselftest_tar.sh b/tools/testing/selftests/gen_kselftest_tar.sh
-new file mode 100755
-index 0000000..17d5bd0
---- /dev/null
-+++ b/tools/testing/selftests/gen_kselftest_tar.sh
-@@ -0,0 +1,55 @@
-+#!/bin/bash
-+#
-+# gen_kselftest_tar
-+# Generate kselftest tarball
-+# Author: Shuah Khan <shuahkh@osg.samsung.com>
-+# Copyright (C) 2015 Samsung Electronics Co., Ltd.
-+
-+# This software may be freely redistributed under the terms of the GNU
-+# General Public License (GPLv2).
-+
-+# main
-+main()
-+{
-+	if [ "$#" -eq 0 ]; then
-+		echo "$0: Generating default compression gzip"
-+		copts="cvzf"
-+		ext=".tar.gz"
-+	else
-+		case "$1" in
-+			tar)
-+				copts="cvf"
-+				ext=".tar"
-+				;;
-+			targz)
-+				copts="cvzf"
-+				ext=".tar.gz"
-+				;;
-+			tarbz2)
-+				copts="cvjf"
-+				ext=".tar.bz2"
-+				;;
-+			tarxz)
-+				copts="cvJf"
-+				ext=".tar.xz"
-+				;;
-+			*)
-+			echo "Unknown tarball format $1"
-+			exit 1
-+			;;
-+	esac
-+	fi
-+
-+	install_dir=./kselftest
-+
-+# Run install using INSTALL_KSFT_PATH override to generate install
-+# directory
-+./kselftest_install.sh
-+tar $copts kselftest${ext} $install_dir
-+echo "Kselftest archive kselftest${ext} created!"
-+
-+# clean up install directory
-+rm -rf kselftest
-+}
-+
-+main "$@"
+
 -- 
-2.1.0
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
