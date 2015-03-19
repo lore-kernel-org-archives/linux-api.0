@@ -1,138 +1,107 @@
-From: Chanwoo Choi <cw00.choi@samsung.com>
-Subject: Re: [PATCH v3  00/15] Add support to STMicroelectronics STM32 family
-Date: Thu, 19 Mar 2015 08:35:09 +0900
-Message-ID: <550A0BAD.2000104@samsung.com>
-References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH] selftests: Fix kcmp build to not require headers install
+Date: Thu, 19 Mar 2015 11:02:37 +1100
+Message-ID: <1426723357.14101.1.camel@ellerman.id.au>
+References: <1426297504-14432-1-git-send-email-shuahkh@osg.samsung.com>
+	 <1426297504-14432-2-git-send-email-shuahkh@osg.samsung.com>
+	 <1426503639.4716.7.camel@ellerman.id.au> <55099415.5060400@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-gpio-owner@vger.kernel.org>
-In-reply-to: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
-Sender: linux-gpio-owner@vger.kernel.org
-To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Cc: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, stefan@agner.ch, pmeerw@pmeerw.net, pebolle@tiscali.nl, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <55099415.5060400-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, tranmanphong-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Maxime,
+On Wed, 2015-03-18 at 09:04 -0600, Shuah Khan wrote:
+> On 03/16/2015 05:00 AM, Michael Ellerman wrote:
+> > On Fri, 2015-03-13 at 19:45 -0600, Shuah Khan wrote:
+> >> Change CFLAGS to look in uapi to allow kcmp to be built without
+> >> requiring headers install. This will make it easier to run tests
+> >> without going through the headers install step.
+> >>
+> >> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> >> ---
+> >>  tools/testing/selftests/kcmp/Makefile | 2 +-
+> >>  1 file changed, 1 insertion(+), 1 deletion(-)
+> >>
+> >> diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
+> >> index ff0eefd..d405ad4 100644
+> >> --- a/tools/testing/selftests/kcmp/Makefile
+> >> +++ b/tools/testing/selftests/kcmp/Makefile
+> >> @@ -1,5 +1,5 @@
+> >>  CC := $(CROSS_COMPILE)$(CC)
+> >> -CFLAGS += -I../../../../usr/include/
+> >> +CFLAGS += -I../../../../include/uapi -I../../../../usr/include/
+> > 
+> > Hi Shuah,
+> > 
+> > Sorry but this is wrong. The contents of include/uapi are not the same as the
+> > exported kernel headers.
+> > 
+> > Mixing the unprocessed kernel headers with user headers leads to all sorts of
+> > mess, eg:
+> > 
+> > $ cc -I../../../../include/uapi -I../../../../usr/include/ kcmp_test.c   -o kcmp_test
+> 
+> Do you see this error when you run the compile using kcmp Makefile
+> or using make ksefltest target?
 
-I tested this patch-set on Linux 4.0-rc4 for STM32F429IDISCOVERY board.
-I completed the kernel booting successfully without any modification .
+$ cd tools/testing/selftests
+$ make TARGETS=kcmp
+for TARGET in kcmp; do \
+	make -C $TARGET; \
+done;
+make[1]: Entering directory '/home/michael/work/topics/powerpc-maint/src/misc-test/tools/testing/selftests/kcmp'
+ppc64-cc -I../../../../include/uapi -I../../../../usr/include/    kcmp_test.c   -o kcmp_test
+In file included from /usr/powerpc-linux-gnu/include/asm/ptrace.h:27:0,
+                 from /usr/powerpc-linux-gnu/include/asm/sigcontext.h:11,
+                 from /usr/powerpc-linux-gnu/include/bits/sigcontext.h:27,
+                 from /usr/powerpc-linux-gnu/include/signal.h:332,
+                 from kcmp_test.c:5:
+../../../../include/uapi/linux/types.h:9:2: warning: #warning "Attempt to use kernel headers from user space, see http://kernelnewbies.org/KernelHeaders" [-Wcpp]
+ #warning "Attempt to use kernel headers from user space, see http://kernelnewbies.org/KernelHeaders"
+  ^
 
-Looks good to me for this patch-set.
+etc.
 
-Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
+I don't use the kselftest target, because I'm cross compiling, and it assumes
+you are running natively (it runs the tests). (And it doesn't work at the
+moment because of -rR and LDFLAGS).
 
-Best Regards,
-Chanwoo Choi
+> Do you consider running cc directly isn't a valid use-case for
+> this test?
 
-On 03/13/2015 06:55 AM, Maxime Coquelin wrote:
-> From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-> 
-> This third round tries to address most of the comments made on previous series.
-> 
-> It contains few less patches, as the reset_controller_of_init() patch has been
-> removed, now that the bootlaoder handles the reset of the timers.
-> 
-> The pinctrl driver has also been removed after Linus review.
-> It will be reworked to use the generic pinconf bindings, and may contain
-> changes for other machines (Mediatek), to add support for pinmux property
-> handling directly in pinconf-generic.
-> 
-> STM32 MCUs are Cortex-M CPU, used in various applications (consumer
-> electronics, industrial applications, hobbyists...).
-> Datasheets, user and programming manuals are publicly available on
-> STMicroelectronics website.
-> 
-> With this series applied, the STM32F419 Discovery can boot succesfully.
-> 
-> 
-> Changes since v2:
-> -----------------
->  - Remove pinctrl driver from the series. 
->  - Remove reset_controller_of_init(), and reset the timers in the bootloader
->  - Add HW flow contrl property for serial driver
->  - Lots of changes in the DTS file, as per Andreas recommendations
->  - Some Kconfig clean-ups
->  - Adapt the config to be compatible with Andreas' bootwrapper, except UART port.
->  - Various fixes in documentation
-> 
-> Changes since v1:
-> -----------------
->  - Move bindings documentation in their own patches (Andreas)
->  - Rename ARM System timer to armv7m-systick (Rob)
->  - Add clock-frequency property handling in armv7m-systick (Rob)
->  - Re-factor the reset controllers into a single controller (Philipp)
->  - Add kerneldoc to reset_controller_of_init (Philipp)
->  - Add named constants in include/dt-bindings/reset/ (Philipp)
->  - Make pinctrl driver to depend on ARCH_STM32 or COMPILE_TEST (Geert)
->  - Introduce CPUV7M_NUM_IRQ config flag to indicate the number of interrupts
-> supported by the MCU, in order to limit memory waste in vectors' table (Uwe)
-> 
-> 
-> Maxime Coquelin (15):
->   scripts: link-vmlinux: Don't pass page offset to kallsyms if XIP
->     Kernel
->   ARM: ARMv7-M: Enlarge vector table up to 256 entries
->   dt-bindings: Document the ARM System timer bindings
->   clocksource: Add ARM System timer driver
->   dt-bindings: Document the STM32 reset bindings
->   drivers: reset: Add STM32 reset driver
->   dt-bindings: Document the STM32 timer bindings
->   clockevent: Add STM32 Timer driver
->   dt-bindings: Document the STM32 USART bindings
->   serial: stm32-usart: Add STM32 USART Driver
->   ARM: Add STM32 family machine
->   ARM: dts: Add ARM System timer as clockevent in armv7m
->   ARM: dts: Introduce STM32F429 MCU
->   ARM: configs: Add STM32 defconfig
->   MAINTAINERS: Add entry for STM32 MCUs
-> 
->  Documentation/arm/stm32/overview.txt               |  32 +
->  Documentation/arm/stm32/stm32f429-overview.txt     |  22 +
->  .../devicetree/bindings/arm/armv7m_systick.txt     |  26 +
->  .../devicetree/bindings/reset/st,stm32-rcc.txt     | 102 +++
->  .../devicetree/bindings/serial/st,stm32-usart.txt  |  32 +
->  .../devicetree/bindings/timer/st,stm32-timer.txt   |  22 +
->  MAINTAINERS                                        |   8 +
->  arch/arm/Kconfig                                   |  18 +
->  arch/arm/Makefile                                  |   1 +
->  arch/arm/boot/dts/Makefile                         |   1 +
->  arch/arm/boot/dts/armv7-m.dtsi                     |   6 +
->  arch/arm/boot/dts/stm32f429-disco.dts              |  71 +++
->  arch/arm/boot/dts/stm32f429.dtsi                   | 226 +++++++
->  arch/arm/configs/stm32_defconfig                   |  71 +++
->  arch/arm/kernel/entry-v7m.S                        |  13 +-
->  arch/arm/mach-stm32/Makefile                       |   1 +
->  arch/arm/mach-stm32/Makefile.boot                  |   3 +
->  arch/arm/mach-stm32/board-dt.c                     |  19 +
->  arch/arm/mm/Kconfig                                |  15 +
->  drivers/clocksource/Kconfig                        |  15 +
->  drivers/clocksource/Makefile                       |   2 +
->  drivers/clocksource/armv7m_systick.c               |  78 +++
->  drivers/clocksource/timer-stm32.c                  | 184 ++++++
->  drivers/reset/Makefile                             |   1 +
->  drivers/reset/reset-stm32.c                        | 125 ++++
->  drivers/tty/serial/Kconfig                         |  17 +
->  drivers/tty/serial/Makefile                        |   1 +
->  drivers/tty/serial/stm32-usart.c                   | 695 +++++++++++++++++++++
->  include/uapi/linux/serial_core.h                   |   3 +
->  scripts/link-vmlinux.sh                            |   2 +-
->  30 files changed, 1807 insertions(+), 5 deletions(-)
->  create mode 100644 Documentation/arm/stm32/overview.txt
->  create mode 100644 Documentation/arm/stm32/stm32f429-overview.txt
->  create mode 100644 Documentation/devicetree/bindings/arm/armv7m_systick.txt
->  create mode 100644 Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
->  create mode 100644 Documentation/devicetree/bindings/serial/st,stm32-usart.txt
->  create mode 100644 Documentation/devicetree/bindings/timer/st,stm32-timer.txt
->  create mode 100644 arch/arm/boot/dts/stm32f429-disco.dts
->  create mode 100644 arch/arm/boot/dts/stm32f429.dtsi
->  create mode 100644 arch/arm/configs/stm32_defconfig
->  create mode 100644 arch/arm/mach-stm32/Makefile
->  create mode 100644 arch/arm/mach-stm32/Makefile.boot
->  create mode 100644 arch/arm/mach-stm32/board-dt.c
->  create mode 100644 drivers/clocksource/armv7m_systick.c
->  create mode 100644 drivers/clocksource/timer-stm32.c
->  create mode 100644 drivers/reset/reset-stm32.c
->  create mode 100644 drivers/tty/serial/stm32-usart.c
-> 
+Running cc directly is completely legitimate. It makes no difference anyway.
 
+> I see your point that kernel headers shouldn't be included from user
+> space. 
+
+Good!
+
+> But kcmp_test isn't really a regular use space app. It is
+> intended for testing kernel. 
+
+It is 100% a regular user space app. It tests the kernel using syscalls, just
+like every other user space app.
+
+> There are other tests that do include uapi headers.
+
+They are also wrong and should be fixed.
+ 
+> Requiring header install is a big hammer. Thinking about a developer
+> use-case, if a developer is building and testing several kernels, it
+> is tedious install headers each time and remembering to cleanup headers.
+
+But if you are testing a kernel without installing the headers for that
+kernel, you are not actually testing that kernel. You're testing that kernel
+with some other kernel's headers, which is something different.
+
+Because we are (generally) careful not to break the userspace API, it usually
+works to build things with one kernels headers and run them on another kernel.
+But if you're interested in testing a particular kernel version properly then
+you absolutely must install that kernel's headers before building the tests.
+
+cheers
