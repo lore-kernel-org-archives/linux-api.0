@@ -1,37 +1,37 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: [PATCH v8 tip 5/9] tracing: allow BPF programs to call bpf_trace_printk()
-Date: Fri, 20 Mar 2015 14:44:21 -0700
-Message-ID: <550C94B5.80301@plumgrid.com>
-References: <1426816787-5001-1-git-send-email-ast@plumgrid.com>	<1426816787-5001-6-git-send-email-ast@plumgrid.com> <20150320172219.45ff7157@gandalf.local.home>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH V7] Allow compaction of unevictable pages
+Date: Fri, 20 Mar 2015 15:17:03 -0700
+Message-ID: <20150320151703.dfd116931ddb397ade8bfd8c@linux-foundation.org>
+References: <1426859390-10974-1-git-send-email-emunson@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20150320172219.45ff7157@gandalf.local.home>
-Sender: netdev-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ingo Molnar <mingo@kernel.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1426859390-10974-1-git-send-email-emunson@akamai.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Eric B Munson <emunson@akamai.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>, Thomas Gleixner <tglx@linutronix.de>, Christoph Lameter <cl@linux.com>, Peter Zijlstra <peterz@infradead.org>, Mel Gorman <mgorman@suse.de>, David Rientjes <rientjes@google.com>, Rik van Riel <riel@redhat.com>, Michal Hocko <mhocko@suse.cz>, linux-doc@vger.kernel.org, linux-rt-users@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 3/20/15 2:22 PM, Steven Rostedt wrote:
->> +/* limited trace_printk()
->> + * only %d %u %x %ld %lu %lx %lld %llu %llx %p conversion specifiers allowed
->> + */
->
-> Ah! Again, don't contaminate the rest of the kernel with net comment
-> styles! :-)
+On Fri, 20 Mar 2015 09:49:50 -0400 Eric B Munson <emunson@akamai.com> wrote:
 
-ok :)
+> Currently, pages which are marked as unevictable are protected from
+> compaction, but not from other types of migration.  The POSIX real time
+> extension explicitly states that mlock() will prevent a major page
+> fault, but the spirit of this is that mlock() should give a process the
+> ability to control sources of latency, including minor page faults.
+> However, the mlock manpage only explicitly says that a locked page will
+> not be written to swap and this can cause some confusion.  The
+> compaction code today does not give a developer who wants to avoid swap
+> but wants to have large contiguous areas available any method to achieve
+> this state.  This patch introduces a sysctl for controlling compaction
+> behavior with respect to the unevictable lru.  Users that demand no page
+> faults after a page is present can set compact_unevictable_allowed to 0
+> and users who need the large contiguous areas can enable compaction on
+> locked memory by leaving the default value of 1.
 
->> +		} else if (fmt[i] == 'p') {
->> +			mod[fmt_cnt]++;
->> +			i++;
->> +			if (!isspace(fmt[i]) && fmt[i] != 0)
->
-> I wonder if we should allow punctuation here too? None alpha-numeric
-> characters?
+Do we really really really need the /proc knob?  We're already
+migrating these pages so users of mlock will occasionally see some
+latency - how likely is it that this patch will significantly damage
+anyone?
 
-yes. just checked all of ispunct characters after %p.
-All should be fine.
-
-Thanks!
