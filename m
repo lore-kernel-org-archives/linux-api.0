@@ -1,50 +1,168 @@
-From: josh@joshtriplett.org
-Subject: Re: [PATCH v2 5/7] clone4: Add a CLONE_AUTOREAP flag to
- automatically reap the child process
-Date: Fri, 20 Mar 2015 14:10:55 -0700
-Message-ID: <20150320211055.GA13125@cloud>
-References: <cover.1426376419.git.josh@joshtriplett.org>
- <20150315233439.GA31890@thin>
- <20150320181404.GA26343@redhat.com>
- <1766646.jusoNDOCPE@tjmaciei-mobl4>
- <20150320190914.GA28357@redhat.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH v8 tip 5/9] tracing: allow BPF programs to call
+ bpf_trace_printk()
+Date: Fri, 20 Mar 2015 17:22:19 -0400
+Message-ID: <20150320172219.45ff7157@gandalf.local.home>
+References: <1426816787-5001-1-git-send-email-ast@plumgrid.com>
+	<1426816787-5001-6-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150320190914.GA28357@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: Thiago Macieira <thiago.macieira@intel.com>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1426816787-5001-6-git-send-email-ast@plumgrid.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexei Starovoitov <ast@plumgrid.com>
+Cc: Ingo Molnar <mingo@kernel.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 20, 2015 at 08:09:14PM +0100, Oleg Nesterov wrote:
-> On 03/20, Thiago Macieira wrote:
-> >
-> > On Friday 20 March 2015 19:14:04 Oleg Nesterov wrote:
-> > > Also. I forgot that the kernel always resets ->exit_signal to SIGCHLD on
-> > > exec or reparenting. Reparenting is probably fine. But what about exec?
-> > > Should it keep ->exit_signal == 0 if "autoreap" ? I think it should not, to
-> > > avoid the strange special case.
-> >
-> > Not delivering any signal was the objective of this patch series, so yes
-> > exit_signal == 0 should survive an exec and even re-exec.
-> 
-> OK, but then perhaps we should never send SIGCHLD (on exit) if "autoreap",
-> to make the logic simple.
-> 
-> And copy_process() should probably do
-> 
-> 	if ((clone_flags & CSIGNAL) && (clone_flags && CLONE_AUTOREAP))
-> 		return -EINVAL;
-> 
-> so that we still can change this behaviour later.
+On Thu, 19 Mar 2015 18:59:43 -0700
+Alexei Starovoitov <ast@plumgrid.com> wrote:
 
-I'm fine with that, as it would handle the particular use case we care
-about.
+> Debugging of BPF programs needs some form of printk from the program,
+> so let programs call limited trace_printk() with %d %u %x %p modifiers only.
+> 
+> Similar to kernel modules, during program load verifier checks whether program
+> is calling bpf_trace_printk() and if so, kernel allocates trace_printk buffers
+> and emits big 'this is debug only' banner.
+> 
+> Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
+> ---
+>  include/uapi/linux/bpf.h |    1 +
+>  kernel/trace/bpf_trace.c |   75 ++++++++++++++++++++++++++++++++++++++++++++++
+>  2 files changed, 76 insertions(+)
+> 
+> diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
+> index 238c6883877b..cc47ef41076a 100644
+> --- a/include/uapi/linux/bpf.h
+> +++ b/include/uapi/linux/bpf.h
+> @@ -166,6 +166,7 @@ enum bpf_func_id {
+>  	BPF_FUNC_map_delete_elem, /* int map_delete_elem(&map, &key) */
+>  	BPF_FUNC_probe_read,      /* int bpf_probe_read(void *dst, int size, void *src) */
+>  	BPF_FUNC_ktime_get_ns,    /* u64 bpf_ktime_get_ns(void) */
+> +	BPF_FUNC_trace_printk,    /* int bpf_trace_printk(const char *fmt, int fmt_size, ...) */
+>  	__BPF_FUNC_MAX_ID,
+>  };
+>  
+> diff --git a/kernel/trace/bpf_trace.c b/kernel/trace/bpf_trace.c
+> index 769c577a1fc8..d5b6284edd75 100644
+> --- a/kernel/trace/bpf_trace.c
+> +++ b/kernel/trace/bpf_trace.c
+> @@ -10,6 +10,7 @@
+>  #include <linux/bpf.h>
+>  #include <linux/filter.h>
+>  #include <linux/uaccess.h>
+> +#include <linux/ctype.h>
+>  #include "trace.h"
+>  
+>  static DEFINE_PER_CPU(int, bpf_prog_active);
+> @@ -83,6 +84,72 @@ static const struct bpf_func_proto bpf_ktime_get_ns_proto = {
+>  	.ret_type = RET_INTEGER,
+>  };
+>  
+> +/* limited trace_printk()
+> + * only %d %u %x %ld %lu %lx %lld %llu %llx %p conversion specifiers allowed
+> + */
 
-However, the reset-signal-on-reparent thing might still make sense,
-particularly for the ptrace-reparent case (less so for the
-reparent-to-child-reaper case).
+Ah! Again, don't contaminate the rest of the kernel with net comment
+styles! :-)
 
-- Josh Triplett
+I change my comment style when I submit net patches. So patches that go
+into tracing must conform to the tracing style.
+
+> +static u64 bpf_trace_printk(u64 r1, u64 fmt_size, u64 r3, u64 r4, u64 r5)
+> +{
+> +	char *fmt = (char *) (long) r1;
+> +	int mod[3] = {};
+> +	int fmt_cnt = 0;
+> +	int i;
+> +
+> +	/* bpf_check()->check_func_arg()->check_stack_boundary()
+
+It spreads like a disease!
+
+> +	 * guarantees that fmt points to bpf program stack,
+> +	 * fmt_size bytes of it were initialized and fmt_size > 0
+> +	 */
+> +	if (fmt[--fmt_size] != 0)
+> +		return -EINVAL;
+> +
+> +	/* check format string for allowed specifiers */
+> +	for (i = 0; i < fmt_size; i++) {
+> +		if ((!isprint(fmt[i]) && !isspace(fmt[i])) || !isascii(fmt[i]))
+> +			return -EINVAL;
+> +
+> +		if (fmt[i] != '%')
+> +			continue;
+> +
+> +		if (fmt_cnt >= 3)
+> +			return -EINVAL;
+> +
+> +		/* fmt[i] != 0 && fmt[last] == 0, so we can access fmt[i + 1] */
+> +		i++;
+> +		if (fmt[i] == 'l') {
+> +			mod[fmt_cnt]++;
+> +			i++;
+> +		} else if (fmt[i] == 'p') {
+> +			mod[fmt_cnt]++;
+> +			i++;
+> +			if (!isspace(fmt[i]) && fmt[i] != 0)
+
+I wonder if we should allow punctuation here too? None alpha-numeric
+characters?
+
+> +				return -EINVAL;
+> +			fmt_cnt++;
+> +			continue;
+> +		}
+> +
+> +		if (fmt[i] == 'l') {
+> +			mod[fmt_cnt]++;
+> +			i++;
+> +		}
+> +
+> +		if (fmt[i] != 'd' && fmt[i] != 'u' && fmt[i] != 'x')
+> +			return -EINVAL;
+> +		fmt_cnt++;
+> +	}
+> +
+> +	return __trace_printk(1/* fake ip will not be printed */, fmt,
+> +			      mod[0] == 2 ? r3 : mod[0] == 1 ? (long) r3 : (u32) r3,
+> +			      mod[1] == 2 ? r4 : mod[1] == 1 ? (long) r4 : (u32) r4,
+> +			      mod[2] == 2 ? r5 : mod[2] == 1 ? (long) r5 : (u32) r5);
+
+Nice trick.
+
+Except for the net-contaminated-comments, the rest looks good.
+
+Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
+
+-- Steve
+
+> +}
+> +
+> +static const struct bpf_func_proto bpf_trace_printk_proto = {
+> +	.func = bpf_trace_printk,
+> +	.gpl_only = true,
+> +	.ret_type = RET_INTEGER,
+> +	.arg1_type = ARG_PTR_TO_STACK,
+> +	.arg2_type = ARG_CONST_STACK_SIZE,
+> +};
+> +
+>  static const struct bpf_func_proto *kprobe_prog_func_proto(enum bpf_func_id func_id)
+>  {
+>  	switch (func_id) {
+> @@ -96,6 +163,14 @@ static const struct bpf_func_proto *kprobe_prog_func_proto(enum bpf_func_id func
+>  		return &bpf_probe_read_proto;
+>  	case BPF_FUNC_ktime_get_ns:
+>  		return &bpf_ktime_get_ns_proto;
+> +
+> +	case BPF_FUNC_trace_printk:
+> +		/* this program might be calling bpf_trace_printk,
+> +		 * so allocate per-cpu printk buffers
+> +		 */
+> +		trace_printk_init_buffers();
+> +
+> +		return &bpf_trace_printk_proto;
+>  	default:
+>  		return NULL;
+>  	}
