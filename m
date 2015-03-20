@@ -1,521 +1,273 @@
-From: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v2] Add virtio-input driver.
-Date: Fri, 20 Mar 2015 13:39:29 +0100
-Message-ID: <1426855170-10997-1-git-send-email-kraxel@redhat.com>
+From: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [v10 3/5] ext4: adds project quota support
+Date: Fri, 20 Mar 2015 21:02:22 +0800
+Message-ID: <CAPTn0cDDSCHG9Txqr_ZZPtgsTEDbSg4UDo8Kjvfv+Xr5NoXLyw@mail.gmail.com>
+References: <1426705497-22158-1-git-send-email-lixi@ddn.com>
+	<1426705497-22158-4-git-send-email-lixi@ddn.com>
+	<D6B2436D-287C-4CC2-8646-8FF0A9F74E07@dilger.ca>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <D6B2436D-287C-4CC2-8646-8FF0A9F74E07-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: virtio-dev-sDuHXQ4OtrM4h7I2RyI4rWD2FQJk+8+b@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Cc: mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Cc: "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Dmitry Monakhov <dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-virtio-input is basically evdev-events-over-virtio, so this driver isn't
-much more than reading configuration from config space and forwarding
-incoming events to the linux input layer.
-
-Signed-off-by: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
----
- MAINTAINERS                       |   6 +
- drivers/virtio/Kconfig            |  10 ++
- drivers/virtio/Makefile           |   1 +
- drivers/virtio/virtio_input.c     | 335 ++++++++++++++++++++++++++++++++++++++
- include/uapi/linux/Kbuild         |   1 +
- include/uapi/linux/virtio_ids.h   |   1 +
- include/uapi/linux/virtio_input.h |  75 +++++++++
- 7 files changed, 429 insertions(+)
- create mode 100644 drivers/virtio/virtio_input.c
- create mode 100644 include/uapi/linux/virtio_input.h
-
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 0e1abe8..585e6cd 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -10435,6 +10435,12 @@ S:	Maintained
- F:	drivers/vhost/
- F:	include/uapi/linux/vhost.h
- 
-+VIRTIO INPUT DRIVER
-+M:	Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-+S:	Maintained
-+F:	drivers/virtio/virtio_input.c
-+F:	include/uapi/linux/virtio_input.h
-+
- VIA RHINE NETWORK DRIVER
- M:	Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>
- S:	Maintained
-diff --git a/drivers/virtio/Kconfig b/drivers/virtio/Kconfig
-index b546da5..cab9f3f 100644
---- a/drivers/virtio/Kconfig
-+++ b/drivers/virtio/Kconfig
-@@ -48,6 +48,16 @@ config VIRTIO_BALLOON
- 
- 	 If unsure, say M.
- 
-+config VIRTIO_INPUT
-+	tristate "Virtio input driver"
-+	depends on VIRTIO
-+	depends on INPUT
-+	---help---
-+	 This driver supports virtio input devices such as
-+	 keyboards, mice and tablets.
-+
-+	 If unsure, say M.
-+
-  config VIRTIO_MMIO
- 	tristate "Platform bus driver for memory mapped virtio devices"
- 	depends on HAS_IOMEM
-diff --git a/drivers/virtio/Makefile b/drivers/virtio/Makefile
-index d85565b..41e30e3 100644
---- a/drivers/virtio/Makefile
-+++ b/drivers/virtio/Makefile
-@@ -4,3 +4,4 @@ obj-$(CONFIG_VIRTIO_PCI) += virtio_pci.o
- virtio_pci-y := virtio_pci_modern.o virtio_pci_common.o
- virtio_pci-$(CONFIG_VIRTIO_PCI_LEGACY) += virtio_pci_legacy.o
- obj-$(CONFIG_VIRTIO_BALLOON) += virtio_balloon.o
-+obj-$(CONFIG_VIRTIO_INPUT) += virtio_input.o
-diff --git a/drivers/virtio/virtio_input.c b/drivers/virtio/virtio_input.c
-new file mode 100644
-index 0000000..dd3215e
---- /dev/null
-+++ b/drivers/virtio/virtio_input.c
-@@ -0,0 +1,335 @@
-+#include <linux/module.h>
-+#include <linux/virtio.h>
-+#include <linux/input.h>
-+
-+#include <uapi/linux/virtio_ids.h>
-+#include <uapi/linux/virtio_input.h>
-+
-+struct virtio_input {
-+	struct virtio_device       *vdev;
-+	struct input_dev           *idev;
-+	char                       name[64];
-+	char                       serial[64];
-+	char                       phys[64];
-+	struct virtqueue           *evt, *sts;
-+	struct virtio_input_event  evts[64];
-+	struct mutex               lock;
-+};
-+
-+static ssize_t serial_show(struct device *dev,
-+			   struct device_attribute *attr, char *buf)
-+{
-+	struct input_dev *idev = to_input_dev(dev);
-+	struct virtio_input *vi = input_get_drvdata(idev);
-+
-+	return sprintf(buf, "%s\n", vi->serial);
-+}
-+static DEVICE_ATTR_RO(serial);
-+
-+static struct attribute *dev_attrs[] = {
-+	&dev_attr_serial.attr,
-+	NULL
-+};
-+
-+static umode_t dev_attrs_are_visible(struct kobject *kobj,
-+				     struct attribute *a, int n)
-+{
-+	struct device *dev = container_of(kobj, struct device, kobj);
-+	struct input_dev *idev = to_input_dev(dev);
-+	struct virtio_input *vi = input_get_drvdata(idev);
-+
-+	if (a == &dev_attr_serial.attr && !strlen(vi->serial))
-+		return 0;
-+
-+	return a->mode;
-+}
-+
-+static struct attribute_group dev_attr_grp = {
-+	.attrs =	dev_attrs,
-+	.is_visible =	dev_attrs_are_visible,
-+};
-+
-+static const struct attribute_group *dev_attr_groups[] = {
-+	&dev_attr_grp,
-+	NULL
-+};
-+
-+static void virtinput_queue_evtbuf(struct virtio_input *vi,
-+				   struct virtio_input_event *evtbuf)
-+{
-+	struct scatterlist sg[1];
-+
-+	sg_init_one(sg, evtbuf, sizeof(*evtbuf));
-+	virtqueue_add_inbuf(vi->evt, sg, 1, evtbuf, GFP_ATOMIC);
-+}
-+
-+static void virtinput_recv_events(struct virtqueue *vq)
-+{
-+	struct virtio_input *vi = vq->vdev->priv;
-+	struct virtio_input_event *event;
-+	unsigned int len;
-+
-+	mutex_lock(&vi->lock);
-+	while ((event = virtqueue_get_buf(vi->evt, &len)) != NULL) {
-+		input_event(vi->idev,
-+			    le16_to_cpu(event->type),
-+			    le16_to_cpu(event->code),
-+			    le32_to_cpu(event->value));
-+		virtinput_queue_evtbuf(vi, event);
-+	}
-+	virtqueue_kick(vq);
-+	mutex_unlock(&vi->lock);
-+}
-+
-+static int virtinput_send_status(struct virtio_input *vi,
-+				 u16 type, u16 code, s32 value)
-+{
-+	struct virtio_input_event *stsbuf;
-+	struct scatterlist sg[1];
-+	int rc;
-+
-+	stsbuf = kzalloc(sizeof(*stsbuf), GFP_ATOMIC);
-+	if (!stsbuf)
-+		return -ENOMEM;
-+
-+	stsbuf->type  = cpu_to_le16(type);
-+	stsbuf->code  = cpu_to_le16(code);
-+	stsbuf->value = cpu_to_le32(value);
-+	sg_init_one(sg, stsbuf, sizeof(*stsbuf));
-+
-+	mutex_lock(&vi->lock);
-+	rc = virtqueue_add_outbuf(vi->sts, sg, 1, stsbuf, GFP_ATOMIC);
-+	virtqueue_kick(vi->sts);
-+	mutex_unlock(&vi->lock);
-+
-+	if (rc != 0)
-+		kfree(stsbuf);
-+	return rc;
-+}
-+
-+static void virtinput_recv_status(struct virtqueue *vq)
-+{
-+	struct virtio_input *vi = vq->vdev->priv;
-+	struct virtio_input_event *stsbuf;
-+	unsigned int len;
-+
-+	mutex_lock(&vi->lock);
-+	while ((stsbuf = virtqueue_get_buf(vi->sts, &len)) != NULL)
-+		kfree(stsbuf);
-+	mutex_unlock(&vi->lock);
-+}
-+
-+static int virtinput_status(struct input_dev *idev, unsigned int type,
-+			    unsigned int code, int value)
-+{
-+	struct virtio_input *vi = input_get_drvdata(idev);
-+
-+	return virtinput_send_status(vi, type, code, value);
-+}
-+
-+static size_t virtinput_cfg_select(struct virtio_input *vi,
-+				   u8 select, u8 subsel)
-+{
-+	u8 size;
-+
-+	virtio_cwrite(vi->vdev, struct virtio_input_config, select, &select);
-+	virtio_cwrite(vi->vdev, struct virtio_input_config, subsel, &subsel);
-+	virtio_cread(vi->vdev, struct virtio_input_config, size, &size);
-+	return size;
-+}
-+
-+static void virtinput_cfg_bits(struct virtio_input *vi, int select, int subsel,
-+			       unsigned long *bits, unsigned int bitcount)
-+{
-+	unsigned int bit;
-+	size_t bytes;
-+	u8 cfg = 0;
-+
-+	bytes = virtinput_cfg_select(vi, select, subsel);
-+	if (!bytes)
-+		return;
-+	if (bitcount > bytes*8)
-+		bitcount = bytes*8;
-+	if (select == VIRTIO_INPUT_CFG_EV_BITS)
-+		set_bit(subsel, vi->idev->evbit);
-+	for (bit = 0; bit < bitcount; bit++) {
-+		if ((bit % 8) == 0)
-+			virtio_cread(vi->vdev, struct virtio_input_config,
-+				     u.bitmap[bit / 8], &cfg);
-+		if (cfg & (1 << (bit % 8)))
-+			set_bit(bit, bits);
-+	}
-+}
-+
-+static void virtinput_cfg_abs(struct virtio_input *vi, int abs)
-+{
-+	u32 mi, ma, fu, fl;
-+
-+	virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ABS_INFO, abs);
-+	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.min, &mi);
-+	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.max, &ma);
-+	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.fuzz, &fu);
-+	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.flat, &fl);
-+	input_set_abs_params(vi->idev, abs, mi, ma, fu, fl);
-+}
-+
-+static int virtinput_init_vqs(struct virtio_input *vi)
-+{
-+	struct virtqueue *vqs[2];
-+	vq_callback_t *cbs[] = { virtinput_recv_events,
-+				 virtinput_recv_status };
-+	static const char * names[] = { "events", "status" };
-+	int i, err, size;
-+
-+	err = vi->vdev->config->find_vqs(vi->vdev, 2, vqs, cbs, names);
-+	if (err)
-+		return err;
-+	vi->evt = vqs[0];
-+	vi->sts = vqs[1];
-+
-+	size = virtqueue_get_vring_size(vi->evt);
-+	if (size > ARRAY_SIZE(vi->evts))
-+		size = ARRAY_SIZE(vi->evts);
-+	for (i = 0; i < size; i++)
-+		virtinput_queue_evtbuf(vi, &vi->evts[i]);
-+	virtqueue_kick(vi->evt);
-+
-+	return 0;
-+}
-+
-+static int virtinput_probe(struct virtio_device *vdev)
-+{
-+	struct virtio_input *vi;
-+	size_t size;
-+	int abs, err;
-+
-+	vi = kzalloc(sizeof(*vi), GFP_KERNEL);
-+	if (!vi)
-+		return -ENOMEM;
-+
-+	vdev->priv = vi;
-+	vi->vdev = vdev;
-+	mutex_init(&vi->lock);
-+
-+	err = virtinput_init_vqs(vi);
-+	if (err)
-+		goto err_init_vq;
-+
-+	vi->idev = input_allocate_device();
-+	if (!vi->idev) {
-+		err = -ENOMEM;
-+		goto err_input_alloc;
-+	}
-+	input_set_drvdata(vi->idev, vi);
-+
-+	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ID_NAME, 0);
-+	virtio_cread_bytes(vi->vdev, offsetof(struct virtio_input_config, u),
-+			   vi->name, min(size, sizeof(vi->name)));
-+	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ID_SERIAL, 0);
-+	virtio_cread_bytes(vi->vdev, offsetof(struct virtio_input_config, u),
-+			   vi->serial, min(size, sizeof(vi->serial)));
-+	snprintf(vi->phys, sizeof(vi->phys),
-+		 "virtio%d/input0", vdev->index);
-+	vi->idev->name = vi->name;
-+	vi->idev->phys = vi->phys;
-+	vi->idev->uniq = vi->serial;
-+
-+	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ID_DEVIDS, 0);
-+	if (size >= 8) {
-+		virtio_cread(vi->vdev, struct virtio_input_config,
-+			     u.ids.bustype, &vi->idev->id.bustype);
-+		virtio_cread(vi->vdev, struct virtio_input_config,
-+			     u.ids.vendor, &vi->idev->id.vendor);
-+		virtio_cread(vi->vdev, struct virtio_input_config,
-+			     u.ids.product, &vi->idev->id.product);
-+		virtio_cread(vi->vdev, struct virtio_input_config,
-+			     u.ids.version, &vi->idev->id.version);
-+	} else {
-+		vi->idev->id.bustype = BUS_VIRTUAL;
-+	}
-+
-+	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_PROP_BITS, 0,
-+			   vi->idev->propbit, INPUT_PROP_CNT);
-+	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_REP);
-+	if (size)
-+		set_bit(EV_REP, vi->idev->evbit);
-+
-+	vi->idev->dev.parent = &vdev->dev;
-+	vi->idev->dev.groups = dev_attr_groups;
-+	vi->idev->event = virtinput_status;
-+
-+	/* device -> kernel */
-+	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_KEY,
-+			   vi->idev->keybit, KEY_CNT);
-+	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_REL,
-+			   vi->idev->relbit, REL_CNT);
-+	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_ABS,
-+			   vi->idev->absbit, ABS_CNT);
-+	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_MSC,
-+			   vi->idev->mscbit, MSC_CNT);
-+	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_SW,
-+			   vi->idev->swbit,  SW_CNT);
-+
-+	/* kernel -> device */
-+	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_LED,
-+			   vi->idev->ledbit, LED_CNT);
-+	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_SND,
-+			   vi->idev->sndbit, SND_CNT);
-+
-+	if (test_bit(EV_ABS, vi->idev->evbit)) {
-+		for (abs = 0; abs < ABS_CNT; abs++) {
-+			if (!test_bit(abs, vi->idev->absbit))
-+				continue;
-+			virtinput_cfg_abs(vi, abs);
-+		}
-+	}
-+	virtio_device_ready(vdev);
-+
-+	err = input_register_device(vi->idev);
-+	if (err)
-+		goto err_input_register;
-+
-+	return 0;
-+
-+err_input_register:
-+	input_free_device(vi->idev);
-+err_input_alloc:
-+	vdev->config->del_vqs(vdev);
-+err_init_vq:
-+	kfree(vi);
-+	return err;
-+}
-+
-+static void virtinput_remove(struct virtio_device *vdev)
-+{
-+	struct virtio_input *vi = vdev->priv;
-+
-+	input_unregister_device(vi->idev);
-+	input_free_device(vi->idev);
-+	vdev->config->del_vqs(vdev);
-+	kfree(vi);
-+}
-+
-+static unsigned int features[] = {
-+};
-+static struct virtio_device_id id_table[] = {
-+	{ VIRTIO_ID_INPUT, VIRTIO_DEV_ANY_ID },
-+	{ 0 },
-+};
-+
-+static struct virtio_driver virtio_input_driver = {
-+	.driver.name         = KBUILD_MODNAME,
-+	.driver.owner        = THIS_MODULE,
-+	.feature_table       = features,
-+	.feature_table_size  = ARRAY_SIZE(features),
-+	.id_table            = id_table,
-+	.probe               = virtinput_probe,
-+	.remove              = virtinput_remove,
-+};
-+
-+module_virtio_driver(virtio_input_driver);
-+MODULE_DEVICE_TABLE(virtio, id_table);
-+
-+MODULE_LICENSE("GPL");
-+MODULE_DESCRIPTION("Virtio input device driver");
-+MODULE_AUTHOR("Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>");
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 68ceb97..04b829e 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -430,6 +430,7 @@ header-y += virtio_blk.h
- header-y += virtio_config.h
- header-y += virtio_console.h
- header-y += virtio_ids.h
-+header-y += virtio_input.h
- header-y += virtio_net.h
- header-y += virtio_pci.h
- header-y += virtio_ring.h
-diff --git a/include/uapi/linux/virtio_ids.h b/include/uapi/linux/virtio_ids.h
-index 284fc3a..5f60aa4 100644
---- a/include/uapi/linux/virtio_ids.h
-+++ b/include/uapi/linux/virtio_ids.h
-@@ -39,5 +39,6 @@
- #define VIRTIO_ID_9P		9 /* 9p virtio console */
- #define VIRTIO_ID_RPROC_SERIAL 11 /* virtio remoteproc serial link */
- #define VIRTIO_ID_CAIF	       12 /* Virtio caif */
-+#define VIRTIO_ID_INPUT        18 /* virtio input */
- 
- #endif /* _LINUX_VIRTIO_IDS_H */
-diff --git a/include/uapi/linux/virtio_input.h b/include/uapi/linux/virtio_input.h
-new file mode 100644
-index 0000000..9302422
---- /dev/null
-+++ b/include/uapi/linux/virtio_input.h
-@@ -0,0 +1,75 @@
-+#ifndef _LINUX_VIRTIO_INPUT_H
-+#define _LINUX_VIRTIO_INPUT_H
-+/* This header is BSD licensed so anyone can use the definitions to implement
-+ * compatible drivers/servers.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ * 3. Neither the name of IBM nor the names of its contributors
-+ *    may be used to endorse or promote products derived from this software
-+ *    without specific prior written permission.
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL IBM OR
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-+ * SUCH DAMAGE. */
-+#include <linux/virtio_ids.h>
-+#include <linux/virtio_config.h>
-+
-+enum virtio_input_config_select {
-+	VIRTIO_INPUT_CFG_UNSET      = 0x00,
-+	VIRTIO_INPUT_CFG_ID_NAME    = 0x01,
-+	VIRTIO_INPUT_CFG_ID_SERIAL  = 0x02,
-+	VIRTIO_INPUT_CFG_ID_DEVIDS  = 0x03,
-+	VIRTIO_INPUT_CFG_PROP_BITS  = 0x10,
-+	VIRTIO_INPUT_CFG_EV_BITS    = 0x11,
-+	VIRTIO_INPUT_CFG_ABS_INFO   = 0x12,
-+};
-+
-+struct virtio_input_absinfo {
-+	__u32  min;
-+	__u32  max;
-+	__u32  fuzz;
-+	__u32  flat;
-+};
-+
-+struct virtio_input_devids {
-+	__u16  bustype;
-+	__u16  vendor;
-+	__u16  product;
-+	__u16  version;
-+};
-+
-+struct virtio_input_config {
-+	__u8    select;
-+	__u8    subsel;
-+	__u8    size;
-+	__u8    reserved;
-+	union {
-+		char string[128];
-+		__u8 bitmap[128];
-+		struct virtio_input_absinfo abs;
-+		struct virtio_input_devids ids;
-+	} u;
-+};
-+
-+struct virtio_input_event {
-+	__le16 type;
-+	__le16 code;
-+	__le32 value;
-+};
-+
-+#endif /* _LINUX_VIRTIO_INPUT_H */
--- 
-1.8.3.1
+On Fri, Mar 20, 2015 at 3:23 AM, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org> wrote:
+> On Mar 18, 2015, at 1:04 PM, Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>>
+>> This patch adds mount options for enabling/disabling project quota
+>> accounting and enforcement. A new specific inode is also used for
+>> project quota accounting.
+>>
+>> Signed-off-by: Li Xi <lixi-LfVdkaOWEx8@public.gmane.org>
+>> Signed-off-by: Dmitry Monakhov <dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+>> Reviewed-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+>> ---
+>> fs/ext4/ext4.h  |    9 +++++-
+>> fs/ext4/super.c |   76 ++++++++++++++++++++++++++++++++++++++++++++++++------
+>> 2 files changed, 74 insertions(+), 11 deletions(-)
+>>
+>> diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+>> index 7acb2da..ad650d4 100644
+>> --- a/fs/ext4/ext4.h
+>> +++ b/fs/ext4/ext4.h
+>> @@ -208,6 +208,7 @@ struct ext4_io_submit {
+>> #define EXT4_UNDEL_DIR_INO     6      /* Undelete directory inode */
+>> #define EXT4_RESIZE_INO                7      /* Reserved group descriptors inode */
+>> #define EXT4_JOURNAL_INO       8      /* Journal inode */
+>> +#define EXT4_PRJ_QUOTA_INO   11      /* Project quota inode */
+>
+> To me it doesn't make sense to reserve this inode number if we aren't
+> going to use it for project quota.  I think it is just confusing for
+> developers that incorrectly think this is correct instead of checking
+> s_prj_quota_inum.
+Yeah, I agree that this definition is confusing and it is not so useful since
+it can be replaced by s_prj_quota_inum. I will removing this definition.
+In my current patches for E2fsprogs, project quota still uses inode number
+11. And if project quota feature is enabled, the s_first_ino will be set to
+s_prj_quota_inum + 1. I hope this is a acceptable implementation.
+>
+>> /* First non-reserved inode for old ext4 filesystems */
+>> #define EXT4_GOOD_OLD_FIRST_INO       11
+>> @@ -987,6 +988,7 @@ struct ext4_inode_info {
+>> #define EXT4_MOUNT_DIOREAD_NOLOCK     0x400000 /* Enable support for dio read nolocking */
+>> #define EXT4_MOUNT_JOURNAL_CHECKSUM   0x800000 /* Journal checksums */
+>> #define EXT4_MOUNT_JOURNAL_ASYNC_COMMIT       0x1000000 /* Journal Async Commit */
+>> +#define EXT4_MOUNT_PRJJQUOTA         0x2000000 /* Journaled Project quota */
+>> #define EXT4_MOUNT_DELALLOC           0x8000000 /* Delalloc support */
+>> #define EXT4_MOUNT_DATA_ERR_ABORT     0x10000000 /* Abort on file data write */
+>> #define EXT4_MOUNT_BLOCK_VALIDITY     0x20000000 /* Block validity checking */
+>> @@ -1169,7 +1171,8 @@ struct ext4_super_block {
+>>       __le32  s_overhead_clusters;    /* overhead blocks/clusters in fs */
+>>       __le32  s_backup_bgs[2];        /* groups with sparse_super2 SBs */
+>>       __u8    s_encrypt_algos[4];     /* Encryption algorithms in use  */
+>> -     __le32  s_reserved[105];        /* Padding to the end of the block */
+>> +     __le32  s_prj_quota_inum;       /* inode for tracking project quota */
+>> +     __le32  s_reserved[104];        /* Padding to the end of the block */
+>>       __le32  s_checksum;             /* crc32c(superblock) */
+>> };
+>>
+>> @@ -1184,7 +1187,7 @@ struct ext4_super_block {
+>> #define EXT4_MF_FS_ABORTED    0x0002  /* Fatal error detected */
+>>
+>> /* Number of quota types we support */
+>> -#define EXT4_MAXQUOTAS 2
+>> +#define EXT4_MAXQUOTAS 3
+>>
+>> /*
+>>  * fourth extended-fs super-block data in memory
+>> @@ -1376,6 +1379,8 @@ static inline int ext4_valid_inum(struct super_block *sb, unsigned long ino)
+>>               ino == EXT4_BOOT_LOADER_INO ||
+>>               ino == EXT4_JOURNAL_INO ||
+>>               ino == EXT4_RESIZE_INO ||
+>> +             (EXT4_FIRST_INO(sb) > EXT4_PRJ_QUOTA_INO &&
+>> +              ino == EXT4_PRJ_QUOTA_INO) ||
+>
+> This check isn't correct either, if s_prj_quota_inum != EXT4_PRJ_QUOTA_INO.
+>
+> Cheers, Andreas
+>
+>>               (ino >= EXT4_FIRST_INO(sb) &&
+>>                ino <= le32_to_cpu(EXT4_SB(sb)->s_es->s_inodes_count));
+>> }
+>> diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+>> index 04c6cc3..4077932 100644
+>> --- a/fs/ext4/super.c
+>> +++ b/fs/ext4/super.c
+>> @@ -1036,8 +1036,8 @@ static int bdev_try_to_free_page(struct super_block *sb, struct page *page,
+>> }
+>>
+>> #ifdef CONFIG_QUOTA
+>> -#define QTYPE2NAME(t) ((t) == USRQUOTA ? "user" : "group")
+>> -#define QTYPE2MOPT(on, t) ((t) == USRQUOTA?((on)##USRJQUOTA):((on)##GRPJQUOTA))
+>> +static char *quotatypes[] = INITQFNAMES;
+>> +#define QTYPE2NAME(t) (quotatypes[t])
+>>
+>> static int ext4_write_dquot(struct dquot *dquot);
+>> static int ext4_acquire_dquot(struct dquot *dquot);
+>> @@ -1135,7 +1135,8 @@ enum {
+>>       Opt_journal_path, Opt_journal_checksum, Opt_journal_async_commit,
+>>       Opt_abort, Opt_data_journal, Opt_data_ordered, Opt_data_writeback,
+>>       Opt_data_err_abort, Opt_data_err_ignore,
+>> -     Opt_usrjquota, Opt_grpjquota, Opt_offusrjquota, Opt_offgrpjquota,
+>> +     Opt_usrjquota, Opt_grpjquota, Opt_prjjquota,
+>> +     Opt_offusrjquota, Opt_offgrpjquota, Opt_offprjjquota,
+>>       Opt_jqfmt_vfsold, Opt_jqfmt_vfsv0, Opt_jqfmt_vfsv1, Opt_quota,
+>>       Opt_noquota, Opt_barrier, Opt_nobarrier, Opt_err,
+>>       Opt_usrquota, Opt_grpquota, Opt_i_version,
+>> @@ -1190,6 +1191,8 @@ static const match_table_t tokens = {
+>>       {Opt_usrjquota, "usrjquota=%s"},
+>>       {Opt_offgrpjquota, "grpjquota="},
+>>       {Opt_grpjquota, "grpjquota=%s"},
+>> +     {Opt_prjjquota, "prjjquota"},
+>> +     {Opt_offprjjquota, "offprjjquota"},
+>>       {Opt_jqfmt_vfsold, "jqfmt=vfsold"},
+>>       {Opt_jqfmt_vfsv0, "jqfmt=vfsv0"},
+>>       {Opt_jqfmt_vfsv1, "jqfmt=vfsv1"},
+>> @@ -1412,11 +1415,16 @@ static const struct mount_opts {
+>>       {Opt_grpquota, EXT4_MOUNT_QUOTA | EXT4_MOUNT_GRPQUOTA,
+>>                                                       MOPT_SET | MOPT_Q},
+>>       {Opt_noquota, (EXT4_MOUNT_QUOTA | EXT4_MOUNT_USRQUOTA |
+>> -                    EXT4_MOUNT_GRPQUOTA), MOPT_CLEAR | MOPT_Q},
+>> +                    EXT4_MOUNT_GRPQUOTA | EXT4_MOUNT_PRJJQUOTA),
+>> +                                                     MOPT_CLEAR | MOPT_Q},
+>>       {Opt_usrjquota, 0, MOPT_Q},
+>>       {Opt_grpjquota, 0, MOPT_Q},
+>> +     {Opt_prjjquota, EXT4_MOUNT_QUOTA | EXT4_MOUNT_PRJJQUOTA,
+>> +                                                     MOPT_SET | MOPT_Q},
+>>       {Opt_offusrjquota, 0, MOPT_Q},
+>>       {Opt_offgrpjquota, 0, MOPT_Q},
+>> +     {Opt_offprjjquota, 0, EXT4_MOUNT_PRJJQUOTA,
+>> +                                                     MOPT_CLEAR | MOPT_Q},
+>>       {Opt_jqfmt_vfsold, QFMT_VFS_OLD, MOPT_QFMT},
+>>       {Opt_jqfmt_vfsv0, QFMT_VFS_V0, MOPT_QFMT},
+>>       {Opt_jqfmt_vfsv1, QFMT_VFS_V1, MOPT_QFMT},
+>> @@ -1673,7 +1681,9 @@ static int parse_options(char *options, struct super_block *sb,
+>>                        "feature is enabled");
+>>               return 0;
+>>       }
+>> -     if (sbi->s_qf_names[USRQUOTA] || sbi->s_qf_names[GRPQUOTA]) {
+>> +     if (sbi->s_qf_names[USRQUOTA] ||
+>> +         sbi->s_qf_names[GRPQUOTA] ||
+>> +         test_opt(sb, PRJJQUOTA)) {
+>>               if (test_opt(sb, USRQUOTA) && sbi->s_qf_names[USRQUOTA])
+>>                       clear_opt(sb, USRQUOTA);
+>>
+>> @@ -3944,7 +3954,7 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
+>>               sb->s_qcop = &ext4_qctl_sysfile_operations;
+>>       else
+>>               sb->s_qcop = &ext4_qctl_operations;
+>> -     sb->s_quota_types = QTYPE_MASK_USR | QTYPE_MASK_GRP;
+>> +     sb->s_quota_types = QTYPE_MASK_USR | QTYPE_MASK_GRP | QTYPE_MASK_PRJ;
+>> #endif
+>>       memcpy(sb->s_uuid, es->s_uuid, sizeof(es->s_uuid));
+>>
+>> @@ -5040,6 +5050,46 @@ restore_opts:
+>>       return err;
+>> }
+>>
+>> +static int ext4_statfs_project(struct super_block *sb,
+>> +                            kprojid_t projid, struct kstatfs *buf)
+>> +{
+>> +     struct kqid qid;
+>> +     struct dquot *dquot;
+>> +     u64 limit;
+>> +     u64 curblock;
+>> +
+>> +     qid = make_kqid_projid(projid);
+>> +     dquot = dqget(sb, qid);
+>> +     if (!dquot)
+>> +             return -ESRCH;
+>> +     spin_lock(&dq_data_lock);
+>> +
+>> +     limit = dquot->dq_dqb.dqb_bsoftlimit ?
+>> +             dquot->dq_dqb.dqb_bsoftlimit :
+>> +             dquot->dq_dqb.dqb_bhardlimit;
+>> +     if (limit && buf->f_blocks * buf->f_bsize > limit) {
+>> +             curblock = dquot->dq_dqb.dqb_curspace / buf->f_bsize;
+>> +             buf->f_blocks = limit / buf->f_bsize;
+>> +             buf->f_bfree = buf->f_bavail =
+>> +                     (buf->f_blocks > curblock) ?
+>> +                      (buf->f_blocks - curblock) : 0;
+>> +     }
+>> +
+>> +     limit = dquot->dq_dqb.dqb_isoftlimit ?
+>> +             dquot->dq_dqb.dqb_isoftlimit :
+>> +             dquot->dq_dqb.dqb_ihardlimit;
+>> +     if (limit && buf->f_files > limit) {
+>> +             buf->f_files = limit;
+>> +             buf->f_ffree =
+>> +                     (buf->f_files > dquot->dq_dqb.dqb_curinodes) ?
+>> +                      (buf->f_files - dquot->dq_dqb.dqb_curinodes) : 0;
+>> +     }
+>> +
+>> +     spin_unlock(&dq_data_lock);
+>> +     dqput(dquot);
+>> +     return 0;
+>> +}
+>> +
+>> static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf)
+>> {
+>>       struct super_block *sb = dentry->d_sb;
+>> @@ -5048,6 +5098,7 @@ static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf)
+>>       ext4_fsblk_t overhead = 0, resv_blocks;
+>>       u64 fsid;
+>>       s64 bfree;
+>> +     struct inode *inode = dentry->d_inode;
+>>       resv_blocks = EXT4_C2B(sbi, atomic64_read(&sbi->s_resv_clusters));
+>>
+>>       if (!test_opt(sb, MINIX_DF))
+>> @@ -5072,6 +5123,9 @@ static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf)
+>>       buf->f_fsid.val[0] = fsid & 0xFFFFFFFFUL;
+>>       buf->f_fsid.val[1] = (fsid >> 32) & 0xFFFFFFFFUL;
+>>
+>> +     if (ext4_test_inode_flag(inode, EXT4_INODE_PROJINHERIT) &&
+>> +         sb_has_quota_limits_enabled(sb, PRJQUOTA))
+>> +             ext4_statfs_project(sb, EXT4_I(inode)->i_projid, buf);
+>>       return 0;
+>> }
+>>
+>> @@ -5152,7 +5206,9 @@ static int ext4_mark_dquot_dirty(struct dquot *dquot)
+>>
+>>       /* Are we journaling quotas? */
+>>       if (EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_QUOTA) ||
+>> -         sbi->s_qf_names[USRQUOTA] || sbi->s_qf_names[GRPQUOTA]) {
+>> +         sbi->s_qf_names[USRQUOTA] ||
+>> +         sbi->s_qf_names[GRPQUOTA] ||
+>> +         test_opt(sb, PRJJQUOTA)) {
+>>               dquot_mark_dquot_dirty(dquot);
+>>               return ext4_write_dquot(dquot);
+>>       } else {
+>> @@ -5236,7 +5292,8 @@ static int ext4_quota_enable(struct super_block *sb, int type, int format_id,
+>>       struct inode *qf_inode;
+>>       unsigned long qf_inums[EXT4_MAXQUOTAS] = {
+>>               le32_to_cpu(EXT4_SB(sb)->s_es->s_usr_quota_inum),
+>> -             le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum)
+>> +             le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum),
+>> +             le32_to_cpu(EXT4_SB(sb)->s_es->s_prj_quota_inum)
+>>       };
+>>
+>>       BUG_ON(!EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_QUOTA));
+>> @@ -5264,7 +5321,8 @@ static int ext4_enable_quotas(struct super_block *sb)
+>>       int type, err = 0;
+>>       unsigned long qf_inums[EXT4_MAXQUOTAS] = {
+>>               le32_to_cpu(EXT4_SB(sb)->s_es->s_usr_quota_inum),
+>> -             le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum)
+>> +             le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum),
+>> +             le32_to_cpu(EXT4_SB(sb)->s_es->s_prj_quota_inum)
+>>       };
+>>
+>>       sb_dqopt(sb)->flags |= DQUOT_QUOTA_SYS_FILE;
+>> --
+>> 1.7.1
+>>
+>
+>
+> Cheers, Andreas
+>
+>
+>
+>
+>
