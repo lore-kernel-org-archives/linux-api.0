@@ -1,49 +1,50 @@
-From: Rik van Riel <riel@redhat.com>
-Subject: Re: [PATCH V7] Allow compaction of unevictable pages
-Date: Fri, 20 Mar 2015 10:47:04 -0400
-Message-ID: <550C32E8.6030103@redhat.com>
-References: <1426859390-10974-1-git-send-email-emunson@akamai.com>
+From: Alexander Shishkin <alexander.shishkin@linux.intel.com>
+Subject: Re: [PATCH v0 01/11] stm class: Introduce an abstraction for System Trace Module devices
+Date: Fri, 20 Mar 2015 16:53:50 +0200
+Message-ID: <87k2ybd8jl.fsf@ashishki-desk.ger.corp.intel.com>
+References: <1425728161-164217-1-git-send-email-alexander.shishkin@linux.intel.com> <1425728161-164217-2-git-send-email-alexander.shishkin@linux.intel.com> <CANLsYkzmnHSbfoWSEWkDx-UTuypALZv42FsZ0XVWz2bfqdGWZQ@mail.gmail.com> <87mw3bewq8.fsf@ashishki-desk.ger.corp.intel.com> <CANLsYkwithjLgtztf8aBDRv-QL2VGOwc4XZ=1sGBSHg4LiymBg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1426859390-10974-1-git-send-email-emunson@akamai.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Eric B Munson <emunson@akamai.com>, Andrew Morton <akpm@linux-foundation.org>
-Cc: Vlastimil Babka <vbabka@suse.cz>, Thomas Gleixner <tglx@linutronix.de>, Christoph Lameter <cl@linux.com>, Peter Zijlstra <peterz@infradead.org>, Mel Gorman <mgorman@suse.de>, David Rientjes <rientjes@google.com>, Michal Hocko <mhocko@suse.cz>, linux-doc@vger.kernel.org, linux-rt-users@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CANLsYkwithjLgtztf8aBDRv-QL2VGOwc4XZ=1sGBSHg4LiymBg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Poirier <mathieu.poirier@linaro.org>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Pratik Patel <pratikp@codeaurora.org>, peter.lachner@intel.com, norbert.schulz@intel.com, keven.boell@intel.com, yann.fouassier@intel.com, laurent.fert@intel.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/20/2015 09:49 AM, Eric B Munson wrote:
-> Currently, pages which are marked as unevictable are protected from
-> compaction, but not from other types of migration.  The POSIX real time
-> extension explicitly states that mlock() will prevent a major page
-> fault, but the spirit of this is that mlock() should give a process the
-> ability to control sources of latency, including minor page faults.
-> However, the mlock manpage only explicitly says that a locked page will
-> not be written to swap and this can cause some confusion.  The
-> compaction code today does not give a developer who wants to avoid swap
-> but wants to have large contiguous areas available any method to achieve
-> this state.  This patch introduces a sysctl for controlling compaction
-> behavior with respect to the unevictable lru.  Users that demand no page
-> faults after a page is present can set compact_unevictable_allowed to 0
-> and users who need the large contiguous areas can enable compaction on
-> locked memory by leaving the default value of 1.
-> 
-> To illustrate this problem I wrote a quick test program that mmaps a
-> large number of 1MB files filled with random data.  These maps are
-> created locked and read only.  Then every other mmap is unmapped and I
-> attempt to allocate huge pages to the static huge page pool.  When the
-> compact_unevictable_allowed sysctl is 0, I cannot allocate hugepages
-> after fragmenting memory.  When the value is set to 1, allocations
-> succeed.
-> 
-> Signed-off-by: Eric B Munson <emunson@akamai.com>
-> Acked-by: Michal Hocko <mhocko@suse.cz>
-> Acked-by: Vlastimil Babka <vbabka@suse.cz>
-> Acked-by: Christoph Lameter <cl@linux.com>
-> Acked-by: David Rientjes <rientjes@google.com>
+Mathieu Poirier <mathieu.poirier@linaro.org> writes:
 
-Acked-by: Rik van Riel <riel@redhat.com>
+> As promised I worked on a prototype that connects the coresight-stm
+> driver with the generic STM interface you have suggested.  Things work
+> quite well and aside from the enhancement related to the ioctl() and
+> private member as discussed above, we should move ahead with this.
+>
+> I will send out a new version of the coresight-stm driver as soon as I
+> see your patches with those changes.
 
--- 
-All rights reversed
+Actually, instread of a private member I'd simply pass struct stm_data
+pointer to the callback (like we do with other callbacks) and the
+private data would be in the structure that embeds this struct stm_data,
+so that you can get to it using container_of():
+
+struct my_stm {
+       struct stm_data	data;
+       void		*my_stuff;
+       ...
+};
+
+...
+
+long my_ioctl(struct stm_data *data, unsigned int cmd, unsigned long
+	      arg)
+{
+        struct my_stm *mine = container_of(data, struct my_stm, data);
+
+...
+
+Would this work for you? I'm otherwise ready to send the second version
+of my patchset.
+
+Regards,
+--
+Alex
