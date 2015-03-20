@@ -1,210 +1,51 @@
-From: Gerd Hoffmann <kraxel@redhat.com>
+From: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH 1/1] Add virtio-input driver.
-Date: Fri, 20 Mar 2015 11:28:47 +0100
-Message-ID: <1426847327.32097.60.camel@nilsson.home.kraxel.org>
+Date: Fri, 20 Mar 2015 11:36:39 +0100
+Message-ID: <1426847799.32097.66.camel@nilsson.home.kraxel.org>
 References: <1426756391-26585-1-git-send-email-kraxel@redhat.com>
-	<1426756391-26585-2-git-send-email-kraxel@redhat.com>
-	<20150319123940-mutt-send-email-mst@redhat.com>
+	 <1426756391-26585-2-git-send-email-kraxel@redhat.com>
+	 <CANq1E4TDj4pq3J_BVc=Yuzo5dVR=QcNexVUqaqwjg7Qi5_xX4Q@mail.gmail.com>
+	 <1426844885.32097.36.camel@nilsson.home.kraxel.org>
+	 <CANq1E4QLPSK6NVeEx6yihYPdF-XPpXx4rKv0deHwX+s2RzFHCg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <20150319123940-mutt-send-email-mst@redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: "Michael S. Tsirkin" <mst@redhat.com>
-Cc: virtio-dev@lists.oasis-open.org, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, virtualization@lists.linux-foundation.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CANq1E4QLPSK6NVeEx6yihYPdF-XPpXx4rKv0deHwX+s2RzFHCg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: virtio-dev-sDuHXQ4OtrM4h7I2RyI4rWD2FQJk+8+b@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
   Hi,
 
-> > +static int virtinput_send_status(struct virtio_input *vi,
-> > +				 u16 type, u16 code, s32 value)
-> > +{
-> > +	struct virtio_input_event *stsbuf;
-> > +	struct scatterlist sg[1];
-> > +
-> > +	stsbuf = kzalloc(sizeof(*stsbuf), GFP_ATOMIC);
-> > +	if (!stsbuf)
-> > +		return -ENOMEM;
+> > There will also be pass-through support, i.e. qemu
+> > opening /dev/input/event<nr> and forwarding everything to the guest.
+> > How should that be handled best?  Copy all four from the host?  Even
+> > though the bustype is BUS_USB?  Not sure this actually improves things
+> > because the guest can match the device, or whenever this confuses apps
+> > due to BUS_USB being applied to virtio devices ...
 > 
-> Does this return an error to userspace?
-> If so it's not a good idea I think, GFP_ATOMIC failures are
-> transient conditions and should not be reported
-> to userspace.
-> Can use GFP_KERNEL here?
+> Lemme give an example: We have databases in user-space, that allow
+> applications to figure out the mouse DPI values of a device. Those
+> databases match on all four, bus+vid+pid+ver (sometimes even more,
+> like name and dmi). If one of those is not forwarded, it will not be
+> detected.
 
-Waiting for an answer from the ioput guys here.
+Ok, so forward as much as possible.
 
-> > +
-> > +	stsbuf->type  = cpu_to_le16(type);
-> > +	stsbuf->code  = cpu_to_le16(code);
-> > +	stsbuf->value = cpu_to_le32(value);
-> > +	sg_init_one(sg, stsbuf, sizeof(*stsbuf));
-> > +	virtqueue_add_outbuf(vi->sts, sg, 1, stsbuf, GFP_ATOMIC);
-> 
-> This can fail if queue is full. What prevents this from happening?
+> I'd like to see all four forwarded from the host. I'd be fine with
+> "bus" being set to VIRTUAL, but I'm not sure why that would be a good
+> thing to do?
 
-Nothing.  It's highly unlikely though given the throughput we have for
-input devices, not sure it is that useful to put too much effort into
-this.  Except for freeing stsbuf in the error case.
+I think for the emulated devices it's fine to use VIRTUAL.
 
-> > +	virtqueue_kick(vi->sts);
-> 
-> Also what prevents multiple virtinput_send_status calls
-> from racing with each other? Is there locking at a higher level?
+For the passthrough case suspected we could confuse apps because ->phys
+points to a virtio device whereas ->type says "I'm usb".
 
-I think input_dev->event_lock does this.
+But at least the device database probably doesn't care much about the
+physical path I guess, because the mouse is the same no matter which usb
+port I plug it in, correct?
 
-> > +static void virtinput_recv_status(struct virtqueue *vq)
-> > +{
-> > +	struct virtio_input *vi = vq->vdev->priv;
-> > +	struct virtio_input_event *stsbuf;
-> > +	unsigned int len;
-> > +
-> > +	while ((stsbuf = virtqueue_get_buf(vi->sts, &len)) != NULL)
-> 
-> looks like this get_buf can race with add above.
-
-Yes, it can.
-
-> Need some locking.
-
-I'll add it.
-
-> Also pls avoid != NULL, removing it makes code less verbose.
-> 
-> > +		kfree(stsbuf);
-> > +	virtqueue_kick(vq);
-> 
-> Why are you kicking here?
-
-Hmm, it is pointless indeed.
-
-> > +	if (select == VIRTIO_INPUT_CFG_EV_BITS)
-> > +		set_bit(subsel, vi->idev->evbit);
-> > +	for (bit = 0; bit < bitcount; bit++) {
-> > +		if ((bit % 8) == 0)
-> > +			virtio_cread(vi->vdev, struct virtio_input_config,
-> > +				     u.bitmap[bit/8], &cfg);
-> 
-> coding style violations above. you need spaces around ops like / and *.
-> Please run checkpatch.pl
-> 
-> > +		if (cfg & (1 << (bit % 8)))
-> > +			set_bit(bit, bits);
-> 
-> what if not set? does something clear the mask?
-
-kzalloc?
-
-> > +	}
-> 
-> doesn't above just implement bitmap_copy or bitmap_or?
-
-Not fully sure how bitmaps are defined.  virtio has a stream of bytes,
-first byte carries bits 0-7, second 8-15 etc.  linux kernel bitmaps ops
-are operating on longs, and native byteorder longs would be something
-else ...
-
-> > +	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ABS_INFO, abs);
-> > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.min, &mi);
-> > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.max, &ma);
-> > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.fuzz, &fu);
-> > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.flat, &fl);
-> 
-> you read le field into u32 value.
-> Please run sparse on this code. you will get a ton
-> of warnings. Same error appears elsewhere.
-
-Indeed.  IIRC that wasn't the case a while back.  Guess those bitwise
-annotations have been added with the virtio 1.0 patches?
-
-In any case I'll fix it up.
-
-> > +static int virtinput_probe(struct virtio_device *vdev)
-> > +{
-> > +	struct virtio_input *vi;
-> > +	size_t size;
-> > +	int abs, err;
-> 
-> How about checking VERSION_1 and bailing out of not there?
-
-I don't think this is needed.  There isn't a hard dependency on virtio
-1.0.  It's just that config space is relatively large and because of
-that I want it be 1.0 on the host (qemu) side to not allocate large
-portions of I/O address space for the legacy virtio pci bar.
-
-> > +	vi->idev->name = vi->name;
-> > +	vi->idev->phys = vi->phys;
-> > +	vi->idev->id.bustype = BUS_VIRTUAL;
-> > +	vi->idev->id.vendor  = 0x0001;
-> > +	vi->idev->id.product = 0x0001;
-> > +	vi->idev->id.version = 0x0100;
-> 
-> Add comments explaining why these #s make sense?
-
-See other subthread, will be changed to be host-provided (like name).
-
-> > +	err = input_register_device(vi->idev);
-> 
-> Once you do this, virtinput_status can get called,
-> and that will kick, correct?
-
-Correct.
-
-> If so, you must call device_ready before this.
-
-Ok.
-
-> > +	if (err)
-> > +		goto out4;
-> > +
-> > +	return 0;
-> > +
-> > +out4:
-> > +	input_free_device(vi->idev);
-> > +out3:
-> > +	vdev->config->del_vqs(vdev);
-> > +out2:
-> > +	kfree(vi);
-> > +out1:
-> > +	return err;
-> 
-> free on error is out of order with initialization.
-> Might lead to leaks or other bugs.
-> Also - can you name labels something sensible pls?
-> out is usually for exiting on success too...
-> E.g. out4 -> err_register etc.
-
-Will fix.
-
-> > +static void virtinput_remove(struct virtio_device *vdev)
-> > +{
-> > +	struct virtio_input *vi = vdev->priv;
-> > +
-> > +	input_unregister_device(vi->idev);
-> > +	vdev->config->reset(vdev);
-> 
-> You don't really need a reset if you just to del_vqs.
-> People do this if they want to prevent interrupts
-> without deleting vqs.
-
-Ok.
-
-> > +	vdev->config->del_vqs(vdev);
-> > +	kfree(vi);
-> 
-> free_device seems to be missing?
-
-Indeed, good catch.
-
-thanks,
+cheers,
   Gerd
