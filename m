@@ -1,97 +1,159 @@
-From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH] coresight: moving to new "hwtracing" directory
-Date: Thu, 19 Mar 2015 18:21:56 -0600
-Message-ID: <CANLsYkx07_xYcXYbj=TwvUpaDRo9=ppLqsg69e2ju2nO-MArwA@mail.gmail.com>
-References: <1426802522-25743-1-git-send-email-mathieu.poirier@linaro.org>
-	<20150319222741.GA24999@kroah.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Subject: [PATCH v8 tip 0/9] tracing: attach eBPF programs to kprobes
+Date: Thu, 19 Mar 2015 18:59:38 -0700
+Message-ID: <1426816787-5001-1-git-send-email-ast@plumgrid.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150319222741.GA24999-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Russell King - ARM Linux <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, peter.lachner-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, norbert.schulz-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, keven.boell-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yann.fouassier-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, laurent.fert-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, Kaixu Xia <kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 19 March 2015 at 16:27, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> wrote:
-> On Thu, Mar 19, 2015 at 04:02:02PM -0600, Mathieu Poirier wrote:
->> Keeping drivers related to HW tracing on ARM, i.e coresight,
->> under "drivers/coresight" doesn't make sense when other
->> architectures start rolling out technologies of the same
->> nature.
->>
->> As such creating a new "drivers/hwtracing" directory where all
->> drivers of the same kind can reside, reducing namespace
->> pollution under "drivers/".
->>
->> Signed-off-by: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
->> ---
->>  MAINTAINERS                                        |    2 +-
->>  arch/arm/Kconfig.debug                             |    2 +-
->>  arch/arm64/Kconfig.debug                           |    2 +-
->>  drivers/Makefile                                   |    2 +-
->>  drivers/coresight/Kconfig                          |   61 -
->>  drivers/coresight/Makefile                         |   11 -
->>  drivers/coresight/coresight-etb10.c                |  527 ------
->>  drivers/coresight/coresight-etm-cp14.c             |  591 ------
->>  drivers/coresight/coresight-etm.h                  |  251 ---
->>  drivers/coresight/coresight-etm3x.c                | 1932 --------------------
->>  drivers/coresight/coresight-funnel.c               |  258 ---
->>  drivers/coresight/coresight-priv.h                 |   63 -
->>  drivers/coresight/coresight-replicator.c           |  137 --
->>  drivers/coresight/coresight-tmc.c                  |  822 ---------
->>  drivers/coresight/coresight-tpiu.c                 |  207 ---
->>  drivers/coresight/coresight.c                      |  720 --------
->>  drivers/coresight/of_coresight.c                   |  200 --
->>  drivers/hwtracing/coresight/Kconfig                |   61 +
->>  drivers/hwtracing/coresight/Makefile               |   11 +
->>  drivers/hwtracing/coresight/coresight-etb10.c      |  527 ++++++
->>  drivers/hwtracing/coresight/coresight-etm-cp14.c   |  591 ++++++
->>  drivers/hwtracing/coresight/coresight-etm.h        |  251 +++
->>  drivers/hwtracing/coresight/coresight-etm3x.c      | 1932 ++++++++++++++++++++
->>  drivers/hwtracing/coresight/coresight-funnel.c     |  258 +++
->>  drivers/hwtracing/coresight/coresight-priv.h       |   63 +
->>  drivers/hwtracing/coresight/coresight-replicator.c |  137 ++
->>  drivers/hwtracing/coresight/coresight-tmc.c        |  822 +++++++++
->>  drivers/hwtracing/coresight/coresight-tpiu.c       |  207 +++
->>  drivers/hwtracing/coresight/coresight.c            |  720 ++++++++
->>  drivers/hwtracing/coresight/of_coresight.c         |  200 ++
->>  30 files changed, 5784 insertions(+), 5784 deletions(-)
->>  delete mode 100644 drivers/coresight/Kconfig
->>  delete mode 100644 drivers/coresight/Makefile
->>  delete mode 100644 drivers/coresight/coresight-etb10.c
->>  delete mode 100644 drivers/coresight/coresight-etm-cp14.c
->>  delete mode 100644 drivers/coresight/coresight-etm.h
->>  delete mode 100644 drivers/coresight/coresight-etm3x.c
->>  delete mode 100644 drivers/coresight/coresight-funnel.c
->>  delete mode 100644 drivers/coresight/coresight-priv.h
->>  delete mode 100644 drivers/coresight/coresight-replicator.c
->>  delete mode 100644 drivers/coresight/coresight-tmc.c
->>  delete mode 100644 drivers/coresight/coresight-tpiu.c
->>  delete mode 100644 drivers/coresight/coresight.c
->>  delete mode 100644 drivers/coresight/of_coresight.c
->>  create mode 100644 drivers/hwtracing/coresight/Kconfig
->>  create mode 100644 drivers/hwtracing/coresight/Makefile
->>  create mode 100644 drivers/hwtracing/coresight/coresight-etb10.c
->>  create mode 100644 drivers/hwtracing/coresight/coresight-etm-cp14.c
->>  create mode 100644 drivers/hwtracing/coresight/coresight-etm.h
->>  create mode 100644 drivers/hwtracing/coresight/coresight-etm3x.c
->>  create mode 100644 drivers/hwtracing/coresight/coresight-funnel.c
->>  create mode 100644 drivers/hwtracing/coresight/coresight-priv.h
->>  create mode 100644 drivers/hwtracing/coresight/coresight-replicator.c
->>  create mode 100644 drivers/hwtracing/coresight/coresight-tmc.c
->>  create mode 100644 drivers/hwtracing/coresight/coresight-tpiu.c
->>  create mode 100644 drivers/hwtracing/coresight/coresight.c
->>  create mode 100644 drivers/hwtracing/coresight/of_coresight.c
->
-> This looks good to me, but please create your patches with -M option to
-> git, so it just moves the code, and we can easily see that it is a move
-> and nothing else changed.
->
+Hi Steven,
 
-Right, it's nothing more than a move - would you like me to resend this?
+while I have your attention please take another look :)
 
+V7->V8:
+- split addition of kprobe flag into separate patch
+- switched to __this_cpu_inc in now documented trace_call_bpf()
+- converted array into standalone bpf_func_proto and switch statement
+  (this apporach looks cleanest, especially considering patch 5)
+- refactored patch 5 bpf_trace_printk to do strict checking
 
-> thanks,
->
-> greg k-h
+V6->V7:
+- rebase and remove confusing _notrace suffix from preempt_disable/enable
+  everything else unchanged
+
+V5->V6:
+- added simple recursion check to trace_call_bpf()
+- added tracex4 example that does kmem_cache_alloc/free tracking.
+  It remembers every allocated object in a map and user space periodically
+  prints a set of old objects. With more work in can be made into
+  simple kmemleak detector.
+  It was used as a test of recursive kmalloc/kfree: attached to
+  kprobe/__kmalloc and let program to call kmalloc again.
+
+V4->V5:
+- switched to ktime_get_mono_fast_ns() as suggested by Peter
+- in libbpf.c fixed zero init of 'union bpf_attr' padding
+- fresh rebase on tip/master
+
+This is targeting 'tip' tree, since most of the changes are perf_event related.
+There will be a small conflict between net-next and tip, since they both
+add new bpf_prog_type (BPF_PROG_TYPE_SCHED_CLS and BPF_PROG_TYPE_KPROBE).
+
+V3 discussion:
+https://lkml.org/lkml/2015/2/9/738
+
+V3->V4:
+- since the boundary of stable ABI in bpf+tracepoints is not clear yet,
+  I've dropped them for now.
+- bpf+syscalls are ok from stable ABI point of view, but bpf+seccomp
+  would want to do very similar analysis of syscalls, so I've dropped
+  them as well to take time and define common bpf+syscalls and bpf+seccomp
+  infra in the future.
+- so only bpf+kprobes left. kprobes by definition is not a stable ABI,
+  so bpf+kprobe is not stable ABI either. To stress on that point added
+  kernel version attribute that user space must pass along with the program
+  and kernel will reject programs when version code doesn't match.
+  So bpf+kprobe is very similar to kernel modules, but unlike modules
+  version check is not used for safety, but for enforcing 'non-ABI-ness'.
+  (version check doesn't apply to bpf+sockets which are stable)
+
+Patch 1 is in net-next and needs to be in tip too, since patch 2 depends on it.
+
+Patch 2 actually adds bpf+kprobe infra:
+programs receive 'struct pt_regs' on input and can walk data structures
+using bpf_probe_read() helper which is a wrapper of probe_kernel_read()
+
+Programs are attached to kprobe events via API:
+
+prog_fd = bpf_prog_load(...);
+struct perf_event_attr attr = {
+  .type = PERF_TYPE_TRACEPOINT,
+  .config = event_id, /* ID of just created kprobe event */
+};
+event_fd = perf_event_open(&attr,...);
+ioctl(event_fd, PERF_EVENT_IOC_SET_BPF, prog_fd);
+
+Patch 3 adds bpf_ktime_get_ns() helper function, so that bpf programs can
+measure time delta between events to compute disk io latency, etc.
+
+Patch 4 adds bpf_trace_printk() helper that is used to debug programs.
+When bpf verifier sees that program is calling bpf_trace_printk() it inits
+trace_printk buffers which emits nasty 'this is debug only' banner.
+That's exactly what we want. bpf_trace_printk() is for debugging only.
+
+Patch 5 sample code that shows how to use bpf_probe_read/bpf_trace_printk
+
+Patch 6 sample code - combination of kfree_skb and sys_write tracing.
+
+Patch 7 sample code that computes disk io latency and prints it as 'heatmap'
+
+Interesting bit is that patch 6 has log2() function implemented in C
+and patch 7 has another log2() function using different algorithm in C.
+In the future if 'log2' usage becomes common, we can add it as in-kernel
+helper function, but for now bpf programs can implement them on bpf side.
+
+Another interesting bit from patch 7 is that it does approximation of
+floating point log10(X)*10 using integer arithmetic, which demonstrates
+the power of C->BPF vs traditional tracing language alternatives,
+where one would need to introduce new helper functions to add functionality,
+whereas bpf can just implement such things in C as part of the program.
+
+Next step is to prototype TCP stack instrumentation (like web10g) using
+bpf+kprobe, but without adding any new code tcp stack.
+Though kprobes are slow comparing to tracepoints, they are good enough
+for prototyping and trace_marker/debug_tracepoint ideas can accelerate
+them in the future.
+
+Alexei Starovoitov (8):
+  tracing: add kprobe flag
+  tracing: attach BPF programs to kprobes
+  tracing: allow BPF programs to call bpf_ktime_get_ns()
+  tracing: allow BPF programs to call bpf_trace_printk()
+  samples: bpf: simple non-portable kprobe filter example
+  samples: bpf: counting example for kfree_skb and write syscall
+  samples: bpf: IO latency analysis (iosnoop/heatmap)
+  samples: bpf: kmem_alloc/free tracker
+
+Daniel Borkmann (1):
+  bpf: make internal bpf API independent of CONFIG_BPF_SYSCALL ifdefs
+
+ include/linux/bpf.h             |   20 +++-
+ include/linux/ftrace_event.h    |   14 +++
+ include/uapi/linux/bpf.h        |    5 +
+ include/uapi/linux/perf_event.h |    1 +
+ kernel/bpf/syscall.c            |    7 +-
+ kernel/events/core.c            |   59 +++++++++++
+ kernel/trace/Makefile           |    1 +
+ kernel/trace/bpf_trace.c        |  212 +++++++++++++++++++++++++++++++++++++++
+ kernel/trace/trace_kprobe.c     |   10 +-
+ samples/bpf/Makefile            |   16 +++
+ samples/bpf/bpf_helpers.h       |    6 ++
+ samples/bpf/bpf_load.c          |  125 +++++++++++++++++++++--
+ samples/bpf/bpf_load.h          |    3 +
+ samples/bpf/libbpf.c            |   14 ++-
+ samples/bpf/libbpf.h            |    5 +-
+ samples/bpf/sock_example.c      |    2 +-
+ samples/bpf/test_verifier.c     |    2 +-
+ samples/bpf/tracex1_kern.c      |   50 +++++++++
+ samples/bpf/tracex1_user.c      |   25 +++++
+ samples/bpf/tracex2_kern.c      |   86 ++++++++++++++++
+ samples/bpf/tracex2_user.c      |   95 ++++++++++++++++++
+ samples/bpf/tracex3_kern.c      |   89 ++++++++++++++++
+ samples/bpf/tracex3_user.c      |  150 +++++++++++++++++++++++++++
+ samples/bpf/tracex4_kern.c      |   54 ++++++++++
+ samples/bpf/tracex4_user.c      |   69 +++++++++++++
+ 25 files changed, 1102 insertions(+), 18 deletions(-)
+ create mode 100644 kernel/trace/bpf_trace.c
+ create mode 100644 samples/bpf/tracex1_kern.c
+ create mode 100644 samples/bpf/tracex1_user.c
+ create mode 100644 samples/bpf/tracex2_kern.c
+ create mode 100644 samples/bpf/tracex2_user.c
+ create mode 100644 samples/bpf/tracex3_kern.c
+ create mode 100644 samples/bpf/tracex3_user.c
+ create mode 100644 samples/bpf/tracex4_kern.c
+ create mode 100644 samples/bpf/tracex4_user.c
+
+-- 
+1.7.9.5
