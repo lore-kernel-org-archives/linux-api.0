@@ -1,1153 +1,474 @@
-From: Martin Kepplinger <martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
-Subject: [PATCH v5] add support for Freescale's MMA8653FC 10 bit accelerometer
-Date: Sat, 21 Mar 2015 12:26:04 +0100
-Message-ID: <1426937164-10997-1-git-send-email-martink@posteo.de>
-References: <1426936150-2439-1-git-send-email-martink@posteo.de>
+From: Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH v9 tip 3/9] tracing: attach BPF programs to kprobes
+Date: Sat, 21 Mar 2015 21:14:58 +0900
+Message-ID: <550D60C2.8010502@hitachi.com>
+References: <1426894210-27441-1-git-send-email-ast@plumgrid.com> <1426894210-27441-4-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426936150-2439-1-git-send-email-martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
+In-Reply-To: <1426894210-27441-4-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: benjamin.tissoires-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Pawel.Moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, alexander.stein-93q1YBGzJSMe9JSWTWOYM3xStJ4P+DSV@public.gmane.org
-Cc: hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Martin Kepplinger <martin.kepplinger-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>, Christoph Muellner <christoph.muellner-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-=46rom: Martin Kepplinger <martin.kepplinger-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>
+(2015/03/21 8:30), Alexei Starovoitov wrote:
+> User interface:
+> struct perf_event_attr attr = {.type = PERF_TYPE_TRACEPOINT, .config = event_id, ...};
+> event_fd = perf_event_open(&attr,...);
+> ioctl(event_fd, PERF_EVENT_IOC_SET_BPF, prog_fd);
+> 
+> prog_fd is a file descriptor associated with BPF program previously loaded.
+> event_id is an ID of created kprobe
+> 
+> close(event_fd) - automatically detaches BPF program from it
+> 
+> BPF programs can call in-kernel helper functions to:
+> - lookup/update/delete elements in maps
+> - probe_read - wraper of probe_kernel_read() used to access any kernel
+>   data structures
+> 
+> BPF programs receive 'struct pt_regs *' as an input
+> ('struct pt_regs' is architecture dependent)
+> and return 0 to ignore the event and 1 to store kprobe event into ring buffer.
+> 
+> Note, kprobes are _not_ a stable kernel ABI, so bpf programs attached to
+> kprobes must be recompiled for every kernel version and user must supply correct
+> LINUX_VERSION_CODE in attr.kern_version during bpf_prog_load() call.
+> 
 
-The MMA8653FC is a low-power, three-axis, capacitive micromachined
-accelerometer with 10 bits of resolution with flexible user-programmabl=
-e
-options.
+Would you mean that the ABI of kprobe-based BPF programs? Kprobe API/ABIs
+(register_kprobe() etc.) are stable, but the code who use kprobes certainly
+depends the kernel binary by design. So, if you meant it, BPF programs must
+be recompiled for every kernel binaries (including configuration changes,
+not only its version).
 
-Embedded interrupt functions enable overall power savings, by relieving=
- the
-host processor from continuously polling data, for example using the po=
-ll()
-system call.
+Thank you,
 
-The device can be configured to generate wake-up interrupt signals from=
- any
-combination of the configurable embedded functions, enabling the MMA865=
-3FC
-to monitor events while remaining in a low-power mode during periods of
-inactivity.
+> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+> Reviewed-by: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+> ---
+>  include/linux/ftrace_event.h    |   11 ++++
+>  include/uapi/linux/bpf.h        |    3 +
+>  include/uapi/linux/perf_event.h |    1 +
+>  kernel/bpf/syscall.c            |    7 ++-
+>  kernel/events/core.c            |   59 ++++++++++++++++++
+>  kernel/trace/Makefile           |    1 +
+>  kernel/trace/bpf_trace.c        |  130 +++++++++++++++++++++++++++++++++++++++
+>  kernel/trace/trace_kprobe.c     |    8 +++
+>  8 files changed, 219 insertions(+), 1 deletion(-)
+>  create mode 100644 kernel/trace/bpf_trace.c
+> 
+> diff --git a/include/linux/ftrace_event.h b/include/linux/ftrace_event.h
+> index 77325e1a1816..0aa535bc9f05 100644
+> --- a/include/linux/ftrace_event.h
+> +++ b/include/linux/ftrace_event.h
+> @@ -13,6 +13,7 @@ struct trace_array;
+>  struct trace_buffer;
+>  struct tracer;
+>  struct dentry;
+> +struct bpf_prog;
+>  
+>  struct trace_print_flags {
+>  	unsigned long		mask;
+> @@ -306,6 +307,7 @@ struct ftrace_event_call {
+>  #ifdef CONFIG_PERF_EVENTS
+>  	int				perf_refcount;
+>  	struct hlist_head __percpu	*perf_events;
+> +	struct bpf_prog			*prog;
+>  
+>  	int	(*perf_perm)(struct ftrace_event_call *,
+>  			     struct perf_event *);
+> @@ -551,6 +553,15 @@ event_trigger_unlock_commit_regs(struct ftrace_event_file *file,
+>  		event_triggers_post_call(file, tt);
+>  }
+>  
+> +#ifdef CONFIG_BPF_SYSCALL
+> +unsigned int trace_call_bpf(struct bpf_prog *prog, void *ctx);
+> +#else
+> +static inline unsigned int trace_call_bpf(struct bpf_prog *prog, void *ctx)
+> +{
+> +	return 1;
+> +}
+> +#endif
+> +
+>  enum {
+>  	FILTER_OTHER = 0,
+>  	FILTER_STATIC_STRING,
+> diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
+> index 45da7ec7d274..b2948feeb70b 100644
+> --- a/include/uapi/linux/bpf.h
+> +++ b/include/uapi/linux/bpf.h
+> @@ -118,6 +118,7 @@ enum bpf_map_type {
+>  enum bpf_prog_type {
+>  	BPF_PROG_TYPE_UNSPEC,
+>  	BPF_PROG_TYPE_SOCKET_FILTER,
+> +	BPF_PROG_TYPE_KPROBE,
+>  };
+>  
+>  /* flags for BPF_MAP_UPDATE_ELEM command */
+> @@ -151,6 +152,7 @@ union bpf_attr {
+>  		__u32		log_level;	/* verbosity level of verifier */
+>  		__u32		log_size;	/* size of user buffer */
+>  		__aligned_u64	log_buf;	/* user supplied buffer */
+> +		__u32		kern_version;	/* checked when prog_type=kprobe */
+>  	};
+>  } __attribute__((aligned(8)));
+>  
+> @@ -162,6 +164,7 @@ enum bpf_func_id {
+>  	BPF_FUNC_map_lookup_elem, /* void *map_lookup_elem(&map, &key) */
+>  	BPF_FUNC_map_update_elem, /* int map_update_elem(&map, &key, &value, flags) */
+>  	BPF_FUNC_map_delete_elem, /* int map_delete_elem(&map, &key) */
+> +	BPF_FUNC_probe_read,      /* int bpf_probe_read(void *dst, int size, void *src) */
+>  	__BPF_FUNC_MAX_ID,
+>  };
+>  
+> diff --git a/include/uapi/linux/perf_event.h b/include/uapi/linux/perf_event.h
+> index 3c8b45de57ec..ad4dade2a502 100644
+> --- a/include/uapi/linux/perf_event.h
+> +++ b/include/uapi/linux/perf_event.h
+> @@ -382,6 +382,7 @@ struct perf_event_attr {
+>  #define PERF_EVENT_IOC_SET_OUTPUT	_IO ('$', 5)
+>  #define PERF_EVENT_IOC_SET_FILTER	_IOW('$', 6, char *)
+>  #define PERF_EVENT_IOC_ID		_IOR('$', 7, __u64 *)
+> +#define PERF_EVENT_IOC_SET_BPF		_IOW('$', 8, __u32)
+>  
+>  enum perf_event_ioc_flags {
+>  	PERF_IOC_FLAG_GROUP		= 1U << 0,
+> diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
+> index 536edc2be307..504c10b990ef 100644
+> --- a/kernel/bpf/syscall.c
+> +++ b/kernel/bpf/syscall.c
+> @@ -16,6 +16,7 @@
+>  #include <linux/file.h>
+>  #include <linux/license.h>
+>  #include <linux/filter.h>
+> +#include <linux/version.h>
+>  
+>  static LIST_HEAD(bpf_map_types);
+>  
+> @@ -467,7 +468,7 @@ struct bpf_prog *bpf_prog_get(u32 ufd)
+>  }
+>  
+>  /* last field in 'union bpf_attr' used by this command */
+> -#define	BPF_PROG_LOAD_LAST_FIELD log_buf
+> +#define	BPF_PROG_LOAD_LAST_FIELD kern_version
+>  
+>  static int bpf_prog_load(union bpf_attr *attr)
+>  {
+> @@ -492,6 +493,10 @@ static int bpf_prog_load(union bpf_attr *attr)
+>  	if (attr->insn_cnt >= BPF_MAXINSNS)
+>  		return -EINVAL;
+>  
+> +	if (type == BPF_PROG_TYPE_KPROBE &&
+> +	    attr->kern_version != LINUX_VERSION_CODE)
+> +		return -EINVAL;
+> +
+>  	/* plain bpf_prog allocation */
+>  	prog = bpf_prog_alloc(bpf_prog_size(attr->insn_cnt), GFP_USER);
+>  	if (!prog)
+> diff --git a/kernel/events/core.c b/kernel/events/core.c
+> index 2709063eb26b..3a45e7f6b2df 100644
+> --- a/kernel/events/core.c
+> +++ b/kernel/events/core.c
+> @@ -42,6 +42,8 @@
+>  #include <linux/module.h>
+>  #include <linux/mman.h>
+>  #include <linux/compat.h>
+> +#include <linux/bpf.h>
+> +#include <linux/filter.h>
+>  
+>  #include "internal.h"
+>  
+> @@ -3402,6 +3404,7 @@ errout:
+>  }
+>  
+>  static void perf_event_free_filter(struct perf_event *event);
+> +static void perf_event_free_bpf_prog(struct perf_event *event);
+>  
+>  static void free_event_rcu(struct rcu_head *head)
+>  {
+> @@ -3411,6 +3414,7 @@ static void free_event_rcu(struct rcu_head *head)
+>  	if (event->ns)
+>  		put_pid_ns(event->ns);
+>  	perf_event_free_filter(event);
+> +	perf_event_free_bpf_prog(event);
+>  	kfree(event);
+>  }
+>  
+> @@ -3923,6 +3927,7 @@ static inline int perf_fget_light(int fd, struct fd *p)
+>  static int perf_event_set_output(struct perf_event *event,
+>  				 struct perf_event *output_event);
+>  static int perf_event_set_filter(struct perf_event *event, void __user *arg);
+> +static int perf_event_set_bpf_prog(struct perf_event *event, u32 prog_fd);
+>  
+>  static long _perf_ioctl(struct perf_event *event, unsigned int cmd, unsigned long arg)
+>  {
+> @@ -3976,6 +3981,9 @@ static long _perf_ioctl(struct perf_event *event, unsigned int cmd, unsigned lon
+>  	case PERF_EVENT_IOC_SET_FILTER:
+>  		return perf_event_set_filter(event, (void __user *)arg);
+>  
+> +	case PERF_EVENT_IOC_SET_BPF:
+> +		return perf_event_set_bpf_prog(event, arg);
+> +
+>  	default:
+>  		return -ENOTTY;
+>  	}
+> @@ -6436,6 +6444,49 @@ static void perf_event_free_filter(struct perf_event *event)
+>  	ftrace_profile_free_filter(event);
+>  }
+>  
+> +static int perf_event_set_bpf_prog(struct perf_event *event, u32 prog_fd)
+> +{
+> +	struct bpf_prog *prog;
+> +
+> +	if (event->attr.type != PERF_TYPE_TRACEPOINT)
+> +		return -EINVAL;
+> +
+> +	if (event->tp_event->prog)
+> +		return -EEXIST;
+> +
+> +	if (!(event->tp_event->flags & TRACE_EVENT_FL_KPROBE))
+> +		/* bpf programs can only be attached to kprobes */
+> +		return -EINVAL;
+> +
+> +	prog = bpf_prog_get(prog_fd);
+> +	if (IS_ERR(prog))
+> +		return PTR_ERR(prog);
+> +
+> +	if (prog->aux->prog_type != BPF_PROG_TYPE_KPROBE) {
+> +		/* valid fd, but invalid bpf program type */
+> +		bpf_prog_put(prog);
+> +		return -EINVAL;
+> +	}
+> +
+> +	event->tp_event->prog = prog;
+> +
+> +	return 0;
+> +}
+> +
+> +static void perf_event_free_bpf_prog(struct perf_event *event)
+> +{
+> +	struct bpf_prog *prog;
+> +
+> +	if (!event->tp_event)
+> +		return;
+> +
+> +	prog = event->tp_event->prog;
+> +	if (prog) {
+> +		event->tp_event->prog = NULL;
+> +		bpf_prog_put(prog);
+> +	}
+> +}
+> +
+>  #else
+>  
+>  static inline void perf_tp_register(void)
+> @@ -6451,6 +6502,14 @@ static void perf_event_free_filter(struct perf_event *event)
+>  {
+>  }
+>  
+> +static int perf_event_set_bpf_prog(struct perf_event *event, u32 prog_fd)
+> +{
+> +	return -ENOENT;
+> +}
+> +
+> +static void perf_event_free_bpf_prog(struct perf_event *event)
+> +{
+> +}
+>  #endif /* CONFIG_EVENT_TRACING */
+>  
+>  #ifdef CONFIG_HAVE_HW_BREAKPOINT
+> diff --git a/kernel/trace/Makefile b/kernel/trace/Makefile
+> index 98f26588255e..c575a300103b 100644
+> --- a/kernel/trace/Makefile
+> +++ b/kernel/trace/Makefile
+> @@ -53,6 +53,7 @@ obj-$(CONFIG_EVENT_TRACING) += trace_event_perf.o
+>  endif
+>  obj-$(CONFIG_EVENT_TRACING) += trace_events_filter.o
+>  obj-$(CONFIG_EVENT_TRACING) += trace_events_trigger.o
+> +obj-$(CONFIG_BPF_SYSCALL) += bpf_trace.o
+>  obj-$(CONFIG_KPROBE_EVENT) += trace_kprobe.o
+>  obj-$(CONFIG_TRACEPOINTS) += power-traces.o
+>  ifeq ($(CONFIG_PM),y)
+> diff --git a/kernel/trace/bpf_trace.c b/kernel/trace/bpf_trace.c
+> new file mode 100644
+> index 000000000000..10ac48da4bb7
+> --- /dev/null
+> +++ b/kernel/trace/bpf_trace.c
+> @@ -0,0 +1,130 @@
+> +/* Copyright (c) 2011-2015 PLUMgrid, http://plumgrid.com
+> + *
+> + * This program is free software; you can redistribute it and/or
+> + * modify it under the terms of version 2 of the GNU General Public
+> + * License as published by the Free Software Foundation.
+> + */
+> +#include <linux/kernel.h>
+> +#include <linux/types.h>
+> +#include <linux/slab.h>
+> +#include <linux/bpf.h>
+> +#include <linux/filter.h>
+> +#include <linux/uaccess.h>
+> +#include "trace.h"
+> +
+> +static DEFINE_PER_CPU(int, bpf_prog_active);
+> +
+> +/**
+> + * trace_call_bpf - invoke BPF program
+> + * @prog: BPF program
+> + * @ctx: opaque context pointer
+> + *
+> + * kprobe handlers execute BPF programs via this helper.
+> + * Can be used from static tracepoints in the future.
+> + *
+> + * Return: BPF programs always return an integer which is interpreted by
+> + * kprobe handler as:
+> + * 0 - return from kprobe (event is filtered out)
+> + * 1 - store kprobe event into ring buffer
+> + * Other values are reserved and currently alias to 1
+> + */
+> +unsigned int trace_call_bpf(struct bpf_prog *prog, void *ctx)
+> +{
+> +	unsigned int ret;
+> +
+> +	if (in_nmi()) /* not supported yet */
+> +		return 1;
+> +
+> +	preempt_disable();
+> +
+> +	if (unlikely(__this_cpu_inc_return(bpf_prog_active) != 1)) {
+> +		/*
+> +		 * since some bpf program is already running on this cpu,
+> +		 * don't call into another bpf program (same or different)
+> +		 * and don't send kprobe event into ring-buffer,
+> +		 * so return zero here
+> +		 */
+> +		ret = 0;
+> +		goto out;
+> +	}
+> +
+> +	rcu_read_lock();
+> +	ret = BPF_PROG_RUN(prog, ctx);
+> +	rcu_read_unlock();
+> +
+> + out:
+> +	__this_cpu_dec(bpf_prog_active);
+> +	preempt_enable();
+> +
+> +	return ret;
+> +}
+> +EXPORT_SYMBOL_GPL(trace_call_bpf);
+> +
+> +static u64 bpf_probe_read(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
+> +{
+> +	void *dst = (void *) (long) r1;
+> +	int size = (int) r2;
+> +	void *unsafe_ptr = (void *) (long) r3;
+> +
+> +	return probe_kernel_read(dst, unsafe_ptr, size);
+> +}
+> +
+> +static const struct bpf_func_proto bpf_probe_read_proto = {
+> +	.func = bpf_probe_read,
+> +	.gpl_only = true,
+> +	.ret_type = RET_INTEGER,
+> +	.arg1_type = ARG_PTR_TO_STACK,
+> +	.arg2_type = ARG_CONST_STACK_SIZE,
+> +	.arg3_type = ARG_ANYTHING,
+> +};
+> +
+> +static const struct bpf_func_proto *kprobe_prog_func_proto(enum bpf_func_id func_id)
+> +{
+> +	switch (func_id) {
+> +	case BPF_FUNC_map_lookup_elem:
+> +		return &bpf_map_lookup_elem_proto;
+> +	case BPF_FUNC_map_update_elem:
+> +		return &bpf_map_update_elem_proto;
+> +	case BPF_FUNC_map_delete_elem:
+> +		return &bpf_map_delete_elem_proto;
+> +	case BPF_FUNC_probe_read:
+> +		return &bpf_probe_read_proto;
+> +	default:
+> +		return NULL;
+> +	}
+> +}
+> +
+> +/* bpf+kprobe programs can access fields of 'struct pt_regs' */
+> +static bool kprobe_prog_is_valid_access(int off, int size, enum bpf_access_type type)
+> +{
+> +	/* check bounds */
+> +	if (off < 0 || off >= sizeof(struct pt_regs))
+> +		return false;
+> +
+> +	/* only read is allowed */
+> +	if (type != BPF_READ)
+> +		return false;
+> +
+> +	/* disallow misaligned access */
+> +	if (off % size != 0)
+> +		return false;
+> +
+> +	return true;
+> +}
+> +
+> +static struct bpf_verifier_ops kprobe_prog_ops = {
+> +	.get_func_proto = kprobe_prog_func_proto,
+> +	.is_valid_access = kprobe_prog_is_valid_access,
+> +};
+> +
+> +static struct bpf_prog_type_list kprobe_tl = {
+> +	.ops = &kprobe_prog_ops,
+> +	.type = BPF_PROG_TYPE_KPROBE,
+> +};
+> +
+> +static int __init register_kprobe_prog_ops(void)
+> +{
+> +	bpf_register_prog_type(&kprobe_tl);
+> +	return 0;
+> +}
+> +late_initcall(register_kprobe_prog_ops);
+> diff --git a/kernel/trace/trace_kprobe.c b/kernel/trace/trace_kprobe.c
+> index 8fa549f6f528..dc3462507d7c 100644
+> --- a/kernel/trace/trace_kprobe.c
+> +++ b/kernel/trace/trace_kprobe.c
+> @@ -1134,11 +1134,15 @@ static void
+>  kprobe_perf_func(struct trace_kprobe *tk, struct pt_regs *regs)
+>  {
+>  	struct ftrace_event_call *call = &tk->tp.call;
+> +	struct bpf_prog *prog = call->prog;
+>  	struct kprobe_trace_entry_head *entry;
+>  	struct hlist_head *head;
+>  	int size, __size, dsize;
+>  	int rctx;
+>  
+> +	if (prog && !trace_call_bpf(prog, regs))
+> +		return;
+> +
+>  	head = this_cpu_ptr(call->perf_events);
+>  	if (hlist_empty(head))
+>  		return;
+> @@ -1165,11 +1169,15 @@ kretprobe_perf_func(struct trace_kprobe *tk, struct kretprobe_instance *ri,
+>  		    struct pt_regs *regs)
+>  {
+>  	struct ftrace_event_call *call = &tk->tp.call;
+> +	struct bpf_prog *prog = call->prog;
+>  	struct kretprobe_trace_entry_head *entry;
+>  	struct hlist_head *head;
+>  	int size, __size, dsize;
+>  	int rctx;
+>  
+> +	if (prog && !trace_call_bpf(prog, regs))
+> +		return;
+> +
+>  	head = this_cpu_ptr(call->perf_events);
+>  	if (hlist_empty(head))
+>  		return;
+> 
 
-This driver provides devicetree properties to program the device's beha=
-viour
-and a simple, tested and documented sysfs interface. The data sheet and=
- more
-information is available on Freescale's website.
 
-Signed-off-by: Martin Kepplinger <martin.kepplinger@theobroma-systems.c=
-om>
-Signed-off-by: Christoph Muellner <christoph.muellner@theobroma-systems=
-=2Ecom>
----
-
-Still, I was missing the drivers/staging Makefile addition. This applie=
-s and
-builds automatically.
-
- drivers/staging/Kconfig               |   2 +
- drivers/staging/Makefile              |   1 +
- drivers/staging/mma8653fc/Kconfig     |  10 +
- drivers/staging/mma8653fc/Makefile    |   1 +
- drivers/staging/mma8653fc/TODO        | 146 ++++++
- drivers/staging/mma8653fc/mma8653fc.c | 864 ++++++++++++++++++++++++++=
-++++++++
- 6 files changed, 1024 insertions(+)
- create mode 100644 drivers/staging/mma8653fc/Kconfig
- create mode 100644 drivers/staging/mma8653fc/Makefile
- create mode 100644 drivers/staging/mma8653fc/TODO
- create mode 100644 drivers/staging/mma8653fc/mma8653fc.c
-
-diff --git a/drivers/staging/Kconfig b/drivers/staging/Kconfig
-index bfacf69..834d949 100644
---- a/drivers/staging/Kconfig
-+++ b/drivers/staging/Kconfig
-@@ -112,4 +112,6 @@ source "drivers/staging/i2o/Kconfig"
-=20
- source "drivers/staging/fsl-mc/Kconfig"
-=20
-+source "drivers/staging/mma8653fc/Kconfig"
-+
- endif # STAGING
-diff --git a/drivers/staging/Makefile b/drivers/staging/Makefile
-index 2bbd1bf..cfea86a 100644
---- a/drivers/staging/Makefile
-+++ b/drivers/staging/Makefile
-@@ -48,3 +48,4 @@ obj-$(CONFIG_COMMON_CLK_XLNX_CLKWZRD)	+=3D clocking-w=
-izard/
- obj-$(CONFIG_FB_TFT)		+=3D fbtft/
- obj-$(CONFIG_I2O)		+=3D i2o/
- obj-$(CONFIG_FSL_MC_BUS)	+=3D fsl-mc/
-+obj-$(CONFIG_MMA8653FC)		+=3D mma8653fc/
-diff --git a/drivers/staging/mma8653fc/Kconfig b/drivers/staging/mma865=
-3fc/Kconfig
-new file mode 100644
-index 0000000..988451b
---- /dev/null
-+++ b/drivers/staging/mma8653fc/Kconfig
-@@ -0,0 +1,10 @@
-+config MMA8653FC
-+        tristate "MMA8653FC - Freescale's 3-Axis, 10-bit Digital Accel=
-erometer"
-+        depends on I2C
-+        default n
-+        help
-+          Say Y here if you want to support Freescale's MMA8653FC Acce=
-lerometer
-+          through I2C interface.
-+
-+          To compile this driver as a module, choose M here: the
-+          module will be called mma8653fc.
-diff --git a/drivers/staging/mma8653fc/Makefile b/drivers/staging/mma86=
-53fc/Makefile
-new file mode 100644
-index 0000000..9a245a3
---- /dev/null
-+++ b/drivers/staging/mma8653fc/Makefile
-@@ -0,0 +1 @@
-+obj-$(CONFIG_MMA8653FC)         +=3D mma8653fc.o
-diff --git a/drivers/staging/mma8653fc/TODO b/drivers/staging/mma8653fc=
-/TODO
-new file mode 100644
-index 0000000..0a31225
---- /dev/null
-+++ b/drivers/staging/mma8653fc/TODO
-@@ -0,0 +1,146 @@
-+- move to IIO device API. The current DT/sysfs interface is documented=
- below
-+
-+Documentation/ABI/testing/...
-+-----------------------------
-+What:		/sys/bus/i2c/drivers/mma8653fc/*/standby
-+Date:		March 2015
-+Contact:	Martin Kepplinger <martin.kepplinger-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>
-+Description:
-+		Write 0 to this in order to turn on the device, and 1 to turn
-+		it off. Read to see if it is turned on or off.
-+
-+
-+What:		/sys/bus/i2c/drivers/mma8653fc/*/currentmode
-+Date:		March 2015
-+Contact:	Martin Kepplinger <martin.kepplinger-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>
-+Description:
-+		Reading this provides the current state of the device, read
-+		directly from a register. This can be "standby", "wake" or
-+		"sleep".
-+
-+
-+What:		/sys/bus/i2c/drivers/mma8653fc/*/position
-+Date:		March 2015
-+Contact:	Martin Kepplinger <martin.kepplinger-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>
-+Description:
-+		Read only. Without interrupts enabled gets current position
-+		values by reading. Poll "position" with interrupt conditions
-+		set, to get notified; see Documentation/.../fsl,mma8653fc.txt
-+
-+		position file format:
-+		"x y z [landscape/portrait status] [front/back status]"
-+
-+		x y z values:
-+			in mg
-+		landscape/portrait status char:
-+			r	landscape right
-+			d	portrait down
-+			u	portrait up
-+			l	landscape left
-+		front/back status char:
-+			f	front facing
-+			b	back facing
-+
-+
-+Documentation/devicetree/bindings/...
-+-------------------------------------
-+Required properties:
-+- compatible
-+	"fsl,mma8653fc"
-+- reg
-+	I2C address
-+
-+Optional properties:
-+
-+- interrupt-parent
-+	a phandle for the interrupt controller (see
-+	Documentation/devicetree/bindings/interrupt-controller/interrupts.txt=
-)
-+- interrupts
-+	interrupt line to which the chip is connected (active low)
-+- int1
-+	set to use interrupt line 1, default is line 2
-+	the interrupt sources can be routed to one of the two lines
-+- ir-freefall-motion-x
-+	activate freefall/motion interrupts on x axis
-+- ir-freefall-motion-y
-+	activate freefall/motion interrupts on y axis
-+- ir-freefall-motion-z
-+	activate freefall/motion interrupts on z axis
-+- irq-threshold
-+	0 < value < 8000: threshold for motion interrupts in mg
-+- ir-landscape-portrait
-+	activate landscape/portrait interrupts
-+- ir-auto-wake
-+	activate wake/sleep change interrupts
-+- ir-data-ready:
-+	activate data-ready interrupts
-+	Interrupt events can be activated in any combination.
-+- dynamic-range
-+	2, 4, or 8: dynamic measurement range in g, default: 2
-+	In =C2=B12 g mode, sensitivity =3D 256 counts/g.
-+	In =C2=B14 g mode, sensitivity =3D 128 counts/g.
-+	In =C2=B18 g mode, sensitivity =3D 64 counts/g.
-+- auto-wake-sleep
-+	auto sleep mode (lower frequency)
-+- motion-mode
-+	use motion mode instead of freefall mode (trigger if >threshold).
-+	per default an interrupt occurs if motion values fall below the
-+	value set in "threshold" and therefore can detect free fall on the
-+	vertical axis (depending on the position of the device).
-+	Setting this values inverts the behaviour and an interrupt occurs
-+	above the threshold value, so usually activate horizontal axis in
-+	this case.
-+
-+- x-offset
-+	0 < value < 500: calibration offset in mg
-+	The offset correction values are used to realign the Zero-g position
-+	of the X, Y, and Z-axis after the device is mounted on a board.
-+	this value has an offset of 250 itself:
-+	0 is -250mg, 250 is 0 mg, 500 is 250mg
-+- y-offset
-+	see x-offset
-+- z-offset
-+	see x-offset
-+
-+Example 1:
-+for a device laying on flat ground to recognize acceleration over 100m=
-g.
-+x-axis is calibrated to +10mg. Adapt interrupt line to your device.
-+
-+mma8653fc@1d {
-+		compatible =3D "fsl,mma8653fc";
-+		interrupt-parent =3D <&gpio1>;
-+		interrupts =3D <5 0>;
-+		reg =3D <0x1d>;
-+
-+		dynamic-range =3D <2>;
-+		motion-mode;
-+		ir-freefall-motion-x;
-+		ir-freefall-motion-y;
-+		irq-threshold =3D <100>;
-+		x-offset =3D <160>;
-+};
-+
-+Example 2:
-+for a device mounted on a wall with y being the vertical axis. This re=
-cognizes
-+y-acceleration below 800mg, so free fall or changing the orientation o=
-f the
-+device (y not being the vertical axis and having ~1000mg anymore).
-+
-+mma8653fc@1d {
-+		compatible =3D "fsl,mma8653fc";
-+		interrupt-parent =3D <&gpio1>;
-+		interrupts =3D <5 0>;
-+		reg =3D <0x1d>;
-+
-+		dynamic-range =3D <2>;
-+		ir-freefall-motion-y;
-+		irq-threshold =3D <800>;
-+};
-+
-+Example 3:
-+minimal example. lets users read current acceleration values. No polli=
-ng
-+is available.
-+
-+mma8653fc@1d {
-+		compatible =3D "fsl,mma8653fc";
-+		reg =3D <0x1d>;
-+};
-diff --git a/drivers/staging/mma8653fc/mma8653fc.c b/drivers/staging/mm=
-a8653fc/mma8653fc.c
-new file mode 100644
-index 0000000..4bd7f99
---- /dev/null
-+++ b/drivers/staging/mma8653fc/mma8653fc.c
-@@ -0,0 +1,864 @@
-+/*
-+ * mma8653fc.c - Support for Freescale MMA8653FC 3-axis 10-bit acceler=
-ometer
-+ *
-+ * Copyright (c) 2014 Theobroma Systems Design and Consulting GmbH
-+ *
-+ * This program is free software; you can redistribute it and/or modif=
-y
-+ * it under the terms of the GNU General Public License as published b=
-y
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ */
-+
-+#include <linux/device.h>
-+#include <linux/delay.h>
-+#include <linux/interrupt.h>
-+#include <linux/irq.h>
-+#include <linux/slab.h>
-+#include <linux/module.h>
-+#include <linux/i2c.h>
-+#include <linux/types.h>
-+#include <linux/of_device.h>
-+#include <linux/of_irq.h>
-+
-+#define DRV_NAME	"mma8653fc"
-+#define MMA8653FC_DEVICE_ID	0x5a
-+
-+#define MMA8653FC_STATUS	0x00
-+
-+#define ZYXOW_MASK	0x80
-+#define ZYXDR		0x08
-+
-+#define MMA8653FC_WHO_AM_I	0x0d
-+
-+#define MMA8653FC_SYSMOD	0x0b
-+#define STATE_STANDBY	0x00
-+#define STATE_WAKE	0x01
-+#define STATE_SLEEP	0x02
-+
-+#define MMA8450_STATUS_ZXYDR	0x08
-+
-+/*
-+ * 10 bit output data registers
-+ * MSB: 7:0 bits 9:2 of data word
-+ * LSB: 7:6 bits 1:0 of data word
-+ */
-+#define MMA8653FC_OUT_X_MSB	0x01
-+#define MMA8653FC_OUT_X_LSB	0x02
-+#define MMA8653FC_OUT_Y_MSB	0x03
-+#define MMA8653FC_OUT_Y_LSB	0x04
-+#define MMA8653FC_OUT_Z_MSB	0x05
-+#define MMA8653FC_OUT_Z_LSB	0x06
-+
-+/*
-+ * Portrait/Landscape Status
-+ */
-+#define MMA8653FC_PL_STATUS	0x10
-+
-+#define NEWLP		0x80
-+#define LAPO_HIGH	0x04
-+#define LAPO_LOW	0x02
-+#define BAFRO		0x01
-+
-+/*
-+ * Portrait/Landscape Configuration
-+ */
-+#define MMA8653FC_PL_CFG	0x11
-+
-+#define PL_EN		(1 << 6)
-+
-+/*
-+ * Data calibration registers
-+ */
-+#define MMA8653FC_OFF_X		0x2f
-+#define MMA8653FC_OFF_Y		0x30
-+#define MMA8653FC_OFF_Z		0x31
-+
-+/* 0 to 500 for dts, but -250 to 250 in mg */
-+#define DEFAULT_OFF	250
-+
-+/*
-+ * bits 1:0 dynamic range
-+ * 00 +/- 2g
-+ * 01 +/- 4g
-+ * 10 +/- 8g
-+ *
-+ * HPF_Out bit 4 - data high pass or low pass filtered
-+ */
-+#define MMA8653FC_XYZ_DATA_CFG	0x0e
-+
-+#define RANGE_MASK	0x03
-+#define RANGE2G		0x00
-+#define RANGE4G		0x01
-+#define RANGE8G		0x02
-+/* values for calculation */
-+#define SHIFT_2G	8
-+#define INCR_2G		128
-+#define SHIFT_4G	7
-+#define INCR_4G		64
-+#define SHIFT_8G	6
-+#define INCR_8G		32
-+#define DYN_RANGE_2G	2
-+#define DYN_RANGE_4G	4
-+#define DYN_RANGE_8G	8
-+
-+/*
-+ * System Control Reg 1
-+ */
-+#define MMA8653FC_CTRL_REG1	0x2a
-+
-+#define ACTIVE_BIT	(1 << 0)
-+#define ODR_MASK	0x38
-+#define ODR_DEFAULT	0x20 /* 50 Hz */
-+#define ASLP_RATE_MASK	0xc0
-+#define ASLP_RATE_DEFAULT 0x80 /* 6.25 Hz */
-+
-+/*
-+ * Sys Control Reg 2
-+ *
-+ * auto-sleep enable, software reset
-+ */
-+#define MMA8653FC_CTRL_REG2	0x2b
-+
-+#define SLPE		(1 << 2)
-+#define SELFTEST	(1 << 7)
-+#define SOFT_RESET	(1 << 6)
-+
-+/*
-+ * Interrupt Source
-+ */
-+#define MMA8653FC_INT_SOURCE	0x0c
-+
-+#define SRC_ASLP	(1 << 7)
-+#define SRC_LNDPRT	(1 << 4)
-+#define SRC_FF_MT	(1 << 2)
-+#define SRC_DRDY	(1 << 0)
-+
-+/*
-+ * Interrupt Control Register
-+ *
-+ * default: active low
-+ * default push-pull, not open-drain
-+ */
-+#define MMA8653FC_CTRL_REG3	0x2c
-+
-+#define WAKE_LNDPRT	(1 << 5)
-+#define WAKE_FF_MT	(1 << 3)
-+#define IPOL		(1 << 1)
-+#define PP_OD		(1 << 0)
-+
-+/*
-+ * Interrupt Enable Register
-+ */
-+#define MMA8653FC_CTRL_REG4	0x2d
-+
-+#define INT_EN_ASLP	(1 << 7)
-+#define INT_EN_LNDPRT	(1 << 4)
-+#define INT_EN_FF_MT	(1 << 2)
-+#define INT_EN_DRDY	(1 << 0)
-+
-+/*
-+ * Interrupt Configuration Register
-+ * bit value 0 ... INT2 (default)
-+ * bit value 1 ... INT1
-+ */
-+#define MMA8653FC_CTRL_REG5	0x2e
-+
-+#define INT_CFG_ASLP	(1 << 7)
-+#define INT_CFG_LNDPRT	(1 << 4)
-+#define INT_CFG_FF_MT	(1 << 2)
-+#define INT_CFG_DRDY	(1 << 0)
-+
-+/*
-+ * Freefall / Motion Configuration Register
-+ *
-+ * Event Latch enable/disable, motion or freefall mode
-+ * and event flag enable per axis
-+ */
-+#define MMA8653FC_FF_MT_CFG	0x15
-+
-+#define FF_MT_CFG_ELE	(1 << 7)
-+#define FF_MT_CFG_OAE	(1 << 6)
-+#define FF_MT_CFG_ZEFE	(1 << 5)
-+#define FF_MT_CFG_YEFE	(1 << 4)
-+#define FF_MT_CFG_XEFE	(1 << 3)
-+
-+/*
-+ * Freefall / Motion Source Register
-+ */
-+#define MMA8653FC_FF_MT_SRC	0x16
-+
-+/*
-+ * Freefall / Motion Threshold Register
-+ *
-+ * define motion threshold
-+ * 0.063 g/LSB, 127 counts(0x7f) (7 bit from LSB)
-+ * range: 0.063g - 8g
-+ */
-+#define MMA8653FC_FF_MT_THS	0x17
-+
-+struct axis_triple {
-+	s16 x;
-+	s16 y;
-+	s16 z;
-+};
-+
-+struct mma8653fc_pdata {
-+	s8 x_axis_offset;
-+	s8 y_axis_offset;
-+	s8 z_axis_offset;
-+	bool auto_wake_sleep;
-+	u32 range;
-+	bool int1;
-+	bool motion_mode;
-+	u8 freefall_motion_thr;
-+	bool int_src_data_ready;
-+	bool int_src_ff_mt_x;
-+	bool int_src_ff_mt_y;
-+	bool int_src_ff_mt_z;
-+	bool int_src_lndprt;
-+	bool int_src_aslp;
-+};
-+
-+struct mma8653fc {
-+	struct i2c_client *client;
-+	struct mutex mutex;
-+	struct mma8653fc_pdata pdata;
-+	struct axis_triple saved;
-+	char orientation;
-+	char bafro;
-+	bool standby;
-+	int irq;
-+	unsigned int_mask;
-+	u8 (*read)(struct mma8653fc *, unsigned char);
-+	void (*write)(struct mma8653fc *, unsigned char, unsigned char);
-+};
-+
-+/* defaults */
-+static const struct mma8653fc_pdata mma8653fc_default_init =3D {
-+	.range =3D 2,
-+	.x_axis_offset =3D DEFAULT_OFF,
-+	.y_axis_offset =3D DEFAULT_OFF,
-+	.z_axis_offset =3D DEFAULT_OFF,
-+	.auto_wake_sleep =3D false,
-+	.int1 =3D false,
-+	.motion_mode =3D false,
-+	.freefall_motion_thr =3D 5,
-+	.int_src_data_ready =3D false,
-+	.int_src_ff_mt_x =3D false,
-+	.int_src_ff_mt_y =3D false,
-+	.int_src_ff_mt_z =3D false,
-+	.int_src_lndprt =3D false,
-+	.int_src_aslp =3D false,
-+};
-+
-+static void mma8653fc_get_triple(struct mma8653fc *mma)
-+{
-+	u8 buf[6];
-+	u8 status;
-+
-+	buf[0] =3D 0;
-+
-+	status =3D mma->read(mma, MMA8653FC_STATUS);
-+	if (status & ZYXOW_MASK)
-+		dev_dbg(&mma->client->dev, "previous read not completed\n");
-+
-+	buf[0] =3D mma->read(mma, MMA8653FC_OUT_X_MSB);
-+	buf[1] =3D mma->read(mma, MMA8653FC_OUT_X_LSB);
-+	buf[2] =3D mma->read(mma, MMA8653FC_OUT_Y_MSB);
-+	buf[3] =3D mma->read(mma, MMA8653FC_OUT_Y_LSB);
-+	buf[4] =3D mma->read(mma, MMA8653FC_OUT_Z_MSB);
-+	buf[5] =3D mma->read(mma, MMA8653FC_OUT_Z_LSB);
-+
-+	mutex_lock(&mma->mutex);
-+	/* move from registers to s16 */
-+	mma->saved.x =3D (buf[1] | (buf[0] << 8)) >> 6;
-+	mma->saved.y =3D (buf[3] | (buf[2] << 8)) >> 6;
-+	mma->saved.z =3D (buf[5] | (buf[4] << 8)) >> 6;
-+	mma->saved.x =3D sign_extend32(mma->saved.x, 9);
-+	mma->saved.y =3D sign_extend32(mma->saved.y, 9);
-+	mma->saved.z =3D sign_extend32(mma->saved.z, 9);
-+
-+	/* calc g, see data sheet and application note */
-+	switch (mma->pdata.range) {
-+	case DYN_RANGE_2G:
-+		mma->saved.x =3D le16_to_cpu((1000 * mma->saved.x +
-+					    INCR_2G) >> SHIFT_2G);
-+		mma->saved.y =3D le16_to_cpu((1000 * mma->saved.y +
-+					   INCR_2G) >> SHIFT_2G);
-+		mma->saved.z =3D le16_to_cpu((1000 * mma->saved.z +
-+					   INCR_2G) >> SHIFT_2G);
-+		break;
-+	case DYN_RANGE_4G:
-+		mma->saved.x =3D le16_to_cpu((1000 * mma->saved.x +
-+					   INCR_4G) >> SHIFT_4G);
-+		mma->saved.y =3D le16_to_cpu((1000 * mma->saved.y +
-+					   INCR_4G) >> SHIFT_4G);
-+		mma->saved.z =3D le16_to_cpu((1000 * mma->saved.z +
-+					   INCR_4G) >> SHIFT_4G);
-+		break;
-+	case DYN_RANGE_8G:
-+		mma->saved.x =3D le16_to_cpu((1000 * mma->saved.x +
-+					   INCR_8G) >> SHIFT_8G);
-+		mma->saved.y =3D le16_to_cpu((1000 * mma->saved.y +
-+					   INCR_8G) >> SHIFT_8G);
-+		mma->saved.z =3D le16_to_cpu((1000 * mma->saved.z +
-+					   INCR_8G) >> SHIFT_8G);
-+		break;
-+	default:
-+		dev_err(&mma->client->dev, "internal data corrupt\n");
-+	}
-+	mutex_unlock(&mma->mutex);
-+}
-+
-+static void mma8653fc_get_orientation(struct mma8653fc *mma, u8 byte)
-+{
-+	if ((byte & LAPO_HIGH) && !(LAPO_LOW))
-+		mma->orientation =3D 'r'; /* landscape right */
-+	if (!(byte & LAPO_HIGH) && (byte & LAPO_LOW))
-+		mma->orientation =3D 'd'; /* portrait down */
-+	if (!(byte & LAPO_HIGH) && !(byte & LAPO_LOW))
-+		mma->orientation =3D 'u'; /* portrait up */
-+	if ((byte & LAPO_HIGH) && (byte & LAPO_LOW))
-+		mma->orientation =3D 'l'; /* landscape left */
-+
-+	if (byte & BAFRO)
-+		mma->bafro =3D 'b'; /* back facing */
-+	else
-+		mma->bafro =3D 'f'; /* front facing */
-+}
-+
-+static irqreturn_t mma8653fc_irq(int irq, void *handle)
-+{
-+	struct mma8653fc *mma =3D handle;
-+	u8 int_src;
-+	u8 byte;
-+
-+	int_src =3D mma->read(mma, MMA8653FC_INT_SOURCE);
-+	if (int_src & SRC_DRDY)
-+		/* data ready handle */
-+	if (int_src & SRC_FF_MT) {
-+		/* freefall/motion change handle */
-+		dev_dbg(&mma->client->dev,
-+			"freefall or motion change\n");
-+		byte =3D mma->read(mma, MMA8653FC_FF_MT_SRC);
-+	}
-+	if (int_src & SRC_LNDPRT) {
-+		/* landscape/portrait change handle */
-+		dev_dbg(&mma->client->dev,
-+			"landscape / portrait change\n");
-+		byte =3D mma->read(mma, MMA8653FC_PL_STATUS);
-+		mma8653fc_get_orientation(mma, byte);
-+	}
-+	if (int_src & SRC_ASLP)
-+		/* autosleep change handle */
-+	mma8653fc_get_triple(mma);
-+
-+	sysfs_notify(&mma->client->dev.kobj, NULL, "position");
-+
-+	return IRQ_HANDLED;
-+}
-+
-+static void __mma8653fc_enable(struct mma8653fc *mma)
-+{
-+	u8 byte;
-+
-+	byte =3D mma->read(mma, MMA8653FC_CTRL_REG1);
-+	mma->write(mma, MMA8653FC_CTRL_REG1, byte | ACTIVE_BIT);
-+}
-+
-+static void __mma8653fc_disable(struct mma8653fc *mma)
-+{
-+	u8 byte;
-+
-+	byte =3D mma->read(mma, MMA8653FC_CTRL_REG1);
-+	mma->write(mma, MMA8653FC_CTRL_REG1, byte & ~ACTIVE_BIT);
-+}
-+
-+static ssize_t mma8653fc_standby_show(struct device *dev,
-+				    struct device_attribute *attr, char *buf)
-+{
-+	struct i2c_client *client =3D to_i2c_client(dev);
-+	struct mma8653fc *mma =3D i2c_get_clientdata(client);
-+
-+	return scnprintf(buf, PAGE_SIZE, "%u\n", mma->standby);
-+}
-+
-+static ssize_t mma8653fc_standby_store(struct device *dev,
-+				     struct device_attribute *attr,
-+				     const char *buf, size_t count)
-+{
-+	struct i2c_client *client =3D to_i2c_client(dev);
-+	struct mma8653fc *mma =3D i2c_get_clientdata(client);
-+	unsigned int val;
-+	int error;
-+
-+	error =3D kstrtouint(buf, 10, &val);
-+	if (error)
-+		return error;
-+
-+	mutex_lock(&mma->mutex);
-+
-+	if (val) {
-+		if (!mma->standby)
-+			__mma8653fc_disable(mma);
-+	} else {
-+		if (mma->standby)
-+			__mma8653fc_enable(mma);
-+	}
-+
-+	mma->standby =3D !!val;
-+
-+	mutex_unlock(&mma->mutex);
-+
-+	return count;
-+}
-+
-+static DEVICE_ATTR(standby, 0664, mma8653fc_standby_show,
-+				  mma8653fc_standby_store);
-+
-+static ssize_t mma8653fc_currentmode_show(struct device *dev,
-+				 struct device_attribute *attr, char *buf)
-+{
-+	struct i2c_client *client =3D to_i2c_client(dev);
-+	struct mma8653fc *mma =3D i2c_get_clientdata(client);
-+	ssize_t count;
-+	u8 byte;
-+
-+	byte =3D mma->read(mma, MMA8653FC_SYSMOD);
-+	if (byte < 0)
-+		return byte;
-+
-+	switch (byte) {
-+	case STATE_STANDBY:
-+		count =3D scnprintf(buf, PAGE_SIZE, "standby\n");
-+		break;
-+	case STATE_WAKE:
-+		count =3D scnprintf(buf, PAGE_SIZE, "wake\n");
-+		break;
-+	case STATE_SLEEP:
-+		count =3D scnprintf(buf, PAGE_SIZE, "sleep\n");
-+		break;
-+	default:
-+		count =3D scnprintf(buf, PAGE_SIZE, "unknown\n");
-+	}
-+	return count;
-+}
-+static DEVICE_ATTR(currentmode, S_IRUGO, mma8653fc_currentmode_show, N=
-ULL);
-+
-+static ssize_t mma8653fc_position_show(struct device *dev,
-+				 struct device_attribute *attr, char *buf)
-+{
-+	struct i2c_client *client =3D to_i2c_client(dev);
-+	struct mma8653fc *mma =3D i2c_get_clientdata(client);
-+	ssize_t count;
-+	u8 byte;
-+
-+	if (!mma->irq) {
-+		byte =3D mma->read(mma, MMA8653FC_PL_STATUS);
-+		if (byte & NEWLP)
-+			mma8653fc_get_orientation(mma, byte);
-+
-+		byte =3D mma->read(mma, MMA8653FC_STATUS);
-+		if (byte & ZYXDR)
-+			mma8653fc_get_triple(mma);
-+
-+		msleep(20);
-+		dev_dbg(&client->dev, "data polled\n");
-+	}
-+	mutex_lock(&mma->mutex);
-+	count =3D scnprintf(buf, PAGE_SIZE, "%d %d %d %c %c\n",
-+			mma->saved.x, mma->saved.y, mma->saved.z,
-+			mma->orientation, mma->bafro);
-+	mutex_unlock(&mma->mutex);
-+
-+	return count;
-+}
-+static DEVICE_ATTR(position, S_IRUGO, mma8653fc_position_show, NULL);
-+
-+static struct attribute *mma8653fc_attributes[] =3D {
-+	&dev_attr_position.attr,
-+	&dev_attr_standby.attr,
-+	&dev_attr_currentmode.attr,
-+	NULL,
-+};
-+
-+static const struct attribute_group mma8653fc_attr_group =3D {
-+	.attrs =3D mma8653fc_attributes,
-+};
-+
-+static u8 mma8653fc_read(struct mma8653fc *mma, unsigned char reg)
-+{
-+	u8 val;
-+
-+	val =3D i2c_smbus_read_byte_data(mma->client, reg);
-+	if (val < 0) {
-+		dev_err(&mma->client->dev,
-+			"failed to read %x register\n", reg);
-+	}
-+	return val;
-+}
-+
-+static void mma8653fc_write(struct mma8653fc *mma, unsigned char reg,
-+			   unsigned char val)
-+{
-+	int ret;
-+
-+	ret =3D i2c_smbus_write_byte_data(mma->client, reg, val);
-+	if (ret) {
-+		dev_err(&mma->client->dev,
-+			"failed to write %x register\n", reg);
-+	}
-+}
-+
-+static const struct of_device_id mma8653fc_dt_ids[] =3D {
-+	{ .compatible =3D "fsl,mma8653fc", },
-+	{ }
-+};
-+MODULE_DEVICE_TABLE(of, mma8653fc_dt_ids);
-+
-+static const struct mma8653fc_pdata *mma8653fc_probe_dt(struct device =
-*dev)
-+{
-+	struct mma8653fc_pdata *pdata;
-+	struct device_node *node =3D dev->of_node;
-+	const struct of_device_id *match;
-+	u32 testu32;
-+	s32 tests32;
-+
-+	if (!node) {
-+		dev_err(dev, "no associated DT data\n");
-+		return ERR_PTR(-EINVAL);
-+	}
-+
-+	match =3D of_match_device(mma8653fc_dt_ids, dev);
-+	if (!match) {
-+		dev_err(dev, "unknown device model\n");
-+		return ERR_PTR(-EINVAL);
-+	}
-+
-+	pdata =3D devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-+	if (!pdata)
-+		return ERR_PTR(-ENOMEM);
-+
-+	*pdata =3D mma8653fc_default_init;
-+
-+	/* overwrite from dts */
-+	testu32 =3D pdata->x_axis_offset;
-+	tests32 =3D 0;
-+	of_property_read_u32(node, "x-offset", &testu32);
-+	tests32 =3D testu32 - DEFAULT_OFF;
-+	if ((tests32) && (tests32 <=3D DEFAULT_OFF) &&
-+	    (tests32 >=3D -DEFAULT_OFF)) {
-+		dev_info(dev, "use %dmg offset on X axis\n", tests32);
-+		/* calc register value, resolution: 1.96mg */
-+		pdata->x_axis_offset =3D (s8) (tests32 / 2);
-+	}
-+	testu32 =3D pdata->y_axis_offset;
-+	tests32 =3D 0;
-+	of_property_read_u32(node, "y-offset", &testu32);
-+	tests32 =3D testu32 - DEFAULT_OFF;
-+	if ((tests32) && (tests32 <=3D DEFAULT_OFF) &&
-+	    (tests32 >=3D -DEFAULT_OFF)) {
-+		dev_info(dev, "use %dmg offset on Y axis\n", tests32);
-+		pdata->y_axis_offset =3D (s8) (tests32 / 2);
-+	}
-+	testu32 =3D pdata->z_axis_offset;
-+	tests32 =3D 0;
-+	of_property_read_u32(node, "z-offset", &testu32);
-+	tests32 =3D testu32 - DEFAULT_OFF;
-+	if ((tests32) && (tests32 <=3D DEFAULT_OFF) &&
-+	    (tests32 >=3D -DEFAULT_OFF)) {
-+		dev_info(dev, "use %dmg offset on Z axis\n", tests32);
-+		pdata->z_axis_offset =3D (s8) (tests32 / 2);
-+	}
-+
-+	testu32 =3D 0;
-+	of_property_read_u32(node, "dynamic-range", &testu32);
-+	if ((testu32) && (testu32 !=3D 2) && (testu32 !=3D 4) && (testu32 !=3D=
- 8)) {
-+		dev_warn(dev, "wrong value for full scale range in dtb\n");
-+	} else {
-+		if (testu32)
-+			pdata->range =3D testu32;
-+	}
-+
-+	if (of_property_read_bool(node, "auto-wake-sleep"))
-+		pdata->auto_wake_sleep =3D true;
-+
-+	if (of_property_read_bool(node, "int1"))
-+		pdata->int1 =3D true;
-+
-+	if (of_property_read_bool(node, "motion-mode"))
-+		pdata->motion_mode =3D true;
-+
-+	if (of_property_read_bool(node, "ir-data-ready"))
-+		pdata->int_src_data_ready =3D true;
-+
-+	if (of_property_read_bool(node, "ir-freefall-motion-x"))
-+		pdata->int_src_ff_mt_x =3D true;
-+
-+	if (of_property_read_bool(node, "ir-freefall-motion-y"))
-+		pdata->int_src_ff_mt_y =3D true;
-+
-+	if (of_property_read_bool(node, "ir-freefall-motion-z"))
-+		pdata->int_src_ff_mt_z =3D true;
-+
-+	if (of_property_read_bool(node, "ir-auto-wake"))
-+		pdata->int_src_aslp =3D true;
-+
-+	if (of_property_read_bool(node, "ir-landscape-portrait"))
-+		pdata->int_src_lndprt =3D true;
-+
-+	testu32 =3D 0;
-+	of_property_read_u32(node, "irq-threshold", &testu32);
-+	/* always uses maximum range +/- 8000g, resolution 63mg */
-+	if ((testu32 <=3D 8000) && (testu32 > 0)) {
-+		dev_dbg(dev, "use freefall / motion threshold %dmg\n",
-+			 testu32);
-+		/* calculate register value from mg */
-+		pdata->freefall_motion_thr =3D (testu32 / 63) + 1;
-+	}
-+
-+	return pdata;
-+}
-+static int mma8653fc_i2c_probe(struct i2c_client *client,
-+				       const struct i2c_device_id *id)
-+{
-+	struct mma8653fc *mma;
-+	const struct mma8653fc_pdata *pdata;
-+	int err;
-+	u8 byte;
-+
-+	err =3D i2c_check_functionality(client->adapter,
-+			I2C_FUNC_SMBUS_BYTE_DATA);
-+	if (!err) {
-+		dev_err(&client->dev, "SMBUS Byte Data not Supported\n");
-+		return -EIO;
-+	}
-+
-+	mma =3D devm_kzalloc(&client->dev, sizeof(*mma), GFP_KERNEL);
-+	if (!mma)
-+		err =3D -ENOMEM;
-+
-+	pdata =3D dev_get_platdata(&client->dev);
-+	if (!pdata) {
-+		pdata =3D mma8653fc_probe_dt(&client->dev);
-+		if (IS_ERR(pdata)) {
-+			err =3D PTR_ERR(pdata);
-+			dev_err(&client->dev, "pdata from DT failed\n");
-+			return err;
-+		}
-+	}
-+	mma->pdata =3D *pdata;
-+	pdata =3D &mma->pdata;
-+	mma->client =3D client;
-+	mma->read =3D &mma8653fc_read;
-+	mma->write =3D &mma8653fc_write;
-+
-+	mutex_init(&mma->mutex);
-+
-+	i2c_set_clientdata(client, mma);
-+
-+	err =3D sysfs_create_group(&client->dev.kobj, &mma8653fc_attr_group);
-+	if (err)
-+		return err;
-+
-+	byte =3D mma->read(mma, MMA8653FC_WHO_AM_I);
-+	if (byte !=3D MMA8653FC_DEVICE_ID) {
-+		dev_err(&client->dev, "wrong device for driver\n");
-+		return -ENODEV;
-+	}
-+	dev_info(&client->dev, "loading driver for device id %x\n", byte);
-+
-+	mma->irq =3D irq_of_parse_and_map(client->dev.of_node, 0);
-+	if (!mma->irq) {
-+		dev_err(&client->dev, "Unable to parse or map IRQ\n");
-+		goto no_irq;
-+	}
-+
-+	err =3D irq_set_irq_type(mma->irq, IRQ_TYPE_EDGE_FALLING);
-+	if (err) {
-+		dev_err(&client->dev, "set_irq_type failed\n");
-+		return err;
-+	}
-+
-+	err =3D devm_request_threaded_irq(&client->dev, mma->irq, NULL,
-+					mma8653fc_irq, IRQF_ONESHOT,
-+					dev_name(&mma->client->dev), mma);
-+	if (err) {
-+		dev_err(&client->dev, "irq %d busy?\n", mma->irq);
-+		return err;
-+	}
-+
-+	mma->write(mma, MMA8653FC_CTRL_REG2, SOFT_RESET);
-+
-+	__mma8653fc_disable(mma);
-+	mma->standby =3D true;
-+
-+	/* enable desired interrupts */
-+	mma->orientation =3D '\0';
-+	mma->bafro =3D '\0';
-+	byte =3D 0;
-+	if (pdata->int_src_data_ready) {
-+		byte |=3D INT_EN_DRDY;
-+		dev_dbg(&client->dev, "DATA READY interrupt source enabled\n");
-+	}
-+	if (pdata->int_src_ff_mt_x || pdata->int_src_ff_mt_y ||
-+	    pdata->int_src_ff_mt_z) {
-+		byte |=3D INT_EN_FF_MT;
-+		dev_dbg(&client->dev, "FF MT interrupt source enabled\n");
-+	}
-+	if (pdata->int_src_lndprt) {
-+		mma->write(mma, MMA8653FC_PL_CFG, PL_EN);
-+		byte |=3D INT_EN_LNDPRT;
-+		dev_dbg(&client->dev, "LNDPRT interrupt source enabled\n");
-+	}
-+	if (pdata->int_src_aslp) {
-+		byte |=3D INT_EN_ASLP;
-+		dev_dbg(&client->dev, "ASLP interrupt source enabled\n");
-+	}
-+	mma->write(mma, MMA8653FC_CTRL_REG4, byte);
-+
-+	/* force everything to line 1 */
-+	if (pdata->int1) {
-+		mma->write(mma, MMA8653FC_CTRL_REG5,
-+			   (INT_CFG_ASLP | INT_CFG_LNDPRT |
-+			   INT_CFG_FF_MT | INT_CFG_DRDY));
-+		dev_dbg(&client->dev, "using interrupt line 1\n");
-+	}
-+no_irq:
-+	/* range mode */
-+	byte =3D mma->read(mma, MMA8653FC_XYZ_DATA_CFG);
-+	byte &=3D ~RANGE_MASK;
-+	switch (pdata->range) {
-+	case DYN_RANGE_2G:
-+		byte |=3D RANGE2G;
-+		dev_dbg(&client->dev, "use 2g range\n");
-+		break;
-+	case DYN_RANGE_4G:
-+		byte |=3D RANGE4G;
-+		dev_dbg(&client->dev, "use 4g range\n");
-+		break;
-+	case DYN_RANGE_8G:
-+		byte |=3D RANGE8G;
-+		dev_dbg(&client->dev, "use 8g range\n");
-+		break;
-+	default:
-+		dev_err(&client->dev, "wrong range mode value\n");
-+		return -EINVAL;
-+	}
-+	mma->write(mma, MMA8653FC_XYZ_DATA_CFG, byte);
-+
-+	/* data calibration offsets */
-+	if (pdata->x_axis_offset)
-+		mma->write(mma, MMA8653FC_OFF_X, pdata->x_axis_offset);
-+	if (pdata->y_axis_offset)
-+		mma->write(mma, MMA8653FC_OFF_Y, pdata->y_axis_offset);
-+	if (pdata->z_axis_offset)
-+		mma->write(mma, MMA8653FC_OFF_Z, pdata->z_axis_offset);
-+
-+	/* if autosleep, wake on both landscape and motion changes */
-+	if (pdata->auto_wake_sleep) {
-+		byte =3D 0;
-+		byte |=3D WAKE_LNDPRT;
-+		byte |=3D WAKE_FF_MT;
-+		mma->write(mma, MMA8653FC_CTRL_REG3, byte);
-+		mma->write(mma, MMA8653FC_CTRL_REG2, SLPE);
-+		dev_dbg(&client->dev, "auto sleep enabled\n");
-+	}
-+
-+	/* data rates */
-+	byte =3D 0;
-+	byte =3D mma->read(mma, MMA8653FC_CTRL_REG1);
-+	byte &=3D ~ODR_MASK;
-+	byte |=3D ODR_DEFAULT;
-+	byte &=3D ~ASLP_RATE_MASK;
-+	byte |=3D ASLP_RATE_DEFAULT;
-+	mma->write(mma, MMA8653FC_CTRL_REG1, byte);
-+
-+	/* freefall / motion config */
-+	byte =3D 0;
-+	if (pdata->motion_mode) {
-+		byte |=3D FF_MT_CFG_OAE;
-+		dev_dbg(&client->dev, "detect motion instead of freefall\n");
-+	}
-+	byte |=3D FF_MT_CFG_ELE;
-+	if (pdata->int_src_ff_mt_x)
-+		byte |=3D FF_MT_CFG_XEFE;
-+	if (pdata->int_src_ff_mt_y)
-+		byte |=3D FF_MT_CFG_YEFE;
-+	if (pdata->int_src_ff_mt_z)
-+		byte |=3D FF_MT_CFG_ZEFE;
-+	mma->write(mma, MMA8653FC_FF_MT_CFG, byte);
-+
-+	if (pdata->freefall_motion_thr) {
-+		mma->write(mma, MMA8653FC_FF_MT_THS,
-+			   pdata->freefall_motion_thr);
-+		/* calculate back to mg */
-+		dev_dbg(&client->dev, "threshold set to %dmg\n",
-+			 (63 * pdata->freefall_motion_thr) - 1);
-+	}
-+
-+	return 0;
-+}
-+
-+static int mma8653fc_remove(struct i2c_client *client)
-+{
-+	dev_dbg(&client->dev, "unregistered accelerometer\n");
-+
-+	return 0;
-+}
-+
-+#ifdef CONFIG_PM_SLEEP
-+static int mma8653fc_suspend(struct device *dev)
-+{
-+	struct i2c_client *client =3D to_i2c_client(dev);
-+	struct mma8653fc *mma =3D i2c_get_clientdata(client);
-+
-+	__mma8653fc_disable(mma);
-+
-+	return 0;
-+}
-+
-+static int mma8653fc_resume(struct device *dev)
-+{
-+	struct i2c_client *client =3D to_i2c_client(dev);
-+	struct mma8653fc *mma =3D i2c_get_clientdata(client);
-+
-+	__mma8653fc_enable(mma);
-+
-+	return 0;
-+}
-+
-+static SIMPLE_DEV_PM_OPS(mma8653fc_pm_ops, mma8653fc_suspend, mma8653f=
-c_resume);
-+#define MMA8653FC_PM_OPS (&mma8653fc_pm_ops)
-+#else
-+#define MMA8653FC_PM_OPS NULL
-+#endif
-+
-+static const struct i2c_device_id mma8653fc_id[] =3D {
-+	{ DRV_NAME, 0 },
-+	{ }
-+};
-+MODULE_DEVICE_TABLE(i2c, mma8653fc_id);
-+
-+static struct i2c_driver mma8653fc_driver =3D {
-+	.driver =3D {
-+		.name =3D DRV_NAME,
-+		.owner =3D THIS_MODULE,
-+		.of_match_table =3D mma8653fc_dt_ids,
-+		.pm =3D MMA8653FC_PM_OPS,
-+	},
-+	.probe    =3D mma8653fc_i2c_probe,
-+	.remove   =3D mma8653fc_remove,
-+	.id_table =3D mma8653fc_id,
-+};
-+
-+module_i2c_driver(mma8653fc_driver);
-+
-+MODULE_AUTHOR("Martin Kepplinger <martin.kepplinger@theobroma-systems.=
-com");
-+MODULE_DESCRIPTION("Freescale's MMA8653FC Three-Axis Accelerometer I2C=
- Driver");
-+MODULE_LICENSE("GPL");
---=20
-2.1.4
+-- 
+Masami HIRAMATSU
+Software Platform Research Dept. Linux Technology Research Center
+Hitachi, Ltd., Yokohama Research Laboratory
+E-mail: masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org
