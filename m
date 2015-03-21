@@ -1,75 +1,92 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: Re: [PATCH 05/45] drm.h: include stdlib.h in userspace
-Date: Sat, 21 Mar 2015 14:17:06 +0200
-Message-ID: <20150321121706.GW12550@lakka.kapsi.fi>
-References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
- <1424127948-22484-6-git-send-email-mikko.rapeli@iki.fi>
- <54EB0072.8020909@gmail.com>
- <20150223103548.GT12550@lakka.kapsi.fi>
- <CACvgo50PA5nb27EcxQqXY49C5hmvDDxi3WOqB=op-wx_WEGd+Q@mail.gmail.com>
+From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Subject: Re: [PATCH v9 tip 1/9] bpf: make internal bpf API independent of
+ CONFIG_BPF_SYSCALL ifdefs
+Date: Sat, 21 Mar 2015 21:16:55 +0900
+Message-ID: <550D6137.2040509@hitachi.com>
+References: <1426894210-27441-1-git-send-email-ast@plumgrid.com> <1426894210-27441-2-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CACvgo50PA5nb27EcxQqXY49C5hmvDDxi3WOqB=op-wx_WEGd+Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>, Dave Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ML dri-devel <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1426894210-27441-2-git-send-email-ast@plumgrid.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexei Starovoitov <ast@plumgrid.com>
+Cc: Ingo Molnar <mingo@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 20, 2015 at 08:25:40PM +0000, Emil Velikov wrote:
-> On 23 February 2015 at 10:35, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wrot=
-e:
-> > On Mon, Feb 23, 2015 at 10:26:58AM +0000, Emil Velikov wrote:
-> >> On 16/02/15 23:05, Mikko Rapeli wrote:
-> >> > Fixes <drm/drm.h> compilation error:
-> >> >
-> >> > drm/drm.h:132:2: error: unknown type name =E2=80=98size_t=E2=80=99
-> >> >
-> >> Hi Mikko,
-> >>
-> >> Can you let us know how you're getting these (series-wise) errors =
-? I've
-> >> been meaning to sync the uapi/drm and libdrm headers and would be =
-nice
-> >> to have an extra step to test things.
-> >
-> > This should have everything needed to reproduce these compile error=
-s,
-> > though some of the errors hide behind other errors and fixes:
-> >
-> > https://lkml.org/lkml/2015/2/16/525
-> >
-> Thanks for the link Mikko.
->=20
-> Afaict the general consensus seems to be that one should avoid using
-> stdint's uint8_t, but stick to __u8 and friends. Did you had the
-> chance to roll out another series that does so ?
+(2015/03/21 8:30), Alexei Starovoitov wrote:
+> From: Daniel Borkmann <daniel@iogearbox.net>
+> 
+> Socket filter code and other subsystems with upcoming eBPF support should
+> not need to deal with the fact that we have CONFIG_BPF_SYSCALL defined or
+> not.
+> 
+> Having the bpf syscall as a config option is a nice thing and I'd expect
+> it to stay that way for expert users (I presume one day the default setting
+> of it might change, though), but code making use of it should not care if
+> it's actually enabled or not.
+> 
+> Instead, hide this via header files and let the rest deal with it.
+> 
 
-Yes, new series with these changes is on the way. I'm trying to follow =
-up to
-all other review comments as well and get down to 100% compiling uapi
-headers; 35 failures to go...
+Looks good to me.
 
-> That aside I'm not 100% sure that doing the UAPI split, as is, was th=
-e
-> perfect solution. Afaik drm used to live as an out of tree userspace
-> library(libdrm). Not sure at which point the major restructuring took
-> part, but one is certain - libdrm remains the only authoritative
-> sources of the headers. It's possible that some buggy programs pull
-> the UAPI headers while linking against the library, but I'd say that
-> won't end up well in the long term. Additionally since the UAPI split
-> the `make update-headers' target used to sync libdrm's headers have
-> been broken leading people to copy misc. hunks and/or files. Leading
-> to greater chance of things going sour.
->
-> All that said, I will need to gather some opinions for drm developers
-> and maintainers if the idea of part revering 718dcedd7e8(UAPI:
-> (Scripted) Disintegrate include/drm) will be the way forward.
+Reviewed-by: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
 
-Ok, I'll follow what is available in Linus' tree (or -next, not shure w=
-hich
-one I should track for these changes).
+Thank you,
 
--Mikko
+> Signed-off-by: Daniel Borkmann <daniel@iogearbox.net>
+> Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
+> ---
+>  include/linux/bpf.h |   20 ++++++++++++++++----
+>  1 file changed, 16 insertions(+), 4 deletions(-)
+> 
+> diff --git a/include/linux/bpf.h b/include/linux/bpf.h
+> index bbfceb756452..c2e21113ecc0 100644
+> --- a/include/linux/bpf.h
+> +++ b/include/linux/bpf.h
+> @@ -113,8 +113,6 @@ struct bpf_prog_type_list {
+>  	enum bpf_prog_type type;
+>  };
+>  
+> -void bpf_register_prog_type(struct bpf_prog_type_list *tl);
+> -
+>  struct bpf_prog;
+>  
+>  struct bpf_prog_aux {
+> @@ -129,11 +127,25 @@ struct bpf_prog_aux {
+>  };
+>  
+>  #ifdef CONFIG_BPF_SYSCALL
+> +void bpf_register_prog_type(struct bpf_prog_type_list *tl);
+> +
+>  void bpf_prog_put(struct bpf_prog *prog);
+> +struct bpf_prog *bpf_prog_get(u32 ufd);
+>  #else
+> -static inline void bpf_prog_put(struct bpf_prog *prog) {}
+> +static inline void bpf_register_prog_type(struct bpf_prog_type_list *tl)
+> +{
+> +}
+> +
+> +static inline struct bpf_prog *bpf_prog_get(u32 ufd)
+> +{
+> +	return ERR_PTR(-EOPNOTSUPP);
+> +}
+> +
+> +static inline void bpf_prog_put(struct bpf_prog *prog)
+> +{
+> +}
+>  #endif
+> -struct bpf_prog *bpf_prog_get(u32 ufd);
+> +
+>  /* verify correctness of eBPF program */
+>  int bpf_check(struct bpf_prog *fp, union bpf_attr *attr);
+>  
+> 
+
+
+-- 
+Masami HIRAMATSU
+Software Platform Research Dept. Linux Technology Research Center
+Hitachi, Ltd., Yokohama Research Laboratory
+E-mail: masami.hiramatsu.pt@hitachi.com
