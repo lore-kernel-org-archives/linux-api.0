@@ -1,54 +1,228 @@
-From: Sebastian Reichel <sre@kernel.org>
-Subject: Re: [PATCHv3 0/2] N900 Modem Speech Support
-Date: Sat, 21 Mar 2015 22:38:06 +0100
-Message-ID: <20150321213805.GA20789@earth>
-References: <1426964957-5023-1-git-send-email-sre@kernel.org>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [PATCH 1/1] Add virtio-input driver.
+Date: Sat, 21 Mar 2015 23:22:25 +0100
+Message-ID: <20150321225356-mutt-send-email-mst@redhat.com>
+References: <1426756391-26585-1-git-send-email-kraxel@redhat.com>
+	<1426756391-26585-2-git-send-email-kraxel@redhat.com>
+	<20150319123940-mutt-send-email-mst@redhat.com>
+	<1426847327.32097.60.camel@nilsson.home.kraxel.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="lrZ03NoBR/3+SXJZ"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
 Content-Disposition: inline
-In-Reply-To: <1426964957-5023-1-git-send-email-sre@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pavel Machek <pavel@ucw.cz>, Pali Rohar <pali.rohar@gmail.com>, Aaro Koskinen <aaro.koskinen@iki.fi>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+In-Reply-To: <1426847327.32097.60.camel@nilsson.home.kraxel.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Gerd Hoffmann <kraxel@redhat.com>
+Cc: virtio-dev@lists.oasis-open.org, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
+On Fri, Mar 20, 2015 at 11:28:47AM +0100, Gerd Hoffmann wrote:
+>   Hi,
+> 
+> > > +static int virtinput_send_status(struct virtio_input *vi,
+> > > +				 u16 type, u16 code, s32 value)
+> > > +{
+> > > +	struct virtio_input_event *stsbuf;
+> > > +	struct scatterlist sg[1];
+> > > +
+> > > +	stsbuf = kzalloc(sizeof(*stsbuf), GFP_ATOMIC);
+> > > +	if (!stsbuf)
+> > > +		return -ENOMEM;
+> > 
+> > Does this return an error to userspace?
+> > If so it's not a good idea I think, GFP_ATOMIC failures are
+> > transient conditions and should not be reported
+> > to userspace.
+> > Can use GFP_KERNEL here?
+> 
+> Waiting for an answer from the ioput guys here.
+> 
+> > > +
+> > > +	stsbuf->type  = cpu_to_le16(type);
+> > > +	stsbuf->code  = cpu_to_le16(code);
+> > > +	stsbuf->value = cpu_to_le32(value);
+> > > +	sg_init_one(sg, stsbuf, sizeof(*stsbuf));
+> > > +	virtqueue_add_outbuf(vi->sts, sg, 1, stsbuf, GFP_ATOMIC);
+> > 
+> > This can fail if queue is full. What prevents this from happening?
+> 
+> Nothing.  It's highly unlikely though given the throughput we have for
+> input devices, not sure it is that useful to put too much effort into
+> this.  Except for freeing stsbuf in the error case.
+> 
+> > > +	virtqueue_kick(vi->sts);
+> > 
+> > Also what prevents multiple virtinput_send_status calls
+> > from racing with each other? Is there locking at a higher level?
+> 
+> I think input_dev->event_lock does this.
+> 
+> > > +static void virtinput_recv_status(struct virtqueue *vq)
+> > > +{
+> > > +	struct virtio_input *vi = vq->vdev->priv;
+> > > +	struct virtio_input_event *stsbuf;
+> > > +	unsigned int len;
+> > > +
+> > > +	while ((stsbuf = virtqueue_get_buf(vi->sts, &len)) != NULL)
+> > 
+> > looks like this get_buf can race with add above.
+> 
+> Yes, it can.
+> 
+> > Need some locking.
+> 
+> I'll add it.
+> 
+> > Also pls avoid != NULL, removing it makes code less verbose.
+> > 
+> > > +		kfree(stsbuf);
+> > > +	virtqueue_kick(vq);
+> > 
+> > Why are you kicking here?
+> 
+> Hmm, it is pointless indeed.
+> 
+> > > +	if (select == VIRTIO_INPUT_CFG_EV_BITS)
+> > > +		set_bit(subsel, vi->idev->evbit);
+> > > +	for (bit = 0; bit < bitcount; bit++) {
+> > > +		if ((bit % 8) == 0)
+> > > +			virtio_cread(vi->vdev, struct virtio_input_config,
+> > > +				     u.bitmap[bit/8], &cfg);
+> > 
+> > coding style violations above. you need spaces around ops like / and *.
+> > Please run checkpatch.pl
+> > 
+> > > +		if (cfg & (1 << (bit % 8)))
+> > > +			set_bit(bit, bits);
+> > 
+> > what if not set? does something clear the mask?
+> 
+> kzalloc?
 
---lrZ03NoBR/3+SXJZ
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+So you are really just reading in array of bytes?
+All this set bit trickery is just to convert things from LE?
 
-Hi,
+> > > +	}
+> > 
+> > doesn't above just implement bitmap_copy or bitmap_or?
+> 
+> Not fully sure how bitmaps are defined.  virtio has a stream of bytes,
+> first byte carries bits 0-7, second 8-15 etc.  linux kernel bitmaps ops
+> are operating on longs, and native byteorder longs would be something
+> else ...
 
-On Sat, Mar 21, 2015 at 08:09:15PM +0100, Sebastian Reichel wrote:
-> [1] git://git.kernel.org/pub/scm/linux/kernel/git/sre/linux-hsi.git branch/cmt-speech-2
+This still looks too complex.
+At least, this needs a comment explaining what the function does,
+and maybe wrap it in a helper like virtio_input_bitmap_copy or
+virtio_bitmap_or.
 
-This should actually be:
 
-git://git.kernel.org/pub/scm/linux/kernel/git/sre/linux-hsi.git branch/cmt-speech-3
+> > > +	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ABS_INFO, abs);
+> > > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.min, &mi);
+> > > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.max, &ma);
+> > > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.fuzz, &fu);
+> > > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.flat, &fl);
+> > 
+> > you read le field into u32 value.
+> > Please run sparse on this code. you will get a ton
+> > of warnings. Same error appears elsewhere.
+> 
+> Indeed.  IIRC that wasn't the case a while back.  Guess those bitwise
+> annotations have been added with the virtio 1.0 patches?
+> 
+> In any case I'll fix it up.
 
--- Sebastian
+I see you still didn't in v2?
 
---lrZ03NoBR/3+SXJZ
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+> > > +static int virtinput_probe(struct virtio_device *vdev)
+> > > +{
+> > > +	struct virtio_input *vi;
+> > > +	size_t size;
+> > > +	int abs, err;
+> > 
+> > How about checking VERSION_1 and bailing out of not there?
+> 
+> I don't think this is needed.  There isn't a hard dependency on virtio
+> 1.0.  It's just that config space is relatively large and because of
+> that I want it be 1.0 on the host (qemu) side to not allocate large
+> portions of I/O address space for the legacy virtio pci bar.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
+You are doing leXXX everywhere, that's VERSION_1 dependency.
+virtio_cread will do byteswaps differently without VERSION_1.
+Just don't go there.
 
-iQIcBAEBCgAGBQJVDeS6AAoJENju1/PIO/qanSsQAJMawfHGH0H6UOfwJK2HOFOk
-T4r7ku0H49g43RevAvUYbIGH1/piAf/8RJ8XFA9OtDXAEb7G/jkZ5djIA6WZsoZy
-EyrRdZhby1ZtiG50d/tRt022h+j4gcGejyjqTaj+bmmNJmxTF2yglURkDNQU4R+d
-9ljKeJFJtqNOpCaNEB6zB2t5VezxYi7Y5eY+dTS1H6/q21ERoxroyWMUSXJp/yzf
-mjxr3gkMVaQCAFvm323VD3TYinDokUUY8gwDPrqdkh5So6S3y1ASkiMYLaohxSpw
-j+/OHmeIZfTeRKNV+8/vnItaTd9ELlxocObEWdN62wgHdwvo0esSgCVRv2+S5mae
-2ydEDcD9XXYQa2UxRUBxkz1IbQKUsutJqiC/08YTF184uQo46g41zbd8eDsCfUk/
-x9764sFTtu6uMg1JSzp+UeeRAwA4gec6LDQUzKkEId1VG797dROj6LYNwmFUzT3s
-MjAdVO6uJBwQp7mh2e9iuienDvZl/admwlnf7gcvMWfQAElA8ePJNDNQnIcH/Jof
-lF475Sgl/qRn5R3vOMEb1EoloomOPJ7mumeNRmKe4rAJ2c3y0BU1TDXHOaCormNB
-Pth0ZKfTr7n7QaLJMiR9Nh3Wuy/9mIvNwVhGQ1t2TEHGV9665vo+IhLIzOcDWKPY
-VXeAqZfXjXqNLCk0SxIv
-=6/XG
------END PGP SIGNATURE-----
-
---lrZ03NoBR/3+SXJZ--
+> > > +	vi->idev->name = vi->name;
+> > > +	vi->idev->phys = vi->phys;
+> > > +	vi->idev->id.bustype = BUS_VIRTUAL;
+> > > +	vi->idev->id.vendor  = 0x0001;
+> > > +	vi->idev->id.product = 0x0001;
+> > > +	vi->idev->id.version = 0x0100;
+> > 
+> > Add comments explaining why these #s make sense?
+> 
+> See other subthread, will be changed to be host-provided (like name).
+> 
+> > > +	err = input_register_device(vi->idev);
+> > 
+> > Once you do this, virtinput_status can get called,
+> > and that will kick, correct?
+> 
+> Correct.
+> 
+> > If so, you must call device_ready before this.
+> 
+> Ok.
+> 
+> > > +	if (err)
+> > > +		goto out4;
+> > > +
+> > > +	return 0;
+> > > +
+> > > +out4:
+> > > +	input_free_device(vi->idev);
+> > > +out3:
+> > > +	vdev->config->del_vqs(vdev);
+> > > +out2:
+> > > +	kfree(vi);
+> > > +out1:
+> > > +	return err;
+> > 
+> > free on error is out of order with initialization.
+> > Might lead to leaks or other bugs.
+> > Also - can you name labels something sensible pls?
+> > out is usually for exiting on success too...
+> > E.g. out4 -> err_register etc.
+> 
+> Will fix.
+> 
+> > > +static void virtinput_remove(struct virtio_device *vdev)
+> > > +{
+> > > +	struct virtio_input *vi = vdev->priv;
+> > > +
+> > > +	input_unregister_device(vi->idev);
+> > > +	vdev->config->reset(vdev);
+> > 
+> > You don't really need a reset if you just to del_vqs.
+> > People do this if they want to prevent interrupts
+> > without deleting vqs.
+> 
+> Ok.
+> 
+> > > +	vdev->config->del_vqs(vdev);
+> > > +	kfree(vi);
+> > 
+> > free_device seems to be missing?
+> 
+> Indeed, good catch.
+> 
+> thanks,
+>   Gerd
