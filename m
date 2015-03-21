@@ -1,83 +1,75 @@
-From: Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v9 tip 2/9] tracing: add kprobe flag
-Date: Sat, 21 Mar 2015 21:16:03 +0900
-Message-ID: <550D6103.9090001@hitachi.com>
-References: <1426894210-27441-1-git-send-email-ast@plumgrid.com> <1426894210-27441-3-git-send-email-ast@plumgrid.com>
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Subject: Re: [PATCH 05/45] drm.h: include stdlib.h in userspace
+Date: Sat, 21 Mar 2015 14:17:06 +0200
+Message-ID: <20150321121706.GW12550@lakka.kapsi.fi>
+References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
+ <1424127948-22484-6-git-send-email-mikko.rapeli@iki.fi>
+ <54EB0072.8020909@gmail.com>
+ <20150223103548.GT12550@lakka.kapsi.fi>
+ <CACvgo50PA5nb27EcxQqXY49C5hmvDDxi3WOqB=op-wx_WEGd+Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426894210-27441-3-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CACvgo50PA5nb27EcxQqXY49C5hmvDDxi3WOqB=op-wx_WEGd+Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>, Dave Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ML dri-devel <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-(2015/03/21 8:30), Alexei Starovoitov wrote:
-> add TRACE_EVENT_FL_KPROBE flag to differentiate kprobe type of tracepoints,
-> since bpf programs can only be attached to kprobe type of
-> PERF_TYPE_TRACEPOINT perf events.
-> 
+On Fri, Mar 20, 2015 at 08:25:40PM +0000, Emil Velikov wrote:
+> On 23 February 2015 at 10:35, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wrot=
+e:
+> > On Mon, Feb 23, 2015 at 10:26:58AM +0000, Emil Velikov wrote:
+> >> On 16/02/15 23:05, Mikko Rapeli wrote:
+> >> > Fixes <drm/drm.h> compilation error:
+> >> >
+> >> > drm/drm.h:132:2: error: unknown type name =E2=80=98size_t=E2=80=99
+> >> >
+> >> Hi Mikko,
+> >>
+> >> Can you let us know how you're getting these (series-wise) errors =
+? I've
+> >> been meaning to sync the uapi/drm and libdrm headers and would be =
+nice
+> >> to have an extra step to test things.
+> >
+> > This should have everything needed to reproduce these compile error=
+s,
+> > though some of the errors hide behind other errors and fixes:
+> >
+> > https://lkml.org/lkml/2015/2/16/525
+> >
+> Thanks for the link Mikko.
+>=20
+> Afaict the general consensus seems to be that one should avoid using
+> stdint's uint8_t, but stick to __u8 and friends. Did you had the
+> chance to roll out another series that does so ?
 
-Looks ok to me.
+Yes, new series with these changes is on the way. I'm trying to follow =
+up to
+all other review comments as well and get down to 100% compiling uapi
+headers; 35 failures to go...
 
-Reviewed-by: <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
+> That aside I'm not 100% sure that doing the UAPI split, as is, was th=
+e
+> perfect solution. Afaik drm used to live as an out of tree userspace
+> library(libdrm). Not sure at which point the major restructuring took
+> part, but one is certain - libdrm remains the only authoritative
+> sources of the headers. It's possible that some buggy programs pull
+> the UAPI headers while linking against the library, but I'd say that
+> won't end up well in the long term. Additionally since the UAPI split
+> the `make update-headers' target used to sync libdrm's headers have
+> been broken leading people to copy misc. hunks and/or files. Leading
+> to greater chance of things going sour.
+>
+> All that said, I will need to gather some opinions for drm developers
+> and maintainers if the idea of part revering 718dcedd7e8(UAPI:
+> (Scripted) Disintegrate include/drm) will be the way forward.
 
-Thank you!
+Ok, I'll follow what is available in Linus' tree (or -next, not shure w=
+hich
+one I should track for these changes).
 
-> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-> Reviewed-by: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-> ---
->  include/linux/ftrace_event.h |    3 +++
->  kernel/trace/trace_kprobe.c  |    2 +-
->  2 files changed, 4 insertions(+), 1 deletion(-)
-> 
-> diff --git a/include/linux/ftrace_event.h b/include/linux/ftrace_event.h
-> index c674ee8f7fca..77325e1a1816 100644
-> --- a/include/linux/ftrace_event.h
-> +++ b/include/linux/ftrace_event.h
-> @@ -252,6 +252,7 @@ enum {
->  	TRACE_EVENT_FL_WAS_ENABLED_BIT,
->  	TRACE_EVENT_FL_USE_CALL_FILTER_BIT,
->  	TRACE_EVENT_FL_TRACEPOINT_BIT,
-> +	TRACE_EVENT_FL_KPROBE_BIT,
->  };
->  
->  /*
-> @@ -265,6 +266,7 @@ enum {
->   *                     it is best to clear the buffers that used it).
->   *  USE_CALL_FILTER - For ftrace internal events, don't use file filter
->   *  TRACEPOINT    - Event is a tracepoint
-> + *  KPROBE        - Event is a kprobe
->   */
->  enum {
->  	TRACE_EVENT_FL_FILTERED		= (1 << TRACE_EVENT_FL_FILTERED_BIT),
-> @@ -274,6 +276,7 @@ enum {
->  	TRACE_EVENT_FL_WAS_ENABLED	= (1 << TRACE_EVENT_FL_WAS_ENABLED_BIT),
->  	TRACE_EVENT_FL_USE_CALL_FILTER	= (1 << TRACE_EVENT_FL_USE_CALL_FILTER_BIT),
->  	TRACE_EVENT_FL_TRACEPOINT	= (1 << TRACE_EVENT_FL_TRACEPOINT_BIT),
-> +	TRACE_EVENT_FL_KPROBE		= (1 << TRACE_EVENT_FL_KPROBE_BIT),
->  };
->  
->  struct ftrace_event_call {
-> diff --git a/kernel/trace/trace_kprobe.c b/kernel/trace/trace_kprobe.c
-> index d73f565b4e06..8fa549f6f528 100644
-> --- a/kernel/trace/trace_kprobe.c
-> +++ b/kernel/trace/trace_kprobe.c
-> @@ -1286,7 +1286,7 @@ static int register_kprobe_event(struct trace_kprobe *tk)
->  		kfree(call->print_fmt);
->  		return -ENODEV;
->  	}
-> -	call->flags = 0;
-> +	call->flags = TRACE_EVENT_FL_KPROBE;
->  	call->class->reg = kprobe_register;
->  	call->data = tk;
->  	ret = trace_add_event_call(call);
-> 
-
-
--- 
-Masami HIRAMATSU
-Software Platform Research Dept. Linux Technology Research Center
-Hitachi, Ltd., Yokohama Research Laboratory
-E-mail: masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org
+-Mikko
