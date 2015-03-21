@@ -1,19 +1,19 @@
-From: Martin Kepplinger <martink@posteo.de>
+From: Martin Kepplinger <martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
 Subject: [PATCH v5] add support for Freescale's MMA8653FC 10 bit accelerometer
-Date: Sat, 21 Mar 2015 12:09:10 +0100
-Message-ID: <1426936150-2439-1-git-send-email-martink@posteo.de>
-References: <1426870690-18365-1-git-send-email-martink@posteo.de>
+Date: Sat, 21 Mar 2015 12:26:04 +0100
+Message-ID: <1426937164-10997-1-git-send-email-martink@posteo.de>
+References: <1426936150-2439-1-git-send-email-martink@posteo.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1426870690-18365-1-git-send-email-martink@posteo.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: benjamin.tissoires@gmail.com, mark.rutland@arm.com, robh+dt@kernel.org, Pawel.Moll@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, dmitry.torokhov@gmail.com, alexander.stein@systec-electronic.com
-Cc: hadess@hadess.net, akpm@linux-foundation.org, gregkh@linuxfoundation.org, linux-api@vger.kernel.org, devicetree@vger.kernel.org, linux-input@vger.kernel.org, linux-kernel@vger.kernel.org, Martin Kepplinger <martin.kepplinger@theobroma-systems.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1426936150-2439-1-git-send-email-martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: benjamin.tissoires-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Pawel.Moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, alexander.stein-93q1YBGzJSMe9JSWTWOYM3xStJ4P+DSV@public.gmane.org
+Cc: hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Martin Kepplinger <martin.kepplinger-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>, Christoph Muellner <christoph.muellner-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-=46rom: Martin Kepplinger <martin.kepplinger@theobroma-systems.com>
+=46rom: Martin Kepplinger <martin.kepplinger-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>
 
 The MMA8653FC is a low-power, three-axis, capacitive micromachined
 accelerometer with 10 bits of resolution with flexible user-programmabl=
@@ -45,16 +45,18 @@ Signed-off-by: Christoph Muellner <christoph.muellner@theobroma-systems=
 =2Ecom>
 ---
 
-Sorry, I forgot the Kconfig integration into drivers/staging.
-This applies and builds.
+Still, I was missing the drivers/staging Makefile addition. This applie=
+s and
+builds automatically.
 
  drivers/staging/Kconfig               |   2 +
+ drivers/staging/Makefile              |   1 +
  drivers/staging/mma8653fc/Kconfig     |  10 +
  drivers/staging/mma8653fc/Makefile    |   1 +
  drivers/staging/mma8653fc/TODO        | 146 ++++++
  drivers/staging/mma8653fc/mma8653fc.c | 864 ++++++++++++++++++++++++++=
 ++++++++
- 5 files changed, 1023 insertions(+)
+ 6 files changed, 1024 insertions(+)
  create mode 100644 drivers/staging/mma8653fc/Kconfig
  create mode 100644 drivers/staging/mma8653fc/Makefile
  create mode 100644 drivers/staging/mma8653fc/TODO
@@ -71,6 +73,16 @@ index bfacf69..834d949 100644
 +source "drivers/staging/mma8653fc/Kconfig"
 +
  endif # STAGING
+diff --git a/drivers/staging/Makefile b/drivers/staging/Makefile
+index 2bbd1bf..cfea86a 100644
+--- a/drivers/staging/Makefile
++++ b/drivers/staging/Makefile
+@@ -48,3 +48,4 @@ obj-$(CONFIG_COMMON_CLK_XLNX_CLKWZRD)	+=3D clocking-w=
+izard/
+ obj-$(CONFIG_FB_TFT)		+=3D fbtft/
+ obj-$(CONFIG_I2O)		+=3D i2o/
+ obj-$(CONFIG_FSL_MC_BUS)	+=3D fsl-mc/
++obj-$(CONFIG_MMA8653FC)		+=3D mma8653fc/
 diff --git a/drivers/staging/mma8653fc/Kconfig b/drivers/staging/mma865=
 3fc/Kconfig
 new file mode 100644
@@ -112,7 +124,7 @@ index 0000000..0a31225
 +-----------------------------
 +What:		/sys/bus/i2c/drivers/mma8653fc/*/standby
 +Date:		March 2015
-+Contact:	Martin Kepplinger <martin.kepplinger@theobroma-systems.com>
++Contact:	Martin Kepplinger <martin.kepplinger-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>
 +Description:
 +		Write 0 to this in order to turn on the device, and 1 to turn
 +		it off. Read to see if it is turned on or off.
@@ -120,7 +132,7 @@ index 0000000..0a31225
 +
 +What:		/sys/bus/i2c/drivers/mma8653fc/*/currentmode
 +Date:		March 2015
-+Contact:	Martin Kepplinger <martin.kepplinger@theobroma-systems.com>
++Contact:	Martin Kepplinger <martin.kepplinger-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>
 +Description:
 +		Reading this provides the current state of the device, read
 +		directly from a register. This can be "standby", "wake" or
@@ -129,7 +141,7 @@ index 0000000..0a31225
 +
 +What:		/sys/bus/i2c/drivers/mma8653fc/*/position
 +Date:		March 2015
-+Contact:	Martin Kepplinger <martin.kepplinger@theobroma-systems.com>
++Contact:	Martin Kepplinger <martin.kepplinger-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>
 +Description:
 +		Read only. Without interrupts enabled gets current position
 +		values by reading. Poll "position" with interrupt conditions
