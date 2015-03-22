@@ -1,54 +1,91 @@
 From: NeilBrown <neil@brown.name>
-Subject: [PATCH 01/14] twl4030_charger: use devm_request_threaded_irq
+Subject: [PATCH 02/14] twl4030_charger: use devres for power_supply_register
+ and kzalloc.
 Date: Mon, 23 Mar 2015 10:20:28 +1100
-Message-ID: <20150322232028.23789.97241.stgit@notabene.brown>
+Message-ID: <20150322232028.23789.38570.stgit@notabene.brown>
 References: <20150322231635.23789.70149.stgit@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-omap-owner@vger.kernel.org>
 In-Reply-To: <20150322231635.23789.70149.stgit@notabene.brown>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-omap-owner@vger.kernel.org
 To: Sebastian Reichel <sre@kernel.org>
 Cc: NeilBrown <neilb@suse.de>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, GTA04 owners <gta04-owner@goldelico.com>, inux-pm@vger.kernel.org, Pavel Machek <pavel@ucw.cz>, linux-omap@vger.kernel.org, Lee Jones <lee.jones@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
 From: NeilBrown <neilb@suse.de>
 
-This simplifies the error paths.
+Final allocations/registrations are now managed by devres.
 
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- drivers/power/twl4030_charger.c |   18 ++++++------------
- 1 file changed, 6 insertions(+), 12 deletions(-)
+ drivers/power/twl4030_charger.c |   32 +++++++++-----------------------
+ 1 file changed, 9 insertions(+), 23 deletions(-)
 
 diff --git a/drivers/power/twl4030_charger.c b/drivers/power/twl4030_charger.c
-index b07f4e2f2dde..58996d252ecf 100644
+index 58996d252ecf..7b6c4000cd30 100644
 --- a/drivers/power/twl4030_charger.c
 +++ b/drivers/power/twl4030_charger.c
-@@ -610,21 +610,21 @@ static int __init twl4030_bci_probe(struct platform_device *pdev)
- 		goto fail_register_usb;
+@@ -565,7 +565,7 @@ static int __init twl4030_bci_probe(struct platform_device *pdev)
+ 	int ret;
+ 	u32 reg;
+ 
+-	bci = kzalloc(sizeof(*bci), GFP_KERNEL);
++	bci = devm_kzalloc(&pdev->dev, sizeof(*bci), GFP_KERNEL);
+ 	if (bci == NULL)
+ 		return -ENOMEM;
+ 
+@@ -580,7 +580,7 @@ static int __init twl4030_bci_probe(struct platform_device *pdev)
+ 	ret = twl4030_is_battery_present(bci);
+ 	if  (ret) {
+ 		dev_crit(&pdev->dev, "Battery was not detected:%d\n", ret);
+-		goto fail_no_battery;
++		return ret;
  	}
  
--	ret = request_threaded_irq(bci->irq_chg, NULL,
-+	ret = devm_request_threaded_irq(&pdev->dev, bci->irq_chg, NULL,
- 			twl4030_charger_interrupt, IRQF_ONESHOT, pdev->name,
- 			bci);
+ 	platform_set_drvdata(pdev, bci);
+@@ -590,10 +590,10 @@ static int __init twl4030_bci_probe(struct platform_device *pdev)
+ 	bci->ac.num_properties = ARRAY_SIZE(twl4030_charger_props);
+ 	bci->ac.get_property = twl4030_bci_get_property;
+ 
+-	ret = power_supply_register(&pdev->dev, &bci->ac);
++	ret = devm_power_supply_register(&pdev->dev, &bci->ac);
+ 	if (ret) {
+ 		dev_err(&pdev->dev, "failed to register ac: %d\n", ret);
+-		goto fail_register_ac;
++		return ret;
+ 	}
+ 
+ 	bci->usb.name = "twl4030_usb";
+@@ -604,10 +604,10 @@ static int __init twl4030_bci_probe(struct platform_device *pdev)
+ 
+ 	bci->usb_reg = regulator_get(bci->dev, "bci3v1");
+ 
+-	ret = power_supply_register(&pdev->dev, &bci->usb);
++	ret = devm_power_supply_register(&pdev->dev, &bci->usb);
+ 	if (ret) {
+ 		dev_err(&pdev->dev, "failed to register usb: %d\n", ret);
+-		goto fail_register_usb;
++		return ret;
+ 	}
+ 
+ 	ret = devm_request_threaded_irq(&pdev->dev, bci->irq_chg, NULL,
+@@ -616,7 +616,7 @@ static int __init twl4030_bci_probe(struct platform_device *pdev)
  	if (ret < 0) {
  		dev_err(&pdev->dev, "could not request irq %d, status %d\n",
  			bci->irq_chg, ret);
--		goto fail_chg_irq;
-+		goto fail;
+-		goto fail;
++		return ret;
  	}
  
--	ret = request_threaded_irq(bci->irq_bci, NULL,
-+	ret = devm_request_threaded_irq(&pdev->dev, bci->irq_bci, NULL,
- 			twl4030_bci_interrupt, IRQF_ONESHOT, pdev->name, bci);
+ 	ret = devm_request_threaded_irq(&pdev->dev, bci->irq_bci, NULL,
+@@ -624,7 +624,7 @@ static int __init twl4030_bci_probe(struct platform_device *pdev)
  	if (ret < 0) {
  		dev_err(&pdev->dev, "could not request irq %d, status %d\n",
  			bci->irq_bci, ret);
--		goto fail_bci_irq;
-+		goto fail;
+-		goto fail;
++		return ret;
  	}
  
  	INIT_WORK(&bci->work, twl4030_bci_usb_work);
@@ -56,30 +93,38 @@ index b07f4e2f2dde..58996d252ecf 100644
  			       TWL4030_INTERRUPTS_BCIIMR1A);
  	if (ret < 0) {
  		dev_err(&pdev->dev, "failed to unmask interrupts: %d\n", ret);
--		goto fail_unmask_interrupts;
-+		goto fail;
+-		goto fail;
++		return ret;
  	}
  
  	reg = ~(u32)(TWL4030_VBATOV | TWL4030_VBUSOV | TWL4030_ACCHGOV);
-@@ -666,11 +666,7 @@ static int __init twl4030_bci_probe(struct platform_device *pdev)
+@@ -665,16 +665,6 @@ static int __init twl4030_bci_probe(struct platform_device *pdev)
+ 		twl4030_charger_enable_backup(0, 0);
  
  	return 0;
+-
+-fail:
+-	power_supply_unregister(&bci->usb);
+-fail_register_usb:
+-	power_supply_unregister(&bci->ac);
+-fail_register_ac:
+-fail_no_battery:
+-	kfree(bci);
+-
+-	return ret;
+ }
  
--fail_unmask_interrupts:
--	free_irq(bci->irq_bci, bci);
--fail_bci_irq:
--	free_irq(bci->irq_chg, bci);
--fail_chg_irq:
-+fail:
- 	power_supply_unregister(&bci->usb);
- fail_register_usb:
- 	power_supply_unregister(&bci->ac);
-@@ -695,8 +691,6 @@ static int __exit twl4030_bci_remove(struct platform_device *pdev)
+ static int __exit twl4030_bci_remove(struct platform_device *pdev)
+@@ -691,10 +681,6 @@ static int __exit twl4030_bci_remove(struct platform_device *pdev)
  	twl_i2c_write_u8(TWL4030_MODULE_INTERRUPTS, 0xff,
  			 TWL4030_INTERRUPTS_BCIIMR2A);
  
--	free_irq(bci->irq_bci, bci);
--	free_irq(bci->irq_chg, bci);
- 	power_supply_unregister(&bci->usb);
- 	power_supply_unregister(&bci->ac);
- 	kfree(bci);
+-	power_supply_unregister(&bci->usb);
+-	power_supply_unregister(&bci->ac);
+-	kfree(bci);
+-
+ 	return 0;
+ }
+ 
+
+
