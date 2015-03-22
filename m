@@ -1,8 +1,7 @@
 From: NeilBrown <neil@brown.name>
-Subject: [PATCH 04/14] twl4030_charger: trust phy to determine when USB
- power is available.
+Subject: [PATCH 05/14] twl4030_charger: split uA calculation into a function.
 Date: Mon, 23 Mar 2015 10:20:28 +1100
-Message-ID: <20150322232028.23789.91362.stgit@notabene.brown>
+Message-ID: <20150322232028.23789.60327.stgit@notabene.brown>
 References: <20150322231635.23789.70149.stgit@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -16,72 +15,85 @@ List-Id: linux-api@vger.kernel.org
 
 From: NeilBrown <neilb@suse.de>
 
-The usb phy driver already determines when VBUS is available,
-so repeating the test in the charger driver is pointless duplication.
+We will need this calculation in other places, so
+create functions to map between register value and uA value.
 
-On probe, process the last event from the phy, and from then on,
-do whatever the phy tells us without double-checking.
-
+Acked-by: Pavel Machek <pavel@ucw.cz>
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- drivers/power/twl4030_charger.c |   33 ++++++---------------------------
- 1 file changed, 6 insertions(+), 27 deletions(-)
+ drivers/power/twl4030_charger.c |   48 ++++++++++++++++++++++++++++-----------
+ 1 file changed, 35 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/power/twl4030_charger.c b/drivers/power/twl4030_charger.c
-index 94c7a4d9400a..0e62a5ae56a3 100644
+index 0e62a5ae56a3..c9a7efbb9141 100644
 --- a/drivers/power/twl4030_charger.c
 +++ b/drivers/power/twl4030_charger.c
-@@ -178,28 +178,6 @@ static int twl4030_is_battery_present(struct twl4030_bci *bci)
+@@ -178,6 +178,40 @@ static int twl4030_is_battery_present(struct twl4030_bci *bci)
  }
  
  /*
-- * Check if VBUS power is present
-- */
--static int twl4030_bci_have_vbus(struct twl4030_bci *bci)
--{
--	int ret;
--	u8 hwsts;
--
--	ret = twl_i2c_read_u8(TWL_MODULE_PM_MASTER, &hwsts,
--			      TWL4030_PM_MASTER_STS_HW_CONDITIONS);
--	if (ret < 0)
--		return 0;
--
--	dev_dbg(bci->dev, "check_vbus: HW_CONDITIONS %02x\n", hwsts);
--
--	/* in case we also have STS_USB_ID, VBUS is driven by TWL itself */
--	if ((hwsts & TWL4030_STS_VBUS) && !(hwsts & TWL4030_STS_USB_ID))
--		return 1;
--
--	return 0;
--}
--
--/*
++ * TI provided formulas:
++ * CGAIN == 0: ICHG = (BCIICHG * 1.7) / (2^10 - 1) - 0.85
++ * CGAIN == 1: ICHG = (BCIICHG * 3.4) / (2^10 - 1) - 1.7
++ * Here we use integer approximation of:
++ * CGAIN == 0: val * 1.6618 - 0.85 * 1000
++ * CGAIN == 1: (val * 1.6618 - 0.85 * 1000) * 2
++ */
++/*
++ * convert twl register value for currents into uA
++ */
++static int regval2ua(int regval, bool cgain)
++{
++	if (cgain)
++		return (regval * 16618 - 8500 * 1000) / 5;
++	else
++		return (regval * 16618 - 8500 * 1000) / 10;
++}
++
++/*
++ * convert uA currents into twl register value
++ */
++static int ua2regval(int ua, bool cgain)
++{
++	int ret;
++	if (cgain)
++		ua /= 2;
++	ret = (ua * 10 + 8500 * 1000) / 16618;
++	/* rounding problems */
++	if (ret < 512)
++		ret = 512;
++	return ret;
++}
++
++/*
   * Enable/Disable USB Charge functionality.
   */
  static int twl4030_charger_enable_usb(struct twl4030_bci *bci, bool enable)
-@@ -207,10 +185,6 @@ static int twl4030_charger_enable_usb(struct twl4030_bci *bci, bool enable)
- 	int ret;
+@@ -366,14 +400,6 @@ static int twl4030_bci_usb_ncb(struct notifier_block *nb, unsigned long val,
+ 	return NOTIFY_OK;
+ }
  
- 	if (enable && !IS_ERR_OR_NULL(bci->transceiver)) {
--		/* Check for USB charger connected */
--		if (!twl4030_bci_have_vbus(bci))
--			return -ENODEV;
+-/*
+- * TI provided formulas:
+- * CGAIN == 0: ICHG = (BCIICHG * 1.7) / (2^10 - 1) - 0.85
+- * CGAIN == 1: ICHG = (BCIICHG * 3.4) / (2^10 - 1) - 1.7
+- * Here we use integer approximation of:
+- * CGAIN == 0: val * 1.6618 - 0.85
+- * CGAIN == 1: (val * 1.6618 - 0.85) * 2
+- */
+ static int twl4030_charger_get_current(void)
+ {
+ 	int curr;
+@@ -388,11 +414,7 @@ static int twl4030_charger_get_current(void)
+ 	if (ret)
+ 		return ret;
+ 
+-	ret = (curr * 16618 - 850 * 10000) / 10;
+-	if (bcictl1 & TWL4030_CGAIN)
+-		ret *= 2;
 -
- 		/*
- 		 * Until we can find out what current the device can provide,
- 		 * require a module param to enable USB charging.
-@@ -649,7 +623,12 @@ static int __init twl4030_bci_probe(struct platform_device *pdev)
- 		dev_warn(&pdev->dev, "failed to unmask interrupts: %d\n", ret);
+-	return ret;
++	return regval2ua(curr, bcictl1 & TWL4030_CGAIN);
+ }
  
- 	twl4030_charger_enable_ac(true);
--	twl4030_charger_enable_usb(bci, true);
-+	if (!IS_ERR_OR_NULL(bci->transceiver))
-+		twl4030_bci_usb_ncb(&bci->usb_nb,
-+				    bci->transceiver->last_event,
-+				    NULL);
-+	else
-+		twl4030_charger_enable_usb(bci, false);
- 	if (pdata)
- 		twl4030_charger_enable_backup(pdata->bb_uvolt,
- 					      pdata->bb_uamp);
+ /*
