@@ -1,105 +1,136 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] seccomp.2: Add note about alarm(2) not being sufficient
- to limit runtime
-Date: Sun, 22 Mar 2015 20:28:14 +0100
-Message-ID: <550F17CE.5080400@gmail.com>
-References: <20150311174204.GA5712@pc.thejh.net> <21760.46870.338764.599348@gargle.gargle.HOWL> <20150312130701.GA11073@pc.thejh.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150312130701.GA11073-J1fxOzX/cBvk1uMJSBkQmQ@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Mikael Pettersson <mikpelinux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Jeff Dike <jdike-OPE4K8JWMJJBDgjK7y7TUQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Subject: [PATCH v10 tip 0/9] tracing: attach eBPF programs to kprobes
+Date: Sun, 22 Mar 2015 12:39:01 -0700
+Message-ID: <1427053150-32213-1-git-send-email-ast@plumgrid.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello Jann,
+Hi Ingo,
 
-On 03/12/2015 02:07 PM, Jann Horn wrote:
-> On Wed, Mar 11, 2015 at 10:43:50PM +0100, Mikael Pettersson wrote:
->> Jann Horn writes:
->>  > Or should I throw this patch away and write a patch
->>  > for the prctl() manpage instead that documents that
->>  > being able to call sigreturn() implies being able to
->>  > effectively call sigprocmask(), at least on some
->>  > architectures like X86?
->>
->> Well, that is the semantics of sigreturn().  It is essentially
->> setcontext() [which includes the actions of sigprocmask()], but
->> with restrictions on parameter placement (at least on x86).
->>
->> You could introduce some setting to restrict that aspect for
->> seccomp processes, but you can't change this for normal processes
->> without breaking things.
-> 
-> Then I think it's probably better and easier to just document the existing
-> behavior? If a new setting would have to be introduced and developers would
-> need to be aware of that, it's probably easier to just tell everyone to use
-> SIGKILL.
-> 
-> Does this manpage patch look good?
+Patch 1 is already in net-next. Patch 3 depends on it.
+I'm assuming it's not going to be a problem during merge window.
+Patch 3 will have a minor conflict in uapi/linux/bpf.h in linux-next,
+since net-next has added new lines to the bpf_prog_type and bpf_func_id enums.
+I'm assuming it's not a problem either.
 
-Patch applied, with Acks from Andy, Mikael, and Kees (I don't
-usually get patches whose pedigree is that good. Thanks!)
+V9->V10:
+- prettified formatting of struct intializers in kernel
+- added Masami's Reviewed-by. Thanks Masami!
 
-I tweaked a few wordings. You can find the changes in Git [1]
+V8->V9:
+- fixed comment style and allowed ispunct after %p
+- added Steven's Reviewed-by. Thanks Steven!
 
-Cheers,
+V7->V8:
+- split addition of kprobe flag into separate patch
+- switched to __this_cpu_inc in now documented trace_call_bpf()
+- converted array into standalone bpf_func_proto and switch statement
+  (this apporach looks cleanest, especially considering patch 5)
+- refactored patch 5 bpf_trace_printk to do strict checking
 
-Michael
+V6->V7:
+- rebase and remove confusing _notrace suffix from preempt_disable/enable
+  everything else unchanged
 
-[1] 
-http://git.kernel.org/cgit/docs/man-pages/man-pages.git/commit/?id=65be1b46fb88e14f0af494ac6b53a2d6a63bb860
+V5->V6:
+- added simple recursion check to trace_call_bpf()
+- added tracex4 example that does kmem_cache_alloc/free tracking.
+  It remembers every allocated object in a map and user space periodically
+  prints a set of old objects. With more work in can be made into
+  simple kmemleak detector.
+  It was used as a test of recursive kmalloc/kfree: attached to
+  kprobe/__kmalloc and let program to call kmalloc again.
 
-> ---
->  man2/seccomp.2 | 25 +++++++++++++++++++++++++
->  1 file changed, 25 insertions(+)
-> 
-> diff --git a/man2/seccomp.2 b/man2/seccomp.2
-> index 702ceb8..f762d07 100644
-> --- a/man2/seccomp.2
-> +++ b/man2/seccomp.2
-> @@ -64,6 +64,31 @@ Strict secure computing mode is useful for number-crunching
->  applications that may need to execute untrusted byte code, perhaps
->  obtained by reading from a pipe or socket.
->  
-> +Note that although the calling thread can no longer call
-> +.BR sigprocmask (2),
-> +it can use
-> +.BR sigreturn (2)
-> +to block all signals apart from
-> +.BR SIGKILL
-> +and
-> +.BR SIGSTOP .
-> +Therefore, to reliably terminate it,
-> +.BR SIGKILL
-> +has to be used, meaning that e.g.
-> +.BR alarm (2)
-> +is not sufficient for restricting its runtime. Instead, use
-> +.BR timer_create (2)
-> +with
-> +.BR SIGEV_SIGNAL
-> +and
-> +.BR sigev_signo
-> +set to
-> +.BR SIGKILL
-> +or use
-> +.BR setrlimit (2)
-> +to set the hard limit for
-> +.BR RLIMIT_CPU .
-> +
->  This operation is available only if the kernel is configured with
->  .BR CONFIG_SECCOMP
->  enabled.
-> 
+V4->V5:
+- switched to ktime_get_mono_fast_ns() as suggested by Peter
+- in libbpf.c fixed zero init of 'union bpf_attr' padding
+- fresh rebase on tip/master
 
+V3 discussion:
+https://lkml.org/lkml/2015/2/9/738
+
+V3->V4:
+- since the boundary of stable ABI in bpf+tracepoints is not clear yet,
+  I've dropped them for now.
+- bpf+syscalls are ok from stable ABI point of view, but bpf+seccomp
+  would want to do very similar analysis of syscalls, so I've dropped
+  them as well to take time and define common bpf+syscalls and bpf+seccomp
+  infra in the future.
+- so only bpf+kprobes left. kprobes by definition is not a stable ABI,
+  so bpf+kprobe is not stable ABI either. To stress on that point added
+  kernel version attribute that user space must pass along with the program
+  and kernel will reject programs when version code doesn't match.
+  So bpf+kprobe is very similar to kernel modules, but unlike modules
+  version check is not used for safety, but for enforcing 'non-ABI-ness'.
+  (version check doesn't apply to bpf+sockets which are stable)
+
+Programs are attached to kprobe events via API:
+
+prog_fd = bpf_prog_load(...);
+struct perf_event_attr attr = {
+  .type = PERF_TYPE_TRACEPOINT,
+  .config = event_id, /* ID of just created kprobe event */
+};
+event_fd = perf_event_open(&attr,...);
+ioctl(event_fd, PERF_EVENT_IOC_SET_BPF, prog_fd);
+
+Next step is to prototype TCP stack instrumentation (like web10g) using
+bpf+kprobe, but without adding any new code tcp stack.
+Though kprobes are slow comparing to tracepoints, they are good enough
+for prototyping and trace_marker/debug_tracepoint ideas can accelerate
+them in the future.
+
+Alexei Starovoitov (8):
+  tracing: add kprobe flag
+  tracing: attach BPF programs to kprobes
+  tracing: allow BPF programs to call bpf_ktime_get_ns()
+  tracing: allow BPF programs to call bpf_trace_printk()
+  samples: bpf: simple non-portable kprobe filter example
+  samples: bpf: counting example for kfree_skb and write syscall
+  samples: bpf: IO latency analysis (iosnoop/heatmap)
+  samples: bpf: kmem_alloc/free tracker
+
+Daniel Borkmann (1):
+  bpf: make internal bpf API independent of CONFIG_BPF_SYSCALL ifdefs
+
+ include/linux/bpf.h             |   20 +++-
+ include/linux/ftrace_event.h    |   14 +++
+ include/uapi/linux/bpf.h        |    5 +
+ include/uapi/linux/perf_event.h |    1 +
+ kernel/bpf/syscall.c            |    7 +-
+ kernel/events/core.c            |   59 +++++++++++
+ kernel/trace/Makefile           |    1 +
+ kernel/trace/bpf_trace.c        |  222 +++++++++++++++++++++++++++++++++++++++
+ kernel/trace/trace_kprobe.c     |   10 +-
+ samples/bpf/Makefile            |   16 +++
+ samples/bpf/bpf_helpers.h       |    6 ++
+ samples/bpf/bpf_load.c          |  125 ++++++++++++++++++++--
+ samples/bpf/bpf_load.h          |    3 +
+ samples/bpf/libbpf.c            |   14 ++-
+ samples/bpf/libbpf.h            |    5 +-
+ samples/bpf/sock_example.c      |    2 +-
+ samples/bpf/test_verifier.c     |    2 +-
+ samples/bpf/tracex1_kern.c      |   50 +++++++++
+ samples/bpf/tracex1_user.c      |   25 +++++
+ samples/bpf/tracex2_kern.c      |   86 +++++++++++++++
+ samples/bpf/tracex2_user.c      |   95 +++++++++++++++++
+ samples/bpf/tracex3_kern.c      |   89 ++++++++++++++++
+ samples/bpf/tracex3_user.c      |  150 ++++++++++++++++++++++++++
+ samples/bpf/tracex4_kern.c      |   54 ++++++++++
+ samples/bpf/tracex4_user.c      |   69 ++++++++++++
+ 25 files changed, 1112 insertions(+), 18 deletions(-)
+ create mode 100644 kernel/trace/bpf_trace.c
+ create mode 100644 samples/bpf/tracex1_kern.c
+ create mode 100644 samples/bpf/tracex1_user.c
+ create mode 100644 samples/bpf/tracex2_kern.c
+ create mode 100644 samples/bpf/tracex2_user.c
+ create mode 100644 samples/bpf/tracex3_kern.c
+ create mode 100644 samples/bpf/tracex3_user.c
+ create mode 100644 samples/bpf/tracex4_kern.c
+ create mode 100644 samples/bpf/tracex4_user.c
 
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+1.7.9.5
