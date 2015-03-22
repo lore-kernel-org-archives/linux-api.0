@@ -1,7 +1,8 @@
 From: NeilBrown <neil@brown.name>
-Subject: [PATCH 12/14] twl4030_charger: add ac/mode to match usb/mode
+Subject: [PATCH 13/14] twl4030_charger: Increase current carefully while
+ watching voltage.
 Date: Mon, 23 Mar 2015 10:20:29 +1100
-Message-ID: <20150322232029.23789.49855.stgit@notabene.brown>
+Message-ID: <20150322232029.23789.30185.stgit@notabene.brown>
 References: <20150322231635.23789.70149.stgit@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -15,133 +16,173 @@ List-Id: linux-api@vger.kernel.org
 
 From: NeilBrown <neilb@suse.de>
 
-This allows AC charging to be turned off, much like usb charging.
-"continuous" mode is not available though.
+The USB Battery Charging spec (BC1.2) suggests a dedicated
+charging port can deliver from 0.5 to 5.0A at between 4.75 and 5.25
+volts.
 
-Acked-by: Pavel Machek <pavel@ucw.cz>
+To choose the "correct" current voltage setting requires a trial
+and error approach: try to draw current and see if the voltage drops
+too low.
+
+Even with a configured Standard Downstream Port, it may not be possible
+to reliably pull 500mA - depending on cable quality and source
+quality I have reports of charging failure due to the voltage dropping
+too low.
+
+To address both these concerns, this patch introduce incremental
+current setting.
+The current pull from VBUS is increased in steps of 20mA every 100ms
+until the target is reached or until the measure voltage drops below
+4.75V.  If the voltage does go too low, the target current is reduced
+by 20mA and kept there.
+
+This applies to currents selected automatically, or to values
+set via sysfs.  So setting a large value will cause the maximum
+available to be used - up to the limit of 1.7A imposed by the
+hardware.
+
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- .../ABI/testing/sysfs-class-power-twl4030          |   10 ++++++
- drivers/power/twl4030_charger.c                    |   35 +++++++++++++++-----
- 2 files changed, 37 insertions(+), 8 deletions(-)
+ drivers/power/twl4030_charger.c |   68 ++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 60 insertions(+), 8 deletions(-)
 
-diff --git a/Documentation/ABI/testing/sysfs-class-power-twl4030 b/Documentation/ABI/testing/sysfs-class-power-twl4030
-index c27e8ca8c9db..35a211b9a172 100644
---- a/Documentation/ABI/testing/sysfs-class-power-twl4030
-+++ b/Documentation/ABI/testing/sysfs-class-power-twl4030
-@@ -33,3 +33,13 @@ Description:
- 			 This is useful for unstable power sources
- 			 such as bicycle dynamo, but care should
- 			 be taken that battery is not over-charged.
-+
-+What: /sys/class/power_supply/twl4030_ac/mode
-+Description:
-+	Changing mode for 'ac' port.
-+	Writing to this can disable charging.
-+
-+	Possible values are:
-+		"auto" - draw power as appropriate for detected
-+			 power source and battery status.
-+		"off"  - do not draw any power.
 diff --git a/drivers/power/twl4030_charger.c b/drivers/power/twl4030_charger.c
-index 2c8d85102def..73c7cd96ebc1 100644
+index 73c7cd96ebc1..d0199495dddc 100644
 --- a/drivers/power/twl4030_charger.c
 +++ b/drivers/power/twl4030_charger.c
-@@ -114,7 +114,7 @@ struct twl4030_bci {
- 	unsigned int		ichg_eoc, ichg_lo, ichg_hi;
- 	unsigned int		usb_cur, ac_cur;
- 	bool			ac_is_active;
--	int			usb_mode; /* charging mode requested */
-+	int			usb_mode, ac_mode; /* charging mode requested */
- #define	CHARGE_OFF	0
+@@ -119,6 +119,18 @@ struct twl4030_bci {
  #define	CHARGE_AUTO	1
  #define	CHARGE_LINEAR	2
-@@ -459,10 +459,13 @@ static int twl4030_charger_enable_usb(struct twl4030_bci *bci, bool enable)
- /*
-  * Enable/Disable AC Charge funtionality.
-  */
--static int twl4030_charger_enable_ac(bool enable)
-+static int twl4030_charger_enable_ac(struct twl4030_bci *bci, bool enable)
- {
- 	int ret;
  
-+	if (bci->ac_mode == CHARGE_OFF)
-+		enable = false;
++	/* When setting the USB current we slowly increase the
++	 * requested current until target is reached or the voltage
++	 * drops below 4.75V.  In the latter case we step back one
++	 * step.
++	 */
++	unsigned int		usb_cur_target;
++	struct delayed_work	current_worker;
++#define	USB_CUR_STEP	20000	/* 20mA at a time */
++#define	USB_MIN_VOLT	4750000	/* 4.75V */
++#define	USB_CUR_DELAY	msecs_to_jiffies(100)
++#define	USB_MAX_CURRENT	1700000 /* TWL4030 caps at 1.7A */
 +
- 	if (enable)
- 		ret = twl4030_clear_set_boot_bci(0, TWL4030_BCIAUTOAC);
- 	else
-@@ -693,9 +696,17 @@ twl4030_bci_mode_store(struct device *dev, struct device_attribute *attr,
- 		mode = 2;
- 	else
- 		return -EINVAL;
--	twl4030_charger_enable_usb(bci, false);
--	bci->usb_mode = mode;
--	status = twl4030_charger_enable_usb(bci, true);
-+	if (dev == bci->ac.dev) {
-+		if (mode == 2)
-+			return -EINVAL;
-+		twl4030_charger_enable_ac(bci, false);
-+		bci->ac_mode = mode;
-+		status = twl4030_charger_enable_ac(bci, true);
-+	} else {
-+		twl4030_charger_enable_usb(bci, false);
-+		bci->usb_mode = mode;
-+		status = twl4030_charger_enable_usb(bci, true);
-+	}
- 	return (status == 0) ? n : status;
+ 	unsigned long		event;
+ };
+ 
+@@ -257,6 +269,12 @@ static int twl4030_charger_update_current(struct twl4030_bci *bci)
+ 	} else {
+ 		cur = bci->usb_cur;
+ 		bci->ac_is_active = false;
++		if (cur > bci->usb_cur_target) {
++			cur = bci->usb_cur_target;
++			bci->usb_cur = cur;
++		}
++		if (cur < bci->usb_cur_target)
++			schedule_delayed_work(&bci->current_worker, USB_CUR_DELAY);
+ 	}
+ 
+ 	/* First, check thresholds and see if cgain is needed */
+@@ -391,6 +409,38 @@ static int twl4030_charger_update_current(struct twl4030_bci *bci)
+ 	return 0;
  }
  
-@@ -709,9 +720,13 @@ twl4030_bci_mode_show(struct device *dev,
- 	struct twl4030_bci *bci = dev_get_drvdata(dev->parent);
- 	int len = 0;
- 	int i;
-+	int mode = bci->usb_mode;
++static void twl4030_current_worker(struct work_struct *data)
++{
++	int v;
++	int res;
++	struct twl4030_bci *bci = container_of(data, struct twl4030_bci,
++					       current_worker.work);
 +
-+	if (dev == bci->ac.dev)
-+		mode = bci->ac_mode;
++	res = twl4030bci_read_adc_val(TWL4030_BCIVBUS);
++	if (res < 0)
++		v = 0;
++	else
++		/* BCIVBUS uses ADCIN8, 7/1023 V/step */
++		v = res * 6843;
++
++	printk("v=%d cur=%d target=%d\n", v, bci->usb_cur,
++	       bci->usb_cur_target);
++
++	if (v < USB_MIN_VOLT) {
++		/* Back up and stop adjusting. */
++		bci->usb_cur -= USB_CUR_STEP;
++		bci->usb_cur_target = bci->usb_cur;
++	} else if (bci->usb_cur >= bci->usb_cur_target ||
++		   bci->usb_cur + USB_CUR_STEP > USB_MAX_CURRENT) {
++		/* Reached target and voltage is OK - stop */
++		return;
++	} else {
++		bci->usb_cur += USB_CUR_STEP;
++		schedule_delayed_work(&bci->current_worker, USB_CUR_DELAY);
++	}
++	twl4030_charger_update_current(bci);
++}
++
+ /*
+  * Enable/Disable USB Charge functionality.
+  */
+@@ -451,6 +501,7 @@ static int twl4030_charger_enable_usb(struct twl4030_bci *bci, bool enable)
+ 			pm_runtime_put_autosuspend(bci->transceiver->dev);
+ 			bci->usb_enabled = 0;
+ 		}
++		bci->usb_cur = 0;
+ 	}
  
- 	for (i = 0; i < ARRAY_SIZE(modes); i++)
--		if (bci->usb_mode == i)
-+		if (mode == i)
- 			len += snprintf(buf+len, PAGE_SIZE-len,
- 					"[%s] ", modes[i]);
- 		else
-@@ -905,6 +920,7 @@ static int __init twl4030_bci_probe(struct platform_device *pdev)
+ 	return ret;
+@@ -599,7 +650,7 @@ twl4030_bci_max_current_store(struct device *dev, struct device_attribute *attr,
+ 	if (dev == bci->ac.dev)
+ 		bci->ac_cur = cur;
  	else
- 		bci->usb_cur = 100000;  /* 100mA */
+-		bci->usb_cur = cur;
++		bci->usb_cur_target = cur;
+ 
+ 	twl4030_charger_update_current(bci);
+ 	return n;
+@@ -621,7 +672,7 @@ static ssize_t twl4030_bci_max_current_show(struct device *dev,
+ 			cur = bci->ac_cur;
+ 	} else {
+ 		if (bci->ac_is_active)
+-			cur = bci->usb_cur;
++			cur = bci->usb_cur_target;
+ 	}
+ 	if (cur < 0) {
+ 		cur = twl4030bci_read_adc_val(TWL4030_BCIIREF1);
+@@ -664,14 +715,14 @@ static int twl4030_bci_usb_ncb(struct notifier_block *nb, unsigned long val,
+ 
+ 	/* reset current on each 'plug' event */
+ 	if (allow_usb)
+-		bci->usb_cur = 500000;
++		bci->usb_cur_target = 500000;
+ 	else
+-		bci->usb_cur = 100000;
++		bci->usb_cur_target = 100000;
+ 
+ 	bci->event = val;
+ 	if (val == USB_EVENT_ENUMERATED && vbus_draw &&
+-	    *vbus_draw * 1000 > bci->usb_cur)
+-		bci->usb_cur = *vbus_draw * 1000;
++	    *vbus_draw * 1000 > bci->usb_cur_target)
++		bci->usb_cur_target = *vbus_draw * 1000;
+ 	schedule_work(&bci->work);
+ 
+ 	return NOTIFY_OK;
+@@ -916,9 +967,9 @@ static int __init twl4030_bci_probe(struct platform_device *pdev)
+ 	bci->ichg_hi = 500000; /* High threshold */
+ 	bci->ac_cur = 500000; /* 500mA */
+ 	if (allow_usb)
+-		bci->usb_cur = 500000;  /* 500mA */
++		bci->usb_cur_target = 500000;  /* 500mA */
+ 	else
+-		bci->usb_cur = 100000;  /* 100mA */
++		bci->usb_cur_target = 100000;  /* 100mA */
  	bci->usb_mode = CHARGE_AUTO;
-+	bci->ac_mode = CHARGE_AUTO;
+ 	bci->ac_mode = CHARGE_AUTO;
  
- 	bci->dev = &pdev->dev;
- 	bci->irq_chg = platform_get_irq(pdev, 0);
-@@ -993,10 +1009,12 @@ static int __init twl4030_bci_probe(struct platform_device *pdev)
- 		dev_warn(&pdev->dev, "could not create sysfs file\n");
- 	if (device_create_file(bci->usb.dev, &dev_attr_mode))
- 		dev_warn(&pdev->dev, "could not create sysfs file\n");
-+	if (device_create_file(bci->ac.dev, &dev_attr_mode))
-+		dev_warn(&pdev->dev, "could not create sysfs file\n");
- 	if (device_create_file(bci->ac.dev, &dev_attr_max_current))
- 		dev_warn(&pdev->dev, "could not create sysfs file\n");
+@@ -976,6 +1027,7 @@ static int __init twl4030_bci_probe(struct platform_device *pdev)
+ 	}
  
--	twl4030_charger_enable_ac(true);
-+	twl4030_charger_enable_ac(bci, true);
- 	if (!IS_ERR_OR_NULL(bci->transceiver))
- 		twl4030_bci_usb_ncb(&bci->usb_nb,
- 				    bci->transceiver->last_event,
-@@ -1016,13 +1034,14 @@ static int __exit twl4030_bci_remove(struct platform_device *pdev)
- {
- 	struct twl4030_bci *bci = platform_get_drvdata(pdev);
+ 	INIT_WORK(&bci->work, twl4030_bci_usb_work);
++	INIT_DELAYED_WORK(&bci->current_worker, twl4030_current_worker);
  
--	twl4030_charger_enable_ac(false);
-+	twl4030_charger_enable_ac(bci, false);
- 	twl4030_charger_enable_usb(bci, false);
- 	twl4030_charger_enable_backup(0, 0);
- 
- 	device_remove_file(bci->usb.dev, &dev_attr_max_current);
- 	device_remove_file(bci->usb.dev, &dev_attr_mode);
- 	device_remove_file(bci->ac.dev, &dev_attr_max_current);
-+	device_remove_file(bci->ac.dev, &dev_attr_mode);
- 	/* mask interrupts */
- 	twl_i2c_write_u8(TWL4030_MODULE_INTERRUPTS, 0xff,
- 			 TWL4030_INTERRUPTS_BCIIMR1A);
+ 	bci->usb_nb.notifier_call = twl4030_bci_usb_ncb;
+ 	if (bci->dev->of_node) {
