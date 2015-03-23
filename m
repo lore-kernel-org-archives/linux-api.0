@@ -1,48 +1,78 @@
 From: josh@joshtriplett.org
-Subject: Re: [PATCH v2 0/7] CLONE_FD: Task exit notification via file
- descriptor
-Date: Mon, 23 Mar 2015 08:03:29 -0700
-Message-ID: <20150323150329.GA31561@cloud>
+Subject: Re: [PATCH v2 3/7] Introduce a new clone4 syscall with more flag
+ bits and extensible arguments
+Date: Mon, 23 Mar 2015 08:05:00 -0700
+Message-ID: <20150323150500.GB31561@cloud>
 References: <cover.1426376419.git.josh@joshtriplett.org>
- <CAGXu5jLmLLgVNCP=cyUiXuiszVXsS88SNUK2iBqArbA2V6vdHA@mail.gmail.com>
- <2381173.VxaIO6vGG3@tjmaciei-mobl4>
- <20150316232949.GB31751@cloud>
- <CAHse=S-e4Rorgzt=LohtNUeVAXTLbpr8ftPGnBZXgO5sQs28RA@mail.gmail.com>
+ <367b888ef58831b6812c3cf80ca973c65edc67f5.1426376419.git.josh@joshtriplett.org>
+ <CAHse=S_0G028D2f1vO=1EBO-TM1ZyJZT3-VE4O3a9dS-VcdKzg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAHse=S-e4Rorgzt=LohtNUeVAXTLbpr8ftPGnBZXgO5sQs28RA@mail.gmail.com>
+In-Reply-To: <CAHse=S_0G028D2f1vO=1EBO-TM1ZyJZT3-VE4O3a9dS-VcdKzg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: David Drysdale <drysdale@google.com>
-Cc: Thiago Macieira <thiago.macieira@intel.com>, Kees Cook <keescook@chromium.org>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Thiago Macieira <thiago.macieira@intel.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, X86 ML <x86@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 23, 2015 at 02:12:34PM +0000, David Drysdale wrote:
-> On Mon, Mar 16, 2015 at 11:29 PM,  <josh@joshtriplett.org> wrote:
-> > On Mon, Mar 16, 2015 at 03:14:14PM -0700, Thiago Macieira wrote:
-> >> On Monday 16 March 2015 14:44:20 Kees Cook wrote:
-> >> > >               O_CLOEXEC
-> >> > >                      Set  the  close-on-exec  flag on the new file
-> >> > >descriptor. See the description of the O_CLOEXEC flag in open(2)  for
-> >> > >reasons why this may be useful.
-> >> >
-> >> > This begs the question: what happens when all CLONE_FD fds for a
-> >> > process are closed? Will the parent get SIGCHLD instead, will it
-> >> > auto-reap, or will it be un-wait-able (I assume not this...)
-> >>
-> >> Depends on CLONE_AUTOREAP. If it's on, then no one gets SIGCHLD, no one can
-> >> wait() on it and the process autoreaps itself.
+On Mon, Mar 23, 2015 at 02:11:45PM +0000, David Drysdale wrote:
+> On Sun, Mar 15, 2015 at 7:59 AM, Josh Triplett <josh@joshtriplett.org> wrote:
+> > diff --git a/arch/x86/ia32/ia32entry.S b/arch/x86/ia32/ia32entry.S
+> > index 0286735..ba28306 100644
+> > --- a/arch/x86/ia32/ia32entry.S
+> > +++ b/arch/x86/ia32/ia32entry.S
+> > @@ -483,6 +483,7 @@ GLOBAL(\label)
+> >         PTREGSCALL stub32_execveat, compat_sys_execveat
+> >         PTREGSCALL stub32_fork, sys_fork
+> >         PTREGSCALL stub32_vfork, sys_vfork
+> > +       PTREGSCALL stub32_clone4, compat_sys_clone4
 > >
-> > Minor nit: CLONE_AUTOREAP makes the process autoreap and nobody can wait
-> > on it, but if you pass SIGCHLD or some other exit signal to clone then
-> > you'll still get that signal.
+> >         ALIGN
+> >  GLOBAL(stub32_clone)
+> > diff --git a/arch/x86/kernel/entry_64.S b/arch/x86/kernel/entry_64.S
+> > index 1d74d16..ead143f 100644
+> > --- a/arch/x86/kernel/entry_64.S
+> > +++ b/arch/x86/kernel/entry_64.S
+> > @@ -520,6 +520,7 @@ END(\label)
+> >         FORK_LIKE  clone
+> >         FORK_LIKE  fork
+> >         FORK_LIKE  vfork
+> > +       FORK_LIKE  clone4
+> >         FIXED_FRAME stub_iopl, sys_iopl
+> >
+> >  ENTRY(stub_execve)
+> > diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
+> > index b3560ec..56fcc90 100644
+> > --- a/arch/x86/syscalls/syscall_32.tbl
+> > +++ b/arch/x86/syscalls/syscall_32.tbl
+> > @@ -365,3 +365,4 @@
+> >  356    i386    memfd_create            sys_memfd_create
+> >  357    i386    bpf                     sys_bpf
+> >  358    i386    execveat                sys_execveat                    stub32_execveat
+> > +359    i386    clone4                  sys_clone4                      stub32_clone4
+> > diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
+> > index 8d656fb..af15b0f 100644
+> > --- a/arch/x86/syscalls/syscall_64.tbl
+> > +++ b/arch/x86/syscalls/syscall_64.tbl
+> > @@ -329,6 +329,7 @@
+> >  320    common  kexec_file_load         sys_kexec_file_load
+> >  321    common  bpf                     sys_bpf
+> >  322    64      execveat                stub_execveat
+> > +323    64      clone4                  stub_clone4
+> >
+> >  #
+> >  # x32-specific system call numbers start at 512 to avoid cache impact
+> > @@ -368,3 +369,4 @@
+> >  543    x32     io_setup                compat_sys_io_setup
+> >  544    x32     io_submit               compat_sys_io_submit
+> >  545    x32     execveat                stub_x32_execveat
+> > +546    x32     clone4                  stub32_clone4
 > 
-> Quick query: does CLONE_AUTOREAP also affect waiting for non-exit
-> events (i.e. WUNTRACED / WCONTINUED), by original parent and/or ptracer?
+> Doesn't this need an x32 specific wrapper (to ensure the full
+> set of registers are saved)?
 
-It shouldn't, no.  You can't wait on the process to exit (you'll get
--ECHLD after it wakes up), but you can wait on it to continue or
-similar; none of the autoreap changes should affect that.
+I'm not an x32 expert; I don't know how x32 interacts with pt_regs and
+compat syscalls.  Could an x32 expert weigh in, please?
 
 - Josh Triplett
