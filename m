@@ -1,198 +1,60 @@
-From: David Drysdale <drysdale@google.com>
-Subject: Re: [PATCH v2 7/7] clone4: Add a CLONE_FD flag to get task exit
- notification via fd
-Date: Mon, 23 Mar 2015 17:38:45 +0000
-Message-ID: <CAHse=S9F=F8yOcac4ywwQbahZkZjbTGFUfTjy=4Guo_UoMaJkQ@mail.gmail.com>
-References: <cover.1426376419.git.josh@joshtriplett.org> <fdec4b70c7cd34e2eacf6a0e41d36f606a696da1.1426376419.git.josh@joshtriplett.org>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: [PATCH v9 tip 8/9] samples: bpf: IO latency analysis (iosnoop/heatmap)
+Date: Mon, 23 Mar 2015 10:41:21 -0700
+Message-ID: <55105041.5090400@plumgrid.com>
+References: <1426894210-27441-1-git-send-email-ast@plumgrid.com> <1426894210-27441-9-git-send-email-ast@plumgrid.com> <20150323074028.GE25184@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <fdec4b70c7cd34e2eacf6a0e41d36f606a696da1.1426376419.git.josh@joshtriplett.org>
+In-Reply-To: <20150323074028.GE25184@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Triplett <josh@joshtriplett.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Thiago Macieira <thiago.macieira@intel.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, X86 ML <x86@kernel.org>
+To: Ingo Molnar <mingo@kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Mar 15, 2015 at 8:00 AM, Josh Triplett <josh@joshtriplett.org> wrote:
-> diff --git a/include/linux/compat.h b/include/linux/compat.h
-> index 6c4a68d..c90df5a 100644
-> --- a/include/linux/compat.h
-> +++ b/include/linux/compat.h
-> @@ -299,6 +299,8 @@ struct compat_clone4_args {
->         compat_ulong_t stack_start;
->         compat_ulong_t stack_size;
->         compat_ulong_t tls;
-> +       compat_uptr_t clonefd;
-> +       u32 clonefd_flags;
->  };
+On 3/23/15 12:40 AM, Ingo Molnar wrote:
 >
->  struct compat_statfs;
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index 9daa017..1dc680b 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -1374,6 +1374,11 @@ struct task_struct {
+> * Alexei Starovoitov <ast@plumgrid.com> wrote:
 >
->         unsigned autoreap:1; /* Do not become a zombie on exit */
+>> BPF C program attaches to blk_mq_start_request/blk_update_request kprobe events
+>> to calculate IO latency.
 >
-> +#ifdef CONFIG_CLONEFD
-> +       unsigned clonefd:1; /* Notify clonefd_wqh on exit */
-> +       wait_queue_head_t clonefd_wqh;
-> +#endif
-> +
->         unsigned long atomic_flags; /* Flags needing atomic access. */
+>   ...
 >
->         struct restart_block restart_block;
+>> +/* kprobe is NOT a stable ABI
+>> + * This bpf+kprobe example can stop working any time.
+>> + */
+>> +SEC("kprobe/blk_mq_start_request")
+>> +int bpf_prog1(struct pt_regs *ctx)
+>> +{
+>> +	long rq = ctx->di;
+>> +	u64 val = bpf_ktime_get_ns();
+>> +
+>> +	bpf_map_update_elem(&my_map, &rq, &val, BPF_ANY);
+>> +	return 0;
+>> +}
+>
+> So just to make sure the original BPF instrumentation model is still
+> upheld: no matter in what way the kernel changes, neither the kprobe,
+> nor the BPF program can ever crash or corrupt the kernel, assuming the
+> kprobes, perf and BPF subsystem has no bugs, correct?
 
-Idle thought: are there any concerns about the occupancy
-impact of adding a wait_queue_head to every task_struct,
-whether it has a clonefd or not?
+yes. of course. That was always #1 requirement.
 
-I guess we could reduce the size somewhat by just
-storing a struct file *clonefd_file in the task, and then have
-a separate structure (with the wqh and a task_struct*) referenced
-by file->private_data.  Not sure whether the added complication
-would be worthwhile, though.
+> So 'stops working' here means that the instrumentation data might not
+> be reliable if kernel internal interfaces change - but it won't ever
+> make the kernel unreliable in any fashion. Right?
 
-> diff --git a/kernel/clonefd.c b/kernel/clonefd.c
-> new file mode 100644
-> index 0000000..eac560c
-> --- /dev/null
-> +++ b/kernel/clonefd.c
-> @@ -0,0 +1,121 @@
-> +/*
-> + * Support functions for CLONE_FD
-> + *
-> + * Copyright (c) 2015 Intel Corporation
-> + * Original authors: Josh Triplett <josh@joshtriplett.org>
-> + *                   Thiago Macieira <thiago@macieira.org>
-> + */
-> +#include <linux/anon_inodes.h>
-> +#include <linux/file.h>
-> +#include <linux/fs.h>
-> +#include <linux/poll.h>
-> +#include <linux/slab.h>
-> +#include "clonefd.h"
-> +
-> +static int clonefd_release(struct inode *inode, struct file *file)
-> +{
-> +       put_task_struct(file->private_data);
-> +       return 0;
-> +}
-> +
-> +static unsigned int clonefd_poll(struct file *file, poll_table *wait)
-> +{
-> +       struct task_struct *p = file->private_data;
-> +       poll_wait(file, &p->clonefd_wqh, wait);
-> +       return p->exit_state ? (POLLIN | POLLRDNORM | POLLHUP) : 0;
-> +}
-> +
-> +static ssize_t clonefd_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
-> +{
-> +       struct task_struct *p = file->private_data;
-> +       int ret = 0;
-> +
-> +       /* EOF after first read */
-> +       if (*ppos)
-> +               return 0;
-> +
-> +       if (file->f_flags & O_NONBLOCK)
-> +               ret = -EAGAIN;
-> +       else
-> +               ret = wait_event_interruptible(p->clonefd_wqh, p->exit_state);
-> +
-> +       if (p->exit_state) {
-> +               struct clonefd_info info = {};
-> +               cputime_t utime, stime;
-> +               task_exit_code_status(p->exit_code, &info.code, &info.status);
-> +               info.code &= ~__SI_MASK;
-> +               task_cputime(p, &utime, &stime);
-> +               info.utime = cputime_to_clock_t(utime + p->signal->utime);
-> +               info.stime = cputime_to_clock_t(stime + p->signal->stime);
-> +               ret = simple_read_from_buffer(buf, count, ppos, &info, sizeof(info));
-> +       }
-> +       return ret;
-> +}
-> +
-> +static struct file_operations clonefd_fops = {
-> +       .release = clonefd_release,
-> +       .poll = clonefd_poll,
-> +       .read = clonefd_read,
-> +       .llseek = no_llseek,
-> +};
+yes. of course.
 
-It might be nice to include a show_fdinfo() implementation that shows
-(say) the pid that the clonefd refers to.  E.g. something like:
+The only situations where it can 'stop working':
+- in-kernel blk_mq_start_request function is renamed, so kprobe cannot 
+find it and cannot attach.
+- arguments to blk_mq_start_request change. Then ctx->di can be 
+meaningless and using it as key into map is useless.
+- whole logic of blk_mq_start_request/blk_update_request pair changes.
+then this sample code won't be measuring any useful io latency.
 
-static void clonefd_show_fdinfo(struct seq_file *m, struct file *file)
-{
-    struct task_struct *p = file->private_data;
-
-    seq_printf(m, "tid:\t%d\n", task_tgid_vnr(p));
-}
-
-> +
-> +/* Do process exit notification for clonefd. */
-> +void clonefd_do_notify(struct task_struct *p)
-> +{
-> +       if (p->clonefd)
-> +               wake_up_all(&p->clonefd_wqh);
-> +}
-> +
-> +/* Handle the CLONE_FD case for copy_process. */
-> +int clonefd_do_clone(u64 clone_flags, struct task_struct *p,
-> +                    struct clone4_args *args, struct clonefd_setup *setup)
-> +{
-> +       int flags;
-> +       struct file *file;
-> +       int fd;
-> +
-> +       p->clonefd = !!(clone_flags & CLONE_FD);
-> +       if (!p->clonefd)
-> +               return 0;
-> +
-> +       if (args->clonefd_flags & ~(O_CLOEXEC | O_NONBLOCK))
-> +               return -EINVAL;
-> +
-
-Maybe also check for (args->clonefd == NULL) in advance, and
-return -EINVAL or -EFAULT?
-
-> +       init_waitqueue_head(&p->clonefd_wqh);
-> +
-> +       get_task_struct(p);
-> +       flags = O_RDONLY | FMODE_ATOMIC_POS | args->clonefd_flags;
-> +       file = anon_inode_getfile("[process]", &clonefd_fops, p, flags);
-> +       if (IS_ERR(file)) {
-> +               put_task_struct(p);
-> +               return PTR_ERR(file);
-> +       }
-> +
-> +       fd = get_unused_fd_flags(flags);
-> +       if (fd < 0) {
-> +               fput(file);
-> +               return fd;
-> +       }
-> +
-> +       setup->fd = fd;
-> +       setup->file = file;
-> +       return 0;
-> +}
-> +
-> +/* Clean up clonefd information after a partially complete clone */
-> +void clonefd_cleanup_failed_clone(struct clonefd_setup *setup)
-> +{
-> +       if (setup->file) {
-> +               put_unused_fd(setup->fd);
-> +               fput(setup->file);
-> +       }
-> +}
-> +
-> +/* Finish setting up the clonefd */
-> +void clonefd_install_fd(struct clone4_args *args, struct clonefd_setup *setup)
-> +{
-> +       if (setup->file) {
-> +               fd_install(setup->fd, setup->file);
-> +               put_user(setup->fd, args->clonefd);
-> +       }
-> +}
+In all cases kernel will never crash (barring bugs in bpf, kprobe 
+subsystems).
