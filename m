@@ -1,36 +1,50 @@
-From: David Drysdale <drysdale@google.com>
-Subject: Re: [PATCH v2 0/7] CLONE_FD: Task exit notification via file descriptor
-Date: Mon, 23 Mar 2015 14:12:34 +0000
-Message-ID: <CAHse=S-e4Rorgzt=LohtNUeVAXTLbpr8ftPGnBZXgO5sQs28RA@mail.gmail.com>
-References: <cover.1426376419.git.josh@joshtriplett.org> <CAGXu5jLmLLgVNCP=cyUiXuiszVXsS88SNUK2iBqArbA2V6vdHA@mail.gmail.com>
- <2381173.VxaIO6vGG3@tjmaciei-mobl4> <20150316232949.GB31751@cloud>
+From: Gerd Hoffmann <kraxel@redhat.com>
+Subject: Re: [PATCH 1/1] Add virtio-input driver.
+Date: Mon, 23 Mar 2015 15:27:35 +0100
+Message-ID: <1427120855.27137.55.camel@nilsson.home.kraxel.org>
+References: <1426756391-26585-1-git-send-email-kraxel@redhat.com>
+	<1426756391-26585-2-git-send-email-kraxel@redhat.com>
+	<20150319123940-mutt-send-email-mst@redhat.com>
+	<1426847327.32097.60.camel@nilsson.home.kraxel.org>
+	<20150321225356-mutt-send-email-mst@redhat.com>
+	<1427097238.6365.27.camel@nilsson.home.kraxel.org>
+	<1427118292.27137.39.camel@nilsson.home.kraxel.org>
+	<20150323144803-mutt-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150316232949.GB31751@cloud>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Triplett <josh@joshtriplett.org>
-Cc: Thiago Macieira <thiago.macieira@intel.com>, Kees Cook <keescook@chromium.org>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <20150323144803-mutt-send-email-mst@redhat.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: "Michael S. Tsirkin" <mst@redhat.com>
+Cc: virtio-dev@lists.oasis-open.org, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 16, 2015 at 11:29 PM,  <josh@joshtriplett.org> wrote:
-> On Mon, Mar 16, 2015 at 03:14:14PM -0700, Thiago Macieira wrote:
->> On Monday 16 March 2015 14:44:20 Kees Cook wrote:
->> > >               O_CLOEXEC
->> > >                      Set  the  close-on-exec  flag on the new file
->> > >descriptor. See the description of the O_CLOEXEC flag in open(2)  for
->> > >reasons why this may be useful.
->> >
->> > This begs the question: what happens when all CLONE_FD fds for a
->> > process are closed? Will the parent get SIGCHLD instead, will it
->> > auto-reap, or will it be un-wait-able (I assume not this...)
->>
->> Depends on CLONE_AUTOREAP. If it's on, then no one gets SIGCHLD, no one can
->> wait() on it and the process autoreaps itself.
->
-> Minor nit: CLONE_AUTOREAP makes the process autoreap and nobody can wait
-> on it, but if you pass SIGCHLD or some other exit signal to clone then
-> you'll still get that signal.
+  Hi,
 
-Quick query: does CLONE_AUTOREAP also affect waiting for non-exit
-events (i.e. WUNTRACED / WCONTINUED), by original parent and/or ptracer?
+> > > > You are doing leXXX everywhere, that's VERSION_1 dependency.
+> > > > virtio_cread will do byteswaps differently without VERSION_1.
+> > > > Just don't go there.
+
+> So to clarify, you dislike using __virtio32 in virtio input header?
+
+Well, as I understand things __virtio32 implies byteorder depends on
+whenever we are using VERSION_1 or not.  And non-transitional drivers
+should not need it as everything is by definition little endian.
+
+So, yes, your suggestion to just require VERSION_1 in the driver implies
+in my eyes that there should be no reason to use __virtio32 instead of
+__le32.
+
+Or do I miss something here?
+
+cheers,
+  Gerd
