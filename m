@@ -1,55 +1,36 @@
-From: Paolo Bonzini <pbonzini@redhat.com>
-Subject: Re: [virtio-dev] Re: [PATCH 1/1] Add virtio-input driver.
-Date: Mon, 23 Mar 2015 12:52:36 +0100
-Message-ID: <550FFE84.4060001@redhat.com>
-References: <1426756391-26585-1-git-send-email-kraxel@redhat.com>	
-	<1426756391-26585-2-git-send-email-kraxel@redhat.com>	
-	<20150319123940-mutt-send-email-mst@redhat.com>	
-	<1426847327.32097.60.camel@nilsson.home.kraxel.org>	
-	<20150321225356-mutt-send-email-mst@redhat.com>
-	<1427097238.6365.27.camel@nilsson.home.kraxel.org>
+From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v10 tip 5/9] tracing: allow BPF programs to call
+ bpf_trace_printk()
+Date: Mon, 23 Mar 2015 13:07:53 +0100
+Message-ID: <20150323120753.GA22560@gmail.com>
+References: <1427053150-32213-1-git-send-email-ast@plumgrid.com>
+ <1427053150-32213-6-git-send-email-ast@plumgrid.com>
+ <063D6719AE5E284EB5DD2968C1650D6D1CB07731@AcuExch.aculab.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <1427097238.6365.27.camel@nilsson.home.kraxel.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Gerd Hoffmann <kraxel@redhat.com>, "Michael S. Tsirkin" <mst@redhat.com>
-Cc: virtio-dev@lists.oasis-open.org, open list <linux-kernel@vger.kernel.org>, ABI/API <linux-api@vger.kernel.org>, virtualization@lists.linux-foundation.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <063D6719AE5E284EB5DD2968C1650D6D1CB07731-VkEWCZq2GCInGFn1LkZF6NBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Laight <David.Laight-ZS65k/vG3HxXrIkS9f7CXA@public.gmane.org>
+Cc: 'Alexei Starovoitov' <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
+* David Laight <David.Laight-ZS65k/vG3HxXrIkS9f7CXA@public.gmane.org> wrote:
 
-On 23/03/2015 08:53, Gerd Hoffmann wrote:
->>>>> > > > > +		if (cfg & (1 << (bit % 8)))
->>>>> > > > > +			set_bit(bit, bits);
->>>> > > > 
->>>> > > > what if not set? does something clear the mask?
->>> > > 
->>> > > kzalloc?
->> > 
->> > So you are really just reading in array of bytes?
->> > All this set bit trickery is just to convert things from LE?
-> Trickery?  Just checking each bit from virtio config space, then set it
-> in the input layer bitmap.  It's a simple stupid loop.
+> From: Alexei Starovoitov
+> > Debugging of BPF programs needs some form of printk from the program,
+> > so let programs call limited trace_printk() with %d %u %x %p modifiers only.
 > 
-> Surely not the most efficient way, but hey, it's not in the hot path and
-> I'm sure I'm setting the bits correctly because this uses the standard
-> linux kernel bitops.
+> Should anyone be allowed to use BPF programs to determine the kernel
+> addresses of any items?
+> Looks as though it is leaking kernel addresses to userspace.
+> Note that the problem is with the arguments, not the format string.
 
-Use __set_bit though, because set_bit is an atomic operation.
+All of these are privileged operations - inherent if you are trying to 
+debug the kernel.
 
-Paolo
+Thanks,
 
->> > At least, this needs a comment explaining what the function does,
->> > and maybe wrap it in a helper like virtio_input_bitmap_copy or
->> > virtio_bitmap_or.
-> Can do that, sure.
+	Ingo
