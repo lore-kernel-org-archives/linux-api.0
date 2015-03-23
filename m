@@ -1,78 +1,68 @@
-From: josh@joshtriplett.org
-Subject: Re: [PATCH v2 3/7] Introduce a new clone4 syscall with more flag
- bits and extensible arguments
-Date: Mon, 23 Mar 2015 08:05:00 -0700
-Message-ID: <20150323150500.GB31561@cloud>
-References: <cover.1426376419.git.josh@joshtriplett.org>
- <367b888ef58831b6812c3cf80ca973c65edc67f5.1426376419.git.josh@joshtriplett.org>
- <CAHse=S_0G028D2f1vO=1EBO-TM1ZyJZT3-VE4O3a9dS-VcdKzg@mail.gmail.com>
+From: Gerd Hoffmann <kraxel@redhat.com>
+Subject: Re: [PATCH 1/1] Add virtio-input driver.
+Date: Mon, 23 Mar 2015 16:05:29 +0100
+Message-ID: <1427123129.27137.62.camel@nilsson.home.kraxel.org>
+References: <1426756391-26585-1-git-send-email-kraxel@redhat.com>
+	 <1426756391-26585-2-git-send-email-kraxel@redhat.com>
+	 <20150319123940-mutt-send-email-mst@redhat.com>
+	 <1426847327.32097.60.camel@nilsson.home.kraxel.org>
+	 <20150321225356-mutt-send-email-mst@redhat.com>
+	 <1427097238.6365.27.camel@nilsson.home.kraxel.org>
+	 <1427118292.27137.39.camel@nilsson.home.kraxel.org>
+	 <20150323144803-mutt-send-email-mst@redhat.com>
+	 <1427120855.27137.55.camel@nilsson.home.kraxel.org>
+	 <20150323155106-mutt-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHse=S_0G028D2f1vO=1EBO-TM1ZyJZT3-VE4O3a9dS-VcdKzg@mail.gmail.com>
+In-Reply-To: <20150323155106-mutt-send-email-mst@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Drysdale <drysdale@google.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Thiago Macieira <thiago.macieira@intel.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, X86 ML <x86@kernel.org>
+To: "Michael S. Tsirkin" <mst@redhat.com>
+Cc: virtio-dev@lists.oasis-open.org, virtualization@lists.linux-foundation.org, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 23, 2015 at 02:11:45PM +0000, David Drysdale wrote:
-> On Sun, Mar 15, 2015 at 7:59 AM, Josh Triplett <josh@joshtriplett.org> wrote:
-> > diff --git a/arch/x86/ia32/ia32entry.S b/arch/x86/ia32/ia32entry.S
-> > index 0286735..ba28306 100644
-> > --- a/arch/x86/ia32/ia32entry.S
-> > +++ b/arch/x86/ia32/ia32entry.S
-> > @@ -483,6 +483,7 @@ GLOBAL(\label)
-> >         PTREGSCALL stub32_execveat, compat_sys_execveat
-> >         PTREGSCALL stub32_fork, sys_fork
-> >         PTREGSCALL stub32_vfork, sys_vfork
-> > +       PTREGSCALL stub32_clone4, compat_sys_clone4
-> >
-> >         ALIGN
-> >  GLOBAL(stub32_clone)
-> > diff --git a/arch/x86/kernel/entry_64.S b/arch/x86/kernel/entry_64.S
-> > index 1d74d16..ead143f 100644
-> > --- a/arch/x86/kernel/entry_64.S
-> > +++ b/arch/x86/kernel/entry_64.S
-> > @@ -520,6 +520,7 @@ END(\label)
-> >         FORK_LIKE  clone
-> >         FORK_LIKE  fork
-> >         FORK_LIKE  vfork
-> > +       FORK_LIKE  clone4
-> >         FIXED_FRAME stub_iopl, sys_iopl
-> >
-> >  ENTRY(stub_execve)
-> > diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
-> > index b3560ec..56fcc90 100644
-> > --- a/arch/x86/syscalls/syscall_32.tbl
-> > +++ b/arch/x86/syscalls/syscall_32.tbl
-> > @@ -365,3 +365,4 @@
-> >  356    i386    memfd_create            sys_memfd_create
-> >  357    i386    bpf                     sys_bpf
-> >  358    i386    execveat                sys_execveat                    stub32_execveat
-> > +359    i386    clone4                  sys_clone4                      stub32_clone4
-> > diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
-> > index 8d656fb..af15b0f 100644
-> > --- a/arch/x86/syscalls/syscall_64.tbl
-> > +++ b/arch/x86/syscalls/syscall_64.tbl
-> > @@ -329,6 +329,7 @@
-> >  320    common  kexec_file_load         sys_kexec_file_load
-> >  321    common  bpf                     sys_bpf
-> >  322    64      execveat                stub_execveat
-> > +323    64      clone4                  stub_clone4
-> >
-> >  #
-> >  # x32-specific system call numbers start at 512 to avoid cache impact
-> > @@ -368,3 +369,4 @@
-> >  543    x32     io_setup                compat_sys_io_setup
-> >  544    x32     io_submit               compat_sys_io_submit
-> >  545    x32     execveat                stub_x32_execveat
-> > +546    x32     clone4                  stub32_clone4
+On Mo, 2015-03-23 at 15:54 +0100, Michael S. Tsirkin wrote:
+> On Mon, Mar 23, 2015 at 03:27:35PM +0100, Gerd Hoffmann wrote:
+> >   Hi,
+> > 
+> > > > > > You are doing leXXX everywhere, that's VERSION_1 dependency.
+> > > > > > virtio_cread will do byteswaps differently without VERSION_1.
+> > > > > > Just don't go there.
+> > 
+> > > So to clarify, you dislike using __virtio32 in virtio input header?
+> > 
+> > Well, as I understand things __virtio32 implies byteorder depends on
+> > whenever we are using VERSION_1 or not.  And non-transitional drivers
+> > should not need it as everything is by definition little endian.
+> > 
+> > So, yes, your suggestion to just require VERSION_1 in the driver implies
+> > in my eyes that there should be no reason to use __virtio32 instead of
+> > __le32.
+> > 
+> > Or do I miss something here?
+> > 
+> > cheers,
+> >   Gerd
+> > 
 > 
-> Doesn't this need an x32 specific wrapper (to ensure the full
-> set of registers are saved)?
+> You are right but then if you do require VERSION_1 then
+> __virtio32 becomes identical to __le32.
 
-I'm not an x32 expert; I don't know how x32 interacts with pt_regs and
-compat syscalls.  Could an x32 expert weigh in, please?
+Except that sparse doesn't know that and throws errors when I mix the
+two.
 
-- Josh Triplett
+> There's some runtime overhead as we check on each access,
+> but it shouldn't matter here, right?
+
+Correct, config space is used at initialization time only.
+
+> I guess we could add virtio_cread_le - is this what
+> you'd like?
+
+I just want something that makes both you and sparse happy.  I don't
+care much whenever that is adding virtio_cread_le() or using __virtio32
+even though it'll effectively is __le32 due to VERSION_1 being required.
+
+cheers,
+  Gerd
