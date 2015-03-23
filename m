@@ -1,29 +1,29 @@
-From: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
-Subject: Re: [PATCH 0/5] Enhancements to twl4030 phy to support better
- charging - V2
-Date: Mon, 23 Mar 2015 22:25:31 +0100
-Message-ID: <20150323212531.GB14779@amd>
-References: <20150322223307.21765.62974.stgit@notabene.brown>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH 02/14] twl4030_charger: use devres for
+ power_supply_register and kzalloc.
+Date: Mon, 23 Mar 2015 22:25:36 +0100
+Message-ID: <20150323212535.GC14779@amd>
+References: <20150322231635.23789.70149.stgit@notabene.brown>
+ <20150322232028.23789.38570.stgit@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-omap-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150322223307.21765.62974.stgit-wvvUuzkyo1EYVZTmpyfIwg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: NeilBrown <neil-+NVA1uvv1dVBDLzU/O5InQ@public.gmane.org>
-Cc: Kishon Vijay Abraham I <kishon-l0cyMroinI0@public.gmane.org>, Tony Lindgren <tony-4v6yS6AI5VpBDgjK7y7TUQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, GTA04 owners <gta04-owner-xXXSsgcRVICgSpxsJD1C4w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20150322232028.23789.38570.stgit@notabene.brown>
+Sender: linux-omap-owner@vger.kernel.org
+To: NeilBrown <neil@brown.name>
+Cc: Sebastian Reichel <sre@kernel.org>, NeilBrown <neilb@suse.de>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, GTA04 owners <gta04-owner@goldelico.com>, inux-pm@vger.kernel.org, linux-omap@vger.kernel.org, Lee Jones <lee.jones@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 2015-03-23 09:35:23, NeilBrown wrote:
-> Hi Kishon,
->  I wonder if you could queue the following for the next merge window.
->  They allow the twl4030 phy to provide more information to the
->  twl4030 battery charger.
->  There are only minimal changes since the first version, particularly
->  documentation has been improved.
+On Mon 2015-03-23 10:20:28, NeilBrown wrote:
+> From: NeilBrown <neilb@suse.de>
+> 
+> Final allocations/registrations are now managed by devres.
+> 
+> Signed-off-by: NeilBrown <neilb@suse.de>
 
-Patches 1-3 Acked-by: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
-									Pavel
+Patches 1,2: Acked-by: Pavel Machek <pavel@ucw.cz>
+
 -- 
 (english) http://www.livejournal.com/~pavelmachek
 (cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
