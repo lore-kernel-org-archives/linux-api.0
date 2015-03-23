@@ -1,43 +1,51 @@
-From: NeilBrown <neil@brown.name>
-Subject: [PATCH 14/14] twl4030_charger: assume a 'charger' can supply
- maximum current.
-Date: Mon, 23 Mar 2015 10:20:29 +1100
-Message-ID: <20150322232029.23789.35538.stgit@notabene.brown>
-References: <20150322231635.23789.70149.stgit@notabene.brown>
+From: Li RongQing <roy.qing.li-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] audit.h: remove the macro AUDIT_ARCH_ARMEB definition
+Date: Mon, 23 Mar 2015 08:51:31 +0800
+Message-ID: <CAJFZqHxdPEhX+9z-FYUMvTF_6LVgK=gOetq0zT4UTZSgUGRqCQ@mail.gmail.com>
+References: <1426827329-27976-1-git-send-email-roy.qing.li@gmail.com>
+	<CAHC9VhR5VcaCtLG9hdVS2gZRWxVmdnpbK+fJwm6wCA8qyLebUQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-omap-owner@vger.kernel.org>
-In-Reply-To: <20150322231635.23789.70149.stgit@notabene.brown>
-Sender: linux-omap-owner@vger.kernel.org
-To: Sebastian Reichel <sre@kernel.org>
-Cc: NeilBrown <neilb@suse.de>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, GTA04 owners <gta04-owner@goldelico.com>, inux-pm@vger.kernel.org, Pavel Machek <pavel@ucw.cz>, linux-omap@vger.kernel.org, Lee Jones <lee.jones@linaro.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAHC9VhR5VcaCtLG9hdVS2gZRWxVmdnpbK+fJwm6wCA8qyLebUQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
+Cc: Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: NeilBrown <neilb@suse.de>
+On Fri, Mar 20, 2015 at 9:29 PM, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org> wrote:
+> On Fri, Mar 20, 2015 at 12:55 AM,  <roy.qing.li-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>> From: Li RongQing <roy.qing.li-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>>
+>> After 2f9783669 [ARM: 7412/1: audit: use only AUDIT_ARCH_ARM regardless
+>> of endianness], no kernel user uses this macro;
+>>
+>> Keeping this macro, only makes the compiling old version audit [before
+>> changeset 931 Improve ARM and AARCH64 support] success, but the audit
+>> program can not work with the kernel after 2f9783669 still,
+>> since no syscall entry is enabled for AUDIT_ARCH_ARMEB in kernel.
+>>
+>> so remove it to force to use the latest audit program
+>>
+>> Signed-off-by: Li RongQing <roy.qing.li-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>> ---
+>> other workaround is to define AUDIT_ARCH_ARMEB as AUDIT_ARCH_ARM,
+>> but it seems very strange
+>>
+>>  include/uapi/linux/audit.h | 1 -
+>>  1 file changed, 1 deletion(-)
+>
+> Since this #define lives in the user visible headers I don't want to
+> remove it and risk causing a userspace breakage.  Leaving the #define
+> in the header, even if it is unused by modern userspace, is harmless.
+>
+it is harm, when I compile the audit-2.3.2 for a arm machine, whose linux kernel
+is 3.14; no compile error, but audit does not work;  since the audit is
 
-If it cannot, we will stop pulling more current when voltage drops.
-
-Signed-off-by: NeilBrown <neilb@suse.de>
----
- drivers/power/twl4030_charger.c |    4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/power/twl4030_charger.c b/drivers/power/twl4030_charger.c
-index d0199495dddc..6f0dc971d84d 100644
---- a/drivers/power/twl4030_charger.c
-+++ b/drivers/power/twl4030_charger.c
-@@ -694,8 +694,10 @@ static void twl4030_bci_usb_work(struct work_struct *data)
- 	struct twl4030_bci *bci = container_of(data, struct twl4030_bci, work);
- 
- 	switch (bci->event) {
--	case USB_EVENT_VBUS:
- 	case USB_EVENT_CHARGER:
-+		bci->usb_cur = USB_MAX_CURRENT;
-+		/* FALL THROUGH */
-+	case USB_EVENT_VBUS:
- 	case USB_EVENT_ENUMERATED:
- 		twl4030_charger_enable_usb(bci, true);
- 		break;
 
 
+>
+>
+> --
+> paul moore
+> www.paul-moore.com
