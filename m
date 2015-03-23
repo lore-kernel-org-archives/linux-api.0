@@ -1,84 +1,60 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: Re: [PATCH 1/1] Add virtio-input driver.
-Date: Mon, 23 Mar 2015 19:20:51 +0100
-Message-ID: <20150323191949-mutt-send-email-mst@redhat.com>
-References: <1426756391-26585-2-git-send-email-kraxel@redhat.com>
-	<20150319123940-mutt-send-email-mst@redhat.com>
-	<1426847327.32097.60.camel@nilsson.home.kraxel.org>
-	<20150321225356-mutt-send-email-mst@redhat.com>
-	<1427097238.6365.27.camel@nilsson.home.kraxel.org>
-	<1427118292.27137.39.camel@nilsson.home.kraxel.org>
-	<20150323144803-mutt-send-email-mst@redhat.com>
-	<1427120855.27137.55.camel@nilsson.home.kraxel.org>
-	<20150323155106-mutt-send-email-mst@redhat.com>
-	<1427123129.27137.62.camel@nilsson.home.kraxel.org>
+From: Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH v2 01/11] stm class: Introduce an abstraction for System Trace Module devices
+Date: Mon, 23 Mar 2015 21:41:58 +0200
+Message-ID: <87384v7b7d.fsf@ashishki-desk.ger.corp.intel.com>
+References: <1427056381-27614-1-git-send-email-alexander.shishkin@linux.intel.com> <1427056381-27614-2-git-send-email-alexander.shishkin@linux.intel.com> <CANLsYkycrE-VyyLWLYtBFNijhLP8UejVjDEXYv4FBP88eyZrRQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-Content-Disposition: inline
-In-Reply-To: <1427123129.27137.62.camel@nilsson.home.kraxel.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Gerd Hoffmann <kraxel@redhat.com>
-Cc: virtio-dev@lists.oasis-open.org, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, virtualization@lists.linux-foundation.org
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CANLsYkycrE-VyyLWLYtBFNijhLP8UejVjDEXYv4FBP88eyZrRQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>, peter.lachner-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, norbert.schulz-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, keven.boell-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yann.fouassier-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, laurent.fert-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Kaixu Xia <kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 23, 2015 at 04:05:29PM +0100, Gerd Hoffmann wrote:
-> On Mo, 2015-03-23 at 15:54 +0100, Michael S. Tsirkin wrote:
-> > On Mon, Mar 23, 2015 at 03:27:35PM +0100, Gerd Hoffmann wrote:
-> > >   Hi,
-> > > 
-> > > > > > > You are doing leXXX everywhere, that's VERSION_1 dependency.
-> > > > > > > virtio_cread will do byteswaps differently without VERSION_1.
-> > > > > > > Just don't go there.
-> > > 
-> > > > So to clarify, you dislike using __virtio32 in virtio input header?
-> > > 
-> > > Well, as I understand things __virtio32 implies byteorder depends on
-> > > whenever we are using VERSION_1 or not.  And non-transitional drivers
-> > > should not need it as everything is by definition little endian.
-> > > 
-> > > So, yes, your suggestion to just require VERSION_1 in the driver implies
-> > > in my eyes that there should be no reason to use __virtio32 instead of
-> > > __le32.
-> > > 
-> > > Or do I miss something here?
-> > > 
-> > > cheers,
-> > >   Gerd
-> > > 
-> > 
-> > You are right but then if you do require VERSION_1 then
-> > __virtio32 becomes identical to __le32.
-> 
-> Except that sparse doesn't know that and throws errors when I mix the
-> two.
-> 
-> > There's some runtime overhead as we check on each access,
-> > but it shouldn't matter here, right?
-> 
-> Correct, config space is used at initialization time only.
-> 
-> > I guess we could add virtio_cread_le - is this what
-> > you'd like?
-> 
-> I just want something that makes both you and sparse happy.  I don't
-> care much whenever that is adding virtio_cread_le() or using __virtio32
-> even though it'll effectively is __le32 due to VERSION_1 being required.
-> 
-> cheers,
->   Gerd
-> 
+Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> writes:
 
-OK so how about we just use __virtio32 everywhere for now?
+>> +source "drivers/hwtracing/stm/Kconfig"
+>> +
+>>  endmenu
+>
+> When the coresight framework and drivers were submitted for review
+> people asked that I move the Kconfig options to
+> "arch/arm[64]/kernel.debug", resulting in coresight configurable
+> options showing up under the "Kernel Hacking" department.  To me the
+> request was not deprived of logic since if one is dealing with HW
+> tracing, some serious kernel hacking is likely happening.
 
--- 
-MST
+To me this is very much a non-sequitur conclusion: if one's likely to
+use CONFIG_x for kernel debugging doesn't necessarily mean CONFIG_x is a
+strictly kernel debugging feature. One might move serial drivers under
+"Kernel Hacking" by the same token. I also suspect that sweeping things
+under "Kernel Hacking" is kind of a license to go easy on code review.
+
+> Now that the Intel drivers are coming in, that we have a generic STM,
+> and "drivers/hwtracing" has already been created, we should take a
+> minute to ponder if tracers for various architecture should go under
+> "arch/XYX/kernel.debug" or if we should introduce a new "hwtracing"
+> submenu in the drivers list.
+
+I'm in favor of the latter. If some bits in this submenu are strictly
+specific to kernel hacking an appropriate dependency can be used.
+
+> Because of the STM sources (which are bound to grow in numbers) I
+> _think_ it would be easier to have a new submenu in the drivers list
+> but I'm not strongly opinionated on the topic.  Please take a minute
+> to think about it and get back to me with your opinion.  I'd also be
+> interested to know what other community members think - it's
+> definitely not the first time this kind of dilemma happens...
+
+I don't see why any of these should be hidden under Kconfig.debug, they
+are mostly device drivers. They shouldn't add any runtime footprint
+unless they are actually used and it's up to the user how to use them
+(provided we handle capabilities/permissions correctly, which we should
+do regardless).
+
+So yes, my opinion -- let's have a submenu in hwtracing.
+
+Regards,
+--
+Alex
