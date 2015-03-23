@@ -1,36 +1,53 @@
-From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v10 tip 5/9] tracing: allow BPF programs to call
- bpf_trace_printk()
-Date: Mon, 23 Mar 2015 13:07:53 +0100
-Message-ID: <20150323120753.GA22560@gmail.com>
-References: <1427053150-32213-1-git-send-email-ast@plumgrid.com>
- <1427053150-32213-6-git-send-email-ast@plumgrid.com>
- <063D6719AE5E284EB5DD2968C1650D6D1CB07731@AcuExch.aculab.com>
+From: jake42 <jake42-9fM0UEq+jfAy41eOTT4XPcSSVFg4/55HhC4ANOJQIlc@public.gmane.org>
+Subject: Re: [Gta04-owner] [PATCH 08/14] =?UTF-8?Q?twl=34=30=33=30=5Fcharg?=
+ =?UTF-8?Q?er=3A=20allow=20max=5Fcurrent=20to=20be=20managed=20via=20sysfs?=
+ =?UTF-8?Q?=2E?=
+Date: Mon, 23 Mar 2015 13:14:50 +0100
+Message-ID: <a05a88a7a3ea4519ada7216ab5bfe097@rommel.stw.uni-erlangen.de>
+References: <20150322231635.23789.70149.stgit@notabene.brown>
+ <20150322232029.23789.13768.stgit@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8;
+ format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <063D6719AE5E284EB5DD2968C1650D6D1CB07731-VkEWCZq2GCInGFn1LkZF6NBPR1lH4CV8@public.gmane.org>
+In-Reply-To: <20150322232029.23789.13768.stgit-wvvUuzkyo1EYVZTmpyfIwg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Laight <David.Laight-ZS65k/vG3HxXrIkS9f7CXA@public.gmane.org>
-Cc: 'Alexei Starovoitov' <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: NeilBrown <neil-+NVA1uvv1dVBDLzU/O5InQ@public.gmane.org>
+Cc: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, inux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, linux-omap-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, List for communicating with real GTA04 owners <gta04-owner-xXXSsgcRVICgSpxsJD1C4w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Hello Neil,
 
-* David Laight <David.Laight-ZS65k/vG3HxXrIkS9f7CXA@public.gmane.org> wrote:
+some suggestions:
 
-> From: Alexei Starovoitov
-> > Debugging of BPF programs needs some form of printk from the program,
-> > so let programs call limited trace_printk() with %d %u %x %p modifiers only.
-> 
-> Should anyone be allowed to use BPF programs to determine the kernel
-> addresses of any items?
-> Looks as though it is leaking kernel addresses to userspace.
-> Note that the problem is with the arguments, not the format string.
+On 23.03.2015 00:20, NeilBrown wrote:
+> From: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+> diff --git a/Documentation/ABI/testing/sysfs-class-power-twl4030
+> b/Documentation/ABI/testing/sysfs-class-power-twl4030
+> new file mode 100644
+> index 000000000000..06092209d851
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-class-power-twl4030
+> @@ -0,0 +1,15 @@
+> +What: /sys/class/power_supply/twl4030_ac/max_current
+> +      /sys/class/power_supply/twl4030_usb/max_current
+> +Description:
+> +	Read/Write limit on current which which may
+one less which                        ^^
+> +	be drawn from the ac (Accessory Charger) or
+> +	USB port.
+> +
+> +	Value is in micro-Amps.
+> +
+> +	Value is set automatically to an appropriate
+> +	value when a cable is plugged on unplugged.
+s/on/or                               ^^
+> +
+> +	Value can the set by writing to the attribute.
+                   ^^ be set?
+> +	The change will only persist until the next
+> +	plug event.  These event are reported via udev.
 
-All of these are privileged operations - inherent if you are trying to 
-debug the kernel.
-
-Thanks,
-
-	Ingo
+Regards
+Jake
