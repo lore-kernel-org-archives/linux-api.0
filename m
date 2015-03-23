@@ -1,1712 +1,472 @@
-From: Mathieu Poirier <mathieu.poirier@linaro.org>
-Subject: Re: [PATCH v2 01/11] stm class: Introduce an abstraction for System
- Trace Module devices
-Date: Sun, 22 Mar 2015 19:50:04 -0600
-Message-ID: <CANLsYkycrE-VyyLWLYtBFNijhLP8UejVjDEXYv4FBP88eyZrRQ@mail.gmail.com>
-References: <1427056381-27614-1-git-send-email-alexander.shishkin@linux.intel.com>
-	<1427056381-27614-2-git-send-email-alexander.shishkin@linux.intel.com>
+From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Subject: Re: [PATCH v10 tip 3/9] tracing: attach BPF programs to kprobes
+Date: Mon, 23 Mar 2015 11:14:58 +0900
+Message-ID: <550F7722.7080709@hitachi.com>
+References: <1427053150-32213-1-git-send-email-ast@plumgrid.com> <1427053150-32213-4-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1427056381-27614-2-git-send-email-alexander.shishkin@linux.intel.com>
+In-Reply-To: <1427053150-32213-4-git-send-email-ast@plumgrid.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexander Shishkin <alexander.shishkin@linux.intel.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Paul Bolle <pebolle@tiscali.nl>, peter.lachner@intel.com, norbert.schulz@intel.com, keven.boell@intel.com, yann.fouassier@intel.com, laurent.fert@intel.com, linux-api@vger.kernel.org, Pratik Patel <pratikp@codeaurora.org>, Chunyan Zhang <zhang.chunyan@linaro.org>, Kaixu Xia <kaixu.xia@linaro.org>
+To: Alexei Starovoitov <ast@plumgrid.com>
+Cc: Ingo Molnar <mingo@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-> +
-> +[1] https://software.intel.com/sites/default/files/managed/d3/3c/intel-th-developer-manual.pdf
-> +[2] http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0444b/index.html
-> diff --git a/drivers/Kconfig b/drivers/Kconfig
-> index c0cc96bab9..9850ab81cc 100644
-> --- a/drivers/Kconfig
-> +++ b/drivers/Kconfig
-> @@ -182,4 +182,6 @@ source "drivers/thunderbolt/Kconfig"
->
+(2015/03/23 4:39), Alexei Starovoitov wrote:
+> User interface:
+> struct perf_event_attr attr = {.type = PERF_TYPE_TRACEPOINT, .config = event_id, ...};
+> event_fd = perf_event_open(&attr,...);
+> ioctl(event_fd, PERF_EVENT_IOC_SET_BPF, prog_fd);
+> 
+> prog_fd is a file descriptor associated with BPF program previously loaded.
+> event_id is an ID of created kprobe
+> 
+> close(event_fd) - automatically detaches BPF program from it
+> 
+> BPF programs can call in-kernel helper functions to:
+> - lookup/update/delete elements in maps
+> - probe_read - wraper of probe_kernel_read() used to access any kernel
+>   data structures
+> 
+> BPF programs receive 'struct pt_regs *' as an input
+> ('struct pt_regs' is architecture dependent)
+> and return 0 to ignore the event and 1 to store kprobe event into ring buffer.
+> 
+> Note, kprobes are _not_ a stable kernel ABI, so bpf programs attached to
+> kprobes must be recompiled for every kernel version and user must supply correct
+> LINUX_VERSION_CODE in attr.kern_version during bpf_prog_load() call.
+> 
 
->  source "drivers/android/Kconfig"
->
-> +source "drivers/hwtracing/stm/Kconfig"
-> +
->  endmenu
+This looks OK to me :)
 
-When the coresight framework and drivers were submitted for review
-people asked that I move the Kconfig options to
-"arch/arm[64]/kernel.debug", resulting in coresight configurable
-options showing up under the "Kernel Hacking" department.  To me the
-request was not deprived of logic since if one is dealing with HW
-tracing, some serious kernel hacking is likely happening.
+Reviewed-by: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
 
-Now that the Intel drivers are coming in, that we have a generic STM,
-and "drivers/hwtracing" has already been created, we should take a
-minute to ponder if tracers for various architecture should go under
-"arch/XYX/kernel.debug" or if we should introduce a new "hwtracing"
-submenu in the drivers list.
+Thanks!
 
-Because of the STM sources (which are bound to grow in numbers) I
-_think_ it would be easier to have a new submenu in the drivers list
-but I'm not strongly opinionated on the topic.  Please take a minute
-to think about it and get back to me with your opinion.  I'd also be
-interested to know what other community members think - it's
-definitely not the first time this kind of dilemma happens...
-
-Thanks,
-Mathieu
-
-> diff --git a/drivers/Makefile b/drivers/Makefile
-> index 527a6da8d5..87d7c74e39 100644
-> --- a/drivers/Makefile
-> +++ b/drivers/Makefile
-> @@ -165,3 +165,4 @@ obj-$(CONFIG_RAS)           += ras/
->  obj-$(CONFIG_THUNDERBOLT)      += thunderbolt/
->  obj-$(CONFIG_CORESIGHT)                += coresight/
->  obj-$(CONFIG_ANDROID)          += android/
-> +obj-$(CONFIG_STM)              += hwtracing/stm/
-> diff --git a/drivers/hwtracing/stm/Kconfig b/drivers/hwtracing/stm/Kconfig
-> new file mode 100644
-> index 0000000000..90ed327461
-> --- /dev/null
-> +++ b/drivers/hwtracing/stm/Kconfig
-> @@ -0,0 +1,8 @@
-> +config STM
-> +       tristate "System Trace Module devices"
-> +       help
-> +         A System Trace Module (STM) is a device exporting data in System
-> +         Trace Protocol (STP) format as defined by MIPI STP standards.
-> +         Examples of such devices are Intel Trace Hub and Coresight STM.
-> +
-> +         Say Y here to enable System Trace Module device support.
-> diff --git a/drivers/hwtracing/stm/Makefile b/drivers/hwtracing/stm/Makefile
-> new file mode 100644
-> index 0000000000..adec701649
-> --- /dev/null
-> +++ b/drivers/hwtracing/stm/Makefile
-> @@ -0,0 +1,3 @@
-> +obj-$(CONFIG_STM)      += stm_core.o
-> +
-> +stm_core-y             := core.o policy.o
-> diff --git a/drivers/hwtracing/stm/core.c b/drivers/hwtracing/stm/core.c
-> new file mode 100644
-> index 0000000000..9e82634590
-> --- /dev/null
-> +++ b/drivers/hwtracing/stm/core.c
-> @@ -0,0 +1,897 @@
-> +/*
-> + * System Trace Module (STM) infrastructure
-> + * Copyright (c) 2014, Intel Corporation.
-> + *
-> + * This program is free software; you can redistribute it and/or modify it
-> + * under the terms and conditions of the GNU General Public License,
-> + * version 2, as published by the Free Software Foundation.
-> + *
-> + * This program is distributed in the hope it will be useful, but WITHOUT
-> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-> + * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-> + * more details.
-> + *
-> + * STM class implements generic infrastructure for  System Trace Module devices
-> + * as defined in MIPI STPv2 specification.
-> + */
-> +
-> +#include <linux/uaccess.h>
-> +#include <linux/kernel.h>
-> +#include <linux/module.h>
-> +#include <linux/device.h>
-> +#include <linux/compat.h>
-> +#include <linux/kdev_t.h>
-> +#include <linux/srcu.h>
-> +#include <linux/slab.h>
-> +#include <linux/stm.h>
-> +#include <linux/fs.h>
-> +#include <linux/mm.h>
-> +#include "stm.h"
-> +
-> +#include <uapi/linux/stm.h>
-> +
-> +static unsigned int stm_core_up;
-> +
-> +/*
-> + * The SRCU here makes sure that STM device doesn't disappear from under a
-> + * stm_source_write() caller, which may want to have as little overhead as
-> + * possible.
-> + */
-> +static struct srcu_struct stm_source_srcu;
-> +
-> +static ssize_t masters_show(struct device *dev,
-> +                           struct device_attribute *attr,
-> +                           char *buf)
-> +{
-> +       struct stm_device *stm = dev_get_drvdata(dev);
-> +       int ret;
-> +
-> +       ret = sprintf(buf, "%u %u\n", stm->data->sw_start, stm->data->sw_end);
-> +
-> +       return ret;
-> +}
-> +
-> +static DEVICE_ATTR_RO(masters);
-> +
-> +static ssize_t channels_show(struct device *dev,
-> +                            struct device_attribute *attr,
-> +                            char *buf)
-> +{
-> +       struct stm_device *stm = dev_get_drvdata(dev);
-> +       int ret;
-> +
-> +       ret = sprintf(buf, "%u\n", stm->data->sw_nchannels);
-> +
-> +       return ret;
-> +}
-> +
-> +static DEVICE_ATTR_RO(channels);
-> +
-> +static struct attribute *stm_attrs[] = {
-> +       &dev_attr_masters.attr,
-> +       &dev_attr_channels.attr,
-> +       NULL,
-> +};
-> +
-> +static const struct attribute_group stm_group = {
-> +       .attrs  = stm_attrs,
-> +};
-> +
-> +static const struct attribute_group *stm_groups[] = {
-> +       &stm_group,
-> +       NULL,
-> +};
-> +
-> +static struct class stm_class = {
-> +       .name           = "stm",
-> +       .dev_groups     = stm_groups,
-> +};
-> +
-> +static int stm_dev_match(struct device *dev, const void *data)
-> +{
-> +       const char *name = data;
-> +
-> +       return sysfs_streq(name, dev_name(dev));
-> +}
-> +
-> +/**
-> + * stm_find_device() - find stm device by name
-> + * @buf:       character buffer containing the name
-> + * @len:       length of the name in @buf
-> + *
-> + * This is called from attributes' store methods, so it will
-> + * also trim the trailing newline if necessary.
-> + *
-> + * Return:     device pointer or null if lookup failed.
-> + */
-> +struct device *stm_find_device(const char *buf, size_t len)
-> +{
-> +       if (!stm_core_up)
-> +               return NULL;
-> +
-> +       return class_find_device(&stm_class, NULL, buf, stm_dev_match);
-> +}
-> +
-> +/*
-> + * Internally we only care about software-writable masters here, that is the
-> + * ones in the range [stm_data->sw_start..stm_data..sw_end], however we need
-> + * original master numbers to be visible externally, since they are the ones
-> + * that will appear in the STP stream. Thus, the internal bookkeeping uses
-> + * $master - stm_data->sw_start to reference master descriptors and such.
-> + */
-> +
-> +#define __stm_master(_s, _m)                           \
-> +       ((_s)->masters[(_m) - (_s)->data->sw_start])
-> +
-> +static inline struct stp_master *
-> +stm_master(struct stm_device *stm, unsigned int idx)
-> +{
-> +       if (idx < stm->data->sw_start || idx > stm->data->sw_end)
-> +               return NULL;
-> +
-> +       return __stm_master(stm, idx);
-> +}
-> +
-> +static int stp_master_alloc(struct stm_device *stm, unsigned int idx)
-> +{
-> +       struct stp_master *master;
-> +       size_t size;
-> +
-> +       size = ALIGN(stm->data->sw_nchannels, 8) / 8;
-> +       size += sizeof(struct stp_master);
-> +       master = kzalloc(size, GFP_ATOMIC);
-> +       if (!master)
-> +               return -ENOMEM;
-> +
-> +       master->nr_free = stm->data->sw_nchannels;
-> +       __stm_master(stm, idx) = master;
-> +
-> +       return 0;
-> +}
-> +
-> +static void stp_master_free(struct stm_device *stm, unsigned int idx)
-> +{
-> +       struct stp_master *master = stm_master(stm, idx);
-> +
-> +       if (!master)
-> +               return;
-> +
-> +       __stm_master(stm, idx) = NULL;
-> +       kfree(master);
-> +}
-> +
-> +static void stm_output_claim(struct stm_device *stm, struct stm_output *output)
-> +{
-> +       struct stp_master *master = stm_master(stm, output->master);
-> +
-> +       if (WARN_ON_ONCE(master->nr_free < output->nr_chans))
-> +               return;
-> +
-> +       bitmap_allocate_region(&master->chan_map[0], output->channel,
-> +                              ilog2(output->nr_chans));
-> +
-> +       master->nr_free -= output->nr_chans;
-> +}
-> +
-> +static void
-> +stm_output_disclaim(struct stm_device *stm, struct stm_output *output)
-> +{
-> +       struct stp_master *master = stm_master(stm, output->master);
-> +
-> +       bitmap_release_region(&master->chan_map[0], output->channel,
-> +                             ilog2(output->nr_chans));
-> +
-> +       master->nr_free += output->nr_chans;
-> +}
-> +
-> +/*
-> + * This is like bitmap_find_free_region(), except it can ignore @start bits
-> + * at the beginning.
-> + */
-> +static int find_free_channels(unsigned long *bitmap, unsigned int start,
-> +                             unsigned int end, unsigned int width)
-> +{
-> +       unsigned int pos;
-> +       int i;
-> +
-> +       for (pos = start; pos < end + 1; pos = ALIGN(pos, width)) {
-> +               pos = find_next_zero_bit(bitmap, end + 1, pos);
-> +               if (pos + width > end + 1)
-> +                       break;
-> +
-> +               if (pos & (width - 1))
-> +                       continue;
-> +
-> +               for (i = 1; i < width && !test_bit(pos + i, bitmap); i++)
-> +                       ;
-> +               if (i == width)
-> +                       return pos;
-> +       }
-> +
-> +       return -1;
-> +}
-> +
-> +static unsigned int
-> +stm_find_master_chan(struct stm_device *stm, unsigned int width,
-> +                    unsigned int *mstart, unsigned int mend,
-> +                    unsigned int *cstart, unsigned int cend)
-> +{
-> +       struct stp_master *master;
-> +       unsigned int midx;
-> +       int pos, err;
-> +
-> +       for (midx = *mstart; midx <= mend; midx++) {
-> +               if (!stm_master(stm, midx)) {
-> +                       err = stp_master_alloc(stm, midx);
-> +                       if (err)
-> +                               return err;
-> +               }
-> +
-> +               master = stm_master(stm, midx);
-> +
-> +               if (!master->nr_free)
-> +                       continue;
-> +
-> +               pos = find_free_channels(master->chan_map, *cstart, cend,
-> +                                        width);
-> +               if (pos < 0)
-> +                       continue;
-> +
-> +               *mstart = midx;
-> +               *cstart = pos;
-> +               return 0;
-> +       }
-> +
-> +       return -ENOSPC;
-> +}
-> +
-> +static int stm_output_assign(struct stm_device *stm, unsigned int width,
-> +                            struct stp_policy_node *policy_node,
-> +                            struct stm_output *output)
-> +{
-> +       unsigned int midx, cidx, mend, cend;
-> +       int ret = -EBUSY;
-> +
-> +       if (width > stm->data->sw_nchannels)
-> +               return -EINVAL;
-> +
-> +       if (policy_node) {
-> +               stp_policy_node_get_ranges(policy_node,
-> +                                          &midx, &mend, &cidx, &cend);
-> +       } else {
-> +               midx = stm->data->sw_start;
-> +               cidx = 0;
-> +               mend = stm->data->sw_end;
-> +               cend = stm->data->sw_nchannels - 1;
-> +       }
-> +
-> +       spin_lock(&stm->mc_lock);
-> +       if (output->nr_chans)
-> +               goto unlock;
-> +
-> +       ret = stm_find_master_chan(stm, width, &midx, mend, &cidx, cend);
-> +       if (ret)
-> +               goto unlock;
-> +
-> +       output->master = midx;
-> +       output->channel = cidx;
-> +       output->nr_chans = width;
-> +       stm_output_claim(stm, output);
-> +       dev_dbg(stm->dev, "assigned %u:%u (+%u)\n", midx, cidx, width);
-> +
-> +       ret = 0;
-> +unlock:
-> +       spin_unlock(&stm->mc_lock);
-> +
-> +       return ret;
-> +}
-> +
-> +static void stm_output_free(struct stm_device *stm, struct stm_output *output)
-> +{
-> +       spin_lock(&stm->mc_lock);
-> +       if (output->nr_chans)
-> +               stm_output_disclaim(stm, output);
-> +       spin_unlock(&stm->mc_lock);
-> +}
-> +
-> +static int major_match(struct device *dev, const void *data)
-> +{
-> +       unsigned int major = *(unsigned int *)data;
-> +
-> +       return MAJOR(dev->devt) == major;
-> +}
-> +
-> +static int stm_char_open(struct inode *inode, struct file *file)
-> +{
-> +       struct stm_file *stmf;
-> +       struct device *dev;
-> +       unsigned int major = imajor(inode);
-> +       int err = -ENODEV;
-> +
-> +       dev = class_find_device(&stm_class, NULL, &major, major_match);
-> +       if (!dev)
-> +               return -ENODEV;
-> +
-> +       stmf = kzalloc(sizeof(*stmf), GFP_KERNEL);
-> +       if (!stmf)
-> +               return -ENOMEM;
-> +
-> +       stmf->stm = dev_get_drvdata(dev);
-> +
-> +       if (!try_module_get(stmf->stm->owner))
-> +               goto err_free;
-> +
-> +       file->private_data = stmf;
-> +
-> +       return nonseekable_open(inode, file);
-> +
-> +err_free:
-> +       kfree(stmf);
-> +
-> +       return err;
-> +}
-> +
-> +static int stm_char_release(struct inode *inode, struct file *file)
-> +{
-> +       struct stm_file *stmf = file->private_data;
-> +
-> +       stm_output_free(stmf->stm, &stmf->output);
-> +       module_put(stmf->stm->owner);
-> +       kfree(stmf);
-> +
-> +       return 0;
-> +}
-> +
-> +static int stm_file_assign(struct stm_file *stmf, char *id, unsigned int width)
-> +{
-> +       struct stm_device *stm = stmf->stm;
-> +       int ret;
-> +
-> +       mutex_lock(&stm->policy_mutex);
-> +       if (stm->policy)
-> +               stmf->policy_node = stp_policy_node_lookup(stm->policy, id);
-> +
-> +       ret = stm_output_assign(stm, width, stmf->policy_node, &stmf->output);
-> +       mutex_unlock(&stm->policy_mutex);
-> +
-> +       return ret;
-> +}
-> +
-> +static ssize_t stm_char_write(struct file *file, const char __user *buf,
-> +                             size_t count, loff_t *ppos)
-> +{
-> +       struct stm_file *stmf = file->private_data;
-> +       struct stm_device *stm = stmf->stm;
-> +       char *kbuf;
-> +       int err;
-> +
-> +       /*
-> +        * if no m/c have been assigned to this writer up to this
-> +        * point, use "default" policy entry
-> +        */
-> +       if (!stmf->output.nr_chans) {
-> +               err = stm_file_assign(stmf, "default", 1);
-> +               /*
-> +                * EBUSY means that somebody else just assigned this
-> +                * output, which is just fine for write()
-> +                */
-> +               if (err && err != -EBUSY)
-> +                       return err;
-> +       }
-> +
-> +       kbuf = kmalloc(count + 1, GFP_KERNEL);
-> +       if (!kbuf)
-> +               return -ENOMEM;
-> +
-> +       err = copy_from_user(kbuf, buf, count);
-> +       if (err) {
-> +               kfree(kbuf);
-> +               return -EFAULT;
-> +       }
-> +
-> +       stm->data->write(stm->data, stmf->output.master,
-> +                        stmf->output.channel, kbuf, count);
-> +
-> +
-> +       kfree(kbuf);
-> +
-> +       return count;
-> +}
-> +
-> +static int stm_char_mmap(struct file *file, struct vm_area_struct *vma)
-> +{
-> +       struct stm_file *stmf = file->private_data;
-> +       struct stm_device *stm = stmf->stm;
-> +       unsigned long size, phys;
-> +
-> +       if (!stm->data->mmio_addr)
-> +               return -EOPNOTSUPP;
-> +
-> +       if (vma->vm_pgoff)
-> +               return -EINVAL;
-> +
-> +       size = vma->vm_end - vma->vm_start;
-> +
-> +       if (stmf->output.nr_chans * stm->data->sw_mmiosz != size)
-> +               return -EINVAL;
-> +
-> +       phys = stm->data->mmio_addr(stm->data, stmf->output.master,
-> +                                   stmf->output.channel,
-> +                                   stmf->output.nr_chans);
-> +
-> +       if (!phys)
-> +               return -EINVAL;
-> +
-> +       vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-> +       vma->vm_flags |= VM_IO | VM_DONTEXPAND | VM_DONTDUMP;
-> +       vm_iomap_memory(vma, phys, size);
-> +
-> +       return 0;
-> +}
-> +
-> +static int stm_char_policy_set_ioctl(struct stm_file *stmf, void __user *arg)
-> +{
-> +       struct stm_device *stm = stmf->stm;
-> +       struct stp_policy_id *id;
-> +       int ret = -EINVAL;
-> +       u32 size;
-> +
-> +       if (stmf->output.nr_chans)
-> +               return -EBUSY;
-> +
-> +       if (copy_from_user(&size, arg, sizeof(size)))
-> +               return -EFAULT;
-> +
-> +       if (size >= PATH_MAX + sizeof(*id))
-> +               return -EINVAL;
-> +
-> +       /* size + 1 to make sure the .id string at the bottom is terminated */
-> +       id = kzalloc(size + 1, GFP_KERNEL);
-> +       if (!id)
-> +               return -ENOMEM;
-> +
-> +       if (copy_from_user(id, arg, size)) {
-> +               ret = -EFAULT;
-> +               goto err_free;
-> +       }
-> +
-> +       if (id->__reserved_0 || id->__reserved_1)
-> +               goto err_free;
-> +
-> +       if (id->width < 1 ||
-> +           id->width > PAGE_SIZE / stm->data->sw_mmiosz)
-> +               goto err_free;
-> +
-> +       ret = stm_file_assign(stmf, id->id, id->width);
-> +       if (ret)
-> +               goto err_free;
-> +
-> +       if (stm->data->link)
-> +               stm->data->link(stm->data, stmf->output.master,
-> +                               stmf->output.channel);
-> +
-> +       ret = 0;
-> +
-> +err_free:
-> +       kfree(id);
-> +
-> +       return ret;
-> +}
-> +
-> +static int stm_char_policy_get_ioctl(struct stm_file *stmf, void __user *arg)
-> +{
-> +       struct stp_policy_id id = {
-> +               .size           = sizeof(id),
-> +               .master         = stmf->output.master,
-> +               .channel        = stmf->output.channel,
-> +               .width          = stmf->output.nr_chans,
-> +               .__reserved_0   = 0,
-> +               .__reserved_1   = 0,
-> +       };
-> +
-> +       return copy_to_user(arg, &id, id.size) ? -EFAULT : 0;
-> +}
-> +
-> +static long
-> +stm_char_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-> +{
-> +       struct stm_file *stmf = file->private_data;
-> +       struct stm_data *stm_data = stmf->stm->data;
-> +       int err = -ENOTTY;
-> +
-> +       switch (cmd) {
-> +       case STP_POLICY_ID_SET:
-> +               err = stm_char_policy_set_ioctl(stmf, (void __user *)arg);
-> +               if (err)
-> +                       return err;
-> +
-> +               return stm_char_policy_get_ioctl(stmf, (void __user *)arg);
-> +
-> +       case STP_POLICY_ID_GET:
-> +               return stm_char_policy_get_ioctl(stmf, (void __user *)arg);
-> +
-> +       default:
-> +               if (stm_data->ioctl)
-> +                       err = stm_data->ioctl(stm_data, cmd, arg);
-> +
-> +               break;
-> +       }
-> +
-> +       return err;
-> +}
-> +
-> +#ifdef CONFIG_COMPAT
-> +static long
-> +stm_char_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-> +{
-> +       return stm_char_ioctl(file, cmd, (unsigned long)compat_ptr(arg));
-> +}
+> Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
+> Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
+> ---
+>  include/linux/ftrace_event.h    |   11 ++++
+>  include/uapi/linux/bpf.h        |    3 +
+>  include/uapi/linux/perf_event.h |    1 +
+>  kernel/bpf/syscall.c            |    7 ++-
+>  kernel/events/core.c            |   59 ++++++++++++++++++
+>  kernel/trace/Makefile           |    1 +
+>  kernel/trace/bpf_trace.c        |  130 +++++++++++++++++++++++++++++++++++++++
+>  kernel/trace/trace_kprobe.c     |    8 +++
+>  8 files changed, 219 insertions(+), 1 deletion(-)
+>  create mode 100644 kernel/trace/bpf_trace.c
+> 
+> diff --git a/include/linux/ftrace_event.h b/include/linux/ftrace_event.h
+> index 77325e1a1816..0aa535bc9f05 100644
+> --- a/include/linux/ftrace_event.h
+> +++ b/include/linux/ftrace_event.h
+> @@ -13,6 +13,7 @@ struct trace_array;
+>  struct trace_buffer;
+>  struct tracer;
+>  struct dentry;
+> +struct bpf_prog;
+>  
+>  struct trace_print_flags {
+>  	unsigned long		mask;
+> @@ -306,6 +307,7 @@ struct ftrace_event_call {
+>  #ifdef CONFIG_PERF_EVENTS
+>  	int				perf_refcount;
+>  	struct hlist_head __percpu	*perf_events;
+> +	struct bpf_prog			*prog;
+>  
+>  	int	(*perf_perm)(struct ftrace_event_call *,
+>  			     struct perf_event *);
+> @@ -551,6 +553,15 @@ event_trigger_unlock_commit_regs(struct ftrace_event_file *file,
+>  		event_triggers_post_call(file, tt);
+>  }
+>  
+> +#ifdef CONFIG_BPF_SYSCALL
+> +unsigned int trace_call_bpf(struct bpf_prog *prog, void *ctx);
 > +#else
-> +#define stm_char_compat_ioctl  NULL
+> +static inline unsigned int trace_call_bpf(struct bpf_prog *prog, void *ctx)
+> +{
+> +	return 1;
+> +}
 > +#endif
 > +
-> +static const struct file_operations stm_fops = {
-> +       .open           = stm_char_open,
-> +       .release        = stm_char_release,
-> +       .write          = stm_char_write,
-> +       .mmap           = stm_char_mmap,
-> +       .unlocked_ioctl = stm_char_ioctl,
-> +       .compat_ioctl   = stm_char_compat_ioctl,
-> +       .llseek         = no_llseek,
-> +};
+>  enum {
+>  	FILTER_OTHER = 0,
+>  	FILTER_STATIC_STRING,
+> diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
+> index 45da7ec7d274..b2948feeb70b 100644
+> --- a/include/uapi/linux/bpf.h
+> +++ b/include/uapi/linux/bpf.h
+> @@ -118,6 +118,7 @@ enum bpf_map_type {
+>  enum bpf_prog_type {
+>  	BPF_PROG_TYPE_UNSPEC,
+>  	BPF_PROG_TYPE_SOCKET_FILTER,
+> +	BPF_PROG_TYPE_KPROBE,
+>  };
+>  
+>  /* flags for BPF_MAP_UPDATE_ELEM command */
+> @@ -151,6 +152,7 @@ union bpf_attr {
+>  		__u32		log_level;	/* verbosity level of verifier */
+>  		__u32		log_size;	/* size of user buffer */
+>  		__aligned_u64	log_buf;	/* user supplied buffer */
+> +		__u32		kern_version;	/* checked when prog_type=kprobe */
+>  	};
+>  } __attribute__((aligned(8)));
+>  
+> @@ -162,6 +164,7 @@ enum bpf_func_id {
+>  	BPF_FUNC_map_lookup_elem, /* void *map_lookup_elem(&map, &key) */
+>  	BPF_FUNC_map_update_elem, /* int map_update_elem(&map, &key, &value, flags) */
+>  	BPF_FUNC_map_delete_elem, /* int map_delete_elem(&map, &key) */
+> +	BPF_FUNC_probe_read,      /* int bpf_probe_read(void *dst, int size, void *src) */
+>  	__BPF_FUNC_MAX_ID,
+>  };
+>  
+> diff --git a/include/uapi/linux/perf_event.h b/include/uapi/linux/perf_event.h
+> index 3c8b45de57ec..ad4dade2a502 100644
+> --- a/include/uapi/linux/perf_event.h
+> +++ b/include/uapi/linux/perf_event.h
+> @@ -382,6 +382,7 @@ struct perf_event_attr {
+>  #define PERF_EVENT_IOC_SET_OUTPUT	_IO ('$', 5)
+>  #define PERF_EVENT_IOC_SET_FILTER	_IOW('$', 6, char *)
+>  #define PERF_EVENT_IOC_ID		_IOR('$', 7, __u64 *)
+> +#define PERF_EVENT_IOC_SET_BPF		_IOW('$', 8, __u32)
+>  
+>  enum perf_event_ioc_flags {
+>  	PERF_IOC_FLAG_GROUP		= 1U << 0,
+> diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
+> index 536edc2be307..504c10b990ef 100644
+> --- a/kernel/bpf/syscall.c
+> +++ b/kernel/bpf/syscall.c
+> @@ -16,6 +16,7 @@
+>  #include <linux/file.h>
+>  #include <linux/license.h>
+>  #include <linux/filter.h>
+> +#include <linux/version.h>
+>  
+>  static LIST_HEAD(bpf_map_types);
+>  
+> @@ -467,7 +468,7 @@ struct bpf_prog *bpf_prog_get(u32 ufd)
+>  }
+>  
+>  /* last field in 'union bpf_attr' used by this command */
+> -#define	BPF_PROG_LOAD_LAST_FIELD log_buf
+> +#define	BPF_PROG_LOAD_LAST_FIELD kern_version
+>  
+>  static int bpf_prog_load(union bpf_attr *attr)
+>  {
+> @@ -492,6 +493,10 @@ static int bpf_prog_load(union bpf_attr *attr)
+>  	if (attr->insn_cnt >= BPF_MAXINSNS)
+>  		return -EINVAL;
+>  
+> +	if (type == BPF_PROG_TYPE_KPROBE &&
+> +	    attr->kern_version != LINUX_VERSION_CODE)
+> +		return -EINVAL;
 > +
-> +int stm_register_device(struct device *parent, struct stm_data *stm_data,
-> +                       struct module *owner)
+>  	/* plain bpf_prog allocation */
+>  	prog = bpf_prog_alloc(bpf_prog_size(attr->insn_cnt), GFP_USER);
+>  	if (!prog)
+> diff --git a/kernel/events/core.c b/kernel/events/core.c
+> index 2709063eb26b..3a45e7f6b2df 100644
+> --- a/kernel/events/core.c
+> +++ b/kernel/events/core.c
+> @@ -42,6 +42,8 @@
+>  #include <linux/module.h>
+>  #include <linux/mman.h>
+>  #include <linux/compat.h>
+> +#include <linux/bpf.h>
+> +#include <linux/filter.h>
+>  
+>  #include "internal.h"
+>  
+> @@ -3402,6 +3404,7 @@ errout:
+>  }
+>  
+>  static void perf_event_free_filter(struct perf_event *event);
+> +static void perf_event_free_bpf_prog(struct perf_event *event);
+>  
+>  static void free_event_rcu(struct rcu_head *head)
+>  {
+> @@ -3411,6 +3414,7 @@ static void free_event_rcu(struct rcu_head *head)
+>  	if (event->ns)
+>  		put_pid_ns(event->ns);
+>  	perf_event_free_filter(event);
+> +	perf_event_free_bpf_prog(event);
+>  	kfree(event);
+>  }
+>  
+> @@ -3923,6 +3927,7 @@ static inline int perf_fget_light(int fd, struct fd *p)
+>  static int perf_event_set_output(struct perf_event *event,
+>  				 struct perf_event *output_event);
+>  static int perf_event_set_filter(struct perf_event *event, void __user *arg);
+> +static int perf_event_set_bpf_prog(struct perf_event *event, u32 prog_fd);
+>  
+>  static long _perf_ioctl(struct perf_event *event, unsigned int cmd, unsigned long arg)
+>  {
+> @@ -3976,6 +3981,9 @@ static long _perf_ioctl(struct perf_event *event, unsigned int cmd, unsigned lon
+>  	case PERF_EVENT_IOC_SET_FILTER:
+>  		return perf_event_set_filter(event, (void __user *)arg);
+>  
+> +	case PERF_EVENT_IOC_SET_BPF:
+> +		return perf_event_set_bpf_prog(event, arg);
+> +
+>  	default:
+>  		return -ENOTTY;
+>  	}
+> @@ -6436,6 +6444,49 @@ static void perf_event_free_filter(struct perf_event *event)
+>  	ftrace_profile_free_filter(event);
+>  }
+>  
+> +static int perf_event_set_bpf_prog(struct perf_event *event, u32 prog_fd)
 > +{
-> +       struct stm_device *stm;
-> +       struct device *dev;
-> +       unsigned int nmasters;
-> +       int err = -ENOMEM;
+> +	struct bpf_prog *prog;
 > +
-> +       if (!stm_core_up)
-> +               return -EPROBE_DEFER;
+> +	if (event->attr.type != PERF_TYPE_TRACEPOINT)
+> +		return -EINVAL;
 > +
-> +       if (!stm_data->write || !stm_data->sw_nchannels)
-> +               return -EINVAL;
+> +	if (event->tp_event->prog)
+> +		return -EEXIST;
 > +
-> +       nmasters = stm_data->sw_end - stm_data->sw_start;
-> +       stm = kzalloc(sizeof(*stm) + nmasters * sizeof(void *), GFP_KERNEL);
-> +       if (!stm)
-> +               return -ENOMEM;
+> +	if (!(event->tp_event->flags & TRACE_EVENT_FL_KPROBE))
+> +		/* bpf programs can only be attached to kprobes */
+> +		return -EINVAL;
 > +
-> +       stm->major = register_chrdev(0, stm_data->name, &stm_fops);
-> +       if (stm->major < 0)
-> +               goto err_free;
+> +	prog = bpf_prog_get(prog_fd);
+> +	if (IS_ERR(prog))
+> +		return PTR_ERR(prog);
 > +
-> +       dev = device_create(&stm_class, parent, MKDEV(stm->major, 0), NULL,
-> +                           "%s", stm_data->name);
-> +       if (IS_ERR(dev)) {
-> +               err = PTR_ERR(dev);
-> +               goto err_device;
-> +       }
+> +	if (prog->aux->prog_type != BPF_PROG_TYPE_KPROBE) {
+> +		/* valid fd, but invalid bpf program type */
+> +		bpf_prog_put(prog);
+> +		return -EINVAL;
+> +	}
 > +
-> +       spin_lock_init(&stm->link_lock);
-> +       INIT_LIST_HEAD(&stm->link_list);
+> +	event->tp_event->prog = prog;
 > +
-> +       spin_lock_init(&stm->mc_lock);
-> +       mutex_init(&stm->policy_mutex);
-> +       stm->sw_nmasters = nmasters;
-> +       stm->owner = owner;
-> +       stm->data = stm_data;
-> +       stm->dev = dev;
-> +       stm_data->stm = stm;
-> +
-> +       dev_set_drvdata(dev, stm);
-> +
-> +       return 0;
-> +
-> +err_device:
-> +       device_unregister(dev);
-> +err_free:
-> +       kfree(stm);
-> +
-> +       return err;
-> +}
-> +EXPORT_SYMBOL_GPL(stm_register_device);
-> +
-> +static void stm_source_link_drop(struct stm_source_device *src);
-> +
-> +void stm_unregister_device(struct stm_data *stm_data)
-> +{
-> +       struct stm_device *stm = stm_data->stm;
-> +       struct stm_source_device *src, *iter;
-> +       int i;
-> +
-> +       spin_lock(&stm->link_lock);
-> +       list_for_each_entry_safe(src, iter, &stm->link_list, link_entry) {
-> +               stm_source_link_drop(src);
-> +       }
-> +       spin_unlock(&stm->link_lock);
-> +
-> +       synchronize_srcu(&stm_source_srcu);
-> +
-> +       unregister_chrdev(stm->major, stm_data->name);
-> +
-> +       if (stm->policy)
-> +               stp_policy_unbind(stm->policy);
-> +
-> +       for (i = 0; i < stm->sw_nmasters; i++)
-> +               stp_master_free(stm, i);
-> +
-> +       device_unregister(stm->dev);
-> +       kfree(stm);
-> +       stm_data->stm = NULL;
-> +}
-> +EXPORT_SYMBOL_GPL(stm_unregister_device);
-> +
-> +/**
-> + * stm_source_link_add() - connect an stm_source device to an stm device
-> + * @src:       stm_source device
-> + * @stm:       stm device
-> + *
-> + * This function establishes a link from stm_source to an stm device so that
-> + * the former can send out trace data to the latter.
-> + *
-> + * Return:     0 on success, -errno otherwise.
-> + */
-> +static int stm_source_link_add(struct stm_source_device *src,
-> +                              struct stm_device *stm)
-> +{
-> +       int err;
-> +
-> +       spin_lock(&stm->link_lock);
-> +       spin_lock(&src->link_lock);
-> +
-> +       /* src->link is dereferenced under stm_source_srcu but not the list */
-> +       rcu_assign_pointer(src->link, stm);
-> +       list_add_tail(&src->link_entry, &stm->link_list);
-> +
-> +       spin_unlock(&src->link_lock);
-> +       spin_unlock(&stm->link_lock);
-> +
-> +       if (stm->policy) {
-> +               char *id = kstrdup(src->data->name, GFP_KERNEL);
-> +
-> +               if (id) {
-> +                       src->policy_node =
-> +                               stp_policy_node_lookup(stm->policy, id);
-> +
-> +                       kfree(id);
-> +               }
-> +       }
-> +
-> +       err = stm_output_assign(stm, src->data->nr_chans,
-> +                               src->policy_node, &src->output);
-> +       if (err)
-> +               return err;
-> +
-> +       /* this is to notify the STM device that a new link has been made */
-> +       if (stm->data->link)
-> +               stm->data->link(stm->data, src->output.master,
-> +                               src->output.channel);
-> +
-> +       /* this is to let the source carry out all necessary preparations */
-> +       if (src->data->link)
-> +               src->data->link(src->data);
-> +
-> +       return 0;
-> +}
-> +
-> +/**
-> + * stm_source_link_drop() - detach stm_source from its stm device
-> + * @src:       stm_source device
-> + *
-> + * Unlinking means disconnecting from source's STM device; after this
-> + * writes will be unsuccessful until it is linked to a new STM device.
-> + *
-> + * This will happen on "stm_source_link" sysfs attribute write to undo
-> + * the existing link (if any), or on linked STM device's de-registration.
-> + */
-> +static void stm_source_link_drop(struct stm_source_device *src)
-> +{
-> +       int idx = srcu_read_lock(&stm_source_srcu);
-> +
-> +       if (src->link && src->data->unlink)
-> +               src->data->unlink(src->data);
-> +
-> +       srcu_read_unlock(&stm_source_srcu, idx);
-> +
-> +       spin_lock(&src->link_lock);
-> +       if (src->link) {
-> +               stm_output_free(src->link, &src->output);
-> +               list_del_init(&src->link_entry);
-> +               rcu_assign_pointer(src->link, NULL);
-> +       }
-> +       spin_unlock(&src->link_lock);
+> +	return 0;
 > +}
 > +
-> +static ssize_t stm_source_link_show(struct device *dev,
-> +                                   struct device_attribute *attr,
-> +                                   char *buf)
+> +static void perf_event_free_bpf_prog(struct perf_event *event)
 > +{
-> +       struct stm_source_device *src = dev_get_drvdata(dev);
-> +       int idx, ret;
+> +	struct bpf_prog *prog;
 > +
-> +       idx = srcu_read_lock(&stm_source_srcu);
-> +       ret = sprintf(buf, "%s\n",
-> +                     src->link ? dev_name(src->link->dev) : "<none>");
-> +       srcu_read_unlock(&stm_source_srcu, idx);
+> +	if (!event->tp_event)
+> +		return;
 > +
-> +       return ret;
+> +	prog = event->tp_event->prog;
+> +	if (prog) {
+> +		event->tp_event->prog = NULL;
+> +		bpf_prog_put(prog);
+> +	}
 > +}
 > +
-> +static ssize_t stm_source_link_store(struct device *dev,
-> +                                    struct device_attribute *attr,
-> +                                    const char *buf, size_t count)
+>  #else
+>  
+>  static inline void perf_tp_register(void)
+> @@ -6451,6 +6502,14 @@ static void perf_event_free_filter(struct perf_event *event)
+>  {
+>  }
+>  
+> +static int perf_event_set_bpf_prog(struct perf_event *event, u32 prog_fd)
 > +{
-> +       struct stm_source_device *src = dev_get_drvdata(dev);
-> +       struct stm_device *link;
-> +       struct device *linkdev;
-> +       int err;
-> +
-> +       stm_source_link_drop(src);
-> +
-> +       linkdev = stm_find_device(buf, count);
-> +       if (!linkdev)
-> +               return -EINVAL;
-> +
-> +       link = dev_get_drvdata(linkdev);
-> +
-> +       err = stm_source_link_add(src, link);
-> +
-> +       return err ? : count;
+> +	return -ENOENT;
 > +}
 > +
-> +static DEVICE_ATTR_RW(stm_source_link);
-> +
-> +static struct attribute *stm_source_attrs[] = {
-> +       &dev_attr_stm_source_link.attr,
-> +       NULL,
-> +};
-> +
-> +static const struct attribute_group stm_source_group = {
-> +       .attrs  = stm_source_attrs,
-> +};
-> +
-> +static const struct attribute_group *stm_source_groups[] = {
-> +       &stm_source_group,
-> +       NULL,
-> +};
-> +
-> +static struct class stm_source_class = {
-> +       .name           = "stm_source",
-> +       .dev_groups     = stm_source_groups,
-> +};
-> +
-> +/**
-> + * stm_source_register_device() - register an stm_source device
-> + * @parent:    parent device
-> + * @data:      device description structure
-> + *
-> + * This will create a device of stm_source class that can write
-> + * data to an stm device once linked.
-> + *
-> + * Return:     0 on success, -errno otherwise.
-> + */
-> +int stm_source_register_device(struct device *parent,
-> +                              struct stm_source_data *data)
+> +static void perf_event_free_bpf_prog(struct perf_event *event)
 > +{
-> +       struct stm_source_device *src;
-> +       struct device *dev;
-> +
-> +       if (!stm_core_up)
-> +               return -EPROBE_DEFER;
-> +
-> +       src = kzalloc(sizeof(*src), GFP_KERNEL);
-> +       if (!src)
-> +               return -ENOMEM;
-> +
-> +       dev = device_create(&stm_source_class, parent, MKDEV(0, 0), NULL, "%s",
-> +                           data->name);
-> +       if (IS_ERR(dev)) {
-> +               kfree(src);
-> +               return PTR_ERR(dev);
-> +       }
-> +
-> +       spin_lock_init(&src->link_lock);
-> +       INIT_LIST_HEAD(&src->link_entry);
-> +       src->dev = dev;
-> +       src->data = data;
-> +       data->src = src;
-> +       dev_set_drvdata(dev, src);
-> +
-> +       return 0;
 > +}
-> +EXPORT_SYMBOL_GPL(stm_source_register_device);
-> +
-> +/**
-> + * stm_source_unregister_device() - unregister an stm_source device
-> + * @data:      device description that was used to register the device
-> + *
-> + * This will remove a previously created stm_source device from the system.
-> + */
-> +void stm_source_unregister_device(struct stm_source_data *data)
-> +{
-> +       struct stm_source_device *src = data->src;
-> +
-> +       stm_source_link_drop(src);
-> +
-> +       device_destroy(&stm_source_class, src->dev->devt);
-> +
-> +       kfree(src);
-> +}
-> +EXPORT_SYMBOL_GPL(stm_source_unregister_device);
-> +
-> +int stm_source_write(struct stm_source_data *data, unsigned int chan,
-> +                    const char *buf, size_t count)
-> +{
-> +       struct stm_source_device *src = data->src;
-> +       struct stm_device *stm;
-> +       int idx;
-> +
-> +       if (!src->output.nr_chans)
-> +               return -ENODEV;
-> +
-> +       if (chan >= src->output.nr_chans)
-> +               return -EINVAL;
-> +
-> +       idx = srcu_read_lock(&stm_source_srcu);
-> +
-> +       stm = srcu_dereference(src->link, &stm_source_srcu);
-> +       if (stm)
-> +               count = stm->data->write(stm->data, src->output.master,
-> +                                        src->output.channel + chan, buf,
-> +                                        count);
-> +       else
-> +               count = -ENODEV;
-> +
-> +       srcu_read_unlock(&stm_source_srcu, idx);
-> +
-> +       return count;
-> +}
-> +EXPORT_SYMBOL_GPL(stm_source_write);
-> +
-> +static int __init stm_core_init(void)
-> +{
-> +       int err;
-> +
-> +       err = class_register(&stm_class);
-> +       if (err)
-> +               return err;
-> +
-> +       err = class_register(&stm_source_class);
-> +       if (err)
-> +               goto err_stm;
-> +
-> +       err = stp_configfs_init();
-> +       if (err)
-> +               goto err_src;
-> +
-> +       init_srcu_struct(&stm_source_srcu);
-> +
-> +       stm_core_up++;
-> +
-> +       return 0;
-> +
-> +err_src:
-> +       class_unregister(&stm_source_class);
-> +err_stm:
-> +       class_unregister(&stm_class);
-> +
-> +       return err;
-> +}
-> +
-> +postcore_initcall(stm_core_init);
-> +
-> +static void __exit stm_core_exit(void)
-> +{
-> +       class_unregister(&stm_source_class);
-> +       class_unregister(&stm_class);
-> +       stp_configfs_exit();
-> +}
-> +
-> +module_exit(stm_core_exit);
-> +
-> +MODULE_LICENSE("GPL v2");
-> +MODULE_DESCRIPTION("System Trace Module device class");
-> +MODULE_AUTHOR("Alexander Shishkin <alexander.shishkin@linux.intel.com>");
-> diff --git a/drivers/hwtracing/stm/policy.c b/drivers/hwtracing/stm/policy.c
+>  #endif /* CONFIG_EVENT_TRACING */
+>  
+>  #ifdef CONFIG_HAVE_HW_BREAKPOINT
+> diff --git a/kernel/trace/Makefile b/kernel/trace/Makefile
+> index 98f26588255e..c575a300103b 100644
+> --- a/kernel/trace/Makefile
+> +++ b/kernel/trace/Makefile
+> @@ -53,6 +53,7 @@ obj-$(CONFIG_EVENT_TRACING) += trace_event_perf.o
+>  endif
+>  obj-$(CONFIG_EVENT_TRACING) += trace_events_filter.o
+>  obj-$(CONFIG_EVENT_TRACING) += trace_events_trigger.o
+> +obj-$(CONFIG_BPF_SYSCALL) += bpf_trace.o
+>  obj-$(CONFIG_KPROBE_EVENT) += trace_kprobe.o
+>  obj-$(CONFIG_TRACEPOINTS) += power-traces.o
+>  ifeq ($(CONFIG_PM),y)
+> diff --git a/kernel/trace/bpf_trace.c b/kernel/trace/bpf_trace.c
 > new file mode 100644
-> index 0000000000..b5c59a0e0c
+> index 000000000000..f1e87da91da3
 > --- /dev/null
-> +++ b/drivers/hwtracing/stm/policy.c
-> @@ -0,0 +1,467 @@
-> +/*
-> + * System Trace Module (STM) master/channel allocation policy management
-> + * Copyright (c) 2014, Intel Corporation.
+> +++ b/kernel/trace/bpf_trace.c
+> @@ -0,0 +1,130 @@
+> +/* Copyright (c) 2011-2015 PLUMgrid, http://plumgrid.com
 > + *
-> + * This program is free software; you can redistribute it and/or modify it
-> + * under the terms and conditions of the GNU General Public License,
-> + * version 2, as published by the Free Software Foundation.
-> + *
-> + * This program is distributed in the hope it will be useful, but WITHOUT
-> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-> + * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-> + * more details.
-> + *
-> + * A master/channel allocation policy allows mapping string identifiers to
-> + * master and channel ranges, where allocation can be done.
+> + * This program is free software; you can redistribute it and/or
+> + * modify it under the terms of version 2 of the GNU General Public
+> + * License as published by the Free Software Foundation.
 > + */
-> +
-> +#define pr_fmt(fmt)    KBUILD_MODNAME ": " fmt
-> +
+> +#include <linux/kernel.h>
 > +#include <linux/types.h>
-> +#include <linux/module.h>
-> +#include <linux/device.h>
-> +#include <linux/configfs.h>
 > +#include <linux/slab.h>
-> +#include <linux/stm.h>
-> +#include "stm.h"
-> +
-> +/*
-> + * STP Master/Channel allocation policy configfs layout.
-> + */
-> +
-> +struct stp_policy {
-> +       struct config_group     group;
-> +       struct stm_device       *stm;
-> +};
-> +
-> +struct stp_policy_node {
-> +       struct config_group     group;
-> +       struct stm_device       *stm;
-> +       struct stp_policy       *policy;
-> +       unsigned int            first_master;
-> +       unsigned int            last_master;
-> +       unsigned int            first_channel;
-> +       unsigned int            last_channel;
-> +};
-> +
-> +void stp_policy_node_get_ranges(struct stp_policy_node *policy_node,
-> +                               unsigned int *mstart, unsigned int *mend,
-> +                               unsigned int *cstart, unsigned int *cend)
-> +{
-> +       *mstart = policy_node->first_master;
-> +       *mend   = policy_node->last_master;
-> +       *cstart = policy_node->first_channel;
-> +       *cend   = policy_node->last_channel;
-> +}
-> +
-> +static inline char *stp_policy_node_name(struct stp_policy_node *policy_node)
-> +{
-> +       return policy_node->group.cg_item.ci_name ? : "<none>";
-> +}
-> +
-> +static inline struct stp_policy *to_stp_policy(struct config_item *item)
-> +{
-> +       return item ?
-> +               container_of(to_config_group(item), struct stp_policy, group) :
-> +               NULL;
-> +}
-> +
-> +static inline struct stp_policy_node *
-> +to_stp_policy_node(struct config_item *item)
-> +{
-> +       return item ?
-> +               container_of(to_config_group(item), struct stp_policy_node,
-> +                            group) :
-> +               NULL;
-> +}
-> +
-> +static ssize_t stp_policy_node_masters_show(struct stp_policy_node *policy_node,
-> +                                           char *page)
-> +{
-> +       ssize_t count;
-> +
-> +       count = sprintf(page, "%u %u\n", policy_node->first_master,
-> +                       policy_node->last_master);
-> +
-> +       return count;
-> +}
-> +
-> +static ssize_t
-> +stp_policy_node_masters_store(struct stp_policy_node *policy_node,
-> +                             const char *page, size_t count)
-> +{
-> +       struct stm_device *stm = policy_node->stm;
-> +       unsigned int first, last;
-> +       char *p = (char *) page;
-> +
-> +       if (sscanf(p, "%u %u", &first, &last) != 2)
-> +               return -EINVAL;
-> +
-> +       /* must be within [sw_start..sw_end], which is an inclusive range */
-> +       if (first > INT_MAX || last > INT_MAX || first > last ||
-> +           first < stm->data->sw_start ||
-> +           last > stm->data->sw_end)
-> +               return -ERANGE;
-> +
-> +       policy_node->first_master = first;
-> +       policy_node->last_master = last;
-> +
-> +       return count;
-> +}
-> +
-> +static ssize_t
-> +stp_policy_node_channels_show(struct stp_policy_node *policy_node, char *page)
-> +{
-> +       ssize_t count;
-> +
-> +       count = sprintf(page, "%u %u\n", policy_node->first_channel,
-> +                       policy_node->last_channel);
-> +
-> +       return count;
-> +}
-> +
-> +static ssize_t
-> +stp_policy_node_channels_store(struct stp_policy_node *policy_node,
-> +                              const char *page, size_t count)
-> +{
-> +       unsigned int first, last;
-> +       char *p = (char *) page;
-> +
-> +       if (sscanf(p, "%u %u", &first, &last) != 2)
-> +               return -EINVAL;
-> +
-> +       if (first > INT_MAX || last > INT_MAX || first > last ||
-> +           last >= policy_node->stm->data->sw_nchannels)
-> +               return -ERANGE;
-> +
-> +       policy_node->first_channel = first;
-> +       policy_node->last_channel = last;
-> +
-> +       return count;
-> +}
-> +
-> +static void stp_policy_node_release(struct config_item *item)
-> +{
-> +       kfree(to_stp_policy_node(item));
-> +}
-> +
-> +struct stp_policy_node_attribute {
-> +       struct configfs_attribute       attr;
-> +       ssize_t (*show)(struct stp_policy_node *, char *);
-> +       ssize_t (*store)(struct stp_policy_node *, const char *, size_t);
-> +};
-> +
-> +static ssize_t stp_policy_node_attr_show(struct config_item *item,
-> +                                        struct configfs_attribute *attr,
-> +                                        char *page)
-> +{
-> +       struct stp_policy_node *policy_node = to_stp_policy_node(item);
-> +       struct stp_policy_node_attribute *pn_attr =
-> +               container_of(attr, struct stp_policy_node_attribute, attr);
-> +       ssize_t count = 0;
-> +
-> +       if (pn_attr->show)
-> +               count = pn_attr->show(policy_node, page);
-> +
-> +       return count;
-> +}
-> +
-> +static ssize_t stp_policy_node_attr_store(struct config_item *item,
-> +                                         struct configfs_attribute *attr,
-> +                                         const char *page, size_t len)
-> +{
-> +       struct stp_policy_node *policy_node = to_stp_policy_node(item);
-> +       struct stp_policy_node_attribute *pn_attr =
-> +               container_of(attr, struct stp_policy_node_attribute, attr);
-> +       ssize_t count = -EINVAL;
-> +
-> +       if (pn_attr->store)
-> +               count = pn_attr->store(policy_node, page, len);
-> +
-> +       return count;
-> +}
-> +
-> +static struct configfs_item_operations stp_policy_node_item_ops = {
-> +       .release                = stp_policy_node_release,
-> +       .show_attribute         = stp_policy_node_attr_show,
-> +       .store_attribute        = stp_policy_node_attr_store,
-> +};
-> +
-> +static struct stp_policy_node_attribute stp_policy_node_attr_range = {
-> +       .attr   = {
-> +               .ca_owner = THIS_MODULE,
-> +               .ca_name = "masters",
-> +               .ca_mode = S_IRUGO | S_IWUSR,
-> +       },
-> +       .show   = stp_policy_node_masters_show,
-> +       .store  = stp_policy_node_masters_store,
-> +};
-> +
-> +static struct stp_policy_node_attribute stp_policy_node_attr_channels = {
-> +       .attr   = {
-> +               .ca_owner = THIS_MODULE,
-> +               .ca_name = "channels",
-> +               .ca_mode = S_IRUGO | S_IWUSR,
-> +       },
-> +       .show   = stp_policy_node_channels_show,
-> +       .store  = stp_policy_node_channels_store,
-> +};
-> +
-> +static struct configfs_attribute *stp_policy_node_attrs[] = {
-> +       &stp_policy_node_attr_range.attr,
-> +       &stp_policy_node_attr_channels.attr,
-> +       NULL,
-> +};
-> +
-> +static struct config_item_type stp_policy_type;
-> +static struct config_item_type stp_policy_node_type;
-> +
-> +static struct config_group *
-> +stp_policy_node_make(struct config_group *group, const char *name)
-> +{
-> +       struct stp_policy_node *policy_node, *parent_node;
-> +       struct stp_policy *policy;
-> +
-> +       if (group->cg_item.ci_type == &stp_policy_type) {
-> +               policy = container_of(group, struct stp_policy, group);
-> +       } else {
-> +               parent_node = container_of(group, struct stp_policy_node,
-> +                                          group);
-> +               policy = parent_node->policy;
-> +       }
-> +
-> +       if (!policy->stm)
-> +               return ERR_PTR(-ENODEV);
-> +
-> +       policy_node = kzalloc(sizeof(struct stp_policy_node), GFP_KERNEL);
-> +       if (!policy_node)
-> +               return ERR_PTR(-ENOMEM);
-> +
-> +       config_group_init_type_name(&policy_node->group, name,
-> +                                   &stp_policy_node_type);
-> +
-> +       policy_node->policy = policy;
-> +       policy_node->stm = policy->stm;
-> +
-> +       /* default values for the attributes */
-> +       policy_node->first_master = policy->stm->data->sw_start;
-> +       policy_node->last_master = policy->stm->data->sw_end;
-> +       policy_node->first_channel = 0;
-> +       policy_node->last_channel = policy->stm->data->sw_nchannels - 1;
-> +
-> +       return &policy_node->group;
-> +}
-> +
-> +static void
-> +stp_policy_node_drop(struct config_group *group, struct config_item *item)
-> +{
-> +       config_item_put(item);
-> +}
-> +
-> +static struct configfs_group_operations stp_policy_node_group_ops = {
-> +       .make_group     = stp_policy_node_make,
-> +       .drop_item      = stp_policy_node_drop,
-> +};
-> +
-> +static struct config_item_type stp_policy_node_type = {
-> +       .ct_item_ops    = &stp_policy_node_item_ops,
-> +       .ct_group_ops   = &stp_policy_node_group_ops,
-> +       .ct_attrs       = stp_policy_node_attrs,
-> +       .ct_owner       = THIS_MODULE,
-> +};
-> +
-> +/*
-> + * Root group: policies.
-> + */
-> +static struct configfs_attribute stp_policy_attr_device = {
-> +       .ca_owner = THIS_MODULE,
-> +       .ca_name = "device",
-> +       .ca_mode = S_IRUGO | S_IWUSR,
-> +};
-> +
-> +static struct configfs_attribute *stp_policy_attrs[] = {
-> +       &stp_policy_attr_device,
-> +       NULL,
-> +};
-> +
-> +static ssize_t stp_policy_attr_show(struct config_item *item,
-> +                                   struct configfs_attribute *attr,
-> +                                   char *page)
-> +{
-> +       struct stp_policy *policy = to_stp_policy(item);
-> +
-> +       return sprintf(page, "%s\n",
-> +                      (policy && policy->stm) ?
-> +                      policy->stm->data->name :
-> +                      "<none>");
-> +}
-> +
-> +static ssize_t stp_policy_attr_store(struct config_item *item,
-> +                                    struct configfs_attribute *attr,
-> +                                    const char *page, size_t len)
-> +{
-> +       struct stp_policy *policy = to_stp_policy(item);
-> +       ssize_t count = -EINVAL;
-> +       struct device *dev;
-> +
-> +       dev = stm_find_device(page, len);
-> +       if (dev) {
-> +               count = len;
-> +               if (policy->stm)
-> +                       put_device(policy->stm->dev);
-> +
-> +               policy->stm = dev_get_drvdata(dev);
-> +
-> +               mutex_lock(&policy->stm->policy_mutex);
-> +               policy->stm->policy = policy;
-> +               mutex_unlock(&policy->stm->policy_mutex);
-> +       }
-> +
-> +       return count;
-> +}
-> +
-> +void stp_policy_unbind(struct stp_policy *policy)
-> +{
-> +       put_device(policy->stm->dev);
-> +
-> +       mutex_lock(&policy->stm->policy_mutex);
-> +       policy->stm->policy = NULL;
-> +       mutex_unlock(&policy->stm->policy_mutex);
-> +
-> +       policy->stm = NULL;
-> +}
-> +
-> +static void stp_policy_release(struct config_item *item)
-> +{
-> +       struct stp_policy *policy = to_stp_policy(item);
-> +
-> +       stp_policy_unbind(policy);
-> +       kfree(policy);
-> +}
-> +
-> +static struct configfs_item_operations stp_policy_item_ops = {
-> +       .release                = stp_policy_release,
-> +       .show_attribute         = stp_policy_attr_show,
-> +       .store_attribute        = stp_policy_attr_store,
-> +};
-> +
-> +static struct configfs_group_operations stp_policy_group_ops = {
-> +       .make_group     = stp_policy_node_make,
-> +};
-> +
-> +static struct config_item_type stp_policy_type = {
-> +       .ct_item_ops    = &stp_policy_item_ops,
-> +       .ct_group_ops   = &stp_policy_group_ops,
-> +       .ct_attrs       = stp_policy_attrs,
-> +       .ct_owner       = THIS_MODULE,
-> +};
-> +
-> +static struct config_group *
-> +stp_policies_make(struct config_group *group, const char *name)
-> +{
-> +       struct stp_policy *policy;
-> +
-> +       policy = kzalloc(sizeof(*policy), GFP_KERNEL);
-> +       if (!policy)
-> +               return ERR_PTR(-ENOMEM);
-> +
-> +       config_group_init_type_name(&policy->group, name,
-> +                                   &stp_policy_type);
-> +       policy->stm = NULL;
-> +
-> +       return &policy->group;
-> +}
-> +
-> +static struct configfs_group_operations stp_policies_group_ops = {
-> +       .make_group     = stp_policies_make,
-> +};
-> +
-> +static struct config_item_type stp_policies_type = {
-> +       .ct_group_ops   = &stp_policies_group_ops,
-> +       .ct_owner       = THIS_MODULE,
-> +};
-> +
-> +static struct configfs_subsystem stp_policy_subsys = {
-> +       .su_group = {
-> +               .cg_item = {
-> +                       .ci_namebuf     = "stp-policy",
-> +                       .ci_type        = &stp_policies_type,
-> +               },
-> +       },
-> +};
-> +
-> +/*
-> + * Lock the policy mutex from the outside
-> + */
-> +static struct stp_policy_node *
-> +__stp_policy_node_lookup(struct stp_policy *policy, char *s)
-> +{
-> +       struct stp_policy_node *policy_node, *ret;
-> +       struct list_head *head = &policy->group.cg_children;
-> +       struct config_item *item;
-> +       char *start, *end = s;
-> +
-> +       if (list_empty(head))
-> +               return NULL;
-> +
-> +       /* return the first entry if everything else fails */
-> +       item = list_entry(head->next, struct config_item, ci_entry);
-> +       ret = to_stp_policy_node(item);
-> +
-> +next:
-> +       for (;;) {
-> +               start = strsep(&end, "/");
-> +               if (!start)
-> +                       break;
-> +
-> +               if (!*start)
-> +                       continue;
-> +
-> +               list_for_each_entry(item, head, ci_entry) {
-> +                       policy_node = to_stp_policy_node(item);
-> +
-> +                       if (!strcmp(start,
-> +                                   policy_node->group.cg_item.ci_name)) {
-> +                               ret = policy_node;
-> +
-> +                               if (!end)
-> +                                       goto out;
-> +
-> +                               head = &policy_node->group.cg_children;
-> +                               goto next;
-> +                       }
-> +               }
-> +               break;
-> +       }
-> +
-> +out:
-> +       return ret;
-> +}
-> +
-> +struct stp_policy_node *
-> +stp_policy_node_lookup(struct stp_policy *policy, char *s)
-> +{
-> +       struct stp_policy_node *policy_node;
-> +
-> +       mutex_lock(&stp_policy_subsys.su_mutex);
-> +       policy_node = __stp_policy_node_lookup(policy, s);
-> +       mutex_unlock(&stp_policy_subsys.su_mutex);
-> +
-> +       return policy_node;
-> +}
-> +
-> +int __init stp_configfs_init(void)
-> +{
-> +       int err;
-> +
-> +       config_group_init(&stp_policy_subsys.su_group);
-> +       mutex_init(&stp_policy_subsys.su_mutex);
-> +       err = configfs_register_subsystem(&stp_policy_subsys);
-> +
-> +       return err;
-> +}
-> +
-> +void __exit stp_configfs_exit(void)
-> +{
-> +       configfs_unregister_subsystem(&stp_policy_subsys);
-> +}
-> diff --git a/drivers/hwtracing/stm/stm.h b/drivers/hwtracing/stm/stm.h
-> new file mode 100644
-> index 0000000000..4d088a1400
-> --- /dev/null
-> +++ b/drivers/hwtracing/stm/stm.h
-> @@ -0,0 +1,79 @@
-> +/*
-> + * System Trace Module (STM) infrastructure
-> + * Copyright (c) 2014, Intel Corporation.
-> + *
-> + * This program is free software; you can redistribute it and/or modify it
-> + * under the terms and conditions of the GNU General Public License,
-> + * version 2, as published by the Free Software Foundation.
-> + *
-> + * This program is distributed in the hope it will be useful, but WITHOUT
-> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-> + * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-> + * more details.
-> + *
-> + * STM class implements generic infrastructure for  System Trace Module devices
-> + * as defined in MIPI STPv2 specification.
-> + */
-> +
-> +#ifndef _CLASS_STM_H_
-> +#define _CLASS_STM_H_
-> +
-> +struct stp_policy;
-> +struct stp_policy_node;
-> +
-> +struct stp_policy_node *
-> +stp_policy_node_lookup(struct stp_policy *policy, char *s);
-> +void stp_policy_unbind(struct stp_policy *policy);
-> +
-> +void stp_policy_node_get_ranges(struct stp_policy_node *policy_node,
-> +                               unsigned int *mstart, unsigned int *mend,
-> +                               unsigned int *cstart, unsigned int *cend);
-> +int stp_configfs_init(void);
-> +void stp_configfs_exit(void);
-> +
-> +struct stp_master {
-> +       unsigned int    nr_free;
-> +       unsigned long   chan_map[0];
-> +};
-> +
-> +struct stm_device {
-> +       struct device           *dev;
-> +       struct module           *owner;
-> +       struct stp_policy       *policy;
-> +       struct mutex            policy_mutex;
-> +       int                     major;
-> +       unsigned int            sw_nmasters;
-> +       struct stm_data         *data;
-> +       spinlock_t              link_lock;
-> +       struct list_head        link_list;
-> +       /* master allocation */
-> +       spinlock_t              mc_lock;
-> +       struct stp_master       *masters[0];
-> +};
-> +
-> +struct stm_output {
-> +       unsigned int            master;
-> +       unsigned int            channel;
-> +       unsigned int            nr_chans;
-> +};
-> +
-> +struct stm_file {
-> +       struct stm_device       *stm;
-> +       struct stp_policy_node  *policy_node;
-> +       struct stm_output       output;
-> +};
-> +
-> +struct device *stm_find_device(const char *name, size_t len);
-> +
-> +struct stm_source_device {
-> +       struct device           *dev;
-> +       struct stm_source_data  *data;
-> +       spinlock_t              link_lock;
-> +       struct stm_device       *link;
-> +       struct list_head        link_entry;
-> +       /* one output per stm_source device */
-> +       struct stp_policy_node  *policy_node;
-> +       struct stm_output       output;
-> +};
-> +
-> +#endif /* _CLASS_STM_H_ */
-> diff --git a/include/linux/stm.h b/include/linux/stm.h
-> new file mode 100644
-> index 0000000000..976c94d8f1
-> --- /dev/null
-> +++ b/include/linux/stm.h
-> @@ -0,0 +1,102 @@
-> +/*
-> + * System Trace Module (STM) infrastructure apis
-> + * Copyright (C) 2014 Intel Corporation.
-> + *
-> + * This program is free software; you can redistribute it and/or modify it
-> + * under the terms and conditions of the GNU General Public License,
-> + * version 2, as published by the Free Software Foundation.
-> + *
-> + * This program is distributed in the hope it will be useful, but WITHOUT
-> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-> + * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-> + * more details.
-> + */
-> +
-> +#ifndef _STM_H_
-> +#define _STM_H_
-> +
-> +#include <linux/device.h>
-> +
-> +struct stp_policy;
-> +
-> +struct stm_device;
+> +#include <linux/bpf.h>
+> +#include <linux/filter.h>
+> +#include <linux/uaccess.h>
+> +#include "trace.h"
+> +
+> +static DEFINE_PER_CPU(int, bpf_prog_active);
 > +
 > +/**
-> + * struct stm_data - STM device description and callbacks
-> + * @name:              device name
-> + * @stm:               internal structure, only used by stm class code
-> + * @sw_start:          first STP master available to software
-> + * @sw_end:            last STP master available to software
-> + * @sw_nchannels:      number of STP channels per master
-> + * @sw_mmiosz:         size of one channel's IO space, for mmap, optional
-> + * @write:             write callback
-> + * @mmio_addr:         mmap callback, optional
-> + * @link:              called when a new stm_source gets linked to us, optional
-> + * @unlink:            likewise for unlinking, again optional
-> + * @ioctl:             ioctl callback for device-specific commands
+> + * trace_call_bpf - invoke BPF program
+> + * @prog: BPF program
+> + * @ctx: opaque context pointer
 > + *
-> + * Fill out this structure before calling stm_register_device() to create
-> + * an STM device and stm_unregister_device() to destroy it. It will also be
-> + * passed back to @write(), @mmio_addr(), @link(), @unlink() and @ioctl()
-> + * callbacks.
+> + * kprobe handlers execute BPF programs via this helper.
+> + * Can be used from static tracepoints in the future.
 > + *
-> + * Normally, an STM device will have a range of masters available to software
-> + * and the rest being statically assigned to various hardware trace sources.
-> + * The former is defined by the the range [@sw_start..@sw_end] of the device
-> + * description. That is, the lowest master that can be allocated to software
-> + * writers is @sw_start and data from this writer will appear is @sw_start
-> + * master in the STP stream.
+> + * Return: BPF programs always return an integer which is interpreted by
+> + * kprobe handler as:
+> + * 0 - return from kprobe (event is filtered out)
+> + * 1 - store kprobe event into ring buffer
+> + * Other values are reserved and currently alias to 1
 > + */
-> +struct stm_data {
-> +       const char              *name;
-> +       struct stm_device       *stm;
-> +       unsigned int            sw_start;
-> +       unsigned int            sw_end;
-> +       unsigned int            sw_nchannels;
-> +       unsigned int            sw_mmiosz;
-> +       ssize_t                 (*write)(struct stm_data *, unsigned int,
-> +                                        unsigned int, const char *, size_t);
-> +       phys_addr_t             (*mmio_addr)(struct stm_data *, unsigned int,
-> +                                            unsigned int, unsigned int);
-> +       void                    (*link)(struct stm_data *, unsigned int,
-> +                                       unsigned int);
-> +       void                    (*unlink)(struct stm_data *, unsigned int,
-> +                                         unsigned int);
-> +       long                    (*ioctl)(struct stm_data *, unsigned int,
-> +                                        unsigned long);
+> +unsigned int trace_call_bpf(struct bpf_prog *prog, void *ctx)
+> +{
+> +	unsigned int ret;
+> +
+> +	if (in_nmi()) /* not supported yet */
+> +		return 1;
+> +
+> +	preempt_disable();
+> +
+> +	if (unlikely(__this_cpu_inc_return(bpf_prog_active) != 1)) {
+> +		/*
+> +		 * since some bpf program is already running on this cpu,
+> +		 * don't call into another bpf program (same or different)
+> +		 * and don't send kprobe event into ring-buffer,
+> +		 * so return zero here
+> +		 */
+> +		ret = 0;
+> +		goto out;
+> +	}
+> +
+> +	rcu_read_lock();
+> +	ret = BPF_PROG_RUN(prog, ctx);
+> +	rcu_read_unlock();
+> +
+> + out:
+> +	__this_cpu_dec(bpf_prog_active);
+> +	preempt_enable();
+> +
+> +	return ret;
+> +}
+> +EXPORT_SYMBOL_GPL(trace_call_bpf);
+> +
+> +static u64 bpf_probe_read(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
+> +{
+> +	void *dst = (void *) (long) r1;
+> +	int size = (int) r2;
+> +	void *unsafe_ptr = (void *) (long) r3;
+> +
+> +	return probe_kernel_read(dst, unsafe_ptr, size);
+> +}
+> +
+> +static const struct bpf_func_proto bpf_probe_read_proto = {
+> +	.func		= bpf_probe_read,
+> +	.gpl_only	= true,
+> +	.ret_type	= RET_INTEGER,
+> +	.arg1_type	= ARG_PTR_TO_STACK,
+> +	.arg2_type	= ARG_CONST_STACK_SIZE,
+> +	.arg3_type	= ARG_ANYTHING,
 > +};
 > +
-> +int stm_register_device(struct device *parent, struct stm_data *stm_data,
-> +                       struct module *owner);
-> +void stm_unregister_device(struct stm_data *stm_data);
+> +static const struct bpf_func_proto *kprobe_prog_func_proto(enum bpf_func_id func_id)
+> +{
+> +	switch (func_id) {
+> +	case BPF_FUNC_map_lookup_elem:
+> +		return &bpf_map_lookup_elem_proto;
+> +	case BPF_FUNC_map_update_elem:
+> +		return &bpf_map_update_elem_proto;
+> +	case BPF_FUNC_map_delete_elem:
+> +		return &bpf_map_delete_elem_proto;
+> +	case BPF_FUNC_probe_read:
+> +		return &bpf_probe_read_proto;
+> +	default:
+> +		return NULL;
+> +	}
+> +}
 > +
-> +struct stm_source_device;
+> +/* bpf+kprobe programs can access fields of 'struct pt_regs' */
+> +static bool kprobe_prog_is_valid_access(int off, int size, enum bpf_access_type type)
+> +{
+> +	/* check bounds */
+> +	if (off < 0 || off >= sizeof(struct pt_regs))
+> +		return false;
 > +
-> +/**
-> + * struct stm_source_data - STM source device description and callbacks
-> + * @name:      device name, will be used for policy lookup
-> + * @src:       internal structure, only used by stm class code
-> + * @nr_chans:  number of channels to allocate
-> + * @link:      called when this source gets linked to an STM device
-> + * @unlink:    called when this source is about to get unlinked from its STM
-> + *
-> + * Fill in this structure before calling stm_source_register_device() to
-> + * register a source device. Also pass it to unregister and write calls.
-> + */
-> +struct stm_source_data {
-> +       const char              *name;
-> +       struct stm_source_device *src;
-> +       unsigned int            percpu;
-> +       unsigned int            nr_chans;
-> +       int                     (*link)(struct stm_source_data *data);
-> +       void                    (*unlink)(struct stm_source_data *data);
+> +	/* only read is allowed */
+> +	if (type != BPF_READ)
+> +		return false;
+> +
+> +	/* disallow misaligned access */
+> +	if (off % size != 0)
+> +		return false;
+> +
+> +	return true;
+> +}
+> +
+> +static struct bpf_verifier_ops kprobe_prog_ops = {
+> +	.get_func_proto  = kprobe_prog_func_proto,
+> +	.is_valid_access = kprobe_prog_is_valid_access,
 > +};
 > +
-> +int stm_source_register_device(struct device *parent,
-> +                              struct stm_source_data *data);
-> +void stm_source_unregister_device(struct stm_source_data *data);
-> +
-> +int stm_source_write(struct stm_source_data *data, unsigned int chan,
-> +                    const char *buf, size_t count);
-> +
-> +#endif /* _STM_H_ */
-> diff --git a/include/uapi/linux/stm.h b/include/uapi/linux/stm.h
-> new file mode 100644
-> index 0000000000..042b58b53b
-> --- /dev/null
-> +++ b/include/uapi/linux/stm.h
-> @@ -0,0 +1,47 @@
-> +/*
-> + * System Trace Module (STM) userspace interfaces
-> + * Copyright (c) 2014, Intel Corporation.
-> + *
-> + * This program is free software; you can redistribute it and/or modify it
-> + * under the terms and conditions of the GNU General Public License,
-> + * version 2, as published by the Free Software Foundation.
-> + *
-> + * This program is distributed in the hope it will be useful, but WITHOUT
-> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-> + * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-> + * more details.
-> + *
-> + * STM class implements generic infrastructure for  System Trace Module devices
-> + * as defined in MIPI STPv2 specification.
-> + */
-> +
-> +#ifndef _UAPI_LINUX_STM_H
-> +#define _UAPI_LINUX_STM_H
-> +
-> +/**
-> + * struct stp_policy_id - identification for the STP policy
-> + * @size:      size of the structure including real id[] length
-> + * @master:    assigned master
-> + * @channel:   first assigned channel
-> + * @width:     number of requested channels
-> + * @id:                identification string
-> + *
-> + * User must calculate the total size of the structure and put it into
-> + * @size field, fill out the @id and desired @width. In return, kernel
-> + * fills out @master, @channel and @width.
-> + */
-> +struct stp_policy_id {
-> +       __u32           size;
-> +       __u16           master;
-> +       __u16           channel;
-> +       __u16           width;
-> +       /* padding */
-> +       __u16           __reserved_0;
-> +       __u32           __reserved_1;
-> +       char            id[0];
+> +static struct bpf_prog_type_list kprobe_tl = {
+> +	.ops	= &kprobe_prog_ops,
+> +	.type	= BPF_PROG_TYPE_KPROBE,
 > +};
 > +
-> +#define STP_POLICY_ID_SET      _IOWR('%', 0, struct stp_policy_id)
-> +#define STP_POLICY_ID_GET      _IOR('%', 1, struct stp_policy_id)
+> +static int __init register_kprobe_prog_ops(void)
+> +{
+> +	bpf_register_prog_type(&kprobe_tl);
+> +	return 0;
+> +}
+> +late_initcall(register_kprobe_prog_ops);
+> diff --git a/kernel/trace/trace_kprobe.c b/kernel/trace/trace_kprobe.c
+> index 8fa549f6f528..dc3462507d7c 100644
+> --- a/kernel/trace/trace_kprobe.c
+> +++ b/kernel/trace/trace_kprobe.c
+> @@ -1134,11 +1134,15 @@ static void
+>  kprobe_perf_func(struct trace_kprobe *tk, struct pt_regs *regs)
+>  {
+>  	struct ftrace_event_call *call = &tk->tp.call;
+> +	struct bpf_prog *prog = call->prog;
+>  	struct kprobe_trace_entry_head *entry;
+>  	struct hlist_head *head;
+>  	int size, __size, dsize;
+>  	int rctx;
+>  
+> +	if (prog && !trace_call_bpf(prog, regs))
+> +		return;
 > +
-> +#endif /* _UAPI_LINUX_STM_H */
-> --
-> 2.1.4
->
+>  	head = this_cpu_ptr(call->perf_events);
+>  	if (hlist_empty(head))
+>  		return;
+> @@ -1165,11 +1169,15 @@ kretprobe_perf_func(struct trace_kprobe *tk, struct kretprobe_instance *ri,
+>  		    struct pt_regs *regs)
+>  {
+>  	struct ftrace_event_call *call = &tk->tp.call;
+> +	struct bpf_prog *prog = call->prog;
+>  	struct kretprobe_trace_entry_head *entry;
+>  	struct hlist_head *head;
+>  	int size, __size, dsize;
+>  	int rctx;
+>  
+> +	if (prog && !trace_call_bpf(prog, regs))
+> +		return;
+> +
+>  	head = this_cpu_ptr(call->perf_events);
+>  	if (hlist_empty(head))
+>  		return;
+> 
+
+
+-- 
+Masami HIRAMATSU
+Software Platform Research Dept. Linux Technology Research Center
+Hitachi, Ltd., Yokohama Research Laboratory
+E-mail: masami.hiramatsu.pt@hitachi.com
