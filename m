@@ -1,28 +1,55 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [PATCH v10 tip 5/9] tracing: allow BPF programs to call
- bpf_trace_printk()
-Date: Mon, 23 Mar 2015 11:37:57 +0000
-Message-ID: <063D6719AE5E284EB5DD2968C1650D6D1CB07731@AcuExch.aculab.com>
-References: <1427053150-32213-1-git-send-email-ast@plumgrid.com>
- <1427053150-32213-6-git-send-email-ast@plumgrid.com>
+From: Paolo Bonzini <pbonzini@redhat.com>
+Subject: Re: [virtio-dev] Re: [PATCH 1/1] Add virtio-input driver.
+Date: Mon, 23 Mar 2015 12:52:36 +0100
+Message-ID: <550FFE84.4060001@redhat.com>
+References: <1426756391-26585-1-git-send-email-kraxel@redhat.com>	
+	<1426756391-26585-2-git-send-email-kraxel@redhat.com>	
+	<20150319123940-mutt-send-email-mst@redhat.com>	
+	<1426847327.32097.60.camel@nilsson.home.kraxel.org>	
+	<20150321225356-mutt-send-email-mst@redhat.com>
+	<1427097238.6365.27.camel@nilsson.home.kraxel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="Windows-1252"
-Content-Transfer-Encoding: 8BIT
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <1427053150-32213-6-git-send-email-ast@plumgrid.com>
-Content-Language: en-US
-Sender: netdev-owner@vger.kernel.org
-To: 'Alexei Starovoitov' <ast@plumgrid.com>, Ingo Molnar <mingo@kernel.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <1427097238.6365.27.camel@nilsson.home.kraxel.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Gerd Hoffmann <kraxel@redhat.com>, "Michael S. Tsirkin" <mst@redhat.com>
+Cc: virtio-dev@lists.oasis-open.org, open list <linux-kernel@vger.kernel.org>, ABI/API <linux-api@vger.kernel.org>, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-From: Alexei Starovoitov
-> Debugging of BPF programs needs some form of printk from the program,
-> so let programs call limited trace_printk() with %d %u %x %p modifiers only.
 
-Should anyone be allowed to use BPF programs to determine the kernel
-addresses of any items?
-Looks as though it is leaking kernel addresses to userspace.
-Note that the problem is with the arguments, not the format string.
 
-	David
+On 23/03/2015 08:53, Gerd Hoffmann wrote:
+>>>>> > > > > +		if (cfg & (1 << (bit % 8)))
+>>>>> > > > > +			set_bit(bit, bits);
+>>>> > > > 
+>>>> > > > what if not set? does something clear the mask?
+>>> > > 
+>>> > > kzalloc?
+>> > 
+>> > So you are really just reading in array of bytes?
+>> > All this set bit trickery is just to convert things from LE?
+> Trickery?  Just checking each bit from virtio config space, then set it
+> in the input layer bitmap.  It's a simple stupid loop.
+> 
+> Surely not the most efficient way, but hey, it's not in the hot path and
+> I'm sure I'm setting the bits correctly because this uses the standard
+> linux kernel bitops.
+
+Use __set_bit though, because set_bit is an atomic operation.
+
+Paolo
+
+>> > At least, this needs a comment explaining what the function does,
+>> > and maybe wrap it in a helper like virtio_input_bitmap_copy or
+>> > virtio_bitmap_or.
+> Can do that, sure.
