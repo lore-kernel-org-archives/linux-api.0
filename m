@@ -1,50 +1,82 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH v9 tip 8/9] samples: bpf: IO latency analysis
- (iosnoop/heatmap)
-Date: Mon, 23 Mar 2015 08:40:28 +0100
-Message-ID: <20150323074028.GE25184@gmail.com>
-References: <1426894210-27441-1-git-send-email-ast@plumgrid.com>
- <1426894210-27441-9-git-send-email-ast@plumgrid.com>
+From: Gerd Hoffmann <kraxel@redhat.com>
+Subject: Re: [PATCH 1/1] Add virtio-input driver.
+Date: Mon, 23 Mar 2015 08:53:58 +0100
+Message-ID: <1427097238.6365.27.camel@nilsson.home.kraxel.org>
+References: <1426756391-26585-1-git-send-email-kraxel@redhat.com>
+	<1426756391-26585-2-git-send-email-kraxel@redhat.com>
+	<20150319123940-mutt-send-email-mst@redhat.com>
+	<1426847327.32097.60.camel@nilsson.home.kraxel.org>
+	<20150321225356-mutt-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1426894210-27441-9-git-send-email-ast@plumgrid.com>
-Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@plumgrid.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <20150321225356-mutt-send-email-mst@redhat.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: "Michael S. Tsirkin" <mst@redhat.com>
+Cc: virtio-dev@lists.oasis-open.org, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
+  Hi,
 
-* Alexei Starovoitov <ast@plumgrid.com> wrote:
+> > > > +		if (cfg & (1 << (bit % 8)))
+> > > > +			set_bit(bit, bits);
+> > > 
+> > > what if not set? does something clear the mask?
+> > 
+> > kzalloc?
+> 
+> So you are really just reading in array of bytes?
+> All this set bit trickery is just to convert things from LE?
 
-> BPF C program attaches to blk_mq_start_request/blk_update_request kprobe events
-> to calculate IO latency.
+Trickery?  Just checking each bit from virtio config space, then set it
+in the input layer bitmap.  It's a simple stupid loop.
 
- ...
+Surely not the most efficient way, but hey, it's not in the hot path and
+I'm sure I'm setting the bits correctly because this uses the standard
+linux kernel bitops.
 
-> +/* kprobe is NOT a stable ABI
-> + * This bpf+kprobe example can stop working any time.
-> + */
-> +SEC("kprobe/blk_mq_start_request")
-> +int bpf_prog1(struct pt_regs *ctx)
-> +{
-> +	long rq = ctx->di;
-> +	u64 val = bpf_ktime_get_ns();
-> +
-> +	bpf_map_update_elem(&my_map, &rq, &val, BPF_ANY);
-> +	return 0;
-> +}
+> At least, this needs a comment explaining what the function does,
+> and maybe wrap it in a helper like virtio_input_bitmap_copy or
+> virtio_bitmap_or.
 
-So just to make sure the original BPF instrumentation model is still 
-upheld: no matter in what way the kernel changes, neither the kprobe, 
-nor the BPF program can ever crash or corrupt the kernel, assuming the 
-kprobes, perf and BPF subsystem has no bugs, correct?
+Can do that, sure.
 
-So 'stops working' here means that the instrumentation data might not 
-be reliable if kernel internal interfaces change - but it won't ever 
-make the kernel unreliable in any fashion. Right?
+> > > > +	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ABS_INFO, abs);
+> > > > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.min, &mi);
+> > > > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.max, &ma);
+> > > > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.fuzz, &fu);
+> > > > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.flat, &fl);
+> > > 
+> > > you read le field into u32 value.
+> > > Please run sparse on this code. you will get a ton
+> > > of warnings. Same error appears elsewhere.
+> > 
+> > Indeed.  IIRC that wasn't the case a while back.  Guess those bitwise
+> > annotations have been added with the virtio 1.0 patches?
+> > 
+> > In any case I'll fix it up.
+> 
+> I see you still didn't in v2?
 
-Thanks,
+v2 builds fine without sparse warnings.  virtio_cread handles swapping
+if needed and returns native endian, so I have to store this in normal
+u32 variables and pass it on to the input layer as-is.
 
-	Ingo
+> You are doing leXXX everywhere, that's VERSION_1 dependency.
+> virtio_cread will do byteswaps differently without VERSION_1.
+> Just don't go there.
+
+Changed that for v2, for the config space structs.  They have normal u32
+in there now.  virtio_cread() wants it this way.
+
+cheers,
+  Gerd
