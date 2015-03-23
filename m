@@ -1,59 +1,74 @@
-From: David Herrmann <dh.herrmann@gmail.com>
-Subject: Re: [PATCH v4 00/14] Add kdbus implementation
-Date: Mon, 23 Mar 2015 16:28:51 +0100
-Message-ID: <CANq1E4TtXq02Ug22fsTr8j0X6+vJKvyryALiTEMbT4SMQB1j3g@mail.gmail.com>
-References: <1425906560-13798-1-git-send-email-gregkh@linuxfoundation.org>
-	<CALCETrUjqTH14fZCeqU_OBoKX_6x4B=712WTeSqSAztpgXGiDw@mail.gmail.com>
-	<CANq1E4Tf_6Cn+sxY=BPEbRpEr5WY+-rRX5gipz-_=4PNLa9bnQ@mail.gmail.com>
-	<CALCETrVWbz7YudNQXQD_2PjC1HR0P0cB_1ea8NiYoQPDfQxERg@mail.gmail.com>
-	<CANq1E4RA1ok=3Z5W2LkzqaUOKtbMVX_Joxe7_LRbLnQgfRUEYA@mail.gmail.com>
-	<CALCETrWCBYzbzG3xZznG4AvVf67E_d8BVmBi1bZsDx7x_2Bh5g@mail.gmail.com>
+From: Cornelia Huck <cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 1/1] Add virtio-input driver.
+Date: Mon, 23 Mar 2015 17:17:25 +0100
+Message-ID: <20150323171725.5c459dec.cornelia.huck@de.ibm.com>
+References: <1426756391-26585-1-git-send-email-kraxel@redhat.com>
+	<1426756391-26585-2-git-send-email-kraxel@redhat.com>
+	<20150319123940-mutt-send-email-mst@redhat.com>
+	<1426847327.32097.60.camel@nilsson.home.kraxel.org>
+	<20150321225356-mutt-send-email-mst@redhat.com>
+	<1427097238.6365.27.camel@nilsson.home.kraxel.org>
+	<1427118292.27137.39.camel@nilsson.home.kraxel.org>
+	<20150323144803-mutt-send-email-mst@redhat.com>
+	<1427120855.27137.55.camel@nilsson.home.kraxel.org>
+	<20150323155106-mutt-send-email-mst@redhat.com>
+	<1427123129.27137.62.camel@nilsson.home.kraxel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrWCBYzbzG3xZznG4AvVf67E_d8BVmBi1bZsDx7x_2Bh5g@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Tom Gundersen <teg@jklm.no>, Jiri Kosina <jkosina@suse.cz>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Daniel Mack <daniel@zonque.org>, Djalal Harouni <tixxdz@opendz.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1427123129.27137.62.camel-3OfP5uLMi4C46o+2HkPkLj4oCIwMql/M@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, virtio-dev-sDuHXQ4OtrM4h7I2RyI4rWD2FQJk+8+b@public.gmane.org, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi
+On Mon, 23 Mar 2015 16:05:29 +0100
+Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 
-On Thu, Mar 19, 2015 at 4:48 PM, Andy Lutomirski <luto@amacapital.net> wrote:
-> On Thu, Mar 19, 2015 at 4:26 AM, David Herrmann <dh.herrmann@gmail.com> wrote:
->> metadata handling is local to the connection that sends the message.
->> It does not affect the overall performance of other bus operations in
->> parallel.
->
-> Sure it does if it writes to shared cachelines.  Given that you're
-> incrementing refcounts, I'm reasonable sure that you're touching lots
-> of shared cachelines.
+> On Mo, 2015-03-23 at 15:54 +0100, Michael S. Tsirkin wrote:
+> > On Mon, Mar 23, 2015 at 03:27:35PM +0100, Gerd Hoffmann wrote:
+> > >   Hi,
+> > > 
+> > > > > > > You are doing leXXX everywhere, that's VERSION_1 dependency.
+> > > > > > > virtio_cread will do byteswaps differently without VERSION_1.
+> > > > > > > Just don't go there.
+> > > 
+> > > > So to clarify, you dislike using __virtio32 in virtio input header?
+> > > 
+> > > Well, as I understand things __virtio32 implies byteorder depends on
+> > > whenever we are using VERSION_1 or not.  And non-transitional drivers
+> > > should not need it as everything is by definition little endian.
+> > > 
+> > > So, yes, your suggestion to just require VERSION_1 in the driver implies
+> > > in my eyes that there should be no reason to use __virtio32 instead of
+> > > __le32.
+> > > 
+> > > Or do I miss something here?
+> > > 
+> > > cheers,
+> > >   Gerd
+> > > 
+> > 
+> > You are right but then if you do require VERSION_1 then
+> > __virtio32 becomes identical to __le32.
+> 
+> Except that sparse doesn't know that and throws errors when I mix the
+> two.
+> 
+> > There's some runtime overhead as we check on each access,
+> > but it shouldn't matter here, right?
+> 
+> Correct, config space is used at initialization time only.
+> 
+> > I guess we could add virtio_cread_le - is this what
+> > you'd like?
+> 
+> I just want something that makes both you and sparse happy.  I don't
+> care much whenever that is adding virtio_cread_le() or using __virtio32
+> even though it'll effectively is __le32 due to VERSION_1 being required.
 
-Ok, sure, but it's still mostly local to the sending task. We take
-locks and ref-counts on the task-struct and mm, which is for most
-parts local to the CPU the task runs on. But this is inherent to
-accessing this kind of data, which is the fundamental difference in
-our views here, as seen below..
-
->> Furthermore, it's way faster than collecting the "same" data
->> via /proc, so I don't think it slows down the overall transaction at
->> all. If a receiver doesn't want metadata, it should not request it (by
->> setting the receiver-metadata-mask). If a sender doesn't like the
->> overhead, it should not send the metadata (by setting the
->> sender-metadata-mask). Only if both peers set the metadata mask, it
->> will be transmitted.
->
-> But you're comparing to the wrong thing, IMO.  Of course it's much
-> faster than /proc hackery, but it's probably much slower to do the
-> metadata operation once per message than to do it when you connect to
-> the endpoint.  (Gah!  It's a "bus" that could easily have tons of
-> users but a single "endpoint".  I'm still not used to it.)
-
-Yes, of course your assumption is right if you compare against
-per-connection caches, instead of per-message metadata. But we do
-support _both_ use-cases, so we don't impose any policy.
-We still believe "live"-metadata is a crucial feature of kdbus,
-despite the known performance penalties.
-
-Thanks
-David
+I think it is clearer if you use __virtio32: The fact that virtio-input
+is VERSION_1 only is not apparent from looking at the config space
+definition, and explicitly forcing le accesses makes it look similar to
+the oddballs like virtio-balloon. Just my two cents.
