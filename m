@@ -1,110 +1,64 @@
-From: Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Daniel Micay <danielmicay@gmail.com>
 Subject: Re: [PATCH] mremap: add MREMAP_NOHOLE flag --resend
-Date: Tue, 24 Mar 2015 10:39:32 -0400
-Message-ID: <55117724.6030102@gmail.com>
-References: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli@fb.com>	<20150318153100.5658b741277f3717b52e42d9@linux-foundation.org>	<550A5FF8.90504@gmail.com>	<CADpJO7zBLhjecbiQeTubnTReiicVLr0-K43KbB4uCL5w_dyqJg@mail.gmail.com>	<20150323051731.GA2616341@devbig257.prn2.facebook.com> <CADpJO7zk8J3q7Bw9NibV9CzLarO+YkfeshyFTTq=XeS5qziBiA@mail.gmail.com>
+Date: Tue, 24 Mar 2015 10:54:11 -0400
+Message-ID: <55117A93.9040207@gmail.com>
+References: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli@fb.com>	<20150318153100.5658b741277f3717b52e42d9@linux-foundation.org>	<550A5FF8.90504@gmail.com>	<CADpJO7zBLhjecbiQeTubnTReiicVLr0-K43KbB4uCL5w_dyqJg@mail.gmail.com>	<550E6D9D.1060507@gmail.com> <CADpJO7wP+dvXyxP7SW7F12jra_cWrEba7orRXMJGytvgOJfHkA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha256;
  protocol="application/pgp-signature";
- boundary="XS1wJbCjV1BPoLF1q09GXFEk2cJ6xqVA5"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CADpJO7zk8J3q7Bw9NibV9CzLarO+YkfeshyFTTq=XeS5qziBiA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Aliaksey Kandratsenka <alkondratenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Shaohua Li <shli-b10kYP2dOMg@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mel-wPRd99KPJ+uzQB+pC5nmwQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "google-perftools-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org" <google-perftools-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+ boundary="3GRRfwHH9NECM73LwlMjdmM2qrHCsTo5c"
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CADpJO7wP+dvXyxP7SW7F12jra_cWrEba7orRXMJGytvgOJfHkA@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Aliaksey Kandratsenka <alkondratenko@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Shaohua Li <shli@fb.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, Rik van Riel <riel@redhat.com>, Hugh Dickins <hughd@google.com>, Mel Gorman <mel@csn.ul.ie>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Andy Lutomirski <luto@amacapital.net>, "google-perftools@googlegroups.com" <google-perftools@googlegroups.com>
 List-Id: linux-api@vger.kernel.org
 
 This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---XS1wJbCjV1BPoLF1q09GXFEk2cJ6xqVA5
+--3GRRfwHH9NECM73LwlMjdmM2qrHCsTo5c
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 
-On 24/03/15 01:25 AM, Aliaksey Kandratsenka wrote:
->=20
-> Well, I don't have any workloads. I'm just maintaining a library that
-> others run various workloads on. Part of the problem is lack of good
-> and varied malloc benchmarks which could allow us that prevent
-> regression. So this makes me a bit more cautious on performance
-> matters.
->=20
-> But I see your point. Indeed I have no evidence at all that exclusive
-> locking might cause observable performance difference.
+> Given that mremap is holding mmap_sem exclusively, how about userspace
+> malloc implementation taking some exclusive malloc lock and doing
+> normal mremap followed by mmap with MAP_FIXED to fill the hole ? It
+> might end up having largely same overhead. Well, modulo some extra TLB
+> flushing. But arguably, reducing TLB flushes for sequence of page
+> table updates could be usefully addressed separately (e.g. maybe by
+> matching those syscalls, maybe via syslets).
 
-I'm sure it matters but I expect you'd need *many* cores running many
-threads before it started to outweigh the benefit of copying pages
-instead of data.
+You can't use MAP_FIXED because it has a race with other users of mmap.
 
-Thinking about it a bit more, it would probably make sense for mremap to
-start with the optimistic assumption that the reader lock is enough here
-when using MREMAP_NOHOLE|MREMAP_FIXED. It only needs the writer lock if
-the destination mapping is incomplete or doesn't match, which is an edge
-case as holes would mean thread unsafety.
+The address hint will *usually* work, but you need to deal with the case
+where it fails and then cope with the fallout of the fragmentation.
 
-An ideal allocator will toggle on PROT_NONE when overcommit is disabled
-so this assumption would be wrong. The heuristic could just be adjusted
-to assume the dest VMA will match with MREMAP_NOHOLE|MREMAP_FIXED when
-full memory accounting isn't enabled. The fallback would never ended up
-being needed in existing use cases that I'm aware of, and would just add
-the overhead of a quick lock, O(log n) check and unlock with the reader
-lock held anyway. Another flag isn't really necessary.
+PaX ASLR ignores address hints so that's something else to consider if
+you care about running on PaX/Grsecurity patched kernels.
 
->>> Another notable thing is how mlock effectively disables MADV_DONTNEED=
- for
->>> jemalloc{1,2} and tcmalloc, lowers page faults count and thus improve=
-s
->>> runtime. It can be seen that tcmalloc+mlock on thp-less configuration=
- is
->>> slightly better on runtime to glibc. The later spends a ton of time i=
-n
->>> kernel,
->>> probably handling minor page faults, and the former burns cpu in user=
- space
->>> doing memcpy-s. So "tons of memcpys" seems to be competitive to what =
-glibc
->>> is
->>> doing in this benchmark.
->>
->> mlock disables MADV_DONTNEED, so this is an unfair comparsion. With it=
-,
->> allocator will use more memory than expected.
->=20
-> Do not agree with unfair. I'm actually hoping MADV_FREE to provide
-> most if not all of benefits of mlock in this benchmark. I believe it's
-> not too unreasonable expectation.
+I'm doing this in my own allocator that's heavily based on the jemalloc
+design. It just unmaps the memory given by the hinted mmap call if it
+fails to get back the hole:
 
-MADV_FREE will still result in as many page faults, just no zeroing.
+https://github.com/thestinger/allocator/blob/e80d2d0c2863c490b650ecffeb33=
+beaccfcfdc46/huge.c#L167-L180
 
-I get ~20k requests/s with jemalloc on the ebizzy benchmark with this
-dual core ivy bridge laptop. It jumps to ~60k requests/s with MADV_FREE
-IIRC, but disabling purging via MALLOC_CONF=3Dlg_dirty_mult:-1 leads to
-3.5 *million* requests/s. It has a similar impact with TCMalloc.
+On 64-bit, it relies on 1TiB of reserved address space (works even with
+overcommit disabled) to do per-CPU allocation for chunks and huge (>=3D
+chunk size) allocations via address range checks so it also needs this
+ugly workaround too:
 
->> I'm kind of confused why we talk about THP, mlock here. When applicati=
-on
->> uses allocator, it doesn't need to be forced to use THP or mlock. Can =
-we
->> forcus on normal case?
->=20
-> See my note on mlock above.
->=20
-> THP it is actually "normal". I know for certain, that many production
-> workloads are run on boxes with THP enabled. Red Hat famously ships
-> it's distros with THP set to "always". And I also know that some other
-> many production workloads are run on boxes with THP disabled. Also, as
-> seen above, "teleporting" pages is more efficient with THP due to much
-> smaller overhead of moving those pages. So I felt it was important not
-> to omit THP in my runs.
+https://github.com/thestinger/allocator/blob/e80d2d0c2863c490b650ecffeb33=
+beaccfcfdc46/huge.c#L67-L75
 
-Yeah, it's quite normal for it to be enabled. Allocators might as well
-give up on fine-grained purging when it is though :P. I think it only
-really makes sense to purge at 2M boundaries in multiples of 2M if it's
-going to end up breaking any other purging over the long-term.
-
-I was originally only testing with THP since Arch uses "always" but I
-realized it had an enormous impact and started testing without it too.
+I'm convinced that the mmap_sem writer lock can be avoided for the case
+with MREMAP_FIXED via a good heuristic though. It just needs to check
+that dst is a single VMA that matches the src properties and fall back
+to the writer lock if that's not the case. This will have the same
+performance as a separate syscall to move pages in all the cases where
+that syscall would work.
 
 
---XS1wJbCjV1BPoLF1q09GXFEk2cJ6xqVA5
+--3GRRfwHH9NECM73LwlMjdmM2qrHCsTo5c
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: OpenPGP digital signature
 Content-Disposition: attachment; filename="signature.asc"
@@ -112,19 +66,25 @@ Content-Disposition: attachment; filename="signature.asc"
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v2
 
-iQIcBAEBCAAGBQJVEXcnAAoJEPnnEuWa9fIqBXUP/RtGjxqw7OgT3Yjv6FMAdOYy
-KGyvAERQPn/udDjCzNtdziELDgrMeMUiADbWVvg669H5Mha16s5agIQVzh4qgfOZ
-gCthv2SwGcy45fZ73lx0RMAKD9wcaVc5Md7SpEz4YbzTTJc1fHpSKGlB1dl54iGm
-zNRmwe2/dgxhlyjogywforgwZAC6R4y9abD3A7q6bCJqWjwLlV9pL2PWJYNPA+0w
-WMZkYovU40dy9zO6vJKNX88F16lsMoP+bFeKWFXPrQr49zhLueU97yXeVDsobIWW
-1ir8JV2pz+tQUmmD8vC2sCu/+DBXDWFK/qzb+F9ork0U99UxTEwAXOxLXv27L0iL
-s2ma7QX0f1XgZYRx9X7MeorxZXwFxFu+sSeNXlMT+iiRz54wgsSxkDUyj06P/Isd
-FOlkWo1moIGswgtathg1fEzaUzJaFjYaA4UkbpCf+vxHV4IXOh93Xqdlkk5FFUJI
-wAIY/CpwGdX7SZKN8W9TX7jKvMn0HmwT3NRyJ6Aq8NSQ4oAxbcUG1mEBvidj6Oxo
-V3Go2BiFvRGFzVqem6BOhItOOOlXNz1rxUULzElk4U/ig4Sx+UqtDVLdJe6NE/EW
-NCdpXyR8w55yd1CisvL12dOlk6WcfOMdfSfen7ZaQg90dVCJULozhTwmO1lfF10v
-t2/CvPP7GaQMdpOrUCot
-=Qm7v
+iQIcBAEBCAAGBQJVEXqTAAoJEPnnEuWa9fIq464P/0tVgIf0xD72jTN8w8+rtcok
+ZwEmk66BC6OnjYY4vu9CMfUVySHPKZ+Q1Ve2UEIGT2leZZMkx1BukSuw5QBz9COx
+ktihFkSuk/4hMfJVkEF7Azyx/Sg/Z+cipzDmSGwaYEIAKbz4+L6RYOqs81KzDDfF
+TT0NbbhbyE1Hr0P5Wmi2PcROXcJRLwOeaDEOyrWl01RECdnvJFoVu1TCY82+gPfK
+voWwE3oSzGzKBl7Yfj9vfG3IPbk0ENcahqG2sPyX235HuvcaU+plUPFq1+IL9vSw
+2rEndWJKJKNCa8oC1bBwCALI1d2lVgE1jRDYPrEuMUeuvwglr57hOb+K7TpoZU4j
+K0owFefk2bEXpYx3Cj+Y5cELu5A3DTwVDouF62yMR7mcAMX5Wq/Lo04s++vFfXmB
++tT3gAsV7n2l1KcgMrjDNY58q5YoFNa7CMaeCFnzHv0qTSJ75Chu/crh963a8UOx
+XxdI8UXmWbI+vb1l3HQjn3IVhJusSnABaAIUBmYLLmcx9vNa7PpOEvCOJGsIlGsR
+Fo1Co6pvfRiESmBrnULvosXSvnNGye5wcmCoGbZ6NJQyACZpknezWEXgwEgfq4S6
+lftkZTUTiuWKiLWUY1FhFVJXreRPvZpnv/fTMAiEKwmiRatNC0ccG62IHhpOnhPl
+2aZiU/gr4RfsJGH80pX8
+=5wx2
 -----END PGP SIGNATURE-----
 
---XS1wJbCjV1BPoLF1q09GXFEk2cJ6xqVA5--
+--3GRRfwHH9NECM73LwlMjdmM2qrHCsTo5c--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
