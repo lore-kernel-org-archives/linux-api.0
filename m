@@ -1,69 +1,81 @@
-From: Mark Brown <broonie@kernel.org>
-Subject: Re: [PATCH v2 1/7] eeprom: Add a simple EEPROM framework for eeprom
- providers
-Date: Tue, 24 Mar 2015 13:55:41 -0700
-Message-ID: <20150324205541.GC17265@sirena.org.uk>
-References: <1426240157-2383-1-git-send-email-srinivas.kandagatla@linaro.org>
- <1426240214-2434-1-git-send-email-srinivas.kandagatla@linaro.org>
- <20150323210918.GS14954@sirena.org.uk>
- <55108E2B.7050305@linaro.org>
- <55112BD6.2070600@linaro.org>
- <20150324172346.GW17265@sirena.org.uk>
- <5511AE38.3000108@linaro.org>
- <20150324190226.GB17265@sirena.org.uk>
- <5511BA75.3020305@linaro.org>
+From: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
+Subject: Re: [PATCH] audit.h: remove the macro AUDIT_ARCH_ARMEB definition
+Date: Tue, 24 Mar 2015 17:16:45 -0400
+Message-ID: <CAHC9VhTbxf_u2FXkcdqofkhywbgrrjjUo_W7yqWXFm=wSJBOAQ@mail.gmail.com>
+References: <1426827329-27976-1-git-send-email-roy.qing.li@gmail.com>
+	<CAHC9VhR5VcaCtLG9hdVS2gZRWxVmdnpbK+fJwm6wCA8qyLebUQ@mail.gmail.com>
+	<CAJFZqHxdPEhX+9z-FYUMvTF_6LVgK=gOetq0zT4UTZSgUGRqCQ@mail.gmail.com>
+	<CAJFZqHxfq0DSjKn-uqhT+pAeJ9u8ym2Mr=wsqvPyX7sCicPGZA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="mjeOt6n4R71vn6wN"
-Return-path: <linux-arm-msm-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5511BA75.3020305@linaro.org>
-Sender: linux-arm-msm-owner@vger.kernel.org
-To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Cc: linux-arm-kernel@lists.infradead.org, Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Kumar Gala <galak@codeaurora.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, Stephen Boyd <sboyd@codeaurora.org>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-arm-msm@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAJFZqHxfq0DSjKn-uqhT+pAeJ9u8ym2Mr=wsqvPyX7sCicPGZA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Li RongQing <roy.qing.li-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On Sun, Mar 22, 2015 at 8:55 PM, Li RongQing <roy.qing.li-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> On Mon, Mar 23, 2015 at 8:51 AM, Li RongQing <roy.qing.li-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>> On Fri, Mar 20, 2015 at 9:29 PM, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org> wrote:
+>>> On Fri, Mar 20, 2015 at 12:55 AM,  <roy.qing.li-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>>>> From: Li RongQing <roy.qing.li-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>>>>
+>>>> After 2f9783669 [ARM: 7412/1: audit: use only AUDIT_ARCH_ARM regardless
+>>>> of endianness], no kernel user uses this macro;
+>>>>
+>>>> Keeping this macro, only makes the compiling old version audit [before
+>>>> changeset 931 Improve ARM and AARCH64 support] success, but the audit
+>>>> program can not work with the kernel after 2f9783669 still,
+>>>> since no syscall entry is enabled for AUDIT_ARCH_ARMEB in kernel.
+>>>>
+>>>> so remove it to force to use the latest audit program
+>>>>
+>>>> Signed-off-by: Li RongQing <roy.qing.li-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>>>> ---
+>>>> other workaround is to define AUDIT_ARCH_ARMEB as AUDIT_ARCH_ARM,
+>>>> but it seems very strange
+>>>>
+>>>>  include/uapi/linux/audit.h | 1 -
+>>>>  1 file changed, 1 deletion(-)
+>>>
+>>> Since this #define lives in the user visible headers I don't want to
+>>> remove it and risk causing a userspace breakage.  Leaving the #define
+>>> in the header, even if it is
+>
+>
+> it is harm, when I compile the audit-2.3.2 for a arm machine, whose linux kernel
+> is 3.14; no compile error, but audit does not work;  spend one day debug to find
+> the root cause is  the audit used MACH_ARMEB, but kernel replaced MACH_ARMEB
+>  with MACH_ARM
+>
+>  grep WITH_ARMEB ./lib/machinetab.h -A10
+> #ifdef WITH_ARMEB
+> _S(MACH_ARMEB,   "armeb"  )
+> _S(MACH_ARMEB,   "armv5tejl")
+> _S(MACH_ARMEB,   "armv5tel")
+> _S(MACH_ARMEB,   "armv6l")
+> _S(MACH_ARMEB,   "armv7l")
+> #endif
+>
+> removal of MACH_ARMEB will let the user find this issue when compile, not
+> run.
 
---mjeOt6n4R71vn6wN
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+[NOTE: Adding the linux-arm folks to this thread just in case they are
+interested.]
 
-On Tue, Mar 24, 2015 at 07:26:45PM +0000, Srinivas Kandagatla wrote:
-> On 24/03/15 19:02, Mark Brown wrote:
-> >On Tue, Mar 24, 2015 at 06:34:32PM +0000, Srinivas Kandagatla wrote:
-> >>>On 24/03/15 17:23, Mark Brown wrote:
+I'm not an ARM expert, but the kernel #define for AUDIT_ARCH_ARMEB
+(below) seems reasonable to me based on the other audit machine
+definitions.  There is clearly a mismatch between the kernel and the
+audit userspace, but I wonder if the issue should be addressed in the
+userspace tools.  Further, you mention kernel 3.14, what happens with
+kernel 3.19 and the most recent audit userspace tools?
 
-> >>>>> >>regmap_get_size(regmap)
+  > grep "AUDIT_ARCH_ARMEB" include/uapi/linux/audit.h
+  #define AUDIT_ARCH_ARMEB        (EM_ARM)
 
-> >>>> >This is already there.
+-Paul
 
-> >>>Sorry, I can't see any such api atleast in v4.0-rc5 and linux-next? Are you
-> >>>referring to another api which does the same job?
-
-> >regmap_get_val_bytes()
-
-> This would return value bytes, but I wanted is the regmap->max_register
-> value which would be used for sanity checks in eeprom-core.
-
-Then you *really* want to pick a better name then, I'd never have
-inferred that meaning from "size" (consider sparse register maps for
-example).  Like I said, send patches (preferrably showing the users as
-well).
-
---mjeOt6n4R71vn6wN
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQEcBAEBCAAGBQJVEc9FAAoJECTWi3JdVIfQMvgH/0FxHeCACWt0iw0MmGE4zaTx
-sZA0bIAUEhDlOxU8EvjuWLLG0eB4rioQPFf0bBrWoRbLvQqSrKK3S7TCt9mQrSUv
-+2sFs3Wk6C0n2m+PPSmaeR0264fJ02GnRGV7PtII2VOFBxhknGLP2Fa0ZucqNhXV
-OePO4v9Qsqfmakp5gx65w7ZyUeRYzBw4sOJATwRqBAYxAwMHea8GieB9EF5NHe2u
-atjeHjwpuFXlt8T7ewZRW6Q3Nlwi6ChtsESBMu2N6YCvMqJjxsU/cujW1dWm53JN
-pZdvKlwQk1Z2783oqh1sv0G4XqeNZd1LM6fwt3eCpy/DuOdR7/WgBmTHe3r9zxg=
-=LY5g
------END PGP SIGNATURE-----
-
---mjeOt6n4R71vn6wN--
+-- 
+paul moore
+www.paul-moore.com
