@@ -1,108 +1,500 @@
-From: Aliaksey Kandratsenka <alkondratenko@gmail.com>
-Subject: Re: [PATCH] mremap: add MREMAP_NOHOLE flag --resend
-Date: Mon, 23 Mar 2015 22:25:41 -0700
-Message-ID: <CADpJO7zk8J3q7Bw9NibV9CzLarO+YkfeshyFTTq=XeS5qziBiA@mail.gmail.com>
-References: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli@fb.com>
-	<20150318153100.5658b741277f3717b52e42d9@linux-foundation.org>
-	<550A5FF8.90504@gmail.com>
-	<CADpJO7zBLhjecbiQeTubnTReiicVLr0-K43KbB4uCL5w_dyqJg@mail.gmail.com>
-	<20150323051731.GA2616341@devbig257.prn2.facebook.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150323051731.GA2616341@devbig257.prn2.facebook.com>
-Sender: owner-linux-mm@kvack.org
-To: Shaohua Li <shli@fb.com>
-Cc: Daniel Micay <danielmicay@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-api@vger.kernel.org, Rik van Riel <riel@redhat.com>, Hugh Dickins <hughd@google.com>, Mel Gorman <mel@csn.ul.ie>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Andy Lutomirski <luto@amacapital.net>, "google-perftools@googlegroups.com" <google-perftools@googlegroups.com>
+From: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v3] Add virtio-input driver.
+Date: Tue, 24 Mar 2015 08:32:01 +0100
+Message-ID: <1427182321-19451-1-git-send-email-kraxel@redhat.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: virtio-dev-sDuHXQ4OtrM4h7I2RyI4rWD2FQJk+8+b@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Cc: mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi.
+virtio-input is basically evdev-events-over-virtio, so this driver isn't
+much more than reading configuration from config space and forwarding
+incoming events to the linux input layer.
 
-On Sun, Mar 22, 2015 at 10:17 PM, Shaohua Li <shli@fb.com> wrote:
-> On Sat, Mar 21, 2015 at 11:06:14PM -0700, Aliaksey Kandratsenka wrote:
+Signed-off-by: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+---
+ MAINTAINERS                       |   6 +
+ drivers/virtio/Kconfig            |  10 ++
+ drivers/virtio/Makefile           |   1 +
+ drivers/virtio/virtio_input.c     | 313 ++++++++++++++++++++++++++++++++++++++
+ include/uapi/linux/Kbuild         |   1 +
+ include/uapi/linux/virtio_ids.h   |   1 +
+ include/uapi/linux/virtio_input.h |  76 +++++++++
+ 7 files changed, 408 insertions(+)
+ create mode 100644 drivers/virtio/virtio_input.c
+ create mode 100644 include/uapi/linux/virtio_input.h
 
->> But now I realize that it is more interesting than that. I.e. because as
->> Daniel
->> pointed out, mremap holds mmap_sem exclusively, while page faults are
->> holding it
->> for read. That could be optimized of course. Either by separate "teleport
->> ptes"
->> syscall (again, as noted by Daniel), or by having mremap drop mmap_sem for
->> write
->> and retaking it for read for "moving pages" part of work. Being not really
->> familiar with kernel code I have no idea if that's doable or not. But it
->> looks
->> like it might be quite important.
->
-> Does mmap_sem contend in your workload? Otherwise, there is no big
-> difference of read or write lock. memcpy to new allocation could trigger
-> page fault, new page allocation overhead and etc.
-
-Well, I don't have any workloads. I'm just maintaining a library that
-others run various workloads on. Part of the problem is lack of good
-and varied malloc benchmarks which could allow us that prevent
-regression. So this makes me a bit more cautious on performance
-matters.
-
-But I see your point. Indeed I have no evidence at all that exclusive
-locking might cause observable performance difference.
-
->> b) is that optimization worth having at all ?
->>
->> After all, memcpy is actually known to be fast. I understand that copying
->> memory
->> in user space can be slowed down by minor page faults (results below seem to
->> confirm that). But this is something where either allocator may retain
->> populated
->> pages a bit longer or where kernel could help. E.g. maybe by exposing
->> something
->> similar to MAP_POPULATE in madvise, or even doing some safe combination of
->> madvise and MAP_UNINITIALIZED.
->
-> This option will make allocator use more memory than expected.
-> Eventually the memory must be reclaimed, which has big overhead too.
->
->> I've played with Daniel's original benchmark (copied from
->> http://marc.info/?l=linux-mm&m=141230769431688&w=2) with some tiny
->> modifications:
->>
-
-...
-
->> Another notable thing is how mlock effectively disables MADV_DONTNEED for
->> jemalloc{1,2} and tcmalloc, lowers page faults count and thus improves
->> runtime. It can be seen that tcmalloc+mlock on thp-less configuration is
->> slightly better on runtime to glibc. The later spends a ton of time in
->> kernel,
->> probably handling minor page faults, and the former burns cpu in user space
->> doing memcpy-s. So "tons of memcpys" seems to be competitive to what glibc
->> is
->> doing in this benchmark.
->
-> mlock disables MADV_DONTNEED, so this is an unfair comparsion. With it,
-> allocator will use more memory than expected.
-
-Do not agree with unfair. I'm actually hoping MADV_FREE to provide
-most if not all of benefits of mlock in this benchmark. I believe it's
-not too unreasonable expectation.
-
->
-> I'm kind of confused why we talk about THP, mlock here. When application
-> uses allocator, it doesn't need to be forced to use THP or mlock. Can we
-> forcus on normal case?
-
-See my note on mlock above.
-
-THP it is actually "normal". I know for certain, that many production
-workloads are run on boxes with THP enabled. Red Hat famously ships
-it's distros with THP set to "always". And I also know that some other
-many production workloads are run on boxes with THP disabled. Also, as
-seen above, "teleporting" pages is more efficient with THP due to much
-smaller overhead of moving those pages. So I felt it was important not
-to omit THP in my runs.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 358eb01..6f233dd 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -10442,6 +10442,12 @@ S:	Maintained
+ F:	drivers/vhost/
+ F:	include/uapi/linux/vhost.h
+ 
++VIRTIO INPUT DRIVER
++M:	Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++S:	Maintained
++F:	drivers/virtio/virtio_input.c
++F:	include/uapi/linux/virtio_input.h
++
+ VIA RHINE NETWORK DRIVER
+ M:	Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>
+ S:	Maintained
+diff --git a/drivers/virtio/Kconfig b/drivers/virtio/Kconfig
+index b546da5..cab9f3f 100644
+--- a/drivers/virtio/Kconfig
++++ b/drivers/virtio/Kconfig
+@@ -48,6 +48,16 @@ config VIRTIO_BALLOON
+ 
+ 	 If unsure, say M.
+ 
++config VIRTIO_INPUT
++	tristate "Virtio input driver"
++	depends on VIRTIO
++	depends on INPUT
++	---help---
++	 This driver supports virtio input devices such as
++	 keyboards, mice and tablets.
++
++	 If unsure, say M.
++
+  config VIRTIO_MMIO
+ 	tristate "Platform bus driver for memory mapped virtio devices"
+ 	depends on HAS_IOMEM
+diff --git a/drivers/virtio/Makefile b/drivers/virtio/Makefile
+index d85565b..41e30e3 100644
+--- a/drivers/virtio/Makefile
++++ b/drivers/virtio/Makefile
+@@ -4,3 +4,4 @@ obj-$(CONFIG_VIRTIO_PCI) += virtio_pci.o
+ virtio_pci-y := virtio_pci_modern.o virtio_pci_common.o
+ virtio_pci-$(CONFIG_VIRTIO_PCI_LEGACY) += virtio_pci_legacy.o
+ obj-$(CONFIG_VIRTIO_BALLOON) += virtio_balloon.o
++obj-$(CONFIG_VIRTIO_INPUT) += virtio_input.o
+diff --git a/drivers/virtio/virtio_input.c b/drivers/virtio/virtio_input.c
+new file mode 100644
+index 0000000..cf112b2
+--- /dev/null
++++ b/drivers/virtio/virtio_input.c
+@@ -0,0 +1,313 @@
++#include <linux/module.h>
++#include <linux/virtio.h>
++#include <linux/input.h>
++
++#include <uapi/linux/virtio_ids.h>
++#include <uapi/linux/virtio_input.h>
++
++struct virtio_input {
++	struct virtio_device       *vdev;
++	struct input_dev           *idev;
++	char                       name[64];
++	char                       serial[64];
++	char                       phys[64];
++	struct virtqueue           *evt, *sts;
++	struct virtio_input_event  evts[64];
++	spinlock_t                 lock;
++};
++
++static void virtinput_queue_evtbuf(struct virtio_input *vi,
++				   struct virtio_input_event *evtbuf)
++{
++	struct scatterlist sg[1];
++
++	sg_init_one(sg, evtbuf, sizeof(*evtbuf));
++	virtqueue_add_inbuf(vi->evt, sg, 1, evtbuf, GFP_ATOMIC);
++}
++
++static void virtinput_recv_events(struct virtqueue *vq)
++{
++	struct virtio_input *vi = vq->vdev->priv;
++	struct virtio_input_event *event;
++	unsigned long flags;
++	unsigned int len;
++
++	spin_lock_irqsave(&vi->lock, flags);
++	while ((event = virtqueue_get_buf(vi->evt, &len)) != NULL) {
++		input_event(vi->idev,
++			    le16_to_cpu(event->type),
++			    le16_to_cpu(event->code),
++			    le32_to_cpu(event->value));
++		virtinput_queue_evtbuf(vi, event);
++	}
++	virtqueue_kick(vq);
++	spin_unlock_irqrestore(&vi->lock, flags);
++}
++
++static int virtinput_send_status(struct virtio_input *vi,
++				 u16 type, u16 code, s32 value)
++{
++	struct virtio_input_event *stsbuf;
++	struct scatterlist sg[1];
++	unsigned long flags;
++	int rc;
++
++	stsbuf = kzalloc(sizeof(*stsbuf), GFP_ATOMIC);
++	if (!stsbuf)
++		return -ENOMEM;
++
++	stsbuf->type  = cpu_to_le16(type);
++	stsbuf->code  = cpu_to_le16(code);
++	stsbuf->value = cpu_to_le32(value);
++	sg_init_one(sg, stsbuf, sizeof(*stsbuf));
++
++	spin_lock_irqsave(&vi->lock, flags);
++	rc = virtqueue_add_outbuf(vi->sts, sg, 1, stsbuf, GFP_ATOMIC);
++	virtqueue_kick(vi->sts);
++	spin_unlock_irqrestore(&vi->lock, flags);
++
++	if (rc != 0)
++		kfree(stsbuf);
++	return rc;
++}
++
++static void virtinput_recv_status(struct virtqueue *vq)
++{
++	struct virtio_input *vi = vq->vdev->priv;
++	struct virtio_input_event *stsbuf;
++	unsigned long flags;
++	unsigned int len;
++
++	spin_lock_irqsave(&vi->lock, flags);
++	while ((stsbuf = virtqueue_get_buf(vi->sts, &len)) != NULL)
++		kfree(stsbuf);
++	spin_unlock_irqrestore(&vi->lock, flags);
++}
++
++static int virtinput_status(struct input_dev *idev, unsigned int type,
++			    unsigned int code, int value)
++{
++	struct virtio_input *vi = input_get_drvdata(idev);
++
++	return virtinput_send_status(vi, type, code, value);
++}
++
++static size_t virtinput_cfg_select(struct virtio_input *vi,
++				   u8 select, u8 subsel)
++{
++	u8 size;
++
++	virtio_cwrite(vi->vdev, struct virtio_input_config, select, &select);
++	virtio_cwrite(vi->vdev, struct virtio_input_config, subsel, &subsel);
++	virtio_cread(vi->vdev, struct virtio_input_config, size, &size);
++	return size;
++}
++
++static void virtinput_cfg_bits(struct virtio_input *vi, int select, int subsel,
++			       unsigned long *bits, unsigned int bitcount)
++{
++	unsigned int bit;
++	size_t bytes;
++	u8 *virtio_bits;
++
++	bytes = virtinput_cfg_select(vi, select, subsel);
++	if (!bytes)
++		return;
++	if (bitcount > bytes*8)
++		bitcount = bytes*8;
++
++	/*
++	 * Bitmap in virtio config space is a simple stream of bytes,
++	 * with the first byte carrying bits 0-7, second bits 8-15 and
++	 * so on.
++	 */
++	virtio_bits = kzalloc(bytes, GFP_KERNEL);
++	if (!virtio_bits)
++		return;
++	virtio_cread_bytes(vi->vdev, offsetof(struct virtio_input_config, u),
++			   virtio_bits, bytes);
++	for (bit = 0; bit < bitcount; bit++) {
++		if (virtio_bits[bit / 8] & (1 << (bit % 8)))
++			__set_bit(bit, bits);
++	}
++	kfree(virtio_bits);
++
++	if (select == VIRTIO_INPUT_CFG_EV_BITS)
++		__set_bit(subsel, vi->idev->evbit);
++}
++
++static void virtinput_cfg_abs(struct virtio_input *vi, int abs)
++{
++	u32 mi, ma, re, fu, fl;
++
++	virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ABS_INFO, abs);
++	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.min, &mi);
++	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.max, &ma);
++	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.res, &re);
++	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.fuzz, &fu);
++	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.flat, &fl);
++	input_set_abs_params(vi->idev, abs, mi, ma, fu, fl);
++	input_abs_set_res(vi->idev, abs, re);
++}
++
++static int virtinput_init_vqs(struct virtio_input *vi)
++{
++	struct virtqueue *vqs[2];
++	vq_callback_t *cbs[] = { virtinput_recv_events,
++				 virtinput_recv_status };
++	static const char * names[] = { "events", "status" };
++	int i, err, size;
++
++	err = vi->vdev->config->find_vqs(vi->vdev, 2, vqs, cbs, names);
++	if (err)
++		return err;
++	vi->evt = vqs[0];
++	vi->sts = vqs[1];
++
++	size = virtqueue_get_vring_size(vi->evt);
++	if (size > ARRAY_SIZE(vi->evts))
++		size = ARRAY_SIZE(vi->evts);
++	for (i = 0; i < size; i++)
++		virtinput_queue_evtbuf(vi, &vi->evts[i]);
++	virtqueue_kick(vi->evt);
++
++	return 0;
++}
++
++static int virtinput_probe(struct virtio_device *vdev)
++{
++	struct virtio_input *vi;
++	size_t size;
++	int abs, err;
++
++	if (!virtio_has_feature(vdev, VIRTIO_F_VERSION_1))
++		return -ENODEV;
++
++	vi = kzalloc(sizeof(*vi), GFP_KERNEL);
++	if (!vi)
++		return -ENOMEM;
++
++	vdev->priv = vi;
++	vi->vdev = vdev;
++	spin_lock_init(&vi->lock);
++
++	err = virtinput_init_vqs(vi);
++	if (err)
++		goto err_init_vq;
++
++	vi->idev = input_allocate_device();
++	if (!vi->idev) {
++		err = -ENOMEM;
++		goto err_input_alloc;
++	}
++	input_set_drvdata(vi->idev, vi);
++
++	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ID_NAME, 0);
++	virtio_cread_bytes(vi->vdev, offsetof(struct virtio_input_config, u),
++			   vi->name, min(size, sizeof(vi->name)));
++	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ID_SERIAL, 0);
++	virtio_cread_bytes(vi->vdev, offsetof(struct virtio_input_config, u),
++			   vi->serial, min(size, sizeof(vi->serial)));
++	snprintf(vi->phys, sizeof(vi->phys),
++		 "virtio%d/input0", vdev->index);
++	vi->idev->name = vi->name;
++	vi->idev->phys = vi->phys;
++	vi->idev->uniq = vi->serial;
++
++	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ID_DEVIDS, 0);
++	if (size >= 8) {
++		virtio_cread(vi->vdev, struct virtio_input_config,
++			     u.ids.bustype, &vi->idev->id.bustype);
++		virtio_cread(vi->vdev, struct virtio_input_config,
++			     u.ids.vendor, &vi->idev->id.vendor);
++		virtio_cread(vi->vdev, struct virtio_input_config,
++			     u.ids.product, &vi->idev->id.product);
++		virtio_cread(vi->vdev, struct virtio_input_config,
++			     u.ids.version, &vi->idev->id.version);
++	} else {
++		vi->idev->id.bustype = BUS_VIRTUAL;
++	}
++
++	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_PROP_BITS, 0,
++			   vi->idev->propbit, INPUT_PROP_CNT);
++	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_REP);
++	if (size)
++		__set_bit(EV_REP, vi->idev->evbit);
++
++	vi->idev->dev.parent = &vdev->dev;
++	vi->idev->event = virtinput_status;
++
++	/* device -> kernel */
++	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_KEY,
++			   vi->idev->keybit, KEY_CNT);
++	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_REL,
++			   vi->idev->relbit, REL_CNT);
++	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_ABS,
++			   vi->idev->absbit, ABS_CNT);
++	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_MSC,
++			   vi->idev->mscbit, MSC_CNT);
++	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_SW,
++			   vi->idev->swbit,  SW_CNT);
++
++	/* kernel -> device */
++	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_LED,
++			   vi->idev->ledbit, LED_CNT);
++	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_SND,
++			   vi->idev->sndbit, SND_CNT);
++
++	if (test_bit(EV_ABS, vi->idev->evbit)) {
++		for (abs = 0; abs < ABS_CNT; abs++) {
++			if (!test_bit(abs, vi->idev->absbit))
++				continue;
++			virtinput_cfg_abs(vi, abs);
++		}
++	}
++	virtio_device_ready(vdev);
++
++	err = input_register_device(vi->idev);
++	if (err)
++		goto err_input_register;
++
++	return 0;
++
++err_input_register:
++	input_free_device(vi->idev);
++err_input_alloc:
++	vdev->config->del_vqs(vdev);
++err_init_vq:
++	kfree(vi);
++	return err;
++}
++
++static void virtinput_remove(struct virtio_device *vdev)
++{
++	struct virtio_input *vi = vdev->priv;
++
++	input_unregister_device(vi->idev);
++	vdev->config->del_vqs(vdev);
++	kfree(vi);
++}
++
++static unsigned int features[] = {
++};
++static struct virtio_device_id id_table[] = {
++	{ VIRTIO_ID_INPUT, VIRTIO_DEV_ANY_ID },
++	{ 0 },
++};
++
++static struct virtio_driver virtio_input_driver = {
++	.driver.name         = KBUILD_MODNAME,
++	.driver.owner        = THIS_MODULE,
++	.feature_table       = features,
++	.feature_table_size  = ARRAY_SIZE(features),
++	.id_table            = id_table,
++	.probe               = virtinput_probe,
++	.remove              = virtinput_remove,
++};
++
++module_virtio_driver(virtio_input_driver);
++MODULE_DEVICE_TABLE(virtio, id_table);
++
++MODULE_LICENSE("GPL");
++MODULE_DESCRIPTION("Virtio input device driver");
++MODULE_AUTHOR("Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>");
+diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+index 68ceb97..04b829e 100644
+--- a/include/uapi/linux/Kbuild
++++ b/include/uapi/linux/Kbuild
+@@ -430,6 +430,7 @@ header-y += virtio_blk.h
+ header-y += virtio_config.h
+ header-y += virtio_console.h
+ header-y += virtio_ids.h
++header-y += virtio_input.h
+ header-y += virtio_net.h
+ header-y += virtio_pci.h
+ header-y += virtio_ring.h
+diff --git a/include/uapi/linux/virtio_ids.h b/include/uapi/linux/virtio_ids.h
+index 284fc3a..5f60aa4 100644
+--- a/include/uapi/linux/virtio_ids.h
++++ b/include/uapi/linux/virtio_ids.h
+@@ -39,5 +39,6 @@
+ #define VIRTIO_ID_9P		9 /* 9p virtio console */
+ #define VIRTIO_ID_RPROC_SERIAL 11 /* virtio remoteproc serial link */
+ #define VIRTIO_ID_CAIF	       12 /* Virtio caif */
++#define VIRTIO_ID_INPUT        18 /* virtio input */
+ 
+ #endif /* _LINUX_VIRTIO_IDS_H */
+diff --git a/include/uapi/linux/virtio_input.h b/include/uapi/linux/virtio_input.h
+new file mode 100644
+index 0000000..7fceabd
+--- /dev/null
++++ b/include/uapi/linux/virtio_input.h
+@@ -0,0 +1,76 @@
++#ifndef _LINUX_VIRTIO_INPUT_H
++#define _LINUX_VIRTIO_INPUT_H
++/* This header is BSD licensed so anyone can use the definitions to implement
++ * compatible drivers/servers.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. Neither the name of IBM nor the names of its contributors
++ *    may be used to endorse or promote products derived from this software
++ *    without specific prior written permission.
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
++ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL IBM OR
++ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
++ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
++ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
++ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++ * SUCH DAMAGE. */
++#include <linux/virtio_ids.h>
++#include <linux/virtio_config.h>
++
++enum virtio_input_config_select {
++	VIRTIO_INPUT_CFG_UNSET      = 0x00,
++	VIRTIO_INPUT_CFG_ID_NAME    = 0x01,
++	VIRTIO_INPUT_CFG_ID_SERIAL  = 0x02,
++	VIRTIO_INPUT_CFG_ID_DEVIDS  = 0x03,
++	VIRTIO_INPUT_CFG_PROP_BITS  = 0x10,
++	VIRTIO_INPUT_CFG_EV_BITS    = 0x11,
++	VIRTIO_INPUT_CFG_ABS_INFO   = 0x12,
++};
++
++struct virtio_input_absinfo {
++	__virtio32  min;
++	__virtio32  max;
++	__virtio32  fuzz;
++	__virtio32  flat;
++	__virtio32  res;
++};
++
++struct virtio_input_devids {
++	__virtio16  bustype;
++	__virtio16  vendor;
++	__virtio16  product;
++	__virtio16  version;
++};
++
++struct virtio_input_config {
++	__u8    select;
++	__u8    subsel;
++	__u8    size;
++	__u8    reserved;
++	union {
++		char string[128];
++		__u8 bitmap[128];
++		struct virtio_input_absinfo abs;
++		struct virtio_input_devids ids;
++	} u;
++};
++
++struct virtio_input_event {
++	__le16 type;
++	__le16 code;
++	__le32 value;
++};
++
++#endif /* _LINUX_VIRTIO_INPUT_H */
+-- 
+1.8.3.1
