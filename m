@@ -1,21 +1,26 @@
 From: "Michael S. Tsirkin" <mst@redhat.com>
 Subject: Re: [PATCH v3] Add virtio-input driver.
-Date: Tue, 24 Mar 2015 11:40:44 +0100
-Message-ID: <20150324114028-mutt-send-email-mst@redhat.com>
+Date: Tue, 24 Mar 2015 11:48:02 +0100
+Message-ID: <20150324114254-mutt-send-email-mst@redhat.com>
 References: <1427182321-19451-1-git-send-email-kraxel@redhat.com>
- <1427192810.18768.4.camel@nilsson.home.kraxel.org>
+	<1427192810.18768.4.camel@nilsson.home.kraxel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <virtio-dev-return-662-gcvd-virtio-dev=m.gmane.org@lists.oasis-open.org>
-Sender: <virtio-dev@lists.oasis-open.org>
-List-Post: <mailto:virtio-dev@lists.oasis-open.org>
-List-Help: <mailto:virtio-dev-help@lists.oasis-open.org>
-List-Unsubscribe: <mailto:virtio-dev-unsubscribe@lists.oasis-open.org>
-List-Subscribe: <mailto:virtio-dev-subscribe@lists.oasis-open.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
 Content-Disposition: inline
 In-Reply-To: <1427192810.18768.4.camel@nilsson.home.kraxel.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
 To: Gerd Hoffmann <kraxel@redhat.com>
-Cc: virtio-dev@lists.oasis-open.org, virtualization@lists.linux-foundation.org, David Herrmann <dh.herrmann@gmail.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
+Cc: virtio-dev@lists.oasis-open.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, virtualization@lists.linux-foundation.org, David Herrmann <dh.herrmann@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
 On Tue, Mar 24, 2015 at 11:26:50AM +0100, Gerd Hoffmann wrote:
@@ -55,5 +60,15 @@ On Tue, Mar 24, 2015 at 11:26:50AM +0100, Gerd Hoffmann wrote:
 >   Gerd
 > 
 
-Weird.
-Let me try this and figure out what the issue is.
+You are right, I was confused. Currently everyone uses simple
+__u32 and friends in config structs, under the understanding
+that they are always accessed using virtio_cread and friends.
+
+Maybe I'll look into adding more type safety, but the
+issue is not virtio-input specific so, let's not
+defer virtio input because of this.
+
+Sorry about wasting your time on this.
+
+-- 
+MST
