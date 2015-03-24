@@ -1,152 +1,52 @@
-From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH v3 7/9] eeprom: qfprom: Add Qualcomm QFPROM support.
-Date: Tue, 24 Mar 2015 22:30:55 +0000
-Message-ID: <1427236255-18840-1-git-send-email-srinivas.kandagatla@linaro.org>
+From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Subject: [PATCH v3 8/9] eeprom: qfprom: Add bindings for qfprom
+Date: Tue, 24 Mar 2015 22:31:08 +0000
+Message-ID: <1427236268-18882-1-git-send-email-srinivas.kandagatla@linaro.org>
 References: <1427236116-18531-1-git-send-email-srinivas.kandagatla@linaro.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1427236116-18531-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
-Cc: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+In-Reply-To: <1427236116-18531-1-git-send-email-srinivas.kandagatla@linaro.org>
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: linux-arm-kernel@lists.infradead.org
+Cc: Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds QFPROM support driver which is used by other drivers
-like thermal sensor and cpufreq.
+This patch adds bindings for qfprom found in QCOM SOCs. QFPROM driver
+is based on simple eeprom framework.
 
-On MSM parts there are some efuses (called qfprom) these fuses store things like
-calibration data, speed bins.. etc. Drivers like cpufreq, thermal sensors would
-read out this data for configuring the driver.
-
-Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 ---
- drivers/eeprom/Kconfig  | 11 +++++++
- drivers/eeprom/Makefile |  2 ++
- drivers/eeprom/qfprom.c | 87 +++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 100 insertions(+)
- create mode 100644 drivers/eeprom/qfprom.c
+ .../devicetree/bindings/eeprom/qfprom.txt          | 23 ++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/eeprom/qfprom.txt
 
-diff --git a/drivers/eeprom/Kconfig b/drivers/eeprom/Kconfig
-index ad396c1..8fc14d3 100644
---- a/drivers/eeprom/Kconfig
-+++ b/drivers/eeprom/Kconfig
-@@ -23,4 +23,15 @@ config EEPROM_SUNXI_SID
- 	  This driver can also be built as a module. If so, the module
- 	  will be called eeprom-sunxi-sid.
- 
-+config QCOM_QFPROM
-+	tristate "QCOM QFPROM Support"
-+	depends on ARCH_QCOM
-+	select REGMAP_MMIO
-+	help
-+	  Say y here to enable QFPROM support. The QFPROM provides access
-+	  functions for QFPROM data to rest of the drivers via eeprom interface.
-+
-+	  This driver can also be built as a module. If so, the module
-+	  will be called eeprom-qfprom.
-+
- endif
-diff --git a/drivers/eeprom/Makefile b/drivers/eeprom/Makefile
-index 184aa53..4ac437e 100644
---- a/drivers/eeprom/Makefile
-+++ b/drivers/eeprom/Makefile
-@@ -8,3 +8,5 @@ eeprom_core-y			:= core.o
- # Devices
- obj-$(CONFIG_EEPROM_SUNXI_SID)	+= eeprom-sunxi-sid.o
- eeprom-sunxi-sid-y		:= sunxi-sid.o
-+obj-$(CONFIG_QCOM_QFPROM)	+= eeprom_qfprom.o
-+eeprom_qfprom-y			:= qfprom.o
-diff --git a/drivers/eeprom/qfprom.c b/drivers/eeprom/qfprom.c
+diff --git a/Documentation/devicetree/bindings/eeprom/qfprom.txt b/Documentation/devicetree/bindings/eeprom/qfprom.txt
 new file mode 100644
-index 0000000..8d5d4d8
+index 0000000..d5baed6
 --- /dev/null
-+++ b/drivers/eeprom/qfprom.c
-@@ -0,0 +1,87 @@
-+/*
-+ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License version 2 and
-+ * only version 2 as published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ */
++++ b/Documentation/devicetree/bindings/eeprom/qfprom.txt
+@@ -0,0 +1,23 @@
++= Qualcomm QFPROM device tree bindings =
 +
-+#include <linux/device.h>
-+#include <linux/module.h>
-+#include <linux/err.h>
-+#include <linux/of.h>
-+#include <linux/regmap.h>
-+#include <linux/platform_device.h>
-+#include <linux/eeprom-provider.h>
++This binding is intended to represent QFPROM which is found in most QCOM SOCs.
 +
-+static struct regmap_config qfprom_regmap_config = {
-+	.reg_bits = 32,
-+	.val_bits = 8,
-+	.reg_stride = 1,
-+};
++Required properties:
++- compatible: should be "qcom,qfprom"
++- reg: Should contain registers location and length
 +
-+static struct eeprom_config econfig = {
-+	.name = "qfprom",
-+};
++= Data cells =
++Are child nodes of qfprom, bindings of which as described in
++bindings/eeprom/eeprom.txt
 +
-+static int qfprom_remove(struct platform_device *pdev)
-+{
-+	struct eeprom_device *eeprom = platform_get_drvdata(pdev);
++Example:
 +
-+	return eeprom_unregister(eeprom);
-+}
-+
-+static int qfprom_probe(struct platform_device *pdev)
-+{
-+	struct resource *res;
-+	void __iomem *base;
-+	struct device *dev = &pdev->dev;
-+	struct eeprom_device *eeprom;
-+	struct regmap *regmap;
-+
-+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-+	base = devm_ioremap_resource(dev, res);
-+	if (IS_ERR(base))
-+		return PTR_ERR(base);
-+
-+	qfprom_regmap_config.max_register = resource_size(res) - 1;
-+
-+	regmap = devm_regmap_init_mmio(dev, base,
-+					       &qfprom_regmap_config);
-+	if (IS_ERR(regmap)) {
-+		dev_err(dev, "regmap init failed\n");
-+		return PTR_ERR(regmap);
-+	}
-+	econfig.owner = THIS_MODULE;
-+	econfig.dev = dev;
-+	eeprom = eeprom_register(&econfig);
-+	if (IS_ERR(eeprom))
-+		return PTR_ERR(eeprom);
-+
-+	platform_set_drvdata(pdev, eeprom);
-+	return 0;
-+}
-+
-+static const struct of_device_id qfprom_of_match[] = {
-+	{ .compatible = "qcom,qfprom"},
-+	{/* sentinel */},
-+};
-+MODULE_DEVICE_TABLE(of, qfprom_of_match);
-+
-+static struct platform_driver qfprom_driver = {
-+	.probe = qfprom_probe,
-+	.remove = qfprom_remove,
-+	.driver = {
-+		.name = "qcom,qfprom",
-+		.of_match_table = qfprom_of_match,
-+	},
-+};
-+module_platform_driver(qfprom_driver);
-+MODULE_AUTHOR("Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>");
-+MODULE_DESCRIPTION("Qualcomm QFPROM driver");
-+MODULE_LICENSE("GPL v2");
++	qfprom: qfprom@00700000 {
++		compatible 	= "qcom,qfprom";
++		reg		= <0x00700000 0x1000>;
++		...
++		/* Data cells */
++		tsens_calibration: calib@404 {
++			reg = <0x404 0x10>;
++		};
++	};
 -- 
 1.9.1
