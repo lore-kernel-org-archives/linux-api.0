@@ -1,80 +1,49 @@
-From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 1/7] eeprom: Add a simple EEPROM framework for eeprom
- providers
-Date: Tue, 24 Mar 2015 09:18:14 +0000
-Message-ID: <55112BD6.2070600@linaro.org>
-References: <1426240157-2383-1-git-send-email-srinivas.kandagatla@linaro.org> <1426240214-2434-1-git-send-email-srinivas.kandagatla@linaro.org> <20150323210918.GS14954@sirena.org.uk> <55108E2B.7050305@linaro.org>
+From: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v3] Add virtio-input driver.
+Date: Tue, 24 Mar 2015 11:26:50 +0100
+Message-ID: <1427192810.18768.4.camel@nilsson.home.kraxel.org>
+References: <1427182321-19451-1-git-send-email-kraxel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55108E2B.7050305-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1427182321-19451-1-git-send-email-kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: virtio-dev-sDuHXQ4OtrM4h7I2RyI4rWD2FQJk+8+b@public.gmane.org
+Cc: virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+  Hi,
 
+> +static void virtinput_cfg_abs(struct virtio_input *vi, int abs)
+> +{
+> +	u32 mi, ma, re, fu, fl;
+> +
+> +	virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ABS_INFO, abs);
+> +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.min, &mi);
+> +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.max, &ma);
+> +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.res, &re);
+> +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.fuzz, &fu);
+> +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.flat, &fl);
+> +	input_set_abs_params(vi->idev, abs, mi, ma, fu, fl);
+> +	input_abs_set_res(vi->idev, abs, re);
+> +}
 
-On 23/03/15 22:05, Srinivas Kandagatla wrote:
->
->
-> On 23/03/15 21:09, Mark Brown wrote:
->> On Fri, Mar 13, 2015 at 09:50:14AM +0000, Srinivas Kandagatla wrote:
->>
->> A couple of *very* minor points below, otherwise this looks OK to me.
->>
-> Thankyou for the review.
->
->>> +struct eeprom_device *eeprom_register(struct eeprom_config *config)
->>> +{
->>> +    struct eeprom_device *eeprom;
->>> +    int rval;
->>> +
->>> +    if (!config->regmap || !config->size) {
->>> +        dev_err(config->dev, "Regmap not found\n");
->>> +        return ERR_PTR(-EINVAL);
->>> +    }
->>
->> You have a struct device in the config and the regmap API has
->> dev_get_regmap() which for most devices that don't have multiple regmaps
->> will give the right regmap.  It would be nice to support this as a
->> convenience for users.
-> Yes, sure that makes sense, I will give it a try.
->
-I did try your suggestion, by which I could remove the regmap from 
-config. One thing I did not like was eeprom-core getting size/stride 
-info directly from providers and regmap from regmap apis. I was 
-wondering if we could take a step further and introduce new regmap 
-helpers like
+> +struct virtio_input_absinfo {
+> +	__virtio32  min;
+> +	__virtio32  max;
+> +	__virtio32  fuzz;
+> +	__virtio32  flat;
+> +	__virtio32  res;
+> +};
 
-regmap_get_size(regmap)
-regmap_get_stride(regmap)
+Damn, had sparse disabled for the test builds.  [ Too bad there are way
+too many warnings on a full kernel build so having sparse enabled all
+the time doesn't fly. ]
 
-Which would be give eeprom-core the size and stride info, doing this way 
-would cut down regmap related things from eeprom_config structure to 
-minimal and also the source of information would come from just regmap apis.
+So this doesn't work either.
 
+Hmm, back to using "u32" in the virtio config structs?
 
---srini
-
->>
->>> +    eeprom = kzalloc(sizeof(*eeprom), GFP_KERNEL);
->>> +    if (!eeprom)
->>> +        return ERR_PTR(-ENOMEM);
->>
->> ...
->>
->>> +    rval = device_add(&eeprom->dev);
->>> +    if (rval)
->>> +        return ERR_PTR(rval);
->>
->> Don't you need a kfree() if device_add() fails?
-> I will fix it in next version.
->
-> --srini
->>
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+cheers,
+  Gerd
