@@ -1,55 +1,69 @@
-From: Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>
-Subject: Re: [PATCH] Add virtio gpu driver.
-Date: Tue, 24 Mar 2015 21:47:03 +0100
-Message-ID: <1427230023.10958.28.camel@x220>
-References: <1427213239-8775-1-git-send-email-kraxel@redhat.com>
+From: Mark Brown <broonie@kernel.org>
+Subject: Re: [PATCH v2 1/7] eeprom: Add a simple EEPROM framework for eeprom
+ providers
+Date: Tue, 24 Mar 2015 13:55:41 -0700
+Message-ID: <20150324205541.GC17265@sirena.org.uk>
+References: <1426240157-2383-1-git-send-email-srinivas.kandagatla@linaro.org>
+ <1426240214-2434-1-git-send-email-srinivas.kandagatla@linaro.org>
+ <20150323210918.GS14954@sirena.org.uk>
+ <55108E2B.7050305@linaro.org>
+ <55112BD6.2070600@linaro.org>
+ <20150324172346.GW17265@sirena.org.uk>
+ <5511AE38.3000108@linaro.org>
+ <20150324190226.GB17265@sirena.org.uk>
+ <5511BA75.3020305@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1427213239-8775-1-git-send-email-kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: virtio-dev-sDuHXQ4OtrM4h7I2RyI4rWD2FQJk+8+b@public.gmane.org, Dave Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dave Airlie <airlied-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:DRM DRIVERS" <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, "open list:VIRTIO CORE, NET..." <virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="mjeOt6n4R71vn6wN"
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <5511BA75.3020305@linaro.org>
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Cc: linux-arm-kernel@lists.infradead.org, Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Kumar Gala <galak@codeaurora.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, Stephen Boyd <sboyd@codeaurora.org>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-arm-msm@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Just a license nit.
 
-On Tue, 2015-03-24 at 17:07 +0100, Gerd Hoffmann wrote:
+--mjeOt6n4R71vn6wN
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-> --- /dev/null
-> +++ b/drivers/gpu/drm/virtio/virtgpu_drv.c
-> @@ -0,0 +1,132 @@
-> +/*
-> + * 2011 Red Hat, Inc.
-> + * All Rights Reserved.
-> + *
-> + * Permission is hereby granted, free of charge, to any person obtaining a
-> + * copy of this software and associated documentation files (the "Software"),
-> + * to deal in the Software without restriction, including without limitation
-> + * the rights to use, copy, modify, merge, publish, distribute, sublicense,
-> + * and/or sell copies of the Software, and to permit persons to whom the
-> + * Software is furnished to do so, subject to the following conditions:
-> + *
-> + * The above copyright notice and this permission notice (including the next
-> + * paragraph) shall be included in all copies or substantial portions of the
-> + * Software.
-> + *
-> + * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-> + * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-> + * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
-> + * VA LINUX SYSTEMS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-> + * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-> + * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-> + * OTHER DEALINGS IN THE SOFTWARE.
+On Tue, Mar 24, 2015 at 07:26:45PM +0000, Srinivas Kandagatla wrote:
+> On 24/03/15 19:02, Mark Brown wrote:
+> >On Tue, Mar 24, 2015 at 06:34:32PM +0000, Srinivas Kandagatla wrote:
+> >>>On 24/03/15 17:23, Mark Brown wrote:
 
-I wouldn't know (without further, well, research) which license this is.
+> >>>>> >>regmap_get_size(regmap)
 
-> +MODULE_LICENSE("GPL");
+> >>>> >This is already there.
 
-But I'm pretty sure it's not GPL v2 or later. So I think the license
-mentioned in the comment at the top of this file and the license "ident"
-used in this macro do not match.
+> >>>Sorry, I can't see any such api atleast in v4.0-rc5 and linux-next? Are you
+> >>>referring to another api which does the same job?
 
+> >regmap_get_val_bytes()
 
-Paul Bolle
+> This would return value bytes, but I wanted is the regmap->max_register
+> value which would be used for sanity checks in eeprom-core.
+
+Then you *really* want to pick a better name then, I'd never have
+inferred that meaning from "size" (consider sparse register maps for
+example).  Like I said, send patches (preferrably showing the users as
+well).
+
+--mjeOt6n4R71vn6wN
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQEcBAEBCAAGBQJVEc9FAAoJECTWi3JdVIfQMvgH/0FxHeCACWt0iw0MmGE4zaTx
+sZA0bIAUEhDlOxU8EvjuWLLG0eB4rioQPFf0bBrWoRbLvQqSrKK3S7TCt9mQrSUv
++2sFs3Wk6C0n2m+PPSmaeR0264fJ02GnRGV7PtII2VOFBxhknGLP2Fa0ZucqNhXV
+OePO4v9Qsqfmakp5gx65w7ZyUeRYzBw4sOJATwRqBAYxAwMHea8GieB9EF5NHe2u
+atjeHjwpuFXlt8T7ewZRW6Q3Nlwi6ChtsESBMu2N6YCvMqJjxsU/cujW1dWm53JN
+pZdvKlwQk1Z2783oqh1sv0G4XqeNZd1LM6fwt3eCpy/DuOdR7/WgBmTHe3r9zxg=
+=LY5g
+-----END PGP SIGNATURE-----
+
+--mjeOt6n4R71vn6wN--
