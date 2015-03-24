@@ -1,456 +1,81 @@
-From: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Subject: Re: [PATCH v3] Add virtio-input driver.
-Date: Tue, 24 Mar 2015 10:28:05 -0700
-Message-ID: <20150324172805.GA16445@dtor-ws>
-References: <1427182321-19451-1-git-send-email-kraxel@redhat.com>
-	<20150324105829-mutt-send-email-mst@redhat.com>
-	<20150324162337.GB34117@dtor-ws>
-	<20150324180532-mutt-send-email-mst@redhat.com>
+From: Jiri Slaby <jslaby@suse.cz>
+Subject: Re: [PATCH 13/14] kdbus: add walk-through user space example
+Date: Tue, 24 Mar 2015 18:37:26 +0100
+Message-ID: <5511A0D6.5030606@suse.cz>
+References: <1425906560-13798-1-git-send-email-gregkh@linuxfoundation.org>	<1425906560-13798-14-git-send-email-gregkh@linuxfoundation.org>	<551194C8.4070707@suse.cz> <CANq1E4QmOg0Xjx9d=fDQmuaAO1aBwQAbdwz_7ucyo6LVvFLzUA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-Content-Disposition: inline
-In-Reply-To: <20150324180532-mutt-send-email-mst@redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: "Michael S. Tsirkin" <mst@redhat.com>
-Cc: virtio-dev@lists.oasis-open.org, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, virtualization@lists.linux-foundation.org, David Herrmann <dh.herrmann@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kbuild-owner@vger.kernel.org>
+In-Reply-To: <CANq1E4QmOg0Xjx9d=fDQmuaAO1aBwQAbdwz_7ucyo6LVvFLzUA@mail.gmail.com>
+Sender: linux-kbuild-owner@vger.kernel.org
+To: David Herrmann <dh.herrmann@gmail.com>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Tom Gundersen <teg@jklm.no>, Jiri Kosina <jkosina@suse.cz>, Andy Lutomirski <luto@amacapital.net>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Daniel Mack <daniel@zonque.org>, Djalal Harouni <tixxdz@opendz.org>, Michal Marek <mmarek@suse.cz>, linux-kbuild@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 24, 2015 at 06:22:36PM +0100, Michael S. Tsirkin wrote:
-> On Tue, Mar 24, 2015 at 09:23:37AM -0700, Dmitry Torokhov wrote:
-> > On Tue, Mar 24, 2015 at 11:36:31AM +0100, Michael S. Tsirkin wrote:
-> > > On Tue, Mar 24, 2015 at 08:32:01AM +0100, Gerd Hoffmann wrote:
-> > > > virtio-input is basically evdev-events-over-virtio, so this driver isn't
-> > > > much more than reading configuration from config space and forwarding
-> > > > incoming events to the linux input layer.
-> > > > 
-> > > > Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
-> > > 
-> > > Looks pretty neat overall. I think I still see some
-> > > small issues, but it's getting there.
-> > > 
-> > > > ---
-> > > >  MAINTAINERS                       |   6 +
-> > > >  drivers/virtio/Kconfig            |  10 ++
-> > > >  drivers/virtio/Makefile           |   1 +
-> > > >  drivers/virtio/virtio_input.c     | 313 ++++++++++++++++++++++++++++++++++++++
-> > > >  include/uapi/linux/Kbuild         |   1 +
-> > > >  include/uapi/linux/virtio_ids.h   |   1 +
-> > > >  include/uapi/linux/virtio_input.h |  76 +++++++++
-> > > >  7 files changed, 408 insertions(+)
-> > > >  create mode 100644 drivers/virtio/virtio_input.c
-> > > >  create mode 100644 include/uapi/linux/virtio_input.h
-> > > > 
-> > > > diff --git a/MAINTAINERS b/MAINTAINERS
-> > > > index 358eb01..6f233dd 100644
-> > > > --- a/MAINTAINERS
-> > > > +++ b/MAINTAINERS
-> > > > @@ -10442,6 +10442,12 @@ S:	Maintained
-> > > >  F:	drivers/vhost/
-> > > >  F:	include/uapi/linux/vhost.h
-> > > >  
-> > > > +VIRTIO INPUT DRIVER
-> > > > +M:	Gerd Hoffmann <kraxel@redhat.com>
-> > > > +S:	Maintained
-> > > > +F:	drivers/virtio/virtio_input.c
-> > > > +F:	include/uapi/linux/virtio_input.h
-> > > > +
-> > > >  VIA RHINE NETWORK DRIVER
-> > > >  M:	Roger Luethi <rl@hellgate.ch>
-> > > >  S:	Maintained
-> > > > diff --git a/drivers/virtio/Kconfig b/drivers/virtio/Kconfig
-> > > > index b546da5..cab9f3f 100644
-> > > > --- a/drivers/virtio/Kconfig
-> > > > +++ b/drivers/virtio/Kconfig
-> > > > @@ -48,6 +48,16 @@ config VIRTIO_BALLOON
-> > > >  
-> > > >  	 If unsure, say M.
-> > > >  
-> > > > +config VIRTIO_INPUT
-> > > > +	tristate "Virtio input driver"
-> > > > +	depends on VIRTIO
-> > > > +	depends on INPUT
-> > > > +	---help---
-> > > > +	 This driver supports virtio input devices such as
-> > > > +	 keyboards, mice and tablets.
-> > > > +
-> > > > +	 If unsure, say M.
-> > > > +
-> > > >   config VIRTIO_MMIO
-> > > >  	tristate "Platform bus driver for memory mapped virtio devices"
-> > > >  	depends on HAS_IOMEM
-> > > > diff --git a/drivers/virtio/Makefile b/drivers/virtio/Makefile
-> > > > index d85565b..41e30e3 100644
-> > > > --- a/drivers/virtio/Makefile
-> > > > +++ b/drivers/virtio/Makefile
-> > > > @@ -4,3 +4,4 @@ obj-$(CONFIG_VIRTIO_PCI) += virtio_pci.o
-> > > >  virtio_pci-y := virtio_pci_modern.o virtio_pci_common.o
-> > > >  virtio_pci-$(CONFIG_VIRTIO_PCI_LEGACY) += virtio_pci_legacy.o
-> > > >  obj-$(CONFIG_VIRTIO_BALLOON) += virtio_balloon.o
-> > > > +obj-$(CONFIG_VIRTIO_INPUT) += virtio_input.o
-> > > > diff --git a/drivers/virtio/virtio_input.c b/drivers/virtio/virtio_input.c
-> > > > new file mode 100644
-> > > > index 0000000..cf112b2
-> > > > --- /dev/null
-> > > > +++ b/drivers/virtio/virtio_input.c
-> > > > @@ -0,0 +1,313 @@
-> > > > +#include <linux/module.h>
-> > > > +#include <linux/virtio.h>
-> > > > +#include <linux/input.h>
-> > > > +
-> > > > +#include <uapi/linux/virtio_ids.h>
-> > > > +#include <uapi/linux/virtio_input.h>
-> > > > +
-> > > > +struct virtio_input {
-> > > > +	struct virtio_device       *vdev;
-> > > > +	struct input_dev           *idev;
-> > > > +	char                       name[64];
-> > > > +	char                       serial[64];
-> > > > +	char                       phys[64];
-> > > > +	struct virtqueue           *evt, *sts;
-> > > > +	struct virtio_input_event  evts[64];
-> > > > +	spinlock_t                 lock;
-> > > > +};
-> > > > +
-> > > > +static void virtinput_queue_evtbuf(struct virtio_input *vi,
-> > > > +				   struct virtio_input_event *evtbuf)
-> > > > +{
-> > > > +	struct scatterlist sg[1];
-> > > > +
-> > > > +	sg_init_one(sg, evtbuf, sizeof(*evtbuf));
-> > > > +	virtqueue_add_inbuf(vi->evt, sg, 1, evtbuf, GFP_ATOMIC);
-> > > > +}
-> > > > +
-> > > > +static void virtinput_recv_events(struct virtqueue *vq)
-> > > > +{
-> > > > +	struct virtio_input *vi = vq->vdev->priv;
-> > > > +	struct virtio_input_event *event;
-> > > > +	unsigned long flags;
-> > > > +	unsigned int len;
-> > > > +
-> > > > +	spin_lock_irqsave(&vi->lock, flags);
-> > > > +	while ((event = virtqueue_get_buf(vi->evt, &len)) != NULL) {
-> > > > +		input_event(vi->idev,
-> > > > +			    le16_to_cpu(event->type),
-> > > > +			    le16_to_cpu(event->code),
-> > > > +			    le32_to_cpu(event->value));
-> > > 
-> > > What happens if input layer gets an
-> > > unexpected event code or value?
-> > > Or does something prevent it?
-> > > 
-> > > 
-> > > 
-> > > > +		virtinput_queue_evtbuf(vi, event);
-> > > > +	}
-> > > > +	virtqueue_kick(vq);
-> > > > +	spin_unlock_irqrestore(&vi->lock, flags);
-> > > > +}
-> > > > +
-> > > > +static int virtinput_send_status(struct virtio_input *vi,
-> > > > +				 u16 type, u16 code, s32 value)
-> > > > +{
-> > > > +	struct virtio_input_event *stsbuf;
-> > > > +	struct scatterlist sg[1];
-> > > > +	unsigned long flags;
-> > > > +	int rc;
-> > > > +
-> > > > +	stsbuf = kzalloc(sizeof(*stsbuf), GFP_ATOMIC);
-> > > > +	if (!stsbuf)
-> > > > +		return -ENOMEM;
-> > > > +
-> > > > +	stsbuf->type  = cpu_to_le16(type);
-> > > > +	stsbuf->code  = cpu_to_le16(code);
-> > > > +	stsbuf->value = cpu_to_le32(value);
-> > > > +	sg_init_one(sg, stsbuf, sizeof(*stsbuf));
-> > > > +
-> > > > +	spin_lock_irqsave(&vi->lock, flags);
-> > > > +	rc = virtqueue_add_outbuf(vi->sts, sg, 1, stsbuf, GFP_ATOMIC);
-> > > > +	virtqueue_kick(vi->sts);
-> > > > +	spin_unlock_irqrestore(&vi->lock, flags);
-> > 
-> > I think locking is wrong here. This is basically input_dev->event()
-> > which is called with input_dev->event_lock spinlock held, and it is
-> > taking vi->lock. OTOH virtinput_recv_events() takes vi->lock and then
-> > calls input_event(), which will try taking input_dev->event_lock. It is
-> > bound to deadlock at some point.
-> > 
-> > I guess the easiest way would be to drop vi->lock() after fetching
-> > virtio event and before calling input_event().
+Ccing kbuild fellows (see the very bottom).
+
+On 03/24/2015, 06:15 PM, David Herrmann wrote:
+> Hi
 > 
-> Or just always use event_lock for event vq, leave vq->lock for
-> status vq only.
+> On Tue, Mar 24, 2015 at 5:46 PM, Jiri Slaby <jslaby@suse.cz> wrote:
+>> On 03/09/2015, 02:09 PM, Greg Kroah-Hartman wrote:
+>>> --- /dev/null
+>>> +++ b/samples/kdbus/Makefile
+>>> @@ -0,0 +1,10 @@
+>>> +# kbuild trick to avoid linker error. Can be omitted if a module is built.
+>>> +obj- := dummy.o
+>>> +
+>>> +hostprogs-y += kdbus-workers
+>>> +
+>>> +always := $(hostprogs-y)
+>>
+>> Errr, no. Not only it causes build failures (even with KDBUS=n), it
+>> definitely should not be built for everyone.
 > 
-> > > > +
-> > > > +	if (rc != 0)
-> > > > +		kfree(stsbuf);
-> > > > +	return rc;
-> > > 
-> > > This means that caller will get errors if it happens to call
-> > > send_status at a rate that's faster than host's consumption of them.
-> > > To me this looks wrong.
-> > > Poking at input layer, it seems to simply discard errors.
-> > > Is it always safe to discard status updates?
-> > > If yes, some kind of comment to clarify the logic would
-> > > make sense IMHO.
-> > > 
-> > > 
-> > > 
-> > > > +}
-> > > > +
-> > > > +static void virtinput_recv_status(struct virtqueue *vq)
-> > > > +{
-> > > > +	struct virtio_input *vi = vq->vdev->priv;
-> > > > +	struct virtio_input_event *stsbuf;
-> > > > +	unsigned long flags;
-> > > > +	unsigned int len;
-> > > > +
-> > > > +	spin_lock_irqsave(&vi->lock, flags);
-> > > > +	while ((stsbuf = virtqueue_get_buf(vi->sts, &len)) != NULL)
-> > > > +		kfree(stsbuf);
-> > > > +	spin_unlock_irqrestore(&vi->lock, flags);
-> > > > +}
-> > > > +
-> > > > +static int virtinput_status(struct input_dev *idev, unsigned int type,
-> > > > +			    unsigned int code, int value)
-> > > > +{
-> > > > +	struct virtio_input *vi = input_get_drvdata(idev);
-> > > > +
-> > > > +	return virtinput_send_status(vi, type, code, value);
-> > > > +}
-> > > > +
-> > > > +static size_t virtinput_cfg_select(struct virtio_input *vi,
-> > > > +				   u8 select, u8 subsel)
-> > > > +{
-> > > > +	u8 size;
-> > > > +
-> > > > +	virtio_cwrite(vi->vdev, struct virtio_input_config, select, &select);
-> > > > +	virtio_cwrite(vi->vdev, struct virtio_input_config, subsel, &subsel);
-> > > > +	virtio_cread(vi->vdev, struct virtio_input_config, size, &size);
-> > > > +	return size;
-> > > > +}
-> > > > +
-> > > > +static void virtinput_cfg_bits(struct virtio_input *vi, int select, int subsel,
-> > > > +			       unsigned long *bits, unsigned int bitcount)
-> > > > +{
-> > > > +	unsigned int bit;
-> > > > +	size_t bytes;
-> > > > +	u8 *virtio_bits;
-> > > > +
-> > > > +	bytes = virtinput_cfg_select(vi, select, subsel);
-> > > > +	if (!bytes)
-> > > > +		return;
-> > > 
-> > > How about limiting bytes to sizeof struct virtio_input_config->u?
-> > > 
-> > > > +	if (bitcount > bytes*8)
-> > > > +		bitcount = bytes*8;
-> > > 
-> > > Space around * pls.
-> > > 
-> > > > +
-> > > > +	/*
-> > > > +	 * Bitmap in virtio config space is a simple stream of bytes,
-> > > > +	 * with the first byte carrying bits 0-7, second bits 8-15 and
-> > > > +	 * so on.
-> > > > +	 */
-> > > > +	virtio_bits = kzalloc(bytes, GFP_KERNEL);
-> > > > +	if (!virtio_bits)
-> > > > +		return;
-> > > > +	virtio_cread_bytes(vi->vdev, offsetof(struct virtio_input_config, u),
-> > > > +			   virtio_bits, bytes);
-> > > > +	for (bit = 0; bit < bitcount; bit++) {
-> > > > +		if (virtio_bits[bit / 8] & (1 << (bit % 8)))
-> > > > +			__set_bit(bit, bits);
-> > > > +	}
-> > > > +	kfree(virtio_bits);
-> > > > +
-> > > > +	if (select == VIRTIO_INPUT_CFG_EV_BITS)
-> > > > +		__set_bit(subsel, vi->idev->evbit);
-> > > > +}
-> > > > +
-> > > > +static void virtinput_cfg_abs(struct virtio_input *vi, int abs)
-> > > > +{
-> > > > +	u32 mi, ma, re, fu, fl;
-> > > > +
-> > > > +	virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ABS_INFO, abs);
-> > > > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.min, &mi);
-> > > > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.max, &ma);
-> > > > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.res, &re);
-> > > > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.fuzz, &fu);
-> > > > +	virtio_cread(vi->vdev, struct virtio_input_config, u.abs.flat, &fl);
-> > > > +	input_set_abs_params(vi->idev, abs, mi, ma, fu, fl);
-> > > > +	input_abs_set_res(vi->idev, abs, re);
-> > > > +}
-> > > > +
-> > > > +static int virtinput_init_vqs(struct virtio_input *vi)
-> > > > +{
-> > > > +	struct virtqueue *vqs[2];
-> > > > +	vq_callback_t *cbs[] = { virtinput_recv_events,
-> > > > +				 virtinput_recv_status };
-> > > > +	static const char * names[] = { "events", "status" };
-> > > 
-> > > No space between * and names expected
-> > > 
-> > > > +	int i, err, size;
-> > > > +
-> > > > +	err = vi->vdev->config->find_vqs(vi->vdev, 2, vqs, cbs, names);
-> > > > +	if (err)
-> > > > +		return err;
-> > > > +	vi->evt = vqs[0];
-> > > > +	vi->sts = vqs[1];
-> > > > +
-> > > > +	size = virtqueue_get_vring_size(vi->evt);
-> > > > +	if (size > ARRAY_SIZE(vi->evts))
-> > > > +		size = ARRAY_SIZE(vi->evts);
-> > > > +	for (i = 0; i < size; i++)
-> > > > +		virtinput_queue_evtbuf(vi, &vi->evts[i]);
-> > > > +	virtqueue_kick(vi->evt);
-> > > > +
-> > > > +	return 0;
-> > > > +}
-> > > > +
-> > > > +static int virtinput_probe(struct virtio_device *vdev)
-> > > > +{
-> > > > +	struct virtio_input *vi;
-> > > > +	size_t size;
-> > > > +	int abs, err;
-> > > > +
-> > > > +	if (!virtio_has_feature(vdev, VIRTIO_F_VERSION_1))
-> > > > +		return -ENODEV;
-> > > > +
-> > > > +	vi = kzalloc(sizeof(*vi), GFP_KERNEL);
-> > > > +	if (!vi)
-> > > > +		return -ENOMEM;
-> > > > +
-> > > > +	vdev->priv = vi;
-> > > > +	vi->vdev = vdev;
-> > > > +	spin_lock_init(&vi->lock);
-> > > > +
-> > > > +	err = virtinput_init_vqs(vi);
-> > > > +	if (err)
-> > > > +		goto err_init_vq;
-> > > > +
-> > > > +	vi->idev = input_allocate_device();
-> > > > +	if (!vi->idev) {
-> > > > +		err = -ENOMEM;
-> > > > +		goto err_input_alloc;
-> > > > +	}
-> > > > +	input_set_drvdata(vi->idev, vi);
-> > > > +
-> > > > +	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ID_NAME, 0);
-> > > > +	virtio_cread_bytes(vi->vdev, offsetof(struct virtio_input_config, u),
-> > > > +			   vi->name, min(size, sizeof(vi->name)));
-> > > > +	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ID_SERIAL, 0);
-> > > > +	virtio_cread_bytes(vi->vdev, offsetof(struct virtio_input_config, u),
-> > > > +			   vi->serial, min(size, sizeof(vi->serial)));
-> > > > +	snprintf(vi->phys, sizeof(vi->phys),
-> > > > +		 "virtio%d/input0", vdev->index);
-> > > > +	vi->idev->name = vi->name;
-> > > > +	vi->idev->phys = vi->phys;
-> > > > +	vi->idev->uniq = vi->serial;
-> > > > +
-> > > > +	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ID_DEVIDS, 0);
-> > > > +	if (size >= 8) {
-> > > 
-> > > What does 8 mean here? Should be sizeof virtio_input_devids?
-> > > 
-> > > > +		virtio_cread(vi->vdev, struct virtio_input_config,
-> > > > +			     u.ids.bustype, &vi->idev->id.bustype);
-> > > > +		virtio_cread(vi->vdev, struct virtio_input_config,
-> > > > +			     u.ids.vendor, &vi->idev->id.vendor);
-> > > > +		virtio_cread(vi->vdev, struct virtio_input_config,
-> > > > +			     u.ids.product, &vi->idev->id.product);
-> > > > +		virtio_cread(vi->vdev, struct virtio_input_config,
-> > > > +			     u.ids.version, &vi->idev->id.version);
-> > > > +	} else {
-> > > > +		vi->idev->id.bustype = BUS_VIRTUAL;
-> > > > +	}
-> > > > +
-> > > > +	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_PROP_BITS, 0,
-> > > > +			   vi->idev->propbit, INPUT_PROP_CNT);
-> > > > +	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_REP);
-> > > > +	if (size)
-> > > > +		__set_bit(EV_REP, vi->idev->evbit);
-> > > > +
-> > > > +	vi->idev->dev.parent = &vdev->dev;
-> > > > +	vi->idev->event = virtinput_status;
-> > > > +
-> > > > +	/* device -> kernel */
-> > > > +	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_KEY,
-> > > > +			   vi->idev->keybit, KEY_CNT);
-> > > > +	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_REL,
-> > > > +			   vi->idev->relbit, REL_CNT);
-> > > > +	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_ABS,
-> > > > +			   vi->idev->absbit, ABS_CNT);
-> > > > +	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_MSC,
-> > > > +			   vi->idev->mscbit, MSC_CNT);
-> > > > +	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_SW,
-> > > > +			   vi->idev->swbit,  SW_CNT);
-> > > > +
-> > > > +	/* kernel -> device */
-> > > > +	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_LED,
-> > > > +			   vi->idev->ledbit, LED_CNT);
-> > > > +	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_SND,
-> > > > +			   vi->idev->sndbit, SND_CNT);
-> > > > +
-> > > > +	if (test_bit(EV_ABS, vi->idev->evbit)) {
-> > > > +		for (abs = 0; abs < ABS_CNT; abs++) {
-> > > > +			if (!test_bit(abs, vi->idev->absbit))
-> > > > +				continue;
-> > > > +			virtinput_cfg_abs(vi, abs);
-> > > > +		}
-> > > > +	}
-> > > > +	virtio_device_ready(vdev);
-> > > > +
-> > > At this point you can already get interrupts.
-> > > This will cause events to be forwarded.
-> > > I'm guessing this is ok since you called
-> > > input_allocate_device, but worth checking,
-> > > and maybe adding a comment.
-> > 
-> > Yes, it is OK to send events though yet unregistered input device, as
-> > long as it was allocated with input_allocate_device().
-> > 
-> > > 
-> > > > +	err = input_register_device(vi->idev);
-> > > > +	if (err)
-> > > > +		goto err_input_register;
-> > > > +
-> > > > +	return 0;
-> > > > +
-> > > > +err_input_register:
-> > > 
-> > > > +	input_free_device(vi->idev);
-> > > 
-> > > At this point you can already get interrupts
-> > > since you called virtio_device_ready, and
-> > > getting events from a freed device likely won't
-> > > DTRT.
-> > 
-> > Right. I guess you want to mark the virtio device ready only after
-> > registering input device.
+> It's only built if CONFIG_SAMPLES is set, right?
+
+Yes, but I build other samples selected with separate CONFIG_ options
+like CONFIG_SAMPLE_LIVEPATCH. So this guy should have its own CONFIG_
+option too, because I (and likely others) don't want to build it. All of
+the samples should be protected at least by their respective kernel
+CONFIG_ option IMO.
+
+> What build-failures does it cause? linux/kdbus.h is not optional based
+> on CONFIG_KDBUS, so the samples should build just fine. Can you tell
+> me what kind of errors you get? The kbuild-robots didn't report
+> anything so far.
+
+The output is this:
+In file included from samples/kdbus/kdbus-workers.c:79:0:
+/home/latest/linux/samples/kdbus/kdbus-api.h:5:25: fatal error:
+linux/kdbus.h: No such file or directory
+ #include <linux/kdbus.h>
+                         ^
+compilation terminated.
+
+I now know that I have to install_headers *if* I want to build the
+sample. But I don't want to build it in the first place. (So the config
+option above should be all we need.)
+
+>> And why is it a host prog? It's a sample prog for the kernel I am
+>> building, i.e. for the destination arch, like all the other samples.
 > 
-> No that's broken since you can get events after this
-> point, and you won't be able to forward them.
+> It's modeled after the other user-space examples in ./samples/, which
+> all use hostprogs (see samples/{bpf,hidraw,seccomp,uhid}/Makefile). I
+> have no idea how to build programs that run on the target
+> architecture. Documentation/kbuild/makefiles.txt doesn't list it,
+> which is, I guess, the reason why everyone used hostprogs so far. And
+> given that autotools calls the target architecture "--host", I
+> actually thought this is what hostprogs does.. apparently that's not
+> the case, sorry.
 
-Who cares? What makes these events needed compared to ones sent 1 ms
-earlier before we had input device registered?
+Oh, it's cut&paste, I see. This does not look correct though. The hack
+inclusive. Host progs are intended to be run on the host where the
+kernel is built. During the compilation or such (like x/menuconfig).
+Quite misleading naming if you are used to the autotools one.
 
-But I guess if you can call virtio_device_ready/virtio_device_broken
-several times then the best option is putting them into input_dev->open
-and input_dev->close callbacks.
-
-Thanks.
-
+thanks,
 -- 
-Dmitry
+js
+suse labs
