@@ -1,75 +1,131 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: [PATCH v11 tip 1/9] bpf: make internal bpf API independent of CONFIG_BPF_SYSCALL ifdefs
-Date: Wed, 25 Mar 2015 12:49:18 -0700
-Message-ID: <1427312966-8434-2-git-send-email-ast@plumgrid.com>
-References: <1427312966-8434-1-git-send-email-ast@plumgrid.com>
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <1427312966-8434-1-git-send-email-ast@plumgrid.com>
-Sender: netdev-owner@vger.kernel.org
-To: Ingo Molnar <mingo@kernel.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Daniel Micay <danielmicay@gmail.com>
+Subject: Re: [PATCH] mremap: add MREMAP_NOHOLE flag --resend
+Date: Wed, 25 Mar 2015 16:49:52 -0400
+Message-ID: <55131F70.7020503@gmail.com>
+References: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli@fb.com>	<20150318153100.5658b741277f3717b52e42d9@linux-foundation.org>	<550A5FF8.90504@gmail.com> <CADpJO7zBLhjecbiQeTubnTReiicVLr0-K43KbB4uCL5w_dyqJg@mail.gmail.com> <550E6D9D.1060507@gmail.com> <5512E0C0.6060406@suse.cz>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha256;
+ protocol="application/pgp-signature";
+ boundary="AN3Fqv5MDNxSMdjq7DAHljhlVIXPfLCnV"
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <5512E0C0.6060406@suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Vlastimil Babka <vbabka@suse.cz>, Aliaksey Kandratsenka <alkondratenko@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Shaohua Li <shli@fb.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, Rik van Riel <riel@redhat.com>, Hugh Dickins <hughd@google.com>, Mel Gorman <mel@csn.ul.ie>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Andy Lutomirski <luto@amacapital.net>, "google-perftools@googlegroups.com" <google-perftools@googlegroups.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Daniel Borkmann <daniel@iogearbox.net>
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--AN3Fqv5MDNxSMdjq7DAHljhlVIXPfLCnV
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-Socket filter code and other subsystems with upcoming eBPF support should
-not need to deal with the fact that we have CONFIG_BPF_SYSCALL defined or
-not.
+On 25/03/15 12:22 PM, Vlastimil Babka wrote:
+>=20
+> I'm not sure I get your description right. The problem I know about is
+> where "purging" means madvise(MADV_DONTNEED) and khugepaged later
+> collapses a new hugepage that will repopulate the purged parts,
+> increasing the memory usage. One can limit this via
+> /sys/kernel/mm/transparent_hugepage/khugepaged/max_ptes_none . That
+> setting doesn't affect the page fault THP allocations, which however
+> happen only in newly accessed hugepage-sized areas and not partially
+> purged ones, though.
 
-Having the bpf syscall as a config option is a nice thing and I'd expect
-it to stay that way for expert users (I presume one day the default setting
-of it might change, though), but code making use of it should not care if
-it's actually enabled or not.
+Since jemalloc doesn't unmap memory but instead does recycling itself in
+userspace, it ends up with large spans of free virtual memory and gets
+*lots* of huge pages from the page fault heuristic. It keeps track of
+active vs. dirty (not purged) vs. clean (purged / untouched) ranges
+everywhere, and will purge dirty ranges as they build up.
 
-Instead, hide this via header files and let the rest deal with it.
+The THP allocation on page faults mean it ends up with memory that's
+supposed to be clean but is really not.
 
-Signed-off-by: Daniel Borkmann <daniel@iogearbox.net>
-Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
-Reviewed-by: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
----
- include/linux/bpf.h |   20 ++++++++++++++++----
- 1 file changed, 16 insertions(+), 4 deletions(-)
+A worst case example with the (up until recently) default chunk size of
+4M is allocating a bunch of 2.1M allocations. Chunks are naturally
+aligned, so each one can be represented as 2 huge pages. It increases
+memory usage by nearly *50%*. The allocator thinks the tail is clean
+memory, but it's not. When the allocations are freed, it will purge the
+2.1M at the head (once enough dirty memory builds up) but all of the
+tail memory will be leaked until something else is allocated there and
+then freed.
 
-diff --git a/include/linux/bpf.h b/include/linux/bpf.h
-index bbfceb756452..c2e21113ecc0 100644
---- a/include/linux/bpf.h
-+++ b/include/linux/bpf.h
-@@ -113,8 +113,6 @@ struct bpf_prog_type_list {
- 	enum bpf_prog_type type;
- };
- 
--void bpf_register_prog_type(struct bpf_prog_type_list *tl);
--
- struct bpf_prog;
- 
- struct bpf_prog_aux {
-@@ -129,11 +127,25 @@ struct bpf_prog_aux {
- };
- 
- #ifdef CONFIG_BPF_SYSCALL
-+void bpf_register_prog_type(struct bpf_prog_type_list *tl);
-+
- void bpf_prog_put(struct bpf_prog *prog);
-+struct bpf_prog *bpf_prog_get(u32 ufd);
- #else
--static inline void bpf_prog_put(struct bpf_prog *prog) {}
-+static inline void bpf_register_prog_type(struct bpf_prog_type_list *tl)
-+{
-+}
-+
-+static inline struct bpf_prog *bpf_prog_get(u32 ufd)
-+{
-+	return ERR_PTR(-EOPNOTSUPP);
-+}
-+
-+static inline void bpf_prog_put(struct bpf_prog *prog)
-+{
-+}
- #endif
--struct bpf_prog *bpf_prog_get(u32 ufd);
-+
- /* verify correctness of eBPF program */
- int bpf_check(struct bpf_prog *fp, union bpf_attr *attr);
- 
--- 
-1.7.9.5
+>> I think a THP implementation playing that played well with purging wou=
+ld
+>> need to drop the page fault heuristic and rely on a significantly bett=
+er
+>> khugepaged.
+>=20
+> See here http://lwn.net/Articles/636162/ (the "Compaction" part)
+>=20
+> The objection is that some short-lived workloads like gcc have to map
+> hugepages immediately if they are to benefit from them. I still plan to=
+
+> improve khugepaged and allow admins to say that they don't want THP pag=
+e
+> faults (and rely solely on khugepaged which has more information to
+> judge additional memory usage), but I'm not sure if it would be an
+> acceptable default behavior.
+> One workaround in the current state for jemalloc and friends could be t=
+o
+> use madvise(MADV_NOHUGEPAGE) on hugepage-sized/aligned areas where it
+> wants to purge parts of them via madvise(MADV_DONTNEED). It could mean
+> overhead of another syscall and tracking of where this was applied and
+> when it makes sense to undo this and allow THP to be collapsed again,
+> though, and it would also split vma's.
+
+Huge pages do significantly help performance though, and this would
+pretty much mean no huge pages. The overhead of toggling it on and off
+based on whether it's a < chunk size allocation or a >=3D chunk size one
+is too high.
+
+The page fault heuristic is just way too aggressive because there's no
+indication of how much memory will be used. I don't think it makes sense
+to do it without an explicit MADV_NOHUGEPAGE. Collapsing only dense
+ranges doesn't have the same risk.
+
+>> This would mean faulting in a span of memory would no longer
+>> be faster. Having a flag to populate a range with madvise would help a=
+
+>=20
+> If it's a newly mapped memory, there's mmap(MAP_POPULATE). There is als=
+o
+> a madvise(MADV_WILLNEED), which sounds like what you want, but I don't
+> know what the implementation does exactly - it was apparently added for=
+
+> paging in ahead, and maybe it ignores unpopulated anonymous areas, but
+> it would probably be well in spirit of the flag to make it prepopulate
+> those.
+
+It doesn't seem to do anything for anon mappings atm but I do see a
+patch from 2008 for that. I guess it never landed.
+
+
+--AN3Fqv5MDNxSMdjq7DAHljhlVIXPfLCnV
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBCAAGBQJVEx9wAAoJEPnnEuWa9fIqw7kQAJPOyfLYeWlfMNDhF0zGfYUQ
+cRYZbbjcJx3T8wdGAIqs+oVsFWOqzn9C3M93RuKrXOpkEV/hJtT5t0Xai/tfa5fX
+6H/aNkSQqDKD4CsrPL3WE8PoZ95IsLFVv0pHpq5Dj6G1nNrCUJ9qMfs+1YHWcRUN
+YGwHgnzyau/iNwfOE4kXOdhIeouI48j1WxbB1kaMtbHjnq+TEnpzZnU1o4frw6SD
+Tcedr58AnZC+7vxFQOl+N9pMQqCKCxr/V7S6i7JcSVBIRa4PdrI/IAzR920ifujS
+OSk2xFS/z0Xx1b2fCAvZtxB0FmLrCatjF0QThW8bVTj+ewVkNjB/TOFDtrAqe7BH
+/zpTUim7kRuGabs8GjxkyW+e6JmURndEyR7th9bNtHXJPeR8IkdIda6vtRs09MAB
+QWWOMPVUq25LLvNuKd8Jpgg2tc5Bvr46PmKHkuALpxzJfP36bBCgYmWl9VLJ4mfp
+LxAsVbEM8eQ8NTanpd0vhG2QJ+GORtDhdhiYSNEgEqLemqOwlEzZEGYjRvEH5FuR
+L+g/MJawoUglEDmdN0IsaUx2c746PYup1+x+3tvPqz3M9LTFsUzdCOfJk4eUqqtm
+n7Dn3NbVecnFy1xiE7CqeL+wIfAxvvSOqR6Lpixt83I70z4jgYwU+1Z5atOOAyIF
+3kbMdlUSNUzaGFh/AnUW
+=uxm3
+-----END PGP SIGNATURE-----
+
+--AN3Fqv5MDNxSMdjq7DAHljhlVIXPfLCnV--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
