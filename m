@@ -1,41 +1,69 @@
-From: Gerd Hoffmann <kraxel@redhat.com>
-Subject: Re: [PATCH] Add virtio gpu driver.
-Date: Wed, 25 Mar 2015 16:37:16 +0100
-Message-ID: <1427297836.23304.29.camel@nilsson.home.kraxel.org>
-References: <1427213239-8775-1-git-send-email-kraxel@redhat.com>
- <20150324171255-mutt-send-email-mst@redhat.com>
- <1427295121.23304.5.camel@nilsson.home.kraxel.org>
- <20150325162246-mutt-send-email-mst@redhat.com>
+From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH] mremap: add MREMAP_NOHOLE flag --resend
+Date: Wed, 25 Mar 2015 17:22:24 +0100
+Message-ID: <5512E0C0.6060406@suse.cz>
+References: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli@fb.com>	<20150318153100.5658b741277f3717b52e42d9@linux-foundation.org>	<550A5FF8.90504@gmail.com> <CADpJO7zBLhjecbiQeTubnTReiicVLr0-K43KbB4uCL5w_dyqJg@mail.gmail.com> <550E6D9D.1060507@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <20150325162246-mutt-send-email-mst@redhat.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: "Michael S. Tsirkin" <mst@redhat.com>
-Cc: virtio-dev@lists.oasis-open.org, "open
- list:ABI/API" <linux-api@vger.kernel.org>, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open
- list:DRM DRIVERS" <dri-devel@lists.freedesktop.org>, "open list:VIRTIO
- CORE, NET..." <virtualization@lists.linux-foundation.org>, Dave Airlie <airlied@redhat.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <550E6D9D.1060507-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Aliaksey Kandratsenka <alkondratenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Shaohua Li <shli-b10kYP2dOMg@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mel-wPRd99KPJ+uzQB+pC5nmwQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "google-perftools-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org" <google-perftools-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-ICBIaSwKCj4gQlRXIGNhbiB3ZSB0ZWFjaCB2aXJ0aW8tZ3B1IHRvIGxvb2sgZm9yIGZyYW1lYnVm
-ZmVyIHVzaW5nCj4gdmlydGlvIHBjaSBjYXBzPwoKVGhlIHZpcnRpby1ncHUgZHJpdmVyIGRvZXNu
-J3QgbWF0dGVyIG11Y2ggaGVyZSwgaXQgZG9lc24ndCB1c2UgaXQKYW55d2F5LgoKPiAgT3IgYXJl
-IHRoZXJlIGxpbWl0YXRpb25zIHN1Y2ggYXMgb25seQo+IHVzaW5nIElPIHBvcnQgQkFScywgb3Ig
-Y29tcGF0aWJpbGl0eSB3aXRoCj4gQklPUyBjb2RlIGV0YyB0aGF0IGxpbWl0IHVzIHRvIHNwZWNp
-ZmljIEJBUnMgYW55d2F5PwoKWWVzLCB2Z2FiaW9zIGNvZGUgbmVlZHMgdG8ga25vdy4gIEN1cnJl
-bnRseSBpdCBoYXMgYmFyICMyIGZvciB0aGUgdmdhCmZyYW1lYnVmZmVyIGJhciBoYXJkY29kZWQu
-ICBJdCdzIDE2Yml0IGNvZGUuICBJIGRvbid0IGZlZWwgbGlrZSBtYWtpbmcKdGhlIHByb2Jpbmcg
-bW9yZSBjb21wbGljYXRlZCAuLi4KCmNoZWVycywKICBHZXJkCgpfX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fXwpkcmktZGV2ZWwgbWFpbGluZyBsaXN0CmRyaS1k
-ZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9t
-YWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
+On 03/22/2015 08:22 AM, Daniel Micay wrote:
+> BTW, THP currently interacts very poorly with the jemalloc/tcmalloc
+> madvise purging. The part where khugepaged assigns huge pages to dense
+> spans of pages is*great*. The part where the kernel hands out a huge
+> page on for a fault in a 2M span can be awful. It causes the model
+> inside the allocator of uncommitted vs. committed pages to break down.
+>
+> For example, the allocator might use 1M of a huge page and then start
+> purging. The purging will split it into 4k pages, so there will be 1M of
+> zeroed 4k pages that are considered purged by the allocator. Over time,
+> this can cripple purging. Search for "jemalloc huge pages" and you'll
+> find lots of horror stories about this.
+
+I'm not sure I get your description right. The problem I know about is 
+where "purging" means madvise(MADV_DONTNEED) and khugepaged later 
+collapses a new hugepage that will repopulate the purged parts, 
+increasing the memory usage. One can limit this via 
+/sys/kernel/mm/transparent_hugepage/khugepaged/max_ptes_none . That 
+setting doesn't affect the page fault THP allocations, which however 
+happen only in newly accessed hugepage-sized areas and not partially 
+purged ones, though.
+
+> I think a THP implementation playing that played well with purging would
+> need to drop the page fault heuristic and rely on a significantly better
+> khugepaged.
+
+See here http://lwn.net/Articles/636162/ (the "Compaction" part)
+
+The objection is that some short-lived workloads like gcc have to map 
+hugepages immediately if they are to benefit from them. I still plan to 
+improve khugepaged and allow admins to say that they don't want THP page 
+faults (and rely solely on khugepaged which has more information to 
+judge additional memory usage), but I'm not sure if it would be an 
+acceptable default behavior.
+One workaround in the current state for jemalloc and friends could be to 
+use madvise(MADV_NOHUGEPAGE) on hugepage-sized/aligned areas where it 
+wants to purge parts of them via madvise(MADV_DONTNEED). It could mean 
+overhead of another syscall and tracking of where this was applied and 
+when it makes sense to undo this and allow THP to be collapsed again, 
+though, and it would also split vma's.
+
+> This would mean faulting in a span of memory would no longer
+> be faster. Having a flag to populate a range with madvise would help a
+
+If it's a newly mapped memory, there's mmap(MAP_POPULATE). There is also 
+a madvise(MADV_WILLNEED), which sounds like what you want, but I don't 
+know what the implementation does exactly - it was apparently added for 
+paging in ahead, and maybe it ignores unpopulated anonymous areas, but 
+it would probably be well in spirit of the flag to make it prepopulate 
+those.
+
+> lot though, since the allocator knows exactly how much it's going to
+> clobber with the memcpy. There will still be a threshold where mremap
+> gets significantly faster, but it would move it higher.
