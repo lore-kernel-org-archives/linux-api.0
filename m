@@ -1,87 +1,65 @@
-From: Li RongQing <roy.qing.li-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] audit.h: remove the macro AUDIT_ARCH_ARMEB definition
-Date: Wed, 25 Mar 2015 08:01:12 +0800
-Message-ID: <CAJFZqHzxXyuzi7Z9WawYKfFnTMfYfsRL0Qnt276p_t-AV9GB2A@mail.gmail.com>
-References: <1426827329-27976-1-git-send-email-roy.qing.li@gmail.com>
-	<CAHC9VhR5VcaCtLG9hdVS2gZRWxVmdnpbK+fJwm6wCA8qyLebUQ@mail.gmail.com>
-	<CAJFZqHxdPEhX+9z-FYUMvTF_6LVgK=gOetq0zT4UTZSgUGRqCQ@mail.gmail.com>
-	<CAJFZqHxfq0DSjKn-uqhT+pAeJ9u8ym2Mr=wsqvPyX7sCicPGZA@mail.gmail.com>
-	<CAHC9VhTbxf_u2FXkcdqofkhywbgrrjjUo_W7yqWXFm=wSJBOAQ@mail.gmail.com>
+From: Bjorn Andersson <bjorn@kryo.se>
+Subject: Re: [PATCH v3 8/9] eeprom: qfprom: Add bindings for qfprom
+Date: Wed, 25 Mar 2015 01:28:33 +0100
+Message-ID: <CAJAp7OgTaJ0FTD1pEgxOxt24_1fAmdK+7v4VuvDojHkoKkJHqg@mail.gmail.com>
+References: <1427236116-18531-1-git-send-email-srinivas.kandagatla@linaro.org>
+	<1427236268-18882-1-git-send-email-srinivas.kandagatla@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAHC9VhTbxf_u2FXkcdqofkhywbgrrjjUo_W7yqWXFm=wSJBOAQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
-Cc: Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+In-Reply-To: <1427236268-18882-1-git-send-email-srinivas.kandagatla@linaro.org>
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Cc: "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, linux-arm-msm <linux-arm-msm@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Stephen Boyd <sboyd@codeaurora.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 25, 2015 at 5:16 AM, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org> wrote:
-> [NOTE: Adding the linux-arm folks to this thread just in case they are
-> interested.]
+On Tue, Mar 24, 2015 at 11:31 PM, Srinivas Kandagatla
+<srinivas.kandagatla@linaro.org> wrote:
+> This patch adds bindings for qfprom found in QCOM SOCs. QFPROM driver
+> is based on simple eeprom framework.
 >
-> I'm not an ARM expert, but the kernel #define for AUDIT_ARCH_ARMEB
-> (below) seems reasonable to me based on the other audit machine
-> definitions.  There is clearly a mismatch between the kernel and the
-> audit userspace, but I wonder if the issue should be addressed in the
-> userspace tools.  Further, you mention kernel 3.14, what happens with
-> kernel 3.19 and the most recent audit userspace tools?
+> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+> ---
+>  .../devicetree/bindings/eeprom/qfprom.txt          | 23 ++++++++++++++++++++++
+>  1 file changed, 23 insertions(+)
+>  create mode 100644 Documentation/devicetree/bindings/eeprom/qfprom.txt
 >
->   > grep "AUDIT_ARCH_ARMEB" include/uapi/linux/audit.h
->   #define AUDIT_ARCH_ARMEB        (EM_ARM)
+> diff --git a/Documentation/devicetree/bindings/eeprom/qfprom.txt b/Documentation/devicetree/bindings/eeprom/qfprom.txt
+> new file mode 100644
+> index 0000000..d5baed6
+> --- /dev/null
+> +++ b/Documentation/devicetree/bindings/eeprom/qfprom.txt
+> @@ -0,0 +1,23 @@
+> += Qualcomm QFPROM device tree bindings =
+> +
+> +This binding is intended to represent QFPROM which is found in most QCOM SOCs.
+> +
+> +Required properties:
+> +- compatible: should be "qcom,qfprom"
+> +- reg: Should contain registers location and length
+> +
+> += Data cells =
+> +Are child nodes of qfprom, bindings of which as described in
+> +bindings/eeprom/eeprom.txt
+> +
+> +Example:
+> +
+> +       qfprom: qfprom@00700000 {
+> +               compatible      = "qcom,qfprom";
+> +               reg             = <0x00700000 0x1000>;
 
+The qfprom block starts at 0x700000 and is 0x8000 long.
 
-1.
-if no the below commit, audit-2.3.2 is working;
-but after the below commit, audit-2.3.2 is not working.
+The registers at the beginning of this block are raw R/W fuse bits and
+should not be read directly. Instead there is an ecc corrected shadow
+copy of these registers at 0x4000.
 
-commit 2f978366984a418f38fcf44137be1fbc5a89cfd9
-Author: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
-Date:   Fri May 4 17:53:52 2012 +0100
+> +               ...
+> +               /* Data cells */
+> +               tsens_calibration: calib@404 {
+> +                       reg = <0x404 0x10>;
+> +               };
+> +       };
 
-    ARM: 7412/1: audit: use only AUDIT_ARCH_ARM regardless of endianness
-
-    The machine endianness has no direct correspondence to the syscall ABI,
-    so use only AUDIT_ARCH_ARM when identifying the ABI to the audit tools
-    in userspace.
-
-    Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-    Signed-off-by: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
-    Signed-off-by: Russell King <rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
-
-diff --git a/arch/arm/kernel/ptrace.c b/arch/arm/kernel/ptrace.c
-index d8dbe9c..9650c14 100644
---- a/arch/arm/kernel/ptrace.c
-+++ b/arch/arm/kernel/ptrace.c
-@@ -906,12 +906,6 @@ long arch_ptrace(struct task_struct *child, long request,
-        return ret;
- }
-
--#ifdef __ARMEB__
--#define AUDIT_ARCH_NR AUDIT_ARCH_ARMEB
--#else
--#define AUDIT_ARCH_NR AUDIT_ARCH_ARM
--#endif
--
- asmlinkage int syscall_trace(int why, struct pt_regs *regs, int scno)
- {
-        unsigned long ip;
-@@ -919,7 +913,7 @@ asmlinkage int syscall_trace(int why, struct
-pt_regs *regs, int scno)
-        if (why)
-                audit_syscall_exit(regs);
-        else
--               audit_syscall_entry(AUDIT_ARCH_NR, scno, regs->ARM_r0,
-+               audit_syscall_entry(AUDIT_ARCH_ARM, scno, regs->ARM_r0,
-                                    regs->ARM_r1, regs->ARM_r2, regs->ARM_r3);
-
-        if (!test_thread_flag(TIF_SYSCALL_TRACE))
-
-
-2.
-
-The latest audit has the changeset of 931 [Improve ARM and AARCH64 support],
-so audit can work again.
-
-
--Roy
+Regards,
+Bjorn
