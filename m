@@ -1,95 +1,167 @@
-From: Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: bpf+tracing next steps. Was: [PATCH v9 tip 3/9] tracing: attach
- BPF programs to kprobes
-Date: Wed, 25 Mar 2015 21:07:07 +0900
-Message-ID: <5512A4EB.90604@hitachi.com>
-References: <1426894210-27441-1-git-send-email-ast@plumgrid.com> <1426894210-27441-4-git-send-email-ast@plumgrid.com> <550D60C2.8010502@hitachi.com> <550D962E.7010400@plumgrid.com> <550E9421.7030507@hitachi.com> <550F0402.80900@plumgrid.com> <550F77B3.1020802@hitachi.com> <550F9D20.7070006@plumgrid.com> <550FDC8A.5010100@hitachi.com> <5512040B.3020605@plumgrid.com>
+From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Subject: Re: [PATCH v3 4/9] eeprom: Add a simple EEPROM framework for eeprom
+ consumers
+Date: Wed, 25 Mar 2015 12:29:16 +0000
+Message-ID: <5512AA1C.2050608@linaro.org>
+References: <1427236116-18531-1-git-send-email-srinivas.kandagatla@linaro.org> <1427236219-18709-1-git-send-email-srinivas.kandagatla@linaro.org> <20150325071630.GW9742@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5512040B.3020605-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnaldo Carvalho de Melo <acme-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jiri Olsa <jolsa-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+In-Reply-To: <20150325071630.GW9742@pengutronix.de>
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: Sascha Hauer <s.hauer@pengutronix.de>
+Cc: linux-arm-kernel@lists.infradead.org, Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org
 List-Id: linux-api@vger.kernel.org
 
-(2015/03/25 9:40), Alexei Starovoitov wrote:
-> On 3/23/15 2:27 AM, Masami Hiramatsu wrote:
->> (2015/03/23 13:57), Alexei Starovoitov wrote:
->>> On 3/22/15 7:17 PM, Masami Hiramatsu wrote:
->>>> (2015/03/23 3:03), Alexei Starovoitov wrote:
->>>>
->>>>> User space tools that will compile ktap/dtrace scripts into bpf might
->>>>> use build-id for their own purpose, but that's a different discussion.
->>>>
->>>> Agreed.
->>>> I'd like to discuss it since kprobe event interface may also have same
->>>> issue.
->>>
->>> I'm not sure what 'issue' you're seeing. My understanding is that
->>> build-ids are used by perf to associate binaries with their debug info
->>> and by systemtap to make sure that probes actually match the kernel
->>> they were compiled for. In bpf case it probably will be perf way only.
+
+
+On 25/03/15 07:16, Sascha Hauer wrote:
+> On Tue, Mar 24, 2015 at 10:30:19PM +0000, Srinivas Kandagatla wrote:
+>> This patch adds just consumers part of the framework just to enable easy
+>> review.
 >>
->> Ah, I see. So perftools can check the build-id if needed, right?
-> 
-> yes. of course.
-> 
->>> Are you interested in doing something with bpf ? ;)
+>> Up until now, EEPROM drivers were stored in drivers/misc, where they all had to
+>> duplicate pretty much the same code to register a sysfs file, allow in-kernel
+>> users to access the content of the devices they were driving, etc.
 >>
->> Of course :)
-> 
-> Great :)
-> 
->>> I know that Jovi is working on clang-based front-end, He Kuang is doing
->>> something fancy and I'm going to focus on 'tcp instrumentation' once
->>> bpf+kprobes is in. I think these efforts will help us make it
->>> concrete and will establish a path towards bpf+tracepoints
->>> (debug tracepoints or trace markers) and eventual integration with perf.
->>> Here is the wish-list (for kernel and userspace) inspired by Brendan:
->>> - access to pid, uid, tid, comm, etc
->>> - access to kernel stack trace
->>> - access to user-level stack trace
->>> - kernel debuginfo for walking kernel structs, and accessing kprobe
->>> entry args as variables
+>> This was also a problem as far as other in-kernel users were involved, since
+>> the solutions used were pretty much different from on driver to another, there
+>> was a rather big abstraction leak.
 >>
->> perf probe can provide this to bpf.
-> 
-> I was thinking about deeper integration with perf actually.
-> perf has all the right infra to find debug info in kernel and user
-> binaries, to extract and understand all the dwarf stuff.
-> The future tracing language can use more of it.
-> The programs should be able refer to names of in-kernel variables
-> and arguments natively.
-> When I'm writing a program that attaches to blk_update_request()
-> I would like to write:
-> bpf_printk("req %p bytes %d\n", req->q, nr_bytes);
-> and perf with debug info should be able to figure out that 'req'
-> is the first function argument, then find out offset of '->q'
-> within the struct and that 'nr_bytes' is the 3rd argument in
-> appropriate register. Then generate llvm ir on the fly,
-> compile it, load into kernel and attach to kprobe event at
-> this blk_update_request() function. All seamlessly.
-
-Yes, that is what perf probe providing now. I think it is easy
-to do that with probe-finder.c. :)
-
->>> - tracing of uprobes
->>> - tracing of user markers
+>> This introduction of this framework aims at solving this. It also introduces DT
+>> representation for consumer devices to go get the data they require (MAC
+>> Addresses, SoC/Revision ID, part numbers, and so on) from the EEPROMs.
 >>
->> I'm working on the perf-cache which will also support SDT (based on Hemant Kumar's work).
-> 
-> yep. waiting for SDT stuff to finalize. Would be nice to
-> have 'follow' button for interesting patches :)
+>> Having regmap interface to this framework would give much better
+>> abstraction for eeproms on different buses.
+>
+> Thanks for working on this. This is something that is missing in the
+> kernel, it looks very promising to me.
+>
+> Some comments inline
+>
+>> +static struct eeprom_cell *__eeprom_cell_get(struct device_node *cell_np,
+>> +					     const char *ename,
+>> +					     struct eeprom_block *blocks,
+>> +					     int nblocks)
+>> +{
+>> +	struct eeprom_cell *cell;
+>> +	struct eeprom_device *eeprom = NULL;
+>
+> No need to initialize.
+Sure.. Will fix it.
 
-:)
+>
+>> +	struct property *prop;
+>> +	const __be32 *vp;
+>> +	u32 pv;
+>> +	int i, rval;
+>> +
+>> +	mutex_lock(&eeprom_mutex);
+>> +
+>> +	eeprom = cell_np ? of_eeprom_find(cell_np->parent) : eeprom_find(ename);
+>> +	if (!eeprom) {
+>> +		mutex_unlock(&eeprom_mutex);
+>> +		return ERR_PTR(-EPROBE_DEFER);
+>> +	}
+>> +
+>
+>> +/**
+>> + * of_eeprom_cell_get(): Get eeprom cell of device form a given index
+>> + *
+>> + * @dev: Device that will be interacted with
+>> + * @index: eeprom index in eeproms property.
+>> + *
+>> + * The return value will be an ERR_PTR() on error or a valid pointer
+>> + * to a struct eeprom_cell.  The eeprom_cell will be freed by the
+>> + * eeprom_cell_put().
+>> + */
+>> +struct eeprom_cell *of_eeprom_cell_get(struct device *dev, int index)
+>> +{
+>
+> I think the consumer API could be improved. The dev pointer is only used
+> to get the struct device_node out of it, so the device_node could be
+> passed in directly. As written in my other mail I think the binding
+> would be better like "calibration = <&tsens_calibration>;", so this
+> function could be:
+>
+> of_eeprom_cell_get(struct device_node *np, const char *name)
+>
+> With this we could also get eeprom cells from subnodes which do not have
+> a struct device bound to them.
+>
+Its a good point, I will give it a try and see.
 
-Thank you!
+>> +	struct device_node *cell_np;
+>> +
+>> +	if (!dev || !dev->of_node)
+>> +		return ERR_PTR(-EINVAL);
+>> +
+>> +	cell_np = of_parse_phandle(dev->of_node, "eeproms", index);
+>> +	if (!cell_np)
+>> +		return ERR_PTR(-EPROBE_DEFER);
+>
+> -EPROBE_DEFER is not appropriate here. If of_parse_phandle fails it
+> won't work next time.
+>
+That's right, if it cant parse it now, it would also fail next time too.
+Will fix it in next version.
 
+>> +
+>> +	return __eeprom_cell_get(cell_np, NULL, NULL, 0);
+>> +}
+>> +EXPORT_SYMBOL_GPL(of_eeprom_cell_get);
+>> +
+>> +/**
+>> + * eeprom_cell_write(): Write to a given eeprom cell
+>> + *
+>> + * @cell: eeprom cell to be written.
+>> + * @buf: Buffer to be written.
+>> + * @len: length of buffer to be written to eeprom cell.
+>> + *
+>> + * The return value will be an non zero on error or a zero on successful write.
+>
+> No, it returns the length.
+>
+Yes, thats true, will fix it in next version.
 
--- 
-Masami HIRAMATSU
-Software Platform Research Dept. Linux Technology Research Center
-Hitachi, Ltd., Yokohama Research Laboratory
-E-mail: masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org
+>> + */
+>> +int eeprom_cell_write(struct eeprom_cell *cell, const char *buf, ssize_t len)
+>> +{
+>> +	struct eeprom_device *eeprom = cell->eeprom;
+>> +	int i, rc, offset = 0;
+>> +
+>> +	if (!eeprom || !eeprom->regmap || len != cell->size)
+>> +		return -EINVAL;
+>> +
+>> +	for (i = 0; i < cell->nblocks; i++) {
+>> +		rc = regmap_bulk_write(eeprom->regmap, cell->blocks[i].offset,
+>> +				 buf + offset,
+>> +				 cell->blocks[i].count);
+>> +
+>> +		if (IS_ERR_VALUE(rc))
+>> +			return rc;
+>> +
+>> +		offset += cell->blocks[i].count;
+>> +	}
+>> +
+>> +	return len;
+>> +}
+>> +EXPORT_SYMBOL_GPL(eeprom_cell_write);
+>> +
+>
+>> +static inline char *eeprom_cell_read(struct eeprom_cell *cell, ssize_t *len)
+>> +{
+>> +	return NULL;
+>> +}
+>
+> The documentation above the real function states that this function
+> either returns an ERR_PTR() or a valid pointer. The wrapper should then
+> do the same.
+>
+Will fix this in next version.
+
+> Sascha
+>
+>
