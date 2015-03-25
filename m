@@ -1,69 +1,161 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH] mremap: add MREMAP_NOHOLE flag --resend
-Date: Wed, 25 Mar 2015 17:22:24 +0100
-Message-ID: <5512E0C0.6060406@suse.cz>
-References: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli@fb.com>	<20150318153100.5658b741277f3717b52e42d9@linux-foundation.org>	<550A5FF8.90504@gmail.com> <CADpJO7zBLhjecbiQeTubnTReiicVLr0-K43KbB4uCL5w_dyqJg@mail.gmail.com> <550E6D9D.1060507@gmail.com>
+From: Maxime Ripard <maxime.ripard@free-electrons.com>
+Subject: Re: [PATCH v3 5/9] eeprom: Add bindings for simple eeprom framework
+Date: Wed, 25 Mar 2015 09:40:42 -0700
+Message-ID: <20150325164042.GK23664@lukather>
+References: <1427236116-18531-1-git-send-email-srinivas.kandagatla@linaro.org>
+ <1427236230-18751-1-git-send-email-srinivas.kandagatla@linaro.org>
+ <20150325071006.GC4946@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <550E6D9D.1060507-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Aliaksey Kandratsenka <alkondratenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Shaohua Li <shli-b10kYP2dOMg@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mel-wPRd99KPJ+uzQB+pC5nmwQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "google-perftools-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org" <google-perftools-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="gBYU9MM4gf8jKg2V"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150325071006.GC4946@pengutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Sascha Hauer <s.hauer@pengutronix.de>
+Cc: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, linux-arm-kernel@lists.infradead.org, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/22/2015 08:22 AM, Daniel Micay wrote:
-> BTW, THP currently interacts very poorly with the jemalloc/tcmalloc
-> madvise purging. The part where khugepaged assigns huge pages to dense
-> spans of pages is*great*. The part where the kernel hands out a huge
-> page on for a fault in a 2M span can be awful. It causes the model
-> inside the allocator of uncommitted vs. committed pages to break down.
->
-> For example, the allocator might use 1M of a huge page and then start
-> purging. The purging will split it into 4k pages, so there will be 1M of
-> zeroed 4k pages that are considered purged by the allocator. Over time,
-> this can cripple purging. Search for "jemalloc huge pages" and you'll
-> find lots of horror stories about this.
 
-I'm not sure I get your description right. The problem I know about is 
-where "purging" means madvise(MADV_DONTNEED) and khugepaged later 
-collapses a new hugepage that will repopulate the purged parts, 
-increasing the memory usage. One can limit this via 
-/sys/kernel/mm/transparent_hugepage/khugepaged/max_ptes_none . That 
-setting doesn't affect the page fault THP allocations, which however 
-happen only in newly accessed hugepage-sized areas and not partially 
-purged ones, though.
+--gBYU9MM4gf8jKg2V
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> I think a THP implementation playing that played well with purging would
-> need to drop the page fault heuristic and rely on a significantly better
-> khugepaged.
+On Wed, Mar 25, 2015 at 08:10:06AM +0100, Sascha Hauer wrote:
+> On Tue, Mar 24, 2015 at 10:30:30PM +0000, Srinivas Kandagatla wrote:
+> > This patch adds bindings for simple eeprom framework which allows eeprom
+> > consumers to talk to eeprom providers to get access to eeprom cell data.
+> >=20
+> > Signed-off-by: Maxime Ripard <maxime.ripard@free-electrons.com>
+> > [Maxime Ripard: intial version of eeprom framework]
+> > Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+> > ---
+> >  .../devicetree/bindings/eeprom/eeprom.txt          | 70 ++++++++++++++=
+++++++++
+> >  1 file changed, 70 insertions(+)
+> >  create mode 100644 Documentation/devicetree/bindings/eeprom/eeprom.txt
+> >=20
+> > diff --git a/Documentation/devicetree/bindings/eeprom/eeprom.txt b/Docu=
+mentation/devicetree/bindings/eeprom/eeprom.txt
+> > new file mode 100644
+> > index 0000000..8348d18
+> > --- /dev/null
+> > +++ b/Documentation/devicetree/bindings/eeprom/eeprom.txt
+> > @@ -0,0 +1,70 @@
+> > +=3D EEPROM Data Device Tree Bindings =3D
+> > +
+> > +This binding is intended to represent the location of hardware
+> > +configuration data stored in EEPROMs.
+> > +
+> > +On a significant proportion of boards, the manufacturer has stored
+> > +some data on an EEPROM-like device, for the OS to be able to retrieve
+> > +these information and act upon it. Obviously, the OS has to know
+> > +about where to retrieve these data from, and where they are stored on
+> > +the storage device.
+> > +
+> > +This document is here to document this.
+> > +
+> > +=3D Data providers =3D
+> > +Contains bindings specific to provider drivers and data cells as child=
+ren
+> > +to this node.
+> > +
+> > +=3D Data cells =3D
+> > +These are the child nodes of the provider which contain data cell
+> > +information like offset and size in eeprom provider.
+> > +
+> > +Required properties:
+> > +reg:	specifies the offset in byte within that storage device, and the =
+length
+> > +	in bytes of the data we care about.
+> > +	There could be more then one offset-length pairs in this property.
+> > +
+> > +Optional properties:
+> > +As required by specific data parsers/interpreters.
+> > +
+> > +For example:
+> > +
+> > +	/* Provider */
+> > +	qfprom: qfprom@00700000 {
+> > +		compatible 	=3D "qcom,qfprom";
+> > +		reg		=3D <0x00700000 0x1000>;
+> > +		...
+> > +
+> > +		/* Data cells */
+> > +		tsens_calibration: calib@404 {
+> > +			reg =3D <0x404 0x10>;
+> > +		};
+> > +
+> > +		serial_number: sn {
+> > +			reg =3D <0x104 0x4>, <0x204 0x4>, <0x30c 0x4>;
+> > +
+> > +		};
+> > +		...
+> > +	};
+> > +
+> > +=3D Data consumers =3D
+> > +Are device nodes which consume eeprom data cells.
+> > +
+> > +Required properties:
+> > +
+> > +eeproms: List of phandle and data cell the device might be interested =
+in.
+> > +
+> > +Optional properties:
+> > +
+> > +eeprom-names: List of data cell name strings sorted in the same order
+> > +	      as the eeproms property. Consumers drivers will use
+> > +	      eeprom-names to differentiate between multiple cells,
+> > +	      and hence being able to know what these cells are for.
+> > +
+> > +For example:
+> > +
+> > +	tsens {
+> > +		...
+> > +		eeproms =3D <&tsens_calibration>;
+> > +		eeprom-names =3D "calibration";
+> > +	};
+>=20
+> This is somewhat complicated. Also having 'eeprom' in the binding is not
+> nice since it could be FRAM or something else. How about:
+>=20
+> 	tsens {
+> 		calibration =3D <&tsens_calibration>;
+> 	};
 
-See here http://lwn.net/Articles/636162/ (the "Compaction" part)
+A similar property was suggested the first time we discussed it, and
+it turned out eventually that the construct you commented about was
+actually preferred.
 
-The objection is that some short-lived workloads like gcc have to map 
-hugepages immediately if they are to benefit from them. I still plan to 
-improve khugepaged and allow admins to say that they don't want THP page 
-faults (and rely solely on khugepaged which has more information to 
-judge additional memory usage), but I'm not sure if it would be an 
-acceptable default behavior.
-One workaround in the current state for jemalloc and friends could be to 
-use madvise(MADV_NOHUGEPAGE) on hugepage-sized/aligned areas where it 
-wants to purge parts of them via madvise(MADV_DONTNEED). It could mean 
-overhead of another syscall and tracking of where this was applied and 
-when it makes sense to undo this and allow THP to be collapsed again, 
-though, and it would also split vma's.
+I guess we can always change the property name to something more
+generic though.
 
-> This would mean faulting in a span of memory would no longer
-> be faster. Having a flag to populate a range with madvise would help a
+--=20
+Maxime Ripard, Free Electrons
+Embedded Linux, Kernel and Android engineering
+http://free-electrons.com
 
-If it's a newly mapped memory, there's mmap(MAP_POPULATE). There is also 
-a madvise(MADV_WILLNEED), which sounds like what you want, but I don't 
-know what the implementation does exactly - it was apparently added for 
-paging in ahead, and maybe it ignores unpopulated anonymous areas, but 
-it would probably be well in spirit of the flag to make it prepopulate 
-those.
+--gBYU9MM4gf8jKg2V
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
-> lot though, since the allocator knows exactly how much it's going to
-> clobber with the memcpy. There will still be a threshold where mremap
-> gets significantly faster, but it would move it higher.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJVEuUKAAoJEBx+YmzsjxAg/xAQAJihpv80j8CNYMOgOlu0nkM0
+puCPzn8giIo8TUZRWd4FzKOyo+pCYXgWkldJGs+6e/Q5snaqBT2H8iwD9/aDw+Za
+l0iQif7fzjsios2Fnbm/8/uGdOtvSaJ88iOzrprle47geEgGzn02cgBAc1VLpwt8
+oEe9qw2yskBp1Ha4qAqxT5WVIqrxYe9bMiPDCVxtiPJMN2Jhs759pIzJON+S9cmx
+EcbzsuOyXrXivemDAdw9EE1s0X1FhJZdgfirimQ1MMhKljLCx6I0HzK958b4Gg9l
+65hLFV+CpBwEOu+9DFaDVXMOe/+qyKUYdESUBRk1S9rHC8WjyO8w/Wgxa/+dy6Fj
+R9I6ROf/qlik0X/QWrmrHkOqh4zLWXCJoPQofKcbotTHrb6uBQQV0GcpUH4Awyxr
+vwYfCmts1tUvCYL0UQ4EvzJajdCsukVZ0p67KvywavAD1tVdivgC4B8GvlyilqfT
+ZGw3jEEkxrsVUbTV1OTS9Im+EX2udytijNXvmwj4VckQi1ImL7KHOO+xkkLDsSV1
+oLW7ng1UmuYm1OoR5QhdsohsoM0emtyAIlgAsejjv0Lys3bG7UnPXqxYx73XYDhy
+WAkbl02FQZT1Ggl0CN+mUVjnajMthemy94I6o7SrNXWZ+98HzYEGdSryYq3eRrxt
+/0DOisNifUeCfR30agWk
+=LH6z
+-----END PGP SIGNATURE-----
+
+--gBYU9MM4gf8jKg2V--
