@@ -1,35 +1,156 @@
-From: Rusty Russell <rusty@rustcorp.com.au>
-Subject: Re: [PATCH v4] Add virtio-input driver.
-Date: Wed, 25 Mar 2015 13:51:43 +1030
-Message-ID: <877fu5iwxk.fsf@rustcorp.com.au>
-References: <1427198927-1745-1-git-send-email-kraxel@redhat.com>
+From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 1/5] of: unittest: overlay: Keep track of created overlays
+Date: Tue, 24 Mar 2015 23:53:03 -0500
+Message-ID: <CAL_JsqKjGb5coH9aDPoSm63YV+E7d+A_VpzgA8W2iSuQ4ViAaw@mail.gmail.com>
+References: <1426624257-23003-1-git-send-email-pantelis.antoniou@konsulko.com> <1426624257-23003-2-git-send-email-pantelis.antoniou@konsulko.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <virtio-dev-return-675-gcvd-virtio-dev=m.gmane.org@lists.oasis-open.org>
-Sender: <virtio-dev@lists.oasis-open.org>
-List-Post: <mailto:virtio-dev@lists.oasis-open.org>
-List-Help: <mailto:virtio-dev-help@lists.oasis-open.org>
-List-Unsubscribe: <mailto:virtio-dev-unsubscribe@lists.oasis-open.org>
-List-Subscribe: <mailto:virtio-dev-subscribe@lists.oasis-open.org>
-In-Reply-To: <1427198927-1745-1-git-send-email-kraxel@redhat.com>
-To: virtio-dev@lists.oasis-open.org, virtualization@lists.linux-foundation.org
-Cc: mst@redhat.com, David Herrmann <dh.herrmann@gmail.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Gerd Hoffmann <kraxel@redhat.com>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, Vojtech Pavlik <vojtech@suse.cz>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1426624257-23003-2-git-send-email-pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Cc: Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matt Porter <matt.porter-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Gerd Hoffmann <kraxel@redhat.com> writes:
-> virtio-input is basically evdev-events-over-virtio, so this driver isn't
-> much more than reading configuration from config space and forwarding
-> incoming events to the linux input layer.
+On Tue, Mar 17, 2015 at 3:30 PM, Pantelis Antoniou
+<pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
+> During the course of the overlay selftests some of them remain
+> applied. While this does not pose a real problem, make sure you track
+> them and destroy them at the end of the test.
+
+This is going to need to be rebased on my tree as there has been some
+selftest->unitest renaming.
+
+Rob
+
 >
-> Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
-
-Is the input layer sane?  I've never dealt with it, so I don't know.
-
-What's it used for?
-
-Imagine a future virtio standard which incorporates this.  And a Windows
-or FreeBSD implementation of the device and or driver.  How ugly would
-they be?
-
-Thanks,
-Rusty.
+> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+> ---
+>  drivers/of/unittest.c | 62 +++++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 62 insertions(+)
+>
+> diff --git a/drivers/of/unittest.c b/drivers/of/unittest.c
+> index 4e60682..c711534 100644
+> --- a/drivers/of/unittest.c
+> +++ b/drivers/of/unittest.c
+> @@ -23,6 +23,8 @@
+>  #include <linux/i2c.h>
+>  #include <linux/i2c-mux.h>
+>
+> +#include <linux/bitops.h>
+> +
+>  #include "of_private.h"
+>
+>  static struct selftest_results {
+> @@ -1115,6 +1117,59 @@ static const char *overlay_path(int nr)
+>
+>  static const char *bus_path = "/testcase-data/overlay-node/test-bus";
+>
+> +/* it is guaranteed that overlay ids are assigned in sequence */
+> +#define MAX_SELFTEST_OVERLAYS  256
+> +static unsigned long overlay_id_bits[BITS_TO_LONGS(MAX_SELFTEST_OVERLAYS)];
+> +static int overlay_first_id = -1;
+> +
+> +static void of_selftest_track_overlay(int id)
+> +{
+> +       if (overlay_first_id < 0)
+> +               overlay_first_id = id;
+> +       id -= overlay_first_id;
+> +
+> +       /* we shouldn't need that many */
+> +       BUG_ON(id >= MAX_SELFTEST_OVERLAYS);
+> +       overlay_id_bits[BIT_WORD(id)] |= BIT_MASK(id);
+> +}
+> +
+> +static void of_selftest_untrack_overlay(int id)
+> +{
+> +       if (overlay_first_id < 0)
+> +               return;
+> +       id -= overlay_first_id;
+> +       BUG_ON(id >= MAX_SELFTEST_OVERLAYS);
+> +       overlay_id_bits[BIT_WORD(id)] &= ~BIT_MASK(id);
+> +}
+> +
+> +static void of_selftest_destroy_tracked_overlays(void)
+> +{
+> +       int id, ret, defers;
+> +
+> +       if (overlay_first_id < 0)
+> +               return;
+> +
+> +       /* try until no defers */
+> +       do {
+> +               defers = 0;
+> +               /* remove in reverse order */
+> +               for (id = MAX_SELFTEST_OVERLAYS - 1; id >= 0; id--) {
+> +                       if (!(overlay_id_bits[BIT_WORD(id)] & BIT_MASK(id)))
+> +                               continue;
+> +
+> +                       ret = of_overlay_destroy(id + overlay_first_id);
+> +                       if (ret != 0) {
+> +                               defers++;
+> +                               pr_warn("%s: overlay destroy failed for #%d\n",
+> +                                       __func__, id + overlay_first_id);
+> +                               continue;
+> +                       }
+> +
+> +                       overlay_id_bits[BIT_WORD(id)] &= ~BIT_MASK(id);
+> +               }
+> +       } while (defers > 0);
+> +}
+> +
+>  static int of_selftest_apply_overlay(int selftest_nr, int overlay_nr,
+>                 int *overlay_id)
+>  {
+> @@ -1136,6 +1191,7 @@ static int of_selftest_apply_overlay(int selftest_nr, int overlay_nr,
+>                 goto out;
+>         }
+>         id = ret;
+> +       of_selftest_track_overlay(id);
+>
+>         ret = 0;
+>
+> @@ -1349,6 +1405,7 @@ static void of_selftest_overlay_6(void)
+>                         return;
+>                 }
+>                 ov_id[i] = ret;
+> +               of_selftest_track_overlay(ov_id[i]);
+>         }
+>
+>         for (i = 0; i < 2; i++) {
+> @@ -1373,6 +1430,7 @@ static void of_selftest_overlay_6(void)
+>                                                 PDEV_OVERLAY));
+>                         return;
+>                 }
+> +               of_selftest_untrack_overlay(ov_id[i]);
+>         }
+>
+>         for (i = 0; i < 2; i++) {
+> @@ -1417,6 +1475,7 @@ static void of_selftest_overlay_8(void)
+>                         return;
+>                 }
+>                 ov_id[i] = ret;
+> +               of_selftest_track_overlay(ov_id[i]);
+>         }
+>
+>         /* now try to remove first overlay (it should fail) */
+> @@ -1439,6 +1498,7 @@ static void of_selftest_overlay_8(void)
+>                                                 PDEV_OVERLAY));
+>                         return;
+>                 }
+> +               of_selftest_untrack_overlay(ov_id[i]);
+>         }
+>
+>         selftest(1, "overlay test %d passed\n", 8);
+> @@ -1861,6 +1921,8 @@ static void __init of_selftest_overlay(void)
+>         of_selftest_overlay_i2c_cleanup();
+>  #endif
+>
+> +       of_selftest_destroy_tracked_overlays();
+> +
+>  out:
+>         of_node_put(bus_np);
+>  }
+> --
+> 1.7.12
+>
