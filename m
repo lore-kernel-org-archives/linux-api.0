@@ -1,51 +1,56 @@
-From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 5/5] MAINTAINERS: Pantelis Antoniou device tree overlay maintainer
-Date: Wed, 25 Mar 2015 00:31:25 -0500
-Message-ID: <CAL_Jsq+nNVjqS_hkxcMJLNMikJ4awMGgAqX25kL5hH=2ijxCJA@mail.gmail.com>
-References: <1426624257-23003-1-git-send-email-pantelis.antoniou@konsulko.com> <1426624257-23003-6-git-send-email-pantelis.antoniou@konsulko.com>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [PATCH v3] Add virtio-input driver.
+Date: Wed, 25 Mar 2015 06:36:11 +0100
+Message-ID: <20150325063245-mutt-send-email-mst@redhat.com>
+References: <1427182321-19451-1-git-send-email-kraxel@redhat.com>
+ <20150324105829-mutt-send-email-mst@redhat.com>
+ <20150324162337.GB34117@dtor-ws>
+ <20150324180532-mutt-send-email-mst@redhat.com>
+ <20150324172805.GA16445@dtor-ws>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1426624257-23003-6-git-send-email-pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Cc: Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150324172805.GA16445@dtor-ws>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+Cc: Gerd Hoffmann <kraxel@redhat.com>, virtio-dev@lists.oasis-open.org, virtualization@lists.linux-foundation.org, David Herrmann <dh.herrmann@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 17, 2015 at 3:30 PM, Pantelis Antoniou
-<pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
-> Add me as the device tree overlays maintainer.
->
-> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+On Tue, Mar 24, 2015 at 10:28:05AM -0700, Dmitry Torokhov wrote:
+> > > > > +	err = input_register_device(vi->idev);
+> > > > > +	if (err)
+> > > > > +		goto err_input_register;
+> > > > > +
+> > > > > +	return 0;
+> > > > > +
+> > > > > +err_input_register:
+> > > > 
+> > > > > +	input_free_device(vi->idev);
+> > > > 
+> > > > At this point you can already get interrupts
+> > > > since you called virtio_device_ready, and
+> > > > getting events from a freed device likely won't
+> > > > DTRT.
+> > > 
+> > > Right. I guess you want to mark the virtio device ready only after
+> > > registering input device.
+> > 
+> > No that's broken since you can get events after this
+> > point, and you won't be able to forward them.
+> 
+> Who cares?
 
-Applied. Thanks.
+virtio cares: guest will crash if you attempt to
+kick virtqueue before device ready call.
 
-Rob
-
-> ---
->  MAINTAINERS | 9 +++++++++
->  1 file changed, 9 insertions(+)
->
-> diff --git a/MAINTAINERS b/MAINTAINERS
-> index 0e1abe8..24aa339 100644
-> --- a/MAINTAINERS
-> +++ b/MAINTAINERS
-> @@ -7187,6 +7187,15 @@ F:       Documentation/devicetree/
->  F:     arch/*/boot/dts/
->  F:     include/dt-bindings/
->
-> +OPEN FIRMWARE AND DEVICE TREE OVERLAYS
-> +M:     Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-> +L:     devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> +S:     Maintained
-> +F:     Documentation/devicetree/dynamic-resolution-notes.txt
-> +F:     Documentation/devicetree/overlay-notes.txt
-> +F:     drivers/of/overlay.c
-> +F:     drivers/of/resolver.c
-> +
->  OPENRISC ARCHITECTURE
->  M:     Jonas Bonn <jonas-A9uVI2HLR7kOP4wsBPIw7w@public.gmane.org>
->  W:     http://openrisc.net
-> --
-> 1.7.12
->
+> What makes these events needed compared to ones sent 1 ms
+> earlier before we had input device registered?
+> 
+> But I guess if you can call virtio_device_ready/virtio_device_broken
+> several times then the best option is putting them into input_dev->open
+> and input_dev->close callbacks.
+> 
+> Thanks.
+> -- 
+> Dmitry
