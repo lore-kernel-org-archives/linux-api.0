@@ -1,59 +1,63 @@
-From: Gerd Hoffmann <kraxel@redhat.com>
+From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH] Add virtio gpu driver.
-Date: Wed, 25 Mar 2015 16:19:00 +0100
-Message-ID: <1427296740.23304.21.camel@nilsson.home.kraxel.org>
+Date: Wed, 25 Mar 2015 16:24:53 +0100
+Message-ID: <20150325162246-mutt-send-email-mst@redhat.com>
 References: <1427213239-8775-1-git-send-email-kraxel@redhat.com>
- <CAPj87rN4pXHukDRD-e=ZrO1hcts04cSz1Hr9TNAgicGVWE5_-Q@mail.gmail.com>
+ <20150324171255-mutt-send-email-mst@redhat.com>
+ <1427295121.23304.5.camel@nilsson.home.kraxel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <CAPj87rN4pXHukDRD-e=ZrO1hcts04cSz1Hr9TNAgicGVWE5_-Q@mail.gmail.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Daniel Stone <daniel@fooishbar.org>
-Cc: virtio-dev@lists.oasis-open.org, "Michael S. Tsirkin" <mst@redhat.com>, "open list:ABI/API" <linux-api@vger.kernel.org>, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open
- list:DRM DRIVERS" <dri-devel@lists.freedesktop.org>, "open list:VIRTIO
- CORE, NET..." <virtualization@lists.linux-foundation.org>, Dave Airlie <airlied@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1427295121.23304.5.camel-3OfP5uLMi4C46o+2HkPkLj4oCIwMql/M@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: virtio-dev-sDuHXQ4OtrM4h7I2RyI4rWD2FQJk+8+b@public.gmane.org, Dave Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dave Airlie <airlied-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:DRM DRIVERS" <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, "open list:VIRTIO CORE, NET..." <virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gRGksIDIwMTUtMDMtMjQgYXQgMjI6NTAgKzAwMDAsIERhbmllbCBTdG9uZSB3cm90ZToKPiBI
-aSwKPiAKPiBPbiAyNCBNYXJjaCAyMDE1IGF0IDE2OjA3LCBHZXJkIEhvZmZtYW5uIDxrcmF4ZWxA
-cmVkaGF0LmNvbT4gd3JvdGU6Cj4gPiArc3RhdGljIGludCB2aXJ0aW9fZ3B1X2NydGNfcGFnZV9m
-bGlwKHN0cnVjdCBkcm1fY3J0YyAqY3J0YywKPiA+ICsgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICBzdHJ1Y3QgZHJtX2ZyYW1lYnVmZmVyICpmYiwKPiA+ICsgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICBzdHJ1Y3QgZHJtX3BlbmRpbmdfdmJsYW5rX2V2ZW50ICpl
-dmVudCwKPiA+ICsgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB1aW50MzJfdCBm
-bGFncykKPiA+ICt7Cj4gPiArICAgICAgIHJldHVybiAtRUlOVkFMOwo+ID4gK30KPiAKPiBJJ20g
-bm90IGdvaW5nIHRvIGxpZSwgSSB3YXMgcmVhbGx5IGhvcGluZyB0aGUgNXRoICg/KSBHUFUgb3B0
-aW9uIGZvcgo+IFFlbXUgd291bGQgc3VwcG9ydCBwYWdlZmxpcHBpbmcuCgpBcyBEYXZlIGFscmVh
-ZHkgcG9pbnRlZCBvdXQgdGhlcmUgaXMgYSBXSVAgcGF0Y2ggZm9yIHRoYXQsIGl0J2xsIGJlCnRo
-ZXJlLgoKV2hpbGUgYmVpbmcgYXQgaXQ6CiAtIGJvY2hzZHJtIChxZW11IC12Z2Egc3RkIGRyaXZl
-cikgc3VwcG9ydHMgcGFnZWZsaXAgc2luY2UgMy4xOS4KIC0gY2lycnVzIGlzIG1vcmUgb3IgbGVz
-cyBhIGxvc3QgY2FzZSwgd2UgbWltaWMgZXhpc3RpbmcgaGFyZHdhcmUKICAgZnJvbSB0aGUgOTBp
-ZXMgaGVyZSBhbmQgaXQgc2ltcGx5IGlzbid0IHVwIHRvIHRvZGF5cyBuZWVkcyBmb3IKICAgbWFu
-eSByZWFzb25zLiAgSnVzdCBzdG9wIHVzaW5nIGl0LgogLSBxeGwgLS0gaG1tLCBub3Qgc3VyZSwg
-dGhlcmUgaXMgdGhpcyAicHJpbWFyeSBzdXJmYWNlIiBjb25jZXB0IGluCiAgIHRoZSB2aXJ0dWFs
-IGhhcmR3YXJlIGRlc2lnbiwgd2hpY2ggZG9lc24ndCBtaXggdmVyeSB3ZWxsIHdpdGgKICAgcGFn
-ZWZsaXAgSSBzdXNwZWN0LgoKPiBEYW5pZWwncyBjb21tZW50IGFib3V0IGNvbnZlcnNpb24gdG8K
-PiBhdG9taWMgaXMgcmVsZXZhbnQsIGJ1dDogZG8geW91IGhhdmUgYSBtZWNoYW5pc20gd2hpY2gg
-YWxsb3dzIHlvdSB0bwo+IHBvc3QgdXBkYXRlcyAoZS5nLiAnc3RhcnQgZGlzcGxheWluZyB0aGlz
-IGJ1ZmZlciBub3cgcGxlYXNlJykgdGhhdAo+IGFsbG93cyB5b3UgdG8gZ2V0IGV2ZW50cyBiYWNr
-IHdoZW4gdGhleSBoYXZlIGFjdHVhbGx5IGJlZW4gZGlzcGxheWVkPwoKSXQncyBwb3NzaWJsZSB0
-byBmZW5jZSB0aGUgZnJhbWVidWZmZXIgdXBkYXRlIHJlcXVlc3RzLCBzbyB5b3UnbGwgYmUKbm90
-aWZpZWQgd2hlbiB0aGUgdXBkYXRlIGhhcyByZWFjaGVkIHRoZSBxZW11IHVpIGNvZGUuICBUeXBp
-Y2FsbHkgdGhlIHVpCmNvZGUgaGFzIHF1ZXVlZCB0aGUgdXBkYXRlIGF0IHRoYXQgcG9pbnQuICBT
-byB3aXRoIGEgbG9jYWwgZGlzcGxheSAoc2RsLApndGspIHNob3dpbmcgdXAgb24gdGhlIHNjcmVl
-biBzaG91bGQgYmUganVzdCBhIHBhZ2VmbGlwIChvbiB0aGUgaG9zdCkKYXdheS4gIFdpdGggYSBy
-ZW1vdGUgZGlzcGxheSAodm5jKSBpdCB3aWxsIHRha2UgYSBsaXR0bGUgbG9uZ2VyIHVudGlsCnRo
-ZSB1c2VyIHdpbGwgYWN0dWFsbHkgc2VlIHRoZSB1cGRhdGUuCgpjaGVlcnMsCiAgR2VyZAoKCl9f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmRyaS1kZXZlbCBt
-YWlsaW5nIGxpc3QKZHJpLWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlzdHMu
-ZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vZHJpLWRldmVsCg==
+On Wed, Mar 25, 2015 at 03:52:01PM +0100, Gerd Hoffmann wrote:
+>   Hi,
+> 
+> > > diff --git a/drivers/virtio/virtio_pci_common.c b/drivers/virtio/virtio_pci_common.c
+> > > index e894eb2..a3167fa 100644
+> > > --- a/drivers/virtio/virtio_pci_common.c
+> > > +++ b/drivers/virtio/virtio_pci_common.c
+> > > @@ -510,7 +510,7 @@ static int virtio_pci_probe(struct pci_dev *pci_dev,
+> > >  		goto err_enable_device;
+> > >  
+> > >  	rc = pci_request_regions(pci_dev, "virtio-pci");
+> > > -	if (rc)
+> > > +	if (rc && ((pci_dev->class >> 8) != PCI_CLASS_DISPLAY_VGA))
+> > >  		goto err_request_regions;
+> > >  
+> > >  	if (force_legacy) {
+> > 
+> > This is probably what you described as "the only concern?
+> 
+> Ahem, no, forgot that one,
+
+What does the concern refer to then?
+
+> but it is related.  With vesafb using and
+> registering the vga compat framebuffer bar pci_request_regions will not
+> succeed.
+> 
+> vesafb will be unregistered later on (this is what I was refering to) by
+> the virtio-gpu driver.
+> 
+> > If we only need to request specific
+> > regions, I think we should do exactly that, requesting only parts of
+> > regions that are covered by the virtio capabilities.
+> 
+> That should work too.
+> 
+> cheers,
+>   Gerd
+
+BTW can we teach virtio-gpu to look for framebuffer using
+virtio pci caps? Or are there limitations such as only
+using IO port BARs, or compatibility with
+BIOS code etc that limit us to specific BARs anyway?
+
+-- 
+MST
