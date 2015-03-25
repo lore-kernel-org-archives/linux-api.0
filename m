@@ -1,80 +1,35 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: Re: bpf+tracing next steps. Was: [PATCH v9 tip 3/9] tracing: attach
- BPF programs to kprobes
-Date: Tue, 24 Mar 2015 17:40:43 -0700
-Message-ID: <5512040B.3020605@plumgrid.com>
-References: <1426894210-27441-1-git-send-email-ast@plumgrid.com> <1426894210-27441-4-git-send-email-ast@plumgrid.com> <550D60C2.8010502@hitachi.com> <550D962E.7010400@plumgrid.com> <550E9421.7030507@hitachi.com> <550F0402.80900@plumgrid.com> <550F77B3.1020802@hitachi.com> <550F9D20.7070006@plumgrid.com> <550FDC8A.5010100@hitachi.com>
+From: Rusty Russell <rusty@rustcorp.com.au>
+Subject: Re: [PATCH v4] Add virtio-input driver.
+Date: Wed, 25 Mar 2015 13:51:43 +1030
+Message-ID: <877fu5iwxk.fsf@rustcorp.com.au>
+References: <1427198927-1745-1-git-send-email-kraxel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-2022-jp
-Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <550FDC8A.5010100@hitachi.com>
-Sender: netdev-owner@vger.kernel.org
-To: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
-Cc: Ingo Molnar <mingo@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain
+Return-path: <virtio-dev-return-675-gcvd-virtio-dev=m.gmane.org@lists.oasis-open.org>
+Sender: <virtio-dev@lists.oasis-open.org>
+List-Post: <mailto:virtio-dev@lists.oasis-open.org>
+List-Help: <mailto:virtio-dev-help@lists.oasis-open.org>
+List-Unsubscribe: <mailto:virtio-dev-unsubscribe@lists.oasis-open.org>
+List-Subscribe: <mailto:virtio-dev-subscribe@lists.oasis-open.org>
+In-Reply-To: <1427198927-1745-1-git-send-email-kraxel@redhat.com>
+To: virtio-dev@lists.oasis-open.org, virtualization@lists.linux-foundation.org
+Cc: mst@redhat.com, David Herrmann <dh.herrmann@gmail.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Gerd Hoffmann <kraxel@redhat.com>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, Vojtech Pavlik <vojtech@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On 3/23/15 2:27 AM, Masami Hiramatsu wrote:
-> (2015/03/23 13:57), Alexei Starovoitov wrote:
->> On 3/22/15 7:17 PM, Masami Hiramatsu wrote:
->>> (2015/03/23 3:03), Alexei Starovoitov wrote:
->>>
->>>> User space tools that will compile ktap/dtrace scripts into bpf might
->>>> use build-id for their own purpose, but that's a different discussion.
->>>
->>> Agreed.
->>> I'd like to discuss it since kprobe event interface may also have same
->>> issue.
->>
->> I'm not sure what 'issue' you're seeing. My understanding is that
->> build-ids are used by perf to associate binaries with their debug info
->> and by systemtap to make sure that probes actually match the kernel
->> they were compiled for. In bpf case it probably will be perf way only.
-> 
-> Ah, I see. So perftools can check the build-id if needed, right?
+Gerd Hoffmann <kraxel@redhat.com> writes:
+> virtio-input is basically evdev-events-over-virtio, so this driver isn't
+> much more than reading configuration from config space and forwarding
+> incoming events to the linux input layer.
+>
+> Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
 
-yes. of course.
+Is the input layer sane?  I've never dealt with it, so I don't know.
 
->> Are you interested in doing something with bpf ? ;)
-> 
-> Of course :)
+What's it used for?
 
-Great :)
+Imagine a future virtio standard which incorporates this.  And a Windows
+or FreeBSD implementation of the device and or driver.  How ugly would
+they be?
 
->> I know that Jovi is working on clang-based front-end, He Kuang is doing
->> something fancy and I'm going to focus on 'tcp instrumentation' once
->> bpf+kprobes is in. I think these efforts will help us make it
->> concrete and will establish a path towards bpf+tracepoints
->> (debug tracepoints or trace markers) and eventual integration with perf.
->> Here is the wish-list (for kernel and userspace) inspired by Brendan:
->> - access to pid, uid, tid, comm, etc
->> - access to kernel stack trace
->> - access to user-level stack trace
->> - kernel debuginfo for walking kernel structs, and accessing kprobe
->> entry args as variables
-> 
-> perf probe can provide this to bpf.
-
-I was thinking about deeper integration with perf actually.
-perf has all the right infra to find debug info in kernel and user
-binaries, to extract and understand all the dwarf stuff.
-The future tracing language can use more of it.
-The programs should be able refer to names of in-kernel variables
-and arguments natively.
-When I'm writing a program that attaches to blk_update_request()
-I would like to write:
-bpf_printk("req %p bytes %d\n", req->q, nr_bytes);
-and perf with debug info should be able to figure out that 'req'
-is the first function argument, then find out offset of '->q'
-within the struct and that 'nr_bytes' is the 3rd argument in
-appropriate register. Then generate llvm ir on the fly,
-compile it, load into kernel and attach to kprobe event at
-this blk_update_request() function. All seamlessly.
-
->> - tracing of uprobes
->> - tracing of user markers
-> 
-> I'm working on the perf-cache which will also support SDT (based on Hemant Kumar's work).
-
-yep. waiting for SDT stuff to finalize. Would be nice to
-have 'follow' button for interesting patches :)
+Thanks,
+Rusty.
