@@ -1,56 +1,48 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: Re: [PATCH v3] Add virtio-input driver.
-Date: Wed, 25 Mar 2015 06:36:11 +0100
-Message-ID: <20150325063245-mutt-send-email-mst@redhat.com>
-References: <1427182321-19451-1-git-send-email-kraxel@redhat.com>
- <20150324105829-mutt-send-email-mst@redhat.com>
- <20150324162337.GB34117@dtor-ws>
- <20150324180532-mutt-send-email-mst@redhat.com>
- <20150324172805.GA16445@dtor-ws>
+From: Vojtech Pavlik <vojtech@suse.com>
+Subject: Re: [PATCH v4] Add virtio-input driver.
+Date: Wed, 25 Mar 2015 06:36:13 +0100
+Message-ID: <20150325053613.GA4572@suse.com>
+References: <1427198927-1745-1-git-send-email-kraxel@redhat.com>
+ <877fu5iwxk.fsf@rustcorp.com.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150324172805.GA16445@dtor-ws>
+In-Reply-To: <877fu5iwxk.fsf@rustcorp.com.au>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Cc: Gerd Hoffmann <kraxel@redhat.com>, virtio-dev@lists.oasis-open.org, virtualization@lists.linux-foundation.org, David Herrmann <dh.herrmann@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
+To: Rusty Russell <rusty@rustcorp.com.au>
+Cc: Gerd Hoffmann <kraxel@redhat.com>, virtio-dev@lists.oasis-open.org, virtualization@lists.linux-foundation.org, mst@redhat.com, David Herrmann <dh.herrmann@gmail.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 24, 2015 at 10:28:05AM -0700, Dmitry Torokhov wrote:
-> > > > > +	err = input_register_device(vi->idev);
-> > > > > +	if (err)
-> > > > > +		goto err_input_register;
-> > > > > +
-> > > > > +	return 0;
-> > > > > +
-> > > > > +err_input_register:
-> > > > 
-> > > > > +	input_free_device(vi->idev);
-> > > > 
-> > > > At this point you can already get interrupts
-> > > > since you called virtio_device_ready, and
-> > > > getting events from a freed device likely won't
-> > > > DTRT.
-> > > 
-> > > Right. I guess you want to mark the virtio device ready only after
-> > > registering input device.
-> > 
-> > No that's broken since you can get events after this
-> > point, and you won't be able to forward them.
-> 
-> Who cares?
+On Wed, Mar 25, 2015 at 01:51:43PM +1030, Rusty Russell wrote:
 
-virtio cares: guest will crash if you attempt to
-kick virtqueue before device ready call.
+> Gerd Hoffmann <kraxel@redhat.com> writes:
+> > virtio-input is basically evdev-events-over-virtio, so this driver isn't
+> > much more than reading configuration from config space and forwarding
+> > incoming events to the linux input layer.
+> >
+> > Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+> 
+> Is the input layer sane?  I've never dealt with it, so I don't know.
 
-> What makes these events needed compared to ones sent 1 ms
-> earlier before we had input device registered?
-> 
-> But I guess if you can call virtio_device_ready/virtio_device_broken
-> several times then the best option is putting them into input_dev->open
-> and input_dev->close callbacks.
-> 
-> Thanks.
-> -- 
-> Dmitry
+I'm rather biased having designed it, but I'd say it's reasonable. It
+certainly has limitations and design mistakes, but none are too bad.
+One testimony to that Android has based its own Input API around it.
+
+> What's it used for?
+
+For all human input devices, like keyboards, mice, touchscreens, etc. 
+
+> Imagine a future virtio standard which incorporates this.  And a Windows
+> or FreeBSD implementation of the device and or driver.  How ugly would
+> they be?
+
+A windows translation layer is fairly easy, people porting software from
+Windows to Linux told me numerous times that adapting isn't hard. I also
+believe that at least one of the BSD's has a compatible implementation
+these days based on the fact that I was asked to allow copying the
+headers in the past.
+
+-- 
+Vojtech Pavlik
+Director SUSE Labs
