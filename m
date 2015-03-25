@@ -1,65 +1,80 @@
-From: Bjorn Andersson <bjorn@kryo.se>
-Subject: Re: [PATCH v3 8/9] eeprom: qfprom: Add bindings for qfprom
-Date: Wed, 25 Mar 2015 01:28:33 +0100
-Message-ID: <CAJAp7OgTaJ0FTD1pEgxOxt24_1fAmdK+7v4VuvDojHkoKkJHqg@mail.gmail.com>
-References: <1427236116-18531-1-git-send-email-srinivas.kandagatla@linaro.org>
-	<1427236268-18882-1-git-send-email-srinivas.kandagatla@linaro.org>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: Re: bpf+tracing next steps. Was: [PATCH v9 tip 3/9] tracing: attach
+ BPF programs to kprobes
+Date: Tue, 24 Mar 2015 17:40:43 -0700
+Message-ID: <5512040B.3020605@plumgrid.com>
+References: <1426894210-27441-1-git-send-email-ast@plumgrid.com> <1426894210-27441-4-git-send-email-ast@plumgrid.com> <550D60C2.8010502@hitachi.com> <550D962E.7010400@plumgrid.com> <550E9421.7030507@hitachi.com> <550F0402.80900@plumgrid.com> <550F77B3.1020802@hitachi.com> <550F9D20.7070006@plumgrid.com> <550FDC8A.5010100@hitachi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-arm-msm-owner@vger.kernel.org>
-In-Reply-To: <1427236268-18882-1-git-send-email-srinivas.kandagatla@linaro.org>
-Sender: linux-arm-msm-owner@vger.kernel.org
-To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Cc: "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, linux-arm-msm <linux-arm-msm@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Stephen Boyd <sboyd@codeaurora.org>
+Content-Type: text/plain; charset=iso-2022-jp
+Content-Transfer-Encoding: 7bit
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <550FDC8A.5010100@hitachi.com>
+Sender: netdev-owner@vger.kernel.org
+To: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Cc: Ingo Molnar <mingo@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Namhyung Kim <namhyung@kernel.org>, Arnaldo Carvalho de Melo <acme@infradead.org>, Jiri Olsa <jolsa@redhat.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 24, 2015 at 11:31 PM, Srinivas Kandagatla
-<srinivas.kandagatla@linaro.org> wrote:
-> This patch adds bindings for qfprom found in QCOM SOCs. QFPROM driver
-> is based on simple eeprom framework.
->
-> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-> ---
->  .../devicetree/bindings/eeprom/qfprom.txt          | 23 ++++++++++++++++++++++
->  1 file changed, 23 insertions(+)
->  create mode 100644 Documentation/devicetree/bindings/eeprom/qfprom.txt
->
-> diff --git a/Documentation/devicetree/bindings/eeprom/qfprom.txt b/Documentation/devicetree/bindings/eeprom/qfprom.txt
-> new file mode 100644
-> index 0000000..d5baed6
-> --- /dev/null
-> +++ b/Documentation/devicetree/bindings/eeprom/qfprom.txt
-> @@ -0,0 +1,23 @@
-> += Qualcomm QFPROM device tree bindings =
-> +
-> +This binding is intended to represent QFPROM which is found in most QCOM SOCs.
-> +
-> +Required properties:
-> +- compatible: should be "qcom,qfprom"
-> +- reg: Should contain registers location and length
-> +
-> += Data cells =
-> +Are child nodes of qfprom, bindings of which as described in
-> +bindings/eeprom/eeprom.txt
-> +
-> +Example:
-> +
-> +       qfprom: qfprom@00700000 {
-> +               compatible      = "qcom,qfprom";
-> +               reg             = <0x00700000 0x1000>;
+On 3/23/15 2:27 AM, Masami Hiramatsu wrote:
+> (2015/03/23 13:57), Alexei Starovoitov wrote:
+>> On 3/22/15 7:17 PM, Masami Hiramatsu wrote:
+>>> (2015/03/23 3:03), Alexei Starovoitov wrote:
+>>>
+>>>> User space tools that will compile ktap/dtrace scripts into bpf might
+>>>> use build-id for their own purpose, but that's a different discussion.
+>>>
+>>> Agreed.
+>>> I'd like to discuss it since kprobe event interface may also have same
+>>> issue.
+>>
+>> I'm not sure what 'issue' you're seeing. My understanding is that
+>> build-ids are used by perf to associate binaries with their debug info
+>> and by systemtap to make sure that probes actually match the kernel
+>> they were compiled for. In bpf case it probably will be perf way only.
+> 
+> Ah, I see. So perftools can check the build-id if needed, right?
 
-The qfprom block starts at 0x700000 and is 0x8000 long.
+yes. of course.
 
-The registers at the beginning of this block are raw R/W fuse bits and
-should not be read directly. Instead there is an ecc corrected shadow
-copy of these registers at 0x4000.
+>> Are you interested in doing something with bpf ? ;)
+> 
+> Of course :)
 
-> +               ...
-> +               /* Data cells */
-> +               tsens_calibration: calib@404 {
-> +                       reg = <0x404 0x10>;
-> +               };
-> +       };
+Great :)
 
-Regards,
-Bjorn
+>> I know that Jovi is working on clang-based front-end, He Kuang is doing
+>> something fancy and I'm going to focus on 'tcp instrumentation' once
+>> bpf+kprobes is in. I think these efforts will help us make it
+>> concrete and will establish a path towards bpf+tracepoints
+>> (debug tracepoints or trace markers) and eventual integration with perf.
+>> Here is the wish-list (for kernel and userspace) inspired by Brendan:
+>> - access to pid, uid, tid, comm, etc
+>> - access to kernel stack trace
+>> - access to user-level stack trace
+>> - kernel debuginfo for walking kernel structs, and accessing kprobe
+>> entry args as variables
+> 
+> perf probe can provide this to bpf.
+
+I was thinking about deeper integration with perf actually.
+perf has all the right infra to find debug info in kernel and user
+binaries, to extract and understand all the dwarf stuff.
+The future tracing language can use more of it.
+The programs should be able refer to names of in-kernel variables
+and arguments natively.
+When I'm writing a program that attaches to blk_update_request()
+I would like to write:
+bpf_printk("req %p bytes %d\n", req->q, nr_bytes);
+and perf with debug info should be able to figure out that 'req'
+is the first function argument, then find out offset of '->q'
+within the struct and that 'nr_bytes' is the 3rd argument in
+appropriate register. Then generate llvm ir on the fly,
+compile it, load into kernel and attach to kprobe event at
+this blk_update_request() function. All seamlessly.
+
+>> - tracing of uprobes
+>> - tracing of user markers
+> 
+> I'm working on the perf-cache which will also support SDT (based on Hemant Kumar's work).
+
+yep. waiting for SDT stuff to finalize. Would be nice to
+have 'follow' button for interesting patches :)
