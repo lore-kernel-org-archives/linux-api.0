@@ -1,109 +1,52 @@
-From: Daniel Stone <daniel@fooishbar.org>
-Subject: Re: [PATCH] Add virtio gpu driver.
-Date: Wed, 25 Mar 2015 05:47:08 +0000
-Message-ID: <CAPj87rOzUyF2U5wj=_w9zWXUgtLMnnbqjUd3Zh_-VqweEfGXJQ@mail.gmail.com>
-References: <1427213239-8775-1-git-send-email-kraxel@redhat.com>
- <CAPj87rN4pXHukDRD-e=ZrO1hcts04cSz1Hr9TNAgicGVWE5_-Q@mail.gmail.com>
- <CAPM=9tyM9AxX-RHhbO-LK+LTyQC6YjwW67pZM1XjbL35+counA@mail.gmail.com>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [PATCH v10 1/12] fs: Add support FALLOC_FL_INSERT_RANGE for
+ fallocate
+Date: Wed, 25 Mar 2015 17:05:52 +1100
+Message-ID: <20150325060552.GY28621@dastard>
+References: <1424533554-28024-1-git-send-email-linkinjeon@gmail.com>
+ <1424533554-28024-2-git-send-email-linkinjeon@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1338701072=="
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <CAPM=9tyM9AxX-RHhbO-LK+LTyQC6YjwW67pZM1XjbL35+counA@mail.gmail.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Dave Airlie <airlied@gmail.com>
-Cc: "virtio-dev@lists.oasis-open.org" <virtio-dev@lists.oasis-open.org>, "Michael S. Tsirkin" <mst@redhat.com>, "open list:ABI/API" <linux-api@vger.kernel.org>, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open list:DRM DRIVERS" <dri-devel@lists.freedesktop.org>, "open list:VIRTIO CORE, NET..." <virtualization@lists.linux-foundation.org>, Dave Airlie <airlied@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1424533554-28024-2-git-send-email-linkinjeon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Namjae Jeon <linkinjeon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: tytso-3s7WtUTddSA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, a.sangwan-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, bfoster-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
---===============1338701072==
-Content-Type: multipart/alternative; boundary=e89a8f3ba5e31278bf0512166e53
+On Sun, Feb 22, 2015 at 12:45:43AM +0900, Namjae Jeon wrote:
+> From: Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+> 
+> FALLOC_FL_INSERT_RANGE command is the opposite command of
+> FALLOC_FL_COLLAPSE_RANGE that is needed for advertisers or someone who want to
+> add some data in the middle of file. FALLOC_FL_INSERT_RANGE will create space
+> for writing new data within a file after shifting extents to right as given
+> length. and this command also has same limitation as FALLOC_FL_COLLAPSE_RANGE,
+> that is block boundary and use ftruncate(2) for crosses EOF.
+> 
+> Signed-off-by: Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+> Signed-off-by: Ashish Sangwan <a.sangwan-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 
---e89a8f3ba5e31278bf0512166e53
-Content-Type: text/plain; charset=UTF-8
+Folks, I have merged this into the xfs tree for the 4.1 merge
+window. It is under the stable branch "fallocate-insert-range"
+in the tree here:
 
-Hi,
+git://git.kernel.org/pub/scm/linux/kernel/git/dgc/linux-xfs.git
 
-On Wednesday, March 25, 2015, Dave Airlie <airlied@gmail.com> wrote:
+an dis currently included in the for-next branch that is included in
+the linux-next tree. I have not included the ext4 kernel support
+patch in this branch (patch 3) because I have not seen any reviews
+from ext4 developers for it.
 
-> On 25 March 2015 at 08:50, Daniel Stone <daniel@fooishbar.org
-> <javascript:;>> wrote:
-> > I'm not going to lie, I was really hoping the 5th (?) GPU option for
-> > Qemu would support pageflipping. Daniel's comment about conversion to
-> > atomic is relevant, but: do you have a mechanism which allows you to
-> > post updates (e.g. 'start displaying this buffer now please') that
-> > allows you to get events back when they have actually been displayed?
->
-> Page flip is implemented in a later patch,
->
->
-> https://www.kraxel.org/cgit/linux/commit/?h=virtio-gpu&id=1e167e8e964f8e08100d315dd354cc0a4b090841
->
-> Since its a long way from an actual display, finding out when
-> something is actually displayed is hard,
-> but when we've posted it to the frontbuffer should be fine.
->
-
-Oh nice. 100% exact timings aren't critical; it's more just having
-something to gate to 60fps that we can actually drive Weston's repaint loop
-off, as that's (not unreasonably) driven by pageflip events.
+Ted, if you want to include that patch in you ext4 tree, feel free
+to base it on the above branch, or if you give your  sob or
+reviewed-by ok I can pull it into my tree. I'll leave it up to you
+to determine how you want to deal with this.
 
 Cheers,
-Daniel
 
---e89a8f3ba5e31278bf0512166e53
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-Hi,<br><br>On Wednesday, March 25, 2015, Dave Airlie &lt;<a href=3D"mailto:=
-airlied@gmail.com">airlied@gmail.com</a>&gt; wrote:<br><blockquote class=3D=
-"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding=
--left:1ex">On 25 March 2015 at 08:50, Daniel Stone &lt;<a href=3D"javascrip=
-t:;" onclick=3D"_e(event, &#39;cvml&#39;, &#39;daniel@fooishbar.org&#39;)">=
-daniel@fooishbar.org</a>&gt; wrote:<br>
-&gt; I&#39;m not going to lie, I was really hoping the 5th (?) GPU option f=
-or<br>
-&gt; Qemu would support pageflipping. Daniel&#39;s comment about conversion=
- to<br>
-&gt; atomic is relevant, but: do you have a mechanism which allows you to<b=
-r>
-&gt; post updates (e.g. &#39;start displaying this buffer now please&#39;) =
-that<br>
-&gt; allows you to get events back when they have actually been displayed?<=
-br>
-<br>
-Page flip is implemented in a later patch,<br>
-<br>
-<a href=3D"https://www.kraxel.org/cgit/linux/commit/?h=3Dvirtio-gpu&amp;id=
-=3D1e167e8e964f8e08100d315dd354cc0a4b090841" target=3D"_blank">https://www.=
-kraxel.org/cgit/linux/commit/?h=3Dvirtio-gpu&amp;id=3D1e167e8e964f8e08100d3=
-15dd354cc0a4b090841</a><br>
-<br>
-Since its a long way from an actual display, finding out when<br>
-something is actually displayed is hard,<br>
-but when we&#39;ve posted it to the frontbuffer should be fine.<br>
-</blockquote><div><br></div><div>Oh nice. 100% exact timings aren&#39;t cri=
-tical; it&#39;s more just having something to gate to 60fps that we can act=
-ually drive Weston&#39;s repaint=C2=A0loop off, as that&#39;s (not unreason=
-ably) driven by pageflip events.</div><div><br></div><div>Cheers,</div><div=
->Daniel<span></span></div>
-
---e89a8f3ba5e31278bf0512166e53--
-
---===============1338701072==
-Content-Type: text/plain; charset="utf-8"
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: inline
-
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZHJpLWRldmVs
-IG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHA6Ly9saXN0
-cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2ZWwK
-
---===============1338701072==--
+Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
