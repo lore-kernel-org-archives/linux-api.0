@@ -1,117 +1,142 @@
-From: Shaohua Li <shli@fb.com>
-Subject: Re: [PATCH] mremap: add MREMAP_NOHOLE flag --resend
-Date: Tue, 24 Mar 2015 22:02:13 -0700
-Message-ID: <20150325050213.GA343154@devbig257.prn2.facebook.com>
-References: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli@fb.com>
- <20150318153100.5658b741277f3717b52e42d9@linux-foundation.org>
- <550A5FF8.90504@gmail.com>
- <CADpJO7zBLhjecbiQeTubnTReiicVLr0-K43KbB4uCL5w_dyqJg@mail.gmail.com>
- <20150323051731.GA2616341@devbig257.prn2.facebook.com>
- <CADpJO7zk8J3q7Bw9NibV9CzLarO+YkfeshyFTTq=XeS5qziBiA@mail.gmail.com>
- <55117724.6030102@gmail.com>
+From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 3/5] of: overlay: Master enable switch
+Date: Wed, 25 Mar 2015 00:25:26 -0500
+Message-ID: <CAL_JsqKZZW=Vq9Mry9H0yjnv=TW8P=xzyX3EjQP+B15U0roaBA@mail.gmail.com>
+References: <1426624257-23003-1-git-send-email-pantelis.antoniou@konsulko.com> <1426624257-23003-4-git-send-email-pantelis.antoniou@konsulko.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <55117724.6030102@gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Daniel Micay <danielmicay@gmail.com>
-Cc: Aliaksey Kandratsenka <alkondratenko@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-api@vger.kernel.org, Rik van Riel <riel@redhat.com>, Hugh Dickins <hughd@google.com>, Mel Gorman <mel@csn.ul.ie>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Andy Lutomirski <luto@amacapital.net>, "google-perftools@googlegroups.com" <google-perftools@googlegroups.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1426624257-23003-4-git-send-email-pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Cc: Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matt Porter <matt.porter-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 24, 2015 at 10:39:32AM -0400, Daniel Micay wrote:
-> On 24/03/15 01:25 AM, Aliaksey Kandratsenka wrote:
-> > 
-> > Well, I don't have any workloads. I'm just maintaining a library that
-> > others run various workloads on. Part of the problem is lack of good
-> > and varied malloc benchmarks which could allow us that prevent
-> > regression. So this makes me a bit more cautious on performance
-> > matters.
-> > 
-> > But I see your point. Indeed I have no evidence at all that exclusive
-> > locking might cause observable performance difference.
-> 
-> I'm sure it matters but I expect you'd need *many* cores running many
-> threads before it started to outweigh the benefit of copying pages
-> instead of data.
-> 
-> Thinking about it a bit more, it would probably make sense for mremap to
-> start with the optimistic assumption that the reader lock is enough here
-> when using MREMAP_NOHOLE|MREMAP_FIXED. It only needs the writer lock if
-> the destination mapping is incomplete or doesn't match, which is an edge
-> case as holes would mean thread unsafety.
-> 
-> An ideal allocator will toggle on PROT_NONE when overcommit is disabled
-> so this assumption would be wrong. The heuristic could just be adjusted
-> to assume the dest VMA will match with MREMAP_NOHOLE|MREMAP_FIXED when
-> full memory accounting isn't enabled. The fallback would never ended up
-> being needed in existing use cases that I'm aware of, and would just add
-> the overhead of a quick lock, O(log n) check and unlock with the reader
-> lock held anyway. Another flag isn't really necessary.
-> 
-> >>> Another notable thing is how mlock effectively disables MADV_DONTNEED for
-> >>> jemalloc{1,2} and tcmalloc, lowers page faults count and thus improves
-> >>> runtime. It can be seen that tcmalloc+mlock on thp-less configuration is
-> >>> slightly better on runtime to glibc. The later spends a ton of time in
-> >>> kernel,
-> >>> probably handling minor page faults, and the former burns cpu in user space
-> >>> doing memcpy-s. So "tons of memcpys" seems to be competitive to what glibc
-> >>> is
-> >>> doing in this benchmark.
-> >>
-> >> mlock disables MADV_DONTNEED, so this is an unfair comparsion. With it,
-> >> allocator will use more memory than expected.
-> > 
-> > Do not agree with unfair. I'm actually hoping MADV_FREE to provide
-> > most if not all of benefits of mlock in this benchmark. I believe it's
-> > not too unreasonable expectation.
-> 
-> MADV_FREE will still result in as many page faults, just no zeroing.
-> 
-> I get ~20k requests/s with jemalloc on the ebizzy benchmark with this
-> dual core ivy bridge laptop. It jumps to ~60k requests/s with MADV_FREE
-> IIRC, but disabling purging via MALLOC_CONF=lg_dirty_mult:-1 leads to
-> 3.5 *million* requests/s. It has a similar impact with TCMalloc.
+On Tue, Mar 17, 2015 at 3:30 PM, Pantelis Antoniou
+<pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
+> Implement a throw once master enable switch to protect against any
+> further overlay applications if the administrator desires so.
 
-MADV_FREE has side effect (exactly like if you use mlock), which causes
-more memory are used. It's lazy memory free, so if there is no memory
-pressure, you can think MADV_FREE is a nop. It's undoubt you will see
-improvement in such case. But if there is memory pressure, it is
-completely different story.
- 
-> >> I'm kind of confused why we talk about THP, mlock here. When application
-> >> uses allocator, it doesn't need to be forced to use THP or mlock. Can we
-> >> forcus on normal case?
-> > 
-> > See my note on mlock above.
-> > 
-> > THP it is actually "normal". I know for certain, that many production
-> > workloads are run on boxes with THP enabled. Red Hat famously ships
-> > it's distros with THP set to "always". And I also know that some other
-> > many production workloads are run on boxes with THP disabled. Also, as
-> > seen above, "teleporting" pages is more efficient with THP due to much
-> > smaller overhead of moving those pages. So I felt it was important not
-> > to omit THP in my runs.
-> 
-> Yeah, it's quite normal for it to be enabled. Allocators might as well
-> give up on fine-grained purging when it is though :P. I think it only
-> really makes sense to purge at 2M boundaries in multiples of 2M if it's
-> going to end up breaking any other purging over the long-term.
-> 
-> I was originally only testing with THP since Arch uses "always" but I
-> realized it had an enormous impact and started testing without it too.
+sysfs documentation?
 
-Hmm, I didn't intend to ignore THP, but just can't understand why it's
-matter. There is extra overhead when purge or mremap THP pages (if range
-isn't 2M aligned in multiple of 2M), but other than that, there is no
-other difference to me, but your test result doesn't suggest this. Guess
-we should understand why THP makes so big difference.
+> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+> ---
+>  drivers/of/overlay.c | 66 +++++++++++++++++++++++++++++++++++++++++++++++++++-
+>  1 file changed, 65 insertions(+), 1 deletion(-)
+>
+> diff --git a/drivers/of/overlay.c b/drivers/of/overlay.c
+> index f17f5ef..6688797 100644
+> --- a/drivers/of/overlay.c
+> +++ b/drivers/of/overlay.c
+> @@ -21,6 +21,7 @@
+>  #include <linux/err.h>
+>  #include <linux/idr.h>
+>  #include <linux/sysfs.h>
+> +#include <linux/atomic.h>
+>
+>  #include "of_private.h"
+>
+> @@ -55,6 +56,9 @@ struct of_overlay {
+>         struct kobject kobj;
+>  };
+>
+> +/* master enable switch; once set to 0 can't be re-enabled */
+> +static atomic_t ov_enable = ATOMIC_INIT(1);
+> +
+>  static int of_overlay_apply_one(struct of_overlay *ov,
+>                 struct device_node *target, const struct device_node *overlay);
+>
+> @@ -345,6 +349,60 @@ static struct kobj_type of_overlay_ktype = {
+>
+>  static struct kset *ov_kset;
+>
+> +static ssize_t enable_read(struct file *filp, struct kobject *kobj,
+> +               struct bin_attribute *bin_attr, char *buf,
+> +               loff_t offset, size_t count)
+> +{
+> +       char tbuf[3];
+> +
+> +       if (offset < 0)
+> +               return -EINVAL;
+> +
+> +       if (offset >= sizeof(tbuf))
+> +               return 0;
+> +
+> +       if (count > sizeof(tbuf) - offset)
+> +               count = sizeof(tbuf) - offset;
+> +
+> +       /* fill in temp */
+> +       tbuf[0] = '0' + atomic_read(&ov_enable);
+> +       tbuf[1] = '\n';
+> +       tbuf[2] = '\0';
+> +
+> +       /* copy to buffer */
+> +       memcpy(buf, tbuf + offset, count);
+> +
+> +       return count;
+> +}
+> +
+> +static ssize_t enable_write(struct file *filp, struct kobject *kobj,
+> +               struct bin_attribute *bin_attr, char *buf,
+> +               loff_t off, size_t count)
+> +{
+> +       int new_enable;
+> +
+> +       if (off != 0 || (buf[0] != '0' && buf[1] != '1'))
 
-Thanks,
-Shaohua
+Is buf[1] correct here?
 
+> +               return -EINVAL;
+> +
+> +       new_enable = buf[0] - '0';
+> +       if (new_enable != 0 && new_enable != 1)
+
+Make unsigned just "if (new_enable > 1)".
+
+> +               return -EINVAL;
+> +
+> +       /* NOP for same value */
+> +       if (new_enable == atomic_read(&ov_enable))
+> +               return count;
+> +
+> +       /* if we've disabled it, no going back */
+> +       if (atomic_read(&ov_enable) == 0)
+> +               return -EPERM;
+> +
+> +       atomic_set(&ov_enable, new_enable);
+> +       return count;
+> +}
+> +
+> +/* just a single char + '\n' + '\0' */
+> +static BIN_ATTR_RW(enable, 3);
+> +
+>  /**
+>   * of_overlay_create() - Create and apply an overlay
+>   * @tree:      Device node containing all the overlays
+> @@ -360,6 +418,10 @@ int of_overlay_create(struct device_node *tree)
+>         struct of_overlay *ov;
+>         int err, id;
+>
+> +       /* administratively disabled */
+> +       if (!atomic_read(&ov_enable))
+> +               return -EPERM;
+> +
+>         /* allocate the overlay structure */
+>         ov = kzalloc(sizeof(*ov), GFP_KERNEL);
+>         if (ov == NULL)
+> @@ -596,5 +658,7 @@ int of_overlay_init(void)
+>         if (!ov_kset)
+>                 return -ENOMEM;
+>
+> -       return 0;
+> +       rc = sysfs_create_bin_file(&ov_kset->kobj, &bin_attr_enable);
+> +       WARN(rc, "%s: error adding enable attribute\n", __func__);
+> +       return rc;
+>  }
+> --
+> 1.7.12
+>
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
