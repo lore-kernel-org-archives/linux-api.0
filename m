@@ -1,40 +1,35 @@
-From: "Ivan.khoronzhuk" <ivan.khoronzhuk@globallogic.com>
-Subject: Re: [dmidecode] [Patch v4] firmware: dmi-sysfs: add SMBIOS entry
- point area attribute
-Date: Thu, 26 Mar 2015 15:06:10 +0200
-Message-ID: <55140442.6010102@globallogic.com>
-References: <1423069563-26467-1-git-send-email-ivan.khoronzhuk@linaro.org> <20150226103622.09b9870a@endymion.delvare> <54F6FAE7.30801@globallogic.com> <1425978807.24849.22.camel@chaos.site> <1426162975.2784.31.camel@mfleming-mobl1.ger.corp.intel.com> <550744E5.3070504@globallogic.com> <20150326130522.GB6525@codeblueprint.co.uk>
+From: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
+Subject: [PATCH v2 0/3] add cursor blink interval terminal escape sequence
+Date: Thu, 26 Mar 2015 13:51:04 +0000 (GMT)
+Message-ID: <alpine.DEB.2.11.1503261341260.2164@local>
+References: <alpine.DEB.2.11.1501262034380.1945@localhost.localdomain> <alpine.DEB.2.11.1501262040380.2052@localhost.localdomain> <20150225094946.GA24627@amd> <alpine.LNX.2.11.1502252319330.276@localhost> <20150226220243.GC9935@amd> <alpine.LNX.2.11.1502271905580.4212@localhost>
+ <alpine.LNX.2.11.1502271911380.4248@localhost> <20150325111949.GA24230@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20150326130522.GB6525@codeblueprint.co.uk>
-Sender: linux-doc-owner@vger.kernel.org
-To: Matt Fleming <matt@codeblueprint.co.uk>
-Cc: Matt Fleming <matt.fleming@intel.com>, Jean Delvare <jdelvare@suse.de>, Ivan Khoronzhuk <ivan.khoronzhuk@linaro.org>, linux-kernel@vger.kernel.org, ard.biesheuvel@linaro.org, grant.likely@linaro.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, dmidecode-devel@nongnu.org, leif.lindholm@linaro.org, msalter@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150325111949.GA24230-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Tomi Valkeinen <tomi.valkeinen-l0cyMroinI0@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+v2: Add documentation to console_codes man page (man-pages repo)
 
+This patch series adds an escape sequence to specify the current console's
+cursor blink interval. The default interval is set to fbcon's currently 
+hardcoded 200 msecs.
 
-On 26.03.15 15:05, Matt Fleming wrote:
-> On Mon, 16 Mar, at 11:02:29PM, Ivan.khoronzhuk wrote:
->> Matt, I've sent new patch that replaces this one.
->> "[Patch] firmware: dmi_scan: split dmisubsystem from dmi-sysfs"
->> It can take a while to go via review.
-> OK, thanks Ivan. I've dropped commit ("firmware: dmi-sysfs: Add SMBIOS
-> entry point area attribute").
->
-> The two remaining DMI commits I have are,
->
->    59d7e3c02860 firmware: dmi_scan: Use direct access to static vars
->    d759d96eb5cc firmware: dmi_scan: Use full dmi version for SMBIOS3
->
-> Am I still sending those for v4.1?
->
+Scot Doyle (3):
+  vt: add cursor blink interval escape sequence
+  fbcon: use the cursor blink interval provided by vt
+  console_codes.4: Add CSI sequence for cursor blink interval
 
-Yes
+ drivers/tty/vt/vt.c            |  9 +++++++++
+ drivers/video/console/fbcon.c  | 10 +++++-----
+ drivers/video/console/fbcon.h  |  1 +
+ include/linux/console_struct.h |  1 +
+ man4/console_codes.4           |  1 +
+ 5 files changed, 17 insertions(+), 5 deletions(-)
 
 -- 
-Regards,
-Ivan Khoronzhuk
-
+2.1.0
