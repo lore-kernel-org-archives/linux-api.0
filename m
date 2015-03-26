@@ -1,76 +1,53 @@
-From: Milosz Tanski <milosz@adfin.com>
-Subject: Re: [PATCH v7 0/5] vfs: Non-blockling buffered fs read (page cache only)
-Date: Thu, 26 Mar 2015 15:12:32 -0400
-Message-ID: <CANP1eJGpgXUv626KQb6kduJgMaOzU5hH9GLGBM-QSVUBagoG8w@mail.gmail.com>
-References: <cover.1426528417.git.milosz@adfin.com>
-	<20150326115514.GA12329@infradead.org>
+From: Tommi Rantala <tt.rantala@gmail.com>
+Subject: [PATCH] drm/i915: fix definition of the
+ DRM_IOCTL_I915_GET_SPRITE_COLORKEY ioctl
+Date: Thu, 26 Mar 2015 21:47:16 +0200
+Message-ID: <1427399236-14012-1-git-send-email-tt.rantala@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20150326115514.GA12329@infradead.org>
-Sender: owner-linux-aio@kvack.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Andrew Morton <akpm@linux-foundation.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Daniel Vetter <daniel.vetter@intel.com>, Jani Nikula <jani.nikula@linux.intel.com>
+Cc: linux-api@vger.kernel.org, intel-gfx@lists.freedesktop.org, dri-devel@lists.freedesktop.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 26, 2015 at 7:55 AM, Christoph Hellwig <hch@infradead.org> wrote:
->
-> On Mon, Mar 16, 2015 at 02:27:10PM -0400, Milosz Tanski wrote:
-> > This patchset introduces two new syscalls preadv2 and pwritev2. They are the
-> > same syscalls as preadv and pwrite but with a flag argument. Additionally,
-> > preadv2 implements an extra RWF_NONBLOCK flag.
->
-> There was some arugment that we just don't wait and don't have the
-> classic unix "blocking" semantics.  Maybe it's time to bite the bullet
-> and rename it to RWF_DONTWAIT? (I personally dont really care).
-
-
-Sure. It is in line with the MSG_DONTWAIT flag for sendmsg() which
-this whole idea is based on anyways.
-
->
->
-> Second this probably needs to be on top of Al's for-next tree:
->
->         https://git.kernel.org/cgit/linux/kernel/git/viro/vfs.git/log/?h=for-next
->
-> Note that this has a flags field in struct kiocb, so we could just use
-> that for the flags.
-
-
-Okay I started rebasing the patches on-top of that. I did see that
-there is a new flags field "ki_flags". I see that there's already a
-IOCB_EVENTFD flag.
-
-Did you see you Andres' question about making the flags a enum? I
-usually wouldn't do that, because C++ is stronger when it comes enums,
-you can't combine them then assignment them to an enum without a cast.
-But in the kernel this doesn't matter.
-
->
->
-> Otherwise this version look fine to me, let's get it merged!
->
-> Al, are yo ready to pick this up?  I'd hate to miss another merge
-> window.
-
-
-Just got back from vacation today, I'll try to get this out before the
-end of the week. I also have to make some adjustments to xfs-tests (to
-push preadv2 into xfs_io).
-
-
--- 
-Milosz Tanski
-CTO
-16 East 34th Street, 15th floor
-New York, NY 10016
-
-p: 646-253-9055
-e: milosz@adfin.com
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Rml4IGRlZmluaXRpb24gb2YgdGhlIERSTV9JT0NUTF9JOTE1X0dFVF9TUFJJVEVfQ09MT1JLRVkg
+aW9jdGwsIHNvIHRoYXQgaXQKaXMgZGlmZmVyZW50IGZyb20gdGhlIERSTV9JT0NUTF9JOTE1X1NF
+VF9TUFJJVEVfQ09MT1JLRVkgaW9jdGwuCgpTaWduZWQtb2ZmLWJ5OiBUb21taSBSYW50YWxhIDx0
+dC5yYW50YWxhQGdtYWlsLmNvbT4KLS0tCiBpbmNsdWRlL3VhcGkvZHJtL2k5MTVfZHJtLmggfCAy
+ICstCiAxIGZpbGUgY2hhbmdlZCwgMSBpbnNlcnRpb24oKyksIDEgZGVsZXRpb24oLSkKCmRpZmYg
+LS1naXQgYS9pbmNsdWRlL3VhcGkvZHJtL2k5MTVfZHJtLmggYi9pbmNsdWRlL3VhcGkvZHJtL2k5
+MTVfZHJtLmgKaW5kZXggNmVlZDE2Yi4uMGU5YzgzNSAxMDA2NDQKLS0tIGEvaW5jbHVkZS91YXBp
+L2RybS9pOTE1X2RybS5oCisrKyBiL2luY2x1ZGUvdWFwaS9kcm0vaTkxNV9kcm0uaApAQCAtMjcw
+LDcgKzI3MCw3IEBAIHR5cGVkZWYgc3RydWN0IF9kcm1faTkxNV9zYXJlYSB7CiAjZGVmaW5lIERS
+TV9JT0NUTF9JOTE1X09WRVJMQVlfUFVUX0lNQUdFCURSTV9JT1coRFJNX0NPTU1BTkRfQkFTRSAr
+IERSTV9JOTE1X09WRVJMQVlfUFVUX0lNQUdFLCBzdHJ1Y3QgZHJtX2ludGVsX292ZXJsYXlfcHV0
+X2ltYWdlKQogI2RlZmluZSBEUk1fSU9DVExfSTkxNV9PVkVSTEFZX0FUVFJTCURSTV9JT1dSKERS
+TV9DT01NQU5EX0JBU0UgKyBEUk1fSTkxNV9PVkVSTEFZX0FUVFJTLCBzdHJ1Y3QgZHJtX2ludGVs
+X292ZXJsYXlfYXR0cnMpCiAjZGVmaW5lIERSTV9JT0NUTF9JOTE1X1NFVF9TUFJJVEVfQ09MT1JL
+RVkgRFJNX0lPV1IoRFJNX0NPTU1BTkRfQkFTRSArIERSTV9JOTE1X1NFVF9TUFJJVEVfQ09MT1JL
+RVksIHN0cnVjdCBkcm1faW50ZWxfc3ByaXRlX2NvbG9ya2V5KQotI2RlZmluZSBEUk1fSU9DVExf
+STkxNV9HRVRfU1BSSVRFX0NPTE9SS0VZIERSTV9JT1dSKERSTV9DT01NQU5EX0JBU0UgKyBEUk1f
+STkxNV9TRVRfU1BSSVRFX0NPTE9SS0VZLCBzdHJ1Y3QgZHJtX2ludGVsX3Nwcml0ZV9jb2xvcmtl
+eSkKKyNkZWZpbmUgRFJNX0lPQ1RMX0k5MTVfR0VUX1NQUklURV9DT0xPUktFWSBEUk1fSU9XUihE
+Uk1fQ09NTUFORF9CQVNFICsgRFJNX0k5MTVfR0VUX1NQUklURV9DT0xPUktFWSwgc3RydWN0IGRy
+bV9pbnRlbF9zcHJpdGVfY29sb3JrZXkpCiAjZGVmaW5lIERSTV9JT0NUTF9JOTE1X0dFTV9XQUlU
+CQlEUk1fSU9XUihEUk1fQ09NTUFORF9CQVNFICsgRFJNX0k5MTVfR0VNX1dBSVQsIHN0cnVjdCBk
+cm1faTkxNV9nZW1fd2FpdCkKICNkZWZpbmUgRFJNX0lPQ1RMX0k5MTVfR0VNX0NPTlRFWFRfQ1JF
+QVRFCURSTV9JT1dSIChEUk1fQ09NTUFORF9CQVNFICsgRFJNX0k5MTVfR0VNX0NPTlRFWFRfQ1JF
+QVRFLCBzdHJ1Y3QgZHJtX2k5MTVfZ2VtX2NvbnRleHRfY3JlYXRlKQogI2RlZmluZSBEUk1fSU9D
+VExfSTkxNV9HRU1fQ09OVEVYVF9ERVNUUk9ZCURSTV9JT1cgKERSTV9DT01NQU5EX0JBU0UgKyBE
+Uk1fSTkxNV9HRU1fQ09OVEVYVF9ERVNUUk9ZLCBzdHJ1Y3QgZHJtX2k5MTVfZ2VtX2NvbnRleHRf
+ZGVzdHJveSkKLS0gCjIuMS4wCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fXwpkcmktZGV2ZWwgbWFpbGluZyBsaXN0CmRyaS1kZXZlbEBsaXN0cy5mcmVlZGVz
+a3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2Ry
+aS1kZXZlbAo=
