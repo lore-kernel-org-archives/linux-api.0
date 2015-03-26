@@ -1,72 +1,42 @@
-From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [virtio-dev] Re: [PATCH] Add virtio gpu driver.
-Date: Thu, 26 Mar 2015 17:47:09 +0100
-Message-ID: <20150326174401-mutt-send-email-mst@redhat.com>
-References: <20150325162246-mutt-send-email-mst@redhat.com>
- <1427297836.23304.29.camel@nilsson.home.kraxel.org>
- <20150325180721-mutt-send-email-mst@redhat.com>
- <1427353959.9779.2.camel@nilsson.home.kraxel.org>
- <20150326091545-mutt-send-email-mst@redhat.com>
- <1427359367.9779.9.camel@nilsson.home.kraxel.org>
- <20150326095736-mutt-send-email-mst@redhat.com>
- <1427369923.9779.18.camel@nilsson.home.kraxel.org>
- <20150326124751-mutt-send-email-mst@redhat.com>
- <1427382436.8786.15.camel@nilsson.home.kraxel.org>
+From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH] mremap: add MREMAP_NOHOLE flag --resend
+Date: Thu, 26 Mar 2015 18:25:32 +0100
+Message-ID: <5514410C.7090408@suse.cz>
+References: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli@fb.com> <20150318153100.5658b741277f3717b52e42d9@linux-foundation.org> <550A5FF8.90504@gmail.com> <CADpJO7zBLhjecbiQeTubnTReiicVLr0-K43KbB4uCL5w_dyqJg@mail.gmail.com> <550E6D9D.1060507@gmail.com> <5512E0C0.6060406@suse.cz> <55131F70.7020503@gmail.com> <alpine.DEB.2.10.1503251710400.31453@chino.kir.corp.google.com> <551351CA.3090803@gmail.com> <alpine.DEB.2.10.1503251914260.16714@chino.kir.corp.google.com> <55137C06.9020608@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1427382436.8786.15.camel-3OfP5uLMi4C46o+2HkPkLj4oCIwMql/M@public.gmane.org>
+In-Reply-To: <55137C06.9020608-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: virtio-dev-sDuHXQ4OtrM4h7I2RyI4rWD2FQJk+8+b@public.gmane.org, Dave Airlie <airlied-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dave Airlie <airlied-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:DRM DRIVERS" <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, "open list:VIRTIO CORE, NET..." <virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Aliaksey Kandratsenka <alkondratenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Shaohua Li <shli-b10kYP2dOMg@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mel-wPRd99KPJ+uzQB+pC5nmwQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "google-perftools-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org" <google-perftools-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 26, 2015 at 04:07:16PM +0100, Gerd Hoffmann wrote:
->   Hi,
-> 
-> > I don't know. This seems exactly like the kind of thing
-> > we had in mind when we added the virtio pci capability.
-> > For example, we have text in spec that requires drivers
-> > to skip unknown capabilities.
-> > 
-> > And yes, if bios pokes at a specific bar then we do
-> > need to list this info in the virtio spec so this makes
-> > it an issue that is virtio related.
-> 
-> Hmm, virtio-vga is a two-in-one device basically.  When virtio is
-> enabled it behaves like virtio-gpu-pci, otherwise it behaves very
-> simliar to stdvga.  So you need to know nothing about virtio to handle
-> the vga side, and I want keep it that way.
-> 
-> When no vga compatibility is needed there always is the option to just
-> use virtio-gpu-pci instead.
-> 
-> > Yes, it's not about what we put there now. It's about being able
-> > to move things about in the future without breaking guests.
-> 
-> We don't have that today for stdvga, and I still fail to see what this
-> buys us.
-> 
-> 
-> Completely different thing crossing my mind:  I think we can make
-> virtio-vga fully compatible with stdvga.  stdvga has two bars, memory
-> (#0) and mmio (#2).  We can make the mmio bar larger and place all the
-> virtio regions there.
-> 
+On 03/26/2015 04:24 AM, Daniel Micay wrote:
+> It's all well and good to say that you shouldn't do that, but it's the
+> basis of the design in jemalloc and other zone-based arena allocators.
+>
+> There's a chosen chunk size and chunks are naturally aligned. An
+> allocation is either a span of chunks (chunk-aligned) or has metadata
+> stored in the chunk header. This also means chunks can be assigned to
+> arenas for a high level of concurrency. Thread caching is then only
+> necessary for batching operations to amortize the cost of locking rather
+> than to reduce contention. Per-CPU arenas can be implemented quite well
+> by using sched_getcpu() to move threads around whenever it detects that
+> another thread allocated from the arena.
+>
+> With >= 2M chunks, madvise purging works very well at the chunk level
+> but there's also fine-grained purging within chunks and it completely
+> breaks down from THP page faults.
 
-Full compatibility with some standard sounds like a better motivation,
-yes.
+Are you sure it's due to page faults and not khugepaged + high value 
+(such as the default 511) of max_ptes_none? As reported here?
 
-> 
-> I think in any case I'll go split off the vga compatibility bits to a
-> different patch (and possible a separate patch series).
-> 
-> cheers,
->   Gerd
+https://bugzilla.kernel.org/show_bug.cgi?id=93111
 
-Will you still need me to change core to claim specific memory only?
-
-
--- 
-MST
+Once you have faulted in a THP, and then purged part of it and split it, 
+I don't think page faults in the purged part can lead to a new THP 
+collapse, only khugepaged can do that AFAIK.
+And if you mmap smaller than 2M areas (i.e. your 256K chunks), that 
+should prevent THP page faults on the first fault within the chunk as well.
