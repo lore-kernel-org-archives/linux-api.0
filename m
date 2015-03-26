@@ -1,40 +1,132 @@
-From: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
-Subject: [PATCH v2 3/3] console_codes.4: Add CSI sequence for cursor blink
- interval
-Date: Thu, 26 Mar 2015 13:57:44 +0000 (GMT)
-Message-ID: <alpine.DEB.2.11.1503261356490.2411@local>
-References: <alpine.DEB.2.11.1501262034380.1945@localhost.localdomain> <alpine.DEB.2.11.1501262040380.2052@localhost.localdomain> <20150225094946.GA24627@amd> <alpine.LNX.2.11.1502252319330.276@localhost> <20150226220243.GC9935@amd> <alpine.LNX.2.11.1502271905580.4212@localhost>
- <alpine.LNX.2.11.1502271911380.4248@localhost> <20150325111949.GA24230@kroah.com> <alpine.DEB.2.11.1503261341260.2164@local>
+From: Paolo Bonzini <pbonzini@redhat.com>
+Subject: Re: [PATCH 20/20] MIPS: KVM: Wire up MSA capability
+Date: Thu, 26 Mar 2015 14:58:39 +0100
+Message-ID: <5514108F.9060905@redhat.com>
+References: <1426085096-12932-1-git-send-email-james.hogan@imgtec.com> <1426085096-12932-21-git-send-email-james.hogan@imgtec.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.11.1503261341260.2164@local>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Tomi Valkeinen <tomi.valkeinen-l0cyMroinI0@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1426085096-12932-21-git-send-email-james.hogan@imgtec.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: James Hogan <james.hogan@imgtec.com>, kvm@vger.kernel.org, linux-mips@linux-mips.org
+Cc: Ralf Baechle <ralf@linux-mips.org>, Gleb Natapov <gleb@kernel.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add a Console Private CSI sequence to specify the current console's
-cursor blink interval. The interval is specified as a number of
-milliseconds until the next cursor display state toggle, from 50 to
-65535.
 
-Signed-off-by: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
----
- man4/console_codes.4 | 1 +
- 1 file changed, 1 insertion(+)
 
-diff --git a/man4/console_codes.4 b/man4/console_codes.4
-index 34f7535..7d05076 100644
---- a/man4/console_codes.4
-+++ b/man4/console_codes.4
-@@ -377,6 +377,7 @@ ESC [ 15 ]      	T{
- Bring the previous console to the front
- (since Linux 2.6.0).
- T}
-+ESC [ 16 ; \fIn\fP ]   	Set the cursor blink interval in milliseconds.
- .TE
- .SS Character sets
- The kernel knows about 4 translations of bytes into console-screen
--- 
-2.1.0
+On 11/03/2015 15:44, James Hogan wrote:
+> Now that the code is in place for KVM to support MIPS SIMD Architecutre
+> (MSA) in MIPS guests, wire up the new KVM_CAP_MIPS_MSA capability.
+> 
+> For backwards compatibility, the capability must be explicitly enabled
+> in order to detect or make use of MSA from the guest.
+> 
+> The capability is not supported if the hardware supports MSA vector
+> partitioning, since the extra support cannot be tested yet and it
+> extends the state that the userland program would have to save.
+> 
+> Signed-off-by: James Hogan <james.hogan@imgtec.com>
+> Cc: Paolo Bonzini <pbonzini@redhat.com>
+> Cc: Ralf Baechle <ralf@linux-mips.org>
+> Cc: Gleb Natapov <gleb@kernel.org>
+> Cc: Jonathan Corbet <corbet@lwn.net>
+> Cc: linux-mips@linux-mips.org
+> Cc: kvm@vger.kernel.org
+> Cc: linux-api@vger.kernel.org
+> Cc: linux-doc@vger.kernel.org
+> Signed-off-by: James Hogan <james.hogan@imgtec.com>
+> ---
+>  Documentation/virtual/kvm/api.txt | 12 ++++++++++++
+>  arch/mips/kvm/mips.c              | 24 ++++++++++++++++++++++++
+>  include/uapi/linux/kvm.h          |  1 +
+>  3 files changed, 37 insertions(+)
+> 
+> diff --git a/Documentation/virtual/kvm/api.txt b/Documentation/virtual/kvm/api.txt
+> index 47ddf0475211..97dd9ee69ca8 100644
+> --- a/Documentation/virtual/kvm/api.txt
+> +++ b/Documentation/virtual/kvm/api.txt
+> @@ -3224,6 +3224,18 @@ done the KVM_REG_MIPS_FPR_* and KVM_REG_MIPS_FCR_* registers can be accessed
+>  Config5.FRE bits are accessible via the KVM API and also from the guest,
+>  depending on them being supported by the FPU.
+>  
+> +6.10 KVM_CAP_MIPS_MSA
+> +
+> +Architectures: mips
+> +Target: vcpu
+> +Parameters: args[0] is reserved for future use (should be 0).
+> +
+> +This capability allows the use of the MIPS SIMD Architecture (MSA) by the guest.
+> +It allows the Config3.MSAP bit to be set to enable the use of MSA by the guest.
+> +Once this is done the KVM_REG_MIPS_VEC_* and KVM_REG_MIPS_MSA_* registers can be
+> +accessed, and the Config5.MSAEn bit is accessible via the KVM API and also from
+> +the guest.
+> +
+>  7. Capabilities that can be enabled on VMs
+>  ------------------------------------------
+>  
+> diff --git a/arch/mips/kvm/mips.c b/arch/mips/kvm/mips.c
+> index 9319c4360285..3b3530f493eb 100644
+> --- a/arch/mips/kvm/mips.c
+> +++ b/arch/mips/kvm/mips.c
+> @@ -880,6 +880,15 @@ static int kvm_vcpu_ioctl_enable_cap(struct kvm_vcpu *vcpu,
+>  			return -EINVAL;
+>  		vcpu->arch.fpu_enabled = true;
+>  		break;
+> +	case KVM_CAP_MIPS_MSA:
+> +		/*
+> +		 * MSA vector partitioning not supported,
+> +		 * see kvm_vm_ioctl_check_extension().
+> +		 */
+> +		if (!cpu_has_msa || boot_cpu_data.msa_id & MSA_IR_WRPF)
+> +			return -EINVAL;
+
+Perhaps you can call kvm_vm_ioctl_check_extension directly, outside the
+switch (it's okay if it's called for a capability other than FPU and MSA)?
+
+Apart from this nit,
+
+Acked-by: Paolo Bonzini <pbonzini@redhat.com>
+
+Paolo
+
+> +		vcpu->arch.msa_enabled = true;
+> +		break;
+>  	default:
+>  		r = -EINVAL;
+>  		break;
+> @@ -1071,6 +1080,21 @@ int kvm_vm_ioctl_check_extension(struct kvm *kvm, long ext)
+>  	case KVM_CAP_MIPS_FPU:
+>  		r = !!cpu_has_fpu;
+>  		break;
+> +	case KVM_CAP_MIPS_MSA:
+> +		/*
+> +		 * We don't support MSA vector partitioning yet:
+> +		 * 1) It would require explicit support which can't be tested
+> +		 *    yet due to lack of support in current hardware.
+> +		 * 2) It extends the state that would need to be saved/restored
+> +		 *    by e.g. QEMU for migration.
+> +		 *
+> +		 * When vector partitioning hardware becomes available, support
+> +		 * could be added by requiring a flag when enabling
+> +		 * KVM_CAP_MIPS_MSA capability to indicate that userland knows
+> +		 * to save/restore the appropriate extra state.
+> +		 */
+> +		r = cpu_has_msa && !(boot_cpu_data.msa_id & MSA_IR_WRPF);
+> +		break;
+>  	default:
+>  		r = 0;
+>  		break;
+> diff --git a/include/uapi/linux/kvm.h b/include/uapi/linux/kvm.h
+> index 98f6e5c653ff..5f859888e3ad 100644
+> --- a/include/uapi/linux/kvm.h
+> +++ b/include/uapi/linux/kvm.h
+> @@ -761,6 +761,7 @@ struct kvm_ppc_smmu_info {
+>  #define KVM_CAP_CHECK_EXTENSION_VM 105
+>  #define KVM_CAP_S390_USER_SIGP 106
+>  #define KVM_CAP_MIPS_FPU 107
+> +#define KVM_CAP_MIPS_MSA 108
+>  
+>  #ifdef KVM_CAP_IRQ_ROUTING
+>  
+> 
