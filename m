@@ -1,64 +1,53 @@
-From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH v3 10/15] serial: stm32-usart: Add STM32 USART Driver
-Date: Thu, 26 Mar 2015 23:05:52 +0100
-Message-ID: <CALszF6CPRqB-wOfyM6QuN3v7GNRbsaHtPv82okiLcNekoBQ2tQ@mail.gmail.com>
-References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
-	<1426197361-19290-11-git-send-email-maxime.coquelin@st.com>
-	<5511ABAA.2010303@hurleysoftware.com>
-	<20150326154618.GO8656@n2100.arm.linux.org.uk>
+From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH v5] add support for Freescale's MMA8653FC 10 bit
+ accelerometer
+Date: Thu, 26 Mar 2015 23:19:44 +0100
+Message-ID: <20150326221944.GA7322@kroah.com>
+References: <1426936150-2439-1-git-send-email-martink@posteo.de>
+ <1426937164-10997-1-git-send-email-martink@posteo.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20150326154618.GO8656@n2100.arm.linux.org.uk>
-Sender: linux-arch-owner@vger.kernel.org
-To: Russell King - ARM Linux <linux@arm.linux.org.uk>
-Cc: Peter Hurley <peter@hurleysoftware.com>, =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemlo>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1426937164-10997-1-git-send-email-martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Martin Kepplinger <martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
+Cc: benjamin.tissoires-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Pawel.Moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, alexander.stein-93q1YBGzJSMe9JSWTWOYM3xStJ4P+DSV@public.gmane.org, hadess-0MeiytkfxGOsTnJN9+BGXg@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Martin Kepplinger <martin.kepplinger-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>, Christoph Muellner <christoph.muellner-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-2015-03-26 16:46 GMT+01:00 Russell King - ARM Linux <linux@arm.linux.org.uk>:
-> On Tue, Mar 24, 2015 at 02:23:38PM -0400, Peter Hurley wrote:
->> Hi Maxime,
->>
->> On 03/12/2015 05:55 PM, Maxime Coquelin wrote:
->> > +static unsigned int stm32_get_mctrl(struct uart_port *port)
->> > +{
->> > +   /*
->> > +    * This routine is used for geting signals of: DTR, DCD, DSR, RI,
->> > +    * and CTS/RTS
->
-> It's also worth noting that this comment is wrong.  This is used to get
-> the state of DCD, DSR, RI and CTS.  DTR and RTS are *not* included
-> because the core tracks their state.
+On Sat, Mar 21, 2015 at 12:26:04PM +0100, Martin Kepplinger wrote:
+> From: Martin Kepplinger <martin.kepplinger-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>
+> 
+> The MMA8653FC is a low-power, three-axis, capacitive micromachined
+> accelerometer with 10 bits of resolution with flexible user-programmable
+> options.
+> 
+> Embedded interrupt functions enable overall power savings, by relieving the
+> host processor from continuously polling data, for example using the poll()
+> system call.
+> 
+> The device can be configured to generate wake-up interrupt signals from any
+> combination of the configurable embedded functions, enabling the MMA8653FC
+> to monitor events while remaining in a low-power mode during periods of
+> inactivity.
+> 
+> This driver provides devicetree properties to program the device's behaviour
+> and a simple, tested and documented sysfs interface. The data sheet and more
+> information is available on Freescale's website.
+> 
+> Signed-off-by: Martin Kepplinger <martin.kepplinger-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>
+> Signed-off-by: Christoph Muellner <christoph.muellner-SN7IsUiht6C/RdPyistoZJqQE7yCjDx5@public.gmane.org>
+> ---
+> 
+> Still, I was missing the drivers/staging Makefile addition. This applies and
+> builds automatically.
 
-OK, thanks for pointing this.
-I will fix the comment in the v4.
+You sent 4 different copies of a "v5" patch, which kind of defeats the
+whole purpose of a "v" number...
 
->
-> ...
->
->> > +   stm32port->clk = devm_clk_get(&pdev->dev, NULL);
->> > +
->> > +   if (WARN_ON(IS_ERR(stm32port->clk)))
->>
->> Do you really need a stack trace here? Could this be dev_err() instead?
->>
->> > +           return -EINVAL;
->
-> Also, propagate the error code.
-Ok.
+All of them now deleted from my todo queue, get it together and send a
+correct one, properly numbered.
 
->
->> > +
->> > +   /* ensure that clk rate is correct by enabling the clk */
->> > +   clk_prepare_enable(stm32port->clk);
->
-> And remember to check the return value of clk_prepare_enable().
-I will.
+thanks,
 
-Thanks for the review,
-Maxime
-
->
-> --
-> FTTC broadband for 0.8mile line: currently at 10.5Mbps down 400kbps up
-> according to speedtest.net.
+greg k-h
