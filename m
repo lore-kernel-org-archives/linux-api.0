@@ -1,79 +1,268 @@
-From: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
-Subject: [PATCH v2 1/3] vt: add cursor blink interval escape sequence
-Date: Thu, 26 Mar 2015 13:54:39 +0000 (GMT)
-Message-ID: <alpine.DEB.2.11.1503261352200.2411@local>
-References: <alpine.DEB.2.11.1501262034380.1945@localhost.localdomain> <alpine.DEB.2.11.1501262040380.2052@localhost.localdomain> <20150225094946.GA24627@amd> <alpine.LNX.2.11.1502252319330.276@localhost> <20150226220243.GC9935@amd> <alpine.LNX.2.11.1502271905580.4212@localhost>
- <alpine.LNX.2.11.1502271911380.4248@localhost> <20150325111949.GA24230@kroah.com> <alpine.DEB.2.11.1503261341260.2164@local>
+From: Paolo Bonzini <pbonzini@redhat.com>
+Subject: Re: [PATCH 14/20] MIPS: KVM: Expose FPU registers
+Date: Thu, 26 Mar 2015 14:55:56 +0100
+Message-ID: <55140FEC.5010403@redhat.com>
+References: <1426085096-12932-1-git-send-email-james.hogan@imgtec.com> <1426085096-12932-15-git-send-email-james.hogan@imgtec.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.11.1503261341260.2164@local>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Tomi Valkeinen <tomi.valkeinen-l0cyMroinI0@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1426085096-12932-15-git-send-email-james.hogan@imgtec.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: James Hogan <james.hogan@imgtec.com>, kvm@vger.kernel.org, linux-mips@linux-mips.org
+Cc: Paul Burton <paul.burton@imgtec.com>, Ralf Baechle <ralf@linux-mips.org>, Gleb Natapov <gleb@kernel.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add an escape sequence to specify the current console's cursor blink
-interval. The interval is specified as a number of milliseconds until
-the next cursor display state toggle, from 50 to 65535. /proc/loadavg
-did not show a difference with a one msec interval, but the lower
-bound is set to 50 msecs since slower hardware wasn't tested.
 
-Store the interval in the vc_data structure for later access by fbcon,
-initializing the value to fbcon's current hardcoded value of 200 msecs.
 
-Signed-off-by: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
-Acked-by: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
----
- drivers/tty/vt/vt.c            | 9 +++++++++
- include/linux/console_struct.h | 1 +
- 2 files changed, 10 insertions(+)
+On 11/03/2015 15:44, James Hogan wrote:
+> Add KVM register numbers for the MIPS FPU registers, and implement
+> access to them with the KVM_GET_ONE_REG / KVM_SET_ONE_REG ioctls when
+> the FPU capability is enabled (exposed in a later patch) and present in
+> the guest according to its Config1.FP bit.
+> 
+> The registers are accessible in the current mode of the guest, with each
+> sized access showing what the guest would see with an equivalent access,
+> and like the architecture they may become UNPREDICTABLE if the FR mode
+> is changed. When FR=0, odd doubles are inaccessible as they do not exist
+> in that mode.
+> 
+> Signed-off-by: James Hogan <james.hogan@imgtec.com>
+> Cc: Paolo Bonzini <pbonzini@redhat.com>
+> Cc: Paul Burton <paul.burton@imgtec.com>
+> Cc: Ralf Baechle <ralf@linux-mips.org>
+> Cc: Gleb Natapov <gleb@kernel.org>
+> Cc: Jonathan Corbet <corbet@lwn.net>
+> Cc: linux-mips@linux-mips.org
+> Cc: kvm@vger.kernel.org
+> Cc: linux-api@vger.kernel.org
+> Cc: linux-doc@vger.kernel.org
+> ---
+>  Documentation/virtual/kvm/api.txt | 16 +++++++++
+>  arch/mips/include/uapi/asm/kvm.h  | 37 ++++++++++++++------
+>  arch/mips/kvm/mips.c              | 72 ++++++++++++++++++++++++++++++++++++++-
+>  3 files changed, 114 insertions(+), 11 deletions(-)
+> 
+> diff --git a/Documentation/virtual/kvm/api.txt b/Documentation/virtual/kvm/api.txt
+> index 1e59515b6d1f..8ba55b9c903e 100644
+> --- a/Documentation/virtual/kvm/api.txt
+> +++ b/Documentation/virtual/kvm/api.txt
+> @@ -1979,6 +1979,10 @@ registers, find a list below:
+>    MIPS  | KVM_REG_MIPS_COUNT_CTL        | 64
+>    MIPS  | KVM_REG_MIPS_COUNT_RESUME     | 64
+>    MIPS  | KVM_REG_MIPS_COUNT_HZ         | 64
+> +  MIPS  | KVM_REG_MIPS_FPR_32(0..31)    | 32
+> +  MIPS  | KVM_REG_MIPS_FPR_64(0..31)    | 64
+> +  MIPS  | KVM_REG_MIPS_FCR_IR           | 32
+> +  MIPS  | KVM_REG_MIPS_FCR_CSR          | 32
+>  
+>  ARM registers are mapped using the lower 32 bits.  The upper 16 of that
+>  is the register group type, or coprocessor number:
+> @@ -2032,6 +2036,18 @@ patterns depending on whether they're 32-bit or 64-bit registers:
+>  MIPS KVM control registers (see above) have the following id bit patterns:
+>    0x7030 0000 0002 <reg:16>
+>  
+> +MIPS FPU registers (see KVM_REG_MIPS_FPR_{32,64}() above) have the following
+> +id bit patterns depending on the size of the register being accessed. They are
+> +always accessed according to the current guest FPU mode (Status.FR and
+> +Config5.FRE), i.e. as the guest would see them, and they become unpredictable
+> +if the guest FPU mode is changed:
+> +  0x7020 0000 0003 00 <0:3> <reg:5> (32-bit FPU registers)
+> +  0x7030 0000 0003 00 <0:3> <reg:5> (64-bit FPU registers)
+> +
+> +MIPS FPU control registers (see KVM_REG_MIPS_FCR_{IR,CSR} above) have the
+> +following id bit patterns:
+> +  0x7020 0000 0003 01 <0:3> <reg:5>
+> +
+>  
+>  4.69 KVM_GET_ONE_REG
+>  
+> diff --git a/arch/mips/include/uapi/asm/kvm.h b/arch/mips/include/uapi/asm/kvm.h
+> index 75d6d8557e57..401e6a6f8bb8 100644
+> --- a/arch/mips/include/uapi/asm/kvm.h
+> +++ b/arch/mips/include/uapi/asm/kvm.h
+> @@ -36,18 +36,8 @@ struct kvm_regs {
+>  
+>  /*
+>   * for KVM_GET_FPU and KVM_SET_FPU
+> - *
+> - * If Status[FR] is zero (32-bit FPU), the upper 32-bits of the FPRs
+> - * are zero filled.
+>   */
+>  struct kvm_fpu {
+> -	__u64 fpr[32];
+> -	__u32 fir;
+> -	__u32 fccr;
+> -	__u32 fexr;
+> -	__u32 fenr;
+> -	__u32 fcsr;
+> -	__u32 pad;
+>  };
+>  
+>  
+> @@ -68,6 +58,8 @@ struct kvm_fpu {
+>   *
+>   * Register set = 2: KVM specific registers (see definitions below).
+>   *
+> + * Register set = 3: FPU registers (see definitions below).
+> + *
+>   * Other sets registers may be added in the future.  Each set would
+>   * have its own identifier in bits[31..16].
+>   */
+> @@ -75,6 +67,7 @@ struct kvm_fpu {
+>  #define KVM_REG_MIPS_GP		(KVM_REG_MIPS | 0x0000000000000000ULL)
+>  #define KVM_REG_MIPS_CP0	(KVM_REG_MIPS | 0x0000000000010000ULL)
+>  #define KVM_REG_MIPS_KVM	(KVM_REG_MIPS | 0x0000000000020000ULL)
+> +#define KVM_REG_MIPS_FPU	(KVM_REG_MIPS | 0x0000000000030000ULL)
+>  
+>  
+>  /*
+> @@ -155,6 +148,30 @@ struct kvm_fpu {
+>  
+>  
+>  /*
+> + * KVM_REG_MIPS_FPU - Floating Point registers.
+> + *
+> + *  bits[15..8]  - Register subset (see definitions below).
+> + *  bits[7..5]   - Must be zero.
+> + *  bits[4..0]   - Register number within register subset.
+> + */
+> +
+> +#define KVM_REG_MIPS_FPR	(KVM_REG_MIPS_FPU | 0x0000000000000000ULL)
+> +#define KVM_REG_MIPS_FCR	(KVM_REG_MIPS_FPU | 0x0000000000000100ULL)
+> +
+> +/*
+> + * KVM_REG_MIPS_FPR - Floating point / Vector registers.
+> + */
+> +#define KVM_REG_MIPS_FPR_32(n)	(KVM_REG_MIPS_FPR | KVM_REG_SIZE_U32  | (n))
+> +#define KVM_REG_MIPS_FPR_64(n)	(KVM_REG_MIPS_FPR | KVM_REG_SIZE_U64  | (n))
+> +
+> +/*
+> + * KVM_REG_MIPS_FCR - Floating point control registers.
+> + */
+> +#define KVM_REG_MIPS_FCR_IR	(KVM_REG_MIPS_FCR | KVM_REG_SIZE_U32 |  0)
+> +#define KVM_REG_MIPS_FCR_CSR	(KVM_REG_MIPS_FCR | KVM_REG_SIZE_U32 | 31)
+> +
+> +
+> +/*
+>   * KVM MIPS specific structures and definitions
+>   *
+>   */
+> diff --git a/arch/mips/kvm/mips.c b/arch/mips/kvm/mips.c
+> index dd0833833bea..5e41afe15ae8 100644
+> --- a/arch/mips/kvm/mips.c
+> +++ b/arch/mips/kvm/mips.c
+> @@ -526,10 +526,13 @@ static int kvm_mips_get_reg(struct kvm_vcpu *vcpu,
+>  			    const struct kvm_one_reg *reg)
+>  {
+>  	struct mips_coproc *cop0 = vcpu->arch.cop0;
+> +	struct mips_fpu_struct *fpu = &vcpu->arch.fpu;
+>  	int ret;
+>  	s64 v;
+> +	unsigned int idx;
+>  
+>  	switch (reg->id) {
+> +	/* General purpose registers */
+>  	case KVM_REG_MIPS_R0 ... KVM_REG_MIPS_R31:
+>  		v = (long)vcpu->arch.gprs[reg->id - KVM_REG_MIPS_R0];
+>  		break;
+> @@ -543,6 +546,38 @@ static int kvm_mips_get_reg(struct kvm_vcpu *vcpu,
+>  		v = (long)vcpu->arch.pc;
+>  		break;
+>  
+> +	/* Floating point registers */
+> +	case KVM_REG_MIPS_FPR_32(0) ... KVM_REG_MIPS_FPR_32(31):
+> +		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
+> +			return -EINVAL;
+> +		idx = reg->id - KVM_REG_MIPS_FPR_32(0);
+> +		/* Odd singles in top of even double when FR=0 */
+> +		if (kvm_read_c0_guest_status(cop0) & ST0_FR)
+> +			v = get_fpr32(&fpu->fpr[idx], 0);
+> +		else
+> +			v = get_fpr32(&fpu->fpr[idx & ~1], idx & 1);
+> +		break;
+> +	case KVM_REG_MIPS_FPR_64(0) ... KVM_REG_MIPS_FPR_64(31):
+> +		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
+> +			return -EINVAL;
+> +		idx = reg->id - KVM_REG_MIPS_FPR_64(0);
+> +		/* Can't access odd doubles in FR=0 mode */
+> +		if (idx & 1 && !(kvm_read_c0_guest_status(cop0) & ST0_FR))
+> +			return -EINVAL;
+> +		v = get_fpr64(&fpu->fpr[idx], 0);
+> +		break;
+> +	case KVM_REG_MIPS_FCR_IR:
+> +		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
+> +			return -EINVAL;
+> +		v = boot_cpu_data.fpu_id;
+> +		break;
+> +	case KVM_REG_MIPS_FCR_CSR:
+> +		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
+> +			return -EINVAL;
+> +		v = fpu->fcr31;
+> +		break;
+> +
+> +	/* Co-processor 0 registers */
+>  	case KVM_REG_MIPS_CP0_INDEX:
+>  		v = (long)kvm_read_c0_guest_index(cop0);
+>  		break;
+> @@ -636,7 +671,9 @@ static int kvm_mips_set_reg(struct kvm_vcpu *vcpu,
+>  			    const struct kvm_one_reg *reg)
+>  {
+>  	struct mips_coproc *cop0 = vcpu->arch.cop0;
+> -	u64 v;
+> +	struct mips_fpu_struct *fpu = &vcpu->arch.fpu;
+> +	s64 v;
+> +	unsigned int idx;
+>  
+>  	if ((reg->id & KVM_REG_SIZE_MASK) == KVM_REG_SIZE_U64) {
+>  		u64 __user *uaddr64 = (u64 __user *)(long)reg->addr;
+> @@ -655,6 +692,7 @@ static int kvm_mips_set_reg(struct kvm_vcpu *vcpu,
+>  	}
+>  
+>  	switch (reg->id) {
+> +	/* General purpose registers */
+>  	case KVM_REG_MIPS_R0:
+>  		/* Silently ignore requests to set $0 */
+>  		break;
+> @@ -671,6 +709,38 @@ static int kvm_mips_set_reg(struct kvm_vcpu *vcpu,
+>  		vcpu->arch.pc = v;
+>  		break;
+>  
+> +	/* Floating point registers */
+> +	case KVM_REG_MIPS_FPR_32(0) ... KVM_REG_MIPS_FPR_32(31):
+> +		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
+> +			return -EINVAL;
+> +		idx = reg->id - KVM_REG_MIPS_FPR_32(0);
+> +		/* Odd singles in top of even double when FR=0 */
+> +		if (kvm_read_c0_guest_status(cop0) & ST0_FR)
+> +			set_fpr32(&fpu->fpr[idx], 0, v);
+> +		else
+> +			set_fpr32(&fpu->fpr[idx & ~1], idx & 1, v);
+> +		break;
+> +	case KVM_REG_MIPS_FPR_64(0) ... KVM_REG_MIPS_FPR_64(31):
+> +		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
+> +			return -EINVAL;
+> +		idx = reg->id - KVM_REG_MIPS_FPR_64(0);
+> +		/* Can't access odd doubles in FR=0 mode */
+> +		if (idx & 1 && !(kvm_read_c0_guest_status(cop0) & ST0_FR))
+> +			return -EINVAL;
+> +		set_fpr64(&fpu->fpr[idx], 0, v);
+> +		break;
+> +	case KVM_REG_MIPS_FCR_IR:
+> +		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
+> +			return -EINVAL;
+> +		/* Read-only */
+> +		break;
+> +	case KVM_REG_MIPS_FCR_CSR:
+> +		if (!kvm_mips_guest_has_fpu(&vcpu->arch))
+> +			return -EINVAL;
+> +		fpu->fcr31 = v;
+> +		break;
+> +
+> +	/* Co-processor 0 registers */
+>  	case KVM_REG_MIPS_CP0_INDEX:
+>  		kvm_write_c0_guest_index(cop0, v);
+>  		break;
+> 
 
-diff --git a/drivers/tty/vt/vt.c b/drivers/tty/vt/vt.c
-index 6e00572..ab1f173 100644
---- a/drivers/tty/vt/vt.c
-+++ b/drivers/tty/vt/vt.c
-@@ -135,6 +135,7 @@ const struct consw *conswitchp;
-  */
- #define DEFAULT_BELL_PITCH	750
- #define DEFAULT_BELL_DURATION	(HZ/8)
-+#define DEFAULT_CURSOR_BLINK_MS	200
- 
- struct vc vc_cons [MAX_NR_CONSOLES];
- 
-@@ -1590,6 +1591,13 @@ static void setterm_command(struct vc_data *vc)
- 		case 15: /* activate the previous console */
- 			set_console(last_console);
- 			break;
-+		case 16: /* set cursor blink duration in msec */
-+			if (vc->vc_npar >= 1 && vc->vc_par[1] >= 50 &&
-+					vc->vc_par[1] <= USHRT_MAX)
-+				vc->vc_cur_blink_ms = vc->vc_par[1];
-+			else
-+				vc->vc_cur_blink_ms = DEFAULT_CURSOR_BLINK_MS;
-+			break;
- 	}
- }
- 
-@@ -1717,6 +1725,7 @@ static void reset_terminal(struct vc_data *vc, int do_clear)
- 
- 	vc->vc_bell_pitch = DEFAULT_BELL_PITCH;
- 	vc->vc_bell_duration = DEFAULT_BELL_DURATION;
-+	vc->vc_cur_blink_ms = DEFAULT_CURSOR_BLINK_MS;
- 
- 	gotoxy(vc, 0, 0);
- 	save_cur(vc);
-diff --git a/include/linux/console_struct.h b/include/linux/console_struct.h
-index e859c98..e329ee2 100644
---- a/include/linux/console_struct.h
-+++ b/include/linux/console_struct.h
-@@ -104,6 +104,7 @@ struct vc_data {
- 	unsigned int    vc_resize_user;         /* resize request from user */
- 	unsigned int	vc_bell_pitch;		/* Console bell pitch */
- 	unsigned int	vc_bell_duration;	/* Console bell duration */
-+	unsigned short	vc_cur_blink_ms;	/* Cursor blink duration */
- 	struct vc_data **vc_display_fg;		/* [!] Ptr to var holding fg console for this display */
- 	struct uni_pagedir *vc_uni_pagedir;
- 	struct uni_pagedir **vc_uni_pagedir_loc; /* [!] Location of uni_pagedir variable for this console */
--- 
-2.1.0
+Acked-by: Paolo Bonzini <pbonzini@redhat.com>
