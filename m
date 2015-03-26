@@ -1,43 +1,39 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: Re: [PATCH v5] Add virtio-input driver.
-Date: Thu, 26 Mar 2015 13:10:40 +0100
-Message-ID: <20150326130644-mutt-send-email-mst@redhat.com>
-References: <1427366965-32549-1-git-send-email-kraxel@redhat.com>
+From: Matt Fleming <matt@codeblueprint.co.uk>
+Subject: Re: [dmidecode] [Patch v4] firmware: dmi-sysfs: add SMBIOS entry
+ point area attribute
+Date: Thu, 26 Mar 2015 13:05:22 +0000
+Message-ID: <20150326130522.GB6525@codeblueprint.co.uk>
+References: <1423069563-26467-1-git-send-email-ivan.khoronzhuk@linaro.org>
+ <20150226103622.09b9870a@endymion.delvare>
+ <54F6FAE7.30801@globallogic.com>
+ <1425978807.24849.22.camel@chaos.site>
+ <1426162975.2784.31.camel@mfleming-mobl1.ger.corp.intel.com>
+ <550744E5.3070504@globallogic.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1427366965-32549-1-git-send-email-kraxel@redhat.com>
+In-Reply-To: <550744E5.3070504@globallogic.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Gerd Hoffmann <kraxel@redhat.com>
-Cc: virtio-dev@lists.oasis-open.org, virtualization@lists.linux-foundation.org, David Herrmann <dh.herrmann@gmail.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
+To: "Ivan.khoronzhuk" <ivan.khoronzhuk@globallogic.com>
+Cc: Matt Fleming <matt.fleming@intel.com>, Jean Delvare <jdelvare@suse.de>, Ivan Khoronzhuk <ivan.khoronzhuk@linaro.org>, linux-kernel@vger.kernel.org, ard.biesheuvel@linaro.org, grant.likely@linaro.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, dmidecode-devel@nongnu.org, leif.lindholm@linaro.org, msalter@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 26, 2015 at 11:49:25AM +0100, Gerd Hoffmann wrote:
-> virtio-input is basically evdev-events-over-virtio, so this driver isn't
-> much more than reading configuration from config space and forwarding
-> incoming events to the linux input layer.
+On Mon, 16 Mar, at 11:02:29PM, Ivan.khoronzhuk wrote:
 > 
-> Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+> Matt, I've sent new patch that replaces this one.
+> "[Patch] firmware: dmi_scan: split dmisubsystem from dmi-sysfs"
+> It can take a while to go via review.
 
-Still a bit worried about using input.h as host/guest
-interface (can't we use some formal standard, e.g. USB HID?),
-but I'll let Rusty decide that.
+OK, thanks Ivan. I've dropped commit ("firmware: dmi-sysfs: Add SMBIOS
+entry point area attribute").
 
-Otherwise mostly looks good. One nit below.
+The two remaining DMI commits I have are,
 
-> ---
+  59d7e3c02860 firmware: dmi_scan: Use direct access to static vars
+  d759d96eb5cc firmware: dmi_scan: Use full dmi version for SMBIOS3
 
-Could you pls include changelog in the future?
-You are sending multiple versions per day and it's hard to keep up.
+Am I still sending those for v4.1?
 
-> +static unsigned int features[] = {
-> +	/* none */
-> +};
-
-An empty line wouldn't hurt here about variable definition.
-
-> +static struct virtio_device_id id_table[] = {
-> +	{ VIRTIO_ID_INPUT, VIRTIO_DEV_ANY_ID },
-> +	{ 0 },
-> +};
+-- 
+Matt Fleming, Intel Open Source Technology Center
