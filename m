@@ -1,62 +1,52 @@
-From: Gerd Hoffmann <kraxel@redhat.com>
-Subject: Re: [virtio-dev] Re: [PATCH] Add virtio gpu driver.
-Date: Thu, 26 Mar 2015 16:07:16 +0100
-Message-ID: <1427382436.8786.15.camel@nilsson.home.kraxel.org>
-References: <20150324171255-mutt-send-email-mst@redhat.com>
- <1427295121.23304.5.camel@nilsson.home.kraxel.org>
- <20150325162246-mutt-send-email-mst@redhat.com>
- <1427297836.23304.29.camel@nilsson.home.kraxel.org>
- <20150325180721-mutt-send-email-mst@redhat.com>
- <1427353959.9779.2.camel@nilsson.home.kraxel.org>
- <20150326091545-mutt-send-email-mst@redhat.com>
- <1427359367.9779.9.camel@nilsson.home.kraxel.org>
- <20150326095736-mutt-send-email-mst@redhat.com>
- <1427369923.9779.18.camel@nilsson.home.kraxel.org>
- <20150326124751-mutt-send-email-mst@redhat.com>
+From: Russell King - ARM Linux <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+Subject: Re: [PATCH v3  10/15] serial: stm32-usart: Add STM32 USART Driver
+Date: Thu, 26 Mar 2015 15:46:18 +0000
+Message-ID: <20150326154618.GO8656@n2100.arm.linux.org.uk>
+References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
+ <1426197361-19290-11-git-send-email-maxime.coquelin@st.com>
+ <5511ABAA.2010303@hurleysoftware.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <20150326124751-mutt-send-email-mst@redhat.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: "Michael S. Tsirkin" <mst@redhat.com>
-Cc: virtio-dev@lists.oasis-open.org, "open
- list:ABI/API" <linux-api@vger.kernel.org>, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open
- list:DRM DRIVERS" <dri-devel@lists.freedesktop.org>, "open list:VIRTIO
- CORE, NET..." <virtualization@lists.linux-foundation.org>, Dave Airlie <airlied@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <5511ABAA.2010303-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
+Cc: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, stefan-XLVq0VzYD2Y@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org, pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Antti Palosaari <crope-X3B1VOXEql0@public.gmane.org>, Tejun Heo <tj@k>
 List-Id: linux-api@vger.kernel.org
 
-ICBIaSwKCj4gSSBkb24ndCBrbm93LiBUaGlzIHNlZW1zIGV4YWN0bHkgbGlrZSB0aGUga2luZCBv
-ZiB0aGluZwo+IHdlIGhhZCBpbiBtaW5kIHdoZW4gd2UgYWRkZWQgdGhlIHZpcnRpbyBwY2kgY2Fw
-YWJpbGl0eS4KPiBGb3IgZXhhbXBsZSwgd2UgaGF2ZSB0ZXh0IGluIHNwZWMgdGhhdCByZXF1aXJl
-cyBkcml2ZXJzCj4gdG8gc2tpcCB1bmtub3duIGNhcGFiaWxpdGllcy4KPiAKPiBBbmQgeWVzLCBp
-ZiBiaW9zIHBva2VzIGF0IGEgc3BlY2lmaWMgYmFyIHRoZW4gd2UgZG8KPiBuZWVkIHRvIGxpc3Qg
-dGhpcyBpbmZvIGluIHRoZSB2aXJ0aW8gc3BlYyBzbyB0aGlzIG1ha2VzCj4gaXQgYW4gaXNzdWUg
-dGhhdCBpcyB2aXJ0aW8gcmVsYXRlZC4KCkhtbSwgdmlydGlvLXZnYSBpcyBhIHR3by1pbi1vbmUg
-ZGV2aWNlIGJhc2ljYWxseS4gIFdoZW4gdmlydGlvIGlzCmVuYWJsZWQgaXQgYmVoYXZlcyBsaWtl
-IHZpcnRpby1ncHUtcGNpLCBvdGhlcndpc2UgaXQgYmVoYXZlcyB2ZXJ5CnNpbWxpYXIgdG8gc3Rk
-dmdhLiAgU28geW91IG5lZWQgdG8ga25vdyBub3RoaW5nIGFib3V0IHZpcnRpbyB0byBoYW5kbGUK
-dGhlIHZnYSBzaWRlLCBhbmQgSSB3YW50IGtlZXAgaXQgdGhhdCB3YXkuCgpXaGVuIG5vIHZnYSBj
-b21wYXRpYmlsaXR5IGlzIG5lZWRlZCB0aGVyZSBhbHdheXMgaXMgdGhlIG9wdGlvbiB0byBqdXN0
-CnVzZSB2aXJ0aW8tZ3B1LXBjaSBpbnN0ZWFkLgoKPiBZZXMsIGl0J3Mgbm90IGFib3V0IHdoYXQg
-d2UgcHV0IHRoZXJlIG5vdy4gSXQncyBhYm91dCBiZWluZyBhYmxlCj4gdG8gbW92ZSB0aGluZ3Mg
-YWJvdXQgaW4gdGhlIGZ1dHVyZSB3aXRob3V0IGJyZWFraW5nIGd1ZXN0cy4KCldlIGRvbid0IGhh
-dmUgdGhhdCB0b2RheSBmb3Igc3RkdmdhLCBhbmQgSSBzdGlsbCBmYWlsIHRvIHNlZSB3aGF0IHRo
-aXMKYnV5cyB1cy4KCgpDb21wbGV0ZWx5IGRpZmZlcmVudCB0aGluZyBjcm9zc2luZyBteSBtaW5k
-OiAgSSB0aGluayB3ZSBjYW4gbWFrZQp2aXJ0aW8tdmdhIGZ1bGx5IGNvbXBhdGlibGUgd2l0aCBz
-dGR2Z2EuICBzdGR2Z2EgaGFzIHR3byBiYXJzLCBtZW1vcnkKKCMwKSBhbmQgbW1pbyAoIzIpLiAg
-V2UgY2FuIG1ha2UgdGhlIG1taW8gYmFyIGxhcmdlciBhbmQgcGxhY2UgYWxsIHRoZQp2aXJ0aW8g
-cmVnaW9ucyB0aGVyZS4KCgpJIHRoaW5rIGluIGFueSBjYXNlIEknbGwgZ28gc3BsaXQgb2ZmIHRo
-ZSB2Z2EgY29tcGF0aWJpbGl0eSBiaXRzIHRvIGEKZGlmZmVyZW50IHBhdGNoIChhbmQgcG9zc2li
-bGUgYSBzZXBhcmF0ZSBwYXRjaCBzZXJpZXMpLgoKY2hlZXJzLAogIEdlcmQKCgpfX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpkcmktZGV2ZWwgbWFpbGluZyBs
-aXN0CmRyaS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNr
-dG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
+On Tue, Mar 24, 2015 at 02:23:38PM -0400, Peter Hurley wrote:
+> Hi Maxime,
+> 
+> On 03/12/2015 05:55 PM, Maxime Coquelin wrote:
+> > +static unsigned int stm32_get_mctrl(struct uart_port *port)
+> > +{
+> > +	/*
+> > +	 * This routine is used for geting signals of: DTR, DCD, DSR, RI,
+> > +	 * and CTS/RTS
+
+It's also worth noting that this comment is wrong.  This is used to get
+the state of DCD, DSR, RI and CTS.  DTR and RTS are *not* included
+because the core tracks their state.
+
+...
+
+> > +	stm32port->clk = devm_clk_get(&pdev->dev, NULL);
+> > +
+> > +	if (WARN_ON(IS_ERR(stm32port->clk)))
+> 
+> Do you really need a stack trace here? Could this be dev_err() instead?
+> 
+> > +		return -EINVAL;
+
+Also, propagate the error code.
+
+> > +
+> > +	/* ensure that clk rate is correct by enabling the clk */
+> > +	clk_prepare_enable(stm32port->clk);
+
+And remember to check the return value of clk_prepare_enable().
+
+-- 
+FTTC broadband for 0.8mile line: currently at 10.5Mbps down 400kbps up
+according to speedtest.net.
