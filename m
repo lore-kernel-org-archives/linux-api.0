@@ -1,43 +1,52 @@
-From: Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>
-Subject: Re: [PATCH] Add virtio gpu driver.
-Date: Thu, 26 Mar 2015 09:53:49 +0100
-Message-ID: <20150326085349.GP1349@phenom.ffwll.local>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [virtio-dev] Re: [PATCH] Add virtio gpu driver.
+Date: Thu, 26 Mar 2015 10:04:03 +0100
+Message-ID: <20150326095736-mutt-send-email-mst@redhat.com>
 References: <1427213239-8775-1-git-send-email-kraxel@redhat.com>
- <20150324165057.GN1349@phenom.ffwll.local>
- <1427295189.23304.6.camel@nilsson.home.kraxel.org>
+ <20150324171255-mutt-send-email-mst@redhat.com>
+ <1427295121.23304.5.camel@nilsson.home.kraxel.org>
+ <20150325162246-mutt-send-email-mst@redhat.com>
+ <1427297836.23304.29.camel@nilsson.home.kraxel.org>
+ <20150325180721-mutt-send-email-mst@redhat.com>
+ <1427353959.9779.2.camel@nilsson.home.kraxel.org>
+ <20150326091545-mutt-send-email-mst@redhat.com>
+ <1427359367.9779.9.camel@nilsson.home.kraxel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
 Content-Disposition: inline
-In-Reply-To: <1427295189.23304.6.camel-3OfP5uLMi4C46o+2HkPkLj4oCIwMql/M@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>, virtio-dev-sDuHXQ4OtrM4h7I2RyI4rWD2FQJk+8+b@public.gmane.org, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:DRM DRIVERS" <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, "open list:VIRTIO CORE, NET..." <virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Dave Airlie <airlied-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1427359367.9779.9.camel@nilsson.home.kraxel.org>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Gerd Hoffmann <kraxel@redhat.com>
+Cc: virtio-dev@lists.oasis-open.org, "open list:ABI/API" <linux-api@vger.kernel.org>, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open list:DRM DRIVERS" <dri-devel@lists.freedesktop.org>, "open list:VIRTIO CORE, NET..." <virtualization@lists.linux-foundation.org>, Dave Airlie <airlied@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 25, 2015 at 03:53:09PM +0100, Gerd Hoffmann wrote:
-> > > Signed-off-by: Dave Airlie <airlied-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> > > Signed-off-by: Gerd Hoffmann <kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> > 
-> > Standard request from my side for new drm drivers (especially if they're
-> > this simple): Can you please update the drivers to latest drm internal
-> > interfaces, i.e. using universal planes and atomic?
-> 
-> Have a docs / sample code pointer for me?
-
-Picking any of the recently converted drivers or recently merged atomic
-drivers should be fairly informative. Overall conversion procedure is
-detailed in
-
-http://blog.ffwll.ch/2014/11/atomic-modeset-support-for-kms-drivers.html
-http://blog.ffwll.ch/2015/01/update-for-atomic-display-updates.html
-
-And ofc there's the kerneldoc stuff in the drm docbook. If you have
-questions probably best to ask them in #dri-devel irc, most of the people
-who've done atomic conversions hang out there and can help out.
-
-Cheers, Daniel
--- 
-Daniel Vetter
-Software Engineer, Intel Corporation
-http://blog.ffwll.ch
+T24gVGh1LCBNYXIgMjYsIDIwMTUgYXQgMDk6NDI6NDdBTSArMDEwMCwgR2VyZCBIb2ZmbWFubiB3
+cm90ZToKPiAgIEhpLAo+IAo+ID4gQW5kIGlzIGl0IHBvc3NpYmxlIHRvIHVzZSBvZmZzZXQgd2l0
+aGluIEJBUiBhbmQvb3IgbWVtb3J5IEJBUnM/Cj4gPiBJZiB5ZXMgSSdkIHN0cm9uZ2x5IHByZWZl
+ciB0aGlzLgo+IAo+IFdoYXQgaXMgdGhlIHBvaW50PyAgRG8geW91IHdhbnQgcGxhY2UgdmlydGlv
+IHJlZ2lvbnMgYW5kIHZnYSBmcmFtZWJ1ZmZlcgo+IGluIHRoZSBzYW1lIHBjaSBiYXI/ICBXaHk/
+ICB2aXJ0aW8gaXMgbW1pbyBhbmQgdHJhcHMgaW50byBxZW11IG9uCj4gYWNjZXNzLCB3aGVyZWFz
+IHRoZSB2Z2EgZnJhbWVidWZmZXIgaXMgbWVtb3J5LWJhY2tlZCAod2l0aCBkaXJ0eQo+IHRyYWNr
+aW5nIHR1cm5lZCBvbikuICBEb24ndCB0aGluayB0aGlzIGlzIGEgZ29vZCBpZGVhLCBldmVuIHRo
+b3VnaCB0aGUKPiBtZW1vcnkgYXBpIHdvdWxkIHByb2JhYmx5IGFsbG93IHRvIGRvIHRoaXMuCj4g
+Cj4gY2hlZXJzLAo+ICAgR2VyZAoKQWJzb2x1dGVseSwgaXQncyBwcmV0dHkgY29tbW9uIHRvIG1p
+eCByZWdpb25zIGluIGEgQkFSLgpGb3IgZXhhbXBsZSwgd2UgaGF2ZSB2aXJ0aW8ga2ljayAoaW9l
+dmVudGZkIGJhY2tlZCwKaGFuZGxlZCBpbiBrZXJuZWwpIGluIHNhbWUgQkFSIGFzIGNvbW1vbiBh
+bmQgZGV2aWNlCnNwZWNpZmljIGNvbmZpZ3VyYXRpb24uCgpXZSBkaWQgdGhlIHNhbWUgdGhpbmcg
+eW91IGFyZSBub3cgZG9pbmcgd2l0aCB0aGUKdmlydGlvIEJBUiwgYW5kIG5vdyB3ZSBoYXZlIHRv
+IG1haW50YWluIHR3byBjb2RlCmJhc2VzLCB2aXJ0aW8gcGNpIGNvbmZpZyB3YXMgZGVzaWduZWQg
+dG8gYmUgZnV0dXJlIHByb29mCnNvIHdoeSBub3QgdXNlIGl0PwoKVGhpcyBpcyBtb3N0bHkganVz
+dCBtYWtpbmcgc3VyZSB3ZSBkb24ndCBwYWludCBvdXJzZWx2ZXMgaW50byBhIGNvcm5lci4KCi0t
+IApNU1QKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZHJp
+LWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHA6
+Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2ZWwK
