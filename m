@@ -1,68 +1,57 @@
-From: Alex Elsayed <eternaleye-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [virtio-dev] Re: [PATCH] Add virtio gpu driver.
-Date: Thu, 26 Mar 2015 15:49:22 -0700
-Message-ID: <mf22dj$v64$6@ger.gmane.org>
-References: <20150325162246-mutt-send-email-mst@redhat.com> <1427297836.23304.29.camel@nilsson.home.kraxel.org> <20150325180721-mutt-send-email-mst@redhat.com> <1427353959.9779.2.camel@nilsson.home.kraxel.org> <20150326091545-mutt-send-email-mst@redhat.com> <1427359367.9779.9.camel@nilsson.home.kraxel.org> <20150326095736-mutt-send-email-mst@redhat.com> <1427369923.9779.18.camel@nilsson.home.kraxel.org> <20150326124751-mutt-send-email-mst@redhat.com> <1427382436.8786.15.camel@nilsson.home.kraxel.org> <20150326174401-mutt-send-email-mst@redhat.com>
+From: David Rientjes <rientjes@google.com>
+Subject: [patch 1/2] mm, doc: cleanup and clarify munmap behavior for hugetlb
+ memory
+Date: Thu, 26 Mar 2015 16:23:21 -0700 (PDT)
+Message-ID: <alpine.DEB.2.10.1503261621570.20009@chino.kir.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>, Jonathan Corbet <corbet@lwn.net>
+Cc: Davide Libenzi <davidel@xmailserver.org>, Luiz Capitulino <lcapitulino@redhat.com>, Shuah Khan <shuahkh@osg.samsung.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, Joern Engel <joern@logfs.org>, Jianguo Wu <wujianguo@huawei.com>, Eric B Munson <emunson@akamai.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Michael S. Tsirkin wrote:
+munmap(2) of hugetlb memory requires a length that is hugepage aligned,
+otherwise it may fail.  Add this to the documentation.
 
-> On Thu, Mar 26, 2015 at 04:07:16PM +0100, Gerd Hoffmann wrote:
->>   Hi,
->> 
->> > I don't know. This seems exactly like the kind of thing
->> > we had in mind when we added the virtio pci capability.
->> > For example, we have text in spec that requires drivers
->> > to skip unknown capabilities.
->> > 
->> > And yes, if bios pokes at a specific bar then we do
->> > need to list this info in the virtio spec so this makes
->> > it an issue that is virtio related.
->> 
->> Hmm, virtio-vga is a two-in-one device basically.  When virtio is
->> enabled it behaves like virtio-gpu-pci, otherwise it behaves very
->> simliar to stdvga.  So you need to know nothing about virtio to handle
->> the vga side, and I want keep it that way.
->> 
->> When no vga compatibility is needed there always is the option to just
->> use virtio-gpu-pci instead.
->> 
->> > Yes, it's not about what we put there now. It's about being able
->> > to move things about in the future without breaking guests.
->> 
->> We don't have that today for stdvga, and I still fail to see what this
->> buys us.
->> 
->> 
->> Completely different thing crossing my mind:  I think we can make
->> virtio-vga fully compatible with stdvga.  stdvga has two bars, memory
->> (#0) and mmio (#2).  We can make the mmio bar larger and place all the
->> virtio regions there.
->> 
-> 
-> Full compatibility with some standard sounds like a better motivation,
-> yes.
+This also cleans up the documentation and separates it into logical
+units: one part refers to MAP_HUGETLB and another part refers to
+requirements for shared memory segments.
 
-I think you misunderstand; stdvga is a specific qemu device that only 
-provides the VGA interface.
+Signed-off-by: David Rientjes <rientjes@google.com>
+---
+ Documentation/vm/hugetlbpage.txt | 21 +++++++++++++--------
+ 1 file changed, 13 insertions(+), 8 deletions(-)
 
-This proposed GPU provides both the VGA interface (the BAR in question) 
-_and_ a virtio interface.
-
->> 
->> I think in any case I'll go split off the vga compatibility bits to a
->> different patch (and possible a separate patch series).
->> 
->> cheers,
->>   Gerd
-> 
-> Will you still need me to change core to claim specific memory only?
-> 
-> 
+diff --git a/Documentation/vm/hugetlbpage.txt b/Documentation/vm/hugetlbpage.txt
+--- a/Documentation/vm/hugetlbpage.txt
++++ b/Documentation/vm/hugetlbpage.txt
+@@ -289,15 +289,20 @@ file systems, write system calls are not.
+ Regular chown, chgrp, and chmod commands (with right permissions) could be
+ used to change the file attributes on hugetlbfs.
+ 
+-Also, it is important to note that no such mount command is required if the
++Also, it is important to note that no such mount command is required if
+ applications are going to use only shmat/shmget system calls or mmap with
+-MAP_HUGETLB.  Users who wish to use hugetlb page via shared memory segment
+-should be a member of a supplementary group and system admin needs to
+-configure that gid into /proc/sys/vm/hugetlb_shm_group.  It is possible for
+-same or different applications to use any combination of mmaps and shm*
+-calls, though the mount of filesystem will be required for using mmap calls
+-without MAP_HUGETLB.  For an example of how to use mmap with MAP_HUGETLB see
+-map_hugetlb.c.
++MAP_HUGETLB.  For an example of how to use mmap with MAP_HUGETLB see map_hugetlb
++below.
++
++Users who wish to use hugetlb memory via shared memory segment should be a
++member of a supplementary group and system admin needs to configure that gid
++into /proc/sys/vm/hugetlb_shm_group.  It is possible for same or different
++applications to use any combination of mmaps and shm* calls, though the mount of
++filesystem will be required for using mmap calls without MAP_HUGETLB.
++
++When using munmap(2) to unmap hugetlb memory, the length specified must be
++hugepage aligned, otherwise it will fail with errno set to EINVAL.
++
+ 
+ Examples
+ ========
