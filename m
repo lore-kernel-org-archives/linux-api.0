@@ -1,75 +1,80 @@
-From: Daniel Micay <danielmicay@gmail.com>
-Subject: Re: [PATCH] mremap: add MREMAP_NOHOLE flag --resend
-Date: Thu, 26 Mar 2015 16:45:51 -0400
-Message-ID: <55146FFF.80809@gmail.com>
-References: <deaa4139de6e6422a0cec1e3282553aed3495e94.1426626497.git.shli@fb.com> <20150318153100.5658b741277f3717b52e42d9@linux-foundation.org> <550A5FF8.90504@gmail.com> <CADpJO7zBLhjecbiQeTubnTReiicVLr0-K43KbB4uCL5w_dyqJg@mail.gmail.com> <550E6D9D.1060507@gmail.com> <5512E0C0.6060406@suse.cz> <55131F70.7020503@gmail.com> <alpine.DEB.2.10.1503251710400.31453@chino.kir.corp.google.com> <551351CA.3090803@gmail.com> <alpine.DEB.2.10.1503251914260.16714@chino.kir.corp.google.com> <55137C06.9020608@gmail.com> <5514410C.7090408@suse.cz>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="CXXGB5B0s7ABUfNSFOK4Jx0Xl5vd2XchI"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <5514410C.7090408@suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>, David Rientjes <rientjes@google.com>
-Cc: Aliaksey Kandratsenka <alkondratenko@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Shaohua Li <shli@fb.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, Rik van Riel <riel@redhat.com>, Hugh Dickins <hughd@google.com>, Mel Gorman <mel@csn.ul.ie>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Andy Lutomirski <luto@amacapital.net>, "google-perftools@googlegroups.com" <google-perftools@googlegroups.com>
+From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH] stm class: Adding master and channel parameter to ioctl function
+Date: Thu, 26 Mar 2015 15:46:11 -0600
+Message-ID: <1427406371-6699-1-git-send-email-mathieu.poirier@linaro.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
+Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, peter.lachner-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, norbert.schulz-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, keven.boell-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yann.fouassier-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, laurent.fert-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---CXXGB5B0s7ABUfNSFOK4Jx0Xl5vd2XchI
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
+Hey Alex,
 
-> Are you sure it's due to page faults and not khugepaged + high value
-> (such as the default 511) of max_ptes_none? As reported here?
->=20
-> https://bugzilla.kernel.org/show_bug.cgi?id=3D93111
->=20
-> Once you have faulted in a THP, and then purged part of it and split it=
-,
-> I don't think page faults in the purged part can lead to a new THP
-> collapse, only khugepaged can do that AFAIK.
-> And if you mmap smaller than 2M areas (i.e. your 256K chunks), that
-> should prevent THP page faults on the first fault within the chunk as w=
-ell.
+Have a look at the following patch and see if you agree with my approach.  If so
+simply add the code to a third version. 
 
-Hm, that's probably it. The page faults would still be an issue when
-reserving ranges on 64-bit for parallel chunk allocation and to make
-sure the lowest address chunks are the oldest from the start, which is
-likely down the road.
+Thanks,
+Mathieu
 
-A nice property of 2M chunks is that mremap doesn't need to split huge
-pages and neither does purging at the chunk level. I'd expect that to be
-a *good thing* rather than something that needs to be avoided due to an
-aggressive heuristic.
+>From 70b4709b668ef59b303dabeff73ed850a4980cfc Mon Sep 17 00:00:00 2001
+From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Date: Thu, 26 Mar 2015 15:33:03 -0600
+Subject: [PATCH] stm class: Adding master and channel parameter to ioctl
+ function
 
+Just like the "write" function, architecture specific device need
+to know about master and channels to do the correct operations on
+a ioctl call.
 
---CXXGB5B0s7ABUfNSFOK4Jx0Xl5vd2XchI
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+Since this information is embedded in the stm_file structure that
+is private to the stm class core, adding extra parameters to convey
+the values is simple and clean.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
+Signed-off-by: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+---
+ drivers/hwtracing/stm/core.c | 12 ++++++++++--
+ include/linux/stm.h          |  5 +++--
+ 2 files changed, 13 insertions(+), 4 deletions(-)
 
-iQIcBAEBCAAGBQJVFHAAAAoJEPnnEuWa9fIqXJwP/RgybET2Sd1xie/EZsHeHqvZ
-yBo3tIlGwKT8JU2aYRRp7sNkqx6W3MWLofQ8Liuz/OPwxF4RhgHL93pJrmLL5Hxi
-2XYNMbri9fvTT2e5jkW6QrDdtRg9CC2vW4MmhDW8sCoewFxa1SDXOILAHp9uE0RI
-0Yt+S04W/HLS9jjhVRheBoX9aCx5atUQ8dwoHKyaFl+LD+C11etXpWNjj1VVIFdw
-Wa+rKnLZT+E/4IPRHYdPzwuacwkovk8Tzw3Ma/PzE14YYeVDHUkowjsrsVxaWB+q
-s94irGZZYH9aiF7unhvSZorPvrgxr7Gcl0x/gWb2glUzSvnsTp/ICc3b6dllOkJE
-C9aezfij/X0j2vP/A2ZT/5fuQQ2kzZgL5iVBkYbB2sYqobEkJjl4tTRHEj5FqidZ
-ezN7a6y4Eyl+vrYbXSDtmr9YdyMkIlphfVtzr4386mhthlmFzXYcTu32XF4Gt8jV
-ecfZSd9UzHvgZUDTicSI9oIXuWHwq0TYrtTS1BP0gOij6YTYWRA/mp3z+Cyew6wH
-ecUFl0zWtRV1CwBzwIR53Sce2Wi5qnIWGzZoWihkecHToMB4j4XI+OcHT6MAh2NV
-rlZ8St8In+dwQoy5ZmhlpCQo9yDIByAdX1mPqWBtD3kE+KM50W4EGxLK/XPzVrIW
-TBK7XZXuMvg3mCIi2Gox
-=Q199
------END PGP SIGNATURE-----
-
---CXXGB5B0s7ABUfNSFOK4Jx0Xl5vd2XchI--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/drivers/hwtracing/stm/core.c b/drivers/hwtracing/stm/core.c
+index 9e82634590dc..ca71b06bbfea 100644
+--- a/drivers/hwtracing/stm/core.c
++++ b/drivers/hwtracing/stm/core.c
+@@ -511,9 +511,17 @@ stm_char_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 		return stm_char_policy_get_ioctl(stmf, (void __user *)arg);
+ 
+ 	default:
+-		if (stm_data->ioctl)
+-			err = stm_data->ioctl(stm_data, cmd, arg);
++		if (stm_data->ioctl) {
++			/* users shouldn't call device specific ioctl before
++			 * getting a channel using the proper potocol
++			 */
++			if (!stmf->output.nr_chans)
++				return -EINVAL;
+ 
++			err = stm_data->ioctl(stm_data, stmf->output.master,
++					      stmf->output.channel, cmd, arg);
++
++		}
+ 		break;
+ 	}
+ 
+diff --git a/include/linux/stm.h b/include/linux/stm.h
+index 976c94d8f17f..84dd83c47fe7 100644
+--- a/include/linux/stm.h
++++ b/include/linux/stm.h
+@@ -62,8 +62,9 @@ struct stm_data {
+ 					unsigned int);
+ 	void			(*unlink)(struct stm_data *, unsigned int,
+ 					  unsigned int);
+-	long			(*ioctl)(struct stm_data *, unsigned int,
+-					 unsigned long);
++	long			(*ioctl)(struct stm_data *,
++					 unsigned int, unsigned int,
++					 unsigned int, unsigned long);
+ };
+ 
+ int stm_register_device(struct device *parent, struct stm_data *stm_data,
+-- 
+1.9.1
