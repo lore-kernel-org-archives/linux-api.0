@@ -1,69 +1,53 @@
-From: Darren Hart <dvhart@linux.intel.com>
-Subject: [PATCH 3/5] selftest/futex: Increment ksft pass and fail counters
-Date: Fri, 27 Mar 2015 15:17:43 -0700
-Message-ID: <596a8fcb684ac2a7e60f71229e2eff6e8b9bfeaa.1427493640.git.dvhart@linux.intel.com>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH 5/5] kselftest: Add exit code defines
+Date: Sat, 28 Mar 2015 09:59:38 +1100
+Message-ID: <1427497178.3986.1.camel@ellerman.id.au>
 References: <597c9eabcac5da9456d6cfd6de9117591d73385e.1427493640.git.dvhart@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <597c9eabcac5da9456d6cfd6de9117591d73385e.1427493640.git.dvhart@linux.intel.com>
-In-Reply-To: <cover.1427493640.git.dvhart@linux.intel.com>
-References: <cover.1427493640.git.dvhart@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
-Cc: Darren Hart <dvhart@linux.intel.com>, Shuah Khan <shuahkh@osg.samsung.com>, linux-api@vger.kernel.org, Ingo Molnar <mingo@elte.hu>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Davidlohr Bueso <dave@stgolabs.net>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
+	 <43a448183a340b61d91c711da4a75898e3ffd8f2.1427493640.git.dvhart@linux.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <43a448183a340b61d91c711da4a75898e3ffd8f2.1427493640.git.dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Add kselftest.h to logging.h and increment the pass and fail counters as
-part of the print_result routine which is called by all futex tests.
+On Fri, 2015-03-27 at 15:17 -0700, Darren Hart wrote:
+> Define the exit codes with KSFT_PASS and similar so tests can use these
+> directly if they choose. Also enable harnesses and other tooling to use
+> the defines instead of hardcoding the return codes.
+ 
++1
 
-Cc: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: linux-api@vger.kernel.org
-Cc: Ingo Molnar <mingo@elte.hu>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Davidlohr Bueso <dave@stgolabs.net>
-Cc: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
-Signed-off-by: Darren Hart <dvhart@linux.intel.com>
----
- tools/testing/selftests/futex/functional/Makefile | 2 +-
- tools/testing/selftests/futex/include/logging.h   | 3 +++
- 2 files changed, 4 insertions(+), 1 deletion(-)
+> diff --git a/tools/testing/selftests/kselftest.h b/tools/testing/selftests/kselftest.h
+> index 572c888..ef1c80d 100644
+> --- a/tools/testing/selftests/kselftest.h
+> +++ b/tools/testing/selftests/kselftest.h
+> @@ -13,6 +13,13 @@
+>  #include <stdlib.h>
+>  #include <unistd.h>
+>  
+> +/* define kselftest exit codes */
+> +#define KSFT_PASS  0
+> +#define KSFT_FAIL  1
+> +#define KSFT_XFAIL 2
+> +#define KSFT_XPASS 3
+> +#define KSFT_SKIP  4
+> +
+>  /* counters */
+>  struct ksft_count {
+>  	unsigned int ksft_pass;
+> @@ -40,23 +47,23 @@ static inline void ksft_print_cnts(void)
+>  
+>  static inline int ksft_exit_pass(void)
+>  {
+> -	exit(0);
+> +	exit(KSFT_PASS);
+>  }
 
-diff --git a/tools/testing/selftests/futex/functional/Makefile b/tools/testing/selftests/futex/functional/Makefile
-index fb96927..e64d43b 100644
---- a/tools/testing/selftests/futex/functional/Makefile
-+++ b/tools/testing/selftests/futex/functional/Makefile
-@@ -1,4 +1,4 @@
--INCLUDES := -I../include
-+INCLUDES := -I../include -I../../
- CFLAGS := $(CFLAGS) -g -O2 -Wall -D_GNU_SOURCE $(INCLUDES)
- LDFLAGS := $(LDFLAGS) -lpthread -lrt
- 
-diff --git a/tools/testing/selftests/futex/include/logging.h b/tools/testing/selftests/futex/include/logging.h
-index 3220b90..1d0cfcd 100644
---- a/tools/testing/selftests/futex/include/logging.h
-+++ b/tools/testing/selftests/futex/include/logging.h
-@@ -24,6 +24,7 @@
- #include <string.h>
- #include <unistd.h>
- #include <linux/futex.h>
-+#include "kselftest.h"
- 
- /*
-  * Define PASS, ERROR, and FAIL strings with and without color escape
-@@ -108,12 +109,14 @@ void print_result(int ret)
- 
- 	switch (ret) {
- 	case RET_PASS:
-+		ksft_inc_pass_cnt();
- 		result = PASS;
- 		break;
- 	case RET_ERROR:
- 		result = ERROR;
- 		break;
- 	case RET_FAIL:
-+		ksft_inc_fail_cnt();
- 		result = FAIL;
- 		break;
- 	}
--- 
-2.1.4
+Am I the only person who's bothered by the fact that these don't actually
+return int?
+
+cheers
