@@ -1,65 +1,43 @@
-From: Jesse Barnes <jesse.barnes@intel.com>
-Subject: Re: [PATCH] drm/i915: fix definition of the
- DRM_IOCTL_I915_GET_SPRITE_COLORKEY ioctl
-Date: Fri, 27 Mar 2015 08:17:39 -0700
-Message-ID: <55157493.3080602@intel.com>
-References: <1427399236-14012-1-git-send-email-tt.rantala@gmail.com>
- <87a8yzq6yr.fsf@intel.com>
+From: Jesse Barnes <jesse.barnes-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [Intel-gfx] [PATCH] drm/i915: fix definition of the DRM_IOCTL_I915_GET_SPRITE_COLORKEY
+ ioctl
+Date: Fri, 27 Mar 2015 08:18:28 -0700
+Message-ID: <551574C4.6000804@intel.com>
+References: <1427399236-14012-1-git-send-email-tt.rantala@gmail.com> <87a8yzq6yr.fsf@intel.com> <20150327080427.GB23521@phenom.ffwll.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <intel-gfx-bounces@lists.freedesktop.org>
-In-Reply-To: <87a8yzq6yr.fsf@intel.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/intel-gfx>
-List-Post: <mailto:intel-gfx@lists.freedesktop.org>
-List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: intel-gfx-bounces@lists.freedesktop.org
-Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
-To: Jani Nikula <jani.nikula@linux.intel.com>, Tommi Rantala <tt.rantala@gmail.com>, Daniel Vetter <daniel.vetter@intel.com>
-Cc: David Airlie <airlied@linux.ie>, linux-api@vger.kernel.org, intel-gfx@lists.freedesktop.org, dri-devel@lists.freedesktop.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150327080427.GB23521-dv86pmgwkMBes7Z6vYuT8azUEOm+Xw19@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Tommi Rantala <tt.rantala-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Vetter <daniel.vetter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-T24gMDMvMjYvMjAxNSAxMTozOSBQTSwgSmFuaSBOaWt1bGEgd3JvdGU6Cj4gT24gVGh1LCAyNiBN
-YXIgMjAxNSwgVG9tbWkgUmFudGFsYSA8dHQucmFudGFsYUBnbWFpbC5jb20+IHdyb3RlOgo+PiBG
-aXggZGVmaW5pdGlvbiBvZiB0aGUgRFJNX0lPQ1RMX0k5MTVfR0VUX1NQUklURV9DT0xPUktFWSBp
-b2N0bCwgc28gdGhhdCBpdAo+PiBpcyBkaWZmZXJlbnQgZnJvbSB0aGUgRFJNX0lPQ1RMX0k5MTVf
-U0VUX1NQUklURV9DT0xPUktFWSBpb2N0bC4KPj4KPj4gU2lnbmVkLW9mZi1ieTogVG9tbWkgUmFu
-dGFsYSA8dHQucmFudGFsYUBnbWFpbC5jb20+Cj4gCj4gV2hvYS4gQnJva2VuIHNpbmNlIGl0cyBp
-bnRyb2R1Y3Rpb24gaW4KPiAKPiBjb21taXQgOGVhMzA4NjQyMjllNTRiMDFhYzBlOWZlODhjNGI3
-MzNhOTQwZWM0ZQo+IEF1dGhvcjogSmVzc2UgQmFybmVzIDxqYmFybmVzQHZpcnR1b3VzZ2Vlay5v
-cmc+Cj4gRGF0ZTogICBUdWUgSmFuIDMgMDg6MDU6MzkgMjAxMiAtMDgwMAo+IAo+ICAgICBkcm0v
-aTkxNTogYWRkIGNvbG9yIGtleSBzdXBwb3J0IHY0Cj4gCj4gQ2M6IHN0YWJsZUB2Z2VyLmtlcm5l
-bC5vcmcKPiAKPiBCUiwKPiBKYW5pLgo+IAo+IAo+PiAtLS0KPj4gIGluY2x1ZGUvdWFwaS9kcm0v
-aTkxNV9kcm0uaCB8IDIgKy0KPj4gIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlvbigrKSwgMSBk
-ZWxldGlvbigtKQo+Pgo+PiBkaWZmIC0tZ2l0IGEvaW5jbHVkZS91YXBpL2RybS9pOTE1X2RybS5o
-IGIvaW5jbHVkZS91YXBpL2RybS9pOTE1X2RybS5oCj4+IGluZGV4IDZlZWQxNmIuLjBlOWM4MzUg
-MTAwNjQ0Cj4+IC0tLSBhL2luY2x1ZGUvdWFwaS9kcm0vaTkxNV9kcm0uaAo+PiArKysgYi9pbmNs
-dWRlL3VhcGkvZHJtL2k5MTVfZHJtLmgKPj4gQEAgLTI3MCw3ICsyNzAsNyBAQCB0eXBlZGVmIHN0
-cnVjdCBfZHJtX2k5MTVfc2FyZWEgewo+PiAgI2RlZmluZSBEUk1fSU9DVExfSTkxNV9PVkVSTEFZ
-X1BVVF9JTUFHRQlEUk1fSU9XKERSTV9DT01NQU5EX0JBU0UgKyBEUk1fSTkxNV9PVkVSTEFZX1BV
-VF9JTUFHRSwgc3RydWN0IGRybV9pbnRlbF9vdmVybGF5X3B1dF9pbWFnZSkKPj4gICNkZWZpbmUg
-RFJNX0lPQ1RMX0k5MTVfT1ZFUkxBWV9BVFRSUwlEUk1fSU9XUihEUk1fQ09NTUFORF9CQVNFICsg
-RFJNX0k5MTVfT1ZFUkxBWV9BVFRSUywgc3RydWN0IGRybV9pbnRlbF9vdmVybGF5X2F0dHJzKQo+
-PiAgI2RlZmluZSBEUk1fSU9DVExfSTkxNV9TRVRfU1BSSVRFX0NPTE9SS0VZIERSTV9JT1dSKERS
-TV9DT01NQU5EX0JBU0UgKyBEUk1fSTkxNV9TRVRfU1BSSVRFX0NPTE9SS0VZLCBzdHJ1Y3QgZHJt
-X2ludGVsX3Nwcml0ZV9jb2xvcmtleSkKPj4gLSNkZWZpbmUgRFJNX0lPQ1RMX0k5MTVfR0VUX1NQ
-UklURV9DT0xPUktFWSBEUk1fSU9XUihEUk1fQ09NTUFORF9CQVNFICsgRFJNX0k5MTVfU0VUX1NQ
-UklURV9DT0xPUktFWSwgc3RydWN0IGRybV9pbnRlbF9zcHJpdGVfY29sb3JrZXkpCj4+ICsjZGVm
-aW5lIERSTV9JT0NUTF9JOTE1X0dFVF9TUFJJVEVfQ09MT1JLRVkgRFJNX0lPV1IoRFJNX0NPTU1B
-TkRfQkFTRSArIERSTV9JOTE1X0dFVF9TUFJJVEVfQ09MT1JLRVksIHN0cnVjdCBkcm1faW50ZWxf
-c3ByaXRlX2NvbG9ya2V5KQo+PiAgI2RlZmluZSBEUk1fSU9DVExfSTkxNV9HRU1fV0FJVAkJRFJN
-X0lPV1IoRFJNX0NPTU1BTkRfQkFTRSArIERSTV9JOTE1X0dFTV9XQUlULCBzdHJ1Y3QgZHJtX2k5
-MTVfZ2VtX3dhaXQpCj4+ICAjZGVmaW5lIERSTV9JT0NUTF9JOTE1X0dFTV9DT05URVhUX0NSRUFU
-RQlEUk1fSU9XUiAoRFJNX0NPTU1BTkRfQkFTRSArIERSTV9JOTE1X0dFTV9DT05URVhUX0NSRUFU
-RSwgc3RydWN0IGRybV9pOTE1X2dlbV9jb250ZXh0X2NyZWF0ZSkKPj4gICNkZWZpbmUgRFJNX0lP
-Q1RMX0k5MTVfR0VNX0NPTlRFWFRfREVTVFJPWQlEUk1fSU9XIChEUk1fQ09NTUFORF9CQVNFICsg
-RFJNX0k5MTVfR0VNX0NPTlRFWFRfREVTVFJPWSwgc3RydWN0IGRybV9pOTE1X2dlbV9jb250ZXh0
-X2Rlc3Ryb3kpCgpIYWgsIEkgZ3Vlc3MgdGhhdCBtdXN0IGJlIGEgd2VsbCB1c2VkIGlvY3RsISAg
-Tm90IGV2ZW4gdGhlIHRlc3QgcHJvZ3JhbQpkb2VzIGEgZ2V0IGNhbGwhCgpKZXNzZQoKX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KSW50ZWwtZ2Z4IG1haWxp
-bmcgbGlzdApJbnRlbC1nZnhAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHA6Ly9saXN0cy5mcmVl
-ZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9pbnRlbC1nZngK
+On 03/27/2015 01:04 AM, Daniel Vetter wrote:
+> On Fri, Mar 27, 2015 at 08:39:56AM +0200, Jani Nikula wrote:
+>> On Thu, 26 Mar 2015, Tommi Rantala <tt.rantala-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>>> Fix definition of the DRM_IOCTL_I915_GET_SPRITE_COLORKEY ioctl, so that it
+>>> is different from the DRM_IOCTL_I915_SET_SPRITE_COLORKEY ioctl.
+>>>
+>>> Signed-off-by: Tommi Rantala <tt.rantala-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>>
+>> Whoa. Broken since its introduction in
+>>
+>> commit 8ea30864229e54b01ac0e9fe88c4b733a940ec4e
+>> Author: Jesse Barnes <jbarnes-Y1mF5jBUw70BENJcbMCuUQ@public.gmane.org>
+>> Date:   Tue Jan 3 08:05:39 2012 -0800
+>>
+>>     drm/i915: add color key support v4
+>>
+>> Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> 
+> Nope, we'll just rip it out and replace it all with the drm_noop ioctl. At
+> least I didn't find any userspace anywhere and only broken definitions.
+> Proof enough this isn't useful.
+> 
+> Even more so since that means we don't have to convert the get ioctl over
+> to atomic, yay! I'll send patches.
+
+Can we just skip the noop part and delete it altogether?  It was only
+added speculatively and obviously never used at all...
