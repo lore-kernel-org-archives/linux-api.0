@@ -1,106 +1,224 @@
 From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH v3 10/15] serial: stm32-usart: Add STM32 USART Driver
-Date: Fri, 27 Mar 2015 13:30:07 +0100
-Message-ID: <CALszF6DGyeJRFRFwPCH53KcqODccgwQmQBSFQr0t6MREF_L3WQ@mail.gmail.com>
+Subject: Re: [PATCH v3 04/15] clocksource: Add ARM System timer driver
+Date: Fri, 27 Mar 2015 13:33:55 +0100
+Message-ID: <CALszF6AyjsYGFE+nqCHzHA3M5W3dQNSHEbt34EnVNOZLer-f7A@mail.gmail.com>
 References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
-	<1426197361-19290-11-git-send-email-maxime.coquelin@st.com>
-	<5511ABAA.2010303@hurleysoftware.com>
-	<CALszF6Ds5b9V35iuSzxnOYDL2sD3psYfYp3b+6a-2Atse6_w3Q@mail.gmail.com>
-	<55153FD2.7070304@hurleysoftware.com>
+	<1426197361-19290-5-git-send-email-maxime.coquelin@st.com>
+	<5513D64A.7060702@linaro.org>
+	<CALszF6CtEf0w8AoaMwFzn34ACMjkW6obT5_MrduBdUOm7T=zNw@mail.gmail.com>
+	<55151695.5050203@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <55153FD2.7070304@hurleysoftware.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Hurley <peter@hurleysoftware.com>
-Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-gpio-owner@vger.kernel.org>
+In-Reply-To: <55151695.5050203@linaro.org>
+Sender: linux-gpio-owner@vger.kernel.org
+To: Daniel Lezcano <daniel.lezcano@linaro.org>
+Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.sa>
 List-Id: linux-api@vger.kernel.org
 
-2015-03-27 12:32 GMT+01:00 Peter Hurley <peter@hurleysoftware.com>:
-> On 03/26/2015 06:03 PM, Maxime Coquelin wrote:
->>>> +static void stm32_set_termios(struct uart_port *port, struct ktermios *termios,
->>>> +                         struct ktermios *old)
+2015-03-27 9:36 GMT+01:00 Daniel Lezcano <daniel.lezcano@linaro.org>:
+> On 03/26/2015 09:19 PM, Maxime Coquelin wrote:
+>>
+>> Hi Daniel,
+>>
+>>    Thanks for the review. Please find my answers below.
+>>
+>> 2015-03-26 10:50 GMT+01:00 Daniel Lezcano <daniel.lezcano@linaro.org=
+>:
+>>>
+>>> On 03/12/2015 10:55 PM, Maxime Coquelin wrote:
+>>>>
+>>>>
+>>>> From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+>>>>
+>>>> This patch adds clocksource support for ARMv7-M's System timer,
+>>>> also known as SysTick.
+>>>>
+>>>> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+>>>
+>>>
+>>>
+>>> Hi Maxime,
+>>>
+>>> the driver looks good. Three comments below.
+>>>
+>>>    -- Daniel
+>>>
+>>>
+>
+> [ ... ]
+>
+>
+>>>> +static void __init system_timer_of_register(struct device_node *n=
+p)
 >>>> +{
->>>> +     unsigned int baud;
->>>> +     u32 usardiv, mantissa, fraction;
->>>> +     tcflag_t cflag;
->>>> +     u32 cr1, cr2, cr3;
->>>> +     unsigned long flags;
+>>>> +       struct clk *clk;
+>>>> +       void __iomem *base;
+>>>> +       u32 rate =3D 0;
+>>>> +       int ret;
 >>>> +
->>>> +     baud = uart_get_baud_rate(port, termios, old, 0, port->uartclk / 16);
->>>> +     cflag = termios->c_cflag;
+>>>> +       base =3D of_iomap(np, 0);
+>>>> +       if (!base) {
+>>>> +               pr_warn("system-timer: invalid base address\n");
+>>>> +               return;
+>>>> +       }
 >>>> +
->>>> +     spin_lock_irqsave(&port->lock, flags);
+>>>> +       clk =3D of_clk_get(np, 0);
+>>>> +       if (!IS_ERR(clk)) {
+>>>> +               ret =3D clk_prepare_enable(clk);
+>>>> +               if (ret) {
+>>>> +                       clk_put(clk);
+>>>> +                       goto out_unmap;
+>>>> +               }
 >>>> +
->>>> +     /* Stop serial port and reset value */
->>>> +     writel_relaxed(0, port->membase + USART_CR1);
+>>>> +               rate =3D clk_get_rate(clk);
+>>>> +       }
 >>>> +
->>>> +     cr1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE;
->>>> +
->>>> +     if (cflag & CSTOPB)
->>>> +             cr2 = USART_CR2_STOP_2B;
->>>> +
->>>> +     if (cflag & PARENB) {
->>>> +             cr1 |= USART_CR1_PCE;
->>>> +             if ((cflag & CSIZE) == CS8)
->>>> +                     cr1 |= USART_CR1_M;
->>>> +     }
->>>> +
->>>> +     if (cflag & PARODD)
->>>> +             cr1 |= USART_CR1_PS;
->>>> +
->>>> +     if (cflag & CRTSCTS)
->>>> +             cr3 = USART_CR3_RTSE | USART_CR3_CTSE;
+>>>> +       /* If no clock found, try to get clock-frequency property =
+*/
+>>>> +       if (!rate) {
+>>>> +               ret =3D of_property_read_u32(np, "clock-frequency"=
+,
+>>>> &rate);
+>>>> +               if (ret)
+>>>> +                       goto out_unmap;
 >>>
->>> If this means autoflow control, then you need to define
->>> throttle()/unthrottle() methods, otherwise the serial core won't
->>> be able to throttle the remote when input buffers are about
->>> to overflow.
 >>>
->>> And you should only enable the autoCTS and let the serial
->>> core enable autoRTS through set_mctrl(TIOCM_RTS).
 >>>
->>> Just let me know if you need more info about how to do this.
+>>> Shouldn't be 'goto out_clk_disable' ?
 >>
->> Ok, let's see if I have well understood.
 >>
->> USART_CR3_RTSE should be set/cleared in set_mctrl(), depending on
->> TIOCM_RTS  value.
->> The throttle callback should disable the rx interrupt, and the
->> unthrottle enable it.
->> For CTS, it should be enabled in set_termios() if CRTSCTS, as done here.
+>> No, because I assumed !rate means we failed to get the clock.
+>> Actually, clk_get_rate could return 0, so relying on rate value is n=
+ot
+>> safe.
 >>
->> Am I right?
+>> I propose to get clock-frequency property if IS_ERR(clk).
+>>
+>> Is it fine for you?
 >
-> Yeah, basically. You also have to indicate to the serial core that you
-> require throttle/unthrottle handling in this mode by setting port->status.
 >
-> Your set_termios() method would look like:
+> Why not invert the conditions ? If the 'clock-frequency' is specified=
+ in the
+> DT then it overrides the clk_get_rate(). So the resulting code will b=
+e:
 >
->         port->status &= ~(UPSTAT_AUTOCTS | UPSTAT_AUTORTS);
->         if (cflag & CRTSCTS) {
->                 port->status |= UPSTAT_AUTOCTS | UPSTAT_AUTORTS;
->                 cr3 = USART_CR3_CTSE;
->         }
+> ret =3D of_property_read_u32(np, "clock-frequency", &rate);
+> if (ret) {
+>         clk =3D of_clk_get(np, 0);
+>         if (IS_ERR(clk))
+>                 goto out_unmap;
 >
-> and your set_mctrl() method would look like:
+>         ret =3D clk_prepare_enable(clk);
+>         if (ret)
+>                 goto out_clk_put;
 >
->         if ((mctrl & TIOCM_RTS) && (port->status & UPSTAT_AUTORTS))
->                 stm32_set_bits(port, USART_CR3, USART_CR3_RTSE);
->         else
->                 stm32_clear_bits(port, USART_CR3, USART_CR3_RTSE);
+>         rate =3D clk_get_rate(clk);
+>         if (!rate)
+>                 goto out_clk_unprepare;
 >
-> The UPSTAT_AUTOCTS doesn't really do anything right now but please
-> use it anyway to indicate this driver has that functionality.
+> }
 
-Ok, thanks for your support.
+Ok, it looks sensible.
+I will do this in next version.
 
-I will implement this in the v4.
+>
+>
+>
+>>>> +       }
+>>>> +
+>>>> +       writel_relaxed(SYSTICK_LOAD_RELOAD_MASK, base + SYST_RVR);
+>>>> +       writel_relaxed(SYST_CSR_ENABLE, base + SYST_CSR);
+>>>> +
+>>>> +       ret =3D clocksource_mmio_init(base + SYST_CVR, "arm_system=
+_timer",
+>>>> rate,
+>>>> +                       200, 24, clocksource_mmio_readl_down);
+>>>> +       if (ret) {
+>>>> +               pr_err("failed to init clocksource (%d)\n", ret);
+>>>> +               goto out_clk_disable;
+>>>> +       }
+>>>> +
+>>>> +       pr_info("ARM System timer initialized as clocksource\n");
+>>>> +
+>>>> +       return;
+>>>> +
+>>>> +out_clk_disable:
+>>>> +       if (!IS_ERR(clk))
+>>>
+>>>
+>>>
+>>> Why do you need this check ?
+>>
+>>
+>> To handle the case were no clock was found, but a clk-frequency valu=
+e
+>> was provided.
+>>
+>>>
+>>> It isn't missing a clk_put ?
+>>
+>>
+>> Right, thanks for spotting this.
+>>
+>> I wonder if it makes sense to implement the error path.
+>> If we fail to initialize the clocksource, the system will be unusabl=
+e.
+>>
+>> Maybe I should just perform a BUG_ON() in the error cases, as most o=
+f
+>> the other clocksource drivers do.
+>> What is your view?
+>
+>
+> I prefer to not BUG_ON in the init functions because it already happe=
+n that
+> drivers were bugging at init time and when a driver was reused on ano=
+ther
+> platform with several timers available, the board was not able to boo=
+t
+> because one timer was not used, hence not defined in the DT. I don't =
+know if
+> that could be the case for this platform but I prefer to keep thing g=
+oing
+> smoothly and return from init even if that lead to a kernel hang. Of =
+course,
+> the errors must be displayed (pr_warn, pr_err, pr_notice, etc ...).
 
-Regards,
+Ok, let's keep the error path, that's much cleaner indeed.
+
+>
+>>>
+>>>> +               clk_disable_unprepare(clk);
+>>>> +out_unmap:
+>>>> +       iounmap(base);
+>>>> +       WARN(ret, "ARM System timer register failed (%d)\n", ret);
+>
+>
+> pr_warn
+
+Sure, will fix.
+
+Thanks,
 Maxime
 
 >
-> Regards,
-> Peter Hurley
+> Thanks
 >
+>   -- Daniel
+>
+>
+> --
+>  <http://www.linaro.org/> Linaro.org =E2=94=82 Open source software f=
+or ARM SoCs
+>
+> Follow Linaro:  <http://www.facebook.com/pages/Linaro> Facebook |
+> <http://twitter.com/#!/linaroorg> Twitter |
+> <http://www.linaro.org/linaro-blog/> Blog
+>
+--
+To unsubscribe from this list: send the line "unsubscribe linux-gpio" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
