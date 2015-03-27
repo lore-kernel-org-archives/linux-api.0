@@ -1,103 +1,102 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [patch][resend] MAP_HUGETLB munmap fails with size not 2MB aligned
-Date: Fri, 27 Mar 2015 10:47:35 +0100
-Message-ID: <55152737.6060404@suse.cz>
-References: <alpine.DEB.2.10.1410221518160.31326@davide-lnx3> <alpine.LSU.2.11.1503251708530.5592@eggly.anvils> <alpine.DEB.2.10.1503251754320.26501@davide-lnx3> <alpine.DEB.2.10.1503251938170.16714@chino.kir.corp.google.com> <alpine.DEB.2.10.1503260431290.2755@mbplnx> <alpine.DEB.2.10.1503261201440.8238@chino.kir.corp.google.com> <alpine.DEB.2.10.1503261221470.5119@davide-lnx3> <alpine.DEB.2.10.1503261250430.9410@chino.kir.corp.google.com>
+From: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+Subject: Re: [PATCH net-next] tc: bpf: generalize pedit action
+Date: Fri, 27 Mar 2015 11:42:45 +0100
+Message-ID: <55153425.2070502@iogearbox.net>
+References: <1427424837-7757-1-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.10.1503261250430.9410-X6Q0R45D7oAcqpCFd4KODRPsWskHk0ljAL8bYrjMMd8@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>
-Cc: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Joern Engel <joern-PCqxUs/MD9bYtjvyW6yDsg@public.gmane.org>, Jianguo Wu <wujianguo-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1427424837-7757-1-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: Jiri Pirko <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, Jamal Hadi Salim <jhs-jkUAjuhPggJWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Might be too late in this thread, but in case you are going to continue and/or
-repost:
+On 03/27/2015 03:53 AM, Alexei Starovoitov wrote:
+> existing TC action 'pedit' can munge any bits of the packet.
+> Generalize it for use in bpf programs attached as cls_bpf and act_bpf via
+> bpf_skb_store_bytes() helper function.
+>
+> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
 
-[CC += linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org]
-(also linux-man and Michael to match my other reply)
+I like it.
 
-    Since this is a kernel-user-space API change, please CC linux-api@. The
-kernel source file Documentation/SubmitChecklist notes that all Linux kernel
-patches that change userspace interfaces should be CCed to
-linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, so that the various parties who are interested in API
-changes are informed. For further information, see
-https://www.kernel.org/doc/man-pages/linux-api-ml.html
+> pedit is limited to 32-bit masked rewrites. Here let it be flexible.
+>
+> ptr = skb_header_pointer(skb, offset, len, buf);
+> memcpy(ptr, from, len);
+> if (ptr == buf)
+>    skb_store_bits(skb, offset, ptr, len);
+>
+> ^^ logic is the same as in pedit.
+> shifts, mask, invert style of rewrite is easily done by the program.
+> Just like arbitrary parsing of the packet and applying rewrites on demand.
+...
+> +static u64 bpf_skb_store_bytes(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
+> +{
+> +	struct sk_buff *skb = (struct sk_buff *) (long) r1;
+> +	unsigned int offset = (unsigned int) r2;
+> +	void *from = (void *) (long) r3;
+> +	unsigned int len = (unsigned int) r4;
+> +	char buf[16];
+> +	void *ptr;
+> +
+> +	/* bpf verifier guarantees that:
+> +	 * 'from' pointer points to bpf program stack
+> +	 * 'len' bytes of it were initialized
+> +	 * 'len' > 0
+> +	 * 'skb' is a valid pointer to 'struct sk_buff'
+> +	 *
+> +	 * so check for invalid 'offset' and too large 'len'
+> +	 */
+> +	if (offset > 0xffff || len > sizeof(buf))
+> +		return -EFAULT;
 
+Could you elaborate on the hard-coded 0xffff? Hm, perhaps better u16, or
+do you see any issues with wrong widening?
 
-On 03/26/2015 09:03 PM, David Rientjes wrote:
-> On Thu, 26 Mar 2015, Davide Libenzi wrote:
-> 
->> > Yes, this munmap() behavior of lengths <= hugepage_size - PAGE_SIZE for a 
->> > hugetlb vma is long standing and there may be applications that break as a 
->> > result of changing the behavior: a database that reserves all allocated 
->> > hugetlb memory with mmap() so that it always has exclusive access to those 
->> > hugepages, whether they are faulted or not, and maintains its own hugepage 
->> > pool (which is common), may test the return value of munmap() and depend 
->> > on it returning -EINVAL to determine if it is freeing memory that was 
->> > either dynamically allocated or mapped from the hugetlb reserved pool.
->> 
->> You went a long way to create such a case.
->> But, in your case, that application will erroneously considering hugepage 
->> mmaped memory, as dynamically allocated, since it will always get EINVAL, 
->> unless it passes an aligned size. Aligned size, which a fix like the one 
->> posted in the patch will still leave as success.
-> 
-> There was a patch proposed last week to add reserved pools to the 
-> hugetlbfs mount option specifically for the case where a large database 
-> wants sole reserved access to the hugepage pool.  This is why hugetlbfs 
-> pages become reserved on mmap().  In that case, the database never wants 
-> to do munmap() and instead maintains its own hugepage pool.
-> 
-> That makes the usual database case, mmap() all necessary hugetlb pages to 
-> reserve them, even easier since they have historically had to maintain 
-> this pool amongst various processes.
-> 
-> Is there a process out there that tests for munmap(ptr) == EINVAL and, if 
-> true, returns ptr to its hugepage pool?  I can't say for certain that none 
-> exist, that's why the potential for breakage exists.
-> 
->> OTOH, an application, which might be more common than the one you posted,
->> which calls munmap() to release a pointer which it validly got from a 
->> previous mmap(), will leak huge pages as all the issued munmaps will fail.
->> 
-> 
-> That application would have to be ignoring an EINVAL return value.
-> 
->> > If we were to go back in time and decide this when the munmap() behavior 
->> > for hugetlb vmas was originally introduced, that would be valid.  The 
->> > problem is that it could lead to userspace breakage and that's a 
->> > non-starter.
->> > 
->> > What we can do is improve the documentation and man-page to clearly 
->> > specify the long-standing behavior so that nobody encounters unexpected 
->> > results in the future.
->> 
->> This way you will leave the mmap API with broken semantics.
->> In any case, I am done arguing.
->> I will leave to Andrew to sort it out, and to Michael Kerrisk to update 
->> the mmap man pages with the new funny behaviour.
->> 
-> 
-> The behavior is certainly not new, it has always been the case for 
-> munmap() on hugetlb vmas.
-> 
-> In a strict POSIX interpretation, it refers only to pages in the sense of
-> what is returned by sysconf(_SC_PAGESIZE).  Such vmas are not backed by 
-> any pages of size sysconf(_SC_PAGESIZE), so this behavior is undefined.  
-> It would be best to modify the man page to explicitly state this for 
-> MAP_HUGETLB.
-> 
-> --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=mailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
-> 
+This check should probably be also unlikely().
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Ok, the sizeof(buf) could still be increased in future if truly necessary.
+
+> +	if (skb_cloned(skb) && !skb_clone_writable(skb, offset + len))
+> +		return -EFAULT;
+> +
+> +	ptr = skb_header_pointer(skb, offset, len, buf);
+> +	if (unlikely(!ptr))
+> +		return -EFAULT;
+> +
+> +	skb_postpull_rcsum(skb, ptr, len);
+> +
+> +	memcpy(ptr, from, len);
+> +
+> +	if (ptr == buf)
+> +		/* skb_store_bits cannot return -EFAULT here */
+> +		skb_store_bits(skb, offset, ptr, len);
+> +
+> +	if (skb->ip_summed == CHECKSUM_COMPLETE)
+> +		skb->csum = csum_add(skb->csum, csum_partial(ptr, len, 0));
+
+For egress, I think that CHECKSUM_PARTIAL does not need to be dealt
+with since the skb length doesn't change. Do you see an issue when
+cls_bpf/act_bpf would be attached to the ingress qdisc?
+
+I was also thinking if it's worth it to split off the csum correction
+as a separate function if there are not too big performance implications?
+
+That way, an action may also allow to intentionally test corruption of
+a part of the skb data together with the recent prandom function.
+
+> +	return 0;
+> +}
+> +
+> +const struct bpf_func_proto bpf_skb_store_bytes_proto = {
+> +	.func		= bpf_skb_store_bytes,
+> +	.gpl_only	= false,
+> +	.ret_type	= RET_INTEGER,
+> +	.arg1_type	= ARG_PTR_TO_CTX,
+> +	.arg2_type	= ARG_ANYTHING,
+> +	.arg3_type	= ARG_PTR_TO_STACK,
+> +	.arg4_type	= ARG_CONST_STACK_SIZE,
+> +};
