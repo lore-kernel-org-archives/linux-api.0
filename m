@@ -1,63 +1,45 @@
-From: Jani Nikula <jani.nikula@linux.intel.com>
-Subject: Re: [PATCH] drm/i915: fix definition of the
-	DRM_IOCTL_I915_GET_SPRITE_COLORKEY ioctl
-Date: Fri, 27 Mar 2015 08:39:56 +0200
-Message-ID: <87a8yzq6yr.fsf@intel.com>
+From: Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>
+Subject: Re: [Intel-gfx] [PATCH] drm/i915: fix definition of the
+ DRM_IOCTL_I915_GET_SPRITE_COLORKEY ioctl
+Date: Fri, 27 Mar 2015 09:04:28 +0100
+Message-ID: <20150327080427.GB23521@phenom.ffwll.local>
 References: <1427399236-14012-1-git-send-email-tt.rantala@gmail.com>
+ <87a8yzq6yr.fsf@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <intel-gfx-bounces@lists.freedesktop.org>
-In-Reply-To: <1427399236-14012-1-git-send-email-tt.rantala@gmail.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/intel-gfx>
-List-Post: <mailto:intel-gfx@lists.freedesktop.org>
-List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: intel-gfx-bounces@lists.freedesktop.org
-Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
-To: Tommi Rantala <tt.rantala@gmail.com>, Daniel Vetter <daniel.vetter@intel.com>
-Cc: David Airlie <airlied@linux.ie>, linux-api@vger.kernel.org, intel-gfx@lists.freedesktop.org, dri-devel@lists.freedesktop.org, "Barnes,
- Jesse" <jesse.barnes@intel.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <87a8yzq6yr.fsf-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Tommi Rantala <tt.rantala-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Vetter <daniel.vetter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, "Barnes, Jesse" <jesse.barnes-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gVGh1LCAyNiBNYXIgMjAxNSwgVG9tbWkgUmFudGFsYSA8dHQucmFudGFsYUBnbWFpbC5jb20+
-IHdyb3RlOgo+IEZpeCBkZWZpbml0aW9uIG9mIHRoZSBEUk1fSU9DVExfSTkxNV9HRVRfU1BSSVRF
-X0NPTE9SS0VZIGlvY3RsLCBzbyB0aGF0IGl0Cj4gaXMgZGlmZmVyZW50IGZyb20gdGhlIERSTV9J
-T0NUTF9JOTE1X1NFVF9TUFJJVEVfQ09MT1JLRVkgaW9jdGwuCj4KPiBTaWduZWQtb2ZmLWJ5OiBU
-b21taSBSYW50YWxhIDx0dC5yYW50YWxhQGdtYWlsLmNvbT4KCldob2EuIEJyb2tlbiBzaW5jZSBp
-dHMgaW50cm9kdWN0aW9uIGluCgpjb21taXQgOGVhMzA4NjQyMjllNTRiMDFhYzBlOWZlODhjNGI3
-MzNhOTQwZWM0ZQpBdXRob3I6IEplc3NlIEJhcm5lcyA8amJhcm5lc0B2aXJ0dW91c2dlZWsub3Jn
-PgpEYXRlOiAgIFR1ZSBKYW4gMyAwODowNTozOSAyMDEyIC0wODAwCgogICAgZHJtL2k5MTU6IGFk
-ZCBjb2xvciBrZXkgc3VwcG9ydCB2NAoKQ2M6IHN0YWJsZUB2Z2VyLmtlcm5lbC5vcmcKCkJSLApK
-YW5pLgoKCj4gLS0tCj4gIGluY2x1ZGUvdWFwaS9kcm0vaTkxNV9kcm0uaCB8IDIgKy0KPiAgMSBm
-aWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCspLCAxIGRlbGV0aW9uKC0pCj4KPiBkaWZmIC0tZ2l0
-IGEvaW5jbHVkZS91YXBpL2RybS9pOTE1X2RybS5oIGIvaW5jbHVkZS91YXBpL2RybS9pOTE1X2Ry
-bS5oCj4gaW5kZXggNmVlZDE2Yi4uMGU5YzgzNSAxMDA2NDQKPiAtLS0gYS9pbmNsdWRlL3VhcGkv
-ZHJtL2k5MTVfZHJtLmgKPiArKysgYi9pbmNsdWRlL3VhcGkvZHJtL2k5MTVfZHJtLmgKPiBAQCAt
-MjcwLDcgKzI3MCw3IEBAIHR5cGVkZWYgc3RydWN0IF9kcm1faTkxNV9zYXJlYSB7Cj4gICNkZWZp
-bmUgRFJNX0lPQ1RMX0k5MTVfT1ZFUkxBWV9QVVRfSU1BR0UJRFJNX0lPVyhEUk1fQ09NTUFORF9C
-QVNFICsgRFJNX0k5MTVfT1ZFUkxBWV9QVVRfSU1BR0UsIHN0cnVjdCBkcm1faW50ZWxfb3Zlcmxh
-eV9wdXRfaW1hZ2UpCj4gICNkZWZpbmUgRFJNX0lPQ1RMX0k5MTVfT1ZFUkxBWV9BVFRSUwlEUk1f
-SU9XUihEUk1fQ09NTUFORF9CQVNFICsgRFJNX0k5MTVfT1ZFUkxBWV9BVFRSUywgc3RydWN0IGRy
-bV9pbnRlbF9vdmVybGF5X2F0dHJzKQo+ICAjZGVmaW5lIERSTV9JT0NUTF9JOTE1X1NFVF9TUFJJ
-VEVfQ09MT1JLRVkgRFJNX0lPV1IoRFJNX0NPTU1BTkRfQkFTRSArIERSTV9JOTE1X1NFVF9TUFJJ
-VEVfQ09MT1JLRVksIHN0cnVjdCBkcm1faW50ZWxfc3ByaXRlX2NvbG9ya2V5KQo+IC0jZGVmaW5l
-IERSTV9JT0NUTF9JOTE1X0dFVF9TUFJJVEVfQ09MT1JLRVkgRFJNX0lPV1IoRFJNX0NPTU1BTkRf
-QkFTRSArIERSTV9JOTE1X1NFVF9TUFJJVEVfQ09MT1JLRVksIHN0cnVjdCBkcm1faW50ZWxfc3By
-aXRlX2NvbG9ya2V5KQo+ICsjZGVmaW5lIERSTV9JT0NUTF9JOTE1X0dFVF9TUFJJVEVfQ09MT1JL
-RVkgRFJNX0lPV1IoRFJNX0NPTU1BTkRfQkFTRSArIERSTV9JOTE1X0dFVF9TUFJJVEVfQ09MT1JL
-RVksIHN0cnVjdCBkcm1faW50ZWxfc3ByaXRlX2NvbG9ya2V5KQo+ICAjZGVmaW5lIERSTV9JT0NU
-TF9JOTE1X0dFTV9XQUlUCQlEUk1fSU9XUihEUk1fQ09NTUFORF9CQVNFICsgRFJNX0k5MTVfR0VN
-X1dBSVQsIHN0cnVjdCBkcm1faTkxNV9nZW1fd2FpdCkKPiAgI2RlZmluZSBEUk1fSU9DVExfSTkx
-NV9HRU1fQ09OVEVYVF9DUkVBVEUJRFJNX0lPV1IgKERSTV9DT01NQU5EX0JBU0UgKyBEUk1fSTkx
-NV9HRU1fQ09OVEVYVF9DUkVBVEUsIHN0cnVjdCBkcm1faTkxNV9nZW1fY29udGV4dF9jcmVhdGUp
-Cj4gICNkZWZpbmUgRFJNX0lPQ1RMX0k5MTVfR0VNX0NPTlRFWFRfREVTVFJPWQlEUk1fSU9XIChE
-Uk1fQ09NTUFORF9CQVNFICsgRFJNX0k5MTVfR0VNX0NPTlRFWFRfREVTVFJPWSwgc3RydWN0IGRy
-bV9pOTE1X2dlbV9jb250ZXh0X2Rlc3Ryb3kpCj4gLS0gCj4gMi4xLjAKPgoKLS0gCkphbmkgTmlr
-dWxhLCBJbnRlbCBPcGVuIFNvdXJjZSBUZWNobm9sb2d5IENlbnRlcgpfX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpJbnRlbC1nZnggbWFpbGluZyBsaXN0Cklu
-dGVsLWdmeEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9y
-Zy9tYWlsbWFuL2xpc3RpbmZvL2ludGVsLWdmeAo=
+On Fri, Mar 27, 2015 at 08:39:56AM +0200, Jani Nikula wrote:
+> On Thu, 26 Mar 2015, Tommi Rantala <tt.rantala-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> > Fix definition of the DRM_IOCTL_I915_GET_SPRITE_COLORKEY ioctl, so that it
+> > is different from the DRM_IOCTL_I915_SET_SPRITE_COLORKEY ioctl.
+> >
+> > Signed-off-by: Tommi Rantala <tt.rantala-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> 
+> Whoa. Broken since its introduction in
+> 
+> commit 8ea30864229e54b01ac0e9fe88c4b733a940ec4e
+> Author: Jesse Barnes <jbarnes-Y1mF5jBUw70BENJcbMCuUQ@public.gmane.org>
+> Date:   Tue Jan 3 08:05:39 2012 -0800
+> 
+>     drm/i915: add color key support v4
+> 
+> Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+
+Nope, we'll just rip it out and replace it all with the drm_noop ioctl. At
+least I didn't find any userspace anywhere and only broken definitions.
+Proof enough this isn't useful.
+
+Even more so since that means we don't have to convert the get ioctl over
+to atomic, yay! I'll send patches.
+-Daniel
+-- 
+Daniel Vetter
+Software Engineer, Intel Corporation
+http://blog.ffwll.ch
