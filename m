@@ -1,74 +1,90 @@
-From: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [GIT PULL] selftest: Add futex functional tests
-Date: Fri, 27 Mar 2015 15:17:41 -0700
-Message-ID: <cover.1427493640.git.dvhart@linux.intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+From: Darren Hart <dvhart@linux.intel.com>
+Subject: [PATCH 2/5] selftest/futex: Update Makefile to use lib.mk
+Date: Fri, 27 Mar 2015 15:17:42 -0700
+Message-ID: <95d599bc531666252f8e3f4e467d5f94af2a7ad2.1427493640.git.dvhart@linux.intel.com>
+References: <597c9eabcac5da9456d6cfd6de9117591d73385e.1427493640.git.dvhart@linux.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <597c9eabcac5da9456d6cfd6de9117591d73385e.1427493640.git.dvhart@linux.intel.com>
+In-Reply-To: <cover.1427493640.git.dvhart@linux.intel.com>
+References: <cover.1427493640.git.dvhart@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Cc: Darren Hart <dvhart@linux.intel.com>, Shuah Khan <shuahkh@osg.samsung.com>, linux-api@vger.kernel.org, Ingo Molnar <mingo@elte.hu>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Davidlohr Bueso <dave@stgolabs.net>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Shuah,
+Adapt the futextest Makefiles to use lib.mk macros for RUN_TESTS and
+EMIT_TESTS. For now, we reuse the run.sh mechanism provided by
+futextest. This doesn't provide the standard selftests: [PASS|FAIL]
+format, but the tests provide very similar output already.
 
-This series begins the process of migrating my futextest tests into kselftest.
-I've started with only the functional tests, as the performance and stress may
-not be appropriate for kselftest as they stand.
+This results in the run_kselftest.sh script for futexes including a
+single line: ./run.sh
 
-I cleaned up various complaints from checkpatch, but I ignored others that would
-require significant rework of the testcases, such as not using volatile and not
-creating new typedefs.
+Cc: Shuah Khan <shuahkh@osg.samsung.com>
+Cc: linux-api@vger.kernel.org
+Cc: Ingo Molnar <mingo@elte.hu>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Davidlohr Bueso <dave@stgolabs.net>
+Cc: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
+Signed-off-by: Darren Hart <dvhart@linux.intel.com>
+---
+ tools/testing/selftests/futex/Makefile            | 21 +++++++++++++++++++++
+ tools/testing/selftests/futex/functional/Makefile |  4 ++++
+ 2 files changed, 25 insertions(+)
 
-The patches will follow, but I'm providing a pull request for your convenience
-as well.
-
-The following changes since commit 0b63accf87225b5eb7e52814c374cf02d733d4bb:
-
-  tools, update rtctest.c to verify passage of time (2015-03-24 22:02:59 -0600)
-
-are available in the git repository at:
-
-  git://git.infradead.org/users/dvhart/linux.git futextest
-
-Darren Hart (5):
-  selftests: Add futex functional tests
-  selftest/futex: Update Makefile to use lib.mk
-  selftest/futex: Increment ksft pass and fail counters
-  selftest: Add futex tests to the top-level Makefile
-  kselftest: Add exit code defines
-
- tools/testing/selftests/Makefile                   |   1 +
- tools/testing/selftests/futex/Makefile             |  29 ++
- tools/testing/selftests/futex/README               |  62 ++++
- tools/testing/selftests/futex/functional/Makefile  |  25 ++
- .../selftests/futex/functional/futex_requeue_pi.c  | 402 +++++++++++++++++++++
- .../functional/futex_requeue_pi_mismatched_ops.c   | 136 +++++++
- .../functional/futex_requeue_pi_signal_restart.c   | 220 +++++++++++
- .../functional/futex_wait_private_mapped_file.c    | 126 +++++++
- .../futex/functional/futex_wait_timeout.c          |  85 +++++
- .../functional/futex_wait_uninitialized_heap.c     | 124 +++++++
- .../futex/functional/futex_wait_wouldblock.c       |  79 ++++
- tools/testing/selftests/futex/functional/run.sh    |  79 ++++
- tools/testing/selftests/futex/include/atomic.h     |  83 +++++
- tools/testing/selftests/futex/include/futextest.h  | 266 ++++++++++++++
- tools/testing/selftests/futex/include/logging.h    | 150 ++++++++
- tools/testing/selftests/futex/run.sh               |  33 ++
- tools/testing/selftests/kselftest.h                |  17 +-
- 17 files changed, 1912 insertions(+), 5 deletions(-)
- create mode 100644 tools/testing/selftests/futex/Makefile
- create mode 100644 tools/testing/selftests/futex/README
- create mode 100644 tools/testing/selftests/futex/functional/Makefile
- create mode 100644 tools/testing/selftests/futex/functional/futex_requeue_pi.c
- create mode 100644 tools/testing/selftests/futex/functional/futex_requeue_pi_mismatched_ops.c
- create mode 100644 tools/testing/selftests/futex/functional/futex_requeue_pi_signal_restart.c
- create mode 100644 tools/testing/selftests/futex/functional/futex_wait_private_mapped_file.c
- create mode 100644 tools/testing/selftests/futex/functional/futex_wait_timeout.c
- create mode 100644 tools/testing/selftests/futex/functional/futex_wait_uninitialized_heap.c
- create mode 100644 tools/testing/selftests/futex/functional/futex_wait_wouldblock.c
- create mode 100755 tools/testing/selftests/futex/functional/run.sh
- create mode 100644 tools/testing/selftests/futex/include/atomic.h
- create mode 100644 tools/testing/selftests/futex/include/futextest.h
- create mode 100644 tools/testing/selftests/futex/include/logging.h
- create mode 100755 tools/testing/selftests/futex/run.sh
-
+diff --git a/tools/testing/selftests/futex/Makefile b/tools/testing/selftests/futex/Makefile
+index 8629187..6a17529 100644
+--- a/tools/testing/selftests/futex/Makefile
++++ b/tools/testing/selftests/futex/Makefile
+@@ -1,8 +1,29 @@
+ SUBDIRS := functional
+ 
++TEST_PROGS := run.sh
++
+ .PHONY: all clean
+ all:
+ 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR $@ ; done
+ 
++include ../lib.mk
++
++override define RUN_TESTS
++	./run.sh
++endef
++
++override define INSTALL_RULE
++	mkdir -p $(INSTALL_PATH)
++	install -t $(INSTALL_PATH) $(TEST_PROGS) $(TEST_PROGS_EXTENDED) $(TEST_FILES)
++
++	@for SUBDIR in $(SUBDIRS); do \
++		$(MAKE) -C $$SUBDIR INSTALL_PATH=$(INSTALL_PATH)/$$SUBDIR install; \
++	done;
++endef
++
++override define EMIT_TESTS
++	echo "./run.sh"
++endef
++
+ clean:
+ 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR $@ ; done
+diff --git a/tools/testing/selftests/futex/functional/Makefile b/tools/testing/selftests/futex/functional/Makefile
+index 6ecb42c..fb96927 100644
+--- a/tools/testing/selftests/futex/functional/Makefile
++++ b/tools/testing/selftests/futex/functional/Makefile
+@@ -12,10 +12,14 @@ TARGETS := \
+ 	futex_wait_uninitialized_heap \
+ 	futex_wait_private_mapped_file
+ 
++TEST_PROGS := $(TARGETS) run.sh
++
+ .PHONY: all clean
+ all: $(TARGETS)
+ 
+ $(TARGETS): $(HEADERS)
+ 
++include ../../lib.mk
++
+ clean:
+ 	rm -f $(TARGETS)
 -- 
 2.1.4
