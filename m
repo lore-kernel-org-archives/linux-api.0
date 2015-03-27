@@ -1,67 +1,67 @@
-From: Volker Lendecke <Volker.Lendecke@SerNet.DE>
-Subject: Re: [PATCH v7 0/5] vfs: Non-blockling buffered fs read (page cache
- only)
-Date: Fri, 27 Mar 2015 10:44:09 +0100
-Message-ID: <E1YbQoP-008C4F-TU@intern.SerNet.DE>
-References: <cover.1426528417.git.milosz@adfin.com>
- <20150326202824.65d03787.akpm@linux-foundation.org>
- <20150327081822.GA28669@infradead.org>
- <20150327013516.8c6788be.akpm@linux-foundation.org>
- <20150327084833.GA7689@infradead.org>
- <20150327020159.eadd0ce1.akpm@linux-foundation.org>
-Reply-To: Volker.Lendecke@SerNet.DE
+From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [patch][resend] MAP_HUGETLB munmap fails with size not 2MB aligned
+Date: Fri, 27 Mar 2015 10:45:44 +0100
+Message-ID: <551526C8.1000105@suse.cz>
+References: <alpine.DEB.2.10.1410221518160.31326@davide-lnx3> <alpine.LSU.2.11.1503251708530.5592@eggly.anvils> <alpine.DEB.2.10.1503251754320.26501@davide-lnx3> <alpine.DEB.2.10.1503251938170.16714@chino.kir.corp.google.com> <alpine.DEB.2.10.1503260431290.2755@mbplnx> <alpine.DEB.2.10.1503261201440.8238@chino.kir.corp.google.com> <alpine.DEB.2.10.1503261221470.5119@davide-lnx3>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150327020159.eadd0ce1.akpm@linux-foundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Christoph Hellwig <hch@infradead.org>, Milosz Tanski <milosz@adfin.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org, Dave Chinner <david@fromorbit.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.10.1503261221470.5119@davide-lnx3>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Joern Engel <joern-PCqxUs/MD9bYtjvyW6yDsg@public.gmane.org>, Jianguo Wu <wujianguo-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 27, 2015 at 02:01:59AM -0700, Andrew Morton wrote:
-> On Fri, 27 Mar 2015 01:48:33 -0700 Christoph Hellwig <hch@infradead.o=
-rg> wrote:
->=20
-> > On Fri, Mar 27, 2015 at 01:35:16AM -0700, Andrew Morton wrote:
-> > > fincore() doesn't have to be ugly.  Please address the design iss=
-ues I
-> > > raised.  How is pread2() useful to the class of applications whic=
-h
-> > > cannot proceed until all data is available?
-> >=20
-> > It actually makes them work correctly?  preadv2( ..., DONTWAIT) wil=
-l
-> > return -EGAIN, which causes them to bounce to the threadpool where
-> > they call preadv(...).
->=20
-> (I assume you mean RWF_NONBLOCK)
->=20
-> That isn't how pread2() works.  If the leading one or more pages are
-> uptodate, pread2() will return a partial read.  Now what?  Either the
-> application reads the same data a second time via the worker thread
-> (dumb, but it will usually be a rare case) or it reads the remainder =
-of
-> the data in the worker thread and splices the data back together.=20
-> Which, as I said, will often result in a second load of the initial
-> read result into CPU cache.
+On 03/26/2015 08:39 PM, Davide Libenzi wrote:
+> On Thu, 26 Mar 2015, David Rientjes wrote:
+> 
+>> Yes, this munmap() behavior of lengths <= hugepage_size - PAGE_SIZE for a 
+>> hugetlb vma is long standing and there may be applications that break as a 
+>> result of changing the behavior: a database that reserves all allocated 
+>> hugetlb memory with mmap() so that it always has exclusive access to those 
+>> hugepages, whether they are faulted or not, and maintains its own hugepage 
+>> pool (which is common), may test the return value of munmap() and depend 
+>> on it returning -EINVAL to determine if it is freeing memory that was 
+>> either dynamically allocated or mapped from the hugetlb reserved pool.
+> 
+> You went a long way to create such a case.
+> But, in your case, that application will erroneously considering hugepage 
+> mmaped memory, as dynamically allocated, since it will always get EINVAL, 
+> unless it passes an aligned size. Aligned size, which a fix like the one 
+> posted in the patch will still leave as success.
+> OTOH, an application, which might be more common than the one you posted,
+> which calls munmap() to release a pointer which it validly got from a 
+> previous mmap(), will leak huge pages as all the issued munmaps will fail.
+> 
+> 
+>> If we were to go back in time and decide this when the munmap() behavior 
+>> for hugetlb vmas was originally introduced, that would be valid.  The 
+>> problem is that it could lead to userspace breakage and that's a 
+>> non-starter.
+>> 
+>> What we can do is improve the documentation and man-page to clearly 
+>> specify the long-standing behavior so that nobody encounters unexpected 
+>> results in the future.
+> 
+> This way you will leave the mmap API with broken semantics.
+> In any case, I am done arguing.
+> I will leave to Andrew to sort it out, and to Michael Kerrisk to update 
+> the mmap man pages with the new funny behaviour.
 
-Sorry, but I don't have a good picture how we are supposed
-to use that. I'm fine with two syscalls, but I need a way to
-tell the kernel to either block or not. Or do you want Samba
-to do repeated pread calls for ever shorter blocks? Right
-now I don't see a way to tell pread to either give me a
-short result or really block. To me that's the core of
-preadv2. I'm perfectly find for a syscall to give me a short
-read instead of a global EWOULDBLOCK. I need a way to tell
-the kernel which behaviour I want.
++ CC's
 
-Volker
+You know that people don't always magically CC themselves, or read all of
+lkml/linux-mm? :)
 
---=20
-SerNet GmbH, Bahnhofsallee 1b, 37081 G=F6ttingen
-phone: +49-551-370000-0, fax: +49-551-370000-9
-AG G=F6ttingen, HRB 2816, GF: Dr. Johannes Loxen
-http://www.sernet.de, mailto:kontakt@sernet.de
+> 
+> 
+> - Davide
+> 
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
+> 
