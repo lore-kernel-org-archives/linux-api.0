@@ -1,117 +1,65 @@
-From: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [patch 1/2] mm, doc: cleanup and clarify munmap behavior for
- hugetlb memory
-Date: Fri, 27 Mar 2015 09:58:47 -0400
-Message-ID: <20150327135847.GB10747@akamai.com>
-References: <alpine.DEB.2.10.1503261621570.20009@chino.kir.corp.google.com>
+From: Jesse Barnes <jesse.barnes@intel.com>
+Subject: Re: [PATCH] drm/i915: fix definition of the
+ DRM_IOCTL_I915_GET_SPRITE_COLORKEY ioctl
+Date: Fri, 27 Mar 2015 08:17:39 -0700
+Message-ID: <55157493.3080602@intel.com>
+References: <1427399236-14012-1-git-send-email-tt.rantala@gmail.com>
+ <87a8yzq6yr.fsf@intel.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="KFztAG8eRSV9hGtP"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.10.1503261621570.20009-X6Q0R45D7oAcqpCFd4KODRPsWskHk0ljAL8bYrjMMd8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, Luiz Capitulino <lcapitulino-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Joern Engel <joern-PCqxUs/MD9bYtjvyW6yDsg@public.gmane.org>, Jianguo Wu <wujianguo-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+In-Reply-To: <87a8yzq6yr.fsf@intel.com>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: Jani Nikula <jani.nikula@linux.intel.com>, Tommi Rantala <tt.rantala@gmail.com>, Daniel Vetter <daniel.vetter@intel.com>
+Cc: David Airlie <airlied@linux.ie>, linux-api@vger.kernel.org, intel-gfx@lists.freedesktop.org, dri-devel@lists.freedesktop.org
 List-Id: linux-api@vger.kernel.org
 
-
---KFztAG8eRSV9hGtP
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On Thu, 26 Mar 2015, David Rientjes wrote:
-
-> munmap(2) of hugetlb memory requires a length that is hugepage aligned,
-> otherwise it may fail.  Add this to the documentation.
->=20
-> This also cleans up the documentation and separates it into logical
-> units: one part refers to MAP_HUGETLB and another part refers to
-> requirements for shared memory segments.
->=20
-> Signed-off-by: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> ---
-
-If this is the route we are going to take, this behavoir needs to be
-called out prominently in the mmap/munmap man page.
-
-
->  Documentation/vm/hugetlbpage.txt | 21 +++++++++++++--------
->  1 file changed, 13 insertions(+), 8 deletions(-)
->=20
-> diff --git a/Documentation/vm/hugetlbpage.txt b/Documentation/vm/hugetlbp=
-age.txt
-> --- a/Documentation/vm/hugetlbpage.txt
-> +++ b/Documentation/vm/hugetlbpage.txt
-> @@ -289,15 +289,20 @@ file systems, write system calls are not.
->  Regular chown, chgrp, and chmod commands (with right permissions) could =
-be
->  used to change the file attributes on hugetlbfs.
-> =20
-> -Also, it is important to note that no such mount command is required if =
-the
-> +Also, it is important to note that no such mount command is required if
->  applications are going to use only shmat/shmget system calls or mmap with
-> -MAP_HUGETLB.  Users who wish to use hugetlb page via shared memory segme=
-nt
-> -should be a member of a supplementary group and system admin needs to
-> -configure that gid into /proc/sys/vm/hugetlb_shm_group.  It is possible =
-for
-> -same or different applications to use any combination of mmaps and shm*
-> -calls, though the mount of filesystem will be required for using mmap ca=
-lls
-> -without MAP_HUGETLB.  For an example of how to use mmap with MAP_HUGETLB=
- see
-> -map_hugetlb.c.
-> +MAP_HUGETLB.  For an example of how to use mmap with MAP_HUGETLB see map=
-_hugetlb
-> +below.
-> +
-> +Users who wish to use hugetlb memory via shared memory segment should be=
- a
-> +member of a supplementary group and system admin needs to configure that=
- gid
-> +into /proc/sys/vm/hugetlb_shm_group.  It is possible for same or differe=
-nt
-> +applications to use any combination of mmaps and shm* calls, though the =
-mount of
-> +filesystem will be required for using mmap calls without MAP_HUGETLB.
-> +
-> +When using munmap(2) to unmap hugetlb memory, the length specified must =
-be
-> +hugepage aligned, otherwise it will fail with errno set to EINVAL.
-> +
-> =20
->  Examples
->  =3D=3D=3D=3D=3D=3D=3D=3D
->=20
-> --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=3Dmailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
-
---KFztAG8eRSV9hGtP
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJVFWIXAAoJELbVsDOpoOa9JnAP/j6Rz7l6Od6nv+u/4fBho3Nq
-CKvxicBLgsD8ZLJ7Sp9TuJE9aLGMntRY+JylQFAW+YzVbHGW6rlFHepqPyNY2RqT
-ITgGv04U0stJYY0RAX6JX5diCzmaIWTaBwBzMAn43wTQSGkGrubo2KrPPNUq8Tof
-2oDjIyGO5RuE3/JafG8uhPBwxHDAq8w4d6YjoKkF/aaYSArKq5Jv0QnPEj3osGZu
-QKrjyMqHMbBhQzvd9ft27oqThddu9Fyra6WSzp+fTJhav/3KnyLMdj+r9SkRbFjk
-WO6CfBSVN8mjOWP8DG0phkYryDJ4aLgkqoUJy5/4f8HspwnFHPYQkEUCcYLjtgzO
-V7mc9Gd6xhnVHhEZiaTF4zDo/7YjzIg+DQnQRYsZ9247KRICwFy9/nnCsBjpjodZ
-eY9S6bGyHBWYgmxfyzkZtI2UP6o7pUrJJMrzOUUrD893IoXR2VpxJ5GSc3x7qc+h
-piA1TgD+4t3bDsYcScQYylQ/hG2eo6LIjYMOuN0QNA7/Cojbro2AY1zQK3rFpGyh
-EfRlM3SzlyzC6essdN+0Hr8Au8W51RwhwtPWY0qDazWAtzVVZTChJ1csBKzoR74U
-V9v+d4c/BDpFgSTLbIxZKa777N04QUjpZcVyeeBLN+baLWAthMtVt4QJKAsMREkT
-39aEgfclx7fwj9Nprzgw
-=+UlW
------END PGP SIGNATURE-----
-
---KFztAG8eRSV9hGtP--
+T24gMDMvMjYvMjAxNSAxMTozOSBQTSwgSmFuaSBOaWt1bGEgd3JvdGU6Cj4gT24gVGh1LCAyNiBN
+YXIgMjAxNSwgVG9tbWkgUmFudGFsYSA8dHQucmFudGFsYUBnbWFpbC5jb20+IHdyb3RlOgo+PiBG
+aXggZGVmaW5pdGlvbiBvZiB0aGUgRFJNX0lPQ1RMX0k5MTVfR0VUX1NQUklURV9DT0xPUktFWSBp
+b2N0bCwgc28gdGhhdCBpdAo+PiBpcyBkaWZmZXJlbnQgZnJvbSB0aGUgRFJNX0lPQ1RMX0k5MTVf
+U0VUX1NQUklURV9DT0xPUktFWSBpb2N0bC4KPj4KPj4gU2lnbmVkLW9mZi1ieTogVG9tbWkgUmFu
+dGFsYSA8dHQucmFudGFsYUBnbWFpbC5jb20+Cj4gCj4gV2hvYS4gQnJva2VuIHNpbmNlIGl0cyBp
+bnRyb2R1Y3Rpb24gaW4KPiAKPiBjb21taXQgOGVhMzA4NjQyMjllNTRiMDFhYzBlOWZlODhjNGI3
+MzNhOTQwZWM0ZQo+IEF1dGhvcjogSmVzc2UgQmFybmVzIDxqYmFybmVzQHZpcnR1b3VzZ2Vlay5v
+cmc+Cj4gRGF0ZTogICBUdWUgSmFuIDMgMDg6MDU6MzkgMjAxMiAtMDgwMAo+IAo+ICAgICBkcm0v
+aTkxNTogYWRkIGNvbG9yIGtleSBzdXBwb3J0IHY0Cj4gCj4gQ2M6IHN0YWJsZUB2Z2VyLmtlcm5l
+bC5vcmcKPiAKPiBCUiwKPiBKYW5pLgo+IAo+IAo+PiAtLS0KPj4gIGluY2x1ZGUvdWFwaS9kcm0v
+aTkxNV9kcm0uaCB8IDIgKy0KPj4gIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlvbigrKSwgMSBk
+ZWxldGlvbigtKQo+Pgo+PiBkaWZmIC0tZ2l0IGEvaW5jbHVkZS91YXBpL2RybS9pOTE1X2RybS5o
+IGIvaW5jbHVkZS91YXBpL2RybS9pOTE1X2RybS5oCj4+IGluZGV4IDZlZWQxNmIuLjBlOWM4MzUg
+MTAwNjQ0Cj4+IC0tLSBhL2luY2x1ZGUvdWFwaS9kcm0vaTkxNV9kcm0uaAo+PiArKysgYi9pbmNs
+dWRlL3VhcGkvZHJtL2k5MTVfZHJtLmgKPj4gQEAgLTI3MCw3ICsyNzAsNyBAQCB0eXBlZGVmIHN0
+cnVjdCBfZHJtX2k5MTVfc2FyZWEgewo+PiAgI2RlZmluZSBEUk1fSU9DVExfSTkxNV9PVkVSTEFZ
+X1BVVF9JTUFHRQlEUk1fSU9XKERSTV9DT01NQU5EX0JBU0UgKyBEUk1fSTkxNV9PVkVSTEFZX1BV
+VF9JTUFHRSwgc3RydWN0IGRybV9pbnRlbF9vdmVybGF5X3B1dF9pbWFnZSkKPj4gICNkZWZpbmUg
+RFJNX0lPQ1RMX0k5MTVfT1ZFUkxBWV9BVFRSUwlEUk1fSU9XUihEUk1fQ09NTUFORF9CQVNFICsg
+RFJNX0k5MTVfT1ZFUkxBWV9BVFRSUywgc3RydWN0IGRybV9pbnRlbF9vdmVybGF5X2F0dHJzKQo+
+PiAgI2RlZmluZSBEUk1fSU9DVExfSTkxNV9TRVRfU1BSSVRFX0NPTE9SS0VZIERSTV9JT1dSKERS
+TV9DT01NQU5EX0JBU0UgKyBEUk1fSTkxNV9TRVRfU1BSSVRFX0NPTE9SS0VZLCBzdHJ1Y3QgZHJt
+X2ludGVsX3Nwcml0ZV9jb2xvcmtleSkKPj4gLSNkZWZpbmUgRFJNX0lPQ1RMX0k5MTVfR0VUX1NQ
+UklURV9DT0xPUktFWSBEUk1fSU9XUihEUk1fQ09NTUFORF9CQVNFICsgRFJNX0k5MTVfU0VUX1NQ
+UklURV9DT0xPUktFWSwgc3RydWN0IGRybV9pbnRlbF9zcHJpdGVfY29sb3JrZXkpCj4+ICsjZGVm
+aW5lIERSTV9JT0NUTF9JOTE1X0dFVF9TUFJJVEVfQ09MT1JLRVkgRFJNX0lPV1IoRFJNX0NPTU1B
+TkRfQkFTRSArIERSTV9JOTE1X0dFVF9TUFJJVEVfQ09MT1JLRVksIHN0cnVjdCBkcm1faW50ZWxf
+c3ByaXRlX2NvbG9ya2V5KQo+PiAgI2RlZmluZSBEUk1fSU9DVExfSTkxNV9HRU1fV0FJVAkJRFJN
+X0lPV1IoRFJNX0NPTU1BTkRfQkFTRSArIERSTV9JOTE1X0dFTV9XQUlULCBzdHJ1Y3QgZHJtX2k5
+MTVfZ2VtX3dhaXQpCj4+ICAjZGVmaW5lIERSTV9JT0NUTF9JOTE1X0dFTV9DT05URVhUX0NSRUFU
+RQlEUk1fSU9XUiAoRFJNX0NPTU1BTkRfQkFTRSArIERSTV9JOTE1X0dFTV9DT05URVhUX0NSRUFU
+RSwgc3RydWN0IGRybV9pOTE1X2dlbV9jb250ZXh0X2NyZWF0ZSkKPj4gICNkZWZpbmUgRFJNX0lP
+Q1RMX0k5MTVfR0VNX0NPTlRFWFRfREVTVFJPWQlEUk1fSU9XIChEUk1fQ09NTUFORF9CQVNFICsg
+RFJNX0k5MTVfR0VNX0NPTlRFWFRfREVTVFJPWSwgc3RydWN0IGRybV9pOTE1X2dlbV9jb250ZXh0
+X2Rlc3Ryb3kpCgpIYWgsIEkgZ3Vlc3MgdGhhdCBtdXN0IGJlIGEgd2VsbCB1c2VkIGlvY3RsISAg
+Tm90IGV2ZW4gdGhlIHRlc3QgcHJvZ3JhbQpkb2VzIGEgZ2V0IGNhbGwhCgpKZXNzZQoKX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KSW50ZWwtZ2Z4IG1haWxp
+bmcgbGlzdApJbnRlbC1nZnhAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHA6Ly9saXN0cy5mcmVl
+ZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9pbnRlbC1nZngK
