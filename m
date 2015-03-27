@@ -1,224 +1,117 @@
-From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH v3 04/15] clocksource: Add ARM System timer driver
-Date: Fri, 27 Mar 2015 13:33:55 +0100
-Message-ID: <CALszF6AyjsYGFE+nqCHzHA3M5W3dQNSHEbt34EnVNOZLer-f7A@mail.gmail.com>
-References: <1426197361-19290-1-git-send-email-maxime.coquelin@st.com>
-	<1426197361-19290-5-git-send-email-maxime.coquelin@st.com>
-	<5513D64A.7060702@linaro.org>
-	<CALszF6CtEf0w8AoaMwFzn34ACMjkW6obT5_MrduBdUOm7T=zNw@mail.gmail.com>
-	<55151695.5050203@linaro.org>
+From: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [patch 1/2] mm, doc: cleanup and clarify munmap behavior for
+ hugetlb memory
+Date: Fri, 27 Mar 2015 09:58:47 -0400
+Message-ID: <20150327135847.GB10747@akamai.com>
+References: <alpine.DEB.2.10.1503261621570.20009@chino.kir.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-gpio-owner@vger.kernel.org>
-In-Reply-To: <55151695.5050203@linaro.org>
-Sender: linux-gpio-owner@vger.kernel.org
-To: Daniel Lezcano <daniel.lezcano@linaro.org>
-Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.sa>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="KFztAG8eRSV9hGtP"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.10.1503261621570.20009-X6Q0R45D7oAcqpCFd4KODRPsWskHk0ljAL8bYrjMMd8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, Luiz Capitulino <lcapitulino-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Joern Engel <joern-PCqxUs/MD9bYtjvyW6yDsg@public.gmane.org>, Jianguo Wu <wujianguo-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-2015-03-27 9:36 GMT+01:00 Daniel Lezcano <daniel.lezcano@linaro.org>:
-> On 03/26/2015 09:19 PM, Maxime Coquelin wrote:
->>
->> Hi Daniel,
->>
->>    Thanks for the review. Please find my answers below.
->>
->> 2015-03-26 10:50 GMT+01:00 Daniel Lezcano <daniel.lezcano@linaro.org=
->:
->>>
->>> On 03/12/2015 10:55 PM, Maxime Coquelin wrote:
->>>>
->>>>
->>>> From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
->>>>
->>>> This patch adds clocksource support for ARMv7-M's System timer,
->>>> also known as SysTick.
->>>>
->>>> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
->>>
->>>
->>>
->>> Hi Maxime,
->>>
->>> the driver looks good. Three comments below.
->>>
->>>    -- Daniel
->>>
->>>
->
-> [ ... ]
->
->
->>>> +static void __init system_timer_of_register(struct device_node *n=
-p)
->>>> +{
->>>> +       struct clk *clk;
->>>> +       void __iomem *base;
->>>> +       u32 rate =3D 0;
->>>> +       int ret;
->>>> +
->>>> +       base =3D of_iomap(np, 0);
->>>> +       if (!base) {
->>>> +               pr_warn("system-timer: invalid base address\n");
->>>> +               return;
->>>> +       }
->>>> +
->>>> +       clk =3D of_clk_get(np, 0);
->>>> +       if (!IS_ERR(clk)) {
->>>> +               ret =3D clk_prepare_enable(clk);
->>>> +               if (ret) {
->>>> +                       clk_put(clk);
->>>> +                       goto out_unmap;
->>>> +               }
->>>> +
->>>> +               rate =3D clk_get_rate(clk);
->>>> +       }
->>>> +
->>>> +       /* If no clock found, try to get clock-frequency property =
-*/
->>>> +       if (!rate) {
->>>> +               ret =3D of_property_read_u32(np, "clock-frequency"=
-,
->>>> &rate);
->>>> +               if (ret)
->>>> +                       goto out_unmap;
->>>
->>>
->>>
->>> Shouldn't be 'goto out_clk_disable' ?
->>
->>
->> No, because I assumed !rate means we failed to get the clock.
->> Actually, clk_get_rate could return 0, so relying on rate value is n=
-ot
->> safe.
->>
->> I propose to get clock-frequency property if IS_ERR(clk).
->>
->> Is it fine for you?
->
->
-> Why not invert the conditions ? If the 'clock-frequency' is specified=
- in the
-> DT then it overrides the clk_get_rate(). So the resulting code will b=
-e:
->
-> ret =3D of_property_read_u32(np, "clock-frequency", &rate);
-> if (ret) {
->         clk =3D of_clk_get(np, 0);
->         if (IS_ERR(clk))
->                 goto out_unmap;
->
->         ret =3D clk_prepare_enable(clk);
->         if (ret)
->                 goto out_clk_put;
->
->         rate =3D clk_get_rate(clk);
->         if (!rate)
->                 goto out_clk_unprepare;
->
-> }
 
-Ok, it looks sensible.
-I will do this in next version.
+--KFztAG8eRSV9hGtP
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
->
->
->
->>>> +       }
->>>> +
->>>> +       writel_relaxed(SYSTICK_LOAD_RELOAD_MASK, base + SYST_RVR);
->>>> +       writel_relaxed(SYST_CSR_ENABLE, base + SYST_CSR);
->>>> +
->>>> +       ret =3D clocksource_mmio_init(base + SYST_CVR, "arm_system=
-_timer",
->>>> rate,
->>>> +                       200, 24, clocksource_mmio_readl_down);
->>>> +       if (ret) {
->>>> +               pr_err("failed to init clocksource (%d)\n", ret);
->>>> +               goto out_clk_disable;
->>>> +       }
->>>> +
->>>> +       pr_info("ARM System timer initialized as clocksource\n");
->>>> +
->>>> +       return;
->>>> +
->>>> +out_clk_disable:
->>>> +       if (!IS_ERR(clk))
->>>
->>>
->>>
->>> Why do you need this check ?
->>
->>
->> To handle the case were no clock was found, but a clk-frequency valu=
-e
->> was provided.
->>
->>>
->>> It isn't missing a clk_put ?
->>
->>
->> Right, thanks for spotting this.
->>
->> I wonder if it makes sense to implement the error path.
->> If we fail to initialize the clocksource, the system will be unusabl=
-e.
->>
->> Maybe I should just perform a BUG_ON() in the error cases, as most o=
-f
->> the other clocksource drivers do.
->> What is your view?
->
->
-> I prefer to not BUG_ON in the init functions because it already happe=
-n that
-> drivers were bugging at init time and when a driver was reused on ano=
-ther
-> platform with several timers available, the board was not able to boo=
-t
-> because one timer was not used, hence not defined in the DT. I don't =
-know if
-> that could be the case for this platform but I prefer to keep thing g=
-oing
-> smoothly and return from init even if that lead to a kernel hang. Of =
-course,
-> the errors must be displayed (pr_warn, pr_err, pr_notice, etc ...).
+On Thu, 26 Mar 2015, David Rientjes wrote:
 
-Ok, let's keep the error path, that's much cleaner indeed.
+> munmap(2) of hugetlb memory requires a length that is hugepage aligned,
+> otherwise it may fail.  Add this to the documentation.
+>=20
+> This also cleans up the documentation and separates it into logical
+> units: one part refers to MAP_HUGETLB and another part refers to
+> requirements for shared memory segments.
+>=20
+> Signed-off-by: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> ---
 
->
->>>
->>>> +               clk_disable_unprepare(clk);
->>>> +out_unmap:
->>>> +       iounmap(base);
->>>> +       WARN(ret, "ARM System timer register failed (%d)\n", ret);
->
->
-> pr_warn
+If this is the route we are going to take, this behavoir needs to be
+called out prominently in the mmap/munmap man page.
 
-Sure, will fix.
 
-Thanks,
-Maxime
-
->
-> Thanks
->
->   -- Daniel
->
->
+>  Documentation/vm/hugetlbpage.txt | 21 +++++++++++++--------
+>  1 file changed, 13 insertions(+), 8 deletions(-)
+>=20
+> diff --git a/Documentation/vm/hugetlbpage.txt b/Documentation/vm/hugetlbp=
+age.txt
+> --- a/Documentation/vm/hugetlbpage.txt
+> +++ b/Documentation/vm/hugetlbpage.txt
+> @@ -289,15 +289,20 @@ file systems, write system calls are not.
+>  Regular chown, chgrp, and chmod commands (with right permissions) could =
+be
+>  used to change the file attributes on hugetlbfs.
+> =20
+> -Also, it is important to note that no such mount command is required if =
+the
+> +Also, it is important to note that no such mount command is required if
+>  applications are going to use only shmat/shmget system calls or mmap with
+> -MAP_HUGETLB.  Users who wish to use hugetlb page via shared memory segme=
+nt
+> -should be a member of a supplementary group and system admin needs to
+> -configure that gid into /proc/sys/vm/hugetlb_shm_group.  It is possible =
+for
+> -same or different applications to use any combination of mmaps and shm*
+> -calls, though the mount of filesystem will be required for using mmap ca=
+lls
+> -without MAP_HUGETLB.  For an example of how to use mmap with MAP_HUGETLB=
+ see
+> -map_hugetlb.c.
+> +MAP_HUGETLB.  For an example of how to use mmap with MAP_HUGETLB see map=
+_hugetlb
+> +below.
+> +
+> +Users who wish to use hugetlb memory via shared memory segment should be=
+ a
+> +member of a supplementary group and system admin needs to configure that=
+ gid
+> +into /proc/sys/vm/hugetlb_shm_group.  It is possible for same or differe=
+nt
+> +applications to use any combination of mmaps and shm* calls, though the =
+mount of
+> +filesystem will be required for using mmap calls without MAP_HUGETLB.
+> +
+> +When using munmap(2) to unmap hugetlb memory, the length specified must =
+be
+> +hugepage aligned, otherwise it will fail with errno set to EINVAL.
+> +
+> =20
+>  Examples
+>  =3D=3D=3D=3D=3D=3D=3D=3D
+>=20
 > --
->  <http://www.linaro.org/> Linaro.org =E2=94=82 Open source software f=
-or ARM SoCs
->
-> Follow Linaro:  <http://www.facebook.com/pages/Linaro> Facebook |
-> <http://twitter.com/#!/linaroorg> Twitter |
-> <http://www.linaro.org/linaro-blog/> Blog
->
---
-To unsubscribe from this list: send the line "unsubscribe linux-gpio" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=3Dmailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
+
+--KFztAG8eRSV9hGtP
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJVFWIXAAoJELbVsDOpoOa9JnAP/j6Rz7l6Od6nv+u/4fBho3Nq
+CKvxicBLgsD8ZLJ7Sp9TuJE9aLGMntRY+JylQFAW+YzVbHGW6rlFHepqPyNY2RqT
+ITgGv04U0stJYY0RAX6JX5diCzmaIWTaBwBzMAn43wTQSGkGrubo2KrPPNUq8Tof
+2oDjIyGO5RuE3/JafG8uhPBwxHDAq8w4d6YjoKkF/aaYSArKq5Jv0QnPEj3osGZu
+QKrjyMqHMbBhQzvd9ft27oqThddu9Fyra6WSzp+fTJhav/3KnyLMdj+r9SkRbFjk
+WO6CfBSVN8mjOWP8DG0phkYryDJ4aLgkqoUJy5/4f8HspwnFHPYQkEUCcYLjtgzO
+V7mc9Gd6xhnVHhEZiaTF4zDo/7YjzIg+DQnQRYsZ9247KRICwFy9/nnCsBjpjodZ
+eY9S6bGyHBWYgmxfyzkZtI2UP6o7pUrJJMrzOUUrD893IoXR2VpxJ5GSc3x7qc+h
+piA1TgD+4t3bDsYcScQYylQ/hG2eo6LIjYMOuN0QNA7/Cojbro2AY1zQK3rFpGyh
+EfRlM3SzlyzC6essdN+0Hr8Au8W51RwhwtPWY0qDazWAtzVVZTChJ1csBKzoR74U
+V9v+d4c/BDpFgSTLbIxZKa777N04QUjpZcVyeeBLN+baLWAthMtVt4QJKAsMREkT
+39aEgfclx7fwj9Nprzgw
+=+UlW
+-----END PGP SIGNATURE-----
+
+--KFztAG8eRSV9hGtP--
