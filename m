@@ -1,102 +1,277 @@
-From: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
-Subject: Re: [PATCH net-next] tc: bpf: generalize pedit action
-Date: Fri, 27 Mar 2015 11:42:45 +0100
-Message-ID: <55153425.2070502@iogearbox.net>
-References: <1427424837-7757-1-git-send-email-ast@plumgrid.com>
+From: "tip-bot for Paul E. McKenney" <tipbot@zytor.com>
+Subject: [tip:core/rcu] smpboot:
+  Add common code for notification from dying CPU
+Date: Fri, 27 Mar 2015 04:32:30 -0700
+Message-ID: <tip-8038dad7e888581266c76df15d70ca457a3c5910@git.kernel.org>
+Reply-To: hpa@zytor.com, paulmck@linux.vnet.ibm.com,
+	  linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
+	  tglx@linutronix.de, mingo@kernel.org,
+	  linux-kernel@vger.kernel.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1427424837-7757-1-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: Jiri Pirko <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, Jamal Hadi Salim <jhs-jkUAjuhPggJWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-arch-owner@vger.kernel.org
+To: linux-tip-commits@vger.kernel.org
+Cc: mingo@kernel.org, tglx@linutronix.de, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, hpa@zytor.com, paulmck@linux.vnet.ibm.com
 List-Id: linux-api@vger.kernel.org
 
-On 03/27/2015 03:53 AM, Alexei Starovoitov wrote:
-> existing TC action 'pedit' can munge any bits of the packet.
-> Generalize it for use in bpf programs attached as cls_bpf and act_bpf via
-> bpf_skb_store_bytes() helper function.
->
-> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Commit-ID:  8038dad7e888581266c76df15d70ca457a3c5910
+Gitweb:     http://git.kernel.org/tip/8038dad7e888581266c76df15d70ca457a3c5910
+Author:     Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+AuthorDate: Wed, 25 Feb 2015 10:34:39 -0800
+Committer:  Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+CommitDate: Wed, 11 Mar 2015 13:20:25 -0700
 
-I like it.
+smpboot: Add common code for notification from dying CPU
 
-> pedit is limited to 32-bit masked rewrites. Here let it be flexible.
->
-> ptr = skb_header_pointer(skb, offset, len, buf);
-> memcpy(ptr, from, len);
-> if (ptr == buf)
->    skb_store_bits(skb, offset, ptr, len);
->
-> ^^ logic is the same as in pedit.
-> shifts, mask, invert style of rewrite is easily done by the program.
-> Just like arbitrary parsing of the packet and applying rewrites on demand.
-...
-> +static u64 bpf_skb_store_bytes(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
-> +{
-> +	struct sk_buff *skb = (struct sk_buff *) (long) r1;
-> +	unsigned int offset = (unsigned int) r2;
-> +	void *from = (void *) (long) r3;
-> +	unsigned int len = (unsigned int) r4;
-> +	char buf[16];
-> +	void *ptr;
-> +
-> +	/* bpf verifier guarantees that:
-> +	 * 'from' pointer points to bpf program stack
-> +	 * 'len' bytes of it were initialized
-> +	 * 'len' > 0
-> +	 * 'skb' is a valid pointer to 'struct sk_buff'
-> +	 *
-> +	 * so check for invalid 'offset' and too large 'len'
-> +	 */
-> +	if (offset > 0xffff || len > sizeof(buf))
-> +		return -EFAULT;
+RCU ignores offlined CPUs, so they cannot safely run RCU read-side code.
+(They -can- use SRCU, but not RCU.)  This means that any use of RCU
+during or after the call to arch_cpu_idle_dead().  Unfortunately,
+commit 2ed53c0d6cc99 added a complete() call, which will contain RCU
+read-side critical sections if there is a task waiting to be awakened.
 
-Could you elaborate on the hard-coded 0xffff? Hm, perhaps better u16, or
-do you see any issues with wrong widening?
+Which, as it turns out, there almost never is.  In my qemu/KVM testing,
+the to-be-awakened task is not yet asleep more than 99.5% of the time.
+In current mainline, failure is even harder to reproduce, requiring a
+virtualized environment that delays the outgoing CPU by at least three
+jiffies between the time it exits its stop_machine() task at CPU_DYING
+time and the time it calls arch_cpu_idle_dead() from the idle loop.
+However, this problem really can occur, especially in virtualized
+environments, and therefore really does need to be fixed
 
-This check should probably be also unlikely().
+This suggests moving back to the polling loop, but using a much shorter
+wait, with gentle exponential backoff instead of the old 100-millisecond
+wait.  Most of the time, the loop will exit without waiting at all,
+and almost all of the remaining uses will wait only five microseconds.
+If the outgoing CPU is preempted, a loop will wait one jiffy, then
+increase the wait by a factor of 11/10ths, rounding up.  As before, there
+is a five-second timeout.
 
-Ok, the sizeof(buf) could still be increased in future if truly necessary.
+This commit therefore provides common-code infrastructure to do the
+dying-to-surviving CPU handoff in a safe manner.  This code also
+provides an indication at CPU-online of whether the CPU to be onlined
+previously timed out on offline.  The new cpu_check_up_prepare() function
+returns -EBUSY if this CPU previously took more than five seconds to
+go offline, or -EAGAIN if it has not yet managed to go offline.  The
+rationale for -EAGAIN is that it might still be preempted, so an additional
+wait might well find it correctly offlined.  Architecture-specific code
+can decide how to handle these conditions.  Systems in which CPUs take
+themselves completely offline might respond to an -EBUSY return as if
+it was a zero (success) return.  Systems in which the surviving CPU must
+take some action might take it at this time, or might simply mark the
+other CPU as unusable.
 
-> +	if (skb_cloned(skb) && !skb_clone_writable(skb, offset + len))
-> +		return -EFAULT;
-> +
-> +	ptr = skb_header_pointer(skb, offset, len, buf);
-> +	if (unlikely(!ptr))
-> +		return -EFAULT;
-> +
-> +	skb_postpull_rcsum(skb, ptr, len);
-> +
-> +	memcpy(ptr, from, len);
-> +
-> +	if (ptr == buf)
-> +		/* skb_store_bits cannot return -EFAULT here */
-> +		skb_store_bits(skb, offset, ptr, len);
-> +
-> +	if (skb->ip_summed == CHECKSUM_COMPLETE)
-> +		skb->csum = csum_add(skb->csum, csum_partial(ptr, len, 0));
+Note that architectures that take the easy way out and simply pass the
+-EBUSY and -EAGAIN upwards will change the sysfs API.
 
-For egress, I think that CHECKSUM_PARTIAL does not need to be dealt
-with since the skb length doesn't change. Do you see an issue when
-cls_bpf/act_bpf would be attached to the ingress qdisc?
+Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+Cc: <linux-api@vger.kernel.org>
+Cc: <linux-arch@vger.kernel.org>
+[ paulmck: Fixed state machine for architectures that don't check earlier
+  CPU-hotplug results as suggested by James Hogan. ]
+---
+ include/linux/cpu.h |  12 ++++
+ kernel/smpboot.c    | 156 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 168 insertions(+)
 
-I was also thinking if it's worth it to split off the csum correction
-as a separate function if there are not too big performance implications?
-
-That way, an action may also allow to intentionally test corruption of
-a part of the skb data together with the recent prandom function.
-
-> +	return 0;
-> +}
-> +
-> +const struct bpf_func_proto bpf_skb_store_bytes_proto = {
-> +	.func		= bpf_skb_store_bytes,
-> +	.gpl_only	= false,
-> +	.ret_type	= RET_INTEGER,
-> +	.arg1_type	= ARG_PTR_TO_CTX,
-> +	.arg2_type	= ARG_ANYTHING,
-> +	.arg3_type	= ARG_PTR_TO_STACK,
-> +	.arg4_type	= ARG_CONST_STACK_SIZE,
-> +};
+diff --git a/include/linux/cpu.h b/include/linux/cpu.h
+index 4260e85..4744ef9 100644
+--- a/include/linux/cpu.h
++++ b/include/linux/cpu.h
+@@ -95,6 +95,8 @@ enum {
+ 					* Called on the new cpu, just before
+ 					* enabling interrupts. Must not sleep,
+ 					* must not fail */
++#define CPU_BROKEN		0x000C /* CPU (unsigned)v did not die properly,
++					* perhaps due to preemption. */
+ 
+ /* Used for CPU hotplug events occurring while tasks are frozen due to a suspend
+  * operation in progress
+@@ -271,4 +273,14 @@ void arch_cpu_idle_enter(void);
+ void arch_cpu_idle_exit(void);
+ void arch_cpu_idle_dead(void);
+ 
++DECLARE_PER_CPU(bool, cpu_dead_idle);
++
++int cpu_report_state(int cpu);
++int cpu_check_up_prepare(int cpu);
++void cpu_set_state_online(int cpu);
++#ifdef CONFIG_HOTPLUG_CPU
++bool cpu_wait_death(unsigned int cpu, int seconds);
++bool cpu_report_death(void);
++#endif /* #ifdef CONFIG_HOTPLUG_CPU */
++
+ #endif /* _LINUX_CPU_H_ */
+diff --git a/kernel/smpboot.c b/kernel/smpboot.c
+index 40190f2..c697f73 100644
+--- a/kernel/smpboot.c
++++ b/kernel/smpboot.c
+@@ -4,6 +4,7 @@
+ #include <linux/cpu.h>
+ #include <linux/err.h>
+ #include <linux/smp.h>
++#include <linux/delay.h>
+ #include <linux/init.h>
+ #include <linux/list.h>
+ #include <linux/slab.h>
+@@ -314,3 +315,158 @@ void smpboot_unregister_percpu_thread(struct smp_hotplug_thread *plug_thread)
+ 	put_online_cpus();
+ }
+ EXPORT_SYMBOL_GPL(smpboot_unregister_percpu_thread);
++
++static DEFINE_PER_CPU(atomic_t, cpu_hotplug_state) = ATOMIC_INIT(CPU_POST_DEAD);
++
++/*
++ * Called to poll specified CPU's state, for example, when waiting for
++ * a CPU to come online.
++ */
++int cpu_report_state(int cpu)
++{
++	return atomic_read(&per_cpu(cpu_hotplug_state, cpu));
++}
++
++/*
++ * If CPU has died properly, set its state to CPU_UP_PREPARE and
++ * return success.  Otherwise, return -EBUSY if the CPU died after
++ * cpu_wait_death() timed out.  And yet otherwise again, return -EAGAIN
++ * if cpu_wait_death() timed out and the CPU still hasn't gotten around
++ * to dying.  In the latter two cases, the CPU might not be set up
++ * properly, but it is up to the arch-specific code to decide.
++ * Finally, -EIO indicates an unanticipated problem.
++ *
++ * Note that it is permissible to omit this call entirely, as is
++ * done in architectures that do no CPU-hotplug error checking.
++ */
++int cpu_check_up_prepare(int cpu)
++{
++	if (!IS_ENABLED(CONFIG_HOTPLUG_CPU)) {
++		atomic_set(&per_cpu(cpu_hotplug_state, cpu), CPU_UP_PREPARE);
++		return 0;
++	}
++
++	switch (atomic_read(&per_cpu(cpu_hotplug_state, cpu))) {
++
++	case CPU_POST_DEAD:
++
++		/* The CPU died properly, so just start it up again. */
++		atomic_set(&per_cpu(cpu_hotplug_state, cpu), CPU_UP_PREPARE);
++		return 0;
++
++	case CPU_DEAD_FROZEN:
++
++		/*
++		 * Timeout during CPU death, so let caller know.
++		 * The outgoing CPU completed its processing, but after
++		 * cpu_wait_death() timed out and reported the error. The
++		 * caller is free to proceed, in which case the state
++		 * will be reset properly by cpu_set_state_online().
++		 * Proceeding despite this -EBUSY return makes sense
++		 * for systems where the outgoing CPUs take themselves
++		 * offline, with no post-death manipulation required from
++		 * a surviving CPU.
++		 */
++		return -EBUSY;
++
++	case CPU_BROKEN:
++
++		/*
++		 * The most likely reason we got here is that there was
++		 * a timeout during CPU death, and the outgoing CPU never
++		 * did complete its processing.  This could happen on
++		 * a virtualized system if the outgoing VCPU gets preempted
++		 * for more than five seconds, and the user attempts to
++		 * immediately online that same CPU.  Trying again later
++		 * might return -EBUSY above, hence -EAGAIN.
++		 */
++		return -EAGAIN;
++
++	default:
++
++		/* Should not happen.  Famous last words. */
++		return -EIO;
++	}
++}
++
++/*
++ * Mark the specified CPU online.
++ *
++ * Note that it is permissible to omit this call entirely, as is
++ * done in architectures that do no CPU-hotplug error checking.
++ */
++void cpu_set_state_online(int cpu)
++{
++	(void)atomic_xchg(&per_cpu(cpu_hotplug_state, cpu), CPU_ONLINE);
++}
++
++#ifdef CONFIG_HOTPLUG_CPU
++
++/*
++ * Wait for the specified CPU to exit the idle loop and die.
++ */
++bool cpu_wait_death(unsigned int cpu, int seconds)
++{
++	int jf_left = seconds * HZ;
++	int oldstate;
++	bool ret = true;
++	int sleep_jf = 1;
++
++	might_sleep();
++
++	/* The outgoing CPU will normally get done quite quickly. */
++	if (atomic_read(&per_cpu(cpu_hotplug_state, cpu)) == CPU_DEAD)
++		goto update_state;
++	udelay(5);
++
++	/* But if the outgoing CPU dawdles, wait increasingly long times. */
++	while (atomic_read(&per_cpu(cpu_hotplug_state, cpu)) != CPU_DEAD) {
++		schedule_timeout_uninterruptible(sleep_jf);
++		jf_left -= sleep_jf;
++		if (jf_left <= 0)
++			break;
++		sleep_jf = DIV_ROUND_UP(sleep_jf * 11, 10);
++	}
++update_state:
++	oldstate = atomic_read(&per_cpu(cpu_hotplug_state, cpu));
++	if (oldstate == CPU_DEAD) {
++		/* Outgoing CPU died normally, update state. */
++		smp_mb(); /* atomic_read() before update. */
++		atomic_set(&per_cpu(cpu_hotplug_state, cpu), CPU_POST_DEAD);
++	} else {
++		/* Outgoing CPU still hasn't died, set state accordingly. */
++		if (atomic_cmpxchg(&per_cpu(cpu_hotplug_state, cpu),
++				   oldstate, CPU_BROKEN) != oldstate)
++			goto update_state;
++		ret = false;
++	}
++	return ret;
++}
++
++/*
++ * Called by the outgoing CPU to report its successful death.  Return
++ * false if this report follows the surviving CPU's timing out.
++ *
++ * A separate "CPU_DEAD_FROZEN" is used when the surviving CPU
++ * timed out.  This approach allows architectures to omit calls to
++ * cpu_check_up_prepare() and cpu_set_state_online() without defeating
++ * the next cpu_wait_death()'s polling loop.
++ */
++bool cpu_report_death(void)
++{
++	int oldstate;
++	int newstate;
++	int cpu = smp_processor_id();
++
++	do {
++		oldstate = atomic_read(&per_cpu(cpu_hotplug_state, cpu));
++		if (oldstate != CPU_BROKEN)
++			newstate = CPU_DEAD;
++		else
++			newstate = CPU_DEAD_FROZEN;
++	} while (atomic_cmpxchg(&per_cpu(cpu_hotplug_state, cpu),
++				oldstate, newstate) != oldstate);
++	return newstate == CPU_DEAD;
++}
++
++#endif /* #ifdef CONFIG_HOTPLUG_CPU */
