@@ -1,20 +1,35 @@
-From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH 86/86] usb/dwc3: move ids to pci_ids.h
-Date: Sun, 29 Mar 2015 22:42:00 +0200
-Message-ID: <20150329204200.GB5902@kroah.com>
-References: <1427635734-24786-1-git-send-email-mst@redhat.com>
- <1427635734-24786-87-git-send-email-mst@redhat.com>
+From: Aaro Koskinen <aaro.koskinen@iki.fi>
+Subject: Re: [PATCHv3 1/2] HSI: cmt_speech: Add cmt-speech driver
+Date: Mon, 30 Mar 2015 00:00:23 +0300
+Message-ID: <20150329210023.GB571@fuloong-minipc.musicnaut.iki.fi>
+References: <1426964957-5023-1-git-send-email-sre@kernel.org>
+ <1426964957-5023-2-git-send-email-sre@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-omap-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1427635734-24786-87-git-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Felipe Balbi <balbi-l0cyMroinI0@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Peter Neubauer <pneubauer-OUHTSVaU61M6GL+IUqp+Xg@public.gmane.org>, Huang Rui <ray.huang-5C7GfCeVMHo@public.gmane.org>, Jean Delvare <jdelvare-l3A5Bk7waGM@public.gmane.org>, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-omap-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <1426964957-5023-2-git-send-email-sre@kernel.org>
+Sender: linux-omap-owner@vger.kernel.org
+To: Sebastian Reichel <sre@kernel.org>
+Cc: Peter Ujfalusi <peter.ujfalusi@ti.com>, Kai Vehmanen <kvcontact@nosignal.fi>, Pavel Machek <pavel@ucw.cz>, Pali Rohar <pali.rohar@gmail.com>, Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>, linux-omap@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Kai Vehmanen <kai.vehmanen@nokia.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Mar 29, 2015 at 03:43:40PM +0200, Michael S. Tsirkin wrote:
-> Comment says IDs should move to pci_ids.h, let's do it.
+Hi,
 
-No, please remove the comment, it's not needed in pci_ids.h at all.
+On Sat, Mar 21, 2015 at 08:09:16PM +0100, Sebastian Reichel wrote:
+> From: Kai Vehmanen <kai.vehmanen@nokia.com>
+> 
+> Introduces the cmt-speech driver, which implements
+> a character device interface for transferring speech
+> data frames over HSI/SSI.
+> 
+> The driver is used to exchange voice/speech data between
+> the Nokia N900/N950/N9's modem and its cpu.
+> 
+> Signed-off-by: Kai Vehmanen <kai.vehmanen@nokia.com>
+> Signed-off-by: Carlos Chinea <carlos.chinea@nokia.com>
+> Signed-off-by: Joni Lapilainen <joni.lapilainen@gmail.com>
+
+Acked-by: Aaro Koskinen <aaro.koskinen@iki.fi>
+
+A.
