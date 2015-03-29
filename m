@@ -1,72 +1,79 @@
 From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [PATCH 5/5] kselftest: Add exit code defines
-Date: Mon, 30 Mar 2015 10:44:50 +1100
-Message-ID: <1427672690.4218.1.camel@ellerman.id.au>
+Subject: Re: [PATCH 2/5] selftest/futex: Update Makefile to use lib.mk
+Date: Mon, 30 Mar 2015 10:49:38 +1100
+Message-ID: <1427672978.4218.3.camel@ellerman.id.au>
 References: <597c9eabcac5da9456d6cfd6de9117591d73385e.1427493640.git.dvhart@linux.intel.com>
-		 <43a448183a340b61d91c711da4a75898e3ffd8f2.1427493640.git.dvhart@linux.intel.com>
-	 <1427497178.3986.1.camel@ellerman.id.au> <5515E323.1070800@linux.intel.com>
+	 <95d599bc531666252f8e3f4e467d5f94af2a7ad2.1427493640.git.dvhart@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5515E323.1070800-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+In-Reply-To: <95d599bc531666252f8e3f4e467d5f94af2a7ad2.1427493640.git.dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2015-03-27 at 16:09 -0700, Darren Hart wrote:
+On Fri, 2015-03-27 at 15:17 -0700, Darren Hart wrote:
+> Adapt the futextest Makefiles to use lib.mk macros for RUN_TESTS and
+> EMIT_TESTS. For now, we reuse the run.sh mechanism provided by
+> futextest. This doesn't provide the standard selftests: [PASS|FAIL]
+> format, but the tests provide very similar output already.
 > 
-> On 3/27/15 3:59 PM, Michael Ellerman wrote:
-> > On Fri, 2015-03-27 at 15:17 -0700, Darren Hart wrote:
-> >> Define the exit codes with KSFT_PASS and similar so tests can use these
-> >> directly if they choose. Also enable harnesses and other tooling to use
-> >> the defines instead of hardcoding the return codes.
-> >  
-> > +1
-> > 
-> >> diff --git a/tools/testing/selftests/kselftest.h b/tools/testing/selftests/kselftest.h
-> >> index 572c888..ef1c80d 100644
-> >> --- a/tools/testing/selftests/kselftest.h
-> >> +++ b/tools/testing/selftests/kselftest.h
-> >> @@ -13,6 +13,13 @@
-> >>  #include <stdlib.h>
-> >>  #include <unistd.h>
-> >>  
-> >> +/* define kselftest exit codes */
-> >> +#define KSFT_PASS  0
-> >> +#define KSFT_FAIL  1
-> >> +#define KSFT_XFAIL 2
-> >> +#define KSFT_XPASS 3
-> >> +#define KSFT_SKIP  4
-> >> +
-> >>  /* counters */
-> >>  struct ksft_count {
-> >>  	unsigned int ksft_pass;
-> >> @@ -40,23 +47,23 @@ static inline void ksft_print_cnts(void)
-> >>  
-> >>  static inline int ksft_exit_pass(void)
-> >>  {
-> >> -	exit(0);
-> >> +	exit(KSFT_PASS);
-> >>  }
-> > 
-> > Am I the only person who's bothered by the fact that these don't actually
-> > return int?
+> This results in the run_kselftest.sh script for futexes including a
+> single line: ./run.sh
 > 
-> That bothered me to, but I couldn't be bothered to go read the manuals
-> apparently to come up with a compelling argument :-)
+> Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
+> Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+> Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+> Cc: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
+> Cc: KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
+> Signed-off-by: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> ---
+>  tools/testing/selftests/futex/Makefile            | 21 +++++++++++++++++++++
+>  tools/testing/selftests/futex/functional/Makefile |  4 ++++
+>  2 files changed, 25 insertions(+)
+> 
+> diff --git a/tools/testing/selftests/futex/Makefile b/tools/testing/selftests/futex/Makefile
+> index 8629187..6a17529 100644
+> --- a/tools/testing/selftests/futex/Makefile
+> +++ b/tools/testing/selftests/futex/Makefile
+> @@ -1,8 +1,29 @@
+>  SUBDIRS := functional
+>  
+> +TEST_PROGS := run.sh
+> +
+>  .PHONY: all clean
 
-Yeah, obviously the compiler accepts it, but it's still a bit weird.
+lib.mk defines all & clean as PHONY for you.
 
-> I also think the ksft_exit* routines should go ahead and increment the
-> counters (at least optionally) so we don't have to call two functions.
+>  all:
+>  	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR $@ ; done
+>  
+> +include ../lib.mk
+> +
+> +override define RUN_TESTS
+> +	./run.sh
+> +endef
 
-But the ksft_exit_*() routines exit, so there's no point incrementing the
-counters. Unless they *also* print the counters before exiting?
+Do you need to do this override? The standard logic should work AFAICS, or do
+you not want the echo logic?
 
-To be honest I think we need to decide if the selftests are going to speak TAP
-or xUnit or whatever, and then switch to that. In their current form these
-helpers don't help much.
+> +override define INSTALL_RULE
+> +	mkdir -p $(INSTALL_PATH)
+> +	install -t $(INSTALL_PATH) $(TEST_PROGS) $(TEST_PROGS_EXTENDED) $(TEST_FILES)
+> +
+> +	@for SUBDIR in $(SUBDIRS); do \
+> +		$(MAKE) -C $$SUBDIR INSTALL_PATH=$(INSTALL_PATH)/$$SUBDIR install; \
+> +	done;
+> +endef
+> +
+> +override define EMIT_TESTS
+> +	echo "./run.sh"
+> +endef
+
+Ditto.
 
 cheers
