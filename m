@@ -1,164 +1,88 @@
-From: Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v2 3/3] Documentation/ABI: Update sysfs-driver-toshiba_acpi entry
-Date: Sun, 29 Mar 2015 19:26:39 -0600
-Message-ID: <1427678799-5508-1-git-send-email-coproscefalo@gmail.com>
+From: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [patch 1/2] mm, doc: cleanup and clarify munmap behavior for
+ hugetlb memory
+Date: Sun, 29 Mar 2015 18:35:34 -0700 (PDT)
+Message-ID: <alpine.LSU.2.11.1503291801400.1052@eggly.anvils>
+References: <alpine.DEB.2.10.1503261621570.20009@chino.kir.corp.google.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.10.1503261621570.20009-X6Q0R45D7oAcqpCFd4KODRPsWskHk0ljAL8bYrjMMd8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, platform-driver-x86-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, Luiz Capitulino <lcapitulino-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Joern Engel <joern-PCqxUs/MD9bYtjvyW6yDsg@public.gmane.org>, Jianguo Wu <wujianguo-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This patch updates the sysfs-driver-toshiba_acpi entry, adding the
-missing entries for USB Sleep functions.
+On Thu, 26 Mar 2015, David Rientjes wrote:
 
-And also, while at the neighborhood, fix some typos and add a note
-that some features require a reboot.
+> munmap(2) of hugetlb memory requires a length that is hugepage aligned,
+> otherwise it may fail.  Add this to the documentation.
 
-Signed-off-by: Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- .../ABI/testing/sysfs-driver-toshiba_acpi          | 93 +++++++++++++++++++---
- 1 file changed, 80 insertions(+), 13 deletions(-)
+Thanks for taking this on, David.  But although munmap(2) is the one
+Davide called out, it goes beyond that, doesn't it?  To mprotect and
+madvise and ...
 
-diff --git a/Documentation/ABI/testing/sysfs-driver-toshiba_acpi b/Documentation/ABI/testing/sysfs-driver-toshiba_acpi
-index ca9c71a..eed922e 100644
---- a/Documentation/ABI/testing/sysfs-driver-toshiba_acpi
-+++ b/Documentation/ABI/testing/sysfs-driver-toshiba_acpi
-@@ -8,9 +8,11 @@ Description:	This file controls the keyboard backlight operation mode, valid
- 			* 0x2  -> AUTO (also called TIMER)
- 			* 0x8  -> ON
- 			* 0x10 -> OFF
--		Note that the kernel 3.16 onwards this file accepts all listed
-+		Note that from kernel 3.16 onwards this file accepts all listed
- 		parameters, kernel 3.15 only accepts the first two (FN-Z and
- 		AUTO).
-+		Also note that toggling this value on type 1 devices, requires
-+		a reboot for changes to take effect.
- Users:		KToshiba
- 
- What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/kbd_backlight_timeout
-@@ -67,15 +69,72 @@ Description:	This file shows the current keyboard backlight type,
- 			* 2 -> Type 2, supporting modes TIMER, ON and OFF
- Users:		KToshiba
- 
-+What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/usb_sleep_charge
-+Date:		January 23, 2015
-+KernelVersion:	4.0
-+Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-+Description:	This file controls the USB Sleep & Charge charging mode, which
-+		can be:
-+			* 0 -> Disabled		(0x00)
-+			* 1 -> Alternate	(0x09)
-+			* 2 -> Auto		(0x21)
-+			* 3 -> Typical		(0x11)
-+		Note that from kernel 4.1 onwards this file accepts all listed
-+		values, kernel 4.0 only supports the first three.
-+		Note that this feature only works when connected to power, if
-+		you want to use it under battery, see the entry named
-+		"sleep_functions_on_battery"
-+Users:		KToshiba
-+
-+What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/sleep_functions_on_battery
-+Date:		January 23, 2015
-+KernelVersion:	4.0
-+Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-+Description:	This file controls the USB Sleep Functions under battery, and
-+		set the level at which point they will be disabled, accepted
-+		values can be:
-+			* 0	-> Disabled
-+			* 1-100	-> Battery level to disable sleep functions
-+		Currently it prints two values, the first one indicates if the
-+		feature is enabled or disabled, while the second one shows the
-+		current battery level set.
-+		Note that when the value is set to disabled, the sleep function
-+		will only work when connected to power.
-+Users:		KToshiba
-+
-+What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/usb_rapid_charge
-+Date:		January 23, 2015
-+KernelVersion:	4.0
-+Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-+Description:	This file controls the USB Rapid Charge state, which can be:
-+			* 0 -> Disabled
-+			* 1 -> Enabled
-+		Note that toggling this value requires a reboot for changes to
-+		take effect.
-+Users:		KToshiba
-+
-+What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/usb_sleep_music
-+Date:		January 23, 2015
-+KernelVersion:	4.0
-+Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-+Description:	This file controls the Sleep & Music state, which values can be:
-+			* 0 -> Disabled
-+			* 1 -> Enabled
-+		Note that this feature only works when connected to power, if
-+		you want to use it under battery, see the entry named
-+		"sleep_functions_on_battery"
-+Users:		KToshiba
-+
- What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/version
--Date:		February, 2015
--KernelVersion:	3.20
-+Date:		February 12, 2015
-+KernelVersion:	4.0
- Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
- Description:	This file shows the current version of the driver
-+Users:		KToshiba
- 
- What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/fan
--Date:		February, 2015
--KernelVersion:	3.20
-+Date:		February 12, 2015
-+KernelVersion:	4.0
- Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
- Description:	This file controls the state of the internal fan, valid
- 		values are:
-@@ -83,8 +142,8 @@ Description:	This file controls the state of the internal fan, valid
- 			* 1 -> ON
- 
- What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/kbd_function_keys
--Date:		February, 2015
--KernelVersion:	3.20
-+Date:		February 12, 2015
-+KernelVersion:	4.0
- Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
- Description:	This file controls the Special Functions (hotkeys) operation
- 		mode, valid values are:
-@@ -94,21 +153,29 @@ Description:	This file controls the Special Functions (hotkeys) operation
- 		and the hotkeys are accessed via FN-F{1-12}.
- 		In the "Special Functions" mode, the F{1-12} keys trigger the
- 		hotkey and the F{1-12} keys are accessed via FN-F{1-12}.
-+		Note that toggling this value requires a reboot for changes to
-+		take effect.
-+Users:		KToshiba
- 
- What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/panel_power_on
--Date:		February, 2015
--KernelVersion:	3.20
-+Date:		February 12, 2015
-+KernelVersion:	4.0
- Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
- Description:	This file controls whether the laptop should turn ON whenever
- 		the LID is opened, valid values are:
- 			* 0 -> Disabled
- 			* 1 -> Enabled
-+		Note that toggling this value requires a reboot for changes to
-+		take effect.
-+Users:		KToshiba
- 
- What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/usb_three
--Date:		February, 2015
--KernelVersion:	3.20
-+Date:		February 12, 2015
-+KernelVersion:	4.0
- Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
--Description:	This file controls whether the USB 3 functionality, valid
--		values are:
-+Description:	This file controls the USB 3 functionality, valid values are:
- 			* 0 -> Disabled (Acts as a regular USB 2)
- 			* 1 -> Enabled (Full USB 3 functionality)
-+		Note that toggling this value requires a reboot for changes to
-+		take effect.
-+Users:		KToshiba
--- 
-2.2.2
+I don't want to work out the list myself: is_vm_hugetlb_page() is
+special-cased all over, and different syscalls react differently.
+
+Which is another reason why, like you, I much prefer not to interfere
+with the long established behavior: it would be very easy to introduce
+bugs and worse inconsistencies.
+
+And mprotect(2) is a good example of why we should not mess around
+with the long established API here: changing an mprotect from failing
+on a particular size to acting on a larger size is not a safe change.
+
+Eric, I apologize for bringing you in to the discussion, and then
+ignoring your input.  I understand that you would like MAP_HUGETLB
+to behave more understandably.  We can all agree that the existing
+behavior is unsatisfying.  But it's many years too late now to 
+change it around - and I suspect that a full exercise to do so would
+actually discover some good reasons why the original choices were made.
+
+> 
+> This also cleans up the documentation and separates it into logical
+> units: one part refers to MAP_HUGETLB and another part refers to
+> requirements for shared memory segments.
+> 
+> Signed-off-by: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> ---
+>  Documentation/vm/hugetlbpage.txt | 21 +++++++++++++--------
+>  1 file changed, 13 insertions(+), 8 deletions(-)
+> 
+> diff --git a/Documentation/vm/hugetlbpage.txt b/Documentation/vm/hugetlbpage.txt
+> --- a/Documentation/vm/hugetlbpage.txt
+> +++ b/Documentation/vm/hugetlbpage.txt
+> @@ -289,15 +289,20 @@ file systems, write system calls are not.
+>  Regular chown, chgrp, and chmod commands (with right permissions) could be
+>  used to change the file attributes on hugetlbfs.
+>  
+> -Also, it is important to note that no such mount command is required if the
+> +Also, it is important to note that no such mount command is required if
+>  applications are going to use only shmat/shmget system calls or mmap with
+> -MAP_HUGETLB.  Users who wish to use hugetlb page via shared memory segment
+> -should be a member of a supplementary group and system admin needs to
+> -configure that gid into /proc/sys/vm/hugetlb_shm_group.  It is possible for
+> -same or different applications to use any combination of mmaps and shm*
+> -calls, though the mount of filesystem will be required for using mmap calls
+> -without MAP_HUGETLB.  For an example of how to use mmap with MAP_HUGETLB see
+> -map_hugetlb.c.
+> +MAP_HUGETLB.  For an example of how to use mmap with MAP_HUGETLB see map_hugetlb
+> +below.
+> +
+> +Users who wish to use hugetlb memory via shared memory segment should be a
+> +member of a supplementary group and system admin needs to configure that gid
+> +into /proc/sys/vm/hugetlb_shm_group.  It is possible for same or different
+> +applications to use any combination of mmaps and shm* calls, though the mount of
+> +filesystem will be required for using mmap calls without MAP_HUGETLB.
+> +
+> +When using munmap(2) to unmap hugetlb memory, the length specified must be
+> +hugepage aligned, otherwise it will fail with errno set to EINVAL.
+
+Perhaps just adding something like "The same is true for mprotect(2)
+and other such memory system calls." is good enough for here.
+
+> +
+>  
+>  Examples
+>  ========
