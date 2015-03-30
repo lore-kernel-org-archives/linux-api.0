@@ -1,70 +1,43 @@
-From: Mathieu Poirier <mathieu.poirier@linaro.org>
-Subject: Re: [PATCH] stm class: Adding master and channel parameter to ioctl function
-Date: Mon, 30 Mar 2015 08:33:13 -0600
-Message-ID: <CANLsYkzSMVau2WrWK8Su7eihTnneDyqo03koteduXRM3ZTTz2g@mail.gmail.com>
-References: <1427406371-6699-1-git-send-email-mathieu.poirier@linaro.org>
-	<878ueed0u3.fsf@ashishki-desk.ger.corp.intel.com>
+From: Daniel Vetter <daniel@ffwll.ch>
+Subject: Re: [PATCH] Add virtio gpu driver.
+Date: Mon, 30 Mar 2015 16:49:27 +0200
+Message-ID: <20150330144927.GN23521@phenom.ffwll.local>
+References: <1427213239-8775-1-git-send-email-kraxel@redhat.com>
+ <20150324165057.GN1349@phenom.ffwll.local>
+ <1427718227.3372.33.camel@nilsson.home.kraxel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <878ueed0u3.fsf@ashishki-desk.ger.corp.intel.com>
+Content-Disposition: inline
+In-Reply-To: <1427718227.3372.33.camel@nilsson.home.kraxel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexander Shishkin <alexander.shishkin@linux.intel.com>
-Cc: Greg KH <gregkh@linuxfoundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, peter.lachner@intel.com, norbert.schulz@intel.com, keven.boell@intel.com, yann.fouassier@intel.com, laurent.fert@intel.com, linux-api@vger.kernel.org, Kaixu Xia <kaixu.xia@linaro.org>, Chunyan Zhang <zhang.chunyan@linaro.org>
+To: Gerd Hoffmann <kraxel@redhat.com>
+Cc: Daniel Vetter <daniel@ffwll.ch>, virtio-dev@lists.oasis-open.org, "Michael S. Tsirkin" <mst@redhat.com>, "open list:ABI/API" <linux-api@vger.kernel.org>, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open list:DRM DRIVERS" <dri-devel@lists.freedesktop.org>, "open list:VIRTIO CORE, NET..." <virtualization@lists.linux-foundation.org>, Dave Airlie <airlied@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On 30 March 2015 at 08:19, Alexander Shishkin
-<alexander.shishkin@linux.intel.com> wrote:
-> Mathieu Poirier <mathieu.poirier@linaro.org> writes:
->
->> Hey Alex,
->
-> Hi Mathieu,
->
->> Have a look at the following patch and see if you agree with my approach.  If so
->> simply add the code to a third version.
->
-> Greg's comment about the two levels of ioctls got me thinking in the
-> direction of adding callbacks to stm_data on case-by-case basis and then
-> I realized that we might actually move these private callbacks into the
-> stm core as well (see my followup to the coresight-stm driver patch).
->
-> So, I suggest that we work through the ioctl commands that you need for
-> coresight stm and try to see how they fit into the generic scheme of
-> things and if we still find that we need implementation-specific ioctl
-> commands, then we try to shape them as individual callbacks rather than
-> just .ioctl().
+On Mon, Mar 30, 2015 at 02:23:47PM +0200, Gerd Hoffmann wrote:
+>   Hi,
+> 
+> > > Signed-off-by: Dave Airlie <airlied@redhat.com>
+> > > Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+> > 
+> > Standard request from my side for new drm drivers (especially if they're
+> > this simple): Can you please update the drivers to latest drm internal
+> > interfaces, i.e. using universal planes and atomic?
+> 
+> Up'n'running.  Incremental patch:
+> 
+> https://www.kraxel.org/cgit/linux/commit/?h=virtio-gpu-2d&id=b8edf4f38a1ec5a50f6ac8948521a12f862d3d5a
+> 
+> v2 coming, but I'll go over the other reviews first.
 
-Yeah, I'm pretty sure we can come up with something better here.
-
->
->> diff --git a/include/linux/stm.h b/include/linux/stm.h
->> index 976c94d8f17f..84dd83c47fe7 100644
->> --- a/include/linux/stm.h
->> +++ b/include/linux/stm.h
->> @@ -62,8 +62,9 @@ struct stm_data {
->>                                       unsigned int);
->>       void                    (*unlink)(struct stm_data *, unsigned int,
->>                                         unsigned int);
->> -     long                    (*ioctl)(struct stm_data *, unsigned int,
->> -                                      unsigned long);
->> +     long                    (*ioctl)(struct stm_data *,
->> +                                      unsigned int, unsigned int,
->> +                                      unsigned int, unsigned long);
->
-> We might go even further and pass a struct stm_output (which also
-> contains number of channels) pointer here, having first moved it from
-> drivers/... to include/linux/stm.h, and while at it also do the same to
-> the other callbacks that pass master/channel around. Does this make
-> sense to you?
-
-Humm...  Do callbacks really need to have access to a struct output?
->From my side of the fence dealing with individual master/channels is
-sufficient but other people may have different scenarios.  The end
-result is the same and modifying the callback signature doesn't
-represent a lot of work.
-
->
-> Regards,
-> --
-> Alex
+Looking good. Wrt pageflip the current MO is to handroll it in your
+driver, common approach is to use the msm async commit implementation
+msm_atomic_commit. The issue is simply that right now there's still no
+useable generic vblank callback support (drm_irq.c is a mess) hence why
+the core helpers don't support async flips yet.
+-Daniel
+-- 
+Daniel Vetter
+Software Engineer, Intel Corporation
+http://blog.ffwll.ch
