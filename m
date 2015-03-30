@@ -1,78 +1,46 @@
-From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 1/6] virtio_balloon: transitional interface
-Date: Mon, 30 Mar 2015 19:55:53 +0200
-Message-ID: <20150330195508-mutt-send-email-mst@redhat.com>
-References: <1427737006-23191-1-git-send-email-mst@redhat.com>
- <1427737006-23191-2-git-send-email-mst@redhat.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH v7 0/5] vfs: Non-blockling buffered fs read (page cache
+ only)
+Date: Mon, 30 Mar 2015 11:54:14 -0700
+Message-ID: <20150330115414.f7900c7062fe6370cb2aea8d@linux-foundation.org>
+References: <cover.1426528417.git.milosz@adfin.com>
+	<20150326202824.65d03787.akpm@linux-foundation.org>
+	<CANP1eJEbDusq_Gda35dGKiacC+2tbvb_bQEEHpi6PmgnNoWDFw@mail.gmail.com>
+	<20150327100411.6823b9d7.akpm@linux-foundation.org>
+	<20150330074020.GC22229@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1427737006-23191-2-git-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: virtio-dev-sDuHXQ4OtrM4h7I2RyI4rWD2FQJk+8+b@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20150330074020.GC22229@infradead.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Milosz Tanski <milosz@adfin.com>, LKML <linux-kernel@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org, Dave Chinner <david@fromorbit.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 30, 2015 at 07:37:12PM +0200, Michael S. Tsirkin wrote:
-> Virtio 1.0 doesn't include a modern balloon device.
-> But it's not a big change to support a transitional
-> balloon device: this has the advantage of supporting
-> existing drivers, transparently.
-> 
-> Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
+On Mon, 30 Mar 2015 00:40:20 -0700 Christoph Hellwig <hch@infradead.org> wrote:
 
-Hmm, re-reading the code, this won't be enough for BE
-guests. We are doing one extra byteswap there.
-
-I'll fix up and repost.
-
->  include/uapi/linux/virtio_balloon.h | 6 ++++++
->  drivers/virtio/virtio_balloon.c     | 8 ++++++--
->  2 files changed, 12 insertions(+), 2 deletions(-)
+> On Fri, Mar 27, 2015 at 10:04:11AM -0700, Andrew Morton wrote:
+> > mm...  I don't think we should be adding placeholders to the kernel API
+> > to support code which hasn't been written, tested, reviewed, merged,
+> > etc.  It's possible none of this will ever happen and we end up with a
+> > syscall nobody needs or uses.  Plus it's always possible that during
+> > this development we decide the pwrite2() interface needs alteration but
+> > it's too late.
+> > 
+> > What would be the downside of deferring pwrite2() until it's all
+> > implemented?
 > 
-> diff --git a/include/uapi/linux/virtio_balloon.h b/include/uapi/linux/virtio_balloon.h
-> index 4b0488f..5d83902 100644
-> --- a/include/uapi/linux/virtio_balloon.h
-> +++ b/include/uapi/linux/virtio_balloon.h
-> @@ -56,4 +56,10 @@ struct virtio_balloon_stat {
->  	__u64 val;
->  } __attribute__((packed));
->  
-> +struct virtio_balloon_stat_modern {
-> +	__u8 reserved[6];
-> +	__u16 tag;
-> +	__u64 val;
-> +};
-> +
->  #endif /* _LINUX_VIRTIO_BALLOON_H */
-> diff --git a/drivers/virtio/virtio_balloon.c b/drivers/virtio/virtio_balloon.c
-> index 6a356e3..68e937f 100644
-> --- a/drivers/virtio/virtio_balloon.c
-> +++ b/drivers/virtio/virtio_balloon.c
-> @@ -77,7 +77,7 @@ struct virtio_balloon {
->  
->  	/* Memory statistics */
->  	int need_stats_update;
-> -	struct virtio_balloon_stat stats[VIRTIO_BALLOON_S_NR];
-> +	struct virtio_balloon_stat_modern stats[VIRTIO_BALLOON_S_NR];
->  
->  	/* To register callback in oom notifier call chain */
->  	struct notifier_block nb;
-> @@ -269,7 +269,11 @@ static void stats_handle_request(struct virtio_balloon *vb)
->  	vq = vb->stats_vq;
->  	if (!virtqueue_get_buf(vq, &len))
->  		return;
-> -	sg_init_one(&sg, vb->stats, sizeof(vb->stats));
-> +	if (virtio_has_feature(vdev, VIRTIO_F_VERSION_1))
-> +		sg_init_one(&sg, vb->stats, sizeof(vb->stats));
-> +	else
-> +		sg_init_one(&sg, &vb->stats->tag, sizeof(vb->stats) -
-> +			    offsetof(typeof(*vb->stats, tag);
->  	virtqueue_add_outbuf(vq, &sg, 1, vb, GFP_KERNEL);
->  	virtqueue_kick(vq);
->  }
-> -- 
-> MST
-> 
+> It _is_ implemented.  I just decided to submit it separately as Miklos
+> already has to deal with enough bikeshedding for his feature that I
+> don't want to put the burden of dealing with the BS for the one I wrote
+> on him.
+
+afacit the only difference between this pwritev2() and the existing
+pwritev() is that pwritev2() interprets pos==-1 as "current position",
+which duplicates writev()?
+
+Unless I've missed something, there's no point in merging this
+pwritev2() and it would be better to separate this syscall out into a
+pwritev2() patchset which can be considered and merged separately.  For
+the reasons described above.
