@@ -1,58 +1,76 @@
-From: Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>
-Subject: Re: [Intel-gfx] [PATCH] drm/i915: fix definition of the
- DRM_IOCTL_I915_GET_SPRITE_COLORKEY ioctl
-Date: Mon, 30 Mar 2015 08:54:55 +0200
-Message-ID: <20150330065455.GG23521@phenom.ffwll.local>
-References: <1427399236-14012-1-git-send-email-tt.rantala@gmail.com>
- <87a8yzq6yr.fsf@intel.com>
- <20150327080427.GB23521@phenom.ffwll.local>
- <551574C4.6000804@intel.com>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH 01/86] pci: export pci_ids.h
+Date: Mon, 30 Mar 2015 08:55:22 +0200
+Message-ID: <20150330065522.GA10105@kroah.com>
+References: <1427635734-24786-1-git-send-email-mst@redhat.com>
+ <1427635734-24786-2-git-send-email-mst@redhat.com>
+ <20150329204047.GA5902@kroah.com>
+ <20150330083707-mutt-send-email-mst@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <551574C4.6000804-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jesse Barnes <jesse.barnes-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Tommi Rantala <tt.rantala-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Vetter <daniel.vetter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
+In-Reply-To: <20150330083707-mutt-send-email-mst@redhat.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: "Michael S. Tsirkin" <mst@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Bjorn Helgaas <bhelgaas@google.com>, Jonathan Corbet <corbet@lwn.net>, "David S. Miller" <davem@davemloft.net>, Hans Verkuil <hans.verkuil@cisco.com>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Alexei Starovoitov <ast@plumgrid.com>, stephen hemminger <stephen@networkplumber.org>, Masahiro Yamada <yamada.m@jp.panasonic.com>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Andy Lutomirski <luto@amacapital.net>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Stephane Eranian <eranian@google.com>, Huang Rui <ray.huang@amd.com>, Peter Neubauer <pneubauer@bluerwhite.org>, linux-pci@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 27, 2015 at 08:18:28AM -0700, Jesse Barnes wrote:
-> On 03/27/2015 01:04 AM, Daniel Vetter wrote:
-> > On Fri, Mar 27, 2015 at 08:39:56AM +0200, Jani Nikula wrote:
-> >> On Thu, 26 Mar 2015, Tommi Rantala <tt.rantala-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> >>> Fix definition of the DRM_IOCTL_I915_GET_SPRITE_COLORKEY ioctl, so that it
-> >>> is different from the DRM_IOCTL_I915_SET_SPRITE_COLORKEY ioctl.
-> >>>
-> >>> Signed-off-by: Tommi Rantala <tt.rantala-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> >>
-> >> Whoa. Broken since its introduction in
-> >>
-> >> commit 8ea30864229e54b01ac0e9fe88c4b733a940ec4e
-> >> Author: Jesse Barnes <jbarnes-Y1mF5jBUw70BENJcbMCuUQ@public.gmane.org>
-> >> Date:   Tue Jan 3 08:05:39 2012 -0800
-> >>
-> >>     drm/i915: add color key support v4
-> >>
-> >> Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+On Mon, Mar 30, 2015 at 08:48:44AM +0200, Michael S. Tsirkin wrote:
+> On Sun, Mar 29, 2015 at 10:40:47PM +0200, Greg KH wrote:
+> > On Sun, Mar 29, 2015 at 03:37:01PM +0200, Michael S. Tsirkin wrote:
+> > > The macros in pci_ids.h are pretty useful for userspace
+> > > using the pci sysfs interface.
+> > > At the moment userspace is forced to duplicate these macros
+> > > (e.g. QEMU does this), it is better to expose them in
+> > > /usr/include/linux/pci_ids.h so everyone can just include
+> > > this header.
+> > > 
+> > > Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+> > > ---
+> > >  include/linux/pci_ids.h      | 2998 +-----------------------------------------
+> > >  include/uapi/linux/pci_ids.h | 2997 +++++++++++++++++++++++++++++++++++++++++
 > > 
-> > Nope, we'll just rip it out and replace it all with the drm_noop ioctl. At
-> > least I didn't find any userspace anywhere and only broken definitions.
-> > Proof enough this isn't useful.
-> > 
-> > Even more so since that means we don't have to convert the get ioctl over
-> > to atomic, yay! I'll send patches.
+> > No, please use the pci ids file from the upstream pci id database
+> > instead.
 > 
-> Can we just skip the noop part and delete it altogether?  It was only
-> added speculatively and obviously never used at all...
+> 
+> >  We shouldn't be putting these all in one file,
+> 
+> pci.txt says:
+> 	Please add PCI_VENDOR_ID_xxx for vendors
+> You want to change this policy, and get rid of
+> vendor ids in pci_ids.h completely?
 
-The table is indexed, we need a dummy entry. I guess we could do a
-drm_invalid_ioctl function too for these, but then whether you get an
-error or not doesn't really matter for unused ioctls. Hence I've stuck
-with drm_noop for all these removed ioctl (except when we need a more
-tailore-made lie to keep userspace happy).
--Daniel
--- 
-Daniel Vetter
-Software Engineer, Intel Corporation
-http://blog.ffwll.ch
+Please read the top of pci_ids.h.  It hasn't had new ids added to it in
+a long time.
+
+> Bjorn, what do you think of this?
+> 
+> >  and pulling
+> > them out of drivers isn't ok.
+> 
+> This patchset is not pulling any files out of drivers fwiw.
+
+It did for the USB gadget driver patch that I commented on.
+
+> > Userspace shouldn't need to know any of these, use libpci.
+> 
+> Unless I'm mistaken, libpci does not export a header with defines. It
+> has a text file pci.ids, but parsing that when all I want is e.g. locate
+> all intel devices is just too much overhead. No one wants that, so
+> people just duplicate headers.
+
+Why would userspace need the pci id of anything?  Again, just use
+libpci, isn't it fast enough?  Don't duplicate existing logic.
+
+Or use the hw database that libudev exports, which is already on your
+machine and exports all of the pci ids from libpci directly.
+
+> Standard class IDs are even sillier to duplicate.
+
+Again, why does userspace need this?
+
+thanks,
+
+greg k-h
