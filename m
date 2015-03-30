@@ -1,53 +1,112 @@
-From: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [patch 1/2] mm, doc: cleanup and clarify munmap behavior for
- hugetlb memory
-Date: Mon, 30 Mar 2015 13:23:20 -0700 (PDT)
-Message-ID: <alpine.LSU.2.11.1503301307490.2485@eggly.anvils>
-References: <alpine.DEB.2.10.1503261621570.20009@chino.kir.corp.google.com> <alpine.LSU.2.11.1503291801400.1052@eggly.anvils> <20150330142336.GB17678@akamai.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH v7 0/5] vfs: Non-blockling buffered fs read (page cache
+ only)
+Date: Mon, 30 Mar 2015 13:26:25 -0700
+Message-ID: <20150330132625.52b1250527ca3dcda79e349e@linux-foundation.org>
+References: <cover.1426528417.git.milosz@adfin.com>
+	<20150326202824.65d03787.akpm@linux-foundation.org>
+	<20150327081822.GA28669@infradead.org>
+	<20150327013516.8c6788be.akpm@linux-foundation.org>
+	<20150327084833.GA7689@infradead.org>
+	<20150327020159.eadd0ce1.akpm@linux-foundation.org>
+	<20150327155854.GA5548@samba2>
+	<20150330073604.GB22229@infradead.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150330142336.GB17678-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Cc: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, Luiz Capitulino <lcapitulino-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Joern Engel <joern-PCqxUs/MD9bYtjvyW6yDsg@public.gmane.org>, Jianguo Wu <wujianguo-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20150330073604.GB22229@infradead.org>
+Sender: owner-linux-aio@kvack.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Jeremy Allison <jra@samba.org>, Milosz Tanski <milosz@adfin.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org, Dave Chinner <david@fromorbit.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 30 Mar 2015, Eric B Munson wrote:
-> On Sun, 29 Mar 2015, Hugh Dickins wrote:
-> > 
-> > Eric, I apologize for bringing you in to the discussion, and then
-> > ignoring your input.  I understand that you would like MAP_HUGETLB
-> > to behave more understandably.  We can all agree that the existing
-> > behavior is unsatisfying.  But it's many years too late now to 
-> > change it around - and I suspect that a full exercise to do so would
-> > actually discover some good reasons why the original choices were made.
+On Mon, 30 Mar 2015 00:36:04 -0700 Christoph Hellwig <hch@infradead.org> wrote:
+
+> On Fri, Mar 27, 2015 at 08:58:54AM -0700, Jeremy Allison wrote:
+> > The problem with the above is that we can't tell the difference
+> > between pread2() returning a short read because the pages are not
+> > in cache, or because someone truncated the file. So we need some
+> > way to differentiate this.
 > 
-> No worries, my main concern was avoiding the confusion that led me down
-> the rabbit hole of compaction and mlock.  As long as the documentation,
-> man pages, and the code all agree I am satisfied.  I would have
-> preferred to make the code match the docs, but I understand that
-> changing the code now introduces a risk of breaking userspace.
+> Is a race vs truncate really that time critical that you can't
+> wait for the thread pool to do the second read to notice it?
 > 
-> It is charitable of you to assume that there were good reasons for the
-> original decision.  But as the author of the code in question, I suspect
-> the omission was one of my own inexperience.
+> > My preference from userspace would be for pread2() to return
+> > EAGAIN if *all* the data requested is not available (where
+> > 'all' can be less than the size requested if the file has
+> > been truncated in the meantime).
+> 
+> That is easily implementable, but I can see that for example web apps
+> would be happy to get as much as possible.  So if Samba can be ok
+> with short reads and only detecting the truncated case in the slow
+> path that would make life simpler.  Otherwise we might indeed need two
+> flags.
 
-No, you are both too modest and too arrogant :)
+The problem is that many applications (including samba!) want
+all-or-nothing behaviour, and preadv2() cannot provide it.  By the time
+preadv2() discovers a not-present page, it has already copied bulk data
+out to userspace.
 
-You were extending the existing hugetlbfs infrastructure to be
-accessible through a MAP_HUGETLB interface.  You therefore inherited
-the defects (some probably necessary, others perhaps not) of the
-original hugetlbfs implementation, which is where this disagreeable
-behaviour comes from.
+To fix this, preadv2() would need to take two passes across the pages,
+pinning them in between and somehow blocking out truncate.  That's a
+big change.
 
-If you were to ask for MAP_HUGETLB to behave differently from mapping
-hugetlbfs here, I would shout no.  For a start, we'd have to add a
-VM_HUGETLB2 flag so that each place that tests VM_HUGETLB (usually
-through is_vm_hugetlb_page(vma) - sic) could decide how to behave
-instead.
+With the current preadv2(), applications would have to do
 
-I for one have neither time nor inclination to write or review
-any such patch.
+	nr_read = preadv2(..., offset, len, ...);
+	if (nr_read == len)
+		process data;
+	else
+		punt(offset + nr_read, len - nr_read);
 
-Hugh
+and the worker thread will later have to splice together the initial
+data and the later-arriving data, probably on another CPU, probably
+after the initial data has gone cache-cold.
+
+A cleaner solution is
+
+	if (fincore(fd, NULL, offset, len) == len) {
+		preadv(..., offset, len);
+		process data;
+	} else {
+		punt(offset, len);
+	}
+
+This way all the data gets copied in a single hit and is cache-hot when
+userspace processes it.
+
+Comparing fincore()+pread() to preadv2():
+
+pros:
+
+a) fincore() may be used to provide both all-or-nothing and
+   part-read-ok behaviour cleanly and with optimum cache behaviour.
+
+b) fincore() doesn't add overhead, complexity and stack depth to
+   core pagecache read() code.  Nor does it expand VFS data structures.
+
+c) with a non-NULL second argument, fincore provides the
+   mincore()-style page map.
+
+cons:
+
+d) fincore() is more expensive
+
+e) fincore() will very occasionally block
+
+
+Tradeoffs are involved.  To decide on the best path we should examine
+d).  I expect that the overhead will be significant for small reads but
+not significant for medium and large reads.  Needs quantifying.
+
+And I don't believe that e) will be a problem in the real world.  It's
+a significant increase in worst-case latency and a negligible increase
+in average latency.  I've asked at least three times for someone to
+explain why this is unacceptable and no explanation has been provided.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
