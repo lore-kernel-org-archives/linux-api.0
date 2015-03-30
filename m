@@ -1,46 +1,164 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH net-next] tc: bpf: generalize pedit action
-Date: Sun, 29 Mar 2015 18:18:01 -0700
-Message-ID: <5518A449.605@plumgrid.com>
-References: <1427424837-7757-1-git-send-email-ast@plumgrid.com> <55189E5F.3050302@mojatatu.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+From: Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v2 3/3] Documentation/ABI: Update sysfs-driver-toshiba_acpi entry
+Date: Sun, 29 Mar 2015 19:26:39 -0600
+Message-ID: <1427678799-5508-1-git-send-email-coproscefalo@gmail.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55189E5F.3050302-jkUAjuhPggJWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jamal Hadi Salim <jhs-jkUAjuhPggJWk0Htik3J/w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Jiri Pirko <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, platform-driver-x86-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 3/29/15 5:52 PM, Jamal Hadi Salim wrote:
-> On 03/26/15 22:53, Alexei Starovoitov wrote:
->> existing TC action 'pedit' can munge any bits of the packet.
->> Generalize it for use in bpf programs attached as cls_bpf and act_bpf via
->> bpf_skb_store_bytes() helper function.
->>
->> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
->> ---
->>
->> pedit is limited to 32-bit masked rewrites. Here let it be flexible.
->>
->> ptr = skb_header_pointer(skb, offset, len, buf);
->> memcpy(ptr, from, len);
->> if (ptr == buf)
->>    skb_store_bits(skb, offset, ptr, len);
->>
->> ^^ logic is the same as in pedit.
->> shifts, mask, invert style of rewrite is easily done by the program.
->> Just like arbitrary parsing of the packet and applying rewrites on
->> demand.
->>
->
-> Alexei/Daniel - I am backlogged on email; however, i didn quiet follow:
-> Is there another patch to pedit that help achieve the above?
+This patch updates the sysfs-driver-toshiba_acpi entry, adding the
+missing entries for USB Sleep functions.
 
-not really. If you meant adding 'array of bytes' attribute to pedit, it
-won't be sufficient from program point of view. Programs are deciding
-what and when to write, whereas pedit is static.
-I'm working on csum helper patch and a set of examples that will
-demonstrate the possibilities. I believe Daniel is preparing examples
-as well for different use cases.
+And also, while at the neighborhood, fix some typos and add a note
+that some features require a reboot.
+
+Signed-off-by: Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+ .../ABI/testing/sysfs-driver-toshiba_acpi          | 93 +++++++++++++++++++---
+ 1 file changed, 80 insertions(+), 13 deletions(-)
+
+diff --git a/Documentation/ABI/testing/sysfs-driver-toshiba_acpi b/Documentation/ABI/testing/sysfs-driver-toshiba_acpi
+index ca9c71a..eed922e 100644
+--- a/Documentation/ABI/testing/sysfs-driver-toshiba_acpi
++++ b/Documentation/ABI/testing/sysfs-driver-toshiba_acpi
+@@ -8,9 +8,11 @@ Description:	This file controls the keyboard backlight operation mode, valid
+ 			* 0x2  -> AUTO (also called TIMER)
+ 			* 0x8  -> ON
+ 			* 0x10 -> OFF
+-		Note that the kernel 3.16 onwards this file accepts all listed
++		Note that from kernel 3.16 onwards this file accepts all listed
+ 		parameters, kernel 3.15 only accepts the first two (FN-Z and
+ 		AUTO).
++		Also note that toggling this value on type 1 devices, requires
++		a reboot for changes to take effect.
+ Users:		KToshiba
+ 
+ What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/kbd_backlight_timeout
+@@ -67,15 +69,72 @@ Description:	This file shows the current keyboard backlight type,
+ 			* 2 -> Type 2, supporting modes TIMER, ON and OFF
+ Users:		KToshiba
+ 
++What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/usb_sleep_charge
++Date:		January 23, 2015
++KernelVersion:	4.0
++Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
++Description:	This file controls the USB Sleep & Charge charging mode, which
++		can be:
++			* 0 -> Disabled		(0x00)
++			* 1 -> Alternate	(0x09)
++			* 2 -> Auto		(0x21)
++			* 3 -> Typical		(0x11)
++		Note that from kernel 4.1 onwards this file accepts all listed
++		values, kernel 4.0 only supports the first three.
++		Note that this feature only works when connected to power, if
++		you want to use it under battery, see the entry named
++		"sleep_functions_on_battery"
++Users:		KToshiba
++
++What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/sleep_functions_on_battery
++Date:		January 23, 2015
++KernelVersion:	4.0
++Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
++Description:	This file controls the USB Sleep Functions under battery, and
++		set the level at which point they will be disabled, accepted
++		values can be:
++			* 0	-> Disabled
++			* 1-100	-> Battery level to disable sleep functions
++		Currently it prints two values, the first one indicates if the
++		feature is enabled or disabled, while the second one shows the
++		current battery level set.
++		Note that when the value is set to disabled, the sleep function
++		will only work when connected to power.
++Users:		KToshiba
++
++What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/usb_rapid_charge
++Date:		January 23, 2015
++KernelVersion:	4.0
++Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
++Description:	This file controls the USB Rapid Charge state, which can be:
++			* 0 -> Disabled
++			* 1 -> Enabled
++		Note that toggling this value requires a reboot for changes to
++		take effect.
++Users:		KToshiba
++
++What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/usb_sleep_music
++Date:		January 23, 2015
++KernelVersion:	4.0
++Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
++Description:	This file controls the Sleep & Music state, which values can be:
++			* 0 -> Disabled
++			* 1 -> Enabled
++		Note that this feature only works when connected to power, if
++		you want to use it under battery, see the entry named
++		"sleep_functions_on_battery"
++Users:		KToshiba
++
+ What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/version
+-Date:		February, 2015
+-KernelVersion:	3.20
++Date:		February 12, 2015
++KernelVersion:	4.0
+ Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+ Description:	This file shows the current version of the driver
++Users:		KToshiba
+ 
+ What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/fan
+-Date:		February, 2015
+-KernelVersion:	3.20
++Date:		February 12, 2015
++KernelVersion:	4.0
+ Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+ Description:	This file controls the state of the internal fan, valid
+ 		values are:
+@@ -83,8 +142,8 @@ Description:	This file controls the state of the internal fan, valid
+ 			* 1 -> ON
+ 
+ What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/kbd_function_keys
+-Date:		February, 2015
+-KernelVersion:	3.20
++Date:		February 12, 2015
++KernelVersion:	4.0
+ Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+ Description:	This file controls the Special Functions (hotkeys) operation
+ 		mode, valid values are:
+@@ -94,21 +153,29 @@ Description:	This file controls the Special Functions (hotkeys) operation
+ 		and the hotkeys are accessed via FN-F{1-12}.
+ 		In the "Special Functions" mode, the F{1-12} keys trigger the
+ 		hotkey and the F{1-12} keys are accessed via FN-F{1-12}.
++		Note that toggling this value requires a reboot for changes to
++		take effect.
++Users:		KToshiba
+ 
+ What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/panel_power_on
+-Date:		February, 2015
+-KernelVersion:	3.20
++Date:		February 12, 2015
++KernelVersion:	4.0
+ Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+ Description:	This file controls whether the laptop should turn ON whenever
+ 		the LID is opened, valid values are:
+ 			* 0 -> Disabled
+ 			* 1 -> Enabled
++		Note that toggling this value requires a reboot for changes to
++		take effect.
++Users:		KToshiba
+ 
+ What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/usb_three
+-Date:		February, 2015
+-KernelVersion:	3.20
++Date:		February 12, 2015
++KernelVersion:	4.0
+ Contact:	Azael Avalos <coproscefalo-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+-Description:	This file controls whether the USB 3 functionality, valid
+-		values are:
++Description:	This file controls the USB 3 functionality, valid values are:
+ 			* 0 -> Disabled (Acts as a regular USB 2)
+ 			* 1 -> Enabled (Full USB 3 functionality)
++		Note that toggling this value requires a reboot for changes to
++		take effect.
++Users:		KToshiba
+-- 
+2.2.2
