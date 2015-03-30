@@ -1,111 +1,146 @@
-From: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [PATCH 2/5] selftest/futex: Update Makefile to use lib.mk
-Date: Mon, 30 Mar 2015 09:31:14 -0700
-Message-ID: <D13EC750.C43E1%dvhart@linux.intel.com>
-References: <597c9eabcac5da9456d6cfd6de9117591d73385e.1427493640.git.dvhart@linux.intel.com>
- <95d599bc531666252f8e3f4e467d5f94af2a7ad2.1427493640.git.dvhart@linux.intel.com>
- <1427672978.4218.3.camel@ellerman.id.au>
+From: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 00/14] Add kdbus implementation
+Date: Mon, 30 Mar 2015 18:56:44 +0200
+Message-ID: <CANq1E4TTt3qanQse30KOZsuo2tfNoj7YSueh3AZ7bY1nQQeZNA@mail.gmail.com>
+References: <1425906560-13798-1-git-send-email-gregkh@linuxfoundation.org>
+	<CALCETrUjqTH14fZCeqU_OBoKX_6x4B=712WTeSqSAztpgXGiDw@mail.gmail.com>
+	<CANq1E4Tf_6Cn+sxY=BPEbRpEr5WY+-rRX5gipz-_=4PNLa9bnQ@mail.gmail.com>
+	<CALCETrVWbz7YudNQXQD_2PjC1HR0P0cB_1ea8NiYoQPDfQxERg@mail.gmail.com>
+	<CANq1E4RA1ok=3Z5W2LkzqaUOKtbMVX_Joxe7_LRbLnQgfRUEYA@mail.gmail.com>
+	<CALCETrWCBYzbzG3xZznG4AvVf67E_d8BVmBi1bZsDx7x_2Bh5g@mail.gmail.com>
+	<CANq1E4TtXq02Ug22fsTr8j0X6+vJKvyryALiTEMbT4SMQB1j3g@mail.gmail.com>
+	<CALCETrXqYBeZuOWhm9mz_nt+aWPXHFwkQPEAfwBXzDxnAP7f+g@mail.gmail.com>
+	<CANq1E4QiErHp8Q6bzFLkK9=7eBZC8dvh+Xnrh9_D5DAAogyaZA@mail.gmail.com>
+	<CALCETrUuWhtJ9w9vyCGgaJDMGithJad4A4wf-BuxWLb_af5eDg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="US-ASCII"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1427672978.4218.3.camel-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+In-Reply-To: <CALCETrUuWhtJ9w9vyCGgaJDMGithJad4A4wf-BuxWLb_af5eDg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 3/29/15, 4:49 PM, "Michael Ellerman" <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org> wrote:
+Hi
 
->On Fri, 2015-03-27 at 15:17 -0700, Darren Hart wrote:
->> Adapt the futextest Makefiles to use lib.mk macros for RUN_TESTS and
->> EMIT_TESTS. For now, we reuse the run.sh mechanism provided by
->> futextest. This doesn't provide the standard selftests: [PASS|FAIL]
->> format, but the tests provide very similar output already.
->> 
->> This results in the run_kselftest.sh script for futexes including a
->> single line: ./run.sh
->> 
->> Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
->> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
->> Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
->> Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
->> Cc: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
->> Cc: KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
->> Signed-off-by: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
->> ---
->>  tools/testing/selftests/futex/Makefile            | 21
->>+++++++++++++++++++++
->>  tools/testing/selftests/futex/functional/Makefile |  4 ++++
->>  2 files changed, 25 insertions(+)
->> 
->> diff --git a/tools/testing/selftests/futex/Makefile
->>b/tools/testing/selftests/futex/Makefile
->> index 8629187..6a17529 100644
->> --- a/tools/testing/selftests/futex/Makefile
->> +++ b/tools/testing/selftests/futex/Makefile
->> @@ -1,8 +1,29 @@
->>  SUBDIRS := functional
->>  
->> +TEST_PROGS := run.sh
->> +
->>  .PHONY: all clean
+On Wed, Mar 25, 2015 at 7:12 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> On Wed, Mar 25, 2015 at 10:29 AM, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+[...]
+>>> I could be wrong about the lack of use cases.  If so, please enlighten me.
+>>
+>> We have several dbus APIs that allow clients to register as a special
+>> handler/controller/etc. (eg., see systemd-logind TakeControl()). The
+>> API provider checks the privileges of a client on registration and
+>> then just tracks the client ID. This way, the client can be privileged
+>> when asking for special access, then drop privileges and still use the
+>> interface. You cannot re-connect in between, as the API provider
+>> tracks your bus ID. Without message-metadata, all your (other) calls
+>> on this bus would always be treated as privileged. We *really* want to
+>> avoid this.
 >
->lib.mk defines all & clean as PHONY for you.
+> Connect twice?
 
-OK, I can remove this (it was just part of the originals). Shall I resent
-the whole series or just a follow-on patch?
+The remote peer might cache your connection ID to track you. You have
+to use the same connection to talk to that peer, in this given
+scenario. That's how D-Bus1 is used today, and we have to follow the
+semantics.
 
->
->>  all:
->>  	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR $@ ; done
->>  
->> +include ../lib.mk
->> +
->> +override define RUN_TESTS
->> +	./run.sh
->> +endef
->
->Do you need to do this override? The standard logic should work AFAICS,
->or do
->you not want the echo logic?
+> You *already* have to reconnect or connect twice because you have
+> per-connection metadata.  That's part of my problem with this scheme
+> -- you support *both styles*, which seems like it'll give you most of
+> the downsides of both without the upsides.
 
-The standard logic wants to run each individual test and uses the echo
-logic. My tests have their own pass/fail reporting mechanism. As I run
-many options on the same tests and have pretty-printing logic, I prefer to
-keep that in a run script rather than in a makefile.
+Not necessarily. Connection metadata describes the state at the time
+you connected to the bus. If someone ask for this information, they
+will get exactly that. In this model, you cannot drop privileges, if
+you need to be privileged during setup.
+If someone asks for per-message metadata, they better ought not ask
+for per-connection creds. It's not the information they're looking
+for, so it will not match the data that at the time the message was
+sent.
 
-I don't care for the echo logic as a mechanism, I think the reporting
-should be part of the test. It also doesn't scale past pass/fail - like
-xpass and xfail, for example.
+There is no immediate need to make both match. For security decisions,
+we mandate per-message creds. Per-connection creds are for
+backwards-compatibility to dbus1 and for passive introspection of bus
+connections.
 
+>>
+>> Another example is logging, where we want exact data at the time a
+>> message is logged. Otherwise, the data is useless.
 >
->> +override define INSTALL_RULE
->> +	mkdir -p $(INSTALL_PATH)
->> +	install -t $(INSTALL_PATH) $(TEST_PROGS) $(TEST_PROGS_EXTENDED)
->>$(TEST_FILES)
->> +
->> +	@for SUBDIR in $(SUBDIRS); do \
->> +		$(MAKE) -C $$SUBDIR INSTALL_PATH=$(INSTALL_PATH)/$$SUBDIR install; \
->> +	done;
->> +endef
->> +
->> +override define EMIT_TESTS
->> +	echo "./run.sh"
->> +endef
+> Why?
 >
->Ditto.
->
->cheers
->
->
->
->
->
+> No, really, why is exact data at the time of logging so important?  It
+> sounds nice, but I really don't see it.
 
+Example: If you don't have message-metadata, you don't know the thread
+which sent a log-message. In a multi-threaded application, that's
+incredibly useful information.
 
--- 
-Darren Hart
-Intel Open Source Technology Center
+After all, logging is all about correct data. Logging creds that were
+not effective at the time the message was sent is futile.
+
+>>
+>> kdbus is a _bus_, not a p2p channel. Thus, a peer may talk to multiple
+>> destinations, and it may want to look different to each of them. DBus
+>> method-calls allow 'syscall'-ish behavior when calling into other
+>> processes. We *want* to be able to drop privileges after doing process
+>> setup. We want further bus-calls to no longer be treated privileged.
+>
+> You could have an IOCTL that re-captures your connection metata.
+
+I don't see how this makes the model easier, or more predictable. On
+the contrary, per-connection metadata is no longer compatible to UDS /
+dbus1, nor is a per-message metadata concept reliable.
+
+>>
+>> Furthermore, DBus was designed to allow peers to track other peers
+>> (which is why it always had the NameOwnerChanged signal). This is an
+>> essential feature, that simplifies access-management considerably, as
+>> you can cache it together with the unique name of a peer. We only open
+>> a single connection to a bus. glib, libdbus, efl, ell, qt, sd-bus, and
+>> others use cached bus-connections that are shared by all code of a
+>> single thread. Hence, the bus connection is kinda part of the process
+>> itself, like stdin/stdout. Without message-metadata, it is impossible
+>> to ever drop privileges on a bus, without losing all state.
+>
+> See above about an IOCTL that re-captures your connection metadata.
+>
+> Again, you seem to be arguing that per-connection metadata is bad, but
+> you still have an implementation of per-connection metadata, so you
+> still have all these problems.
+
+I don't see why we get the problems of per-connection metadata. Just
+because you _can_ use it, doesn't mean you should use it for all
+imaginable use-cases. The same goes for reading information from
+/proc. There are valid use-cases to do so, but also a lot of cases
+where it will not provide the information you want.
+
+> I'm actually okay with per-message metadata in principle, but I'd like
+> to see evidence (with numbers, please) that a send+recv of per-message
+> metadata is *not* significantly slower than a recv of already-captured
+> per-connection metadata.  If this is in fact the case, then maybe you
+> should trash per-connection metadata instead and the legacy
+> compatibility code can figure out a way to deal with it.  IMO that
+> would be a pretty nice outcome, since you would never have to worry
+> whether your connection to the bus is inadvertantly privileged.
+
+Per-message metadata makes SEND about 25% slower, if you transmit the
+full set of all possible information. Just 3% if you only use
+PIDs+UIDs. The expensive metadata is cgroup-path and exe-path.
+If a service needs that information, however, and if that information
+is not guaranteed to be up-to-date, the service _will_ go and look it
+up in /proc or somewhere else, which is certainly a whole lot more
+expensive than the code in kdbus.
+
+In general, there seems to be a number of misconception in this thread
+about what kdbus is supposed to be. We're not inventing something new
+here with a clean slate, but we're moving parts of an existing
+implementation that has tons of users into the kernel, in order to fix
+issues that cannot be fixed otherwise in userspace (most notably, the
+race gaps that exist when retrieving per-message metadata). Therefore,
+we have to keep existing semantics stable, otherwise the exercise is
+somewhat pointless.
+
+Thanks
+David
