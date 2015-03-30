@@ -1,50 +1,78 @@
-From: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
-Subject: Re: [PATCH v7 0/5] vfs: Non-blockling buffered fs read (page cache
- only)
-Date: Mon, 30 Mar 2015 10:19:12 -0700
-Message-ID: <20150330171912.GB5835@samba2>
-References: <cover.1426528417.git.milosz@adfin.com>
- <20150326202824.65d03787.akpm@linux-foundation.org>
- <20150327081822.GA28669@infradead.org>
- <20150327013516.8c6788be.akpm@linux-foundation.org>
- <20150327084833.GA7689@infradead.org>
- <20150327020159.eadd0ce1.akpm@linux-foundation.org>
- <20150327155854.GA5548@samba2>
- <20150330073604.GB22229@infradead.org>
-Reply-To: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: [PATCH 1/6] virtio_balloon: transitional interface
+Date: Mon, 30 Mar 2015 19:37:12 +0200
+Message-ID: <1427737006-23191-2-git-send-email-mst@redhat.com>
+References: <1427737006-23191-1-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
 Content-Disposition: inline
-In-Reply-To: <20150330073604.GB22229-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-aio-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Volker Lendecke <Volker.Lendecke-3ekOc4rQMZmzQB+pC5nmwQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+In-Reply-To: <1427737006-23191-1-git-send-email-mst@redhat.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: linux-kernel@vger.kernel.org
+Cc: virtio-dev@lists.oasis-open.org, linux-api@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 30, 2015 at 12:36:04AM -0700, Christoph Hellwig wrote:
-> On Fri, Mar 27, 2015 at 08:58:54AM -0700, Jeremy Allison wrote:
-> > The problem with the above is that we can't tell the difference
-> > between pread2() returning a short read because the pages are not
-> > in cache, or because someone truncated the file. So we need some
-> > way to differentiate this.
-> 
-> Is a race vs truncate really that time critical that you can't
-> wait for the thread pool to do the second read to notice it?
+Virtio 1.0 doesn't include a modern balloon device.
+But it's not a big change to support a transitional
+balloon device: this has the advantage of supporting
+existing drivers, transparently.
 
-Probably not, as this is the fallback path anyway.
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+---
+ include/uapi/linux/virtio_balloon.h | 6 ++++++
+ drivers/virtio/virtio_balloon.c     | 8 ++++++--
+ 2 files changed, 12 insertions(+), 2 deletions(-)
 
-> > My preference from userspace would be for pread2() to return
-> > EAGAIN if *all* the data requested is not available (where
-> > 'all' can be less than the size requested if the file has
-> > been truncated in the meantime).
-> 
-> That is easily implementable, but I can see that for example web apps
-> would be happy to get as much as possible.  So if Samba can be ok
-> with short reads and only detecting the truncated case in the slow
-> path that would make life simpler.  Otherwise we might indeed need two
-> flags.
-
-Simpler is better. I can live with the partial read+fallback.
-
-Jeremy.
+diff --git a/include/uapi/linux/virtio_balloon.h b/include/uapi/linux/virtio_balloon.h
+index 4b0488f..5d83902 100644
+--- a/include/uapi/linux/virtio_balloon.h
++++ b/include/uapi/linux/virtio_balloon.h
+@@ -56,4 +56,10 @@ struct virtio_balloon_stat {
+ 	__u64 val;
+ } __attribute__((packed));
+ 
++struct virtio_balloon_stat_modern {
++	__u8 reserved[6];
++	__u16 tag;
++	__u64 val;
++};
++
+ #endif /* _LINUX_VIRTIO_BALLOON_H */
+diff --git a/drivers/virtio/virtio_balloon.c b/drivers/virtio/virtio_balloon.c
+index 6a356e3..68e937f 100644
+--- a/drivers/virtio/virtio_balloon.c
++++ b/drivers/virtio/virtio_balloon.c
+@@ -77,7 +77,7 @@ struct virtio_balloon {
+ 
+ 	/* Memory statistics */
+ 	int need_stats_update;
+-	struct virtio_balloon_stat stats[VIRTIO_BALLOON_S_NR];
++	struct virtio_balloon_stat_modern stats[VIRTIO_BALLOON_S_NR];
+ 
+ 	/* To register callback in oom notifier call chain */
+ 	struct notifier_block nb;
+@@ -269,7 +269,11 @@ static void stats_handle_request(struct virtio_balloon *vb)
+ 	vq = vb->stats_vq;
+ 	if (!virtqueue_get_buf(vq, &len))
+ 		return;
+-	sg_init_one(&sg, vb->stats, sizeof(vb->stats));
++	if (virtio_has_feature(vdev, VIRTIO_F_VERSION_1))
++		sg_init_one(&sg, vb->stats, sizeof(vb->stats));
++	else
++		sg_init_one(&sg, &vb->stats->tag, sizeof(vb->stats) -
++			    offsetof(typeof(*vb->stats, tag);
+ 	virtqueue_add_outbuf(vq, &sg, 1, vb, GFP_KERNEL);
+ 	virtqueue_kick(vq);
+ }
+-- 
+MST
