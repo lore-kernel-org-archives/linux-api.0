@@ -1,146 +1,50 @@
-From: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v4 00/14] Add kdbus implementation
-Date: Mon, 30 Mar 2015 18:56:44 +0200
-Message-ID: <CANq1E4TTt3qanQse30KOZsuo2tfNoj7YSueh3AZ7bY1nQQeZNA@mail.gmail.com>
-References: <1425906560-13798-1-git-send-email-gregkh@linuxfoundation.org>
-	<CALCETrUjqTH14fZCeqU_OBoKX_6x4B=712WTeSqSAztpgXGiDw@mail.gmail.com>
-	<CANq1E4Tf_6Cn+sxY=BPEbRpEr5WY+-rRX5gipz-_=4PNLa9bnQ@mail.gmail.com>
-	<CALCETrVWbz7YudNQXQD_2PjC1HR0P0cB_1ea8NiYoQPDfQxERg@mail.gmail.com>
-	<CANq1E4RA1ok=3Z5W2LkzqaUOKtbMVX_Joxe7_LRbLnQgfRUEYA@mail.gmail.com>
-	<CALCETrWCBYzbzG3xZznG4AvVf67E_d8BVmBi1bZsDx7x_2Bh5g@mail.gmail.com>
-	<CANq1E4TtXq02Ug22fsTr8j0X6+vJKvyryALiTEMbT4SMQB1j3g@mail.gmail.com>
-	<CALCETrXqYBeZuOWhm9mz_nt+aWPXHFwkQPEAfwBXzDxnAP7f+g@mail.gmail.com>
-	<CANq1E4QiErHp8Q6bzFLkK9=7eBZC8dvh+Xnrh9_D5DAAogyaZA@mail.gmail.com>
-	<CALCETrUuWhtJ9w9vyCGgaJDMGithJad4A4wf-BuxWLb_af5eDg@mail.gmail.com>
+From: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+Subject: Re: [PATCH v7 0/5] vfs: Non-blockling buffered fs read (page cache
+ only)
+Date: Mon, 30 Mar 2015 10:19:12 -0700
+Message-ID: <20150330171912.GB5835@samba2>
+References: <cover.1426528417.git.milosz@adfin.com>
+ <20150326202824.65d03787.akpm@linux-foundation.org>
+ <20150327081822.GA28669@infradead.org>
+ <20150327013516.8c6788be.akpm@linux-foundation.org>
+ <20150327084833.GA7689@infradead.org>
+ <20150327020159.eadd0ce1.akpm@linux-foundation.org>
+ <20150327155854.GA5548@samba2>
+ <20150330073604.GB22229@infradead.org>
+Reply-To: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrUuWhtJ9w9vyCGgaJDMGithJad4A4wf-BuxWLb_af5eDg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150330073604.GB22229-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-aio-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Volker Lendecke <Volker.Lendecke-3ekOc4rQMZmzQB+pC5nmwQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi
+On Mon, Mar 30, 2015 at 12:36:04AM -0700, Christoph Hellwig wrote:
+> On Fri, Mar 27, 2015 at 08:58:54AM -0700, Jeremy Allison wrote:
+> > The problem with the above is that we can't tell the difference
+> > between pread2() returning a short read because the pages are not
+> > in cache, or because someone truncated the file. So we need some
+> > way to differentiate this.
+> 
+> Is a race vs truncate really that time critical that you can't
+> wait for the thread pool to do the second read to notice it?
 
-On Wed, Mar 25, 2015 at 7:12 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> On Wed, Mar 25, 2015 at 10:29 AM, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-[...]
->>> I could be wrong about the lack of use cases.  If so, please enlighten me.
->>
->> We have several dbus APIs that allow clients to register as a special
->> handler/controller/etc. (eg., see systemd-logind TakeControl()). The
->> API provider checks the privileges of a client on registration and
->> then just tracks the client ID. This way, the client can be privileged
->> when asking for special access, then drop privileges and still use the
->> interface. You cannot re-connect in between, as the API provider
->> tracks your bus ID. Without message-metadata, all your (other) calls
->> on this bus would always be treated as privileged. We *really* want to
->> avoid this.
->
-> Connect twice?
+Probably not, as this is the fallback path anyway.
 
-The remote peer might cache your connection ID to track you. You have
-to use the same connection to talk to that peer, in this given
-scenario. That's how D-Bus1 is used today, and we have to follow the
-semantics.
+> > My preference from userspace would be for pread2() to return
+> > EAGAIN if *all* the data requested is not available (where
+> > 'all' can be less than the size requested if the file has
+> > been truncated in the meantime).
+> 
+> That is easily implementable, but I can see that for example web apps
+> would be happy to get as much as possible.  So if Samba can be ok
+> with short reads and only detecting the truncated case in the slow
+> path that would make life simpler.  Otherwise we might indeed need two
+> flags.
 
-> You *already* have to reconnect or connect twice because you have
-> per-connection metadata.  That's part of my problem with this scheme
-> -- you support *both styles*, which seems like it'll give you most of
-> the downsides of both without the upsides.
+Simpler is better. I can live with the partial read+fallback.
 
-Not necessarily. Connection metadata describes the state at the time
-you connected to the bus. If someone ask for this information, they
-will get exactly that. In this model, you cannot drop privileges, if
-you need to be privileged during setup.
-If someone asks for per-message metadata, they better ought not ask
-for per-connection creds. It's not the information they're looking
-for, so it will not match the data that at the time the message was
-sent.
-
-There is no immediate need to make both match. For security decisions,
-we mandate per-message creds. Per-connection creds are for
-backwards-compatibility to dbus1 and for passive introspection of bus
-connections.
-
->>
->> Another example is logging, where we want exact data at the time a
->> message is logged. Otherwise, the data is useless.
->
-> Why?
->
-> No, really, why is exact data at the time of logging so important?  It
-> sounds nice, but I really don't see it.
-
-Example: If you don't have message-metadata, you don't know the thread
-which sent a log-message. In a multi-threaded application, that's
-incredibly useful information.
-
-After all, logging is all about correct data. Logging creds that were
-not effective at the time the message was sent is futile.
-
->>
->> kdbus is a _bus_, not a p2p channel. Thus, a peer may talk to multiple
->> destinations, and it may want to look different to each of them. DBus
->> method-calls allow 'syscall'-ish behavior when calling into other
->> processes. We *want* to be able to drop privileges after doing process
->> setup. We want further bus-calls to no longer be treated privileged.
->
-> You could have an IOCTL that re-captures your connection metata.
-
-I don't see how this makes the model easier, or more predictable. On
-the contrary, per-connection metadata is no longer compatible to UDS /
-dbus1, nor is a per-message metadata concept reliable.
-
->>
->> Furthermore, DBus was designed to allow peers to track other peers
->> (which is why it always had the NameOwnerChanged signal). This is an
->> essential feature, that simplifies access-management considerably, as
->> you can cache it together with the unique name of a peer. We only open
->> a single connection to a bus. glib, libdbus, efl, ell, qt, sd-bus, and
->> others use cached bus-connections that are shared by all code of a
->> single thread. Hence, the bus connection is kinda part of the process
->> itself, like stdin/stdout. Without message-metadata, it is impossible
->> to ever drop privileges on a bus, without losing all state.
->
-> See above about an IOCTL that re-captures your connection metadata.
->
-> Again, you seem to be arguing that per-connection metadata is bad, but
-> you still have an implementation of per-connection metadata, so you
-> still have all these problems.
-
-I don't see why we get the problems of per-connection metadata. Just
-because you _can_ use it, doesn't mean you should use it for all
-imaginable use-cases. The same goes for reading information from
-/proc. There are valid use-cases to do so, but also a lot of cases
-where it will not provide the information you want.
-
-> I'm actually okay with per-message metadata in principle, but I'd like
-> to see evidence (with numbers, please) that a send+recv of per-message
-> metadata is *not* significantly slower than a recv of already-captured
-> per-connection metadata.  If this is in fact the case, then maybe you
-> should trash per-connection metadata instead and the legacy
-> compatibility code can figure out a way to deal with it.  IMO that
-> would be a pretty nice outcome, since you would never have to worry
-> whether your connection to the bus is inadvertantly privileged.
-
-Per-message metadata makes SEND about 25% slower, if you transmit the
-full set of all possible information. Just 3% if you only use
-PIDs+UIDs. The expensive metadata is cgroup-path and exe-path.
-If a service needs that information, however, and if that information
-is not guaranteed to be up-to-date, the service _will_ go and look it
-up in /proc or somewhere else, which is certainly a whole lot more
-expensive than the code in kdbus.
-
-In general, there seems to be a number of misconception in this thread
-about what kdbus is supposed to be. We're not inventing something new
-here with a clean slate, but we're moving parts of an existing
-implementation that has tons of users into the kernel, in order to fix
-issues that cannot be fixed otherwise in userspace (most notably, the
-race gaps that exist when retrieving per-message metadata). Therefore,
-we have to keep existing semantics stable, otherwise the exercise is
-somewhat pointless.
-
-Thanks
-David
+Jeremy.
