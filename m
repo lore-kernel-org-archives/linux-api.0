@@ -1,88 +1,61 @@
-From: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [patch 1/2] mm, doc: cleanup and clarify munmap behavior for
- hugetlb memory
-Date: Sun, 29 Mar 2015 18:35:34 -0700 (PDT)
-Message-ID: <alpine.LSU.2.11.1503291801400.1052@eggly.anvils>
-References: <alpine.DEB.2.10.1503261621570.20009@chino.kir.corp.google.com>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [PATCH 01/86] pci: export pci_ids.h
+Date: Mon, 30 Mar 2015 08:48:44 +0200
+Message-ID: <20150330083707-mutt-send-email-mst@redhat.com>
+References: <1427635734-24786-1-git-send-email-mst@redhat.com>
+ <1427635734-24786-2-git-send-email-mst@redhat.com>
+ <20150329204047.GA5902@kroah.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.10.1503261621570.20009-X6Q0R45D7oAcqpCFd4KODRPsWskHk0ljAL8bYrjMMd8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, Luiz Capitulino <lcapitulino-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Joern Engel <joern-PCqxUs/MD9bYtjvyW6yDsg@public.gmane.org>, Jianguo Wu <wujianguo-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150329204047.GA5902@kroah.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Greg KH <gregkh@linuxfoundation.org>
+Cc: linux-kernel@vger.kernel.org, Bjorn Helgaas <bhelgaas@google.com>, Jonathan Corbet <corbet@lwn.net>, "David S. Miller" <davem@davemloft.net>, Hans Verkuil <hans.verkuil@cisco.com>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Alexei Starovoitov <ast@plumgrid.com>, stephen hemminger <stephen@networkplumber.org>, Masahiro Yamada <yamada.m@jp.panasonic.com>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Andy Lutomirski <luto@amacapital.net>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Stephane Eranian <eranian@google.com>, Huang Rui <ray.huang@amd.com>, Peter Neubauer <pneubauer@bluerwhite.org>, linux-pci@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 26 Mar 2015, David Rientjes wrote:
-
-> munmap(2) of hugetlb memory requires a length that is hugepage aligned,
-> otherwise it may fail.  Add this to the documentation.
-
-Thanks for taking this on, David.  But although munmap(2) is the one
-Davide called out, it goes beyond that, doesn't it?  To mprotect and
-madvise and ...
-
-I don't want to work out the list myself: is_vm_hugetlb_page() is
-special-cased all over, and different syscalls react differently.
-
-Which is another reason why, like you, I much prefer not to interfere
-with the long established behavior: it would be very easy to introduce
-bugs and worse inconsistencies.
-
-And mprotect(2) is a good example of why we should not mess around
-with the long established API here: changing an mprotect from failing
-on a particular size to acting on a larger size is not a safe change.
-
-Eric, I apologize for bringing you in to the discussion, and then
-ignoring your input.  I understand that you would like MAP_HUGETLB
-to behave more understandably.  We can all agree that the existing
-behavior is unsatisfying.  But it's many years too late now to 
-change it around - and I suspect that a full exercise to do so would
-actually discover some good reasons why the original choices were made.
-
+On Sun, Mar 29, 2015 at 10:40:47PM +0200, Greg KH wrote:
+> On Sun, Mar 29, 2015 at 03:37:01PM +0200, Michael S. Tsirkin wrote:
+> > The macros in pci_ids.h are pretty useful for userspace
+> > using the pci sysfs interface.
+> > At the moment userspace is forced to duplicate these macros
+> > (e.g. QEMU does this), it is better to expose them in
+> > /usr/include/linux/pci_ids.h so everyone can just include
+> > this header.
+> > 
+> > Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+> > ---
+> >  include/linux/pci_ids.h      | 2998 +-----------------------------------------
+> >  include/uapi/linux/pci_ids.h | 2997 +++++++++++++++++++++++++++++++++++++++++
 > 
-> This also cleans up the documentation and separates it into logical
-> units: one part refers to MAP_HUGETLB and another part refers to
-> requirements for shared memory segments.
-> 
-> Signed-off-by: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> ---
->  Documentation/vm/hugetlbpage.txt | 21 +++++++++++++--------
->  1 file changed, 13 insertions(+), 8 deletions(-)
-> 
-> diff --git a/Documentation/vm/hugetlbpage.txt b/Documentation/vm/hugetlbpage.txt
-> --- a/Documentation/vm/hugetlbpage.txt
-> +++ b/Documentation/vm/hugetlbpage.txt
-> @@ -289,15 +289,20 @@ file systems, write system calls are not.
->  Regular chown, chgrp, and chmod commands (with right permissions) could be
->  used to change the file attributes on hugetlbfs.
->  
-> -Also, it is important to note that no such mount command is required if the
-> +Also, it is important to note that no such mount command is required if
->  applications are going to use only shmat/shmget system calls or mmap with
-> -MAP_HUGETLB.  Users who wish to use hugetlb page via shared memory segment
-> -should be a member of a supplementary group and system admin needs to
-> -configure that gid into /proc/sys/vm/hugetlb_shm_group.  It is possible for
-> -same or different applications to use any combination of mmaps and shm*
-> -calls, though the mount of filesystem will be required for using mmap calls
-> -without MAP_HUGETLB.  For an example of how to use mmap with MAP_HUGETLB see
-> -map_hugetlb.c.
-> +MAP_HUGETLB.  For an example of how to use mmap with MAP_HUGETLB see map_hugetlb
-> +below.
-> +
-> +Users who wish to use hugetlb memory via shared memory segment should be a
-> +member of a supplementary group and system admin needs to configure that gid
-> +into /proc/sys/vm/hugetlb_shm_group.  It is possible for same or different
-> +applications to use any combination of mmaps and shm* calls, though the mount of
-> +filesystem will be required for using mmap calls without MAP_HUGETLB.
-> +
-> +When using munmap(2) to unmap hugetlb memory, the length specified must be
-> +hugepage aligned, otherwise it will fail with errno set to EINVAL.
+> No, please use the pci ids file from the upstream pci id database
+> instead.
 
-Perhaps just adding something like "The same is true for mprotect(2)
-and other such memory system calls." is good enough for here.
 
-> +
->  
->  Examples
->  ========
+>  We shouldn't be putting these all in one file,
+
+pci.txt says:
+	Please add PCI_VENDOR_ID_xxx for vendors
+You want to change this policy, and get rid of
+vendor ids in pci_ids.h completely?
+Bjorn, what do you think of this?
+
+>  and pulling
+> them out of drivers isn't ok.
+
+This patchset is not pulling any files out of drivers fwiw.
+
+> Userspace shouldn't need to know any of these, use libpci.
+
+Unless I'm mistaken, libpci does not export a header with defines. It
+has a text file pci.ids, but parsing that when all I want is e.g. locate
+all intel devices is just too much overhead. No one wants that, so
+people just duplicate headers.
+
+Standard class IDs are even sillier to duplicate.
+
+
+> thanks,
+> 
+> greg k-h
