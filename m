@@ -1,112 +1,38 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: Re: [PATCH 01/86] pci: export pci_ids.h
-Date: Mon, 30 Mar 2015 09:15:26 +0200
-Message-ID: <20150330085617-mutt-send-email-mst@redhat.com>
+From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 86/86] usb/dwc3: move ids to pci_ids.h
+Date: Mon, 30 Mar 2015 09:16:19 +0200
+Message-ID: <20150330091542-mutt-send-email-mst@redhat.com>
 References: <1427635734-24786-1-git-send-email-mst@redhat.com>
- <1427635734-24786-2-git-send-email-mst@redhat.com>
- <20150329204047.GA5902@kroah.com>
- <20150330083707-mutt-send-email-mst@redhat.com>
- <20150330065522.GA10105@kroah.com>
+ <1427635734-24786-87-git-send-email-mst@redhat.com>
+ <20150329204200.GB5902@kroah.com>
+ <20150330085001-mutt-send-email-mst@redhat.com>
+ <20150330065810.GA10508@kroah.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150330065522.GA10105@kroah.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Greg KH <gregkh@linuxfoundation.org>
-Cc: linux-kernel@vger.kernel.org, Bjorn Helgaas <bhelgaas@google.com>, Jonathan Corbet <corbet@lwn.net>, "David S. Miller" <davem@davemloft.net>, Hans Verkuil <hans.verkuil@cisco.com>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Alexei Starovoitov <ast@plumgrid.com>, stephen hemminger <stephen@networkplumber.org>, Masahiro Yamada <yamada.m@jp.panasonic.com>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Andy Lutomirski <luto@amacapital.net>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Stephane Eranian <eranian@google.com>, Huang Rui <ray.huang@amd.com>, Peter Neubauer <pneubauer@bluerwhite.org>, linux-pci@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+In-Reply-To: <20150330065810.GA10508-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Felipe Balbi <balbi-l0cyMroinI0@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Peter Neubauer <pneubauer-OUHTSVaU61M6GL+IUqp+Xg@public.gmane.org>, Huang Rui <ray.huang-5C7GfCeVMHo@public.gmane.org>, Jean Delvare <jdelvare-l3A5Bk7waGM@public.gmane.org>, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-omap-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 30, 2015 at 08:55:22AM +0200, Greg KH wrote:
-> On Mon, Mar 30, 2015 at 08:48:44AM +0200, Michael S. Tsirkin wrote:
-> > On Sun, Mar 29, 2015 at 10:40:47PM +0200, Greg KH wrote:
-> > > On Sun, Mar 29, 2015 at 03:37:01PM +0200, Michael S. Tsirkin wrote:
-> > > > The macros in pci_ids.h are pretty useful for userspace
-> > > > using the pci sysfs interface.
-> > > > At the moment userspace is forced to duplicate these macros
-> > > > (e.g. QEMU does this), it is better to expose them in
-> > > > /usr/include/linux/pci_ids.h so everyone can just include
-> > > > this header.
-> > > > 
-> > > > Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
-> > > > ---
-> > > >  include/linux/pci_ids.h      | 2998 +-----------------------------------------
-> > > >  include/uapi/linux/pci_ids.h | 2997 +++++++++++++++++++++++++++++++++++++++++
+On Mon, Mar 30, 2015 at 08:58:10AM +0200, Greg Kroah-Hartman wrote:
+> On Mon, Mar 30, 2015 at 08:50:34AM +0200, Michael S. Tsirkin wrote:
+> > On Sun, Mar 29, 2015 at 10:42:00PM +0200, Greg Kroah-Hartman wrote:
+> > > On Sun, Mar 29, 2015 at 03:43:40PM +0200, Michael S. Tsirkin wrote:
+> > > > Comment says IDs should move to pci_ids.h, let's do it.
 > > > 
-> > > No, please use the pci ids file from the upstream pci id database
-> > > instead.
+> > > No, please remove the comment, it's not needed in pci_ids.h at all.
 > > 
-> > 
-> > >  We shouldn't be putting these all in one file,
-> > 
-> > pci.txt says:
-> > 	Please add PCI_VENDOR_ID_xxx for vendors
-> > You want to change this policy, and get rid of
-> > vendor ids in pci_ids.h completely?
+> > vendor ID does belong in pci_ids.h though, so says
+> > Documentation/PCI/pci.txt
 > 
-> Please read the top of pci_ids.h.  It hasn't had new ids added to it in
-> a long time.
+> Read the top of pci_ids.h please.
 
-OK, looks like pci.txt should be fixed then.
-
-> > Bjorn, what do you think of this?
-> > 
-> > >  and pulling
-> > > them out of drivers isn't ok.
-> > 
-> > This patchset is not pulling any files out of drivers fwiw.
-> 
-> It did for the USB gadget driver patch that I commented on.
-> 
-> > > Userspace shouldn't need to know any of these, use libpci.
-> > 
-> > Unless I'm mistaken, libpci does not export a header with defines. It
-> > has a text file pci.ids, but parsing that when all I want is e.g. locate
-> > all intel devices is just too much overhead. No one wants that, so
-> > people just duplicate headers.
-> 
-> Why would userspace need the pci id of anything?
-
-Look at how they are used e.g. by QEMU, seabios, gpxe.
-People want to say e.g. "find all network class devices".
-
->  Again, just use
-> libpci, isn't it fast enough?  Don't duplicate existing logic.
-
-This really depends on whether you want something else that
-libpci provides. But if I just want e.g. standard class IDs,
-I don't want to depend on libpci.
-
-
-> Or use the hw database that libudev exports, which is already on your
-> machine and exports all of the pci ids from libpci directly.
-
-Same argument really.
-
-> > Standard class IDs are even sillier to duplicate.
-> 
-> Again, why does userspace need this?
-> 
-> thanks,
-> 
-> greg k-h
-
-Mostly because it has a userspace driver, or is emulating
-a hardware device.
-
-For example, the VFIO driver uses the PCI hardware formats
-as it's userspace/kernel interface. This means I need
-a ton of PCI constants in userspace. Most of them are
-already in pci_regs.h, and so exported. No problem here.
-
-However class and prog interface IDs are not, they
-are in pci_ids.h
-
-Would you support splitting pci_ids.h to
-include/uapi/linux/pci_ids.h with standard headers
-and include/linux/pci_ids.h with device/vendor
-specific ones?
-
-
--- 
-MST
+Thanks for pointing this out, looks like Documentation/PCI/pci.txt
+should be improved.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-usb" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
