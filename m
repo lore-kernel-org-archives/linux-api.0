@@ -1,73 +1,47 @@
-From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: [PATCH v4 07/10] eeprom: qfprom: Add Qualcomm QFPROM support.
-Date: Mon, 30 Mar 2015 22:58:22 +0100
-Message-ID: <1427752702-17345-1-git-send-email-srinivas.kandagatla@linaro.org>
+From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH v4 06/10] eeprom: Add simple eeprom-mmio consumer helper functions.
+Date: Mon, 30 Mar 2015 22:58:13 +0100
+Message-ID: <1427752693-17303-1-git-send-email-srinivas.kandagatla@linaro.org>
 References: <1427752492-17039-1-git-send-email-srinivas.kandagatla@linaro.org>
-Return-path: <linux-arm-msm-owner@vger.kernel.org>
-In-Reply-To: <1427752492-17039-1-git-send-email-srinivas.kandagatla@linaro.org>
-Sender: linux-arm-msm-owner@vger.kernel.org
-To: linux-arm-kernel@lists.infradead.org
-Cc: Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1427752492-17039-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds QFPROM support driver which is used by other drivers
-like thermal sensor and cpufreq.
+This patch adds probe and remove helper functions for eeproms which are
+mmio based, With these helper function new eeprom consumer drivers need
+very little code add its driver.
 
-On MSM parts there are some efuses (called qfprom) these fuses store things like
-calibration data, speed bins.. etc. Drivers like cpufreq, thermal sensors would
-read out this data for configuring the driver.
+This code is currently used for qfprom and sunxi-sid eeprom consumer drivers.
 
-Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 ---
- drivers/eeprom/Kconfig  | 15 +++++++++++++++
- drivers/eeprom/Makefile |  4 ++++
- drivers/eeprom/qfprom.c | 51 +++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 70 insertions(+)
- create mode 100644 drivers/eeprom/qfprom.c
+ drivers/eeprom/Makefile      |  1 +
+ drivers/eeprom/eeprom-mmio.c | 69 ++++++++++++++++++++++++++++++++++++++++++++
+ drivers/eeprom/eeprom-mmio.h | 41 ++++++++++++++++++++++++++
+ 3 files changed, 111 insertions(+)
+ create mode 100644 drivers/eeprom/eeprom-mmio.c
+ create mode 100644 drivers/eeprom/eeprom-mmio.h
 
-diff --git a/drivers/eeprom/Kconfig b/drivers/eeprom/Kconfig
-index 15985e1..8fcde9b 100644
---- a/drivers/eeprom/Kconfig
-+++ b/drivers/eeprom/Kconfig
-@@ -8,3 +8,18 @@ menuconfig EEPROM
- 	  from both the Linux Kernel and the userspace.
- 
- 	  If unsure, say no.
-+
-+if EEPROM
-+
-+config QCOM_QFPROM
-+	tristate "QCOM QFPROM Support"
-+	depends on ARCH_QCOM
-+	select REGMAP_MMIO
-+	help
-+	  Say y here to enable QFPROM support. The QFPROM provides access
-+	  functions for QFPROM data to rest of the drivers via eeprom interface.
-+
-+	  This driver can also be built as a module. If so, the module
-+	  will be called eeprom-qfprom.
-+
-+endif
 diff --git a/drivers/eeprom/Makefile b/drivers/eeprom/Makefile
-index 6812bbe..819476c 100644
+index 51a727f..6812bbe 100644
 --- a/drivers/eeprom/Makefile
 +++ b/drivers/eeprom/Makefile
-@@ -5,3 +5,7 @@
+@@ -4,3 +4,4 @@
+ 
  obj-$(CONFIG_EEPROM)		+= eeprom_core.o
  eeprom_core-y			:= core.o
- eeprom_core-y			+= eeprom-mmio.o
-+
-+# Devices
-+obj-$(CONFIG_QCOM_QFPROM)	+= eeprom_qfprom.o
-+eeprom_qfprom-y			:= qfprom.o
-diff --git a/drivers/eeprom/qfprom.c b/drivers/eeprom/qfprom.c
++eeprom_core-y			+= eeprom-mmio.o
+diff --git a/drivers/eeprom/eeprom-mmio.c b/drivers/eeprom/eeprom-mmio.c
 new file mode 100644
-index 0000000..011bdf1
+index 0000000..55b8913
 --- /dev/null
-+++ b/drivers/eeprom/qfprom.c
-@@ -0,0 +1,51 @@
++++ b/drivers/eeprom/eeprom-mmio.c
+@@ -0,0 +1,69 @@
 +/*
-+ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
++ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 and
@@ -79,43 +53,108 @@ index 0000000..011bdf1
 + * GNU General Public License for more details.
 + */
 +
++#include <linux/device.h>
 +#include <linux/module.h>
++#include <linux/err.h>
 +#include <linux/of.h>
++#include <linux/of_device.h>
 +#include "eeprom-mmio.h"
 +
-+static struct regmap_config qfprom_regmap_config = {
-+	.reg_bits = 32,
-+	.val_bits = 8,
-+	.reg_stride = 1,
++int eeprom_mmio_remove(struct platform_device *pdev)
++{
++	struct eeprom_device *eeprom = platform_get_drvdata(pdev);
++
++	return eeprom_unregister(eeprom);
++}
++EXPORT_SYMBOL_GPL(eeprom_mmio_remove);
++
++int eeprom_mmio_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct resource *res;
++	const struct eeprom_mmio_data *data;
++	struct eeprom_device *eeprom;
++	struct regmap *regmap;
++	const struct of_device_id *match;
++	void __iomem *base;
++
++	if (!dev || !dev->driver)
++		return -ENODEV;
++
++	match = of_match_device(dev->driver->of_match_table, dev);
++	if (!match || !match->data)
++		return -EINVAL;
++
++	data = match->data;
++
++	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	base = devm_ioremap_resource(dev, res);
++	if (IS_ERR(base))
++		return PTR_ERR(base);
++
++	data->regmap_config->max_register = resource_size(res) - 1;
++
++	regmap = devm_regmap_init_mmio(dev, base, data->regmap_config);
++	if (IS_ERR(regmap)) {
++		dev_err(dev, "regmap init failed\n");
++		return PTR_ERR(regmap);
++	}
++	data->eeprom_config->dev = dev;
++	eeprom = eeprom_register(data->eeprom_config);
++	if (IS_ERR(eeprom))
++		return PTR_ERR(eeprom);
++
++	platform_set_drvdata(pdev, eeprom);
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(eeprom_mmio_probe);
+diff --git a/drivers/eeprom/eeprom-mmio.h b/drivers/eeprom/eeprom-mmio.h
+new file mode 100644
+index 0000000..e58bcc8
+--- /dev/null
++++ b/drivers/eeprom/eeprom-mmio.h
+@@ -0,0 +1,41 @@
++/*
++ * MMIO based EEPROM providers.
++ *
++ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
++ *
++ * This file is licensed under the terms of the GNU General Public
++ * License version 2.  This program is licensed "as is" without any
++ * warranty of any kind, whether express or implied.
++ */
++
++#ifndef _LINUX_EEPROM_MMIO_H
++#define _LINUX_EEPROM_MMIO_H
++
++#include <linux/platform_device.h>
++#include <linux/eeprom-provider.h>
++#include <linux/regmap.h>
++
++struct eeprom_mmio_data {
++	struct regmap_config *regmap_config;
++	struct eeprom_config *eeprom_config;
 +};
 +
-+static struct eeprom_config econfig = {
-+	.name = "qfprom",
-+	.owner = THIS_MODULE,
-+};
++#if IS_ENABLED(CONFIG_EEPROM)
 +
-+static struct eeprom_mmio_data qfprom_data = {
-+	.eeprom_config = &econfig,
-+	.regmap_config = &qfprom_regmap_config,
-+};
++int eeprom_mmio_probe(struct platform_device *pdev);
++int eeprom_mmio_remove(struct platform_device *pdev);
 +
-+static const struct of_device_id qfprom_of_match[] = {
-+	{ .compatible = "qcom,qfprom", .data = &qfprom_data},
-+	{/* sentinel */},
-+};
-+MODULE_DEVICE_TABLE(of, qfprom_of_match);
++#else
 +
-+static struct platform_driver qfprom_driver = {
-+	.probe = eeprom_mmio_probe,
-+	.remove = eeprom_mmio_remove,
-+	.driver = {
-+		.name = "qcom,qfprom",
-+		.of_match_table = qfprom_of_match,
-+	},
-+};
-+module_platform_driver(qfprom_driver);
-+MODULE_AUTHOR("Srinivas Kandagatla <srinivas.kandagatla@linaro.org>");
-+MODULE_DESCRIPTION("Qualcomm QFPROM driver");
-+MODULE_LICENSE("GPL v2");
++static inline int eeprom_mmio_probe(struct platform_device *pdev)
++{
++	return -ENOSYS;
++}
++
++static inline int eeprom_mmio_remove(struct platform_device *pdev)
++{
++	return -ENOSYS;
++}
++#endif
++
++#endif  /* ifndef _LINUX_EEPROM_MMIO_H */
 -- 
 1.9.1
