@@ -1,40 +1,42 @@
-From: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
-Subject: Re: Revised futex(2) man page for review
-Date: Tue, 31 Mar 2015 07:45:46 -0700
-Message-ID: <1427813146.20009.2.camel@stgolabs.net>
-References: <55166C01.7000803@gmail.com>
-	 <20150328114725.GJ27490@worktop.programming.kicks-ass.net>
+From: =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>
+Subject: [PATCH v2 01/10] KVM: add commentary for kvm_debug_exit_arch struct
+Date: Tue, 31 Mar 2015 16:07:59 +0100
+Message-ID: <1427814488-28467-2-git-send-email-alex.bennee@linaro.org>
+References: <1427814488-28467-1-git-send-email-alex.bennee@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150328114725.GJ27490-IIpfhp3q70z/8w/KjCw3T+5/BudmfyzbbVWyRVo5IupeoWH0uzbU5w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, bert hubert <bert.hubert-dxZxOz86jR8sYtaaK7K+xw@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb8U04JRNCRQjg@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
+In-Reply-To: <1427814488-28467-1-git-send-email-alex.bennee@linaro.org>
+List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
+List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
+List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
+List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
+List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
+Errors-To: kvmarm-bounces@lists.cs.columbia.edu
+Sender: kvmarm-bounces@lists.cs.columbia.edu
+To: kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kvmarm@lists.cs.columbia.edu, christoffer.dall@linaro.org, marc.zyngier@arm.com, peter.maydell@linaro.org, agraf@suse.de, drjones@redhat.com, pbonzini@redhat.com, zhichao.huang@linaro.org
+Cc: Gleb Natapov <gleb@kernel.org>, jan.kiszka@siemens.com, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, dahi@linux.vnet.ibm.com, r65777@freescale.com, bp@suse.de
 List-Id: linux-api@vger.kernel.org
 
-On Sat, 2015-03-28 at 12:47 +0100, Peter Zijlstra wrote:
-
->        The condition is represented by the futex word, which is an ad=
-dress  in
->        memory  supplied to the futex() system call, and the value at =
-this mem=E2=80=90
->        ory location.  (While the virtual addresses for the same memor=
-y in sep=E2=80=90
->        arate  processes  may  not be equal, the kernel maps them inte=
-rnally so
->        that the same memory mapped in different locations will corres=
-pond  for
->        futex() calls.)
->=20
->        When  executing  a futex operation that requests to block a th=
-read, the
->        kernel will only block if the futex word has the value that th=
-e calling
-
-Given the use of "word", you should probably state right away that
-futexes are only 32bit.
-
-Thanks,
-Davidlohr
+QnJpbmcgaW50byBsaW5lIHdpdGggdGhlIGNvbW1lbnRhcnkgZm9yIHRoZSBvdGhlciBzdHJ1Y3R1
+cmVzIGFuZCB0aGVpcgpLVk1fRVhJVF8qIGNhc2VzLgoKU2lnbmVkLW9mZi1ieTogQWxleCBCZW5u
+w6llIDxhbGV4LmJlbm5lZUBsaW5hcm8ub3JnPgoKLS0tCgp2MgogIC0gYWRkIGNvbW1lbnRzIGZv
+ciBvdGhlciBleGl0IHR5cGVzCgpkaWZmIC0tZ2l0IGEvaW5jbHVkZS91YXBpL2xpbnV4L2t2bS5o
+IGIvaW5jbHVkZS91YXBpL2xpbnV4L2t2bS5oCmluZGV4IDgwNTU3MDYuLjVlZWRmODQgMTAwNjQ0
+Ci0tLSBhL2luY2x1ZGUvdWFwaS9saW51eC9rdm0uaAorKysgYi9pbmNsdWRlL3VhcGkvbGludXgv
+a3ZtLmgKQEAgLTIyNiw2ICsyMjYsNyBAQCBzdHJ1Y3Qga3ZtX3J1biB7CiAJCQlfX3UzMiBjb3Vu
+dDsKIAkJCV9fdTY0IGRhdGFfb2Zmc2V0OyAvKiByZWxhdGl2ZSB0byBrdm1fcnVuIHN0YXJ0ICov
+CiAJCX0gaW87CisJCS8qIEtWTV9FWElUX0RFQlVHICovCiAJCXN0cnVjdCB7CiAJCQlzdHJ1Y3Qg
+a3ZtX2RlYnVnX2V4aXRfYXJjaCBhcmNoOwogCQl9IGRlYnVnOwpAQCAtMjc0LDYgKzI3NSw3IEBA
+IHN0cnVjdCBrdm1fcnVuIHsKIAkJCV9fdTMyIGRhdGE7CiAJCQlfX3U4ICBpc193cml0ZTsKIAkJ
+fSBkY3I7CisJCS8qIEtWTV9FWElUX0lOVEVSTkFMX0VSUk9SICovCiAJCXN0cnVjdCB7CiAJCQlf
+X3UzMiBzdWJlcnJvcjsKIAkJCS8qIEF2YWlsYWJsZSB3aXRoIEtWTV9DQVBfSU5URVJOQUxfRVJS
+T1JfREFUQTogKi8KQEAgLTI4NCw2ICsyODYsNyBAQCBzdHJ1Y3Qga3ZtX3J1biB7CiAJCXN0cnVj
+dCB7CiAJCQlfX3U2NCBncHJzWzMyXTsKIAkJfSBvc2k7CisJCS8qIEtWTV9FWElUX1BBUFJfSENB
+TEwgKi8KIAkJc3RydWN0IHsKIAkJCV9fdTY0IG5yOwogCQkJX191NjQgcmV0OwotLSAKMi4zLjQK
+Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmt2bWFybSBt
+YWlsaW5nIGxpc3QKa3ZtYXJtQGxpc3RzLmNzLmNvbHVtYmlhLmVkdQpodHRwczovL2xpc3RzLmNz
+LmNvbHVtYmlhLmVkdS9tYWlsbWFuL2xpc3RpbmZvL2t2bWFybQo=
