@@ -1,47 +1,74 @@
-From: josh@joshtriplett.org
-Subject: Re: [PATCH v2 0/7] CLONE_FD: Task exit notification via file
- descriptor
-Date: Tue, 31 Mar 2015 15:02:24 -0700
-Message-ID: <20150331220224.GA22707@cloud>
-References: <cover.1426376419.git.josh@joshtriplett.org>
- <20150331220807.6927e780@lwn.net>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH 2/5] selftest/futex: Update Makefile to use lib.mk
+Date: Wed, 01 Apr 2015 10:28:02 +1100
+Message-ID: <1427844482.4256.5.camel@ellerman.id.au>
+References: <597c9eabcac5da9456d6cfd6de9117591d73385e.1427493640.git.dvhart@linux.intel.com>
+	 <95d599bc531666252f8e3f4e467d5f94af2a7ad2.1427493640.git.dvhart@linux.intel.com>
+	 <1427672978.4218.3.camel@ellerman.id.au>
+	 <D13EC750.C43E1%dvhart@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150331220807.6927e780@lwn.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jonathan Corbet <corbet@lwn.net>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Thiago Macieira <thiago.macieira@intel.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <D13EC750.C43E1%dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 31, 2015 at 10:08:07PM +0200, Jonathan Corbet wrote:
-> So I finally got around to having a look at this, and one thing caught my
-> eye:
+On Mon, 2015-03-30 at 09:31 -0700, Darren Hart wrote:
+> On 3/29/15, 4:49 PM, "Michael Ellerman" <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org> wrote:
 > 
-> >              read(2) (and similar)
-> >                      When  the  new  process  exits,  reading  from  the  file
-> >                      descriptor produces a single clonefd_info structure:
-> > 
-> >                      struct clonefd_info {
-> >                          uint32_t code;   /* Signal code */
-> >                          uint32_t status; /* Exit status or signal */
-> >                          uint64_t utime;  /* User CPU time */
-> >                          uint64_t stime;  /* System CPU time */
-> >                      };
+> >On Fri, 2015-03-27 at 15:17 -0700, Darren Hart wrote:
+> >> Adapt the futextest Makefiles to use lib.mk macros for RUN_TESTS and
+> >> EMIT_TESTS. For now, we reuse the run.sh mechanism provided by
+> >> futextest. This doesn't provide the standard selftests: [PASS|FAIL]
+> >> format, but the tests provide very similar output already.
+> >> 
+> >> This results in the run_kselftest.sh script for futexes including a
+> >> single line: ./run.sh
+> >> 
+> >> diff --git a/tools/testing/selftests/futex/Makefile
+> >>b/tools/testing/selftests/futex/Makefile
+> >> index 8629187..6a17529 100644
+> >> --- a/tools/testing/selftests/futex/Makefile
+> >> +++ b/tools/testing/selftests/futex/Makefile
+> >> @@ -1,8 +1,29 @@
+> >>  SUBDIRS := functional
+> >>  
+> >> +TEST_PROGS := run.sh
+> >> +
+> >>  .PHONY: all clean
+> >
+> >lib.mk defines all & clean as PHONY for you.
 > 
-> This would appear to assume that a clonefd_info structure is the only
-> thing that will ever be read from this descriptor.  It seems to me that
-> there is the potential for, someday, wanting to be able to read and write
-> other things as well.  Should this structure be marked with type and
-> length fields so that other structures could be added in the future?
+> OK, I can remove this (it was just part of the originals). Shall I resent
+> the whole series or just a follow-on patch?
 
-I don't think it makes sense for a caller to get an arbitrary structure
-on read(), and have to figure out what they got and ignore something
-they don't understand.  Instead, I think it makes more sense for the
-caller to say "Hey, here's a flag saying I understand the new thing, go
-ahead and give me the new thing".  So, for instance, if you want to
-receive SIGSTOP/SIGCONT messages for child processes through this
-descriptor, we could add a flag for that.
+Up to Shuah. It's a minor nit, so probably a follow-up patch is fine.
 
-- Josh Triplett
+> >>  all:
+> >>  	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR $@ ; done
+> >>  
+> >> +include ../lib.mk
+> >> +
+> >> +override define RUN_TESTS
+> >> +	./run.sh
+> >> +endef
+> >
+> >Do you need to do this override? The standard logic should work AFAICS,
+> >or do
+> >you not want the echo logic?
+> 
+> The standard logic wants to run each individual test and uses the echo
+> logic. My tests have their own pass/fail reporting mechanism. As I run
+> many options on the same tests and have pretty-printing logic, I prefer to
+> keep that in a run script rather than in a makefile.
+> 
+> I don't care for the echo logic as a mechanism, I think the reporting
+> should be part of the test. It also doesn't scale past pass/fail - like
+> xpass and xfail, for example.
+
+Fare enuf.
+
+cheers
