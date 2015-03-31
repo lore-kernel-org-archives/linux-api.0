@@ -1,250 +1,829 @@
 From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: [PATCH v4 08/15] clockevents/drivers: Add STM32 Timer driver
-Date: Tue, 31 Mar 2015 18:24:49 +0200
-Message-ID: <1427819096-31109-9-git-send-email-mcoquelin.stm32@gmail.com>
+Subject: [PATCH v4 10/15] serial: stm32-usart: Add STM32 USART Driver
+Date: Tue, 31 Mar 2015 18:24:51 +0200
+Message-ID: <1427819096-31109-11-git-send-email-mcoquelin.stm32@gmail.com>
 References: <1427819096-31109-1-git-send-email-mcoquelin.stm32@gmail.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <linux-gpio-owner@vger.kernel.org>
 In-Reply-To: <1427819096-31109-1-git-send-email-mcoquelin.stm32@gmail.com>
-Sender: linux-doc-owner@vger.kernel.org
+Sender: linux-gpio-owner@vger.kernel.org
 To: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, stefan@agner.ch, pmeerw@pmeerw.net, pebolle@tiscali.nl, peter@hurleysoftware.com, andy.shevchenko@gmail.com, cw00.choi@samsung.com, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>
 Cc: Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees Cook <keescook@chromium.org>, Michal Marek <mmarek@suse.cz>, linux-doc@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-gpio@vger.kernel.org, linux-serial@vger.ke
 List-Id: linux-api@vger.kernel.org
 
-STM32 MCUs feature 16 and 32 bits general purpose timers with prescalers.
-The drivers detects whether the time is 16 or 32 bits, and applies a
-1024 prescaler value if it is 16 bits.
+This drivers adds support to the STM32 USART controller, which is a
+standard serial driver.
 
-Reviewed-by: Linus Walleij <linus.walleij@linaro.org>
 Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
 Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
 ---
- drivers/clocksource/Kconfig       |   8 ++
- drivers/clocksource/Makefile      |   1 +
- drivers/clocksource/timer-stm32.c | 184 ++++++++++++++++++++++++++++++++++++++
- 3 files changed, 193 insertions(+)
- create mode 100644 drivers/clocksource/timer-stm32.c
+ drivers/tty/serial/Kconfig       |  17 +
+ drivers/tty/serial/Makefile      |   1 +
+ drivers/tty/serial/stm32-usart.c | 743 +++++++++++++++++++++++++++++++++++++++
+ include/uapi/linux/serial_core.h |   3 +
+ 4 files changed, 764 insertions(+)
+ create mode 100644 drivers/tty/serial/stm32-usart.c
 
-diff --git a/drivers/clocksource/Kconfig b/drivers/clocksource/Kconfig
-index b82e58b..519304b 100644
---- a/drivers/clocksource/Kconfig
-+++ b/drivers/clocksource/Kconfig
-@@ -101,6 +101,14 @@ config CLKSRC_EFM32
- 	  Support to use the timers of EFM32 SoCs as clock source and clock
- 	  event device.
+diff --git a/drivers/tty/serial/Kconfig b/drivers/tty/serial/Kconfig
+index d2501f0..880cb4f 100644
+--- a/drivers/tty/serial/Kconfig
++++ b/drivers/tty/serial/Kconfig
+@@ -1611,6 +1611,23 @@ config SERIAL_SPRD_CONSOLE
+ 	  with "earlycon" on the kernel command line. The console is
+ 	  enabled when early_param is processed.
  
-+config CLKSRC_STM32
-+	bool "Clocksource for STM32 SoCs" if !ARCH_STM32
-+	depends on OF && ARM && (ARCH_STM32 || COMPILE_TEST)
-+	select CLKSRC_MMIO
-+	default ARCH_STM32
++config SERIAL_STM32
++	tristate "STMicroelectronics STM32 serial port support"
++	select SERIAL_CORE
++	depends on ARM || COMPILE_TEST
 +	help
-+	  Support to use the timers of STM32 SoCs as clock event device.
++	  This driver is for the on-chip Serial Controller on
++	  STMicroelectronics STM32 MCUs.
++	  USART supports Rx & Tx functionality.
++	  It support all industry standard baud rates.
 +
- config ARM_ARCH_TIMER
- 	bool
- 	select CLKSRC_OF if OF
-diff --git a/drivers/clocksource/Makefile b/drivers/clocksource/Makefile
-index 1c9a643..525dafe 100644
---- a/drivers/clocksource/Makefile
-+++ b/drivers/clocksource/Makefile
-@@ -35,6 +35,7 @@ obj-$(CONFIG_ARCH_NSPIRE)	+= zevio-timer.o
- obj-$(CONFIG_ARCH_BCM_MOBILE)	+= bcm_kona_timer.o
- obj-$(CONFIG_CADENCE_TTC_TIMER)	+= cadence_ttc_timer.o
- obj-$(CONFIG_CLKSRC_EFM32)	+= time-efm32.o
-+obj-$(CONFIG_CLKSRC_STM32)	+= timer-stm32.o
- obj-$(CONFIG_CLKSRC_EXYNOS_MCT)	+= exynos_mct.o
- obj-$(CONFIG_CLKSRC_SAMSUNG_PWM)	+= samsung_pwm_timer.o
- obj-$(CONFIG_FSL_FTM_TIMER)	+= fsl_ftm_timer.o
-diff --git a/drivers/clocksource/timer-stm32.c b/drivers/clocksource/timer-stm32.c
++	  If unsure, say N.
++
++config SERIAL_STM32_CONSOLE
++	bool "Support for console on STM32"
++	depends on SERIAL_STM32=y
++	select SERIAL_CORE_CONSOLE
++
+ endmenu
+ 
+ config SERIAL_MCTRL_GPIO
+diff --git a/drivers/tty/serial/Makefile b/drivers/tty/serial/Makefile
+index 599be4b..67c5023 100644
+--- a/drivers/tty/serial/Makefile
++++ b/drivers/tty/serial/Makefile
+@@ -95,6 +95,7 @@ obj-$(CONFIG_SERIAL_FSL_LPUART)	+= fsl_lpuart.o
+ obj-$(CONFIG_SERIAL_CONEXANT_DIGICOLOR)	+= digicolor-usart.o
+ obj-$(CONFIG_SERIAL_MEN_Z135)	+= men_z135_uart.o
+ obj-$(CONFIG_SERIAL_SPRD) += sprd_serial.o
++obj-$(CONFIG_SERIAL_STM32)	+= stm32-usart.o
+ 
+ # GPIOLIB helpers for modem control lines
+ obj-$(CONFIG_SERIAL_MCTRL_GPIO)	+= serial_mctrl_gpio.o
+diff --git a/drivers/tty/serial/stm32-usart.c b/drivers/tty/serial/stm32-usart.c
 new file mode 100644
-index 0000000..fad2e2e
+index 0000000..126fbac
 --- /dev/null
-+++ b/drivers/clocksource/timer-stm32.c
-@@ -0,0 +1,184 @@
++++ b/drivers/tty/serial/stm32-usart.c
+@@ -0,0 +1,743 @@
 +/*
 + * Copyright (C) Maxime Coquelin 2015
 + * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
 + * License terms:  GNU General Public License (GPL), version 2
 + *
-+ * Inspired by time-efm32.c from Uwe Kleine-Koenig
++ * Inspired by st-asc.c from STMicroelectronics (c)
 + */
 +
-+#include <linux/kernel.h>
-+#include <linux/clocksource.h>
-+#include <linux/clockchips.h>
++#if defined(CONFIG_SERIAL_STM32_USART_CONSOLE) && defined(CONFIG_MAGIC_SYSRQ)
++#define SUPPORT_SYSRQ
++#endif
++
++#include <linux/module.h>
++#include <linux/serial.h>
++#include <linux/console.h>
++#include <linux/sysrq.h>
++#include <linux/platform_device.h>
++#include <linux/io.h>
 +#include <linux/irq.h>
-+#include <linux/interrupt.h>
++#include <linux/tty.h>
++#include <linux/tty_flip.h>
++#include <linux/delay.h>
++#include <linux/spinlock.h>
++#include <linux/pm_runtime.h>
 +#include <linux/of.h>
-+#include <linux/of_address.h>
-+#include <linux/of_irq.h>
++#include <linux/of_platform.h>
++#include <linux/serial_core.h>
 +#include <linux/clk.h>
-+#include <linux/reset.h>
 +
-+#define TIM_CR1		0x00
-+#define TIM_DIER	0x0c
-+#define TIM_SR		0x10
-+#define TIM_EGR		0x14
-+#define TIM_PSC		0x28
-+#define TIM_ARR		0x2c
++#define DRIVER_NAME "stm32-usart"
 +
-+#define TIM_CR1_CEN	BIT(0)
-+#define TIM_CR1_OPM	BIT(3)
-+#define TIM_CR1_ARPE	BIT(7)
++/* Register offsets */
++#define USART_SR		0x00
++#define USART_DR		0x04
++#define USART_BRR		0x08
++#define USART_CR1		0x0c
++#define USART_CR2		0x10
++#define USART_CR3		0x14
++#define USART_GTPR		0x18
 +
-+#define TIM_DIER_UIE	BIT(0)
++/* USART_SR */
++#define USART_SR_PE		BIT(0)
++#define USART_SR_FE		BIT(1)
++#define USART_SR_NF		BIT(2)
++#define USART_SR_ORE		BIT(3)
++#define USART_SR_IDLE		BIT(4)
++#define USART_SR_RXNE		BIT(5)
++#define USART_SR_TC		BIT(6)
++#define USART_SR_TXE		BIT(7)
++#define USART_SR_LBD		BIT(8)
++#define USART_SR_CTS		BIT(9)
++#define USART_SR_ERR_MASK	(USART_SR_LBD | USART_SR_ORE | \
++				 USART_SR_FE | USART_SR_PE)
++/* Dummy bits */
++#define USART_SR_DUMMY_RX	BIT(16)
 +
-+#define TIM_SR_UIF	BIT(0)
++/* USART_DR */
++#define USART_DR_MASK		GENMASK(8, 0)
 +
-+#define TIM_EGR_UG	BIT(0)
++/* USART_BRR */
++#define USART_BRR_DIV_F_MASK	GENMASK(3, 0)
++#define USART_BRR_DIV_M_MASK	GENMASK(15, 4)
++#define USART_BRR_DIV_M_SHIFT	4
 +
-+struct stm32_clock_event_ddata {
-+	struct clock_event_device evtdev;
-+	unsigned periodic_top;
-+	void __iomem *base;
++/* USART_CR1 */
++#define USART_CR1_SBK		BIT(0)
++#define USART_CR1_RWU		BIT(1)
++#define USART_CR1_RE		BIT(2)
++#define USART_CR1_TE		BIT(3)
++#define USART_CR1_IDLEIE	BIT(4)
++#define USART_CR1_RXNEIE	BIT(5)
++#define USART_CR1_TCIE		BIT(6)
++#define USART_CR1_TXEIE		BIT(7)
++#define USART_CR1_PEIE		BIT(8)
++#define USART_CR1_PS		BIT(9)
++#define USART_CR1_PCE		BIT(10)
++#define USART_CR1_WAKE		BIT(11)
++#define USART_CR1_M		BIT(12)
++#define USART_CR1_UE		BIT(13)
++#define USART_CR1_OVER8		BIT(15)
++#define USART_CR1_IE_MASK	GENMASK(8, 4)
++
++/* USART_CR2 */
++#define USART_CR2_ADD_MASK	GENMASK(3, 0)
++#define USART_CR2_LBDL		BIT(5)
++#define USART_CR2_LBDIE		BIT(6)
++#define USART_CR2_LBCL		BIT(8)
++#define USART_CR2_CPHA		BIT(9)
++#define USART_CR2_CPOL		BIT(10)
++#define USART_CR2_CLKEN		BIT(11)
++#define USART_CR2_STOP_2B	BIT(13)
++#define USART_CR2_STOP_MASK	GENMASK(13, 12)
++#define USART_CR2_LINEN		BIT(14)
++
++/* USART_CR3 */
++#define USART_CR3_EIE		BIT(0)
++#define USART_CR3_IREN		BIT(1)
++#define USART_CR3_IRLP		BIT(2)
++#define USART_CR3_HDSEL		BIT(3)
++#define USART_CR3_NACK		BIT(4)
++#define USART_CR3_SCEN		BIT(5)
++#define USART_CR3_DMAR		BIT(6)
++#define USART_CR3_DMAT		BIT(7)
++#define USART_CR3_RTSE		BIT(8)
++#define USART_CR3_CTSE		BIT(9)
++#define USART_CR3_CTSIE		BIT(10)
++#define USART_CR3_ONEBIT	BIT(11)
++
++/* USART_GTPR */
++#define USART_GTPR_PSC_MASK	GENMASK(7, 0)
++#define USART_GTPR_GT_MASK	GENMASK(15, 8)
++
++#define DRIVER_NAME "stm32-usart"
++#define STM32_SERIAL_NAME "ttyS"
++#define STM32_MAX_PORTS 6
++
++struct stm32_port {
++	struct uart_port port;
++	struct clk *clk;
++	bool hw_flow_control;
 +};
 +
-+static void stm32_clock_event_set_mode(enum clock_event_mode mode,
-+				       struct clock_event_device *evtdev)
++static struct stm32_port stm32_ports[STM32_MAX_PORTS];
++static struct uart_driver stm32_usart_driver;
++
++static void stm32_stop_tx(struct uart_port *port);
++
++static inline struct stm32_port *to_stm32_port(struct uart_port *port)
 +{
-+	struct stm32_clock_event_ddata *data =
-+		container_of(evtdev, struct stm32_clock_event_ddata, evtdev);
-+	void *base = data->base;
++	return container_of(port, struct stm32_port, port);
++}
 +
-+	switch (mode) {
-+	case CLOCK_EVT_MODE_PERIODIC:
-+		writel_relaxed(data->periodic_top, base + TIM_ARR);
-+		writel_relaxed(TIM_CR1_ARPE | TIM_CR1_CEN, base + TIM_CR1);
-+		break;
++static void stm32_set_bits(struct uart_port *port, u32 reg, u32 bits)
++{
++	u32 val;
 +
-+	case CLOCK_EVT_MODE_ONESHOT:
-+	default:
-+		writel_relaxed(0, base + TIM_CR1);
-+		break;
++	val = readl_relaxed(port->membase + reg);
++	val |= bits;
++	writel_relaxed(val, port->membase + reg);
++}
++
++static void stm32_clr_bits(struct uart_port *port, u32 reg, u32 bits)
++{
++	u32 val;
++
++	val = readl_relaxed(port->membase + reg);
++	val &= ~bits;
++	writel_relaxed(val, port->membase + reg);
++}
++
++static void stm32_receive_chars(struct uart_port *port)
++{
++	struct tty_port *tport = &port->state->port;
++	unsigned long c;
++	u32 sr;
++	char flag;
++
++	if (port->irq_wake)
++		pm_wakeup_event(tport->tty->dev, 0);
++
++	while ((sr = readl_relaxed(port->membase + USART_SR)) & USART_SR_RXNE) {
++		sr |= USART_SR_DUMMY_RX;
++		c = readl_relaxed(port->membase + USART_DR);
++		flag = TTY_NORMAL;
++		port->icount.rx++;
++
++		if (sr & USART_SR_ERR_MASK) {
++			if (sr & USART_SR_LBD) {
++				port->icount.brk++;
++				if (uart_handle_break(port))
++					continue;
++			} else if (sr & USART_SR_ORE) {
++				port->icount.overrun++;
++			} else if (sr & USART_SR_PE) {
++				port->icount.parity++;
++			} else if (sr & USART_SR_FE) {
++				port->icount.frame++;
++			}
++
++			sr &= port->read_status_mask;
++
++			if (sr & USART_SR_LBD)
++				flag = TTY_BREAK;
++			else if (sr & USART_SR_PE)
++				flag = TTY_PARITY;
++			else if (sr & USART_SR_FE)
++				flag = TTY_FRAME;
++		}
++
++		if (uart_handle_sysrq_char(port, c))
++			continue;
++		uart_insert_char(port, sr, USART_SR_ORE, c, flag);
 +	}
++
++	spin_unlock(&port->lock);
++	tty_flip_buffer_push(tport);
++	spin_lock(&port->lock);
 +}
 +
-+static int stm32_clock_event_set_next_event(unsigned long evt,
-+					    struct clock_event_device *evtdev)
++static void stm32_transmit_chars(struct uart_port *port)
 +{
-+	struct stm32_clock_event_ddata *data =
-+		container_of(evtdev, struct stm32_clock_event_ddata, evtdev);
++	struct circ_buf *xmit = &port->state->xmit;
 +
-+	writel_relaxed(evt, data->base + TIM_ARR);
-+	writel_relaxed(TIM_CR1_ARPE | TIM_CR1_OPM | TIM_CR1_CEN,
-+		       data->base + TIM_CR1);
++	if (port->x_char) {
++		writel_relaxed(port->x_char, port->membase + USART_DR);
++		port->x_char = 0;
++		port->icount.tx++;
++		return;
++	}
 +
-+	return 0;
++	if (uart_tx_stopped(port)) {
++		stm32_stop_tx(port);
++		return;
++	}
++
++	if (uart_circ_empty(xmit)) {
++		stm32_stop_tx(port);
++		return;
++	}
++
++	writel_relaxed(xmit->buf[xmit->tail], port->membase + USART_DR);
++	xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
++	port->icount.tx++;
++
++	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
++		uart_write_wakeup(port);
++
++	if (uart_circ_empty(xmit))
++		stm32_stop_tx(port);
 +}
 +
-+static irqreturn_t stm32_clock_event_handler(int irq, void *dev_id)
++static irqreturn_t stm32_interrupt(int irq, void *ptr)
 +{
-+	struct stm32_clock_event_ddata *data = dev_id;
++	struct uart_port *port = ptr;
++	u32 sr;
 +
-+	writel_relaxed(0, data->base + TIM_SR);
++	spin_lock(&port->lock);
 +
-+	data->evtdev.event_handler(&data->evtdev);
++	sr = readl_relaxed(port->membase + USART_SR);
++
++	if (sr & USART_SR_RXNE)
++		stm32_receive_chars(port);
++
++	if (sr & USART_SR_TXE)
++		stm32_transmit_chars(port);
++
++	spin_unlock(&port->lock);
 +
 +	return IRQ_HANDLED;
 +}
 +
-+static struct stm32_clock_event_ddata clock_event_ddata = {
-+	.evtdev = {
-+		.name = "stm32 clockevent",
-+		.features = CLOCK_EVT_FEAT_ONESHOT | CLOCK_EVT_FEAT_PERIODIC,
-+		.set_mode = stm32_clock_event_set_mode,
-+		.set_next_event = stm32_clock_event_set_next_event,
-+		.rating = 200,
++static unsigned int stm32_tx_empty(struct uart_port *port)
++{
++	return readl_relaxed(port->membase + USART_SR) & USART_SR_TXE;
++}
++
++static void stm32_set_mctrl(struct uart_port *port, unsigned int mctrl)
++{
++	if ((mctrl & TIOCM_RTS) && (port->status & UPSTAT_AUTORTS))
++		stm32_set_bits(port, USART_CR3, USART_CR3_RTSE);
++	else
++		stm32_clr_bits(port, USART_CR3, USART_CR3_RTSE);
++}
++
++static unsigned int stm32_get_mctrl(struct uart_port *port)
++{
++	/* This routine is used to get signals of: DCD, DSR, RI, and CTS */
++	return TIOCM_CAR | TIOCM_DSR | TIOCM_CTS;
++}
++
++/* Transmit stop */
++static void stm32_stop_tx(struct uart_port *port)
++{
++	stm32_clr_bits(port, USART_CR1, USART_CR1_TXEIE);
++}
++
++
++/* There are probably characters waiting to be transmitted. */
++static void stm32_start_tx(struct uart_port *port)
++{
++	struct circ_buf *xmit = &port->state->xmit;
++
++	if (uart_circ_empty(xmit))
++		return;
++
++	stm32_set_bits(port, USART_CR1, USART_CR1_TXEIE | USART_CR1_TE);
++}
++
++/* Throttle the remote when input buffer is about to overflow. */
++static void stm32_throttle(struct uart_port *port)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&port->lock, flags);
++	stm32_clr_bits(port, USART_CR1, USART_CR1_RXNEIE);
++	spin_unlock_irqrestore(&port->lock, flags);
++}
++
++/* Unthrottle the remote, the input buffer can now accept data. */
++static void stm32_unthrottle(struct uart_port *port)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&port->lock, flags);
++	stm32_set_bits(port, USART_CR1, USART_CR1_RXNEIE);
++	spin_unlock_irqrestore(&port->lock, flags);
++}
++
++/* Receive stop */
++static void stm32_stop_rx(struct uart_port *port)
++{
++	stm32_clr_bits(port, USART_CR1, USART_CR1_RXNEIE);
++}
++
++/* Handle breaks - ignored by us */
++static void stm32_break_ctl(struct uart_port *port, int break_state)
++{
++	/* Nothing here yet .. */
++}
++
++static int stm32_startup(struct uart_port *port)
++{
++	const char *name = to_platform_device(port->dev)->name;
++	u32 val;
++
++	if (request_irq(port->irq, stm32_interrupt, IRQF_NO_SUSPEND,
++				name, port)) {
++		dev_err(port->dev, "cannot allocate irq %d\n", port->irq);
++		return -ENODEV;
++	}
++
++	val = USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE;
++	stm32_set_bits(port, USART_CR1, val);
++
++	return 0;
++}
++
++static void stm32_shutdown(struct uart_port *port)
++{
++	u32 val;
++
++	val = USART_CR1_TXEIE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE;
++	stm32_set_bits(port, USART_CR1, val);
++
++	free_irq(port->irq, port);
++}
++
++static void stm32_set_termios(struct uart_port *port, struct ktermios *termios,
++			    struct ktermios *old)
++{
++	struct stm32_port *stm32_port = to_stm32_port(port);
++	unsigned int baud;
++	u32 usartdiv, mantissa, fraction, oversampling;
++	tcflag_t cflag = termios->c_cflag;
++	u32 cr1, cr2, cr3;
++	unsigned long flags;
++
++	if (!stm32_port->hw_flow_control)
++		cflag &= ~CRTSCTS;
++
++	baud = uart_get_baud_rate(port, termios, old, 0, port->uartclk / 8);
++
++	spin_lock_irqsave(&port->lock, flags);
++
++	/* Stop serial port and reset value */
++	writel_relaxed(0, port->membase + USART_CR1);
++
++	cr1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE;
++
++	if (cflag & CSTOPB)
++		cr2 = USART_CR2_STOP_2B;
++
++	if (cflag & PARENB) {
++		cr1 |= USART_CR1_PCE;
++		if ((cflag & CSIZE) == CS8)
++			cr1 |= USART_CR1_M;
++	}
++
++	if (cflag & PARODD)
++		cr1 |= USART_CR1_PS;
++
++	port->status &= ~(UPSTAT_AUTOCTS | UPSTAT_AUTORTS);
++	if (cflag & CRTSCTS) {
++		port->status |= UPSTAT_AUTOCTS | UPSTAT_AUTORTS;
++		cr3 = USART_CR3_CTSE;
++	}
++
++	usartdiv = DIV_ROUND_CLOSEST(port->uartclk, baud);
++
++	/*
++	 * The USART supports 16 or 8 times oversampling.
++	 * By default we prefer 16 times oversampling, so that the receiver
++	 * has a better tolerance to clock deviations.
++	 * 8 times oversampling is only used to achieve higher speeds.
++	 */
++	if (usartdiv < 16) {
++		oversampling = 8;
++		stm32_set_bits(port, USART_CR1, USART_CR1_OVER8);
++	} else {
++		oversampling = 16;
++		stm32_clr_bits(port, USART_CR1, USART_CR1_OVER8);
++	}
++
++	mantissa = (usartdiv / oversampling) << USART_BRR_DIV_M_SHIFT;
++	fraction = usartdiv % oversampling;
++	writel_relaxed(mantissa | fraction, port->membase + USART_BRR);
++
++	uart_update_timeout(port, cflag, baud);
++
++	port->read_status_mask = USART_SR_ORE;
++	if (termios->c_iflag & INPCK)
++		port->read_status_mask |= USART_SR_PE | USART_SR_FE;
++	if (termios->c_iflag & (IGNBRK | BRKINT | PARMRK))
++		port->read_status_mask |= USART_SR_LBD;
++
++	/* Characters to ignore */
++	port->ignore_status_mask = 0;
++	if (termios->c_iflag & IGNPAR)
++		port->ignore_status_mask = USART_SR_PE | USART_SR_FE;
++	if (termios->c_iflag & IGNBRK) {
++		port->ignore_status_mask |= USART_SR_LBD;
++		/*
++		 * If we're ignoring parity and break indicators,
++		 * ignore overruns too (for real raw support).
++		 */
++		if (termios->c_iflag & IGNPAR)
++			port->ignore_status_mask |= USART_SR_ORE;
++	}
++
++	/*
++	 * Ignore all characters if CREAD is not set.
++	 */
++	if ((termios->c_cflag & CREAD) == 0)
++		port->ignore_status_mask |= USART_SR_DUMMY_RX;
++
++	writel_relaxed(cr3, port->membase + USART_CR3);
++	writel_relaxed(cr2, port->membase + USART_CR2);
++	writel_relaxed(cr1, port->membase + USART_CR1);
++
++	spin_unlock_irqrestore(&port->lock, flags);
++}
++
++static const char *stm32_type(struct uart_port *port)
++{
++	return (port->type == PORT_STM32) ? DRIVER_NAME : NULL;
++}
++
++static void stm32_release_port(struct uart_port *port)
++{
++}
++
++static int stm32_request_port(struct uart_port *port)
++{
++	return 0;
++}
++
++static void stm32_config_port(struct uart_port *port, int flags)
++{
++	if (flags & UART_CONFIG_TYPE)
++		port->type = PORT_STM32;
++}
++
++static int
++stm32_verify_port(struct uart_port *port, struct serial_struct *ser)
++{
++	/* No user changeable parameters */
++	return -EINVAL;
++}
++
++static void stm32_pm(struct uart_port *port, unsigned int state,
++		unsigned int oldstate)
++{
++	struct stm32_port *stm32port = container_of(port,
++			struct stm32_port, port);
++	unsigned long flags = 0;
++
++	switch (state) {
++	case UART_PM_STATE_ON:
++		clk_prepare_enable(stm32port->clk);
++		break;
++	case UART_PM_STATE_OFF:
++		spin_lock_irqsave(&port->lock, flags);
++		stm32_clr_bits(port, USART_CR1, USART_CR1_UE);
++		spin_unlock_irqrestore(&port->lock, flags);
++		clk_disable_unprepare(stm32port->clk);
++		break;
++	}
++}
++
++static struct uart_ops stm32_uart_ops = {
++	.tx_empty	= stm32_tx_empty,
++	.set_mctrl	= stm32_set_mctrl,
++	.get_mctrl	= stm32_get_mctrl,
++	.stop_tx	= stm32_stop_tx,
++	.start_tx	= stm32_start_tx,
++	.throttle	= stm32_throttle,
++	.unthrottle	= stm32_unthrottle,
++	.stop_rx	= stm32_stop_rx,
++	.break_ctl	= stm32_break_ctl,
++	.startup	= stm32_startup,
++	.shutdown	= stm32_shutdown,
++	.set_termios	= stm32_set_termios,
++	.pm		= stm32_pm,
++	.type		= stm32_type,
++	.release_port	= stm32_release_port,
++	.request_port	= stm32_request_port,
++	.config_port	= stm32_config_port,
++	.verify_port	= stm32_verify_port,
++};
++
++static int stm32_init_port(struct stm32_port *stm32port,
++			  struct platform_device *pdev)
++{
++	struct uart_port *port = &stm32port->port;
++	struct resource *res;
++	int ret;
++
++	port->iotype	= UPIO_MEM;
++	port->flags	= UPF_BOOT_AUTOCONF;
++	port->ops	= &stm32_uart_ops;
++	port->dev	= &pdev->dev;
++	port->irq	= platform_get_irq(pdev, 0);
++
++	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	port->membase = devm_ioremap_resource(&pdev->dev, res);
++	if (IS_ERR(port->membase))
++		return PTR_ERR(port->membase);
++	port->mapbase = res->start;
++
++	spin_lock_init(&port->lock);
++
++	stm32port->clk = devm_clk_get(&pdev->dev, NULL);
++	if (IS_ERR(stm32port->clk))
++		return PTR_ERR(stm32port->clk);
++
++	/* Ensure that clk rate is correct by enabling the clk */
++	ret = clk_prepare_enable(stm32port->clk);
++	if (ret)
++		return ret;
++
++	stm32port->port.uartclk = clk_get_rate(stm32port->clk);
++	if (!stm32port->port.uartclk)
++		ret = -EINVAL;
++
++	clk_disable_unprepare(stm32port->clk);
++
++	return ret;
++}
++
++static struct stm32_port *stm32_of_get_stm32_port(struct platform_device *pdev)
++{
++	struct device_node *np = pdev->dev.of_node;
++	int id;
++
++	if (!np)
++		return NULL;
++
++	id = of_alias_get_id(np, "serial");
++
++	if (id < 0)
++		id = 0;
++
++	if (WARN_ON(id >= STM32_MAX_PORTS))
++		return NULL;
++
++	stm32_ports[id].hw_flow_control = of_property_read_bool(np,
++							"st,hw-flow-control");
++	stm32_ports[id].port.line = id;
++	return &stm32_ports[id];
++}
++
++#ifdef CONFIG_OF
++static const struct of_device_id stm32_match[] = {
++	{ .compatible = "st,stm32-usart", },
++	{ .compatible = "st,stm32-uart", },
++	{},
++};
++
++MODULE_DEVICE_TABLE(of, stm32_match);
++#endif
++
++static int stm32_serial_probe(struct platform_device *pdev)
++{
++	int ret;
++	struct stm32_port *stm32port;
++
++	stm32port = stm32_of_get_stm32_port(pdev);
++	if (!stm32port)
++		return -ENODEV;
++
++	ret = stm32_init_port(stm32port, pdev);
++	if (ret)
++		return ret;
++
++	ret = uart_add_one_port(&stm32_usart_driver, &stm32port->port);
++	if (ret)
++		return ret;
++
++	platform_set_drvdata(pdev, &stm32port->port);
++
++	return 0;
++}
++
++static int stm32_serial_remove(struct platform_device *pdev)
++{
++	struct uart_port *port = platform_get_drvdata(pdev);
++
++	return uart_remove_one_port(&stm32_usart_driver, port);
++}
++
++
++#ifdef CONFIG_SERIAL_STM32_CONSOLE
++static void stm32_console_putchar(struct uart_port *port, int ch)
++{
++	while (!(readl_relaxed(port->membase + USART_SR) & USART_SR_TXE))
++		cpu_relax();
++
++	writel_relaxed(ch, port->membase + USART_DR);
++}
++
++static void stm32_console_write(struct console *co, const char *s, unsigned cnt)
++{
++	struct uart_port *port = &stm32_ports[co->index].port;
++	unsigned long flags;
++	u32 old_cr1, new_cr1;
++	int locked = 1;
++
++	if (oops_in_progress) {
++		locked = spin_trylock_irqsave(&port->lock, flags);
++	} else {
++		locked = 1;
++		spin_lock_irqsave(&port->lock, flags);
++	}
++
++	/* Save and disable interrupts */
++	old_cr1 = readl_relaxed(port->membase + USART_CR1);
++	new_cr1 = old_cr1 & ~USART_CR1_IE_MASK;
++	writel_relaxed(new_cr1, port->membase + USART_CR1);
++
++	uart_console_write(port, s, cnt, stm32_console_putchar);
++
++	/* Restore interrupt state */
++	writel_relaxed(old_cr1, port->membase + USART_CR1);
++
++	if (locked)
++		spin_unlock_irqrestore(&port->lock, flags);
++}
++
++static int stm32_console_setup(struct console *co, char *options)
++{
++	struct stm32_port *stm32port;
++	int baud = 9600;
++	int bits = 8;
++	int parity = 'n';
++	int flow = 'n';
++
++	if (co->index >= STM32_MAX_PORTS)
++		return -ENODEV;
++
++	stm32port = &stm32_ports[co->index];
++
++	/*
++	 * This driver does not support early console initialization
++	 * (use ARM early printk support instead), so we only expect
++	 * this to be called during the uart port registration when the
++	 * driver gets probed and the port should be mapped at that point.
++	 */
++	if (stm32port->port.mapbase == 0 || stm32port->port.membase == NULL)
++		return -ENXIO;
++
++	if (options)
++		uart_parse_options(options, &baud, &parity, &bits, &flow);
++
++	return uart_set_options(&stm32port->port, co, baud, parity, bits, flow);
++}
++
++static struct console stm32_console = {
++	.name		= STM32_SERIAL_NAME,
++	.device		= uart_console_device,
++	.write		= stm32_console_write,
++	.setup		= stm32_console_setup,
++	.flags		= CON_PRINTBUFFER,
++	.index		= -1,
++	.data		= &stm32_usart_driver,
++};
++
++#define STM32_SERIAL_CONSOLE (&stm32_console)
++
++#else
++#define STM32_SERIAL_CONSOLE NULL
++#endif /* CONFIG_SERIAL_STM32_CONSOLE */
++
++static struct uart_driver stm32_usart_driver = {
++	.owner		= THIS_MODULE,
++	.driver_name	= DRIVER_NAME,
++	.dev_name	= STM32_SERIAL_NAME,
++	.major		= 0,
++	.minor		= 0,
++	.nr		= STM32_MAX_PORTS,
++	.cons		= STM32_SERIAL_CONSOLE,
++};
++
++static struct platform_driver stm32_serial_driver = {
++	.probe		= stm32_serial_probe,
++	.remove		= stm32_serial_remove,
++	.driver	= {
++		.name	= DRIVER_NAME,
++		.owner	= THIS_MODULE,
++		.of_match_table = of_match_ptr(stm32_match),
 +	},
 +};
 +
-+static void __init stm32_clockevent_init(struct device_node *np)
++static int __init usart_init(void)
 +{
-+	struct stm32_clock_event_ddata *data = &clock_event_ddata;
-+	struct clk *clk;
-+	struct reset_control *rstc;
-+	unsigned long rate, max_delta;
-+	int irq, ret, bits, prescaler = 1;
++	int ret;
++	static char banner[] __initdata =
++		KERN_INFO "STM32 USART driver initialized\n";
 +
-+	clk = of_clk_get(np, 0);
-+	if (IS_ERR(clk)) {
-+		ret = PTR_ERR(clk);
-+		pr_err("failed to get clock for clockevent (%d)\n", ret);
-+		goto err_clk_get;
-+	}
++	printk(banner);
 +
-+	ret = clk_prepare_enable(clk);
-+	if (ret) {
-+		pr_err("failed to enable timer clock for clockevent (%d)\n",
-+		       ret);
-+		goto err_clk_enable;
-+	}
++	ret = uart_register_driver(&stm32_usart_driver);
++	if (ret)
++		return ret;
 +
-+	rate = clk_get_rate(clk);
++	ret = platform_driver_register(&stm32_serial_driver);
++	if (ret)
++		uart_unregister_driver(&stm32_usart_driver);
 +
-+	rstc = of_reset_control_get(np, NULL);
-+	if (!IS_ERR(rstc)) {
-+		reset_control_assert(rstc);
-+		reset_control_deassert(rstc);
-+	}
-+
-+	data->base = of_iomap(np, 0);
-+	if (!data->base) {
-+		pr_err("failed to map registers for clockevent\n");
-+		goto err_iomap;
-+	}
-+
-+	irq = irq_of_parse_and_map(np, 0);
-+	if (!irq) {
-+		pr_err("%s: failed to get irq.\n", np->full_name);
-+		goto err_get_irq;
-+	}
-+
-+	/* Detect whether the timer is 16 or 32 bits */
-+	writel_relaxed(~0UL, data->base + TIM_ARR);
-+	max_delta = readl_relaxed(data->base + TIM_ARR);
-+	if (max_delta == ~0UL) {
-+		prescaler = 1;
-+		bits = 32;
-+	} else {
-+		prescaler = 1024;
-+		bits = 16;
-+	}
-+	writel_relaxed(0, data->base + TIM_ARR);
-+
-+	writel_relaxed(prescaler - 1, data->base + TIM_PSC);
-+	writel_relaxed(TIM_EGR_UG, data->base + TIM_EGR);
-+	writel_relaxed(TIM_DIER_UIE, data->base + TIM_DIER);
-+	writel_relaxed(0, data->base + TIM_SR);
-+
-+	data->periodic_top = DIV_ROUND_CLOSEST(rate, prescaler * HZ);
-+
-+	clockevents_config_and_register(&data->evtdev,
-+					DIV_ROUND_CLOSEST(rate, prescaler),
-+					0x1, max_delta);
-+
-+	ret = request_irq(irq, stm32_clock_event_handler, IRQF_TIMER,
-+			"stm32 clockevent", data);
-+	if (ret) {
-+		pr_err("%s: failed to request irq.\n", np->full_name);
-+		goto err_get_irq;
-+	}
-+
-+	pr_info("%s: STM32 clockevent driver initialized (%d bits)\n",
-+			np->full_name, bits);
-+
-+	return;
-+
-+err_get_irq:
-+	iounmap(data->base);
-+err_iomap:
-+	clk_disable_unprepare(clk);
-+err_clk_enable:
-+	clk_put(clk);
-+err_clk_get:
-+	return;
++	return ret;
 +}
 +
-+CLOCKSOURCE_OF_DECLARE(stm32, "st,stm32-timer", stm32_clockevent_init);
++static void __exit usart_exit(void)
++{
++	platform_driver_unregister(&stm32_serial_driver);
++	uart_unregister_driver(&stm32_usart_driver);
++}
++
++module_init(usart_init);
++module_exit(usart_exit);
++
++MODULE_ALIAS("platform:" DRIVER_NAME);
++MODULE_DESCRIPTION("STMicroelectronics STM32 serial port driver");
++MODULE_LICENSE("GPL v2");
+diff --git a/include/uapi/linux/serial_core.h b/include/uapi/linux/serial_core.h
+index b212281..93ba148 100644
+--- a/include/uapi/linux/serial_core.h
++++ b/include/uapi/linux/serial_core.h
+@@ -258,4 +258,7 @@
+ /* Cris v10 / v32 SoC */
+ #define PORT_CRIS	112
+ 
++/* STM32 USART */
++#define PORT_STM32	113
++
+ #endif /* _UAPILINUX_SERIAL_CORE_H */
 -- 
 1.9.1
 
