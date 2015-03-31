@@ -1,66 +1,153 @@
-From: =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>
-Subject: [PATCH v2 02/10] KVM: define common __KVM_GUESTDBG_USE_SW/HW_BP values
-Date: Tue, 31 Mar 2015 16:08:00 +0100
-Message-ID: <1427814488-28467-3-git-send-email-alex.bennee@linaro.org>
-References: <1427814488-28467-1-git-send-email-alex.bennee@linaro.org>
+From: Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>
+Subject: Re: [PATCH v4 00/14] Add kdbus implementation
+Date: Tue, 31 Mar 2015 17:10:19 +0200
+Message-ID: <CAG-2HqVwfH5fK0YV1+k3T4bFqd5v3Yd-hpL-bTSBK23FFY-zMA@mail.gmail.com>
+References: <1425906560-13798-1-git-send-email-gregkh@linuxfoundation.org>
+ <CALCETrUjqTH14fZCeqU_OBoKX_6x4B=712WTeSqSAztpgXGiDw@mail.gmail.com>
+ <CANq1E4Tf_6Cn+sxY=BPEbRpEr5WY+-rRX5gipz-_=4PNLa9bnQ@mail.gmail.com>
+ <CALCETrVWbz7YudNQXQD_2PjC1HR0P0cB_1ea8NiYoQPDfQxERg@mail.gmail.com>
+ <CANq1E4RA1ok=3Z5W2LkzqaUOKtbMVX_Joxe7_LRbLnQgfRUEYA@mail.gmail.com>
+ <CALCETrWCBYzbzG3xZznG4AvVf67E_d8BVmBi1bZsDx7x_2Bh5g@mail.gmail.com>
+ <CANq1E4TtXq02Ug22fsTr8j0X6+vJKvyryALiTEMbT4SMQB1j3g@mail.gmail.com>
+ <CALCETrXqYBeZuOWhm9mz_nt+aWPXHFwkQPEAfwBXzDxnAP7f+g@mail.gmail.com>
+ <CANq1E4QiErHp8Q6bzFLkK9=7eBZC8dvh+Xnrh9_D5DAAogyaZA@mail.gmail.com>
+ <CALCETrUuWhtJ9w9vyCGgaJDMGithJad4A4wf-BuxWLb_af5eDg@mail.gmail.com>
+ <CANq1E4TTt3qanQse30KOZsuo2tfNoj7YSueh3AZ7bY1nQQeZNA@mail.gmail.com> <CALCETrV-cHYzcWu3t6tJ1eP0UZHTqoGH0KTYHTpJNit9-59TAA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
-In-Reply-To: <1427814488-28467-1-git-send-email-alex.bennee@linaro.org>
-List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
-List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
-List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
-List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
-List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
-Errors-To: kvmarm-bounces@lists.cs.columbia.edu
-Sender: kvmarm-bounces@lists.cs.columbia.edu
-To: kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kvmarm@lists.cs.columbia.edu, christoffer.dall@linaro.org, marc.zyngier@arm.com, peter.maydell@linaro.org, agraf@suse.de, drjones@redhat.com, pbonzini@redhat.com, zhichao.huang@linaro.org
-Cc: "maintainer:X86 ARCHITECTURE..." <x86@kernel.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Alexey Kardashevskiy <aik@ozlabs.ru>, Nadav Amit <namit@cs.technion.ac.il>, Gleb Natapov <gleb@kernel.org>, jan.kiszka@siemens.com, "H. Peter Anvin" <hpa@zytor.com>, "open list:LINUX FOR POWERPC..." <linuxppc-dev@lists.ozlabs.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, dahi@linux.vnet.ibm.com, Ingo Molnar <mingo@redhat.com>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, r65777@freescale.com, Thomas Gleixner <tglx@linutronix.de>, bp@suse.de
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrV-cHYzcWu3t6tJ1eP0UZHTqoGH0KTYHTpJNit9-59TAA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Q3VycmVudGx5IHg4NiwgcG93ZXJwYyBhbmQgc29vbiBhcm02NCB1c2UgdGhlIHNhbWUgdHdvIGFy
-Y2hpdGVjdHVyZQpzcGVjaWZpYyBiaXRzIGZvciBndWVzdCBkZWJ1ZyBzdXBwb3J0IGZvciBzb2Z0
-d2FyZSBhbmQgaGFyZHdhcmUKYnJlYWtwb2ludHMuIFRoaXMgbWFrZXMgdGhlIHNoYXJlZCB2YWx1
-ZXMgZXhwbGljaXQgd2hpbGUgbGVhdmluZyB0aGUKZ2F0ZSBvcGVuIGZvciBhbm90aGVyIGFyY2hp
-dGVjdHVyZSB0byB1c2Ugc29tZSBvdGhlciB2YWx1ZSBpZiB0aGV5CnJlYWxseSByZWFsbHkgd2Fu
-dCB0by4KClNpZ25lZC1vZmYtYnk6IEFsZXggQmVubsOpZSA8YWxleC5iZW5uZWVAbGluYXJvLm9y
-Zz4KCmRpZmYgLS1naXQgYS9hcmNoL3Bvd2VycGMvaW5jbHVkZS91YXBpL2FzbS9rdm0uaCBiL2Fy
-Y2gvcG93ZXJwYy9pbmNsdWRlL3VhcGkvYXNtL2t2bS5oCmluZGV4IGFiNGQ0NzMuLjE3MzE1Njkg
-MTAwNjQ0Ci0tLSBhL2FyY2gvcG93ZXJwYy9pbmNsdWRlL3VhcGkvYXNtL2t2bS5oCisrKyBiL2Fy
-Y2gvcG93ZXJwYy9pbmNsdWRlL3VhcGkvYXNtL2t2bS5oCkBAIC0zMTAsOCArMzEwLDggQEAgc3Ry
-dWN0IGt2bV9ndWVzdF9kZWJ1Z19hcmNoIHsKICAqIGFuZCB1cHBlciAxNiBiaXRzIGFyZSBhcmNo
-aXRlY3R1cmUgc3BlY2lmaWMuIEFyY2hpdGVjdHVyZSBzcGVjaWZpYyBkZWZpbmVzCiAgKiB0aGF0
-IGlvY3RsIGlzIGZvciBzZXR0aW5nIGhhcmR3YXJlIGJyZWFrcG9pbnQgb3Igc29mdHdhcmUgYnJl
-YWtwb2ludC4KICAqLwotI2RlZmluZSBLVk1fR1VFU1REQkdfVVNFX1NXX0JQCQkweDAwMDEwMDAw
-Ci0jZGVmaW5lIEtWTV9HVUVTVERCR19VU0VfSFdfQlAJCTB4MDAwMjAwMDAKKyNkZWZpbmUgS1ZN
-X0dVRVNUREJHX1VTRV9TV19CUAkJX19LVk1fR1VFU1REQkdfVVNFX1NXX0JQCisjZGVmaW5lIEtW
-TV9HVUVTVERCR19VU0VfSFdfQlAJCV9fS1ZNX0dVRVNUREJHX1VTRV9IV19CUAogCiAvKiBkZWZp
-bml0aW9uIG9mIHJlZ2lzdGVycyBpbiBrdm1fcnVuICovCiBzdHJ1Y3Qga3ZtX3N5bmNfcmVncyB7
-CmRpZmYgLS1naXQgYS9hcmNoL3g4Ni9pbmNsdWRlL3VhcGkvYXNtL2t2bS5oIGIvYXJjaC94ODYv
-aW5jbHVkZS91YXBpL2FzbS9rdm0uaAppbmRleCBkN2RjZWY1Li4xNDM4MjAyIDEwMDY0NAotLS0g
-YS9hcmNoL3g4Ni9pbmNsdWRlL3VhcGkvYXNtL2t2bS5oCisrKyBiL2FyY2gveDg2L2luY2x1ZGUv
-dWFwaS9hc20va3ZtLmgKQEAgLTI1MCw4ICsyNTAsOCBAQCBzdHJ1Y3Qga3ZtX2RlYnVnX2V4aXRf
-YXJjaCB7CiAJX191NjQgZHI3OwogfTsKIAotI2RlZmluZSBLVk1fR1VFU1REQkdfVVNFX1NXX0JQ
-CQkweDAwMDEwMDAwCi0jZGVmaW5lIEtWTV9HVUVTVERCR19VU0VfSFdfQlAJCTB4MDAwMjAwMDAK
-KyNkZWZpbmUgS1ZNX0dVRVNUREJHX1VTRV9TV19CUAkJX19LVk1fR1VFU1REQkdfVVNFX1NXX0JQ
-CisjZGVmaW5lIEtWTV9HVUVTVERCR19VU0VfSFdfQlAJCV9fS1ZNX0dVRVNUREJHX1VTRV9IV19C
-UAogI2RlZmluZSBLVk1fR1VFU1REQkdfSU5KRUNUX0RCCQkweDAwMDQwMDAwCiAjZGVmaW5lIEtW
-TV9HVUVTVERCR19JTkpFQ1RfQlAJCTB4MDAwODAwMDAKIApkaWZmIC0tZ2l0IGEvaW5jbHVkZS91
-YXBpL2xpbnV4L2t2bS5oIGIvaW5jbHVkZS91YXBpL2xpbnV4L2t2bS5oCmluZGV4IDVlZWRmODQu
-LmNlMmRiMTQgMTAwNjQ0Ci0tLSBhL2luY2x1ZGUvdWFwaS9saW51eC9rdm0uaAorKysgYi9pbmNs
-dWRlL3VhcGkvbGludXgva3ZtLmgKQEAgLTUyNSw4ICs1MjUsMTYgQEAgc3RydWN0IGt2bV9zMzkw
-X2lycSB7CiAKIC8qIGZvciBLVk1fU0VUX0dVRVNUX0RFQlVHICovCiAKLSNkZWZpbmUgS1ZNX0dV
-RVNUREJHX0VOQUJMRQkJMHgwMDAwMDAwMQotI2RlZmluZSBLVk1fR1VFU1REQkdfU0lOR0xFU1RF
-UAkJMHgwMDAwMDAwMgorI2RlZmluZSBLVk1fR1VFU1REQkdfRU5BQkxFCQkoMSA8PCAwKQorI2Rl
-ZmluZSBLVk1fR1VFU1REQkdfU0lOR0xFU1RFUAkoMSA8PCAxKQorCisvKgorICogQXJjaGl0ZWN0
-dXJlIHNwZWNpZmljIHN0dWZmIHVzZXMgdGhlIHRvcCAxNiBiaXRzIG9mIHRoZSBmaWVsZCwKKyAq
-IGhvd2V2ZXIgdGhlcmUgaXMgc29tZSBzaGFyZWQgY29tbW9uYWxpdHkgZm9yIHRoZSBjb21tb24g
-Y2FzZXMKKyAqLworI2RlZmluZSBfX0tWTV9HVUVTVERCR19VU0VfU1dfQlAJKDEgPDwgMTYpCisj
-ZGVmaW5lIF9fS1ZNX0dVRVNUREJHX1VTRV9IV19CUAkoMSA8PCAxNykKKwogCiBzdHJ1Y3Qga3Zt
-X2d1ZXN0X2RlYnVnIHsKIAlfX3UzMiBjb250cm9sOwotLSAKMi4zLjQKCl9fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmt2bWFybSBtYWlsaW5nIGxpc3QKa3Zt
-YXJtQGxpc3RzLmNzLmNvbHVtYmlhLmVkdQpodHRwczovL2xpc3RzLmNzLmNvbHVtYmlhLmVkdS9t
-YWlsbWFuL2xpc3RpbmZvL2t2bWFybQo=
+On Tue, Mar 31, 2015 at 3:58 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> On Mon, Mar 30, 2015 at 9:56 AM, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>> Hi
+>>
+>> On Wed, Mar 25, 2015 at 7:12 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>>> On Wed, Mar 25, 2015 at 10:29 AM, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>> [...]
+>>>>> I could be wrong about the lack of use cases.  If so, please enlighten me.
+>>>>
+>>>> We have several dbus APIs that allow clients to register as a special
+>>>> handler/controller/etc. (eg., see systemd-logind TakeControl()). The
+>>>> API provider checks the privileges of a client on registration and
+>>>> then just tracks the client ID. This way, the client can be privileged
+>>>> when asking for special access, then drop privileges and still use the
+>>>> interface. You cannot re-connect in between, as the API provider
+>>>> tracks your bus ID. Without message-metadata, all your (other) calls
+>>>> on this bus would always be treated as privileged. We *really* want to
+>>>> avoid this.
+>>>
+>>> Connect twice?
+>>
+>> The remote peer might cache your connection ID to track you. You have
+>> to use the same connection to talk to that peer, in this given
+>> scenario. That's how D-Bus1 is used today, and we have to follow the
+>> semantics.
+>
+> That's yet another reason that you really ought to disconnect and
+> reconnect after a privilege change -- the remote peer might remember
+> you.
+>
+> The "might" will be a big problem.  Users of kdbus can't rely on any
+> particular concept of privilege because you have too many of them.
+>
+>>
+>>> You *already* have to reconnect or connect twice because you have
+>>> per-connection metadata.  That's part of my problem with this scheme
+>>> -- you support *both styles*, which seems like it'll give you most of
+>>> the downsides of both without the upsides.
+>>
+>> Not necessarily. Connection metadata describes the state at the time
+>> you connected to the bus. If someone ask for this information, they
+>> will get exactly that. In this model, you cannot drop privileges, if
+>> you need to be privileged during setup.
+>> If someone asks for per-message metadata, they better ought not ask
+>> for per-connection creds. It's not the information they're looking
+>> for, so it will not match the data that at the time the message was
+>> sent.
+>>
+>> There is no immediate need to make both match. For security decisions,
+>> we mandate per-message creds. Per-connection creds are for
+>> backwards-compatibility to dbus1 and for passive introspection of bus
+>> connections.
+>
+> Backwards compatibility doesn't magically exempt security
+> considerations.
+
+No one is arguing that.
+
+> If new code is insecure when talking to a legacy
+> service, it's still insecure.
+>
+> [...]
+>
+>>> Again, you seem to be arguing that per-connection metadata is bad, but
+>>> you still have an implementation of per-connection metadata, so you
+>>> still have all these problems.
+>>
+>> I don't see why we get the problems of per-connection metadata. Just
+>> because you _can_ use it, doesn't mean you should use it for all
+>> imaginable use-cases. The same goes for reading information from
+>> /proc. There are valid use-cases to do so, but also a lot of cases
+>> where it will not provide the information you want.
+>>
+>
+> Then you'll need to document really carefully which metadata is used
+> for which service.  This actually seems impossible to do, since some
+> services will exist in legacy and kdbus forms.
+>
+>>> I'm actually okay with per-message metadata in principle, but I'd like
+>>> to see evidence (with numbers, please) that a send+recv of per-message
+>>> metadata is *not* significantly slower than a recv of already-captured
+>>> per-connection metadata.  If this is in fact the case, then maybe you
+>>> should trash per-connection metadata instead and the legacy
+>>> compatibility code can figure out a way to deal with it.  IMO that
+>>> would be a pretty nice outcome, since you would never have to worry
+>>> whether your connection to the bus is inadvertantly privileged.
+>>
+>> Per-message metadata makes SEND about 25% slower, if you transmit the
+>> full set of all possible information. Just 3% if you only use
+>> PIDs+UIDs. The expensive metadata is cgroup-path and exe-path.
+>> If a service needs that information, however, and if that information
+>> is not guaranteed to be up-to-date, the service _will_ go and look it
+>> up in /proc or somewhere else, which is certainly a whole lot more
+>> expensive than the code in kdbus.
+>
+> Can you give actual numbers, in ns or cycles, of how much overhead
+> metadata adds?
+>
+>>
+>> In general, there seems to be a number of misconception in this thread
+>> about what kdbus is supposed to be. We're not inventing something new
+>> here with a clean slate, but we're moving parts of an existing
+>> implementation that has tons of users into the kernel, in order to fix
+>> issues that cannot be fixed otherwise in userspace (most notably, the
+>> race gaps that exist when retrieving per-message metadata). Therefore,
+>> we have to keep existing semantics stable, otherwise the exercise is
+>> somewhat pointless.
+>
+> IOW you're taking something that you dislike aspects of and shoving
+> most of it in the kernel.  That guarantees us an API in the kernel
+> that even the creators don't really like.  This is, IMO, very
+> unfortunate.
+
+This is a misrepresentation of what David wrote. We do want this API
+regardless of dbus1 compatibility, but compatibility is by itself a
+sufficient motivation. A further motivation is reliable introspection,
+since this meta-data allows listing current peers on the bus and
+showing their identities. That's hugely useful to make the bus
+transparent to admins.
+
+> Have you considered porting the kdbus per-message metadata mechanism to UDS?
+
+As outlined before, enhancing UDS by porting the metadata mechanism
+from kdbus would not be sufficient to solve all the problems we need
+to solve, so it is not something we are currently working on.
+
+Cheers,
+
+Tom
