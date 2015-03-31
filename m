@@ -1,91 +1,40 @@
-From: David Drysdale <drysdale@google.com>
-Subject: Re: [PATCH v2 3/7] Introduce a new clone4 syscall with more flag bits
- and extensible arguments
-Date: Tue, 31 Mar 2015 15:41:35 +0100
-Message-ID: <CAHse=S_nZFeC3BMp74SOO_aNvTSqkRbkq28LpT-GaNBpD_kP+A@mail.gmail.com>
-References: <cover.1426376419.git.josh@joshtriplett.org> <367b888ef58831b6812c3cf80ca973c65edc67f5.1426376419.git.josh@joshtriplett.org>
- <CAHse=S_0G028D2f1vO=1EBO-TM1ZyJZT3-VE4O3a9dS-VcdKzg@mail.gmail.com> <20150323150500.GB31561@cloud>
+From: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
+Subject: Re: Revised futex(2) man page for review
+Date: Tue, 31 Mar 2015 07:45:46 -0700
+Message-ID: <1427813146.20009.2.camel@stgolabs.net>
+References: <55166C01.7000803@gmail.com>
+	 <20150328114725.GJ27490@worktop.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20150323150500.GB31561@cloud>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Josh Triplett <josh@joshtriplett.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Thiago Macieira <thiago.macieira@intel.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, X86 ML <x86@kernel.org>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150328114725.GJ27490-IIpfhp3q70z/8w/KjCw3T+5/BudmfyzbbVWyRVo5IupeoWH0uzbU5w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, bert hubert <bert.hubert-dxZxOz86jR8sYtaaK7K+xw@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb8U04JRNCRQjg@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 23, 2015 at 3:05 PM,  <josh@joshtriplett.org> wrote:
-> On Mon, Mar 23, 2015 at 02:11:45PM +0000, David Drysdale wrote:
->> On Sun, Mar 15, 2015 at 7:59 AM, Josh Triplett <josh@joshtriplett.org> wrote:
->> > diff --git a/arch/x86/ia32/ia32entry.S b/arch/x86/ia32/ia32entry.S
->> > index 0286735..ba28306 100644
->> > --- a/arch/x86/ia32/ia32entry.S
->> > +++ b/arch/x86/ia32/ia32entry.S
->> > @@ -483,6 +483,7 @@ GLOBAL(\label)
->> >         PTREGSCALL stub32_execveat, compat_sys_execveat
->> >         PTREGSCALL stub32_fork, sys_fork
->> >         PTREGSCALL stub32_vfork, sys_vfork
->> > +       PTREGSCALL stub32_clone4, compat_sys_clone4
->> >
->> >         ALIGN
->> >  GLOBAL(stub32_clone)
->> > diff --git a/arch/x86/kernel/entry_64.S b/arch/x86/kernel/entry_64.S
->> > index 1d74d16..ead143f 100644
->> > --- a/arch/x86/kernel/entry_64.S
->> > +++ b/arch/x86/kernel/entry_64.S
->> > @@ -520,6 +520,7 @@ END(\label)
->> >         FORK_LIKE  clone
->> >         FORK_LIKE  fork
->> >         FORK_LIKE  vfork
->> > +       FORK_LIKE  clone4
->> >         FIXED_FRAME stub_iopl, sys_iopl
->> >
->> >  ENTRY(stub_execve)
->> > diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
->> > index b3560ec..56fcc90 100644
->> > --- a/arch/x86/syscalls/syscall_32.tbl
->> > +++ b/arch/x86/syscalls/syscall_32.tbl
->> > @@ -365,3 +365,4 @@
->> >  356    i386    memfd_create            sys_memfd_create
->> >  357    i386    bpf                     sys_bpf
->> >  358    i386    execveat                sys_execveat                    stub32_execveat
->> > +359    i386    clone4                  sys_clone4                      stub32_clone4
->> > diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
->> > index 8d656fb..af15b0f 100644
->> > --- a/arch/x86/syscalls/syscall_64.tbl
->> > +++ b/arch/x86/syscalls/syscall_64.tbl
->> > @@ -329,6 +329,7 @@
->> >  320    common  kexec_file_load         sys_kexec_file_load
->> >  321    common  bpf                     sys_bpf
->> >  322    64      execveat                stub_execveat
->> > +323    64      clone4                  stub_clone4
->> >
->> >  #
->> >  # x32-specific system call numbers start at 512 to avoid cache impact
->> > @@ -368,3 +369,4 @@
->> >  543    x32     io_setup                compat_sys_io_setup
->> >  544    x32     io_submit               compat_sys_io_submit
->> >  545    x32     execveat                stub_x32_execveat
->> > +546    x32     clone4                  stub32_clone4
->>
->> Doesn't this need an x32 specific wrapper (to ensure the full
->> set of registers are saved)?
->
-> I'm not an x32 expert; I don't know how x32 interacts with pt_regs and
-> compat syscalls.  Could an x32 expert weigh in, please?
->
-> - Josh Triplett
+On Sat, 2015-03-28 at 12:47 +0100, Peter Zijlstra wrote:
 
-(In the absence of an x32 expert chiming in...)
+>        The condition is represented by the futex word, which is an ad=
+dress  in
+>        memory  supplied to the futex() system call, and the value at =
+this mem=E2=80=90
+>        ory location.  (While the virtual addresses for the same memor=
+y in sep=E2=80=90
+>        arate  processes  may  not be equal, the kernel maps them inte=
+rnally so
+>        that the same memory mapped in different locations will corres=
+pond  for
+>        futex() calls.)
+>=20
+>        When  executing  a futex operation that requests to block a th=
+read, the
+>        kernel will only block if the futex word has the value that th=
+e calling
 
-As I understand it:
- - stub32_clone4 expects 32-bit calling conventions and calls compat_sys_clone4
- - stub_clone4 expects 64-bit calling conventions and calls sys_clone4
- - stub_x32_clone4 would expect 64-bit calling conventions but call
-   compat_sys_clone4.
+Given the use of "word", you should probably state right away that
+futexes are only 32bit.
 
-Also, I have a suspicion that different field types in the [compat_]clone4_args
-structure may cause problems -- I *think* its (final) layout will be 4+4+4+4+4+4
-on 32-bit, 8+8+8+8+8+4 on 64-bit, but 4+4+8+8+4+4 on x32.
-
-Have you tried running a test with a userspace program compiled with -mx32?
+Thanks,
+Davidlohr
