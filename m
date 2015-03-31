@@ -1,72 +1,59 @@
-From: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCHv3 0/2] N900 Modem Speech Support
-Date: Tue, 31 Mar 2015 22:33:41 +0200
-Message-ID: <20150331203340.GA5450@earth>
-References: <1426964957-5023-1-git-send-email-sre@kernel.org>
+From: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
+Subject: Re: Revised futex(2) man page for review
+Date: Tue, 31 Mar 2015 13:36:45 -0700
+Message-ID: <1427834205.20009.19.camel@stgolabs.net>
+References: <55166C01.7000803@gmail.com>
+	 <20150328114725.GJ27490@worktop.programming.kicks-ass.net>
+	 <20150328120337.GB32047@worktop.ger.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="MGYHOYXEY6WxJCY8"
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1426964957-5023-1-git-send-email-sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+In-Reply-To: <20150328120337.GB32047-IIpfhp3q70xoDWY/xQGDymt3HXsI98Cx0E9HWUfgJXw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Ujfalusi <peter.ujfalusi-l0cyMroinI0@public.gmane.org>, Kai Vehmanen <kvcontact-nQfqiRJ1PMYxHbG02/KK1g@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Pali Rohar <pali.rohar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Aaro Koskinen <aaro.koskinen-X3B1VOXEql0@public.gmane.org>, Ivaylo Dimitrov <ivo.g.dimitrov.75-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-omap-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, bert hubert <bert.hubert-dxZxOz86jR8sYtaaK7K+xw@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb8U04JRNCRQjg@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-
---MGYHOYXEY6WxJCY8
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-Hi,
-
-On Sat, Mar 21, 2015 at 08:09:15PM +0100, Sebastian Reichel wrote:
-> This patchset contains the missing speech data support for the
-> Nokia N900 modem.
->
-> [...]
->
->   HSI: cmt_speech: Add cmt-speech driver
->   HSI: nokia-modem: Add cmt-speech support
+On Sat, 2015-03-28 at 13:03 +0100, Peter Zijlstra wrote:
+> >               If the timeout argument is non-NULL, its contents spe=
+cify a rel=E2=80=90
+> >               ative   timeout   for   the  wait,  measured  accordi=
+ng  to  the
+> >               CLOCK_MONOTONIC clock.  (This interval will be rounde=
+d up to the
+> >               system clock granularity, and kernel scheduling delay=
+s mean that
+> >               the blocking interval may overrun by a small amount.)=
+  If  time=E2=80=90
+> >               out is NULL, the call blocks indefinitely.
 >=20
->  drivers/hsi/clients/Kconfig          |   12 +-
->  drivers/hsi/clients/Makefile         |    1 +
->  drivers/hsi/clients/cmt_speech.c     | 1456 ++++++++++++++++++++++++++++=
-++++++
->  drivers/hsi/clients/nokia-modem.c    |   32 +-
->  include/uapi/linux/hsi/Kbuild        |    2 +-
->  include/uapi/linux/hsi/cs-protocol.h |  113 +++
->  6 files changed, 1613 insertions(+), 3 deletions(-)
->  create mode 100644 drivers/hsi/clients/cmt_speech.c
->  create mode 100644 include/uapi/linux/hsi/cs-protocol.h
+> Would it not be better to only state that the wait will not return
+> before the timeout -- unless woken -- and not bother with clock
+> granularity and scheduling delays?
 
-I added the patches to my linux-hsi.git for-next branch aimed for
-4.1.
+Yeah, similarly we also have this:
 
--- Sebastian
+     FUTEX_PRIVATE_FLAG (since Linux 2.6.22)
+              This option bit can be employed with all futex  operation=
+s.   It
+              tells  the  kernel  that  the  futex  is process-private =
+and not
+              shared with another process (i.e., it is  only  being  us=
+ed  for
+              synchronization  between  threads  of  the  same process)=
+=2E  This
+              allows the kernel to choose the fast  path  for  validati=
+ng  the
+              user-space address and avoids expensive VMA lookups, taki=
+ng ref=E2=80=90
+              erence counts on file backing store, and so on.
 
+This to me reads a bit too much into the kernel (fastpath, refcnt,
+vmas). Why not just mention that it avoids overhead in the kernel or
+something? I don't recall any manpage mentioning such details, but I
+could be wrong. In any case its a nit, the whole doc is pretty good and
+I hope you can merge it soon and then just increment ;)
 
---MGYHOYXEY6WxJCY8
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBCgAGBQJVGwShAAoJENju1/PIO/qaW6cQAI4gTKtou6io7CgSWWLL8XhR
-IwyPWmkzk3B1iCLs0S1yqz63FFCe3sQ6Yk4WvHloBAvLUXRAxi5tTSTnuvB7oVk2
-L6bFxW9o1GOSBnWxtSq7HaaPFZOK93ZC4awQNiEz461K5w43xKuBBpw2c1hAdU4W
-iK+htqKSOWe+bmh5hhMEne4UaKe9YihBqke821hJkrxtN6nYCvsv847KYpiVDt0N
-Ozexj1tvzocAvQTW9lOyNYX7yq8nASMbRGplaDBHEd7jEtmR8FVqAHbM/jE4tp2T
-+ANBldZZNQ+m99uoY0bzJ2foVnCL7EZgyNdtvGlq712vNZCEoxtB9ads0RcyPYde
-qTnAsLivIdLhSwL2XlQpdYwKbZ6Ivbv5y+npeGVvLX63WvH1MdMCIQ6rWlk10Nm5
-82MWYwBxBi9SkIvY72jqdPbG79eco37ogmmPGfZCm0O1zosAxDatLWKPjGy/7akI
-yqJBGGZur6p+2pBiQ4v4T7RsGirFjvR+qwkhU7Zl/a+ptia6tMgTLMGMYm8lFAof
-brIyCLRG4ighPbBUwE+W3MzrLohwf+PfHLl9VL5JYzBmloQA1CpyqLgGNLJVhdEf
-sL31dN1HnULsGc+3Ts3fw/QdFLwBJOhbXhJ6Qm9WVU0BeuTBxWCU1DdwL7/y9BbA
-srvx/natcKS1l1vGt+DB
-=KR0s
------END PGP SIGNATURE-----
-
---MGYHOYXEY6WxJCY8--
+Thanks,
+Davidlohr
