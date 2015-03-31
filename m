@@ -1,47 +1,47 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH] selftests/mount: Make git ignore all binaries in mount
- test suite
-Date: Tue, 31 Mar 2015 15:36:56 -0600
-Message-ID: <551B1378.5050205@osg.samsung.com>
-References: <1427507045-68758-1-git-send-email-zhenzhang.zhang@huawei.com> <55160911.8080302@huawei.com>
+From: josh@joshtriplett.org
+Subject: Re: [PATCH v2 0/7] CLONE_FD: Task exit notification via file
+ descriptor
+Date: Tue, 31 Mar 2015 15:02:24 -0700
+Message-ID: <20150331220224.GA22707@cloud>
+References: <cover.1426376419.git.josh@joshtriplett.org>
+ <20150331220807.6927e780@lwn.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55160911.8080302-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Zhang Zhen <zhenzhang.zhang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150331220807.6927e780@lwn.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jonathan Corbet <corbet@lwn.net>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Thiago Macieira <thiago.macieira@intel.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/27/2015 07:51 PM, Zhang Zhen wrote:
-> This patch includes the mount test binaries into the .gitignore
-> file listing in their respective directories. This will make sure
-> that git ignores all of these test binaries when displaying status.
+On Tue, Mar 31, 2015 at 10:08:07PM +0200, Jonathan Corbet wrote:
+> So I finally got around to having a look at this, and one thing caught my
+> eye:
 > 
-> Signed-off-by: Zhang Zhen <zhenzhang.zhang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-> ---
->  tools/testing/selftests/mount/.gitignore | 1 +
->  1 file changed, 1 insertion(+)
->  create mode 100644 tools/testing/selftests/mount/.gitignore
+> >              read(2) (and similar)
+> >                      When  the  new  process  exits,  reading  from  the  file
+> >                      descriptor produces a single clonefd_info structure:
+> > 
+> >                      struct clonefd_info {
+> >                          uint32_t code;   /* Signal code */
+> >                          uint32_t status; /* Exit status or signal */
+> >                          uint64_t utime;  /* User CPU time */
+> >                          uint64_t stime;  /* System CPU time */
+> >                      };
 > 
-> diff --git a/tools/testing/selftests/mount/.gitignore b/tools/testing/selftests/mount/.gitignore
-> new file mode 100644
-> index 0000000..856ad41
-> --- /dev/null
-> +++ b/tools/testing/selftests/mount/.gitignore
-> @@ -0,0 +1 @@
-> +unprivileged-remount-test
-> 
+> This would appear to assume that a clonefd_info structure is the only
+> thing that will ever be read from this descriptor.  It seems to me that
+> there is the potential for, someday, wanting to be able to read and write
+> other things as well.  Should this structure be marked with type and
+> length fields so that other structures could be added in the future?
 
+I don't think it makes sense for a caller to get an arbitrary structure
+on read(), and have to figure out what they got and ignore something
+they don't understand.  Instead, I think it makes more sense for the
+caller to say "Hey, here's a flag saying I understand the new thing, go
+ahead and give me the new thing".  So, for instance, if you want to
+receive SIGSTOP/SIGCONT messages for child processes through this
+descriptor, we could add a flag for that.
 
-Thanks for fixing this. Applied to linux-kselftest next for 4.1
-
-thanks,
--- Shuah
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+- Josh Triplett
