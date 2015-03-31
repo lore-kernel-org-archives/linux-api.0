@@ -1,137 +1,75 @@
-From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: [PATCH v4 05/15] dt-bindings: Document the STM32 reset bindings
-Date: Tue, 31 Mar 2015 18:24:46 +0200
-Message-ID: <1427819096-31109-6-git-send-email-mcoquelin.stm32@gmail.com>
-References: <1427819096-31109-1-git-send-email-mcoquelin.stm32@gmail.com>
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <1427819096-31109-1-git-send-email-mcoquelin.stm32@gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, stefan@agner.ch, pmeerw@pmeerw.net, pebolle@tiscali.nl, peter@hurleysoftware.com, andy.shevchenko@gmail.com, cw00.choi@samsung.com, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>
-Cc: Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees Cook <keescook@chromium.org>, Michal Marek <mmarek@suse.cz>, linux-doc@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-gpio@vger.kernel.org, linux-serial@vger.ke
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [GIT PULL] selftest: Add futex functional tests
+Date: Tue, 31 Mar 2015 10:37:51 -0600
+Message-ID: <551ACD5F.8010003@osg.samsung.com>
+References: <cover.1427493640.git.dvhart@linux.intel.com> <551ABE00.9050003@osg.samsung.com> <D14017F7.C46F0%dvhart@linux.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <D14017F7.C46F0%dvhart@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Darren Hart <dvhart@linux.intel.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Cc: linux-api@vger.kernel.org, Ingo Molnar <mingo@elte.hu>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Davidlohr Bueso <dave@stgolabs.net>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, greg Kroah-Hartman <gregkh@linuxfoundation.org>, fengguang.wu@intel.com, Michael Ellerman <mpe@ellerman.id.au>
 List-Id: linux-api@vger.kernel.org
 
-This adds documentation of device tree bindings for the
-STM32 reset controller.
+On 03/31/2015 10:24 AM, Darren Hart wrote:
+> On 3/31/15, 8:32 AM, "Shuah Khan" <shuahkh@osg.samsung.com> wrote:
+> 
+>> Hi Daren,
+>>
+>> On 03/27/2015 04:17 PM, Darren Hart wrote:
+>>> Hi Shuah,
+>>>
+>>> This series begins the process of migrating my futextest tests into
+>>> kselftest.
+>>> I've started with only the functional tests, as the performance and
+>>> stress may
+>>> not be appropriate for kselftest as they stand.
+>>>
+>>> I cleaned up various complaints from checkpatch, but I ignored others
+>>> that would
+>>> require significant rework of the testcases, such as not using volatile
+>>> and not
+>>> creating new typedefs.
+>>>
+>>> The patches will follow, but I'm providing a pull request for your
+>>> convenience
+>>> as well.
+>>
+>> Thanks for acting on this so quickly after we talked about it at ELC.
+>> Just a quick note that I am going to get to this soon once I get the
+>> 4.1 content wrapped up. We can plan upon getting these into 4.2.
+> 
+> OK. Michael E. provided some feedback which I can either incorporate and
+> respin, or I can send as a follow-on to your -next after you merge these.
+> Which do you prefer?
+> 
 
-Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
-Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
----
- .../devicetree/bindings/reset/st,stm32-rcc.txt     | 107 +++++++++++++++++++++
- 1 file changed, 107 insertions(+)
- create mode 100644 Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
+Working through my email. Yes I see Michael had comments on install.
+I would have the same ones. Please re-do the patch 2/5 to use shared
+logic and install framework in lib.mk. This need to be done to
+facilitate test install. If you were to create a script for running
+tests, please make it non-generic and unique. For example, run.sh
+is a very generic name.
 
-diff --git a/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt b/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
-new file mode 100644
-index 0000000..e2e2f25
---- /dev/null
-+++ b/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
-@@ -0,0 +1,107 @@
-+STMicroelectronics STM32 Peripheral Reset Controller
-+====================================================
-+
-+The RCC IP is both a reset and a clock controller. This documentation only
-+document the reset part.
-+
-+Please also refer to reset.txt in this directory for common reset
-+controller binding usage.
-+
-+Required properties:
-+- compatible: Should be "st,stm32-rcc"
-+- reg: should be register base and length as documented in the
-+  datasheet
-+- #reset-cells: 1, see below
-+
-+example:
-+
-+rcc: reset@40023800 {
-+	#reset-cells = <1>;
-+	compatible = "st,stm32-rcc";
-+	reg = <0x40023800 0x400>;
-+};
-+
-+Specifying softreset control of devices
-+=======================================
-+
-+Device nodes should specify the reset channel required in their "resets"
-+property, containing a phandle to the reset device node and an index specifying
-+which channel to use.
-+The index is the bit number within the RCC registers bank, starting from RCC
-+base address.
-+It is calculated as: index = register_offset / 4 * 32 + bit_offset.
-+Where bit_offset is the bit offset within the register.
-+For example, for CRC reset:
-+  crc = AHB1RSTR_offset / 4 * 32 + CRCRST_bit_offset = 0x10 / 4 * 32 + 12 = 140
-+
-+example:
-+
-+	timer2 {
-+		resets			= <&rcc 256>;
-+	};
-+
-+List of valid indices for STM32F429:
-+ - gpioa: 128
-+ - gpiob: 129
-+ - gpioc: 130
-+ - gpiod: 131
-+ - gpioe: 132
-+ - gpiof: 133
-+ - gpiog: 134
-+ - gpioh: 135
-+ - gpioi: 136
-+ - gpioj: 137
-+ - gpiok: 138
-+ - crc: 140
-+ - dma1: 149
-+ - dma2: 150
-+ - dma2d: 151
-+ - ethmac: 153
-+ - otghs: 157
-+ - dcmi: 160
-+ - cryp: 164
-+ - hash: 165
-+ - rng: 166
-+ - otgfs: 167
-+ - fmc: 192
-+ - tim2: 256
-+ - tim3: 257
-+ - tim4: 258
-+ - tim5: 259
-+ - tim6: 260
-+ - tim7: 261
-+ - tim12: 262
-+ - tim13: 263
-+ - tim14: 264
-+ - wwdg: 267
-+ - spi2: 270
-+ - spi3: 271
-+ - uart2: 273
-+ - uart3: 274
-+ - uart4: 275
-+ - uart5: 276
-+ - i2c1: 277
-+ - i2c2: 278
-+ - i2c3: 279
-+ - can1: 281
-+ - can2: 282
-+ - pwr: 284
-+ - dac: 285
-+ - uart7: 286
-+ - uart8: 287
-+ - tim1: 288
-+ - tim8: 289
-+ - usart1: 292
-+ - usart6: 293
-+ - adc: 296
-+ - sdio: 299
-+ - spi1: 300
-+ - spi4: 301
-+ - syscfg: 302
-+ - tim9: 304
-+ - tim10: 305
-+ - tim11: 306
-+ - spi5: 308
-+ - spi6: 309
-+ - sai1: 310
-+ - ltdc: 314
+[PATCH 2/5] selftest/futex: Update Makefile to use lib.mk
+
+I took a quick look at the exit code discussion. If you would
+like improve what is in kselftest.h, please re-do that patch.
+
+[PATCH 5/5] kselftest: Add exit code defines
+
+You can wait to re-do patches. I am planning to review the
+patch set later on this week. That way you can avoid re-spin
+just in case, I have other comments.
+
+thanks,
+-- Shuah
+
 -- 
-1.9.1
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
