@@ -1,7 +1,7 @@
 From: Milosz Tanski <milosz@adfin.com>
 Subject: Re: [PATCH v7 0/5] vfs: Non-blockling buffered fs read (page cache only)
-Date: Mon, 30 Mar 2015 19:25:22 -0400
-Message-ID: <CANP1eJFGYrXoWEc7xeeJeudk5tCSbzb1cezjPCTumRCfTVmWog@mail.gmail.com>
+Date: Mon, 30 Mar 2015 21:27:54 -0400
+Message-ID: <CANP1eJEciJRM10ZpC98uXmxs5TP_GP8OX+cBfHK5WEhgaQnzNw@mail.gmail.com>
 References: <cover.1426528417.git.milosz@adfin.com>
 	<20150326202824.65d03787.akpm@linux-foundation.org>
 	<20150327081822.GA28669@infradead.org>
@@ -9,109 +9,104 @@ References: <cover.1426528417.git.milosz@adfin.com>
 	<20150327084833.GA7689@infradead.org>
 	<20150327020159.eadd0ce1.akpm@linux-foundation.org>
 	<20150327155854.GA5548@samba2>
-	<20150330073604.GB22229@infradead.org>
-	<20150330132625.52b1250527ca3dcda79e349e@linux-foundation.org>
+	<20150327093046.53c2769a.akpm@linux-foundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20150330132625.52b1250527ca3dcda79e349e@linux-foundation.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20150327093046.53c2769a.akpm@linux-foundation.org>
+Sender: linux-arch-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Christoph Hellwig <hch@infradead.org>, Jeremy Allison <jra@samba.org>, LKML <linux-kernel@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org, Dave Chinner <david@fromorbit.com>
+Cc: Jeremy Allison <jra@samba.org>, Christoph Hellwig <hch@infradead.org>, LKML <linux-kernel@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org, Dave Chinner <david@fromorbit.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 30, 2015 at 4:26 PM, Andrew Morton
+On Fri, Mar 27, 2015 at 12:30 PM, Andrew Morton
 <akpm@linux-foundation.org> wrote:
-> On Mon, 30 Mar 2015 00:36:04 -0700 Christoph Hellwig <hch@infradead.org> wrote:
+> On Fri, 27 Mar 2015 08:58:54 -0700 Jeremy Allison <jra@samba.org> wrote:
 >
->> On Fri, Mar 27, 2015 at 08:58:54AM -0700, Jeremy Allison wrote:
->> > The problem with the above is that we can't tell the difference
->> > between pread2() returning a short read because the pages are not
->> > in cache, or because someone truncated the file. So we need some
->> > way to differentiate this.
+>> On Fri, Mar 27, 2015 at 02:01:59AM -0700, Andrew Morton wrote:
+>> > On Fri, 27 Mar 2015 01:48:33 -0700 Christoph Hellwig <hch@infradead.org> wrote:
+>> >
+>> > > On Fri, Mar 27, 2015 at 01:35:16AM -0700, Andrew Morton wrote:
+>> > > > fincore() doesn't have to be ugly.  Please address the design issues I
+>> > > > raised.  How is pread2() useful to the class of applications which
+>> > > > cannot proceed until all data is available?
+>> > >
+>> > > It actually makes them work correctly?  preadv2( ..., DONTWAIT) will
+>> > > return -EGAIN, which causes them to bounce to the threadpool where
+>> > > they call preadv(...).
+>> >
+>> > (I assume you mean RWF_NONBLOCK)
+>> >
+>> > That isn't how pread2() works.  If the leading one or more pages are
+>> > uptodate, pread2() will return a partial read.  Now what?  Either the
+>> > application reads the same data a second time via the worker thread
+>> > (dumb, but it will usually be a rare case)
 >>
->> Is a race vs truncate really that time critical that you can't
->> wait for the thread pool to do the second read to notice it?
+>> The problem with the above is that we can't tell the difference
+>> between pread2() returning a short read because the pages are not
+>> in cache, or because someone truncated the file. So we need some
+>> way to differentiate this.
 >>
->> > My preference from userspace would be for pread2() to return
->> > EAGAIN if *all* the data requested is not available (where
->> > 'all' can be less than the size requested if the file has
->> > been truncated in the meantime).
+>> My preference from userspace would be for pread2() to return
+>> EAGAIN if *all* the data requested is not available (where
+>> 'all' can be less than the size requested if the file has
+>> been truncated in the meantime).
 >>
->> That is easily implementable, but I can see that for example web apps
->> would be happy to get as much as possible.  So if Samba can be ok
->> with short reads and only detecting the truncated case in the slow
->> path that would make life simpler.  Otherwise we might indeed need two
->> flags.
+>> ...
+>>
+>> The thing I want to avoid is the case where
+>> ret < size_wanted means only part of the file
+>> is in cache.
 >
-> The problem is that many applications (including samba!) want
-> all-or-nothing behaviour, and preadv2() cannot provide it.  By the time
-> preadv2() discovers a not-present page, it has already copied bulk data
-> out to userspace.
+> From my reading of the code, pread2() will return -EAGAIN only when it
+> copied zero bytes to userspace.  ie, the very first page wasn't in
+> cache.  If pread2() does copy some data to userspace then it will
+> return the amount of data copied.  This is traditional read()
+> behaviour.
 >
-> To fix this, preadv2() would need to take two passes across the pages,
-> pinning them in between and somehow blocking out truncate.  That's a
-> big change.
+> Maybe there's some other code somewhere in the patch which converts
+> that short read into -EAGAIN, dunno - the changelogs don't appear to
+> mention it and the manpage update is ambiguous about this.
 >
-> With the current preadv2(), applications would have to do
+> But from an interface perspective the behaviour you're asking for is
+> insane, frankly - if the kernel copied out 8k of data then pread2()
+> should return 8k.  Otherwise there's no way for userspace to know that
+> the 8k copy actually happened and we have just wasted a great pile of
+> CPU doing a pointless memcpy.
 >
->         nr_read = preadv2(..., offset, len, ...);
->         if (nr_read == len)
->                 process data;
->         else
->                 punt(offset + nr_read, len - nr_read);
+> I expect that this situation (first part in cache, latter part not in
+> cache) is rare - for reasonably small requests the common cases will be
+> "all cached" and "nothing cached".  So perhaps the best approach here
+> is for samba to add special handling for the short read, to work out
+> the reason for its occurrence.
 >
-> and the worker thread will later have to splice together the initial
-> data and the later-arriving data, probably on another CPU, probably
-> after the initial data has gone cache-cold.
+> Alternatively we could add another flag to pread2() to select this
+> "throw away my data and return -EAGAIN" behaviour.  Presumably
+> implemented with an i_size check, but it's gonna be racy.
 >
-> A cleaner solution is
 >
->         if (fincore(fd, NULL, offset, len) == len) {
->                 preadv(..., offset, len);
->                 process data;
->         } else {
->                 punt(offset, len);
->         }
 >
-> This way all the data gets copied in a single hit and is cache-hot when
-> userspace processes it.
+> I take it from your comments that nobody has actually wired up pread2()
+> into samba yet?  That's a bit disturbing, because if we later want to
+> go and change something like this short-read behaviour, we're screwed -
+> it's a non back-compat userspace-visible change.
 >
-> Comparing fincore()+pread() to preadv2():
 >
-> pros:
+> And a note on cosmetics: why are we using EAGAIN here rather than
+> EWOULDBLOCK?  They have the same numerical value, but EWOULDBLOCK is a
+> better name - EAGAIN says "run it again", but that won't work.
 >
-> a) fincore() may be used to provide both all-or-nothing and
->    part-read-ok behaviour cleanly and with optimum cache behaviour.
->
-> b) fincore() doesn't add overhead, complexity and stack depth to
->    core pagecache read() code.  Nor does it expand VFS data structures.
 
-Actually, we're not expanding any VFS structures with the next
-patchset. I've rebased the forthcoming patchset ontop of Al's
-vfs/linux-next tree to keep track of the refactoring already done with
-some of the code paths I touched. The refactoring work done there
-already ads a flag argument to kiocb struct for other reasons.
+Per definition EWOULDBLOCK seams like a better fit. Like you said
+above it won't stop blocking unless you do something. I also did a
+search in the kernel source (excluding drivers / sound directories)
+use of EAGAIN (even in network code) is like 2 magnitudes bigger then
+EWOULDBLOCK. In fact some places that grep found check for both
+(although I'm sure it's optimized out).
 
->
-> c) with a non-NULL second argument, fincore provides the
->    mincore()-style page map.
->
-> cons:
->
-> d) fincore() is more expensive
->
-> e) fincore() will very occasionally block
->
->
-> Tradeoffs are involved.  To decide on the best path we should examine
-> d).  I expect that the overhead will be significant for small reads but
-> not significant for medium and large reads.  Needs quantifying.
->
-> And I don't believe that e) will be a problem in the real world.  It's
-> a significant increase in worst-case latency and a negligible increase
-> in average latency.  I've asked at least three times for someone to
-> explain why this is unacceptable and no explanation has been provided.
+Does anybody feel strongly about it being EWOULDBLOCK instead of
+EAGAIN? Esp. since they are same on Linux? The convention (by numbers)
+seams to favor EAGAIN.
 
 -- 
 Milosz Tanski
