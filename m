@@ -1,49 +1,50 @@
-From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v3 1/6] virtio_balloon: transitional interface
-Date: Wed, 1 Apr 2015 15:01:38 +0200
-Message-ID: <20150401150110-mutt-send-email-mst@redhat.com>
-References: <1427884468-23930-1-git-send-email-mst@redhat.com>
- <1427884468-23930-2-git-send-email-mst@redhat.com>
- <20150401124539-mutt-send-email-mst@redhat.com>
- <20150401135244.5a8d7ad1.cornelia.huck@de.ibm.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH] selftests: Change memory on-off-test.sh name to be unique
+Date: Wed, 01 Apr 2015 07:06:15 -0600
+Message-ID: <551BED47.6030303@osg.samsung.com>
+References: <1427847059-9353-1-git-send-email-shuahkh@osg.samsung.com> <20150401120400.GA3218@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150401135244.5a8d7ad1.cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20150401120400.GA3218-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Cornelia Huck <cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, virtio-dev-sDuHXQ4OtrM4h7I2RyI4rWD2FQJk+8+b@public.gmane.org, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 01, 2015 at 01:52:44PM +0200, Cornelia Huck wrote:
-> On Wed, 1 Apr 2015 12:49:02 +0200
-> "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+On 04/01/2015 06:04 AM, Greg KH wrote:
+> On Tue, Mar 31, 2015 at 06:10:59PM -0600, Shuah Khan wrote:
+>> cpu and memory hotplug scripts use the same name. Change
+>> memory on-off-test.sh to mem-on-off-test.sh.
+>>
+>> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+>> ---
+>>  tools/testing/selftests/memory-hotplug/Makefile    |   6 +-
+>>  .../selftests/memory-hotplug/mem-on-off-test.sh    | 238 +++++++++++++++++++++
+>>  .../selftests/memory-hotplug/on-off-test.sh        | 238 ---------------------
+>>  3 files changed, 241 insertions(+), 241 deletions(-)
+>>  create mode 100755 tools/testing/selftests/memory-hotplug/mem-on-off-test.sh
+>>  delete mode 100755 tools/testing/selftests/memory-hotplug/on-off-test.sh
 > 
-> > On Wed, Apr 01, 2015 at 12:35:45PM +0200, Michael S. Tsirkin wrote:
-> > > Virtio 1.0 doesn't include a modern balloon device.
-> > > But it's not a big change to support a transitional
-> > > balloon device: this has the advantage of supporting
-> > > existing drivers, transparently.
-> > > 
-> > > Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> > > ---
-> > >  include/uapi/linux/virtio_balloon.h | 11 ++++++++--
-> > >  drivers/virtio/virtio_balloon.c     | 43 +++++++++++++++++++++++++++++--------
-> > >  2 files changed, 43 insertions(+), 11 deletions(-)
-> > 
-> > So all in all 32 LOC added, and 9 out of these
-> > deal with endian-ness differences.
-> > 
-> > Seems like a small cost for guests to pay for a clean spec, no?
-> > 
-> 
-> I'm not opposed to this per se, but I'm not totally convinced of the
-> usefulness :)
-> 
-> Seeing the qemu side would be helpful.
+> Hint, when making patches that rename files, use '-M' as a git diff
+> output, it will show the move much easier than adding and removing the
+> file.
 
-Cleaning this up for submission, should be ready RSN.
+Thanks for the tip. That would have made it easier to review.
+
+> 
+> Anyway, I have no problem with this:
+> 
+> Acked-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+> 
+
+thanks,
+-- Shuah
 
 -- 
-MST
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
