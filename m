@@ -1,46 +1,35 @@
-From: Cornelia Huck <cornelia.huck@de.ibm.com>
-Subject: Re: [PATCH v3 1/6] virtio_balloon: transitional interface
-Date: Wed, 1 Apr 2015 13:52:44 +0200
-Message-ID: <20150401135244.5a8d7ad1.cornelia.huck@de.ibm.com>
-References: <1427884468-23930-1-git-send-email-mst@redhat.com>
-	<1427884468-23930-2-git-send-email-mst@redhat.com>
-	<20150401124539-mutt-send-email-mst@redhat.com>
+From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH] selftests: Change memory on-off-test.sh name to be unique
+Date: Wed, 1 Apr 2015 14:04:00 +0200
+Message-ID: <20150401120400.GA3218@kroah.com>
+References: <1427847059-9353-1-git-send-email-shuahkh@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <virtio-dev-return-727-gcvd-virtio-dev=m.gmane.org@lists.oasis-open.org>
-Sender: <virtio-dev@lists.oasis-open.org>
-List-Post: <mailto:virtio-dev@lists.oasis-open.org>
-List-Help: <mailto:virtio-dev-help@lists.oasis-open.org>
-List-Unsubscribe: <mailto:virtio-dev-unsubscribe@lists.oasis-open.org>
-List-Subscribe: <mailto:virtio-dev-subscribe@lists.oasis-open.org>
-In-Reply-To: <20150401124539-mutt-send-email-mst@redhat.com>
-To: "Michael S. Tsirkin" <mst@redhat.com>
-Cc: linux-kernel@vger.kernel.org, Pawel Moll <pawel.moll@arm.com>, virtio-dev@lists.oasis-open.org, Rusty Russell <rusty@rustcorp.com.au>, virtualization@lists.linux-foundation.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1427847059-9353-1-git-send-email-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 1 Apr 2015 12:49:02 +0200
-"Michael S. Tsirkin" <mst@redhat.com> wrote:
-
-> On Wed, Apr 01, 2015 at 12:35:45PM +0200, Michael S. Tsirkin wrote:
-> > Virtio 1.0 doesn't include a modern balloon device.
-> > But it's not a big change to support a transitional
-> > balloon device: this has the advantage of supporting
-> > existing drivers, transparently.
-> > 
-> > Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
-> > ---
-> >  include/uapi/linux/virtio_balloon.h | 11 ++++++++--
-> >  drivers/virtio/virtio_balloon.c     | 43 +++++++++++++++++++++++++++++--------
-> >  2 files changed, 43 insertions(+), 11 deletions(-)
+On Tue, Mar 31, 2015 at 06:10:59PM -0600, Shuah Khan wrote:
+> cpu and memory hotplug scripts use the same name. Change
+> memory on-off-test.sh to mem-on-off-test.sh.
 > 
-> So all in all 32 LOC added, and 9 out of these
-> deal with endian-ness differences.
-> 
-> Seems like a small cost for guests to pay for a clean spec, no?
-> 
+> Signed-off-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> ---
+>  tools/testing/selftests/memory-hotplug/Makefile    |   6 +-
+>  .../selftests/memory-hotplug/mem-on-off-test.sh    | 238 +++++++++++++++++++++
+>  .../selftests/memory-hotplug/on-off-test.sh        | 238 ---------------------
+>  3 files changed, 241 insertions(+), 241 deletions(-)
+>  create mode 100755 tools/testing/selftests/memory-hotplug/mem-on-off-test.sh
+>  delete mode 100755 tools/testing/selftests/memory-hotplug/on-off-test.sh
 
-I'm not opposed to this per se, but I'm not totally convinced of the
-usefulness :)
+Hint, when making patches that rename files, use '-M' as a git diff
+output, it will show the move much easier than adding and removing the
+file.
 
-Seeing the qemu side would be helpful.
+Anyway, I have no problem with this:
+
+Acked-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
