@@ -1,42 +1,43 @@
-From: Jonathan Corbet <corbet@lwn.net>
-Subject: Re: [PATCH v2 0/7] CLONE_FD: Task exit notification via file
- descriptor
-Date: Wed, 1 Apr 2015 09:24:20 +0200
-Message-ID: <20150401092420.4c1dbb6e@lwn.net>
-References: <cover.1426376419.git.josh@joshtriplett.org>
-	<20150331220807.6927e780@lwn.net>
-	<20150331220224.GA22707@cloud>
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Subject: Re: [PATCH v4 10/15] serial: stm32-usart: Add STM32 USART Driver
+Date: Wed, 1 Apr 2015 10:36:58 +0200
+Message-ID: <CALszF6AKw-F1RVc5m2As7upp7ZuS7GpcJSoqixms3Dd4SNU9EQ@mail.gmail.com>
+References: <1427819096-31109-1-git-send-email-mcoquelin.stm32@gmail.com>
+	<1427819096-31109-11-git-send-email-mcoquelin.stm32@gmail.com>
+	<CAHp75VeUzKUEo7NCaXUYKBPpG7JYCykB+76Wu5tBKj750Bi+Qg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150331220224.GA22707@cloud>
-Sender: linux-kernel-owner@vger.kernel.org
-To: josh@joshtriplett.org
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Thiago Macieira <thiago.macieira@intel.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <CAHp75VeUzKUEo7NCaXUYKBPpG7JYCykB+76Wu5tBKj750Bi+Qg@mail.gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Andy Shevchenko <andy.shevchenko@gmail.com>
+Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Peter Hurley <peter@hurleysoftware.com>, Chanwoo Choi <cw00.choi@samsung.com>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 31 Mar 2015 15:02:24 -0700
-josh@joshtriplett.org wrote:
+Hello Andy,
 
-> > This would appear to assume that a clonefd_info structure is the only
-> > thing that will ever be read from this descriptor.  It seems to me that
-> > there is the potential for, someday, wanting to be able to read and write
-> > other things as well.  Should this structure be marked with type and
-> > length fields so that other structures could be added in the future?  
-> 
-> I don't think it makes sense for a caller to get an arbitrary structure
-> on read(), and have to figure out what they got and ignore something
-> they don't understand.  Instead, I think it makes more sense for the
-> caller to say "Hey, here's a flag saying I understand the new thing, go
-> ahead and give me the new thing".  So, for instance, if you want to
-> receive SIGSTOP/SIGCONT messages for child processes through this
-> descriptor, we could add a flag for that.
+2015-03-31 18:45 GMT+02:00 Andy Shevchenko <andy.shevchenko@gmail.com>:
+> On Tue, Mar 31, 2015 at 7:24 PM, Maxime Coquelin
+> <mcoquelin.stm32@gmail.com> wrote:
+>> This drivers adds support to the STM32 USART controller, which is a
+>> standard serial driver.
+>>
+>> Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
+>> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+>
+> Few minor comments below.
 
-The flag is fine, but, once we have set that flag saying we want those
-messages, how do we know which type of structure we've gotten?  That's
-the piece of the puzzle I'm missing, sorry if I'm being overly slow.
+All your comments are valid, I will send a v5 shortly fixing this.
 
-Thanks,
+Thanks for the review,
+Maxime
 
-jon
+>
+>> ---
+>>  drivers/tty/serial/Kconfig       |  17 +
+>>  drivers/tty/serial/Makefile      |   1 +
+>>  drivers/tty/serial/stm32-usart.c | 743 +++++++++++++++++++++++++++++++++++++++
+>>  include/uapi/linux/serial_core.h |   3 +
+>>  4 files changed, 764 insertions(+)
+>>  create mode 100644 drivers/tty/serial/stm32-usart.c
+>>
