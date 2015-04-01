@@ -1,531 +1,94 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: [PATCH] selftests: Change memory on-off-test.sh name to be unique
-Date: Tue, 31 Mar 2015 18:10:59 -0600
-Message-ID: <1427847059-9353-1-git-send-email-shuahkh@osg.samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: akpm@linux-foundation.org, gregkh@linuxfoundation.org, mpe@ellerman.id.au
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+From: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>
+Subject: Re: [PATCH v2 1/6] virtio_balloon: transitional interface
+Date: Wed, 01 Apr 2015 14:17:23 +1030
+Message-ID: <87mw2sy0fo.fsf@rustcorp.com.au>
+References: <1427831230-28044-1-git-send-email-mst@redhat.com> <1427831230-28044-2-git-send-email-mst@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1427831230-28044-2-git-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-cpu and memory hotplug scripts use the same name. Change
-memory on-off-test.sh to mem-on-off-test.sh.
+"Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
+> Virtio 1.0 doesn't include a modern balloon device.
+> But it's not a big change to support a transitional
+> balloon device: this has the advantage of supporting
+> existing drivers, transparently.
 
-Signed-off-by: Shuah Khan <shuahkh@osg.samsung.com>
----
- tools/testing/selftests/memory-hotplug/Makefile    |   6 +-
- .../selftests/memory-hotplug/mem-on-off-test.sh    | 238 +++++++++++++++++++++
- .../selftests/memory-hotplug/on-off-test.sh        | 238 ---------------------
- 3 files changed, 241 insertions(+), 241 deletions(-)
- create mode 100755 tools/testing/selftests/memory-hotplug/mem-on-off-test.sh
- delete mode 100755 tools/testing/selftests/memory-hotplug/on-off-test.sh
+You decided to fix the packed struct...
 
-diff --git a/tools/testing/selftests/memory-hotplug/Makefile b/tools/testing/selftests/memory-hotplug/Makefile
-index 598a1f6..afb2624 100644
---- a/tools/testing/selftests/memory-hotplug/Makefile
-+++ b/tools/testing/selftests/memory-hotplug/Makefile
-@@ -2,11 +2,11 @@ all:
- 
- include ../lib.mk
- 
--TEST_PROGS := on-off-test.sh
--override RUN_TESTS := ./on-off-test.sh -r 2 || echo "selftests: memory-hotplug [FAIL]"
-+TEST_PROGS := mem-on-off-test.sh
-+override RUN_TESTS := ./mem-on-off-test.sh -r 2 || echo "selftests: memory-hotplug [FAIL]"
- override EMIT_TESTS := echo "$(RUN_TESTS)"
- 
- run_full_test:
--	@/bin/bash ./on-off-test.sh || echo "memory-hotplug selftests: [FAIL]"
-+	@/bin/bash ./mem-on-off-test.sh || echo "memory-hotplug selftests: [FAIL]"
- 
- clean:
-diff --git a/tools/testing/selftests/memory-hotplug/mem-on-off-test.sh b/tools/testing/selftests/memory-hotplug/mem-on-off-test.sh
-new file mode 100755
-index 0000000..6cddde0
---- /dev/null
-+++ b/tools/testing/selftests/memory-hotplug/mem-on-off-test.sh
-@@ -0,0 +1,238 @@
-+#!/bin/bash
-+
-+SYSFS=
-+
-+prerequisite()
-+{
-+	msg="skip all tests:"
-+
-+	if [ $UID != 0 ]; then
-+		echo $msg must be run as root >&2
-+		exit 0
-+	fi
-+
-+	SYSFS=`mount -t sysfs | head -1 | awk '{ print $3 }'`
-+
-+	if [ ! -d "$SYSFS" ]; then
-+		echo $msg sysfs is not mounted >&2
-+		exit 0
-+	fi
-+
-+	if ! ls $SYSFS/devices/system/memory/memory* > /dev/null 2>&1; then
-+		echo $msg memory hotplug is not supported >&2
-+		exit 0
-+	fi
-+}
-+
-+#
-+# list all hot-pluggable memory
-+#
-+hotpluggable_memory()
-+{
-+	local state=${1:-.\*}
-+
-+	for memory in $SYSFS/devices/system/memory/memory*; do
-+		if grep -q 1 $memory/removable &&
-+		   grep -q $state $memory/state; then
-+			echo ${memory##/*/memory}
-+		fi
-+	done
-+}
-+
-+hotplaggable_offline_memory()
-+{
-+	hotpluggable_memory offline
-+}
-+
-+hotpluggable_online_memory()
-+{
-+	hotpluggable_memory online
-+}
-+
-+memory_is_online()
-+{
-+	grep -q online $SYSFS/devices/system/memory/memory$1/state
-+}
-+
-+memory_is_offline()
-+{
-+	grep -q offline $SYSFS/devices/system/memory/memory$1/state
-+}
-+
-+online_memory()
-+{
-+	echo online > $SYSFS/devices/system/memory/memory$1/state
-+}
-+
-+offline_memory()
-+{
-+	echo offline > $SYSFS/devices/system/memory/memory$1/state
-+}
-+
-+online_memory_expect_success()
-+{
-+	local memory=$1
-+
-+	if ! online_memory $memory; then
-+		echo $FUNCNAME $memory: unexpected fail >&2
-+	elif ! memory_is_online $memory; then
-+		echo $FUNCNAME $memory: unexpected offline >&2
-+	fi
-+}
-+
-+online_memory_expect_fail()
-+{
-+	local memory=$1
-+
-+	if online_memory $memory 2> /dev/null; then
-+		echo $FUNCNAME $memory: unexpected success >&2
-+	elif ! memory_is_offline $memory; then
-+		echo $FUNCNAME $memory: unexpected online >&2
-+	fi
-+}
-+
-+offline_memory_expect_success()
-+{
-+	local memory=$1
-+
-+	if ! offline_memory $memory; then
-+		echo $FUNCNAME $memory: unexpected fail >&2
-+	elif ! memory_is_offline $memory; then
-+		echo $FUNCNAME $memory: unexpected offline >&2
-+	fi
-+}
-+
-+offline_memory_expect_fail()
-+{
-+	local memory=$1
-+
-+	if offline_memory $memory 2> /dev/null; then
-+		echo $FUNCNAME $memory: unexpected success >&2
-+	elif ! memory_is_online $memory; then
-+		echo $FUNCNAME $memory: unexpected offline >&2
-+	fi
-+}
-+
-+error=-12
-+priority=0
-+ratio=10
-+
-+while getopts e:hp:r: opt; do
-+	case $opt in
-+	e)
-+		error=$OPTARG
-+		;;
-+	h)
-+		echo "Usage $0 [ -e errno ] [ -p notifier-priority ] [ -r percent-of-memory-to-offline ]"
-+		exit
-+		;;
-+	p)
-+		priority=$OPTARG
-+		;;
-+	r)
-+		ratio=$OPTARG
-+		;;
-+	esac
-+done
-+
-+if ! [ "$error" -ge -4095 -a "$error" -lt 0 ]; then
-+	echo "error code must be -4095 <= errno < 0" >&2
-+	exit 1
-+fi
-+
-+prerequisite
-+
-+echo "Test scope: $ratio% hotplug memory"
-+echo -e "\t online all hotplug memory in offline state"
-+echo -e "\t offline $ratio% hotplug memory in online state"
-+echo -e "\t online all hotplug memory in offline state"
-+
-+#
-+# Online all hot-pluggable memory
-+#
-+for memory in `hotplaggable_offline_memory`; do
-+	echo offline-online $memory
-+	online_memory_expect_success $memory
-+done
-+
-+#
-+# Offline $ratio percent of hot-pluggable memory
-+#
-+for memory in `hotpluggable_online_memory`; do
-+	if [ $((RANDOM % 100)) -lt $ratio ]; then
-+		echo online-offline $memory
-+		offline_memory_expect_success $memory
-+	fi
-+done
-+
-+#
-+# Online all hot-pluggable memory again
-+#
-+for memory in `hotplaggable_offline_memory`; do
-+	echo offline-online $memory
-+	online_memory_expect_success $memory
-+done
-+
-+#
-+# Test with memory notifier error injection
-+#
-+
-+DEBUGFS=`mount -t debugfs | head -1 | awk '{ print $3 }'`
-+NOTIFIER_ERR_INJECT_DIR=$DEBUGFS/notifier-error-inject/memory
-+
-+prerequisite_extra()
-+{
-+	msg="skip extra tests:"
-+
-+	/sbin/modprobe -q -r memory-notifier-error-inject
-+	/sbin/modprobe -q memory-notifier-error-inject priority=$priority
-+
-+	if [ ! -d "$DEBUGFS" ]; then
-+		echo $msg debugfs is not mounted >&2
-+		exit 0
-+	fi
-+
-+	if [ ! -d $NOTIFIER_ERR_INJECT_DIR ]; then
-+		echo $msg memory-notifier-error-inject module is not available >&2
-+		exit 0
-+	fi
-+}
-+
-+prerequisite_extra
-+
-+#
-+# Offline $ratio percent of hot-pluggable memory
-+#
-+echo 0 > $NOTIFIER_ERR_INJECT_DIR/actions/MEM_GOING_OFFLINE/error
-+for memory in `hotpluggable_online_memory`; do
-+	if [ $((RANDOM % 100)) -lt $ratio ]; then
-+		offline_memory_expect_success $memory
-+	fi
-+done
-+
-+#
-+# Test memory hot-add error handling (offline => online)
-+#
-+echo $error > $NOTIFIER_ERR_INJECT_DIR/actions/MEM_GOING_ONLINE/error
-+for memory in `hotplaggable_offline_memory`; do
-+	online_memory_expect_fail $memory
-+done
-+
-+#
-+# Online all hot-pluggable memory
-+#
-+echo 0 > $NOTIFIER_ERR_INJECT_DIR/actions/MEM_GOING_ONLINE/error
-+for memory in `hotplaggable_offline_memory`; do
-+	online_memory_expect_success $memory
-+done
-+
-+#
-+# Test memory hot-remove error handling (online => offline)
-+#
-+echo $error > $NOTIFIER_ERR_INJECT_DIR/actions/MEM_GOING_OFFLINE/error
-+for memory in `hotpluggable_online_memory`; do
-+	offline_memory_expect_fail $memory
-+done
-+
-+echo 0 > $NOTIFIER_ERR_INJECT_DIR/actions/MEM_GOING_OFFLINE/error
-+/sbin/modprobe -q -r memory-notifier-error-inject
-diff --git a/tools/testing/selftests/memory-hotplug/on-off-test.sh b/tools/testing/selftests/memory-hotplug/on-off-test.sh
-deleted file mode 100755
-index 6cddde0..0000000
---- a/tools/testing/selftests/memory-hotplug/on-off-test.sh
-+++ /dev/null
-@@ -1,238 +0,0 @@
--#!/bin/bash
--
--SYSFS=
--
--prerequisite()
--{
--	msg="skip all tests:"
--
--	if [ $UID != 0 ]; then
--		echo $msg must be run as root >&2
--		exit 0
--	fi
--
--	SYSFS=`mount -t sysfs | head -1 | awk '{ print $3 }'`
--
--	if [ ! -d "$SYSFS" ]; then
--		echo $msg sysfs is not mounted >&2
--		exit 0
--	fi
--
--	if ! ls $SYSFS/devices/system/memory/memory* > /dev/null 2>&1; then
--		echo $msg memory hotplug is not supported >&2
--		exit 0
--	fi
--}
--
--#
--# list all hot-pluggable memory
--#
--hotpluggable_memory()
--{
--	local state=${1:-.\*}
--
--	for memory in $SYSFS/devices/system/memory/memory*; do
--		if grep -q 1 $memory/removable &&
--		   grep -q $state $memory/state; then
--			echo ${memory##/*/memory}
--		fi
--	done
--}
--
--hotplaggable_offline_memory()
--{
--	hotpluggable_memory offline
--}
--
--hotpluggable_online_memory()
--{
--	hotpluggable_memory online
--}
--
--memory_is_online()
--{
--	grep -q online $SYSFS/devices/system/memory/memory$1/state
--}
--
--memory_is_offline()
--{
--	grep -q offline $SYSFS/devices/system/memory/memory$1/state
--}
--
--online_memory()
--{
--	echo online > $SYSFS/devices/system/memory/memory$1/state
--}
--
--offline_memory()
--{
--	echo offline > $SYSFS/devices/system/memory/memory$1/state
--}
--
--online_memory_expect_success()
--{
--	local memory=$1
--
--	if ! online_memory $memory; then
--		echo $FUNCNAME $memory: unexpected fail >&2
--	elif ! memory_is_online $memory; then
--		echo $FUNCNAME $memory: unexpected offline >&2
--	fi
--}
--
--online_memory_expect_fail()
--{
--	local memory=$1
--
--	if online_memory $memory 2> /dev/null; then
--		echo $FUNCNAME $memory: unexpected success >&2
--	elif ! memory_is_offline $memory; then
--		echo $FUNCNAME $memory: unexpected online >&2
--	fi
--}
--
--offline_memory_expect_success()
--{
--	local memory=$1
--
--	if ! offline_memory $memory; then
--		echo $FUNCNAME $memory: unexpected fail >&2
--	elif ! memory_is_offline $memory; then
--		echo $FUNCNAME $memory: unexpected offline >&2
--	fi
--}
--
--offline_memory_expect_fail()
--{
--	local memory=$1
--
--	if offline_memory $memory 2> /dev/null; then
--		echo $FUNCNAME $memory: unexpected success >&2
--	elif ! memory_is_online $memory; then
--		echo $FUNCNAME $memory: unexpected offline >&2
--	fi
--}
--
--error=-12
--priority=0
--ratio=10
--
--while getopts e:hp:r: opt; do
--	case $opt in
--	e)
--		error=$OPTARG
--		;;
--	h)
--		echo "Usage $0 [ -e errno ] [ -p notifier-priority ] [ -r percent-of-memory-to-offline ]"
--		exit
--		;;
--	p)
--		priority=$OPTARG
--		;;
--	r)
--		ratio=$OPTARG
--		;;
--	esac
--done
--
--if ! [ "$error" -ge -4095 -a "$error" -lt 0 ]; then
--	echo "error code must be -4095 <= errno < 0" >&2
--	exit 1
--fi
--
--prerequisite
--
--echo "Test scope: $ratio% hotplug memory"
--echo -e "\t online all hotplug memory in offline state"
--echo -e "\t offline $ratio% hotplug memory in online state"
--echo -e "\t online all hotplug memory in offline state"
--
--#
--# Online all hot-pluggable memory
--#
--for memory in `hotplaggable_offline_memory`; do
--	echo offline-online $memory
--	online_memory_expect_success $memory
--done
--
--#
--# Offline $ratio percent of hot-pluggable memory
--#
--for memory in `hotpluggable_online_memory`; do
--	if [ $((RANDOM % 100)) -lt $ratio ]; then
--		echo online-offline $memory
--		offline_memory_expect_success $memory
--	fi
--done
--
--#
--# Online all hot-pluggable memory again
--#
--for memory in `hotplaggable_offline_memory`; do
--	echo offline-online $memory
--	online_memory_expect_success $memory
--done
--
--#
--# Test with memory notifier error injection
--#
--
--DEBUGFS=`mount -t debugfs | head -1 | awk '{ print $3 }'`
--NOTIFIER_ERR_INJECT_DIR=$DEBUGFS/notifier-error-inject/memory
--
--prerequisite_extra()
--{
--	msg="skip extra tests:"
--
--	/sbin/modprobe -q -r memory-notifier-error-inject
--	/sbin/modprobe -q memory-notifier-error-inject priority=$priority
--
--	if [ ! -d "$DEBUGFS" ]; then
--		echo $msg debugfs is not mounted >&2
--		exit 0
--	fi
--
--	if [ ! -d $NOTIFIER_ERR_INJECT_DIR ]; then
--		echo $msg memory-notifier-error-inject module is not available >&2
--		exit 0
--	fi
--}
--
--prerequisite_extra
--
--#
--# Offline $ratio percent of hot-pluggable memory
--#
--echo 0 > $NOTIFIER_ERR_INJECT_DIR/actions/MEM_GOING_OFFLINE/error
--for memory in `hotpluggable_online_memory`; do
--	if [ $((RANDOM % 100)) -lt $ratio ]; then
--		offline_memory_expect_success $memory
--	fi
--done
--
--#
--# Test memory hot-add error handling (offline => online)
--#
--echo $error > $NOTIFIER_ERR_INJECT_DIR/actions/MEM_GOING_ONLINE/error
--for memory in `hotplaggable_offline_memory`; do
--	online_memory_expect_fail $memory
--done
--
--#
--# Online all hot-pluggable memory
--#
--echo 0 > $NOTIFIER_ERR_INJECT_DIR/actions/MEM_GOING_ONLINE/error
--for memory in `hotplaggable_offline_memory`; do
--	online_memory_expect_success $memory
--done
--
--#
--# Test memory hot-remove error handling (online => offline)
--#
--echo $error > $NOTIFIER_ERR_INJECT_DIR/actions/MEM_GOING_OFFLINE/error
--for memory in `hotpluggable_online_memory`; do
--	offline_memory_expect_fail $memory
--done
--
--echo 0 > $NOTIFIER_ERR_INJECT_DIR/actions/MEM_GOING_OFFLINE/error
--/sbin/modprobe -q -r memory-notifier-error-inject
--- 
-2.1.0
+> diff --git a/drivers/virtio/virtio_balloon.c b/drivers/virtio/virtio_balloon.c
+> index 6a356e3..574267f 100644
+> --- a/drivers/virtio/virtio_balloon.c
+> +++ b/drivers/virtio/virtio_balloon.c
+> @@ -77,7 +77,7 @@ struct virtio_balloon {
+>  
+>  	/* Memory statistics */
+>  	int need_stats_update;
+> -	struct virtio_balloon_stat stats[VIRTIO_BALLOON_S_NR];
+> +	struct virtio_balloon_stat_modern stats[VIRTIO_BALLOON_S_NR];
+>  
+>  	/* To register callback in oom notifier call chain */
+>  	struct notifier_block nb;
+> @@ -269,7 +269,11 @@ static void stats_handle_request(struct virtio_balloon *vb)
+>  	vq = vb->stats_vq;
+>  	if (!virtqueue_get_buf(vq, &len))
+>  		return;
+> -	sg_init_one(&sg, vb->stats, sizeof(vb->stats));
+> +	if (virtio_has_feature(vdev, VIRTIO_F_VERSION_1))
+> +		sg_init_one(&sg, vb->stats, sizeof(vb->stats));
+> +	else
+> +		sg_init_one(&sg, &vb->stats->tag, sizeof(vb->stats) -
+> +			    offsetof(typeof(*vb->stats, tag);
+
+This makes it compile, but definitely won't work.
+
+>  	virtqueue_add_outbuf(vq, &sg, 1, vb, GFP_KERNEL);
+>  	virtqueue_kick(vq);
+>  }
+> @@ -283,21 +287,30 @@ static void virtballoon_changed(struct virtio_device *vdev)
+>  
+>  static inline s64 towards_target(struct virtio_balloon *vb)
+>  {
+> -	__le32 v;
+>  	s64 target;
+> +	u32 num_pages;
+>  
+> -	virtio_cread(vb->vdev, struct virtio_balloon_config, num_pages, &v);
+> +	virtio_cread(vb->vdev, struct virtio_balloon_config,
+> +		     num_pages, &num_pages);
+>  
+> -	target = le32_to_cpu(v);
+> +	/* Legacy balloon config space is LE, unlike all other devices. */
+> +	if (!virtio_has_feature(vb->vdev, VIRTIO_F_VERSION_1))
+> +		num_pages = le32_to_cpu((__force le32)num_pages);
+> +
+> +	target = num_pages;
+>  	return target - vb->num_pages;
+>  }
+>  
+>  static void update_balloon_size(struct virtio_balloon *vb)
+>  {
+> -	__le32 actual = cpu_to_le32(vb->num_pages);
+> +	u32 actual = vb->num_pages;
+> +
+> +	/* Legacy balloon config space is LE, unlike all other devices. */
+> +	if (!virtio_has_feature(vb->vdev, VIRTIO_F_VERSION_1))
+> +		actual = (__force u32)cpu_to_le32(num_pages);
+>  
+> -	virtio_cwrite(vb->vdev, struct virtio_balloon_config, actual,
+> -		      &actual);
+> +	virtio_cwrite(vb->vdev, struct virtio_balloon_config,
+> +		      actual, &actual);
+>  }
+
+Final line is gratitous reformatting.
+
+I would leave the device *exactly* as is, ugly structure packing and
+all.
+
+Cheers,
+Rusty.
