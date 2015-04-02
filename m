@@ -1,68 +1,44 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH] selftests/mount: output error messages when mount test fail
-Date: Thu, 02 Apr 2015 13:56:23 -0500
-Message-ID: <87r3s2qrzc.fsf@x220.int.ebiederm.org>
-References: <1427957214-40367-1-git-send-email-zhenzhang.zhang@huawei.com>
-	<551CE72E.3050303@huawei.com>
+From: Bjorn Helgaas <bhelgaas@google.com>
+Subject: Re: [PATCH v2] pci: export class IDs from pci_ids.h
+Date: Thu, 2 Apr 2015 15:53:47 -0500
+Message-ID: <20150402205347.GA10892@google.com>
+References: <1427714755-16873-1-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <551CE72E.3050303@huawei.com> (Zhang Zhen's message of "Thu, 2
-	Apr 2015 14:52:30 +0800")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Zhang Zhen <zhenzhang.zhang@huawei.com>
-Cc: linux-api@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, shuahkh@osg.samsung.com, mpe@ellerman.id.au
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1427714755-16873-1-git-send-email-mst@redhat.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: "Michael S. Tsirkin" <mst@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, "David S. Miller" <davem@davemloft.net>, Hans Verkuil <hans.verkuil@cisco.com>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Alexei Starovoitov <ast@plumgrid.com>, stephen hemminger <stephen@networkplumber.org>, Masahiro Yamada <yamada.m@jp.panasonic.com>, linux-pci@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, Greg KH <gregkh@linuxfoundation.org>
 List-Id: linux-api@vger.kernel.org
 
-Zhang Zhen <zhenzhang.zhang@huawei.com> writes:
+On Mon, Mar 30, 2015 at 01:33:28PM +0200, Michael S. Tsirkin wrote:
+> The basic class ID macros in pci_ids.h are pretty useful for userspace
+> using the pci sysfs interface, and they aren't fundamentally different
+> from the constants in pci_regs.h - both are defined in the
+> pci spec.
+> 
+> At the moment userspace is forced to duplicate these macros
+> (e.g. QEMU does this, so do seabios, gpxe, and others), it is better to
+> expose them in /usr/include/linux/pci_ids.h so everyone can just include
+> this header.
 
-> Without this patch, if /proc/self/uid_map is not exist,
-> the mount test case will fail and no any prompting.
+I agree that it would be nice for applications to get these definitions
+from a single place, but I'm not sure that include/uapi/linux/pci_ids.h
+needs to be that place.
 
-The intent was not to fail if /proc/self/uid_map is missing but to skip
-the test because it is not applicable.
+These constants are just copies of what's in the spec, and I don't think
+you're suggesting that the constants are necessary to use a kernel API.
 
-Making this an error seems wrong.  Even if I did mess up the shell
-script error propagation and made it an error by accident.
+I know the kernel does provide access to values via sysfs "class" files,
+but the kernel is just passing the values through from the hardware.
+That's analogous to reading the class with setpci, and I don't think it
+leads to a requirement that the kernel export all the information about how
+to interpret the class values.
 
-> After applied this patch, the case will prompt why it fail.
-> Just as follows:
-> root@kernel-host:/opt/kernel> make -C tools/testing/selftests TARGETS=mount run_tests
-> make: Entering directory `/opt/kernel/tools/testing/selftests'
-> for TARGET in mount; do \
->                 make -C $TARGET; \
->         done;
-> make[1]: Entering directory `/opt/kernel/tools/testing/selftests/mount'
-> make[1]: Nothing to be done for `all'.
-> make[1]: Leaving directory `/opt/kernel/tools/testing/selftests/mount'
-> for TARGET in mount; do \
->                 make -C $TARGET run_tests; \
->         done;
-> make[1]: Entering directory `/opt/kernel/tools/testing/selftests/mount'
-> ERROR: No /proc/self/uid_map exist
-> make[1]: Leaving directory `/opt/kernel/tools/testing/selftests/mount'
-> make: Leaving directory `/opt/kernel/tools/testing/selftests'
->
-> Signed-off-by: Zhang Zhen <zhenzhang.zhang@huawei.com>
-> ---
->  tools/testing/selftests/mount/Makefile | 7 ++++++-
->  1 file changed, 6 insertions(+), 1 deletion(-)
->
-> diff --git a/tools/testing/selftests/mount/Makefile b/tools/testing/selftests/mount/Makefile
-> index a5b367f..b3266db 100644
-> --- a/tools/testing/selftests/mount/Makefile
-> +++ b/tools/testing/selftests/mount/Makefile
-> @@ -8,7 +8,12 @@ unprivileged-remount-test: unprivileged-remount-test.c
->  include ../lib.mk
->
->  TEST_PROGS := unprivileged-remount-test
-> -override RUN_TESTS := if [ -f /proc/self/uid_map ] ; then ./unprivileged-remount-test ; fi
-> +override RUN_TESTS :=  @if [ -f /proc/self/uid_map ] ; \
-> +			then	\
-> +				./unprivileged-remount-test ; \
-> +			else	\
-> +				echo "ERROR: No /proc/self/uid_map exist" ; \
-> +			fi
->  override EMIT_TESTS := echo "$(RUN_TESTS)"
->
->  clean:
+I haven't looked at libpci or libudev, but it sounds like you think those
+are not good solutions.  Is that because they don't currently have this
+information?  People don't want to add dependencies on them?
+
+Bjorn
