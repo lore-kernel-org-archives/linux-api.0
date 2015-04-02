@@ -1,263 +1,51 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: Re: [PATCH v2 7/7] vhost: feature to set the vring endianness
-Date: Thu, 2 Apr 2015 16:20:46 +0200
-Message-ID: <20150402142046.GA23121@redhat.com>
-References: <20150402131637.24676.60700.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
-	<20150402131713.24676.9924.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [PATCH] selftests/mount: output error messages when mount test
+ fail
+Date: Thu, 02 Apr 2015 08:21:59 -0600
+Message-ID: <551D5087.3010900@osg.samsung.com>
+References: <1427957214-40367-1-git-send-email-zhenzhang.zhang@huawei.com> <551CE72E.3050303@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-Content-Disposition: inline
-In-Reply-To: <20150402131713.24676.9924.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Greg Kurz <gkurz@linux.vnet.ibm.com>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kvm@vger.kernel.org, virtualization@lists.linux-foundation.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <551CE72E.3050303@huawei.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Zhang Zhen <zhenzhang.zhang@huawei.com>, linux-api@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Cc: mpe@ellerman.id.au, ebiederm@xmission.com, Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 02, 2015 at 03:17:13PM +0200, Greg Kurz wrote:
-> This patch brings cross-endian support to vhost when used to implement
-> legacy virtio devices. Since it is a relatively rare situation, the feature
-> availability is controlled by a kernel config option (not set by default).
+On 04/02/2015 12:52 AM, Zhang Zhen wrote:
+> Without this patch, if /proc/self/uid_map is not exist,
+> the mount test case will fail and no any prompting.
 > 
-> If cross-endian support is compiled in, vhost abvertises a new feature
-> to be negotiated with userspace. If userspace acknowledges the feature,
-> it can inform vhost about the endianness to use with a new ioctl.
+> After applied this patch, the case will prompt why it fail.
+> Just as follows:
+> root@kernel-host:/opt/kernel> make -C tools/testing/selftests TARGETS=mount run_tests
+> make: Entering directory `/opt/kernel/tools/testing/selftests'
+> for TARGET in mount; do \
+>                 make -C $TARGET; \
+>         done;
+> make[1]: Entering directory `/opt/kernel/tools/testing/selftests/mount'
+> make[1]: Nothing to be done for `all'.
+> make[1]: Leaving directory `/opt/kernel/tools/testing/selftests/mount'
+> for TARGET in mount; do \
+>                 make -C $TARGET run_tests; \
+>         done;
+> make[1]: Entering directory `/opt/kernel/tools/testing/selftests/mount'
+> ERROR: No /proc/self/uid_map exist
+> make[1]: Leaving directory `/opt/kernel/tools/testing/selftests/mount'
+> make: Leaving directory `/opt/kernel/tools/testing/selftests'
 > 
-> This feature is mutually exclusive with virtio 1.0. Even if the vhost device
-> advertises virtio 1.0 and legacy cross-endian features, it cannot receive
-> aknowledgement for both at the same time.
-> 
-> Hot paths are being preserved from any penalty when the config option is
-> disabled or when virtio 1.0 is being used.
-> 
-> Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
-> ---
->  drivers/vhost/Kconfig      |   10 ++++++++++
->  drivers/vhost/net.c        |    5 +++++
->  drivers/vhost/scsi.c       |    4 ++++
->  drivers/vhost/test.c       |    4 ++++
->  drivers/vhost/vhost.c      |   19 +++++++++++++++++++
->  drivers/vhost/vhost.h      |   13 ++++++++++++-
->  include/uapi/linux/vhost.h |   10 ++++++++++
->  7 files changed, 64 insertions(+), 1 deletion(-)
-> 
-> diff --git a/drivers/vhost/Kconfig b/drivers/vhost/Kconfig
-> index 017a1e8..5bb8da9 100644
-> --- a/drivers/vhost/Kconfig
-> +++ b/drivers/vhost/Kconfig
-> @@ -32,3 +32,13 @@ config VHOST
->  	---help---
->  	  This option is selected by any driver which needs to access
->  	  the core of vhost.
-> +
-> +config VHOST_SET_ENDIAN_LEGACY
-> +	bool "Cross-endian support for host kernel accelerator"
-> +	default n
-> +	---help---
-> +	  This option allows vhost to support guests with a different byte
-> +	  ordering
+> Signed-off-by: Zhang Zhen <zhenzhang.zhang@huawei.com>
 
-from host
+Thanks for fixing this. It will get into 4.1-rc2.
 
->. It is disabled by default since it adds overhead and it
-> +	  is only needed by a few platforms (powerpc and arm).
-> +
-> +	  If unsure, say "n".
-
-"N"
-
-> diff --git a/drivers/vhost/net.c b/drivers/vhost/net.c
-> index 2bbfc25..5274a44 100644
-> --- a/drivers/vhost/net.c
-> +++ b/drivers/vhost/net.c
-> @@ -1011,6 +1011,11 @@ static int vhost_net_set_features(struct vhost_net *n, u64 features)
->  		vhost_hlen = 0;
->  		sock_hlen = hdr_len;
->  	}
-> +
-> +	if (features & ((1ULL << VHOST_F_SET_ENDIAN_LEGACY) |
-> +			(1ULL << VIRTIO_F_VERSION_1)))
-> +		return -EINVAL;
-> +
->  	mutex_lock(&n->dev.mutex);
->  	if ((features & (1 << VHOST_F_LOG_ALL)) &&
->  	    !vhost_log_access_ok(&n->dev)) {
-> diff --git a/drivers/vhost/scsi.c b/drivers/vhost/scsi.c
-> index 71df240..b53e9c2 100644
-> --- a/drivers/vhost/scsi.c
-> +++ b/drivers/vhost/scsi.c
-> @@ -1544,6 +1544,10 @@ static int vhost_scsi_set_features(struct vhost_scsi *vs, u64 features)
->  	if (features & ~VHOST_SCSI_FEATURES)
->  		return -EOPNOTSUPP;
->  
-> +	if (features & ((1ULL << VHOST_F_SET_ENDIAN_LEGACY) |
-> +			(1ULL << VIRTIO_F_VERSION_1)))
-> +		return -EINVAL;
-> +
->  	mutex_lock(&vs->dev.mutex);
->  	if ((features & (1 << VHOST_F_LOG_ALL)) &&
->  	    !vhost_log_access_ok(&vs->dev)) {
-> diff --git a/drivers/vhost/test.c b/drivers/vhost/test.c
-> index d9c501e..cfefdad 100644
-> --- a/drivers/vhost/test.c
-> +++ b/drivers/vhost/test.c
-> @@ -243,6 +243,10 @@ static int vhost_test_set_features(struct vhost_test *n, u64 features)
->  {
->  	struct vhost_virtqueue *vq;
->  
-> +	if (features & ((1ULL << VHOST_F_SET_ENDIAN_LEGACY) |
-> +			(1ULL << VIRTIO_F_VERSION_1)))
-> +		return -EINVAL;
-> +
->  	mutex_lock(&n->dev.mutex);
->  	if ((features & (1 << VHOST_F_LOG_ALL)) &&
->  	    !vhost_log_access_ok(&n->dev)) {
-
-Above seems to prevent users from specifying either
-VIRTIO_F_VERSION_1 or VHOST_F_SET_ENDIAN_LEGACY.
-Does it actually work?
-
-> diff --git a/drivers/vhost/vhost.c b/drivers/vhost/vhost.c
-> index 2ee2826..60a0f32 100644
-> --- a/drivers/vhost/vhost.c
-> +++ b/drivers/vhost/vhost.c
-> @@ -199,6 +199,7 @@ static void vhost_vq_reset(struct vhost_dev *dev,
->  	vq->call = NULL;
->  	vq->log_ctx = NULL;
->  	vq->memory = NULL;
-> +	vq->legacy_big_endian = false;
->  }
->  
->  static int vhost_worker(void *data)
-> @@ -806,6 +807,24 @@ long vhost_vring_ioctl(struct vhost_dev *d, int ioctl, void __user *argp)
->  		} else
->  			filep = eventfp;
->  		break;
-> +#ifdef CONFIG_VHOST_SET_ENDIAN_LEGACY
-> +	case VHOST_SET_VRING_ENDIAN_LEGACY:
-> +	{
-> +		struct vhost_vring_endian e;
-> +
-> +		if (!vhost_has_feature(vq, VHOST_F_SET_ENDIAN_LEGACY)) {
-> +			r = -EINVAL;
-> +			break;
-> +		}
-> +
-> +		if (copy_from_user(&e, argp, sizeof(e))) {
-> +			r = -EFAULT;
-> +			break;
-> +		}
-> +		vq->legacy_big_endian = e.is_big_endian;
-> +		break;
-> +	}
-> +#endif
->  	default:
->  		r = -ENOIOCTLCMD;
->  	}
-> diff --git a/drivers/vhost/vhost.h b/drivers/vhost/vhost.h
-> index 4e9a186..d50881d 100644
-> --- a/drivers/vhost/vhost.h
-> +++ b/drivers/vhost/vhost.h
-> @@ -106,6 +106,9 @@ struct vhost_virtqueue {
->  	/* Log write descriptors */
->  	void __user *log_base;
->  	struct vhost_log *log;
-> +
-> +	/* We need to know the device endianness with legacy virtio. */
-> +	bool legacy_big_endian;
->  };
->  
->  struct vhost_dev {
-> @@ -165,7 +168,11 @@ enum {
->  	VHOST_FEATURES = (1ULL << VIRTIO_F_NOTIFY_ON_EMPTY) |
->  			 (1ULL << VIRTIO_RING_F_INDIRECT_DESC) |
->  			 (1ULL << VIRTIO_RING_F_EVENT_IDX) |
-> -			 (1ULL << VHOST_F_LOG_ALL),
-> +			 (1ULL << VHOST_F_LOG_ALL) |
-> +#ifdef CONFIG_VHOST_SET_ENDIAN_LEGACY
-> +			 (1ULL << VHOST_F_SET_ENDIAN_LEGACY) |
-> +#endif
-> +			 0ULL,
->  };
->  
->  static inline bool vhost_has_feature(struct vhost_virtqueue *vq, int bit)
-> @@ -177,6 +184,10 @@ static inline bool vhost_is_little_endian(struct vhost_virtqueue *vq)
->  {
->  	if (vhost_has_feature(vq, VIRTIO_F_VERSION_1))
->  		return true;
-> +#ifdef CONFIG_VHOST_SET_ENDIAN_LEGACY
-> +	if (vhost_has_feature(vq, VHOST_F_SET_ENDIAN_LEGACY))
-> +		return !vq->legacy_big_endian;
-
-why do we need to check the feature bit?
-How about simple
-	return !vq->legacy_big_endian;
-here?
-All you need to do is set legacy_big_endian to
-!virtio_legacy_is_little_endian() on reset.
-Maybe rename to legacy_is_little_endian so you don't
-need to reverse the logic.
-
-> +#endif
->  	return virtio_legacy_is_little_endian();
->  }
->  
-> diff --git a/include/uapi/linux/vhost.h b/include/uapi/linux/vhost.h
-> index bb6a5b4..09d2a48 100644
-> --- a/include/uapi/linux/vhost.h
-> +++ b/include/uapi/linux/vhost.h
-> @@ -47,6 +47,11 @@ struct vhost_vring_addr {
->  	__u64 log_guest_addr;
->  };
->  
-> +struct vhost_vring_endian {
-> +	unsigned int index;
-> +	bool is_big_endian;
-
-bool in uapi is a bad idea.
-Generally, I think you can use vhost_vring_state here.
-
-> +};
-> +
->  struct vhost_memory_region {
->  	__u64 guest_phys_addr;
->  	__u64 memory_size; /* bytes */
-> @@ -103,6 +108,9 @@ struct vhost_memory {
->  /* Get accessor: reads index, writes value in num */
->  #define VHOST_GET_VRING_BASE _IOWR(VHOST_VIRTIO, 0x12, struct vhost_vring_state)
->  
-> +/* Set endianness for the ring (legacy virtio only) */
-> +#define VHOST_SET_VRING_ENDIAN_LEGACY _IOW(VHOST_VIRTIO, 0x13, struct vhost_vring_endian)
-> +
->  /* The following ioctls use eventfd file descriptors to signal and poll
->   * for events. */
->  
-
-You also need a GET ioctl, as a matter of policy.
-
-> @@ -126,6 +134,8 @@ struct vhost_memory {
->  #define VHOST_F_LOG_ALL 26
->  /* vhost-net should add virtio_net_hdr for RX, and strip for TX packets. */
->  #define VHOST_NET_F_VIRTIO_NET_HDR 27
-> +/* the vring endianness can be explicitly set (legacy virtio only). */
-> +#define VHOST_F_SET_ENDIAN_LEGACY 28
->  
->  /* VHOST_SCSI specific definitions */
-
-
-VHOST_F_SET_ENDIAN_LEGACY doesn't seem too useful.
-Is this so userspace can detect kernel configuration?
-I think probing VHOST_SET_VRING_ENDIAN_LEGACY should
-be sufficient for this.
+thanks,
+-- Shuah
 
 -- 
-MST
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
