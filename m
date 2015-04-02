@@ -1,147 +1,342 @@
-From: Rob Herring <robherring2@gmail.com>
-Subject: Re: [PATCH v4 05/15] dt-bindings: Document the STM32 reset bindings
-Date: Wed, 1 Apr 2015 11:32:17 -0500
-Message-ID: <CAL_Jsq++ojQOeP1RBOQffOJKzW+M=ygpWaB=ryZ7APbtgZSVzQ@mail.gmail.com>
-References: <1427819096-31109-1-git-send-email-mcoquelin.stm32@gmail.com> <1427819096-31109-6-git-send-email-mcoquelin.stm32@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1427819096-31109-6-git-send-email-mcoquelin.stm32@gmail.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, pmeerw@pmeerw.net, Paul Bolle <pebolle@tiscali.nl>, Peter Hurley <peter@hurleysoftware.com>, andy.shevchenko@gmail.com, Chanwoo Choi <cw00.choi@samsung.com>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby>
+From: Alexei Starovoitov <ast@plumgrid.com>
+Subject: [PATCH net-next] tc: bpf: add checksum helpers
+Date: Wed,  1 Apr 2015 17:12:13 -0700
+Message-ID: <1427933533-14394-1-git-send-email-ast@plumgrid.com>
+Return-path: <netdev-owner@vger.kernel.org>
+Sender: netdev-owner@vger.kernel.org
+To: "David S. Miller" <davem@davemloft.net>
+Cc: Daniel Borkmann <daniel@iogearbox.net>, Jiri Pirko <jiri@resnulli.us>, Jamal Hadi Salim <jhs@mojatatu.com>, linux-api@vger.kernel.org, netdev@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 31, 2015 at 11:24 AM, Maxime Coquelin
-<mcoquelin.stm32@gmail.com> wrote:
-> This adds documentation of device tree bindings for the
-> STM32 reset controller.
->
-> Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
-> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Commit 608cd71a9c7c ("tc: bpf: generalize pedit action") has added the
+possibility to mangle packet data to BPF programs in the tc pipeline.
+This patch adds two helpers bpf_l3_csum_replace() and bpf_l4_csum_replace()
+for fixing up the protocol checksums after the packet mangling.
 
-Nothing really new here.
+It also adds 'flags' argument to bpf_skb_store_bytes() helper to avoid
+unnecessary checksum recomputations when BPF programs adjusting l3/l4
+checksums and documents all three helpers in uapi header.
 
-Acked-by: Rob Herring <robh@kernel.org>
+Moreover, a sample program is added to show how BPF programs can make use
+of the mangle and csum helpers.
 
-> ---
->  .../devicetree/bindings/reset/st,stm32-rcc.txt     | 107 +++++++++++++++++++++
->  1 file changed, 107 insertions(+)
->  create mode 100644 Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
->
-> diff --git a/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt b/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
-> new file mode 100644
-> index 0000000..e2e2f25
-> --- /dev/null
-> +++ b/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
-> @@ -0,0 +1,107 @@
-> +STMicroelectronics STM32 Peripheral Reset Controller
-> +====================================================
-> +
-> +The RCC IP is both a reset and a clock controller. This documentation only
-> +document the reset part.
-> +
-> +Please also refer to reset.txt in this directory for common reset
-> +controller binding usage.
-> +
-> +Required properties:
-> +- compatible: Should be "st,stm32-rcc"
-> +- reg: should be register base and length as documented in the
-> +  datasheet
-> +- #reset-cells: 1, see below
-> +
-> +example:
-> +
-> +rcc: reset@40023800 {
-> +       #reset-cells = <1>;
-> +       compatible = "st,stm32-rcc";
-> +       reg = <0x40023800 0x400>;
-> +};
-> +
-> +Specifying softreset control of devices
-> +=======================================
-> +
-> +Device nodes should specify the reset channel required in their "resets"
-> +property, containing a phandle to the reset device node and an index specifying
-> +which channel to use.
-> +The index is the bit number within the RCC registers bank, starting from RCC
-> +base address.
-> +It is calculated as: index = register_offset / 4 * 32 + bit_offset.
-> +Where bit_offset is the bit offset within the register.
-> +For example, for CRC reset:
-> +  crc = AHB1RSTR_offset / 4 * 32 + CRCRST_bit_offset = 0x10 / 4 * 32 + 12 = 140
-> +
-> +example:
-> +
-> +       timer2 {
-> +               resets                  = <&rcc 256>;
-> +       };
-> +
-> +List of valid indices for STM32F429:
-> + - gpioa: 128
-> + - gpiob: 129
-> + - gpioc: 130
-> + - gpiod: 131
-> + - gpioe: 132
-> + - gpiof: 133
-> + - gpiog: 134
-> + - gpioh: 135
-> + - gpioi: 136
-> + - gpioj: 137
-> + - gpiok: 138
-> + - crc: 140
-> + - dma1: 149
-> + - dma2: 150
-> + - dma2d: 151
-> + - ethmac: 153
-> + - otghs: 157
-> + - dcmi: 160
-> + - cryp: 164
-> + - hash: 165
-> + - rng: 166
-> + - otgfs: 167
-> + - fmc: 192
-> + - tim2: 256
-> + - tim3: 257
-> + - tim4: 258
-> + - tim5: 259
-> + - tim6: 260
-> + - tim7: 261
-> + - tim12: 262
-> + - tim13: 263
-> + - tim14: 264
-> + - wwdg: 267
-> + - spi2: 270
-> + - spi3: 271
-> + - uart2: 273
-> + - uart3: 274
-> + - uart4: 275
-> + - uart5: 276
-> + - i2c1: 277
-> + - i2c2: 278
-> + - i2c3: 279
-> + - can1: 281
-> + - can2: 282
-> + - pwr: 284
-> + - dac: 285
-> + - uart7: 286
-> + - uart8: 287
-> + - tim1: 288
-> + - tim8: 289
-> + - usart1: 292
-> + - usart6: 293
-> + - adc: 296
-> + - sdio: 299
-> + - spi1: 300
-> + - spi4: 301
-> + - syscfg: 302
-> + - tim9: 304
-> + - tim10: 305
-> + - tim11: 306
-> + - spi5: 308
-> + - spi6: 309
-> + - sai1: 310
-> + - ltdc: 314
-> --
-> 1.9.1
->
+Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
+---
+ include/uapi/linux/bpf.h  |   38 +++++++++++++++-
+ net/core/filter.c         |  108 +++++++++++++++++++++++++++++++++++++++++++--
+ samples/bpf/Makefile      |    1 +
+ samples/bpf/bpf_helpers.h |    7 +++
+ samples/bpf/tcbpf1_kern.c |   71 +++++++++++++++++++++++++++++
+ 5 files changed, 220 insertions(+), 5 deletions(-)
+ create mode 100644 samples/bpf/tcbpf1_kern.c
+
+diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
+index 74aab6e0d964..c8e3c29a080e 100644
+--- a/include/uapi/linux/bpf.h
++++ b/include/uapi/linux/bpf.h
+@@ -168,7 +168,43 @@ enum bpf_func_id {
+ 	BPF_FUNC_map_delete_elem, /* int map_delete_elem(&map, &key) */
+ 	BPF_FUNC_get_prandom_u32, /* u32 prandom_u32(void) */
+ 	BPF_FUNC_get_smp_processor_id, /* u32 raw_smp_processor_id(void) */
+-	BPF_FUNC_skb_store_bytes, /* int skb_store_bytes(skb, offset, from, len) */
++
++	/**
++	 * skb_store_bytes(skb, offset, from, len, flags) - store bytes into packet
++	 * @skb: pointer to skb
++	 * @offset: offset within packet from skb->data
++	 * @from: pointer where to copy bytes from
++	 * @len: number of bytes to store into packet
++	 * @flags: bit 0 - if true, recompute skb->csum
++	 *         other bits - reserved
++	 * Return: 0 on success
++	 */
++	BPF_FUNC_skb_store_bytes,
++
++	/**
++	 * l3_csum_replace(skb, offset, from, to, flags) - recompute IP checksum
++	 * @skb: pointer to skb
++	 * @offset: offset within packet where IP checksum is located
++	 * @from: old value of header field
++	 * @to: new value of header field
++	 * @flags: bits 0-3 - size of header field
++	 *         other bits - reserved
++	 * Return: 0 on success
++	 */
++	BPF_FUNC_l3_csum_replace,
++
++	/**
++	 * l4_csum_replace(skb, offset, from, to, flags) - recompute TCP/UDP checksum
++	 * @skb: pointer to skb
++	 * @offset: offset within packet where TCP/UDP checksum is located
++	 * @from: old value of header field
++	 * @to: new value of header field
++	 * @flags: bits 0-3 - size of header field
++	 *         bit 4 - is pseudo header
++	 *         other bits - reserved
++	 * Return: 0 on success
++	 */
++	BPF_FUNC_l4_csum_replace,
+ 	__BPF_FUNC_MAX_ID,
+ };
+ 
+diff --git a/net/core/filter.c b/net/core/filter.c
+index 444a07e4f68d..e7a51a4b4d34 100644
+--- a/net/core/filter.c
++++ b/net/core/filter.c
+@@ -1175,7 +1175,9 @@ int sk_attach_bpf(u32 ufd, struct sock *sk)
+ 	return 0;
+ }
+ 
+-static u64 bpf_skb_store_bytes(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
++#define BPF_RECOMPUTE_CSUM(flags)	((flags) & 1)
++
++static u64 bpf_skb_store_bytes(u64 r1, u64 r2, u64 r3, u64 r4, u64 flags)
+ {
+ 	struct sk_buff *skb = (struct sk_buff *) (long) r1;
+ 	unsigned int offset = (unsigned int) r2;
+@@ -1192,7 +1194,7 @@ static u64 bpf_skb_store_bytes(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
+ 	 *
+ 	 * so check for invalid 'offset' and too large 'len'
+ 	 */
+-	if (offset > 0xffff || len > sizeof(buf))
++	if (unlikely(offset > 0xffff || len > sizeof(buf)))
+ 		return -EFAULT;
+ 
+ 	if (skb_cloned(skb) && !skb_clone_writable(skb, offset + len))
+@@ -1202,7 +1204,8 @@ static u64 bpf_skb_store_bytes(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
+ 	if (unlikely(!ptr))
+ 		return -EFAULT;
+ 
+-	skb_postpull_rcsum(skb, ptr, len);
++	if (BPF_RECOMPUTE_CSUM(flags))
++		skb_postpull_rcsum(skb, ptr, len);
+ 
+ 	memcpy(ptr, from, len);
+ 
+@@ -1210,7 +1213,7 @@ static u64 bpf_skb_store_bytes(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
+ 		/* skb_store_bits cannot return -EFAULT here */
+ 		skb_store_bits(skb, offset, ptr, len);
+ 
+-	if (skb->ip_summed == CHECKSUM_COMPLETE)
++	if (BPF_RECOMPUTE_CSUM(flags) && skb->ip_summed == CHECKSUM_COMPLETE)
+ 		skb->csum = csum_add(skb->csum, csum_partial(ptr, len, 0));
+ 	return 0;
+ }
+@@ -1223,6 +1226,99 @@ const struct bpf_func_proto bpf_skb_store_bytes_proto = {
+ 	.arg2_type	= ARG_ANYTHING,
+ 	.arg3_type	= ARG_PTR_TO_STACK,
+ 	.arg4_type	= ARG_CONST_STACK_SIZE,
++	.arg5_type	= ARG_ANYTHING,
++};
++
++#define BPF_HEADER_FIELD_SIZE(flags)	((flags) & 0x0f)
++#define BPF_IS_PSEUDO_HEADER(flags)	((flags) & 0x10)
++
++static u64 bpf_l3_csum_replace(u64 r1, u64 offset, u64 from, u64 to, u64 flags)
++{
++	struct sk_buff *skb = (struct sk_buff *) (long) r1;
++	__sum16 sum, *ptr;
++
++	if (unlikely(offset > 0xffff))
++		return -EFAULT;
++
++	if (skb_cloned(skb) && !skb_clone_writable(skb, offset + sizeof(sum)))
++		return -EFAULT;
++
++	ptr = skb_header_pointer(skb, offset, sizeof(sum), &sum);
++	if (unlikely(!ptr))
++		return -EFAULT;
++
++	switch (BPF_HEADER_FIELD_SIZE(flags)) {
++	case 2:
++		csum_replace2(ptr, from, to);
++		break;
++	case 4:
++		csum_replace4(ptr, from, to);
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	if (ptr == &sum)
++		/* skb_store_bits guaranteed to not return -EFAULT here */
++		skb_store_bits(skb, offset, ptr, sizeof(sum));
++
++	return 0;
++}
++
++const struct bpf_func_proto bpf_l3_csum_replace_proto = {
++	.func		= bpf_l3_csum_replace,
++	.gpl_only	= false,
++	.ret_type	= RET_INTEGER,
++	.arg1_type	= ARG_PTR_TO_CTX,
++	.arg2_type	= ARG_ANYTHING,
++	.arg3_type	= ARG_ANYTHING,
++	.arg4_type	= ARG_ANYTHING,
++	.arg5_type	= ARG_ANYTHING,
++};
++
++static u64 bpf_l4_csum_replace(u64 r1, u64 offset, u64 from, u64 to, u64 flags)
++{
++	struct sk_buff *skb = (struct sk_buff *) (long) r1;
++	u32 is_pseudo = BPF_IS_PSEUDO_HEADER(flags);
++	__sum16 sum, *ptr;
++
++	if (unlikely(offset > 0xffff))
++		return -EFAULT;
++
++	if (skb_cloned(skb) && !skb_clone_writable(skb, offset + sizeof(sum)))
++		return -EFAULT;
++
++	ptr = skb_header_pointer(skb, offset, sizeof(sum), &sum);
++	if (unlikely(!ptr))
++		return -EFAULT;
++
++	switch (BPF_HEADER_FIELD_SIZE(flags)) {
++	case 2:
++		inet_proto_csum_replace2(ptr, skb, from, to, is_pseudo);
++		break;
++	case 4:
++		inet_proto_csum_replace4(ptr, skb, from, to, is_pseudo);
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	if (ptr == &sum)
++		/* skb_store_bits guaranteed to not return -EFAULT here */
++		skb_store_bits(skb, offset, ptr, sizeof(sum));
++
++	return 0;
++}
++
++const struct bpf_func_proto bpf_l4_csum_replace_proto = {
++	.func		= bpf_l4_csum_replace,
++	.gpl_only	= false,
++	.ret_type	= RET_INTEGER,
++	.arg1_type	= ARG_PTR_TO_CTX,
++	.arg2_type	= ARG_ANYTHING,
++	.arg3_type	= ARG_ANYTHING,
++	.arg4_type	= ARG_ANYTHING,
++	.arg5_type	= ARG_ANYTHING,
+ };
+ 
+ static const struct bpf_func_proto *
+@@ -1250,6 +1346,10 @@ tc_cls_act_func_proto(enum bpf_func_id func_id)
+ 	switch (func_id) {
+ 	case BPF_FUNC_skb_store_bytes:
+ 		return &bpf_skb_store_bytes_proto;
++	case BPF_FUNC_l3_csum_replace:
++		return &bpf_l3_csum_replace_proto;
++	case BPF_FUNC_l4_csum_replace:
++		return &bpf_l4_csum_replace_proto;
+ 	default:
+ 		return sk_filter_func_proto(func_id);
+ 	}
+diff --git a/samples/bpf/Makefile b/samples/bpf/Makefile
+index b5b3600dcdf5..d24f51bca465 100644
+--- a/samples/bpf/Makefile
++++ b/samples/bpf/Makefile
+@@ -17,6 +17,7 @@ sockex2-objs := bpf_load.o libbpf.o sockex2_user.o
+ always := $(hostprogs-y)
+ always += sockex1_kern.o
+ always += sockex2_kern.o
++always += tcbpf1_kern.o
+ 
+ HOSTCFLAGS += -I$(objtree)/usr/include
+ 
+diff --git a/samples/bpf/bpf_helpers.h b/samples/bpf/bpf_helpers.h
+index ca0333146006..72540ec1f003 100644
+--- a/samples/bpf/bpf_helpers.h
++++ b/samples/bpf/bpf_helpers.h
+@@ -37,4 +37,11 @@ struct bpf_map_def {
+ 	unsigned int max_entries;
+ };
+ 
++static int (*bpf_skb_store_bytes)(void *ctx, int off, void *from, int len, int flags) =
++	(void *) BPF_FUNC_skb_store_bytes;
++static int (*bpf_l3_csum_replace)(void *ctx, int off, int from, int to, int flags) =
++	(void *) BPF_FUNC_l3_csum_replace;
++static int (*bpf_l4_csum_replace)(void *ctx, int off, int from, int to, int flags) =
++	(void *) BPF_FUNC_l4_csum_replace;
++
+ #endif
+diff --git a/samples/bpf/tcbpf1_kern.c b/samples/bpf/tcbpf1_kern.c
+new file mode 100644
+index 000000000000..7cf3f42a6e39
+--- /dev/null
++++ b/samples/bpf/tcbpf1_kern.c
+@@ -0,0 +1,71 @@
++#include <uapi/linux/bpf.h>
++#include <uapi/linux/if_ether.h>
++#include <uapi/linux/if_packet.h>
++#include <uapi/linux/ip.h>
++#include <uapi/linux/in.h>
++#include <uapi/linux/tcp.h>
++#include "bpf_helpers.h"
++
++/* compiler workaround */
++#define _htonl __builtin_bswap32
++
++static inline void set_dst_mac(struct __sk_buff *skb, char *mac)
++{
++	bpf_skb_store_bytes(skb, 0, mac, ETH_ALEN, 1);
++}
++
++/* use 1 below for ingress qdisc and 0 for egress */
++#if 0
++#undef ETH_HLEN
++#define ETH_HLEN 0
++#endif
++
++#define IP_CSUM_OFF (ETH_HLEN + offsetof(struct iphdr, check))
++#define TOS_OFF (ETH_HLEN + offsetof(struct iphdr, tos))
++
++static inline void set_ip_tos(struct __sk_buff *skb, __u8 new_tos)
++{
++	__u8 old_tos = load_byte(skb, TOS_OFF);
++
++	bpf_l3_csum_replace(skb, IP_CSUM_OFF, htons(old_tos), htons(new_tos), 2);
++	bpf_skb_store_bytes(skb, TOS_OFF, &new_tos, sizeof(new_tos), 0);
++}
++
++#define TCP_CSUM_OFF (ETH_HLEN + sizeof(struct iphdr) + offsetof(struct tcphdr, check))
++#define IP_SRC_OFF (ETH_HLEN + offsetof(struct iphdr, saddr))
++
++#define IS_PSEUDO 0x10
++
++static inline void set_tcp_ip_src(struct __sk_buff *skb, __u32 new_ip)
++{
++	__u32 old_ip = _htonl(load_word(skb, IP_SRC_OFF));
++
++	bpf_l4_csum_replace(skb, TCP_CSUM_OFF, old_ip, new_ip, IS_PSEUDO | sizeof(new_ip));
++	bpf_l3_csum_replace(skb, IP_CSUM_OFF, old_ip, new_ip, sizeof(new_ip));
++	bpf_skb_store_bytes(skb, IP_SRC_OFF, &new_ip, sizeof(new_ip), 0);
++}
++
++#define TCP_DPORT_OFF (ETH_HLEN + sizeof(struct iphdr) + offsetof(struct tcphdr, dest))
++static inline void set_tcp_dest_port(struct __sk_buff *skb, __u16 new_port)
++{
++	__u16 old_port = htons(load_half(skb, TCP_DPORT_OFF));
++
++	bpf_l4_csum_replace(skb, TCP_CSUM_OFF, old_port, new_port, sizeof(new_port));
++	bpf_skb_store_bytes(skb, TCP_DPORT_OFF, &new_port, sizeof(new_port), 0);
++}
++
++SEC("classifier")
++int bpf_prog1(struct __sk_buff *skb)
++{
++	__u8 proto = load_byte(skb, ETH_HLEN + offsetof(struct iphdr, protocol));
++	long *value;
++
++	if (proto == IPPROTO_TCP) {
++		set_ip_tos(skb, 8);
++		set_tcp_ip_src(skb, 0xA010101);
++		set_tcp_dest_port(skb, 5001);
++	}
++
++	return 0;
++}
++char _license[] SEC("license") = "GPL";
+-- 
+1.7.9.5
