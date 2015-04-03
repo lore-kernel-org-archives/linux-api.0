@@ -1,56 +1,86 @@
-From: Hugh Dickins <hughd@google.com>
-Subject: Re: [patch -mm] mm, doc: cleanup and clarify munmap behavior for
- hugetlb memory fix
-Date: Thu, 2 Apr 2015 18:05:10 -0700 (PDT)
-Message-ID: <alpine.LSU.2.11.1504021802340.7876@eggly.anvils>
-References: <alpine.DEB.2.10.1503261621570.20009@chino.kir.corp.google.com> <alpine.LSU.2.11.1503291801400.1052@eggly.anvils> <alpine.DEB.2.10.1504021536210.15536@chino.kir.corp.google.com> <alpine.DEB.2.10.1504021547330.15536@chino.kir.corp.google.com>
+From: Zhang Zhen <zhenzhang.zhang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] selftests/mount: output error messages when mount test
+ fail
+Date: Fri, 3 Apr 2015 09:17:28 +0800
+Message-ID: <551DEA28.6040509@huawei.com>
+References: <1427957214-40367-1-git-send-email-zhenzhang.zhang@huawei.com> <551CE72E.3050303@huawei.com> <87r3s2qrzc.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <alpine.DEB.2.10.1504021547330.15536@chino.kir.corp.google.com>
-Sender: owner-linux-mm@kvack.org
-To: David Rientjes <rientjes@google.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Hugh Dickins <hughd@google.com>, Jonathan Corbet <corbet@lwn.net>, Davide Libenzi <davidel@xmailserver.org>, Luiz Capitulino <lcapitulino@redhat.com>, Shuah Khan <shuahkh@osg.samsung.com>, Andrea Arcangeli <aarcange@redhat.com>, Joern Engel <joern@logfs.org>, Jianguo Wu <wujianguo@huawei.com>, Eric B Munson <emunson@akamai.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87r3s2qrzc.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2 Apr 2015, David Rientjes wrote:
+On 2015/4/3 2:56, Eric W. Biederman wrote:
+> Zhang Zhen <zhenzhang.zhang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org> writes:
+>=20
+>> Without this patch, if /proc/self/uid_map is not exist,
+>> the mount test case will fail and no any prompting.
+>=20
+> The intent was not to fail if /proc/self/uid_map is missing but to sk=
+ip
+> the test because it is not applicable.
+>=20
+> Making this an error seems wrong.  Even if I did mess up the shell
+> script error propagation and made it an error by accident.
+>=20
+Ok=EF=BC=8C modify the output messages as follows=EF=BC=9A
+WARN: No /proc/self/uid_map exist, test skipped.
 
-> Don't only specify munmap(2) behavior with respect the hugetlb memory, all 
-> other syscalls get naturally aligned to the native page size of the 
-> processor.  Rather, pick out munmap(2) as a specific example.
-> 
-> Signed-off-by: David Rientjes <rientjes@google.com>
+Do you think this modification right?
 
-Thanks, yes, good wording: it is best to be a bit vague here,
-since each msyscall takes the approach most convenient for it.
-
-Acked-by: Hugh Dickins <hughd@google.com>
-
-> ---
->  Documentation/vm/hugetlbpage.txt | 7 +++++--
->  1 file changed, 5 insertions(+), 2 deletions(-)
-> 
-> diff --git a/Documentation/vm/hugetlbpage.txt b/Documentation/vm/hugetlbpage.txt
-> index 1270fb1..030977f 100644
-> --- a/Documentation/vm/hugetlbpage.txt
-> +++ b/Documentation/vm/hugetlbpage.txt
-> @@ -313,8 +313,11 @@ into /proc/sys/vm/hugetlb_shm_group.  It is possible for same or different
->  applications to use any combination of mmaps and shm* calls, though the mount of
->  filesystem will be required for using mmap calls without MAP_HUGETLB.
->  
-> -When using munmap(2) to unmap hugetlb memory, the length specified must be
-> -hugepage aligned, otherwise it will fail with errno set to EINVAL.
-> +Syscalls that operate on memory backed by hugetlb pages only have their lengths
-> +aligned to the native page size of the processor; they will normally fail with
-> +errno set to EINVAL or exclude hugetlb pages that extend beyond the length if
-> +not hugepage aligned.  For example, munmap(2) will fail if memory is backed by
-> +a hugetlb page and the length is smaller than the hugepage size.
->  
->  
->  Examples
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Best regards!
+>> After applied this patch, the case will prompt why it fail.
+>> Just as follows:
+>> root@kernel-host:/opt/kernel> make -C tools/testing/selftests TARGET=
+S=3Dmount run_tests
+>> make: Entering directory `/opt/kernel/tools/testing/selftests'
+>> for TARGET in mount; do \
+>>                 make -C $TARGET; \
+>>         done;
+>> make[1]: Entering directory `/opt/kernel/tools/testing/selftests/mou=
+nt'
+>> make[1]: Nothing to be done for `all'.
+>> make[1]: Leaving directory `/opt/kernel/tools/testing/selftests/moun=
+t'
+>> for TARGET in mount; do \
+>>                 make -C $TARGET run_tests; \
+>>         done;
+>> make[1]: Entering directory `/opt/kernel/tools/testing/selftests/mou=
+nt'
+>> ERROR: No /proc/self/uid_map exist
+>> make[1]: Leaving directory `/opt/kernel/tools/testing/selftests/moun=
+t'
+>> make: Leaving directory `/opt/kernel/tools/testing/selftests'
+>>
+>> Signed-off-by: Zhang Zhen <zhenzhang.zhang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+>> ---
+>>  tools/testing/selftests/mount/Makefile | 7 ++++++-
+>>  1 file changed, 6 insertions(+), 1 deletion(-)
+>>
+>> diff --git a/tools/testing/selftests/mount/Makefile b/tools/testing/=
+selftests/mount/Makefile
+>> index a5b367f..b3266db 100644
+>> --- a/tools/testing/selftests/mount/Makefile
+>> +++ b/tools/testing/selftests/mount/Makefile
+>> @@ -8,7 +8,12 @@ unprivileged-remount-test: unprivileged-remount-tes=
+t.c
+>>  include ../lib.mk
+>>
+>>  TEST_PROGS :=3D unprivileged-remount-test
+>> -override RUN_TESTS :=3D if [ -f /proc/self/uid_map ] ; then ./unpri=
+vileged-remount-test ; fi
+>> +override RUN_TESTS :=3D  @if [ -f /proc/self/uid_map ] ; \
+>> +			then	\
+>> +				./unprivileged-remount-test ; \
+>> +			else	\
+>> +				echo "ERROR: No /proc/self/uid_map exist" ; \
+>> +			fi
+>>  override EMIT_TESTS :=3D echo "$(RUN_TESTS)"
+>>
+>>  clean:
+>=20
+>=20
