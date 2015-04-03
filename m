@@ -1,263 +1,106 @@
-From: "Ivan.khoronzhuk" <ivan.khoronzhuk@globallogic.com>
-Subject: Re: [Patch 2/3] firmware: dmi_scan: add SBMIOS entry and DMI tables
-Date: Fri, 03 Apr 2015 12:36:11 +0300
-Message-ID: <551E5F0B.6050709@globallogic.com>
-References: <1427979423-22767-1-git-send-email-ivan.khoronzhuk@globallogic.com> <1427979423-22767-3-git-send-email-ivan.khoronzhuk@globallogic.com>
+From: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 00/14] Add kdbus implementation
+Date: Fri, 3 Apr 2015 13:51:34 +0200
+Message-ID: <CANq1E4QSja-KhVL2p-d406uLJT600zMpK2UAcwsb0LkMwa8F7w@mail.gmail.com>
+References: <1425906560-13798-1-git-send-email-gregkh@linuxfoundation.org>
+	<CALCETrUjqTH14fZCeqU_OBoKX_6x4B=712WTeSqSAztpgXGiDw@mail.gmail.com>
+	<CANq1E4Tf_6Cn+sxY=BPEbRpEr5WY+-rRX5gipz-_=4PNLa9bnQ@mail.gmail.com>
+	<CALCETrVWbz7YudNQXQD_2PjC1HR0P0cB_1ea8NiYoQPDfQxERg@mail.gmail.com>
+	<CANq1E4RA1ok=3Z5W2LkzqaUOKtbMVX_Joxe7_LRbLnQgfRUEYA@mail.gmail.com>
+	<CALCETrWCBYzbzG3xZznG4AvVf67E_d8BVmBi1bZsDx7x_2Bh5g@mail.gmail.com>
+	<CANq1E4TtXq02Ug22fsTr8j0X6+vJKvyryALiTEMbT4SMQB1j3g@mail.gmail.com>
+	<CALCETrXqYBeZuOWhm9mz_nt+aWPXHFwkQPEAfwBXzDxnAP7f+g@mail.gmail.com>
+	<CANq1E4QiErHp8Q6bzFLkK9=7eBZC8dvh+Xnrh9_D5DAAogyaZA@mail.gmail.com>
+	<CALCETrUuWhtJ9w9vyCGgaJDMGithJad4A4wf-BuxWLb_af5eDg@mail.gmail.com>
+	<CANq1E4TTt3qanQse30KOZsuo2tfNoj7YSueh3AZ7bY1nQQeZNA@mail.gmail.com>
+	<CALCETrV-cHYzcWu3t6tJ1eP0UZHTqoGH0KTYHTpJNit9-59TAA@mail.gmail.com>
+	<CAG-2HqVwfH5fK0YV1+k3T4bFqd5v3Yd-hpL-bTSBK23FFY-zMA@mail.gmail.com>
+	<CALCETrX3vDZsymwC=LK=oK0=QLZqyB2Nv4N8jcjsx2yp1rjBvg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1427979423-22767-3-git-send-email-ivan.khoronzhuk@globallogic.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, matt.fleming@intel.com, jdelvare@suse.de, ard.biesheuvel@linaro.org, grant.likely@linaro.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, mikew@google.com
-Cc: dmidecode-devel@nongnu.org, leif.lindholm@linaro.org, msalter@redhat.com, roy.franz@linaro.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrX3vDZsymwC=LK=oK0=QLZqyB2Nv4N8jcjsx2yp1rjBvg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Hi
 
-
-On 02.04.15 15:57, Ivan Khoronzhuk wrote:
-> Some utils, like dmidecode and smbios, need to access SMBIOS entry
-> table area in order to get information like SMBIOS version, size, etc.
-> Currently it's done via /dev/mem. But for situation when /dev/mem
-> usage is disabled, the utils have to use dmi sysfs instead, which
-> doesn't represent SMBIOS entry and adds code/delay redundancy when direct
-> access for table is needed.
+On Tue, Mar 31, 2015 at 8:29 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> On Tue, Mar 31, 2015 at 8:10 AM, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org> wrote:
+>> On Tue, Mar 31, 2015 at 3:58 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>>>
+>>> IOW you're taking something that you dislike aspects of and shoving
+>>> most of it in the kernel.  That guarantees us an API in the kernel
+>>> that even the creators don't really like.  This is, IMO, very
+>>> unfortunate.
+>>
+>> This is a misrepresentation of what David wrote. We do want this API
+>> regardless of dbus1 compatibility, but compatibility is by itself a
+>> sufficient motivation. A further motivation is reliable introspection,
+>> since this meta-data allows listing current peers on the bus and
+>> showing their identities. That's hugely useful to make the bus
+>> transparent to admins.
 >
-> So this patch creates dmi/tables and adds SMBIOS entry point to allow
-> utils in question to work correctly without /dev/mem. Also patch adds
-> raw dmi table to simplify dmi table processing in user space, as
-> proposed by Jean Delvare.
+> I've heard the following use cases for per-connection metadata:
 >
-> Signed-off-by: Ivan Khoronzhuk <ivan.khoronzhuk@globallogic.com>
-> ---
->   .../ABI/testing/sysfs-firmware-dmi-tables          | 22 ++++++
->   drivers/firmware/dmi-sysfs.c                       | 11 ++-
->   drivers/firmware/dmi_scan.c                        | 80 ++++++++++++++++++++++
->   include/linux/dmi.h                                |  1 +
->   4 files changed, 107 insertions(+), 7 deletions(-)
->   create mode 100644 Documentation/ABI/testing/sysfs-firmware-dmi-tables
+>  - Authenticating to dbus1 services.
+
+Not necessarily authentication, but we need to support the legacy API,
+for whatever reason it was used by old applications. But..
+
+>  - Identifying connected users for admin diagnostics.
 >
-> diff --git a/Documentation/ABI/testing/sysfs-firmware-dmi-tables b/Documentation/ABI/testing/sysfs-firmware-dmi-tables
-> new file mode 100644
-> index 0000000..f46158c
-> --- /dev/null
-> +++ b/Documentation/ABI/testing/sysfs-firmware-dmi-tables
-> @@ -0,0 +1,22 @@
-> +What:		/sys/firmware/dmi/tables/
-> +Date:		April 2015
-> +Contact:	Ivan Khoronzhuk <ivan.khoronzhuk@globallogic.com>
-> +Description:
-> +		The firmware provides DMI structures as a packed list of
-> +		data referenced by a SMBIOS table entry point. The SMBIOS
-> +		entry point contains general information, like SMBIOS
-> +		version, DMI table size, etc. The structure, content and
-> +		size of SMBIOS entry point is dependent on SMBIOS version.
-> +		The format of SMBIOS entry point, equal as DMI structures
-> +		can be read in SMBIOS specification.
-> +
-> +		The dmi/tables provides raw SMBIOS entry point and DMI tables
-> +		through sysfs as an alternative to utilities reading them
-> +		from /dev/mem. The raw SMBIOS entry point and DMI table are
-> +		presented as raw attributes and are accessible via:
-> +
-> +		/sys/firmware/dmi/tables/smbios_entry_point
-> +		/sys/firmware/dmi/tables/DMI
-> +
-> +		The complete DMI information can be taken using these two
-> +		tables.
-> diff --git a/drivers/firmware/dmi-sysfs.c b/drivers/firmware/dmi-sysfs.c
-> index e0f1cb3..8e1a411 100644
-> --- a/drivers/firmware/dmi-sysfs.c
-> +++ b/drivers/firmware/dmi-sysfs.c
-> @@ -566,7 +566,6 @@ static struct kobj_type dmi_sysfs_entry_ktype = {
->   	.default_attrs = dmi_sysfs_entry_attrs,
->   };
->   
-> -static struct kobject *dmi_kobj;
->   static struct kset *dmi_kset;
->   
->   /* Global count of all instances seen.  Only for setup */
-> @@ -651,10 +650,11 @@ static int __init dmi_sysfs_init(void)
->   	int error = -ENOMEM;
->   	int val;
->   
-> -	/* Set up our directory */
-> -	dmi_kobj = kobject_create_and_add("dmi", firmware_kobj);
-> -	if (!dmi_kobj)
-> +	if (!dmi_kobj) {
-> +		pr_err("dmi-sysfs: dmi entry is absent.\n");
-> +		error = -ENOSYS;
->   		goto err;
-> +	}
->   
->   	dmi_kset = kset_create_and_add("entries", NULL, dmi_kobj);
->   	if (!dmi_kset)
-> @@ -675,7 +675,6 @@ static int __init dmi_sysfs_init(void)
->   err:
->   	cleanup_entry_list();
->   	kset_unregister(dmi_kset);
-> -	kobject_put(dmi_kobj);
->   	return error;
->   }
->   
-> @@ -685,8 +684,6 @@ static void __exit dmi_sysfs_exit(void)
->   	pr_debug("dmi-sysfs: unloading.\n");
->   	cleanup_entry_list();
->   	kset_unregister(dmi_kset);
-> -	kobject_del(dmi_kobj);
-> -	kobject_put(dmi_kobj);
->   }
->   
->   module_init(dmi_sysfs_init);
-> diff --git a/drivers/firmware/dmi_scan.c b/drivers/firmware/dmi_scan.c
-> index d3aae09..bb19f8b 100644
-> --- a/drivers/firmware/dmi_scan.c
-> +++ b/drivers/firmware/dmi_scan.c
-> @@ -10,6 +10,9 @@
->   #include <asm/dmi.h>
->   #include <asm/unaligned.h>
->   
-> +struct kobject *dmi_kobj;
-> +EXPORT_SYMBOL_GPL(dmi_kobj);
-> +
->   /*
->    * DMI stands for "Desktop Management Interface".  It is part
->    * of and an antecedent to, SMBIOS, which stands for System
-> @@ -20,6 +23,9 @@ static const char dmi_empty_string[] = "        ";
->   static u32 dmi_ver __initdata;
->   static u32 dmi_len;
->   static u16 dmi_num;
-> +static u8 smbios_entry_point[32];
-> +static int smbios_entry_point_size;
-> +
->   /*
->    * Catch too early calls to dmi_check_system():
->    */
-> @@ -118,6 +124,7 @@ static void dmi_decode_table(u8 *buf,
->   }
->   
->   static phys_addr_t dmi_base;
-> +static u8 *dmi_table;
->   
->   static int __init dmi_walk_early(void (*decode)(const struct dmi_header *,
->   		void *))
-> @@ -476,6 +483,8 @@ static int __init dmi_present(const u8 *buf)
->   	if (memcmp(buf, "_SM_", 4) == 0 &&
->   	    buf[5] < 32 && dmi_checksum(buf, buf[5])) {
->   		smbios_ver = get_unaligned_be16(buf + 6);
-> +		smbios_entry_point_size = buf[5];
-> +		memcpy(smbios_entry_point, buf, smbios_entry_point_size);
->   
->   		/* Some BIOS report weird SMBIOS version, fix that up */
->   		switch (smbios_ver) {
-> @@ -508,6 +517,9 @@ static int __init dmi_present(const u8 *buf)
->   					dmi_ver >> 8, dmi_ver & 0xFF,
->   					(dmi_ver < 0x0300) ? "" : ".x");
->   			} else {
-> +				smbios_entry_point_size = 15;
-> +				memcpy(smbios_entry_point, buf,
-> +				       smbios_entry_point_size);
->   				dmi_ver = (buf[14] & 0xF0) << 4 |
->   					   (buf[14] & 0x0F);
->   				pr_info("Legacy DMI %d.%d present.\n",
-> @@ -535,6 +547,8 @@ static int __init dmi_smbios3_present(const u8 *buf)
->   		dmi_ver &= 0xFFFFFF;
->   		dmi_len = get_unaligned_le32(buf + 12);
->   		dmi_base = get_unaligned_le64(buf + 16);
-> +		smbios_entry_point_size = buf[6];
-> +		memcpy(smbios_entry_point, buf, smbios_entry_point_size);
->   
->   		/*
->   		 * The 64-bit SMBIOS 3.0 entry point no longer has a field
-> @@ -638,6 +652,72 @@ void __init dmi_scan_machine(void)
->   	dmi_initialized = 1;
->   }
->   
-> +static ssize_t raw_table_read(struct file *file, struct kobject *kobj,
-> +			      struct bin_attribute *attr, char *buf,
-> +			      loff_t pos, size_t count)
-> +{
-> +	memcpy(buf, attr->private + pos, count);
-> +	return count;
-> +}
-> +
-> +static BIN_ATTR(smbios_entry_point, S_IRUSR, raw_table_read, NULL, 0);
-> +struct bin_attribute bin_attr_dmi_table =
-> +			__BIN_ATTR(DMI, S_IRUSR, raw_table_read, NULL, 0);
+> I've heard the following use cases for per-message metadata:
+>
+>  - Logging.
+>
+>  - Authenticating to kdbus services that want this style of authentication.
 
-missed static here
+..please note that authentication on DBus has always been done with
+per-message metadata (see polkit history). However, this had to be
+reverted some years ago as it is racy (it used /proc for that, which
+can be exploited by exec'ing setuid binaries). However, the
+per-message metadata authentication worked very well for _years_
+(minus the race..), so this is already a well-established scheme. With
+kdbus we can finally implement this in a race-free manner.
 
-> +
-> +static int __init dmi_init(void)
-> +{
-> +	int ret = -ENOMEM;
-> +	struct kobject *tables_kobj = NULL;
-> +
-> +	if (!dmi_available) {
-> +		ret = -ENOSYS;
-> +		goto err;
-> +	}
-> +
-> +	/* Set up dmi directory at /sys/firmware/dmi */
-> +	dmi_kobj = kobject_create_and_add("dmi", firmware_kobj);
-> +	if (!dmi_kobj)
-> +		goto err;
-> +
-> +	tables_kobj = kobject_create_and_add("tables", dmi_kobj);
-> +	if (!tables_kobj)
-> +		goto err;
-> +
-> +	bin_attr_smbios_entry_point.size = smbios_entry_point_size;
-> +	bin_attr_smbios_entry_point.private = smbios_entry_point;
-> +	ret = sysfs_create_bin_file(tables_kobj, &bin_attr_smbios_entry_point);
-> +	if (ret)
-> +		goto err;
-> +
-> +	dmi_table = dmi_remap(dmi_base, dmi_len);
-> +	if (!dmi_table)
-> +		goto err;
-> +
-> +	bin_attr_dmi_table.size = dmi_len;
-> +	bin_attr_dmi_table.private = dmi_table;
-> +	ret = sysfs_create_bin_file(tables_kobj, &bin_attr_dmi_table);
-> +	if (ret) {
-> +		dmi_unmap(dmi_table);
-> +		goto err;
-> +	}
-> +
-> +	return 0;
-> +err:
-> +	pr_err("dmi: Firmware registration failed.\n");
-> +
-> +	if (tables_kobj)
-> +		sysfs_remove_bin_file(tables_kobj,
-> +				      &bin_attr_smbios_entry_point);
-> +	kobject_del(tables_kobj);
-> +	kobject_put(tables_kobj);
-> +	kobject_del(dmi_kobj);
-> +	kobject_put(dmi_kobj);
-> +	dmi_kobj = NULL;
-> +
-> +	return ret;
-> +}
-> +subsys_initcall(dmi_init);
-> +
->   /**
->    * dmi_set_dump_stack_arch_desc - set arch description for dump_stack()
->    *
-> diff --git a/include/linux/dmi.h b/include/linux/dmi.h
-> index f820f0a..9f55f46 100644
-> --- a/include/linux/dmi.h
-> +++ b/include/linux/dmi.h
-> @@ -93,6 +93,7 @@ struct dmi_dev_onboard {
->   	int devfn;
->   };
->   
-> +extern struct kobject *dmi_kobj;
->   extern int dmi_check_system(const struct dmi_system_id *list);
->   const struct dmi_system_id *dmi_first_match(const struct dmi_system_id *list);
->   extern const char * dmi_get_system_info(int field);
+[...]
+> This is simply not okay for a modern interface, and in my opinion the
+> kernel should not carry code to support new APIs with weakly defined
+> security semantics.  It's important that one be able to tell what the
+> security implications of one's code is without cross-referencing with
+> the implementation of the server's you're interacting with.
 
--- 
-Regards,
-Ivan Khoronzhuk
+Again, I disagree. Our concepts are established and used on UDS and
+DBus for decades.
+
+Yes, we provide two ways to retrieve metadata, but the kernel offers
+several more paths to gather that information. Just because those APIs
+are available does not mean they should be used for authentication. We
+mandate per-message metadata. If applications use per-connection
+metadata, /proc, netlink, or random data, they're doing it wrong.
+
+Furthermore, dbus provides pretty complete and straightforward
+libraries which hide that from you. If you use glib, qt or sd-bus, you
+don't even need to deal with all that.
+
+> To top that off, the kdbus policy mechanism has truly bizarre effects
+> with respect to services that have unique ids and well-known names.
+> That, too, is apparently for compatibility.
+>
+> This all feels to me like a total of about four people are going to
+> understand the tangle that is kdbus security, and that's bad.  I think
+> that the kernel should insist that new security-critical mechanisms
+> make sense and be hard to misuse.  The current design of kdbus, in
+> contrast, feel like it will be very hard to use correctly.
+
+Native kdbus clients are authenticated with their credentials at time
+of method call. Legacy clients will always have their credentials at
+time of connect in effect. No fallbacks, no choices. It's a simple
+question whether it's a legacy client or not.
+Sounds simple to me.
+
+Thanks
+David
