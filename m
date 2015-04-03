@@ -1,357 +1,152 @@
-From: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v5 13/15] ARM: dts: Introduce STM32F429 MCU
-Date: Fri,  3 Apr 2015 19:01:19 +0200
-Message-ID: <1428080481-18591-14-git-send-email-mcoquelin.stm32@gmail.com>
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Subject: [PATCH v5 04/15] clocksource/drivers: Add ARM System timer driver
+Date: Fri,  3 Apr 2015 19:01:10 +0200
+Message-ID: <1428080481-18591-5-git-send-email-mcoquelin.stm32@gmail.com>
 References: <1428080481-18591-1-git-send-email-mcoquelin.stm32@gmail.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1428080481-18591-1-git-send-email-mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, stefan-XLVq0VzYD2Y@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org, pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org, peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org, andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Antti Palosaari <crope-X3B1VOXEql0@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Nikolay Borisov <Nikolay.Borisov-5wv7dgnIgG8@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michal Marek <mmarek-AlSwsSmVLrQ@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-gpio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-serial-fy+rA21nqHI@public.gmane.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <1428080481-18591-1-git-send-email-mcoquelin.stm32@gmail.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, stefan@agner.ch, pmeerw@pmeerw.net, pebolle@tiscali.nl, peter@hurleysoftware.com, andy.shevchenko@gmail.com, cw00.choi@samsung.com, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>
+Cc: Mark Rutland <mark.rutland@arm.com>, linux-doc@vger.kernel.org, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, linux-api@vger.kernel.org, Jiri Slaby <jslaby@suse.cz>, linux-arch@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Antti Palosaari <crope@iki.fi>, linux-serial@vger.kernel.org, devicetree@vger.kernel.org, Kees Cook <keescook@chromium.org>, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Rusty Russell <rusty@rustcorp.com.au>, Joe Perches <joe@perches.com>, Thomas Gleixner <tglx@linutronix.de>, linux-arm-kernel@lists.infradead.org, Michal Marek <mmarek@suse.cz>, linux-gpio@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-kernel@vger.kernel.org, mcoquelin.stm32@gmail.com, Kumar Gala <galak@codeaurora.org>, Tejun Heo <tj@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-The STMicrolectornics's STM32F419 MCU has the following main features:
- - Cortex-M4 core running up to @180MHz
- - 2MB internal flash, 256KBytes internal RAM
- - FMC controller to connect SDRAM, NOR and NAND memories
- - SD/MMC/SDIO support
- - Ethernet controller
- - USB OTFG FS & HS controllers
- - I2C, SPI, CAN busses support
- - Several 16 & 32 bits general purpose timers
- - Serial Audio interface
- - LCD controller
+This patch adds clocksource support for ARMv7-M's System timer,
+also known as SysTick.
 
-Tested-by: Chanwoo Choi <cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Signed-off-by: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
+Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
 ---
- arch/arm/boot/dts/Makefile            |   1 +
- arch/arm/boot/dts/stm32f429-disco.dts |  71 +++++++++++
- arch/arm/boot/dts/stm32f429.dtsi      | 226 ++++++++++++++++++++++++++++++++++
- 3 files changed, 298 insertions(+)
- create mode 100644 arch/arm/boot/dts/stm32f429-disco.dts
- create mode 100644 arch/arm/boot/dts/stm32f429.dtsi
+ drivers/clocksource/Kconfig          |  7 ++++
+ drivers/clocksource/Makefile         |  1 +
+ drivers/clocksource/armv7m_systick.c | 79 ++++++++++++++++++++++++++++++++++++
+ 3 files changed, 87 insertions(+)
+ create mode 100644 drivers/clocksource/armv7m_systick.c
 
-diff --git a/arch/arm/boot/dts/Makefile b/arch/arm/boot/dts/Makefile
-index a1c776b..e5dbd03 100644
---- a/arch/arm/boot/dts/Makefile
-+++ b/arch/arm/boot/dts/Makefile
-@@ -509,6 +509,7 @@ dtb-$(CONFIG_ARCH_STI) += \
- 	stih416-b2020.dtb \
- 	stih416-b2020e.dtb \
- 	stih418-b2199.dtb
-+dtb-$(CONFIG_ARCH_STM32)+= stm32f429-disco.dtb
- dtb-$(CONFIG_MACH_SUN4I) += \
- 	sun4i-a10-a1000.dtb \
- 	sun4i-a10-ba10-tvbox.dtb \
-diff --git a/arch/arm/boot/dts/stm32f429-disco.dts b/arch/arm/boot/dts/stm32f429-disco.dts
+diff --git a/drivers/clocksource/Kconfig b/drivers/clocksource/Kconfig
+index 1c2506f..b82e58b 100644
+--- a/drivers/clocksource/Kconfig
++++ b/drivers/clocksource/Kconfig
+@@ -134,6 +134,13 @@ config CLKSRC_ARM_GLOBAL_TIMER_SCHED_CLOCK
+ 	help
+ 	 Use ARM global timer clock source as sched_clock
+ 
++config ARMV7M_SYSTICK
++	bool
++	select CLKSRC_OF if OF
++	select CLKSRC_MMIO
++	help
++	  This options enables support for the ARMv7M system timer unit
++
+ config ATMEL_PIT
+ 	select CLKSRC_OF if OF
+ 	def_bool SOC_AT91SAM9 || SOC_SAMA5
+diff --git a/drivers/clocksource/Makefile b/drivers/clocksource/Makefile
+index 752d5c7..1c9a643 100644
+--- a/drivers/clocksource/Makefile
++++ b/drivers/clocksource/Makefile
+@@ -44,6 +44,7 @@ obj-$(CONFIG_MTK_TIMER)		+= mtk_timer.o
+ 
+ obj-$(CONFIG_ARM_ARCH_TIMER)		+= arm_arch_timer.o
+ obj-$(CONFIG_ARM_GLOBAL_TIMER)		+= arm_global_timer.o
++obj-$(CONFIG_ARMV7M_SYSTICK)		+= armv7m_systick.o
+ obj-$(CONFIG_CLKSRC_METAG_GENERIC)	+= metag_generic.o
+ obj-$(CONFIG_ARCH_HAS_TICK_BROADCAST)	+= dummy_timer.o
+ obj-$(CONFIG_ARCH_KEYSTONE)		+= timer-keystone.o
+diff --git a/drivers/clocksource/armv7m_systick.c b/drivers/clocksource/armv7m_systick.c
 new file mode 100644
-index 0000000..6b9aa59
+index 0000000..addfd2c
 --- /dev/null
-+++ b/arch/arm/boot/dts/stm32f429-disco.dts
-@@ -0,0 +1,71 @@
++++ b/drivers/clocksource/armv7m_systick.c
+@@ -0,0 +1,79 @@
 +/*
-+ * Copyright 2015 - Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-+ *
-+ * This file is dual-licensed: you can use it either under the terms
-+ * of the GPL or the X11 license, at your option. Note that this dual
-+ * licensing only applies to this file, and not this project as a
-+ * whole.
-+ *
-+ *  a) This file is free software; you can redistribute it and/or
-+ *     modify it under the terms of the GNU General Public License as
-+ *     published by the Free Software Foundation; either version 2 of the
-+ *     License, or (at your option) any later version.
-+ *
-+ *     This file is distributed in the hope that it will be useful,
-+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *     GNU General Public License for more details.
-+ *
-+ *     You should have received a copy of the GNU General Public
-+ *     License along with this file; if not, write to the Free
-+ *     Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
-+ *     MA 02110-1301 USA
-+ *
-+ * Or, alternatively,
-+ *
-+ *  b) Permission is hereby granted, free of charge, to any person
-+ *     obtaining a copy of this software and associated documentation
-+ *     files (the "Software"), to deal in the Software without
-+ *     restriction, including without limitation the rights to use,
-+ *     copy, modify, merge, publish, distribute, sublicense, and/or
-+ *     sell copies of the Software, and to permit persons to whom the
-+ *     Software is furnished to do so, subject to the following
-+ *     conditions:
-+ *
-+ *     The above copyright notice and this permission notice shall be
-+ *     included in all copies or substantial portions of the Software.
-+ *
-+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-+ *     OTHER DEALINGS IN THE SOFTWARE.
++ * Copyright (C) Maxime Coquelin 2015
++ * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
++ * License terms:  GNU General Public License (GPL), version 2
 + */
 +
-+/dts-v1/;
-+#include "stm32f429.dtsi"
++#include <linux/kernel.h>
++#include <linux/clocksource.h>
++#include <linux/clockchips.h>
++#include <linux/of.h>
++#include <linux/of_address.h>
++#include <linux/clk.h>
++#include <linux/bitops.h>
 +
-+/ {
-+	model = "STMicroelectronics STM32F429i-DISCO board";
-+	compatible = "st,stm32f429i-disco", "st,stm32f429";
++#define SYST_CSR	0x00
++#define SYST_RVR	0x04
++#define SYST_CVR	0x08
++#define SYST_CALIB	0x0c
 +
-+	chosen {
-+		bootargs = "console=ttyS0,115200 root=/dev/ram rdinit=/linuxrc";
-+		linux,stdout-path = &usart1;
-+	};
++#define SYST_CSR_ENABLE BIT(0)
 +
-+	memory {
-+		reg = <0x90000000 0x800000>;
-+	};
++#define SYSTICK_LOAD_RELOAD_MASK 0x00FFFFFF
 +
-+	aliases {
-+		serial0 = &usart1;
-+	};
-+};
++static void __init system_timer_of_register(struct device_node *np)
++{
++	struct clk *clk = NULL;
++	void __iomem *base;
++	u32 rate;
++	int ret;
 +
-+&usart1 {
-+	status = "okay";
-+};
-diff --git a/arch/arm/boot/dts/stm32f429.dtsi b/arch/arm/boot/dts/stm32f429.dtsi
-new file mode 100644
-index 0000000..39ffdb8
---- /dev/null
-+++ b/arch/arm/boot/dts/stm32f429.dtsi
-@@ -0,0 +1,226 @@
-+/*
-+ * Copyright 2015 - Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-+ *
-+ * This file is dual-licensed: you can use it either under the terms
-+ * of the GPL or the X11 license, at your option. Note that this dual
-+ * licensing only applies to this file, and not this project as a
-+ * whole.
-+ *
-+ *  a) This file is free software; you can redistribute it and/or
-+ *     modify it under the terms of the GNU General Public License as
-+ *     published by the Free Software Foundation; either version 2 of the
-+ *     License, or (at your option) any later version.
-+ *
-+ *     This file is distributed in the hope that it will be useful,
-+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *     GNU General Public License for more details.
-+ *
-+ *     You should have received a copy of the GNU General Public
-+ *     License along with this file; if not, write to the Free
-+ *     Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
-+ *     MA 02110-1301 USA
-+ *
-+ * Or, alternatively,
-+ *
-+ *  b) Permission is hereby granted, free of charge, to any person
-+ *     obtaining a copy of this software and associated documentation
-+ *     files (the "Software"), to deal in the Software without
-+ *     restriction, including without limitation the rights to use,
-+ *     copy, modify, merge, publish, distribute, sublicense, and/or
-+ *     sell copies of the Software, and to permit persons to whom the
-+ *     Software is furnished to do so, subject to the following
-+ *     conditions:
-+ *
-+ *     The above copyright notice and this permission notice shall be
-+ *     included in all copies or substantial portions of the Software.
-+ *
-+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-+ *     OTHER DEALINGS IN THE SOFTWARE.
-+ */
++	base = of_iomap(np, 0);
++	if (!base) {
++		pr_warn("system-timer: invalid base address\n");
++		return;
++	}
 +
-+#include "armv7-m.dtsi"
++	ret = of_property_read_u32(np, "clock-frequency", &rate);
++	if (ret) {
++		clk = of_clk_get(np, 0);
++		if (IS_ERR(clk))
++			goto out_unmap;
 +
-+/ {
-+	clocks {
-+		clk_sysclk: clk-sysclk {
-+			#clock-cells = <0>;
-+			compatible = "fixed-clock";
-+			clock-frequency = <180000000>;
-+		};
++		ret = clk_prepare_enable(clk);
++		if (ret)
++			goto out_clk_put;
 +
-+		clk_hclk: clk-hclk {
-+			#clock-cells = <0>;
-+			compatible = "fixed-clock";
-+			clock-frequency = <180000000>;
-+		};
++		rate = clk_get_rate(clk);
++		if (!rate)
++			goto out_clk_disable;
++	}
 +
-+		clk_pclk1: clk-pclk1 {
-+			#clock-cells = <0>;
-+			compatible = "fixed-clock";
-+			clock-frequency = <45000000>;
-+		};
++	writel_relaxed(SYSTICK_LOAD_RELOAD_MASK, base + SYST_RVR);
++	writel_relaxed(SYST_CSR_ENABLE, base + SYST_CSR);
 +
-+		clk_pclk2: clk-pclk2 {
-+			#clock-cells = <0>;
-+			compatible = "fixed-clock";
-+			clock-frequency = <90000000>;
-+		};
++	ret = clocksource_mmio_init(base + SYST_CVR, "arm_system_timer", rate,
++			200, 24, clocksource_mmio_readl_down);
++	if (ret) {
++		pr_err("failed to init clocksource (%d)\n", ret);
++		if (clk)
++			goto out_clk_disable;
++		else
++			goto out_unmap;
++	}
 +
-+		clk_pmtr1: clk-pmtr1 {
-+			#clock-cells = <0>;
-+			compatible = "fixed-clock";
-+			clock-frequency = <90000000>;
-+		};
++	pr_info("ARM System timer initialized as clocksource\n");
 +
-+		clk_pmtr2: clk-pmtr2 {
-+			#clock-cells = <0>;
-+			compatible = "fixed-clock";
-+			clock-frequency = <180000000>;
-+		};
++	return;
 +
-+		clk_systick: clk-systick {
-+			compatible = "fixed-factor-clock";
-+			clocks = <&clk_hclk>;
-+			#clock-cells = <0>;
-+			clock-div = <8>;
-+			clock-mult = <1>;
-+		};
-+	};
++out_clk_disable:
++	clk_disable_unprepare(clk);
++out_clk_put:
++	clk_put(clk);
++out_unmap:
++	iounmap(base);
++	pr_warn("ARM System timer register failed (%d)\n", ret);
++}
 +
-+	soc {
-+		timer2: timer@40000000 {
-+			compatible = "st,stm32-timer";
-+			reg = <0x40000000 0x400>;
-+			interrupts = <28>;
-+			resets = <&rcc 256>;
-+			clocks = <&clk_pmtr1>;
-+			status = "disabled";
-+		};
-+
-+		timer3: timer@40000400 {
-+			compatible = "st,stm32-timer";
-+			reg = <0x40000400 0x400>;
-+			interrupts = <29>;
-+			resets = <&rcc 257>;
-+			clocks = <&clk_pmtr1>;
-+			status = "disabled";
-+		};
-+
-+		timer4: timer@40000800 {
-+			compatible = "st,stm32-timer";
-+			reg = <0x40000800 0x400>;
-+			interrupts = <30>;
-+			resets = <&rcc 258>;
-+			clocks = <&clk_pmtr1>;
-+			status = "disabled";
-+		};
-+
-+		timer5: timer@40000c00 {
-+			compatible = "st,stm32-timer";
-+			reg = <0x40000c00 0x400>;
-+			interrupts = <50>;
-+			resets = <&rcc 259>;
-+			clocks = <&clk_pmtr1>;
-+		};
-+
-+		timer6: timer@40001000 {
-+			compatible = "st,stm32-timer";
-+			reg = <0x40001000 0x400>;
-+			interrupts = <54>;
-+			resets = <&rcc 260>;
-+			clocks = <&clk_pmtr1>;
-+			status = "disabled";
-+		};
-+
-+		timer7: timer@40001400 {
-+			compatible = "st,stm32-timer";
-+			reg = <0x40001400 0x400>;
-+			interrupts = <55>;
-+			resets = <&rcc 261>;
-+			clocks = <&clk_pmtr1>;
-+			status = "disabled";
-+		};
-+
-+		usart2: serial@40004400 {
-+			compatible = "st,stm32-usart", "st,stm32-uart";
-+			reg = <0x40004400 0x400>;
-+			interrupts = <38>;
-+			clocks = <&clk_pclk1>;
-+			status = "disabled";
-+		};
-+
-+		usart3: serial@40004800 {
-+			compatible = "st,stm32-usart", "st,stm32-uart";
-+			reg = <0x40004800 0x400>;
-+			interrupts = <39>;
-+			clocks = <&clk_pclk1>;
-+			status = "disabled";
-+		};
-+
-+		usart4: serial@40004c00 {
-+			compatible = "st,stm32-uart";
-+			reg = <0x40004c00 0x400>;
-+			interrupts = <52>;
-+			clocks = <&clk_pclk1>;
-+			status = "disabled";
-+		};
-+
-+		usart5: serial@40005000 {
-+			compatible = "st,stm32-uart";
-+			reg = <0x40005000 0x400>;
-+			interrupts = <53>;
-+			clocks = <&clk_pclk1>;
-+			status = "disabled";
-+		};
-+
-+		usart7: serial@40007800 {
-+			compatible = "st,stm32-usart", "st,stm32-uart";
-+			reg = <0x40007800 0x400>;
-+			interrupts = <82>;
-+			clocks = <&clk_pclk1>;
-+			status = "disabled";
-+		};
-+
-+		usart8: serial@40007c00 {
-+			compatible = "st,stm32-usart", "st,stm32-uart";
-+			reg = <0x40007c00 0x400>;
-+			interrupts = <83>;
-+			clocks = <&clk_pclk1>;
-+			status = "disabled";
-+		};
-+
-+		usart1: serial@40011000 {
-+			compatible = "st,stm32-usart", "st,stm32-uart";
-+			reg = <0x40011000 0x400>;
-+			interrupts = <37>;
-+			clocks = <&clk_pclk2>;
-+			status = "disabled";
-+		};
-+
-+		usart6: serial@40011400 {
-+			compatible = "st,stm32-usart", "st,stm32-uart";
-+			reg = <0x40011400 0x400>;
-+			interrupts = <71>;
-+			clocks = <&clk_pclk2>;
-+			status = "disabled";
-+		};
-+
-+		rcc: rcc@40023810 {
-+			#reset-cells = <1>;
-+			compatible = "st,stm32-rcc";
-+			reg = <0x40023800 0x400>;
-+		};
-+	};
-+};
-+
-+&systick {
-+	clocks = <&clk_systick>;
-+	status = "okay";
-+};
++CLOCKSOURCE_OF_DECLARE(arm_systick, "arm,armv7m-systick",
++			system_timer_of_register);
 -- 
 1.9.1
