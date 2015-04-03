@@ -1,35 +1,71 @@
-From: Andy Shevchenko <andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v5 08/15] clockevents/drivers: Add STM32 Timer driver
-Date: Sat, 4 Apr 2015 01:14:04 +0300
-Message-ID: <CAHp75Ve+2UUyPAM6ZnYLXaLNOaEA4DGnY6y=VCQxZpdo+cYBfw@mail.gmail.com>
-References: <1428080481-18591-1-git-send-email-mcoquelin.stm32@gmail.com>
-	<1428080481-18591-9-git-send-email-mcoquelin.stm32@gmail.com>
-	<CAHp75VfPn_+sg_1iR_CdR2KuTyWcR+SKFsuHCbCkCKB0Oeqgfg@mail.gmail.com>
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH net-next] tc: cls_bpf: make ingress and egress qdiscs
+ consistent
+Date: Fri, 03 Apr 2015 15:17:27 -0700
+Message-ID: <551F1177.7090902@plumgrid.com>
+References: <1428095784-7091-1-git-send-email-ast@plumgrid.com> <551F0A1B.3000100@iogearbox.net> <551F0B96.2090403@plumgrid.com> <551F0FE2.8000502@iogearbox.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAHp75VfPn_+sg_1iR_CdR2KuTyWcR+SKFsuHCbCkCKB0Oeqgfg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <551F0FE2.8000502-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber-l3A5Bk7waGM@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>, Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>, cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Andrew
+To: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: Jiri Pirko <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, Jamal Hadi Salim <jhs-jkUAjuhPggJWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Apr 4, 2015 at 1:09 AM, Andy Shevchenko
-<andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Fri, Apr 3, 2015 at 8:01 PM, Maxime Coquelin
-> <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> STM32 MCUs feature 16 and 32 bits general purpose timers with prescalers.
->> The drivers detects whether the time is 16 or 32 bits, and applies a
->> 1024 prescaler value if it is 16 bits.
-
-[]
-
->> +               pr_err("failed to get clock for clockevent (%d)\n", ret);
+On 4/3/15 3:10 PM, Daniel Borkmann wrote:
+> On 04/03/2015 11:52 PM, Alexei Starovoitov wrote:
+>> On 4/3/15 2:46 PM, Daniel Borkmann wrote:
+>>> On 04/03/2015 11:16 PM, Alexei Starovoitov wrote:
+>>>> BPF programs attached to ingress and egress qdiscs see inconsistent
+>>>> skb->data.
+>>>> For ingress L2 header is already pulled, whereas for egress it's
+>>>> present.
+>>>> That makes writing programs more difficult.
+>>>> Make them consistent by pushing L2 before running the programs and
+>>>> pulling
+>>>> it back afterwards.
+>>>> Similar approach is taken by skb_defer_rx_timestamp() which does
+>>>> push/pull
+>>>> before calling ptp_classify_raw()->BPF_PROG_RUN().
+>>>>
+>>>> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+>>>
+>>> Thanks for looking into this. This ends up going via ingress_enqueue(),
+>>
+>> yes.
+>>
+>>> right? Maybe it would be better to add a new netlink attribute for
+>>> ingress qdisc there that sets a flag in ingress_qdisc_data to pull the
+>>> header space before calling tc_classify() and restore it later on?
+>>> So, it would be configurable from tc. Would that work?
+>>
+>> you mean a flag that will affect all classifiers? I'm not sure other
+>> classifiers care. Noone complained for years. I think it would be
+>> overdesign. Here the fix is trivial, which is my preference.
 >
-> Why not dev_err(); ?
+> But the 'defect' is actually on the ingress qdisc side, right, not
+> the classifier itself ... so if we do this in the classifier, we add
+> two extra branches to the output path, which would never be taken.
+>
+> Plus, other classifiers wanting to look into ethernet headers would
+> then also need to pull from /within/ their classifier as well. What
+> about classic BPF users?
+>
+> I don't think fixing this in ingress qdisc is overdesign, but rather
+> the better place to fix it. ;)
 
-Understood, because it's device tree with lack of something like of_err();
+Strongly disagree.
+1. there shouldn't be a choice at all for bpf. Because not pulling l2
+means it's bug.
+2. adding a flag means adding it to iproute2 with default off and making
+users forgetting it from time to time and have no way of knowing why
+their programs all of a sudden stopped working.
 
--- 
-With Best Regards,
-Andy Shevchenko
+classic falls under the same rules. It doesn't make sense at all to run
+a program on packet without L2 header. It's very odd both for classic
+and extended programs.
+
+Two 'if' conditions in critical path is bogus argument, since these
+checks would be there in ingress as well. Same critical path.
