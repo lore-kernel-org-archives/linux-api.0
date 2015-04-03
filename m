@@ -1,116 +1,130 @@
-From: Kishon Vijay Abraham I <kishon-l0cyMroinI0@public.gmane.org>
-Subject: Re: [PATCH 0/5] Enhancements to twl4030 phy to support better charging
- - V2
-Date: Fri, 3 Apr 2015 19:08:22 +0530
-Message-ID: <551E97CE.4000501@ti.com>
-References: <20150322223307.21765.62974.stgit@notabene.brown> <551325B0.1090308@ti.com> <20150326082219.510ac598@notabene.brown> <55134BEE.7050406@ti.com> <20150401154102.5f57ec1e@notabene.brown>
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Subject: [PATCH v5 00/15] Add support to STMicroelectronics STM32 family
+Date: Fri,  3 Apr 2015 19:01:06 +0200
+Message-ID: <1428080481-18591-1-git-send-email-mcoquelin.stm32@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150401154102.5f57ec1e-wvvUuzkyo1EYVZTmpyfIwg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
-Cc: NeilBrown <neil-+NVA1uvv1dVBDLzU/O5InQ@public.gmane.org>, Tony Lindgren <tony-4v6yS6AI5VpBDgjK7y7TUQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, GTA04 owners <gta04-owner-xXXSsgcRVICgSpxsJD1C4w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, myungjoo.ham-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, stefan@agner.ch, pmeerw@pmeerw.net, pebolle@tiscali.nl, peter@hurleysoftware.com, andy.shevchenko@gmail.com, cw00.choi@samsung.com, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>
+Cc: Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Joe Perches <joe@perches.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees Cook <keescook@chromium.org>, Michal Marek <mmarek@suse.cz>, linux-doc@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-gpio@vger.kernel.org, linux-serial@vger.ke
 List-Id: linux-api@vger.kernel.org
 
-+Extcon MAINTAINERS
+This fifth round only contains cosmetic fixes, and add some more Acks.
 
-Hi,
+STM32 MCUs are Cortex-M CPU, used in various applications (consumer
+electronics, industrial applications, hobbyists...).
+Datasheets, user and programming manuals are publicly available on
+STMicroelectronics website.
 
-On Wednesday 01 April 2015 10:11 AM, NeilBrown wrote:
-> On Thu, 26 Mar 2015 05:29:42 +0530 Kishon Vijay Abraham I <kishon-l0cyMroinI0@public.gmane.org>
-> wrote:
->
->> Hi NeilBrown,
->>
->> On Thursday 26 March 2015 02:52 AM, NeilBrown wrote:
->>> On Thu, 26 Mar 2015 02:46:32 +0530 Kishon Vijay Abraham I <kishon-l0cyMroinI0@public.gmane.org>
->>> wrote:
->>>
->>>> Hi,
->>>>
->>>> On Monday 23 March 2015 04:05 AM, NeilBrown wrote:
->>>>> Hi Kishon,
->>>>>   I wonder if you could queue the following for the next merge window.
->>>>>   They allow the twl4030 phy to provide more information to the
->>>>>   twl4030 battery charger.
->>>>>   There are only minimal changes since the first version, particularly
->>>>>   documentation has been improved.
->>>>
->>>> There are quite a few things in this series which use the USB PHY library
->>>> interface which is kindof deprecated. We should try and use the Generic PHY
->>>> library for all of them. It would also be better to add features to the
->>>> PHY framework if the we can't achieve something with the existing PHY
->>>> framework.
->>>
->>> Hi,
->>>   are you able to more specific at all?  What is the "USB PHY library"?
->>> Where exactly is the "PHY framework"?
->>
->> There is a USB PHY library that exists in drivers/usb/phy/phy.c and there is
->> a Generic PHY framework that is present in drivers/phy/phy-core.c. twl4030
->> actually supports both the framework.
->>
->> In your patch whatever uses struct usb_phy uses the old USB PHY library and
->> whatever uses struct phy uses the generic PHY framework. (Actually your patch
->> does not use the PHY framework at all). We want to deprecate using the USB PHY
->> library and make everyone use the generic PHY framework. Adding features
->> to a driver using the USB PHY library will make the transition to generic PHY
->> framework a bit more difficult.
->>
->> Now all the features that is supported in the USB PHY library may not be
->> supported by the PHY framework. So we should start extending the PHY framework
->> instead of using the USB PHY library.
->>
->> One think I noticed in your driver is using atomic notifier chain. IMO extcon
->> framework should be used in twl4030 USB driver to notify the controller driver
->> instead of using USB PHY notifier. For all other things we have to see if it
->> can be added in the PHY framework.
->
-> I've had a look at the code with these issues in mind, and there is one issue
-> that I'm not sure about.
->
-> In phy-twl4030-usb, the usb_phy is used to hold a reference to the
-> 'struct otg', and for passing cable state changes to the notifier.
+With this series applied, the STM32F419 Discovery can boot succesfully.
 
-right now we directly call omap_musb_mailbox no? we don't use notifiers right?
->
-> The former probably has to stay until musb can keep a reference to the otg,
-> separate form the usb_phy.  The latter can be changed to use extcon - to
-> some extent.  I actually have patches to do that from a couple of years back,
-> but I never proceeded with them.
->
-> The problem is that one thing that needs to be communicated to the charger is
-> the max current that was negotiated by a "Standard Downstream Port".
-> This could be 500mA from a powered hum, or much less from an unpowered hub.
-> (Currently the usb gadget code does negotiated between different
-> possibilities, but it could and hopefully will one day).
->
-> With the notifier chain there is an easy way to communicate the allowed
-> current once it is negotiated. e.g. ab8500_usb_set_power() does this.
->
-> 'struct phy' has no equivalent of the 'set_power' callback  which 'struct
-> usb_phy' provides, and extcon has no mechanism (that I can see) for
-> communicating a number - just binary cable states.
+Changes since v4:
+-----------------
+ - Cosmetic changes in USART driver (Andy)
+ - Apply Acks on reset driver & bindings (Philipp & Rob)
 
-Chanwoo Choi, Can this be modified so that we can communicate numbers like in
-the case of EXTCON_CHARGE_DOWNSTREAM?
->
-> Presumably a 'set_power' method could be added to 'struct phy' so the
-> usb-core can communicate the number to the phy, but it is not clear to me how
-> the 'phy' can communicate it to the charger.
+Changes since v3:
+-----------------
+ - Fix and simplify error path in ARMv7-M Systick driver (Daniel)
+ - Improve reset bindings documentation (Philipp)
+ - Fix trailing lines anf typos in reset driver & doc (Philipp & Chanwoo)
+ - Fix MODULE_LICENCE in USART driver (Paul)
+ - Refactor USART baudrate calculation (Peter & Andy)
+ - Fix error path in USART init (Peter & Russell)
+ - Fix HW flow control in USART driver (Peter)
+ - Fix serial port type number to unused one (Peter)
+ - Applies Chanwoo's Tested-by on the series
 
-Should the PHY be involved in all this? We can make the gadget driver
-directly communicate the value to the charger no?
-> The 'phy' could provide an API to request the current negotiated max current,
-> but there still needs to be a way to let the charger know that this has
-> changed.
-> That could in theory be done via extcon, by having a secondary
-> 'USB_connected' cable type, but it isn't really a cable type and pretending
-> that it is seems wrong.
+Changes since v2:
+-----------------
+ - Remove pinctrl driver from the series. 
+ - Remove reset_controller_of_init(), and reset the timers in the bootloader
+ - Add HW flow contrl property for serial driver
+ - Lots of changes in the DTS file, as per Andreas recommendations
+ - Some Kconfig clean-ups
+ - Adapt the config to be compatible with Andreas' bootwrapper, except UART port.
+ - Various fixes in documentation
 
-I think EXTCON_CHARGE_DOWNSTREAM was created for that purpose. Chanwoo?
+Changes since v1:
+-----------------
+ - Move bindings documentation in their own patches (Andreas)
+ - Rename ARM System timer to armv7m-systick (Rob)
+ - Add clock-frequency property handling in armv7m-systick (Rob)
+ - Re-factor the reset controllers into a single controller (Philipp)
+ - Add kerneldoc to reset_controller_of_init (Philipp)
+ - Add named constants in include/dt-bindings/reset/ (Philipp)
+ - Make pinctrl driver to depend on ARCH_STM32 or COMPILE_TEST (Geert)
+ - Introduce CPUV7M_NUM_IRQ config flag to indicate the number of interrupts
+supported by the MCU, in order to limit memory waste in vectors' table (Uwe)
 
-Thanks
-Kishon
+
+Maxime Coquelin (15):
+  scripts: link-vmlinux: Don't pass page offset to kallsyms if XIP
+    Kernel
+  ARM: ARMv7-M: Enlarge vector table up to 256 entries
+  dt-bindings: Document the ARM System timer bindings
+  clocksource/drivers: Add ARM System timer driver
+  dt-bindings: Document the STM32 reset bindings
+  drivers: reset: Add STM32 reset driver
+  dt-bindings: Document the STM32 timer bindings
+  clockevents/drivers: Add STM32 Timer driver
+  dt-bindings: Document the STM32 USART bindings
+  serial: stm32-usart: Add STM32 USART Driver
+  ARM: Add STM32 family machine
+  ARM: dts: Add ARM System timer as clockevent in armv7m
+  ARM: dts: Introduce STM32F429 MCU
+  ARM: configs: Add STM32 defconfig
+  MAINTAINERS: Add entry for STM32 MCUs
+
+ Documentation/arm/stm32/overview.txt               |  32 +
+ Documentation/arm/stm32/stm32f429-overview.txt     |  22 +
+ .../devicetree/bindings/arm/armv7m_systick.txt     |  26 +
+ .../devicetree/bindings/reset/st,stm32-rcc.txt     | 107 +++
+ .../devicetree/bindings/serial/st,stm32-usart.txt  |  32 +
+ .../devicetree/bindings/timer/st,stm32-timer.txt   |  22 +
+ MAINTAINERS                                        |   8 +
+ arch/arm/Kconfig                                   |  18 +
+ arch/arm/Makefile                                  |   1 +
+ arch/arm/boot/dts/Makefile                         |   1 +
+ arch/arm/boot/dts/armv7-m.dtsi                     |   6 +
+ arch/arm/boot/dts/stm32f429-disco.dts              |  71 ++
+ arch/arm/boot/dts/stm32f429.dtsi                   | 226 +++++++
+ arch/arm/configs/stm32_defconfig                   |  71 ++
+ arch/arm/kernel/entry-v7m.S                        |  13 +-
+ arch/arm/mach-stm32/Makefile                       |   1 +
+ arch/arm/mach-stm32/Makefile.boot                  |   3 +
+ arch/arm/mach-stm32/board-dt.c                     |  19 +
+ arch/arm/mm/Kconfig                                |  15 +
+ drivers/clocksource/Kconfig                        |  15 +
+ drivers/clocksource/Makefile                       |   2 +
+ drivers/clocksource/armv7m_systick.c               |  79 +++
+ drivers/clocksource/timer-stm32.c                  | 184 ++++++
+ drivers/reset/Makefile                             |   1 +
+ drivers/reset/reset-stm32.c                        | 124 ++++
+ drivers/tty/serial/Kconfig                         |  17 +
+ drivers/tty/serial/Makefile                        |   1 +
+ drivers/tty/serial/stm32-usart.c                   | 736 +++++++++++++++++++++
+ include/uapi/linux/serial_core.h                   |   3 +
+ scripts/link-vmlinux.sh                            |   2 +-
+ 30 files changed, 1853 insertions(+), 5 deletions(-)
+ create mode 100644 Documentation/arm/stm32/overview.txt
+ create mode 100644 Documentation/arm/stm32/stm32f429-overview.txt
+ create mode 100644 Documentation/devicetree/bindings/arm/armv7m_systick.txt
+ create mode 100644 Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
+ create mode 100644 Documentation/devicetree/bindings/serial/st,stm32-usart.txt
+ create mode 100644 Documentation/devicetree/bindings/timer/st,stm32-timer.txt
+ create mode 100644 arch/arm/boot/dts/stm32f429-disco.dts
+ create mode 100644 arch/arm/boot/dts/stm32f429.dtsi
+ create mode 100644 arch/arm/configs/stm32_defconfig
+ create mode 100644 arch/arm/mach-stm32/Makefile
+ create mode 100644 arch/arm/mach-stm32/Makefile.boot
+ create mode 100644 arch/arm/mach-stm32/board-dt.c
+ create mode 100644 drivers/clocksource/armv7m_systick.c
+ create mode 100644 drivers/clocksource/timer-stm32.c
+ create mode 100644 drivers/reset/reset-stm32.c
+ create mode 100644 drivers/tty/serial/stm32-usart.c
+
+-- 
+1.9.1
