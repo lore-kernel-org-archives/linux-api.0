@@ -1,164 +1,69 @@
-From: Azael Avalos <coproscefalo@gmail.com>
-Subject: [PATCH v3 3/3] Documentation/ABI: Update sysfs-driver-toshiba_acpi entry
-Date: Thu,  2 Apr 2015 19:28:07 -0600
-Message-ID: <1428024487-3922-1-git-send-email-coproscefalo@gmail.com>
-Return-path: <platform-driver-x86-owner@vger.kernel.org>
-Sender: platform-driver-x86-owner@vger.kernel.org
-To: Darren Hart <dvhart@infradead.org>, platform-driver-x86@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Azael Avalos <coproscefalo@gmail.com>
+From: Zhang Zhen <zhenzhang.zhang@huawei.com>
+Subject: [PATCH v2] selftests/mount: output WARN messages when mount test
+ skipped
+Date: Fri, 3 Apr 2015 09:39:36 +0800
+Message-ID: <551DEF58.3090505@huawei.com>
+References: <1428024818-28554-1-git-send-email-zhenzhang.zhang@huawei.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1428024818-28554-1-git-send-email-zhenzhang.zhang@huawei.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-api@vger.kernel.org, "linux-kernel@vger.kernel.org >> Linux Kernel Mailing List" <linux-kernel@vger.kernel.org>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, shuahkh@osg.samsung.com
 List-Id: linux-api@vger.kernel.org
 
-This patch updates the sysfs-driver-toshiba_acpi entry, adding the
-missing entries for USB Sleep functions.
+Without this patch, if /proc/self/uid_map is not exist,
+the mount test case will skipped and no any prompting.
 
-And also, while at the neighborhood, fix some typos and add a note
-that some features require a reboot.
+After applied this patch, the case will prompt why it skipped.
+Just as follows:
+root@kernel-host:/opt/kernel> make -C tools/testing/selftests TARGETS=mount run_tests
+make: Entering directory `/opt/kernel/tools/testing/selftests'
+for TARGET in mount; do \
+                make -C $TARGET; \
+        done;
+make[1]: Entering directory `/opt/kernel/tools/testing/selftests/mount'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/opt/kernel/tools/testing/selftests/mount'
+for TARGET in mount; do \
+                make -C $TARGET run_tests; \
+        done;
+make[1]: Entering directory `/opt/kernel/tools/testing/selftests/mount'
+if [ -f /proc/self/uid_map ] ; then ./unprivileged-remount-test ; else echo "WARN: No /proc/self/uid_map exist, test skipped." ; fi
+WARN: No /proc/self/uid_map exist, test skipped.
+make[1]: Leaving directory `/opt/kernel/tools/testing/selftests/mount'
+make: Leaving directory `/opt/kernel/tools/testing/selftests'
 
-Signed-off-by: Azael Avalos <coproscefalo@gmail.com>
+Change v1 -> v2:
+- fix syntax error when run kselftest_install.sh
+
+Signed-off-by: Zhang Zhen <zhenzhang.zhang@huawei.com>
 ---
- .../ABI/testing/sysfs-driver-toshiba_acpi          | 93 +++++++++++++++++++---
- 1 file changed, 80 insertions(+), 13 deletions(-)
+ tools/testing/selftests/mount/Makefile | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/Documentation/ABI/testing/sysfs-driver-toshiba_acpi b/Documentation/ABI/testing/sysfs-driver-toshiba_acpi
-index ca9c71a..eed922e 100644
---- a/Documentation/ABI/testing/sysfs-driver-toshiba_acpi
-+++ b/Documentation/ABI/testing/sysfs-driver-toshiba_acpi
-@@ -8,9 +8,11 @@ Description:	This file controls the keyboard backlight operation mode, valid
- 			* 0x2  -> AUTO (also called TIMER)
- 			* 0x8  -> ON
- 			* 0x10 -> OFF
--		Note that the kernel 3.16 onwards this file accepts all listed
-+		Note that from kernel 3.16 onwards this file accepts all listed
- 		parameters, kernel 3.15 only accepts the first two (FN-Z and
- 		AUTO).
-+		Also note that toggling this value on type 1 devices, requires
-+		a reboot for changes to take effect.
- Users:		KToshiba
- 
- What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/kbd_backlight_timeout
-@@ -67,15 +69,72 @@ Description:	This file shows the current keyboard backlight type,
- 			* 2 -> Type 2, supporting modes TIMER, ON and OFF
- Users:		KToshiba
- 
-+What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/usb_sleep_charge
-+Date:		January 23, 2015
-+KernelVersion:	4.0
-+Contact:	Azael Avalos <coproscefalo@gmail.com>
-+Description:	This file controls the USB Sleep & Charge charging mode, which
-+		can be:
-+			* 0 -> Disabled		(0x00)
-+			* 1 -> Alternate	(0x09)
-+			* 2 -> Auto		(0x21)
-+			* 3 -> Typical		(0x11)
-+		Note that from kernel 4.1 onwards this file accepts all listed
-+		values, kernel 4.0 only supports the first three.
-+		Note that this feature only works when connected to power, if
-+		you want to use it under battery, see the entry named
-+		"sleep_functions_on_battery"
-+Users:		KToshiba
-+
-+What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/sleep_functions_on_battery
-+Date:		January 23, 2015
-+KernelVersion:	4.0
-+Contact:	Azael Avalos <coproscefalo@gmail.com>
-+Description:	This file controls the USB Sleep Functions under battery, and
-+		set the level at which point they will be disabled, accepted
-+		values can be:
-+			* 0	-> Disabled
-+			* 1-100	-> Battery level to disable sleep functions
-+		Currently it prints two values, the first one indicates if the
-+		feature is enabled or disabled, while the second one shows the
-+		current battery level set.
-+		Note that when the value is set to disabled, the sleep function
-+		will only work when connected to power.
-+Users:		KToshiba
-+
-+What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/usb_rapid_charge
-+Date:		January 23, 2015
-+KernelVersion:	4.0
-+Contact:	Azael Avalos <coproscefalo@gmail.com>
-+Description:	This file controls the USB Rapid Charge state, which can be:
-+			* 0 -> Disabled
-+			* 1 -> Enabled
-+		Note that toggling this value requires a reboot for changes to
-+		take effect.
-+Users:		KToshiba
-+
-+What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/usb_sleep_music
-+Date:		January 23, 2015
-+KernelVersion:	4.0
-+Contact:	Azael Avalos <coproscefalo@gmail.com>
-+Description:	This file controls the Sleep & Music state, which values can be:
-+			* 0 -> Disabled
-+			* 1 -> Enabled
-+		Note that this feature only works when connected to power, if
-+		you want to use it under battery, see the entry named
-+		"sleep_functions_on_battery"
-+Users:		KToshiba
-+
- What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/version
--Date:		February, 2015
--KernelVersion:	3.20
-+Date:		February 12, 2015
-+KernelVersion:	4.0
- Contact:	Azael Avalos <coproscefalo@gmail.com>
- Description:	This file shows the current version of the driver
-+Users:		KToshiba
- 
- What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/fan
--Date:		February, 2015
--KernelVersion:	3.20
-+Date:		February 12, 2015
-+KernelVersion:	4.0
- Contact:	Azael Avalos <coproscefalo@gmail.com>
- Description:	This file controls the state of the internal fan, valid
- 		values are:
-@@ -83,8 +142,8 @@ Description:	This file controls the state of the internal fan, valid
- 			* 1 -> ON
- 
- What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/kbd_function_keys
--Date:		February, 2015
--KernelVersion:	3.20
-+Date:		February 12, 2015
-+KernelVersion:	4.0
- Contact:	Azael Avalos <coproscefalo@gmail.com>
- Description:	This file controls the Special Functions (hotkeys) operation
- 		mode, valid values are:
-@@ -94,21 +153,29 @@ Description:	This file controls the Special Functions (hotkeys) operation
- 		and the hotkeys are accessed via FN-F{1-12}.
- 		In the "Special Functions" mode, the F{1-12} keys trigger the
- 		hotkey and the F{1-12} keys are accessed via FN-F{1-12}.
-+		Note that toggling this value requires a reboot for changes to
-+		take effect.
-+Users:		KToshiba
- 
- What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/panel_power_on
--Date:		February, 2015
--KernelVersion:	3.20
-+Date:		February 12, 2015
-+KernelVersion:	4.0
- Contact:	Azael Avalos <coproscefalo@gmail.com>
- Description:	This file controls whether the laptop should turn ON whenever
- 		the LID is opened, valid values are:
- 			* 0 -> Disabled
- 			* 1 -> Enabled
-+		Note that toggling this value requires a reboot for changes to
-+		take effect.
-+Users:		KToshiba
- 
- What:		/sys/devices/LNXSYSTM:00/LNXSYBUS:00/TOS{1900,620{0,7,8}}:00/usb_three
--Date:		February, 2015
--KernelVersion:	3.20
-+Date:		February 12, 2015
-+KernelVersion:	4.0
- Contact:	Azael Avalos <coproscefalo@gmail.com>
--Description:	This file controls whether the USB 3 functionality, valid
--		values are:
-+Description:	This file controls the USB 3 functionality, valid values are:
- 			* 0 -> Disabled (Acts as a regular USB 2)
- 			* 1 -> Enabled (Full USB 3 functionality)
-+		Note that toggling this value requires a reboot for changes to
-+		take effect.
-+Users:		KToshiba
+diff --git a/tools/testing/selftests/mount/Makefile b/tools/testing/selftests/mount/Makefile
+index a5b367f..038c777 100644
+--- a/tools/testing/selftests/mount/Makefile
++++ b/tools/testing/selftests/mount/Makefile
+@@ -8,7 +8,12 @@ unprivileged-remount-test: unprivileged-remount-test.c
+ include ../lib.mk
+
+ TEST_PROGS := unprivileged-remount-test
+-override RUN_TESTS := if [ -f /proc/self/uid_map ] ; then ./unprivileged-remount-test ; fi
++override RUN_TESTS := if [ -f /proc/self/uid_map ] ; \
++		      then	\
++				./unprivileged-remount-test ; \
++		      else	\
++				echo "WARN: No /proc/self/uid_map exist, test skipped." ; \
++		      fi
+ override EMIT_TESTS := echo "$(RUN_TESTS)"
+
+ clean:
 -- 
-2.3.4
+1.8.5.5
+
+
+.
