@@ -1,58 +1,32 @@
-From: Alexei Starovoitov <ast@plumgrid.com>
-Subject: [PATCH net-next] tc: cls_bpf: make ingress and egress qdiscs consistent
-Date: Fri,  3 Apr 2015 14:16:24 -0700
-Message-ID: <1428095784-7091-1-git-send-email-ast@plumgrid.com>
-Return-path: <netdev-owner@vger.kernel.org>
-Sender: netdev-owner@vger.kernel.org
-To: "David S. Miller" <davem@davemloft.net>
-Cc: Daniel Borkmann <daniel@iogearbox.net>, Jiri Pirko <jiri@resnulli.us>, Jamal Hadi Salim <jhs@mojatatu.com>, linux-api@vger.kernel.org, netdev@vger.kernel.org
+From: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+Subject: Re: [PATCH net-next] tc: cls_bpf: make ingress and egress qdiscs
+ consistent
+Date: Fri, 03 Apr 2015 23:46:03 +0200
+Message-ID: <551F0A1B.3000100@iogearbox.net>
+References: <1428095784-7091-1-git-send-email-ast@plumgrid.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1428095784-7091-1-git-send-email-ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: Jiri Pirko <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, Jamal Hadi Salim <jhs-jkUAjuhPggJWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-BPF programs attached to ingress and egress qdiscs see inconsistent skb->data.
-For ingress L2 header is already pulled, whereas for egress it's present.
-That makes writing programs more difficult.
-Make them consistent by pushing L2 before running the programs and pulling
-it back afterwards.
-Similar approach is taken by skb_defer_rx_timestamp() which does push/pull
-before calling ptp_classify_raw()->BPF_PROG_RUN().
+On 04/03/2015 11:16 PM, Alexei Starovoitov wrote:
+> BPF programs attached to ingress and egress qdiscs see inconsistent skb->data.
+> For ingress L2 header is already pulled, whereas for egress it's present.
+> That makes writing programs more difficult.
+> Make them consistent by pushing L2 before running the programs and pulling
+> it back afterwards.
+> Similar approach is taken by skb_defer_rx_timestamp() which does push/pull
+> before calling ptp_classify_raw()->BPF_PROG_RUN().
+>
+> Signed-off-by: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
 
-Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
----
-
-Looks like noone has tried bpf with ingress qdisc before, otherwise this
-problem would have been found sooner.
-This patch is probably not needed for 'net', since tc+bpf infra only starting
-to come alive.
-
- net/sched/cls_bpf.c |    9 +++++++++
- 1 file changed, 9 insertions(+)
-
-diff --git a/net/sched/cls_bpf.c b/net/sched/cls_bpf.c
-index 5c4171c5d2bd..b1cefd2037c9 100644
---- a/net/sched/cls_bpf.c
-+++ b/net/sched/cls_bpf.c
-@@ -66,6 +66,12 @@ static int cls_bpf_classify(struct sk_buff *skb, const struct tcf_proto *tp,
- 	struct cls_bpf_prog *prog;
- 	int ret = -1;
- 
-+	if (tp->q->flags & TCQ_F_INGRESS) {
-+		if (skb_headroom(skb) < ETH_HLEN)
-+			return -1;
-+		__skb_push(skb, ETH_HLEN);
-+	}
-+
- 	/* Needed here for accessing maps. */
- 	rcu_read_lock();
- 	list_for_each_entry_rcu(prog, &head->plist, link) {
-@@ -86,6 +92,9 @@ static int cls_bpf_classify(struct sk_buff *skb, const struct tcf_proto *tp,
- 	}
- 	rcu_read_unlock();
- 
-+	if (tp->q->flags & TCQ_F_INGRESS)
-+		__skb_pull(skb, ETH_HLEN);
-+
- 	return ret;
- }
- 
--- 
-1.7.9.5
+Thanks for looking into this. This ends up going via ingress_enqueue(),
+right? Maybe it would be better to add a new netlink attribute for
+ingress qdisc there that sets a flag in ingress_qdisc_data to pull the
+header space before calling tc_classify() and restore it later on?
+So, it would be configurable from tc. Would that work?
