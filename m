@@ -1,234 +1,222 @@
-From: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
-Subject: Re: [PATCH 0/5] Enhancements to twl4030 phy to support better
- charging - V2
-Date: Sat, 4 Apr 2015 11:28:16 +1100
-Message-ID: <20150404112816.025d233b@notabene.brown>
-References: <20150322223307.21765.62974.stgit@notabene.brown>
-	<551325B0.1090308@ti.com>
-	<20150326082219.510ac598@notabene.brown>
-	<55134BEE.7050406@ti.com>
-	<20150401154102.5f57ec1e@notabene.brown>
-	<551E97CE.4000501@ti.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH v7 0/5] vfs: Non-blockling buffered fs read (page cache
+ only)
+Date: Fri, 3 Apr 2015 20:42:09 -0700
+Message-ID: <20150403204209.75405f37.akpm@linux-foundation.org>
+References: <cover.1426528417.git.milosz@adfin.com>
+	<20150326202824.65d03787.akpm@linux-foundation.org>
+	<20150327081822.GA28669@infradead.org>
+	<20150327013516.8c6788be.akpm@linux-foundation.org>
+	<20150327084833.GA7689@infradead.org>
+	<20150327020159.eadd0ce1.akpm@linux-foundation.org>
+	<20150327155854.GA5548@samba2>
+	<20150330073604.GB22229@infradead.org>
+	<20150330132625.52b1250527ca3dcda79e349e@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- boundary="Sig_/8h=E08/kvIkLphM=9=.5yiV"; protocol="application/pgp-signature"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <551E97CE.4000501-l0cyMroinI0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kishon Vijay Abraham I <kishon-l0cyMroinI0@public.gmane.org>
-Cc: NeilBrown <neil-+NVA1uvv1dVBDLzU/O5InQ@public.gmane.org>, Tony Lindgren <tony-4v6yS6AI5VpBDgjK7y7TUQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, GTA04 owners <gta04-owner-xXXSsgcRVICgSpxsJD1C4w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, myungjoo.ham-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20150330132625.52b1250527ca3dcda79e349e@linux-foundation.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>, Jeremy Allison <jra@samba.org>, Milosz Tanski <milosz@adfin.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, Mel Gorman <mgorman@suse.de>, Volker Lendecke <Volker.Lendecke@sernet.de>, Tejun Heo <tj@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Theodore Ts'o <tytso@mit.edu>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-arch@vger.kernel.org, Dave Chinner <david@fromorbit.com>
 List-Id: linux-api@vger.kernel.org
 
---Sig_/8h=E08/kvIkLphM=9=.5yiV
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+On Mon, 30 Mar 2015 13:26:25 -0700 Andrew Morton <akpm@linux-foundation.org> wrote:
 
-On Fri, 3 Apr 2015 19:08:22 +0530 Kishon Vijay Abraham I <kishon-l0cyMroinI0@public.gmane.org>
-wrote:
+> d) fincore() is more expensive
 
-> +Extcon MAINTAINERS
->=20
-> Hi,
->=20
-> On Wednesday 01 April 2015 10:11 AM, NeilBrown wrote:
-> > On Thu, 26 Mar 2015 05:29:42 +0530 Kishon Vijay Abraham I <kishon-Bv2c3lPp1Ag@public.gmane.org=
-m>
-> > wrote:
-> >
-> >> Hi NeilBrown,
-> >>
-> >> On Thursday 26 March 2015 02:52 AM, NeilBrown wrote:
-> >>> On Thu, 26 Mar 2015 02:46:32 +0530 Kishon Vijay Abraham I <kishon@ti.=
-com>
-> >>> wrote:
-> >>>
-> >>>> Hi,
-> >>>>
-> >>>> On Monday 23 March 2015 04:05 AM, NeilBrown wrote:
-> >>>>> Hi Kishon,
-> >>>>>   I wonder if you could queue the following for the next merge wind=
-ow.
-> >>>>>   They allow the twl4030 phy to provide more information to the
-> >>>>>   twl4030 battery charger.
-> >>>>>   There are only minimal changes since the first version, particula=
-rly
-> >>>>>   documentation has been improved.
-> >>>>
-> >>>> There are quite a few things in this series which use the USB PHY li=
-brary
-> >>>> interface which is kindof deprecated. We should try and use the Gene=
-ric PHY
-> >>>> library for all of them. It would also be better to add features to =
-the
-> >>>> PHY framework if the we can't achieve something with the existing PHY
-> >>>> framework.
-> >>>
-> >>> Hi,
-> >>>   are you able to more specific at all?  What is the "USB PHY library=
-"?
-> >>> Where exactly is the "PHY framework"?
-> >>
-> >> There is a USB PHY library that exists in drivers/usb/phy/phy.c and th=
-ere is
-> >> a Generic PHY framework that is present in drivers/phy/phy-core.c. twl=
-4030
-> >> actually supports both the framework.
-> >>
-> >> In your patch whatever uses struct usb_phy uses the old USB PHY librar=
-y and
-> >> whatever uses struct phy uses the generic PHY framework. (Actually you=
-r patch
-> >> does not use the PHY framework at all). We want to deprecate using the=
- USB PHY
-> >> library and make everyone use the generic PHY framework. Adding featur=
-es
-> >> to a driver using the USB PHY library will make the transition to gene=
-ric PHY
-> >> framework a bit more difficult.
-> >>
-> >> Now all the features that is supported in the USB PHY library may not =
-be
-> >> supported by the PHY framework. So we should start extending the PHY f=
-ramework
-> >> instead of using the USB PHY library.
-> >>
-> >> One think I noticed in your driver is using atomic notifier chain. IMO=
- extcon
-> >> framework should be used in twl4030 USB driver to notify the controlle=
-r driver
-> >> instead of using USB PHY notifier. For all other things we have to see=
- if it
-> >> can be added in the PHY framework.
-> >
-> > I've had a look at the code with these issues in mind, and there is one=
- issue
-> > that I'm not sure about.
-> >
-> > In phy-twl4030-usb, the usb_phy is used to hold a reference to the
-> > 'struct otg', and for passing cable state changes to the notifier.
->=20
-> right now we directly call omap_musb_mailbox no? we don't use notifiers r=
-ight?
+Actually, I kinda take that back.  fincore() will be faster than
+preadv2() in the case of a pagecache miss, and slower in the case of a
+pagecache hit.
 
-Correct, and omap_musb_set_mailbox uses the notifier chain.=20
-phy-twl4030-usb does=20
-	ATOMIC_INIT_NOTIFIER_HEAD(&twl->phy.notifier);
-That is the only place the current phy code interacts with the notifier cha=
-in.
+The breakpoint appears to be a hit rate of 30% - if fewer than 30% of
+queries find the page in pagecache, fincore() will be faster than
+preadv2().
+
+This is because for a pagecache miss, fincore() will be about twice as
+fast as preadv2().  For a pagecache hit, fincore()+pread() is 55%
+slower than preadv2().  If there are lots of misses, fincore() is
+faster overall.
 
 
-> >
-> > The former probably has to stay until musb can keep a reference to the =
-otg,
-> > separate form the usb_phy.  The latter can be changed to use extcon - to
-> > some extent.  I actually have patches to do that from a couple of years=
- back,
-> > but I never proceeded with them.
-> >
-> > The problem is that one thing that needs to be communicated to the char=
-ger is
-> > the max current that was negotiated by a "Standard Downstream Port".
-> > This could be 500mA from a powered hum, or much less from an unpowered =
-hub.
-> > (Currently the usb gadget code does negotiated between different
-> > possibilities, but it could and hopefully will one day).
-> >
-> > With the notifier chain there is an easy way to communicate the allowed
-> > current once it is negotiated. e.g. ab8500_usb_set_power() does this.
-> >
-> > 'struct phy' has no equivalent of the 'set_power' callback  which 'stru=
-ct
-> > usb_phy' provides, and extcon has no mechanism (that I can see) for
-> > communicating a number - just binary cable states.
->=20
-> Chanwoo Choi, Can this be modified so that we can communicate numbers lik=
-e in
-> the case of EXTCON_CHARGE_DOWNSTREAM?
-> >
-> > Presumably a 'set_power' method could be added to 'struct phy' so the
-> > usb-core can communicate the number to the phy, but it is not clear to =
-me how
-> > the 'phy' can communicate it to the charger.
->=20
-> Should the PHY be involved in all this? We can make the gadget driver
-> directly communicate the value to the charger no?
-> > The 'phy' could provide an API to request the current negotiated max cu=
-rrent,
-> > but there still needs to be a way to let the charger know that this has
-> > changed.
-> > That could in theory be done via extcon, by having a secondary
-> > 'USB_connected' cable type, but it isn't really a cable type and preten=
-ding
-> > that it is seems wrong.
->=20
-> I think EXTCON_CHARGE_DOWNSTREAM was created for that purpose. Chanwoo?
->=20
-
-EXTCON_CHARGE_DOWNSTREAM is something quite different.
-
-There are roughly three ways that the USB gadget can determine what sort of
-thing has been plugged in to it and what current it can draw.
-
- - it can look at the resistance between the ID pin and GROUND.  This is a
-   physical property of the cable and it makes a lot of sense of EXTCON
-   to report different cables based on different resistances.
-
- - it can look at the voltage provided on different pins.  If it detects a
-   certain voltage on D- when it asserts a voltage on D+, it can know
-   that it is a Charging Downstream Port (EXTCON_CHARGE_DOWNSTREAM).  This
-   might be a property of the cable (shorting D- to D+ can achieve this) or
-   might be a property of the attached device.  It makes some sense for
-   EXTCON to report cable type based on this sort of information.
-
- - it can wait for the connected host to initiate a USB session and select a
-   particular profile.  That profile will include a "MaxPower" field.  When
-   the host selects that profile, the gadget knows it is allowed to draw th=
-at
-   much power ("current" really, measured in mA).
-
-So EXTCON_CHARGE_DOWNSTREAM fits into the second category.  My question is
-about the third category.
-I need this "MaxPower" number to be communicated from the USB core to the
-charger driver, presumably via the "phy" driver.
-
-With "usb_phy", there is a ->set_power() callback to communicate from
-usb-core to phy, and a notifier chain to communicate from phy to charger.
-With "phy" there is nothing.
-
-extcon _could_ be used to communicate the MaxPower, but I'm not sure it mak=
-es
-sense.  It is a property of the power available on the cable, not a property
-of the cable itself, or something that can be deduced from the properties of
-the cable.
-
-I guess I could get musb_gadget_vbus_draw(), or usb_phy_set_power(), to call
-the notifier chain directly.  But if usb_phy is being deprecated, that isn't
-a long-term solution.
-
-Thanks,
-NeilBrown
 
 
---Sig_/8h=E08/kvIkLphM=9=.5yiV
-Content-Type: application/pgp-signature
-Content-Description: OpenPGP digital signature
+Minimal fincore() implementation is below.  It doesn't implement the
+page_map!=NULL mode at all and will be slow for large areas - it needs
+to be taught about radix_tree_for_each_*().  But it's good enough for
+testing.  
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
+On a slow machine, in nanoseconds:
 
-iQIVAwUBVR8wIDnsnt1WYoG5AQKe+w//UjqwY8ocbTuR1Fa5jNI8JasS81vDCi+s
-h9/gskGZ5HckdMUaRq7vD8FubUpBIKRevOHAcxwh8KiTq/jCt5XCqnClv02M8P+s
-6CbYfmpxTmAXY80H8JnBglRPJkyBaEuhwjIuY0JyxR/js+RAhLgZa9ELKMXfx7+N
-JVVLuZ7n4FeQ7TX7wbvFR7qt+/xf2/uCIjIL45d6iqS3Z5SkOqZEA8RHj2L3pY00
-hunIMVYY3v2J+2ZsrmqDGurc8d98jWOm6OraUtYXyByH6ZF1tG3EE0Xa78su9L7p
-BSklAWXL4heB7+Os9xlSEzkuqIdFmq/oomys8/AAngEFHcGenWSxrnq6xLIDTEfh
-s6e9zzxCaiTWhVlp4U7uPWbmypwR9IHSFSEJhR0J4W97VNKxDT6TrTjXAK5lFVCI
-seQgIsqzU1TWi/Sm4spZ8yXgjzmViQmuvOITbIHJDYu8vYHHb0/6HTW21S03l1ox
-GFWBr1xWQkEtXNU9U2A77REkFw92WONDaVPp1tm9kHIhzMl5K1FFKyksFQQwnAR9
-QLTO1H/NU/+Dnlh7zZttAJwW6rCiiT8z3PwMMEksxqRfyNGNr9H9/2Zgjenoaom3
-qlMbpxk4xq/CrgCqN7kEL9Z75W3ulaCV3C9tBv2+OC3vIDCS/IX8zrUiR7pJ1Eyg
-ozK8RhXtSi8=
-=WM1X
------END PGP SIGNATURE-----
+null syscall:		528
+fincore (miss):		674
+fincore (hit):		729
+single byte pread:	1026
+single byte preadv:	1134
 
---Sig_/8h=E08/kvIkLphM=9=.5yiV--
+pread() is a bit faster than preadv() and samba uses pread(), so the
+implementations are:
+
+	if (fincore(fd, NULL, offset, len) == len)
+		pread();
+	else
+		punt();
+
+	if (preadv2(fd, ..., offset, len) == len)
+		...
+	else
+		punt();
+
+fincore+pread, pagecache-hit:	1755ns
+fincore+pread, pagecache-miss:	674ns
+preadv():			1134ns (preadv2() will be a little faster for misses)
+
+
+
+Now, a pagecache hit rate of 30% sounds high so one would think that
+fincore+pread is clearly ahead.  But the pagecache hit rate in this
+code will actually be quite high, because of readahead.
+
+For a large linear read of a file which is perfectly laid out on disk
+and is fully *uncached*, the hit rates will be as good as 99.8%,
+because readahead is bringing in data in 2MB blobs.
+
+In practice I expect that fincore()+pread() will be slower for linear
+reads of medium to large files and faster for small files and seeky
+accesses.
+
+How much does all this matter?  Not much.  On a fast machine a
+single-byte pread() takes 240ns.  So if your server thread is handling
+25000 requests/sec, we're only talking 0.6% overhead.
+
+Note that we can trivially monitor the hit rate with either preadv2()
+or fincore()+pread(): just count how many times all the data is there
+versus how many times it isn't.
+
+
+
+Also, note that we can use *both* fincore() and preadv2() to detect the
+problematic page-just-disappeared race:
+
+	if (fincore(fd, NULL, offset, len) == len) {
+		if (preadv2(fd, offset, len) != len)
+			printf("race just happened");
+
+It would be great if someone could apply the below, modify the
+preadv2() callsite as above and determine under what conditions (if
+any) the page-stealing race occurs.
+
+
+
+ arch/x86/syscalls/syscall_64.tbl |    1 
+ include/linux/syscalls.h         |    2 
+ mm/Makefile                      |    2 
+ mm/fincore.c                     |   65 +++++++++++++++++++++++++++++
+ 4 files changed, 69 insertions(+), 1 deletion(-)
+
+diff -puN arch/x86/syscalls/syscall_64.tbl~fincore arch/x86/syscalls/syscall_64.tbl
+--- a/arch/x86/syscalls/syscall_64.tbl~fincore
++++ a/arch/x86/syscalls/syscall_64.tbl
+@@ -331,6 +331,7 @@
+ 322	64	execveat		stub_execveat
+ 323	64	preadv2			sys_preadv2
+ 324	64	pwritev2		sys_pwritev2
++325	common	fincore			sys_fincore
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff -puN include/linux/syscalls.h~fincore include/linux/syscalls.h
+--- a/include/linux/syscalls.h~fincore
++++ a/include/linux/syscalls.h
+@@ -880,6 +880,8 @@ asmlinkage long sys_process_vm_writev(pi
+ asmlinkage long sys_kcmp(pid_t pid1, pid_t pid2, int type,
+ 			 unsigned long idx1, unsigned long idx2);
+ asmlinkage long sys_finit_module(int fd, const char __user *uargs, int flags);
++asmlinkage long sys_fincore(int fd, unsigned char __user *page_map,
++			    loff_t offset, size_t len);
+ asmlinkage long sys_seccomp(unsigned int op, unsigned int flags,
+ 			    const char __user *uargs);
+ asmlinkage long sys_getrandom(char __user *buf, size_t count,
+diff -puN mm/Makefile~fincore mm/Makefile
+--- a/mm/Makefile~fincore
++++ a/mm/Makefile
+@@ -19,7 +19,7 @@ obj-y			:= filemap.o mempool.o oom_kill.
+ 			   readahead.o swap.o truncate.o vmscan.o shmem.o \
+ 			   util.o mmzone.o vmstat.o backing-dev.o \
+ 			   mm_init.o mmu_context.o percpu.o slab_common.o \
+-			   compaction.o vmacache.o \
++			   compaction.o vmacache.o fincore.o \
+ 			   interval_tree.o list_lru.o workingset.o \
+ 			   debug.o $(mmu-y)
+ 
+diff -puN /dev/null mm/fincore.c
+--- /dev/null
++++ a/mm/fincore.c
+@@ -0,0 +1,65 @@
++#include <linux/syscalls.h>
++#include <linux/pagemap.h>
++#include <linux/file.h>
++#include <linux/fs.h>
++#include <linux/mm.h>
++#include <linux/slab.h>
++#include <linux/hugetlb.h>
++
++SYSCALL_DEFINE4(fincore, int, fd, unsigned char __user *, page_map,
++		loff_t, offset, size_t, len)
++{
++	struct fd f;
++	struct address_space *mapping;
++	loff_t cur_off;
++	loff_t end;
++	pgoff_t pgoff;
++	long ret = 0;
++
++	if (offset < 0 || (ssize_t)len <= 0)
++		return -EINVAL;
++
++	f = fdget(fd);
++
++	if (!f.file)
++		return -EBADF;
++
++	if (is_file_hugepages(f.file)) {
++		ret = -EINVAL;
++		goto out;
++	}
++
++	if (!S_ISREG(file_inode(f.file)->i_mode)) {
++		ret = -EBADF;
++		goto out;
++	}
++
++	end = min_t(loff_t, offset + len, i_size_read(file_inode(f.file)));
++	pgoff = offset >> PAGE_CACHE_SHIFT;
++	mapping = f.file->f_mapping;
++
++	/*
++	 * We probably need to do somethnig here to reduce the chance of the
++	 * pages being reclaimed between fincore() and read().  eg,
++	 * SetPageReferenced(page) or mark_page_accessed(page) or
++	 * activate_page(page).
++	 */
++	for (cur_off = offset; cur_off < end ; ) {
++		struct page *page;
++		loff_t end_of_coverage;
++
++		page = find_get_page(mapping, pgoff);
++		if (!page || !PageUptodate(page))
++			break;
++		page_cache_release(page);
++
++		pgoff++;
++		end_of_coverage = min_t(loff_t, pgoff << PAGE_CACHE_SHIFT, end);
++		ret += end_of_coverage - cur_off;
++		cur_off = (cur_off + PAGE_CACHE_SIZE) & PAGE_CACHE_MASK;
++	}
++
++out:
++	fdput(f);
++	return ret;
++}
+_
+
