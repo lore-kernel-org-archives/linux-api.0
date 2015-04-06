@@ -1,52 +1,33 @@
-From: bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org (J. Bruce Fields)
-Subject: Re: [PATCH] sunrpc: eliminate RPC_DEBUG
-Date: Mon, 6 Apr 2015 14:18:58 -0400
-Message-ID: <20150406181858.GB3363@fieldses.org>
-References: <1428327960-22213-1-git-send-email-msalter@redhat.com>
- <20150406100452.402754a6@tlielax.poochiereds.net>
- <4110847.o7VvYRDU5Z@wuerfel>
- <20150406104536.63b01b09@synchrony.poochiereds.net>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH net-next] tc: bpf: add checksum helpers
+Date: Mon, 06 Apr 2015 16:42:57 -0400 (EDT)
+Message-ID: <20150406.164257.2290989583284445419.davem@davemloft.net>
+References: <1427933533-14394-1-git-send-email-ast@plumgrid.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150406104536.63b01b09-08S845evdOaAjSkqwZiSMmfYqLom42DlXqFh9Ls21Oc@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jeff Layton <jeff.layton-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Mark Salter <msalter-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <1427933533-14394-1-git-send-email-ast@plumgrid.com>
+Sender: netdev-owner@vger.kernel.org
+To: ast@plumgrid.com
+Cc: daniel@iogearbox.net, jiri@resnulli.us, jhs@mojatatu.com, linux-api@vger.kernel.org, netdev@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 06, 2015 at 10:45:36AM -0400, Jeff Layton wrote:
-> On Mon, 06 Apr 2015 16:38:09 +0200
-> Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org> wrote:
-> 
-> > On Monday 06 April 2015 10:04:52 Jeff Layton wrote:
-> > > > diff --git a/fs/lockd/svcsubs.c b/fs/lockd/svcsubs.c
-> > > > index 665ef5a..a563ddb 100644
-> > > > --- a/fs/lockd/svcsubs.c
-> > > > +++ b/fs/lockd/svcsubs.c
-> > > > @@ -31,7 +31,7 @@
-> > > >  static struct hlist_head     nlm_files[FILE_NRHASH];
-> > > >  static DEFINE_MUTEX(nlm_file_mutex);
-> > > >  
-> > > > -#ifdef NFSD_DEBUG
-> > > > +#ifdef CONFIG_SUNRPC_DEBUG
-> > > 
-> > > Technically, you should use #if IS_ENABLED(CONFIG_SUNRPC_DEBUG). That's
-> > > supposed to help the compiler do checking of the code inside the block
-> > > even when it's not defined.
-> > 
-> > You probably meant the right thing and wrote something else: you should use
-> > 'if (IS_ENABLED(CONFIG_SUNRPC_DEBUG)) { ... }' to get that effect, but that
-> > only works within a function. '#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)' is just
-> > a nicer way to write '#if defined(CONFIG_SUNRPC_DEBUG) || 
-> > defined(CONFIG_SUNRPC_DEBUG_MODULE)', which is harmless but pointless here
-> > as the symbol would never be set to 'm'.
-> > 
-> > 	Arnd
-> 
-> Ahh ok, good to know. Then this patch is fine as-is then.
+From: Alexei Starovoitov <ast@plumgrid.com>
+Date: Wed,  1 Apr 2015 17:12:13 -0700
 
-Thanks, queueing up for 4.1 and stable.
+> Commit 608cd71a9c7c ("tc: bpf: generalize pedit action") has added the
+> possibility to mangle packet data to BPF programs in the tc pipeline.
+> This patch adds two helpers bpf_l3_csum_replace() and bpf_l4_csum_replace()
+> for fixing up the protocol checksums after the packet mangling.
+> 
+> It also adds 'flags' argument to bpf_skb_store_bytes() helper to avoid
+> unnecessary checksum recomputations when BPF programs adjusting l3/l4
+> checksums and documents all three helpers in uapi header.
+> 
+> Moreover, a sample program is added to show how BPF programs can make use
+> of the mangle and csum helpers.
+> 
+> Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
 
---b.
+Applied, thanks.
