@@ -1,96 +1,120 @@
-From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v4 05/10] eeprom: Add bindings for simple eeprom framework
-Date: Mon, 6 Apr 2015 09:11:05 -0500
-Message-ID: <CAL_Jsq++9pyJMLXssgyz2WRU4e7ikT_6FwzWMo1fKS82FJvEyg@mail.gmail.com>
-References: <1427752492-17039-1-git-send-email-srinivas.kandagatla@linaro.org>
- <1427752679-17261-1-git-send-email-srinivas.kandagatla@linaro.org> <20150406133208.GH30984@beef>
+From: Mark Salter <msalter-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] sunrpc: eliminate RPC_DEBUG
+Date: Mon, 06 Apr 2015 10:13:48 -0400
+Message-ID: <1428329628.2973.21.camel@deneb.redhat.com>
+References: <1428327960-22213-1-git-send-email-msalter@redhat.com>
+	 <20150406100452.402754a6@tlielax.poochiereds.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150406133208.GH30984@beef>
+In-Reply-To: <20150406100452.402754a6-9yPaYZwiELC+kQycOl6kW4xkIHaj4LzF@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Cc: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Sascha Hauer <s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arm-msm <linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Jeff Layton <jeff.layton-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>
+Cc: Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 6, 2015 at 8:32 AM, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
-> On Mon, Mar 30, 2015 at 10:57:59PM +0100, Srinivas Kandagatla wrote:
->> This patch adds bindings for simple eeprom framework which allows eeprom
->> consumers to talk to eeprom providers to get access to eeprom cell data.
->>
->> Signed-off-by: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
->> [Maxime Ripard: intial version of eeprom framework]
->> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
->> ---
->>  .../devicetree/bindings/eeprom/eeprom.txt          | 58 ++++++++++++++++++++++
->>  1 file changed, 58 insertions(+)
->>  create mode 100644 Documentation/devicetree/bindings/eeprom/eeprom.txt
->>
->> diff --git a/Documentation/devicetree/bindings/eeprom/eeprom.txt b/Documentation/devicetree/bindings/eeprom/eeprom.txt
->> new file mode 100644
->> index 0000000..fb71d46
->> --- /dev/null
->> +++ b/Documentation/devicetree/bindings/eeprom/eeprom.txt
->> @@ -0,0 +1,58 @@
->> += EEPROM Data Device Tree Bindings =
->> +
->> +This binding is intended to represent the location of hardware
->> +configuration data stored in EEPROMs.
->> +
->> +On a significant proportion of boards, the manufacturer has stored
->> +some data on an EEPROM-like device, for the OS to be able to retrieve
->> +these information and act upon it. Obviously, the OS has to know
->> +about where to retrieve these data from, and where they are stored on
->> +the storage device.
->
-> Since this binding (and the kernel framework supporting it) describes
-> non-volatile memory devices other than EEPROMs (e.g. EFuses) it should
-> be named more generically like "nvmem".
->
->> +
->> +This document is here to document this.
->> +
->> += Data providers =
->> +Contains bindings specific to provider drivers and data cells as children
->> +to this node.
->> +
->> += Data cells =
->> +These are the child nodes of the provider which contain data cell
->> +information like offset and size in eeprom provider.
->> +
->> +Required properties:
->> +reg: specifies the offset in byte within that storage device, and the length
->> +     in bytes of the data we care about.
->> +     There could be more then one offset-length pairs in this property.
->> +
->> +Optional properties:
->> +As required by specific data parsers/interpreters.
->
-> The generic binding could really use a "read-only" property here as this
-> is a common hardware attribute for many nvmem devices. A serial EEPROM
-> commonly has a write protect pin which may be hard-wired such that the
-> hardware description should reflect that. An EFuse is typically blown with
-> the required information at manufacturing time (for an end product case)
-> and would be marked with the "read-only" flag.
->
-> Having this optional flag in the generic binding would allow the
-> framework to hint to consumers about the inability to write to the
-> provided region.
+On Mon, 2015-04-06 at 10:04 -0400, Jeff Layton wrote:
+> nit: title should probably be "sunrpc: eliminate NFSD_DEBUG"
 
-This could get fairly complex if you wanted to describe grouping of WP
-regions which could have different layout than the fields here. This
-may be better left as a device property listing addr & size pairs.
-However, there is the notion of s/w "read-only" which means the OS
-should not allow write access. The MTD partition binding supports this
-with the "read-only" property.
+*sigh*
 
-> The framework sysfs attributes provide a userspace EEPROM consumer where
-> it would be useful information to know that a data provider region is
-> read only rather than having the exported writeable attribute simply
-> fail a write cycle. This would allow the consumer to be aware that a
-> failed write (if even attempted) is expected if the data provider
-> advertised itself as read-only.
+Yes, of course. That is what I intended but not what I wrote.
 
-You could distinguish with RW versus RO file attributes.
-
-Rob
+> 
+> On Mon,  6 Apr 2015 09:46:00 -0400
+> Mark Salter <msalter-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> 
+> > Commit f895b252d4edf ("sunrpc: eliminate RPC_DEBUG") introduced
+> > use of IS_ENABLED() in a uapi header which leads to a build
+> > failure for userspace apps trying to use <linux/nfsd/debug.h>:
+> > 
+> >    linux/nfsd/debug.h:18:15: error: missing binary operator before token "("
+> >   #if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+> >                 ^
+> > 
+> > Since this was only used to define NFSD_DEBUG if CONFIG_SUNRPC_DEBUG
+> > is enabled, replace instances of NFSD_DEBUG with CONFIG_SUNRPC_DEBUG.
+> > 
+> > Signed-off-by: Mark Salter <msalter-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> > ---
+> >  fs/lockd/svcsubs.c              | 2 +-
+> >  fs/nfsd/nfs4state.c             | 2 +-
+> >  fs/nfsd/nfsd.h                  | 2 +-
+> >  include/uapi/linux/nfsd/debug.h | 8 --------
+> >  4 files changed, 3 insertions(+), 11 deletions(-)
+> > 
+> > diff --git a/fs/lockd/svcsubs.c b/fs/lockd/svcsubs.c
+> > index 665ef5a..a563ddb 100644
+> > --- a/fs/lockd/svcsubs.c
+> > +++ b/fs/lockd/svcsubs.c
+> > @@ -31,7 +31,7 @@
+> >  static struct hlist_head	nlm_files[FILE_NRHASH];
+> >  static DEFINE_MUTEX(nlm_file_mutex);
+> >  
+> > -#ifdef NFSD_DEBUG
+> > +#ifdef CONFIG_SUNRPC_DEBUG
+> 
+> Technically, you should use #if IS_ENABLED(CONFIG_SUNRPC_DEBUG). That's
+> supposed to help the compiler do checking of the code inside the block
+> even when it's not defined.
+> 
+> In some cases though, that doesn't work correctly and you may need to
+> use plain-old #ifdef if not (particularly if there are symbols that
+> don't exist and are referenced inside the block when
+> CONFIG_SUNRPC_DEBUG isn't defined).
+> 
+> The CodingStyle document has a little blurb on this, fwiw...
+> 
+> >  static inline void nlm_debug_print_fh(char *msg, struct nfs_fh *f)
+> >  {
+> >  	u32 *fhp = (u32*)f->data;
+> > diff --git a/fs/nfsd/nfs4state.c b/fs/nfsd/nfs4state.c
+> > index 26e9baa..d42786e 100644
+> > --- a/fs/nfsd/nfs4state.c
+> > +++ b/fs/nfsd/nfs4state.c
+> > @@ -1139,7 +1139,7 @@ hash_sessionid(struct nfs4_sessionid *sessionid)
+> >  	return sid->sequence % SESSION_HASH_SIZE;
+> >  }
+> >  
+> > -#ifdef NFSD_DEBUG
+> > +#ifdef CONFIG_SUNRPC_DEBUG
+> >  static inline void
+> >  dump_sessionid(const char *fn, struct nfs4_sessionid *sessionid)
+> >  {
+> > diff --git a/fs/nfsd/nfsd.h b/fs/nfsd/nfsd.h
+> > index 565c4da..cf98052 100644
+> > --- a/fs/nfsd/nfsd.h
+> > +++ b/fs/nfsd/nfsd.h
+> > @@ -24,7 +24,7 @@
+> >  #include "export.h"
+> >  
+> >  #undef ifdebug
+> > -#ifdef NFSD_DEBUG
+> > +#ifdef CONFIG_SUNRPC_DEBUG
+> >  # define ifdebug(flag)		if (nfsd_debug & NFSDDBG_##flag)
+> >  #else
+> >  # define ifdebug(flag)		if (0)
+> > diff --git a/include/uapi/linux/nfsd/debug.h b/include/uapi/linux/nfsd/debug.h
+> > index 0bf130a..28ec6c9 100644
+> > --- a/include/uapi/linux/nfsd/debug.h
+> > +++ b/include/uapi/linux/nfsd/debug.h
+> > @@ -12,14 +12,6 @@
+> >  #include <linux/sunrpc/debug.h>
+> >  
+> >  /*
+> > - * Enable debugging for nfsd.
+> > - * Requires RPC_DEBUG.
+> > - */
+> > -#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+> > -# define NFSD_DEBUG		1
+> > -#endif
+> > -
+> > -/*
+> >   * knfsd debug flags
+> >   */
+> >  #define NFSDDBG_SOCK		0x0001
+> 
+> Looks fine other than the two nits above...
+> 
+> Acked-by: Jeff Layton <jeff.layton-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>
