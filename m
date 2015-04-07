@@ -1,202 +1,53 @@
-From: Greg Kurz <gkurz@linux.vnet.ibm.com>
-Subject: [PATCH v3 7/7] vhost: feature to set the vring endianness
-Date: Tue, 07 Apr 2015 14:19:31 +0200
-Message-ID: <20150407121557.4213.95569.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
-References: <20150407120929.4213.8225.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
+From: Martin Mares <mj-+ZI9xUNit7I@public.gmane.org>
+Subject: Re: [PATCH v2] pci: export class IDs from pci_ids.h
+Date: Tue, 7 Apr 2015 14:57:19 +0200
+Message-ID: <mj+md-20150407.125023.43354.nikam@ucw.cz>
+References: <1427714755-16873-1-git-send-email-mst@redhat.com>
+ <20150402205347.GA10892@google.com>
+ <20150402232804-mutt-send-email-mst@redhat.com>
+ <CAErSpo7Wtg2QTznd7RpqXrGO7BL7OekE89iH6CvuXsC6gyVXWg@mail.gmail.com>
+ <20150405132041-mutt-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <20150407120929.4213.8225.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Rusty Russell <rusty@rustcorp.com.au>, "Michael S. Tsirkin" <mst@redhat.com>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kvm@vger.kernel.org, virtualization@lists.linux-foundation.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150405132041-mutt-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>, stephen hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Masahiro Yamada <yamada.m-NAum8xwdG0+S7A1Ibl2khg@public.gmane.org>, "linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch brings cross-endian support to vhost when used to implement
-legacy virtio devices. Since it is a relatively rare situation, the
-feature availability is controlled by a kernel config option (not set
-by default).
+Hello!
 
-The ioctls introduced by this patch are for legacy only: virtio 1.0
-devices are returned EPERM.
+> That's a good idea. Martin, could you please answer the following:
+> assuming that linux exported linux/pci_ids.h providing class
+> IDs that are currently in /usr/include/pci/header.h
+> in a header /usr/include/linux/pci_ids.h,
+> would libpci be open to replacing part of
+> /usr/include/pci/header.h with #include <linux/pci_ids.h>,
+> assuming that a solution for old systems that lack this
+> header is also provided?
 
-Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
----
- drivers/vhost/Kconfig      |   10 ++++++++
- drivers/vhost/vhost.c      |   55 ++++++++++++++++++++++++++++++++++++++++++++
- drivers/vhost/vhost.h      |   17 +++++++++++++-
- include/uapi/linux/vhost.h |    5 ++++
- 4 files changed, 86 insertions(+), 1 deletion(-)
+Please remember that libpci is cross-platform. Your proposal would make it
+use <linux/pci_ids.h> on Linux and provide its own definitions on all other
+systems, which is likely to bring less consistency, not more.
 
-Changes since v2:
-- fixed typos in Kconfig description
-- renamed vq->legacy_big_endian to vq->legacy_is_little_endian
-- vq->legacy_is_little_endian reset to default in vhost_vq_reset()
-- dropped VHOST_F_SET_ENDIAN_LEGACY feature
-- dropped struct vhost_vring_endian from the user API (re-use
-  struct vhost_vring_state instead)
-- added VHOST_GET_VRING_ENDIAN_LEGACY ioctl
-- introduced more helpers and stubs to avoid polluting the code with ifdefs
+I do not see any point in using kernel headers for things, which are unrelated
+to the kernel.
 
+> pciutils does nothing with this value itself, it's possible for a distro
+> to ship a wrong header, and no one will notice. OTOH Linux will break if
+> it's wrong.  In fact there are 3 values libpci does appear to use
+> internally:
+> PCI_CLASS_BRIDGE_HOST
+> PCI_CLASS_DISPLAY_VGA
+> PCI_CLASS_BRIDGE_PCI
+> 
+> I'm guessing others are re-exported for the benefit of
+> applications using libpci.
 
-diff --git a/drivers/vhost/Kconfig b/drivers/vhost/Kconfig
-index 017a1e8..0aec88c 100644
---- a/drivers/vhost/Kconfig
-+++ b/drivers/vhost/Kconfig
-@@ -32,3 +32,13 @@ config VHOST
- 	---help---
- 	  This option is selected by any driver which needs to access
- 	  the core of vhost.
-+
-+config VHOST_SET_ENDIAN_LEGACY
-+	bool "Cross-endian support for host kernel accelerator"
-+	default n
-+	---help---
-+	  This option allows vhost to support guests with a different byte
-+	  ordering from host. It is disabled by default since it adds overhead
-+	  and it is only needed by a few platforms (powerpc and arm).
-+
-+	  If unsure, say "N".
-diff --git a/drivers/vhost/vhost.c b/drivers/vhost/vhost.c
-index 2ee2826..3529a3c 100644
---- a/drivers/vhost/vhost.c
-+++ b/drivers/vhost/vhost.c
-@@ -199,6 +199,7 @@ static void vhost_vq_reset(struct vhost_dev *dev,
- 	vq->call = NULL;
- 	vq->log_ctx = NULL;
- 	vq->memory = NULL;
-+	vq->legacy_is_little_endian = virtio_legacy_is_little_endian();
- }
- 
- static int vhost_worker(void *data)
-@@ -630,6 +631,54 @@ static long vhost_set_memory(struct vhost_dev *d, struct vhost_memory __user *m)
- 	return 0;
- }
- 
-+#ifdef CONFIG_VHOST_SET_ENDIAN_LEGACY
-+static long vhost_set_vring_endian_legacy(struct vhost_virtqueue *vq,
-+					  void __user *argp)
-+{
-+	struct vhost_vring_state s;
-+
-+	if (vhost_has_feature(vq, VIRTIO_F_VERSION_1))
-+		return -EPERM;
-+
-+	if (copy_from_user(&s, argp, sizeof(s)))
-+		return -EFAULT;
-+
-+	vq->legacy_is_little_endian = !!s.num;
-+	return 0;
-+}
-+
-+static long vhost_get_vring_endian_legacy(struct vhost_virtqueue *vq,
-+					  u32 idx,
-+					  void __user *argp)
-+{
-+	struct vhost_vring_state s = {
-+		.index = idx,
-+		.num = vq->legacy_is_little_endian
-+	};
-+
-+	if (vhost_has_feature(vq, VIRTIO_F_VERSION_1))
-+		return -EPERM;
-+
-+	if (copy_to_user(argp, &s, sizeof(s)))
-+		return -EFAULT;
-+
-+	return 0;
-+}
-+#else
-+static long vhost_set_vring_endian_legacy(struct vhost_virtqueue *vq,
-+					  void __user *argp)
-+{
-+	return 0;
-+}
-+
-+static long vhost_get_vring_endian_legacy(struct vhost_virtqueue *vq,
-+					  u32 idx,
-+					  void __user *argp)
-+{
-+	return 0;
-+}
-+#endif /* CONFIG_VHOST_SET_ENDIAN_LEGACY */
-+
- long vhost_vring_ioctl(struct vhost_dev *d, int ioctl, void __user *argp)
- {
- 	struct file *eventfp, *filep = NULL;
-@@ -806,6 +855,12 @@ long vhost_vring_ioctl(struct vhost_dev *d, int ioctl, void __user *argp)
- 		} else
- 			filep = eventfp;
- 		break;
-+	case VHOST_SET_VRING_ENDIAN_LEGACY:
-+		r = vhost_set_vring_endian_legacy(vq, argp);
-+		break;
-+	case VHOST_GET_VRING_ENDIAN_LEGACY:
-+		r = vhost_get_vring_endian_legacy(vq, idx, argp);
-+		break;
- 	default:
- 		r = -ENOIOCTLCMD;
- 	}
-diff --git a/drivers/vhost/vhost.h b/drivers/vhost/vhost.h
-index 4e9a186..981ba06 100644
---- a/drivers/vhost/vhost.h
-+++ b/drivers/vhost/vhost.h
-@@ -106,6 +106,9 @@ struct vhost_virtqueue {
- 	/* Log write descriptors */
- 	void __user *log_base;
- 	struct vhost_log *log;
-+
-+	/* We need to know the device endianness with legacy virtio. */
-+	bool legacy_is_little_endian;
- };
- 
- struct vhost_dev {
-@@ -173,11 +176,23 @@ static inline bool vhost_has_feature(struct vhost_virtqueue *vq, int bit)
- 	return vq->acked_features & (1ULL << bit);
- }
- 
-+#ifdef CONFIG_VHOST_SET_ENDIAN_LEGACY
-+static inline bool vhost_legacy_is_little_endian(struct vhost_virtqueue *vq)
-+{
-+	return vq->legacy_is_little_endian;
-+}
-+#else
-+static inline bool vhost_legacy_is_little_endian(struct vhost_virtqueue *vq)
-+{
-+	return virtio_legacy_is_little_endian();
-+}
-+#endif
-+
- static inline bool vhost_is_little_endian(struct vhost_virtqueue *vq)
- {
- 	if (vhost_has_feature(vq, VIRTIO_F_VERSION_1))
- 		return true;
--	return virtio_legacy_is_little_endian();
-+	return vhost_legacy_is_little_endian(vq);
- }
- 
- /* Memory accessors */
-diff --git a/include/uapi/linux/vhost.h b/include/uapi/linux/vhost.h
-index bb6a5b4..1b01a72 100644
---- a/include/uapi/linux/vhost.h
-+++ b/include/uapi/linux/vhost.h
-@@ -103,6 +103,11 @@ struct vhost_memory {
- /* Get accessor: reads index, writes value in num */
- #define VHOST_GET_VRING_BASE _IOWR(VHOST_VIRTIO, 0x12, struct vhost_vring_state)
- 
-+/* Set endianness for the ring (legacy virtio only) */
-+/* num is 0 for big endian, other values mean little endian */
-+#define VHOST_SET_VRING_ENDIAN_LEGACY _IOW(VHOST_VIRTIO, 0x13, struct vhost_vring_state)
-+#define VHOST_GET_VRING_ENDIAN_LEGACY _IOW(VHOST_VIRTIO, 0x14, struct vhost_vring_state)
-+
- /* The following ioctls use eventfd file descriptors to signal and poll
-  * for events. */
+Exactly. And I expect that it will be quite similar with the kernel --
+most classes defined in <linux/pci_ids.h> are not likely to be used anywhere
+in the kernel.
+
+				Martin
