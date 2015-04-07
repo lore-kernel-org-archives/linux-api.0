@@ -1,46 +1,79 @@
-From: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v3 0/7] vhost: support for cross endian guests
-Date: Tue, 07 Apr 2015 14:09:29 +0200
-Message-ID: <20150407120929.4213.8225.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
+From: Greg Kurz <gkurz@linux.vnet.ibm.com>
+Subject: [PATCH v3 1/7] virtio: introduce virtio_is_little_endian() helper
+Date: Tue, 07 Apr 2015 14:09:41 +0200
+Message-ID: <20150407120934.4213.66836.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
+References: <20150407120929.4213.8225.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <20150407120929.4213.8225.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Rusty Russell <rusty@rustcorp.com.au>, "Michael S. Tsirkin" <mst@redhat.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kvm@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
-
-This patchset allows vhost to be used with legacy virtio when guest and host
-have a different endianness.
-
-Patches 1-6 remain the same as the previous post. Patch 7 was heavily changed
-according to MST's comments.
-
+Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
 ---
+ include/linux/virtio_config.h |   17 +++++++++++------
+ 1 file changed, 11 insertions(+), 6 deletions(-)
 
-Greg Kurz (7):
-      virtio: introduce virtio_is_little_endian() helper
-      tun: add tun_is_little_endian() helper
-      macvtap: introduce macvtap_is_little_endian() helper
-      vringh: introduce vringh_is_little_endian() helper
-      vhost: introduce vhost_is_little_endian() helper
-      virtio: add explicit big-endian support to memory accessors
-      vhost: feature to set the vring endianness
-
-
- drivers/net/macvtap.c            |   11 ++++++--
- drivers/net/tun.c                |   11 ++++++--
- drivers/vhost/Kconfig            |   10 +++++++
- drivers/vhost/vhost.c            |   55 ++++++++++++++++++++++++++++++++++++++
- drivers/vhost/vhost.h            |   34 +++++++++++++++++++----
- include/linux/virtio_byteorder.h |   24 ++++++++++-------
- include/linux/virtio_config.h    |   19 +++++++++----
- include/linux/vringh.h           |   19 +++++++++----
- include/uapi/linux/vhost.h       |    5 +++
- 9 files changed, 156 insertions(+), 32 deletions(-)
-
---
-Greg
+diff --git a/include/linux/virtio_config.h b/include/linux/virtio_config.h
+index ca3ed78..bd1a582 100644
+--- a/include/linux/virtio_config.h
++++ b/include/linux/virtio_config.h
+@@ -205,35 +205,40 @@ int virtqueue_set_affinity(struct virtqueue *vq, int cpu)
+ 	return 0;
+ }
+ 
++static inline bool virtio_is_little_endian(struct virtio_device *vdev)
++{
++	return virtio_has_feature(vdev, VIRTIO_F_VERSION_1);
++}
++
+ /* Memory accessors */
+ static inline u16 virtio16_to_cpu(struct virtio_device *vdev, __virtio16 val)
+ {
+-	return __virtio16_to_cpu(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
++	return __virtio16_to_cpu(virtio_is_little_endian(vdev), val);
+ }
+ 
+ static inline __virtio16 cpu_to_virtio16(struct virtio_device *vdev, u16 val)
+ {
+-	return __cpu_to_virtio16(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
++	return __cpu_to_virtio16(virtio_is_little_endian(vdev), val);
+ }
+ 
+ static inline u32 virtio32_to_cpu(struct virtio_device *vdev, __virtio32 val)
+ {
+-	return __virtio32_to_cpu(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
++	return __virtio32_to_cpu(virtio_is_little_endian(vdev), val);
+ }
+ 
+ static inline __virtio32 cpu_to_virtio32(struct virtio_device *vdev, u32 val)
+ {
+-	return __cpu_to_virtio32(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
++	return __cpu_to_virtio32(virtio_is_little_endian(vdev), val);
+ }
+ 
+ static inline u64 virtio64_to_cpu(struct virtio_device *vdev, __virtio64 val)
+ {
+-	return __virtio64_to_cpu(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
++	return __virtio64_to_cpu(virtio_is_little_endian(vdev), val);
+ }
+ 
+ static inline __virtio64 cpu_to_virtio64(struct virtio_device *vdev, u64 val)
+ {
+-	return __cpu_to_virtio64(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
++	return __cpu_to_virtio64(virtio_is_little_endian(vdev), val);
+ }
+ 
+ /* Config space accessors. */
