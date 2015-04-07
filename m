@@ -1,49 +1,164 @@
-From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: Re: [PATCH v4 05/10] eeprom: Add bindings for simple eeprom framework
-Date: Tue, 07 Apr 2015 19:03:30 +0100
-Message-ID: <55241BF2.4050609@linaro.org>
-References: <1427752492-17039-1-git-send-email-srinivas.kandagatla@linaro.org> <1427752679-17261-1-git-send-email-srinivas.kandagatla@linaro.org> <20150406133208.GH30984@beef> <CAL_Jsq++9pyJMLXssgyz2WRU4e7ikT_6FwzWMo1fKS82FJvEyg@mail.gmail.com> <20150406150442.GA26319@beef> <55241575.7040809@linaro.org> <20150407174624.GO6023@sirena.org.uk>
+From: Stephen Boyd <sboyd@codeaurora.org>
+Subject: Re: [PATCH v4 04/10] eeprom: Add a simple EEPROM framework for
+ eeprom consumers
+Date: Tue, 7 Apr 2015 11:45:33 -0700
+Message-ID: <20150407184533.GA10278@codeaurora.org>
+References: <1427752492-17039-1-git-send-email-srinivas.kandagatla@linaro.org>
+ <1427752670-17219-1-git-send-email-srinivas.kandagatla@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150407174624.GO6023@sirena.org.uk>
+Content-Disposition: inline
+In-Reply-To: <1427752670-17219-1-git-send-email-srinivas.kandagatla@linaro.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mark Brown <broonie@kernel.org>
-Cc: Matt Porter <mporter@konsulko.com>, Rob Herring <robherring2@gmail.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Sascha Hauer <s.hauer@pengutronix.de>, Stephen Boyd <sboyd@codeaurora.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Maxime Ripard <maxime.ripard@free-electrons.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, linux-arm-msm <linux-arm-msm@vger.kernel.org>
+To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Cc: linux-arm-kernel@lists.infradead.org, Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de
 List-Id: linux-api@vger.kernel.org
 
+On 03/30, Srinivas Kandagatla wrote:
+> @@ -130,6 +138,37 @@ static struct class eeprom_class = {
+>  	.dev_release	= eeprom_release,
+>  };
+>  
+> +static int of_eeprom_match(struct device *dev, const void *eeprom_np)
+> +{
+> +	return dev->of_node == eeprom_np;
+> +}
+> +
+> +static struct eeprom_device *of_eeprom_find(struct device_node *eeprom_np)
+> +{
+> +	struct device *d;
+> +
+> +	if (!eeprom_np)
+> +		return NULL;
+> +
+> +	d = class_find_device(&eeprom_class, NULL, eeprom_np, of_eeprom_match);
+> +
+> +	return d ? to_eeprom(d) : NULL;
+> +}
+> +
+> +static int eeprom_match(struct device *dev, const void *data)
+> +{
+> +	return !strcmp(dev_name(dev), (const char *)data);
 
+Is this cast necessary?
 
-On 07/04/15 18:46, Mark Brown wrote:
-> On Tue, Apr 07, 2015 at 06:35:49PM +0100, Srinivas Kandagatla wrote:
->> On 06/04/15 16:04, Matt Porter wrote:
->>> On Mon, Apr 06, 2015 at 09:11:05AM -0500, Rob Herring wrote:
->
->>>>> The generic binding could really use a "read-only" property here as this
->>>>> is a common hardware attribute for many nvmem devices. A serial EEPROM
->
->> Correct me If am wrong.
->
->> Regarding write protection/read-only, regmap already has provisions to
->> support this feature. regmap would bail out with errors if any attempt to
->> write to non-writable regions. It all depends on the data providers how they
->> setup the regmap and the bindings for those are specific individual data
->> providers I think.
->
-> There is the ability to flag read/write permissions in regmap but I
-> think there's some suggestion that this should be exposed to userspace
-> so that it's easier for it to handle things rather than just writing
-> then coping with any errors.
+> +}
+> +
+> +static struct eeprom_device *eeprom_find(const char *name)
+> +{
+> +	struct device *d;
+> +
+> +	d = class_find_device(&eeprom_class, NULL, (void *)name, eeprom_match);
 
-Yes, That's possible if the data provider use the "read-only" generic 
-binding like MTD partitions which the eeprom framwork could use to set 
-the binary file mode appropriately.
+Is this cast necessary?
 
-"read-only" property seems to be more generic for all types of data 
-providers.
+> +
+> +	return d ? to_eeprom(d) : NULL;
+> +}
+> +
+>  /**
+>   * eeprom_register(): Register a eeprom device for given eeprom.
+>   * Also creates an binary entry in /sys/class/eeprom/name-id/eeprom
+> +
+> +/**
+> + * eeprom_cell_get(): Get eeprom cell of device form a given eeprom name
 
-I will give it a try and document this in the bindings too in next version.
+s/form/from/
 
---srini
->
+> + * and blocks.
+> + *
+> + * @ename: eeprom device name that needs to be looked-up.
+> + * @blocks: eeprom blocks containing offset and length information.
+> + * @nblocks: number of eeprom blocks.
+> + *
+> + * The return value will be an ERR_PTR() on error or a valid pointer
+> + * to a struct eeprom_cell.  The eeprom_cell will be freed by the
+> + * eeprom_cell_put().
+> + */
+> +struct eeprom_cell *eeprom_cell_get(const char *ename,
+> +				    struct eeprom_block *blocks, int nblocks)
+> +{
+> +	return __eeprom_cell_get(NULL, ename, blocks, nblocks);
+> +}
+> +EXPORT_SYMBOL_GPL(eeprom_cell_get);
+> +
+> +/**
+> + * of_eeprom_cell_get(): Get eeprom cell of device form a given index
+
+s/form/from/
+
+> + *
+> + * @dev node: Device tree node that uses the eeprom cell
+> + * @index: eeprom index in eeproms property.
+> + *
+> + * The return value will be an ERR_PTR() on error or a valid pointer
+> + * to a struct eeprom_cell.  The eeprom_cell will be freed by the
+> + * eeprom_cell_put().
+> + */
+> +struct eeprom_cell *of_eeprom_cell_get(struct device_node *np, const char *name)
+> +{
+> +	struct device_node *cell_np;
+> +
+> +	cell_np = of_parse_phandle(np, name, 0);
+> +	if (!cell_np)
+> +		return ERR_PTR(-EINVAL);
+> +
+> +	return __eeprom_cell_get(cell_np, NULL, NULL, 0);
+> +}
+> +EXPORT_SYMBOL_GPL(of_eeprom_cell_get);
+> +
+> diff --git a/include/linux/eeprom-consumer.h b/include/linux/eeprom-consumer.h
+> new file mode 100644
+> index 0000000..effa417
+> --- /dev/null
+> +++ b/include/linux/eeprom-consumer.h
+> @@ -0,0 +1,61 @@
+> +/*
+> + * EEPROM framework consumer.
+> + *
+> + * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+> + * Copyright (C) 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
+> + *
+> + * This file is licensed under the terms of the GNU General Public
+> + * License version 2.  This program is licensed "as is" without any
+> + * warranty of any kind, whether express or implied.
+> + */
+> +
+> +#ifndef _LINUX_EEPROM_CONSUMER_H
+> +#define _LINUX_EEPROM_CONSUMER_H
+> +
+> +struct eeprom_cell;
+> +
+> +struct eeprom_block {
+> +	loff_t offset;
+> +	size_t count;
+> +};
+> +#if IS_ENABLED(CONFIG_EEPROM)
+> +struct eeprom_cell *eeprom_cell_get(const char *ename,
+> +				    struct eeprom_block *blocks, int nblocks);
+> +void eeprom_cell_put(struct eeprom_cell *cell);
+> +char *eeprom_cell_read(struct eeprom_cell *cell, ssize_t *len);
+> +int eeprom_cell_write(struct eeprom_cell *cell, const char *buf, ssize_t len);
+[...]
+> +
+> +#if IS_ENABLED(CONFIG_EEPROM) && IS_ENABLED(CONFIG_OF)
+> +struct eeprom_cell *of_eeprom_cell_get(struct device_node *dev,
+> +				       const char *property);
+> +#else
+> +static inline struct eeprom_cell *of_eeprom_cell_get(struct device_node *np,
+> +						     const char *property)
+> +{
+> +	return ERR_PTR(-ENOSYS);
+> +}
+> +#endif
+> +#endif  /* ifndef _LINUX_EEPROM_CONSUMER_H */
+
+Do you have an overview of how to use these APIs? Maybe some
+Documentation/ is in order? I'm mostly interested in how the
+blocks array is supposed to work and how this hooks up to drivers
+that are using DT.
+
+-- 
+Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum,
+a Linux Foundation Collaborative Project
