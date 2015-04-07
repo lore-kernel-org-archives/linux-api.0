@@ -1,112 +1,67 @@
-From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH v5 10/15] serial: stm32-usart: Add STM32 USART Driver
-Date: Tue, 7 Apr 2015 18:05:47 +0200
-Message-ID: <CALszF6AzxKhQYVyDki-pT2hWT0a2gtJaPp2HED7SB+yJSG5rOg@mail.gmail.com>
-References: <1428080481-18591-1-git-send-email-mcoquelin.stm32@gmail.com>
-	<1428080481-18591-11-git-send-email-mcoquelin.stm32@gmail.com>
-	<CAHp75VfRpwH3gw=EX816Bd8QnGSVzPg8+OWppqEKp2H_vCzRXw@mail.gmail.com>
+From: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH v3 0/7] vhost: support for cross endian guests
+Date: Tue, 7 Apr 2015 18:08:20 +0200
+Message-ID: <20150407180820.473d54be@bahia.local>
+References: <20150407120929.4213.8225.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
+	<20150407175443-mutt-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-gpio-owner@vger.kernel.org>
-In-Reply-To: <CAHp75VfRpwH3gw=EX816Bd8QnGSVzPg8+OWppqEKp2H_vCzRXw@mail.gmail.com>
-Sender: linux-gpio-owner@vger.kernel.org
-To: Andy Shevchenko <andy.shevchenko@gmail.com>
-Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Peter Hurley <peter@hurleysoftware.com>, Chanwoo Choi <cw00.choi@samsung.com>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150407175443-mutt-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-2015-04-04 0:04 GMT+02:00 Andy Shevchenko <andy.shevchenko@gmail.com>:
-> On Fri, Apr 3, 2015 at 8:01 PM, Maxime Coquelin
-> <mcoquelin.stm32@gmail.com> wrote:
->> This drivers adds support to the STM32 USART controller, which is a
->> standard serial driver.
->>
->
-> Few minor comments.
->
->> Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
->> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
->> ---
->>  drivers/tty/serial/Kconfig       |  17 +
->>  drivers/tty/serial/Makefile      |   1 +
->>  drivers/tty/serial/stm32-usart.c | 736 +++++++++++++++++++++++++++++++++++++++
->>  include/uapi/linux/serial_core.h |   3 +
->>  4 files changed, 757 insertions(+)
->>  create mode 100644 drivers/tty/serial/stm32-usart.c
->>
+On Tue, 7 Apr 2015 17:55:08 +0200
+"Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 
->> diff --git a/drivers/tty/serial/stm32-usart.c b/drivers/tty/serial/stm32-usart.c
->> new file mode 100644
->> index 0000000..61e0e19
->> --- /dev/null
->> +++ b/drivers/tty/serial/stm32-usart.c
->> @@ -0,0 +1,736 @@
-...
->> +
->> +static unsigned int stm32_get_mctrl(struct uart_port *port)
->> +{
->> +       /* This routine is used to get signals of: DCD, DSR, RI, and CTS */
->> +       return TIOCM_CAR | TIOCM_DSR | TIOCM_CTS;
->> +}
->> +
->> +/* Transmit stop */
->> +static void stm32_stop_tx(struct uart_port *port)
->> +{
->> +       stm32_clr_bits(port, USART_CR1, USART_CR1_TXEIE);
->> +}
->> +
->> +
->
-> Unneeded empty line.
-Right, will be removed.
+> On Tue, Apr 07, 2015 at 02:09:29PM +0200, Greg Kurz wrote:
+> > Hi,
+> > 
+> > This patchset allows vhost to be used with legacy virtio when guest and host
+> > have a different endianness.
+> > 
+> > Patches 1-6 remain the same as the previous post. Patch 7 was heavily changed
+> > according to MST's comments.
+> 
+> This still doesn't actually work, right?
+> tun and macvtap need new ioctls too ...
+> 
 
->
-...
->> +
->> +static int stm32_startup(struct uart_port *port)
->> +{
->> +       const char *name = to_platform_device(port->dev)->name;
->> +       u32 val;
->> +
->> +       if (request_irq(port->irq, stm32_interrupt, IRQF_NO_SUSPEND,
->> +                               name, port)) {
->
-> I think you have to propogate returned value, thus
-> ret = request_irq();
-> if (ret < 0)
->  return ret;
-Exact, I will fix this.
+Yes they do. I already have a patch but I wasn't sure if I should send it
+along this series... Since it looks like there will be a v4, I'll add the
+tun/macvtap patch.
 
->
-...
->> +
->> +static const char *stm32_type(struct uart_port *port)
->> +{
->> +       return (port->type == PORT_STM32) ? DRIVER_NAME : NULL;
->> +}
->> +
->> +static void stm32_release_port(struct uart_port *port)
->> +{
->> +}
->
-> Doesn't core handle NULL-functions? If it does, remove such from the driver.
-No it does not.
+Thanks.
 
->
->> +
->> +static int stm32_request_port(struct uart_port *port)
->> +{
->> +       return 0;
->> +}
->
-> Ditto.
-Ditto.
+--
+Greg
 
-Thanks for the review,
-Maxime
-
->
->
->
-> --
-> With Best Regards,
-> Andy Shevchenko
+> > ---
+> > 
+> > Greg Kurz (7):
+> >       virtio: introduce virtio_is_little_endian() helper
+> >       tun: add tun_is_little_endian() helper
+> >       macvtap: introduce macvtap_is_little_endian() helper
+> >       vringh: introduce vringh_is_little_endian() helper
+> >       vhost: introduce vhost_is_little_endian() helper
+> >       virtio: add explicit big-endian support to memory accessors
+> >       vhost: feature to set the vring endianness
+> > 
+> > 
+> >  drivers/net/macvtap.c            |   11 ++++++--
+> >  drivers/net/tun.c                |   11 ++++++--
+> >  drivers/vhost/Kconfig            |   10 +++++++
+> >  drivers/vhost/vhost.c            |   55 ++++++++++++++++++++++++++++++++++++++
+> >  drivers/vhost/vhost.h            |   34 +++++++++++++++++++----
+> >  include/linux/virtio_byteorder.h |   24 ++++++++++-------
+> >  include/linux/virtio_config.h    |   19 +++++++++----
+> >  include/linux/vringh.h           |   19 +++++++++----
+> >  include/uapi/linux/vhost.h       |    5 +++
+> >  9 files changed, 156 insertions(+), 32 deletions(-)
+> > 
+> > --
+> > Greg
+> 
