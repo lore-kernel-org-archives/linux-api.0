@@ -1,88 +1,56 @@
-From: Cornelia Huck <cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v3 7/7] vhost: feature to set the vring endianness
-Date: Tue, 7 Apr 2015 17:01:31 +0200
-Message-ID: <20150407170131.3899d62c.cornelia.huck@de.ibm.com>
-References: <20150407120929.4213.8225.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
-	<20150407121557.4213.95569.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Subject: Re: [PATCH v5 09/15] dt-bindings: Document the STM32 USART bindings
+Date: Tue, 7 Apr 2015 17:49:54 +0200
+Message-ID: <CALszF6BnFz3D=6AT0+o2umy6wtVJg1BGX4rLWmHjrbt=4-ZknQ@mail.gmail.com>
+References: <1428080481-18591-1-git-send-email-mcoquelin.stm32@gmail.com>
+	<1428080481-18591-10-git-send-email-mcoquelin.stm32@gmail.com>
+	<CAL_JsqKioFc65Gng0FbOOBCspwxr1-bdy1kShKRM24XyALPmOw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150407121557.4213.95569.stgit-to6p26YowclJmDnNpxttO7KMsZMIf1jtdfLczzV0R5oAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <CAL_JsqKioFc65Gng0FbOOBCspwxr1-bdy1kShKRM24XyALPmOw@mail.gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Rob Herring <robherring2@gmail.com>
+Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Peter Hurley <peter@hurleysoftware.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Chanwoo Choi <cw00.choi@samsung.com>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linu>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 07 Apr 2015 14:19:31 +0200
-Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org> wrote:
+2015-04-03 19:14 GMT+02:00 Rob Herring <robherring2@gmail.com>:
+> On Fri, Apr 3, 2015 at 12:01 PM, Maxime Coquelin
+> <mcoquelin.stm32@gmail.com> wrote:
+>> This adds documentation of device tree bindings for the
+>> STM32 USART
+>>
+>> Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
+>> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+>> ---
+>>  .../devicetree/bindings/serial/st,stm32-usart.txt  | 32 ++++++++++++++++++++++
+>>  1 file changed, 32 insertions(+)
+>>  create mode 100644 Documentation/devicetree/bindings/serial/st,stm32-usart.txt
+>>
+>> diff --git a/Documentation/devicetree/bindings/serial/st,stm32-usart.txt b/Documentation/devicetree/bindings/serial/st,stm32-usart.txt
+>> new file mode 100644
+>> index 0000000..090a3a4
+>> --- /dev/null
+>> +++ b/Documentation/devicetree/bindings/serial/st,stm32-usart.txt
+>> @@ -0,0 +1,32 @@
+>> +* STMicroelectronics STM32 USART
+>> +
+>> +Required properties:
+>> +- compatible: Can be either "st,stm32-usart" or "st,stm32-uart" depending on
+>> +whether the device supports synchronous mode.
+>> +- reg: The address and length of the peripheral registers space
+>> +- interrupts: The interrupt line of the USART instance
+>> +- clocks: The input clock of the USART instance
+>> +
+>> +Optional properties:
+>> +- pinctrl: The reference on the pins configuration
+>> +- st,hw-flow-ctrl: bool flag to enable hardware flow control.
+>
+> We already have "auto-flow-control" for 8250. Does that work for you?
 
-> This patch brings cross-endian support to vhost when used to implement
-> legacy virtio devices. Since it is a relatively rare situation, the
-> feature availability is controlled by a kernel config option (not set
-> by default).
-> 
-> The ioctls introduced by this patch are for legacy only: virtio 1.0
-> devices are returned EPERM.
-> 
-> Signed-off-by: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-> ---
->  drivers/vhost/Kconfig      |   10 ++++++++
->  drivers/vhost/vhost.c      |   55 ++++++++++++++++++++++++++++++++++++++++++++
->  drivers/vhost/vhost.h      |   17 +++++++++++++-
->  include/uapi/linux/vhost.h |    5 ++++
->  4 files changed, 86 insertions(+), 1 deletion(-)
+Yes it works, just that I didn't know about it.
 
-> +#ifdef CONFIG_VHOST_SET_ENDIAN_LEGACY
-> +static long vhost_set_vring_endian_legacy(struct vhost_virtqueue *vq,
-> +					  void __user *argp)
-> +{
-> +	struct vhost_vring_state s;
-> +
-> +	if (vhost_has_feature(vq, VIRTIO_F_VERSION_1))
-> +		return -EPERM;
-> +
-> +	if (copy_from_user(&s, argp, sizeof(s)))
-> +		return -EFAULT;
-> +
-> +	vq->legacy_is_little_endian = !!s.num;
-> +	return 0;
-> +}
-> +
-> +static long vhost_get_vring_endian_legacy(struct vhost_virtqueue *vq,
-> +					  u32 idx,
-> +					  void __user *argp)
-> +{
-> +	struct vhost_vring_state s = {
-> +		.index = idx,
-> +		.num = vq->legacy_is_little_endian
-> +	};
-> +
-> +	if (vhost_has_feature(vq, VIRTIO_F_VERSION_1))
-> +		return -EPERM;
-> +
-> +	if (copy_to_user(argp, &s, sizeof(s)))
-> +		return -EFAULT;
-> +
-> +	return 0;
-> +}
-> +#else
-> +static long vhost_set_vring_endian_legacy(struct vhost_virtqueue *vq,
-> +					  void __user *argp)
-> +{
-> +	return 0;
+I will change to "auto-flow-control" in next version.
 
-I'm wondering whether this handler should return an error if the
-feature is not configured for the kernel? How can the userspace caller
-find out whether it has successfully prompted the kernel to handle the
-endianness correctly?
-
-> +}
-> +
-> +static long vhost_get_vring_endian_legacy(struct vhost_virtqueue *vq,
-> +					  u32 idx,
-> +					  void __user *argp)
-> +{
-> +	return 0;
-> +}
-> +#endif /* CONFIG_VHOST_SET_ENDIAN_LEGACY */
+Thanks,
+Maxime
