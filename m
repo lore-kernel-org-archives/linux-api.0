@@ -1,180 +1,183 @@
 From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: [PATCH v6 06/15] drivers: reset: Add STM32 reset driver
-Date: Tue,  7 Apr 2015 18:30:25 +0200
-Message-ID: <1428424234-28572-7-git-send-email-mcoquelin.stm32@gmail.com>
+Subject: [PATCH v6 11/15] ARM: Add STM32 family machine
+Date: Tue,  7 Apr 2015 18:30:30 +0200
+Message-ID: <1428424234-28572-12-git-send-email-mcoquelin.stm32@gmail.com>
 References: <1428424234-28572-1-git-send-email-mcoquelin.stm32@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1428424234-28572-1-git-send-email-mcoquelin.stm32@gmail.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, stefan@agner.ch, pmeerw@pmeerw.net, pebolle@tiscali.nl, peter@hurleysoftware.com, andy.shevchenko@gmail.com, cw00.choi@samsung.com, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, joe@perches.com
-Cc: Mark Rutland <mark.rutland@arm.com>, linux-doc@vger.kernel.org, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, linux-api@vger.kernel.org, Jiri Slaby <jslaby@suse.cz>, linux-arch@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Antti Palosaari <crope@iki.fi>, linux-serial@vger.kernel.org, devicetree@vger.kernel.org, Kees Cook <keescook@chromium.org>, Pawel Moll <pawel.moll@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Rusty Russell <rusty@rustcorp.com.au>, linux-gpio@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, linux-arm-kernel@lists.infradead.org, Michal Marek <mmarek@suse.cz>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-kernel@vger.kernel.org, mcoquelin.stm32@gmail.com, Kumar Gala <galak@codeaurora.org>, Tejun Heo <tj@kernel.org>, Andrew Morton <akpm@linux-fo>
+Cc: Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees Cook <keescook@chromium.org>, Michal Marek <mmarek@suse.cz>, linux-doc@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-gpio@vger.kernel.org, linux-serial@vger.kernel.org, linux-arch@vger.kerne
 List-Id: linux-api@vger.kernel.org
 
-The STM32 MCUs family IPs can be reset by accessing some registers
-from the RCC block.
-
-The list of available reset lines is documented in the DT bindings.
+STMicrolectronics's STM32 series is a family of Cortex-M
+microcontrollers. It is used in various applications, and
+proposes a wide range of peripherals.
 
 Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
-Acked-by: Philipp Zabel <p.zabel@pengutronix.de>
 Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
 ---
- drivers/reset/Makefile      |   1 +
- drivers/reset/reset-stm32.c | 124 ++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 125 insertions(+)
- create mode 100644 drivers/reset/reset-stm32.c
+ Documentation/arm/stm32/overview.txt           | 32 ++++++++++++++++++++++++++
+ Documentation/arm/stm32/stm32f429-overview.txt | 22 ++++++++++++++++++
+ arch/arm/Kconfig                               | 18 +++++++++++++++
+ arch/arm/Makefile                              |  1 +
+ arch/arm/mach-stm32/Makefile                   |  1 +
+ arch/arm/mach-stm32/Makefile.boot              |  3 +++
+ arch/arm/mach-stm32/board-dt.c                 | 19 +++++++++++++++
+ 7 files changed, 96 insertions(+)
+ create mode 100644 Documentation/arm/stm32/overview.txt
+ create mode 100644 Documentation/arm/stm32/stm32f429-overview.txt
+ create mode 100644 arch/arm/mach-stm32/Makefile
+ create mode 100644 arch/arm/mach-stm32/Makefile.boot
+ create mode 100644 arch/arm/mach-stm32/board-dt.c
 
-diff --git a/drivers/reset/Makefile b/drivers/reset/Makefile
-index 157d421..aed12d1 100644
---- a/drivers/reset/Makefile
-+++ b/drivers/reset/Makefile
-@@ -1,5 +1,6 @@
- obj-$(CONFIG_RESET_CONTROLLER) += core.o
- obj-$(CONFIG_ARCH_SOCFPGA) += reset-socfpga.o
- obj-$(CONFIG_ARCH_BERLIN) += reset-berlin.o
-+obj-$(CONFIG_ARCH_STM32) += reset-stm32.o
- obj-$(CONFIG_ARCH_SUNXI) += reset-sunxi.o
- obj-$(CONFIG_ARCH_STI) += sti/
-diff --git a/drivers/reset/reset-stm32.c b/drivers/reset/reset-stm32.c
+diff --git a/Documentation/arm/stm32/overview.txt b/Documentation/arm/stm32/overview.txt
 new file mode 100644
-index 0000000..2c41858
+index 0000000..09aed55
 --- /dev/null
-+++ b/drivers/reset/reset-stm32.c
-@@ -0,0 +1,124 @@
++++ b/Documentation/arm/stm32/overview.txt
+@@ -0,0 +1,32 @@
++			STM32 ARM Linux Overview
++			========================
++
++Introduction
++------------
++
++  The STMicroelectronics family of Cortex-M based MCUs are supported by the
++  'STM32' platform of ARM Linux. Currently only the STM32F429 is supported.
++
++
++Configuration
++-------------
++
++  A generic configuration is provided for STM32 family, and can be used as the
++  default by
++	make stm32_defconfig
++
++Layout
++------
++
++  All the files for multiple machine families are located in the platform code
++  contained in arch/arm/mach-stm32
++
++  There is a generic board board-dt.c in the mach folder which support
++  Flattened Device Tree, which means, it works with any compatible board with
++  Device Trees.
++
++
++Document Author
++---------------
++
++  Maxime Coquelin <mcoquelin.stm32@gmail.com>
+diff --git a/Documentation/arm/stm32/stm32f429-overview.txt b/Documentation/arm/stm32/stm32f429-overview.txt
+new file mode 100644
+index 0000000..5206822
+--- /dev/null
++++ b/Documentation/arm/stm32/stm32f429-overview.txt
+@@ -0,0 +1,22 @@
++			STM32F429 Overview
++			==================
++
++  Introduction
++  ------------
++	The STM32F429 is a Cortex-M4 MCU aimed at various applications.
++	It features:
++	- ARM Cortex-M4 up to 180MHz with FPU
++	- 2MB internal Flash Memory
++	- External memory support through FMC controller (PSRAM, SDRAM, NOR, NAND)
++	- I2C, SPI, SAI, CAN, USB OTG, Ethernet controllers
++	- LCD controller & Camera interface
++	- Cryptographic processor
++
++  Resources
++  ---------
++	Datasheet and reference manual are publicly available on ST website:
++	- http://www.st.com/web/en/catalog/mmc/FM141/SC1169/SS1577/LN1806?ecmp=stm32f429-439_pron_pr-ces2014_nov2013
++
++  Document Author
++  ---------------
++	Maxime Coquelin <mcoquelin.stm32@gmail.com>
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 9f1f09a..5b1157d 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -776,6 +776,24 @@ config ARCH_OMAP1
+ 	help
+ 	  Support for older TI OMAP1 (omap7xx, omap15xx or omap16xx)
+ 
++config ARCH_STM32
++	bool "STMicrolectronics STM32"
++	depends on !MMU
++	select ARCH_HAS_RESET_CONTROLLER
++	select ARM_NVIC
++	select ARMV7M_SYSTICK
++	select AUTO_ZRELADDR
++	select CLKSRC_OF
++	select COMMON_CLK
++	select CPU_V7M
++	select GENERIC_CLOCKEVENTS
++	select NO_IOPORT_MAP
++	select RESET_CONTROLLER
++	select SPARSE_IRQ
++	select USE_OF
++	help
++	  Support for STMicroelectronics STM32 processors.
++
+ endchoice
+ 
+ menu "Multiple platform selection"
+diff --git a/arch/arm/Makefile b/arch/arm/Makefile
+index 7f99cd6..982c104 100644
+--- a/arch/arm/Makefile
++++ b/arch/arm/Makefile
+@@ -196,6 +196,7 @@ machine-$(CONFIG_ARCH_SHMOBILE) 	+= shmobile
+ machine-$(CONFIG_ARCH_SIRF)		+= prima2
+ machine-$(CONFIG_ARCH_SOCFPGA)		+= socfpga
+ machine-$(CONFIG_ARCH_STI)		+= sti
++machine-$(CONFIG_ARCH_STM32)		+= stm32
+ machine-$(CONFIG_ARCH_SUNXI)		+= sunxi
+ machine-$(CONFIG_ARCH_TEGRA)		+= tegra
+ machine-$(CONFIG_ARCH_U300)		+= u300
+diff --git a/arch/arm/mach-stm32/Makefile b/arch/arm/mach-stm32/Makefile
+new file mode 100644
+index 0000000..bd0b7b5
+--- /dev/null
++++ b/arch/arm/mach-stm32/Makefile
+@@ -0,0 +1 @@
++obj-y += board-dt.o
+diff --git a/arch/arm/mach-stm32/Makefile.boot b/arch/arm/mach-stm32/Makefile.boot
+new file mode 100644
+index 0000000..eacfc3f
+--- /dev/null
++++ b/arch/arm/mach-stm32/Makefile.boot
+@@ -0,0 +1,3 @@
++# Empty file waiting for deletion once Makefile.boot isn't needed any more.
++# Patch waits for application at
++# http://www.arm.linux.org.uk/developer/patches/viewpatch.php?id=7889/1 .
+diff --git a/arch/arm/mach-stm32/board-dt.c b/arch/arm/mach-stm32/board-dt.c
+new file mode 100644
+index 0000000..f2ad772
+--- /dev/null
++++ b/arch/arm/mach-stm32/board-dt.c
+@@ -0,0 +1,19 @@
 +/*
 + * Copyright (C) Maxime Coquelin 2015
 + * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
 + * License terms:  GNU General Public License (GPL), version 2
-+ *
-+ * Heavily based on sunxi driver from Maxime Ripard.
 + */
 +
-+#include <linux/err.h>
-+#include <linux/io.h>
-+#include <linux/module.h>
-+#include <linux/of.h>
-+#include <linux/of_address.h>
-+#include <linux/platform_device.h>
-+#include <linux/reset-controller.h>
-+#include <linux/slab.h>
-+#include <linux/spinlock.h>
-+#include <linux/types.h>
++#include <linux/kernel.h>
++#include <asm/v7m.h>
++#include <asm/mach/arch.h>
 +
-+struct stm32_reset_data {
-+	spinlock_t			lock;
-+	void __iomem			*membase;
-+	struct reset_controller_dev	rcdev;
++static const char *const stm32_compat[] __initconst = {
++	"st,stm32f429",
++	NULL
 +};
 +
-+static int stm32_reset_assert(struct reset_controller_dev *rcdev,
-+			      unsigned long id)
-+{
-+	struct stm32_reset_data *data = container_of(rcdev,
-+						     struct stm32_reset_data,
-+						     rcdev);
-+	int bank = id / BITS_PER_LONG;
-+	int offset = id % BITS_PER_LONG;
-+	unsigned long flags;
-+	u32 reg;
-+
-+	spin_lock_irqsave(&data->lock, flags);
-+
-+	reg = readl_relaxed(data->membase + (bank * 4));
-+	writel_relaxed(reg | BIT(offset), data->membase + (bank * 4));
-+
-+	spin_unlock_irqrestore(&data->lock, flags);
-+
-+	return 0;
-+}
-+
-+static int stm32_reset_deassert(struct reset_controller_dev *rcdev,
-+				unsigned long id)
-+{
-+	struct stm32_reset_data *data = container_of(rcdev,
-+						     struct stm32_reset_data,
-+						     rcdev);
-+	int bank = id / BITS_PER_LONG;
-+	int offset = id % BITS_PER_LONG;
-+	unsigned long flags;
-+	u32 reg;
-+
-+	spin_lock_irqsave(&data->lock, flags);
-+
-+	reg = readl_relaxed(data->membase + (bank * 4));
-+	writel_relaxed(reg & ~BIT(offset), data->membase + (bank * 4));
-+
-+	spin_unlock_irqrestore(&data->lock, flags);
-+
-+	return 0;
-+}
-+
-+static struct reset_control_ops stm32_reset_ops = {
-+	.assert		= stm32_reset_assert,
-+	.deassert	= stm32_reset_deassert,
-+};
-+
-+static const struct of_device_id stm32_reset_dt_ids[] = {
-+	 { .compatible = "st,stm32-rcc", },
-+	 { /* sentinel */ },
-+};
-+MODULE_DEVICE_TABLE(of, sstm32_reset_dt_ids);
-+
-+static int stm32_reset_probe(struct platform_device *pdev)
-+{
-+	struct stm32_reset_data *data;
-+	struct resource *res;
-+
-+	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
-+	if (!data)
-+		return -ENOMEM;
-+
-+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-+	data->membase = devm_ioremap_resource(&pdev->dev, res);
-+	if (IS_ERR(data->membase))
-+		return PTR_ERR(data->membase);
-+
-+	spin_lock_init(&data->lock);
-+
-+	data->rcdev.owner = THIS_MODULE;
-+	data->rcdev.nr_resets = resource_size(res) * 8;
-+	data->rcdev.ops = &stm32_reset_ops;
-+	data->rcdev.of_node = pdev->dev.of_node;
-+
-+	return reset_controller_register(&data->rcdev);
-+}
-+
-+static int stm32_reset_remove(struct platform_device *pdev)
-+{
-+	struct stm32_reset_data *data = platform_get_drvdata(pdev);
-+
-+	reset_controller_unregister(&data->rcdev);
-+
-+	return 0;
-+}
-+
-+static struct platform_driver stm32_reset_driver = {
-+	.probe	= stm32_reset_probe,
-+	.remove	= stm32_reset_remove,
-+	.driver = {
-+		.name		= "stm32-rcc-reset",
-+		.of_match_table	= stm32_reset_dt_ids,
-+	},
-+};
-+module_platform_driver(stm32_reset_driver);
-+
-+MODULE_AUTHOR("Maxime Coquelin <maxime.coquelin@gmail.com>");
-+MODULE_DESCRIPTION("STM32 MCUs Reset Controller Driver");
-+MODULE_LICENSE("GPL");
++DT_MACHINE_START(STM32DT, "STM32 (Device Tree Support)")
++	.dt_compat = stm32_compat,
++	.restart = armv7m_restart,
++MACHINE_END
 -- 
 1.9.1
