@@ -1,192 +1,202 @@
-From: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v3 6/7] virtio: add explicit big-endian support to memory
- accessors
-Date: Tue, 07 Apr 2015 14:15:52 +0200
-Message-ID: <20150407121533.4213.46434.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
+From: Greg Kurz <gkurz@linux.vnet.ibm.com>
+Subject: [PATCH v3 7/7] vhost: feature to set the vring endianness
+Date: Tue, 07 Apr 2015 14:19:31 +0200
+Message-ID: <20150407121557.4213.95569.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
 References: <20150407120929.4213.8225.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150407120929.4213.8225.stgit-to6p26YowclJmDnNpxttO7KMsZMIf1jtdfLczzV0R5oAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <20150407120929.4213.8225.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Rusty Russell <rusty@rustcorp.com.au>, "Michael S. Tsirkin" <mst@redhat.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kvm@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-The current memory accessors logic is:
-- little endian if little_endian
-- native endian (i.e. no byteswap) if !little_endian
+This patch brings cross-endian support to vhost when used to implement
+legacy virtio devices. Since it is a relatively rare situation, the
+feature availability is controlled by a kernel config option (not set
+by default).
 
-If we want to fully support cross-endian vhost, we also need to be
-able to convert to big endian.
+The ioctls introduced by this patch are for legacy only: virtio 1.0
+devices are returned EPERM.
 
-Instead of changing the little_endian argument to some 3-value enum, this
-patch changes the logic to:
-- little endian if little_endian
-- big endian if !little_endian
-
-The native endian case is handled by all users with a trivial helper. This
-patch doesn't change any functionality, nor it does add overhead.
-
-Signed-off-by: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
 ---
- drivers/net/macvtap.c            |    4 +++-
- drivers/net/tun.c                |    4 +++-
- drivers/vhost/vhost.h            |    4 +++-
- include/linux/virtio_byteorder.h |   24 ++++++++++++++----------
- include/linux/virtio_config.h    |    4 +++-
- include/linux/vringh.h           |    4 +++-
- 6 files changed, 29 insertions(+), 15 deletions(-)
+ drivers/vhost/Kconfig      |   10 ++++++++
+ drivers/vhost/vhost.c      |   55 ++++++++++++++++++++++++++++++++++++++++++++
+ drivers/vhost/vhost.h      |   17 +++++++++++++-
+ include/uapi/linux/vhost.h |    5 ++++
+ 4 files changed, 86 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/net/macvtap.c b/drivers/net/macvtap.c
-index a2f2958..0a03a66 100644
---- a/drivers/net/macvtap.c
-+++ b/drivers/net/macvtap.c
-@@ -51,7 +51,9 @@ struct macvtap_queue {
- 
- static inline bool macvtap_is_little_endian(struct macvtap_queue *q)
- {
--	return q->flags & MACVTAP_VNET_LE;
-+	if (q->flags & MACVTAP_VNET_LE)
-+		return true;
-+	return virtio_legacy_is_little_endian();
+Changes since v2:
+- fixed typos in Kconfig description
+- renamed vq->legacy_big_endian to vq->legacy_is_little_endian
+- vq->legacy_is_little_endian reset to default in vhost_vq_reset()
+- dropped VHOST_F_SET_ENDIAN_LEGACY feature
+- dropped struct vhost_vring_endian from the user API (re-use
+  struct vhost_vring_state instead)
+- added VHOST_GET_VRING_ENDIAN_LEGACY ioctl
+- introduced more helpers and stubs to avoid polluting the code with ifdefs
+
+
+diff --git a/drivers/vhost/Kconfig b/drivers/vhost/Kconfig
+index 017a1e8..0aec88c 100644
+--- a/drivers/vhost/Kconfig
++++ b/drivers/vhost/Kconfig
+@@ -32,3 +32,13 @@ config VHOST
+ 	---help---
+ 	  This option is selected by any driver which needs to access
+ 	  the core of vhost.
++
++config VHOST_SET_ENDIAN_LEGACY
++	bool "Cross-endian support for host kernel accelerator"
++	default n
++	---help---
++	  This option allows vhost to support guests with a different byte
++	  ordering from host. It is disabled by default since it adds overhead
++	  and it is only needed by a few platforms (powerpc and arm).
++
++	  If unsure, say "N".
+diff --git a/drivers/vhost/vhost.c b/drivers/vhost/vhost.c
+index 2ee2826..3529a3c 100644
+--- a/drivers/vhost/vhost.c
++++ b/drivers/vhost/vhost.c
+@@ -199,6 +199,7 @@ static void vhost_vq_reset(struct vhost_dev *dev,
+ 	vq->call = NULL;
+ 	vq->log_ctx = NULL;
+ 	vq->memory = NULL;
++	vq->legacy_is_little_endian = virtio_legacy_is_little_endian();
  }
  
- static inline u16 macvtap16_to_cpu(struct macvtap_queue *q, __virtio16 val)
-diff --git a/drivers/net/tun.c b/drivers/net/tun.c
-index 3c3d6c0..053f9b6 100644
---- a/drivers/net/tun.c
-+++ b/drivers/net/tun.c
-@@ -208,7 +208,9 @@ struct tun_struct {
- 
- static inline bool tun_is_little_endian(struct tun_struct *tun)
- {
--	return tun->flags & TUN_VNET_LE;
-+	if (tun->flags & TUN_VNET_LE)
-+		return true;
-+	return virtio_legacy_is_little_endian();
+ static int vhost_worker(void *data)
+@@ -630,6 +631,54 @@ static long vhost_set_memory(struct vhost_dev *d, struct vhost_memory __user *m)
+ 	return 0;
  }
  
- static inline u16 tun16_to_cpu(struct tun_struct *tun, __virtio16 val)
++#ifdef CONFIG_VHOST_SET_ENDIAN_LEGACY
++static long vhost_set_vring_endian_legacy(struct vhost_virtqueue *vq,
++					  void __user *argp)
++{
++	struct vhost_vring_state s;
++
++	if (vhost_has_feature(vq, VIRTIO_F_VERSION_1))
++		return -EPERM;
++
++	if (copy_from_user(&s, argp, sizeof(s)))
++		return -EFAULT;
++
++	vq->legacy_is_little_endian = !!s.num;
++	return 0;
++}
++
++static long vhost_get_vring_endian_legacy(struct vhost_virtqueue *vq,
++					  u32 idx,
++					  void __user *argp)
++{
++	struct vhost_vring_state s = {
++		.index = idx,
++		.num = vq->legacy_is_little_endian
++	};
++
++	if (vhost_has_feature(vq, VIRTIO_F_VERSION_1))
++		return -EPERM;
++
++	if (copy_to_user(argp, &s, sizeof(s)))
++		return -EFAULT;
++
++	return 0;
++}
++#else
++static long vhost_set_vring_endian_legacy(struct vhost_virtqueue *vq,
++					  void __user *argp)
++{
++	return 0;
++}
++
++static long vhost_get_vring_endian_legacy(struct vhost_virtqueue *vq,
++					  u32 idx,
++					  void __user *argp)
++{
++	return 0;
++}
++#endif /* CONFIG_VHOST_SET_ENDIAN_LEGACY */
++
+ long vhost_vring_ioctl(struct vhost_dev *d, int ioctl, void __user *argp)
+ {
+ 	struct file *eventfp, *filep = NULL;
+@@ -806,6 +855,12 @@ long vhost_vring_ioctl(struct vhost_dev *d, int ioctl, void __user *argp)
+ 		} else
+ 			filep = eventfp;
+ 		break;
++	case VHOST_SET_VRING_ENDIAN_LEGACY:
++		r = vhost_set_vring_endian_legacy(vq, argp);
++		break;
++	case VHOST_GET_VRING_ENDIAN_LEGACY:
++		r = vhost_get_vring_endian_legacy(vq, idx, argp);
++		break;
+ 	default:
+ 		r = -ENOIOCTLCMD;
+ 	}
 diff --git a/drivers/vhost/vhost.h b/drivers/vhost/vhost.h
-index 6a49960..4e9a186 100644
+index 4e9a186..981ba06 100644
 --- a/drivers/vhost/vhost.h
 +++ b/drivers/vhost/vhost.h
-@@ -175,7 +175,9 @@ static inline bool vhost_has_feature(struct vhost_virtqueue *vq, int bit)
+@@ -106,6 +106,9 @@ struct vhost_virtqueue {
+ 	/* Log write descriptors */
+ 	void __user *log_base;
+ 	struct vhost_log *log;
++
++	/* We need to know the device endianness with legacy virtio. */
++	bool legacy_is_little_endian;
+ };
  
+ struct vhost_dev {
+@@ -173,11 +176,23 @@ static inline bool vhost_has_feature(struct vhost_virtqueue *vq, int bit)
+ 	return vq->acked_features & (1ULL << bit);
+ }
+ 
++#ifdef CONFIG_VHOST_SET_ENDIAN_LEGACY
++static inline bool vhost_legacy_is_little_endian(struct vhost_virtqueue *vq)
++{
++	return vq->legacy_is_little_endian;
++}
++#else
++static inline bool vhost_legacy_is_little_endian(struct vhost_virtqueue *vq)
++{
++	return virtio_legacy_is_little_endian();
++}
++#endif
++
  static inline bool vhost_is_little_endian(struct vhost_virtqueue *vq)
  {
--	return vhost_has_feature(vq, VIRTIO_F_VERSION_1);
-+	if (vhost_has_feature(vq, VIRTIO_F_VERSION_1))
-+		return true;
-+	return virtio_legacy_is_little_endian();
+ 	if (vhost_has_feature(vq, VIRTIO_F_VERSION_1))
+ 		return true;
+-	return virtio_legacy_is_little_endian();
++	return vhost_legacy_is_little_endian(vq);
  }
  
  /* Memory accessors */
-diff --git a/include/linux/virtio_byteorder.h b/include/linux/virtio_byteorder.h
-index 51865d0..ce63a2c 100644
---- a/include/linux/virtio_byteorder.h
-+++ b/include/linux/virtio_byteorder.h
-@@ -3,17 +3,21 @@
- #include <linux/types.h>
- #include <uapi/linux/virtio_types.h>
+diff --git a/include/uapi/linux/vhost.h b/include/uapi/linux/vhost.h
+index bb6a5b4..1b01a72 100644
+--- a/include/uapi/linux/vhost.h
++++ b/include/uapi/linux/vhost.h
+@@ -103,6 +103,11 @@ struct vhost_memory {
+ /* Get accessor: reads index, writes value in num */
+ #define VHOST_GET_VRING_BASE _IOWR(VHOST_VIRTIO, 0x12, struct vhost_vring_state)
  
--/*
-- * Low-level memory accessors for handling virtio in modern little endian and in
-- * compatibility native endian format.
-- */
-+static inline bool virtio_legacy_is_little_endian(void)
-+{
-+#ifdef __LITTLE_ENDIAN
-+	return true;
-+#else
-+	return false;
-+#endif
-+}
- 
- static inline u16 __virtio16_to_cpu(bool little_endian, __virtio16 val)
- {
- 	if (little_endian)
- 		return le16_to_cpu((__force __le16)val);
- 	else
--		return (__force u16)val;
-+		return be16_to_cpu((__force __be16)val);
- }
- 
- static inline __virtio16 __cpu_to_virtio16(bool little_endian, u16 val)
-@@ -21,7 +25,7 @@ static inline __virtio16 __cpu_to_virtio16(bool little_endian, u16 val)
- 	if (little_endian)
- 		return (__force __virtio16)cpu_to_le16(val);
- 	else
--		return (__force __virtio16)val;
-+		return (__force __virtio16)cpu_to_be16(val);
- }
- 
- static inline u32 __virtio32_to_cpu(bool little_endian, __virtio32 val)
-@@ -29,7 +33,7 @@ static inline u32 __virtio32_to_cpu(bool little_endian, __virtio32 val)
- 	if (little_endian)
- 		return le32_to_cpu((__force __le32)val);
- 	else
--		return (__force u32)val;
-+		return be32_to_cpu((__force __be32)val);
- }
- 
- static inline __virtio32 __cpu_to_virtio32(bool little_endian, u32 val)
-@@ -37,7 +41,7 @@ static inline __virtio32 __cpu_to_virtio32(bool little_endian, u32 val)
- 	if (little_endian)
- 		return (__force __virtio32)cpu_to_le32(val);
- 	else
--		return (__force __virtio32)val;
-+		return (__force __virtio32)cpu_to_be32(val);
- }
- 
- static inline u64 __virtio64_to_cpu(bool little_endian, __virtio64 val)
-@@ -45,7 +49,7 @@ static inline u64 __virtio64_to_cpu(bool little_endian, __virtio64 val)
- 	if (little_endian)
- 		return le64_to_cpu((__force __le64)val);
- 	else
--		return (__force u64)val;
-+		return be64_to_cpu((__force __be64)val);
- }
- 
- static inline __virtio64 __cpu_to_virtio64(bool little_endian, u64 val)
-@@ -53,7 +57,7 @@ static inline __virtio64 __cpu_to_virtio64(bool little_endian, u64 val)
- 	if (little_endian)
- 		return (__force __virtio64)cpu_to_le64(val);
- 	else
--		return (__force __virtio64)val;
-+		return (__force __virtio64)cpu_to_be64(val);
- }
- 
- #endif /* _LINUX_VIRTIO_BYTEORDER */
-diff --git a/include/linux/virtio_config.h b/include/linux/virtio_config.h
-index bd1a582..36a6daa 100644
---- a/include/linux/virtio_config.h
-+++ b/include/linux/virtio_config.h
-@@ -207,7 +207,9 @@ int virtqueue_set_affinity(struct virtqueue *vq, int cpu)
- 
- static inline bool virtio_is_little_endian(struct virtio_device *vdev)
- {
--	return virtio_has_feature(vdev, VIRTIO_F_VERSION_1);
-+	if (virtio_has_feature(vdev, VIRTIO_F_VERSION_1))
-+		return true;
-+	return virtio_legacy_is_little_endian();
- }
- 
- /* Memory accessors */
-diff --git a/include/linux/vringh.h b/include/linux/vringh.h
-index 3ed62ef..d786c2d 100644
---- a/include/linux/vringh.h
-+++ b/include/linux/vringh.h
-@@ -228,7 +228,9 @@ static inline void vringh_notify(struct vringh *vrh)
- 
- static inline bool vringh_is_little_endian(const struct vringh *vrh)
- {
--	return vrh->little_endian;
-+	if (vrh->little_endian)
-+		return true;
-+	return virtio_legacy_is_little_endian();
- }
- 
- static inline u16 vringh16_to_cpu(const struct vringh *vrh, __virtio16 val)
++/* Set endianness for the ring (legacy virtio only) */
++/* num is 0 for big endian, other values mean little endian */
++#define VHOST_SET_VRING_ENDIAN_LEGACY _IOW(VHOST_VIRTIO, 0x13, struct vhost_vring_state)
++#define VHOST_GET_VRING_ENDIAN_LEGACY _IOW(VHOST_VIRTIO, 0x14, struct vhost_vring_state)
++
+ /* The following ioctls use eventfd file descriptors to signal and poll
+  * for events. */
