@@ -1,45 +1,53 @@
-From: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v2 4/4] Documentation: ABI: Fix documentation for mass_storage
- function
-Date: Wed, 08 Apr 2015 14:06:48 +0200
-Message-ID: <1428494808-12566-5-git-send-email-k.opasiak@samsung.com>
-References: <1428494808-12566-1-git-send-email-k.opasiak@samsung.com>
+From: Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
+Subject: Re: [PATCH v2 2/4] usb: gadget: mass_storage: Store lun_opts in
+ fsg_opts
+Date: Wed, 8 Apr 2015 10:15:32 -0400 (EDT)
+Message-ID: <Pine.LNX.4.44L0.1504081012240.1384-100000@iolanthe.rowland.org>
+References: <1428494808-12566-3-git-send-email-k.opasiak@samsung.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <1428494808-12566-1-git-send-email-k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+In-Reply-To: <1428494808-12566-3-git-send-email-k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: balbi-l0cyMroinI0@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jlbec-aKy9MeLSZ9dg9hUCZPvPmw@public.gmane.org
-Cc: andrzej.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+To: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Cc: balbi-l0cyMroinI0@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jlbec-aKy9MeLSZ9dg9hUCZPvPmw@public.gmane.org, andrzej.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Luns in mass storage function are identified using their id.
-While creating lun's directory user cannot choose any arbitrary
-name other than arabic numeral from 1 to FSG_MAX_LUNS.
+On Wed, 8 Apr 2015, Krzysztof Opasiak wrote:
 
-Signed-off-by: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
----
- .../ABI/testing/configfs-usb-gadget-mass-storage   |    7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+> Signed-off-by: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+> ---
+>  drivers/usb/gadget/function/f_mass_storage.c |    5 +++++
+>  drivers/usb/gadget/function/f_mass_storage.h |    1 +
+>  2 files changed, 6 insertions(+)
+> 
+> diff --git a/drivers/usb/gadget/function/f_mass_storage.c b/drivers/usb/gadget/function/f_mass_storage.c
+> index 811929c..095b618 100644
+> --- a/drivers/usb/gadget/function/f_mass_storage.c
+> +++ b/drivers/usb/gadget/function/f_mass_storage.c
+> @@ -3372,6 +3372,8 @@ static struct config_group *fsg_lun_make(struct config_group *group,
+>  	}
+>  	opts->lun = fsg_opts->common->luns[num];
+>  	opts->lun_id = num;
+> +	BUG_ON(fsg_opts->lun_opts[num]);
 
-diff --git a/Documentation/ABI/testing/configfs-usb-gadget-mass-storage b/Documentation/ABI/testing/configfs-usb-gadget-mass-storage
-index 9931fb0..0b54280 100644
---- a/Documentation/ABI/testing/configfs-usb-gadget-mass-storage
-+++ b/Documentation/ABI/testing/configfs-usb-gadget-mass-storage
-@@ -11,10 +11,15 @@ Description:
- 				are 2..4. Available only if
- 				CONFIG_USB_GADGET_DEBUG_FILES is set.
- 
--What:		/config/usb-gadget/gadget/functions/mass_storage.name/lun.name
-+What:		/config/usb-gadget/gadget/functions/mass_storage.name/lun.id
- Date:		Oct 2013
- KernelVersion:	3.13
- Description:
-+		id - arabic numeral from 1 to FSG_MAX_LUNS
-+		(which is 8 by default) - 1. LUNs should be numbered contiguously.
-+		lun.0 is reserved for default lun which appears while creating
-+		mass_storage.name directory and cannot be removed by the user.
-+
- 		The attributes:
- 
- 		file		- The path to the backing file for the LUN.
--- 
-1.7.9.5
+This is not a good idea.  BUG_ON should hardly ever be used.  In fact,
+Linus has said that the only time BUG_ON should be used is when things
+are so badly messed up that it is better to crash the computer than to
+let it continue.
+
+What's wrong with using WARN_ON instead?
+
+> diff --git a/drivers/usb/gadget/function/f_mass_storage.h b/drivers/usb/gadget/function/f_mass_storage.h
+> index b4866fc..0a7c656 100644
+> --- a/drivers/usb/gadget/function/f_mass_storage.h
+> +++ b/drivers/usb/gadget/function/f_mass_storage.h
+> @@ -81,6 +81,7 @@ struct fsg_opts {
+>  	struct fsg_common *common;
+>  	struct usb_function_instance func_inst;
+>  	struct fsg_lun_opts lun0;
+> +	struct fsg_lun_opts *lun_opts[FSG_MAX_LUNS];
+
+This looks strange.  Why is the entry for LUN 0 duplicated?
+
+Alan Stern
