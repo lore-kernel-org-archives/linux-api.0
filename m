@@ -1,93 +1,45 @@
-From: Krzysztof Opasiak <k.opasiak@samsung.com>
-Subject: [PATCH v2 3/4] usb: gadget: mass_storage: Ensure that lun ids are
- contiguous
-Date: Wed, 08 Apr 2015 14:06:47 +0200
-Message-ID: <1428494808-12566-4-git-send-email-k.opasiak@samsung.com>
+From: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH v2 4/4] Documentation: ABI: Fix documentation for mass_storage
+ function
+Date: Wed, 08 Apr 2015 14:06:48 +0200
+Message-ID: <1428494808-12566-5-git-send-email-k.opasiak@samsung.com>
 References: <1428494808-12566-1-git-send-email-k.opasiak@samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <1428494808-12566-1-git-send-email-k.opasiak@samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: balbi@ti.com, gregkh@linuxfoundation.org, jlbec@evilplan.org
-Cc: andrzej.p@samsung.com, m.szyprowski@samsung.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-usb@vger.kernel.org, Krzysztof Opasiak <k.opasiak@samsung.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-reply-to: <1428494808-12566-1-git-send-email-k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: balbi-l0cyMroinI0@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jlbec-aKy9MeLSZ9dg9hUCZPvPmw@public.gmane.org
+Cc: andrzej.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Krzysztof Opasiak <k.opasiak@samsung.com>
----
- drivers/usb/gadget/function/f_mass_storage.c |   35 +++++++++++++++++++++++---
- 1 file changed, 31 insertions(+), 4 deletions(-)
+Luns in mass storage function are identified using their id.
+While creating lun's directory user cannot choose any arbitrary
+name other than arabic numeral from 1 to FSG_MAX_LUNS.
 
-diff --git a/drivers/usb/gadget/function/f_mass_storage.c b/drivers/usb/gadget/function/f_mass_storage.c
-index 095b618..9d9fafb 100644
---- a/drivers/usb/gadget/function/f_mass_storage.c
-+++ b/drivers/usb/gadget/function/f_mass_storage.c
-@@ -3355,6 +3355,12 @@ static struct config_group *fsg_lun_make(struct config_group *group,
- 		goto out;
- 	}
+Signed-off-by: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+---
+ .../ABI/testing/configfs-usb-gadget-mass-storage   |    7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/Documentation/ABI/testing/configfs-usb-gadget-mass-storage b/Documentation/ABI/testing/configfs-usb-gadget-mass-storage
+index 9931fb0..0b54280 100644
+--- a/Documentation/ABI/testing/configfs-usb-gadget-mass-storage
++++ b/Documentation/ABI/testing/configfs-usb-gadget-mass-storage
+@@ -11,10 +11,15 @@ Description:
+ 				are 2..4. Available only if
+ 				CONFIG_USB_GADGET_DEBUG_FILES is set.
  
-+	if (!fsg_opts->common->luns[num - 1]) {
-+		ret = -EINVAL;
-+		pr_err("LUN ids should be contignous\n");
-+		goto out;
-+	}
+-What:		/config/usb-gadget/gadget/functions/mass_storage.name/lun.name
++What:		/config/usb-gadget/gadget/functions/mass_storage.name/lun.id
+ Date:		Oct 2013
+ KernelVersion:	3.13
+ Description:
++		id - arabic numeral from 1 to FSG_MAX_LUNS
++		(which is 8 by default) - 1. LUNs should be numbered contiguously.
++		lun.0 is reserved for default lun which appears while creating
++		mass_storage.name directory and cannot be removed by the user.
 +
- 	opts = kzalloc(sizeof(*opts), GFP_KERNEL);
- 	if (!opts) {
- 		ret = -ENOMEM;
-@@ -3364,12 +3370,17 @@ static struct config_group *fsg_lun_make(struct config_group *group,
- 	memset(&config, 0, sizeof(config));
- 	config.removable = true;
+ 		The attributes:
  
-+	/* ensure that lun ids are contiguous */
-+	ret = configfs_depend_item_unlocked(&(fsg_opts->lun_opts
-+					      [num - 1]->group.cg_item));
-+	if (ret)
-+		goto err_free_opts;
-+
- 	ret = fsg_common_create_lun(fsg_opts->common, &config, num, name,
- 				    (const char **)&group->cg_item.ci_name);
--	if (ret) {
--		kfree(opts);
--		goto out;
--	}
-+	if (ret)
-+		goto err_undepend_item;
-+
- 	opts->lun = fsg_opts->common->luns[num];
- 	opts->lun_id = num;
- 	BUG_ON(fsg_opts->lun_opts[num]);
-@@ -3382,6 +3393,16 @@ static struct config_group *fsg_lun_make(struct config_group *group,
- out:
- 	mutex_unlock(&fsg_opts->lock);
- 	return ERR_PTR(ret);
-+
-+err_undepend_item:
-+	configfs_undepend_item_unlocked(&(fsg_opts->lun_opts
-+					  [num - 1]->group.cg_item));
-+err_free_opts:
-+	kfree(opts);
-+
-+	mutex_unlock(&fsg_opts->lock);
-+	return ERR_PTR(ret);
-+
- }
- 
- static void fsg_lun_drop(struct config_group *group, struct config_item *item)
-@@ -3400,10 +3421,16 @@ static void fsg_lun_drop(struct config_group *group, struct config_item *item)
- 		unregister_gadget_item(gadget);
- 	}
- 
-+
-+	/* Allow to remove next one */
-+	configfs_undepend_item_unlocked(&(fsg_opts->lun_opts
-+					  [lun_opts->lun_id - 1]->group.cg_item));
-+
- 	fsg_common_remove_lun(lun_opts->lun, fsg_opts->common->sysfs);
- 	fsg_opts->common->luns[lun_opts->lun_id] = NULL;
- 	fsg_opts->lun_opts[lun_opts->lun_id] = NULL;
- 	lun_opts->lun_id = 0;
-+
- 	mutex_unlock(&fsg_opts->lock);
- 
- 	config_item_put(item);
+ 		file		- The path to the backing file for the LUN.
 -- 
 1.7.9.5
