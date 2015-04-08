@@ -1,155 +1,134 @@
-From: KY Srinivasan <kys@microsoft.com>
-Subject: RE: [PATCH RFCv2 00/21] Drivers: hv: utils: re-implement the
- kernel/userspace communication layer
-Date: Wed, 8 Apr 2015 16:15:06 +0000
-Message-ID: <BY2PR0301MB0711D5CDA8F246880FD6D1C0A0FC0@BY2PR0301MB0711.namprd03.prod.outlook.com>
-References: <1426080574-9011-1-git-send-email-vkuznets@redhat.com>
-	<BY2PR0301MB0711A355F6C97C96DD4883C9A0020@BY2PR0301MB0711.namprd03.prod.outlook.com>
- <87iod64nkm.fsf@vitty.brq.redhat.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH v4 00/14] Add kdbus implementation
+Date: Wed, 8 Apr 2015 15:38:57 -0700
+Message-ID: <CALCETrVFnpc9Rz9q4LCoYW7LvtevmBZd2RKz8f6kCOLZtFpwkg@mail.gmail.com>
+References: <1425906560-13798-1-git-send-email-gregkh@linuxfoundation.org>
+ <CALCETrUjqTH14fZCeqU_OBoKX_6x4B=712WTeSqSAztpgXGiDw@mail.gmail.com>
+ <CANq1E4Tf_6Cn+sxY=BPEbRpEr5WY+-rRX5gipz-_=4PNLa9bnQ@mail.gmail.com>
+ <CALCETrVWbz7YudNQXQD_2PjC1HR0P0cB_1ea8NiYoQPDfQxERg@mail.gmail.com>
+ <CANq1E4RA1ok=3Z5W2LkzqaUOKtbMVX_Joxe7_LRbLnQgfRUEYA@mail.gmail.com>
+ <CALCETrWCBYzbzG3xZznG4AvVf67E_d8BVmBi1bZsDx7x_2Bh5g@mail.gmail.com>
+ <CANq1E4TtXq02Ug22fsTr8j0X6+vJKvyryALiTEMbT4SMQB1j3g@mail.gmail.com>
+ <CALCETrXqYBeZuOWhm9mz_nt+aWPXHFwkQPEAfwBXzDxnAP7f+g@mail.gmail.com>
+ <CANq1E4QiErHp8Q6bzFLkK9=7eBZC8dvh+Xnrh9_D5DAAogyaZA@mail.gmail.com>
+ <CALCETrUuWhtJ9w9vyCGgaJDMGithJad4A4wf-BuxWLb_af5eDg@mail.gmail.com>
+ <CANq1E4TTt3qanQse30KOZsuo2tfNoj7YSueh3AZ7bY1nQQeZNA@mail.gmail.com>
+ <CALCETrV-cHYzcWu3t6tJ1eP0UZHTqoGH0KTYHTpJNit9-59TAA@mail.gmail.com>
+ <CAG-2HqVwfH5fK0YV1+k3T4bFqd5v3Yd-hpL-bTSBK23FFY-zMA@mail.gmail.com>
+ <CALCETrX3vDZsymwC=LK=oK0=QLZqyB2Nv4N8jcjsx2yp1rjBvg@mail.gmail.com> <CANq1E4QSja-KhVL2p-d406uLJT600zMpK2UAcwsb0LkMwa8F7w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87iod64nkm.fsf@vitty.brq.redhat.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vitaly Kuznetsov <vkuznets@redhat.com>
-Cc: "devel@linuxdriverproject.org" <devel@linuxdriverproject.org>, Haiyang Zhang <haiyangz@microsoft.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Dexuan Cui <decui@microsoft.com>, Radim Krcmar <rkrcmar@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CANq1E4QSja-KhVL2p-d406uLJT600zMpK2UAcwsb0LkMwa8F7w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+[Trying again due to HTML mail goof.  Trimming and responding better, too.]
 
 
-> -----Original Message-----
-> From: Vitaly Kuznetsov [mailto:vkuznets@redhat.com]
-> Sent: Wednesday, April 8, 2015 9:01 AM
-> To: KY Srinivasan
-> Cc: devel@linuxdriverproject.org; Haiyang Zhang; linux-
-> kernel@vger.kernel.org; Dexuan Cui; Radim Krcmar; Greg Kroah-Hartman;
-> linux-api@vger.kernel.org
-> Subject: Re: [PATCH RFCv2 00/21] Drivers: hv: utils: re-implement the
-> kernel/userspace communication layer
-> 
-> KY Srinivasan <kys@microsoft.com> writes:
-> 
-> >> -----Original Message-----
-> >> From: Vitaly Kuznetsov [mailto:vkuznets@redhat.com]
-> >> Sent: Wednesday, March 11, 2015 6:29 AM
-> >> To: KY Srinivasan; devel@linuxdriverproject.org
-> >> Cc: Haiyang Zhang; linux-kernel@vger.kernel.org; Dexuan Cui; Radim
-> Krcmar;
-> >> Greg Kroah-Hartman; linux-api@vger.kernel.org
-> >> Subject: [PATCH RFCv2 00/21] Drivers: hv: utils: re-implement the
-> >> kernel/userspace communication layer
-> >>
-> >> Changes in RFCv2:
-> >> - Preserve backwards compatibility with netlink-speaking daemons. [K. Y.
-> >> Srinivasan]
-> >> - Introduce transport abstraction layer. [K. Y. Srinivasan]
-> >> - Get rid of ioctls [Radim Krcmar]
-> >> - Make the series reviewable by splitting it into smaller patches.
-> >>
-> >> Anatomy of the series:
-> >> Patches 01 - 07 are cleanup with minor functional change.
-> >> Patch 08 defines the state machine.
-> >> Patches 09-11 convert all 3 drivers to using the state machine.
-> >> Patch 12 fixes a bug in fcopy. This change is going away in Patch 15,  I just
-> >> want to highlight the fix.
-> >> Patch 13 introduces a transport abstraction.
-> >> Patch 14-16 convert all drivers to using the transport abstraction.
-> >> Patches 17-18 switch KVP and VSS daemon to using char devices.
-> >> Patches 19-20 convert FCOPY and VSS to hull handshake (the same we
-> have
-> >> in  KVP). These two can be postponed till we really need to distinguish
-> >> between  different kernels in the daemon code.
-> >> Patch 21 unifies log messages on daemons connect across all drivers and
-> >> moves  these messages to debug level.
-> >>
-> >> I smoke-tested this series with both old (netlink) and new (char devices)
-> >> daemons and tested the daemon upgrade procedure.
-> >>
-> >> Original description:
-> >> This series converts kvp/vss daemons to use misc char devices instead of
-> >> netlink for userspace/kernel communication and then updates fcopy to
-> be
-> >> consistent with kvp/vss.
-> >>
-> >> Userspace/kernel communication via netlink has a number of issues:
-> >> - It is hard for userspace to figure out if the kernel part was loaded or not
-> >>   and this fact can change as there is a way to enable/disable the service
-> from
-> >>   host side. Racy daemon startup is also a problem.
-> >> - When the userspace daemon restarts/dies kernel part doesn't receive a
-> >>   notification.
-> >> - Netlink communication is not stable under heavy load.
-> >> - ...
-> >>
-> >> Vitaly Kuznetsov (21):
-> >>   Drivers: hv: util: move kvp/vss function declarations to
-> >>     hyperv_vmbus.h
-> >>   Drivers: hv: kvp: reset kvp_context
-> >>   Drivers: hv: kvp: move poll_channel() to hyperv_vmbus.h
-> >>   Drivers: hv: fcopy: process deferred messages when we complete the
-> >>     transaction
-> >>   Drivers: hv: vss: process deferred messages when we complete the
-> >>     transaction
-> >>   Drivers: hv: kvp: rename kvp_work -> kvp_timeout_work
-> >>   Drivers: hv: fcopy: rename fcopy_work -> fcopy_timeout_work
-> >>   Drivers: hv: util: introduce state machine for util drivers
-> >>   Drivers: hv: kvp: switch to using the hvutil_device_state state
-> >>     machine
-> >>   Drivers: hv: vss: switch to using the hvutil_device_state state
-> >>     machine
-> >>   Drivers: hv: fcopy: switch to using the hvutil_device_state state
-> >>     machine
-> >>   Drivers: hv: fcopy: set .owner reference for file operations
-> >>   Drivers: hv: util: introduce hv_utils_transport abstraction
-> >>   Drivers: hv: vss: convert to hv_utils_transport
-> >>   Drivers: hv: fcopy: convert to hv_utils_transport
-> >>   Drivers: hv: kvp: convert to hv_utils_transport
-> >>   Tools: hv: kvp: use misc char device to communicate with kernel
-> >>   Tools: hv: vss: use misc char device to communicate with kernel
-> >>   Drivers: hv: vss: full handshake support
-> >>   Drivers: hv: fcopy: full handshake support
-> >>   Drivers: hv: utils: unify driver registration reporting
-> >>
-> >>  drivers/hv/Makefile             |   2 +-
-> >>  drivers/hv/hv_fcopy.c           | 287 ++++++++++++++--------------------------
-> >>  drivers/hv/hv_kvp.c             | 192 +++++++++++++--------------
-> >>  drivers/hv/hv_snapshot.c        | 168 +++++++++++++++--------
-> >>  drivers/hv/hv_utils_transport.c | 276
-> >> ++++++++++++++++++++++++++++++++++++++
-> >>  drivers/hv/hv_utils_transport.h |  51 +++++++
-> >>  drivers/hv/hyperv_vmbus.h       |  29 ++++
-> >>  include/linux/hyperv.h          |   8 --
-> >>  include/uapi/linux/hyperv.h     |   8 +-
-> >>  tools/hv/hv_fcopy_daemon.c      |  15 +++
-> >>  tools/hv/hv_kvp_daemon.c        | 166 +++++------------------
-> >>  tools/hv/hv_vss_daemon.c        | 149 ++++++---------------
-> >>  12 files changed, 752 insertions(+), 599 deletions(-)  create mode 100644
-> >> drivers/hv/hv_utils_transport.c  create mode 100644
-> >> drivers/hv/hv_utils_transport.h
-> >
-> > Vitaly,
-> >
-> > Thank you very much for taking on this project; very well done. I have
-> mostly reviewed the code and I should be
-> > done shortly. Also, I am going to test this code as well. If there are no
-> issues, I will send this out to Greg in my next
-> > installment of patches.
-> 
-> Hi K.Y.,
-> 
-> I don't mean to rush or anything but please let me know if I need to do
-> something with this series (e.g. fix something, rebase/resend it,...) to
-> get it applied.
+On Fri, Apr 3, 2015 at 4:51 AM, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> Hi
+>
+> On Tue, Mar 31, 2015 at 8:29 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>> On Tue, Mar 31, 2015 at 8:10 AM, Tom Gundersen <teg-B22kvLQNl6c@public.gmane.org> wrote:
+>>> On Tue, Mar 31, 2015 at 3:58 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+>>>>
+>>>> IOW you're taking something that you dislike aspects of and shoving
+>>>> most of it in the kernel.  That guarantees us an API in the kernel
+>>>> that even the creators don't really like.  This is, IMO, very
+>>>> unfortunate.
+>>>
+>>> This is a misrepresentation of what David wrote. We do want this API
+>>> regardless of dbus1 compatibility, but compatibility is by itself a
+>>> sufficient motivation. A further motivation is reliable introspection,
+>>> since this meta-data allows listing current peers on the bus and
+>>> showing their identities. That's hugely useful to make the bus
+>>> transparent to admins.
+>>
+>> I've heard the following use cases for per-connection metadata:
+>>
+>>  - Authenticating to dbus1 services.
+>
+> Not necessarily authentication, but we need to support the legacy API,
+> for whatever reason it was used by old applications. But..
+>
+>>  - Identifying connected users for admin diagnostics.
+>>
+>> I've heard the following use cases for per-message metadata:
+>>
+>>  - Logging.
+>>
+>>  - Authenticating to kdbus services that want this style of authentication.
+>
+> ..please note that authentication on DBus has always been done with
+> per-message metadata (see polkit history). However, this had to be
+> reverted some years ago as it is racy (it used /proc for that, which
+> can be exploited by exec'ing setuid binaries). However, the
+> per-message metadata authentication worked very well for _years_
+> (minus the race..), so this is already a well-established scheme. With
+> kdbus we can finally implement this in a race-free manner.
+>
+> [...]
+>> This is simply not okay for a modern interface, and in my opinion the
+>> kernel should not carry code to support new APIs with weakly defined
+>> security semantics.  It's important that one be able to tell what the
+>> security implications of one's code is without cross-referencing with
+>> the implementation of the server's you're interacting with.
+>
+> Again, I disagree. Our concepts are established and used on UDS and
+> DBus for decades.
 
-Sorry for the delay Vitaly. I finally was able to test it; please resend the patch-set that can apply on the current tip.
+SO_PASSCRED does not justify anything in my book.  It was a mistake
+and it remains a minor disaster.  Please don't use it as justification
+for something being a good idea.
 
-Regards,
+Similarly, the fact that the *receiver* chooses which of SO_PASSCRED
+and SO_PEERCRED to use is awful.
 
-K. Y
-> 
-> Thanks,
-> 
-> --
->   Vitaly
+>
+> Yes, we provide two ways to retrieve metadata, but the kernel offers
+> several more paths to gather that information. Just because those APIs
+> are available does not mean they should be used for authentication. We
+> mandate per-message metadata. If applications use per-connection
+> metadata, /proc, netlink, or random data, they're doing it wrong.
+
+ISTM kdbus is trying to add three more interfaces, at least two of
+which are also doing it wrong.  (Which two is debatable.)
+
+>
+> Furthermore, dbus provides pretty complete and straightforward
+> libraries which hide that from you. If you use glib, qt or sd-bus, you
+> don't even need to deal with all that.
+
+Libraries can't hide the issue of whether:
+
+init_my_favorite_library();
+connect_to_thingy();
+setresuid(nobody);
+
+is secure.  It is either secure, insecure, or ambiguous.
+Unfortunately, kdbus as currently proposed is aiming for ambiguous.
+
+>
+>> To top that off, the kdbus policy mechanism has truly bizarre effects
+>> with respect to services that have unique ids and well-known names.
+>> That, too, is apparently for compatibility.
+>>
+>> This all feels to me like a total of about four people are going to
+>> understand the tangle that is kdbus security, and that's bad.  I think
+>> that the kernel should insist that new security-critical mechanisms
+>> make sense and be hard to misuse.  The current design of kdbus, in
+>> contrast, feel like it will be very hard to use correctly.
+>
+> Native kdbus clients are authenticated with their credentials at time
+> of method call. Legacy clients will always have their credentials at
+> time of connect in effect. No fallbacks, no choices. It's a simple
+> question whether it's a legacy client or not.
+> Sounds simple to me.
+
+I had the distinct impression that the kdbus-client-to-dbus1-server
+proxy used kdbus clients' connection metadata.  I could be wrong here.
+
+--Andy
