@@ -1,15 +1,15 @@
 From: Greg Kurz <gkurz@linux.vnet.ibm.com>
 Subject: Re: [PATCH v3 7/7] vhost: feature to set the vring endianness
-Date: Wed, 8 Apr 2015 10:23:29 +0200
-Message-ID: <20150408102329.7f39e80d@bahia.local>
+Date: Wed, 8 Apr 2015 10:25:34 +0200
+Message-ID: <20150408102534.1baddf7b@bahia.local>
 References: <20150407120929.4213.8225.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
 	<20150407121557.4213.95569.stgit@bahia.lab.toulouse-stg.fr.ibm.com>
-	<20150407155228.GA1907@redhat.com>
+	<20150407175640-mutt-send-email-mst@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <20150407155228.GA1907@redhat.com>
+In-Reply-To: <20150407175640-mutt-send-email-mst@redhat.com>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
 	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
@@ -23,7 +23,7 @@ To: "Michael S. Tsirkin" <mst@redhat.com>
 Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kvm@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 7 Apr 2015 17:52:28 +0200
+On Tue, 7 Apr 2015 18:11:29 +0200
 "Michael S. Tsirkin" <mst@redhat.com> wrote:
 
 > On Tue, Apr 07, 2015 at 02:19:31PM +0200, Greg Kurz wrote:
@@ -36,16 +36,6 @@ On Tue, 7 Apr 2015 17:52:28 +0200
 > > devices are returned EPERM.
 > > 
 > > Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
-> 
-> EINVAL probably makes more sense?
-> 
-
-I had choosen EPERM because the error isn't related to the arguments
-being passed by userspace. It simply does not make sense to set the
-vring endianness for a virtio 1.0 device.
-
-That being said, I am perfectly fine with EINVAL. :)
-
 > > ---
 > >  drivers/vhost/Kconfig      |   10 ++++++++
 > >  drivers/vhost/vhost.c      |   55 ++++++++++++++++++++++++++++++++++++++++++++
@@ -106,19 +96,6 @@ That being said, I am perfectly fine with EINVAL. :)
 > > +
 > > +	if (vhost_has_feature(vq, VIRTIO_F_VERSION_1))
 > > +		return -EPERM;
-> 
-> EINVAL probably makes more sense? But I'm not sure this
-> is helpful: one can set VIRTIO_F_VERSION_1 afterwards,
-> and your patch does not seem to detect this.
-> 
-
-Yeah, when I dropped the *bogus* feature from v2, I forgot to patch
-VHOST_SET_FEATURES accordingly... But thinking about it now, the choice
-to error out when setting VIRTIO_F_VERSION_1 because cross-endian legacy
-was set before looks terrible... :-\
-
-> 
-> 
 > > +
 > > +	if (copy_from_user(&s, argp, sizeof(s)))
 > > +		return -EFAULT;
@@ -157,12 +134,6 @@ was set before looks terrible... :-\
 > > +{
 > > +	return 0;
 > > +}
-> 
-> Should be -ENOIOCTLCMD?
-> 
-
-Sure.
-
 > > +#endif /* CONFIG_VHOST_SET_ENDIAN_LEGACY */
 > > +
 > >  long vhost_vring_ioctl(struct vhost_dev *d, int ioctl, void __user *argp)
@@ -181,12 +152,6 @@ Sure.
 > >  	default:
 > >  		r = -ENOIOCTLCMD;
 > >  	}
-> 
-> I think we also want to forbid this with a running backend.
-> 
-
-Yes.
-
 > > diff --git a/drivers/vhost/vhost.h b/drivers/vhost/vhost.h
 > > index 4e9a186..981ba06 100644
 > > --- a/drivers/vhost/vhost.h
@@ -236,12 +201,6 @@ Yes.
 > >  
 > > +/* Set endianness for the ring (legacy virtio only) */
 > > +/* num is 0 for big endian, other values mean little endian */
-> 
-> I'd prefer 0 and 1, return EINVAL on other values.
-> 
-
-Ok.
-
 > > +#define VHOST_SET_VRING_ENDIAN_LEGACY _IOW(VHOST_VIRTIO, 0x13, struct vhost_vring_state)
 > > +#define VHOST_GET_VRING_ENDIAN_LEGACY _IOW(VHOST_VIRTIO, 0x14, struct vhost_vring_state)
 > > +
@@ -249,8 +208,33 @@ Ok.
 > >   * for events. */
 > >  
 > 
+> So if the config feature is enabled, you actually check two
+> things: 1. feature 2. ioctl
+> 
+> Why not override is_le when we set VIRTIO_F_VERSION_1?
+> I guess you are worried that setting a value and not being
+> able to read it back is ugly. We can add a flag to track
+> it though. So here's an idea
+> 	I would probably rename to G/SET_BIG_ENDIAN then it's obvious
+> 	it's legacy.  And just document that it's ignored with
+> 	VIRTIO_F_VERSION_1.
+> 
+> 	make sure it's not changed when ring is running
+> 
+> 	simply set vq->is_le correctly when we start/stop the device
+> 		vq->is_le = vhost_has_feature(vq, VIRTIO_F_VERSION_1) ||
+> 			!vq->user_be;
+> 
+> 	 static inline bool vhost_is_little_endian(struct vhost_virtqueue *vq)
+> 	 {
+> 		return vq->is_le;
+> 	 }
+> 
+> 
 
-Thanks.
+I like the idea. I'll give it a try.
+
+Thanks for your help Michael.
 
 --
 Greg
