@@ -1,11 +1,11 @@
 From: Krzysztof Opasiak <k.opasiak@samsung.com>
-Subject: [PATCH 2/5] fs: configfs: Add unlocked version of
+Subject: [PATCH v2 1/4] fs: configfs: Add unlocked version of
  configfs_depend_item()
-Date: Wed, 08 Apr 2015 13:28:45 +0200
-Message-ID: <1428492528-11993-3-git-send-email-k.opasiak@samsung.com>
-References: <1428492528-11993-1-git-send-email-k.opasiak@samsung.com>
+Date: Wed, 08 Apr 2015 14:06:45 +0200
+Message-ID: <1428494808-12566-2-git-send-email-k.opasiak@samsung.com>
+References: <1428494808-12566-1-git-send-email-k.opasiak@samsung.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <1428492528-11993-1-git-send-email-k.opasiak@samsung.com>
+In-reply-to: <1428494808-12566-1-git-send-email-k.opasiak@samsung.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: balbi@ti.com, gregkh@linuxfoundation.org, jlbec@evilplan.org
 Cc: andrzej.p@samsung.com, m.szyprowski@samsung.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-usb@vger.kernel.org, Krzysztof Opasiak <k.opasiak@samsung.com>
@@ -29,7 +29,7 @@ Signed-off-by: Krzysztof Opasiak <k.opasiak@samsung.com>
  2 files changed, 38 insertions(+)
 
 diff --git a/fs/configfs/dir.c b/fs/configfs/dir.c
-index dee1cb5..ef51594 100644
+index cf0db00..7875a5e 100644
 --- a/fs/configfs/dir.c
 +++ b/fs/configfs/dir.c
 @@ -1152,6 +1152,35 @@ void configfs_undepend_item(struct configfs_subsystem *subsys,
