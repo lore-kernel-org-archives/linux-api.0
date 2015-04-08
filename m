@@ -1,183 +1,67 @@
-From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: Re: [PATCH v4 04/10] eeprom: Add a simple EEPROM framework for eeprom
- consumers
-Date: Tue, 07 Apr 2015 21:09:38 +0100
-Message-ID: <55243982.7020907@linaro.org>
-References: <1427752492-17039-1-git-send-email-srinivas.kandagatla@linaro.org> <1427752670-17219-1-git-send-email-srinivas.kandagatla@linaro.org> <20150407184533.GA10278@codeaurora.org>
+From: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [GIT PULL] selftest: Add futex functional tests
+Date: Tue, 7 Apr 2015 21:12:57 -0700
+Message-ID: <20150408041257.GC14618@fury.dvhart.com>
+References: <cover.1427493640.git.dvhart@linux.intel.com>
+ <551ABE00.9050003@osg.samsung.com>
+ <D14017F7.C46F0%dvhart@linux.intel.com>
+ <551ACD5F.8010003@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-msm-owner@vger.kernel.org>
-In-Reply-To: <20150407184533.GA10278@codeaurora.org>
-Sender: linux-arm-msm-owner@vger.kernel.org
-To: Stephen Boyd <sboyd@codeaurora.org>
-Cc: linux-arm-kernel@lists.infradead.org, Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <551ACD5F.8010003-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Thanks Stephen for review,
+On Tue, Mar 31, 2015 at 10:37:51AM -0600, Shuah Khan wrote:
+> On 03/31/2015 10:24 AM, Darren Hart wrote:
+> > On 3/31/15, 8:32 AM, "Shuah Khan" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+> > 
+> >> Hi Daren,
+> >>
+> >> On 03/27/2015 04:17 PM, Darren Hart wrote:
+> >>> Hi Shuah,
+> >>>
+> >>> This series begins the process of migrating my futextest tests into
+> >>> kselftest.
+> >>> I've started with only the functional tests, as the performance and
+> >>> stress may
+> >>> not be appropriate for kselftest as they stand.
+> >>>
+> >>> I cleaned up various complaints from checkpatch, but I ignored others
+> >>> that would
+> >>> require significant rework of the testcases, such as not using volatile
+> >>> and not
+> >>> creating new typedefs.
+> >>>
+> >>> The patches will follow, but I'm providing a pull request for your
+> >>> convenience
+> >>> as well.
+> >>
+> >> Thanks for acting on this so quickly after we talked about it at ELC.
+> >> Just a quick note that I am going to get to this soon once I get the
+> >> 4.1 content wrapped up. We can plan upon getting these into 4.2.
+> > 
+> > OK. Michael E. provided some feedback which I can either incorporate and
+> > respin, or I can send as a follow-on to your -next after you merge these.
+> > Which do you prefer?
+> > 
 
-On 07/04/15 19:45, Stephen Boyd wrote:
-> On 03/30, Srinivas Kandagatla wrote:
->> @@ -130,6 +138,37 @@ static struct class eeprom_class = {
->>   	.dev_release	= eeprom_release,
->>   };
->>
->> +static int of_eeprom_match(struct device *dev, const void *eeprom_np)
->> +{
->> +	return dev->of_node == eeprom_np;
->> +}
->> +
->> +static struct eeprom_device *of_eeprom_find(struct device_node *eeprom_np)
->> +{
->> +	struct device *d;
->> +
->> +	if (!eeprom_np)
->> +		return NULL;
->> +
->> +	d = class_find_device(&eeprom_class, NULL, eeprom_np, of_eeprom_match);
->> +
->> +	return d ? to_eeprom(d) : NULL;
->> +}
->> +
->> +static int eeprom_match(struct device *dev, const void *data)
->> +{
->> +	return !strcmp(dev_name(dev), (const char *)data);
->
-> Is this cast necessary?
-May be an over do here, I will fix it.
->
->> +}
->> +
->> +static struct eeprom_device *eeprom_find(const char *name)
->> +{
->> +	struct device *d;
->> +
->> +	d = class_find_device(&eeprom_class, NULL, (void *)name, eeprom_match);
->
-> Is this cast necessary?
+...
 
-I Will fix it in next version.
->
->> +
->> +	return d ? to_eeprom(d) : NULL;
->> +}
->> +
->>   /**
->>    * eeprom_register(): Register a eeprom device for given eeprom.
->>    * Also creates an binary entry in /sys/class/eeprom/name-id/eeprom
->> +
->> +/**
->> + * eeprom_cell_get(): Get eeprom cell of device form a given eeprom name
->
-> s/form/from/
+> You can wait to re-do patches. I am planning to review the
+> patch set later on this week. That way you can avoid re-spin
+> just in case, I have other comments.
 
-Will fix this in next version.
->
->> + * and blocks.
->> + *
->> + * @ename: eeprom device name that needs to be looked-up.
->> + * @blocks: eeprom blocks containing offset and length information.
->> + * @nblocks: number of eeprom blocks.
->> + *
->> + * The return value will be an ERR_PTR() on error or a valid pointer
->> + * to a struct eeprom_cell.  The eeprom_cell will be freed by the
->> + * eeprom_cell_put().
->> + */
->> +struct eeprom_cell *eeprom_cell_get(const char *ename,
->> +				    struct eeprom_block *blocks, int nblocks)
->> +{
->> +	return __eeprom_cell_get(NULL, ename, blocks, nblocks);
->> +}
->> +EXPORT_SYMBOL_GPL(eeprom_cell_get);
->> +
->> +/**
->> + * of_eeprom_cell_get(): Get eeprom cell of device form a given index
->
-> s/form/from/
->
-Ok,
->> + *
->> + * @dev node: Device tree node that uses the eeprom cell
->> +
->> +#ifndef _LINUX_EEPROM_CONSUMER_H
->> +#define _LINUX_EEPROM_CONSUMER_H
->> +
->> +struct eeprom_cell;
->> +
->> +struct eeprom_block {
->> +	loff_t offset;
->> +	size_t count;
->> +};
->> +#if IS_ENABLED(CONFIG_EEPROM)
->> +struct eeprom_cell *eeprom_cell_get(const char *ename,
->> +				    struct eeprom_block *blocks, int nblocks);
->> +void eeprom_cell_put(struct eeprom_cell *cell);
->> +char *eeprom_cell_read(struct eeprom_cell *cell, ssize_t *len);
->> +int eeprom_cell_write(struct eeprom_cell *cell, const char *buf, ssize_t len);
-> [...]
->> +
->> +#if IS_ENABLED(CONFIG_EEPROM) && IS_ENABLED(CONFIG_OF)
->> +struct eeprom_cell *of_eeprom_cell_get(struct device_node *dev,
->> +				       const char *property);
->> +#else
->> +static inline struct eeprom_cell *of_eeprom_cell_get(struct device_node *np,
->> +						     const char *property)
->> +{
->> +	return ERR_PTR(-ENOSYS);
->> +}
->> +#endif
->> +#endif  /* ifndef _LINUX_EEPROM_CONSUMER_H */
->
-> Do you have an overview of how to use these APIs? Maybe some
-> Documentation/ is in order? I'm mostly interested in how the
-> blocks array is supposed to work and how this hooks up to drivers
-> that are using DT.
+Hi Shuah,
 
-Only doc ATM is function level kernel doc in c file.
-May be I can explain you for now and I will try to add some 
-documentation with some usage examples in next version.
+Did you have any additional comments for the futex tests?
 
-eeprom block array is just another way intended to get hold of eeprom 
-content for non-DT providers/consumers, but DT consumers/providers can 
-also use it. As of today SOC/mach level code could use it as well.
+Thanks,
 
-In eeprom_cell_get() case the lookup of provider is done based on 
-provider name, this provider name is generally supplied by all the 
-providers (both DT/non DT).
-
-for example in qfprom case,
-provider is registered from DT with eeprom config containing a unique name:
-static struct eeprom_config econfig = {
-	.name = "qfprom",
-	.id = 0,
-};
-
-In the consumer case, the tsens driver could do some like in non DT way:
-
-	struct eeprom_block blocks[4] ={
-		{
-		.offset = 0x404,
-		.count = 0x4,
-		},
-		{
-		.offset = 0x408,
-		.count = 0x4,
-		},
-		{
-		.offset = 0x40c,
-		.count = 0x4,
-		},
-		{
-		.offset = 0x410,
-		.count = 0x4,
-		},
-	};
-	calib_cell = eeprom_cell_get("qfprom0", blocks, 4);
-
-
-Or in DT way
-calib_cell  = of_eeprom_cell_get(np, "calib");
-
-
---srini
->
+-- 
+Darren Hart
+Intel Open Source Technology Center
