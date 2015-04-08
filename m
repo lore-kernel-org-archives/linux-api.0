@@ -1,7 +1,8 @@
 From: Krzysztof Opasiak <k.opasiak@samsung.com>
-Subject: [PATCH v2 2/4] usb: gadget: mass_storage: Store lun_opts in fsg_opts
-Date: Wed, 08 Apr 2015 14:06:46 +0200
-Message-ID: <1428494808-12566-3-git-send-email-k.opasiak@samsung.com>
+Subject: [PATCH v2 3/4] usb: gadget: mass_storage: Ensure that lun ids are
+ contiguous
+Date: Wed, 08 Apr 2015 14:06:47 +0200
+Message-ID: <1428494808-12566-4-git-send-email-k.opasiak@samsung.com>
 References: <1428494808-12566-1-git-send-email-k.opasiak@samsung.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-reply-to: <1428494808-12566-1-git-send-email-k.opasiak@samsung.com>
@@ -12,58 +13,81 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Krzysztof Opasiak <k.opasiak@samsung.com>
 ---
- drivers/usb/gadget/function/f_mass_storage.c |    5 +++++
- drivers/usb/gadget/function/f_mass_storage.h |    1 +
- 2 files changed, 6 insertions(+)
+ drivers/usb/gadget/function/f_mass_storage.c |   35 +++++++++++++++++++++++---
+ 1 file changed, 31 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/usb/gadget/function/f_mass_storage.c b/drivers/usb/gadget/function/f_mass_storage.c
-index 811929c..095b618 100644
+index 095b618..9d9fafb 100644
 --- a/drivers/usb/gadget/function/f_mass_storage.c
 +++ b/drivers/usb/gadget/function/f_mass_storage.c
-@@ -3372,6 +3372,8 @@ static struct config_group *fsg_lun_make(struct config_group *group,
+@@ -3355,6 +3355,12 @@ static struct config_group *fsg_lun_make(struct config_group *group,
+ 		goto out;
  	}
+ 
++	if (!fsg_opts->common->luns[num - 1]) {
++		ret = -EINVAL;
++		pr_err("LUN ids should be contignous\n");
++		goto out;
++	}
++
+ 	opts = kzalloc(sizeof(*opts), GFP_KERNEL);
+ 	if (!opts) {
+ 		ret = -ENOMEM;
+@@ -3364,12 +3370,17 @@ static struct config_group *fsg_lun_make(struct config_group *group,
+ 	memset(&config, 0, sizeof(config));
+ 	config.removable = true;
+ 
++	/* ensure that lun ids are contiguous */
++	ret = configfs_depend_item_unlocked(&(fsg_opts->lun_opts
++					      [num - 1]->group.cg_item));
++	if (ret)
++		goto err_free_opts;
++
+ 	ret = fsg_common_create_lun(fsg_opts->common, &config, num, name,
+ 				    (const char **)&group->cg_item.ci_name);
+-	if (ret) {
+-		kfree(opts);
+-		goto out;
+-	}
++	if (ret)
++		goto err_undepend_item;
++
  	opts->lun = fsg_opts->common->luns[num];
  	opts->lun_id = num;
-+	BUG_ON(fsg_opts->lun_opts[num]);
-+	fsg_opts->lun_opts[num] = opts;
+ 	BUG_ON(fsg_opts->lun_opts[num]);
+@@ -3382,6 +3393,16 @@ static struct config_group *fsg_lun_make(struct config_group *group,
+ out:
  	mutex_unlock(&fsg_opts->lock);
+ 	return ERR_PTR(ret);
++
++err_undepend_item:
++	configfs_undepend_item_unlocked(&(fsg_opts->lun_opts
++					  [num - 1]->group.cg_item));
++err_free_opts:
++	kfree(opts);
++
++	mutex_unlock(&fsg_opts->lock);
++	return ERR_PTR(ret);
++
+ }
  
- 	config_group_init_type_name(&opts->group, name, &fsg_lun_type);
-@@ -3400,6 +3402,7 @@ static void fsg_lun_drop(struct config_group *group, struct config_item *item)
+ static void fsg_lun_drop(struct config_group *group, struct config_item *item)
+@@ -3400,10 +3421,16 @@ static void fsg_lun_drop(struct config_group *group, struct config_item *item)
+ 		unregister_gadget_item(gadget);
+ 	}
  
++
++	/* Allow to remove next one */
++	configfs_undepend_item_unlocked(&(fsg_opts->lun_opts
++					  [lun_opts->lun_id - 1]->group.cg_item));
++
  	fsg_common_remove_lun(lun_opts->lun, fsg_opts->common->sysfs);
  	fsg_opts->common->luns[lun_opts->lun_id] = NULL;
-+	fsg_opts->lun_opts[lun_opts->lun_id] = NULL;
+ 	fsg_opts->lun_opts[lun_opts->lun_id] = NULL;
  	lun_opts->lun_id = 0;
++
  	mutex_unlock(&fsg_opts->lock);
  
-@@ -3546,6 +3549,7 @@ static struct usb_function_instance *fsg_alloc_inst(void)
- 	if (!opts)
- 		return ERR_PTR(-ENOMEM);
- 	mutex_init(&opts->lock);
-+	memset(opts->lun_opts, 0, sizeof(opts->lun_opts));
- 	opts->func_inst.free_func_inst = fsg_free_inst;
- 	opts->common = fsg_common_setup(opts->common);
- 	if (IS_ERR(opts->common)) {
-@@ -3569,6 +3573,7 @@ static struct usb_function_instance *fsg_alloc_inst(void)
- 			(const char **)&opts->func_inst.group.cg_item.ci_name);
- 	opts->lun0.lun = opts->common->luns[0];
- 	opts->lun0.lun_id = 0;
-+	opts->lun_opts[0] = &opts->lun0;
- 	config_group_init_type_name(&opts->lun0.group, "lun.0", &fsg_lun_type);
- 	opts->default_groups[0] = &opts->lun0.group;
- 	opts->func_inst.group.default_groups = opts->default_groups;
-diff --git a/drivers/usb/gadget/function/f_mass_storage.h b/drivers/usb/gadget/function/f_mass_storage.h
-index b4866fc..0a7c656 100644
---- a/drivers/usb/gadget/function/f_mass_storage.h
-+++ b/drivers/usb/gadget/function/f_mass_storage.h
-@@ -81,6 +81,7 @@ struct fsg_opts {
- 	struct fsg_common *common;
- 	struct usb_function_instance func_inst;
- 	struct fsg_lun_opts lun0;
-+	struct fsg_lun_opts *lun_opts[FSG_MAX_LUNS];
- 	struct config_group *default_groups[2];
- 	bool no_configfs; /* for legacy gadgets */
- 
+ 	config_item_put(item);
 -- 
 1.7.9.5
