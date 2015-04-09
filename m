@@ -1,47 +1,80 @@
-From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Subject: Re: [PATCH v2 0/7] CLONE_FD: Task exit notification via file
- descriptor
-Date: Wed, 8 Apr 2015 19:19:49 -0700
-Message-ID: <20150409021948.GA1027@jtriplet-mobl1>
-References: <cover.1426376419.git.josh@joshtriplett.org>
- <20150331220807.6927e780@lwn.net>
- <20150331220224.GA22707@cloud>
- <20150401092420.4c1dbb6e@lwn.net>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [GIT PULL] selftest: Add futex functional tests
+Date: Wed, 08 Apr 2015 23:41:52 -0600
+Message-ID: <55261120.7040902@osg.samsung.com>
+References: <cover.1427493640.git.dvhart@linux.intel.com> <551ABE00.9050003@osg.samsung.com> <D14017F7.C46F0%dvhart@linux.intel.com> <551ACD5F.8010003@osg.samsung.com> <20150408041257.GC14618@fury.dvhart.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150401092420.4c1dbb6e-T1hC0tSOHrs@public.gmane.org>
+In-Reply-To: <20150408041257.GC14618-JIrPihikzLEQaXB9iyTzyw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
-Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thiago Macieira <thiago.macieira-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+To: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 01, 2015 at 09:24:20AM +0200, Jonathan Corbet wrote:
-> On Tue, 31 Mar 2015 15:02:24 -0700
-> josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org wrote:
+On 04/07/2015 10:12 PM, Darren Hart wrote:
+> On Tue, Mar 31, 2015 at 10:37:51AM -0600, Shuah Khan wrote:
+>> On 03/31/2015 10:24 AM, Darren Hart wrote:
+>>> On 3/31/15, 8:32 AM, "Shuah Khan" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+>>>
+>>>> Hi Daren,
+>>>>
+>>>> On 03/27/2015 04:17 PM, Darren Hart wrote:
+>>>>> Hi Shuah,
+>>>>>
+>>>>> This series begins the process of migrating my futextest tests into
+>>>>> kselftest.
+>>>>> I've started with only the functional tests, as the performance and
+>>>>> stress may
+>>>>> not be appropriate for kselftest as they stand.
+>>>>>
+>>>>> I cleaned up various complaints from checkpatch, but I ignored others
+>>>>> that would
+>>>>> require significant rework of the testcases, such as not using volatile
+>>>>> and not
+>>>>> creating new typedefs.
+>>>>>
+>>>>> The patches will follow, but I'm providing a pull request for your
+>>>>> convenience
+>>>>> as well.
+>>>>
+>>>> Thanks for acting on this so quickly after we talked about it at ELC.
+>>>> Just a quick note that I am going to get to this soon once I get the
+>>>> 4.1 content wrapped up. We can plan upon getting these into 4.2.
+>>>
+>>> OK. Michael E. provided some feedback which I can either incorporate and
+>>> respin, or I can send as a follow-on to your -next after you merge these.
+>>> Which do you prefer?
+>>>
 > 
-> > > This would appear to assume that a clonefd_info structure is the only
-> > > thing that will ever be read from this descriptor.  It seems to me that
-> > > there is the potential for, someday, wanting to be able to read and write
-> > > other things as well.  Should this structure be marked with type and
-> > > length fields so that other structures could be added in the future?  
-> > 
-> > I don't think it makes sense for a caller to get an arbitrary structure
-> > on read(), and have to figure out what they got and ignore something
-> > they don't understand.  Instead, I think it makes more sense for the
-> > caller to say "Hey, here's a flag saying I understand the new thing, go
-> > ahead and give me the new thing".  So, for instance, if you want to
-> > receive SIGSTOP/SIGCONT messages for child processes through this
-> > descriptor, we could add a flag for that.
+> ...
 > 
-> The flag is fine, but, once we have set that flag saying we want those
-> messages, how do we know which type of structure we've gotten?  That's
-> the piece of the puzzle I'm missing, sorry if I'm being overly slow.
+>> You can wait to re-do patches. I am planning to review the
+>> patch set later on this week. That way you can avoid re-spin
+>> just in case, I have other comments.
+> 
+> Hi Shuah,
+> 
+> Did you have any additional comments for the futex tests?
+> 
+> Thanks,
+> 
 
-If you pass a flag saying you can handle a new set of potential
-structures, those structures can then include any necessary
-disambiguating flags/IDs/etc.  No need for them to match the current
-clonefd_info structure if userspace has opted into a new version.
 
-- Josh Triplett
+Sorry Daren. I got called away on a family emergency. The patch
+looks good to me and I don't have any additional comments.
+
+Assume these get pulled in for 4.2 release. I will get to them
+soon once the 4.1-rc1 is out.
+
+thanks,
+-- Shuah
+
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
