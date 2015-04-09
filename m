@@ -1,99 +1,77 @@
 From: Vitaly Kuznetsov <vkuznets@redhat.com>
-Subject: [PATCH v3 03/21] Drivers: hv: kvp: move poll_channel() to
- hyperv_vmbus.h
-Date: Thu,  9 Apr 2015 10:38:32 +0200
-Message-ID: <1428568730-6030-4-git-send-email-vkuznets@redhat.com>
+Subject: [PATCH v3 05/21] Drivers: hv: vss: process deferred messages when we complete the transaction
+Date: Thu,  9 Apr 2015 10:38:34 +0200
+Message-ID: <1428568730-6030-6-git-send-email-vkuznets@redhat.com>
 References: <1428568730-6030-1-git-send-email-vkuznets@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1428568730-6030-1-git-send-email-vkuznets@redhat.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: "K. Y. Srinivasan" <kys@microsoft.com>, devel@linuxdriverproject.org
-Cc: Radim Krcmar <rkrcmar@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Haiyang Zhang <haiyangz@microsoft.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Haiyang Zhang <haiyangz@microsoft.com>, linux-kernel@vger.kernel.org, Dexuan Cui <decui@microsoft.com>, Radim Krcmar <rkrcmar@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-..., make it inline and rename it to hv_poll_channel() so it can be reused
-in other hv_util modules.
+In theory, the host is not supposed to issue any requests before be reply to
+the previous one. In KVP we, however, support the following scenarios:
+1) A message was received before userspace daemon registered;
+2) A message was received while the previous one is still being processed.
+In VSS we support only the former. Add support for the later, use
+hv_poll_channel() to do the job.
 
 Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
 ---
- drivers/hv/hv_kvp.c       | 17 +++--------------
- drivers/hv/hyperv_vmbus.h | 12 ++++++++++++
- 2 files changed, 15 insertions(+), 14 deletions(-)
+ drivers/hv/hv_snapshot.c | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/hv/hv_kvp.c b/drivers/hv/hv_kvp.c
-index caa467d..939c3e7 100644
---- a/drivers/hv/hv_kvp.c
-+++ b/drivers/hv/hv_kvp.c
-@@ -128,17 +128,6 @@ kvp_work_func(struct work_struct *dummy)
- 	kvp_respond_to_host(NULL, HV_E_FAIL);
- }
+diff --git a/drivers/hv/hv_snapshot.c b/drivers/hv/hv_snapshot.c
+index c1a3604..4bb9b1c 100644
+--- a/drivers/hv/hv_snapshot.c
++++ b/drivers/hv/hv_snapshot.c
+@@ -47,6 +47,7 @@ static struct {
+ 	struct vmbus_channel *recv_channel; /* chn we got the request */
+ 	u64 recv_req_id; /* request ID. */
+ 	struct hv_vss_msg  *msg; /* current message */
++	void *vss_context; /* for the channel callback */
+ } vss_transaction;
  
--static void poll_channel(struct vmbus_channel *channel)
--{
--	if (channel->target_cpu != smp_processor_id())
--		smp_call_function_single(channel->target_cpu,
--					 hv_kvp_onchannelcallback,
--					 channel, true);
--	else
--		hv_kvp_onchannelcallback(channel);
--}
--
--
- static int kvp_handle_handshake(struct hv_kvp_msg *msg)
- {
- 	int ret = 1;
-@@ -166,8 +155,8 @@ static int kvp_handle_handshake(struct hv_kvp_msg *msg)
- 		pr_info("KVP: user-mode registering done.\n");
- 		kvp_register(dm_reg_value);
- 		kvp_transaction.active = false;
--		if (kvp_transaction.kvp_context)
--			poll_channel(kvp_transaction.kvp_context);
-+		hv_poll_channel(kvp_transaction.kvp_context,
-+				hv_kvp_onchannelcallback);
- 	}
- 	return ret;
- }
-@@ -587,7 +576,7 @@ response_done:
  
- 	vmbus_sendpacket(channel, recv_buffer, buf_len, req_id,
- 				VM_PKT_DATA_INBAND, 0);
--	poll_channel(channel);
-+	hv_poll_channel(channel, hv_kvp_onchannelcallback);
- }
- 
- /*
-diff --git a/drivers/hv/hyperv_vmbus.h b/drivers/hv/hyperv_vmbus.h
-index ddcf6c4..2f30456 100644
---- a/drivers/hv/hyperv_vmbus.h
-+++ b/drivers/hv/hyperv_vmbus.h
-@@ -742,5 +742,17 @@ int hv_fcopy_init(struct hv_util_service *);
- void hv_fcopy_deinit(void);
- void hv_fcopy_onchannelcallback(void *);
- 
-+static inline void hv_poll_channel(struct vmbus_channel *channel,
-+				   void (*cb)(void *))
-+{
-+	if (!channel)
-+		return;
+@@ -73,6 +74,9 @@ static void vss_timeout_func(struct work_struct *dummy)
+ 	 */
+ 	pr_warn("VSS: timeout waiting for daemon to reply\n");
+ 	vss_respond_to_host(HV_E_FAIL);
 +
-+	if (channel->target_cpu != smp_processor_id())
-+		smp_call_function_single(channel->target_cpu,
-+					 cb, channel, true);
-+	else
-+		cb(channel);
-+}
++	hv_poll_channel(vss_transaction.vss_context,
++			hv_vss_onchannelcallback);
+ }
  
- #endif /* _HYPERV_VMBUS_H */
+ static void
+@@ -85,13 +89,12 @@ vss_cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
+ 	if (vss_msg->vss_hdr.operation == VSS_OP_REGISTER) {
+ 		pr_info("VSS daemon registered\n");
+ 		vss_transaction.active = false;
+-		if (vss_transaction.recv_channel != NULL)
+-			hv_vss_onchannelcallback(vss_transaction.recv_channel);
+-		return;
+-
+ 	}
+ 	if (cancel_delayed_work_sync(&vss_timeout_work))
+ 		vss_respond_to_host(vss_msg->error);
++
++	hv_poll_channel(vss_transaction.vss_context,
++			hv_vss_onchannelcallback);
+ }
+ 
+ 
+@@ -198,9 +201,10 @@ void hv_vss_onchannelcallback(void *context)
+ 		 * We will defer processing this callback once
+ 		 * the current transaction is complete.
+ 		 */
+-		vss_transaction.recv_channel = channel;
++		vss_transaction.vss_context = context;
+ 		return;
+ 	}
++	vss_transaction.vss_context = NULL;
+ 
+ 	vmbus_recvpacket(channel, recv_buffer, PAGE_SIZE * 2, &recvlen,
+ 			 &requestid);
 -- 
 1.9.3
