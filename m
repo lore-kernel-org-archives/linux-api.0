@@ -1,99 +1,86 @@
-From: Vitaly Kuznetsov <vkuznets@redhat.com>
-Subject: [PATCH v3 01/21] Drivers: hv: util: move kvp/vss function
- declarations to hyperv_vmbus.h
-Date: Thu,  9 Apr 2015 10:38:30 +0200
-Message-ID: <1428568730-6030-2-git-send-email-vkuznets@redhat.com>
+From: Vitaly Kuznetsov <vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v3 06/21] Drivers: hv: kvp: rename kvp_work -> kvp_timeout_work
+Date: Thu,  9 Apr 2015 10:38:35 +0200
+Message-ID: <1428568730-6030-7-git-send-email-vkuznets@redhat.com>
 References: <1428568730-6030-1-git-send-email-vkuznets@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <1428568730-6030-1-git-send-email-vkuznets@redhat.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: "K. Y. Srinivasan" <kys@microsoft.com>, devel@linuxdriverproject.org
-Cc: Radim Krcmar <rkrcmar@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Haiyang Zhang <haiyangz@microsoft.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1428568730-6030-1-git-send-email-vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "K. Y. Srinivasan" <kys-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, devel-tBiZLqfeLfOHmIFyCCdPziST3g8Odh+X@public.gmane.org
+Cc: Haiyang Zhang <haiyangz-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dexuan Cui <decui-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Radim Krcmar <rkrcmar-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-These declarations are internal to hv_util module and hv_fcopy_* declarations
-already reside there.
+'kvp_work' (and kvp_work_func) is a misnomer as it sounds like we expect
+this useful work to happen and in reality it is just an emergency escape when
+timeout happens.
 
-Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+Signed-off-by: Vitaly Kuznetsov <vkuznets-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- drivers/hv/hv_kvp.c       | 1 +
- drivers/hv/hv_snapshot.c  | 2 ++
- drivers/hv/hyperv_vmbus.h | 8 ++++++++
- include/linux/hyperv.h    | 7 -------
- 4 files changed, 11 insertions(+), 7 deletions(-)
+ drivers/hv/hv_kvp.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/hv/hv_kvp.c b/drivers/hv/hv_kvp.c
-index beb8105..a414c83 100644
+index 939c3e7..14c62e2 100644
 --- a/drivers/hv/hv_kvp.c
 +++ b/drivers/hv/hv_kvp.c
-@@ -28,6 +28,7 @@
- #include <linux/workqueue.h>
- #include <linux/hyperv.h>
+@@ -79,10 +79,10 @@ static void kvp_send_key(struct work_struct *dummy);
  
-+#include "hyperv_vmbus.h"
  
- /*
-  * Pre win8 version numbers used in ws2008 and ws 2008 r2 (win7)
-diff --git a/drivers/hv/hv_snapshot.c b/drivers/hv/hv_snapshot.c
-index 9d5e0d1..c1a3604 100644
---- a/drivers/hv/hv_snapshot.c
-+++ b/drivers/hv/hv_snapshot.c
-@@ -24,6 +24,8 @@
- #include <linux/workqueue.h>
- #include <linux/hyperv.h>
+ static void kvp_respond_to_host(struct hv_kvp_msg *msg, int error);
+-static void kvp_work_func(struct work_struct *dummy);
++static void kvp_timeout_func(struct work_struct *dummy);
+ static void kvp_register(int);
  
-+#include "hyperv_vmbus.h"
+-static DECLARE_DELAYED_WORK(kvp_work, kvp_work_func);
++static DECLARE_DELAYED_WORK(kvp_timeout_work, kvp_timeout_func);
+ static DECLARE_WORK(kvp_sendkey_work, kvp_send_key);
+ 
+ static struct cb_id kvp_id = { CN_KVP_IDX, CN_KVP_VAL };
+@@ -118,8 +118,8 @@ kvp_register(int reg_value)
+ 		kfree(msg);
+ 	}
+ }
+-static void
+-kvp_work_func(struct work_struct *dummy)
 +
- #define VSS_MAJOR  5
- #define VSS_MINOR  0
- #define VSS_VERSION    (VSS_MAJOR << 16 | VSS_MINOR)
-diff --git a/drivers/hv/hyperv_vmbus.h b/drivers/hv/hyperv_vmbus.h
-index 887287a..ddcf6c4 100644
---- a/drivers/hv/hyperv_vmbus.h
-+++ b/drivers/hv/hyperv_vmbus.h
-@@ -730,6 +730,14 @@ int vmbus_set_event(struct vmbus_channel *channel);
++static void kvp_timeout_func(struct work_struct *dummy)
+ {
+ 	/*
+ 	 * If the timer fires, the user-mode component has not responded;
+@@ -215,7 +215,7 @@ kvp_cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
+ 	 * Complete the transaction by forwarding the key value
+ 	 * to the host. But first, cancel the timeout.
+ 	 */
+-	if (cancel_delayed_work_sync(&kvp_work))
++	if (cancel_delayed_work_sync(&kvp_timeout_work))
+ 		kvp_respond_to_host(message, error);
+ }
  
- void vmbus_on_event(unsigned long data);
+@@ -440,7 +440,7 @@ kvp_send_key(struct work_struct *dummy)
+ 	rc = cn_netlink_send(msg, 0, 0, GFP_ATOMIC);
+ 	if (rc) {
+ 		pr_debug("KVP: failed to communicate to the daemon: %d\n", rc);
+-		if (cancel_delayed_work_sync(&kvp_work))
++		if (cancel_delayed_work_sync(&kvp_timeout_work))
+ 			kvp_respond_to_host(message, HV_E_FAIL);
+ 	}
  
-+int hv_kvp_init(struct hv_util_service *);
-+void hv_kvp_deinit(void);
-+void hv_kvp_onchannelcallback(void *);
-+
-+int hv_vss_init(struct hv_util_service *);
-+void hv_vss_deinit(void);
-+void hv_vss_onchannelcallback(void *);
-+
- int hv_fcopy_init(struct hv_util_service *);
- void hv_fcopy_deinit(void);
- void hv_fcopy_onchannelcallback(void *);
-diff --git a/include/linux/hyperv.h b/include/linux/hyperv.h
-index 902c37a..1744148 100644
---- a/include/linux/hyperv.h
-+++ b/include/linux/hyperv.h
-@@ -1236,13 +1236,6 @@ extern bool vmbus_prep_negotiate_resp(struct icmsg_hdr *,
- 					struct icmsg_negotiate *, u8 *, int,
- 					int);
+@@ -668,7 +668,7 @@ void hv_kvp_onchannelcallback(void *context)
+ 			 * user-mode not responding.
+ 			 */
+ 			schedule_work(&kvp_sendkey_work);
+-			schedule_delayed_work(&kvp_work, 5*HZ);
++			schedule_delayed_work(&kvp_timeout_work, 5*HZ);
  
--int hv_kvp_init(struct hv_util_service *);
--void hv_kvp_deinit(void);
--void hv_kvp_onchannelcallback(void *);
--
--int hv_vss_init(struct hv_util_service *);
--void hv_vss_deinit(void);
--void hv_vss_onchannelcallback(void *);
- void hv_process_channel_removal(struct vmbus_channel *channel, u32 relid);
+ 			return;
  
- extern struct resource hyperv_mmio;
+@@ -708,6 +708,6 @@ hv_kvp_init(struct hv_util_service *srv)
+ void hv_kvp_deinit(void)
+ {
+ 	cn_del_callback(&kvp_id);
+-	cancel_delayed_work_sync(&kvp_work);
++	cancel_delayed_work_sync(&kvp_timeout_work);
+ 	cancel_work_sync(&kvp_sendkey_work);
+ }
 -- 
 1.9.3
