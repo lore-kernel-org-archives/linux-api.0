@@ -1,77 +1,82 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: Re: [PATCH 05/45] drm.h: include stdlib.h in userspace
-Date: Thu, 9 Apr 2015 19:09:29 +0300
-Message-ID: <20150409160929.GP12550@lakka.kapsi.fi>
-References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
- <1424127948-22484-6-git-send-email-mikko.rapeli@iki.fi>
- <54EB0072.8020909@gmail.com>
- <20150223103548.GT12550@lakka.kapsi.fi>
- <CACvgo50PA5nb27EcxQqXY49C5hmvDDxi3WOqB=op-wx_WEGd+Q@mail.gmail.com>
- <20150321121706.GW12550@lakka.kapsi.fi>
- <CACvgo50OU8mroLSS_R_Uo4D9PRtTnmLCM5p5QbxO6KQAjLWrYw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Krzysztof Opasiak <k.opasiak@samsung.com>
+Subject: [PATCH v3 0/4] Ensure that lun ids are contiguous
+Date: Thu, 09 Apr 2015 18:18:06 +0200
+Message-ID: <1428596290-23637-1-git-send-email-k.opasiak@samsung.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CACvgo50OU8mroLSS_R_Uo4D9PRtTnmLCM5p5QbxO6KQAjLWrYw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Emil Velikov <emil.l.velikov@gmail.com>
-Cc: David Howells <dhowells@redhat.com>, Daniel Vetter <daniel@ffwll.ch>, Dave Airlie <airlied@gmail.com>, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel@vger.kernel.org>, ML dri-devel <dri-devel@lists.freedesktop.org>, linux-api@vger.kernel.org
+To: balbi@ti.com, gregkh@linuxfoundation.org, jlbec@evilplan.org
+Cc: andrzej.p@samsung.com, m.szyprowski@samsung.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-usb@vger.kernel.org, Krzysztof Opasiak <k.opasiak@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 09, 2015 at 05:00:48PM +0100, Emil Velikov wrote:
-> Hi Mikko
->=20
-> Pardon for the late response,
->=20
-> On 21 March 2015 at 12:17, Mikko Rapeli <mikko.rapeli@iki.fi> wrote:
-> > On Fri, Mar 20, 2015 at 08:25:40PM +0000, Emil Velikov wrote:
-> >> On 23 February 2015 at 10:35, Mikko Rapeli <mikko.rapeli@iki.fi> w=
-rote:
-> >> > On Mon, Feb 23, 2015 at 10:26:58AM +0000, Emil Velikov wrote:
-> >> >> On 16/02/15 23:05, Mikko Rapeli wrote:
-> >> >> > Fixes <drm/drm.h> compilation error:
-> >> >> >
-> >> >> > drm/drm.h:132:2: error: unknown type name =E2=80=98size_t=E2=80=
-=99
-> >> >> >
-> >> >> Hi Mikko,
-> >> >>
-> >> >> Can you let us know how you're getting these (series-wise) erro=
-rs ? I've
-> >> >> been meaning to sync the uapi/drm and libdrm headers and would =
-be nice
-> >> >> to have an extra step to test things.
-> >> >
-> >> > This should have everything needed to reproduce these compile er=
-rors,
-> >> > though some of the errors hide behind other errors and fixes:
-> >> >
-> >> > https://lkml.org/lkml/2015/2/16/525
-> >> >
-> >> Thanks for the link Mikko.
-> >>
-> >> Afaict the general consensus seems to be that one should avoid usi=
-ng
-> >> stdint's uint8_t, but stick to __u8 and friends. Did you had the
-> >> chance to roll out another series that does so ?
-> >
-> > Yes, new series with these changes is on the way. I'm trying to fol=
-low up to
-> > all other review comments as well and get down to 100% compiling ua=
-pi
-> > headers; 35 failures to go...
-> >
-> Glad to hear that it's getting there. Might be a bit slower than
-> expected but we'll get there :-) Can you please Cc me on the next
-> iteration ?
+Dear list,
 
-Yes will Cc you too, and sorry life is getting on the way of this work.=
- Draft
-version is visible at
+This series fix configfs interface for mass storage function.
+According to mass storage specification[1]:
 
-https://github.com/torvalds/linux/compare/master...mcfrisk:headers_test=
-_v03
+"Logical Unit Numbers on the device shall be numbered contiguously
+ starting from LUN 0 to a maximum LUN of 15 (Fh)."
 
--Mikko
+Currently configfs interface allows to create LUNs with
+arbitrary ids what causes problems with some host side
+mass storage drivers.
+
+This patch extends configfs interface with unlocked version
+of configfs_depend_item() which should be used only in configfs
+callbacks. This allows to protect from
+removing lun directory from the middle of id space.
+
+Example:
+
+as is:
+$ mkdir mass_storage.name
+$ mkdir lun.3
+$ mkdir lun.5
+$ rmdir lun.3
+
+After this series:
+$ mkdir mass_storage.name
+$ mkdir lun.3
+mkdir: cannot create directory 'lun.3': Invalid argument
+$ mkdir lun.1
+$ mkdir lun.2
+$ rmdir lun.1
+rmdir: failed to remove 'lun.1': Device or resource busy
+$ rmdir lun.2
+$ rmdir lun.1
+
+Footnotes:
+1 - http://www.usb.org/developers/docs/devclass_docs/usbmassbulk_10.pdf
+
+--
+Best regards,
+Krzysztof Opasiak
+Samsung R&D Institute Poland
+Samsung Electronics
+
+---
+Changes since v1:
+- drop incorrect typo fix
+   ("iff" is not a typo but shorten version of "if and only if")
+
+Changes since v2:
+- replace BUG_ON() with WARN_ON()
+- s/arabic numeral/deciaml value
+- add more verbose commit messages
+- fix some typos
+- move out label in more suitable place
+
+Krzysztof Opasiak (4):
+  fs: configfs: Add unlocked version of configfs_depend_item()
+  usb: gadget: mass_storage: Store lun_opts in fsg_opts
+  usb: gadget: mass_storage: Ensure that lun ids are contiguous
+  Documentation: ABI: Fix documentation for mass_storage function
+
+ .../ABI/testing/configfs-usb-gadget-mass-storage   |    7 +++-
+ drivers/usb/gadget/function/f_mass_storage.c       |   34 +++++++++++++++++---
+ drivers/usb/gadget/function/f_mass_storage.h       |    1 +
+ fs/configfs/dir.c                                  |   29 +++++++++++++++++
+ include/linux/configfs.h                           |    9 ++++++
+ 5 files changed, 75 insertions(+), 5 deletions(-)
+
+-- 
+1.7.9.5
