@@ -1,63 +1,81 @@
-From: Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>
-Subject: Re: [PATCH v6 10/15] serial: stm32-usart: Add STM32 USART Driver
-Date: Thu, 9 Apr 2015 16:04:39 +0300
-Message-ID: <552678E7.4040107@mentor.com>
-References: <1428424234-28572-1-git-send-email-mcoquelin.stm32@gmail.com> <1428424234-28572-11-git-send-email-mcoquelin.stm32@gmail.com>
+From: Felipe Balbi <balbi-l0cyMroinI0@public.gmane.org>
+Subject: Re: [PATCH 1/5] fs: configfs: Fix typo in comment
+Date: Thu, 9 Apr 2015 08:46:37 -0500
+Message-ID: <20150409134637.GB4393@saruman.tx.rr.com>
+References: <1428492528-11993-1-git-send-email-k.opasiak@samsung.com>
+ <1428492528-11993-2-git-send-email-k.opasiak@samsung.com>
+Reply-To: <balbi-l0cyMroinI0@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <1428424234-28572-11-git-send-email-mcoquelin.stm32@gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Maxime Coquelin <mcoquelin.stm32@gmail.com>, u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, stefan@agner.ch, pmeerw@pmeerw.net, pebolle@tiscali.nl, peter@hurleysoftware.com, andy.shevchenko@gmail.com, cw00.choi@samsung.com, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, joe@perches.com
-Cc: Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Antti Palosaari <crope@iki.fi>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Rusty Russell <rusty@rustcorp.com.au>, Kees Cook <keescook@chromium.org>, Michal Marek <mmarek@suse.cz>, linux-doc@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-gpio@vger.kernel.org, linux-serial@vger.kernel.orglinux-a
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="wq9mPyueHGvFACwf"
+Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1428492528-11993-2-git-send-email-k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Cc: balbi-l0cyMroinI0@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jlbec-aKy9MeLSZ9dg9hUCZPvPmw@public.gmane.org, andrzej.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Maxime,
+--wq9mPyueHGvFACwf
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-On 07.04.2015 19:30, Maxime Coquelin wrote:
-> This drivers adds support to the STM32 USART controller, which is a
-> standard serial driver.
-> 
-> Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
-> Reviewed-by: Peter Hurley <peter@hurleysoftware.com>
-> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+On Wed, Apr 08, 2015 at 01:28:44PM +0200, Krzysztof Opasiak wrote:
+> Signed-off-by: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 > ---
->  drivers/tty/serial/Kconfig       |  17 +
->  drivers/tty/serial/Makefile      |   1 +
->  drivers/tty/serial/stm32-usart.c | 735 +++++++++++++++++++++++++++++++++++++++
->  include/uapi/linux/serial_core.h |   3 +
->  4 files changed, 756 insertions(+)
->  create mode 100644 drivers/tty/serial/stm32-usart.c
+>  fs/configfs/dir.c |    2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>=20
+> diff --git a/fs/configfs/dir.c b/fs/configfs/dir.c
+> index cf0db00..dee1cb5 100644
+> --- a/fs/configfs/dir.c
+> +++ b/fs/configfs/dir.c
+> @@ -325,7 +325,7 @@ static void configfs_dir_set_ready(struct configfs_di=
+rent *sd)
+>   * attached and not validated yet.
+>   * @sd		configfs_dirent of the directory to check
+>   *
+> - * @return	non-zero iff the directory was validated
+> + * @return	non-zero if the directory was validated
 
-[snip]
+iff is not a typo, it's short-hand for "if, and only if"
 
-> +static void stm32_console_write(struct console *co, const char *s, unsigned cnt)
-> +{
-> +	struct uart_port *port = &stm32_ports[co->index].port;
-> +	unsigned long flags;
-> +	u32 old_cr1, new_cr1;
-> +	int locked = 1;
-> +
-> +	if (oops_in_progress) {
-> +		locked = spin_trylock_irqsave(&port->lock, flags);
-> +	} else {
-> +		locked = 1;
+>   *
+>   * Note: takes configfs_dirent_lock, so the result may change from false=
+ to true
+>   * in two consecutive calls, but never from true to false.
+> --=20
+> 1.7.9.5
+>=20
 
-locked = 1 is done from the declaration.
+--=20
+balbi
 
-Also do you want to add "if (port->sysrq) locked = 0;" check?
+--wq9mPyueHGvFACwf
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
-> +		spin_lock_irqsave(&port->lock, flags);
-> +	}
-> +
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
 
-[snip]
+iQIcBAEBAgAGBQJVJoK8AAoJEIaOsuA1yqREyEoP/1g1pIQLlxWVJvu2rBjNZh5G
+m5hTV2hRhlmgeDPB3ouTJVg5f0pD1DuzS9Y5qFCfq9qzdSF6nPkUd4gREDOcXYkz
+/nXgRDeQ1bmKunxEUC9ZjZ0klZ5ywMb4mYQeHxhOXedu4KqdFqrhgqVUnzhaqoo3
+r6zDSpIWP8U0cMNfkAJlF6p2U3HLMij7qIpAYoehTnIlVJ7TFRBQ7q+z3uZziF/3
+IGzhHdvLYYG8mL/xeWrHO+ykP9TIjHhGp4va+NEI3X8PLfnA02TvnHVI2TuiQfTY
+BcrlBPM6FolEcfUBGBgQXKmmMSevf7uKcP9BpIcvYFTbIge3sf0kOvZZ36vS189K
+3E+kiEJ6sHcOMZpF+XWDWxGq/sY5E/Rxf50zeY7Ao20mr3P3TKwbArzJKlExsonB
+AUdJ0ILrVSnW5g466iiYOzoNDa6zoaaf/3bj3F6hBas4HkUT7urnj2lSn7jmQBFV
+5FBRkfRd97NEmrv2tcS+hXZaCNMdL/iIuILS4qaSkqpSDQLtIbLoKb7/BH8MQ1dJ
+/F51AoZrfsP8rQqZVo5lVWks9XgE9haA4V0AbXmVPb8P2lZbRJYn/XeuvocXJI1G
+1DSGUDpBqdXMmMOYA+9kHZeRz1r2iYiUiTXkpspa2sGj+Tk8ztTfP9PGOz/19Uv3
+N6NJAHGsOYM+yYvn/i6G
+=sFul
+-----END PGP SIGNATURE-----
 
-Everything else is fine from point of view.
-
-Reviewed-by: Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>
-
+--wq9mPyueHGvFACwf--
 --
-With best wishes,
-Vladimir
+To unsubscribe from this list: send the line "unsubscribe linux-usb" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
