@@ -1,78 +1,77 @@
-From: Emil Velikov <emil.l.velikov@gmail.com>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
 Subject: Re: [PATCH 05/45] drm.h: include stdlib.h in userspace
-Date: Thu, 9 Apr 2015 17:00:48 +0100
-Message-ID: <CACvgo50OU8mroLSS_R_Uo4D9PRtTnmLCM5p5QbxO6KQAjLWrYw@mail.gmail.com>
+Date: Thu, 9 Apr 2015 19:09:29 +0300
+Message-ID: <20150409160929.GP12550@lakka.kapsi.fi>
 References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
  <1424127948-22484-6-git-send-email-mikko.rapeli@iki.fi>
  <54EB0072.8020909@gmail.com>
  <20150223103548.GT12550@lakka.kapsi.fi>
  <CACvgo50PA5nb27EcxQqXY49C5hmvDDxi3WOqB=op-wx_WEGd+Q@mail.gmail.com>
  <20150321121706.GW12550@lakka.kapsi.fi>
+ <CACvgo50OU8mroLSS_R_Uo4D9PRtTnmLCM5p5QbxO6KQAjLWrYw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <20150321121706.GW12550@lakka.kapsi.fi>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Mikko Rapeli <mikko.rapeli@iki.fi>
-Cc: linux-api@vger.kernel.org, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel@vger.kernel.org>, ML dri-devel <dri-devel@lists.freedesktop.org>, David Howells <dhowells@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CACvgo50OU8mroLSS_R_Uo4D9PRtTnmLCM5p5QbxO6KQAjLWrYw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Emil Velikov <emil.l.velikov@gmail.com>
+Cc: David Howells <dhowells@redhat.com>, Daniel Vetter <daniel@ffwll.ch>, Dave Airlie <airlied@gmail.com>, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel@vger.kernel.org>, ML dri-devel <dri-devel@lists.freedesktop.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-SGkgTWlra28KClBhcmRvbiBmb3IgdGhlIGxhdGUgcmVzcG9uc2UsCgpPbiAyMSBNYXJjaCAyMDE1
-IGF0IDEyOjE3LCBNaWtrbyBSYXBlbGkgPG1pa2tvLnJhcGVsaUBpa2kuZmk+IHdyb3RlOgo+IE9u
-IEZyaSwgTWFyIDIwLCAyMDE1IGF0IDA4OjI1OjQwUE0gKzAwMDAsIEVtaWwgVmVsaWtvdiB3cm90
-ZToKPj4gT24gMjMgRmVicnVhcnkgMjAxNSBhdCAxMDozNSwgTWlra28gUmFwZWxpIDxtaWtrby5y
-YXBlbGlAaWtpLmZpPiB3cm90ZToKPj4gPiBPbiBNb24sIEZlYiAyMywgMjAxNSBhdCAxMDoyNjo1
-OEFNICswMDAwLCBFbWlsIFZlbGlrb3Ygd3JvdGU6Cj4+ID4+IE9uIDE2LzAyLzE1IDIzOjA1LCBN
-aWtrbyBSYXBlbGkgd3JvdGU6Cj4+ID4+ID4gRml4ZXMgPGRybS9kcm0uaD4gY29tcGlsYXRpb24g
-ZXJyb3I6Cj4+ID4+ID4KPj4gPj4gPiBkcm0vZHJtLmg6MTMyOjI6IGVycm9yOiB1bmtub3duIHR5
-cGUgbmFtZSDigJhzaXplX3TigJkKPj4gPj4gPgo+PiA+PiBIaSBNaWtrbywKPj4gPj4KPj4gPj4g
-Q2FuIHlvdSBsZXQgdXMga25vdyBob3cgeW91J3JlIGdldHRpbmcgdGhlc2UgKHNlcmllcy13aXNl
-KSBlcnJvcnMgPyBJJ3ZlCj4+ID4+IGJlZW4gbWVhbmluZyB0byBzeW5jIHRoZSB1YXBpL2RybSBh
-bmQgbGliZHJtIGhlYWRlcnMgYW5kIHdvdWxkIGJlIG5pY2UKPj4gPj4gdG8gaGF2ZSBhbiBleHRy
-YSBzdGVwIHRvIHRlc3QgdGhpbmdzLgo+PiA+Cj4+ID4gVGhpcyBzaG91bGQgaGF2ZSBldmVyeXRo
-aW5nIG5lZWRlZCB0byByZXByb2R1Y2UgdGhlc2UgY29tcGlsZSBlcnJvcnMsCj4+ID4gdGhvdWdo
-IHNvbWUgb2YgdGhlIGVycm9ycyBoaWRlIGJlaGluZCBvdGhlciBlcnJvcnMgYW5kIGZpeGVzOgo+
-PiA+Cj4+ID4gaHR0cHM6Ly9sa21sLm9yZy9sa21sLzIwMTUvMi8xNi81MjUKPj4gPgo+PiBUaGFu
-a3MgZm9yIHRoZSBsaW5rIE1pa2tvLgo+Pgo+PiBBZmFpY3QgdGhlIGdlbmVyYWwgY29uc2Vuc3Vz
-IHNlZW1zIHRvIGJlIHRoYXQgb25lIHNob3VsZCBhdm9pZCB1c2luZwo+PiBzdGRpbnQncyB1aW50
-OF90LCBidXQgc3RpY2sgdG8gX191OCBhbmQgZnJpZW5kcy4gRGlkIHlvdSBoYWQgdGhlCj4+IGNo
-YW5jZSB0byByb2xsIG91dCBhbm90aGVyIHNlcmllcyB0aGF0IGRvZXMgc28gPwo+Cj4gWWVzLCBu
-ZXcgc2VyaWVzIHdpdGggdGhlc2UgY2hhbmdlcyBpcyBvbiB0aGUgd2F5LiBJJ20gdHJ5aW5nIHRv
-IGZvbGxvdyB1cCB0bwo+IGFsbCBvdGhlciByZXZpZXcgY29tbWVudHMgYXMgd2VsbCBhbmQgZ2V0
-IGRvd24gdG8gMTAwJSBjb21waWxpbmcgdWFwaQo+IGhlYWRlcnM7IDM1IGZhaWx1cmVzIHRvIGdv
-Li4uCj4KR2xhZCB0byBoZWFyIHRoYXQgaXQncyBnZXR0aW5nIHRoZXJlLiBNaWdodCBiZSBhIGJp
-dCBzbG93ZXIgdGhhbgpleHBlY3RlZCBidXQgd2UnbGwgZ2V0IHRoZXJlIDotKSBDYW4geW91IHBs
-ZWFzZSBDYyBtZSBvbiB0aGUgbmV4dAppdGVyYXRpb24gPwoKPj4gVGhhdCBhc2lkZSBJJ20gbm90
-IDEwMCUgc3VyZSB0aGF0IGRvaW5nIHRoZSBVQVBJIHNwbGl0LCBhcyBpcywgd2FzIHRoZQo+PiBw
-ZXJmZWN0IHNvbHV0aW9uLiBBZmFpayBkcm0gdXNlZCB0byBsaXZlIGFzIGFuIG91dCBvZiB0cmVl
-IHVzZXJzcGFjZQo+PiBsaWJyYXJ5KGxpYmRybSkuIE5vdCBzdXJlIGF0IHdoaWNoIHBvaW50IHRo
-ZSBtYWpvciByZXN0cnVjdHVyaW5nIHRvb2sKPj4gcGFydCwgYnV0IG9uZSBpcyBjZXJ0YWluIC0g
-bGliZHJtIHJlbWFpbnMgdGhlIG9ubHkgYXV0aG9yaXRhdGl2ZQo+PiBzb3VyY2VzIG9mIHRoZSBo
-ZWFkZXJzLiBJdCdzIHBvc3NpYmxlIHRoYXQgc29tZSBidWdneSBwcm9ncmFtcyBwdWxsCj4+IHRo
-ZSBVQVBJIGhlYWRlcnMgd2hpbGUgbGlua2luZyBhZ2FpbnN0IHRoZSBsaWJyYXJ5LCBidXQgSSdk
-IHNheSB0aGF0Cj4+IHdvbid0IGVuZCB1cCB3ZWxsIGluIHRoZSBsb25nIHRlcm0uIEFkZGl0aW9u
-YWxseSBzaW5jZSB0aGUgVUFQSSBzcGxpdAo+PiB0aGUgYG1ha2UgdXBkYXRlLWhlYWRlcnMnIHRh
-cmdldCB1c2VkIHRvIHN5bmMgbGliZHJtJ3MgaGVhZGVycyBoYXZlCj4+IGJlZW4gYnJva2VuIGxl
-YWRpbmcgcGVvcGxlIHRvIGNvcHkgbWlzYy4gaHVua3MgYW5kL29yIGZpbGVzLiBMZWFkaW5nCj4+
-IHRvIGdyZWF0ZXIgY2hhbmNlIG9mIHRoaW5ncyBnb2luZyBzb3VyLgo+Pgo+PiBBbGwgdGhhdCBz
-YWlkLCBJIHdpbGwgbmVlZCB0byBnYXRoZXIgc29tZSBvcGluaW9ucyBmb3IgZHJtIGRldmVsb3Bl
-cnMKPj4gYW5kIG1haW50YWluZXJzIGlmIHRoZSBpZGVhIG9mIHBhcnQgcmV2ZXJpbmcgNzE4ZGNl
-ZGQ3ZTgoVUFQSToKPj4gKFNjcmlwdGVkKSBEaXNpbnRlZ3JhdGUgaW5jbHVkZS9kcm0pIHdpbGwg
-YmUgdGhlIHdheSBmb3J3YXJkLgo+Cj4gT2ssIEknbGwgZm9sbG93IHdoYXQgaXMgYXZhaWxhYmxl
-IGluIExpbnVzJyB0cmVlIChvciAtbmV4dCwgbm90IHNodXJlIHdoaWNoCj4gb25lIEkgc2hvdWxk
-IHRyYWNrIGZvciB0aGVzZSBjaGFuZ2VzKS4KPgpBZnRlciBkaXNjdXNzaW5nIChtb3JlIGxpa2Ug
-YW5ub3lpbmcpIG91ciBEUk0gbWFpbnRhaW5lciB3ZSBnb3QgdG8gdGhlCmNvbmNsdXNpb24gdGhh
-dCB0aGUgaGVhZGVycyB3aWxsIHN0YXkgZXhwb3NlZCB0byB1c2Vyc3BhY2UuIFNvIGFueSBhbmQK
-YWxsIG9mIHlvdXIgd29yayB3aWxsIGJlIGdyZWF0bHkgYXBwcmVjaWF0ZWQuCgpUaGFua3MKRW1p
-bApfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpkcmktZGV2
-ZWwgbWFpbGluZyBsaXN0CmRyaS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xp
-c3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
+On Thu, Apr 09, 2015 at 05:00:48PM +0100, Emil Velikov wrote:
+> Hi Mikko
+>=20
+> Pardon for the late response,
+>=20
+> On 21 March 2015 at 12:17, Mikko Rapeli <mikko.rapeli@iki.fi> wrote:
+> > On Fri, Mar 20, 2015 at 08:25:40PM +0000, Emil Velikov wrote:
+> >> On 23 February 2015 at 10:35, Mikko Rapeli <mikko.rapeli@iki.fi> w=
+rote:
+> >> > On Mon, Feb 23, 2015 at 10:26:58AM +0000, Emil Velikov wrote:
+> >> >> On 16/02/15 23:05, Mikko Rapeli wrote:
+> >> >> > Fixes <drm/drm.h> compilation error:
+> >> >> >
+> >> >> > drm/drm.h:132:2: error: unknown type name =E2=80=98size_t=E2=80=
+=99
+> >> >> >
+> >> >> Hi Mikko,
+> >> >>
+> >> >> Can you let us know how you're getting these (series-wise) erro=
+rs ? I've
+> >> >> been meaning to sync the uapi/drm and libdrm headers and would =
+be nice
+> >> >> to have an extra step to test things.
+> >> >
+> >> > This should have everything needed to reproduce these compile er=
+rors,
+> >> > though some of the errors hide behind other errors and fixes:
+> >> >
+> >> > https://lkml.org/lkml/2015/2/16/525
+> >> >
+> >> Thanks for the link Mikko.
+> >>
+> >> Afaict the general consensus seems to be that one should avoid usi=
+ng
+> >> stdint's uint8_t, but stick to __u8 and friends. Did you had the
+> >> chance to roll out another series that does so ?
+> >
+> > Yes, new series with these changes is on the way. I'm trying to fol=
+low up to
+> > all other review comments as well and get down to 100% compiling ua=
+pi
+> > headers; 35 failures to go...
+> >
+> Glad to hear that it's getting there. Might be a bit slower than
+> expected but we'll get there :-) Can you please Cc me on the next
+> iteration ?
+
+Yes will Cc you too, and sorry life is getting on the way of this work.=
+ Draft
+version is visible at
+
+https://github.com/torvalds/linux/compare/master...mcfrisk:headers_test=
+_v03
+
+-Mikko
