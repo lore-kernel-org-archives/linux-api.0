@@ -1,166 +1,21 @@
-From: Li Xi <pkuelelixi@gmail.com>
-Subject: [v12 3/5] ext4: adds project quota support
-Date: Fri, 10 Apr 2015 00:14:35 +0900
-Message-ID: <1428592477-8212-4-git-send-email-lixi@ddn.com>
-References: <1428592477-8212-1-git-send-email-lixi@ddn.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1428592477-8212-1-git-send-email-lixi@ddn.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
+From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC] capabilities: Ambient capabilities
+Date: Thu, 9 Apr 2015 10:25:42 -0500 (CDT)
+Message-ID: <alpine.DEB.2.11.1504091024540.13650@gentwo.org>
+References: <933931146caf5dac58379f50c017bff9f6c47661.1426183417.git.luto@kernel.org> <CAGXu5jKfvswdUMcrGbr6+wn1ME_JkySMvdNd0wvvHpbQ1C7HUg@mail.gmail.com> <CALQRfL7b8CjYgUnVy3jykNwv48fOc03T385RKo--cfv25YenBg@mail.gmail.com>
+ <CAObL_7HgU-ekb7mJS7C=0=idfrzV6=CSqTrG2LvUgdDtvbJx_w@mail.gmail.com> <CALQRfL6HUGMfPtsqLcSed8G14Yqg27R8tpDnMZOKtvQE+rqX0A@mail.gmail.com> <CALCETrVz39pJmMAEFodBNA8cOZjd0xkH95EzMazY0MWJDtpYgg@mail.gmail.com> <CALQRfL5FGGUnK7+Ss=MSDGmxpAERTUjezardGnH3QouBwhbZ4A@mail.gmail.com>
+ <CALCETrUGASa3Gp6cC1zdAahcS59DOdyLnTtgNX7t7FucMZLmoQ@mail.gmail.com> <CALQRfL6z2dEtPkWiuGydT0a+y4iWm2qw-cY0Rk9hA-K4gPw_qA@mail.gmail.com> <CALCETrWRHRVLotFs=Cpdr=7KjE7q52NdT62GxZg=xjv+LFZBqw@mail.gmail.com> <CALQRfL7AyadFcu9JqtC6FGnuuqY7zbnFAL81XnwBvn0o6c6UWQ@mail.gmail.com>
+ <alpine.DEB.2.11.1503300754070.5031@gentwo.org> <CALCETrW9ckw=7-1JSyFkenhFu2_1MvVqjA+inOmsuuWemGaU0w@mail.gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrW9ckw=7-1JSyFkenhFu2_1MvVqjA+inOmsuuWemGaU0w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds mount options for enabling/disabling project quota
-accounting and enforcement. A new specific inode is also used for
-project quota accounting.
+On Mon, 30 Mar 2015, Andy Lutomirski wrote:
 
-Signed-off-by: Li Xi <lixi@ddn.com>
-Signed-off-by: Dmitry Monakhov <dmonakhov@openvz.org>
-Reviewed-by: Jan Kara <jack@suse.cz>
----
- fs/ext4/ext4.h  |    6 +++-
- fs/ext4/super.c |   56 ++++++++++++++++++++++++++++++++++++++++++++++++++----
- 2 files changed, 55 insertions(+), 7 deletions(-)
+> I'll submit a new version this week with the securebits.  Sorry for the delay.
 
-diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index 7acb2da..8ddc723 100644
---- a/fs/ext4/ext4.h
-+++ b/fs/ext4/ext4.h
-@@ -1169,7 +1169,8 @@ struct ext4_super_block {
- 	__le32	s_overhead_clusters;	/* overhead blocks/clusters in fs */
- 	__le32	s_backup_bgs[2];	/* groups with sparse_super2 SBs */
- 	__u8	s_encrypt_algos[4];	/* Encryption algorithms in use  */
--	__le32	s_reserved[105];	/* Padding to the end of the block */
-+	__le32  s_prj_quota_inum;       /* inode for tracking project quota */
-+	__le32	s_reserved[104];	/* Padding to the end of the block */
- 	__le32	s_checksum;		/* crc32c(superblock) */
- };
- 
-@@ -1184,7 +1185,7 @@ struct ext4_super_block {
- #define EXT4_MF_FS_ABORTED	0x0002	/* Fatal error detected */
- 
- /* Number of quota types we support */
--#define EXT4_MAXQUOTAS 2
-+#define EXT4_MAXQUOTAS 3
- 
- /*
-  * fourth extended-fs super-block data in memory
-@@ -1376,6 +1377,7 @@ static inline int ext4_valid_inum(struct super_block *sb, unsigned long ino)
- 		ino == EXT4_BOOT_LOADER_INO ||
- 		ino == EXT4_JOURNAL_INO ||
- 		ino == EXT4_RESIZE_INO ||
-+		ino == le32_to_cpu(EXT4_SB(sb)->s_es->s_prj_quota_inum) ||
- 		(ino >= EXT4_FIRST_INO(sb) &&
- 		 ino <= le32_to_cpu(EXT4_SB(sb)->s_es->s_inodes_count));
- }
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index 04c6cc3..476e46f 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -1036,8 +1036,8 @@ static int bdev_try_to_free_page(struct super_block *sb, struct page *page,
- }
- 
- #ifdef CONFIG_QUOTA
--#define QTYPE2NAME(t) ((t) == USRQUOTA ? "user" : "group")
--#define QTYPE2MOPT(on, t) ((t) == USRQUOTA?((on)##USRJQUOTA):((on)##GRPJQUOTA))
-+static char *quotatypes[] = INITQFNAMES;
-+#define QTYPE2NAME(t) (quotatypes[t])
- 
- static int ext4_write_dquot(struct dquot *dquot);
- static int ext4_acquire_dquot(struct dquot *dquot);
-@@ -3944,7 +3944,7 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
- 		sb->s_qcop = &ext4_qctl_sysfile_operations;
- 	else
- 		sb->s_qcop = &ext4_qctl_operations;
--	sb->s_quota_types = QTYPE_MASK_USR | QTYPE_MASK_GRP;
-+	sb->s_quota_types = QTYPE_MASK_USR | QTYPE_MASK_GRP | QTYPE_MASK_PRJ;
- #endif
- 	memcpy(sb->s_uuid, es->s_uuid, sizeof(es->s_uuid));
- 
-@@ -5040,6 +5040,46 @@ restore_opts:
- 	return err;
- }
- 
-+static int ext4_statfs_project(struct super_block *sb,
-+			       kprojid_t projid, struct kstatfs *buf)
-+{
-+	struct kqid qid;
-+	struct dquot *dquot;
-+	u64 limit;
-+	u64 curblock;
-+
-+	qid = make_kqid_projid(projid);
-+	dquot = dqget(sb, qid);
-+	if (!dquot)
-+		return -ESRCH;
-+	spin_lock(&dq_data_lock);
-+
-+	limit = dquot->dq_dqb.dqb_bsoftlimit ?
-+		dquot->dq_dqb.dqb_bsoftlimit :
-+		dquot->dq_dqb.dqb_bhardlimit;
-+	if (limit && buf->f_blocks * buf->f_bsize > limit) {
-+		curblock = dquot->dq_dqb.dqb_curspace / buf->f_bsize;
-+		buf->f_blocks = limit / buf->f_bsize;
-+		buf->f_bfree = buf->f_bavail =
-+			(buf->f_blocks > curblock) ?
-+			 (buf->f_blocks - curblock) : 0;
-+	}
-+
-+	limit = dquot->dq_dqb.dqb_isoftlimit ?
-+		dquot->dq_dqb.dqb_isoftlimit :
-+		dquot->dq_dqb.dqb_ihardlimit;
-+	if (limit && buf->f_files > limit) {
-+		buf->f_files = limit;
-+		buf->f_ffree =
-+			(buf->f_files > dquot->dq_dqb.dqb_curinodes) ?
-+			 (buf->f_files - dquot->dq_dqb.dqb_curinodes) : 0;
-+	}
-+
-+	spin_unlock(&dq_data_lock);
-+	dqput(dquot);
-+	return 0;
-+}
-+
- static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf)
- {
- 	struct super_block *sb = dentry->d_sb;
-@@ -5048,6 +5088,7 @@ static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf)
- 	ext4_fsblk_t overhead = 0, resv_blocks;
- 	u64 fsid;
- 	s64 bfree;
-+	struct inode *inode = dentry->d_inode;
- 	resv_blocks = EXT4_C2B(sbi, atomic64_read(&sbi->s_resv_clusters));
- 
- 	if (!test_opt(sb, MINIX_DF))
-@@ -5072,6 +5113,9 @@ static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf)
- 	buf->f_fsid.val[0] = fsid & 0xFFFFFFFFUL;
- 	buf->f_fsid.val[1] = (fsid >> 32) & 0xFFFFFFFFUL;
- 
-+	if (ext4_test_inode_flag(inode, EXT4_INODE_PROJINHERIT) &&
-+	    sb_has_quota_limits_enabled(sb, PRJQUOTA))
-+		ext4_statfs_project(sb, EXT4_I(inode)->i_projid, buf);
- 	return 0;
- }
- 
-@@ -5236,7 +5280,8 @@ static int ext4_quota_enable(struct super_block *sb, int type, int format_id,
- 	struct inode *qf_inode;
- 	unsigned long qf_inums[EXT4_MAXQUOTAS] = {
- 		le32_to_cpu(EXT4_SB(sb)->s_es->s_usr_quota_inum),
--		le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum)
-+		le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum),
-+		le32_to_cpu(EXT4_SB(sb)->s_es->s_prj_quota_inum)
- 	};
- 
- 	BUG_ON(!EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_QUOTA));
-@@ -5264,7 +5309,8 @@ static int ext4_enable_quotas(struct super_block *sb)
- 	int type, err = 0;
- 	unsigned long qf_inums[EXT4_MAXQUOTAS] = {
- 		le32_to_cpu(EXT4_SB(sb)->s_es->s_usr_quota_inum),
--		le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum)
-+		le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum),
-+		le32_to_cpu(EXT4_SB(sb)->s_es->s_prj_quota_inum)
- 	};
- 
- 	sb_dqopt(sb)->flags |= DQUOT_QUOTA_SYS_FILE;
--- 
-1.7.1
-
+Are we going to get a new version?
