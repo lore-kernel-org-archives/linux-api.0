@@ -1,80 +1,55 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [GIT PULL] selftest: Add futex functional tests
-Date: Wed, 08 Apr 2015 23:41:52 -0600
-Message-ID: <55261120.7040902@osg.samsung.com>
-References: <cover.1427493640.git.dvhart@linux.intel.com> <551ABE00.9050003@osg.samsung.com> <D14017F7.C46F0%dvhart@linux.intel.com> <551ACD5F.8010003@osg.samsung.com> <20150408041257.GC14618@fury.dvhart.com>
+From: Tal Shorer <tal.shorer@gmail.com>
+Subject: Re: [PATCH v2 4/4] Documentation: ABI: Fix documentation for
+ mass_storage function
+Date: Thu, 9 Apr 2015 11:32:24 +0300
+Message-ID: <CAFDyS3P+c=hNKJZdQcaPDdh2sW=dCNkn6PPFTZxdh5HO8r7ehA@mail.gmail.com>
+References: <1428494808-12566-1-git-send-email-k.opasiak@samsung.com>
+	<1428494808-12566-5-git-send-email-k.opasiak@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150408041257.GC14618-JIrPihikzLEQaXB9iyTzyw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1428494808-12566-5-git-send-email-k.opasiak@samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Krzysztof Opasiak <k.opasiak@samsung.com>
+Cc: balbi@ti.com, "<gregkh@linuxfoundation.org>" <gregkh@linuxfoundation.org>, jlbec@evilplan.org, andrzej.p@samsung.com, m.szyprowski@samsung.com, linux-api@vger.kernel.org, "<linux-kernel@vger.kernel.org>" <linux-kernel@vger.kernel.org>, linux-usb@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 04/07/2015 10:12 PM, Darren Hart wrote:
-> On Tue, Mar 31, 2015 at 10:37:51AM -0600, Shuah Khan wrote:
->> On 03/31/2015 10:24 AM, Darren Hart wrote:
->>> On 3/31/15, 8:32 AM, "Shuah Khan" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
->>>
->>>> Hi Daren,
->>>>
->>>> On 03/27/2015 04:17 PM, Darren Hart wrote:
->>>>> Hi Shuah,
->>>>>
->>>>> This series begins the process of migrating my futextest tests into
->>>>> kselftest.
->>>>> I've started with only the functional tests, as the performance and
->>>>> stress may
->>>>> not be appropriate for kselftest as they stand.
->>>>>
->>>>> I cleaned up various complaints from checkpatch, but I ignored others
->>>>> that would
->>>>> require significant rework of the testcases, such as not using volatile
->>>>> and not
->>>>> creating new typedefs.
->>>>>
->>>>> The patches will follow, but I'm providing a pull request for your
->>>>> convenience
->>>>> as well.
->>>>
->>>> Thanks for acting on this so quickly after we talked about it at ELC.
->>>> Just a quick note that I am going to get to this soon once I get the
->>>> 4.1 content wrapped up. We can plan upon getting these into 4.2.
->>>
->>> OK. Michael E. provided some feedback which I can either incorporate and
->>> respin, or I can send as a follow-on to your -next after you merge these.
->>> Which do you prefer?
->>>
-> 
-> ...
-> 
->> You can wait to re-do patches. I am planning to review the
->> patch set later on this week. That way you can avoid re-spin
->> just in case, I have other comments.
-> 
-> Hi Shuah,
-> 
-> Did you have any additional comments for the futex tests?
-> 
-> Thanks,
-> 
-
-
-Sorry Daren. I got called away on a family emergency. The patch
-looks good to me and I don't have any additional comments.
-
-Assume these get pulled in for 4.2 release. I will get to them
-soon once the 4.1-rc1 is out.
-
-thanks,
--- Shuah
-
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+On Wed, Apr 8, 2015 at 3:06 PM, Krzysztof Opasiak <k.opasiak@samsung.com> wrote:
+> Luns in mass storage function are identified using their id.
+> While creating lun's directory user cannot choose any arbitrary
+> name other than arabic numeral from 1 to FSG_MAX_LUNS.
+>
+> Signed-off-by: Krzysztof Opasiak <k.opasiak@samsung.com>
+> ---
+>  .../ABI/testing/configfs-usb-gadget-mass-storage   |    7 ++++++-
+>  1 file changed, 6 insertions(+), 1 deletion(-)
+>
+> diff --git a/Documentation/ABI/testing/configfs-usb-gadget-mass-storage b/Documentation/ABI/testing/configfs-usb-gadget-mass-storage
+> index 9931fb0..0b54280 100644
+> --- a/Documentation/ABI/testing/configfs-usb-gadget-mass-storage
+> +++ b/Documentation/ABI/testing/configfs-usb-gadget-mass-storage
+> @@ -11,10 +11,15 @@ Description:
+>                                 are 2..4. Available only if
+>                                 CONFIG_USB_GADGET_DEBUG_FILES is set.
+>
+> -What:          /config/usb-gadget/gadget/functions/mass_storage.name/lun.name
+> +What:          /config/usb-gadget/gadget/functions/mass_storage.name/lun.id
+>  Date:          Oct 2013
+>  KernelVersion: 3.13
+>  Description:
+> +               id - arabic numeral from 1 to FSG_MAX_LUNS
+I think "decimal number" or "decimal value" would be easier to understand.
+> +               (which is 8 by default) - 1. LUNs should be numbered contiguously.
+> +               lun.0 is reserved for default lun which appears while creating
+> +               mass_storage.name directory and cannot be removed by the user.
+> +
+>                 The attributes:
+>
+>                 file            - The path to the backing file for the LUN.
+> --
+> 1.7.9.5
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-usb" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
