@@ -1,54 +1,78 @@
-From: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v3 4/4] Documentation: ABI: Fix documentation for mass_storage
- function
-Date: Thu, 09 Apr 2015 18:18:10 +0200
-Message-ID: <1428596290-23637-5-git-send-email-k.opasiak@samsung.com>
+From: Krzysztof Opasiak <k.opasiak@samsung.com>
+Subject: [PATCH v3 2/4] usb: gadget: mass_storage: Store lun_opts in fsg_opts
+Date: Thu, 09 Apr 2015 18:18:08 +0200
+Message-ID: <1428596290-23637-3-git-send-email-k.opasiak@samsung.com>
 References: <1428596290-23637-1-git-send-email-k.opasiak@samsung.com>
-Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <1428596290-23637-1-git-send-email-k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: balbi-l0cyMroinI0@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jlbec-aKy9MeLSZ9dg9hUCZPvPmw@public.gmane.org
-Cc: andrzej.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-reply-to: <1428596290-23637-1-git-send-email-k.opasiak@samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: balbi@ti.com, gregkh@linuxfoundation.org, jlbec@evilplan.org
+Cc: andrzej.p@samsung.com, m.szyprowski@samsung.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-usb@vger.kernel.org, Krzysztof Opasiak <k.opasiak@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-Luns in mass storage function are identified using their id.
-While creating lun's directory user cannot choose any arbitrary
-name other than decimal value from 1 to FSG_MAX_LUNS.
+Currently lun_opts are stored only in configfs and
+accessed using container_of() on config group. This
+means that in configfs callbacks we can easily access
+only current lun (config_group).
 
-Moreover, LUNs ids should be contiguous. This means that user
-may remove only lun with max id and can create new lun
-only if its id equals to max id + 1.
+This commit adds an additinal array to fsg_opts which
+allows to access not only current lun but also all other
+luns using their id.
 
-Signed-off-by: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Signed-off-by: Krzysztof Opasiak <k.opasiak@samsung.com>
 ---
- .../ABI/testing/configfs-usb-gadget-mass-storage   |    7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+ drivers/usb/gadget/function/f_mass_storage.c |    5 +++++
+ drivers/usb/gadget/function/f_mass_storage.h |    1 +
+ 2 files changed, 6 insertions(+)
 
-diff --git a/Documentation/ABI/testing/configfs-usb-gadget-mass-storage b/Documentation/ABI/testing/configfs-usb-gadget-mass-storage
-index 9931fb0..2bf085d 100644
---- a/Documentation/ABI/testing/configfs-usb-gadget-mass-storage
-+++ b/Documentation/ABI/testing/configfs-usb-gadget-mass-storage
-@@ -11,10 +11,15 @@ Description:
- 				are 2..4. Available only if
- 				CONFIG_USB_GADGET_DEBUG_FILES is set.
+diff --git a/drivers/usb/gadget/function/f_mass_storage.c b/drivers/usb/gadget/function/f_mass_storage.c
+index 811929c..67a67b5 100644
+--- a/drivers/usb/gadget/function/f_mass_storage.c
++++ b/drivers/usb/gadget/function/f_mass_storage.c
+@@ -3372,6 +3372,8 @@ static struct config_group *fsg_lun_make(struct config_group *group,
+ 	}
+ 	opts->lun = fsg_opts->common->luns[num];
+ 	opts->lun_id = num;
++	WARN_ON(fsg_opts->lun_opts[num]);
++	fsg_opts->lun_opts[num] = opts;
+ 	mutex_unlock(&fsg_opts->lock);
  
--What:		/config/usb-gadget/gadget/functions/mass_storage.name/lun.name
-+What:		/config/usb-gadget/gadget/functions/mass_storage.name/lun.id
- Date:		Oct 2013
- KernelVersion:	3.13
- Description:
-+		id - decimal value from 1 to FSG_MAX_LUNS
-+		(which is 8 by default) - 1. LUNs should be numbered contiguously.
-+		lun.0 is reserved for default lun which appears while creating
-+		mass_storage.name directory and cannot be removed by the user.
-+
- 		The attributes:
+ 	config_group_init_type_name(&opts->group, name, &fsg_lun_type);
+@@ -3400,6 +3402,7 @@ static void fsg_lun_drop(struct config_group *group, struct config_item *item)
  
- 		file		- The path to the backing file for the LUN.
+ 	fsg_common_remove_lun(lun_opts->lun, fsg_opts->common->sysfs);
+ 	fsg_opts->common->luns[lun_opts->lun_id] = NULL;
++	fsg_opts->lun_opts[lun_opts->lun_id] = NULL;
+ 	lun_opts->lun_id = 0;
+ 	mutex_unlock(&fsg_opts->lock);
+ 
+@@ -3546,6 +3549,7 @@ static struct usb_function_instance *fsg_alloc_inst(void)
+ 	if (!opts)
+ 		return ERR_PTR(-ENOMEM);
+ 	mutex_init(&opts->lock);
++	memset(opts->lun_opts, 0, sizeof(opts->lun_opts));
+ 	opts->func_inst.free_func_inst = fsg_free_inst;
+ 	opts->common = fsg_common_setup(opts->common);
+ 	if (IS_ERR(opts->common)) {
+@@ -3569,6 +3573,7 @@ static struct usb_function_instance *fsg_alloc_inst(void)
+ 			(const char **)&opts->func_inst.group.cg_item.ci_name);
+ 	opts->lun0.lun = opts->common->luns[0];
+ 	opts->lun0.lun_id = 0;
++	opts->lun_opts[0] = &opts->lun0;
+ 	config_group_init_type_name(&opts->lun0.group, "lun.0", &fsg_lun_type);
+ 	opts->default_groups[0] = &opts->lun0.group;
+ 	opts->func_inst.group.default_groups = opts->default_groups;
+diff --git a/drivers/usb/gadget/function/f_mass_storage.h b/drivers/usb/gadget/function/f_mass_storage.h
+index b4866fc..0a7c656 100644
+--- a/drivers/usb/gadget/function/f_mass_storage.h
++++ b/drivers/usb/gadget/function/f_mass_storage.h
+@@ -81,6 +81,7 @@ struct fsg_opts {
+ 	struct fsg_common *common;
+ 	struct usb_function_instance func_inst;
+ 	struct fsg_lun_opts lun0;
++	struct fsg_lun_opts *lun_opts[FSG_MAX_LUNS];
+ 	struct config_group *default_groups[2];
+ 	bool no_configfs; /* for legacy gadgets */
+ 
 -- 
 1.7.9.5
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-usb" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
