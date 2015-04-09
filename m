@@ -1,175 +1,146 @@
 From: Vitaly Kuznetsov <vkuznets@redhat.com>
-Subject: [PATCH v3 14/21] Drivers: hv: vss: convert to hv_utils_transport
-Date: Thu,  9 Apr 2015 10:38:43 +0200
-Message-ID: <1428568730-6030-15-git-send-email-vkuznets@redhat.com>
+Subject: [PATCH v3 19/21] Drivers: hv: vss: full handshake support
+Date: Thu,  9 Apr 2015 10:38:48 +0200
+Message-ID: <1428568730-6030-20-git-send-email-vkuznets@redhat.com>
 References: <1428568730-6030-1-git-send-email-vkuznets@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1428568730-6030-1-git-send-email-vkuznets@redhat.com>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: "K. Y. Srinivasan" <kys@microsoft.com>, devel@linuxdriverproject.org
-Cc: Radim Krcmar <rkrcmar@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Haiyang Zhang <haiyangz@microsoft.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Haiyang Zhang <haiyangz@microsoft.com>, linux-kernel@vger.kernel.org, Dexuan Cui <decui@microsoft.com>, Radim Krcmar <rkrcmar@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-... to support both netlink and /dev/vmbus/hv_vss communication methods.
+Introduce VSS_OP_REGISTER1 to support kernel replying to the negotiation
+message with its own version.
 
 Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
 ---
- drivers/hv/hv_snapshot.c | 52 +++++++++++++++++++++++++-----------------------
- 1 file changed, 27 insertions(+), 25 deletions(-)
+ drivers/hv/hv_snapshot.c    | 49 ++++++++++++++++++++++++++++++++++-----------
+ include/uapi/linux/hyperv.h |  5 +++++
+ tools/hv/hv_vss_daemon.c    | 14 +++++++++++++
+ 3 files changed, 56 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/hv/hv_snapshot.c b/drivers/hv/hv_snapshot.c
-index ddb1cda..2c8c246 100644
+index 2c8c246..ee1762b 100644
 --- a/drivers/hv/hv_snapshot.c
 +++ b/drivers/hv/hv_snapshot.c
-@@ -25,6 +25,7 @@
- #include <linux/hyperv.h>
- 
- #include "hyperv_vmbus.h"
-+#include "hv_utils_transport.h"
- 
- #define VSS_MAJOR  5
- #define VSS_MINOR  0
-@@ -58,9 +59,9 @@ static struct {
+@@ -59,6 +59,11 @@ static struct {
  
  static void vss_respond_to_host(int error);
  
--static struct cb_id vss_id = { CN_VSS_IDX, CN_VSS_VAL };
--static const char vss_name[] = "vss_kernel_module";
-+static const char vss_devname[] = "vmbus/hv_vss";
++/*
++ * This state maintains the version number registered by the daemon.
++ */
++static int dm_reg_value;
++
+ static const char vss_devname[] = "vmbus/hv_vss";
  static __u8 *recv_buffer;
-+static struct hvutil_transport *hvt;
- 
- static void vss_send_op(struct work_struct *dummy);
- static void vss_timeout_func(struct work_struct *dummy);
-@@ -88,12 +89,12 @@ static void vss_timeout_func(struct work_struct *dummy)
+ static struct hvutil_transport *hvt;
+@@ -89,6 +94,29 @@ static void vss_timeout_func(struct work_struct *dummy)
  			hv_vss_onchannelcallback);
  }
  
--static void
--vss_cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
-+static int vss_on_msg(void *msg, int len)
- {
--	struct hv_vss_msg *vss_msg;
-+	struct hv_vss_msg *vss_msg = (struct hv_vss_msg *)msg;
- 
--	vss_msg = (struct hv_vss_msg *)msg->data;
-+	if (len != sizeof(*vss_msg))
-+		return -EINVAL;
- 
- 	/*
- 	 * Don't process registration messages if we're in the middle of
-@@ -101,7 +102,7 @@ vss_cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
- 	 */
- 	if (vss_transaction.state > HVUTIL_READY &&
- 	    vss_msg->vss_hdr.operation == VSS_OP_REGISTER)
--		return;
-+		return -EINVAL;
- 
- 	if (vss_transaction.state == HVUTIL_DEVICE_INIT &&
- 	    vss_msg->vss_hdr.operation == VSS_OP_REGISTER) {
-@@ -119,8 +120,9 @@ vss_cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp)
- 	} else {
- 		/* This is a spurious call! */
- 		pr_warn("VSS: Transaction not active\n");
--		return;
-+		return -EINVAL;
- 	}
-+	return 0;
- }
- 
- 
-@@ -128,27 +130,20 @@ static void vss_send_op(struct work_struct *dummy)
- {
- 	int op = vss_transaction.msg->vss_hdr.operation;
- 	int rc;
--	struct cn_msg *msg;
- 	struct hv_vss_msg *vss_msg;
- 
- 	/* The transaction state is wrong. */
- 	if (vss_transaction.state != HVUTIL_HOSTMSG_RECEIVED)
- 		return;
- 
--	msg = kzalloc(sizeof(*msg) + sizeof(*vss_msg), GFP_ATOMIC);
--	if (!msg)
-+	vss_msg = kzalloc(sizeof(*vss_msg), GFP_KERNEL);
-+	if (!vss_msg)
- 		return;
- 
--	vss_msg = (struct hv_vss_msg *)msg->data;
--
--	msg->id.idx =  CN_VSS_IDX;
--	msg->id.val = CN_VSS_VAL;
--
- 	vss_msg->vss_hdr.operation = op;
--	msg->len = sizeof(struct hv_vss_msg);
- 
- 	vss_transaction.state = HVUTIL_USERSPACE_REQ;
--	rc = cn_netlink_send(msg, 0, 0, GFP_ATOMIC);
-+	rc = hvutil_transport_send(hvt, vss_msg, sizeof(*vss_msg));
- 	if (rc) {
- 		pr_warn("VSS: failed to communicate to the daemon: %d\n", rc);
- 		if (cancel_delayed_work_sync(&vss_timeout_work)) {
-@@ -157,7 +152,7 @@ static void vss_send_op(struct work_struct *dummy)
- 		}
- 	}
- 
--	kfree(msg);
-+	kfree(vss_msg);
- 
- 	return;
- }
-@@ -308,14 +303,16 @@ void hv_vss_onchannelcallback(void *context)
- 
- }
- 
-+static void vss_on_reset(void)
++static int vss_handle_handshake(struct hv_vss_msg *vss_msg)
 +{
-+	if (cancel_delayed_work_sync(&vss_timeout_work))
-+		vss_respond_to_host(HV_E_FAIL);
-+	vss_transaction.state = HVUTIL_DEVICE_INIT;
++	u32 our_ver = VSS_OP_REGISTER1;
++
++	switch (vss_msg->vss_hdr.operation) {
++	case VSS_OP_REGISTER:
++		/* Daemon doesn't expect us to reply */
++		dm_reg_value = VSS_OP_REGISTER;
++		break;
++	case VSS_OP_REGISTER1:
++		/* Daemon expects us to reply with our own version*/
++		if (hvutil_transport_send(hvt, &our_ver, sizeof(our_ver)))
++			return -EFAULT;
++		dm_reg_value = VSS_OP_REGISTER1;
++		break;
++	default:
++		return -EINVAL;
++	}
++	vss_transaction.state = HVUTIL_READY;
++	pr_info("VSS daemon registered\n");
++	return 0;
 +}
 +
- int
- hv_vss_init(struct hv_util_service *srv)
+ static int vss_on_msg(void *msg, int len)
  {
--	int err;
+ 	struct hv_vss_msg *vss_msg = (struct hv_vss_msg *)msg;
+@@ -96,18 +124,15 @@ static int vss_on_msg(void *msg, int len)
+ 	if (len != sizeof(*vss_msg))
+ 		return -EINVAL;
+ 
+-	/*
+-	 * Don't process registration messages if we're in the middle of
+-	 * a transaction processing.
+-	 */
+-	if (vss_transaction.state > HVUTIL_READY &&
+-	    vss_msg->vss_hdr.operation == VSS_OP_REGISTER)
+-		return -EINVAL;
 -
--	err = cn_add_callback(&vss_id, vss_name, vss_cn_callback);
--	if (err)
--		return err;
- 	recv_buffer = srv->recv_buffer;
+-	if (vss_transaction.state == HVUTIL_DEVICE_INIT &&
+-	    vss_msg->vss_hdr.operation == VSS_OP_REGISTER) {
+-		pr_info("VSS daemon registered\n");
+-		vss_transaction.state = HVUTIL_READY;
++	if (vss_msg->vss_hdr.operation == VSS_OP_REGISTER ||
++	    vss_msg->vss_hdr.operation == VSS_OP_REGISTER1) {
++		/*
++		 * Don't process registration messages if we're in the middle
++		 * of a transaction processing.
++		 */
++		if (vss_transaction.state > HVUTIL_READY)
++			return -EINVAL;
++		return vss_handle_handshake(vss_msg);
+ 	} else if (vss_transaction.state == HVUTIL_USERSPACE_REQ) {
+ 		vss_transaction.state = HVUTIL_USERSPACE_RECV;
+ 		if (cancel_delayed_work_sync(&vss_timeout_work)) {
+diff --git a/include/uapi/linux/hyperv.h b/include/uapi/linux/hyperv.h
+index bb1cb73..66c76df 100644
+--- a/include/uapi/linux/hyperv.h
++++ b/include/uapi/linux/hyperv.h
+@@ -45,6 +45,11 @@
  
- 	/*
-@@ -326,13 +323,18 @@ hv_vss_init(struct hv_util_service *srv)
- 	 */
- 	vss_transaction.state = HVUTIL_DEVICE_INIT;
+ #define VSS_OP_REGISTER 128
  
-+	hvt = hvutil_transport_init(vss_devname, CN_VSS_IDX, CN_VSS_VAL,
-+				    vss_on_msg, vss_on_reset);
-+	if (!hvt)
-+		return -EFAULT;
++/*
++  Daemon code with full handshake support.
++ */
++#define VSS_OP_REGISTER1 129
 +
- 	return 0;
- }
+ enum hv_vss_op {
+ 	VSS_OP_CREATE = 0,
+ 	VSS_OP_DELETE,
+diff --git a/tools/hv/hv_vss_daemon.c b/tools/hv/hv_vss_daemon.c
+index 36f1821..96234b6 100644
+--- a/tools/hv/hv_vss_daemon.c
++++ b/tools/hv/hv_vss_daemon.c
+@@ -148,6 +148,8 @@ int main(int argc, char *argv[])
+ 	int	op;
+ 	struct hv_vss_msg vss_msg[1];
+ 	int daemonize = 1, long_index = 0, opt;
++	int in_handshake = 1;
++	__u32 kernel_modver;
  
- void hv_vss_deinit(void)
- {
- 	vss_transaction.state = HVUTIL_DEVICE_DYING;
--	cn_del_callback(&vss_id);
- 	cancel_delayed_work_sync(&vss_timeout_work);
- 	cancel_work_sync(&vss_send_op_work);
-+	hvutil_transport_destroy(hvt);
- }
+ 	static struct option long_options[] = {
+ 		{"help",	no_argument,	   0,  'h' },
+@@ -211,6 +213,18 @@ int main(int argc, char *argv[])
+ 
+ 		len = read(vss_fd, vss_msg, sizeof(struct hv_vss_msg));
+ 
++		if (in_handshake) {
++			if (len != sizeof(kernel_modver)) {
++				syslog(LOG_ERR, "invalid version negotiation");
++				exit(EXIT_FAILURE);
++			}
++			kernel_modver = *(__u32 *)vss_msg;
++			in_handshake = 0;
++			syslog(LOG_INFO, "VSS: kernel module version: %d",
++			       kernel_modver);
++			continue;
++		}
++
+ 		if (len != sizeof(struct hv_vss_msg)) {
+ 			syslog(LOG_ERR, "read failed; error:%d %s",
+ 			       errno, strerror(errno));
 -- 
 1.9.3
