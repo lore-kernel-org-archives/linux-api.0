@@ -1,21 +1,78 @@
-From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC] capabilities: Ambient capabilities
-Date: Thu, 9 Apr 2015 10:25:42 -0500 (CDT)
-Message-ID: <alpine.DEB.2.11.1504091024540.13650@gentwo.org>
-References: <933931146caf5dac58379f50c017bff9f6c47661.1426183417.git.luto@kernel.org> <CAGXu5jKfvswdUMcrGbr6+wn1ME_JkySMvdNd0wvvHpbQ1C7HUg@mail.gmail.com> <CALQRfL7b8CjYgUnVy3jykNwv48fOc03T385RKo--cfv25YenBg@mail.gmail.com>
- <CAObL_7HgU-ekb7mJS7C=0=idfrzV6=CSqTrG2LvUgdDtvbJx_w@mail.gmail.com> <CALQRfL6HUGMfPtsqLcSed8G14Yqg27R8tpDnMZOKtvQE+rqX0A@mail.gmail.com> <CALCETrVz39pJmMAEFodBNA8cOZjd0xkH95EzMazY0MWJDtpYgg@mail.gmail.com> <CALQRfL5FGGUnK7+Ss=MSDGmxpAERTUjezardGnH3QouBwhbZ4A@mail.gmail.com>
- <CALCETrUGASa3Gp6cC1zdAahcS59DOdyLnTtgNX7t7FucMZLmoQ@mail.gmail.com> <CALQRfL6z2dEtPkWiuGydT0a+y4iWm2qw-cY0Rk9hA-K4gPw_qA@mail.gmail.com> <CALCETrWRHRVLotFs=Cpdr=7KjE7q52NdT62GxZg=xjv+LFZBqw@mail.gmail.com> <CALQRfL7AyadFcu9JqtC6FGnuuqY7zbnFAL81XnwBvn0o6c6UWQ@mail.gmail.com>
- <alpine.DEB.2.11.1503300754070.5031@gentwo.org> <CALCETrW9ckw=7-1JSyFkenhFu2_1MvVqjA+inOmsuuWemGaU0w@mail.gmail.com>
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrW9ckw=7-1JSyFkenhFu2_1MvVqjA+inOmsuuWemGaU0w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+From: Emil Velikov <emil.l.velikov@gmail.com>
+Subject: Re: [PATCH 05/45] drm.h: include stdlib.h in userspace
+Date: Thu, 9 Apr 2015 17:00:48 +0100
+Message-ID: <CACvgo50OU8mroLSS_R_Uo4D9PRtTnmLCM5p5QbxO6KQAjLWrYw@mail.gmail.com>
+References: <1424127948-22484-1-git-send-email-mikko.rapeli@iki.fi>
+ <1424127948-22484-6-git-send-email-mikko.rapeli@iki.fi>
+ <54EB0072.8020909@gmail.com>
+ <20150223103548.GT12550@lakka.kapsi.fi>
+ <CACvgo50PA5nb27EcxQqXY49C5hmvDDxi3WOqB=op-wx_WEGd+Q@mail.gmail.com>
+ <20150321121706.GW12550@lakka.kapsi.fi>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <20150321121706.GW12550@lakka.kapsi.fi>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Mikko Rapeli <mikko.rapeli@iki.fi>
+Cc: linux-api@vger.kernel.org, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel@vger.kernel.org>, ML dri-devel <dri-devel@lists.freedesktop.org>, David Howells <dhowells@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 30 Mar 2015, Andy Lutomirski wrote:
-
-> I'll submit a new version this week with the securebits.  Sorry for the delay.
-
-Are we going to get a new version?
+SGkgTWlra28KClBhcmRvbiBmb3IgdGhlIGxhdGUgcmVzcG9uc2UsCgpPbiAyMSBNYXJjaCAyMDE1
+IGF0IDEyOjE3LCBNaWtrbyBSYXBlbGkgPG1pa2tvLnJhcGVsaUBpa2kuZmk+IHdyb3RlOgo+IE9u
+IEZyaSwgTWFyIDIwLCAyMDE1IGF0IDA4OjI1OjQwUE0gKzAwMDAsIEVtaWwgVmVsaWtvdiB3cm90
+ZToKPj4gT24gMjMgRmVicnVhcnkgMjAxNSBhdCAxMDozNSwgTWlra28gUmFwZWxpIDxtaWtrby5y
+YXBlbGlAaWtpLmZpPiB3cm90ZToKPj4gPiBPbiBNb24sIEZlYiAyMywgMjAxNSBhdCAxMDoyNjo1
+OEFNICswMDAwLCBFbWlsIFZlbGlrb3Ygd3JvdGU6Cj4+ID4+IE9uIDE2LzAyLzE1IDIzOjA1LCBN
+aWtrbyBSYXBlbGkgd3JvdGU6Cj4+ID4+ID4gRml4ZXMgPGRybS9kcm0uaD4gY29tcGlsYXRpb24g
+ZXJyb3I6Cj4+ID4+ID4KPj4gPj4gPiBkcm0vZHJtLmg6MTMyOjI6IGVycm9yOiB1bmtub3duIHR5
+cGUgbmFtZSDigJhzaXplX3TigJkKPj4gPj4gPgo+PiA+PiBIaSBNaWtrbywKPj4gPj4KPj4gPj4g
+Q2FuIHlvdSBsZXQgdXMga25vdyBob3cgeW91J3JlIGdldHRpbmcgdGhlc2UgKHNlcmllcy13aXNl
+KSBlcnJvcnMgPyBJJ3ZlCj4+ID4+IGJlZW4gbWVhbmluZyB0byBzeW5jIHRoZSB1YXBpL2RybSBh
+bmQgbGliZHJtIGhlYWRlcnMgYW5kIHdvdWxkIGJlIG5pY2UKPj4gPj4gdG8gaGF2ZSBhbiBleHRy
+YSBzdGVwIHRvIHRlc3QgdGhpbmdzLgo+PiA+Cj4+ID4gVGhpcyBzaG91bGQgaGF2ZSBldmVyeXRo
+aW5nIG5lZWRlZCB0byByZXByb2R1Y2UgdGhlc2UgY29tcGlsZSBlcnJvcnMsCj4+ID4gdGhvdWdo
+IHNvbWUgb2YgdGhlIGVycm9ycyBoaWRlIGJlaGluZCBvdGhlciBlcnJvcnMgYW5kIGZpeGVzOgo+
+PiA+Cj4+ID4gaHR0cHM6Ly9sa21sLm9yZy9sa21sLzIwMTUvMi8xNi81MjUKPj4gPgo+PiBUaGFu
+a3MgZm9yIHRoZSBsaW5rIE1pa2tvLgo+Pgo+PiBBZmFpY3QgdGhlIGdlbmVyYWwgY29uc2Vuc3Vz
+IHNlZW1zIHRvIGJlIHRoYXQgb25lIHNob3VsZCBhdm9pZCB1c2luZwo+PiBzdGRpbnQncyB1aW50
+OF90LCBidXQgc3RpY2sgdG8gX191OCBhbmQgZnJpZW5kcy4gRGlkIHlvdSBoYWQgdGhlCj4+IGNo
+YW5jZSB0byByb2xsIG91dCBhbm90aGVyIHNlcmllcyB0aGF0IGRvZXMgc28gPwo+Cj4gWWVzLCBu
+ZXcgc2VyaWVzIHdpdGggdGhlc2UgY2hhbmdlcyBpcyBvbiB0aGUgd2F5LiBJJ20gdHJ5aW5nIHRv
+IGZvbGxvdyB1cCB0bwo+IGFsbCBvdGhlciByZXZpZXcgY29tbWVudHMgYXMgd2VsbCBhbmQgZ2V0
+IGRvd24gdG8gMTAwJSBjb21waWxpbmcgdWFwaQo+IGhlYWRlcnM7IDM1IGZhaWx1cmVzIHRvIGdv
+Li4uCj4KR2xhZCB0byBoZWFyIHRoYXQgaXQncyBnZXR0aW5nIHRoZXJlLiBNaWdodCBiZSBhIGJp
+dCBzbG93ZXIgdGhhbgpleHBlY3RlZCBidXQgd2UnbGwgZ2V0IHRoZXJlIDotKSBDYW4geW91IHBs
+ZWFzZSBDYyBtZSBvbiB0aGUgbmV4dAppdGVyYXRpb24gPwoKPj4gVGhhdCBhc2lkZSBJJ20gbm90
+IDEwMCUgc3VyZSB0aGF0IGRvaW5nIHRoZSBVQVBJIHNwbGl0LCBhcyBpcywgd2FzIHRoZQo+PiBw
+ZXJmZWN0IHNvbHV0aW9uLiBBZmFpayBkcm0gdXNlZCB0byBsaXZlIGFzIGFuIG91dCBvZiB0cmVl
+IHVzZXJzcGFjZQo+PiBsaWJyYXJ5KGxpYmRybSkuIE5vdCBzdXJlIGF0IHdoaWNoIHBvaW50IHRo
+ZSBtYWpvciByZXN0cnVjdHVyaW5nIHRvb2sKPj4gcGFydCwgYnV0IG9uZSBpcyBjZXJ0YWluIC0g
+bGliZHJtIHJlbWFpbnMgdGhlIG9ubHkgYXV0aG9yaXRhdGl2ZQo+PiBzb3VyY2VzIG9mIHRoZSBo
+ZWFkZXJzLiBJdCdzIHBvc3NpYmxlIHRoYXQgc29tZSBidWdneSBwcm9ncmFtcyBwdWxsCj4+IHRo
+ZSBVQVBJIGhlYWRlcnMgd2hpbGUgbGlua2luZyBhZ2FpbnN0IHRoZSBsaWJyYXJ5LCBidXQgSSdk
+IHNheSB0aGF0Cj4+IHdvbid0IGVuZCB1cCB3ZWxsIGluIHRoZSBsb25nIHRlcm0uIEFkZGl0aW9u
+YWxseSBzaW5jZSB0aGUgVUFQSSBzcGxpdAo+PiB0aGUgYG1ha2UgdXBkYXRlLWhlYWRlcnMnIHRh
+cmdldCB1c2VkIHRvIHN5bmMgbGliZHJtJ3MgaGVhZGVycyBoYXZlCj4+IGJlZW4gYnJva2VuIGxl
+YWRpbmcgcGVvcGxlIHRvIGNvcHkgbWlzYy4gaHVua3MgYW5kL29yIGZpbGVzLiBMZWFkaW5nCj4+
+IHRvIGdyZWF0ZXIgY2hhbmNlIG9mIHRoaW5ncyBnb2luZyBzb3VyLgo+Pgo+PiBBbGwgdGhhdCBz
+YWlkLCBJIHdpbGwgbmVlZCB0byBnYXRoZXIgc29tZSBvcGluaW9ucyBmb3IgZHJtIGRldmVsb3Bl
+cnMKPj4gYW5kIG1haW50YWluZXJzIGlmIHRoZSBpZGVhIG9mIHBhcnQgcmV2ZXJpbmcgNzE4ZGNl
+ZGQ3ZTgoVUFQSToKPj4gKFNjcmlwdGVkKSBEaXNpbnRlZ3JhdGUgaW5jbHVkZS9kcm0pIHdpbGwg
+YmUgdGhlIHdheSBmb3J3YXJkLgo+Cj4gT2ssIEknbGwgZm9sbG93IHdoYXQgaXMgYXZhaWxhYmxl
+IGluIExpbnVzJyB0cmVlIChvciAtbmV4dCwgbm90IHNodXJlIHdoaWNoCj4gb25lIEkgc2hvdWxk
+IHRyYWNrIGZvciB0aGVzZSBjaGFuZ2VzKS4KPgpBZnRlciBkaXNjdXNzaW5nIChtb3JlIGxpa2Ug
+YW5ub3lpbmcpIG91ciBEUk0gbWFpbnRhaW5lciB3ZSBnb3QgdG8gdGhlCmNvbmNsdXNpb24gdGhh
+dCB0aGUgaGVhZGVycyB3aWxsIHN0YXkgZXhwb3NlZCB0byB1c2Vyc3BhY2UuIFNvIGFueSBhbmQK
+YWxsIG9mIHlvdXIgd29yayB3aWxsIGJlIGdyZWF0bHkgYXBwcmVjaWF0ZWQuCgpUaGFua3MKRW1p
+bApfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpkcmktZGV2
+ZWwgbWFpbGluZyBsaXN0CmRyaS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xp
+c3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
