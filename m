@@ -1,54 +1,55 @@
-From: Felipe Balbi <balbi-l0cyMroinI0@public.gmane.org>
-Subject: Re: [PATCH 3/5] usb: gadget: mass_storage: Store lun_opts in fsg_opts
-Date: Thu, 9 Apr 2015 08:47:33 -0500
-Message-ID: <20150409134733.GC4393@saruman.tx.rr.com>
+From: Felipe Balbi <balbi@ti.com>
+Subject: Re: [PATCH 4/5] usb: gadget: mass_storage: Ensure that lun ids are
+ contiguous
+Date: Thu, 9 Apr 2015 08:47:41 -0500
+Message-ID: <20150409134741.GD4393@saruman.tx.rr.com>
 References: <1428492528-11993-1-git-send-email-k.opasiak@samsung.com>
- <1428492528-11993-4-git-send-email-k.opasiak@samsung.com>
-Reply-To: <balbi-l0cyMroinI0@public.gmane.org>
+ <1428492528-11993-5-git-send-email-k.opasiak@samsung.com>
+Reply-To: <balbi@ti.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="oJ71EGRlYNjSvfq7"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+	protocol="application/pgp-signature"; boundary="IMjqdzrDRly81ofr"
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1428492528-11993-4-git-send-email-k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Cc: balbi-l0cyMroinI0@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jlbec-aKy9MeLSZ9dg9hUCZPvPmw@public.gmane.org, andrzej.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <1428492528-11993-5-git-send-email-k.opasiak@samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Krzysztof Opasiak <k.opasiak@samsung.com>
+Cc: balbi@ti.com, gregkh@linuxfoundation.org, jlbec@evilplan.org, andrzej.p@samsung.com, m.szyprowski@samsung.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-usb@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
---oJ71EGRlYNjSvfq7
+--IMjqdzrDRly81ofr
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Apr 08, 2015 at 01:28:46PM +0200, Krzysztof Opasiak wrote:
-> Signed-off-by: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+On Wed, Apr 08, 2015 at 01:28:47PM +0200, Krzysztof Opasiak wrote:
+> Signed-off-by: Krzysztof Opasiak <k.opasiak@samsung.com>
 
 no commit log
 
 --=20
 balbi
 
---oJ71EGRlYNjSvfq7
+--IMjqdzrDRly81ofr
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: Digital signature
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1
 
-iQIcBAEBAgAGBQJVJoL1AAoJEIaOsuA1yqREEewP+QFKJr1/Wl+XxCvv64nGCuQQ
-jc7EQAGAgLc8wCOmw6bxfP1561q51c7JZOwQnH2it2vcJnsccRSH6Xt5i+kveKgI
-QZX7bF4I8ZbYRYykan8AidnSF2KNTDgmVAMRaJCxwzbgA/XDCElUqpJjPP2NJD4U
-qkM/ixCgk6aUOzRvvN3KBpvAXMmVI9ZKfd6rCB+n8Gz/pSlStq2OU6PWM72GFPx4
-Q+9GRVJkghKpyrQHA6pt+BI3S8p7Z6a+9V1wjep26OEcID+qdFUzh1nSjY+k0y9j
-+CAp7g25KgSSAwQUVKSDhRomWi39IgSRUWZFVgFd6yurHmcjAC5+C9oD2YzT2Sr9
-PENMYYqU43KgysfTenjjRvy93auCdCX1x8uHLIl7401UI73VhZ1qyofF4DNG+APa
-LjT1YsjfhQTmuZsdjEUidCEXPODJ+uzgxMVxdZQlNYablxnHEg8aZ9WxHDVJ3E5n
-Jb32sJih06ovXmb4RAQQY+ghspivleOoz2mY0/coZWZTQCvmxVbR3z07WeVwSDBr
-qKh2Kkx5aCFmQ/hwLBmxZmyCRtg4XOWJGtwmW9k4ioJq8zUFnOgJb0yA20HqJNhI
-ojPzAoqYvCzGDOkEfew++PAJANIp6T/4EEWtsDgQ7W+uZzlYjzysAk03GGzPcxeT
-4R5j4Nq/WlrFqliRWp3F
-=8huu
+iQIcBAEBAgAGBQJVJoL9AAoJEIaOsuA1yqREO0oP/1KoehihYBw6GBBoVjrWvkwZ
+HjeTwhXnO8uCjy4h5T7MxABbnywq//0qS2+ae4F37s2XbKH1gkWZkh9/mDuYO7N+
+O1bYpwI0yqVrlgd3LXExdB2Egmv0XuN55tJb7esiukElbWzHUDdnTFBACsX+UGri
+wb7tqx+tShQ41CWNfnUfUxY4hdZ3j9uOV6P6xLISnzDR9Vdrnu8eTc8CA3paTbSq
+D5p8OBsZerlP53O54vnpAVjjefaPiIqEulm+xXcVa31mcDlNKJG4k5b9z8pZQ5kH
+loH845mS7lsTqV484Airw3CU/3dgIaly9xFu+6s/IuoCfYnfvkexSND46yYHzCNH
+m4/NgN9OH8CGQ1tQe0c3QdSUvQDUBir7bJpoDMLL729ZdeNEaao6lOqq+7V5cvOb
+ChQHB4Hia1Rc2BzQbRrGtRsqVSkDFO5v/K6/uyH1CFR1OwcEam0ICEq92TsZ0qk3
+TjZicVGMtsEgOy19MNm8UkqXTrWALxpyc+ejsBZ010D8AFepX40Np2WYuDStvBTb
+mzTDSGUwYCZwWogll0AFJzN/4Fu6rxjD8NhueXN7xdM47QIdt19Icv9u8AdezH4a
+EekBp2AyI7URivFAEhH8k3dqO61hxZT5kod1jBnZtLe9rBTTG1pIXy/CQZPgYBvc
+Mnu/qW/3Td4rxl6hvG1u
+=+MVz
 -----END PGP SIGNATURE-----
 
---oJ71EGRlYNjSvfq7--
+--IMjqdzrDRly81ofr--
