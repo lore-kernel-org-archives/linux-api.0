@@ -1,78 +1,33 @@
-From: Krzysztof Opasiak <k.opasiak@samsung.com>
-Subject: [PATCH v3 2/4] usb: gadget: mass_storage: Store lun_opts in fsg_opts
-Date: Thu, 09 Apr 2015 18:18:08 +0200
-Message-ID: <1428596290-23637-3-git-send-email-k.opasiak@samsung.com>
-References: <1428596290-23637-1-git-send-email-k.opasiak@samsung.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <1428596290-23637-1-git-send-email-k.opasiak@samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: balbi@ti.com, gregkh@linuxfoundation.org, jlbec@evilplan.org
-Cc: andrzej.p@samsung.com, m.szyprowski@samsung.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-usb@vger.kernel.org, Krzysztof Opasiak <k.opasiak@samsung.com>
+From: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [patch -mm] mm, doc: cleanup and clarify munmap behavior for
+ hugetlb memory fix
+Date: Thu, 9 Apr 2015 12:46:09 -0700 (PDT)
+Message-ID: <alpine.DEB.2.10.1504091244501.11370@chino.kir.corp.google.com>
+References: <alpine.DEB.2.10.1503261621570.20009@chino.kir.corp.google.com> <alpine.LSU.2.11.1503291801400.1052@eggly.anvils> <alpine.DEB.2.10.1504021536210.15536@chino.kir.corp.google.com> <alpine.DEB.2.10.1504021547330.15536@chino.kir.corp.google.com>
+ <20150404113456.55468dc3@lwn.net>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150404113456.55468dc3-T1hC0tSOHrs@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>, Luiz Capitulino <lcapitulino-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Joern Engel <joern-PCqxUs/MD9bYtjvyW6yDsg@public.gmane.org>, Jianguo Wu <wujianguo-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Currently lun_opts are stored only in configfs and
-accessed using container_of() on config group. This
-means that in configfs callbacks we can easily access
-only current lun (config_group).
+On Sat, 4 Apr 2015, Jonathan Corbet wrote:
 
-This commit adds an additinal array to fsg_opts which
-allows to access not only current lun but also all other
-luns using their id.
+> On Thu, 2 Apr 2015 15:50:15 -0700 (PDT)
+> David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> 
+> > Don't only specify munmap(2) behavior with respect the hugetlb memory, all 
+> > other syscalls get naturally aligned to the native page size of the 
+> > processor.  Rather, pick out munmap(2) as a specific example.
+> 
+> So I was going to apply this to the docs tree, but it doesn't even come
+> close.  What tree was this patch generated against?
+> 
 
-Signed-off-by: Krzysztof Opasiak <k.opasiak@samsung.com>
----
- drivers/usb/gadget/function/f_mass_storage.c |    5 +++++
- drivers/usb/gadget/function/f_mass_storage.h |    1 +
- 2 files changed, 6 insertions(+)
-
-diff --git a/drivers/usb/gadget/function/f_mass_storage.c b/drivers/usb/gadget/function/f_mass_storage.c
-index 811929c..67a67b5 100644
---- a/drivers/usb/gadget/function/f_mass_storage.c
-+++ b/drivers/usb/gadget/function/f_mass_storage.c
-@@ -3372,6 +3372,8 @@ static struct config_group *fsg_lun_make(struct config_group *group,
- 	}
- 	opts->lun = fsg_opts->common->luns[num];
- 	opts->lun_id = num;
-+	WARN_ON(fsg_opts->lun_opts[num]);
-+	fsg_opts->lun_opts[num] = opts;
- 	mutex_unlock(&fsg_opts->lock);
- 
- 	config_group_init_type_name(&opts->group, name, &fsg_lun_type);
-@@ -3400,6 +3402,7 @@ static void fsg_lun_drop(struct config_group *group, struct config_item *item)
- 
- 	fsg_common_remove_lun(lun_opts->lun, fsg_opts->common->sysfs);
- 	fsg_opts->common->luns[lun_opts->lun_id] = NULL;
-+	fsg_opts->lun_opts[lun_opts->lun_id] = NULL;
- 	lun_opts->lun_id = 0;
- 	mutex_unlock(&fsg_opts->lock);
- 
-@@ -3546,6 +3549,7 @@ static struct usb_function_instance *fsg_alloc_inst(void)
- 	if (!opts)
- 		return ERR_PTR(-ENOMEM);
- 	mutex_init(&opts->lock);
-+	memset(opts->lun_opts, 0, sizeof(opts->lun_opts));
- 	opts->func_inst.free_func_inst = fsg_free_inst;
- 	opts->common = fsg_common_setup(opts->common);
- 	if (IS_ERR(opts->common)) {
-@@ -3569,6 +3573,7 @@ static struct usb_function_instance *fsg_alloc_inst(void)
- 			(const char **)&opts->func_inst.group.cg_item.ci_name);
- 	opts->lun0.lun = opts->common->luns[0];
- 	opts->lun0.lun_id = 0;
-+	opts->lun_opts[0] = &opts->lun0;
- 	config_group_init_type_name(&opts->lun0.group, "lun.0", &fsg_lun_type);
- 	opts->default_groups[0] = &opts->lun0.group;
- 	opts->func_inst.group.default_groups = opts->default_groups;
-diff --git a/drivers/usb/gadget/function/f_mass_storage.h b/drivers/usb/gadget/function/f_mass_storage.h
-index b4866fc..0a7c656 100644
---- a/drivers/usb/gadget/function/f_mass_storage.h
-+++ b/drivers/usb/gadget/function/f_mass_storage.h
-@@ -81,6 +81,7 @@ struct fsg_opts {
- 	struct fsg_common *common;
- 	struct usb_function_instance func_inst;
- 	struct fsg_lun_opts lun0;
-+	struct fsg_lun_opts *lun_opts[FSG_MAX_LUNS];
- 	struct config_group *default_groups[2];
- 	bool no_configfs; /* for legacy gadgets */
- 
--- 
-1.7.9.5
+Sorry, it's not intended to go through the docs tree, it's a patch to fix 
+mm-doc-cleanup-and-clarify-munmap-behavior-for-hugetlb-memory.patch in 
+-mm.  It's been merged into that tree, but I would still appreciate your 
+ack!
