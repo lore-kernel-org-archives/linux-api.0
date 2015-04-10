@@ -1,65 +1,105 @@
 From: Andrew Jones <drjones@redhat.com>
-Subject: Re: [PATCH v2 01/10] KVM: add commentary for kvm_debug_exit_arch
- struct
-Date: Fri, 10 Apr 2015 14:58:54 +0200
-Message-ID: <20150410125853.GD3227@hawk.usersys.redhat.com>
+Subject: Re: [PATCH v2 02/10] KVM: define common __KVM_GUESTDBG_USE_SW/HW_BP
+ values
+Date: Fri, 10 Apr 2015 14:59:58 +0200
+Message-ID: <20150410125957.GE3227@hawk.usersys.redhat.com>
 References: <1427814488-28467-1-git-send-email-alex.bennee@linaro.org>
- <1427814488-28467-2-git-send-email-alex.bennee@linaro.org>
+ <1427814488-28467-3-git-send-email-alex.bennee@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <kvm-owner@vger.kernel.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
 Content-Disposition: inline
-In-Reply-To: <1427814488-28467-2-git-send-email-alex.bennee@linaro.org>
-Sender: kvm-owner@vger.kernel.org
+In-Reply-To: <1427814488-28467-3-git-send-email-alex.bennee@linaro.org>
+List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
+List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
+List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
+List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
+List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
+Errors-To: kvmarm-bounces@lists.cs.columbia.edu
+Sender: kvmarm-bounces@lists.cs.columbia.edu
 To: Alex =?iso-8859-1?Q?Benn=E9e?= <alex.bennee@linaro.org>
-Cc: kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kvmarm@lists.cs.columbia.edu, christoffer.dall@linaro.org, marc.zyngier@arm.com, peter.maydell@linaro.org, agraf@suse.de, pbonzini@redhat.com, zhichao.huang@linaro.org, jan.kiszka@siemens.com, dahi@linux.vnet.ibm.com, r65777@freescale.com, bp@suse.de, Gleb Natapov <gleb@kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>
+Cc: kvm@vger.kernel.org, Alexey Kardashevskiy <aik@ozlabs.ru>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, "H. Peter Anvin" <hpa@zytor.com>, kvmarm@lists.cs.columbia.edu, Nadav Amit <namit@cs.technion.ac.il>, Michael Ellerman <mpe@ellerman.id.au>, "maintainer:X86 ARCHITECTURE..." <x86@kernel.org>, Gleb Natapov <gleb@kernel.org>, Ingo Molnar <mingo@redhat.com>, zhichao.huang@linaro.org, jan.kiszka@siemens.com, bp@suse.de, marc.zyngier@arm.com, r65777@freescale.com, Thomas Gleixner <tglx@linutronix.de>, linux-arm-kernel@lists.infradead.org, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, dahi@linux.vnet.ibm.com, pbonzini@redhat.com, "open list:LINUX FOR POWERPC..." <linuxppc-dev@lists.ozlabs.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 31, 2015 at 04:07:59PM +0100, Alex Benn=E9e wrote:
-> Bring into line with the commentary for the other structures and thei=
-r
-> KVM_EXIT_* cases.
->=20
+On Tue, Mar 31, 2015 at 04:08:00PM +0100, Alex Benn=E9e wrote:
+> Currently x86, powerpc and soon arm64 use the same two architecture
+> specific bits for guest debug support for software and hardware
+> breakpoints. This makes the shared values explicit while leaving the
+> gate open for another architecture to use some other value if they
+> really really want to.
+> =
+
 > Signed-off-by: Alex Benn=E9e <alex.bennee@linaro.org>
->=20
-> ---
->=20
-> v2
->   - add comments for other exit types
->=20
+> =
+
+> diff --git a/arch/powerpc/include/uapi/asm/kvm.h b/arch/powerpc/include/u=
+api/asm/kvm.h
+> index ab4d473..1731569 100644
+> --- a/arch/powerpc/include/uapi/asm/kvm.h
+> +++ b/arch/powerpc/include/uapi/asm/kvm.h
+> @@ -310,8 +310,8 @@ struct kvm_guest_debug_arch {
+>   * and upper 16 bits are architecture specific. Architecture specific de=
+fines
+>   * that ioctl is for setting hardware breakpoint or software breakpoint.
+>   */
+> -#define KVM_GUESTDBG_USE_SW_BP		0x00010000
+> -#define KVM_GUESTDBG_USE_HW_BP		0x00020000
+> +#define KVM_GUESTDBG_USE_SW_BP		__KVM_GUESTDBG_USE_SW_BP
+> +#define KVM_GUESTDBG_USE_HW_BP		__KVM_GUESTDBG_USE_HW_BP
+>  =
+
+>  /* definition of registers in kvm_run */
+>  struct kvm_sync_regs {
+> diff --git a/arch/x86/include/uapi/asm/kvm.h b/arch/x86/include/uapi/asm/=
+kvm.h
+> index d7dcef5..1438202 100644
+> --- a/arch/x86/include/uapi/asm/kvm.h
+> +++ b/arch/x86/include/uapi/asm/kvm.h
+> @@ -250,8 +250,8 @@ struct kvm_debug_exit_arch {
+>  	__u64 dr7;
+>  };
+>  =
+
+> -#define KVM_GUESTDBG_USE_SW_BP		0x00010000
+> -#define KVM_GUESTDBG_USE_HW_BP		0x00020000
+> +#define KVM_GUESTDBG_USE_SW_BP		__KVM_GUESTDBG_USE_SW_BP
+> +#define KVM_GUESTDBG_USE_HW_BP		__KVM_GUESTDBG_USE_HW_BP
+>  #define KVM_GUESTDBG_INJECT_DB		0x00040000
+>  #define KVM_GUESTDBG_INJECT_BP		0x00080000
+>  =
+
 > diff --git a/include/uapi/linux/kvm.h b/include/uapi/linux/kvm.h
-> index 8055706..5eedf84 100644
+> index 5eedf84..ce2db14 100644
 > --- a/include/uapi/linux/kvm.h
 > +++ b/include/uapi/linux/kvm.h
-> @@ -226,6 +226,7 @@ struct kvm_run {
->  			__u32 count;
->  			__u64 data_offset; /* relative to kvm_run start */
->  		} io;
-> +		/* KVM_EXIT_DEBUG */
->  		struct {
->  			struct kvm_debug_exit_arch arch;
->  		} debug;
-> @@ -274,6 +275,7 @@ struct kvm_run {
->  			__u32 data;
->  			__u8  is_write;
->  		} dcr;
-> +		/* KVM_EXIT_INTERNAL_ERROR */
->  		struct {
->  			__u32 suberror;
->  			/* Available with KVM_CAP_INTERNAL_ERROR_DATA: */
-> @@ -284,6 +286,7 @@ struct kvm_run {
->  		struct {
->  			__u64 gprs[32];
->  		} osi;
-> +		/* KVM_EXIT_PAPR_HCALL */
->  		struct {
->  			__u64 nr;
->  			__u64 ret;
-> --=20
+> @@ -525,8 +525,16 @@ struct kvm_s390_irq {
+>  =
+
+>  /* for KVM_SET_GUEST_DEBUG */
+>  =
+
+> -#define KVM_GUESTDBG_ENABLE		0x00000001
+> -#define KVM_GUESTDBG_SINGLESTEP		0x00000002
+> +#define KVM_GUESTDBG_ENABLE		(1 << 0)
+> +#define KVM_GUESTDBG_SINGLESTEP	(1 << 1)
+> +
+> +/*
+> + * Architecture specific stuff uses the top 16 bits of the field,
+> + * however there is some shared commonality for the common cases
+> + */
+> +#define __KVM_GUESTDBG_USE_SW_BP	(1 << 16)
+> +#define __KVM_GUESTDBG_USE_HW_BP	(1 << 17)
+> +
+>  =
+
+>  struct kvm_guest_debug {
+>  	__u32 control;
+> -- =
+
 > 2.3.4
->=20
+>
 
-I echo David's commit message tweak, otherwise
-
-Reviewed-by: Andrew Jones <drjones@redhat.com>
+Reviewed-by: Andrew Jones <drjones@redhat.com> =
