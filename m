@@ -1,100 +1,209 @@
-From: Laurent Pinchart <laurent.pinchart+renesas@ideasonboard.com>
-Subject: [RFC/PATCH v2 0/5] Add live source objects to DRM
-Date: Mon, 13 Apr 2015 21:39:42 +0300
-Message-ID: <1428950387-6913-1-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: dri-devel@lists.freedesktop.org
-Cc: Daniel Vetter <daniel.vetter@intel.com>, linux-api@vger.kernel.org, linux-sh@vger.kernel.org, Magnus Damm <magnus.damm@gmail.com>, linux-media@vger.kernel.org
+From: Laurent Pinchart <laurent.pinchart+renesas-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
+Subject: [RFC/PATCH v2 2/5] drm: Connect live source to framebuffers
+Date: Mon, 13 Apr 2015 21:39:44 +0300
+Message-ID: <1428950387-6913-3-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
+References: <1428950387-6913-1-git-send-email-laurent.pinchart+renesas@ideasonboard.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1428950387-6913-1-git-send-email-laurent.pinchart+renesas-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
+Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-sh-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Magnus Damm <magnus.damm-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Vetter <daniel.vetter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-SGVsbG8sCgpIZXJlJ3MgYSBwcm9wb3NhbCBmb3IgYSBkaWZmZXJlbnQgYXBwcm9hY2ggdG8gbGl2
-ZSBzb3VyY2UgaW4gRFJNIGJhc2VkIG9uIGFuCmlkZWEgYnkgRGFuaWVsIFZldHRlci4gVGhlIHBy
-ZXZpb3VzIHZlcnNpb24gY2FuIGJlIGZvdW5kIGF0Cmh0dHA6Ly9saXN0cy5mcmVlZGVza3RvcC5v
-cmcvYXJjaGl2ZXMvZHJpLWRldmVsLzIwMTUtTWFyY2gvMDc5MzE5Lmh0bWwuCgpUaGUgbmVlZCBj
-b21lcyBmcm9tIHRoZSBSZW5lc2FzIFItQ2FyIFNvQ3MgaW4gd2hpY2ggYSB2aWRlbyBwcm9jZXNz
-aW5nIGVuZ2luZQoobmFtZWQgVlNQMSkgdGhhdCBvcGVyYXRlcyBmcm9tIG1lbW9yeSB0byBtZW1v
-cnkgaGFzIG9uZSBvdXRwdXQgZGlyZWN0bHkKY29ubmVjdGVkIHRvIGEgcGxhbmUgb2YgdGhlIGRp
-c3BsYXkgZW5naW5lIChEVSkgd2l0aG91dCBnb2luZyB0aHJvdWdoIG1lbW9yeS4KClRoZSBWU1Ax
-IGlzIHN1cHBvcnRlZCBieSBhIFY0TDIgZHJpdmVyLiBXaGlsZSBpdCBjb3VsZCBiZSBhcmd1ZWQg
-dGhhdCBpdApzaG91bGQgaW5zdGVhZCBiZSBzdXBwb3J0ZWQgZGlyZWN0bHkgYnkgdGhlIERSTSBy
-Y2FyLWR1IGRyaXZlciwgdGhpcyB3b3VsZG4ndApiZSBhIGdvb2QgaWRlYSBmb3IgYXQgbGVhc3Qg
-dHdvIHJlYXNvbnMuIEZpcnN0LCB0aGUgUi1DYXIgU29DcyBjb250YWluIHNldmVyYWwKVlNQMSBp
-bnN0YW5jZXMsIG9mIHdoaWNoIG9ubHkgYSBzdWJzZXQgaGF2ZSBhIGRpcmVjdCBEVSBjb25uZWN0
-aW9uLiBUaGUgb25seQpvdGhlciBpbnN0YW5jZXMgb3BlcmF0ZSBzb2xlbHkgaW4gbWVtb3J5IHRv
-IG1lbW9yeSBtb2RlLiBUaGVuLCB0aGUgVlNQMSBpcyBhCnZpZGVvIHByb2Nlc3NpbmcgZW5naW5l
-IGFuZCBub3QgYSBkaXNwbGF5IGVuZ2luZS4gSXRzIGZlYXR1cmVzIGFyZSBlYXNpbHkKc3VwcG9y
-dGVkIGJ5IHRoZSBWNEwyIEFQSSwgYnV0IGRvbid0IG1hcCB0byB0aGUgRFJNL0tNUyBBUEkuIFNp
-Z25pZmljYW50CmNoYW5nZXMgdG8gRFJNL0tNUyB3b3VsZCBiZSByZXF1aXJlZCwgYmV5b25kIHdo
-YXQgaXMgaW4gbXkgb3BpbmlvbiBhbgphY2NlcHRhYmxlIHNjb3BlIGZvciBhIGRpc3BsYXkgQVBJ
-LgoKTm93IHRoYXQgdGhlIG5lZWQgdG8gaW50ZXJmYWNlIHR3byBzZXBhcmF0ZSBkZXZpY2VzIHN1
-cHBvcnRlZCBieSB0d28gZGlmZmVyZW50CmRyaXZlcnMgaW4gdHdvIHNlcGFyYXRlIHN1YnN5c3Rl
-bXMgaGFzIGJlZW4gZXN0YWJsaXNoZWQsIHdlIG5lZWQgYW4gQVBJIHRvIGRvCnNvLiBJdCBzaG91
-bGQgYmUgbm90ZWQgdGhhdCB3aGlsZSB0aGF0IEFQSSBkb2Vzbid0IGV4aXN0IGluIHRoZSBtYWlu
-bGluZQprZXJuZWwsIHRoZSBuZWVkIGlzbid0IGxpbWl0ZWQgdG8gUmVuZXNhcyBTb0NzLgoKVGhp
-cyBwYXRjaCBzZXQgcHJvcG9zZXMgb25lIHBvc3NpYmxlIHNvbHV0aW9uIGZvciB0aGUgcHJvYmxl
-bSBpbiB0aGUgZm9ybSBvZiBhCm5ldyBEUk0gb2JqZWN0IG5hbWVkIGxpdmUgc291cmNlLiBMaXZl
-IHNvdXJjZXMgYXJlIGNyZWF0ZWQgYnkgZHJpdmVycyB0byBtb2RlbApoYXJkd2FyZSBjb25uZWN0
-aW9ucyBiZXR3ZWVuIGEgcGxhbmUgaW5wdXQgYW5kIGFuIGV4dGVybmFsIHNvdXJjZSwgYW5kIGFy
-ZQphdHRhY2hlZCB0byBwbGFuZXMgdGhyb3VnaCB0aGUgS01TIHVzZXJzcGFjZSBBUEkuCgpQYXRj
-aCAxLzUgYWRkcyBsaXZlIHNvdXJjZSBvYmplY3RzIHRvIERSTSwgd2l0aCBhbiBpbi1rZXJuZWwg
-QVBJIGZvciBkcml2ZXJzCnRvIHJlZ2lzdGVyIHRoZSBzb3VyY2VzLCBhbmQgYSB1c2Vyc3BhY2Ug
-QVBJIHRvIGVudW1lcmF0ZSB0aGVtLgoKUGF0Y2ggMi81IGltcGxlbWVudHMgY29ubmVjdGlvbiBi
-ZXR3ZWVuIGxpdmUgc291cmNlcyBhbmQgcGxhbmVzIHRocm91Z2gKZnJhbWVidWZmZXJzLiBJdCBp
-bnRyb2R1Y2VzIGEgbmV3IGxpdmUgc291cmNlIGZsYWcgZm9yIGZyYW1lYnVmZmVycy4gV2hlbiBh
-CmZyYW1lYnVmZmVyIGlzIGNyZWF0ZWQgd2l0aCB0aGF0IGZsYWcgc2V0LCBhIGxpdmUgc291cmNl
-IGlzIGFzc29jaWF0ZWQgd2l0aAp0aGUgZnJhbWVidWZmZXIgaW5zdGVhZCBvZiBidWZmZXIgb2Jq
-ZWN0cy4gVGhlIGZyYW1lYnVmZmVyIGNhbiB0aGVuIGJlIHVzZWQKd2l0aCBhIHBsYW5lIHRvIGNv
-bm5lY3QgaXQgd2l0aCB0aGUgbGl2ZSBzb3VyY2UuIFRoaXMgaXMgdGhlIGJpZ2dlc3QKZGlmZmVy
-ZW5jZSBjb21wYXJlZCB0byB0aGUgcHJldmlvdXMgYXBwcm9hY2gsIGFuZCBoYXMgc2V2ZXJhbCBi
-ZW5lZml0czoKCi0gQ2hhbmdlcyBhcmUgbGVzcyBpbnRydXNpdmUgaW4gdGhlIERSTSBjb3JlCi0g
-VGhlIGltcGxlbWVudGF0aW9uIHN1cHBvcnRzIGJvdGggdGhlIGxlZ2FjeSBBUEkgYW5kIGF0b21p
-YyB1cGRhdGVzIHdpdGhvdXQKICBhbnkgY29kZSBzcGVjaWZpYyB0byBlaXRoZXIKLSBObyBjaGFu
-Z2VzIHRvIGV4aXN0aW5nIGRyaXZlcnMgYXJlIG5lZWRlZAotIFRoZSBmcmFtZWJ1ZmZlciBmb3Jt
-YXQgYW5kIHNpemUgY29uZmlndXJhdGlvbiBBUEkgaXMgcmV1c2VkCgpUaGUgZnJhbWVidWZmZXIg
-Zm9ybWF0IGFuZCBzaXplIHNob3VsZCBpZGVhbGx5IGJlIHZhbGlkYXRlZCB1c2luZyBpbmZvcm1h
-dGlvbgpxdWVyaWVkIGRpcmVjdGx5IGZyb20gdGhlIGRyaXZlciB0aGF0IHN1cHBvcnRzIHRoZSBs
-aXZlIHNvdXJjZSBkZXZpY2UsIGJ1dApJJ3ZlIGRlY2lkZWQgbm90IHRvIGltcGxlbWVudCBzdWNo
-IGNvbW11bmljYXRpb24gYmV0d2VlbiBWNEwyIGFuZCBEUk0vS01TIGF0CnRoZSBtb21lbnQgdG8g
-a2VlcCB0aGUgcHJvcG9zYWwgc2ltcGxlLgoKUGF0Y2hlcyAzLzUgdG8gNS81IHRoZW4gaW1wbGVt
-ZW50IHN1cHBvcnQgZm9yIGxpdmUgc291cmNlcyBpbiB0aGUgUi1DYXIgRFUKZHJpdmVyLiBUaGUg
-cmNhcl9kdV9saXZlX2ZyYW1lYnVmZmVyIHN0cnVjdHVyZSBhbmQgaXRzIGFzc29jaWF0ZWQgaGVs
-cGVyCmZ1bmN0aW9ucyBjb3VsZCBiZSBtb3ZlZCB0byB0aGUgRFJNIGNvcmUgbGF0ZXIgaWYgb3Ro
-ZXIgZHJpdmVycyBuZWVkIGEgc2ltaWxhcgppbXBsZW1lbnRhdGlvbi4gSSd2ZSBkZWNpZGVkIHRv
-IGtlZXAgdGhlbSBpbiB0aGUgcmNhci1kdSBkcml2ZXIgZm9yIG5vdyBhcwppdCdzIG5vdCBjbGVh
-ciB5ZXQgd2hhdCBvdGhlciBkcml2ZXJzIG1pZ2h0IG5lZWQuCgpPbmNlIGFnYWluIG5vdGhpbmcg
-aGVyZSBpcyBzZXQgaW4gc3RvbmUuCgpMYXVyZW50IFBpbmNoYXJ0ICg1KToKICBkcm06IEFkZCBs
-aXZlIHNvdXJjZSBvYmplY3QKICBkcm06IENvbm5lY3QgbGl2ZSBzb3VyY2UgdG8gZnJhbWVidWZm
-ZXJzCiAgZHJtL3JjYXItZHU6IEFkZCBWU1AxIHN1cHBvcnQgdG8gdGhlIHBsYW5lcyBhbGxvY2F0
-b3IKICBkcm0vcmNhci1kdTogQWRkIFZTUDEgbGl2ZSBzb3VyY2Ugc3VwcG9ydAogIGRybS9yY2Fy
-LWR1OiBSZXN0YXJ0IHRoZSBEVSBncm91cCB3aGVuIGEgcGxhbmUgc291cmNlIGNoYW5nZXMKCiBk
-cml2ZXJzL2dwdS9kcm0vZHJtX2NydGMuYyAgICAgICAgICAgICAgfCAyODcgKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKystLS0KIGRyaXZlcnMvZ3B1L2RybS9kcm1faW9jdGwuYyAgICAgICAg
-ICAgICB8ICAgMiArCiBkcml2ZXJzL2dwdS9kcm0vcmNhci1kdS9yY2FyX2R1X2NydGMuYyAgfCAg
-MTAgKy0KIGRyaXZlcnMvZ3B1L2RybS9yY2FyLWR1L3JjYXJfZHVfZHJ2LmMgICB8ICAgNiArLQog
-ZHJpdmVycy9ncHUvZHJtL3JjYXItZHUvcmNhcl9kdV9kcnYuaCAgIHwgICAzICsKIGRyaXZlcnMv
-Z3B1L2RybS9yY2FyLWR1L3JjYXJfZHVfZ3JvdXAuYyB8ICAyMSArKy0KIGRyaXZlcnMvZ3B1L2Ry
-bS9yY2FyLWR1L3JjYXJfZHVfZ3JvdXAuaCB8ICAgMiArCiBkcml2ZXJzL2dwdS9kcm0vcmNhci1k
-dS9yY2FyX2R1X2ttcy5jICAgfCAxMzIgKysrKysrKysrKysrKystCiBkcml2ZXJzL2dwdS9kcm0v
-cmNhci1kdS9yY2FyX2R1X2ttcy5oICAgfCAgIDMgKwogZHJpdmVycy9ncHUvZHJtL3JjYXItZHUv
-cmNhcl9kdV9wbGFuZS5jIHwgMTkxICsrKysrKysrKysrKysrKystLS0tLQogZHJpdmVycy9ncHUv
-ZHJtL3JjYXItZHUvcmNhcl9kdV9wbGFuZS5oIHwgIDExICsrCiBkcml2ZXJzL2dwdS9kcm0vcmNh
-ci1kdS9yY2FyX2R1X3JlZ3MuaCAgfCAgIDEgKwogaW5jbHVkZS9kcm0vZHJtX2NydGMuaCAgICAg
-ICAgICAgICAgICAgIHwgIDM1ICsrKysKIGluY2x1ZGUvdWFwaS9kcm0vZHJtLmggICAgICAgICAg
-ICAgICAgICB8ICAgMyArCiBpbmNsdWRlL3VhcGkvZHJtL2RybV9tb2RlLmggICAgICAgICAgICAg
-fCAgMjMgKysrCiAxNSBmaWxlcyBjaGFuZ2VkLCA2NDcgaW5zZXJ0aW9ucygrKSwgODMgZGVsZXRp
-b25zKC0pCgotLSAKUmVnYXJkcywKCkxhdXJlbnQgUGluY2hhcnQKCl9fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmRyaS1kZXZlbCBtYWlsaW5nIGxpc3QKZHJp
-LWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3Jn
-L21haWxtYW4vbGlzdGluZm8vZHJpLWRldmVsCg==
+Introduce a new live source flag for framebuffers. When a framebuffer is
+created with that flag set, a live source is associated with the
+framebuffer instead of buffer objects. The framebuffer can then be used
+with a plane to connect it with the live source.
+
+Signed-off-by: Laurent Pinchart <laurent.pinchart+renesas-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
+---
+ drivers/gpu/drm/drm_crtc.c  | 123 +++++++++++++++++++++++++++++++++++---------
+ include/uapi/drm/drm_mode.h |   7 +++
+ 2 files changed, 107 insertions(+), 23 deletions(-)
+
+diff --git a/drivers/gpu/drm/drm_crtc.c b/drivers/gpu/drm/drm_crtc.c
+index 1f71978b4f17..838fd5051a00 100644
+--- a/drivers/gpu/drm/drm_crtc.c
++++ b/drivers/gpu/drm/drm_crtc.c
+@@ -3408,31 +3408,13 @@ static int format_check(const struct drm_mode_fb_cmd2 *r)
+ 	}
+ }
+ 
+-static int framebuffer_check(const struct drm_mode_fb_cmd2 *r)
++static int framebuffer_check_buffers(const struct drm_mode_fb_cmd2 *r,
++				     int hsub, int vsub)
+ {
+-	int ret, hsub, vsub, num_planes, i;
++	int num_planes, i;
+ 
+-	ret = format_check(r);
+-	if (ret) {
+-		DRM_DEBUG_KMS("bad framebuffer format %s\n",
+-			      drm_get_format_name(r->pixel_format));
+-		return ret;
+-	}
+-
+-	hsub = drm_format_horz_chroma_subsampling(r->pixel_format);
+-	vsub = drm_format_vert_chroma_subsampling(r->pixel_format);
+ 	num_planes = drm_format_num_planes(r->pixel_format);
+ 
+-	if (r->width == 0 || r->width % hsub) {
+-		DRM_DEBUG_KMS("bad framebuffer width %u\n", r->width);
+-		return -EINVAL;
+-	}
+-
+-	if (r->height == 0 || r->height % vsub) {
+-		DRM_DEBUG_KMS("bad framebuffer height %u\n", r->height);
+-		return -EINVAL;
+-	}
+-
+ 	for (i = 0; i < num_planes; i++) {
+ 		unsigned int width = r->width / (i != 0 ? hsub : 1);
+ 		unsigned int height = r->height / (i != 0 ? vsub : 1);
+@@ -3464,6 +3446,100 @@ static int framebuffer_check(const struct drm_mode_fb_cmd2 *r)
+ 	return 0;
+ }
+ 
++static int framebuffer_check_sources(struct drm_device *dev,
++				     const struct drm_mode_fb_cmd2 *r)
++{
++	struct drm_mode_object *obj;
++	struct drm_live_source *src;
++	unsigned int cpp;
++	unsigned int i;
++
++	/*
++	 * Ensure that userspace has zeroed unused handles, pitches, offsets and
++	 * modifiers to allow future API extensions.
++	 */
++	if (r->offsets[0] || r->modifier[0])
++		return -EINVAL;
++
++	for (i = 1; i < ARRAY_SIZE(r->handles); ++i) {
++		if (r->handles[i] || r->pitches[i] ||
++		    r->offsets[i] || r->modifier[i])
++			return -EINVAL;
++	}
++
++	/* Validate width, height and pitch. */
++	cpp = drm_format_plane_cpp(r->pixel_format, 0);
++
++	if ((uint64_t) r->width * cpp > UINT_MAX)
++		return -ERANGE;
++
++	if ((uint64_t) r->height * r->pitches[0] > UINT_MAX)
++		return -ERANGE;
++
++	if (r->pitches[0] != r->width * cpp) {
++		DRM_DEBUG_KMS("bad pitch %u for plane %d\n", r->pitches[0], i);
++		return -EINVAL;
++	}
++
++	/*
++	 * Find the live source and check whether it supports the requested
++	 * pixel format.
++	 */
++
++	obj = drm_mode_object_find(dev, r->handles[0],
++				   DRM_MODE_OBJECT_LIVE_SOURCE);
++	if (!obj) {
++		DRM_DEBUG_KMS("bad framebuffer source ID %u\n", r->handles[0]);
++		return -EINVAL;
++	}
++
++	src = obj_to_live_source(obj);
++
++	for (i = 0; i < src->format_count; i++) {
++		if (r->pixel_format == src->format_types[i])
++			break;
++	}
++
++	if (i == src->format_count) {
++		DRM_DEBUG_KMS("bad framebuffer pixel format 0x%08x for source %u\n",
++			      r->pixel_format, r->handles[0]);
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++static int framebuffer_check(struct drm_device *dev,
++			     const struct drm_mode_fb_cmd2 *r)
++{
++	int ret, hsub, vsub;
++
++	ret = format_check(r);
++	if (ret) {
++		DRM_DEBUG_KMS("bad framebuffer format %s\n",
++			      drm_get_format_name(r->pixel_format));
++		return ret;
++	}
++
++	hsub = drm_format_horz_chroma_subsampling(r->pixel_format);
++	vsub = drm_format_vert_chroma_subsampling(r->pixel_format);
++
++	if (r->width == 0 || r->width % hsub) {
++		DRM_DEBUG_KMS("bad framebuffer width %u\n", r->width);
++		return -EINVAL;
++	}
++
++	if (r->height == 0 || r->height % vsub) {
++		DRM_DEBUG_KMS("bad framebuffer height %u\n", r->height);
++		return -EINVAL;
++	}
++
++	if (r->flags & DRM_MODE_FB_LIVE_SOURCE)
++		return framebuffer_check_sources(dev, r);
++	else
++		return framebuffer_check_buffers(r, hsub, vsub);
++}
++
+ static struct drm_framebuffer *
+ internal_framebuffer_create(struct drm_device *dev,
+ 			    struct drm_mode_fb_cmd2 *r,
+@@ -3473,7 +3549,8 @@ internal_framebuffer_create(struct drm_device *dev,
+ 	struct drm_framebuffer *fb;
+ 	int ret;
+ 
+-	if (r->flags & ~(DRM_MODE_FB_INTERLACED | DRM_MODE_FB_MODIFIERS)) {
++	if (r->flags & ~(DRM_MODE_FB_INTERLACED | DRM_MODE_FB_MODIFIERS |
++			 DRM_MODE_FB_LIVE_SOURCE)) {
+ 		DRM_DEBUG_KMS("bad framebuffer flags 0x%08x\n", r->flags);
+ 		return ERR_PTR(-EINVAL);
+ 	}
+@@ -3495,7 +3572,7 @@ internal_framebuffer_create(struct drm_device *dev,
+ 		return ERR_PTR(-EINVAL);
+ 	}
+ 
+-	ret = framebuffer_check(r);
++	ret = framebuffer_check(dev, r);
+ 	if (ret)
+ 		return ERR_PTR(ret);
+ 
+diff --git a/include/uapi/drm/drm_mode.h b/include/uapi/drm/drm_mode.h
+index e4d09f6f20eb..0cb73fb09d64 100644
+--- a/include/uapi/drm/drm_mode.h
++++ b/include/uapi/drm/drm_mode.h
+@@ -353,6 +353,7 @@ struct drm_mode_fb_cmd {
+ 
+ #define DRM_MODE_FB_INTERLACED	(1<<0) /* for interlaced framebuffers */
+ #define DRM_MODE_FB_MODIFIERS	(1<<1) /* enables ->modifer[] */
++#define DRM_MODE_FB_LIVE_SOURCE	(1<<2) /* connected to a live source */
+ 
+ struct drm_mode_fb_cmd2 {
+ 	__u32 fb_id;
+@@ -380,6 +381,12 @@ struct drm_mode_fb_cmd2 {
+ 	 * Vendor specific modifier token.  This allows, for example,
+ 	 * different tiling/swizzling pattern on different planes.
+ 	 * See discussion above of DRM_FORMAT_MOD_xxx.
++	 *
++	 * If the DRM_MODE_FB_LIVE_SOURCE flag is set the frame buffer input
++	 * comes from a live source instead of from memory. The handles[0]
++	 * field contains the ID of the connected live source object. All other
++	 * handles and all pitches, offsets and modifiers are then ignored by
++	 * the kernel and must be set to zero by applications.
+ 	 */
+ 	__u32 handles[4];
+ 	__u32 pitches[4]; /* pitch for each plane */
+-- 
+2.0.5
