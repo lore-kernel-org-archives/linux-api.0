@@ -1,92 +1,49 @@
-From: Cornelia Huck <cornelia.huck@de.ibm.com>
-Subject: Re: [PATCH v4 7/8] vhost: feature to set the vring endianness
-Date: Tue, 14 Apr 2015 17:22:07 +0200
-Message-ID: <20150414172207.4d872643.cornelia.huck@de.ibm.com>
-References: <20150410101500.31843.61248.stgit@bahia.local>
-	<20150410101627.31843.21710.stgit@bahia.local>
-	<20150414162023.2f8694fe.cornelia.huck@de.ibm.com>
-	<20150414171352.105909ae@bahia.local>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <20150414171352.105909ae@bahia.local>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Greg Kurz <gkurz@linux.vnet.ibm.com>
-Cc: kvm@vger.kernel.org, "Michael S. Tsirkin" <mst@redhat.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
+From: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
+Subject: [PATCH/RFC 0/2] Repurpose the v4l2_plane data_offset field
+Date: Tue, 14 Apr 2015 22:44:47 +0300
+Message-ID: <1429040689-23808-1-git-send-email-laurent.pinchart@ideasonboard.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>, Pawel Osciak <pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 14 Apr 2015 17:13:52 +0200
-Greg Kurz <gkurz@linux.vnet.ibm.com> wrote:
+Hello,
 
-> On Tue, 14 Apr 2015 16:20:23 +0200
-> Cornelia Huck <cornelia.huck@de.ibm.com> wrote:
-> 
-> > On Fri, 10 Apr 2015 12:19:16 +0200
-> > Greg Kurz <gkurz@linux.vnet.ibm.com> wrote:
+The v4l2_plane data_offset field has been introduced at the same time as the
+the multiplane API to convey header size information between kernelspace and
+userspace.
 
-> > 
-> > > +#ifdef CONFIG_VHOST_SET_ENDIAN_LEGACY
-> > > +static void vhost_init_is_le(struct vhost_virtqueue *vq)
-> > > +{
-> > > +	vq->is_le = vhost_has_feature(vq, VIRTIO_F_VERSION_1) || !vq->user_be;
-> > 
-> > So if the endianness is not explicitly set to BE, it will be forced to
-> > LE (instead of native endian)? Won't that break userspace that does not
-> > yet use the new interface when CONFIG_VHOST_SET_ENDIAN_LEGACY is set?
-> > 
-> 
-> If userspace doesn't use the new interface, then vq->user_be will retain its
-> default value that was set in vhost_vq_reset(), i.e. :
-> 
->  vq->user_be = !virtio_legacy_is_little_endian();
-> 
-> This means default is native endian.
-> 
-> What about adding this comment ?
-> 
-> static void vhost_init_is_le(struct vhost_virtqueue *vq)
-> {
-> 	/* Note for legacy virtio: user_be is initialized in vhost_vq_reset()
-> 	 * according to the host endianness. If userspace does not set an
-> 	 * explicit endianness, the default behavior is native endian, as
-> 	 * expected by legacy virtio.
-> 	 */
+The API then became slightly controversial, both because different developers
+understood the purpose of the field differently (resulting for instance in an
+out-of-tree driver abusing the field for a different purpose), and because of
+competing proposals (see for instance "[RFC] Multi format stream support" at
+http://www.spinics.net/lists/linux-media/msg69130.html).
 
-Good idea, as this is easy to miss.
+Furthermore, the data_offset field isn't used by any mainline driver except
+vivid (for testing purpose).
 
-> 	vq->is_le = vhost_has_feature(vq, VIRTIO_F_VERSION_1) || !vq->user_be;
-> }
-> 
-> > > +}
-> > > +#else
-> > > +static void vhost_init_is_le(struct vhost_virtqueue *vq)
-> > > +{
-> > > +	if (vhost_has_feature(vq, VIRTIO_F_VERSION_1))
-> > > +		vq->is_le = true;
-> > > +}
-> > > +#endif
-> > > +
-> > >  int vhost_init_used(struct vhost_virtqueue *vq)
-> > >  {
-> > >  	__virtio16 last_used_idx;
-> > >  	int r;
-> > > -	if (!vq->private_data)
-> > > +	if (!vq->private_data) {
-> > > +		vq->is_le = virtio_legacy_is_little_endian();
-> > >  		return 0;
-> > > +	}
-> > > +
-> > > +	vhost_init_is_le(vq);
-> > > 
-> > >  	r = vhost_update_used_flags(vq);
-> > >  	if (r)
-> 
+I need a different data offset in planes to allow data capture to or data
+output from a userspace-selected offset within a buffer (mainly for the
+DMABUF and MMAP memory types). As the data_offset field already has the
+right name, is unused, and ill-defined, I propose repurposing it. This is what
+this RFC is about.
+
+If the proposal is accepted I'll add another patch to update data_offset usage
+in the vivid driver.
+
+Laurent Pinchart (2):
+  v4l: Repurpose the v4l2_plane data_offset field
+  videobuf2: Repurpose the v4l2_plane data_offset field
+
+ Documentation/DocBook/media/v4l/io.xml   | 19 +++++++------
+ drivers/media/v4l2-core/videobuf2-core.c | 46 +++++++++++++++++++++++---------
+ include/media/videobuf2-core.h           |  4 +++
+ include/media/videobuf2-dma-contig.h     |  2 +-
+ include/uapi/linux/videodev2.h           |  6 +++--
+ 5 files changed, 54 insertions(+), 23 deletions(-)
+
+-- 
+Regards,
+
+Laurent Pinchart
