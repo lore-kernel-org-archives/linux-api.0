@@ -1,131 +1,331 @@
-From: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
-Subject: Re: [PATCH/RFC 1/2] v4l: Repurpose the v4l2_plane data_offset field
-Date: Wed, 15 Apr 2015 23:37:27 +0300
-Message-ID: <1663968.IkQMnejUTA@avalon>
-References: <1429040689-23808-1-git-send-email-laurent.pinchart@ideasonboard.com> <1429040689-23808-2-git-send-email-laurent.pinchart@ideasonboard.com> <20150414201004.GA27451@valkosipuli.retiisi.org.uk>
+From: Roy Franz <roy.franz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [Patch 2/3] firmware: dmi_scan: add SBMIOS entry and DMI tables
+Date: Wed, 15 Apr 2015 17:54:51 -0700
+Message-ID: <CAFECyb9RFAEWMOFCDcKKYBgQk85HoDiG2yfyou6X9qm=Wq5+Pg@mail.gmail.com>
+References: <1427979423-22767-1-git-send-email-ivan.khoronzhuk@globallogic.com>
+	<1427979423-22767-3-git-send-email-ivan.khoronzhuk@globallogic.com>
+	<551E5F0B.6050709@globallogic.com>
+	<CAFECyb_BGU82vCi0jOz+MbdsxRS-jFoHNsZe5KdOCgpt0K7y+A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150414201004.GA27451-S+BSfZ9RZZmRSg0ZkenSGLdO1Tsj/99ntUK59QYPAWc@public.gmane.org>
+In-Reply-To: <CAFECyb_BGU82vCi0jOz+MbdsxRS-jFoHNsZe5KdOCgpt0K7y+A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sakari Ailus <sakari.ailus-X3B1VOXEql0@public.gmane.org>
-Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>, Pawel Osciak <pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: "Ivan.khoronzhuk" <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
+Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Matt Fleming <matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jean Delvare <jdelvare-l3A5Bk7waGM@public.gmane.org>, Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, dmidecode-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, Leif Lindholm <leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Mark Salter <msalter-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Sakari,
+On Tue, Apr 14, 2015 at 9:19 PM, Roy Franz <roy.franz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
+> On Fri, Apr 3, 2015 at 2:36 AM, Ivan.khoronzhuk
+> <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org> wrote:
+>>
+>>
+>> On 02.04.15 15:57, Ivan Khoronzhuk wrote:
+>>>
+>>> Some utils, like dmidecode and smbios, need to access SMBIOS entry
+>>> table area in order to get information like SMBIOS version, size, etc.
+>>> Currently it's done via /dev/mem. But for situation when /dev/mem
+>>> usage is disabled, the utils have to use dmi sysfs instead, which
+>>> doesn't represent SMBIOS entry and adds code/delay redundancy when direct
+>>> access for table is needed.
+>>>
+>>> So this patch creates dmi/tables and adds SMBIOS entry point to allow
+>>> utils in question to work correctly without /dev/mem. Also patch adds
+>>> raw dmi table to simplify dmi table processing in user space, as
+>>> proposed by Jean Delvare.
+>>>
+>
+> I have made modifications to dmidecode to support this interface, and it
+> works quite nicely for dmidecode. (changes posted to dmidecode-devel list)
+> The only open issue I am aware of is how the SMBIOS v3 entry point
+> will be handled,
+> especially in cases where there is a v2 and a v3 entry point.
+> In principal I think this a good change - are there any other open issues?
+>
+> Thanks,
+> Roy
+>
 
-Thank you for the review.
+I looked at the SMBIOS spec again, and the platform can provide either or
+both of the 32-bit and 64-bit entry points.  The spec says that an
+implementation
+"should" provide a 32-bit entry point for compatibility.
 
-On Tuesday 14 April 2015 23:10:05 Sakari Ailus wrote:
-> On Tue, Apr 14, 2015 at 10:44:48PM +0300, Laurent Pinchart wrote:
-> > The data_offset field has been introduced along with the multiplane API
-> > to convey header size information between kernelspace and userspace.
-> > It's not used by any mainline driver except vivid (for testing purpose).
-> > 
-> > A different data offset is needed to allow data capture to or data
-> > output from a userspace-selected offset within a buffer (mainly for the
-> > DMABUF and MMAP memory types). As the data_offset field already has the
-> > right name and is unused, repurpose it.
-> > 
-> > Signed-off-by: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
-> > ---
-> > 
-> >  Documentation/DocBook/media/v4l/io.xml | 19 +++++++++++--------
-> >  include/uapi/linux/videodev2.h         |  6 ++++--
-> >  2 files changed, 15 insertions(+), 10 deletions(-)
-> > 
-> > diff --git a/Documentation/DocBook/media/v4l/io.xml
-> > b/Documentation/DocBook/media/v4l/io.xml index 1c17f80..416c05a 100644
-> > --- a/Documentation/DocBook/media/v4l/io.xml
-> > +++ b/Documentation/DocBook/media/v4l/io.xml
-> > @@ -870,7 +870,7 @@ should set this to 0.</entry>
-> > 
-> >  	      If the application sets this to 0 for an output stream, then
-> >  	      <structfield>bytesused</structfield> will be set to the size of
-> >  	      the
-> >  	      plane (see the <structfield>length</structfield> field of this
-> >  	      struct)
-> > -	      by the driver. Note that the actual image data starts at
-> > +	      by the driver. Note that the actual plane data content starts 
-at
-> >  	      <structfield>data_offset</structfield> which may not be 
-0.</entry>
-> >  	  </row>
-> >  	  <row>
-> > @@ -917,13 +917,16 @@ should set this to 0.</entry>
-> >  	    <entry>__u32</entry>
-> >  	    <entry><structfield>data_offset</structfield></entry>
-> >  	    <entry></entry>
-> > -	    <entry>Offset in bytes to video data in the plane.
-> > -	      Drivers must set this field when 
-<structfield>type</structfield>
-> > -	      refers to an input stream, applications when it refers to an
-> > output stream. -	      Note that data_offset is included in
-> > <structfield>bytesused</structfield>. -	      So the size of the image 
-in
-> > the plane is
-> > -	     
-> > <structfield>bytesused</structfield>-<structfield>data_offset</structfiel
-> > d> at -	      offset <structfield>data_offset</structfield> from the 
-start
-> > of the plane. +	    <entry>Offset in bytes from the start of the plane
-> > buffer to the start of +	      captured or output data. Applications 
-set
-> > this field for all stream types +	      when calling the <link
-> > linkend="vidioc-qbuf">VIDIOC_PREPARE_BUF</link> or +	      <link
-> > linkend="vidioc-qbuf">VIDIOC_QBUF</link> ioctls to instruct the driver +	
-> >      to capture or output data starting at an offset in the plane buffer.
-> > If the +	      requested data offset doesn't match device or driver
-> > constraints, device +	      drivers must return the &EINVAL; and either
-> > leave the field value untouched +	      if they support data offsets, 
-or
-> > set it to 0 if they don't support data +	      offsets at all. Note that
-> > <structfield>data_offset</structfield> is not +	      included in
-> > <structfield>bytesused</structfield>.
-> 
-> At most 80 characters per line would be nice.
+These 2 entry point structures can both point to the same SMBIOS
+structure table,
+or two distinct ones.  If distinct, the one referenced by the 32-bit
+entry point must be
+a consistent subset of the 64-bit one.
+There does not seem to be any prohibition from using new SMBIOS v3 structures
+in a table referenced by a 32-bit entry point, so backwards
+compatibility is completely
+up to the implementation.
 
-I've followed the coding style of the file, but I can certainly change that, 
-no issue.
+Since the point of this patchset (and related changes to dmidecode) is
+to provide the
+SMBIOS information without using /dev/mem, I think the interface we
+define should
+support all the cases outlined in the specification.  I would like to
+avoid a case where
+we're back to using /dev/mem to deal with the dual entry/dual table
+case if that becomes
+important down the road.
 
-> How does the user discover what data_offsets are possible if the driver
-> returns an error if the data_offset does not match hardware capabilities?
-> 
-> I'd rather have the driver to adjust data_offset to match what it can do. If
-> the user needs to know that the data_offset was not modified, it should
-> check the field value after QBUF/PREPARE_BUF.
+Here's a proposal for files in /sys/firmware/dmi/tables:
 
-I've discussed this with Hans before, and we thought negotiating data_offset 
-wasn't very useful. data_offset values used by applications are pretty much 
-mandatory, if you need to write the UV plane of an NV12 image at a given 
-offset in a Y+UV contiguous buffer, using a different negotiated offset is 
-pointless. Feel free to point us to use cases though.
+smbios_entry_point32   -  32 bit (existing entry point type), if it exists.
+smbios_entry_point64   -  64 bit entry, new in SMBIOS v3.0
+DMI32                         -  smbios structure tables referenced by
+32 bit entry point, if it exists
+DMI64                         -  smbios structure tables referenced by
+64 bit entry point, if it exists.
+                                     symlink to DMI32 if identical
+smbios_entry_point    - symlink to smbios_entry_point64 if it exists,
+otherwise symlink to smbios_entry_point64
+DMI                           - symlink to DMI64 if it exists,
+otherwise symlink to DMI32
 
-> >  	    </entry>
-> >  	  </row>
-> >  	  <row>
-> > diff --git a/include/uapi/linux/videodev2.h
-> > b/include/uapi/linux/videodev2.h index fa376f7..261fb66 100644
-> > --- a/include/uapi/linux/videodev2.h
-> > +++ b/include/uapi/linux/videodev2.h
-> > @@ -706,8 +706,10 @@ struct v4l2_requestbuffers {
-> >   *			pointing to this plane
-> >   * @fd:			when memory is V4L2_MEMORY_DMABUF, a userspace file
-> >   *			descriptor associated with this plane
-> > - * @data_offset:	offset in the plane to the start of data; usually 0,
-> > - *			unless there is a header in front of the data
-> > + * @data_offset:	offset in bytes from the start of the plane buffer to
-> > + *			the start of data; usually 0 unless applications need to
-> > + *			capture data to or output data from elsewhere than the
-> > + *			start of the buffer
-> >   *
-> >   * Multi-planar buffers consist of one or more planes, e.g. an YCbCr
-> >   buffer
-> >   * with two planes can have one plane for Y, and another for interleaved
-> >   CbCr
+These last two would provide names to the 'preferred' tables, and
+names that would always exist on all systems, which
+I think is a nice property to have.
 
--- 
-Regards,
+Thoughts?
 
-Laurent Pinchart
+Thanks,
+Roy
+
+
+
+>
+>
+>>> Signed-off-by: Ivan Khoronzhuk <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
+>>> ---
+>>>   .../ABI/testing/sysfs-firmware-dmi-tables          | 22 ++++++
+>>>   drivers/firmware/dmi-sysfs.c                       | 11 ++-
+>>>   drivers/firmware/dmi_scan.c                        | 80
+>>> ++++++++++++++++++++++
+>>>   include/linux/dmi.h                                |  1 +
+>>>   4 files changed, 107 insertions(+), 7 deletions(-)
+>>>   create mode 100644 Documentation/ABI/testing/sysfs-firmware-dmi-tables
+>>>
+>>> diff --git a/Documentation/ABI/testing/sysfs-firmware-dmi-tables
+>>> b/Documentation/ABI/testing/sysfs-firmware-dmi-tables
+>>> new file mode 100644
+>>> index 0000000..f46158c
+>>> --- /dev/null
+>>> +++ b/Documentation/ABI/testing/sysfs-firmware-dmi-tables
+>>> @@ -0,0 +1,22 @@
+>>> +What:          /sys/firmware/dmi/tables/
+>>> +Date:          April 2015
+>>> +Contact:       Ivan Khoronzhuk <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
+>>> +Description:
+>>> +               The firmware provides DMI structures as a packed list of
+>>> +               data referenced by a SMBIOS table entry point. The SMBIOS
+>>> +               entry point contains general information, like SMBIOS
+>>> +               version, DMI table size, etc. The structure, content and
+>>> +               size of SMBIOS entry point is dependent on SMBIOS version.
+>>> +               The format of SMBIOS entry point, equal as DMI structures
+>>> +               can be read in SMBIOS specification.
+>>> +
+>>> +               The dmi/tables provides raw SMBIOS entry point and DMI
+>>> tables
+>>> +               through sysfs as an alternative to utilities reading them
+>>> +               from /dev/mem. The raw SMBIOS entry point and DMI table
+>>> are
+>>> +               presented as raw attributes and are accessible via:
+>>> +
+>>> +               /sys/firmware/dmi/tables/smbios_entry_point
+>>> +               /sys/firmware/dmi/tables/DMI
+>>> +
+>>> +               The complete DMI information can be taken using these two
+>>> +               tables.
+>>> diff --git a/drivers/firmware/dmi-sysfs.c b/drivers/firmware/dmi-sysfs.c
+>>> index e0f1cb3..8e1a411 100644
+>>> --- a/drivers/firmware/dmi-sysfs.c
+>>> +++ b/drivers/firmware/dmi-sysfs.c
+>>> @@ -566,7 +566,6 @@ static struct kobj_type dmi_sysfs_entry_ktype = {
+>>>         .default_attrs = dmi_sysfs_entry_attrs,
+>>>   };
+>>>   -static struct kobject *dmi_kobj;
+>>>   static struct kset *dmi_kset;
+>>>     /* Global count of all instances seen.  Only for setup */
+>>> @@ -651,10 +650,11 @@ static int __init dmi_sysfs_init(void)
+>>>         int error = -ENOMEM;
+>>>         int val;
+>>>   -     /* Set up our directory */
+>>> -       dmi_kobj = kobject_create_and_add("dmi", firmware_kobj);
+>>> -       if (!dmi_kobj)
+>>> +       if (!dmi_kobj) {
+>>> +               pr_err("dmi-sysfs: dmi entry is absent.\n");
+>>> +               error = -ENOSYS;
+>>>                 goto err;
+>>> +       }
+>>>         dmi_kset = kset_create_and_add("entries", NULL, dmi_kobj);
+>>>         if (!dmi_kset)
+>>> @@ -675,7 +675,6 @@ static int __init dmi_sysfs_init(void)
+>>>   err:
+>>>         cleanup_entry_list();
+>>>         kset_unregister(dmi_kset);
+>>> -       kobject_put(dmi_kobj);
+>>>         return error;
+>>>   }
+>>>   @@ -685,8 +684,6 @@ static void __exit dmi_sysfs_exit(void)
+>>>         pr_debug("dmi-sysfs: unloading.\n");
+>>>         cleanup_entry_list();
+>>>         kset_unregister(dmi_kset);
+>>> -       kobject_del(dmi_kobj);
+>>> -       kobject_put(dmi_kobj);
+>>>   }
+>>>     module_init(dmi_sysfs_init);
+>>> diff --git a/drivers/firmware/dmi_scan.c b/drivers/firmware/dmi_scan.c
+>>> index d3aae09..bb19f8b 100644
+>>> --- a/drivers/firmware/dmi_scan.c
+>>> +++ b/drivers/firmware/dmi_scan.c
+>>> @@ -10,6 +10,9 @@
+>>>   #include <asm/dmi.h>
+>>>   #include <asm/unaligned.h>
+>>>   +struct kobject *dmi_kobj;
+>>> +EXPORT_SYMBOL_GPL(dmi_kobj);
+>>> +
+>>>   /*
+>>>    * DMI stands for "Desktop Management Interface".  It is part
+>>>    * of and an antecedent to, SMBIOS, which stands for System
+>>> @@ -20,6 +23,9 @@ static const char dmi_empty_string[] = "        ";
+>>>   static u32 dmi_ver __initdata;
+>>>   static u32 dmi_len;
+>>>   static u16 dmi_num;
+>>> +static u8 smbios_entry_point[32];
+>>> +static int smbios_entry_point_size;
+>>> +
+>>>   /*
+>>>    * Catch too early calls to dmi_check_system():
+>>>    */
+>>> @@ -118,6 +124,7 @@ static void dmi_decode_table(u8 *buf,
+>>>   }
+>>>     static phys_addr_t dmi_base;
+>>> +static u8 *dmi_table;
+>>>     static int __init dmi_walk_early(void (*decode)(const struct
+>>> dmi_header *,
+>>>                 void *))
+>>> @@ -476,6 +483,8 @@ static int __init dmi_present(const u8 *buf)
+>>>         if (memcmp(buf, "_SM_", 4) == 0 &&
+>>>             buf[5] < 32 && dmi_checksum(buf, buf[5])) {
+>>>                 smbios_ver = get_unaligned_be16(buf + 6);
+>>> +               smbios_entry_point_size = buf[5];
+>>> +               memcpy(smbios_entry_point, buf, smbios_entry_point_size);
+>>>                 /* Some BIOS report weird SMBIOS version, fix that up */
+>>>                 switch (smbios_ver) {
+>>> @@ -508,6 +517,9 @@ static int __init dmi_present(const u8 *buf)
+>>>                                         dmi_ver >> 8, dmi_ver & 0xFF,
+>>>                                         (dmi_ver < 0x0300) ? "" : ".x");
+>>>                         } else {
+>>> +                               smbios_entry_point_size = 15;
+>>> +                               memcpy(smbios_entry_point, buf,
+>>> +                                      smbios_entry_point_size);
+>>>                                 dmi_ver = (buf[14] & 0xF0) << 4 |
+>>>                                            (buf[14] & 0x0F);
+>>>                                 pr_info("Legacy DMI %d.%d present.\n",
+>>> @@ -535,6 +547,8 @@ static int __init dmi_smbios3_present(const u8 *buf)
+>>>                 dmi_ver &= 0xFFFFFF;
+>>>                 dmi_len = get_unaligned_le32(buf + 12);
+>>>                 dmi_base = get_unaligned_le64(buf + 16);
+>>> +               smbios_entry_point_size = buf[6];
+>>> +               memcpy(smbios_entry_point, buf, smbios_entry_point_size);
+>>>                 /*
+>>>                  * The 64-bit SMBIOS 3.0 entry point no longer has a field
+>>> @@ -638,6 +652,72 @@ void __init dmi_scan_machine(void)
+>>>         dmi_initialized = 1;
+>>>   }
+>>>   +static ssize_t raw_table_read(struct file *file, struct kobject *kobj,
+>>> +                             struct bin_attribute *attr, char *buf,
+>>> +                             loff_t pos, size_t count)
+>>> +{
+>>> +       memcpy(buf, attr->private + pos, count);
+>>> +       return count;
+>>> +}
+>>> +
+>>> +static BIN_ATTR(smbios_entry_point, S_IRUSR, raw_table_read, NULL, 0);
+>>> +struct bin_attribute bin_attr_dmi_table =
+>>> +                       __BIN_ATTR(DMI, S_IRUSR, raw_table_read, NULL, 0);
+>>
+>>
+>> missed static here
+>>
+>>
+>>> +
+>>> +static int __init dmi_init(void)
+>>> +{
+>>> +       int ret = -ENOMEM;
+>>> +       struct kobject *tables_kobj = NULL;
+>>> +
+>>> +       if (!dmi_available) {
+>>> +               ret = -ENOSYS;
+>>> +               goto err;
+>>> +       }
+>>> +
+>>> +       /* Set up dmi directory at /sys/firmware/dmi */
+>>> +       dmi_kobj = kobject_create_and_add("dmi", firmware_kobj);
+>>> +       if (!dmi_kobj)
+>>> +               goto err;
+>>> +
+>>> +       tables_kobj = kobject_create_and_add("tables", dmi_kobj);
+>>> +       if (!tables_kobj)
+>>> +               goto err;
+>>> +
+>>> +       bin_attr_smbios_entry_point.size = smbios_entry_point_size;
+>>> +       bin_attr_smbios_entry_point.private = smbios_entry_point;
+>>> +       ret = sysfs_create_bin_file(tables_kobj,
+>>> &bin_attr_smbios_entry_point);
+>>> +       if (ret)
+>>> +               goto err;
+>>> +
+>>> +       dmi_table = dmi_remap(dmi_base, dmi_len);
+>>> +       if (!dmi_table)
+>>> +               goto err;
+>>> +
+>>> +       bin_attr_dmi_table.size = dmi_len;
+>>> +       bin_attr_dmi_table.private = dmi_table;
+>>> +       ret = sysfs_create_bin_file(tables_kobj, &bin_attr_dmi_table);
+>>> +       if (ret) {
+>>> +               dmi_unmap(dmi_table);
+>>> +               goto err;
+>>> +       }
+>>> +
+>>> +       return 0;
+>>> +err:
+>>> +       pr_err("dmi: Firmware registration failed.\n");
+>>> +
+>>> +       if (tables_kobj)
+>>> +               sysfs_remove_bin_file(tables_kobj,
+>>> +                                     &bin_attr_smbios_entry_point);
+>>> +       kobject_del(tables_kobj);
+>>> +       kobject_put(tables_kobj);
+>>> +       kobject_del(dmi_kobj);
+>>> +       kobject_put(dmi_kobj);
+>>> +       dmi_kobj = NULL;
+>>> +
+>>> +       return ret;
+>>> +}
+>>> +subsys_initcall(dmi_init);
+>>> +
+>>>   /**
+>>>    * dmi_set_dump_stack_arch_desc - set arch description for dump_stack()
+>>>    *
+>>> diff --git a/include/linux/dmi.h b/include/linux/dmi.h
+>>> index f820f0a..9f55f46 100644
+>>> --- a/include/linux/dmi.h
+>>> +++ b/include/linux/dmi.h
+>>> @@ -93,6 +93,7 @@ struct dmi_dev_onboard {
+>>>         int devfn;
+>>>   };
+>>>   +extern struct kobject *dmi_kobj;
+>>>   extern int dmi_check_system(const struct dmi_system_id *list);
+>>>   const struct dmi_system_id *dmi_first_match(const struct dmi_system_id
+>>> *list);
+>>>   extern const char * dmi_get_system_info(int field);
+>>
+>>
+>> --
+>> Regards,
+>> Ivan Khoronzhuk
+>>
