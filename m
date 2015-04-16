@@ -1,64 +1,332 @@
-From: Jean Delvare <jdelvare-l3A5Bk7waGM@public.gmane.org>
-Subject: Re: [Patch 1/3] firmware: dmi_scan: rename dmi_table to
- dmi_decode_table
-Date: Thu, 16 Apr 2015 10:35:11 +0200
-Message-ID: <20150416103511.55927ccc@endymion.delvare>
+From: Jean Delvare <jdelvare@suse.de>
+Subject: Re: [Patch 2/3] firmware: dmi_scan: add SBMIOS entry and DMI tables
+Date: Thu, 16 Apr 2015 11:52:52 +0200
+Message-ID: <20150416115252.7dc964a3@endymion.delvare>
 References: <1427979423-22767-1-git-send-email-ivan.khoronzhuk@globallogic.com>
-	<1427979423-22767-2-git-send-email-ivan.khoronzhuk@globallogic.com>
-	<20150415143530.GF4804@codeblueprint.co.uk>
+	<1427979423-22767-3-git-send-email-ivan.khoronzhuk@globallogic.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150415143530.GF4804-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>
-Cc: Ivan Khoronzhuk <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, dmidecode-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, msalter-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, roy.franz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1427979423-22767-3-git-send-email-ivan.khoronzhuk@globallogic.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Ivan Khoronzhuk <ivan.khoronzhuk@globallogic.com>
+Cc: linux-kernel@vger.kernel.org, matt.fleming@intel.com, ard.biesheuvel@linaro.org, grant.likely@linaro.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, mikew@google.com, dmidecode-devel@nongnu.org, leif.lindholm@linaro.org, msalter@redhat.com, roy.franz@linaro.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Matt,
+Hi Ivan,
 
-On Wed, 15 Apr 2015 15:35:30 +0100, Matt Fleming wrote:
-> On Thu, 02 Apr, at 03:57:01PM, Ivan Khoronzhuk wrote:
-> > The "dmi_table" function looks like data instance, but it does DMI
-> > table decode. This patch renames it to "dmi_decode_table" name as
-> > more appropriate. That allows us to use "dmi_table" name for correct
-> > purposes.
-> > 
-> > Signed-off-by: Ivan Khoronzhuk <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
-> > ---
-> >  drivers/firmware/dmi_scan.c | 10 +++++-----
-> >  1 file changed, 5 insertions(+), 5 deletions(-)
+On Thu,  2 Apr 2015 15:57:02 +0300, Ivan Khoronzhuk wrote:
+> Some utils, like dmidecode and smbios, need to access SMBIOS entry
+> table area in order to get information like SMBIOS version, size, etc.
+> Currently it's done via /dev/mem. But for situation when /dev/mem
+> usage is disabled, the utils have to use dmi sysfs instead, which
+> doesn't represent SMBIOS entry and adds code/delay redundancy when direct
+> access for table is needed.
 > 
-> Looks good to me.
+> So this patch creates dmi/tables and adds SMBIOS entry point to allow
+> utils in question to work correctly without /dev/mem. Also patch adds
+> raw dmi table to simplify dmi table processing in user space, as
+> proposed by Jean Delvare.
 > 
-> Jean, do you want me to pick this patch up or are you going to?
+> Signed-off-by: Ivan Khoronzhuk <ivan.khoronzhuk@globallogic.com>
+> ---
+>  .../ABI/testing/sysfs-firmware-dmi-tables          | 22 ++++++
+>  drivers/firmware/dmi-sysfs.c                       | 11 ++-
+>  drivers/firmware/dmi_scan.c                        | 80 ++++++++++++++++++++++
+>  include/linux/dmi.h                                |  1 +
+>  4 files changed, 107 insertions(+), 7 deletions(-)
+>  create mode 100644 Documentation/ABI/testing/sysfs-firmware-dmi-tables
 
-Good question, we need to agree on a strategy.
+First of all: thanks for doing this, it looks mostly good now, and I've
+tested it successfully on my own system.
 
-There are 3 patch sets to consider here.
+> diff --git a/Documentation/ABI/testing/sysfs-firmware-dmi-tables b/Documentation/ABI/testing/sysfs-firmware-dmi-tables
+> new file mode 100644
+> index 0000000..f46158c
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-firmware-dmi-tables
+> @@ -0,0 +1,22 @@
+> +What:		/sys/firmware/dmi/tables/
+> +Date:		April 2015
+> +Contact:	Ivan Khoronzhuk <ivan.khoronzhuk@globallogic.com>
+> +Description:
+> +		The firmware provides DMI structures as a packed list of
+> +		data referenced by a SMBIOS table entry point. The SMBIOS
+> +		entry point contains general information, like SMBIOS
+> +		version, DMI table size, etc. The structure, content and
+> +		size of SMBIOS entry point is dependent on SMBIOS version.
+> +		The format of SMBIOS entry point, equal as DMI structures
+> +		can be read in SMBIOS specification.
 
-1* My patch fixing the UUID ordering bug. It must go in first and
-   immediately, as it fixes a regression and will have to be backported
-   to stable branches.
+"equal as" sounds strange, I think a simple "and" would be better.
 
-2* 2 older patches from Ivan which are currently in your efi-next tree
-   if I'm not mistaken. Both were based on an old tree so they do not
-   apply cleanly on kernel v4.0, I had to fix them up manually. I have
-   no idea if git would be able to merge them properly, as the fix
-   above changed the context even more.
+> +
+> +		The dmi/tables provides raw SMBIOS entry point and DMI tables
+> +		through sysfs as an alternative to utilities reading them
+> +		from /dev/mem. The raw SMBIOS entry point and DMI table are
+> +		presented as raw attributes and are accessible via:
 
-3* The 3 new patches from Ivan which I am reviewing now, which are not
-   applied in any public tree AFAIK.
+"binary attributes" rather than "raw attributes"? The "raw" nature is
+already mentioned earlier in the sentence.
 
-I don't really care who picks these patches up and sends them to Linus,
-but I think they should all follow the same route so that Linus has as
-little merge work to do as possible. So either you pick them all, or I
-do. If I do, you'll have to drop the 2 patches you have in efi-next.
-Again I'm fine either way, so please let me know what makes your life
-easier and let's do that.
+> +
+> +		/sys/firmware/dmi/tables/smbios_entry_point
+> +		/sys/firmware/dmi/tables/DMI
+> +
+> +		The complete DMI information can be taken using these two
 
-Thanks,
+"obtained" or "decoded" would sound better than "taken" IMHO.
+
+> +		tables.
+> diff --git a/drivers/firmware/dmi-sysfs.c b/drivers/firmware/dmi-sysfs.c
+> index e0f1cb3..8e1a411 100644
+> --- a/drivers/firmware/dmi-sysfs.c
+> +++ b/drivers/firmware/dmi-sysfs.c
+> @@ -566,7 +566,6 @@ static struct kobj_type dmi_sysfs_entry_ktype = {
+>  	.default_attrs = dmi_sysfs_entry_attrs,
+>  };
+>  
+> -static struct kobject *dmi_kobj;
+>  static struct kset *dmi_kset;
+>  
+>  /* Global count of all instances seen.  Only for setup */
+> @@ -651,10 +650,11 @@ static int __init dmi_sysfs_init(void)
+>  	int error = -ENOMEM;
+
+This initialization can be moved to the single error path left that
+needs it. (I can do it myself in a separate patch if you don't want to
+do it here.)
+
+>  	int val;
+>  
+> -	/* Set up our directory */
+> -	dmi_kobj = kobject_create_and_add("dmi", firmware_kobj);
+> -	if (!dmi_kobj)
+> +	if (!dmi_kobj) {
+> +		pr_err("dmi-sysfs: dmi entry is absent.\n");
+> +		error = -ENOSYS;
+>  		goto err;
+> +	}
+>  
+>  	dmi_kset = kset_create_and_add("entries", NULL, dmi_kobj);
+>  	if (!dmi_kset)
+> @@ -675,7 +675,6 @@ static int __init dmi_sysfs_init(void)
+>  err:
+>  	cleanup_entry_list();
+>  	kset_unregister(dmi_kset);
+> -	kobject_put(dmi_kobj);
+>  	return error;
+>  }
+>  
+> @@ -685,8 +684,6 @@ static void __exit dmi_sysfs_exit(void)
+>  	pr_debug("dmi-sysfs: unloading.\n");
+>  	cleanup_entry_list();
+>  	kset_unregister(dmi_kset);
+> -	kobject_del(dmi_kobj);
+> -	kobject_put(dmi_kobj);
+>  }
+>  
+>  module_init(dmi_sysfs_init);
+> diff --git a/drivers/firmware/dmi_scan.c b/drivers/firmware/dmi_scan.c
+> index d3aae09..bb19f8b 100644
+> --- a/drivers/firmware/dmi_scan.c
+> +++ b/drivers/firmware/dmi_scan.c
+> @@ -10,6 +10,9 @@
+>  #include <asm/dmi.h>
+>  #include <asm/unaligned.h>
+>  
+> +struct kobject *dmi_kobj;
+> +EXPORT_SYMBOL_GPL(dmi_kobj);
+> +
+>  /*
+>   * DMI stands for "Desktop Management Interface".  It is part
+>   * of and an antecedent to, SMBIOS, which stands for System
+> @@ -20,6 +23,9 @@ static const char dmi_empty_string[] = "        ";
+>  static u32 dmi_ver __initdata;
+>  static u32 dmi_len;
+>  static u16 dmi_num;
+> +static u8 smbios_entry_point[32];
+> +static int smbios_entry_point_size;
+> +
+>  /*
+>   * Catch too early calls to dmi_check_system():
+>   */
+> @@ -118,6 +124,7 @@ static void dmi_decode_table(u8 *buf,
+>  }
+>  
+>  static phys_addr_t dmi_base;
+> +static u8 *dmi_table;
+
+This variable is only ever used in a single function (dmi_init). Does
+it actually need to be a global variable? I suspect not.
+
+>  
+>  static int __init dmi_walk_early(void (*decode)(const struct dmi_header *,
+>  		void *))
+> @@ -476,6 +483,8 @@ static int __init dmi_present(const u8 *buf)
+>  	if (memcmp(buf, "_SM_", 4) == 0 &&
+>  	    buf[5] < 32 && dmi_checksum(buf, buf[5])) {
+>  		smbios_ver = get_unaligned_be16(buf + 6);
+> +		smbios_entry_point_size = buf[5];
+> +		memcpy(smbios_entry_point, buf, smbios_entry_point_size);
+>  
+>  		/* Some BIOS report weird SMBIOS version, fix that up */
+>  		switch (smbios_ver) {
+> @@ -508,6 +517,9 @@ static int __init dmi_present(const u8 *buf)
+>  					dmi_ver >> 8, dmi_ver & 0xFF,
+>  					(dmi_ver < 0x0300) ? "" : ".x");
+>  			} else {
+> +				smbios_entry_point_size = 15;
+> +				memcpy(smbios_entry_point, buf,
+> +				       smbios_entry_point_size);
+>  				dmi_ver = (buf[14] & 0xF0) << 4 |
+>  					   (buf[14] & 0x0F);
+>  				pr_info("Legacy DMI %d.%d present.\n",
+> @@ -535,6 +547,8 @@ static int __init dmi_smbios3_present(const u8 *buf)
+>  		dmi_ver &= 0xFFFFFF;
+>  		dmi_len = get_unaligned_le32(buf + 12);
+>  		dmi_base = get_unaligned_le64(buf + 16);
+> +		smbios_entry_point_size = buf[6];
+> +		memcpy(smbios_entry_point, buf, smbios_entry_point_size);
+>  
+>  		/*
+>  		 * The 64-bit SMBIOS 3.0 entry point no longer has a field
+> @@ -638,6 +652,72 @@ void __init dmi_scan_machine(void)
+>  	dmi_initialized = 1;
+>  }
+>  
+> +static ssize_t raw_table_read(struct file *file, struct kobject *kobj,
+> +			      struct bin_attribute *attr, char *buf,
+> +			      loff_t pos, size_t count)
+> +{
+> +	memcpy(buf, attr->private + pos, count);
+> +	return count;
+> +}
+> +
+> +static BIN_ATTR(smbios_entry_point, S_IRUSR, raw_table_read, NULL, 0);
+
+This one could be world-readable as it contains no sensitive
+information.
+
+> +struct bin_attribute bin_attr_dmi_table =
+> +			__BIN_ATTR(DMI, S_IRUSR, raw_table_read, NULL, 0);
+
+I do not understand why you don't use BIN_ATTR here too? I tried naming
+the attribute bin_attr_DMI and it seems to work just fine, checkpatch
+doesn't even complain!
+
+> +
+> +static int __init dmi_init(void)
+> +{
+> +	int ret = -ENOMEM;
+> +	struct kobject *tables_kobj = NULL;
+> +
+> +	if (!dmi_available) {
+> +		ret = -ENOSYS;
+> +		goto err;
+> +	}
+
+This is weird. Can this actually happen?
+
+We currently have two ways to enter this module: dmi_scan_machine(),
+which is called by the architecture code, and dmi_init(), which is
+called at subsys_initcall time. As far as I can see,
+core/arch_initcalls are guaranteed to be always called before
+subsys_initcalls. If we can rely on that, the test above is not needed.
+If for any reason we can't, that means that dmi_init() should not be a
+subsys_initcall, but should instead be called explicitly at the end of
+dmi_scan_machine().
+
+> +
+> +	/* Set up dmi directory at /sys/firmware/dmi */
+> +	dmi_kobj = kobject_create_and_add("dmi", firmware_kobj);
+> +	if (!dmi_kobj)
+> +		goto err;
+> +
+> +	tables_kobj = kobject_create_and_add("tables", dmi_kobj);
+> +	if (!tables_kobj)
+> +		goto err;
+> +
+> +	bin_attr_smbios_entry_point.size = smbios_entry_point_size;
+> +	bin_attr_smbios_entry_point.private = smbios_entry_point;
+> +	ret = sysfs_create_bin_file(tables_kobj, &bin_attr_smbios_entry_point);
+> +	if (ret)
+> +		goto err;
+> +
+> +	dmi_table = dmi_remap(dmi_base, dmi_len);
+> +	if (!dmi_table)
+> +		goto err;
+
+At this point "ret" has value 0 so you will take the error path but
+return with success. No good. I suggest that you move the call to
+dmi_remap before the first call to sysfs_create_bin_file above, so that
+"ret" still has value -ENOMEM.
+
+> +
+> +	bin_attr_dmi_table.size = dmi_len;
+> +	bin_attr_dmi_table.private = dmi_table;
+> +	ret = sysfs_create_bin_file(tables_kobj, &bin_attr_dmi_table);
+> +	if (ret) {
+> +		dmi_unmap(dmi_table);
+
+Doing this here goes against the logic of having a single error path.
+Instead you should have an additional error label before err: and jump
+there.
+
+> +		goto err;
+> +	}
+> +
+> +	return 0;
+> +err:
+> +	pr_err("dmi: Firmware registration failed.\n");
+> +
+> +	if (tables_kobj)
+> +		sysfs_remove_bin_file(tables_kobj,
+> +				      &bin_attr_smbios_entry_point);
+> +	kobject_del(tables_kobj);
+> +	kobject_put(tables_kobj);
+
+These last two calls could be moved inside the conditional above. Even
+better would be a separate error label so that you know exactly what
+needs to be undone.
+
+> +	kobject_del(dmi_kobj);
+> +	kobject_put(dmi_kobj);
+> +	dmi_kobj = NULL;
+
+I'm wondering, wouldn't it make sense to keep dmi_kobj alive (with an
+appropriate comment), so that dmi-sysfs has a chance to load? As it is
+now, a bug or some unexpected behavior in this new code could cause a
+regression for dmi-sysfs users. Just because I don't like dmi_sysfs
+doesn't mean we can break it ;-)
+
+> +
+> +	return ret;
+> +}
+> +subsys_initcall(dmi_init);
+> +
+>  /**
+>   * dmi_set_dump_stack_arch_desc - set arch description for dump_stack()
+>   *
+> diff --git a/include/linux/dmi.h b/include/linux/dmi.h
+> index f820f0a..9f55f46 100644
+> --- a/include/linux/dmi.h
+> +++ b/include/linux/dmi.h
+> @@ -93,6 +93,7 @@ struct dmi_dev_onboard {
+>  	int devfn;
+>  };
+>  
+> +extern struct kobject *dmi_kobj;
+
+struct kobject is defined in <linux/kobject.h> so I think you should
+include that file to avoid random build failures in the future.
+
+>  extern int dmi_check_system(const struct dmi_system_id *list);
+>  const struct dmi_system_id *dmi_first_match(const struct dmi_system_id *list);
+>  extern const char * dmi_get_system_info(int field);
+
+
 -- 
 Jean Delvare
 SUSE L3 Support
