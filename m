@@ -1,29 +1,94 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH V6 07/10] sched: add a macro to ref all CLONE_NEW* flags
-Date: Fri, 17 Apr 2015 10:18:43 +0200
-Message-ID: <20150417081843.GE23123@twins.programming.kicks-ass.net>
-References: <cover.1429252659.git.rgb@redhat.com>
-	<cf1ed24f71743ea7f85682f26f3185202a1f8a32.1429252659.git.rgb@redhat.com>
+From: Jean Delvare <jdelvare@suse.de>
+Subject: Re: [Patch 1/3] firmware: dmi_scan: rename dmi_table to
+ dmi_decode_table
+Date: Fri, 17 Apr 2015 10:54:54 +0200
+Message-ID: <20150417105454.1c52f430@endymion.delvare>
+References: <1427979423-22767-1-git-send-email-ivan.khoronzhuk@globallogic.com>
+	<1427979423-22767-2-git-send-email-ivan.khoronzhuk@globallogic.com>
+	<20150415143530.GF4804@codeblueprint.co.uk>
+	<20150416103511.55927ccc@endymion.delvare>
+	<553018BB.1080903@globallogic.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <cf1ed24f71743ea7f85682f26f3185202a1f8a32.1429252659.git.rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org, sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <553018BB.1080903@globallogic.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: "Ivan.khoronzhuk" <ivan.khoronzhuk@globallogic.com>
+Cc: Matt Fleming <matt@codeblueprint.co.uk>, linux-kernel@vger.kernel.org, matt.fleming@intel.com, ard.biesheuvel@linaro.org, grant.likely@linaro.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, mikew@google.com, dmidecode-devel@nongnu.org, leif.lindholm@linaro.org, msalter@redhat.com, roy.franz@linaro.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 17, 2015 at 03:35:54AM -0400, Richard Guy Briggs wrote:
-> Added the macro CLONE_NEW_MASK_ALL to refer to all CLONE_NEW* flags.
+Hi Ivan,
 
-A wee bit about why might be nice..
+On Thu, 16 Apr 2015 23:16:59 +0300, Ivan.khoronzhuk wrote:
+> On 16.04.15 11:35, Jean Delvare wrote:
+> > On Wed, 15 Apr 2015 15:35:30 +0100, Matt Fleming wrote:
+> >> Jean, do you want me to pick this patch up or are you going to?
+> > Good question, we need to agree on a strategy.
+> >
+> > There are 3 patch sets to consider here.
+> >
+> > 1* My patch fixing the UUID ordering bug. It must go in first and
+> >     immediately, as it fixes a regression and will have to be backported
+> >     to stable branches.
+> 
+> ||
+> V
+> 
+> >
+> > 2* 2 older patches from Ivan which are currently in your efi-next tree
+> >     if I'm not mistaken. Both were based on an old tree so they do not
+> >     apply cleanly on kernel v4.0, I had to fix them up manually. I have
+> 
+> They are in master tree already.
+> 
+> >     no idea if git would be able to merge them properly, as the fix
+> >     above changed the context even more.
+> 
+> Current efi-next already merged, so you should base your patches on
+> top of last changes.
+
+Correct. I looked at the result and the merge looks correct. I'll turn
+my objections into fixup patches to apply on top, where still worth it.
+In particular I'll start with the ".x" revert, as it will make
+backporting the bug fix easier.
+
+> >
+> > 3* The 3 new patches from Ivan which I am reviewing now, which are not
+> >     applied in any public tree AFAIK.
+> 
+> It shouldn't happen,
+> I've been verifying just now once again.
+> They are applied on top of linux_next cleanly.
+> Equal as on efi/next.
+
+I can't see them at
+http://git.kernel.org/cgit/linux/kernel/git/mfleming/efi.git/log/?h=next
+
+To clarify: I do not claim that they can't be applied, I'm only saying
+they're not there yet (which is OK as they were still pending my
+review.) They do apply just fine, no problem with this.
+
+> > I don't really care who picks these patches up and sends them to Linus,
+> > but I think they should all follow the same route so that Linus has as
+> > little merge work to do as possible. So either you pick them all, or I
+> > do. If I do, you'll have to drop the 2 patches you have in efi-next.
+> > Again I'm fine either way, so please let me know what makes your life
+> > easier and let's do that.
+> 
+> I'm going to base my series
+> "firmware: dmi_scan: add SBMIOS entry point and DMI tables"
+> on top of linux next unless you have already your tree to pick up changes.
+> Please let me know, if you have one.
+
+I have no formal tree yet, but my current patch set can be seen at:
+http://jdelvare.nerim.net/devel/linux-3/jdelvare-dmi/
+
+First 2 patches from you are already upstream. You should rebase your
+updated patch series on top of upstream + patches 03 and 04, as they
+will go in first.
+
+Thanks,
+-- 
+Jean Delvare
+SUSE L3 Support
