@@ -1,85 +1,222 @@
-From: Jean Delvare <jdelvare-l3A5Bk7waGM@public.gmane.org>
-Subject: Re: [Patch 2/3] firmware: dmi_scan: add SBMIOS entry and DMI tables
-Date: Fri, 17 Apr 2015 15:02:24 +0200
-Message-ID: <20150417150224.50202bcb@endymion.delvare>
-References: <1427979423-22767-1-git-send-email-ivan.khoronzhuk@globallogic.com>
-	<1427979423-22767-3-git-send-email-ivan.khoronzhuk@globallogic.com>
-	<20150416115252.7dc964a3@endymion.delvare>
-	<552FB18D.6080207@globallogic.com>
-	<1429199064.4386.93.camel@chaos.site>
-	<552FF0E4.709@gmail.com>
+From: Beata Michalska <b.michalska@samsung.com>
+Subject: Re: [RFC 1/4] fs: Add generic file system event notifications
+Date: Fri, 17 Apr 2015 15:04:37 +0200
+Message-ID: <553104E5.2040704@samsung.com>
+References: <1429082147-4151-1-git-send-email-b.michalska@samsung.com>
+ <1429082147-4151-2-git-send-email-b.michalska@samsung.com>
+ <20150417113110.GD3116@quack.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <552FF0E4.709-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Ivan.khoronzhuk" <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, dmidecode-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, msalter-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, roy.franz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-reply-to: <20150417113110.GD3116@quack.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Jan Kara <jack@suse.cz>
+Cc: linux-kernel@vger.kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org, Linux Filesystem Mailing List <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 16 Apr 2015 20:27:00 +0300, subscivan wrote:
-> On 16.04.15 18:44, Jean Delvare wrote:
-> > Le Thursday 16 April 2015 =C3=A0 15:56 +0300, Ivan.khoronzhuk a =C3=
-=A9crit :
-> >> We cannot be sure that firmware_kobj created at time of dmi_init()=
-=2E
-> >> The sources don't oblige you to call it at core level,
-> >> for instance like it was done for arm64. For x86, dmi_init() can b=
-e called
-> >> before firmware_kobj is created.
-> > Looking at the code, it seems that firmware_kobj is created very, v=
-ery
-> > early in the boot process. In do_basic_setup(), you can see that
-> > driver_init() (which in turn calls firmware_init(), creating
-> > firmware_kobj) is called before do_initcalls(). So firmware_kobj mu=
-st be
-> > defined before dmi_scan_machine() or dmi_init() is called.
->=20
-> No. Not must, rather should. See below.
->=20
-> > Oh, and this wasn't even my point ;-) I'm fine with you checking if
-> > firmware_kobj is defined. My question was about the dmi_available c=
-heck
-> > above. But that question was silly anyway, sorry. I confused
-> > dmi_available with dmi_initialized. Checking for dmi_available is
-> > perfectly reasonable, please scratch my objection.
-> >
-> >> And if I call it from dmi_init() I suppose
-> >> I would face an error. As I can't call it in dmi_init I can't be s=
-ure that
-> >> DMI is available at all. So, no, we have to check dmi_available he=
-re and
-> >> call it at subsys layer, where it's supposed to be.
-> > I can't parse that, I suspect you wrote dmi_init where you actually
-> > meant dmi_scan_machine? Given how early firmware_kobj is created, I
-> > think the code currently in dmi_init could in fact go at the end of
-> > dmi_scan_machine.
->=20
-> Actually, dmi_scan_machine can be called even earlier.
-> As I've sad, for x86, it's called before firmware_kobj is created.
->=20
-> kernel_start()
->      setup_arch()
->          dmi_scan_machine()
->=20
-> And for firmware_init(), as you noticed already:
->=20
-> start_kernel()
->      rest_init()
->          kernel_init()
->              kernel_init_freeable()
->                  do_basic_setup()
->                      driver_init()
->                          firmware_init()
->=20
-> Pay attentions that setup_arch() is called much earlier than rest_ini=
-t().
-> So dmi_init couldn't in fact go at the end of dmi_scan_machine.
+On 04/17/2015 01:31 PM, Jan Kara wrote:
+> On Wed 15-04-15 09:15:44, Beata Michalska wrote:
+>> Introduce configurable generic interface for file
+>> system-wide event notifications to provide file
+>> systems with a common way of reporting any potential
+>> issues as they emerge.
+>>
+>> The notifications are to be issued through generic
+>> netlink interface, by a dedicated, for file system
+>> events, multicast group. The file systems might as
+>> well use this group to send their own custom messages.
+>>
+>> The events have been split into four base categories:
+>> information, warnings, errors and threshold notifications,
+>> with some very basic event types like running out of space
+>> or file system being remounted as read-only.
+>>
+>> Threshold notifications have been included to allow
+>> triggering an event whenever the amount of free space
+>> drops below a certain level - or levels to be more precise
+>> as two of them are being supported: the lower and the upper
+>> range. The notifications work both ways: once the threshold
+>> level has been reached, an event shall be generated whenever
+>> the number of available blocks goes up again re-activating
+>> the threshold.
+>>
+>> The interface has been exposed through a vfs. Once mounted,
+>> it serves as an entry point for the set-up where one can
+>> register for particular file system events.
+>>
+>> Signed-off-by: Beata Michalska <b.michalska@samsung.com>
+>   Thanks for the patches! Some comments are below.
+> 
+>> ---
+>>  Documentation/filesystems/events.txt |  254 +++++++++++
+>>  fs/Makefile                          |    1 +
+>>  fs/events/Makefile                   |    6 +
+>>  fs/events/fs_event.c                 |  775 ++++++++++++++++++++++++++++++++++
+>>  fs/events/fs_event.h                 |   27 ++
+>>  fs/events/fs_event_netlink.c         |   94 +++++
+>>  fs/namespace.c                       |    1 +
+>>  include/linux/fs.h                   |    6 +-
+>>  include/linux/fs_event.h             |   69 +++
+>>  include/uapi/linux/fs_event.h        |   62 +++
+>>  include/uapi/linux/genetlink.h       |    1 +
+>>  net/netlink/genetlink.c              |    7 +-
+>>  12 files changed, 1301 insertions(+), 2 deletions(-)
+>>  create mode 100644 Documentation/filesystems/events.txt
+>>  create mode 100644 fs/events/Makefile
+>>  create mode 100644 fs/events/fs_event.c
+>>  create mode 100644 fs/events/fs_event.h
+>>  create mode 100644 fs/events/fs_event_netlink.c
+>>  create mode 100644 include/linux/fs_event.h
+>>  create mode 100644 include/uapi/linux/fs_event.h
+>>
+>> diff --git a/Documentation/filesystems/events.txt b/Documentation/filesystems/events.txt
+>> new file mode 100644
+>> index 0000000..c85dd88
+>> --- /dev/null
+>> +++ b/Documentation/filesystems/events.txt
+>> @@ -0,0 +1,254 @@
+>> +
+>> +	Generic file system event notification interface
+>> +
+>> +Document created 09 April 2015 by Beata Michalska <b.michalska@samsung.com>
+>> +
+>> +1. The reason behind:
+>> +=====================
+>> +
+>> +There are many corner cases when things might get messy with the filesystems.
+>> +And it is not always obvious what and when went wrong. Sometimes you might
+>> +get some subtle hints that there is something going on - but by the time
+>> +you realise it, it might be too late as you are already out-of-space
+>> +or the filesystem has been remounted as read-only (i.e.). The generic
+>> +interface for the filesystem events fills the gap by providing a rather
+>> +easy way of real-time notifications triggered whenever something intreseting
+>> +happens, allowing filesystems to report events in a common way, as they occur.
+>> +
+>> +2. How does it work:
+>> +====================
+>> +
+>> +The interface itself has been exposed as fstrace-type Virtual File System,
+>> +primarily to ease the process of setting up the configuration for the file
+>> +system notifications. So for starters it needs to get mounted (obviously):
+>> +
+>> +	mount -t fstrace none /sys/fs/events
+>> +
+>> +This will unveil the single fstrace filesystem entry - the 'config' file,
+>> +through which the notification are being set-up.
+>> +
+>> +Activating notifications for particular filesystem is as straightforward
+>> +as writing into the 'config' file. Note that by default all events despite
+>> +the actual filesystem type are being disregarded.
+>   Is there a reason to have a special filesystem for this? Do you expect
+> extending it by (many) more files? Why not just creating a file in sysfs or
+> something like that?
 
-Yeah, you're right, sorry. Somehow I thought that setup_arch was an
-arch_initcall, but it is not, so I got the order all wrong.
+No particular reason here - just for possible future extension if needed.
+I'm totally fine with having a single sysfs entry.
 
---=20
-Jean Delvare
-SUSE L3 Support
+> 
+>> +Synopsis of config:
+>> +------------------
+>> +
+>> +	MOUNT EVENT_TYPE [L1] [L2]
+>> +
+>> + MOUNT      : the filesystem's mount point
+>   I'm not quite decided but is mountpoint really the right thing to pass
+> via the interface? They aren't unique (filesystem can be mounted in
+> multiple places) and more importantly can change over time. So won't it be
+> better to pass major:minor over the interface? These are stable, unique to
+> the filesystem, and userspace can easily get them by calling stat(2) on the
+> desired path (or directly from /proc/self/mountinfo). That could be also
+> used as an fs identifier instead of assigned ID (and thus we won't need
+> those events about creation of new trace which look somewhat strange to
+> me).
+> 
+Even if a given filesystem is being mounted in many places this will come
+down to single super_block - the interface will add trace for the first mount
+point. This is just to ease the usage: internally a particular trace is 
+associated with a super_block. 
+
+> OTOH using major:minor may have issues in container world where processes
+> could watch events from filesystems inaccessible to the container if they
+> guess the device number. So maybe we could use 'path' when creating new
+> trace but I'd still like to use the device number internally and for all
+> outgoing communication because of above mentioned problems with
+> mountpoints.
+
+Alright then, so dropping the idea of announcing new trace (with assigned id)
+and switching to using the major:minor numbers. Sounds OK to me.
+
+> 
+>> + EVENT_TYPE : type of events to be enabled: info,warn,err,thr;
+>> +              at least one type needs to be specified;
+>> +              note the comma delimiter and lack of spaces between
+>> +	      those options
+>> + L1         : the threshold limit - lower range
+>> + L2         : the threshold limit - upper range
+>> + 	      case enabling threshold notifications the lower level is
+>> +	      mandatory, whereas the upper one remains optional;
+>> +	      note though, that as those refer to the number of available
+>> +	      blocks, the lower level needs to be higher than the upper one
+>> +
+>> +Sample request could look like the follwoing:
+>> +
+>> + echo /sample/mount/point warn,err,thr 710000 500000 > /sys/fs/events/config
+>> +
+>> +Multiple request might be specified provided they are separated with semicolon.
+>   Is this necessary? It somewhat complicates syntax and parsing in kernel
+> and I don't see a need for that. I'd prefer to keep the interface as simple
+> as possible.
+> 
+
+This is not necessary but could ease the usage - i.e. through scripting: to specify
+multiple traces and register them in one go. 
+
+> Also I think that we should make it clear that each event type has
+> different set of arguments. For threshold events they'll be L1 & L2, for
+> other events there may be no arguments, for other events maybe something
+> else...
+> 
+
+Currently only the threshold events use arguments -  not sure what arguments
+could be used for the remaining notifications. But any suggestions are welcomed.
+
+> ...
+>> +static const match_table_t fs_etypes = {
+>> +	{ FS_EVENT_INFO,    "info"  },
+>> +	{ FS_EVENT_WARN,    "warn"  },
+>> +	{ FS_EVENT_THRESH,  "thr"   },
+>> +	{ FS_EVENT_ERR,     "err"   },
+>> +	{ 0, NULL },
+>> +};
+>   Why are there these generic message types? Threshold messages make good
+> sense to me. But not so much the rest. If they don't have a clear meaning,
+> it will be a mess. So I also agree with a message like - "filesystem has
+> trouble, you should probably unmount and run fsck" - that's fine. But
+> generic "info" or "warning" doesn't really carry any meaning on its own and
+> thus seems pretty useless to me. To explain a bit more, AFAIU this
+> shouldn't be a generic logging interface where something like severity
+> makes sense but rather a relatively specific interface notifying about
+> events in filesystem userspace should know about so I expect relatively low
+> number of types of events, not tens or even hundreds...
+> 
+> 								Honza
+
+Getting rid of those would simplify the configuration part, indeed.
+So we would be left with 'generic' and threshold events.
+I guess I've overdone this part.
+
+Thanks for Your comments so far.
+
+BR
+Beata
+
+
+
+
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
