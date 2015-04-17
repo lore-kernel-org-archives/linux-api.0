@@ -1,79 +1,64 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+From: John Spray <john.spray@redhat.com>
 Subject: Re: [RFC 1/4] fs: Add generic file system event notifications
-Date: Fri, 17 Apr 2015 18:39:14 +0200
-Message-ID: <20150417163914.GA28058@quack.suse.cz>
-References: <1429082147-4151-1-git-send-email-b.michalska@samsung.com>
- <1429082147-4151-2-git-send-email-b.michalska@samsung.com>
- <20150417113110.GD3116@quack.suse.cz>
- <553104E5.2040704@samsung.com>
- <55310957.3070101@gmail.com>
- <55311DE2.9000901@redhat.com>
- <20150417154351.GA26736@quack.suse.cz>
- <55312FEA.3030905@redhat.com>
- <20150417162247.GB27500@quack.suse.cz>
- <553134D3.9040001@gmail.com>
+Date: Fri, 17 Apr 2015 18:37:47 +0100
+Message-ID: <553144EB.9060701@redhat.com>
+References: <1429082147-4151-1-git-send-email-b.michalska@samsung.com> <1429082147-4151-2-git-send-email-b.michalska@samsung.com> <20150417113110.GD3116@quack.suse.cz> <553104E5.2040704@samsung.com> <55310957.3070101@gmail.com> <55311DE2.9000901@redhat.com> <20150417154351.GA26736@quack.suse.cz> <55312FEA.3030905@redhat.com> <20150417162247.GB27500@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <553134D3.9040001-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, John Spray <john.spray-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Beata Michalska <b.michalska-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, lczerner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kmpark-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, Linux Filesystem Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20150417162247.GB27500@quack.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Jan Kara <jack@suse.cz>
+Cc: Austin S Hemmelgarn <ahferroin7@gmail.com>, Beata Michalska <b.michalska@samsung.com>, linux-kernel@vger.kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org, Linux Filesystem Mailing List <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri 17-04-15 12:29:07, Austin S Hemmelgarn wrote:
-> On 2015-04-17 12:22, Jan Kara wrote:
-> >On Fri 17-04-15 17:08:10, John Spray wrote:
-> >>
-> >>On 17/04/2015 16:43, Jan Kara wrote:
-> >>>On Fri 17-04-15 15:51:14, John Spray wrote:
-> >>>>On 17/04/2015 14:23, Austin S Hemmelgarn wrote:
-> >>>>
-> >>>>>For some filesystems, it may make sense to differentiate between a
-> >>>>>generic warning and an error.  For BTRFS and ZFS for example, if
-> >>>>>there is a csum error on a block, this will get automatically
-> >>>>>corrected in many configurations, and won't require anything like
-> >>>>>fsck to be run, but monitoring applications will still probably
-> >>>>>want to be notified.
-> >>>>Another key differentiation IMHO is between transient errors (like
-> >>>>server is unavailable in a distributed filesystem) that will block
-> >>>>the filesystem but might clear on their own, vs. permanent errors
-> >>>>like unreadable drives that definitely will not clear until the
-> >>>>administrator takes some action.  It's usually a reasonable
-> >>>>approximation to call transient issues warnings, and permanent
-> >>>>issues errors.
-> >>>   So you can have events like FS_UNAVAILABLE and FS_AVAILABLE but what use
-> >>>would this have? I wouldn't like the interface to be dumping ground for
-> >>>random crap - we have dmesg for that :).
-> >>In that case I'm confused -- why would ENOSPC be an appropriate use
-> >>of this interface if the mount being entirely blocked would be
-> >>inappropriate?  Isn't being unable to service any I/O a more
-> >>fundamental and severe thing than being up and healthy but full?
-> >>
-> >>Were you intending the interface to be exclusively for data
-> >>integrity issues like checksum failures, rather than more general
-> >>events about a mount that userspace would probably like to know
-> >>about?
-> >   Well, I'm not saying we cannot have those events for fs availability /
-> >inavailability. I'm just saying I'd like to see some use for that first.
-> >I don't want events to be added just because it's possible...
-> >
-> >For ENOSPC we have thin provisioned storage and the userspace deamon
-> >shuffling real storage underneath. So there I know the usecase.
-> >
-> The use-case that immediately comes to mind for me would be diskless
-> nodes with root-on-nfs needing to know if they can actually access
-> the root filesystem.
-  Well, most apps will access the root file system regardless of what we
-send over netlink... So I don't see netlink events improving the situation
-there too much. You could try to use it for something like failover but
-even there I'm not too convinced - just doing some IO, waiting for timeout,
-and failing over if IO doesn't complete works just fine for that these
-days. That's why I was asking because I didn't see convincing usecase
-myself...
 
-								Honza
--- 
-Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-SUSE Labs, CR
+
+On 17/04/2015 17:22, Jan Kara wrote:
+> On Fri 17-04-15 17:08:10, John Spray wrote:
+>> On 17/04/2015 16:43, Jan Kara wrote:
+>> In that case I'm confused -- why would ENOSPC be an appropriate use
+>> of this interface if the mount being entirely blocked would be
+>> inappropriate?  Isn't being unable to service any I/O a more
+>> fundamental and severe thing than being up and healthy but full?
+>>
+>> Were you intending the interface to be exclusively for data
+>> integrity issues like checksum failures, rather than more general
+>> events about a mount that userspace would probably like to know
+>> about?
+>    Well, I'm not saying we cannot have those events for fs availability /
+> inavailability. I'm just saying I'd like to see some use for that first.
+> I don't want events to be added just because it's possible...
+>
+> For ENOSPC we have thin provisioned storage and the userspace deamon
+> shuffling real storage underneath. So there I know the usecase.
+>
+
+Ah, OK.  So I can think of a couple of use cases:
+  * a cluster scheduling service (think MPI jobs or docker containers) 
+might check for events like this.  If it can see the cluster filesystem 
+is unavailable, then it can avoid scheduling the job, so that the 
+(multi-node) application does not get hung on one node with a bad 
+mount.  If it sees a mount go bad (unavailable, or client evicted) 
+partway through a job, then it can kill -9 the process that was relying 
+on the bad mount, and go run it somewhere else.
+  * Boring but practical case: a nagios health check for checking if 
+mounts are OK.
+
+We don't have to invent these event types now of course, but something 
+to bear in mind.  Hopefully if/when any of the distributed filesystems 
+(Lustre/Ceph/etc) choose to implement this, we can look at making the 
+event types common at that time though.
+
+BTW in any case an interface for filesystem events to userspace will be 
+a useful addition, thank you!
+
+Cheers,
+John
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
