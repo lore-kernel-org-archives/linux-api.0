@@ -1,94 +1,248 @@
-From: Jean Delvare <jdelvare@suse.de>
-Subject: Re: [Patch 1/3] firmware: dmi_scan: rename dmi_table to
- dmi_decode_table
-Date: Fri, 17 Apr 2015 10:54:54 +0200
-Message-ID: <20150417105454.1c52f430@endymion.delvare>
-References: <1427979423-22767-1-git-send-email-ivan.khoronzhuk@globallogic.com>
-	<1427979423-22767-2-git-send-email-ivan.khoronzhuk@globallogic.com>
-	<20150415143530.GF4804@codeblueprint.co.uk>
-	<20150416103511.55927ccc@endymion.delvare>
-	<553018BB.1080903@globallogic.com>
+From: Beata Michalska <b.michalska@samsung.com>
+Subject: Re: [RFC 0/4] Generic file system events interface
+Date: Fri, 17 Apr 2015 11:10:13 +0200
+Message-ID: <5530CDF5.1070003@samsung.com>
+References: <1429082147-4151-1-git-send-email-b.michalska@samsung.com>
+ <20150417081727.GB3116@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <553018BB.1080903@globallogic.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: "Ivan.khoronzhuk" <ivan.khoronzhuk@globallogic.com>
-Cc: Matt Fleming <matt@codeblueprint.co.uk>, linux-kernel@vger.kernel.org, matt.fleming@intel.com, ard.biesheuvel@linaro.org, grant.likely@linaro.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, mikew@google.com, dmidecode-devel@nongnu.org, leif.lindholm@linaro.org, msalter@redhat.com, roy.franz@linaro.org
+Return-path: <owner-linux-mm@kvack.org>
+In-reply-to: <20150417081727.GB3116@quack.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Jan Kara <jack@suse.cz>
+Cc: linux-kernel@vger.kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org, Linux Filesystem Mailing List <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Ivan,
 
-On Thu, 16 Apr 2015 23:16:59 +0300, Ivan.khoronzhuk wrote:
-> On 16.04.15 11:35, Jean Delvare wrote:
-> > On Wed, 15 Apr 2015 15:35:30 +0100, Matt Fleming wrote:
-> >> Jean, do you want me to pick this patch up or are you going to?
-> > Good question, we need to agree on a strategy.
-> >
-> > There are 3 patch sets to consider here.
-> >
-> > 1* My patch fixing the UUID ordering bug. It must go in first and
-> >     immediately, as it fixes a regression and will have to be backported
-> >     to stable branches.
+Hi,
+
+On 04/17/2015 10:17 AM, Jan Kara wrote:
+>   Hello,
 > 
-> ||
-> V
+> On Wed 15-04-15 09:15:43, Beata Michalska wrote:
+>> The following patchset is a result of previous discussions regarding
+>> file system threshold notifiactions. It introduces support for file
+>> system event notifications, sent through generic netlinik interface
+>> whenever an fs-related event occurs. Included are also some shmem
+>> and ext4 changes showing how the new interface might actually be used.
+>>
+>> The vary idea of using the generic netlink interface has been previoulsy
+>> suggested here:  https://lkml.org/lkml/2011/8/18/169
+>>
+>> The basic description of the new functionality can be found in
+>> the first patch from this set - both in the commit message and
+>> in the doc file.
+>>
+>> Some very basic tests have been performed though still this is
+>> a PoC version. Below though is a sample user space application
+>> which subscribes to the new multicast group and listens for
+>> potential fs-related events. The code has been based on libnl 3.4
+>> and its test application for the generic netlink.
+>   Thanks for the patches! As a general note for the next posting, please CC
+> also linux-fsdevel@vger.kernel.org (since this has implications for other
+> filesystems as well, specifically I know about XFS guys thinking about some
+> notification system as well) and linux-api@vger.kernel.org (since this is a
+> new kernel interface to userspace).
 > 
-> >
-> > 2* 2 older patches from Ivan which are currently in your efi-next tree
-> >     if I'm not mistaken. Both were based on an old tree so they do not
-> >     apply cleanly on kernel v4.0, I had to fix them up manually. I have
-> 
-> They are in master tree already.
-> 
-> >     no idea if git would be able to merge them properly, as the fix
-> >     above changed the context even more.
-> 
-> Current efi-next already merged, so you should base your patches on
-> top of last changes.
+> 								Honza
 
-Correct. I looked at the result and the merge looks correct. I'll turn
-my objections into fixup patches to apply on top, where still worth it.
-In particular I'll start with the ".x" revert, as it will make
-backporting the bug fix easier.
+My bad  - with the CC list. Apologies for that.
 
-> >
-> > 3* The 3 new patches from Ivan which I am reviewing now, which are not
-> >     applied in any public tree AFAIK.
-> 
-> It shouldn't happen,
-> I've been verifying just now once again.
-> They are applied on top of linux_next cleanly.
-> Equal as on efi/next.
+BR
+Beata
 
-I can't see them at
-http://git.kernel.org/cgit/linux/kernel/git/mfleming/efi.git/log/?h=next
+>>
+>> ---
+>>
+>> Beata Michalska (4):
+>>   fs: Add generic file system event notifications
+>>   ext4: Add helper function to mark group as corrupted
+>>   ext4: Add support for generic FS events
+>>   shmem: Add support for generic FS events
+>>
+>>  Documentation/filesystems/events.txt |  254 +++++++++++
+>>  fs/Makefile                          |    1 +
+>>  fs/events/Makefile                   |    6 +
+>>  fs/events/fs_event.c                 |  775 ++++++++++++++++++++++++++++++++++
+>>  fs/events/fs_event.h                 |   27 ++
+>>  fs/events/fs_event_netlink.c         |   94 +++++
+>>  fs/ext4/balloc.c                     |   26 +-
+>>  fs/ext4/ext4.h                       |   10 +
+>>  fs/ext4/ialloc.c                     |    5 +-
+>>  fs/ext4/inode.c                      |    2 +-
+>>  fs/ext4/mballoc.c                    |   17 +-
+>>  fs/ext4/resize.c                     |    1 +
+>>  fs/ext4/super.c                      |   43 ++
+>>  fs/namespace.c                       |    1 +
+>>  include/linux/fs.h                   |    6 +-
+>>  include/linux/fs_event.h             |   69 +++
+>>  include/uapi/linux/fs_event.h        |   62 +++
+>>  include/uapi/linux/genetlink.h       |    1 +
+>>  mm/shmem.c                           |   39 +-
+>>  net/netlink/genetlink.c              |    7 +-
+>>  20 files changed, 1412 insertions(+), 34 deletions(-)
+>>  create mode 100644 Documentation/filesystems/events.txt
+>>  create mode 100644 fs/events/Makefile
+>>  create mode 100644 fs/events/fs_event.c
+>>  create mode 100644 fs/events/fs_event.h
+>>  create mode 100644 fs/events/fs_event_netlink.c
+>>  create mode 100644 include/linux/fs_event.h
+>>  create mode 100644 include/uapi/linux/fs_event.h
+>>
+>> ---
+>> Sample application:
+>>
+>> #include <netlink/cli/utils.h>
+>> #include <fs_event.h>
+>>
+>> #define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
+>> #define LOG(args...) fprintf(stderr, args)
+>>
+>> static int parse_info(struct nl_cache_ops *unused, struct genl_cmd *cmd,
+>> 		struct genl_info *info, void *arg)
+>> {
+>> 	LOG("New trace %d:\n",
+>> 		info->attrs[FS_EVENT_ATR_FS_ID]
+>> 		?  nla_get_u32(info->attrs[FS_EVENT_ATR_FS_ID])
+>> 		: -1);
+>> 	LOG("Mout point: %s\n", info->attrs[FS_EVENT_ATR_MOUNT]
+>> 		? nla_get_string(info->attrs[FS_EVENT_ATR_MOUNT])
+>> 		: "unknown");
+>> 	return 0;
+>> }
+>>
+>> static int parse_thres(struct nl_cache_ops *unused, struct genl_cmd *cmd,
+>> 		struct genl_info *info, void *arg)
+>> {
+>>
+>> 	LOG("Threshold notification received for trace %d:\n",
+>> 		info->attrs[FS_EVENT_ATR_FS_ID]
+>> 		?  nla_get_u32(info->attrs[FS_EVENT_ATR_FS_ID])
+>> 		: -1);
+>>
+>> 	if (info->attrs[FS_EVENT_ATR_DEV_MAJOR])
+>> 		LOG("Backing dev major: %u\n",
+>> 			nla_get_u32(info->attrs[FS_EVENT_ATR_DEV_MAJOR]));
+>> 	if (info->attrs[FS_EVENT_ATR_DEV_MINOR])
+>> 		LOG("Backing dev minor: %u\n",
+>> 			nla_get_u32(info->attrs[FS_EVENT_ATR_DEV_MINOR]));
+>> 	LOG("Proc:              %u\n", info->attrs[FS_EVENT_ATR_CAUSED_ID] ?
+>> 			nla_get_u32(info->attrs[FS_EVENT_ATR_CAUSED_ID]) : -1);
+>> 	LOG("Threshold data:    %llu\n", info->attrs[FS_EVENT_ATR_DATA]
+>> 		? nla_get_u64(info->attrs[FS_EVENT_ATR_DATA])
+>> 		: 0);
+>>
+>> 	return 0;
+>> }
+>>
+>> static int parse_warning(struct nl_cache_ops *unused, struct genl_cmd *cmd,
+>> 			 struct genl_info *info, void *arg)
+>> {
+>>
+>> 	LOG("Warning recieved for trace %d\n", info->attrs[FS_EVENT_ATR_FS_ID] ?
+>> 		nla_get_u32(info->attrs[FS_EVENT_ATR_FS_ID]) : -1);
+>> 	if (info->attrs[FS_EVENT_ATR_DEV_MAJOR])
+>> 		LOG("Backing dev major: %u\n",
+>> 			nla_get_u32(info->attrs[FS_EVENT_ATR_DEV_MAJOR]));
+>> 	if (info->attrs[FS_EVENT_ATR_DEV_MINOR])
+>> 		LOG("Backing dev minor: %u\n",
+>> 			nla_get_u32(info->attrs[FS_EVENT_ATR_DEV_MINOR]));
+>> 	LOG("Proc:              %u\n", info->attrs[FS_EVENT_ATR_CAUSED_ID] ?
+>> 		nla_get_u32(info->attrs[FS_EVENT_ATR_CAUSED_ID]) : -1);
+>> 	LOG("Warning:           %u\n", info->attrs[FS_EVENT_ATR_ID] ?
+>> 		nla_get_u32(info->attrs[FS_EVENT_ATR_ID]) : -1);
+>>
+>> 	return 0;
+>> }
+>>
+>> static struct genl_cmd cmd[] = {
+>> 	{
+>> 		.c_id = FS_EVENT_TYPE_NEW_TRACE,
+>> 		.c_name = "info",
+>> 		.c_maxattr = 2,
+>> 		.c_msg_parser = parse_info,
+>> 	}, {
+>> 		.c_id = FS_EVENT_TYPE_THRESH,
+>> 		.c_name = "thres",
+>> 		.c_maxattr = 6,
+>> 		.c_msg_parser = parse_thres,
+>> 	}, {
+>> 		.c_id = FS_EVENT_TYPE_WARN,
+>> 		.c_name = "warn",
+>> 		.c_maxattr = 5,
+>> 		.c_msg_parser = parse_warning,
+>> 	},
+>> };
+>>
+>> static struct genl_ops ops = {
+>> 	.o_id = GENL_ID_FS_EVENT,
+>> 	.o_name = "FS_EVENT",
+>> 	.o_hdrsize = 0,
+>> 	.o_cmds = cmd,
+>> 	.o_ncmds = ARRAY_SIZE(cmd),
+>> };
+>>
+>>
+>> int events_cb(struct nl_msg *msg, void *arg)
+>> {
+>> 	 return  genl_handle_msg(msg, arg);
+>> }
+>>
+>> int main(int argc, char **argv)
+>> {
+>> 	struct nl_sock *sock;
+>> 	int ret;
+>>
+>> 	sock = nl_cli_alloc_socket();
+>> 	nl_socket_set_local_port(sock, 0);
+>> 	nl_socket_disable_seq_check(sock);
+>>
+>> 	nl_socket_modify_cb(sock, NL_CB_VALID, NL_CB_CUSTOM, events_cb, NULL);
+>>
+>> 	nl_cli_connect(sock, NETLINK_GENERIC);
+>>
+>> 	if ((ret = nl_socket_add_membership(sock, GENL_ID_FS_EVENT))) {
+>> 		LOG("Failed to add membership\n");
+>> 		goto leave;
+>> 	}
+>>
+>> 	if((ret = genl_register_family(&ops))) {
+>> 		LOG("Failed to register protocol family\n");
+>> 		goto leave;
+>> 	}
+>>
+>> 	if ((ret = genl_ops_resolve(sock, &ops) < 0)) {
+>> 		LOG("Unable to resolve the family name\n");
+>> 		goto leave;
+>> 	}
+>>
+>> 	if (genl_ctrl_resolve(sock, "FS_EVENT") < 0) {
+>> 		LOG("Failed to resolve  the family name\n");
+>> 		goto leave;
+>> 	}
+>>
+>> 	while (1) {
+>> 		if ((ret = nl_recvmsgs_default(sock)) < 0)
+>> 			LOG("Unable to receive message: %s\n", nl_geterror(ret));
+>> 	}
+>>
+>> leave:
+>> 	nl_close(sock);
+>> 	nl_socket_free(sock);
+>> 	return 0;
+>> }
+>>
+>> -- 
+>> 1.7.9.5
+>>
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-ext4" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-To clarify: I do not claim that they can't be applied, I'm only saying
-they're not there yet (which is OK as they were still pending my
-review.) They do apply just fine, no problem with this.
-
-> > I don't really care who picks these patches up and sends them to Linus,
-> > but I think they should all follow the same route so that Linus has as
-> > little merge work to do as possible. So either you pick them all, or I
-> > do. If I do, you'll have to drop the 2 patches you have in efi-next.
-> > Again I'm fine either way, so please let me know what makes your life
-> > easier and let's do that.
-> 
-> I'm going to base my series
-> "firmware: dmi_scan: add SBMIOS entry point and DMI tables"
-> on top of linux next unless you have already your tree to pick up changes.
-> Please let me know, if you have one.
-
-I have no formal tree yet, but my current patch set can be seen at:
-http://jdelvare.nerim.net/devel/linux-3/jdelvare-dmi/
-
-First 2 patches from you are already upstream. You should rebase your
-updated patch series on top of upstream + patches 03 and 04, as they
-will go in first.
-
-Thanks,
--- 
-Jean Delvare
-SUSE L3 Support
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
