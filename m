@@ -1,64 +1,56 @@
-From: John Spray <john.spray@redhat.com>
-Subject: Re: [RFC 1/4] fs: Add generic file system event notifications
-Date: Fri, 17 Apr 2015 18:37:47 +0100
-Message-ID: <553144EB.9060701@redhat.com>
-References: <1429082147-4151-1-git-send-email-b.michalska@samsung.com> <1429082147-4151-2-git-send-email-b.michalska@samsung.com> <20150417113110.GD3116@quack.suse.cz> <553104E5.2040704@samsung.com> <55310957.3070101@gmail.com> <55311DE2.9000901@redhat.com> <20150417154351.GA26736@quack.suse.cz> <55312FEA.3030905@redhat.com> <20150417162247.GB27500@quack.suse.cz>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH V6 07/10] sched: add a macro to ref all CLONE_NEW* flags
+Date: Fri, 17 Apr 2015 19:41:31 +0200
+Message-ID: <20150417174131.GL23123@twins.programming.kicks-ass.net>
+References: <cover.1429252659.git.rgb@redhat.com>
+	<cf1ed24f71743ea7f85682f26f3185202a1f8a32.1429252659.git.rgb@redhat.com>
+	<20150417081843.GE23123@twins.programming.kicks-ass.net>
+	<20150417154250.GA26233@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150417162247.GB27500@quack.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Jan Kara <jack@suse.cz>
-Cc: Austin S Hemmelgarn <ahferroin7@gmail.com>, Beata Michalska <b.michalska@samsung.com>, linux-kernel@vger.kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org, Linux Filesystem Mailing List <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150417154250.GA26233-bcJWsdo4jJjeVoXN4CMphl7TgLCtbB0G@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org, sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On Fri, Apr 17, 2015 at 11:42:50AM -0400, Richard Guy Briggs wrote:
+> On 15/04/17, Peter Zijlstra wrote:
+> > On Fri, Apr 17, 2015 at 03:35:54AM -0400, Richard Guy Briggs wrote:
+> > > Added the macro CLONE_NEW_MASK_ALL to refer to all CLONE_NEW* flags.
+> > 
+> > A wee bit about why might be nice..
+> 
+> It makes the following patch much cleaner to read:
+> 	[PATCH V6 08/10] fork: audit on creation of new namespace(s)
+> 	https://lkml.org/lkml/2015/4/17/50
+> 
+> I was hoping it might also make a lot of other code cleaner, but most of
+> the other places where multiple CLONE_NEW* flags are used, not all six
+> are used together, but only 5 are used.  Ok, so it is helpful in 1 of 3:
+> 
+> It would actually be useful in check_unshare_flags():
+> 	https://github.com/torvalds/linux/blob/v3.17/kernel/fork.c#L1791
+> 
+> but not in copy_namespaces() or unshare_nsproxy_namespaces():
+> 	https://github.com/torvalds/linux/blob/v3.17/kernel/nsproxy.c#L130
+> 	https://github.com/torvalds/linux/blob/v3.17/kernel/nsproxy.c#L183
+> 
 
+Right, so no objections from me on this, its just that I only saw this
+one patch in isolation without context and the changelog failed on
+rationale.
 
-On 17/04/2015 17:22, Jan Kara wrote:
-> On Fri 17-04-15 17:08:10, John Spray wrote:
->> On 17/04/2015 16:43, Jan Kara wrote:
->> In that case I'm confused -- why would ENOSPC be an appropriate use
->> of this interface if the mount being entirely blocked would be
->> inappropriate?  Isn't being unable to service any I/O a more
->> fundamental and severe thing than being up and healthy but full?
->>
->> Were you intending the interface to be exclusively for data
->> integrity issues like checksum failures, rather than more general
->> events about a mount that userspace would probably like to know
->> about?
->    Well, I'm not saying we cannot have those events for fs availability /
-> inavailability. I'm just saying I'd like to see some use for that first.
-> I don't want events to be added just because it's possible...
->
-> For ENOSPC we have thin provisioned storage and the userspace deamon
-> shuffling real storage underneath. So there I know the usecase.
->
-
-Ah, OK.  So I can think of a couple of use cases:
-  * a cluster scheduling service (think MPI jobs or docker containers) 
-might check for events like this.  If it can see the cluster filesystem 
-is unavailable, then it can avoid scheduling the job, so that the 
-(multi-node) application does not get hung on one node with a bad 
-mount.  If it sees a mount go bad (unavailable, or client evicted) 
-partway through a job, then it can kill -9 the process that was relying 
-on the bad mount, and go run it somewhere else.
-  * Boring but practical case: a nagios health check for checking if 
-mounts are OK.
-
-We don't have to invent these event types now of course, but something 
-to bear in mind.  Hopefully if/when any of the distributed filesystems 
-(Lustre/Ceph/etc) choose to implement this, we can look at making the 
-event types common at that time though.
-
-BTW in any case an interface for filesystem events to userspace will be 
-a useful addition, thank you!
-
-Cheers,
-John
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Does it perchance make sense to fold this patch into the next patch that
+actually makes use of it?
