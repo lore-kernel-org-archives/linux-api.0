@@ -1,58 +1,145 @@
-From: Jean Delvare <jdelvare-l3A5Bk7waGM@public.gmane.org>
-Subject: Re: [Patch 1/3] firmware: dmi_scan: rename dmi_table to
- dmi_decode_table
-Date: Fri, 17 Apr 2015 14:50:15 +0200
-Message-ID: <20150417145015.1f7a1762@endymion.delvare>
-References: <1427979423-22767-1-git-send-email-ivan.khoronzhuk@globallogic.com>
-	<1427979423-22767-2-git-send-email-ivan.khoronzhuk@globallogic.com>
-	<20150415143530.GF4804@codeblueprint.co.uk>
-	<20150416103511.55927ccc@endymion.delvare>
-	<553018BB.1080903@globallogic.com>
-	<20150417105454.1c52f430@endymion.delvare>
-	<5530DC41.3050700@globallogic.com>
-	<5530F6C7.6060306@globallogic.com>
+From: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
+Subject: Re: [PATCH/RFC 0/2] Repurpose the v4l2_plane data_offset field
+Date: Fri, 17 Apr 2015 15:53:54 +0300
+Message-ID: <7986966.gGAFkYegjs@avalon>
+References: <1429040689-23808-1-git-send-email-laurent.pinchart@ideasonboard.com> <5530E01D.3050105@xs4all.nl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5530F6C7.6060306-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
+In-Reply-To: <5530E01D.3050105-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Ivan.khoronzhuk" <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
-Cc: Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, dmidecode-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, msalter-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, roy.franz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+To: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Pawel Osciak <pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Nicolas Dufresne <nicolas.dufresne-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 17 Apr 2015 15:04:23 +0300, Ivan.khoronzhuk wrote:
-> On 17.04.15 13:11, Ivan.khoronzhuk wrote:
-> > On 17.04.15 11:54, Jean Delvare wrote:
-> >> I have no formal tree yet, but my current patch set can be seen at:
-> >> http://jdelvare.nerim.net/devel/linux-3/jdelvare-dmi/
-> >>
-> >> First 2 patches from you are already upstream. You should rebase your
-> >> updated patch series on top of upstream + patches 03 and 04, as they
-> >> will go in first.
-> >
-> > Not sure that's a good idea to base on patches that doesn't path any 
-> > review and
-> > no one cannot apply. At least it be good you send them that I can 
-> > point on them in
-> > commit message.
+Hi Hans,
+
+On Friday 17 April 2015 12:27:41 Hans Verkuil wrote:
+> On 04/14/2015 09:44 PM, Laurent Pinchart wrote:
+> > Hello,
+> > 
+> > The v4l2_plane data_offset field has been introduced at the same time as
+> > the the multiplane API to convey header size information between
+> > kernelspace and userspace.
+> > 
+> > The API then became slightly controversial, both because different
+> > developers understood the purpose of the field differently (resulting for
+> > instance in an out-of-tree driver abusing the field for a different
+> > purpose), and because of competing proposals (see for instance "[RFC]
+> > Multi format stream support" at
+> > http://www.spinics.net/lists/linux-media/msg69130.html).
+> > 
+> > Furthermore, the data_offset field isn't used by any mainline driver
+> > except vivid (for testing purpose).
+> > 
+> > I need a different data offset in planes to allow data capture to or data
+> > output from a userspace-selected offset within a buffer (mainly for the
+> > DMABUF and MMAP memory types). As the data_offset field already has the
+> > right name, is unused, and ill-defined, I propose repurposing it. This is
+> > what this RFC is about.
+> > 
+> > If the proposal is accepted I'll add another patch to update data_offset
+> > usage in the vivid driver.
 > 
-> Don't know why your patches don't apply on top of linux next.
-> They looks w/o conflicts. I've applied them by hand. To avoid mess, 
-> could you
-> please send them in order I can refer on them in my commit message.
+> I am skeptical about all this for a variety of reasons:
 
-Sorry, I had the the whitespace wrong when backporting one of your two
-old patches, so I ended up with a code base different from what upstream
-has. It's all fixed now, you can download the patches again and they
-should apply fine (starting from 01 if working with kernel v4.0,
-starting from 03 if working with linux-next.) Sorry for the trouble.
+That's all good, it's an RFC :-)
 
-The reason why my patch series is based on v4.0 and not linux-next is
-that I'm going to test it on a remote development system which
-implements SMBIOS 3.0 and is currently running kernel v4.0, so I don't
-want to use an unstable code base which could cause problems by itself.
+> 1) The data_offset field is well-defined in the spec. There really is no
+> doubt about the meaning of the field.
+
+I only partly agree. I believe the purpose of the data_offset field to be 
+clear among the core V4L2 developers, but the documentation isn't precise 
+enough. I've seen out-of-tree drivers using the data_offset field for other 
+purposes than specifying the header size. The situation is a bit better now 
+that videobuf2 handles the field properly (and avoids copying it from user to 
+kernel for capture devices for instance), but there are still many users of 
+older kernels.
+
+This being said, the problem wouldn't be difficult to fix, it just requires a 
+documentation patch.
+
+> 2) We really don't know who else might be using it, or which applications
+> might be using it (a lot of work was done in gstreamer recently, I wonder
+> if data_offset support was implemented there).
+
+It's funny you mention that. I cloned the gstreamer repositories and tried to 
+investigate. The gstreamer v4l2 elements started using data_offset a year ago 
+in
+
+commit 92bdd596f2b07dbf4ccc9b8bf3d17620d44f131a
+Author: Nicolas Dufresne <nicolas.dufresne-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>
+Date:   Fri Apr 11 17:10:11 2014 -0400
+
+    v4l2: Add DMABUF and USERPTR importation
+
+(I've CC'ed Nicolas to this e-mail)
+
+I'm not too familiar with the latest gstreamer code, but after a first 
+investigation it seems that gstreamer uses the data_offset field for the 
+purpose introduced by this patch, not to convey the header size. One more 
+argument in favour of repurposing the field ;-)
+
+> 3) You offer no alternative to this feature. Basically this is my main
+> objection. It is not at all unusual to have headers in front of the frame
+> data. We (Cisco) use it in one of our product series for example. And I
+> suspect it is something that happens especially in systems with an FPGA
+> that does custom processing, and those systems are exactly the ones that
+> are generally not upstreamed and so are not visible to us.
+> 
+> IMHO the functionality it provides is very much relevant, and I would like
+> to see an alternative in place before it is repurposed.
+>
+> But frankly, I really don't see why you would want to repurpose it. Adding a
+> new field (buf_offset) would do exactly what you want it to do without
+> causing an ABI change.
+> 
+> Should we ever implement a better alternative for data_offset, then that
+> field can be renamed to 'reserved2' or whatever at some point.
+> 
+> Frankly, I don't think data_offset is all that bad. What is missing is info
+> about the format (so add a 'data_format' field) and possible similar info
+> about a footer (footer_size, footer_format). Yes, the name could have been
+> better (header_size), but nobody is perfect...
+
+I totally agree that the functionality is relevant, and we certainly need an 
+API for that.
+
+My point, however, was twofold : I believe we need a better (as in more 
+powerful) API than data_offset to specify plane content, and the current usage 
+of data_offset in out-of-tree drivers, and it seems in gstreamer too, is 
+different than what we had intended the field to be used for.
+
+For those two reasons, I believe it would make sense to repurpose the field 
+and introduce a new API to specify information about the plane content. Let's 
+kickstart the discussion :-)
+
+The following information comes to my mind as being useful to specify:
+
+- format
+- header size
+- footer size
+
+There is, however, another point I'd like to raise. I'm working on an H.264 
+encoder that produces slices without headers. Userspace is thus responsible 
+for filling the headers, based on information produced by the encoder.
+
+When a capture buffer at the output of the encoder contains a single slice, 
+that's pretty easy to handle. Userspace can use data_offset (in its new 
+purpose, or buf_offset if we decide to introduce a new field instead) to 
+reserve space for a header if the header size is known in advance by the 
+application, or the driver (or possibly the device) can reserve space for the 
+header and report the header size.
+
+However, a capture buffer can contain multiple slices, with gaps between the 
+slices for the headers. The position and size of the gaps need to be known by 
+the application. I'm not sure yet if userspace can compute them, or if they're 
+dynamic and need to be passed from the driver to the application on a per-
+frame basis. In the latter case I would need more than a header size and 
+footer size per plane.
 
 -- 
-Jean Delvare
-SUSE L3 Support
+Regards,
+
+Laurent Pinchart
