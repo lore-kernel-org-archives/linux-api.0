@@ -1,62 +1,52 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [RFC 1/4] fs: Add generic file system event notifications
-Date: Fri, 17 Apr 2015 15:41:44 +0200
-Message-ID: <20150417134144.GA23905@quack.suse.cz>
-References: <1429082147-4151-1-git-send-email-b.michalska@samsung.com>
- <1429082147-4151-2-git-send-email-b.michalska@samsung.com>
- <20150417113110.GD3116@quack.suse.cz>
- <553104E5.2040704@samsung.com>
- <55310957.3070101@gmail.com>
+From: Jean Delvare <jdelvare@suse.de>
+Subject: Re: [dmidecode] [Patch 1/3] firmware: dmi_scan: rename dmi_table to
+ dmi_decode_table
+Date: Fri, 17 Apr 2015 16:12:49 +0200
+Message-ID: <1429279969.4600.0.camel@chaos.site>
+References: <1427979423-22767-1-git-send-email-ivan.khoronzhuk@globallogic.com>
+	<1427979423-22767-2-git-send-email-ivan.khoronzhuk@globallogic.com>
+	<20150415143530.GF4804@codeblueprint.co.uk>
+	<20150416103511.55927ccc@endymion.delvare>
+	<20150417134036.GA3671@codeblueprint.co.uk>
+Reply-To: dmidecode-devel@nongnu.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <55310957.3070101@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Austin S Hemmelgarn <ahferroin7@gmail.com>
-Cc: Beata Michalska <b.michalska@samsung.com>, Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org, Linux Filesystem Mailing List <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dmidecode-devel-bounces+ghsdd-dmidecode-devel=m.gmane.org@nongnu.org>
+In-Reply-To: <20150417134036.GA3671@codeblueprint.co.uk>
+List-Unsubscribe: <https://lists.nongnu.org/mailman/options/dmidecode-devel>,
+	<mailto:dmidecode-devel-request@nongnu.org?subject=unsubscribe>
+List-Archive: <http://lists.nongnu.org/archive/html/dmidecode-devel>
+List-Post: <mailto:dmidecode-devel@nongnu.org>
+List-Help: <mailto:dmidecode-devel-request@nongnu.org?subject=help>
+List-Subscribe: <https://lists.nongnu.org/mailman/listinfo/dmidecode-devel>,
+	<mailto:dmidecode-devel-request@nongnu.org?subject=subscribe>
+Errors-To: dmidecode-devel-bounces+ghsdd-dmidecode-devel=m.gmane.org@nongnu.org
+Sender: dmidecode-devel-bounces+ghsdd-dmidecode-devel=m.gmane.org@nongnu.org
+To: Matt Fleming <matt@codeblueprint.co.uk>
+Cc: dmidecode-devel@nongnu.org, matt.fleming@intel.com, ard.biesheuvel@linaro.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, leif.lindholm@linaro.org, mikew@google.com, roy.franz@linaro.org, Ivan Khoronzhuk <ivan.khoronzhuk@globallogic.com>, msalter@redhat.com, grant.likely@linaro.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri 17-04-15 09:23:35, Austin S Hemmelgarn wrote:
-> On 2015-04-17 09:04, Beata Michalska wrote:
-> >On 04/17/2015 01:31 PM, Jan Kara wrote:
-> >>On Wed 15-04-15 09:15:44, Beata Michalska wrote:
-> >>...
-> >>>+static const match_table_t fs_etypes = {
-> >>>+	{ FS_EVENT_INFO,    "info"  },
-> >>>+	{ FS_EVENT_WARN,    "warn"  },
-> >>>+	{ FS_EVENT_THRESH,  "thr"   },
-> >>>+	{ FS_EVENT_ERR,     "err"   },
-> >>>+	{ 0, NULL },
-> >>>+};
-> >>   Why are there these generic message types? Threshold messages make good
-> >>sense to me. But not so much the rest. If they don't have a clear meaning,
-> >>it will be a mess. So I also agree with a message like - "filesystem has
-> >>trouble, you should probably unmount and run fsck" - that's fine. But
-> >>generic "info" or "warning" doesn't really carry any meaning on its own and
-> >>thus seems pretty useless to me. To explain a bit more, AFAIU this
-> >>shouldn't be a generic logging interface where something like severity
-> >>makes sense but rather a relatively specific interface notifying about
-> >>events in filesystem userspace should know about so I expect relatively low
-> >>number of types of events, not tens or even hundreds...
-> >>
-> >>								Honza
-> >
-> >Getting rid of those would simplify the configuration part, indeed.
-> >So we would be left with 'generic' and threshold events.
-> >I guess I've overdone this part.
-> 
-> For some filesystems, it may make sense to differentiate between a
-> generic warning and an error.  For BTRFS and ZFS for example, if
-> there is a csum error on a block, this will get automatically
-> corrected in many configurations, and won't require anything like
-> fsck to be run, but monitoring applications will still probably want
-> to be notified.
-   Sure, but in that case just create an event CORRECTED_CHECKSUM_ERROR and
-use that. Then userspace knows what it should do with the event. No need to
-hide it behind warning / error category.
-
-								Honza
--- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+SGkgTWF0dCwKCkxlIEZyaWRheSAxNyBBcHJpbCAyMDE1IMOgIDE0OjQwICswMTAwLCBNYXR0IEZs
+ZW1pbmcgYSDDqWNyaXQgOgo+IE9uIFRodSwgMTYgQXByLCBhdCAxMDozNToxMUFNLCBKZWFuIERl
+bHZhcmUgd3JvdGU6Cj4gPiAKPiA+IEkgZG9uJ3QgcmVhbGx5IGNhcmUgd2hvIHBpY2tzIHRoZXNl
+IHBhdGNoZXMgdXAgYW5kIHNlbmRzIHRoZW0gdG8gTGludXMsCj4gPiBidXQgSSB0aGluayB0aGV5
+IHNob3VsZCBhbGwgZm9sbG93IHRoZSBzYW1lIHJvdXRlIHNvIHRoYXQgTGludXMgaGFzIGFzCj4g
+PiBsaXR0bGUgbWVyZ2Ugd29yayB0byBkbyBhcyBwb3NzaWJsZS4gU28gZWl0aGVyIHlvdSBwaWNr
+IHRoZW0gYWxsLCBvciBJCj4gPiBkby4gSWYgSSBkbywgeW91J2xsIGhhdmUgdG8gZHJvcCB0aGUg
+MiBwYXRjaGVzIHlvdSBoYXZlIGluIGVmaS1uZXh0Lgo+ID4gQWdhaW4gSSdtIGZpbmUgZWl0aGVy
+IHdheSwgc28gcGxlYXNlIGxldCBtZSBrbm93IHdoYXQgbWFrZXMgeW91ciBsaWZlCj4gPiBlYXNp
+ZXIgYW5kIGxldCdzIGRvIHRoYXQuCj4gCj4gQXMgd2FzIG1lbnRpb25lZCBieSBJdmFuLCB0aGUg
+Zm9sbG93aW5nIHBhdGNoZXMgaGF2ZSBhbHJlYWR5IGJlZW4gbWVyZ2VkCj4gYnkgTGludXMsCj4g
+Cj4gICBmNjE3YjBmMzJkYTIgKCJmaXJtd2FyZTogZG1pX3NjYW46IFVzZSBmdWxsIGRtaSB2ZXJz
+aW9uIGZvciBTTUJJT1MzIikKPiAgIGU0YjFkZWM0NDhhZiAoImZpcm13YXJlOiBkbWlfc2Nhbjog
+VXNlIGRpcmVjdCBhY2Nlc3MgdG8gc3RhdGljIHZhcnMiKQo+IAo+IHNvIG5vIHBhdGNoZXMgbmVl
+ZCB0byBiZSBkcm9wcGVkIGZyb20gbXkgdHJlZSBhbmQgdGhlcmUgYXJlIG5vIHBlbmRpbmcKPiBE
+TUkvU01CSU9TIHBhdGNoZXMgaW4gYW55IG9mIG15IGJyYW5jaGVzLgoKQ29ycmVjdC4KCj4gSG93
+IGFib3V0IHlvdSBnbyBhaGVhZCBhbmQgY29sbGVjdCBhbGwgdGhlIHBhdGNoZXMgYW5kIHNlbmQg
+dGhlbSB0bwo+IExpbnVzPyBJJ20gaGFwcHkgdG8gcGlja3VwIGFueSBwYXRjaGVzIGluIHRoZSBm
+dXR1cmUgaWYgSSdtIGV4cGxpY2l0bHkKPiBhc2tlZCwgYnV0IG9ubHkgaWYgT0snZCBieSB5b3Us
+IEplYW4uCj4gCj4gU291bmQgT0sgdG8gZXZlcnlvbmU/CgpEZWFsISA6LSkKCi0tIApKZWFuIERl
+bHZhcmUKU1VTRSBMMyBTdXBwb3J0CgoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX18KaHR0cHM6Ly9saXN0cy5ub25nbnUub3JnL21haWxtYW4vbGlzdGluZm8v
+ZG1pZGVjb2RlLWRldmVsCg==
