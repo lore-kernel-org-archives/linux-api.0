@@ -1,45 +1,46 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [PATCH V6 07/10] sched: add a macro to ref all CLONE_NEW* flags
-Date: Fri, 17 Apr 2015 11:42:50 -0400
-Message-ID: <20150417154250.GA26233@madcap2.tricolour.ca>
-References: <cover.1429252659.git.rgb@redhat.com>
- <cf1ed24f71743ea7f85682f26f3185202a1f8a32.1429252659.git.rgb@redhat.com>
- <20150417081843.GE23123@twins.programming.kicks-ass.net>
+From: John Spray <john.spray-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC 1/4] fs: Add generic file system event notifications
+Date: Fri, 17 Apr 2015 17:08:10 +0100
+Message-ID: <55312FEA.3030905@redhat.com>
+References: <1429082147-4151-1-git-send-email-b.michalska@samsung.com> <1429082147-4151-2-git-send-email-b.michalska@samsung.com> <20150417113110.GD3116@quack.suse.cz> <553104E5.2040704@samsung.com> <55310957.3070101@gmail.com> <55311DE2.9000901@redhat.com> <20150417154351.GA26736@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150417081843.GE23123@twins.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-audit@redhat.com, sgrubb@redhat.com, eparis@parisplace.org, pmoore@redhat.com, arozansk@redhat.com, ebiederm@xmission.com, serge@hallyn.com, zohar@linux.vnet.ibm.com, linux-api@vger.kernel.org, mingo@redhat.com
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150417154351.GA26736-+0h/O2h83AeN3ZZ/Hiejyg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Beata Michalska <b.michalska-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, lczerner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kmpark-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, Linux Filesystem Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 15/04/17, Peter Zijlstra wrote:
-> On Fri, Apr 17, 2015 at 03:35:54AM -0400, Richard Guy Briggs wrote:
-> > Added the macro CLONE_NEW_MASK_ALL to refer to all CLONE_NEW* flags.
-> 
-> A wee bit about why might be nice..
 
-It makes the following patch much cleaner to read:
-	[PATCH V6 08/10] fork: audit on creation of new namespace(s)
-	https://lkml.org/lkml/2015/4/17/50
+On 17/04/2015 16:43, Jan Kara wrote:
+> On Fri 17-04-15 15:51:14, John Spray wrote:
+>> On 17/04/2015 14:23, Austin S Hemmelgarn wrote:
+>>
+>>> For some filesystems, it may make sense to differentiate between a
+>>> generic warning and an error.  For BTRFS and ZFS for example, if
+>>> there is a csum error on a block, this will get automatically
+>>> corrected in many configurations, and won't require anything like
+>>> fsck to be run, but monitoring applications will still probably
+>>> want to be notified.
+>> Another key differentiation IMHO is between transient errors (like
+>> server is unavailable in a distributed filesystem) that will block
+>> the filesystem but might clear on their own, vs. permanent errors
+>> like unreadable drives that definitely will not clear until the
+>> administrator takes some action.  It's usually a reasonable
+>> approximation to call transient issues warnings, and permanent
+>> issues errors.
+>    So you can have events like FS_UNAVAILABLE and FS_AVAILABLE but what use
+> would this have? I wouldn't like the interface to be dumping ground for
+> random crap - we have dmesg for that :).
+In that case I'm confused -- why would ENOSPC be an appropriate use of 
+this interface if the mount being entirely blocked would be 
+inappropriate?  Isn't being unable to service any I/O a more fundamental 
+and severe thing than being up and healthy but full?
 
-I was hoping it might also make a lot of other code cleaner, but most of
-the other places where multiple CLONE_NEW* flags are used, not all six
-are used together, but only 5 are used.  Ok, so it is helpful in 1 of 3:
+Were you intending the interface to be exclusively for data integrity 
+issues like checksum failures, rather than more general events about a 
+mount that userspace would probably like to know about?
 
-It would actually be useful in check_unshare_flags():
-	https://github.com/torvalds/linux/blob/v3.17/kernel/fork.c#L1791
-
-but not in copy_namespaces() or unshare_nsproxy_namespaces():
-	https://github.com/torvalds/linux/blob/v3.17/kernel/nsproxy.c#L130
-	https://github.com/torvalds/linux/blob/v3.17/kernel/nsproxy.c#L183
-
-- RGB
-
---
-Richard Guy Briggs <rbriggs@redhat.com>
-Senior Software Engineer, Kernel Security, AMER ENG Base Operating Systems, Red Hat
-Remote, Ottawa, Canada
-Voice: +1.647.777.2635, Internal: (81) 32635, Alt: +1.613.693.0684x3545
+John
