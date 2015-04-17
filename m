@@ -1,83 +1,45 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [RFC 1/4] fs: Add generic file system event notifications
-Date: Fri, 17 Apr 2015 17:43:51 +0200
-Message-ID: <20150417154351.GA26736@quack.suse.cz>
-References: <1429082147-4151-1-git-send-email-b.michalska@samsung.com>
- <1429082147-4151-2-git-send-email-b.michalska@samsung.com>
- <20150417113110.GD3116@quack.suse.cz>
- <553104E5.2040704@samsung.com>
- <55310957.3070101@gmail.com>
- <55311DE2.9000901@redhat.com>
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: Re: [PATCH V6 07/10] sched: add a macro to ref all CLONE_NEW* flags
+Date: Fri, 17 Apr 2015 11:42:50 -0400
+Message-ID: <20150417154250.GA26233@madcap2.tricolour.ca>
+References: <cover.1429252659.git.rgb@redhat.com>
+ <cf1ed24f71743ea7f85682f26f3185202a1f8a32.1429252659.git.rgb@redhat.com>
+ <20150417081843.GE23123@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <55311DE2.9000901@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: John Spray <john.spray@redhat.com>
-Cc: Austin S Hemmelgarn <ahferroin7@gmail.com>, Beata Michalska <b.michalska@samsung.com>, Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org, Linux Filesystem Mailing List <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org
+In-Reply-To: <20150417081843.GE23123@twins.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-audit@redhat.com, sgrubb@redhat.com, eparis@parisplace.org, pmoore@redhat.com, arozansk@redhat.com, ebiederm@xmission.com, serge@hallyn.com, zohar@linux.vnet.ibm.com, linux-api@vger.kernel.org, mingo@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On Fri 17-04-15 15:51:14, John Spray wrote:
-> On 17/04/2015 14:23, Austin S Hemmelgarn wrote:
-> >On 2015-04-17 09:04, Beata Michalska wrote:
-> >>On 04/17/2015 01:31 PM, Jan Kara wrote:
-> >>>On Wed 15-04-15 09:15:44, Beata Michalska wrote:
-> >>>...
-> >>>>+static const match_table_t fs_etypes = {
-> >>>>+    { FS_EVENT_INFO,    "info"  },
-> >>>>+    { FS_EVENT_WARN,    "warn"  },
-> >>>>+    { FS_EVENT_THRESH,  "thr"   },
-> >>>>+    { FS_EVENT_ERR,     "err"   },
-> >>>>+    { 0, NULL },
-> >>>>+};
-> >>>   Why are there these generic message types? Threshold
-> >>>messages make good
-> >>>sense to me. But not so much the rest. If they don't have a
-> >>>clear meaning,
-> >>>it will be a mess. So I also agree with a message like -
-> >>>"filesystem has
-> >>>trouble, you should probably unmount and run fsck" - that's fine. But
-> >>>generic "info" or "warning" doesn't really carry any meaning
-> >>>on its own and
-> >>>thus seems pretty useless to me. To explain a bit more, AFAIU this
-> >>>shouldn't be a generic logging interface where something like severity
-> >>>makes sense but rather a relatively specific interface notifying about
-> >>>events in filesystem userspace should know about so I expect
-> >>>relatively low
-> >>>number of types of events, not tens or even hundreds...
-> >>>
-> >>>                                Honza
-> >>
-> >>Getting rid of those would simplify the configuration part, indeed.
-> >>So we would be left with 'generic' and threshold events.
-> >>I guess I've overdone this part.
-> >
-> >For some filesystems, it may make sense to differentiate between a
-> >generic warning and an error.  For BTRFS and ZFS for example, if
-> >there is a csum error on a block, this will get automatically
-> >corrected in many configurations, and won't require anything like
-> >fsck to be run, but monitoring applications will still probably
-> >want to be notified.
+On 15/04/17, Peter Zijlstra wrote:
+> On Fri, Apr 17, 2015 at 03:35:54AM -0400, Richard Guy Briggs wrote:
+> > Added the macro CLONE_NEW_MASK_ALL to refer to all CLONE_NEW* flags.
 > 
-> Another key differentiation IMHO is between transient errors (like
-> server is unavailable in a distributed filesystem) that will block
-> the filesystem but might clear on their own, vs. permanent errors
-> like unreadable drives that definitely will not clear until the
-> administrator takes some action.  It's usually a reasonable
-> approximation to call transient issues warnings, and permanent
-> issues errors.
-  So you can have events like FS_UNAVAILABLE and FS_AVAILABLE but what use
-would this have? I wouldn't like the interface to be dumping ground for
-random crap - we have dmesg for that :).
+> A wee bit about why might be nice..
 
-								Honza
--- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+It makes the following patch much cleaner to read:
+	[PATCH V6 08/10] fork: audit on creation of new namespace(s)
+	https://lkml.org/lkml/2015/4/17/50
+
+I was hoping it might also make a lot of other code cleaner, but most of
+the other places where multiple CLONE_NEW* flags are used, not all six
+are used together, but only 5 are used.  Ok, so it is helpful in 1 of 3:
+
+It would actually be useful in check_unshare_flags():
+	https://github.com/torvalds/linux/blob/v3.17/kernel/fork.c#L1791
+
+but not in copy_namespaces() or unshare_nsproxy_namespaces():
+	https://github.com/torvalds/linux/blob/v3.17/kernel/nsproxy.c#L130
+	https://github.com/torvalds/linux/blob/v3.17/kernel/nsproxy.c#L183
+
+- RGB
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Richard Guy Briggs <rbriggs@redhat.com>
+Senior Software Engineer, Kernel Security, AMER ENG Base Operating Systems, Red Hat
+Remote, Ottawa, Canada
+Voice: +1.647.777.2635, Internal: (81) 32635, Alt: +1.613.693.0684x3545
