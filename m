@@ -1,104 +1,81 @@
-From: Beata Michalska <b.michalska@samsung.com>
-Subject: Re: [RFC 1/4] fs: Add generic file system event notifications
-Date: Fri, 17 Apr 2015 11:10:58 +0200
-Message-ID: <5530CE22.8080903@samsung.com>
-References: <1429082147-4151-1-git-send-email-b.michalska@samsung.com>
- <1429082147-4151-2-git-send-email-b.michalska@samsung.com>
- <552F308F.1050505@redhat.com> <552F75D6.4030902@samsung.com>
- <alpine.LSU.2.11.1504161229450.17935@eggly.anvils>
+From: Greg Kurz <gkurz@linux.vnet.ibm.com>
+Subject: Re: [PATCH v4 0/8] vhost: support for cross endian guests
+Date: Fri, 17 Apr 2015 11:18:13 +0200
+Message-ID: <20150417111813.2b795b2c@bahia.local>
+References: <20150410101500.31843.61248.stgit@bahia.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-reply-to: <alpine.LSU.2.11.1504161229450.17935@eggly.anvils>
-Sender: owner-linux-mm@kvack.org
-To: Hugh Dickins <hughd@google.com>
-Cc: Eric Sandeen <sandeen@redhat.com>, Tim Chen <tim.c.chen@linux.intel.com>, linux-kernel@vger.kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org, Linux Filesystem Mailing List <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <20150410101500.31843.61248.stgit@bahia.local>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: "Michael S. Tsirkin" <mst@redhat.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kvm@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+On Fri, 10 Apr 2015 12:15:00 +0200
+Greg Kurz <gkurz@linux.vnet.ibm.com> wrote:
 
-On 04/16/2015 10:10 PM, Hugh Dickins wrote:
-> On Thu, 16 Apr 2015, Beata Michalska wrote:
->> On 04/16/2015 05:46 AM, Eric Sandeen wrote:
->>> On 4/15/15 2:15 AM, Beata Michalska wrote:
->>>> Introduce configurable generic interface for file
->>>> system-wide event notifications to provide file
->>>> systems with a common way of reporting any potential
->>>> issues as they emerge.
->>>>
->>>> The notifications are to be issued through generic
->>>> netlink interface, by a dedicated, for file system
->>>> events, multicast group. The file systems might as
->>>> well use this group to send their own custom messages.
->>>
->>> ...
->>>
->>>> + 4.3 Threshold notifications:
->>>> +
->>>> + #include <linux/fs_event.h>
->>>> + void fs_event_alloc_space(struct super_block *sb, u64 ncount);
->>>> + void fs_event_free_space(struct super_block *sb, u64 ncount);
->>>> +
->>>> + Each filesystme supporting the treshold notifiactions should call
->>>> + fs_event_alloc_space/fs_event_free_space repsectively whenever the
->>>> + ammount of availbale blocks changes.
->>>> + - sb:     the filesystem's super block
->>>> + - ncount: number of blocks being acquired/released
->>>
->>> so:
->>>
->>>> +void fs_event_alloc_space(struct super_block *sb, u64 ncount)
->>>> +{
->>>> +	struct fs_trace_entry *en;
->>>> +	s64 count;
->>>> +
->>>> +	spin_lock(&fs_trace_lock);
->>>
->>> Every allocation/free for every supported filesystem system-wide will be
->>> serialized on this global spinlock?  That sounds like a non-starter...
->>>
->>> -Eric
->>>
->> I guess there is a plenty room for improvements as this is an early version.
->> I do agree that this might be a performance bottleneck event though I've tried
->> to keep this to minimum - it's being taken only for hashtable look-up. But still...
->> I was considering placing the trace object within the super_block to skip
->> this look-up part but I'd like to gather more comments, especially on the concept
->> itself.
+> Hi,
 > 
-> Sorry, I have no opinion on the netlink fs notifications concept
-> itself, not my area of expertise at all.
+> This patchset allows vhost to be used with legacy virtio when guest and host
+> have a different endianness.
 > 
-> No doubt you Cc'ed me for tmpfs: I am very glad you're now trying the
-> generic filesystem route, and yes, I'd be happy to have the support
-> in tmpfs, thank you - if it is generally agreed to be suitable for
-> filesystems; but wouldn't want this as a special for tmpfs.
+> Patch 7 got rewritten according to Cornelia's and Michael's comments. I have
+> also introduced patch 8 that brings BE vnet headers support to tun/macvtap.
 > 
-> However, I must echo Eric's point: please take a look at 7e496299d4d2
-> "tmpfs: make tmpfs scalable with percpu_counter for used blocks":
-> Tim would be unhappy if you added overhead back into that path.
-> 
-> (And please Cc linux-fsdevel@vger.kernel.org next time you post these.)
-> 
-> Hugh
+> This series is enough to have vhost_net working flawlessly. I could
+> succesfully reboot guests from ppc64 to ppc64le and vice-versa on ppc64
+> and ppc64le hosts.
 > 
 
-Well, the concept of using netlink interface here is just a part of the overall
-idea - so any comments are really welcomed here. The more of them the better solution
-can be worked out, as I believe.
+Michael,
 
-As for the possible overhead: this is the last thing I would want, so I'll
-definitely do may best to not to introduce any. I will definitely rework this.
-
-Thanks for Your comments,
-
-BR
-Beata
-
+I am ready to post v5 with the changes suggested by Cornelia... Do you have any
+extra comments on this v4 ? 
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Greg
+
+> ---
+> 
+> Greg Kurz (8):
+>       virtio: introduce virtio_is_little_endian() helper
+>       tun: add tun_is_little_endian() helper
+>       macvtap: introduce macvtap_is_little_endian() helper
+>       vringh: introduce vringh_is_little_endian() helper
+>       vhost: introduce vhost_is_little_endian() helper
+>       virtio: add explicit big-endian support to memory accessors
+>       vhost: feature to set the vring endianness
+>       macvtap/tun: add VNET_BE flag
+> 
+> 
+>  drivers/net/Kconfig              |   12 ++++++
+>  drivers/net/macvtap.c            |   69 ++++++++++++++++++++++++++++++++++-
+>  drivers/net/tun.c                |   71 +++++++++++++++++++++++++++++++++++-
+>  drivers/vhost/Kconfig            |   10 +++++
+>  drivers/vhost/vhost.c            |   76 ++++++++++++++++++++++++++++++++++++++
+>  drivers/vhost/vhost.h            |   25 ++++++++++---
+>  include/linux/virtio_byteorder.h |   24 +++++++-----
+>  include/linux/virtio_config.h    |   19 +++++++---
+>  include/linux/vringh.h           |   19 +++++++---
+>  include/uapi/linux/if_tun.h      |    2 +
+>  include/uapi/linux/vhost.h       |    9 +++++
+>  11 files changed, 303 insertions(+), 33 deletions(-)
+> 
+> --
+> Greg
+> 
+> _______________________________________________
+> Virtualization mailing list
+> Virtualization@lists.linux-foundation.org
+> https://lists.linuxfoundation.org/mailman/listinfo/virtualization
+> 
