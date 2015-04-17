@@ -1,145 +1,85 @@
-From: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
-Subject: Re: [PATCH/RFC 0/2] Repurpose the v4l2_plane data_offset field
-Date: Fri, 17 Apr 2015 15:53:54 +0300
-Message-ID: <7986966.gGAFkYegjs@avalon>
-References: <1429040689-23808-1-git-send-email-laurent.pinchart@ideasonboard.com> <5530E01D.3050105@xs4all.nl>
+From: Jean Delvare <jdelvare-l3A5Bk7waGM@public.gmane.org>
+Subject: Re: [Patch 2/3] firmware: dmi_scan: add SBMIOS entry and DMI tables
+Date: Fri, 17 Apr 2015 15:02:24 +0200
+Message-ID: <20150417150224.50202bcb@endymion.delvare>
+References: <1427979423-22767-1-git-send-email-ivan.khoronzhuk@globallogic.com>
+	<1427979423-22767-3-git-send-email-ivan.khoronzhuk@globallogic.com>
+	<20150416115252.7dc964a3@endymion.delvare>
+	<552FB18D.6080207@globallogic.com>
+	<1429199064.4386.93.camel@chaos.site>
+	<552FF0E4.709@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5530E01D.3050105-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+In-Reply-To: <552FF0E4.709-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Cc: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Pawel Osciak <pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Nicolas Dufresne <nicolas.dufresne-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>
+To: "Ivan.khoronzhuk" <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, dmidecode-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, msalter-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, roy.franz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Hans,
+On Thu, 16 Apr 2015 20:27:00 +0300, subscivan wrote:
+> On 16.04.15 18:44, Jean Delvare wrote:
+> > Le Thursday 16 April 2015 =C3=A0 15:56 +0300, Ivan.khoronzhuk a =C3=
+=A9crit :
+> >> We cannot be sure that firmware_kobj created at time of dmi_init()=
+=2E
+> >> The sources don't oblige you to call it at core level,
+> >> for instance like it was done for arm64. For x86, dmi_init() can b=
+e called
+> >> before firmware_kobj is created.
+> > Looking at the code, it seems that firmware_kobj is created very, v=
+ery
+> > early in the boot process. In do_basic_setup(), you can see that
+> > driver_init() (which in turn calls firmware_init(), creating
+> > firmware_kobj) is called before do_initcalls(). So firmware_kobj mu=
+st be
+> > defined before dmi_scan_machine() or dmi_init() is called.
+>=20
+> No. Not must, rather should. See below.
+>=20
+> > Oh, and this wasn't even my point ;-) I'm fine with you checking if
+> > firmware_kobj is defined. My question was about the dmi_available c=
+heck
+> > above. But that question was silly anyway, sorry. I confused
+> > dmi_available with dmi_initialized. Checking for dmi_available is
+> > perfectly reasonable, please scratch my objection.
+> >
+> >> And if I call it from dmi_init() I suppose
+> >> I would face an error. As I can't call it in dmi_init I can't be s=
+ure that
+> >> DMI is available at all. So, no, we have to check dmi_available he=
+re and
+> >> call it at subsys layer, where it's supposed to be.
+> > I can't parse that, I suspect you wrote dmi_init where you actually
+> > meant dmi_scan_machine? Given how early firmware_kobj is created, I
+> > think the code currently in dmi_init could in fact go at the end of
+> > dmi_scan_machine.
+>=20
+> Actually, dmi_scan_machine can be called even earlier.
+> As I've sad, for x86, it's called before firmware_kobj is created.
+>=20
+> kernel_start()
+>      setup_arch()
+>          dmi_scan_machine()
+>=20
+> And for firmware_init(), as you noticed already:
+>=20
+> start_kernel()
+>      rest_init()
+>          kernel_init()
+>              kernel_init_freeable()
+>                  do_basic_setup()
+>                      driver_init()
+>                          firmware_init()
+>=20
+> Pay attentions that setup_arch() is called much earlier than rest_ini=
+t().
+> So dmi_init couldn't in fact go at the end of dmi_scan_machine.
 
-On Friday 17 April 2015 12:27:41 Hans Verkuil wrote:
-> On 04/14/2015 09:44 PM, Laurent Pinchart wrote:
-> > Hello,
-> > 
-> > The v4l2_plane data_offset field has been introduced at the same time as
-> > the the multiplane API to convey header size information between
-> > kernelspace and userspace.
-> > 
-> > The API then became slightly controversial, both because different
-> > developers understood the purpose of the field differently (resulting for
-> > instance in an out-of-tree driver abusing the field for a different
-> > purpose), and because of competing proposals (see for instance "[RFC]
-> > Multi format stream support" at
-> > http://www.spinics.net/lists/linux-media/msg69130.html).
-> > 
-> > Furthermore, the data_offset field isn't used by any mainline driver
-> > except vivid (for testing purpose).
-> > 
-> > I need a different data offset in planes to allow data capture to or data
-> > output from a userspace-selected offset within a buffer (mainly for the
-> > DMABUF and MMAP memory types). As the data_offset field already has the
-> > right name, is unused, and ill-defined, I propose repurposing it. This is
-> > what this RFC is about.
-> > 
-> > If the proposal is accepted I'll add another patch to update data_offset
-> > usage in the vivid driver.
-> 
-> I am skeptical about all this for a variety of reasons:
+Yeah, you're right, sorry. Somehow I thought that setup_arch was an
+arch_initcall, but it is not, so I got the order all wrong.
 
-That's all good, it's an RFC :-)
-
-> 1) The data_offset field is well-defined in the spec. There really is no
-> doubt about the meaning of the field.
-
-I only partly agree. I believe the purpose of the data_offset field to be 
-clear among the core V4L2 developers, but the documentation isn't precise 
-enough. I've seen out-of-tree drivers using the data_offset field for other 
-purposes than specifying the header size. The situation is a bit better now 
-that videobuf2 handles the field properly (and avoids copying it from user to 
-kernel for capture devices for instance), but there are still many users of 
-older kernels.
-
-This being said, the problem wouldn't be difficult to fix, it just requires a 
-documentation patch.
-
-> 2) We really don't know who else might be using it, or which applications
-> might be using it (a lot of work was done in gstreamer recently, I wonder
-> if data_offset support was implemented there).
-
-It's funny you mention that. I cloned the gstreamer repositories and tried to 
-investigate. The gstreamer v4l2 elements started using data_offset a year ago 
-in
-
-commit 92bdd596f2b07dbf4ccc9b8bf3d17620d44f131a
-Author: Nicolas Dufresne <nicolas.dufresne-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>
-Date:   Fri Apr 11 17:10:11 2014 -0400
-
-    v4l2: Add DMABUF and USERPTR importation
-
-(I've CC'ed Nicolas to this e-mail)
-
-I'm not too familiar with the latest gstreamer code, but after a first 
-investigation it seems that gstreamer uses the data_offset field for the 
-purpose introduced by this patch, not to convey the header size. One more 
-argument in favour of repurposing the field ;-)
-
-> 3) You offer no alternative to this feature. Basically this is my main
-> objection. It is not at all unusual to have headers in front of the frame
-> data. We (Cisco) use it in one of our product series for example. And I
-> suspect it is something that happens especially in systems with an FPGA
-> that does custom processing, and those systems are exactly the ones that
-> are generally not upstreamed and so are not visible to us.
-> 
-> IMHO the functionality it provides is very much relevant, and I would like
-> to see an alternative in place before it is repurposed.
->
-> But frankly, I really don't see why you would want to repurpose it. Adding a
-> new field (buf_offset) would do exactly what you want it to do without
-> causing an ABI change.
-> 
-> Should we ever implement a better alternative for data_offset, then that
-> field can be renamed to 'reserved2' or whatever at some point.
-> 
-> Frankly, I don't think data_offset is all that bad. What is missing is info
-> about the format (so add a 'data_format' field) and possible similar info
-> about a footer (footer_size, footer_format). Yes, the name could have been
-> better (header_size), but nobody is perfect...
-
-I totally agree that the functionality is relevant, and we certainly need an 
-API for that.
-
-My point, however, was twofold : I believe we need a better (as in more 
-powerful) API than data_offset to specify plane content, and the current usage 
-of data_offset in out-of-tree drivers, and it seems in gstreamer too, is 
-different than what we had intended the field to be used for.
-
-For those two reasons, I believe it would make sense to repurpose the field 
-and introduce a new API to specify information about the plane content. Let's 
-kickstart the discussion :-)
-
-The following information comes to my mind as being useful to specify:
-
-- format
-- header size
-- footer size
-
-There is, however, another point I'd like to raise. I'm working on an H.264 
-encoder that produces slices without headers. Userspace is thus responsible 
-for filling the headers, based on information produced by the encoder.
-
-When a capture buffer at the output of the encoder contains a single slice, 
-that's pretty easy to handle. Userspace can use data_offset (in its new 
-purpose, or buf_offset if we decide to introduce a new field instead) to 
-reserve space for a header if the header size is known in advance by the 
-application, or the driver (or possibly the device) can reserve space for the 
-header and report the header size.
-
-However, a capture buffer can contain multiple slices, with gaps between the 
-slices for the headers. The position and size of the gaps need to be known by 
-the application. I'm not sure yet if userspace can compute them, or if they're 
-dynamic and need to be passed from the driver to the application on a per-
-frame basis. In the latter case I would need more than a header size and 
-footer size per plane.
-
--- 
-Regards,
-
-Laurent Pinchart
+--=20
+Jean Delvare
+SUSE L3 Support
