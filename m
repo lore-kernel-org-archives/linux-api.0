@@ -1,105 +1,90 @@
-From: Beata Michalska <b.michalska-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [RFC 1/4] fs: Add generic file system event notifications
-Date: Fri, 17 Apr 2015 11:46:46 +0200
-Message-ID: <5530D686.9080807@samsung.com>
-References: <1429082147-4151-1-git-send-email-b.michalska@samsung.com>
- <1429082147-4151-2-git-send-email-b.michalska@samsung.com>
- <55302FFB.4010108@gmx.de>
+From: "Ivan.khoronzhuk" <ivan.khoronzhuk@globallogic.com>
+Subject: Re: [Patch 1/3] firmware: dmi_scan: rename dmi_table to dmi_decode_table
+Date: Fri, 17 Apr 2015 13:11:13 +0300
+Message-ID: <5530DC41.3050700@globallogic.com>
+References: <1427979423-22767-1-git-send-email-ivan.khoronzhuk@globallogic.com>	<1427979423-22767-2-git-send-email-ivan.khoronzhuk@globallogic.com>	<20150415143530.GF4804@codeblueprint.co.uk>	<20150416103511.55927ccc@endymion.delvare>	<553018BB.1080903@globallogic.com> <20150417105454.1c52f430@endymion.delvare>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <55302FFB.4010108-Mmb7MZpHnFY@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, lczerner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kmpark-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Linux Filesystem Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20150417105454.1c52f430@endymion.delvare>
+Sender: linux-doc-owner@vger.kernel.org
+To: Jean Delvare <jdelvare@suse.de>
+Cc: Matt Fleming <matt@codeblueprint.co.uk>, linux-kernel@vger.kernel.org, matt.fleming@intel.com, ard.biesheuvel@linaro.org, grant.likely@linaro.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, mikew@google.com, dmidecode-devel@nongnu.org, leif.lindholm@linaro.org, msalter@redhat.com, roy.franz@linaro.org
 List-Id: linux-api@vger.kernel.org
 
 
-Hi,
 
-On 04/16/2015 11:56 PM, Heinrich Schuchardt wrote:
-> On 15.04.2015 09:15, Beata Michalska wrote:
->> Introduce configurable generic interface for file
->> system-wide event notifications to provide file
->> systems with a common way of reporting any potential
->> issues as they emerge.
+On 17.04.15 11:54, Jean Delvare wrote:
+> Hi Ivan,
+>
+> On Thu, 16 Apr 2015 23:16:59 +0300, Ivan.khoronzhuk wrote:
+>> On 16.04.15 11:35, Jean Delvare wrote:
+>>> On Wed, 15 Apr 2015 15:35:30 +0100, Matt Fleming wrote:
+>>>> Jean, do you want me to pick this patch up or are you going to?
+>>> Good question, we need to agree on a strategy.
+>>>
+>>> There are 3 patch sets to consider here.
+>>>
+>>> 1* My patch fixing the UUID ordering bug. It must go in first and
+>>>      immediately, as it fixes a regression and will have to be backported
+>>>      to stable branches.
+>> ||
+>> V
 >>
->> The notifications are to be issued through generic
->> netlink interface, by a dedicated, for file system
->> events, multicast group. The file systems might as
->> well use this group to send their own custom messages.
+>>> 2* 2 older patches from Ivan which are currently in your efi-next tree
+>>>      if I'm not mistaken. Both were based on an old tree so they do not
+>>>      apply cleanly on kernel v4.0, I had to fix them up manually. I have
+>> They are in master tree already.
 >>
->> The events have been split into four base categories:
->> information, warnings, errors and threshold notifications,
->> with some very basic event types like running out of space
->> or file system being remounted as read-only.
->>
->> Threshold notifications have been included to allow
->> triggering an event whenever the amount of free space
->> drops below a certain level - or levels to be more precise
->> as two of them are being supported: the lower and the upper
->> range. The notifications work both ways: once the threshold
->> level has been reached, an event shall be generated whenever
->> the number of available blocks goes up again re-activating
->> the threshold.
->>
->> The interface has been exposed through a vfs. Once mounted,
->> it serves as an entry point for the set-up where one can
->> register for particular file system events.
-> 
-> Having a framework for notification for file systems is a great idea.
-> Your solution covers an important part of the possible application scope.
-> 
-> Before moving forward I suggest we should analyze if this scope should
-> be enlarged.
-> 
-> Many filesystems are remote (e.g. CIFS/Samba) or distributed over many
-> network nodes (e.g. Lustre). How should file system notification work here?
-> 
-> How will fuse file systems be served?
-> 
-> The current point of reference is a single mount point.
-> Every time I insert an USB stick several file system may be automounted.
-> I would like to receive events for these automounted file systems.
-> 
-> A similar case arises when starting new virtual machines. How will I
-> receive events on the host system for the file systems of the virtual
-> machines?
+>>>      no idea if git would be able to merge them properly, as the fix
+>>>      above changed the context even more.
+>> Current efi-next already merged, so you should base your patches on
+>> top of last changes.
+> Correct. I looked at the result and the merge looks correct. I'll turn
+> my objections into fixup patches to apply on top, where still worth it.
+> In particular I'll start with the ".x" revert, as it will make
+> backporting the bug fix easier.
+>
+>>> 3* The 3 new patches from Ivan which I am reviewing now, which are not
+>>>      applied in any public tree AFAIK.
+>> It shouldn't happen,
+>> I've been verifying just now once again.
+>> They are applied on top of linux_next cleanly.
+>> Equal as on efi/next.
+> I can't see them at
+> http://git.kernel.org/cgit/linux/kernel/git/mfleming/efi.git/log/?h=next
+>
+> To clarify: I do not claim that they can't be applied, I'm only saying
+> they're not there yet (which is OK as they were still pending my
+> review.) They do apply just fine, no problem with this.
+>
+>>> I don't really care who picks these patches up and sends them to Linus,
+>>> but I think they should all follow the same route so that Linus has as
+>>> little merge work to do as possible. So either you pick them all, or I
+>>> do. If I do, you'll have to drop the 2 patches you have in efi-next.
+>>> Again I'm fine either way, so please let me know what makes your life
+>>> easier and let's do that.
+>> I'm going to base my series
+>> "firmware: dmi_scan: add SBMIOS entry point and DMI tables"
+>> on top of linux next unless you have already your tree to pick up changes.
+>> Please let me know, if you have one.
+> I have no formal tree yet, but my current patch set can be seen at:
+> http://jdelvare.nerim.net/devel/linux-3/jdelvare-dmi/
+>
+> First 2 patches from you are already upstream. You should rebase your
+> updated patch series on top of upstream + patches 03 and 04, as they
+> will go in first.
+>
+> Thanks,
 
-> In your implementation events are received via Netlink.
-> Using Netlink for marking mounts for notification would create a much
-> more homogenous interface. So why should we use a virtual file system here?
-> 
-> Best regards
-> 
-> Heinrich Schuchardt
-> 
-> 
+Not sure that's a good idea to base on patches that doesn't path any 
+review and
+no one cannot apply. At least it be good you send them that I can point 
+on them in
+commit message.
 
-I'd be more than happy to extend the scope of suggested changes.
-I hope I'll be able to collect more comments - in this way there 
-is a chance we might get here smth that is really useful, for everyone.
+-- 
+Regards,
+Ivan Khoronzhuk
 
-I've tried to make the interface rather flexible, so that new cases
-can be easily added - so the notification whenever a file system
-is being mounted is definitely doable.
-
-The vfs here merely serves the purpose to configure which type of events
-and for which filesystems are to be issued. Having this done through
-netlink is also an option, though it needs some more thoughts. The way
-notifications are being sent might be extended: so there could be more
-than one option for this. We might also want to consider if we want to
-have this widely available - everything for everyone. (?)
-
-As for the rest, I must admit I'm not really an fs person, so I assume
-there will be more comments and questions like yours. This is also why
-any comments/hints/remarks/doubts/issues etc would me more than just
-welcomed. I'll try to answer them all, though this will require some
-time on my side, thus apologies if I have some delays.
-
-
-I'll get beck to this asap.
-
-BR
-Beata
