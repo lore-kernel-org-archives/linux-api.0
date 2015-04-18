@@ -1,81 +1,123 @@
-From: Andreas Dilger <adilger@dilger.ca>
-Subject: Re: [RFC 1/4] fs: Add generic file system event notifications
-Date: Fri, 17 Apr 2015 16:37:32 -0600
-Message-ID: <A8EE2778-45FE-4EC6-AB41-278D8745D068@dilger.ca>
-References: <1429082147-4151-1-git-send-email-b.michalska@samsung.com> <1429082147-4151-2-git-send-email-b.michalska@samsung.com> <20150417113110.GD3116@quack.suse.cz> <553104E5.2040704@samsung.com> <55310957.3070101@gmail.com> <55311DE2.9000901@redhat.com> <20150417154351.GA26736@quack.suse.cz> <55312FEA.3030905@redhat.com> <20150417162247.GB27500@quack.suse.cz> <553144EB.9060701@redhat.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2098\))
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <553144EB.9060701@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: John Spray <john.spray@redhat.com>
-Cc: Jan Kara <jack@suse.cz>, Austin S Hemmelgarn <ahferroin7@gmail.com>, Beata Michalska <b.michalska@samsung.com>, LKML <linux-kernel@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, Hugh Dickins <hughd@google.com>, =?windows-1252?Q?Luk=E1=9A_Czerner?= <lczerner@redhat.com>, Christoph Hellwig <hch@infradead.org>, Ext4 <linux-ext4@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, kyungmin.park@samsung.com, kmpark@infradead.org, Linux Filesystem Mailing List <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+From: Sakari Ailus <sakari.ailus@iki.fi>
+Subject: Re: [PATCH/RFC 0/2] Repurpose the v4l2_plane data_offset field
+Date: Sat, 18 Apr 2015 16:04:15 +0300
+Message-ID: <20150418130415.GM27451@valkosipuli.retiisi.org.uk>
+References: <1429040689-23808-1-git-send-email-laurent.pinchart@ideasonboard.com>
+ <5530E01D.3050105@xs4all.nl>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-media-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <5530E01D.3050105@xs4all.nl>
+Sender: linux-media-owner@vger.kernel.org
+To: Hans Verkuil <hverkuil@xs4all.nl>
+Cc: Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-media@vger.kernel.org, linux-api@vger.kernel.org, Sakari Ailus <sakari.ailus@linux.intel.com>, Pawel Osciak <pawel@osciak.com>, Marek Szyprowski <m.szyprowski@samsung.com>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On Apr 17, 2015, at 11:37 AM, John Spray <john.spray@redhat.com> wrote:
-> On 17/04/2015 17:22, Jan Kara wrote:
->> On Fri 17-04-15 17:08:10, John Spray wrote:
->>> On 17/04/2015 16:43, Jan Kara wrote:
->>> In that case I'm confused -- why would ENOSPC be an appropriate use
->>> of this interface if the mount being entirely blocked would be
->>> inappropriate?  Isn't being unable to service any I/O a more
->>> fundamental and severe thing than being up and healthy but full?
->>>=20
->>> Were you intending the interface to be exclusively for data
->>> integrity issues like checksum failures, rather than more general
->>> events about a mount that userspace would probably like to know
->>> about?
->>   Well, I'm not saying we cannot have those events for fs =
-availability /
->> inavailability. I'm just saying I'd like to see some use for that =
-first.
->> I don't want events to be added just because it's possible...
->>=20
->> For ENOSPC we have thin provisioned storage and the userspace deamon
->> shuffling real storage underneath. So there I know the usecase.
->>=20
->=20
-> Ah, OK.  So I can think of a couple of use cases:
-> * a cluster scheduling service (think MPI jobs or docker containers) =
-might check for events like this.  If it can see the cluster filesystem =
-is unavailable, then it can avoid scheduling the job, so that the =
-(multi-node) application does not get hung on one node with a bad mount. =
- If it sees a mount go bad (unavailable, or client evicted) partway =
-through a job, then it can kill -9 the process that was relying on the =
-bad mount, and go run it somewhere else.
-> * Boring but practical case: a nagios health check for checking if =
-mounts are OK.
+Hi Hans,
 
-John,
-thanks for chiming in, as I was just about to write the same.  Some =
-users
-were just asking yesterday at the Lustre User Group meeting about adding
-an interface to notify job schedulers for your #1 point, and I'd much
-rather use a generic interface than inventing our own for Lustre.
+On Fri, Apr 17, 2015 at 12:27:41PM +0200, Hans Verkuil wrote:
+> Hi Laurent,
+> 
+> On 04/14/2015 09:44 PM, Laurent Pinchart wrote:
+> > Hello,
+> > 
+> > The v4l2_plane data_offset field has been introduced at the same time as the
+> > the multiplane API to convey header size information between kernelspace and
+> > userspace.
+> > 
+> > The API then became slightly controversial, both because different developers
+> > understood the purpose of the field differently (resulting for instance in an
+> > out-of-tree driver abusing the field for a different purpose), and because of
+> > competing proposals (see for instance "[RFC] Multi format stream support" at
+> > http://www.spinics.net/lists/linux-media/msg69130.html).
+> > 
+> > Furthermore, the data_offset field isn't used by any mainline driver except
+> > vivid (for testing purpose).
+> > 
+> > I need a different data offset in planes to allow data capture to or data
+> > output from a userspace-selected offset within a buffer (mainly for the
+> > DMABUF and MMAP memory types). As the data_offset field already has the
+> > right name, is unused, and ill-defined, I propose repurposing it. This is what
+> > this RFC is about.
+> > 
+> > If the proposal is accepted I'll add another patch to update data_offset usage
+> > in the vivid driver.
+> 
+> I am skeptical about all this for a variety of reasons:
+> 
+> 1) The data_offset field is well-defined in the spec. There really is no doubt
+> about the meaning of the field.
 
-Cheers, Andreas
+I think that's debatable. :-) The specification doesn't say much what the
+data_offset is really about. For instance, it does not specify what may be
+in the buffer before data_offset.
 
-> We don't have to invent these event types now of course, but something =
-to bear in mind.  Hopefully if/when any of the distributed filesystems =
-(Lustre/Ceph/etc) choose to implement this, we can look at making the =
-event types common at that time though.
->=20
-> BTW in any case an interface for filesystem events to userspace will =
-be a useful addition, thank you!
->=20
-> Cheers,
-> John
+The kerneldoc documentation next to struct v4l2_plane suggests there might
+be a header, but that's primarily for driver developers rather than users.
 
+I, for instance, understood data_offset to mean essentially how this set
+"re-purposes" it. I wonder if there are others who have originally
+understood it as such.
 
-Cheers, Andreas
+> 
+> 2) We really don't know who else might be using it, or which applications might
+> be using it (a lot of work was done in gstreamer recently, I wonder if data_offset
+> support was implemented there).
+> 
+> 3) You offer no alternative to this feature. Basically this is my main objection.
+> It is not at all unusual to have headers in front of the frame data. We (Cisco)
+> use it in one of our product series for example. And I suspect it is something that
+> happens especially in systems with an FPGA that does custom processing, and those
+> systems are exactly the ones that are generally not upstreamed and so are not
+> visible to us.
 
+If you have a header before the image, the header probably has a format as
+well. Some headers are device specific whereas some are more generic. The
+SMIA standard, for example, does specify a metadata (header or footer!)
+format.
 
+It'd be useful to be able to tell the user what kind of header there is. For
+that, the header could be located on a different plane, with a specific
+format.
 
+There's room for format information in struct v4l2_plane_pix_format but
+hardly much else. It still would cover a number of potential use cases.
 
+I might still consider making the planes independent of each other;
+conveniently there's 8 bytes of free space in struct v4l2_pix_format_mplane
+for alternative plane related information. It'd be nice to be able to do
+this without an additional buffer type since that's visible in a large
+number of other places: there's plenty of room in struct v4l2_plane for
+any video buffer related information.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Frame descriptors are not needed for this --- you're quite right in that.
+But the frame descriptors, when implemented, will very probably need plane
+specific formats in the end as not many receivers are able to separate
+different parts of the image to different buffers.
+
+> 
+> IMHO the functionality it provides is very much relevant, and I would like to see
+> an alternative in place before it is repurposed.
+> 
+> But frankly, I really don't see why you would want to repurpose it. Adding a new
+> field (buf_offset) would do exactly what you want it to do without causing an ABI
+> change.
+
+I said I ok with adding buf_offset field, but it might not be the best
+choice we can make: it's a temporary solution for a very specific problem,
+leaves the API with similar field names with different meanings (data_offset
+vs. buf_offset, where the other is about the header and the other about the
+data) and is not extensible. In addition, the size of the header is not
+specified; it might be smaller than what's between buf_offset and
+data_offset. Some devices produce footers as well; currently we have no way
+to specify how they are dealt with.
+
+I'd like to at least investigate if we could have something more
+future-proof for this purpose.
+
+-- 
+Kind regards,
+
+Sakari Ailus
+e-mail: sakari.ailus@iki.fi	XMPP: sailus@retiisi.org.uk
