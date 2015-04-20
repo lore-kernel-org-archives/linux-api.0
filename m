@@ -1,192 +1,281 @@
-From: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
-Subject: Re: [PATCH/RFC 0/2] Repurpose the v4l2_plane data_offset field
-Date: Mon, 20 Apr 2015 18:44:48 +0300
-Message-ID: <2114647.vLEMpM9qcY@avalon>
-References: <1429040689-23808-1-git-send-email-laurent.pinchart@ideasonboard.com> <20150418130415.GM27451@valkosipuli.retiisi.org.uk> <5534C405.9010307@xs4all.nl>
+From: Roy Franz <roy.franz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [Patch v2 2/3] firmware: dmi_scan: add SBMIOS entry and DMI tables
+Date: Mon, 20 Apr 2015 11:32:28 -0700
+Message-ID: <CAFECyb_qEhKrut3C2yaY9ruMQeQc-3dO7RUwACMPX-oOSc8aZA@mail.gmail.com>
+References: <1429525187-3376-1-git-send-email-ivan.khoronzhuk@globallogic.com>
+	<1429525187-3376-3-git-send-email-ivan.khoronzhuk@globallogic.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5534C405.9010307-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+In-Reply-To: <1429525187-3376-3-git-send-email-ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Cc: Sakari Ailus <sakari.ailus-X3B1VOXEql0@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Pawel Osciak <pawel-FA/gS7QP4orQT0dZR+AlfA@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: Ivan Khoronzhuk <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
+Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Matt Fleming <matt.fleming-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jean Delvare <jdelvare-l3A5Bk7waGM@public.gmane.org>, Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, dmidecode-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, Leif Lindholm <leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Mark Salter <msalter-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Hans,
-
-On Monday 20 April 2015 11:16:53 Hans Verkuil wrote:
-> On 04/18/2015 03:04 PM, Sakari Ailus wrote:
-> > On Fri, Apr 17, 2015 at 12:27:41PM +0200, Hans Verkuil wrote:
-> >> On 04/14/2015 09:44 PM, Laurent Pinchart wrote:
-> >>> Hello,
-> >>> 
-> >>> The v4l2_plane data_offset field has been introduced at the same time as
-> >>> the the multiplane API to convey header size information between
-> >>> kernelspace and userspace.
-> >>> 
-> >>> The API then became slightly controversial, both because different
-> >>> developers understood the purpose of the field differently (resulting
-> >>> for instance in an out-of-tree driver abusing the field for a different
-> >>> purpose), and because of competing proposals (see for instance "[RFC]
-> >>> Multi format stream support" at
-> >>> http://www.spinics.net/lists/linux-media/msg69130.html).
-> >>> 
-> >>> Furthermore, the data_offset field isn't used by any mainline driver
-> >>> except vivid (for testing purpose).
-> >>> 
-> >>> I need a different data offset in planes to allow data capture to or
-> >>> data output from a userspace-selected offset within a buffer (mainly for
-> >>> the DMABUF and MMAP memory types). As the data_offset field already has
-> >>> the right name, is unused, and ill-defined, I propose repurposing it.
-> >>> This is what this RFC is about.
-> >>> 
-> >>> If the proposal is accepted I'll add another patch to update data_offset
-> >>> usage in the vivid driver.
-> >> 
-> >> I am skeptical about all this for a variety of reasons:
-> >> 
-> >> 1) The data_offset field is well-defined in the spec. There really is no
-> >> doubt about the meaning of the field.
-> > 
-> > I think that's debatable. :-) The specification doesn't say much what the
-> > data_offset is really about. For instance, it does not specify what may be
-> > in the buffer before data_offset.
-> 
-> That's correct. Now, it is my view that, while it would be nice if a fourcc
-> like value would be available to tell the format of that header, in
-> practice that format is so tied to a specific type of hardware that you
-> either know it (i.e. it is a custom app for that hardware), or you ignore
-> it altogether. There may be some exceptions for somewhat standardized types
-> of metadata (SMIA), but those never materialized as actual code.
-> 
-> > The kerneldoc documentation next to struct v4l2_plane suggests there might
-> > be a header, but that's primarily for driver developers rather than users.
-> > 
-> > I, for instance, understood data_offset to mean essentially how this set
-> > "re-purposes" it. I wonder if there are others who have originally
-> > understood it as such.
-> 
-> I know it was mis-understood, the spec was fairly vague in the past, and
-> while more specific you are right in that it does not actually tell the
-> reason for the field (i.e. skip headers).
-> 
-> In no way can you re-purpose the field, though.
-> 
-> 1) It is in use.
-
-It's of course hard to get an overall view of all users, but the more I look 
-at the problem the more it seems like both out-of-tree kernel drivers (in 
-particular a Marvell CSI-2 receiver driver) and userspace (in particular 
-gstreamer) have implemented support for the data_offset field as proposed in 
-this patch series. We could of course argue that this is incorrect, and that 
-there are out-of-tree drivers and userspace code that use data_offset for the 
-purpose it was initially envisioned for (I'm thinking about Cisco code 
-possibly, at least the one you've had the opportunity to review :-)). However, 
-if the majority of users use data_offset "incorrectly", maybe we should 
-consider that usage as being the de-facto standard and consider this series as 
-a documentation fix.
-
-The question is thus, what does the majority of the users do ?
-
-> 2) If you thought it was confusing today, then that's nothing compared to
-> the confusion once you change the meaning from one kernel to another.
-> 
-> Either keep the current meaning and improve the specification, or deprecate
-> it: warn when it is non-zero and just mark it as 'don't use' in the spec.
-> 
-> >> 2) We really don't know who else might be using it, or which applications
-> >> might be using it (a lot of work was done in gstreamer recently, I
-> >> wonder if data_offset support was implemented there).
-> >> 
-> >> 3) You offer no alternative to this feature. Basically this is my main
-> >> objection. It is not at all unusual to have headers in front of the
-> >> frame data. We (Cisco) use it in one of our product series for example.
-> >> And I suspect it is something that happens especially in systems with an
-> >> FPGA that does custom processing, and those systems are exactly the ones
-> >> that are generally not upstreamed and so are not visible to us.
-> > 
-> > If you have a header before the image, the header probably has a format as
-> > well. Some headers are device specific whereas some are more generic. The
-> > SMIA standard, for example, does specify a metadata (header or footer!)
-> > format.
-> > 
-> > It'd be useful to be able to tell the user what kind of header there is.
-> > For that, the header could be located on a different plane, with a
-> > specific format.
-> > 
-> > There's room for format information in struct v4l2_plane_pix_format but
-> > hardly much else. It still would cover a number of potential use cases.
-> > 
-> > I might still consider making the planes independent of each other;
-> > conveniently there's 8 bytes of free space in struct
-> > v4l2_pix_format_mplane for alternative plane related information. It'd be
-> > nice to be able to do this without an additional buffer type since that's
-> > visible in a large number of other places: there's plenty of room in
-> > struct v4l2_plane for any video buffer related information.
-> 
-> Please don't confuse things: each struct v4l2_plane_pix_format relates to a
-> single buffer that contains the data for that plane. If one buffer contains
-> both metadata and actual image data, then that's all part of the same plane
-> since it was all transferred to the buffer with the same DMA transfer.
-> 
-> You cannot put the header/footer into separate planes since the only way to
-> achieve that would be a memcpy and the header/footer would still be part of
-> the actual plane data.
-> 
-> If the metadata arrives through its own DMA channel, then I would have no
-> objection to seeing that as a separate plane. But I think in general that
-> might be a bad idea because such metadata may come at an earlier/later time
-> compared to the image data, and usually apps want to receive things asap.
-> 
-> I still see it as a simple problem: I have a buffer, it contains a picture
-> of a given pixel format, but there may be a header and (currently not
-> implemented) a footer. Header and/or footer may have a format (also not
-> implemented yet).
-> 
-> Applications can use the offsets to ignore all those headers/footers and
-> just go straight to the image data. Or they use it to interpret the data in
-> the headers/footers.
-> 
-> Perhaps it is a total lack of imagination, but I really cannot see what else
-> it is you would need. Of course, you can think of really crazy schemes, but
-> then you likely need to just use a new pixelformat since it is so crazy
-> that it doesn't fit into anything existing.
-> 
-> The whole point of data_offset was that it is nuts to have to come up with a
-> new pixelformat for otherwise standard pixelformats that just happen to
-> have a header in front of them. You can't duplicate all pixel formats just
-> for that.
+On Mon, Apr 20, 2015 at 3:19 AM, Ivan Khoronzhuk
+<ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org> wrote:
+> Some utils, like dmidecode and smbios, need to access SMBIOS entry
+> table area in order to get information like SMBIOS version, size, etc.
+> Currently it's done via /dev/mem. But for situation when /dev/mem
+> usage is disabled, the utils have to use dmi sysfs instead, which
+> doesn't represent SMBIOS entry and adds code/delay redundancy when direct
+> access for table is needed.
 >
-> > Frame descriptors are not needed for this --- you're quite right in that.
-> > But the frame descriptors, when implemented, will very probably need plane
-> > specific formats in the end as not many receivers are able to separate
-> > different parts of the image to different buffers.
-> > 
-> >> IMHO the functionality it provides is very much relevant, and I would
-> >> like to see an alternative in place before it is repurposed.
-> >> 
-> >> But frankly, I really don't see why you would want to repurpose it.
-> >> Adding a new field (buf_offset) would do exactly what you want it to do
-> >> without causing an ABI change.
-> > 
-> > I said I ok with adding buf_offset field, but it might not be the best
-> > choice we can make: it's a temporary solution for a very specific problem,
-> > leaves the API with similar field names with different meanings
-> > (data_offset vs. buf_offset, where the other is about the header and the
-> > other about the data) and is not extensible. In addition, the size of the
-> > header is not specified; it might be smaller than what's between
-> > buf_offset and data_offset. Some devices produce footers as well;
-> > currently we have no way to specify how they are dealt with.
-> > 
-> > I'd like to at least investigate if we could have something more
-> > future-proof for this purpose.
-> 
-> Proposals welcome!
+> So this patch creates dmi/tables and adds SMBIOS entry point to allow
+> utils in question to work correctly without /dev/mem. Also patch adds
+> raw dmi table to simplify dmi table processing in user space, as
+> proposed by Jean Delvare.
+>
+> Signed-off-by: Ivan Khoronzhuk <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
 
-I certainly second that :-) Sakari, do you have something in mind ?
+Tested-by: Roy Franz <roy.franz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 
--- 
-Regards,
+Tested with dmidecode w/patches to read tables from sysfs.  The dmidecode
+patches are posted on dmidecode-devel and should be commited upstream soon.
 
-Laurent Pinchart
+Thanks,
+Roy
+
+> ---
+>  .../ABI/testing/sysfs-firmware-dmi-tables          | 22 ++++++
+>  drivers/firmware/dmi-sysfs.c                       | 17 +++--
+>  drivers/firmware/dmi_scan.c                        | 82 ++++++++++++++++++++++
+>  include/linux/dmi.h                                |  2 +
+>  4 files changed, 114 insertions(+), 9 deletions(-)
+>  create mode 100644 Documentation/ABI/testing/sysfs-firmware-dmi-tables
+>
+> diff --git a/Documentation/ABI/testing/sysfs-firmware-dmi-tables b/Documentation/ABI/testing/sysfs-firmware-dmi-tables
+> new file mode 100644
+> index 0000000..ff3cac8
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-firmware-dmi-tables
+> @@ -0,0 +1,22 @@
+> +What:          /sys/firmware/dmi/tables/
+> +Date:          April 2015
+> +Contact:       Ivan Khoronzhuk <ivan.khoronzhuk-hExfYMNmJl/Cnp4W7fqMDg@public.gmane.org>
+> +Description:
+> +               The firmware provides DMI structures as a packed list of
+> +               data referenced by a SMBIOS table entry point. The SMBIOS
+> +               entry point contains general information, like SMBIOS
+> +               version, DMI table size, etc. The structure, content and
+> +               size of SMBIOS entry point is dependent on SMBIOS version.
+> +               The format of SMBIOS entry point and DMI structures
+> +               can be read in SMBIOS specification.
+> +
+> +               The dmi/tables provides raw SMBIOS entry point and DMI tables
+> +               through sysfs as an alternative to utilities reading them
+> +               from /dev/mem. The raw SMBIOS entry point and DMI table are
+> +               presented as binary attributes and are accessible via:
+> +
+> +               /sys/firmware/dmi/tables/smbios_entry_point
+> +               /sys/firmware/dmi/tables/DMI
+> +
+> +               The complete DMI information can be obtained using these two
+> +               tables.
+> diff --git a/drivers/firmware/dmi-sysfs.c b/drivers/firmware/dmi-sysfs.c
+> index e0f1cb3..ef76e5e 100644
+> --- a/drivers/firmware/dmi-sysfs.c
+> +++ b/drivers/firmware/dmi-sysfs.c
+> @@ -566,7 +566,6 @@ static struct kobj_type dmi_sysfs_entry_ktype = {
+>         .default_attrs = dmi_sysfs_entry_attrs,
+>  };
+>
+> -static struct kobject *dmi_kobj;
+>  static struct kset *dmi_kset;
+>
+>  /* Global count of all instances seen.  Only for setup */
+> @@ -648,17 +647,20 @@ static void cleanup_entry_list(void)
+>
+>  static int __init dmi_sysfs_init(void)
+>  {
+> -       int error = -ENOMEM;
+> +       int error;
+>         int val;
+>
+> -       /* Set up our directory */
+> -       dmi_kobj = kobject_create_and_add("dmi", firmware_kobj);
+> -       if (!dmi_kobj)
+> +       if (!dmi_kobj) {
+> +               pr_err("dmi-sysfs: dmi entry is absent.\n");
+> +               error = -ENODATA;
+>                 goto err;
+> +       }
+>
+>         dmi_kset = kset_create_and_add("entries", NULL, dmi_kobj);
+> -       if (!dmi_kset)
+> +       if (!dmi_kset) {
+> +               error = -ENOMEM;
+>                 goto err;
+> +       }
+>
+>         val = 0;
+>         error = dmi_walk(dmi_sysfs_register_handle, &val);
+> @@ -675,7 +677,6 @@ static int __init dmi_sysfs_init(void)
+>  err:
+>         cleanup_entry_list();
+>         kset_unregister(dmi_kset);
+> -       kobject_put(dmi_kobj);
+>         return error;
+>  }
+>
+> @@ -685,8 +686,6 @@ static void __exit dmi_sysfs_exit(void)
+>         pr_debug("dmi-sysfs: unloading.\n");
+>         cleanup_entry_list();
+>         kset_unregister(dmi_kset);
+> -       kobject_del(dmi_kobj);
+> -       kobject_put(dmi_kobj);
+>  }
+>
+>  module_init(dmi_sysfs_init);
+> diff --git a/drivers/firmware/dmi_scan.c b/drivers/firmware/dmi_scan.c
+> index a864a6b..9705be2 100644
+> --- a/drivers/firmware/dmi_scan.c
+> +++ b/drivers/firmware/dmi_scan.c
+> @@ -10,6 +10,9 @@
+>  #include <asm/dmi.h>
+>  #include <asm/unaligned.h>
+>
+> +struct kobject *dmi_kobj;
+> +EXPORT_SYMBOL_GPL(dmi_kobj);
+> +
+>  /*
+>   * DMI stands for "Desktop Management Interface".  It is part
+>   * of and an antecedent to, SMBIOS, which stands for System
+> @@ -20,6 +23,9 @@ static const char dmi_empty_string[] = "        ";
+>  static u32 dmi_ver __initdata;
+>  static u32 dmi_len;
+>  static u16 dmi_num;
+> +static u8 smbios_entry_point[32];
+> +static int smbios_entry_point_size;
+> +
+>  /*
+>   * Catch too early calls to dmi_check_system():
+>   */
+> @@ -478,6 +484,8 @@ static int __init dmi_present(const u8 *buf)
+>         if (memcmp(buf, "_SM_", 4) == 0 &&
+>             buf[5] < 32 && dmi_checksum(buf, buf[5])) {
+>                 smbios_ver = get_unaligned_be16(buf + 6);
+> +               smbios_entry_point_size = buf[5];
+> +               memcpy(smbios_entry_point, buf, smbios_entry_point_size);
+>
+>                 /* Some BIOS report weird SMBIOS version, fix that up */
+>                 switch (smbios_ver) {
+> @@ -512,6 +520,9 @@ static int __init dmi_present(const u8 *buf)
+>                                 pr_info("SMBIOS %d.%d present.\n",
+>                                        dmi_ver >> 8, dmi_ver & 0xFF);
+>                         } else {
+> +                               smbios_entry_point_size = 15;
+> +                               memcpy(smbios_entry_point, buf,
+> +                                      smbios_entry_point_size);
+>                                 pr_info("Legacy DMI %d.%d present.\n",
+>                                        dmi_ver >> 8, dmi_ver & 0xFF);
+>                         }
+> @@ -538,6 +549,8 @@ static int __init dmi_smbios3_present(const u8 *buf)
+>                 dmi_num = 0;                    /* No longer specified */
+>                 dmi_len = get_unaligned_le32(buf + 12);
+>                 dmi_base = get_unaligned_le64(buf + 16);
+> +               smbios_entry_point_size = buf[6];
+> +               memcpy(smbios_entry_point, buf, smbios_entry_point_size);
+>
+>                 if (dmi_walk_early(dmi_decode) == 0) {
+>                         pr_info("SMBIOS %d.%d.%d present.\n",
+> @@ -629,6 +642,75 @@ void __init dmi_scan_machine(void)
+>         dmi_initialized = 1;
+>  }
+>
+> +static ssize_t raw_table_read(struct file *file, struct kobject *kobj,
+> +                             struct bin_attribute *attr, char *buf,
+> +                             loff_t pos, size_t count)
+> +{
+> +       memcpy(buf, attr->private + pos, count);
+> +       return count;
+> +}
+> +
+> +static BIN_ATTR(smbios_entry_point, S_IRUSR, raw_table_read, NULL, 0);
+> +static BIN_ATTR(DMI, S_IRUSR, raw_table_read, NULL, 0);
+> +
+> +static int __init dmi_init(void)
+> +{
+> +       int ret;
+> +       u8 *dmi_table = NULL;
+> +       struct kobject *tables_kobj = NULL;
+> +
+> +       if (!dmi_available) {
+> +               ret = -ENODATA;
+> +               goto err;
+> +       }
+> +
+> +       /*
+> +        * Set up dmi directory at /sys/firmware/dmi. This entry should stay
+> +        * even after farther error, as it can be used by other modules like
+> +        * dmi-sysfs.
+> +        */
+> +       dmi_kobj = kobject_create_and_add("dmi", firmware_kobj);
+> +       tables_kobj = kobject_create_and_add("tables", dmi_kobj);
+> +       if (!(dmi_kobj && tables_kobj)) {
+> +               ret = -ENOMEM;
+> +               goto err;
+> +       }
+> +
+> +       bin_attr_smbios_entry_point.size = smbios_entry_point_size;
+> +       bin_attr_smbios_entry_point.private = smbios_entry_point;
+> +       ret = sysfs_create_bin_file(tables_kobj, &bin_attr_smbios_entry_point);
+> +       if (ret)
+> +               goto err;
+> +
+> +       dmi_table = dmi_remap(dmi_base, dmi_len);
+> +       if (!dmi_table) {
+> +               ret = -ENOMEM;
+> +               goto err;
+> +       }
+> +
+> +       bin_attr_DMI.size = dmi_len;
+> +       bin_attr_DMI.private = dmi_table;
+> +       ret = sysfs_create_bin_file(tables_kobj, &bin_attr_DMI);
+> +       if (!ret)
+> +               return 0;
+> +
+> +err:
+> +       pr_err("dmi: Firmware registration failed.\n");
+> +
+> +       if (tables_kobj) {
+> +               sysfs_remove_bin_file(tables_kobj,
+> +                                     &bin_attr_smbios_entry_point);
+> +               kobject_del(tables_kobj);
+> +               kobject_put(tables_kobj);
+> +       }
+> +
+> +       if (dmi_table)
+> +               dmi_unmap(dmi_table);
+> +
+> +       return ret;
+> +}
+> +subsys_initcall(dmi_init);
+> +
+>  /**
+>   * dmi_set_dump_stack_arch_desc - set arch description for dump_stack()
+>   *
+> diff --git a/include/linux/dmi.h b/include/linux/dmi.h
+> index f820f0a..2f9f988 100644
+> --- a/include/linux/dmi.h
+> +++ b/include/linux/dmi.h
+> @@ -2,6 +2,7 @@
+>  #define __DMI_H__
+>
+>  #include <linux/list.h>
+> +#include <linux/kobject.h>
+>  #include <linux/mod_devicetable.h>
+>
+>  /* enum dmi_field is in mod_devicetable.h */
+> @@ -93,6 +94,7 @@ struct dmi_dev_onboard {
+>         int devfn;
+>  };
+>
+> +extern struct kobject *dmi_kobj;
+>  extern int dmi_check_system(const struct dmi_system_id *list);
+>  const struct dmi_system_id *dmi_first_match(const struct dmi_system_id *list);
+>  extern const char * dmi_get_system_info(int field);
+> --
+> 1.9.1
+>
