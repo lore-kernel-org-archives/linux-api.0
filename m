@@ -1,209 +1,130 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [v13 1/5] vfs: adds general codes to enforces project quota
- limits
-Date: Tue, 21 Apr 2015 13:56:24 +0200
-Message-ID: <20150421115624.GG24278@quack.suse.cz>
-References: <1429493988-16819-1-git-send-email-lixi@ddn.com>
- <1429493988-16819-2-git-send-email-lixi@ddn.com>
+From: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 0/3] UserfaultFD: Extension for non cooperative uffd usage
+Date: Tue, 21 Apr 2015 14:02:22 +0200
+Message-ID: <20150421120222.GC4481@redhat.com>
+References: <5509D342.7000403@parallels.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1429493988-16819-2-git-send-email-lixi-LfVdkaOWEx8@public.gmane.org>
+In-Reply-To: <5509D342.7000403-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+To: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Sanidhya Kashyap <sanidhya.gatech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Dr. David Alan Gilbert" <dgilbert-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 20-04-15 10:39:44, Li Xi wrote:
-> This patch adds support for a new quota type PRJQUOTA for project quota
-> enforcement. Also a new method get_projid() is added into dquot_operations
-> structure.
-> 
-> Signed-off-by: Li Xi <lixi-LfVdkaOWEx8@public.gmane.org>
-> Signed-off-by: Dmitry Monakhov <dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-> Reviewed-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-  This patch is now upstream as commit
-847aac644e92e5624f2c153bab409bf713d5ff9a. So you don't have to send it
-in the next posting if you rebase on top of latest Linus' tree.
+Hi Pavel,
 
-								Honza
-> ---
->  fs/quota/dquot.c           |   35 ++++++++++++++++++++++++++++++-----
->  fs/quota/quota.c           |    5 ++++-
->  fs/quota/quotaio_v2.h      |    6 ++++--
->  include/linux/quota.h      |    2 ++
->  include/uapi/linux/quota.h |    6 ++++--
->  5 files changed, 44 insertions(+), 10 deletions(-)
+On Wed, Mar 18, 2015 at 10:34:26PM +0300, Pavel Emelyanov wrote:
+> Hi,
 > 
-> diff --git a/fs/quota/dquot.c b/fs/quota/dquot.c
-> index 8f0acef..a02bb68 100644
-> --- a/fs/quota/dquot.c
-> +++ b/fs/quota/dquot.c
-> @@ -1159,8 +1159,8 @@ static int need_print_warning(struct dquot_warn *warn)
->  			return uid_eq(current_fsuid(), warn->w_dq_id.uid);
->  		case GRPQUOTA:
->  			return in_group_p(warn->w_dq_id.gid);
-> -		case PRJQUOTA:	/* Never taken... Just make gcc happy */
-> -			return 0;
-> +		case PRJQUOTA:
-> +			return 1;
->  	}
->  	return 0;
->  }
-> @@ -1399,6 +1399,9 @@ static void __dquot_initialize(struct inode *inode, int type)
->  	/* First get references to structures we might need. */
->  	for (cnt = 0; cnt < MAXQUOTAS; cnt++) {
->  		struct kqid qid;
-> +		kprojid_t projid;
-> +		int rc;
-> +
->  		got[cnt] = NULL;
->  		if (type != -1 && cnt != type)
->  			continue;
-> @@ -1409,6 +1412,10 @@ static void __dquot_initialize(struct inode *inode, int type)
->  		 */
->  		if (i_dquot(inode)[cnt])
->  			continue;
-> +
-> +		if (!sb_has_quota_active(sb, cnt))
-> +			continue;
-> +
->  		init_needed = 1;
->  
->  		switch (cnt) {
-> @@ -1418,6 +1425,12 @@ static void __dquot_initialize(struct inode *inode, int type)
->  		case GRPQUOTA:
->  			qid = make_kqid_gid(inode->i_gid);
->  			break;
-> +		case PRJQUOTA:
-> +			rc = inode->i_sb->dq_op->get_projid(inode, &projid);
-> +			if (rc)
-> +				continue;
-> +			qid = make_kqid_projid(projid);
-> +			break;
->  		}
->  		got[cnt] = dqget(sb, qid);
->  	}
-> @@ -2161,7 +2174,8 @@ static int vfs_load_quota_inode(struct inode *inode, int type, int format_id,
->  		error = -EROFS;
->  		goto out_fmt;
->  	}
-> -	if (!sb->s_op->quota_write || !sb->s_op->quota_read) {
-> +	if (!sb->s_op->quota_write || !sb->s_op->quota_read ||
-> +	    (type == PRJQUOTA && sb->dq_op->get_projid == NULL)) {
->  		error = -EINVAL;
->  		goto out_fmt;
->  	}
-> @@ -2402,8 +2416,19 @@ static void do_get_dqblk(struct dquot *dquot, struct fs_disk_quota *di)
->  
->  	memset(di, 0, sizeof(*di));
->  	di->d_version = FS_DQUOT_VERSION;
-> -	di->d_flags = dquot->dq_id.type == USRQUOTA ?
-> -			FS_USER_QUOTA : FS_GROUP_QUOTA;
-> +	switch (dquot->dq_id.type) {
-> +	case USRQUOTA:
-> +		di->d_flags = FS_USER_QUOTA;
-> +		break;
-> +	case GRPQUOTA:
-> +		di->d_flags = FS_GROUP_QUOTA;
-> +		break;
-> +	case PRJQUOTA:
-> +		di->d_flags = FS_PROJ_QUOTA;
-> +		break;
-> +	default:
-> +		BUG();
-> +	}
->  	di->d_id = from_kqid_munged(current_user_ns(), dquot->dq_id);
->  
->  	spin_lock(&dq_data_lock);
-> diff --git a/fs/quota/quota.c b/fs/quota/quota.c
-> index 2aa4151..33b30b1 100644
-> --- a/fs/quota/quota.c
-> +++ b/fs/quota/quota.c
-> @@ -30,7 +30,10 @@ static int check_quotactl_permission(struct super_block *sb, int type, int cmd,
->  	case Q_XGETQSTATV:
->  	case Q_XQUOTASYNC:
->  		break;
-> -	/* allow to query information for dquots we "own" */
-> +	/*
-> +	 * allow to query information for dquots we "own"
-> +	 * always allow querying project quota
-> +	 */
->  	case Q_GETQUOTA:
->  	case Q_XGETQUOTA:
->  		if ((type == USRQUOTA && uid_eq(current_euid(), make_kuid(current_user_ns(), id))) ||
-> diff --git a/fs/quota/quotaio_v2.h b/fs/quota/quotaio_v2.h
-> index f1966b4..4e95430 100644
-> --- a/fs/quota/quotaio_v2.h
-> +++ b/fs/quota/quotaio_v2.h
-> @@ -13,12 +13,14 @@
->   */
->  #define V2_INITQMAGICS {\
->  	0xd9c01f11,	/* USRQUOTA */\
-> -	0xd9c01927	/* GRPQUOTA */\
-> +	0xd9c01927,	/* GRPQUOTA */\
-> +	0xd9c03f14,	/* PRJQUOTA */\
->  }
->  
->  #define V2_INITQVERSIONS {\
->  	1,		/* USRQUOTA */\
-> -	1		/* GRPQUOTA */\
-> +	1,		/* GRPQUOTA */\
-> +	1,		/* PRJQUOTA */\
->  }
->  
->  /* First generic header */
-> diff --git a/include/linux/quota.h b/include/linux/quota.h
-> index 50978b7..ba51f7e 100644
-> --- a/include/linux/quota.h
-> +++ b/include/linux/quota.h
-> @@ -50,6 +50,7 @@
->  
->  #undef USRQUOTA
->  #undef GRPQUOTA
-> +#undef PRJQUOTA
->  enum quota_type {
->  	USRQUOTA = 0,		/* element used for user quotas */
->  	GRPQUOTA = 1,		/* element used for group quotas */
-> @@ -317,6 +318,7 @@ struct dquot_operations {
->  	/* get reserved quota for delayed alloc, value returned is managed by
->  	 * quota code only */
->  	qsize_t *(*get_reserved_space) (struct inode *);
-> +	int (*get_projid) (struct inode *, kprojid_t *);/* Get project ID */
->  };
->  
->  struct path;
-> diff --git a/include/uapi/linux/quota.h b/include/uapi/linux/quota.h
-> index 3b6cfbe..b2d9486 100644
-> --- a/include/uapi/linux/quota.h
-> +++ b/include/uapi/linux/quota.h
-> @@ -36,11 +36,12 @@
->  #include <linux/errno.h>
->  #include <linux/types.h>
->  
-> -#define __DQUOT_VERSION__	"dquot_6.5.2"
-> +#define __DQUOT_VERSION__	"dquot_6.6.0"
->  
-> -#define MAXQUOTAS 2
-> +#define MAXQUOTAS 3
->  #define USRQUOTA  0		/* element used for user quotas */
->  #define GRPQUOTA  1		/* element used for group quotas */
-> +#define PRJQUOTA  2		/* element used for project quotas */
->  
->  /*
->   * Definitions for the default names of the quotas files.
-> @@ -48,6 +49,7 @@
->  #define INITQFNAMES { \
->  	"user",    /* USRQUOTA */ \
->  	"group",   /* GRPQUOTA */ \
-> +	"project", /* PRJQUOTA */ \
->  	"undefined", \
->  };
->  
-> -- 
-> 1.7.1
+> On the recent LSF Andrea presented his userfault-fd patches and
+> I had shown some issues that appear in usage scenarios when the
+> monitor task and mm task do not cooperate to each other on VM
+> changes (and fork()-s).
 > 
--- 
-Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-SUSE Labs, CR
+> Here's the implementation of the extended uffd API that would help 
+> us to address those issues.
+> 
+> As proof of concept I've implemented only fix for fork() case, but
+> I also plan to add the mremap() and exit() notifications, both are
+> also required for such non-cooperative usage.
+> 
+> More details about the extension itself is in patch #2 and the fork()
+> notification description is in patch #3.
+> 
+> Comments and suggestion are warmly welcome :)
+
+This looks feasible.
+
+> Andrea, what's the best way to go on with the patches -- would you
+> prefer to include them in your git tree or should I instead continue
+> with them on my own, re-sending them when required? Either way would
+> be OK for me.
+
+Ok so various improvements happened in userfaultfd patchset over the
+last month so your incremental patchset likely requires a rebase
+sorry. When you posted it I was in the middle of the updates. Now
+things are working stable and I have no pending updates, so it would
+be a good time for a rebase.
+
+I can merge it if you like, it's your call if you prefer to maintain
+it incrementally or if I should merge it, but I wouldn't push it to
+Andrew for upstream integration in the first batch, as this
+complicates things further and it's not fully complete yet (at least
+the version posted only handled fork). I think it can be merged
+incrementally in a second stage.
+
+The major updates of the userfaultfd patchset over the last month were:
+
+1) Various mixed fixes thanks to the feedback from Dave Hansen and
+   David Gilbert.
+
+   The most notable one is the use of mm_users instead of mm_count to
+   pin the mm to avoid crashes that assumed the vma still existed (in
+   the userfaultfd_release method and in the various ioctl). exit_mmap
+   doesn't even set mm->mmap to NULL, so unless I introduce a
+   userfaultfd_exit to call in mmput, I have to pin the mm_users to be
+   safe. This is mainly an issue for the non-cooperative usage you're
+   implementing. Can you catch the exit somehow so you can close the
+   fd? The memory won't be released until you do. Is this ok with you?
+   I suppose you had to close the fd somehow anyway.
+
+2) userfaults are waken immediately even if they're not been "read"
+   yet, this can lead to POLLIN false positives (so I only allow poll
+   if the fd is open in nonblocking mode to be sure it won't hang). Is
+   it too paranoid to return POLLERR if the fd is not open in
+   nonblocking mode?
+
+	http://git.kernel.org/cgit/linux/kernel/git/andrea/aa.git/commit/?h=userfault&id=f222d9de0a5302dc8ac62d6fab53a84251098751
+
+3) optimize read to return entries in O(1) and poll which was already
+   O(1) becomes lockless. This required to split the waitqueue in two,
+   one for pending faults and one for non pending faults, and the
+   faults are refiled across the two waitqueues when they're
+   read. Both waitqueues are protected by a single lock to be simpler
+   and faster at runtime (the fault_pending_wqh one).
+
+	http://git.kernel.org/cgit/linux/kernel/git/andrea/aa.git/commit/?h=userfault&id=9aa033ed43a1134c2223dac8c5d9e02e0100fca1
+
+4) Allocate the ctx with kmem_cache_alloc. This is going to collide a
+   bit with your cleanup patch sorry.
+
+	http://git.kernel.org/cgit/linux/kernel/git/andrea/aa.git/commit/?h=userfault&id=f5a8db16d2876eed8906a4d36f1d0e06ca5490f6
+
+5) Originally qemu had two bitflags for each page and kept 3 states
+   (of the 4 possible with two bits) for each page in order to deal
+   with the races that can happen if one thread is reading the
+   userfaults and another thread is calling the UFFDIO_COPY ioctl in
+   the background. This patch solves all races in the kernel so the
+   two bits per page can be dropped from qemu codebase. I started
+   documenting the races that can materialize by using 2 threads
+   (instead of running the workload single threaded with a single poll
+   event loop), and how userland had to solve them until I decided it
+   was simpler to fix the race in the kernel by running an ad-hoc
+   pagetable walk inside the wait_event()-kind-of-section. This
+   simplified qemu significantly and it doesn't make the kernel much
+   more complicated.
+
+   I tried this before in much older versions but I use gup_fast for
+   it and it didn't work well with gup_fast for various reasons.
+
+   http://git.kernel.org/cgit/linux/kernel/git/andrea/aa.git/commit/?h=userfault&id=41efeae4e93f0296436f2a9fc6b28b6b0158512a
+
+   After this patch the only reason to call UFFDIO_WAKE is to handle
+   the userfaults in batches in combination with the DONT_WAKE flag of
+   UFFDIO_COPY.
+
+6) I removed the read recursion from mcopy_atomic. This avoids to
+   depend on the write-starvation behavior of rwsem to be safe. After
+   this change the rwsem is free to stop any further down_read if
+   there's a down_write waiting on the lock.
+
+   	  http://git.kernel.org/cgit/linux/kernel/git/andrea/aa.git/commit/?h=userfault&id=b1e3a08acc9e3f6c2614e89fc3b8e338daa58e18
+
+About other troubles for the non cooperative usage: MADV_DONTNEED
+likely needs to be trapped too or how do you know that you shall map a
+zero page instead of the old data at the faulting address?
+
+Thanks,
+Andrea
