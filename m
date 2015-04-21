@@ -1,115 +1,43 @@
-From: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 2/3] uffd: Introduce the v2 API
-Date: Tue, 21 Apr 2015 14:18:17 +0200
-Message-ID: <20150421121817.GD4481@redhat.com>
-References: <5509D342.7000403@parallels.com>
- <5509D375.7000809@parallels.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [v13 2/5] ext4: adds project ID support
+Date: Tue, 21 Apr 2015 14:19:46 +0200
+Message-ID: <20150421121946.GH24278@quack.suse.cz>
+References: <1429493988-16819-1-git-send-email-lixi@ddn.com>
+ <1429493988-16819-3-git-send-email-lixi@ddn.com>
+ <60E980ED-C4CF-4558-B0A2-5E5671388BE1@dilger.ca>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <5509D375.7000809-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+In-Reply-To: <60E980ED-C4CF-4558-B0A2-5E5671388BE1-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Sanidhya Kashyap <sanidhya.gatech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Cc: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 18, 2015 at 10:35:17PM +0300, Pavel Emelyanov wrote:
-> +		if (!(ctx->features & UFFD_FEATURE_LONGMSG)) {
-
-If we are to use different protocols, it'd be nicer to have two
-different methods to assign to userfaultfd_fops.read that calls an
-__always_inline function, so that the above check can be optimized
-away at build time when the inline is expanded. So the branch is
-converted to calling a different pointer to function which is zero
-additional cost.
-
-> +			/* careful to always initialize addr if ret == 0 */
-> +			__u64 uninitialized_var(addr);
-> +			__u64 uninitialized_var(mtype);
-> +			if (count < sizeof(addr))
-> +				return ret ? ret : -EINVAL;
-> +			_ret = userfaultfd_ctx_read(ctx, no_wait, &mtype, &addr);
-> +			if (_ret < 0)
-> +				return ret ? ret : _ret;
-> +			BUG_ON(mtype != UFFD_PAGEFAULT);
-> +			if (put_user(addr, (__u64 __user *) buf))
-> +				return ret ? ret : -EFAULT;
-> +			_ret = sizeof(addr);
-> +		} else {
-> +			struct uffd_v2_msg msg;
-> +			if (count < sizeof(msg))
-> +				return ret ? ret : -EINVAL;
-> +			_ret = userfaultfd_ctx_read(ctx, no_wait, &msg.type, &msg.arg);
-> +			if (_ret < 0)
-> +				return ret ? ret : _ret;
-> +			if (copy_to_user(buf, &msg, sizeof(msg)))
-> +				return ret ? ret : -EINVAL;
-> +			_ret = sizeof(msg);
-
-Reading 16bytes instead of 8bytes for each fault, probably wouldn't
-move the needle much in terms of userfaultfd_read performance. Perhaps
-we could consider using the uffd_v2_msg unconditionally and then have
-a single protocol differentiated by the feature bits.
-
-The only reason to have two different protocols would be to be able to
-read 8 bytes per userfault, in the cooperative usage (i.e. qemu
-postcopy). But if we do that we want to use the __always_inline trick
-to avoid branches and additional runtime costs (otherwise we may as
-well forget all microoptimizations and read 16bytes always).
-
-> @@ -992,6 +1013,12 @@ static int userfaultfd_api(struct userfaultfd_ctx *ctx,
->  	/* careful not to leak info, we only read the first 8 bytes */
->  	uffdio_api.bits = UFFD_API_BITS;
->  	uffdio_api.ioctls = UFFD_API_IOCTLS;
-> +
-> +	if (uffdio_api.api == UFFD_API_V2) {
-> +		ctx->features |= UFFD_FEATURE_LONGMSG;
-> +		uffdio_api.bits |= UFFD_API_V2_BITS;
-> +	}
-> +
->  	ret = -EFAULT;
->  	if (copy_to_user(buf, &uffdio_api, sizeof(uffdio_api)))
->  		goto out;
-
-The original meaning of the bits is:
-
-If UFFD_BIT_WRITE was set in api.bits, it means the
-!!(address&UFFD_BIT_WRITE) tells if it was a write fault (missing or
-WP).
-
-If UFFD_BIT_WP was set in api.bits, it means the
-!!(address&UFFD_BIT_WP) tells if it was a WP fault (if not set it
-means it was a missing fault).
-
-Currently api.bits sets only UFFD_BIT_WRITE, and UFFD_BIT_WP will be
-set later, after the WP tracking mode will be implemented.
-
-I'm uncertain how bits translated to features and if they should be
-unified or only have features.
-
-> +struct uffd_v2_msg {
-> +	__u64	type;
-> +	__u64	arg;
-> +};
-> +
-> +#define UFFD_PAGEFAULT	0x1
-> +
-> +#define UFFD_PAGEFAULT_BIT	(1 << (UFFD_PAGEFAULT - 1))
-> +#define __UFFD_API_V2_BITS	(UFFD_PAGEFAULT_BIT)
-> +
-> +/*
-> + * Lower PAGE_SHIFT bits are used to report those supported
-> + * by the pagefault message itself. Other bits are used to
-> + * report the message types v2 API supports
-> + */
-> +#define UFFD_API_V2_BITS	(__UFFD_API_V2_BITS << 12)
-> +
-
-And why exactly is this 12 hardcoded? And which field should be masked
-with the bits? In the V1 protocol it was the "arg" (userfault address)
-not the "type". So this is a bit confusing and probably requires
-simplification.
-
-Thanks,
-Andrea
+On Mon 20-04-15 17:25:51, Andreas Dilger wrote:
+> On Apr 19, 2015, at 7:39 PM, Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> > 
+> > This patch adds a new internal field of ext4 inode to save project
+> > identifier. Also a new flag EXT4_INODE_PROJINHERIT is added for
+> > inheriting project ID from parent directory.
+> > 
+> 
+> > @@ -3930,12 +3939,18 @@ struct inode *ext4_iget(struct super_block *sb, unsigned long ino)
+> > 	inode->i_mode = le16_to_cpu(raw_inode->i_mode);
+> > 	i_uid = (uid_t)le16_to_cpu(raw_inode->i_uid_low);
+> > 	i_gid = (gid_t)le16_to_cpu(raw_inode->i_gid_low);
+> > +	if (EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_PROJECT))
+> > +		i_projid = (projid_t)le32_to_cpu(raw_inode->i_projid);
+> 
+> This needs to check if EXT4_PROJID_INHERIT_FL is set, and if i_projid
+> fits in i_extra_isize, otherwise it could be accessing a garbage value
+> beyond i_extra_isize.
+  We don't need to check EXT4_PROJID_INHERIT_FL. That is completely
+independent of whether project ID is stored or not. We should check whether
+project ID fits into the inode in this place, that is correct.
+	
+								Honza
+-- 
+Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+SUSE Labs, CR
