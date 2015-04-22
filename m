@@ -1,104 +1,86 @@
-From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v4 8/8] macvtap/tun: add VNET_BE flag
-Date: Wed, 22 Apr 2015 15:22:13 +0200
-Message-ID: <20150422152145-mutt-send-email-mst@redhat.com>
-References: <20150410101500.31843.61248.stgit@bahia.local>
- <20150410101923.31843.66853.stgit@bahia.local>
- <20150421160538-mutt-send-email-mst@redhat.com>
- <20150421182220.33257bd6@bahia.local>
- <20150421202542-mutt-send-email-mst@redhat.com>
- <20150422120129.275c0bc6@bahia.local>
+From: Li Xi <pkuelelixi@gmail.com>
+Subject: Re: [v13 3/5] ext4: adds project quota support
+Date: Thu, 23 Apr 2015 02:52:21 +0800
+Message-ID: <CAPTn0cCxxaYyoXvDeY36g4Ss-P4JWZnTuAG_nabNWg43NSeREQ@mail.gmail.com>
+References: <1429493988-16819-1-git-send-email-lixi@ddn.com>
+	<1429493988-16819-4-git-send-email-lixi@ddn.com>
+	<000EC725-2B59-42E8-811E-0E41E6EBB306@dilger.ca>
+	<20150421123500.GI24278@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150422120129.275c0bc6-GiB8zCg7hOfDOqzlkpFKJg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Cornelia Huck <cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20150421123500.GI24278@quack.suse.cz>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Jan Kara <jack@suse.cz>
+Cc: Andreas Dilger <adilger@dilger.ca>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "hch@infradead.org" <hch@infradead.org>, Dmitry Monakhov <dmonakhov@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 22, 2015 at 12:01:29PM +0200, Greg Kurz wrote:
-> On Tue, 21 Apr 2015 20:30:23 +0200
-> "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> 
-> > On Tue, Apr 21, 2015 at 06:22:20PM +0200, Greg Kurz wrote:
-> > > On Tue, 21 Apr 2015 16:06:33 +0200
-> > > "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> > > 
-> > > > On Fri, Apr 10, 2015 at 12:20:21PM +0200, Greg Kurz wrote:
-> > > > > The VNET_LE flag was introduced to fix accesses to virtio 1.0 headers
-> > > > > that are always little-endian. It can also be used to handle the special
-> > > > > case of a legacy little-endian device implemented by a big-endian host.
-> > > > > 
-> > > > > Let's add a flag and ioctls for big-endian devices as well. If both flags
-> > > > > are set, little-endian wins.
-> > > > > 
-> > > > > Since this is isn't a common usecase, the feature is controlled by a kernel
-> > > > > config option (not set by default).
-> > > > > 
-> > > > > Both macvtap and tun are covered by this patch since they share the same
-> > > > > API with userland.
-> > > > > 
-> > > > > Signed-off-by: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-> > > > > ---
-> > > > >  drivers/net/Kconfig         |   12 ++++++++
-> > > > >  drivers/net/macvtap.c       |   60 +++++++++++++++++++++++++++++++++++++++++-
-> > > > >  drivers/net/tun.c           |   62 ++++++++++++++++++++++++++++++++++++++++++-
-> > > > >  include/uapi/linux/if_tun.h |    2 +
-> > > > >  4 files changed, 134 insertions(+), 2 deletions(-)
-> > > > > 
-> > > > > diff --git a/drivers/net/Kconfig b/drivers/net/Kconfig
-> > > > > index df51d60..f0e23a0 100644
-> > > > > --- a/drivers/net/Kconfig
-> > > > > +++ b/drivers/net/Kconfig
-> > > > > @@ -244,6 +244,18 @@ config TUN
-> > > > >  
-> > > > >  	  If you don't know what to use this for, you don't need it.
-> > > > >  
-> > > > > +config TUN_VNET_BE
-> > > > > +	bool "Support for big-endian vnet headers"
-> > > > > +	default n
-> > > > > +	---help---
-> > > > > +	  This option allows TUN/TAP and MACVTAP device drivers to parse
-> > > > > +	  vnet headers that are in big-endian byte order. It is useful
-> > > > > +	  when the headers come from a big-endian legacy virtio driver and
-> > > > > +	  the host is little-endian.
-> > > > > +
-> > > > > +	  Unless you have a little-endian system hosting a big-endian virtual
-> > > > > +	  machine with a virtio NIC, you should say N.
-> > > > > +
-> > > > 
-> > > > should mention cross-endian, not big-endian, right?
-> > > > 
-> > > 
-> > > The current TUN_VNET_LE related code is already doing cross-endian: without
-> > > this patch, one can already run a LE guest on a BE host... wouldn't it be
-> > > confusing to mention cross-endian only when the guest is BE ?
-> > 
-> > Hmm I think no - LE is also useful for virtio 1 - this is what it was
-> > intended for after all.
-> > 
-> > > What about having a completely distinct implementation for cross-endian that
-> > > don't reuse the existing code and defines then ?
-> > 
-> > I think implementation and interface are fine, just the documentation
-> > can be improved a bit.
-> > 
-> > How about:
-> > 	"Support for cross-endian vnet headers on little-endian kernels".
-> > 
-> > Accordingly CONFIG_TUN_VNET_CROSS_LE
-> > 
-> > ?
-> > 
-> 
-> Sure. And what about also renaming the ioctl to TUNSETVNETCROSSLE then ?
-> 
+I agree that we need to deciede which inode numbers to use for special
+system file. Anyway, I will use the first way in the next version of
+patch.
+
+On Tue, Apr 21, 2015 at 8:35 PM, Jan Kara <jack@suse.cz> wrote:
+> On Mon 20-04-15 17:27:20, Andreas Dilger wrote:
+>> On Apr 19, 2015, at 7:39 PM, Li Xi <pkuelelixi@gmail.com> wrote:
+> ...
+>> > diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+>> > index 1446c4f..a7acf10 100644
+>> > --- a/fs/ext4/ext4.h
+>> > +++ b/fs/ext4/ext4.h
+>> > @@ -1169,7 +1169,8 @@ struct ext4_super_block {
+>> >     __le32  s_overhead_clusters;    /* overhead blocks/clusters in fs */
+>> >     __le32  s_backup_bgs[2];        /* groups with sparse_super2 SBs */
+>> >     __u8    s_encrypt_algos[4];     /* Encryption algorithms in use  */
+>> > -   __le32  s_reserved[105];        /* Padding to the end of the block */
+>> > +   __le32  s_prj_quota_inum;       /* inode for tracking project quota */
+>> > +   __le32  s_reserved[104];        /* Padding to the end of the block */
+>> >     __le32  s_checksum;             /* crc32c(superblock) */
+>> > };
+>> >
+>> > @@ -1184,7 +1185,7 @@ struct ext4_super_block {
+>> > #define EXT4_MF_FS_ABORTED  0x0002  /* Fatal error detected */
+>> >
+>> > /* Number of quota types we support */
+>> > -#define EXT4_MAXQUOTAS 2
+>> > +#define EXT4_MAXQUOTAS 3
+>> >
+>> > /*
+>> >  * fourth extended-fs super-block data in memory
+>> > @@ -1376,6 +1377,7 @@ static inline int ext4_valid_inum(struct super_block *sb, unsigned long ino)
+>> >             ino == EXT4_BOOT_LOADER_INO ||
+>> >             ino == EXT4_JOURNAL_INO ||
+>> >             ino == EXT4_RESIZE_INO ||
+>> > +           ino == le32_to_cpu(EXT4_SB(sb)->s_es->s_prj_quota_inum) ||
+>>
+>> This extra check isn't needed, since s_proj_quota_inum will be a regular
+>> inode number and handled by the checks below.
+>   So I think this needs a final decision from Ted how we handle new system
+> files and use it consistently among all features - project quotas, orphan
+> file, etc. Ted, can you share your thoughts please? Options are:
+>
+> 1) We allocate inodes from normal inode pool and just store their inode
+>    numbers in superblock.
+> + no need to increase number of special inodes
+> - slightly less robust since inode can be anywhere
+> - needs special treatment from fsck to know inode isn't just some lost inode
+> - consumes space in sb for inode numbers
+>
+> 2) Like 1) but also create special "system" directory and attach system
+>    inodes there
+> + fsck just needs to know about the system directory, not about every
+>   special file
+> + no wasted space in sb for every special inode
+> - more code in kernel to implement this
+> - even less robust than 1) - when system directory gets corrupt, we are in
+>   trouble
+>
+> 3) Increase number of special inodes
+> + consistent with what we did upto now
+> + somewhat more robust since inode is in fixed place
+> - tune2fs needs to do quite some work to reserve more inodes
+> - wastes unused special inodes
+>
+>                                                                 Honza
 > --
-> Greg
-
-I think not.
-
--- 
-MST
+> Jan Kara <jack@suse.cz>
+> SUSE Labs, CR
