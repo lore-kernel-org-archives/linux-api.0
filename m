@@ -1,158 +1,87 @@
-From: Li Xi <pkuelelixi@gmail.com>
-Subject: [v14 2/4] ext4: adds project quota support
-Date: Thu, 23 Apr 2015 03:56:35 +0900
-Message-ID: <1429728997-21464-3-git-send-email-lixi@ddn.com>
+From: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [v14 4/4] ext4: cleanup inode flag definitions
+Date: Thu, 23 Apr 2015 03:56:37 +0900
+Message-ID: <1429728997-21464-5-git-send-email-lixi@ddn.com>
 References: <1429728997-21464-1-git-send-email-lixi@ddn.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1429728997-21464-1-git-send-email-lixi@ddn.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger@dilger.ca, jack@suse.cz, viro@zeniv.linux.org.uk, hch@infradead.org, dmonakhov@openvz.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1429728997-21464-1-git-send-email-lixi-LfVdkaOWEx8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This patch adds mount options for enabling/disabling project quota
-accounting and enforcement. A new specific inode is also used for
-project quota accounting.
+The inode flags defined in uapi/linux/fs.h were migrated from
+ext4.h. This patch changes the inode flag definitions in ext4.h
+to VFS definitions to make the gaps between them clearer.
 
-Signed-off-by: Li Xi <lixi@ddn.com>
-Signed-off-by: Dmitry Monakhov <dmonakhov@openvz.org>
-Reviewed-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Li Xi <lixi-LfVdkaOWEx8@public.gmane.org>
+Reviewed-by: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
 ---
- fs/ext4/ext4.h  |    5 ++-
- fs/ext4/super.c |   56 ++++++++++++++++++++++++++++++++++++++++++++++++++----
- 2 files changed, 54 insertions(+), 7 deletions(-)
+ fs/ext4/ext4.h |   50 +++++++++++++++++++++++++-------------------------
+ 1 files changed, 25 insertions(+), 25 deletions(-)
 
 diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index ebcc91e..0729a42 100644
+index 9995c53..f7ddf53 100644
 --- a/fs/ext4/ext4.h
 +++ b/fs/ext4/ext4.h
-@@ -1194,7 +1194,8 @@ struct ext4_super_block {
- 	__u8	s_encrypt_algos[4];	/* Encryption algorithms in use  */
- 	__u8	s_encrypt_pw_salt[16];	/* Salt used for string2key algorithm */
- 	__le32	s_lpf_ino;		/* Location of the lost+found inode */
--	__le32	s_reserved[100];	/* Padding to the end of the block */
-+	__le32	s_prj_quota_inum;	/* inode for tracking project quota */
-+	__le32	s_reserved[99];		/* Padding to the end of the block */
- 	__le32	s_checksum;		/* crc32c(superblock) */
- };
- 
-@@ -1217,7 +1218,7 @@ struct ext4_super_block {
- #endif
- 
- /* Number of quota types we support */
--#define EXT4_MAXQUOTAS 2
-+#define EXT4_MAXQUOTAS 3
- 
+@@ -352,34 +352,34 @@ struct flex_groups {
  /*
-  * fourth extended-fs super-block data in memory
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index 45558c9..c61bb6b 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -1022,8 +1022,8 @@ static int bdev_try_to_free_page(struct super_block *sb, struct page *page,
- }
+  * Inode flags
+  */
+-#define	EXT4_SECRM_FL			0x00000001 /* Secure deletion */
+-#define	EXT4_UNRM_FL			0x00000002 /* Undelete */
+-#define	EXT4_COMPR_FL			0x00000004 /* Compress file */
+-#define EXT4_SYNC_FL			0x00000008 /* Synchronous updates */
+-#define EXT4_IMMUTABLE_FL		0x00000010 /* Immutable file */
+-#define EXT4_APPEND_FL			0x00000020 /* writes to file may only append */
+-#define EXT4_NODUMP_FL			0x00000040 /* do not dump file */
+-#define EXT4_NOATIME_FL			0x00000080 /* do not update atime */
++#define	EXT4_SECRM_FL			FS_SECRM_FL        /* Secure deletion */
++#define	EXT4_UNRM_FL			FS_UNRM_FL         /* Undelete */
++#define	EXT4_COMPR_FL			FS_COMPR_FL        /* Compress file */
++#define EXT4_SYNC_FL			FS_SYNC_FL         /* Synchronous updates */
++#define EXT4_IMMUTABLE_FL		FS_IMMUTABLE_FL    /* Immutable file */
++#define EXT4_APPEND_FL			FS_APPEND_FL       /* writes to file may only append */
++#define EXT4_NODUMP_FL			FS_NODUMP_FL       /* do not dump file */
++#define EXT4_NOATIME_FL			FS_NOATIME_FL      /* do not update atime */
+ /* Reserved for compression usage... */
+-#define EXT4_DIRTY_FL			0x00000100
+-#define EXT4_COMPRBLK_FL		0x00000200 /* One or more compressed clusters */
+-#define EXT4_NOCOMPR_FL			0x00000400 /* Don't compress */
++#define EXT4_DIRTY_FL			FS_DIRTY_FL
++#define EXT4_COMPRBLK_FL		FS_COMPRBLK_FL     /* One or more compressed clusters */
++#define EXT4_NOCOMPR_FL			FS_NOCOMP_FL       /* Don't compress */
+ 	/* nb: was previously EXT2_ECOMPR_FL */
+-#define EXT4_ENCRYPT_FL			0x00000800 /* encrypted file */
++#define EXT4_ENCRYPT_FL			0x00000800         /* encrypted file */
+ /* End compression flags --- maybe not all used */
+-#define EXT4_INDEX_FL			0x00001000 /* hash-indexed directory */
+-#define EXT4_IMAGIC_FL			0x00002000 /* AFS directory */
+-#define EXT4_JOURNAL_DATA_FL		0x00004000 /* file data should be journaled */
+-#define EXT4_NOTAIL_FL			0x00008000 /* file tail should not be merged */
+-#define EXT4_DIRSYNC_FL			0x00010000 /* dirsync behaviour (directories only) */
+-#define EXT4_TOPDIR_FL			0x00020000 /* Top of directory hierarchies*/
+-#define EXT4_HUGE_FILE_FL               0x00040000 /* Set to each huge file */
+-#define EXT4_EXTENTS_FL			0x00080000 /* Inode uses extents */
+-#define EXT4_EA_INODE_FL	        0x00200000 /* Inode used for large EA */
+-#define EXT4_EOFBLOCKS_FL		0x00400000 /* Blocks allocated beyond EOF */
+-#define EXT4_INLINE_DATA_FL		0x10000000 /* Inode has inline data. */
+-#define EXT4_PROJINHERIT_FL		0x20000000 /* Create with parents projid */
+-#define EXT4_RESERVED_FL		0x80000000 /* reserved for ext4 lib */
++#define EXT4_INDEX_FL			FS_INDEX_FL        /* hash-indexed directory */
++#define EXT4_IMAGIC_FL			FS_IMAGIC_FL       /* AFS directory */
++#define EXT4_JOURNAL_DATA_FL		FS_JOURNAL_DATA_FL /* file data should be journaled */
++#define EXT4_NOTAIL_FL			FS_NOTAIL_FL       /* file tail should not be merged */
++#define EXT4_DIRSYNC_FL			FS_DIRSYNC_FL      /* dirsync behaviour (directories only) */
++#define EXT4_TOPDIR_FL			FS_TOPDIR_FL       /* Top of directory hierarchies*/
++#define EXT4_HUGE_FILE_FL               0x00040000         /* Set to each huge file */
++#define EXT4_EXTENTS_FL			FS_EXTENT_FL       /* Inode uses extents */
++#define EXT4_EA_INODE_FL	        0x00200000         /* Inode used for large EA */
++#define EXT4_EOFBLOCKS_FL		0x00400000         /* Blocks allocated beyond EOF */
++#define EXT4_INLINE_DATA_FL		0x10000000         /* Inode has inline data. */
++#define EXT4_PROJINHERIT_FL		FS_PROJINHERIT_FL  /* Create with parents projid */
++#define EXT4_RESERVED_FL		FS_RESERVED_FL     /* reserved for ext4 lib */
  
- #ifdef CONFIG_QUOTA
--#define QTYPE2NAME(t) ((t) == USRQUOTA ? "user" : "group")
--#define QTYPE2MOPT(on, t) ((t) == USRQUOTA?((on)##USRJQUOTA):((on)##GRPJQUOTA))
-+static char *quotatypes[] = INITQFNAMES;
-+#define QTYPE2NAME(t) (quotatypes[t])
- 
- static int ext4_write_dquot(struct dquot *dquot);
- static int ext4_acquire_dquot(struct dquot *dquot);
-@@ -3976,7 +3976,7 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
- 		sb->s_qcop = &dquot_quotactl_sysfile_ops;
- 	else
- 		sb->s_qcop = &ext4_qctl_operations;
--	sb->s_quota_types = QTYPE_MASK_USR | QTYPE_MASK_GRP;
-+	sb->s_quota_types = QTYPE_MASK_USR | QTYPE_MASK_GRP | QTYPE_MASK_PRJ;
- #endif
- 	memcpy(sb->s_uuid, es->s_uuid, sizeof(es->s_uuid));
- 
-@@ -5092,6 +5092,46 @@ restore_opts:
- 	return err;
- }
- 
-+static int ext4_statfs_project(struct super_block *sb,
-+			       kprojid_t projid, struct kstatfs *buf)
-+{
-+	struct kqid qid;
-+	struct dquot *dquot;
-+	u64 limit;
-+	u64 curblock;
-+
-+	qid = make_kqid_projid(projid);
-+	dquot = dqget(sb, qid);
-+	if (!dquot)
-+		return -ESRCH;
-+	spin_lock(&dq_data_lock);
-+
-+	limit = dquot->dq_dqb.dqb_bsoftlimit ?
-+		dquot->dq_dqb.dqb_bsoftlimit :
-+		dquot->dq_dqb.dqb_bhardlimit;
-+	if (limit && buf->f_blocks * buf->f_bsize > limit) {
-+		curblock = dquot->dq_dqb.dqb_curspace / buf->f_bsize;
-+		buf->f_blocks = limit / buf->f_bsize;
-+		buf->f_bfree = buf->f_bavail =
-+			(buf->f_blocks > curblock) ?
-+			 (buf->f_blocks - curblock) : 0;
-+	}
-+
-+	limit = dquot->dq_dqb.dqb_isoftlimit ?
-+		dquot->dq_dqb.dqb_isoftlimit :
-+		dquot->dq_dqb.dqb_ihardlimit;
-+	if (limit && buf->f_files > limit) {
-+		buf->f_files = limit;
-+		buf->f_ffree =
-+			(buf->f_files > dquot->dq_dqb.dqb_curinodes) ?
-+			 (buf->f_files - dquot->dq_dqb.dqb_curinodes) : 0;
-+	}
-+
-+	spin_unlock(&dq_data_lock);
-+	dqput(dquot);
-+	return 0;
-+}
-+
- static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf)
- {
- 	struct super_block *sb = dentry->d_sb;
-@@ -5100,6 +5140,7 @@ static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf)
- 	ext4_fsblk_t overhead = 0, resv_blocks;
- 	u64 fsid;
- 	s64 bfree;
-+	struct inode *inode = dentry->d_inode;
- 	resv_blocks = EXT4_C2B(sbi, atomic64_read(&sbi->s_resv_clusters));
- 
- 	if (!test_opt(sb, MINIX_DF))
-@@ -5124,6 +5165,9 @@ static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf)
- 	buf->f_fsid.val[0] = fsid & 0xFFFFFFFFUL;
- 	buf->f_fsid.val[1] = (fsid >> 32) & 0xFFFFFFFFUL;
- 
-+	if (ext4_test_inode_flag(inode, EXT4_INODE_PROJINHERIT) &&
-+	    sb_has_quota_limits_enabled(sb, PRJQUOTA))
-+		ext4_statfs_project(sb, EXT4_I(inode)->i_projid, buf);
- 	return 0;
- }
- 
-@@ -5288,7 +5332,8 @@ static int ext4_quota_enable(struct super_block *sb, int type, int format_id,
- 	struct inode *qf_inode;
- 	unsigned long qf_inums[EXT4_MAXQUOTAS] = {
- 		le32_to_cpu(EXT4_SB(sb)->s_es->s_usr_quota_inum),
--		le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum)
-+		le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum),
-+		le32_to_cpu(EXT4_SB(sb)->s_es->s_prj_quota_inum)
- 	};
- 
- 	BUG_ON(!EXT4_HAS_RO_COMPAT_FEATURE(sb, EXT4_FEATURE_RO_COMPAT_QUOTA));
-@@ -5316,7 +5361,8 @@ static int ext4_enable_quotas(struct super_block *sb)
- 	int type, err = 0;
- 	unsigned long qf_inums[EXT4_MAXQUOTAS] = {
- 		le32_to_cpu(EXT4_SB(sb)->s_es->s_usr_quota_inum),
--		le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum)
-+		le32_to_cpu(EXT4_SB(sb)->s_es->s_grp_quota_inum),
-+		le32_to_cpu(EXT4_SB(sb)->s_es->s_prj_quota_inum)
- 	};
- 
- 	sb_dqopt(sb)->flags |= DQUOT_QUOTA_SYS_FILE;
+ #define EXT4_FL_USER_VISIBLE		0x304BDFFF /* User visible flags */
+ #define EXT4_FL_USER_MODIFIABLE		0x204380FF /* User modifiable flags */
 -- 
 1.7.1
-
