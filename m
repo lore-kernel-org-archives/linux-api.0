@@ -1,139 +1,292 @@
-From: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
-Subject: Re: [v14 0/4] ext4: add project quota support
-Date: Wed, 22 Apr 2015 13:45:10 -0600
-Message-ID: <810F10F7-9374-492D-957F-523F8A9D34EE@dilger.ca>
-References: <1429728997-21464-1-git-send-email-lixi@ddn.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2098\))
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
+From: Sri Jayaramappa <sjayaram-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] Test compaction of mlocked memory
+Date: Wed, 22 Apr 2015 17:01:20 -0400
+Message-ID: <1429736480-8017-1-git-send-email-sjayaram@akamai.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1429728997-21464-1-git-send-email-lixi-LfVdkaOWEx8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: Sri Jayaramappa <sjayaram-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Apr 22, 2015, at 12:56 PM, Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> 
-> The following patches propose an implementation of project quota
-> support for ext4. A project is an aggregate of unrelated inodes
-> which might scatter in different directories. Inodes that belong
-> to the same project possess an identical identification i.e.
-> 'project ID', just like every inode has its user/group
-> identification. The following patches add project quota as
-> supplement to the former uer/group quota types.
-> 
-> The semantics of ext4 project quota is consistent with XFS. Each
-> directory can have EXT4_INODE_PROJINHERIT flag set. When the
-> EXT4_INODE_PROJINHERIT flag of a parent directory is not set, a
-> newly created inode under that directory will have a default project
-> ID (i.e. 0). And its EXT4_INODE_PROJINHERIT flag is not set either.
-> When this flag is set on a directory, following rules will be kept:
-> 
-> 1) The newly created inode under that directory will inherit both
-> the EXT4_INODE_PROJINHERIT flag and the project ID from its parent
-> directory.
-> 
-> 2) Hard-linking a inode with different project ID into that directory
-> will fail with errno EXDEV.
-> 
-> 3) Renaming a inode with different project ID into that directory
-> will fail with errno EXDEV. However, 'mv' command will detect this
-> failure and copy the renamed inode to a new inode in the directory.
-> Thus, this new inode will inherit both the project ID and
-> EXT4_INODE_PROJINHERIT flag.
-> 
-> 4) If the project quota of that ID is being enforced, statfs() on
-> that directory will take the quotas as another upper limits along
-> with the capacity of the file system, i.e. the total block/inode
-> number will be the minimum of the quota limits and file system
-> capacity.
+Commit commit 5bbe3547aa3b ("mm: allow compaction of unevictable pages")
+introduced a sysctl that allows userspace to enable scanning of locked
+pages for compaction.  This patch introduces a new test which fragments
+main memory and attempts to allocate a number of huge pages to exercise
+this compaction logic.
 
-Thanks for this last update.  You can add my Reviewed-by to the remaining
-patches in the series.
+Tested on machines with up to 32 GB RAM. With the patch a much larger
+number of huge pages can be allocated than on the kernel without the patch.
 
-Cheers, Andreas
+Signed-off-by: Sri Jayaramappa <sjayaram-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+---
+ tools/testing/selftests/vm/Makefile          |    2 +-
+ tools/testing/selftests/vm/compaction_test.c |  219 ++++++++++++++++++++++++++
+ tools/testing/selftests/vm/run_vmtests       |   12 ++
+ 3 files changed, 232 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/vm/compaction_test.c
 
-> Changelog:
-> * v14 <- v13:
-> - Cleanup ioctl of setting project ID;
-> - Do not check project quota inode number specially;
-> - Check isize when extract project ID from disk;
-> - Rebase to latest kernel (4.0.0)
-> * v13 <- v12:
-> - Update inode size check of project ID.
-> * v12 <- v11:
-> - Relax the permission check when setting project ID.
-> * v11 <- v10:
-> - Remove project quota mount option;
-> - Fix permission check when setting project ID.
-> * v10 <- v9:
-> - Remove non-journaled project quota interface;
-> - Only allow admin to read project quota info;
-> - Cleanup FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR interface.
-> * v9 <- v8:
-> - Remove non-journaled project quota;
-> - Rebase to newest dev branch of ext4 repository (3.19.0-rc3).
-> * v8 <- v7:
-> - Rebase to newest dev branch of ext4 repository (3.18.0_rc3).
-> * v7 <- v6:
-> - Map ext4 inode flags to xflags of struct fsxattr;
-> - Add patch to cleanup ext4 inode flag definitions.
-> * v6 <- v5:
-> - Add project ID check for cross rename;
-> - Remove patch of EXT4_IOC_GETPROJECT/EXT4_IOC_SETPROJECT ioctl
-> * v5 <- v4:
-> - Check project feature when set/get project ID;
-> - Do not check project feature for project quota;
-> - Add support of FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR.
-> * v4 <- v3:
-> - Do not check project feature when set/get project ID;
-> - Use EXT4_MAXQUOTAS instead of MAXQUOTAS in ext4 patches;
-> - Remove unnecessary change of fs/quota/dquot.c;
-> - Remove CONFIG_QUOTA_PROJECT.
-> * v3 <- v2:
-> - Add EXT4_INODE_PROJINHERIT semantics.
-> * v2 <- v1:
-> - Add ioctl interface for setting/getting project;
-> - Add EXT4_FEATURE_RO_COMPAT_PROJECT;
-> - Add get_projid() method in struct dquot_operations;
-> - Add error check of ext4_inode_projid_set/get().
-> 
-> v13: http://www.spinics.net/lists/linux-fsdevel/msg85205.html
-> v12: http://www.spinics.net/lists/linux-fsdevel/msg84905.html
-> v11: http://www.spinics.net/lists/linux-ext4/msg47450.html
-> v10: http://www.spinics.net/lists/linux-ext4/msg47413.html
-> v9: http://www.spinics.net/lists/linux-ext4/msg47326.html
-> v8: http://www.spinics.net/lists/linux-ext4/msg46545.html
-> v7: http://www.spinics.net/lists/linux-fsdevel/msg80404.html
-> v6: http://www.spinics.net/lists/linux-fsdevel/msg80022.html
-> v5: http://www.spinics.net/lists/linux-api/msg04840.html
-> v4: http://lwn.net/Articles/612972/
-> v3: http://www.spinics.net/lists/linux-ext4/msg45184.html
-> v2: http://www.spinics.net/lists/linux-ext4/msg44695.html
-> v1: http://article.gmane.org/gmane.comp.file-systems.ext4/45153
-> 
-> Any comments or feedbacks are appreciated.
-> 
-> Regards,
->                                         - Li Xi
-> 
-> Li Xi (4):
->  ext4: adds project ID support
->  ext4: adds project quota support
->  ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR interface support
->  ext4: cleanup inode flag definitions
-> 
-> fs/ext4/ext4.h          |   85 +++++++----
-> fs/ext4/ialloc.c        |    5 +
-> fs/ext4/inode.c         |   28 ++++
-> fs/ext4/ioctl.c         |  367 ++++++++++++++++++++++++++++++++++++-----------
-> fs/ext4/namei.c         |   20 +++
-> fs/ext4/super.c         |   57 +++++++-
-> fs/xfs/libxfs/xfs_fs.h  |   47 +++----
-> include/uapi/linux/fs.h |   33 +++++
-> 8 files changed, 489 insertions(+), 153 deletions(-)
-> 
-
-
-Cheers, Andreas
+diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
+index a5ce953..e528836 100644
+--- a/tools/testing/selftests/vm/Makefile
++++ b/tools/testing/selftests/vm/Makefile
+@@ -2,7 +2,7 @@
+ 
+ CFLAGS = -Wall
+ BINARIES = hugepage-mmap hugepage-shm map_hugetlb thuge-gen hugetlbfstest
+-BINARIES += transhuge-stress
++BINARIES += transhuge-stress compaction_test
+ 
+ all: $(BINARIES)
+ %: %.c
+diff --git a/tools/testing/selftests/vm/compaction_test.c b/tools/testing/selftests/vm/compaction_test.c
+new file mode 100644
+index 0000000..866bd71
+--- /dev/null
++++ b/tools/testing/selftests/vm/compaction_test.c
+@@ -0,0 +1,219 @@
++/*
++ * 
++ * A test for the patch "Allow compaction of unevictable pages".
++ * With this patch we should be able to allocate at least 1/4
++ * of RAM in huge pages. Without the patch much less is
++ * allocated.
++ */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <sys/mman.h>
++#include <sys/resource.h>
++#include <fcntl.h>
++#include <errno.h>
++#include <unistd.h>
++
++#define MAP_SIZE 1048576
++
++struct map_list {
++	void *map;
++	struct map_list *next;
++};
++
++int read_memory_info(unsigned long *memfree, unsigned long *hugepagesize)
++{
++	char  buffer[256] = {0};
++	char *cmd = "cat /proc/meminfo | grep -i memfree | grep -o '[0-9]*'";
++	FILE *cmdfile = popen(cmd, "r");
++	
++	if (!(fgets(buffer, sizeof(buffer), cmdfile))) {
++		perror("Failed to read meminfo\n");
++		return -1;
++	}
++	
++	pclose(cmdfile);
++	
++	*memfree = atoll(buffer);
++	cmd = "cat /proc/meminfo | grep -i hugepagesize | grep -o '[0-9]*'";
++	cmdfile = popen(cmd, "r");
++	
++	if (!(fgets(buffer, sizeof(buffer), cmdfile))) {
++		perror("Failed to read meminfo\n");
++		return -1;
++	}
++	
++	pclose(cmdfile);
++	*hugepagesize = atoll(buffer);
++	
++	return 0;
++}
++
++int prereq(void)
++{
++	char allowed;
++	int fd;
++
++	fd = open("/proc/sys/vm/compact_unevictable_allowed",
++		  O_RDONLY | O_NONBLOCK);
++	if (fd < 0) {
++		perror("Failed to open\n"
++		       "/proc/sys/vm/compact_unevictable_allowed\n");
++		return -1;
++	}
++	
++	if (read(fd, &allowed, sizeof(char)) < 0) {
++		perror("Failed to read from\n"
++		       "/proc/sys/vm/compact_unevictable_allowed\n");
++		close(fd);
++		return -1;
++	}
++	
++	close(fd);
++	if (allowed == '1')
++		return 0;
++	
++	return -1;
++}
++
++int check_compaction(unsigned long mem_free, unsigned int hugepage_size)  
++{
++	int fd;
++	int compaction_index = 0;
++	char initail_nr_hugepages[10] = {0};
++	char nr_hugepages[10] = {0};
++	
++	/* We want to test with 80% available memory. Else, OOM killer comes in
++	   to play */
++	mem_free = mem_free * 0.8;
++	
++	fd = open("/proc/sys/vm/nr_hugepages", O_RDWR | O_NONBLOCK);
++	if (fd < 0) {
++		perror("Failed to open /proc/sys/vm/nr_hugepages");
++		return -1;
++	}
++	
++	if (read(fd, initail_nr_hugepages, sizeof(initail_nr_hugepages)) < 0) {
++		perror("Failed to read from /proc/sys/vm/nr_hugepages");
++		goto close_fd;
++	}
++	
++	/* Start with the initial condition of 0 huge pages*/
++	if (write(fd, "0", 1) < 0) {
++		perror("Failed to write to /proc/sys/vm/nr_hugepages\n");
++		goto close_fd;
++	}
++	
++	lseek(fd, 0, SEEK_SET);
++	
++	/* Request a large number of huge pages. The Kernel will allocate
++	   as much as it can */
++	if (write(fd, "100000", 6) < 0) {
++		perror("Failed to write to /proc/sys/vm/nr_hugepages\n");
++		goto close_fd;
++	}
++	
++	lseek(fd, 0, SEEK_SET);
++	
++	if (read(fd, nr_hugepages, sizeof(nr_hugepages)) < 0) {
++		perror("Failed to read from /proc/sys/vm/nr_hugepages\n");
++		goto close_fd;
++	}
++	
++	/* We should have been able to request at least 1/4 th of the memory in
++	   huge pages */
++	compaction_index = mem_free/(atoi(nr_hugepages) * hugepage_size);
++	
++	if (compaction_index > 4) {
++		fprintf(stderr, "ERROR: Less that 1/%d of memory is available\n"
++			"as huge pages\n", compaction_index);
++		goto close_fd;
++	}
++	
++	if (write(fd, initail_nr_hugepages, sizeof(initail_nr_hugepages)) < 0) {
++		perror("Failed to write to /proc/sys/vm/nr_hugepages\n");
++		goto close_fd;
++	}
++	
++	close(fd);
++	return 0;
++	
++ close_fd:
++	close(fd);
++	printf("Not OK. Compaction test failed.");
++	return -1;
++}
++
++
++int main(int argc, char **argv)
++{
++	struct rlimit lim;
++	struct map_list *list, *entry;
++	size_t page_size, num_maps = 0, i;
++	void *map = NULL;
++	unsigned long mem_free = 0;
++	unsigned long hugepage_size = 0;
++	unsigned long mem_fragmentable = 0;
++	
++	if (prereq() != 0) {
++		printf("Either the sysctl compact_unevictable_allowed is not\n"
++		       "set to 1 or couldn't read the proc file.\n"
++		       "Skipping the test\n");
++		return 0;
++	}
++	
++	lim.rlim_cur = RLIM_INFINITY;
++	lim.rlim_max = RLIM_INFINITY;
++	if (setrlimit(RLIMIT_MEMLOCK, &lim)) {
++		perror("Failed to set rlimit:\n");
++		return -1;
++	}
++	
++	page_size = getpagesize();
++	
++	list = NULL;
++	
++	if (read_memory_info(&mem_free, &hugepage_size) != 0) {
++		printf("ERROR: Cannot read meminfo\n");
++		return -1;
++	}
++	
++	mem_fragmentable = mem_free * 0.8 / 1024;
++	
++	while (mem_fragmentable > 0) {
++		mem_fragmentable--;
++		map = mmap(NULL, MAP_SIZE, PROT_READ | PROT_WRITE,
++			   MAP_ANONYMOUS | MAP_PRIVATE | MAP_LOCKED, -1, 0);
++		if (map == MAP_FAILED)
++			break;
++		
++		entry = malloc(sizeof(struct map_list));
++		if (!entry) {
++			munmap(map, MAP_SIZE);
++			break;
++		}
++		entry->map = map;
++		entry->next = list;
++		list = entry;
++		
++		/* Write something (in this case the address of the map) to
++		 * ensure that KSM can't merge the mapped pages
++		 */
++		for (i = 0; i < MAP_SIZE; i += page_size)
++			*(unsigned long *)(map + i) = (unsigned long)map + i;
++		
++		num_maps++;
++	}
++	
++	for (entry = list; entry != NULL; entry = entry->next) {
++		munmap(entry->map, MAP_SIZE);
++		if (!entry->next)
++			break;
++		entry = entry->next;
++	}
++	
++	if (check_compaction(mem_free, hugepage_size) == 0) 
++		return 0;
++	
++	return -1;
++}
+diff --git a/tools/testing/selftests/vm/run_vmtests b/tools/testing/selftests/vm/run_vmtests
+index c87b681..49ece11 100755
+--- a/tools/testing/selftests/vm/run_vmtests
++++ b/tools/testing/selftests/vm/run_vmtests
+@@ -90,4 +90,16 @@ fi
+ umount $mnt
+ rm -rf $mnt
+ echo $nr_hugepgs > /proc/sys/vm/nr_hugepages
++
++echo "-----------------------"
++echo "running compaction_test"
++echo "-----------------------"
++./compaction_test
++if [ $? -ne 0 ]; then
++	echo "[FAIL]"
++	exitcode=1
++else
++	echo "[PASS]"
++fi
++
+ exit $exitcode
+-- 
+1.7.9.5
