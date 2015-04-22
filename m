@@ -1,97 +1,111 @@
-From: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH v4 8/8] macvtap/tun: add VNET_BE flag
-Date: Wed, 22 Apr 2015 12:01:29 +0200
-Message-ID: <20150422120129.275c0bc6@bahia.local>
+From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v4 7/8] vhost: feature to set the vring endianness
+Date: Wed, 22 Apr 2015 13:47:50 +0200
+Message-ID: <20150422134701-mutt-send-email-mst@redhat.com>
 References: <20150410101500.31843.61248.stgit@bahia.local>
-	<20150410101923.31843.66853.stgit@bahia.local>
-	<20150421160538-mutt-send-email-mst@redhat.com>
-	<20150421182220.33257bd6@bahia.local>
-	<20150421202542-mutt-send-email-mst@redhat.com>
+ <20150410101627.31843.21710.stgit@bahia.local>
+ <20150421155753-mutt-send-email-mst@redhat.com>
+ <20150421174820.78c150b7@bahia.local>
+ <20150421201636-mutt-send-email-mst@redhat.com>
+ <20150422110854.74988416@bahia.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150421202542-mutt-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150422110854.74988416-GiB8zCg7hOfDOqzlkpFKJg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Cornelia Huck <cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 21 Apr 2015 20:30:23 +0200
-"Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-
-> On Tue, Apr 21, 2015 at 06:22:20PM +0200, Greg Kurz wrote:
-> > On Tue, 21 Apr 2015 16:06:33 +0200
-> > "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> > 
-> > > On Fri, Apr 10, 2015 at 12:20:21PM +0200, Greg Kurz wrote:
-> > > > The VNET_LE flag was introduced to fix accesses to virtio 1.0 headers
-> > > > that are always little-endian. It can also be used to handle the special
-> > > > case of a legacy little-endian device implemented by a big-endian host.
+On Wed, Apr 22, 2015 at 11:08:54AM +0200, Greg Kurz wrote:
+> On Tue, 21 Apr 2015 20:25:03 +0200
+> "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> [ ... ]
+> > > > > @@ -630,6 +634,53 @@ static long vhost_set_memory(struct vhost_dev *d, struct vhost_memory __user *m)
+> > > > >  	return 0;
+> > > > >  }
+> > > > >  
+> > > > > +#ifdef CONFIG_VHOST_SET_ENDIAN_LEGACY
+> > > > > +static long vhost_set_vring_big_endian(struct vhost_virtqueue *vq,
+> > > > > +				       int __user *argp)
+> > > > > +{
+> > > > > +	struct vhost_vring_state s;
+> > > > > +
+> > > > > +	if (vq->private_data)
+> > > > > +		return -EBUSY;
+> > > > > +
+> > > > > +	if (copy_from_user(&s, argp, sizeof(s)))
+> > > > > +		return -EFAULT;
+> > > > > +
+> > > > > +	if (s.num && s.num != 1)
 > > > > 
-> > > > Let's add a flag and ioctls for big-endian devices as well. If both flags
-> > > > are set, little-endian wins.
+> > > > s.num & ~0x1
 > > > > 
-> > > > Since this is isn't a common usecase, the feature is controlled by a kernel
-> > > > config option (not set by default).
-> > > > 
-> > > > Both macvtap and tun are covered by this patch since they share the same
-> > > > API with userland.
-> > > > 
-> > > > Signed-off-by: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-> > > > ---
-> > > >  drivers/net/Kconfig         |   12 ++++++++
-> > > >  drivers/net/macvtap.c       |   60 +++++++++++++++++++++++++++++++++++++++++-
-> > > >  drivers/net/tun.c           |   62 ++++++++++++++++++++++++++++++++++++++++++-
-> > > >  include/uapi/linux/if_tun.h |    2 +
-> > > >  4 files changed, 134 insertions(+), 2 deletions(-)
-> > > > 
-> > > > diff --git a/drivers/net/Kconfig b/drivers/net/Kconfig
-> > > > index df51d60..f0e23a0 100644
-> > > > --- a/drivers/net/Kconfig
-> > > > +++ b/drivers/net/Kconfig
-> > > > @@ -244,6 +244,18 @@ config TUN
-> > > >  
-> > > >  	  If you don't know what to use this for, you don't need it.
-> > > >  
-> > > > +config TUN_VNET_BE
-> > > > +	bool "Support for big-endian vnet headers"
-> > > > +	default n
-> > > > +	---help---
-> > > > +	  This option allows TUN/TAP and MACVTAP device drivers to parse
-> > > > +	  vnet headers that are in big-endian byte order. It is useful
-> > > > +	  when the headers come from a big-endian legacy virtio driver and
-> > > > +	  the host is little-endian.
-> > > > +
-> > > > +	  Unless you have a little-endian system hosting a big-endian virtual
-> > > > +	  machine with a virtio NIC, you should say N.
-> > > > +
 > > > 
-> > > should mention cross-endian, not big-endian, right?
-> > > 
+> > > Since s.num is unsigned and I assume this won't change, what about
+> > > s.num > 1 as suggested by Cornelia ?
 > > 
-> > The current TUN_VNET_LE related code is already doing cross-endian: without
-> > this patch, one can already run a LE guest on a BE host... wouldn't it be
-> > confusing to mention cross-endian only when the guest is BE ?
+> > I just tried and gcc optimizes
+> > s.num != 0 && s.num != 1 to s.num > 1
+> > 
+> > The former will be more readable once we
+> > replace 0 and 1 with defines.
+> > 
+> > So ignore my advice, keep code as is but use defines.
+> > 
 > 
-> Hmm I think no - LE is also useful for virtio 1 - this is what it was
-> intended for after all.
+> Ok.
 > 
-> > What about having a completely distinct implementation for cross-endian that
-> > don't reuse the existing code and defines then ?
+> [ ... ] 
+> > > > > --- a/include/uapi/linux/vhost.h
+> > > > > +++ b/include/uapi/linux/vhost.h
+> > > > > @@ -103,6 +103,15 @@ struct vhost_memory {
+> > > > >  /* Get accessor: reads index, writes value in num */
+> > > > >  #define VHOST_GET_VRING_BASE _IOWR(VHOST_VIRTIO, 0x12, struct vhost_vring_state)
+> > > > >  
+> > > > > +/* Set the vring byte order in num. This is a legacy only API that is simply
+> > > > > + * ignored when VIRTIO_F_VERSION_1 is set.
+> > > > > + * 0 to set to little-endian
+> > > > > + * 1 to set to big-endian
+> > > > 
+> > > > How about defines for these?
+> > > > 
+> > > 
+> > > Ok. I'll put the defines here so that all the cross-endian stuff
+> > > lies in the same hunk. Is it ok for you ?
+> > 
+> > Fine.
+> > 
+> > > > > + * other values return EINVAL.
+> > 
+> > Pls also add a note saying that not all kernel configurations support this ioctl,
+> > but all configurations that support SET also support GET.
+> > 
 > 
-> I think implementation and interface are fine, just the documentation
-> can be improved a bit.
+> Ok.
 > 
-> How about:
-> 	"Support for cross-endian vnet headers on little-endian kernels".
+> > > > > + */
+> > > > > +#define VHOST_SET_VRING_BIG_ENDIAN _IOW(VHOST_VIRTIO, 0x13, struct vhost_vring_state)
+> > > > > +#define VHOST_GET_VRING_BIG_ENDIAN _IOW(VHOST_VIRTIO, 0x14, struct vhost_vring_state)
+> > > > > +
+> > > > >  /* The following ioctls use eventfd file descriptors to signal and poll
+> > > > >   * for events. */
+> > > > >  
+> > > > 
+> > 
+> > I'm inclined to think VHOST_SET_VRING_ENDIAN is a slightly better name.
+> > What do you think?
+> > 
 > 
-> Accordingly CONFIG_TUN_VNET_CROSS_LE
+> Or VHOST_SET_VRING_CROSS_ENDIAN ? I like the idea to keep a hint that this
+> API is for cross-endian only... like the rest of this series.
 > 
-> ?
-> 
+> --
+> Greg
 
-Sure. And what about also renaming the ioctl to TUNSETVNETCROSSLE then ?
+I think VHOST_SET_VRING_CROSS_ENDIAN is not a good name -
+it would imply 1 for cross endian, 0 for native endian.
 
---
-Greg
+-- 
+MST
