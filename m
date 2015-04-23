@@ -1,23 +1,62 @@
-From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC] capabilities: Ambient capabilities
-Date: Thu, 23 Apr 2015 09:01:02 -0500 (CDT)
-Message-ID: <alpine.DEB.2.11.1504230900260.32203@gentwo.org>
-References: <933931146caf5dac58379f50c017bff9f6c47661.1426183417.git.luto@kernel.org> <CAGXu5jKfvswdUMcrGbr6+wn1ME_JkySMvdNd0wvvHpbQ1C7HUg@mail.gmail.com> <CALQRfL7b8CjYgUnVy3jykNwv48fOc03T385RKo--cfv25YenBg@mail.gmail.com>
- <CAObL_7HgU-ekb7mJS7C=0=idfrzV6=CSqTrG2LvUgdDtvbJx_w@mail.gmail.com> <CALQRfL6HUGMfPtsqLcSed8G14Yqg27R8tpDnMZOKtvQE+rqX0A@mail.gmail.com> <CALCETrVz39pJmMAEFodBNA8cOZjd0xkH95EzMazY0MWJDtpYgg@mail.gmail.com> <CALQRfL5FGGUnK7+Ss=MSDGmxpAERTUjezardGnH3QouBwhbZ4A@mail.gmail.com>
- <CALCETrUGASa3Gp6cC1zdAahcS59DOdyLnTtgNX7t7FucMZLmoQ@mail.gmail.com> <CALQRfL6z2dEtPkWiuGydT0a+y4iWm2qw-cY0Rk9hA-K4gPw_qA@mail.gmail.com> <CALCETrWRHRVLotFs=Cpdr=7KjE7q52NdT62GxZg=xjv+LFZBqw@mail.gmail.com> <CALQRfL7AyadFcu9JqtC6FGnuuqY7zbnFAL81XnwBvn0o6c6UWQ@mail.gmail.com>
- <alpine.DEB.2.11.1503300754070.5031@gentwo.org> <CALCETrW9ckw=7-1JSyFkenhFu2_1MvVqjA+inOmsuuWemGaU0w@mail.gmail.com> <alpine.DEB.2.11.1504091024540.13650@gentwo.org>
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.11.1504091024540.13650-gkYfJU5Cukgdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+From: Christopher Covington <cov@codeaurora.org>
+Subject: Re: [PATCH 10/11] coresight-etm4x: Controls pertaining to the
+ context ID functions
+Date: Thu, 23 Apr 2015 11:08:53 -0400
+Message-ID: <55390B05.1050801@codeaurora.org>
+References: <1429742451-11465-1-git-send-email-mathieu.poirier@linaro.org> <1429742451-11465-11-git-send-email-mathieu.poirier@linaro.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1429742451-11465-11-git-send-email-mathieu.poirier@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Poirier <mathieu.poirier@linaro.org>
+Cc: gregkh@linuxfoundation.org, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kaixu.xia@linaro.org, zhang.chunyan@linaro.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 9 Apr 2015, Christoph Lameter wrote:
+Hi Mathieu,
 
-> > I'll submit a new version this week with the securebits.  Sorry for the delay.
- > Are we going to get a new version?
+On 04/22/2015 06:40 PM, Mathieu Poirier wrote:
+> From: Pratik Patel <pratikp@codeaurora.org>
+> 
+> Adding sysfs entries to access and configure specifics about the
+> context ID comparator functions.
+> 
+> Signed-off-by: Pratik Patel <pratikp@codeaurora.org>
+> Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
+> ---
+>  .../ABI/testing/sysfs-bus-coresight-devices-etm4x  |  19 +++
+>  drivers/hwtracing/coresight/coresight-etm4x.c      | 187 +++++++++++++++++++++
+>  2 files changed, 206 insertions(+)
+> 
+> diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
+> index b5c0456290ab..8b32cb7b9723 100644
+> --- a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
+> +++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
+> @@ -254,3 +254,22 @@ Date:		April 2015
+>  KernelVersion:	4.01
+>  Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
+>  Description: 	(RW) Controls the selection of the resources in the trace unit.
+> +
+> +What:		/sys/bus/coresight/devices/<memory_map>.etm/ctxid_idx
+> +Date:		April 2015
+> +KernelVersion:	4.01
+> +Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
+> +Description:	(RW) Select which context ID comparator to work with.
+> +
+> +What:		/sys/bus/coresight/devices/<memory_map>.etm/ctxid_val
+> +Date:		April 2015
+> +KernelVersion:	4.01
+> +Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
+> +Description:	(RW) Get/Set the context ID comparator value to trigger on.
 
-Replying to my own here. Cant we simply use the SETPCAP approach as per
-the patch I posted?
+If I'm understanding this correctly, ctxid_val is multiplexed using ctxid_idx.
+Why not just have ctxid_val0, ctxid_val1, ...?
+
+Thanks,
+Chris
+
+-- 
+Qualcomm Innovation Center, Inc.
+The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum,
+a Linux Foundation Collaborative Project
