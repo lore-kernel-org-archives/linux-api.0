@@ -1,137 +1,64 @@
-From: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Subject: Re: [PATCH 0/3] UserfaultFD: Extension for non cooperative uffd usage
-Date: Thu, 23 Apr 2015 09:34:09 +0300
-Message-ID: <55389261.50105@parallels.com>
-References: <5509D342.7000403@parallels.com> <20150421120222.GC4481@redhat.com>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [RFC] simple_char: New infrastructure to simplify chardev
+ management
+Date: Thu, 23 Apr 2015 10:25:43 +0200
+Message-ID: <20150423082543.GA10801@kroah.com>
+References: <d3ab93173d51cebf00dd2263fd0ce9f8cd6258f7.1423609645.git.luto@amacapital.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150421120222.GC4481-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <d3ab93173d51cebf00dd2263fd0ce9f8cd6258f7.1423609645.git.luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Sanidhya Kashyap <sanidhya.gatech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Dr. David Alan Gilbert" <dgilbert-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 04/21/2015 03:02 PM, Andrea Arcangeli wrote:
-> Hi Pavel,
-> 
-> On Wed, Mar 18, 2015 at 10:34:26PM +0300, Pavel Emelyanov wrote:
->> Hi,
->>
->> On the recent LSF Andrea presented his userfault-fd patches and
->> I had shown some issues that appear in usage scenarios when the
->> monitor task and mm task do not cooperate to each other on VM
->> changes (and fork()-s).
->>
->> Here's the implementation of the extended uffd API that would help 
->> us to address those issues.
->>
->> As proof of concept I've implemented only fix for fork() case, but
->> I also plan to add the mremap() and exit() notifications, both are
->> also required for such non-cooperative usage.
->>
->> More details about the extension itself is in patch #2 and the fork()
->> notification description is in patch #3.
->>
->> Comments and suggestion are warmly welcome :)
-> 
-> This looks feasible.
-> 
->> Andrea, what's the best way to go on with the patches -- would you
->> prefer to include them in your git tree or should I instead continue
->> with them on my own, re-sending them when required? Either way would
->> be OK for me.
-> 
-> Ok so various improvements happened in userfaultfd patchset over the
-> last month so your incremental patchset likely requires a rebase
-> sorry. When you posted it I was in the middle of the updates. Now
-> things are working stable and I have no pending updates, so it would
-> be a good time for a rebase.
+On Tue, Feb 10, 2015 at 03:44:05PM -0800, Andy Lutomirski wrote:
+> This isn't adequately tested, and I don't have a demonstration (yet).
+> It's here for review for whether it's a good idea in the first place
+> and for weather the fully_dynamic mechanism is a good idea.
 
-OK, thanks for the heads up! I will rebase my patches.
+Sorry for the long delay.
 
-> I can merge it if you like, it's your call if you prefer to maintain
-> it incrementally or if I should merge it, but I wouldn't push it to
-> Andrew for upstream integration in the first batch, as this
-> complicates things further and it's not fully complete yet (at least
-> the version posted only handled fork). I think it can be merged
-> incrementally in a second stage.
+I looked at this, and at a first glance, this looks good.  The existing
+char interface is a mess, and needs to really be simplified.  I think
+this code can go a long way toward making that happen.
 
-Sure!
+But I'm a bit confused as to how to use this.  Can you pick some
+in-kernel driver and convert it to this interface to see how it would
+"work"?
 
-> The major updates of the userfaultfd patchset over the last month were:
-> 
-> 1) Various mixed fixes thanks to the feedback from Dave Hansen and
->    David Gilbert.
-> 
->    The most notable one is the use of mm_users instead of mm_count to
->    pin the mm to avoid crashes that assumed the vma still existed (in
->    the userfaultfd_release method and in the various ioctl). exit_mmap
->    doesn't even set mm->mmap to NULL, so unless I introduce a
->    userfaultfd_exit to call in mmput, I have to pin the mm_users to be
->    safe. This is mainly an issue for the non-cooperative usage you're
->    implementing. Can you catch the exit somehow so you can close the
->    fd? The memory won't be released until you do. Is this ok with you?
->    I suppose you had to close the fd somehow anyway.
-> 
-> 2) userfaults are waken immediately even if they're not been "read"
->    yet, this can lead to POLLIN false positives (so I only allow poll
->    if the fd is open in nonblocking mode to be sure it won't hang). Is
->    it too paranoid to return POLLERR if the fd is not open in
->    nonblocking mode?
-> 
-> 	http://git.kernel.org/cgit/linux/kernel/git/andrea/aa.git/commit/?h=userfault&id=f222d9de0a5302dc8ac62d6fab53a84251098751
-> 
-> 3) optimize read to return entries in O(1) and poll which was already
->    O(1) becomes lockless. This required to split the waitqueue in two,
->    one for pending faults and one for non pending faults, and the
->    faults are refiled across the two waitqueues when they're
->    read. Both waitqueues are protected by a single lock to be simpler
->    and faster at runtime (the fault_pending_wqh one).
-> 
-> 	http://git.kernel.org/cgit/linux/kernel/git/andrea/aa.git/commit/?h=userfault&id=9aa033ed43a1134c2223dac8c5d9e02e0100fca1
-> 
-> 4) Allocate the ctx with kmem_cache_alloc. This is going to collide a
->    bit with your cleanup patch sorry.
-> 
-> 	http://git.kernel.org/cgit/linux/kernel/git/andrea/aa.git/commit/?h=userfault&id=f5a8db16d2876eed8906a4d36f1d0e06ca5490f6
-> 
-> 5) Originally qemu had two bitflags for each page and kept 3 states
->    (of the 4 possible with two bits) for each page in order to deal
->    with the races that can happen if one thread is reading the
->    userfaults and another thread is calling the UFFDIO_COPY ioctl in
->    the background. This patch solves all races in the kernel so the
->    two bits per page can be dropped from qemu codebase. I started
->    documenting the races that can materialize by using 2 threads
->    (instead of running the workload single threaded with a single poll
->    event loop), and how userland had to solve them until I decided it
->    was simpler to fix the race in the kernel by running an ad-hoc
->    pagetable walk inside the wait_event()-kind-of-section. This
->    simplified qemu significantly and it doesn't make the kernel much
->    more complicated.
-> 
->    I tried this before in much older versions but I use gup_fast for
->    it and it didn't work well with gup_fast for various reasons.
-> 
->    http://git.kernel.org/cgit/linux/kernel/git/andrea/aa.git/commit/?h=userfault&id=41efeae4e93f0296436f2a9fc6b28b6b0158512a
-> 
->    After this patch the only reason to call UFFDIO_WAKE is to handle
->    the userfaults in batches in combination with the DONT_WAKE flag of
->    UFFDIO_COPY.
-> 
-> 6) I removed the read recursion from mcopy_atomic. This avoids to
->    depend on the write-starvation behavior of rwsem to be safe. After
->    this change the rwsem is free to stop any further down_read if
->    there's a down_write waiting on the lock.
-> 
->    	  http://git.kernel.org/cgit/linux/kernel/git/andrea/aa.git/commit/?h=userfault&id=b1e3a08acc9e3f6c2614e89fc3b8e338daa58e18
-> 
-> About other troubles for the non cooperative usage: MADV_DONTNEED
-> likely needs to be trapped too or how do you know that you shall map a
-> zero page instead of the old data at the faulting address?
-> 
-> Thanks,
-> Andrea
-> .
-> 
+Ideally, between an interface like this, and the miscdevice interface,
+that should be the main way to create character devices, simplifying a
+lot of "boilerplate" code we have in drivers today.
+
+Some minor comments on the code:
+
+> +	ret = -ENOMEM;
+> +	major = kmalloc(sizeof(struct simple_char_major), GFP_KERNEL);
+> +	if (!major)
+> +		goto out_unregister;
+> +	cdev_init(&major->cdev, &simple_char_fops);
+> +	kobject_set_name(&major->cdev.kobj, "%s", name);
+
+The kobject in a cdev isn't a "real" kobject in that the name doesn't
+matter, and it's never "registered" with sysfs.  It's only use for the
+kobject map code, for looking up the cdev very quickly.  I really would
+like to just split the kmap code out from being related to a kobject as
+it's something that confuses a lot of people, but never spent the time
+to do the work.
+
+So a line like this shouldn't do anything, you don't have to set the
+name here.
+
+> +void simple_char_major_free(struct simple_char_major *major)
+> +{
+> +	BUG_ON(!idr_is_empty(&major->idr));
+
+WARN_ON is best, we never want to add new BUG calls to the kernel.  Or,
+if this really can never happen, we don't need to test for it.
+
+thanks,
+
+greg k-h
