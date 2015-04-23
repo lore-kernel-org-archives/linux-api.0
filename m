@@ -1,76 +1,51 @@
 From: Thomas Huth <thuth@redhat.com>
-Subject: Re: [PATCH v5 1/8] virtio: introduce virtio_is_little_endian()
- helper
-Date: Thu, 23 Apr 2015 20:52:01 +0200
-Message-ID: <20150423205201.2a6f650d@thh440s>
+Subject: Re: [PATCH v5 2/8] tun: add tun_is_little_endian() helper
+Date: Thu, 23 Apr 2015 20:57:56 +0200
+Message-ID: <20150423205756.5f477b27@thh440s>
 References: <20150423152608.11795.4373.stgit@bahia.local>
-	<20150423152617.11795.13272.stgit@bahia.local>
+	<20150423152628.11795.87340.stgit@bahia.local>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150423152617.11795.13272.stgit@bahia.local>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <kvm-owner@vger.kernel.org>
+In-Reply-To: <20150423152628.11795.87340.stgit@bahia.local>
+Sender: kvm-owner@vger.kernel.org
 To: Greg Kurz <gkurz@linux.vnet.ibm.com>
 Cc: Rusty Russell <rusty@rustcorp.com.au>, "Michael S. Tsirkin" <mst@redhat.com>, Cornelia Huck <cornelia.huck@de.ibm.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kvm@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 23 Apr 2015 17:26:20 +0200
+On Thu, 23 Apr 2015 17:26:30 +0200
 Greg Kurz <gkurz@linux.vnet.ibm.com> wrote:
 
 > Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
 > ---
->  include/linux/virtio_config.h |   17 +++++++++++------
->  1 file changed, 11 insertions(+), 6 deletions(-)
+>  drivers/net/tun.c |    9 +++++++--
+>  1 file changed, 7 insertions(+), 2 deletions(-)
 > 
-> diff --git a/include/linux/virtio_config.h b/include/linux/virtio_config.h
-> index ca3ed78..bd1a582 100644
-> --- a/include/linux/virtio_config.h
-> +++ b/include/linux/virtio_config.h
-> @@ -205,35 +205,40 @@ int virtqueue_set_affinity(struct virtqueue *vq, int cpu)
->  	return 0;
->  }
+> diff --git a/drivers/net/tun.c b/drivers/net/tun.c
+> index 857dca4..3c3d6c0 100644
+> --- a/drivers/net/tun.c
+> +++ b/drivers/net/tun.c
+> @@ -206,14 +206,19 @@ struct tun_struct {
+>  	u32 flow_count;
+>  };
 >  
-> +static inline bool virtio_is_little_endian(struct virtio_device *vdev)
+> +static inline bool tun_is_little_endian(struct tun_struct *tun)
 > +{
-> +	return virtio_has_feature(vdev, VIRTIO_F_VERSION_1);
+> +	return tun->flags & TUN_VNET_LE;
 > +}
 > +
->  /* Memory accessors */
->  static inline u16 virtio16_to_cpu(struct virtio_device *vdev, __virtio16 val)
+>  static inline u16 tun16_to_cpu(struct tun_struct *tun, __virtio16 val)
 >  {
-> -	return __virtio16_to_cpu(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-> +	return __virtio16_to_cpu(virtio_is_little_endian(vdev), val);
+> -	return __virtio16_to_cpu(tun->flags & TUN_VNET_LE, val);
+> +	return __virtio16_to_cpu(tun_is_little_endian(tun), val);
 >  }
 >  
->  static inline __virtio16 cpu_to_virtio16(struct virtio_device *vdev, u16 val)
+>  static inline __virtio16 cpu_to_tun16(struct tun_struct *tun, u16 val)
 >  {
-> -	return __cpu_to_virtio16(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-> +	return __cpu_to_virtio16(virtio_is_little_endian(vdev), val);
->  }
->  
->  static inline u32 virtio32_to_cpu(struct virtio_device *vdev, __virtio32 val)
->  {
-> -	return __virtio32_to_cpu(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-> +	return __virtio32_to_cpu(virtio_is_little_endian(vdev), val);
->  }
->  
->  static inline __virtio32 cpu_to_virtio32(struct virtio_device *vdev, u32 val)
->  {
-> -	return __cpu_to_virtio32(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-> +	return __cpu_to_virtio32(virtio_is_little_endian(vdev), val);
->  }
->  
->  static inline u64 virtio64_to_cpu(struct virtio_device *vdev, __virtio64 val)
->  {
-> -	return __virtio64_to_cpu(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-> +	return __virtio64_to_cpu(virtio_is_little_endian(vdev), val);
->  }
->  
->  static inline __virtio64 cpu_to_virtio64(struct virtio_device *vdev, u64 val)
->  {
-> -	return __cpu_to_virtio64(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-> +	return __cpu_to_virtio64(virtio_is_little_endian(vdev), val);
+> -	return __cpu_to_virtio16(tun->flags & TUN_VNET_LE, val);
+> +	return __cpu_to_virtio16(tun_is_little_endian(tun), val);
 >  }
 
 Reviewed-by: Thomas Huth <thuth@redhat.com>
+
