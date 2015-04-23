@@ -1,51 +1,23 @@
-From: Greg KH <greg@kroah.com>
-Subject: Re: [PATCH v2 3/4] of: overlay: Add sysfs attributes
-Date: Thu, 23 Apr 2015 15:04:09 +0200
-Message-ID: <20150423130409.GA4437@kroah.com>
-References: <1428434632-13789-1-git-send-email-pantelis.antoniou@konsulko.com>
- <1428434632-13789-4-git-send-email-pantelis.antoniou@konsulko.com>
- <CAL_JsqLMVBfQpmSjg9qfOvtM3RXMY3Dm+knN8h54gDCzx513-g@mail.gmail.com>
- <6E391B8F-936A-4FD1-B8CC-C9B5FCE0B291@konsulko.com>
- <20150423123346.GA19166@kroah.com>
- <98237E9E-04CB-4CD5-8B2F-63F070B54459@konsulko.com>
- <20150423125441.GA32303@kroah.com>
- <5F0BA9FB-8345-4296-8595-0E4CD1C816AA@konsulko.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5F0BA9FB-8345-4296-8595-0E4CD1C816AA@konsulko.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
-Cc: Rob Herring <robherring2@gmail.com>, Grant Likely <grant.likely@secretlab.ca>, Andrew Morton <akpm@linux-foundation.org>, Matt Porter <mporter@konsulko.com>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC] capabilities: Ambient capabilities
+Date: Thu, 23 Apr 2015 09:01:02 -0500 (CDT)
+Message-ID: <alpine.DEB.2.11.1504230900260.32203@gentwo.org>
+References: <933931146caf5dac58379f50c017bff9f6c47661.1426183417.git.luto@kernel.org> <CAGXu5jKfvswdUMcrGbr6+wn1ME_JkySMvdNd0wvvHpbQ1C7HUg@mail.gmail.com> <CALQRfL7b8CjYgUnVy3jykNwv48fOc03T385RKo--cfv25YenBg@mail.gmail.com>
+ <CAObL_7HgU-ekb7mJS7C=0=idfrzV6=CSqTrG2LvUgdDtvbJx_w@mail.gmail.com> <CALQRfL6HUGMfPtsqLcSed8G14Yqg27R8tpDnMZOKtvQE+rqX0A@mail.gmail.com> <CALCETrVz39pJmMAEFodBNA8cOZjd0xkH95EzMazY0MWJDtpYgg@mail.gmail.com> <CALQRfL5FGGUnK7+Ss=MSDGmxpAERTUjezardGnH3QouBwhbZ4A@mail.gmail.com>
+ <CALCETrUGASa3Gp6cC1zdAahcS59DOdyLnTtgNX7t7FucMZLmoQ@mail.gmail.com> <CALQRfL6z2dEtPkWiuGydT0a+y4iWm2qw-cY0Rk9hA-K4gPw_qA@mail.gmail.com> <CALCETrWRHRVLotFs=Cpdr=7KjE7q52NdT62GxZg=xjv+LFZBqw@mail.gmail.com> <CALQRfL7AyadFcu9JqtC6FGnuuqY7zbnFAL81XnwBvn0o6c6UWQ@mail.gmail.com>
+ <alpine.DEB.2.11.1503300754070.5031@gentwo.org> <CALCETrW9ckw=7-1JSyFkenhFu2_1MvVqjA+inOmsuuWemGaU0w@mail.gmail.com> <alpine.DEB.2.11.1504091024540.13650@gentwo.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.11.1504091024540.13650-gkYfJU5Cukgdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 23, 2015 at 03:59:02PM +0300, Pantelis Antoniou wrote:
-> >>>> It=E2=80=99s the same reason that the device tree core is using =
-it.
-> >>>=20
-> >>> It is doing that for "raw" device tree files, not individual attr=
-ibutes,
-> >>> right?
-> >>>=20
-> >>=20
-> >> Each property of a device tree is a binary attribute.
-> >=20
-> > Because they export binary data, right?  I don't have access to a
-> > machine that uses device tree at the moment to check this...
-> >=20
-> > Any specific file/function you are referring to?
-> >=20
->=20
-> Yes, they export binary data. It works because the device tree nodes
-> are raw kobjs.
+On Thu, 9 Apr 2015, Christoph Lameter wrote:
 
-Great, then the device tree is doing this correctly :)
+> > I'll submit a new version this week with the securebits.  Sorry for the delay.
+ > Are we going to get a new version?
 
-=46or text files, use real attribute files, that's the proper way to
-handle sysfs from kobjects.
-
-thanks,
-
-greg k-h
+Replying to my own here. Cant we simply use the SETPCAP approach as per
+the patch I posted?
