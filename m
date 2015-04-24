@@ -1,8 +1,7 @@
 From: Greg Kurz <gkurz@linux.vnet.ibm.com>
-Subject: [PATCH v6 6/8] virtio: add explicit big-endian support to memory
-	accessors
-Date: Fri, 24 Apr 2015 14:26:24 +0200
-Message-ID: <20150424122521.19156.65586.stgit@bahia.local>
+Subject: [PATCH v6 7/8] vhost: cross-endian support for legacy devices
+Date: Fri, 24 Apr 2015 14:27:24 +0200
+Message-ID: <20150424122632.19156.88058.stgit@bahia.local>
 References: <20150424122211.19156.97626.stgit@bahia.local>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,179 +21,227 @@ To: Rusty Russell <rusty@rustcorp.com.au>, "Michael S. Tsirkin" <mst@redhat.com>
 Cc: Thomas Huth <thuth@redhat.com>, kvm@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-The current memory accessors logic is:
-- little endian if little_endian
-- native endian (i.e. no byteswap) if !little_endian
+This patch brings cross-endian support to vhost when used to implement
+legacy virtio devices. Since it is a relatively rare situation, the
+feature availability is controlled by a kernel config option (not set
+by default).
 
-If we want to fully support cross-endian vhost, we also need to be
-able to convert to big endian.
+The vq->is_le boolean field is added to cache the endianness to be
+used for ring accesses. It defaults to native endian, as expected
+by legacy virtio devices. When the ring gets active, we force little
+endian if the device is modern. When the ring is deactivated, we
+revert to the native endian default.
 
-Instead of changing the little_endian argument to some 3-value enum, this
-patch changes the logic to:
-- little endian if little_endian
-- big endian if !little_endian
-
-The native endian case is handled by all users with a trivial helper. This
-patch doesn't change any functionality, nor it does add overhead.
+If cross-endian was compiled in, a vq->user_be boolean field is added
+so that userspace may request a specific endianness. This field is
+used to override the default when activating the ring of a legacy
+device. It has no effect on modern devices.
 
 Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
 ---
 
 Changes since v5:
-- changed endian checking helpers as suggested by Thomas (use || and line
-  breaker)
+- fixed description in Kconfig
+- fixed error description in uapi header
+- dropped useless semi-colon in the vhost_vq_reset_user_be() stub
 
- drivers/net/macvtap.c            |    3 ++-
- drivers/net/tun.c                |    3 ++-
- drivers/vhost/vhost.h            |    3 ++-
- include/linux/virtio_byteorder.h |   24 ++++++++++++++----------
- include/linux/virtio_config.h    |    3 ++-
- include/linux/vringh.h           |    3 ++-
- 6 files changed, 24 insertions(+), 15 deletions(-)
+ drivers/vhost/Kconfig      |   15 ++++++++
+ drivers/vhost/vhost.c      |   85 +++++++++++++++++++++++++++++++++++++++++++-
+ drivers/vhost/vhost.h      |   11 +++++-
+ include/uapi/linux/vhost.h |   14 +++++++
+ 4 files changed, 122 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/net/macvtap.c b/drivers/net/macvtap.c
-index a2f2958..0327d9d 100644
---- a/drivers/net/macvtap.c
-+++ b/drivers/net/macvtap.c
-@@ -51,7 +51,8 @@ struct macvtap_queue {
+diff --git a/drivers/vhost/Kconfig b/drivers/vhost/Kconfig
+index 017a1e8..533eaf0 100644
+--- a/drivers/vhost/Kconfig
++++ b/drivers/vhost/Kconfig
+@@ -32,3 +32,18 @@ config VHOST
+ 	---help---
+ 	  This option is selected by any driver which needs to access
+ 	  the core of vhost.
++
++config VHOST_CROSS_ENDIAN_LEGACY
++	bool "Cross-endian support for vhost"
++	default n
++	---help---
++	  This option allows vhost to support guests with a different byte
++	  ordering from host while using legacy virtio.
++
++	  Userspace programs can control the feature using the
++	  VHOST_SET_VRING_ENDIAN and VHOST_GET_VRING_ENDIAN ioctls.
++
++	  This is only useful on a few platforms (ppc64 and arm64). Since it
++	  adds some overhead, it is disabled by default.
++
++	  If unsure, say "N".
+diff --git a/drivers/vhost/vhost.c b/drivers/vhost/vhost.c
+index 2ee2826..9e8e004 100644
+--- a/drivers/vhost/vhost.c
++++ b/drivers/vhost/vhost.c
+@@ -36,6 +36,77 @@ enum {
+ #define vhost_used_event(vq) ((__virtio16 __user *)&vq->avail->ring[vq->num])
+ #define vhost_avail_event(vq) ((__virtio16 __user *)&vq->used->ring[vq->num])
  
- static inline bool macvtap_is_little_endian(struct macvtap_queue *q)
++#ifdef CONFIG_VHOST_CROSS_ENDIAN_LEGACY
++static void vhost_vq_reset_user_be(struct vhost_virtqueue *vq)
++{
++	vq->user_be = !virtio_legacy_is_little_endian();
++}
++
++static long vhost_set_vring_endian(struct vhost_virtqueue *vq, int __user *argp)
++{
++	struct vhost_vring_state s;
++
++	if (vq->private_data)
++		return -EBUSY;
++
++	if (copy_from_user(&s, argp, sizeof(s)))
++		return -EFAULT;
++
++	if (s.num != VHOST_VRING_LITTLE_ENDIAN &&
++	    s.num != VHOST_VRING_BIG_ENDIAN)
++		return -EINVAL;
++
++	vq->user_be = s.num;
++
++	return 0;
++}
++
++static long vhost_get_vring_endian(struct vhost_virtqueue *vq, u32 idx,
++				   int __user *argp)
++{
++	struct vhost_vring_state s = {
++		.index = idx,
++		.num = vq->user_be
++	};
++
++	if (copy_to_user(argp, &s, sizeof(s)))
++		return -EFAULT;
++
++	return 0;
++}
++
++static void vhost_init_is_le(struct vhost_virtqueue *vq)
++{
++	/* Note for legacy virtio: user_be is initialized at reset time
++	 * according to the host endianness. If userspace does not set an
++	 * explicit endianness, the default behavior is native endian, as
++	 * expected by legacy virtio.
++	 */
++	vq->is_le = vhost_has_feature(vq, VIRTIO_F_VERSION_1) || !vq->user_be;
++}
++#else
++static void vhost_vq_reset_user_be(struct vhost_virtqueue *vq)
++{
++}
++
++static long vhost_set_vring_endian(struct vhost_virtqueue *vq, int __user *argp)
++{
++	return -ENOIOCTLCMD;
++}
++
++static long vhost_get_vring_endian(struct vhost_virtqueue *vq, u32 idx,
++				   int __user *argp)
++{
++	return -ENOIOCTLCMD;
++}
++
++static void vhost_init_is_le(struct vhost_virtqueue *vq)
++{
++	if (vhost_has_feature(vq, VIRTIO_F_VERSION_1))
++		vq->is_le = true;
++}
++#endif /* CONFIG_VHOST_CROSS_ENDIAN_LEGACY */
++
+ static void vhost_poll_func(struct file *file, wait_queue_head_t *wqh,
+ 			    poll_table *pt)
  {
--	return q->flags & MACVTAP_VNET_LE;
-+	return q->flags & MACVTAP_VNET_LE ||
-+		virtio_legacy_is_little_endian();
+@@ -199,6 +270,8 @@ static void vhost_vq_reset(struct vhost_dev *dev,
+ 	vq->call = NULL;
+ 	vq->log_ctx = NULL;
+ 	vq->memory = NULL;
++	vq->is_le = virtio_legacy_is_little_endian();
++	vhost_vq_reset_user_be(vq);
  }
  
- static inline u16 macvtap16_to_cpu(struct macvtap_queue *q, __virtio16 val)
-diff --git a/drivers/net/tun.c b/drivers/net/tun.c
-index 3c3d6c0..7c4f6b6 100644
---- a/drivers/net/tun.c
-+++ b/drivers/net/tun.c
-@@ -208,7 +208,8 @@ struct tun_struct {
- 
- static inline bool tun_is_little_endian(struct tun_struct *tun)
+ static int vhost_worker(void *data)
+@@ -806,6 +879,12 @@ long vhost_vring_ioctl(struct vhost_dev *d, int ioctl, void __user *argp)
+ 		} else
+ 			filep = eventfp;
+ 		break;
++	case VHOST_SET_VRING_ENDIAN:
++		r = vhost_set_vring_endian(vq, argp);
++		break;
++	case VHOST_GET_VRING_ENDIAN:
++		r = vhost_get_vring_endian(vq, idx, argp);
++		break;
+ 	default:
+ 		r = -ENOIOCTLCMD;
+ 	}
+@@ -1044,8 +1123,12 @@ int vhost_init_used(struct vhost_virtqueue *vq)
  {
--	return tun->flags & TUN_VNET_LE;
-+	return tun->flags & TUN_VNET_LE ||
-+		virtio_legacy_is_little_endian();
- }
+ 	__virtio16 last_used_idx;
+ 	int r;
+-	if (!vq->private_data)
++	if (!vq->private_data) {
++		vq->is_le = virtio_legacy_is_little_endian();
+ 		return 0;
++	}
++
++	vhost_init_is_le(vq);
  
- static inline u16 tun16_to_cpu(struct tun_struct *tun, __virtio16 val)
+ 	r = vhost_update_used_flags(vq);
+ 	if (r)
 diff --git a/drivers/vhost/vhost.h b/drivers/vhost/vhost.h
-index 6a49960..a4fa33a 100644
+index a4fa33a..ce6f6da 100644
 --- a/drivers/vhost/vhost.h
 +++ b/drivers/vhost/vhost.h
-@@ -175,7 +175,8 @@ static inline bool vhost_has_feature(struct vhost_virtqueue *vq, int bit)
+@@ -106,6 +106,14 @@ struct vhost_virtqueue {
+ 	/* Log write descriptors */
+ 	void __user *log_base;
+ 	struct vhost_log *log;
++
++	/* Ring endianness. Defaults to legacy native endianness.
++	 * Set to true when starting a modern virtio device. */
++	bool is_le;
++#ifdef CONFIG_VHOST_CROSS_ENDIAN_LEGACY
++	/* Ring endianness requested by userspace for cross-endian support. */
++	bool user_be;
++#endif
+ };
+ 
+ struct vhost_dev {
+@@ -175,8 +183,7 @@ static inline bool vhost_has_feature(struct vhost_virtqueue *vq, int bit)
  
  static inline bool vhost_is_little_endian(struct vhost_virtqueue *vq)
  {
--	return vhost_has_feature(vq, VIRTIO_F_VERSION_1);
-+	return vhost_has_feature(vq, VIRTIO_F_VERSION_1) ||
-+		virtio_legacy_is_little_endian();
+-	return vhost_has_feature(vq, VIRTIO_F_VERSION_1) ||
+-		virtio_legacy_is_little_endian();
++	return vq->is_le;
  }
  
  /* Memory accessors */
-diff --git a/include/linux/virtio_byteorder.h b/include/linux/virtio_byteorder.h
-index 51865d0..ce63a2c 100644
---- a/include/linux/virtio_byteorder.h
-+++ b/include/linux/virtio_byteorder.h
-@@ -3,17 +3,21 @@
- #include <linux/types.h>
- #include <uapi/linux/virtio_types.h>
+diff --git a/include/uapi/linux/vhost.h b/include/uapi/linux/vhost.h
+index bb6a5b4..ab373191 100644
+--- a/include/uapi/linux/vhost.h
++++ b/include/uapi/linux/vhost.h
+@@ -103,6 +103,20 @@ struct vhost_memory {
+ /* Get accessor: reads index, writes value in num */
+ #define VHOST_GET_VRING_BASE _IOWR(VHOST_VIRTIO, 0x12, struct vhost_vring_state)
  
--/*
-- * Low-level memory accessors for handling virtio in modern little endian and in
-- * compatibility native endian format.
-- */
-+static inline bool virtio_legacy_is_little_endian(void)
-+{
-+#ifdef __LITTLE_ENDIAN
-+	return true;
-+#else
-+	return false;
-+#endif
-+}
- 
- static inline u16 __virtio16_to_cpu(bool little_endian, __virtio16 val)
- {
- 	if (little_endian)
- 		return le16_to_cpu((__force __le16)val);
- 	else
--		return (__force u16)val;
-+		return be16_to_cpu((__force __be16)val);
- }
- 
- static inline __virtio16 __cpu_to_virtio16(bool little_endian, u16 val)
-@@ -21,7 +25,7 @@ static inline __virtio16 __cpu_to_virtio16(bool little_endian, u16 val)
- 	if (little_endian)
- 		return (__force __virtio16)cpu_to_le16(val);
- 	else
--		return (__force __virtio16)val;
-+		return (__force __virtio16)cpu_to_be16(val);
- }
- 
- static inline u32 __virtio32_to_cpu(bool little_endian, __virtio32 val)
-@@ -29,7 +33,7 @@ static inline u32 __virtio32_to_cpu(bool little_endian, __virtio32 val)
- 	if (little_endian)
- 		return le32_to_cpu((__force __le32)val);
- 	else
--		return (__force u32)val;
-+		return be32_to_cpu((__force __be32)val);
- }
- 
- static inline __virtio32 __cpu_to_virtio32(bool little_endian, u32 val)
-@@ -37,7 +41,7 @@ static inline __virtio32 __cpu_to_virtio32(bool little_endian, u32 val)
- 	if (little_endian)
- 		return (__force __virtio32)cpu_to_le32(val);
- 	else
--		return (__force __virtio32)val;
-+		return (__force __virtio32)cpu_to_be32(val);
- }
- 
- static inline u64 __virtio64_to_cpu(bool little_endian, __virtio64 val)
-@@ -45,7 +49,7 @@ static inline u64 __virtio64_to_cpu(bool little_endian, __virtio64 val)
- 	if (little_endian)
- 		return le64_to_cpu((__force __le64)val);
- 	else
--		return (__force u64)val;
-+		return be64_to_cpu((__force __be64)val);
- }
- 
- static inline __virtio64 __cpu_to_virtio64(bool little_endian, u64 val)
-@@ -53,7 +57,7 @@ static inline __virtio64 __cpu_to_virtio64(bool little_endian, u64 val)
- 	if (little_endian)
- 		return (__force __virtio64)cpu_to_le64(val);
- 	else
--		return (__force __virtio64)val;
-+		return (__force __virtio64)cpu_to_be64(val);
- }
- 
- #endif /* _LINUX_VIRTIO_BYTEORDER */
-diff --git a/include/linux/virtio_config.h b/include/linux/virtio_config.h
-index bd1a582..f64919e 100644
---- a/include/linux/virtio_config.h
-+++ b/include/linux/virtio_config.h
-@@ -207,7 +207,8 @@ int virtqueue_set_affinity(struct virtqueue *vq, int cpu)
- 
- static inline bool virtio_is_little_endian(struct virtio_device *vdev)
- {
--	return virtio_has_feature(vdev, VIRTIO_F_VERSION_1);
-+	return virtio_has_feature(vdev, VIRTIO_F_VERSION_1) ||
-+		virtio_legacy_is_little_endian();
- }
- 
- /* Memory accessors */
-diff --git a/include/linux/vringh.h b/include/linux/vringh.h
-index 3ed62ef..bc6c28d 100644
---- a/include/linux/vringh.h
-+++ b/include/linux/vringh.h
-@@ -228,7 +228,8 @@ static inline void vringh_notify(struct vringh *vrh)
- 
- static inline bool vringh_is_little_endian(const struct vringh *vrh)
- {
--	return vrh->little_endian;
-+	return vrh->little_endian ||
-+		virtio_legacy_is_little_endian();
- }
- 
- static inline u16 vringh16_to_cpu(const struct vringh *vrh, __virtio16 val)
++/* Set the vring byte order in num. Valid values are VHOST_VRING_LITTLE_ENDIAN
++ * or VHOST_VRING_BIG_ENDIAN (other values return -EINVAL).
++ * The byte order cannot be changed while the device is active: trying to do so
++ * returns -EBUSY.
++ * This is a legacy only API that is simply ignored when VIRTIO_F_VERSION_1 is
++ * set.
++ * Not all kernel configurations support this ioctl, but all configurations that
++ * support SET also support GET.
++ */
++#define VHOST_VRING_LITTLE_ENDIAN 0
++#define VHOST_VRING_BIG_ENDIAN 1
++#define VHOST_SET_VRING_ENDIAN _IOW(VHOST_VIRTIO, 0x13, struct vhost_vring_state)
++#define VHOST_GET_VRING_ENDIAN _IOW(VHOST_VIRTIO, 0x14, struct vhost_vring_state)
++
+ /* The following ioctls use eventfd file descriptors to signal and poll
+  * for events. */
