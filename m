@@ -1,64 +1,110 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [PATCH V2] Test compaction of mlocked memory
-Date: Thu, 23 Apr 2015 14:24:28 -0600
-Message-ID: <553954FC.4050700@osg.samsung.com>
-References: <1429813301-27216-1-git-send-email-sjayaram@akamai.com> <20150423184134.GF2282@akamai.com> <20150423132323.a3bd1dcdc94a2da3ca06a30d@linux-foundation.org>
+From: Cornelia Huck <cornelia.huck@de.ibm.com>
+Subject: Re: [PATCH v5 6/8] virtio: add explicit big-endian support to
+	memory accessors
+Date: Fri, 24 Apr 2015 09:04:21 +0200
+Message-ID: <20150424090421.123d6ff6.cornelia.huck@de.ibm.com>
+References: <20150423152608.11795.4373.stgit@bahia.local>
+	<20150423152712.11795.29245.stgit@bahia.local>
+	<20150423212719.4b7f9507@thh440s>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150423132323.a3bd1dcdc94a2da3ca06a30d@linux-foundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>, Eric B Munson <emunson@akamai.com>
-Cc: Sri Jayaramappa <sjayaram@akamai.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <20150423212719.4b7f9507@thh440s>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Thomas Huth <thuth@redhat.com>
+Cc: kvm@vger.kernel.org, "Michael S. Tsirkin" <mst@redhat.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On 04/23/2015 02:23 PM, Andrew Morton wrote:
-> On Thu, 23 Apr 2015 14:41:34 -0400 Eric B Munson <emunson@akamai.com> wrote:
-> 
->> On Thu, 23 Apr 2015, Sri Jayaramappa wrote:
->>
->>> Commit commit 5bbe3547aa3b ("mm: allow compaction of unevictable pages")
->>> introduced a sysctl that allows userspace to enable scanning of locked
->>> pages for compaction.  This patch introduces a new test which fragments
->>> main memory and attempts to allocate a number of huge pages to exercise
->>> this compaction logic.
->>>
->>> Tested on machines with up to 32 GB RAM. With the patch a much larger
->>> number of huge pages can be allocated than on the kernel without the
->>> patch.
->>>
->>> Example output:
->>> On a machine with 16 GB RAM:
->>> sudo make run_tests vm
->>> ...
->>> -----------------------
->>> running compaction_test
->>> -----------------------
->>> No of huge pages allocated = 3834
->>> [PASS]
->>> ...
->>>
->>> Signed-off-by: Sri Jayaramappa <sjayaram@akamai.com>
->>> Cc: linux-kernel@vger.kernel.org
->>> Cc: linux-api@vger.kernel.org
->>> Cc: Andrew Morton <akpm@linux-foundation.org>
->>> Cc: Eric B Munson <emunson@akamai.com>
->>
->> Reviewed-by: Eric B Munson <emunson@akamai.com>
-> 
-> Acked-by: Andrew Morton <akpm@linux-foundation.org>
-> 
-> I'm assuming that Shuah will process this one?
-> 
+On Thu, 23 Apr 2015 21:27:19 +0200
+Thomas Huth <thuth@redhat.com> wrote:
 
-Yes. I will get this one after the merge window closes.
+> On Thu, 23 Apr 2015 17:29:06 +0200
+> Greg Kurz <gkurz@linux.vnet.ibm.com> wrote:
+> 
+> > The current memory accessors logic is:
+> > - little endian if little_endian
+> > - native endian (i.e. no byteswap) if !little_endian
+> > 
+> > If we want to fully support cross-endian vhost, we also need to be
+> > able to convert to big endian.
+> > 
+> > Instead of changing the little_endian argument to some 3-value enum, this
+> > patch changes the logic to:
+> > - little endian if little_endian
+> > - big endian if !little_endian
+> > 
+> > The native endian case is handled by all users with a trivial helper. This
+> > patch doesn't change any functionality, nor it does add overhead.
+> > 
+> > Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
+> > ---
+> > 
+> > Changes since v4:
+> > - style fixes (I have chosen if ... else in most places to stay below
+> >   80 columns, with the notable exception of the vhost helper which gets
+> >   shorten in a later patch)
+> > 
+> >  drivers/net/macvtap.c            |    5 ++++-
+> >  drivers/net/tun.c                |    5 ++++-
+> >  drivers/vhost/vhost.h            |    2 +-
+> >  include/linux/virtio_byteorder.h |   24 ++++++++++++++----------
+> >  include/linux/virtio_config.h    |    5 ++++-
+> >  include/linux/vringh.h           |    2 +-
+> >  6 files changed, 28 insertions(+), 15 deletions(-)
+> > 
+> > diff --git a/drivers/net/macvtap.c b/drivers/net/macvtap.c
+> > index a2f2958..6cf6b3e 100644
+> > --- a/drivers/net/macvtap.c
+> > +++ b/drivers/net/macvtap.c
+> > @@ -51,7 +51,10 @@ struct macvtap_queue {
+> >  
+> >  static inline bool macvtap_is_little_endian(struct macvtap_queue *q)
+> >  {
+> > -	return q->flags & MACVTAP_VNET_LE;
+> > +	if (q->flags & MACVTAP_VNET_LE)
+> > +		return true;
+> > +	else
+> > +		return virtio_legacy_is_little_endian();
+> 
+> simply:
+> 
+> 	return (q->flags & MACVTAP_VNET_LE) ||
+> 	       virtio_legacy_is_little_endian();
+> 
+> ?
 
--- Shuah
+ISTR that MST preferred the current notation, but I like either your
+way or ?: (with linebreak) even better.
 
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh@osg.samsung.com | (970) 217-8978
+> 
+> >  }
+> >  
+(...)
+> > diff --git a/drivers/vhost/vhost.h b/drivers/vhost/vhost.h
+> > index 6a49960..954c657 100644
+> > --- a/drivers/vhost/vhost.h
+> > +++ b/drivers/vhost/vhost.h
+> > @@ -175,7 +175,7 @@ static inline bool vhost_has_feature(struct vhost_virtqueue *vq, int bit)
+> >  
+> >  static inline bool vhost_is_little_endian(struct vhost_virtqueue *vq)
+> >  {
+> > -	return vhost_has_feature(vq, VIRTIO_F_VERSION_1);
+> > +	return vhost_has_feature(vq, VIRTIO_F_VERSION_1) ? true : virtio_legacy_is_little_endian();
+> >  }
+> 
+> That line is way longer than 80 characters ... may I suggest to switch
+> at least here to:
+> 
+> 	return vhost_has_feature(vq, VIRTIO_F_VERSION_1) ||
+> 	       virtio_legacy_is_little_endian();
+
+I think the line will collapse in a further patch anyway.
