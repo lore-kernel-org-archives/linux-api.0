@@ -1,7 +1,8 @@
 From: Greg Kurz <gkurz@linux.vnet.ibm.com>
-Subject: [PATCH v6 7/8] vhost: cross-endian support for legacy devices
-Date: Fri, 24 Apr 2015 14:27:24 +0200
-Message-ID: <20150424122632.19156.88058.stgit@bahia.local>
+Subject: [PATCH v6 8/8] macvtap/tun: cross-endian support for little-endian
+	hosts
+Date: Fri, 24 Apr 2015 14:50:36 +0200
+Message-ID: <20150424122732.19156.77709.stgit@bahia.local>
 References: <20150424122211.19156.97626.stgit@bahia.local>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,227 +22,236 @@ To: Rusty Russell <rusty@rustcorp.com.au>, "Michael S. Tsirkin" <mst@redhat.com>
 Cc: Thomas Huth <thuth@redhat.com>, kvm@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-This patch brings cross-endian support to vhost when used to implement
-legacy virtio devices. Since it is a relatively rare situation, the
-feature availability is controlled by a kernel config option (not set
-by default).
+The VNET_LE flag was introduced to fix accesses to virtio 1.0 headers
+that are always little-endian. It can also be used to handle the special
+case of a legacy little-endian device implemented by a big-endian host.
 
-The vq->is_le boolean field is added to cache the endianness to be
-used for ring accesses. It defaults to native endian, as expected
-by legacy virtio devices. When the ring gets active, we force little
-endian if the device is modern. When the ring is deactivated, we
-revert to the native endian default.
+Let's add a flag and ioctls for big-endian devices as well. If both flags
+are set, little-endian wins.
 
-If cross-endian was compiled in, a vq->user_be boolean field is added
-so that userspace may request a specific endianness. This field is
-used to override the default when activating the ring of a legacy
-device. It has no effect on modern devices.
+Since this is isn't a common usecase, the feature is controlled by a kernel
+config option (not set by default).
+
+Both macvtap and tun are covered by this patch since they share the same
+API with userland.
 
 Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
 ---
 
 Changes since v5:
-- fixed description in Kconfig
-- fixed error description in uapi header
-- dropped useless semi-colon in the vhost_vq_reset_user_be() stub
+- changed {macvtapi,tun}_legacy_is_little_endian() to use ?:
 
- drivers/vhost/Kconfig      |   15 ++++++++
- drivers/vhost/vhost.c      |   85 +++++++++++++++++++++++++++++++++++++++++++-
- drivers/vhost/vhost.h      |   11 +++++-
- include/uapi/linux/vhost.h |   14 +++++++
- 4 files changed, 122 insertions(+), 3 deletions(-)
+ drivers/net/Kconfig         |   14 ++++++++++
+ drivers/net/macvtap.c       |   57 +++++++++++++++++++++++++++++++++++++++++-
+ drivers/net/tun.c           |   59 ++++++++++++++++++++++++++++++++++++++++++-
+ include/uapi/linux/if_tun.h |    6 ++++
+ 4 files changed, 134 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/vhost/Kconfig b/drivers/vhost/Kconfig
-index 017a1e8..533eaf0 100644
---- a/drivers/vhost/Kconfig
-+++ b/drivers/vhost/Kconfig
-@@ -32,3 +32,18 @@ config VHOST
- 	---help---
- 	  This option is selected by any driver which needs to access
- 	  the core of vhost.
-+
-+config VHOST_CROSS_ENDIAN_LEGACY
-+	bool "Cross-endian support for vhost"
+diff --git a/drivers/net/Kconfig b/drivers/net/Kconfig
+index df51d60..71ac0ec 100644
+--- a/drivers/net/Kconfig
++++ b/drivers/net/Kconfig
+@@ -244,6 +244,20 @@ config TUN
+ 
+ 	  If you don't know what to use this for, you don't need it.
+ 
++config TUN_VNET_CROSS_LE
++	bool "Support for cross-endian vnet headers on little-endian kernels"
 +	default n
 +	---help---
-+	  This option allows vhost to support guests with a different byte
-+	  ordering from host while using legacy virtio.
++	  This option allows TUN/TAP and MACVTAP device drivers in a
++	  little-endian kernel to parse vnet headers that come from a
++	  big-endian legacy virtio device.
 +
-+	  Userspace programs can control the feature using the
-+	  VHOST_SET_VRING_ENDIAN and VHOST_GET_VRING_ENDIAN ioctls.
++	  Userspace programs can control the feature using the TUNSETVNETBE
++	  and TUNGETVNETBE ioctls.
 +
-+	  This is only useful on a few platforms (ppc64 and arm64). Since it
-+	  adds some overhead, it is disabled by default.
++	  Unless you have a little-endian system hosting a big-endian virtual
++	  machine with a legacy virtio NIC, you should say N.
 +
-+	  If unsure, say "N".
-diff --git a/drivers/vhost/vhost.c b/drivers/vhost/vhost.c
-index 2ee2826..9e8e004 100644
---- a/drivers/vhost/vhost.c
-+++ b/drivers/vhost/vhost.c
-@@ -36,6 +36,77 @@ enum {
- #define vhost_used_event(vq) ((__virtio16 __user *)&vq->avail->ring[vq->num])
- #define vhost_avail_event(vq) ((__virtio16 __user *)&vq->used->ring[vq->num])
+ config VETH
+ 	tristate "Virtual ethernet pair device"
+ 	---help---
+diff --git a/drivers/net/macvtap.c b/drivers/net/macvtap.c
+index 0327d9d..dc0a47c 100644
+--- a/drivers/net/macvtap.c
++++ b/drivers/net/macvtap.c
+@@ -48,11 +48,60 @@ struct macvtap_queue {
+ #define MACVTAP_FEATURES (IFF_VNET_HDR | IFF_MULTI_QUEUE)
  
-+#ifdef CONFIG_VHOST_CROSS_ENDIAN_LEGACY
-+static void vhost_vq_reset_user_be(struct vhost_virtqueue *vq)
+ #define MACVTAP_VNET_LE 0x80000000
++#define MACVTAP_VNET_BE 0x40000000
++
++#ifdef CONFIG_TUN_VNET_CROSS_LE
++static inline bool macvtap_legacy_is_little_endian(struct macvtap_queue *q)
 +{
-+	vq->user_be = !virtio_legacy_is_little_endian();
++	return q->flags & MACVTAP_VNET_BE ? false :
++		virtio_legacy_is_little_endian();
 +}
 +
-+static long vhost_set_vring_endian(struct vhost_virtqueue *vq, int __user *argp)
++static long macvtap_get_vnet_be(struct macvtap_queue *q, int __user *sp)
 +{
-+	struct vhost_vring_state s;
++	int s = !!(q->flags & MACVTAP_VNET_BE);
 +
-+	if (vq->private_data)
-+		return -EBUSY;
-+
-+	if (copy_from_user(&s, argp, sizeof(s)))
-+		return -EFAULT;
-+
-+	if (s.num != VHOST_VRING_LITTLE_ENDIAN &&
-+	    s.num != VHOST_VRING_BIG_ENDIAN)
-+		return -EINVAL;
-+
-+	vq->user_be = s.num;
-+
-+	return 0;
-+}
-+
-+static long vhost_get_vring_endian(struct vhost_virtqueue *vq, u32 idx,
-+				   int __user *argp)
-+{
-+	struct vhost_vring_state s = {
-+		.index = idx,
-+		.num = vq->user_be
-+	};
-+
-+	if (copy_to_user(argp, &s, sizeof(s)))
++	if (put_user(s, sp))
 +		return -EFAULT;
 +
 +	return 0;
 +}
 +
-+static void vhost_init_is_le(struct vhost_virtqueue *vq)
++static long macvtap_set_vnet_be(struct macvtap_queue *q, int __user *sp)
 +{
-+	/* Note for legacy virtio: user_be is initialized at reset time
-+	 * according to the host endianness. If userspace does not set an
-+	 * explicit endianness, the default behavior is native endian, as
-+	 * expected by legacy virtio.
-+	 */
-+	vq->is_le = vhost_has_feature(vq, VIRTIO_F_VERSION_1) || !vq->user_be;
++	int s;
++
++	if (get_user(s, sp))
++		return -EFAULT;
++
++	if (s)
++		q->flags |= MACVTAP_VNET_BE;
++	else
++		q->flags &= ~MACVTAP_VNET_BE;
++
++	return 0;
 +}
 +#else
-+static void vhost_vq_reset_user_be(struct vhost_virtqueue *vq)
++static inline bool macvtap_legacy_is_little_endian(struct macvtap_queue *q)
 +{
++	return virtio_legacy_is_little_endian();
 +}
 +
-+static long vhost_set_vring_endian(struct vhost_virtqueue *vq, int __user *argp)
++static long macvtap_get_vnet_be(struct macvtap_queue *q, int __user *argp)
 +{
-+	return -ENOIOCTLCMD;
++	return -EINVAL;
 +}
 +
-+static long vhost_get_vring_endian(struct vhost_virtqueue *vq, u32 idx,
-+				   int __user *argp)
++static long macvtap_set_vnet_be(struct macvtap_queue *q, int __user *argp)
 +{
-+	return -ENOIOCTLCMD;
++	return -EINVAL;
 +}
-+
-+static void vhost_init_is_le(struct vhost_virtqueue *vq)
-+{
-+	if (vhost_has_feature(vq, VIRTIO_F_VERSION_1))
-+		vq->is_le = true;
-+}
-+#endif /* CONFIG_VHOST_CROSS_ENDIAN_LEGACY */
-+
- static void vhost_poll_func(struct file *file, wait_queue_head_t *wqh,
- 			    poll_table *pt)
++#endif /* CONFIG_TUN_VNET_CROSS_LE */
+ 
+ static inline bool macvtap_is_little_endian(struct macvtap_queue *q)
  {
-@@ -199,6 +270,8 @@ static void vhost_vq_reset(struct vhost_dev *dev,
- 	vq->call = NULL;
- 	vq->log_ctx = NULL;
- 	vq->memory = NULL;
-+	vq->is_le = virtio_legacy_is_little_endian();
-+	vhost_vq_reset_user_be(vq);
+ 	return q->flags & MACVTAP_VNET_LE ||
+-		virtio_legacy_is_little_endian();
++		macvtap_legacy_is_little_endian(q);
  }
  
- static int vhost_worker(void *data)
-@@ -806,6 +879,12 @@ long vhost_vring_ioctl(struct vhost_dev *d, int ioctl, void __user *argp)
- 		} else
- 			filep = eventfp;
- 		break;
-+	case VHOST_SET_VRING_ENDIAN:
-+		r = vhost_set_vring_endian(vq, argp);
-+		break;
-+	case VHOST_GET_VRING_ENDIAN:
-+		r = vhost_get_vring_endian(vq, idx, argp);
-+		break;
- 	default:
- 		r = -ENOIOCTLCMD;
- 	}
-@@ -1044,8 +1123,12 @@ int vhost_init_used(struct vhost_virtqueue *vq)
- {
- 	__virtio16 last_used_idx;
- 	int r;
--	if (!vq->private_data)
-+	if (!vq->private_data) {
-+		vq->is_le = virtio_legacy_is_little_endian();
+ static inline u16 macvtap16_to_cpu(struct macvtap_queue *q, __virtio16 val)
+@@ -1096,6 +1145,12 @@ static long macvtap_ioctl(struct file *file, unsigned int cmd,
+ 			q->flags &= ~MACVTAP_VNET_LE;
  		return 0;
-+	}
-+
-+	vhost_init_is_le(vq);
  
- 	r = vhost_update_used_flags(vq);
- 	if (r)
-diff --git a/drivers/vhost/vhost.h b/drivers/vhost/vhost.h
-index a4fa33a..ce6f6da 100644
---- a/drivers/vhost/vhost.h
-+++ b/drivers/vhost/vhost.h
-@@ -106,6 +106,14 @@ struct vhost_virtqueue {
- 	/* Log write descriptors */
- 	void __user *log_base;
- 	struct vhost_log *log;
++	case TUNGETVNETBE:
++		return macvtap_get_vnet_be(q, sp);
 +
-+	/* Ring endianness. Defaults to legacy native endianness.
-+	 * Set to true when starting a modern virtio device. */
-+	bool is_le;
-+#ifdef CONFIG_VHOST_CROSS_ENDIAN_LEGACY
-+	/* Ring endianness requested by userspace for cross-endian support. */
-+	bool user_be;
-+#endif
++	case TUNSETVNETBE:
++		return macvtap_set_vnet_be(q, sp);
++
+ 	case TUNSETOFFLOAD:
+ 		/* let the user check for future flags */
+ 		if (arg & ~(TUN_F_CSUM | TUN_F_TSO4 | TUN_F_TSO6 |
+diff --git a/drivers/net/tun.c b/drivers/net/tun.c
+index 7c4f6b6..9fa05d6 100644
+--- a/drivers/net/tun.c
++++ b/drivers/net/tun.c
+@@ -111,6 +111,7 @@ do {								\
+ #define TUN_FASYNC	IFF_ATTACH_QUEUE
+ /* High bits in flags field are unused. */
+ #define TUN_VNET_LE     0x80000000
++#define TUN_VNET_BE     0x40000000
+ 
+ #define TUN_FEATURES (IFF_NO_PI | IFF_ONE_QUEUE | IFF_VNET_HDR | \
+ 		      IFF_MULTI_QUEUE)
+@@ -206,10 +207,58 @@ struct tun_struct {
+ 	u32 flow_count;
  };
  
- struct vhost_dev {
-@@ -175,8 +183,7 @@ static inline bool vhost_has_feature(struct vhost_virtqueue *vq, int bit)
- 
- static inline bool vhost_is_little_endian(struct vhost_virtqueue *vq)
++#ifdef CONFIG_TUN_VNET_CROSS_LE
++static inline bool tun_legacy_is_little_endian(struct tun_struct *tun)
++{
++	return tun->flags & TUN_VNET_BE ? false :
++		virtio_legacy_is_little_endian();
++}
++
++static long tun_get_vnet_be(struct tun_struct *tun, int __user *argp)
++{
++	int be = !!(tun->flags & TUN_VNET_BE);
++
++	if (put_user(be, argp))
++		return -EFAULT;
++
++	return 0;
++}
++
++static long tun_set_vnet_be(struct tun_struct *tun, int __user *argp)
++{
++	int be;
++
++	if (get_user(be, argp))
++		return -EFAULT;
++
++	if (be)
++		tun->flags |= TUN_VNET_BE;
++	else
++		tun->flags &= ~TUN_VNET_BE;
++
++	return 0;
++}
++#else
++static inline bool tun_legacy_is_little_endian(struct tun_struct *tun)
++{
++	return virtio_legacy_is_little_endian();
++}
++
++static long tun_get_vnet_be(struct tun_struct *tun, int __user *argp)
++{
++	return -EINVAL;
++}
++
++static long tun_set_vnet_be(struct tun_struct *tun, int __user *argp)
++{
++	return -EINVAL;
++}
++#endif /* CONFIG_TUN_VNET_CROSS_LE */
++
+ static inline bool tun_is_little_endian(struct tun_struct *tun)
  {
--	return vhost_has_feature(vq, VIRTIO_F_VERSION_1) ||
+ 	return tun->flags & TUN_VNET_LE ||
 -		virtio_legacy_is_little_endian();
-+	return vq->is_le;
++		tun_legacy_is_little_endian(tun);
  }
  
- /* Memory accessors */
-diff --git a/include/uapi/linux/vhost.h b/include/uapi/linux/vhost.h
-index bb6a5b4..ab373191 100644
---- a/include/uapi/linux/vhost.h
-+++ b/include/uapi/linux/vhost.h
-@@ -103,6 +103,20 @@ struct vhost_memory {
- /* Get accessor: reads index, writes value in num */
- #define VHOST_GET_VRING_BASE _IOWR(VHOST_VIRTIO, 0x12, struct vhost_vring_state)
+ static inline u16 tun16_to_cpu(struct tun_struct *tun, __virtio16 val)
+@@ -2064,6 +2113,14 @@ static long __tun_chr_ioctl(struct file *file, unsigned int cmd,
+ 			tun->flags &= ~TUN_VNET_LE;
+ 		break;
  
-+/* Set the vring byte order in num. Valid values are VHOST_VRING_LITTLE_ENDIAN
-+ * or VHOST_VRING_BIG_ENDIAN (other values return -EINVAL).
-+ * The byte order cannot be changed while the device is active: trying to do so
-+ * returns -EBUSY.
-+ * This is a legacy only API that is simply ignored when VIRTIO_F_VERSION_1 is
-+ * set.
-+ * Not all kernel configurations support this ioctl, but all configurations that
-+ * support SET also support GET.
-+ */
-+#define VHOST_VRING_LITTLE_ENDIAN 0
-+#define VHOST_VRING_BIG_ENDIAN 1
-+#define VHOST_SET_VRING_ENDIAN _IOW(VHOST_VIRTIO, 0x13, struct vhost_vring_state)
-+#define VHOST_GET_VRING_ENDIAN _IOW(VHOST_VIRTIO, 0x14, struct vhost_vring_state)
++	case TUNGETVNETBE:
++		ret = tun_get_vnet_be(tun, argp);
++		break;
 +
- /* The following ioctls use eventfd file descriptors to signal and poll
-  * for events. */
++	case TUNSETVNETBE:
++		ret = tun_set_vnet_be(tun, argp);
++		break;
++
+ 	case TUNATTACHFILTER:
+ 		/* Can be set only for TAPs */
+ 		ret = -EINVAL;
+diff --git a/include/uapi/linux/if_tun.h b/include/uapi/linux/if_tun.h
+index 50ae243..3cb5e1d 100644
+--- a/include/uapi/linux/if_tun.h
++++ b/include/uapi/linux/if_tun.h
+@@ -50,6 +50,12 @@
+ #define TUNGETFILTER _IOR('T', 219, struct sock_fprog)
+ #define TUNSETVNETLE _IOW('T', 220, int)
+ #define TUNGETVNETLE _IOR('T', 221, int)
++/* The TUNSETVNETBE and TUNGETVNETBE ioctls are for cross-endian support on
++ * little-endian hosts. Not all kernel configurations support them, but all
++ * configurations that support SET also support GET.
++ */
++#define TUNSETVNETBE _IOW('T', 222, int)
++#define TUNGETVNETBE _IOR('T', 223, int)
+ 
+ /* TUNSETIFF ifr flags */
+ #define IFF_TUN		0x0001
