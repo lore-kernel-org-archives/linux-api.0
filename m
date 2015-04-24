@@ -1,7 +1,7 @@
 From: Greg Kurz <gkurz@linux.vnet.ibm.com>
-Subject: [PATCH v6 1/8] virtio: introduce virtio_is_little_endian() helper
-Date: Fri, 24 Apr 2015 14:24:27 +0200
-Message-ID: <20150424122423.19156.34555.stgit@bahia.local>
+Subject: [PATCH v6 3/8] macvtap: introduce macvtap_is_little_endian() helper
+Date: Fri, 24 Apr 2015 14:24:48 +0200
+Message-ID: <20150424122446.19156.93123.stgit@bahia.local>
 References: <20150424122211.19156.97626.stgit@bahia.local>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,57 +23,32 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
 ---
- include/linux/virtio_config.h |   17 +++++++++++------
- 1 file changed, 11 insertions(+), 6 deletions(-)
+ drivers/net/macvtap.c |    9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/virtio_config.h b/include/linux/virtio_config.h
-index ca3ed78..bd1a582 100644
---- a/include/linux/virtio_config.h
-+++ b/include/linux/virtio_config.h
-@@ -205,35 +205,40 @@ int virtqueue_set_affinity(struct virtqueue *vq, int cpu)
- 	return 0;
- }
+diff --git a/drivers/net/macvtap.c b/drivers/net/macvtap.c
+index 27ecc5c..a2f2958 100644
+--- a/drivers/net/macvtap.c
++++ b/drivers/net/macvtap.c
+@@ -49,14 +49,19 @@ struct macvtap_queue {
  
-+static inline bool virtio_is_little_endian(struct virtio_device *vdev)
+ #define MACVTAP_VNET_LE 0x80000000
+ 
++static inline bool macvtap_is_little_endian(struct macvtap_queue *q)
 +{
-+	return virtio_has_feature(vdev, VIRTIO_F_VERSION_1);
++	return q->flags & MACVTAP_VNET_LE;
 +}
 +
- /* Memory accessors */
- static inline u16 virtio16_to_cpu(struct virtio_device *vdev, __virtio16 val)
+ static inline u16 macvtap16_to_cpu(struct macvtap_queue *q, __virtio16 val)
  {
--	return __virtio16_to_cpu(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-+	return __virtio16_to_cpu(virtio_is_little_endian(vdev), val);
+-	return __virtio16_to_cpu(q->flags & MACVTAP_VNET_LE, val);
++	return __virtio16_to_cpu(macvtap_is_little_endian(q), val);
  }
  
- static inline __virtio16 cpu_to_virtio16(struct virtio_device *vdev, u16 val)
+ static inline __virtio16 cpu_to_macvtap16(struct macvtap_queue *q, u16 val)
  {
--	return __cpu_to_virtio16(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-+	return __cpu_to_virtio16(virtio_is_little_endian(vdev), val);
+-	return __cpu_to_virtio16(q->flags & MACVTAP_VNET_LE, val);
++	return __cpu_to_virtio16(macvtap_is_little_endian(q), val);
  }
  
- static inline u32 virtio32_to_cpu(struct virtio_device *vdev, __virtio32 val)
- {
--	return __virtio32_to_cpu(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-+	return __virtio32_to_cpu(virtio_is_little_endian(vdev), val);
- }
- 
- static inline __virtio32 cpu_to_virtio32(struct virtio_device *vdev, u32 val)
- {
--	return __cpu_to_virtio32(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-+	return __cpu_to_virtio32(virtio_is_little_endian(vdev), val);
- }
- 
- static inline u64 virtio64_to_cpu(struct virtio_device *vdev, __virtio64 val)
- {
--	return __virtio64_to_cpu(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-+	return __virtio64_to_cpu(virtio_is_little_endian(vdev), val);
- }
- 
- static inline __virtio64 cpu_to_virtio64(struct virtio_device *vdev, u64 val)
- {
--	return __cpu_to_virtio64(virtio_has_feature(vdev, VIRTIO_F_VERSION_1), val);
-+	return __cpu_to_virtio64(virtio_is_little_endian(vdev), val);
- }
- 
- /* Config space accessors. */
+ static struct proto macvtap_proto = {
