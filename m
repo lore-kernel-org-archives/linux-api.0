@@ -1,7 +1,7 @@
 From: Greg Kurz <gkurz@linux.vnet.ibm.com>
-Subject: [PATCH v6 2/8] tun: add tun_is_little_endian() helper
-Date: Fri, 24 Apr 2015 14:24:38 +0200
-Message-ID: <20150424122435.19156.18985.stgit@bahia.local>
+Subject: [PATCH v6 4/8] vringh: introduce vringh_is_little_endian() helper
+Date: Fri, 24 Apr 2015 14:24:58 +0200
+Message-ID: <20150424122456.19156.56558.stgit@bahia.local>
 References: <20150424122211.19156.97626.stgit@bahia.local>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,32 +23,55 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
 ---
- drivers/net/tun.c |    9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+ include/linux/vringh.h |   17 +++++++++++------
+ 1 file changed, 11 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/net/tun.c b/drivers/net/tun.c
-index 857dca4..3c3d6c0 100644
---- a/drivers/net/tun.c
-+++ b/drivers/net/tun.c
-@@ -206,14 +206,19 @@ struct tun_struct {
- 	u32 flow_count;
- };
+diff --git a/include/linux/vringh.h b/include/linux/vringh.h
+index a3fa537..3ed62ef 100644
+--- a/include/linux/vringh.h
++++ b/include/linux/vringh.h
+@@ -226,33 +226,38 @@ static inline void vringh_notify(struct vringh *vrh)
+ 		vrh->notify(vrh);
+ }
  
-+static inline bool tun_is_little_endian(struct tun_struct *tun)
++static inline bool vringh_is_little_endian(const struct vringh *vrh)
 +{
-+	return tun->flags & TUN_VNET_LE;
++	return vrh->little_endian;
 +}
 +
- static inline u16 tun16_to_cpu(struct tun_struct *tun, __virtio16 val)
+ static inline u16 vringh16_to_cpu(const struct vringh *vrh, __virtio16 val)
  {
--	return __virtio16_to_cpu(tun->flags & TUN_VNET_LE, val);
-+	return __virtio16_to_cpu(tun_is_little_endian(tun), val);
+-	return __virtio16_to_cpu(vrh->little_endian, val);
++	return __virtio16_to_cpu(vringh_is_little_endian(vrh), val);
  }
  
- static inline __virtio16 cpu_to_tun16(struct tun_struct *tun, u16 val)
+ static inline __virtio16 cpu_to_vringh16(const struct vringh *vrh, u16 val)
  {
--	return __cpu_to_virtio16(tun->flags & TUN_VNET_LE, val);
-+	return __cpu_to_virtio16(tun_is_little_endian(tun), val);
+-	return __cpu_to_virtio16(vrh->little_endian, val);
++	return __cpu_to_virtio16(vringh_is_little_endian(vrh), val);
  }
  
- static inline u32 tun_hashfn(u32 rxhash)
+ static inline u32 vringh32_to_cpu(const struct vringh *vrh, __virtio32 val)
+ {
+-	return __virtio32_to_cpu(vrh->little_endian, val);
++	return __virtio32_to_cpu(vringh_is_little_endian(vrh), val);
+ }
+ 
+ static inline __virtio32 cpu_to_vringh32(const struct vringh *vrh, u32 val)
+ {
+-	return __cpu_to_virtio32(vrh->little_endian, val);
++	return __cpu_to_virtio32(vringh_is_little_endian(vrh), val);
+ }
+ 
+ static inline u64 vringh64_to_cpu(const struct vringh *vrh, __virtio64 val)
+ {
+-	return __virtio64_to_cpu(vrh->little_endian, val);
++	return __virtio64_to_cpu(vringh_is_little_endian(vrh), val);
+ }
+ 
+ static inline __virtio64 cpu_to_vringh64(const struct vringh *vrh, u64 val)
+ {
+-	return __cpu_to_virtio64(vrh->little_endian, val);
++	return __cpu_to_virtio64(vringh_is_little_endian(vrh), val);
+ }
+ #endif /* _LINUX_VRINGH_H */
