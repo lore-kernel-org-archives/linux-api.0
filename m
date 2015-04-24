@@ -1,69 +1,63 @@
-From: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v3 2/4] of: overlay: global sysfs enable attribute
-Date: Fri, 24 Apr 2015 22:36:19 +0200
-Message-ID: <20150424203619.GC14970@kroah.com>
-References: <1429868744-19863-1-git-send-email-pantelis.antoniou@konsulko.com>
- <1429868744-19863-3-git-send-email-pantelis.antoniou@konsulko.com>
+From: "Serge E. Hallyn" <serge@hallyn.com>
+Subject: Re: [RFC] capabilities: Ambient capabilities
+Date: Fri, 24 Apr 2015 16:15:11 -0500
+Message-ID: <20150424211511.GB28613@mail.hallyn.com>
+References: <alpine.DEB.2.11.1503300754070.5031@gentwo.org>
+ <CALCETrW9ckw=7-1JSyFkenhFu2_1MvVqjA+inOmsuuWemGaU0w@mail.gmail.com>
+ <alpine.DEB.2.11.1504091024540.13650@gentwo.org>
+ <alpine.DEB.2.11.1504230900260.32203@gentwo.org>
+ <20150424175348.GL16377@ubuntumail>
+ <CALCETrW5_85mFFTkzCVNA5N1KQeNBrkw2d8FF3H3LYtmz6UAPw@mail.gmail.com>
+ <20150424190935.GN16377@ubuntumail>
+ <CALCETrV7S0dLkNWMSYsL7MFuLgdpQwUEAjW6zTwRE8uhh_AuBQ@mail.gmail.com>
+ <alpine.DEB.2.11.1504241512570.11839@gentwo.org>
+ <CALCETrUrFm9n_4xTj4ELkzTSnWHfxQtANqz2wpzU7riTihLDaA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1429868744-19863-3-git-send-email-pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Cc: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>
+In-Reply-To: <CALCETrUrFm9n_4xTj4ELkzTSnWHfxQtANqz2wpzU7riTihLDaA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Christoph Lameter <cl@linux.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Andrew Lutomirski <luto@kernel.org>, Ted Ts'o <tytso@mit.edu>, Andrew Morton <akpm@linuxfoundation.org>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 24, 2015 at 12:45:42PM +0300, Pantelis Antoniou wrote:
-> A throw once master enable switch to protect against any
-> further overlay applications if the administrator desires so.
+On Fri, Apr 24, 2015 at 01:18:44PM -0700, Andy Lutomirski wrote:
+> On Fri, Apr 24, 2015 at 1:13 PM, Christoph Lameter <cl@linux.com> wrote:
+> > On Fri, 24 Apr 2015, Andy Lutomirski wrote:
+> >
+> >> That's sort of what my patch does -- you need CAP_SETPCAP to switch
+> >> the securebit.
+> >>
+> >> But Christoph's patch required it to add caps to the ambient set, right?
+> >
+> > Yes but you seem to be just adding one additional step without too much of
+> > a benefit because you still need CAP_SETPCAP.
+> >
 > 
-> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-> ---
->  drivers/of/overlay.c | 45 ++++++++++++++++++++++++++++++++++++++++++++-
->  1 file changed, 44 insertions(+), 1 deletion(-)
-> 
-> diff --git a/drivers/of/overlay.c b/drivers/of/overlay.c
-> index f17f5ef..c335809 100644
-> --- a/drivers/of/overlay.c
-> +++ b/drivers/of/overlay.c
-> @@ -21,6 +21,7 @@
->  #include <linux/err.h>
->  #include <linux/idr.h>
->  #include <linux/sysfs.h>
-> +#include <linux/atomic.h>
->  
->  #include "of_private.h"
->  
-> @@ -55,8 +56,12 @@ struct of_overlay {
->  	struct kobject kobj;
->  };
->  
-> +/* master enable switch; once set to 0 can't be re-enabled */
-> +static atomic_t ov_enable = ATOMIC_INIT(1);
-> +
->  static int of_overlay_apply_one(struct of_overlay *ov,
->  		struct device_node *target, const struct device_node *overlay);
-> +static int overlay_removal_is_ok(struct of_overlay *ov);
->  
->  static int of_overlay_apply_single_property(struct of_overlay *ov,
->  		struct device_node *target, struct property *prop)
-> @@ -339,6 +344,37 @@ void of_overlay_release(struct kobject *kobj)
->  	kfree(ov);
->  }
->  
-> +static ssize_t enable_show(struct kobject *kobj,
-> +		struct kobj_attribute *attr, char *buf)
-> +{
-> +	return snprintf(buf, PAGE_SIZE, "%d\n", atomic_read(&ov_enable));
-> +}
-> +
-> +static ssize_t enable_store(struct kobject *kobj,
-> +		struct kobj_attribute *attr, const char *buf, size_t count)
-> +{
-> +	int ret;
-> +	long new_enable;
-> +
-> +	ret = kstrtol(buf, 10, &new_enable);
+> No, because I set the default to on :)
 
-strtobool()?
+Right - I definately prefer
+
+. default off
+. CAP_SETPCAP required to turn it on (for self and children)
+. once on, anyone can copy bits from (whatever we decided) to pA.
+
+> Also, in my model you can do:
+> 
+> $ sudo capset cap_whatever=eip something
+> $ ./something
+> 
+> and the program can make its cap be ambient and run a helper.  In the
+> CAP_SETPCAP model, that doesn't work.
+> 
+> --Andy
+> 
+> -- 
+> Andy Lutomirski
+> AMA Capital Management, LLC
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
