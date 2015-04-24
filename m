@@ -1,7 +1,7 @@
 From: Greg Kurz <gkurz@linux.vnet.ibm.com>
-Subject: [PATCH v6 3/8] macvtap: introduce macvtap_is_little_endian() helper
-Date: Fri, 24 Apr 2015 14:24:48 +0200
-Message-ID: <20150424122446.19156.93123.stgit@bahia.local>
+Subject: [PATCH v6 2/8] tun: add tun_is_little_endian() helper
+Date: Fri, 24 Apr 2015 14:24:38 +0200
+Message-ID: <20150424122435.19156.18985.stgit@bahia.local>
 References: <20150424122211.19156.97626.stgit@bahia.local>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,32 +23,32 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
 ---
- drivers/net/macvtap.c |    9 +++++++--
+ drivers/net/tun.c |    9 +++++++--
  1 file changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/net/macvtap.c b/drivers/net/macvtap.c
-index 27ecc5c..a2f2958 100644
---- a/drivers/net/macvtap.c
-+++ b/drivers/net/macvtap.c
-@@ -49,14 +49,19 @@ struct macvtap_queue {
+diff --git a/drivers/net/tun.c b/drivers/net/tun.c
+index 857dca4..3c3d6c0 100644
+--- a/drivers/net/tun.c
++++ b/drivers/net/tun.c
+@@ -206,14 +206,19 @@ struct tun_struct {
+ 	u32 flow_count;
+ };
  
- #define MACVTAP_VNET_LE 0x80000000
- 
-+static inline bool macvtap_is_little_endian(struct macvtap_queue *q)
++static inline bool tun_is_little_endian(struct tun_struct *tun)
 +{
-+	return q->flags & MACVTAP_VNET_LE;
++	return tun->flags & TUN_VNET_LE;
 +}
 +
- static inline u16 macvtap16_to_cpu(struct macvtap_queue *q, __virtio16 val)
+ static inline u16 tun16_to_cpu(struct tun_struct *tun, __virtio16 val)
  {
--	return __virtio16_to_cpu(q->flags & MACVTAP_VNET_LE, val);
-+	return __virtio16_to_cpu(macvtap_is_little_endian(q), val);
+-	return __virtio16_to_cpu(tun->flags & TUN_VNET_LE, val);
++	return __virtio16_to_cpu(tun_is_little_endian(tun), val);
  }
  
- static inline __virtio16 cpu_to_macvtap16(struct macvtap_queue *q, u16 val)
+ static inline __virtio16 cpu_to_tun16(struct tun_struct *tun, u16 val)
  {
--	return __cpu_to_virtio16(q->flags & MACVTAP_VNET_LE, val);
-+	return __cpu_to_virtio16(macvtap_is_little_endian(q), val);
+-	return __cpu_to_virtio16(tun->flags & TUN_VNET_LE, val);
++	return __cpu_to_virtio16(tun_is_little_endian(tun), val);
  }
  
- static struct proto macvtap_proto = {
+ static inline u32 tun_hashfn(u32 rxhash)
