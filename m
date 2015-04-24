@@ -1,34 +1,49 @@
-From: "Ivan T. Ivanov" <iivanov-NEYub+7Iv8PQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 01/11] coresight-etm4x: Adding CoreSight ETM4x driver
-Date: Fri, 24 Apr 2015 18:41:48 +0300
-Message-ID: <1429890108.5211.8.camel@mm-sol.com>
-References: <1429742451-11465-1-git-send-email-mathieu.poirier@linaro.org>
-	 <1429742451-11465-2-git-send-email-mathieu.poirier@linaro.org>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: Regression: Requiring CAP_SYS_ADMIN for /proc/<pid>/pagemap
+ causes application-level breakage
+Date: Fri, 24 Apr 2015 09:08:15 -0700
+Message-ID: <CA+55aFymwdHBs02GQkqQYwYF9Ru5dMKd4=2whLUfPwZSPU7ZGA@mail.gmail.com>
+References: <CAEVpBa+7Yp+zCTczZqBd6Qp_uM7yy0i8YZfZkUbDeUsPpKtqRQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1429742451-11465-2-git-send-email-mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAEVpBa+7Yp+zCTczZqBd6Qp_uM7yy0i8YZfZkUbDeUsPpKtqRQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mark Williamson <mwilliamson@undo-software.com>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Pavel Emelyanov <xemul@parallels.com>, Konstantin Khlebnikov <khlebnikov@openvz.org>, Andrew Morton <akpm@linux-foundation.org>, Mark Seaborn <mseaborn@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Linux API <linux-api@vger.kernel.org>, Finn Grimwood <fgrimwood@undo-software.com>, Daniel James <djames@undo-software.com>
 List-Id: linux-api@vger.kernel.org
 
+On Fri, Apr 24, 2015 at 7:55 AM, Mark Williamson
+<mwilliamson@undo-software.com> wrote:
+>
+> Although I've marked this as a "Regression", we do realise there are
+> legitimate security concerns over the original implementation of this
+> interface.  Still, given the kernel's strong stance on preserving userspace
+> interfaces, we thought we ought to flag this quickly as something that has
+> changed application-relevant behaviour.
 
-On Wed, 2015-04-22 at 16:40 -0600, Mathieu Poirier wrote:
-> 
+So the one exception to the regression rule is "security fixes", but
+even for security fixes we do try to be as reasonable as humanly
+possible to make them not break things.
 
-> +static struct amba_id etm4_ids[] = {
-> +       {       /* ETM 4.0 - Hi6220 board */
-> +               .id     = 0x0003b95d,
-> +               .mask   = 0x0003ffff,
-> +               .data   = "ETM 4.0",
-> +       },
-> +       {       /* ETM 4.0 - Juno board */
-> +               .id     = 0x000bb95e,
-> +               .mask   = 0x000bffff,
+Now, as you mentioned, one option is to not outright disallow accesses
+to the /proc/PID/pagemap, but to at least hide the page frame numbers.
+However, I don't believe that we have a good enough scrambling model
+to make that reasonable. Remember: any attacker will be able to see
+our scrambling code, so it would need to be both cryptographically
+secure *and* use a truly random per-VM secret key. Quite frankly,
+that's a _lot_ of effort for dubious gain...
 
-Mask looks suspicious.
+So the "just show physical addresses as zero for non-root users"
+(instead of the outright ban on opening the file) is likely the only
+really viable alternative.
 
-Regards,
-Ivan
+It sounds like that could work for you. So if you can modify the app
+to do that, and send me a tested kernel patch that moves the
+permission check into the read phase (remember to use the open-time
+credentials in "file->f_cred" rather than the read-time credentials in
+"current" - otherwise you can trick some suid program to read the fily
+that an unauthorized user opened), then we can have this fixed. Does
+that sound reasonable?
+
+                      Linus
