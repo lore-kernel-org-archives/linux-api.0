@@ -1,58 +1,66 @@
-From: Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
-Subject: Regression: Requiring CAP_SYS_ADMIN for /proc/<pid>/pagemap causes
- application-level breakage
-Date: Fri, 24 Apr 2015 16:01:24 +0100
-Message-ID: <CAEVpBa+_RyACkhODZrRvQLs80iy0sqpdrd0AaP_-tgnX3Y9yNQ@mail.gmail.com>
+From: "Ivan T. Ivanov" <iivanov-NEYub+7Iv8PQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 01/11] coresight-etm4x: Adding CoreSight ETM4x driver
+Date: Fri, 24 Apr 2015 18:05:23 +0300
+Message-ID: <1429887923.5211.6.camel@mm-sol.com>
+References: <1429742451-11465-1-git-send-email-mathieu.poirier@linaro.org>
+	 <1429742451-11465-2-git-send-email-mathieu.poirier@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1429742451-11465-2-git-send-email-mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Konstantin Khlebnikov <khlebnikov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mark Seaborn <mseaborn-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Finn Grimwood <fgrimwood-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, Daniel James <djames-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
+To: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi all,
 
-<resending without unwanted HTML-ifying - apologies for the noise if
-this appears twice for you!>
+On Wed, 2015-04-22 at 16:40 -0600, Mathieu Poirier wrote:
+> From: Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+> 
+> This driver manages the CoreSight ETMv4 (Embedded Trace Macrocell) IP block
+> to support HW assisted tracing on ARMv7 and ARMv8 architectures.
+> 
+> Signed-off-by: Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+> Signed-off-by: Kaixu Xia <xiakaixu-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+> Signed-off-by: Mathieu Poirier poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 
-Recent changes have restricted a userspace interface used by our
-product; specifically, a security patch to require CAP_SYS_ADMIN when
-opening /proc/PID/pagemap
-(https://github.com/torvalds/linux/commit/ab676b7d6fbf4b294bf198fb27ade5b0e865c7ce,
-original LKML discussion here: https://lkml.org/lkml/2015/3/9/864).
+<snip>
 
-Although I've marked this as a "Regression", we do realise there are
-legitimate security concerns over the original implementation of this
-interface.  Still, given the kernel's strong stance on preserving
-userspace interfaces, we thought we ought to flag this quickly as
-something that has changed application-relevant behaviour.
+> 
 
-We believe this change came into released kernels with Linux 4.0.  We
-first observed problems when testing on Ubuntu 15.04 this week; I see
-the patch is now backported to the various -stable kernel lines, so
-I'd expect it to show up in other distros in due course.  The obvious
-solution (to simply run with CAP_SYS_ADMIN) is quite undesirable for
-our product, which is a debugger; we're expecting our users to run
-without special privileges.
+> +       pm_runtime_put(&adev->dev);
+> +
+> +       desc->type = CORESIGHT_DEV_TYPE_SOURCE;
+> +       desc->subtype.source_subtype = CORESIGHT_DEV_SUBTYPE_SOURCE_PROC;
+> +       desc->ops = &etm4_cs_ops;
+> +       desc->pdata = pdata;
+> +       desc->dev = dev;
+> +       desc->groups = coresight_etmv4_groups;
+> +       drvdata->csdev = coresight_register(desc);
+> +       if (IS_ERR(drvdata->csdev)) {
+> +               ret = PTR_ERR(drvdata->csdev);
+> +               goto err_arch_supported;
 
-In our use of /proc/PID/pagemap, we currently make use of the physical
-pageframe addresses.  We should be able to work with a scrambled
-representation of these (Andy Lutomirski suggested this in the
-original discussion - https://lkml.org/lkml/2015/3/16/1273) so long as
-the scrambling remained consistent during the lifetime of the open
-pagemap file.  Alternatively, if physical addresses were simply zeroed
-(also suggested by Pavel Emelyanov -
-https://lkml.org/lkml/2015/3/9/871) we would be able to change our
-code to rely only on the soft-dirty flag and thus still work
-correctly.
+double runtime put.
 
-I propose to follow up with a patch that provides unprivileged access
-to /proc/PID/pagemap with the physical pageframe addresses zeroed.
-Would this be an acceptable approach?
+> +       }
+> +
+> +       dev_info(dev, "%s initialized\n", (char *)id->data);
+> +
+> +       if (boot_enable) {
+> +               coresight_enable(drvdata->csdev);
+> +               drvdata->boot_enable = true;
+> +       }
+> +
+> +       return 0;
+> +
+> +err_arch_supported:
+> +       pm_runtime_put(&adev->dev);
+> +       if (--etm4_count == 0)
+> +               unregister_hotcpu_notifier(&etm4_cpu_notifier);
+> +       return ret;
+> +}
 
-Thank you,
-Mark Williamson
-
----
-Undo Software - http://undo-software.com/
+Regards,
+Ivan
