@@ -1,31 +1,50 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [v14 3/4] ext4: adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR
- interface support
-Date: Mon, 27 Apr 2015 09:20:33 +1000
-Message-ID: <20150426232033.GQ15810@dastard>
-References: <1429728997-21464-1-git-send-email-lixi@ddn.com>
- <1429728997-21464-4-git-send-email-lixi@ddn.com>
+From: Cornelia Huck <cornelia.huck@de.ibm.com>
+Subject: Re: [PATCH v6 1/8] virtio: introduce virtio_is_little_endian() helper
+Date: Mon, 27 Apr 2015 11:07:30 +0200
+Message-ID: <20150427110730.212a1594.cornelia.huck@de.ibm.com>
+References: <20150424122211.19156.97626.stgit@bahia.local>
+	<20150424122423.19156.34555.stgit@bahia.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1429728997-21464-4-git-send-email-lixi-LfVdkaOWEx8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Li Xi <pkuelelixi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dmonakhov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <20150424122423.19156.34555.stgit@bahia.local>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Greg Kurz <gkurz@linux.vnet.ibm.com>
+Cc: Thomas Huth <thuth@redhat.com>, kvm@vger.kernel.org, "Michael S. Tsirkin" <mst@redhat.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 23, 2015 at 03:56:36AM +0900, Li Xi wrote:
-> This patch adds FS_IOC_FSSETXATTR/FS_IOC_FSGETXATTR ioctl interface
-> support for ext4. The interface is kept consistent with
-> XFS_IOC_FSGETXATTR/XFS_IOC_FSGETXATTR.
+On Fri, 24 Apr 2015 14:24:27 +0200
+Greg Kurz <gkurz@linux.vnet.ibm.com> wrote:
 
-Have you run this patchthrough XFS testing to make sure everything
-sill works?
+> Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
+> ---
+>  include/linux/virtio_config.h |   17 +++++++++++------
+>  1 file changed, 11 insertions(+), 6 deletions(-)
+> 
+> diff --git a/include/linux/virtio_config.h b/include/linux/virtio_config.h
+> index ca3ed78..bd1a582 100644
+> --- a/include/linux/virtio_config.h
+> +++ b/include/linux/virtio_config.h
+> @@ -205,35 +205,40 @@ int virtqueue_set_affinity(struct virtqueue *vq, int cpu)
+>  	return 0;
+>  }
+> 
+> +static inline bool virtio_is_little_endian(struct virtio_device *vdev)
+> +{
+> +	return virtio_has_feature(vdev, VIRTIO_F_VERSION_1);
+> +}
+> +
 
-Cheers,
+While this reads a bit funny in this patch, it will end up correctly at
+the end of the series, so
 
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+Acked-by: Cornelia Huck <cornelia.huck@de.ibm.com>
