@@ -1,172 +1,181 @@
-From: Greg KH <greg@kroah.com>
-Subject: Re: [RFC v2 1/4] fs: Add generic file system event notifications
-Date: Mon, 27 Apr 2015 17:37:11 +0200
-Message-ID: <20150427153711.GA23428@kroah.com>
-References: <1430135504-24334-1-git-send-email-b.michalska@samsung.com>
- <1430135504-24334-2-git-send-email-b.michalska@samsung.com>
- <20150427142421.GB21942@kroah.com>
- <553E50EB.3000402@samsung.com>
+From: "Kuppuswamy Sathyanarayanan"
+	<sathyanarayanan.kuppuswamy@linux.intel.com>
+Subject: Re: [RFC PATCH 3/3] iio: derive the mounting matrix from ACPI _PLD
+     objects
+Date: Mon, 27 Apr 2015 08:42:22 -0700 (PDT)
+Message-ID: <64714.10.254.87.235.1430149342.squirrel@linux.intel.com>
+References: <1430146908-27919-1-git-send-email-octavian.purdila@intel.com>
+    <1430146908-27919-4-git-send-email-octavian.purdila@intel.com>
+Reply-To: sathyanarayanan.kuppuswamy@linux.intel.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <553E50EB.3000402@samsung.com>
-Sender: owner-linux-mm@kvack.org
-To: Beata Michalska <b.michalska@samsung.com>
-Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, jack@suse.cz, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1430146908-27919-4-git-send-email-octavian.purdila@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+Cc: jic23@kernel.org, lars@metafoo.de, pmeerw@pmeerw.net, robert.moore@intel.com, rafael.j.wysocki@intel.com, lenb@kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-iio@vger.kernel.org, linux-acpi@vger.kernel.org, Octavian Purdila <octavian.purdila@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 27, 2015 at 05:08:27PM +0200, Beata Michalska wrote:
-> On 04/27/2015 04:24 PM, Greg KH wrote:
-> > On Mon, Apr 27, 2015 at 01:51:41PM +0200, Beata Michalska wrote:
-> >> Introduce configurable generic interface for file
-> >> system-wide event notifications, to provide file
-> >> systems with a common way of reporting any potential
-> >> issues as they emerge.
-> >>
-> >> The notifications are to be issued through generic
-> >> netlink interface by newly introduced multicast group.
-> >>
-> >> Threshold notifications have been included, allowing
-> >> triggering an event whenever the amount of free space drops
-> >> below a certain level - or levels to be more precise as two
-> >> of them are being supported: the lower and the upper range.
-> >> The notifications work both ways: once the threshold level
-> >> has been reached, an event shall be generated whenever
-> >> the number of available blocks goes up again re-activating
-> >> the threshold.
-> >>
-> >> The interface has been exposed through a vfs. Once mounted,
-> >> it serves as an entry point for the set-up where one can
-> >> register for particular file system events.
-> >>
-> >> Signed-off-by: Beata Michalska <b.michalska@samsung.com>
-> >> ---
-> >>  Documentation/filesystems/events.txt |  231 ++++++++++
-> >>  fs/Makefile                          |    1 +
-> >>  fs/events/Makefile                   |    6 +
-> >>  fs/events/fs_event.c                 |  770 ++++++++++++++++++++++++++++++++++
-> >>  fs/events/fs_event.h                 |   25 ++
-> >>  fs/events/fs_event_netlink.c         |   99 +++++
-> >>  fs/namespace.c                       |    1 +
-> >>  include/linux/fs.h                   |    6 +-
-> >>  include/linux/fs_event.h             |   58 +++
-> >>  include/uapi/linux/fs_event.h        |   54 +++
-> >>  include/uapi/linux/genetlink.h       |    1 +
-> >>  net/netlink/genetlink.c              |    7 +-
-> >>  12 files changed, 1257 insertions(+), 2 deletions(-)
-> >>  create mode 100644 Documentation/filesystems/events.txt
-> >>  create mode 100644 fs/events/Makefile
-> >>  create mode 100644 fs/events/fs_event.c
-> >>  create mode 100644 fs/events/fs_event.h
-> >>  create mode 100644 fs/events/fs_event_netlink.c
-> >>  create mode 100644 include/linux/fs_event.h
-> >>  create mode 100644 include/uapi/linux/fs_event.h
-> > 
-> > Any reason why you just don't do uevents for the block devices today,
-> > and not create a new type of netlink message and userspace tool required
-> > to read these?
-> 
-> The idea here is to have support for filesystems with no backing device as well.
-> Parsing the message with libnl is really simple and requires few lines of code
-> (sample application has been presented in the initial version of this RFC)
+Since Acpi framework already exports this info to user space, Why not do
+this derivation in user space code ? Why do we need new ABI, if the same
+can be derived from existing one.
 
-I'm not saying it's not "simple" to parse, just that now you are doing
-something that requires a different tool.  If you have a block device,
-you should be able to emit uevents for it, you don't need a backing
-device, we handle virtual filesystems in /sys/block/ just fine :)
+> This patch derives the mounting matrix for a particular IIO device
+> based ont the ACPI _PLD information. Note that if mounting matrix is
+> defined in the device properties it overrieds the _PLD information.
+>
+> Signed-off-by: Octavian Purdila <octavian.purdila@intel.com>
+> ---
+>  drivers/iio/industrialio-core.c | 51
+> +++++++++++++++++++++++++++++++++++++++++
+>  include/linux/iio/iio.h         | 46
+> +++++++++++++++++++++++++++++++++++++
+>  2 files changed, 97 insertions(+)
+>
+> diff --git a/drivers/iio/industrialio-core.c
+> b/drivers/iio/industrialio-core.c
+> index 9000c53..90ee58a 100644
+> --- a/drivers/iio/industrialio-core.c
+> +++ b/drivers/iio/industrialio-core.c
+> @@ -31,6 +31,7 @@
+>  #include <linux/iio/sysfs.h>
+>  #include <linux/iio/events.h>
+>  #include <linux/iio/buffer.h>
+> +#include <linux/acpi.h>
+>
+>  /* IDA to assign each registered device a unique id */
+>  static DEFINE_IDA(iio_ida);
+> @@ -871,6 +872,53 @@ static ssize_t iio_show_dev_name(struct device *dev,
+>
+>  static DEVICE_ATTR(name, S_IRUGO, iio_show_dev_name, NULL);
+>
+> +#if IS_ENABLED(CONFIG_ACPI)
+> +static bool iio_get_mounting_matrix_acpi(struct iio_dev *indio_dev)
+> +{
+> +	acpi_handle h = ACPI_HANDLE(indio_dev->dev.parent);
+> +	struct acpi_pld_info *info;
+> +
+> +	if (ACPI_SUCCESS(acpi_get_physical_device_location(h, &info))) {
+> +		IIO_MM_SET(indio_dev->mounting_matrix, X, X, 1, 0);
+> +		IIO_MM_SET(indio_dev->mounting_matrix, Y, Y, 1, 0);
+> +		IIO_MM_SET(indio_dev->mounting_matrix, Z, Z, 1, 0);
+> +
+> +		/* Chip placed on the back panel ; negate x and z */
+> +		if (info->panel == ACPI_PLD_PANEL_BACK) {
+> +			IIO_MM_MUL(indio_dev->mounting_matrix, X, X, -1, 0);
+> +			IIO_MM_MUL(indio_dev->mounting_matrix, Z, Z, -1, 0);
+> +		}
+> +
+> +		switch (info->rotation) {
+> +		case 2:
+> +			/* 90 deg clockwise: negate y then swap x,y */
+> +			IIO_MM_MUL(indio_dev->mounting_matrix, Y, Y, -1, 0);
+> +			IIO_MM_SWAP(indio_dev->mounting_matrix, X, Y);
+> +			break;
+> +		case 4:
+> +			/* Upside down: negate x and y */
+> +			IIO_MM_MUL(indio_dev->mounting_matrix, X, X, -1, 0);
+> +			IIO_MM_MUL(indio_dev->mounting_matrix, Y, Y, -1, 0);
+> +			break;
+> +		case 6:
+> +			/* 90 deg counter clockwise: negate x then swap x,y */
+> +			IIO_MM_MUL(indio_dev->mounting_matrix, X, X, -1, 0);
+> +			IIO_MM_SWAP(indio_dev->mounting_matrix, X, Y);
+> +			break;
+> +		}
+> +
+> +		return true;
+> +	}
+> +
+> +	return false;
+> +}
+> +#else
+> +static bool iio_get_mounting_matrix_acpi(struct iio_dev *indio_dev)
+> +{
+> +	return false;
+> +}
+> +#endif
+> +
+>  static bool iio_get_mounting_matrix(struct iio_dev *indio_dev)
+>  {
+>  	int i, err;
+> @@ -888,6 +936,9 @@ static bool iio_get_mounting_matrix(struct iio_dev
+> *indio_dev)
+>  		return true;
+>  	}
+>
+> +	if (ACPI_HANDLE(indio_dev->dev.parent))
+> +		return iio_get_mounting_matrix_acpi(indio_dev);
+> +
+>  	return false;
+>  }
+>
+> diff --git a/include/linux/iio/iio.h b/include/linux/iio/iio.h
+> index c1fa852..feb7813 100644
+> --- a/include/linux/iio/iio.h
+> +++ b/include/linux/iio/iio.h
+> @@ -436,6 +436,52 @@ struct iio_buffer_setup_ops {
+>
+>  #define IIO_MM_SIZE		18
+>
+> +enum {
+> +	IIO_MM_XX0,
+> +	IIO_MM_XX1,
+> +	IIO_MM_XY0,
+> +	IIO_MM_XY1,
+> +	IIO_MM_XZ0,
+> +	IIO_MM_XZ1,
+> +	IIO_MM_YX0,
+> +	IIO_MM_YX1,
+> +	IIO_MM_YY0,
+> +	IIO_MM_YY1,
+> +	IIO_MM_YZ0,
+> +	IIO_MM_YZ1,
+> +	IIO_MM_ZX0,
+> +	IIO_MM_ZX1,
+> +	IIO_MM_ZY0,
+> +	IIO_MM_ZY1,
+> +	IIO_MM_ZZ0,
+> +	IIO_MM_ZZ1,
+> +};
+> +
+> +#define IIO_MM_SET(mm, a, b, val0, val1)	\
+> +	do {					\
+> +		mm[IIO_MM_##a##b##0] = val0;	\
+> +		mm[IIO_MM_##a##b##1] = val1;	\
+> +	} while (0)				\
+> +
+> +#define IIO_MM_MUL(mm, a, b, val0, val1)	\
+> +	do {					\
+> +		mm[IIO_MM_##a##b##0] *= val0;	\
+> +		mm[IIO_MM_##a##b##0] *= val1;	\
+> +	} while (0)				\
+> +
+> +#define IIO_MM_SWAP(mm, x, y)					\
+> +	do {							\
+> +		int tmp;					\
+> +								\
+> +		tmp = mm[IIO_MM_##x##x##0];			\
+> +		mm[IIO_MM_##x##x##0] = mm[IIO_MM_##y##y##0];	\
+> +		mm[IIO_MM_##y##y##0] = tmp;			\
+> +								\
+> +		tmp = mm[IIO_MM_##x##x##1];			\
+> +		mm[IIO_MM_##x##x##1] = mm[IIO_MM_##y##y##1];	\
+> +		mm[IIO_MM_##y##y##1] = tmp;			\
+> +	} while (0)						\
+> +
+>  /**
+>   * struct iio_dev - industrial I/O device
+>   * @id:			[INTERN] used to identify device internally
+> --
+> 1.9.1
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-iio" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
 
-People already have tools that listen to libudev for system monitoring
-and management, why require them to hook up to yet-another-library?  And
-what is going to provide the ability for multiple userspace tools to
-listen to these netlink messages in case you have more than one program
-that wants to watch for these things (i.e. multiple desktop filesystem
-monitoring tools, system-health checkers, etc.)?
 
-> >> --- a/fs/Makefile
-> >> +++ b/fs/Makefile
-> >> @@ -126,3 +126,4 @@ obj-y				+= exofs/ # Multiple modules
-> >>  obj-$(CONFIG_CEPH_FS)		+= ceph/
-> >>  obj-$(CONFIG_PSTORE)		+= pstore/
-> >>  obj-$(CONFIG_EFIVAR_FS)		+= efivarfs/
-> >> +obj-y				+= events/
-> > 
-> > Always?
-> > 
-> >> diff --git a/fs/events/Makefile b/fs/events/Makefile
-> >> new file mode 100644
-> >> index 0000000..58d1454
-> >> --- /dev/null
-> >> +++ b/fs/events/Makefile
-> >> @@ -0,0 +1,6 @@
-> >> +#
-> >> +# Makefile for the Linux Generic File System Event Interface
-> >> +#
-> >> +
-> >> +obj-y := fs_event.o
-> > 
-> > Always?  Even if the option is not selected?  Why is everyone forced to
-> > always use this code?  Can't you disable it for the "tiny" systems that
-> > don't need it?
-> > 
-> 
-> I was considering making it optional and I guess it's worth getting back
-> to this idea.
-
-The "linux-tiny" people will appreciate that :)
-
-> >> +struct fs_trace_entry {
-> >> +	atomic_t	 count;
-> > 
-> > Why not just use a 'struct kref' for your count, which will save a bunch
-> > of open-coding of reference counting, and forcing us to audit your code
-> > to verify you got all the corner cases correct?  :)
-> > 
-> >> +	atomic_t	 active;
-> >> +	struct super_block *sb;
-> 
-> Not sure if using kref would change much here as the kref would not really
-> make it easier to verify those corner cases, unfortunately.
-
-Why not, that's the goal of a kref.  Yes, you already did the hard work,
-but now you require everyone else to also do the hard work of trying to
-audit your code.  That's why we have common functions/data structures in
-the kernel, to make long-term maintenance easier.
-
-Please switch to make it so that we "know" you are doing this correctly.
-
-> > Are you properly reference counting this pointer?  I didn't see where
-> > that was happening, so I must have missed it.
-> > 
-> > thanks,
-> >
-> 
-> You haven't. And if I haven't missed anything, the sb is being used only
-> as long as the super is alive.
-
-How do you know that? :)
-
-> Most of the code operates on sb only if it
-> was explicitly asked to, through call from filesystem. There is also
-> a callback notifying of mount being dropped (which proceeds the call to 
-> kill_super) that invalidates the object that depends on it.
-> Still, it should be explicitly stated that the sb is being used through
-> bidding up the s_count counter, though that would require taking the
-> sb_lock. AFAIK, one can get the reference to super block but for a particular
-> device. Maybe it would be worth having it more generic (?).
-
-Why not just grab a reference to the sb when you save the pointer, and
-release it when you are done with it?  That should handle the lifecycle
-properly.  It's always a very bad idea to have a pointer to a reference
-counted object without actually grabbing the reference, as you have no
-idea what is happening with it behind your back.
-
-thanks,
-
-greg k-h
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+Sathyanarayanan Kuppuswamy
