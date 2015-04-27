@@ -1,139 +1,52 @@
-From: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 2/3] uffd: Introduce the v2 API
-Date: Mon, 27 Apr 2015 23:12:37 +0200
-Message-ID: <20150427211236.GB24035@redhat.com>
-References: <5509D342.7000403@parallels.com>
- <5509D375.7000809@parallels.com>
- <20150421121817.GD4481@redhat.com>
- <55389133.8070701@parallels.com>
+From: sathyanarayanan kuppuswamy
+	<sathyanarayanan.kuppuswamy@linux.intel.com>
+Subject: Re: [RFC PATCH 3/3] iio: derive the mounting matrix from ACPI _PLD
+ objects
+Date: Mon, 27 Apr 2015 14:57:07 -0700
+Message-ID: <553EB0B3.5000707@linux.intel.com>
+References: <1430146908-27919-1-git-send-email-octavian.purdila@intel.com>	<1430146908-27919-4-git-send-email-octavian.purdila@intel.com>	<64714.10.254.87.235.1430149342.squirrel@linux.intel.com> <CAE1zot+YKTPmVbG-_fNRy-E_VCcqq1VE78H3PMSMb5HvsBheQw@mail.gmail.com>
+Reply-To: sathyanarayanan.kuppuswamy@linux.intel.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <55389133.8070701-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Sanidhya Kashyap <sanidhya.gatech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-acpi-owner@vger.kernel.org>
+In-Reply-To: <CAE1zot+YKTPmVbG-_fNRy-E_VCcqq1VE78H3PMSMb5HvsBheQw@mail.gmail.com>
+Sender: linux-acpi-owner@vger.kernel.org
+To: Octavian Purdila <octavian.purdila@intel.com>
+Cc: Jonathan Cameron <jic23@kernel.org>, Lars-Peter Clausen <lars@metafoo.de>, Peter Meerwald <pmeerw@pmeerw.net>, Robert Moore <robert.moore@intel.com>, Rafael J Wysocki <rafael.j.wysocki@intel.com>, lenb@kernel.org, linux-api@vger.kernel.org, lkml <linux-kernel@vger.kernel.org>, "linux-iio@vger.kernel.org" <linux-iio@vger.kernel.org>, "linux-acpi@vger.kernel.org" <linux-acpi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+Hi
 
-On Thu, Apr 23, 2015 at 09:29:07AM +0300, Pavel Emelyanov wrote:
-> So your proposal is to always report 16 bytes per PF from read() and
-> let userspace decide itself how to handle the result?
+On 04/27/2015 08:54 AM, Octavian Purdila wrote:
+> On Mon, Apr 27, 2015 at 6:42 PM, Kuppuswamy Sathyanarayanan
+> <sathyanarayanan.kuppuswamy@linux.intel.com> wrote:
+>> Since Acpi framework already exports this info to user space, Why not do
+>> this derivation in user space code ? Why do we need new ABI, if the same
+>> can be derived from existing one.
+>>
+> The ABI was added in the previous patch so that we can present the
+> sensor orientation information to userspace even in the case of device
+> tree.
+If the main reason for implementing a new ABI is to support DT 
+platforms, Why not implement a version of _PLD for device tree ? Don't 
+you think it would be much better than adding a new ABI to export 
+redundant information ?
 
-Reading 16bytes for each userfault (instead of 8) and sharing the same
-read(2) protocol (UFFD_API) for both the cooperative and
-non-cooperative usages, is something I just suggested for
-consideration after reading your patchset.
+Also the location information of the device is not just specific to iio 
+drivers. You should consider that we would have similar requirements for 
+devices implemented as input or platform drivers.
+>
+> The purpose of this patch is to provide a consistent ABI to userspace,
+> i.e. to avoid doing one thing in the ACPI case and another thing in
+> the case of device tree.
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-acpi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
 
-The pros of using a single protocol for both is that it would reduce
-amount of code and there would be just one file operation for the
-.read method. The cons is that it will waste 8 bytes per userfault in
-terms of memory footprint. The other major cons is that it would force
-us to define the format of the non cooperative protocol now despite it's
-not fully finished yet.
+-- 
+Sathyanarayanan Kuppuswamy
+Android kernel developer
 
-I'm also ok with two protocols if nobody else objects, but if we use
-two protocols, we should at least use different file operation methods
-and use __always_inline with constants passed as parameter to optimize
-away the branches at build time. This way we get the reduced memory
-footprint in the read syscall without other runtime overhead
-associated with it.
-
-> >> +struct uffd_v2_msg {
-> >> +	__u64	type;
-> >> +	__u64	arg;
-> >> +};
-> >> +
-> >> +#define UFFD_PAGEFAULT	0x1
-> >> +
-> >> +#define UFFD_PAGEFAULT_BIT	(1 << (UFFD_PAGEFAULT - 1))
-> >> +#define __UFFD_API_V2_BITS	(UFFD_PAGEFAULT_BIT)
-> >> +
-> >> +/*
-> >> + * Lower PAGE_SHIFT bits are used to report those supported
-> >> + * by the pagefault message itself. Other bits are used to
-> >> + * report the message types v2 API supports
-> >> + */
-> >> +#define UFFD_API_V2_BITS	(__UFFD_API_V2_BITS << 12)
-> >> +
-> > 
-> > And why exactly is this 12 hardcoded?
-> 
-> Ah, it should have been the PAGE_SHIFT one, but I was unsure whether it
-> would be OK to have different shifts in different arches.
-> 
-> But taking into account your comment that bits field id bad for these
-> values, if we introduce the new .features one for api message, then this
-> 12 will just go away.
-
-Ok.
-
-> > And which field should be masked
-> > with the bits? In the V1 protocol it was the "arg" (userfault address)
-> > not the "type". So this is a bit confusing and probably requires
-> > simplification.
-> 
-> I see. Actually I decided that since bits higher than 12th (for x86) is
-> always 0 in api message (no bits allowed there, since pfn sits in this
-> place), it would be OK to put non-PF bits there.
-
-That was ok yes.
-
-> Should I better introduce another .features field in uffd API message?
-
-What about renaming "uffdio_api.bits" to "uffdio_api.features"?
-
-And then we set uffdio_api.features to
-UFFD_FEATURE_WRITE|UFFD_FEATURE_WP|UFFD_FEATURE_FORK as needed.
-
-UFFD_FEATURE_WRITE would always be enabled, it's there only in case we
-want to disable it later (mostly if some arch has trouble with it,
-which is unlikely, but qemu doesn't need that bit of information at
-all for example so qemu would be fine if UFFD_FEATURE_WRITE
-disappears).
-
-UFFD_FEATURE_WP would signal also that the wrprotection feature (not
-implemented yet) is available (then later the register ioctl would
-also show the new wrprotection ioctl numbers available to mangle the
-wrprotection). The UFFD_FEATURE_WP feature in the cooperative usage
-(qemu live snapshotting) can use the UFFD_API first protocol too.
-
-UFFD_FEATURE_FORK would be returned if the UFFD_API_V2 was set in
-uffdio.api, and it would be part of the incremental non-cooperative
-patchset.
-
-We could also not define "UFFD_FEATURE_FORK" at all and imply that
-fork/mremap/MADV_DONTNEED are all available if UFFD_API_V2 uffdio_api
-ioctl succeeds... That's only doable if we keep two different read
-protocols though. UFFD_FEATURE_FORK (or UFFD_FEATURE_NON_COOPERATIVE)
-are really strictly needed only if we share the same read(2) protocol
-for both the cooperative and non-cooperative usages.
-
-The idea is that there's not huge benefit of only having the "fork"
-feature supported but missing "mremap" and "madv_dontneed".
-
-In fact if a new syscall that works like mremap is added later (call
-it mremap2), we would need to fail the UFFDIO_API_V2 and require a
-UFFDIO_API_V3 for such kernel that can return a new mremap2 type of
-event. Userland couldn't just assume it is ok to use postcopy live
-migration for containers, because
-UFFD_FEATURE_FORK|MREMAP|MADV_DONTNEED are present in the
-uffdio.features when it asked for API_V2. There shall be something
-that tells userland "hey there's a new mremap2 that the software
-inside the container can run on top of this kernel, so you are going
-to get a new mremap2 type of userfault event too".
-
-In any case, regardless of how we solve the above,
-"uffdio_api.features" sounds better than ".bits".
-
-If we retain two different UFFD_API, we'll be able to freeze the
-current one and decide later if
-UFFD_FEATURE_FORK|UFFD_FEATURE_MREMAP|UFFD_FEATURE_MADV_DONTNEED shall
-be added to the .features, or if to rely on UFFD_API_V2 succeeding to
-let userland know that the non-cooperative usage is fully supported by
-the kernel.
-
-Not having to freeze these details now is the main benefit of having
-two different UFFD_API after all...
