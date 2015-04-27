@@ -1,40 +1,70 @@
-From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+From: Mathieu Poirier <mathieu.poirier@linaro.org>
 Subject: Re: [PATCH 01/11] coresight-etm4x: Adding CoreSight ETM4x driver
-Date: Mon, 27 Apr 2015 09:48:15 -0600
-Message-ID: <CANLsYky6TZhZ=JZuoBxU4dNRWVPYGUj6joMfi+dD9zjaokRE0A@mail.gmail.com>
+Date: Mon, 27 Apr 2015 09:51:21 -0600
+Message-ID: <CANLsYkxWaxWL6rDaEKh+EOcXVBEqWp1W5yarSEsvEC3B0mne7g@mail.gmail.com>
 References: <1429742451-11465-1-git-send-email-mathieu.poirier@linaro.org>
 	<1429742451-11465-2-git-send-email-mathieu.poirier@linaro.org>
-	<1429890108.5211.8.camel@mm-sol.com>
+	<1429887923.5211.6.camel@mm-sol.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1429890108.5211.8.camel-NEYub+7Iv8PQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Ivan T. Ivanov" <iivanov-NEYub+7Iv8PQT0dZR+AlfA@public.gmane.org>
-Cc: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kaixu Xia <kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1429887923.5211.6.camel@mm-sol.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Ivan T. Ivanov" <iivanov@mm-sol.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, linux-api@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Kaixu Xia <kaixu.xia@linaro.org>, Chunyan Zhang <zhang.chunyan@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-On 24 April 2015 at 09:41, Ivan T. Ivanov <iivanov-NEYub+7Iv8PQT0dZR+AlfA@public.gmane.org> wrote:
+On 24 April 2015 at 09:05, Ivan T. Ivanov <iivanov@mm-sol.com> wrote:
 >
 > On Wed, 2015-04-22 at 16:40 -0600, Mathieu Poirier wrote:
+>> From: Pratik Patel <pratikp@codeaurora.org>
+>>
+>> This driver manages the CoreSight ETMv4 (Embedded Trace Macrocell) IP block
+>> to support HW assisted tracing on ARMv7 and ARMv8 architectures.
+>>
+>> Signed-off-by: Pratik Patel <pratikp@codeaurora.org>
+>> Signed-off-by: Kaixu Xia <xiakaixu@huawei.com>
+>> Signed-off-by: Mathieu Poirier poirier@linaro.org>
+>
+> <snip>
+>
 >>
 >
->> +static struct amba_id etm4_ids[] = {
->> +       {       /* ETM 4.0 - Hi6220 board */
->> +               .id     = 0x0003b95d,
->> +               .mask   = 0x0003ffff,
->> +               .data   = "ETM 4.0",
->> +       },
->> +       {       /* ETM 4.0 - Juno board */
->> +               .id     = 0x000bb95e,
->> +               .mask   = 0x000bffff,
+>> +       pm_runtime_put(&adev->dev);
+>> +
+>> +       desc->type = CORESIGHT_DEV_TYPE_SOURCE;
+>> +       desc->subtype.source_subtype = CORESIGHT_DEV_SUBTYPE_SOURCE_PROC;
+>> +       desc->ops = &etm4_cs_ops;
+>> +       desc->pdata = pdata;
+>> +       desc->dev = dev;
+>> +       desc->groups = coresight_etmv4_groups;
+>> +       drvdata->csdev = coresight_register(desc);
+>> +       if (IS_ERR(drvdata->csdev)) {
+>> +               ret = PTR_ERR(drvdata->csdev);
+>> +               goto err_arch_supported;
 >
-> Mask looks suspicious.
+> double runtime put.
 
-Can you please expand the "suspicious" part ?
+Good catch - thanks.
 
+>
+>> +       }
+>> +
+>> +       dev_info(dev, "%s initialized\n", (char *)id->data);
+>> +
+>> +       if (boot_enable) {
+>> +               coresight_enable(drvdata->csdev);
+>> +               drvdata->boot_enable = true;
+>> +       }
+>> +
+>> +       return 0;
+>> +
+>> +err_arch_supported:
+>> +       pm_runtime_put(&adev->dev);
+>> +       if (--etm4_count == 0)
+>> +               unregister_hotcpu_notifier(&etm4_cpu_notifier);
+>> +       return ret;
+>> +}
 >
 > Regards,
 > Ivan
->
->
