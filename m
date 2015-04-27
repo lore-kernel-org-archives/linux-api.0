@@ -1,113 +1,28 @@
-From: Greg KH <greg@kroah.com>
-Subject: Re: [RFC v2 1/4] fs: Add generic file system event notifications
-Date: Mon, 27 Apr 2015 16:24:21 +0200
-Message-ID: <20150427142421.GB21942@kroah.com>
-References: <1430135504-24334-1-git-send-email-b.michalska@samsung.com>
- <1430135504-24334-2-git-send-email-b.michalska@samsung.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <1430135504-24334-2-git-send-email-b.michalska@samsung.com>
-Sender: owner-linux-mm@kvack.org
-To: Beata Michalska <b.michalska@samsung.com>
-Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, jack@suse.cz, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [RFC] capabilities: Ambient capabilities
+Date: Mon, 27 Apr 2015 09:55:51 -0500 (CDT)
+Message-ID: <alpine.DEB.2.11.1504270953470.28858@gentwo.org>
+References: <CALCETrUGASa3Gp6cC1zdAahcS59DOdyLnTtgNX7t7FucMZLmoQ@mail.gmail.com> <CALQRfL6z2dEtPkWiuGydT0a+y4iWm2qw-cY0Rk9hA-K4gPw_qA@mail.gmail.com> <CALCETrWRHRVLotFs=Cpdr=7KjE7q52NdT62GxZg=xjv+LFZBqw@mail.gmail.com> <CALQRfL7AyadFcu9JqtC6FGnuuqY7zbnFAL81XnwBvn0o6c6UWQ@mail.gmail.com>
+ <alpine.DEB.2.11.1503300754070.5031@gentwo.org> <CALCETrW9ckw=7-1JSyFkenhFu2_1MvVqjA+inOmsuuWemGaU0w@mail.gmail.com> <alpine.DEB.2.11.1504091024540.13650@gentwo.org> <alpine.DEB.2.11.1504230900260.32203@gentwo.org> <20150424175348.GL16377@ubuntumail>
+ <CALCETrW5_85mFFTkzCVNA5N1KQeNBrkw2d8FF3H3LYtmz6UAPw@mail.gmail.com> <20150424190935.GN16377@ubuntumail> <CALCETrV7S0dLkNWMSYsL7MFuLgdpQwUEAjW6zTwRE8uhh_AuBQ@mail.gmail.com> <alpine.DEB.2.11.1504241512570.11839@gentwo.org>
+ <CALCETrUrFm9n_4xTj4ELkzTSnWHfxQtANqz2wpzU7riTihLDaA@mail.gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <CALCETrUrFm9n_4xTj4ELkzTSnWHfxQtANqz2wpzU7riTihLDaA@mail.gmail.com>
+Sender: linux-security-module-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Serge Hallyn <serge.hallyn@ubuntu.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Andrew Lutomirski <luto@kernel.org>, Ted Ts'o <tytso@mit.edu>, Andrew Morton <akpm@linuxfoundation.org>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 27, 2015 at 01:51:41PM +0200, Beata Michalska wrote:
-> Introduce configurable generic interface for file
-> system-wide event notifications, to provide file
-> systems with a common way of reporting any potential
-> issues as they emerge.
-> 
-> The notifications are to be issued through generic
-> netlink interface by newly introduced multicast group.
-> 
-> Threshold notifications have been included, allowing
-> triggering an event whenever the amount of free space drops
-> below a certain level - or levels to be more precise as two
-> of them are being supported: the lower and the upper range.
-> The notifications work both ways: once the threshold level
-> has been reached, an event shall be generated whenever
-> the number of available blocks goes up again re-activating
-> the threshold.
-> 
-> The interface has been exposed through a vfs. Once mounted,
-> it serves as an entry point for the set-up where one can
-> register for particular file system events.
-> 
-> Signed-off-by: Beata Michalska <b.michalska@samsung.com>
-> ---
->  Documentation/filesystems/events.txt |  231 ++++++++++
->  fs/Makefile                          |    1 +
->  fs/events/Makefile                   |    6 +
->  fs/events/fs_event.c                 |  770 ++++++++++++++++++++++++++++++++++
->  fs/events/fs_event.h                 |   25 ++
->  fs/events/fs_event_netlink.c         |   99 +++++
->  fs/namespace.c                       |    1 +
->  include/linux/fs.h                   |    6 +-
->  include/linux/fs_event.h             |   58 +++
->  include/uapi/linux/fs_event.h        |   54 +++
->  include/uapi/linux/genetlink.h       |    1 +
->  net/netlink/genetlink.c              |    7 +-
->  12 files changed, 1257 insertions(+), 2 deletions(-)
->  create mode 100644 Documentation/filesystems/events.txt
->  create mode 100644 fs/events/Makefile
->  create mode 100644 fs/events/fs_event.c
->  create mode 100644 fs/events/fs_event.h
->  create mode 100644 fs/events/fs_event_netlink.c
->  create mode 100644 include/linux/fs_event.h
->  create mode 100644 include/uapi/linux/fs_event.h
+On Fri, 24 Apr 2015, Andy Lutomirski wrote:
 
-Any reason why you just don't do uevents for the block devices today,
-and not create a new type of netlink message and userspace tool required
-to read these?
+> Also, in my model you can do:
+>
+> $ sudo capset cap_whatever=eip something
+> $ ./something
+>
+> and the program can make its cap be ambient and run a helper.  In the
+> CAP_SETPCAP model, that doesn't work.
 
-> --- a/fs/Makefile
-> +++ b/fs/Makefile
-> @@ -126,3 +126,4 @@ obj-y				+= exofs/ # Multiple modules
->  obj-$(CONFIG_CEPH_FS)		+= ceph/
->  obj-$(CONFIG_PSTORE)		+= pstore/
->  obj-$(CONFIG_EFIVAR_FS)		+= efivarfs/
-> +obj-y				+= events/
-
-Always?
-
-> diff --git a/fs/events/Makefile b/fs/events/Makefile
-> new file mode 100644
-> index 0000000..58d1454
-> --- /dev/null
-> +++ b/fs/events/Makefile
-> @@ -0,0 +1,6 @@
-> +#
-> +# Makefile for the Linux Generic File System Event Interface
-> +#
-> +
-> +obj-y := fs_event.o
-
-Always?  Even if the option is not selected?  Why is everyone forced to
-always use this code?  Can't you disable it for the "tiny" systems that
-don't need it?
-
-> +struct fs_trace_entry {
-> +	atomic_t	 count;
-
-Why not just use a 'struct kref' for your count, which will save a bunch
-of open-coding of reference counting, and forcing us to audit your code
-to verify you got all the corner cases correct?  :)
-
-> +	atomic_t	 active;
-> +	struct super_block *sb;
-
-Are you properly reference counting this pointer?  I didn't see where
-that was happening, so I must have missed it.
-
-thanks,
-
-greg k-h
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Dont see too much difference in setting caps and CAP_SETPCAP on
+"./something" to allow it to set the ambient caps.
