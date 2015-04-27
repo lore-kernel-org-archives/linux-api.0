@@ -1,130 +1,113 @@
-From: Beata Michalska <b.michalska-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC v2 2/4] ext4: Add helper function to mark group as corrupted
-Date: Mon, 27 Apr 2015 13:51:42 +0200
-Message-ID: <1430135504-24334-3-git-send-email-b.michalska@samsung.com>
+From: Greg KH <greg@kroah.com>
+Subject: Re: [RFC v2 1/4] fs: Add generic file system event notifications
+Date: Mon, 27 Apr 2015 16:24:21 +0200
+Message-ID: <20150427142421.GB21942@kroah.com>
 References: <1430135504-24334-1-git-send-email-b.michalska@samsung.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <1430135504-24334-1-git-send-email-b.michalska-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: jack-AlSwsSmVLrQ@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, lczerner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kmpark-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+ <1430135504-24334-2-git-send-email-b.michalska@samsung.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1430135504-24334-2-git-send-email-b.michalska@samsung.com>
+Sender: owner-linux-mm@kvack.org
+To: Beata Michalska <b.michalska@samsung.com>
+Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, jack@suse.cz, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-Add ext4_mark_group_corrupted helper function to
-simplify the code and to keep the logic in one place.
+On Mon, Apr 27, 2015 at 01:51:41PM +0200, Beata Michalska wrote:
+> Introduce configurable generic interface for file
+> system-wide event notifications, to provide file
+> systems with a common way of reporting any potential
+> issues as they emerge.
+> 
+> The notifications are to be issued through generic
+> netlink interface by newly introduced multicast group.
+> 
+> Threshold notifications have been included, allowing
+> triggering an event whenever the amount of free space drops
+> below a certain level - or levels to be more precise as two
+> of them are being supported: the lower and the upper range.
+> The notifications work both ways: once the threshold level
+> has been reached, an event shall be generated whenever
+> the number of available blocks goes up again re-activating
+> the threshold.
+> 
+> The interface has been exposed through a vfs. Once mounted,
+> it serves as an entry point for the set-up where one can
+> register for particular file system events.
+> 
+> Signed-off-by: Beata Michalska <b.michalska@samsung.com>
+> ---
+>  Documentation/filesystems/events.txt |  231 ++++++++++
+>  fs/Makefile                          |    1 +
+>  fs/events/Makefile                   |    6 +
+>  fs/events/fs_event.c                 |  770 ++++++++++++++++++++++++++++++++++
+>  fs/events/fs_event.h                 |   25 ++
+>  fs/events/fs_event_netlink.c         |   99 +++++
+>  fs/namespace.c                       |    1 +
+>  include/linux/fs.h                   |    6 +-
+>  include/linux/fs_event.h             |   58 +++
+>  include/uapi/linux/fs_event.h        |   54 +++
+>  include/uapi/linux/genetlink.h       |    1 +
+>  net/netlink/genetlink.c              |    7 +-
+>  12 files changed, 1257 insertions(+), 2 deletions(-)
+>  create mode 100644 Documentation/filesystems/events.txt
+>  create mode 100644 fs/events/Makefile
+>  create mode 100644 fs/events/fs_event.c
+>  create mode 100644 fs/events/fs_event.h
+>  create mode 100644 fs/events/fs_event_netlink.c
+>  create mode 100644 include/linux/fs_event.h
+>  create mode 100644 include/uapi/linux/fs_event.h
 
-Signed-off-by: Beata Michalska <b.michalska-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
----
- fs/ext4/balloc.c  |   15 +++------------
- fs/ext4/ext4.h    |    9 +++++++++
- fs/ext4/ialloc.c  |    5 +----
- fs/ext4/mballoc.c |   11 ++---------
- 4 files changed, 15 insertions(+), 25 deletions(-)
+Any reason why you just don't do uevents for the block devices today,
+and not create a new type of netlink message and userspace tool required
+to read these?
 
-diff --git a/fs/ext4/balloc.c b/fs/ext4/balloc.c
-index 83a6f49..e95b27a 100644
---- a/fs/ext4/balloc.c
-+++ b/fs/ext4/balloc.c
-@@ -193,10 +193,7 @@ static int ext4_init_block_bitmap(struct super_block *sb,
- 	 * essentially implementing a per-group read-only flag. */
- 	if (!ext4_group_desc_csum_verify(sb, block_group, gdp)) {
- 		grp = ext4_get_group_info(sb, block_group);
--		if (!EXT4_MB_GRP_BBITMAP_CORRUPT(grp))
--			percpu_counter_sub(&sbi->s_freeclusters_counter,
--					   grp->bb_free);
--		set_bit(EXT4_GROUP_INFO_BBITMAP_CORRUPT_BIT, &grp->bb_state);
-+		ext4_mark_group_corrupted(sbi, grp);
- 		if (!EXT4_MB_GRP_IBITMAP_CORRUPT(grp)) {
- 			int count;
- 			count = ext4_free_inodes_count(sb, gdp);
-@@ -379,20 +376,14 @@ static void ext4_validate_block_bitmap(struct super_block *sb,
- 		ext4_unlock_group(sb, block_group);
- 		ext4_error(sb, "bg %u: block %llu: invalid block bitmap",
- 			   block_group, blk);
--		if (!EXT4_MB_GRP_BBITMAP_CORRUPT(grp))
--			percpu_counter_sub(&sbi->s_freeclusters_counter,
--					   grp->bb_free);
--		set_bit(EXT4_GROUP_INFO_BBITMAP_CORRUPT_BIT, &grp->bb_state);
-+		ext4_mark_group_corrupted(sbi, grp);
- 		return;
- 	}
- 	if (unlikely(!ext4_block_bitmap_csum_verify(sb, block_group,
- 			desc, bh))) {
- 		ext4_unlock_group(sb, block_group);
- 		ext4_error(sb, "bg %u: bad block bitmap checksum", block_group);
--		if (!EXT4_MB_GRP_BBITMAP_CORRUPT(grp))
--			percpu_counter_sub(&sbi->s_freeclusters_counter,
--					   grp->bb_free);
--		set_bit(EXT4_GROUP_INFO_BBITMAP_CORRUPT_BIT, &grp->bb_state);
-+		ext4_mark_group_corrupted(sbi, grp);
- 		return;
- 	}
- 	set_buffer_verified(bh);
-diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index f63c3d5..163afe2 100644
---- a/fs/ext4/ext4.h
-+++ b/fs/ext4/ext4.h
-@@ -2535,6 +2535,15 @@ static inline spinlock_t *ext4_group_lock_ptr(struct super_block *sb,
- 	return bgl_lock_ptr(EXT4_SB(sb)->s_blockgroup_lock, group);
- }
- 
-+static inline
-+void ext4_mark_group_corrupted(struct ext4_sb_info *sbi,
-+				struct ext4_group_info *grp)
-+{
-+	if (!EXT4_MB_GRP_BBITMAP_CORRUPT(grp))
-+		percpu_counter_sub(&sbi->s_freeclusters_counter, grp->bb_free);
-+	set_bit(EXT4_GROUP_INFO_BBITMAP_CORRUPT_BIT, &grp->bb_state);
-+}
-+
- /*
-  * Returns true if the filesystem is busy enough that attempts to
-  * access the block group locks has run into contention.
-diff --git a/fs/ext4/ialloc.c b/fs/ext4/ialloc.c
-index ac644c3..ebe0499 100644
---- a/fs/ext4/ialloc.c
-+++ b/fs/ext4/ialloc.c
-@@ -79,10 +79,7 @@ static unsigned ext4_init_inode_bitmap(struct super_block *sb,
- 	if (!ext4_group_desc_csum_verify(sb, block_group, gdp)) {
- 		ext4_error(sb, "Checksum bad for group %u", block_group);
- 		grp = ext4_get_group_info(sb, block_group);
--		if (!EXT4_MB_GRP_BBITMAP_CORRUPT(grp))
--			percpu_counter_sub(&sbi->s_freeclusters_counter,
--					   grp->bb_free);
--		set_bit(EXT4_GROUP_INFO_BBITMAP_CORRUPT_BIT, &grp->bb_state);
-+		ext4_mark_group_corrupted(sbi, grp);
- 		if (!EXT4_MB_GRP_IBITMAP_CORRUPT(grp)) {
- 			int count;
- 			count = ext4_free_inodes_count(sb, gdp);
-diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
-index 8d1e602..24a4b6d 100644
---- a/fs/ext4/mballoc.c
-+++ b/fs/ext4/mballoc.c
-@@ -760,10 +760,7 @@ void ext4_mb_generate_buddy(struct super_block *sb,
- 		 * corrupt and update bb_free using bitmap value
- 		 */
- 		grp->bb_free = free;
--		if (!EXT4_MB_GRP_BBITMAP_CORRUPT(grp))
--			percpu_counter_sub(&sbi->s_freeclusters_counter,
--					   grp->bb_free);
--		set_bit(EXT4_GROUP_INFO_BBITMAP_CORRUPT_BIT, &grp->bb_state);
-+		ext4_mark_group_corrupted(sbi, grp);
- 	}
- 	mb_set_largest_free_order(sb, grp);
- 
-@@ -1448,12 +1445,8 @@ static void mb_free_blocks(struct inode *inode, struct ext4_buddy *e4b,
- 				      "freeing already freed block "
- 				      "(bit %u); block bitmap corrupt.",
- 				      block);
--		if (!EXT4_MB_GRP_BBITMAP_CORRUPT(e4b->bd_info))
--			percpu_counter_sub(&sbi->s_freeclusters_counter,
--					   e4b->bd_info->bb_free);
- 		/* Mark the block group as corrupt. */
--		set_bit(EXT4_GROUP_INFO_BBITMAP_CORRUPT_BIT,
--			&e4b->bd_info->bb_state);
-+		ext4_mark_group_corrupted(sbi, e4b->bd_info);
- 		mb_regenerate_buddy(e4b);
- 		goto done;
- 	}
--- 
-1.7.9.5
+> --- a/fs/Makefile
+> +++ b/fs/Makefile
+> @@ -126,3 +126,4 @@ obj-y				+= exofs/ # Multiple modules
+>  obj-$(CONFIG_CEPH_FS)		+= ceph/
+>  obj-$(CONFIG_PSTORE)		+= pstore/
+>  obj-$(CONFIG_EFIVAR_FS)		+= efivarfs/
+> +obj-y				+= events/
+
+Always?
+
+> diff --git a/fs/events/Makefile b/fs/events/Makefile
+> new file mode 100644
+> index 0000000..58d1454
+> --- /dev/null
+> +++ b/fs/events/Makefile
+> @@ -0,0 +1,6 @@
+> +#
+> +# Makefile for the Linux Generic File System Event Interface
+> +#
+> +
+> +obj-y := fs_event.o
+
+Always?  Even if the option is not selected?  Why is everyone forced to
+always use this code?  Can't you disable it for the "tiny" systems that
+don't need it?
+
+> +struct fs_trace_entry {
+> +	atomic_t	 count;
+
+Why not just use a 'struct kref' for your count, which will save a bunch
+of open-coding of reference counting, and forcing us to audit your code
+to verify you got all the corner cases correct?  :)
+
+> +	atomic_t	 active;
+> +	struct super_block *sb;
+
+Are you properly reference counting this pointer?  I didn't see where
+that was happening, so I must have missed it.
+
+thanks,
+
+greg k-h
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
