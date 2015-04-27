@@ -1,70 +1,30 @@
-From: Mathieu Poirier <mathieu.poirier@linaro.org>
-Subject: Re: [PATCH 01/11] coresight-etm4x: Adding CoreSight ETM4x driver
-Date: Mon, 27 Apr 2015 09:51:21 -0600
-Message-ID: <CANLsYkxWaxWL6rDaEKh+EOcXVBEqWp1W5yarSEsvEC3B0mne7g@mail.gmail.com>
-References: <1429742451-11465-1-git-send-email-mathieu.poirier@linaro.org>
-	<1429742451-11465-2-git-send-email-mathieu.poirier@linaro.org>
-	<1429887923.5211.6.camel@mm-sol.com>
+From: Octavian Purdila <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH 3/3] iio: derive the mounting matrix from ACPI _PLD objects
+Date: Mon, 27 Apr 2015 18:54:54 +0300
+Message-ID: <CAE1zot+YKTPmVbG-_fNRy-E_VCcqq1VE78H3PMSMb5HvsBheQw@mail.gmail.com>
+References: <1430146908-27919-1-git-send-email-octavian.purdila@intel.com>
+	<1430146908-27919-4-git-send-email-octavian.purdila@intel.com>
+	<64714.10.254.87.235.1430149342.squirrel@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1429887923.5211.6.camel@mm-sol.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Ivan T. Ivanov" <iivanov@mm-sol.com>
-Cc: Greg KH <gregkh@linuxfoundation.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, linux-api@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Kaixu Xia <kaixu.xia@linaro.org>, Chunyan Zhang <zhang.chunyan@linaro.org>
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <64714.10.254.87.235.1430149342.squirrel-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: sathyanarayanan.kuppuswamy-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
+Cc: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Robert Moore <robert.moore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Rafael J Wysocki <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, lenb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 24 April 2015 at 09:05, Ivan T. Ivanov <iivanov@mm-sol.com> wrote:
+On Mon, Apr 27, 2015 at 6:42 PM, Kuppuswamy Sathyanarayanan
+<sathyanarayanan.kuppuswamy-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+> Since Acpi framework already exports this info to user space, Why not do
+> this derivation in user space code ? Why do we need new ABI, if the same
+> can be derived from existing one.
 >
-> On Wed, 2015-04-22 at 16:40 -0600, Mathieu Poirier wrote:
->> From: Pratik Patel <pratikp@codeaurora.org>
->>
->> This driver manages the CoreSight ETMv4 (Embedded Trace Macrocell) IP block
->> to support HW assisted tracing on ARMv7 and ARMv8 architectures.
->>
->> Signed-off-by: Pratik Patel <pratikp@codeaurora.org>
->> Signed-off-by: Kaixu Xia <xiakaixu@huawei.com>
->> Signed-off-by: Mathieu Poirier poirier@linaro.org>
->
-> <snip>
->
->>
->
->> +       pm_runtime_put(&adev->dev);
->> +
->> +       desc->type = CORESIGHT_DEV_TYPE_SOURCE;
->> +       desc->subtype.source_subtype = CORESIGHT_DEV_SUBTYPE_SOURCE_PROC;
->> +       desc->ops = &etm4_cs_ops;
->> +       desc->pdata = pdata;
->> +       desc->dev = dev;
->> +       desc->groups = coresight_etmv4_groups;
->> +       drvdata->csdev = coresight_register(desc);
->> +       if (IS_ERR(drvdata->csdev)) {
->> +               ret = PTR_ERR(drvdata->csdev);
->> +               goto err_arch_supported;
->
-> double runtime put.
 
-Good catch - thanks.
+The ABI was added in the previous patch so that we can present the
+sensor orientation information to userspace even in the case of device
+tree.
 
->
->> +       }
->> +
->> +       dev_info(dev, "%s initialized\n", (char *)id->data);
->> +
->> +       if (boot_enable) {
->> +               coresight_enable(drvdata->csdev);
->> +               drvdata->boot_enable = true;
->> +       }
->> +
->> +       return 0;
->> +
->> +err_arch_supported:
->> +       pm_runtime_put(&adev->dev);
->> +       if (--etm4_count == 0)
->> +               unregister_hotcpu_notifier(&etm4_cpu_notifier);
->> +       return ret;
->> +}
->
-> Regards,
-> Ivan
+The purpose of this patch is to provide a consistent ABI to userspace,
+i.e. to avoid doing one thing in the ACPI case and another thing in
+the case of device tree.
