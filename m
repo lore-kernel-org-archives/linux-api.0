@@ -1,27 +1,27 @@
-From: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+From: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
 Subject: Re: [PATCH v3 2/4] of: overlay: global sysfs enable attribute
-Date: Mon, 27 Apr 2015 21:13:56 +0300
-Message-ID: <355B6AF0-7F58-4BE4-BEE6-A77246D40652@konsulko.com>
-References: <1429868744-19863-1-git-send-email-pantelis.antoniou@konsulko.com> <1429868744-19863-3-git-send-email-pantelis.antoniou@konsulko.com> <20150424202922.GA14970@kroah.com>
+Date: Mon, 27 Apr 2015 21:25:03 +0300
+Message-ID: <9F31828D-016A-4C01-A75D-DF9891DE417A@konsulko.com>
+References: <1429868744-19863-1-git-send-email-pantelis.antoniou@konsulko.com> <1429868744-19863-3-git-send-email-pantelis.antoniou@konsulko.com> <20150424203619.GC14970@kroah.com>
 Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2098\))
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150424202922.GA14970-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Cc: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150424203619.GC14970@kroah.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Greg KH <greg@kroah.com>
+Cc: Rob Herring <robherring2@gmail.com>, Grant Likely <grant.likely@secretlab.ca>, Andrew Morton <akpm@linux-foundation.org>, Matt Porter <mporter@konsulko.com>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, devicetree@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 Hi Greg,
 
-> On Apr 24, 2015, at 23:29 , Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org> wrote:
+> On Apr 24, 2015, at 23:36 , Greg KH <greg@kroah.com> wrote:
 >=20
 > On Fri, Apr 24, 2015 at 12:45:42PM +0300, Pantelis Antoniou wrote:
 >> A throw once master enable switch to protect against any
 >> further overlay applications if the administrator desires so.
 >>=20
->> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+>> Signed-off-by: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
 >> ---
 >> drivers/of/overlay.c | 45 ++++++++++++++++++++++++++++++++++++++++++=
 ++-
@@ -69,79 +69,11 @@ Hi Greg,
 >> +	long new_enable;
 >> +
 >> +	ret =3D kstrtol(buf, 10, &new_enable);
->> +	if (ret !=3D 0)
->> +		return ret;
->> +	if ((unsigned long)new_enable > 1)
->> +		return -EINVAL;
->> +	/* if we've disabled it, no going back */
->> +	if (atomic_read(&ov_enable) =3D=3D 0)
->> +		return -EPERM;
->> +	atomic_set(&ov_enable, (int)new_enable);
->> +	return count;
->> +}
->> +
->> +static struct kobj_attribute enable_attr =3D __ATTR_RW(enable);
->> +
->> +static const struct attribute *overlay_global_attrs[] =3D {
->> +	&enable_attr.attr,
->> +	NULL
->> +};
 >=20
-> Why not make this an attribute group and then attach it to the kobj_t=
-ype
-> to create the files in a race-free manner?
->=20
+> strtobool()?
 
-Err, these are the global attributes. They are attached to the
-parent of the overlay objects which is a kset object itself.
-
-There=E2=80=99s no way which I can attach the attribute to it as far
-as I can tell.
-
->> +
->> static struct kobj_type of_overlay_ktype =3D {
->> 	.release =3D of_overlay_release,
->> };
->> @@ -360,6 +396,10 @@ int of_overlay_create(struct device_node *tree)
->> 	struct of_overlay *ov;
->> 	int err, id;
->>=20
->> +	/* administratively disabled */
->> +	if (!atomic_read(&ov_enable))
->> +		return -EPERM;
->> +
->> 	/* allocate the overlay structure */
->> 	ov =3D kzalloc(sizeof(*ov), GFP_KERNEL);
->> 	if (ov =3D=3D NULL)
->> @@ -596,5 +636,8 @@ int of_overlay_init(void)
->> 	if (!ov_kset)
->> 		return -ENOMEM;
->>=20
->> -	return 0;
->> +	rc =3D sysfs_create_files(&ov_kset->kobj, overlay_global_attrs);
->> +	WARN(rc, "%s: error adding global attributes\n", __func__);
->=20
-> What can a user do with this warning message?  If nothing, then don't
-> print it out, right?
->=20
-> You are creating sysfs files _after_ the kobject has been announced t=
-o
-> userspace, causing nasty race conditions.  Please don't do that.
->=20
-
-This is at overlay_init() time, which is way way before userspace ever
-has a chance to start. If there=E2=80=99s a different way to attach a a=
-ttribute
-group to a kset object I=E2=80=99d like to find out how :)
-
-> thanks,
->=20
-> greg k-h
+OK
 
 Regards
 
-=E2=80=94 Pantelis--
-To unsubscribe from this list: send the line "unsubscribe devicetree" i=
-n
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+=E2=80=94 Pantelis
