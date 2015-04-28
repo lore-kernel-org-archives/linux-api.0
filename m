@@ -1,124 +1,60 @@
-From: Greg KH <greg@kroah.com>
-Subject: Re: [RFC v2 1/4] fs: Add generic file system event notifications
-Date: Tue, 28 Apr 2015 19:39:00 +0200
-Message-ID: <20150428173900.GA16708@kroah.com>
-References: <1430135504-24334-1-git-send-email-b.michalska@samsung.com>
- <1430135504-24334-2-git-send-email-b.michalska@samsung.com>
- <20150427142421.GB21942@kroah.com>
- <553E50EB.3000402@samsung.com>
- <20150427153711.GA23428@kroah.com>
- <20150428135653.GD9955@quack.suse.cz>
- <20150428140936.GA13406@kroah.com>
- <553F9D56.6030301@samsung.com>
+From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: Should mmap MAP_LOCKED fail if mm_poppulate fails?
+Date: Tue, 28 Apr 2015 20:35:36 +0200
+Message-ID: <20150428183535.GB30918@dhcp22.suse.cz>
+References: <20150114095019.GC4706@dhcp22.suse.cz>
+ <1430223111-14817-1-git-send-email-mhocko@suse.cz>
+ <CA+55aFxzLXx=cC309h_tEc-Gkn_zH4ipR7PsefVcE-97Uj066g@mail.gmail.com>
+ <20150428164302.GI2659@dhcp22.suse.cz>
+ <CA+55aFydkG-BgZzry5DrTzueVh9VvEcVJdLV8iOyUphQk=0vpw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <553F9D56.6030301@samsung.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Beata Michalska <b.michalska@samsung.com>
-Cc: Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org
+In-Reply-To: <CA+55aFydkG-BgZzry5DrTzueVh9VvEcVJdLV8iOyUphQk=0vpw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 28, 2015 at 04:46:46PM +0200, Beata Michalska wrote:
-> On 04/28/2015 04:09 PM, Greg KH wrote:
-> > On Tue, Apr 28, 2015 at 03:56:53PM +0200, Jan Kara wrote:
-> >> On Mon 27-04-15 17:37:11, Greg KH wrote:
-> >>> On Mon, Apr 27, 2015 at 05:08:27PM +0200, Beata Michalska wrote:
-> >>>> On 04/27/2015 04:24 PM, Greg KH wrote:
-> >>>>> On Mon, Apr 27, 2015 at 01:51:41PM +0200, Beata Michalska wrote:
-> >>>>>> Introduce configurable generic interface for file
-> >>>>>> system-wide event notifications, to provide file
-> >>>>>> systems with a common way of reporting any potential
-> >>>>>> issues as they emerge.
-> >>>>>>
-> >>>>>> The notifications are to be issued through generic
-> >>>>>> netlink interface by newly introduced multicast group.
-> >>>>>>
-> >>>>>> Threshold notifications have been included, allowing
-> >>>>>> triggering an event whenever the amount of free space drops
-> >>>>>> below a certain level - or levels to be more precise as two
-> >>>>>> of them are being supported: the lower and the upper range.
-> >>>>>> The notifications work both ways: once the threshold level
-> >>>>>> has been reached, an event shall be generated whenever
-> >>>>>> the number of available blocks goes up again re-activating
-> >>>>>> the threshold.
-> >>>>>>
-> >>>>>> The interface has been exposed through a vfs. Once mounted,
-> >>>>>> it serves as an entry point for the set-up where one can
-> >>>>>> register for particular file system events.
-> >>>>>>
-> >>>>>> Signed-off-by: Beata Michalska <b.michalska@samsung.com>
-> >>>>>> ---
-> >>>>>>  Documentation/filesystems/events.txt |  231 ++++++++++
-> >>>>>>  fs/Makefile                          |    1 +
-> >>>>>>  fs/events/Makefile                   |    6 +
-> >>>>>>  fs/events/fs_event.c                 |  770 ++++++++++++++++++++++++++++++++++
-> >>>>>>  fs/events/fs_event.h                 |   25 ++
-> >>>>>>  fs/events/fs_event_netlink.c         |   99 +++++
-> >>>>>>  fs/namespace.c                       |    1 +
-> >>>>>>  include/linux/fs.h                   |    6 +-
-> >>>>>>  include/linux/fs_event.h             |   58 +++
-> >>>>>>  include/uapi/linux/fs_event.h        |   54 +++
-> >>>>>>  include/uapi/linux/genetlink.h       |    1 +
-> >>>>>>  net/netlink/genetlink.c              |    7 +-
-> >>>>>>  12 files changed, 1257 insertions(+), 2 deletions(-)
-> >>>>>>  create mode 100644 Documentation/filesystems/events.txt
-> >>>>>>  create mode 100644 fs/events/Makefile
-> >>>>>>  create mode 100644 fs/events/fs_event.c
-> >>>>>>  create mode 100644 fs/events/fs_event.h
-> >>>>>>  create mode 100644 fs/events/fs_event_netlink.c
-> >>>>>>  create mode 100644 include/linux/fs_event.h
-> >>>>>>  create mode 100644 include/uapi/linux/fs_event.h
-> >>>>>
-> >>>>> Any reason why you just don't do uevents for the block devices today,
-> >>>>> and not create a new type of netlink message and userspace tool required
-> >>>>> to read these?
-> >>>>
-> >>>> The idea here is to have support for filesystems with no backing device as well.
-> >>>> Parsing the message with libnl is really simple and requires few lines of code
-> >>>> (sample application has been presented in the initial version of this RFC)
-> >>>
-> >>> I'm not saying it's not "simple" to parse, just that now you are doing
-> >>> something that requires a different tool.  If you have a block device,
-> >>> you should be able to emit uevents for it, you don't need a backing
-> >>> device, we handle virtual filesystems in /sys/block/ just fine :)
-> >>>
-> >>> People already have tools that listen to libudev for system monitoring
-> >>> and management, why require them to hook up to yet-another-library?  And
-> >>> what is going to provide the ability for multiple userspace tools to
-> >>> listen to these netlink messages in case you have more than one program
-> >>> that wants to watch for these things (i.e. multiple desktop filesystem
-> >>> monitoring tools, system-health checkers, etc.)?
-> >>   As much as I understand your concerns I'm not convinced uevent interface
-> >> is a good fit. There are filesystems that don't have underlying block
-> >> device - think of e.g. tmpfs or filesystems working directly on top of
-> >> flash devices.  These still want to send notification to userspace (one of
-> >> primary motivation for this interfaces was so that tmpfs can notify about
-> >> something). And creating some fake nodes in /sys/block for tmpfs and
-> >> similar filesystems seems like doing more harm than good to me...
-> > 
-> > If these are "fake" block devices, what's going to be present in the
-> > block major/minor fields of the netlink message?  For some reason I
-> > thought it was a required field, and because of that, I thought we had a
-> > "real" filesystem somewhere to refer to, otherwise how would userspace
-> > know what filesystem was creating these events?
-> > 
-> > What am I missing here?
-> > 
-> > confused,
-> > 
-> > greg k-h
-> > 
+On Tue 28-04-15 09:57:11, Linus Torvalds wrote:
+> On Tue, Apr 28, 2015 at 9:43 AM, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org> wrote:
+> >
+> > Hmm, no other thread has the address from the current mmap call except
+> > for MAP_FIXED (more on that below).
 > 
-> For those 'fake' block devs, upon mount, get_anon_bdev will assign
-> the major:minor numbers. Userspace might get those through stat.
+> With things like opportunistic SIGSEGV handlers that map/unmap things
+> as the user takes faults, that's actually not at all guaranteed.
+> 
+> Yeah, it's unusual, but I've seen it, with threaded applications where
+> people play games with user-space memory management, and do "demand
+> allocation" with mmap() in response to signals.
 
-How can userspace do the mapping backwards from this "anonymous"
-major:minor number for these types of filesystems in such a way that
-they can "know" how to report the block device that is causing the
-event?
+I am still not sure I see the problem here. Let's say we have a
+userspace page fault handler which would do mmap(fault_addr, MAP_FIXED),
+right?
 
-thanks,
+If we had a racy mmap(NULL, MAP_LOCKED) that could have mapped
+fault_addr by the time handler does its work then this is buggy wrt. to
+MAP_LOCKED semantic because the fault handler would discard the locked
+part. This wouldn't lead to a data loss but still makes MAP_LOCKED usage
+buggy IMO.
 
-greg k-h
+If the racing thread did mmap(around_fault_addr, MAP_FIXED|MAP_LOCKED)
+then it would be broken as well, and even worse I would say, because the
+original fault could have been discarded and data lost.
+
+I would expect that user fault handlers would be synchronized with
+other mmap activity otherwise I have hard time to see how this can all
+have a well defined behavior. Especially when MAP_FIXED is involved.
+
+> Admittedly we already do bad things in mmap(MAP_FIXED) for that case,
+> since we dropped the vm lock. But at least it shouldn't be any worse
+> than a thread speculatively touching the pages..
+
+Actually we already allow to mmap(MAP_FIXED) to fail after
+discarding an existing mmaped area (see mmap_region and e.g.
+security_vm_enough_memory_mm or other failure cases).
+-- 
+Michal Hocko
+SUSE Labs
