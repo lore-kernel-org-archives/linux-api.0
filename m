@@ -1,78 +1,48 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
+From: Michal Hocko <mhocko@suse.cz>
 Subject: Re: Should mmap MAP_LOCKED fail if mm_poppulate fails?
-Date: Tue, 28 Apr 2015 09:01:59 -0700
-Message-ID: <CA+55aFxzLXx=cC309h_tEc-Gkn_zH4ipR7PsefVcE-97Uj066g@mail.gmail.com>
+Date: Tue, 28 Apr 2015 18:43:03 +0200
+Message-ID: <20150428164302.GI2659@dhcp22.suse.cz>
 References: <20150114095019.GC4706@dhcp22.suse.cz>
-	<1430223111-14817-1-git-send-email-mhocko@suse.cz>
+ <1430223111-14817-1-git-send-email-mhocko@suse.cz>
+ <CA+55aFxzLXx=cC309h_tEc-Gkn_zH4ipR7PsefVcE-97Uj066g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1430223111-14817-1-git-send-email-mhocko@suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@suse.cz>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <CA+55aFxzLXx=cC309h_tEc-Gkn_zH4ipR7PsefVcE-97Uj066g@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
 Cc: linux-mm <linux-mm@kvack.org>, Cyril Hrubis <chrubis@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Hugh Dickins <hughd@google.com>, Michel Lespinasse <walken@google.com>, Rik van Riel <riel@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 28, 2015 at 5:11 AM, Michal Hocko <mhocko@suse.cz> wrote:
->
-> The first patch is dumb and straightforward. It should be safe as is and
-> also good without the follow up 2 patches which try to handle potential
-> allocation failures in the do_munmap path more gracefully. As we still
-> do not fail small allocations even the first patch could be simplified
-> a bit and the retry loop replaced by a BUG_ON right away.
+On Tue 28-04-15 09:01:59, Linus Torvalds wrote:
+[...]
+> Your code is also fundamentally buggy in that it tries to do unmap()
+> after it has dropped all locks, and things went wrong. So you may nto
+> be unmapping some other threads data.
 
-I think the BUG_ON() is a bad idea in the first place, and is in fact
-a good reason to ignore the patch series entirely.
+Hmm, no other thread has the address from the current mmap call except
+for MAP_FIXED (more on that below).
 
-What is the point of that BUG_ON()?
+Well I can imagine userspace doing nasty things like watching
+/proc/self/maps and using the address from there or using an address as
+an mmap hint and then using it before mmap returns by other threads. But
+would those be valid usecases? They sound crazy and buggy to me.
 
-Hell, people add too many of those things. There is *no* excuse for
-killing the kernel for things like this (and in certain setups,
-BUG_ON() *will* cause the machine to be rebooted). None. It's
-completely inexcusable.
+Another nasty case would be MAP_FIXED from a different thread destroying
+the mmap I am trying to poppulate but that is not so interesting because
+nothing protects from that even now.
+Or this being MAP_FIXED|MAP_LOCKED which has already destroyed a part
+of somebody's else mapping and the cleanup would lead to an unexpected
+SIGSEGV for the other thread. Is this the case you are worried about?
 
-Thinking like this must go. BUG_ON() is for things where our internal
-data structures are so corrupted that we don't know what to do, and
-there's no way to continue. Not for "I want to sprinkle these things
-around and this should not happen".
+Or am I missing other cases?
+-- 
+Michal Hocko
+SUSE Labs
 
-I also think that the whole complex "do_munmap_nofail()" is broken to
-begin with, along with the crazy "!fatal_signal_pending()" thing.
-There is absolutely no excuse for any of this.
-
-Your code is also fundamentally buggy in that it tries to do unmap()
-after it has dropped all locks, and things went wrong. So you may nto
-be unmapping some other threads data.
-
-There is no way in hell any of these patches can ever be applied.
-
-There's a reason we don't handle populate failures - it's exactly
-because we've dropped the locks etc. After dropping the locks, we
-*cannot* clean up any more, because there's no way to know whather
-we're cleaning up the right thing.  You'd have to hold the write lock
-over the whole populate, which has serious problems of its own.
-
-So NAK on this series. I think just documenting the man-page might be
-better. I don't think MAP_LOCKED is sanely fixable.
-
-We might improve on MAP_LOCKED by having a heuristic up-front
-(*before* actually doing any mmap) to verify that it's *likely* that
-it will work. So we could return ENOMEM early if it looks like the
-user would hit the resource limits, for example. That wouldn't be any
-guarantee (another process might eat up the resource limit anyway),
-and in fact it might be overly eager to fail (maybe the
-mmap(MAP_LOCKED ends up unmapping an older locked mapping and we deny
-it too eagerly), but it would probably work well enough in practice.
-
-That, together with a warning in the man-page about mmap(MAP_LOCKED)
-not being able to return "I only locked part of the mapping", if you
-want full error handling you need to do mmap()+mlock() and check the
-two errors separately.
-
-Hmm? But I really dislike your patch-series as-is.
-
-                       Linus
-
-                      Linus
-
-                           Linus
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
