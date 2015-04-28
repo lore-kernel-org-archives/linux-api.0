@@ -1,57 +1,144 @@
-From: Zhuang Jin Can <jin.can.zhuang@intel.com>
-Subject: Re: [PATCH] usb: core: add usb3 lpm sysfs
-Date: Wed, 29 Apr 2015 00:51:27 +0800
-Message-ID: <20150428165127.GA26638@intel.com>
-References: <20150419034612.GA31576@intel.com>
- <20150428104224.GB540@kroah.com>
-Reply-To: jin.can.zhuang@intel.com
+From: Felipe Balbi <balbi-l0cyMroinI0@public.gmane.org>
+Subject: Re: [PATCH v3 1/4] fs: configfs: Add unlocked version of
+ configfs_depend_item()
+Date: Tue, 28 Apr 2015 11:52:49 -0500
+Message-ID: <20150428165249.GJ18263@saruman.tx.rr.com>
+References: <1428596290-23637-1-git-send-email-k.opasiak@samsung.com>
+ <1428596290-23637-2-git-send-email-k.opasiak@samsung.com>
+Reply-To: <balbi-l0cyMroinI0@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="2feizKym29CxAecD"
+Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150428104224.GB540@kroah.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Greg KH <gregkh@linuxfoundation.org>
-Cc: rafael.j.wysocki@intel.com, stern@rowland.harvard.edu, dan.j.williams@intel.com, pmladek@suse.cz, peter.chen@freescale.com, jwerner@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-usb@vger.kernel.org
+In-Reply-To: <1428596290-23637-2-git-send-email-k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Cc: balbi-l0cyMroinI0@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jlbec-aKy9MeLSZ9dg9hUCZPvPmw@public.gmane.org, andrzej.p-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Greg KH,
+--2feizKym29CxAecD
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-On Tue, Apr 28, 2015 at 12:42:24PM +0200, Greg KH wrote:
-> On Sun, Apr 19, 2015 at 11:46:12AM +0800, Zhuang Jin Can wrote:
-> > Some usb3 devices may not support usb3 lpm well.
-> > The patch adds a sysfs to enable/disable u1 or u2 of the port.The
-> > settings apply to both before and after device enumeration.
-> > Supported values are "0" - u1 and u2 are disabled, "u1" - only u1 is
-> > enabled, "u2" - only u2 is enabled, "u1_u2" - u1 and u2 are enabled.
-> > 
-> > The interface is useful for testing some USB3 devices during
-> > development, and provides a way to disable usb3 lpm if the issues can
-> > not be fixed in final products.
-> 
-> How is a user supposed to "know" to make this setting for a device?  Why
-> can't the kernel automatically set this value properly?  Why does it
-> need to be a kernel issue at all?
-> 
-By default kernel enables u1 u2 of all USB3 devices. This interface
-provides the user to change this policy. User may set the policy
-according to PID/VID of uevent or according to the platform information
-known by userspace.
+Hi,
 
-It's not a kernel issue, as u1 u2 is mandatory by USB3 compliance. But
-for some internal hardwired USB3 connection, e.g. SSIC, passing USB3
-compliance is not mandatory. So the interface provides a way for vendor
-to ship with u1 or u2 broken products. Of course, this is not encouraged :).
+On Thu, Apr 09, 2015 at 06:18:07PM +0200, Krzysztof Opasiak wrote:
+> Sometimes it might be desirable to prohibit removing a directory
+> in configfs. One example is USB gadget (mass_storage function):
+> when gadget is already bound, if lun directory is removed,
+> the gadget must be thrown away, too. A better solution would be
+> to fail with e.g. -EBUSY.
+>=20
+> Currently configfs has configfs_depend/undepend_item() methods
+> but they cannot be used in configfs callbacks. This commit
+> adds unlocked version of this methods which can be used
+> only in configfs callbacks.
+>=20
+> Signed-off-by: Krzysztof Opasiak <k.opasiak-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 
-> And when you are doing development of broken devices, the kernel doesn't
-> have to support you, you can run with debugging patches of your own
-> until you fix your firmware :)
-> 
-Understood. But I think other vendor or developer may face the same
-issue in final product shipment or during development. Moreover, the
-interface provide the flexibility for developer to separately
-disable/enable u1 or u2, e.g. If they're debugging an u2 issue, they
-can disable u1 to simplify the situtation.
+Joel, any comments to this patch ?
 
-Thanks
-Jincan
+> ---
+>  fs/configfs/dir.c        |   29 +++++++++++++++++++++++++++++
+>  include/linux/configfs.h |    9 +++++++++
+>  2 files changed, 38 insertions(+)
+>=20
+> diff --git a/fs/configfs/dir.c b/fs/configfs/dir.c
+> index cf0db00..7875a5e 100644
+> --- a/fs/configfs/dir.c
+> +++ b/fs/configfs/dir.c
+> @@ -1152,6 +1152,35 @@ void configfs_undepend_item(struct configfs_subsys=
+tem *subsys,
+>  }
+>  EXPORT_SYMBOL(configfs_undepend_item);
+> =20
+> +int configfs_depend_item_unlocked(struct config_item *target)
+> +{
+> +	struct configfs_dirent *sd;
+> +	int ret =3D -ENOENT;
+> +
+> +	spin_lock(&configfs_dirent_lock);
+> +	BUG_ON(!target->ci_dentry);
+> +
+> +	sd =3D target->ci_dentry->d_fsdata;
+> +	if ((sd->s_type & CONFIGFS_DIR) &&
+> +	    ((sd->s_type & CONFIGFS_USET_DROPPING) ||
+> +	     (sd->s_type & CONFIGFS_USET_CREATING)))
+> +		goto out_unlock_dirent_lock;
+> +
+> +	sd->s_dependent_count +=3D 1;
+> +	ret =3D 0;
+> +
+> +out_unlock_dirent_lock:
+> +	spin_unlock(&configfs_dirent_lock);
+> +	return ret;
+> +}
+> +EXPORT_SYMBOL(configfs_depend_item_unlocked);
+> +
+> +void configfs_undepend_item_unlocked(struct config_item *target)
+> +{
+> +	configfs_undepend_item(NULL, target);
+> +}
+> +EXPORT_SYMBOL(configfs_undepend_item_unlocked);
+> +
+>  static int configfs_mkdir(struct inode *dir, struct dentry *dentry, umod=
+e_t mode)
+>  {
+>  	int ret =3D 0;
+> diff --git a/include/linux/configfs.h b/include/linux/configfs.h
+> index 34025df..e9dbf01 100644
+> --- a/include/linux/configfs.h
+> +++ b/include/linux/configfs.h
+> @@ -257,4 +257,13 @@ void configfs_unregister_subsystem(struct configfs_s=
+ubsystem *subsys);
+>  int configfs_depend_item(struct configfs_subsystem *subsys, struct confi=
+g_item *target);
+>  void configfs_undepend_item(struct configfs_subsystem *subsys, struct co=
+nfig_item *target);
+> =20
+> +/*
+> + * These functions can sleep and can alloc with GFP_KERNEL
+> + * NOTE: These should be called only underneath configfs callbacks.
+> + * WARNING: These cannot be called on newly created item
+> + *        (in make_group()/make_item callback)
+> + */
+> +int configfs_depend_item_unlocked(struct config_item *target);
+> +void configfs_undepend_item_unlocked(struct config_item *target);
+> +
+>  #endif /* _CONFIGFS_H_ */
+> --=20
+> 1.7.9.5
+>=20
+
+--=20
+balbi
+
+--2feizKym29CxAecD
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJVP7rhAAoJEIaOsuA1yqRELFEQAJuv7Vzv96VH0/U7om0Vgi8M
+k+7F1KZ0STy+MBXDRaP+b9fjvJ6fdjhmgGhZ98BAWuf5+WeEJCnxyxSyvXpwDWqL
+NHSNltBZHGKkWLbsKIOX8JNr6vPQ0zsGX+I9mmPvBo8UJWt7nwbyJQp4wpzAsiFC
+aHMXvhz5WxTyMsLyQ9P+7LBW5Iyeyc4MFf3Hv1F6V9VkIkFv5MtOhIedx75e2t0H
+1556Ao4YFWUOeOPXlgxZinFPjLLUPrdA8ifU2eslupaNZoYNG0FFW31g66MNh7Be
+zZRUlwD7ouj3nxyPAS9BH1SsTikGQwOKuKoJ7SxkMCo7nVA3CRPsA5uogDypDoWK
+TFAs4X6FPmnKq9tV6m7jrVcx3+SGTCi7K2GVghOl54KLoZ0y52eyLxyluWO0k0bJ
+1mXS+h6nap6GjfrPEMHTzLEyBIZdnt6iRkcXEWoTIrFYsC7DhTRklIFkjkP1Cw/j
+V1VRNzTUMahx8V4fQxd3XBHLlv6eqbiuM9NpQJkaJ89QIlLISpgbxnDMMUnI1hAp
++/Qd755LNkmtr/9Lpcy7zQJMsRHUOtSaHNtFR/SxQt8qX5W84lTm0lM64Q/Nc5fh
+ZYKVl0KaMGsiVGS2Kab9eEPKrwQZLCjZKKXlOv48Dd1vzhtTMnwLaC04axIH6JWd
+nC44dZligk2YACq481lS
+=sMnv
+-----END PGP SIGNATURE-----
+
+--2feizKym29CxAecD--
+--
+To unsubscribe from this list: send the line "unsubscribe linux-usb" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
