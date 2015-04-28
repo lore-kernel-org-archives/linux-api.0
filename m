@@ -1,48 +1,57 @@
-From: Michal Hocko <mhocko@suse.cz>
-Subject: Re: Should mmap MAP_LOCKED fail if mm_poppulate fails?
-Date: Tue, 28 Apr 2015 18:43:03 +0200
-Message-ID: <20150428164302.GI2659@dhcp22.suse.cz>
-References: <20150114095019.GC4706@dhcp22.suse.cz>
- <1430223111-14817-1-git-send-email-mhocko@suse.cz>
- <CA+55aFxzLXx=cC309h_tEc-Gkn_zH4ipR7PsefVcE-97Uj066g@mail.gmail.com>
+From: Zhuang Jin Can <jin.can.zhuang@intel.com>
+Subject: Re: [PATCH] usb: core: add usb3 lpm sysfs
+Date: Wed, 29 Apr 2015 00:51:27 +0800
+Message-ID: <20150428165127.GA26638@intel.com>
+References: <20150419034612.GA31576@intel.com>
+ <20150428104224.GB540@kroah.com>
+Reply-To: jin.can.zhuang@intel.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CA+55aFxzLXx=cC309h_tEc-Gkn_zH4ipR7PsefVcE-97Uj066g@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: linux-mm <linux-mm@kvack.org>, Cyril Hrubis <chrubis@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Hugh Dickins <hughd@google.com>, Michel Lespinasse <walken@google.com>, Rik van Riel <riel@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+In-Reply-To: <20150428104224.GB540@kroah.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Greg KH <gregkh@linuxfoundation.org>
+Cc: rafael.j.wysocki@intel.com, stern@rowland.harvard.edu, dan.j.williams@intel.com, pmladek@suse.cz, peter.chen@freescale.com, jwerner@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-usb@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue 28-04-15 09:01:59, Linus Torvalds wrote:
-[...]
-> Your code is also fundamentally buggy in that it tries to do unmap()
-> after it has dropped all locks, and things went wrong. So you may nto
-> be unmapping some other threads data.
+Hi Greg KH,
 
-Hmm, no other thread has the address from the current mmap call except
-for MAP_FIXED (more on that below).
+On Tue, Apr 28, 2015 at 12:42:24PM +0200, Greg KH wrote:
+> On Sun, Apr 19, 2015 at 11:46:12AM +0800, Zhuang Jin Can wrote:
+> > Some usb3 devices may not support usb3 lpm well.
+> > The patch adds a sysfs to enable/disable u1 or u2 of the port.The
+> > settings apply to both before and after device enumeration.
+> > Supported values are "0" - u1 and u2 are disabled, "u1" - only u1 is
+> > enabled, "u2" - only u2 is enabled, "u1_u2" - u1 and u2 are enabled.
+> > 
+> > The interface is useful for testing some USB3 devices during
+> > development, and provides a way to disable usb3 lpm if the issues can
+> > not be fixed in final products.
+> 
+> How is a user supposed to "know" to make this setting for a device?  Why
+> can't the kernel automatically set this value properly?  Why does it
+> need to be a kernel issue at all?
+> 
+By default kernel enables u1 u2 of all USB3 devices. This interface
+provides the user to change this policy. User may set the policy
+according to PID/VID of uevent or according to the platform information
+known by userspace.
 
-Well I can imagine userspace doing nasty things like watching
-/proc/self/maps and using the address from there or using an address as
-an mmap hint and then using it before mmap returns by other threads. But
-would those be valid usecases? They sound crazy and buggy to me.
+It's not a kernel issue, as u1 u2 is mandatory by USB3 compliance. But
+for some internal hardwired USB3 connection, e.g. SSIC, passing USB3
+compliance is not mandatory. So the interface provides a way for vendor
+to ship with u1 or u2 broken products. Of course, this is not encouraged :).
 
-Another nasty case would be MAP_FIXED from a different thread destroying
-the mmap I am trying to poppulate but that is not so interesting because
-nothing protects from that even now.
-Or this being MAP_FIXED|MAP_LOCKED which has already destroyed a part
-of somebody's else mapping and the cleanup would lead to an unexpected
-SIGSEGV for the other thread. Is this the case you are worried about?
+> And when you are doing development of broken devices, the kernel doesn't
+> have to support you, you can run with debugging patches of your own
+> until you fix your firmware :)
+> 
+Understood. But I think other vendor or developer may face the same
+issue in final product shipment or during development. Moreover, the
+interface provide the flexibility for developer to separately
+disable/enable u1 or u2, e.g. If they're debugging an u2 issue, they
+can disable u1 to simplify the situtation.
 
-Or am I missing other cases?
--- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Thanks
+Jincan
