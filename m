@@ -1,37 +1,31 @@
-From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH] usb: core: add usb3 lpm sysfs
-Date: Tue, 28 Apr 2015 12:42:24 +0200
-Message-ID: <20150428104224.GB540@kroah.com>
-References: <20150419034612.GA31576@intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: Should mmap MAP_LOCKED fail if mm_poppulate fails?
+Date: Tue, 28 Apr 2015 14:11:48 +0200
+Message-ID: <1430223111-14817-1-git-send-email-mhocko@suse.cz>
+References: <20150114095019.GC4706@dhcp22.suse.cz>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150419034612.GA31576-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <20150114095019.GC4706-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Zhuang Jin Can <jin.can.zhuang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, pmladek-AlSwsSmVLrQ@public.gmane.org, peter.chen-KZfg59tc24xl57MIdRCFDg@public.gmane.org, jwerner-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+Cc: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Apr 19, 2015 at 11:46:12AM +0800, Zhuang Jin Can wrote:
-> Some usb3 devices may not support usb3 lpm well.
-> The patch adds a sysfs to enable/disable u1 or u2 of the port.The
-> settings apply to both before and after device enumeration.
-> Supported values are "0" - u1 and u2 are disabled, "u1" - only u1 is
-> enabled, "u2" - only u2 is enabled, "u1_u2" - u1 and u2 are enabled.
-> 
-> The interface is useful for testing some USB3 devices during
-> development, and provides a way to disable usb3 lpm if the issues can
-> not be fixed in final products.
+Hi,
+it seems that the initial email got lost (or ignored). I would like to
+revive it again. I've cooked up a potential fix to this issue which will
+follow as a reply to this email.
 
-How is a user supposed to "know" to make this setting for a device?  Why
-can't the kernel automatically set this value properly?  Why does it
-need to be a kernel issue at all?
+The first patch is dumb and straightforward. It should be safe as is and
+also good without the follow up 2 patches which try to handle potential
+allocation failures in the do_munmap path more gracefully. As we still
+do not fail small allocations even the first patch could be simplified
+a bit and the retry loop replaced by a BUG_ON right away. But I felt this
+would better be done robust.
 
-And when you are doing development of broken devices, the kernel doesn't
-have to support you, you can run with debugging patches of your own
-until you fix your firmware :)
+An obvious alternative would be patching the man pages to mention the
+subtle difference between mlock and MAP_LOCKED semantic. I have checked
+debian code search and it shown some applications relying on MAP_LOCKED
+but I have no idea whether they really require the mlock all-or-nothing
+fault in semantic.
 
-thanks,
-
-greg k-h
+Any thoughts, ideas?
