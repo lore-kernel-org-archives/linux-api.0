@@ -1,46 +1,73 @@
-From: Vladimir Davydov <vdavydov@parallels.com>
-Subject: Re: [PATCH v3 3/3] proc: add kpageidle file
-Date: Wed, 29 Apr 2015 11:31:49 +0300
-Message-ID: <20150429083148.GA11497@esperanza>
-References: <cover.1430217477.git.vdavydov@parallels.com>
- <4c24a6bf2c9711dd4dbb72a43a16eba6867527b7.1430217477.git.vdavydov@parallels.com>
- <20150429045759.GA27051@blaptop>
+From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH] usb: core: add usb3 lpm sysfs
+Date: Wed, 29 Apr 2015 11:01:48 +0200
+Message-ID: <20150429090148.GA22743@kroah.com>
+References: <20150419034612.GA31576@intel.com>
+ <20150428104224.GB540@kroah.com>
+ <20150428165127.GA26638@intel.com>
+ <20150428211110.GA32383@kroah.com>
+ <20150429072004.GA20961@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150429045759.GA27051@blaptop>
-Sender: linux-doc-owner@vger.kernel.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20150429072004.GA20961-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Zhuang Jin Can <jin.can.zhuang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, pmladek-AlSwsSmVLrQ@public.gmane.org, peter.chen-KZfg59tc24xl57MIdRCFDg@public.gmane.org, jwerner-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 29, 2015 at 01:57:59PM +0900, Minchan Kim wrote:
-> On Tue, Apr 28, 2015 at 03:24:42PM +0300, Vladimir Davydov wrote:
-> > @@ -69,6 +69,14 @@ There are four components to pagemap:
-> >     memory cgroup each page is charged to, indexed by PFN. Only available when
-> >     CONFIG_MEMCG is set.
-> >  
-> > + * /proc/kpageidle.  For each page this file contains a 64-bit number, which
-> > +   equals 1 if the page is idle or 0 otherwise, indexed by PFN. A page is
-> > +   considered idle if it has not been accessed since it was marked idle. To
-> > +   mark a page idle one should write 1 to this file at the offset corresponding
-> > +   to the page. Only user memory pages can be marked idle, for other page types
-> > +   input is silently ignored. Writing to this file beyond max PFN results in
-> > +   the ENXIO error. Only available when CONFIG_IDLE_PAGE_TRACKING is set.
-> > +
-> 
-> How about using kpageflags for reading part?
-> 
-> I mean PG_idle is one of the page flags and we already have a feature to
-> parse of each PFN flag so we could reuse existing feature for reading
-> idleness.
+On Wed, Apr 29, 2015 at 03:20:04PM +0800, Zhuang Jin Can wrote:
+> On Tue, Apr 28, 2015 at 11:11:10PM +0200, Greg KH wrote:
+> > On Wed, Apr 29, 2015 at 12:51:27AM +0800, Zhuang Jin Can wrote:
+> > > Hi Greg KH,
+> > > 
+> > > On Tue, Apr 28, 2015 at 12:42:24PM +0200, Greg KH wrote:
+> > > > On Sun, Apr 19, 2015 at 11:46:12AM +0800, Zhuang Jin Can wrote:
+> > > > > Some usb3 devices may not support usb3 lpm well.
+> > > > > The patch adds a sysfs to enable/disable u1 or u2 of the port.The
+> > > > > settings apply to both before and after device enumeration.
+> > > > > Supported values are "0" - u1 and u2 are disabled, "u1" - only u1 is
+> > > > > enabled, "u2" - only u2 is enabled, "u1_u2" - u1 and u2 are enabled.
+> > > > > 
+> > > > > The interface is useful for testing some USB3 devices during
+> > > > > development, and provides a way to disable usb3 lpm if the issues can
+> > > > > not be fixed in final products.
+> > > > 
+> > > > How is a user supposed to "know" to make this setting for a device?  Why
+> > > > can't the kernel automatically set this value properly?  Why does it
+> > > > need to be a kernel issue at all?
+> > > > 
+> > > By default kernel enables u1 u2 of all USB3 devices. This interface
+> > > provides the user to change this policy. User may set the policy
+> > > according to PID/VID of uevent or according to the platform information
+> > > known by userspace.
+> > 
+> > And why would they ever want to do that?
+> > 
+> > > It's not a kernel issue, as u1 u2 is mandatory by USB3 compliance. But
+> > > for some internal hardwired USB3 connection, e.g. SSIC, passing USB3
+> > > compliance is not mandatory. So the interface provides a way for vendor
+> > > to ship with u1 or u2 broken products. Of course, this is not encouraged :).
+> > 
+> > If the state is broken for those devices, we can't require the user to
+> > fix it for us, the kernel should do it automatically.
+> > 
+> > > > And when you are doing development of broken devices, the kernel doesn't
+> > > > have to support you, you can run with debugging patches of your own
+> > > > until you fix your firmware :)
+> > > > 
+> > > Understood. But I think other vendor or developer may face the same
+> > > issue in final product shipment or during development. Moreover, the
+> > > interface provide the flexibility for developer to separately
+> > > disable/enable u1 or u2, e.g. If they're debugging an u2 issue, they
+> > > can disable u1 to simplify the situtation.
+> > 
+> > For debugging only, perhaps, but for a "normal" user, please let's
+> > handle this automatically and don't create a switch that never gets used
+> > by anyone or anything.
+> > 
+> Thanks Greg. Since so far the patch has no interesting value to the
+> community, I'll drop the patch.
 
-Reading PG_idle implies clearing all pte references to make sure the
-page was not referenced via a pte. This means that exporting it via
-/proc/kpageflags would increase the cost of reading this file, even for
-users that don't care about PG_idle. I'm not sure all users of
-/proc/kpageflags will be fine with it.
-
-Thanks,
-Vladimir
+I didn't say that, I said it needed some more work to be accepted.
