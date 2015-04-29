@@ -1,102 +1,87 @@
-From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
-Subject: [RFC PATCH] mmap.2: clarify MAP_LOCKED semantic (was: Re: Should
- mmap MAP_LOCKED fail if mm_poppulate fails?)
-Date: Wed, 29 Apr 2015 13:38:18 +0200
-Message-ID: <20150429113818.GC16097@dhcp22.suse.cz>
-References: <20150114095019.GC4706@dhcp22.suse.cz>
- <1430223111-14817-1-git-send-email-mhocko@suse.cz>
- <CA+55aFxzLXx=cC309h_tEc-Gkn_zH4ipR7PsefVcE-97Uj066g@mail.gmail.com>
- <20150428164302.GI2659@dhcp22.suse.cz>
- <CA+55aFydkG-BgZzry5DrTzueVh9VvEcVJdLV8iOyUphQk=0vpw@mail.gmail.com>
- <20150428183535.GB30918@dhcp22.suse.cz>
- <CA+55aFyajquhGhw59qNWKGK4dBV0TPmDD7-1XqPo7DZWvO_hPg@mail.gmail.com>
+From: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC v2 1/4] fs: Add generic file system event notifications
+Date: Wed, 29 Apr 2015 15:45:05 +0200
+Message-ID: <20150429134505.GB15398@kroah.com>
+References: <553E50EB.3000402@samsung.com>
+ <20150427153711.GA23428@kroah.com>
+ <20150428135653.GD9955@quack.suse.cz>
+ <20150428140936.GA13406@kroah.com>
+ <553F9D56.6030301@samsung.com>
+ <20150428173900.GA16708@kroah.com>
+ <5540822C.10000@samsung.com>
+ <20150429074259.GA31089@quack.suse.cz>
+ <20150429091303.GA4090@kroah.com>
+ <5540BC2A.8010504@samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CA+55aFyajquhGhw59qNWKGK4dBV0TPmDD7-1XqPo7DZWvO_hPg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <5540BC2A.8010504-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Beata Michalska <b.michalska-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, lczerner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kmpark-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue 28-04-15 11:38:35, Linus Torvalds wrote:
-> On Tue, Apr 28, 2015 at 11:35 AM, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org> wrote:
-> >
-> > I am still not sure I see the problem here.
+On Wed, Apr 29, 2015 at 01:10:34PM +0200, Beata Michalska wrote:
+> >>> It needs to be done internally by the app but is doable.
+> >>> The app knows what it is watching, so it can maintain the mappings.
+> >>> So prior to activating the notifications it can call 'stat' on the mount point.
+> >>> Stat struct gives the 'st_dev' which is the device id. Same will be reported
+> >>> within the message payload (through major:minor numbers). So having this,
+> >>> the app is able to get any other information it needs. 
+> >>> Note that the events refer to the file system as a whole and they may not
+> >>> necessarily have anything to do with the actual block device. 
+> > 
+> > How are you going to show an event for a filesystem that is made up of
+> > multiple block devices?
 > 
-> Basically, I absolutely hate the notion of us doing something
-> unsynchronized, when I can see us undoing a mmap that another thread
-> is doing. It's wrong.
+> AFAIK, for such filesystems there will be similar case with the anonymous
+> major:minor numbers - at least the btrfs is doing so. Not sure we can
+> differentiate here the actual block device. So in this case such events
+> serves merely as a hint for the userspace.
 
-OK, I have checked the mmap(2) man page and there is no single mention
-about multi-threaded usage. So even though I personally think that
-user fault handlers which do mmap(MAP_FIXED) without synchronization
-to parallel mmaps are broken by definition we cannot simply rule them
-out and it is not the kernel job to make them broken even more or in a
-subtly different way.
-So here is an RFC for the man page patch. I am not very good in the
-format but man doesn't complain about any formating issues.
----
->From 903ed733187afaa4d27fef3c24f413304494411c Mon Sep 17 00:00:00 2001
-From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
-Date: Wed, 29 Apr 2015 11:02:19 +0200
-Subject: [RFC PATCH] mmap.2: clarify MAP_LOCKED semantic
+"hint" seems like this isn't really going to work well.
 
-MAP_LOCKED had a subtly different semantic from mmap(2)+mlock(2) since
-it has been introduced.
-mlock(2) fails if the memory range cannot get populated to guarantee
-that no future major faults will happen on the range. mmap(MAP_LOCKED) on
-the other hand silently succeeds even if the range was populated only
-partially.
+Do you have userspace code that can properly map this back to the "real"
+device that is causing problems?  Without that, this doesn't seem all
+that useful as no one would be able to use those events.
 
-Fixing this subtle difference in the kernel is rather awkward because
-the memory population happens after mm locks have been dropped and so
-the cleanup before returning failure (munlock) could operate on something
-else than the originally mapped area.
+> At this point a user might decide to run some scanning tools.
 
-E.g. speculative userspace page fault handler catching SEGV and doing
-mmap(fault_addr, MAP_FIXED|MAP_LOCKED) might discard portion of a racing
-mmap and lead to lost data. Although it is not clear whether such a
-usage would be valid, mmap page doesn't explicitly describe requirements
-for threaded applications so we cannot exclude this possibility.
+You can't run a scanning tool on a tmpfs :)
 
-This patch makes the semantic of MAP_LOCKED explicit and suggest using
-mmap + mlock as the only way to guarantee no later major page faults.
+So what can a user do with information about one of these "virtual"
+filesystems that it can't directly see or access?
 
-Signed-off-by: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
----
- man2/mmap.2 | 13 ++++++++++++-
- 1 file changed, 12 insertions(+), 1 deletion(-)
+> We might extend the scope of the
+> info being sent, though I would consider this as a nice-to-have but not
+> required for this initial version of notifications. The filesystems
+> might also want to decide to send their own custom messages so it is
+> possible for filesystems like btrfs to send more detailed information
+> using the new genetlink multicast group.
+> >>   Or you can use /proc/self/mountinfo for the mapping. There you can see
+> >> device numbers, real device names if applicable and mountpoints. This has
+> >> the advantage that it works even if filesystem mountpoints change.
+> > 
+> > Ok, then that brings up my next question, how does this handle
+> > namespaces?  What namespace is the event being sent in?  block devices
+> > aren't namespaced, but the mount points are, is that going to cause
+> > problems?
+> > 
+> 
+> The path should get resolved properly (as from root level). though I must
+> admit I'm not sure if there will be no issues when it comes to the network
+> namespaces. I'll double check it. Any hints though are more than welcomed :)
 
-diff --git a/man2/mmap.2 b/man2/mmap.2
-index 54d68cf87e9e..1486be2e96b3 100644
---- a/man2/mmap.2
-+++ b/man2/mmap.2
-@@ -235,8 +235,19 @@ See the Linux kernel source file
- for further information.
- .TP
- .BR MAP_LOCKED " (since Linux 2.5.37)"
--Lock the pages of the mapped region into memory in the manner of
-+Mark the mmaped region to be locked in the same way as
- .BR mlock (2).
-+This implementation will try to populate (prefault) the whole range but
-+the mmap call doesn't fail with
-+.B ENOMEM
-+if this fails. Therefore major faults might happen later on. So the semantic
-+is not as strong as
-+.BR mlock (2).
-+.BR mmap (2)
-++
-+.BR mlock (2)
-+should be used when major faults are not acceptable after the initialization
-+of the mapping.
- This flag is ignored in older kernels.
- .\" If set, the mapped pages will not be swapped out.
- .TP
--- 
-2.1.4
+What is "root level" here?  You can mount things in different namespaces
+all over the place.
 
--- 
-Michal Hocko
-SUSE Labs
+This is going to get really complex very quickly :(
+
+I still think you should tie this to an existing sysfs device, which
+handles the namespace issues for you, and it also handles the fact that
+userspace can properly identify the device, if at all possible.
+
+thanks,
+
+greg k-h
