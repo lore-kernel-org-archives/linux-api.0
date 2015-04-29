@@ -1,195 +1,131 @@
-From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH v2 08/11] coresight-etm4x: Controls pertaining to the counter functions
-Date: Wed, 29 Apr 2015 11:16:32 -0600
-Message-ID: <1430327795-10710-9-git-send-email-mathieu.poirier@linaro.org>
+From: Mathieu Poirier <mathieu.poirier@linaro.org>
+Subject: [PATCH v2 03/11] coresight-etm4x: Controls pertaining to the reset, mode, pe and events
+Date: Wed, 29 Apr 2015 11:16:27 -0600
+Message-ID: <1430327795-10710-4-git-send-email-mathieu.poirier@linaro.org>
 References: <1430327795-10710-1-git-send-email-mathieu.poirier@linaro.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1430327795-10710-1-git-send-email-mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org
-Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1430327795-10710-1-git-send-email-mathieu.poirier@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: gregkh@linuxfoundation.org
+Cc: linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kaixu.xia@linaro.org, zhang.chunyan@linaro.org, mathieu.poirier@linaro.org
 List-Id: linux-api@vger.kernel.org
 
-From: Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+From: Pratik Patel <pratikp@codeaurora.org>
 
-Adding sysfs entries related to the counter functionality, more specifically
-to set, control and reload the counters.
+Adding sysfs entries to:
+. set the tracing entity with default values.
+. set various mode associated to the tracing entity.
+. select the processing entity the tracing entity relates to.
+. select various events of interest.
 
-Signed-off-by: Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-Signed-off-by: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Signed-off-by: Pratik Patel <pratikp@codeaurora.org>
+Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
 ---
- .../ABI/testing/sysfs-bus-coresight-devices-etm4x  |  26 ++++
- drivers/hwtracing/coresight/coresight-etm4x.c      | 144 +++++++++++++++++++++
- 2 files changed, 170 insertions(+)
+ .../ABI/testing/sysfs-bus-coresight-devices-etm4x  |  33 ++
+ drivers/hwtracing/coresight/coresight-etm4x.c      | 442 ++++++++++++++++++++-
+ 2 files changed, 474 insertions(+), 1 deletion(-)
 
 diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
-index 44723f2e107e..b4581c9426d3 100644
+index 0f579eb24631..9caf70382088 100644
 --- a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
 +++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
-@@ -216,3 +216,29 @@ KernelVersion:	4.01
- Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
- Description: 	(RW) Moves the sequencer to state 0 when a programmed event
- 		occurs.
+@@ -87,3 +87,36 @@ KernelVersion:	4.01
+ Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
+ Description:	(R) Indicates the number of single-shot comparator controls that
+ 		are available for tracing.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/cntr_idx
++What:		/sys/bus/coresight/devices/<memory_map>.etm/reset
 +Date:		April 2015
 +KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description: 	(RW) Select which counter unit to work with.
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(W) Cancels all configuration on a trace unit and set it back
++		to its boot configuration.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/cntrldvr
++What:		/sys/bus/coresight/devices/<memory_map>.etm/mode
 +Date:		April 2015
 +KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description: 	(RW) This sets or returns the reload count value of the
-+		specific counter.
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Controls various modes supported by this ETM, for example
++		P0 instruction tracing, branch broadcast, cycle counting and
++		context ID tracing.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/cntr_val
++What:		/sys/bus/coresight/devices/<memory_map>.etm/pe
 +Date:		April 2015
 +KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description: 	(RW) This sets or returns the current count value of the
-+                specific counter.
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Controls which PE to trace.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/cntr_ctrl
++What:		/sys/bus/coresight/devices/<memory_map>.etm/event
 +Date:		April 2015
 +KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description: 	(RW) Controls the operation of the selected counter.
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Controls the tracing of arbitrary events from bank 0 to 3.
++
++What:		/sys/bus/coresight/devices/<memory_map>.etm/event_instren
++Date:		April 2015
++KernelVersion:	4.01
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Controls the behavior of the events in bank 0 to 3.
 diff --git a/drivers/hwtracing/coresight/coresight-etm4x.c b/drivers/hwtracing/coresight/coresight-etm4x.c
-index 2ab64e2333e4..cd6a1d51ad66 100644
+index babf9bb27d25..4d58b41bb27c 100644
 --- a/drivers/hwtracing/coresight/coresight-etm4x.c
 +++ b/drivers/hwtracing/coresight/coresight-etm4x.c
-@@ -1567,6 +1567,146 @@ static ssize_t seq_reset_event_store(struct device *dev,
- }
- static DEVICE_ATTR_RW(seq_reset_event);
+@@ -268,6 +268,46 @@ static const struct coresight_ops etm4_cs_ops = {
+ 	.source_ops	= &etm4_source_ops,
+ };
  
-+static ssize_t cntr_idx_show(struct device *dev,
-+			     struct device_attribute *attr,
-+			     char *buf)
++static int etm4_set_mode_exclude(struct etmv4_drvdata *drvdata, bool exclude)
 +{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->cntr_idx;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+
-+static ssize_t cntr_idx_store(struct device *dev,
-+			      struct device_attribute *attr,
-+			      const char *buf, size_t size)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	if (kstrtoul(buf, 16, &val))
-+		return -EINVAL;
-+	if (val >= drvdata->nr_cntr)
-+		return -EINVAL;
++	u8 idx = drvdata->addr_idx;
 +
 +	/*
-+	 * Use spinlock to ensure index doesn't change while it gets
-+	 * dereferenced multiple times within a spinlock block elsewhere.
++	 * TRCACATRn.TYPE bit[1:0]: type of comparison
++	 * the trace unit performs
 +	 */
-+	spin_lock(&drvdata->spinlock);
-+	drvdata->cntr_idx = val;
-+	spin_unlock(&drvdata->spinlock);
-+	return size;
-+}
-+static DEVICE_ATTR_RW(cntr_idx);
++	if (BMVAL(drvdata->addr_acc[idx], 0, 1) == ETM_INSTR_ADDR) {
++		if (idx % 2 != 0)
++			return -EINVAL;
 +
-+static ssize_t cntrldvr_show(struct device *dev,
-+			     struct device_attribute *attr,
-+			     char *buf)
-+{
-+	u8 idx;
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++		/*
++		 * We are performing instruction address comparison. Set the
++		 * relevant bit of ViewInst Include/Exclude Control register
++		 * for corresponding address comparator pair.
++		 */
++		if (drvdata->addr_type[idx] != ETM_ADDR_TYPE_RANGE ||
++		    drvdata->addr_type[idx + 1] != ETM_ADDR_TYPE_RANGE)
++			return -EINVAL;
 +
-+	spin_lock(&drvdata->spinlock);
-+	idx = drvdata->cntr_idx;
-+	val = drvdata->cntrldvr[idx];
-+	spin_unlock(&drvdata->spinlock);
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+
-+static ssize_t cntrldvr_store(struct device *dev,
-+			      struct device_attribute *attr,
-+			      const char *buf, size_t size)
-+{
-+	u8 idx;
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	if (kstrtoul(buf, 16, &val))
-+		return -EINVAL;
-+	if (val > ETM_CNTR_MAX_VAL)
-+		return -EINVAL;
-+
-+	spin_lock(&drvdata->spinlock);
-+	idx = drvdata->cntr_idx;
-+	drvdata->cntrldvr[idx] = val;
-+	spin_unlock(&drvdata->spinlock);
-+	return size;
-+}
-+static DEVICE_ATTR_RW(cntrldvr);
-+
-+static ssize_t cntr_val_show(struct device *dev,
-+			     struct device_attribute *attr,
-+			     char *buf)
-+{
-+	u8 idx;
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	spin_lock(&drvdata->spinlock);
-+	idx = drvdata->cntr_idx;
-+	val = drvdata->cntr_val[idx];
-+	spin_unlock(&drvdata->spinlock);
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
++		if (exclude == true) {
++			/*
++			 * Set exclude bit and unset the include bit
++			 * corresponding to comparator pair
++			 */
++			drvdata->viiectlr |= BIT(idx / 2 + 16);
++			drvdata->viiectlr &= ~BIT(idx / 2);
++		} else {
++			/*
++			 * Set include bit and unset exclude bit
++			 * corresponding to comparator pair
++			 */
++			drvdata->viiectlr |= BIT(idx / 2);
++			drvdata->viiectlr &= ~BIT(idx / 2 + 16);
++		}
++	}
++	return 0;
 +}
 +
-+static ssize_t cntr_val_store(struct device *dev,
-+			      struct device_attribute *attr,
-+			      const char *buf, size_t size)
+ static ssize_t nr_pe_cmp_show(struct device *dev,
+ 			      struct device_attribute *attr,
+ 			      char *buf)
+@@ -376,6 +416,402 @@ static ssize_t nr_ss_cmp_show(struct device *dev,
+ }
+ static DEVICE_ATTR_RO(nr_ss_cmp);
+ 
++static ssize_t reset_store(struct device *dev,
++			   struct device_attribute *attr,
++			   const char *buf, size_t size)
 +{
-+	u8 idx;
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	if (kstrtoul(buf, 16, &val))
-+		return -EINVAL;
-+	if (val > ETM_CNTR_MAX_VAL)
-+		return -EINVAL;
-+
-+	spin_lock(&drvdata->spinlock);
-+	idx = drvdata->cntr_idx;
-+	drvdata->cntr_val[idx] = val;
-+	spin_unlock(&drvdata->spinlock);
-+	return size;
-+}
-+static DEVICE_ATTR_RW(cntr_val);
-+
-+static ssize_t cntr_ctrl_show(struct device *dev,
-+			      struct device_attribute *attr,
-+			      char *buf)
-+{
-+	u8 idx;
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	spin_lock(&drvdata->spinlock);
-+	idx = drvdata->cntr_idx;
-+	val = drvdata->cntr_ctrl[idx];
-+	spin_unlock(&drvdata->spinlock);
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+
-+static ssize_t cntr_ctrl_store(struct device *dev,
-+			       struct device_attribute *attr,
-+			       const char *buf, size_t size)
-+{
-+	u8 idx;
++	int i;
 +	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
@@ -197,24 +133,410 @@ index 2ab64e2333e4..cd6a1d51ad66 100644
 +		return -EINVAL;
 +
 +	spin_lock(&drvdata->spinlock);
-+	idx = drvdata->cntr_idx;
-+	drvdata->cntr_ctrl[idx] = val;
++	if (val)
++		drvdata->mode = 0x0;
++
++	/* Disable data tracing: do not trace load and store data transfers */
++	drvdata->mode &= ~(ETM_MODE_LOAD | ETM_MODE_STORE);
++	drvdata->cfg &= ~(BIT(1) | BIT(2));
++
++	/* Disable data value and data address tracing */
++	drvdata->mode &= ~(ETM_MODE_DATA_TRACE_ADDR |
++			   ETM_MODE_DATA_TRACE_VAL);
++	drvdata->cfg &= ~(BIT(16) | BIT(17));
++
++	/* Disable all events tracing */
++	drvdata->eventctrl0 = 0x0;
++	drvdata->eventctrl1 = 0x0;
++
++	/* Disable timestamp event */
++	drvdata->ts_ctrl = 0x0;
++
++	/* Disable stalling */
++	drvdata->stall_ctrl = 0x0;
++
++	/* Reset trace synchronization period  to 2^8 = 256 bytes*/
++	if (drvdata->syncpr == false)
++		drvdata->syncfreq = 0x8;
++
++	/*
++	 * Enable ViewInst to trace everything with start-stop logic in
++	 * started state. ARM recommends start-stop logic is set before
++	 * each trace run.
++	 */
++	drvdata->vinst_ctrl |= BIT(0);
++	if (drvdata->nr_addr_cmp == true) {
++		drvdata->mode |= ETM_MODE_VIEWINST_STARTSTOP;
++		/* SSSTATUS, bit[9] */
++		drvdata->vinst_ctrl |= BIT(9);
++	}
++
++	/* No address range filtering for ViewInst */
++	drvdata->viiectlr = 0x0;
++
++	/* No start-stop filtering for ViewInst */
++	drvdata->vissctlr = 0x0;
++
++	/* Disable seq events */
++	for (i = 0; i < drvdata->nrseqstate-1; i++)
++		drvdata->seq_ctrl[i] = 0x0;
++	drvdata->seq_rst = 0x0;
++	drvdata->seq_state = 0x0;
++
++	/* Disable external input events */
++	drvdata->ext_inp = 0x0;
++
++	drvdata->cntr_idx = 0x0;
++	for (i = 0; i < drvdata->nr_cntr; i++) {
++		drvdata->cntrldvr[i] = 0x0;
++		drvdata->cntr_ctrl[i] = 0x0;
++		drvdata->cntr_val[i] = 0x0;
++	}
++
++	drvdata->res_idx = 0x0;
++	for (i = 0; i < drvdata->nr_resource; i++)
++		drvdata->res_ctrl[i] = 0x0;
++
++	for (i = 0; i < drvdata->nr_ss_cmp; i++) {
++		drvdata->ss_ctrl[i] = 0x0;
++		drvdata->ss_pe_cmp[i] = 0x0;
++	}
++
++	drvdata->addr_idx = 0x0;
++	for (i = 0; i < drvdata->nr_addr_cmp * 2; i++) {
++		drvdata->addr_val[i] = 0x0;
++		drvdata->addr_acc[i] = 0x0;
++		drvdata->addr_type[i] = ETM_ADDR_TYPE_NONE;
++	}
++
++	drvdata->ctxid_idx = 0x0;
++	for (i = 0; i < drvdata->numcidc; i++)
++		drvdata->ctxid_val[i] = 0x0;
++	drvdata->ctxid_mask0 = 0x0;
++	drvdata->ctxid_mask1 = 0x0;
++
++	drvdata->vmid_idx = 0x0;
++	for (i = 0; i < drvdata->numvmidc; i++)
++		drvdata->vmid_val[i] = 0x0;
++	drvdata->vmid_mask0 = 0x0;
++	drvdata->vmid_mask1 = 0x0;
++
++	drvdata->trcid = drvdata->cpu + 1;
 +	spin_unlock(&drvdata->spinlock);
 +	return size;
 +}
-+static DEVICE_ATTR_RW(cntr_ctrl);
++static DEVICE_ATTR_WO(reset);
++
++static ssize_t mode_show(struct device *dev,
++			 struct device_attribute *attr,
++			 char *buf)
++{
++	unsigned long val;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	val = drvdata->mode;
++	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
++}
++
++static ssize_t mode_store(struct device *dev,
++			  struct device_attribute *attr,
++			  const char *buf, size_t size)
++{
++	unsigned long val, mode;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	if (kstrtoul(buf, 16, &val))
++		return -EINVAL;
++
++	spin_lock(&drvdata->spinlock);
++	drvdata->mode = val & ETMv4_MODE_ALL;
++
++	if (drvdata->mode & ETM_MODE_EXCLUDE)
++		etm4_set_mode_exclude(drvdata, true);
++	else
++		etm4_set_mode_exclude(drvdata, false);
++
++	if (drvdata->instrp0 == true) {
++		/* start by clearing instruction P0 field */
++		drvdata->cfg  &= ~(BIT(1) | BIT(2));
++		if (drvdata->mode & ETM_MODE_LOAD)
++			/* 0b01 Trace load instructions as P0 instructions */
++			drvdata->cfg  |= BIT(1);
++		if (drvdata->mode & ETM_MODE_STORE)
++			/* 0b10 Trace store instructions as P0 instructions */
++			drvdata->cfg  |= BIT(2);
++		if (drvdata->mode & ETM_MODE_LOAD_STORE)
++			/*
++			 * 0b11 Trace load and store instructions
++			 * as P0 instructions
++			 */
++			drvdata->cfg  |= BIT(1) | BIT(2);
++	}
++
++	/* bit[3], Branch broadcast mode */
++	if ((drvdata->mode & ETM_MODE_BB) && (drvdata->trcbb == true))
++		drvdata->cfg |= BIT(3);
++	else
++		drvdata->cfg &= ~BIT(3);
++
++	/* bit[4], Cycle counting instruction trace bit */
++	if ((drvdata->mode & ETMv4_MODE_CYCACC) &&
++		(drvdata->trccci == true))
++		drvdata->cfg |= BIT(4);
++	else
++		drvdata->cfg &= ~BIT(4);
++
++	/* bit[6], Context ID tracing bit */
++	if ((drvdata->mode & ETMv4_MODE_CTXID) && (drvdata->ctxid_size))
++		drvdata->cfg |= BIT(6);
++	else
++		drvdata->cfg &= ~BIT(6);
++
++	if ((drvdata->mode & ETM_MODE_VMID) && (drvdata->vmid_size))
++		drvdata->cfg |= BIT(7);
++	else
++		drvdata->cfg &= ~BIT(7);
++
++	/* bits[10:8], Conditional instruction tracing bit */
++	mode = ETM_MODE_COND(drvdata->mode);
++	if (drvdata->trccond == true) {
++		drvdata->cfg &= ~(BIT(8) | BIT(9) | BIT(10));
++		drvdata->cfg |= mode << 8;
++	}
++
++	/* bit[11], Global timestamp tracing bit */
++	if ((drvdata->mode & ETMv4_MODE_TIMESTAMP) && (drvdata->ts_size))
++		drvdata->cfg |= BIT(11);
++	else
++		drvdata->cfg &= ~BIT(11);
++
++	/* bit[12], Return stack enable bit */
++	if ((drvdata->mode & ETM_MODE_RETURNSTACK) &&
++		(drvdata->retstack == true))
++		drvdata->cfg |= BIT(12);
++	else
++		drvdata->cfg &= ~BIT(12);
++
++	/* bits[14:13], Q element enable field */
++	mode = ETM_MODE_QELEM(drvdata->mode);
++	/* start by clearing QE bits */
++	drvdata->cfg &= ~(BIT(13) | BIT(14));
++	/* if supported, Q elements with instruction counts are enabled */
++	if ((mode & BIT(0)) && (drvdata->q_support & BIT(0)))
++		drvdata->cfg |= BIT(13);
++	/*
++	 * if supported, Q elements with and without instruction
++	 * counts are enabled
++	 */
++	if ((mode & BIT(1)) && (drvdata->q_support & BIT(1)))
++		drvdata->cfg |= BIT(14);
++
++	/* bit[11], AMBA Trace Bus (ATB) trigger enable bit */
++	if ((drvdata->mode & ETM_MODE_ATB_TRIGGER) &&
++	    (drvdata->atbtrig == true))
++		drvdata->eventctrl1 |= BIT(11);
++	else
++		drvdata->eventctrl1 &= ~BIT(11);
++
++	/* bit[12], Low-power state behavior override bit */
++	if ((drvdata->mode & ETM_MODE_LPOVERRIDE) &&
++	    (drvdata->lpoverride == true))
++		drvdata->eventctrl1 |= BIT(12);
++	else
++		drvdata->eventctrl1 &= ~BIT(12);
++
++	/* bit[8], Instruction stall bit */
++	if (drvdata->mode & ETM_MODE_ISTALL_EN)
++		drvdata->stall_ctrl |= BIT(8);
++	else
++		drvdata->stall_ctrl &= ~BIT(8);
++
++	/* bit[10], Prioritize instruction trace bit */
++	if (drvdata->mode & ETM_MODE_INSTPRIO)
++		drvdata->stall_ctrl |= BIT(10);
++	else
++		drvdata->stall_ctrl &= ~BIT(10);
++
++	/* bit[13], Trace overflow prevention bit */
++	if ((drvdata->mode & ETM_MODE_NOOVERFLOW) &&
++		(drvdata->nooverflow == true))
++		drvdata->stall_ctrl |= BIT(13);
++	else
++		drvdata->stall_ctrl &= ~BIT(13);
++
++	/* bit[9] Start/stop logic control bit */
++	if (drvdata->mode & ETM_MODE_VIEWINST_STARTSTOP)
++		drvdata->vinst_ctrl |= BIT(9);
++	else
++		drvdata->vinst_ctrl &= ~BIT(9);
++
++	/* bit[10], Whether a trace unit must trace a Reset exception */
++	if (drvdata->mode & ETM_MODE_TRACE_RESET)
++		drvdata->vinst_ctrl |= BIT(10);
++	else
++		drvdata->vinst_ctrl &= ~BIT(10);
++
++	/* bit[11], Whether a trace unit must trace a system error exception */
++	if ((drvdata->mode & ETM_MODE_TRACE_ERR) &&
++		(drvdata->trc_error == true))
++		drvdata->vinst_ctrl |= BIT(11);
++	else
++		drvdata->vinst_ctrl &= ~BIT(11);
++
++	spin_unlock(&drvdata->spinlock);
++	return size;
++}
++static DEVICE_ATTR_RW(mode);
++
++static ssize_t pe_show(struct device *dev,
++		       struct device_attribute *attr,
++		       char *buf)
++{
++	unsigned long val;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	val = drvdata->pe_sel;
++	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
++}
++
++static ssize_t pe_store(struct device *dev,
++			struct device_attribute *attr,
++			const char *buf, size_t size)
++{
++	unsigned long val;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	if (kstrtoul(buf, 16, &val))
++		return -EINVAL;
++
++	spin_lock(&drvdata->spinlock);
++	if (val > drvdata->nr_pe) {
++		spin_unlock(&drvdata->spinlock);
++		return -EINVAL;
++	}
++
++	drvdata->pe_sel = val;
++	spin_unlock(&drvdata->spinlock);
++	return size;
++}
++static DEVICE_ATTR_RW(pe);
++
++static ssize_t event_show(struct device *dev,
++			  struct device_attribute *attr,
++			  char *buf)
++{
++	unsigned long val;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	val = drvdata->eventctrl0;
++	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
++}
++
++static ssize_t event_store(struct device *dev,
++			   struct device_attribute *attr,
++			   const char *buf, size_t size)
++{
++	unsigned long val;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	if (kstrtoul(buf, 16, &val))
++		return -EINVAL;
++
++	spin_lock(&drvdata->spinlock);
++	switch (drvdata->nr_event) {
++	case 0x0:
++		/* EVENT0, bits[7:0] */
++		drvdata->eventctrl0 = val & 0xFF;
++		break;
++	case 0x1:
++		 /* EVENT1, bits[15:8] */
++		drvdata->eventctrl0 = val & 0xFFFF;
++		break;
++	case 0x2:
++		/* EVENT2, bits[23:16] */
++		drvdata->eventctrl0 = val & 0xFFFFFF;
++		break;
++	case 0x3:
++		/* EVENT3, bits[31:24] */
++		drvdata->eventctrl0 = val;
++		break;
++	default:
++		break;
++	}
++	spin_unlock(&drvdata->spinlock);
++	return size;
++}
++static DEVICE_ATTR_RW(event);
++
++static ssize_t event_instren_show(struct device *dev,
++				  struct device_attribute *attr,
++				  char *buf)
++{
++	unsigned long val;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	val = BMVAL(drvdata->eventctrl1, 0, 3);
++	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
++}
++
++static ssize_t event_instren_store(struct device *dev,
++				   struct device_attribute *attr,
++				   const char *buf, size_t size)
++{
++	unsigned long val;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	if (kstrtoul(buf, 16, &val))
++		return -EINVAL;
++
++	spin_lock(&drvdata->spinlock);
++	/* start by clearing all instruction event enable bits */
++	drvdata->eventctrl1 &= ~(BIT(0) | BIT(1) | BIT(2) | BIT(3));
++	switch (drvdata->nr_event) {
++	case 0x0:
++		/* generate Event element for event 1 */
++		drvdata->eventctrl1 |= val & BIT(1);
++		break;
++	case 0x1:
++		/* generate Event element for event 1 and 2 */
++		drvdata->eventctrl1 |= val & (BIT(0) | BIT(1));
++		break;
++	case 0x2:
++		/* generate Event element for event 1, 2 and 3 */
++		drvdata->eventctrl1 |= val & (BIT(0) | BIT(1) | BIT(2));
++		break;
++	case 0x3:
++		/* generate Event element for all 4 events */
++		drvdata->eventctrl1 |= val & 0xF;
++		break;
++	default:
++		break;
++	}
++	spin_unlock(&drvdata->spinlock);
++	return size;
++}
++static DEVICE_ATTR_RW(event_instren);
 +
  static ssize_t status_show(struct device *dev,
  			   struct device_attribute *attr, char *buf)
  {
-@@ -1743,6 +1883,10 @@ static struct attribute *coresight_etmv4_attrs[] = {
- 	&dev_attr_seq_state.attr,
- 	&dev_attr_seq_event.attr,
- 	&dev_attr_seq_reset_event.attr,
-+	&dev_attr_cntr_idx.attr,
-+	&dev_attr_cntrldvr.attr,
-+	&dev_attr_cntr_val.attr,
-+	&dev_attr_cntr_ctrl.attr,
+@@ -518,7 +954,6 @@ static ssize_t trcidr_show(struct device *dev,
+ 	return ret;
+ }
+ static DEVICE_ATTR_RO(trcidr);
+-
+ static struct attribute *coresight_etmv4_attrs[] = {
+ 	&dev_attr_nr_pe_cmp.attr,
+ 	&dev_attr_nr_addr_cmp.attr,
+@@ -529,6 +964,11 @@ static struct attribute *coresight_etmv4_attrs[] = {
+ 	&dev_attr_nrseqstate.attr,
+ 	&dev_attr_nr_resource.attr,
+ 	&dev_attr_nr_ss_cmp.attr,
++	&dev_attr_reset.attr,
++	&dev_attr_mode.attr,
++	&dev_attr_pe.attr,
++	&dev_attr_event.attr,
++	&dev_attr_event_instren.attr,
  	&dev_attr_status.attr,
  	&dev_attr_mgmt.attr,
  	&dev_attr_trcidr.attr,
