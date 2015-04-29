@@ -1,62 +1,38 @@
-From: Michal Hocko <mhocko@suse.cz>
-Subject: Re: [RFC 1/3] mm: mmap make MAP_LOCKED really mlock semantic
-Date: Wed, 29 Apr 2015 09:52:38 +0200
-Message-ID: <20150429075238.GA16097@dhcp22.suse.cz>
-References: <20150114095019.GC4706@dhcp22.suse.cz>
- <1430223111-14817-1-git-send-email-mhocko@suse.cz>
- <1430223111-14817-2-git-send-email-mhocko@suse.cz>
- <20150428161001.e854fb3eaf82f738865130af@linux-foundation.org>
+From: Vladimir Davydov <vdavydov@parallels.com>
+Subject: Re: [PATCH v3 0/3] idle memory tracking
+Date: Wed, 29 Apr 2015 10:58:53 +0300
+Message-ID: <20150429075853.GC1694@esperanza>
+References: <cover.1430217477.git.vdavydov@parallels.com>
+ <20150429035722.GA11486@blaptop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20150428161001.e854fb3eaf82f738865130af@linux-foundation.org>
+In-Reply-To: <20150429035722.GA11486@blaptop>
 Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org, Cyril Hrubis <chrubis@suse.cz>, Hugh Dickins <hughd@google.com>, Michel Lespinasse <walken@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue 28-04-15 16:10:01, Andrew Morton wrote:
-> On Tue, 28 Apr 2015 14:11:49 +0200 Michal Hocko <mhocko@suse.cz> wrote:
+Hi Minchan,
+
+Thank you for taking a look at this patch set.
+
+On Wed, Apr 29, 2015 at 12:57:22PM +0900, Minchan Kim wrote:
+> On Tue, Apr 28, 2015 at 03:24:39PM +0300, Vladimir Davydov wrote:
+> >  * /proc/kpageidle.  For each page this file contains a 64-bit number, which
+> >    equals 1 if the page is idle or 0 otherwise, indexed by PFN. A page is
 > 
-> > The man page however says
-> > "
-> > MAP_LOCKED (since Linux 2.5.37)
-> >       Lock the pages of the mapped region into memory in the manner of
-> >       mlock(2).  This flag is ignored in older kernels.
-> > "
-> 
-> I'm trying to remember why we implemented MAP_LOCKED in the first
-> place.  Was it better than mmap+mlock in some fashion?
-> 
-> afaict we had a #define MAP_LOCKED in the header file but it wasn't
-> implemented, so we went and wired it up.  13 years ago:
-> https://lkml.org/lkml/2002/9/18/108
+> Why do we need 64bit per page to indicate just idle or not?
 
-Yeah I have encountered this one while digging though the history as
-well but there was no real usecase described - except "it doesn't work
-currently".
+I don't think we need this, actually. I made this file 64 bit per page
+only to conform to other /proc/kpage* files. Currently, I can't think of
+any potential use for residual 63 bits, so personally I'm fine with 1
+bit per page. If nobody comes with an idea about how > 1 bits could be
+used, I'll switch /proc/kpageidle to a bitmask in the next iteration.
 
-The only sensible usecase I was able to come up with was a userspace
-fault handling when we need to mmap and lock the faulting address in an
-atomic way so that other threads cannot possibly leak data to the swap.
-These guys can live with the current implementation, though.
-
-I do not really believe that 2 instead of 1 syscall really justifies the
-complexity.
-
-> Anyway...  the third way of doing this is to use plain old mmap() while
-> mlockall(MCL_FUTURE) is in force.  Has anyone looked at that, checked
-> that the behaviour is sane and compared it with the mmap+mlock
-> behaviour, the MAP_LOCKED behaviour and the manpages?
-
-AFAICS this will behave the same way as mmap(MAP_LOCKED). VMA will be
-marked VM_LOCKED but the popullation might fail for the very same
-reason.
-
--- 
-Michal Hocko
-SUSE Labs
+Thanks,
+Vladimir
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
