@@ -1,542 +1,248 @@
-From: Mathieu Poirier <mathieu.poirier@linaro.org>
-Subject: [PATCH v2 03/11] coresight-etm4x: Controls pertaining to the reset, mode, pe and events
-Date: Wed, 29 Apr 2015 11:16:27 -0600
-Message-ID: <1430327795-10710-4-git-send-email-mathieu.poirier@linaro.org>
+From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH v2 11/11] coresight-etm4x: Controls pertaining to the VM ID functions
+Date: Wed, 29 Apr 2015 11:16:35 -0600
+Message-ID: <1430327795-10710-12-git-send-email-mathieu.poirier@linaro.org>
 References: <1430327795-10710-1-git-send-email-mathieu.poirier@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1430327795-10710-1-git-send-email-mathieu.poirier@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: gregkh@linuxfoundation.org
-Cc: linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kaixu.xia@linaro.org, zhang.chunyan@linaro.org, mathieu.poirier@linaro.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1430327795-10710-1-git-send-email-mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Pratik Patel <pratikp@codeaurora.org>
+From: Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
 
-Adding sysfs entries to:
-. set the tracing entity with default values.
-. set various mode associated to the tracing entity.
-. select the processing entity the tracing entity relates to.
-. select various events of interest.
+Adding sysfs entries to access and configure specifics about the
+virtual machine ID comparator functions.
 
-Signed-off-by: Pratik Patel <pratikp@codeaurora.org>
-Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
+Signed-off-by: Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Signed-off-by: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 ---
- .../ABI/testing/sysfs-bus-coresight-devices-etm4x  |  33 ++
- drivers/hwtracing/coresight/coresight-etm4x.c      | 442 ++++++++++++++++++++-
- 2 files changed, 474 insertions(+), 1 deletion(-)
+ .../ABI/testing/sysfs-bus-coresight-devices-etm4x  |  20 +++
+ drivers/hwtracing/coresight/coresight-etm4x.c      | 178 +++++++++++++++++++++
+ 2 files changed, 198 insertions(+)
 
 diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
-index 0f579eb24631..9caf70382088 100644
+index 8b32cb7b9723..eb5153891919 100644
 --- a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
 +++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
-@@ -87,3 +87,36 @@ KernelVersion:	4.01
- Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
- Description:	(R) Indicates the number of single-shot comparator controls that
- 		are available for tracing.
+@@ -273,3 +273,23 @@ KernelVersion:	4.01
+ Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+ Description:	(RW) Mask for all 8 context ID comparator value
+ 		registers (if implemented).
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/reset
++What:		/sys/bus/coresight/devices/<memory_map>.etm/vmid_idx
 +Date:		April 2015
 +KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description: 	(W) Cancels all configuration on a trace unit and set it back
-+		to its boot configuration.
++Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
++Description:	(RW) Select which virtual machine ID comparator to work with.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/mode
++What:		/sys/bus/coresight/devices/<memory_map>.etm/vmid_val
 +Date:		April 2015
 +KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description: 	(RW) Controls various modes supported by this ETM, for example
-+		P0 instruction tracing, branch broadcast, cycle counting and
-+		context ID tracing.
++Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
++Description:	(RW) Get/Set the virtual machine ID comparator value to
++		trigger on.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/pe
++What:		/sys/bus/coresight/devices/<memory_map>.etm/vmid_masks
 +Date:		April 2015
 +KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description: 	(RW) Controls which PE to trace.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/event
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description: 	(RW) Controls the tracing of arbitrary events from bank 0 to 3.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/event_instren
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description: 	(RW) Controls the behavior of the events in bank 0 to 3.
++Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
++Description:	(RW) Mask for all 8 virtual machine ID comparator value
++		registers (if implemented).
 diff --git a/drivers/hwtracing/coresight/coresight-etm4x.c b/drivers/hwtracing/coresight/coresight-etm4x.c
-index babf9bb27d25..4d58b41bb27c 100644
+index 58ae33980b12..cdcfa019a82c 100644
 --- a/drivers/hwtracing/coresight/coresight-etm4x.c
 +++ b/drivers/hwtracing/coresight/coresight-etm4x.c
-@@ -268,6 +268,46 @@ static const struct coresight_ops etm4_cs_ops = {
- 	.source_ops	= &etm4_source_ops,
- };
- 
-+static int etm4_set_mode_exclude(struct etmv4_drvdata *drvdata, bool exclude)
-+{
-+	u8 idx = drvdata->addr_idx;
-+
-+	/*
-+	 * TRCACATRn.TYPE bit[1:0]: type of comparison
-+	 * the trace unit performs
-+	 */
-+	if (BMVAL(drvdata->addr_acc[idx], 0, 1) == ETM_INSTR_ADDR) {
-+		if (idx % 2 != 0)
-+			return -EINVAL;
-+
-+		/*
-+		 * We are performing instruction address comparison. Set the
-+		 * relevant bit of ViewInst Include/Exclude Control register
-+		 * for corresponding address comparator pair.
-+		 */
-+		if (drvdata->addr_type[idx] != ETM_ADDR_TYPE_RANGE ||
-+		    drvdata->addr_type[idx + 1] != ETM_ADDR_TYPE_RANGE)
-+			return -EINVAL;
-+
-+		if (exclude == true) {
-+			/*
-+			 * Set exclude bit and unset the include bit
-+			 * corresponding to comparator pair
-+			 */
-+			drvdata->viiectlr |= BIT(idx / 2 + 16);
-+			drvdata->viiectlr &= ~BIT(idx / 2);
-+		} else {
-+			/*
-+			 * Set include bit and unset exclude bit
-+			 * corresponding to comparator pair
-+			 */
-+			drvdata->viiectlr |= BIT(idx / 2);
-+			drvdata->viiectlr &= ~BIT(idx / 2 + 16);
-+		}
-+	}
-+	return 0;
-+}
-+
- static ssize_t nr_pe_cmp_show(struct device *dev,
- 			      struct device_attribute *attr,
- 			      char *buf)
-@@ -376,6 +416,402 @@ static ssize_t nr_ss_cmp_show(struct device *dev,
+@@ -1964,6 +1964,181 @@ static ssize_t ctxid_masks_store(struct device *dev,
  }
- static DEVICE_ATTR_RO(nr_ss_cmp);
+ static DEVICE_ATTR_RW(ctxid_masks);
  
-+static ssize_t reset_store(struct device *dev,
-+			   struct device_attribute *attr,
-+			   const char *buf, size_t size)
++static ssize_t vmid_idx_show(struct device *dev,
++			     struct device_attribute *attr,
++			     char *buf)
 +{
-+	int i;
++	unsigned long val;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	val = drvdata->vmid_idx;
++	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
++}
++
++static ssize_t vmid_idx_store(struct device *dev,
++			      struct device_attribute *attr,
++			      const char *buf, size_t size)
++{
 +	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
 +	if (kstrtoul(buf, 16, &val))
 +		return -EINVAL;
-+
-+	spin_lock(&drvdata->spinlock);
-+	if (val)
-+		drvdata->mode = 0x0;
-+
-+	/* Disable data tracing: do not trace load and store data transfers */
-+	drvdata->mode &= ~(ETM_MODE_LOAD | ETM_MODE_STORE);
-+	drvdata->cfg &= ~(BIT(1) | BIT(2));
-+
-+	/* Disable data value and data address tracing */
-+	drvdata->mode &= ~(ETM_MODE_DATA_TRACE_ADDR |
-+			   ETM_MODE_DATA_TRACE_VAL);
-+	drvdata->cfg &= ~(BIT(16) | BIT(17));
-+
-+	/* Disable all events tracing */
-+	drvdata->eventctrl0 = 0x0;
-+	drvdata->eventctrl1 = 0x0;
-+
-+	/* Disable timestamp event */
-+	drvdata->ts_ctrl = 0x0;
-+
-+	/* Disable stalling */
-+	drvdata->stall_ctrl = 0x0;
-+
-+	/* Reset trace synchronization period  to 2^8 = 256 bytes*/
-+	if (drvdata->syncpr == false)
-+		drvdata->syncfreq = 0x8;
++	if (val >= drvdata->numvmidc)
++		return -EINVAL;
 +
 +	/*
-+	 * Enable ViewInst to trace everything with start-stop logic in
-+	 * started state. ARM recommends start-stop logic is set before
-+	 * each trace run.
++	 * Use spinlock to ensure index doesn't change while it gets
++	 * dereferenced multiple times within a spinlock block elsewhere.
 +	 */
-+	drvdata->vinst_ctrl |= BIT(0);
-+	if (drvdata->nr_addr_cmp == true) {
-+		drvdata->mode |= ETM_MODE_VIEWINST_STARTSTOP;
-+		/* SSSTATUS, bit[9] */
-+		drvdata->vinst_ctrl |= BIT(9);
-+	}
-+
-+	/* No address range filtering for ViewInst */
-+	drvdata->viiectlr = 0x0;
-+
-+	/* No start-stop filtering for ViewInst */
-+	drvdata->vissctlr = 0x0;
-+
-+	/* Disable seq events */
-+	for (i = 0; i < drvdata->nrseqstate-1; i++)
-+		drvdata->seq_ctrl[i] = 0x0;
-+	drvdata->seq_rst = 0x0;
-+	drvdata->seq_state = 0x0;
-+
-+	/* Disable external input events */
-+	drvdata->ext_inp = 0x0;
-+
-+	drvdata->cntr_idx = 0x0;
-+	for (i = 0; i < drvdata->nr_cntr; i++) {
-+		drvdata->cntrldvr[i] = 0x0;
-+		drvdata->cntr_ctrl[i] = 0x0;
-+		drvdata->cntr_val[i] = 0x0;
-+	}
-+
-+	drvdata->res_idx = 0x0;
-+	for (i = 0; i < drvdata->nr_resource; i++)
-+		drvdata->res_ctrl[i] = 0x0;
-+
-+	for (i = 0; i < drvdata->nr_ss_cmp; i++) {
-+		drvdata->ss_ctrl[i] = 0x0;
-+		drvdata->ss_pe_cmp[i] = 0x0;
-+	}
-+
-+	drvdata->addr_idx = 0x0;
-+	for (i = 0; i < drvdata->nr_addr_cmp * 2; i++) {
-+		drvdata->addr_val[i] = 0x0;
-+		drvdata->addr_acc[i] = 0x0;
-+		drvdata->addr_type[i] = ETM_ADDR_TYPE_NONE;
-+	}
-+
-+	drvdata->ctxid_idx = 0x0;
-+	for (i = 0; i < drvdata->numcidc; i++)
-+		drvdata->ctxid_val[i] = 0x0;
-+	drvdata->ctxid_mask0 = 0x0;
-+	drvdata->ctxid_mask1 = 0x0;
-+
-+	drvdata->vmid_idx = 0x0;
-+	for (i = 0; i < drvdata->numvmidc; i++)
-+		drvdata->vmid_val[i] = 0x0;
-+	drvdata->vmid_mask0 = 0x0;
-+	drvdata->vmid_mask1 = 0x0;
-+
-+	drvdata->trcid = drvdata->cpu + 1;
++	spin_lock(&drvdata->spinlock);
++	drvdata->vmid_idx = val;
 +	spin_unlock(&drvdata->spinlock);
 +	return size;
 +}
-+static DEVICE_ATTR_WO(reset);
++static DEVICE_ATTR_RW(vmid_idx);
 +
-+static ssize_t mode_show(struct device *dev,
-+			 struct device_attribute *attr,
-+			 char *buf)
++static ssize_t vmid_val_show(struct device *dev,
++			     struct device_attribute *attr,
++			     char *buf)
 +{
 +	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
-+	val = drvdata->mode;
++	val = (unsigned long)drvdata->vmid_val[drvdata->vmid_idx];
 +	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
 +}
 +
-+static ssize_t mode_store(struct device *dev,
-+			  struct device_attribute *attr,
-+			  const char *buf, size_t size)
++static ssize_t vmid_val_store(struct device *dev,
++			      struct device_attribute *attr,
++			      const char *buf, size_t size)
 +{
-+	unsigned long val, mode;
++	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
-+	if (kstrtoul(buf, 16, &val))
-+		return -EINVAL;
-+
-+	spin_lock(&drvdata->spinlock);
-+	drvdata->mode = val & ETMv4_MODE_ALL;
-+
-+	if (drvdata->mode & ETM_MODE_EXCLUDE)
-+		etm4_set_mode_exclude(drvdata, true);
-+	else
-+		etm4_set_mode_exclude(drvdata, false);
-+
-+	if (drvdata->instrp0 == true) {
-+		/* start by clearing instruction P0 field */
-+		drvdata->cfg  &= ~(BIT(1) | BIT(2));
-+		if (drvdata->mode & ETM_MODE_LOAD)
-+			/* 0b01 Trace load instructions as P0 instructions */
-+			drvdata->cfg  |= BIT(1);
-+		if (drvdata->mode & ETM_MODE_STORE)
-+			/* 0b10 Trace store instructions as P0 instructions */
-+			drvdata->cfg  |= BIT(2);
-+		if (drvdata->mode & ETM_MODE_LOAD_STORE)
-+			/*
-+			 * 0b11 Trace load and store instructions
-+			 * as P0 instructions
-+			 */
-+			drvdata->cfg  |= BIT(1) | BIT(2);
-+	}
-+
-+	/* bit[3], Branch broadcast mode */
-+	if ((drvdata->mode & ETM_MODE_BB) && (drvdata->trcbb == true))
-+		drvdata->cfg |= BIT(3);
-+	else
-+		drvdata->cfg &= ~BIT(3);
-+
-+	/* bit[4], Cycle counting instruction trace bit */
-+	if ((drvdata->mode & ETMv4_MODE_CYCACC) &&
-+		(drvdata->trccci == true))
-+		drvdata->cfg |= BIT(4);
-+	else
-+		drvdata->cfg &= ~BIT(4);
-+
-+	/* bit[6], Context ID tracing bit */
-+	if ((drvdata->mode & ETMv4_MODE_CTXID) && (drvdata->ctxid_size))
-+		drvdata->cfg |= BIT(6);
-+	else
-+		drvdata->cfg &= ~BIT(6);
-+
-+	if ((drvdata->mode & ETM_MODE_VMID) && (drvdata->vmid_size))
-+		drvdata->cfg |= BIT(7);
-+	else
-+		drvdata->cfg &= ~BIT(7);
-+
-+	/* bits[10:8], Conditional instruction tracing bit */
-+	mode = ETM_MODE_COND(drvdata->mode);
-+	if (drvdata->trccond == true) {
-+		drvdata->cfg &= ~(BIT(8) | BIT(9) | BIT(10));
-+		drvdata->cfg |= mode << 8;
-+	}
-+
-+	/* bit[11], Global timestamp tracing bit */
-+	if ((drvdata->mode & ETMv4_MODE_TIMESTAMP) && (drvdata->ts_size))
-+		drvdata->cfg |= BIT(11);
-+	else
-+		drvdata->cfg &= ~BIT(11);
-+
-+	/* bit[12], Return stack enable bit */
-+	if ((drvdata->mode & ETM_MODE_RETURNSTACK) &&
-+		(drvdata->retstack == true))
-+		drvdata->cfg |= BIT(12);
-+	else
-+		drvdata->cfg &= ~BIT(12);
-+
-+	/* bits[14:13], Q element enable field */
-+	mode = ETM_MODE_QELEM(drvdata->mode);
-+	/* start by clearing QE bits */
-+	drvdata->cfg &= ~(BIT(13) | BIT(14));
-+	/* if supported, Q elements with instruction counts are enabled */
-+	if ((mode & BIT(0)) && (drvdata->q_support & BIT(0)))
-+		drvdata->cfg |= BIT(13);
 +	/*
-+	 * if supported, Q elements with and without instruction
-+	 * counts are enabled
++	 * only implemented when vmid tracing is enabled, i.e. at least one
++	 * vmid comparator is implemented and at least 8 bit vmid size
 +	 */
-+	if ((mode & BIT(1)) && (drvdata->q_support & BIT(1)))
-+		drvdata->cfg |= BIT(14);
-+
-+	/* bit[11], AMBA Trace Bus (ATB) trigger enable bit */
-+	if ((drvdata->mode & ETM_MODE_ATB_TRIGGER) &&
-+	    (drvdata->atbtrig == true))
-+		drvdata->eventctrl1 |= BIT(11);
-+	else
-+		drvdata->eventctrl1 &= ~BIT(11);
-+
-+	/* bit[12], Low-power state behavior override bit */
-+	if ((drvdata->mode & ETM_MODE_LPOVERRIDE) &&
-+	    (drvdata->lpoverride == true))
-+		drvdata->eventctrl1 |= BIT(12);
-+	else
-+		drvdata->eventctrl1 &= ~BIT(12);
-+
-+	/* bit[8], Instruction stall bit */
-+	if (drvdata->mode & ETM_MODE_ISTALL_EN)
-+		drvdata->stall_ctrl |= BIT(8);
-+	else
-+		drvdata->stall_ctrl &= ~BIT(8);
-+
-+	/* bit[10], Prioritize instruction trace bit */
-+	if (drvdata->mode & ETM_MODE_INSTPRIO)
-+		drvdata->stall_ctrl |= BIT(10);
-+	else
-+		drvdata->stall_ctrl &= ~BIT(10);
-+
-+	/* bit[13], Trace overflow prevention bit */
-+	if ((drvdata->mode & ETM_MODE_NOOVERFLOW) &&
-+		(drvdata->nooverflow == true))
-+		drvdata->stall_ctrl |= BIT(13);
-+	else
-+		drvdata->stall_ctrl &= ~BIT(13);
-+
-+	/* bit[9] Start/stop logic control bit */
-+	if (drvdata->mode & ETM_MODE_VIEWINST_STARTSTOP)
-+		drvdata->vinst_ctrl |= BIT(9);
-+	else
-+		drvdata->vinst_ctrl &= ~BIT(9);
-+
-+	/* bit[10], Whether a trace unit must trace a Reset exception */
-+	if (drvdata->mode & ETM_MODE_TRACE_RESET)
-+		drvdata->vinst_ctrl |= BIT(10);
-+	else
-+		drvdata->vinst_ctrl &= ~BIT(10);
-+
-+	/* bit[11], Whether a trace unit must trace a system error exception */
-+	if ((drvdata->mode & ETM_MODE_TRACE_ERR) &&
-+		(drvdata->trc_error == true))
-+		drvdata->vinst_ctrl |= BIT(11);
-+	else
-+		drvdata->vinst_ctrl &= ~BIT(11);
-+
-+	spin_unlock(&drvdata->spinlock);
-+	return size;
-+}
-+static DEVICE_ATTR_RW(mode);
-+
-+static ssize_t pe_show(struct device *dev,
-+		       struct device_attribute *attr,
-+		       char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->pe_sel;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+
-+static ssize_t pe_store(struct device *dev,
-+			struct device_attribute *attr,
-+			const char *buf, size_t size)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
++	if (!drvdata->vmid_size || !drvdata->numvmidc)
++		return -EINVAL;
 +	if (kstrtoul(buf, 16, &val))
 +		return -EINVAL;
 +
 +	spin_lock(&drvdata->spinlock);
-+	if (val > drvdata->nr_pe) {
-+		spin_unlock(&drvdata->spinlock);
-+		return -EINVAL;
-+	}
-+
-+	drvdata->pe_sel = val;
++	drvdata->vmid_val[drvdata->vmid_idx] = (u64)val;
 +	spin_unlock(&drvdata->spinlock);
 +	return size;
 +}
-+static DEVICE_ATTR_RW(pe);
++static DEVICE_ATTR_RW(vmid_val);
 +
-+static ssize_t event_show(struct device *dev,
-+			  struct device_attribute *attr,
-+			  char *buf)
++static ssize_t vmid_masks_show(struct device *dev,
++			       struct device_attribute *attr, char *buf)
 +{
-+	unsigned long val;
++	unsigned long val1, val2;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
-+	val = drvdata->eventctrl0;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
++	spin_lock(&drvdata->spinlock);
++	val1 = drvdata->vmid_mask0;
++	val2 = drvdata->vmid_mask1;
++	spin_unlock(&drvdata->spinlock);
++	return scnprintf(buf, PAGE_SIZE, "%#lx %#lx\n", val1, val2);
 +}
 +
-+static ssize_t event_store(struct device *dev,
-+			   struct device_attribute *attr,
-+			   const char *buf, size_t size)
++static ssize_t vmid_masks_store(struct device *dev,
++				struct device_attribute *attr,
++				const char *buf, size_t size)
 +{
-+	unsigned long val;
++	u8 i, j, maskbyte;
++	unsigned long val1, val2, mask;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	if (kstrtoul(buf, 16, &val))
++	/*
++	 * only implemented when vmid tracing is enabled, i.e. at least one
++	 * vmid comparator is implemented and at least 8 bit vmid size
++	 */
++	if (!drvdata->vmid_size || !drvdata->numvmidc)
++		return -EINVAL;
++	if (sscanf(buf, "%lx %lx", &val1, &val2) != 2)
 +		return -EINVAL;
 +
 +	spin_lock(&drvdata->spinlock);
-+	switch (drvdata->nr_event) {
-+	case 0x0:
-+		/* EVENT0, bits[7:0] */
-+		drvdata->eventctrl0 = val & 0xFF;
-+		break;
++
++	/*
++	 * each byte[0..3] controls mask value applied to vmid
++	 * comparator[0..3]
++	 */
++	switch (drvdata->numvmidc) {
 +	case 0x1:
-+		 /* EVENT1, bits[15:8] */
-+		drvdata->eventctrl0 = val & 0xFFFF;
++		/* COMP0, bits[7:0] */
++		drvdata->vmid_mask0 = val1 & 0xFF;
 +		break;
 +	case 0x2:
-+		/* EVENT2, bits[23:16] */
-+		drvdata->eventctrl0 = val & 0xFFFFFF;
++		/* COMP1, bits[15:8] */
++		drvdata->vmid_mask0 = val1 & 0xFFFF;
 +		break;
 +	case 0x3:
-+		/* EVENT3, bits[31:24] */
-+		drvdata->eventctrl0 = val;
++		/* COMP2, bits[23:16] */
++		drvdata->vmid_mask0 = val1 & 0xFFFFFF;
++		break;
++	case 0x4:
++		/* COMP3, bits[31:24] */
++		drvdata->vmid_mask0 = val1;
++		break;
++	case 0x5:
++		/* COMP4, bits[7:0] */
++		drvdata->vmid_mask0 = val1;
++		drvdata->vmid_mask1 = val2 & 0xFF;
++		break;
++	case 0x6:
++		/* COMP5, bits[15:8] */
++		drvdata->vmid_mask0 = val1;
++		drvdata->vmid_mask1 = val2 & 0xFFFF;
++		break;
++	case 0x7:
++		/* COMP6, bits[23:16] */
++		drvdata->vmid_mask0 = val1;
++		drvdata->vmid_mask1 = val2 & 0xFFFFFF;
++		break;
++	case 0x8:
++		/* COMP7, bits[31:24] */
++		drvdata->vmid_mask0 = val1;
++		drvdata->vmid_mask1 = val2;
 +		break;
 +	default:
 +		break;
 +	}
-+	spin_unlock(&drvdata->spinlock);
-+	return size;
-+}
-+static DEVICE_ATTR_RW(event);
 +
-+static ssize_t event_instren_show(struct device *dev,
-+				  struct device_attribute *attr,
-+				  char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = BMVAL(drvdata->eventctrl1, 0, 3);
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+
-+static ssize_t event_instren_store(struct device *dev,
-+				   struct device_attribute *attr,
-+				   const char *buf, size_t size)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	if (kstrtoul(buf, 16, &val))
-+		return -EINVAL;
-+
-+	spin_lock(&drvdata->spinlock);
-+	/* start by clearing all instruction event enable bits */
-+	drvdata->eventctrl1 &= ~(BIT(0) | BIT(1) | BIT(2) | BIT(3));
-+	switch (drvdata->nr_event) {
-+	case 0x0:
-+		/* generate Event element for event 1 */
-+		drvdata->eventctrl1 |= val & BIT(1);
-+		break;
-+	case 0x1:
-+		/* generate Event element for event 1 and 2 */
-+		drvdata->eventctrl1 |= val & (BIT(0) | BIT(1));
-+		break;
-+	case 0x2:
-+		/* generate Event element for event 1, 2 and 3 */
-+		drvdata->eventctrl1 |= val & (BIT(0) | BIT(1) | BIT(2));
-+		break;
-+	case 0x3:
-+		/* generate Event element for all 4 events */
-+		drvdata->eventctrl1 |= val & 0xF;
-+		break;
-+	default:
-+		break;
++	/*
++	 * If software sets a mask bit to 1, it must program relevant byte
++	 * of vmid comparator value 0x0, otherwise behavior is unpredictable.
++	 * For example, if bit[3] of vmid_mask0 is 1, we must clear bits[31:24]
++	 * of vmid comparator0 value (corresponding to byte 0) register.
++	 */
++	mask = drvdata->vmid_mask0;
++	for (i = 0; i < drvdata->numvmidc; i++) {
++		/* mask value of corresponding vmid comparator */
++		maskbyte = mask & ETMv4_EVENT_MASK;
++		/*
++		 * each bit corresponds to a byte of respective vmid comparator
++		 * value register
++		 */
++		for (j = 0; j < 8; j++) {
++			if (maskbyte & 1)
++				drvdata->vmid_val[i] &= ~(0xFF << (j * 8));
++			maskbyte >>= 1;
++		}
++		/* Select the next vmid comparator mask value */
++		if (i == 3)
++			/* vmid comparators[4-7] */
++			mask = drvdata->vmid_mask1;
++		else
++			mask >>= 0x8;
 +	}
 +	spin_unlock(&drvdata->spinlock);
 +	return size;
 +}
-+static DEVICE_ATTR_RW(event_instren);
++static DEVICE_ATTR_RW(vmid_masks);
 +
  static ssize_t status_show(struct device *dev,
  			   struct device_attribute *attr, char *buf)
  {
-@@ -518,7 +954,6 @@ static ssize_t trcidr_show(struct device *dev,
- 	return ret;
- }
- static DEVICE_ATTR_RO(trcidr);
--
- static struct attribute *coresight_etmv4_attrs[] = {
- 	&dev_attr_nr_pe_cmp.attr,
- 	&dev_attr_nr_addr_cmp.attr,
-@@ -529,6 +964,11 @@ static struct attribute *coresight_etmv4_attrs[] = {
- 	&dev_attr_nrseqstate.attr,
- 	&dev_attr_nr_resource.attr,
- 	&dev_attr_nr_ss_cmp.attr,
-+	&dev_attr_reset.attr,
-+	&dev_attr_mode.attr,
-+	&dev_attr_pe.attr,
-+	&dev_attr_event.attr,
-+	&dev_attr_event_instren.attr,
+@@ -2149,6 +2324,9 @@ static struct attribute *coresight_etmv4_attrs[] = {
+ 	&dev_attr_ctxid_idx.attr,
+ 	&dev_attr_ctxid_val.attr,
+ 	&dev_attr_ctxid_masks.attr,
++	&dev_attr_vmid_idx.attr,
++	&dev_attr_vmid_val.attr,
++	&dev_attr_vmid_masks.attr,
  	&dev_attr_status.attr,
  	&dev_attr_mgmt.attr,
  	&dev_attr_trcidr.attr,
