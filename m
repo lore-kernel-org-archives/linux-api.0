@@ -1,41 +1,46 @@
 From: Vladimir Davydov <vdavydov@parallels.com>
-Subject: Re: [PATCH v3 0/3] idle memory tracking
-Date: Wed, 29 Apr 2015 10:58:53 +0300
-Message-ID: <20150429075853.GC1694@esperanza>
+Subject: Re: [PATCH v3 3/3] proc: add kpageidle file
+Date: Wed, 29 Apr 2015 11:31:49 +0300
+Message-ID: <20150429083148.GA11497@esperanza>
 References: <cover.1430217477.git.vdavydov@parallels.com>
- <20150429035722.GA11486@blaptop>
+ <4c24a6bf2c9711dd4dbb72a43a16eba6867527b7.1430217477.git.vdavydov@parallels.com>
+ <20150429045759.GA27051@blaptop>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150429035722.GA11486@blaptop>
-Sender: owner-linux-mm@kvack.org
+In-Reply-To: <20150429045759.GA27051@blaptop>
+Sender: linux-doc-owner@vger.kernel.org
 To: Minchan Kim <minchan@kernel.org>
 Cc: Andrew Morton <akpm@linux-foundation.org>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Minchan,
-
-Thank you for taking a look at this patch set.
-
-On Wed, Apr 29, 2015 at 12:57:22PM +0900, Minchan Kim wrote:
-> On Tue, Apr 28, 2015 at 03:24:39PM +0300, Vladimir Davydov wrote:
-> >  * /proc/kpageidle.  For each page this file contains a 64-bit number, which
-> >    equals 1 if the page is idle or 0 otherwise, indexed by PFN. A page is
+On Wed, Apr 29, 2015 at 01:57:59PM +0900, Minchan Kim wrote:
+> On Tue, Apr 28, 2015 at 03:24:42PM +0300, Vladimir Davydov wrote:
+> > @@ -69,6 +69,14 @@ There are four components to pagemap:
+> >     memory cgroup each page is charged to, indexed by PFN. Only available when
+> >     CONFIG_MEMCG is set.
+> >  
+> > + * /proc/kpageidle.  For each page this file contains a 64-bit number, which
+> > +   equals 1 if the page is idle or 0 otherwise, indexed by PFN. A page is
+> > +   considered idle if it has not been accessed since it was marked idle. To
+> > +   mark a page idle one should write 1 to this file at the offset corresponding
+> > +   to the page. Only user memory pages can be marked idle, for other page types
+> > +   input is silently ignored. Writing to this file beyond max PFN results in
+> > +   the ENXIO error. Only available when CONFIG_IDLE_PAGE_TRACKING is set.
+> > +
 > 
-> Why do we need 64bit per page to indicate just idle or not?
+> How about using kpageflags for reading part?
+> 
+> I mean PG_idle is one of the page flags and we already have a feature to
+> parse of each PFN flag so we could reuse existing feature for reading
+> idleness.
 
-I don't think we need this, actually. I made this file 64 bit per page
-only to conform to other /proc/kpage* files. Currently, I can't think of
-any potential use for residual 63 bits, so personally I'm fine with 1
-bit per page. If nobody comes with an idea about how > 1 bits could be
-used, I'll switch /proc/kpageidle to a bitmask in the next iteration.
+Reading PG_idle implies clearing all pte references to make sure the
+page was not referenced via a pte. This means that exporting it via
+/proc/kpageflags would increase the cost of reading this file, even for
+users that don't care about PG_idle. I'm not sure all users of
+/proc/kpageflags will be fine with it.
 
 Thanks,
 Vladimir
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
