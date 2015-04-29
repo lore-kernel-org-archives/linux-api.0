@@ -1,67 +1,155 @@
-From: Greg KH <greg@kroah.com>
-Subject: Re: [RFC v2 1/4] fs: Add generic file system event notifications
-Date: Wed, 29 Apr 2015 17:55:22 +0200
-Message-ID: <20150429155522.GA14723@kroah.com>
-References: <20150428135653.GD9955@quack.suse.cz>
- <20150428140936.GA13406@kroah.com>
- <553F9D56.6030301@samsung.com>
- <20150428173900.GA16708@kroah.com>
- <5540822C.10000@samsung.com>
- <20150429074259.GA31089@quack.suse.cz>
- <20150429091303.GA4090@kroah.com>
- <5540BC2A.8010504@samsung.com>
- <20150429134505.GB15398@kroah.com>
- <5540FD3E.9050801@samsung.com>
+From: Rob Herring <robherring2@gmail.com>
+Subject: Re: [PATCH] of: unittest: overlay: Keep track of created overlays
+Date: Wed, 29 Apr 2015 10:55:45 -0500
+Message-ID: <CAL_JsqJ7GxMMiu7U7u6bgDLut0Eme6TOowZZW9A3WXrjFuAexA@mail.gmail.com>
+References: <1429868546-19613-1-git-send-email-pantelis.antoniou@konsulko.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5540FD3E.9050801@samsung.com>
+In-Reply-To: <1429868546-19613-1-git-send-email-pantelis.antoniou@konsulko.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Beata Michalska <b.michalska@samsung.com>
-Cc: Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org
+To: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+Cc: Grant Likely <grant.likely@secretlab.ca>, Andrew Morton <akpm@linux-foundation.org>, Matt Porter <mporter@konsulko.com>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Pantelis Antoniou <panto@antoniou-consulting.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 29, 2015 at 05:48:14PM +0200, Beata Michalska wrote:
-> On 04/29/2015 03:45 PM, Greg KH wrote:
-> > On Wed, Apr 29, 2015 at 01:10:34PM +0200, Beata Michalska wrote:
-> >>>>> It needs to be done internally by the app but is doable.
-> >>>>> The app knows what it is watching, so it can maintain the mappings.
-> >>>>> So prior to activating the notifications it can call 'stat' on the mount point.
-> >>>>> Stat struct gives the 'st_dev' which is the device id. Same will be reported
-> >>>>> within the message payload (through major:minor numbers). So having this,
-> >>>>> the app is able to get any other information it needs. 
-> >>>>> Note that the events refer to the file system as a whole and they may not
-> >>>>> necessarily have anything to do with the actual block device. 
-> >>>
-> >>> How are you going to show an event for a filesystem that is made up of
-> >>> multiple block devices?
-> >>
-> >> AFAIK, for such filesystems there will be similar case with the anonymous
-> >> major:minor numbers - at least the btrfs is doing so. Not sure we can
-> >> differentiate here the actual block device. So in this case such events
-> >> serves merely as a hint for the userspace.
-> > 
-> > "hint" seems like this isn't really going to work well.
-> > 
-> > Do you have userspace code that can properly map this back to the "real"
-> > device that is causing problems?  Without that, this doesn't seem all
-> > that useful as no one would be able to use those events.
-> 
-> I'm not sure we are on the same page here.
-> This is about watching the file system rather than the 'real' device.
-> Like the threshold notifications: you would like to know when you
-> will be approaching certain level of available space for the tmpfs
-> mounted on /tmp.  You do know you are watching the /tmp
-> and you know that the dev numbers for this are 0:20 (or so). 
-> (either through calling stat on /tmp or through reading the /proc/$$/mountinfo)
-> With this interface you can setup threshold levels
-> for /tmp. Then, once the limit is reached the event will be
-> sent with those anonymous major:minor numbers.
-> 
-> I can provide a sample code which will demonstrate how this
-> can be achieved.
+On Fri, Apr 24, 2015 at 4:42 AM, Pantelis Antoniou
+<pantelis.antoniou@konsulko.com> wrote:
+> During the course of the overlay selftests some of them remain
+> applied. While this does not pose a real problem, make sure you track
+> them and destroy them at the end of the test.
+>
+> Signed-off-by: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
 
-Yes, example code would be helpful to understand this, thanks.
+This is already in for 4.1. Is this the same as the prior version.
 
-greg k-h
+Rob
+
+> ---
+>  drivers/of/unittest.c | 62 +++++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 62 insertions(+)
+>
+> diff --git a/drivers/of/unittest.c b/drivers/of/unittest.c
+> index e844907..1801634 100644
+> --- a/drivers/of/unittest.c
+> +++ b/drivers/of/unittest.c
+> @@ -23,6 +23,8 @@
+>  #include <linux/i2c.h>
+>  #include <linux/i2c-mux.h>
+>
+> +#include <linux/bitops.h>
+> +
+>  #include "of_private.h"
+>
+>  static struct unittest_results {
+> @@ -1109,6 +1111,59 @@ static const char *overlay_path(int nr)
+>
+>  static const char *bus_path = "/testcase-data/overlay-node/test-bus";
+>
+> +/* it is guaranteed that overlay ids are assigned in sequence */
+> +#define MAX_UNITTEST_OVERLAYS  256
+> +static unsigned long overlay_id_bits[BITS_TO_LONGS(MAX_UNITTEST_OVERLAYS)];
+> +static int overlay_first_id = -1;
+> +
+> +static void of_unittest_track_overlay(int id)
+> +{
+> +       if (overlay_first_id < 0)
+> +               overlay_first_id = id;
+> +       id -= overlay_first_id;
+> +
+> +       /* we shouldn't need that many */
+> +       BUG_ON(id >= MAX_UNITTEST_OVERLAYS);
+> +       overlay_id_bits[BIT_WORD(id)] |= BIT_MASK(id);
+> +}
+> +
+> +static void of_unittest_untrack_overlay(int id)
+> +{
+> +       if (overlay_first_id < 0)
+> +               return;
+> +       id -= overlay_first_id;
+> +       BUG_ON(id >= MAX_UNITTEST_OVERLAYS);
+> +       overlay_id_bits[BIT_WORD(id)] &= ~BIT_MASK(id);
+> +}
+> +
+> +static void of_unittest_destroy_tracked_overlays(void)
+> +{
+> +       int id, ret, defers;
+> +
+> +       if (overlay_first_id < 0)
+> +               return;
+> +
+> +       /* try until no defers */
+> +       do {
+> +               defers = 0;
+> +               /* remove in reverse order */
+> +               for (id = MAX_UNITTEST_OVERLAYS - 1; id >= 0; id--) {
+> +                       if (!(overlay_id_bits[BIT_WORD(id)] & BIT_MASK(id)))
+> +                               continue;
+> +
+> +                       ret = of_overlay_destroy(id + overlay_first_id);
+> +                       if (ret != 0) {
+> +                               defers++;
+> +                               pr_warn("%s: overlay destroy failed for #%d\n",
+> +                                       __func__, id + overlay_first_id);
+> +                               continue;
+> +                       }
+> +
+> +                       overlay_id_bits[BIT_WORD(id)] &= ~BIT_MASK(id);
+> +               }
+> +       } while (defers > 0);
+> +}
+> +
+>  static int of_unittest_apply_overlay(int unittest_nr, int overlay_nr,
+>                 int *overlay_id)
+>  {
+> @@ -1130,6 +1185,7 @@ static int of_unittest_apply_overlay(int unittest_nr, int overlay_nr,
+>                 goto out;
+>         }
+>         id = ret;
+> +       of_unittest_track_overlay(id);
+>
+>         ret = 0;
+>
+> @@ -1343,6 +1399,7 @@ static void of_unittest_overlay_6(void)
+>                         return;
+>                 }
+>                 ov_id[i] = ret;
+> +               of_unittest_track_overlay(ov_id[i]);
+>         }
+>
+>         for (i = 0; i < 2; i++) {
+> @@ -1367,6 +1424,7 @@ static void of_unittest_overlay_6(void)
+>                                                 PDEV_OVERLAY));
+>                         return;
+>                 }
+> +               of_unittest_untrack_overlay(ov_id[i]);
+>         }
+>
+>         for (i = 0; i < 2; i++) {
+> @@ -1411,6 +1469,7 @@ static void of_unittest_overlay_8(void)
+>                         return;
+>                 }
+>                 ov_id[i] = ret;
+> +               of_unittest_track_overlay(ov_id[i]);
+>         }
+>
+>         /* now try to remove first overlay (it should fail) */
+> @@ -1433,6 +1492,7 @@ static void of_unittest_overlay_8(void)
+>                                                 PDEV_OVERLAY));
+>                         return;
+>                 }
+> +               of_unittest_untrack_overlay(ov_id[i]);
+>         }
+>
+>         unittest(1, "overlay test %d passed\n", 8);
+> @@ -1855,6 +1915,8 @@ static void __init of_unittest_overlay(void)
+>         of_unittest_overlay_i2c_cleanup();
+>  #endif
+>
+> +       of_unittest_destroy_tracked_overlays();
+> +
+>  out:
+>         of_node_put(bus_np);
+>  }
+> --
+> 1.7.12
+>
