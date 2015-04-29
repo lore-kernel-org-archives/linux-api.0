@@ -1,182 +1,81 @@
 From: Mathieu Poirier <mathieu.poirier@linaro.org>
-Subject: [PATCH v2 04/11] coresight-etm4x: Controls pertaining to various
- configuration options
-Date: Wed, 29 Apr 2015 11:16:28 -0600
-Message-ID: <1430327795-10710-5-git-send-email-mathieu.poirier@linaro.org>
+Subject: [PATCH v2 07/11] coresight-etm4x: Controls pertaining to the sequencer functions
+Date: Wed, 29 Apr 2015 11:16:31 -0600
+Message-ID: <1430327795-10710-8-git-send-email-mathieu.poirier@linaro.org>
 References: <1430327795-10710-1-git-send-email-mathieu.poirier@linaro.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1430327795-10710-1-git-send-email-mathieu.poirier@linaro.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: gregkh@linuxfoundation.org
-Cc: mathieu.poirier@linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, zhang.chunyan@linaro.org, linux-arm-kernel@lists.infradead.org, kaixu.xia@linaro.org
+Cc: linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kaixu.xia@linaro.org, zhang.chunyan@linaro.org, mathieu.poirier@linaro.org
 List-Id: linux-api@vger.kernel.org
 
 From: Pratik Patel <pratikp@codeaurora.org>
 
-Adding sysfs entries to configure:
-. global timestamp.
-. how often trace synchronisation occur.
-. the threashold value for cycle counting.
-. branch and broadcasting regions.
+Adding sysfs entries to access the sequencers related registers,
+more specifically the sequencer state, the sequencer state
+transition and the sequencer reset control registers.
 
 Signed-off-by: Pratik Patel <pratikp@codeaurora.org>
 Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
 ---
- .../ABI/testing/sysfs-bus-coresight-devices-etm4x  |  28 ++++-
- drivers/hwtracing/coresight/coresight-etm4x.c      | 124 +++++++++++++++++++++
- 2 files changed, 151 insertions(+), 1 deletion(-)
+ .../ABI/testing/sysfs-bus-coresight-devices-etm4x  |  25 ++++
+ drivers/hwtracing/coresight/coresight-etm4x.c      | 129 +++++++++++++++++++++
+ 2 files changed, 154 insertions(+)
 
 diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
-index 9caf70382088..2aeae2976c10 100644
+index 8cdc4ad10bd6..44723f2e107e 100644
 --- a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
 +++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
-@@ -119,4 +119,30 @@ What:		/sys/bus/coresight/devices/<memory_map>.etm/event_instren
- Date:		April 2015
+@@ -191,3 +191,28 @@ Date:		April 2015
  KernelVersion:	4.01
  Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
--Description: 	(RW) Controls the behavior of the events in bank 0 to 3.
-+Description: 	(RW) Controls the behavior of the events in bank 0 to 3
+ Description: 	(RW) Used to setup address range comparator values.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/event_ts
++What:		/sys/bus/coresight/devices/<memory_map>.etm/seq_idx
 +Date:		April 2015
 +KernelVersion:	4.01
 +Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description: 	(RW) Controls the insertion of global timestamps in the trace
-+		streams.
++Description: 	(RW) Select which sequensor.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/syncfreq
++What:		/sys/bus/coresight/devices/<memory_map>.etm/seq_state
 +Date:		April 2015
 +KernelVersion:	4.01
 +Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description: 	(RW) Controls how often trace synchronization requests occur.
++Description: 	(RW) Use this to set, or read, the sequencer state.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/cyc_threshold
++What:		/sys/bus/coresight/devices/<memory_map>.etm/seq_event
 +Date:		April 2015
 +KernelVersion:	4.01
 +Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description: 	(RW) Sets the threshold value for cycle counting.
++Description: 	(RW) Moves the sequencer state to a specific state.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/bb_ctrl
++What:		/sys/bus/coresight/devices/<memory_map>.etm/seq_reset_event
 +Date:		April 2015
 +KernelVersion:	4.01
 +Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description: 	(RW) Controls which regions in the memory map are enabled to
-+		use branch broadcasting.
++Description: 	(RW) Moves the sequencer to state 0 when a programmed event
++		occurs.
 diff --git a/drivers/hwtracing/coresight/coresight-etm4x.c b/drivers/hwtracing/coresight/coresight-etm4x.c
-index 4d58b41bb27c..f69e4652a357 100644
+index 47cc68b8cc43..2ab64e2333e4 100644
 --- a/drivers/hwtracing/coresight/coresight-etm4x.c
 +++ b/drivers/hwtracing/coresight/coresight-etm4x.c
-@@ -812,6 +812,126 @@ static ssize_t event_instren_store(struct device *dev,
+@@ -1442,6 +1442,131 @@ static ssize_t addr_context_store(struct device *dev,
  }
- static DEVICE_ATTR_RW(event_instren);
+ static DEVICE_ATTR_RW(addr_context);
  
-+static ssize_t event_ts_show(struct device *dev,
-+			     struct device_attribute *attr,
-+			     char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->ts_ctrl;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+
-+static ssize_t event_ts_store(struct device *dev,
-+			      struct device_attribute *attr,
-+			      const char *buf, size_t size)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	if (kstrtoul(buf, 16, &val))
-+		return -EINVAL;
-+	if (!drvdata->ts_size)
-+		return -EINVAL;
-+
-+	drvdata->ts_ctrl = val & ETMv4_EVENT_MASK;
-+	return size;
-+}
-+static DEVICE_ATTR_RW(event_ts);
-+
-+static ssize_t syncfreq_show(struct device *dev,
-+			     struct device_attribute *attr,
-+			     char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->syncfreq;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+
-+static ssize_t syncfreq_store(struct device *dev,
-+			      struct device_attribute *attr,
-+			      const char *buf, size_t size)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	if (kstrtoul(buf, 16, &val))
-+		return -EINVAL;
-+	if (drvdata->syncpr == true)
-+		return -EINVAL;
-+
-+	drvdata->syncfreq = val & ETMv4_SYNC_MASK;
-+	return size;
-+}
-+static DEVICE_ATTR_RW(syncfreq);
-+
-+static ssize_t cyc_threshold_show(struct device *dev,
-+				  struct device_attribute *attr,
-+				  char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->ccctlr;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+
-+static ssize_t cyc_threshold_store(struct device *dev,
-+				   struct device_attribute *attr,
-+				   const char *buf, size_t size)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	if (kstrtoul(buf, 16, &val))
-+		return -EINVAL;
-+	if (val < drvdata->ccitmin)
-+		return -EINVAL;
-+
-+	drvdata->ccctlr = val & ETM_CYC_THRESHOLD_MASK;
-+	return size;
-+}
-+static DEVICE_ATTR_RW(cyc_threshold);
-+
-+static ssize_t bb_ctrl_show(struct device *dev,
++static ssize_t seq_idx_show(struct device *dev,
 +			    struct device_attribute *attr,
 +			    char *buf)
 +{
 +	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
-+	val = drvdata->bb_ctrl;
++	val = drvdata->seq_idx;
 +	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
 +}
 +
-+static ssize_t bb_ctrl_store(struct device *dev,
++static ssize_t seq_idx_store(struct device *dev,
 +			     struct device_attribute *attr,
 +			     const char *buf, size_t size)
 +{
@@ -185,33 +84,122 @@ index 4d58b41bb27c..f69e4652a357 100644
 +
 +	if (kstrtoul(buf, 16, &val))
 +		return -EINVAL;
-+	if (drvdata->trcbb == false)
-+		return -EINVAL;
-+	if (!drvdata->nr_addr_cmp)
-+		return -EINVAL;
-+	/*
-+	 * Bit[7:0] selects which address range comparator is used for
-+	 * branch broadcast control.
-+	 */
-+	if (BMVAL(val, 0, 7) > drvdata->nr_addr_cmp)
++	if (val >= drvdata->nrseqstate - 1)
 +		return -EINVAL;
 +
-+	drvdata->bb_ctrl = val;
++	/*
++	 * Use spinlock to ensure index doesn't change while it gets
++	 * dereferenced multiple times within a spinlock block elsewhere.
++	 */
++	spin_lock(&drvdata->spinlock);
++	drvdata->seq_idx = val;
++	spin_unlock(&drvdata->spinlock);
 +	return size;
 +}
-+static DEVICE_ATTR_RW(bb_ctrl);
++static DEVICE_ATTR_RW(seq_idx);
++
++static ssize_t seq_state_show(struct device *dev,
++			      struct device_attribute *attr,
++			      char *buf)
++{
++	unsigned long val;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	val = drvdata->seq_state;
++	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
++}
++
++static ssize_t seq_state_store(struct device *dev,
++			       struct device_attribute *attr,
++			       const char *buf, size_t size)
++{
++	unsigned long val;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	if (kstrtoul(buf, 16, &val))
++		return -EINVAL;
++	if (val >= drvdata->nrseqstate)
++		return -EINVAL;
++
++	drvdata->seq_state = val;
++	return size;
++}
++static DEVICE_ATTR_RW(seq_state);
++
++static ssize_t seq_event_show(struct device *dev,
++			      struct device_attribute *attr,
++			      char *buf)
++{
++	u8 idx;
++	unsigned long val;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	spin_lock(&drvdata->spinlock);
++	idx = drvdata->seq_idx;
++	val = drvdata->seq_ctrl[idx];
++	spin_unlock(&drvdata->spinlock);
++	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
++}
++
++static ssize_t seq_event_store(struct device *dev,
++			       struct device_attribute *attr,
++			       const char *buf, size_t size)
++{
++	u8 idx;
++	unsigned long val;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	if (kstrtoul(buf, 16, &val))
++		return -EINVAL;
++
++	spin_lock(&drvdata->spinlock);
++	idx = drvdata->seq_idx;
++	/* RST, bits[7:0] */
++	drvdata->seq_ctrl[idx] = val & 0xFF;
++	spin_unlock(&drvdata->spinlock);
++	return size;
++}
++static DEVICE_ATTR_RW(seq_event);
++
++static ssize_t seq_reset_event_show(struct device *dev,
++				    struct device_attribute *attr,
++				    char *buf)
++{
++	unsigned long val;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	val = drvdata->seq_rst;
++	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
++}
++
++static ssize_t seq_reset_event_store(struct device *dev,
++				     struct device_attribute *attr,
++				     const char *buf, size_t size)
++{
++	unsigned long val;
++	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
++
++	if (kstrtoul(buf, 16, &val))
++		return -EINVAL;
++	if (!(drvdata->nrseqstate))
++		return -EINVAL;
++
++	drvdata->seq_rst = val & ETMv4_EVENT_MASK;
++	return size;
++}
++static DEVICE_ATTR_RW(seq_reset_event);
 +
  static ssize_t status_show(struct device *dev,
  			   struct device_attribute *attr, char *buf)
  {
-@@ -969,6 +1089,10 @@ static struct attribute *coresight_etmv4_attrs[] = {
- 	&dev_attr_pe.attr,
- 	&dev_attr_event.attr,
- 	&dev_attr_event_instren.attr,
-+	&dev_attr_event_ts.attr,
-+	&dev_attr_syncfreq.attr,
-+	&dev_attr_cyc_threshold.attr,
-+	&dev_attr_bb_ctrl.attr,
+@@ -1614,6 +1739,10 @@ static struct attribute *coresight_etmv4_attrs[] = {
+ 	&dev_attr_addr_stop.attr,
+ 	&dev_attr_addr_ctxtype.attr,
+ 	&dev_attr_addr_context.attr,
++	&dev_attr_seq_idx.attr,
++	&dev_attr_seq_state.attr,
++	&dev_attr_seq_event.attr,
++	&dev_attr_seq_reset_event.attr,
  	&dev_attr_status.attr,
  	&dev_attr_mgmt.attr,
  	&dev_attr_trcidr.attr,
