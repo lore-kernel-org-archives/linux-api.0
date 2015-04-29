@@ -1,65 +1,168 @@
-From: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-Subject: Re: Regression: Requiring CAP_SYS_ADMIN for /proc/<pid>/pagemap
- causes application-level breakage
-Date: Wed, 29 Apr 2015 22:36:22 +0300
-Message-ID: <20150429193622.GA11892@node.dhcp.inet.fi>
-References: <CAEVpBa+_RyACkhODZrRvQLs80iy0sqpdrd0AaP_-tgnX3Y9yNQ@mail.gmail.com>
- <CAL82V5P-6_3kKfkgBuv1WMSu5xQ-0mUs7pHXegyPAzgroTgLtA@mail.gmail.com>
- <CAEVpBa+vjfR8p_fJQPXyrQCMYJOocQpTHmkTYmj7nOpGcce=Pg@mail.gmail.com>
- <CAEVpBa+DPbhZeRsA=+Jnn7f1BqVZm9SU=ABjy6bAHbbMi_yn+g@mail.gmail.com>
+From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH] usb: core: add usb3 lpm sysfs
+Date: Wed, 29 Apr 2015 21:57:33 +0200
+Message-ID: <20150429195733.GA19183@kroah.com>
+References: <20150419034612.GA31576@intel.com>
+ <20150428104224.GB540@kroah.com>
+ <20150428165127.GA26638@intel.com>
+ <20150428211110.GA32383@kroah.com>
+ <20150429072004.GA20961@intel.com>
+ <20150429090148.GA22743@kroah.com>
+ <20150429105730.GA12505@intel.com>
+ <20150429110622.GA26820@kroah.com>
+ <20150429162132.GA21141@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAEVpBa+DPbhZeRsA=+Jnn7f1BqVZm9SU=ABjy6bAHbbMi_yn+g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20150429162132.GA21141-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
-Cc: Mark Seaborn <mseaborn-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Konstantin Khlebnikov <khlebnikov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Finn Grimwood <fgrimwood-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, Daniel James <djames-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
+To: Zhuang Jin Can <jin.can.zhuang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, pmladek-AlSwsSmVLrQ@public.gmane.org, peter.chen-KZfg59tc24xl57MIdRCFDg@public.gmane.org, jwerner-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 29, 2015 at 07:44:57PM +0100, Mark Williamson wrote:
-> Hi all,
-> 
-> We've been investigating further and found a snag with the PFN-hiding
-> approach discussed last week - looks like it won't be enough on all
-> the architectures we support.  Our product runs on x86_32, x86_64 and
-> ARM.  For now, it looks like soft-dirty is only available on x86_64.
-> A patch that simply zeros out the physical addresses in
-> /proc/PID/pagemap will therefore help us on x86_64 but we'll still
-> have problems on other platforms[1].
-> 
-> For context, we were previously using pagemap as a cross-platform way
-> to get soft-dirty-like functionality.  Specifically, to ask "did a
-> process write to any pages since fork()" by comparing addresses and
-> deducing where CoW must have occurred.  In the absence of soft-dirty
-> and the physical addresses, it looks like we can't figure that out
-> with the remaining information in pagemap.
-> 
-> If the pagemap file included the "writeable" bit from the PTE, we
-> think we'd have all the information required to deduce what we need
-> (although I realise that's a bit of a nasty workaround).  If I
-> proposed including the PTE protection bits in pagemap, would that be
-> controversial?  I'm guessing yes but thought it was worth a shot ;-)
-> Would anybody be able to suggest a more tasteful approach?
+On Thu, Apr 30, 2015 at 12:21:32AM +0800, Zhuang Jin Can wrote:
+> On Wed, Apr 29, 2015 at 01:06:22PM +0200, Greg KH wrote:
+> > On Wed, Apr 29, 2015 at 06:57:30PM +0800, Zhuang Jin Can wrote:
+> > > On Wed, Apr 29, 2015 at 11:01:48AM +0200, Greg KH wrote:
+> > > > On Wed, Apr 29, 2015 at 03:20:04PM +0800, Zhuang Jin Can wrote:
+> > > > > On Tue, Apr 28, 2015 at 11:11:10PM +0200, Greg KH wrote:
+> > > > > > On Wed, Apr 29, 2015 at 12:51:27AM +0800, Zhuang Jin Can wrote:
+> > > > > > > Hi Greg KH,
+> > > > > > > 
+> > > > > > > On Tue, Apr 28, 2015 at 12:42:24PM +0200, Greg KH wrote:
+> > > > > > > > On Sun, Apr 19, 2015 at 11:46:12AM +0800, Zhuang Jin Can wrote:
+> > > > > > > > > Some usb3 devices may not support usb3 lpm well.
+> > > > > > > > > The patch adds a sysfs to enable/disable u1 or u2 of the port.The
+> > > > > > > > > settings apply to both before and after device enumeration.
+> > > > > > > > > Supported values are "0" - u1 and u2 are disabled, "u1" - only u1 is
+> > > > > > > > > enabled, "u2" - only u2 is enabled, "u1_u2" - u1 and u2 are enabled.
+> > > > > > > > > 
+> > > > > > > > > The interface is useful for testing some USB3 devices during
+> > > > > > > > > development, and provides a way to disable usb3 lpm if the issues can
+> > > > > > > > > not be fixed in final products.
+> > > > > > > > 
+> > > > > > > > How is a user supposed to "know" to make this setting for a device?  Why
+> > > > > > > > can't the kernel automatically set this value properly?  Why does it
+> > > > > > > > need to be a kernel issue at all?
+> > > > > > > > 
+> > > > > > > By default kernel enables u1 u2 of all USB3 devices. This interface
+> > > > > > > provides the user to change this policy. User may set the policy
+> > > > > > > according to PID/VID of uevent or according to the platform information
+> > > > > > > known by userspace.
+> > > > > > 
+> > > > > > And why would they ever want to do that?
+> > > > > > 
+> > > > > > > It's not a kernel issue, as u1 u2 is mandatory by USB3 compliance. But
+> > > > > > > for some internal hardwired USB3 connection, e.g. SSIC, passing USB3
+> > > > > > > compliance is not mandatory. So the interface provides a way for vendor
+> > > > > > > to ship with u1 or u2 broken products. Of course, this is not encouraged :).
+> > > > > > 
+> > > > > > If the state is broken for those devices, we can't require the user to
+> > > > > > fix it for us, the kernel should do it automatically.
+> > > > > > 
+> > > > > > > > And when you are doing development of broken devices, the kernel doesn't
+> > > > > > > > have to support you, you can run with debugging patches of your own
+> > > > > > > > until you fix your firmware :)
+> > > > > > > > 
+> > > > > > > Understood. But I think other vendor or developer may face the same
+> > > > > > > issue in final product shipment or during development. Moreover, the
+> > > > > > > interface provide the flexibility for developer to separately
+> > > > > > > disable/enable u1 or u2, e.g. If they're debugging an u2 issue, they
+> > > > > > > can disable u1 to simplify the situtation.
+> > > > > > 
+> > > > > > For debugging only, perhaps, but for a "normal" user, please let's
+> > > > > > handle this automatically and don't create a switch that never gets used
+> > > > > > by anyone or anything.
+> > > > > > 
+> > > > > Thanks Greg. Since so far the patch has no interesting value to the
+> > > > > community, I'll drop the patch.
+> > > > 
+> > > > I didn't say that, I said it needed some more work to be accepted.
+> > > Sorry for misunderstanding. Let me explain more why we need this interface.
+> > > 
+> > > We have a modem USB3 device (in stepping C) hardwired to one specific port of xHCI.
+> > > The device was expected to work with u1 u2, however, due to a HW issue, it doesn't
+> > > work stably. To workaround the issue, we let the init.rc script disable u1 u2 for
+> > > this specific port.
+> > 
+> > Modern Linux systems don't have init.rc scripts anymore :)
+> > 
+> In Android, the init process still reads an init.rc where vendor can
+> define their own policies. Vendors normally provides a whole reference
+> design (including HW, FW, Kernel, BSP, AOSP) to OEMs. BSP contains
+> vendor specific configurations including its own init.rc.
 
-Emm.. I have hard time to understand how writable bit is enough to get
-soft-dirty-alike functionality.
+And that's generally not a good idea for companies to do, as they
+shouldn't need special hardware workarounds in an init script, but I
+understand :(
 
-Let's say we have anon-mapping with COW setup after the fork(). It's not
-writable PTEs to trigger COW on wp faults. But you can easily get to the
-same non-writable PTE after breaking COW: fork() again or
-mprotect(PROT_READ) and mprotect(PROT_READ|PROT_WRITE) back.
+You are also going to be giving them a kernel patch that is not accepted
+upstream which is really NOT the way to do things, and something that
+many of us are working quite hard to keep from happening.
 
-?
+> > > Then maybe we want to start debug u1 issue first, to avoid hitting u2 issue,
+> > > we can disable u2. After u1 issue is resolved, we can enable back u2 to continue to
+> > > debug u2 issue. This provides the flexibility to isolate u1 u2 debugging.
+> > > This is valuable I think :)
+> > 
+> > I agree.
+> > 
+> > > The HW issue will be fixed in stepping D, however C and D will have the same PID/VID.
+> > > There's no way for kernel to know the difference between C and D.
+> > > Even after fixing in D, C will still be used for development (to save money..)
+> > 
+> > That sounds like a big design flaw, what about looking at the version of
+> > the device?  That's what that field in the USB descriptors is for.
+> > 
+> You're right. bcdDevice should be used for this purpose.
 
-> 
-> Thanks,
-> Mark
-> 
-> [1] I'd note that using soft-dirty is clearly the right approach for
-> us on x64, where available and that ideally we'd use it on other
-> architectures - cross-arch support for soft-dirty is a slightly
-> different discussion, which I hope to post another thread for.
+Why can't it?
 
--- 
- Kirill A. Shutemov
+> However, since we need to live with what we have, we just used the init.rc to disable
+> u1/u2. Definitely, it's a ugly hack in userspace to make it "automatically" work.
+
+Why can't you put a quirk in the kernel for that bcdDevice value and
+then not need any userspace hacks?
+
+> A better solution is to use monitor uevent, reading bcdDevice + PID/VID, and define
+> a rule in to disable u1/u2 of this device. Android provides an uevent machanism to do this.
+
+It's a horrid uevent mechanism in that it duplicates what udev did years
+ago :(
+
+> However, how to do it automatically, it's out of the scope of the patch.
+
+Not at all, what if you don't want to run Android on your hardware?  You
+still want it to work, so get the kernel fix upstream properly.
+
+> Without the patch, the only choice is to add a quirk in usb core to do it automatically. And
+> this should be in another separate patch.
+
+Please send that patch.
+
+> With the patch:
+> 	1. Userspace can also do the quirk with the help of uevent and rules
+
+But it has no idea how or when to do that.  Please don't provide hooks
+that no one knows how to use.
+
+> 	2. Developer can isolate u1 u2 debugging.
+
+That only developer seems to be you, and you've already debugged this :)
+
+> And I don't think it's necessary for kernel to support this broken modem. Because, the modem
+> is integrated with the SoC, and SoC goes with init.rc to OEMs. Thus, it doesn't make sense we
+> add a quirk in kernel to long term support it. The SoC/Modem is going to be replaced by its next
+> generation, especially in mobile area.
+
+Again, someone wants to run a mainline kernel.org release on that
+hardware, like they should.  Some companies even are pushing to require
+OEMs to have all of their changes upstream before they will buy their
+chip, so please, make this a quirk and have it "just work" properly.  No
+need to rely on a magic init.rc value that no one notices or
+understands.
+
+thanks,
+
+greg k-h
