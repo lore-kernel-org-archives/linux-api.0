@@ -1,189 +1,159 @@
-From: Zhuang Jin Can <jin.can.zhuang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] usb: core: add usb3 lpm sysfs
-Date: Thu, 30 Apr 2015 16:49:06 +0800
-Message-ID: <20150430084905.GA18460@intel.com>
-References: <20150419034612.GA31576@intel.com>
- <20150428104224.GB540@kroah.com>
- <20150428165127.GA26638@intel.com>
- <20150428211110.GA32383@kroah.com>
- <20150429072004.GA20961@intel.com>
- <20150429090148.GA22743@kroah.com>
- <20150429105730.GA12505@intel.com>
- <20150429110622.GA26820@kroah.com>
- <20150429162132.GA21141@intel.com>
- <20150429195733.GA19183@kroah.com>
-Reply-To: jin.can.zhuang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+From: Pavel Emelyanov <xemul@parallels.com>
+Subject: Re: [PATCH 2/3] uffd: Introduce the v2 API
+Date: Thu, 30 Apr 2015 12:50:43 +0300
+Message-ID: <5541FAF3.4080008@parallels.com>
+References: <5509D342.7000403@parallels.com> <5509D375.7000809@parallels.com> <20150421121817.GD4481@redhat.com> <55389133.8070701@parallels.com> <20150427211236.GB24035@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150429195733.GA19183-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, pmladek-AlSwsSmVLrQ@public.gmane.org, peter.chen-KZfg59tc24xl57MIdRCFDg@public.gmane.org, jwerner-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20150427211236.GB24035@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Andrea Arcangeli <aarcange@redhat.com>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 29, 2015 at 09:57:33PM +0200, Greg KH wrote:
-> On Thu, Apr 30, 2015 at 12:21:32AM +0800, Zhuang Jin Can wrote:
-> > On Wed, Apr 29, 2015 at 01:06:22PM +0200, Greg KH wrote:
-> > > On Wed, Apr 29, 2015 at 06:57:30PM +0800, Zhuang Jin Can wrote:
-> > > > On Wed, Apr 29, 2015 at 11:01:48AM +0200, Greg KH wrote:
-> > > > > On Wed, Apr 29, 2015 at 03:20:04PM +0800, Zhuang Jin Can wrote:
-> > > > > > On Tue, Apr 28, 2015 at 11:11:10PM +0200, Greg KH wrote:
-> > > > > > > On Wed, Apr 29, 2015 at 12:51:27AM +0800, Zhuang Jin Can wrote:
-> > > > > > > > Hi Greg KH,
-> > > > > > > > 
-> > > > > > > > On Tue, Apr 28, 2015 at 12:42:24PM +0200, Greg KH wrote:
-> > > > > > > > > On Sun, Apr 19, 2015 at 11:46:12AM +0800, Zhuang Jin Can wrote:
-> > > > > > > > > > Some usb3 devices may not support usb3 lpm well.
-> > > > > > > > > > The patch adds a sysfs to enable/disable u1 or u2 of the port.The
-> > > > > > > > > > settings apply to both before and after device enumeration.
-> > > > > > > > > > Supported values are "0" - u1 and u2 are disabled, "u1" - only u1 is
-> > > > > > > > > > enabled, "u2" - only u2 is enabled, "u1_u2" - u1 and u2 are enabled.
-> > > > > > > > > > 
-> > > > > > > > > > The interface is useful for testing some USB3 devices during
-> > > > > > > > > > development, and provides a way to disable usb3 lpm if the issues can
-> > > > > > > > > > not be fixed in final products.
-> > > > > > > > > 
-> > > > > > > > > How is a user supposed to "know" to make this setting for a device?  Why
-> > > > > > > > > can't the kernel automatically set this value properly?  Why does it
-> > > > > > > > > need to be a kernel issue at all?
-> > > > > > > > > 
-> > > > > > > > By default kernel enables u1 u2 of all USB3 devices. This interface
-> > > > > > > > provides the user to change this policy. User may set the policy
-> > > > > > > > according to PID/VID of uevent or according to the platform information
-> > > > > > > > known by userspace.
-> > > > > > > 
-> > > > > > > And why would they ever want to do that?
-> > > > > > > 
-> > > > > > > > It's not a kernel issue, as u1 u2 is mandatory by USB3 compliance. But
-> > > > > > > > for some internal hardwired USB3 connection, e.g. SSIC, passing USB3
-> > > > > > > > compliance is not mandatory. So the interface provides a way for vendor
-> > > > > > > > to ship with u1 or u2 broken products. Of course, this is not encouraged :).
-> > > > > > > 
-> > > > > > > If the state is broken for those devices, we can't require the user to
-> > > > > > > fix it for us, the kernel should do it automatically.
-> > > > > > > 
-> > > > > > > > > And when you are doing development of broken devices, the kernel doesn't
-> > > > > > > > > have to support you, you can run with debugging patches of your own
-> > > > > > > > > until you fix your firmware :)
-> > > > > > > > > 
-> > > > > > > > Understood. But I think other vendor or developer may face the same
-> > > > > > > > issue in final product shipment or during development. Moreover, the
-> > > > > > > > interface provide the flexibility for developer to separately
-> > > > > > > > disable/enable u1 or u2, e.g. If they're debugging an u2 issue, they
-> > > > > > > > can disable u1 to simplify the situtation.
-> > > > > > > 
-> > > > > > > For debugging only, perhaps, but for a "normal" user, please let's
-> > > > > > > handle this automatically and don't create a switch that never gets used
-> > > > > > > by anyone or anything.
-> > > > > > > 
-> > > > > > Thanks Greg. Since so far the patch has no interesting value to the
-> > > > > > community, I'll drop the patch.
-> > > > > 
-> > > > > I didn't say that, I said it needed some more work to be accepted.
-> > > > Sorry for misunderstanding. Let me explain more why we need this interface.
-> > > > 
-> > > > We have a modem USB3 device (in stepping C) hardwired to one specific port of xHCI.
-> > > > The device was expected to work with u1 u2, however, due to a HW issue, it doesn't
-> > > > work stably. To workaround the issue, we let the init.rc script disable u1 u2 for
-> > > > this specific port.
-> > > 
-> > > Modern Linux systems don't have init.rc scripts anymore :)
-> > > 
-> > In Android, the init process still reads an init.rc where vendor can
-> > define their own policies. Vendors normally provides a whole reference
-> > design (including HW, FW, Kernel, BSP, AOSP) to OEMs. BSP contains
-> > vendor specific configurations including its own init.rc.
+On 04/28/2015 12:12 AM, Andrea Arcangeli wrote:
+> Hello,
 > 
-> And that's generally not a good idea for companies to do, as they
-> shouldn't need special hardware workarounds in an init script, but I
-> understand :(
+> On Thu, Apr 23, 2015 at 09:29:07AM +0300, Pavel Emelyanov wrote:
+>> So your proposal is to always report 16 bytes per PF from read() and
+>> let userspace decide itself how to handle the result?
 > 
-> You are also going to be giving them a kernel patch that is not accepted
-> upstream which is really NOT the way to do things, and something that
-> many of us are working quite hard to keep from happening.
+> Reading 16bytes for each userfault (instead of 8) and sharing the same
+> read(2) protocol (UFFD_API) for both the cooperative and
+> non-cooperative usages, is something I just suggested for
+> consideration after reading your patchset.
 > 
-> > > > Then maybe we want to start debug u1 issue first, to avoid hitting u2 issue,
-> > > > we can disable u2. After u1 issue is resolved, we can enable back u2 to continue to
-> > > > debug u2 issue. This provides the flexibility to isolate u1 u2 debugging.
-> > > > This is valuable I think :)
-> > > 
-> > > I agree.
-> > > 
-> > > > The HW issue will be fixed in stepping D, however C and D will have the same PID/VID.
-> > > > There's no way for kernel to know the difference between C and D.
-> > > > Even after fixing in D, C will still be used for development (to save money..)
-> > > 
-> > > That sounds like a big design flaw, what about looking at the version of
-> > > the device?  That's what that field in the USB descriptors is for.
-> > > 
-> > You're right. bcdDevice should be used for this purpose.
+> The pros of using a single protocol for both is that it would reduce
+> amount of code and there would be just one file operation for the
+> .read method. The cons is that it will waste 8 bytes per userfault in
+> terms of memory footprint. The other major cons is that it would force
+> us to define the format of the non cooperative protocol now despite it's
+> not fully finished yet.
 > 
-> Why can't it?
-> 
-> > However, since we need to live with what we have, we just used the init.rc to disable
-> > u1/u2. Definitely, it's a ugly hack in userspace to make it "automatically" work.
-> 
-> Why can't you put a quirk in the kernel for that bcdDevice value and
-> then not need any userspace hacks?
-> 
-Let me double confirm with our modem HW engineers to see if anything we
-can differentiate the modem variants, and add the quirks in kernel
-accordingly.
+> I'm also ok with two protocols if nobody else objects, but if we use
+> two protocols, we should at least use different file operation methods
+> and use __always_inline with constants passed as parameter to optimize
+> away the branches at build time. This way we get the reduced memory
+> footprint in the read syscall without other runtime overhead
+> associated with it.
 
-> > A better solution is to use monitor uevent, reading bcdDevice + PID/VID, and define
-> > a rule in to disable u1/u2 of this device. Android provides an uevent machanism to do this.
-> 
-> It's a horrid uevent mechanism in that it duplicates what udev did years
-> ago :(
-> 
-OK. I think I got your point now: kernel should handle broken devices automatically without
-userspace's attention.
+OK. I would go with two protocols then and will reshuffle the code to
+use two ops.
 
+>>>> +struct uffd_v2_msg {
+>>>> +	__u64	type;
+>>>> +	__u64	arg;
+>>>> +};
+>>>> +
+>>>> +#define UFFD_PAGEFAULT	0x1
+>>>> +
+>>>> +#define UFFD_PAGEFAULT_BIT	(1 << (UFFD_PAGEFAULT - 1))
+>>>> +#define __UFFD_API_V2_BITS	(UFFD_PAGEFAULT_BIT)
+>>>> +
+>>>> +/*
+>>>> + * Lower PAGE_SHIFT bits are used to report those supported
+>>>> + * by the pagefault message itself. Other bits are used to
+>>>> + * report the message types v2 API supports
+>>>> + */
+>>>> +#define UFFD_API_V2_BITS	(__UFFD_API_V2_BITS << 12)
+>>>> +
+>>>
+>>> And why exactly is this 12 hardcoded?
+>>
+>> Ah, it should have been the PAGE_SHIFT one, but I was unsure whether it
+>> would be OK to have different shifts in different arches.
+>>
+>> But taking into account your comment that bits field id bad for these
+>> values, if we introduce the new .features one for api message, then this
+>> 12 will just go away.
+> 
+> Ok.
+> 
+>>> And which field should be masked
+>>> with the bits? In the V1 protocol it was the "arg" (userfault address)
+>>> not the "type". So this is a bit confusing and probably requires
+>>> simplification.
+>>
+>> I see. Actually I decided that since bits higher than 12th (for x86) is
+>> always 0 in api message (no bits allowed there, since pfn sits in this
+>> place), it would be OK to put non-PF bits there.
+> 
+> That was ok yes.
+> 
+>> Should I better introduce another .features field in uffd API message?
+> 
+> What about renaming "uffdio_api.bits" to "uffdio_api.features"?
 
-> > However, how to do it automatically, it's out of the scope of the patch.
-> 
-> Not at all, what if you don't want to run Android on your hardware?  You
-> still want it to work, so get the kernel fix upstream properly.
-> 
-Got it.
+Yup, agreed, will do.
 
-> > Without the patch, the only choice is to add a quirk in usb core to do it automatically. And
-> > this should be in another separate patch.
+> And then we set uffdio_api.features to
+> UFFD_FEATURE_WRITE|UFFD_FEATURE_WP|UFFD_FEATURE_FORK as needed.
 > 
-> Please send that patch.
+> UFFD_FEATURE_WRITE would always be enabled, it's there only in case we
+> want to disable it later (mostly if some arch has trouble with it,
+> which is unlikely, but qemu doesn't need that bit of information at
+> all for example so qemu would be fine if UFFD_FEATURE_WRITE
+> disappears).
 > 
-Sure. Will need some time before sending the patch.
+> UFFD_FEATURE_WP would signal also that the wrprotection feature (not
+> implemented yet) is available (then later the register ioctl would
+> also show the new wrprotection ioctl numbers available to mangle the
+> wrprotection). The UFFD_FEATURE_WP feature in the cooperative usage
+> (qemu live snapshotting) can use the UFFD_API first protocol too.
+> 
+> UFFD_FEATURE_FORK would be returned if the UFFD_API_V2 was set in
+> uffdio.api, and it would be part of the incremental non-cooperative
+> patchset.
+> 
+> We could also not define "UFFD_FEATURE_FORK" at all and imply that
+> fork/mremap/MADV_DONTNEED are all available if UFFD_API_V2 uffdio_api
+> ioctl succeeds... That's only doable if we keep two different read
+> protocols though. UFFD_FEATURE_FORK (or UFFD_FEATURE_NON_COOPERATIVE)
+> are really strictly needed only if we share the same read(2) protocol
+> for both the cooperative and non-cooperative usages.
+> 
+> The idea is that there's not huge benefit of only having the "fork"
+> feature supported but missing "mremap" and "madv_dontneed".
+> 
+> In fact if a new syscall that works like mremap is added later (call
+> it mremap2), we would need to fail the UFFDIO_API_V2 and require a
+> UFFDIO_API_V3 for such kernel that can return a new mremap2 type of
+> event. Userland couldn't just assume it is ok to use postcopy live
+> migration for containers, because
+> UFFD_FEATURE_FORK|MREMAP|MADV_DONTNEED are present in the
+> uffdio.features when it asked for API_V2. There shall be something
+> that tells userland "hey there's a new mremap2 that the software
+> inside the container can run on top of this kernel, so you are going
+> to get a new mremap2 type of userfault event too".
 
-> > With the patch:
-> > 	1. Userspace can also do the quirk with the help of uevent and rules
-> 
-> But it has no idea how or when to do that.  Please don't provide hooks
-> that no one knows how to use.
-> 
-OK.
+But that's why I assumed to use per-sycall bits -- UFFD_FEATURE_FORK,
+_MREMAP, _MWHATEVER so that userspace can read those bits and make sure
+it contains only bits it understands with other bits set to zero.
 
-> > 	2. Developer can isolate u1 u2 debugging.
-> 
-> That only developer seems to be you, and you've already debugged this :)
-> 
-Do you think the interface has no much value to other developers, and I should
-remove it?
+If we had only one UFFD_API_NON_COOPERATIVE userspace would have no idea
+what kind of messages it may receive.
 
-> > And I don't think it's necessary for kernel to support this broken modem. Because, the modem
-> > is integrated with the SoC, and SoC goes with init.rc to OEMs. Thus, it doesn't make sense we
-> > add a quirk in kernel to long term support it. The SoC/Modem is going to be replaced by its next
-> > generation, especially in mobile area.
+> In any case, regardless of how we solve the above,
+> "uffdio_api.features" sounds better than ".bits".
 > 
-> Again, someone wants to run a mainline kernel.org release on that
-> hardware, like they should.  Some companies even are pushing to require
-> OEMs to have all of their changes upstream before they will buy their
-> chip, so please, make this a quirk and have it "just work" properly.  No
-> need to rely on a magic init.rc value that no one notices or
-> understands.
+> If we retain two different UFFD_API, we'll be able to freeze the
+> current one and decide later if
+> UFFD_FEATURE_FORK|UFFD_FEATURE_MREMAP|UFFD_FEATURE_MADV_DONTNEED shall
+> be added to the .features, or if to rely on UFFD_API_V2 succeeding to
+> let userland know that the non-cooperative usage is fully supported by
+> the kernel.
 > 
-Got it. Thanks your explainations Greg.
+> Not having to freeze these details now is the main benefit of having
+> two different UFFD_API after all...
+> .
+> 
 
-Regards
-Jincan
+-- Pavel
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
