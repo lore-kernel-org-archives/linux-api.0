@@ -1,118 +1,54 @@
-From: Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
 Subject: Re: Regression: Requiring CAP_SYS_ADMIN for /proc/<pid>/pagemap
  causes application-level breakage
-Date: Thu, 30 Apr 2015 16:11:30 +0300
-Message-ID: <CALYGNiNVvVUuXvRX2nTtcDA8a8uWdQNVJ4bb2HgCY2efeDJrRw@mail.gmail.com>
+Date: Thu, 30 Apr 2015 16:22:30 +0300
+Message-ID: <20150430132230.GE15874@node.dhcp.inet.fi>
 References: <CAEVpBa+_RyACkhODZrRvQLs80iy0sqpdrd0AaP_-tgnX3Y9yNQ@mail.gmail.com>
-	<CAL82V5P-6_3kKfkgBuv1WMSu5xQ-0mUs7pHXegyPAzgroTgLtA@mail.gmail.com>
-	<CAEVpBa+vjfR8p_fJQPXyrQCMYJOocQpTHmkTYmj7nOpGcce=Pg@mail.gmail.com>
-	<CAEVpBa+DPbhZeRsA=+Jnn7f1BqVZm9SU=ABjy6bAHbbMi_yn+g@mail.gmail.com>
-	<20150429193622.GA11892@node.dhcp.inet.fi>
-	<CA+55aFx67hC3RxvAXYXWp=6mN_cfyMVqh_TDJVEqiV17o8+PtA@mail.gmail.com>
-	<CALYGNiN6kU5xgEAfbs4VVXsVKmMN+uCStrQoLh6gFCzBxJfy+A@mail.gmail.com>
-	<CA+55aFzW52u-LahoBA5kDs47rgeTGU_KF_GUrx+XSUDzeQD3=g@mail.gmail.com>
-	<CALYGNiOcb2Z+zBVQ0Z058Z7+jp3EixYq8MK1f3MYYXOpT9iAiw@mail.gmail.com>
+ <CAL82V5P-6_3kKfkgBuv1WMSu5xQ-0mUs7pHXegyPAzgroTgLtA@mail.gmail.com>
+ <CAEVpBa+vjfR8p_fJQPXyrQCMYJOocQpTHmkTYmj7nOpGcce=Pg@mail.gmail.com>
+ <CAEVpBa+DPbhZeRsA=+Jnn7f1BqVZm9SU=ABjy6bAHbbMi_yn+g@mail.gmail.com>
+ <20150429193622.GA11892@node.dhcp.inet.fi>
+ <CA+55aFx67hC3RxvAXYXWp=6mN_cfyMVqh_TDJVEqiV17o8+PtA@mail.gmail.com>
+ <CALYGNiN6kU5xgEAfbs4VVXsVKmMN+uCStrQoLh6gFCzBxJfy+A@mail.gmail.com>
+ <CA+55aFzW52u-LahoBA5kDs47rgeTGU_KF_GUrx+XSUDzeQD3=g@mail.gmail.com>
+ <CALYGNiOcb2Z+zBVQ0Z058Z7+jp3EixYq8MK1f3MYYXOpT9iAiw@mail.gmail.com>
+ <CALYGNiNVvVUuXvRX2nTtcDA8a8uWdQNVJ4bb2HgCY2efeDJrRw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary=001a11c2707e8de7290514f0d53d
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALYGNiOcb2Z+zBVQ0Z058Z7+jp3EixYq8MK1f3MYYXOpT9iAiw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CALYGNiNVvVUuXvRX2nTtcDA8a8uWdQNVJ4bb2HgCY2efeDJrRw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, Mark Seaborn <mseaborn-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Finn Grimwood <fgrimwood-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, Daniel James <djames-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
+To: Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, Mark Seaborn <mseaborn-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Finn Grimwood <fgrimwood-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, Daniel James <djames-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
---001a11c2707e8de7290514f0d53d
-Content-Type: text/plain; charset=UTF-8
+On Thu, Apr 30, 2015 at 04:11:30PM +0300, Konstantin Khlebnikov wrote:
+> On Thu, Apr 30, 2015 at 2:43 PM, Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> > On Thu, Apr 30, 2015 at 12:02 AM, Linus Torvalds
+> > <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
+> >> On Wed, Apr 29, 2015 at 1:44 PM, Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> >>>
+> >>> This's no longer true. After recent fixes for "anon_vma endless growing" new vma
+> >>> might reuse old anon_vma from grandparent vma.
+> >>
+> >> Oh well. I guess that was too simple.
+> >>
+> >> If Mark is ok with the rule that "it's not reliably if you have two
+> >> nested forks" (ie it only works if you exec for every fork you do), it
+> >> should still work, right? It sounds like Mark doesn't necessarily need
+> >> to handle the *generic* case.
+> >
+> > What about exposing shared/exclusive bit in pagemap == 1 if
+> > page_mapcount() > 1, otherwise 0 (or vise versa).
+> >
+> > Seems like this should work for detecting CoWed pages in child mm.
+> 
+> Something like this (see patch in attachment)
 
-On Thu, Apr 30, 2015 at 2:43 PM, Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Thu, Apr 30, 2015 at 12:02 AM, Linus Torvalds
-> <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
->> On Wed, Apr 29, 2015 at 1:44 PM, Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->>>
->>> This's no longer true. After recent fixes for "anon_vma endless growing" new vma
->>> might reuse old anon_vma from grandparent vma.
->>
->> Oh well. I guess that was too simple.
->>
->> If Mark is ok with the rule that "it's not reliably if you have two
->> nested forks" (ie it only works if you exec for every fork you do), it
->> should still work, right? It sounds like Mark doesn't necessarily need
->> to handle the *generic* case.
->
-> What about exposing shared/exclusive bit in pagemap == 1 if
-> page_mapcount() > 1, otherwise 0 (or vise versa).
->
-> Seems like this should work for detecting CoWed pages in child mm.
+THP is not covered.
 
-Something like this (see patch in attachment)
+Any comments on kcmp() idea?
 
---001a11c2707e8de7290514f0d53d
-Content-Type: application/octet-stream;
-	name=pagemap-add-mmap-shared-bit-for-marking-pages-mapped-multiple-times
-Content-Disposition: attachment;
-	filename=pagemap-add-mmap-shared-bit-for-marking-pages-mapped-multiple-times
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_i946wfnx0
-
-cGFnZW1hcDogYWRkIG1tYXAtc2hhcmVkIGJpdCBmb3IgbWFya2luZyBwYWdlcyBtYXBwZWQgbXVs
-dGlwbGUgdGltZXMKCkZyb206IEtvbnN0YW50aW4gS2hsZWJuaWtvdiA8a2hsZWJuaWtvdkB5YW5k
-ZXgtdGVhbS5ydT4KClRoaXMgcGF0Y2ggc2V0cyBiaXQgNTYgaW4gcGFnZW1hcCBpZiB0aGlzIHBh
-Z2UgaXMgbWFwcGVkIG1vcmUgdGhhbiBvbmNlLgpJdCBhbGxvd3MgdG8gZGV0ZWN0IHNoYXJlZCBm
-aWxlIGFuZCBDb1dlZCBhbm9uIHBhZ2VzIHdpdGhvdXQgZXhwb3NpbmcgUEZOLgoKU2lnbmVkLW9m
-Zi1ieTogS29uc3RhbnRpbiBLaGxlYm5pa292IDxraGxlYm5pa292QHlhbmRleC10ZWFtLnJ1Pgot
-LS0KIERvY3VtZW50YXRpb24vdm0vcGFnZW1hcC50eHQgfCAgICAzICsrLQogZnMvcHJvYy90YXNr
-X21tdS5jICAgICAgICAgICB8ICAgIDMgKysrCiB0b29scy92bS9NYWtlZmlsZSAgICAgICAgICAg
-IHwgICAgMiArLQogdG9vbHMvdm0vcGFnZS10eXBlcy5jICAgICAgICB8ICAgIDYgKysrKysrCiA0
-IGZpbGVzIGNoYW5nZWQsIDEyIGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pCgpkaWZmIC0t
-Z2l0IGEvRG9jdW1lbnRhdGlvbi92bS9wYWdlbWFwLnR4dCBiL0RvY3VtZW50YXRpb24vdm0vcGFn
-ZW1hcC50eHQKaW5kZXggNmJmYmMxNzJjZGI5Li40MzViMTRjMTNmYjkgMTAwNjQ0Ci0tLSBhL0Rv
-Y3VtZW50YXRpb24vdm0vcGFnZW1hcC50eHQKKysrIGIvRG9jdW1lbnRhdGlvbi92bS9wYWdlbWFw
-LnR4dApAQCAtMTYsNyArMTYsOCBAQCBUaGVyZSBhcmUgdGhyZWUgY29tcG9uZW50cyB0byBwYWdl
-bWFwOgogICAgICogQml0cyAwLTQgICBzd2FwIHR5cGUgaWYgc3dhcHBlZAogICAgICogQml0cyA1
-LTU0ICBzd2FwIG9mZnNldCBpZiBzd2FwcGVkCiAgICAgKiBCaXQgIDU1ICAgIHB0ZSBpcyBzb2Z0
-LWRpcnR5IChzZWUgRG9jdW1lbnRhdGlvbi92bS9zb2Z0LWRpcnR5LnR4dCkKLSAgICAqIEJpdHMg
-NTYtNjAgemVybworICAgICogQml0ICA1NiAgICBwYWdlIG1hcHBlZCBtdWx0aXBsZSB0aW1lcyAo
-bWFwY291bnQgPiAxKQorICAgICogQml0cyA1Ny02MCB6ZXJvCiAgICAgKiBCaXQgIDYxICAgIHBh
-Z2UgaXMgZmlsZS1wYWdlIG9yIHNoYXJlZC1hbm9uCiAgICAgKiBCaXQgIDYyICAgIHBhZ2Ugc3dh
-cHBlZAogICAgICogQml0ICA2MyAgICBwYWdlIHByZXNlbnQKZGlmZiAtLWdpdCBhL2ZzL3Byb2Mv
-dGFza19tbXUuYyBiL2ZzL3Byb2MvdGFza19tbXUuYwppbmRleCA2ZGVlNjhkMDEzZmYuLmQ0YjFk
-ZjIyOTg4YiAxMDA2NDQKLS0tIGEvZnMvcHJvYy90YXNrX21tdS5jCisrKyBiL2ZzL3Byb2MvdGFz
-a19tbXUuYwpAQCAtOTgyLDYgKzk4Miw3IEBAIHN0cnVjdCBwYWdlbWFwcmVhZCB7CiAjZGVmaW5l
-IFBNX1NUQVRVUzIodjIsIHgpICAgKF9fUE1fUFNISUZUKHYyID8geCA6IFBBR0VfU0hJRlQpKQog
-CiAjZGVmaW5lIF9fUE1fU09GVF9ESVJUWSAgICAgICgxTEwpCisjZGVmaW5lIF9fUE1fTU1BUF9T
-SEFSRUQgICAgICgyTEwpCiAjZGVmaW5lIFBNX1BSRVNFTlQgICAgICAgICAgUE1fU1RBVFVTKDRM
-TCkKICNkZWZpbmUgUE1fU1dBUCAgICAgICAgICAgICBQTV9TVEFUVVMoMkxMKQogI2RlZmluZSBQ
-TV9GSUxFICAgICAgICAgICAgIFBNX1NUQVRVUygxTEwpCkBAIC0xMDc0LDYgKzEwNzUsOCBAQCBz
-dGF0aWMgdm9pZCBwdGVfdG9fcGFnZW1hcF9lbnRyeShwYWdlbWFwX2VudHJ5X3QgKnBtZSwgc3Ry
-dWN0IHBhZ2VtYXByZWFkICpwbSwKIAogCWlmIChwYWdlICYmICFQYWdlQW5vbihwYWdlKSkKIAkJ
-ZmxhZ3MgfD0gUE1fRklMRTsKKwlpZiAocGFnZSAmJiBwYWdlX21hcGNvdW50KHBhZ2UpID4gMSkK
-KwkJZmxhZ3MyIHw9IF9fUE1fTU1BUF9TSEFSRUQ7CiAJaWYgKCh2bWEtPnZtX2ZsYWdzICYgVk1f
-U09GVERJUlRZKSkKIAkJZmxhZ3MyIHw9IF9fUE1fU09GVF9ESVJUWTsKIApkaWZmIC0tZ2l0IGEv
-dG9vbHMvdm0vTWFrZWZpbGUgYi90b29scy92bS9NYWtlZmlsZQppbmRleCBhYzg4NGI2NWEwNzIu
-LjkzYWFkYWY3ZmY2MyAxMDA2NDQKLS0tIGEvdG9vbHMvdm0vTWFrZWZpbGUKKysrIGIvdG9vbHMv
-dm0vTWFrZWZpbGUKQEAgLTMsNyArMyw3IEBACiBUQVJHRVRTPXBhZ2UtdHlwZXMgc2xhYmluZm8g
-cGFnZV9vd25lcl9zb3J0CiAKIExJQl9ESVIgPSAuLi9saWIvYXBpCi1MSUJTID0gJChMSUJfRElS
-KS9saWJhcGlrZnMuYQorTElCUyA9ICQoTElCX0RJUikvbGliYXBpLmEKIAogQ0MgPSAkKENST1NT
-X0NPTVBJTEUpZ2NjCiBDRkxBR1MgPSAtV2FsbCAtV2V4dHJhIC1JLi4vbGliLwpkaWZmIC0tZ2l0
-IGEvdG9vbHMvdm0vcGFnZS10eXBlcy5jIGIvdG9vbHMvdm0vcGFnZS10eXBlcy5jCmluZGV4IDhi
-ZGYxNmI4YmE2MC4uZjkwMzE5NmZiODgzIDEwMDY0NAotLS0gYS90b29scy92bS9wYWdlLXR5cGVz
-LmMKKysrIGIvdG9vbHMvdm0vcGFnZS10eXBlcy5jCkBAIC03MCw5ICs3MCwxMSBAQAogI2RlZmlu
-ZSBQTV9QRlJBTUUoeCkgICAgICAgICgoeCkgJiBQTV9QRlJBTUVfTUFTSykKIAogI2RlZmluZSBf
-X1BNX1NPRlRfRElSVFkgICAgICAoMUxMKQorI2RlZmluZSBfX1BNX01NQVBfU0hBUkVEICAgICAo
-MkxMKQogI2RlZmluZSBQTV9QUkVTRU5UICAgICAgICAgIFBNX1NUQVRVUyg0TEwpCiAjZGVmaW5l
-IFBNX1NXQVAgICAgICAgICAgICAgUE1fU1RBVFVTKDJMTCkKICNkZWZpbmUgUE1fU09GVF9ESVJU
-WSAgICAgICBfX1BNX1BTSElGVChfX1BNX1NPRlRfRElSVFkpCisjZGVmaW5lIFBNX01NQVBfU0hB
-UkVEICAgICAgX19QTV9QU0hJRlQoX19QTV9NTUFQX1NIQVJFRCkKIAogCiAvKgpAQCAtMTAwLDYg
-KzEwMiw3IEBACiAjZGVmaW5lIEtQRl9TTE9CX0ZSRUUJCTQ5CiAjZGVmaW5lIEtQRl9TTFVCX0ZS
-T1pFTgkJNTAKICNkZWZpbmUgS1BGX1NMVUJfREVCVUcJCTUxCisjZGVmaW5lIEtQRl9NTUFQX1NI
-QVJFRAkJNTIKIAogI2RlZmluZSBLUEZfQUxMX0JJVFMJCSgodWludDY0X3QpfjBVTEwpCiAjZGVm
-aW5lIEtQRl9IQUNLRVJTX0JJVFMJKDB4ZmZmZlVMTCA8PCAzMikKQEAgLTE0OSw2ICsxNTIsNyBA
-QCBzdGF0aWMgY29uc3QgY2hhciAqIGNvbnN0IHBhZ2VfZmxhZ19uYW1lc1tdID0gewogCVtLUEZf
-U0xPQl9GUkVFXQkJPSAiUDpzbG9iX2ZyZWUiLAogCVtLUEZfU0xVQl9GUk9aRU5dCT0gIkE6c2x1
-Yl9mcm96ZW4iLAogCVtLUEZfU0xVQl9ERUJVR10JPSAiRTpzbHViX2RlYnVnIiwKKwlbS1BGX01N
-QVBfU0hBUkVEXQk9ICI1Om1tYXBfc2hhcmVkIiwKIH07CiAKIApAQCAtNDUyLDYgKzQ1Niw4IEBA
-IHN0YXRpYyB1aW50NjRfdCBleHBhbmRfb3ZlcmxvYWRlZF9mbGFncyh1aW50NjRfdCBmbGFncywg
-dWludDY0X3QgcG1lKQogCiAJaWYgKHBtZSAmIFBNX1NPRlRfRElSVFkpCiAJCWZsYWdzIHw9IEJJ
-VChTT0ZURElSVFkpOworCWlmIChwbWUgJiBQTV9NTUFQX1NIQVJFRCkKKwkJZmxhZ3MgfD0gQklU
-KE1NQVBfU0hBUkVEKTsKIAogCXJldHVybiBmbGFnczsKIH0K
---001a11c2707e8de7290514f0d53d--
+-- 
+ Kirill A. Shutemov
