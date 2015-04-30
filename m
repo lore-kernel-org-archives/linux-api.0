@@ -1,84 +1,65 @@
-From: David Rientjes <rientjes@google.com>
-Subject: Re: [RFC PATCH] mmap.2: clarify MAP_LOCKED semantic (was: Re: Should
- mmap MAP_LOCKED fail if mm_poppulate fails?)
-Date: Wed, 29 Apr 2015 17:28:54 -0700 (PDT)
-Message-ID: <alpine.DEB.2.10.1504291723001.17825@chino.kir.corp.google.com>
-References: <20150114095019.GC4706@dhcp22.suse.cz> <1430223111-14817-1-git-send-email-mhocko@suse.cz> <CA+55aFxzLXx=cC309h_tEc-Gkn_zH4ipR7PsefVcE-97Uj066g@mail.gmail.com> <20150428164302.GI2659@dhcp22.suse.cz> <CA+55aFydkG-BgZzry5DrTzueVh9VvEcVJdLV8iOyUphQk=0vpw@mail.gmail.com>
- <20150428183535.GB30918@dhcp22.suse.cz> <CA+55aFyajquhGhw59qNWKGK4dBV0TPmDD7-1XqPo7DZWvO_hPg@mail.gmail.com> <20150429113818.GC16097@dhcp22.suse.cz>
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v3 3/3] proc: add kpageidle file
+Date: Thu, 30 Apr 2015 15:55:33 +0900
+Message-ID: <20150430065533.GC21771@blaptop>
+References: <cover.1430217477.git.vdavydov@parallels.com>
+ <4c24a6bf2c9711dd4dbb72a43a16eba6867527b7.1430217477.git.vdavydov@parallels.com>
+ <20150429045759.GA27051@blaptop>
+ <20150429083148.GA11497@esperanza>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150429113818.GC16097@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@suse.cz>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-mm <linux-mm@kvack.org>, Cyril Hrubis <chrubis@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Hugh Dickins <hughd@google.com>, Michel Lespinasse <walken@google.com>, Rik van Riel <riel@redhat.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150429083148.GA11497@esperanza>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 29 Apr 2015, Michal Hocko wrote:
+Hi,
 
-> MAP_LOCKED had a subtly different semantic from mmap(2)+mlock(2) since
-> it has been introduced.
-> mlock(2) fails if the memory range cannot get populated to guarantee
-> that no future major faults will happen on the range. mmap(MAP_LOCKED) on
-> the other hand silently succeeds even if the range was populated only
-> partially.
+On Wed, Apr 29, 2015 at 11:31:49AM +0300, Vladimir Davydov wrote:
+> On Wed, Apr 29, 2015 at 01:57:59PM +0900, Minchan Kim wrote:
+> > On Tue, Apr 28, 2015 at 03:24:42PM +0300, Vladimir Davydov wrote:
+> > > @@ -69,6 +69,14 @@ There are four components to pagemap:
+> > >     memory cgroup each page is charged to, indexed by PFN. Only available when
+> > >     CONFIG_MEMCG is set.
+> > >  
+> > > + * /proc/kpageidle.  For each page this file contains a 64-bit number, which
+> > > +   equals 1 if the page is idle or 0 otherwise, indexed by PFN. A page is
+> > > +   considered idle if it has not been accessed since it was marked idle. To
+> > > +   mark a page idle one should write 1 to this file at the offset corresponding
+> > > +   to the page. Only user memory pages can be marked idle, for other page types
+> > > +   input is silently ignored. Writing to this file beyond max PFN results in
+> > > +   the ENXIO error. Only available when CONFIG_IDLE_PAGE_TRACKING is set.
+> > > +
+> > 
+> > How about using kpageflags for reading part?
+> > 
+> > I mean PG_idle is one of the page flags and we already have a feature to
+> > parse of each PFN flag so we could reuse existing feature for reading
+> > idleness.
 > 
-> Fixing this subtle difference in the kernel is rather awkward because
-> the memory population happens after mm locks have been dropped and so
-> the cleanup before returning failure (munlock) could operate on something
-> else than the originally mapped area.
-> 
-> E.g. speculative userspace page fault handler catching SEGV and doing
-> mmap(fault_addr, MAP_FIXED|MAP_LOCKED) might discard portion of a racing
-> mmap and lead to lost data. Although it is not clear whether such a
-> usage would be valid, mmap page doesn't explicitly describe requirements
-> for threaded applications so we cannot exclude this possibility.
-> 
-> This patch makes the semantic of MAP_LOCKED explicit and suggest using
-> mmap + mlock as the only way to guarantee no later major page faults.
-> 
-> Signed-off-by: Michal Hocko <mhocko@suse.cz>
-> ---
->  man2/mmap.2 | 13 ++++++++++++-
->  1 file changed, 12 insertions(+), 1 deletion(-)
-> 
-> diff --git a/man2/mmap.2 b/man2/mmap.2
-> index 54d68cf87e9e..1486be2e96b3 100644
-> --- a/man2/mmap.2
-> +++ b/man2/mmap.2
-> @@ -235,8 +235,19 @@ See the Linux kernel source file
->  for further information.
->  .TP
->  .BR MAP_LOCKED " (since Linux 2.5.37)"
-> -Lock the pages of the mapped region into memory in the manner of
-> +Mark the mmaped region to be locked in the same way as
->  .BR mlock (2).
-> +This implementation will try to populate (prefault) the whole range but
-> +the mmap call doesn't fail with
-> +.B ENOMEM
-> +if this fails. Therefore major faults might happen later on. So the semantic
-> +is not as strong as
-> +.BR mlock (2).
-> +.BR mmap (2)
-> ++
-> +.BR mlock (2)
-> +should be used when major faults are not acceptable after the initialization
-> +of the mapping.
->  This flag is ignored in older kernels.
->  .\" If set, the mapped pages will not be swapped out.
->  .TP
+> Reading PG_idle implies clearing all pte references to make sure the
+> page was not referenced via a pte. This means that exporting it via
+> /proc/kpageflags would increase the cost of reading this file, even for
+> users that don't care about PG_idle. I'm not sure all users of
+> /proc/kpageflags will be fine with it.
 
-The wording of this begs the question on the behavior of 
-MAP_LOCKED | MAP_POPULATE since this same man page specifies that 
-accesses to memory mapped with MAP_POPULATE will not block on page faults 
-later.
+It triggers rmap traverse so it would be horrible overhead sometime
+so I agree every kpageflags users don't want it but I didn't mean
+reading of PG_idle via kpageflags should clear all pte references.
+Reset should be still part of kpageidle but we can just read idlenss
+without reset by kpageflags(IOW, Reset and reading is orthogoal)
 
-I think Documentation/vm/unevictable-lru.txt would benefit from an update 
-under the mmap(MAP_LOCKED) section where all this can be laid out and 
-perhaps reference it from the man page?
+A benefit via reading kpageflags, we could parse it's idle page
+and not dirty page so we could reclaim it easy.
+Anyway, it could be further improvement.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> 
+> Thanks,
+> Vladimir
+
+-- 
+Kind regards,
+Minchan Kim
