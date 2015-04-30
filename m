@@ -1,159 +1,40 @@
-From: Pavel Emelyanov <xemul@parallels.com>
-Subject: Re: [PATCH 2/3] uffd: Introduce the v2 API
-Date: Thu, 30 Apr 2015 12:50:43 +0300
-Message-ID: <5541FAF3.4080008@parallels.com>
-References: <5509D342.7000403@parallels.com> <5509D375.7000809@parallels.com> <20150421121817.GD4481@redhat.com> <55389133.8070701@parallels.com> <20150427211236.GB24035@redhat.com>
+From: Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Regression: Requiring CAP_SYS_ADMIN for /proc/<pid>/pagemap
+ causes application-level breakage
+Date: Thu, 30 Apr 2015 14:43:56 +0300
+Message-ID: <CALYGNiOcb2Z+zBVQ0Z058Z7+jp3EixYq8MK1f3MYYXOpT9iAiw@mail.gmail.com>
+References: <CAEVpBa+_RyACkhODZrRvQLs80iy0sqpdrd0AaP_-tgnX3Y9yNQ@mail.gmail.com>
+	<CAL82V5P-6_3kKfkgBuv1WMSu5xQ-0mUs7pHXegyPAzgroTgLtA@mail.gmail.com>
+	<CAEVpBa+vjfR8p_fJQPXyrQCMYJOocQpTHmkTYmj7nOpGcce=Pg@mail.gmail.com>
+	<CAEVpBa+DPbhZeRsA=+Jnn7f1BqVZm9SU=ABjy6bAHbbMi_yn+g@mail.gmail.com>
+	<20150429193622.GA11892@node.dhcp.inet.fi>
+	<CA+55aFx67hC3RxvAXYXWp=6mN_cfyMVqh_TDJVEqiV17o8+PtA@mail.gmail.com>
+	<CALYGNiN6kU5xgEAfbs4VVXsVKmMN+uCStrQoLh6gFCzBxJfy+A@mail.gmail.com>
+	<CA+55aFzW52u-LahoBA5kDs47rgeTGU_KF_GUrx+XSUDzeQD3=g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150427211236.GB24035@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrea Arcangeli <aarcange@redhat.com>
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CA+55aFzW52u-LahoBA5kDs47rgeTGU_KF_GUrx+XSUDzeQD3=g@mail.gmail.com>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, Mark Seaborn <mseaborn-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Finn Grimwood <fgrimwood-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, Daniel James <djames-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 04/28/2015 12:12 AM, Andrea Arcangeli wrote:
-> Hello,
-> 
-> On Thu, Apr 23, 2015 at 09:29:07AM +0300, Pavel Emelyanov wrote:
->> So your proposal is to always report 16 bytes per PF from read() and
->> let userspace decide itself how to handle the result?
-> 
-> Reading 16bytes for each userfault (instead of 8) and sharing the same
-> read(2) protocol (UFFD_API) for both the cooperative and
-> non-cooperative usages, is something I just suggested for
-> consideration after reading your patchset.
-> 
-> The pros of using a single protocol for both is that it would reduce
-> amount of code and there would be just one file operation for the
-> .read method. The cons is that it will waste 8 bytes per userfault in
-> terms of memory footprint. The other major cons is that it would force
-> us to define the format of the non cooperative protocol now despite it's
-> not fully finished yet.
-> 
-> I'm also ok with two protocols if nobody else objects, but if we use
-> two protocols, we should at least use different file operation methods
-> and use __always_inline with constants passed as parameter to optimize
-> away the branches at build time. This way we get the reduced memory
-> footprint in the read syscall without other runtime overhead
-> associated with it.
-
-OK. I would go with two protocols then and will reshuffle the code to
-use two ops.
-
->>>> +struct uffd_v2_msg {
->>>> +	__u64	type;
->>>> +	__u64	arg;
->>>> +};
->>>> +
->>>> +#define UFFD_PAGEFAULT	0x1
->>>> +
->>>> +#define UFFD_PAGEFAULT_BIT	(1 << (UFFD_PAGEFAULT - 1))
->>>> +#define __UFFD_API_V2_BITS	(UFFD_PAGEFAULT_BIT)
->>>> +
->>>> +/*
->>>> + * Lower PAGE_SHIFT bits are used to report those supported
->>>> + * by the pagefault message itself. Other bits are used to
->>>> + * report the message types v2 API supports
->>>> + */
->>>> +#define UFFD_API_V2_BITS	(__UFFD_API_V2_BITS << 12)
->>>> +
->>>
->>> And why exactly is this 12 hardcoded?
+On Thu, Apr 30, 2015 at 12:02 AM, Linus Torvalds
+<torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
+> On Wed, Apr 29, 2015 at 1:44 PM, Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
 >>
->> Ah, it should have been the PAGE_SHIFT one, but I was unsure whether it
->> would be OK to have different shifts in different arches.
->>
->> But taking into account your comment that bits field id bad for these
->> values, if we introduce the new .features one for api message, then this
->> 12 will just go away.
-> 
-> Ok.
-> 
->>> And which field should be masked
->>> with the bits? In the V1 protocol it was the "arg" (userfault address)
->>> not the "type". So this is a bit confusing and probably requires
->>> simplification.
->>
->> I see. Actually I decided that since bits higher than 12th (for x86) is
->> always 0 in api message (no bits allowed there, since pfn sits in this
->> place), it would be OK to put non-PF bits there.
-> 
-> That was ok yes.
-> 
->> Should I better introduce another .features field in uffd API message?
-> 
-> What about renaming "uffdio_api.bits" to "uffdio_api.features"?
+>> This's no longer true. After recent fixes for "anon_vma endless growing" new vma
+>> might reuse old anon_vma from grandparent vma.
+>
+> Oh well. I guess that was too simple.
+>
+> If Mark is ok with the rule that "it's not reliably if you have two
+> nested forks" (ie it only works if you exec for every fork you do), it
+> should still work, right? It sounds like Mark doesn't necessarily need
+> to handle the *generic* case.
 
-Yup, agreed, will do.
+What about exposing shared/exclusive bit in pagemap == 1 if
+page_mapcount() > 1, otherwise 0 (or vise versa).
 
-> And then we set uffdio_api.features to
-> UFFD_FEATURE_WRITE|UFFD_FEATURE_WP|UFFD_FEATURE_FORK as needed.
-> 
-> UFFD_FEATURE_WRITE would always be enabled, it's there only in case we
-> want to disable it later (mostly if some arch has trouble with it,
-> which is unlikely, but qemu doesn't need that bit of information at
-> all for example so qemu would be fine if UFFD_FEATURE_WRITE
-> disappears).
-> 
-> UFFD_FEATURE_WP would signal also that the wrprotection feature (not
-> implemented yet) is available (then later the register ioctl would
-> also show the new wrprotection ioctl numbers available to mangle the
-> wrprotection). The UFFD_FEATURE_WP feature in the cooperative usage
-> (qemu live snapshotting) can use the UFFD_API first protocol too.
-> 
-> UFFD_FEATURE_FORK would be returned if the UFFD_API_V2 was set in
-> uffdio.api, and it would be part of the incremental non-cooperative
-> patchset.
-> 
-> We could also not define "UFFD_FEATURE_FORK" at all and imply that
-> fork/mremap/MADV_DONTNEED are all available if UFFD_API_V2 uffdio_api
-> ioctl succeeds... That's only doable if we keep two different read
-> protocols though. UFFD_FEATURE_FORK (or UFFD_FEATURE_NON_COOPERATIVE)
-> are really strictly needed only if we share the same read(2) protocol
-> for both the cooperative and non-cooperative usages.
-> 
-> The idea is that there's not huge benefit of only having the "fork"
-> feature supported but missing "mremap" and "madv_dontneed".
-> 
-> In fact if a new syscall that works like mremap is added later (call
-> it mremap2), we would need to fail the UFFDIO_API_V2 and require a
-> UFFDIO_API_V3 for such kernel that can return a new mremap2 type of
-> event. Userland couldn't just assume it is ok to use postcopy live
-> migration for containers, because
-> UFFD_FEATURE_FORK|MREMAP|MADV_DONTNEED are present in the
-> uffdio.features when it asked for API_V2. There shall be something
-> that tells userland "hey there's a new mremap2 that the software
-> inside the container can run on top of this kernel, so you are going
-> to get a new mremap2 type of userfault event too".
-
-But that's why I assumed to use per-sycall bits -- UFFD_FEATURE_FORK,
-_MREMAP, _MWHATEVER so that userspace can read those bits and make sure
-it contains only bits it understands with other bits set to zero.
-
-If we had only one UFFD_API_NON_COOPERATIVE userspace would have no idea
-what kind of messages it may receive.
-
-> In any case, regardless of how we solve the above,
-> "uffdio_api.features" sounds better than ".bits".
-> 
-> If we retain two different UFFD_API, we'll be able to freeze the
-> current one and decide later if
-> UFFD_FEATURE_FORK|UFFD_FEATURE_MREMAP|UFFD_FEATURE_MADV_DONTNEED shall
-> be added to the .features, or if to rely on UFFD_API_V2 succeeding to
-> let userland know that the non-cooperative usage is fully supported by
-> the kernel.
-> 
-> Not having to freeze these details now is the main benefit of having
-> two different UFFD_API after all...
-> .
-> 
-
--- Pavel
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Seems like this should work for detecting CoWed pages in child mm.
