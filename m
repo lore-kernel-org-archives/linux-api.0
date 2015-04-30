@@ -1,47 +1,85 @@
-From: Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
-Subject: Re: Regression: Requiring CAP_SYS_ADMIN for /proc/<pid>/pagemap
- causes application-level breakage
-Date: Thu, 30 Apr 2015 19:45:06 +0100
-Message-ID: <CAEVpBaLQx-8Hxjav5OO0xntDs=2wEXJwLXXW3FuNE0yCeBjBeQ@mail.gmail.com>
-References: <CAEVpBa+_RyACkhODZrRvQLs80iy0sqpdrd0AaP_-tgnX3Y9yNQ@mail.gmail.com>
-	<CAL82V5P-6_3kKfkgBuv1WMSu5xQ-0mUs7pHXegyPAzgroTgLtA@mail.gmail.com>
-	<CAEVpBa+vjfR8p_fJQPXyrQCMYJOocQpTHmkTYmj7nOpGcce=Pg@mail.gmail.com>
-	<CAEVpBa+DPbhZeRsA=+Jnn7f1BqVZm9SU=ABjy6bAHbbMi_yn+g@mail.gmail.com>
-	<20150429193622.GA11892@node.dhcp.inet.fi>
-	<CA+55aFx67hC3RxvAXYXWp=6mN_cfyMVqh_TDJVEqiV17o8+PtA@mail.gmail.com>
-	<CALYGNiN6kU5xgEAfbs4VVXsVKmMN+uCStrQoLh6gFCzBxJfy+A@mail.gmail.com>
-	<CA+55aFzW52u-LahoBA5kDs47rgeTGU_KF_GUrx+XSUDzeQD3=g@mail.gmail.com>
-	<CALYGNiOcb2Z+zBVQ0Z058Z7+jp3EixYq8MK1f3MYYXOpT9iAiw@mail.gmail.com>
-	<CALYGNiNVvVUuXvRX2nTtcDA8a8uWdQNVJ4bb2HgCY2efeDJrRw@mail.gmail.com>
-	<20150430132230.GE15874@node.dhcp.inet.fi>
+From: Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>
+Subject: Re: [PATCH v2 01/11] coresight-etm4x: Adding CoreSight ETM4x driver
+Date: Thu, 30 Apr 2015 23:29:57 +0200
+Message-ID: <1430429397.2187.34.camel@x220>
+References: <1430327795-10710-1-git-send-email-mathieu.poirier@linaro.org>
+	 <1430327795-10710-2-git-send-email-mathieu.poirier@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150430132230.GE15874-nhfs4B5ZimeFUdmeq17FyvUpdFzICT1y@public.gmane.org>
+In-Reply-To: <1430327795-10710-2-git-send-email-mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-Cc: Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mark Seaborn <mseaborn-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Finn Grimwood <fgrimwood-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, Daniel James <djames-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
+To: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
->> Something like this (see patch in attachment)
->
-> THP is not covered.
->
-> Any comments on kcmp() idea?
+On Wed, 2015-04-29 at 11:16 -0600, Mathieu Poirier wrote:
+> --- a/drivers/hwtracing/coresight/Kconfig
+> +++ b/drivers/hwtracing/coresight/Kconfig
 
-It seems like a modified kcmp() would also be a valid approach but, as
-you noted, probably speed-limited for our purposes.  As you say, there
-is the option of a vector-oriented equivalent.  It seems like a
-generally nice facility to have available in the kernel but my
-suspicion is that it wouldn't be optimal for us...
+> +config CORESIGHT_SOURCE_ETM4X
+> +	bool "CoreSight Embedded Trace Macrocell 4.x driver"
+> +	depends on ARM64
+> +	select CORESIGHT_LINKS_AND_SINKS
+> +	help
+> +	  This driver provides support for the ETM4.x tracer module, tracing the
+> +	  instructions that a processor is executing. This is primarily useful
+> +	  for instruction level tracing. Depending on the implemented version
+> +	  data tracing may also be available.
 
-My thinking is that using soft-dirty might give us the best
-performance on platforms where it's available.  We're only using
-fork() as a cunning/hacky way of tracking what pages change;
-soft-dirty would allow us to avoid that too, whereas using kcmp()
-would still require the forking overhead.
+(Please add an empty line here.)
 
-Does that make sense, or have I missed something?
+>  endif
 
-Thanks,
-Mark
+> --- a/drivers/hwtracing/coresight/Makefile
+> +++ b/drivers/hwtracing/coresight/Makefile
+
+> +obj-$(CONFIG_CORESIGHT_SOURCE_ETM4X) += coresight-etm4x.o
+
+CORESIGHT_SOURCE_ETM4X is a bool symbol, so coresight-etm4x.o can never
+be part of a module, right?
+
+(If I'm wrong, we're done here.)
+
+> --- /dev/null
+> +++ b/drivers/hwtracing/coresight/coresight-etm4x.c
+
+> +#include <linux/module.h>
+
+Is this include needed?
+
+> +static struct amba_driver etm4x_driver = {
+> +	.drv = {
+> +		.name   = "coresight-etm4x",
+> +		.owner  = THIS_MODULE,
+
+For built-in code this is basically equivalent to NULL (see
+include/linux/export.h).
+
+> +	},
+> +	.probe		= etm4_probe,
+> +	.remove		= etm4_remove,
+> +	.id_table	= etm4_ids,
+> +};
+> +
+> +module_amba_driver(etm4x_driver);
+
+In a message I sent a short while ago, I suggested that for built-in
+only code this is equivalent to calling
+    amba_driver_register(&etm4x_driver);
+
+from within a function marked with some sort of *initcall(). Please
+double check.
+
+> +MODULE_LICENSE("GPL v2");
+> +MODULE_DESCRIPTION("CoreSight Embedded Trace Macrocell v4 driver");
+
+These macros will be effectively be preprocessed away for built-in only
+code.
+
+(There is also a reference to module_param_named(). I don't know by
+heart how that works for built-in only code, sorry.)
+
+
+Paul Bolle
