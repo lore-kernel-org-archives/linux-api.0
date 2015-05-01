@@ -1,55 +1,50 @@
-From: Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>
-Subject: Re: [PATCH v2 01/11] coresight-etm4x: Adding CoreSight ETM4x driver
-Date: Fri, 01 May 2015 20:28:56 +0200
-Message-ID: <1430504936.3928.13.camel@tiscali.nl>
-References: <1430327795-10710-1-git-send-email-mathieu.poirier@linaro.org>
-	 <1430327795-10710-2-git-send-email-mathieu.poirier@linaro.org>
-	 <1430429397.2187.34.camel@x220>
-	 <CANLsYkywp0o8YtjkFwfvEiAje-w2jCWbs_82SiD29xdirA_7vQ@mail.gmail.com>
+From: Eric Dumazet <eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] Allow TCP connections to cache SYN packet for userspace
+ inspection
+Date: Fri, 01 May 2015 11:42:57 -0700
+Message-ID: <1430505777.3711.135.camel@edumazet-glaptop2.roam.corp.google.com>
+References: <1430502237-5619-1-git-send-email-emunson@akamai.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CANLsYkywp0o8YtjkFwfvEiAje-w2jCWbs_82SiD29xdirA_7vQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1430502237-5619-1-git-send-email-emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kaixu Xia <kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Alexey Kuznetsov <kuznet-v/Mj1YrvjDBInbfyfbPRSQ@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Hideaki YOSHIFUJI <yoshfuji-VfPWfsRibaP+Ru+s062T9g@public.gmane.org>, Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Mathieu Poirier schreef op vr 01-05-2015 om 08:39 [-0600]:
-> On 30 April 2015 at 15:29, Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org> wrote:
-> > On Wed, 2015-04-29 at 11:16 -0600, Mathieu Poirier wrote:
-> >> +#include <linux/module.h>
-> >
-> > Is this include needed?
+On Fri, 2015-05-01 at 13:43 -0400, Eric B Munson wrote:
+> In order to enable policy decisions in userspace, the data contained in
+> the SYN packet would be useful for tracking or identifying connections.
+> Only parts of this data are available to userspace after the hand shake
+> is completed.  This patch exposes a new setsockopt() option that will,
+> when used with a listening socket, ask the kernel to cache the skb
+> holding the SYN packet for retrieval later.  The SYN skbs will not be
+> saved while the kernel is in syn cookie mode.
 > 
-> It is needed for "module_param_named()".
-
-I guess that it should suffice to include just
-include/linux/moduleparam.h. (Note that [...]/module.h includes
-[...]/moduleparam.h.)
-
-> >> +module_amba_driver(etm4x_driver);
-> >
-> > In a message I sent a short while ago, I suggested that for built-in
-> > only code this is equivalent to calling
-> >     amba_driver_register(&etm4x_driver);
-> >
-> > from within a function marked with some sort of *initcall(). Please
-> > double check.
+> The same option will ask the kernel for the packet headers when used
+> with getsockopt() with the socket returned from accept().  The cached
+> packet will only be available for the first getsockopt() call, the skb
+> is consumed after the requested data is copied to userspace.  Subsequent
+> calls will return -ENOENT.  Because of this behavior, getsockopt() will
+> return -E2BIG if the caller supplied a buffer that is too small to hold
+> the skb header.
 > 
-> Built-in as a module or not using "module_amba_driver()" deals with
-> redundant code.
+> Signed-off-by: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+> Cc: Alexey Kuznetsov <kuznet-v/Mj1YrvjDBInbfyfbPRSQ@public.gmane.org>
+> Cc: James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>
+> Cc: Hideaki YOSHIFUJI <yoshfuji-VfPWfsRibaP+Ru+s062T9g@public.gmane.org>
+> Cc: Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>
+> Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> ---
 
-This is becoming yet another pet peeve: idempotent macros prefixed with
-module_. driver_ would be a better prefix. But, in this case,
-driver_amba_driver() is silly, amba_driver is used already, and
-register_amba_driver() looks like amba_driver_register() way too much.
+We have a similar patch here at Google, but we do not hold one skb and
+dst per saved syn. That can be ~4KB for some drivers.
 
-I fear that this pet peeve is going to hang around my place for quite
-some time.
+Only a kmalloc() with the needed part (headers), usually less than 128
+bytes. We store the length in first byte of this allocation.
 
-Thanks,
-
-
-Paul Bolle
+This has a huge difference if you want to have ~4 million request socks.
