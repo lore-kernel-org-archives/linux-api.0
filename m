@@ -1,157 +1,77 @@
-From: Daniel Thompson <daniel.thompson@linaro.org>
-Subject: Re: [PATCH v7 05/15] dt-bindings: Document the STM32 reset bindings
-Date: Sat, 02 May 2015 11:01:13 +0100
-Message-ID: <5544A069.5000808@linaro.org>
-References: <1430410844-16062-1-git-send-email-mcoquelin.stm32@gmail.com>	<1430410844-16062-6-git-send-email-mcoquelin.stm32@gmail.com>	<55433467.2010603@linaro.org> <CALszF6Bw900E9MtpaVmvkFxsrOODRkNg+RxRXz5V3WghHtsxbw@mail.gmail.com>
+From: Lars-Peter Clausen <lars@metafoo.de>
+Subject: Re: [RFC PATCH 2/3] iio: allow better control for flushing the hardware
+ fifo
+Date: Sat, 02 May 2015 19:42:54 +0200
+Message-ID: <55450C9E.4060409@metafoo.de>
+References: <1430306340-5026-1-git-send-email-octavian.purdila@intel.com> <1430306340-5026-3-git-send-email-octavian.purdila@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-gpio-owner@vger.kernel.org>
-In-Reply-To: <CALszF6Bw900E9MtpaVmvkFxsrOODRkNg+RxRXz5V3WghHtsxbw@mail.gmail.com>
-Sender: linux-gpio-owner@vger.kernel.org
-To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Cc: =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?B?QW5kcmVhcyBGw6RyYmVy?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Peter Hurley <peter@hurleysoftware.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Chanwoo Choi <cw00.choi@samsung.com>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Joe Perches <joe@perches.com>, Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@c>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1430306340-5026-3-git-send-email-octavian.purdila@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Octavian Purdila <octavian.purdila@intel.com>, jic23@kernel.org
+Cc: knaack.h@gmx.de, pmeerw@pmeerw.net, linux-iio@vger.kernel.org, linux-kernel@vger.kernel.org, adriana.reus@intel.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 02/05/15 08:55, Maxime Coquelin wrote:
-> 2015-05-01 10:08 GMT+02:00 Daniel Thompson <daniel.thompson@linaro.org>:
->> On 30/04/15 17:20, Maxime Coquelin wrote:
->>>
->>> This adds documentation of device tree bindings for the
->>> STM32 reset controller.
->>>
->>> Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
->>> Acked-by: Philipp Zabel <p.zabel@pengutronix.de>
->>> Acked-by: Rob Herring <robh@kernel.org>
->>> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
->>> ---
->>>    .../devicetree/bindings/reset/st,stm32-rcc.txt     | 107
->>> +++++++++++++++++++++
->>>    1 file changed, 107 insertions(+)
->>>    create mode 100644
->>> Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
->>>
->>> diff --git a/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
->>> b/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
->>> new file mode 100644
->>> index 0000000..c1b0f8d
->>> --- /dev/null
->>> +++ b/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
->>> @@ -0,0 +1,107 @@
->>> +STMicroelectronics STM32 Peripheral Reset Controller
->>> +====================================================
->>> +
->>> +The RCC IP is both a reset and a clock controller. This documentation
->>> only
->>> +documents the reset part.
->>> +
->>> +Please also refer to reset.txt in this directory for common reset
->>> +controller binding usage.
->>> +
->>> +Required properties:
->>> +- compatible: Should be "st,stm32-rcc"
->>> +- reg: should be register base and length as documented in the
->>> +  datasheet
->>> +- #reset-cells: 1, see below
->>> +
->>> +example:
->>> +
->>> +rcc: reset@40023800 {
->>> +       #reset-cells = <1>;
->>> +       compatible = "st,stm32-rcc";
->>
->>
->> Do you intend the clock driver to use the same compatible string (given it
->> is the same bit of hardware).
->>
->> If so, is it better to use st,stm32f4-rcc here? It seems unlikey to me that
->> the register layout of the PLLs and dividers can be the same on the f7 parts
->> (and later).
+On 04/29/2015 01:18 PM, Octavian Purdila wrote:
+> Some applications need to be able to flush [1] the hardware fifo of
+> the device and to receive events of when that happened [2] so that it
+> can ignore stale data.
 >
-> I agree we need a compatible dedicate to f4 series for clocks, and
-> maybe even one for f429 (to be checked).
-> For the reset part, we don't have this need.
+> This patch adds a new event (IIO_EV_TYPE_HWFIFO_FLUSHED) that should
+> be sent to userspace when a flush has been completed. The application
+> will be able to identify which are the samples to ignore based on the
+> timestamp of the event.
 >
-> So either we use only "st,stm32f4" as you suggest, or we can have both
-> in device tree:
+> To allow applications to accurately generate a hardware fifo flush on
+> demand, this patch also adds a new sysfs entry that triggers a
+> hardware fifo flush when written to.
 >
-> rcc: reset@40023800 {
->      #reset-cells = <1>;
->      compatible = "st,stm32f4-rcc", "st,stm32-rcc";
->      reg = <0x40023800 0x400>;
-> };
+> [1] https://source.android.com/devices/sensors/hal-interface.html#flush_sensor
+> [2] https://source.android.com/devices/sensors/hal-interface.html#metadata_flush_complete_events
+
+Since there is no asynchronous queue for commands to be executed in IIO 
+adding a asynchronous completion event doesn't make too much sense. This is 
+something that needs to be handled at the HAL level.
+
+The HAL needs to have a queue of commands that need to be executed where new 
+events can be added asynchronously, then has a loop which goes through the 
+commands in the queue and executes them, and once executed generated the 
+appropriate completion event.
+
+I really wish that document would specify what is actually meant by flush. 
+Copy the FIFO content to a software buffer or discard the FIFO content.
+
 >
-> What do you think?
-
-Having both makes sense. The reset driver probably doesn't care about 
-differences between F4 and F7 (I know very little about F7 but I can't 
-think of any obvious h/ware evolution that would confuse the current 
-reset driver).
-
-
->>> +       reg = <0x40023800 0x400>;
->>> +};
->>> +
->>> +Specifying softreset control of devices
->>> +=======================================
->>> +
->>> +Device nodes should specify the reset channel required in their "resets"
->>> +property, containing a phandle to the reset device node and an index
->>> specifying
->>> +which channel to use.
->>> +The index is the bit number within the RCC registers bank, starting from
->>> RCC
->>> +base address.
->>> +It is calculated as: index = register_offset / 4 * 32 + bit_offset.
->>> +Where bit_offset is the bit offset within the register.
->>> +For example, for CRC reset:
->>> +  crc = AHB1RSTR_offset / 4 * 32 + CRCRST_bit_offset = 0x10 / 4 * 32 + 12
->>> = 140
->>> +
->>> +example:
->>> +
->>> +       timer2 {
->>> +               resets                  = <&rcc 256>;
->>> +       };
->>> +
->>> +List of valid indices for STM32F429:
->>> + - gpioa: 128
->>> + - gpiob: 129
->>> ...
->>> <snip>
->>> ...
->>> + - sai1: 310
->>> + - ltdc: 314
->>
->>
->> These numbers are stable for all STM32F4 family parts. Should this table go
->> into a dt-bindings header file?
->>
+> Signed-off-by: Octavian Purdila <octavian.purdila@intel.com>
+> ---
+>   Documentation/ABI/testing/sysfs-bus-iio | 11 +++++++++++
+>   include/linux/iio/sysfs.h               |  3 +++
+>   include/uapi/linux/iio/types.h          |  1 +
+>   3 files changed, 15 insertions(+)
 >
-> This has already been discussed with Philipp and Arnd in earlier
-> versions of this series [0].
-> I initially created a header file, and we  decided going this way finally.
+> diff --git a/Documentation/ABI/testing/sysfs-bus-iio b/Documentation/ABI/testing/sysfs-bus-iio
+> index 866b4ec..bb4d8de 100644
+> --- a/Documentation/ABI/testing/sysfs-bus-iio
+> +++ b/Documentation/ABI/testing/sysfs-bus-iio
+> @@ -1375,3 +1375,14 @@ Description:
+>   		The emissivity ratio of the surface in the field of view of the
+>   		contactless temperature sensor.  Emissivity varies from 0 to 1,
+>   		with 1 being the emissivity of a black body.
+> +
+> +What:		/sys/bus/iio/devices/iio:deviceX/buffer/hwfifo_flush
+> +KernelVersion:	4.2
+> +Contact:	linux-iio@vger.kernel.org
+> +Description:
+> +		Write only entry that accepts a single strictly positive integer
+> +		specifying the number of samples to flush from the hardware fifo
+> +		to the device buffer. When the flush is completed an
+> +		IIO_EV_TYPE_HWFIFO_FLUSHED event is generated. The event has the
+> +		timestamp equal with the timestamp of last sample that was
+> +		flushed from the hardware fifo.
 
-Thanks for the link. I had overlooked that (I only really started paying 
-attention at v5; I should probably have looked further back before 
-commenting).
-
-However...
-
-Arnd's concerns about mergability of headers can also be met by using 
-h/ware values in the header file can't there. To be honest my comment 
-was pretty heavily influenced after having read a recent patch from Rob 
-Herring ( https://lkml.org/lkml/2015/5/1/14 ) which does exactly this.
-
-The main reason I got interested in having a header is that the reset 
-bits and the clock gate bits are encoded using the same bit patterns so 
-I wondering it we could express that only once.
-
-I guess it doesn't matter that much, especially given there is only one 
-.dtsi file, and we can add a header later and remain binary compatible. 
-However if the same number set does end up repeated in different .dtsi 
-files I think that would motivate adding a header for F4 family.
-
-
-Daniel.
-
+I'd prefer this to be handled through the normal read() API rather than 
+having a side channel for it. Big question is how though. We could specify 
+that reading in O_NONBLOCK mode will always read data if it is available and 
+not only if it is above the watermark threshold.
