@@ -1,40 +1,50 @@
-From: Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>
-Subject: Re: [PATCH] of: unittest: overlay: Keep track of created overlays
-Date: Sun, 3 May 2015 20:56:48 +0300
-Message-ID: <2FBD69F5-84E9-4528-9843-D3A010ED1B4B@antoniou-consulting.com>
-References: <1429868546-19613-1-git-send-email-pantelis.antoniou@konsulko.com> <CAL_JsqJ7GxMMiu7U7u6bgDLut0Eme6TOowZZW9A3WXrjFuAexA@mail.gmail.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2098\))
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH] iio: doc: fix typo
+Date: Sun, 03 May 2015 20:14:02 +0100
+Message-ID: <5546737A.9000407@kernel.org>
+References: <1430404582-13115-1-git-send-email-martink@posteo.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAL_JsqJ7GxMMiu7U7u6bgDLut0Eme6TOowZZW9A3WXrjFuAexA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1430404582-13115-1-git-send-email-martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Martin Kepplinger <martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>, irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Rob,
+On 30/04/15 15:36, Martin Kepplinger wrote:
+> Since we have deviceX, we don't need accelX. This has no users as of now, so
+> correcting this is no problem.
+> 
+> Signed-off-by: Martin Kepplinger <martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
+The X is certainly misleading.  The interface could have a number there,
+(if we have a device with multiple parallel accelerometers - unusual, but
+not unheard of) but it would be the channel index, not the device index
+and hence should be Y not X.
 
-> On Apr 29, 2015, at 18:55 , Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote=
-:
->=20
-> On Fri, Apr 24, 2015 at 4:42 AM, Pantelis Antoniou
-> <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
->> During the course of the overlay selftests some of them remain
->> applied. While this does not pose a real problem, make sure you trac=
-k
->> them and destroy them at the end of the test.
->>=20
->> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
->=20
-> This is already in for 4.1. Is this the same as the prior version.
->=20
+Or as we don't have any of these anyway, just drop the X and leave it as
+an un-indexed accelerometer channel.
 
-It is the same as the earlier one.
-
-> Rob
->=20
-
-Regards
-
-=E2=80=94 Pantelis
+Jonathan
+> ---
+> 
+> That's really just a question now. If I'm wrong, sorry for the noise.
+> 
+>  Documentation/ABI/testing/sysfs-bus-iio | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/Documentation/ABI/testing/sysfs-bus-iio b/Documentation/ABI/testing/sysfs-bus-iio
+> index 3befcb1..efd1334 100644
+> --- a/Documentation/ABI/testing/sysfs-bus-iio
+> +++ b/Documentation/ABI/testing/sysfs-bus-iio
+> @@ -1119,7 +1119,7 @@ Description:
+>  		This attribute is used to read the amount of quadrature error
+>  		present in the device at a given time.
+>  
+> -What:		/sys/.../iio:deviceX/in_accelX_power_mode
+> +What:		/sys/.../iio:deviceX/in_accel_power_mode
+>  KernelVersion:	3.11
+>  Contact:	linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>  Description:
+> 
