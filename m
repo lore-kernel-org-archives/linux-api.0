@@ -1,50 +1,76 @@
-From: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH] iio: doc: fix typo
-Date: Sun, 03 May 2015 20:14:02 +0100
-Message-ID: <5546737A.9000407@kernel.org>
-References: <1430404582-13115-1-git-send-email-martink@posteo.de>
+From: Sathyanarayanan Kuppuswamy
+	<sathyanarayanan.kuppuswamy-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [RFC PATCH 3/3] iio: derive the mounting matrix from ACPI _PLD
+ objects
+Date: Sun, 03 May 2015 18:11:10 -0700
+Message-ID: <5546C72E.2040101@linux.intel.com>
+References: <1430146908-27919-1-git-send-email-octavian.purdila@intel.com>	<1430146908-27919-4-git-send-email-octavian.purdila@intel.com>	<64714.10.254.87.235.1430149342.squirrel@linux.intel.com>	<CAE1zot+YKTPmVbG-_fNRy-E_VCcqq1VE78H3PMSMb5HvsBheQw@mail.gmail.com>	<553EB0B3.5000707@linux.intel.com> <CAE1zot+fusrvow+s2+CmoctcSD=c2BxoSyd2b=7MBv-pg68A+Q@mail.gmail.com>
+Reply-To: sathyanarayanan.kuppuswamy-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1430404582-13115-1-git-send-email-martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
+In-Reply-To: <CAE1zot+fusrvow+s2+CmoctcSD=c2BxoSyd2b=7MBv-pg68A+Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Martin Kepplinger <martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>, irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Octavian Purdila <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Robert Moore <robert.moore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Rafael J Wysocki <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, lenb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Srinivas Pandruvada <srinivas.pandruvada-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 30/04/15 15:36, Martin Kepplinger wrote:
-> Since we have deviceX, we don't need accelX. This has no users as of now, so
-> correcting this is no problem.
-> 
-> Signed-off-by: Martin Kepplinger <martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
-The X is certainly misleading.  The interface could have a number there,
-(if we have a device with multiple parallel accelerometers - unusual, but
-not unheard of) but it would be the channel index, not the device index
-and hence should be Y not X.
+Hi Octavian,
 
-Or as we don't have any of these anyway, just drop the X and leave it as
-an un-indexed accelerometer channel.
+On 04/27/2015 07:23 PM, Octavian Purdila wrote:
+> On Tue, Apr 28, 2015 at 12:57 AM, sathyanarayanan kuppuswamy
+> <sathyanarayanan.kuppuswamy-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+>> Hi
+>>
+>> On 04/27/2015 08:54 AM, Octavian Purdila wrote:
+>>> On Mon, Apr 27, 2015 at 6:42 PM, Kuppuswamy Sathyanarayanan
+>>> <sathyanarayanan.kuppuswamy-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+>>>> Since Acpi framework already exports this info to user space, Why not do
+>>>> this derivation in user space code ? Why do we need new ABI, if the same
+>>>> can be derived from existing one.
+>>>>
+>>> The ABI was added in the previous patch so that we can present the
+>>> sensor orientation information to userspace even in the case of device
+>>> tree.
+>> If the main reason for implementing a new ABI is to support DT platforms,
+>> Why not implement a version of _PLD for device tree ? Don't you think it
+>> would be much better than adding a new ABI to export redundant information ?
+>>
+> IMO the mounting matrix is more consistent with the IIO ABIs. Although
+> I have no issue with repicating _PLD for device tree if people agree
+> that it is better.
+Since your main issue is, device tree lacking ABI to specify location
+information, you should consider fixing it there. Let's wait for others
+comment on this.
 
-Jonathan
-> ---
-> 
-> That's really just a question now. If I'm wrong, sorry for the noise.
-> 
->  Documentation/ABI/testing/sysfs-bus-iio | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/Documentation/ABI/testing/sysfs-bus-iio b/Documentation/ABI/testing/sysfs-bus-iio
-> index 3befcb1..efd1334 100644
-> --- a/Documentation/ABI/testing/sysfs-bus-iio
-> +++ b/Documentation/ABI/testing/sysfs-bus-iio
-> @@ -1119,7 +1119,7 @@ Description:
->  		This attribute is used to read the amount of quadrature error
->  		present in the device at a given time.
->  
-> -What:		/sys/.../iio:deviceX/in_accelX_power_mode
-> +What:		/sys/.../iio:deviceX/in_accel_power_mode
->  KernelVersion:	3.11
->  Contact:	linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->  Description:
-> 
+If you think mounting matrix provides more information than what is 
+supported
+by _PLD,  then we should consider implementing another ABI. AFAIK, that 
+is not
+the case here.
+
+Adding adding a new ABI to represent the information that can be derived
+from existing ABI does not seem to be useful.
+>
+>> Also the location information of the device is not just specific to iio
+>> drivers. You should consider that we would have similar requirements for
+>> devices implemented as input or platform drivers.
+> The upstream standard for those sensors where the orientation matters
+> (accelerometer, gyro, compass) is IIO.
+>
+> Granted, there are other device types for which the orientation
+> information may be useful (e.g. camera). However the actual
+> interpretation and action to be taken is different for each subsystem
+> (e.g. in the camera case do the correction via V4L2_CID_HFLIP /
+> V4L2_CID_VFLIP) so I think it is better to expose it at the subsystem
+> level in a way consistent with the subsystem's ABIs.
+I agree that location information is used differently at different
+sub systems. But my question is why we need  a new ABI ?
+
+Why not handle it in user space ?
+
+-- 
+--
+Sathyanarayanan KN
+Android Kernel Developer
