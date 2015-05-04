@@ -1,7 +1,7 @@
 From: Ricardo Ribalda Delgado <ricardo.ribalda@gmail.com>
-Subject: [PATCH 3/4] media/vivid: Add support for Y16_BE format
-Date: Mon,  4 May 2015 10:07:31 +0200
-Message-ID: <1430726852-11715-4-git-send-email-ricardo.ribalda@gmail.com>
+Subject: [PATCH 2/4] media/v4l2-core: Add support for V4L2_PIX_FMT_Y16_BE
+Date: Mon,  4 May 2015 10:07:30 +0200
+Message-ID: <1430726852-11715-3-git-send-email-ricardo.ribalda@gmail.com>
 References: <1430726852-11715-1-git-send-email-ricardo.ribalda@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1430726852-11715-1-git-send-email-ricardo.ribalda@gmail.com>
@@ -10,73 +10,38 @@ To: Hans Verkuil <hverkuil@xs4all.nl>, Mauro Carvalho Chehab <mchehab@osg.samsun
 Cc: Ricardo Ribalda Delgado <ricardo.ribalda@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Support for V4L2_PIX_FMT_Y16_BE, a 16 bit big endian greyscale format.
+16 bit greyscale format, structured in Big Endian. Such a format can be
+converted into a PMN image just by adding a header.
 
 Signed-off-by: Ricardo Ribalda Delgado <ricardo.ribalda@gmail.com>
 ---
- drivers/media/platform/vivid/vivid-tpg.c        | 9 ++++++++-
- drivers/media/platform/vivid/vivid-vid-common.c | 8 ++++++++
- 2 files changed, 16 insertions(+), 1 deletion(-)
+ drivers/media/v4l2-core/v4l2-ioctl.c | 1 +
+ include/uapi/linux/videodev2.h       | 1 +
+ 2 files changed, 2 insertions(+)
 
-diff --git a/drivers/media/platform/vivid/vivid-tpg.c b/drivers/media/platform/vivid/vivid-tpg.c
-index 9e50303a19c5..2e5129a6bc2f 100644
---- a/drivers/media/platform/vivid/vivid-tpg.c
-+++ b/drivers/media/platform/vivid/vivid-tpg.c
-@@ -221,6 +221,7 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
- 	case V4L2_PIX_FMT_ABGR32:
- 	case V4L2_PIX_FMT_GREY:
- 	case V4L2_PIX_FMT_Y16:
-+	case V4L2_PIX_FMT_Y16_BE:
- 		tpg->is_yuv = false;
- 		break;
- 	case V4L2_PIX_FMT_YUV444:
-@@ -315,6 +316,7 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
- 	case V4L2_PIX_FMT_YUV555:
- 	case V4L2_PIX_FMT_YUV565:
- 	case V4L2_PIX_FMT_Y16:
-+	case V4L2_PIX_FMT_Y16_BE:
- 		tpg->twopixelsize[0] = 2 * 2;
- 		break;
- 	case V4L2_PIX_FMT_RGB24:
-@@ -715,7 +717,8 @@ static void precalculate_color(struct tpg_data *tpg, int k)
- 		b <<= 4;
- 	}
- 	if (tpg->qual == TPG_QUAL_GRAY || tpg->fourcc == V4L2_PIX_FMT_GREY ||
--	    tpg->fourcc == V4L2_PIX_FMT_Y16) {
-+	    tpg->fourcc == V4L2_PIX_FMT_Y16 ||
-+	    tpg->fourcc == V4L2_PIX_FMT_Y16_BE) {
- 		/* Rec. 709 Luma function */
- 		/* (0.2126, 0.7152, 0.0722) * (255 * 256) */
- 		r = g = b = (13879 * r + 46688 * g + 4713 * b) >> 16;
-@@ -902,6 +905,10 @@ static void gen_twopix(struct tpg_data *tpg,
- 		buf[0][offset] = 0;
- 		buf[0][offset+1] = r_y;
- 		break;
-+	case V4L2_PIX_FMT_Y16_BE:
-+		buf[0][offset] = r_y;
-+		buf[0][offset+1] = 0;
-+		break;
- 	case V4L2_PIX_FMT_YUV422P:
- 	case V4L2_PIX_FMT_YUV420:
- 	case V4L2_PIX_FMT_YUV420M:
-diff --git a/drivers/media/platform/vivid/vivid-vid-common.c b/drivers/media/platform/vivid/vivid-vid-common.c
-index 96ccd3c38dd2..45f10a7f9b46 100644
---- a/drivers/media/platform/vivid/vivid-vid-common.c
-+++ b/drivers/media/platform/vivid/vivid-vid-common.c
-@@ -197,6 +197,14 @@ struct vivid_fmt vivid_formats[] = {
- 		.buffers = 1,
- 	},
- 	{
-+		.fourcc   = V4L2_PIX_FMT_Y16_BE,
-+		.vdownsampling = { 1 },
-+		.bit_depth = { 16 },
-+		.is_yuv   = true,
-+		.planes   = 1,
-+		.buffers = 1,
-+	},
-+	{
- 		.fourcc   = V4L2_PIX_FMT_RGB332, /* rrrgggbb */
- 		.vdownsampling = { 1 },
- 		.bit_depth = { 8 },
+diff --git a/drivers/media/v4l2-core/v4l2-ioctl.c b/drivers/media/v4l2-core/v4l2-ioctl.c
+index 14766029bf49..136df7ccfedc 100644
+--- a/drivers/media/v4l2-core/v4l2-ioctl.c
++++ b/drivers/media/v4l2-core/v4l2-ioctl.c
+@@ -1146,6 +1146,7 @@ static void v4l_fill_fmtdesc(struct v4l2_fmtdesc *fmt)
+ 	case V4L2_PIX_FMT_Y10:		descr = "10-bit Greyscale"; break;
+ 	case V4L2_PIX_FMT_Y12:		descr = "12-bit Greyscale"; break;
+ 	case V4L2_PIX_FMT_Y16:		descr = "16-bit Greyscale"; break;
++	case V4L2_PIX_FMT_Y16_BE:	descr = "16-bit Greyscale BE"; break;
+ 	case V4L2_PIX_FMT_Y10BPACK:	descr = "10-bit Greyscale (Packed)"; break;
+ 	case V4L2_PIX_FMT_PAL8:		descr = "8-bit Palette"; break;
+ 	case V4L2_PIX_FMT_UV8:		descr = "8-bit Chrominance UV 4-4"; break;
+diff --git a/include/uapi/linux/videodev2.h b/include/uapi/linux/videodev2.h
+index fa376f7666ba..3f01d7bbbc77 100644
+--- a/include/uapi/linux/videodev2.h
++++ b/include/uapi/linux/videodev2.h
+@@ -404,6 +404,7 @@ struct v4l2_pix_format {
+ #define V4L2_PIX_FMT_Y10     v4l2_fourcc('Y', '1', '0', ' ') /* 10  Greyscale     */
+ #define V4L2_PIX_FMT_Y12     v4l2_fourcc('Y', '1', '2', ' ') /* 12  Greyscale     */
+ #define V4L2_PIX_FMT_Y16     v4l2_fourcc('Y', '1', '6', ' ') /* 16  Greyscale     */
++#define V4L2_PIX_FMT_Y16_BE  v4l2_fourcc_be('Y', '1', '6', ' ') /* 16  Greyscale BE  */
+ 
+ /* Grey bit-packed formats */
+ #define V4L2_PIX_FMT_Y10BPACK    v4l2_fourcc('Y', '1', '0', 'B') /* 10  Greyscale bit-packed */
 -- 
 2.1.4
