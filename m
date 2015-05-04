@@ -1,142 +1,245 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [PATCH v3 3/3] proc: add kpageidle file
-Date: Mon, 4 May 2015 12:17:22 +0900
-Message-ID: <20150504031722.GA2768@blaptop>
-References: <cover.1430217477.git.vdavydov@parallels.com>
- <4c24a6bf2c9711dd4dbb72a43a16eba6867527b7.1430217477.git.vdavydov@parallels.com>
- <20150429043536.GB11486@blaptop>
- <20150429091248.GD1694@esperanza>
- <20150430082531.GD21771@blaptop>
- <20150430145055.GB17640@esperanza>
+From: Eric Dumazet <eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH net-next] tcp: provide SYN headers for passive connections
+Date: Sun, 03 May 2015 21:34:46 -0700
+Message-ID: <1430714086.3711.165.camel@edumazet-glaptop2.roam.corp.google.com>
+References: <1430502237-5619-1-git-send-email-emunson@akamai.com>
+	 <1430505777.3711.135.camel@edumazet-glaptop2.roam.corp.google.com>
+	 <CALx6S34ftz_wDoPwcJg_cMQu4QtnBJF-=d+gF5ieTA=d=r31-Q@mail.gmail.com>
+	 <20150501201417.GB6113@akamai.com>
+	 <1430511800.3711.138.camel@edumazet-glaptop2.roam.corp.google.com>
+	 <20150501202908.GC6113@akamai.com>
+	 <1430512894.3711.140.camel@edumazet-glaptop2.roam.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150430145055.GB17640@esperanza>
-Sender: owner-linux-mm@kvack.org
-To: Vladimir Davydov <vdavydov@parallels.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1430512894.3711.140.camel-XN9IlZ5yJG9HTL0Zs8A6p/gx64E7kk8eUsxypvmhUTTZJqsBc5GL+g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: Tom Herbert <tom-BjP2VixgY4xUbtYUoyoikg@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 30, 2015 at 05:50:55PM +0300, Vladimir Davydov wrote:
-> On Thu, Apr 30, 2015 at 05:25:31PM +0900, Minchan Kim wrote:
-> > On Wed, Apr 29, 2015 at 12:12:48PM +0300, Vladimir Davydov wrote:
-> > > On Wed, Apr 29, 2015 at 01:35:36PM +0900, Minchan Kim wrote:
-> > > > On Tue, Apr 28, 2015 at 03:24:42PM +0300, Vladimir Davydov wrote:
-> > > > > +#ifdef CONFIG_IDLE_PAGE_TRACKING
-> > > > > +static struct page *kpageidle_get_page(unsigned long pfn)
-> > > > > +{
-> > > > > +	struct page *page;
-> > > > > +
-> > > > > +	if (!pfn_valid(pfn))
-> > > > > +		return NULL;
-> > > > > +	page = pfn_to_page(pfn);
-> > > > > +	/*
-> > > > > +	 * We are only interested in user memory pages, i.e. pages that are
-> > > > > +	 * allocated and on an LRU list.
-> > > > > +	 */
-> > > > > +	if (!page || page_count(page) == 0 || !PageLRU(page))
-> > > > > +		return NULL;
-> > > > > +	if (!get_page_unless_zero(page))
-> > > > > +		return NULL;
-> > > > > +	if (unlikely(!PageLRU(page))) {
-> > > > 
-> > > > What lock protect the check PageLRU?
-> > > > If it is racing ClearPageLRU, what happens?
-> > > 
-> > > If we hold a reference to a page and see that it's on an LRU list, it
-> > > will surely remain a user memory page at least until we release the
-> > > reference to it, so it must be safe to play with idle/young flags. If we
-> > 
-> > The problem is that you pass the page in rmap reverse logic(ie, page_referenced)
-> > once you judge it's LRU page so if it is false-positive, what happens?
-> > A question is SetPageLRU, PageLRU, ClearPageLRU keeps memory ordering?
-> > IOW, all of fields from struct page rmap can acccess should be set up completely
-> > before LRU checking. Otherwise, something will be broken.
-> 
-> So, basically you are concerned about the case when we encounter a
-> freshly allocated page, which has PG_lru bit set and it's going to
-> become anonymous, but it is still in the process of rmap initialization,
-> i.e. its ->mapping or ->mapcount may still be uninitialized, right?
-> 
-> AFAICS, page_referenced should handle such pages fine. Look, it only
-> needs ->index, ->mapping, and ->mapcount.
-> 
-> If ->mapping is unset, than it is NULL and rmap_walk_anon_lock ->
-> page_lock_anon_vma_read will return NULL so that rmap_walk will be a
-> no-op.
-> 
-> If ->index is not initialized, than at worst we will go to
-> anon_vma_interval_tree_foreach over a wrong interval, in which case we
-> will see that the page is actually not mapped in page_referenced_one ->
-> page_check_address and again do nothing.
-> 
-> If ->mapcount is not initialized it is -1, and page_lock_anon_vma_read
-> will return NULL, just as it does in case ->mapping = NULL.
-> 
-> For file pages, we always take PG_locked before checking ->mapping, so
-> it must be valid.
-> 
-> Thanks,
-> Vladimir
+From: Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
+This patch allows a server application to get the TCP SYN headers for
+its passive connections.  This is useful if the server is doing
+fingerprinting of clients based on SYN packet contents.
 
-do_anonymous_page
-page_add_new_anon_rmap
-atomic_set(&page->_mapcount, 0);
-__page_set_anon_rmap
-   anon_vma = (void *) anon_vma + PAGE_MAPPING_ANON;
-   page->mapping = (struct address_space *) anon_vma;
-   page->index = linear_page_index(vma, address);
-lru_cache_add 
-  __pagevec_lru_add_fn
-  SetPageLRU(page);
+Two socket options are added: TCP_SAVE_SYN and TCP_SAVED_SYN.
 
-During the procedure, there is no lock to prevent race. Then, at least,
-we need a write memory barrier to guarantee other fields set up before
-SetPageLRU. (Of course, PageLRU should have read-memory barrier to work
-well) But I can't find any barrier, either.
+The first is used on a socket to enable saving the SYN headers
+for child connections. This can be set before or after the listen()
+call.
 
-IOW, any fields you said could be out of order store without any lock or
-memory barrier. You might argue atomic op is a barrier on x86 but it
-doesn't guarantee other arches work like that so we need explict momory
-barrier or lock.
+The latter is used to retrieve the SYN headers for passive connections,
+if the parent listener has enabled TCP_SAVE_SYN.
 
-Let's have a theoretical example.
+TCP_SAVED_SYN is read once, it frees the saved SYN headers.
 
-        CPU 0                                                                           CPU 1
+The data returned in TCP_SAVED_SYN are network (IPv4/IPv6) and TCP
+headers.
 
-do_anonymous_page
-  __page_set_anon_rmap
-  /* out of order happened so SetPageLRU is done ahead */
-  SetPageLRU(page)
-  /* Compilr changed store operation like below */
-  page->mapping = (struct address_space *) anon_vma;
-  /* Big stall happens */
-                                                                /* idletacking judged it as LRU page so pass the page
-                                                                   in page_reference */
-                                                                page_refernced
-                                                                        page_rmapping return true because
-                                                                        page->mapping has some vaule but not complete
-                                                                        so it calls rmap_walk_file.
-                                                                        it's okay to pass non-completed anon page in rmap_walk_file?
+Original patch was written by Tom Herbert, I changed it to not hold
+a full skb (and associated dst and conntracking reference).
 
-  page->mapping = (struct address_space *)
-        ((void *)page_mapping + PAGE_MAPPING_ANON);
+We have used such patch for about 3 years at Google.
 
-It's too theoretical so it might be hard to happen in real practice.
-My point is there is nothing to prevent explict race.
-Even if there is no problem with other lock, it's fragile.
-Do I miss something?
+Signed-off-by: Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+---
+ include/linux/tcp.h        |    8 ++++++++
+ include/net/request_sock.h |    4 +++-
+ include/uapi/linux/tcp.h   |    2 ++
+ net/ipv4/tcp.c             |   35 +++++++++++++++++++++++++++++++++++
+ net/ipv4/tcp_input.c       |   18 ++++++++++++++++++
+ net/ipv4/tcp_ipv4.c        |    1 +
+ net/ipv4/tcp_minisocks.c   |    3 +++
+ 7 files changed, 70 insertions(+), 1 deletion(-)
 
-I think general way to handle PageLRU are ahead isolation or zone->lru_lock.
-
--- 
-Kind regards,
-Minchan Kim
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/include/linux/tcp.h b/include/linux/tcp.h
+index 3b2911502a8c..e6fb5df22db1 100644
+--- a/include/linux/tcp.h
++++ b/include/linux/tcp.h
+@@ -199,6 +199,7 @@ struct tcp_sock {
+ 		syn_fastopen:1,	/* SYN includes Fast Open option */
+ 		syn_fastopen_exp:1,/* SYN includes Fast Open exp. option */
+ 		syn_data_acked:1,/* data in SYN is acked by SYN-ACK */
++		save_syn:1,	/* Save headers of SYN packet */
+ 		is_cwnd_limited:1;/* forward progress limited by snd_cwnd? */
+ 	u32	tlp_high_seq;	/* snd_nxt at the time of TLP retransmit. */
+ 
+@@ -326,6 +327,7 @@ struct tcp_sock {
+ 	 * socket. Used to retransmit SYNACKs etc.
+ 	 */
+ 	struct request_sock *fastopen_rsk;
++	u32	*saved_syn;
+ };
+ 
+ enum tsq_flags {
+@@ -393,4 +395,10 @@ static inline int fastopen_init_queue(struct sock *sk, int backlog)
+ 	return 0;
+ }
+ 
++static inline void tcp_saved_syn_free(struct tcp_sock *tp)
++{
++	kfree(tp->saved_syn);
++	tp->saved_syn = NULL;
++}
++
+ #endif	/* _LINUX_TCP_H */
+diff --git a/include/net/request_sock.h b/include/net/request_sock.h
+index 9f4265ce8892..87935cad2f7b 100644
+--- a/include/net/request_sock.h
++++ b/include/net/request_sock.h
+@@ -64,6 +64,7 @@ struct request_sock {
+ 	struct timer_list		rsk_timer;
+ 	const struct request_sock_ops	*rsk_ops;
+ 	struct sock			*sk;
++	u32				*saved_syn;
+ 	u32				secid;
+ 	u32				peer_secid;
+ };
+@@ -77,7 +78,7 @@ reqsk_alloc(const struct request_sock_ops *ops, struct sock *sk_listener)
+ 		req->rsk_ops = ops;
+ 		sock_hold(sk_listener);
+ 		req->rsk_listener = sk_listener;
+-
++		req->saved_syn = NULL;
+ 		/* Following is temporary. It is coupled with debugging
+ 		 * helpers in reqsk_put() & reqsk_free()
+ 		 */
+@@ -104,6 +105,7 @@ static inline void reqsk_free(struct request_sock *req)
+ 	req->rsk_ops->destructor(req);
+ 	if (req->rsk_listener)
+ 		sock_put(req->rsk_listener);
++	kfree(req->saved_syn);
+ 	kmem_cache_free(req->rsk_ops->slab, req);
+ }
+ 
+diff --git a/include/uapi/linux/tcp.h b/include/uapi/linux/tcp.h
+index faa72f4fa547..51ebedba577f 100644
+--- a/include/uapi/linux/tcp.h
++++ b/include/uapi/linux/tcp.h
+@@ -113,6 +113,8 @@ enum {
+ #define TCP_TIMESTAMP		24
+ #define TCP_NOTSENT_LOWAT	25	/* limit number of unsent bytes in write queue */
+ #define TCP_CC_INFO		26	/* Get Congestion Control (optional) info */
++#define TCP_SAVE_SYN		27	/* Record SYN headers for new connections */
++#define TCP_SAVED_SYN		28	/* Get SYN headers recorded for connection */
+ 
+ struct tcp_repair_opt {
+ 	__u32	opt_code;
+diff --git a/net/ipv4/tcp.c b/net/ipv4/tcp.c
+index 46efa03d2b11..ecccfdc50d76 100644
+--- a/net/ipv4/tcp.c
++++ b/net/ipv4/tcp.c
+@@ -2482,6 +2482,13 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
+ 			icsk->icsk_syn_retries = val;
+ 		break;
+ 
++	case TCP_SAVE_SYN:
++		if (val < 0 || val > 1)
++			err = -EINVAL;
++		else
++			tp->save_syn = val;
++		break;
++
+ 	case TCP_LINGER2:
+ 		if (val < 0)
+ 			tp->linger2 = -1;
+@@ -2818,6 +2825,34 @@ static int do_tcp_getsockopt(struct sock *sk, int level,
+ 	case TCP_NOTSENT_LOWAT:
+ 		val = tp->notsent_lowat;
+ 		break;
++	case TCP_SAVE_SYN:
++		val = tp->save_syn;
++		break;
++	case TCP_SAVED_SYN: {
++		if (get_user(len, optlen))
++			return -EFAULT;
++
++		lock_sock(sk);
++		if (tp->saved_syn) {
++			len = min_t(unsigned int, tp->saved_syn[0], len);
++			if (put_user(len, optlen)) {
++				release_sock(sk);
++				return -EFAULT;
++			}
++			if (copy_to_user(optval, tp->saved_syn + 1, len)) {
++				release_sock(sk);
++				return -EFAULT;
++			}
++			tcp_saved_syn_free(tp);
++			release_sock(sk);
++		} else {
++			release_sock(sk);
++			len = 0;
++			if (put_user(len, optlen))
++				return -EFAULT;
++		}
++		return 0;
++	}
+ 	default:
+ 		return -ENOPROTOOPT;
+ 	}
+diff --git a/net/ipv4/tcp_input.c b/net/ipv4/tcp_input.c
+index 09bdc4abfcbb..df2ca615cd0c 100644
+--- a/net/ipv4/tcp_input.c
++++ b/net/ipv4/tcp_input.c
+@@ -6060,6 +6060,23 @@ static bool tcp_syn_flood_action(struct sock *sk,
+ 	return want_cookie;
+ }
+ 
++static void tcp_reqsk_record_syn(const struct sock *sk,
++				 struct request_sock *req,
++				 const struct sk_buff *skb)
++{
++	if (tcp_sk(sk)->save_syn) {
++		u32 len = skb_network_header_len(skb) + tcp_hdrlen(skb);
++		u32 *copy;
++
++		copy = kmalloc(len + sizeof(u32), GFP_ATOMIC);
++		if (copy) {
++			copy[0] = len;
++			memcpy(&copy[1], skb_network_header(skb), len);
++			req->saved_syn = copy;
++		}
++	}
++}
++
+ int tcp_conn_request(struct request_sock_ops *rsk_ops,
+ 		     const struct tcp_request_sock_ops *af_ops,
+ 		     struct sock *sk, struct sk_buff *skb)
+@@ -6192,6 +6209,7 @@ int tcp_conn_request(struct request_sock_ops *rsk_ops,
+ 		tcp_rsk(req)->tfo_listener = false;
+ 		af_ops->queue_hash_add(sk, req, TCP_TIMEOUT_INIT);
+ 	}
++	tcp_reqsk_record_syn(sk, req, skb);
+ 
+ 	return 0;
+ 
+diff --git a/net/ipv4/tcp_ipv4.c b/net/ipv4/tcp_ipv4.c
+index fc1c658ec6c1..91cb4768a860 100644
+--- a/net/ipv4/tcp_ipv4.c
++++ b/net/ipv4/tcp_ipv4.c
+@@ -1802,6 +1802,7 @@ void tcp_v4_destroy_sock(struct sock *sk)
+ 
+ 	/* If socket is aborted during connect operation */
+ 	tcp_free_fastopen_req(tp);
++	tcp_saved_syn_free(tp);
+ 
+ 	sk_sockets_allocated_dec(sk);
+ 	sock_release_memcg(sk);
+diff --git a/net/ipv4/tcp_minisocks.c b/net/ipv4/tcp_minisocks.c
+index e5d7649136fc..ebe2ab2596ed 100644
+--- a/net/ipv4/tcp_minisocks.c
++++ b/net/ipv4/tcp_minisocks.c
+@@ -536,6 +536,9 @@ struct sock *tcp_create_openreq_child(struct sock *sk, struct request_sock *req,
+ 		newtp->fastopen_rsk = NULL;
+ 		newtp->syn_data_acked = 0;
+ 
++		newtp->saved_syn = req->saved_syn;
++		req->saved_syn = NULL;
++
+ 		TCP_INC_STATS_BH(sock_net(sk), TCP_MIB_PASSIVEOPENS);
+ 	}
+ 	return newsk;
