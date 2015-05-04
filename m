@@ -1,47 +1,107 @@
-From: Eric Dumazet <eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH net-next] tcp: provide SYN headers for passive
- connections
-Date: Mon, 04 May 2015 08:12:10 -0700
-Message-ID: <1430752330.3711.180.camel@edumazet-glaptop2.roam.corp.google.com>
-References: <1430502237-5619-1-git-send-email-emunson@akamai.com>
-	 <1430505777.3711.135.camel@edumazet-glaptop2.roam.corp.google.com>
-	 <CALx6S34ftz_wDoPwcJg_cMQu4QtnBJF-=d+gF5ieTA=d=r31-Q@mail.gmail.com>
-	 <20150501201417.GB6113@akamai.com>
-	 <1430511800.3711.138.camel@edumazet-glaptop2.roam.corp.google.com>
-	 <20150501202908.GC6113@akamai.com>
-	 <1430512894.3711.140.camel@edumazet-glaptop2.roam.corp.google.com>
-	 <1430714086.3711.165.camel@edumazet-glaptop2.roam.corp.google.com>
-	 <CABrhC0nmsfAyHgJX8zEBDBVfFN=2qXKy7cO0Kbp9R9UCeEYowg@mail.gmail.com>
+From: Srinivas Pandruvada <srinivas.pandruvada-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [RFC PATCH 3/3] iio: derive the mounting matrix from ACPI _PLD
+ objects
+Date: Mon, 04 May 2015 08:23:57 -0700
+Message-ID: <1430753037.5506.18.camel@spandruv-DESK3.jf.intel.com>
+References: <1430146908-27919-1-git-send-email-octavian.purdila@intel.com>
+	 <1430146908-27919-4-git-send-email-octavian.purdila@intel.com>
+	 <64714.10.254.87.235.1430149342.squirrel@linux.intel.com>
+	 <CAE1zot+YKTPmVbG-_fNRy-E_VCcqq1VE78H3PMSMb5HvsBheQw@mail.gmail.com>
+	 <553EB0B3.5000707@linux.intel.com>
+	 <CAE1zot+fusrvow+s2+CmoctcSD=c2BxoSyd2b=7MBv-pg68A+Q@mail.gmail.com>
+	 <5546C72E.2040101@linux.intel.com>
+	 <CAE1zot+1qGPhquFH8+=MhiXNb-OoqKuiYJae3aATqntFO6Q-Jw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CABrhC0nmsfAyHgJX8zEBDBVfFN=2qXKy7cO0Kbp9R9UCeEYowg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: John Heffner <johnwheffner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Tom Herbert <tom-BjP2VixgY4xUbtYUoyoikg@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAE1zot+1qGPhquFH8+=MhiXNb-OoqKuiYJae3aATqntFO6Q-Jw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Octavian Purdila <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: sathyanarayanan.kuppuswamy-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Robert Moore <robert.moore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Rafael J Wysocki <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Len Brown <lenb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2015-05-04 at 10:41 -0400, John Heffner wrote:
-
-> Nice idea, seems handy.  But a couple (somewhat related) questions:
+On Mon, 2015-05-04 at 11:21 +0300, Octavian Purdila wrote:
+> On Mon, May 4, 2015 at 4:11 AM, Sathyanarayanan Kuppuswamy
+> <sathyanarayanan.kuppuswamy-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+> > Hi Octavian,
+> >
+> > On 04/27/2015 07:23 PM, Octavian Purdila wrote:
+> >>
+> >> On Tue, Apr 28, 2015 at 12:57 AM, sathyanarayanan kuppuswamy
+> >> <sathyanarayanan.kuppuswamy-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+> >>>
+> >>> Hi
+> >>>
+> >>> On 04/27/2015 08:54 AM, Octavian Purdila wrote:
+> >>>>
+> >>>> On Mon, Apr 27, 2015 at 6:42 PM, Kuppuswamy Sathyanarayanan
+> >>>> <sathyanarayanan.kuppuswamy-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+> >>>>>
+> >>>>> Since Acpi framework already exports this info to user space, Why not
+> >>>>> do
+> >>>>> this derivation in user space code ? Why do we need new ABI, if the
+> >>>>> same
+> >>>>> can be derived from existing one.
+> >>>>>
+> >>>> The ABI was added in the previous patch so that we can present the
+> >>>> sensor orientation information to userspace even in the case of device
+> >>>> tree.
+> >>>
+> >>> If the main reason for implementing a new ABI is to support DT platforms,
+> >>> Why not implement a version of _PLD for device tree ? Don't you think it
+> >>> would be much better than adding a new ABI to export redundant
+> >>> information ?
+> >>>
+> >> IMO the mounting matrix is more consistent with the IIO ABIs. Although
+> >> I have no issue with repicating _PLD for device tree if people agree
+> >> that it is better.
+> >
+> > Since your main issue is, device tree lacking ABI to specify location
+> > information, you should consider fixing it there. Let's wait for others
+> > comment on this.
+> >
+> > If you think mounting matrix provides more information than what is
+> > supported
+> > by _PLD,  then we should consider implementing another ABI. AFAIK, that is
+> > not
+> > the case here.
+> >
+> > Adding adding a new ABI to represent the information that can be derived
+> > from existing ABI does not seem to be useful.
 > 
-> * Other than convenience, are there reasons not use an existing, more
-> general-purpose and portable mechanism like pcap?  (Permissions, I
-> guess?)
+> AFAICS the ACPI _PLD information is not (yet) exported to userspace. This patch:
+> 
+> http://marc.info/?t=140795040700003&r=1&w=2
+> 
+> does not seem to be merged upstream. So there is no existing ABI to
+> derive from :)
+I don't think there is any major objection to this patch. The author
+should just try and see if he can replace to device_* calls.
 
-Very hard to synchronize when say you have 32 listeners sharing a single
-port (SO_REUSEPORT), and receive one million SYN per second (when my TCP
-listener scaling work is finished).
+Thanks,
+Srinivas
 
-libpcap here would be a serious bottleneck, even with a clever FANIN
-support on the af_packet sockets, considering use of multiqueue NIC.
-
-> * Are there conditions where, for security purposes, you don't want an
-> application to have access to the raw SYNs?
-
-Not that we are aware of : We restrict the access to IP + TCP headers,
-for the passive part. All information that is available there was
-provided by the remote peer on a 'open way' anyway.
-
-Thanks.
+> 
+> >>
+> >>
+> >>> Also the location information of the device is not just specific to iio
+> >>> drivers. You should consider that we would have similar requirements for
+> >>> devices implemented as input or platform drivers.
+> >>
+> >> The upstream standard for those sensors where the orientation matters
+> >> (accelerometer, gyro, compass) is IIO.
+> >>
+> >> Granted, there are other device types for which the orientation
+> >> information may be useful (e.g. camera). However the actual
+> >> interpretation and action to be taken is different for each subsystem
+> >> (e.g. in the camera case do the correction via V4L2_CID_HFLIP /
+> >> V4L2_CID_VFLIP) so I think it is better to expose it at the subsystem
+> >> level in a way consistent with the subsystem's ABIs.
+> >
+> > I agree that location information is used differently at different
+> > sub systems. But my question is why we need  a new ABI ?
+> >
+> > Why not handle it in user space ?
+> >
+> > -
