@@ -1,47 +1,147 @@
-From: Eric Dumazet <eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH net-next] tcp: provide SYN headers for passive
- connections
-Date: Mon, 04 May 2015 07:36:37 -0700
-Message-ID: <1430750197.3711.175.camel@edumazet-glaptop2.roam.corp.google.com>
-References: <1430502237-5619-1-git-send-email-emunson@akamai.com>
-	 <1430505777.3711.135.camel@edumazet-glaptop2.roam.corp.google.com>
-	 <CALx6S34ftz_wDoPwcJg_cMQu4QtnBJF-=d+gF5ieTA=d=r31-Q@mail.gmail.com>
-	 <20150501201417.GB6113@akamai.com>
-	 <1430511800.3711.138.camel@edumazet-glaptop2.roam.corp.google.com>
-	 <20150501202908.GC6113@akamai.com>
-	 <1430512894.3711.140.camel@edumazet-glaptop2.roam.corp.google.com>
-	 <1430714086.3711.165.camel@edumazet-glaptop2.roam.corp.google.com>
-	 <20150504142155.GD6113@akamai.com>
-	 <1430749912.3711.173.camel@edumazet-glaptop2.roam.corp.google.com>
+From: Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>
+Subject: Re: [RFC PATCH 2/3] iio: allow better control for flushing the hardware
+ fifo
+Date: Mon, 04 May 2015 16:38:39 +0200
+Message-ID: <5547846F.50604@metafoo.de>
+References: <1430306340-5026-1-git-send-email-octavian.purdila@intel.com>	<1430306340-5026-3-git-send-email-octavian.purdila@intel.com>	<55450C9E.4060409@metafoo.de> <CAE1zotKDQjQS70tY0NS6536pjmKW8mbH_p+2aOv0kM0075hgkA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1430749912.3711.173.camel-XN9IlZ5yJG9HTL0Zs8A6p/gx64E7kk8eUsxypvmhUTTZJqsBc5GL+g@public.gmane.org>
+In-Reply-To: <CAE1zotKDQjQS70tY0NS6536pjmKW8mbH_p+2aOv0kM0075hgkA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Cc: Tom Herbert <tom-BjP2VixgY4xUbtYUoyoikg@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Octavian Purdila <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, "linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Adriana Reus <adriana.reus-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2015-05-04 at 07:31 -0700, Eric Dumazet wrote:
-> On Mon, 2015-05-04 at 10:21 -0400, Eric B Munson wrote:
-> 
-> > The getsockopt() for TCP_SAVE_SYN doesn't offer much over returning 0
-> > from TCP_SAVED_SYN if the headers are not available. Why not collapse
-> > these into a single option?  If you need to track the difference between
-> > the headers are not avialable and should have been and the headers
-> > should not be available it can be done through error codes from
-> > getsockopt().
-> 
-> A single option is not good, because it adds confusion.
-> 
-> Note that we need to set the bit on any socket state, and doing this
-> with a single option is not very easy. ( You got this wrong in your
-> patch btw)
+On 05/03/2015 08:11 AM, Octavian Purdila wrote:
+> On Sat, May 2, 2015 at 8:42 PM, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org> wrote:
+>> On 04/29/2015 01:18 PM, Octavian Purdila wrote:
+>>>
+>>> Some applications need to be able to flush [1] the hardware fifo of
+>>> the device and to receive events of when that happened [2] so that it
+>>> can ignore stale data.
+>>>
+>>> This patch adds a new event (IIO_EV_TYPE_HWFIFO_FLUSHED) that should
+>>> be sent to userspace when a flush has been completed. The application
+>>> will be able to identify which are the samples to ignore based on the
+>>> timestamp of the event.
+>>>
+>>> To allow applications to accurately generate a hardware fifo flush on
+>>> demand, this patch also adds a new sysfs entry that triggers a
+>>> hardware fifo flush when written to.
+>>>
+>>> [1]
+>>> https://source.android.com/devices/sensors/hal-interface.html#flush_sensor
+>>> [2]
+>>> https://source.android.com/devices/sensors/hal-interface.html#metadata_flush_complete_events
+>>
+>>
+>> Since there is no asynchronous queue for commands to be executed in IIO
+>> adding a asynchronous completion event doesn't make too much sense. This is
+>> something that needs to be handled at the HAL level.
+>>
+>> The HAL needs to have a queue of commands that need to be executed where new
+>> events can be added asynchronously, then has a loop which goes through the
+>> commands in the queue and executes them, and once executed generated the
+>> appropriate completion event.
+>>
+>
+> Hi Lars,
+>
+> Thanks for the review.
+>
+> We can't do this at the HAL level because the needed information is
+> only available at the HAL level. At the HAL level each received sample
+> from the driver is converted to an event. When doing a flush the HAL
+> must add a special event (flush complete) after the last sample in the
+> hardware fifo. But the HAL does not know how many samples are in the
+> hardware fifo, how many are in the device buffer, etc.
 
-Another argument for having two options is for TCP_REPAIR support.
+Ok, so that's what you need the timestamp for I presume? So the signature of 
+the of the sync function is basically.
 
-If you want to properly check/restore a socket, including its
-TCP_SAVE_SYN state, then you definitely need 2 options.
+timestamp sync(device)
 
- 
+where timestamp is greater or equal to the timestamp of all samples before 
+the sync and smaller or equal to all samples after the sync.
+
+What your implementation does is implement a synchronous API to flush the 
+FIFO but delivers the result of the operation asynchronously via a rather 
+arbitrary delivery mechanism. That is in my opinion not a good API/ABI and 
+might even have some race condition issues.
+
+If you do a flush, then read as much data as available you know that this 
+data is from before the flush and any data read at a later point is after 
+the flush.
+
+>
+>>
+>> I really wish that document would specify what is actually meant by flush.
+>> Copy the FIFO content to a software buffer or discard the FIFO content.
+>>
+>
+> It does say: "... and flushes the FIFO; those events are delivered as
+> usual (i.e.: as if the maximum reporting latency had expired) ..."
+>
+
+Missed that, thanks.
+
+>>
+>>>
+>>> Signed-off-by: Octavian Purdila <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+>>> ---
+>>>    Documentation/ABI/testing/sysfs-bus-iio | 11 +++++++++++
+>>>    include/linux/iio/sysfs.h               |  3 +++
+>>>    include/uapi/linux/iio/types.h          |  1 +
+>>>    3 files changed, 15 insertions(+)
+>>>
+>>> diff --git a/Documentation/ABI/testing/sysfs-bus-iio
+>>> b/Documentation/ABI/testing/sysfs-bus-iio
+>>> index 866b4ec..bb4d8de 100644
+>>> --- a/Documentation/ABI/testing/sysfs-bus-iio
+>>> +++ b/Documentation/ABI/testing/sysfs-bus-iio
+>>> @@ -1375,3 +1375,14 @@ Description:
+>>>                  The emissivity ratio of the surface in the field of view
+>>> of the
+>>>                  contactless temperature sensor.  Emissivity varies from 0
+>>> to 1,
+>>>                  with 1 being the emissivity of a black body.
+>>> +
+>>> +What:          /sys/bus/iio/devices/iio:deviceX/buffer/hwfifo_flush
+>>> +KernelVersion: 4.2
+>>> +Contact:       linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>>> +Description:
+>>> +               Write only entry that accepts a single strictly positive
+>>> integer
+>>> +               specifying the number of samples to flush from the
+>>> hardware fifo
+>>> +               to the device buffer. When the flush is completed an
+>>> +               IIO_EV_TYPE_HWFIFO_FLUSHED event is generated. The event
+>>> has the
+>>> +               timestamp equal with the timestamp of last sample that was
+>>> +               flushed from the hardware fifo.
+>>
+>>
+>> I'd prefer this to be handled through the normal read() API rather than
+>> having a side channel for it. Big question is how though. We could specify
+>> that reading in O_NONBLOCK mode will always read data if it is available and
+>> not only if it is above the watermark threshold.
+>
+> Do you mean to try and flush when the available data in the device
+> buffer is less then the requested size? That should work and hopefully
+> the ABI change does not matter since the hwfifo stuff has not been
+> released yet.
+
+Basically only let poll() and blocking read() block when not enough data is 
+available. But for non-blocking read return as much data as possible if data 
+is available.
+
+>
+> I prefer the explicit flush though. I think it is better to have the
+> ABIs clearly visible instead of being buried in the details.
+>
+
+Yea, it's a bit tricky. What should be used for this sysfs, IOCTL, read()...
+
+- Lars
