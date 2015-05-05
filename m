@@ -1,245 +1,214 @@
-From: Beata Michalska <b.michalska@samsung.com>
-Subject: Re: [RFC v2 1/4] fs: Add generic file system event notifications
-Date: Tue, 05 May 2015 14:16:59 +0200
-Message-ID: <5548B4BB.7050503@samsung.com>
-References: <1430135504-24334-2-git-send-email-b.michalska@samsung.com>
- <20150427142421.GB21942@kroah.com> <553E50EB.3000402@samsung.com>
- <20150427153711.GA23428@kroah.com> <20150428135653.GD9955@quack.suse.cz>
- <20150428140936.GA13406@kroah.com> <553F9D56.6030301@samsung.com>
- <20150428173900.GA16708@kroah.com> <5540822C.10000@samsung.com>
- <20150429074259.GA31089@quack.suse.cz> <20150429091303.GA4090@kroah.com>
+From: Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v7 05/15] dt-bindings: Document the STM32 reset bindings
+Date: Tue, 05 May 2015 15:07:30 +0100
+Message-ID: <5548CEA2.8020807@linaro.org>
+References: <1430410844-16062-1-git-send-email-mcoquelin.stm32@gmail.com>	<1430410844-16062-6-git-send-email-mcoquelin.stm32@gmail.com>	<55433467.2010603@linaro.org>	<CALszF6Bw900E9MtpaVmvkFxsrOODRkNg+RxRXz5V3WghHtsxbw@mail.gmail.com>	<5544A069.5000808@linaro.org> <CALszF6BTb0Ce6jfT5gY4eEtSep6+8XqOxu1LbpUXHmPYX9PmgQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-reply-to: <20150429091303.GA4090@kroah.com>
-Sender: owner-linux-mm@kvack.org
-To: Greg KH <greg@kroah.com>
-Cc: Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALszF6BTb0Ce6jfT5gY4eEtSep6+8XqOxu1LbpUXHmPYX9PmgQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>
+Cc: =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, =?UTF-8?B?QW5kcmVhcyBGw6RyYmVy?= <afaerber-l3A5Bk7waGM@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>, Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>, Andy Shevchenko <andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Chanwoo Choi <cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Vladimir Zapolskiy <vladimir_zapolskiy-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Thomas Gleixner <tglx@li>
 List-Id: linux-api@vger.kernel.org
 
-Hi again,
-
-On 04/29/2015 11:13 AM, Greg KH wrote:
-> On Wed, Apr 29, 2015 at 09:42:59AM +0200, Jan Kara wrote:
->> On Wed 29-04-15 09:03:08, Beata Michalska wrote:
->>> On 04/28/2015 07:39 PM, Greg KH wrote:
->>>> On Tue, Apr 28, 2015 at 04:46:46PM +0200, Beata Michalska wrote:
->>>>> On 04/28/2015 04:09 PM, Greg KH wrote:
->>>>>> On Tue, Apr 28, 2015 at 03:56:53PM +0200, Jan Kara wrote:
->>>>>>> On Mon 27-04-15 17:37:11, Greg KH wrote:
->>>>>>>> On Mon, Apr 27, 2015 at 05:08:27PM +0200, Beata Michalska wrote:
->>>>>>>>> On 04/27/2015 04:24 PM, Greg KH wrote:
->>>>>>>>>> On Mon, Apr 27, 2015 at 01:51:41PM +0200, Beata Michalska wrot=
-e:
->>>>>>>>>>> Introduce configurable generic interface for file
->>>>>>>>>>> system-wide event notifications, to provide file
->>>>>>>>>>> systems with a common way of reporting any potential
->>>>>>>>>>> issues as they emerge.
->>>>>>>>>>>
->>>>>>>>>>> The notifications are to be issued through generic
->>>>>>>>>>> netlink interface by newly introduced multicast group.
->>>>>>>>>>>
->>>>>>>>>>> Threshold notifications have been included, allowing
->>>>>>>>>>> triggering an event whenever the amount of free space drops
->>>>>>>>>>> below a certain level - or levels to be more precise as two
->>>>>>>>>>> of them are being supported: the lower and the upper range.
->>>>>>>>>>> The notifications work both ways: once the threshold level
->>>>>>>>>>> has been reached, an event shall be generated whenever
->>>>>>>>>>> the number of available blocks goes up again re-activating
->>>>>>>>>>> the threshold.
->>>>>>>>>>>
->>>>>>>>>>> The interface has been exposed through a vfs. Once mounted,
->>>>>>>>>>> it serves as an entry point for the set-up where one can
->>>>>>>>>>> register for particular file system events.
->>>>>>>>>>>
->>>>>>>>>>> Signed-off-by: Beata Michalska <b.michalska@samsung.com>
->>>>>>>>>>> ---
->>>>>>>>>>>  Documentation/filesystems/events.txt |  231 ++++++++++
->>>>>>>>>>>  fs/Makefile                          |    1 +
->>>>>>>>>>>  fs/events/Makefile                   |    6 +
->>>>>>>>>>>  fs/events/fs_event.c                 |  770 ++++++++++++++++=
-++++++++++++++++++
->>>>>>>>>>>  fs/events/fs_event.h                 |   25 ++
->>>>>>>>>>>  fs/events/fs_event_netlink.c         |   99 +++++
->>>>>>>>>>>  fs/namespace.c                       |    1 +
->>>>>>>>>>>  include/linux/fs.h                   |    6 +-
->>>>>>>>>>>  include/linux/fs_event.h             |   58 +++
->>>>>>>>>>>  include/uapi/linux/fs_event.h        |   54 +++
->>>>>>>>>>>  include/uapi/linux/genetlink.h       |    1 +
->>>>>>>>>>>  net/netlink/genetlink.c              |    7 +-
->>>>>>>>>>>  12 files changed, 1257 insertions(+), 2 deletions(-)
->>>>>>>>>>>  create mode 100644 Documentation/filesystems/events.txt
->>>>>>>>>>>  create mode 100644 fs/events/Makefile
->>>>>>>>>>>  create mode 100644 fs/events/fs_event.c
->>>>>>>>>>>  create mode 100644 fs/events/fs_event.h
->>>>>>>>>>>  create mode 100644 fs/events/fs_event_netlink.c
->>>>>>>>>>>  create mode 100644 include/linux/fs_event.h
->>>>>>>>>>>  create mode 100644 include/uapi/linux/fs_event.h
->>>>>>>>>>
->>>>>>>>>> Any reason why you just don't do uevents for the block devices=
- today,
->>>>>>>>>> and not create a new type of netlink message and userspace too=
-l required
->>>>>>>>>> to read these?
->>>>>>>>>
->>>>>>>>> The idea here is to have support for filesystems with no backin=
-g device as well.
->>>>>>>>> Parsing the message with libnl is really simple and requires fe=
-w lines of code
->>>>>>>>> (sample application has been presented in the initial version o=
-f this RFC)
->>>>>>>>
->>>>>>>> I'm not saying it's not "simple" to parse, just that now you are=
- doing
->>>>>>>> something that requires a different tool.  If you have a block d=
-evice,
->>>>>>>> you should be able to emit uevents for it, you don't need a back=
-ing
->>>>>>>> device, we handle virtual filesystems in /sys/block/ just fine :=
-)
->>>>>>>>
->>>>>>>> People already have tools that listen to libudev for system moni=
-toring
->>>>>>>> and management, why require them to hook up to yet-another-libra=
-ry?  And
->>>>>>>> what is going to provide the ability for multiple userspace tool=
-s to
->>>>>>>> listen to these netlink messages in case you have more than one =
-program
->>>>>>>> that wants to watch for these things (i.e. multiple desktop file=
-system
->>>>>>>> monitoring tools, system-health checkers, etc.)?
->>>>>>>   As much as I understand your concerns I'm not convinced uevent =
-interface
->>>>>>> is a good fit. There are filesystems that don't have underlying b=
-lock
->>>>>>> device - think of e.g. tmpfs or filesystems working directly on t=
-op of
->>>>>>> flash devices.  These still want to send notification to userspac=
-e (one of
->>>>>>> primary motivation for this interfaces was so that tmpfs can noti=
-fy about
->>>>>>> something). And creating some fake nodes in /sys/block for tmpfs =
-and
->>>>>>> similar filesystems seems like doing more harm than good to me...
->>>>>>
->>>>>> If these are "fake" block devices, what's going to be present in t=
-he
->>>>>> block major/minor fields of the netlink message?  For some reason =
-I
->>>>>> thought it was a required field, and because of that, I thought we=
- had a
->>>>>> "real" filesystem somewhere to refer to, otherwise how would users=
-pace
->>>>>> know what filesystem was creating these events?
->>>>>>
->>>>>> What am I missing here?
->>>>>>
->>>>>> confused,
->>>>>>
->>>>>> greg k-h
->>>>>>
+On 04/05/15 12:25, Maxime Coquelin wrote:
+> 2015-05-02 12:01 GMT+02:00 Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>:
+>> On 02/05/15 08:55, Maxime Coquelin wrote:
+>>>
+>>> 2015-05-01 10:08 GMT+02:00 Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>:
+>>>>
+>>>> On 30/04/15 17:20, Maxime Coquelin wrote:
 >>>>>
->>>>> For those 'fake' block devs, upon mount, get_anon_bdev will assign
->>>>> the major:minor numbers. Userspace might get those through stat.
+>>>>>
+>>>>> This adds documentation of device tree bindings for the
+>>>>> STM32 reset controller.
+>>>>>
+>>>>> Tested-by: Chanwoo Choi <cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+>>>>> Acked-by: Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>
+>>>>> Acked-by: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+>>>>> Signed-off-by: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>>>>> ---
+>>>>>     .../devicetree/bindings/reset/st,stm32-rcc.txt     | 107
+>>>>> +++++++++++++++++++++
+>>>>>     1 file changed, 107 insertions(+)
+>>>>>     create mode 100644
+>>>>> Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
+>>>>>
+>>>>> diff --git a/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
+>>>>> b/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
+>>>>> new file mode 100644
+>>>>> index 0000000..c1b0f8d
+>>>>> --- /dev/null
+>>>>> +++ b/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
+>>>>> @@ -0,0 +1,107 @@
+>>>>> +STMicroelectronics STM32 Peripheral Reset Controller
+>>>>> +====================================================
+>>>>> +
+>>>>> +The RCC IP is both a reset and a clock controller. This documentation
+>>>>> only
+>>>>> +documents the reset part.
+>>>>> +
+>>>>> +Please also refer to reset.txt in this directory for common reset
+>>>>> +controller binding usage.
+>>>>> +
+>>>>> +Required properties:
+>>>>> +- compatible: Should be "st,stm32-rcc"
+>>>>> +- reg: should be register base and length as documented in the
+>>>>> +  datasheet
+>>>>> +- #reset-cells: 1, see below
+>>>>> +
+>>>>> +example:
+>>>>> +
+>>>>> +rcc: reset@40023800 {
+>>>>> +       #reset-cells = <1>;
+>>>>> +       compatible = "st,stm32-rcc";
 >>>>
->>>> How can userspace do the mapping backwards from this "anonymous"
->>>> major:minor number for these types of filesystems in such a way that
->>>> they can "know" how to report the block device that is causing the
->>>> event?
 >>>>
->>>> thanks,
 >>>>
->>>> greg k-h
+>>>> Do you intend the clock driver to use the same compatible string (given
+>>>> it
+>>>> is the same bit of hardware).
+>>>>
+>>>> If so, is it better to use st,stm32f4-rcc here? It seems unlikey to me
+>>>> that
+>>>> the register layout of the PLLs and dividers can be the same on the f7
+>>>> parts
+>>>> (and later).
+>>>
+>>>
+>>> I agree we need a compatible dedicate to f4 series for clocks, and
+>>> maybe even one for f429 (to be checked).
+>>> For the reset part, we don't have this need.
+>>>
+>>> So either we use only "st,stm32f4" as you suggest, or we can have both
+>>> in device tree:
+>>>
+>>> rcc: reset@40023800 {
+>>>       #reset-cells = <1>;
+>>>       compatible = "st,stm32f4-rcc", "st,stm32-rcc";
+>>>       reg = <0x40023800 0x400>;
+>>> };
+>>>
+>>> What do you think?
+>>
+>>
+>> Having both makes sense. The reset driver probably doesn't care about
+>> differences between F4 and F7 (I know very little about F7 but I can't think
+>> of any obvious h/ware evolution that would confuse the current reset
+>> driver).
+>>
+>>
+>>>>> +       reg = <0x40023800 0x400>;
+>>>>> +};
+>>>>> +
+>>>>> +Specifying softreset control of devices
+>>>>> +=======================================
+>>>>> +
+>>>>> +Device nodes should specify the reset channel required in their
+>>>>> "resets"
+>>>>> +property, containing a phandle to the reset device node and an index
+>>>>> specifying
+>>>>> +which channel to use.
+>>>>> +The index is the bit number within the RCC registers bank, starting
+>>>>> from
+>>>>> RCC
+>>>>> +base address.
+>>>>> +It is calculated as: index = register_offset / 4 * 32 + bit_offset.
+>>>>> +Where bit_offset is the bit offset within the register.
+>>>>> +For example, for CRC reset:
+>>>>> +  crc = AHB1RSTR_offset / 4 * 32 + CRCRST_bit_offset = 0x10 / 4 * 32 +
+>>>>> 12
+>>>>> = 140
+>>>>> +
+>>>>> +example:
+>>>>> +
+>>>>> +       timer2 {
+>>>>> +               resets                  = <&rcc 256>;
+>>>>> +       };
+>>>>> +
+>>>>> +List of valid indices for STM32F429:
+>>>>> + - gpioa: 128
+>>>>> + - gpiob: 129
+>>>>> ...
+>>>>> <snip>
+>>>>> ...
+>>>>> + - sai1: 310
+>>>>> + - ltdc: 314
+>>>>
+>>>>
+>>>>
+>>>> These numbers are stable for all STM32F4 family parts. Should this table
+>>>> go
+>>>> into a dt-bindings header file?
 >>>>
 >>>
->>> It needs to be done internally by the app but is doable.
->>> The app knows what it is watching, so it can maintain the mappings.
->>> So prior to activating the notifications it can call 'stat' on the mo=
-unt point.
->>> Stat struct gives the 'st_dev' which is the device id. Same will be r=
-eported
->>> within the message payload (through major:minor numbers). So having t=
-his,
->>> the app is able to get any other information it needs.=20
->>> Note that the events refer to the file system as a whole and they may=
- not
->>> necessarily have anything to do with the actual block device.=20
->=20
-> How are you going to show an event for a filesystem that is made up of
-> multiple block devices?
->=20
->>   Or you can use /proc/self/mountinfo for the mapping. There you can s=
-ee
->> device numbers, real device names if applicable and mountpoints. This =
-has
->> the advantage that it works even if filesystem mountpoints change.
->=20
-> Ok, then that brings up my next question, how does this handle
-> namespaces?  What namespace is the event being sent in?  block devices
-> aren't namespaced, but the mount points are, is that going to cause
-> problems?
->=20
-> thanks,
->=20
-> greg k-h
->=20
+>>> This has already been discussed with Philipp and Arnd in earlier
+>>> versions of this series [0].
+>>> I initially created a header file, and we  decided going this way finally.
+>>
+>>
+>> Thanks for the link. I had overlooked that (I only really started paying
+>> attention at v5; I should probably have looked further back before
+>> commenting).
+>>
+>> However...
+>>
+>> Arnd's concerns about mergability of headers can also be met by using h/ware
+>> values in the header file can't there. To be honest my comment was pretty
+>> heavily influenced after having read a recent patch from Rob Herring (
+>> https://lkml.org/lkml/2015/5/1/14 ) which does exactly this.
+>>
+>> The main reason I got interested in having a header is that the reset bits
+>> and the clock gate bits are encoded using the same bit patterns so I
+>> wondering it we could express that only once.
+>
+> Ok, I understand your need, and it makes sense.
+> The problem is that the values defined today cannot be re-used
+> directly for clocks.
+> Since the calculation is starting from rcc base, there is a 128 offset.
+>
+> To re-use the same values, maybe we should create a mfd dt-binding header file.
+> It would contain the bits definition starting from 0, and  define
+> macros for both reset and clocks to add the offsets.
+>
+> For example, includes/dt-bindings/mfd/stm32f4-rcc.h would look like:
+>
+> #define GPIOA 0
+> #define GPIOB 1
+> ...
+> #define LTDC 186
+>
+> #define STM32F4_RESET(x) (x + 128)
+> #define STM32F4_CLOCK(x) (x + 384)
+>
+> Then, in DT, a reset would be described like this:
+>
+> timer2 {
+>      resets = <&rcc STM32F4_RESET(TIM2)>;
+> };
+>
+> Phillip, Daniel, does that look acceptable to you?
 
-Getting back to the namespaces ...=20
-In the current state the notifications will be sent to the init network n=
-amespace,
-which means that processes belonging to a different net namespace will no=
-t
-be able to receive them. To be more precise, those processes will not be=20
-able to subscribe to the multicast group, though this can be easily chang=
-ed.
-Furthermore, the notifications might also be sent to specific namespace.
-In this case, the one, with which the trace for the mount point has been =
-registered,
-which as I believe would be the best approach.
+Doesn't look unreasonable.
 
-As for the mount namespaces, reading the config file needs to be slightly=
- tweaked,=20
-to hide away all the registered mount points which does not belong to the=
- current
-mount namespace.
-
-Still, there is one possible 'issue' - the private/slave mount points.=20
-As the notifications will be sent to all the listeners (within the same n=
-etns),
-the events might be visible to processes outside the given mount ns.
-This should be limited to only those listeners that share the mount names=
-pace,
-to which such private/slave mount points belong. As using the generic net=
-link
-to filter the outgoing messages is doable (with small changes to current
-implementation), the filters themselves seem rather cumbersome, as they w=
-ould require
-finding the socket=E2=80=99s owner mount namespace, which just doesn't se=
-ems right.
-On the other hand, identifying the file system, which generated the event=
-, will
-not be possible for processes outside such namespace, as device major:min=
-or
-numbers are not bound to any namespace (afaict) so they will not provide =
-any
-valid information. They will remain unresolved.
-
-The best way out here though, is to leave it to userspace to properly set=
-up new namespaces:
-the mount namespace with possible private/slave mounts should have a sepa=
-rate=20
-network namespace to isolate the potential fs events, if required.
+I am a little uneasy simply because there are very few similar header 
+files in that directory but I haven't thought of a better idea.
 
 
-BR
-Beata
+Daniel.
 
 
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
+>
+> Kind regards,
+> Maxime
+>>
+>> I guess it doesn't matter that much, especially given there is only one
+>> .dtsi file, and we can add a header later and remain binary compatible.
+>> However if the same number set does end up repeated in different .dtsi files
+>> I think that would motivate adding a header for F4 family.
+>>
+>>
+>> Daniel.
+>>
