@@ -1,39 +1,29 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH] ipc/sem: 64bit union semun definition
-Date: Tue, 05 May 2015 23:40:17 +0200
-Message-ID: <3111248.ei0HoJaVIp@wuerfel>
-References: <1430850523-7522-1-git-send-email-a22017@motorola.com> <2165666.hrkl3t0kHm@wuerfel> <CACwVHNr9K0XXvB8JVEet_OtTRAJmjkHTsKsOc9h5HNts9+X5QA@mail.gmail.com>
+From: josh@joshtriplett.org
+Subject: Re: [PATCH 1/2] clone: Support passing tls argument via C rather
+ than pt_regs magic
+Date: Tue, 5 May 2015 16:12:21 -0700
+Message-ID: <20150505231221.GB16525@cloud>
+References: <20150421174711.GA5127@jtriplet-mobl1>
+ <alpine.DEB.2.11.1505052050100.4225@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CACwVHNr9K0XXvB8JVEet_OtTRAJmjkHTsKsOc9h5HNts9+X5QA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sandy Sun <a22017-3WKxDLwmzFNWk0Htik3J/w@public.gmane.org>
-Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.11.1505052050100.4225@nanos>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday 05 May 2015 14:09:14 Sandy Sun wrote:
-> Hi Arnd,
+On Tue, May 05, 2015 at 08:53:03PM +0200, Thomas Gleixner wrote:
+> On Tue, 21 Apr 2015, Josh Triplett wrote:
+> > 
+> > Signed-off-by: Josh Triplett <josh@joshtriplett.org>
+> > Signed-off-by: Thiago Macieira <thiago.macieira@intel.com>
 > 
-> If user space uses union semun to define.It will use semid_ds not
-> semid64_ds.
-> 
-> I used LTP test case semctl01 IPC_STAT to do the test on 64 bit
-> system.According to the test results:
-> 
-> Before the change, semun uses semid_ds, the field of sem_nsems reporting of
-> semaphore STAT info is incorrect:
-> 
-> semctl01    1  TFAIL  :  semaphore STAT info is incorrect
-> semctl01    2  TFAIL  :  semaphore mode info is incorrect
-> 
-> After this change, the return value is correct:
-> semctl01    1  TPASS  :  buf.sem_nsems and buf.sem_perm.mode are correct
-> semctl01    2  TPASS  :  buf.sem_perm.mode is correct
+> Can you please clarify that SOB chain? It does not make any sense.
 
-I don't understand: semctl01 does not reference 'union semun64'. How
-does this change make a difference, and why would that difference
-be limited to 64-bit systems?
+Co-authored patch.  We both worked on it together, and sadly git doesn't
+support a commit with multiple authors, so this is the next best thing.
 
-	Arnd
+- Josh Triplett
