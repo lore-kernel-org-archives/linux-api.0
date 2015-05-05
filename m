@@ -1,214 +1,518 @@
-From: Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v7 05/15] dt-bindings: Document the STM32 reset bindings
-Date: Tue, 05 May 2015 15:07:30 +0100
-Message-ID: <5548CEA2.8020807@linaro.org>
-References: <1430410844-16062-1-git-send-email-mcoquelin.stm32@gmail.com>	<1430410844-16062-6-git-send-email-mcoquelin.stm32@gmail.com>	<55433467.2010603@linaro.org>	<CALszF6Bw900E9MtpaVmvkFxsrOODRkNg+RxRXz5V3WghHtsxbw@mail.gmail.com>	<5544A069.5000808@linaro.org> <CALszF6BTb0Ce6jfT5gY4eEtSep6+8XqOxu1LbpUXHmPYX9PmgQ@mail.gmail.com>
+From: Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH V6 05/10] audit: log creation and deletion of namespace
+	instances
+Date: Tue, 05 May 2015 10:22:32 -0400
+Message-ID: <2487286.y6vyJ9A3er@x2>
+References: <cover.1429252659.git.rgb@redhat.com>
+	<11270b0b1afd0a25b108915673e1e1b38dfeeafa.1429252659.git.rgb@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALszF6BTb0Ce6jfT5gY4eEtSep6+8XqOxu1LbpUXHmPYX9PmgQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>
-Cc: =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, =?UTF-8?B?QW5kcmVhcyBGw6RyYmVy?= <afaerber-l3A5Bk7waGM@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>, Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>, Andy Shevchenko <andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Chanwoo Choi <cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Vladimir Zapolskiy <vladimir_zapolskiy-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Thomas Gleixner <tglx@li>
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <11270b0b1afd0a25b108915673e1e1b38dfeeafa.1429252659.git.rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org, zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 04/05/15 12:25, Maxime Coquelin wrote:
-> 2015-05-02 12:01 GMT+02:00 Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>:
->> On 02/05/15 08:55, Maxime Coquelin wrote:
->>>
->>> 2015-05-01 10:08 GMT+02:00 Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>:
->>>>
->>>> On 30/04/15 17:20, Maxime Coquelin wrote:
->>>>>
->>>>>
->>>>> This adds documentation of device tree bindings for the
->>>>> STM32 reset controller.
->>>>>
->>>>> Tested-by: Chanwoo Choi <cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
->>>>> Acked-by: Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>
->>>>> Acked-by: Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
->>>>> Signed-off-by: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->>>>> ---
->>>>>     .../devicetree/bindings/reset/st,stm32-rcc.txt     | 107
->>>>> +++++++++++++++++++++
->>>>>     1 file changed, 107 insertions(+)
->>>>>     create mode 100644
->>>>> Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
->>>>>
->>>>> diff --git a/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
->>>>> b/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
->>>>> new file mode 100644
->>>>> index 0000000..c1b0f8d
->>>>> --- /dev/null
->>>>> +++ b/Documentation/devicetree/bindings/reset/st,stm32-rcc.txt
->>>>> @@ -0,0 +1,107 @@
->>>>> +STMicroelectronics STM32 Peripheral Reset Controller
->>>>> +====================================================
->>>>> +
->>>>> +The RCC IP is both a reset and a clock controller. This documentation
->>>>> only
->>>>> +documents the reset part.
->>>>> +
->>>>> +Please also refer to reset.txt in this directory for common reset
->>>>> +controller binding usage.
->>>>> +
->>>>> +Required properties:
->>>>> +- compatible: Should be "st,stm32-rcc"
->>>>> +- reg: should be register base and length as documented in the
->>>>> +  datasheet
->>>>> +- #reset-cells: 1, see below
->>>>> +
->>>>> +example:
->>>>> +
->>>>> +rcc: reset@40023800 {
->>>>> +       #reset-cells = <1>;
->>>>> +       compatible = "st,stm32-rcc";
->>>>
->>>>
->>>>
->>>> Do you intend the clock driver to use the same compatible string (given
->>>> it
->>>> is the same bit of hardware).
->>>>
->>>> If so, is it better to use st,stm32f4-rcc here? It seems unlikey to me
->>>> that
->>>> the register layout of the PLLs and dividers can be the same on the f7
->>>> parts
->>>> (and later).
->>>
->>>
->>> I agree we need a compatible dedicate to f4 series for clocks, and
->>> maybe even one for f429 (to be checked).
->>> For the reset part, we don't have this need.
->>>
->>> So either we use only "st,stm32f4" as you suggest, or we can have both
->>> in device tree:
->>>
->>> rcc: reset@40023800 {
->>>       #reset-cells = <1>;
->>>       compatible = "st,stm32f4-rcc", "st,stm32-rcc";
->>>       reg = <0x40023800 0x400>;
->>> };
->>>
->>> What do you think?
->>
->>
->> Having both makes sense. The reset driver probably doesn't care about
->> differences between F4 and F7 (I know very little about F7 but I can't think
->> of any obvious h/ware evolution that would confuse the current reset
->> driver).
->>
->>
->>>>> +       reg = <0x40023800 0x400>;
->>>>> +};
->>>>> +
->>>>> +Specifying softreset control of devices
->>>>> +=======================================
->>>>> +
->>>>> +Device nodes should specify the reset channel required in their
->>>>> "resets"
->>>>> +property, containing a phandle to the reset device node and an index
->>>>> specifying
->>>>> +which channel to use.
->>>>> +The index is the bit number within the RCC registers bank, starting
->>>>> from
->>>>> RCC
->>>>> +base address.
->>>>> +It is calculated as: index = register_offset / 4 * 32 + bit_offset.
->>>>> +Where bit_offset is the bit offset within the register.
->>>>> +For example, for CRC reset:
->>>>> +  crc = AHB1RSTR_offset / 4 * 32 + CRCRST_bit_offset = 0x10 / 4 * 32 +
->>>>> 12
->>>>> = 140
->>>>> +
->>>>> +example:
->>>>> +
->>>>> +       timer2 {
->>>>> +               resets                  = <&rcc 256>;
->>>>> +       };
->>>>> +
->>>>> +List of valid indices for STM32F429:
->>>>> + - gpioa: 128
->>>>> + - gpiob: 129
->>>>> ...
->>>>> <snip>
->>>>> ...
->>>>> + - sai1: 310
->>>>> + - ltdc: 314
->>>>
->>>>
->>>>
->>>> These numbers are stable for all STM32F4 family parts. Should this table
->>>> go
->>>> into a dt-bindings header file?
->>>>
->>>
->>> This has already been discussed with Philipp and Arnd in earlier
->>> versions of this series [0].
->>> I initially created a header file, and we  decided going this way finally.
->>
->>
->> Thanks for the link. I had overlooked that (I only really started paying
->> attention at v5; I should probably have looked further back before
->> commenting).
->>
->> However...
->>
->> Arnd's concerns about mergability of headers can also be met by using h/ware
->> values in the header file can't there. To be honest my comment was pretty
->> heavily influenced after having read a recent patch from Rob Herring (
->> https://lkml.org/lkml/2015/5/1/14 ) which does exactly this.
->>
->> The main reason I got interested in having a header is that the reset bits
->> and the clock gate bits are encoded using the same bit patterns so I
->> wondering it we could express that only once.
->
-> Ok, I understand your need, and it makes sense.
-> The problem is that the values defined today cannot be re-used
-> directly for clocks.
-> Since the calculation is starting from rcc base, there is a 128 offset.
->
-> To re-use the same values, maybe we should create a mfd dt-binding header file.
-> It would contain the bits definition starting from 0, and  define
-> macros for both reset and clocks to add the offsets.
->
-> For example, includes/dt-bindings/mfd/stm32f4-rcc.h would look like:
->
-> #define GPIOA 0
-> #define GPIOB 1
-> ...
-> #define LTDC 186
->
-> #define STM32F4_RESET(x) (x + 128)
-> #define STM32F4_CLOCK(x) (x + 384)
->
-> Then, in DT, a reset would be described like this:
->
-> timer2 {
->      resets = <&rcc STM32F4_RESET(TIM2)>;
-> };
->
-> Phillip, Daniel, does that look acceptable to you?
+Hello,
 
-Doesn't look unreasonable.
+I think there needs to be some more discussion around this. It seems like this 
+is not exactly recording things that are useful for audit.
 
-I am a little uneasy simply because there are very few similar header 
-files in that directory but I haven't thought of a better idea.
+On Friday, April 17, 2015 03:35:52 AM Richard Guy Briggs wrote:
+> Log the creation and deletion of namespace instances in all 6 types of
+> namespaces.
+> 
+> Twelve new audit message types have been introduced:
+> AUDIT_NS_INIT_MNT       1330    /* Record mount namespace instance creation
+> */ AUDIT_NS_INIT_UTS       1331    /* Record UTS namespace instance
+> creation */ AUDIT_NS_INIT_IPC       1332    /* Record IPC namespace
+> instance creation */ AUDIT_NS_INIT_USER      1333    /* Record USER
+> namespace instance creation */ AUDIT_NS_INIT_PID       1334    /* Record
+> PID namespace instance creation */ AUDIT_NS_INIT_NET       1335    /*
+> Record NET namespace instance creation */ AUDIT_NS_DEL_MNT        1336   
+> /* Record mount namespace instance deletion */ AUDIT_NS_DEL_UTS        1337
+>    /* Record UTS namespace instance deletion */ AUDIT_NS_DEL_IPC       
+> 1338    /* Record IPC namespace instance deletion */ AUDIT_NS_DEL_USER     
+>  1339    /* Record USER namespace instance deletion */ AUDIT_NS_DEL_PID    
+>    1340    /* Record PID namespace instance deletion */ AUDIT_NS_DEL_NET   
+>     1341    /* Record NET namespace instance deletion */
 
+The requirements for auditing of containers should be derived from VPP. In it, 
+it asks for selectable auditing, selective audit, and selective audit review. 
+What this means is that we need the container and all its children to have one 
+identifier that is inserted into all the events that are associated with the 
+container.
 
-Daniel.
+With this, its possible to do a search for all events related to a container. 
+Its possible to exclude events from a container. Its possible to not get any 
+events.
 
+The requirements also call out for the identification of the subject. This 
+means that the event should be bound to a syscall such as clone, setns, or 
+unshare.
 
->
-> Kind regards,
-> Maxime
->>
->> I guess it doesn't matter that much, especially given there is only one
->> .dtsi file, and we can add a header later and remain binary compatible.
->> However if the same number set does end up repeated in different .dtsi files
->> I think that would motivate adding a header for F4 family.
->>
->>
->> Daniel.
->>
+Also, any user space events originating inside the container needs to have the 
+container ID added to the user space event - just like auid and session id.
+
+Recording each instance of a name space is giving me something that I cannot 
+use to do queries required by the security target. Given these events, how do 
+I locate a web server event where it accesses a watched file? That 
+authentication failed? That an update within the container failed?
+
+The requirements are that we have to log the creation, suspension, migration, 
+and termination of a container. The requirements are not on the individual 
+name space.
+
+Maybe I'm missing how these events give me that. But I'd like to hear how I 
+would be able to meet requirements with these 12 events.
+
+-Steve
+
+ 
+> As suggested by Eric Paris, there are 12 message types, one for each of
+> creation and deletion, one for each type of namespace so that text searches
+> are easier in conjunction with the AUDIT_NS_INFO message type, being able
+> to search for all records such as "netns=4 " and to avoid fields
+> disappearing per message type to make ausearch more efficient.
+> 
+> A typical startup would look roughly like:
+> 
+> 	type=AUDIT_NS_INIT_UTS msg=audit(1408577534.868:5): pid=1 uid=0
+> auid=4294967295 ses=4294967295 subj=kernel dev=00:03 old_utsns=(none)
+> utsns=-2 res=1 type=AUDIT_NS_INIT_USER msg=audit(1408577534.868:6): pid=1
+> uid=0 auid=4294967295 ses=4294967295 subj=kernel dev=00:03
+> old_userns=(none) userns=-3 res=1 type=AUDIT_NS_INIT_PID
+> msg=audit(1408577534.868:7): pid=1 uid=0 auid=4294967295 ses=4294967295
+> subj=kernel dev=00:03 old_pidns=(none) pidns=-4 res=1
+> type=AUDIT_NS_INIT_MNT msg=audit(1408577534.868:8): pid=1 uid=0
+> auid=4294967295 ses=4294967295 subj=kernel dev=00:03 old_mntns=(none)
+> mntns=0 res=1 type=AUDIT_NS_INIT_IPC msg=audit(1408577534.868:9): pid=1
+> uid=0 auid=4294967295 ses=4294967295 subj=kernel dev=00:03 old_ipcns=(none)
+> ipcns=-1 res=1 type=AUDIT_NS_INIT_NET msg=audit(1408577533.500:10): pid=1
+> uid=0 auid=4294967295 ses=4294967295 subj=kernel dev=00:03 old_netns=(none)
+> netns=2 res=1
+> 
+> And a CLONE action would result in:
+> 	type=type=AUDIT_NS_INIT_NET msg=audit(1408577535.306:81): pid=481 uid=0
+> auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 dev=00:03
+> old_netns=2 netns=3 res=1
+> 
+> While deleting a namespace would result in:
+> 	type=type=AUDIT_NS_DEL_MNT msg=audit(1408577552.221:85): pid=481 uid=0
+> auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 dev=00:03
+> mntns=4 res=1
+> 
+> If not "(none)", old_XXXns lists the namespace from which it was cloned.
+> 
+> Signed-off-by: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> ---
+>  fs/namespace.c             |   13 +++++++++
+>  include/linux/audit.h      |    8 +++++
+>  include/uapi/linux/audit.h |   12 ++++++++
+>  ipc/namespace.c            |   12 ++++++++
+>  kernel/audit.c             |   64
+> ++++++++++++++++++++++++++++++++++++++++++++ kernel/pid_namespace.c     |  
+> 13 +++++++++
+>  kernel/user_namespace.c    |   13 +++++++++
+>  kernel/utsname.c           |   12 ++++++++
+>  net/core/net_namespace.c   |   12 ++++++++
+>  9 files changed, 159 insertions(+), 0 deletions(-)
+> 
+> diff --git a/fs/namespace.c b/fs/namespace.c
+> index 182bc41..7b62543 100644
+> --- a/fs/namespace.c
+> +++ b/fs/namespace.c
+> @@ -24,6 +24,7 @@
+>  #include <linux/proc_ns.h>
+>  #include <linux/magic.h>
+>  #include <linux/bootmem.h>
+> +#include <linux/audit.h>
+>  #include "pnode.h"
+>  #include "internal.h"
+> 
+> @@ -2459,6 +2460,7 @@ dput_out:
+> 
+>  static void free_mnt_ns(struct mnt_namespace *ns)
+>  {
+> +	audit_log_ns_del(AUDIT_NS_DEL_MNT, ns->proc_inum);
+>  	proc_free_inum(ns->proc_inum);
+>  	put_user_ns(ns->user_ns);
+>  	kfree(ns);
+> @@ -2518,6 +2520,7 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags,
+> struct mnt_namespace *ns, new_ns = alloc_mnt_ns(user_ns);
+>  	if (IS_ERR(new_ns))
+>  		return new_ns;
+> +	audit_log_ns_init(AUDIT_NS_INIT_MNT, ns->proc_inum, new_ns->proc_inum);
+> 
+>  	namespace_lock();
+>  	/* First pass: copy the tree topology */
+> @@ -2830,6 +2833,16 @@ static void __init init_mount_tree(void)
+>  	set_fs_root(current->fs, &root);
+>  }
+> 
+> +/* log the ID of init mnt namespace after audit service starts */
+> +static int __init mnt_ns_init_log(void)
+> +{
+> +	struct mnt_namespace *init_mnt_ns = init_task.nsproxy->mnt_ns;
+> +
+> +	audit_log_ns_init(AUDIT_NS_INIT_MNT, 0, init_mnt_ns->proc_inum);
+> +	return 0;
+> +}
+> +late_initcall(mnt_ns_init_log);
+> +
+>  void __init mnt_init(void)
+>  {
+>  	unsigned u;
+> diff --git a/include/linux/audit.h b/include/linux/audit.h
+> index 71698ec..b28dfb0 100644
+> --- a/include/linux/audit.h
+> +++ b/include/linux/audit.h
+> @@ -484,6 +484,9 @@ extern void		    audit_log_ns_info(struct 
+task_struct
+> *tsk); static inline void	    audit_log_ns_info(struct task_struct *tsk) {
+> }
+>  #endif
+> +extern void		    audit_log_ns_init(int type, unsigned int old_inum,
+> +					      unsigned int inum);
+> +extern void		    audit_log_ns_del(int type, unsigned int inum);
+> 
+>  extern int		    audit_update_lsm_rules(void);
+> 
+> @@ -542,6 +545,11 @@ static inline void audit_log_task_info(struct
+> audit_buffer *ab, { }
+>  static inline void audit_log_ns_info(struct task_struct *tsk)
+>  { }
+> +static inline int audit_log_ns_init(int type, unsigned int old_inum,
+> +				    unsigned int inum)
+> +{ }
+> +static inline int audit_log_ns_del(int type, unsigned int inum)
+> +{ }
+>  #define audit_enabled 0
+>  #endif /* CONFIG_AUDIT */
+>  static inline void audit_log_string(struct audit_buffer *ab, const char
+> *buf) diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+> index 1ffb151..487cad6 100644
+> --- a/include/uapi/linux/audit.h
+> +++ b/include/uapi/linux/audit.h
+> @@ -111,6 +111,18 @@
+>  #define AUDIT_PROCTITLE		1327	/* Proctitle emit event */
+>  #define AUDIT_FEATURE_CHANGE	1328	/* audit log listing feature changes 
+*/
+>  #define AUDIT_NS_INFO		1329	/* Record process namespace IDs */
+> +#define AUDIT_NS_INIT_MNT	1330	/* Record mount namespace instance 
+creation
+> */ +#define AUDIT_NS_INIT_UTS	1331	/* Record UTS namespace instance
+> creation */ +#define AUDIT_NS_INIT_IPC	1332	/* Record IPC namespace
+> instance creation */ +#define AUDIT_NS_INIT_USER	1333	/* Record USER
+> namespace instance creation */ +#define AUDIT_NS_INIT_PID	1334	/* Record
+> PID namespace instance creation */ +#define AUDIT_NS_INIT_NET	1335	/*
+> Record NET namespace instance creation */ +#define AUDIT_NS_DEL_MNT	1336	
+/*
+> Record mount namespace instance deletion */ +#define
+> AUDIT_NS_DEL_UTS	1337	/* Record UTS namespace instance deletion */ 
++#define
+> AUDIT_NS_DEL_IPC	1338	/* Record IPC namespace instance deletion */ 
++#define
+> AUDIT_NS_DEL_USER	1339	/* Record USER namespace instance deletion */
+> +#define AUDIT_NS_DEL_PID	1340	/* Record PID namespace instance 
+deletion */
+> +#define AUDIT_NS_DEL_NET	1341	/* Record NET namespace instance deletion 
+*/
+> 
+>  #define AUDIT_AVC		1400	/* SE Linux avc denial or grant */
+>  #define AUDIT_SELINUX_ERR	1401	/* Internal SE Linux Errors */
+> diff --git a/ipc/namespace.c b/ipc/namespace.c
+> index 59451c1..73727ce 100644
+> --- a/ipc/namespace.c
+> +++ b/ipc/namespace.c
+> @@ -13,6 +13,7 @@
+>  #include <linux/mount.h>
+>  #include <linux/user_namespace.h>
+>  #include <linux/proc_ns.h>
+> +#include <linux/audit.h>
+> 
+>  #include "util.h"
+> 
+> @@ -41,6 +42,8 @@ static struct ipc_namespace *create_ipc_ns(struct
+> user_namespace *user_ns, }
+>  	atomic_inc(&nr_ipc_ns);
+> 
+> +	audit_log_ns_init(AUDIT_NS_INIT_IPC, old_ns->proc_inum, ns->proc_inum);
+> +
+>  	sem_init_ns(ns);
+>  	msg_init_ns(ns);
+>  	shm_init_ns(ns);
+> @@ -119,6 +122,7 @@ static void free_ipc_ns(struct ipc_namespace *ns)
+>  	 */
+>  	ipcns_notify(IPCNS_REMOVED);
+>  	put_user_ns(ns->user_ns);
+> +	audit_log_ns_del(AUDIT_NS_DEL_IPC, ns->proc_inum);
+>  	proc_free_inum(ns->proc_inum);
+>  	kfree(ns);
+>  }
+> @@ -197,3 +201,11 @@ const struct proc_ns_operations ipcns_operations = {
+>  	.install	= ipcns_install,
+>  	.inum		= ipcns_inum,
+>  };
+> +
+> +/* log the ID of init IPC namespace after audit service starts */
+> +static int __init ipc_namespaces_init(void)
+> +{
+> +	audit_log_ns_init(AUDIT_NS_INIT_IPC, 0, init_ipc_ns.proc_inum);
+> +	return 0;
+> +}
+> +late_initcall(ipc_namespaces_init);
+> diff --git a/kernel/audit.c b/kernel/audit.c
+> index 63f32f4..e6230c4 100644
+> --- a/kernel/audit.c
+> +++ b/kernel/audit.c
+> @@ -1978,6 +1978,70 @@ out:
+>  	kfree(name);
+>  }
+> 
+> +#ifdef CONFIG_NAMESPACES
+> +static char *ns_name[] = {
+> +	"mnt",
+> +	"uts",
+> +	"ipc",
+> +	"user",
+> +	"pid",
+> +	"net",
+> +};
+> +
+> +/**
+> + * audit_log_ns_init - report a namespace instance creation
+> + * @type: type of audit namespace instance created message
+> + * @old_inum: the ID number of the cloned namespace instance
+> + * @inum: the ID number of the new namespace instance
+> + */
+> +void  audit_log_ns_init(int type, unsigned int old_inum, unsigned int inum)
+> +{
+> +	struct audit_buffer *ab;
+> +	char *audit_ns_name = ns_name[type - AUDIT_NS_INIT_MNT];
+> +	struct vfsmount *mnt = task_active_pid_ns(current)->proc_mnt;
+> +	struct super_block *sb = mnt->mnt_sb;
+> +	char old_ns[16];
+> +
+> +	if (type < AUDIT_NS_INIT_MNT || type > AUDIT_NS_INIT_NET) {
+> +		WARN(1, "audit_log_ns_init: type:%d out of range", type);
+> +		return;
+> +	}
+> +	if (!old_inum)
+> +		sprintf(old_ns, "(none)");
+> +	else
+> +		sprintf(old_ns, "%d", old_inum - PROC_DYNAMIC_FIRST);
+> +	audit_log_common_recv_msg(&ab, type);
+> +	audit_log_format(ab, " dev=%02x:%02x old_%sns=%s %sns=%d res=1",
+> +			 MAJOR(sb->s_dev), MINOR(sb->s_dev),
+> +			 audit_ns_name, old_ns,
+> +			 audit_ns_name, inum - PROC_DYNAMIC_FIRST);
+> +	audit_log_end(ab);
+> +}
+> +
+> +/**
+> + * audit_log_ns_del - report a namespace instance deleted
+> + * @type: type of audit namespace instance deleted message
+> + * @inum: the ID number of the namespace instance
+> + */
+> +void audit_log_ns_del(int type, unsigned int inum)
+> +{
+> +	struct audit_buffer *ab;
+> +	char *audit_ns_name = ns_name[type - AUDIT_NS_DEL_MNT];
+> +	struct vfsmount *mnt = task_active_pid_ns(current)->proc_mnt;
+> +	struct super_block *sb = mnt->mnt_sb;
+> +
+> +	if (type < AUDIT_NS_DEL_MNT || type > AUDIT_NS_DEL_NET) {
+> +		WARN(1, "audit_log_ns_del: type:%d out of range", type);
+> +		return;
+> +	}
+> +	audit_log_common_recv_msg(&ab, type);
+> +	audit_log_format(ab, " dev=%02x:%02x %sns=%d res=1",
+> +			 MAJOR(sb->s_dev), MINOR(sb->s_dev), audit_ns_name,
+> +			 inum - PROC_DYNAMIC_FIRST);
+> +	audit_log_end(ab);
+> +}
+> +#endif /* CONFIG_NAMESPACES */
+> +
+>  /**
+>   * audit_log_end - end one audit record
+>   * @ab: the audit_buffer
+> diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
+> index db95d8e..d28fd14 100644
+> --- a/kernel/pid_namespace.c
+> +++ b/kernel/pid_namespace.c
+> @@ -18,6 +18,7 @@
+>  #include <linux/proc_ns.h>
+>  #include <linux/reboot.h>
+>  #include <linux/export.h>
+> +#include <linux/audit.h>
+> 
+>  struct pid_cache {
+>  	int nr_ids;
+> @@ -109,6 +110,9 @@ static struct pid_namespace *create_pid_namespace(struct
+> user_namespace *user_ns if (err)
+>  		goto out_free_map;
+> 
+> +	audit_log_ns_init(AUDIT_NS_INIT_PID, parent_pid_ns->proc_inum,
+> +			  ns->proc_inum);
+> +
+>  	kref_init(&ns->kref);
+>  	ns->level = level;
+>  	ns->parent = get_pid_ns(parent_pid_ns);
+> @@ -142,6 +146,7 @@ static void destroy_pid_namespace(struct pid_namespace
+> *ns) {
+>  	int i;
+> 
+> +	audit_log_ns_del(AUDIT_NS_DEL_PID, ns->proc_inum);
+>  	proc_free_inum(ns->proc_inum);
+>  	for (i = 0; i < PIDMAP_ENTRIES; i++)
+>  		kfree(ns->pidmap[i].page);
+> @@ -388,3 +393,11 @@ static __init int pid_namespaces_init(void)
+>  }
+> 
+>  __initcall(pid_namespaces_init);
+> +
+> +/* log the ID of init PID namespace after audit service starts */
+> +static __init int pid_namespaces_late_init(void)
+> +{
+> +	audit_log_ns_init(AUDIT_NS_INIT_PID, 0, init_pid_ns.proc_inum);
+> +	return 0;
+> +}
+> +late_initcall(pid_namespaces_late_init);
+> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+> index fcc0256..89c2517 100644
+> --- a/kernel/user_namespace.c
+> +++ b/kernel/user_namespace.c
+> @@ -22,6 +22,7 @@
+>  #include <linux/ctype.h>
+>  #include <linux/projid.h>
+>  #include <linux/fs_struct.h>
+> +#include <linux/audit.h>
+> 
+>  static struct kmem_cache *user_ns_cachep __read_mostly;
+> 
+> @@ -92,6 +93,9 @@ int create_user_ns(struct cred *new)
+>  		return ret;
+>  	}
+> 
+> +	audit_log_ns_init(AUDIT_NS_INIT_USER, parent_ns->proc_inum,
+> +			  ns->proc_inum);
+> +
+>  	atomic_set(&ns->count, 1);
+>  	/* Leave the new->user_ns reference with the new user namespace. */
+>  	ns->parent = parent_ns;
+> @@ -136,6 +140,7 @@ void free_user_ns(struct user_namespace *ns)
+>  #ifdef CONFIG_PERSISTENT_KEYRINGS
+>  		key_put(ns->persistent_keyring_register);
+>  #endif
+> +		audit_log_ns_del(AUDIT_NS_DEL_USER, ns->proc_inum);
+>  		proc_free_inum(ns->proc_inum);
+>  		kmem_cache_free(user_ns_cachep, ns);
+>  		ns = parent;
+> @@ -909,3 +914,11 @@ static __init int user_namespaces_init(void)
+>  	return 0;
+>  }
+>  subsys_initcall(user_namespaces_init);
+> +
+> +/* log the ID of init user namespace after audit service starts */
+> +static __init int user_namespaces_late_init(void)
+> +{
+> +	audit_log_ns_init(AUDIT_NS_INIT_USER, 0, init_user_ns.proc_inum);
+> +	return 0;
+> +}
+> +late_initcall(user_namespaces_late_init);
+> diff --git a/kernel/utsname.c b/kernel/utsname.c
+> index fd39312..fa21e8d 100644
+> --- a/kernel/utsname.c
+> +++ b/kernel/utsname.c
+> @@ -16,6 +16,7 @@
+>  #include <linux/slab.h>
+>  #include <linux/user_namespace.h>
+>  #include <linux/proc_ns.h>
+> +#include <linux/audit.h>
+> 
+>  static struct uts_namespace *create_uts_ns(void)
+>  {
+> @@ -48,6 +49,8 @@ static struct uts_namespace *clone_uts_ns(struct
+> user_namespace *user_ns, return ERR_PTR(err);
+>  	}
+> 
+> +	audit_log_ns_init(AUDIT_NS_INIT_UTS, old_ns->proc_inum, ns->proc_inum);
+> +
+>  	down_read(&uts_sem);
+>  	memcpy(&ns->name, &old_ns->name, sizeof(ns->name));
+>  	ns->user_ns = get_user_ns(user_ns);
+> @@ -84,6 +87,7 @@ void free_uts_ns(struct kref *kref)
+> 
+>  	ns = container_of(kref, struct uts_namespace, kref);
+>  	put_user_ns(ns->user_ns);
+> +	audit_log_ns_del(AUDIT_NS_DEL_UTS, ns->proc_inum);
+>  	proc_free_inum(ns->proc_inum);
+>  	kfree(ns);
+>  }
+> @@ -138,3 +142,11 @@ const struct proc_ns_operations utsns_operations = {
+>  	.install	= utsns_install,
+>  	.inum		= utsns_inum,
+>  };
+> +
+> +/* log the ID of init UTS namespace after audit service starts */
+> +static int __init uts_namespaces_init(void)
+> +{
+> +	audit_log_ns_init(AUDIT_NS_INIT_UTS, 0, init_uts_ns.proc_inum);
+> +	return 0;
+> +}
+> +late_initcall(uts_namespaces_init);
+> diff --git a/net/core/net_namespace.c b/net/core/net_namespace.c
+> index 85b6269..562eb85 100644
+> --- a/net/core/net_namespace.c
+> +++ b/net/core/net_namespace.c
+> @@ -17,6 +17,7 @@
+>  #include <linux/user_namespace.h>
+>  #include <net/net_namespace.h>
+>  #include <net/netns/generic.h>
+> +#include <linux/audit.h>
+> 
+>  /*
+>   *	Our network namespace constructor/destructor lists
+> @@ -253,6 +254,8 @@ struct net *copy_net_ns(unsigned long flags,
+>  	mutex_lock(&net_mutex);
+>  	rv = setup_net(net, user_ns);
+>  	if (rv == 0) {
+> +		audit_log_ns_init(AUDIT_NS_INIT_NET, old_net->proc_inum,
+> +				  net->proc_inum);
+>  		rtnl_lock();
+>  		list_add_tail_rcu(&net->list, &net_namespace_list);
+>  		rtnl_unlock();
+> @@ -389,6 +392,7 @@ static __net_init int net_ns_net_init(struct net *net)
+> 
+>  static __net_exit void net_ns_net_exit(struct net *net)
+>  {
+> +	audit_log_ns_del(AUDIT_NS_DEL_NET, net->proc_inum);
+>  	proc_free_inum(net->proc_inum);
+>  }
+> 
+> @@ -435,6 +439,14 @@ static int __init net_ns_init(void)
+> 
+>  pure_initcall(net_ns_init);
+> 
+> +/* log the ID of init_net namespace after audit service starts */
+> +static int __init net_ns_init_log(void)
+> +{
+> +	audit_log_ns_init(AUDIT_NS_INIT_NET, 0, init_net.proc_inum);
+> +	return 0;
+> +}
+> +late_initcall(net_ns_init_log);
+> +
+>  #ifdef CONFIG_NET_NS
+>  static int __register_pernet_operations(struct list_head *list,
+>  					struct pernet_operations *ops)
