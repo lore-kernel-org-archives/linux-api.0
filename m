@@ -1,25 +1,32 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH 1/2] clone: Support passing tls argument via C rather
- than pt_regs magic
-Date: Tue, 5 May 2015 20:53:03 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1505052050100.4225@nanos>
-References: <20150421174711.GA5127@jtriplet-mobl1>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [PATCH] ipc/sem: 64bit union semun definition
+Date: Tue, 05 May 2015 21:37:37 +0200
+Message-ID: <2165666.hrkl3t0kHm@wuerfel>
+References: <1430850523-7522-1-git-send-email-a22017@motorola.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150421174711.GA5127@jtriplet-mobl1>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Triplett <josh@joshtriplett.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, x86@kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1430850523-7522-1-git-send-email-a22017-3WKxDLwmzFNWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: a22017-3WKxDLwmzFNWk0Htik3J/w@public.gmane.org
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 21 Apr 2015, Josh Triplett wrote:
+On Tuesday 05 May 2015 11:28:43 a22017-3WKxDLwmzFNWk0Htik3J/w@public.gmane.org wrote:
+> From: Ling-Juan Sun <a22017-3WKxDLwmzFNWk0Htik3J/w@public.gmane.org>
 > 
-> Signed-off-by: Josh Triplett <josh@joshtriplett.org>
-> Signed-off-by: Thiago Macieira <thiago.macieira@intel.com>
+> The member of semun semid_ds has new definition
+> semid64_ds for 64bit architectures.
+> 
+> Signed-off-by: Ling-Juan Sun <a22017-3WKxDLwmzFNWk0Htik3J/w@public.gmane.org>
+> 
 
-Can you please clarify that SOB chain? It does not make any sense.
+Please describe in more detail what this is needed for. The way I
+understood this, used space would always define union semun
+to define semid_ds, but that would normally match the kernel's
+semid64_ds.
 
-Thanks,
+Also, what is the connection with 64-bit architectures here?
 
-	tglx
+	Arnd
