@@ -1,32 +1,59 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH] ipc/sem: 64bit union semun definition
-Date: Tue, 05 May 2015 21:37:37 +0200
-Message-ID: <2165666.hrkl3t0kHm@wuerfel>
-References: <1430850523-7522-1-git-send-email-a22017@motorola.com>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH net-next] tcp: provide SYN headers for passive
+ connections
+Date: Tue, 05 May 2015 16:05:35 -0400 (EDT)
+Message-ID: <20150505.160535.1034497188259706110.davem@davemloft.net>
+References: <20150501202908.GC6113@akamai.com>
+	<1430512894.3711.140.camel@edumazet-glaptop2.roam.corp.google.com>
+	<1430714086.3711.165.camel@edumazet-glaptop2.roam.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1430850523-7522-1-git-send-email-a22017-3WKxDLwmzFNWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: a22017-3WKxDLwmzFNWk0Htik3J/w@public.gmane.org
-Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <1430714086.3711.165.camel@edumazet-glaptop2.roam.corp.google.com>
+Sender: netdev-owner@vger.kernel.org
+To: eric.dumazet@gmail.com
+Cc: emunson@akamai.com, tom@herbertland.com, linux-api@vger.kernel.org, netdev@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday 05 May 2015 11:28:43 a22017-3WKxDLwmzFNWk0Htik3J/w@public.gmane.org wrote:
-> From: Ling-Juan Sun <a22017-3WKxDLwmzFNWk0Htik3J/w@public.gmane.org>
-> 
-> The member of semun semid_ds has new definition
-> semid64_ds for 64bit architectures.
-> 
-> Signed-off-by: Ling-Juan Sun <a22017-3WKxDLwmzFNWk0Htik3J/w@public.gmane.org>
-> 
+From: Eric Dumazet <eric.dumazet@gmail.com>
+Date: Sun, 03 May 2015 21:34:46 -0700
 
-Please describe in more detail what this is needed for. The way I
-understood this, used space would always define union semun
-to define semid_ds, but that would normally match the kernel's
-semid64_ds.
+> From: Eric Dumazet <edumazet@google.com>
+> 
+> This patch allows a server application to get the TCP SYN headers for
+> its passive connections.  This is useful if the server is doing
+> fingerprinting of clients based on SYN packet contents.
+> 
+> Two socket options are added: TCP_SAVE_SYN and TCP_SAVED_SYN.
+> 
+> The first is used on a socket to enable saving the SYN headers
+> for child connections. This can be set before or after the listen()
+> call.
+> 
+> The latter is used to retrieve the SYN headers for passive connections,
+> if the parent listener has enabled TCP_SAVE_SYN.
+> 
+> TCP_SAVED_SYN is read once, it frees the saved SYN headers.
+> 
+> The data returned in TCP_SAVED_SYN are network (IPv4/IPv6) and TCP
+> headers.
+> 
+> Original patch was written by Tom Herbert, I changed it to not hold
+> a full skb (and associated dst and conntracking reference).
+> 
+> We have used such patch for about 3 years at Google.
+> 
+> Signed-off-by: Eric Dumazet <edumazet@google.com>
 
-Also, what is the connection with 64-bit architectures here?
+Applied, but I think you should give maybe a little bit more thought
+into the behavior when a not-large-enough buffer is supplied by the
+user.
 
-	Arnd
+Since we're talking about things on the order of 60 bytes or so at
+most, it seems clear to me that signalling an error is probably the
+most advisable thing to do in this situation.
+
+Maybe you could signal an error, yet write the actual length to
+"optlen".  That way the user can figure out how much they need.  Then
+they at least would have the option of retrying with a larger buffer.
