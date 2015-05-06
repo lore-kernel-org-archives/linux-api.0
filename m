@@ -1,232 +1,169 @@
-From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH v3 02/11] coresight-etm4x: Controls pertaining to tracer configuration
-Date: Wed,  6 May 2015 09:27:18 -0600
-Message-ID: <1430926047-9125-3-git-send-email-mathieu.poirier@linaro.org>
+From: Mathieu Poirier <mathieu.poirier@linaro.org>
+Subject: [PATCH v3 05/11] coresight-etm4x: Controls pertaining to the ViewInst register
+Date: Wed,  6 May 2015 09:27:21 -0600
+Message-ID: <1430926047-9125-6-git-send-email-mathieu.poirier@linaro.org>
 References: <1430926047-9125-1-git-send-email-mathieu.poirier@linaro.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1430926047-9125-1-git-send-email-mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org
-Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1430926047-9125-1-git-send-email-mathieu.poirier@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: gregkh@linuxfoundation.org
+Cc: linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kaixu.xia@linaro.org, zhang.chunyan@linaro.org, mathieu.poirier@linaro.org
 List-Id: linux-api@vger.kernel.org
 
-From: Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+From: Pratik Patel <pratikp@codeaurora.org>
 
-Tracers can be configured with various options at synthesis
-time and knowing what resources are available is important for
-SW configuration purposes.
+Adding sysfs entries to control the ViewInst register's event
+selector along with secure and non-secure exception level
+instruction tracing.
 
-As such adding RO sysfs entries for characteristics related to the
-tracer implementation.
-
-Signed-off-by: Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-Signed-off-by: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Signed-off-by: Pratik Patel <pratikp@codeaurora.org>
+Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
 ---
- .../ABI/testing/sysfs-bus-coresight-devices-etm4x  |  61 +++++++++++
- drivers/hwtracing/coresight/coresight-etm4x.c      | 117 +++++++++++++++++++++
- 2 files changed, 178 insertions(+)
+ .../ABI/testing/sysfs-bus-coresight-devices-etm4x  | 20 +++++
+ drivers/hwtracing/coresight/coresight-etm4x.c      | 98 ++++++++++++++++++++++
+ 2 files changed, 118 insertions(+)
 
 diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
-index a4b623871ca0..0f579eb24631 100644
+index 2aeae2976c10..d7409c3d58e6 100644
 --- a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
 +++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
-@@ -26,3 +26,64 @@ Date:		April 2015
- KernelVersion:	4.01
- Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
- Description:	(R) Provides value of all the ID registers (TRCIDRx).
+@@ -146,3 +146,23 @@ KernelVersion:	4.01
+ Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
+ Description: 	(RW) Controls which regions in the memory map are enabled to
+ 		use branch broadcasting.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/nr_pe_cmp
++What:		/sys/bus/coresight/devices/<memory_map>.etm/event_vinst
 +Date:		April 2015
 +KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description:	(R) Indicates the number of PE comparator inputs that are
-+		available for tracing.
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) Controls instruction trace filtering.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/nr_addr_cmp
++What:		/sys/bus/coresight/devices/<memory_map>.etm/s_exlevel_vinst
 +Date:		April 2015
 +KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description:	(R) Indicates the number of address comparator pairs that are
-+		available for tracing.
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) In Secure state, each bit controls whether instruction
++		tracing is enabled for the corresponding exception level.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/nr_cntr
++What:		/sys/bus/coresight/devices/<memory_map>.etm/ns_exlevel_vinst
 +Date:		April 2015
 +KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description:	(R) Indicates the number of counters that are available for
-+		tracing.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/nr_ext_inp
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description:	(R) Indicates how many external inputs are implemented.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/numcidc
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description:	(R) Indicates the number of Context ID comparators that are
-+		available for tracing.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/numvmidc
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description:	(R) Indicates the number of VMID comparators that are available
-+		for tracing.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/nrseqstate
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description:	(R) Indicates the number of sequencer states that are implemented.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/nr_resource
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description:	(R) Indicates the number of resource selection pairs that are
-+		available for tracing.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/nr_ss_cmp
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+Description:	(R) Indicates the number of single-shot comparator controls that
-+		are available for tracing.
++Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
++Description: 	(RW) In non-secure state, each bit controls whether instruction
++		tracing is enabled for the corresponding exception level.
 diff --git a/drivers/hwtracing/coresight/coresight-etm4x.c b/drivers/hwtracing/coresight/coresight-etm4x.c
-index db0bea4d4661..c7421f319350 100644
+index 9812fbfdbeae..4eb3babb4592 100644
 --- a/drivers/hwtracing/coresight/coresight-etm4x.c
 +++ b/drivers/hwtracing/coresight/coresight-etm4x.c
-@@ -268,6 +268,114 @@ static const struct coresight_ops etm4_cs_ops = {
- 	.source_ops	= &etm4_source_ops,
- };
+@@ -932,6 +932,101 @@ static ssize_t bb_ctrl_store(struct device *dev,
+ }
+ static DEVICE_ATTR_RW(bb_ctrl);
  
-+static ssize_t nr_pe_cmp_show(struct device *dev,
-+			      struct device_attribute *attr,
-+			      char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->nr_pe_cmp;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+static DEVICE_ATTR_RO(nr_pe_cmp);
-+
-+static ssize_t nr_addr_cmp_show(struct device *dev,
++static ssize_t event_vinst_show(struct device *dev,
 +				struct device_attribute *attr,
 +				char *buf)
 +{
 +	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
-+	val = drvdata->nr_addr_cmp;
++	val = drvdata->vinst_ctrl & ETMv4_EVENT_MASK;
 +	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
 +}
-+static DEVICE_ATTR_RO(nr_addr_cmp);
 +
-+static ssize_t nr_cntr_show(struct device *dev,
-+			    struct device_attribute *attr,
-+			    char *buf)
++static ssize_t event_vinst_store(struct device *dev,
++				 struct device_attribute *attr,
++				 const char *buf, size_t size)
 +{
 +	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
-+	val = drvdata->nr_cntr;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+static DEVICE_ATTR_RO(nr_cntr);
++	if (kstrtoul(buf, 16, &val))
++		return -EINVAL;
 +
-+static ssize_t nr_ext_inp_show(struct device *dev,
-+			       struct device_attribute *attr,
-+			       char *buf)
++	spin_lock(&drvdata->spinlock);
++	val &= ETMv4_EVENT_MASK;
++	drvdata->vinst_ctrl &= ~ETMv4_EVENT_MASK;
++	drvdata->vinst_ctrl |= val;
++	spin_unlock(&drvdata->spinlock);
++	return size;
++}
++static DEVICE_ATTR_RW(event_vinst);
++
++static ssize_t s_exlevel_vinst_show(struct device *dev,
++				    struct device_attribute *attr,
++				    char *buf)
 +{
 +	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
-+	val = drvdata->nr_ext_inp;
++	val = BMVAL(drvdata->vinst_ctrl, 16, 19);
 +	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
 +}
-+static DEVICE_ATTR_RO(nr_ext_inp);
 +
-+static ssize_t numcidc_show(struct device *dev,
-+			    struct device_attribute *attr,
-+			    char *buf)
++static ssize_t s_exlevel_vinst_store(struct device *dev,
++				     struct device_attribute *attr,
++				     const char *buf, size_t size)
 +{
 +	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
-+	val = drvdata->numcidc;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+static DEVICE_ATTR_RO(numcidc);
++	if (kstrtoul(buf, 16, &val))
++		return -EINVAL;
 +
-+static ssize_t numvmidc_show(struct device *dev,
-+			     struct device_attribute *attr,
-+			     char *buf)
++	spin_lock(&drvdata->spinlock);
++	/* clear all EXLEVEL_S bits (bit[18] is never implemented) */
++	drvdata->vinst_ctrl &= ~(BIT(16) | BIT(17) | BIT(19));
++	/* enable instruction tracing for corresponding exception level */
++	val &= drvdata->s_ex_level;
++	drvdata->vinst_ctrl |= (val << 16);
++	spin_unlock(&drvdata->spinlock);
++	return size;
++}
++static DEVICE_ATTR_RW(s_exlevel_vinst);
++
++static ssize_t ns_exlevel_vinst_show(struct device *dev,
++				     struct device_attribute *attr,
++				     char *buf)
 +{
 +	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
-+	val = drvdata->numvmidc;
++	/* EXLEVEL_NS, bits[23:20] */
++	val = BMVAL(drvdata->vinst_ctrl, 20, 23);
 +	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
 +}
-+static DEVICE_ATTR_RO(numvmidc);
 +
-+static ssize_t nrseqstate_show(struct device *dev,
-+			       struct device_attribute *attr,
-+			       char *buf)
++static ssize_t ns_exlevel_vinst_store(struct device *dev,
++				      struct device_attribute *attr,
++				      const char *buf, size_t size)
 +{
 +	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
-+	val = drvdata->nrseqstate;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
++	if (kstrtoul(buf, 16, &val))
++		return -EINVAL;
++
++	spin_lock(&drvdata->spinlock);
++	/* clear EXLEVEL_NS bits (bit[23] is never implemented */
++	drvdata->vinst_ctrl &= ~(BIT(20) | BIT(21) | BIT(22));
++	/* enable instruction tracing for corresponding exception level */
++	val &= drvdata->ns_ex_level;
++	drvdata->vinst_ctrl |= (val << 20);
++	spin_unlock(&drvdata->spinlock);
++	return size;
 +}
-+static DEVICE_ATTR_RO(nrseqstate);
-+
-+static ssize_t nr_resource_show(struct device *dev,
-+				struct device_attribute *attr,
-+				char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->nr_resource;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+static DEVICE_ATTR_RO(nr_resource);
-+
-+static ssize_t nr_ss_cmp_show(struct device *dev,
-+			      struct device_attribute *attr,
-+			      char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->nr_ss_cmp;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+static DEVICE_ATTR_RO(nr_ss_cmp);
++static DEVICE_ATTR_RW(ns_exlevel_vinst);
 +
  static ssize_t status_show(struct device *dev,
  			   struct device_attribute *attr, char *buf)
  {
-@@ -412,6 +520,15 @@ static ssize_t trcidr_show(struct device *dev,
- static DEVICE_ATTR_RO(trcidr);
- 
- static struct attribute *coresight_etmv4_attrs[] = {
-+	&dev_attr_nr_pe_cmp.attr,
-+	&dev_attr_nr_addr_cmp.attr,
-+	&dev_attr_nr_cntr.attr,
-+	&dev_attr_nr_ext_inp.attr,
-+	&dev_attr_numcidc.attr,
-+	&dev_attr_numvmidc.attr,
-+	&dev_attr_nrseqstate.attr,
-+	&dev_attr_nr_resource.attr,
-+	&dev_attr_nr_ss_cmp.attr,
+@@ -1093,6 +1188,9 @@ static struct attribute *coresight_etmv4_attrs[] = {
+ 	&dev_attr_syncfreq.attr,
+ 	&dev_attr_cyc_threshold.attr,
+ 	&dev_attr_bb_ctrl.attr,
++	&dev_attr_event_vinst.attr,
++	&dev_attr_s_exlevel_vinst.attr,
++	&dev_attr_ns_exlevel_vinst.attr,
  	&dev_attr_status.attr,
  	&dev_attr_mgmt.attr,
  	&dev_attr_trcidr.attr,
