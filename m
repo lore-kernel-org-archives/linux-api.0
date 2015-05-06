@@ -1,100 +1,102 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 05/19] y2038: make linux/compat_time.h usable on 32-bit
-Date: Wed,  6 May 2015 18:30:12 +0200
-Message-ID: <1430929826-318934-6-git-send-email-arnd@arndb.de>
+Subject: [PATCH 10/19] y2038: use __kernel_stat for sys_newstat syscalls
+Date: Wed,  6 May 2015 18:30:17 +0200
+Message-ID: <1430929826-318934-11-git-send-email-arnd@arndb.de>
 References: <1430929826-318934-1-git-send-email-arnd@arndb.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <libc-alpha-return-58713-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 In-Reply-To: <1430929826-318934-1-git-send-email-arnd@arndb.de>
-Sender: linux-kernel-owner@vger.kernel.org
 To: y2038@lists.linaro.org
 Cc: baolin.wang@linaro.org, tglx@linutronix.de, albert.aribaud@3adev.fr, john.stultz@linaro.org, bamvor.zhangjian@linaro.org, ruchandani.tina@gmail.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-This adds the necessary type definitions to allow using the
-linux/compat_time.h header file on 32-bit architectures without
-adding an asm/compat.h header in each architecture.
+This moves over the sys_new{stat,lstat,fstat,fstatat} system calls
+to use the newly introduced __kernel_stat. On all 64-bit architectures,
+the layout is the same as 'struct stat', so nothing changes.
 
-The types we define here are used in the compat system call
-definitions of some system calls that also pass a time_t
-in another structure, but are themselves not depending on the
-size of time_t.
-
-This also adds a way to use COMPAT_SYSCALL_DEFINE() by
-including the compat.h header file. Some code may need to
-get reshuffled here.
+On 32-bit architectures, we use a trick to '#define __kernel_stat stat'
+as long as CONFIG_COMPAT_TIME is not set, and hide the new definitions
+from the kernel as long as this is the case, so the behavior does not
+change until we change over the architectures individually to use
+compat_sys_stat() in place of sys_stat() so we can reuse the sys_stat()
+implementation for the new structure.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- include/linux/compat.h      |  6 ++++--
- include/linux/compat_time.h | 24 ++++++++++++++++++++++++
- 2 files changed, 28 insertions(+), 2 deletions(-)
+ fs/stat.c            | 12 ++++++------
+ include/linux/stat.h |  3 +++
+ 2 files changed, 9 insertions(+), 6 deletions(-)
 
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index 41b0dae6203b..fefc45094107 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -5,8 +5,6 @@
-  * syscall compatibility layer.
-  */
- 
--#ifdef CONFIG_COMPAT
--
- #include <linux/stat.h>
- #include <linux/param.h>	/* for HZ */
- #include <linux/sem.h>
-@@ -17,7 +15,9 @@
- #include <linux/unistd.h>
- #include <linux/compat_time.h>
- 
-+#ifdef CONFIG_COMPAT
- #include <asm/compat.h>
-+#endif
- #include <asm/siginfo.h>
- #include <asm/signal.h>
- 
-@@ -52,6 +52,8 @@
- 	}								\
- 	static inline long C_SYSC##name(__MAP(x,__SC_DECL,__VA_ARGS__))
- 
-+#ifdef CONFIG_COMPAT
-+
- #ifndef compat_user_stack_pointer
- #define compat_user_stack_pointer() current_user_stack_pointer()
+diff --git a/fs/stat.c b/fs/stat.c
+index cccc1aab9a8b..12efbdd258fc 100644
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -226,9 +226,9 @@ SYSCALL_DEFINE2(fstat, unsigned int, fd, struct __old_kernel_stat __user *, stat
+ #  define INIT_STRUCT_STAT_PADDING(st) memset(&st, 0, sizeof(st))
  #endif
-diff --git a/include/linux/compat_time.h b/include/linux/compat_time.h
-index 37564582f6a5..e17375a91f76 100644
---- a/include/linux/compat_time.h
-+++ b/include/linux/compat_time.h
-@@ -78,6 +78,30 @@ struct compat_timex {
- 	compat_int_t:32; compat_int_t:32; compat_int_t:32;
- };
  
-+#ifdef CONFIG_COMPAT
-+#include <asm/compat.h>
-+
-+#define _COMPAT_NSIG_WORDS     (_COMPAT_NSIG / _COMPAT_NSIG_BPW)
-+typedef struct {
-+       compat_sigset_word      sig[_COMPAT_NSIG_WORDS];
-+} compat_sigset_t;
-+
-+#else
-+
-+#define compat_mmsghdr mmsghdr
-+#define compat_stat stat
-+#define compat_siginfo siginfo
-+#define compat_sigevent sigevent
-+#define compat_sigset_t sigset_t
-+#define __compat_uid_t __kernel_uid_t
-+#define __compat_gid_t __kernel_gid_t
-+#define compat_mode_t __kernel_mode_t
-+#define copy_siginfo_to_user32(uinfo, info) copy_siginfo_to_user(uinfo, info)
-+static inline void __user *compat_ptr(compat_uptr_t ptr)
-+{
-+	return (void __user*)ptr;
-+}
+-static int cp_new_stat(struct kstat *stat, struct stat __user *statbuf)
++static int cp_new_stat(struct kstat *stat, struct __kernel_stat __user *statbuf)
+ {
+-	struct stat tmp;
++	struct __kernel_stat tmp;
+ 
+ 	if (!valid_dev(stat->dev) || !valid_dev(stat->rdev))
+ 		return -EOVERFLOW;
+@@ -264,7 +264,7 @@ static int cp_new_stat(struct kstat *stat, struct stat __user *statbuf)
+ }
+ 
+ SYSCALL_DEFINE2(newstat, const char __user *, filename,
+-		struct stat __user *, statbuf)
++		struct __kernel_stat __user *, statbuf)
+ {
+ 	struct kstat stat;
+ 	int error = vfs_stat(filename, &stat);
+@@ -275,7 +275,7 @@ SYSCALL_DEFINE2(newstat, const char __user *, filename,
+ }
+ 
+ SYSCALL_DEFINE2(newlstat, const char __user *, filename,
+-		struct stat __user *, statbuf)
++		struct __kernel_stat __user *, statbuf)
+ {
+ 	struct kstat stat;
+ 	int error;
+@@ -289,7 +289,7 @@ SYSCALL_DEFINE2(newlstat, const char __user *, filename,
+ 
+ #if !defined(__ARCH_WANT_STAT64) || defined(__ARCH_WANT_SYS_NEWFSTATAT)
+ SYSCALL_DEFINE4(newfstatat, int, dfd, const char __user *, filename,
+-		struct stat __user *, statbuf, int, flag)
++		struct __kernel_stat __user *, statbuf, int, flag)
+ {
+ 	struct kstat stat;
+ 	int error;
+@@ -301,7 +301,7 @@ SYSCALL_DEFINE4(newfstatat, int, dfd, const char __user *, filename,
+ }
+ #endif
+ 
+-SYSCALL_DEFINE2(newfstat, unsigned int, fd, struct stat __user *, statbuf)
++SYSCALL_DEFINE2(newfstat, unsigned int, fd, struct __kernel_stat __user *, statbuf)
+ {
+ 	struct kstat stat;
+ 	int error = vfs_fstat(fd, &stat);
+diff --git a/include/linux/stat.h b/include/linux/stat.h
+index 075cb0c7eb2a..9efc32774e98 100644
+--- a/include/linux/stat.h
++++ b/include/linux/stat.h
+@@ -1,6 +1,9 @@
+ #ifndef _LINUX_STAT_H
+ #define _LINUX_STAT_H
+ 
++#ifndef CONFIG_COMPAT_TIME
++#define __kernel_stat stat
 +#endif
  
- /*
-  * These functions operate on 32- or 64-bit specs depending on
+ #include <asm/stat.h>
+ #include <uapi/linux/stat.h>
 -- 
 2.1.0.rc2
