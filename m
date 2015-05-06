@@ -1,65 +1,50 @@
 From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH V2] Test compaction of mlocked memory
-Date: Wed, 06 May 2015 11:01:56 -0600
-Message-ID: <554A4904.4040604@osg.samsung.com>
-References: <1429813301-27216-1-git-send-email-sjayaram@akamai.com> <20150423184134.GF2282@akamai.com> <20150423132323.a3bd1dcdc94a2da3ca06a30d@linux-foundation.org> <553954FC.4050700@osg.samsung.com>
+Subject: Re: [PATCH 1/5] selftests: Add futex functional tests
+Date: Wed, 06 May 2015 11:28:26 -0600
+Message-ID: <554A4F3A.7020504@osg.samsung.com>
+References: <cover.1427493640.git.dvhart@linux.intel.com> <597c9eabcac5da9456d6cfd6de9117591d73385e.1427493640.git.dvhart@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <553954FC.4050700-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <597c9eabcac5da9456d6cfd6de9117591d73385e.1427493640.git.dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sri Jayaramappa <sjayaram-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 04/23/2015 02:24 PM, Shuah Khan wrote:
-> On 04/23/2015 02:23 PM, Andrew Morton wrote:
->> On Thu, 23 Apr 2015 14:41:34 -0400 Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org> wrote:
->>
->>> On Thu, 23 Apr 2015, Sri Jayaramappa wrote:
->>>
->>>> Commit commit 5bbe3547aa3b ("mm: allow compaction of unevictable pages")
->>>> introduced a sysctl that allows userspace to enable scanning of locked
->>>> pages for compaction.  This patch introduces a new test which fragments
->>>> main memory and attempts to allocate a number of huge pages to exercise
->>>> this compaction logic.
->>>>
->>>> Tested on machines with up to 32 GB RAM. With the patch a much larger
->>>> number of huge pages can be allocated than on the kernel without the
->>>> patch.
->>>>
->>>> Example output:
->>>> On a machine with 16 GB RAM:
->>>> sudo make run_tests vm
->>>> ...
->>>> -----------------------
->>>> running compaction_test
->>>> -----------------------
->>>> No of huge pages allocated = 3834
->>>> [PASS]
->>>> ...
->>>>
->>>> Signed-off-by: Sri Jayaramappa <sjayaram-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
->>>> Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>>> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>>> Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
->>>> Cc: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
->>>
->>> Reviewed-by: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
->>
->> Acked-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
->>
->> I'm assuming that Shuah will process this one?
->>
+On 03/27/2015 04:17 PM, Darren Hart wrote:
+> The futextest testsuite [1] provides functional, stress, and
+> performance tests for the various futex op codes. Those tests will be of
+> more use to futex developers if they are included with the kernel
+> source.
 > 
-> Yes. I will get this one after the merge window closes.
+> Copy the core infrastructure and the functional tests into selftests.
+> Remove reference to the performance and stress tests from the
+> contributed sources.
 > 
+> Remove the Free Software Foundation address paragraph from all
+> contributed files to avoid checkpatch complaints.
+> 
+> A future effort will explore moving the performance and stress tests
+> into the kernel.
+> 
+> 1. http://git.kernel.org/cgit/linux/kernel/git/dvhart/futextest.git
+> 
+> Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
+> Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+> Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+> Cc: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
+> Cc: KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
+> Signed-off-by: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 
-Hi Sri Jayaramappa,
+Sorry it took so long. I am just about to apply these to linux-kselftest
+next and ran into checkpatch errors on this patch.
 
-The patch didn't pass checkpatch. Several trailing whitespace
-errors. Could you please fix these and resend.
+Could you clean them and resend this patch. Other patches in this series
+are good.
 
 thanks,
 -- Shuah
