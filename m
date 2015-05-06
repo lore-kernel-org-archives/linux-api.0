@@ -1,86 +1,80 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 12/19] y2038: add compat_{get,put}_timespec64
-Date: Wed,  6 May 2015 18:30:19 +0200
-Message-ID: <1430929826-318934-13-git-send-email-arnd@arndb.de>
+Subject: [PATCH 15/19] y2038: introduce timespec64_to_jiffies
+Date: Wed,  6 May 2015 18:30:22 +0200
+Message-ID: <1430929826-318934-16-git-send-email-arnd@arndb.de>
 References: <1430929826-318934-1-git-send-email-arnd@arndb.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <libc-alpha-return-58717-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 In-Reply-To: <1430929826-318934-1-git-send-email-arnd@arndb.de>
-Sender: linux-kernel-owner@vger.kernel.org
 To: y2038@lists.linaro.org
 Cc: baolin.wang@linaro.org, tglx@linutronix.de, albert.aribaud@3adev.fr, john.stultz@linaro.org, bamvor.zhangjian@linaro.org, ruchandani.tina@gmail.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-These are new helper functions that convert between a user compat_timespec
-and a kernel timespec64 structure.
+This is needed to convert do_sigtimedwait to use timespec64.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- include/linux/compat_time.h |  2 ++
- kernel/compat.c             | 32 ++++++++++++++++++++++++++++++++
- 2 files changed, 34 insertions(+)
+ include/linux/jiffies.h | 13 ++++++++++++-
+ kernel/time/time.c      | 11 ++---------
+ 2 files changed, 14 insertions(+), 10 deletions(-)
 
-diff --git a/include/linux/compat_time.h b/include/linux/compat_time.h
-index e3b43bd79801..d91d0d9c753b 100644
---- a/include/linux/compat_time.h
-+++ b/include/linux/compat_time.h
-@@ -112,6 +112,8 @@ extern int compat_get_timespec(struct timespec *, const void __user *);
- extern int compat_put_timespec(const struct timespec *, void __user *);
- extern int compat_get_timeval(struct timeval *, const void __user *);
- extern int compat_put_timeval(const struct timeval *, void __user *);
-+extern int compat_get_timespec64(struct timespec64 *ts, const void __user *uts);
-+extern int compat_put_timespec64(const struct timespec64 *ts, void __user *uts);
+diff --git a/include/linux/jiffies.h b/include/linux/jiffies.h
+index c367cbdf73ab..2aeb872f5547 100644
+--- a/include/linux/jiffies.h
++++ b/include/linux/jiffies.h
+@@ -290,7 +290,18 @@ static inline u64 jiffies_to_nsecs(const unsigned long j)
  
- /*
-  * This function convert a timespec if necessary and returns a *user
-diff --git a/kernel/compat.c b/kernel/compat.c
-index e56ee6a23c0f..d8d0a4711cc7 100644
---- a/kernel/compat.c
-+++ b/kernel/compat.c
-@@ -157,6 +157,20 @@ static int __compat_put_timespec(const struct timespec *ts, struct compat_timesp
- 			__put_user(ts->tv_nsec, &cts->tv_nsec)) ? -EFAULT : 0;
- }
- 
-+static int __compat_get_timespec64(struct timespec64 *ts, const struct compat_timespec __user *cts)
+ extern unsigned long msecs_to_jiffies(const unsigned int m);
+ extern unsigned long usecs_to_jiffies(const unsigned int u);
+-extern unsigned long timespec_to_jiffies(const struct timespec *value);
++extern unsigned long __timespec_to_jiffies(unsigned long sec, long nsec);
++static inline unsigned long timespec_to_jiffies(const struct timespec *value)
 +{
-+	return (!access_ok(VERIFY_READ, cts, sizeof(*cts)) ||
-+			__get_user(ts->tv_sec, &cts->tv_sec) ||
-+			__get_user(ts->tv_nsec, &cts->tv_nsec)) ? -EFAULT : 0;
++	return __timespec_to_jiffies(value->tv_sec, value->tv_nsec);
 +}
 +
-+static int __compat_put_timespec64(const struct timespec64 *ts, struct compat_timespec __user *cts)
++static inline unsigned long timespec64_to_jiffies(const struct timespec64 *value)
 +{
-+	return (!access_ok(VERIFY_WRITE, cts, sizeof(*cts)) ||
-+			__put_user(ts->tv_sec, &cts->tv_sec) ||
-+			__put_user(ts->tv_nsec, &cts->tv_nsec)) ? -EFAULT : 0;
++	return __timespec_to_jiffies(value->tv_sec, value->tv_nsec);
 +}
 +
- int compat_get_timeval(struct timeval *tv, const void __user *utv)
++
+ extern void jiffies_to_timespec(const unsigned long jiffies,
+ 				struct timespec *value);
+ extern unsigned long timeval_to_jiffies(const struct timeval *value);
+diff --git a/kernel/time/time.c b/kernel/time/time.c
+index 845af1db66fa..4d96236c07b0 100644
+--- a/kernel/time/time.c
++++ b/kernel/time/time.c
+@@ -571,7 +571,7 @@ EXPORT_SYMBOL(usecs_to_jiffies);
+  * The >> (NSEC_JIFFIE_SC - SEC_JIFFIE_SC) converts the scaled nsec
+  * value to a scaled second value.
+  */
+-static unsigned long
++unsigned long
+ __timespec_to_jiffies(unsigned long sec, long nsec)
  {
- 	if (COMPAT_USE_64BIT_TIME)
-@@ -193,6 +207,24 @@ int compat_put_timespec(const struct timespec *ts, void __user *uts)
- }
- EXPORT_SYMBOL_GPL(compat_put_timespec);
+ 	nsec = nsec + TICK_NSEC - 1;
+@@ -585,14 +585,7 @@ __timespec_to_jiffies(unsigned long sec, long nsec)
+ 		 (NSEC_JIFFIE_SC - SEC_JIFFIE_SC))) >> SEC_JIFFIE_SC;
  
-+int compat_get_timespec64(struct timespec64 *ts, const void __user *uts)
-+{
-+	if (COMPAT_USE_64BIT_TIME)
-+		return copy_from_user(ts, uts, sizeof(*ts)) ? -EFAULT : 0;
-+	else
-+		return __compat_get_timespec64(ts, uts);
-+}
-+EXPORT_SYMBOL_GPL(compat_get_timespec64);
-+
-+int compat_put_timespec64(const struct timespec64 *ts, void __user *uts)
-+{
-+	if (COMPAT_USE_64BIT_TIME)
-+		return copy_to_user(uts, ts, sizeof(*ts)) ? -EFAULT : 0;
-+	else
-+		return __compat_put_timespec64(ts, uts);
-+}
-+EXPORT_SYMBOL_GPL(compat_put_timespec64);
-+
- #ifdef CONFIG_COMPAT
- int compat_convert_timespec(struct timespec __user **kts,
- 			    const void __user *cts)
+ }
+-
+-unsigned long
+-timespec_to_jiffies(const struct timespec *value)
+-{
+-	return __timespec_to_jiffies(value->tv_sec, value->tv_nsec);
+-}
+-
+-EXPORT_SYMBOL(timespec_to_jiffies);
++EXPORT_SYMBOL(__timespec_to_jiffies);
+ 
+ void
+ jiffies_to_timespec(const unsigned long jiffies, struct timespec *value)
 -- 
 2.1.0.rc2
