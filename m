@@ -1,63 +1,99 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 18/19] y2038: introduce jiffies_to_timespec64
-Date: Wed,  6 May 2015 18:30:25 +0200
-Message-ID: <1430929826-318934-19-git-send-email-arnd@arndb.de>
+Subject: [PATCH 08/19] y2038: introduce struct __kernel_timespec
+Date: Wed,  6 May 2015 18:30:15 +0200
+Message-ID: <1430929826-318934-9-git-send-email-arnd@arndb.de>
 References: <1430929826-318934-1-git-send-email-arnd@arndb.de>
-Return-path: <libc-alpha-return-58718-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
 In-Reply-To: <1430929826-318934-1-git-send-email-arnd@arndb.de>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
 To: y2038@lists.linaro.org
-Cc: baolin.wang@linaro.org, tglx@linutronix.de, albert.aribaud@3adev.fr, john.stultz@linaro.org, bamvor.zhangjian@linaro.org, ruchandani.tina@gmail.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>
+Cc: libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>, baolin.wang@linaro.org, linux-api@vger.kernel.org, ruchandani.tina@gmail.com, linux-kernel@vger.kernel.org, albert.aribaud@3adev.fr, john.stultz@linaro.org, tglx@linutronix.de, bamvor.zhangjian@linaro.org
 List-Id: linux-api@vger.kernel.org
 
-Needed for converting sys_sched_rr_get_interval
-
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
----
- include/linux/jiffies.h | 12 +++++++++---
- kernel/time/time.c      |  2 +-
- 2 files changed, 10 insertions(+), 4 deletions(-)
-
-diff --git a/include/linux/jiffies.h b/include/linux/jiffies.h
-index 2aeb872f5547..6647257fa3da 100644
---- a/include/linux/jiffies.h
-+++ b/include/linux/jiffies.h
-@@ -301,9 +301,15 @@ static inline unsigned long timespec64_to_jiffies(const struct timespec64 *value
- 	return __timespec_to_jiffies(value->tv_sec, value->tv_nsec);
- }
- 
--
--extern void jiffies_to_timespec(const unsigned long jiffies,
--				struct timespec *value);
-+extern void jiffies_to_timespec64(const unsigned long jiffies,
-+				  struct timespec64 *value);
-+static inline void jiffies_to_timespec(const unsigned long jiffies,
-+				       struct timespec *value)
-+{
-+	struct timespec64 ts64;
-+	jiffies_to_timespec64(jiffies, &ts64);
-+	*value = timespec64_to_timespec(ts64);
-+}
- extern unsigned long timeval_to_jiffies(const struct timeval *value);
- extern void jiffies_to_timeval(const unsigned long jiffies,
- 			       struct timeval *value);
-diff --git a/kernel/time/time.c b/kernel/time/time.c
-index 4d96236c07b0..5e71dbd36fff 100644
---- a/kernel/time/time.c
-+++ b/kernel/time/time.c
-@@ -588,7 +588,7 @@ __timespec_to_jiffies(unsigned long sec, long nsec)
- EXPORT_SYMBOL(__timespec_to_jiffies);
- 
- void
--jiffies_to_timespec(const unsigned long jiffies, struct timespec *value)
-+jiffies_to_timespec64(const unsigned long jiffies, struct timespec64 *value)
- {
- 	/*
- 	 * Convert jiffies to nanoseconds and separate with
--- 
-2.1.0.rc2
+QSBsb3Qgb2Ygc3lzdGVtIGNhbGxzIHBhc3MgYSAnc3RydWN0IHRpbWVzcGVjJyBmcm9tIG9yIHRv
+IHVzZXIgc3BhY2UsCmFuZCB3ZSB3YW50IHRvIGNoYW5nZSB0aGF0IHR5cGUgdG8gYmUgYmFzZWQg
+b24gYSA2NC1iaXQgdGltZV90IGJ5CmRlZmF1bHQuCgpUaGlzIGludHJvZHVjZXMgYSBuZXcgdHlw
+ZSBzdHJ1Y3QgX19rZXJuZWxfdGltZXNwZWMsIHdoaWNoIGhhcyB0aGUKZm9ybWF0IHdlIHdhbnQg
+dG8gdXNlIGV2ZW50dWFsbHksIGJ1dCBhbHNvIGhhcyBhbiBvdmVycmlkZSBzbyBhbGwKYXJjaGl0
+ZWN0dXJlcyB0aGF0IGRvIG5vdCBkZWZpbmUgQ09ORklHX0NPTVBBVF9USU1FIHlldCBzdGlsbCBn
+ZXQgdGhlCm9sZCBiZWhhdmlvci4KT25jZSBhbGwgYXJjaGl0ZWN0dXJlcyBzZXQgdGhpcywgd2Ug
+Y2FuIHJlbW92ZSB0aGF0IG92ZXJyaWRlLgoKVGhpcyBhbHNvIGludHJvZHVjZXMgYSBnZXRfdGlt
+ZXNwZWM2NC9wdXRfdGltZXNwZWM2NCBzZXQgb2YgZnVuY3Rpb25zCnRoYXQgY29udmVydCBiZXR3
+ZWVuIGEgX19rZXJuZWxfdGltZXNwZWMgaW4gdXNlciBzcGFjZSBhbmQgYSB0aW1lc3BlYzY0Cmlu
+IGtlcm5lbCBzcGFjZS4KClRoZSBjdXJyZW50IGJlaGF2aW9yIG9mIGdldF90aW1lc3BlYzY0IGV4
+cGxpY2l0bHkgemVyb2VzIHRoZSB1cHBlciBoYWxmCm9mIHRoZSB0dl9uc2VjIG1lbWJlciwgdG8g
+YWxsb3cgdXNlciBzcGFjZSB0byBkZWZpbmUgaXRzIG93biAnc3RydWN0CnRpbWVzcGVjJyB3aXRo
+IHNvbWUgcGFkZGluZyBpbiBpdC4gV2hldGhlciB0aGlzIGlzIGEgZ29vZCBvciBiYWQgaWRlYQpp
+cyBvcGVuIGZvciBkaXNjdXNzaW9uLgoKU2lnbmVkLW9mZi1ieTogQXJuZCBCZXJnbWFubiA8YXJu
+ZEBhcm5kYi5kZT4KLS0tCiBpbmNsdWRlL2xpbnV4L3RpbWU2NC5oICAgIHwgMTcgKysrKysrKysr
+KystLS0tLS0KIGluY2x1ZGUvdWFwaS9saW51eC90aW1lLmggfCAxNyArKysrKysrKysrKysrKysr
+Kwoga2VybmVsL3RpbWUvdGltZS5jICAgICAgICB8IDMyICsrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrCiAzIGZpbGVzIGNoYW5nZWQsIDYwIGluc2VydGlvbnMoKyksIDYgZGVsZXRpb25z
+KC0pCgpkaWZmIC0tZ2l0IGEvaW5jbHVkZS9saW51eC90aW1lNjQuaCBiL2luY2x1ZGUvbGludXgv
+dGltZTY0LmgKaW5kZXggYTM4MzE0NzhkOWNmLi44ODBlYmU0YjRiYTQgMTAwNjQ0Ci0tLSBhL2lu
+Y2x1ZGUvbGludXgvdGltZTY0LmgKKysrIGIvaW5jbHVkZS9saW51eC90aW1lNjQuaApAQCAtMSwx
+NCArMSwxMiBAQAogI2lmbmRlZiBfTElOVVhfVElNRTY0X0gKICNkZWZpbmUgX0xJTlVYX1RJTUU2
+NF9ICiAKLSNpbmNsdWRlIDx1YXBpL2xpbnV4L3RpbWUuaD4KLQogdHlwZWRlZiBfX3M2NCB0aW1l
+NjRfdDsKIAotLyoKLSAqIFRoaXMgd2FudHMgdG8gZ28gaW50byB1YXBpL2xpbnV4L3RpbWUuaCBv
+bmNlIHdlIGFncmVlZCBhYm91dCB0aGUKLSAqIHVzZXJzcGFjZSBpbnRlcmZhY2VzLgotICovCisj
+aWZuZGVmIENPTkZJR19DT01QQVRfVElNRQorIyBkZWZpbmUgX19rZXJuZWxfdGltZXNwZWMgdGlt
+ZXNwZWMKKyNlbmRpZgorCiAjaWYgX19CSVRTX1BFUl9MT05HID09IDY0CiAjIGRlZmluZSB0aW1l
+c3BlYzY0IHRpbWVzcGVjCiAjZWxzZQpAQCAtMTgsNiArMTYsOCBAQCBzdHJ1Y3QgdGltZXNwZWM2
+NCB7CiB9OwogI2VuZGlmCiAKKyNpbmNsdWRlIDx1YXBpL2xpbnV4L3RpbWUuaD4KKwogLyogUGFy
+YW1ldGVycyB1c2VkIHRvIGNvbnZlcnQgdGhlIHRpbWVzcGVjIHZhbHVlczogKi8KICNkZWZpbmUg
+TVNFQ19QRVJfU0VDCTEwMDBMCiAjZGVmaW5lIFVTRUNfUEVSX01TRUMJMTAwMEwKQEAgLTE4Nyw0
+ICsxODcsOSBAQCBzdGF0aWMgX19hbHdheXNfaW5saW5lIHZvaWQgdGltZXNwZWM2NF9hZGRfbnMo
+c3RydWN0IHRpbWVzcGVjNjQgKmEsIHU2NCBucykKIAogI2VuZGlmCiAKK2V4dGVybiBpbnQgZ2V0
+X3RpbWVzcGVjNjQoc3RydWN0IHRpbWVzcGVjNjQgKnRzLAorCQkJICBjb25zdCBzdHJ1Y3QgX19r
+ZXJuZWxfdGltZXNwZWMgX191c2VyICp1dHMpOworZXh0ZXJuIGludCBwdXRfdGltZXNwZWM2NChj
+b25zdCBzdHJ1Y3QgdGltZXNwZWM2NCAqdHMsCisJCQkgIHN0cnVjdCBfX2tlcm5lbF90aW1lc3Bl
+YyBfX3VzZXIgKnV0cyk7CisKICNlbmRpZiAvKiBfTElOVVhfVElNRTY0X0ggKi8KZGlmZiAtLWdp
+dCBhL2luY2x1ZGUvdWFwaS9saW51eC90aW1lLmggYi9pbmNsdWRlL3VhcGkvbGludXgvdGltZS5o
+CmluZGV4IGU3NWUxYjZmZjI3Zi4uNzJkODk0ZGYzMDEzIDEwMDY0NAotLS0gYS9pbmNsdWRlL3Vh
+cGkvbGludXgvdGltZS5oCisrKyBiL2luY2x1ZGUvdWFwaS9saW51eC90aW1lLmgKQEAgLTY2LDQg
+KzY2LDIxIEBAIHN0cnVjdCBpdGltZXJ2YWwgewogICovCiAjZGVmaW5lIFRJTUVSX0FCU1RJTUUJ
+CQkweDAxCiAKKy8qIHR5cGVzIGJhc2VkIG9uIDY0LWJpdCB0aW1lX3QgKi8KKyNpZm5kZWYgX19r
+ZXJuZWxfdGltZXNwZWMKK3R5cGVkZWYgX19zNjQgX19rZXJuZWxfdGltZTY0X3Q7CisKK3N0cnVj
+dCBfX2tlcm5lbF90aW1lc3BlYyB7CisJX19rZXJuZWxfdGltZTY0X3QJdHZfc2VjOworCV9fczY0
+CQkJdHZfbnNlYzsKK307CisjZW5kaWYKKworI2lmbmRlZiBfX2tlcm5lbF9pdGltZXJzcGVjCitz
+dHJ1Y3QgX19rZXJuZWxfaXRpbWVyc3BlYyB7CisJc3RydWN0IF9fa2VybmVsX3RpbWVzcGVjIGl0
+X2ludGVydmFsOworCXN0cnVjdCBfX2tlcm5lbF90aW1lc3BlYyBpdF92YWx1ZTsKK307CisjZW5k
+aWYKKwogI2VuZGlmIC8qIF9VQVBJX0xJTlVYX1RJTUVfSCAqLwpkaWZmIC0tZ2l0IGEva2VybmVs
+L3RpbWUvdGltZS5jIGIva2VybmVsL3RpbWUvdGltZS5jCmluZGV4IDJjODViNzcyNGFmNC4uODQ1
+YWYxZGI2NmZhIDEwMDY0NAotLS0gYS9rZXJuZWwvdGltZS90aW1lLmMKKysrIGIva2VybmVsL3Rp
+bWUvdGltZS5jCkBAIC0zMCw2ICszMCw3IEBACiAjaW5jbHVkZSA8bGludXgvZXhwb3J0Lmg+CiAj
+aW5jbHVkZSA8bGludXgvdGltZXguaD4KICNpbmNsdWRlIDxsaW51eC9jYXBhYmlsaXR5Lmg+Cisj
+aW5jbHVkZSA8bGludXgvY29tcGF0Lmg+CiAjaW5jbHVkZSA8bGludXgvdGltZWtlZXBlcl9pbnRl
+cm5hbC5oPgogI2luY2x1ZGUgPGxpbnV4L2Vycm5vLmg+CiAjaW5jbHVkZSA8bGludXgvc3lzY2Fs
+bHMuaD4KQEAgLTM3LDYgKzM4LDcgQEAKICNpbmNsdWRlIDxsaW51eC9mcy5oPgogI2luY2x1ZGUg
+PGxpbnV4L21hdGg2NC5oPgogI2luY2x1ZGUgPGxpbnV4L3B0cmFjZS5oPgorI2luY2x1ZGUgPGxp
+bnV4L3RpbWU2NC5oPgogCiAjaW5jbHVkZSA8YXNtL3VhY2Nlc3MuaD4KICNpbmNsdWRlIDxhc20v
+dW5pc3RkLmg+CkBAIC03ODMsMyArNzg1LDMzIEBAIHN0cnVjdCB0aW1lc3BlYyB0aW1lc3BlY19h
+ZGRfc2FmZShjb25zdCBzdHJ1Y3QgdGltZXNwZWMgbGhzLAogCiAJcmV0dXJuIHJlczsKIH0KKwor
+aW50IGdldF90aW1lc3BlYzY0KHN0cnVjdCB0aW1lc3BlYzY0ICp0cywKKwkJICAgY29uc3Qgc3Ry
+dWN0IF9fa2VybmVsX3RpbWVzcGVjIF9fdXNlciAqdXRzKQoreworCXN0cnVjdCBfX2tlcm5lbF90
+aW1lc3BlYyBrdHM7CisJaW50IHJldDsKKworCXJldCA9IGNvcHlfZnJvbV91c2VyKCZrdHMsIHV0
+cywgc2l6ZW9mKGt0cykpOworCWlmIChyZXQpCisJCXJldHVybiAtRUZBVUxUOworCisJdHMtPnR2
+X3NlYyA9IGt0cy50dl9zZWM7CisJaWYgKCFJU19FTkFCTEVEKENPTkZJR182NEJJVCkgfHwgaXNf
+Y29tcGF0X3Rhc2soKSkKKwkJa3RzLnR2X25zZWMgJj0gMHhmZmZmZmZmZnVsOworCXRzLT50dl9u
+c2VjID0ga3RzLnR2X25zZWM7CisKKwlyZXR1cm4gMDsKK30KK0VYUE9SVF9TWU1CT0xfR1BMKGdl
+dF90aW1lc3BlYzY0KTsKKworaW50IHB1dF90aW1lc3BlYzY0KGNvbnN0IHN0cnVjdCB0aW1lc3Bl
+YzY0ICp0cywKKwkJICAgc3RydWN0IF9fa2VybmVsX3RpbWVzcGVjIF9fdXNlciAqdXRzKQorewor
+CXN0cnVjdCBfX2tlcm5lbF90aW1lc3BlYyBrdHMgPSB7CisJCS50dl9zZWMgPSB0cy0+dHZfc2Vj
+LAorCQkudHZfbnNlYyA9IHRzLT50dl9uc2VjCisJfTsKKwlyZXR1cm4gY29weV90b191c2VyKHV0
+cywgJmt0cywgc2l6ZW9mKGt0cykpID8gLUVGQVVMVCA6IDA7Cit9CitFWFBPUlRfU1lNQk9MX0dQ
+TChwdXRfdGltZXNwZWM2NCk7Ci0tIAoyLjEuMC5yYzIKCl9fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBsaXN0cy5s
+aW5hcm8ub3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3kyMDM4
+Cg==
