@@ -1,7 +1,7 @@
 From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: [PATCH 09/19] y2038: introduce struct __kernel_stat
-Date: Wed,  6 May 2015 18:30:16 +0200
-Message-ID: <1430929826-318934-10-git-send-email-arnd@arndb.de>
+Subject: [PATCH 11/19] y2038: introduce and use struct __kernel_rusage
+Date: Wed,  6 May 2015 18:30:18 +0200
+Message-ID: <1430929826-318934-12-git-send-email-arnd@arndb.de>
 References: <1430929826-318934-1-git-send-email-arnd@arndb.de>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1430929826-318934-1-git-send-email-arnd-r2nGTMty4D4@public.gmane.org>
@@ -10,518 +10,362 @@ To: y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org
 Cc: baolin.wang-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, albert.aribaud-iEu9NFBzPZE@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, ruchandani.tina-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-The stat() family of system calls uses up to three different data
-structures: 'struct __kernel_oldstat', 'struct stat', and 'struct
-stat64', which were extended in various ways over time. Unfortunately,
-on most 32-bit architectures and even some 64-bit machines (parisc),
-all of them use 32-bit timestamps, which are already broken because
-they cannot represent the range of times that can be stored on
-typical file systems. When time_t overflows, things of course become
-much worse.
+'struct rusage' is not compatible with user space that defines time_t
+as 64-bit. While there will never be an overflow of the timeval
+members in this structure, the current definition breaks any program
+that relies on the member to be a timeval.
 
-This introduces a fourth data structure, 'struct __kernel_stat', which
-is supposed to match the layout of 'struct stat' on 64-bit architectures,
-so the compat handlers can be shared between native 64-bit and compat
-32-bit syscalls. On architectures that are always 32-bit, the asm-generic
-variant can be used.
+This introduces a new struct __kernel_rusage that is defined to match
+the 64-bit version of struct rusage. 32-bit architectures that use
+CONFIG_COMPAT_TIME can then use compat_sys_getrusage() etc to get
+the original structure, while the normal sys_getrusage() function
+will provide the new layout in both native and compat32 mode.
+
+On 32-bit architectures that do not set CONFIG_COMPAT_TIME, as well
+as all 64-bit architectures, this patch is intented to have no
+user-visible impact.
 
 Signed-off-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
 ---
- arch/alpha/include/uapi/asm/stat.h     |  4 +++
- arch/arm/include/uapi/asm/stat.h       |  2 ++
- arch/avr32/include/uapi/asm/stat.h     |  2 ++
- arch/blackfin/include/uapi/asm/stat.h  |  2 ++
- arch/cris/include/uapi/asm/stat.h      |  2 ++
- arch/frv/include/uapi/asm/stat.h       |  2 ++
- arch/ia64/include/uapi/asm/stat.h      |  4 +++
- arch/m32r/include/uapi/asm/stat.h      |  1 +
- arch/m68k/include/uapi/asm/stat.h      |  2 ++
- arch/mips/include/uapi/asm/stat.h      |  1 +
- arch/mn10300/include/uapi/asm/stat.h   |  2 ++
- arch/parisc/include/uapi/asm/stat.h    |  1 +
- arch/powerpc/include/uapi/asm/stat.h   | 25 +++++++++++++++++
- arch/s390/include/uapi/asm/stat.h      | 24 +++++++++++++++++
- arch/sh/include/uapi/asm/stat.h        |  2 ++
- arch/sparc/include/uapi/asm/stat.h     | 28 +++++++++++++++++++
- arch/x86/include/uapi/asm/stat.h       | 49 ++++++++++++++++++++++++----------
- arch/xtensa/include/uapi/asm/stat.h    |  2 ++
- include/linux/syscalls.h               | 11 ++++----
- include/uapi/asm-generic/kernel_stat.h | 36 +++++++++++++++++++++++++
- include/uapi/asm-generic/stat.h        | 12 +++++----
- 21 files changed, 189 insertions(+), 25 deletions(-)
- create mode 100644 include/uapi/asm-generic/kernel_stat.h
+ arch/alpha/kernel/osf_sys.c   |  4 ++--
+ include/linux/compat_time.h   |  3 +--
+ include/linux/resource.h      |  8 ++++++--
+ include/linux/syscalls.h      |  7 +++----
+ include/uapi/linux/resource.h | 32 ++++++++++++++++++++++++++++++++
+ kernel/compat.c               | 42 +++++++++++++++++++++++++++++++++++++-----
+ kernel/exit.c                 |  6 +++---
+ kernel/sys.c                  | 23 ++++++++++++++---------
+ 8 files changed, 98 insertions(+), 27 deletions(-)
 
-diff --git a/arch/alpha/include/uapi/asm/stat.h b/arch/alpha/include/uapi/asm/stat.h
-index 07ad3e6b3f3e..ca566bc620f6 100644
---- a/arch/alpha/include/uapi/asm/stat.h
-+++ b/arch/alpha/include/uapi/asm/stat.h
-@@ -1,6 +1,10 @@
- #ifndef _ALPHA_STAT_H
- #define _ALPHA_STAT_H
+diff --git a/arch/alpha/kernel/osf_sys.c b/arch/alpha/kernel/osf_sys.c
+index e51f578636a5..6824e68d32ad 100644
+--- a/arch/alpha/kernel/osf_sys.c
++++ b/arch/alpha/kernel/osf_sys.c
+@@ -1166,7 +1166,7 @@ SYSCALL_DEFINE2(osf_getrusage, int, who, struct rusage32 __user *, ru)
+ SYSCALL_DEFINE4(osf_wait4, pid_t, pid, int __user *, ustatus, int, options,
+ 		struct rusage32 __user *, ur)
+ {
+-	struct rusage r;
++	struct __kernel_rusage r;
+ 	long ret, err;
+ 	unsigned int status = 0;
+ 	mm_segment_t old_fs;
+@@ -1178,7 +1178,7 @@ SYSCALL_DEFINE4(osf_wait4, pid_t, pid, int __user *, ustatus, int, options,
+ 		
+ 	set_fs (KERNEL_DS);
+ 	ret = sys_wait4(pid, (unsigned int __user *) &status, options,
+-			(struct rusage __user *) &r);
++			(struct __kernel_rusage __user *) &r);
+ 	set_fs (old_fs);
  
-+#ifndef __kernel_stat
-+#define __kernel_stat stat
-+#endif
-+
- struct stat {
- 	unsigned int	st_dev;
- 	unsigned int	st_ino;
-diff --git a/arch/arm/include/uapi/asm/stat.h b/arch/arm/include/uapi/asm/stat.h
-index 42c0c13999d5..537a12553dd8 100644
---- a/arch/arm/include/uapi/asm/stat.h
-+++ b/arch/arm/include/uapi/asm/stat.h
-@@ -1,6 +1,8 @@
- #ifndef _ASMARM_STAT_H
- #define _ASMARM_STAT_H
- 
-+#include <asm-generic/kernel_stat.h>
-+
- struct __old_kernel_stat {
- 	unsigned short st_dev;
- 	unsigned short st_ino;
-diff --git a/arch/avr32/include/uapi/asm/stat.h b/arch/avr32/include/uapi/asm/stat.h
-index c06acef7fce7..2b528ca17985 100644
---- a/arch/avr32/include/uapi/asm/stat.h
-+++ b/arch/avr32/include/uapi/asm/stat.h
-@@ -8,6 +8,8 @@
- #ifndef _UAPI__ASM_AVR32_STAT_H
- #define _UAPI__ASM_AVR32_STAT_H
- 
-+#include <asm-generic/kernel_stat.h>
-+
- struct __old_kernel_stat {
-         unsigned short st_dev;
-         unsigned short st_ino;
-diff --git a/arch/blackfin/include/uapi/asm/stat.h b/arch/blackfin/include/uapi/asm/stat.h
-index d3068a750b94..99ee343aec23 100644
---- a/arch/blackfin/include/uapi/asm/stat.h
-+++ b/arch/blackfin/include/uapi/asm/stat.h
-@@ -7,6 +7,8 @@
- #ifndef _UAPI_BFIN_STAT_H
- #define _UAPI_BFIN_STAT_H
- 
-+#include <asm-generic/kernel_stat.h>
-+
- struct stat {
- 	unsigned short st_dev;
- 	unsigned short __pad1;
-diff --git a/arch/cris/include/uapi/asm/stat.h b/arch/cris/include/uapi/asm/stat.h
-index 9e558cc3c43b..4837884cd2d3 100644
---- a/arch/cris/include/uapi/asm/stat.h
-+++ b/arch/cris/include/uapi/asm/stat.h
-@@ -1,6 +1,8 @@
- #ifndef _CRIS_STAT_H
- #define _CRIS_STAT_H
- 
-+#include <asm-generic/kernel_stat.h>
-+
- /* Keep this a verbatim copy of i386 version; tweak CRIS-specific bits in
-    the kernel if necessary.  */
- 
-diff --git a/arch/frv/include/uapi/asm/stat.h b/arch/frv/include/uapi/asm/stat.h
-index ce56de9b37ba..5448b198fbb6 100644
---- a/arch/frv/include/uapi/asm/stat.h
-+++ b/arch/frv/include/uapi/asm/stat.h
-@@ -1,6 +1,8 @@
- #ifndef _ASM_STAT_H
- #define _ASM_STAT_H
- 
-+#include <asm-generic/kernel_stat.h>
-+
- struct __old_kernel_stat {
- 	unsigned short st_dev;
- 	unsigned short st_ino;
-diff --git a/arch/ia64/include/uapi/asm/stat.h b/arch/ia64/include/uapi/asm/stat.h
-index 367bb90cdffa..cde68a31e183 100644
---- a/arch/ia64/include/uapi/asm/stat.h
-+++ b/arch/ia64/include/uapi/asm/stat.h
-@@ -1,6 +1,10 @@
- #ifndef _ASM_IA64_STAT_H
- #define _ASM_IA64_STAT_H
- 
-+#ifndef __kernel_stat
-+#define __kernel_stat stat
-+#endif
-+
- /*
-  * Modified 1998, 1999
-  *	David Mosberger-Tang <davidm-sDzT885Ts8HQT0dZR+AlfA@public.gmane.org>, Hewlett-Packard Co
-diff --git a/arch/m32r/include/uapi/asm/stat.h b/arch/m32r/include/uapi/asm/stat.h
-index 98470fe483b6..d0ffa70f73c0 100644
---- a/arch/m32r/include/uapi/asm/stat.h
-+++ b/arch/m32r/include/uapi/asm/stat.h
-@@ -2,6 +2,7 @@
- #define _ASM_M32R_STAT_H
- 
- #include <asm/byteorder.h>
-+#include <asm-generic/kernel_stat.h>
- 
- struct __old_kernel_stat {
- 	unsigned short st_dev;
-diff --git a/arch/m68k/include/uapi/asm/stat.h b/arch/m68k/include/uapi/asm/stat.h
-index dd38bc2e9f98..6f455db47b4e 100644
---- a/arch/m68k/include/uapi/asm/stat.h
-+++ b/arch/m68k/include/uapi/asm/stat.h
-@@ -1,6 +1,8 @@
- #ifndef _M68K_STAT_H
- #define _M68K_STAT_H
- 
-+#include <asm-generic/kernel_stat.h>
-+
- struct __old_kernel_stat {
- 	unsigned short st_dev;
- 	unsigned short st_ino;
-diff --git a/arch/mips/include/uapi/asm/stat.h b/arch/mips/include/uapi/asm/stat.h
-index b47bc541bbc0..53e58fbd83fa 100644
---- a/arch/mips/include/uapi/asm/stat.h
-+++ b/arch/mips/include/uapi/asm/stat.h
-@@ -12,6 +12,7 @@
- #include <linux/types.h>
- 
- #include <asm/sgidefs.h>
-+#include <asm-generic/kernel_stat.h>
- 
- #if (_MIPS_SIM == _MIPS_SIM_ABI32) || (_MIPS_SIM == _MIPS_SIM_NABI32)
- 
-diff --git a/arch/mn10300/include/uapi/asm/stat.h b/arch/mn10300/include/uapi/asm/stat.h
-index 63ff8371cf2c..af3b4d6b7b7a 100644
---- a/arch/mn10300/include/uapi/asm/stat.h
-+++ b/arch/mn10300/include/uapi/asm/stat.h
-@@ -1,6 +1,8 @@
- #ifndef _ASM_STAT_H
- #define _ASM_STAT_H
- 
-+#include <asm-generic/kernel_stat.h>
-+
- struct __old_kernel_stat {
- 	unsigned short st_dev;
- 	unsigned short st_ino;
-diff --git a/arch/parisc/include/uapi/asm/stat.h b/arch/parisc/include/uapi/asm/stat.h
-index b606b366d0a7..f06ce7ba0115 100644
---- a/arch/parisc/include/uapi/asm/stat.h
-+++ b/arch/parisc/include/uapi/asm/stat.h
-@@ -2,6 +2,7 @@
- #define _PARISC_STAT_H
- 
- #include <linux/types.h>
-+#include <asm-generic/kernel_stat.h>
- 
- struct stat {
- 	unsigned int	st_dev;		/* dev_t is 32 bits on parisc */
-diff --git a/arch/powerpc/include/uapi/asm/stat.h b/arch/powerpc/include/uapi/asm/stat.h
-index 84880b80cc1c..248d8072267f 100644
---- a/arch/powerpc/include/uapi/asm/stat.h
-+++ b/arch/powerpc/include/uapi/asm/stat.h
-@@ -78,4 +78,29 @@ struct stat64 {
- 	unsigned int	__unused5;
+ 	if (!access_ok(VERIFY_WRITE, ur, sizeof(*ur)))
+diff --git a/include/linux/compat_time.h b/include/linux/compat_time.h
+index 789b6415e90e..e3b43bd79801 100644
+--- a/include/linux/compat_time.h
++++ b/include/linux/compat_time.h
+@@ -141,8 +141,7 @@ struct compat_rusage {
+ 	compat_long_t	ru_nivcsw;
  };
  
-+#ifndef __kernel_stat
-+/* this matches the powerpc64 'struct stat' for compat tasks */
-+struct __kernel_stat {
-+	unsigned long long	st_dev;
-+	unsigned long long	st_ino;
-+	unsigned long long	st_nlink;
-+	unsigned int		st_mode;
-+	unsigned int		st_uid;
-+	unsigned int		st_gid;
-+	unsigned long long	st_rdev;
-+	unsigned long long	st_size;
-+	unsigned long long	st_blksize;
-+	unsigned long long	st_blocks;
-+	unsigned long long	st_atime;
-+	unsigned long long	st_atime_nsec;
-+	unsigned long long	st_mtime;
-+	unsigned long long	st_mtime_nsec;
-+	unsigned long long	st_ctime;
-+	unsigned long long	st_ctime_nsec;
-+	unsigned long long	__unused4;
-+	unsigned long long	__unused5;
-+	unsigned long long	__unused6;
-+};
+-struct rusage;
+-extern int put_compat_rusage(const struct rusage *,
++extern int put_compat_rusage(const struct __kernel_rusage *,
+ 			     struct compat_rusage __user *);
+ 
+ static inline int compat_timeval_compare(struct compat_timeval *lhs,
+diff --git a/include/linux/resource.h b/include/linux/resource.h
+index 5bc3116e649c..8cdecf204607 100644
+--- a/include/linux/resource.h
++++ b/include/linux/resource.h
+@@ -1,12 +1,16 @@
+ #ifndef _LINUX_RESOURCE_H
+ #define _LINUX_RESOURCE_H
+ 
+-#include <uapi/linux/resource.h>
++#ifndef CONFIG_COMPAT_TIME
++#define __kernel_rusage rusage
 +#endif
-+
- #endif /* _ASM_POWERPC_STAT_H */
-diff --git a/arch/s390/include/uapi/asm/stat.h b/arch/s390/include/uapi/asm/stat.h
-index b4ca97d91466..d4c2711249dd 100644
---- a/arch/s390/include/uapi/asm/stat.h
-+++ b/arch/s390/include/uapi/asm/stat.h
-@@ -100,4 +100,28 @@ struct stat {
  
- #define STAT_HAVE_NSEC 1
++#include <uapi/linux/resource.h>
  
-+/* same layout as 'struct stat on s390x' for both 32-bit and 64-bit tasks */
-+#ifndef __kernel_stat
-+struct __kernel_stat {
-+	unsigned long long st_dev;
-+	unsigned long long st_ino;
-+	unsigned long long st_nlink;
-+	unsigned int	   st_mode;
-+	unsigned int	   st_uid;
-+	unsigned int	   st_gid;
-+	unsigned int	   __pad1;
-+	unsigned long long st_rdev;
-+	unsigned long long st_size;
-+	unsigned long long st_atime;
-+	unsigned long long st_atime_nsec;
-+	unsigned long long st_mtime;
-+	unsigned long long st_mtime_nsec;
-+	unsigned long long st_ctime;
-+	unsigned long long st_ctime_nsec;
-+	unsigned long long st_blksize;
-+	long long	   st_blocks;
-+	unsigned long long __unused[3];
-+};
-+#endif
-+
- #endif
-diff --git a/arch/sh/include/uapi/asm/stat.h b/arch/sh/include/uapi/asm/stat.h
-index e1810cc6e3da..a13ffbcccd50 100644
---- a/arch/sh/include/uapi/asm/stat.h
-+++ b/arch/sh/include/uapi/asm/stat.h
-@@ -1,6 +1,8 @@
- #ifndef __ASM_SH_STAT_H
- #define __ASM_SH_STAT_H
+ struct task_struct;
  
-+#include <asm-generic/kernel_stat.h>
-+
- struct __old_kernel_stat {
- 	unsigned short st_dev;
- 	unsigned short st_ino;
-diff --git a/arch/sparc/include/uapi/asm/stat.h b/arch/sparc/include/uapi/asm/stat.h
-index a232e9e1f4e5..6d19c7bdc641 100644
---- a/arch/sparc/include/uapi/asm/stat.h
-+++ b/arch/sparc/include/uapi/asm/stat.h
-@@ -104,4 +104,32 @@ struct stat64 {
- 	unsigned int	__unused5;
- };
- #endif /* defined(__sparc__) && defined(__arch64__) */
-+
-+#ifndef __kernel_stat
-+/* This matches the sparc64 'struct stat64' in compat tasks */
-+struct __kernel_stat {
-+	unsigned long long	st_dev;
-+	unsigned long long	st_ino;
-+	unsigned long long	st_nlink;
-+
-+	unsigned int		st_mode;
-+	unsigned int		st_uid;
-+	unsigned int		st_gid;
-+	unsigned int		__pad0;
-+
-+	unsigned long long	st_rdev;
-+	long long		st_size;
-+	long long		st_blksize;
-+	long long		st_blocks;
-+
-+	unsigned long long	st_atime;
-+	unsigned long long	st_atime_nsec;
-+	unsigned long long	st_mtime;
-+	unsigned long long	st_mtime_nsec;
-+	unsigned long long	st_ctime;
-+	unsigned long long	st_ctime_nsec;
-+	long long		__unused[3];
-+};
-+#endif
-+
- #endif /* __SPARC_STAT_H */
-diff --git a/arch/x86/include/uapi/asm/stat.h b/arch/x86/include/uapi/asm/stat.h
-index bc03eb5d6360..5d5754fc3d36 100644
---- a/arch/x86/include/uapi/asm/stat.h
-+++ b/arch/x86/include/uapi/asm/stat.h
-@@ -27,12 +27,6 @@ struct stat {
- 	unsigned long  __unused5;
- };
+-int getrusage(struct task_struct *p, int who, struct rusage __user *ru);
++int getrusage(struct task_struct *p, int who,
++	      struct __kernel_rusage __user *ru);
+ int do_prlimit(struct task_struct *tsk, unsigned int resource,
+ 		struct rlimit *new_rlim, struct rlimit *old_rlim);
  
--/* We don't need to memset the whole thing just to initialize the padding */
--#define INIT_STRUCT_STAT_PADDING(st) do {	\
--	st.__unused4 = 0;			\
--	st.__unused5 = 0;			\
--} while (0)
--
- #define STAT64_HAS_BROKEN_ST_INO	1
- 
- /* This matches struct stat64 in glibc2.1, hence the absolutely
-@@ -102,14 +96,6 @@ struct stat {
- 	__kernel_long_t		__unused[3];
- };
- 
--/* We don't need to memset the whole thing just to initialize the padding */
--#define INIT_STRUCT_STAT_PADDING(st) do {	\
--	st.__pad0 = 0;				\
--	st.__unused[0] = 0;			\
--	st.__unused[1] = 0;			\
--	st.__unused[2] = 0;			\
--} while (0)
--
- #endif
- 
- /* for 32bit emulation and 32 bit kernels */
-@@ -134,4 +120,39 @@ struct __old_kernel_stat {
- #endif
- };
- 
-+#ifndef __kernel_stat
-+/* This matches the 64-bit version of 'struct stat' on i386 */
-+struct __kernel_stat {
-+	unsigned long long	st_dev;
-+	unsigned long long	st_ino;
-+	unsigned long long	st_nlink;
-+
-+	unsigned int		st_mode;
-+	unsigned int		st_uid;
-+	unsigned int		st_gid;
-+	unsigned int		__pad0;
-+	unsigned long long	st_rdev;
-+	long long		st_size;
-+	long long		st_blksize;
-+	long long		st_blocks;	/* Number 512-byte blocks allocated. */
-+
-+	unsigned long long	st_atime;
-+	unsigned long long	st_atime_nsec;
-+	unsigned long long	st_mtime;
-+	unsigned long long	st_mtime_nsec;
-+	unsigned long long	st_ctime;
-+	unsigned long long	st_ctime_nsec;
-+	long long		__unused[3];
-+};
-+
-+/* We don't need to memset the whole thing just to initialize the padding */
-+#define INIT_STRUCT_STAT_PADDING(st) do {	\
-+	st.__pad0 = 0;				\
-+	st.__unused[0] = 0;			\
-+	st.__unused[1] = 0;			\
-+	st.__unused[2] = 0;			\
-+} while (0)
-+
-+#endif
-+
- #endif /* _ASM_X86_STAT_H */
-diff --git a/arch/xtensa/include/uapi/asm/stat.h b/arch/xtensa/include/uapi/asm/stat.h
-index c4992038cee0..8d9c1d9d82d0 100644
---- a/arch/xtensa/include/uapi/asm/stat.h
-+++ b/arch/xtensa/include/uapi/asm/stat.h
-@@ -11,6 +11,8 @@
- #ifndef _XTENSA_STAT_H
- #define _XTENSA_STAT_H
- 
-+#include <asm-generic/kernel_stat.h>
-+
- #define STAT_HAVE_NSEC 1
- 
- struct stat {
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 76d1e38aabe1..71b574b0365e 100644
+index 71b574b0365e..f3fdc312627b 100644
 --- a/include/linux/syscalls.h
 +++ b/include/linux/syscalls.h
-@@ -44,8 +44,6 @@ struct semaphore;
- struct sembuf;
- struct shmid_ds;
- struct sockaddr;
--struct stat;
--struct stat64;
- struct statfs;
- struct statfs64;
- struct __sysctl_args;
-@@ -79,6 +77,7 @@ union bpf_attr;
- #include <linux/quota.h>
- #include <linux/key.h>
- #include <trace/syscall.h>
-+#include <linux/stat.h>
+@@ -36,7 +36,6 @@ struct old_utsname;
+ struct pollfd;
+ struct rlimit;
+ struct rlimit64;
+-struct rusage;
+ struct sched_param;
+ struct sched_attr;
+ struct sel_arg_struct;
+@@ -325,10 +324,10 @@ asmlinkage long sys_kexec_file_load(int kernel_fd, int initrd_fd,
+ asmlinkage long sys_exit(int error_code);
+ asmlinkage long sys_exit_group(int error_code);
+ asmlinkage long sys_wait4(pid_t pid, int __user *stat_addr,
+-				int options, struct rusage __user *ru);
++				int options, struct __kernel_rusage __user *ru);
+ asmlinkage long sys_waitid(int which, pid_t pid,
+ 			   struct siginfo __user *infop,
+-			   int options, struct rusage __user *ru);
++			   int options, struct __kernel_rusage __user *ru);
+ asmlinkage long sys_waitpid(pid_t pid, int __user *stat_addr, int options);
+ asmlinkage long sys_set_tid_address(int __user *tidptr);
+ asmlinkage long sys_futex(u32 __user *uaddr, int op, u32 val,
+@@ -650,7 +649,7 @@ asmlinkage long sys_setrlimit(unsigned int resource,
+ asmlinkage long sys_prlimit64(pid_t pid, unsigned int resource,
+ 				const struct rlimit64 __user *new_rlim,
+ 				struct rlimit64 __user *old_rlim);
+-asmlinkage long sys_getrusage(int who, struct rusage __user *ru);
++asmlinkage long sys_getrusage(int who, struct __kernel_rusage __user *ru);
+ asmlinkage long sys_umask(int mask);
  
- /*
-  * __MAP - apply a macro to syscall arguments
-@@ -405,10 +404,10 @@ asmlinkage long sys_lstat(const char __user *filename,
- asmlinkage long sys_fstat(unsigned int fd,
- 			struct __old_kernel_stat __user *statbuf);
- asmlinkage long sys_newstat(const char __user *filename,
--				struct stat __user *statbuf);
-+				struct __kernel_stat __user *statbuf);
- asmlinkage long sys_newlstat(const char __user *filename,
--				struct stat __user *statbuf);
--asmlinkage long sys_newfstat(unsigned int fd, struct stat __user *statbuf);
-+				struct __kernel_stat __user *statbuf);
-+asmlinkage long sys_newfstat(unsigned int fd, struct __kernel_stat __user *statbuf);
- asmlinkage long sys_ustat(unsigned dev, struct ustat __user *ubuf);
- #if defined(__ARCH_WANT_STAT64) || defined(__ARCH_WANT_COMPAT_STAT64)
- asmlinkage long sys_stat64(const char __user *filename,
-@@ -774,7 +773,7 @@ asmlinkage long sys_fchownat(int dfd, const char __user *filename, uid_t user,
- asmlinkage long sys_openat(int dfd, const char __user *filename, int flags,
- 			   umode_t mode);
- asmlinkage long sys_newfstatat(int dfd, const char __user *filename,
--			       struct stat __user *statbuf, int flag);
-+			       struct __kernel_stat __user *statbuf, int flag);
- asmlinkage long sys_readlinkat(int dfd, const char __user *path, char __user *buf,
- 			       int bufsiz);
- asmlinkage long sys_utimensat(int dfd, const char __user *filename,
-diff --git a/include/uapi/asm-generic/kernel_stat.h b/include/uapi/asm-generic/kernel_stat.h
-new file mode 100644
-index 000000000000..d1db22583046
---- /dev/null
-+++ b/include/uapi/asm-generic/kernel_stat.h
-@@ -0,0 +1,36 @@
-+#ifndef __ASM_GENERIC_KERNEL_STAT_H
-+#define __ASM_GENERIC_KERNEL_STAT_H
+ asmlinkage long sys_msgget(key_t key, int msgflg);
+diff --git a/include/uapi/linux/resource.h b/include/uapi/linux/resource.h
+index 36fb3b5fb181..c4f3ba44db00 100644
+--- a/include/uapi/linux/resource.h
++++ b/include/uapi/linux/resource.h
+@@ -39,6 +39,38 @@ struct	rusage {
+ 	__kernel_long_t	ru_nivcsw;	/* involuntary " */
+ };
+ 
 +
 +/*
-+ * The new structure that works on both 32-bit and 64-bit and survives y2038
-+ * The layout matches 'struct stat' from asm-generic/stat.h on 64-bit
-+ * architecture, but is identical on 32-bit architectures and uses 64-bit
-+ * st_?time members so we don't wrap around in 2038.
++ * __kernel_rusage replaces rusage, and matches the layout of 64-bit rusage
++ * on both 32-bit and 64-bit machines, to let 32-bit user space migrate to
++ * 64-bit tv_sec.
 + */
++#ifndef __kernel_rusage
++struct __kernel_rusage_timeval {
++	__s64	tv_sec;
++	__s64	tv_usec;
++};
 +
-+#ifndef __kernel_stat
-+struct __kernel_stat {
-+	unsigned long long st_dev;	/* Device.  */
-+	unsigned long long st_ino;	/* File serial number.  */
-+	unsigned int	   st_mode;	/* File mode.  */
-+	unsigned int	   st_nlink;	/* Link count.  */
-+	unsigned int	   st_uid;	/* User ID of the file's owner.  */
-+	unsigned int	   st_gid;	/* Group ID of the file's group. */
-+	unsigned long long st_rdev;	/* Device number, if device.  */
-+	unsigned long long __pad1;
-+	long long	   st_size;	/* Size of file, in bytes.  */
-+	int		   st_blksize;	/* Optimal block size for I/O.  */
-+	int		   __pad2;
-+	long long	   st_blocks;	/* Number 512-byte blocks allocated. */
-+	long long	   st_atime;	/* Time of last access.  */
-+	unsigned long long st_atime_nsec;
-+	long long	   st_mtime;	/* Time of last modification.  */
-+	unsigned long long st_mtime_nsec;
-+	long long	   st_ctime;	/* Time of last status change.  */
-+	unsigned long long st_ctime_nsec;
-+	unsigned int	   __unused4;
-+	unsigned int	   __unused5;
++struct	__kernel_rusage {
++	struct __kernel_rusage_timeval ru_utime; /* user time used */
++	struct __kernel_rusage_timeval ru_stime; /* system time used */
++	__s64	ru_maxrss;	/* maximum resident set size */
++	__s64	ru_ixrss;	/* integral shared memory size */
++	__s64	ru_idrss;	/* integral unshared data size */
++	__s64	ru_isrss;	/* integral unshared stack size */
++	__s64	ru_minflt;	/* page reclaims */
++	__s64	ru_majflt;	/* page faults */
++	__s64	ru_nswap;	/* swaps */
++	__s64	ru_inblock;	/* block input operations */
++	__s64	ru_oublock;	/* block output operations */
++	__s64	ru_msgsnd;	/* messages sent */
++	__s64	ru_msgrcv;	/* messages received */
++	__s64	ru_nsignals;	/* signals received */
++	__s64	ru_nvcsw;	/* voluntary context switches */
++	__s64	ru_nivcsw;	/* involuntary " */
 +};
 +#endif
 +
-+#endif /* __ASM_GENERIC_KERNEL_STAT_H */
-diff --git a/include/uapi/asm-generic/stat.h b/include/uapi/asm-generic/stat.h
-index bd8cad21998e..64c32ba7c1a9 100644
---- a/include/uapi/asm-generic/stat.h
-+++ b/include/uapi/asm-generic/stat.h
-@@ -8,15 +8,17 @@
+ struct rlimit {
+ 	__kernel_ulong_t	rlim_cur;
+ 	__kernel_ulong_t	rlim_max;
+diff --git a/kernel/compat.c b/kernel/compat.c
+index 03bb63995027..e56ee6a23c0f 100644
+--- a/kernel/compat.c
++++ b/kernel/compat.c
+@@ -517,7 +517,7 @@ COMPAT_SYSCALL_DEFINE2(getrlimit, unsigned int, resource,
+ #endif
+ 
+ #ifdef CONFIG_COMPAT_TIME
+-int put_compat_rusage(const struct rusage *r, struct compat_rusage __user *ru)
++int put_compat_rusage(const struct __kernel_rusage *r, struct compat_rusage __user *ru)
+ {
+ 	if (!access_ok(VERIFY_WRITE, ru, sizeof(*ru)) ||
+ 	    __put_user(r->ru_utime.tv_sec, &ru->ru_utime.tv_sec) ||
+@@ -551,7 +551,7 @@ COMPAT_SYSCALL_DEFINE4(wait4,
+ 	if (!ru) {
+ 		return sys_wait4(pid, stat_addr, options, NULL);
+ 	} else {
+-		struct rusage r;
++		struct __kernel_rusage r;
+ 		int ret;
+ 		unsigned int status;
+ 		mm_segment_t old_fs = get_fs();
+@@ -560,7 +560,7 @@ COMPAT_SYSCALL_DEFINE4(wait4,
+ 		ret = sys_wait4(pid,
+ 				(stat_addr ?
+ 				 (unsigned int __user *) &status : NULL),
+-				options, (struct rusage __user *) &r);
++				options, (struct __kernel_rusage __user *) &r);
+ 		set_fs (old_fs);
+ 
+ 		if (ret > 0) {
+@@ -579,7 +579,7 @@ COMPAT_SYSCALL_DEFINE5(waitid,
+ 		struct compat_rusage __user *, uru)
+ {
+ 	siginfo_t info;
+-	struct rusage ru;
++	struct __kernel_rusage ru;
+ 	long ret;
+ 	mm_segment_t old_fs = get_fs();
+ 
+@@ -587,7 +587,7 @@ COMPAT_SYSCALL_DEFINE5(waitid,
+ 
+ 	set_fs(KERNEL_DS);
+ 	ret = sys_waitid(which, pid, (siginfo_t __user *)&info, options,
+-			 uru ? (struct rusage __user *)&ru : NULL);
++			 uru ? (struct __kernel_rusage __user *)&ru : NULL);
+ 	set_fs(old_fs);
+ 
+ 	if ((ret < 0) || (info.si_signo == 0))
+@@ -610,6 +610,38 @@ COMPAT_SYSCALL_DEFINE5(waitid,
+ #endif
+ 
+ #ifdef CONFIG_COMPAT
++COMPAT_SYSCALL_DEFINE5(waitid_time64,
++		int, which, compat_pid_t, pid,
++		struct compat_siginfo __user *, uinfo, int, options,
++		struct compat_rusage __user *, uru)
++{
++	siginfo_t info;
++	struct __kernel_rusage ru;
++	long ret;
++	mm_segment_t old_fs = get_fs();
++
++	memset(&info, 0, sizeof(info));
++
++	set_fs(KERNEL_DS);
++	ret = sys_waitid(which, pid, (siginfo_t __user *)&info, options,
++			 uru ? (struct __kernel_rusage __user *)&ru : NULL);
++	set_fs(old_fs);
++
++	if ((ret < 0) || (info.si_signo == 0))
++		return ret;
++
++	if (uru) {
++		/* sys_waitid() overwrites everything in ru */
++		ret = copy_to_user(uru, &ru, sizeof(ru));
++		if (ret)
++			return -EFAULT;
++	}
++
++	BUG_ON(info.si_code & __SI_MASK);
++	info.si_code |= __SI_CHLD;
++	return copy_siginfo_to_user32(uinfo, &info);
++}
++
+ static int compat_get_user_cpu_mask(compat_ulong_t __user *user_mask_ptr,
+ 				    unsigned len, struct cpumask *new_mask)
+ {
+diff --git a/kernel/exit.c b/kernel/exit.c
+index 22fcc05dec40..bf2de12e6ae1 100644
+--- a/kernel/exit.c
++++ b/kernel/exit.c
+@@ -894,7 +894,7 @@ struct wait_opts {
+ 
+ 	struct siginfo __user	*wo_info;
+ 	int __user		*wo_stat;
+-	struct rusage __user	*wo_rusage;
++	struct __kernel_rusage __user *wo_rusage;
+ 
+ 	wait_queue_t		child_wait;
+ 	int			notask_error;
+@@ -1514,7 +1514,7 @@ end:
+ }
+ 
+ SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
+-		infop, int, options, struct rusage __user *, ru)
++		infop, int, options, struct __kernel_rusage __user *, ru)
+ {
+ 	struct wait_opts wo;
+ 	struct pid *pid = NULL;
+@@ -1582,7 +1582,7 @@ SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
+ }
+ 
+ SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
+-		int, options, struct rusage __user *, ru)
++		int, options, struct __kernel_rusage __user *, ru)
+ {
+ 	struct wait_opts wo;
+ 	struct pid *pid = NULL;
+diff --git a/kernel/sys.c b/kernel/sys.c
+index a4e372b798a5..e578f33a286e 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -1529,7 +1529,7 @@ SYSCALL_DEFINE2(setrlimit, unsigned int, resource, struct rlimit __user *, rlim)
   *
-  * stat64 is copied from powerpc64, with explicit padding added.
-  * stat is the same structure layout on 64-bit, without the 'long long'
-- * types.
-+ * types. Unfortunately, we started out using '32-bit st_*time here,
-+ * which was a huge mistake.
-  *
-- * By convention, 64 bit architectures use the stat interface, while
-- * 32 bit architectures use the stat64 interface. Note that we don't
-- * provide an __old_kernel_stat here, which new architecture should
-- * not have to start with.
-+ * New architectures use only the __kernel_stat interface with
-+ * 'sys_newfstatat', everything else is provided for backwards
-+ * compatibility. Note that we don't provide an __old_kernel_stat here,
-+ * which new architecture should not have to start with.
   */
  
- #include <asm/bitsperlong.h>
-+#include <asm-generic/kernel_stat.h>
+-static void accumulate_thread_rusage(struct task_struct *t, struct rusage *r)
++static void accumulate_thread_rusage(struct task_struct *t, struct __kernel_rusage *r)
+ {
+ 	r->ru_nvcsw += t->nvcsw;
+ 	r->ru_nivcsw += t->nivcsw;
+@@ -1539,12 +1539,13 @@ static void accumulate_thread_rusage(struct task_struct *t, struct rusage *r)
+ 	r->ru_oublock += task_io_get_oublock(t);
+ }
  
- #define STAT_HAVE_NSEC 1
+-static void k_getrusage(struct task_struct *p, int who, struct rusage *r)
++static void k_getrusage(struct task_struct *p, int who, struct __kernel_rusage *r)
+ {
+ 	struct task_struct *t;
+ 	unsigned long flags;
+ 	cputime_t tgutime, tgstime, utime, stime;
+ 	unsigned long maxrss = 0;
++	struct timeval tv;
  
+ 	memset((char *)r, 0, sizeof (*r));
+ 	utime = stime = 0;
+@@ -1599,8 +1600,12 @@ static void k_getrusage(struct task_struct *p, int who, struct rusage *r)
+ 	unlock_task_sighand(p, &flags);
+ 
+ out:
+-	cputime_to_timeval(utime, &r->ru_utime);
+-	cputime_to_timeval(stime, &r->ru_stime);
++	cputime_to_timeval(utime, &tv);
++	r->ru_utime.tv_sec = tv.tv_sec;
++	r->ru_utime.tv_usec = tv.tv_usec;
++	cputime_to_timeval(stime, &tv);
++	r->ru_stime.tv_sec = tv.tv_sec;
++	r->ru_stime.tv_usec = tv.tv_usec;
+ 
+ 	if (who != RUSAGE_CHILDREN) {
+ 		struct mm_struct *mm = get_task_mm(p);
+@@ -1613,15 +1618,15 @@ out:
+ 	r->ru_maxrss = maxrss * (PAGE_SIZE / 1024); /* convert pages to KBs */
+ }
+ 
+-int getrusage(struct task_struct *p, int who, struct rusage __user *ru)
++int getrusage(struct task_struct *p, int who, struct __kernel_rusage __user *ru)
+ {
+-	struct rusage r;
++	struct __kernel_rusage r;
+ 
+ 	k_getrusage(p, who, &r);
+ 	return copy_to_user(ru, &r, sizeof(r)) ? -EFAULT : 0;
+ }
+ 
+-SYSCALL_DEFINE2(getrusage, int, who, struct rusage __user *, ru)
++SYSCALL_DEFINE2(getrusage, int, who, struct __kernel_rusage __user *, ru)
+ {
+ 	if (who != RUSAGE_SELF && who != RUSAGE_CHILDREN &&
+ 	    who != RUSAGE_THREAD)
+@@ -1629,10 +1634,10 @@ SYSCALL_DEFINE2(getrusage, int, who, struct rusage __user *, ru)
+ 	return getrusage(current, who, ru);
+ }
+ 
+-#ifdef CONFIG_COMPAT
++#ifdef CONFIG_COMPAT_TIME
+ COMPAT_SYSCALL_DEFINE2(getrusage, int, who, struct compat_rusage __user *, ru)
+ {
+-	struct rusage r;
++	struct __kernel_rusage r;
+ 
+ 	if (who != RUSAGE_SELF && who != RUSAGE_CHILDREN &&
+ 	    who != RUSAGE_THREAD)
 -- 
 2.1.0.rc2
