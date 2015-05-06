@@ -1,99 +1,94 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 08/19] y2038: introduce struct __kernel_timespec
-Date: Wed,  6 May 2015 18:30:15 +0200
-Message-ID: <1430929826-318934-9-git-send-email-arnd@arndb.de>
+Subject: [PATCH 01/19] compat: remove compat_printk
+Date: Wed,  6 May 2015 18:30:08 +0200
+Message-ID: <1430929826-318934-2-git-send-email-arnd@arndb.de>
 References: <1430929826-318934-1-git-send-email-arnd@arndb.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
+Return-path: <libc-alpha-return-58722-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 In-Reply-To: <1430929826-318934-1-git-send-email-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
 To: y2038@lists.linaro.org
-Cc: libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>, baolin.wang@linaro.org, linux-api@vger.kernel.org, ruchandani.tina@gmail.com, linux-kernel@vger.kernel.org, albert.aribaud@3adev.fr, john.stultz@linaro.org, tglx@linutronix.de, bamvor.zhangjian@linaro.org
+Cc: baolin.wang@linaro.org, tglx@linutronix.de, albert.aribaud@3adev.fr, john.stultz@linaro.org, bamvor.zhangjian@linaro.org, ruchandani.tina@gmail.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-QSBsb3Qgb2Ygc3lzdGVtIGNhbGxzIHBhc3MgYSAnc3RydWN0IHRpbWVzcGVjJyBmcm9tIG9yIHRv
-IHVzZXIgc3BhY2UsCmFuZCB3ZSB3YW50IHRvIGNoYW5nZSB0aGF0IHR5cGUgdG8gYmUgYmFzZWQg
-b24gYSA2NC1iaXQgdGltZV90IGJ5CmRlZmF1bHQuCgpUaGlzIGludHJvZHVjZXMgYSBuZXcgdHlw
-ZSBzdHJ1Y3QgX19rZXJuZWxfdGltZXNwZWMsIHdoaWNoIGhhcyB0aGUKZm9ybWF0IHdlIHdhbnQg
-dG8gdXNlIGV2ZW50dWFsbHksIGJ1dCBhbHNvIGhhcyBhbiBvdmVycmlkZSBzbyBhbGwKYXJjaGl0
-ZWN0dXJlcyB0aGF0IGRvIG5vdCBkZWZpbmUgQ09ORklHX0NPTVBBVF9USU1FIHlldCBzdGlsbCBn
-ZXQgdGhlCm9sZCBiZWhhdmlvci4KT25jZSBhbGwgYXJjaGl0ZWN0dXJlcyBzZXQgdGhpcywgd2Ug
-Y2FuIHJlbW92ZSB0aGF0IG92ZXJyaWRlLgoKVGhpcyBhbHNvIGludHJvZHVjZXMgYSBnZXRfdGlt
-ZXNwZWM2NC9wdXRfdGltZXNwZWM2NCBzZXQgb2YgZnVuY3Rpb25zCnRoYXQgY29udmVydCBiZXR3
-ZWVuIGEgX19rZXJuZWxfdGltZXNwZWMgaW4gdXNlciBzcGFjZSBhbmQgYSB0aW1lc3BlYzY0Cmlu
-IGtlcm5lbCBzcGFjZS4KClRoZSBjdXJyZW50IGJlaGF2aW9yIG9mIGdldF90aW1lc3BlYzY0IGV4
-cGxpY2l0bHkgemVyb2VzIHRoZSB1cHBlciBoYWxmCm9mIHRoZSB0dl9uc2VjIG1lbWJlciwgdG8g
-YWxsb3cgdXNlciBzcGFjZSB0byBkZWZpbmUgaXRzIG93biAnc3RydWN0CnRpbWVzcGVjJyB3aXRo
-IHNvbWUgcGFkZGluZyBpbiBpdC4gV2hldGhlciB0aGlzIGlzIGEgZ29vZCBvciBiYWQgaWRlYQpp
-cyBvcGVuIGZvciBkaXNjdXNzaW9uLgoKU2lnbmVkLW9mZi1ieTogQXJuZCBCZXJnbWFubiA8YXJu
-ZEBhcm5kYi5kZT4KLS0tCiBpbmNsdWRlL2xpbnV4L3RpbWU2NC5oICAgIHwgMTcgKysrKysrKysr
-KystLS0tLS0KIGluY2x1ZGUvdWFwaS9saW51eC90aW1lLmggfCAxNyArKysrKysrKysrKysrKysr
-Kwoga2VybmVsL3RpbWUvdGltZS5jICAgICAgICB8IDMyICsrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrCiAzIGZpbGVzIGNoYW5nZWQsIDYwIGluc2VydGlvbnMoKyksIDYgZGVsZXRpb25z
-KC0pCgpkaWZmIC0tZ2l0IGEvaW5jbHVkZS9saW51eC90aW1lNjQuaCBiL2luY2x1ZGUvbGludXgv
-dGltZTY0LmgKaW5kZXggYTM4MzE0NzhkOWNmLi44ODBlYmU0YjRiYTQgMTAwNjQ0Ci0tLSBhL2lu
-Y2x1ZGUvbGludXgvdGltZTY0LmgKKysrIGIvaW5jbHVkZS9saW51eC90aW1lNjQuaApAQCAtMSwx
-NCArMSwxMiBAQAogI2lmbmRlZiBfTElOVVhfVElNRTY0X0gKICNkZWZpbmUgX0xJTlVYX1RJTUU2
-NF9ICiAKLSNpbmNsdWRlIDx1YXBpL2xpbnV4L3RpbWUuaD4KLQogdHlwZWRlZiBfX3M2NCB0aW1l
-NjRfdDsKIAotLyoKLSAqIFRoaXMgd2FudHMgdG8gZ28gaW50byB1YXBpL2xpbnV4L3RpbWUuaCBv
-bmNlIHdlIGFncmVlZCBhYm91dCB0aGUKLSAqIHVzZXJzcGFjZSBpbnRlcmZhY2VzLgotICovCisj
-aWZuZGVmIENPTkZJR19DT01QQVRfVElNRQorIyBkZWZpbmUgX19rZXJuZWxfdGltZXNwZWMgdGlt
-ZXNwZWMKKyNlbmRpZgorCiAjaWYgX19CSVRTX1BFUl9MT05HID09IDY0CiAjIGRlZmluZSB0aW1l
-c3BlYzY0IHRpbWVzcGVjCiAjZWxzZQpAQCAtMTgsNiArMTYsOCBAQCBzdHJ1Y3QgdGltZXNwZWM2
-NCB7CiB9OwogI2VuZGlmCiAKKyNpbmNsdWRlIDx1YXBpL2xpbnV4L3RpbWUuaD4KKwogLyogUGFy
-YW1ldGVycyB1c2VkIHRvIGNvbnZlcnQgdGhlIHRpbWVzcGVjIHZhbHVlczogKi8KICNkZWZpbmUg
-TVNFQ19QRVJfU0VDCTEwMDBMCiAjZGVmaW5lIFVTRUNfUEVSX01TRUMJMTAwMEwKQEAgLTE4Nyw0
-ICsxODcsOSBAQCBzdGF0aWMgX19hbHdheXNfaW5saW5lIHZvaWQgdGltZXNwZWM2NF9hZGRfbnMo
-c3RydWN0IHRpbWVzcGVjNjQgKmEsIHU2NCBucykKIAogI2VuZGlmCiAKK2V4dGVybiBpbnQgZ2V0
-X3RpbWVzcGVjNjQoc3RydWN0IHRpbWVzcGVjNjQgKnRzLAorCQkJICBjb25zdCBzdHJ1Y3QgX19r
-ZXJuZWxfdGltZXNwZWMgX191c2VyICp1dHMpOworZXh0ZXJuIGludCBwdXRfdGltZXNwZWM2NChj
-b25zdCBzdHJ1Y3QgdGltZXNwZWM2NCAqdHMsCisJCQkgIHN0cnVjdCBfX2tlcm5lbF90aW1lc3Bl
-YyBfX3VzZXIgKnV0cyk7CisKICNlbmRpZiAvKiBfTElOVVhfVElNRTY0X0ggKi8KZGlmZiAtLWdp
-dCBhL2luY2x1ZGUvdWFwaS9saW51eC90aW1lLmggYi9pbmNsdWRlL3VhcGkvbGludXgvdGltZS5o
-CmluZGV4IGU3NWUxYjZmZjI3Zi4uNzJkODk0ZGYzMDEzIDEwMDY0NAotLS0gYS9pbmNsdWRlL3Vh
-cGkvbGludXgvdGltZS5oCisrKyBiL2luY2x1ZGUvdWFwaS9saW51eC90aW1lLmgKQEAgLTY2LDQg
-KzY2LDIxIEBAIHN0cnVjdCBpdGltZXJ2YWwgewogICovCiAjZGVmaW5lIFRJTUVSX0FCU1RJTUUJ
-CQkweDAxCiAKKy8qIHR5cGVzIGJhc2VkIG9uIDY0LWJpdCB0aW1lX3QgKi8KKyNpZm5kZWYgX19r
-ZXJuZWxfdGltZXNwZWMKK3R5cGVkZWYgX19zNjQgX19rZXJuZWxfdGltZTY0X3Q7CisKK3N0cnVj
-dCBfX2tlcm5lbF90aW1lc3BlYyB7CisJX19rZXJuZWxfdGltZTY0X3QJdHZfc2VjOworCV9fczY0
-CQkJdHZfbnNlYzsKK307CisjZW5kaWYKKworI2lmbmRlZiBfX2tlcm5lbF9pdGltZXJzcGVjCitz
-dHJ1Y3QgX19rZXJuZWxfaXRpbWVyc3BlYyB7CisJc3RydWN0IF9fa2VybmVsX3RpbWVzcGVjIGl0
-X2ludGVydmFsOworCXN0cnVjdCBfX2tlcm5lbF90aW1lc3BlYyBpdF92YWx1ZTsKK307CisjZW5k
-aWYKKwogI2VuZGlmIC8qIF9VQVBJX0xJTlVYX1RJTUVfSCAqLwpkaWZmIC0tZ2l0IGEva2VybmVs
-L3RpbWUvdGltZS5jIGIva2VybmVsL3RpbWUvdGltZS5jCmluZGV4IDJjODViNzcyNGFmNC4uODQ1
-YWYxZGI2NmZhIDEwMDY0NAotLS0gYS9rZXJuZWwvdGltZS90aW1lLmMKKysrIGIva2VybmVsL3Rp
-bWUvdGltZS5jCkBAIC0zMCw2ICszMCw3IEBACiAjaW5jbHVkZSA8bGludXgvZXhwb3J0Lmg+CiAj
-aW5jbHVkZSA8bGludXgvdGltZXguaD4KICNpbmNsdWRlIDxsaW51eC9jYXBhYmlsaXR5Lmg+Cisj
-aW5jbHVkZSA8bGludXgvY29tcGF0Lmg+CiAjaW5jbHVkZSA8bGludXgvdGltZWtlZXBlcl9pbnRl
-cm5hbC5oPgogI2luY2x1ZGUgPGxpbnV4L2Vycm5vLmg+CiAjaW5jbHVkZSA8bGludXgvc3lzY2Fs
-bHMuaD4KQEAgLTM3LDYgKzM4LDcgQEAKICNpbmNsdWRlIDxsaW51eC9mcy5oPgogI2luY2x1ZGUg
-PGxpbnV4L21hdGg2NC5oPgogI2luY2x1ZGUgPGxpbnV4L3B0cmFjZS5oPgorI2luY2x1ZGUgPGxp
-bnV4L3RpbWU2NC5oPgogCiAjaW5jbHVkZSA8YXNtL3VhY2Nlc3MuaD4KICNpbmNsdWRlIDxhc20v
-dW5pc3RkLmg+CkBAIC03ODMsMyArNzg1LDMzIEBAIHN0cnVjdCB0aW1lc3BlYyB0aW1lc3BlY19h
-ZGRfc2FmZShjb25zdCBzdHJ1Y3QgdGltZXNwZWMgbGhzLAogCiAJcmV0dXJuIHJlczsKIH0KKwor
-aW50IGdldF90aW1lc3BlYzY0KHN0cnVjdCB0aW1lc3BlYzY0ICp0cywKKwkJICAgY29uc3Qgc3Ry
-dWN0IF9fa2VybmVsX3RpbWVzcGVjIF9fdXNlciAqdXRzKQoreworCXN0cnVjdCBfX2tlcm5lbF90
-aW1lc3BlYyBrdHM7CisJaW50IHJldDsKKworCXJldCA9IGNvcHlfZnJvbV91c2VyKCZrdHMsIHV0
-cywgc2l6ZW9mKGt0cykpOworCWlmIChyZXQpCisJCXJldHVybiAtRUZBVUxUOworCisJdHMtPnR2
-X3NlYyA9IGt0cy50dl9zZWM7CisJaWYgKCFJU19FTkFCTEVEKENPTkZJR182NEJJVCkgfHwgaXNf
-Y29tcGF0X3Rhc2soKSkKKwkJa3RzLnR2X25zZWMgJj0gMHhmZmZmZmZmZnVsOworCXRzLT50dl9u
-c2VjID0ga3RzLnR2X25zZWM7CisKKwlyZXR1cm4gMDsKK30KK0VYUE9SVF9TWU1CT0xfR1BMKGdl
-dF90aW1lc3BlYzY0KTsKKworaW50IHB1dF90aW1lc3BlYzY0KGNvbnN0IHN0cnVjdCB0aW1lc3Bl
-YzY0ICp0cywKKwkJICAgc3RydWN0IF9fa2VybmVsX3RpbWVzcGVjIF9fdXNlciAqdXRzKQorewor
-CXN0cnVjdCBfX2tlcm5lbF90aW1lc3BlYyBrdHMgPSB7CisJCS50dl9zZWMgPSB0cy0+dHZfc2Vj
-LAorCQkudHZfbnNlYyA9IHRzLT50dl9uc2VjCisJfTsKKwlyZXR1cm4gY29weV90b191c2VyKHV0
-cywgJmt0cywgc2l6ZW9mKGt0cykpID8gLUVGQVVMVCA6IDA7Cit9CitFWFBPUlRfU1lNQk9MX0dQ
-TChwdXRfdGltZXNwZWM2NCk7Ci0tIAoyLjEuMC5yYzIKCl9fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBsaXN0cy5s
-aW5hcm8ub3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3kyMDM4
-Cg==
+After 7e8e385aaf6e ("x86/compat: Remove sys32_vm86_warning"), this
+function has become unused, so we can remove it as well.
+
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ fs/compat.c            | 14 --------------
+ include/linux/compat.h |  1 -
+ kernel/sysctl.c        | 10 ----------
+ 3 files changed, 25 deletions(-)
+
+diff --git a/fs/compat.c b/fs/compat.c
+index 6fd272d455e4..7d78cde20fc3 100644
+--- a/fs/compat.c
++++ b/fs/compat.c
+@@ -54,20 +54,6 @@
+ #include <asm/ioctls.h>
+ #include "internal.h"
+ 
+-int compat_log = 1;
+-
+-int compat_printk(const char *fmt, ...)
+-{
+-	va_list ap;
+-	int ret;
+-	if (!compat_log)
+-		return 0;
+-	va_start(ap, fmt);
+-	ret = vprintk(fmt, ap);
+-	va_end(ap);
+-	return ret;
+-}
+-
+ /*
+  * Not all architectures have sys_utime, so implement this in terms
+  * of sys_utimes.
+diff --git a/include/linux/compat.h b/include/linux/compat.h
+index ab25814690bc..d533d06146a8 100644
+--- a/include/linux/compat.h
++++ b/include/linux/compat.h
+@@ -424,7 +424,6 @@ asmlinkage long compat_sys_settimeofday(struct compat_timeval __user *tv,
+ 
+ asmlinkage long compat_sys_adjtimex(struct compat_timex __user *utp);
+ 
+-extern int compat_printk(const char *fmt, ...);
+ extern void sigset_from_compat(sigset_t *set, const compat_sigset_t *compat);
+ extern void sigset_to_compat(compat_sigset_t *compat, const sigset_t *set);
+ 
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index 2082b1a88fb9..4020ade0ce4d 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
+@@ -105,7 +105,6 @@ extern unsigned int core_pipe_limit;
+ extern int pid_max;
+ extern int pid_max_min, pid_max_max;
+ extern int percpu_pagelist_fraction;
+-extern int compat_log;
+ extern int latencytop_enabled;
+ extern int sysctl_nr_open_min, sysctl_nr_open_max;
+ #ifndef CONFIG_MMU
+@@ -1043,15 +1042,6 @@ static struct ctl_table kern_table[] = {
+ 		.extra1		= &neg_one,
+ 	},
+ #endif
+-#ifdef CONFIG_COMPAT
+-	{
+-		.procname	= "compat-log",
+-		.data		= &compat_log,
+-		.maxlen		= sizeof (int),
+-	 	.mode		= 0644,
+-		.proc_handler	= proc_dointvec,
+-	},
+-#endif
+ #ifdef CONFIG_RT_MUTEXES
+ 	{
+ 		.procname	= "max_lock_depth",
+-- 
+2.1.0.rc2
