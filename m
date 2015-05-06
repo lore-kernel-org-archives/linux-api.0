@@ -1,111 +1,227 @@
-From: Michal Hocko <mhocko@suse.cz>
-Subject: Re: [RFC PATCH] mmap.2: clarify MAP_LOCKED semantic (was: Re: Should
- mmap MAP_LOCKED fail if mm_poppulate fails?)
-Date: Wed, 6 May 2015 14:21:09 +0200
-Message-ID: <20150506122108.GJ14550@dhcp22.suse.cz>
-References: <20150114095019.GC4706@dhcp22.suse.cz>
- <1430223111-14817-1-git-send-email-mhocko@suse.cz>
- <CA+55aFxzLXx=cC309h_tEc-Gkn_zH4ipR7PsefVcE-97Uj066g@mail.gmail.com>
- <20150428164302.GI2659@dhcp22.suse.cz>
- <CA+55aFydkG-BgZzry5DrTzueVh9VvEcVJdLV8iOyUphQk=0vpw@mail.gmail.com>
- <20150428183535.GB30918@dhcp22.suse.cz>
- <CA+55aFyajquhGhw59qNWKGK4dBV0TPmDD7-1XqPo7DZWvO_hPg@mail.gmail.com>
- <20150429113818.GC16097@dhcp22.suse.cz>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v10 12/12] manpage: update FALLOC_FL_INSERT_RANGE flag
+ in fallocate
+Date: Wed, 06 May 2015 14:43:25 +0200
+Message-ID: <554A0C6D.8070408@gmail.com>
+References: <1424533554-28024-1-git-send-email-linkinjeon@gmail.com> <1424533554-28024-13-git-send-email-linkinjeon@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150429113818.GC16097@dhcp22.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: linux-mm <linux-mm@kvack.org>, Cyril Hrubis <chrubis@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Hugh Dickins <hughd@google.com>, Michel Lespinasse <walken@google.com>, Rik van Riel <riel@redhat.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1424533554-28024-13-git-send-email-linkinjeon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Namjae Jeon <linkinjeon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, a.sangwan-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, bfoster-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-If there are no objections here I will resubmit this and MAP_POPULATE
-patches in few days.
 
-On Wed 29-04-15 13:38:18, Michal Hocko wrote:
-> On Tue 28-04-15 11:38:35, Linus Torvalds wrote:
-> > On Tue, Apr 28, 2015 at 11:35 AM, Michal Hocko <mhocko@suse.cz> wrote:
-> > >
-> > > I am still not sure I see the problem here.
-> > 
-> > Basically, I absolutely hate the notion of us doing something
-> > unsynchronized, when I can see us undoing a mmap that another thread
-> > is doing. It's wrong.
+Hello Namjae Jeon,
+
+I see that FALLOC_FL_INSERT_RANGE has hit mainline. Could I ask you refresh 
+this patch, please? (Against latest man-pages Git, please, since the current
+patch does not apply cleanly).
+
+See some comments below.
+
+On 02/21/2015 04:45 PM, Namjae Jeon wrote:
+> From: Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 > 
-> OK, I have checked the mmap(2) man page and there is no single mention
-> about multi-threaded usage. So even though I personally think that
-> user fault handlers which do mmap(MAP_FIXED) without synchronization
-> to parallel mmaps are broken by definition we cannot simply rule them
-> out and it is not the kernel job to make them broken even more or in a
-> subtly different way.
-> So here is an RFC for the man page patch. I am not very good in the
-> format but man doesn't complain about any formating issues.
+> Update FALLOC_FL_INSERT_RANGE flag in fallocate.
+> 
+> Signed-off-by: Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+> Signed-off-by: Ashish Sangwan <a.sangwan-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 > ---
-> From 903ed733187afaa4d27fef3c24f413304494411c Mon Sep 17 00:00:00 2001
-> From: Michal Hocko <mhocko@suse.cz>
-> Date: Wed, 29 Apr 2015 11:02:19 +0200
-> Subject: [RFC PATCH] mmap.2: clarify MAP_LOCKED semantic
+>  man2/fallocate.2 |   88 ++++++++++++++++++++++++++++++++++++++++++++++++++----
+>  1 file changed, 82 insertions(+), 6 deletions(-)
 > 
-> MAP_LOCKED had a subtly different semantic from mmap(2)+mlock(2) since
-> it has been introduced.
-> mlock(2) fails if the memory range cannot get populated to guarantee
-> that no future major faults will happen on the range. mmap(MAP_LOCKED) on
-> the other hand silently succeeds even if the range was populated only
-> partially.
-> 
-> Fixing this subtle difference in the kernel is rather awkward because
-> the memory population happens after mm locks have been dropped and so
-> the cleanup before returning failure (munlock) could operate on something
-> else than the originally mapped area.
-> 
-> E.g. speculative userspace page fault handler catching SEGV and doing
-> mmap(fault_addr, MAP_FIXED|MAP_LOCKED) might discard portion of a racing
-> mmap and lead to lost data. Although it is not clear whether such a
-> usage would be valid, mmap page doesn't explicitly describe requirements
-> for threaded applications so we cannot exclude this possibility.
-> 
-> This patch makes the semantic of MAP_LOCKED explicit and suggest using
-> mmap + mlock as the only way to guarantee no later major page faults.
-> 
-> Signed-off-by: Michal Hocko <mhocko@suse.cz>
-> ---
->  man2/mmap.2 | 13 ++++++++++++-
->  1 file changed, 12 insertions(+), 1 deletion(-)
-> 
-> diff --git a/man2/mmap.2 b/man2/mmap.2
-> index 54d68cf87e9e..1486be2e96b3 100644
-> --- a/man2/mmap.2
-> +++ b/man2/mmap.2
-> @@ -235,8 +235,19 @@ See the Linux kernel source file
->  for further information.
+> diff --git a/man2/fallocate.2 b/man2/fallocate.2
+> index adf42db..9b3c460 100644
+> --- a/man2/fallocate.2
+> +++ b/man2/fallocate.2
+> @@ -8,7 +8,7 @@
+>  .\" 2011-09-19: Added FALLOC_FL_PUNCH_HOLE
+>  .\" 2011-09-19: Substantial restructuring of the page
+>  .\"
+> -.TH FALLOCATE 2 2015-01-22 "Linux" "Linux Programmer's Manual"
+> +.TH FALLOCATE 2 2015-02-14 "Linux" "Linux Programmer's Manual"
+
+No need to update the timestamp on the page. I have scripts
+that do this automatically.
+
+>  .SH NAME
+>  fallocate \- manipulate file space
+>  .SH SYNOPSIS
+> @@ -225,6 +225,56 @@ XFS (since Linux 3.14)
+>  .IP *
+>  ext4, for extent-based files (since Linux 3.14)
+>  .\" commit b8a8684502a0fc852afa0056c6bb2a9273f6fcc0
+> +.SS Increasing file space
+> +.\" TODO: Mention commit id and supporting Linux version
+
+Yes, please add the commit ID and "Linux 4.1".
+
+> +Specifying the
+> +.BR FALLOC_FL_INSERT_RANGE
+> +flag in
+> +.I mode
+> +will increase the file space by inserting a hole within the file size without
+> +overwriting any existing data. The hole will start at
+                                  ^
+Please start new sentences on new source lines. (Same thing at various 
+lines below.)
+
+> +.I offset
+> +and continue for
+> +.I len
+> +bytes. For inserting hole inside file, the contents of the file starting at
+
+Please start new sentences on new source lines.
+
+> +.I offset
+> +will be shifted towards right by
+> +.I len
+> +bytes. Inserting a hole inside the file will increase the file size by
+
+Please start new sentences on new source lines.
+
+> +.I len
+> +bytes.
+> +
+> +This mode has the same limitation as
+> +.BR FALLOC_FL_COLLAPSE_RANGE
+> +regarding the
+> +granularity of the operation.
+> +If the granulrity requirements are not met,
+
+Spelling: "granularity"
+
+> +.BR fallocate ()
+> +will fail with the error
+> +.BR EINVAL.
+> +If the
+> +.I offset
+> +overlaps with end of file OR if it is greater than end of file, an error is
+> +returned. For such type of operations, i.e. inserting a hole at the end of
+
+Please start new sentences on new source lines.
+
+> +file,
+> +.BR ftruncate(2)
+> +should be used.
+> +In case
+> +.IR offset + len
+> +exceeds the maximum file size, errno will be set to
+> +.B EFBIG.
+> +
+> +No other flags may be specified in
+> +.IR mode
+> +in conjunction with
+> +.BR FALLOC_FL_INSERT_RANGE .
+> +
+> +As of Linux XXXX,
+> +.\" TODO: Mention commit id and supporting Linux version
+> +.B FALLOC_FL_INSERT_RANGE
+> +is supported by
+> +ext4 (only for extent-based files) and XFS.
+
+Is the ext4 support really there? Grep Linus's current Git, it appears
+that only XFS support is currently there?
+
+> +
+>  .SH RETURN VALUE
+>  On success,
+>  .BR fallocate ()
+> @@ -242,6 +292,12 @@ is not a valid file descriptor, or is not opened for writing.
+>  .IR offset + len
+>  exceeds the maximum file size.
 >  .TP
->  .BR MAP_LOCKED " (since Linux 2.5.37)"
-> -Lock the pages of the mapped region into memory in the manner of
-> +Mark the mmaped region to be locked in the same way as
->  .BR mlock (2).
-> +This implementation will try to populate (prefault) the whole range but
-> +the mmap call doesn't fail with
-> +.B ENOMEM
-> +if this fails. Therefore major faults might happen later on. So the semantic
-> +is not as strong as
-> +.BR mlock (2).
-> +.BR mmap (2)
-> ++
-> +.BR mlock (2)
-> +should be used when major faults are not acceptable after the initialization
-> +of the mapping.
->  This flag is ignored in older kernels.
->  .\" If set, the mapped pages will not be swapped out.
+> +.B EFBIG
+> +.I mode
+> +is
+> +.BR FALLOC_FL_INSERT_RANGE ,
+> +the current file size+len excceds the maximum file size.
+
+"exceeds"
+
+> +.TP
+>  .B EINTR
+>  A signal was caught during execution.
 >  .TP
-> -- 
-> 2.1.4
+> @@ -270,7 +326,17 @@ reaches or passes the end of the file.
+>  .B EINVAL
+>  .I mode
+>  is
+> -.BR FALLOC_FL_COLLAPSE_RANGE ,
+> +.BR FALLOC_FL_INSERT_RANGE
+> +and the range specified by
+> +.I offset
+> +reaches or passes the end of the file.
+> +.TP
+> +.B EINVAL
+> +.I mode
+> +is
+> +.BR FALLOC_FL_COLLAPSE_RANGE
+> +or
+> +.BR FALLOC_FL_INSERT_RANGE ,
+>  but either
+>  .I offset
+>  or
+> @@ -279,18 +345,24 @@ is not a multiple of the filesystem block size.
+>  .TP
+>  .B EINVAL
+>  .I mode
+> -contains both
+> +contains either of
+>  .B FALLOC_FL_COLLAPSE_RANGE
+> +or
+> +.B FALLOC_FL_INSERT_RANGE
+>  and other flags;
+>  no other flags are permitted with
+> -.BR FALLOC_FL_COLLAPSE_RANGE .
+> +.BR FALLOC_FL_COLLAPSE_RANGE
+> +or
+> +.BR FALLOC_FL_INSERT_RANGE .
+>  .TP
+>  .B EINVAL
+>  .I mode
+>  is
+>  .BR FALLOC_FL_COLLAPSE_RANGE
+>  or
+> -.BR FALLOC_FL_ZERO_RANGE ,
+> +.BR FALLOC_FL_ZERO_RANGE
+> +or
+> +.BR FALLOC_FL_INSERT_RANGE ,
+>  but the file referred to by
+>  .I fd
+>  is not a regular file.
+> @@ -342,6 +414,8 @@ specifies
+>  .BR FALLOC_FL_PUNCH_HOLE
+>  or
+>  .BR FALLOC_FL_COLLAPSE_RANGE
+> +or
+> +.BR FALLOC_FL_INSERT_RANGE
+>  and
+>  the file referred to by
+>  .I fd
+> @@ -360,7 +434,9 @@ refers to a pipe or FIFO.
+>  .B ETXTBSY
+>  .I mode
+>  specifies
+> -.BR FALLOC_FL_COLLAPSE_RANGE ,
+> +.BR FALLOC_FL_COLLAPSE_RANGE
+> +or
+> +.BR FALLOC_FL_INSERT_RANGE ,
+>  but the file referred to by
+>  .IR fd
+>  is currently being executed.
 > 
-> -- 
-> Michal Hocko
-> SUSE Labs
+
+Thanks,
+
+Michael
+
 
 -- 
-Michal Hocko
-SUSE Labs
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
