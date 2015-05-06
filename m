@@ -1,219 +1,59 @@
-From: Mathieu Poirier <mathieu.poirier@linaro.org>
-Subject: [PATCH v3 04/11] coresight-etm4x: Controls pertaining to various
- configuration options
-Date: Wed,  6 May 2015 09:27:20 -0600
-Message-ID: <1430926047-9125-5-git-send-email-mathieu.poirier@linaro.org>
-References: <1430926047-9125-1-git-send-email-mathieu.poirier@linaro.org>
+From: =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>
+Subject: [PATCH v3 01/12] KVM: add comments for kvm_debug_exit_arch struct
+Date: Wed,  6 May 2015 17:23:16 +0100
+Message-ID: <1430929407-3487-2-git-send-email-alex.bennee@linaro.org>
+References: <1430929407-3487-1-git-send-email-alex.bennee@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <1430926047-9125-1-git-send-email-mathieu.poirier@linaro.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: gregkh@linuxfoundation.org
-Cc: mathieu.poirier@linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, zhang.chunyan@linaro.org, linux-arm-kernel@lists.infradead.org, kaixu.xia@linaro.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
+In-Reply-To: <1430929407-3487-1-git-send-email-alex.bennee@linaro.org>
+List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
+List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
+List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
+List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
+List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
+Errors-To: kvmarm-bounces@lists.cs.columbia.edu
+Sender: kvmarm-bounces@lists.cs.columbia.edu
+To: kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kvmarm@lists.cs.columbia.edu, christoffer.dall@linaro.org, marc.zyngier@arm.com, peter.maydell@linaro.org, agraf@suse.de, drjones@redhat.com, pbonzini@redhat.com, zhichao.huang@linaro.org
+Cc: Jonathan Corbet <corbet@lwn.net>, Gleb Natapov <gleb@kernel.org>, jan.kiszka@siemens.com, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, dahi@linux.vnet.ibm.com, r65777@freescale.com, bp@suse.de
 List-Id: linux-api@vger.kernel.org
 
-From: Pratik Patel <pratikp@codeaurora.org>
-
-Adding sysfs entries to configure:
-. global timestamp.
-. how often trace synchronisation occur.
-. the threashold value for cycle counting.
-. branch and broadcasting regions.
-
-Signed-off-by: Pratik Patel <pratikp@codeaurora.org>
-Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
----
- .../ABI/testing/sysfs-bus-coresight-devices-etm4x  |  28 ++++-
- drivers/hwtracing/coresight/coresight-etm4x.c      | 124 +++++++++++++++++++++
- 2 files changed, 151 insertions(+), 1 deletion(-)
-
-diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
-index 9caf70382088..2aeae2976c10 100644
---- a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
-+++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
-@@ -119,4 +119,30 @@ What:		/sys/bus/coresight/devices/<memory_map>.etm/event_instren
- Date:		April 2015
- KernelVersion:	4.01
- Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
--Description: 	(RW) Controls the behavior of the events in bank 0 to 3.
-+Description: 	(RW) Controls the behavior of the events in bank 0 to 3
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/event_ts
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description: 	(RW) Controls the insertion of global timestamps in the trace
-+		streams.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/syncfreq
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description: 	(RW) Controls how often trace synchronization requests occur.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/cyc_threshold
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description: 	(RW) Sets the threshold value for cycle counting.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/bb_ctrl
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description: 	(RW) Controls which regions in the memory map are enabled to
-+		use branch broadcasting.
-diff --git a/drivers/hwtracing/coresight/coresight-etm4x.c b/drivers/hwtracing/coresight/coresight-etm4x.c
-index 1a93b968ab6e..9812fbfdbeae 100644
---- a/drivers/hwtracing/coresight/coresight-etm4x.c
-+++ b/drivers/hwtracing/coresight/coresight-etm4x.c
-@@ -812,6 +812,126 @@ static ssize_t event_instren_store(struct device *dev,
- }
- static DEVICE_ATTR_RW(event_instren);
- 
-+static ssize_t event_ts_show(struct device *dev,
-+			     struct device_attribute *attr,
-+			     char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->ts_ctrl;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+
-+static ssize_t event_ts_store(struct device *dev,
-+			      struct device_attribute *attr,
-+			      const char *buf, size_t size)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	if (kstrtoul(buf, 16, &val))
-+		return -EINVAL;
-+	if (!drvdata->ts_size)
-+		return -EINVAL;
-+
-+	drvdata->ts_ctrl = val & ETMv4_EVENT_MASK;
-+	return size;
-+}
-+static DEVICE_ATTR_RW(event_ts);
-+
-+static ssize_t syncfreq_show(struct device *dev,
-+			     struct device_attribute *attr,
-+			     char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->syncfreq;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+
-+static ssize_t syncfreq_store(struct device *dev,
-+			      struct device_attribute *attr,
-+			      const char *buf, size_t size)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	if (kstrtoul(buf, 16, &val))
-+		return -EINVAL;
-+	if (drvdata->syncpr == true)
-+		return -EINVAL;
-+
-+	drvdata->syncfreq = val & ETMv4_SYNC_MASK;
-+	return size;
-+}
-+static DEVICE_ATTR_RW(syncfreq);
-+
-+static ssize_t cyc_threshold_show(struct device *dev,
-+				  struct device_attribute *attr,
-+				  char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->ccctlr;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+
-+static ssize_t cyc_threshold_store(struct device *dev,
-+				   struct device_attribute *attr,
-+				   const char *buf, size_t size)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	if (kstrtoul(buf, 16, &val))
-+		return -EINVAL;
-+	if (val < drvdata->ccitmin)
-+		return -EINVAL;
-+
-+	drvdata->ccctlr = val & ETM_CYC_THRESHOLD_MASK;
-+	return size;
-+}
-+static DEVICE_ATTR_RW(cyc_threshold);
-+
-+static ssize_t bb_ctrl_show(struct device *dev,
-+			    struct device_attribute *attr,
-+			    char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->bb_ctrl;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+
-+static ssize_t bb_ctrl_store(struct device *dev,
-+			     struct device_attribute *attr,
-+			     const char *buf, size_t size)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	if (kstrtoul(buf, 16, &val))
-+		return -EINVAL;
-+	if (drvdata->trcbb == false)
-+		return -EINVAL;
-+	if (!drvdata->nr_addr_cmp)
-+		return -EINVAL;
-+	/*
-+	 * Bit[7:0] selects which address range comparator is used for
-+	 * branch broadcast control.
-+	 */
-+	if (BMVAL(val, 0, 7) > drvdata->nr_addr_cmp)
-+		return -EINVAL;
-+
-+	drvdata->bb_ctrl = val;
-+	return size;
-+}
-+static DEVICE_ATTR_RW(bb_ctrl);
-+
- static ssize_t status_show(struct device *dev,
- 			   struct device_attribute *attr, char *buf)
- {
-@@ -969,6 +1089,10 @@ static struct attribute *coresight_etmv4_attrs[] = {
- 	&dev_attr_pe.attr,
- 	&dev_attr_event.attr,
- 	&dev_attr_event_instren.attr,
-+	&dev_attr_event_ts.attr,
-+	&dev_attr_syncfreq.attr,
-+	&dev_attr_cyc_threshold.attr,
-+	&dev_attr_bb_ctrl.attr,
- 	&dev_attr_status.attr,
- 	&dev_attr_mgmt.attr,
- 	&dev_attr_trcidr.attr,
--- 
-1.9.1
+QnJpbmcgaW50byBsaW5lIHdpdGggdGhlIGNvbW1lbnRzIGZvciB0aGUgb3RoZXIgc3RydWN0dXJl
+cyBhbmQgdGhlaXIKS1ZNX0VYSVRfKiBjYXNlcy4gQWxzbyB1cGRhdGUgYXBpLnR4dCB0byByZWZs
+ZWN0IHVzZSBpbiBrdm1fcnVuCmRvY3VtZW50YXRpb24uCgpTaWduZWQtb2ZmLWJ5OiBBbGV4IEJl
+bm7DqWUgPGFsZXguYmVubmVlQGxpbmFyby5vcmc+ClJldmlld2VkLWJ5OiBEYXZpZCBIaWxkZW5i
+cmFuZCA8ZGFoaUBsaW51eC52bmV0LmlibS5jb20+ClJldmlld2VkLWJ5OiBBbmRyZXcgSm9uZXMg
+PGRyam9uZXNAcmVkaGF0LmNvbT4KCi0tLQoKdjIKICAtIGFkZCBjb21tZW50cyBmb3Igb3RoZXIg
+ZXhpdCB0eXBlcwp2MwogIC0gcy9jb21tZW50YXJ5L2NvbW1lbnRzLwogIC0gYWRkIHJiIHRhZ3MK
+ICAtIHVwZGF0ZSBhcGkudHh0IGt2bV9ydW4gdG8gaW5jbHVkZSBLVk1fRVhJVF9ERUJVRyBkZXNj
+CgpkaWZmIC0tZ2l0IGEvRG9jdW1lbnRhdGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0IGIvRG9jdW1l
+bnRhdGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0CmluZGV4IDlmYTJiZjguLmNiOTAwMjUgMTAwNjQ0
+Ci0tLSBhL0RvY3VtZW50YXRpb24vdmlydHVhbC9rdm0vYXBpLnR4dAorKysgYi9Eb2N1bWVudGF0
+aW9uL3ZpcnR1YWwva3ZtL2FwaS50eHQKQEAgLTMwNzAsMTEgKzMwNzAsMTMgQEAgZGF0YV9vZmZz
+ZXQgZGVzY3JpYmVzIHdoZXJlIHRoZSBkYXRhIGlzIGxvY2F0ZWQgKEtWTV9FWElUX0lPX09VVCkg
+b3IKIHdoZXJlIGt2bSBleHBlY3RzIGFwcGxpY2F0aW9uIGNvZGUgdG8gcGxhY2UgdGhlIGRhdGEg
+Zm9yIHRoZSBuZXh0CiBLVk1fUlVOIGludm9jYXRpb24gKEtWTV9FWElUX0lPX0lOKS4gIERhdGEg
+Zm9ybWF0IGlzIGEgcGFja2VkIGFycmF5LgogCisJCS8qIEtWTV9FWElUX0RFQlVHICovCiAJCXN0
+cnVjdCB7CiAJCQlzdHJ1Y3Qga3ZtX2RlYnVnX2V4aXRfYXJjaCBhcmNoOwogCQl9IGRlYnVnOwog
+Ci1VbnVzZWQuCitJZiB0aGUgZXhpdF9yZWFzb24gaW4gS1ZNX0VYSVRfREVCVUcsIHRoZW4gYSB2
+Y3B1IGlzIHByb2Nlc3NpbmcgYSBkZWJ1ZyBldmVudAorZm9yIHdoaWNoIGFyY2hpdGVjdHVyZSBk
+ZXBlbmRhbnQgaW5mb3JtYXRpb24gaXMgcmV0dXJuZWQuCiAKIAkJLyogS1ZNX0VYSVRfTU1JTyAq
+LwogCQlzdHJ1Y3QgewpkaWZmIC0tZ2l0IGEvaW5jbHVkZS91YXBpL2xpbnV4L2t2bS5oIGIvaW5j
+bHVkZS91YXBpL2xpbnV4L2t2bS5oCmluZGV4IDRiNjAwNTYuLjcwYWM2NDEgMTAwNjQ0Ci0tLSBh
+L2luY2x1ZGUvdWFwaS9saW51eC9rdm0uaAorKysgYi9pbmNsdWRlL3VhcGkvbGludXgva3ZtLmgK
+QEAgLTIzNyw2ICsyMzcsNyBAQCBzdHJ1Y3Qga3ZtX3J1biB7CiAJCQlfX3UzMiBjb3VudDsKIAkJ
+CV9fdTY0IGRhdGFfb2Zmc2V0OyAvKiByZWxhdGl2ZSB0byBrdm1fcnVuIHN0YXJ0ICovCiAJCX0g
+aW87CisJCS8qIEtWTV9FWElUX0RFQlVHICovCiAJCXN0cnVjdCB7CiAJCQlzdHJ1Y3Qga3ZtX2Rl
+YnVnX2V4aXRfYXJjaCBhcmNoOwogCQl9IGRlYnVnOwpAQCAtMjg1LDYgKzI4Niw3IEBAIHN0cnVj
+dCBrdm1fcnVuIHsKIAkJCV9fdTMyIGRhdGE7CiAJCQlfX3U4ICBpc193cml0ZTsKIAkJfSBkY3I7
+CisJCS8qIEtWTV9FWElUX0lOVEVSTkFMX0VSUk9SICovCiAJCXN0cnVjdCB7CiAJCQlfX3UzMiBz
+dWJlcnJvcjsKIAkJCS8qIEF2YWlsYWJsZSB3aXRoIEtWTV9DQVBfSU5URVJOQUxfRVJST1JfREFU
+QTogKi8KQEAgLTI5NSw2ICsyOTcsNyBAQCBzdHJ1Y3Qga3ZtX3J1biB7CiAJCXN0cnVjdCB7CiAJ
+CQlfX3U2NCBncHJzWzMyXTsKIAkJfSBvc2k7CisJCS8qIEtWTV9FWElUX1BBUFJfSENBTEwgKi8K
+IAkJc3RydWN0IHsKIAkJCV9fdTY0IG5yOwogCQkJX191NjQgcmV0OwotLSAKMi4zLjUKCl9fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmt2bWFybSBtYWlsaW5n
+IGxpc3QKa3ZtYXJtQGxpc3RzLmNzLmNvbHVtYmlhLmVkdQpodHRwczovL2xpc3RzLmNzLmNvbHVt
+YmlhLmVkdS9tYWlsbWFuL2xpc3RpbmZvL2t2bWFybQo=
