@@ -1,58 +1,71 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 04/19] y2038: introduce CONFIG_COMPAT_TIME
-Date: Wed,  6 May 2015 18:30:11 +0200
-Message-ID: <1430929826-318934-5-git-send-email-arnd@arndb.de>
+Subject: [PATCH 02/19] initramfs: use vfs_stat/lstat directly
+Date: Wed,  6 May 2015 18:30:09 +0200
+Message-ID: <1430929826-318934-3-git-send-email-arnd@arndb.de>
 References: <1430929826-318934-1-git-send-email-arnd@arndb.de>
-Return-path: <libc-alpha-return-58711-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
 In-Reply-To: <1430929826-318934-1-git-send-email-arnd@arndb.de>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
 To: y2038@lists.linaro.org
-Cc: baolin.wang@linaro.org, tglx@linutronix.de, albert.aribaud@3adev.fr, john.stultz@linaro.org, bamvor.zhangjian@linaro.org, ruchandani.tina@gmail.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>
+Cc: libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>, baolin.wang@linaro.org, linux-api@vger.kernel.org, ruchandani.tina@gmail.com, linux-kernel@vger.kernel.org, albert.aribaud@3adev.fr, john.stultz@linaro.org, tglx@linutronix.de, bamvor.zhangjian@linaro.org
 List-Id: linux-api@vger.kernel.org
 
-There are a total of system calls (aside from ioctl) that pass a time_t
-or derived data structure as an argument, and in order to extend time_t
-to 64-bit, we have to replace them with new system calls and keep providing
-backwards compatibility.
-
-To avoid adding completely new and untested code for this purpose, we
-introduce a new CONFIG_COMPAT_TIME symbol that is always set on 64-bit
-architectures with 32-bit compat mode, as well as all 32-bit architectures
-that have been extended to provide the new system calls.
-
-After this is done for all architectures, the CONFIG_COMPAT_TIME symbol
-can be made a user-selected option, to enable users to build a kernel
-that only provides y2038-safe system calls.
-
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
----
- arch/Kconfig | 11 +++++++++++
- 1 file changed, 11 insertions(+)
-
-diff --git a/arch/Kconfig b/arch/Kconfig
-index a65eafb24997..630d3d289569 100644
---- a/arch/Kconfig
-+++ b/arch/Kconfig
-@@ -545,4 +545,15 @@ config OLD_SIGACTION
- config COMPAT_OLD_SIGACTION
- 	bool
- 
-+config ARCH_HAS_COMPAT_TIME
-+	def_bool COMPAT
-+
-+config COMPAT_TIME
-+	def_bool ARCH_HAS_COMPAT_TIME
-+	help
-+	  This should be selected by all architectures that need to support
-+	  system calls with a 32-bit time_t. Traditionally, this has been
-+	  used on all 32-bit architectures, and needs to be supported on
-+	  64-bit architectures as part of compat syscall handling.
-+
- source "kernel/gcov/Kconfig"
--- 
-2.1.0.rc2
+c3lzX25ld2xzdGF0IGlzIGEgc3lzdGVtIGNhbGwgaW1wbGVtZW50YXRpb24gdGhhdCBpcyBtZWFu
+dCBmb3IgdXNlcgpzcGFjZSwgYW5kIHRoYXQgY29waWVzIGtlcm5lbC1pbnRlcm5hbCBkYXRhIHN0
+cnVjdHVyZSB0byB0aGUgdXNlcgpmb3JtYXQsIHdoaWNoIGlzIG5vdCBuZWVkZWQgZm9yIGluLWtl
+cm5lbCB1c2Vycy4KCkZ1cnRoZXIsIGFzIHdlIHJlYXJyYW5nZSB0aGUgc3lzdGVtIGNhbGwgaW1w
+bGVtZW50YXRpb24gc28gd2UgY2FuCmV4dGVuZCBpdCB3aXRoIDY0LWJpdCB0aW1lX3QsIHRoZSBw
+cm90b3R5cGUgZm9yIHN5c19uZXdsc3RhdCBjaGFuZ2VzLgoKVGhpcyBjaGFuZ2VzIHRoZSBpbml0
+cmFtZnMgY29kZSB0byB1c2UgdmZzX2xzdGF0IGRpcmVjdGx5LCB0byBnZXQKaXQgb3V0IG9mIHRo
+ZSB3YXkgb2YgdGhlIHRpbWVfdCBjaGFuZ2VzLCBhbmQgbWFrZSBpdCBzbGlnaHRseSBtb3JlCmVm
+ZmljaWVudCBpbiB0aGUgcHJvY2Vzcy4gQWxvbmcgdGhlIHNhbWUgbGluZXMgd2UgYWxzbyByZXBs
+YWNlCnN5c19zdGF0IGFuZCBzeXNfc3RhdDY0IHdpdGggdmZzX3N0YXQuCgpTaWduZWQtb2ZmLWJ5
+OiBBcm5kIEJlcmdtYW5uIDxhcm5kQGFybmRiLmRlPgotLS0KIGluaXQvZG9fbW91bnRzLmggfCAy
+MiArKysrLS0tLS0tLS0tLS0tLS0tLS0tCiBpbml0L2luaXRyYW1mcy5jIHwgMTIgKysrKysrLS0t
+LS0tCiAyIGZpbGVzIGNoYW5nZWQsIDEwIGluc2VydGlvbnMoKyksIDI0IGRlbGV0aW9ucygtKQoK
+ZGlmZiAtLWdpdCBhL2luaXQvZG9fbW91bnRzLmggYi9pbml0L2RvX21vdW50cy5oCmluZGV4IGY1
+Yjk3OGE5YmI5Mi4uNzRlNzViYjIwZmUzIDEwMDY0NAotLS0gYS9pbml0L2RvX21vdW50cy5oCisr
+KyBiL2luaXQvZG9fbW91bnRzLmgKQEAgLTE5LDI5ICsxOSwxNSBAQCBzdGF0aWMgaW5saW5lIGlu
+dCBjcmVhdGVfZGV2KGNoYXIgKm5hbWUsIGRldl90IGRldikKIAlyZXR1cm4gc3lzX21rbm9kKG5h
+bWUsIFNfSUZCTEt8MDYwMCwgbmV3X2VuY29kZV9kZXYoZGV2KSk7CiB9CiAKLSNpZiBCSVRTX1BF
+Ul9MT05HID09IDMyCiBzdGF0aWMgaW5saW5lIHUzMiBic3RhdChjaGFyICpuYW1lKQogewotCXN0
+cnVjdCBzdGF0NjQgc3RhdDsKLQlpZiAoc3lzX3N0YXQ2NChuYW1lLCAmc3RhdCkgIT0gMCkKKwlz
+dHJ1Y3Qga3N0YXQgc3RhdDsKKwlpZiAodmZzX3N0YXQobmFtZSwgJnN0YXQpICE9IDApCiAJCXJl
+dHVybiAwOwotCWlmICghU19JU0JMSyhzdGF0LnN0X21vZGUpKQorCWlmICghU19JU0JMSyhzdGF0
+Lm1vZGUpKQogCQlyZXR1cm4gMDsKLQlpZiAoc3RhdC5zdF9yZGV2ICE9ICh1MzIpc3RhdC5zdF9y
+ZGV2KQotCQlyZXR1cm4gMDsKLQlyZXR1cm4gc3RhdC5zdF9yZGV2OwotfQotI2Vsc2UKLXN0YXRp
+YyBpbmxpbmUgdTMyIGJzdGF0KGNoYXIgKm5hbWUpCi17Ci0Jc3RydWN0IHN0YXQgc3RhdDsKLQlp
+ZiAoc3lzX25ld3N0YXQobmFtZSwgJnN0YXQpICE9IDApCi0JCXJldHVybiAwOwotCWlmICghU19J
+U0JMSyhzdGF0LnN0X21vZGUpKQotCQlyZXR1cm4gMDsKLQlyZXR1cm4gc3RhdC5zdF9yZGV2Owor
+CXJldHVybiBzdGF0LnJkZXY7CiB9Ci0jZW5kaWYKIAogI2lmZGVmIENPTkZJR19CTEtfREVWX1JB
+TQogCmRpZmYgLS1naXQgYS9pbml0L2luaXRyYW1mcy5jIGIvaW5pdC9pbml0cmFtZnMuYwppbmRl
+eCBhZDFiZDc3ODdiYmIuLjEwYzgwOGU5NzAyMyAxMDA2NDQKLS0tIGEvaW5pdC9pbml0cmFtZnMu
+YworKysgYi9pbml0L2luaXRyYW1mcy5jCkBAIC0zMTEsMTAgKzMxMSwxMCBAQCBzdGF0aWMgaW50
+IF9faW5pdCBtYXliZV9saW5rKHZvaWQpCiAKIHN0YXRpYyB2b2lkIF9faW5pdCBjbGVhbl9wYXRo
+KGNoYXIgKnBhdGgsIHVtb2RlX3QgZm1vZGUpCiB7Ci0Jc3RydWN0IHN0YXQgc3Q7CisJc3RydWN0
+IGtzdGF0IHN0OwogCi0JaWYgKCFzeXNfbmV3bHN0YXQocGF0aCwgJnN0KSAmJiAoc3Quc3RfbW9k
+ZSBeIGZtb2RlKSAmIFNfSUZNVCkgewotCQlpZiAoU19JU0RJUihzdC5zdF9tb2RlKSkKKwlpZiAo
+IXZmc19sc3RhdChwYXRoLCAmc3QpICYmIChzdC5tb2RlIF4gZm1vZGUpICYgU19JRk1UKSB7CisJ
+CWlmIChTX0lTRElSKHN0Lm1vZGUpKQogCQkJc3lzX3JtZGlyKHBhdGgpOwogCQllbHNlCiAJCQlz
+eXNfdW5saW5rKHBhdGgpOwpAQCAtNTgwLDEzICs1ODAsMTMgQEAgc3RhdGljIHZvaWQgX19pbml0
+IGNsZWFuX3Jvb3Rmcyh2b2lkKQogCW51bSA9IHN5c19nZXRkZW50czY0KGZkLCBkaXJwLCBCVUZf
+U0laRSk7CiAJd2hpbGUgKG51bSA+IDApIHsKIAkJd2hpbGUgKG51bSA+IDApIHsKLQkJCXN0cnVj
+dCBzdGF0IHN0OworCQkJc3RydWN0IGtzdGF0IHN0OwogCQkJaW50IHJldDsKIAotCQkJcmV0ID0g
+c3lzX25ld2xzdGF0KGRpcnAtPmRfbmFtZSwgJnN0KTsKKwkJCXJldCA9IHZmc19sc3RhdChkaXJw
+LT5kX25hbWUsICZzdCk7CiAJCQlXQVJOX09OX09OQ0UocmV0KTsKIAkJCWlmICghcmV0KSB7Ci0J
+CQkJaWYgKFNfSVNESVIoc3Quc3RfbW9kZSkpCisJCQkJaWYgKFNfSVNESVIoc3QubW9kZSkpCiAJ
+CQkJCXN5c19ybWRpcihkaXJwLT5kX25hbWUpOwogCQkJCWVsc2UKIAkJCQkJc3lzX3VubGluayhk
+aXJwLT5kX25hbWUpOwotLSAKMi4xLjAucmMyCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMubGluYXJv
+Lm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAzOAo=
