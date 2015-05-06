@@ -1,52 +1,54 @@
-From: Mark Brown <broonie@kernel.org>
-Subject: Re: [PATCH v4 04/10] eeprom: Add a simple EEPROM framework for
- eeprom consumers
-Date: Wed, 6 May 2015 18:28:46 +0100
-Message-ID: <20150506172846.GC22845@sirena.org.uk>
-References: <1427752492-17039-1-git-send-email-srinivas.kandagatla@linaro.org>
- <1427752670-17219-1-git-send-email-srinivas.kandagatla@linaro.org>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH V2] Test compaction of mlocked memory
+Date: Wed, 06 May 2015 11:41:46 -0600
+Message-ID: <554A525A.8000401@osg.samsung.com>
+References: <1429813301-27216-1-git-send-email-sjayaram@akamai.com> <20150423184134.GF2282@akamai.com> <20150423132323.a3bd1dcdc94a2da3ca06a30d@linux-foundation.org> <553954FC.4050700@osg.samsung.com> <554A4904.4040604@osg.samsung.com> <554A4F50.6080208@akamai.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="QRZRoILo0Pq4YpTd"
-Return-path: <linux-arm-msm-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1427752670-17219-1-git-send-email-srinivas.kandagatla@linaro.org>
-Sender: linux-arm-msm-owner@vger.kernel.org
-To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Cc: linux-arm-kernel@lists.infradead.org, Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, s.hauer@pengutronix.de, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <554A4F50.6080208-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Sri <sjayaram-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On 05/06/2015 11:28 AM, Sri wrote:
+> Hi Shuah,
+> 
+> This is what I see when I check the patch against the script,
+> 
+> linux-stable$ ./scripts/checkpatch.pl
+> 0001-Test-compaction-of-mlocked-memory.patch
+> WARNING: added, moved or deleted file(s), does MAINTAINERS need updating?
+> #72:
+> new file mode 100644
+> 
+> total: 0 errors, 1 warnings, 256 lines checked
+> 
+> 0001-Test-compaction-of-mlocked-memory.patch has style problems, please
+> review.
+> 
+> If any of these errors are false positives, please report
+> them to the maintainer, see CHECKPATCH in MAINTAINERS.
+> 
+> 
+> That was the only warning I saw even before I submitted the patch. I'm
+> not sure how the whitespaces are introduced...
+> 
 
---QRZRoILo0Pq4YpTd
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Hmm. Perhaps something is odd with the 4.1 checkpatch script.
+I am not seeing any whitespace errors when I do a manual
+check on the patch file.
 
-On Mon, Mar 30, 2015 at 10:57:50PM +0100, Srinivas Kandagatla wrote:
+Applying to linux-kselftest next
 
-> +
-> +	for (i = 0; i < cell->nblocks; i++) {
-> +		rc = regmap_raw_read(eeprom->regmap, cell->blocks[i].offset,
-> +				      buf + offset, cell->blocks[i].count);
+-- Shuah
 
-I *think* this is probably OK but please double check that the count
-here is in bytes rather than words, it's a bit confusing since I'd read
-a count as being in words.  Otherwise I think the regmap usage here all
-looks good.
 
---QRZRoILo0Pq4YpTd
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQEcBAEBCAAGBQJVSk9OAAoJECTWi3JdVIfQuNkH/RnXfz7KyQ5kGvUyl3+gaXeJ
-XwnfC+bEF1j2tRN6FTe/0w39Ll50q55jrTHgWHbTa3y0P1eKg7HXznlya/dHXy6S
-dgDjePF1thLsAWER3qeyW/jWNATd/sf0ZQzJuISX94KbLklkgxSVfkSDh1JdlPwl
-XPzFQzfm5qccmdc+LRu0sElChMPY11c+PXSNe1qHl+hoZVb5aKAiLzJj0TQl43xk
-AKJwA04mcEbj0xDKOXS6Dl4SRqMJiZrmEK9cYtwdLRW4A+r1yGwIwPxSHk8Mssxl
-vQ/mqBcpx56HKXeio46C/uJVgIX7toJlxmbSmQUT2B4YO5zm70Kbb8RgxEHxKZI=
-=wNz3
------END PGP SIGNATURE-----
-
---QRZRoILo0Pq4YpTd--
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
