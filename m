@@ -1,8 +1,8 @@
 From: Chris Wilson <chris-Y6uKTt2uX1cEflXRtASbqLVCufUGDwFn@public.gmane.org>
 Subject: Re: [Intel-gfx] [RFC PATCH 07/11] drm/i915: Expose PMU for
  Observation Architecture
-Date: Thu, 7 May 2015 15:36:39 +0100
-Message-ID: <20150507143639.GY22099@nuc-i3427.alporthouse.com>
+Date: Thu, 7 May 2015 15:58:00 +0100
+Message-ID: <20150507145800.GZ22099@nuc-i3427.alporthouse.com>
 References: <1431008154-6833-1-git-send-email-robert@sixbynine.org>
  <1431008154-6833-8-git-send-email-robert@sixbynine.org>
 Mime-Version: 1.0
@@ -16,77 +16,116 @@ Cc: intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Peter Zijlstra 
 List-Id: linux-api@vger.kernel.org
 
 On Thu, May 07, 2015 at 03:15:50PM +0100, Robert Bragg wrote:
-> +static int init_oa_buffer(struct perf_event *event)
-> +{
-> +	struct drm_i915_private *dev_priv =
-> +		container_of(event->pmu, typeof(*dev_priv), oa_pmu.pmu);
-> +	struct drm_i915_gem_object *bo;
-> +	int ret;
-> +
-> +	BUG_ON(!IS_HASWELL(dev_priv->dev));
-> +	BUG_ON(!mutex_is_locked(&dev_priv->dev->struct_mutex));
-> +	BUG_ON(dev_priv->oa_pmu.oa_buffer.obj);
-> +
-> +	spin_lock_init(&dev_priv->oa_pmu.oa_buffer.flush_lock);
-> +
-> +	/* NB: We over allocate the OA buffer due to the way raw sample data
-> +	 * gets copied from the gpu mapped circular buffer into the perf
-> +	 * circular buffer so that only one copy is required.
-> +	 *
-> +	 * For each perf sample (raw->size + 4) needs to be 8 byte aligned,
-> +	 * where the 4 corresponds to the 32bit raw->size member that's
-> +	 * added to the sample header that userspace sees.
-> +	 *
-> +	 * Due to the + 4 for the size member: when we copy a report to the
-> +	 * userspace facing perf buffer we always copy an additional 4 bytes
-> +	 * from the subsequent report to make up for the miss alignment, but
-> +	 * when a report is at the end of the gpu mapped buffer we need to
-> +	 * read 4 bytes past the end of the buffer.
+> +	/* We bypass the default perf core perf_paranoid_cpu() ||
+> +	 * CAP_SYS_ADMIN check by using the PERF_PMU_CAP_IS_DEVICE
+> +	 * flag and instead authenticate based on whether the current
+> +	 * pid owns the specified context, or require CAP_SYS_ADMIN
+> +	 * when collecting cross-context metrics.
 > +	 */
-> +	bo = i915_gem_alloc_object(dev_priv->dev, OA_BUFFER_SIZE + PAGE_SIZE);
-> +	if (bo == NULL) {
-> +		DRM_ERROR("Failed to allocate OA buffer\n");
-> +		ret = -ENOMEM;
-> +		goto err;
+> +	dev_priv->oa_pmu.specific_ctx = NULL;
+> +	if (oa_attr.single_context) {
+> +		u32 ctx_id = oa_attr.ctx_id;
+> +		unsigned int drm_fd = oa_attr.drm_fd;
+> +		struct fd fd = fdget(drm_fd);
+> +
+> +		if (fd.file) {
+
+Specify a ctx and not providing the right fd should be its own error,
+either EBADF or EINVAL.
+
+> +			dev_priv->oa_pmu.specific_ctx =
+> +				lookup_context(dev_priv, fd.file, ctx_id);
+> +		}
+
+Missing fdput
+
 > +	}
-> +	dev_priv->oa_pmu.oa_buffer.obj = bo;
 > +
-> +	ret = i915_gem_object_set_cache_level(bo, I915_CACHE_LLC);
-> +	if (ret)
-> +		goto err_unref;
+> +	if (!dev_priv->oa_pmu.specific_ctx && !capable(CAP_SYS_ADMIN))
+> +		return -EACCES;
 > +
-> +	/* PreHSW required 512K alignment, HSW requires 16M */
-> +	ret = i915_gem_obj_ggtt_pin(bo, SZ_16M, 0);
-> +	if (ret)
-> +		goto err_unref;
-> +
-> +	dev_priv->oa_pmu.oa_buffer.gtt_offset = i915_gem_obj_ggtt_offset(bo);
-> +	dev_priv->oa_pmu.oa_buffer.addr = vmap_oa_buffer(bo);
+> +	mutex_lock(&dev_priv->dev->struct_mutex);
 
-You can look forward to both i915_gem_object_create_internal() and
-i915_gem_object_pin_vmap()
+i915_mutex_interruptible, probably best to couple into the GPU error
+handling here as well especially as init_oa_buffer() will go onto touch
+GPU internals.
 
+> +	ret = init_oa_buffer(event);
+> +	mutex_unlock(&dev_priv->dev->struct_mutex);
 > +
-> +	/* Pre-DevBDW: OABUFFER must be set with counters off,
-> +	 * before OASTATUS1, but after OASTATUS2 */
-> +	I915_WRITE(GEN7_OASTATUS2, dev_priv->oa_pmu.oa_buffer.gtt_offset |
-> +		   GEN7_OASTATUS2_GGTT); /* head */
-> +	I915_WRITE(GEN7_OABUFFER, dev_priv->oa_pmu.oa_buffer.gtt_offset);
-> +	I915_WRITE(GEN7_OASTATUS1, dev_priv->oa_pmu.oa_buffer.gtt_offset |
-> +		   GEN7_OASTATUS1_OABUFFER_SIZE_16M); /* tail */
+> +	if (ret)
+> +		return ret;
 > +
-> +	DRM_DEBUG_DRIVER("OA Buffer initialized, gtt offset = 0x%x, vaddr = %p",
-> +			 dev_priv->oa_pmu.oa_buffer.gtt_offset,
-> +			 dev_priv->oa_pmu.oa_buffer.addr);
+> +	BUG_ON(dev_priv->oa_pmu.exclusive_event);
+> +	dev_priv->oa_pmu.exclusive_event = event;
+> +
+> +	event->destroy = i915_oa_event_destroy;
+> +
+> +	/* PRM - observability performance counters:
+> +	 *
+> +	 *   OACONTROL, performance counter enable, note:
+> +	 *
+> +	 *   "When this bit is set, in order to have coherent counts,
+> +	 *   RC6 power state and trunk clock gating must be disabled.
+> +	 *   This can be achieved by programming MMIO registers as
+> +	 *   0xA094=0 and 0xA090[31]=1"
+> +	 *
+> +	 *   In our case we are expected that taking pm + FORCEWAKE
+> +	 *   references will effectively disable RC6 and trunk clock
+> +	 *   gating.
+> +	 */
+> +	intel_runtime_pm_get(dev_priv);
+> +	intel_uncore_forcewake_get(dev_priv, FORCEWAKE_ALL);
+
+That is a nuisance. Aside: Why isn't OA inside the powerctx? Is a subset
+valid with forcewake? It does perturb the system greatly to disable rc6,
+so I wonder if it could be made optional?
+
 > +
 > +	return 0;
+> +}
 > +
-> +err_unref:
-> +	drm_gem_object_unreference_unlocked(&bo->base);
+> +static void update_oacontrol(struct drm_i915_private *dev_priv)
+> +{
+> +	BUG_ON(!spin_is_locked(&dev_priv->oa_pmu.lock));
+> +
+> +	if (dev_priv->oa_pmu.event_active) {
+> +		unsigned long ctx_id = 0;
+> +		bool pinning_ok = false;
+> +
+> +		if (dev_priv->oa_pmu.specific_ctx) {
+> +			struct intel_context *ctx =
+> +				dev_priv->oa_pmu.specific_ctx;
+> +			struct drm_i915_gem_object *obj =
+> +				ctx->legacy_hw_ctx.rcs_state;
 
-But what I really what to say was:
-mutex deadlock^^^
+If only there was ctx->legacy_hw_ctx.rcs_vma...
+
+> +
+> +			if (i915_gem_obj_is_pinned(obj)) {
+> +				ctx_id = i915_gem_obj_ggtt_offset(obj);
+> +				pinning_ok = true;
+> +			}
+> +		}
+> +
+> +		if ((ctx_id == 0 || pinning_ok)) {
+> +			bool periodic = dev_priv->oa_pmu.periodic;
+> +			u32 period_exponent = dev_priv->oa_pmu.period_exponent;
+> +			u32 report_format = dev_priv->oa_pmu.oa_buffer.format;
+> +
+> +			I915_WRITE(GEN7_OACONTROL,
+> +				   (ctx_id & GEN7_OACONTROL_CTX_MASK) |
+> +				   (period_exponent <<
+> +				    GEN7_OACONTROL_TIMER_PERIOD_SHIFT) |
+> +				   (periodic ?
+> +				    GEN7_OACONTROL_TIMER_ENABLE : 0) |
+> +				   (report_format <<
+> +				    GEN7_OACONTROL_FORMAT_SHIFT) |
+> +				   (ctx_id ?
+> +				    GEN7_OACONTROL_PER_CTX_ENABLE : 0) |
+> +				   GEN7_OACONTROL_ENABLE);
+
+I notice you don't use any write barriers...
 -Chris
-
 -- 
 Chris Wilson, Intel Open Source Technology Centre
