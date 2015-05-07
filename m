@@ -1,169 +1,44 @@
-From: Namjae Jeon <namjae.jeon@samsung.com>
-Subject: [PATCH v2] manpage: update FALLOC_FL_INSERT_RANGE flag in fallocate
-Date: Thu, 07 May 2015 14:15:41 +0900
-Message-ID: <006d01d08884$dcfc7ea0$96f57be0$@samsung.com>
+From: Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>
+Subject: Re: [PATCH 00/19] converting system calls to 64-bit time_t, part 1
+Date: Thu, 07 May 2015 09:27:58 +0200
+Message-ID: <1430983678.8171.23.camel@x220>
+References: <1430929826-318934-1-git-send-email-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-language: ko
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-man@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, Theodore Ts'o <tytso@mit.edu>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1430929826-318934-1-git-send-email-arnd-r2nGTMty4D4@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, baolin.wang-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, albert.aribaud-iEu9NFBzPZE@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, ruchandani.tina-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Update FALLOC_FL_INSERT_RANGE flag in fallocate.
+On Wed, 2015-05-06 at 18:30 +0200, Arnd Bergmann wrote:
+> * After all system calls are converted, we can change one architecture
+>   at a time to select ARCH_HAS_COMPAT_TIME, and modify its system
+>   call table accordingly. In this version, I do it for ARM32, x86-32,
+>   and x86-64 for demonstration purposes.
 
-Signed-off-by: Namjae Jeon <namjae.jeon@samsung.com>
-Signed-off-by: Ashish Sangwan <a.sangwan@samsung.com>
----
- man2/fallocate.2 | 89 ++++++++++++++++++++++++++++++++++++++++++++++++++++----
- 1 file changed, 84 insertions(+), 5 deletions(-)
+Perhaps this was correct for your first draft. Because this series adds
+ARCH_HAS_COMPAT_TIME in 04/19, but it doesn't add any selects of that
+symbol, does it? As far as I can see ARCH_HAS_COMPAT_TIME simply
+functions as an alias for COMPAT in this series.
 
-diff --git a/man2/fallocate.2 b/man2/fallocate.2
-index 0cc1a00..0d31027 100644
---- a/man2/fallocate.2
-+++ b/man2/fallocate.2
-@@ -228,6 +228,59 @@ ext4, for extent-based files (since Linux 3.15)
- .IP *
- SMB3 (since Linux 3.17)
- .\" commit 30175628bf7f521e9ee31ac98fa6d6fe7441a556
-+.SS Increasing file space
-+flag (available since Linux 4.1)
-+.\" commit dd46c787788d5bf5b974729d43e4c405814a4c7d
-+Specifying the
-+.BR FALLOC_FL_INSERT_RANGE
-+flag in
-+.I mode
-+will increase the file space by inserting a hole within the file size without
-+overwriting any existing data.
-+The hole will start at
-+.I offset
-+and continue for
-+.I len
-+bytes.
-+For inserting hole inside file, the contents of the file starting at
-+.I offset
-+will be shifted towards right by
-+.I len
-+bytes.
-+Inserting a hole inside the file will increase the file size by
-+.I len
-+bytes.
-+
-+This mode has the same limitation as
-+.BR FALLOC_FL_COLLAPSE_RANGE
-+regarding the
-+granularity of the operation.
-+If the granularity requirements are not met,
-+.BR fallocate ()
-+will fail with the error
-+.BR EINVAL.
-+If the
-+.I offset
-+overlaps with end of file OR if it is greater than end of file, an error is
-+returned.
-+For such type of operations, i.e. inserting a hole at the end of file,
-+.BR ftruncate(2)
-+should be used.
-+In case
-+.IR offset + len
-+exceeds the maximum file size, errno will be set to
-+.B EFBIG.
-+
-+No other flags may be specified in
-+.IR mode
-+in conjunction with
-+.BR FALLOC_FL_INSERT_RANGE .
-+
-+As of Linux 4.1,
-+.B FALLOC_FL_INSERT_RANGE
-+is supported by
-+XFS.
-+.\" commit a904b1ca5751faf5ece8600e18cd3b674afcca1b
- .SH RETURN VALUE
- On success,
- .BR fallocate ()
-@@ -245,6 +298,12 @@ is not a valid file descriptor, or is not opened for writing.
- .IR offset + len
- exceeds the maximum file size.
- .TP
-+.B EFBIG
-+.I mode
-+is
-+.BR FALLOC_FL_INSERT_RANGE ,
-+the current file size+len exceeds the maximum file size.
-+.TP
- .B EINTR
- A signal was caught during execution.
- .TP
-@@ -273,7 +332,17 @@ reaches or passes the end of the file.
- .B EINVAL
- .I mode
- is
--.BR FALLOC_FL_COLLAPSE_RANGE ,
-+.BR FALLOC_FL_INSERT_RANGE
-+and the range specified by
-+.I offset
-+reaches or passes the end of the file.
-+.TP
-+.B EINVAL
-+.I mode
-+is
-+.BR FALLOC_FL_COLLAPSE_RANGE
-+or
-+.BR FALLOC_FL_INSERT_RANGE ,
- but either
- .I offset
- or
-@@ -282,18 +351,24 @@ is not a multiple of the filesystem block size.
- .TP
- .B EINVAL
- .I mode
--contains both
-+contains either of
- .B FALLOC_FL_COLLAPSE_RANGE
-+or
-+.B FALLOC_FL_INSERT_RANGE
- and other flags;
- no other flags are permitted with
--.BR FALLOC_FL_COLLAPSE_RANGE .
-+.BR FALLOC_FL_COLLAPSE_RANGE
-+or
-+.BR FALLOC_FL_INSERT_RANGE .
- .TP
- .B EINVAL
- .I mode
- is
- .BR FALLOC_FL_COLLAPSE_RANGE
- or
--.BR FALLOC_FL_ZERO_RANGE ,
-+.BR FALLOC_FL_ZERO_RANGE
-+or
-+.BR FALLOC_FL_INSERT_RANGE ,
- but the file referred to by
- .I fd
- is not a regular file.
-@@ -345,6 +420,8 @@ specifies
- .BR FALLOC_FL_PUNCH_HOLE
- or
- .BR FALLOC_FL_COLLAPSE_RANGE
-+or
-+.BR FALLOC_FL_INSERT_RANGE
- and
- the file referred to by
- .I fd
-@@ -363,7 +440,9 @@ refers to a pipe or FIFO.
- .B ETXTBSY
- .I mode
- specifies
--.BR FALLOC_FL_COLLAPSE_RANGE ,
-+.BR FALLOC_FL_COLLAPSE_RANGE
-+or
-+.BR FALLOC_FL_INSERT_RANGE ,
- but the file referred to by
- .IR fd
- is currently being executed.
--- 
-1.8.5.5
+> * A follow-up series changes over all other architectures.
+> 
+> * The last patch in the series changes the CONFIG_COMPAT_TIME
+>   Kconfig symbol to be user visible. Disabling this symbol will
+>   get you a kernel that intentionally breaks support for old tasks
+>   in order to provide an interface that will survive 2038.
 
+This doesn't happen in 19/19, or in any other patch in this series.
+Maybe also something that has changed since the first draft.
+
+>   This is meant mostly as a debugging help for now, to let people
+>   build a y2038 safe distro, but at some point in the 2030s, we
+>   should remove that option and all the compat handling.
+
+Thanks,
+
+
+Paul Bolle
