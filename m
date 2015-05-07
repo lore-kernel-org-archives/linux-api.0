@@ -1,282 +1,261 @@
-From: Tomas Winkler <tomas.winkler@intel.com>
-Subject: [char-misc-next 05/11] mei: bus: report also uuid in module alias
-Date: Thu,  7 May 2015 15:54:02 +0300
-Message-ID: <1431003248-3164-5-git-send-email-tomas.winkler@intel.com>
-References: <1431003248-3164-1-git-send-email-tomas.winkler@intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1431003248-3164-1-git-send-email-tomas.winkler@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: gregkh@linuxfoundation.org
-Cc: arnd@arndb.de, linux-kernel@vger.kernel.org, Tomas Winkler <tomas.winkler@intel.com>, linux-api@vger.kernel.org, Samuel Ortiz <sameo@linux.intel.com>
+From: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Subject: [PATCH v4 0/3] idle memory tracking
+Date: Thu, 7 May 2015 17:09:39 +0300
+Message-ID: <cover.1431002699.git.vdavydov@parallels.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-In order to automate modules matching add device uuid
-which is reported in client enumeration, keep also
-the name that is needed in for nfc distinguishing radio vendor
+Hi,
 
-Report mei:name:uuid
+This patch set introduces a new user API for tracking user memory pages
+that have not been used for a given period of time. The purpose of this
+is to provide the userspace with the means of tracking a workload's
+working set, i.e. the set of pages that are actively used by the
+workload. Knowing the working set size can be useful for partitioning
+the system more efficiently, e.g. by tuning memory cgroup limits
+appropriately, or for job placement within a compute cluster.
 
-Cc: linux-api@vger.kernel.org
-Cc: Samuel Ortiz <sameo@linux.intel.com>
-Signed-off-by: Tomas Winkler <tomas.winkler@intel.com>
----
- Documentation/ABI/testing/sysfs-bus-mei |  2 +-
- drivers/misc/mei/bus.c                  | 42 ++++++++++++++++++++++++++-------
- drivers/misc/mei/mei_dev.h              |  2 ++
- drivers/nfc/mei_phy.h                   |  3 +++
- drivers/nfc/microread/mei.c             |  2 +-
- drivers/nfc/pn544/mei.c                 |  2 +-
- include/linux/mod_devicetable.h         | 13 ++++++++++
- scripts/mod/devicetable-offsets.c       |  1 +
- scripts/mod/file2alias.c                | 18 ++++++++++++--
- 9 files changed, 72 insertions(+), 13 deletions(-)
+---- USE CASES ----
 
-diff --git a/Documentation/ABI/testing/sysfs-bus-mei b/Documentation/ABI/testing/sysfs-bus-mei
-index 2066f0bbd453..91967a70313a 100644
---- a/Documentation/ABI/testing/sysfs-bus-mei
-+++ b/Documentation/ABI/testing/sysfs-bus-mei
-@@ -4,4 +4,4 @@ KernelVersion:	3.10
- Contact:	Samuel Ortiz <sameo@linux.intel.com>
- 		linux-mei@linux.intel.com
- Description:	Stores the same MODALIAS value emitted by uevent
--		Format: mei:<mei device name>
-+		Format: mei:<mei device name>:<device uuid>:
-diff --git a/drivers/misc/mei/bus.c b/drivers/misc/mei/bus.c
-index 1101d6efaf27..17b00baa53b1 100644
---- a/drivers/misc/mei/bus.c
-+++ b/drivers/misc/mei/bus.c
-@@ -30,23 +30,40 @@
- #define to_mei_cl_driver(d) container_of(d, struct mei_cl_driver, driver)
- #define to_mei_cl_device(d) container_of(d, struct mei_cl_device, dev)
- 
-+static inline uuid_le uuid_le_cast(const __u8 uuid[16])
-+{
-+	return *(uuid_le *)uuid;
-+}
-+
- static int mei_cl_device_match(struct device *dev, struct device_driver *drv)
- {
- 	struct mei_cl_device *device = to_mei_cl_device(dev);
- 	struct mei_cl_driver *driver = to_mei_cl_driver(drv);
- 	const struct mei_cl_device_id *id;
-+	const uuid_le *uuid;
-+	const char *name;
- 
- 	if (!device)
- 		return 0;
- 
-+	uuid = mei_me_cl_uuid(device->me_cl);
-+	name = device->name;
-+
- 	if (!driver || !driver->id_table)
- 		return 0;
- 
- 	id = driver->id_table;
- 
--	while (id->name[0]) {
--		if (!strncmp(dev_name(dev), id->name, sizeof(id->name)))
--			return 1;
-+	while (uuid_le_cmp(NULL_UUID_LE, uuid_le_cast(id->uuid))) {
-+
-+		if (!uuid_le_cmp(*uuid, uuid_le_cast(id->uuid))) {
-+			if (id->name[0]) {
-+				if (!strncmp(name, id->name, sizeof(id->name)))
-+					return 1;
-+			} else {
-+				return 1;
-+			}
-+		}
- 
- 		id++;
- 	}
-@@ -69,7 +86,7 @@ static int mei_cl_device_probe(struct device *dev)
- 
- 	dev_dbg(dev, "Device probe\n");
- 
--	strlcpy(id.name, dev_name(dev), sizeof(id.name));
-+	strlcpy(id.name, device->name, sizeof(id.name));
- 
- 	return driver->probe(device, &id);
- }
-@@ -100,9 +117,12 @@ static int mei_cl_device_remove(struct device *dev)
- static ssize_t modalias_show(struct device *dev, struct device_attribute *a,
- 			     char *buf)
- {
--	int len;
-+	struct mei_cl_device *device = to_mei_cl_device(dev);
-+	const uuid_le *uuid = mei_me_cl_uuid(device->me_cl);
-+	size_t len;
- 
--	len = snprintf(buf, PAGE_SIZE, "mei:%s\n", dev_name(dev));
-+	len = snprintf(buf, PAGE_SIZE, "mei:%s:" MEI_CL_UUID_FMT ":",
-+		device->name, MEI_CL_UUID_ARGS(uuid->b));
- 
- 	return (len >= PAGE_SIZE) ? (PAGE_SIZE - 1) : len;
- }
-@@ -116,7 +136,11 @@ ATTRIBUTE_GROUPS(mei_cl_dev);
- 
- static int mei_cl_uevent(struct device *dev, struct kobj_uevent_env *env)
- {
--	if (add_uevent_var(env, "MODALIAS=mei:%s", dev_name(dev)))
-+	struct mei_cl_device *device = to_mei_cl_device(dev);
-+	const uuid_le *uuid = mei_me_cl_uuid(device->me_cl);
-+
-+	if (add_uevent_var(env, "MODALIAS=mei:%s:" MEI_CL_UUID_FMT ":",
-+		device->name, MEI_CL_UUID_ARGS(uuid->b)))
- 		return -ENOMEM;
- 
- 	return 0;
-@@ -185,7 +209,9 @@ struct mei_cl_device *mei_cl_add_device(struct mei_device *dev,
- 	device->dev.bus = &mei_cl_bus_type;
- 	device->dev.type = &mei_cl_device_type;
- 
--	dev_set_name(&device->dev, "%s", name);
-+	strlcpy(device->name, name, sizeof(device->name));
-+
-+	dev_set_name(&device->dev, "mei:%s:%pUl", name, mei_me_cl_uuid(me_cl));
- 
- 	status = device_register(&device->dev);
- 	if (status) {
-diff --git a/drivers/misc/mei/mei_dev.h b/drivers/misc/mei/mei_dev.h
-index 79ab78184523..ab719e674edf 100644
---- a/drivers/misc/mei/mei_dev.h
-+++ b/drivers/misc/mei/mei_dev.h
-@@ -376,6 +376,7 @@ struct mei_cl *mei_cl_bus_find_cl_by_uuid(struct mei_device *dev, uuid_le uuid);
-  * @dev: linux driver model device pointer
-  * @me_cl: me client
-  * @cl: mei client
-+ * @name: device name
-  * @ops: ME transport ops
-  * @event_work: async work to execute event callback
-  * @event_cb: Drivers register this callback to get asynchronous ME
-@@ -389,6 +390,7 @@ struct mei_cl_device {
- 
- 	struct mei_me_client *me_cl;
- 	struct mei_cl *cl;
-+	char name[MEI_CL_NAME_SIZE];
- 
- 	const struct mei_cl_ops *ops;
- 
-diff --git a/drivers/nfc/mei_phy.h b/drivers/nfc/mei_phy.h
-index d669900f8278..06608c28ff14 100644
---- a/drivers/nfc/mei_phy.h
-+++ b/drivers/nfc/mei_phy.h
-@@ -3,7 +3,10 @@
- 
- #include <linux/mei_cl_bus.h>
- #include <net/nfc/hci.h>
-+#include <linux/uuid.h>
- 
-+#define MEI_NFC_UUID __UUID_LE(0x0bb17a78, 0x2a8e, 0x4c50, \
-+		0x94, 0xd4, 0x50, 0x26, 0x67, 0x23, 0x77, 0x5c)
- #define MEI_NFC_HEADER_SIZE 10
- #define MEI_NFC_MAX_HCI_PAYLOAD 300
- 
-diff --git a/drivers/nfc/microread/mei.c b/drivers/nfc/microread/mei.c
-index 2d1395be64ae..f9f5fc97cdd7 100644
---- a/drivers/nfc/microread/mei.c
-+++ b/drivers/nfc/microread/mei.c
-@@ -67,7 +67,7 @@ static int microread_mei_remove(struct mei_cl_device *device)
- }
- 
- static struct mei_cl_device_id microread_mei_tbl[] = {
--	{ MICROREAD_DRIVER_NAME },
-+	{ MICROREAD_DRIVER_NAME, MEI_NFC_UUID},
- 
- 	/* required last entry */
- 	{ }
-diff --git a/drivers/nfc/pn544/mei.c b/drivers/nfc/pn544/mei.c
-index 330cd4031009..101a37e12efa 100644
---- a/drivers/nfc/pn544/mei.c
-+++ b/drivers/nfc/pn544/mei.c
-@@ -67,7 +67,7 @@ static int pn544_mei_remove(struct mei_cl_device *device)
- }
- 
- static struct mei_cl_device_id pn544_mei_tbl[] = {
--	{ PN544_DRIVER_NAME },
-+	{ PN544_DRIVER_NAME, MEI_NFC_UUID},
- 
- 	/* required last entry */
- 	{ }
-diff --git a/include/linux/mod_devicetable.h b/include/linux/mod_devicetable.h
-index 3bfd56778c29..2d2b2b571d61 100644
---- a/include/linux/mod_devicetable.h
-+++ b/include/linux/mod_devicetable.h
-@@ -599,9 +599,22 @@ struct ipack_device_id {
- 
- #define MEI_CL_MODULE_PREFIX "mei:"
- #define MEI_CL_NAME_SIZE 32
-+#define MEI_CL_UUID_FMT "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-+#define MEI_CL_UUID_ARGS(_u) \
-+	_u[0], _u[1], _u[2], _u[3], _u[4], _u[5], _u[6], _u[7], \
-+	_u[8], _u[9], _u[10], _u[11], _u[12], _u[13], _u[14], _u[15]
- 
-+/**
-+ * struct mei_cl_device_id - MEI client device identifier
-+ * @name: helper name
-+ * @uuid: client uuid
-+ * @driver_info: information used by the driver.
-+ *
-+ * identifies mei client device by uuid and name
-+ */
- struct mei_cl_device_id {
- 	char name[MEI_CL_NAME_SIZE];
-+	__u8 uuid[16];
- 	kernel_ulong_t driver_info;
- };
- 
-diff --git a/scripts/mod/devicetable-offsets.c b/scripts/mod/devicetable-offsets.c
-index fce36d0f6898..091f6290a651 100644
---- a/scripts/mod/devicetable-offsets.c
-+++ b/scripts/mod/devicetable-offsets.c
-@@ -182,6 +182,7 @@ int main(void)
- 
- 	DEVID(mei_cl_device_id);
- 	DEVID_FIELD(mei_cl_device_id, name);
-+	DEVID_FIELD(mei_cl_device_id, uuid);
- 
- 	DEVID(rio_device_id);
- 	DEVID_FIELD(rio_device_id, did);
-diff --git a/scripts/mod/file2alias.c b/scripts/mod/file2alias.c
-index 78691d51a479..62c517f4b592 100644
---- a/scripts/mod/file2alias.c
-+++ b/scripts/mod/file2alias.c
-@@ -131,6 +131,15 @@ static inline void add_wildcard(char *str)
- 		strcat(str + len, "*");
- }
- 
-+static inline void add_uuid(char *str, __u8 uuid[16])
-+{
-+	int len = strlen(str);
-+	int i;
-+
-+	for (i = 0; i < 16; i++)
-+		sprintf(str + len + (i << 1), "%02x", uuid[i]);
-+}
-+
- /**
-  * Check that sizeof(device_id type) are consistent with size of section
-  * in .o file. If in-consistent then userspace and kernel does not agree
-@@ -1160,13 +1169,18 @@ static int do_cpu_entry(const char *filename, void *symval, char *alias)
- }
- ADD_TO_DEVTABLE("cpu", cpu_feature, do_cpu_entry);
- 
--/* Looks like: mei:S */
-+/* Looks like: mei:S:uuid */
- static int do_mei_entry(const char *filename, void *symval,
- 			char *alias)
- {
- 	DEF_FIELD_ADDR(symval, mei_cl_device_id, name);
-+	DEF_FIELD_ADDR(symval, mei_cl_device_id, uuid);
-+
-+	sprintf(alias, MEI_CL_MODULE_PREFIX);
-+	sprintf(alias + strlen(alias), "%s:",  (*name)[0]  ? *name : "*");
-+	add_uuid(alias, *uuid);
- 
--	sprintf(alias, MEI_CL_MODULE_PREFIX "%s", *name);
-+	strcat(alias, ":*");
- 
- 	return 1;
- }
+The unified cgroup hierarchy has memory.low and memory.high knobs, which
+are defined as the low and high boundaries for the workload working set
+size. However, the working set size of a workload may be unknown or
+change in time. With this patch set, one can periodically estimate the
+amount of memory unused by each cgroup and tune their memory.low and
+memory.high parameters accordingly, therefore optimizing the overall
+memory utilization.
+
+Another use case is balancing workloads within a compute cluster.
+Knowing how much memory is not really used by a workload unit may help
+take a more optimal decision when considering migrating the unit to
+another node within the cluster.
+
+Also, as noted by Minchan, this would be useful for per-process reclaim
+(https://lwn.net/Articles/545668/). With idle tracking, we could reclaim idle
+pages only by smart user memory manager.
+
+---- USER API ----
+
+The user API consists of two new proc files:
+
+ * /proc/kpageidle.  This file implements a bitmap where each bit corresponds
+   to a page, indexed by PFN. When the bit is set, the corresponding page is
+   idle. A page is considered idle if it has not been accessed since it was
+   marked idle. To mark a page idle one should set the bit corresponding to the
+   page by writing to the file. A value written to the file is OR-ed with the
+   current bitmap value. Only user memory pages can be marked idle, for other
+   page types input is silently ignored. Writing to this file beyond max PFN
+   results in the ENXIO error. Only available when CONFIG_IDLE_PAGE_TRACKING is
+   set.
+
+   This file can be used to estimate the amount of pages that are not
+   used by a particular workload as follows:
+
+   1. mark all pages of interest idle by setting corresponding bits in the
+      /proc/kpageidle bitmap
+   2. wait until the workload accesses its working set
+   3. read /proc/kpageidle and count the number of bits set
+
+ * /proc/kpagecgroup.  This file contains a 64-bit inode number of the
+   memory cgroup each page is charged to, indexed by PFN. Only available when
+   CONFIG_MEMCG is set.
+
+   This file can be used to find all pages (including unmapped file
+   pages) accounted to a particular cgroup. Using /proc/kpageidle, one
+   can then estimate the cgroup working set size.
+
+For an example of using these files for estimating the amount of unused
+memory pages per each memory cgroup, please see the script attached
+below.
+
+---- REASONING ----
+
+The reason to introduce the new user API instead of using
+/proc/PID/{clear_refs,smaps} is that the latter has two serious
+drawbacks:
+
+ - it does not count unmapped file pages
+ - it affects the reclaimer logic
+
+The new API attempts to overcome them both. For more details on how it
+is achieved, please see the comment to patch 3.
+
+---- CHANGE LOG ----
+
+Changes in v4:
+
+This iteration primarily addresses Minchan's comments to v3:
+
+ - Implement /proc/kpageidle as a bitmap instead of using u64 per each page,
+   because there does not seem to be any future uses for the other 63 bits.
+ - Do not double-increase pra->referenced in page_referenced_one() if the page
+   was young and referenced recently.
+ - Remove the pointless (page_count == 0) check from kpageidle_get_page().
+ - Rename kpageidle_clear_refs() to kpageidle_clear_pte_refs().
+ - Improve comments to kpageidle-related functions.
+ - Rebase on top of 4.1-rc2.
+
+Note it does not address Minchan's concern of possible __page_set_anon_rmap vs
+page_referenced race (see https://lkml.org/lkml/2015/5/3/220) since it is still
+unclear if this race can really happen (see https://lkml.org/lkml/2015/5/4/160)
+
+Changes in v3:
+
+ - Enable CONFIG_IDLE_PAGE_TRACKING for 32 bit. Since this feature
+   requires two extra page flags and there is no space for them on 32
+   bit, page ext is used (thanks to Minchan Kim).
+ - Minor code cleanups and comments improved.
+ - Rebase on top of 4.1-rc1.
+
+Changes in v2:
+
+ - The main difference from v1 is the API change. In v1 the user can
+   only set the idle flag for all pages at once, and for clearing the
+   Idle flag on pages accessed via page tables /proc/PID/clear_refs
+   should be used.
+   The main drawback of the v1 approach, as noted by Minchan, is that on
+   big machines setting the idle flag for each pages can result in CPU
+   bursts, which would be especially frustrating if the user only wanted
+   to estimate the amount of idle pages for a particular process or VMA.
+   With the new API a more fine-grained approach is possible: one can
+   read a process's /proc/PID/pagemap and set/check the Idle flag only
+   for those pages of the process's address space he or she is
+   interested in.
+   Another good point about the v2 API is that it is possible to limit
+   /proc/kpage* scanning rate when the user wants to estimate the total
+   number of idle pages, which is unachievable with the v1 approach.
+ - Make /proc/kpagecgroup return the ino of the closest online ancestor
+   in case the cgroup a page is charged to is offline.
+ - Fix /proc/PID/clear_refs not clearing Young page flag.
+ - Rebase on top of v4.0-rc6-mmotm-2015-04-01-14-54
+
+v3: https://lkml.org/lkml/2015/4/28/224
+v2: https://lkml.org/lkml/2015/4/7/260
+v1: https://lkml.org/lkml/2015/3/18/794
+
+---- PATCH SET STRUCTURE ----
+
+The patch set is organized as follows:
+
+ - patch 1 adds page_cgroup_ino() helper for the sake of
+   /proc/kpagecgroup
+ - patch 2 adds /proc/kpagecgroup, which reports cgroup ino each page is
+   charged to
+ - patch 3 implements the idle page tracking feature, including the
+   userspace API, /proc/kpageidle
+
+---- SIMILAR WORKS ----
+
+Originally, the patch for tracking idle memory was proposed back in 2011
+by Michel Lespinasse (see http://lwn.net/Articles/459269/). The main
+difference between Michel's patch and this one is that Michel
+implemented a kernel space daemon for estimating idle memory size per
+cgroup while this patch only provides the userspace with the minimal API
+for doing the job, leaving the rest up to the userspace. However, they
+both share the same idea of Idle/Young page flags to avoid affecting the
+reclaimer logic.
+
+---- SCRIPT FOR COUNTING IDLE PAGES PER CGROUP ----
+#! /usr/bin/python
+#
+
+import os
+import stat
+import errno
+import struct
+
+CGROUP_MOUNT = "/sys/fs/cgroup/memory"
+
+
+def set_idle():
+    f = open("/proc/kpageidle", "wb")
+    while True:
+        try:
+            f.write(struct.pack("Q", pow(2, 64) - 1))
+        except IOError as err:
+            if err.errno == errno.ENXIO:
+                break
+            raise
+    f.close()
+
+
+def count_idle():
+    f_idle = open("/proc/kpageidle", "rb")
+    f_flags = open("/proc/kpageflags", "rb")
+    f_cgroup = open("/proc/kpagecgroup", "rb")
+
+    pfn = 0
+    nr_idle = {}
+    while True:
+        if not pfn % 64:
+            s = f_idle.read(8)
+            if not s:
+                break
+            idle_bitmap = struct.unpack('Q', s)[0]
+
+        idle = idle_bitmap & 1
+        idle_bitmap >>= 1
+        pfn += 1
+
+        flags = struct.unpack('Q', f_flags.read(8))[0]
+        cgino = struct.unpack('Q', f_cgroup.read(8))[0]
+
+        unevictable = flags >> 18 & 1
+        huge = flags >> 22 & 1
+
+        if idle and not unevictable:
+            nr_idle[cgino] = nr_idle.get(cgino, 0) + (512 if huge else 1)
+
+    f_flags.close()
+    f_cgroup.close()
+    f_idle.close()
+    return nr_idle
+
+
+print "Setting the idle flag for each page..."
+set_idle()
+
+raw_input("Wait until the workload accesses its working set, then press Enter")
+
+print "Counting idle pages..."
+nr_idle = count_idle()
+
+for dir, subdirs, files in os.walk(CGROUP_MOUNT):
+    ino = os.stat(dir)[stat.ST_INO]
+    print dir + ": " + str(nr_idle.get(ino, 0) * 4) + " KB"
+---- END SCRIPT ----
+
+Comments are more than welcome.
+
+Thanks,
+
+Vladimir Davydov (3):
+  memcg: add page_cgroup_ino helper
+  proc: add kpagecgroup file
+  proc: add kpageidle file
+
+ Documentation/vm/pagemap.txt |   16 ++-
+ fs/proc/Kconfig              |    5 +-
+ fs/proc/page.c               |  224 ++++++++++++++++++++++++++++++++++++++++++
+ fs/proc/task_mmu.c           |    4 +-
+ include/linux/memcontrol.h   |    8 +-
+ include/linux/mm.h           |   88 +++++++++++++++++
+ include/linux/page-flags.h   |    9 ++
+ include/linux/page_ext.h     |    4 +
+ mm/Kconfig                   |   12 +++
+ mm/debug.c                   |    4 +
+ mm/hwpoison-inject.c         |    5 +-
+ mm/memcontrol.c              |   73 +++++++-------
+ mm/memory-failure.c          |   16 +--
+ mm/page_ext.c                |    3 +
+ mm/rmap.c                    |    8 ++
+ mm/swap.c                    |    2 +
+ 16 files changed, 417 insertions(+), 64 deletions(-)
+
 -- 
-2.1.0
+1.7.10.4
