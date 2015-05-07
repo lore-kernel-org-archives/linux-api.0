@@ -1,75 +1,50 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
-Date: Thu, 7 May 2015 10:26:17 +1000
-Message-ID: <20150507002617.GJ4327@dastard>
-References: <1430949612-21356-1-git-send-email-zab@redhat.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH v18 for v4.1-rc2 1/3] sys_membarrier(): system-wide memory
+ barrier (generic, x86)
+Date: Wed, 6 May 2015 19:50:26 -0700
+Message-ID: <CALCETrX4RSAgJ+A-GtQy_zoECSRDqQ456FV8-JmOqRD=eftiNA@mail.gmail.com>
+References: <1430940068-4326-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1430940068-4326-2-git-send-email-mathieu.desnoyers@efficios.com>
+ <20150506202120.GA23011@cloud> <371299002.44925.1430944039395.JavaMail.zimbra@efficios.com>
+ <2014027751.44926.1430944422045.JavaMail.zimbra@efficios.com> <CA+55aFwQbE0pvb2XRRT33rDEwwwQHKN27w5A8f4GWWJ_j6w1EA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1430949612-21356-1-git-send-email-zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <CA+55aFwQbE0pvb2XRRT33rDEwwwQHKN27w5A8f4GWWJ_j6w1EA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Sage Weil <sweil-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Nicholas Miell <nmiell-Wuw85uim5zDR7s880joybQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alan Cox <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 06, 2015 at 03:00:12PM -0700, Zach Brown wrote:
-> Add the O_NOMTIME flag which prevents mtime from being updated which can
-> greatly reduce the IO overhead of writes to allocated and initialized
-> regions of files.
+On Wed, May 6, 2015 at 1:39 PM, Linus Torvalds
+<torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
+> On Wed, May 6, 2015 at 1:33 PM, Mathieu Desnoyers
+> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+>>
+>> Will try moving those parts under a "---" in the commit
+>> message, and hope it does what I intend.
+>
+> Yeah, that should do it for anybody who then uses "git am" to apply
+> the patches you send out. It's kind of hacky, and I've always worried
+> a bit that somebody uses "^---$' for real in a commit message and
+> things get lost, but it is *such* a useful way to add notes to emails
+> that aren't fit for actually committing, that the risk has never
+> outweighed the benefits.
 
-Hmmm. How do backup programs now work out if the file has changed
-and hence needs copying again? ie. applications using this will
-break other critical infrastructure in subtle ways.
+There's also 'git format-patch --notes', which is less hacky but more
+complicated.
 
-> ceph servers can have loads where they perform O_DIRECT overwrites of
-> allocated file data and then sync to make sure that the O_DIRECT writes
-> are flushed from write caches.  If the writes dirty the inode with mtime
-> updates then the syncs also write out the metadata needed to track the
-> inodes which can add significant iop and latency overhead.
-> 
-> The ceph servers don't use mtime at all.  They're using the local file
-> system as a backing store and any backups would be driven by their upper
-> level ceph metadata.  For ceph, slow IO from mtime updates in the file
-> system is as daft as if we had block devices slowing down IO for
-> per-block write timestamps that file systems never use.
-> 
-> In simple tests a O_DIRECT|O_NOMTIME overwriting write followed by a
-> sync went from 2 serial write round trips to 1 in XFS and from 4 serial
-> IO round trips to 1 in ext4.
-> 
-> file_update_time() checks for O_NOMTIME and aborts the update if it's
-> set, just like the current check for the in-kernel inode flag
-> S_NOCMTIME.  I didn't update any other mtime update sites. They could be
-> added as we decide that it's appropriate to do so.
-> 
-> I opted not to name the flag O_NOCMTIME because I didn't want the name
-> to imply that ctime updates would be prevented for other inode changes
-> like updating i_size in truncate.  Not updating ctime is a side-effect
-> of removing mtime updates when it's the only thing changing in the
-> inode.
+--Andy
 
-If adding this, wouldn't we want to unify O_NOMTIME and
-FMODE_NOCMTIME at the same time?
+>
+>                   Linus
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-i.e. it makes no sense to add O_NOMTIME and not add O_NOCMTIME,
-likewise it makes no sense to have two different "no mtime"
-detection mechanisms.  i.e. file_is_nomtime(file)) should return
-true for both files opened with O_NOMTIME, files that have had
-FMODE_NOCMTIME added to them and inodes with the S_NOCMTIME flag
-set on them.
 
-> The criteria for using O_NOMTIME is the same as for using O_NOATIME:
-> owning the file or having the CAP_FOWNER capability.  If we're not
-> comfortable allowing owners to prevent mtime/ctime updates then we
-> should add a tunable to allow O_NOMTIME.  Maybe a mount option?
 
-I dislike "turn off safety for performance" options because Joe
-SpeedRacer will always select performance over safety.
-
-Cheers,
-
-Dave.
 -- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+Andy Lutomirski
+AMA Capital Management, LLC
