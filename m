@@ -1,60 +1,169 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH RFC 0/3] simple copy offloading system call
-Date: Wed, 6 May 2015 19:52:34 -0700
-Message-ID: <CALCETrUj2EqJ7uDPbAuOGBnLycWBqqnt2Z2cAf8Pp+sgCqBhvw@mail.gmail.com>
-References: <1428703236-24735-1-git-send-email-zab@redhat.com> <CAHO5Pa0UEhOC3vqP9Nq4+gEH_OJPG6dgoLM9XbRLOfTRsRVSCw@mail.gmail.com>
+From: Namjae Jeon <namjae.jeon@samsung.com>
+Subject: [PATCH v2] manpage: update FALLOC_FL_INSERT_RANGE flag in fallocate
+Date: Thu, 07 May 2015 14:15:41 +0900
+Message-ID: <006d01d08884$dcfc7ea0$96f57be0$@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <CAHO5Pa0UEhOC3vqP9Nq4+gEH_OJPG6dgoLM9XbRLOfTRsRVSCw@mail.gmail.com>
+Content-language: ko
 Sender: linux-fsdevel-owner@vger.kernel.org
 To: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux SCSI List <linux-scsi@vger.kernel.org>, linux-nfs@vger.kernel.org, Linux btrfs Developers List <linux-btrfs@vger.kernel.org>, Zach Brown <zab@redhat.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-man@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, Theodore Ts'o <tytso@mit.edu>
 List-Id: linux-api@vger.kernel.org
 
-On May 6, 2015 11:45 AM, "Michael Kerrisk" <mtk.manpages@gmail.com> wrote:
->
-> [CC += linux-api@vger.kernel.org]
->
-> Zach,
->
-> Since this is a kernel-user-space API change, please CC linux-api@.
-> The kernel source file Documentation/SubmitChecklist notes that all
-> Linux kernel patches that change userspace interfaces should be CCed
-> to linux-api@vger.kernel.org, so that the various parties who are
-> interested in API changes are informed. For further information, see
-> https://www.kernel.org/doc/man-pages/linux-api-ml.html
->
-> Thanks,
->
-> Michael
->
->
->
->
-> On Sat, Apr 11, 2015 at 12:00 AM, Zach Brown <zab@redhat.com> wrote:
-> > Hello everyone!
-> >
-> > Here's my current attempt at the most basic system call interface for
-> > offloading copying between files.  The system call and vfs function
-> > are relatively light wrappers around the file_operation method that
-> > does the heavy lifting.
-> >
-> > There was interest at LSF in getting the basic infrastructure merged
-> > before worrying about adding behavioural flags and more complicated
-> > implementations.  This series only offers a refactoring of the btrfs
-> > clone ioctl as an example of an implementation of the file
-> > copy_file_range method.
-> >
-> > I've added support for copy_file_range() to xfs_io in xfsprogs and
-> > have the start of an xfstest that tests the system call.  I'll send
-> > those to fstests@.
-> >
-> > So how does this look?
-> >
-> > Do we want to merge this and let the NFS and block XCOPY patches add
-> > their changes when they're ready?
+Update FALLOC_FL_INSERT_RANGE flag in fallocate.
 
-This sounds enough like splice that I'm wondering why the API isn't splice.
+Signed-off-by: Namjae Jeon <namjae.jeon@samsung.com>
+Signed-off-by: Ashish Sangwan <a.sangwan@samsung.com>
+---
+ man2/fallocate.2 | 89 ++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 84 insertions(+), 5 deletions(-)
 
---Andy
+diff --git a/man2/fallocate.2 b/man2/fallocate.2
+index 0cc1a00..0d31027 100644
+--- a/man2/fallocate.2
++++ b/man2/fallocate.2
+@@ -228,6 +228,59 @@ ext4, for extent-based files (since Linux 3.15)
+ .IP *
+ SMB3 (since Linux 3.17)
+ .\" commit 30175628bf7f521e9ee31ac98fa6d6fe7441a556
++.SS Increasing file space
++flag (available since Linux 4.1)
++.\" commit dd46c787788d5bf5b974729d43e4c405814a4c7d
++Specifying the
++.BR FALLOC_FL_INSERT_RANGE
++flag in
++.I mode
++will increase the file space by inserting a hole within the file size without
++overwriting any existing data.
++The hole will start at
++.I offset
++and continue for
++.I len
++bytes.
++For inserting hole inside file, the contents of the file starting at
++.I offset
++will be shifted towards right by
++.I len
++bytes.
++Inserting a hole inside the file will increase the file size by
++.I len
++bytes.
++
++This mode has the same limitation as
++.BR FALLOC_FL_COLLAPSE_RANGE
++regarding the
++granularity of the operation.
++If the granularity requirements are not met,
++.BR fallocate ()
++will fail with the error
++.BR EINVAL.
++If the
++.I offset
++overlaps with end of file OR if it is greater than end of file, an error is
++returned.
++For such type of operations, i.e. inserting a hole at the end of file,
++.BR ftruncate(2)
++should be used.
++In case
++.IR offset + len
++exceeds the maximum file size, errno will be set to
++.B EFBIG.
++
++No other flags may be specified in
++.IR mode
++in conjunction with
++.BR FALLOC_FL_INSERT_RANGE .
++
++As of Linux 4.1,
++.B FALLOC_FL_INSERT_RANGE
++is supported by
++XFS.
++.\" commit a904b1ca5751faf5ece8600e18cd3b674afcca1b
+ .SH RETURN VALUE
+ On success,
+ .BR fallocate ()
+@@ -245,6 +298,12 @@ is not a valid file descriptor, or is not opened for writing.
+ .IR offset + len
+ exceeds the maximum file size.
+ .TP
++.B EFBIG
++.I mode
++is
++.BR FALLOC_FL_INSERT_RANGE ,
++the current file size+len exceeds the maximum file size.
++.TP
+ .B EINTR
+ A signal was caught during execution.
+ .TP
+@@ -273,7 +332,17 @@ reaches or passes the end of the file.
+ .B EINVAL
+ .I mode
+ is
+-.BR FALLOC_FL_COLLAPSE_RANGE ,
++.BR FALLOC_FL_INSERT_RANGE
++and the range specified by
++.I offset
++reaches or passes the end of the file.
++.TP
++.B EINVAL
++.I mode
++is
++.BR FALLOC_FL_COLLAPSE_RANGE
++or
++.BR FALLOC_FL_INSERT_RANGE ,
+ but either
+ .I offset
+ or
+@@ -282,18 +351,24 @@ is not a multiple of the filesystem block size.
+ .TP
+ .B EINVAL
+ .I mode
+-contains both
++contains either of
+ .B FALLOC_FL_COLLAPSE_RANGE
++or
++.B FALLOC_FL_INSERT_RANGE
+ and other flags;
+ no other flags are permitted with
+-.BR FALLOC_FL_COLLAPSE_RANGE .
++.BR FALLOC_FL_COLLAPSE_RANGE
++or
++.BR FALLOC_FL_INSERT_RANGE .
+ .TP
+ .B EINVAL
+ .I mode
+ is
+ .BR FALLOC_FL_COLLAPSE_RANGE
+ or
+-.BR FALLOC_FL_ZERO_RANGE ,
++.BR FALLOC_FL_ZERO_RANGE
++or
++.BR FALLOC_FL_INSERT_RANGE ,
+ but the file referred to by
+ .I fd
+ is not a regular file.
+@@ -345,6 +420,8 @@ specifies
+ .BR FALLOC_FL_PUNCH_HOLE
+ or
+ .BR FALLOC_FL_COLLAPSE_RANGE
++or
++.BR FALLOC_FL_INSERT_RANGE
+ and
+ the file referred to by
+ .I fd
+@@ -363,7 +440,9 @@ refers to a pipe or FIFO.
+ .B ETXTBSY
+ .I mode
+ specifies
+-.BR FALLOC_FL_COLLAPSE_RANGE ,
++.BR FALLOC_FL_COLLAPSE_RANGE
++or
++.BR FALLOC_FL_INSERT_RANGE ,
+ but the file referred to by
+ .IR fd
+ is currently being executed.
+-- 
+1.8.5.5
+
