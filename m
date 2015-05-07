@@ -1,535 +1,234 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH 00/19] converting system calls to 64-bit time_t, part 1
-Date: Thu, 07 May 2015 10:52:08 +0200
-Message-ID: <2330671.lQAl76KQcx@wuerfel>
-References: <1430929826-318934-1-git-send-email-arnd@arndb.de> <1430983678.8171.23.camel@x220> <1430984358.8171.28.camel@x220>
+From: =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>
+Subject: [PATCH v3 09/12] KVM: arm64: guest debug, HW assisted debug support
+Date: Thu,  7 May 2015 10:07:12 +0100
+Message-ID: <1430989647-22501-2-git-send-email-alex.bennee@linaro.org>
+References: <1430929407-3487-1-git-send-email-alex.bennee@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1430984358.8171.28.camel@x220>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Bolle <pebolle@tiscali.nl>
-Cc: y2038@lists.linaro.org, baolin.wang@linaro.org, tglx@linutronix.de, albert.aribaud@3adev.fr, john.stultz@linaro.org, bamvor.zhangjian@linaro.org, ruchandani.tina@gmail.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, libc-alpha@sourceware.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
+In-Reply-To: <1430929407-3487-1-git-send-email-alex.bennee@linaro.org>
+List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
+List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
+List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
+List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
+List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
+Errors-To: kvmarm-bounces@lists.cs.columbia.edu
+Sender: kvmarm-bounces@lists.cs.columbia.edu
+To: kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kvmarm@lists.cs.columbia.edu, christoffer.dall@linaro.org, marc.zyngier@arm.com, peter.maydell@linaro.org, agraf@suse.de, drjones@redhat.com, pbonzini@redhat.com, zhichao.huang@linaro.org
+Cc: Peter Zijlstra <peterz@infradead.org>, Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>, Russell King <linux@arm.linux.org.uk>, Richard Weinberger <richard@nod.at>, Jonathan Corbet <corbet@lwn.net>, Gleb Natapov <gleb@kernel.org>, jan.kiszka@siemens.com, AKASHI Takahiro <takahiro.akashi@linaro.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Will Deacon <will.deacon@arm.com>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, dahi@linux.vnet.ibm.com, Andre Przywara <andre.przywara@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, r65777@freescale.com, bp@suse.de, Ingo Molnar <mingo@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thursday 07 May 2015 09:39:18 Paul Bolle wrote:
-> On Thu, 2015-05-07 at 09:27 +0200, Paul Bolle wrote:
-> > On Wed, 2015-05-06 at 18:30 +0200, Arnd Bergmann wrote:
-> > > * After all system calls are converted, we can change one architecture
-> > >   at a time to select ARCH_HAS_COMPAT_TIME, and modify its system
-> > >   call table accordingly. In this version, I do it for ARM32, x86-32,
-> > >   and x86-64 for demonstration purposes.
-> > 
-> > Perhaps this was correct for your first draft. Because this series adds
-> > ARCH_HAS_COMPAT_TIME in 04/19, but it doesn't add any selects of that
-> > symbol, does it? As far as I can see ARCH_HAS_COMPAT_TIME simply
-> > functions as an alias for COMPAT in this series.
-
-It is still the intention of the patch to add the selects in the later
-patches that are required to see any benefit of the earlier patches.
-
-ARCH_HAS_COMPAT_TIME is in the "x86: use COMPAT_SYS_TIME" and
-"ARM: use CONFIG_COMPAT_TIME" patches of the full series available
-on my git tree.
-
-I realize the downsides of not posting the entire series at once
-here, but it seemed better to avoid spamming everyone too much,
-while I try to find out if we have agreement on the overall
-strategy.
-
-For reference, see below for the ARM patch.
-
-> > > * A follow-up series changes over all other architectures.
-> > > 
-> > > * The last patch in the series changes the CONFIG_COMPAT_TIME
-> > >   Kconfig symbol to be user visible. Disabling this symbol will
-> > >   get you a kernel that intentionally breaks support for old tasks
-> > >   in order to provide an interface that will survive 2038.
-> > 
-> > This doesn't happen in 19/19, or in any other patch in this series.
-> > Maybe also something that has changed since the first draft.
-> > 
-> > >   This is meant mostly as a debugging help for now, to let people
-> > >   build a y2038 safe distro, but at some point in the 2030s, we
-> > >   should remove that option and all the compat handling.
-> 
-> And then it occurred to me to check the y2038-syscalls git branch you
-> referenced. After which the above made much more sense. (Though my
-> remark that ARCH_HAS_COMPAT_TIME simply functions as an alias for COMPAT
-> also seems to hold for that branch.)
-
-Right, in fact both of these happen at the end of the git tree.
-
-	Arnd
-
-8<-------
-commit 93a8526e02b6e29888df516e5750cd6483ee4472
-Author: Arnd Bergmann <arnd@arndb.de>
-Date:   Fri Apr 24 17:12:08 2015 +0200
-
-    ARM: use CONFIG_COMPAT_TIME
-    
-    This changes the ARM architecture to use the new compat system call
-    definitions that were added in previous patches. All system calls
-    that use 32-bit time_t now go through the COMPAT framework, while
-    a set of 25 new system calls gets added to replace them using 64-bit
-    data structures __kernel_timespec, __kernel_itimerspec,
-    __kernel_rusage, __kernel_msqid_ds, __kernel_semid_ds, __kernel_shmid_ds
-    and __kernel_stat.
-    
-    Similarly, we add all the new system calls to the arm64 compat syscall
-    table.
-    
-    Signed-off-by: Arnd Bergmann <arnd@arndb.de>
---
- arch/arm/Kconfig                   |   1 +
- arch/arm/include/asm/unistd.h      |  11 ++--
- arch/arm/include/uapi/asm/unistd.h |  22 ++++++++
- arch/arm/kernel/calls.S            | 101 +++++++++++++++++++++++--------------
- arch/arm/kernel/sys_oabi-compat.c  |   9 ++--
- arch/arm64/include/asm/unistd32.h  |  44 ++++++++++++++++
- 6 files changed, 142 insertions(+), 46 deletions(-)
-
-diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index 45df48ba0b12..491896833c76 100644
---- a/arch/arm/Kconfig
-+++ b/arch/arm/Kconfig
-@@ -2,6 +2,7 @@ config ARM
- 	bool
- 	default y
- 	select ARCH_HAS_ATOMIC64_DEC_IF_POSITIVE
-+	select ARCH_HAS_COMPAT_TIME
- 	select ARCH_HAS_ELF_RANDOMIZE
- 	select ARCH_HAS_TICK_BROADCAST if GENERIC_CLOCKEVENTS_BROADCAST
- 	select ARCH_HAVE_CUSTOM_GPIO_H
-diff --git a/arch/arm/include/asm/unistd.h b/arch/arm/include/asm/unistd.h
-index 32640c431a08..ad7588eb9d58 100644
---- a/arch/arm/include/asm/unistd.h
-+++ b/arch/arm/include/asm/unistd.h
-@@ -19,7 +19,7 @@
-  * This may need to be greater than __NR_last_syscall+1 in order to
-  * account for the padding in the syscall table
-  */
--#define __NR_syscalls  (388)
-+#define __NR_syscalls  (412)
- 
- /*
-  * *NOTE*: This is a ghost syscall private to the kernel.  Only the
-@@ -28,7 +28,9 @@
-  */
- #define __ARM_NR_cmpxchg		(__ARM_NR_BASE+0x00fff0)
- 
-+#ifdef CONFIG_COMPAT_TIME
- #define __ARCH_WANT_STAT64
-+#endif
- #define __ARCH_WANT_SYS_GETHOSTNAME
- #define __ARCH_WANT_SYS_PAUSE
- #define __ARCH_WANT_SYS_GETPGRP
-@@ -40,11 +42,13 @@
- #define __ARCH_WANT_SYS_OLD_SELECT
- 
- #if !defined(CONFIG_AEABI) || defined(CONFIG_OABI_COMPAT)
--#define __ARCH_WANT_SYS_TIME
-+#ifdef CONFIG_COMPAT_TIME
-+#define __ARCH_WANT_COMPAT_SYS_TIME
- #define __ARCH_WANT_SYS_IPC
-+#define __ARCH_WANT_SYS_UTIME
-+#endif
- #define __ARCH_WANT_SYS_OLDUMOUNT
- #define __ARCH_WANT_SYS_ALARM
--#define __ARCH_WANT_SYS_UTIME
- #define __ARCH_WANT_SYS_OLD_GETRLIMIT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_SYS_SOCKETCALL
-@@ -52,6 +56,7 @@
- #define __ARCH_WANT_SYS_FORK
- #define __ARCH_WANT_SYS_VFORK
- #define __ARCH_WANT_SYS_CLONE
-+#define __ARCH_WANT_SYS_NEWFSTATAT
- 
- /*
-  * Unimplemented (or alternatively implemented) syscalls
-diff --git a/arch/arm/include/uapi/asm/unistd.h b/arch/arm/include/uapi/asm/unistd.h
-index 0c3f5a0dafd3..4ea2d7312f15 100644
---- a/arch/arm/include/uapi/asm/unistd.h
-+++ b/arch/arm/include/uapi/asm/unistd.h
-@@ -414,6 +414,28 @@
- #define __NR_memfd_create		(__NR_SYSCALL_BASE+385)
- #define __NR_bpf			(__NR_SYSCALL_BASE+386)
- #define __NR_execveat			(__NR_SYSCALL_BASE+387)
-+#define __NR_clock_gettime64		(__NR_SYSCALL_BASE+388)
-+#define __NR_clock_settime64		(__NR_SYSCALL_BASE+389)
-+#define __NR_clock_adjtime64		(__NR_SYSCALL_BASE+390)
-+#define __NR_clock_getres64		(__NR_SYSCALL_BASE+391)
-+#define __NR_clock_nanosleep64		(__NR_SYSCALL_BASE+392)
-+#define __NR_timer_gettime64		(__NR_SYSCALL_BASE+393)
-+#define __NR_timer_settime64		(__NR_SYSCALL_BASE+394)
-+#define __NR_timerfd_gettime64		(__NR_SYSCALL_BASE+395)
-+#define __NR_timerfd_settime64		(__NR_SYSCALL_BASE+396)
-+#define __NR_pselect64			(__NR_SYSCALL_BASE+397)
-+#define __NR_ppoll64			(__NR_SYSCALL_BASE+398)
-+#define __NR_io_getevents64		(__NR_SYSCALL_BASE+399)
-+#define __NR_recvmmsg64			(__NR_SYSCALL_BASE+400)
-+#define __NR_semtimedop64		(__NR_SYSCALL_BASE+401)
-+#define __NR_mq_timedsend64		(__NR_SYSCALL_BASE+402)
-+#define __NR_mq_timedreceive64		(__NR_SYSCALL_BASE+403)
-+#define __NR_utimensat64		(__NR_SYSCALL_BASE+404)
-+#define __NR_newfstat64			(__NR_SYSCALL_BASE+405)
-+#define __NR_newfstatat64		(__NR_SYSCALL_BASE+406)
-+#define __NR_rt_sigtimedwait64		(__NR_SYSCALL_BASE+407)
-+#define __NR_getrusage64		(__NR_SYSCALL_BASE+408)
-+#define __NR_waitid64			(__NR_SYSCALL_BASE+409)
- 
- /*
-  * The following SWIs are ARM private.
-diff --git a/arch/arm/kernel/calls.S b/arch/arm/kernel/calls.S
-index 05745eb838c5..092a2e1d979c 100644
---- a/arch/arm/kernel/calls.S
-+++ b/arch/arm/kernel/calls.S
-@@ -22,7 +22,7 @@
- /* 10 */	CALL(sys_unlink)
- 		CALL(sys_execve)
- 		CALL(sys_chdir)
--		CALL(OBSOLETE(sys_time))	/* used by libc4 */
-+		CALL(OBSOLETE(compat_sys_time))	/* used by libc4 */
- 		CALL(sys_mknod)
- /* 15 */	CALL(sys_chmod)
- 		CALL(sys_lchown16)
-@@ -34,12 +34,12 @@
- 		CALL(OBSOLETE(sys_oldumount))	/* used by libc4 */
- 		CALL(sys_setuid16)
- 		CALL(sys_getuid16)
--/* 25 */	CALL(OBSOLETE(sys_stime))
-+/* 25 */	CALL(OBSOLETE(compat_sys_stime))
- 		CALL(sys_ptrace)
- 		CALL(OBSOLETE(sys_alarm))	/* used by libc4 */
- 		CALL(sys_ni_syscall)		/* was sys_fstat */
- 		CALL(sys_pause)
--/* 30 */	CALL(OBSOLETE(sys_utime))	/* used by libc4 */
-+/* 30 */	CALL(OBSOLETE(compat_sys_utime))/* used by libc4 */
- 		CALL(sys_ni_syscall)		/* was sys_stty */
- 		CALL(sys_ni_syscall)		/* was sys_getty */
- 		CALL(sys_access)
-@@ -86,12 +86,12 @@
- 		CALL(sys_sethostname)
- /* 75 */	CALL(sys_setrlimit)
- 		CALL(OBSOLETE(sys_old_getrlimit)) /* used by libc4 */
--		CALL(sys_getrusage)
--		CALL(sys_gettimeofday)
--		CALL(sys_settimeofday)
-+		CALL(compat_sys_getrusage)
-+		CALL(compat_sys_gettimeofday)
-+		CALL(compat_sys_settimeofday)
- /* 80 */	CALL(sys_getgroups16)
- 		CALL(sys_setgroups16)
--		CALL(OBSOLETE(sys_old_select))	/* used by libc4 */
-+		CALL(OBSOLETE(compat_sys_old_select))	/* used by libc4 */
- 		CALL(sys_symlink)
- 		CALL(sys_ni_syscall)		/* was sys_lstat */
- /* 85 */	CALL(sys_readlink)
-@@ -113,17 +113,17 @@
- 		CALL(sys_ni_syscall)		/* sys_ioperm */
- 		CALL(OBSOLETE(ABI(sys_socketcall, sys_oabi_socketcall)))
- 		CALL(sys_syslog)
--		CALL(sys_setitimer)
--/* 105 */	CALL(sys_getitimer)
--		CALL(sys_newstat)
--		CALL(sys_newlstat)
--		CALL(sys_newfstat)
-+		CALL(compat_sys_setitimer)
-+/* 105 */	CALL(compat_sys_getitimer)
-+		CALL(compat_sys_newstat)
-+		CALL(compat_sys_newlstat)
-+		CALL(compat_sys_newfstat)
- 		CALL(sys_ni_syscall)		/* was sys_uname */
- /* 110 */	CALL(sys_ni_syscall)		/* was sys_iopl */
- 		CALL(sys_vhangup)
- 		CALL(sys_ni_syscall)
- 		CALL(OBSOLETE(sys_syscall))	/* call a syscall */
--		CALL(sys_wait4)
-+		CALL(compat_sys_wait4)
- /* 115 */	CALL(sys_swapoff)
- 		CALL(sys_sysinfo)
- 		CALL(OBSOLETE(ABI(sys_ipc, sys_oabi_ipc)))
-@@ -133,7 +133,7 @@
- 		CALL(sys_setdomainname)
- 		CALL(sys_newuname)
- 		CALL(sys_ni_syscall)		/* modify_ldt */
--		CALL(sys_adjtimex)
-+		CALL(compat_sys_adjtimex)
- /* 125 */	CALL(sys_mprotect)
- 		CALL(sys_sigprocmask)
- 		CALL(sys_ni_syscall)		/* was sys_create_module */
-@@ -151,7 +151,7 @@
- 		CALL(sys_setfsgid16)
- /* 140 */	CALL(sys_llseek)
- 		CALL(sys_getdents)
--		CALL(sys_select)
-+		CALL(compat_sys_select)
- 		CALL(sys_flock)
- 		CALL(sys_msync)
- /* 145 */	CALL(sys_readv)
-@@ -170,8 +170,8 @@
- 		CALL(sys_sched_yield)
- 		CALL(sys_sched_get_priority_max)
- /* 160 */	CALL(sys_sched_get_priority_min)
--		CALL(sys_sched_rr_get_interval)
--		CALL(sys_nanosleep)
-+		CALL(compat_sys_sched_rr_get_interval)
-+		CALL(compat_sys_nanosleep)
- 		CALL(sys_mremap)
- 		CALL(sys_setresuid16)
- /* 165 */	CALL(sys_getresuid16)
-@@ -186,7 +186,7 @@
- 		CALL(sys_rt_sigaction)
- /* 175 */	CALL(sys_rt_sigprocmask)
- 		CALL(sys_rt_sigpending)
--		CALL(sys_rt_sigtimedwait)
-+		CALL(compat_sys_rt_sigtimedwait)
- 		CALL(sys_rt_sigqueueinfo)
- 		CALL(sys_rt_sigsuspend)
- /* 180 */	CALL(ABI(sys_pread64, sys_oabi_pread64))
-@@ -249,12 +249,12 @@
- 		CALL(sys_fremovexattr)
- 		CALL(sys_tkill)
- 		CALL(sys_sendfile64)
--/* 240 */	CALL(sys_futex)
-+/* 240 */	CALL(compat_sys_futex)
- 		CALL(sys_sched_setaffinity)
- 		CALL(sys_sched_getaffinity)
- 		CALL(sys_io_setup)
- 		CALL(sys_io_destroy)
--/* 245 */	CALL(sys_io_getevents)
-+/* 245 */	CALL(compat_sys_io_getevents)
- 		CALL(sys_io_submit)
- 		CALL(sys_io_cancel)
- 		CALL(sys_exit_group)
-@@ -267,29 +267,29 @@
- /* 255 */	CALL(sys_ni_syscall)	/* sys_get_thread_area */
- 		CALL(sys_set_tid_address)
- 		CALL(sys_timer_create)
--		CALL(sys_timer_settime)
--		CALL(sys_timer_gettime)
-+		CALL(compat_sys_timer_settime)
-+		CALL(compat_sys_timer_gettime)
- /* 260 */	CALL(sys_timer_getoverrun)
- 		CALL(sys_timer_delete)
--		CALL(sys_clock_settime)
--		CALL(sys_clock_gettime)
--		CALL(sys_clock_getres)
--/* 265 */	CALL(sys_clock_nanosleep)
-+		CALL(compat_sys_clock_settime)
-+		CALL(compat_sys_clock_gettime)
-+		CALL(compat_sys_clock_getres)
-+/* 265 */	CALL(compat_sys_clock_nanosleep)
- 		CALL(sys_statfs64_wrapper)
- 		CALL(sys_fstatfs64_wrapper)
- 		CALL(sys_tgkill)
--		CALL(sys_utimes)
-+		CALL(compat_sys_utimes)
- /* 270 */	CALL(sys_arm_fadvise64_64)
- 		CALL(sys_pciconfig_iobase)
- 		CALL(sys_pciconfig_read)
- 		CALL(sys_pciconfig_write)
- 		CALL(sys_mq_open)
- /* 275 */	CALL(sys_mq_unlink)
--		CALL(sys_mq_timedsend)
--		CALL(sys_mq_timedreceive)
-+		CALL(compat_sys_mq_timedsend)
-+		CALL(compat_sys_mq_timedreceive)
- 		CALL(sys_mq_notify)
- 		CALL(sys_mq_getsetattr)
--/* 280 */	CALL(sys_waitid)
-+/* 280 */	CALL(compat_sys_waitid)
- 		CALL(sys_socket)
- 		CALL(ABI(sys_bind, sys_oabi_bind))
- 		CALL(ABI(sys_connect, sys_oabi_connect))
-@@ -321,7 +321,7 @@
- 		CALL(sys_add_key)
- /* 310 */	CALL(sys_request_key)
- 		CALL(sys_keyctl)
--		CALL(ABI(sys_semtimedop, sys_oabi_semtimedop))
-+		CALL(ABI(compat_sys_semtimedop, sys_oabi_semtimedop))
- /* vserver */	CALL(sys_ni_syscall)
- 		CALL(sys_ioprio_set)
- /* 315 */	CALL(sys_ioprio_get)
-@@ -335,7 +335,7 @@
- 		CALL(sys_mkdirat)
- 		CALL(sys_mknodat)
- /* 325 */	CALL(sys_fchownat)
--		CALL(sys_futimesat)
-+		CALL(compat_sys_futimesat)
- 		CALL(ABI(sys_fstatat64,  sys_oabi_fstatat64))
- 		CALL(sys_unlinkat)
- 		CALL(sys_renameat)
-@@ -344,8 +344,8 @@
- 		CALL(sys_readlinkat)
- 		CALL(sys_fchmodat)
- 		CALL(sys_faccessat)
--/* 335 */	CALL(sys_pselect6)
--		CALL(sys_ppoll)
-+/* 335 */	CALL(compat_sys_pselect6)
-+		CALL(compat_sys_ppoll)
- 		CALL(sys_unshare)
- 		CALL(sys_set_robust_list)
- 		CALL(sys_get_robust_list)
-@@ -357,13 +357,13 @@
- /* 345 */	CALL(sys_getcpu)
- 		CALL(sys_epoll_pwait)
- 		CALL(sys_kexec_load)
--		CALL(sys_utimensat)
-+		CALL(compat_sys_utimensat)
- 		CALL(sys_signalfd)
- /* 350 */	CALL(sys_timerfd_create)
- 		CALL(sys_eventfd)
- 		CALL(sys_fallocate)
--		CALL(sys_timerfd_settime)
--		CALL(sys_timerfd_gettime)
-+		CALL(compat_sys_timerfd_settime)
-+		CALL(compat_sys_timerfd_gettime)
- /* 355 */	CALL(sys_signalfd4)
- 		CALL(sys_eventfd2)
- 		CALL(sys_epoll_create1)
-@@ -374,14 +374,14 @@
- 		CALL(sys_pwritev)
- 		CALL(sys_rt_tgsigqueueinfo)
- 		CALL(sys_perf_event_open)
--/* 365 */	CALL(sys_recvmmsg)
-+/* 365 */	CALL(compat_sys_recvmmsg)
- 		CALL(sys_accept4)
- 		CALL(sys_fanotify_init)
- 		CALL(sys_fanotify_mark)
- 		CALL(sys_prlimit64)
- /* 370 */	CALL(sys_name_to_handle_at)
- 		CALL(sys_open_by_handle_at)
--		CALL(sys_clock_adjtime)
-+		CALL(compat_sys_clock_adjtime)
- 		CALL(sys_syncfs)
- 		CALL(sys_sendmmsg)
- /* 375 */	CALL(sys_setns)
-@@ -397,6 +397,29 @@
- /* 385 */	CALL(sys_memfd_create)
- 		CALL(sys_bpf)
- 		CALL(sys_execveat)
-+		CALL(sys_clock_gettime)
-+		CALL(sys_clock_settime)
-+/* 390 */	CALL(sys_clock_adjtime)
-+		CALL(sys_clock_getres)
-+		CALL(sys_clock_nanosleep)
-+		CALL(sys_timer_gettime)
-+		CALL(sys_timer_settime)
-+/* 395 */	CALL(sys_timerfd_gettime)
-+		CALL(sys_timerfd_settime)
-+		CALL(sys_pselect6)
-+		CALL(sys_ppoll)
-+		CALL(sys_io_getevents)
-+/* 400 */	CALL(sys_recvmmsg)
-+		CALL(sys_semtimedop)
-+		CALL(sys_mq_timedsend)
-+		CALL(sys_mq_timedreceive)
-+		CALL(sys_utimensat)
-+/* 405 */	CALL(sys_newfstat)
-+		CALL(sys_newfstatat)
-+		CALL(sys_rt_sigtimedwait)
-+		CALL(sys_getrusage)
-+		CALL(sys_waitid)
-+
- #ifndef syscalls_counted
- .equ syscalls_padding, ((NR_syscalls + 3) & ~3) - NR_syscalls
- #define syscalls_counted
-diff --git a/arch/arm/kernel/sys_oabi-compat.c b/arch/arm/kernel/sys_oabi-compat.c
-index b83f3b7737fb..2e990b564371 100644
---- a/arch/arm/kernel/sys_oabi-compat.c
-+++ b/arch/arm/kernel/sys_oabi-compat.c
-@@ -73,6 +73,7 @@
-  *   wrappers provided below.
-  */
- 
-+#include <linux/compat_time.h>
- #include <linux/syscalls.h>
- #include <linux/errno.h>
- #include <linux/fs.h>
-@@ -307,10 +308,10 @@ struct oabi_sembuf {
- asmlinkage long sys_oabi_semtimedop(int semid,
- 				    struct oabi_sembuf __user *tsops,
- 				    unsigned nsops,
--				    const struct timespec __user *timeout)
-+				    const struct compat_timespec __user *timeout)
- {
- 	struct sembuf *sops;
--	struct timespec local_timeout;
-+	struct compat_timespec local_timeout;
- 	long err;
- 	int i;
- 
-@@ -336,7 +337,7 @@ asmlinkage long sys_oabi_semtimedop(int semid,
- 	} else {
- 		mm_segment_t fs = get_fs();
- 		set_fs(KERNEL_DS);
--		err = sys_semtimedop(semid, sops, nsops, timeout);
-+		err = compat_sys_semtimedop(semid, sops, nsops, timeout);
- 		set_fs(fs);
- 	}
- 	kfree(sops);
-@@ -361,7 +362,7 @@ asmlinkage int sys_oabi_ipc(uint call, int first, int second, int third,
- 		return  sys_oabi_semtimedop(first,
- 					    (struct oabi_sembuf __user *)ptr,
- 					    second,
--					    (const struct timespec __user *)fifth);
-+					    (const struct compat_timespec __user *)fifth);
- 	default:
- 		return sys_ipc(call, first, second, third, ptr, fifth);
- 	}
-diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
-index cef934a90f17..1659a0c68ea3 100644
---- a/arch/arm64/include/asm/unistd32.h
-+++ b/arch/arm64/include/asm/unistd32.h
-@@ -797,3 +797,47 @@ __SYSCALL(__NR_memfd_create, sys_memfd_create)
- __SYSCALL(__NR_bpf, sys_bpf)
- #define __NR_execveat 387
- __SYSCALL(__NR_execveat, compat_sys_execveat)
-+#define __NR_clock_gettime64 388
-+_SYSCALL(__NR_clock_gettime64, sys_clock_gettime)
-+#define __NR_clock_settime64 389
-+_SYSCALL(__NR_clock_settime64, sys_clock_settime)
-+#define __NR_clock_adjtime64 390
-+_SYSCALL(__NR_clock_adjtime64, sys_clock_adjtime)
-+#define __NR_clock_getres64 391
-+_SYSCALL(__NR_clock_getres64, sys_clock_getres)
-+#define __NR_clock_nanosleep64 392
-+_SYSCALL(__NR_clock_nanosleep64, sys_clock_nanosleep)
-+#define __NR_timer_gettime64 393
-+_SYSCALL(__NR_timer_gettime64, sys_timer_gettime)
-+#define __NR_timer_settime64 394
-+_SYSCALL(__NR_timer_settime64, sys_timer_settime)
-+#define __NR_timerfd_gettime64 395
-+_SYSCALL(__NR_timerfd_gettime64, sys_timerfd_gettime)
-+#define __NR_timerfd_settime64 396
-+_SYSCALL(__NR_timerfd_settime64, sys_timerfd_settime)
-+#define __NR_pselect64 397
-+_SYSCALL(__NR_pselect64, compat_sys_pselect6_time64)
-+#define __NR_ppoll64 398
-+_SYSCALL(__NR_ppoll64, compat_sys_ppoll_time64)
-+#define __NR_io_getevents64 399
-+_SYSCALL(__NR_io_getevents64, sys_io_getevents)
-+#define __NR_recvmmsg64 400
-+_SYSCALL(__NR_recvmmsg64, compat_sys_recvmmsg64)
-+#define __NR_semtimedop64 401
-+_SYSCALL(__NR_semtimedop64, sys_semtimedop)
-+#define __NR_mq_timedsend64 402
-+_SYSCALL(__NR_mq_timedsend64, sys_mq_timedsend)
-+#define __NR_mq_timedreceive64 403
-+_SYSCALL(__NR_mq_timedreceive64, sys_mq_timedreceive)
-+#define __NR_utimensat64 404
-+_SYSCALL(__NR_utimensat64, sys_utimensat)
-+#define __NR_newfstat64 405
-+_SYSCALL(__NR_newfstat64, sys_newfstat)
-+#define __NR_newfstatat64 406
-+_SYSCALL(__NR_newfstatat64, sys_newfstatat)
-+#define __NR_rt_sigtimedwait64 407
-+_SYSCALL(__NR_rt_sigtimedwait64, compat_sys_rt_sigtimedwait_time64)
-+#define __NR_getrusage64 408
-+_SYSCALL(__NR_getrusage64, sys_getrusage)
-+#define __NR_waitid64 409
-+_SYSCALL(__NR_waitid64, compat_sys_waitid_time64)
+VGhpcyBhZGRzIHN1cHBvcnQgZm9yIHVzZXJzcGFjZSB0byBjb250cm9sIHRoZSBIVyBkZWJ1ZyBy
+ZWdpc3RlcnMgZm9yCmd1ZXN0IGRlYnVnLiBJbiB0aGUgZGVidWcgaW9jdGwgd2UgY29weSB0aGUg
+SU1QREVGIGRlZmluZWQgbnVtYmVyIG9mCnJlZ2lzdGVycyBpbnRvIGEgbmV3IHJlZ2lzdGVyIHNl
+dCBjYWxsZWQgaG9zdF9kZWJ1Z19zdGF0ZS4gVGhlcmUgaXMgbm93CmEgbmV3IHZjcHUgcGFyYW1l
+dGVyIGNhbGxlZCBkZWJ1Z19wdHIgd2hpY2ggc2VsZWN0cyB3aGljaCByZWdpc3RlciBzZXQKaXMg
+dG8gY29waWVkIGludG8gdGhlIHJlYWwgcmVnaXN0ZXJzIHdoZW4gd29ybGQgc3dpdGNoIG9jY3Vy
+cy4KCkkndmUgbW92ZWQgc29tZSBoZWxwZXIgZnVuY3Rpb25zIGludG8gdGhlIGh3X2JyZWFrcG9p
+bnQuaCBoZWFkZXIgZm9yCnJlLXVzZS4KCkFzIHdpdGggc2luZ2xlIHN0ZXAgd2UgbmVlZCB0byB0
+d2VhayB0aGUgZ3Vlc3QgcmVnaXN0ZXJzIHRvIGVuYWJsZSB0aGUKZXhjZXB0aW9ucyBzbyB3ZSBu
+ZWVkIHRvIHNhdmUgYW5kIHJlc3RvcmUgdGhvc2UgYml0cy4KClR3byBuZXcgY2FwYWJpbGl0aWVz
+IGhhdmUgYmVlbiBhZGRlZCB0byB0aGUgS1ZNX0VYVEVOU0lPTiBpb2N0bCB0byBhbGxvdwp1c2Vy
+c3BhY2UgdG8gcXVlcnkgdGhlIG51bWJlciBvZiBoYXJkd2FyZSBicmVhayBhbmQgd2F0Y2ggcG9p
+bnRzCmF2YWlsYWJsZSBvbiB0aGUgaG9zdCBoYXJkd2FyZS4KClNpZ25lZC1vZmYtYnk6IEFsZXgg
+QmVubsOpZSA8YWxleC5iZW5uZWVAbGluYXJvLm9yZz4KCi0tLQp2MgogICAtIHN3aXRjaGVkIHRv
+IEMgc2V0dXAKICAgLSByZXBsYWNlIGhvc3QgZGVidWcgcmVnaXN0ZXJzIGRpcmVjdGx5IGludG8g
+Y29udGV4dAogICAtIG1pbm9yIHR3ZWFrIHRvIGFwaSBkb2NzCiAgIC0gc2V0dXAgcmlnaHQgcmVn
+aXN0ZXIgZm9yIGRlYnVnCiAgIC0gYWRkIEZBUl9FTDIgdG8gZGVidWcgZXhpdCBzdHJ1Y3R1cmUK
+ICAgLSBhZGQgc3VwcG9ydCBmb3IgdHJhcHBpbmcgZGVidWcgcmVnaXN0ZXIgYWNjZXNzCnYzCiAg
+IC0gcmVtb3ZlIHN0cmF5IHRyYWNlIHN0YXRlbWVudAogICAtIGZpeCBzcGFjaW5nIGFyb3VuZCBv
+cGVyYXRvcnMgKHZhcmlvdXMpCiAgIC0gY2xlYW4tdXAgdXNhZ2Ugb2YgdHJhcF9kZWJ1ZwogICAt
+IGludHJvZHVjZSBkZWJ1Z19wdHIsIHJlcGxhY2UgZXhjZXNzaXZlIG1lbWNweSBzdHVmZgogICAt
+IGRvbid0IHVzZSBtZW1jcHkgaW4gaW9jdGwsIGp1c3QgYXNzaWduCiAgIC0gdXBkYXRlIGNhcCBp
+b2N0bCBkb2N1bWVudGF0aW9uCiAgIC0gcmV3b3JkIGEgbnVtYmVyIGNvbW1lbnRzCiAgIC0gcmVu
+YW1lIGhvc3RfZGVidWdfc3RhdGUtPmV4dGVybmFsX2RlYnVnX3N0YXRlCgpkaWZmIC0tZ2l0IGEv
+RG9jdW1lbnRhdGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0IGIvRG9jdW1lbnRhdGlvbi92aXJ0dWFs
+L2t2bS9hcGkudHh0CmluZGV4IDVlZjkzN2MuLjQxOWY3YTggMTAwNjQ0Ci0tLSBhL0RvY3VtZW50
+YXRpb24vdmlydHVhbC9rdm0vYXBpLnR4dAorKysgYi9Eb2N1bWVudGF0aW9uL3ZpcnR1YWwva3Zt
+L2FwaS50eHQKQEAgLTI2NjgsNyArMjY2OCw3IEBAIFRoZSB0b3AgMTYgYml0cyBvZiB0aGUgY29u
+dHJvbCBmaWVsZCBhcmUgYXJjaGl0ZWN0dXJlIHNwZWNpZmljIGNvbnRyb2wKIGZsYWdzIHdoaWNo
+IGNhbiBpbmNsdWRlIHRoZSBmb2xsb3dpbmc6CiAKICAgLSBLVk1fR1VFU1REQkdfVVNFX1NXX0JQ
+OiAgICAgdXNpbmcgc29mdHdhcmUgYnJlYWtwb2ludHMgW3g4NiwgYXJtNjRdCi0gIC0gS1ZNX0dV
+RVNUREJHX1VTRV9IV19CUDogICAgIHVzaW5nIGhhcmR3YXJlIGJyZWFrcG9pbnRzIFt4ODYsIHMz
+OTBdCisgIC0gS1ZNX0dVRVNUREJHX1VTRV9IV19CUDogICAgIHVzaW5nIGhhcmR3YXJlIGJyZWFr
+cG9pbnRzIFt4ODYsIHMzOTAsIGFybTY0XQogICAtIEtWTV9HVUVTVERCR19JTkpFQ1RfREI6ICAg
+ICBpbmplY3QgREIgdHlwZSBleGNlcHRpb24gW3g4Nl0KICAgLSBLVk1fR1VFU1REQkdfSU5KRUNU
+X0JQOiAgICAgaW5qZWN0IEJQIHR5cGUgZXhjZXB0aW9uIFt4ODZdCiAgIC0gS1ZNX0dVRVNUREJH
+X0VYSVRfUEVORElORzogIHRyaWdnZXIgYW4gaW1tZWRpYXRlIGd1ZXN0IGV4aXQgW3MzOTBdCkBA
+IC0yNjgzLDYgKzI2ODMsMTEgQEAgdXBkYXRlZCB0byB0aGUgY29ycmVjdCAoc3VwcGxpZWQpIHZh
+bHVlcy4KIFRoZSBzZWNvbmQgcGFydCBvZiB0aGUgc3RydWN0dXJlIGlzIGFyY2hpdGVjdHVyZSBz
+cGVjaWZpYyBhbmQKIHR5cGljYWxseSBjb250YWlucyBhIHNldCBvZiBkZWJ1ZyByZWdpc3RlcnMu
+CiAKK0ZvciBhcm02NCB0aGUgbnVtYmVyIG9mIGRlYnVnIHJlZ2lzdGVycyBpcyBpbXBsZW1lbnRh
+dGlvbiBkZWZpbmVkIGFuZAorY2FuIGJlIGRldGVybWluZWQgYnkgcXVlcnlpbmcgdGhlIEtWTV9D
+QVBfR1VFU1RfREVCVUdfSFdfQlBTIGFuZAorS1ZNX0NBUF9HVUVTVF9ERUJVR19IV19XUFMgY2Fw
+YWJpbGl0aWVzIHdoaWNoIHJldHVybnMgYSArdmUgbnVtYmVyCitpbmRpY2F0aW5nIHRoZSBudW1i
+ZXIgb2Ygc3VwcG9ydGVkIHJlZ2lzdGVycy4KKwogV2hlbiBkZWJ1ZyBldmVudHMgZXhpdCB0aGUg
+bWFpbiBydW4gbG9vcCB3aXRoIHRoZSByZWFzb24KIEtWTV9FWElUX0RFQlVHIHdpdGggdGhlIGt2
+bV9kZWJ1Z19leGl0X2FyY2ggcGFydCBvZiB0aGUga3ZtX3J1bgogc3RydWN0dXJlIGNvbnRhaW5p
+bmcgYXJjaGl0ZWN0dXJlIHNwZWNpZmljIGRlYnVnIGluZm9ybWF0aW9uLgpkaWZmIC0tZ2l0IGEv
+YXJjaC9hcm0va3ZtL2FybS5jIGIvYXJjaC9hcm0va3ZtL2FybS5jCmluZGV4IDliM2VkNmQuLjI5
+MjAxODUgMTAwNjQ0Ci0tLSBhL2FyY2gvYXJtL2t2bS9hcm0uYworKysgYi9hcmNoL2FybS9rdm0v
+YXJtLmMKQEAgLTI3OSw2ICsyNzksMTAgQEAgaW50IGt2bV9hcmNoX3ZjcHVfaW5pdChzdHJ1Y3Qg
+a3ZtX3ZjcHUgKnZjcHUpCiAJLyogU2V0IHVwIHRoZSB0aW1lciAqLwogCWt2bV90aW1lcl92Y3B1
+X2luaXQodmNwdSk7CiAKKwkvKiBTZXQgdGhlIGRlYnVnIHJlZ2lzdGVycyB0byBiZSB0aGUgZ3Vl
+c3RzICovCisJdmNwdS0+YXJjaC5kZWJ1Z19wdHIgPSAoc3RydWN0IGt2bV9ndWVzdF9kZWJ1Z19h
+cmNoICopCisJCQkJJnZjcHVfc3lzX3JlZyh2Y3B1LCBEQkdCQ1IwX0VMMSk7CisKIAlyZXR1cm4g
+MDsKIH0KIApAQCAtMzA0LDYgKzMwOCw3IEBAIHZvaWQga3ZtX2FyY2hfdmNwdV9wdXQoc3RydWN0
+IGt2bV92Y3B1ICp2Y3B1KQogCiAjZGVmaW5lIEtWTV9HVUVTVERCR19WQUxJRF9NQVNLIChLVk1f
+R1VFU1REQkdfRU5BQkxFIHwgICAgXAogCQkJICAgIEtWTV9HVUVTVERCR19VU0VfU1dfQlAgfCBc
+CisJCQkgICAgS1ZNX0dVRVNUREJHX1VTRV9IV19CUCB8IFwKIAkJCSAgICBLVk1fR1VFU1REQkdf
+U0lOR0xFU1RFUCkKIAogLyoqCkBAIC0zMjQsNiArMzI5LDEyIEBAIGludCBrdm1fYXJjaF92Y3B1
+X2lvY3RsX3NldF9ndWVzdF9kZWJ1ZyhzdHJ1Y3Qga3ZtX3ZjcHUgKnZjcHUsCiAKIAlpZiAoZGJn
+LT5jb250cm9sICYgS1ZNX0dVRVNUREJHX0VOQUJMRSkgewogCQl2Y3B1LT5ndWVzdF9kZWJ1ZyA9
+IGRiZy0+Y29udHJvbDsKKworCQkvKiBIYXJkd2FyZSBhc3Npc3RlZCBCcmVhayBhbmQgV2F0Y2gg
+cG9pbnRzICovCisJCWlmICh2Y3B1LT5ndWVzdF9kZWJ1ZyAmIEtWTV9HVUVTVERCR19VU0VfSFdf
+QlApIHsKKwkJCXZjcHUtPmFyY2guZXh0ZXJuYWxfZGVidWdfc3RhdGUgPSBkYmctPmFyY2g7CisJ
+CX0KKwogCX0gZWxzZSB7CiAJCS8qIElmIG5vdCBlbmFibGVkIGNsZWFyIGFsbCBmbGFncyAqLwog
+CQl2Y3B1LT5ndWVzdF9kZWJ1ZyA9IDA7CmRpZmYgLS1naXQgYS9hcmNoL2FybTY0L2luY2x1ZGUv
+YXNtL2h3X2JyZWFrcG9pbnQuaCBiL2FyY2gvYXJtNjQvaW5jbHVkZS9hc20vaHdfYnJlYWtwb2lu
+dC5oCmluZGV4IDUyYjQ4NGIuLmM0NTA1NTIgMTAwNjQ0Ci0tLSBhL2FyY2gvYXJtNjQvaW5jbHVk
+ZS9hc20vaHdfYnJlYWtwb2ludC5oCisrKyBiL2FyY2gvYXJtNjQvaW5jbHVkZS9hc20vaHdfYnJl
+YWtwb2ludC5oCkBAIC0xMzAsNiArMTMwLDE4IEBAIHN0YXRpYyBpbmxpbmUgdm9pZCBwdHJhY2Vf
+aHdfY29weV90aHJlYWQoc3RydWN0IHRhc2tfc3RydWN0ICp0YXNrKQogfQogI2VuZGlmCiAKKy8q
+IERldGVybWluZSBudW1iZXIgb2YgQlJQIHJlZ2lzdGVycyBhdmFpbGFibGUuICovCitzdGF0aWMg
+aW5saW5lIGludCBnZXRfbnVtX2JycHModm9pZCkKK3sKKwlyZXR1cm4gKChyZWFkX2NwdWlkKElE
+X0FBNjRERlIwX0VMMSkgPj4gMTIpICYgMHhmKSArIDE7Cit9CisKKy8qIERldGVybWluZSBudW1i
+ZXIgb2YgV1JQIHJlZ2lzdGVycyBhdmFpbGFibGUuICovCitzdGF0aWMgaW5saW5lIGludCBnZXRf
+bnVtX3dycHModm9pZCkKK3sKKwlyZXR1cm4gKChyZWFkX2NwdWlkKElEX0FBNjRERlIwX0VMMSkg
+Pj4gMjApICYgMHhmKSArIDE7Cit9CisKIGV4dGVybiBzdHJ1Y3QgcG11IHBlcmZfb3BzX2JwOwog
+CiAjZW5kaWYJLyogX19LRVJORUxfXyAqLwpkaWZmIC0tZ2l0IGEvYXJjaC9hcm02NC9pbmNsdWRl
+L2FzbS9rdm1faG9zdC5oIGIvYXJjaC9hcm02NC9pbmNsdWRlL2FzbS9rdm1faG9zdC5oCmluZGV4
+IGI2MGZhN2EuLmE0NGZiMzIgMTAwNjQ0Ci0tLSBhL2FyY2gvYXJtNjQvaW5jbHVkZS9hc20va3Zt
+X2hvc3QuaAorKysgYi9hcmNoL2FybTY0L2luY2x1ZGUvYXNtL2t2bV9ob3N0LmgKQEAgLTEwOCw5
+ICsxMDgsMTggQEAgc3RydWN0IGt2bV92Y3B1X2FyY2ggewogCS8qIEV4Y2VwdGlvbiBJbmZvcm1h
+dGlvbiAqLwogCXN0cnVjdCBrdm1fdmNwdV9mYXVsdF9pbmZvIGZhdWx0OwogCi0JLyogRGVidWcg
+c3RhdGUgKi8KKwkvKiBHdWVzdCBkZWJ1ZyBzdGF0ZSAqLwogCXU2NCBkZWJ1Z19mbGFnczsKIAor
+CS8qCisJICogRm9yIGRlYnVnZ2luZyB0aGUgZ3Vlc3Qgd2UgbmVlZCB0byBrZWVwIGEgc2V0IG9m
+IGRlYnVnCisJICogcmVnaXN0ZXJzIHdoaWNoIGNhbiBvdmVycmlkZSB0aGUgZ3Vlc3RzIG93biBk
+ZWJ1ZyBzdGF0ZQorCSAqIHdoaWxlIGJlaW5nIHVzZWQuIFRoZXNlIGFyZSBzZXQgdmlhIHRoZSBL
+Vk1fU0VUX0dVRVNUX0RFQlVHCisJICogaW9jdGwuCisJICovCisJc3RydWN0IGt2bV9ndWVzdF9k
+ZWJ1Z19hcmNoICpkZWJ1Z19wdHI7CisJc3RydWN0IGt2bV9ndWVzdF9kZWJ1Z19hcmNoIGV4dGVy
+bmFsX2RlYnVnX3N0YXRlOworCiAJLyogUG9pbnRlciB0byBob3N0IENQVSBjb250ZXh0ICovCiAJ
+a3ZtX2NwdV9jb250ZXh0X3QgKmhvc3RfY3B1X2NvbnRleHQ7CiAKZGlmZiAtLWdpdCBhL2FyY2gv
+YXJtNjQvaW5jbHVkZS91YXBpL2FzbS9rdm0uaCBiL2FyY2gvYXJtNjQvaW5jbHVkZS91YXBpL2Fz
+bS9rdm0uaAppbmRleCAwNDk1N2Q3Li45OGU4MmVmIDEwMDY0NAotLS0gYS9hcmNoL2FybTY0L2lu
+Y2x1ZGUvdWFwaS9hc20va3ZtLmgKKysrIGIvYXJjaC9hcm02NC9pbmNsdWRlL3VhcGkvYXNtL2t2
+bS5oCkBAIC0xMjEsNyArMTIxLDcgQEAgc3RydWN0IGt2bV9ndWVzdF9kZWJ1Z19hcmNoIHsKIAog
+c3RydWN0IGt2bV9kZWJ1Z19leGl0X2FyY2ggewogCV9fdTMyIGhzcjsKLQlfX3U2NCBmYXI7CisJ
+X191NjQgZmFyOwkvKiB1c2VkIGZvciB3YXRjaHBvaW50cyAqLwogfTsKIAogc3RydWN0IGt2bV9z
+eW5jX3JlZ3MgewpkaWZmIC0tZ2l0IGEvYXJjaC9hcm02NC9rZXJuZWwvYXNtLW9mZnNldHMuYyBi
+L2FyY2gvYXJtNjQva2VybmVsL2FzbS1vZmZzZXRzLmMKaW5kZXggY2U3YjdkZC4uNjcxYWIxMyAx
+MDA2NDQKLS0tIGEvYXJjaC9hcm02NC9rZXJuZWwvYXNtLW9mZnNldHMuYworKysgYi9hcmNoL2Fy
+bTY0L2tlcm5lbC9hc20tb2Zmc2V0cy5jCkBAIC0xMTYsNiArMTE2LDcgQEAgaW50IG1haW4odm9p
+ZCkKICAgREVGSU5FKFZDUFVfRkFSX0VMMiwJCW9mZnNldG9mKHN0cnVjdCBrdm1fdmNwdSwgYXJj
+aC5mYXVsdC5mYXJfZWwyKSk7CiAgIERFRklORShWQ1BVX0hQRkFSX0VMMiwJb2Zmc2V0b2Yoc3Ry
+dWN0IGt2bV92Y3B1LCBhcmNoLmZhdWx0LmhwZmFyX2VsMikpOwogICBERUZJTkUoVkNQVV9ERUJV
+R19GTEFHUywJb2Zmc2V0b2Yoc3RydWN0IGt2bV92Y3B1LCBhcmNoLmRlYnVnX2ZsYWdzKSk7Cisg
+IERFRklORShWQ1BVX0RFQlVHX1BUUiwJb2Zmc2V0b2Yoc3RydWN0IGt2bV92Y3B1LCBhcmNoLmRl
+YnVnX3B0cikpOwogICBERUZJTkUoREVCVUdfQkNSLCAJCW9mZnNldG9mKHN0cnVjdCBrdm1fZ3Vl
+c3RfZGVidWdfYXJjaCwgZGJnX2JjcikpOwogICBERUZJTkUoREVCVUdfQlZSLCAJCW9mZnNldG9m
+KHN0cnVjdCBrdm1fZ3Vlc3RfZGVidWdfYXJjaCwgZGJnX2J2cikpOwogICBERUZJTkUoREVCVUdf
+V0NSLCAJCW9mZnNldG9mKHN0cnVjdCBrdm1fZ3Vlc3RfZGVidWdfYXJjaCwgZGJnX3djcikpOwpk
+aWZmIC0tZ2l0IGEvYXJjaC9hcm02NC9rZXJuZWwvaHdfYnJlYWtwb2ludC5jIGIvYXJjaC9hcm02
+NC9rZXJuZWwvaHdfYnJlYWtwb2ludC5jCmluZGV4IGU3ZDkzNGQuLjNhNDFiYmYgMTAwNjQ0Ci0t
+LSBhL2FyY2gvYXJtNjQva2VybmVsL2h3X2JyZWFrcG9pbnQuYworKysgYi9hcmNoL2FybTY0L2tl
+cm5lbC9od19icmVha3BvaW50LmMKQEAgLTQ5LDE4ICs0OSw2IEBAIHN0YXRpYyBERUZJTkVfUEVS
+X0NQVShpbnQsIHN0ZXBwaW5nX2tlcm5lbF9icCk7CiBzdGF0aWMgaW50IGNvcmVfbnVtX2JycHM7
+CiBzdGF0aWMgaW50IGNvcmVfbnVtX3dycHM7CiAKLS8qIERldGVybWluZSBudW1iZXIgb2YgQlJQ
+IHJlZ2lzdGVycyBhdmFpbGFibGUuICovCi1zdGF0aWMgaW50IGdldF9udW1fYnJwcyh2b2lkKQot
+ewotCXJldHVybiAoKHJlYWRfY3B1aWQoSURfQUE2NERGUjBfRUwxKSA+PiAxMikgJiAweGYpICsg
+MTsKLX0KLQotLyogRGV0ZXJtaW5lIG51bWJlciBvZiBXUlAgcmVnaXN0ZXJzIGF2YWlsYWJsZS4g
+Ki8KLXN0YXRpYyBpbnQgZ2V0X251bV93cnBzKHZvaWQpCi17Ci0JcmV0dXJuICgocmVhZF9jcHVp
+ZChJRF9BQTY0REZSMF9FTDEpID4+IDIwKSAmIDB4ZikgKyAxOwotfQotCiBpbnQgaHdfYnJlYWtw
+b2ludF9zbG90cyhpbnQgdHlwZSkKIHsKIAkvKgpkaWZmIC0tZ2l0IGEvYXJjaC9hcm02NC9rdm0v
+ZGVidWcuYyBiL2FyY2gvYXJtNjQva3ZtL2RlYnVnLmMKaW5kZXggMTkzNDZlOC4uMWFiNjNkZCAx
+MDA2NDQKLS0tIGEvYXJjaC9hcm02NC9rdm0vZGVidWcuYworKysgYi9hcmNoL2FybTY0L2t2bS9k
+ZWJ1Zy5jCkBAIC05OSwxMiArOTksNiBAQCB2b2lkIGt2bV9hcm1fc2V0dXBfZGVidWcoc3RydWN0
+IGt2bV92Y3B1ICp2Y3B1KQogCQkJCU1EQ1JfRUwyX1REUkEgfAogCQkJCU1EQ1JfRUwyX1RET1NB
+KTsKIAotCS8qIFRyYXAgb24gYWNjZXNzIHRvIGRlYnVnIHJlZ2lzdGVycz8gKi8KLQlpZiAodHJh
+cF9kZWJ1ZykKLQkJdmNwdS0+YXJjaC5tZGNyX2VsMiB8PSBNRENSX0VMMl9UREE7Ci0JZWxzZQot
+CQl2Y3B1LT5hcmNoLm1kY3JfZWwyICY9IH5NRENSX0VMMl9UREE7Ci0KIAkvKiBJcyBHdWVzdCBk
+ZWJ1Z2dpbmcgaW4gZWZmZWN0PyAqLwogCWlmICh2Y3B1LT5ndWVzdF9kZWJ1ZykgewogCQl2Y3B1
+LT5hcmNoLm1kY3JfZWwyIHw9IE1EQ1JfRUwyX1RERTsKQEAgLTEyOCwxNCArMTIyLDU0IEBAIHZv
+aWQga3ZtX2FybV9zZXR1cF9kZWJ1ZyhzdHJ1Y3Qga3ZtX3ZjcHUgKnZjcHUpCiAJCQl2Y3B1X3N5
+c19yZWcodmNwdSwgTURTQ1JfRUwxKSAmPSB+REJHX01EU0NSX1NTOwogCQl9CiAKKwkJLyoKKwkJ
+ICogSFcgQnJlYWsvV2F0Y2ggcG9pbnRzCisJCSAqCisJCSAqIFdlIHNpbXBseSBzd2l0Y2ggdGhl
+IGRlYnVnX3B0ciB0byBwb2ludCB0byBvdXIgbmV3CisJCSAqIGV4dGVybmFsX2RlYnVnX3N0YXRl
+IHdoaWNoIGhhcyBiZWVuIHBvcHVsYXRlZCBieSB0aGUKKwkJICogZGVidWcgaW9jdGwuIFRoZSBl
+eGlzdGluZyBLVk1fQVJNNjRfREVCVUdfRElSVFkKKwkJICogbWVjaGFuaXNtIGVuc3VyZXMgdGhl
+IHJlZ2lzdGVycyBhcmUgdXBkYXRlZCBvbiB0aGUKKwkJICogd29ybGQgc3dpdGNoLgorCQkgKi8K
+KwkJaWYgKHZjcHUtPmd1ZXN0X2RlYnVnICYgS1ZNX0dVRVNUREJHX1VTRV9IV19CUCkgeworCisJ
+CQl2Y3B1X3N5c19yZWcodmNwdSwgTURTQ1JfRUwxKSB8PQorCQkJCShEQkdfTURTQ1JfS0RFIHwg
+REJHX01EU0NSX01ERSk7CisKKwkJCXZjcHUtPmFyY2guZGVidWdfcHRyID0gJnZjcHUtPmFyY2gu
+ZXh0ZXJuYWxfZGVidWdfc3RhdGU7CisJCQl2Y3B1LT5hcmNoLmRlYnVnX2ZsYWdzIHw9IEtWTV9B
+Uk02NF9ERUJVR19ESVJUWTsKKwkJCXRyYXBfZGVidWcgPSB0cnVlOworCQl9CisKIAl9IGVsc2Ug
+ewogCQkvKiBEZWJ1ZyBvcGVyYXRpb25zIGNhbiBnbyBzdHJhaWdodCB0byB0aGUgZ3Vlc3QgKi8K
+IAkJdmNwdS0+YXJjaC5tZGNyX2VsMiAmPSB+TURDUl9FTDJfVERFOwogCX0KKworCS8qCisJICog
+SWYgdGhlIGd1ZXN0IGRlYnVnIHJlZ2lzdGVyIHN0YXRlIGlzIGRpcnR5ICh0aGUgZ3Vlc3QgaXMK
+KwkgKiBhY3RpdmVseSBhY2Nlc3NpbmcgdGhlbSksIHRoZW4gd2UgY29udGV4dC1zd2l0Y2ggdGhl
+CisJICogcmVnaXN0ZXJzIGluIEVMMi4gT3RoZXJ3aXNlLCB3ZSB0cmFwLWFuZC1lbXVsYXRlIGFs
+bCBndWVzdAorCSAqIGFjY2Vzc2VzIHRvIHRoZW0uCisJICovCisJaWYgKHRyYXBfZGVidWcpCisJ
+CXZjcHUtPmFyY2gubWRjcl9lbDIgfD0gTURDUl9FTDJfVERBOworCWVsc2UKKwkJdmNwdS0+YXJj
+aC5tZGNyX2VsMiAmPSB+TURDUl9FTDJfVERBOwogfQogCiB2b2lkIGt2bV9hcm1fY2xlYXJfZGVi
+dWcoc3RydWN0IGt2bV92Y3B1ICp2Y3B1KQogewotCWlmICh2Y3B1LT5ndWVzdF9kZWJ1ZykKKwlp
+ZiAodmNwdS0+Z3Vlc3RfZGVidWcpIHsKIAkJcmVzdG9yZV9ndWVzdF9kZWJ1Z19yZWdzKHZjcHUp
+OworCisJCS8qCisJCSAqIElmIHdlIHdlcmUgdXNpbmcgSFcgZGVidWcgd2UgbmVlZCB0byByZXN0
+b3JlIHRoZQorCQkgKiBkZWJ1Z19wdHIgdG8gdGhlIGd1ZXN0IGRlYnVnIHN0YXRlLgorCQkgKi8K
+KwkJaWYgKHZjcHUtPmd1ZXN0X2RlYnVnICYgS1ZNX0dVRVNUREJHX1VTRV9IV19CUCkgeworCQkJ
+dmNwdS0+YXJjaC5kZWJ1Z19wdHIgPSAoc3RydWN0IGt2bV9ndWVzdF9kZWJ1Z19hcmNoICopCisJ
+CQkJJnZjcHVfc3lzX3JlZyh2Y3B1LCBEQkdCQ1IwX0VMMSk7CisJCX0KKwl9CiB9CmRpZmYgLS1n
+aXQgYS9hcmNoL2FybTY0L2t2bS9oYW5kbGVfZXhpdC5jIGIvYXJjaC9hcm02NC9rdm0vaGFuZGxl
+X2V4aXQuYwppbmRleCBlOWRlMTNlLi42OGEwNzU5IDEwMDY0NAotLS0gYS9hcmNoL2FybTY0L2t2
+bS9oYW5kbGVfZXhpdC5jCisrKyBiL2FyY2gvYXJtNjQva3ZtL2hhbmRsZV9leGl0LmMKQEAgLTEw
+Myw3ICsxMDMsMTEgQEAgc3RhdGljIGludCBrdm1faGFuZGxlX2d1ZXN0X2RlYnVnKHN0cnVjdCBr
+dm1fdmNwdSAqdmNwdSwgc3RydWN0IGt2bV9ydW4gKnJ1bikKIAlydW4tPmRlYnVnLmFyY2guaHNy
+ID0gaHNyOwogCiAJc3dpdGNoIChoc3IgPj4gRVNSX0VMeF9FQ19TSElGVCkgeworCWNhc2UgRVNS
+X0VMeF9FQ19XQVRDSFBUX0xPVzoKKwkJcnVuLT5kZWJ1Zy5hcmNoLmZhciA9IHZjcHUtPmFyY2gu
+ZmF1bHQuZmFyX2VsMjsKKwkJLyogZmFsbCB0aHJvdWdoICovCiAJY2FzZSBFU1JfRUx4X0VDX1NP
+RlRTVFBfTE9XOgorCWNhc2UgRVNSX0VMeF9FQ19CUkVBS1BUX0xPVzoKIAljYXNlIEVTUl9FTHhf
+RUNfQktQVDMyOgogCWNhc2UgRVNSX0VMeF9FQ19CUks2NDoKIAkJYnJlYWs7CkBAIC0xMzIsNiAr
+MTM2LDggQEAgc3RhdGljIGV4aXRfaGFuZGxlX2ZuIGFybV9leGl0X2hhbmRsZXJzW10gPSB7CiAJ
+W0VTUl9FTHhfRUNfSUFCVF9MT1ddCT0ga3ZtX2hhbmRsZV9ndWVzdF9hYm9ydCwKIAlbRVNSX0VM
+eF9FQ19EQUJUX0xPV10JPSBrdm1faGFuZGxlX2d1ZXN0X2Fib3J0LAogCVtFU1JfRUx4X0VDX1NP
+RlRTVFBfTE9XXT0ga3ZtX2hhbmRsZV9ndWVzdF9kZWJ1ZywKKwlbRVNSX0VMeF9FQ19XQVRDSFBU
+X0xPV109IGt2bV9oYW5kbGVfZ3Vlc3RfZGVidWcsCisJW0VTUl9FTHhfRUNfQlJFQUtQVF9MT1dd
+PSBrdm1faGFuZGxlX2d1ZXN0X2RlYnVnLAogCVtFU1JfRUx4X0VDX0JLUFQzMl0JPSBrdm1faGFu
+ZGxlX2d1ZXN0X2RlYnVnLAogCVtFU1JfRUx4X0VDX0JSSzY0XQk9IGt2bV9oYW5kbGVfZ3Vlc3Rf
+ZGVidWcsCiB9OwpkaWZmIC0tZ2l0IGEvYXJjaC9hcm02NC9rdm0vaHlwLlMgYi9hcmNoL2FybTY0
+L2t2bS9oeXAuUwppbmRleCBkZDUxZmIxLi45MjFkMjQ4IDEwMDY0NAotLS0gYS9hcmNoL2FybTY0
+L2t2bS9oeXAuUworKysgYi9hcmNoL2FybTY0L2t2bS9oeXAuUwpAQCAtNzA2LDcgKzcwNiw4IEBA
+IEVOVFJZKF9fa3ZtX3ZjcHVfcnVuKQogCWJsIF9fcmVzdG9yZV9mcHNpbWQKIAogCXNraXBfZGVi
+dWdfc3RhdGUgeDMsIDFmCi0JYWRkCXgzLCB4MiwgI0NQVV9TWVNSRUdfT0ZGU0VUKERCR0JDUjBf
+RUwxKQorCWxkcgl4MywgW3gwLCAjVkNQVV9ERUJVR19QVFJdCisJa2Vybl9oeXBfdmEgeDMKIAli
+bAlfX3Jlc3RvcmVfZGVidWcKIDE6CiAJcmVzdG9yZV9ndWVzdF8zMmJpdF9zdGF0ZQpAQCAtNzI3
+LDcgKzcyOCw4IEBAIF9fa3ZtX3ZjcHVfcmV0dXJuOgogCWJsIF9fc2F2ZV9zeXNyZWdzCiAKIAlz
+a2lwX2RlYnVnX3N0YXRlIHgzLCAxZgotCWFkZAl4MywgeDIsICNDUFVfU1lTUkVHX09GRlNFVChE
+QkdCQ1IwX0VMMSkKKwlsZHIJeDMsIFt4MCwgI1ZDUFVfREVCVUdfUFRSXQorCWtlcm5faHlwX3Zh
+IHgzCiAJYmwJX19zYXZlX2RlYnVnCiAxOgogCXNhdmVfZ3Vlc3RfMzJiaXRfc3RhdGUKZGlmZiAt
+LWdpdCBhL2FyY2gvYXJtNjQva3ZtL3Jlc2V0LmMgYi9hcmNoL2FybTY0L2t2bS9yZXNldC5jCmlu
+ZGV4IDBiNDMyNjUuLjIxZDVhNjIgMTAwNjQ0Ci0tLSBhL2FyY2gvYXJtNjQva3ZtL3Jlc2V0LmMK
+KysrIGIvYXJjaC9hcm02NC9rdm0vcmVzZXQuYwpAQCAtNTYsNiArNTYsMTIgQEAgc3RhdGljIGJv
+b2wgY3B1X2hhc18zMmJpdF9lbDEodm9pZCkKIAlyZXR1cm4gISEocGZyMCAmIDB4MjApOwogfQog
+CisvKioKKyAqIGt2bV9hcmNoX2Rldl9pb2N0bF9jaGVja19leHRlbnNpb24KKyAqCisgKiBXZSBj
+dXJyZW50bHkgYXNzdW1lIHRoYXQgdGhlIG51bWJlciBvZiBIVyByZWdpc3RlcnMgaXMgdW5pZm9y
+bQorICogYWNyb3NzIGFsbCBDUFVzIChzZWUgY3B1aW5mb19zYW5pdHlfY2hlY2spLgorICovCiBp
+bnQga3ZtX2FyY2hfZGV2X2lvY3RsX2NoZWNrX2V4dGVuc2lvbihsb25nIGV4dCkKIHsKIAlpbnQg
+cjsKQEAgLTY0LDYgKzcwLDEyIEBAIGludCBrdm1fYXJjaF9kZXZfaW9jdGxfY2hlY2tfZXh0ZW5z
+aW9uKGxvbmcgZXh0KQogCWNhc2UgS1ZNX0NBUF9BUk1fRUwxXzMyQklUOgogCQlyID0gY3B1X2hh
+c18zMmJpdF9lbDEoKTsKIAkJYnJlYWs7CisJY2FzZSBLVk1fQ0FQX0dVRVNUX0RFQlVHX0hXX0JQ
+UzoKKwkJciA9IGdldF9udW1fYnJwcygpOworCQlicmVhazsKKwljYXNlIEtWTV9DQVBfR1VFU1Rf
+REVCVUdfSFdfV1BTOgorCQlyICA9IGdldF9udW1fd3JwcygpOworCQlicmVhazsKIAlkZWZhdWx0
+OgogCQlyID0gMDsKIAl9CmRpZmYgLS1naXQgYS9pbmNsdWRlL3VhcGkvbGludXgva3ZtLmggYi9p
+bmNsdWRlL3VhcGkvbGludXgva3ZtLmgKaW5kZXggM2I2MjUyZS4uOTIzYzJhYSAxMDA2NDQKLS0t
+IGEvaW5jbHVkZS91YXBpL2xpbnV4L2t2bS5oCisrKyBiL2luY2x1ZGUvdWFwaS9saW51eC9rdm0u
+aApAQCAtODI1LDYgKzgyNSw4IEBAIHN0cnVjdCBrdm1fcHBjX3NtbXVfaW5mbyB7CiAjZGVmaW5l
+IEtWTV9DQVBfUzM5MF9JTkpFQ1RfSVJRIDExMwogI2RlZmluZSBLVk1fQ0FQX1MzOTBfSVJRX1NU
+QVRFIDExNAogI2RlZmluZSBLVk1fQ0FQX1BQQ19IV1JORyAxMTUKKyNkZWZpbmUgS1ZNX0NBUF9H
+VUVTVF9ERUJVR19IV19CUFMgMTE2CisjZGVmaW5lIEtWTV9DQVBfR1VFU1RfREVCVUdfSFdfV1BT
+IDExNwogCiAjaWZkZWYgS1ZNX0NBUF9JUlFfUk9VVElORwogCi0tIAoyLjMuNQoKX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18Ka3ZtYXJtIG1haWxpbmcgbGlz
+dAprdm1hcm1AbGlzdHMuY3MuY29sdW1iaWEuZWR1Cmh0dHBzOi8vbGlzdHMuY3MuY29sdW1iaWEu
+ZWR1L21haWxtYW4vbGlzdGluZm8va3ZtYXJtCg==
