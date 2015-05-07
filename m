@@ -1,152 +1,63 @@
-From: Robert Bragg <robert-St23OQVBDYPNLxjTenLetw@public.gmane.org>
-Subject: [RFC PATCH 00/11] drm/i915: Expose OA metrics via perf PMU
-Date: Thu,  7 May 2015 15:15:43 +0100
-Message-ID: <1431008154-6833-1-git-send-email-robert@sixbynine.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
-Cc: Daniel Vetter <daniel.vetter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Robert Bragg <robert@sixbynine.org>
+Subject: [RFC PATCH 03/11] perf: Add PERF_EVENT_IOC_FLUSH ioctl
+Date: Thu,  7 May 2015 15:15:46 +0100
+Message-ID: <1431008154-6833-4-git-send-email-robert@sixbynine.org>
+References: <1431008154-6833-1-git-send-email-robert@sixbynine.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+In-Reply-To: <1431008154-6833-1-git-send-email-robert@sixbynine.org>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: intel-gfx@lists.freedesktop.org
+Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>, David Airlie <airlied@linux.ie>, linux-api@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Daniel Vetter <daniel.vetter@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This is an updated series adding support for an "i915_oa" perf PMU for
-configuring the Intel Gen graphics Observability unit (Haswell only to
-start with) and forwarding periodic counter reports as perf samples.
-
-Compared to the series I sent out last year:
-
-The driver is now hooked into context switching so we no longer require
-a context to be pinned for the full lifetime of a perf event fd (when
-profiling a specific context).
-
-Not visible in the series, but I can say we've also gained some
-experience from looking at enabling Broadwell within the same
-architecture. There are some fiddly challenges ahead with enabling
-Broadwell but I do feel comfortable that it can be supported in the same
-kind of way via perf. I haven't updated my Broadwell branches for a
-little while now but if anyone is interested I can share this code as a
-point of reference if that's helpful.
-
-As I've had interest from folks looking at developing tools based on
-this interface to not require root, but we are following the precedent
-of not exposing system wide metrics to unprivileged processes, I've
-added a sysctl directly comparable to kernel.perf_event_paranoid
-(dev.i915.oa_event_paranoid) that lets users optionally allow
-unprivileged access to system wide gpu metrics.
-
-This series is able to expose more than just the A (aggregating)
-counters and demonstrates selecting a more counters that are useful when
-benchmarking 3D render workloads. The expectation is to add further
-configurations later geared towards media or gpgpu workloads for
-example.
-
-I've changed the uapi for configuring the i915_oa specific attributes
-when calling perf_event_open(2) whereby instead of cramming lots of
-bitfields into the perf_event_attr config members, I'm now
-daisy-chaining a drm_i915_oa_event_attr_t structure off of a single
-config member that's extensible and validated in the same way as the
-perf_event_attr struct. I've found this much nicer to work with while
-being neatly extensible too.
-
-I've made a few more (small) changes to core perf infrastructure:
-
-I've added a PERF_EVENT_IOC_FLUSH ioctl that can be used to explicitly
-ask the driver to flush buffered samples. In our case this makes sure to
-forward all reports currently in the gpu mapped, circular, oabuffer as
-perf samples. This issue was discussed a bit on LKML last year and
-previously I was overloading our PMU's read() hook but decided that the
-cleaner approach would be to add a dedicated ioctl instead.
-
-To allow device-driver PMUs to define their own types for records
-written to the perf circular buffer I've introduced a PERF_RECORD_DEVICE
-type whereby drivers can then document their own header defining a driver
-specific scheme for sub-types. This is then used in the i915_oa driver
-for reporting hw status conditions such as OABUFFER overruns or report
-lost conditions from the hw.
-
-
-For examples of using the i915_oa driver I have a branch of Mesa that
-enables support for the INTEL_performance_query extension based on this:
-
-https://github.com/rib/drm   wip/rib/oa-hsw-4.0.0
-https://github.com/rib/mesa  wip/rib/oa-hsw-4.0.0
-
-For reference I sent out a corresponding series for the Mesa work for
-review yesterday:
-
-http://lists.freedesktop.org/archives/mesa-dev/2015-May/083519.html
-
-I also have a minimal gputop tool that can both test Mesa's
-INTEL_performance_query implementation to view per-context metrics or
-it can view system wide gpu metrics collected directly from perf
-(gputop/gputop-perf.c would be the main code of interest):
-
-https://github.com/rib/gputop
-
-If it's convenient for testing, my kernel patches can also be fetched
-from here:
-
-https://github.com/rib/linux  wip/rib/oa-hsw-4.0.0
-
-One specific patch comment:
-
-[RFC PATCH 11/11] WIP: drm/i915: constrain unit gating while using OA
-
-I didn't want to hold up getting feedback due to this issue that I'm
-currently investigating (since the effect on the driver should be
-trivial) but I've included a work-in-progress patch since it does
-address a known problem with collecting reliable periodic metrics.
-
-Besides the last patch, I feel like this series is in pretty good shape
-now and by testing it with Mesa and several profiling tools as well as
-starting the work to enable Broadwell I feel quite happy with our
-approach of leveraging perf infrastructure.
-
-I'd really appreciate any feedback on the core perf changes I've made,
-as well as general feedback on the PMU driver itself.
-
-Since it's been quite a long time since I last sent out patches for this
-work; in case it's helpful to refer back to some of the discussion last
-year:
-
-https://lkml.org/lkml/2014/10/22/462
-
-For anyone interested to know more details about this hardware, this PRM
-is a good starting point:
-
-https://01.org/sites/default/files/documentation/
-observability_performance_counters_haswell.pdf
-
-Kind regards,
-- Robert
-
-Robert Bragg (11):
-  perf: export perf_event_overflow
-  perf: Add PERF_PMU_CAP_IS_DEVICE flag
-  perf: Add PERF_EVENT_IOC_FLUSH ioctl
-  perf: Add a PERF_RECORD_DEVICE event type
-  perf: allow drivers more control over event logging
-  drm/i915: rename OACONTROL GEN7_OACONTROL
-  drm/i915: Expose PMU for Observation Architecture
-  drm/i915: add OA config for 3D render counters
-  drm/i915: Add dev.i915.oa_event_paranoid sysctl option
-  drm/i915: report OA buf overrun + report lost status
-  WIP: drm/i915: constrain unit gating while using OA
-
- drivers/gpu/drm/i915/Makefile           |   1 +
- drivers/gpu/drm/i915/i915_cmd_parser.c  |   4 +-
- drivers/gpu/drm/i915/i915_dma.c         |   6 +
- drivers/gpu/drm/i915/i915_drv.h         |  62 +++
- drivers/gpu/drm/i915/i915_gem_context.c |  45 +-
- drivers/gpu/drm/i915/i915_oa_perf.c     | 951 ++++++++++++++++++++++++++++++++
- drivers/gpu/drm/i915/i915_reg.h         | 311 ++++++++++-
- include/linux/perf_event.h              |  15 +
- include/uapi/drm/i915_drm.h             |  58 ++
- include/uapi/linux/perf_event.h         |  14 +
- kernel/events/core.c                    |  47 +-
- kernel/events/internal.h                |   9 -
- kernel/events/ring_buffer.c             |   3 +
- 13 files changed, 1498 insertions(+), 28 deletions(-)
- create mode 100644 drivers/gpu/drm/i915/i915_oa_perf.c
-
--- 
-2.3.2
+VG8gYWxsb3cgZm9yIHBtdXMgdGhhdCBtYXkgaGF2ZSBpbnRlcm5hbCBidWZmZXJpbmcgKGUuZy4g
+dGhlIGhhcmR3YXJlCml0c2VsZiB3cml0ZXMgb3V0IGRhdGEgdG8gaXRzIG93biBjaXJjdWxhciBi
+dWZmZXIgd2hpY2ggaXMgb25seQpwZXJpb2RpY2FsbHkgZm9yd2FyZGVkIHRvIHVzZXJzcGFjZSB2
+aWEgcGVyZikgdGhpcyBpb2N0bCBlbmFibGVzCnVzZXJzcGFjZSB0byBleHBsaWNpdGx5IGVuc3Vy
+ZSBpdCBoYXMgcmVjZWl2ZWQgYWxsIHNhbXBsZXMgYmVmb3JlIGEKcG9pbnQgaW4gdGltZS4KClNp
+Z25lZC1vZmYtYnk6IFJvYmVydCBCcmFnZyA8cm9iZXJ0QHNpeGJ5bmluZS5vcmc+Ci0tLQogaW5j
+bHVkZS9saW51eC9wZXJmX2V2ZW50LmggICAgICB8IDcgKysrKysrKwogaW5jbHVkZS91YXBpL2xp
+bnV4L3BlcmZfZXZlbnQuaCB8IDEgKwoga2VybmVsL2V2ZW50cy9jb3JlLmMgICAgICAgICAgICB8
+IDUgKysrKysKIDMgZmlsZXMgY2hhbmdlZCwgMTMgaW5zZXJ0aW9ucygrKQoKZGlmZiAtLWdpdCBh
+L2luY2x1ZGUvbGludXgvcGVyZl9ldmVudC5oIGIvaW5jbHVkZS9saW51eC9wZXJmX2V2ZW50LmgK
+aW5kZXggMWFmMzViNC4uNjlhMGNiOSAxMDA2NDQKLS0tIGEvaW5jbHVkZS9saW51eC9wZXJmX2V2
+ZW50LmgKKysrIGIvaW5jbHVkZS9saW51eC9wZXJmX2V2ZW50LmgKQEAgLTI2Niw2ICsyNjYsMTMg
+QEAgc3RydWN0IHBtdSB7CiAJICogZmx1c2ggYnJhbmNoIHN0YWNrIG9uIGNvbnRleHQtc3dpdGNo
+ZXMgKG5lZWRlZCBpbiBjcHUtd2lkZSBtb2RlKQogCSAqLwogCXZvaWQgKCpmbHVzaF9icmFuY2hf
+c3RhY2spCSh2b2lkKTsKKworCS8qCisJICogRmx1c2ggYnVmZmVyZWQgc2FtcGxlcyAoRS5nLiBm
+b3IgcG11IGhhcmR3YXJlIHRoYXQgd3JpdGVzIHNhbXBsZXMgdG8KKwkgKiBzb21lIGludGVybWVk
+aWF0ZSBidWZmZXIpIHVzZXJzcGFjZSBtYXkgbmVlZCB0byBleHBsaWNpdGx5IGVuc3VyZQorCSAq
+IHN1Y2ggc2FtcGxlcyBoYXZlIGJlZW4gZm9yd2FyZGVkIHRvIHBlcmYuCisJICovCisJdm9pZCAo
+KmZsdXNoKQkJCShzdHJ1Y3QgcGVyZl9ldmVudCAqZXZlbnQpOyAvKm9wdGlvbmFsICovCiB9Owog
+CiAvKioKZGlmZiAtLWdpdCBhL2luY2x1ZGUvdWFwaS9saW51eC9wZXJmX2V2ZW50LmggYi9pbmNs
+dWRlL3VhcGkvbGludXgvcGVyZl9ldmVudC5oCmluZGV4IDliNzlhYmIuLmEyNTk2N2IgMTAwNjQ0
+Ci0tLSBhL2luY2x1ZGUvdWFwaS9saW51eC9wZXJmX2V2ZW50LmgKKysrIGIvaW5jbHVkZS91YXBp
+L2xpbnV4L3BlcmZfZXZlbnQuaApAQCAtMzYwLDYgKzM2MCw3IEBAIHN0cnVjdCBwZXJmX2V2ZW50
+X2F0dHIgewogI2RlZmluZSBQRVJGX0VWRU5UX0lPQ19TRVRfT1VUUFVUCV9JTyAoJyQnLCA1KQog
+I2RlZmluZSBQRVJGX0VWRU5UX0lPQ19TRVRfRklMVEVSCV9JT1coJyQnLCA2LCBjaGFyICopCiAj
+ZGVmaW5lIFBFUkZfRVZFTlRfSU9DX0lECQlfSU9SKCckJywgNywgX191NjQgKikKKyNkZWZpbmUg
+UEVSRl9FVkVOVF9JT0NfRkxVU0gJCV9JTyAoJyQnLCA4KQogCiBlbnVtIHBlcmZfZXZlbnRfaW9j
+X2ZsYWdzIHsKIAlQRVJGX0lPQ19GTEFHX0dST1VQCQk9IDFVIDw8IDAsCmRpZmYgLS1naXQgYS9r
+ZXJuZWwvZXZlbnRzL2NvcmUuYyBiL2tlcm5lbC9ldmVudHMvY29yZS5jCmluZGV4IDcyMThiMDEu
+LjM0MGRlYWEgMTAwNjQ0Ci0tLSBhL2tlcm5lbC9ldmVudHMvY29yZS5jCisrKyBiL2tlcm5lbC9l
+dmVudHMvY29yZS5jCkBAIC0zOTgxLDYgKzM5ODEsMTEgQEAgc3RhdGljIGxvbmcgX3BlcmZfaW9j
+dGwoc3RydWN0IHBlcmZfZXZlbnQgKmV2ZW50LCB1bnNpZ25lZCBpbnQgY21kLCB1bnNpZ25lZCBs
+b24KIAljYXNlIFBFUkZfRVZFTlRfSU9DX1NFVF9GSUxURVI6CiAJCXJldHVybiBwZXJmX2V2ZW50
+X3NldF9maWx0ZXIoZXZlbnQsICh2b2lkIF9fdXNlciAqKWFyZyk7CiAKKwljYXNlIFBFUkZfRVZF
+TlRfSU9DX0ZMVVNIOgorCQlpZiAoZXZlbnQtPnBtdS0+Zmx1c2gpCisJCQlldmVudC0+cG11LT5m
+bHVzaChldmVudCk7CisJCXJldHVybiAwOworCiAJZGVmYXVsdDoKIAkJcmV0dXJuIC1FTk9UVFk7
+CiAJfQotLSAKMi4zLjIKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fCkludGVsLWdmeCBtYWlsaW5nIGxpc3QKSW50ZWwtZ2Z4QGxpc3RzLmZyZWVkZXNrdG9w
+Lm9yZwpodHRwOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vaW50ZWwt
+Z2Z4Cg==
