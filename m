@@ -1,50 +1,60 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH v18 for v4.1-rc2 1/3] sys_membarrier(): system-wide memory
- barrier (generic, x86)
-Date: Wed, 6 May 2015 19:50:26 -0700
-Message-ID: <CALCETrX4RSAgJ+A-GtQy_zoECSRDqQ456FV8-JmOqRD=eftiNA@mail.gmail.com>
-References: <1430940068-4326-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1430940068-4326-2-git-send-email-mathieu.desnoyers@efficios.com>
- <20150506202120.GA23011@cloud> <371299002.44925.1430944039395.JavaMail.zimbra@efficios.com>
- <2014027751.44926.1430944422045.JavaMail.zimbra@efficios.com> <CA+55aFwQbE0pvb2XRRT33rDEwwwQHKN27w5A8f4GWWJ_j6w1EA@mail.gmail.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH RFC 0/3] simple copy offloading system call
+Date: Wed, 6 May 2015 19:52:34 -0700
+Message-ID: <CALCETrUj2EqJ7uDPbAuOGBnLycWBqqnt2Z2cAf8Pp+sgCqBhvw@mail.gmail.com>
+References: <1428703236-24735-1-git-send-email-zab@redhat.com> <CAHO5Pa0UEhOC3vqP9Nq4+gEH_OJPG6dgoLM9XbRLOfTRsRVSCw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CA+55aFwQbE0pvb2XRRT33rDEwwwQHKN27w5A8f4GWWJ_j6w1EA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Nicholas Miell <nmiell-Wuw85uim5zDR7s880joybQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alan Cox <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <CAHO5Pa0UEhOC3vqP9Nq4+gEH_OJPG6dgoLM9XbRLOfTRsRVSCw@mail.gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Michael Kerrisk <mtk.manpages@gmail.com>
+Cc: Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux SCSI List <linux-scsi@vger.kernel.org>, linux-nfs@vger.kernel.org, Linux btrfs Developers List <linux-btrfs@vger.kernel.org>, Zach Brown <zab@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 6, 2015 at 1:39 PM, Linus Torvalds
-<torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
-> On Wed, May 6, 2015 at 1:33 PM, Mathieu Desnoyers
-> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
->>
->> Will try moving those parts under a "---" in the commit
->> message, and hope it does what I intend.
+On May 6, 2015 11:45 AM, "Michael Kerrisk" <mtk.manpages@gmail.com> wrote:
 >
-> Yeah, that should do it for anybody who then uses "git am" to apply
-> the patches you send out. It's kind of hacky, and I've always worried
-> a bit that somebody uses "^---$' for real in a commit message and
-> things get lost, but it is *such* a useful way to add notes to emails
-> that aren't fit for actually committing, that the risk has never
-> outweighed the benefits.
+> [CC += linux-api@vger.kernel.org]
+>
+> Zach,
+>
+> Since this is a kernel-user-space API change, please CC linux-api@.
+> The kernel source file Documentation/SubmitChecklist notes that all
+> Linux kernel patches that change userspace interfaces should be CCed
+> to linux-api@vger.kernel.org, so that the various parties who are
+> interested in API changes are informed. For further information, see
+> https://www.kernel.org/doc/man-pages/linux-api-ml.html
+>
+> Thanks,
+>
+> Michael
+>
+>
+>
+>
+> On Sat, Apr 11, 2015 at 12:00 AM, Zach Brown <zab@redhat.com> wrote:
+> > Hello everyone!
+> >
+> > Here's my current attempt at the most basic system call interface for
+> > offloading copying between files.  The system call and vfs function
+> > are relatively light wrappers around the file_operation method that
+> > does the heavy lifting.
+> >
+> > There was interest at LSF in getting the basic infrastructure merged
+> > before worrying about adding behavioural flags and more complicated
+> > implementations.  This series only offers a refactoring of the btrfs
+> > clone ioctl as an example of an implementation of the file
+> > copy_file_range method.
+> >
+> > I've added support for copy_file_range() to xfs_io in xfsprogs and
+> > have the start of an xfstest that tests the system call.  I'll send
+> > those to fstests@.
+> >
+> > So how does this look?
+> >
+> > Do we want to merge this and let the NFS and block XCOPY patches add
+> > their changes when they're ready?
 
-There's also 'git format-patch --notes', which is less hacky but more
-complicated.
+This sounds enough like splice that I'm wondering why the API isn't splice.
 
 --Andy
-
->
->                   Linus
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-
-
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
