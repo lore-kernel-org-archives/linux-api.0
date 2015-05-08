@@ -1,119 +1,106 @@
-From: Paolo Bonzini <pbonzini@redhat.com>
-Subject: Re: [PATCH v3 02/12] KVM: define common __KVM_GUESTDBG_USE_SW/HW_BP
- values
-Date: Fri, 08 May 2015 13:09:15 +0200
-Message-ID: <554C995B.6050907@redhat.com>
-References: <1430929407-3487-1-git-send-email-alex.bennee@linaro.org>
- <1430929407-3487-3-git-send-email-alex.bennee@linaro.org>
- <20150508092346.GB24744@cbox>
+From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Subject: Re: [PATCH 02/18] media controller: deprecate entity subtype
+Date: Fri, 08 May 2015 13:39:12 +0200
+Message-ID: <554CA060.7090006@xs4all.nl>
+References: <cover.1431046915.git.mchehab@osg.samsung.com> <80e0882a4194460ca232f19ebbc85fa3338eda3f.1431046915.git.mchehab@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
-In-Reply-To: <20150508092346.GB24744@cbox>
-List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
-List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
-List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
-List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
-List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
-Errors-To: kvmarm-bounces@lists.cs.columbia.edu
-Sender: kvmarm-bounces@lists.cs.columbia.edu
-To: Christoffer Dall <christoffer.dall@linaro.org>, =?windows-1252?Q?Alex?= =?windows-1252?Q?_Benn=E9e?= <alex.bennee@linaro.org>
-Cc: kvm@vger.kernel.org, Alexey Kardashevskiy <aik@ozlabs.ru>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, "H. Peter Anvin" <hpa@zytor.com>, kvmarm@lists.cs.columbia.edu, Nadav Amit <namit@cs.technion.ac.il>, Michael Ellerman <mpe@ellerman.id.au>, "maintainer:X86 ARCHITECTURE..." <x86@kernel.org>, Gleb Natapov <gleb@kernel.org>, Ingo Molnar <mingo@redhat.com>, zhichao.huang@linaro.org, jan.kiszka@siemens.com, bp@suse.de, marc.zyngier@arm.com, r65777@freescale.com, Thomas Gleixner <tglx@linutronix.de>, linux-arm-kernel@lists.infradead.org, list@lists.cs.columbia.edu, ABI/API <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, dahi@linux.vnet.ibm.com, open@lists.cs.columbia.edu, "open list:LINUX FOR POWERPC..." <linuxppc-dev@lists.ozlabs.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <80e0882a4194460ca232f19ebbc85fa3338eda3f.1431046915.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+Hi Mauro,
 
+Just a typo, after that you can add my:
 
-On 08/05/2015 11:23, Christoffer Dall wrote:
-> On Wed, May 06, 2015 at 05:23:17PM +0100, Alex Benn=E9e wrote:
->> Currently x86, powerpc and soon arm64 use the same two architecture
->> specific bits for guest debug support for software and hardware
->> breakpoints. This makes the shared values explicit while leaving the
->> gate open for another architecture to use some other value if they
->> really really want to.
->>
->> Signed-off-by: Alex Benn=E9e <alex.bennee@linaro.org>
->> Reviewed-by: Andrew Jones <drjones@redhat.com>
->>
->> diff --git a/arch/powerpc/include/uapi/asm/kvm.h b/arch/powerpc/include/=
-uapi/asm/kvm.h
->> index ab4d473..1731569 100644
->> --- a/arch/powerpc/include/uapi/asm/kvm.h
->> +++ b/arch/powerpc/include/uapi/asm/kvm.h
->> @@ -310,8 +310,8 @@ struct kvm_guest_debug_arch {
->>   * and upper 16 bits are architecture specific. Architecture specific d=
-efines
->>   * that ioctl is for setting hardware breakpoint or software breakpoint.
->>   */
->> -#define KVM_GUESTDBG_USE_SW_BP		0x00010000
->> -#define KVM_GUESTDBG_USE_HW_BP		0x00020000
->> +#define KVM_GUESTDBG_USE_SW_BP		__KVM_GUESTDBG_USE_SW_BP
->> +#define KVM_GUESTDBG_USE_HW_BP		__KVM_GUESTDBG_USE_HW_BP
->>  =
+Acked-by: Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
 
->>  /* definition of registers in kvm_run */
->>  struct kvm_sync_regs {
->> diff --git a/arch/x86/include/uapi/asm/kvm.h b/arch/x86/include/uapi/asm=
-/kvm.h
->> index d7dcef5..1438202 100644
->> --- a/arch/x86/include/uapi/asm/kvm.h
->> +++ b/arch/x86/include/uapi/asm/kvm.h
->> @@ -250,8 +250,8 @@ struct kvm_debug_exit_arch {
->>  	__u64 dr7;
->>  };
->>  =
+Thanks,
 
->> -#define KVM_GUESTDBG_USE_SW_BP		0x00010000
->> -#define KVM_GUESTDBG_USE_HW_BP		0x00020000
->> +#define KVM_GUESTDBG_USE_SW_BP		__KVM_GUESTDBG_USE_SW_BP
->> +#define KVM_GUESTDBG_USE_HW_BP		__KVM_GUESTDBG_USE_HW_BP
->>  #define KVM_GUESTDBG_INJECT_DB		0x00040000
->>  #define KVM_GUESTDBG_INJECT_BP		0x00080000
->>  =
+	Hans
 
->> diff --git a/include/uapi/linux/kvm.h b/include/uapi/linux/kvm.h
->> index 70ac641..3b6252e 100644
->> --- a/include/uapi/linux/kvm.h
->> +++ b/include/uapi/linux/kvm.h
->> @@ -570,8 +570,16 @@ struct kvm_s390_irq_state {
->>  =
+On 05/08/2015 03:12 AM, Mauro Carvalho Chehab wrote:
+> The media controller entity subtype doesn't make much sense,
+> especially since V4L2 subdevices may also have associated devnodes.
+> 
+> So, better to get rid of it while it is not too late.
+> 
+> We need, of course, to keep the old symbols to avoid userspace
+> breakage, but we should avoid using them internally at the
+> Kernel.
+> 
+> Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> 
+> diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
+> index 4e816be3de39..775c11c6b173 100644
+> --- a/include/uapi/linux/media.h
+> +++ b/include/uapi/linux/media.h
+> @@ -42,31 +42,45 @@ struct media_device_info {
+>  
+>  #define MEDIA_ENT_ID_FLAG_NEXT		(1 << 31)
+>  
+> +/* Used values for media_entity_desc::type */
+> +
+> +#define MEDIA_ENT_T_DEVNODE_V4L		(((1 << 16)) + 1)
+> +#define MEDIA_ENT_T_DEVNODE_DVB_FE	(MEDIA_ENT_T_DEVNODE_V4L + 3)
+> +#define MEDIA_ENT_T_DEVNODE_DVB_DEMUX	(MEDIA_ENT_T_DEVNODE_V4L + 4)
+> +#define MEDIA_ENT_T_DEVNODE_DVB_DVR	(MEDIA_ENT_T_DEVNODE_V4L + 5)
+> +#define MEDIA_ENT_T_DEVNODE_DVB_CA	(MEDIA_ENT_T_DEVNODE_V4L + 6)
+> +#define MEDIA_ENT_T_DEVNODE_DVB_NET	(MEDIA_ENT_T_DEVNODE_V4L + 7)
+> +
+> +#define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	((2 << 16) + 1)
+> +#define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV_SENSOR + 1)
+> +#define MEDIA_ENT_T_V4L2_SUBDEV_LENS	(MEDIA_ENT_T_V4L2_SUBDEV_SENSOR + 2)
+> +/* A converter of analogue video to its digital representation. */
+> +#define MEDIA_ENT_T_V4L2_SUBDEV_DECODER	(MEDIA_ENT_T_V4L2_SUBDEV_SENSOR + 3)
+> +
+> +#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	(MEDIA_ENT_T_V4L2_SUBDEV_SENSOR + 4)
+> +
+> +#if 1
+> +/*
+> + * Legacy symbols.
+> + * Kept just to avoid userspace compilation breakages.
+> + * One day, the symbols bellow will be removed
 
->>  /* for KVM_SET_GUEST_DEBUG */
->>  =
+bellow -> below
 
->> -#define KVM_GUESTDBG_ENABLE		0x00000001
->> -#define KVM_GUESTDBG_SINGLESTEP		0x00000002
->> +#define KVM_GUESTDBG_ENABLE		(1 << 0)
->> +#define KVM_GUESTDBG_SINGLESTEP	(1 << 1)
->> +
->> +/*
->> + * Architecture specific stuff uses the top 16 bits of the field,
-> =
-
-> s/stuff/<something more specific>/
-> =
-
->> + * however there is some shared commonality for the common cases
->> + */
->> +#define __KVM_GUESTDBG_USE_SW_BP	(1 << 16)
->> +#define __KVM_GUESTDBG_USE_HW_BP	(1 << 17)
->> +
->>  =
-
->>  struct kvm_guest_debug {
->>  	__u32 control;
-> =
-
-> We sort of left this discussion hanging with me expressing slight
-> concern about the usefulness about these defines.
-> =
-
-> Paolo, what are your thoughts?
-
-I would just lift these two KVM_GUESTDBG_* defines to
-include/uapi/linux/kvm.h and say that architecture specific stuff uses
-the top 14 bits of the field. :)
-
-Paolo
+> + */
+> +
+>  #define MEDIA_ENT_TYPE_SHIFT		16
+>  #define MEDIA_ENT_TYPE_MASK		0x00ff0000
+>  #define MEDIA_ENT_SUBTYPE_MASK		0x0000ffff
+>  
+>  #define MEDIA_ENT_T_DEVNODE		(1 << MEDIA_ENT_TYPE_SHIFT)
+> -#define MEDIA_ENT_T_DEVNODE_V4L		(MEDIA_ENT_T_DEVNODE + 1)
+> +#define MEDIA_ENT_T_V4L2_SUBDEV		(2 << MEDIA_ENT_TYPE_SHIFT)
+> +
+>  #define MEDIA_ENT_T_DEVNODE_FB		(MEDIA_ENT_T_DEVNODE + 2)
+>  #define MEDIA_ENT_T_DEVNODE_ALSA	(MEDIA_ENT_T_DEVNODE + 3)
+> -#define MEDIA_ENT_T_DEVNODE_DVB_FE	(MEDIA_ENT_T_DEVNODE + 4)
+> -#define MEDIA_ENT_T_DEVNODE_DVB_DEMUX	(MEDIA_ENT_T_DEVNODE + 5)
+> -#define MEDIA_ENT_T_DEVNODE_DVB_DVR	(MEDIA_ENT_T_DEVNODE + 6)
+> -#define MEDIA_ENT_T_DEVNODE_DVB_CA	(MEDIA_ENT_T_DEVNODE + 7)
+> -#define MEDIA_ENT_T_DEVNODE_DVB_NET	(MEDIA_ENT_T_DEVNODE + 8)
+>  
+> -/* Legacy symbol. Use it to avoid userspace compilation breakages */
+> +
+>  #define MEDIA_ENT_T_DEVNODE_DVB		MEDIA_ENT_T_DEVNODE_DVB_FE
+> +#endif
+>  
+> -#define MEDIA_ENT_T_V4L2_SUBDEV		(2 << MEDIA_ENT_TYPE_SHIFT)
+> -#define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	(MEDIA_ENT_T_V4L2_SUBDEV + 1)
+> -#define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV + 2)
+> -#define MEDIA_ENT_T_V4L2_SUBDEV_LENS	(MEDIA_ENT_T_V4L2_SUBDEV + 3)
+> -/* A converter of analogue video to its digital representation. */
+> -#define MEDIA_ENT_T_V4L2_SUBDEV_DECODER	(MEDIA_ENT_T_V4L2_SUBDEV + 4)
+> -
+> -#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	(MEDIA_ENT_T_V4L2_SUBDEV + 5)
+> +/* Used bitmasks for media_entity_desc::flags */
+>  
+>  #define MEDIA_ENT_FL_DEFAULT		(1 << 0)
+>  
+> 
