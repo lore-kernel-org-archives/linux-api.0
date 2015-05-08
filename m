@@ -1,102 +1,125 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: [PATCH 07/18] media controller: rename the tuner entity
-Date: Thu,  7 May 2015 22:12:29 -0300
-Message-ID: <6d88ece22cbbbaa72bbddb8b152b0d62728d6129.1431046915.git.mchehab@osg.samsung.com>
+From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [PATCH 03/18] media controller: use MEDIA_ENT_T_AV_DMA for A/V DMA engines
+Date: Thu,  7 May 2015 22:12:25 -0300
+Message-ID: <afb84e3d80fc4f6f2465a123012f161b8c29f1c4.1431046915.git.mchehab@osg.samsung.com>
 References: <cover.1431046915.git.mchehab@osg.samsung.com>
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <cover.1431046915.git.mchehab@osg.samsung.com>
-In-Reply-To: <cover.1431046915.git.mchehab@osg.samsung.com>
-References: <cover.1431046915.git.mchehab@osg.samsung.com>
-Sender: linux-media-owner@vger.kernel.org
-To: Linux Media Mailing List <linux-media@vger.kernel.org>
-Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Mauro Carvalho Chehab <mchehab@infradead.org>, Jonathan Corbet <corbet@lwn.net>, Hans Verkuil <hverkuil@xs4all.nl>, Matthias Schwarzott <zzam@gentoo.org>, Antti Palosaari <crope@iki.fi>, Olli Salonen <olli.salonen@iki.fi>, Prabhakar Lad <prabhakar.csengg@gmail.com>, Sakari Ailus <sakari.ailus@linux.intel.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1431046915.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <cover.1431046915.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+References: <cover.1431046915.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Hyun Kwon <hyun.kwon-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, Michal Simek <michal.simek-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>, =?UTF-8?q?S=C3=B6ren=20Brinkmann?= <soren.brinkmann-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>, Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Sylwester Nawrocki <s.nawrocki-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Ramakrishnan Muthukrishnan <ramakrmu-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Markus Elfring <elfring-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Finally, let's rename the tuner entity. inside the media subsystem,
-a tuner can be used by AM/FM radio, SDR radio, analog TV and digital TV.
-It could even be used on other subsystems, like network, for wireless
-devices.
+At the Video4Linux API, the /dev/video?, /dev/vbi? and
+/dev/radio? device nodes are used for the chipset that
+provides the bridge between video/radio streams and the
+USB, PCI or CPU buses.
 
-So, it is not constricted to V4L2 API, or to a subdev.
+Such bridge is also typically used to control the V4L2 device
+as a hole.
 
-Let's then rename it as:
-	MEDIA_ENT_T_V4L2_SUBDEV_TUNER -> MEDIA_ENT_T_TUNER
+For video streaming devices and SDR radio devices, they're
+also associated with the DMA engines that transfer the
+video stream (or SDR stream) to the CPU's memory.
 
-Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+It should be noticed, however, this is not true on non-SDR
+radio devices, and may also not be true on embedded devices
+that, due to DRM reasons, don't allow writing unencrypted
+data on a memory that could be seen by the CPU.
+
+So, we'll eventually need to add another entity for such
+bridge chipsets that have a video/vbi/radio device node
+associated, but don't have DMA engines on (some) devnodes.
+
+As, currently, we don't have any such case, let's for now
+just rename the device nodes that are associated with a
+DMA engine as MEDIA_ENT_T_AV_DMA.
+
+So,
+	MEDIA_ENT_T_DEVNODE_V4L -> MEDIA_ENT_T_AV_DMA
+
+PS.: This is not actually true for USB devices, as the
+DMA engine is an internal component, as it is up to the
+Kernel to strip the stream payload from the URB packages.
+
+Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 
 diff --git a/Documentation/DocBook/media/v4l/media-ioc-enum-entities.xml b/Documentation/DocBook/media/v4l/media-ioc-enum-entities.xml
-index 9b3861058f0d..5c7f366bb1f4 100644
+index 5872f8bbf774..5b8147629159 100644
 --- a/Documentation/DocBook/media/v4l/media-ioc-enum-entities.xml
 +++ b/Documentation/DocBook/media/v4l/media-ioc-enum-entities.xml
-@@ -241,7 +241,7 @@
- 	    signals.</entry>
+@@ -183,7 +183,7 @@
+ 	    <entry>Unknown device node</entry>
  	  </row>
  	  <row>
--	    <entry><constant>MEDIA_ENT_T_V4L2_SUBDEV_TUNER</constant></entry>
-+	    <entry><constant>MEDIA_ENT_T_TUNER</constant></entry>
- 	    <entry>TV and/or radio tuner</entry>
+-	    <entry><constant>MEDIA_ENT_T_DEVNODE_V4L</constant></entry>
++	    <entry><constant>MEDIA_ENT_T_AV_DMA</constant></entry>
+ 	    <entry>V4L video, radio or vbi device node</entry>
  	  </row>
- 	</tbody>
-diff --git a/drivers/media/dvb-core/dvbdev.c b/drivers/media/dvb-core/dvbdev.c
-index 39846077045e..d6a096495035 100644
---- a/drivers/media/dvb-core/dvbdev.c
-+++ b/drivers/media/dvb-core/dvbdev.c
-@@ -393,7 +393,7 @@ void dvb_create_media_graph(struct dvb_adapter *adap)
+ 	  <row>
+diff --git a/drivers/media/platform/xilinx/xilinx-dma.c b/drivers/media/platform/xilinx/xilinx-dma.c
+index efde88adf624..7fa0cc0f08f0 100644
+--- a/drivers/media/platform/xilinx/xilinx-dma.c
++++ b/drivers/media/platform/xilinx/xilinx-dma.c
+@@ -193,7 +193,7 @@ static int xvip_pipeline_validate(struct xvip_pipeline *pipe,
+ 	while ((entity = media_entity_graph_walk_next(&graph))) {
+ 		struct xvip_dma *dma;
  
- 	media_device_for_each_entity(entity, mdev) {
- 		switch (entity->type) {
--		case MEDIA_ENT_T_V4L2_SUBDEV_TUNER:
-+		case MEDIA_ENT_T_TUNER:
- 			tuner = entity;
- 			break;
- 		case MEDIA_ENT_T_DTV_DEMOD:
-diff --git a/drivers/media/usb/cx231xx/cx231xx-cards.c b/drivers/media/usb/cx231xx/cx231xx-cards.c
-index a756f74f0adc..2a7331e3c4a0 100644
---- a/drivers/media/usb/cx231xx/cx231xx-cards.c
-+++ b/drivers/media/usb/cx231xx/cx231xx-cards.c
-@@ -1213,7 +1213,7 @@ static void cx231xx_create_media_graph(struct cx231xx *dev)
+-		if (entity->type != MEDIA_ENT_T_DEVNODE_V4L)
++		if (entity->type != MEDIA_ENT_T_AV_DMA)
+ 			continue;
  
- 	media_device_for_each_entity(entity, mdev) {
- 		switch (entity->type) {
--		case MEDIA_ENT_T_V4L2_SUBDEV_TUNER:
-+		case MEDIA_ENT_T_TUNER:
- 			tuner = entity;
- 			break;
- 		case MEDIA_ENT_T_ATV_DECODER:
-diff --git a/drivers/media/v4l2-core/tuner-core.c b/drivers/media/v4l2-core/tuner-core.c
-index abdcffabcb59..ecf4e8a543b3 100644
---- a/drivers/media/v4l2-core/tuner-core.c
-+++ b/drivers/media/v4l2-core/tuner-core.c
-@@ -696,7 +696,7 @@ static int tuner_probe(struct i2c_client *client,
- register_client:
- #if defined(CONFIG_MEDIA_CONTROLLER)
- 	t->pad.flags = MEDIA_PAD_FL_SOURCE;
--	t->sd.entity.type = MEDIA_ENT_T_V4L2_SUBDEV_TUNER;
-+	t->sd.entity.type = MEDIA_ENT_T_TUNER;
- 	t->sd.entity.name = t->name;
+ 		dma = to_xvip_dma(media_entity_to_video_device(entity));
+diff --git a/drivers/media/v4l2-core/v4l2-dev.c b/drivers/media/v4l2-core/v4l2-dev.c
+index 71a1b93b0790..9ef920221b5a 100644
+--- a/drivers/media/v4l2-core/v4l2-dev.c
++++ b/drivers/media/v4l2-core/v4l2-dev.c
+@@ -912,7 +912,7 @@ int __video_register_device(struct video_device *vdev, int type, int nr,
+ 	/* Part 5: Register the entity. */
+ 	if (vdev->v4l2_dev->mdev &&
+ 	    vdev->vfl_type != VFL_TYPE_SUBDEV) {
+-		vdev->entity.type = MEDIA_ENT_T_DEVNODE_V4L;
++		vdev->entity.type = MEDIA_ENT_T_AV_DMA;
+ 		vdev->entity.name = vdev->name;
+ 		vdev->entity.info.dev.major = VIDEO_MAJOR;
+ 		vdev->entity.info.dev.minor = vdev->minor;
+diff --git a/drivers/media/v4l2-core/v4l2-subdev.c b/drivers/media/v4l2-core/v4l2-subdev.c
+index 63596063b213..9f8fc8330b3e 100644
+--- a/drivers/media/v4l2-core/v4l2-subdev.c
++++ b/drivers/media/v4l2-core/v4l2-subdev.c
+@@ -535,7 +535,7 @@ v4l2_subdev_link_validate_get_format(struct media_pad *pad,
+ 		return v4l2_subdev_call(sd, pad, get_fmt, NULL, fmt);
+ 	}
  
- 	ret = media_entity_init(&t->sd.entity, 1, &t->pad, 0);
+-	WARN(pad->entity->type != MEDIA_ENT_T_DEVNODE_V4L,
++	WARN(pad->entity->type != MEDIA_ENT_T_AV_DMA,
+ 	     "Driver bug! Wrong media entity type 0x%08x, entity %s\n",
+ 	     pad->entity->type, pad->entity->name);
+ 
 diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-index 9b3d80e765f0..6acc4be1378c 100644
+index 775c11c6b173..a7aa2aac9c23 100644
 --- a/include/uapi/linux/media.h
 +++ b/include/uapi/linux/media.h
-@@ -57,7 +57,7 @@ struct media_device_info {
+@@ -44,12 +44,12 @@ struct media_device_info {
  
- #define MEDIA_ENT_T_ATV_DECODER	(MEDIA_ENT_T_CAM_SENSOR + 3)
+ /* Used values for media_entity_desc::type */
  
--#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	(MEDIA_ENT_T_CAM_SENSOR + 4)
-+#define MEDIA_ENT_T_TUNER	(MEDIA_ENT_T_CAM_SENSOR + 4)
+-#define MEDIA_ENT_T_DEVNODE_V4L		(((1 << 16)) + 1)
+-#define MEDIA_ENT_T_DEVNODE_DVB_FE	(MEDIA_ENT_T_DEVNODE_V4L + 3)
+-#define MEDIA_ENT_T_DEVNODE_DVB_DEMUX	(MEDIA_ENT_T_DEVNODE_V4L + 4)
+-#define MEDIA_ENT_T_DEVNODE_DVB_DVR	(MEDIA_ENT_T_DEVNODE_V4L + 5)
+-#define MEDIA_ENT_T_DEVNODE_DVB_CA	(MEDIA_ENT_T_DEVNODE_V4L + 6)
+-#define MEDIA_ENT_T_DEVNODE_DVB_NET	(MEDIA_ENT_T_DEVNODE_V4L + 7)
++#define MEDIA_ENT_T_AV_DMA		(((1 << 16)) + 1)
++#define MEDIA_ENT_T_DEVNODE_DVB_FE	(MEDIA_ENT_T_AV_DMA + 3)
++#define MEDIA_ENT_T_DEVNODE_DVB_DEMUX	(MEDIA_ENT_T_AV_DMA + 4)
++#define MEDIA_ENT_T_DEVNODE_DVB_DVR	(MEDIA_ENT_T_AV_DMA + 5)
++#define MEDIA_ENT_T_DEVNODE_DVB_CA	(MEDIA_ENT_T_AV_DMA + 6)
++#define MEDIA_ENT_T_DEVNODE_DVB_NET	(MEDIA_ENT_T_AV_DMA + 7)
  
- #if 1
- /*
-@@ -88,6 +88,8 @@ struct media_device_info {
- #define MEDIA_ENT_T_V4L2_SUBDEV_LENS	MEDIA_ENT_T_CAM_LENS
- 
- #define MEDIA_ENT_T_V4L2_SUBDEV_DECODER MEDIA_ENT_T_ATV_DECODER
-+
-+#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	MEDIA_ENT_T_TUNER
- #endif
- 
- /* Used bitmasks for media_entity_desc::flags */
+ #define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	((2 << 16) + 1)
+ #define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV_SENSOR + 1)
 -- 
 2.1.0
