@@ -1,122 +1,173 @@
-From: Sascha Hauer <s.hauer@pengutronix.de>
-Subject: Re: [PATCH v4 04/10] eeprom: Add a simple EEPROM framework for
- eeprom consumers
-Date: Fri, 8 May 2015 07:23:18 +0200
-Message-ID: <20150508052318.GZ6325@pengutronix.de>
-References: <1427752492-17039-1-git-send-email-srinivas.kandagatla@linaro.org>
- <1427752670-17219-1-git-send-email-srinivas.kandagatla@linaro.org>
- <20150407184533.GA10278@codeaurora.org>
- <55243982.7020907@linaro.org>
- <20150409144522.GB9663@codeaurora.org>
- <5548AD98.50801@linaro.org>
+From: Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH v3] manpage: update FALLOC_FL_INSERT_RANGE flag in fallocate
+Date: Fri, 08 May 2015 14:28:42 +0900
+Message-ID: <009201d0894f$d87f0890$897d19b0$@samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5548AD98.50801@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Cc: Stephen Boyd <sboyd@codeaurora.org>, linux-arm-kernel@lists.infradead.org, Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-language: ko
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 05, 2015 at 12:46:32PM +0100, Srinivas Kandagatla wrote:
-> Hi Stephen,
-> 
-> Sorry I took so long to reply.
-> 
-> 
-> On 09/04/15 15:45, Stephen Boyd wrote:
-> >On 04/07, Srinivas Kandagatla wrote:
-> >>On 07/04/15 19:45, Stephen Boyd wrote:
-> >>>On 03/30, Srinivas Kandagatla wrote:
-> >>>
-> >>>Do you have an overview of how to use these APIs? Maybe some
-> >>>Documentation/ is in order? I'm mostly interested in how the
-> >>>blocks array is supposed to work and how this hooks up to drivers
-> >>>that are using DT.
-> >>
-> >>Only doc ATM is function level kernel doc in c file.
-> >>May be I can explain you for now and I will try to add some
-> >>documentation with some usage examples in next version.
-> >
-> >Thanks.
-> >
-> >>
-> >>eeprom block array is just another way intended to get hold of
-> >>eeprom content for non-DT providers/consumers, but DT
-> >>consumers/providers can also use it. As of today SOC/mach level code
-> >>could use it as well.
-> >>
-> >>In eeprom_cell_get() case the lookup of provider is done based on
-> >>provider name, this provider name is generally supplied by all the
-> >>providers (both DT/non DT).
-> >>
-> >>for example in qfprom case,
-> >>provider is registered from DT with eeprom config containing a unique name:
-> >>static struct eeprom_config econfig = {
-> >>	.name = "qfprom",
-> >>	.id = 0,
-> >>};
-> >>
-> >>In the consumer case, the tsens driver could do some like in non DT way:
-> >>
-> >>	struct eeprom_block blocks[4] ={
-> >>		{
-> >>		.offset = 0x404,
-> >>		.count = 0x4,
-> >>		},
-> >>		{
-> >>		.offset = 0x408,
-> >>		.count = 0x4,
-> >>		},
-> >>		{
-> >>		.offset = 0x40c,
-> >>		.count = 0x4,
-> >>		},
-> >>		{
-> >>		.offset = 0x410,
-> >>		.count = 0x4,
-> >>		},
-> >>	};
-> >>	calib_cell = eeprom_cell_get("qfprom0", blocks, 4);
-> >>
-> >>
-> >>Or in DT way
-> >>calib_cell  = of_eeprom_cell_get(np, "calib");
-> >>
-> >
-> >Ok. I guess I was hoping for a more device centric approach like
-> >we have for clks/regulators/etc. That way a driver doesn't need
-> >to know it's using DT or not to figure out which API to call.
-> 
-> That would be the best. Its easy to wrap up whats in eeprom core to
-> eeprom_get_cell(dev, "cell-name") for both DT and non-dt cases, if I
-> remove the nasty global name space thing.
-> 
-> Only thing which is limiting it is the existing bindings which are
-> just phandle based. For eeprom to be more of device centric we need
-> more
-> generic bindings/property names like
-> 
-> nvrom-cell = <&abc>, <&edf>
-> nvrom-cell-names = "cell1", "cell2";
-> 
-> Also we can have name associated to each eeprom cell which would
-> help for non-dt cases. So they can just lookup by the cell name.
-> 
-> 
-> Sacha, Are you ok with such binding?  As this can provide a single
-> interface for dt and non-dt. I remember you requested for changing
-> from generic properties to specific property names.
+Update FALLOC_FL_INSERT_RANGE flag in fallocate.
 
-Yes, I am fine with such a binding. The same type of binding is used for
-clocks and other stuff already, so it has proven good and people are
-famliar with it.
+Signed-off-by: Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Signed-off-by: Ashish Sangwan <a.sangwan-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+---
+ man2/fallocate.2 | 89 ++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 84 insertions(+), 5 deletions(-)
 
-Sascha
-
+diff --git a/man2/fallocate.2 b/man2/fallocate.2
+index 0cc1a00..0d31027 100644
+--- a/man2/fallocate.2
++++ b/man2/fallocate.2
+@@ -228,6 +228,59 @@ ext4, for extent-based files (since Linux 3.15)
+ .IP *
+ SMB3 (since Linux 3.17)
+ .\" commit 30175628bf7f521e9ee31ac98fa6d6fe7441a556
++.SS Increasing file space
++flag (available since Linux 4.1)
++.\" commit dd46c787788d5bf5b974729d43e4c405814a4c7d
++Specifying the
++.BR FALLOC_FL_INSERT_RANGE
++flag in
++.I mode
++will increase the file space by inserting a hole within the file size without
++overwriting any existing data.
++The hole will start at
++.I offset
++and continue for
++.I len
++bytes.
++For inserting hole inside file, the contents of the file starting at
++.I offset
++will be shifted towards right by
++.I len
++bytes.
++Inserting a hole inside the file will increase the file size by
++.I len
++bytes.
++
++This mode has the same limitation as
++.BR FALLOC_FL_COLLAPSE_RANGE
++regarding the
++granularity of the operation.
++If the granularity requirements are not met,
++.BR fallocate ()
++will fail with the error
++.BR EINVAL.
++If the
++.I offset
++is greater than or equal to the end of file, an error is
++returned.
++For such type of operations, i.e. inserting a hole at the end of file,
++.BR ftruncate(2)
++should be used.
++In case
++.IR offset + len
++exceeds the maximum file size, errno will be set to
++.B EFBIG.
++
++No other flags may be specified in
++.IR mode
++in conjunction with
++.BR FALLOC_FL_INSERT_RANGE .
++
++As of Linux 4.1,
++.B FALLOC_FL_INSERT_RANGE
++is supported by
++XFS.
++.\" commit a904b1ca5751faf5ece8600e18cd3b674afcca1b
+ .SH RETURN VALUE
+ On success,
+ .BR fallocate ()
+@@ -245,6 +298,12 @@ is not a valid file descriptor, or is not opened for writing.
+ .IR offset + len
+ exceeds the maximum file size.
+ .TP
++.B EFBIG
++.I mode
++is
++.BR FALLOC_FL_INSERT_RANGE ,
++the current file size+len exceeds the maximum file size.
++.TP
+ .B EINTR
+ A signal was caught during execution.
+ .TP
+@@ -273,7 +332,17 @@ reaches or passes the end of the file.
+ .B EINVAL
+ .I mode
+ is
+-.BR FALLOC_FL_COLLAPSE_RANGE ,
++.BR FALLOC_FL_INSERT_RANGE
++and the range specified by
++.I offset
++reaches or passes the end of the file.
++.TP
++.B EINVAL
++.I mode
++is
++.BR FALLOC_FL_COLLAPSE_RANGE
++or
++.BR FALLOC_FL_INSERT_RANGE ,
+ but either
+ .I offset
+ or
+@@ -282,18 +351,24 @@ is not a multiple of the filesystem block size.
+ .TP
+ .B EINVAL
+ .I mode
+-contains both
++contains either of
+ .B FALLOC_FL_COLLAPSE_RANGE
++or
++.B FALLOC_FL_INSERT_RANGE
+ and other flags;
+ no other flags are permitted with
+-.BR FALLOC_FL_COLLAPSE_RANGE .
++.BR FALLOC_FL_COLLAPSE_RANGE
++or
++.BR FALLOC_FL_INSERT_RANGE .
+ .TP
+ .B EINVAL
+ .I mode
+ is
+ .BR FALLOC_FL_COLLAPSE_RANGE
+ or
+-.BR FALLOC_FL_ZERO_RANGE ,
++.BR FALLOC_FL_ZERO_RANGE
++or
++.BR FALLOC_FL_INSERT_RANGE ,
+ but the file referred to by
+ .I fd
+ is not a regular file.
+@@ -345,6 +420,8 @@ specifies
+ .BR FALLOC_FL_PUNCH_HOLE
+ or
+ .BR FALLOC_FL_COLLAPSE_RANGE
++or
++.BR FALLOC_FL_INSERT_RANGE
+ and
+ the file referred to by
+ .I fd
+@@ -363,7 +440,9 @@ refers to a pipe or FIFO.
+ .B ETXTBSY
+ .I mode
+ specifies
+-.BR FALLOC_FL_COLLAPSE_RANGE ,
++.BR FALLOC_FL_COLLAPSE_RANGE
++or
++.BR FALLOC_FL_INSERT_RANGE ,
+ but the file referred to by
+ .IR fd
+ is currently being executed.
 -- 
-Pengutronix e.K.                           |                             |
-Industrial Linux Solutions                 | http://www.pengutronix.de/  |
-Peiner Str. 6-8, 31137 Hildesheim, Germany | Phone: +49-5121-206917-0    |
-Amtsgericht Hildesheim, HRA 2686           | Fax:   +49-5121-206917-5555 |
+1.8.5.5
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
