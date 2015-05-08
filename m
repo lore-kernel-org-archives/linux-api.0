@@ -1,113 +1,78 @@
-From: Chris Metcalf <cmetcalf@ezchip.com>
-Subject: [PATCH 4/6] nohz: support PR_DATAPLANE_QUIESCE
-Date: Fri, 8 May 2015 13:58:45 -0400
-Message-ID: <1431107927-13998-5-git-send-email-cmetcalf@ezchip.com>
-References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Frederic Weisbecker <fweisbec@gmail.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Chris Metcalf <cmetcalf@ezchip.com>
+From: Eric B Munson <emunson@akamai.com>
+Subject: [PATCH 0/3] Allow user to request memory to be locked on page fault
+Date: Fri,  8 May 2015 15:33:43 -0400
+Message-ID: <1431113626-19153-1-git-send-email-emunson@akamai.com>
+Return-path: <linux-alpha-owner@vger.kernel.org>
+Sender: linux-alpha-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Eric B Munson <emunson@akamai.com>, Shuah Khan <shuahkh@osg.samsung.com>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This prctl() flag for PR_SET_DATAPLANE sets a mode that requires the
-kernel to quiesce any pending timer interrupts prior to returning
-to userspace.  When running with this mode set, sys calls (and page
-faults, etc.) can be inordinately slow.  However, user applications
-that want to guarantee that no unexpected interrupts will occur
-(even if they call into the kernel) can set this flag to guarantee
-that semantics.
+mlock() allows a user to control page out of program memory, but this
+comes at the cost of faulting in the entire mapping when it is
+allocated.  For large mappings where the entire area is not necessary
+this is not ideal.
 
-Signed-off-by: Chris Metcalf <cmetcalf@ezchip.com>
----
- include/uapi/linux/prctl.h |  1 +
- kernel/time/tick-sched.c   | 54 ++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 55 insertions(+)
+This series introduces new flags for mmap() and mlockall() that allow a
+user to specify that the covered are should not be paged out, but only
+after the memory has been used the first time.
 
-diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-index 1aa8fa8a8b05..8b735651304a 100644
---- a/include/uapi/linux/prctl.h
-+++ b/include/uapi/linux/prctl.h
-@@ -194,5 +194,6 @@ struct prctl_mm_map {
- #define PR_SET_DATAPLANE	47
- #define PR_GET_DATAPLANE	48
- # define PR_DATAPLANE_ENABLE	(1 << 0)
-+# define PR_DATAPLANE_QUIESCE	(1 << 1)
- 
- #endif /* _LINUX_PRCTL_H */
-diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
-index fd0e6e5c931c..69d908c6cef8 100644
---- a/kernel/time/tick-sched.c
-+++ b/kernel/time/tick-sched.c
-@@ -392,6 +392,53 @@ void __init tick_nohz_init(void)
- }
- 
- /*
-+ * We normally return immediately to userspace.
-+ *
-+ * The PR_DATAPLANE_QUIESCE flag causes us to wait until no more
-+ * interrupts are pending.  Otherwise we nap with interrupts enabled
-+ * and wait for the next interrupt to fire, then loop back and retry.
-+ *
-+ * Note that if you schedule two processes on the same core and both
-+ * specify PR_DATAPLANE_QUIESCE, neither will ever leave the kernel,
-+ * and one will have to be killed manually.  Otherwise in situations
-+ * where another process is in the runqueue on this cpu, this task
-+ * will just wait for that other task to go idle before returning to
-+ * user space.
-+ */
-+static void dataplane_quiesce(void)
-+{
-+	struct clock_event_device *dev =
-+		__this_cpu_read(tick_cpu_device.evtdev);
-+	struct task_struct *task = current;
-+	unsigned long start = jiffies;
-+	bool warned = false;
-+
-+	while (ACCESS_ONCE(dev->next_event.tv64) != KTIME_MAX) {
-+		if (!warned && (jiffies - start) >= (5 * HZ)) {
-+			pr_warn("%s/%d: cpu %d: dataplane task blocked for %ld jiffies\n",
-+				task->comm, task->pid, smp_processor_id(),
-+				(jiffies - start));
-+			warned = true;
-+		}
-+		if (should_resched())
-+			schedule();
-+		if (test_thread_flag(TIF_SIGPENDING))
-+			break;
-+
-+		/* Idle with interrupts enabled and wait for the tick. */
-+		set_current_state(TASK_INTERRUPTIBLE);
-+		arch_cpu_idle();
-+		set_current_state(TASK_RUNNING);
-+	}
-+	if (warned) {
-+		pr_warn("%s/%d: cpu %d: dataplane task unblocked after %ld jiffies\n",
-+			task->comm, task->pid, smp_processor_id(),
-+			(jiffies - start));
-+		dump_stack();
-+	}
-+}
-+
-+/*
-  * When returning to userspace on a nohz_full core after doing
-  * prctl(PR_DATAPLANE_SET,1), we come here and try more aggressively
-  * to prevent this core from being interrupted later.
-@@ -411,6 +458,13 @@ void tick_nohz_dataplane_enter(void)
- 	lru_add_drain();
- 
- 	/*
-+	 * Quiesce any timer ticks if requested.  On return from this
-+	 * function, no timer ticks are pending.
-+	 */
-+	if ((current->dataplane_flags & PR_DATAPLANE_QUIESCE) != 0)
-+		dataplane_quiesce();
-+
-+	/*
- 	 * Disable interrupts again since other code running in this
- 	 * function may have enabled them, and the caller expects
- 	 * interrupts to be disabled on return.  Enabling them during
+The performance cost of these patches are minimal on the two benchmarks
+I have tested (stream and kernbench).
+
+Avg throughput in MB/s from stream using 1000000 element arrays
+Test     4.1-rc2      4.1-rc2+lock-on-fault
+Copy:    10,979.08    10,917.34
+Scale:   11,094.45    11,023.01
+Add:     12,487.29    12,388.65
+Triad:   12,505.77    12,418.78
+
+Kernbench optimal load
+                 4.1-rc2  4.1-rc2+lock-on-fault
+Elapsed Time     71.046   71.324
+User Time        62.117   62.352
+System Time      8.926    8.969
+Context Switches 14531.9  14542.5
+Sleeps           14935.9  14939
+
+Eric B Munson (3):
+  Add flag to request pages are locked after page fault
+  Add mlockall flag for locking pages on fault
+  Add tests for lock on fault
+
+ arch/alpha/include/uapi/asm/mman.h          |   2 +
+ arch/mips/include/uapi/asm/mman.h           |   2 +
+ arch/parisc/include/uapi/asm/mman.h         |   2 +
+ arch/powerpc/include/uapi/asm/mman.h        |   2 +
+ arch/sparc/include/uapi/asm/mman.h          |   2 +
+ arch/tile/include/uapi/asm/mman.h           |   2 +
+ arch/xtensa/include/uapi/asm/mman.h         |   2 +
+ include/linux/mm.h                          |   1 +
+ include/linux/mman.h                        |   3 +-
+ include/uapi/asm-generic/mman.h             |   2 +
+ mm/mlock.c                                  |  13 ++-
+ mm/mmap.c                                   |   4 +-
+ mm/swap.c                                   |   3 +-
+ tools/testing/selftests/vm/Makefile         |   8 +-
+ tools/testing/selftests/vm/lock-on-fault.c  | 145 ++++++++++++++++++++++++++++
+ tools/testing/selftests/vm/on-fault-limit.c |  47 +++++++++
+ tools/testing/selftests/vm/run_vmtests      |  23 +++++
+ 17 files changed, 254 insertions(+), 9 deletions(-)
+ create mode 100644 tools/testing/selftests/vm/lock-on-fault.c
+ create mode 100644 tools/testing/selftests/vm/on-fault-limit.c
+
+Cc: Shuah Khan <shuahkh@osg.samsung.com>
+Cc: linux-alpha@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-mips@linux-mips.org
+Cc: linux-parisc@vger.kernel.org
+Cc: linuxppc-dev@lists.ozlabs.org
+Cc: sparclinux@vger.kernel.org
+Cc: linux-xtensa@linux-xtensa.org
+Cc: linux-mm@kvack.org
+Cc: linux-arch@vger.kernel.org
+Cc: linux-api@vger.kernel.org
+
 -- 
-2.1.2
+1.9.1
+
