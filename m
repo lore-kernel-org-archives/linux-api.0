@@ -1,7 +1,7 @@
 From: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH 4/5] selftest: Add futex tests to the top-level Makefile
-Date: Fri,  8 May 2015 15:09:46 -0700
-Message-ID: <2d3453b76e43e7472a1bf2725579feef0b6dc255.1431121818.git.dvhart@linux.intel.com>
+Subject: [PATCH 2/5] selftest/futex: Update Makefile to use lib.mk
+Date: Fri,  8 May 2015 15:09:44 -0700
+Message-ID: <a3a0ef213a23f2633d811226f45d3a1498901564.1431121818.git.dvhart@linux.intel.com>
 References: <57d921b1c30e8258ca4b2f55637424527317e92f.1431121818.git.dvhart@linux.intel.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <57d921b1c30e8258ca4b2f55637424527317e92f.1431121818.git.dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
@@ -12,11 +12,13 @@ To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List
 Cc: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Enable futex tests to be built and run with the make kselftest and
-associated targets.
+Adapt the futextest Makefiles to use lib.mk macros for RUN_TESTS and
+EMIT_TESTS. For now, we reuse the run.sh mechanism provided by
+futextest. This doesn't provide the standard selftests: [PASS|FAIL]
+format, but the tests provide very similar output already.
 
-Most of the tests require escalated privileges. These return ERROR, and
-run.sh continues.
+This results in the run_kselftest.sh script for futexes including a
+single line: ./run.sh
 
 Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
@@ -27,20 +29,65 @@ Cc: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
 Cc: KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
 Signed-off-by: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 ---
- tools/testing/selftests/Makefile | 1 +
- 1 file changed, 1 insertion(+)
+ tools/testing/selftests/futex/Makefile            | 20 +++++++++++++++++++-
+ tools/testing/selftests/futex/functional/Makefile |  5 +++--
+ 2 files changed, 22 insertions(+), 3 deletions(-)
 
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 95abddc..ebac6b8 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -4,6 +4,7 @@ TARGETS += efivarfs
- TARGETS += exec
- TARGETS += firmware
- TARGETS += ftrace
-+TARGETS += futex
- TARGETS += kcmp
- TARGETS += memfd
- TARGETS += memory-hotplug
+diff --git a/tools/testing/selftests/futex/Makefile b/tools/testing/selftests/futex/Makefile
+index 2c26d59..6a17529 100644
+--- a/tools/testing/selftests/futex/Makefile
++++ b/tools/testing/selftests/futex/Makefile
+@@ -1,11 +1,29 @@
+ SUBDIRS := functional
+ 
++TEST_PROGS := run.sh
++
+ .PHONY: all clean
+ all:
+ 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR $@ ; done
+ 
+-run_tests: all
++include ../lib.mk
++
++override define RUN_TESTS
+ 	./run.sh
++endef
++
++override define INSTALL_RULE
++	mkdir -p $(INSTALL_PATH)
++	install -t $(INSTALL_PATH) $(TEST_PROGS) $(TEST_PROGS_EXTENDED) $(TEST_FILES)
++
++	@for SUBDIR in $(SUBDIRS); do \
++		$(MAKE) -C $$SUBDIR INSTALL_PATH=$(INSTALL_PATH)/$$SUBDIR install; \
++	done;
++endef
++
++override define EMIT_TESTS
++	echo "./run.sh"
++endef
+ 
+ clean:
+ 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR $@ ; done
+diff --git a/tools/testing/selftests/futex/functional/Makefile b/tools/testing/selftests/futex/functional/Makefile
+index 4098340..fb96927 100644
+--- a/tools/testing/selftests/futex/functional/Makefile
++++ b/tools/testing/selftests/futex/functional/Makefile
+@@ -12,13 +12,14 @@ TARGETS := \
+ 	futex_wait_uninitialized_heap \
+ 	futex_wait_private_mapped_file
+ 
++TEST_PROGS := $(TARGETS) run.sh
++
+ .PHONY: all clean
+ all: $(TARGETS)
+ 
+ $(TARGETS): $(HEADERS)
+ 
+-run_tests: all
+-	./run.sh
++include ../../lib.mk
+ 
+ clean:
+ 	rm -f $(TARGETS)
 -- 
 2.1.4
