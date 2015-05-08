@@ -1,86 +1,122 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
-Date: Thu, 7 May 2015 20:24:49 -0700
-Message-ID: <CALCETrUksu5ZB4QBfC8DMwYO2OFjfPW2eWsTweZGN_gybzcsmw@mail.gmail.com>
-References: <1430949612-21356-1-git-send-email-zab@redhat.com>
- <20150507002617.GJ4327@dastard> <20150507172053.GA659@lenny.home.zabbo.net> <20150508023711.GK4327@dastard>
+From: Sascha Hauer <s.hauer@pengutronix.de>
+Subject: Re: [PATCH v4 04/10] eeprom: Add a simple EEPROM framework for
+ eeprom consumers
+Date: Fri, 8 May 2015 07:23:18 +0200
+Message-ID: <20150508052318.GZ6325@pengutronix.de>
+References: <1427752492-17039-1-git-send-email-srinivas.kandagatla@linaro.org>
+ <1427752670-17219-1-git-send-email-srinivas.kandagatla@linaro.org>
+ <20150407184533.GA10278@codeaurora.org>
+ <55243982.7020907@linaro.org>
+ <20150409144522.GB9663@codeaurora.org>
+ <5548AD98.50801@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150508023711.GK4327@dastard>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Sage Weil <sweil-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <5548AD98.50801@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Cc: Stephen Boyd <sboyd@codeaurora.org>, linux-arm-kernel@lists.infradead.org, Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de
 List-Id: linux-api@vger.kernel.org
 
-On May 8, 2015 8:11 AM, "Dave Chinner" <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
->
-> On Thu, May 07, 2015 at 10:20:53AM -0700, Zach Brown wrote:
-> > On Thu, May 07, 2015 at 10:26:17AM +1000, Dave Chinner wrote:
-> > > On Wed, May 06, 2015 at 03:00:12PM -0700, Zach Brown wrote:
-> > > > Add the O_NOMTIME flag which prevents mtime from being updated which can
-> > > > greatly reduce the IO overhead of writes to allocated and initialized
-> > > > regions of files.
-> > >
-> > > Hmmm. How do backup programs now work out if the file has changed
-> > > and hence needs copying again? ie. applications using this will
-> > > break other critical infrastructure in subtle ways.
+On Tue, May 05, 2015 at 12:46:32PM +0100, Srinivas Kandagatla wrote:
+> Hi Stephen,
+> 
+> Sorry I took so long to reply.
+> 
+> 
+> On 09/04/15 15:45, Stephen Boyd wrote:
+> >On 04/07, Srinivas Kandagatla wrote:
+> >>On 07/04/15 19:45, Stephen Boyd wrote:
+> >>>On 03/30, Srinivas Kandagatla wrote:
+> >>>
+> >>>Do you have an overview of how to use these APIs? Maybe some
+> >>>Documentation/ is in order? I'm mostly interested in how the
+> >>>blocks array is supposed to work and how this hooks up to drivers
+> >>>that are using DT.
+> >>
+> >>Only doc ATM is function level kernel doc in c file.
+> >>May be I can explain you for now and I will try to add some
+> >>documentation with some usage examples in next version.
 > >
-> > By using backup infrastructure that doesn't use cmtime.  Like btrfs
-> > send/recv.  Or application level backups that know how to do
-> > incrementals from metadata in giant database files, say, without
-> > walking, comparing, and copying the entire thing.
->
-> "Use magical thing that doesn't exist"? Really?
->
-> e.g. you can't do incremental backups with tools like xfsdump if
-> mtime is not being updated.  The last thing an admin wants when
-> doing disaster recovery is to find out that the app started using
-> O_NOMTIME as a result of the upgrade they did 6 months ago. Hence
-> the last 6 months of production data isn't in the backups despite
-> the backup procedure having been extensively tested and verified
-> when it was first put in place.
->
-> > > > The criteria for using O_NOMTIME is the same as for using O_NOATIME:
-> > > > owning the file or having the CAP_FOWNER capability.  If we're not
-> > > > comfortable allowing owners to prevent mtime/ctime updates then we
-> > > > should add a tunable to allow O_NOMTIME.  Maybe a mount option?
-> > >
-> > > I dislike "turn off safety for performance" options because Joe
-> > > SpeedRacer will always select performance over safety.
+> >Thanks.
 > >
-> > Well, for ceph there's no safety concern.  They never use cmtime in
-> > these files.
->
-> Understood.
->
-> > So are you suggesting not implementing this
->
-> No.
->
-> > Or are we talking about adding some speed bumps
-> > that ceph can flip on that might give Joe Speedracer pause?
->
-> Yes, but not just Joe Speedracer - if it can be turned on silently
-> by apps then it's a great big landmine that most users and sysadmins
-> will not know about until it is too late.
+> >>
+> >>eeprom block array is just another way intended to get hold of
+> >>eeprom content for non-DT providers/consumers, but DT
+> >>consumers/providers can also use it. As of today SOC/mach level code
+> >>could use it as well.
+> >>
+> >>In eeprom_cell_get() case the lookup of provider is done based on
+> >>provider name, this provider name is generally supplied by all the
+> >>providers (both DT/non DT).
+> >>
+> >>for example in qfprom case,
+> >>provider is registered from DT with eeprom config containing a unique name:
+> >>static struct eeprom_config econfig = {
+> >>	.name = "qfprom",
+> >>	.id = 0,
+> >>};
+> >>
+> >>In the consumer case, the tsens driver could do some like in non DT way:
+> >>
+> >>	struct eeprom_block blocks[4] ={
+> >>		{
+> >>		.offset = 0x404,
+> >>		.count = 0x4,
+> >>		},
+> >>		{
+> >>		.offset = 0x408,
+> >>		.count = 0x4,
+> >>		},
+> >>		{
+> >>		.offset = 0x40c,
+> >>		.count = 0x4,
+> >>		},
+> >>		{
+> >>		.offset = 0x410,
+> >>		.count = 0x4,
+> >>		},
+> >>	};
+> >>	calib_cell = eeprom_cell_get("qfprom0", blocks, 4);
+> >>
+> >>
+> >>Or in DT way
+> >>calib_cell  = of_eeprom_cell_get(np, "calib");
+> >>
+> >
+> >Ok. I guess I was hoping for a more device centric approach like
+> >we have for clks/regulators/etc. That way a driver doesn't need
+> >to know it's using DT or not to figure out which API to call.
+> 
+> That would be the best. Its easy to wrap up whats in eeprom core to
+> eeprom_get_cell(dev, "cell-name") for both DT and non-dt cases, if I
+> remove the nasty global name space thing.
+> 
+> Only thing which is limiting it is the existing bindings which are
+> just phandle based. For eeprom to be more of device centric we need
+> more
+> generic bindings/property names like
+> 
+> nvrom-cell = <&abc>, <&edf>
+> nvrom-cell-names = "cell1", "cell2";
+> 
+> Also we can have name associated to each eeprom cell which would
+> help for non-dt cases. So they can just lookup by the cell name.
+> 
+> 
+> Sacha, Are you ok with such binding?  As this can provide a single
+> interface for dt and non-dt. I remember you requested for changing
+> from generic properties to specific property names.
 
-What about programs like tar that explicitly override mtime?  No admin
-buy-in is required for that.  Admittedly, that doesn't affect ctime,
-nor is it as likely to bite unexpectedly as a nomtime flag.
+Yes, I am fine with such a binding. The same type of binding is used for
+clocks and other stuff already, so it has proven good and people are
+famliar with it.
 
-I think it would be reasonably safe if a mount option had to be set to
-allow O_NOCMTIME or such.
+Sascha
 
---Andy
-
-> Cheers,
->
-> Dave.
-> --
-> Dave Chinner
-> david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+Pengutronix e.K.                           |                             |
+Industrial Linux Solutions                 | http://www.pengutronix.de/  |
+Peiner Str. 6-8, 31137 Hildesheim, Germany | Phone: +49-5121-206917-0    |
+Amtsgericht Hildesheim, HRA 2686           | Fax:   +49-5121-206917-5555 |
