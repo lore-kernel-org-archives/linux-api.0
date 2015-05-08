@@ -1,62 +1,69 @@
-From: Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
-Date: Fri, 8 May 2015 10:11:15 -0700
-Message-ID: <20150508171115.GA13050@lenny.home.zabbo.net>
-References: <1430949612-21356-1-git-send-email-zab@redhat.com>
- <20150507002617.GJ4327@dastard>
- <20150507172053.GA659@lenny.home.zabbo.net>
- <alpine.DEB.2.00.1505071752520.28239@cobra.newdream.net>
+From: Chris Metcalf <cmetcalf@ezchip.com>
+Subject: [PATCH 0/6] support "dataplane" mode for nohz_full
+Date: Fri, 8 May 2015 13:58:41 -0400
+Message-ID: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.00.1505071752520.28239-vIokxiIdD2AQNTJnQDzGJqxOck334EZe@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>
-Cc: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Chris Metcalf <cmetcalf@ezchip.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 07, 2015 at 06:01:23PM -0700, Sage Weil wrote:
-> On Thu, 7 May 2015, Zach Brown wrote:
-> > On Thu, May 07, 2015 at 10:26:17AM +1000, Dave Chinner wrote:
-> > > On Wed, May 06, 2015 at 03:00:12PM -0700, Zach Brown wrote:
-> > > > The criteria for using O_NOMTIME is the same as for using O_NOATIME:
-> > > > owning the file or having the CAP_FOWNER capability.  If we're not
-> > > > comfortable allowing owners to prevent mtime/ctime updates then we
-> > > > should add a tunable to allow O_NOMTIME.  Maybe a mount option?
-> > > 
-> > > I dislike "turn off safety for performance" options because Joe
-> > > SpeedRacer will always select performance over safety.
-> > 
-> > Well, for ceph there's no safety concern.  They never use cmtime in
-> > these files.
-> > 
-> > So are you suggesting not implementing this and making them rework their
-> > IO paths to avoid the fs maintaining mtime so that we don't give Joe
-> > Speedracer more rope?  Or are we talking about adding some speed bumps
-> > that ceph can flip on that might give Joe Speedracer pause?
-> 
-> I think this is the fundamental question: who do we give the ammunition 
-> to, the user or app writer, or the sysadmin?
+The existing nohz_full mode does a nice job of suppressing extraneous
+kernel interrupts for cores that desire it.  However, there is a need
+for a more deterministic mode that rigorously disallows kernel
+interrupts, even at a higher cost in user/kernel transition time:
+for example, high-speed networking applications running userspace
+drivers that will drop packets if they are ever interrupted.
 
-Yeah, I think this is right.  Dave doesn't want the possibility of it
-bleeding in to installations through irresponsible default use in apps
-without explicit buy-in from the people responsible for the backups.
+These changes attempt to provide an initial draft of such a framework;
+the changes do not add any overhead to the usual non-nohz_full mode,
+and only very small overhead to the typical nohz_full mode.  A prctl()
+option (PR_SET_DATAPLANE) is added to control whether processes have
+requested this stricter semantics, and within that prctl() option we
+provide a number of different bits for more precise control.
+Additionally, we add a new command-line boot argument to facilitate
+debugging where unexpected interrupts are being delivered from.
 
-> [...]
-> 
-> Or, we can be conservative and require a mount option so that the admin 
-> has to explicitly allow behavior that might break some existing 
-> assumptions about mtime/ctime ('-o user_noatime' I guess?).
-> 
-> I'm happy either way, so long as in the end an unprivileged ceph daemon 
-> avoids the useless work.  In our case we always own the entire mount/disk, 
-> so a mount option is just fine.
+Code that is conceptually similar has been in use in Tilera's
+Multicore Development Environment since 2008, known as Zero-Overhead
+Linux, and has seen wide adoption by a range of customers.  This patch
+series represents the first serious attempt to upstream that
+functionality.  Although the current state of the kernel isn't quite
+ready to run with absolutely no kernel interrupts (for example,
+workqueues on dataplane cores still remain to be dealt with), this
+patch series provides a way to make dynamic tradeoffs between avoiding
+kernel interrupts on the one hand, and making voluntary calls in and
+out of the kernel more expensive, for tasks that want it.
 
-It seems that the thread has headed towards responding to my suggestion
-of a possible mount option with an enthusiastic "yes, please, no
-surprises."
+The series (based currently on my arch/tile master tree for 4.2,
+in turn based on 4.1-rc1) is available at:
 
-So I'll try that.
+  git://git.kernel.org/pub/scm/linux/kernel/git/cmetcalf/linux-tile.git dataplane
 
-- z
+Chris Metcalf (6):
+  nohz_full: add support for "dataplane" mode
+  nohz: dataplane: allow tick to be fully disabled for dataplane
+  dataplane nohz: run softirqs synchronously on user entry
+  nohz: support PR_DATAPLANE_QUIESCE
+  nohz: support PR_DATAPLANE_STRICT mode
+  nohz: add dataplane_debug boot flag
+
+ Documentation/kernel-parameters.txt |   6 ++
+ arch/tile/mm/homecache.c            |   5 +-
+ include/linux/sched.h               |   3 +
+ include/linux/tick.h                |  12 ++++
+ include/uapi/linux/prctl.h          |   8 +++
+ kernel/context_tracking.c           |   3 +
+ kernel/irq_work.c                   |   4 +-
+ kernel/sched/core.c                 |  18 ++++++
+ kernel/signal.c                     |   5 ++
+ kernel/smp.c                        |   4 ++
+ kernel/softirq.c                    |  15 ++++-
+ kernel/sys.c                        |   8 +++
+ kernel/time/tick-sched.c            | 112 +++++++++++++++++++++++++++++++++++-
+ 13 files changed, 198 insertions(+), 5 deletions(-)
+
+-- 
+2.1.2
