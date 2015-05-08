@@ -1,51 +1,92 @@
-From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [PATCH 16/18] v4l2-subdev: use MEDIA_ENT_T_UNKNOWN for new subdevs
-Date: Thu,  7 May 2015 22:12:38 -0300
-Message-ID: <8326e056cbbf1813e41f8321d5bfe695167e03b5.1431046915.git.mchehab@osg.samsung.com>
+From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Subject: [PATCH 02/18] media controller: deprecate entity subtype
+Date: Thu,  7 May 2015 22:12:24 -0300
+Message-ID: <80e0882a4194460ca232f19ebbc85fa3338eda3f.1431046915.git.mchehab@osg.samsung.com>
 References: <cover.1431046915.git.mchehab@osg.samsung.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1431046915.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-In-Reply-To: <cover.1431046915.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-References: <cover.1431046915.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Sylwester Nawrocki <s.nawrocki-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Markus Elfring <elfring-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-media-owner@vger.kernel.org>
+In-Reply-To: <cover.1431046915.git.mchehab@osg.samsung.com>
+In-Reply-To: <cover.1431046915.git.mchehab@osg.samsung.com>
+References: <cover.1431046915.git.mchehab@osg.samsung.com>
+Sender: linux-media-owner@vger.kernel.org
+To: Linux Media Mailing List <linux-media@vger.kernel.org>
+Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Mauro Carvalho Chehab <mchehab@infradead.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Instead of abusing MEDIA_ENT_T_V4L2_SUBDEV, initialize
-new subdev entities as MEDIA_ENT_T_UNKNOWN.
+The media controller entity subtype doesn't make much sense,
+especially since V4L2 subdevices may also have associated devnodes.
 
-Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+So, better to get rid of it while it is not too late.
 
-diff --git a/drivers/media/v4l2-core/v4l2-subdev.c b/drivers/media/v4l2-core/v4l2-subdev.c
-index 66c6d9fd2033..0233d30b4922 100644
---- a/drivers/media/v4l2-core/v4l2-subdev.c
-+++ b/drivers/media/v4l2-core/v4l2-subdev.c
-@@ -584,7 +584,7 @@ void v4l2_subdev_init(struct v4l2_subdev *sd, const struct v4l2_subdev_ops *ops)
- 	sd->host_priv = NULL;
- #if defined(CONFIG_MEDIA_CONTROLLER)
- 	sd->entity.name = sd->name;
--	sd->entity.type = MEDIA_ENT_T_V4L2_SUBDEV;
-+	sd->entity.type = MEDIA_ENT_T_UNKNOWN;
- #endif
- }
- EXPORT_SYMBOL(v4l2_subdev_init);
+We need, of course, to keep the old symbols to avoid userspace
+breakage, but we should avoid using them internally at the
+Kernel.
+
+Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+
 diff --git a/include/uapi/linux/media.h b/include/uapi/linux/media.h
-index 8d47b70b7ea8..663eb2c6019d 100644
+index 4e816be3de39..775c11c6b173 100644
 --- a/include/uapi/linux/media.h
 +++ b/include/uapi/linux/media.h
-@@ -44,6 +44,12 @@ struct media_device_info {
+@@ -42,31 +42,45 @@ struct media_device_info {
  
- /* Used values for media_entity_desc::type */
+ #define MEDIA_ENT_ID_FLAG_NEXT		(1 << 31)
  
-+/*
-+ * Initial value when an entity is created
-+ * Drivers should change it to something useful
-+ */
-+#define MEDIA_ENT_T_UNKNOWN	0
++/* Used values for media_entity_desc::type */
 +
- /* Audio/video streaming bridges */
- #define MEDIA_ENT_T_AV_DMA		(((1 << 16)) + 1)
++#define MEDIA_ENT_T_DEVNODE_V4L		(((1 << 16)) + 1)
++#define MEDIA_ENT_T_DEVNODE_DVB_FE	(MEDIA_ENT_T_DEVNODE_V4L + 3)
++#define MEDIA_ENT_T_DEVNODE_DVB_DEMUX	(MEDIA_ENT_T_DEVNODE_V4L + 4)
++#define MEDIA_ENT_T_DEVNODE_DVB_DVR	(MEDIA_ENT_T_DEVNODE_V4L + 5)
++#define MEDIA_ENT_T_DEVNODE_DVB_CA	(MEDIA_ENT_T_DEVNODE_V4L + 6)
++#define MEDIA_ENT_T_DEVNODE_DVB_NET	(MEDIA_ENT_T_DEVNODE_V4L + 7)
++
++#define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	((2 << 16) + 1)
++#define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV_SENSOR + 1)
++#define MEDIA_ENT_T_V4L2_SUBDEV_LENS	(MEDIA_ENT_T_V4L2_SUBDEV_SENSOR + 2)
++/* A converter of analogue video to its digital representation. */
++#define MEDIA_ENT_T_V4L2_SUBDEV_DECODER	(MEDIA_ENT_T_V4L2_SUBDEV_SENSOR + 3)
++
++#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	(MEDIA_ENT_T_V4L2_SUBDEV_SENSOR + 4)
++
++#if 1
++/*
++ * Legacy symbols.
++ * Kept just to avoid userspace compilation breakages.
++ * One day, the symbols bellow will be removed
++ */
++
+ #define MEDIA_ENT_TYPE_SHIFT		16
+ #define MEDIA_ENT_TYPE_MASK		0x00ff0000
+ #define MEDIA_ENT_SUBTYPE_MASK		0x0000ffff
+ 
+ #define MEDIA_ENT_T_DEVNODE		(1 << MEDIA_ENT_TYPE_SHIFT)
+-#define MEDIA_ENT_T_DEVNODE_V4L		(MEDIA_ENT_T_DEVNODE + 1)
++#define MEDIA_ENT_T_V4L2_SUBDEV		(2 << MEDIA_ENT_TYPE_SHIFT)
++
+ #define MEDIA_ENT_T_DEVNODE_FB		(MEDIA_ENT_T_DEVNODE + 2)
+ #define MEDIA_ENT_T_DEVNODE_ALSA	(MEDIA_ENT_T_DEVNODE + 3)
+-#define MEDIA_ENT_T_DEVNODE_DVB_FE	(MEDIA_ENT_T_DEVNODE + 4)
+-#define MEDIA_ENT_T_DEVNODE_DVB_DEMUX	(MEDIA_ENT_T_DEVNODE + 5)
+-#define MEDIA_ENT_T_DEVNODE_DVB_DVR	(MEDIA_ENT_T_DEVNODE + 6)
+-#define MEDIA_ENT_T_DEVNODE_DVB_CA	(MEDIA_ENT_T_DEVNODE + 7)
+-#define MEDIA_ENT_T_DEVNODE_DVB_NET	(MEDIA_ENT_T_DEVNODE + 8)
+ 
+-/* Legacy symbol. Use it to avoid userspace compilation breakages */
++
+ #define MEDIA_ENT_T_DEVNODE_DVB		MEDIA_ENT_T_DEVNODE_DVB_FE
++#endif
+ 
+-#define MEDIA_ENT_T_V4L2_SUBDEV		(2 << MEDIA_ENT_TYPE_SHIFT)
+-#define MEDIA_ENT_T_V4L2_SUBDEV_SENSOR	(MEDIA_ENT_T_V4L2_SUBDEV + 1)
+-#define MEDIA_ENT_T_V4L2_SUBDEV_FLASH	(MEDIA_ENT_T_V4L2_SUBDEV + 2)
+-#define MEDIA_ENT_T_V4L2_SUBDEV_LENS	(MEDIA_ENT_T_V4L2_SUBDEV + 3)
+-/* A converter of analogue video to its digital representation. */
+-#define MEDIA_ENT_T_V4L2_SUBDEV_DECODER	(MEDIA_ENT_T_V4L2_SUBDEV + 4)
+-
+-#define MEDIA_ENT_T_V4L2_SUBDEV_TUNER	(MEDIA_ENT_T_V4L2_SUBDEV + 5)
++/* Used bitmasks for media_entity_desc::flags */
+ 
+ #define MEDIA_ENT_FL_DEFAULT		(1 << 0)
  
 -- 
 2.1.0
