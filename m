@@ -1,56 +1,89 @@
-From: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Subject: Re: [PATCH 07/18] media controller: rename the tuner entity
-Date: Fri, 08 May 2015 15:21:39 +0200
-Message-ID: <554CB863.1040006@xs4all.nl>
-References: <cover.1431046915.git.mchehab@osg.samsung.com>	<6d88ece22cbbbaa72bbddb8b152b0d62728d6129.1431046915.git.mchehab@osg.samsung.com>	<554CA862.8070407@xs4all.nl> <20150508095754.1c39a276@recife.lan>
+From: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Subject: Re: [PATCH v4 0/3] idle memory tracking
+Date: Fri, 8 May 2015 16:22:42 +0300
+Message-ID: <20150508132242.GQ31732@esperanza>
+References: <cover.1431002699.git.vdavydov@parallels.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150508095754.1c39a276-+RedX5hVuTR+urZeOPWqwQ@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <cover.1431002699.git.vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Matthias Schwarzott <zzam-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Antti Palosaari <crope-X3B1VOXEql0@public.gmane.org>, Olli Salonen <olli.salonen-X3B1VOXEql0@public.gmane.org>, Prabhakar Lad <prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 05/08/2015 02:57 PM, Mauro Carvalho Chehab wrote:
-> Em Fri, 08 May 2015 14:13:22 +0200
-> Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org> escreveu:
-> 
->> On 05/08/2015 03:12 AM, Mauro Carvalho Chehab wrote:
->>> Finally, let's rename the tuner entity. inside the media subsystem,
->>> a tuner can be used by AM/FM radio, SDR radio, analog TV and digital TV.
->>> It could even be used on other subsystems, like network, for wireless
->>> devices.
->>>
->>> So, it is not constricted to V4L2 API, or to a subdev.
->>>
->>> Let's then rename it as:
->>> 	MEDIA_ENT_T_V4L2_SUBDEV_TUNER -> MEDIA_ENT_T_TUNER
->>
->> See patch 04/18.
-> 
-> Mapping the tuner as a V4L2_SUBDEV is plain wrong. We can't assume
-> that a tuner will always be mapped via V4L2 subdev API.
+On Thu, May 07, 2015 at 05:09:39PM +0300, Vladimir Davydov wrote:
+> ---- SCRIPT FOR COUNTING IDLE PAGES PER CGROUP ----
 
-True. Today we have subdevs that have no device node to control them, so
-in that case it would just be a SUBDEV entity. There are subdevs that make
-a v4l-subdev device node, so those can be V4L(2)_SUBDEV entities.
+Oops, this script is stale. The correct one is here:
+---
+#! /usr/bin/python
+#
 
-The question is: what are your ideas for e.g. DVB-only tuners? Would they
-get a DVB-like device node? (so DTV_SUBDEV) Would hybrid tuners have two
-device nodes? One v4l-subdev, one dvb/dtv-subdev?
+import os
+import stat
+import errno
+import struct
 
-Just curious what your thoughts are.
+CGROUP_MOUNT = "/sys/fs/cgroup/memory"
+BUFSIZE = 8 * 1024  # must be multiple of 8
 
-Brainstorming:
 
-It might be better to map each device node to an entity and each hardware
-component (tuner, DMA engine) to an entity, and avoid this mixing of
-hw entity vs device node entity.
+def set_idle():
+    f = open("/proc/kpageidle", "wb", BUFSIZE)
+    while True:
+        try:
+            f.write(struct.pack("Q", pow(2, 64) - 1))
+        except IOError as err:
+            if err.errno == errno.ENXIO:
+                break
+            raise
+    f.close()
 
-Hmm, we need a another brainstorm meeting...
 
-Regards,
+def count_idle():
+    f_flags = open("/proc/kpageflags", "rb", BUFSIZE)
+    f_cgroup = open("/proc/kpagecgroup", "rb", BUFSIZE)
+    f_idle = open("/proc/kpageidle", "rb", BUFSIZE)
 
-	Hans
+    pfn = 0
+    nr_idle = {}
+    while True:
+        s = f_flags.read(8)
+        if not s:
+            break
+
+        flags, = struct.unpack('Q', s)
+        cgino, = struct.unpack('Q', f_cgroup.read(8))
+
+        bit = pfn % 64
+        if not bit:
+            idle_bitmap, = struct.unpack('Q', f_idle.read(8))
+
+        idle = idle_bitmap >> bit & 1
+        pfn += 1
+
+        unevictable = flags >> 18 & 1
+        huge = flags >> 22 & 1
+
+        if idle and not unevictable:
+            nr_idle[cgino] = nr_idle.get(cgino, 0) + (512 if huge else 1)
+
+    f_flags.close()
+    f_cgroup.close()
+    f_idle.close()
+    return nr_idle
+
+
+print "Setting the idle flag for each page..."
+set_idle()
+
+raw_input("Wait until the workload accesses its working set, then press Enter")
+
+print "Counting idle pages..."
+nr_idle = count_idle()
+
+for dir, subdirs, files in os.walk(CGROUP_MOUNT):
+    ino = os.stat(dir)[stat.ST_INO]
+    print dir + ": " + str(nr_idle.get(ino, 0) * 4) + " KB"
