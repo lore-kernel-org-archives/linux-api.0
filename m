@@ -1,58 +1,57 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: Sage Weil <sage@newdream.net>
 Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
-Date: Thu, 7 May 2015 13:06:08 -0700
-Message-ID: <CALCETrX2s-26B1O5yFewhpCZtO2WRm9=3XtW8YHnC8dZszP_cQ@mail.gmail.com>
-References: <1430949612-21356-1-git-send-email-zab@redhat.com>
- <20150507002617.GJ4327@dastard> <20150507172053.GA659@lenny.home.zabbo.net>
- <CAFLxGvw8ESrM6vZ4iB70JFQN-qR-Trs3j1O_+y36tSOn0GVH4A@mail.gmail.com>
- <CALCETrWNDMq0nK3ac-uZweV5BKK_yWTQHH5D0YkyEu7bcONo9g@mail.gmail.com> <554BC4D8.9010507@nod.at>
+Date: Thu, 7 May 2015 18:01:23 -0700 (PDT)
+Message-ID: <alpine.DEB.2.00.1505071752520.28239@cobra.newdream.net>
+References: <1430949612-21356-1-git-send-email-zab@redhat.com> <20150507002617.GJ4327@dastard> <20150507172053.GA659@lenny.home.zabbo.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <554BC4D8.9010507@nod.at>
+In-Reply-To: <20150507172053.GA659@lenny.home.zabbo.net>
 Sender: linux-fsdevel-owner@vger.kernel.org
-To: Richard Weinberger <richard@nod.at>
-Cc: Zach Brown <zab@redhat.com>, Dave Chinner <david@fromorbit.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Sage Weil <sweil@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
+To: Zach Brown <zab@redhat.com>
+Cc: Dave Chinner <david@fromorbit.com>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 7, 2015 at 1:02 PM, Richard Weinberger <richard@nod.at> wrote:
-> Am 07.05.2015 um 21:53 schrieb Andy Lutomirski:
->> On Thu, May 7, 2015 at 12:09 PM, Richard Weinberger
->> <richard.weinberger@gmail.com> wrote:
->>> On Thu, May 7, 2015 at 7:20 PM, Zach Brown <zab@redhat.com> wrote:
->>>> On Thu, May 07, 2015 at 10:26:17AM +1000, Dave Chinner wrote:
->>>>> On Wed, May 06, 2015 at 03:00:12PM -0700, Zach Brown wrote:
->>>>>> Add the O_NOMTIME flag which prevents mtime from being updated which can
->>>>>> greatly reduce the IO overhead of writes to allocated and initialized
->>>>>> regions of files.
->>>>>
->>>>> Hmmm. How do backup programs now work out if the file has changed
->>>>> and hence needs copying again? ie. applications using this will
->>>>> break other critical infrastructure in subtle ways.
->>>>
->>>> By using backup infrastructure that doesn't use cmtime.  Like btrfs
->>>> send/recv.  Or application level backups that know how to do
->>>> incrementals from metadata in giant database files, say, without
->>>> walking, comparing, and copying the entire thing.
->>>
->>> But how can Joey random user know that some of his
->>> applications are using O_NOMTIME and his KISS backup
->>> program does no longer function as expected?
->>>
->>
->> Joey random user can't have a working KISS backup anyway, though,
->> because we screw up mtime updates on mmap writes.  I have patches
->> gathering dust that fix that, though.
->
-> Hmmm, I thought mtime will be updated upon msync()?
-> Assuming a sane application is using msync()...
->
+On Thu, 7 May 2015, Zach Brown wrote:
+> On Thu, May 07, 2015 at 10:26:17AM +1000, Dave Chinner wrote:
+> > On Wed, May 06, 2015 at 03:00:12PM -0700, Zach Brown wrote:
+> > > The criteria for using O_NOMTIME is the same as for using O_NOATIME:
+> > > owning the file or having the CAP_FOWNER capability.  If we're not
+> > > comfortable allowing owners to prevent mtime/ctime updates then we
+> > > should add a tunable to allow O_NOMTIME.  Maybe a mount option?
+> > 
+> > I dislike "turn off safety for performance" options because Joe
+> > SpeedRacer will always select performance over safety.
+> 
+> Well, for ceph there's no safety concern.  They never use cmtime in
+> these files.
+> 
+> So are you suggesting not implementing this and making them rework their
+> IO paths to avoid the fs maintaining mtime so that we don't give Joe
+> Speedracer more rope?  Or are we talking about adding some speed bumps
+> that ceph can flip on that might give Joe Speedracer pause?
 
-So would I.  Unfortunately, mtime is updated on the page fault that
-makes an mmapped page writeable, thus guaranteeing that the resulting
-mtime is stale if you mmap a file, write to it, unmap it, and close
-it.  It's much more stale if you mmap it, write, wait for a while but
-not long enough that the page is automatically written back, write
-again, unmap, and close.
+I think this is the fundamental question: who do we give the ammunition 
+to, the user or app writer, or the sysadmin?
 
---Andy
+One might argue that we gave the user a similar power with O_NOATIME (the 
+power to break applications that assume atime is accurate).  Here we give 
+developers/users the power to not update mtime and suffer the consequences 
+(like, obviously, breaking mtime-based backups).  It should be pretty 
+obvious to anyone using the flag what the consequences are.
+
+Note that we can suffer similar lapses in mtime with fdatasync followed by 
+a system crash.  And as Andy points out it's semi-broken for writable 
+mmap.  The crash case is obviously a slightly different thing, but the 
+idea that mtime can't always be trusted certainly isn't crazy talk.
+
+Or, we can be conservative and require a mount option so that the admin 
+has to explicitly allow behavior that might break some existing 
+assumptions about mtime/ctime ('-o user_noatime' I guess?).
+
+I'm happy either way, so long as in the end an unprivileged ceph daemon 
+avoids the useless work.  In our case we always own the entire mount/disk, 
+so a mount option is just fine.
+
+Thanks!
+sage
