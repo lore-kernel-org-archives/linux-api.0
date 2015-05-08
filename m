@@ -1,54 +1,119 @@
-From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 01/11] coresight-etm4x: Adding CoreSight ETM4x driver
-Date: Fri, 8 May 2015 08:07:39 -0600
-Message-ID: <CANLsYkwT9zinP6KLi6o95+fGwPbxbUgWTpMnL7yZfsfTU8p31A@mail.gmail.com>
-References: <1429742451-11465-1-git-send-email-mathieu.poirier@linaro.org>
-	<1429742451-11465-2-git-send-email-mathieu.poirier@linaro.org>
-	<CACRpkdak5-iuWEDAvhDq3uwYobK+tW_N-t-QaY+-5TUSCa7uOg@mail.gmail.com>
+From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH 07/18] media controller: rename the tuner entity
+Date: Fri, 8 May 2015 11:08:26 -0300
+Message-ID: <20150508110826.00e4e954@recife.lan>
+References: <cover.1431046915.git.mchehab@osg.samsung.com>
+	<6d88ece22cbbbaa72bbddb8b152b0d62728d6129.1431046915.git.mchehab@osg.samsung.com>
+	<554CA862.8070407@xs4all.nl>
+	<20150508095754.1c39a276@recife.lan>
+	<554CB863.1040006@xs4all.nl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CACRpkdak5-iuWEDAvhDq3uwYobK+tW_N-t-QaY+-5TUSCa7uOg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <554CB863.1040006-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kaixu Xia <kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+To: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Matthias Schwarzott <zzam-aBrp7R+bbdUdnm+yROfE0A@public.gmane.org>, Antti Palosaari <crope-X3B1VOXEql0@public.gmane.org>, Olli Salonen <olli.salonen-X3B1VOXEql0@public.gmane.org>, Prabhakar Lad <prabhakar.csengg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 28 April 2015 at 06:28, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
-> On Thu, Apr 23, 2015 at 12:40 AM, Mathieu Poirier
-> <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
->
->> From: Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
->>
->> This driver manages the CoreSight ETMv4 (Embedded Trace Macrocell) IP block
->> to support HW assisted tracing on ARMv7 and ARMv8 architectures.
->>
->> Signed-off-by: Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
->> Signed-off-by: Kaixu Xia <xiakaixu-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
->> Signed-off-by: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
->
-> (...)
->> +/* The number of ETMv4 currently registered */
->> +static int etm4_count;
->> +static struct etmv4_drvdata *etmdrvdata[NR_CPUS];
->
-> Don't you need a mutex or something around etm4_count so
-> as to protect it? You could also make it an atomic.
+Em Fri, 08 May 2015 15:21:39 +0200
+Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org> escreveu:
 
-Sorry for the late reply, your email got lost under the pile.
+> On 05/08/2015 02:57 PM, Mauro Carvalho Chehab wrote:
+> > Em Fri, 08 May 2015 14:13:22 +0200
+> > Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org> escreveu:
+> > 
+> >> On 05/08/2015 03:12 AM, Mauro Carvalho Chehab wrote:
+> >>> Finally, let's rename the tuner entity. inside the media subsystem,
+> >>> a tuner can be used by AM/FM radio, SDR radio, analog TV and digital TV.
+> >>> It could even be used on other subsystems, like network, for wireless
+> >>> devices.
+> >>>
+> >>> So, it is not constricted to V4L2 API, or to a subdev.
+> >>>
+> >>> Let's then rename it as:
+> >>> 	MEDIA_ENT_T_V4L2_SUBDEV_TUNER -> MEDIA_ENT_T_TUNER
+> >>
+> >> See patch 04/18.
+> > 
+> > Mapping the tuner as a V4L2_SUBDEV is plain wrong. We can't assume
+> > that a tuner will always be mapped via V4L2 subdev API.
+> 
+> True. Today we have subdevs that have no device node to control them, so
+> in that case it would just be a SUBDEV entity. There are subdevs that make
+> a v4l-subdev device node, so those can be V4L(2)_SUBDEV entities.
+> 
+> The question is: what are your ideas for e.g. DVB-only tuners? Would they
+> get a DVB-like device node? (so DTV_SUBDEV)
 
-The etm4_count is only used at boot time to avoid registering the
-notifiers twice and not used otherwise.  Since the discovery of
-coresight devices is sequential there is no point in guarding it.
+I guess we may need DVB subdevs in the future. For now, I don't see
+much usage.
 
->
-> Also why is it a signed int ... unsigned int?
->
-> I know, lame comments, the runtime PM stuff looks perfect now,
+> Would hybrid tuners have two
+> device nodes? One v4l-subdev, one dvb/dtv-subdev?
 
-I like it too - thanks for the review.
+No. A tuner is a tuner. The very same device can be used for analog or
+digital TV. Ok, there are tuners that only work for digital TV (satellite
+tuners, typically), because satellite requires a different tuning range,
+and require an extra hardware to power up the satellite antena. So, on
+most devices, the tuner is integrated with SEC.
 
-> someone had a refcount comment but it's doing the right thing.
->
-> Yours,
-> Linus Walleij
+In any case, I don't see any reason why artificially one piece of hardware
+component (tuner) into one subdevice entity per API.
+
+What it might make sense in the future is to have some DVB-specific ioctls
+for a hybrid tuner,  in order to allow adjusting its internal filters to
+an specific digital TV standard.
+
+> Just curious what your thoughts are.
+> 
+> Brainstorming:
+> 
+> It might be better to map each device node to an entity and each hardware
+> component (tuner, DMA engine) to an entity, and avoid this mixing of
+> hw entity vs device node entity.
+
+Ok, but then we need to properly define the namespaces for HW and for
+Linux API components.
+
+So, we would have a namespace like:
+ 
+	- ENT_T_DEVNODE_DVB_(FE|CA|NET|DEMUX|DVR) for the DVB API device nodes;
+	- ENT_T_DEVNODE_V4L for the radio/swradio/video/vbi devnodes, or,
+alternatively, use ENT_T_DEVNODE_V4L_(RADIO|SWRADIO|VIDEO|VBI);
+	- ENT_T_HW_(TUNER|CAM_SENSOR|ATV_DEMOD|DTV_DEMOD|...) for the
+hardware components.
+
+In other words, the namespace would actually define two subtypes:
+	- devnodes;
+	- hardware components
+
+There's one advantage on this strategy: it is easier to keep backward
+compatibility, IMHO, as we'll be preserving 1 << 16 for device nodes
+and 2 << 16 for hardware components.
+
+Yet, we'll need to add an entity for the V4L2 hardware DMA (with makes
+sense to me), and this might break backward compatibility if not done
+well.
+
+It should be said that, in such case, hardware components will then
+mean not only V4L2-specific hardware (V4L2_SUBDEV_foo), but also DVB,
+ALSA, ... components.
+
+So, we'll still need a way to identify what of those components are
+V4L2 subdevs, probably using the properties API.
+
+If you all agree with that, I'll respin the patch series to map the
+entities like that.
+
+Regards,
+Mauro
+
+
+> 
+> Hmm, we need a another brainstorm meeting...
+> 
+> Regards,
+> 
+> 	Hans
