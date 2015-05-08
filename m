@@ -1,89 +1,54 @@
-From: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Subject: Re: [PATCH v4 0/3] idle memory tracking
-Date: Fri, 8 May 2015 16:22:42 +0300
-Message-ID: <20150508132242.GQ31732@esperanza>
-References: <cover.1431002699.git.vdavydov@parallels.com>
+From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 01/11] coresight-etm4x: Adding CoreSight ETM4x driver
+Date: Fri, 8 May 2015 08:07:39 -0600
+Message-ID: <CANLsYkwT9zinP6KLi6o95+fGwPbxbUgWTpMnL7yZfsfTU8p31A@mail.gmail.com>
+References: <1429742451-11465-1-git-send-email-mathieu.poirier@linaro.org>
+	<1429742451-11465-2-git-send-email-mathieu.poirier@linaro.org>
+	<CACRpkdak5-iuWEDAvhDq3uwYobK+tW_N-t-QaY+-5TUSCa7uOg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <cover.1431002699.git.vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+In-Reply-To: <CACRpkdak5-iuWEDAvhDq3uwYobK+tW_N-t-QaY+-5TUSCa7uOg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kaixu Xia <kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 07, 2015 at 05:09:39PM +0300, Vladimir Davydov wrote:
-> ---- SCRIPT FOR COUNTING IDLE PAGES PER CGROUP ----
+On 28 April 2015 at 06:28, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
+> On Thu, Apr 23, 2015 at 12:40 AM, Mathieu Poirier
+> <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
+>
+>> From: Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+>>
+>> This driver manages the CoreSight ETMv4 (Embedded Trace Macrocell) IP block
+>> to support HW assisted tracing on ARMv7 and ARMv8 architectures.
+>>
+>> Signed-off-by: Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+>> Signed-off-by: Kaixu Xia <xiakaixu-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+>> Signed-off-by: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+>
+> (...)
+>> +/* The number of ETMv4 currently registered */
+>> +static int etm4_count;
+>> +static struct etmv4_drvdata *etmdrvdata[NR_CPUS];
+>
+> Don't you need a mutex or something around etm4_count so
+> as to protect it? You could also make it an atomic.
 
-Oops, this script is stale. The correct one is here:
----
-#! /usr/bin/python
-#
+Sorry for the late reply, your email got lost under the pile.
 
-import os
-import stat
-import errno
-import struct
+The etm4_count is only used at boot time to avoid registering the
+notifiers twice and not used otherwise.  Since the discovery of
+coresight devices is sequential there is no point in guarding it.
 
-CGROUP_MOUNT = "/sys/fs/cgroup/memory"
-BUFSIZE = 8 * 1024  # must be multiple of 8
+>
+> Also why is it a signed int ... unsigned int?
+>
+> I know, lame comments, the runtime PM stuff looks perfect now,
 
+I like it too - thanks for the review.
 
-def set_idle():
-    f = open("/proc/kpageidle", "wb", BUFSIZE)
-    while True:
-        try:
-            f.write(struct.pack("Q", pow(2, 64) - 1))
-        except IOError as err:
-            if err.errno == errno.ENXIO:
-                break
-            raise
-    f.close()
-
-
-def count_idle():
-    f_flags = open("/proc/kpageflags", "rb", BUFSIZE)
-    f_cgroup = open("/proc/kpagecgroup", "rb", BUFSIZE)
-    f_idle = open("/proc/kpageidle", "rb", BUFSIZE)
-
-    pfn = 0
-    nr_idle = {}
-    while True:
-        s = f_flags.read(8)
-        if not s:
-            break
-
-        flags, = struct.unpack('Q', s)
-        cgino, = struct.unpack('Q', f_cgroup.read(8))
-
-        bit = pfn % 64
-        if not bit:
-            idle_bitmap, = struct.unpack('Q', f_idle.read(8))
-
-        idle = idle_bitmap >> bit & 1
-        pfn += 1
-
-        unevictable = flags >> 18 & 1
-        huge = flags >> 22 & 1
-
-        if idle and not unevictable:
-            nr_idle[cgino] = nr_idle.get(cgino, 0) + (512 if huge else 1)
-
-    f_flags.close()
-    f_cgroup.close()
-    f_idle.close()
-    return nr_idle
-
-
-print "Setting the idle flag for each page..."
-set_idle()
-
-raw_input("Wait until the workload accesses its working set, then press Enter")
-
-print "Counting idle pages..."
-nr_idle = count_idle()
-
-for dir, subdirs, files in os.walk(CGROUP_MOUNT):
-    ino = os.stat(dir)[stat.ST_INO]
-    print dir + ": " + str(nr_idle.get(ino, 0) * 4) + " KB"
+> someone had a refcount comment but it's doing the right thing.
+>
+> Yours,
+> Linus Walleij
