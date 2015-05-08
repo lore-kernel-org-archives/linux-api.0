@@ -1,95 +1,189 @@
-From: Christoffer Dall <christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v3 02/12] KVM: define common __KVM_GUESTDBG_USE_SW/HW_BP
- values
-Date: Fri, 8 May 2015 11:23:46 +0200
-Message-ID: <20150508092346.GB24744@cbox>
-References: <1430929407-3487-1-git-send-email-alex.bennee@linaro.org>
- <1430929407-3487-3-git-send-email-alex.bennee@linaro.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3] manpage: update FALLOC_FL_INSERT_RANGE flag in fallocate
+Date: Fri, 08 May 2015 11:40:10 +0200
+Message-ID: <554C847A.9050709@gmail.com>
+References: <009201d0894f$d87f0890$897d19b0$@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1430929407-3487-3-git-send-email-alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alex =?iso-8859-1?Q?Benn=E9e?= <alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, agraf-l3A5Bk7waGM@public.gmane.org, drjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, zhichao.huang-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org, dahi-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, r65777-KZfg59tc24xl57MIdRCFDg@public.gmane.org, bp-l3A5Bk7waGM@public.gmane.org, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, "maintainer:X86 ARCHITECTURE..." <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Gleb Natapov <gleb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Bharat Bhushan <Bharat.Bhushan-KZfg59tc24xl57MIdRCFDg@public.gmane.org>, Mihai Caraman <mihai.caraman-KZfg59tc24xl57MIdRCFDg@public.gmane.org>, Alexey Kardashevskiy <aik-sLpHqDYs0B2HXe+LvDLADg@public.gmane.org>, Nadav Amit <namit-FrESSTt7Abv7r6psnUbsSmZHpeb/A1Y/@public.gmane.org>, "open list:LINUX FOR POWERPC..." <linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org>, open list <linux-kernel@vger.>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <009201d0894f$d87f0890$897d19b0$@samsung.com>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 06, 2015 at 05:23:17PM +0100, Alex Benn=E9e wrote:
-> Currently x86, powerpc and soon arm64 use the same two architecture
-> specific bits for guest debug support for software and hardware
-> breakpoints. This makes the shared values explicit while leaving the
-> gate open for another architecture to use some other value if they
-> really really want to.
->=20
-> Signed-off-by: Alex Benn=E9e <alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-> Reviewed-by: Andrew Jones <drjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->=20
-> diff --git a/arch/powerpc/include/uapi/asm/kvm.h b/arch/powerpc/inclu=
-de/uapi/asm/kvm.h
-> index ab4d473..1731569 100644
-> --- a/arch/powerpc/include/uapi/asm/kvm.h
-> +++ b/arch/powerpc/include/uapi/asm/kvm.h
-> @@ -310,8 +310,8 @@ struct kvm_guest_debug_arch {
->   * and upper 16 bits are architecture specific. Architecture specifi=
-c defines
->   * that ioctl is for setting hardware breakpoint or software breakpo=
-int.
->   */
-> -#define KVM_GUESTDBG_USE_SW_BP		0x00010000
-> -#define KVM_GUESTDBG_USE_HW_BP		0x00020000
-> +#define KVM_GUESTDBG_USE_SW_BP		__KVM_GUESTDBG_USE_SW_BP
-> +#define KVM_GUESTDBG_USE_HW_BP		__KVM_GUESTDBG_USE_HW_BP
-> =20
->  /* definition of registers in kvm_run */
->  struct kvm_sync_regs {
-> diff --git a/arch/x86/include/uapi/asm/kvm.h b/arch/x86/include/uapi/=
-asm/kvm.h
-> index d7dcef5..1438202 100644
-> --- a/arch/x86/include/uapi/asm/kvm.h
-> +++ b/arch/x86/include/uapi/asm/kvm.h
-> @@ -250,8 +250,8 @@ struct kvm_debug_exit_arch {
->  	__u64 dr7;
->  };
-> =20
-> -#define KVM_GUESTDBG_USE_SW_BP		0x00010000
-> -#define KVM_GUESTDBG_USE_HW_BP		0x00020000
-> +#define KVM_GUESTDBG_USE_SW_BP		__KVM_GUESTDBG_USE_SW_BP
-> +#define KVM_GUESTDBG_USE_HW_BP		__KVM_GUESTDBG_USE_HW_BP
->  #define KVM_GUESTDBG_INJECT_DB		0x00040000
->  #define KVM_GUESTDBG_INJECT_BP		0x00080000
-> =20
-> diff --git a/include/uapi/linux/kvm.h b/include/uapi/linux/kvm.h
-> index 70ac641..3b6252e 100644
-> --- a/include/uapi/linux/kvm.h
-> +++ b/include/uapi/linux/kvm.h
-> @@ -570,8 +570,16 @@ struct kvm_s390_irq_state {
-> =20
->  /* for KVM_SET_GUEST_DEBUG */
-> =20
-> -#define KVM_GUESTDBG_ENABLE		0x00000001
-> -#define KVM_GUESTDBG_SINGLESTEP		0x00000002
-> +#define KVM_GUESTDBG_ENABLE		(1 << 0)
-> +#define KVM_GUESTDBG_SINGLESTEP	(1 << 1)
+Hi Namjae,
+
+> Update FALLOC_FL_INSERT_RANGE flag in fallocate.
+
+Sorry -- I should have said that I already applied your V2 
+patch and made the fix we discussed (and that you add below).
+I just hadn't pushed to Git yet. Done now.
+
+Cheers,
+
+Michael
+
+On 05/08/2015 07:28 AM, Namjae Jeon wrote:
+> Signed-off-by: Namjae Jeon <namjae.jeon-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+> Signed-off-by: Ashish Sangwan <a.sangwan-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+> ---
+>  man2/fallocate.2 | 89 ++++++++++++++++++++++++++++++++++++++++++++++++++++----
+>  1 file changed, 84 insertions(+), 5 deletions(-)
+> 
+> diff --git a/man2/fallocate.2 b/man2/fallocate.2
+> index 0cc1a00..0d31027 100644
+> --- a/man2/fallocate.2
+> +++ b/man2/fallocate.2
+> @@ -228,6 +228,59 @@ ext4, for extent-based files (since Linux 3.15)
+>  .IP *
+>  SMB3 (since Linux 3.17)
+>  .\" commit 30175628bf7f521e9ee31ac98fa6d6fe7441a556
+> +.SS Increasing file space
+> +flag (available since Linux 4.1)
+> +.\" commit dd46c787788d5bf5b974729d43e4c405814a4c7d
+> +Specifying the
+> +.BR FALLOC_FL_INSERT_RANGE
+> +flag in
+> +.I mode
+> +will increase the file space by inserting a hole within the file size without
+> +overwriting any existing data.
+> +The hole will start at
+> +.I offset
+> +and continue for
+> +.I len
+> +bytes.
+> +For inserting hole inside file, the contents of the file starting at
+> +.I offset
+> +will be shifted towards right by
+> +.I len
+> +bytes.
+> +Inserting a hole inside the file will increase the file size by
+> +.I len
+> +bytes.
 > +
-> +/*
-> + * Architecture specific stuff uses the top 16 bits of the field,
-
-s/stuff/<something more specific>/
-
-> + * however there is some shared commonality for the common cases
-> + */
-> +#define __KVM_GUESTDBG_USE_SW_BP	(1 << 16)
-> +#define __KVM_GUESTDBG_USE_HW_BP	(1 << 17)
+> +This mode has the same limitation as
+> +.BR FALLOC_FL_COLLAPSE_RANGE
+> +regarding the
+> +granularity of the operation.
+> +If the granularity requirements are not met,
+> +.BR fallocate ()
+> +will fail with the error
+> +.BR EINVAL.
+> +If the
+> +.I offset
+> +is greater than or equal to the end of file, an error is
+> +returned.
+> +For such type of operations, i.e. inserting a hole at the end of file,
+> +.BR ftruncate(2)
+> +should be used.
+> +In case
+> +.IR offset + len
+> +exceeds the maximum file size, errno will be set to
+> +.B EFBIG.
 > +
-> =20
->  struct kvm_guest_debug {
->  	__u32 control;
+> +No other flags may be specified in
+> +.IR mode
+> +in conjunction with
+> +.BR FALLOC_FL_INSERT_RANGE .
+> +
+> +As of Linux 4.1,
+> +.B FALLOC_FL_INSERT_RANGE
+> +is supported by
+> +XFS.
+> +.\" commit a904b1ca5751faf5ece8600e18cd3b674afcca1b
+>  .SH RETURN VALUE
+>  On success,
+>  .BR fallocate ()
+> @@ -245,6 +298,12 @@ is not a valid file descriptor, or is not opened for writing.
+>  .IR offset + len
+>  exceeds the maximum file size.
+>  .TP
+> +.B EFBIG
+> +.I mode
+> +is
+> +.BR FALLOC_FL_INSERT_RANGE ,
+> +the current file size+len exceeds the maximum file size.
+> +.TP
+>  .B EINTR
+>  A signal was caught during execution.
+>  .TP
+> @@ -273,7 +332,17 @@ reaches or passes the end of the file.
+>  .B EINVAL
+>  .I mode
+>  is
+> -.BR FALLOC_FL_COLLAPSE_RANGE ,
+> +.BR FALLOC_FL_INSERT_RANGE
+> +and the range specified by
+> +.I offset
+> +reaches or passes the end of the file.
+> +.TP
+> +.B EINVAL
+> +.I mode
+> +is
+> +.BR FALLOC_FL_COLLAPSE_RANGE
+> +or
+> +.BR FALLOC_FL_INSERT_RANGE ,
+>  but either
+>  .I offset
+>  or
+> @@ -282,18 +351,24 @@ is not a multiple of the filesystem block size.
+>  .TP
+>  .B EINVAL
+>  .I mode
+> -contains both
+> +contains either of
+>  .B FALLOC_FL_COLLAPSE_RANGE
+> +or
+> +.B FALLOC_FL_INSERT_RANGE
+>  and other flags;
+>  no other flags are permitted with
+> -.BR FALLOC_FL_COLLAPSE_RANGE .
+> +.BR FALLOC_FL_COLLAPSE_RANGE
+> +or
+> +.BR FALLOC_FL_INSERT_RANGE .
+>  .TP
+>  .B EINVAL
+>  .I mode
+>  is
+>  .BR FALLOC_FL_COLLAPSE_RANGE
+>  or
+> -.BR FALLOC_FL_ZERO_RANGE ,
+> +.BR FALLOC_FL_ZERO_RANGE
+> +or
+> +.BR FALLOC_FL_INSERT_RANGE ,
+>  but the file referred to by
+>  .I fd
+>  is not a regular file.
+> @@ -345,6 +420,8 @@ specifies
+>  .BR FALLOC_FL_PUNCH_HOLE
+>  or
+>  .BR FALLOC_FL_COLLAPSE_RANGE
+> +or
+> +.BR FALLOC_FL_INSERT_RANGE
+>  and
+>  the file referred to by
+>  .I fd
+> @@ -363,7 +440,9 @@ refers to a pipe or FIFO.
+>  .B ETXTBSY
+>  .I mode
+>  specifies
+> -.BR FALLOC_FL_COLLAPSE_RANGE ,
+> +.BR FALLOC_FL_COLLAPSE_RANGE
+> +or
+> +.BR FALLOC_FL_INSERT_RANGE ,
+>  but the file referred to by
+>  .IR fd
+>  is currently being executed.
+> 
 
-We sort of left this discussion hanging with me expressing slight
-concern about the usefulness about these defines.
 
-Paolo, what are your thoughts?
-
--Christoffer
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
