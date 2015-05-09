@@ -1,67 +1,56 @@
-From: Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 0/6] support "dataplane" mode for nohz_full
-Date: Sat, 09 May 2015 09:19:43 +0200
-Message-ID: <1431155983.3209.131.camel@gmail.com>
-References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
-	 <20150508141824.797eb0d89d514e39fd30fffe@linux-foundation.org>
-	 <20150508172210.559830a9@gandalf.local.home> <554D428E.6020702@ezchip.com>
-	 <20150508161909.308d60e21f6b83b897174276@linux-foundation.org>
-	 <20150509070538.GA9413@gmail.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH 5/6] nohz: support PR_DATAPLANE_STRICT mode
+Date: Sat, 9 May 2015 00:28:44 -0700
+Message-ID: <CALCETrUoptUPVUxL87jUgry1pFac0rDPpnZ790zDKyK4a0FARA@mail.gmail.com>
+References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com> <1431107927-13998-6-git-send-email-cmetcalf@ezchip.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150509070538.GA9413-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "Srivatsa S. Bhat" <srivatsa.bhat-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1431107927-13998-6-git-send-email-cmetcalf@ezchip.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Chris Metcalf <cmetcalf@ezchip.com>
+Cc: "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Frederic Weisbecker <fweisbec@gmail.com>, Ingo Molnar <mingo@redhat.com>, Rik van Riel <riel@redhat.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Tejun Heo <tj@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Christoph Lameter <cl@linux.com>, Gilad Ben Yossef <giladb@ezchip.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, 2015-05-09 at 09:05 +0200, Ingo Molnar wrote:
-> * Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
-> 
-> > On Fri, 8 May 2015 19:11:10 -0400 Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org> wrote:
-> > 
-> > > On 5/8/2015 5:22 PM, Steven Rostedt wrote:
-> > > > On Fri, 8 May 2015 14:18:24 -0700
-> > > > Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
-> > > >
-> > > >> On Fri, 8 May 2015 13:58:41 -0400 Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org> wrote:
-> > > >>
-> > > >>> A prctl() option (PR_SET_DATAPLANE) is added
-> > > >> Dumb question: what does the term "dataplane" mean in this context?  I
-> > > >> can't see the relationship between those words and what this patch
-> > > >> does.
-> > > > I was thinking the same thing. I haven't gotten around to searching
-> > > > DATAPLANE yet.
-> > > >
-> > > > I would assume we want a name that is more meaningful for what is
-> > > > happening.
-> > > 
-> > > The text in the commit message and the 0/6 cover letter do try to explain
-> > > the concept.  The terminology comes, I think, from networking line cards,
-> > > where the "dataplane" is the part of the application that handles all the
-> > > fast path processing of network packets, and the "control plane" is the part
-> > > that handles routing updates, etc., generally slow-path stuff.  I've probably
-> > > just been using the terms so long they seem normal to me.
-> > > 
-> > > That said, what would be clearer?  NO_HZ_STRICT as a superset of
-> > > NO_HZ_FULL?  Or move away from the NO_HZ terminology a bit; after all,
-> > > we're talking about no interrupts of any kind, and maybe NO_HZ is too
-> > > limited in scope?  So, NO_INTERRUPTS?  USERSPACE_ONLY?  Or look
-> > > to vendors who ship bare-metal runtimes and call it BARE_METAL?
-> > > Borrow the Tilera marketing name and call it ZERO_OVERHEAD?
-> > > 
-> > > Maybe BARE_METAL seems most plausible -- after DATAPLANE, to me,
-> > > of course :-)
-> 
-> 'baremetal' has uses in virtualization speak, so I think that would be 
-> confusing.
-> 
-> > I like NO_INTERRUPTS.  Simple, direct.
-> 
-> NO_HZ_PURE?
+On May 8, 2015 11:44 PM, "Chris Metcalf" <cmetcalf@ezchip.com> wrote:
+>
+> With QUIESCE mode, the task is in principle guaranteed not to be
+> interrupted by the kernel, but only if it behaves.  In particular,
+> if it enters the kernel via system call, page fault, or any of
+> a number of other synchronous traps, it may be unexpectedly
+> exposed to long latencies.  Add a simple flag that puts the process
+> into a state where any such kernel entry is fatal.
+>
+> To allow the state to be entered and exited, we add an internal
+> bit to current->dataplane_flags that is set when prctl() sets the
+> flags.  That way, when we are exiting the kernel after calling
+> prctl() to forbid future kernel exits, we don't get immediately
+> killed.
 
-Hm, coke light, coke zero... OS_LIGHT and OS_ZERO?
+Is there any reason this can't already be addressed in userspace using
+/proc/interrupts or perf_events?  ISTM the real goal here is to detect
+when we screw up and fail to avoid an interrupt, and killing the task
+seems like overkill to me.
 
-	-Mike
+Also, can we please stop further torturing the exit paths?  We have a
+disaster of assembly code that calls into syscall_trace_leave and
+do_notify_resume.  Those functions, in turn, *both* call user_enter
+(WTF?), and on very brief inspection user_enter makes it into the nohz
+code through multiple levels of indirection, which, with these
+patches, has yet another conditionally enabled helper, which does this
+new stuff.  It's getting to be impossible to tell what happens when we
+exit to user space any more.
+
+Also, I think your code is buggy.  There's no particular guarantee
+that user_enter is only called once between sys_prctl and the final
+exit to user mode (see the above WTF), so you might spuriously kill
+the process.
+
+Also, I think that most users will be quite surprised if "strict
+dataplane" code causes any machine check on the system to kill your
+dataplane task.  Similarly, a user accidentally running perf record -a
+probably should have some reasonable semantics.  /proc/interrupts gets
+that right as is.  Sure, MCEs will hurt your RT performance, but Intel
+screwed up the way that MCEs work, so we should make do.
+
+--Andy
