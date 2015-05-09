@@ -1,53 +1,135 @@
-From: Gilad Ben Yossef <giladb@ezchip.com>
-Subject: RE: [PATCH 5/6] nohz: support PR_DATAPLANE_STRICT mode
-Date: Sat, 9 May 2015 10:37:43 +0000
-Message-ID: <AM2PR02MB0417ECD92733D0475C5358CCBDDD0@AM2PR02MB0417.eurprd02.prod.outlook.com>
-References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
- <1431107927-13998-6-git-send-email-cmetcalf@ezchip.com>
- <CALCETrUoptUPVUxL87jUgry1pFac0rDPpnZ790zDKyK4a0FARA@mail.gmail.com>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: [PATCH v3 3/3] proc: add kpageidle file
+Date: Sun, 10 May 2015 00:12:38 +0900
+Message-ID: <20150509151031.GA24141@blaptop>
+References: <cover.1430217477.git.vdavydov@parallels.com>
+ <4c24a6bf2c9711dd4dbb72a43a16eba6867527b7.1430217477.git.vdavydov@parallels.com>
+ <20150429043536.GB11486@blaptop>
+ <20150429091248.GD1694@esperanza>
+ <20150430082531.GD21771@blaptop>
+ <20150430145055.GB17640@esperanza>
+ <20150504031722.GA2768@blaptop>
+ <20150504094938.GB4197@esperanza>
+ <20150504105459.GA19384@blaptop>
+ <20150508095604.GO31732@esperanza>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <CALCETrUoptUPVUxL87jUgry1pFac0rDPpnZ790zDKyK4a0FARA@mail.gmail.com>
-Content-Language: en-US
-Sender: linux-doc-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>, Chris Metcalf <cmetcalf@ezchip.com>
-Cc: "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Frederic Weisbecker <fweisbec@gmail.com>, Ingo Molnar <mingo@redhat.com>, Rik van Riel <riel@redhat.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Tejun Heo <tj@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Christoph Lameter <cl@linux.com>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20150508095604.GO31732@esperanza>
+Sender: owner-linux-mm@kvack.org
+To: Vladimir Davydov <vdavydov@parallels.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org, Rik van Riel <riel@redhat.com>, Hugh Dickins <hughd@google.com>, Christoph Lameter <cl@linux-foundation.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>
 List-Id: linux-api@vger.kernel.org
 
-PiBGcm9tOiBBbmR5IEx1dG9taXJza2kgW21haWx0bzpsdXRvQGFtYWNhcGl0YWwubmV0XQ0KPiBT
-ZW50OiBTYXR1cmRheSwgTWF5IDA5LCAyMDE1IDEwOjI5IEFNDQo+IFRvOiBDaHJpcyBNZXRjYWxm
-DQo+IENjOiBTcml2YXRzYSBTLiBCaGF0OyBQYXVsIEUuIE1jS2VubmV5OyBGcmVkZXJpYyBXZWlz
-YmVja2VyOyBJbmdvIE1vbG5hcjsNCj4gUmlrIHZhbiBSaWVsOyBsaW51eC1kb2NAdmdlci5rZXJu
-ZWwub3JnOyBBbmRyZXcgTW9ydG9uOyBsaW51eC0NCj4ga2VybmVsQHZnZXIua2VybmVsLm9yZzsg
-VGhvbWFzIEdsZWl4bmVyOyBUZWp1biBIZW87IFBldGVyIFppamxzdHJhOyBTdGV2ZW4NCj4gUm9z
-dGVkdDsgQ2hyaXN0b3BoIExhbWV0ZXI7IEdpbGFkIEJlbiBZb3NzZWY7IExpbnV4IEFQSQ0KPiBT
-dWJqZWN0OiBSZTogW1BBVENIIDUvNl0gbm9oejogc3VwcG9ydCBQUl9EQVRBUExBTkVfU1RSSUNU
-IG1vZGUNCj4gDQo+IE9uIE1heSA4LCAyMDE1IDExOjQ0IFBNLCAiQ2hyaXMgTWV0Y2FsZiIgPGNt
-ZXRjYWxmQGV6Y2hpcC5jb20+IHdyb3RlOg0KPiA+DQo+ID4gV2l0aCBRVUlFU0NFIG1vZGUsIHRo
-ZSB0YXNrIGlzIGluIHByaW5jaXBsZSBndWFyYW50ZWVkIG5vdCB0byBiZQ0KPiA+IGludGVycnVw
-dGVkIGJ5IHRoZSBrZXJuZWwsIGJ1dCBvbmx5IGlmIGl0IGJlaGF2ZXMuICBJbiBwYXJ0aWN1bGFy
-LA0KPiA+IGlmIGl0IGVudGVycyB0aGUga2VybmVsIHZpYSBzeXN0ZW0gY2FsbCwgcGFnZSBmYXVs
-dCwgb3IgYW55IG9mDQo+ID4gYSBudW1iZXIgb2Ygb3RoZXIgc3luY2hyb25vdXMgdHJhcHMsIGl0
-IG1heSBiZSB1bmV4cGVjdGVkbHkNCj4gPiBleHBvc2VkIHRvIGxvbmcgbGF0ZW5jaWVzLiAgQWRk
-IGEgc2ltcGxlIGZsYWcgdGhhdCBwdXRzIHRoZSBwcm9jZXNzDQo+ID4gaW50byBhIHN0YXRlIHdo
-ZXJlIGFueSBzdWNoIGtlcm5lbCBlbnRyeSBpcyBmYXRhbC4NCj4gPg0KPiA+IFRvIGFsbG93IHRo
-ZSBzdGF0ZSB0byBiZSBlbnRlcmVkIGFuZCBleGl0ZWQsIHdlIGFkZCBhbiBpbnRlcm5hbA0KPiA+
-IGJpdCB0byBjdXJyZW50LT5kYXRhcGxhbmVfZmxhZ3MgdGhhdCBpcyBzZXQgd2hlbiBwcmN0bCgp
-IHNldHMgdGhlDQo+ID4gZmxhZ3MuICBUaGF0IHdheSwgd2hlbiB3ZSBhcmUgZXhpdGluZyB0aGUg
-a2VybmVsIGFmdGVyIGNhbGxpbmcNCj4gPiBwcmN0bCgpIHRvIGZvcmJpZCBmdXR1cmUga2VybmVs
-IGV4aXRzLCB3ZSBkb24ndCBnZXQgaW1tZWRpYXRlbHkNCj4gPiBraWxsZWQuDQo+IA0KPiBJcyB0
-aGVyZSBhbnkgcmVhc29uIHRoaXMgY2FuJ3QgYWxyZWFkeSBiZSBhZGRyZXNzZWQgaW4gdXNlcnNw
-YWNlIHVzaW5nDQo+IC9wcm9jL2ludGVycnVwdHMgb3IgcGVyZl9ldmVudHM/ICBJU1RNIHRoZSBy
-ZWFsIGdvYWwgaGVyZSBpcyB0byBkZXRlY3QNCj4gd2hlbiB3ZSBzY3JldyB1cCBhbmQgZmFpbCB0
-byBhdm9pZCBhbiBpbnRlcnJ1cHQsIGFuZCBraWxsaW5nIHRoZSB0YXNrDQo+IHNlZW1zIGxpa2Ug
-b3ZlcmtpbGwgdG8gbWUuDQo+IA0KPiBBbHNvLCBjYW4gd2UgcGxlYXNlIHN0b3AgZnVydGhlciB0
-b3J0dXJpbmcgdGhlIGV4aXQgcGF0aHM/ICANClNvLCBJIGRvbid0IGtub3cgaWYgaXQgaXMgYSBw
-cmFjdGljYWwgc3VnZ2VzdGlvbiBvciBub3QsIGJ1dCB3b3VsZCBpdCBiZXR0ZXIvZWFzaWVyIHRv
-IG1hcmsgYSBwZW5kaW5nIHNpZ25hbCBvbiBrZXJuZWwgZW50cnkgZm9yIHRoaXMgY2FzZT8NClRo
-ZSB1cHNpZGVzIEkgc2VlIGlzIHRoYXQgdGhlIHVzZXIgZ2V0cyBoZXIgbm90aWZpY2F0aW9uIChr
-aWxsaW5nIHRoZSB0YXNrIG9yIGp1c3QgbG9nZ2luZyB0aGUgZXZlbnQgaW4gYSBzaWduYWwgaGFu
-ZGxlcikgYW5kIGhvcGVmdWxseSBzaW5jZSByZXR1cm4gdG8gdXNlcnNwYWNlIHdpdGggYSBwZW5k
-aW5nIHNpZ25hbCBpcyBhbHJlYWR5IGhhbmRsZWQgd2UgZG9uJ3QgbmVlZCBuZXcgY29kZSBpbiB0
-aGUgZXhpdCBwYXRoPw0KDQpHaWxhZA0K
+Hello, Vladimir
+
+On Fri, May 08, 2015 at 12:56:04PM +0300, Vladimir Davydov wrote:
+> On Mon, May 04, 2015 at 07:54:59PM +0900, Minchan Kim wrote:
+> > So, I guess once below compiler optimization happens in __page_set_anon_rmap,
+> > it could be corrupt in page_refernced.
+> > 
+> > __page_set_anon_rmap:
+> >         page->mapping = (struct address_space *) anon_vma;
+> >         page->mapping = (struct address_space *)((void *)page_mapping + PAGE_MAPPING_ANON);
+> > 
+> > Because page_referenced checks it with PageAnon which has no memory barrier.
+> > So if above compiler optimization happens, page_referenced can pass the anon
+> > page in rmap_walk_file, not ramp_walk_anon. It's my theory. :)
+> 
+> FWIW
+> 
+> If such splits were possible, we would have bugs all over the kernel
+> IMO. An example is do_wp_page() vs shrink_active_list(). In do_wp_page()
+> we can call page_move_anon_rmap(), which sets page->mapping in exactly
+> the same fashion as above-mentioned __page_set_anon_rmap():
+> 
+> 	anon_vma = (void *) anon_vma + PAGE_MAPPING_ANON;
+> 	page->mapping = (struct address_space *) anon_vma;
+> 
+> The page in question may be on an LRU list, because nowhere in
+> do_wp_page() we remove it from the list, neither do we take any LRU
+> related locks. The page is locked, that's true, but shrink_active_list()
+> calls page_referenced() on an unlocked page, so according to your logic
+> they can race with the latter receiving a page with page->mapping equal
+> to anon_vma w/o PAGE_MAPPING_ANON bit set:
+> 
+> CPU0				CPU1
+> ----				----
+> do_wp_page			shrink_active_list
+>  lock_page			 page_referenced
+> 				  PageAnon->yes, so skip trylock_page
+>  page_move_anon_rmap
+>   page->mapping = anon_vma
+> 				  rmap_walk
+> 				   PageAnon->no
+> 				   rmap_walk_file
+> 				    BUG
+>   page->mapping = page->mapping+PAGE_MAPPING_ANON
+> 
+> However, this does not happen.
+
+Good spot.
+
+However, it doesn't mean it's right so you are okay to rely on it.
+Normally, store tearing is not common and such race would be hard to hit
+but I want to call it as BUG.
+
+Rik wrote the code and commented out.
+
+        "Protected against the rmap code by the page lock"
+
+But unfortunately, page_referenced in shrink_active_list doesn't hold
+a page lock so isn't it a bug? Rik?
+
+Please, read store tearing section in Documentation/memory-barrier.txt.
+If you get confused due to aligned memory, please read this link.
+
+        https://lkml.org/lkml/2014/7/16/262
+
+Other quote from Paul in https://lkml.org/lkml/2015/5/1/229
+"
+..
+If the thing read/written does fit into a machine word and if the location
+read/written is properly aligned, I would be quite surprised if either
+READ_ONCE() or WRITE_ONCE() resulted in any sort of tearing.
+"
+
+I parsed it as that "even store tearing can happen machine word at
+alinged address and that's why WRITE_ONCE is there to prevent it"
+
+If you want to claim GCC doesn't do it, please read below links
+
+        https://lkml.org/lkml/2015/4/16/527
+        http://yarchive.net/comp/linux/ACCESS_ONCE.html
+
+Quote from Linus
+"
+The thing is, you can't _prove_ that the compiler won't do it, especially
+if you end up changing the code later (without thinking about the fact
+that you're loading things without locking).
+
+So the rule is: if you access unlocked values, you use ACCESS_ONCE(). You
+don't say "but it can't matter". Because you simply don't know.
+"
+
+Yeb, I might be paranoid but my point is it might work now on most of
+arch but it seem to be buggy/fragile/subtle because we couldn't prove
+all arch/compiler don't make any trouble. So, intead of adding more
+logics based on fragile, please use right lock model. If lock becomes
+big trouble by overhead, let's fix it(for instance, use WRITE_ONCE for
+update-side and READ_ONCE  for read-side) if I don't miss something.
+
+> 
+> Thanks,
+> Vladimir
+
+-- 
+Kind regards,
+Minchan Kim
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
