@@ -1,70 +1,97 @@
-From: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 0/6] support "dataplane" mode for nohz_full
-Date: Mon, 11 May 2015 15:54:36 -0400
-Message-ID: <555108FC.3060200@ezchip.com>
-References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com> <20150508141824.797eb0d89d514e39fd30fffe@linux-foundation.org> <20150508172210.559830a9@gandalf.local.home> <554D428E.6020702@ezchip.com> <20150508161909.308d60e21f6b83b897174276@linux-foundation.org> <20150509070538.GA9413@gmail.com> <CALCETrXavog018+xLacXeBLaMLjWtqk0bMU5fUzZ+pkwgu7Y3A@mail.gmail.com>
+From: bfields@fieldses.org (J. Bruce Fields)
+Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
+Date: Mon, 11 May 2015 16:36:51 -0400
+Message-ID: <20150511203651.GA23754@fieldses.org>
+References: <1430949612-21356-1-git-send-email-zab@redhat.com>
+ <20150507002617.GJ4327@dastard>
+ <20150507172053.GA659@lenny.home.zabbo.net>
+ <20150508023711.GK4327@dastard>
+ <CALCETrUksu5ZB4QBfC8DMwYO2OFjfPW2eWsTweZGN_gybzcsmw@mail.gmail.com>
+ <554CCBC9.3070706@sandeen.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrXavog018+xLacXeBLaMLjWtqk0bMU5fUzZ+pkwgu7Y3A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <554CCBC9.3070706@sandeen.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Eric Sandeen <sandeen@sandeen.net>
+Cc: Andy Lutomirski <luto@amacapital.net>, Dave Chinner <david@fromorbit.com>, Al Viro <viro@zeniv.linux.org.uk>, Sage Weil <sweil@redhat.com>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Zach Brown <zab@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-(Oops, resending and forcing html off.)
+On Fri, May 08, 2015 at 09:44:25AM -0500, Eric Sandeen wrote:
+> On 5/7/15 10:24 PM, Andy Lutomirski wrote:
+> > On May 8, 2015 8:11 AM, "Dave Chinner" <david@fromorbit.com> wrote:
+> >>
+> >> On Thu, May 07, 2015 at 10:20:53AM -0700, Zach Brown wrote:
+> >>> On Thu, May 07, 2015 at 10:26:17AM +1000, Dave Chinner wrote:
+> >>>> On Wed, May 06, 2015 at 03:00:12PM -0700, Zach Brown wrote:
+> >>>>> Add the O_NOMTIME flag which prevents mtime from being updated which can
+> >>>>> greatly reduce the IO overhead of writes to allocated and initialized
+> >>>>> regions of files.
+> >>>>
+> >>>> Hmmm. How do backup programs now work out if the file has changed
+> >>>> and hence needs copying again? ie. applications using this will
+> >>>> break other critical infrastructure in subtle ways.
+> >>>
+> >>> By using backup infrastructure that doesn't use cmtime.  Like btrfs
+> >>> send/recv.  Or application level backups that know how to do
+> >>> incrementals from metadata in giant database files, say, without
+> >>> walking, comparing, and copying the entire thing.
+> >>
+> >> "Use magical thing that doesn't exist"? Really?
+> >>
+> >> e.g. you can't do incremental backups with tools like xfsdump if
+> >> mtime is not being updated.  The last thing an admin wants when
+> >> doing disaster recovery is to find out that the app started using
+> >> O_NOMTIME as a result of the upgrade they did 6 months ago. Hence
+> >> the last 6 months of production data isn't in the backups despite
+> >> the backup procedure having been extensively tested and verified
+> >> when it was first put in place.
+> >>
+> >>>>> The criteria for using O_NOMTIME is the same as for using O_NOATIME:
+> >>>>> owning the file or having the CAP_FOWNER capability.  If we're not
+> >>>>> comfortable allowing owners to prevent mtime/ctime updates then we
+> >>>>> should add a tunable to allow O_NOMTIME.  Maybe a mount option?
+> >>>>
+> >>>> I dislike "turn off safety for performance" options because Joe
+> >>>> SpeedRacer will always select performance over safety.
+> >>>
+> >>> Well, for ceph there's no safety concern.  They never use cmtime in
+> >>> these files.
+> >>
+> >> Understood.
+> >>
+> >>> So are you suggesting not implementing this
+> >>
+> >> No.
+> >>
+> >>> Or are we talking about adding some speed bumps
+> >>> that ceph can flip on that might give Joe Speedracer pause?
+> >>
+> >> Yes, but not just Joe Speedracer - if it can be turned on silently
+> >> by apps then it's a great big landmine that most users and sysadmins
+> >> will not know about until it is too late.
+> > 
+> > What about programs like tar that explicitly override mtime?  No admin
+> > buy-in is required for that.  Admittedly, that doesn't affect ctime,
+> > nor is it as likely to bite unexpectedly as a nomtime flag.
+> > 
+> > I think it would be reasonably safe if a mount option had to be set to
+> > allow O_NOCMTIME or such.
+> 
+> I was going to suggest the same.  Make infrastructure available for an app
+> to request O_NOMTIME, but a mount option must be set to allow it, so the
+> administrator doesn't get an unhappy surprise at backup-restore time.
+> 
+> (Not a big fan of more twiddly knobs, but that seems to put the control
+> in all the right places).
 
-On 05/09/2015 03:19 AM, Andy Lutomirski wrote:
-> Naming aside, I don't think this should be a per-task flag at all.  We
-> already have way too much overhead per syscall in nohz mode, and it
-> would be nice to get the per-syscall overhead as low as possible.  We
-> should strive, for all tasks, to keep syscall overhead down*and*
-> avoid as many interrupts as possible.
->
-> That being said, I do see a legitimate use for a way to tell the
-> kernel "I'm going to run in userspace for a long time; stay away".
-> But shouldn't that be a single operation, not an ongoing flag?  IOW, I
-> think that we should have a new syscall quiesce() or something rather
-> than a prctl.
+It seems more like a permanent feature of the filesystem than a
+per-mount option: once you've turned off mtime updates you lose
+information that can't be regained after remounting.  A mkfs option
+might make more sense?  But I guess those aren't very generic.
 
-Yes, if all you are concerned about is quiescing the tick, we could
-probably do it as a new syscall.
+(I do hope we can get an O_NOMTIME flag, it will make me smile every
+time I see it....)
 
-I do note that you'd want to try to actually do the quiesce as late as
-possible - in particular, if you just did it in the usual syscall, you
-might miss out on a timer that is set by softirq, or even something
-that happened when you called schedule() on the syscall exit path.
-Doing it as late as we are doing helps to ensure that that doesn't
-happen.  We could still arrange for this semantics by having a new
-quiesce() syscall set a temporary task bit that was cleared on
-return to userspace, but as you pointed out in a different email,
-that gets tricky if you end up doing multiple user_exit() calls on
-your way back to userspace.
-
-More to the point, I think it's actually important to know when an
-application believes it's in userspace-only mode as an actual state
-bit, rather than just during its transitional moment.  If an
-application calls the kernel at an unexpected time (third-party code
-is the usual culprit for our customers, whether it's syscalls, page
-faults, or other things) we would prefer to have the "quiesce"
-semantics stay in force and cause the third-party code to be
-visibly very slow, rather than cause a totally unexpected and
-hard-to-diagnose interrupt show up later as we are still going
-around the loop that we thought was safely userspace-only.
-
-And, for debugging the kernel, it's crazy helpful to have that state
-bit in place: see patch 6/6 in the series for how we can diagnose
-things like "a different core just queued an IPI that will hit a
-dataplane core unexpectedly".  Having that state bit makes this sort
-of thing a trivial check in the kernel and relatively easy to debug.
-
-Finally, I proposed a "strict" mode in patch 5/6 where we kill the
-process if it voluntarily enters the kernel by mistake after saying it
-wasn't going to any more.  To do this requires a state bit, so
-carrying another state bit for "quiesce on user entry" seems pretty
-reasonable.
-
--- 
-Chris Metcalf, EZChip Semiconductor
-http://www.ezchip.com
+--b.
