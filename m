@@ -1,97 +1,224 @@
-From: bfields@fieldses.org (J. Bruce Fields)
-Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
-Date: Mon, 11 May 2015 16:36:51 -0400
-Message-ID: <20150511203651.GA23754@fieldses.org>
-References: <1430949612-21356-1-git-send-email-zab@redhat.com>
- <20150507002617.GJ4327@dastard>
- <20150507172053.GA659@lenny.home.zabbo.net>
- <20150508023711.GK4327@dastard>
- <CALCETrUksu5ZB4QBfC8DMwYO2OFjfPW2eWsTweZGN_gybzcsmw@mail.gmail.com>
- <554CCBC9.3070706@sandeen.net>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH 1/5] selftests: Add futex functional tests
+Date: Mon, 11 May 2015 14:51:26 -0600
+Message-ID: <5551164E.5080409@osg.samsung.com>
+References: <cover.1431121818.git.dvhart@linux.intel.com> <57d921b1c30e8258ca4b2f55637424527317e92f.1431121818.git.dvhart@linux.intel.com> <5550EF8D.8080403@osg.samsung.com> <D1763F31.CC237%dvhart@linux.intel.com> <5550FB2C.1000403@osg.samsung.com> <D17653E0.CC29F%dvhart@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <554CCBC9.3070706@sandeen.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Eric Sandeen <sandeen@sandeen.net>
-Cc: Andy Lutomirski <luto@amacapital.net>, Dave Chinner <david@fromorbit.com>, Al Viro <viro@zeniv.linux.org.uk>, Sage Weil <sweil@redhat.com>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Zach Brown <zab@redhat.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <D17653E0.CC29F%dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 08, 2015 at 09:44:25AM -0500, Eric Sandeen wrote:
-> On 5/7/15 10:24 PM, Andy Lutomirski wrote:
-> > On May 8, 2015 8:11 AM, "Dave Chinner" <david@fromorbit.com> wrote:
-> >>
-> >> On Thu, May 07, 2015 at 10:20:53AM -0700, Zach Brown wrote:
-> >>> On Thu, May 07, 2015 at 10:26:17AM +1000, Dave Chinner wrote:
-> >>>> On Wed, May 06, 2015 at 03:00:12PM -0700, Zach Brown wrote:
-> >>>>> Add the O_NOMTIME flag which prevents mtime from being updated which can
-> >>>>> greatly reduce the IO overhead of writes to allocated and initialized
-> >>>>> regions of files.
-> >>>>
-> >>>> Hmmm. How do backup programs now work out if the file has changed
-> >>>> and hence needs copying again? ie. applications using this will
-> >>>> break other critical infrastructure in subtle ways.
-> >>>
-> >>> By using backup infrastructure that doesn't use cmtime.  Like btrfs
-> >>> send/recv.  Or application level backups that know how to do
-> >>> incrementals from metadata in giant database files, say, without
-> >>> walking, comparing, and copying the entire thing.
-> >>
-> >> "Use magical thing that doesn't exist"? Really?
-> >>
-> >> e.g. you can't do incremental backups with tools like xfsdump if
-> >> mtime is not being updated.  The last thing an admin wants when
-> >> doing disaster recovery is to find out that the app started using
-> >> O_NOMTIME as a result of the upgrade they did 6 months ago. Hence
-> >> the last 6 months of production data isn't in the backups despite
-> >> the backup procedure having been extensively tested and verified
-> >> when it was first put in place.
-> >>
-> >>>>> The criteria for using O_NOMTIME is the same as for using O_NOATIME:
-> >>>>> owning the file or having the CAP_FOWNER capability.  If we're not
-> >>>>> comfortable allowing owners to prevent mtime/ctime updates then we
-> >>>>> should add a tunable to allow O_NOMTIME.  Maybe a mount option?
-> >>>>
-> >>>> I dislike "turn off safety for performance" options because Joe
-> >>>> SpeedRacer will always select performance over safety.
-> >>>
-> >>> Well, for ceph there's no safety concern.  They never use cmtime in
-> >>> these files.
-> >>
-> >> Understood.
-> >>
-> >>> So are you suggesting not implementing this
-> >>
-> >> No.
-> >>
-> >>> Or are we talking about adding some speed bumps
-> >>> that ceph can flip on that might give Joe Speedracer pause?
-> >>
-> >> Yes, but not just Joe Speedracer - if it can be turned on silently
-> >> by apps then it's a great big landmine that most users and sysadmins
-> >> will not know about until it is too late.
-> > 
-> > What about programs like tar that explicitly override mtime?  No admin
-> > buy-in is required for that.  Admittedly, that doesn't affect ctime,
-> > nor is it as likely to bite unexpectedly as a nomtime flag.
-> > 
-> > I think it would be reasonably safe if a mount option had to be set to
-> > allow O_NOCMTIME or such.
-> 
-> I was going to suggest the same.  Make infrastructure available for an app
-> to request O_NOMTIME, but a mount option must be set to allow it, so the
-> administrator doesn't get an unhappy surprise at backup-restore time.
-> 
-> (Not a big fan of more twiddly knobs, but that seems to put the control
-> in all the right places).
+On 05/11/2015 01:47 PM, Darren Hart wrote:
+> On 5/11/15, 11:55 AM, "Shuah Khan" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+>=20
+>> On 05/11/2015 12:22 PM, Darren Hart wrote:
+>>> On 5/11/15, 11:06 AM, "Shuah Khan" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+>>>
+>>>> On 05/08/2015 04:09 PM, Darren Hart wrote:
+>>>>> The futextest testsuite [1] provides functional, stress, and
+>>>>> performance tests for the various futex op codes. Those tests wil=
+l be
+>>>>> of
+>>>>> more use to futex developers if they are included with the kernel
+>>>>> source.
+>>>>>
+>>>>> Copy the core infrastructure and the functional tests into selfte=
+sts,
+>>>>> but adapt them for inclusion in the kernel:
+>>>>>
+>>>>> - Update the Makefile to include the run_tests target, remove
+>>>>> reference
+>>>>>   to the performance and stress tests from the contributed source=
+s.
+>>>>> - Replace my dead IBM email address with my current Intel email
+>>>>> address.
+>>>>> - Remove the warrantee and write-to paragraphs from the license
+>>>>> blurbs.
+>>>>> - Remove the NAME section as the filename is easily determined. ;=
+-)
+>>>>> - Make the whitespace usage consistent in a couple of places.
+>>>>> - Cleanup various CodingStyle violations.
+>>>>>
+>>>>> A future effort will explore moving the performance and stress te=
+sts
+>>>>> into the kernel.
+>>>>>
+>>>>> 1. http://git.kernel.org/cgit/linux/kernel/git/dvhart/futextest.g=
+it
+>>>>>
+>>>>> Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+>>>>> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>>>>> Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
+>>>>> Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+>>>>> Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+>>>>> Cc: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
+>>>>> Cc: KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
+>>>>> Signed-off-by: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+>>>>> ---
+>>>>
+>>>> Daren,
+>>>>
+>>>> I am seeing
+>>>>
+>>>> fatal: cannot convert from y to UTF-8
+>>>>
+>>>> when I try to apply the patch. Did you use git send-email?
+>>>
+>>> Hi Shuah,
+>>>
+>>> I've seen that from one of my contributors earlier this month as we=
+ll. I
+>>> dropped the Content... Header and it applied without problems.
+>>>
+>>> I created the patch using git format-patch and then sent them using=
+ git
+>>> send-email - via a script I've been using for years now...
+>>>
+>>> Checking the files locally:
+>>> $ file *
+>>> 0000-cover-letter.patch:                                         AS=
+CII
+>>> text
+>>> 0001-selftests-Add-futex-functional-tests.patch:                 un=
+ified
+>>> diff output, UTF-8 Unicode text
+>>> 0002-selftest-futex-Update-Makefile-to-use-lib.mk.patch:         un=
+ified
+>>> diff output, ASCII text
+>>> 0003-selftest-futex-Increment-ksft-pass-and-fail-counters.patch: un=
+ified
+>>> diff output, ASCII text
+>>> 0004-selftest-Add-futex-tests-to-the-top-level-Makefile.patch:   un=
+ified
+>>> diff output, ASCII text
+>>> 0005-kselftest-Add-exit-code-defines.patch:                      un=
+ified
+>>> diff output, ASCII text
+>>>
+>>>
+>>> This shows that only the first in UTF-8 and the rest are ASCII. I
+>>> presume
+>>> this is due to the Copyright notices in the original files:
+>>>
+>>> Copyright =A9 International Business Machines  Corp., 2006-2008
+>>>
+>>> Which use =A9 instead of (C). I just checked and there are 545 inst=
+ances
+>>> of
+>>> =A9 in the kernel itself, so this should not present a problem.
+>>>
+>>> I apologize for the glitch in applying. If you use the pull request=
+ I
+>>> included that will avoid the mail transport issues, and I will be s=
+ure
+>>> to
+>>> fix my scripts to avoid the issue in the future.
+>>>
+>>> If you want to use the patches directly, please have a look at 1 of=
+ 5
+>>> and
+>>> just remove the "Content..." header, and I think you'll find "git a=
+m"
+>>> will
+>>> apply it without complaint.
+>>>
+>>
+>> Hi Daren,
+>>
+>> Removing the Content header got me past the utf error. However, git =
+am
+>> complains:
+>>
+>> git am --signoff
+>> ../4.2_patches/futex_tests/PATCH_1_5selftestsAddfutexfunctionaltests=
+=2Embox
+>> Applying: selftests: Add futex functional tests
+>> /mnt/data/lkml/linux-kselftest/.git/rebase-apply/patch:1457: new bla=
+nk
+>> line at EOF.
+>> +
+>> warning: 1 line adds whitespace errors.
+>>
+>> Could you look into these. Rest of the patches applied fine.
+>=20
+> Hi Shuah,
+>=20
+> This was due to a newline at the end of:
+> tools/testing/selftests/futex/functional/run.sh
+>=20
+> Which unfortunately checkpatch.pl doesn't catch. My fault for not app=
+lying
+> the series from the generated patches first. Sorry for the hassle.
+>=20
+> I have corrected this in the first patch and pushed v3 of the series =
+to:
+>=20
+> git://git.infradead.org/users/dvhart/linux.git futextest-v3
+>=20
+>=20
+> $ git diff infradead/futextest-v2 infradead/futextest-v3
+> diff --git a/tools/testing/selftests/futex/functional/run.sh
+> b/tools/testing/selftests/futex/functional/run.sh
+> index 46827a8..e87dbe2 100755
+> --- a/tools/testing/selftests/futex/functional/run.sh
+> +++ b/tools/testing/selftests/futex/functional/run.sh
+> @@ -77,4 +77,3 @@ echo
+>  echo
+>  ./futex_wait_uninitialized_heap $COLOR
+>  ./futex_wait_private_mapped_file $COLOR
+> -
+>=20
+>=20
 
-It seems more like a permanent feature of the filesystem than a
-per-mount option: once you've turned off mtime updates you lose
-information that can't be regained after remounting.  A mkfs option
-might make more sense?  But I guess those aren't very generic.
+No need for a new pull request. Have you seen these errors before:
 
-(I do hope we can get an O_NOMTIME flag, it will make me smile every
-time I see it....)
+make[2]: Entering directory
+'/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex'
+for DIR in functional; do make -C $DIR all ; done
+make[3]: Entering directory
+'/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functiona=
+l'
+gcc  -g -O2 -Wall -D_GNU_SOURCE -I../include -I../../   -lpthread -lrt
+futex_requeue_pi.c ../include/futextest.h   -o futex_requeue_pi
+/tmp/cc2UgUVs.o: In function `create_rt_thread':
+/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functional=
+/futex_requeue_pi.c:102:
+undefined reference to `pthread_create'
+/tmp/cc2UgUVs.o: In function `unit_test':
+/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functional=
+/futex_requeue_pi.c:342:
+undefined reference to `pthread_join'
+/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functional=
+/futex_requeue_pi.c:347:
+undefined reference to `pthread_join'
+/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functional=
+/futex_requeue_pi.c:346:
+undefined reference to `pthread_join'
+collect2: error: ld returned 1 exit status
+<builtin>: recipe for target 'futex_requeue_pi' failed
+make[3]: *** [futex_requeue_pi] Error 1
+make[3]: Leaving directory
+'/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functiona=
+l'
+Makefile:7: recipe for target 'all' failed
 
---b.
+I am running make kselftest target when I saw the above build failures.
+kselftest run doesn't fail which is good, however futex tests won't
+run with this failure.
+
+
+thanks,
+-- Shuah
+
+
+--=20
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
