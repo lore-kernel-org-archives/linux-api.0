@@ -1,34 +1,100 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH 0/6] support "dataplane" mode for nohz_full
-Date: Mon, 11 May 2015 10:27:44 -0700
-Message-ID: <20150511102744.9ebb2d05a7e8b457d03430bf@linux-foundation.org>
-References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
-	<20150508141824.797eb0d89d514e39fd30fffe@linux-foundation.org>
-	<20150508172210.559830a9@gandalf.local.home>
-	<554D428E.6020702@ezchip.com>
-	<20150508161909.308d60e21f6b83b897174276@linux-foundation.org>
-	<20150509070538.GA9413@gmail.com>
-	<20150511085759.71deeb64@gandalf.local.home>
-	<20150511171916.GN6776@linux.vnet.ibm.com>
+From: Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>
+Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
+Date: Mon, 11 May 2015 10:30:58 -0700 (PDT)
+Message-ID: <alpine.DEB.2.00.1505111020120.28239@cobra.newdream.net>
+References: <1430949612-21356-1-git-send-email-zab@redhat.com> <20150507002617.GJ4327@dastard> <20150507172053.GA659@lenny.home.zabbo.net> <alpine.DEB.2.00.1505071752520.28239@cobra.newdream.net> <CAHQdGtQjMHA8rVPkggB2zMz=k3O667+APH_1EY_2FtYmHL7-hw@mail.gmail.com>
+ <20150508221325.GM4327@dastard> <alpine.DEB.2.00.1505081517470.28239@cobra.newdream.net> <CAHQdGtTFTN2XuvmarFZ9HPQV=cuhh7FosdHSrJME_U4htr=i8w@mail.gmail.com> <20150511073103.GO4327@dastard> <alpine.DEB.2.00.1505110925150.28239@cobra.newdream.net>
+ <CAHQdGtT3rCf-ycAYw-=7HGaemg1+HfY8sw3+kb54VHONxDyP3w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20150511171916.GN6776@linux.vnet.ibm.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: paulmck@linux.vnet.ibm.com
-Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Chris Metcalf <cmetcalf@ezchip.com>, Gilad Ben Yossef <giladb@ezchip.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAHQdGtT3rCf-ycAYw-=7HGaemg1+HfY8sw3+kb54VHONxDyP3w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>
+Cc: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 11 May 2015 10:19:16 -0700 "Paul E. McKenney" <paulmck@linux.vnet.ibm.com> wrote:
-
-> On Mon, May 11, 2015 at 08:57:59AM -0400, Steven Rostedt wrote:
-> > 
-> > NO_HZ_LEAVE_ME_THE_FSCK_ALONE!
+On Mon, 11 May 2015, Trond Myklebust wrote:
+> On Mon, May 11, 2015 at 12:39 PM, Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org> wrote:
+> > On Mon, 11 May 2015, Dave Chinner wrote:
+> >> On Sun, May 10, 2015 at 07:13:24PM -0400, Trond Myklebust wrote:
+> >> > On Fri, May 8, 2015 at 6:24 PM, Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org> wrote:
+> >> > > I'm sure you realize what we're try to achieve is the same "invisible IO"
+> >> > > that the XFS open by handle ioctls do by default.  Would you be more
+> >> > > comfortable if this option where only available to the generic
+> >> > > open_by_handle syscall, and not to open(2)?
+> >> >
+> >> > It should be an ioctl(). It has no business being part of
+> >> > open_by_handle either, since that is another generic interface.
+> >
+> > Our use-case doesn't make sense on network file systems, but it does on
+> > any reasonably featureful local filesystem, and the goal is to be generic
+> > there.  If mtime is critical to a network file system's consistency it
+> > seems pretty reasonable to disallow/ignore it for just that file system
+> > (e.g., by masking off the flag at open time), as others won't have that
+> > same problem (cephfs doesn't, for example).
+> >
+> > Perhaps making each fs opt-in instead of handling it in a generic path
+> > would alleviate this concern?
 > 
-> NO_HZ_OVERFLOWING?
+> The issue isn't whether or not you have a network file system, it's
+> whether or not you want users to be able to manage data. mtime isn't
+> useful for the application (which knows whether or not it has changed
+> the file) or for the filesystem (ditto). It exists, rather, in order
+> to enable data management by users and other applications, letting
+> them know whether or not the data contents of the file have changed,
+> and when that change occurred.
 
-Actually, "NO_HZ" shouldn't appear in the name at all.  The objective
-is to permit userspace to execute without interruption.  NO_HZ is a
-part of that, as is NO_INTERRUPTS.  The "NO_HZ" thing is a historical
-artifact from an early partial implementation.
+Agreed.
+ 
+> If you are able to guarantee that your users don't care about that,
+> then fine, but that would be a very special case that doesn't fit the
+> way that most data centres are run. Backups are one case where mtime
+> matters, tiering and archiving is another.
+
+This is true, although I argue it is becoming increasingly common for the 
+data management (including backups and so forth) to be layered not on top 
+of the POSIX file system but on something higher up in the stack. This is 
+true of pretty much any distributed system (ceph, cassandra, mongo, etc., 
+and I assume commercial databases like Oracle, too) where backups, 
+replication, and any other DR strategies need to be orchestrated across 
+nodes to be consistent--simply copying files out from underneath them is 
+already insufficient and a recipe for disaster.
+
+There is a growing category of applications that can benefit from this 
+capability...
+
+> Neither of these examples
+> cases are under the control of the application that calls
+> open(O_NOMTIME).
+
+Wouldn't a mount option (e.g., allow_nomtime) address this concern?  Only 
+nodes provisioned explicitly to run these systems would be enable this 
+option.
+
+> >> I'm happy for it to be an ioctl interface - even an XFS specific
+> >> interface if you want to go that route, Sage - and it probably
+> >> should emit a warning to syslog first time it is used so there is
+> >> trace for bug triage purposes. i.e. we know the app is not using
+> >> mtime updates, so bug reports that are the result of mtime
+> >> mishandling don't result in large amounts of wasted developer time
+> >> trying to understand them...
+> >
+> > A warning on using the interface (or when mounting with user_nomtime)
+> > sounds reasonable.
+> >
+> > I'd rather not make this XFS specific as other local filesystmes (ext4,
+> > f2fs, possibly btrfs) would similarly benefit.  (And if we want to target
+> > XFS specifically the existing XFS open-by-handle ioctl is sufficient as it
+> > already does O_NOMTIME unconditionally.)
+> 
+> Lack of a namespace, doesn't imply that you don't want to manage the
+> data. The whole point of using object storage instead of plain old
+> block storage is to be able to provide whatever metadata you still
+> need in order to manage the object.
+
+Yeah, agreed--this is presumably why open_by_handle(2) (which is what we'd 
+like to use) doesn't assume O_NOMTIME.
+
+Thanks!
+sage
