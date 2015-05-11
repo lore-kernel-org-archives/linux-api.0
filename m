@@ -1,108 +1,58 @@
-From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Subject: [PATCHv2 2/2] x86: Opt into HAVE_COPY_THREAD_TLS, for both 32-bit
- and 64-bit
-Date: Mon, 11 May 2015 12:30:46 -0700
-Message-ID: <20150511193045.GA11411@jtriplet-mobl1>
+From: Josh Triplett <josh@joshtriplett.org>
+Subject: Re: [PATCH 1/2] clone: Support passing tls argument via C rather
+ than pt_regs magic
+Date: Mon, 11 May 2015 12:30:51 -0700
+Message-ID: <20150511193050.GA11002@jtriplet-mobl1>
+References: <20150421174711.GA5127@jtriplet-mobl1>
+ <alpine.DEB.2.11.1505052050100.4225@nanos>
+ <20150505231221.GB16525@cloud>
+ <20150511101313.GA18058@gmail.com>
+ <20150511135526.GA6130@x>
+ <20150511140043.GB5354@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+In-Reply-To: <20150511140043.GB5354@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ingo Molnar <mingo@kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-For 32-bit userspace on a 64-bit kernel, this requires modifying
-stub32_clone to actually swap the appropriate arguments to match
-CONFIG_CLONE_BACKWARDS, rather than just leaving the C argument for tls
-broken.
+On Mon, May 11, 2015 at 04:00:43PM +0200, Ingo Molnar wrote:
+> 
+> * Josh Triplett <josh@joshtriplett.org> wrote:
+> 
+> > On Mon, May 11, 2015 at 12:13:13PM +0200, Ingo Molnar wrote:
+> > > 
+> > > * josh@joshtriplett.org <josh@joshtriplett.org> wrote:
+> > > 
+> > > > On Tue, May 05, 2015 at 08:53:03PM +0200, Thomas Gleixner wrote:
+> > > > > On Tue, 21 Apr 2015, Josh Triplett wrote:
+> > > > > > 
+> > > > > > Signed-off-by: Josh Triplett <josh@joshtriplett.org>
+> > > > > > Signed-off-by: Thiago Macieira <thiago.macieira@intel.com>
+> > > > > 
+> > > > > Can you please clarify that SOB chain? It does not make any sense.
+> > > > 
+> > > > Co-authored patch.  We both worked on it together, and sadly git 
+> > > > doesn't support a commit with multiple authors, so this is the next 
+> > > > best thing.
+> > > 
+> > > No, this is not a valid SOB chain.
+> > > 
+> > > For 'co authored' patches you can add credits either to the file, 
+> > > as two copyright lines, or via the changelog, no need to mess up 
+> > > the SOB chain for that.
+> > 
+> > Fine, I'll write it another way.
+> > 
+> > Do you see any other issues with the patch other than the signoffs?
+> 
+> Looks good to me, but I have not looked very deeply ...
 
-Patch co-authored by Josh Triplett and Thiago Macieira.
+I sent out a v2 with the co-author information moved from the signoffs
+to the commit message.  If it looks reasonable to you, can you take it
+through the tip tree please?
 
-Signed-off-by: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Acked-by: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
----
- arch/x86/Kconfig             | 1 +
- arch/x86/ia32/ia32entry.S    | 2 +-
- arch/x86/kernel/process_32.c | 6 +++---
- arch/x86/kernel/process_64.c | 8 ++++----
- 4 files changed, 9 insertions(+), 8 deletions(-)
-
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index b7d31ca..4960b0d 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -124,6 +124,7 @@ config X86
- 	select MODULES_USE_ELF_REL if X86_32
- 	select MODULES_USE_ELF_RELA if X86_64
- 	select CLONE_BACKWARDS if X86_32
-+	select HAVE_COPY_THREAD_TLS
- 	select ARCH_USE_BUILTIN_BSWAP
- 	select ARCH_USE_QUEUE_RWLOCK
- 	select OLD_SIGSUSPEND3 if X86_32 || IA32_EMULATION
-diff --git a/arch/x86/ia32/ia32entry.S b/arch/x86/ia32/ia32entry.S
-index 156ebca..0286735 100644
---- a/arch/x86/ia32/ia32entry.S
-+++ b/arch/x86/ia32/ia32entry.S
-@@ -487,7 +487,7 @@ GLOBAL(\label)
- 	ALIGN
- GLOBAL(stub32_clone)
- 	leaq sys_clone(%rip),%rax
--	mov	%r8, %rcx
-+	xchg %r8, %rcx
- 	jmp  ia32_ptregs_common	
- 
- 	ALIGN
-diff --git a/arch/x86/kernel/process_32.c b/arch/x86/kernel/process_32.c
-index 603c4f9..ead28ff 100644
---- a/arch/x86/kernel/process_32.c
-+++ b/arch/x86/kernel/process_32.c
-@@ -129,8 +129,8 @@ void release_thread(struct task_struct *dead_task)
- 	release_vm86_irqs(dead_task);
- }
- 
--int copy_thread(unsigned long clone_flags, unsigned long sp,
--	unsigned long arg, struct task_struct *p)
-+int copy_thread_tls(unsigned long clone_flags, unsigned long sp,
-+	unsigned long arg, struct task_struct *p, unsigned long tls)
- {
- 	struct pt_regs *childregs = task_pt_regs(p);
- 	struct task_struct *tsk;
-@@ -185,7 +185,7 @@ int copy_thread(unsigned long clone_flags, unsigned long sp,
- 	 */
- 	if (clone_flags & CLONE_SETTLS)
- 		err = do_set_thread_area(p, -1,
--			(struct user_desc __user *)childregs->si, 0);
-+			(struct user_desc __user *)tls, 0);
- 
- 	if (err && p->thread.io_bitmap_ptr) {
- 		kfree(p->thread.io_bitmap_ptr);
-diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
-index 67fcc43..c69cabc 100644
---- a/arch/x86/kernel/process_64.c
-+++ b/arch/x86/kernel/process_64.c
-@@ -151,8 +151,8 @@ static inline u32 read_32bit_tls(struct task_struct *t, int tls)
- 	return get_desc_base(&t->thread.tls_array[tls]);
- }
- 
--int copy_thread(unsigned long clone_flags, unsigned long sp,
--		unsigned long arg, struct task_struct *p)
-+int copy_thread_tls(unsigned long clone_flags, unsigned long sp,
-+		unsigned long arg, struct task_struct *p, unsigned long tls)
- {
- 	int err;
- 	struct pt_regs *childregs;
-@@ -209,10 +209,10 @@ int copy_thread(unsigned long clone_flags, unsigned long sp,
- #ifdef CONFIG_IA32_EMULATION
- 		if (test_thread_flag(TIF_IA32))
- 			err = do_set_thread_area(p, -1,
--				(struct user_desc __user *)childregs->si, 0);
-+				(struct user_desc __user *)tls, 0);
- 		else
- #endif
--			err = do_arch_prctl(p, ARCH_SET_FS, childregs->r8);
-+			err = do_arch_prctl(p, ARCH_SET_FS, tls);
- 		if (err)
- 			goto out;
- 	}
--- 
-2.1.4
+- Josh Triplett
