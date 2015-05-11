@@ -1,83 +1,51 @@
-From: Trond Myklebust <trond.myklebust@primarydata.com>
-Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
-Date: Mon, 11 May 2015 13:12:32 -0400
-Message-ID: <CAHQdGtT3rCf-ycAYw-=7HGaemg1+HfY8sw3+kb54VHONxDyP3w@mail.gmail.com>
-References: <1430949612-21356-1-git-send-email-zab@redhat.com>
-	<20150507002617.GJ4327@dastard>
-	<20150507172053.GA659@lenny.home.zabbo.net>
-	<alpine.DEB.2.00.1505071752520.28239@cobra.newdream.net>
-	<CAHQdGtQjMHA8rVPkggB2zMz=k3O667+APH_1EY_2FtYmHL7-hw@mail.gmail.com>
-	<20150508221325.GM4327@dastard>
-	<alpine.DEB.2.00.1505081517470.28239@cobra.newdream.net>
-	<CAHQdGtTFTN2XuvmarFZ9HPQV=cuhh7FosdHSrJME_U4htr=i8w@mail.gmail.com>
-	<20150511073103.GO4327@dastard>
-	<alpine.DEB.2.00.1505110925150.28239@cobra.newdream.net>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [PATCH 0/6] support "dataplane" mode for nohz_full
+Date: Mon, 11 May 2015 10:19:16 -0700
+Message-ID: <20150511171916.GN6776@linux.vnet.ibm.com>
+References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
+ <20150508141824.797eb0d89d514e39fd30fffe@linux-foundation.org>
+ <20150508172210.559830a9@gandalf.local.home>
+ <554D428E.6020702@ezchip.com>
+ <20150508161909.308d60e21f6b83b897174276@linux-foundation.org>
+ <20150509070538.GA9413@gmail.com>
+ <20150511085759.71deeb64@gandalf.local.home>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.00.1505110925150.28239@cobra.newdream.net>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Sage Weil <sage@newdream.net>
-Cc: Dave Chinner <david@fromorbit.com>, Zach Brown <zab@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API Mailing List <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150511085759.71deeb64@gandalf.local.home>
+Sender: linux-doc-owner@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Cc: Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Chris Metcalf <cmetcalf@ezchip.com>, Gilad Ben Yossef <giladb@ezchip.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 11, 2015 at 12:39 PM, Sage Weil <sage@newdream.net> wrote:
-> On Mon, 11 May 2015, Dave Chinner wrote:
->> On Sun, May 10, 2015 at 07:13:24PM -0400, Trond Myklebust wrote:
->> > On Fri, May 8, 2015 at 6:24 PM, Sage Weil <sage@newdream.net> wrote:
->> > > I'm sure you realize what we're try to achieve is the same "invisible IO"
->> > > that the XFS open by handle ioctls do by default.  Would you be more
->> > > comfortable if this option where only available to the generic
->> > > open_by_handle syscall, and not to open(2)?
->> >
->> > It should be an ioctl(). It has no business being part of
->> > open_by_handle either, since that is another generic interface.
->
-> Our use-case doesn't make sense on network file systems, but it does on
-> any reasonably featureful local filesystem, and the goal is to be generic
-> there.  If mtime is critical to a network file system's consistency it
-> seems pretty reasonable to disallow/ignore it for just that file system
-> (e.g., by masking off the flag at open time), as others won't have that
-> same problem (cephfs doesn't, for example).
->
-> Perhaps making each fs opt-in instead of handling it in a generic path
-> would alleviate this concern?
+On Mon, May 11, 2015 at 08:57:59AM -0400, Steven Rostedt wrote:
+> 
+> NO_HZ_LEAVE_ME_THE_FSCK_ALONE!
 
-The issue isn't whether or not you have a network file system, it's
-whether or not you want users to be able to manage data. mtime isn't
-useful for the application (which knows whether or not it has changed
-the file) or for the filesystem (ditto). It exists, rather, in order
-to enable data management by users and other applications, letting
-them know whether or not the data contents of the file have changed,
-and when that change occurred.
+NO_HZ_OVERFLOWING?
 
-If you are able to guarantee that your users don't care about that,
-then fine, but that would be a very special case that doesn't fit the
-way that most data centres are run. Backups are one case where mtime
-matters, tiering and archiving is another. Neither of these examples
-cases are under the control of the application that calls
-open(O_NOMTIME).
+Kconfig naming controversy aside, I believe this patchset is addressing
+a real need.  Might need additional adjustment, but something useful.
 
->> I'm happy for it to be an ioctl interface - even an XFS specific
->> interface if you want to go that route, Sage - and it probably
->> should emit a warning to syslog first time it is used so there is
->> trace for bug triage purposes. i.e. we know the app is not using
->> mtime updates, so bug reports that are the result of mtime
->> mishandling don't result in large amounts of wasted developer time
->> trying to understand them...
->
-> A warning on using the interface (or when mounting with user_nomtime)
-> sounds reasonable.
->
-> I'd rather not make this XFS specific as other local filesystmes (ext4,
-> f2fs, possibly btrfs) would similarly benefit.  (And if we want to target
-> XFS specifically the existing XFS open-by-handle ioctl is sufficient as it
-> already does O_NOMTIME unconditionally.)
+							Thanx, Paul
 
-Lack of a namespace, doesn't imply that you don't want to manage the
-data. The whole point of using object storage instead of plain old
-block storage is to be able to provide whatever metadata you still
-need in order to manage the object.
+> On Sat, 9 May 2015 09:05:38 +0200
+> Ingo Molnar <mingo@kernel.org> wrote:
+> 
+> > So I think we should either rename NO_HZ_FULL to NO_HZ_PURE, or keep 
+> > it at NO_HZ_FULL: because the intention of NO_HZ_FULL was always to be 
+> > such a 'zero overhead' mode of operation, where if user-space runs, it 
+> > won't get interrupted in any way.
+> 
+> 
+> All kidding aside, I think this is the real answer. We don't need a new
+> NO_HZ, we need to make NO_HZ_FULL work. Right now it doesn't do exactly
+> what it was created to do. That should be fixed.
+> 
+> Please lets get NO_HZ_FULL up to par. That should be the main focus.
+> 
+> -- Steve
+> 
 
-Cheers
-  Trond
