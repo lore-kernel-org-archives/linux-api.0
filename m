@@ -1,63 +1,35 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
-Subject: Re: [PATCH 0/6] support "dataplane" mode for nohz_full
-Date: Mon, 11 May 2015 17:36:04 +0200
-Message-ID: <20150511153602.GA32512@lerouge>
-References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
- <20150508141824.797eb0d89d514e39fd30fffe@linux-foundation.org>
- <20150508172210.559830a9@gandalf.local.home>
- <554D428E.6020702@ezchip.com>
- <20150508161909.308d60e21f6b83b897174276@linux-foundation.org>
- <20150509070538.GA9413@gmail.com>
- <20150511085759.71deeb64@gandalf.local.home>
+From: Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>
+Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
+Date: Mon, 11 May 2015 09:24:09 -0700 (PDT)
+Message-ID: <alpine.DEB.2.00.1505110920520.28239@cobra.newdream.net>
+References: <1430949612-21356-1-git-send-email-zab@redhat.com> <20150507002617.GJ4327@dastard> <20150507172053.GA659@lenny.home.zabbo.net> <alpine.DEB.2.00.1505071752520.28239@cobra.newdream.net> <CAHQdGtQjMHA8rVPkggB2zMz=k3O667+APH_1EY_2FtYmHL7-hw@mail.gmail.com>
+ <20150508221325.GM4327@dastard> <alpine.DEB.2.00.1505081517470.28239@cobra.newdream.net> <CAHQdGtTFTN2XuvmarFZ9HPQV=cuhh7FosdHSrJME_U4htr=i8w@mail.gmail.com> <20150511144719.GA14088@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150511085759.71deeb64@gandalf.local.home>
-Sender: linux-doc-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Chris Metcalf <cmetcalf@ezchip.com>, Gilad Ben Yossef <giladb@ezchip.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150511144719.GA14088-AKGzg7BKzIDYtjvyW6yDsg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Cc: Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 11, 2015 at 08:57:59AM -0400, Steven Rostedt wrote:
+On Mon, 11 May 2015, Theodore Ts'o wrote:
+> On Sun, May 10, 2015 at 07:13:24PM -0400, Trond Myklebust wrote:
+> > That makes it completely non-generic though. By putting this in the
+> > VFS, you are giving applications a loaded gun that is pointed straight
+> > at the application user's head.
 > 
-> NO_HZ_LEAVE_ME_THE_FSCK_ALONE!
-> 
-> 
-> On Sat, 9 May 2015 09:05:38 +0200
-> Ingo Molnar <mingo@kernel.org> wrote:
->  
-> > So I think we should either rename NO_HZ_FULL to NO_HZ_PURE, or keep 
-> > it at NO_HZ_FULL: because the intention of NO_HZ_FULL was always to be 
-> > such a 'zero overhead' mode of operation, where if user-space runs, it 
-> > won't get interrupted in any way.
-> 
-> 
-> All kidding aside, I think this is the real answer. We don't need a new
-> NO_HZ, we need to make NO_HZ_FULL work. Right now it doesn't do exactly
-> what it was created to do. That should be fixed.
-> 
-> Please lets get NO_HZ_FULL up to par. That should be the main focus.
+> Let me re-ask the question that I asked last week (and was apparently
+> ignored).  Why not trying to use the lazytime feature instead of
+> pointing a head straight at the application's --- and system
+> administrators' --- heads?
 
-Now if we can achieve to make NO_HZ_FULL behave in a specific way
-that fits everyone's usecase, I'll be happy.
+Sorry Ted, I thought I responded already.
 
-But some people may expect hard isolation requirement (Real Time, deterministic
-latency) and others softer isolation (HPC, only interested in performance, can
-live with one rare random tick, so no need to loop before returning to userspace
-until we have the no-noise guarantee).
+The goal is to avoid inode writeout entirely when we can, and 
+as I understand it lazytime will still force writeout before the inode 
+is dropped from the cache.  In systems like Ceph in particular, the 
+IOs can be spread across lots of files, so simply deferring writeout 
+doesn't always help.
 
-I expect some Real Time users may want this kind of dataplane mode where a syscall
-or whatever sleeps until the system is ready to provide the guarantee that no
-disturbance is going to happen for a given time. I'm not sure HPC users are interested
-in that.
-
-In fact it goes along the fact that NO_HZ_FULL was really only supposed to be about
-the tick and now people are introducing more and more kernel default presetting that
-assume NO_HZ_FULL implies ISOLATION which is about all kind of noise (tick, tasks, irqs,
-...). Which is true but what kind of ISOLATION?
-
-Probably NO_HZ_FULL should really only be about stopping the tick then some sort
-of CONFIG_ISOLATION would drive the kind of isolation we are interested in
-and hereby the behaviour of NO_HZ_FULL, workqueues, timers, tasks affinity, irqs
-affinity, dataplane mode, ...
+sage
