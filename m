@@ -1,281 +1,188 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH 1/5] selftests: Add futex functional tests
-Date: Mon, 11 May 2015 16:21:58 -0600
-Message-ID: <55512B86.2040900@osg.samsung.com>
-References: <cover.1431121818.git.dvhart@linux.intel.com> <57d921b1c30e8258ca4b2f55637424527317e92f.1431121818.git.dvhart@linux.intel.com> <5550EF8D.8080403@osg.samsung.com> <D1763F31.CC237%dvhart@linux.intel.com> <5550FB2C.1000403@osg.samsung.com> <D17653E0.CC29F%dvhart@linux.intel.com> <5551164E.5080409@osg.samsung.com> <D17670E1.CC354%dvhart@linux.intel.com> <55512B54.50304@osg.samsung.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH 5/6] nohz: support PR_DATAPLANE_STRICT mode
+Date: Mon, 11 May 2015 15:28:35 -0700
+Message-ID: <CALCETrW8aNOZmNKx8P=mCD2iZmjxjDFzZH4Yzmh5im9Werzw9g@mail.gmail.com>
+References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
+ <1431107927-13998-6-git-send-email-cmetcalf@ezchip.com> <CALCETrUoptUPVUxL87jUgry1pFac0rDPpnZ790zDKyK4a0FARA@mail.gmail.com>
+ <5550FF63.1030107@ezchip.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55512B54.50304-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <5550FF63.1030107@ezchip.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Chris Metcalf <cmetcalf@ezchip.com>, Peter Zijlstra <peterz@infradead.org>
+Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Frederic Weisbecker <fweisbec@gmail.com>, Ingo Molnar <mingo@kernel.org>, Rik van Riel <riel@redhat.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Tejun Heo <tj@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Christoph Lameter <cl@linux.com>, Gilad Ben Yossef <giladb@ezchip.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 05/11/2015 04:21 PM, Shuah Khan wrote:
-> On 05/11/2015 03:50 PM, Darren Hart wrote:
->> On 5/11/15, 1:51 PM, "Shuah Khan" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+[add peterz due to perf stuff]
+
+On Mon, May 11, 2015 at 12:13 PM, Chris Metcalf <cmetcalf@ezchip.com> wrote:
+> On 05/09/2015 03:28 AM, Andy Lutomirski wrote:
 >>
->>> On 05/11/2015 01:47 PM, Darren Hart wrote:
->>>> On 5/11/15, 11:55 AM, "Shuah Khan" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote=
-:
->>>>
->>>>> On 05/11/2015 12:22 PM, Darren Hart wrote:
->>>>>> On 5/11/15, 11:06 AM, "Shuah Khan" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wro=
-te:
->>>>>>
->>>>>>> On 05/08/2015 04:09 PM, Darren Hart wrote:
->>>>>>>> The futextest testsuite [1] provides functional, stress, and
->>>>>>>> performance tests for the various futex op codes. Those tests =
-will
->>>>>>>> be
->>>>>>>> of
->>>>>>>> more use to futex developers if they are included with the ker=
-nel
->>>>>>>> source.
->>>>>>>>
->>>>>>>> Copy the core infrastructure and the functional tests into
->>>>>>>> selftests,
->>>>>>>> but adapt them for inclusion in the kernel:
->>>>>>>>
->>>>>>>> - Update the Makefile to include the run_tests target, remove
->>>>>>>> reference
->>>>>>>>   to the performance and stress tests from the contributed sou=
-rces.
->>>>>>>> - Replace my dead IBM email address with my current Intel emai=
-l
->>>>>>>> address.
->>>>>>>> - Remove the warrantee and write-to paragraphs from the licens=
-e
->>>>>>>> blurbs.
->>>>>>>> - Remove the NAME section as the filename is easily determined=
-=2E ;-)
->>>>>>>> - Make the whitespace usage consistent in a couple of places.
->>>>>>>> - Cleanup various CodingStyle violations.
->>>>>>>>
->>>>>>>> A future effort will explore moving the performance and stress=
- tests
->>>>>>>> into the kernel.
->>>>>>>>
->>>>>>>> 1. http://git.kernel.org/cgit/linux/kernel/git/dvhart/futextes=
-t.git
->>>>>>>>
->>>>>>>> Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
->>>>>>>> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>>>>>>> Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
->>>>>>>> Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
->>>>>>>> Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
->>>>>>>> Cc: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
->>>>>>>> Cc: KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
->>>>>>>> Signed-off-by: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
->>>>>>>> ---
->>>>>>>
->>>>>>> Daren,
->>>>>>>
->>>>>>> I am seeing
->>>>>>>
->>>>>>> fatal: cannot convert from y to UTF-8
->>>>>>>
->>>>>>> when I try to apply the patch. Did you use git send-email?
->>>>>>
->>>>>> Hi Shuah,
->>>>>>
->>>>>> I've seen that from one of my contributors earlier this month as
->>>>>> well. I
->>>>>> dropped the Content... Header and it applied without problems.
->>>>>>
->>>>>> I created the patch using git format-patch and then sent them us=
-ing
->>>>>> git
->>>>>> send-email - via a script I've been using for years now...
->>>>>>
->>>>>> Checking the files locally:
->>>>>> $ file *
->>>>>> 0000-cover-letter.patch:                                        =
- ASCII
->>>>>> text
->>>>>> 0001-selftests-Add-futex-functional-tests.patch:
->>>>>> unified
->>>>>> diff output, UTF-8 Unicode text
->>>>>> 0002-selftest-futex-Update-Makefile-to-use-lib.mk.patch:
->>>>>> unified
->>>>>> diff output, ASCII text
->>>>>> 0003-selftest-futex-Increment-ksft-pass-and-fail-counters.patch:
->>>>>> unified
->>>>>> diff output, ASCII text
->>>>>> 0004-selftest-Add-futex-tests-to-the-top-level-Makefile.patch:
->>>>>> unified
->>>>>> diff output, ASCII text
->>>>>> 0005-kselftest-Add-exit-code-defines.patch:
->>>>>> unified
->>>>>> diff output, ASCII text
->>>>>>
->>>>>>
->>>>>> This shows that only the first in UTF-8 and the rest are ASCII. =
-I
->>>>>> presume
->>>>>> this is due to the Copyright notices in the original files:
->>>>>>
->>>>>> Copyright =A9 International Business Machines  Corp., 2006-2008
->>>>>>
->>>>>> Which use =A9 instead of (C). I just checked and there are 545 i=
-nstances
->>>>>> of
->>>>>> =A9 in the kernel itself, so this should not present a problem.
->>>>>>
->>>>>> I apologize for the glitch in applying. If you use the pull requ=
-est I
->>>>>> included that will avoid the mail transport issues, and I will b=
-e sure
->>>>>> to
->>>>>> fix my scripts to avoid the issue in the future.
->>>>>>
->>>>>> If you want to use the patches directly, please have a look at 1=
- of 5
->>>>>> and
->>>>>> just remove the "Content..." header, and I think you'll find "gi=
-t am"
->>>>>> will
->>>>>> apply it without complaint.
->>>>>>
->>>>>
->>>>> Hi Daren,
->>>>>
->>>>> Removing the Content header got me past the utf error. However, g=
-it am
->>>>> complains:
->>>>>
->>>>> git am --signoff
->>>>>
->>>>> ../4.2_patches/futex_tests/PATCH_1_5selftestsAddfutexfunctionalte=
-sts.mbo
->>>>> x
->>>>> Applying: selftests: Add futex functional tests
->>>>> /mnt/data/lkml/linux-kselftest/.git/rebase-apply/patch:1457: new =
-blank
->>>>> line at EOF.
->>>>> +
->>>>> warning: 1 line adds whitespace errors.
->>>>>
->>>>> Could you look into these. Rest of the patches applied fine.
->>>>
->>>> Hi Shuah,
->>>>
->>>> This was due to a newline at the end of:
->>>> tools/testing/selftests/futex/functional/run.sh
->>>>
->>>> Which unfortunately checkpatch.pl doesn't catch. My fault for not
->>>> applying
->>>> the series from the generated patches first. Sorry for the hassle.
->>>>
->>>> I have corrected this in the first patch and pushed v3 of the seri=
-es to:
->>>>
->>>> git://git.infradead.org/users/dvhart/linux.git futextest-v3
->>>>
->>>>
->>>> $ git diff infradead/futextest-v2 infradead/futextest-v3
->>>> diff --git a/tools/testing/selftests/futex/functional/run.sh
->>>> b/tools/testing/selftests/futex/functional/run.sh
->>>> index 46827a8..e87dbe2 100755
->>>> --- a/tools/testing/selftests/futex/functional/run.sh
->>>> +++ b/tools/testing/selftests/futex/functional/run.sh
->>>> @@ -77,4 +77,3 @@ echo
->>>>  echo
->>>>  ./futex_wait_uninitialized_heap $COLOR
->>>>  ./futex_wait_private_mapped_file $COLOR
->>>> -
->>>>
->>>>
+>> On May 8, 2015 11:44 PM, "Chris Metcalf" <cmetcalf@ezchip.com> wrote:
 >>>
->>> No need for a new pull request. Have you seen these errors before:
+>>> With QUIESCE mode, the task is in principle guaranteed not to be
+>>> interrupted by the kernel, but only if it behaves.  In particular,
+>>> if it enters the kernel via system call, page fault, or any of
+>>> a number of other synchronous traps, it may be unexpectedly
+>>> exposed to long latencies.  Add a simple flag that puts the process
+>>> into a state where any such kernel entry is fatal.
 >>>
->>> make[2]: Entering directory
->>> '/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex'
->>> for DIR in functional; do make -C $DIR all ; done
->>> make[3]: Entering directory
->>> '/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/funct=
-ional'
->>> gcc  -g -O2 -Wall -D_GNU_SOURCE -I../include -I../../   -lpthread -=
-lrt
->>> futex_requeue_pi.c ../include/futextest.h   -o futex_requeue_pi
->>> /tmp/cc2UgUVs.o: In function `create_rt_thread':
->>> /mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functi=
-onal/fu
->>> tex_requeue_pi.c:102:
->>> undefined reference to `pthread_create'
->>> /tmp/cc2UgUVs.o: In function `unit_test':
->>> /mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functi=
-onal/fu
->>> tex_requeue_pi.c:342:
->>> undefined reference to `pthread_join'
->>> /mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functi=
-onal/fu
->>> tex_requeue_pi.c:347:
->>> undefined reference to `pthread_join'
->>> /mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functi=
-onal/fu
->>> tex_requeue_pi.c:346:
->>> undefined reference to `pthread_join'
->>> collect2: error: ld returned 1 exit status
->>> <builtin>: recipe for target 'futex_requeue_pi' failed
->>> make[3]: *** [futex_requeue_pi] Error 1
->>> make[3]: Leaving directory
->>> '/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/funct=
-ional'
->>> Makefile:7: recipe for target 'all' failed
->>>
->>> I am running make kselftest target when I saw the above build failu=
-res.
->>> kselftest run doesn't fail which is good, however futex tests won't
->>> run with this failure.
+>>> To allow the state to be entered and exited, we add an internal
+>>> bit to current->dataplane_flags that is set when prctl() sets the
+>>> flags.  That way, when we are exiting the kernel after calling
+>>> prctl() to forbid future kernel exits, we don't get immediately
+>>> killed.
 >>
->> I have not seen these errors whilst developing with futextest for th=
-e
->> kernel. That looks like you may be missing the pthread development h=
-eaders
->> from your build machine.
+>> Is there any reason this can't already be addressed in userspace using
+>> /proc/interrupts or perf_events?  ISTM the real goal here is to detect
+>> when we screw up and fail to avoid an interrupt, and killing the task
+>> seems like overkill to me.
+>
+>
+> Patch 6/6 proposes a mechanism to track down times when the
+> kernel screws up and delivers an IRQ to a userspace-only task.
+> Here, we're just trying to identify the times when an application
+> screws itself up out of cluelessness, and provide a mechanism
+> that allows the developer to easily figure out why and fix it.
+>
+> In particular, /proc/interrupts won't show syscalls or page faults,
+> which are two easy ways applications can screw themselves
+> when they think they're in userspace-only mode.  Also, they don't
+> provide sufficient precision to make it clear what part of the
+> application caused the undesired kernel entry.
+
+Perf does, though, complete with context.
+
+>
+> In this case, killing the task is appropriate, since that's exactly
+> the semantics that have been asked for - it's like on architectures
+> that don't natively support unaligned accesses, but fake it relatively
+> slowly in the kernel, and in development you just say "give me a
+> SIGBUS when that happens" and in production you might say
+> "fix it up and let's try to keep going".
+
+I think more control is needed.  I also think that, if we go this
+route, we should distinguish syscalls, synchronous non-syscall
+entries, and asynchronous non-syscall entries.  They're quite
+different.
+
+>
+> You can argue that this is something that can be done by ftrace,
+> but certainly you'd want to have a way to programmatically
+> turn on ftrace at the moment when you're entering userspace-only
+> mode, so we'd want some API around that anyway.  And honestly,
+> it's so easy to test a task state bit in a couple of places and
+> generate the failurel on the spot, vs. the relative complexity
+> of setting up and understanding ftrace, that I think it merits
+> inclusion on that basis alone.
+
+perf_event, not ftrace.
+
+>
+>> Also, can we please stop further torturing the exit paths?  We have a
+>> disaster of assembly code that calls into syscall_trace_leave and
+>> do_notify_resume.  Those functions, in turn, *both* call user_enter
+>> (WTF?), and on very brief inspection user_enter makes it into the nohz
+>> code through multiple levels of indirection, which, with these
+>> patches, has yet another conditionally enabled helper, which does this
+>> new stuff.  It's getting to be impossible to tell what happens when we
+>> exit to user space any more.
 >>
->> Those are provided by libc6-dev on my Debian systems.
->>
->=20
-> I do have lib6-dev installed. timers uses pthread compiles fine.
-> So does mqueue. I am not sure what is going on with futex tests
-> though. I am guessing it has to do with library link order.
->=20
-> The following fixed it for me:
->=20
-> -LDFLAGS :=3D $(LDFLAGS) -lpthread -lrt
-> +LDFLAGS :=3D $(LDFLAGS) -pthread -lrt
->=20
-> Could you please make this change and resend the patch series.
-> I prefer patch series over pull request.
->=20
-> thanks,
-> -- Shuah
->=20
+>> Also, I think your code is buggy.  There's no particular guarantee
+>> that user_enter is only called once between sys_prctl and the final
+>> exit to user mode (see the above WTF), so you might spuriously kill
+>> the process.
+>
+>
+> This is a good point; I also find the x86 kernel entry and exit
+> paths confusing, although I've reviewed them a bunch of times.
+> The tile architecture paths are a little easier to understand.
+>
+> That said, I think the answer here is avoid non-idempotent
+> actions in the dataplane code, such as clearing a syscall bit.
+>
+> A better implementation, I think, is to put the tests for "you
+> screwed up and synchronously entered the kernel" in
+> the syscall_trace_enter() code, which TIF_NOHZ already
+> gets us into;
 
-Sorry full diff:
+No, not unless you're planning on using that to distinguish syscalls
+from other stuff *and* people think that's justified.
 
+It's far to easy to just make a tiny change to the entry code.  Add a
+tiny trivial change here, a few lines of asm (that's you, audit!)
+there, some weird written-in-asm scheduling code over here, and you
+end up with the truly awful mess that we currently have.
 
-diff --git a/tools/testing/selftests/futex/functional/Makefile
-b/tools/testing/selftests/futex/functional/Makefile
-index e64d43b..b8a2e9b 100644
---- a/tools/testing/selftests/futex/functional/Makefile
-+++ b/tools/testing/selftests/futex/functional/Makefile
-@@ -1,6 +1,6 @@
- INCLUDES :=3D -I../include -I../../
- CFLAGS :=3D $(CFLAGS) -g -O2 -Wall -D_GNU_SOURCE $(INCLUDES)
--LDFLAGS :=3D $(LDFLAGS) -lpthread -lrt
-+LDFLAGS :=3D $(LDFLAGS) -pthread -lrt
+If it really makes sense for this stuff to go with context tracking,
+then fine, but we should *fix* the context tracking first rather than
+kludging around it.  I already have a prototype patch for the relevant
+part of that.
 
+> there, we can test if the dataplane "strict" bit is
+> set and the syscall is not prctl(), then we generate the error.
+> (We'd exclude exit and exit_group here too, since we don't
+> need to shoot down a task that's just trying to kill itself.)
+> This needs a bit of platform-specific code for each platform,
+> but that doesn't seem like too big a problem.
 
--- Shuah
+I'd rather avoid that, too.  This feature isn't really arch-specific,
+so let's avoid the arch stuff if at all possible.
 
---=20
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+>
+> Likewise we can test in exception_enter() since that's only
+> called for all the synchronous user entries like page faults.
+
+Let's try to generalize a bit.  There's also irq_entry and ist_enter,
+and some of the exception_enter cases are for synchronous entries
+while (IIRC -- could be wrong) others aren't always like that.
+
+>
+>> Also, I think that most users will be quite surprised if "strict
+>> dataplane" code causes any machine check on the system to kill your
+>> dataplane task.
+>
+>
+> Fair point, and avoided by testing as described above instead.
+> (Though presumably in development it's not such a big deal,
+> and as I said you'd likely turn it off in production.)
+
+Until you forget to turn it off in production because it worked so
+nicely in development.
+
+What if we added a mode to perf where delivery of a sample
+synchronously (or semi-synchronously by catching it on the next exit
+to userspace) freezes the delivering task?  It would be like debugger
+support via perf.
+
+peterz, do you think this would be a sensible thing to add to perf?
+It would only make sense for some types of events (tracepoints and
+hw_breakpoints mostly, I think).
+
+>> So, I don't know if it is a practical suggestion or not, but would it
+>> better/easier to mark a pending signal on kernel entry for this case?
+>> The upsides I see is that the user gets her notification (killing the task
+>> or just logging the event in a signal handler) and hopefully since return to
+>> userspace with a pending signal is already handled we don't need new code in
+>> the exit path?
+>
+>
+> We could certainly do this now that I'm planning to do the
+> test at kernel entry rather than super-late in kernel exit.
+> Rather than just do_group_exit(SIGKILL), we should raise
+> a proper SIGKILL signal via send_sig(SIGKILL, current, 1),
+> and then we could catch it in the debugger; the pc should
+> help identify if it was a syscall, page fault, or other trap.
+>
+> I'm not sure there's an argument to be made for the user
+> process being able to catch the signal itself; presumably in
+> production you don't turn this mode on anyway, and in
+> development, assuming a debugger is probably fine.
+>
+> But if you want to argue for another signal (SIGILL?) please
+> do; I'm curious to hear if you think it would make more sense.
+
+Make it configurable as part of the prctl.
+
+--Andy
