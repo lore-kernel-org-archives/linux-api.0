@@ -1,35 +1,55 @@
-From: Chris Metcalf <cmetcalf@ezchip.com>
-Subject: Re: [PATCH 0/6] support "dataplane" mode for nohz_full
-Date: Mon, 11 May 2015 15:25:12 -0400
-Message-ID: <55510218.9090104@ezchip.com>
-References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>	 <20150508141824.797eb0d89d514e39fd30fffe@linux-foundation.org>	 <20150508172210.559830a9@gandalf.local.home> <554D428E.6020702@ezchip.com>	 <20150508161909.308d60e21f6b83b897174276@linux-foundation.org>	 <20150509070538.GA9413@gmail.com>	 <20150511085759.71deeb64@gandalf.local.home>	 <20150511153602.GA32512@lerouge> <1431371974.3195.126.camel@gmail.com>
+From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Subject: [PATCHv2 0/2] clone: Support passing tls argument via C rather than
+ pt_regs magic
+Date: Mon, 11 May 2015 12:28:11 -0700
+Message-ID: <20150511192810.GA11328@jtriplet-mobl1>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1431371974.3195.126.camel@gmail.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Mike Galbraith <umgwanakikbuti@gmail.com>, Frederic Weisbecker <fweisbec@gmail.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Gilad Ben Yossef <giladb@ezchip.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 05/11/2015 03:19 PM, Mike Galbraith wrote:
-> I really shouldn't have acked nohz_full -> isolcpus.  Beside the fact
-> that old static isolcpus was_supposed_  to crawl off and die, I know
-> beyond doubt that having isolated a cpu as well as you can definitely
-> does NOT imply that said cpu should become tickless.
+clone has some of the quirkiest syscall handling in the kernel, with a pile of
+special cases, historical curiosities, and architecture-specific calling
+conventions.  In particular, clone with CLONE_SETTLS accepts a parameter "tls"
+that the C entry point completely ignores and some assembly entry points
+overwrite; instead, the low-level arch-specific code pulls the tls parameter
+out of the arch-specific register captured as part of pt_regs on entry to the
+kernel.  That's a massive hack, and it makes the arch-specific code only work
+when called via the specific existing syscall entry points; because of this
+hack, any new clone-like system call would have to accept an identical tls
+argument in exactly the same arch-specific position, rather than providing a
+unified system call entry point across architectures.
 
-True, at a high level, I agree that it would be better to have a
-top-level concept like Frederic's proposed ISOLATION that includes
-isolcpus and nohz_cpu (and other stuff as needed).
+The first patch allows architectures to handle the tls argument via normal C
+parameter passing, if they opt in by selecting HAVE_COPY_THREAD_TLS.  The
+second patch makes 32-bit and 64-bit x86 opt into this.
 
-That said, what you wrote above is wrong; even with the patch you
-acked, setting isolcpus does not automatically turn on nohz_full for
-a given cpu.  The patch made it true the other way around: when
-you say nohz_full, you automatically get isolcpus on that cpu too.
-That does, at least, make sense for the semantics of nohz_full.
+These two patches came out of the clone4 series, which isn't ready for this
+merge window, but these first two cleanup patches were entirely uncontroversial
+and have acks.  I'd like to go ahead and submit these two so that other
+architectures can begin building on top of this and opting into
+HAVE_COPY_THREAD_TLS.  However, I'm also happy to wait and send these through
+the next merge window (along with v3 of clone4) if anyone would prefer that.
+
+v2: Move co-author from signoffs to a note in the commit message, as
+    required by Ingo Molnar.
+
+Josh Triplett (2):
+  clone: Support passing tls argument via C rather than pt_regs magic
+  x86: Opt into HAVE_COPY_THREAD_TLS, for both 32-bit and 64-bit
+
+ arch/Kconfig                 |  7 ++++++
+ arch/x86/Kconfig             |  1 +
+ arch/x86/ia32/ia32entry.S    |  2 +-
+ arch/x86/kernel/process_32.c |  6 ++---
+ arch/x86/kernel/process_64.c |  8 +++----
+ include/linux/sched.h        | 14 +++++++++++
+ include/linux/syscalls.h     |  6 ++---
+ kernel/fork.c                | 55 +++++++++++++++++++++++++++++---------------
+ 8 files changed, 69 insertions(+), 30 deletions(-)
 
 -- 
-Chris Metcalf, EZChip Semiconductor
-http://www.ezchip.com
-
+2.1.4
