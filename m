@@ -1,279 +1,122 @@
-From: Vineet Gupta <Vineet.Gupta1-HKixBCOQz3hWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH 1/2] clone: Support passing tls argument via C rather
- than pt_regs magic
-Date: Mon, 11 May 2015 14:31:39 +0000
-Message-ID: <C2D7FE5348E1B147BCA15975FBA230756659F586@IN01WEMBXB.internal.synopsys.com>
-References: <20150421174711.GA5127@jtriplet-mobl1>
+From: Eric B Munson <emunson@akamai.com>
+Subject: Re: [PATCH 0/3] Allow user to request memory to be locked on page
+ fault
+Date: Mon, 11 May 2015 10:36:18 -0400
+Message-ID: <20150511143618.GA30570@akamai.com>
+References: <1431113626-19153-1-git-send-email-emunson@akamai.com>
+ <20150508124203.6679b1d35ad9555425003929@linux-foundation.org>
+ <20150508200610.GB29933@akamai.com>
+ <20150508131523.f970d13a213bca63bd6f2619@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="6TrnltStXW4iwmi0"
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20150508131523.f970d13a213bca63bd6f2619@linux-foundation.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday 21 April 2015 11:17 PM, Josh Triplett wrote:
-> clone with CLONE_SETTLS accepts an argument to set the thread-local
-> storage area for the new thread.  sys_clone declares an int argument
-> tls_val in the appropriate point in the argument list (based on the
-> various CLONE_BACKWARDS variants), but doesn't actually use or pass
-> along that argument.  Instead, sys_clone calls do_fork, which calls
-> copy_process, which calls the arch-specific copy_thread, and copy_thread
-> pulls the corresponding syscall argument out of the pt_regs captured at
-> kernel entry (knowing what argument of clone that architecture passes
-> tls in).
-> 
-> Apart from being awful and inscrutable, that also only works because
-> only one code path into copy_thread can pass the CLONE_SETTLS flag, and
-> that code path comes from sys_clone with its architecture-specific
-> argument-passing order.  This prevents introducing a new version of the
-> clone system call without propagating the same architecture-specific
-> position of the tls argument.
-> 
-> However, there's no reason to pull the argument out of pt_regs when
-> sys_clone could just pass it down via C function call arguments.
-> 
-> Introduce a new CONFIG_HAVE_COPY_THREAD_TLS for architectures to opt
-> into, and a new copy_thread_tls that accepts the tls parameter as an
-> additional unsigned long (syscall-argument-sized) argument.
-> Change sys_clone's tls argument to an unsigned long (which does
-> not change the ABI), and pass that down to copy_thread_tls.
-> 
-> Architectures that don't opt into copy_thread_tls will continue to
-> ignore the C argument to sys_clone in favor of the pt_regs captured at
-> kernel entry, and thus will be unable to introduce new versions of the
-> clone syscall.
-> 
-> Signed-off-by: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-> Signed-off-by: Thiago Macieira <thiago.macieira-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Acked-by: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> ---
->  arch/Kconfig             |  7 ++++++
->  include/linux/sched.h    | 14 ++++++++++++
->  include/linux/syscalls.h |  6 +++---
->  kernel/fork.c            | 55 +++++++++++++++++++++++++++++++-----------------
->  4 files changed, 60 insertions(+), 22 deletions(-)
-> 
-> diff --git a/arch/Kconfig b/arch/Kconfig
-> index 05d7a8a..4834a58 100644
-> --- a/arch/Kconfig
-> +++ b/arch/Kconfig
-> @@ -484,6 +484,13 @@ config HAVE_IRQ_EXIT_ON_IRQ_STACK
->  	  This spares a stack switch and improves cache usage on softirq
->  	  processing.
->  
-> +config HAVE_COPY_THREAD_TLS
-> +	bool
-> +	help
-> +	  Architecture provides copy_thread_tls to accept tls argument via
-> +	  normal C parameter passing, rather than extracting the syscall
-> +	  argument from pt_regs.
-> +
->  #
->  # ABI hall of shame
->  #
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index a419b65..2cc88c6 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -2480,8 +2480,22 @@ extern struct mm_struct *mm_access(struct task_struct *task, unsigned int mode);
->  /* Remove the current tasks stale references to the old mm_struct */
->  extern void mm_release(struct task_struct *, struct mm_struct *);
->  
-> +#ifdef CONFIG_HAVE_COPY_THREAD_TLS
-> +extern int copy_thread_tls(unsigned long, unsigned long, unsigned long,
-> +			struct task_struct *, unsigned long);
-> +#else
->  extern int copy_thread(unsigned long, unsigned long, unsigned long,
->  			struct task_struct *);
-> +
-> +/* Architectures that haven't opted into copy_thread_tls get the tls argument
-> + * via pt_regs, so ignore the tls argument passed via C. */
-> +static inline int copy_thread_tls(
-> +		unsigned long clone_flags, unsigned long sp, unsigned long arg,
-> +		struct task_struct *p, unsigned long tls)
-> +{
-> +	return copy_thread(clone_flags, sp, arg, p);
-> +}
-> +#endif
 
-Is this detour really needed. Can we not update copy_thread() of all arches in one
-go and add the tls arg, w/o using it.
+--6TrnltStXW4iwmi0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-And then arch maintainers can micro-optimize their code to use that arg vs.
-pt_regs->rxx version at their own leisure. The only downside I see with that is
-bigger churn (touches all arches), and a interim unused arg warning ?
+On Fri, 08 May 2015, Andrew Morton wrote:
 
+> On Fri, 8 May 2015 16:06:10 -0400 Eric B Munson <emunson@akamai.com> wrot=
+e:
+>=20
+> > On Fri, 08 May 2015, Andrew Morton wrote:
+> >=20
+> > > On Fri,  8 May 2015 15:33:43 -0400 Eric B Munson <emunson@akamai.com>=
+ wrote:
+> > >=20
+> > > > mlock() allows a user to control page out of program memory, but th=
+is
+> > > > comes at the cost of faulting in the entire mapping when it is
+> > > > allocated.  For large mappings where the entire area is not necessa=
+ry
+> > > > this is not ideal.
+> > > >=20
+> > > > This series introduces new flags for mmap() and mlockall() that all=
+ow a
+> > > > user to specify that the covered are should not be paged out, but o=
+nly
+> > > > after the memory has been used the first time.
+> > >=20
+> > > Please tell us much much more about the value of these changes: the u=
+se
+> > > cases, the behavioural improvements and performance results which the
+> > > patchset brings to those use cases, etc.
+> > >=20
+> >=20
+> > The primary use case is for mmaping large files read only.  The process
+> > knows that some of the data is necessary, but it is unlikely that the
+> > entire file will be needed.  The developer only wants to pay the cost to
+> > read the data in once.  Unfortunately developer must choose between
+> > allowing the kernel to page in the memory as needed and guaranteeing
+> > that the data will only be read from disk once.  The first option runs
+> > the risk of having the memory reclaimed if the system is under memory
+> > pressure, the second forces the memory usage and startup delay when
+> > faulting in the entire file.
+>=20
+> Why can't the application mmap only those parts of the file which it
+> wants and mlock those?
 
--Vineet
+There are a number of problems with this approach.  The first is it
+presumes the program will know what portions are needed a head of time.
+In many cases this is simply not true.  The second problem is the number
+of syscalls required.  With my patches, a single mmap() or mlockall()
+call is needed to setup the required locking.  Without it, a separate
+mmap call must be made for each piece of data that is needed.  This also
+opens up problems for data that is arranged assuming it is contiguous in
+memory.  With the single mmap call, the user gets a contiguous VMA
+without having to know about it.  mmap() with MAP_FIXED could address
+the problem, but this introduces a new failure mode of your map
+colliding with another that was placed by the kernel.
 
->  extern void flush_thread(void);
->  extern void exit_thread(void);
->  
-> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-> index 76d1e38..bb51bec 100644
-> --- a/include/linux/syscalls.h
-> +++ b/include/linux/syscalls.h
-> @@ -827,15 +827,15 @@ asmlinkage long sys_syncfs(int fd);
->  asmlinkage long sys_fork(void);
->  asmlinkage long sys_vfork(void);
->  #ifdef CONFIG_CLONE_BACKWARDS
-> -asmlinkage long sys_clone(unsigned long, unsigned long, int __user *, int,
-> +asmlinkage long sys_clone(unsigned long, unsigned long, int __user *, unsigned long,
->  	       int __user *);
->  #else
->  #ifdef CONFIG_CLONE_BACKWARDS3
->  asmlinkage long sys_clone(unsigned long, unsigned long, int, int __user *,
-> -			  int __user *, int);
-> +			  int __user *, unsigned long);
->  #else
->  asmlinkage long sys_clone(unsigned long, unsigned long, int __user *,
-> -	       int __user *, int);
-> +	       int __user *, unsigned long);
->  #endif
->  #endif
->  
-> diff --git a/kernel/fork.c b/kernel/fork.c
-> index cf65139..b3dadf4 100644
-> --- a/kernel/fork.c
-> +++ b/kernel/fork.c
-> @@ -1192,7 +1192,8 @@ static struct task_struct *copy_process(unsigned long clone_flags,
->  					unsigned long stack_size,
->  					int __user *child_tidptr,
->  					struct pid *pid,
-> -					int trace)
-> +					int trace,
-> +					unsigned long tls)
->  {
->  	int retval;
->  	struct task_struct *p;
-> @@ -1401,7 +1402,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
->  	retval = copy_io(clone_flags, p);
->  	if (retval)
->  		goto bad_fork_cleanup_namespaces;
-> -	retval = copy_thread(clone_flags, stack_start, stack_size, p);
-> +	retval = copy_thread_tls(clone_flags, stack_start, stack_size, p, tls);
->  	if (retval)
->  		goto bad_fork_cleanup_io;
->  
-> @@ -1613,7 +1614,7 @@ static inline void init_idle_pids(struct pid_link *links)
->  struct task_struct *fork_idle(int cpu)
->  {
->  	struct task_struct *task;
-> -	task = copy_process(CLONE_VM, 0, 0, NULL, &init_struct_pid, 0);
-> +	task = copy_process(CLONE_VM, 0, 0, NULL, &init_struct_pid, 0, 0);
->  	if (!IS_ERR(task)) {
->  		init_idle_pids(task->pids);
->  		init_idle(task, cpu);
-> @@ -1628,11 +1629,13 @@ struct task_struct *fork_idle(int cpu)
->   * It copies the process, and if successful kick-starts
->   * it and waits for it to finish using the VM if required.
->   */
-> -long do_fork(unsigned long clone_flags,
-> -	      unsigned long stack_start,
-> -	      unsigned long stack_size,
-> -	      int __user *parent_tidptr,
-> -	      int __user *child_tidptr)
-> +static long _do_fork(
-> +		unsigned long clone_flags,
-> +		unsigned long stack_start,
-> +		unsigned long stack_size,
-> +		int __user *parent_tidptr,
-> +		int __user *child_tidptr,
-> +		unsigned long tls)
->  {
->  	struct task_struct *p;
->  	int trace = 0;
-> @@ -1657,7 +1660,7 @@ long do_fork(unsigned long clone_flags,
->  	}
->  
->  	p = copy_process(clone_flags, stack_start, stack_size,
-> -			 child_tidptr, NULL, trace);
-> +			 child_tidptr, NULL, trace, tls);
->  	/*
->  	 * Do this prior waking up the new thread - the thread pointer
->  	 * might get invalid after that point, if the thread exits quickly.
-> @@ -1698,20 +1701,34 @@ long do_fork(unsigned long clone_flags,
->  	return nr;
->  }
->  
-> +#ifndef CONFIG_HAVE_COPY_THREAD_TLS
-> +/* For compatibility with architectures that call do_fork directly rather than
-> + * using the syscall entry points below. */
-> +long do_fork(unsigned long clone_flags,
-> +	      unsigned long stack_start,
-> +	      unsigned long stack_size,
-> +	      int __user *parent_tidptr,
-> +	      int __user *child_tidptr)
-> +{
-> +	return _do_fork(clone_flags, stack_start, stack_size,
-> +			parent_tidptr, child_tidptr, 0);
-> +}
-> +#endif
-> +
->  /*
->   * Create a kernel thread.
->   */
->  pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
->  {
-> -	return do_fork(flags|CLONE_VM|CLONE_UNTRACED, (unsigned long)fn,
-> -		(unsigned long)arg, NULL, NULL);
-> +	return _do_fork(flags|CLONE_VM|CLONE_UNTRACED, (unsigned long)fn,
-> +		(unsigned long)arg, NULL, NULL, 0);
->  }
->  
->  #ifdef __ARCH_WANT_SYS_FORK
->  SYSCALL_DEFINE0(fork)
->  {
->  #ifdef CONFIG_MMU
-> -	return do_fork(SIGCHLD, 0, 0, NULL, NULL);
-> +	return _do_fork(SIGCHLD, 0, 0, NULL, NULL, 0);
->  #else
->  	/* can not support in nommu mode */
->  	return -EINVAL;
-> @@ -1722,8 +1739,8 @@ SYSCALL_DEFINE0(fork)
->  #ifdef __ARCH_WANT_SYS_VFORK
->  SYSCALL_DEFINE0(vfork)
->  {
-> -	return do_fork(CLONE_VFORK | CLONE_VM | SIGCHLD, 0,
-> -			0, NULL, NULL);
-> +	return _do_fork(CLONE_VFORK | CLONE_VM | SIGCHLD, 0,
-> +			0, NULL, NULL, 0);
->  }
->  #endif
->  
-> @@ -1731,27 +1748,27 @@ SYSCALL_DEFINE0(vfork)
->  #ifdef CONFIG_CLONE_BACKWARDS
->  SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
->  		 int __user *, parent_tidptr,
-> -		 int, tls_val,
-> +		 unsigned long, tls,
->  		 int __user *, child_tidptr)
->  #elif defined(CONFIG_CLONE_BACKWARDS2)
->  SYSCALL_DEFINE5(clone, unsigned long, newsp, unsigned long, clone_flags,
->  		 int __user *, parent_tidptr,
->  		 int __user *, child_tidptr,
-> -		 int, tls_val)
-> +		 unsigned long, tls)
->  #elif defined(CONFIG_CLONE_BACKWARDS3)
->  SYSCALL_DEFINE6(clone, unsigned long, clone_flags, unsigned long, newsp,
->  		int, stack_size,
->  		int __user *, parent_tidptr,
->  		int __user *, child_tidptr,
-> -		int, tls_val)
-> +		unsigned long, tls)
->  #else
->  SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
->  		 int __user *, parent_tidptr,
->  		 int __user *, child_tidptr,
-> -		 int, tls_val)
-> +		 unsigned long, tls)
->  #endif
->  {
-> -	return do_fork(clone_flags, newsp, 0, parent_tidptr, child_tidptr);
-> +	return _do_fork(clone_flags, newsp, 0, parent_tidptr, child_tidptr, tls);
->  }
->  #endif
->  
-> 
+Another use case for the LOCKONFAULT flag is the security use of
+mlock().  If an application will be using data that cannot be written
+to swap, but the exact size is unknown until run time (all we have a
+build time is the maximum size the buffer can be).  The LOCKONFAULT flag
+allows the developer to create the buffer and guarantee that the
+contents are never written to swap without ever consuming more memory
+than is actually needed.
+
+>=20
+> > I am working on getting startup times with and without this change for
+> > an application, I will post them as soon as I have them.
+>=20
+
+--6TrnltStXW4iwmi0
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJVUL5iAAoJELbVsDOpoOa9+rIP/AtdiaAVRSAXFkS8FoN053Gp
+X9V3dAR/tJhrcsK0YFQcYBdG/e2doGqbJq6ni9iHdiABQ/dWmC6LZIRugSGltzGw
+WN3WSPpzLAHLS6TbH5KPydvrbne32pCI02McxTCSJ+IKARHZvUz3JWaq0z1/Tuqa
+U6pKp0qOo+1CD/YYgew2vyVWTZozPG379QhIkolLAtd4/FnL1DL8tW9gwgP6/pSF
+lfKNZNc2RFTRBnONckDDctDVbV8MZJCzPbPk4lBvhqc8VS11GWPylocZFB76C/w4
+Jcj5+JRUXgqGuIb+hwnQcnv/jAn2yjXW//6vB8qG0r1oXfCF7QwAVQegbjV7VAyT
+iQj3785JaeFIWUy8WLIk+BqP8tTzB/hphDTiV4dqTeHDSZGYw1ioFbzXcqkrapdm
+Ycqq4oTBxl7OkqDW5UQvvAWv4q9YP/E1KJK7O/HccybRcofVNGyO4hH+lgeFazMw
+5Id9Ptd/+qLxHP7jX0G53facKx5M8xtUT1DfsHi/nmCLD/uFdFOueaHKzQiVVGcp
+C8SgvCWcBQrHtgcn/JOyKH211sKOszOHFxg3TkglDl6s3th5zd+SAjYGRjKYizPe
+FoZ1FWhjyvsuybV8KFs5LRZ6et3kD06bCZrGS8JMrNo6R4BA4z7o88EVUxkSXx+z
+s7IIi8UpQrCbKJra0ucm
+=R9vZ
+-----END PGP SIGNATURE-----
+
+--6TrnltStXW4iwmi0--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
