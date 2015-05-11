@@ -1,58 +1,184 @@
-From: Josh Triplett <josh@joshtriplett.org>
-Subject: Re: [PATCH 1/2] clone: Support passing tls argument via C rather
- than pt_regs magic
-Date: Mon, 11 May 2015 12:30:51 -0700
-Message-ID: <20150511193050.GA11002@jtriplet-mobl1>
-References: <20150421174711.GA5127@jtriplet-mobl1>
- <alpine.DEB.2.11.1505052050100.4225@nanos>
- <20150505231221.GB16525@cloud>
- <20150511101313.GA18058@gmail.com>
- <20150511135526.GA6130@x>
- <20150511140043.GB5354@gmail.com>
+From: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH 1/5] selftests: Add futex functional tests
+Date: Mon, 11 May 2015 12:47:33 -0700
+Message-ID: <D17653E0.CC29F%dvhart@linux.intel.com>
+References: <cover.1431121818.git.dvhart@linux.intel.com>
+ <57d921b1c30e8258ca4b2f55637424527317e92f.1431121818.git.dvhart@linux.intel.com>
+ <5550EF8D.8080403@osg.samsung.com>
+ <D1763F31.CC237%dvhart@linux.intel.com>
+ <5550FB2C.1000403@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150511140043.GB5354@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ingo Molnar <mingo@kernel.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, x86@kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5550FB2C.1000403-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 11, 2015 at 04:00:43PM +0200, Ingo Molnar wrote:
-> 
-> * Josh Triplett <josh@joshtriplett.org> wrote:
-> 
-> > On Mon, May 11, 2015 at 12:13:13PM +0200, Ingo Molnar wrote:
-> > > 
-> > > * josh@joshtriplett.org <josh@joshtriplett.org> wrote:
-> > > 
-> > > > On Tue, May 05, 2015 at 08:53:03PM +0200, Thomas Gleixner wrote:
-> > > > > On Tue, 21 Apr 2015, Josh Triplett wrote:
-> > > > > > 
-> > > > > > Signed-off-by: Josh Triplett <josh@joshtriplett.org>
-> > > > > > Signed-off-by: Thiago Macieira <thiago.macieira@intel.com>
-> > > > > 
-> > > > > Can you please clarify that SOB chain? It does not make any sense.
-> > > > 
-> > > > Co-authored patch.  We both worked on it together, and sadly git 
-> > > > doesn't support a commit with multiple authors, so this is the next 
-> > > > best thing.
-> > > 
-> > > No, this is not a valid SOB chain.
-> > > 
-> > > For 'co authored' patches you can add credits either to the file, 
-> > > as two copyright lines, or via the changelog, no need to mess up 
-> > > the SOB chain for that.
-> > 
-> > Fine, I'll write it another way.
-> > 
-> > Do you see any other issues with the patch other than the signoffs?
-> 
-> Looks good to me, but I have not looked very deeply ...
+On 5/11/15, 11:55 AM, "Shuah Khan" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
 
-I sent out a v2 with the co-author information moved from the signoffs
-to the commit message.  If it looks reasonable to you, can you take it
-through the tip tree please?
+>On 05/11/2015 12:22 PM, Darren Hart wrote:
+>> On 5/11/15, 11:06 AM, "Shuah Khan" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+>>=20
+>>> On 05/08/2015 04:09 PM, Darren Hart wrote:
+>>>> The futextest testsuite [1] provides functional, stress, and
+>>>> performance tests for the various futex op codes. Those tests will=
+ be
+>>>>of
+>>>> more use to futex developers if they are included with the kernel
+>>>> source.
+>>>>
+>>>> Copy the core infrastructure and the functional tests into selftes=
+ts,
+>>>> but adapt them for inclusion in the kernel:
+>>>>
+>>>> - Update the Makefile to include the run_tests target, remove
+>>>>reference
+>>>>   to the performance and stress tests from the contributed sources=
+=2E
+>>>> - Replace my dead IBM email address with my current Intel email
+>>>>address.
+>>>> - Remove the warrantee and write-to paragraphs from the license
+>>>>blurbs.
+>>>> - Remove the NAME section as the filename is easily determined. ;-=
+)
+>>>> - Make the whitespace usage consistent in a couple of places.
+>>>> - Cleanup various CodingStyle violations.
+>>>>
+>>>> A future effort will explore moving the performance and stress tes=
+ts
+>>>> into the kernel.
+>>>>
+>>>> 1. http://git.kernel.org/cgit/linux/kernel/git/dvhart/futextest.gi=
+t
+>>>>
+>>>> Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+>>>> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>>>> Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
+>>>> Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+>>>> Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+>>>> Cc: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
+>>>> Cc: KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
+>>>> Signed-off-by: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+>>>> ---
+>>>
+>>> Daren,
+>>>
+>>> I am seeing
+>>>
+>>> fatal: cannot convert from y to UTF-8
+>>>
+>>> when I try to apply the patch. Did you use git send-email?
+>>=20
+>> Hi Shuah,
+>>=20
+>> I've seen that from one of my contributors earlier this month as wel=
+l. I
+>> dropped the Content... Header and it applied without problems.
+>>=20
+>> I created the patch using git format-patch and then sent them using =
+git
+>> send-email - via a script I've been using for years now...
+>>=20
+>> Checking the files locally:
+>> $ file *
+>> 0000-cover-letter.patch:                                         ASC=
+II
+>>text
+>> 0001-selftests-Add-futex-functional-tests.patch:                 uni=
+fied
+>> diff output, UTF-8 Unicode text
+>> 0002-selftest-futex-Update-Makefile-to-use-lib.mk.patch:         uni=
+fied
+>> diff output, ASCII text
+>> 0003-selftest-futex-Increment-ksft-pass-and-fail-counters.patch: uni=
+fied
+>> diff output, ASCII text
+>> 0004-selftest-Add-futex-tests-to-the-top-level-Makefile.patch:   uni=
+fied
+>> diff output, ASCII text
+>> 0005-kselftest-Add-exit-code-defines.patch:                      uni=
+fied
+>> diff output, ASCII text
+>>=20
+>>=20
+>> This shows that only the first in UTF-8 and the rest are ASCII. I
+>>presume
+>> this is due to the Copyright notices in the original files:
+>>=20
+>> Copyright =A9 International Business Machines  Corp., 2006-2008
+>>=20
+>> Which use =A9 instead of (C). I just checked and there are 545 insta=
+nces
+>>of
+>> =A9 in the kernel itself, so this should not present a problem.
+>>=20
+>> I apologize for the glitch in applying. If you use the pull request =
+I
+>> included that will avoid the mail transport issues, and I will be su=
+re
+>>to
+>> fix my scripts to avoid the issue in the future.
+>>=20
+>> If you want to use the patches directly, please have a look at 1 of =
+5
+>>and
+>> just remove the "Content..." header, and I think you'll find "git am=
+"
+>>will
+>> apply it without complaint.
+>>=20
+>
+>Hi Daren,
+>
+>Removing the Content header got me past the utf error. However, git am
+>complains:
+>
+>git am --signoff
+>../4.2_patches/futex_tests/PATCH_1_5selftestsAddfutexfunctionaltests.m=
+box
+>Applying: selftests: Add futex functional tests
+>/mnt/data/lkml/linux-kselftest/.git/rebase-apply/patch:1457: new blank
+>line at EOF.
+>+
+>warning: 1 line adds whitespace errors.
+>
+>Could you look into these. Rest of the patches applied fine.
 
-- Josh Triplett
+Hi Shuah,
+
+This was due to a newline at the end of:
+tools/testing/selftests/futex/functional/run.sh
+
+Which unfortunately checkpatch.pl doesn't catch. My fault for not apply=
+ing
+the series from the generated patches first. Sorry for the hassle.
+
+I have corrected this in the first patch and pushed v3 of the series to=
+:
+
+git://git.infradead.org/users/dvhart/linux.git futextest-v3
+
+
+$ git diff infradead/futextest-v2 infradead/futextest-v3
+diff --git a/tools/testing/selftests/futex/functional/run.sh
+b/tools/testing/selftests/futex/functional/run.sh
+index 46827a8..e87dbe2 100755
+--- a/tools/testing/selftests/futex/functional/run.sh
++++ b/tools/testing/selftests/futex/functional/run.sh
+@@ -77,4 +77,3 @@ echo
+ echo
+ ./futex_wait_uninitialized_heap $COLOR
+ ./futex_wait_private_mapped_file $COLOR
+-
+
+
+Is this sufficient or do would you prefer a new pull request?
+
+Thanks,
+
+--=20
+Darren Hart
+Intel Open Source Technology Center
