@@ -1,46 +1,69 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
-Date: Mon, 11 May 2015 17:31:04 +1000
-Message-ID: <20150511073103.GO4327@dastard>
-References: <1430949612-21356-1-git-send-email-zab@redhat.com>
- <20150507002617.GJ4327@dastard>
- <20150507172053.GA659@lenny.home.zabbo.net>
- <alpine.DEB.2.00.1505071752520.28239@cobra.newdream.net>
- <CAHQdGtQjMHA8rVPkggB2zMz=k3O667+APH_1EY_2FtYmHL7-hw@mail.gmail.com>
- <20150508221325.GM4327@dastard>
- <alpine.DEB.2.00.1505081517470.28239@cobra.newdream.net>
- <CAHQdGtTFTN2XuvmarFZ9HPQV=cuhh7FosdHSrJME_U4htr=i8w@mail.gmail.com>
+From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Subject: Re: [PATCH 07/18] media controller: rename the tuner entity
+Date: Mon, 11 May 2015 06:31:38 -0300
+Message-ID: <20150511063138.1ea10ccf@recife.lan>
+References: <cover.1431046915.git.mchehab@osg.samsung.com>
+	<6d88ece22cbbbaa72bbddb8b152b0d62728d6129.1431046915.git.mchehab@osg.samsung.com>
+	<554CA862.8070407@xs4all.nl>
+	<20150508095754.1c39a276@recife.lan>
+	<554CB863.1040006@xs4all.nl>
+	<20150508110826.00e4e954@recife.lan>
+	<554CC8E3.2030308@xs4all.nl>
+	<554DD3FE.1070806@xs4all.nl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAHQdGtTFTN2XuvmarFZ9HPQV=cuhh7FosdHSrJME_U4htr=i8w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>
-Cc: Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>, Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-media-owner@vger.kernel.org>
+In-Reply-To: <554DD3FE.1070806@xs4all.nl>
+Sender: linux-media-owner@vger.kernel.org
+To: Hans Verkuil <hverkuil@xs4all.nl>
+Cc: Linux Media Mailing List <linux-media@vger.kernel.org>, Mauro Carvalho Chehab <mchehab@infradead.org>, Jonathan Corbet <corbet@lwn.net>, Matthias Schwarzott <zzam@gentoo.org>, Antti Palosaari <crope@iki.fi>, Olli Salonen <olli.salonen@iki.fi>, Prabhakar Lad <prabhakar.csengg@gmail.com>, Sakari Ailus <sakari.ailus@linux.intel.com>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, May 10, 2015 at 07:13:24PM -0400, Trond Myklebust wrote:
-> On Fri, May 8, 2015 at 6:24 PM, Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org> wrote:
-> > I'm sure you realize what we're try to achieve is the same "invisible IO"
-> > that the XFS open by handle ioctls do by default.  Would you be more
-> > comfortable if this option where only available to the generic
-> > open_by_handle syscall, and not to open(2)?
+Em Sat, 09 May 2015 11:31:42 +0200
+Hans Verkuil <hverkuil@xs4all.nl> escreveu:
+
+> >>> Brainstorming:
+> >>>
+> >>> It might be better to map each device node to an entity and each hardware
+> >>> component (tuner, DMA engine) to an entity, and avoid this mixing of
+> >>> hw entity vs device node entity.
 > 
-> It should be an ioctl(). It has no business being part of
-> open_by_handle either, since that is another generic interface.
+> There are two options here:
+> 
+> either make each device node an entity, or expose the device node information
+> as properties of an entity.
+> 
+> The latter would be backwards compatible with what we do today. I'm trying to
+> think of reasons why you would want to make each device node an entity in its
+> own right.
+> 
+> The problem today is that a video_device representing a video/vbi/radio/swradio
+> device node is an entity, but it is really representing the dma engine. Which
+> is weird for radio devices since there is no dma engine there.
+> 
+> Implementing device nodes as entities in their own right does solve this problem,
+> but implementing it as properties would be weird since a radio device node would
+> be a property of a radio tuner entity, which can be a subdevice driver which means
+> that the bridge driver would have to add the radio device property to a subdev
+> driver, which feels really wrong to me.
+> 
+> With this in mind I do think representing device nodes as entities in their own
+> right makes sense.
 
-I'm happy for it to be an ioctl interface - even an XFS specific
-interface if you want to go that route, Sage - and it probably
-should emit a warning to syslog first time it is used so there is
-trace for bug triage purposes. i.e. we know the app is not using
-mtime updates, so bug reports that are the result of mtime
-mishandling don't result in large amounts of wasted developer time
-trying to understand them...
+I agree with that: devnodes should be entities, as they're the points to control
+the hardware, and need to be known by the Kernel, no matter if they have DMA
+engines associated with it or not. The better seems to map the DMA engine
+as a property on those entities.
 
-Cheers,
+> But I would do this also for a v4l-subdev node. It's very
+> inconsistent not to do that.
 
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+It should be easy to create an entity for each v4l-subdev node. I just
+don't see much usage on it, and this will almost double the number of
+entities. Also, in order to keep it backward-compatible, both the subdev
+devnode and the subdev no-devnode entity should accept the same set of
+ioctls.
+
+Regards,
+Mauro
