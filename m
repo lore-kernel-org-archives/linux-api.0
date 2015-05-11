@@ -1,224 +1,95 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH 1/5] selftests: Add futex functional tests
-Date: Mon, 11 May 2015 14:51:26 -0600
-Message-ID: <5551164E.5080409@osg.samsung.com>
-References: <cover.1431121818.git.dvhart@linux.intel.com> <57d921b1c30e8258ca4b2f55637424527317e92f.1431121818.git.dvhart@linux.intel.com> <5550EF8D.8080403@osg.samsung.com> <D1763F31.CC237%dvhart@linux.intel.com> <5550FB2C.1000403@osg.samsung.com> <D17653E0.CC29F%dvhart@linux.intel.com>
+From: Eric B Munson <emunson@akamai.com>
+Subject: Re: [PATCH 0/3] Allow user to request memory to be locked on page
+ fault
+Date: Mon, 11 May 2015 17:05:33 -0400
+Message-ID: <20150511210533.GB1227@akamai.com>
+References: <1431113626-19153-1-git-send-email-emunson@akamai.com>
+ <20150508124203.6679b1d35ad9555425003929@linux-foundation.org>
+ <20150508200610.GB29933@akamai.com>
+ <20150508131523.f970d13a213bca63bd6f2619@linux-foundation.org>
+ <20150511143618.GA30570@akamai.com>
+ <20150511121204.2af73429ad3c29b6d67f1345@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <D17653E0.CC29F%dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="TRYliJ5NKNqkz5bu"
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150511121204.2af73429ad3c29b6d67f1345@linux-foundation.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 05/11/2015 01:47 PM, Darren Hart wrote:
-> On 5/11/15, 11:55 AM, "Shuah Khan" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+
+--TRYliJ5NKNqkz5bu
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Mon, 11 May 2015, Andrew Morton wrote:
+
+> On Mon, 11 May 2015 10:36:18 -0400 Eric B Munson <emunson@akamai.com> wro=
+te:
 >=20
->> On 05/11/2015 12:22 PM, Darren Hart wrote:
->>> On 5/11/15, 11:06 AM, "Shuah Khan" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
->>>
->>>> On 05/08/2015 04:09 PM, Darren Hart wrote:
->>>>> The futextest testsuite [1] provides functional, stress, and
->>>>> performance tests for the various futex op codes. Those tests wil=
-l be
->>>>> of
->>>>> more use to futex developers if they are included with the kernel
->>>>> source.
->>>>>
->>>>> Copy the core infrastructure and the functional tests into selfte=
-sts,
->>>>> but adapt them for inclusion in the kernel:
->>>>>
->>>>> - Update the Makefile to include the run_tests target, remove
->>>>> reference
->>>>>   to the performance and stress tests from the contributed source=
-s.
->>>>> - Replace my dead IBM email address with my current Intel email
->>>>> address.
->>>>> - Remove the warrantee and write-to paragraphs from the license
->>>>> blurbs.
->>>>> - Remove the NAME section as the filename is easily determined. ;=
--)
->>>>> - Make the whitespace usage consistent in a couple of places.
->>>>> - Cleanup various CodingStyle violations.
->>>>>
->>>>> A future effort will explore moving the performance and stress te=
-sts
->>>>> into the kernel.
->>>>>
->>>>> 1. http://git.kernel.org/cgit/linux/kernel/git/dvhart/futextest.g=
-it
->>>>>
->>>>> Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
->>>>> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>>>> Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>
->>>>> Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
->>>>> Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
->>>>> Cc: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
->>>>> Cc: KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
->>>>> Signed-off-by: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
->>>>> ---
->>>>
->>>> Daren,
->>>>
->>>> I am seeing
->>>>
->>>> fatal: cannot convert from y to UTF-8
->>>>
->>>> when I try to apply the patch. Did you use git send-email?
->>>
->>> Hi Shuah,
->>>
->>> I've seen that from one of my contributors earlier this month as we=
-ll. I
->>> dropped the Content... Header and it applied without problems.
->>>
->>> I created the patch using git format-patch and then sent them using=
- git
->>> send-email - via a script I've been using for years now...
->>>
->>> Checking the files locally:
->>> $ file *
->>> 0000-cover-letter.patch:                                         AS=
-CII
->>> text
->>> 0001-selftests-Add-futex-functional-tests.patch:                 un=
-ified
->>> diff output, UTF-8 Unicode text
->>> 0002-selftest-futex-Update-Makefile-to-use-lib.mk.patch:         un=
-ified
->>> diff output, ASCII text
->>> 0003-selftest-futex-Increment-ksft-pass-and-fail-counters.patch: un=
-ified
->>> diff output, ASCII text
->>> 0004-selftest-Add-futex-tests-to-the-top-level-Makefile.patch:   un=
-ified
->>> diff output, ASCII text
->>> 0005-kselftest-Add-exit-code-defines.patch:                      un=
-ified
->>> diff output, ASCII text
->>>
->>>
->>> This shows that only the first in UTF-8 and the rest are ASCII. I
->>> presume
->>> this is due to the Copyright notices in the original files:
->>>
->>> Copyright =A9 International Business Machines  Corp., 2006-2008
->>>
->>> Which use =A9 instead of (C). I just checked and there are 545 inst=
-ances
->>> of
->>> =A9 in the kernel itself, so this should not present a problem.
->>>
->>> I apologize for the glitch in applying. If you use the pull request=
- I
->>> included that will avoid the mail transport issues, and I will be s=
-ure
->>> to
->>> fix my scripts to avoid the issue in the future.
->>>
->>> If you want to use the patches directly, please have a look at 1 of=
- 5
->>> and
->>> just remove the "Content..." header, and I think you'll find "git a=
-m"
->>> will
->>> apply it without complaint.
->>>
->>
->> Hi Daren,
->>
->> Removing the Content header got me past the utf error. However, git =
-am
->> complains:
->>
->> git am --signoff
->> ../4.2_patches/futex_tests/PATCH_1_5selftestsAddfutexfunctionaltests=
-=2Embox
->> Applying: selftests: Add futex functional tests
->> /mnt/data/lkml/linux-kselftest/.git/rebase-apply/patch:1457: new bla=
-nk
->> line at EOF.
->> +
->> warning: 1 line adds whitespace errors.
->>
->> Could you look into these. Rest of the patches applied fine.
+> > On Fri, 08 May 2015, Andrew Morton wrote:
+> > ...
+> >
+> > >=20
+> > > Why can't the application mmap only those parts of the file which it
+> > > wants and mlock those?
+> >=20
+> > There are a number of problems with this approach.  The first is it
+> > presumes the program will know what portions are needed a head of time.
+> > In many cases this is simply not true.  The second problem is the number
+> > of syscalls required.  With my patches, a single mmap() or mlockall()
+> > call is needed to setup the required locking.  Without it, a separate
+> > mmap call must be made for each piece of data that is needed.  This also
+> > opens up problems for data that is arranged assuming it is contiguous in
+> > memory.  With the single mmap call, the user gets a contiguous VMA
+> > without having to know about it.  mmap() with MAP_FIXED could address
+> > the problem, but this introduces a new failure mode of your map
+> > colliding with another that was placed by the kernel.
+> >=20
+> > Another use case for the LOCKONFAULT flag is the security use of
+> > mlock().  If an application will be using data that cannot be written
+> > to swap, but the exact size is unknown until run time (all we have a
+> > build time is the maximum size the buffer can be).  The LOCKONFAULT flag
+> > allows the developer to create the buffer and guarantee that the
+> > contents are never written to swap without ever consuming more memory
+> > than is actually needed.
 >=20
-> Hi Shuah,
+> What application(s) or class of applications are we talking about here?
 >=20
-> This was due to a newline at the end of:
-> tools/testing/selftests/futex/functional/run.sh
->=20
-> Which unfortunately checkpatch.pl doesn't catch. My fault for not app=
-lying
-> the series from the generated patches first. Sorry for the hassle.
->=20
-> I have corrected this in the first patch and pushed v3 of the series =
-to:
->=20
-> git://git.infradead.org/users/dvhart/linux.git futextest-v3
->=20
->=20
-> $ git diff infradead/futextest-v2 infradead/futextest-v3
-> diff --git a/tools/testing/selftests/futex/functional/run.sh
-> b/tools/testing/selftests/futex/functional/run.sh
-> index 46827a8..e87dbe2 100755
-> --- a/tools/testing/selftests/futex/functional/run.sh
-> +++ b/tools/testing/selftests/futex/functional/run.sh
-> @@ -77,4 +77,3 @@ echo
->  echo
->  ./futex_wait_uninitialized_heap $COLOR
->  ./futex_wait_private_mapped_file $COLOR
-> -
->=20
+> IOW, how generally applicable is this?  It sounds rather specialized.
 >=20
 
-No need for a new pull request. Have you seen these errors before:
-
-make[2]: Entering directory
-'/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex'
-for DIR in functional; do make -C $DIR all ; done
-make[3]: Entering directory
-'/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functiona=
-l'
-gcc  -g -O2 -Wall -D_GNU_SOURCE -I../include -I../../   -lpthread -lrt
-futex_requeue_pi.c ../include/futextest.h   -o futex_requeue_pi
-/tmp/cc2UgUVs.o: In function `create_rt_thread':
-/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functional=
-/futex_requeue_pi.c:102:
-undefined reference to `pthread_create'
-/tmp/cc2UgUVs.o: In function `unit_test':
-/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functional=
-/futex_requeue_pi.c:342:
-undefined reference to `pthread_join'
-/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functional=
-/futex_requeue_pi.c:347:
-undefined reference to `pthread_join'
-/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functional=
-/futex_requeue_pi.c:346:
-undefined reference to `pthread_join'
-collect2: error: ld returned 1 exit status
-<builtin>: recipe for target 'futex_requeue_pi' failed
-make[3]: *** [futex_requeue_pi] Error 1
-make[3]: Leaving directory
-'/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functiona=
-l'
-Makefile:7: recipe for target 'all' failed
-
-I am running make kselftest target when I saw the above build failures.
-kselftest run doesn't fail which is good, however futex tests won't
-run with this failure.
+For the example of a large file, this is the usage pattern for a large
+statical language model (probably applies to other statical or graphical
+models as well).  For the security example, any application transacting
+in data that cannot be swapped out (credit card data, medical records,
+etc).
 
 
-thanks,
--- Shuah
+--TRYliJ5NKNqkz5bu
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
 
---=20
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+iQIcBAEBAgAGBQJVURmdAAoJELbVsDOpoOa9a0MP/2y5c7mdKE8qXiCYEBHY1vPr
+mMYr1mBF5plc21zbajP8EsFs+Ld/CdtHlmeYYS8WajfsgNYeC8/0agAzYVfJFsFP
+/wCPq8eC9v1kO+bl76ysR3eHpQ1vNFPwFlRfIJmKmoeA/0QJZESjuZKXbLyWCIbh
+fUft9fDVrTiKmIIPA+xU/LQBTJJG3JxM31EW0npZ5czeW82djBf1U4rqJuOJ/DFr
+yRFC6Ja9JRcamqDDlwnh2sI1GAT0xzWAr2dVYFEWLuin+zUAST0ByOvirtVW+Te3
+Tkd+VZ5D913uj32bJnSPFBR+XkKpXkmG2oH/bskpHi2f0IJOHq8Rwae5ONlsR3HG
+9ehYZk5j6XMi8p4zc77Gz4RrzOpzJWnQCtiwP0tRsCWwYDUzUtkt89I/jEp7ng/U
+vsV4QocVqk8cbmAj4kJ6lK1CSstR4vi1/kjdvnMiu0iHTMc7k/ZIguZaz4nmzq0j
+WDYnr87YYuOK5rPRR1U0zFHzsdC6rdcx9o5LQaEM7JUBm5Jg1aaC0ZPgs4kbzBtv
+iSPfAOjCtCetUfLF5rH+qEy06emMTxOTGXuEk1ozb+q/zm0C5cE6DrSOUabBfg8V
+QGAlOxZUcFQIBKgYNbhblA+edUvEL9aglNMl+91CDzk6CkNp35K2UnEk1LM4Bqqn
+mYcyYlFfiVQqWLOBBiX5
+=Su4z
+-----END PGP SIGNATURE-----
+
+--TRYliJ5NKNqkz5bu--
