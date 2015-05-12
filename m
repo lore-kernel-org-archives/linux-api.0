@@ -1,172 +1,140 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH 5/6] nohz: support PR_DATAPLANE_STRICT mode
-Date: Tue, 12 May 2015 15:23:02 -0700
-Message-ID: <CALCETrXVLGi=DSHza2fCXDNbkh_MOAbxQANNg738=AWVMsYPrw@mail.gmail.com>
-References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
- <1431107927-13998-6-git-send-email-cmetcalf@ezchip.com> <CALCETrUoptUPVUxL87jUgry1pFac0rDPpnZ790zDKyK4a0FARA@mail.gmail.com>
- <5550FF63.1030107@ezchip.com> <CALCETrW8aNOZmNKx8P=mCD2iZmjxjDFzZH4Yzmh5im9Werzw9g@mail.gmail.com>
- <55526B39.10208@ezchip.com>
+From: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
+Date: Wed, 13 May 2015 08:39:51 +1000
+Message-ID: <20150513083951.5eb63bc0@notabene.brown>
+References: <CAHQdGtQjMHA8rVPkggB2zMz=k3O667+APH_1EY_2FtYmHL7-hw@mail.gmail.com>
+	<20150508221325.GM4327@dastard>
+	<alpine.DEB.2.00.1505081517470.28239@cobra.newdream.net>
+	<CAHQdGtTFTN2XuvmarFZ9HPQV=cuhh7FosdHSrJME_U4htr=i8w@mail.gmail.com>
+	<20150511144719.GA14088@thunk.org>
+	<alpine.DEB.2.00.1505110920520.28239@cobra.newdream.net>
+	<20150511231021.GC14088@thunk.org>
+	<20150512050821.GA9404@chicago.guarana.org>
+	<5551E7EB.8040301@gmail.com>
+	<21842.1555.38099.868100@quad.stoffel.home>
+	<20150512143637.GA6370@fieldses.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <55526B39.10208@ezchip.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@ezchip.com>
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Frederic Weisbecker <fweisbec@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Rik van Riel <riel@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Tejun Heo <tj@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Christoph Lameter <cl@linux.com>, Gilad Ben Yossef <giladb@ezchip.com>, Ingo Molnar <mingo@kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ boundary="Sig_/0D4m/+CtwMSsg1VoXjsHSm+"; protocol="application/pgp-signature"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150512143637.GA6370-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Cc: John Stoffel <john-HgN6juyGXH5AfugRpC6u6w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kevin Easton <kevin-RFfraI6bZkdAfugRpC6u6w@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On May 13, 2015 6:06 AM, "Chris Metcalf" <cmetcalf@ezchip.com> wrote:
->
-> On 05/11/2015 06:28 PM, Andy Lutomirski wrote:
->>
->> [add peterz due to perf stuff]
->>
->> On Mon, May 11, 2015 at 12:13 PM, Chris Metcalf <cmetcalf@ezchip.com> wrote:
->>>
->>> Patch 6/6 proposes a mechanism to track down times when the
->>> kernel screws up and delivers an IRQ to a userspace-only task.
->>> Here, we're just trying to identify the times when an application
->>> screws itself up out of cluelessness, and provide a mechanism
->>> that allows the developer to easily figure out why and fix it.
->>>
->>> In particular, /proc/interrupts won't show syscalls or page faults,
->>> which are two easy ways applications can screw themselves
->>> when they think they're in userspace-only mode.  Also, they don't
->>> provide sufficient precision to make it clear what part of the
->>> application caused the undesired kernel entry.
->>
->> Perf does, though, complete with context.
->
->
-> The perf_event suggestions are interesting, but I think it's plausible
-> for this to be an alternate way to debug the issues that STRICT
-> addresses.
->
->
->>> In this case, killing the task is appropriate, since that's exactly
->>> the semantics that have been asked for - it's like on architectures
->>> that don't natively support unaligned accesses, but fake it relatively
->>> slowly in the kernel, and in development you just say "give me a
->>> SIGBUS when that happens" and in production you might say
->>> "fix it up and let's try to keep going".
->>
->> I think more control is needed.  I also think that, if we go this
->> route, we should distinguish syscalls, synchronous non-syscall
->> entries, and asynchronous non-syscall entries.  They're quite
->> different.
->
->
-> I don't think it's necessary to distinguish the types.  As long as we
-> have a PC pointing to the instruction that triggered the problem,
-> we can see if it's a system call instruction, a memory write that
-> caused a page fault, a trap instruction, etc.
+--Sig_/0D4m/+CtwMSsg1VoXjsHSm+
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-Not true.  PC right after a syscall insn could be any type of kernel
-entry, and you can't even reliably tell whether the syscall insn was
-executed or, on x86, whether it was a syscall at all.  (x86 insns
-can't be reliably decided backwards.)
+On Tue, 12 May 2015 10:36:37 -0400 bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org (J. Bruce Fields)
+wrote:
 
-PC pointing at a load could be a page fault or an IPI.
+> On Tue, May 12, 2015 at 09:54:27AM -0400, John Stoffel wrote:
+> > >>>>> "Austin" =3D=3D Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
+> >=20
+> > Austin> On 2015-05-12 01:08, Kevin Easton wrote:
+> > >> On Mon, May 11, 2015 at 07:10:21PM -0400, Theodore Ts'o wrote:
+> > >>> On Mon, May 11, 2015 at 09:24:09AM -0700, Sage Weil wrote:
+> > >>>>> Let me re-ask the question that I asked last week (and was appare=
+ntly
+> > >>>>> ignored).  Why not trying to use the lazytime feature instead of
+> > >>>>> pointing a head straight at the application's --- and system
+> > >>>>> administrators' --- heads?
+> > >>>>=20
+> > >>>> Sorry Ted, I thought I responded already.
+> > >>>>=20
+> > >>>> The goal is to avoid inode writeout entirely when we can, and
+> > >>>> as I understand it lazytime will still force writeout before the i=
+node
+> > >>>> is dropped from the cache.  In systems like Ceph in particular, the
+> > >>>> IOs can be spread across lots of files, so simply deferring writeo=
+ut
+> > >>>> doesn't always help.
+> > >>>=20
+> > >>> Sure, but it would reduce the writeout by orders of magnitude.  I c=
+an
+> > >>> understand if you want to reduce it further, but it might be good
+> > >>> enough for your purposes.
+> > >>>=20
+> > >>> I considered doing the equivalent of O_NOMTIME for our purposes at
+> > >>> $WORK, and our use case is actually not that different from Ceph's
+> > >>> (i.e., using a local disk file system to support a cluster file
+> > >>> system), and lazytime was (a) something I figured was something I
+> > >>> could upstream in good conscience, and (b) was more than good enough
+> > >>> for us.
+> > >>=20
+> > >> A safer alternative might be a chattr file attribute that if set, the
+> > >> mtime is not updated on writes, and stat() on the file always shows =
+the
+> > >> mtime as "right now".  At least that way, the file won't accidentally
+> > >> get left out of backups that rely on the mtime.
+> > >>=20
+> > >> (If the file attribute is unset, you immediately update the mtime th=
+en
+> > >> too, and from then on the file is back to normal).
+> > >>=20
+> >=20
+> > Austin> I like this even better than the flag suggestion, it provides
+> > Austin> better control, means that you don't need to update
+> > Austin> applications to get the benefits, and prevents backup software
+> > Austin> from breaking (although backups would be bigger).
+> >=20
+> > Me too, it fails in a safer mode, where you do more work on backups
+> > than strictly needed.  I'm still against this as a mount option
+> > though, way way way too many bullets in the foot gun.  And as someone
+> > else said, once you mount with O_NOMTIME, then unmount, then mount
+> > again without O_NOMTIME, you've lost information.  Not good. =20
+>=20
+> That was me.  Zach also pointed out to me that'd mean figuring out where
+> to store that information on-disk for every filesystem you care about.
+> I like the idea of something persistent, but maybe it's more trouble
+> than it's worth--I honestly don't know.
+>=20
 
-> We certainly could
-> add infrastructure to capture syscall numbers, fault/signal numbers,
-> etc etc, but I think it's overkill if it adds kernel overhead on
-> entry/exit.
->
+When this persistent flag is in effect, the values stored in mtime and atim=
+e,
+and probably ctime, become irrelevant.  Surely we can choose some magic val=
+ue
+to store there that would never happen in practice.
 
-None of these should add overhead.
+e.g. ctime is signed and so goes back to 1902 (is that right?).  As ctime
+cannot be set (via POSIX) to anything but "now", and as there were no Unix
+systems in 1902, such values are impossible.
 
->
->>> A better implementation, I think, is to put the tests for "you
->>> screwed up and synchronously entered the kernel" in
->>> the syscall_trace_enter() code, which TIF_NOHZ already
->>> gets us into;
->>
->> No, not unless you're planning on using that to distinguish syscalls
->> from other stuff *and* people think that's justified.
->
->
-> So, the question is how we separate synchronous entries
-> from IRQs?  At a high level, IRQs are kernel bugs (for cpu-isolated
-> tasks), and synchronous entries are application bugs.  We'd
-> like to deliver a signal for the latter, and do some kind of
-> kernel diagnostics for the former.  So we can't just add the
-> test in the context tracking code, which doesn't actually know
-> why we're entering or exiting.
+So a specific large negative value in ctime could safely be take to mean
+"don't update time stamps, and always report them as 'now'".
 
-Synchronous entries could be VM bugs, too.
+Or do we need to keep ctime 'real'?
 
->
-> That's why I was thinking that the syscall_trace_entry and
-> exception_enter paths were the best choices.  I'm fairly sure
-> that exception_enter is only done for synchronous traps,
-> page faults, etc.
 
-Maybe.  Doing it through the actual entry/exit slow paths would be
-overhead-free, although I'm not sure that IRQs have real slow paths
-for entry.
+BTW When you "swap" to a file the mtime doesn't get updated.  No one seems =
+to
+complain about that.  I guess it is a rather narrow use-case though.
 
->
-> Certainly on the tile architecture we include the trap number
-> in the pt_regs, so it's possible to just examine the pt_regs and
-> know why you entered or are exiting the kernel, but I don't
-> think we can rely on that for all architectures.
 
-x86 can't do this.
+NeilBrown
 
-> I'll put out a v2 of my patch that does both the things you
-> advise against :-) just so we can have a strawman to think
-> about how to do it better - unless you have a suggestion
-> offhand as to how we can better differentiate sync and async
-> entries into the kernel in a platform-independent way.
->
-> I could imagine modifying user_exit() and exception_enter()
-> to pass an identifier into the context system saying why they
-> were changing contexts, so we could have syscalls, trap
-> numbers, fault numbers, etc., and some way to query as
-> to whether they were synchronous or asynchronous, and
-> build this scheme on top of that, but I'm not sure the extra
-> infrastructure is worthwhile.
->
+--Sig_/0D4m/+CtwMSsg1VoXjsHSm+
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
 
-I'll take a look.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
 
-Again, though, I think we really do need to distinguish at least MCE
-and NMI (on x86) from the others.
+iQIVAwUBVVKBODnsnt1WYoG5AQL3XA//Uy9AuNd7KYX5oaywU34WxRaJnG1c8fGK
+hdelglpuBdMJbu9+DpZqD6Vy6SLCbjn1qb+CM5eqS2nCk3f4wlyQT2Go5JIdrRhu
+GbI0L5ZZ+PQCFwDeywRen8sRtuVpOOujtC8hLc4XTmgBOEX4Xzj/XNUAVwB1d4na
+p3TYA2Gu7llhTDFjTf5a90LAog41lWMhxZQlhyGRVQWA4oiZ39NY7kGEZm2ci4pj
+fNzkTmvRiNUmnbTN0LUhNdX9vLRzK/QpKyCGE1hbkRrewNUVmh/IDAptjQUeHiLz
+8LQ9fgWmOWXLX0CC6dZ+e66yNeIejQtSrhqOfaVMSxqdUpUO9FYgerr1TAZ9TGFx
+oi8QjjlKcN/Irb4vVjBYjAXRliV8t+TujViSBdNl6NcqMNm5sHr55isiYXZlLGSR
+8jhoKbNn27j+KpdHlz9LquUmqgto8S9AYURmlIKrKWIL+wccRkPusb91EId9quRT
+1Ma9dR/y75i5NSkWECjHoBZvt5PwM681027f3utgHs+N3L54KiKblDqHYpuPUWg8
+LlmVjHS8LfhEIMSCt+iXhACQsf3anXcRV7sXRWJUVmQITDnAujYNNNn+PFbAtbzG
+dbOGvYwABxhnpORU7dT2PhRaXp1beRMIl9TZeNqCn3gtC6kKOthmsAFdJR1xVAQ1
+e5+spLOQMNs=
+=Fbg6
+-----END PGP SIGNATURE-----
 
->
->> What if we added a mode to perf where delivery of a sample
->> synchronously (or semi-synchronously by catching it on the next exit
->> to userspace) freezes the delivering task?  It would be like debugger
->> support via perf.
->>
->> peterz, do you think this would be a sensible thing to add to perf?
->> It would only make sense for some types of events (tracepoints and
->> hw_breakpoints mostly, I think).
->
->
-> I suspect it's reasonable to consider this orthogonal, particularly
-> if there is some skid between the actual violation by the
-> application, and the freeze happening.
->
-
-I think it could be done without skid, except for async entries, but
-for asynx entries we don't care about exact user state anyway.
-
-> You pushed back somewhat on prctl() in favor of a quiesce()
-> syscall in your email, but it seemed like at the end of your
-> email you were adopting the prctl() perspective.  Is that true?
-> I admit the prctl() still seems cleaner from my perspective.
->
-
-Prctl for the strict thing seems much more reasonable to me than prctl
-for quiescing.  Also, the scheduler people seem to thing that
-quiescing should be automatic.
-
-Anyway, I'll happily look at code and maybe even write more coherent
-emails when I'm back in town in a week.  Since you're thinking that
-async entries should give kernel diagnostics instead of signals, maybe
-the right thing to do is to separate them out completely and try to
-address the individual entry types separately and as needed.
-
---Andy
+--Sig_/0D4m/+CtwMSsg1VoXjsHSm+--
