@@ -1,82 +1,101 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
-Subject: Re: CONFIG_ISOLATION=y (was: [PATCH 0/6] support "dataplane" mode
- for nohz_full)
-Date: Tue, 12 May 2015 17:36:31 +0200
-Message-ID: <20150512153630.GA27864@lerouge>
-References: <20150509070538.GA9413@gmail.com>
- <20150511085759.71deeb64@gandalf.local.home>
- <20150511171916.GN6776@linux.vnet.ibm.com>
- <20150511102744.9ebb2d05a7e8b457d03430bf@linux-foundation.org>
- <20150511173305.GC32512@lerouge>
- <20150511140009.1f7bcf07@gandalf.local.home>
- <5550F077.6030906@ezchip.com>
- <20150512091032.GA10138@gmail.com>
- <20150512114809.GL21418@twins.programming.kicks-ass.net>
- <20150512123440.GA16959@gmail.com>
+From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Subject: Re: [PATCH v2 2/3] pagemap: hide physical addresses from non-privileged
+ users
+Date: Tue, 12 May 2015 18:41:28 +0300
+Message-ID: <55521F28.1020306@yandex-team.ru>
+References: <20150512090156.24768.2521.stgit@buzz>	<20150512094305.24768.51807.stgit@buzz> <CA+55aFyKpWrt_Ajzh1rzp_GcwZ4=6Y=kOv8hBz172CFJp6L8Tg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150512123440.GA16959@gmail.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Ingo Molnar <mingo@kernel.org>
-Cc: Peter Zijlstra <peterz@infradead.org>, Chris Metcalf <cmetcalf@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Andrew Morton <akpm@linux-foundation.org>, paulmck@linux.vnet.ibm.com, Gilad Ben Yossef <giladb@ezchip.com>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CA+55aFyKpWrt_Ajzh1rzp_GcwZ4=6Y=kOv8hBz172CFJp6L8Tg@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: linux-mm <linux-mm@kvack.org>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Mark Williamson <mwilliamson@undo-software.com>, Pavel Emelyanov <xemul@parallels.com>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Vlastimil Babka <vbabka@suse.cz>, Pavel Machek <pavel@ucw.cz>, Mark Seaborn <mseaborn@chromium.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Daniel James <djames@undo-software.com>, Finn Grimwood <fgrimwood@undo-software.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 12, 2015 at 02:34:40PM +0200, Ingo Molnar wrote:
-> 
-> * Peter Zijlstra <peterz@infradead.org> wrote:
-> 
-> > On Tue, May 12, 2015 at 11:10:32AM +0200, Ingo Molnar wrote:
-> > > 
-> > > So I'd vote for Frederic's CONFIG_ISOLATION=y, mostly because this 
-> > > is a high level kernel feature, so it won't conflict with 
-> > > isolation concepts in lower level subsystems such as IOMMU 
-> > > isolation - and other higher level features like scheduler 
-> > > isolation are basically another partial implementation we want to 
-> > > merge with all this...
-> > 
-> > But why do we need a CONFIG flag for something that has no content?
-> > 
-> > That is, I do not see anything much; except the 'I want to stay in 
-> > userspace and kill me otherwise' flag, and I'm not sure that 
-> > warrants a CONFIG flag like this.
-> > 
-> > Other than that, its all a combination of NOHZ_FULL and 
-> > cpusets/isolcpus and whatnot.
-> 
-> Yes, that's what I meant: CONFIG_ISOLATION would trigger what is 
-> NO_HZ_FULL today - we could possibly even remove CONFIG_NO_HZ_FULL as 
-> an individual Kconfig option?
+On 12.05.2015 18:06, Linus Torvalds wrote:
+> On Tue, May 12, 2015 at 2:43 AM, Konstantin Khlebnikov
+> <khlebnikov@yandex-team.ru> wrote:
+>> @@ -1260,6 +1269,8 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
+>>          if (!count)
+>>                  goto out_task;
+>>
+>> +       /* do not disclose physical addresses: attack vector */
+>> +       pm.show_pfn = capable(CAP_SYS_ADMIN);
+>>          pm.v2 = soft_dirty_cleared;
+>>          pm.len = (PAGEMAP_WALK_SIZE >> PAGE_SHIFT);
+>>          pm.buffer = kmalloc(pm.len * PM_ENTRY_BYTES, GFP_TEMPORARY);
+>
+> NO! Dammit, no, no, no!
+>
+> How many times must people do this major security faux-pas before we learn?
 
-Right, we could return to what we had previously: CONFIG_NO_HZ. A config
-that enables dynticks-idle by default and allows full dynticks if nohz_full=
-boot option is passed (or something driven by higher level isolation interface).
+Oops. Sorry. I guess everybody must do that mistake at least once.
+That's my first time. =)
 
-Because eventually, distros enable NO_HZ_FULL so that their 0.0001% users
-can use it. Well at least Red Hat does.
 
-> 
-> CONFIG_ISOLATION=y would express the guarantee from the kernel that 
-> it's possible for user-space to configure itself to run undisturbed - 
-> instead of the current inconsistent set of options and facilities.
-> 
-> A bit like CONFIG_PREEMPT_RT is more than just preemptable spinlocks, 
-> it also tries to offer various facilities and tune the defaults to 
-> turn the kernel hard-rt.
-> 
-> Does that make sense to you?
+So, in this case existing call of mm_access() from pagemap_read()
+is a bug too because it checks CAP_SYS_PTRACE for current task.
 
-Right although distros tend to want features to be enabled dynamically
-so that they have a single kernel to maintain. Things like PREEMPT_RT
-really need to be a different kernel because fundamental primitives like
-spinlocks must be implemented statically.
+I'll rework it in the same way as /proc/*/[s]maps.
 
-But isolation can be a boot-enabled, or even runtime-enabled, as it's only
-about timer,irq,task affinity. Full Nohz is more complicated but it can
-be runtime toggled in the future.
+>
+> WE DO NOT CHECK CURRENT CAPABILITIES AT READ/WRITE TIME!
+>
+> It's a bug. It's a security issue. It's not how Unix capabilities work!
+>
+> Capabilities are checked at open time.:
+>
+>> @@ -1335,9 +1346,6 @@ out:
+>>
+>>   static int pagemap_open(struct inode *inode, struct file *file)
+>>   {
+>> -       /* do not disclose physical addresses: attack vector */
+>> -       if (!capable(CAP_SYS_ADMIN))
+>> -               return -EPERM;
+>
+> THIS  is where you are supposed to check for capabilities. The place
+> where you removed it!
+>
+> The reason we check capabilities at open time, and open time ONLY is
+> because that is really very integral to the whole Unix security model.
+> Otherwise, you get into this situation:
+>
+>   - unprivileged process opens file
+>
+>   - unprivileged process tricks suid process to do the actual access for it
+>
+> where the traditional model is to just force a "write()" by opening
+> the file as stderr, and then executing a suid process (traditionally
+> "sudo") that writes an error message to it.
+>
+> So *don't* do permission checks using read/write time credentials.
+> They are wrong.
+>
+> Now, if there is some reason that you really can't do it when opening
+> the file, and you actually need to use capability information at
+> read/write time, you use the "file->f_cred" field, which is the
+> open-time capabilities. So you _can_ do permission checks at
+> read/write time, but you have to use the credentials of the opener,
+> not "current".
+>
+> So in this case, I guess you could use
+>
+>          pm.show_pfn = file_ns_capable(file, &init_user_ns, CAP_SYS_ADMIN);
+>
+> if you really need to do this at read time, and cannot fill in that
+> "show_pfn" at open-time.
+>
+>                          Linus
+>
 
-So we can bring CONFIG_CPU_ISOLATION, at least for distros that are really
-not interested in that so they can disable it. CONFIG_CPU_ISOLATION=y would
-bring an ability which is default-disabled and driven dynamically through whatever
-interface.
+
+-- 
+Konstantin
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
