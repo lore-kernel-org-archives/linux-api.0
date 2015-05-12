@@ -1,90 +1,78 @@
-From: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [PATCH 1/5] selftests: Add futex functional tests
-Date: Tue, 12 May 2015 13:54:32 -0700
-Message-ID: <D177B3F7.CC8C3%dvhart@linux.intel.com>
-References: <D1763F31.CC237%dvhart@linux.intel.com>
- <5550FB2C.1000403@osg.samsung.com>
- <D17653E0.CC29F%dvhart@linux.intel.com>
- <5551164E.5080409@osg.samsung.com>
- <D17670E1.CC354%dvhart@linux.intel.com>
- <55512B54.50304@osg.samsung.com>
- <55512B86.2040900@osg.samsung.com>
- <D1767EA1.CC3DA%dvhart@linux.intel.com>
- <20150512100256.GA5122@rei.suse.de>
- <D1777231.CC5D0%dvhart@linux.intel.com>
- <20150512200528.GA1336@rei>
- <D177AD46.CC848%dvhart@linux.intel.com>
- <55526544.90909@osg.samsung.com>
+From: Chris Metcalf <cmetcalf@ezchip.com>
+Subject: Re: CONFIG_ISOLATION=y
+Date: Tue, 12 May 2015 17:05:36 -0400
+Message-ID: <55526B20.10409@ezchip.com>
+References: <20150508172210.559830a9@gandalf.local.home> <554D428E.6020702@ezchip.com> <20150508161909.308d60e21f6b83b897174276@linux-foundation.org> <20150509070538.GA9413@gmail.com> <20150511085759.71deeb64@gandalf.local.home> <20150511171916.GN6776@linux.vnet.ibm.com> <20150511102744.9ebb2d05a7e8b457d03430bf@linux-foundation.org> <20150511173305.GC32512@lerouge> <20150511140009.1f7bcf07@gandalf.local.home> <5550F077.6030906@ezchip.com> <20150512091032.GA10138@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="US-ASCII"
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55526544.90909-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20150512091032.GA10138@gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Ingo Molnar <mingo@kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>, Frederic Weisbecker <fweisbec@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, paulmck@linux.vnet.ibm.com, Gilad Ben Yossef <giladb@ezchip.com>, Peter Zijlstra <peterz@infradead.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 5/12/15, 1:40 PM, "Shuah Khan" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
-
->On 05/12/2015 02:15 PM, Darren Hart wrote:
->> On 5/12/15, 1:05 PM, "Cyril Hrubis" <chrubis-AlSwsSmVLrQ@public.gmane.org> wrote:
->> 
->>> Hi!
->>>>>> I'm happy to do that, but I would like to make sure I'm doing the
->>>> right
->>>>>> thing.
->>>>>
->>>>> The right thing here is to add -pthread to CFLAGS which sets both
->>>>>flags
->>>>> for preprocessor and linker (see man gcc).
->>>>
->>>> Hi Cyril,
->>>>
->>>> Thanks. I read that, and mentioned it, but my concern with -pthread in
->>>> the
->>>> CFLAGS and LDFLAGS is that it is a non-standard compiler flag. I
->>>> understand we have a number of gcc-isms in our build - but do we want
->>>>to
->>>> add more?
->>>>
->>>> I'm also struggling to find any kind of prescribed documentation on
->>>>this
->>>> beyond the short blurb in the gcc man page which describes what this
->>>> option does, but not when to use it. I'll need something concrete to
->>>> justify changes to testcase Makefiles to Shuah.
->>>
->>> Sorry to mislead you with the pointing at gcc man page.
->>>
->>> It is a Linux standard. Have a look at pthreads manual page:
->>> http://man7.org/linux/man-pages/man7/pthreads.7.html
->>>
->>> "On Linux, programs that use the Pthreads API should be compiled using
->>> cc -pthread."
->>>
->>> Or any pthread_foo() manual page that starts with:
->>>
->>> "Compile and link with -pthread."
->>>
->>> The portable way i.e. POSIX would be getting compiler flags with
->>>getconf
->>> but as this is a Linux kernel testsuite I would not bother with that.
->>> Hmm, and it looks like this is not implemented on Linux anyway.
->> 
->> Thanks Cyril, that's perfect.
->> 
->> I'll roll my latest example patch adding -pthread to LDFLAGS and CFLAGS
->> into the initial patch and resubmit the patch series as v4.
->> 
+On 05/12/2015 05:10 AM, Ingo Molnar wrote:
+> * Chris Metcalf <cmetcalf@ezchip.com> wrote:
 >
->Daren,
+>> - ISOLATION (Frederic).  I like this but it conflicts with other uses
+>>    of "isolation" in the kernel: cgroup isolation, lru page isolation,
+>>    iommu isolation, scheduler isolation (at least it's a superset of
+>>    that one), etc.  Also, we're not exactly isolating a task - often
+>>    a "dataplane" app consists of a bunch of interacting threads in
+>>    userspace, so not exactly isolated.  So perhaps it's too confusing.
+> So I'd vote for Frederic's CONFIG_ISOLATION=y, mostly because this is
+> a high level kernel feature, so it won't conflict with isolation
+> concepts in lower level subsystems such as IOMMU isolation - and other
+> higher level features like scheduler isolation are basically another
+> partial implementation we want to merge with all this...
 >
->While you are generating new version, could you also please add
->.gitignore for the futex binaries, so they get ignored by git.
+> nohz, RCU tricks, watchdog defaults, isolcpus and various other
+> measures to keep these CPUs and workloads as isolated as possible
+> are (or should become) components of this high level concept.
+>
+> Ideally CONFIG_ISOLATION=y would be a kernel feature that has almost
+> zero overhead on normal workloads and on non-isolated CPUs, so that
+> Linux distributions can enable it.
 
-Will do.
+Using CONFIG_CPU_ISOLATION to capture all this stuff instead of
+making CONFIG_NO_HZ_FULL do it seems plausible for naming.
+However, this feels like just bombing the current naming to this
+new name, right?  I'd like to argue that this is orthogonal to adding
+new isolation functionality into no_hz_full, as my patch series has
+been doing.  Perhaps we can defer this to a follow-up patch series?
+I'm happy to do the work but I'm not sure we want to bundle all
+that churn into the current patch series under consideration.
+I can use cpu_isolation_xxx for naming in the current patch series
+so we don't have to come back and bomb that later.
+
+> Enabling CONFIG_ISOLATION=y should be the only 'kernel config' step
+> needed: just like cpusets, the configuration of isolated CPUs should
+> be a completely boot option free excercise that can be dynamically
+> done and undone by the administrator via an intuitive interface.
+
+Eventually isolation can be runtime-enabled, but for now I think
+it makes sense to be boot-enabled.  As Frederic suggested, we
+can arrange full nohz to be runtime toggled in the future.
+I agree that it should be reasonable to compile it in by default.
+
+On 05/12/2015 07:48 AM, Peter Zijlstra wrote:
+> But why do we need a CONFIG flag for something that has no content?
+>
+> That is, I do not see anything much; except the 'I want to stay in
+> userspace and kill me otherwise' flag, and I'm not sure that warrants a
+> CONFIG flag like this.
+>
+> Other than that, its all a combination of NOHZ_FULL and cpusets/isolcpus
+> and whatnot.
+
+There are three major pieces here - one is the STRICT piece
+that you allude to, but there is also the piece where we quiesce
+tasks in the kernel until no timer interrupts are pending, and the
+piece that allows easy debugging of stray IRQs etc to isolated cpus.
 
 -- 
-Darren Hart
-Intel Open Source Technology Center
+Chris Metcalf, EZChip Semiconductor
+http://www.ezchip.com
+
