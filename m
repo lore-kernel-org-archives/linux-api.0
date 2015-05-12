@@ -1,37 +1,57 @@
-From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 1/2] clone: Support passing tls argument via C rather
- than pt_regs magic
-Date: Tue, 12 May 2015 10:17:28 +0200
-Message-ID: <20150512081727.GA6058@gmail.com>
-References: <20150421174711.GA5127@jtriplet-mobl1>
- <alpine.DEB.2.11.1505052050100.4225@nanos>
- <20150505231221.GB16525@cloud>
- <20150511101313.GA18058@gmail.com>
- <20150511135526.GA6130@x>
- <20150511140043.GB5354@gmail.com>
- <20150511193050.GA11002@jtriplet-mobl1>
+From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] Implement fchmodat4 system call
+Date: Tue, 12 May 2015 10:48:52 +0200
+Message-ID: <CAHO5Pa1-5X1yC5qkNPKe19zj-JOWMdr_oHmtbyK20+pMjznzAw@mail.gmail.com>
+References: <1431310042-52247-1-git-send-email-will@worrbase.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150511193050.GA11002@jtriplet-mobl1>
+In-Reply-To: <1431310042-52247-1-git-send-email-will-o9VNkMWGZsBWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+To: William Orr <will-o9VNkMWGZsBWk0Htik3J/w@public.gmane.org>
+Cc: Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Ayer <agwa-vM4+sZUQx5cvLxMWut27OA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+[CC += linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org]
 
-* Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> wrote:
+Hello William,
 
-> > Looks good to me, but I have not looked very deeply ...
-> 
-> I sent out a v2 with the co-author information moved from the 
-> signoffs to the commit message.  If it looks reasonable to you, can 
-> you take it through the tip tree please?
+Since this is a kernel-user-space API change, please CC linux-api@.
+The kernel source file Documentation/SubmitChecklist notes that all
+Linux kernel patches that change userspace interfaces should be CCed
+to linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, so that the various parties who are
+interested in API changes are informed. For further information, see
+https://www.kernel.org/doc/man-pages/linux-api-ml.html
 
-So since this is multi-arch, and changes kernel/fork.c, I'd say -mm is 
-a more appropriate home for it? (Assuming Linus does not object.)
+Aside from that, I've added a few other people/lists to CC that seem
+likely to be relevant. Some additional comments below.
 
-Thanks,
+On Mon, May 11, 2015 at 4:07 AM, William Orr <will-o9VNkMWGZsBWk0Htik3J/w@public.gmane.org> wrote:
+> Hey,
+>
+> Currently, Linux's fchmodat(2) doesn't honor the flags argument. To bring it
+> more in-line with POSIX and other implementations, this patch adds fchmodat4,
+> which honors the flags argument, and implements the same flags as fchownat(2).
+>
+> This makes it possible to chmod a file without following symlinks, without
+> having to call open(2) on a file with O_NOFOLLOW. This is heavily based off
+> of Andrew Ayer's work in 2012, and is sent with his permission. Let me know
+> if this can be applied.
+>
+> Please CC me, since I'm not subscribed to this list.
 
-	Ingo
+This seems an obviously sensible addition, and it was an obvious
+mistake not to have a 'flags' argument in the original system call
+(https://lwn.net/Articles/585415/). As well as getting us a proper
+POSIX compliant API (and one that is consistent with other
+implementations, such as FreeBSD), it allows for future behavior
+expansion via the 'flags' argument.
+
+Cheers,
+
+Michael
+
+-- 
+Michael Kerrisk Linux man-pages maintainer;
+http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface", http://blog.man7.org/
