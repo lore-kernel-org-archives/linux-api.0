@@ -1,142 +1,47 @@
-From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Subject: [PATCH v2 1/3] pagemap: add mmap-exclusive bit for marking pages
- mapped only here
-Date: Tue, 12 May 2015 12:43:03 +0300
-Message-ID: <20150512094303.24768.10282.stgit@buzz>
-References: <20150512090156.24768.2521.stgit@buzz>
+From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 4/6] nohz: support PR_DATAPLANE_QUIESCE
+Date: Tue, 12 May 2015 11:50:30 +0200
+Message-ID: <20150512095030.GD11477@gmail.com>
+References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
+ <1431107927-13998-5-git-send-email-cmetcalf@ezchip.com>
+ <20150512093349.GH21418@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150512090156.24768.2521.stgit@buzz>
-Sender: owner-linux-mm@kvack.org
-To: linux-mm@kvack.org, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>
-Cc: Mark Williamson <mwilliamson@undo-software.com>, Pavel Emelyanov <xemul@parallels.com>, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Vlastimil Babka <vbabka@suse.cz>, Pavel Machek <pavel@ucw.cz>, Mark Seaborn <mseaborn@chromium.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Linus Torvalds <torvalds@linux-foundation.org>, Daniel James <djames@undo-software.com>, Finn Grimwood <fgrimwood@undo-software.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150512093349.GH21418-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "Srivatsa S. Bhat" <srivatsa.bhat-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This patch sets bit 56 in pagemap if this page is mapped only once.
-It allows to detect exclusively used pages without exposing PFN:
 
-present file exclusive state
-0       0    0         non-present
-1       1    0         file page mapped somewhere else
-1       1    1         file page mapped only here
-1       0    0         anon non-CoWed page (shared with parent/child)
-1       0    1         anon CoWed page (or never forked)
+* Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
 
-Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Link: lkml.kernel.org/r/CAEVpBa+_RyACkhODZrRvQLs80iy0sqpdrd0AaP_-tgnX3Y9yNQ@mail.gmail.com
+> On Fri, May 08, 2015 at 01:58:45PM -0400, Chris Metcalf wrote:
+> > This prctl() flag for PR_SET_DATAPLANE sets a mode that requires the
+> > kernel to quiesce any pending timer interrupts prior to returning
+> > to userspace.  When running with this mode set, sys calls (and page
+> > faults, etc.) can be inordinately slow.  However, user applications
+> > that want to guarantee that no unexpected interrupts will occur
+> > (even if they call into the kernel) can set this flag to guarantee
+> > that semantics.
+> 
+> Currently people hot-unplug and hot-plug the CPU to do this. 
+> Obviously that's a wee bit horrible :-)
+> 
+> Not sure if a prctl like this is any better though. This is a CPU 
+> properly not a process one.
 
----
+So if then a prctl() (or other system call) could be a shortcut to:
 
-v2:
-* handle transparent huge pages
-* invert bit and rename shared -> exclusive (less confusing name)
----
- Documentation/vm/pagemap.txt |    3 ++-
- fs/proc/task_mmu.c           |   10 ++++++++++
- tools/vm/page-types.c        |   12 ++++++++++++
- 3 files changed, 24 insertions(+), 1 deletion(-)
+ - move the task to an isolated CPU
+ - make sure there _is_ such an isolated domain available
 
-diff --git a/Documentation/vm/pagemap.txt b/Documentation/vm/pagemap.txt
-index 6bfbc172cdb9..3cfbbb333ea1 100644
---- a/Documentation/vm/pagemap.txt
-+++ b/Documentation/vm/pagemap.txt
-@@ -16,7 +16,8 @@ There are three components to pagemap:
-     * Bits 0-4   swap type if swapped
-     * Bits 5-54  swap offset if swapped
-     * Bit  55    pte is soft-dirty (see Documentation/vm/soft-dirty.txt)
--    * Bits 56-60 zero
-+    * Bit  56    page exlusively mapped
-+    * Bits 57-60 zero
-     * Bit  61    page is file-page or shared-anon
-     * Bit  62    page swapped
-     * Bit  63    page present
-diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index 6dee68d013ff..29febec65de4 100644
---- a/fs/proc/task_mmu.c
-+++ b/fs/proc/task_mmu.c
-@@ -982,6 +982,7 @@ struct pagemapread {
- #define PM_STATUS2(v2, x)   (__PM_PSHIFT(v2 ? x : PAGE_SHIFT))
- 
- #define __PM_SOFT_DIRTY      (1LL)
-+#define __PM_MMAP_EXCLUSIVE  (2LL)
- #define PM_PRESENT          PM_STATUS(4LL)
- #define PM_SWAP             PM_STATUS(2LL)
- #define PM_FILE             PM_STATUS(1LL)
-@@ -1074,6 +1075,8 @@ static void pte_to_pagemap_entry(pagemap_entry_t *pme, struct pagemapread *pm,
- 
- 	if (page && !PageAnon(page))
- 		flags |= PM_FILE;
-+	if (page && page_mapcount(page) == 1)
-+		flags2 |= __PM_MMAP_EXCLUSIVE;
- 	if ((vma->vm_flags & VM_SOFTDIRTY))
- 		flags2 |= __PM_SOFT_DIRTY;
- 
-@@ -1119,6 +1122,13 @@ static int pagemap_pte_range(pmd_t *pmd, unsigned long addr, unsigned long end,
- 		else
- 			pmd_flags2 = 0;
- 
-+		if (pmd_present(*pmd)) {
-+			struct page *page = pmd_page(*pmd);
-+
-+			if (page_mapcount(page) == 1)
-+				pmd_flags2 |= __PM_MMAP_EXCLUSIVE;
-+		}
-+
- 		for (; addr != end; addr += PAGE_SIZE) {
- 			unsigned long offset;
- 			pagemap_entry_t pme;
-diff --git a/tools/vm/page-types.c b/tools/vm/page-types.c
-index 8bdf16b8ba60..3a9f193526ee 100644
---- a/tools/vm/page-types.c
-+++ b/tools/vm/page-types.c
-@@ -70,9 +70,12 @@
- #define PM_PFRAME(x)        ((x) & PM_PFRAME_MASK)
- 
- #define __PM_SOFT_DIRTY      (1LL)
-+#define __PM_MMAP_EXCLUSIVE  (2LL)
- #define PM_PRESENT          PM_STATUS(4LL)
- #define PM_SWAP             PM_STATUS(2LL)
-+#define PM_FILE             PM_STATUS(1LL)
- #define PM_SOFT_DIRTY       __PM_PSHIFT(__PM_SOFT_DIRTY)
-+#define PM_MMAP_EXCLUSIVE   __PM_PSHIFT(__PM_MMAP_EXCLUSIVE)
- 
- 
- /*
-@@ -100,6 +103,8 @@
- #define KPF_SLOB_FREE		49
- #define KPF_SLUB_FROZEN		50
- #define KPF_SLUB_DEBUG		51
-+#define KPF_FILE		62
-+#define KPF_MMAP_EXCLUSIVE	63
- 
- #define KPF_ALL_BITS		((uint64_t)~0ULL)
- #define KPF_HACKERS_BITS	(0xffffULL << 32)
-@@ -149,6 +154,9 @@ static const char * const page_flag_names[] = {
- 	[KPF_SLOB_FREE]		= "P:slob_free",
- 	[KPF_SLUB_FROZEN]	= "A:slub_frozen",
- 	[KPF_SLUB_DEBUG]	= "E:slub_debug",
-+
-+	[KPF_FILE]		= "F:file",
-+	[KPF_MMAP_EXCLUSIVE]	= "1:mmap_exclusive",
- };
- 
- 
-@@ -452,6 +460,10 @@ static uint64_t expand_overloaded_flags(uint64_t flags, uint64_t pme)
- 
- 	if (pme & PM_SOFT_DIRTY)
- 		flags |= BIT(SOFTDIRTY);
-+	if (pme & PM_FILE)
-+		flags |= BIT(FILE);
-+	if (pme & PM_MMAP_EXCLUSIVE)
-+		flags |= BIT(MMAP_EXCLUSIVE);
- 
- 	return flags;
- }
+I.e. have some programmatic, kernel provided way for an application to 
+be sure it's running in the right environment. Relying on random 
+administration flags here and there won't cut it.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Thanks,
+
+	Ingo
