@@ -1,40 +1,61 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCHv2 1/2] clone: Support passing tls argument via C rather
- than pt_regs magic
-Date: Tue, 12 May 2015 14:22:50 -0700
-Message-ID: <20150512142250.dcb053da81855ae1b5861173@linux-foundation.org>
-References: <20150511192918.GA11361@jtriplet-mobl1>
+From: Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>
+Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
+Date: Tue, 12 May 2015 14:35:52 -0700 (PDT)
+Message-ID: <alpine.DEB.2.00.1505112225170.28239@cobra.newdream.net>
+References: <20150507002617.GJ4327@dastard> <20150507172053.GA659@lenny.home.zabbo.net> <alpine.DEB.2.00.1505071752520.28239@cobra.newdream.net> <CAHQdGtQjMHA8rVPkggB2zMz=k3O667+APH_1EY_2FtYmHL7-hw@mail.gmail.com> <20150508221325.GM4327@dastard>
+ <alpine.DEB.2.00.1505081517470.28239@cobra.newdream.net> <CAHQdGtTFTN2XuvmarFZ9HPQV=cuhh7FosdHSrJME_U4htr=i8w@mail.gmail.com> <20150511144719.GA14088@thunk.org> <alpine.DEB.2.00.1505110920520.28239@cobra.newdream.net> <20150511231021.GC14088@thunk.org>
+ <20150512050821.GA9404@chicago.guarana.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150511192918.GA11361@jtriplet-mobl1>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Triplett <josh@joshtriplett.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, x86@kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150512050821.GA9404-Qr0l8DEfScZEV+tojptmR0B+6BGkLq7r@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kevin Easton <kevin-RFfraI6bZkdAfugRpC6u6w@public.gmane.org>
+Cc: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 11 May 2015 12:29:19 -0700 Josh Triplett <josh@joshtriplett.org> wrote:
-
-> Introduce a new CONFIG_HAVE_COPY_THREAD_TLS for architectures to opt
-> into, and a new copy_thread_tls that accepts the tls parameter as an
-> additional unsigned long (syscall-argument-sized) argument.
-> Change sys_clone's tls argument to an unsigned long (which does
-> not change the ABI), and pass that down to copy_thread_tls.
+On Tue, 12 May 2015, Kevin Easton wrote:
+> On Mon, May 11, 2015 at 07:10:21PM -0400, Theodore Ts'o wrote:
+> > On Mon, May 11, 2015 at 09:24:09AM -0700, Sage Weil wrote:
+> > > > Let me re-ask the question that I asked last week (and was apparently
+> > > > ignored).  Why not trying to use the lazytime feature instead of
+> > > > pointing a head straight at the application's --- and system
+> > > > administrators' --- heads?
+> > > 
+> > > Sorry Ted, I thought I responded already.
+> > > 
+> > > The goal is to avoid inode writeout entirely when we can, and 
+> > > as I understand it lazytime will still force writeout before the inode 
+> > > is dropped from the cache.  In systems like Ceph in particular, the 
+> > > IOs can be spread across lots of files, so simply deferring writeout 
+> > > doesn't always help.
+> > 
+> > Sure, but it would reduce the writeout by orders of magnitude.  I can
+> > understand if you want to reduce it further, but it might be good
+> > enough for your purposes.
+> > 
+> > I considered doing the equivalent of O_NOMTIME for our purposes at
+> > $WORK, and our use case is actually not that different from Ceph's
+> > (i.e., using a local disk file system to support a cluster file
+> > system), and lazytime was (a) something I figured was something I
+> > could upstream in good conscience, and (b) was more than good enough
+> > for us.
 > 
-> Architectures that don't opt into copy_thread_tls will continue to
-> ignore the C argument to sys_clone in favor of the pt_regs captured at
-> kernel entry, and thus will be unable to introduce new versions of the
-> clone syscall.
+> A safer alternative might be a chattr file attribute that if set, the
+> mtime is not updated on writes, and stat() on the file always shows the
+> mtime as "right now".  At least that way, the file won't accidentally
+> get left out of backups that rely on the mtime.
+> 
+> (If the file attribute is unset, you immediately update the mtime then
+> too, and from then on the file is back to normal).
 
-What happens quite frequently is that we do something for x86 with the
-expectation that other architectures will follow along, but this
-doesn't happen.  The arch maintainers simply didn't know about it or
-nobody nags them.  Nothing happens and inconsistencies hang around for
-years.  eg, http://lkml.iu.edu/hypermail/linux/kernel/1504.2/04993.html
+Interesting!  I didn't realize there was already a chattr +A that disabled 
+atime (although I suspect it doesn't do the "right now" for stat thing). 
+This makes the nomtime-ness a bit more obscure (I don't think most users 
+would think to check these file attributes), but it's a safer failure 
+condition for backups at least.
 
-I'm thinking we should find a way to do this better.  One way might be
-to maintain a Documentation/arch-todo which identifies each item, has a
-little list of what-to-do instructions and perhaps a list of the
-not-yet-done architectures.  Basically a way for everyone to
-communicate at the arch maintainers.
+The fact that chattr +A (and hopefully +M) will work for non-root is a 
+bonus, as we're also trying to get ceph daemons to drop most privileges.
+
+sage
