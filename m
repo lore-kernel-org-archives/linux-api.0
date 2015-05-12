@@ -1,65 +1,28 @@
-From: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH v6 0/8] vhost: support for cross endian guests
-Date: Tue, 12 May 2015 12:44:26 +0200
-Message-ID: <20150512124426.4e487cb6@bahia.local>
-References: <20150424122211.19156.97626.stgit@bahia.local>
-	<20150424153137-mutt-send-email-mst@redhat.com>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH 0/6] support "dataplane" mode for nohz_full
+Date: Tue, 12 May 2015 12:46:22 +0200
+Message-ID: <20150512104622.GK21418@twins.programming.kicks-ass.net>
+References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
+ <20150508141824.797eb0d89d514e39fd30fffe@linux-foundation.org>
+ <20150508172210.559830a9@gandalf.local.home>
+ <554D428E.6020702@ezchip.com>
+ <20150508161909.308d60e21f6b83b897174276@linux-foundation.org>
+ <20150509070538.GA9413@gmail.com>
+ <20150511085759.71deeb64@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150424153137-mutt-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150511085759.71deeb64-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Thomas Huth <thuth-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Cornelia Huck <cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
+To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "Srivatsa S. Bhat" <srivatsa.bhat-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 24 Apr 2015 15:31:54 +0200
-"Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-
-> On Fri, Apr 24, 2015 at 02:24:15PM +0200, Greg Kurz wrote:
-> > Only cosmetic and documentation changes since v5.
-> > 
-> > ---
+On Mon, May 11, 2015 at 08:57:59AM -0400, Steven Rostedt wrote:
 > 
-> Looks sane to me. I plan to review and apply next week.
+> Please lets get NO_HZ_FULL up to par. That should be the main focus.
 > 
 
-Hi Michael,
-
-I realize you just got back and have tons of things to do... Do
-you still plan to apply shortly ? Would you also have time to
-comment the QEMU part ?
-
-Thanks.
-
---
-Greg
-
-> > Greg Kurz (8):
-> >       virtio: introduce virtio_is_little_endian() helper
-> >       tun: add tun_is_little_endian() helper
-> >       macvtap: introduce macvtap_is_little_endian() helper
-> >       vringh: introduce vringh_is_little_endian() helper
-> >       vhost: introduce vhost_is_little_endian() helper
-> >       virtio: add explicit big-endian support to memory accessors
-> >       vhost: cross-endian support for legacy devices
-> >       macvtap/tun: cross-endian support for little-endian hosts
-> > 
-> > 
-> >  drivers/net/Kconfig              |   14 ++++++
-> >  drivers/net/macvtap.c            |   66 +++++++++++++++++++++++++++++-
-> >  drivers/net/tun.c                |   68 ++++++++++++++++++++++++++++++
-> >  drivers/vhost/Kconfig            |   15 +++++++
-> >  drivers/vhost/vhost.c            |   85 ++++++++++++++++++++++++++++++++++++++
-> >  drivers/vhost/vhost.h            |   25 ++++++++---
-> >  include/linux/virtio_byteorder.h |   24 ++++++-----
-> >  include/linux/virtio_config.h    |   18 +++++---
-> >  include/linux/vringh.h           |   18 +++++---
-> >  include/uapi/linux/if_tun.h      |    6 +++
-> >  include/uapi/linux/vhost.h       |   14 ++++++
-> >  11 files changed, 320 insertions(+), 33 deletions(-)
-> > 
-> > --
-> > Greg
-> 
+ACK, much of this dataplane stuff is (useful) hacks working around the
+fact that nohz_full just isn't complete.
