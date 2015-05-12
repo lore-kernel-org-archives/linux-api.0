@@ -1,33 +1,42 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH 4/6] nohz: support PR_DATAPLANE_QUIESCE
-Date: Tue, 12 May 2015 11:33:49 +0200
-Message-ID: <20150512093349.GH21418@twins.programming.kicks-ass.net>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH 5/6] nohz: support PR_DATAPLANE_STRICT mode
+Date: Tue, 12 May 2015 11:38:58 +0200
+Message-ID: <20150512093858.GI21418@twins.programming.kicks-ass.net>
 References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
- <1431107927-13998-5-git-send-email-cmetcalf@ezchip.com>
+ <1431107927-13998-6-git-send-email-cmetcalf@ezchip.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1431107927-13998-5-git-send-email-cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
-Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "Srivatsa S. Bhat" <srivatsa.bhat-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <1431107927-13998-6-git-send-email-cmetcalf@ezchip.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Chris Metcalf <cmetcalf@ezchip.com>
+Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Frederic Weisbecker <fweisbec@gmail.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 08, 2015 at 01:58:45PM -0400, Chris Metcalf wrote:
-> This prctl() flag for PR_SET_DATAPLANE sets a mode that requires the
-> kernel to quiesce any pending timer interrupts prior to returning
-> to userspace.  When running with this mode set, sys calls (and page
-> faults, etc.) can be inordinately slow.  However, user applications
-> that want to guarantee that no unexpected interrupts will occur
-> (even if they call into the kernel) can set this flag to guarantee
-> that semantics.
+On Fri, May 08, 2015 at 01:58:46PM -0400, Chris Metcalf wrote:
+> +++ b/kernel/time/tick-sched.c
+> @@ -436,6 +436,20 @@ static void dataplane_quiesce(void)
+>  			(jiffies - start));
+>  		dump_stack();
+>  	}
+> +
+> +	/*
+> +	 * Kill the process if it violates STRICT mode.  Note that this
+> +	 * code also results in killing the task if a kernel bug causes an
+> +	 * irq to be delivered to this core.
+> +	 */
+> +	if ((task->dataplane_flags & (PR_DATAPLANE_STRICT|PR_DATAPLANE_PRCTL))
+> +	    == PR_DATAPLANE_STRICT) {
+> +		pr_warn("Dataplane STRICT mode violated; process killed.\n");
+> +		dump_stack();
+> +		task->dataplane_flags &= ~PR_DATAPLANE_QUIESCE;
+> +		local_irq_enable();
+> +		do_group_exit(SIGKILL);
+> +	}
+>  }
 
-Currently people hot-unplug and hot-plug the CPU to do this. Obviously
-that's a wee bit horrible :-)
-
-Not sure if a prctl like this is any better though. This is a CPU
-properly not a process one.
-
-ISTR people talking about 'quiesce' sysfs file, along side the hotplug
-stuff, I can't quite remember.
+So while I'm all for hard fails like this, can we not provide a wee bit
+more information in the siginfo ? And maybe use a slightly less fatal
+signal, such that userspace can actually catch it and dump state in
+debug modes?
