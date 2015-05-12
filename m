@@ -1,27 +1,40 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v8 14/16] ARM: dts: Introduce STM32F429 MCU
-Date: Tue, 12 May 2015 23:21:06 +0200
-Message-ID: <2789447.8FUTAOJOHR@wuerfel>
-References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com> <1431158038-3813-15-git-send-email-mcoquelin.stm32@gmail.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCHv2 1/2] clone: Support passing tls argument via C rather
+ than pt_regs magic
+Date: Tue, 12 May 2015 14:22:50 -0700
+Message-ID: <20150512142250.dcb053da81855ae1b5861173@linux-foundation.org>
+References: <20150511192918.GA11361@jtriplet-mobl1>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1431158038-3813-15-git-send-email-mcoquelin.stm32@gmail.com>
+In-Reply-To: <20150511192918.GA11361@jtriplet-mobl1>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Cc: u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, stefan@agner.ch, pmeerw@pmeerw.net, pebolle@tiscali.nl, peter@hurleysoftware.com, andy.shevchenko@gmail.com, cw00.choi@samsung.com, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, joe@perches.com, Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>, lee.jones@linaro.org, Daniel Thompson <daniel.thompson@linaro.org>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.>
+To: Josh Triplett <josh@joshtriplett.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Saturday 09 May 2015 09:53:56 Maxime Coquelin wrote:
-> +#include  <dt-bindings/mfd/stm32f4-rcc.h>
-> +
+On Mon, 11 May 2015 12:29:19 -0700 Josh Triplett <josh@joshtriplett.org> wrote:
+
+> Introduce a new CONFIG_HAVE_COPY_THREAD_TLS for architectures to opt
+> into, and a new copy_thread_tls that accepts the tls parameter as an
+> additional unsigned long (syscall-argument-sized) argument.
+> Change sys_clone's tls argument to an unsigned long (which does
+> not change the ABI), and pass that down to copy_thread_tls.
 > 
+> Architectures that don't opt into copy_thread_tls will continue to
+> ignore the C argument to sys_clone in favor of the pt_regs captured at
+> kernel entry, and thus will be unable to introduce new versions of the
+> clone syscall.
 
-Can you find a way to avoid this dependency?
+What happens quite frequently is that we do something for x86 with the
+expectation that other architectures will follow along, but this
+doesn't happen.  The arch maintainers simply didn't know about it or
+nobody nags them.  Nothing happens and inconsistencies hang around for
+years.  eg, http://lkml.iu.edu/hypermail/linux/kernel/1504.2/04993.html
 
-Maybe you can change the bindings so that the numbers you pass as
-arguments to the reset and clock specifiers reflect the numbers that
-the hardware use?
-
-	Arnd
+I'm thinking we should find a way to do this better.  One way might be
+to maintain a Documentation/arch-todo which identifies each item, has a
+little list of what-to-do instructions and perhaps a list of the
+not-yet-done architectures.  Basically a way for everyone to
+communicate at the arch maintainers.
