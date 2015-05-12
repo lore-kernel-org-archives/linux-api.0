@@ -1,139 +1,124 @@
-From: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 1/5] selftests: Add futex functional tests
-Date: Mon, 11 May 2015 16:23:03 -0700
-Message-ID: <CALAqxLVnv0Pp=eNxLaeAk00Bv=Y_mAWZjpaChp5SV-Sgk2FtPA@mail.gmail.com>
-References: <cover.1431121818.git.dvhart@linux.intel.com>
-	<57d921b1c30e8258ca4b2f55637424527317e92f.1431121818.git.dvhart@linux.intel.com>
-	<5550EF8D.8080403@osg.samsung.com>
-	<D1763F31.CC237%dvhart@linux.intel.com>
-	<5550FB2C.1000403@osg.samsung.com>
-	<D17653E0.CC29F%dvhart@linux.intel.com>
-	<5551164E.5080409@osg.samsung.com>
-	<D17670E1.CC354%dvhart@linux.intel.com>
-	<55512B54.50304@osg.samsung.com>
-	<55512B86.2040900@osg.samsung.com>
-	<D1767EA1.CC3DA%dvhart@linux.intel.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
+Date: Tue, 12 May 2015 11:21:33 +1000
+Message-ID: <20150512012133.GR4327@dastard>
+References: <20150507172053.GA659@lenny.home.zabbo.net>
+ <alpine.DEB.2.00.1505071752520.28239@cobra.newdream.net>
+ <CAHQdGtQjMHA8rVPkggB2zMz=k3O667+APH_1EY_2FtYmHL7-hw@mail.gmail.com>
+ <20150508221325.GM4327@dastard>
+ <alpine.DEB.2.00.1505081517470.28239@cobra.newdream.net>
+ <CAHQdGtTFTN2XuvmarFZ9HPQV=cuhh7FosdHSrJME_U4htr=i8w@mail.gmail.com>
+ <20150511073103.GO4327@dastard>
+ <alpine.DEB.2.00.1505110925150.28239@cobra.newdream.net>
+ <CAHQdGtT3rCf-ycAYw-=7HGaemg1+HfY8sw3+kb54VHONxDyP3w@mail.gmail.com>
+ <alpine.DEB.2.00.1505111020120.28239@cobra.newdream.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <D1767EA1.CC3DA%dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.00.1505111020120.28239@cobra.newdream.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Sage Weil <sage@newdream.net>
+Cc: Trond Myklebust <trond.myklebust@primarydata.com>, Zach Brown <zab@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API Mailing List <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 11, 2015 at 4:07 PM, Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
-> On 5/11/15, 3:21 PM, "Shuah Khan" <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
->
->>>>>No need for a new pull request. Have you seen these errors before:
->>>>>
->>>>>make[2]: Entering directory
->>>>>'/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex'
->>>>>for DIR in functional; do make -C $DIR all ; done
->>>>>make[3]: Entering directory
->>>>>'/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functiona
->>>>>l'
->>>>>gcc  -g -O2 -Wall -D_GNU_SOURCE -I../include -I../../   -lpthread -lrt
->>>>>futex_requeue_pi.c ../include/futextest.h   -o futex_requeue_pi
->>>>>/tmp/cc2UgUVs.o: In function `create_rt_thread':
->>>>>/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functional
->>>>>/fu
->>>>>tex_requeue_pi.c:102:
->>>>>undefined reference to `pthread_create'
->>>>>/tmp/cc2UgUVs.o: In function `unit_test':
->>>>>/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functional
->>>>>/fu
->>>>>tex_requeue_pi.c:342:
->>>>>undefined reference to `pthread_join'
->>>>>/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functional
->>>>>/fu
->>>>>tex_requeue_pi.c:347:
->>>>>undefined reference to `pthread_join'
->>>>>/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functional
->>>>>/fu
->>>>>tex_requeue_pi.c:346:
->>>>>undefined reference to `pthread_join'
->>>>>collect2: error: ld returned 1 exit status
->>>>><builtin>: recipe for target 'futex_requeue_pi' failed
->>>>>make[3]: *** [futex_requeue_pi] Error 1
->>>>>make[3]: Leaving directory
->>>>>'/mnt/data/lkml/linux-kselftest/tools/testing/selftests/futex/functiona
->>>>>l'
->>>>>Makefile:7: recipe for target 'all' failed
->>>>>
->>>>>I am running make kselftest target when I saw the above build failures.
->>>>>kselftest run doesn't fail which is good, however futex tests won't
->>>>>run with this failure.
->>>>
->>>>I have not seen these errors whilst developing with futextest for the
->>>>kernel. That looks like you may be missing the pthread development
->>>>headers
->>>>from your build machine.
->>>>
->>>>Those are provided by libc6-dev on my Debian systems.
->>>>
->>>I do have lib6-dev installed. timers uses pthread compiles fine.
->>>So does mqueue. I am not sure what is going on with futex tests
->>>though. I am guessing it has to do with library link order.
->>>The following fixed it for me:
->>>-LDFLAGS := $(LDFLAGS) -lpthread -lrt
->>>+LDFLAGS := $(LDFLAGS) -pthread -lrt
->>>Could you please make this change and resend the patch series.
->>>I prefer patch series over pull request.
->>>thanks,
->>>-- Shuah
->>
->>Sorry full diff:
->>
->>
->>diff --git a/tools/testing/selftests/futex/functional/Makefile
->>b/tools/testing/selftests/futex/functional/Makefile
->>index e64d43b..b8a2e9b 100644
->>--- a/tools/testing/selftests/futex/functional/Makefile
->>+++ b/tools/testing/selftests/futex/functional/Makefile
->>@@ -1,6 +1,6 @@
->>INCLUDES := -I../include -I../../
->>CFLAGS := $(CFLAGS) -g -O2 -Wall -D_GNU_SOURCE $(INCLUDES)
->>-LDFLAGS := $(LDFLAGS) -lpthread -lrt
->>+LDFLAGS := $(LDFLAGS) -pthread -lrt
->
->
-> I'm happy to do that, but I would like to make sure I'm doing the right
-> thing.
->
-> I'm building with:
-> $ gcc --version
-> gcc (Debian 4.9.2-10) 4.9.2
->
->
-> What's there now works for me:
->         LDFLAGS := $(LDFLAGS) -lpthread -lrt
->
->
-> What you propose also works for me:
->         LDFLAGS := $(LDFLAGS) -pthread -lrt
->
->
-> I notice that most other test cases list -lrt first, including timers:
->         LDFLAGS += -lrt -lpthread
->
-> Which works for me for timers - does that work for you? I assume so. It
-> also works for futexes for me. I've found references out there suggesting
-> -lrt should always come before -lpthread.
->
-> I suspect you are correct as -pthread provides flags for both the
-> preprocessor and the linker, however, I'm still concerned about the
-> ordering.
->
-> John - did you deliberately choose to use "-lrt -lpthread" ?
+On Mon, May 11, 2015 at 10:30:58AM -0700, Sage Weil wrote:
+> On Mon, 11 May 2015, Trond Myklebust wrote:
+> > On Mon, May 11, 2015 at 12:39 PM, Sage Weil <sage@newdream.net> wrote:
+> > > On Mon, 11 May 2015, Dave Chinner wrote:
+> > >> On Sun, May 10, 2015 at 07:13:24PM -0400, Trond Myklebust wrote:
+> > >> > On Fri, May 8, 2015 at 6:24 PM, Sage Weil <sage@newdream.net> wrote:
+> > >> > > I'm sure you realize what we're try to achieve is the same "invisible IO"
+> > >> > > that the XFS open by handle ioctls do by default.  Would you be more
+> > >> > > comfortable if this option where only available to the generic
+> > >> > > open_by_handle syscall, and not to open(2)?
+> > >> >
+> > >> > It should be an ioctl(). It has no business being part of
+> > >> > open_by_handle either, since that is another generic interface.
+> > >
+> > > Our use-case doesn't make sense on network file systems, but it does on
+> > > any reasonably featureful local filesystem, and the goal is to be generic
+> > > there.  If mtime is critical to a network file system's consistency it
+> > > seems pretty reasonable to disallow/ignore it for just that file system
+> > > (e.g., by masking off the flag at open time), as others won't have that
+> > > same problem (cephfs doesn't, for example).
+> > >
+> > > Perhaps making each fs opt-in instead of handling it in a generic path
+> > > would alleviate this concern?
+> > 
+> > The issue isn't whether or not you have a network file system, it's
+> > whether or not you want users to be able to manage data. mtime isn't
+> > useful for the application (which knows whether or not it has changed
+> > the file) or for the filesystem (ditto). It exists, rather, in order
+> > to enable data management by users and other applications, letting
+> > them know whether or not the data contents of the file have changed,
+> > and when that change occurred.
+> 
+> Agreed.
+>  
+> > If you are able to guarantee that your users don't care about that,
+> > then fine, but that would be a very special case that doesn't fit the
+> > way that most data centres are run. Backups are one case where mtime
+> > matters, tiering and archiving is another.
+> 
+> This is true, although I argue it is becoming increasingly common for the 
+> data management (including backups and so forth) to be layered not on top 
+> of the POSIX file system but on something higher up in the stack. This is 
 
-Ooof. Possibly, but I can't say I really recall at this point.
+In the cloud storage world, yes. In the rest of the world, no.
+It's the rest of the world we are worried about here. :/
 
-I do remember somewhere around gcc 4.6 I had to change things around
-since the linker arguments had to be at the end of the gcc string
-(where as before I was throwing them in w/ the CFLAGS).  I think it
-was then I added the "-Wl,-no-as-needed" bit after googling around.
-You might look at that as well?
+> > Neither of these examples
+> > cases are under the control of the application that calls
+> > open(O_NOMTIME).
+> 
+> Wouldn't a mount option (e.g., allow_nomtime) address this concern?  Only 
+> nodes provisioned explicitly to run these systems would be enable this 
+> option.
 
-Sorry I'm not of much help.
--john
+Back to my Joe Speedracer comments.....
+
+I'm not sure what the right answer is - mount options are simply too
+easy to add without understanding the full implications of them.
+e.g. we didn't merge FALLOC_FL_NO_HIDE_STALE simply because it was
+too dangerous for unsuspecting users. This isn't at that same level
+or concern, but it's still a landmine we want to avoid users from
+arming without realising it...
+
+> > >> I'm happy for it to be an ioctl interface - even an XFS specific
+> > >> interface if you want to go that route, Sage - and it probably
+> > >> should emit a warning to syslog first time it is used so there is
+> > >> trace for bug triage purposes. i.e. we know the app is not using
+> > >> mtime updates, so bug reports that are the result of mtime
+> > >> mishandling don't result in large amounts of wasted developer time
+> > >> trying to understand them...
+> > >
+> > > A warning on using the interface (or when mounting with user_nomtime)
+> > > sounds reasonable.
+> > >
+> > > I'd rather not make this XFS specific as other local filesystmes (ext4,
+> > > f2fs, possibly btrfs) would similarly benefit.  (And if we want to target
+> > > XFS specifically the existing XFS open-by-handle ioctl is sufficient as it
+> > > already does O_NOMTIME unconditionally.)
+> > 
+> > Lack of a namespace, doesn't imply that you don't want to manage the
+> > data. The whole point of using object storage instead of plain old
+> > block storage is to be able to provide whatever metadata you still
+> > need in order to manage the object.
+> 
+> Yeah, agreed--this is presumably why open_by_handle(2) (which is what we'd 
+> like to use) doesn't assume O_NOMTIME.
+
+Right - the XFS ioctls were designed specifically for applications
+that interacted directly with the structure of XFS filesystems and
+so needed invisible IO (e.g. online defragmenter). IOWs, they are
+not interfaces intended for general usage. They are also only
+available to root, so a typical user application won't be making use
+of them, either.
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
