@@ -1,42 +1,60 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH 5/6] nohz: support PR_DATAPLANE_STRICT mode
-Date: Tue, 12 May 2015 11:38:58 +0200
-Message-ID: <20150512093858.GI21418@twins.programming.kicks-ass.net>
-References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
- <1431107927-13998-6-git-send-email-cmetcalf@ezchip.com>
+From: Vladimir Davydov <vdavydov@parallels.com>
+Subject: Re: [PATCH v3 3/3] proc: add kpageidle file
+Date: Tue, 12 May 2015 12:41:34 +0300
+Message-ID: <20150512094134.GE17628@esperanza>
+References: <20150429043536.GB11486@blaptop>
+ <20150429091248.GD1694@esperanza>
+ <20150430082531.GD21771@blaptop>
+ <20150430145055.GB17640@esperanza>
+ <20150504031722.GA2768@blaptop>
+ <20150504094938.GB4197@esperanza>
+ <20150504105459.GA19384@blaptop>
+ <20150508095604.GO31732@esperanza>
+ <20150509151031.GA24141@blaptop>
+ <20150510103429.GA17628@esperanza>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <1431107927-13998-6-git-send-email-cmetcalf@ezchip.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@ezchip.com>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Frederic Weisbecker <fweisbec@gmail.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20150510103429.GA17628@esperanza>
+Sender: owner-linux-mm@kvack.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org, Rik van Riel <riel@redhat.com>, Hugh Dickins <hughd@google.com>, Christoph Lameter <cl@linux-foundation.org>, "Paul E.
+ McKenney" <paulmck@linux.vnet.ibm.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 08, 2015 at 01:58:46PM -0400, Chris Metcalf wrote:
-> +++ b/kernel/time/tick-sched.c
-> @@ -436,6 +436,20 @@ static void dataplane_quiesce(void)
->  			(jiffies - start));
->  		dump_stack();
->  	}
-> +
-> +	/*
-> +	 * Kill the process if it violates STRICT mode.  Note that this
-> +	 * code also results in killing the task if a kernel bug causes an
-> +	 * irq to be delivered to this core.
-> +	 */
-> +	if ((task->dataplane_flags & (PR_DATAPLANE_STRICT|PR_DATAPLANE_PRCTL))
-> +	    == PR_DATAPLANE_STRICT) {
-> +		pr_warn("Dataplane STRICT mode violated; process killed.\n");
-> +		dump_stack();
-> +		task->dataplane_flags &= ~PR_DATAPLANE_QUIESCE;
-> +		local_irq_enable();
-> +		do_group_exit(SIGKILL);
-> +	}
->  }
+On Sun, May 10, 2015 at 01:34:29PM +0300, Vladimir Davydov wrote:
+> On Sun, May 10, 2015 at 12:12:38AM +0900, Minchan Kim wrote:
+> > Yeb, I might be paranoid but my point is it might work now on most of
+> > arch but it seem to be buggy/fragile/subtle because we couldn't prove
+> > all arch/compiler don't make any trouble. So, intead of adding more
+> > logics based on fragile, please use right lock model. If lock becomes
+> > big trouble by overhead, let's fix it(for instance, use WRITE_ONCE for
+> > update-side and READ_ONCE  for read-side) if I don't miss something.
+> 
+> IMO, locking would be an overkill. READ_ONCE is OK, because it has no
+> performance implications, but I would prefer to be convinced that it is
+> 100% necessary before adding it just in case.
 
-So while I'm all for hard fails like this, can we not provide a wee bit
-more information in the siginfo ? And maybe use a slightly less fatal
-signal, such that userspace can actually catch it and dump state in
-debug modes?
+Finally, I'm convinced we do need synchronization here :-) Sorry for
+being so stubborn and thank you for your patience.
+
+After examining page_referenced() with the knowledge that the compiler
+may be completely unreliable and split page->mapping read/writes as it
+wants, I've drawn the conclusion that it is safer to take
+page_zone->lru_lock for checking if the page is on an LRU list, just as
+you proposed initially, because otherwise we need to insert those
+READ/WRITE_ONCE in every nook and cranny, which would look confusing
+provided we only needed them for this idle page tracking feature, which
+might even be not compiled in.
+
+I'll fix it and resend.
+
+Thanks,
+Vladimir
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
