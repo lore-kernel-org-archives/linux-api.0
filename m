@@ -1,41 +1,80 @@
-From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: CONFIG_ISOLATION=y (was: [PATCH 0/6] support "dataplane" mode
- for nohz_full)
-Date: Tue, 12 May 2015 14:43:19 +0200
-Message-ID: <20150512124319.GA17244@gmail.com>
-References: <20150511085759.71deeb64@gandalf.local.home>
- <20150511171916.GN6776@linux.vnet.ibm.com>
- <20150511102744.9ebb2d05a7e8b457d03430bf@linux-foundation.org>
- <20150511173305.GC32512@lerouge>
- <20150511140009.1f7bcf07@gandalf.local.home>
- <5550F077.6030906@ezchip.com>
- <20150512091032.GA10138@gmail.com>
- <20150512114809.GL21418@twins.programming.kicks-ass.net>
- <20150512123440.GA16959@gmail.com>
- <20150512123912.GO21418@twins.programming.kicks-ass.net>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [PATCH 4/6] nohz: support PR_DATAPLANE_QUIESCE
+Date: Tue, 12 May 2015 14:52:01 +0200
+Message-ID: <20150512125200.GB17244@gmail.com>
+References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
+ <1431107927-13998-5-git-send-email-cmetcalf@ezchip.com>
+ <20150512093349.GH21418@twins.programming.kicks-ass.net>
+ <20150512095030.GD11477@gmail.com>
+ <20150512103805.GJ21418@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150512123912.GO21418-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "Srivatsa S. Bhat" <srivatsa.bhat-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20150512103805.GJ21418@twins.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Chris Metcalf <cmetcalf@ezchip.com>, Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Frederic Weisbecker <fweisbec@gmail.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 
-* Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+* Peter Zijlstra <peterz@infradead.org> wrote:
 
-> On Tue, May 12, 2015 at 02:34:40PM +0200, Ingo Molnar wrote:
->
-> > Yes, that's what I meant: CONFIG_ISOLATION would trigger what is 
-> > NO_HZ_FULL today - we could possibly even remove CONFIG_NO_HZ_FULL 
-> > as an individual Kconfig option?
+> > So if then a prctl() (or other system call) could be a shortcut 
+> > to:
+> > 
+> >  - move the task to an isolated CPU
+> >  - make sure there _is_ such an isolated domain available
+> > 
+> > I.e. have some programmatic, kernel provided way for an 
+> > application to be sure it's running in the right environment. 
+> > Relying on random administration flags here and there won't cut 
+> > it.
 > 
-> Ah, as a rename of nohz_full, sure that might work.
+> No, we already have sched_setaffinity() and we should not duplicate 
+> its ability to move tasks about.
 
-It could also be named CONFIG_CPU_ISOLATION=y, to make it more 
-explicit what it's about.
+But sched_setaffinity() does not guarantee isolation - it's just a 
+syscall to move a task to a set of CPUs, which might be isolated or 
+not.
+
+What I suggested is that it might make sense to offer a system call, 
+for example a sched_setparam() variant, that makes such guarantees.
+
+Say if user-space does:
+
+	ret = sched_setscheduler(0, BIND_ISOLATED, &isolation_params);
+
+... then we would get the task moved to an isolated domain and get a 0 
+return code if the kernel is able to do all that and if the current 
+uid/namespace/etc. has the required permissions and such.
+
+( BIND_ISOLATED will not replace the current p->policy value, so it's
+  still possible to use the regular policies as well on top of this. )
+
+I.e. make it programatic instead of relying on a fragile, kernel 
+version dependent combination of sysctl, sysfs, kernel config and boot 
+parameter details to get us this result.
+
+I.e. provide a central hub to offer this feature in a more structured, 
+easier to use fashion.
+
+We might still require the admin (or distro) to separately set up the 
+domain of isolated CPUs, and it would still be possible to simply 
+'move' tasks there using existing syscalls - but I say that it's not a 
+bad idea at all to offer a single central syscall interface for apps 
+to request such treatment.
+
+> What this is about is 'clearing' CPU state, its nothing to do with 
+> tasks.
+> 
+> Ideally we'd never have to clear the state because it should be 
+> impossible to get into this predicament in the first place.
+
+That I absolutely agree about, that bit is nonsense.
+
+We might offer debugging facilities to debug such bugs, but we won't 
+work or hack it around.
 
 Thanks,
 
