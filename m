@@ -1,76 +1,57 @@
-From: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 2/2] Define syscall number for fchmodat4
-Date: Tue, 12 May 2015 10:49:01 +0200
-Message-ID: <CAHO5Pa1nvKB1g1i6vXqFkT1+BRwnV4KbCQi34F3Z=AmHci7jdg@mail.gmail.com>
-References: <1431310042-52247-1-git-send-email-will@worrbase.com> <1431310042-52247-3-git-send-email-will@worrbase.com>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: CONFIG_ISOLATION=y (was: [PATCH 0/6] support "dataplane" mode for
+ nohz_full)
+Date: Tue, 12 May 2015 11:10:32 +0200
+Message-ID: <20150512091032.GA10138@gmail.com>
+References: <20150508172210.559830a9@gandalf.local.home>
+ <554D428E.6020702@ezchip.com>
+ <20150508161909.308d60e21f6b83b897174276@linux-foundation.org>
+ <20150509070538.GA9413@gmail.com>
+ <20150511085759.71deeb64@gandalf.local.home>
+ <20150511171916.GN6776@linux.vnet.ibm.com>
+ <20150511102744.9ebb2d05a7e8b457d03430bf@linux-foundation.org>
+ <20150511173305.GC32512@lerouge>
+ <20150511140009.1f7bcf07@gandalf.local.home>
+ <5550F077.6030906@ezchip.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1431310042-52247-3-git-send-email-will-o9VNkMWGZsBWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: William Orr <will-o9VNkMWGZsBWk0Htik3J/w@public.gmane.org>
-Cc: Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Ayer <agwa-vM4+sZUQx5cvLxMWut27OA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux-Fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <5550F077.6030906@ezchip.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Chris Metcalf <cmetcalf@ezchip.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>, Frederic Weisbecker <fweisbec@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, paulmck@linux.vnet.ibm.com, Gilad Ben Yossef <giladb@ezchip.com>, Peter Zijlstra <peterz@infradead.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-[expanding CC]
 
-On Mon, May 11, 2015 at 4:07 AM, William Orr <will-o9VNkMWGZsBWk0Htik3J/w@public.gmane.org> wrote:
-> ---
->  arch/x86/syscalls/syscall_32.tbl  | 1 +
->  arch/x86/syscalls/syscall_64.tbl  | 1 +
->  include/uapi/asm-generic/unistd.h | 4 +++-
->  3 files changed, 5 insertions(+), 1 deletion(-)
->
-> diff --git a/arch/x86/syscalls/syscall_32.tbl b/arch/x86/syscalls/syscall_32.tbl
-> index ef8187f..cc8ada8 100644
-> --- a/arch/x86/syscalls/syscall_32.tbl
-> +++ b/arch/x86/syscalls/syscall_32.tbl
-> @@ -365,3 +365,4 @@
->  356    i386    memfd_create            sys_memfd_create
->  357    i386    bpf                     sys_bpf
->  358    i386    execveat                sys_execveat                    stub32_execveat
-> +359    i386    fchmodat4               sys_fchmodat4
-> diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
-> index 9ef32d5..bbf8c6b 100644
-> --- a/arch/x86/syscalls/syscall_64.tbl
-> +++ b/arch/x86/syscalls/syscall_64.tbl
-> @@ -329,6 +329,7 @@
->  320    common  kexec_file_load         sys_kexec_file_load
->  321    common  bpf                     sys_bpf
->  322    64      execveat                stub_execveat
-> +323    common  fchmodat4               sys_fchmodat4
->
->  #
->  # x32-specific system call numbers start at 512 to avoid cache impact
-> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-> index e016bd9..6e362a2 100644
-> --- a/include/uapi/asm-generic/unistd.h
-> +++ b/include/uapi/asm-generic/unistd.h
-> @@ -709,9 +709,11 @@ __SYSCALL(__NR_memfd_create, sys_memfd_create)
->  __SYSCALL(__NR_bpf, sys_bpf)
->  #define __NR_execveat 281
->  __SC_COMP(__NR_execveat, sys_execveat, compat_sys_execveat)
-> +#define __NR_fchmodat4 282
-> +__SYSCALL(__NR_fchmodat4, sys_fchmodat4);
->
->  #undef __NR_syscalls
-> -#define __NR_syscalls 282
-> +#define __NR_syscalls 283
->
->  /*
->   * All syscalls below here should go away really,
-> --
-> 2.1.0
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+* Chris Metcalf <cmetcalf@ezchip.com> wrote:
 
+> - ISOLATION (Frederic).  I like this but it conflicts with other uses
+>   of "isolation" in the kernel: cgroup isolation, lru page isolation,
+>   iommu isolation, scheduler isolation (at least it's a superset of
+>   that one), etc.  Also, we're not exactly isolating a task - often
+>   a "dataplane" app consists of a bunch of interacting threads in
+>   userspace, so not exactly isolated.  So perhaps it's too confusing.
 
+So I'd vote for Frederic's CONFIG_ISOLATION=y, mostly because this is 
+a high level kernel feature, so it won't conflict with isolation 
+concepts in lower level subsystems such as IOMMU isolation - and other 
+higher level features like scheduler isolation are basically another 
+partial implementation we want to merge with all this...
 
--- 
-Michael Kerrisk Linux man-pages maintainer;
-http://www.kernel.org/doc/man-pages/
-Author of "The Linux Programming Interface", http://blog.man7.org/
+nohz, RCU tricks, watchdog defaults, isolcpus and various other 
+measures to keep these CPUs and workloads as isolated as possible
+are (or should become) components of this high level concept.
+
+Ideally CONFIG_ISOLATION=y would be a kernel feature that has almost 
+zero overhead on normal workloads and on non-isolated CPUs, so that 
+Linux distributions can enable it.
+
+Enabling CONFIG_ISOLATION=y should be the only 'kernel config' step 
+needed: just like cpusets, the configuration of isolated CPUs should 
+be a completely boot option free excercise that can be dynamically 
+done and undone by the administrator via an intuitive interface.
+
+Thanks,
+
+	Ingo
