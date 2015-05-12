@@ -1,101 +1,54 @@
-From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Subject: Re: [PATCH v2 2/3] pagemap: hide physical addresses from non-privileged
- users
-Date: Tue, 12 May 2015 18:41:28 +0300
-Message-ID: <55521F28.1020306@yandex-team.ru>
-References: <20150512090156.24768.2521.stgit@buzz>	<20150512094305.24768.51807.stgit@buzz> <CA+55aFyKpWrt_Ajzh1rzp_GcwZ4=6Y=kOv8hBz172CFJp6L8Tg@mail.gmail.com>
+From: Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH 1/5] selftests: Add futex functional tests
+Date: Tue, 12 May 2015 09:10:49 -0700
+Message-ID: <D1777231.CC5D0%dvhart@linux.intel.com>
+References: <57d921b1c30e8258ca4b2f55637424527317e92f.1431121818.git.dvhart@linux.intel.com>
+ <5550EF8D.8080403@osg.samsung.com>
+ <D1763F31.CC237%dvhart@linux.intel.com>
+ <5550FB2C.1000403@osg.samsung.com>
+ <D17653E0.CC29F%dvhart@linux.intel.com>
+ <5551164E.5080409@osg.samsung.com>
+ <D17670E1.CC354%dvhart@linux.intel.com>
+ <55512B54.50304@osg.samsung.com>
+ <55512B86.2040900@osg.samsung.com>
+ <D1767EA1.CC3DA%dvhart@linux.intel.com>
+ <20150512100256.GA5122@rei.suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain;
+	charset="US-ASCII"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CA+55aFyKpWrt_Ajzh1rzp_GcwZ4=6Y=kOv8hBz172CFJp6L8Tg@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: linux-mm <linux-mm@kvack.org>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Mark Williamson <mwilliamson@undo-software.com>, Pavel Emelyanov <xemul@parallels.com>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Vlastimil Babka <vbabka@suse.cz>, Pavel Machek <pavel@ucw.cz>, Mark Seaborn <mseaborn@chromium.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Daniel James <djames@undo-software.com>, Finn Grimwood <fgrimwood@undo-software.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150512100256.GA5122-J5syqNJeCN4b1SvskN2V4Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 12.05.2015 18:06, Linus Torvalds wrote:
-> On Tue, May 12, 2015 at 2:43 AM, Konstantin Khlebnikov
-> <khlebnikov@yandex-team.ru> wrote:
->> @@ -1260,6 +1269,8 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
->>          if (!count)
->>                  goto out_task;
->>
->> +       /* do not disclose physical addresses: attack vector */
->> +       pm.show_pfn = capable(CAP_SYS_ADMIN);
->>          pm.v2 = soft_dirty_cleared;
->>          pm.len = (PAGEMAP_WALK_SIZE >> PAGE_SHIFT);
->>          pm.buffer = kmalloc(pm.len * PM_ENTRY_BYTES, GFP_TEMPORARY);
->
-> NO! Dammit, no, no, no!
->
-> How many times must people do this major security faux-pas before we learn?
+On 5/12/15, 3:02 AM, "Cyril Hrubis" <chrubis-AlSwsSmVLrQ@public.gmane.org> wrote:
 
-Oops. Sorry. I guess everybody must do that mistake at least once.
-That's my first time. =)
+>Hi!
+>> I'm happy to do that, but I would like to make sure I'm doing the right
+>> thing.
+>
+>The right thing here is to add -pthread to CFLAGS which sets both flags
+>for preprocessor and linker (see man gcc).
 
+Hi Cyril,
 
-So, in this case existing call of mm_access() from pagemap_read()
-is a bug too because it checks CAP_SYS_PTRACE for current task.
+Thanks. I read that, and mentioned it, but my concern with -pthread in the
+CFLAGS and LDFLAGS is that it is a non-standard compiler flag. I
+understand we have a number of gcc-isms in our build - but do we want to
+add more?
 
-I'll rework it in the same way as /proc/*/[s]maps.
+I'm also struggling to find any kind of prescribed documentation on this
+beyond the short blurb in the gcc man page which describes what this
+option does, but not when to use it. I'll need something concrete to
+justify changes to testcase Makefiles to Shuah.
 
->
-> WE DO NOT CHECK CURRENT CAPABILITIES AT READ/WRITE TIME!
->
-> It's a bug. It's a security issue. It's not how Unix capabilities work!
->
-> Capabilities are checked at open time.:
->
->> @@ -1335,9 +1346,6 @@ out:
->>
->>   static int pagemap_open(struct inode *inode, struct file *file)
->>   {
->> -       /* do not disclose physical addresses: attack vector */
->> -       if (!capable(CAP_SYS_ADMIN))
->> -               return -EPERM;
->
-> THIS  is where you are supposed to check for capabilities. The place
-> where you removed it!
->
-> The reason we check capabilities at open time, and open time ONLY is
-> because that is really very integral to the whole Unix security model.
-> Otherwise, you get into this situation:
->
->   - unprivileged process opens file
->
->   - unprivileged process tricks suid process to do the actual access for it
->
-> where the traditional model is to just force a "write()" by opening
-> the file as stderr, and then executing a suid process (traditionally
-> "sudo") that writes an error message to it.
->
-> So *don't* do permission checks using read/write time credentials.
-> They are wrong.
->
-> Now, if there is some reason that you really can't do it when opening
-> the file, and you actually need to use capability information at
-> read/write time, you use the "file->f_cred" field, which is the
-> open-time capabilities. So you _can_ do permission checks at
-> read/write time, but you have to use the credentials of the opener,
-> not "current".
->
-> So in this case, I guess you could use
->
->          pm.show_pfn = file_ns_capable(file, &init_user_ns, CAP_SYS_ADMIN);
->
-> if you really need to do this at read time, and cannot fill in that
-> "show_pfn" at open-time.
->
->                          Linus
->
-
+Unfortunately, all these options are functional for me, while some are not
+for Shuah, so I'm currently having to rely on documentation which seems
+pretty sparse.
 
 -- 
-Konstantin
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Darren Hart
+Intel Open Source Technology Center
