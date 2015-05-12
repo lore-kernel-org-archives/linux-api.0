@@ -1,85 +1,37 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH v2 2/3] pagemap: hide physical addresses from
- non-privileged users
-Date: Tue, 12 May 2015 08:06:32 -0700
-Message-ID: <CA+55aFyKpWrt_Ajzh1rzp_GcwZ4=6Y=kOv8hBz172CFJp6L8Tg@mail.gmail.com>
-References: <20150512090156.24768.2521.stgit@buzz>
-	<20150512094305.24768.51807.stgit@buzz>
+From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Subject: Re: [PATCH 1/2] clone: Support passing tls argument via C rather
+ than pt_regs magic
+Date: Tue, 12 May 2015 08:15:29 -0700
+Message-ID: <20150512151529.GB9923@x>
+References: <20150421174711.GA5127@jtriplet-mobl1>
+ <alpine.DEB.2.11.1505052050100.4225@nanos>
+ <20150505231221.GB16525@cloud>
+ <20150511101313.GA18058@gmail.com>
+ <20150511135526.GA6130@x>
+ <20150511140043.GB5354@gmail.com>
+ <20150511193050.GA11002@jtriplet-mobl1>
+ <20150512081727.GA6058@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150512094305.24768.51807.stgit@buzz>
-Sender: owner-linux-mm@kvack.org
-To: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Cc: linux-mm <linux-mm@kvack.org>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Mark Williamson <mwilliamson@undo-software.com>, Pavel Emelyanov <xemul@parallels.com>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Vlastimil Babka <vbabka@suse.cz>, Pavel Machek <pavel@ucw.cz>, Mark Seaborn <mseaborn@chromium.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Daniel James <djames@undo-software.com>, Finn Grimwood <fgrimwood@undo-software.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150512081727.GA6058-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 12, 2015 at 2:43 AM, Konstantin Khlebnikov
-<khlebnikov@yandex-team.ru> wrote:
-> @@ -1260,6 +1269,8 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
->         if (!count)
->                 goto out_task;
->
-> +       /* do not disclose physical addresses: attack vector */
-> +       pm.show_pfn = capable(CAP_SYS_ADMIN);
->         pm.v2 = soft_dirty_cleared;
->         pm.len = (PAGEMAP_WALK_SIZE >> PAGE_SHIFT);
->         pm.buffer = kmalloc(pm.len * PM_ENTRY_BYTES, GFP_TEMPORARY);
+On Tue, May 12, 2015 at 10:17:28AM +0200, Ingo Molnar wrote:
+> * Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> wrote:
+> > > Looks good to me, but I have not looked very deeply ...
+> > 
+> > I sent out a v2 with the co-author information moved from the 
+> > signoffs to the commit message.  If it looks reasonable to you, can 
+> > you take it through the tip tree please?
+> 
+> So since this is multi-arch, and changes kernel/fork.c, I'd say -mm is 
+> a more appropriate home for it? (Assuming Linus does not object.)
 
-NO! Dammit, no, no, no!
+Works for me.
 
-How many times must people do this major security faux-pas before we learn?
-
-WE DO NOT CHECK CURRENT CAPABILITIES AT READ/WRITE TIME!
-
-It's a bug. It's a security issue. It's not how Unix capabilities work!
-
-Capabilities are checked at open time.:
-
-> @@ -1335,9 +1346,6 @@ out:
->
->  static int pagemap_open(struct inode *inode, struct file *file)
->  {
-> -       /* do not disclose physical addresses: attack vector */
-> -       if (!capable(CAP_SYS_ADMIN))
-> -               return -EPERM;
-
-THIS  is where you are supposed to check for capabilities. The place
-where you removed it!
-
-The reason we check capabilities at open time, and open time ONLY is
-because that is really very integral to the whole Unix security model.
-Otherwise, you get into this situation:
-
- - unprivileged process opens file
-
- - unprivileged process tricks suid process to do the actual access for it
-
-where the traditional model is to just force a "write()" by opening
-the file as stderr, and then executing a suid process (traditionally
-"sudo") that writes an error message to it.
-
-So *don't* do permission checks using read/write time credentials.
-They are wrong.
-
-Now, if there is some reason that you really can't do it when opening
-the file, and you actually need to use capability information at
-read/write time, you use the "file->f_cred" field, which is the
-open-time capabilities. So you _can_ do permission checks at
-read/write time, but you have to use the credentials of the opener,
-not "current".
-
-So in this case, I guess you could use
-
-        pm.show_pfn = file_ns_capable(file, &init_user_ns, CAP_SYS_ADMIN);
-
-if you really need to do this at read time, and cannot fill in that
-"show_pfn" at open-time.
-
-                        Linus
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+- Josh Triplett
