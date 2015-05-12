@@ -1,47 +1,59 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [PATCH 0/6] support "dataplane" mode for nohz_full
-Date: Tue, 12 May 2015 03:47:55 +0200
-Message-ID: <1431395275.3195.19.camel@gmail.com>
-References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
-	 <20150508141824.797eb0d89d514e39fd30fffe@linux-foundation.org>
-	 <20150508172210.559830a9@gandalf.local.home> <554D428E.6020702@ezchip.com>
-	 <20150508161909.308d60e21f6b83b897174276@linux-foundation.org>
-	 <20150509070538.GA9413@gmail.com>
-	 <20150511085759.71deeb64@gandalf.local.home>
-	 <20150511153602.GA32512@lerouge> <1431371974.3195.126.camel@gmail.com>
-	 <55510218.9090104@ezchip.com>
+From: Kevin Easton <kevin@guarana.org>
+Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
+Date: Tue, 12 May 2015 15:08:21 +1000
+Message-ID: <20150512050821.GA9404@chicago.guarana.org>
+References: <20150507002617.GJ4327@dastard>
+ <20150507172053.GA659@lenny.home.zabbo.net>
+ <alpine.DEB.2.00.1505071752520.28239@cobra.newdream.net>
+ <CAHQdGtQjMHA8rVPkggB2zMz=k3O667+APH_1EY_2FtYmHL7-hw@mail.gmail.com>
+ <20150508221325.GM4327@dastard>
+ <alpine.DEB.2.00.1505081517470.28239@cobra.newdream.net>
+ <CAHQdGtTFTN2XuvmarFZ9HPQV=cuhh7FosdHSrJME_U4htr=i8w@mail.gmail.com>
+ <20150511144719.GA14088@thunk.org>
+ <alpine.DEB.2.00.1505110920520.28239@cobra.newdream.net>
+ <20150511231021.GC14088@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <55510218.9090104@ezchip.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@ezchip.com>
-Cc: Frederic Weisbecker <fweisbec@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Gilad Ben Yossef <giladb@ezchip.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150511231021.GC14088@thunk.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Theodore Ts'o <tytso@mit.edu>
+Cc: Sage Weil <sage@newdream.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Dave Chinner <david@fromorbit.com>, Zach Brown <zab@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API Mailing List <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2015-05-11 at 15:25 -0400, Chris Metcalf wrote:
-> On 05/11/2015 03:19 PM, Mike Galbraith wrote:
-> > I really shouldn't have acked nohz_full -> isolcpus.  Beside the fact
-> > that old static isolcpus was_supposed_  to crawl off and die, I know
-> > beyond doubt that having isolated a cpu as well as you can definitely
-> > does NOT imply that said cpu should become tickless.
+On Mon, May 11, 2015 at 07:10:21PM -0400, Theodore Ts'o wrote:
+> On Mon, May 11, 2015 at 09:24:09AM -0700, Sage Weil wrote:
+> > > Let me re-ask the question that I asked last week (and was apparently
+> > > ignored).  Why not trying to use the lazytime feature instead of
+> > > pointing a head straight at the application's --- and system
+> > > administrators' --- heads?
+> > 
+> > Sorry Ted, I thought I responded already.
+> > 
+> > The goal is to avoid inode writeout entirely when we can, and 
+> > as I understand it lazytime will still force writeout before the inode 
+> > is dropped from the cache.  In systems like Ceph in particular, the 
+> > IOs can be spread across lots of files, so simply deferring writeout 
+> > doesn't always help.
 > 
-> True, at a high level, I agree that it would be better to have a
-> top-level concept like Frederic's proposed ISOLATION that includes
-> isolcpus and nohz_cpu (and other stuff as needed).
+> Sure, but it would reduce the writeout by orders of magnitude.  I can
+> understand if you want to reduce it further, but it might be good
+> enough for your purposes.
 > 
-> That said, what you wrote above is wrong; even with the patch you
-> acked, setting isolcpus does not automatically turn on nohz_full for
-> a given cpu.  The patch made it true the other way around: when
-> you say nohz_full, you automatically get isolcpus on that cpu too.
-> That does, at least, make sense for the semantics of nohz_full.
+> I considered doing the equivalent of O_NOMTIME for our purposes at
+> $WORK, and our use case is actually not that different from Ceph's
+> (i.e., using a local disk file system to support a cluster file
+> system), and lazytime was (a) something I figured was something I
+> could upstream in good conscience, and (b) was more than good enough
+> for us.
 
-I didn't write that, I wrote nohz_full implies (spelled '->') isolcpus.
-Yes, with nohz_full currently being static, the old allegedly dying but
-also static isolcpus scheduler off switch is a convenient thing to wire
-the nohz_full CPU SET (<- hint;) property to.
+A safer alternative might be a chattr file attribute that if set, the
+mtime is not updated on writes, and stat() on the file always shows the
+mtime as "right now".  At least that way, the file won't accidentally
+get left out of backups that rely on the mtime.
 
-	-Mike
+(If the file attribute is unset, you immediately update the mtime then
+too, and from then on the file is back to normal).
 
-
+    - Kevin
