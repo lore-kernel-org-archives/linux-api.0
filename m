@@ -1,182 +1,64 @@
-From: Mark Williamson <mwilliamson@undo-software.com>
-Subject: Re: [PATCH v2 1/3] pagemap: add mmap-exclusive bit for marking pages
- mapped only here
-Date: Tue, 12 May 2015 13:05:45 +0100
-Message-ID: <CAEVpBaLm9eicuFPmyRLa7GddLwtBJh3XzHT=fxj-h0YwwmXQOg@mail.gmail.com>
-References: <20150512090156.24768.2521.stgit@buzz>
-	<20150512094303.24768.10282.stgit@buzz>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: CONFIG_ISOLATION=y (was: [PATCH 0/6] support "dataplane" mode
+ for nohz_full)
+Date: Tue, 12 May 2015 14:34:40 +0200
+Message-ID: <20150512123440.GA16959@gmail.com>
+References: <20150508161909.308d60e21f6b83b897174276@linux-foundation.org>
+ <20150509070538.GA9413@gmail.com>
+ <20150511085759.71deeb64@gandalf.local.home>
+ <20150511171916.GN6776@linux.vnet.ibm.com>
+ <20150511102744.9ebb2d05a7e8b457d03430bf@linux-foundation.org>
+ <20150511173305.GC32512@lerouge>
+ <20150511140009.1f7bcf07@gandalf.local.home>
+ <5550F077.6030906@ezchip.com>
+ <20150512091032.GA10138@gmail.com>
+ <20150512114809.GL21418@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150512094303.24768.10282.stgit@buzz>
-Sender: owner-linux-mm@kvack.org
-To: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Cc: linux-mm@kvack.org, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, kernel list <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Pavel Emelyanov <xemul@parallels.com>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Vlastimil Babka <vbabka@suse.cz>, Pavel Machek <pavel@ucw.cz>, Mark Seaborn <mseaborn@chromium.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Linus Torvalds <torvalds@linux-foundation.org>, Daniel James <djames@undo-software.com>, Finn Grimwood <fgrimwood@undo-software.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150512114809.GL21418@twins.programming.kicks-ass.net>
+Sender: linux-doc-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Chris Metcalf <cmetcalf@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Frederic Weisbecker <fweisbec@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, paulmck@linux.vnet.ibm.com, Gilad Ben Yossef <giladb@ezchip.com>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Konstantin,
 
-I hope you won't mind me thinking out loud here on the idea of adding
-a flag to the v2 pagemap fields...  From a kernel PoV, I agree that
-this seems like the cleanest approach.  However, with my application
-developer hat on:
+* Peter Zijlstra <peterz@infradead.org> wrote:
 
- 1. I was hoping we'd be able to backport a compatible fix to older
-kernels that might adopt the pagemap permissions change.  Using the V2
-format flags rules out doing this for kernels that are too old to have
-soft-dirty, I think.
- 2. From our software's PoV, I feel it's worth noting that it doesn't
-strictly fix ABI compatibility, though I realise that's probably not
-your primary concern here.  We'll need to modify our code to write the
-clear_refs file but that change is OK for us if it's the preferred
-solution.
+> On Tue, May 12, 2015 at 11:10:32AM +0200, Ingo Molnar wrote:
+> > 
+> > So I'd vote for Frederic's CONFIG_ISOLATION=y, mostly because this 
+> > is a high level kernel feature, so it won't conflict with 
+> > isolation concepts in lower level subsystems such as IOMMU 
+> > isolation - and other higher level features like scheduler 
+> > isolation are basically another partial implementation we want to 
+> > merge with all this...
+> 
+> But why do we need a CONFIG flag for something that has no content?
+> 
+> That is, I do not see anything much; except the 'I want to stay in 
+> userspace and kill me otherwise' flag, and I'm not sure that 
+> warrants a CONFIG flag like this.
+> 
+> Other than that, its all a combination of NOHZ_FULL and 
+> cpusets/isolcpus and whatnot.
 
-In the patches I've been playing with, I was considering putting the
-Exclusive flag in the now-unused PFN field of the pagemap entries.
-Since we're specifically trying to work around for the lack of PFN
-information, would there be any appetite for mirroring this flag
-unconditionally into the now-empty PFN field (i.e. whether using v1 or
-v2 flags) when accessed by an unprivileged process?
+Yes, that's what I meant: CONFIG_ISOLATION would trigger what is 
+NO_HZ_FULL today - we could possibly even remove CONFIG_NO_HZ_FULL as 
+an individual Kconfig option?
 
-I realise it's ugly from a kernel PoV and I feel a little bad for
-suggesting it - but it would address points 1 and 2 for us (our
-existing code just looks for changes in the pagemap entry, so sticking
-the flag in there would cause it to do the right thing).
+CONFIG_ISOLATION=y would express the guarantee from the kernel that 
+it's possible for user-space to configure itself to run undisturbed - 
+instead of the current inconsistent set of options and facilities.
 
-I'm sorry to raise application-specific issues at this point; I
-appreciate that your primary concern is to improve the kernel and
-technically I like the approach that you've taken!  I'll try and
-provide more code-oriented feedback once I've tried out the changes.
+A bit like CONFIG_PREEMPT_RT is more than just preemptable spinlocks, 
+it also tries to offer various facilities and tune the defaults to 
+turn the kernel hard-rt.
+
+Does that make sense to you?
 
 Thanks,
-Mark
 
-On Tue, May 12, 2015 at 10:43 AM, Konstantin Khlebnikov
-<khlebnikov@yandex-team.ru> wrote:
-> This patch sets bit 56 in pagemap if this page is mapped only once.
-> It allows to detect exclusively used pages without exposing PFN:
->
-> present file exclusive state
-> 0       0    0         non-present
-> 1       1    0         file page mapped somewhere else
-> 1       1    1         file page mapped only here
-> 1       0    0         anon non-CoWed page (shared with parent/child)
-> 1       0    1         anon CoWed page (or never forked)
->
-> Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-> Link: lkml.kernel.org/r/CAEVpBa+_RyACkhODZrRvQLs80iy0sqpdrd0AaP_-tgnX3Y9yNQ@mail.gmail.com
->
-> ---
->
-> v2:
-> * handle transparent huge pages
-> * invert bit and rename shared -> exclusive (less confusing name)
-> ---
->  Documentation/vm/pagemap.txt |    3 ++-
->  fs/proc/task_mmu.c           |   10 ++++++++++
->  tools/vm/page-types.c        |   12 ++++++++++++
->  3 files changed, 24 insertions(+), 1 deletion(-)
->
-> diff --git a/Documentation/vm/pagemap.txt b/Documentation/vm/pagemap.txt
-> index 6bfbc172cdb9..3cfbbb333ea1 100644
-> --- a/Documentation/vm/pagemap.txt
-> +++ b/Documentation/vm/pagemap.txt
-> @@ -16,7 +16,8 @@ There are three components to pagemap:
->      * Bits 0-4   swap type if swapped
->      * Bits 5-54  swap offset if swapped
->      * Bit  55    pte is soft-dirty (see Documentation/vm/soft-dirty.txt)
-> -    * Bits 56-60 zero
-> +    * Bit  56    page exlusively mapped
-> +    * Bits 57-60 zero
->      * Bit  61    page is file-page or shared-anon
->      * Bit  62    page swapped
->      * Bit  63    page present
-> diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-> index 6dee68d013ff..29febec65de4 100644
-> --- a/fs/proc/task_mmu.c
-> +++ b/fs/proc/task_mmu.c
-> @@ -982,6 +982,7 @@ struct pagemapread {
->  #define PM_STATUS2(v2, x)   (__PM_PSHIFT(v2 ? x : PAGE_SHIFT))
->
->  #define __PM_SOFT_DIRTY      (1LL)
-> +#define __PM_MMAP_EXCLUSIVE  (2LL)
->  #define PM_PRESENT          PM_STATUS(4LL)
->  #define PM_SWAP             PM_STATUS(2LL)
->  #define PM_FILE             PM_STATUS(1LL)
-> @@ -1074,6 +1075,8 @@ static void pte_to_pagemap_entry(pagemap_entry_t *pme, struct pagemapread *pm,
->
->         if (page && !PageAnon(page))
->                 flags |= PM_FILE;
-> +       if (page && page_mapcount(page) == 1)
-> +               flags2 |= __PM_MMAP_EXCLUSIVE;
->         if ((vma->vm_flags & VM_SOFTDIRTY))
->                 flags2 |= __PM_SOFT_DIRTY;
->
-> @@ -1119,6 +1122,13 @@ static int pagemap_pte_range(pmd_t *pmd, unsigned long addr, unsigned long end,
->                 else
->                         pmd_flags2 = 0;
->
-> +               if (pmd_present(*pmd)) {
-> +                       struct page *page = pmd_page(*pmd);
-> +
-> +                       if (page_mapcount(page) == 1)
-> +                               pmd_flags2 |= __PM_MMAP_EXCLUSIVE;
-> +               }
-> +
->                 for (; addr != end; addr += PAGE_SIZE) {
->                         unsigned long offset;
->                         pagemap_entry_t pme;
-> diff --git a/tools/vm/page-types.c b/tools/vm/page-types.c
-> index 8bdf16b8ba60..3a9f193526ee 100644
-> --- a/tools/vm/page-types.c
-> +++ b/tools/vm/page-types.c
-> @@ -70,9 +70,12 @@
->  #define PM_PFRAME(x)        ((x) & PM_PFRAME_MASK)
->
->  #define __PM_SOFT_DIRTY      (1LL)
-> +#define __PM_MMAP_EXCLUSIVE  (2LL)
->  #define PM_PRESENT          PM_STATUS(4LL)
->  #define PM_SWAP             PM_STATUS(2LL)
-> +#define PM_FILE             PM_STATUS(1LL)
->  #define PM_SOFT_DIRTY       __PM_PSHIFT(__PM_SOFT_DIRTY)
-> +#define PM_MMAP_EXCLUSIVE   __PM_PSHIFT(__PM_MMAP_EXCLUSIVE)
->
->
->  /*
-> @@ -100,6 +103,8 @@
->  #define KPF_SLOB_FREE          49
->  #define KPF_SLUB_FROZEN                50
->  #define KPF_SLUB_DEBUG         51
-> +#define KPF_FILE               62
-> +#define KPF_MMAP_EXCLUSIVE     63
->
->  #define KPF_ALL_BITS           ((uint64_t)~0ULL)
->  #define KPF_HACKERS_BITS       (0xffffULL << 32)
-> @@ -149,6 +154,9 @@ static const char * const page_flag_names[] = {
->         [KPF_SLOB_FREE]         = "P:slob_free",
->         [KPF_SLUB_FROZEN]       = "A:slub_frozen",
->         [KPF_SLUB_DEBUG]        = "E:slub_debug",
-> +
-> +       [KPF_FILE]              = "F:file",
-> +       [KPF_MMAP_EXCLUSIVE]    = "1:mmap_exclusive",
->  };
->
->
-> @@ -452,6 +460,10 @@ static uint64_t expand_overloaded_flags(uint64_t flags, uint64_t pme)
->
->         if (pme & PM_SOFT_DIRTY)
->                 flags |= BIT(SOFTDIRTY);
-> +       if (pme & PM_FILE)
-> +               flags |= BIT(FILE);
-> +       if (pme & PM_MMAP_EXCLUSIVE)
-> +               flags |= BIT(MMAP_EXCLUSIVE);
->
->         return flags;
->  }
->
+	Ingo
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
