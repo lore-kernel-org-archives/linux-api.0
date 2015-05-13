@@ -1,233 +1,137 @@
-From: Mathieu Poirier <mathieu.poirier@linaro.org>
-Subject: [PATCH v4 02/13] coresight-etm4x: Controls pertaining to tracer configuration
-Date: Wed, 13 May 2015 10:34:10 -0600
-Message-ID: <1431534861-24986-3-git-send-email-mathieu.poirier@linaro.org>
+From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH v4 09/13] coresight-etm4x: Controls pertaining to the selection of resources
+Date: Wed, 13 May 2015 10:34:17 -0600
+Message-ID: <1431534861-24986-10-git-send-email-mathieu.poirier@linaro.org>
 References: <1431534861-24986-1-git-send-email-mathieu.poirier@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1431534861-24986-1-git-send-email-mathieu.poirier@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: gregkh@linuxfoundation.org
-Cc: linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, kaixu.xia@linaro.org, zhang.chunyan@linaro.org, mathieu.poirier@linaro.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1431534861-24986-1-git-send-email-mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kaixu.xia-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Pratik Patel <pratikp@codeaurora.org>
+From: Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
 
-Tracers can be configured with various options at synthesis
-time and knowing what resources are available is important for
-SW configuration purposes.
+Adding sysfs entries to control the selection of the resources the
+trace unit will use as triggers to perform a trace run.
 
-As such adding RO sysfs entries for characteristics related to the
-tracer implementation.
-
-Signed-off-by: Pratik Patel <pratikp@codeaurora.org>
-Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
+Signed-off-by: Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Signed-off-by: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 ---
- .../ABI/testing/sysfs-bus-coresight-devices-etm4x  |  62 +++++++++++
- drivers/hwtracing/coresight/coresight-etm4x.c      | 117 +++++++++++++++++++++
- 2 files changed, 179 insertions(+)
+ .../ABI/testing/sysfs-bus-coresight-devices-etm4x  | 12 ++++
+ drivers/hwtracing/coresight/coresight-etm4x.c      | 75 ++++++++++++++++++++++
+ 2 files changed, 87 insertions(+)
 
 diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
-index d1e513991fcb..c731ed9943b3 100644
+index 104f3951c998..5c7391d4e33a 100644
 --- a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
 +++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm4x
-@@ -13,3 +13,65 @@ Date:		April 2015
+@@ -230,3 +230,15 @@ Date:		April 2015
  KernelVersion:	4.01
- Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
- Description:	(R) The CPU this tracing entity is associated with.
+ Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+ Description: 	(RW) Controls the operation of the selected counter.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/nr_pe_cmp
++What:		/sys/bus/coresight/devices/<memory_map>.etm/res_idx
 +Date:		April 2015
 +KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description:	(R) Indicates the number of PE comparator inputs that are
-+		available for tracing.
++Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
++Description: 	(RW) Select which resource selection unit to work with.
 +
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/nr_addr_cmp
++What:		/sys/bus/coresight/devices/<memory_map>.etm/res_ctrl
 +Date:		April 2015
 +KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description:	(R) Indicates the number of address comparator pairs that are
-+		available for tracing.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/nr_cntr
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description:	(R) Indicates the number of counters that are available for
-+		tracing.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/nr_ext_inp
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description:	(R) Indicates how many external inputs are implemented.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/numcidc
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description:	(R) Indicates the number of Context ID comparators that are
-+		available for tracing.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/numvmidc
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description:	(R) Indicates the number of VMID comparators that are available
-+		for tracing.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/nrseqstate
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description:	(R) Indicates the number of sequencer states that are
-+		implemented.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/nr_resource
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description:	(R) Indicates the number of resource selection pairs that are
-+		available for tracing.
-+
-+What:		/sys/bus/coresight/devices/<memory_map>.etm/nr_ss_cmp
-+Date:		April 2015
-+KernelVersion:	4.01
-+Contact:	Mathieu Poirier <mathieu.poirier@linaro.org>
-+Description:	(R) Indicates the number of single-shot comparator controls that
-+		are available for tracing.
++Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
++Description: 	(RW) Controls the selection of the resources in the trace unit.
 diff --git a/drivers/hwtracing/coresight/coresight-etm4x.c b/drivers/hwtracing/coresight/coresight-etm4x.c
-index 169d8011c8b5..859e061722d8 100644
+index 2c394e41b0c8..308a48df4338 100644
 --- a/drivers/hwtracing/coresight/coresight-etm4x.c
 +++ b/drivers/hwtracing/coresight/coresight-etm4x.c
-@@ -268,6 +268,114 @@ static const struct coresight_ops etm4_cs_ops = {
- 	.source_ops	= &etm4_source_ops,
- };
+@@ -1707,6 +1707,79 @@ static ssize_t cntr_ctrl_store(struct device *dev,
+ }
+ static DEVICE_ATTR_RW(cntr_ctrl);
  
-+static ssize_t nr_pe_cmp_show(struct device *dev,
-+			      struct device_attribute *attr,
-+			      char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->nr_pe_cmp;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+static DEVICE_ATTR_RO(nr_pe_cmp);
-+
-+static ssize_t nr_addr_cmp_show(struct device *dev,
-+				struct device_attribute *attr,
-+				char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->nr_addr_cmp;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+static DEVICE_ATTR_RO(nr_addr_cmp);
-+
-+static ssize_t nr_cntr_show(struct device *dev,
++static ssize_t res_idx_show(struct device *dev,
 +			    struct device_attribute *attr,
 +			    char *buf)
 +{
 +	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
-+	val = drvdata->nr_cntr;
++	val = drvdata->res_idx;
 +	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
 +}
-+static DEVICE_ATTR_RO(nr_cntr);
 +
-+static ssize_t nr_ext_inp_show(struct device *dev,
-+			       struct device_attribute *attr,
-+			       char *buf)
++static ssize_t res_idx_store(struct device *dev,
++			     struct device_attribute *attr,
++			     const char *buf, size_t size)
 +{
 +	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
-+	val = drvdata->nr_ext_inp;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
++	if (kstrtoul(buf, 16, &val))
++		return -EINVAL;
++	/* Resource selector pair 0 is always implemented and reserved */
++	if ((val == 0) || (val >= drvdata->nr_resource))
++		return -EINVAL;
++
++	/*
++	 * Use spinlock to ensure index doesn't change while it gets
++	 * dereferenced multiple times within a spinlock block elsewhere.
++	 */
++	spin_lock(&drvdata->spinlock);
++	drvdata->res_idx = val;
++	spin_unlock(&drvdata->spinlock);
++	return size;
 +}
-+static DEVICE_ATTR_RO(nr_ext_inp);
++static DEVICE_ATTR_RW(res_idx);
 +
-+static ssize_t numcidc_show(struct device *dev,
-+			    struct device_attribute *attr,
-+			    char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->numcidc;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+static DEVICE_ATTR_RO(numcidc);
-+
-+static ssize_t numvmidc_show(struct device *dev,
++static ssize_t res_ctrl_show(struct device *dev,
 +			     struct device_attribute *attr,
 +			     char *buf)
 +{
++	u8 idx;
 +	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
-+	val = drvdata->numvmidc;
++	spin_lock(&drvdata->spinlock);
++	idx = drvdata->res_idx;
++	val = drvdata->res_ctrl[idx];
++	spin_unlock(&drvdata->spinlock);
 +	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
 +}
-+static DEVICE_ATTR_RO(numvmidc);
 +
-+static ssize_t nrseqstate_show(struct device *dev,
-+			       struct device_attribute *attr,
-+			       char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->nrseqstate;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+static DEVICE_ATTR_RO(nrseqstate);
-+
-+static ssize_t nr_resource_show(struct device *dev,
-+				struct device_attribute *attr,
-+				char *buf)
-+{
-+	unsigned long val;
-+	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
-+
-+	val = drvdata->nr_resource;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
-+}
-+static DEVICE_ATTR_RO(nr_resource);
-+
-+static ssize_t nr_ss_cmp_show(struct device *dev,
++static ssize_t res_ctrl_store(struct device *dev,
 +			      struct device_attribute *attr,
-+			      char *buf)
++			      const char *buf, size_t size)
 +{
++	u8 idx;
 +	unsigned long val;
 +	struct etmv4_drvdata *drvdata = dev_get_drvdata(dev->parent);
 +
-+	val = drvdata->nr_ss_cmp;
-+	return scnprintf(buf, PAGE_SIZE, "%#lx\n", val);
++	if (kstrtoul(buf, 16, &val))
++		return -EINVAL;
++
++	spin_lock(&drvdata->spinlock);
++	idx = drvdata->res_idx;
++	/* For odd idx pair inversal bit is RES0 */
++	if (idx % 2 != 0)
++		/* PAIRINV, bit[21] */
++		val &= ~BIT(21);
++	drvdata->res_ctrl[idx] = val;
++	spin_unlock(&drvdata->spinlock);
++	return size;
 +}
-+static DEVICE_ATTR_RO(nr_ss_cmp);
++static DEVICE_ATTR_RW(res_ctrl);
 +
  static ssize_t cpu_show(struct device *dev,
  			struct device_attribute *attr, char *buf)
  {
-@@ -281,6 +389,15 @@ static ssize_t cpu_show(struct device *dev,
- static DEVICE_ATTR_RO(cpu);
- 
- static struct attribute *coresight_etmv4_attrs[] = {
-+	&dev_attr_nr_pe_cmp.attr,
-+	&dev_attr_nr_addr_cmp.attr,
-+	&dev_attr_nr_cntr.attr,
-+	&dev_attr_nr_ext_inp.attr,
-+	&dev_attr_numcidc.attr,
-+	&dev_attr_numvmidc.attr,
-+	&dev_attr_nrseqstate.attr,
-+	&dev_attr_nr_resource.attr,
-+	&dev_attr_nr_ss_cmp.attr,
+@@ -1757,6 +1830,8 @@ static struct attribute *coresight_etmv4_attrs[] = {
+ 	&dev_attr_cntrldvr.attr,
+ 	&dev_attr_cntr_val.attr,
+ 	&dev_attr_cntr_ctrl.attr,
++	&dev_attr_res_idx.attr,
++	&dev_attr_res_ctrl.attr,
  	&dev_attr_cpu.attr,
  	NULL,
  };
