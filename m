@@ -1,72 +1,105 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH 4/6] nohz: support PR_DATAPLANE_QUIESCE
-Date: Wed, 13 May 2015 10:51:50 -0700
-Message-ID: <20150513175150.GL6776@linux.vnet.ibm.com>
-References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
- <1431107927-13998-5-git-send-email-cmetcalf@ezchip.com>
- <20150512093349.GH21418@twins.programming.kicks-ass.net>
- <20150512095030.GD11477@gmail.com>
- <20150512103805.GJ21418@twins.programming.kicks-ass.net>
- <20150512125200.GB17244@gmail.com>
- <CALCETrXGb1_JXLBb62KU=Hb8FZfCuRT1e60xW2KTBEPsYiaAXg@mail.gmail.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [RFC PATCH v6] Documentation/arch: Add
+ Documentation/arch-features.txt
+Date: Wed, 13 May 2015 15:05:23 -0700
+Message-ID: <20150513150523.ddd65d7cd51f820b78f0c8e3@linux-foundation.org>
+References: <20150512142250.dcb053da81855ae1b5861173@linux-foundation.org>
+	<20150512213843.GV21418@twins.programming.kicks-ass.net>
+	<20150512144910.0b49c9a7a13336773449db33@linux-foundation.org>
+	<20150513083441.GA17336@gmail.com>
+	<20150513085636.GA11030@gmail.com>
+	<20150513092421.GB11030@gmail.com>
+	<20150513094622.GC11030@gmail.com>
+	<20150513094756.GD11030@gmail.com>
+	<20150513131835.GJ1517@pd.tnic>
+	<20150513134842.GA1657@gmail.com>
+	<20150513162757.GA21894@x>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrXGb1_JXLBb62KU=Hb8FZfCuRT1e60xW2KTBEPsYiaAXg@mail.gmail.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Chris Metcalf <cmetcalf@ezchip.com>, Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Frederic Weisbecker <fweisbec@gmail.com>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150513162757.GA21894@x>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 12, 2015 at 09:35:25PM -0700, Andy Lutomirski wrote:
-> On Tue, May 12, 2015 at 5:52 AM, Ingo Molnar <mingo@kernel.org> wrote:
-> >
-> > * Peter Zijlstra <peterz@infradead.org> wrote:
-> >
-> >> > So if then a prctl() (or other system call) could be a shortcut
-> >> > to:
-> >> >
-> >> >  - move the task to an isolated CPU
-> >> >  - make sure there _is_ such an isolated domain available
-> >> >
-> >> > I.e. have some programmatic, kernel provided way for an
-> >> > application to be sure it's running in the right environment.
-> >> > Relying on random administration flags here and there won't cut
-> >> > it.
-> >>
-> >> No, we already have sched_setaffinity() and we should not duplicate
-> >> its ability to move tasks about.
-> >
-> > But sched_setaffinity() does not guarantee isolation - it's just a
-> > syscall to move a task to a set of CPUs, which might be isolated or
-> > not.
-> >
-> > What I suggested is that it might make sense to offer a system call,
-> > for example a sched_setparam() variant, that makes such guarantees.
-> >
-> > Say if user-space does:
-> >
-> >         ret = sched_setscheduler(0, BIND_ISOLATED, &isolation_params);
-> >
-> > ... then we would get the task moved to an isolated domain and get a 0
-> > return code if the kernel is able to do all that and if the current
-> > uid/namespace/etc. has the required permissions and such.
-> >
-> > ( BIND_ISOLATED will not replace the current p->policy value, so it's
-> >   still possible to use the regular policies as well on top of this. )
-> 
-> I think we shouldn't have magic selection of an isolated domain.
-> Anyone using this has already configured some isolated CPUs and
-> probably wants to choose the CPU and, especially, NUMA node
-> themselves.  Also, maybe it should be a special type of realtime
-> class/priority -- doing this should require RT permission IMO.
+On Wed, 13 May 2015 09:27:57 -0700 Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> wrote:
 
-I have no real argument against special permissions, but this feature
-is totally orthogonal to realtime classes/priorities.  It is perfectly
-legitimate for a given CPU's single runnable task to be SCHED_OTHER,
-for example.
+> If we can't generate this, then the ASCII-art style and right-aligned
+> feature names seems *really* likely to produce spurious conflicts,
+> especially when adding a feature to the list.  Even though it would
+> produce a much longer file, would you consider dropping the tables and
+> just having a section per feature?
 
-							Thanx, Paul
+me2.  The patch conflicts are going to be pretty bad.
 
+I'd also prefer a format which allows us to add useful notes - it's a
+bit hostile to say "thou shalt implement X" without providing any info
+about how to do so.  Where do we tell maintainers that there's a handy
+test app in tools/testing/selftests which they should use?
+
+This way, I can bug patch submitters with "hey, you forgot to update
+Documentation/arch-features.txt" and they will add useful info while
+it's all still hot in their minds.
+
+
+
+And there's a ton of stuff which can go in here, much of it not
+immediately apparent.
+
+Just grepping 9 months worth of the stuff I've handled, I'm seeing
+things like
+
+HAVE_ARCH_KASAN
+__HAVE_ARCH_PMDP_SPLITTING_FLUSH
+__HAVE_ARCH_PTE_SPECIAL
+__HAVE_ARCH_GATE_AREA
+ARCH_HAVE_ELF_ASLR
+ARCH_HAS_GCOV_PROFILE_ALL
+CONFIG_ARCH_USE_BUILTIN_BSWAP
+HAVE_ARCH_HUGE_VMAP
+ARCH_HAS_SG_CHAIN
+__HAVE_ARCH_STRNCASECMP
+ARCH_HAS_ELF_RANDOMIZE
+CONFIG_HAVE_ARCH_EARLY_PFN_TO_NID
+ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
+CONFIG_ARCH_USES_PG_UNCACHED
+CONFIG_ARCH_HAS_WALK_MEMORY
+
+and things which don't contain ARCH
+
+HAVE_GENERIC_RCU_GUP
+HAVE_RCU_TABLE_FREE
+HAVE_GENERIC_RCU_GUP
+CONFIG_HAVE_CLK
+CONFIG_HAVE_IOREMAP_PROT
+CONFIG_HAVE_MEMBLOCK_NODE_MAP
+
+And then there's the increasingly common
+
+arch/include/asm/foo.h:
+
+	static inline void wibble(...)
+	{
+		...
+	}
+	#define wibble wibble
+
+include/linux/foo.h:
+
+	#ifndef wibble
+	static inline void wibble(...)
+	{
+		...
+	}
+	#define wibble
+	#endif
+
+which is going to be hard to grep for....
+
+
+ugh, this thing's going to be enormous.  People will go insane reading
+it, so each section should have a sentence describing what the feature
+does so maintainers can make quick decisions about whether they should
+bother.
