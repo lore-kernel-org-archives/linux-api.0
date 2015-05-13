@@ -1,79 +1,60 @@
-From: Darren Hart <dvhart@linux.intel.com>
-Subject: [PATCH 5/6] kselftest: Add exit code defines
-Date: Tue, 12 May 2015 21:07:56 -0700
-Message-ID: <374765e8ced4c1f225b251f6a620e0b279467f80.1431489408.git.dvhart@linux.intel.com>
-References: <077301628833a25c85ee597cd8f4b8fcc3f30714.1431489408.git.dvhart@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <077301628833a25c85ee597cd8f4b8fcc3f30714.1431489408.git.dvhart@linux.intel.com>
-In-Reply-To: <cover.1431489408.git.dvhart@linux.intel.com>
-References: <cover.1431489408.git.dvhart@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
-Cc: chrubis@suse.cz, Darren Hart <dvhart@linux.intel.com>, Shuah Khan <shuahkh@osg.samsung.com>, linux-api@vger.kernel.org, Ingo Molnar <mingo@elte.hu>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Davidlohr Bueso <dave@stgolabs.net>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH 4/6] nohz: support PR_DATAPLANE_QUIESCE
+Date: Tue, 12 May 2015 21:35:25 -0700
+Message-ID: <CALCETrXGb1_JXLBb62KU=Hb8FZfCuRT1e60xW2KTBEPsYiaAXg@mail.gmail.com>
+References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
+ <1431107927-13998-5-git-send-email-cmetcalf@ezchip.com> <20150512093349.GH21418@twins.programming.kicks-ass.net>
+ <20150512095030.GD11477@gmail.com> <20150512103805.GJ21418@twins.programming.kicks-ass.net>
+ <20150512125200.GB17244@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20150512125200.GB17244@gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Ingo Molnar <mingo@kernel.org>
+Cc: Peter Zijlstra <peterz@infradead.org>, Chris Metcalf <cmetcalf@ezchip.com>, Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Frederic Weisbecker <fweisbec@gmail.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Define the exit codes with KSFT_PASS and similar so tests can use these
-directly if they choose. Also enable harnesses and other tooling to use
-the defines instead of hardcoding the return codes.
+On Tue, May 12, 2015 at 5:52 AM, Ingo Molnar <mingo@kernel.org> wrote:
+>
+> * Peter Zijlstra <peterz@infradead.org> wrote:
+>
+>> > So if then a prctl() (or other system call) could be a shortcut
+>> > to:
+>> >
+>> >  - move the task to an isolated CPU
+>> >  - make sure there _is_ such an isolated domain available
+>> >
+>> > I.e. have some programmatic, kernel provided way for an
+>> > application to be sure it's running in the right environment.
+>> > Relying on random administration flags here and there won't cut
+>> > it.
+>>
+>> No, we already have sched_setaffinity() and we should not duplicate
+>> its ability to move tasks about.
+>
+> But sched_setaffinity() does not guarantee isolation - it's just a
+> syscall to move a task to a set of CPUs, which might be isolated or
+> not.
+>
+> What I suggested is that it might make sense to offer a system call,
+> for example a sched_setparam() variant, that makes such guarantees.
+>
+> Say if user-space does:
+>
+>         ret = sched_setscheduler(0, BIND_ISOLATED, &isolation_params);
+>
+> ... then we would get the task moved to an isolated domain and get a 0
+> return code if the kernel is able to do all that and if the current
+> uid/namespace/etc. has the required permissions and such.
+>
+> ( BIND_ISOLATED will not replace the current p->policy value, so it's
+>   still possible to use the regular policies as well on top of this. )
 
-Cc: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: linux-api@vger.kernel.org
-Cc: Ingo Molnar <mingo@elte.hu>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Davidlohr Bueso <dave@stgolabs.net>
-Cc: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
-Signed-off-by: Darren Hart <dvhart@linux.intel.com>
----
- tools/testing/selftests/kselftest.h | 17 ++++++++++++-----
- 1 file changed, 12 insertions(+), 5 deletions(-)
+I think we shouldn't have magic selection of an isolated domain.
+Anyone using this has already configured some isolated CPUs and
+probably wants to choose the CPU and, especially, NUMA node
+themselves.  Also, maybe it should be a special type of realtime
+class/priority -- doing this should require RT permission IMO.
 
-diff --git a/tools/testing/selftests/kselftest.h b/tools/testing/selftests/kselftest.h
-index 572c888..ef1c80d 100644
---- a/tools/testing/selftests/kselftest.h
-+++ b/tools/testing/selftests/kselftest.h
-@@ -13,6 +13,13 @@
- #include <stdlib.h>
- #include <unistd.h>
- 
-+/* define kselftest exit codes */
-+#define KSFT_PASS  0
-+#define KSFT_FAIL  1
-+#define KSFT_XFAIL 2
-+#define KSFT_XPASS 3
-+#define KSFT_SKIP  4
-+
- /* counters */
- struct ksft_count {
- 	unsigned int ksft_pass;
-@@ -40,23 +47,23 @@ static inline void ksft_print_cnts(void)
- 
- static inline int ksft_exit_pass(void)
- {
--	exit(0);
-+	exit(KSFT_PASS);
- }
- static inline int ksft_exit_fail(void)
- {
--	exit(1);
-+	exit(KSFT_FAIL);
- }
- static inline int ksft_exit_xfail(void)
- {
--	exit(2);
-+	exit(KSFT_XFAIL);
- }
- static inline int ksft_exit_xpass(void)
- {
--	exit(3);
-+	exit(KSFT_XPASS);
- }
- static inline int ksft_exit_skip(void)
- {
--	exit(4);
-+	exit(KSFT_SKIP);
- }
- 
- #endif /* __KSELFTEST_H */
--- 
-2.1.4
+--Andy
