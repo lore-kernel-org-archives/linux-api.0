@@ -1,68 +1,61 @@
-From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Subject: Re: [PATCH v2 3/3] pagemap: switch to the new format and do some
- cleanup
-Date: Wed, 13 May 2015 14:39:54 +0300
-Message-ID: <5553380A.1040605@yandex-team.ru>
-References: <20150512090156.24768.2521.stgit@buzz> <20150512094306.24768.51325.stgit@buzz> <20150512105431.GD18365@node.dhcp.inet.fi>
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Subject: Re: [PATCH v8 14/16] ARM: dts: Introduce STM32F429 MCU
+Date: Wed, 13 May 2015 13:45:36 +0200
+Message-ID: <CALszF6CS8Q9DWX+ERtu=k=Bzr1-25N3oZQyWyxDZBF3an4nFKQ@mail.gmail.com>
+References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com>
+	<1431158038-3813-15-git-send-email-mcoquelin.stm32@gmail.com>
+	<2789447.8FUTAOJOHR@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150512105431.GD18365@node.dhcp.inet.fi>
-Sender: owner-linux-mm@kvack.org
-To: "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: linux-mm@kvack.org, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Mark Williamson <mwilliamson@undo-software.com>, Pavel Emelyanov <xemul@parallels.com>, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Vlastimil Babka <vbabka@suse.cz>, Pavel Machek <pavel@ucw.cz>, Mark Seaborn <mseaborn@chromium.org>, Linus Torvalds <torvalds@linux-foundation.org>, Daniel James <djames@undo-software.com>, Finn Grimwood <fgrimwood@undo-software.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <2789447.8FUTAOJOHR@wuerfel>
+Sender: linux-doc-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>, Daniel Thompson <daniel.thompson@linaro.org>
+Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Peter Hurley <peter@hurleysoftware.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Chanwoo Choi <cw00.choi@samsung.com>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Joe Perches <joe@perches.com>, Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>, Lee Jones <lee.jones@linaro.org>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak>
 List-Id: linux-api@vger.kernel.org
 
-On 12.05.2015 13:54, Kirill A. Shutemov wrote:
-> On Tue, May 12, 2015 at 12:43:06PM +0300, Konstantin Khlebnikov wrote:
->> This patch removes page-shift bits (scheduled to remove since 3.11) and
->> completes migration to the new bit layout. Also it cleans messy macro.
+2015-05-12 23:21 GMT+02:00 Arnd Bergmann <arnd@arndb.de>:
+> On Saturday 09 May 2015 09:53:56 Maxime Coquelin wrote:
+>> +#include  <dt-bindings/mfd/stm32f4-rcc.h>
+>> +
 >>
->> Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
->> ---
->>   fs/proc/task_mmu.c    |  152 ++++++++++++++++---------------------------------
->>   tools/vm/page-types.c |   29 +++------
->>   2 files changed, 58 insertions(+), 123 deletions(-)
->>
->> diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
->> index 0b7a8ffec95f..66bc7207ce90 100644
->> --- a/fs/proc/task_mmu.c
->> +++ b/fs/proc/task_mmu.c
->> @@ -710,23 +710,6 @@ const struct file_operations proc_tid_smaps_operations = {
->>   	.release	= proc_map_release,
->>   };
->>
->> -/*
->> - * We do not want to have constant page-shift bits sitting in
->> - * pagemap entries and are about to reuse them some time soon.
->> - *
->> - * Here's the "migration strategy":
->> - * 1. when the system boots these bits remain what they are,
->> - *    but a warning about future change is printed in log;
->> - * 2. once anyone clears soft-dirty bits via clear_refs file,
->> - *    these flag is set to denote, that user is aware of the
->> - *    new API and those page-shift bits change their meaning.
->> - *    The respective warning is printed in dmesg;
->> - * 3. In a couple of releases we will remove all the mentions
->> - *    of page-shift in pagemap entries.
->> - */
 >
-> Wouldn't it be better to just have v2=1 by default for couple releases to
-> see if anything breaks? This way we can revert easily if regression reported.
-> I guess someone could miss this change coming if he didn't touch clear_refs.
+> Can you find a way to avoid this dependency?
 >
+> Maybe you can change the bindings so that the numbers you pass as
+> arguments to the reset and clock specifiers reflect the numbers that
+> the hardware use?
 
-I don't believe that constant PAGE_SHIFT bits are used by anybody. 
-Recent change of permissions was much more destructive and there is just
-one report about that. Kernel prints message at first pagemap open for
-ten releases. I think that's enough.
+If I understand correctly, you prefer the way I did in v7 [0]?
 
--- 
-Konstantin
+I don't have a strong opinion on this. Either way is fine to me.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+I changed the bindings in the v8 after discussions with Daniel
+Thompson, who is implementing the clock driver part of the RCC IP.
+
+He proposed we used common defines, because each peripheral has a
+reset line and a clock gate.
+Both reset and clock are represented as a single bit, with only the
+base offset differing between clock and reset.
+You can have a look at chapter 6 of the reference manual [1] if you
+find some time.
+
+Having common defines between clocks and reset make sense to me, but I
+also understand your point of avoiding dependencies.
+
+Maybe I can revert back to v7 bindings for now, and then we can
+reconsider using common defines when Daniel will send the clock
+patches.
+Note that doing that won't break the DT binary compatibility, as the
+raw reset values, or the ones from defines are the same.
+
+Daniel, could you share an example of the bindings you would use for the clocks?
+
+Kind regards,
+Maxime
+
+>
+>         Arnd
+
+[0]: http://lkml.iu.edu/hypermail/linux/kernel/1504.3/04523.html
+[1]: http://www.st.com/web/en/resource/technical/document/reference_manual/DM00031020.pdf
