@@ -1,61 +1,120 @@
-From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH v8 14/16] ARM: dts: Introduce STM32F429 MCU
-Date: Wed, 13 May 2015 13:45:36 +0200
-Message-ID: <CALszF6CS8Q9DWX+ERtu=k=Bzr1-25N3oZQyWyxDZBF3an4nFKQ@mail.gmail.com>
-References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com>
-	<1431158038-3813-15-git-send-email-mcoquelin.stm32@gmail.com>
-	<2789447.8FUTAOJOHR@wuerfel>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH 4/5] doc: ABI: bone_capemgr sysfs API
+Date: Wed, 13 May 2015 04:52:59 -0700
+Message-ID: <20150513115259.GA1021@kroah.com>
+References: <1431503985-31853-1-git-send-email-pantelis.antoniou@konsulko.com>
+ <1431503985-31853-5-git-send-email-pantelis.antoniou@konsulko.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <2789447.8FUTAOJOHR@wuerfel>
-Sender: linux-doc-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>, Daniel Thompson <daniel.thompson@linaro.org>
-Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Peter Hurley <peter@hurleysoftware.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Chanwoo Choi <cw00.choi@samsung.com>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Joe Perches <joe@perches.com>, Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>, Lee Jones <lee.jones@linaro.org>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1431503985-31853-5-git-send-email-pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Cc: Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Robert Nelson <robertcnelson-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Geert Uytterhoeven <geert+renesas-gXvu3+zWzMSzQB+pC5nmwQ@public.gmane.org>, =?iso-8859-1?Q?Beno=EEt?= Cousso <bcousson-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-2015-05-12 23:21 GMT+02:00 Arnd Bergmann <arnd@arndb.de>:
-> On Saturday 09 May 2015 09:53:56 Maxime Coquelin wrote:
->> +#include  <dt-bindings/mfd/stm32f4-rcc.h>
->> +
->>
->
-> Can you find a way to avoid this dependency?
->
-> Maybe you can change the bindings so that the numbers you pass as
-> arguments to the reset and clock specifiers reflect the numbers that
-> the hardware use?
+On Wed, May 13, 2015 at 10:59:44AM +0300, Pantelis Antoniou wrote:
+> Document the beaglebone's capemgr sysfs API
+> 
+> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+> ---
+>  .../testing/sysfs-devices-platform-bone_capemgr    | 63 ++++++++++++++++++++++
+>  1 file changed, 63 insertions(+)
+>  create mode 100644 Documentation/ABI/testing/sysfs-devices-platform-bone_capemgr
+> 
+> diff --git a/Documentation/ABI/testing/sysfs-devices-platform-bone_capemgr b/Documentation/ABI/testing/sysfs-devices-platform-bone_capemgr
+> new file mode 100644
+> index 0000000..e2df613
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-devices-platform-bone_capemgr
+> @@ -0,0 +1,63 @@
+> +What:		/sys/devices/platform/bone_capemgr/slots
+> +Date:		May 2015
+> +KernelVersion:	4.0
 
-If I understand correctly, you prefer the way I did in v7 [0]?
+I don't think that version is correct :)
 
-I don't have a strong opinion on this. Either way is fine to me.
+> +Contact:	Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+> +Description:
+> +		READ:
+> +		  Describe the state of all the slots of the beaglebone capemgr.
+> +		  Each line of the output describes a slot:
 
-I changed the bindings in the v8 after discussions with Daniel
-Thompson, who is implementing the clock driver part of the RCC IP.
+sysfs files are "one value per file", so a sysfs file that displays
+multiple lines like this is not allowed at all, sorry.
 
-He proposed we used common defines, because each peripheral has a
-reset line and a clock gate.
-Both reset and clock are represented as a single bit, with only the
-base offset differing between clock and reset.
-You can have a look at chapter 6 of the reference manual [1] if you
-find some time.
+Please either make it a debugfs file (if this is only for debugging, or
+split it out into individual files, one per slot (hint, one per slot is
+probably best.)
 
-Having common defines between clocks and reset make sense to me, but I
-also understand your point of avoiding dependencies.
+> +		  The slot format is as following:
+> +		  <slot-id>: [P-][F-][O-][l-][L-][D-] \
+> +			  <overlay-id> <board-name>,<version>,
+> +			  <manufacturer>,<part-number>
+> +
+> +		Where the flags are:
+> +		P: Slot has been probed
+> +		F: Slot has failed probing (i.e. no EEPROM detected)
+> +		O: Slot has been overridden by the user
+> +		l: Slot is current loading
+> +		L: Slot has completed loading and is ready
+> +		D: Slot has been disabled
+> +
+> +		Example:
+> +		0: P---L-  -1 BeagleBone RS232 CAPE,00A1,Beagleboardtoys,BB-BONE-SERL-03
+> +		1: PF----  -1
+> +		2: PF----  -1
+> +		3: PF----  -1
+> +
+> +		WRITE:
+> +		  Writing a string of the form <part-number>[:version] issues a request to
+> +		  load a firmware blob containing an overlay. The name of the firmware blob
+> +		  is <part-number>-[version|00A0].dtbo. This act is defined as a slot override.
+> +
+> +		  Writing a negative slot id removes the slot if it was an overridden one, or
+> +		  unloads a slot that was probed.
+> +
+> +What:		/sys/devices/platform/bone_capemgr/baseboard/<eeprom-field>
+> +Date:		May 2015
+> +KernelVersion:	4.0
+> +Contact:	Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+> +Description:	Contains the probed base board EEPROM field; one of:
+> +		board-name		- board-name as stored in cape EEPROM
+> +		dc-supplied		- whether the cape draws or supplies DC
+> +		eeprom-format-revision	- EEPROM format rev, only 00A0 supported
+> +		header			- header; should be 'aa 55 33 ee'
 
-Maybe I can revert back to v7 bindings for now, and then we can
-reconsider using common defines when Daniel will send the clock
-patches.
-Note that doing that won't break the DT binary compatibility, as the
-raw reset values, or the ones from defines are the same.
+If it's always this value, why have the file?
 
-Daniel, could you share an example of the bindings you would use for the clocks?
+> +		manufacturer		- manufacturer string
+> +		part-number		- part-number of the cape
+> +		serial-number		- serial number of the cape
+> +		version			- version of the cape, i.e. 00A0
+> +		number-of-pins		- displayed but ignored
+> +		pin-usage		- displayed but ignored
+> +		sys-5v			- displayed but ignored
+> +		vdd-3v3exp		- displayed but ignored
+> +		vdd-5v			- displayed but ignored
 
-Kind regards,
-Maxime
+Are these all individual different files?
 
->
->         Arnd
+> +What:		/sys/devices/platform/bone_capemgr/slot-<n>/<eeprom-field>
 
-[0]: http://lkml.iu.edu/hypermail/linux/kernel/1504.3/04523.html
-[1]: http://www.st.com/web/en/resource/technical/document/reference_manual/DM00031020.pdf
+No blank line?
+
+> +Date:		May 2015
+> +KernelVersion:	4.0
+> +Contact:	Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+> +Description:	Contains the probed cape's EEPROM field; the field is one of:
+> +		board-name		- baseboard name i.e. A335BNLT
+> +		header			- header; should be 'aa 55 33 ee'
+> +		revision		- baseboard revision
+> +		serial-number		- baseboard serial number
+> +		config-option		- displayed but ignored
+
+Same here, are these all individual files?
+
+thanks,
+
+greg k-h
