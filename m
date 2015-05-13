@@ -1,155 +1,218 @@
-From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH 4/5] doc: ABI: bone_capemgr sysfs API
-Date: Wed, 13 May 2015 05:08:54 -0700
-Message-ID: <20150513120854.GA1516@kroah.com>
-References: <1431503985-31853-1-git-send-email-pantelis.antoniou@konsulko.com>
- <1431503985-31853-5-git-send-email-pantelis.antoniou@konsulko.com>
- <20150513115259.GA1021@kroah.com>
- <28C3D47C-8D31-4DD9-8751-F72A7F09DF6F@konsulko.com>
-Mime-Version: 1.0
+From: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+Subject: Re: [PATCH 1/5] misc: Beaglebone capemanager
+Date: Wed, 13 May 2015 15:10:25 +0300
+Message-ID: <67B17BCF-0489-4FD6-88F0-57B6187BEFEB@konsulko.com>
+References: <1431503985-31853-1-git-send-email-pantelis.antoniou@konsulko.com> <1431503985-31853-2-git-send-email-pantelis.antoniou@konsulko.com> <20150513115514.GB1021@kroah.com>
+Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2098\))
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <28C3D47C-8D31-4DD9-8751-F72A7F09DF6F-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Cc: Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Robert Nelson <robertcnelson-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Geert Uytterhoeven <geert+renesas-gXvu3+zWzMSzQB+pC5nmwQ@public.gmane.org>, =?iso-8859-1?Q?Beno=EEt?= Cousso <bcousson-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20150513115514.GB1021@kroah.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Matt Porter <mporter@konsulko.com>, Koen Kooi <koen@dominion.thruhere.net>, Robert Nelson <robertcnelson@gmail.com>, Rob Herring <robherring2@gmail.com>, Grant Likely <grant.likely@secretlab.ca>, Jonathan Corbet <corbet@lwn.net>, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, Guenter Roeck <linux@roeck-us.net>, Geert Uytterhoeven <geert+renesas@glider.be>, =?utf-8?Q?Beno=C3=AEt_Cousso?= <bcousson@baylibre.com>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 13, 2015 at 02:56:49PM +0300, Pantelis Antoniou wrote:
-> Hi Greg,
+Hi Greg,
+
+> On May 13, 2015, at 14:55 , Greg Kroah-Hartman <gregkh@linuxfoundatio=
+n.org> wrote:
 >=20
-> > On May 13, 2015, at 14:52 , Greg Kroah-Hartman <gregkh@linuxfoundat=
-ion.org> wrote:
-> >=20
-> > On Wed, May 13, 2015 at 10:59:44AM +0300, Pantelis Antoniou wrote:
-> >> Document the beaglebone's capemgr sysfs API
-> >>=20
-> >> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-> >> ---
-> >> .../testing/sysfs-devices-platform-bone_capemgr    | 63 ++++++++++=
-++++++++++++
-> >> 1 file changed, 63 insertions(+)
-> >> create mode 100644 Documentation/ABI/testing/sysfs-devices-platfor=
-m-bone_capemgr
-> >>=20
-> >> diff --git a/Documentation/ABI/testing/sysfs-devices-platform-bone=
-_capemgr b/Documentation/ABI/testing/sysfs-devices-platform-bone_capemg=
+> On Wed, May 13, 2015 at 10:59:41AM +0300, Pantelis Antoniou wrote:
+>> A cape loader based on DT overlays and DT objects.
+>>=20
+>> This is the beaglebone cape manager which allows capes to be automat=
+ically
+>> probed and instantiated via means of a device tree overlay deduced f=
+rom
+>> the part-number and version contained on the cape's EEPROM.
+>>=20
+>> The reference manual contains information about the specification
+>> and the contents of the EEPROM.
+>>=20
+>> http://beagleboard.org/static/beaglebone/latest/Docs/Hardware/BONE_S=
+RM.pdf
+>>=20
+>> Documentation about the workings of the cape manager is located
+>> in Documentation/misc-devices/bone_capemgr.txt
+>>=20
+>> This driver is using the EEPROM framework interface to retrieve
+>> the data stored on the baseboard and cape EEPROMs.
+>>=20
+>> Signed-off-by: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+>> ---
+>> drivers/misc/Kconfig        |   10 +
+>> drivers/misc/Makefile       |    1 +
+>> drivers/misc/bone_capemgr.c | 1926 +++++++++++++++++++++++++++++++++=
+++++++++++
+>> 3 files changed, 1937 insertions(+)
+>> create mode 100644 drivers/misc/bone_capemgr.c
+>>=20
+>> diff --git a/drivers/misc/Kconfig b/drivers/misc/Kconfig
+>> index 006242c..f9e09e1 100644
+>> --- a/drivers/misc/Kconfig
+>> +++ b/drivers/misc/Kconfig
+>> @@ -515,6 +515,16 @@ config VEXPRESS_SYSCFG
+>> 	  bus. System Configuration interface is one of the possible means
+>> 	  of generating transactions on this bus.
+>>=20
+>> +config BONE_CAPEMGR
+>> +	tristate "Beaglebone cape manager"
+>> +	depends on ARCH_OMAP2PLUS && OF
+>> +	select EEPROM
+>> +	select OF_OVERLAY
+>> +	default n
+>=20
+> N is always the default, please remove.
+>=20
+
+OK
+
+>> +	help
+>> +	  Say Y here to include support for automatic loading of
+>> +	  beaglebone capes.
+>> +
+>=20
+> What about if it's a module?
+>=20
+>=20
+
+It should work but it=E2=80=99s going to be weird (i.e. no-one has used=
+ it as such).
+I=E2=80=99ll update the blurb.
+
+>> source "drivers/misc/c2port/Kconfig"
+>> source "drivers/misc/eeprom/Kconfig"
+>> source "drivers/misc/cb710/Kconfig"
+>> diff --git a/drivers/misc/Makefile b/drivers/misc/Makefile
+>> index 7d5c4cd..659b78b 100644
+>> --- a/drivers/misc/Makefile
+>> +++ b/drivers/misc/Makefile
+>> @@ -56,3 +56,4 @@ obj-$(CONFIG_GENWQE)		+=3D genwqe/
+>> obj-$(CONFIG_ECHO)		+=3D echo/
+>> obj-$(CONFIG_VEXPRESS_SYSCFG)	+=3D vexpress-syscfg.o
+>> obj-$(CONFIG_CXL_BASE)		+=3D cxl/
+>> +obj-$(CONFIG_BONE_CAPEMGR)	+=3D bone_capemgr.o
+>> diff --git a/drivers/misc/bone_capemgr.c b/drivers/misc/bone_capemgr=
+=2Ec
+>> new file mode 100644
+>> index 0000000..423719c
+>> --- /dev/null
+>> +++ b/drivers/misc/bone_capemgr.c
+>> @@ -0,0 +1,1926 @@
+>> +/*
+>> + * TI Beaglebone cape manager
+>> + *
+>> + * Copyright (C) 2012 Texas Instruments Inc.
+>> + * Copyright (C) 2012-2015 Konsulko Group.
+>> + * Author: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+>> + *
+>> + * This program is free software; you can redistribute it and/or mo=
+dify
+>> + * it under the terms of the GNU General Public License as publishe=
+d by
+>> + * the Free Software Foundation; either version 2 of the License, o=
 r
-> >> new file mode 100644
-> >> index 0000000..e2df613
-> >> --- /dev/null
-> >> +++ b/Documentation/ABI/testing/sysfs-devices-platform-bone_capemg=
-r
-> >> @@ -0,0 +1,63 @@
-> >> +What:		/sys/devices/platform/bone_capemgr/slots
-> >> +Date:		May 2015
-> >> +KernelVersion:	4.0
-> >=20
-> > I don't think that version is correct :)
-> >=20
+>> + * (at your option) any later version.
 >=20
-> Bah, ++
+> I have to ask, do you really mean, "or any later version=E2=80=9D?
 >=20
-> >> +Contact:	Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-> >> +Description:
-> >> +		READ:
-> >> +		  Describe the state of all the slots of the beaglebone capemgr=
-=2E
-> >> +		  Each line of the output describes a slot:
-> >=20
-> > sysfs files are "one value per file", so a sysfs file that displays
-> > multiple lines like this is not allowed at all, sorry.
-> >=20
-> > Please either make it a debugfs file (if this is only for debugging=
-, or
-> > split it out into individual files, one per slot (hint, one per slo=
-t is
-> > probably best.)
-> >=20
+
+Yes, this is purely a community thing. No evil vendor at play at all.
+=20
 >=20
-> Well, it=E2=80=99s a status file. And it=E2=80=99s been used as is fo=
-r a couple of years
-> so it was worth a shot for backward compatibility.
-
-There is not "backwards compatiblity" for when you do things wrong in
-the first place, you can't claim that here, sorry.
-
-And don't "try" to introduce things you know is wrong, that just makes
-maintainers _very_ suspicious of everything else you are doing here...
-
-> >> +		  The slot format is as following:
-> >> +		  <slot-id>: [P-][F-][O-][l-][L-][D-] \
-> >> +			  <overlay-id> <board-name>,<version>,
-> >> +			  <manufacturer>,<part-number>
-> >> +
-> >> +		Where the flags are:
-> >> +		P: Slot has been probed
-> >> +		F: Slot has failed probing (i.e. no EEPROM detected)
-> >> +		O: Slot has been overridden by the user
-> >> +		l: Slot is current loading
-> >> +		L: Slot has completed loading and is ready
-> >> +		D: Slot has been disabled
-> >> +
-> >> +		Example:
-> >> +		0: P---L-  -1 BeagleBone RS232 CAPE,00A1,Beagleboardtoys,BB-BON=
-E-SERL-03
-> >> +		1: PF----  -1
-> >> +		2: PF----  -1
-> >> +		3: PF----  -1
-> >> +
-> >> +		WRITE:
-> >> +		  Writing a string of the form <part-number>[:version] issues a=
- request to
-> >> +		  load a firmware blob containing an overlay. The name of the f=
-irmware blob
-> >> +		  is <part-number>-[version|00A0].dtbo. This act is defined as =
-a slot override.
-> >> +
-> >> +		  Writing a negative slot id removes the slot if it was an over=
-ridden one, or
-> >> +		  unloads a slot that was probed.
-> >> +
-> >> +What:		/sys/devices/platform/bone_capemgr/baseboard/<eeprom-field=
->
-> >> +Date:		May 2015
-> >> +KernelVersion:	4.0
-> >> +Contact:	Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-> >> +Description:	Contains the probed base board EEPROM field; one of:
-> >> +		board-name		- board-name as stored in cape EEPROM
-> >> +		dc-supplied		- whether the cape draws or supplies DC
-> >> +		eeprom-format-revision	- EEPROM format rev, only 00A0 supported
-> >> +		header			- header; should be 'aa 55 33 ee'
-> >=20
-> > If it's always this value, why have the file?
-> >=20
+>> + *
+>> + * This program is distributed in the hope that it will be useful,
+>> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+>> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+>> + * GNU General Public License for more details.
+>> + */
+>> +
+>> +#include <linux/module.h>
+>> +#include <linux/delay.h>
+>> +#include <linux/err.h>
+>> +#include <linux/interrupt.h>
+>> +#include <linux/completion.h>
+>> +#include <linux/platform_device.h>
+>> +#include <linux/clk.h>
+>> +#include <linux/io.h>
+>> +#include <linux/of.h>
+>> +#include <linux/of_device.h>
+>> +#include <linux/of_fdt.h>
+>> +#include <linux/slab.h>
+>> +#include <linux/pm_runtime.h>
+>> +#include <linux/pinctrl/consumer.h>
+>> +#include <linux/firmware.h>
+>> +#include <linux/err.h>
+>> +#include <linux/ctype.h>
+>> +#include <linux/string.h>
+>> +#include <linux/memory.h>
+>> +#include <linux/kthread.h>
+>> +#include <linux/wait.h>
+>> +#include <linux/file.h>
+>> +#include <linux/fs.h>
+>> +#include <linux/eeprom-consumer.h>
+>> +
+>> +/* disabled capes */
+>> +static char *disable_partno;
+>> +module_param(disable_partno, charp, 0444);
+>> +MODULE_PARM_DESC(disable_partno,
+>> +		"Comma delimited list of PART-NUMBER[:REV] of disabled capes");
+>> +
+>> +/* enable capes */
+>> +static char *enable_partno;
+>> +module_param(enable_partno, charp, 0444);
+>> +MODULE_PARM_DESC(enable_partno,
+>> +		"Comma delimited list of PART-NUMBER[:REV] of enabled capes");
+>> +
+>> +/* delay to scan on boot until rootfs appears */
+>> +static int boot_scan_period =3D 1000;
+>> +module_param(boot_scan_period, int, 0444);
+>> +MODULE_PARM_DESC(boot_scan_period,
+>> +		"boot scan period until rootfs firmware is available");
 >=20
-> These are the contents of the EEPROM. If the format of the EEPROM cha=
-nges then the
-> header information will change.
-
-Then don't say "should be", because what happens in the future if it is
-not.
-
-> >> +		manufacturer		- manufacturer string
-> >> +		part-number		- part-number of the cape
-> >> +		serial-number		- serial number of the cape
-> >> +		version			- version of the cape, i.e. 00A0
-> >> +		number-of-pins		- displayed but ignored
-> >> +		pin-usage		- displayed but ignored
-> >> +		sys-5v			- displayed but ignored
-> >> +		vdd-3v3exp		- displayed but ignored
-> >> +		vdd-5v			- displayed but ignored
-> >=20
-> > Are these all individual different files?
-> >=20
+> Ick, no module parameters please, can't we drop these?
 >=20
-> Yes
 
-Then write out the individual files please as different entries.
+In a nutshell, no :)
 
-Also, the "displayed but ignored" doesn't make sense, please fix that
-up.
+These has to be way to control whether a cape is disabled (if found) an=
+d enabled (if the manufacturer in it=E2=80=99s infinite wisdom removed =
+the EEPROM to save $0.01 per cape).
 
-greg k-h
+The easiest way to achieve this is with the kernel command line.
+
+> And we have a rootfs delay option already for the whole system, this
+> module shouldn't need a special one.
+>=20
+
+No, that won=E2=80=99t work.
+
+You see the problem is as follows.
+
+The capemanager is not built as a module, it is builtin.
+
+By the time the probe method is called the rootfs has no been mounted y=
+et.
+This is actually what we want for the cases where the rootfs resides on=
+ a cape and
+the cape=E2=80=99s dtbo firmware file is built-in the kernel image.
+
+This does not work when the firmware file is located in the rootfs file=
+system, since
+the call to request_firmware will fail at that time.
+
+That option controls the polling delay until the system boot state indi=
+cates that the
+rootfs is available and the call will succeed.
+
+There are lots of warts in our firmware loader.
+
+> thanks,
+>=20
+> greg k-h
+
+Regards
+
+=E2=80=94 Pantelis
+
