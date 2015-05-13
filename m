@@ -1,7 +1,7 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [RFC PATCH v3] Documentation/arch: Add Documentation/arch-TODO
-Date: Wed, 13 May 2015 11:46:23 +0200
-Message-ID: <20150513094622.GC11030@gmail.com>
+From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: [RFC PATCH v5] Documentation/arch: Add Documentation/arch-TODO
+Date: Wed, 13 May 2015 11:47:56 +0200
+Message-ID: <20150513094756.GD11030@gmail.com>
 References: <20150511192918.GA11361@jtriplet-mobl1>
  <20150512142250.dcb053da81855ae1b5861173@linux-foundation.org>
  <20150512213843.GV21418@twins.programming.kicks-ass.net>
@@ -9,16 +9,19 @@ References: <20150511192918.GA11361@jtriplet-mobl1>
  <20150513083441.GA17336@gmail.com>
  <20150513085636.GA11030@gmail.com>
  <20150513092421.GB11030@gmail.com>
+ <20150513094622.GC11030@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150513092421.GB11030@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>, Jonathan Corbet <corbet@lwn.net>
-Cc: Peter Zijlstra <peterz@infradead.org>, Josh Triplett <josh@joshtriplett.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, x86@kernel.org, linux-arch@vger.kernel.org, Borislav Petkov <bp@alien8.de>
+In-Reply-To: <20150513094622.GC11030-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+
+(fixed the subject.)
 
 So this is the final version for now:
 
@@ -56,14 +59,14 @@ Thanks,
 
 ==========================>
 >From a44b9e91788a2628e1223d143024de4572a924c3 Mon Sep 17 00:00:00 2001
-From: Ingo Molnar <mingo@kernel.org>
+From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Date: Wed, 13 May 2015 10:30:11 +0200
 Subject: [PATCH] Documentation/arch: Add Documentation/arch-TODO
 
 Add a TODO list for missing/incomplete architecture support
 for generic kernel features.
 
-Signed-off-by: Ingo Molnar <mingo@kernel.org>
+Signed-off-by: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 ---
  Documentation/arch-TODO | 169 ++++++++++++++++++++++++++++++++++++++++++++++++
  1 file changed, 169 insertions(+)
