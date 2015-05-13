@@ -1,40 +1,92 @@
-From: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH 5/5] MAINTAINERS: Beaglebone capemanager maintainer
-Date: Wed, 13 May 2015 10:59:45 +0300
-Message-ID: <1431503985-31853-6-git-send-email-pantelis.antoniou@konsulko.com>
+From: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+Subject: [PATCH 2/5] doc: misc: Beaglebone capemanager documentation
+Date: Wed, 13 May 2015 10:59:42 +0300
+Message-ID: <1431503985-31853-3-git-send-email-pantelis.antoniou@konsulko.com>
 References: <1431503985-31853-1-git-send-email-pantelis.antoniou@konsulko.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1431503985-31853-1-git-send-email-pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Robert Nelson <robertcnelson-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Geert Uytterhoeven <geert+renesas-gXvu3+zWzMSzQB+pC5nmwQ@public.gmane.org>, =?UTF-8?q?Beno=C3=AEt=20Cousso?= <bcousson-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1431503985-31853-1-git-send-email-pantelis.antoniou@konsulko.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Matt Porter <mporter@konsulko.com>, Koen Kooi <koen@dominion.thruhere.net>, Robert Nelson <robertcnelson@gmail.com>, Rob Herring <robherring2@gmail.com>, Grant Likely <grant.likely@secretlab.ca>, Jonathan Corbet <corbet@lwn.net>, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, Guenter Roeck <linux@roeck-us.net>, Geert Uytterhoeven <geert+renesas@glider.be>, =?UTF-8?q?Beno=C3=AEt=20Cousso?= <bcousson@baylibre.com>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, Pantelis Antoniou <pantelis.antoniou@konsulko.com>, Pantelis Antoniou <panto@antoniou-consulting.com>
 List-Id: linux-api@vger.kernel.org
 
-Add me as the capemanager maintainer.
+Add beaglebone capemanager documentation entry.
 
-Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Signed-off-by: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
 ---
- MAINTAINERS | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ Documentation/misc-devices/bone_capemgr.txt | 63 +++++++++++++++++++++++++++++
+ 1 file changed, 63 insertions(+)
+ create mode 100644 Documentation/misc-devices/bone_capemgr.txt
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index c97e090..87611c0 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -1964,6 +1964,14 @@ W:	http://bcache.evilpiepirate.org
- S:	Maintained:
- F:	drivers/md/bcache/
- 
-+BEAGLEBONE CAPEMANAGER
-+M:	Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-+S:	Maintained
-+F:	drivers/misc/beaglebone-capemgr.c
-+F:	Documentation/misc-devices/bone_capemgr.txt
-+F:	Documentation/devicetree/bindings/misc/bone_capemgr.txt
-+F:	Documentation/ABI/testing/sysfs-devices-platform-bone_capemgr
+diff --git a/Documentation/misc-devices/bone_capemgr.txt b/Documentation/misc-devices/bone_capemgr.txt
+new file mode 100644
+index 0000000..2a8c766
+--- /dev/null
++++ b/Documentation/misc-devices/bone_capemgr.txt
+@@ -0,0 +1,63 @@
++---------------------------
++  Beaglebone Cape-Manager
++---------------------------
 +
- BEFS FILE SYSTEM
- S:	Orphan
- F:	Documentation/filesystems/befs.txt
++The beaglebone cape manager driver allows the automatic use of external
++peripheral capes to be automatically supported by Linux without any manual
++setup required by the user.
++
++Each beaglebone cape should contain an EEPROM that describes
++it in a fixed I2C address on the i2c2 bus of the baseboard.
++The format of the EEPROM is defined in the beaglebone reference
++manual at:
++http://beagleboard.org/static/beaglebone/latest/Docs/Hardware/BONE_SRM.pdf
++
++Reading the part number and revision information the manager
++requests a firmware file formatted as a device tree overlay blob.
++
++Applying the overlay the devices are instantiated and the cape is
++ready to be used.
++
++For instance if the part-number is BB-BONE-SERL-03 and the version is 00A1
++the firmware file requested will be BB-BONE-SERL-03-00A1-00A1.dtbo
++It will be located by the in-kernel firmware
++loader in the usual place, i.e.  /lib/firmware/`uname -r`, /lib/firmware etc.
++
++The driver supports the following parameters (either as part of the kernel
++command line or supplied at module insertion time).
++
++disable_partno:   A comma delimited list of PART-NUMBER[:REV] of
++                  disabled capes.
++enable_partno:    A comma delimited list of PART-NUMBER[:REV[:PRIO]] of
++                  enabled capes.
++boot_scan_period: The boot scan period in ms. When the cape manager is built-in
++                  the kernel image, the firmware loader cannot find the files
++		  before the rootfs is mounted. This parameter controls the
++		  period with which the boot state is checked in that case.
++
++There's a sysfs control interface which is defined at the ABI documentation
++area.
++
++Theory of operation:
++--------------------
++
++On driver probe the I2C EEPROM of the baseboard is read and information about
++the current baseboard is retrieved. This information includes the mapping from
++baseboard board name to DT friendly compatible string. I.e. the "A335BONE" board
++name from EEPROM is mapped to the "ti,beaglebone" compatible string which should
++be present in the dtbo to be loaded.
++
++Afterwards the EEPROMs declared in each slot are probed, and the EEPROMs found
++are decoded keeping track the cape part-number and version data.
++
++Using the part-number and version a firmware file is requested (the firmware
++file requested is <part-number>-<version>.dtbo).
++
++The dtbo is unflattend and the resulting device tree is matched against a
++compatible baseboard, and in case of multiple parallel loading capes the
++priorities defined are honored.  That means that when there are multiple capes
++being loaded in parallel the ones with the lowest priority number are loaded
++first.
++
++Applying the device tree overlay makes the cape operational, as if it was part
++of the kernel's booting device tree.
 -- 
 1.7.12
+
