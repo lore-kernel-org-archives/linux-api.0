@@ -1,52 +1,172 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
-Date: Wed, 13 May 2015 14:32:28 +0200
-Message-ID: <20150513123227.GA3512@quack.suse.cz>
-References: <1430949612-21356-1-git-send-email-zab@redhat.com>
- <20150507002617.GJ4327@dastard>
- <20150507172053.GA659@lenny.home.zabbo.net>
- <alpine.DEB.2.00.1505071752520.28239@cobra.newdream.net>
- <CAHQdGtQjMHA8rVPkggB2zMz=k3O667+APH_1EY_2FtYmHL7-hw@mail.gmail.com>
- <20150508221325.GM4327@dastard>
- <alpine.DEB.2.00.1505081517470.28239@cobra.newdream.net>
- <CAHQdGtTFTN2XuvmarFZ9HPQV=cuhh7FosdHSrJME_U4htr=i8w@mail.gmail.com>
- <20150511144719.GA14088@thunk.org>
- <alpine.DEB.2.00.1505110920520.28239@cobra.newdream.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH 4/5] doc: ABI: bone_capemgr sysfs API
+Date: Wed, 13 May 2015 15:42:12 +0300
+Message-ID: <F6CE4BD7-D409-407E-8E42-0E79965C6855@konsulko.com>
+References: <1431503985-31853-1-git-send-email-pantelis.antoniou@konsulko.com> <1431503985-31853-5-git-send-email-pantelis.antoniou@konsulko.com> <20150513115259.GA1021@kroah.com> <28C3D47C-8D31-4DD9-8751-F72A7F09DF6F@konsulko.com> <20150513120854.GA1516@kroah.com>
+Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2098\))
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.00.1505110920520.28239-vIokxiIdD2AQNTJnQDzGJqxOck334EZe@public.gmane.org>
+In-Reply-To: <20150513120854.GA1516-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>
-Cc: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Robert Nelson <robertcnelson-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Geert Uytterhoeven <geert+renesas-gXvu3+zWzMSzQB+pC5nmwQ@public.gmane.org>, =?utf-8?Q?Beno=C3=AEt_Cousso?= <bcousson-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 11-05-15 09:24:09, Sage Weil wrote:
-> On Mon, 11 May 2015, Theodore Ts'o wrote:
-> > On Sun, May 10, 2015 at 07:13:24PM -0400, Trond Myklebust wrote:
-> > > That makes it completely non-generic though. By putting this in the
-> > > VFS, you are giving applications a loaded gun that is pointed straight
-> > > at the application user's head.
-> > 
-> > Let me re-ask the question that I asked last week (and was apparently
-> > ignored).  Why not trying to use the lazytime feature instead of
-> > pointing a head straight at the application's --- and system
-> > administrators' --- heads?
-> 
-> Sorry Ted, I thought I responded already.
-> 
-> The goal is to avoid inode writeout entirely when we can, and 
-> as I understand it lazytime will still force writeout before the inode 
-> is dropped from the cache.  In systems like Ceph in particular, the 
-> IOs can be spread across lots of files, so simply deferring writeout 
-> doesn't always help.
-  Can we get some numbers on this? Before we go on and implement new mount
-options, persistent inode flags, open flags, or whatever other crap
-(neither of which looks particularly appealing to me) I'd like to know how
-big is the performance difference between lazytime + fdatasync and not
-updating mtime at all for Ceph...
-								Honza
--- 
-Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-SUSE Labs, CR
+Hi Greg,
+
+> On May 13, 2015, at 15:08 , Greg Kroah-Hartman <gregkh@linuxfoundatio=
+n.org> wrote:
+>=20
+> On Wed, May 13, 2015 at 02:56:49PM +0300, Pantelis Antoniou wrote:
+>> Hi Greg,
+>>=20
+>>> On May 13, 2015, at 14:52 , Greg Kroah-Hartman <gregkh@linuxfoundat=
+ion.org> wrote:
+>>>=20
+>>> On Wed, May 13, 2015 at 10:59:44AM +0300, Pantelis Antoniou wrote:
+>>>> Document the beaglebone's capemgr sysfs API
+>>>>=20
+>>>> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+>>>> ---
+>>>> .../testing/sysfs-devices-platform-bone_capemgr    | 63 ++++++++++=
+++++++++++++
+>>>> 1 file changed, 63 insertions(+)
+>>>> create mode 100644 Documentation/ABI/testing/sysfs-devices-platfor=
+m-bone_capemgr
+>>>>=20
+>>>> diff --git a/Documentation/ABI/testing/sysfs-devices-platform-bone=
+_capemgr b/Documentation/ABI/testing/sysfs-devices-platform-bone_capemg=
+r
+>>>> new file mode 100644
+>>>> index 0000000..e2df613
+>>>> --- /dev/null
+>>>> +++ b/Documentation/ABI/testing/sysfs-devices-platform-bone_capemg=
+r
+>>>> @@ -0,0 +1,63 @@
+>>>> +What:		/sys/devices/platform/bone_capemgr/slots
+>>>> +Date:		May 2015
+>>>> +KernelVersion:	4.0
+>>>=20
+>>> I don't think that version is correct :)
+>>>=20
+>>=20
+>> Bah, ++
+>>=20
+>>>> +Contact:	Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+>>>> +Description:
+>>>> +		READ:
+>>>> +		  Describe the state of all the slots of the beaglebone capemgr=
+=2E
+>>>> +		  Each line of the output describes a slot:
+>>>=20
+>>> sysfs files are "one value per file", so a sysfs file that displays
+>>> multiple lines like this is not allowed at all, sorry.
+>>>=20
+>>> Please either make it a debugfs file (if this is only for debugging=
+, or
+>>> split it out into individual files, one per slot (hint, one per slo=
+t is
+>>> probably best.)
+>>>=20
+>>=20
+>> Well, it=E2=80=99s a status file. And it=E2=80=99s been used as is f=
+or a couple of years
+>> so it was worth a shot for backward compatibility.
+>=20
+> There is not "backwards compatiblity" for when you do things wrong in
+> the first place, you can't claim that here, sorry.
+>=20
+> And don't "try" to introduce things you know is wrong, that just make=
+s
+> maintainers _very_ suspicious of everything else you are doing here=E2=
+=80=A6
+>=20
+
+OK
+
+>>>> +		  The slot format is as following:
+>>>> +		  <slot-id>: [P-][F-][O-][l-][L-][D-] \
+>>>> +			  <overlay-id> <board-name>,<version>,
+>>>> +			  <manufacturer>,<part-number>
+>>>> +
+>>>> +		Where the flags are:
+>>>> +		P: Slot has been probed
+>>>> +		F: Slot has failed probing (i.e. no EEPROM detected)
+>>>> +		O: Slot has been overridden by the user
+>>>> +		l: Slot is current loading
+>>>> +		L: Slot has completed loading and is ready
+>>>> +		D: Slot has been disabled
+>>>> +
+>>>> +		Example:
+>>>> +		0: P---L-  -1 BeagleBone RS232 CAPE,00A1,Beagleboardtoys,BB-BON=
+E-SERL-03
+>>>> +		1: PF----  -1
+>>>> +		2: PF----  -1
+>>>> +		3: PF----  -1
+>>>> +
+>>>> +		WRITE:
+>>>> +		  Writing a string of the form <part-number>[:version] issues a=
+ request to
+>>>> +		  load a firmware blob containing an overlay. The name of the f=
+irmware blob
+>>>> +		  is <part-number>-[version|00A0].dtbo. This act is defined as =
+a slot override.
+>>>> +
+>>>> +		  Writing a negative slot id removes the slot if it was an over=
+ridden one, or
+>>>> +		  unloads a slot that was probed.
+>>>> +
+>>>> +What:		/sys/devices/platform/bone_capemgr/baseboard/<eeprom-field=
+>
+>>>> +Date:		May 2015
+>>>> +KernelVersion:	4.0
+>>>> +Contact:	Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+>>>> +Description:	Contains the probed base board EEPROM field; one of:
+>>>> +		board-name		- board-name as stored in cape EEPROM
+>>>> +		dc-supplied		- whether the cape draws or supplies DC
+>>>> +		eeprom-format-revision	- EEPROM format rev, only 00A0 supported
+>>>> +		header			- header; should be 'aa 55 33 ee'
+>>>=20
+>>> If it's always this value, why have the file?
+>>>=20
+>>=20
+>> These are the contents of the EEPROM. If the format of the EEPROM ch=
+anges then the
+>> header information will change.
+>=20
+> Then don't say "should be", because what happens in the future if it =
+is
+> not.
+>=20
+
+OK
+
+>>>> +		manufacturer		- manufacturer string
+>>>> +		part-number		- part-number of the cape
+>>>> +		serial-number		- serial number of the cape
+>>>> +		version			- version of the cape, i.e. 00A0
+>>>> +		number-of-pins		- displayed but ignored
+>>>> +		pin-usage		- displayed but ignored
+>>>> +		sys-5v			- displayed but ignored
+>>>> +		vdd-3v3exp		- displayed but ignored
+>>>> +		vdd-5v			- displayed but ignored
+>>>=20
+>>> Are these all individual different files?
+>>>=20
+>>=20
+>> Yes
+>=20
+> Then write out the individual files please as different entries.
+>=20
+> Also, the "displayed but ignored" doesn't make sense, please fix that
+> up.
+>=20
+
+OK
+
+> greg k-h
+
+Regards
+
+=E2=80=94 Pantelis
