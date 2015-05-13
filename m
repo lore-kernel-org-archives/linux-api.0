@@ -1,120 +1,319 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v8 14/16] ARM: dts: Introduce STM32F429 MCU
-Date: Wed, 13 May 2015 15:27:31 +0200
-Message-ID: <3125409.QXbEmPolyh@wuerfel>
-References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com> <CALszF6CS8Q9DWX+ERtu=k=Bzr1-25N3oZQyWyxDZBF3an4nFKQ@mail.gmail.com> <55534A5D.6050904@linaro.org>
+From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: [RFC PATCH v6] Documentation/arch: Add
+ Documentation/arch-features.txt
+Date: Wed, 13 May 2015 15:48:42 +0200
+Message-ID: <20150513134842.GA1657@gmail.com>
+References: <20150511192918.GA11361@jtriplet-mobl1>
+ <20150512142250.dcb053da81855ae1b5861173@linux-foundation.org>
+ <20150512213843.GV21418@twins.programming.kicks-ass.net>
+ <20150512144910.0b49c9a7a13336773449db33@linux-foundation.org>
+ <20150513083441.GA17336@gmail.com>
+ <20150513085636.GA11030@gmail.com>
+ <20150513092421.GB11030@gmail.com>
+ <20150513094622.GC11030@gmail.com>
+ <20150513094756.GD11030@gmail.com>
+ <20150513131835.GJ1517@pd.tnic>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-gpio-owner@vger.kernel.org>
-In-Reply-To: <55534A5D.6050904@linaro.org>
-Sender: linux-gpio-owner@vger.kernel.org
-To: Daniel Thompson <daniel.thompson@linaro.org>
-Cc: Maxime Coquelin <mcoquelin.stm32@gmail.com>, Uwe =?ISO-8859-1?Q?Kleine=2DK=F6nig?= <u.kleine-koenig@pengutronix.de>, Andreas =?ISO-8859-1?Q?F=E4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Peter Hurley <peter@hurleysoftware.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Chanwoo Choi <cw00.choi@samsung.com>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Joe Perches <joe@perches.com>, Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>, Lee Jones <lee.jones@linaro.org>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150513131835.GJ1517-fF5Pk5pvG8Y@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday 13 May 2015 13:58:05 Daniel Thompson wrote:
-> On 13/05/15 12:45, Maxime Coquelin wrote:
-> > 2015-05-12 23:21 GMT+02:00 Arnd Bergmann <arnd@arndb.de>:
-> >> On Saturday 09 May 2015 09:53:56 Maxime Coquelin wrote:
-> >>> +#include  <dt-bindings/mfd/stm32f4-rcc.h>
-> >>> +
-> >>>
-> >>
-> >> Can you find a way to avoid this dependency?
-> >>
-> >> Maybe you can change the bindings so that the numbers you pass as
-> >> arguments to the reset and clock specifiers reflect the numbers that
-> >> the hardware use?
-> >
-> > If I understand correctly, you prefer the way I did in v7 [0]?
 
-Yes, that looks better. I would probably not list all the possible
-values in the binding though, when the intention is to use the
-hardware specific values, and being able to reuse the binding
-and driver for variations of the same chip.
+* Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org> wrote:
 
-> > Note that doing that won't break the DT binary compatibility, as the
-> > raw reset values, or the ones from defines are the same.
-> >
-> > Daniel, could you share an example of the bindings you would use for the clocks?
+> On Wed, May 13, 2015 at 11:47:56AM +0200, Ingo Molnar wrote:
+> >  - introduce the '..' denotion (in the final table) to show features 
+> >    that cannot be supported by an architecture due to hardware 
+> >    dependencies:
+> > 
+> > 		   gcov-profile-all:---------------.
+> > 				THP:--------.      |
+> > 		      irq-time-acct:-.      |      |
+> > 				     |      |      |
+> > 		----------------------------------------
+> > 		  alpha           | TODO | TODO | TODO |
+> > 		  arc             | TODO |  ..  | TODO |
+> > 		  arm             |  ok  |  ok  |  ok  |
+> > 		  arm64           | TODO |  ok  |  ok  |
+> > 		  avr32           | TODO |  ..  | TODO |
+> > 		  blackfin        | TODO |  ..  | TODO |
+> > 		  c6x             | TODO |  ..  | TODO |
+> > 
+> >    so in the 'THP' column, if an architecture could in theory support 
+> >    THP, it's listed as 'TODO', if it cannot, it's listed as '..'.
 > 
-> For the most cases, where there is a clock gate just before the 
-> peripheral it looks pretty much like the reset driver and I use the bit 
-> offset of the clock gating bit as the index.
+> Shouldn't exactly that explanation be in the text file itself too?
 
-Is this bit always the same index as the one for the reset driver?
+Yeah, indeed, added it.
 
-> However there are a couple of clocks without gating just before the 
-> clock reaches the peripheral:
-> 
-> 1. A hard coded /8. I think this will have to be given a synthetic
->     number.
+> Also, how about s/TODO//g for less clutter:
 
-If this is just a divider, why not use a separate DT node for that,
-like this:
+No, I'd like there to be a very visible 'TODO' item for missing 
+features.
 
-        clock {
-                compatible = "fixed-factor-clock";
-                clocks = <&parentclk>;
-                #clock-cells = <0>;
-                clock-div = <8>;
-                clock-mult = <1>;
-        };
+The 'clutter' shows how badly our generic kernel features are 
+propagating :-/ We hope to reduce this clutter in the future.
 
-No need to assign a number for this.
+Updated patch attached - I've added a few more features to the last 
+table, and restructured the explanations, now every feature 
+description also lists the Kconfig variable that it's tracking, e.g.:
 
-> 2. Ungated dividers. For these I am using the bit offset of the LSB of
->     the mux field.
+      irq time acct: HAVE_IRQ_TIME_ACCOUNTING
+                THP: HAVE_ARCH_TRANSPARENT_HUGEPAGE && 64BIT
+   gcov profile all: ARCH_HAS_GCOV_PROFILE_ALL
+    rwsem optimized: Optimized asm/rwsem.h
+   queued spinlocks: ARCH_USE_QUEUED_SPINLOCKS
+     queued rwlocks: ARCH_USE_QUEUED_RWLOCKS
+     numa balancing: ARCH_SUPPORTS_NUMA_BALANCING && 64BIT && NUMA
 
-Do these ones also come with resets?
+Thanks,
 
-> So I think there is only one value that is completely unrelated to the 
-> hardware and will use a magic constant instead.
-> 
-> I had planned to macros similar to the STM32F4_AxB_RESET() family of 
-> macros in both clk driver and DT in order to reuse the bit layouts from 
-> dt-bindings/mfd/stm32f4-rcc.h .
-> 
-> Normal case would have looked like this:
-> 
->                 timer3: timer@40000000 {
->                         compatible = "st,stm32-timer";
->                         reg = <0x40000000 0x400>;
->                         interrupts = <28>;
->                         resets = <&rcc STM32F4_APB1_RESET(TIM3)>;
->                         clocks = <&rcc STM32F4_APB1_CLK(TIM3)>;
->                         status = "disabled";
->                 };
-> 
-> Without the macros it looks like this:
-> 
->                 timer3: timer@40000000 {
->                         compatible = "st,stm32-timer";
->                         reg = <0x40000000 0x400>;
->                         interrupts = <28>;
->                         resets = <&rcc 257>;
->                         clocks = <&rcc 513>;
->                         status = "disabled";
->                 };
-> 
-> However we could perhaps be more literate even if we don't use the macros?
-> 
->                 timer3: timer@40000000 {
->                         compatible = "st,stm32-timer";
->                         reg = <0x40000000 0x400>;
->                         interrupts = <28>;
->                         resets = <&rcc ((0x20*8) + 1)>;
->                         clocks = <&rcc ((0x40*8) + 1)>;
->                         status = "disabled";
->                 };
+	Ingo
 
-How about #address-cells = <2>, so you can do
+=========================================>
+>From 93f6bd67b4348bf4bf27cbac8ffa9f1def4fa6aa Mon Sep 17 00:00:00 2001
+From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Date: Wed, 13 May 2015 10:30:11 +0200
+Subject: [PATCH] Documentation/arch: Add Documentation/arch-features.txt
 
-		resets = <&rcc 8 1>;
-		clocks = <&rcc 8 1>;
+Add a support matrix for various generic kernel features that need
+architecture support.
 
-with the first cell being an index for the block and the second cell the
-bit number within that block.
+Signed-off-by: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+---
+ Documentation/arch-features.txt | 222 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 222 insertions(+)
 
-	Arnd
+diff --git a/Documentation/arch-features.txt b/Documentation/arch-features.txt
+new file mode 100644
+index 000000000000..4f6430bc552b
+--- /dev/null
++++ b/Documentation/arch-features.txt
+@@ -0,0 +1,222 @@
++
++For generic kernel features that need architecture support, this is
++the feature support matrix, for all upstream Linux architectures.
++
++Meaning of entries in the tables:
++
++    ' ok ': feature supported by the architecture
++    'TODO': feature not yet supported by the architecture
++    ' .. ': feature cannot be supported by the hardware
++
++
++
++            lockdep: LOCKDEP_SUPPORT
++     stackprotector: HAVE_CC_STACKPROTECTOR
++        jump labels: HAVE_ARCH_JUMP_LABEL
++     seccomp filter: HAVE_ARCH_SECCOMP_FILTER
++   context tracking: HAVE_CONTEXT_TRACKING
++               kgdb: HAVE_ARCH_KGDB
++ modern timekeeping: !ARCH_USES_GETTIMEOFFSET
++        clockevents: GENERIC_CLOCKEVENTS
++           ELF ASLR: ARCH_HAS_ELF_RANDOMIZE
++
++            lockdep:---------------------------------------------------------.
++     stackprotector:--------------------------------------------------.      |
++        jump labels:-------------------------------------------.      |      |
++     seccomp filter:------------------------------------.      |      |      |
++   context tracking:-----------------------------.      |      |      |      |
++               kgdb:----------------------.      |      |      |      |      |
++ modern timekeeping:---------------.      |      |      |      |      |      |
++        clockevents:--------.      |      |      |      |      |      |      |
++           ELF ASLR:-.      |      |      |      |      |      |      |      |
++                     |      |      |      |      |      |      |      |      |
++----------------------------------------------------------------------------------
++  alpha           | TODO |  ok  |  ok  | TODO | TODO | TODO | TODO | TODO | TODO |
++  arc             | TODO |  ok  |  ok  |  ok  | TODO | TODO | TODO | TODO |  ok  |
++  arm             |  ok  |  ok  | TODO |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
++  arm64           |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
++  avr32           | TODO |  ok  |  ok  | TODO | TODO | TODO | TODO | TODO |  ok  |
++  blackfin        | TODO |  ok  | TODO |  ok  | TODO | TODO | TODO | TODO |  ok  |
++  c6x             | TODO |  ok  |  ok  | TODO | TODO | TODO | TODO | TODO | TODO |
++  cris            | TODO |  ok  | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  frv             | TODO | TODO |  ok  | TODO | TODO | TODO | TODO | TODO | TODO |
++  hexagon         | TODO |  ok  |  ok  |  ok  | TODO | TODO | TODO | TODO |  ok  |
++  ia64            | TODO | TODO |  ok  | TODO | TODO | TODO | TODO | TODO | TODO |
++  m32r            | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  m68k            | TODO |  ok  | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  metag           | TODO |  ok  |  ok  | TODO | TODO | TODO | TODO | TODO |  ok  |
++  microblaze      | TODO |  ok  |  ok  |  ok  | TODO | TODO | TODO | TODO |  ok  |
++  mips            |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
++  mn10300         | TODO |  ok  |  ok  |  ok  | TODO | TODO | TODO | TODO | TODO |
++  nios2           | TODO |  ok  |  ok  |  ok  | TODO | TODO | TODO | TODO | TODO |
++  openrisc        | TODO |  ok  |  ok  | TODO | TODO | TODO | TODO | TODO | TODO |
++  parisc          | TODO | TODO |  ok  | TODO | TODO | TODO | TODO | TODO | TODO |
++  powerpc         |  ok  |  ok  |  ok  |  ok  |  ok  | TODO |  ok  | TODO |  ok  |
++  s390            |  ok  |  ok  |  ok  | TODO | TODO |  ok  |  ok  | TODO |  ok  |
++  score           | TODO |  ok  |  ok  | TODO | TODO | TODO | TODO | TODO |  ok  |
++  sh              | TODO |  ok  |  ok  |  ok  | TODO | TODO | TODO |  ok  |  ok  |
++  sparc           | TODO |  ok  |  ok  |  ok  |  ok  | TODO |  ok  | TODO |  ok  |
++  tile            | TODO |  ok  |  ok  |  ok  |  ok  | TODO | TODO | TODO |  ok  |
++  um              | TODO |  ok  |  ok  | TODO | TODO | TODO | TODO | TODO |  ok  |
++  unicore32       | TODO |  ok  |  ok  | TODO | TODO | TODO | TODO | TODO |  ok  |
++  x86             |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
++  xtensa          | TODO |  ok  |  ok  | TODO | TODO | TODO | TODO | TODO |  ok  |
++----------------------------------------------------------------------------------
++
++
++arch tick broadcast: ARCH_HAS_TICK_BROADCAST
++            kprobes: HAVE_KPROBES
++          optprobes: HAVE_OPTPROBES
++  kprobes on ftrace: HAVE_KPROBES_ON_FTRACE
++            uprobes: ARCH_SUPPORTS_UPROBES
++         kretprobes: HAVE_KRETPROBES
++  user ret profiler: HAVE_USER_RETURN_NOTIFIER
++     ioremap_prot(): HAVE_IOREMAP_PROT
++          tracehook: HAVE_ARCH_TRACEHOOK
++
++arch tick broadcast:---------------------------------------------------------.
++            kprobes:--------------------------------------------------.      |
++          optprobes:-------------------------------------------.      |      |
++  kprobes on ftrace:------------------------------------.      |      |      |
++            uprobes:-----------------------------.      |      |      |      |
++         kretprobes:----------------------.      |      |      |      |      |
++  user ret profiler:---------------.      |      |      |      |      |      |
++     ioremap_prot():--------.      |      |      |      |      |      |      |
++          tracehook:-.      |      |      |      |      |      |      |      |
++                     |      |      |      |      |      |      |      |      |
++----------------------------------------------------------------------------------
++  alpha           | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  arc             |  ok  |  ok  | TODO |  ok  | TODO | TODO | TODO |  ok  | TODO |
++  arm             |  ok  | TODO | TODO |  ok  |  ok  | TODO |  ok  |  ok  |  ok  |
++  arm64           |  ok  | TODO | TODO | TODO | TODO | TODO | TODO | TODO |  ok  |
++  avr32           | TODO | TODO | TODO | TODO | TODO | TODO | TODO |  ok  | TODO |
++  blackfin        |  ok  | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  c6x             |  ok  | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  cris            | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  frv             |  ok  | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  hexagon         |  ok  | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  ia64            |  ok  | TODO | TODO |  ok  | TODO | TODO | TODO |  ok  | TODO |
++  m32r            | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  m68k            | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  metag           |  ok  | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  microblaze      | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  mips            |  ok  | TODO | TODO |  ok  | TODO | TODO | TODO |  ok  |  ok  |
++  mn10300         |  ok  | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  nios2           |  ok  | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  openrisc        |  ok  | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  parisc          | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  powerpc         |  ok  |  ok  | TODO |  ok  |  ok  | TODO | TODO |  ok  |  ok  |
++  s390            |  ok  | TODO | TODO |  ok  |  ok  | TODO | TODO |  ok  | TODO |
++  score           | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  sh              |  ok  |  ok  | TODO |  ok  | TODO | TODO | TODO |  ok  | TODO |
++  sparc           |  ok  | TODO | TODO |  ok  | TODO | TODO | TODO |  ok  | TODO |
++  tile            |  ok  |  ok  |  ok  |  ok  | TODO | TODO |  ok  |  ok  | TODO |
++  um              | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  unicore32       | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  x86             |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  | TODO |
++  xtensa          | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++----------------------------------------------------------------------------------
++
++
++generic idle thread: GENERIC_SMP_IDLE_THREAD
++  dma_*map*_attrs(): HAVE_DMA_ATTRS
++     dma contiguous: HAVE_DMA_CONTIGUOUS
++      kprobes event: HAVE_REGS_AND_STACK_ACCESS_API
++      dma api debug: HAVE_DMA_API_DEBUG
++          perf regs: HAVE_PERF_REGS
++     perf stackdump: HAVE_PERF_USER_STACK_DUMP
++      cmpxchg local: HAVE_CMPXCHG_LOCAL
++       virt cpuacct: HAVE_VIRT_CPU_ACCOUNTING || 64BIT
++
++generic idle thread:---------------------------------------------------------.
++  dma_*map*_attrs():--------------------------------------------------.      |
++     dma contiguous:-------------------------------------------.      |      |
++      kprobes event:------------------------------------.      |      |      |
++      dma api debug:-----------------------------.      |      |      |      |
++          perf regs:----------------------.      |      |      |      |      |
++     perf stackdump:---------------.      |      |      |      |      |      |
++      cmpxchg local:--------.      |      |      |      |      |      |      |
++       virt cpuacct:-.      |      |      |      |      |      |      |      |
++                     |      |      |      |      |      |      |      |      |
++----------------------------------------------------------------------------------
++  alpha           |  ok  | TODO | TODO | TODO | TODO | TODO | TODO |  ok  |  ok  |
++  arc             | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |  ok  |
++  arm             |  ok  | TODO |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
++  arm64           |  ok  | TODO |  ok  |  ok  |  ok  | TODO |  ok  |  ok  |  ok  |
++  avr32           | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  blackfin        | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |  ok  |
++  c6x             | TODO | TODO | TODO | TODO |  ok  | TODO | TODO | TODO | TODO |
++  cris            | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  frv             | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  hexagon         | TODO | TODO | TODO | TODO | TODO |  ok  | TODO |  ok  |  ok  |
++  ia64            |  ok  | TODO | TODO | TODO |  ok  | TODO | TODO |  ok  |  ok  |
++  m32r            | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  m68k            | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  metag           | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |  ok  |
++  microblaze      | TODO | TODO | TODO | TODO |  ok  | TODO | TODO |  ok  | TODO |
++  mips            |  ok  | TODO | TODO | TODO |  ok  | TODO |  ok  |  ok  |  ok  |
++  mn10300         | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  nios2           | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  openrisc        | TODO | TODO | TODO | TODO | TODO | TODO | TODO |  ok  | TODO |
++  parisc          |  ok  | TODO | TODO | TODO | TODO | TODO | TODO | TODO |  ok  |
++  powerpc         |  ok  | TODO | TODO | TODO |  ok  |  ok  | TODO |  ok  |  ok  |
++  s390            |  ok  |  ok  | TODO | TODO |  ok  |  ok  | TODO |  ok  |  ok  |
++  score           | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  sh              | TODO | TODO | TODO | TODO |  ok  |  ok  | TODO |  ok  |  ok  |
++  sparc           |  ok  | TODO | TODO | TODO |  ok  | TODO | TODO |  ok  |  ok  |
++  tile            |  ok  | TODO | TODO | TODO |  ok  |  ok  | TODO |  ok  | TODO |
++  um              | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  unicore32       | TODO | TODO | TODO | TODO | TODO | TODO | TODO |  ok  | TODO |
++  x86             |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
++  xtensa          | TODO | TODO | TODO | TODO | TODO | TODO | TODO | TODO |  ok  |
++----------------------------------------------------------------------------------
++
++
++      irq time acct: HAVE_IRQ_TIME_ACCOUNTING
++                THP: HAVE_ARCH_TRANSPARENT_HUGEPAGE && 64BIT
++   gcov profile all: ARCH_HAS_GCOV_PROFILE_ALL
++    rwsem optimized: Optimized asm/rwsem.h
++   queued spinlocks: ARCH_USE_QUEUED_SPINLOCKS
++     queued rwlocks: ARCH_USE_QUEUED_RWLOCKS
++     numa balancing: ARCH_SUPPORTS_NUMA_BALANCING && 64BIT && NUMA
++
++      irq time acct:-------------------------------------------.
++                THP:------------------------------------.      |
++   gcov profile all:-----------------------------.      |      |
++    rwsem optimized:----------------------.      |      |      |
++   queued spinlocks:---------------.      |      |      |      |
++     queued rwlocks:--------.      |      |      |      |      |
++     numa balancing:-.      |      |      |      |      |      |
++                     |      |      |      |      |      |      |
++--------------------------------------------------------------------
++  alpha           | TODO | TODO | TODO |  ok  | TODO | TODO | TODO |
++  arc             |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  arm             |  ..  | TODO | TODO | TODO |  ok  |  ok  |  ok  |
++  arm64           |  ..  | TODO | TODO | TODO |  ok  |  ok  | TODO |
++  avr32           |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  blackfin        |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  c6x             |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  cris            |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  frv             |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  hexagon         |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  ia64            | TODO | TODO | TODO |  ok  | TODO | TODO | TODO |
++  m32r            |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  m68k            |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  metag           |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  microblaze      |  ..  | TODO | TODO | TODO |  ok  |  ..  | TODO |
++  mips            | TODO | TODO | TODO | TODO | TODO |  ok  |  ok  |
++  mn10300         |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  nios2           |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  openrisc        |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  parisc          |  ..  | TODO | TODO | TODO | TODO | TODO | TODO |
++  powerpc         |  ok  | TODO | TODO | TODO |  ok  |  ok  | TODO |
++  s390            |  ..  | TODO | TODO |  ok  |  ok  |  ok  | TODO |
++  score           |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  sh              |  ..  | TODO | TODO |  ok  |  ok  |  ..  | TODO |
++  sparc           | TODO | TODO | TODO |  ok  | TODO |  ok  | TODO |
++  tile            | TODO | TODO | TODO | TODO | TODO | TODO | TODO |
++  um              |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  unicore32       |  ..  | TODO | TODO | TODO | TODO |  ..  | TODO |
++  x86             |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
++  xtensa          |  ..  | TODO | TODO |  ok  | TODO |  ..  |  ok  |
++--------------------------------------------------------------------
