@@ -1,60 +1,47 @@
-From: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 2/2] mmap2: clarify MAP_POPULATE
-Date: Wed, 13 May 2015 10:47:15 -0400
-Message-ID: <20150513144715.GE1227@akamai.com>
-References: <1431527892-2996-1-git-send-email-miso@dhcp22.suse.cz>
- <1431527892-2996-3-git-send-email-miso@dhcp22.suse.cz>
+From: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+Subject: Re: [PATCH 1/5] misc: Beaglebone capemanager
+Date: Wed, 13 May 2015 16:47:33 +0200
+Message-ID: <CAMuHMdUDxQEbmfQ=YTtK=2Tza1JLPkij6oTZw1HS7fgeEHJJhQ@mail.gmail.com>
+References: <1431503985-31853-1-git-send-email-pantelis.antoniou@konsulko.com>
+	<1431503985-31853-2-git-send-email-pantelis.antoniou@konsulko.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="a+b56+3nqLzpiR9O"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1431527892-2996-3-git-send-email-miso-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Hocko <miso-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
-Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1431503985-31853-2-git-send-email-pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Robert Nelson <robertcnelson-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Geert Uytterhoeven <geert+renesas-gXvu3+zWzMSzQB+pC5nmwQ@public.gmane.org>, =?UTF-8?Q?Beno=C3=AEt_Cousso?= <bcousson-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Wed, May 13, 2015 at 9:59 AM, Pantelis Antoniou
+<pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
+> diff --git a/drivers/misc/bone_capemgr.c b/drivers/misc/bone_capemgr.c
+> new file mode 100644
+> index 0000000..423719c
+> --- /dev/null
+> +++ b/drivers/misc/bone_capemgr.c
 
---a+b56+3nqLzpiR9O
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+> +static int capemgr_load_slot(struct bone_cape_slot *slot)
+> +{
 
-On Wed, 13 May 2015, Michal Hocko wrote:
+[...]
 
-> From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
->=20
-> David Rientjes has noticed that MAP_POPULATE wording might promise much
-> more than the kernel actually provides and intend to provide. The
-> primary usage of the flag is to pre-fault the range. There is no
-> guarantee that no major faults will happen later on. The pages might
-> have been reclaimed by the time the process tries to access them.
->=20
-> Signed-off-by: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+> +       of_fdt_unflatten_tree((void *)slot->fw->data, &slot->overlay);
 
-Reviewed-by: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+After "[PATCH] of/fdt: Make fdt blob input parameters of unflatten functions
+const", you can remove the cast.
 
---a+b56+3nqLzpiR9O
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+Gr{oetje,eeting}s,
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
+                        Geert
 
-iQIcBAEBAgAGBQJVU2PzAAoJELbVsDOpoOa9MfUQAJTJ/HrT0MkSGYeicZsd/fPv
-Rr/bJn9eQ+kYCXs5UqSpseRznLOt297Yt0aA45cbk2CGXe/s1FMxlr+OqZJaq5b+
-kJXcJ0vorN/29AFSyqHUHs+3Dfkmcop6k1PomDItwVx8p9tVi7dSdE8laYufx1fJ
-smsw/jm+vecBLuriss1RmtnYkGwOdbwB9HDzte30x6DAOKRC6y/gZeBlLTJ+cdUB
-FyH8kLtOkm8O9x1bR6TbBswo1tVn1LmCQHyNxZH9i41FuZVciTkpu6SrGpfn4j0Z
-jtQoNXVukruRQjZyIrBdiuxZWV/HFSTS3G0DUORpm/uupLG4VcBf904VH7jEgAkU
-3h/ky8TMvXN3IOxy9GENsJ6GKhIjXSJuYQp6iUQfcHLTKNnkOfSJJnpy75wvmJCu
-kIGHunZXd6ocCA2vBPqiOHx46scOy9E58Vurdtz5SnwVVV6crznvIQ7jzewpVkFs
-0EIU0xf0FOb9iGYmvRetb2Ut6rwS4/i/VkGbHbl7nLaGBcJtX1zP/f26X2NrnCAy
-iauzQ/ullPiji0JufVB+G2v+RBR7fRpnYB/CUF5p+ubzKHpSjjC4jWhjOW8jQc+W
-coZUJiXBQE6LfeqOSh+MPIVFoyBmEN8HnQ9vQxpvlopfJ1D+jVjOBnFIvzdwre7R
-jVUo3LatpKU4Z796F6xS
-=yYNO
------END PGP SIGNATURE-----
+--
+Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org
 
---a+b56+3nqLzpiR9O--
+In personal conversations with technical people, I call myself a hacker. But
+when I'm talking to journalists I just say "programmer" or something like that.
+                                -- Linus Torvalds
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
