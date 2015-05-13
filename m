@@ -1,98 +1,42 @@
-From: Sage Weil <sage@newdream.net>
-Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
-Date: Tue, 12 May 2015 16:12:46 -0700 (PDT)
-Message-ID: <alpine.DEB.2.00.1505121454000.20395@cobra.newdream.net>
-References: <20150507172053.GA659@lenny.home.zabbo.net> <alpine.DEB.2.00.1505071752520.28239@cobra.newdream.net> <CAHQdGtQjMHA8rVPkggB2zMz=k3O667+APH_1EY_2FtYmHL7-hw@mail.gmail.com> <20150508221325.GM4327@dastard> <alpine.DEB.2.00.1505081517470.28239@cobra.newdream.net>
- <CAHQdGtTFTN2XuvmarFZ9HPQV=cuhh7FosdHSrJME_U4htr=i8w@mail.gmail.com> <20150511073103.GO4327@dastard> <alpine.DEB.2.00.1505110925150.28239@cobra.newdream.net> <CAHQdGtT3rCf-ycAYw-=7HGaemg1+HfY8sw3+kb54VHONxDyP3w@mail.gmail.com> <alpine.DEB.2.00.1505111020120.28239@cobra.newdream.net>
- <20150512012133.GR4327@dastard>
+From: josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org
+Subject: Re: [PATCHv2 1/2] clone: Support passing tls argument via C rather
+ than pt_regs magic
+Date: Tue, 12 May 2015 17:53:37 -0700
+Message-ID: <20150513005337.GB14292@cloud>
+References: <20150511192918.GA11361@jtriplet-mobl1>
+ <20150512142250.dcb053da81855ae1b5861173@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150512012133.GR4327@dastard>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Trond Myklebust <trond.myklebust@primarydata.com>, Zach Brown <zab@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API Mailing List <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150512142250.dcb053da81855ae1b5861173-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 12 May 2015, Dave Chinner wrote:
-> > > Neither of these examples cases are under the control of the 
-> > > application that calls open(O_NOMTIME).
+On Tue, May 12, 2015 at 02:22:50PM -0700, Andrew Morton wrote:
+> On Mon, 11 May 2015 12:29:19 -0700 Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org> wrote:
+> 
+> > Introduce a new CONFIG_HAVE_COPY_THREAD_TLS for architectures to opt
+> > into, and a new copy_thread_tls that accepts the tls parameter as an
+> > additional unsigned long (syscall-argument-sized) argument.
+> > Change sys_clone's tls argument to an unsigned long (which does
+> > not change the ABI), and pass that down to copy_thread_tls.
 > > 
-> > Wouldn't a mount option (e.g., allow_nomtime) address this concern?  Only 
-> > nodes provisioned explicitly to run these systems would be enable this 
-> > option.
+> > Architectures that don't opt into copy_thread_tls will continue to
+> > ignore the C argument to sys_clone in favor of the pt_regs captured at
+> > kernel entry, and thus will be unable to introduce new versions of the
+> > clone syscall.
 > 
-> Back to my Joe Speedracer comments.....
-> 
-> I'm not sure what the right answer is - mount options are simply too
-> easy to add without understanding the full implications of them.
-> e.g. we didn't merge FALLOC_FL_NO_HIDE_STALE simply because it was
-> too dangerous for unsuspecting users. This isn't at that same level
-> or concern, but it's still a landmine we want to avoid users from
-> arming without realising it...
-> 
-> > > >> I'm happy for it to be an ioctl interface - even an XFS specific
-> > > >> interface if you want to go that route, Sage - and it probably
-> > > >> should emit a warning to syslog first time it is used so there is
-> > > >> trace for bug triage purposes. i.e. we know the app is not using
-> > > >> mtime updates, so bug reports that are the result of mtime
-> > > >> mishandling don't result in large amounts of wasted developer time
-> > > >> trying to understand them...
-> > > >
-> > > > A warning on using the interface (or when mounting with user_nomtime)
-> > > > sounds reasonable.
-> > > >
-> > > > I'd rather not make this XFS specific as other local filesystmes (ext4,
-> > > > f2fs, possibly btrfs) would similarly benefit.  (And if we want to target
-> > > > XFS specifically the existing XFS open-by-handle ioctl is sufficient as it
-> > > > already does O_NOMTIME unconditionally.)
-> > > 
-> > > Lack of a namespace, doesn't imply that you don't want to manage the
-> > > data. The whole point of using object storage instead of plain old
-> > > block storage is to be able to provide whatever metadata you still
-> > > need in order to manage the object.
-> > 
-> > Yeah, agreed--this is presumably why open_by_handle(2) (which is what we'd 
-> > like to use) doesn't assume O_NOMTIME.
-> 
-> Right - the XFS ioctls were designed specifically for applications
-> that interacted directly with the structure of XFS filesystems and
-> so needed invisible IO (e.g. online defragmenter). IOWs, they are
-> not interfaces intended for general usage. They are also only
-> available to root, so a typical user application won't be making use
-> of them, either.
+> What happens quite frequently is that we do something for x86 with the
+> expectation that other architectures will follow along, but this
+> doesn't happen.  The arch maintainers simply didn't know about it or
+> nobody nags them.  Nothing happens and inconsistencies hang around for
+> years.  eg, http://lkml.iu.edu/hypermail/linux/kernel/1504.2/04993.html
 
-I understand that's what they're intended for, but I'm having a hard time 
-parsing out the difference between what they *do* and what O_NOMTIME + -o 
-allow_nomtime does.  The open-by-handle ioctls have nothing to do with the 
-online XFS format--they simply allow you to open a file via an opaque 
-handle (albeit a differently formatted one than the generic 
-open_by_handle_at(2)).  They also force you into an O_NOMTIME-equivalent 
-mode.
+In this case, there will be a very clear incentive to switch to
+CONFIG_HAVE_COPY_THREAD_TLS: if you don't, you can't enable new
+syscalls.
 
-AFAICS the only difference that I see is that
-
-1) the ioctl is XFS specific.  (As open_by_handle_at(2) demonstrates, this 
-needn't be the case.)
-
-2) the NOMTIME mode is only available via the open-by-handle interface, 
-not open(2).
-
-3) it is an ioctl interface, and thus more obscure.  (Well, there is a 
-libhandle library, but it doesn't seem to be widely used.)
-
-Would you object less if 
-
-1) the O_NOMTIME flag were only available via open_by_handle_at(2)?
-
-2) an equivalent ioctl were implemented for each file system of interest 
-that (say) called into open_by_handle_at(2) code, adding in the O_NOMTIME 
-flag?
-
-3) O_NOMTIME required root (vs a mount option that requires root and 
-unpriviledged O_NOMTIME)?
-
-Just trying to tease apart which part is problematic...
-
-Thanks!
-sage
+- Josh Triplett
