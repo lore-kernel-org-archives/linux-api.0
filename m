@@ -1,172 +1,124 @@
-From: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH 4/5] doc: ABI: bone_capemgr sysfs API
-Date: Wed, 13 May 2015 15:42:12 +0300
-Message-ID: <F6CE4BD7-D409-407E-8E42-0E79965C6855@konsulko.com>
-References: <1431503985-31853-1-git-send-email-pantelis.antoniou@konsulko.com> <1431503985-31853-5-git-send-email-pantelis.antoniou@konsulko.com> <20150513115259.GA1021@kroah.com> <28C3D47C-8D31-4DD9-8751-F72A7F09DF6F@konsulko.com> <20150513120854.GA1516@kroah.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2098\))
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150513120854.GA1516-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Robert Nelson <robertcnelson-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Geert Uytterhoeven <geert+renesas-gXvu3+zWzMSzQB+pC5nmwQ@public.gmane.org>, =?utf-8?Q?Beno=C3=AEt_Cousso?= <bcousson-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v8 14/16] ARM: dts: Introduce STM32F429 MCU
+Date: Wed, 13 May 2015 13:58:05 +0100
+Message-ID: <55534A5D.6050904@linaro.org>
+References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com>	<1431158038-3813-15-git-send-email-mcoquelin.stm32@gmail.com>	<2789447.8FUTAOJOHR@wuerfel> <CALszF6CS8Q9DWX+ERtu=k=Bzr1-25N3oZQyWyxDZBF3an4nFKQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALszF6CS8Q9DWX+ERtu=k=Bzr1-25N3oZQyWyxDZBF3an4nFKQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, =?UTF-8?B?QW5kcmVhcyBGw6RyYmVy?= <afaerber-l3A5Bk7waGM@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>, Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>, Andy Shevchenko <andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Chanwoo Choi <cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Vladimir Zapolskiy <vladimir_zapolskiy-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <gal>
 List-Id: linux-api@vger.kernel.org
 
-Hi Greg,
-
-> On May 13, 2015, at 15:08 , Greg Kroah-Hartman <gregkh@linuxfoundatio=
-n.org> wrote:
->=20
-> On Wed, May 13, 2015 at 02:56:49PM +0300, Pantelis Antoniou wrote:
->> Hi Greg,
->>=20
->>> On May 13, 2015, at 14:52 , Greg Kroah-Hartman <gregkh@linuxfoundat=
-ion.org> wrote:
->>>=20
->>> On Wed, May 13, 2015 at 10:59:44AM +0300, Pantelis Antoniou wrote:
->>>> Document the beaglebone's capemgr sysfs API
->>>>=20
->>>> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
->>>> ---
->>>> .../testing/sysfs-devices-platform-bone_capemgr    | 63 ++++++++++=
-++++++++++++
->>>> 1 file changed, 63 insertions(+)
->>>> create mode 100644 Documentation/ABI/testing/sysfs-devices-platfor=
-m-bone_capemgr
->>>>=20
->>>> diff --git a/Documentation/ABI/testing/sysfs-devices-platform-bone=
-_capemgr b/Documentation/ABI/testing/sysfs-devices-platform-bone_capemg=
-r
->>>> new file mode 100644
->>>> index 0000000..e2df613
->>>> --- /dev/null
->>>> +++ b/Documentation/ABI/testing/sysfs-devices-platform-bone_capemg=
-r
->>>> @@ -0,0 +1,63 @@
->>>> +What:		/sys/devices/platform/bone_capemgr/slots
->>>> +Date:		May 2015
->>>> +KernelVersion:	4.0
->>>=20
->>> I don't think that version is correct :)
->>>=20
->>=20
->> Bah, ++
->>=20
->>>> +Contact:	Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
->>>> +Description:
->>>> +		READ:
->>>> +		  Describe the state of all the slots of the beaglebone capemgr=
-=2E
->>>> +		  Each line of the output describes a slot:
->>>=20
->>> sysfs files are "one value per file", so a sysfs file that displays
->>> multiple lines like this is not allowed at all, sorry.
->>>=20
->>> Please either make it a debugfs file (if this is only for debugging=
-, or
->>> split it out into individual files, one per slot (hint, one per slo=
-t is
->>> probably best.)
->>>=20
->>=20
->> Well, it=E2=80=99s a status file. And it=E2=80=99s been used as is f=
-or a couple of years
->> so it was worth a shot for backward compatibility.
->=20
-> There is not "backwards compatiblity" for when you do things wrong in
-> the first place, you can't claim that here, sorry.
->=20
-> And don't "try" to introduce things you know is wrong, that just make=
-s
-> maintainers _very_ suspicious of everything else you are doing here=E2=
-=80=A6
->=20
-
-OK
-
->>>> +		  The slot format is as following:
->>>> +		  <slot-id>: [P-][F-][O-][l-][L-][D-] \
->>>> +			  <overlay-id> <board-name>,<version>,
->>>> +			  <manufacturer>,<part-number>
->>>> +
->>>> +		Where the flags are:
->>>> +		P: Slot has been probed
->>>> +		F: Slot has failed probing (i.e. no EEPROM detected)
->>>> +		O: Slot has been overridden by the user
->>>> +		l: Slot is current loading
->>>> +		L: Slot has completed loading and is ready
->>>> +		D: Slot has been disabled
->>>> +
->>>> +		Example:
->>>> +		0: P---L-  -1 BeagleBone RS232 CAPE,00A1,Beagleboardtoys,BB-BON=
-E-SERL-03
->>>> +		1: PF----  -1
->>>> +		2: PF----  -1
->>>> +		3: PF----  -1
->>>> +
->>>> +		WRITE:
->>>> +		  Writing a string of the form <part-number>[:version] issues a=
- request to
->>>> +		  load a firmware blob containing an overlay. The name of the f=
-irmware blob
->>>> +		  is <part-number>-[version|00A0].dtbo. This act is defined as =
-a slot override.
->>>> +
->>>> +		  Writing a negative slot id removes the slot if it was an over=
-ridden one, or
->>>> +		  unloads a slot that was probed.
->>>> +
->>>> +What:		/sys/devices/platform/bone_capemgr/baseboard/<eeprom-field=
+On 13/05/15 12:45, Maxime Coquelin wrote:
+> 2015-05-12 23:21 GMT+02:00 Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>:
+>> On Saturday 09 May 2015 09:53:56 Maxime Coquelin wrote:
+>>> +#include  <dt-bindings/mfd/stm32f4-rcc.h>
+>>> +
+>>>
+>>
+>> Can you find a way to avoid this dependency?
+>>
+>> Maybe you can change the bindings so that the numbers you pass as
+>> arguments to the reset and clock specifiers reflect the numbers that
+>> the hardware use?
 >
->>>> +Date:		May 2015
->>>> +KernelVersion:	4.0
->>>> +Contact:	Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
->>>> +Description:	Contains the probed base board EEPROM field; one of:
->>>> +		board-name		- board-name as stored in cape EEPROM
->>>> +		dc-supplied		- whether the cape draws or supplies DC
->>>> +		eeprom-format-revision	- EEPROM format rev, only 00A0 supported
->>>> +		header			- header; should be 'aa 55 33 ee'
->>>=20
->>> If it's always this value, why have the file?
->>>=20
->>=20
->> These are the contents of the EEPROM. If the format of the EEPROM ch=
-anges then the
->> header information will change.
->=20
-> Then don't say "should be", because what happens in the future if it =
-is
-> not.
->=20
+> If I understand correctly, you prefer the way I did in v7 [0]?
+>
+> I don't have a strong opinion on this. Either way is fine to me.
+>
+> I changed the bindings in the v8 after discussions with Daniel
+> Thompson, who is implementing the clock driver part of the RCC IP.
+>
+> He proposed we used common defines, because each peripheral has a
+> reset line and a clock gate.
+> Both reset and clock are represented as a single bit, with only the
+> base offset differing between clock and reset.
+> You can have a look at chapter 6 of the reference manual [1] if you
+> find some time.
+>
+> Having common defines between clocks and reset make sense to me, but I
+> also understand your point of avoiding dependencies.
+>
+> Maybe I can revert back to v7 bindings for now, and then we can
+> reconsider using common defines when Daniel will send the clock
+> patches.
+> Note that doing that won't break the DT binary compatibility, as the
+> raw reset values, or the ones from defines are the same.
+>
+> Daniel, could you share an example of the bindings you would use for the clocks?
 
-OK
+For the most cases, where there is a clock gate just before the 
+peripheral it looks pretty much like the reset driver and I use the bit 
+offset of the clock gating bit as the index.
 
->>>> +		manufacturer		- manufacturer string
->>>> +		part-number		- part-number of the cape
->>>> +		serial-number		- serial number of the cape
->>>> +		version			- version of the cape, i.e. 00A0
->>>> +		number-of-pins		- displayed but ignored
->>>> +		pin-usage		- displayed but ignored
->>>> +		sys-5v			- displayed but ignored
->>>> +		vdd-3v3exp		- displayed but ignored
->>>> +		vdd-5v			- displayed but ignored
->>>=20
->>> Are these all individual different files?
->>>=20
->>=20
->> Yes
->=20
-> Then write out the individual files please as different entries.
->=20
-> Also, the "displayed but ignored" doesn't make sense, please fix that
-> up.
->=20
+However there are a couple of clocks without gating just before the 
+clock reaches the peripheral:
 
-OK
+1. A hard coded /8. I think this will have to be given a synthetic
+    number.
 
-> greg k-h
+2. Ungated dividers. For these I am using the bit offset of the LSB of
+    the mux field.
 
-Regards
+So I think there is only one value that is completely unrelated to the 
+hardware and will use a magic constant instead.
 
-=E2=80=94 Pantelis
+I had planned to macros similar to the STM32F4_AxB_RESET() family of 
+macros in both clk driver and DT in order to reuse the bit layouts from 
+dt-bindings/mfd/stm32f4-rcc.h .
+
+Normal case would have looked like this:
+
+		timer3: timer@40000000 {
+			compatible = "st,stm32-timer";
+			reg = <0x40000000 0x400>;
+			interrupts = <28>;
+			resets = <&rcc STM32F4_APB1_RESET(TIM3)>;
+			clocks = <&rcc STM32F4_APB1_CLK(TIM3)>;
+			status = "disabled";
+		};
+
+Without the macros it looks like this:
+
+		timer3: timer@40000000 {
+			compatible = "st,stm32-timer";
+			reg = <0x40000000 0x400>;
+			interrupts = <28>;
+			resets = <&rcc 257>;
+			clocks = <&rcc 513>;
+			status = "disabled";
+		};
+
+However we could perhaps be more literate even if we don't use the macros?
+
+		timer3: timer@40000000 {
+			compatible = "st,stm32-timer";
+			reg = <0x40000000 0x400>;
+			interrupts = <28>;
+			resets = <&rcc ((0x20*8) + 1)>;
+			clocks = <&rcc ((0x40*8) + 1)>;
+			status = "disabled";
+		};
+
+
+Daniel.
+
+
+> Kind regards,
+> Maxime
+>
+>>
+>>          Arnd
+>
+> [0]: http://lkml.iu.edu/hypermail/linux/kernel/1504.3/04523.html
+> [1]: http://www.st.com/web/en/resource/technical/document/reference_manual/DM00031020.pdf
+>
+
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
