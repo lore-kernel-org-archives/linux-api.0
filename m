@@ -1,59 +1,88 @@
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Subject: Re: [RFC PATCH v5] Documentation/arch: Add Documentation/arch-TODO
-Date: Wed, 13 May 2015 16:42:43 +0200
-Message-ID: <CAMuHMdXV68nie93Rb=Z+vYtn2aNex=s5E4+Z=QGojF+8EbPbKA@mail.gmail.com>
-References: <20150511192918.GA11361@jtriplet-mobl1>
-	<20150512142250.dcb053da81855ae1b5861173@linux-foundation.org>
-	<20150512213843.GV21418@twins.programming.kicks-ass.net>
-	<20150512144910.0b49c9a7a13336773449db33@linux-foundation.org>
-	<20150513083441.GA17336@gmail.com>
-	<20150513085636.GA11030@gmail.com>
-	<20150513092421.GB11030@gmail.com>
-	<20150513094622.GC11030@gmail.com>
-	<20150513094756.GD11030@gmail.com>
-	<20150513140945.GA8376@dellaz>
+From: Eric B Munson <emunson@akamai.com>
+Subject: Re: [PATCH 1/2] mmap.2: clarify MAP_LOCKED semantic
+Date: Wed, 13 May 2015 10:45:06 -0400
+Message-ID: <20150513144506.GD1227@akamai.com>
+References: <1431527892-2996-1-git-send-email-miso@dhcp22.suse.cz>
+ <1431527892-2996-2-git-send-email-miso@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20150513140945.GA8376@dellaz>
-Sender: linux-arch-owner@vger.kernel.org
-To: Michele Curti <michele.curti@gmail.com>
-Cc: Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Jonathan Corbet <corbet@lwn.net>, Peter Zijlstra <peterz@infradead.org>, Josh Triplett <josh@joshtriplett.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux-Arch <linux-arch@vger.kernel.org>, Borislav Petkov <bp@alien8.de>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="rz+pwK2yUstbofK6"
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1431527892-2996-2-git-send-email-miso@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <miso@dhcp22.suse.cz>
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, David Rientjes <rientjes@google.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-mm@kvack.org, Michal Hocko <mhocko@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 13, 2015 at 4:09 PM, Michele Curti <michele.curti@gmail.com> wrote:
-> Tried to transpose rows with columns, to avoid architecture name duplication
-> and to get only one table while keeping 80 char width, but result seems less
-> readable :p
->
->
->                                                 m
->                                                 i                         u
->                               b                 c       o                 n
->                               l       h         r   m   p   p             i
->                               a       e         o   n   e p o             c   x
->                     a     a a c       x       m b   1 n n a w   s   s     o   t
->                     l     r v k   c   a i m m e l m 0 i r r e s c   p t   r   e
->                     p a a m r f c r f g a 3 6 t a i 3 o i i r 3 o   a i   e x n
->                     h r r 6 3 i 6 i r o 6 2 8 a z p 0 s s s p 9 r s r l u 3 8 s
->                     a c m 4 2 n x s v n 4 r k g e s 0 2 c c c 0 e h c e m 2 6 a
-> -------------------------------------------------------------------------------
->             lockdep T K K K K K T T T K T T T K K K T T T T K K K K K K K K K K
->      stackprotector T T K K T T T T T T T T T T T K T T T T T T T K T T T T K T
->         jump-labels T T K K T T T T T T T T T T T K T T T T K K T T K T T T K T
->      seccomp-filter T T K K T T T T T T T T T T T K T T T T T K T T T T T T K T
 
-I thought about that, too, as there are more (not fully implemented) features
-than architectures. But I expect more merge conflicts with the transposed
-version.
+--rz+pwK2yUstbofK6
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Gr{oetje,eeting}s,
+On Wed, 13 May 2015, Michal Hocko wrote:
 
-                        Geert
+> From: Michal Hocko <mhocko@suse.cz>
+>=20
+> MAP_LOCKED had a subtly different semantic from mmap(2)+mlock(2) since
+> it has been introduced.
+> mlock(2) fails if the memory range cannot get populated to guarantee
+> that no future major faults will happen on the range. mmap(MAP_LOCKED) on
+> the other hand silently succeeds even if the range was populated only
+> partially.
+>=20
+> Fixing this subtle difference in the kernel is rather awkward because
+> the memory population happens after mm locks have been dropped and so
+> the cleanup before returning failure (munlock) could operate on something
+> else than the originally mapped area.
+>=20
+> E.g. speculative userspace page fault handler catching SEGV and doing
+> mmap(fault_addr, MAP_FIXED|MAP_LOCKED) might discard portion of a racing
+> mmap and lead to lost data. Although it is not clear whether such a
+> usage would be valid, mmap page doesn't explicitly describe requirements
+> for threaded applications so we cannot exclude this possibility.
+>=20
+> This patch makes the semantic of MAP_LOCKED explicit and suggest using
+> mmap + mlock as the only way to guarantee no later major page faults.
+>=20
+> Signed-off-by: Michal Hocko <mhocko@suse.cz>
+
+Does the problem still happend when MAP_POPULATE | MAP_LOCKED is used
+(AFAICT MAP_POPULATE will cause the mmap to fail if all the pages cannot
+be made present).
+
+Either way this is a good catch.
+
+Acked-by: Eric B Munson <emunson@akamai.com>
+
+
+--rz+pwK2yUstbofK6
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJVU2NyAAoJELbVsDOpoOa9qrcQAL7qkobw8zBNPCW62SwMI8Gt
+HnilnO3Y42MDYOVSNzcPvmwDbETpqrS5mzK4cEpM5KQFLIz6XMvmZr2D/16BIOED
+3ieX+d2Eg7kw5O87/rq2MVrmLYfAXoDnni25d6SQEQBQihuAGEk7M45KBRaa8zcb
+aKElv4ov8xjMMcRwRzTdpdzaWogFjNz5TuRsm4Zu9Xj/MrPhmhzaCwoBpOqxGKp5
+kt9utHzVh4h6MDC0ZCZ4dfw9UCAMfA4wtEncS4JcEQ+a/LPN1n/ZG7LqqqwIL50x
+1miEgtCxIOVlaLXUUCHeCa0tfvSBPFznDfjpnnnGeowFKdG9HfoakbgrzeGTWFX+
++6MLsCzba/ODKwK4sALB0U9KUCLg+qjBFuTAX16mpaRJLjiaPvK1MHOWoD70yC+z
+fKAKjFlXRmebAM9nmpx0Q0uKUzUT8wK7WN0IFB9sJrqM7HoR+nzAweGtbXQrNKwm
+O5jA/jPChP7zshrllyfgp56rRiYF3ztsT1kGDA7147c8S17NIzW4oFGYCUG7s8ua
+XPsjaMQHgrPn33LVMq9dfX01kLMft1GKVYLil6xoGW+AfqBrNwbOLvVQfy0WrxM2
+XKNwGCa5G/V4RYVzQEKdzfvwKYslxbpr3iqmjR0PQNhjdZWFAgIHonrboQmc59PC
+fkrgPry07zHAVqVQVIDX
+=+Q1g
+-----END PGP SIGNATURE-----
+
+--rz+pwK2yUstbofK6--
 
 --
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
-
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-                                -- Linus Torvalds
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
