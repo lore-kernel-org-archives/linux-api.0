@@ -1,411 +1,60 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: [CFT][PATCH 09/10] sysfs: Create mountpoints with
-	sysfs_create_empty_dir
-Date: Thu, 14 May 2015 12:36:30 -0500
-Message-ID: <878ucrhxi9.fsf@x220.int.ebiederm.org>
+Subject: [CFT][PATCH 10/10] mnt: Update fs_fully_visible to test for permanently empty directories
+Date: Thu, 14 May 2015 12:37:02 -0500
+Message-ID: <87382zhxhd.fsf@x220.int.ebiederm.org>
 References: <87pp63jcca.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <87pp63jcca.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org> (Eric W. Biederman's
 	message of "Thu, 14 May 2015 12:30:45 -0500")
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, =?utf-8?Q?St=C3=A9phane?= Graber <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Eric Windisch <ewindisch-FCduhRhOUaTQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
-This allows for better documentation in the code and
-it allows for a simpler and fully correct version of
-fs_fully_visible to be written.
+fs_fully_visible attempts to make fresh mounts of proc and sysfs give
+the mounter no more access to proc and sysfs than if they could have
+by creating a bind mount.  One aspect of proc and sysfs that makes
+this particularly tricky is that there are other filesystems that
+typically mount on top of proc and sysfs.  As those filesystems are
+mounted on empty directories in practice it is safe to ignore them.
+However testing to ensure filesystems are mounted on empty directories
+has not been something the in kernel data structures have supported so
+the current test for an empty directory which checks to see
+if nlink <= 2 is a bit lacking.
 
-The mount points converted and their filesystems are:
-/sys/hypervisor/s390/       s390_hypfs
-/sys/kernel/config/         configfs
-/sys/kernel/debug/          debugfs
-/sys/firmware/efi/efivars/  efivarfs
-/sys/fs/fuse/connections/   fusectl
-/sys/fs/pstore/             pstore
-/sys/kernel/tracing/        tracefs
-/sys/fs/cgroup/             cgroup
-/sys/kernel/security/       securityfs
-/sys/fs/selinux/            selinuxfs
-/sys/fs/smackfs/            smackfs
+proc and sysfs have recently been modified to use the new empty_dir
+infrastructure to create all of their dedicated mount points.  Instead
+of testing for S_ISDIR(inode->i_mode) && i_nlink <= 2 to see if a
+directory is empty, test for is_empty_dir_inode(inode).  That small
+change guaranteess mounts found on proc and sysfs really are safe to
+ignore, because the directories are not only empty but nothing can
+ever be added to them.  This guarantees there is nothing to worry
+about when mounting proc and sysfs.
 
 Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- arch/s390/hypfs/inode.c      | 12 ++++--------
- drivers/firmware/efi/efi.c   |  6 ++----
- fs/configfs/mount.c          | 10 ++++------
- fs/debugfs/inode.c           | 11 ++++-------
- fs/fuse/inode.c              |  9 +++------
- fs/pstore/inode.c            | 12 ++++--------
- fs/tracefs/inode.c           |  6 ++----
- kernel/cgroup.c              | 10 ++++------
- security/inode.c             | 10 ++++------
- security/selinux/selinuxfs.c | 11 +++++------
- security/smack/smackfs.c     |  8 ++++----
- 11 files changed, 40 insertions(+), 65 deletions(-)
+ fs/namespace.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/arch/s390/hypfs/inode.c b/arch/s390/hypfs/inode.c
-index d3f896a35b98..d943d36076cc 100644
---- a/arch/s390/hypfs/inode.c
-+++ b/arch/s390/hypfs/inode.c
-@@ -456,8 +456,6 @@ static const struct super_operations hypfs_s_ops = {
- 	.show_options	= hypfs_show_options,
- };
- 
--static struct kobject *s390_kobj;
--
- static int __init hypfs_init(void)
- {
- 	int rc;
-@@ -481,18 +479,16 @@ static int __init hypfs_init(void)
- 		rc = -ENODATA;
- 		goto fail_hypfs_sprp_exit;
- 	}
--	s390_kobj = kobject_create_and_add("s390", hypervisor_kobj);
--	if (!s390_kobj) {
--		rc = -ENOMEM;
-+	rc = sysfs_create_empty_dir(hypervisor_kobj, "s390");
-+	if (rc)
- 		goto fail_hypfs_diag0c_exit;
--	}
- 	rc = register_filesystem(&hypfs_type);
- 	if (rc)
- 		goto fail_filesystem;
- 	return 0;
- 
- fail_filesystem:
--	kobject_put(s390_kobj);
-+	sysfs_remove_empty_dir(hypervisor_kobj, "s390");
- fail_hypfs_diag0c_exit:
- 	hypfs_diag0c_exit();
- fail_hypfs_sprp_exit:
-@@ -510,7 +506,7 @@ fail_dbfs_exit:
- static void __exit hypfs_exit(void)
- {
- 	unregister_filesystem(&hypfs_type);
--	kobject_put(s390_kobj);
-+	sysfs_remove_empty_dir(hypervisor_kobj, "s390");
- 	hypfs_diag0c_exit();
- 	hypfs_sprp_exit();
- 	hypfs_vm_exit();
-diff --git a/drivers/firmware/efi/efi.c b/drivers/firmware/efi/efi.c
-index 3061bb8629dc..98523650efd9 100644
---- a/drivers/firmware/efi/efi.c
-+++ b/drivers/firmware/efi/efi.c
-@@ -65,7 +65,6 @@ static int __init parse_efi_cmdline(char *str)
- early_param("efi", parse_efi_cmdline);
- 
- static struct kobject *efi_kobj;
--static struct kobject *efivars_kobj;
- 
- /*
-  * Let's not leave out systab information that snuck into
-@@ -212,10 +211,9 @@ static int __init efisubsys_init(void)
- 		goto err_remove_group;
- 
- 	/* and the standard mountpoint for efivarfs */
--	efivars_kobj = kobject_create_and_add("efivars", efi_kobj);
--	if (!efivars_kobj) {
-+	error = sysfs_create_empty_dir(efi_kobj, "efivars");
-+	if (error) {
- 		pr_err("efivars: Subsystem registration failed.\n");
--		error = -ENOMEM;
- 		goto err_remove_group;
- 	}
- 
-diff --git a/fs/configfs/mount.c b/fs/configfs/mount.c
-index da94e41bdbf6..b4d1580a6602 100644
---- a/fs/configfs/mount.c
-+++ b/fs/configfs/mount.c
-@@ -129,8 +129,6 @@ void configfs_release_fs(void)
- }
- 
- 
--static struct kobject *config_kobj;
--
- static int __init configfs_init(void)
- {
- 	int err = -ENOMEM;
-@@ -141,8 +139,8 @@ static int __init configfs_init(void)
- 	if (!configfs_dir_cachep)
- 		goto out;
- 
--	config_kobj = kobject_create_and_add("config", kernel_kobj);
--	if (!config_kobj)
-+	err = sysfs_create_empty_dir(kernel_kobj, "config");
-+	if (err)
- 		goto out2;
- 
- 	err = register_filesystem(&configfs_fs_type);
-@@ -152,7 +150,7 @@ static int __init configfs_init(void)
- 	return 0;
- out3:
- 	pr_err("Unable to register filesystem!\n");
--	kobject_put(config_kobj);
-+	sysfs_remove_empty_dir(kernel_kobj, "config");
- out2:
- 	kmem_cache_destroy(configfs_dir_cachep);
- 	configfs_dir_cachep = NULL;
-@@ -163,7 +161,7 @@ out:
- static void __exit configfs_exit(void)
- {
- 	unregister_filesystem(&configfs_fs_type);
--	kobject_put(config_kobj);
-+	sysfs_remove_empty_dir(kernel_kobj, "config");
- 	kmem_cache_destroy(configfs_dir_cachep);
- 	configfs_dir_cachep = NULL;
- }
-diff --git a/fs/debugfs/inode.c b/fs/debugfs/inode.c
-index c1e7ffb0dab6..5bcb499980d0 100644
---- a/fs/debugfs/inode.c
-+++ b/fs/debugfs/inode.c
-@@ -716,20 +716,17 @@ bool debugfs_initialized(void)
- }
- EXPORT_SYMBOL_GPL(debugfs_initialized);
- 
--
--static struct kobject *debug_kobj;
--
- static int __init debugfs_init(void)
- {
- 	int retval;
- 
--	debug_kobj = kobject_create_and_add("debug", kernel_kobj);
--	if (!debug_kobj)
--		return -EINVAL;
-+	retval = sysfs_create_empty_dir(kernel_kobj, "debug");
-+	if (retval)
-+		return retval;
- 
- 	retval = register_filesystem(&debug_fs_type);
- 	if (retval)
--		kobject_put(debug_kobj);
-+		sysfs_remove_empty_dir(kernel_kobj, "debug");
- 	else
- 		debugfs_registered = true;
- 
-diff --git a/fs/fuse/inode.c b/fs/fuse/inode.c
-index 082ac1c97f39..475d9cfa59a9 100644
---- a/fs/fuse/inode.c
-+++ b/fs/fuse/inode.c
-@@ -1238,7 +1238,6 @@ static void fuse_fs_cleanup(void)
- }
- 
- static struct kobject *fuse_kobj;
--static struct kobject *connections_kobj;
- 
- static int fuse_sysfs_init(void)
- {
-@@ -1250,11 +1249,9 @@ static int fuse_sysfs_init(void)
- 		goto out_err;
- 	}
- 
--	connections_kobj = kobject_create_and_add("connections", fuse_kobj);
--	if (!connections_kobj) {
--		err = -ENOMEM;
-+	err = sysfs_create_empty_dir(fuse_kobj, "connections");
-+	if (err)
- 		goto out_fuse_unregister;
--	}
- 
- 	return 0;
- 
-@@ -1266,7 +1263,7 @@ static int fuse_sysfs_init(void)
- 
- static void fuse_sysfs_cleanup(void)
- {
--	kobject_put(connections_kobj);
-+	sysfs_remove_empty_dir(fuse_kobj, "connections");
- 	kobject_put(fuse_kobj);
- }
- 
-diff --git a/fs/pstore/inode.c b/fs/pstore/inode.c
-index dc43b5f29305..d1caeefd2d1b 100644
---- a/fs/pstore/inode.c
-+++ b/fs/pstore/inode.c
-@@ -461,22 +461,18 @@ static struct file_system_type pstore_fs_type = {
- 	.kill_sb	= pstore_kill_sb,
- };
- 
--static struct kobject *pstore_kobj;
--
- static int __init init_pstore_fs(void)
- {
--	int err = 0;
-+	int err;
- 
- 	/* Create a convenient mount point for people to access pstore */
--	pstore_kobj = kobject_create_and_add("pstore", fs_kobj);
--	if (!pstore_kobj) {
--		err = -ENOMEM;
-+	err = sysfs_create_empty_dir(fs_kobj, "pstore");
-+	if (err)
- 		goto out;
--	}
- 
- 	err = register_filesystem(&pstore_fs_type);
- 	if (err < 0)
--		kobject_put(pstore_kobj);
-+		sysfs_remove_empty_dir(fs_kobj, "pstore");
- 
- out:
- 	return err;
-diff --git a/fs/tracefs/inode.c b/fs/tracefs/inode.c
-index d92bdf3b079a..e887c881a4b3 100644
---- a/fs/tracefs/inode.c
-+++ b/fs/tracefs/inode.c
-@@ -631,14 +631,12 @@ bool tracefs_initialized(void)
- 	return tracefs_registered;
- }
- 
--static struct kobject *trace_kobj;
--
- static int __init tracefs_init(void)
- {
- 	int retval;
- 
--	trace_kobj = kobject_create_and_add("tracing", kernel_kobj);
--	if (!trace_kobj)
-+	retval = sysfs_create_empty_dir(kernel_kobj, "tracing");
-+	if (retval)
- 		return -EINVAL;
- 
- 	retval = register_filesystem(&trace_fs_type);
-diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-index 469dd547770c..816657b5ef16 100644
---- a/kernel/cgroup.c
-+++ b/kernel/cgroup.c
-@@ -1924,8 +1924,6 @@ static struct file_system_type cgroup_fs_type = {
- 	.kill_sb = cgroup_kill_sb,
- };
- 
--static struct kobject *cgroup_kobj;
--
- /**
-  * task_cgroup_path - cgroup path of a task in the first cgroup hierarchy
-  * @task: target task
-@@ -5044,13 +5042,13 @@ int __init cgroup_init(void)
- 			ss->bind(init_css_set.subsys[ssid]);
- 	}
- 
--	cgroup_kobj = kobject_create_and_add("cgroup", fs_kobj);
--	if (!cgroup_kobj)
--		return -ENOMEM;
-+	err = sysfs_create_empty_dir(fs_kobj, "cgroup");
-+	if (err)
-+		return err;
- 
- 	err = register_filesystem(&cgroup_fs_type);
- 	if (err < 0) {
--		kobject_put(cgroup_kobj);
-+		sysfs_remove_empty_dir(fs_kobj, "cgroup");
- 		return err;
- 	}
- 
-diff --git a/security/inode.c b/security/inode.c
-index 91503b79c5f8..d7e5de5ffc59 100644
---- a/security/inode.c
-+++ b/security/inode.c
-@@ -215,19 +215,17 @@ void securityfs_remove(struct dentry *dentry)
- }
- EXPORT_SYMBOL_GPL(securityfs_remove);
- 
--static struct kobject *security_kobj;
--
- static int __init securityfs_init(void)
- {
- 	int retval;
- 
--	security_kobj = kobject_create_and_add("security", kernel_kobj);
--	if (!security_kobj)
--		return -EINVAL;
-+	retval = sysfs_create_empty_dir(kernel_kobj, "security");
-+	if (retval)
-+		return retval;
- 
- 	retval = register_filesystem(&fs_type);
- 	if (retval)
--		kobject_put(security_kobj);
-+		sysfs_remove_empty_dir(kernel_kobj, "security");
- 	return retval;
- }
- 
-diff --git a/security/selinux/selinuxfs.c b/security/selinux/selinuxfs.c
-index d2787cca1fcb..a3d882729a45 100644
---- a/security/selinux/selinuxfs.c
-+++ b/security/selinux/selinuxfs.c
-@@ -1853,7 +1853,6 @@ static struct file_system_type sel_fs_type = {
- };
- 
- struct vfsmount *selinuxfs_mount;
--static struct kobject *selinuxfs_kobj;
- 
- static int __init init_sel_fs(void)
- {
-@@ -1862,13 +1861,13 @@ static int __init init_sel_fs(void)
- 	if (!selinux_enabled)
- 		return 0;
- 
--	selinuxfs_kobj = kobject_create_and_add("selinux", fs_kobj);
--	if (!selinuxfs_kobj)
--		return -ENOMEM;
-+	err = sysfs_create_empty_dir(fs_kobj, "selinux");
-+	if (err)
-+		return err;
- 
- 	err = register_filesystem(&sel_fs_type);
- 	if (err) {
--		kobject_put(selinuxfs_kobj);
-+		sysfs_remove_empty_dir(fs_kobj, "selinux");
- 		return err;
- 	}
- 
-@@ -1887,7 +1886,7 @@ __initcall(init_sel_fs);
- #ifdef CONFIG_SECURITY_SELINUX_DISABLE
- void exit_sel_fs(void)
- {
--	kobject_put(selinuxfs_kobj);
-+	sysfs_remove_empty_dir(fs_kobj, "selinux");
- 	kern_unmount(selinuxfs_mount);
- 	unregister_filesystem(&sel_fs_type);
- }
-diff --git a/security/smack/smackfs.c b/security/smack/smackfs.c
-index d9682985349e..35079cc8c765 100644
---- a/security/smack/smackfs.c
-+++ b/security/smack/smackfs.c
-@@ -2241,16 +2241,16 @@ static const struct file_operations smk_revoke_subj_ops = {
- 	.llseek		= generic_file_llseek,
- };
- 
--static struct kset *smackfs_kset;
- /**
-  * smk_init_sysfs - initialize /sys/fs/smackfs
-  *
-  */
- static int smk_init_sysfs(void)
- {
--	smackfs_kset = kset_create_and_add("smackfs", NULL, fs_kobj);
--	if (!smackfs_kset)
--		return -ENOMEM;
-+	int err;
-+	err = sysfs_create_empty_dir(fs_kobj, "smackfs");
-+	if (err)
-+		return err;
- 	return 0;
- }
- 
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 3ede0669b8d2..eccd925c6e82 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -3220,9 +3220,8 @@ static bool fs_fully_visible(struct file_system_type *type, int *new_mnt_flags)
+ 			/* Only worry about locked mounts */
+ 			if (!(mnt->mnt.mnt_flags & MNT_LOCKED))
+ 				continue;
+-			if (!S_ISDIR(inode->i_mode))
+-				goto next;
+-			if (inode->i_nlink > 2)
++			/* Is the directory permanetly empty? */
++			if (!is_empty_dir_inode(inode))
+ 				goto next;
+ 		}
+ 		/* Preserve the locked attributes */
 -- 
 2.2.1
