@@ -1,7 +1,7 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: [CFT][PATCH 06/10] proc: Allow creating permanently empty directories.
-Date: Thu, 14 May 2015 12:34:10 -0500
-Message-ID: <87r3qjhxm5.fsf@x220.int.ebiederm.org>
+Subject: [CFT][PATCH 07/10] kernfs: Add support for always empty directories.
+Date: Thu, 14 May 2015 12:34:37 -0500
+Message-ID: <87lhgrhxle.fsf@x220.int.ebiederm.org>
 References: <87pp63jcca.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,108 +23,118 @@ Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Ha
 List-Id: linux-api@vger.kernel.org
 
 
-Add a new function proc_mk_empty_dir that when used to creates
-a directory that can not be added to.
+Add a new function kernfs_create_empty_dir that can be used to create
+directory that can not be modified.
 
-Update the code to use make_empty_dir_inode when reporting
-a permanently empty directory to the vfs.
+Update the code to use make_empty_dir_inode when reporting a
+permanently empty directory to the vfs.
 
 Update the code to not allow adding to permanently empty directories.
-
-Update /proc/openprom and /proc/fs/nfsd to be permanently empty directories.
 
 Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- fs/proc/generic.c  | 23 +++++++++++++++++++++++
- fs/proc/inode.c    |  3 +++
- fs/proc/internal.h |  1 +
- fs/proc/root.c     |  4 ++--
- 4 files changed, 29 insertions(+), 2 deletions(-)
+ fs/kernfs/dir.c        | 38 +++++++++++++++++++++++++++++++++++++-
+ fs/kernfs/inode.c      |  2 ++
+ include/linux/kernfs.h |  3 +++
+ 3 files changed, 42 insertions(+), 1 deletion(-)
 
-diff --git a/fs/proc/generic.c b/fs/proc/generic.c
-index df6327a2b865..e235c1544b22 100644
---- a/fs/proc/generic.c
-+++ b/fs/proc/generic.c
-@@ -373,6 +373,10 @@ static struct proc_dir_entry *__proc_create(struct proc_dir_entry **parent,
- 		WARN(1, "create '/proc/%s' by hand\n", qstr.name);
- 		return NULL;
- 	}
-+	if (S_ISDIR((*parent)->mode) && ((*parent)->proc_fops == NULL)) {
-+		WARN(1, "attempt to add to permanently empty directory");
-+		return NULL;
-+	}
+diff --git a/fs/kernfs/dir.c b/fs/kernfs/dir.c
+index f131fc23ffc4..8643e70536f8 100644
+--- a/fs/kernfs/dir.c
++++ b/fs/kernfs/dir.c
+@@ -585,6 +585,9 @@ int kernfs_add_one(struct kernfs_node *kn)
+ 		goto out_unlock;
  
- 	ent = kzalloc(sizeof(struct proc_dir_entry) + qstr.len + 1, GFP_KERNEL);
- 	if (!ent)
-@@ -455,6 +459,25 @@ struct proc_dir_entry *proc_mkdir(const char *name,
- }
- EXPORT_SYMBOL(proc_mkdir);
- 
-+struct proc_dir_entry *proc_mk_empty_dir(const char *name)
-+{
-+	umode_t mode = S_IFDIR | S_IRUGO | S_IXUGO;
-+	struct proc_dir_entry *ent, *parent = NULL;
+ 	ret = -ENOENT;
++	if (parent->flags & KERNFS_EMPTY_DIR)
++		goto out_unlock;
 +
-+	ent = __proc_create(&parent, name, mode, 2);
-+	if (ent) {
-+		ent->data = NULL;
-+		ent->proc_fops = NULL;
-+		ent->proc_iops = NULL;
-+		if (proc_register(parent, ent) < 0) {
-+			kfree(ent);
-+			parent->nlink--;
-+			ent = NULL;
-+		}
-+	}
-+	return ent;
+ 	if ((parent->flags & KERNFS_ACTIVATED) && !kernfs_active(parent))
+ 		goto out_unlock;
+ 
+@@ -776,6 +779,38 @@ struct kernfs_node *kernfs_create_dir_ns(struct kernfs_node *parent,
+ 	return ERR_PTR(rc);
+ }
+ 
++/**
++ * kernfs_create_empty_dir - create an always empty directory
++ * @parent: parent in which to create a new directory
++ * @name: name of the new directory
++ *
++ * Returns the created node on success, ERR_PTR() value on failure.
++ */
++struct kernfs_node *kernfs_create_empty_dir(struct kernfs_node *parent,
++					    const char *name, void *priv)
++{
++	struct kernfs_node *kn;
++	int rc;
++
++	/* allocate */
++	kn = kernfs_new_node(parent, name, S_IRUGO|S_IXUGO|S_IFDIR, KERNFS_DIR);
++	if (!kn)
++		return ERR_PTR(-ENOMEM);
++
++	kn->flags |= KERNFS_EMPTY_DIR;
++	kn->dir.root = parent->dir.root;
++	kn->ns = NULL;
++	kn->priv = priv;
++
++	/* link in */
++	rc = kernfs_add_one(kn);
++	if (!rc)
++		return kn;
++
++	kernfs_put(kn);
++	return ERR_PTR(rc);
 +}
 +
- struct proc_dir_entry *proc_create_data(const char *name, umode_t mode,
- 					struct proc_dir_entry *parent,
- 					const struct file_operations *proc_fops,
-diff --git a/fs/proc/inode.c b/fs/proc/inode.c
-index 8272aaba1bb0..b957ec618bda 100644
---- a/fs/proc/inode.c
-+++ b/fs/proc/inode.c
-@@ -445,6 +445,9 @@ struct inode *proc_get_inode(struct super_block *sb, struct proc_dir_entry *de)
- 					inode->i_fop = &proc_reg_file_ops;
- 			} else {
- 				inode->i_fop = de->proc_fops;
-+				if (S_ISDIR(inode->i_mode) &&
-+				    (de->proc_fops == NULL))
-+					make_empty_dir_inode(inode);
- 			}
- 		}
- 	} else
-diff --git a/fs/proc/internal.h b/fs/proc/internal.h
-index c835b94c0cd3..6bc2e7a12912 100644
---- a/fs/proc/internal.h
-+++ b/fs/proc/internal.h
-@@ -190,6 +190,7 @@ static inline struct proc_dir_entry *pde_get(struct proc_dir_entry *pde)
- 	return pde;
- }
- extern void pde_put(struct proc_dir_entry *);
-+struct proc_dir_entry *proc_mk_empty_dir(const char *name);
+ static struct dentry *kernfs_iop_lookup(struct inode *dir,
+ 					struct dentry *dentry,
+ 					unsigned int flags)
+@@ -1247,7 +1282,8 @@ int kernfs_rename_ns(struct kernfs_node *kn, struct kernfs_node *new_parent,
+ 	mutex_lock(&kernfs_mutex);
  
- /*
-  * inode.c
-diff --git a/fs/proc/root.c b/fs/proc/root.c
-index 64e1ab64bde6..b031fc3991c3 100644
---- a/fs/proc/root.c
-+++ b/fs/proc/root.c
-@@ -179,10 +179,10 @@ void __init proc_root_init(void)
- #endif
- 	proc_mkdir("fs", NULL);
- 	proc_mkdir("driver", NULL);
--	proc_mkdir("fs/nfsd", NULL); /* somewhere for the nfsd filesystem to be mounted */
-+	proc_mk_empty_dir("fs/nfsd"); /* somewhere for the nfsd filesystem to be mounted */
- #if defined(CONFIG_SUN_OPENPROMFS) || defined(CONFIG_SUN_OPENPROMFS_MODULE)
- 	/* just give it a mountpoint */
--	proc_mkdir("openprom", NULL);
-+	proc_mk_empty_dir("openprom");
- #endif
- 	proc_tty_init();
- 	proc_mkdir("bus", NULL);
+ 	error = -ENOENT;
+-	if (!kernfs_active(kn) || !kernfs_active(new_parent))
++	if (!kernfs_active(kn) || !kernfs_active(new_parent) ||
++	    (new_parent->flags & KERNFS_EMPTY_DIR))
+ 		goto out;
+ 
+ 	error = 0;
+diff --git a/fs/kernfs/inode.c b/fs/kernfs/inode.c
+index 2da8493a380b..756dd56aaf60 100644
+--- a/fs/kernfs/inode.c
++++ b/fs/kernfs/inode.c
+@@ -296,6 +296,8 @@ static void kernfs_init_inode(struct kernfs_node *kn, struct inode *inode)
+ 	case KERNFS_DIR:
+ 		inode->i_op = &kernfs_dir_iops;
+ 		inode->i_fop = &kernfs_dir_fops;
++		if (kn->flags & KERNFS_EMPTY_DIR)
++			make_empty_dir_inode(inode);
+ 		break;
+ 	case KERNFS_FILE:
+ 		inode->i_size = kn->attr.size;
+diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
+index 71ecdab1671b..4b479a0b3d61 100644
+--- a/include/linux/kernfs.h
++++ b/include/linux/kernfs.h
+@@ -45,6 +45,7 @@ enum kernfs_node_flag {
+ 	KERNFS_LOCKDEP		= 0x0100,
+ 	KERNFS_SUICIDAL		= 0x0400,
+ 	KERNFS_SUICIDED		= 0x0800,
++	KERNFS_EMPTY_DIR	= 0x1000,
+ };
+ 
+ /* @flags for kernfs_create_root() */
+@@ -285,6 +286,8 @@ void kernfs_destroy_root(struct kernfs_root *root);
+ struct kernfs_node *kernfs_create_dir_ns(struct kernfs_node *parent,
+ 					 const char *name, umode_t mode,
+ 					 void *priv, const void *ns);
++struct kernfs_node *kernfs_create_empty_dir(struct kernfs_node *parent,
++					    const char *name, void *priv);
+ struct kernfs_node *__kernfs_create_file(struct kernfs_node *parent,
+ 					 const char *name,
+ 					 umode_t mode, loff_t size,
 -- 
 2.2.1
