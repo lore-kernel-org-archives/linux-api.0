@@ -1,117 +1,242 @@
-From: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 16/23] userfaultfd: allocate the userfaultfd_ctx cacheline aligned
-Date: Thu, 14 May 2015 19:31:13 +0200
-Message-ID: <1431624680-20153-17-git-send-email-aarcange@redhat.com>
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: [PATCH 07/23] userfaultfd: call handle_userfault() for userfaultfd_missing() faults
+Date: Thu, 14 May 2015 19:31:04 +0200
+Message-ID: <1431624680-20153-8-git-send-email-aarcange@redhat.com>
 References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1431624680-20153-1-git-send-email-aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Sanidhya Kashyap <sanidhya.gatech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, zhang.zhanghailiang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Feiner <pfeiner-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Dr. David Alan Gilbert" <dgilbert-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, "Huangpeng (Peter)" <peter.huangpeng-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-Use proper slab to guarantee alignment.
+This is where the page faults must be modified to call
+handle_userfault() if userfaultfd_missing() is true (so if the
+vma->vm_flags had VM_UFFD_MISSING set).
 
-Signed-off-by: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+handle_userfault() then takes care of blocking the page fault and
+delivering it to userland.
+
+The fault flags must also be passed as parameter so the "read|write"
+kind of fault can be passed to userland.
+
+Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
 ---
- fs/userfaultfd.c | 39 +++++++++++++++++++++++++++++++--------
- 1 file changed, 31 insertions(+), 8 deletions(-)
+ mm/huge_memory.c | 69 ++++++++++++++++++++++++++++++++++++++------------------
+ mm/memory.c      | 16 +++++++++++++
+ 2 files changed, 63 insertions(+), 22 deletions(-)
 
-diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-index 3d26f41..5542fe7 100644
---- a/fs/userfaultfd.c
-+++ b/fs/userfaultfd.c
-@@ -27,20 +27,26 @@
- #include <linux/ioctl.h>
- #include <linux/security.h>
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index cb8904c..c221be3 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -23,6 +23,7 @@
+ #include <linux/pagemap.h>
+ #include <linux/migrate.h>
+ #include <linux/hashtable.h>
++#include <linux/userfaultfd_k.h>
  
-+static struct kmem_cache *userfaultfd_ctx_cachep __read_mostly;
-+
- enum userfaultfd_state {
- 	UFFD_STATE_WAIT_API,
- 	UFFD_STATE_RUNNING,
- };
+ #include <asm/tlb.h>
+ #include <asm/pgalloc.h>
+@@ -717,7 +718,8 @@ static inline pmd_t mk_huge_pmd(struct page *page, pgprot_t prot)
+ static int __do_huge_pmd_anonymous_page(struct mm_struct *mm,
+ 					struct vm_area_struct *vma,
+ 					unsigned long haddr, pmd_t *pmd,
+-					struct page *page, gfp_t gfp)
++					struct page *page, gfp_t gfp,
++					unsigned int flags)
+ {
+ 	struct mem_cgroup *memcg;
+ 	pgtable_t pgtable;
+@@ -725,12 +727,16 @@ static int __do_huge_pmd_anonymous_page(struct mm_struct *mm,
  
-+/*
-+ * Start with fault_pending_wqh and fault_wqh so they're more likely
-+ * to be in the same cacheline.
-+ */
- struct userfaultfd_ctx {
--	/* pseudo fd refcounting */
--	atomic_t refcount;
- 	/* waitqueue head for the pending (i.e. not read) userfaults */
- 	wait_queue_head_t fault_pending_wqh;
- 	/* waitqueue head for the userfaults */
- 	wait_queue_head_t fault_wqh;
- 	/* waitqueue head for the pseudo fd to wakeup poll/read */
- 	wait_queue_head_t fd_wqh;
-+	/* pseudo fd refcounting */
-+	atomic_t refcount;
- 	/* userfaultfd syscall flags */
- 	unsigned int flags;
- 	/* state machine */
-@@ -117,7 +123,7 @@ static void userfaultfd_ctx_put(struct userfaultfd_ctx *ctx)
- 		VM_BUG_ON(spin_is_locked(&ctx->fd_wqh.lock));
- 		VM_BUG_ON(waitqueue_active(&ctx->fd_wqh));
- 		mmput(ctx->mm);
--		kfree(ctx);
-+		kmem_cache_free(userfaultfd_ctx_cachep, ctx);
+ 	VM_BUG_ON_PAGE(!PageCompound(page), page);
+ 
+-	if (mem_cgroup_try_charge(page, mm, gfp, &memcg))
+-		return VM_FAULT_OOM;
++	if (mem_cgroup_try_charge(page, mm, gfp, &memcg)) {
++		put_page(page);
++		count_vm_event(THP_FAULT_FALLBACK);
++		return VM_FAULT_FALLBACK;
++	}
+ 
+ 	pgtable = pte_alloc_one(mm, haddr);
+ 	if (unlikely(!pgtable)) {
+ 		mem_cgroup_cancel_charge(page, memcg);
++		put_page(page);
+ 		return VM_FAULT_OOM;
  	}
+ 
+@@ -750,6 +756,21 @@ static int __do_huge_pmd_anonymous_page(struct mm_struct *mm,
+ 		pte_free(mm, pgtable);
+ 	} else {
+ 		pmd_t entry;
++
++		/* Deliver the page fault to userland */
++		if (userfaultfd_missing(vma)) {
++			int ret;
++
++			spin_unlock(ptl);
++			mem_cgroup_cancel_charge(page, memcg);
++			put_page(page);
++			pte_free(mm, pgtable);
++			ret = handle_userfault(vma, haddr, flags,
++					       VM_UFFD_MISSING);
++			VM_BUG_ON(ret & VM_FAULT_FALLBACK);
++			return ret;
++		}
++
+ 		entry = mk_huge_pmd(page, vma->vm_page_prot);
+ 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
+ 		page_add_new_anon_rmap(page, vma, haddr);
+@@ -760,6 +781,7 @@ static int __do_huge_pmd_anonymous_page(struct mm_struct *mm,
+ 		add_mm_counter(mm, MM_ANONPAGES, HPAGE_PMD_NR);
+ 		atomic_long_inc(&mm->nr_ptes);
+ 		spin_unlock(ptl);
++		count_vm_event(THP_FAULT_ALLOC);
+ 	}
+ 
+ 	return 0;
+@@ -771,19 +793,16 @@ static inline gfp_t alloc_hugepage_gfpmask(int defrag, gfp_t extra_gfp)
  }
  
-@@ -987,6 +993,15 @@ static const struct file_operations userfaultfd_fops = {
- 	.llseek		= noop_llseek,
- };
- 
-+static void init_once_userfaultfd_ctx(void *mem)
-+{
-+	struct userfaultfd_ctx *ctx = (struct userfaultfd_ctx *) mem;
-+
-+	init_waitqueue_head(&ctx->fault_pending_wqh);
-+	init_waitqueue_head(&ctx->fault_wqh);
-+	init_waitqueue_head(&ctx->fd_wqh);
-+}
-+
- /**
-  * userfaultfd_file_create - Creates an userfaultfd file pointer.
-  * @flags: Flags for the userfaultfd file.
-@@ -1017,14 +1032,11 @@ static struct file *userfaultfd_file_create(int flags)
- 		goto out;
- 
- 	file = ERR_PTR(-ENOMEM);
--	ctx = kmalloc(sizeof(*ctx), GFP_KERNEL);
-+	ctx = kmem_cache_alloc(userfaultfd_ctx_cachep, GFP_KERNEL);
- 	if (!ctx)
- 		goto out;
- 
- 	atomic_set(&ctx->refcount, 1);
--	init_waitqueue_head(&ctx->fault_pending_wqh);
--	init_waitqueue_head(&ctx->fault_wqh);
--	init_waitqueue_head(&ctx->fd_wqh);
- 	ctx->flags = flags;
- 	ctx->state = UFFD_STATE_WAIT_API;
- 	ctx->released = false;
-@@ -1035,7 +1047,7 @@ static struct file *userfaultfd_file_create(int flags)
- 	file = anon_inode_getfile("[userfaultfd]", &userfaultfd_fops, ctx,
- 				  O_RDWR | (flags & UFFD_SHARED_FCNTL_FLAGS));
- 	if (IS_ERR(file))
--		kfree(ctx);
-+		kmem_cache_free(userfaultfd_ctx_cachep, ctx);
- out:
- 	return file;
+ /* Caller must hold page table lock. */
+-static bool set_huge_zero_page(pgtable_t pgtable, struct mm_struct *mm,
++static void set_huge_zero_page(pgtable_t pgtable, struct mm_struct *mm,
+ 		struct vm_area_struct *vma, unsigned long haddr, pmd_t *pmd,
+ 		struct page *zero_page)
+ {
+ 	pmd_t entry;
+-	if (!pmd_none(*pmd))
+-		return false;
+ 	entry = mk_pmd(zero_page, vma->vm_page_prot);
+ 	entry = pmd_mkhuge(entry);
+ 	pgtable_trans_huge_deposit(mm, pmd, pgtable);
+ 	set_pmd_at(mm, haddr, pmd, entry);
+ 	atomic_long_inc(&mm->nr_ptes);
+-	return true;
  }
-@@ -1064,3 +1076,14 @@ err_put_unused_fd:
  
- 	return error;
+ int do_huge_pmd_anonymous_page(struct mm_struct *mm, struct vm_area_struct *vma,
+@@ -806,6 +825,7 @@ int do_huge_pmd_anonymous_page(struct mm_struct *mm, struct vm_area_struct *vma,
+ 		pgtable_t pgtable;
+ 		struct page *zero_page;
+ 		bool set;
++		int ret;
+ 		pgtable = pte_alloc_one(mm, haddr);
+ 		if (unlikely(!pgtable))
+ 			return VM_FAULT_OOM;
+@@ -816,14 +836,28 @@ int do_huge_pmd_anonymous_page(struct mm_struct *mm, struct vm_area_struct *vma,
+ 			return VM_FAULT_FALLBACK;
+ 		}
+ 		ptl = pmd_lock(mm, pmd);
+-		set = set_huge_zero_page(pgtable, mm, vma, haddr, pmd,
+-				zero_page);
+-		spin_unlock(ptl);
++		ret = 0;
++		set = false;
++		if (pmd_none(*pmd)) {
++			if (userfaultfd_missing(vma)) {
++				spin_unlock(ptl);
++				ret = handle_userfault(vma, haddr, flags,
++						       VM_UFFD_MISSING);
++				VM_BUG_ON(ret & VM_FAULT_FALLBACK);
++			} else {
++				set_huge_zero_page(pgtable, mm, vma,
++						   haddr, pmd,
++						   zero_page);
++				spin_unlock(ptl);
++				set = true;
++			}
++		} else
++			spin_unlock(ptl);
+ 		if (!set) {
+ 			pte_free(mm, pgtable);
+ 			put_huge_zero_page();
+ 		}
+-		return 0;
++		return ret;
+ 	}
+ 	gfp = alloc_hugepage_gfpmask(transparent_hugepage_defrag(vma), 0);
+ 	page = alloc_hugepage_vma(gfp, vma, haddr, HPAGE_PMD_ORDER);
+@@ -831,14 +865,7 @@ int do_huge_pmd_anonymous_page(struct mm_struct *mm, struct vm_area_struct *vma,
+ 		count_vm_event(THP_FAULT_FALLBACK);
+ 		return VM_FAULT_FALLBACK;
+ 	}
+-	if (unlikely(__do_huge_pmd_anonymous_page(mm, vma, haddr, pmd, page, gfp))) {
+-		put_page(page);
+-		count_vm_event(THP_FAULT_FALLBACK);
+-		return VM_FAULT_FALLBACK;
+-	}
+-
+-	count_vm_event(THP_FAULT_ALLOC);
+-	return 0;
++	return __do_huge_pmd_anonymous_page(mm, vma, haddr, pmd, page, gfp, flags);
  }
+ 
+ int copy_huge_pmd(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+@@ -873,16 +900,14 @@ int copy_huge_pmd(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+ 	 */
+ 	if (is_huge_zero_pmd(pmd)) {
+ 		struct page *zero_page;
+-		bool set;
+ 		/*
+ 		 * get_huge_zero_page() will never allocate a new page here,
+ 		 * since we already have a zero page to copy. It just takes a
+ 		 * reference.
+ 		 */
+ 		zero_page = get_huge_zero_page();
+-		set = set_huge_zero_page(pgtable, dst_mm, vma, addr, dst_pmd,
++		set_huge_zero_page(pgtable, dst_mm, vma, addr, dst_pmd,
+ 				zero_page);
+-		BUG_ON(!set); /* unexpected !pmd_none(dst_pmd) */
+ 		ret = 0;
+ 		goto out_unlock;
+ 	}
+diff --git a/mm/memory.c b/mm/memory.c
+index be9f075..790e6f7 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -61,6 +61,7 @@
+ #include <linux/string.h>
+ #include <linux/dma-debug.h>
+ #include <linux/debugfs.h>
++#include <linux/userfaultfd_k.h>
+ 
+ #include <asm/io.h>
+ #include <asm/pgalloc.h>
+@@ -2680,6 +2681,12 @@ static int do_anonymous_page(struct mm_struct *mm, struct vm_area_struct *vma,
+ 		page_table = pte_offset_map_lock(mm, pmd, address, &ptl);
+ 		if (!pte_none(*page_table))
+ 			goto unlock;
++		/* Deliver the page fault to userland, check inside PT lock */
++		if (userfaultfd_missing(vma)) {
++			pte_unmap_unlock(page_table, ptl);
++			return handle_userfault(vma, address, flags,
++						VM_UFFD_MISSING);
++		}
+ 		goto setpte;
+ 	}
+ 
+@@ -2707,6 +2714,15 @@ static int do_anonymous_page(struct mm_struct *mm, struct vm_area_struct *vma,
+ 	if (!pte_none(*page_table))
+ 		goto release;
+ 
++	/* Deliver the page fault to userland, check inside PT lock */
++	if (userfaultfd_missing(vma)) {
++		pte_unmap_unlock(page_table, ptl);
++		mem_cgroup_cancel_charge(page, memcg);
++		page_cache_release(page);
++		return handle_userfault(vma, address, flags,
++					VM_UFFD_MISSING);
++	}
 +
-+static int __init userfaultfd_init(void)
-+{
-+	userfaultfd_ctx_cachep = kmem_cache_create("userfaultfd_ctx_cache",
-+						sizeof(struct userfaultfd_ctx),
-+						0,
-+						SLAB_HWCACHE_ALIGN|SLAB_PANIC,
-+						init_once_userfaultfd_ctx);
-+	return 0;
-+}
-+__initcall(userfaultfd_init);
+ 	inc_mm_counter_fast(mm, MM_ANONPAGES);
+ 	page_add_new_anon_rmap(page, vma, address);
+ 	mem_cgroup_commit_charge(page, memcg, false);
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
