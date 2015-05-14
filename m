@@ -1,20 +1,20 @@
-From: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+From: "H. Peter Anvin" <hpa@zytor.com>
 Subject: Re: [RFC PATCH v5] Documentation/arch: Add Documentation/arch-TODO
-Date: Thu, 14 May 2015 00:21:00 -0700
-Message-ID: <55544CDC.3050605@zytor.com>
+Date: Thu, 14 May 2015 00:21:01 -0700
+Message-ID: <55544CDD.108@zytor.com>
 References: <20150511192918.GA11361@jtriplet-mobl1>	<20150512142250.dcb053da81855ae1b5861173@linux-foundation.org>	<20150512213843.GV21418@twins.programming.kicks-ass.net>	<20150512144910.0b49c9a7a13336773449db33@linux-foundation.org>	<20150513083441.GA17336@gmail.com>	<20150513085636.GA11030@gmail.com>	<20150513092421.GB11030@gmail.com>	<20150513094622.GC11030@gmail.com>	<20150513094756.GD11030@gmail.com>	<20150513140945.GA8376@dellaz> <CAMuHMdXV68nie93Rb=Z+vYtn2aNex=s5E4+Z=QGojF+8EbPbKA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAMuHMdXV68nie93Rb=Z+vYtn2aNex=s5E4+Z=QGojF+8EbPbKA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Michele Curti <michele.curti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, the arch/x86 maintainers <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux-Arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <CAMuHMdXV68nie93Rb=Z+vYtn2aNex=s5E4+Z=QGojF+8EbPbKA@mail.gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Geert Uytterhoeven <geert@linux-m68k.org>, Michele Curti <michele.curti@gmail.com>
+Cc: Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Jonathan Corbet <corbet@lwn.net>, Peter Zijlstra <peterz@infradead.org>, Josh Triplett <josh@joshtriplett.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux-Arch <linux-arch@vger.kernel.org>, Borislav Petkov <bp@alien8.de>
 List-Id: linux-api@vger.kernel.org
 
 On 05/13/2015 07:42 AM, Geert Uytterhoeven wrote:
-> On Wed, May 13, 2015 at 4:09 PM, Michele Curti <michele.curti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> On Wed, May 13, 2015 at 4:09 PM, Michele Curti <michele.curti@gmail.com> wrote:
 >> Tried to transpose rows with columns, to avoid architecture name duplication
 >> and to get only one table while keeping 80 char width, but result seems less
 >> readable :p
