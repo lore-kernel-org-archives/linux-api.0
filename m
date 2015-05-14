@@ -1,36 +1,75 @@
-From: Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2] Documentation/arch: Add kernel feature descriptions
- and arch support status under Documentation/features/
-Date: Thu, 14 May 2015 22:34:42 +0200
-Message-ID: <CAFLxGvzyDyj6gYuQ6F-eV6aCHABC4OEFK0Oa3qm0eVk0PMnsyA@mail.gmail.com>
-References: <20150513083441.GA17336@gmail.com>
-	<20150513085636.GA11030@gmail.com>
-	<20150513092421.GB11030@gmail.com>
-	<20150513094622.GC11030@gmail.com>
-	<20150513094756.GD11030@gmail.com>
-	<20150513131835.GJ1517@pd.tnic>
-	<20150513134842.GA1657@gmail.com>
-	<20150513162757.GA21894@x>
-	<20150513150523.ddd65d7cd51f820b78f0c8e3@linux-foundation.org>
-	<20150514101518.GA27550@gmail.com>
-	<20150514103544.GA7027@gmail.com>
-	<20150514123835.1bf436bc35d711f8dbf9bc0f@linux-foundation.org>
+From: Chris Metcalf <cmetcalf@ezchip.com>
+Subject: Re: [PATCH 4/6] nohz: support PR_DATAPLANE_QUIESCE
+Date: Thu, 14 May 2015 16:54:32 -0400
+Message-ID: <55550B88.8030306@ezchip.com>
+References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com> <1431107927-13998-5-git-send-email-cmetcalf@ezchip.com> <20150512093349.GH21418@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150514123835.1bf436bc35d711f8dbf9bc0f-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux-Arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20150512093349.GH21418@twins.programming.kicks-ass.net>
+Sender: linux-doc-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Frederic Weisbecker <fweisbec@gmail.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 14, 2015 at 9:38 PM, Andrew Morton
-<akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
-> I don't think we've heard from any (non-x86) arch maintainers?  Do they
-> consider this useful at all?  Poke.
+On 05/12/2015 05:33 AM, Peter Zijlstra wrote:
+> On Fri, May 08, 2015 at 01:58:45PM -0400, Chris Metcalf wrote:
+>> This prctl() flag for PR_SET_DATAPLANE sets a mode that requires the
+>> kernel to quiesce any pending timer interrupts prior to returning
+>> to userspace.  When running with this mode set, sys calls (and page
+>> faults, etc.) can be inordinately slow.  However, user applications
+>> that want to guarantee that no unexpected interrupts will occur
+>> (even if they call into the kernel) can set this flag to guarantee
+>> that semantics.
+> Currently people hot-unplug and hot-plug the CPU to do this. Obviously
+> that's a wee bit horrible :-)
+>
+> Not sure if a prctl like this is any better though. This is a CPU
+> properly not a process one.
 
-I like it. :-)
+The CPU property aspects, I think, should be largely handled by
+fixing kernel bugs that let work end up running on nohz_full cores
+without having been explicitly requested to run there.
+
+As you said in a follow-up email:
+
+On 05/12/2015 06:38 AM, Peter Zijlstra wrote:
+> Ideally we'd never have to clear the state because it should be
+> impossible to get into this predicament in the first place.
+
+What my prctl() proposal does is quiesce things that end up
+happening specifically because the user process called on purpose
+into the kernel.  For example, perhaps RCU was invoked in the
+kernel, and the core has to wait a timer tick to quiesce RCU.
+Whatever causes it, the intent is that you're not allowed back into
+userspace until everything has settled down from your call into
+the kernel; the presumption is that it's all due to the kernel entry
+that was just made, and not from other stray work.
+
+In that sense, it's very appropriate for it to be a process property.
+
+> ISTR people talking about 'quiesce' sysfs file, along side the hotplug
+> stuff, I can't quite remember.
+
+It seems somewhat similar (adding Viresh to the cc's) but does
+seem like it might have been more intended to address the
+CPU properties rather than process properties:
+
+   https://lkml.org/lkml/2014/4/4/99
+
+One thing the original Tilera dataplane code did was to require
+setting dataplane flags to succeed only on dataplane cores,
+and only when the task had been affinitized to that single core.
+This did not protect the task from later being re-affinitized in
+a way that broke those assumptions, but I suppose you could
+also imagine make sched_setaffinity() fail for such a process.
+Somewhat unrelated, but it occurred to me in the context of this
+reply, so what do you think?  I can certainly add this to the
+patch series if it seems like it makes setting the prctl() flags
+more conservative.
 
 -- 
-Thanks,
-//richard
+Chris Metcalf, EZChip Semiconductor
+http://www.ezchip.com
+
