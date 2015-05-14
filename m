@@ -1,55 +1,79 @@
-From: Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
-Subject: Re: [PATCH v2 1/3] pagemap: add mmap-exclusive bit for marking pages
- mapped only here
-Date: Thu, 14 May 2015 19:50:30 +0100
-Message-ID: <CAEVpBa+r6AuB7hnCnTm8YKHzaj172q7Wy89yT=P_F6GQG-3-1A@mail.gmail.com>
-References: <20150512090156.24768.2521.stgit@buzz>
-	<20150512094303.24768.10282.stgit@buzz>
-	<CAEVpBaLm9eicuFPmyRLa7GddLwtBJh3XzHT=fxj-h0YwwmXQOg@mail.gmail.com>
-	<55532CB0.6070400@yandex-team.ru>
+From: Paul Moore <pmoore@redhat.com>
+Subject: Re: [PATCH V6 05/10] audit: log creation and deletion of namespace instances
+Date: Thu, 14 May 2015 15:19:33 -0400
+Message-ID: <12675437.ssZNCck7zG@sifl>
+References: <cover.1429252659.git.rgb@redhat.com> <20150512195759.GA9832@madcap2.tricolour.ca> <2918460.dpKocsKt4o@x2>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55532CB0.6070400-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Mark Seaborn <mseaborn-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Daniel James <djames-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, Finn Grimwood <fgrimwood-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <2918460.dpKocsKt4o@x2>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Steve Grubb <sgrubb@redhat.com>, Richard Guy Briggs <rgb@redhat.com>, ebiederm@xmission.com
+Cc: containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-audit@redhat.com, eparis@parisplace.org, arozansk@redhat.com, serge@hallyn.com, zohar@linux.vnet.ibm.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Konstantin,
+On Thursday, May 14, 2015 10:57:14 AM Steve Grubb wrote:
+> On Tuesday, May 12, 2015 03:57:59 PM Richard Guy Briggs wrote:
+> > On 15/05/05, Steve Grubb wrote:
+> > > I think there needs to be some more discussion around this. It seems
+> > > like this is not exactly recording things that are useful for audit.
+> > 
+> > It seems to me that either audit has to assemble that information, or
+> > the kernel has to do so.  The kernel doesn't know about containers
+> > (yet?).
+> 
+> Auditing is something that has a lot of requirements imposed on it by
+> security standards. There was no requirement to have an auid until audit
+> came along and said that uid is not good enough to know who is issuing
+> commands because of su or sudo. There was no requirement for sessionid
+> until we had to track each action back to a login so we could see if the
+> login came from the expected place.
+> 
+> What I am saying is we have the same situation. Audit needs to track a
+> container and we need an ID. The information that is being logged is not
+> useful for auditing. Maybe someone wants that info in syslog, but I doubt
+> it. The audit trail's purpose is to allow a security officer to reconstruct
+> the events to determine what happened during some security incident.
 
-On Wed, May 13, 2015 at 11:51 AM, Konstantin Khlebnikov
-<khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org> wrote:
-> On 12.05.2015 15:05, Mark Williamson wrote:
-<snip>
->>   1. I was hoping we'd be able to backport a compatible fix to older
->> kernels that might adopt the pagemap permissions change.  Using the V2
->> format flags rules out doing this for kernels that are too old to have
->> soft-dirty, I think.
->>
->>   2. From our software's PoV, I feel it's worth noting that it doesn't
->> strictly fix ABI compatibility, though I realise that's probably not
->> your primary concern here.  We'll need to modify our code to write the
->> clear_refs file but that change is OK for us if it's the preferred
->> solution.
-<snip>
-> I prefer to backport v2 format (except soft-dirty bit and clear_refs)
-> into older kernels. Page-shift bits are barely used so nobody will see
-> the difference.
+As Eric, and others, have stated, the container concept is a userspace idea, 
+not a kernel idea; the kernel only knows, and cares about, namespaces.  This 
+is unlikely to change.
 
-My concern was whether a change to format would be acceptable to
-include in the various -stable kernels; they are already including the
-additional protections on pagemap, so we're starting to need our
-fallback mode in distributions.  Do you think that such a patch would
-be acceptable there?
+However, as Steve points out, there is precedence for the kernel to record 
+userspace tokens for the sake of audit.  Personally I'm not a big fan of this 
+in general, but I do recognize that it does satisfy a legitimate need.  Think 
+of things like auid and the sessionid as necessary evils; audit is already 
+chock full of evilness I doubt one more will doom us all to hell.
 
-(As an application vendor we're likely to be particularly stuck with
-what the commercial distributions decide to ship, which is why I'm
-trying to keep an eye on this)
+Moving forward, I'd like to see the following:
 
-I appreciate that this is a slightly administrative concern!  I
-definitely like the technical approach of this code and it seems to
-work fine for us.
+* Record the creation/removal/mgmt of the individual namespaces as Richard's 
+patchset currently does.  However, I'd suggest using an explicit namespace 
+value for the init namespace instead of the "unset" value in the V6 patchset 
+(my apologies if you've already changed this Richard, I haven't looked at V7 
+yet).
 
-Thanks,
-Mark
+* Create a container ID token (unsigned 32-bit integer?), similar to 
+auid/sessionid, that is set by userspace and carried by the kernel to be used 
+in audit records.  I'd like to see some discussion on how we manage this, e.g. 
+how do handle container ID inheritance, how do we handle nested containers 
+(setting the containerid when it is already set), do we care if multiple 
+different containers share the same namespace config, etc.?
+
+* When userspace sets the container ID, emit a new audit record with the 
+associated namespace tokens and the container ID.
+
+* Look at our existing audit records to determine which records should have 
+namespace and container ID tokens added.  We may only want to add the 
+additional fields in the case where the namespace/container ID tokens are not 
+the init namespace.
+
+Can we all live with this?  If not, please suggest some alternate ideas; 
+simply shouting "IT'S ALL CRAP!" isn't helpful for anyone ... it may be true, 
+but it doesn't help us solve the problem ;)
+
+-- 
+paul moore
+security @ redhat
+
