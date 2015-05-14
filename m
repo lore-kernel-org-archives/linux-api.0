@@ -1,130 +1,314 @@
-From: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 03/23] userfaultfd: uAPI
-Date: Thu, 14 May 2015 19:31:00 +0200
-Message-ID: <1431624680-20153-4-git-send-email-aarcange@redhat.com>
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: [PATCH 15/23] userfaultfd: optimize read() and poll() to be O(1)
+Date: Thu, 14 May 2015 19:31:12 +0200
+Message-ID: <1431624680-20153-16-git-send-email-aarcange@redhat.com>
 References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1431624680-20153-1-git-send-email-aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Sanidhya Kashyap <sanidhya.gatech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, zhang.zhanghailiang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Feiner <pfeiner-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Dr. David Alan Gilbert" <dgilbert-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, "Huangpeng (Peter)" <peter.huangpeng-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-Defines the uAPI of the userfaultfd, notably the ioctl numbers and protocol.
+This makes read O(1) and poll that was already O(1) becomes lockless.
 
-Signed-off-by: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
 ---
- Documentation/ioctl/ioctl-number.txt |  1 +
- include/uapi/linux/Kbuild            |  1 +
- include/uapi/linux/userfaultfd.h     | 81 ++++++++++++++++++++++++++++++++++++
- 3 files changed, 83 insertions(+)
- create mode 100644 include/uapi/linux/userfaultfd.h
+ fs/userfaultfd.c | 172 +++++++++++++++++++++++++++++++------------------------
+ 1 file changed, 98 insertions(+), 74 deletions(-)
 
-diff --git a/Documentation/ioctl/ioctl-number.txt b/Documentation/ioctl/ioctl-number.txt
-index ec7c81b..ed950ad 100644
---- a/Documentation/ioctl/ioctl-number.txt
-+++ b/Documentation/ioctl/ioctl-number.txt
-@@ -302,6 +302,7 @@ Code  Seq#(hex)	Include File		Comments
- 0xA3	80-8F	Port ACL		in development:
- 					<mailto:tlewis-mn4gwa5WIIQysxA8WJXlww@public.gmane.org>
- 0xA3	90-9F	linux/dtlk.h
-+0xAA	00-3F	linux/uapi/linux/userfaultfd.h
- 0xAB	00-1F	linux/nbd.h
- 0xAC	00-1F	linux/raw.h
- 0xAD	00	Netfilter device	in development:
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 4842a98..47547ea 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -452,3 +452,4 @@ header-y += xfrm.h
- header-y += xilinx-v4l2-controls.h
- header-y += zorro.h
- header-y += zorro_ids.h
-+header-y += userfaultfd.h
-diff --git a/include/uapi/linux/userfaultfd.h b/include/uapi/linux/userfaultfd.h
-new file mode 100644
-index 0000000..9a8cd56
---- /dev/null
-+++ b/include/uapi/linux/userfaultfd.h
-@@ -0,0 +1,81 @@
-+/*
-+ *  include/linux/userfaultfd.h
-+ *
-+ *  Copyright (C) 2007  Davide Libenzi <davidel-AhlLAIvw+VEjIGhXcJzhZg@public.gmane.org>
-+ *  Copyright (C) 2015  Red Hat, Inc.
-+ *
-+ */
-+
-+#ifndef _LINUX_USERFAULTFD_H
-+#define _LINUX_USERFAULTFD_H
-+
-+#define UFFD_API ((__u64)0xAA)
-+/* FIXME: add "|UFFD_BIT_WP" to UFFD_API_BITS after implementing it */
-+#define UFFD_API_BITS (UFFD_BIT_WRITE)
-+#define UFFD_API_IOCTLS				\
-+	((__u64)1 << _UFFDIO_REGISTER |		\
-+	 (__u64)1 << _UFFDIO_UNREGISTER |	\
-+	 (__u64)1 << _UFFDIO_API)
-+#define UFFD_API_RANGE_IOCTLS			\
-+	((__u64)1 << _UFFDIO_WAKE)
-+
-+/*
-+ * Valid ioctl command number range with this API is from 0x00 to
-+ * 0x3F.  UFFDIO_API is the fixed number, everything else can be
-+ * changed by implementing a different UFFD_API. If sticking to the
-+ * same UFFD_API more ioctl can be added and userland will be aware of
-+ * which ioctl the running kernel implements through the ioctl command
-+ * bitmask written by the UFFDIO_API.
-+ */
-+#define _UFFDIO_REGISTER		(0x00)
-+#define _UFFDIO_UNREGISTER		(0x01)
-+#define _UFFDIO_WAKE			(0x02)
-+#define _UFFDIO_API			(0x3F)
-+
-+/* userfaultfd ioctl ids */
-+#define UFFDIO 0xAA
-+#define UFFDIO_API		_IOWR(UFFDIO, _UFFDIO_API,	\
-+				      struct uffdio_api)
-+#define UFFDIO_REGISTER		_IOWR(UFFDIO, _UFFDIO_REGISTER, \
-+				      struct uffdio_register)
-+#define UFFDIO_UNREGISTER	_IOR(UFFDIO, _UFFDIO_UNREGISTER,	\
-+				     struct uffdio_range)
-+#define UFFDIO_WAKE		_IOR(UFFDIO, _UFFDIO_WAKE,	\
-+				     struct uffdio_range)
-+
-+/*
-+ * Valid bits below PAGE_SHIFT in the userfault address read through
-+ * the read() syscall.
-+ */
-+#define UFFD_BIT_WRITE	(1<<0)	/* this was a write fault, MISSING or WP */
-+#define UFFD_BIT_WP	(1<<1)	/* handle_userfault() reason VM_UFFD_WP */
-+#define UFFD_BITS	2	/* two above bits used for UFFD_BIT_* mask */
-+
-+struct uffdio_api {
-+	/* userland asks for an API number */
-+	__u64 api;
-+
-+	/* kernel answers below with the available features for the API */
-+	__u64 bits;
-+	__u64 ioctls;
-+};
-+
-+struct uffdio_range {
-+	__u64 start;
-+	__u64 len;
-+};
-+
-+struct uffdio_register {
-+	struct uffdio_range range;
-+#define UFFDIO_REGISTER_MODE_MISSING	((__u64)1<<0)
-+#define UFFDIO_REGISTER_MODE_WP		((__u64)1<<1)
-+	__u64 mode;
+diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
+index 50edbd8..3d26f41 100644
+--- a/fs/userfaultfd.c
++++ b/fs/userfaultfd.c
+@@ -35,7 +35,9 @@ enum userfaultfd_state {
+ struct userfaultfd_ctx {
+ 	/* pseudo fd refcounting */
+ 	atomic_t refcount;
+-	/* waitqueue head for the userfaultfd page faults */
++	/* waitqueue head for the pending (i.e. not read) userfaults */
++	wait_queue_head_t fault_pending_wqh;
++	/* waitqueue head for the userfaults */
+ 	wait_queue_head_t fault_wqh;
+ 	/* waitqueue head for the pseudo fd to wakeup poll/read */
+ 	wait_queue_head_t fd_wqh;
+@@ -52,11 +54,6 @@ struct userfaultfd_ctx {
+ struct userfaultfd_wait_queue {
+ 	struct uffd_msg msg;
+ 	wait_queue_t wq;
+-	/*
+-	 * Only relevant when queued in fault_wqh and only used by the
+-	 * read operation to avoid reading the same userfault twice.
+-	 */
+-	bool pending;
+ 	struct userfaultfd_ctx *ctx;
+ };
+ 
+@@ -250,17 +247,21 @@ int handle_userfault(struct vm_area_struct *vma, unsigned long address,
+ 	init_waitqueue_func_entry(&uwq.wq, userfaultfd_wake_function);
+ 	uwq.wq.private = current;
+ 	uwq.msg = userfault_msg(address, flags, reason);
+-	uwq.pending = true;
+ 	uwq.ctx = ctx;
+ 
+-	spin_lock(&ctx->fault_wqh.lock);
++	spin_lock(&ctx->fault_pending_wqh.lock);
+ 	/*
+ 	 * After the __add_wait_queue the uwq is visible to userland
+ 	 * through poll/read().
+ 	 */
+-	__add_wait_queue(&ctx->fault_wqh, &uwq.wq);
++	__add_wait_queue(&ctx->fault_pending_wqh, &uwq.wq);
++	/*
++	 * The smp_mb() after __set_current_state prevents the reads
++	 * following the spin_unlock to happen before the list_add in
++	 * __add_wait_queue.
++	 */
+ 	set_current_state(TASK_KILLABLE);
+-	spin_unlock(&ctx->fault_wqh.lock);
++	spin_unlock(&ctx->fault_pending_wqh.lock);
+ 
+ 	if (likely(!ACCESS_ONCE(ctx->released) &&
+ 		   !fatal_signal_pending(current))) {
+@@ -270,11 +271,28 @@ int handle_userfault(struct vm_area_struct *vma, unsigned long address,
+ 	}
+ 
+ 	__set_current_state(TASK_RUNNING);
+-	/* see finish_wait() comment for why list_empty_careful() */
 +
 +	/*
-+	 * kernel answers which ioctl commands are available for the
-+	 * range, keep at the end as the last 8 bytes aren't read.
++	 * Here we race with the list_del; list_add in
++	 * userfaultfd_ctx_read(), however because we don't ever run
++	 * list_del_init() to refile across the two lists, the prev
++	 * and next pointers will never point to self. list_add also
++	 * would never let any of the two pointers to point to
++	 * self. So list_empty_careful won't risk to see both pointers
++	 * pointing to self at any time during the list refile. The
++	 * only case where list_del_init() is called is the full
++	 * removal in the wake function and there we don't re-list_add
++	 * and it's fine not to block on the spinlock. The uwq on this
++	 * kernel stack can be released after the list_del_init.
 +	 */
-+	__u64 ioctls;
-+};
+ 	if (!list_empty_careful(&uwq.wq.task_list)) {
+-		spin_lock(&ctx->fault_wqh.lock);
+-		list_del_init(&uwq.wq.task_list);
+-		spin_unlock(&ctx->fault_wqh.lock);
++		spin_lock(&ctx->fault_pending_wqh.lock);
++		/*
++		 * No need of list_del_init(), the uwq on the stack
++		 * will be freed shortly anyway.
++		 */
++		list_del(&uwq.wq.task_list);
++		spin_unlock(&ctx->fault_pending_wqh.lock);
+ 	}
+ 
+ 	/*
+@@ -332,59 +350,38 @@ static int userfaultfd_release(struct inode *inode, struct file *file)
+ 	up_write(&mm->mmap_sem);
+ 
+ 	/*
+-	 * After no new page faults can wait on this fault_wqh, flush
++	 * After no new page faults can wait on this fault_*wqh, flush
+ 	 * the last page faults that may have been already waiting on
+-	 * the fault_wqh.
++	 * the fault_*wqh.
+ 	 */
+-	spin_lock(&ctx->fault_wqh.lock);
++	spin_lock(&ctx->fault_pending_wqh.lock);
++	__wake_up_locked_key(&ctx->fault_pending_wqh, TASK_NORMAL, 0, &range);
+ 	__wake_up_locked_key(&ctx->fault_wqh, TASK_NORMAL, 0, &range);
+-	spin_unlock(&ctx->fault_wqh.lock);
++	spin_unlock(&ctx->fault_pending_wqh.lock);
+ 
+ 	wake_up_poll(&ctx->fd_wqh, POLLHUP);
+ 	userfaultfd_ctx_put(ctx);
+ 	return 0;
+ }
+ 
+-/* fault_wqh.lock must be hold by the caller */
+-static inline unsigned int find_userfault(struct userfaultfd_ctx *ctx,
+-					  struct userfaultfd_wait_queue **uwq)
++/* fault_pending_wqh.lock must be hold by the caller */
++static inline struct userfaultfd_wait_queue *find_userfault(
++	struct userfaultfd_ctx *ctx)
+ {
+ 	wait_queue_t *wq;
+-	struct userfaultfd_wait_queue *_uwq;
+-	unsigned int ret = 0;
+-
+-	VM_BUG_ON(!spin_is_locked(&ctx->fault_wqh.lock));
++	struct userfaultfd_wait_queue *uwq;
+ 
+-	list_for_each_entry(wq, &ctx->fault_wqh.task_list, task_list) {
+-		_uwq = container_of(wq, struct userfaultfd_wait_queue, wq);
+-		if (_uwq->pending) {
+-			ret = POLLIN;
+-			if (!uwq)
+-				/*
+-				 * If there's at least a pending and
+-				 * we don't care which one it is,
+-				 * break immediately and leverage the
+-				 * efficiency of the LIFO walk.
+-				 */
+-				break;
+-			/*
+-			 * If we need to find which one was pending we
+-			 * keep walking until we find the first not
+-			 * pending one, so we read() them in FIFO order.
+-			 */
+-			*uwq = _uwq;
+-		} else
+-			/*
+-			 * break the loop at the first not pending
+-			 * one, there cannot be pending userfaults
+-			 * after the first not pending one, because
+-			 * all new pending ones are inserted at the
+-			 * head and we walk it in LIFO.
+-			 */
+-			break;
+-	}
++	VM_BUG_ON(!spin_is_locked(&ctx->fault_pending_wqh.lock));
+ 
+-	return ret;
++	uwq = NULL;
++	if (!waitqueue_active(&ctx->fault_pending_wqh))
++		goto out;
++	/* walk in reverse to provide FIFO behavior to read userfaults */
++	wq = list_last_entry(&ctx->fault_pending_wqh.task_list,
++			     typeof(*wq), task_list);
++	uwq = container_of(wq, struct userfaultfd_wait_queue, wq);
++out:
++	return uwq;
+ }
+ 
+ static unsigned int userfaultfd_poll(struct file *file, poll_table *wait)
+@@ -404,9 +401,20 @@ static unsigned int userfaultfd_poll(struct file *file, poll_table *wait)
+ 		 */
+ 		if (unlikely(!(file->f_flags & O_NONBLOCK)))
+ 			return POLLERR;
+-		spin_lock(&ctx->fault_wqh.lock);
+-		ret = find_userfault(ctx, NULL);
+-		spin_unlock(&ctx->fault_wqh.lock);
++		/*
++		 * lockless access to see if there are pending faults
++		 * __pollwait last action is the add_wait_queue but
++		 * the spin_unlock would allow the waitqueue_active to
++		 * pass above the actual list_add inside
++		 * add_wait_queue critical section. So use a full
++		 * memory barrier to serialize the list_add write of
++		 * add_wait_queue() with the waitqueue_active read
++		 * below.
++		 */
++		ret = 0;
++		smp_mb();
++		if (waitqueue_active(&ctx->fault_pending_wqh))
++			ret = POLLIN;
+ 		return ret;
+ 	default:
+ 		BUG();
+@@ -418,27 +426,34 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
+ {
+ 	ssize_t ret;
+ 	DECLARE_WAITQUEUE(wait, current);
+-	struct userfaultfd_wait_queue *uwq = NULL;
++	struct userfaultfd_wait_queue *uwq;
+ 
+-	/* always take the fd_wqh lock before the fault_wqh lock */
++	/* always take the fd_wqh lock before the fault_pending_wqh lock */
+ 	spin_lock(&ctx->fd_wqh.lock);
+ 	__add_wait_queue(&ctx->fd_wqh, &wait);
+ 	for (;;) {
+ 		set_current_state(TASK_INTERRUPTIBLE);
+-		spin_lock(&ctx->fault_wqh.lock);
+-		if (find_userfault(ctx, &uwq)) {
++		spin_lock(&ctx->fault_pending_wqh.lock);
++		uwq = find_userfault(ctx);
++		if (uwq) {
+ 			/*
+-			 * The fault_wqh.lock prevents the uwq to
+-			 * disappear from under us.
++			 * The fault_pending_wqh.lock prevents the uwq
++			 * to disappear from under us.
++			 *
++			 * Refile this userfault from
++			 * fault_pending_wqh to fault_wqh, it's not
++			 * pending anymore after we read it.
+ 			 */
+-			uwq->pending = false;
++			list_del(&uwq->wq.task_list);
++			__add_wait_queue(&ctx->fault_wqh, &uwq->wq);
 +
-+#endif /* _LINUX_USERFAULTFD_H */
+ 			/* careful to always initialize msg if ret == 0 */
+ 			*msg = uwq->msg;
+-			spin_unlock(&ctx->fault_wqh.lock);
++			spin_unlock(&ctx->fault_pending_wqh.lock);
+ 			ret = 0;
+ 			break;
+ 		}
+-		spin_unlock(&ctx->fault_wqh.lock);
++		spin_unlock(&ctx->fault_pending_wqh.lock);
+ 		if (signal_pending(current)) {
+ 			ret = -ERESTARTSYS;
+ 			break;
+@@ -497,16 +512,21 @@ static void __wake_userfault(struct userfaultfd_ctx *ctx,
+ 	start = range->start;
+ 	end = range->start + range->len;
+ 
+-	spin_lock(&ctx->fault_wqh.lock);
++	spin_lock(&ctx->fault_pending_wqh.lock);
+ 	/* wake all in the range and autoremove */
+-	__wake_up_locked_key(&ctx->fault_wqh, TASK_NORMAL, 0, range);
+-	spin_unlock(&ctx->fault_wqh.lock);
++	if (waitqueue_active(&ctx->fault_pending_wqh))
++		__wake_up_locked_key(&ctx->fault_pending_wqh, TASK_NORMAL, 0,
++				     range);
++	if (waitqueue_active(&ctx->fault_wqh))
++		__wake_up_locked_key(&ctx->fault_wqh, TASK_NORMAL, 0, range);
++	spin_unlock(&ctx->fault_pending_wqh.lock);
+ }
+ 
+ static __always_inline void wake_userfault(struct userfaultfd_ctx *ctx,
+ 					   struct userfaultfd_wake_range *range)
+ {
+-	if (waitqueue_active(&ctx->fault_wqh))
++	if (waitqueue_active(&ctx->fault_pending_wqh) ||
++	    waitqueue_active(&ctx->fault_wqh))
+ 		__wake_userfault(ctx, range);
+ }
+ 
+@@ -932,14 +952,17 @@ static void userfaultfd_show_fdinfo(struct seq_file *m, struct file *f)
+ 	struct userfaultfd_wait_queue *uwq;
+ 	unsigned long pending = 0, total = 0;
+ 
+-	spin_lock(&ctx->fault_wqh.lock);
++	spin_lock(&ctx->fault_pending_wqh.lock);
++	list_for_each_entry(wq, &ctx->fault_pending_wqh.task_list, task_list) {
++		uwq = container_of(wq, struct userfaultfd_wait_queue, wq);
++		pending++;
++		total++;
++	}
+ 	list_for_each_entry(wq, &ctx->fault_wqh.task_list, task_list) {
+ 		uwq = container_of(wq, struct userfaultfd_wait_queue, wq);
+-		if (uwq->pending)
+-			pending++;
+ 		total++;
+ 	}
+-	spin_unlock(&ctx->fault_wqh.lock);
++	spin_unlock(&ctx->fault_pending_wqh.lock);
+ 
+ 	/*
+ 	 * If more protocols will be added, there will be all shown
+@@ -999,6 +1022,7 @@ static struct file *userfaultfd_file_create(int flags)
+ 		goto out;
+ 
+ 	atomic_set(&ctx->refcount, 1);
++	init_waitqueue_head(&ctx->fault_pending_wqh);
+ 	init_waitqueue_head(&ctx->fault_wqh);
+ 	init_waitqueue_head(&ctx->fd_wqh);
+ 	ctx->flags = flags;
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
