@@ -1,78 +1,67 @@
-From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH 0/3] Allow user to request memory to be locked on page
- fault
-Date: Thu, 14 May 2015 10:08:12 +0200
-Message-ID: <20150514080812.GC6433@dhcp22.suse.cz>
-References: <1431113626-19153-1-git-send-email-emunson@akamai.com>
- <20150508124203.6679b1d35ad9555425003929@linux-foundation.org>
- <20150511180631.GA1227@akamai.com>
- <20150513150036.GG1227@akamai.com>
+From: Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>
+Subject: Re: [RFC][PATCH 2/2] drm/mediatek: Add DRM Driver for Mediatek SoC
+ MT8173.
+Date: Thu, 14 May 2015 11:16:54 +0200
+Message-ID: <1431595014.2650.50.camel@x220>
+References: <1431530626-31493-1-git-send-email-ck.hu@mediatek.com>
+	 <1431530626-31493-3-git-send-email-ck.hu@mediatek.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150513150036.GG1227-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1431530626-31493-3-git-send-email-ck.hu-NuS5LvNUpcJWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-alpha-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, linux-parisc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: CK Hu <ck.hu-NuS5LvNUpcJWk0Htik3J/w@public.gmane.org>
+Cc: Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Matthias Brugger <matthias.bgg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-mediatek-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Rob Herring <robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ashwin Chaugule <ashwin.chaugule-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Grant Likely <grant.likely-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Graeme Gregory <graeme.gregory-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, srv_heupstream-NuS5LvNUpcJWk0Htik3J/w@public.gmane.org, Sascha Hauer <kernel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Cawa Cheng <cawa.cheng-NuS5LvNUpcJWk0Htik3J/w@public.gmane.org>, YT Shen <yt.shen-NuS5LvNUpcJWk0Htik3J/w@public.gmane.org>, Jitao Shi <jitao.shi-NuS5LvNUpcJWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 13-05-15 11:00:36, Eric B Munson wrote:
-> On Mon, 11 May 2015, Eric B Munson wrote:
-> 
-> > On Fri, 08 May 2015, Andrew Morton wrote:
-> > 
-> > > On Fri,  8 May 2015 15:33:43 -0400 Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org> wrote:
-> > > 
-> > > > mlock() allows a user to control page out of program memory, but this
-> > > > comes at the cost of faulting in the entire mapping when it is
-> > > > allocated.  For large mappings where the entire area is not necessary
-> > > > this is not ideal.
-> > > > 
-> > > > This series introduces new flags for mmap() and mlockall() that allow a
-> > > > user to specify that the covered are should not be paged out, but only
-> > > > after the memory has been used the first time.
-> > > 
-> > > Please tell us much much more about the value of these changes: the use
-> > > cases, the behavioural improvements and performance results which the
-> > > patchset brings to those use cases, etc.
-> > > 
-> > 
-> > To illustrate the proposed use case I wrote a quick program that mmaps
-> > a 5GB file which is filled with random data and accesses 150,000 pages
-> > from that mapping.  Setup and processing were timed separately to
-> > illustrate the differences between the three tested approaches.  the
-> > setup portion is simply the call to mmap, the processing is the
-> > accessing of the various locations in  that mapping.  The following
-> > values are in milliseconds and are the averages of 20 runs each with a
-> > call to echo 3 > /proc/sys/vm/drop_caches between each run.
-> > 
-> > The first mapping was made with MAP_PRIVATE | MAP_LOCKED as a baseline:
-> > Startup average:    9476.506
-> > Processing average: 3.573
-> > 
-> > The second mapping was simply MAP_PRIVATE but each page was passed to
-> > mlock() before being read:
-> > Startup average:    0.051
-> > Processing average: 721.859
-> > 
-> > The final mapping was MAP_PRIVATE | MAP_LOCKONFAULT:
-> > Startup average:    0.084
-> > Processing average: 42.125
-> > 
-> 
-> Michal's suggestion of changing protections and locking in a signal
-> handler was better than the locking as needed, but still significantly
-> more work required than the LOCKONFAULT case.
-> 
-> Startup average:    0.047
-> Processing average: 86.431
+A naive question and a nit follow. That's probably not what you'd like
+to see for an RFC, but the patch got tangled up in my mail filter
+anyhow.
 
-Have you played with batching? Has it helped? Anyway it is to be
-expected that the overhead will be higher than a single mmap call. The
-question is whether you can live with it because adding a new semantic
-to mlock sounds trickier and MAP_LOCKED is tricky enough already...
+On Wed, 2015-05-13 at 23:23 +0800, CK Hu wrote:
+> --- /dev/null
+> +++ b/drivers/gpu/drm/mediatek/Kconfig
 
--- 
-Michal Hocko
-SUSE Labs
+> +config DRM_MEDIATEK_FBDEV
+> +	bool "Enable legacy fbdev support for Mediatek DRM"
+> +	depends on DRM_MEDIATEK
+> +	select FB_SYS_FILLRECT
+> +	select FB_SYS_COPYAREA
+> +	select FB_SYS_IMAGEBLIT
+> +	select DRM_KMS_FB_HELPER
+> +	help
+> +	  Choose this option if you have a need for the legacy
+> +	  fbdev support.  Note that this support also provides
+> +	  the Linux console on top of the Mediatek DRM mode
+> +	  setting driver.
+
+Naive question, as I know next to nothing about drivers/gpu/drm.
+DRM_MEDIATEK_FBDEV isn't used anywhere, as far as I can see. So all that
+setting this Kconfig symbol does is selecting four other Kconfig
+symbols. Is selecting those four symbols enough to get fbdev support?
+Taking the Cargo Cult approach of looking at similar symbols
+(DRM_I915_FBDEV, DRM_MSM_FBDEV, DRM_STI_FBDEV, and DRM_TEGRA_FBDEV) I
+noticed that they all do a bit more than just selecting other symbols.
+
+> --- /dev/null
+> +++ b/drivers/gpu/drm/mediatek/mediatek_drm_drv.c
+
+> + * This program is free software; you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License version 2 as
+> + * published by the Free Software Foundation.
+
+This states the license of this driver is GPL v2. (Identical comments
+seem to be part of all files added in this patch.)
+
+> +MODULE_LICENSE("GPL");
+
+And, according to include/linux/module.h, this states the license is GPL
+v2 or later. So I think that either the comment at the top of these
+files or the ident used in the MODULE_LICENSE() macro needs to be
+changed.
+
+Thanks,
+
+
+Paul Bolle
