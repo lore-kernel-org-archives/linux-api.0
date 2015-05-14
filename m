@@ -1,126 +1,98 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH v2] Documentation/arch: Add kernel feature descriptions
- and arch support status under Documentation/features/
-Date: Thu, 14 May 2015 21:59:25 +0200
-Message-ID: <20150514195925.GA27570@gmail.com>
-References: <20150513092421.GB11030@gmail.com>
- <20150513094622.GC11030@gmail.com>
- <20150513094756.GD11030@gmail.com>
- <20150513131835.GJ1517@pd.tnic>
- <20150513134842.GA1657@gmail.com>
- <20150513162757.GA21894@x>
- <20150513150523.ddd65d7cd51f820b78f0c8e3@linux-foundation.org>
- <20150514101518.GA27550@gmail.com>
- <20150514103544.GA7027@gmail.com>
- <20150514123835.1bf436bc35d711f8dbf9bc0f@linux-foundation.org>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [CFT][PATCH 0/10] Making new mounts of proc and sysfs as safe as
+ bind mounts
+Date: Thu, 14 May 2015 13:29:51 -0700
+Message-ID: <20150514202951.GA16416@kroah.com>
+References: <87pp63jcca.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150514123835.1bf436bc35d711f8dbf9bc0f@linux-foundation.org>
-Sender: linux-arch-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Josh Triplett <josh@joshtriplett.org>, Borislav Petkov <bp@alien8.de>, Jonathan Corbet <corbet@lwn.net>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, x86@kernel.org, linux-arch@vger.kernel.org
+In-Reply-To: <87pp63jcca.fsf@x220.int.ebiederm.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Linux Containers <containers@lists.linux-foundation.org>, linux-fsdevel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Andy Lutomirski <luto@amacapital.net>, Richard Weinberger <richard@nod.at>, Kenton Varda <kenton@sandstorm.io>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, =?iso-8859-1?Q?St=E9phane?= Graber <stgraber@ubuntu.com>, Eric Windisch <ewindisch@docker.com>, Tejun Heo <tj@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-
-* Andrew Morton <akpm@linux-foundation.org> wrote:
-
-> > Add arch support matrices for more than 40 generic kernel features
-> > that need per architecture support.
-> > 
-> > Each feature has its own directory under Documentation/features/feature_name/,
-> > and the arch-support.txt file shows its current arch porting status.
-> > 
-> > For example, lockdep support is shown the following way:
-> > 
-> >     triton:~/tip> cat Documentation/features/lockdep/arch-support.txt
-> >     #
-> >     # Feature name:          lockdep
-> >     #         Kconfig:       LOCKDEP_SUPPORT
-> >     #         description:   arch supports the runtime locking correctness debug facility
-> >     #
-> >         -----------------------
-> >         |         arch |status|
-> >         -----------------------
-> > ...
-> >         |      xtensa: |  ok  |
-> >         -----------------------
-> > 
-> > For generic kernel features that need architecture support, the
-> > arch-support.txt file in each feature directory shows the arch
-> > support matrix, for all upstream Linux architectures.
-> > 
-> > The meaning of entries in the tables is:
-> > 
-> >     | ok |  # feature supported by the architecture
-> >     |TODO|  # feature not yet supported by the architecture
-> >     | .. |  # feature cannot be supported by the hardware
+On Thu, May 14, 2015 at 12:30:45PM -0500, Eric W. Biederman wrote:
 > 
-> Presumably there will be instances where the maintainer decides "we 
-> shall not implement that".
-
-So I tried to limit the list of features to those that represent the 
-overall progress of the generic kernel and are recommended on all 
-architectures that are able to support it.
-
-There are certainly features that are opt-in. We could still list them 
-here as well, because this is a convenient central index, but would 
-mark them not with 'TODO' but with a low-key '..' marking?
-
-On the other end of the spectrum we could also define 'must have' 
-features for new architectures. For example modern-timekeeping and 
-clockevents.
-
-The patch that adds a new architecture to all these files would give 
-us a good overview about how complete an initial port is.
-
-> > This directory structure can be used in the future to add other 
-> > files - such as porting guides, testing description, etc.
+> The code is currently available at:
 > 
-> I suppose so.  Having a great bunch of directories, each containing 
-> a single file is a bit odd.
+>    git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-testing
+> 
+>    HEAD: a524faf520600968e58bbc732063fccf2fdf9199 mnt: Update fs_fully_visible to test for permanently empty directories
+> 
+> The problem:  Mounting a new instance of proc of sysfs can allow things
+> that a bind mount of those filesystems would not.
+> 
+> That is the cases I am dealing with are:
+>      unshare --user --net --mount ; mount -t sysfs ...
+>      unshare --user --pid --mount ; mount -t proc ...
+> 
+> The big change is that this set of changes enforces the preservation of
+> locked mount flags, from the existing mount to the current mount.  Which
+> means that if proc was mounted read-only the current current will allow
+> a new instance of proc to be mounted read-write, and this set of changes
+> enforces that proc remain read-only.
+> 
+> The other gotcha is that the current code does not properly detect empty
+> directories so to prevent things slipping through the cracks this set of
+> changes annotates all mount points where nothing will be revealed if
+> the filesystem mounted on top is removed.
+> 
+> Enforcing the administrators policy can actually matter in the real
+> world as has been shown by the recent docker issue.
+> 
+> With this patchset I have two concerns:
+> - The enforcement of mount flag preservation on proc and sysfs may break
+>   things.  (I am especially worried about the implicit adding of nodev).
 
-It's a starting point and nicely extensible. I was thinking about one 
-more intermediate level:
+What do you mean by this?  What got added?
 
-   Documentation/features/locking/lockdep/
-   Documentation/features/locking/rwsem-optimized/
-   Documentation/features/locking/queued-rwlocks/
-   Documentation/features/locking/queued-spinlocks/
-   ...
+> - I missed a filesystem mountpoint on proc or sysfs which would make a
+>   fresh copy unmountable for no good reason.
+> 
+> I don't want to break userspace if I can help it, and the code has been
+> this way for a while so I figure there is time to find any pitfalls and
+> address them before this code gets merged.
+> 
+> So if this works for you please give me your Tested-By
+> 
+> The well known mountpoints for pseudo filesystems that I could find are:
+> /dev/ffs*/                 functionfs
+> /dev/gadget/               gadgetfs
+> /dev/mqueue                mqueue
+> /dev/oprofile/             oprofilefs
+> /dev/pts/                  devpts
 
-   Documentation/features/vm/PG_uncached/
-   Documentation/features/vm/pmdp_splitting_flush/
-   Documentation/features/vm/pte_special/
-   ...
+/dev/shm gets a tmpfs, right?  Or do those not matter here?
 
-The advantage of this, beyond more structure, would be that I'd 
-probably move most of the Documentation/locking/*.txt files into 
-Documentation/features/locking/, for example lockdep-design.txt would 
-go into Documentation/features/locking/lockdep/.
+> /dlm/                      ocfs2_dlmfs
+> /ipath/                    ipathfs
+> /proc/fs/nfsd/             nfsd
+> /proc/openprom/            openpromfs
+> /proc/sys/fs/binfmt_misc/  binfmt_misc
+> /spu/                      spufs
 
-I'd keep the hierarchy at a predictable depth though, i.e.:
+> /sys/firmware/efi/efivars/ efivarfs
+> /sys/fs/cgroup/            cgroup
+> /sys/fs/fuse/connections/  fusectl
 
-   Documentation/features/<subsystem>/<feature_name>/
+I thought fuse mounted a few more things in here, but I don't know for
+sure.
 
-> It would be nice to provide people with commit IDs to look at, but 
-> the IDs won't be known at the time the documentation file is 
-> created.  We could provide patch titles.
+> /sys/fs/pstore/            pstore
+> /sys/fs/selinux/           selinuxfs
+> /sys/fs/smackfs/           smackfs
+> /sys/hypervisor/s390/      s390_hypfs
+> /sys/kernel/config/        configfs
+> /sys/kernel/debug/         debugfs
+> /sys/kernel/security/      securityfs
+> /sys/kernel/tracing/       tracefs
 
-Ok.
+I think these are all correct for sysfs, I have a minor comment on the
+sysfs patch I'll make in it.
 
-> But still, let's not overdo it - get something in there, see how 
-> well it works, evolve it over time.
+thanks,
 
-Yeah.
-
-> I don't think we've heard from any (non-x86) arch maintainers?  Do 
-> they consider this useful at all?  Poke.
-
-I think we god some feedback from the PowerPC side, but yeah, would be 
-nice to get more reactions.
-
-Thanks,
-
-	Ingo
+greg k-h
