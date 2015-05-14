@@ -1,61 +1,122 @@
-From: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 4/6] nohz: support PR_DATAPLANE_QUIESCE
-Date: Thu, 14 May 2015 16:55:01 -0400
-Message-ID: <55550BA5.4040905@ezchip.com>
-References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com> <1431107927-13998-5-git-send-email-cmetcalf@ezchip.com> <20150512093349.GH21418@twins.programming.kicks-ass.net> <20150512095030.GD11477@gmail.com> <20150512103805.GJ21418@twins.programming.kicks-ass.net> <20150512125200.GB17244@gmail.com> <CALCETrXGb1_JXLBb62KU=Hb8FZfCuRT1e60xW2KTBEPsYiaAXg@mail.gmail.com> <20150513175150.GL6776@linux.vnet.ibm.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [CFT][PATCH 0/10] Making new mounts of proc and sysfs as safe as bind mounts
+Date: Thu, 14 May 2015 16:10:52 -0500
+Message-ID: <87oalmg90j.fsf@x220.int.ebiederm.org>
+References: <87pp63jcca.fsf@x220.int.ebiederm.org>
+	<20150514202951.GA16416@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150513175150.GL6776-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20150514202951.GA16416@kroah.com> (Greg Kroah-Hartman's message
+	of "Thu, 14 May 2015 13:29:51 -0700")
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Linux Containers <containers@lists.linux-foundation.org>, linux-fsdevel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Andy Lutomirski <luto@amacapital.net>, Richard Weinberger <richard@nod.at>, Kenton Varda <kenton@sandstorm.io>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, =?utf-8?Q?St=C3=A9phane?= Graber <stgraber@ubuntu.com>, Eric Windisch <ewindisch@docker.com>, Tejun Heo <tj@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 05/12/2015 08:52 AM, Ingo Molnar wrote:
-> What I suggested is that it might make sense to offer a system call,
-> for example a sched_setparam() variant, that makes such guarantees.
+Greg Kroah-Hartman <gregkh@linuxfoundation.org> writes:
+
+> On Thu, May 14, 2015 at 12:30:45PM -0500, Eric W. Biederman wrote:
+>> 
+>> The code is currently available at:
+>> 
+>>    git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-testing
+>> 
+>>    HEAD: a524faf520600968e58bbc732063fccf2fdf9199 mnt: Update fs_fully_visible to test for permanently empty directories
+>> 
+>> The problem:  Mounting a new instance of proc of sysfs can allow things
+>> that a bind mount of those filesystems would not.
+>> 
+>> That is the cases I am dealing with are:
+>>      unshare --user --net --mount ; mount -t sysfs ...
+>>      unshare --user --pid --mount ; mount -t proc ...
+>> 
+>> The big change is that this set of changes enforces the preservation of
+>> locked mount flags, from the existing mount to the current mount.  Which
+>> means that if proc was mounted read-only the current current will allow
+>> a new instance of proc to be mounted read-write, and this set of changes
+>> enforces that proc remain read-only.
+>> 
+>> The other gotcha is that the current code does not properly detect empty
+>> directories so to prevent things slipping through the cracks this set of
+>> changes annotates all mount points where nothing will be revealed if
+>> the filesystem mounted on top is removed.
+>> 
+>> Enforcing the administrators policy can actually matter in the real
+>> world as has been shown by the recent docker issue.
+>> 
+>> With this patchset I have two concerns:
+>> - The enforcement of mount flag preservation on proc and sysfs may break
+>>   things.  (I am especially worried about the implicit adding of nodev).
 >
-> Say if user-space does:
+> What do you mean by this?  What got added?
+
+In a user namespace mounting a filesystem implicitly adds nodev.
+
+When I started enforcing not clearing bits that root had set on a
+filesystem in mount -o remount the implicit nodev wound up being
+an issue that broke userspace for no good reason.  The fix was
+to implicitly add nodev in remount as well.
+
+Taking a second look at this nodev is implicitly added before the
+fs_fully_visible check so even for applications that are know how the
+original proc was mounted (and don't see an implicit nodev) and that
+don't add nodev (because they ''know'' the mount flags) this change
+should not be a problem.  Hooray!  One less scary thing.
+
+>> - I missed a filesystem mountpoint on proc or sysfs which would make a
+>>   fresh copy unmountable for no good reason.
+>> 
+>> I don't want to break userspace if I can help it, and the code has been
+>> this way for a while so I figure there is time to find any pitfalls and
+>> address them before this code gets merged.
+>> 
+>> So if this works for you please give me your Tested-By
+>> 
+>> The well known mountpoints for pseudo filesystems that I could find are:
+>> /dev/ffs*/                 functionfs
+>> /dev/gadget/               gadgetfs
+>> /dev/mqueue                mqueue
+>> /dev/oprofile/             oprofilefs
+>> /dev/pts/                  devpts
 >
-> 	ret = sched_setscheduler(0, BIND_ISOLATED, &isolation_params);
+> /dev/shm gets a tmpfs, right?  Or do those not matter here?
+
+It does, but it doesn't matter in this context.   I was looking for
+things that mounted themselves on proc or sysfs and I catalogued the
+rest just to know they were not mounted there.
+
+>> /dlm/                      ocfs2_dlmfs
+>> /ipath/                    ipathfs
+>> /proc/fs/nfsd/             nfsd
+>> /proc/openprom/            openpromfs
+>> /proc/sys/fs/binfmt_misc/  binfmt_misc
+>> /spu/                      spufs
 >
-> ... then we would get the task moved to an isolated domain and get a 0
-> return code if the kernel is able to do all that and if the current
-> uid/namespace/etc. has the required permissions and such.
+>> /sys/firmware/efi/efivars/ efivarfs
+>> /sys/fs/cgroup/            cgroup
+>> /sys/fs/fuse/connections/  fusectl
+>
+> I thought fuse mounted a few more things in here, but I don't know for
+> sure.
 
-Unfortunately I don't know nearly as much about the scheduler
-and scheduler policies as I might, since I mostly focused on
-make the scheduler stay out of the way.  :-)  This does seem like
-another way to set a policy bit on a process.  I assume you
-could only validly issue this call on a nohz_full core, and that
-you're not assuming it migrates the cpu to such a core?
+There are definitely some fuse attributes under /sys/fs/fuse/ but
+I don't see anything else in the code that could be creating a mount
+point.
 
-You suggested that BIND_ISOLATED would not replace the usual
-scheduler policies, but perhaps SCHED_ISOLATED as a full
-replacement would make sense - it would make it an error
-to have any other schedulable task on that core.  I guess that
-brings it around to whether the "cpu_isolated" task just loses when
-another task is scheduled on the core with it (the current
-approach I'm proposing) or if it ends up truly owning the core
-and other processes can be denied the right to run there:
-which in that case clearly does get us into the area of requiring
-privileges to set up, as Andy pointed out later.
+>> /sys/fs/pstore/            pstore
+>> /sys/fs/selinux/           selinuxfs
+>> /sys/fs/smackfs/           smackfs
+>> /sys/hypervisor/s390/      s390_hypfs
+>> /sys/kernel/config/        configfs
+>> /sys/kernel/debug/         debugfs
+>> /sys/kernel/security/      securityfs
+>> /sys/kernel/tracing/       tracefs
+>
+> I think these are all correct for sysfs, I have a minor comment on the
+> sysfs patch I'll make in it.
 
-This would leave the notion of "strict" as proposed elsewhere
-as a separate thing, but presumably it could still be a prctl()
-as originally proposed.
+Good to hear and I will answer there as well.
 
-I admit I don't know enough to say whether this sounds like
-a better approach than just using a prctl() to set the
-cpu_isolated state.  My instinct is that it's cleanest to avoid
-requiring permissions to do this, and to simply enable the
-quiescing semantics the process requested when it happens
-to be alone on a core.  If so, it's somewhat orthogonal to the
-actual scheduler policy in force, so best not to conflate it with
-the notion of scheduler code at all via sched_setscheduler()?
+Eric
 
--- 
-Chris Metcalf, EZChip Semiconductor
-http://www.ezchip.com
