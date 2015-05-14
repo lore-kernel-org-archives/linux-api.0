@@ -1,198 +1,225 @@
 From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: [PATCH 14/23] userfaultfd: wake pending userfaults
-Date: Thu, 14 May 2015 19:31:11 +0200
-Message-ID: <1431624680-20153-15-git-send-email-aarcange@redhat.com>
+Subject: [PATCH 08/23] userfaultfd: teach vma_merge to merge across vma->vm_userfaultfd_ctx
+Date: Thu, 14 May 2015 19:31:05 +0200
+Message-ID: <1431624680-20153-9-git-send-email-aarcange@redhat.com>
 References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
-Sender: owner-linux-mm@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org
 Cc: Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-This is an optimization but it's a userland visible one and it affects
-the API.
-
-The downside of this optimization is that if you call poll() and you
-get POLLIN, read(ufd) may still return -EAGAIN. The blocked userfault
-may be waken by a different thread, before read(ufd) comes
-around. This in short means that poll() isn't really usable if the
-userfaultfd is opened in blocking mode.
-
-userfaults won't wait in "pending" state to be read anymore and any
-UFFDIO_WAKE or similar operations that has the objective of waking
-userfaults after their resolution, will wake all blocked userfaults
-for the resolved range, including those that haven't been read() by
-userland yet.
-
-The behavior of poll() becomes not standard, but this obviates the
-need of "spurious" UFFDIO_WAKE and it lets the userland threads to
-restart immediately without requiring an UFFDIO_WAKE. This is even
-more significant in case of repeated faults on the same address from
-multiple threads.
-
-This optimization is justified by the measurement that the number of
-spurious UFFDIO_WAKE accounts for 5% and 10% of the total
-userfaults for heavy workloads, so it's worth optimizing those away.
+vma->vm_userfaultfd_ctx is yet another vma parameter that vma_merge
+must be aware about so that we can merge vmas back like they were
+originally before arming the userfaultfd on some memory range.
 
 Signed-off-by: Andrea Arcangeli <aarcange@redhat.com>
 ---
- fs/userfaultfd.c | 65 +++++++++++++++++++++++++++++++++++++-------------------
- 1 file changed, 43 insertions(+), 22 deletions(-)
+ include/linux/mm.h |  2 +-
+ mm/madvise.c       |  3 ++-
+ mm/mempolicy.c     |  4 ++--
+ mm/mlock.c         |  3 ++-
+ mm/mmap.c          | 40 +++++++++++++++++++++++++++-------------
+ mm/mprotect.c      |  3 ++-
+ 6 files changed, 36 insertions(+), 19 deletions(-)
 
-diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-index b45cefe..50edbd8 100644
---- a/fs/userfaultfd.c
-+++ b/fs/userfaultfd.c
-@@ -52,6 +52,10 @@ struct userfaultfd_ctx {
- struct userfaultfd_wait_queue {
- 	struct uffd_msg msg;
- 	wait_queue_t wq;
-+	/*
-+	 * Only relevant when queued in fault_wqh and only used by the
-+	 * read operation to avoid reading the same userfault twice.
-+	 */
- 	bool pending;
- 	struct userfaultfd_ctx *ctx;
- };
-@@ -71,9 +75,6 @@ static int userfaultfd_wake_function(wait_queue_t *wq, unsigned mode,
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 7fccd22..76376e0 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -1763,7 +1763,7 @@ extern int vma_adjust(struct vm_area_struct *vma, unsigned long start,
+ extern struct vm_area_struct *vma_merge(struct mm_struct *,
+ 	struct vm_area_struct *prev, unsigned long addr, unsigned long end,
+ 	unsigned long vm_flags, struct anon_vma *, struct file *, pgoff_t,
+-	struct mempolicy *);
++	struct mempolicy *, struct vm_userfaultfd_ctx);
+ extern struct anon_vma *find_mergeable_anon_vma(struct vm_area_struct *);
+ extern int split_vma(struct mm_struct *,
+ 	struct vm_area_struct *, unsigned long addr, int new_below);
+diff --git a/mm/madvise.c b/mm/madvise.c
+index 22e8f0c..d215ea9 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -111,7 +111,8 @@ static long madvise_behavior(struct vm_area_struct *vma,
  
- 	uwq = container_of(wq, struct userfaultfd_wait_queue, wq);
- 	ret = 0;
--	/* don't wake the pending ones to avoid reads to block */
--	if (uwq->pending && !ACCESS_ONCE(uwq->ctx->released))
--		goto out;
- 	/* len == 0 means wake all */
- 	start = range->start;
- 	len = range->len;
-@@ -183,12 +184,14 @@ int handle_userfault(struct vm_area_struct *vma, unsigned long address,
- 	struct mm_struct *mm = vma->vm_mm;
- 	struct userfaultfd_ctx *ctx;
- 	struct userfaultfd_wait_queue uwq;
-+	int ret;
+ 	pgoff = vma->vm_pgoff + ((start - vma->vm_start) >> PAGE_SHIFT);
+ 	*prev = vma_merge(mm, *prev, start, end, new_flags, vma->anon_vma,
+-				vma->vm_file, pgoff, vma_policy(vma));
++			  vma->vm_file, pgoff, vma_policy(vma),
++			  vma->vm_userfaultfd_ctx);
+ 	if (*prev) {
+ 		vma = *prev;
+ 		goto success;
+diff --git a/mm/mempolicy.c b/mm/mempolicy.c
+index 7477432..eeec77a 100644
+--- a/mm/mempolicy.c
++++ b/mm/mempolicy.c
+@@ -722,8 +722,8 @@ static int mbind_range(struct mm_struct *mm, unsigned long start,
+ 		pgoff = vma->vm_pgoff +
+ 			((vmstart - vma->vm_start) >> PAGE_SHIFT);
+ 		prev = vma_merge(mm, prev, vmstart, vmend, vma->vm_flags,
+-				  vma->anon_vma, vma->vm_file, pgoff,
+-				  new_pol);
++				 vma->anon_vma, vma->vm_file, pgoff,
++				 new_pol, vma->vm_userfaultfd_ctx);
+ 		if (prev) {
+ 			vma = prev;
+ 			next = vma->vm_next;
+diff --git a/mm/mlock.c b/mm/mlock.c
+index 6fd2cf1..25936680 100644
+--- a/mm/mlock.c
++++ b/mm/mlock.c
+@@ -510,7 +510,8 @@ static int mlock_fixup(struct vm_area_struct *vma, struct vm_area_struct **prev,
  
- 	BUG_ON(!rwsem_is_locked(&mm->mmap_sem));
+ 	pgoff = vma->vm_pgoff + ((start - vma->vm_start) >> PAGE_SHIFT);
+ 	*prev = vma_merge(mm, *prev, start, end, newflags, vma->anon_vma,
+-			  vma->vm_file, pgoff, vma_policy(vma));
++			  vma->vm_file, pgoff, vma_policy(vma),
++			  vma->vm_userfaultfd_ctx);
+ 	if (*prev) {
+ 		vma = *prev;
+ 		goto success;
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 9c1c5b9..5f09a7e 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -41,6 +41,7 @@
+ #include <linux/notifier.h>
+ #include <linux/memory.h>
+ #include <linux/printk.h>
++#include <linux/userfaultfd_k.h>
  
-+	ret = VM_FAULT_SIGBUS;
- 	ctx = vma->vm_userfaultfd_ctx.ctx;
- 	if (!ctx)
--		return VM_FAULT_SIGBUS;
-+		goto out;
- 
- 	BUG_ON(ctx->mm != mm);
- 
-@@ -201,7 +204,7 @@ int handle_userfault(struct vm_area_struct *vma, unsigned long address,
- 	 * caller of handle_userfault to release the mmap_sem.
- 	 */
- 	if (unlikely(ACCESS_ONCE(ctx->released)))
--		return VM_FAULT_SIGBUS;
-+		goto out;
- 
- 	/*
- 	 * Check that we can return VM_FAULT_RETRY.
-@@ -227,15 +230,16 @@ int handle_userfault(struct vm_area_struct *vma, unsigned long address,
- 			dump_stack();
- 		}
- #endif
--		return VM_FAULT_SIGBUS;
-+		goto out;
- 	}
- 
- 	/*
- 	 * Handle nowait, not much to do other than tell it to retry
- 	 * and wait.
- 	 */
-+	ret = VM_FAULT_RETRY;
- 	if (flags & FAULT_FLAG_RETRY_NOWAIT)
--		return VM_FAULT_RETRY;
-+		goto out;
- 
- 	/* take the reference before dropping the mmap_sem */
- 	userfaultfd_ctx_get(ctx);
-@@ -255,21 +259,23 @@ int handle_userfault(struct vm_area_struct *vma, unsigned long address,
- 	 * through poll/read().
- 	 */
- 	__add_wait_queue(&ctx->fault_wqh, &uwq.wq);
--	for (;;) {
--		set_current_state(TASK_KILLABLE);
--		if (!uwq.pending || ACCESS_ONCE(ctx->released) ||
--		    fatal_signal_pending(current))
--			break;
--		spin_unlock(&ctx->fault_wqh.lock);
-+	set_current_state(TASK_KILLABLE);
-+	spin_unlock(&ctx->fault_wqh.lock);
- 
-+	if (likely(!ACCESS_ONCE(ctx->released) &&
-+		   !fatal_signal_pending(current))) {
- 		wake_up_poll(&ctx->fd_wqh, POLLIN);
- 		schedule();
-+		ret |= VM_FAULT_MAJOR;
-+	}
- 
-+	__set_current_state(TASK_RUNNING);
-+	/* see finish_wait() comment for why list_empty_careful() */
-+	if (!list_empty_careful(&uwq.wq.task_list)) {
- 		spin_lock(&ctx->fault_wqh.lock);
-+		list_del_init(&uwq.wq.task_list);
-+		spin_unlock(&ctx->fault_wqh.lock);
- 	}
--	__remove_wait_queue(&ctx->fault_wqh, &uwq.wq);
--	__set_current_state(TASK_RUNNING);
--	spin_unlock(&ctx->fault_wqh.lock);
- 
- 	/*
- 	 * ctx may go away after this if the userfault pseudo fd is
-@@ -277,7 +283,8 @@ int handle_userfault(struct vm_area_struct *vma, unsigned long address,
- 	 */
- 	userfaultfd_ctx_put(ctx);
- 
--	return VM_FAULT_RETRY;
-+out:
-+	return ret;
- }
- 
- static int userfaultfd_release(struct inode *inode, struct file *file)
-@@ -391,6 +398,12 @@ static unsigned int userfaultfd_poll(struct file *file, poll_table *wait)
- 	case UFFD_STATE_WAIT_API:
- 		return POLLERR;
- 	case UFFD_STATE_RUNNING:
-+		/*
-+		 * poll() never guarantees that read won't block.
-+		 * userfaults can be waken before they're read().
-+		 */
-+		if (unlikely(!(file->f_flags & O_NONBLOCK)))
-+			return POLLERR;
- 		spin_lock(&ctx->fault_wqh.lock);
- 		ret = find_userfault(ctx, NULL);
- 		spin_unlock(&ctx->fault_wqh.lock);
-@@ -806,11 +819,19 @@ out:
- }
- 
- /*
-- * This is mostly needed to re-wakeup those userfaults that were still
-- * pending when userland wake them up the first time. We don't wake
-- * the pending one to avoid blocking reads to block, or non blocking
-- * read to return -EAGAIN, if used with POLLIN, to avoid userland
-- * doubts on why POLLIN wasn't reliable.
-+ * userfaultfd_wake is needed in case an userfault is in flight by the
-+ * time a UFFDIO_COPY (or other ioctl variants) completes. The page
-+ * may be well get mapped and the page fault if repeated wouldn't lead
-+ * to a userfault anymore, but before scheduling in TASK_KILLABLE mode
-+ * handle_userfault() doesn't recheck the pagetables and it doesn't
-+ * serialize against UFFDO_COPY (or other ioctl variants). Ultimately
-+ * the knowledge of which pages are mapped is left to userland who is
-+ * responsible for handling the race between read() userfaults and
-+ * background UFFDIO_COPY (or other ioctl variants), if done by
-+ * separate concurrent threads.
-+ *
-+ * userfaultfd_wake may be used in combination with the
-+ * UFFDIO_*_MODE_DONTWAKE to wakeup userfaults in batches.
+ #include <asm/uaccess.h>
+ #include <asm/cacheflush.h>
+@@ -919,7 +920,8 @@ again:			remove_next = 1 + (end > next->vm_end);
+  * per-vma resources, so we don't attempt to merge those.
   */
- static int userfaultfd_wake(struct userfaultfd_ctx *ctx,
- 			    unsigned long arg)
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+ static inline int is_mergeable_vma(struct vm_area_struct *vma,
+-			struct file *file, unsigned long vm_flags)
++				struct file *file, unsigned long vm_flags,
++				struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
+ {
+ 	/*
+ 	 * VM_SOFTDIRTY should not prevent from VMA merging, if we
+@@ -935,6 +937,8 @@ static inline int is_mergeable_vma(struct vm_area_struct *vma,
+ 		return 0;
+ 	if (vma->vm_ops && vma->vm_ops->close)
+ 		return 0;
++	if (!is_mergeable_vm_userfaultfd_ctx(vma, vm_userfaultfd_ctx))
++		return 0;
+ 	return 1;
+ }
+ 
+@@ -965,9 +969,11 @@ static inline int is_mergeable_anon_vma(struct anon_vma *anon_vma1,
+  */
+ static int
+ can_vma_merge_before(struct vm_area_struct *vma, unsigned long vm_flags,
+-	struct anon_vma *anon_vma, struct file *file, pgoff_t vm_pgoff)
++		     struct anon_vma *anon_vma, struct file *file,
++		     pgoff_t vm_pgoff,
++		     struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
+ {
+-	if (is_mergeable_vma(vma, file, vm_flags) &&
++	if (is_mergeable_vma(vma, file, vm_flags, vm_userfaultfd_ctx) &&
+ 	    is_mergeable_anon_vma(anon_vma, vma->anon_vma, vma)) {
+ 		if (vma->vm_pgoff == vm_pgoff)
+ 			return 1;
+@@ -984,9 +990,11 @@ can_vma_merge_before(struct vm_area_struct *vma, unsigned long vm_flags,
+  */
+ static int
+ can_vma_merge_after(struct vm_area_struct *vma, unsigned long vm_flags,
+-	struct anon_vma *anon_vma, struct file *file, pgoff_t vm_pgoff)
++		    struct anon_vma *anon_vma, struct file *file,
++		    pgoff_t vm_pgoff,
++		    struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
+ {
+-	if (is_mergeable_vma(vma, file, vm_flags) &&
++	if (is_mergeable_vma(vma, file, vm_flags, vm_userfaultfd_ctx) &&
+ 	    is_mergeable_anon_vma(anon_vma, vma->anon_vma, vma)) {
+ 		pgoff_t vm_pglen;
+ 		vm_pglen = vma_pages(vma);
+@@ -1029,7 +1037,8 @@ struct vm_area_struct *vma_merge(struct mm_struct *mm,
+ 			struct vm_area_struct *prev, unsigned long addr,
+ 			unsigned long end, unsigned long vm_flags,
+ 			struct anon_vma *anon_vma, struct file *file,
+-			pgoff_t pgoff, struct mempolicy *policy)
++			pgoff_t pgoff, struct mempolicy *policy,
++			struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
+ {
+ 	pgoff_t pglen = (end - addr) >> PAGE_SHIFT;
+ 	struct vm_area_struct *area, *next;
+@@ -1056,14 +1065,17 @@ struct vm_area_struct *vma_merge(struct mm_struct *mm,
+ 	if (prev && prev->vm_end == addr &&
+ 			mpol_equal(vma_policy(prev), policy) &&
+ 			can_vma_merge_after(prev, vm_flags,
+-						anon_vma, file, pgoff)) {
++					    anon_vma, file, pgoff,
++					    vm_userfaultfd_ctx)) {
+ 		/*
+ 		 * OK, it can.  Can we now merge in the successor as well?
+ 		 */
+ 		if (next && end == next->vm_start &&
+ 				mpol_equal(policy, vma_policy(next)) &&
+ 				can_vma_merge_before(next, vm_flags,
+-					anon_vma, file, pgoff+pglen) &&
++						     anon_vma, file,
++						     pgoff+pglen,
++						     vm_userfaultfd_ctx) &&
+ 				is_mergeable_anon_vma(prev->anon_vma,
+ 						      next->anon_vma, NULL)) {
+ 							/* cases 1, 6 */
+@@ -1084,7 +1096,8 @@ struct vm_area_struct *vma_merge(struct mm_struct *mm,
+ 	if (next && end == next->vm_start &&
+ 			mpol_equal(policy, vma_policy(next)) &&
+ 			can_vma_merge_before(next, vm_flags,
+-					anon_vma, file, pgoff+pglen)) {
++					     anon_vma, file, pgoff+pglen,
++					     vm_userfaultfd_ctx)) {
+ 		if (prev && addr < prev->vm_end)	/* case 4 */
+ 			err = vma_adjust(prev, prev->vm_start,
+ 				addr, prev->vm_pgoff, NULL);
+@@ -1570,8 +1583,8 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
+ 	/*
+ 	 * Can we just expand an old mapping?
+ 	 */
+-	vma = vma_merge(mm, prev, addr, addr + len, vm_flags, NULL, file, pgoff,
+-			NULL);
++	vma = vma_merge(mm, prev, addr, addr + len, vm_flags,
++			NULL, file, pgoff, NULL, NULL_VM_UFFD_CTX);
+ 	if (vma)
+ 		goto out;
+ 
+@@ -2757,7 +2770,7 @@ static unsigned long do_brk(unsigned long addr, unsigned long len)
+ 
+ 	/* Can we just expand an old private anonymous mapping? */
+ 	vma = vma_merge(mm, prev, addr, addr + len, flags,
+-					NULL, NULL, pgoff, NULL);
++			NULL, NULL, pgoff, NULL, NULL_VM_UFFD_CTX);
+ 	if (vma)
+ 		goto out;
+ 
+@@ -2913,7 +2926,8 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
+ 	if (find_vma_links(mm, addr, addr + len, &prev, &rb_link, &rb_parent))
+ 		return NULL;	/* should never get here */
+ 	new_vma = vma_merge(mm, prev, addr, addr + len, vma->vm_flags,
+-			vma->anon_vma, vma->vm_file, pgoff, vma_policy(vma));
++			    vma->anon_vma, vma->vm_file, pgoff, vma_policy(vma),
++			    vma->vm_userfaultfd_ctx);
+ 	if (new_vma) {
+ 		/*
+ 		 * Source vma may have been merged into new_vma
+diff --git a/mm/mprotect.c b/mm/mprotect.c
+index e7d6f11..ef5be8e 100644
+--- a/mm/mprotect.c
++++ b/mm/mprotect.c
+@@ -292,7 +292,8 @@ mprotect_fixup(struct vm_area_struct *vma, struct vm_area_struct **pprev,
+ 	 */
+ 	pgoff = vma->vm_pgoff + ((start - vma->vm_start) >> PAGE_SHIFT);
+ 	*pprev = vma_merge(mm, *pprev, start, end, newflags,
+-			vma->anon_vma, vma->vm_file, pgoff, vma_policy(vma));
++			   vma->anon_vma, vma->vm_file, pgoff, vma_policy(vma),
++			   vma->vm_userfaultfd_ctx);
+ 	if (*pprev) {
+ 		vma = *pprev;
+ 		goto success;
