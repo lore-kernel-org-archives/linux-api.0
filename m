@@ -1,40 +1,33 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [PATCH 13/19] y2038: add compat handling for sys_semtimedop
-Date: Sat, 16 May 2015 00:46:44 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1505160041370.4225@nanos>
-References: <1430929826-318934-1-git-send-email-arnd@arndb.de> <1430929826-318934-14-git-send-email-arnd@arndb.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH 17/19] y2038: use __kernel_timespec in sys_futex
+Date: Sat, 16 May 2015 00:53:17 +0200 (CEST)
+Message-ID: <alpine.DEB.2.11.1505160049210.4225@nanos>
+References: <1430929826-318934-1-git-send-email-arnd@arndb.de> <1430929826-318934-18-git-send-email-arnd@arndb.de>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1430929826-318934-14-git-send-email-arnd-r2nGTMty4D4@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, baolin.wang-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, albert.aribaud-iEu9NFBzPZE@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, ruchandani.tina-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1430929826-318934-18-git-send-email-arnd@arndb.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: y2038@lists.linaro.org, baolin.wang@linaro.org, albert.aribaud@3adev.fr, john.stultz@linaro.org, bamvor.zhangjian@linaro.org, ruchandani.tina@gmail.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, libc-alpha@sourceware.org
 List-Id: linux-api@vger.kernel.org
 
 On Wed, 6 May 2015, Arnd Bergmann wrote:
-> +SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
-> +		unsigned, nsops,
-> +		const struct __kernel_timespec  __user *, timeout)
-> +{
-> +	unsigned long jiffies_left = 0;
-> +
-> +	if (timeout) {
-> +		struct timespec64 _timeout;
-> +		if (get_timespec64(&_timeout, timeout))
 
-Moo. I had to look 3 times to get not confused by the extra
-underscore. What's wrong with a proper variable name which is easy to
-distinguish?
+> Conversion for sys_futex is particularly easy, we can use the unmodified
+> compat_sys_futex on 32-bit systems to provide compatibility for 32-bit
+> time_t, and change sys_futex to pass a __kernel_timespec, which matches
+> what future libc implementations will use as their struct timespec.
 
-> +			return -EFAULT;
+Unless I'm missing something I doubt that you get away that easy. It
+works on 32bit, but not on 64 bit with 32bit app support:
 
-> +		if (_timeout.tv_sec < 0 || _timeout.tv_nsec < 0 ||
-> +			_timeout.tv_nsec >= 1000000000L)
-> +			return -EINVAL;
+Native 64bit: 	   sys_futex()
+32bit timespec32:  compat_sys_futex()
+32bit timespec64:  ?????
 
-We have proper helper functions to validate time specs.
-
+You cannot map that to sys_futex() because the pointer size differs.
+ 
 Thanks,
 
 	tglx
