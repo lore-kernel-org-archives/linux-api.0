@@ -1,65 +1,57 @@
-From: David Hildenbrand <dahi-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH v4 02/12] KVM: define common KVM_GUESTDBG_USE_SW/HW_BP
- bits
-Date: Fri, 15 May 2015 19:33:15 +0200
-Message-ID: <20150515193315.6d3e82d2@thinkpad-w530>
-References: <1431700035-23479-1-git-send-email-alex.bennee@linaro.org>
-	<1431700035-23479-3-git-send-email-alex.bennee@linaro.org>
-	<555613F2.9060204@de.ibm.com>
+From: Jan Kiszka <jan.kiszka@siemens.com>
+Subject: Re: [PATCH v4 02/12] KVM: define common KVM_GUESTDBG_USE_SW/HW_BP bits
+Date: Fri, 15 May 2015 19:46:08 +0200
+Message-ID: <555630E0.8060305@siemens.com>
+References: <1431700035-23479-1-git-send-email-alex.bennee@linaro.org>	<1431700035-23479-3-git-send-email-alex.bennee@linaro.org>	<555613F2.9060204@de.ibm.com>
+ <20150515193315.6d3e82d2@thinkpad-w530>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <555613F2.9060204-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christian Borntraeger <borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
-Cc: Alex =?UTF-8?B?QmVubsOpZQ==?= <alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, agraf-l3A5Bk7waGM@public.gmane.org, drjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, zhichao.huang-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org, r65777-KZfg59tc24xl57MIdRCFDg@public.gmane.org, bp-l3A5Bk7waGM@public.gmane.org, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, "supporter:S390" <linux390-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, "maintainer:X86 ARCHITECTURE..." <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Gleb Natapov <gleb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Bharat Bhushan <Bharat.Bhushan-KZfg59tc24xl57MIdRCFDg@public.gmane.org>, Alexey Kardashevskiy <aik@oz>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
+In-Reply-To: <20150515193315.6d3e82d2@thinkpad-w530>
+List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
+List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
+List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
+List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
+List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
+Errors-To: kvmarm-bounces@lists.cs.columbia.edu
+Sender: kvmarm-bounces@lists.cs.columbia.edu
+To: David Hildenbrand <dahi@linux.vnet.ibm.com>, Christian Borntraeger <borntraeger@de.ibm.com>, =?UTF-8?B?QWxleCBCZW5uw6ll?= <alex.bennee@linaro.org>
+Cc: Tony Krowiak <akrowiak@linux.vnet.ibm.com>, kvm@vger.kernel.org, supporter@lists.cs.columbia.edu, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, Paul Mackerras <paulus@samba.org>, "H. Peter Anvin" <hpa@zytor.com>, kvmarm@lists.cs.columbia.edu, S390 <linux-s390@vger.kernel.org>, Michael Mueller <mimu@linux.vnet.ibm.com>, Nadav Amit <namit@cs.technion.ac.il>, Michael Ellerman <mpe@ellerman.id.au>, "maintainer:X86 ARCHITECTURE..." <x86@kernel.org>, Gleb Natapov <gleb@kernel.org>, Ingo Molnar <mingo@redhat.com>, zhichao.huang@linaro.org, r65777@freescale.com, bp@suse.de, "Jason J. Herne" <jjherne@linux.vnet.ibm.com>, marc.zyngier@arm.com, pbonzini@redhat.com, Cornelia Huck <cornelia.huck@de.ibm.com>, Thomas Gleixner <tglx@linutronix.de>, linux-arm-kernel@lists.infradead.org, Eric Farman <farman@linux.vnet.ibm.com>, list@lists.c
 List-Id: linux-api@vger.kernel.org
 
-> Am 15.05.2015 um 16:27 schrieb Alex Benn=C3=A9e:
-> > +++ b/arch/s390/include/uapi/asm/kvm.h
-> > @@ -114,8 +114,6 @@ struct kvm_fpu {
-> >  	__u64 fprs[16];
-> >  };
-> >=20
-> > -#define KVM_GUESTDBG_USE_HW_BP		0x00010000
-> [...]
-> > +++ b/include/uapi/linux/kvm.h
-> [...]
-> > +#define KVM_GUESTDBG_USE_SW_BP		(1 << 16)
-> > +#define KVM_GUESTDBG_USE_HW_BP		(1 << 17)
->=20
-> This is an ABI break for s390, no?
->=20
-> David, do you remember why we do not use KVM_GUESTDBG_USE_SW_BP?
->=20
-
-We never had to tell the kernel about software breakpoints as this is a=
-ll
-handled via 4 byte DIAG instructions until now. We don't have to turn t=
-his
-mechanism on. QEMU can directly insert the desired DIAG instructions an=
-d gets
-notified when they are about to get executed.
-
-(But we still have 2 byte breakpoint support todo - still tbd how exact=
-ly this
-will be realized - could be turned on via such a mechanism)
-
-The problem is, that these bits are arch specific, now Alex wants to un=
-ify
-them for all archs.
-
-So yes, this is an ABI break for us and breaks hardware breakpoints.(I =
-think
-the first version of this patch didn't contain this ABI break when I ha=
-d a look)
-
-I wonder if it wouldn't make more sense to
-
-- introduce new bits in the arch-unspecific section
-- rework the existing implementers to accept both bits
-
-Or to simply leave stuff as it is and handle it via arch specific bits.
-
-David
+T24gMjAxNS0wNS0xNSAxOTozMywgRGF2aWQgSGlsZGVuYnJhbmQgd3JvdGU6Cj4+IEFtIDE1LjA1
+LjIwMTUgdW0gMTY6Mjcgc2NocmllYiBBbGV4IEJlbm7DqWU6Cj4+PiArKysgYi9hcmNoL3MzOTAv
+aW5jbHVkZS91YXBpL2FzbS9rdm0uaAo+Pj4gQEAgLTExNCw4ICsxMTQsNiBAQCBzdHJ1Y3Qga3Zt
+X2ZwdSB7Cj4+PiAgCV9fdTY0IGZwcnNbMTZdOwo+Pj4gIH07Cj4+Pgo+Pj4gLSNkZWZpbmUgS1ZN
+X0dVRVNUREJHX1VTRV9IV19CUAkJMHgwMDAxMDAwMAo+PiBbLi4uXQo+Pj4gKysrIGIvaW5jbHVk
+ZS91YXBpL2xpbnV4L2t2bS5oCj4+IFsuLi5dCj4+PiArI2RlZmluZSBLVk1fR1VFU1REQkdfVVNF
+X1NXX0JQCQkoMSA8PCAxNikKPj4+ICsjZGVmaW5lIEtWTV9HVUVTVERCR19VU0VfSFdfQlAJCSgx
+IDw8IDE3KQo+Pgo+PiBUaGlzIGlzIGFuIEFCSSBicmVhayBmb3IgczM5MCwgbm8/Cj4+Cj4+IERh
+dmlkLCBkbyB5b3UgcmVtZW1iZXIgd2h5IHdlIGRvIG5vdCB1c2UgS1ZNX0dVRVNUREJHX1VTRV9T
+V19CUD8KPj4KPiAKPiBXZSBuZXZlciBoYWQgdG8gdGVsbCB0aGUga2VybmVsIGFib3V0IHNvZnR3
+YXJlIGJyZWFrcG9pbnRzIGFzIHRoaXMgaXMgYWxsCj4gaGFuZGxlZCB2aWEgNCBieXRlIERJQUcg
+aW5zdHJ1Y3Rpb25zIHVudGlsIG5vdy4gV2UgZG9uJ3QgaGF2ZSB0byB0dXJuIHRoaXMKPiBtZWNo
+YW5pc20gb24uIFFFTVUgY2FuIGRpcmVjdGx5IGluc2VydCB0aGUgZGVzaXJlZCBESUFHIGluc3Ry
+dWN0aW9ucyBhbmQgZ2V0cwo+IG5vdGlmaWVkIHdoZW4gdGhleSBhcmUgYWJvdXQgdG8gZ2V0IGV4
+ZWN1dGVkLgo+IAo+IChCdXQgd2Ugc3RpbGwgaGF2ZSAyIGJ5dGUgYnJlYWtwb2ludCBzdXBwb3J0
+IHRvZG8gLSBzdGlsbCB0YmQgaG93IGV4YWN0bHkgdGhpcwo+IHdpbGwgYmUgcmVhbGl6ZWQgLSBj
+b3VsZCBiZSB0dXJuZWQgb24gdmlhIHN1Y2ggYSBtZWNoYW5pc20pCj4gCj4gVGhlIHByb2JsZW0g
+aXMsIHRoYXQgdGhlc2UgYml0cyBhcmUgYXJjaCBzcGVjaWZpYywgbm93IEFsZXggd2FudHMgdG8g
+dW5pZnkKPiB0aGVtIGZvciBhbGwgYXJjaHMuCj4gCj4gU28geWVzLCB0aGlzIGlzIGFuIEFCSSBi
+cmVhayBmb3IgdXMgYW5kIGJyZWFrcyBoYXJkd2FyZSBicmVha3BvaW50cy4oSSB0aGluawo+IHRo
+ZSBmaXJzdCB2ZXJzaW9uIG9mIHRoaXMgcGF0Y2ggZGlkbid0IGNvbnRhaW4gdGhpcyBBQkkgYnJl
+YWsgd2hlbiBJIGhhZCBhIGxvb2spCj4gCj4gSSB3b25kZXIgaWYgaXQgd291bGRuJ3QgbWFrZSBt
+b3JlIHNlbnNlIHRvCj4gCj4gLSBpbnRyb2R1Y2UgbmV3IGJpdHMgaW4gdGhlIGFyY2gtdW5zcGVj
+aWZpYyBzZWN0aW9uCj4gLSByZXdvcmsgdGhlIGV4aXN0aW5nIGltcGxlbWVudGVycyB0byBhY2Nl
+cHQgYm90aCBiaXRzCj4gCj4gT3IgdG8gc2ltcGx5IGxlYXZlIHN0dWZmIGFzIGl0IGlzIGFuZCBo
+YW5kbGUgaXQgdmlhIGFyY2ggc3BlY2lmaWMgYml0cy4KCldpdGggb25lIGFyY2ggcHJvdmluZyB0
+aGUgImFsbCBuZWVkIHRoaXMiIHRoZW9yeSB3cm9uZywganVzdCBkcm9wIHRoaXMKcGF0Y2guIEV2
+ZW4gcXVpY2tlciB3aGVuIGl0IGJyZWFrcyBhbiBBQkkuCgpKYW4KCi0tIApTaWVtZW5zIEFHLCBD
+b3Jwb3JhdGUgVGVjaG5vbG9neSwgQ1QgUlRDIElUUCBTRVMtREUKQ29ycG9yYXRlIENvbXBldGVu
+Y2UgQ2VudGVyIEVtYmVkZGVkIExpbnV4Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fCmt2bWFybSBtYWlsaW5nIGxpc3QKa3ZtYXJtQGxpc3RzLmNzLmNvbHVt
+YmlhLmVkdQpodHRwczovL2xpc3RzLmNzLmNvbHVtYmlhLmVkdS9tYWlsbWFuL2xpc3RpbmZvL2t2
+bWFybQo=
