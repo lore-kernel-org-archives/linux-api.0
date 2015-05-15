@@ -1,265 +1,66 @@
-From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH V6 05/10] audit: log creation and deletion of namespace
- instances
-Date: Thu, 14 May 2015 20:48:55 -0400
-Message-ID: <20150515004855.GB10526@madcap2.tricolour.ca>
-References: <cover.1429252659.git.rgb@redhat.com>
- <2487286.y6vyJ9A3er@x2>
- <20150512195759.GA9832@madcap2.tricolour.ca>
- <2918460.dpKocsKt4o@x2>
+From: Robert Bragg <robert-St23OQVBDYPNLxjTenLetw@public.gmane.org>
+Subject: Re: [RFC PATCH 00/11] drm/i915: Expose OA metrics via perf PMU
+Date: Fri, 15 May 2015 02:07:29 +0100
+Message-ID: <CAMou1-1Q1_kKGrRPz36Fox=gxhGF6v+DiR5HZ6TOyQyxtMsysA@mail.gmail.com>
+References: <1431008154-6833-1-git-send-email-robert@sixbynine.org> <20150508162452.GR27504@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <2918460.dpKocsKt4o@x2>
+In-Reply-To: <20150508162452.GR27504-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org, pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, arozansk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org, zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Daniel Vetter <daniel.vetter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 15/05/14, Steve Grubb wrote:
-> On Tuesday, May 12, 2015 03:57:59 PM Richard Guy Briggs wrote:
-> > On 15/05/05, Steve Grubb wrote:
-> > > I think there needs to be some more discussion around this. It seems like
-> > > this is not exactly recording things that are useful for audit.
-> > 
-> > It seems to me that either audit has to assemble that information, or
-> > the kernel has to do so.  The kernel doesn't know about containers
-> > (yet?).
-> 
-> Auditing is something that has a lot of requirements imposed on it by security 
-> standards. There was no requirement to have an auid until audit came along and 
-> said that uid is not good enough to know who is issuing commands because of su 
-> or sudo. There was no requirement for sessionid until we had to track each 
-> action back to a login so we could see if the login came from the expected 
-> place. 
-> 
-> What I am saying is we have the same situation. Audit needs to track a 
-> container and we need an ID. The information that is being logged is not 
-> useful for auditing. Maybe someone wants that info in syslog, but I doubt it. 
-> The audit trail's purpose is to allow a security officer to reconstruct the 
-> events to determine what happened during some security incident.
+On Fri, May 8, 2015 at 5:24 PM, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+> On Thu, May 07, 2015 at 03:15:43PM +0100, Robert Bragg wrote:
+>
+>> I've changed the uapi for configuring the i915_oa specific attributes
+>> when calling perf_event_open(2) whereby instead of cramming lots of
+>> bitfields into the perf_event_attr config members, I'm now
+>> daisy-chaining a drm_i915_oa_event_attr_t structure off of a single
+>> config member that's extensible and validated in the same way as the
+>> perf_event_attr struct. I've found this much nicer to work with while
+>> being neatly extensible too.
+>
+> This worries me a bit.. is there more background for this?
 
-I agree the information being logged is not yet useful, but it is a
-component of what would be.  I wasn't ever thinking about syslog...  It
-is this trail that I was trying to help create.
+Would it maybe be helpful to see the before and after? I had kept this
+uapi change in a separate patch for a while locally but in the end
+decided to squash it before sending out my updated series.
 
-> What they would want to know is what resources were assigned; if two 
-> containers shared a resource, what resource and container was it shared with; 
-> if two containers can communicate, we need to see or control information flow 
-> when necessary; and we need to see termination and release of resources.
+Although I did find it a bit awkward with the bitfields, I was mainly
+concerned about the extensibility of packing logically separate
+attributes into the config members and had heard similar concerns from
+a few others who had been experimenting with my patches too.
 
-So, namespaces are a big part of this.  I understand how they are
-spawned and potentially shared.  I have a more vague idea about how
-cgroups contribute to this concept of a container.  So far, I have very
-little idea how seccomp contributes, but I assume that it will also need
-to be part of this tracking.
+A few simple attributes I can think of a.t.m that we might want to add
+in the future are:
+- control of the OABUFFER size
+- a way to ask the kernel to collect reports at the beginning and end
+of batch buffers, in addition to periodic reports
+- alternative ways to uniquely identify a context to support tools
+profiling a single context not necessarily owned by the current
+process
 
-> Also, if the host OS cannot make sense of the information being logged because 
-> the pid maps to another process name, or a uid maps to another user, or a file 
-> access maps to something not in the host's, then we need the container to do 
-> its own auditing and resolve these mappings and optionally pass these to an 
-> aggregation server.
+It could also be interesting to expose some counter configuration
+through these attributes too. E.g. on Broadwell+ we have 14 'Flexible
+EU' counters included in the OA unit reports, each with a 16bit
+configuration.
 
-I'm open to both being possible.
+In a more extreme case it might also be useful to allow userspace to
+specify a complete counter config, which (depending on the
+configuration) could be over 100 32bit values to select the counter
+signals + configure the corresponding combining logic.
 
-> Nothing else makes sense.
-> 
-> > > On Friday, April 17, 2015 03:35:52 AM Richard Guy Briggs wrote:
-> > > > Log the creation and deletion of namespace instances in all 6 types of
-> > > > namespaces.
-> > > > 
-> > > > Twelve new audit message types have been introduced:
-> > > > AUDIT_NS_INIT_MNT       1330    /* Record mount namespace instance
-> > > > creation
-> > > > */ AUDIT_NS_INIT_UTS       1331    /* Record UTS namespace instance
-> > > > creation */ AUDIT_NS_INIT_IPC       1332    /* Record IPC namespace
-> > > > instance creation */ AUDIT_NS_INIT_USER      1333    /* Record USER
-> > > > namespace instance creation */ AUDIT_NS_INIT_PID       1334    /* Record
-> > > > PID namespace instance creation */ AUDIT_NS_INIT_NET       1335    /*
-> > > > Record NET namespace instance creation */ AUDIT_NS_DEL_MNT        1336
-> > > > /* Record mount namespace instance deletion */ AUDIT_NS_DEL_UTS       
-> > > > 1337
-> > > > 
-> > > >    /* Record UTS namespace instance deletion */ AUDIT_NS_DEL_IPC
-> > > > 
-> > > > 1338    /* Record IPC namespace instance deletion */ AUDIT_NS_DEL_USER
-> > > > 
-> > > >  1339    /* Record USER namespace instance deletion */ AUDIT_NS_DEL_PID
-> > > >  
-> > > >    1340    /* Record PID namespace instance deletion */ AUDIT_NS_DEL_NET
-> > > >    
-> > > >     1341    /* Record NET namespace instance deletion */
-> > > 
-> > > The requirements for auditing of containers should be derived from VPP. In
-> > > it, it asks for selectable auditing, selective audit, and selective audit
-> > > review. What this means is that we need the container and all its
-> > > children to have one identifier that is inserted into all the events that
-> > > are associated with the container.
-> > 
-> > Is that requirement for the records that are sent from the kernel, or
-> > for the records stored by auditd, or by another facility that delivers
-> > those records to a final consumer?
-> 
-> A little of both. Selective audit means that you can set rules to include or 
-> exclude an event. This is done in the kernel. Selectable review means that the 
-> user space tools need to be able to skip past records not of interest to a 
-> specific line of inquiry. Also, logging everything and letting user space work 
-> it out later is also not a solution because the needle is harder to find in a 
-> larger haystack. Or, the logs may rotate and its gone forever because the 
-> partition is filled. 
+Since this pmu is in a device driver it also seemed reasonably
+appropriate to de-couple it slightly from the core perf_event_attr
+structure by allowing driver extensible attributes.
 
-I agree it needs to be a balance of flexibility and efficiency.
+I wonder if it might be less worrisome if the i915_oa_copy_attr() code
+were instead a re-usable utility perhaps maintained in events/core.c,
+so if other pmu drivers were to follow suite there would be less risk
+of a mistake being made here?
 
-> > > With this, its possible to do a search for all events related to a
-> > > container. Its possible to exclude events from a container. Its possible
-> > > to not get any events.
-> > > 
-> > > The requirements also call out for the identification of the subject. This
-> > > means that the event should be bound to a syscall such as clone, setns, or
-> > > unshare.
-> > 
-> > Is it useful to have a reference of the init namespace set from which
-> > all others are spawned?
-> 
-> For things directly observable by the init name space, yes.
-
-Ok, so we'll need to have a way to document that initial state on boot
-before any other processes start, preferably in one clear brief record.
-
-> > If it isn't bound, I assume the subject should be added to the message
-> > format?  I'm thinking of messages without an audit_context such as audit
-> > user messages (such as AUDIT_NS_INFO and AUDIT_VIRT_CONTROL).
-> 
-> Making these events auxiliary records to a syscall is all that is needed. The 
-> same way that PATH is added to an open event. If someone wants to have 
-> container/namespace events, they add a rule on clone(2).
-
-This doesn't make sense.  The point of this type of record is to have a
-way for a userspace container manager (which maybe should have a new CAP
-type) to tie the creation of namespaces to a specific container name or
-ID.  It might even contain cgroup and/or seccomp info.
-
-> > For now, we should not need to log namespaces with AUDIT_FEATURE_CHANGE
-> > or AUDIT_CONFIG_CHANGE messages since only initial user namespace with
-> > initial pid namespace has permission to do so.  This will need to be
-> > addressed by having non-init config changes be limited to that container
-> > or set of namespaces and possibly its children.  The other possibility
-> > is to add the subject to the stand-alone message.
-> > 
-> > > Also, any user space events originating inside the container needs to have
-> > > the container ID added to the user space event - just like auid and
-> > > session id.
-> >
-> > This sounds like every task needs to record a container ID since that
-> > information is otherwise unknown by the kernel except by what might be
-> > provided by an audit user message such as AUDIT_VIRT_CONTROL or possibly
-> > the new AUDIT_NS_INFO request.
-> 
-> Right. The same as we record auid and ses on every event. We'll need a 
-> container ID logged with everything. -1 for unset, meaning init namespace.
-
-Ok, that might remove the need for the reply I just wrote above.
-
-> > It could be stored in struct task_struct or in struct audit_context.  I
-> > don't have a suggestion on how to get that information securely into the
-> > kernel.
-> 
-> That is where I'd suggest. Its for audit subsystem needs.
-
-struct audit_context would be my choice.
-
-> > > Recording each instance of a name space is giving me something that I
-> > > cannot use to do queries required by the security target. Given these
-> > > events, how do I locate a web server event where it accesses a watched
-> > > file? That authentication failed? That an update within the container
-> > > failed?
-> > > 
-> > > The requirements are that we have to log the creation, suspension,
-> > > migration, and termination of a container. The requirements are not on
-> > > the individual name space.
-> > 
-> > Ok.  Do we have a robust definition of a container? 
-> 
-> We call the combination of name spaces, cgroups, and seccomp rules a 
-> container.
-
-Can you detail what information is required from each?
-
-> > Where is that definition managed?
-> 
-> In the thing that invokes a container.
-
-I was looking for a reference to a standards document rather than an
-application...
-
-> > If it is a userspace concept, then I think either userspace should be
-> > assembling this information, or providing that information to the entity
-> > that will be expected to know about and provide it.
-> 
-> Well, uid is a userspace concept, too. But we record an auid and keep it 
-> immutable so that we can check enforcement of system security policy which is 
-> also a user space concept. These things need to be collected to a place that 
-> can be associated with events as needed. That place is the kernel.
-
-I am fine with putting that in the kernel if that is what makes most
-sense.
-
-> > > Maybe I'm missing how these events give me that. But I'd like to
-> > > hear how I would be able to meet requirements with these 12
-> > > events.
-> > 
-> > Adding the infrastructure to give each of those 12 events an audit
-> > context to be able to give meaningful subject fields in audit records
-> > appears to require adding a struct task_struct argument to calls to
-> > copy_mnt_ns(), copy_utsname(), copy_ipcs(), copy_pid_ns(),
-> > copy_net_ns(), create_user_ns() unless I use current.  I think we must
-> > use current since the userns is created before the spawned process is
-> > mature or has an audit context in the case of clone.
-> 
-> I think you are heading down the wrong path.
-
-That's why I started questioning it...
-
-> We can tell from syscall flags what is being done. Try this:
-> 
-> ## Optional - log container creation
-> -a always,exit -F arch=b32 -S clone -F a0&0x7C020000 -F key=container-create
-> -a always,exit -F arch=b64 -S clone -F a0&0x7C020000 -F key=container-create
-> 
-> ## Optional - watch for containers that may change their configuration
-> -a always,exit -F arch=b32 -S unshare,setns -F key=container-config
-> -a always,exit -F arch=b64 -S unshare,setns -F key=container-config
-> 
-> Then muck with containers, then use ausearch --start recent -k container -i. I 
-> think you'll see that we know a bit about what's happening. What's needed is 
-> the breadcrumb trail to tie future events back to the container so that we can 
-> check for violations of host security policy.
-
-Agreed.
-
-> > Either that, or I have mis-understood and I should be stashing this
-> > namespace ID information in an audit_aux_data structure or a more
-> > permanent part of struct audit_context to be printed when required on
-> > syscall exit.  I'm trying to think through if it is needed in any
-> > non-syscall audit messages.
-> 
-> I think this is what is required. But we also have the issue where an event's 
-> meaning can't be determined outside of a container. (For example, login, 
-> account creation, password change, uid change, file access, etc.) So, I think 
-> auditing needs to be local to the container for enrichment and ultimately 
-> forwarded to an aggregating server.
-
-There are some events that will mean more to different layers...
-They should be determined by the rules in each auditd jurisdiction,
-potentially one per user namespace.
-
-> -Steve
-
-- RGB
-
---
-Richard Guy Briggs <rbriggs-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Senior Software Engineer, Kernel Security, AMER ENG Base Operating Systems, Red Hat
-Remote, Ottawa, Canada
-Voice: +1.647.777.2635, Internal: (81) 32635, Alt: +1.613.693.0684x3545
+Regards,
+- Robert
