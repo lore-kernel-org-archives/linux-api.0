@@ -1,71 +1,26 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [GIT PULL] kselftest fixes for 4.1-rc4
-Date: Fri, 15 May 2015 12:47:51 -0600
-Message-ID: <55563F57.1060703@osg.samsung.com>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [PATCH v8 12/16] ARM: Add STM32 family machine
+Date: Fri, 15 May 2015 21:57:52 +0200
+Message-ID: <4888184.iVzlIKQk94@wuerfel>
+References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com> <1431158038-3813-13-git-send-email-mcoquelin.stm32@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1431158038-3813-13-git-send-email-mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Tyler Baker <tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, stefan-XLVq0VzYD2Y@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org, pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org, peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org, andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org, Vladimir Zapolskiy <vladimir_zapolskiy-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>, lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm@linux-foundation.>
 List-Id: linux-api@vger.kernel.org
 
-Hi Linus,
+On Saturday 09 May 2015 09:53:54 Maxime Coquelin wrote:
+> STMicrolectronics's STM32 series is a family of Cortex-M
+> microcontrollers. It is used in various applications, and
+> proposes a wide range of peripherals.
+> 
+> Tested-by: Chanwoo Choi <cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+> Signed-off-by: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-Please pull the following Kselftest fixes for 4.1-rc4
+Applied to next/soc, thanks
 
-thanks,
--- Shuah
-
-
-The following changes since commit b787f68c36d49bb1d9236f403813641efa74a031:
-
-  Linux 4.1-rc1 (2015-04-26 17:59:10 -0700)
-
-are available in the git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/shuah/linux-kselftest
-tags/linux-kselftest-4.1-rc4
-
-for you to fetch changes up to e9886ace222eb48bb57bd541320056ca334bd3a0:
-
-  selftests, x86: Rework x86 target architecture detection (2015-05-12
-20:02:40 -0600)
-
-----------------------------------------------------------------
-linux-kselftest-4.1-rc4
-
-Urgent fix for Kselftest regression introduced in 4.1-rc1
-by the new x86 test due to its hard dependency on 32-bit
-build environment. A set of 5 patches fix the make kselftest
-run and kselftest install.
-
-----------------------------------------------------------------
-Andy Lutomirski (2):
-      selftests, x86: Remove useless run_tests rule
-      selftests, x86: Rework x86 target architecture detection
-
-Tyler Baker (3):
-      selftest/x86: build both bitnesses
-      selftest/x86: have no dependency on all when cross building
-      selftests/x86: install tests
-
- tools/testing/selftests/x86/Makefile               | 53
-+++++++++++++---------
- tools/testing/selftests/x86/check_cc.sh            | 16 +++++++
- tools/testing/selftests/x86/run_x86_tests.sh       | 13 ------
- .../testing/selftests/x86/trivial_32bit_program.c  |  4 ++
- .../testing/selftests/x86/trivial_64bit_program.c  | 18 ++++++++
- 5 files changed, 69 insertions(+), 35 deletions(-)
- create mode 100755 tools/testing/selftests/x86/check_cc.sh
- delete mode 100644 tools/testing/selftests/x86/run_x86_tests.sh
- create mode 100644 tools/testing/selftests/x86/trivial_64bit_program.c
-
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+	Arnd
