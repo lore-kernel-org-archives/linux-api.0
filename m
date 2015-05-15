@@ -1,154 +1,62 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH v2] Documentation/arch: Add kernel feature descriptions
- and arch support status under Documentation/features/
-Date: Fri, 15 May 2015 11:37:50 +0200
-Message-ID: <20150515093750.GA4665@gmail.com>
-References: <20150513094622.GC11030@gmail.com>
- <20150513094756.GD11030@gmail.com>
- <20150513131835.GJ1517@pd.tnic>
- <20150513134842.GA1657@gmail.com>
- <20150513162757.GA21894@x>
- <20150513150523.ddd65d7cd51f820b78f0c8e3@linux-foundation.org>
- <20150514101518.GA27550@gmail.com>
- <20150514103544.GA7027@gmail.com>
- <20150514123835.1bf436bc35d711f8dbf9bc0f@linux-foundation.org>
- <20150514195925.GA27570@gmail.com>
+From: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+Subject: Re: [PATCH v2 1/3] pagemap: add mmap-exclusive bit for marking pages
+ mapped only here
+Date: Fri, 15 May 2015 12:39:05 +0300
+Message-ID: <5555BEB9.6000905@yandex-team.ru>
+References: <20150512090156.24768.2521.stgit@buzz>	<20150512094303.24768.10282.stgit@buzz>	<CAEVpBaLm9eicuFPmyRLa7GddLwtBJh3XzHT=fxj-h0YwwmXQOg@mail.gmail.com>	<55532CB0.6070400@yandex-team.ru> <CAEVpBa+r6AuB7hnCnTm8YKHzaj172q7Wy89yT=P_F6GQG-3-1A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150514195925.GA27570@gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Josh Triplett <josh@joshtriplett.org>, Borislav Petkov <bp@alien8.de>, Jonathan Corbet <corbet@lwn.net>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, x86@kernel.org, linux-arch@vger.kernel.org
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAEVpBa+r6AuB7hnCnTm8YKHzaj172q7Wy89yT=P_F6GQG-3-1A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Mark Seaborn <mseaborn-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Daniel James <djames-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, Finn Grimwood <fgrimwood-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On 14.05.2015 21:50, Mark Williamson wrote:
+> Hi Konstantin,
+>
+> On Wed, May 13, 2015 at 11:51 AM, Konstantin Khlebnikov
+> <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org> wrote:
+>> On 12.05.2015 15:05, Mark Williamson wrote:
+> <snip>
+>>>    1. I was hoping we'd be able to backport a compatible fix to older
+>>> kernels that might adopt the pagemap permissions change.  Using the V2
+>>> format flags rules out doing this for kernels that are too old to have
+>>> soft-dirty, I think.
+>>>
+>>>    2. From our software's PoV, I feel it's worth noting that it doesn't
+>>> strictly fix ABI compatibility, though I realise that's probably not
+>>> your primary concern here.  We'll need to modify our code to write the
+>>> clear_refs file but that change is OK for us if it's the preferred
+>>> solution.
+> <snip>
+>> I prefer to backport v2 format (except soft-dirty bit and clear_refs)
+>> into older kernels. Page-shift bits are barely used so nobody will see
+>> the difference.
+>
+> My concern was whether a change to format would be acceptable to
+> include in the various -stable kernels; they are already including the
+> additional protections on pagemap, so we're starting to need our
+> fallback mode in distributions.  Do you think that such a patch would
+> be acceptable there?
+>
+> (As an application vendor we're likely to be particularly stuck with
+> what the commercial distributions decide to ship, which is why I'm
+> trying to keep an eye on this)
+>
+> I appreciate that this is a slightly administrative concern!  I
+> definitely like the technical approach of this code and it seems to
+> work fine for us.
 
-* Ingo Molnar <mingo@kernel.org> wrote:
+I cannot guarantee that v2 format will be accepted into stable kernels
+and into distributives. I'm not the gate keeper.
 
-> > > This directory structure can be used in the future to add other 
-> > > files - such as porting guides, testing description, etc.
-> > 
-> > I suppose so.  Having a great bunch of directories, each 
-> > containing a single file is a bit odd.
-> 
-> It's a starting point and nicely extensible. I was thinking about 
-> one more intermediate level:
-> 
->    Documentation/features/locking/lockdep/
->    Documentation/features/locking/rwsem-optimized/
->    Documentation/features/locking/queued-rwlocks/
->    Documentation/features/locking/queued-spinlocks/
->    ...
-> 
->    Documentation/features/vm/PG_uncached/
->    Documentation/features/vm/pmdp_splitting_flush/
->    Documentation/features/vm/pte_special/
->    ...
-> 
-> The advantage of this, beyond more structure, would be that I'd 
-> probably move most of the Documentation/locking/*.txt files into 
-> Documentation/features/locking/, for example lockdep-design.txt 
-> would go into Documentation/features/locking/lockdep/.
-> 
-> I'd keep the hierarchy at a predictable depth though, i.e.:
-> 
->    Documentation/features/<subsystem>/<feature_name>/
+As a fallback probably you should invent some kind of suid helper
+which gives you access to required information without exposing pfn.
+For example: it gets pids and memory ranges as arguments and prints
+bitmap of CoWed pages into stdout.
 
-So I've implemented this, the high level structure now looks like 
-this:
-
- triton:~/tip/Documentation/features> ls -l
- total 48
- -rw-rw-r--  1 mingo mingo  396 May 15 11:26 arch-support.txt
- drwxrwxr-x  6 mingo mingo 4096 May 15 11:26 core
- drwxrwxr-x 12 mingo mingo 4096 May 15 11:26 debug
- drwxrwxr-x  6 mingo mingo 4096 May 15 11:26 io
- drwxrwxr-x  3 mingo mingo 4096 May 15 11:26 lib
- -rwxrwxr-x  1 mingo mingo  692 May 15 11:31 list-arch.sh
- drwxrwxr-x  7 mingo mingo 4096 May 15 11:26 locking
- drwxrwxr-x  5 mingo mingo 4096 May 15 11:26 perf
- drwxrwxr-x  3 mingo mingo 4096 May 15 11:26 sched
- drwxrwxr-x  3 mingo mingo 4096 May 15 11:26 seccomp
- drwxrwxr-x  8 mingo mingo 4096 May 15 11:26 time
- drwxrwxr-x 10 mingo mingo 4096 May 15 11:26 vm
- triton:~/tip/Documentation/features> 
-
- triton:~/tip/Documentation/features> ls -l locking/
- total 20
- drwxrwxr-x 2 mingo mingo 4096 May 15 11:26 cmpxchg-local
- drwxrwxr-x 2 mingo mingo 4096 May 15 11:26 lockdep
- drwxrwxr-x 2 mingo mingo 4096 May 15 11:26 queued-rwlocks
- drwxrwxr-x 2 mingo mingo 4096 May 15 11:26 queued-spinlocks
- drwxrwxr-x 2 mingo mingo 4096 May 15 11:26 rwsem-optimized
-
- triton:~/tip/Documentation/features> ls -l vm/
- total 32
- drwxrwxr-x 2 mingo mingo 4096 May 15 11:26 ELF-ASLR
- drwxrwxr-x 2 mingo mingo 4096 May 15 11:26 huge-vmap
- drwxrwxr-x 2 mingo mingo 4096 May 15 11:26 ioremap_prot
- drwxrwxr-x 2 mingo mingo 4096 May 15 11:26 numa-memblock
- drwxrwxr-x 2 mingo mingo 4096 May 15 11:26 PG_uncached
- drwxrwxr-x 2 mingo mingo 4096 May 15 11:26 pmdp_splitting_flush
- drwxrwxr-x 2 mingo mingo 4096 May 15 11:26 pte_special
- drwxrwxr-x 2 mingo mingo 4096 May 15 11:26 THP
-
-And this structure, beyond making it easier to navigate, can be 
-utilized to improve the visualization output as well:
-
- triton:~/tip/Documentation/features> ./list-arch.sh
- #
- # Kernel feature support matrix of the 'x86' architecture:
- #
-      core/ BPF-JIT              :  ok  |                        HAVE_BPF_JIT #  arch supports BPF JIT optimizations
-      core/ generic-idle-thread  :  ok  |             GENERIC_SMP_IDLE_THREAD #  arch makes use of the generic SMP idle thread facility
-      core/ jump-labels          :  ok  |                HAVE_ARCH_JUMP_LABEL #  arch supports live patched, high efficiency branches
-      core/ tracehook            :  ok  |                 HAVE_ARCH_TRACEHOOK #  arch supports tracehook (ptrace) register handling APIs
-     debug/ gcov-profile-all     :  ok  |           ARCH_HAS_GCOV_PROFILE_ALL #  arch supports whole-kernel GCOV code coverage profiling
-     debug/ KASAN                :  ok  |                     HAVE_ARCH_KASAN #  arch supports the KASAN runtime memory checker
-     debug/ kgdb                 :  ok  |                      HAVE_ARCH_KGDB #  arch supports the kGDB kernel debugger
-     debug/ kprobes              :  ok  |                        HAVE_KPROBES #  arch supports live patched kernel probe
-     debug/ kprobes-on-ftrace    :  ok  |              HAVE_KPROBES_ON_FTRACE #  arch supports combined kprobes and ftrace live patching
-     debug/ kretprobes           :  ok  |                     HAVE_KRETPROBES #  arch supports kernel function-return probes
-     debug/ optprobes            :  ok  |                      HAVE_OPTPROBES #  arch supports live patched optprobes
-     debug/ stackprotector       :  ok  |              HAVE_CC_STACKPROTECTOR #  arch supports compiler driven stack overflow protection
-     debug/ uprobes              :  ok  |               ARCH_SUPPORTS_UPROBES #  arch supports live patched user probes
-     debug/ user-ret-profiler    :  ok  |           HAVE_USER_RETURN_NOTIFIER #  arch supports user-space return from system call profiler
-        io/ dma-api-debug        :  ok  |                  HAVE_DMA_API_DEBUG #  arch supports DMA debug facilities
-        io/ dma-contiguous       :  ok  |                 HAVE_DMA_CONTIGUOUS #  arch supports the DMA CMA (continuous memory allocator)
-        io/ dma_map_attrs        :  ok  |                      HAVE_DMA_ATTRS #  arch provides dma_*map*_attrs() APIs
-        io/ sg-chain             :  ok  |                   ARCH_HAS_SG_CHAIN #  arch supports chained scatter-gather lists
-       lib/ strncasecmp          : TODO |             __HAVE_ARCH_STRNCASECMP #  arch provides an optimized strncasecmp() function
-   locking/ cmpxchg-local        :  ok  |                  HAVE_CMPXCHG_LOCAL #  arch supports the this_cpu_cmpxchg() API
-   locking/ lockdep              :  ok  |                     LOCKDEP_SUPPORT #  arch supports the runtime locking correctness debug facility
-   locking/ queued-rwlocks       :  ok  |             ARCH_USE_QUEUED_RWLOCKS #  arch supports queued rwlocks
-   locking/ queued-spinlocks     :  ok  |           ARCH_USE_QUEUED_SPINLOCKS #  arch supports queued spinlocks
-   locking/ rwsem-optimized      :  ok  |               Optimized asm/rwsem.h #  arch provides optimized rwsem APIs
-      perf/ kprobes-event        :  ok  |      HAVE_REGS_AND_STACK_ACCESS_API #  arch supports kprobes with perf events
-      perf/ perf-regs            :  ok  |                      HAVE_PERF_REGS #  arch supports perf events register access
-      perf/ perf-stackdump       :  ok  |           HAVE_PERF_USER_STACK_DUMP #  arch supports perf events stack dumps
-     sched/ numa-balancing       :  ok  |        ARCH_SUPPORTS_NUMA_BALANCING #  arch supports NUMA balancing
-   seccomp/ seccomp-filter       :  ok  |            HAVE_ARCH_SECCOMP_FILTER #  arch supports seccomp filters
-      time/ arch-tick-broadcast  : TODO |             ARCH_HAS_TICK_BROADCAST #  arch provides tick_broadcast()
-      time/ clockevents          :  ok  |                 GENERIC_CLOCKEVENTS #  arch support generic clock events
-      time/ context-tracking     :  ok  |               HAVE_CONTEXT_TRACKING #  arch supports context tracking for NO_HZ_FULL
-      time/ irq-time-acct        :  ok  |            HAVE_IRQ_TIME_ACCOUNTING #  arch supports precise IRQ time accounting
-      time/ modern-timekeeping   :  ok  |            !ARCH_USES_GETTIMEOFFSET #  arch does not use arch_gettimeoffset() anymore
-      time/ virt-cpuacct         :  ok  |            HAVE_VIRT_CPU_ACCOUNTING #  arch supports precise virtual CPU time accounting
-        vm/ ELF-ASLR             :  ok  |              ARCH_HAS_ELF_RANDOMIZE #  arch randomizes the stack, heap and binary images of ELF binaries
-        vm/ huge-vmap            :  ok  |                 HAVE_ARCH_HUGE_VMAP #  arch supports the ioremap_pud_enabled() and ioremap_pmd_enabled() VM APIs
-        vm/ ioremap_prot         :  ok  |                   HAVE_IOREMAP_PROT #  arch has ioremap_prot()
-        vm/ numa-memblock        :  ok  |              HAVE_MEMBLOCK_NODE_MAP #  arch supports NUMA aware memblocks
-        vm/ PG_uncached          :  ok  |               ARCH_USES_PG_UNCACHED #  arch supports the PG_uncached page flag
-        vm/ pmdp_splitting_flush :  ok  |    __HAVE_ARCH_PMDP_SPLITTING_FLUSH #  arch supports the pmdp_splitting_flush() VM API
-        vm/ pte_special          :  ok  |             __HAVE_ARCH_PTE_SPECIAL #  arch supports the pte_special()/pte_mkspecial() VM APIs
-        vm/ THP                  :  ok  |      HAVE_ARCH_TRANSPARENT_HUGEPAGE #  arch supports transparent hugepages
-
-See the first column, the subsystem prefixes - this organizes the 
-feature list in a natural way as well, per subsystem.
-
-Seems to work out well.
-
-Thanks,
-
-	Ingo
+-- 
+Konstantin
