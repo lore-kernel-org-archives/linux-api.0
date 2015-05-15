@@ -1,47 +1,93 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [CFT][PATCH 0/10] Making new mounts of proc and sysfs as safe as bind mounts
-Date: Fri, 15 May 2015 01:55:38 -0500
-Message-ID: <87617u1g9h.fsf@x220.int.ebiederm.org>
-References: <87pp63jcca.fsf@x220.int.ebiederm.org>
-	<20150514202951.GA16416@kroah.com>
-	<87oalmg90j.fsf@x220.int.ebiederm.org>
-	<CALCETrU1yxcDfv4YV3wVpWMAdiOOsSUFOPUpFAN-mVA4M-OxdQ@mail.gmail.com>
+From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2] Documentation/arch: Add kernel feature descriptions
+ and arch support status under Documentation/features/
+Date: Fri, 15 May 2015 09:38:06 +0200
+Message-ID: <20150515073805.GA14993@gmail.com>
+References: <20150513094756.GD11030@gmail.com>
+ <20150513131835.GJ1517@pd.tnic>
+ <20150513134842.GA1657@gmail.com>
+ <20150513162757.GA21894@x>
+ <20150513150523.ddd65d7cd51f820b78f0c8e3@linux-foundation.org>
+ <20150514101518.GA27550@gmail.com>
+ <20150514103544.GA7027@gmail.com>
+ <20150514123835.1bf436bc35d711f8dbf9bc0f@linux-foundation.org>
+ <20150514195925.GA27570@gmail.com>
+ <20150515083334.535ad43e@canb.auug.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrU1yxcDfv4YV3wVpWMAdiOOsSUFOPUpFAN-mVA4M-OxdQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-	(Andy Lutomirski's message of "Thu, 14 May 2015 23:26:48 -0700")
+Content-Disposition: inline
+In-Reply-To: <20150515083334.535ad43e-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, =?utf-8?Q?St=C3=A9phane?= Graber <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Eric Windisch <ewindisch-FCduhRhOUaTQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+To: Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Yoshinori Sato <ysato-Rn4VEauK+AKRv+LV9MX5uooqe+aC9MnS@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
 
-> Can we please just get rid of this implicit nodev thing once and for all?  If it
-> breaks some really weird /proc use case, then I think the right fix is to
-> stop enforcing the nodev lock for the proc fully visible check.  After
-> all, /proc doesn't contain useful device nodes anyway.
+* Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org> wrote:
 
-On second look I don't think that will actually cause issues in this
-case.
+> Hi Ingo,
+> 
+> Thanks for this.  The concept is certainly good.
+> 
+> On Thu, 14 May 2015 21:59:25 +0200 Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> >
+> > The patch that adds a new architecture to all these files would give 
+> > us a good overview about how complete an initial port is.
+> 
+> If you want to test how hard that is (and what sort of patch it
+> produces), the h8300 architecture was added to linux-next recently.
 
-I actually have a fix for the implicit nodev weirdness in my development
-qeueue but it requires figuring out how to add s_user_ns to superblocks.
-My last round of testing told me I was doing that wrong.
+I tried this out, this is the resulting feature support matrix for the 
+new h8300 architecture:
 
-But if the implicit nodev is actually a problem I will definitely delay
-this until I have that change ready to go as well.
+#
+# Kernel feature support matrix of architecture 'h8300':
+#
+           arch-tick-broadcast:     |       h8300: | TODO |
+                       BPF-JIT:     |       h8300: | TODO |
+                   clockevents:     |       h8300: |  ok  |
+                 cmpxchg-local:     |       h8300: | TODO |
+              context-tracking:     |       h8300: | TODO |
+                 dma-api-debug:     |       h8300: | TODO |
+                dma-contiguous:     |       h8300: | TODO |
+                 dma_map_attrs:     |       h8300: |  ok  |
+                      ELF-ASLR:     |       h8300: | TODO |
+              gcov-profile-all:     |       h8300: | TODO |
+           generic-idle-thread:     |       h8300: | TODO |
+                     huge-vmap:     |       h8300: | TODO |
+                  ioremap_prot:     |       h8300: | TODO |
+                 irq-time-acct:     |       h8300: | TODO |
+                   jump-labels:     |       h8300: | TODO |
+                         KASAN:     |       h8300: | TODO |
+                          kgdb:     |       h8300: | TODO |
+                       kprobes:     |       h8300: | TODO |
+                 kprobes-event:     |       h8300: | TODO |
+             kprobes-on-ftrace:     |       h8300: | TODO |
+                    kretprobes:     |       h8300: | TODO |
+                       lockdep:     |       h8300: | TODO |
+            modern-timekeeping:     |       h8300: |  ok  |
+                numa-balancing:     |       h8300: |  ..  |
+                 numa-memblock:     |       h8300: |  ..  |
+                     optprobes:     |       h8300: | TODO |
+                     perf-regs:     |       h8300: | TODO |
+                perf-stackdump:     |       h8300: | TODO |
+                   PG_uncached:     |       h8300: | TODO |
+          pmdp_splitting_flush:     |       h8300: | TODO |
+                   pte_special:     |       h8300: | TODO |
+                queued-rwlocks:     |       h8300: | TODO |
+              queued-spinlocks:     |       h8300: | TODO |
+               rwsem-optimized:     |       h8300: |  ok  |
+                seccomp-filter:     |       h8300: | TODO |
+                      sg-chain:     |       h8300: | TODO |
+                stackprotector:     |       h8300: | TODO |
+                   strncasecmp:     |       h8300: | TODO |
+                           THP:     |       h8300: |  ..  |
+                     tracehook:     |       h8300: | TODO |
+                       uprobes:     |       h8300: | TODO |
+             user-ret-profiler:     |       h8300: | TODO |
+                  virt-cpuacct:     |       h8300: | TODO |
 
-> Other than that, the code here looks okay to me on brief inspection.
+Thanks,
 
-At a practical level I am concerned that enforcing things like noexec
-and nosuid from the original normal global proc might cause problems for
-things like sandstorm, lxc, and possibly libvirt-lxc.  So I would really
-appreciate if people associated with those projects could test this and
-tell me if I break things.
-
-Other than my stupid refactor in my code for /proc/fs/nfsd that causes
-the kernel to oops :(  Doh!
-
-Eric
+	Ingo
