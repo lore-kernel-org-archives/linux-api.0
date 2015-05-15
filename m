@@ -1,100 +1,99 @@
 From: Richard Guy Briggs <rgb@redhat.com>
 Subject: Re: [PATCH V6 05/10] audit: log creation and deletion of namespace
  instances
-Date: Thu, 14 May 2015 22:25:27 -0400
-Message-ID: <20150515022527.GB965@madcap2.tricolour.ca>
+Date: Thu, 14 May 2015 22:32:21 -0400
+Message-ID: <20150515023221.GC965@madcap2.tricolour.ca>
 References: <cover.1429252659.git.rgb@redhat.com>
  <20150512195759.GA9832@madcap2.tricolour.ca>
  <2918460.dpKocsKt4o@x2>
  <12675437.ssZNCck7zG@sifl>
- <87bnhmbp8e.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <87bnhmbp8e.fsf@x220.int.ebiederm.org>
-Sender: netdev-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Paul Moore <pmoore@redhat.com>, Steve Grubb <sgrubb@redhat.com>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-audit@redhat.com, eparis@parisplace.org, arozansk@redhat.com, serge@hallyn.com, zohar@linux.vnet.ibm.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
+In-Reply-To: <12675437.ssZNCck7zG@sifl>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Paul Moore <pmoore@redhat.com>
+Cc: Steve Grubb <sgrubb@redhat.com>, ebiederm@xmission.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-audit@redhat.com, eparis@parisplace.org, arozansk@redhat.com, serge@hallyn.com, zohar@linux.vnet.ibm.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, netdev@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 15/05/14, Eric W. Biederman wrote:
-> Paul Moore <pmoore@redhat.com> writes:
-> > As Eric, and others, have stated, the container concept is a userspace idea, 
-> > not a kernel idea; the kernel only knows, and cares about, namespaces.  This 
-> > is unlikely to change.
-> >
-> > However, as Steve points out, there is precedence for the kernel to record 
-> > userspace tokens for the sake of audit.  Personally I'm not a big fan of this 
-> > in general, but I do recognize that it does satisfy a legitimate need.  Think 
-> > of things like auid and the sessionid as necessary evils; audit is already 
-> > chock full of evilness I doubt one more will doom us all to hell.
-> >
-> > Moving forward, I'd like to see the following:
+On 15/05/14, Paul Moore wrote:
+> On Thursday, May 14, 2015 10:57:14 AM Steve Grubb wrote:
+> > On Tuesday, May 12, 2015 03:57:59 PM Richard Guy Briggs wrote:
+> > > On 15/05/05, Steve Grubb wrote:
+> > > > I think there needs to be some more discussion around this. It seems
+> > > > like this is not exactly recording things that are useful for audit.
+> > > 
+> > > It seems to me that either audit has to assemble that information, or
+> > > the kernel has to do so.  The kernel doesn't know about containers
+> > > (yet?).
+> > 
+> > Auditing is something that has a lot of requirements imposed on it by
+> > security standards. There was no requirement to have an auid until audit
+> > came along and said that uid is not good enough to know who is issuing
+> > commands because of su or sudo. There was no requirement for sessionid
+> > until we had to track each action back to a login so we could see if the
+> > login came from the expected place.
+> > 
+> > What I am saying is we have the same situation. Audit needs to track a
+> > container and we need an ID. The information that is being logged is not
+> > useful for auditing. Maybe someone wants that info in syslog, but I doubt
+> > it. The audit trail's purpose is to allow a security officer to reconstruct
+> > the events to determine what happened during some security incident.
 > 
-> > * Create a container ID token (unsigned 32-bit integer?), similar to 
-> > auid/sessionid, that is set by userspace and carried by the kernel to be used 
-> > in audit records.  I'd like to see some discussion on how we manage this, e.g. 
-> > how do handle container ID inheritance, how do we handle nested containers 
-> > (setting the containerid when it is already set), do we care if multiple 
-> > different containers share the same namespace config, etc.?
+> As Eric, and others, have stated, the container concept is a userspace idea, 
+> not a kernel idea; the kernel only knows, and cares about, namespaces.  This 
+> is unlikely to change.
 > 
+> However, as Steve points out, there is precedence for the kernel to record 
+> userspace tokens for the sake of audit.  Personally I'm not a big fan of this 
+> in general, but I do recognize that it does satisfy a legitimate need.  Think 
+> of things like auid and the sessionid as necessary evils; audit is already 
+> chock full of evilness I doubt one more will doom us all to hell.
 > 
-> > Can we all live with this?  If not, please suggest some alternate ideas; 
-> > simply shouting "IT'S ALL CRAP!" isn't helpful for anyone ... it may be true, 
-> > but it doesn't help us solve the problem ;)
+> Moving forward, I'd like to see the following:
 > 
-> Without stopping and defining what someone means by container I think it
-> is pretty much nonsense.
+> * Record the creation/removal/mgmt of the individual namespaces as Richard's 
+> patchset currently does.  However, I'd suggest using an explicit namespace 
+> value for the init namespace instead of the "unset" value in the V6 patchset 
+> (my apologies if you've already changed this Richard, I haven't looked at V7 
+> yet).
 
-Not complete, but this is why I'm asking for a standards document...
+The "unset" (none) value is only there before the first namespaces have
+been created.  After that, any new ones are created relative to the init
+namespace of that type.
 
-> Should every vsftp connection get a container every?  Every chrome tab?
-> 
-> At some of the connections per second numbers I have seen we might
-> exhaust a 32bit number in an hour or two.  Will any of that make sense
-> to someone reading the audit logs?
+> * Create a container ID token (unsigned 32-bit integer?), similar to 
+> auid/sessionid, that is set by userspace and carried by the kernel to be used 
+> in audit records.  I'd like to see some discussion on how we manage this, e.g. 
+> how do handle container ID inheritance, how do we handle nested containers 
+> (setting the containerid when it is already set), do we care if multiple 
+> different containers share the same namespace config, etc.?
 
-So making it 64bits buys us some time, but sure...  I think your
-definition of a container may be a bit more liberal than what we're
-trying to understand...
+(Addressed in another reply.)  Nested will need some careful thought...
 
-> Without considerning that container creation is an unprivileged
-> operation I think it is pretty much nonsense.  Do I get to say I am any
-> container I want?  That would seem to invalidate the concept of
-> userspace setting a container id.
+> * When userspace sets the container ID, emit a new audit record with the 
+> associated namespace tokens and the container ID.
 
-Ok, my impression was that we're dealing with a privileged application
-as I alluded with the need to create a new CAP_AUDIT_CONTAINER_ID or
-something...
+That was the goal of AUDIT_VIRT_CONTROL or AUDIT_NS_INFO messages from
+userspace into the kernel.
 
-> How does any of this interact with setns?  AKA entering a container?
+> * Look at our existing audit records to determine which records should have 
+> namespace and container ID tokens added.  We may only want to add the 
+> additional fields in the case where the namespace/container ID tokens are not 
+> the init namespace.
 
-You mean entering another namespace that might all be part of one
-container?  Or an an application attempting to enter the namespace of
-another container?
+If we have a record that ties a set of namespace IDs with a container
+ID, then I expect we only need to list the containerID along with auid
+and sessionID.
 
-> I will go as far as looking at patches.  If someone comes up with
-> a mission statement about what they are actually trying to achieve and a
-> mechanism that actually achieves that, and that allows for containers to
-> nest we can talk about doing something like that.
+> Can we all live with this?  If not, please suggest some alternate ideas; 
+> simply shouting "IT'S ALL CRAP!" isn't helpful for anyone ... it may be true, 
+> but it doesn't help us solve the problem ;)
 
-I don't pretend these patches are anywhere near finished or ready for
-upstream.
+Thanks Paul.
 
-> But for right now I just hear proposals for things that make no sense
-> and can not possibly work.  Not least because it will require modifying
-> every program that creates a container and who knows how many of them
-> there are.  Especially since you don't need to be root.  Modifying
-> /usr/bin/unshare seems a little far out to me.
-
-My understanding is that just spawning or changing namespace doesn't
-imply spawning or changing containers.  I also don't necessarily assume
-that creating a container is an atomic operation, though that concept
-might make some sense to understand or predict the boundaries of
-actions...
-
-> Eric
+> paul moore
 
 - RGB
 
