@@ -1,39 +1,65 @@
-From: Peter Maydell <peter.maydell@linaro.org>
-Subject: Re: [PATCH v4 10/12] KVM: arm64: guest debug,
- HW assisted debug support
-Date: Fri, 15 May 2015 18:09:03 +0100
-Message-ID: <CAFEAcA8Z1Na9LY3m-DvGXpjUtCkc_H3+uAKWVRB4EBZWP6enJg@mail.gmail.com>
+From: David Hildenbrand <dahi-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH v4 02/12] KVM: define common KVM_GUESTDBG_USE_SW/HW_BP
+ bits
+Date: Fri, 15 May 2015 19:33:15 +0200
+Message-ID: <20150515193315.6d3e82d2@thinkpad-w530>
 References: <1431700035-23479-1-git-send-email-alex.bennee@linaro.org>
- <1431700035-23479-11-git-send-email-alex.bennee@linaro.org>
- <20150515152346.GB23652@leverpostej> <87y4kpke91.fsf@linaro.org>
+	<1431700035-23479-3-git-send-email-alex.bennee@linaro.org>
+	<555613F2.9060204@de.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
-In-Reply-To: <87y4kpke91.fsf@linaro.org>
-List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
-List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
-List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
-List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
-List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
-Errors-To: kvmarm-bounces@lists.cs.columbia.edu
-Sender: kvmarm-bounces@lists.cs.columbia.edu
-To: =?UTF-8?B?QWxleCBCZW5uw6ll?= <alex.bennee@linaro.org>
-Cc: "kvm@vger.kernel.org" <kvm@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "jan.kiszka@siemens.com" <jan.kiszka@siemens.com>, Will Deacon <Will.Deacon@arm.com>, "kvmarm@lists.cs.columbia.edu" <kvmarm@lists.cs.columbia.edu>, Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, Russell King <linux@arm.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>, Ingo Molnar <mingo@kernel.org>, Gleb Natapov <gleb@kernel.org>, "zhichao.huang@linaro.org" <zhichao.huang@linaro.org>, Catalin Marinas <Catalin.Marinas@arm.com>, "bp@suse.de" <bp@suse.de>, Marc Zyngier <Marc.Zyngier@arm.com>, "r65777@freescale.com" <r65777@freescale.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "dahi@linux.vnet.ibm.com" <da>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <555613F2.9060204-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christian Borntraeger <borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
+Cc: Alex =?UTF-8?B?QmVubsOpZQ==?= <alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, agraf-l3A5Bk7waGM@public.gmane.org, drjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, zhichao.huang-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org, r65777-KZfg59tc24xl57MIdRCFDg@public.gmane.org, bp-l3A5Bk7waGM@public.gmane.org, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, "supporter:S390" <linux390-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, "maintainer:X86 ARCHITECTURE..." <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Gleb Natapov <gleb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Bharat Bhushan <Bharat.Bhushan-KZfg59tc24xl57MIdRCFDg@public.gmane.org>, Alexey Kardashevskiy <aik@oz>
 List-Id: linux-api@vger.kernel.org
 
-T24gMTUgTWF5IDIwMTUgYXQgMTc6MTYsIEFsZXggQmVubsOpZSA8YWxleC5iZW5uZWVAbGluYXJv
-Lm9yZz4gd3JvdGU6Cj4gTWFyayBSdXRsYW5kIDxtYXJrLnJ1dGxhbmRAYXJtLmNvbT4gd3JpdGVz
-Ogo+PiBUaGlzIGdldHMgbW9yZSBmdW4gd2hlbiB5b3UgY29uc2lkZXIgdGhlIGNvbnRleHQtYXdh
-cmUgYnJlYWtwb2ludHMgYXJlCj4+IHRoZSBoaWdoZXN0IG51bWJlcmVkLiBTbyB0aGUgc2V0IG9m
-IChjb250ZXh0LWF3YXJlKSBicmVha3BvaW50cyBtaWdodAo+PiBub3QgaW50ZXJzZWN0IGFjcm9z
-cyBhbGwgQ1BVcy4KPgo+IEkgZGlkbid0IHNlZSBhIHJlZmVyZW5jZSB0byB0aGF0IGluIHRoZSBB
-Uk0gQVJNLiBJdCBzZWVtZWQgdG8gaW1wbHkgYW55Cj4gYnJlYWtwb2ludCBjb3VsZCBiZSBjb250
-ZXh0IGF3YXJlIGlzIC5CVCB3YXMgYXBwcm9wcmlhdGVseSBzZXQgYW5kCj4gbGlua2VkIHRvIHRo
-ZSBWUi4KCk5vOyBzZWUgRDIuOS4yOyB0aGVyZSBtdXN0IGJlIGF0IGxlYXN0IG9uZSBjb250ZXh0
-LWF3YXJlCmJyZWFrcG9pbnQsIGJ1dCBubyByZXF1aXJlbWVudCBmb3IgbW9yZSB0aGFuIHRoYXQu
-CgotLSBQTU0KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18K
-a3ZtYXJtIG1haWxpbmcgbGlzdAprdm1hcm1AbGlzdHMuY3MuY29sdW1iaWEuZWR1Cmh0dHBzOi8v
-bGlzdHMuY3MuY29sdW1iaWEuZWR1L21haWxtYW4vbGlzdGluZm8va3ZtYXJtCg==
+> Am 15.05.2015 um 16:27 schrieb Alex Benn=C3=A9e:
+> > +++ b/arch/s390/include/uapi/asm/kvm.h
+> > @@ -114,8 +114,6 @@ struct kvm_fpu {
+> >  	__u64 fprs[16];
+> >  };
+> >=20
+> > -#define KVM_GUESTDBG_USE_HW_BP		0x00010000
+> [...]
+> > +++ b/include/uapi/linux/kvm.h
+> [...]
+> > +#define KVM_GUESTDBG_USE_SW_BP		(1 << 16)
+> > +#define KVM_GUESTDBG_USE_HW_BP		(1 << 17)
+>=20
+> This is an ABI break for s390, no?
+>=20
+> David, do you remember why we do not use KVM_GUESTDBG_USE_SW_BP?
+>=20
+
+We never had to tell the kernel about software breakpoints as this is a=
+ll
+handled via 4 byte DIAG instructions until now. We don't have to turn t=
+his
+mechanism on. QEMU can directly insert the desired DIAG instructions an=
+d gets
+notified when they are about to get executed.
+
+(But we still have 2 byte breakpoint support todo - still tbd how exact=
+ly this
+will be realized - could be turned on via such a mechanism)
+
+The problem is, that these bits are arch specific, now Alex wants to un=
+ify
+them for all archs.
+
+So yes, this is an ABI break for us and breaks hardware breakpoints.(I =
+think
+the first version of this patch didn't contain this ABI break when I ha=
+d a look)
+
+I wonder if it wouldn't make more sense to
+
+- introduce new bits in the arch-unspecific section
+- rework the existing implementers to accept both bits
+
+Or to simply leave stuff as it is and handle it via arch specific bits.
+
+David
