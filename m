@@ -1,66 +1,77 @@
-From: Robert Bragg <robert-St23OQVBDYPNLxjTenLetw@public.gmane.org>
-Subject: Re: [RFC PATCH 00/11] drm/i915: Expose OA metrics via perf PMU
-Date: Fri, 15 May 2015 02:07:29 +0100
-Message-ID: <CAMou1-1Q1_kKGrRPz36Fox=gxhGF6v+DiR5HZ6TOyQyxtMsysA@mail.gmail.com>
-References: <1431008154-6833-1-git-send-email-robert@sixbynine.org> <20150508162452.GR27504@twins.programming.kicks-ass.net>
+From: Oren Laadan <orenl-3AfRa/s5aFdBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH V6 05/10] audit: log creation and deletion of namespace
+	instances
+Date: Thu, 14 May 2015 21:10:56 -0400
+Message-ID: <CAA4jN2bgynVTwF+owtXgq06JMLQJpy_qokpD0mAguNYeDxmh1A@mail.gmail.com>
+References: <cover.1429252659.git.rgb@redhat.com> <2487286.y6vyJ9A3er@x2>
+	<20150512195759.GA9832@madcap2.tricolour.ca>
+	<2918460.dpKocsKt4o@x2>
+	<20150515004855.GB10526@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150508162452.GR27504-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Daniel Vetter <daniel.vetter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20150515004855.GB10526-bcJWsdo4jJjeVoXN4CMphl7TgLCtbB0G@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org, Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, Eric Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 8, 2015 at 5:24 PM, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
-> On Thu, May 07, 2015 at 03:15:43PM +0100, Robert Bragg wrote:
+On Thu, May 14, 2015 at 8:48 PM, Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+
 >
->> I've changed the uapi for configuring the i915_oa specific attributes
->> when calling perf_event_open(2) whereby instead of cramming lots of
->> bitfields into the perf_event_attr config members, I'm now
->> daisy-chaining a drm_i915_oa_event_attr_t structure off of a single
->> config member that's extensible and validated in the same way as the
->> perf_event_attr struct. I've found this much nicer to work with while
->> being neatly extensible too.
+> > > > Recording each instance of a name space is giving me something that I
+> > > > cannot use to do queries required by the security target. Given these
+> > > > events, how do I locate a web server event where it accesses a
+> watched
+> > > > file? That authentication failed? That an update within the container
+> > > > failed?
+> > > >
+> > > > The requirements are that we have to log the creation, suspension,
+> > > > migration, and termination of a container. The requirements are not
+> on
+> > > > the individual name space.
+> > >
+> > > Ok.  Do we have a robust definition of a container?
+> >
+> > We call the combination of name spaces, cgroups, and seccomp rules a
+> > container.
 >
-> This worries me a bit.. is there more background for this?
+> Can you detail what information is required from each?
+>
+> > > Where is that definition managed?
+> >
+> > In the thing that invokes a container.
+>
+> I was looking for a reference to a standards document rather than an
+> application...
+>
+>
+[focusing on "containers id" - snipped the rest away]
 
-Would it maybe be helpful to see the before and after? I had kept this
-uapi change in a separate patch for a while locally but in the end
-decided to squash it before sending out my updated series.
+I am unfamiliar with the audit subsystem, but work with namespaces in other
+contexts. Perhaps the term "container" is overloaded here. The definition
+suggested by Steve in this thread makes sense to me: "a combination of
+namespaces". I imagine people may want to audit subsets of namespaces.
 
-Although I did find it a bit awkward with the bitfields, I was mainly
-concerned about the extensibility of packing logically separate
-attributes into the config members and had heard similar concerns from
-a few others who had been experimenting with my patches too.
+For namespaces, can use a string like "A:B:C:D:E:F" as an identifier for a
+particular combination, where A-F are respective namespaces identifiers.
+(Can be taken for example from /proc/PID/ns/{mnt,uts,ipc,user,pid,net}).
+ That will even be grep-able to locate records related to a particular
+subset
+of namespaces. So a "container" in the classic meaning would have all A-F
+unique and different from the init process, but processes separated only by
+e.g. mnt-ns and net-ns will differ from the init process in  A and F.
 
-A few simple attributes I can think of a.t.m that we might want to add
-in the future are:
-- control of the OABUFFER size
-- a way to ask the kernel to collect reports at the beginning and end
-of batch buffers, in addition to periodic reports
-- alternative ways to uniquely identify a context to support tools
-profiling a single context not necessarily owned by the current
-process
+(If a string is a no go, then perhaps combine the IDs in a unique way into a
+super ID).
 
-It could also be interesting to expose some counter configuration
-through these attributes too. E.g. on Broadwell+ we have 14 'Flexible
-EU' counters included in the OA unit reports, each with a 16bit
-configuration.
-
-In a more extreme case it might also be useful to allow userspace to
-specify a complete counter config, which (depending on the
-configuration) could be over 100 32bit values to select the counter
-signals + configure the corresponding combining logic.
-
-Since this pmu is in a device driver it also seemed reasonably
-appropriate to de-couple it slightly from the core perf_event_attr
-structure by allowing driver extensible attributes.
-
-I wonder if it might be less worrisome if the i915_oa_copy_attr() code
-were instead a re-usable utility perhaps maintained in events/core.c,
-so if other pmu drivers were to follow suite there would be less risk
-of a mistake being made here?
-
-Regards,
-- Robert
+Oren.
