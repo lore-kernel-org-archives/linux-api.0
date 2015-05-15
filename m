@@ -1,85 +1,103 @@
-From: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v2 0/5] support "cpu_isolated" mode for nohz_full
-Date: Fri, 15 May 2015 17:26:07 -0400
-Message-ID: <1431725178-20876-1-git-send-email-cmetcalf@ezchip.com>
-References: <1431107927-13998-1-git-send-email-cmetcalf@ezchip.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1431107927-13998-1-git-send-email-cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+From: Zach Brown <zab@zabbo.net>
+Subject: [PATCH RFC v2 1/2] vfs: add generic nocmtime mount flag
+Date: Fri, 15 May 2015 14:23:47 -0700
+Message-ID: <1431725028-24071-2-git-send-email-zab@zabbo.net>
+References: <1431725028-24071-1-git-send-email-zab@zabbo.net>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1431725028-24071-1-git-send-email-zab@zabbo.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Sage Weil <sweil@redhat.com>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The existing nohz_full mode does a nice job of suppressing extraneous
-kernel interrupts for cores that desire it.  However, there is a need
-for a more deterministic mode that rigorously disallows kernel
-interrupts, even at a higher cost in user/kernel transition time:
-for example, high-speed networking applications running userspace
-drivers that will drop packets if they are ever interrupted.
+Add the infrastructure to support a generic nocmtime mount flag.  Like
+MS_NOATIME/MNT_NOATIME this can be used to support the mount option in
+file systems without having to touch each file system.
 
-These changes attempt to provide an initial draft of such a framework;
-the changes do not add any overhead to the usual non-nohz_full mode,
-and only very small overhead to the typical nohz_full mode.  A prctl()
-option (PR_SET_CPU_ISOLATED) is added to control whether processes have
-requested this stricter semantics, and within that prctl() option we
-provide a number of different bits for more precise control.
-Additionally, we add a new command-line boot argument to facilitate
-debugging where unexpected interrupts are being delivered from.
+This will be used to provide a priviledged indication that unpriviledged
+apps can safely use O_NOCMTIME to prevent cmtime updates without harm.
 
-Code that is conceptually similar has been in use in Tilera's
-Multicore Development Environment since 2008, known as Zero-Overhead
-Linux, and has seen wide adoption by a range of customers.  This patch
-series represents the first serious attempt to upstream that
-functionality.  Although the current state of the kernel isn't quite
-ready to run with absolutely no kernel interrupts (for example,
-workqueues on cpu_isolated cores still remain to be dealt with), this
-patch series provides a way to make dynamic tradeoffs between avoiding
-kernel interrupts on the one hand, and making voluntary calls in and
-out of the kernel more expensive, for tasks that want it.
+Signed-off-by: Zach Brown <zab@zabbo.net>
+---
+ fs/namespace.c          | 2 ++
+ fs/proc_namespace.c     | 1 +
+ fs/statfs.c             | 2 ++
+ include/linux/mount.h   | 1 +
+ include/linux/statfs.h  | 1 +
+ include/uapi/linux/fs.h | 1 +
+ 6 files changed, 8 insertions(+)
 
-The series (based currently on my arch/tile master tree for 4.2,
-in turn based on 4.1-rc1) is available at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/cmetcalf/linux-tile.git dataplane
-
-v2:
-  rename "dataplane" to "cpu_isolated"
-  drop ksoftirqd suppression changes (believed no longer needed)
-  merge previous "QUIESCE" functionality into baseline functionality
-  explicitly track syscalls and exceptions for "STRICT" functionality
-  allow configuring a signal to be delivered for STRICT mode failures
-  move debug tracking to irq_enter(), not irq_exit()
-
-Note: I have not yet removed the hack to disable the 1Hz timer tick
-fallback that was nack'ed by PeterZ, pending a decision on that thread
-as to what to do (https://lkml.org/lkml/2015/5/8/555).
-
-Chris Metcalf (5):
-  nohz_full: add support for "cpu_isolated" mode
-  nohz: support PR_CPU_ISOLATED_STRICT mode
-  nohz: cpu_isolated strict mode configurable signal
-  nohz: add cpu_isolated_debug boot flag
-  nohz: cpu_isolated: allow tick to be fully disabled
-
- Documentation/kernel-parameters.txt |  6 +++
- arch/tile/kernel/ptrace.c           |  6 ++-
- arch/tile/mm/homecache.c            |  5 +-
- arch/x86/kernel/ptrace.c            |  2 +
- include/linux/context_tracking.h    | 11 +++--
- include/linux/sched.h               |  3 ++
- include/linux/tick.h                | 28 +++++++++++
- include/uapi/linux/prctl.h          |  8 +++
- kernel/context_tracking.c           | 12 +++--
- kernel/irq_work.c                   |  4 +-
- kernel/sched/core.c                 | 18 +++++++
- kernel/signal.c                     |  5 ++
- kernel/smp.c                        |  4 ++
- kernel/softirq.c                    |  6 +++
- kernel/sys.c                        |  8 +++
- kernel/time/tick-sched.c            | 98 ++++++++++++++++++++++++++++++++++++-
- 16 files changed, 214 insertions(+), 10 deletions(-)
-
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 1b9e111..48be1f9 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -2652,6 +2652,8 @@ long do_mount(const char *dev_name, const char __user *dir_name,
+ 		mnt_flags |= MNT_NOEXEC;
+ 	if (flags & MS_NOATIME)
+ 		mnt_flags |= MNT_NOATIME;
++	if (flags & MS_NOCMTIME)
++		mnt_flags |= MNT_NOCMTIME;
+ 	if (flags & MS_NODIRATIME)
+ 		mnt_flags |= MNT_NODIRATIME;
+ 	if (flags & MS_STRICTATIME)
+diff --git a/fs/proc_namespace.c b/fs/proc_namespace.c
+index 8db932d..49d7839 100644
+--- a/fs/proc_namespace.c
++++ b/fs/proc_namespace.c
+@@ -64,6 +64,7 @@ static void show_mnt_opts(struct seq_file *m, struct vfsmount *mnt)
+ 		{ MNT_NODEV, ",nodev" },
+ 		{ MNT_NOEXEC, ",noexec" },
+ 		{ MNT_NOATIME, ",noatime" },
++		{ MNT_NOCMTIME, ",nocmtime" },
+ 		{ MNT_NODIRATIME, ",nodiratime" },
+ 		{ MNT_RELATIME, ",relatime" },
+ 		{ 0, NULL }
+diff --git a/fs/statfs.c b/fs/statfs.c
+index 083dc0a..43d3de2 100644
+--- a/fs/statfs.c
++++ b/fs/statfs.c
+@@ -23,6 +23,8 @@ static int flags_by_mnt(int mnt_flags)
+ 		flags |= ST_NOEXEC;
+ 	if (mnt_flags & MNT_NOATIME)
+ 		flags |= ST_NOATIME;
++	if (mnt_flags & MNT_NOCMTIME)
++		flags |= ST_NOCMTIME;
+ 	if (mnt_flags & MNT_NODIRATIME)
+ 		flags |= ST_NODIRATIME;
+ 	if (mnt_flags & MNT_RELATIME)
+diff --git a/include/linux/mount.h b/include/linux/mount.h
+index f822c3c..deb458f 100644
+--- a/include/linux/mount.h
++++ b/include/linux/mount.h
+@@ -28,6 +28,7 @@ struct mnt_namespace;
+ #define MNT_NODIRATIME	0x10
+ #define MNT_RELATIME	0x20
+ #define MNT_READONLY	0x40	/* does the user want this to be r/o? */
++#define MNT_NOCMTIME	0x80	/* allow O_NOCMTIME to stop cmtime updates */
+ 
+ #define MNT_SHRINKABLE	0x100
+ #define MNT_WRITE_HOLD	0x200
+diff --git a/include/linux/statfs.h b/include/linux/statfs.h
+index 0166d32..bde224e 100644
+--- a/include/linux/statfs.h
++++ b/include/linux/statfs.h
+@@ -39,5 +39,6 @@ struct kstatfs {
+ #define ST_NOATIME	0x0400	/* do not update access times */
+ #define ST_NODIRATIME	0x0800	/* do not update directory access times */
+ #define ST_RELATIME	0x1000	/* update atime relative to mtime/ctime */
++#define ST_NOCMTIME	0x2000	/* allow O_NOCMTIME to stop cmtime updates */
+ 
+ #endif
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index 9b964a5..af1131e 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -91,6 +91,7 @@ struct inodes_stat_t {
+ #define MS_I_VERSION	(1<<23) /* Update inode I_version field */
+ #define MS_STRICTATIME	(1<<24) /* Always perform atime updates */
+ #define MS_LAZYTIME	(1<<25) /* Update the on-disk [acm]times lazily */
++#define MS_NOCMTIME	(1<<26) /* allow O_NOCMTIME to stop cmtime updates */
+ 
+ /* These sb flags are internal to the kernel */
+ #define MS_NOSEC	(1<<28)
 -- 
-2.1.2
+2.1.0
