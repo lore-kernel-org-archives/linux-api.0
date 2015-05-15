@@ -1,37 +1,71 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH 10/23] userfaultfd: add new syscall to provide memory externalization
-Date: Fri, 15 May 2015 11:22:09 -0700
-Message-ID: <CA+55aFyPY9PtGLaK=TxBX_bU44MBCe53yLXDFzU43zJqbwzQ6Q@mail.gmail.com>
-References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
-	<1431624680-20153-11-git-send-email-aarcange@redhat.com>
-	<CA+55aFwCODeiXUPDR7-Y-=2xE2abmVuCnmVV=ezFqhO+JkaW=A@mail.gmail.com>
-	<20150515160426.GD19097@redhat.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [GIT PULL] kselftest fixes for 4.1-rc4
+Date: Fri, 15 May 2015 12:47:51 -0600
+Message-ID: <55563F57.1060703@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150515160426.GD19097@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrea Arcangeli <aarcange@redhat.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, qemu-devel@nongnu.org, KVM list <kvm@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Tyler Baker <tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 15, 2015 at 9:04 AM, Andrea Arcangeli <aarcange@redhat.com> wrote:
->
-> To fix it I added this along a comment:
+Hi Linus,
 
-Ok, this looks good as a explanation/fix for the races (and also as an
-example of my worry about waitqueue_active() use in general).
+Please pull the following Kselftest fixes for 4.1-rc4
 
-However, it now makes me suspect that the optimistic "let's check if
-they are even active" may not be worth it any more. You're adding a
-"smp_mb()" in order to avoid taking the real lock. Although I guess
-there are two locks there (one for each wait-queue) so maybe it's
-worth it.
+thanks,
+-- Shuah
 
-                    Linus
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+The following changes since commit b787f68c36d49bb1d9236f403813641efa74a031:
+
+  Linux 4.1-rc1 (2015-04-26 17:59:10 -0700)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/shuah/linux-kselftest
+tags/linux-kselftest-4.1-rc4
+
+for you to fetch changes up to e9886ace222eb48bb57bd541320056ca334bd3a0:
+
+  selftests, x86: Rework x86 target architecture detection (2015-05-12
+20:02:40 -0600)
+
+----------------------------------------------------------------
+linux-kselftest-4.1-rc4
+
+Urgent fix for Kselftest regression introduced in 4.1-rc1
+by the new x86 test due to its hard dependency on 32-bit
+build environment. A set of 5 patches fix the make kselftest
+run and kselftest install.
+
+----------------------------------------------------------------
+Andy Lutomirski (2):
+      selftests, x86: Remove useless run_tests rule
+      selftests, x86: Rework x86 target architecture detection
+
+Tyler Baker (3):
+      selftest/x86: build both bitnesses
+      selftest/x86: have no dependency on all when cross building
+      selftests/x86: install tests
+
+ tools/testing/selftests/x86/Makefile               | 53
++++++++++++++---------
+ tools/testing/selftests/x86/check_cc.sh            | 16 +++++++
+ tools/testing/selftests/x86/run_x86_tests.sh       | 13 ------
+ .../testing/selftests/x86/trivial_32bit_program.c  |  4 ++
+ .../testing/selftests/x86/trivial_64bit_program.c  | 18 ++++++++
+ 5 files changed, 69 insertions(+), 35 deletions(-)
+ create mode 100755 tools/testing/selftests/x86/check_cc.sh
+ delete mode 100644 tools/testing/selftests/x86/run_x86_tests.sh
+ create mode 100644 tools/testing/selftests/x86/trivial_64bit_program.c
+
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
