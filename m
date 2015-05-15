@@ -1,196 +1,67 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: Re: [PATCH 10/23] userfaultfd: add new syscall to provide memory
- externalization
-Date: Fri, 15 May 2015 18:04:26 +0200
-Message-ID: <20150515160426.GD19097@redhat.com>
-References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
- <1431624680-20153-11-git-send-email-aarcange@redhat.com>
- <CA+55aFwCODeiXUPDR7-Y-=2xE2abmVuCnmVV=ezFqhO+JkaW=A@mail.gmail.com>
+From: Alex =?utf-8?Q?Benn=C3=A9e?= <alex.bennee@linaro.org>
+Subject: Re: [PATCH v4 10/12] KVM: arm64: guest debug,
+ HW assisted debug support
+Date: Fri, 15 May 2015 17:16:26 +0100
+Message-ID: <87y4kpke91.fsf@linaro.org>
+References: <1431700035-23479-1-git-send-email-alex.bennee@linaro.org>
+ <1431700035-23479-11-git-send-email-alex.bennee@linaro.org>
+ <20150515152346.GB23652@leverpostej>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <CA+55aFwCODeiXUPDR7-Y-=2xE2abmVuCnmVV=ezFqhO+JkaW=A@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, qemu-devel@nongnu.org, KVM list <kvm@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, Huangpeng (Pet
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
+In-reply-to: <20150515152346.GB23652@leverpostej>
+List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
+List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
+List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
+List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
+List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
+Errors-To: kvmarm-bounces@lists.cs.columbia.edu
+Sender: kvmarm-bounces@lists.cs.columbia.edu
+To: Mark Rutland <mark.rutland@arm.com>
+Cc: "kvm@vger.kernel.org" <kvm@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, "jan.kiszka@siemens.com" <jan.kiszka@siemens.com>, Will Deacon <Will.Deacon@arm.com>, Peter Zijlstra <peterz@infr>, "kvmarm@lists.cs.columbia.edu" <kvmarm@lists.cs.columbia.edu>, Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, Russell King <linux@arm.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>, Ingo Molnar <mingo@kernel.org>, Gleb Natapov <gleb@kernel.org>, "zhichao.huang@linaro.org" <zhichao.huang@linaro.org>, Catalin Marinas <Catalin.Marinas@arm.com>, "bp@suse.de" <bp@suse.de>, Marc Zyngier <Marc.Zyngier@arm.com>, "r65777@freescale.com" <r65777@freescale.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, adead.org@lists.cs.columbia.edu, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>d
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 14, 2015 at 10:49:06AM -0700, Linus Torvalds wrote:
-> On Thu, May 14, 2015 at 10:31 AM, Andrea Arcangeli <aarcange@redhat.com> wrote:
-> > +static __always_inline void wake_userfault(struct userfaultfd_ctx *ctx,
-> > +                                          struct userfaultfd_wake_range *range)
-> > +{
-> > +       if (waitqueue_active(&ctx->fault_wqh))
-> > +               __wake_userfault(ctx, range);
-> > +}
-> 
-> Pretty much every single time people use this "if
-> (waitqueue_active())" model, it tends to be a bug, because it means
-> that there is zero serialization with people who are just about to go
-> to sleep. It's fundamentally racy against all the "wait_event()" loops
-> that carefully do memory barriers between testing conditions and going
-> to sleep, because the memory barriers now don't exist on the waking
-> side.
-
-As far as 10/23 is concerned, the __wake_userfault taking the locks
-would also ignore any "incoming" not yet "read(2)" userfault. "read(2)"
-as in syscall read. So there was no race to worry about as "incoming"
-userfaults would be ignored anyway by the wake.
-
-The only case that had to be reliable in not missing wakeup events was
-the "release" file operation. But that doesn't use waitqueue_active
-and it relies on ctx->released combined with mmap_sem taken for writing.
-
-    http://git.kernel.org/cgit/linux/kernel/git/andrea/aa.git/tree/fs/userfaultfd.c?h=userfault&id=2f73ffa8267e41f04fe6b0d93d23feed45c0980a#n267
-
-However later (after I started documenting what userland should do) I
-started to question this old model of leaving the race handling to
-userland. It's way too complex to leave the race handling to
-userland. Furthermore it's inefficient because there would be lots of
-spurious userfaults that we could have been waken up within the kernel
-before userland could have a chance to read them.
-
-So then I handled the race in the kernel in patch 17/23. That allowed
-to drop hundres of line of locking code from qemu (two bits per page
-and a mutex and lots of complexity) and then I didn't need to document
-the complex rules described in this commit header:
-
-     http://git.kernel.org/cgit/linux/kernel/git/andrea/aa.git/commit/?h=userfault&id=5a2b3614e107482da9a1fcfcd120d30eb62d45dc
-
-You can see from the patch it complicated the kernel by adding a
-pagetable walk, but it's worth it because it's simpler than solving it
-in userland, plus its solved at once for all users.
-
-The only cons is that the old model would allow userland to be way
-more consistent in enforcing asserts as it had the control.
-
-With the current model POLLIN may be returned from poll() despite the
-later read returns -EAGAIN, so it basically requires a non blocking
-open if people uses poll(). (blocking reads without poll are still
-fine)
-
-Now back to your question: the waitqueue_active is still there in the
-current model as well (since 17/23).
-
-Since 17/23 losing a wakeup (as far as qemu is concerned) would mean
-that qemu would read the address of the fault that didn't get waken up
-because of the race, then it would send a page request to the source
-node (it had no state in the destination node where the userfault runs
-to know if it was a "dup"), which would discard the request (not
-sending the page twice) noticing in its simple per-page bitmap that it
-was already sent. So with the new model after 17/23 qemu, losing a
-wakeup is a bug.
-
-The wait_event is like this:
-
-	handle_userfault (wait_event)
-	-------
-	spin_lock(&ctx->fault_pending_wqh.lock);
-	/*
-	 * After the __add_wait_queue the uwq is visible to userland
-	 * through poll/read().
-	 */
-	__add_wait_queue(&ctx->fault_pending_wqh, &uwq.wq);
-	/*
-	 * The smp_mb() after __set_current_state prevents the reads
-	 * following the spin_unlock to happen before the list_add in
-	 * __add_wait_queue.
-	 */
-	set_current_state(TASK_KILLABLE);
-	spin_unlock(&ctx->fault_pending_wqh.lock);
-
-	must_wait = userfaultfd_must_wait(ctx, address, flags, reason);
-
-	up_read(&mm->mmap_sem);
-
-	if (likely(must_wait && !ACCESS_ONCE(ctx->released) &&
-		   !fatal_signal_pending(current))) {
-		wake_up_poll(&ctx->fd_wqh, POLLIN);
-		schedule();
-
-The wakeup side is:
-
-	userfaultfd_copy
-	-----------
-	ret = mcopy_atomic(ctx->mm, uffdio_copy.dst, uffdio_copy.src,
-			   uffdio_copy.len);
-	if (unlikely(put_user(ret, &user_uffdio_copy->copy)))
-		return -EFAULT;
-	if (ret < 0)
-		goto out;
-	BUG_ON(!ret);
-	/* len == 0 would wake all */
-	range.len = ret;
-	if (!(uffdio_copy.mode & UFFDIO_COPY_MODE_DONTWAKE)) {
-		range.start = uffdio_copy.dst;
-		wake_userfault(ctx, &range);
-
-
-wake_userfault is the function that is using waitqueue_active so the
-problem materializes if waitqueue_active moves before
-mcopy_atomic. Precisely it should move before the set_pte_at below:
-
-	mcopy_atomic_pte
-	------
-	set_pte_at(dst_mm, dst_addr, dst_pte, _dst_pte);
-
-	/* No need to invalidate - it was non-present before */
-	update_mmu_cache(dst_vma, dst_addr, dst_pte);
-
-	pte_unmap_unlock(dst_pte, ptl);
-
-unlock would allow the read to be reordered before it even on
-x86. There's an up_read as well in between but it has the same
-problem. So you're right that theoretically we can miss a wakeup.
-
-Practically it sounds unlikely because of the sheer size of
-mcopy_atomic and we never experienced it but it's still a bug.
-
->  So I'm making a new rule: if you use waitqueue_active(), I want an
-> explanation for why it's not racy with the waiter. A big comment
-> about the memory ordering, or about higher-level locks that are held
-> by the caller, or something.  Linus
-
-To fix it I added this along a comment:
-
-diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-index c89e96f..6be316b 100644
---- a/fs/userfaultfd.c
-+++ b/fs/userfaultfd.c
-@@ -593,6 +593,21 @@ static void __wake_userfault(struct userfaultfd_ctx *ctx,
- static __always_inline void wake_userfault(struct userfaultfd_ctx *ctx,
- 					   struct userfaultfd_wake_range *range)
- {
-+	/*
-+	 * To be sure waitqueue_active() is not reordered by the CPU
-+	 * before the pagetable update, use an explicit SMP memory
-+	 * barrier here. PT lock release or up_read(mmap_sem) still
-+	 * have release semantics that can allow the
-+	 * waitqueue_active() to be reordered before the pte update.
-+	 */
-+	smp_mb();
-+
-+	/*
-+	 * Use waitqueue_active because it's very frequent to
-+	 * change the address space atomically even if there are no
-+	 * userfaults yet. So we take the spinlock only when we're
-+	 * sure we've userfaults to wake.
-+	 */
- 	if (waitqueue_active(&ctx->fault_pending_wqh) ||
- 	    waitqueue_active(&ctx->fault_wqh))
- 		__wake_userfault(ctx, range);
-
-The wait_event/handle_userfault side already has a smp_mb() to prevent
-the lockless pagetable walk to be reordered before the list_add in
-__add_wait_queue (needed as well precisely because of the
-waitqueue_active optimization that I'd like to keep).
-
-Thanks,
-Andrea
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Ck1hcmsgUnV0bGFuZCA8bWFyay5ydXRsYW5kQGFybS5jb20+IHdyaXRlczoKCj4gSGkgQWxleCwK
+Pgo+IE9uIEZyaSwgTWF5IDE1LCAyMDE1IGF0IDAzOjI3OjEzUE0gKzAxMDAsIEFsZXggQmVubsOp
+ZSB3cm90ZToKPj4gVGhpcyBhZGRzIHN1cHBvcnQgZm9yIHVzZXJzcGFjZSB0byBjb250cm9sIHRo
+ZSBIVyBkZWJ1ZyByZWdpc3RlcnMgZm9yCj4+IGd1ZXN0IGRlYnVnLiBJbiB0aGUgZGVidWcgaW9j
+dGwgd2UgY29weSB0aGUgSU1QREVGIGRlZmluZWQgbnVtYmVyIG9mCj4+IHJlZ2lzdGVycyBpbnRv
+IGEgbmV3IHJlZ2lzdGVyIHNldCBjYWxsZWQgaG9zdF9kZWJ1Z19zdGF0ZS4gVGhlcmUgaXMgbm93
+Cj4+IGEgbmV3IHZjcHUgcGFyYW1ldGVyIGNhbGxlZCBkZWJ1Z19wdHIgd2hpY2ggc2VsZWN0cyB3
+aGljaCByZWdpc3RlciBzZXQKPj4gaXMgdG8gY29waWVkIGludG8gdGhlIHJlYWwgcmVnaXN0ZXJz
+IHdoZW4gd29ybGQgc3dpdGNoIG9jY3Vycy4KPj4gCj4+IEkndmUgbW92ZWQgc29tZSBoZWxwZXIg
+ZnVuY3Rpb25zIGludG8gdGhlIGh3X2JyZWFrcG9pbnQuaCBoZWFkZXIgZm9yCj4+IHJlLXVzZS4K
+Pj4gCj4+IEFzIHdpdGggc2luZ2xlIHN0ZXAgd2UgbmVlZCB0byB0d2VhayB0aGUgZ3Vlc3QgcmVn
+aXN0ZXJzIHRvIGVuYWJsZSB0aGUKPj4gZXhjZXB0aW9ucyBzbyB3ZSBuZWVkIHRvIHNhdmUgYW5k
+IHJlc3RvcmUgdGhvc2UgYml0cy4KPj4gCj4+IFR3byBuZXcgY2FwYWJpbGl0aWVzIGhhdmUgYmVl
+biBhZGRlZCB0byB0aGUgS1ZNX0VYVEVOU0lPTiBpb2N0bCB0byBhbGxvdwo+PiB1c2Vyc3BhY2Ug
+dG8gcXVlcnkgdGhlIG51bWJlciBvZiBoYXJkd2FyZSBicmVhayBhbmQgd2F0Y2ggcG9pbnRzCj4+
+IGF2YWlsYWJsZSBvbiB0aGUgaG9zdCBoYXJkd2FyZS4KPgo+IFRoZXJlJ3MgdGhlIHVuZm9ydHVu
+YXRlIHBvc3NpYmlsaXR5IHRoYXQgdGhlc2UgY291bGQgdmFyeSBhY3Jvc3MgY29yZXMKPiBpbiBh
+IGJpZy5MSVRUTEUgc3lzdGVtICh0aG91Z2ggd2UgaGF2ZW4ndCBzZWVuIHRoYXQgdGh1cyBmYXIp
+LiBUaGUKPiBrZXJuZWwgc2FuaXR5IGNoZWNrcyBzaG91bGQgY3VycmVudGx5IGV4cGxvZGUgaWYg
+c3VjaCBhIGNhc2UgaXMKPiBlbmNvdW50ZXJlZCwgYnV0IEkgZG9uJ3Qga25vdyB3aGF0IHdlJ2Qg
+ZG8gd2VyZSB0aGF0IHRvIGhhcHBlbi4KCkkgc3VzcGVjdCB3ZSB3b3VsZCBoYXZlIHRvIGRpc2Fi
+bGUgSFcgYXNzaXN0ZWQgYnJlYWtwb2ludHMgb3IgcmV0dXJuIHRoZQpsb3dlc3QgY29tbW9uIGRl
+bm9taW5hdG9yIGlmIHdlIGNhbiB0ZWxsIHdoaWNoIGNvcmVzIHdlIHNoYWxsIGV2ZXJ5IGJlCnNj
+aGVkdWxlZCBvbi4KCj4KPiBUaGlzIGdldHMgbW9yZSBmdW4gd2hlbiB5b3UgY29uc2lkZXIgdGhl
+IGNvbnRleHQtYXdhcmUgYnJlYWtwb2ludHMgYXJlCj4gdGhlIGhpZ2hlc3QgbnVtYmVyZWQuIFNv
+IHRoZSBzZXQgb2YgKGNvbnRleHQtYXdhcmUpIGJyZWFrcG9pbnRzIG1pZ2h0Cj4gbm90IGludGVy
+c2VjdCBhY3Jvc3MgYWxsIENQVXMuCgpJIGRpZG4ndCBzZWUgYSByZWZlcmVuY2UgdG8gdGhhdCBp
+biB0aGUgQVJNIEFSTS4gSXQgc2VlbWVkIHRvIGltcGx5IGFueQpicmVha3BvaW50IGNvdWxkIGJl
+IGNvbnRleHQgYXdhcmUgaXMgLkJUIHdhcyBhcHByb3ByaWF0ZWx5IHNldCBhbmQKbGlua2VkIHRv
+IHRoZSBWUi4gIAoKQXMgaXQgaGFwcGVucyB0aGUgZ2RiIHN0dWIgaW50ZXJmYWNlIGluIFFFTVUg
+aXMgZmFpcmx5IGxpbWl0ZWQgc28gd2hpbGUKSSBleHBvc2UgdGhlIGZ1bGwgZGVidWcgcmVnaXN0
+ZXJzIEkgZG9uJ3QgdGhpbmsgdGhlcmUgaXMgY3VycmVudGx5IGEgd2F5CnRvIGV4cG9zZSBhbnkg
+b2YgdGhlIGZhbmN5IGxpbmtpbmcvY29udGV4dCBzdHVmZiB0byB0aGUgdXNlcnNwYWNlCmRlYnVn
+Z2VyLiBIb3dldmVyIEkgZGlkIG1ha2UgdGhlIEFCSSBwYXNzIGZ1bGwgcmF3IHZhbHVlcyBpbiBz
+byB0aGlzCmNvdWxkIGJlY29tZSBhIHBvc3NpYmlsaXR5IGxhdGVyIHdpdGhvdXQgaGF2aW5nIHRv
+IGV4cGFuZCB0aGUgQUJJLgoKCj4gSSdtIG5vdCBzdXJlIHdoYXQgdGhlIGJlc3QgdGhpbmcgdG8g
+ZG8gaXMgdy5yLnQuIGV4cG9zaW5nIHRoYXQgdG8KPiB1c2Vyc3BhY2UuCj4KPiBUaGFua3MsCj4g
+TWFyay4KCi0tIApBbGV4IEJlbm7DqWUKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX18Ka3ZtYXJtIG1haWxpbmcgbGlzdAprdm1hcm1AbGlzdHMuY3MuY29sdW1i
+aWEuZWR1Cmh0dHBzOi8vbGlzdHMuY3MuY29sdW1iaWEuZWR1L21haWxtYW4vbGlzdGluZm8va3Zt
+YXJtCg==
