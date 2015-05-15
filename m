@@ -1,86 +1,115 @@
 From: Andy Lutomirski <luto@kernel.org>
-Subject: [PATCH v2 2/2] capabilities: Add a securebit to disable PR_CAP_AMBIENT_RAISE
-Date: Thu, 14 May 2015 23:39:49 -0700
-Message-ID: <003b2a2d3e6ad9f4853e248d853f73448ca7b002.1431671529.git.luto@kernel.org>
-References: <cover.1431671529.git.luto@kernel.org>
+Subject: [PATCH man-pages v2] capabilities.7, prctl.2: Document ambient capabilities
+Date: Thu, 14 May 2015 23:43:45 -0700
+Message-ID: <f85ae308af4946436e82aaa9dd71bcd4b39bd196.1431672156.git.luto@kernel.org>
 Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <cover.1431671529.git.luto@kernel.org>
-In-Reply-To: <cover.1431671529.git.luto@kernel.org>
-References: <cover.1431671529.git.luto@kernel.org>
 Sender: linux-security-module-owner@vger.kernel.org
 To: Serge Hallyn <serge.hallyn@ubuntu.com>, Andrew Morton <akpm@linuxfoundation.org>
-Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Andrew Lutomirski <luto@kernel.org>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>, Christoph Lameter <cl@linux.com>, Andy Lutomirski <luto@amacapital.net>
+Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Andrew Lutomirski <luto@kernel.org>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-Per Andrew Morgan's request, add a securebit to allow admins to
-disable PR_CAP_AMBIENT_RAISE.  This securebit will prevent processes
-from adding capabilities to their ambient set.
-
-For simplicity, this disables PR_CAP_AMBIENT_RAISE entirely rather
-than just disabling setting previously cleared bits.
-
-Requested-by: Andrew G. Morgan <morgan@kernel.org>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Christoph Lameter <cl@linux.com>
-Cc: Serge Hallyn <serge.hallyn@canonical.com>
-Cc: Andy Lutomirski <luto@amacapital.net>
-Cc: Jonathan Corbet <corbet@lwn.net>
-Cc: Aaron Jones <aaronmdjones@gmail.com>
-CC: Ted Ts'o <tytso@mit.edu>
-Cc: linux-security-module@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org
-Cc: akpm@linuxfoundation.org
-Cc: Andrew G. Morgan <morgan@kernel.org>
-Cc: Mimi Zohar <zohar@linux.vnet.ibm.com>
-Cc: Austin S Hemmelgarn <ahferroin7@gmail.com>
-Cc: Markku Savela <msa@moth.iki.fi>
-Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
 Signed-off-by: Andy Lutomirski <luto@kernel.org>
 ---
- include/uapi/linux/securebits.h | 11 ++++++++++-
- security/commoncap.c            |  3 ++-
- 2 files changed, 12 insertions(+), 2 deletions(-)
 
-diff --git a/include/uapi/linux/securebits.h b/include/uapi/linux/securebits.h
-index 985aac9e6bf8..35ac35cef217 100644
---- a/include/uapi/linux/securebits.h
-+++ b/include/uapi/linux/securebits.h
-@@ -43,9 +43,18 @@
- #define SECBIT_KEEP_CAPS	(issecure_mask(SECURE_KEEP_CAPS))
- #define SECBIT_KEEP_CAPS_LOCKED (issecure_mask(SECURE_KEEP_CAPS_LOCKED))
+There was no v1.  I'm calling this v2 to keep it in sync with the kernel
+patch versioning.
+
+ man2/prctl.2        | 10 ++++++++++
+ man7/capabilities.7 | 32 ++++++++++++++++++++++++++------
+ 2 files changed, 36 insertions(+), 6 deletions(-)
+
+diff --git a/man2/prctl.2 b/man2/prctl.2
+index b352f6283624..5861e3aefe9a 100644
+--- a/man2/prctl.2
++++ b/man2/prctl.2
+@@ -949,6 +949,16 @@ had been called.
+ For further information on Intel MPX, see the kernel source file
+ .IR Documentation/x86/intel_mpx.txt .
+ .\"
++.TP
++.BR PR_CAP_AMBIENT " (since Linux 4.2)"
++Reads or changes the ambient capability set.  If arg2 is PR_CAP_AMBIENT_RAISE,
++then the capability specified in arg3 is added to the ambient set.  This will
++fail, returning EPERM, if the capability is not already both permitted and
++inheritable or if the SECBIT_NO_CAP_AMBIENT_RAISE securebit is set.  If arg2
++is PR_CAP_AMBIENT_LOWER, then the capability specified in arg3 is removed
++from the ambient set.  If arg2 is PR_CAP_AMBIENT_GET, then
++.BR prctl (2)
++will return 1 if the capability in arg3 is in the ambient set and 0 if not.
+ .SH RETURN VALUE
+ On success,
+ .BR PR_GET_DUMPABLE ,
+diff --git a/man7/capabilities.7 b/man7/capabilities.7
+index d75ec65de05b..dae62f0be3b7 100644
+--- a/man7/capabilities.7
++++ b/man7/capabilities.7
+@@ -697,13 +697,26 @@ a program whose associated file capabilities grant that capability).
+ .IR Inheritable :
+ This is a set of capabilities preserved across an
+ .BR execve (2).
+-It provides a mechanism for a process to assign capabilities
+-to the permitted set of the new program during an
+-.BR execve (2).
++Inheritable capabilities remain inheritable when executing any program,
++and inheritable capabilities are added to the permitted set when executing
++a program that has the corresponding bits set in the file inheritable set.
++When executing programs without file capabilities, ambient capabilities
+ .TP
+ .IR Effective :
+ This is the set of capabilities used by the kernel to
+ perform permission checks for the thread.
++.TP
++.IR Ambient " (since Linux 4.2) :"
++This is a set of capabilities that are preserved across an
++.BR execve (2)
++of a program that does not have file capabilities.  The ambient capability
++set obeys the invariant that no capability can ever be ambient if it is
++not both permitted and inheritable.  Ambient capabilities are, with some
++exceptions, preserved in the permitted set and added to the effective
++set when
++.BR execve (2)
++is called.  The ambient capability set is modified using
++.BR prctl (2).
+ .PP
+ A child created via
+ .BR fork (2)
+@@ -785,10 +798,12 @@ the process using the following algorithm:
+ .in +4n
+ .nf
  
-+/* When set, a process cannot add new capabilities to its ambient set. */
-+#define SECURE_NO_CAP_AMBIENT_RAISE		6
-+#define SECURE_NO_CAP_AMBIENT_RAISE_LOCKED	7  /* make bit-6 immutable */
++P'(ambient) = (file has capabilities or is setuid or setgid) ? 0 : P(ambient)
 +
-+#define SECBIT_NO_CAP_AMBIENT_RAISE (issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE))
-+#define SECBIT_NO_CAP_AMBIENT_RAISE_LOCKED \
-+			(issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE_LOCKED))
-+
- #define SECURE_ALL_BITS		(issecure_mask(SECURE_NOROOT) | \
- 				 issecure_mask(SECURE_NO_SETUID_FIXUP) | \
--				 issecure_mask(SECURE_KEEP_CAPS))
-+				 issecure_mask(SECURE_KEEP_CAPS) | \
-+				 issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE))
- #define SECURE_ALL_LOCKS	(SECURE_ALL_BITS << 1)
+ P'(permitted) = (P(inheritable) & F(inheritable)) |
+-                (F(permitted) & cap_bset)
++                (F(permitted) & cap_bset) | P'(ambient)
  
- #endif /* _UAPI_LINUX_SECUREBITS_H */
-diff --git a/security/commoncap.c b/security/commoncap.c
-index 09541a6a85a0..98aa1b129c12 100644
---- a/security/commoncap.c
-+++ b/security/commoncap.c
-@@ -983,7 +983,8 @@ int cap_task_prctl(int option, unsigned long arg2, unsigned long arg3,
- 			if (arg2 == PR_CAP_AMBIENT_RAISE &&
- 			    (!cap_raised(current_cred()->cap_permitted, arg3) ||
- 			     !cap_raised(current_cred()->cap_inheritable,
--					 arg3)))
-+					 arg3) ||
-+			     issecure(SECURE_NO_CAP_AMBIENT_RAISE)))
- 				return -EPERM;
+-P'(effective) = F(effective) ? P'(permitted) : 0
++P'(effective) = F(effective) ? P'(permitted) : P'(ambient)
  
- 			new = prepare_creds();
+ P'(inheritable) = P(inheritable)    [i.e., unchanged]
+ 
+@@ -1071,6 +1086,10 @@ an effective or real UID of 0 calls
+ .BR execve (2).
+ (See the subsection
+ .IR "Capabilities and execution of programs by root" .)
++.TP
++.B SECBIT_NO_CAP_AMBIENT_RAISE
++Setting this flag disallows
++.BR PR_CAP_AMBIENT_RAISE .
+ .PP
+ Each of the above "base" flags has a companion "locked" flag.
+ Setting any of the "locked" flags is irreversible,
+@@ -1079,8 +1098,9 @@ corresponding "base" flag.
+ The locked flags are:
+ .BR SECBIT_KEEP_CAPS_LOCKED ,
+ .BR SECBIT_NO_SETUID_FIXUP_LOCKED ,
++.BR SECBIT_NOROOT_LOCKED ,
+ and
+-.BR SECBIT_NOROOT_LOCKED .
++.BR SECBIT_NO_CAP_AMBIENT_RAISE .
+ .PP
+ The
+ .I securebits
 -- 
 2.1.0
 
