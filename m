@@ -1,25 +1,61 @@
-From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 1/2] capabilities: Ambient capabilities
-Date: Fri, 15 May 2015 09:19:04 -0500 (CDT)
-Message-ID: <alpine.DEB.2.11.1505150916330.20103@gentwo.org>
-References: <cover.1431671529.git.luto@kernel.org> <cc4749638a21079cce12f9f30c806170558e56e5.1431671529.git.luto@kernel.org>
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cc4749638a21079cce12f9f30c806170558e56e5.1431671529.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+From: =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>
+Subject: [PATCH v4 01/12] KVM: add comments for kvm_debug_exit_arch struct
+Date: Fri, 15 May 2015 15:27:04 +0100
+Message-ID: <1431700035-23479-2-git-send-email-alex.bennee@linaro.org>
+References: <1431700035-23479-1-git-send-email-alex.bennee@linaro.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
+In-Reply-To: <1431700035-23479-1-git-send-email-alex.bennee@linaro.org>
+List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
+List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
+List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
+List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
+List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
+Errors-To: kvmarm-bounces@lists.cs.columbia.edu
+Sender: kvmarm-bounces@lists.cs.columbia.edu
+To: kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kvmarm@lists.cs.columbia.edu, christoffer.dall@linaro.org, marc.zyngier@arm.com, peter.maydell@linaro.org, agraf@suse.de, drjones@redhat.com, pbonzini@redhat.com, zhichao.huang@linaro.org
+Cc: Jonathan Corbet <corbet@lwn.net>, Gleb Natapov <gleb@kernel.org>, jan.kiszka@siemens.com, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, dahi@linux.vnet.ibm.com, r65777@freescale.com, bp@suse.de
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 14 May 2015, Andy Lutomirski wrote:
-
-> Cc: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-
-This is partially my code it seems. So there should be a
-
-Signed-off-by: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-
-here.
-
-Could you provide an example to demonstrate how it is to be used?
-Something similar to what I had in my patch?
+QnJpbmcgaW50byBsaW5lIHdpdGggdGhlIGNvbW1lbnRzIGZvciB0aGUgb3RoZXIgc3RydWN0dXJl
+cyBhbmQgdGhlaXIKS1ZNX0VYSVRfKiBjYXNlcy4gQWxzbyB1cGRhdGUgYXBpLnR4dCB0byByZWZs
+ZWN0IHVzZSBpbiBrdm1fcnVuCmRvY3VtZW50YXRpb24uCgpTaWduZWQtb2ZmLWJ5OiBBbGV4IEJl
+bm7DqWUgPGFsZXguYmVubmVlQGxpbmFyby5vcmc+ClJldmlld2VkLWJ5OiBEYXZpZCBIaWxkZW5i
+cmFuZCA8ZGFoaUBsaW51eC52bmV0LmlibS5jb20+ClJldmlld2VkLWJ5OiBBbmRyZXcgSm9uZXMg
+PGRyam9uZXNAcmVkaGF0LmNvbT4KQWNrZWQtYnk6IENocmlzdG9mZmVyIERhbGwgPGNocmlzdG9m
+ZmVyLmRhbGxAbGluYXJvLm9yZz4KCi0tLQoKdjIKICAtIGFkZCBjb21tZW50cyBmb3Igb3RoZXIg
+ZXhpdCB0eXBlcwp2MwogIC0gcy9jb21tZW50YXJ5L2NvbW1lbnRzLwogIC0gYWRkIHJiIHRhZ3MK
+ICAtIHVwZGF0ZSBhcGkudHh0IGt2bV9ydW4gdG8gaW5jbHVkZSBLVk1fRVhJVF9ERUJVRyBkZXNj
+CnY0CiAgLSBzcCBmaXhlcwogIC0gYWRkIGEtYgoKZGlmZiAtLWdpdCBhL0RvY3VtZW50YXRpb24v
+dmlydHVhbC9rdm0vYXBpLnR4dCBiL0RvY3VtZW50YXRpb24vdmlydHVhbC9rdm0vYXBpLnR4dApp
+bmRleCA5ZmEyYmY4Li5jMzRjMzJkIDEwMDY0NAotLS0gYS9Eb2N1bWVudGF0aW9uL3ZpcnR1YWwv
+a3ZtL2FwaS50eHQKKysrIGIvRG9jdW1lbnRhdGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0CkBAIC0z
+MDcwLDExICszMDcwLDEzIEBAIGRhdGFfb2Zmc2V0IGRlc2NyaWJlcyB3aGVyZSB0aGUgZGF0YSBp
+cyBsb2NhdGVkIChLVk1fRVhJVF9JT19PVVQpIG9yCiB3aGVyZSBrdm0gZXhwZWN0cyBhcHBsaWNh
+dGlvbiBjb2RlIHRvIHBsYWNlIHRoZSBkYXRhIGZvciB0aGUgbmV4dAogS1ZNX1JVTiBpbnZvY2F0
+aW9uIChLVk1fRVhJVF9JT19JTikuICBEYXRhIGZvcm1hdCBpcyBhIHBhY2tlZCBhcnJheS4KIAor
+CQkvKiBLVk1fRVhJVF9ERUJVRyAqLwogCQlzdHJ1Y3QgewogCQkJc3RydWN0IGt2bV9kZWJ1Z19l
+eGl0X2FyY2ggYXJjaDsKIAkJfSBkZWJ1ZzsKIAotVW51c2VkLgorSWYgdGhlIGV4aXRfcmVhc29u
+IGlzIEtWTV9FWElUX0RFQlVHLCB0aGVuIGEgdmNwdSBpcyBwcm9jZXNzaW5nIGEgZGVidWcgZXZl
+bnQKK2ZvciB3aGljaCBhcmNoaXRlY3R1cmUgc3BlY2lmaWMgaW5mb3JtYXRpb24gaXMgcmV0dXJu
+ZWQuCiAKIAkJLyogS1ZNX0VYSVRfTU1JTyAqLwogCQlzdHJ1Y3QgewpkaWZmIC0tZ2l0IGEvaW5j
+bHVkZS91YXBpL2xpbnV4L2t2bS5oIGIvaW5jbHVkZS91YXBpL2xpbnV4L2t2bS5oCmluZGV4IDRi
+NjAwNTYuLjcwYWM2NDEgMTAwNjQ0Ci0tLSBhL2luY2x1ZGUvdWFwaS9saW51eC9rdm0uaAorKysg
+Yi9pbmNsdWRlL3VhcGkvbGludXgva3ZtLmgKQEAgLTIzNyw2ICsyMzcsNyBAQCBzdHJ1Y3Qga3Zt
+X3J1biB7CiAJCQlfX3UzMiBjb3VudDsKIAkJCV9fdTY0IGRhdGFfb2Zmc2V0OyAvKiByZWxhdGl2
+ZSB0byBrdm1fcnVuIHN0YXJ0ICovCiAJCX0gaW87CisJCS8qIEtWTV9FWElUX0RFQlVHICovCiAJ
+CXN0cnVjdCB7CiAJCQlzdHJ1Y3Qga3ZtX2RlYnVnX2V4aXRfYXJjaCBhcmNoOwogCQl9IGRlYnVn
+OwpAQCAtMjg1LDYgKzI4Niw3IEBAIHN0cnVjdCBrdm1fcnVuIHsKIAkJCV9fdTMyIGRhdGE7CiAJ
+CQlfX3U4ICBpc193cml0ZTsKIAkJfSBkY3I7CisJCS8qIEtWTV9FWElUX0lOVEVSTkFMX0VSUk9S
+ICovCiAJCXN0cnVjdCB7CiAJCQlfX3UzMiBzdWJlcnJvcjsKIAkJCS8qIEF2YWlsYWJsZSB3aXRo
+IEtWTV9DQVBfSU5URVJOQUxfRVJST1JfREFUQTogKi8KQEAgLTI5NSw2ICsyOTcsNyBAQCBzdHJ1
+Y3Qga3ZtX3J1biB7CiAJCXN0cnVjdCB7CiAJCQlfX3U2NCBncHJzWzMyXTsKIAkJfSBvc2k7CisJ
+CS8qIEtWTV9FWElUX1BBUFJfSENBTEwgKi8KIAkJc3RydWN0IHsKIAkJCV9fdTY0IG5yOwogCQkJ
+X191NjQgcmV0OwotLSAKMi4zLjUKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fCmt2bWFybSBtYWlsaW5nIGxpc3QKa3ZtYXJtQGxpc3RzLmNzLmNvbHVtYmlh
+LmVkdQpodHRwczovL2xpc3RzLmNzLmNvbHVtYmlhLmVkdS9tYWlsbWFuL2xpc3RpbmZvL2t2bWFy
+bQo=
