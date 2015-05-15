@@ -1,94 +1,25 @@
-From: Daniel J Walsh <dwalsh-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH V6 05/10] audit: log creation and deletion of namespace
-	instances
-Date: Fri, 15 May 2015 09:19:19 -0400
-Message-ID: <5555F257.3030906@redhat.com>
-References: <cover.1429252659.git.rgb@redhat.com>
-	<2487286.y6vyJ9A3er@x2>	<20150512195759.GA9832@madcap2.tricolour.ca>	<2918460.dpKocsKt4o@x2>	<20150515004855.GB10526@madcap2.tricolour.ca>	<CAA4jN2bgynVTwF+owtXgq06JMLQJpy_qokpD0mAguNYeDxmh1A@mail.gmail.com>
-	<20150515021126.GA965@madcap2.tricolour.ca>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20150515021126.GA965-bcJWsdo4jJjeVoXN4CMphl7TgLCtbB0G@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Oren Laadan <orenl-3AfRa/s5aFdBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org, Eric Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 1/2] capabilities: Ambient capabilities
+Date: Fri, 15 May 2015 09:19:04 -0500 (CDT)
+Message-ID: <alpine.DEB.2.11.1505150916330.20103@gentwo.org>
+References: <cover.1431671529.git.luto@kernel.org> <cc4749638a21079cce12f9f30c806170558e56e5.1431671529.git.luto@kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cc4749638a21079cce12f9f30c806170558e56e5.1431671529.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Thu, 14 May 2015, Andy Lutomirski wrote:
 
+> Cc: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
 
-On 05/14/2015 10:11 PM, Richard Guy Briggs wrote:
-> On 15/05/14, Oren Laadan wrote:
->> On Thu, May 14, 2015 at 8:48 PM, Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->>
->>>>>> Recording each instance of a name space is giving me something that I
->>>>>> cannot use to do queries required by the security target. Given these
->>>>>> events, how do I locate a web server event where it accesses a
->>> watched
->>>>>> file? That authentication failed? That an update within the container
->>>>>> failed?
->>>>>>
->>>>>> The requirements are that we have to log the creation, suspension,
->>>>>> migration, and termination of a container. The requirements are not
->>> on
->>>>>> the individual name space.
->>>>> Ok.  Do we have a robust definition of a container?
->>>> We call the combination of name spaces, cgroups, and seccomp rules a
->>>> container.
->>> Can you detail what information is required from each?
->>>
->>>>> Where is that definition managed?
->>>> In the thing that invokes a container.
->>> I was looking for a reference to a standards document rather than an
->>> application...
->>>
->>>
->> [focusing on "containers id" - snipped the rest away]
->>
->> I am unfamiliar with the audit subsystem, but work with namespaces in other
->> contexts. Perhaps the term "container" is overloaded here. The definition
->> suggested by Steve in this thread makes sense to me: "a combination of
->> namespaces". I imagine people may want to audit subsets of namespaces.
-> I assume it would be a bit more than that, including cgroup and seccomp info.
-I don't see why seccomp versus other Security mechanism come into this. 
-Not really
-sure of cgroup.  That stuff would all be associated with the process.  I
-would guess
-you could look at the process that modified these for logging, but that
-should happen
-at the time they get changed,  Not recorded for every process.
->> For namespaces, can use a string like "A:B:C:D:E:F" as an identifier for a
->> particular combination, where A-F are respective namespaces identifiers.
->> (Can be taken for example from /proc/PID/ns/{mnt,uts,ipc,user,pid,net}).
->>  That will even be grep-able to locate records related to a particular
->> subset
->> of namespaces. So a "container" in the classic meaning would have all A-F
->> unique and different from the init process, but processes separated only by
->> e.g. mnt-ns and net-ns will differ from the init process in  A and F.
->>
->> (If a string is a no go, then perhaps combine the IDs in a unique way into a
->> super ID).
-> I'd be fine with either, even including the nsfs deviceID.
->
->> Oren.
-> - RGB
->
-> --
-> Richard Guy Briggs <rbriggs-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Senior Software Engineer, Kernel Security, AMER ENG Base Operating Systems, Red Hat
-> Remote, Ottawa, Canada
-> Voice: +1.647.777.2635, Internal: (81) 32635, Alt: +1.613.693.0684x3545
->
-> --
-> Linux-audit mailing list
-> Linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-> https://www.redhat.com/mailman/listinfo/linux-audit
+This is partially my code it seems. So there should be a
+
+Signed-off-by: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+
+here.
+
+Could you provide an example to demonstrate how it is to be used?
+Something similar to what I had in my patch?
