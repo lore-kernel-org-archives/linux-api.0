@@ -1,115 +1,47 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: [PATCH man-pages v2] capabilities.7, prctl.2: Document ambient capabilities
-Date: Thu, 14 May 2015 23:43:45 -0700
-Message-ID: <f85ae308af4946436e82aaa9dd71bcd4b39bd196.1431672156.git.luto@kernel.org>
-Return-path: <linux-security-module-owner@vger.kernel.org>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Serge Hallyn <serge.hallyn@ubuntu.com>, Andrew Morton <akpm@linuxfoundation.org>
-Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Andrew Lutomirski <luto@kernel.org>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [CFT][PATCH 0/10] Making new mounts of proc and sysfs as safe as bind mounts
+Date: Fri, 15 May 2015 01:55:38 -0500
+Message-ID: <87617u1g9h.fsf@x220.int.ebiederm.org>
+References: <87pp63jcca.fsf@x220.int.ebiederm.org>
+	<20150514202951.GA16416@kroah.com>
+	<87oalmg90j.fsf@x220.int.ebiederm.org>
+	<CALCETrU1yxcDfv4YV3wVpWMAdiOOsSUFOPUpFAN-mVA4M-OxdQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrU1yxcDfv4YV3wVpWMAdiOOsSUFOPUpFAN-mVA4M-OxdQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+	(Andy Lutomirski's message of "Thu, 14 May 2015 23:26:48 -0700")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, =?utf-8?Q?St=C3=A9phane?= Graber <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Eric Windisch <ewindisch-FCduhRhOUaTQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Andy Lutomirski <luto@kernel.org>
----
+Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
 
-There was no v1.  I'm calling this v2 to keep it in sync with the kernel
-patch versioning.
+> Can we please just get rid of this implicit nodev thing once and for all?  If it
+> breaks some really weird /proc use case, then I think the right fix is to
+> stop enforcing the nodev lock for the proc fully visible check.  After
+> all, /proc doesn't contain useful device nodes anyway.
 
- man2/prctl.2        | 10 ++++++++++
- man7/capabilities.7 | 32 ++++++++++++++++++++++++++------
- 2 files changed, 36 insertions(+), 6 deletions(-)
+On second look I don't think that will actually cause issues in this
+case.
 
-diff --git a/man2/prctl.2 b/man2/prctl.2
-index b352f6283624..5861e3aefe9a 100644
---- a/man2/prctl.2
-+++ b/man2/prctl.2
-@@ -949,6 +949,16 @@ had been called.
- For further information on Intel MPX, see the kernel source file
- .IR Documentation/x86/intel_mpx.txt .
- .\"
-+.TP
-+.BR PR_CAP_AMBIENT " (since Linux 4.2)"
-+Reads or changes the ambient capability set.  If arg2 is PR_CAP_AMBIENT_RAISE,
-+then the capability specified in arg3 is added to the ambient set.  This will
-+fail, returning EPERM, if the capability is not already both permitted and
-+inheritable or if the SECBIT_NO_CAP_AMBIENT_RAISE securebit is set.  If arg2
-+is PR_CAP_AMBIENT_LOWER, then the capability specified in arg3 is removed
-+from the ambient set.  If arg2 is PR_CAP_AMBIENT_GET, then
-+.BR prctl (2)
-+will return 1 if the capability in arg3 is in the ambient set and 0 if not.
- .SH RETURN VALUE
- On success,
- .BR PR_GET_DUMPABLE ,
-diff --git a/man7/capabilities.7 b/man7/capabilities.7
-index d75ec65de05b..dae62f0be3b7 100644
---- a/man7/capabilities.7
-+++ b/man7/capabilities.7
-@@ -697,13 +697,26 @@ a program whose associated file capabilities grant that capability).
- .IR Inheritable :
- This is a set of capabilities preserved across an
- .BR execve (2).
--It provides a mechanism for a process to assign capabilities
--to the permitted set of the new program during an
--.BR execve (2).
-+Inheritable capabilities remain inheritable when executing any program,
-+and inheritable capabilities are added to the permitted set when executing
-+a program that has the corresponding bits set in the file inheritable set.
-+When executing programs without file capabilities, ambient capabilities
- .TP
- .IR Effective :
- This is the set of capabilities used by the kernel to
- perform permission checks for the thread.
-+.TP
-+.IR Ambient " (since Linux 4.2) :"
-+This is a set of capabilities that are preserved across an
-+.BR execve (2)
-+of a program that does not have file capabilities.  The ambient capability
-+set obeys the invariant that no capability can ever be ambient if it is
-+not both permitted and inheritable.  Ambient capabilities are, with some
-+exceptions, preserved in the permitted set and added to the effective
-+set when
-+.BR execve (2)
-+is called.  The ambient capability set is modified using
-+.BR prctl (2).
- .PP
- A child created via
- .BR fork (2)
-@@ -785,10 +798,12 @@ the process using the following algorithm:
- .in +4n
- .nf
- 
-+P'(ambient) = (file has capabilities or is setuid or setgid) ? 0 : P(ambient)
-+
- P'(permitted) = (P(inheritable) & F(inheritable)) |
--                (F(permitted) & cap_bset)
-+                (F(permitted) & cap_bset) | P'(ambient)
- 
--P'(effective) = F(effective) ? P'(permitted) : 0
-+P'(effective) = F(effective) ? P'(permitted) : P'(ambient)
- 
- P'(inheritable) = P(inheritable)    [i.e., unchanged]
- 
-@@ -1071,6 +1086,10 @@ an effective or real UID of 0 calls
- .BR execve (2).
- (See the subsection
- .IR "Capabilities and execution of programs by root" .)
-+.TP
-+.B SECBIT_NO_CAP_AMBIENT_RAISE
-+Setting this flag disallows
-+.BR PR_CAP_AMBIENT_RAISE .
- .PP
- Each of the above "base" flags has a companion "locked" flag.
- Setting any of the "locked" flags is irreversible,
-@@ -1079,8 +1098,9 @@ corresponding "base" flag.
- The locked flags are:
- .BR SECBIT_KEEP_CAPS_LOCKED ,
- .BR SECBIT_NO_SETUID_FIXUP_LOCKED ,
-+.BR SECBIT_NOROOT_LOCKED ,
- and
--.BR SECBIT_NOROOT_LOCKED .
-+.BR SECBIT_NO_CAP_AMBIENT_RAISE .
- .PP
- The
- .I securebits
--- 
-2.1.0
+I actually have a fix for the implicit nodev weirdness in my development
+qeueue but it requires figuring out how to add s_user_ns to superblocks.
+My last round of testing told me I was doing that wrong.
 
+But if the implicit nodev is actually a problem I will definitely delay
+this until I have that change ready to go as well.
+
+> Other than that, the code here looks okay to me on brief inspection.
+
+At a practical level I am concerned that enforcing things like noexec
+and nosuid from the original normal global proc might cause problems for
+things like sandstorm, lxc, and possibly libvirt-lxc.  So I would really
+appreciate if people associated with those projects could test this and
+tell me if I break things.
+
+Other than my stupid refactor in my code for /proc/fs/nfsd that causes
+the kernel to oops :(  Doh!
+
+Eric
