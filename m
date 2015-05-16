@@ -1,138 +1,139 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe as bind mounts (take 2)
-Date: Fri, 15 May 2015 21:05:39 -0500
-Message-ID: <87siaxuvik.fsf@x220.int.ebiederm.org>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: [CFT][PATCH 01/10] mnt: Refactor the logic for mounting sysfs and proc in a user namespace
+Date: Fri, 15 May 2015 21:06:14 -0500
+Message-ID: <87mw15uvhl.fsf_-_@x220.int.ebiederm.org>
 References: <87pp63jcca.fsf@x220.int.ebiederm.org>
+	<87siaxuvik.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <87pp63jcca.fsf@x220.int.ebiederm.org> (Eric W. Biederman's
-	message of "Thu, 14 May 2015 12:30:45 -0500")
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Linux Containers <containers@lists.linux-foundation.org>
-Cc: linux-fsdevel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Andy Lutomirski <luto@amacapital.net>, Richard Weinberger <richard@nod.at>, Kenton Varda <kenton@sandstorm.io>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, =?utf-8?Q?St=C3=A9phane?= Graber <stgraber@ubuntu.com>, Eric Windisch <ewindisch@docker.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tejun Heo <tj@kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87siaxuvik.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org> (Eric W. Biederman's
+	message of "Fri, 15 May 2015 21:05:39 -0500")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, =?utf-8?Q?St=C3=A9phane?= Graber <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Eric Windisch <ewindisch-FCduhRhOUaTQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-The code is currently available at:
 
-   git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-testing
+Fresh mounts of proc and sysfs are a very special case that works very
+much like a bind mount.  Unfortunately the current structure can not
+preserve the MNT_LOCK... mount flags.  Therefore refactor the logic
+into a form that can be modified to preserve those lock bits.
 
-   HEAD: 513d98ba1adfa9e3178b6fc3b2fa57a622283d32 mnt: Update fs_fully_visible to test for permanently empty directories
+Add a new filesystem flag FS_USERNS_VISIBLE that requires some mount
+of the filesystem be fully visible in the current mount namespace,
+before the filesystem may be mounted.
 
-The problem:  Mounting a new instance of proc of sysfs can allow things
-that a bind mount of those filesystems would not.
+Move the logic for calling fs_fully_visible from proc and sysfs into
+fs/namespace.c where it has greater access to mount namespace state.
 
-That is the cases I am dealing with are:
-     unshare --user --net --mount ; mount -t sysfs ...
-     unshare --user --pid --mount ; mount -t proc ...
+Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+---
+ fs/namespace.c     | 8 +++++++-
+ fs/proc/root.c     | 5 +----
+ fs/sysfs/mount.c   | 5 +----
+ include/linux/fs.h | 2 +-
+ 4 files changed, 10 insertions(+), 10 deletions(-)
 
-This set of changes enforces the preservation of locked mount flags,
-from the existing mount to the current mount.  Which means that if proc
-was mounted read-only the current current will allow a new instance of
-proc to be mounted read-write, and this set of changes enforces that
-proc remain read-only.
-
-This set of changes also updates sysctl, proc and sysfs to explicitly
-create the directories they expect to be mount points as mount points.
-Making the code a little clearly and making it so when fs_fully_visible
-disregards something mounted on a proc or sysfs it is guaranteed to
-be safe, unlike the current code which can occassionally let things
-fall through the cracks.
-
-These changes to enforce the administrators policy can actually matter
-in the real world as has been shown by the recent docker issue.
-
-With this patchset I have two concerns:
-- The enforcement of not being able to mount proc or sysfs with fewer
-  mount flags than the existing mount may break something.
-
-- That there is a filesystem that that common mounts on proc or sysfs
-  and I missed annotating it's mount point.  That would make mounting
-  a freshy copy of proc or sysfs impossible.
-
-I don't want to break userspace if I can help it, and the code has been
-this way for a while so I figure there is time to find any pitfalls and
-address them before this code gets merged.  Folks rom lxc, sandstorm,
-libvirt-lxc (anyone who uses user namespaces in the least) a
-confirmation that I have not broken your existing code would be
-appreciated.
-
-If this works for you please give me your Tested-By
-
-Since the first version I have renamed the directory creation calls to
-have sysfs_create_mount_point and proc_create_mount_point (as suggested
-by Greg KH so that it is very clear what the code that creates those
-mount points is doing.  I have also fixed a stupid bug that slipped into
-the proc code when I refactored it.  I have also gone through and rested
-everything so hopefully nothing has slipped past me.
-
-The well known mountpoints for pseudo filesystems that I could find are:
-/dev/ffs*/                 functionfs
-/dev/gadget/               gadgetfs
-/dev/mqueue                mqueue
-/dev/oprofile/             oprofilefs
-/dev/pts/                  devpts
-/dev/shm/                  tmpfs
-/dlm/                      ocfs2_dlmfs
-/ipath/                    ipathfs
-/proc/fs/nfsd/             nfsd
-/proc/openprom/            openpromfs
-/proc/sys/fs/binfmt_misc/  binfmt_misc
-/spu/                      spufs
-/sys/firmware/efi/efivars/ efivarfs
-/sys/fs/cgroup/            cgroup
-/sys/fs/fuse/connections/  fusectl
-/sys/fs/pstore/            pstore
-/sys/fs/selinux/           selinuxfs
-/sys/fs/smackfs/           smackfs
-/sys/hypervisor/s390/      s390_hypfs
-/sys/kernel/config/        configfs
-/sys/kernel/debug/         debugfs
-/sys/kernel/security/      securityfs
-/sys/kernel/tracing/       tracefs
-/var/lib/ibmasm/           ibmasmfs
-/var/lib/nfs/rpc_pipefs/   rpc_pipefs
-
-Eric W. Biederman (10):
-      mnt: Refactor the logic for mounting sysfs and proc in a user namespace
-      mnt: Modify fs_fully_visible to deal with mount attributes
-      vfs: Ignore unlocked mounts in fs_fully_visible
-      fs: Add helper functions for permanently empty directories.
-      sysctl: Allow creating permanently empty directories that serve as mountpoints.
-      proc: Allow creating permanently empty directories that serve as mount points
-      kernfs: Add support for always empty directories.
-      sysfs: Add support for permanently empty directories to serve as mount points.
-      sysfs: Create mountpoints with sysfs_create_mount_point
-      mnt: Update fs_fully_visible to test for permanently empty directories
-
-
- arch/s390/hypfs/inode.c      | 12 ++----
- drivers/firmware/efi/efi.c   |  6 +--
- fs/configfs/mount.c          | 10 ++---
- fs/debugfs/inode.c           | 11 ++---
- fs/fuse/inode.c              |  9 ++---
- fs/kernfs/dir.c              | 38 +++++++++++++++++-
- fs/kernfs/inode.c            |  2 +
- fs/libfs.c                   | 96 ++++++++++++++++++++++++++++++++++++++++++++
- fs/namespace.c               | 47 +++++++++++++++++++---
- fs/proc/generic.c            | 23 +++++++++++
- fs/proc/inode.c              |  4 ++
- fs/proc/internal.h           |  6 +++
- fs/proc/proc_sysctl.c        | 37 +++++++++++++++++
- fs/proc/root.c               |  9 ++---
- fs/pstore/inode.c            | 12 ++----
- fs/sysfs/dir.c               | 34 ++++++++++++++++
- fs/sysfs/mount.c             |  5 +--
- fs/tracefs/inode.c           |  6 +--
- include/linux/fs.h           |  4 +-
- include/linux/kernfs.h       |  3 ++
- include/linux/sysctl.h       |  3 ++
- include/linux/sysfs.h        | 16 ++++++++
- kernel/cgroup.c              | 10 ++---
- kernel/sysctl.c              |  8 +---
- security/inode.c             | 10 ++---
- security/selinux/selinuxfs.c | 11 +++--
- security/smack/smackfs.c     |  8 ++--
- 27 files changed, 350 insertions(+), 90 deletions(-)
-
-Eric
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 1b9e11167bae..8e7edaf60fe1 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -2332,6 +2332,8 @@ unlock:
+ 	return err;
+ }
+ 
++static bool fs_fully_visible(struct file_system_type *fs_type);
++
+ /*
+  * create a new mount for userspace and request it to be added into the
+  * namespace's tree
+@@ -2363,6 +2365,10 @@ static int do_new_mount(struct path *path, const char *fstype, int flags,
+ 			flags |= MS_NODEV;
+ 			mnt_flags |= MNT_NODEV | MNT_LOCK_NODEV;
+ 		}
++		if (type->fs_flags & FS_USERNS_VISIBLE) {
++			if (!fs_fully_visible(type))
++				return -EPERM;
++		}
+ 	}
+ 
+ 	mnt = vfs_kern_mount(type, flags, name, data);
+@@ -3164,7 +3170,7 @@ bool current_chrooted(void)
+ 	return chrooted;
+ }
+ 
+-bool fs_fully_visible(struct file_system_type *type)
++static bool fs_fully_visible(struct file_system_type *type)
+ {
+ 	struct mnt_namespace *ns = current->nsproxy->mnt_ns;
+ 	struct mount *mnt;
+diff --git a/fs/proc/root.c b/fs/proc/root.c
+index b7fa4bfe896a..64e1ab64bde6 100644
+--- a/fs/proc/root.c
++++ b/fs/proc/root.c
+@@ -112,9 +112,6 @@ static struct dentry *proc_mount(struct file_system_type *fs_type,
+ 		ns = task_active_pid_ns(current);
+ 		options = data;
+ 
+-		if (!capable(CAP_SYS_ADMIN) && !fs_fully_visible(fs_type))
+-			return ERR_PTR(-EPERM);
+-
+ 		/* Does the mounter have privilege over the pid namespace? */
+ 		if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN))
+ 			return ERR_PTR(-EPERM);
+@@ -159,7 +156,7 @@ static struct file_system_type proc_fs_type = {
+ 	.name		= "proc",
+ 	.mount		= proc_mount,
+ 	.kill_sb	= proc_kill_sb,
+-	.fs_flags	= FS_USERNS_MOUNT,
++	.fs_flags	= FS_USERNS_VISIBLE | FS_USERNS_MOUNT,
+ };
+ 
+ void __init proc_root_init(void)
+diff --git a/fs/sysfs/mount.c b/fs/sysfs/mount.c
+index 8a49486bf30c..1c6ac6fcee9f 100644
+--- a/fs/sysfs/mount.c
++++ b/fs/sysfs/mount.c
+@@ -31,9 +31,6 @@ static struct dentry *sysfs_mount(struct file_system_type *fs_type,
+ 	bool new_sb;
+ 
+ 	if (!(flags & MS_KERNMOUNT)) {
+-		if (!capable(CAP_SYS_ADMIN) && !fs_fully_visible(fs_type))
+-			return ERR_PTR(-EPERM);
+-
+ 		if (!kobj_ns_current_may_mount(KOBJ_NS_TYPE_NET))
+ 			return ERR_PTR(-EPERM);
+ 	}
+@@ -58,7 +55,7 @@ static struct file_system_type sysfs_fs_type = {
+ 	.name		= "sysfs",
+ 	.mount		= sysfs_mount,
+ 	.kill_sb	= sysfs_kill_sb,
+-	.fs_flags	= FS_USERNS_MOUNT,
++	.fs_flags	= FS_USERNS_VISIBLE | FS_USERNS_MOUNT,
+ };
+ 
+ int __init sysfs_init(void)
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 35ec87e490b1..2d24eeb8e59c 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1897,6 +1897,7 @@ struct file_system_type {
+ #define FS_HAS_SUBTYPE		4
+ #define FS_USERNS_MOUNT		8	/* Can be mounted by userns root */
+ #define FS_USERNS_DEV_MOUNT	16 /* A userns mount does not imply MNT_NODEV */
++#define FS_USERNS_VISIBLE	32	/* FS must already be visible */
+ #define FS_RENAME_DOES_D_MOVE	32768	/* FS will handle d_move() during rename() internally. */
+ 	struct dentry *(*mount) (struct file_system_type *, int,
+ 		       const char *, void *);
+@@ -1984,7 +1985,6 @@ extern int vfs_ustat(dev_t, struct kstatfs *);
+ extern int freeze_super(struct super_block *super);
+ extern int thaw_super(struct super_block *super);
+ extern bool our_mnt(struct vfsmount *mnt);
+-extern bool fs_fully_visible(struct file_system_type *);
+ 
+ extern int current_umask(void);
+ 
+-- 
+2.2.1
