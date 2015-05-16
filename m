@@ -1,7 +1,7 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: [CFT][PATCH 05/10] sysctl: Allow creating permanently empty directories that serve as mountpoints.
-Date: Fri, 15 May 2015 21:08:27 -0500
-Message-ID: <87y4kptgtg.fsf_-_@x220.int.ebiederm.org>
+Subject: [CFT][PATCH 06/10] proc: Allow creating permanently empty directories that serve as mount points
+Date: Fri, 15 May 2015 21:08:59 -0500
+Message-ID: <87siaxtgsk.fsf_-_@x220.int.ebiederm.org>
 References: <87pp63jcca.fsf@x220.int.ebiederm.org>
 	<87siaxuvik.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
@@ -15,132 +15,117 @@ Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-
 List-Id: linux-api@vger.kernel.org
 
 
-Add a magic sysctl table sysctl_mount_point that when used to
-create a directory forces that directory to be permanently empty.
+Add a new function proc_create_mount_point that when used to creates a
+directory that can not be added to.
 
-Update the code to use make_empty_dir_inode when accessing permanently
-empty directories.
+Add a new function is_empty_pde to test if a function is a mount
+point.
+
+Update the code to use make_empty_dir_inode when reporting
+a permanently empty directory to the vfs.
 
 Update the code to not allow adding to permanently empty directories.
 
-Update /proc/sys/fs/binfmt_misc to be a permanently empty directory.
+Update /proc/openprom and /proc/fs/nfsd to be permanently empty directories.
 
 Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- fs/proc/proc_sysctl.c  | 37 +++++++++++++++++++++++++++++++++++++
- include/linux/sysctl.h |  3 +++
- kernel/sysctl.c        |  8 +-------
- 3 files changed, 41 insertions(+), 7 deletions(-)
+ fs/proc/generic.c  | 23 +++++++++++++++++++++++
+ fs/proc/inode.c    |  4 ++++
+ fs/proc/internal.h |  6 ++++++
+ fs/proc/root.c     |  4 ++--
+ 4 files changed, 35 insertions(+), 2 deletions(-)
 
-diff --git a/fs/proc/proc_sysctl.c b/fs/proc/proc_sysctl.c
-index fea2561d773b..fdda62e6115e 100644
---- a/fs/proc/proc_sysctl.c
-+++ b/fs/proc/proc_sysctl.c
-@@ -19,6 +19,28 @@ static const struct inode_operations proc_sys_inode_operations;
- static const struct file_operations proc_sys_dir_file_operations;
- static const struct inode_operations proc_sys_dir_operations;
- 
-+/* Support for permanently empty directories */
-+
-+struct ctl_table sysctl_mount_point[] = {
-+	{ }
-+};
-+
-+static bool is_empty_dir(struct ctl_table_header *head)
-+{
-+	return head->ctl_table[0].child == sysctl_mount_point;
-+}
-+
-+static void set_empty_dir(struct ctl_dir *dir)
-+{
-+	dir->header.ctl_table[0].child = sysctl_mount_point;
-+}
-+
-+static void clear_empty_dir(struct ctl_dir *dir)
-+
-+{
-+	dir->header.ctl_table[0].child = NULL;
-+}
-+
- void proc_sys_poll_notify(struct ctl_table_poll *poll)
- {
- 	if (!poll)
-@@ -187,6 +209,17 @@ static int insert_header(struct ctl_dir *dir, struct ctl_table_header *header)
- 	struct ctl_table *entry;
- 	int err;
- 
-+	/* Is this a permanently empty directory? */
-+	if (is_empty_dir(&dir->header))
-+		return -EROFS;
-+
-+	/* Am I creating a permanently empty directory? */
-+	if (header->ctl_table == sysctl_mount_point) {
-+		if (!RB_EMPTY_ROOT(&dir->root))
-+			return -EINVAL;
-+		set_empty_dir(dir);
-+	}
-+
- 	dir->header.nreg++;
- 	header->parent = dir;
- 	err = insert_links(header);
-@@ -202,6 +235,8 @@ fail:
- 	erase_header(header);
- 	put_links(header);
- fail_links:
-+	if (header->ctl_table == sysctl_mount_point)
-+		clear_empty_dir(dir);
- 	header->parent = NULL;
- 	drop_sysctl_table(&dir->header);
- 	return err;
-@@ -419,6 +454,8 @@ static struct inode *proc_sys_make_inode(struct super_block *sb,
- 		inode->i_mode |= S_IFDIR;
- 		inode->i_op = &proc_sys_dir_operations;
- 		inode->i_fop = &proc_sys_dir_file_operations;
-+		if (is_empty_dir(head))
-+			make_empty_dir_inode(inode);
+diff --git a/fs/proc/generic.c b/fs/proc/generic.c
+index df6327a2b865..e5dee5c3188e 100644
+--- a/fs/proc/generic.c
++++ b/fs/proc/generic.c
+@@ -373,6 +373,10 @@ static struct proc_dir_entry *__proc_create(struct proc_dir_entry **parent,
+ 		WARN(1, "create '/proc/%s' by hand\n", qstr.name);
+ 		return NULL;
  	}
- out:
- 	return inode;
-diff --git a/include/linux/sysctl.h b/include/linux/sysctl.h
-index 795d5fea5697..fa7bc29925c9 100644
---- a/include/linux/sysctl.h
-+++ b/include/linux/sysctl.h
-@@ -188,6 +188,9 @@ struct ctl_table_header *register_sysctl_paths(const struct ctl_path *path,
- void unregister_sysctl_table(struct ctl_table_header * table);
++	if (is_empty_pde(*parent)) {
++		WARN(1, "attempt to add to permanently empty directory");
++		return NULL;
++	}
  
- extern int sysctl_init(void);
-+
-+extern struct ctl_table sysctl_mount_point[];
-+
- #else /* CONFIG_SYSCTL */
- static inline struct ctl_table_header *register_sysctl_table(struct ctl_table * table)
- {
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index 2082b1a88fb9..c3eee4c6d6c1 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -1531,12 +1531,6 @@ static struct ctl_table vm_table[] = {
- 	{ }
- };
+ 	ent = kzalloc(sizeof(struct proc_dir_entry) + qstr.len + 1, GFP_KERNEL);
+ 	if (!ent)
+@@ -455,6 +459,25 @@ struct proc_dir_entry *proc_mkdir(const char *name,
+ }
+ EXPORT_SYMBOL(proc_mkdir);
  
--#if defined(CONFIG_BINFMT_MISC) || defined(CONFIG_BINFMT_MISC_MODULE)
--static struct ctl_table binfmt_misc_table[] = {
--	{ }
--};
--#endif
--
- static struct ctl_table fs_table[] = {
- 	{
- 		.procname	= "inode-nr",
-@@ -1690,7 +1684,7 @@ static struct ctl_table fs_table[] = {
- 	{
- 		.procname	= "binfmt_misc",
- 		.mode		= 0555,
--		.child		= binfmt_misc_table,
-+		.child		= sysctl_mount_point,
- 	},
++struct proc_dir_entry *proc_create_mount_point(const char *name)
++{
++	umode_t mode = S_IFDIR | S_IRUGO | S_IXUGO;
++	struct proc_dir_entry *ent, *parent = NULL;
++
++	ent = __proc_create(&parent, name, mode, 2);
++	if (ent) {
++		ent->data = NULL;
++		ent->proc_fops = NULL;
++		ent->proc_iops = NULL;
++		if (proc_register(parent, ent) < 0) {
++			kfree(ent);
++			parent->nlink--;
++			ent = NULL;
++		}
++	}
++	return ent;
++}
++
+ struct proc_dir_entry *proc_create_data(const char *name, umode_t mode,
+ 					struct proc_dir_entry *parent,
+ 					const struct file_operations *proc_fops,
+diff --git a/fs/proc/inode.c b/fs/proc/inode.c
+index 8272aaba1bb0..e3eb5524639f 100644
+--- a/fs/proc/inode.c
++++ b/fs/proc/inode.c
+@@ -423,6 +423,10 @@ struct inode *proc_get_inode(struct super_block *sb, struct proc_dir_entry *de)
+ 		inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
+ 		PROC_I(inode)->pde = de;
+ 
++		if (is_empty_pde(de)) {
++			make_empty_dir_inode(inode);
++			return inode;
++		}
+ 		if (de->mode) {
+ 			inode->i_mode = de->mode;
+ 			inode->i_uid = de->uid;
+diff --git a/fs/proc/internal.h b/fs/proc/internal.h
+index c835b94c0cd3..aa2781095bd1 100644
+--- a/fs/proc/internal.h
++++ b/fs/proc/internal.h
+@@ -191,6 +191,12 @@ static inline struct proc_dir_entry *pde_get(struct proc_dir_entry *pde)
+ }
+ extern void pde_put(struct proc_dir_entry *);
+ 
++static inline bool is_empty_pde(const struct proc_dir_entry *pde)
++{
++	return S_ISDIR(pde->mode) && !pde->proc_iops;
++}
++struct proc_dir_entry *proc_create_mount_point(const char *name);
++
+ /*
+  * inode.c
+  */
+diff --git a/fs/proc/root.c b/fs/proc/root.c
+index 64e1ab64bde6..68feb0f70e63 100644
+--- a/fs/proc/root.c
++++ b/fs/proc/root.c
+@@ -179,10 +179,10 @@ void __init proc_root_init(void)
  #endif
- 	{
+ 	proc_mkdir("fs", NULL);
+ 	proc_mkdir("driver", NULL);
+-	proc_mkdir("fs/nfsd", NULL); /* somewhere for the nfsd filesystem to be mounted */
++	proc_create_mount_point("fs/nfsd"); /* somewhere for the nfsd filesystem to be mounted */
+ #if defined(CONFIG_SUN_OPENPROMFS) || defined(CONFIG_SUN_OPENPROMFS_MODULE)
+ 	/* just give it a mountpoint */
+-	proc_mkdir("openprom", NULL);
++	proc_create_mount_point("openprom");
+ #endif
+ 	proc_tty_init();
+ 	proc_mkdir("bus", NULL);
 -- 
 2.2.1
