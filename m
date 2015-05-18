@@ -1,64 +1,63 @@
-From: Robert Bragg <robert-St23OQVBDYPNLxjTenLetw@public.gmane.org>
-Subject: [RFC PATCH] squash: be more careful stopping oacontrol updates
-Date: Mon, 18 May 2015 18:21:46 +0100
-Message-ID: <1431969706-32102-1-git-send-email-robert@sixbynine.org>
-References: <CAMou1-1QsATpCLMxmzGNTWyTEic4GtihiaRib0GJ55vsLYyaCQ@mail.gmail.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAMou1-1QsATpCLMxmzGNTWyTEic4GtihiaRib0GJ55vsLYyaCQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
-Cc: Daniel Vetter <daniel.vetter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Wilson <chris-Y6uKTt2uX1cEflXRtASbqLVCufUGDwFn@public.gmane.org>
+From: Robert Bragg <robert@sixbynine.org>
+Subject: [RFC PATCH v2] perf: Add PERF_EVENT_IOC_FLUSH ioctl
+Date: Mon, 18 May 2015 18:25:19 +0100
+Message-ID: <1431969919-32233-1-git-send-email-robert@sixbynine.org>
+References: <20150507142009.GX22099@nuc-i3427.alporthouse.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+In-Reply-To: <20150507142009.GX22099@nuc-i3427.alporthouse.com>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: intel-gfx@lists.freedesktop.org
+Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>, David Airlie <airlied@linux.ie>, linux-api@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Daniel Vetter <daniel.vetter@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This makes sure we've stopped touching oacontrol before we start
-resetting OA, PM and clock gating. Shouldn't strictly be needed since we
-know that oacontrol will have been disabled before we start destroying
-an event but it seems worth highlighting that update_oacontrol() could
-still be running asynchronously and stopping it early in case it might
-become an issue in the future.
----
- drivers/gpu/drm/i915/i915_oa_perf.c | 18 ++++++++++++++++--
- 1 file changed, 16 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/gpu/drm/i915/i915_oa_perf.c b/drivers/gpu/drm/i915/i915_oa_perf.c
-index bf1c1d6..e47ed90 100644
---- a/drivers/gpu/drm/i915/i915_oa_perf.c
-+++ b/drivers/gpu/drm/i915/i915_oa_perf.c
-@@ -166,12 +166,21 @@ static void i915_oa_event_destroy(struct perf_event *event)
- {
- 	struct drm_i915_private *i915 =
- 		container_of(event->pmu, typeof(*i915), oa_pmu.pmu);
-+	unsigned long lock_flags;
- 
- 	WARN_ON(event->parent);
- 
--	oa_buffer_destroy(i915);
--
-+	/* Stop updating oacontrol via _oa_context_pin_[un]notify()... */
-+	spin_lock_irqsave(&i915->oa_pmu.lock, lock_flags);
- 	i915->oa_pmu.specific_ctx = NULL;
-+	spin_unlock_irqrestore(&i915->oa_pmu.lock, lock_flags);
-+
-+	/* Don't let the compiler start resetting OA, PM and clock gating
-+	 * state before we've stopped update_oacontrol()
-+	 */
-+	barrier();
-+
-+	oa_buffer_destroy(i915);
- 
- 	BUG_ON(i915->oa_pmu.exclusive_event != event);
- 	i915->oa_pmu.exclusive_event = NULL;
-@@ -513,6 +522,11 @@ static int i915_oa_event_init(struct perf_event *event)
- 	return 0;
- }
- 
-+/* Note: Although pmu methods are called with the corresponding
-+ * perf_event_context lock taken (so we don't need to worry about our pmu
-+ * methods contending with each other) update_oacontrol() may be called
-+ * asynchronously via the i915_oa_pmu_[un]register() hooks.
-+ */
- static void update_oacontrol(struct drm_i915_private *dev_priv)
- {
- 	BUG_ON(!spin_is_locked(&dev_priv->oa_pmu.lock));
--- 
-2.4.1
+VG8gYWxsb3cgZm9yIHBtdXMgdGhhdCBtYXkgaGF2ZSBpbnRlcm5hbCBidWZmZXJpbmcgKGUuZy4g
+dGhlIGhhcmR3YXJlCml0c2VsZiB3cml0ZXMgb3V0IGRhdGEgdG8gaXRzIG93biBjaXJjdWxhciBi
+dWZmZXIgd2hpY2ggaXMgb25seQpwZXJpb2RpY2FsbHkgZm9yd2FyZGVkIHRvIHVzZXJzcGFjZSB2
+aWEgcGVyZikgdGhpcyBpb2N0bCBlbmFibGVzCnVzZXJzcGFjZSB0byBleHBsaWNpdGx5IGVuc3Vy
+ZSBpdCBoYXMgcmVjZWl2ZWQgYWxsIHNhbXBsZXMgYmVmb3JlIGEKcG9pbnQgaW4gdGltZS4KCnYy
+OiByZXR1cm4gaW50IGVycm9yIHN0YXR1cwoKU2lnbmVkLW9mZi1ieTogUm9iZXJ0IEJyYWdnIDxy
+b2JlcnRAc2l4YnluaW5lLm9yZz4KLS0tCiBpbmNsdWRlL2xpbnV4L3BlcmZfZXZlbnQuaCAgICAg
+IHwgNyArKysrKysrCiBpbmNsdWRlL3VhcGkvbGludXgvcGVyZl9ldmVudC5oIHwgMSArCiBrZXJu
+ZWwvZXZlbnRzL2NvcmUuYyAgICAgICAgICAgIHwgNSArKysrKwogMyBmaWxlcyBjaGFuZ2VkLCAx
+MyBpbnNlcnRpb25zKCspCgpkaWZmIC0tZ2l0IGEvaW5jbHVkZS9saW51eC9wZXJmX2V2ZW50Lmgg
+Yi9pbmNsdWRlL2xpbnV4L3BlcmZfZXZlbnQuaAppbmRleCBjZjFkMDk2Li4wYzU5MWViIDEwMDY0
+NAotLS0gYS9pbmNsdWRlL2xpbnV4L3BlcmZfZXZlbnQuaAorKysgYi9pbmNsdWRlL2xpbnV4L3Bl
+cmZfZXZlbnQuaApAQCAtMzA1LDYgKzMwNSwxMyBAQCBzdHJ1Y3QgcG11IHsKIAkgKiBGcmVlIHBt
+dS1wcml2YXRlIEFVWCBkYXRhIHN0cnVjdHVyZXMKIAkgKi8KIAl2b2lkICgqZnJlZV9hdXgpCQko
+dm9pZCAqYXV4KTsgLyogb3B0aW9uYWwgKi8KKworCS8qCisJICogRmx1c2ggYnVmZmVyZWQgc2Ft
+cGxlcyAoRS5nLiBmb3IgcG11IGhhcmR3YXJlIHRoYXQgd3JpdGVzIHNhbXBsZXMgdG8KKwkgKiBz
+b21lIGludGVybWVkaWF0ZSBidWZmZXIpIHVzZXJzcGFjZSBtYXkgbmVlZCB0byBleHBsaWNpdGx5
+IGVuc3VyZQorCSAqIHN1Y2ggc2FtcGxlcyBoYXZlIGJlZW4gZm9yd2FyZGVkIHRvIHBlcmYuCisJ
+ICovCisJaW50ICgqZmx1c2gpCQkJKHN0cnVjdCBwZXJmX2V2ZW50ICpldmVudCk7IC8qb3B0aW9u
+YWwgKi8KIH07CiAKIC8qKgpkaWZmIC0tZ2l0IGEvaW5jbHVkZS91YXBpL2xpbnV4L3BlcmZfZXZl
+bnQuaCBiL2luY2x1ZGUvdWFwaS9saW51eC9wZXJmX2V2ZW50LmgKaW5kZXggMzA5MjExYi4uY2Jm
+MWI4MCAxMDA2NDQKLS0tIGEvaW5jbHVkZS91YXBpL2xpbnV4L3BlcmZfZXZlbnQuaAorKysgYi9p
+bmNsdWRlL3VhcGkvbGludXgvcGVyZl9ldmVudC5oCkBAIC0zODksNiArMzg5LDcgQEAgc3RydWN0
+IHBlcmZfZXZlbnRfYXR0ciB7CiAjZGVmaW5lIFBFUkZfRVZFTlRfSU9DX1NFVF9GSUxURVIJX0lP
+VygnJCcsIDYsIGNoYXIgKikKICNkZWZpbmUgUEVSRl9FVkVOVF9JT0NfSUQJCV9JT1IoJyQnLCA3
+LCBfX3U2NCAqKQogI2RlZmluZSBQRVJGX0VWRU5UX0lPQ19TRVRfQlBGCQlfSU9XKCckJywgOCwg
+X191MzIpCisjZGVmaW5lIFBFUkZfRVZFTlRfSU9DX0ZMVVNICQlfSU8gKCckJywgOSkKIAogZW51
+bSBwZXJmX2V2ZW50X2lvY19mbGFncyB7CiAJUEVSRl9JT0NfRkxBR19HUk9VUAkJPSAxVSA8PCAw
+LApkaWZmIC0tZ2l0IGEva2VybmVsL2V2ZW50cy9jb3JlLmMgYi9rZXJuZWwvZXZlbnRzL2NvcmUu
+YwppbmRleCAzZmU1MzJhLi43MmRhZWU2IDEwMDY0NAotLS0gYS9rZXJuZWwvZXZlbnRzL2NvcmUu
+YworKysgYi9rZXJuZWwvZXZlbnRzL2NvcmUuYwpAQCAtNDA3OSw2ICs0MDc5LDExIEBAIHN0YXRp
+YyBsb25nIF9wZXJmX2lvY3RsKHN0cnVjdCBwZXJmX2V2ZW50ICpldmVudCwgdW5zaWduZWQgaW50
+IGNtZCwgdW5zaWduZWQgbG9uCiAJY2FzZSBQRVJGX0VWRU5UX0lPQ19TRVRfQlBGOgogCQlyZXR1
+cm4gcGVyZl9ldmVudF9zZXRfYnBmX3Byb2coZXZlbnQsIGFyZyk7CiAKKwljYXNlIFBFUkZfRVZF
+TlRfSU9DX0ZMVVNIOgorCQlpZiAoZXZlbnQtPnBtdS0+Zmx1c2gpCisJCQlyZXR1cm4gZXZlbnQt
+PnBtdS0+Zmx1c2goZXZlbnQpOworCQlyZXR1cm4gMDsKKwogCWRlZmF1bHQ6CiAJCXJldHVybiAt
+RU5PVFRZOwogCX0KLS0gCjIuNC4xCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fXwpJbnRlbC1nZnggbWFpbGluZyBsaXN0CkludGVsLWdmeEBsaXN0cy5mcmVl
+ZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZv
+L2ludGVsLWdmeAo=
