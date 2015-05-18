@@ -1,41 +1,70 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v2 1/2] capabilities: Ambient capabilities
-Date: Mon, 18 May 2015 12:48:43 -0700
-Message-ID: <CALCETrXKRt9MJQEZc=EEGMFB_vwKDQbZ7ReMNqE-5tRTxxJu2Q@mail.gmail.com>
-References: <cover.1431671529.git.luto@kernel.org> <cc4749638a21079cce12f9f30c806170558e56e5.1431671529.git.luto@kernel.org>
- <alpine.DEB.2.11.1505150916330.20103@gentwo.org>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [klibc] kernel/libc uapi changes for y2038
+Date: Mon, 18 May 2015 22:35:40 +0200
+Message-ID: <3622889.d8DplXjbu8@wuerfel>
+References: <2664016.bYZKg6FQqR@wuerfel> <10173485.f8yUt0lQ60@wuerfel>
+ <Pine.BSM.4.64L.1505181658330.32668@herc.mirbsd.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.11.1505150916330.20103@gentwo.org>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Christoph Lameter <cl@linux.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, Andrew Morton <akpm@linuxfoundation.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+In-Reply-To: <Pine.BSM.4.64L.1505181658330.32668@herc.mirbsd.org>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: y2038@lists.linaro.org
+Cc: klibc@zytor.com, libc-alpha@sourceware.org, linux-api@vger.kernel.org, musl@lists.openwall.com, linux-kernel@vger.kernel.org, Rich Felker <dalias@libc.org>, Thorsten Glaser <tg@mirbsd.de>, cferris@google.com, enh@google.com, "Joseph S. Myers" <joseph@codesourcery.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 15, 2015 at 7:19 AM, Christoph Lameter <cl@linux.com> wrote:
-> On Thu, 14 May 2015, Andy Lutomirski wrote:
->
->> Cc: Christoph Lameter <cl@linux.com>
->
-> This is partially my code it seems. So there should be a
->
-> Signed-off-by: Christoph Lameter <cl@linux.com>
->
-> here.
->
-> Could you provide an example to demonstrate how it is to be used?
-> Something similar to what I had in my patch?
->
-
-Do you mean something like:
-
-setpriv --ambient-caps=+net_bind_service --inh-haps=+net_bind_service
---euid=500 --ruid=500 bash
-
---Andy
-
-
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
+T24gTW9uZGF5IDE4IE1heSAyMDE1IDE3OjAzOjA4IFRob3JzdGVuIEdsYXNlciB3cm90ZToKCj4g
+Pk1JUFMgb24gdGhlIG90aGVyIGhhbmQgaXMgbm8gbW9yZSBicm9rZW4gdGhhbiBhbnkgb2YgdGhl
+IG90aGVyIDMyLWJpdAo+ID5BQklzLCBiZWNhdXNlIGl0IGRvZXMgbm90IHVzZSA2NC1iaXQgX19r
+ZXJuZWxfbG9uZ190IGluIGl0cyBuMzIgQUJJLgo+IAo+IEkgaGF2ZSBoZWFyZCBmcm9tIGEgTUlQ
+UyBwb3J0ZXIgdGhhdCBvbmUgb2YgdGhlIGZsYXZvdXJzIHN1ZmZlcnMKPiBmcm9tIHNpbWlsYXIg
+cHJvYmxlbXMgYXMgeDMyLCBqdXN0IG5vdCB0byB0aGF0IGV4dGVudC4gQnV0IEkKPiBkb27igJl0
+IHJlY2FsbCBteSBzb3VyY2XigKYKCk1JUFMgbjMyIGhhcyBhIGxvdCBvZiB0aGUgc2FtZSBpc3N1
+ZXMgYXMgeDg2IHgzMiwgYnV0IEknbSBwcmV0dHkKc3VyZSB0aGF0IHRoZSB0aW1lX3Qgb25lIGlz
+IG5vdCBhbW9uZyB0aGVtLgoKPiA+aW9jdGxzLiBNeSBwbGFuIGF0IHRoaXMgcG9pbnQgaXMgdG8g
+ZWxpbWluYXRlIGFsbCB1c2VzIG9mIHRpbWVfdCBpbgo+ID50aGUga2VybmVsIGFuZCByZXBsYWNl
+IHRoZW0gd2l0aCB0aW1lNjRfdCBvciBvdGhlciBzYWZlIHR5cGVzLgo+ID5UaGlzIHdheSwgd2Ug
+d2lsbCBldmVudHVhbGx5IGZpbmQgYWxsIGNvZGUgdGhhdCBwYXNzZXMgMzItYml0IHRpbWUgdHlw
+ZXMKPiA+dG8gdXNlciBzcGFjZSBhbmQgY2FuIGZpeCBpdC4gVGhpcyB3aWxsIHRha2UgY2FyZSBv
+ZiB0aGUgdGltZV90Cj4gPnJlbGF0ZWQgcHJvYmxlbXMgb24geDMyIGFzIHdlbGwuCj4gCj4gQWgs
+IGludGVyZXN0aW5nIGFwcHJvYWNoLiBBbmQgZXhpc3RpbmcgdXNlcnNwYWNlLCBhcyB3ZWxsIGFz
+IG5ldwo+IHVzZXJzcGFjZSB0aGF0IGRvZXMgbm90IGRlY2xhcmUgNjQtYml0IHRpbWVfdCByZWFk
+aW5lc3MsIGlzIHN0aWxsCj4gc2FmZSBvbiBjdXJyZW50bHktbm90LWJyb2tlbiBhcmNoaXRlY3R1
+cmVzPyBTbywgdGhlcmXigJlzIGVub3VnaCB0aW1lCj4gdG8gZml4IHRoaXMgYmVmb3JlIHRoZSB2
+YXJpb3VzIGxpYmNzIHR1cm4gdGhhdCBvbiAoYW5kIGl0IGhhZCBiZXR0ZXIKPiBiZSBmaXhlZCBi
+eSB0aGVuLCBiZWNhdXNlIGl0IGJlY29tZXMgQUJJIGJ5IHRoZW4pLiBOaWNlIGlkZWEuCgpDb3Jy
+ZWN0LiBBbm90aGVyIGFzcGVjdCBvZiB0aGUgYXBwcm9hY2ggSSdtIHRha2luZyBpcyB0aGF0IHRo
+ZQpzeXN0ZW0tY2FsbCBpbXBsZW1lbnRhdGlvbiBpcyBzaGFyZWQgYmV0d2VlbiB0aGUgbmF0aXZl
+IDY0LWJpdApjYXNlIGFuZCB0aGUgbmV3IDMyLWJpdCBjYXNlLCB3aGlsZSB0aGUgaGFuZGxpbmcg
+Zm9yIHRoZSBleGlzdGluZwpzeXNjYWxscyBvbiAzMi1iaXQgYXJjaGl0ZWN0dXJlcyBpcyBzaGFy
+ZWQgd2l0aCB0aGUgMzItYml0IGNvbXBhdApjb2RlIG9uIDY0LWJpdCBhcmNoaXRlY3R1cmVzLiBU
+aGlzIG1lYW5zIGlmIHdlIGludHJvZHVjZSBhIGJ1ZwppbiBlaXRoZXIgb2YgdGhlbSwgd2Ugd2ls
+bCBmaW5kIG91dCB2ZXJ5IHF1aWNrbHkgYW5kIGRvbid0IGhhdmUKdG8gd2FpdCB1bnRpbCBwZW9w
+bGUgc3RhcnQgdXNpbmcgNjQtYml0IHRpbWVfdCBvbiAzMi1iaXQgdXNlciBsYW5kLgoKPiBJIGFt
+IHdvbmRlcmluZyBhIGJpdCBhYm91dCB0aGUgaW9jdGxzIGJlaW5nIGhhcmQgdG8gZmluZC4gSSBo
+YXZlCj4gbm90IG11Y2ggZXhwZXJpZW5jZSB3aXRoIGtlcm5lbCBwcm9ncmFtbWluZywgYW5kIGV2
+ZW4gbGVzcyB3aXRoCj4gTGludXggdGhhbiB3aXRoIE1TLURPUyBhbmQgQlNELCBidXQgc2hvdWxk
+IG5vdCBlYWNoIGRyaXZlciBoYXZlCj4gYSBjZW50cmFsIGlvY3RsIGVudHJ5IHBvaW50LCBmcm9t
+IHdoaWNoIGl0IHNob3VsZCBjYXN0IHRoZSB1c2VyCj4gc3BhY2UgZGF0YSBpbnRvIGEgKHBvc3Np
+Ymx5IGxvY2FsbHkgZGVjbGFyZWQpIHN0cnVjdHVyZT8KClllcywgdGhhdCdzIGhvdyBpdCB3b3Jr
+cywgYnV0IHVuZm9ydHVuYXRlbHkgd2UgaGF2ZSBhIGZldyB0aG91c2FuZApkcml2ZXJzIHRoYXQg
+ZGVjbGFyZSBhbiBpb2N0bCBmdW5jdGlvbiwgYW5kIEkgaG9wZSB0byBkbyBzb21ldGhpbmcKYmV0
+dGVyIHRoYW4gYnJ1dGUtZm9yY2Ugc2VhcmNoIGFsbCBvZiB0aGVtLiBUaGUgb3RoZXIgcG9pbnQg
+aXMgdGhhdAp3ZSByZWFsbHkgbmVlZCB0byBmaXggYWxsIHkyMDM4LXJlbGF0ZWQgYnVnIGluIGRy
+aXZlcnMsIG5vdCBqdXN0CnRoZSBvbmVzIGluIGlvY3RsLiBUaGlzIGluY2x1ZGVzIHRoaW5ncyBs
+aWtlIGZpbGUgc3lzdGVtcyBzdG9yaW5nCnRpbWUgaW4gMzItYml0IHVuaXRzIG9uIGRpc2ssIG9y
+IGRyaXZlcnMgdHJ5aW5nIHRvIG1lYXN1cmUgaG93IG11Y2gKdGltZSBoYXMgZWxhcHNlZCB3aXRo
+b3V0IGNvbW11bmljYXRpbmcgdGhhdCB2YWx1ZSBlbHNld2hlcmUsIGJ1dApmYWlsaW5nIHdoZW4g
+dGhlIHRpbWVfdCBudW1iZXIgZ29lcyBuZWdhdGl2ZS4KCglBcm5kCl9fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBs
+aXN0cy5saW5hcm8ub3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZv
+L3kyMDM4Cg==
