@@ -1,15 +1,16 @@
 From: Robert Bragg <robert@sixbynine.org>
 Subject: Re: [RFC PATCH 07/11] drm/i915: Expose PMU for
  Observation Architecture
-Date: Mon, 18 May 2015 17:21:14 +0100
-Message-ID: <CAMou1-1OsNmxy177KaHQewDXoAjT0sSvhctJ4E7sTjL_Sw-Big@mail.gmail.com>
+Date: Mon, 18 May 2015 17:36:52 +0100
+Message-ID: <CAMou1-1QsATpCLMxmzGNTWyTEic4GtihiaRib0GJ55vsLYyaCQ@mail.gmail.com>
 References: <1431008154-6833-1-git-send-email-robert@sixbynine.org>
  <1431008154-6833-8-git-send-email-robert@sixbynine.org>
- <20150507143639.GY22099@nuc-i3427.alporthouse.com>
+ <20150507145800.GZ22099@nuc-i3427.alporthouse.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0124365893=="
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <intel-gfx-bounces@lists.freedesktop.org>
-In-Reply-To: <20150507143639.GY22099@nuc-i3427.alporthouse.com>
+In-Reply-To: <20150507145800.GZ22099@nuc-i3427.alporthouse.com>
 List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/intel-gfx>,
  <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
 List-Archive: <http://lists.freedesktop.org/archives/intel-gfx>
@@ -22,248 +23,140 @@ Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
 To: dri-devel@lists.freedesktop.org, David Airlie <airlied@linux.ie>, Daniel Vetter <daniel.vetter@intel.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Paul Mackerras <paulus@samba.org>, Chris Wilson <chris@chris-wilson.co.uk>, Arnaldo Carvalho de Melo <acme@kernel.org>, intel-gfx@lists.freedesktop.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
---===============0124365893==
-Content-Type: multipart/alternative; boundary=047d7bb03eb06e761f05165d9639
-
---047d7bb03eb06e761f05165d9639
-Content-Type: text/plain; charset=UTF-8
-
-On 7 May 2015 15:37, "Chris Wilson" <chris@chris-wilson.co.uk> wrote:
->
-> On Thu, May 07, 2015 at 03:15:50PM +0100, Robert Bragg wrote:
-> > +static int init_oa_buffer(struct perf_event *event)
-> > +{
-> > +     struct drm_i915_private *dev_priv =
-> > +             container_of(event->pmu, typeof(*dev_priv), oa_pmu.pmu);
-> > +     struct drm_i915_gem_object *bo;
-> > +     int ret;
-> > +
-> > +     BUG_ON(!IS_HASWELL(dev_priv->dev));
-> > +     BUG_ON(!mutex_is_locked(&dev_priv->dev->struct_mutex));
-> > +     BUG_ON(dev_priv->oa_pmu.oa_buffer.obj);
-> > +
-> > +     spin_lock_init(&dev_priv->oa_pmu.oa_buffer.flush_lock);
-> > +
-> > +     /* NB: We over allocate the OA buffer due to the way raw sample
-data
-> > +      * gets copied from the gpu mapped circular buffer into the perf
-> > +      * circular buffer so that only one copy is required.
-> > +      *
-> > +      * For each perf sample (raw->size + 4) needs to be 8 byte
-aligned,
-> > +      * where the 4 corresponds to the 32bit raw->size member that's
-> > +      * added to the sample header that userspace sees.
-> > +      *
-> > +      * Due to the + 4 for the size member: when we copy a report to
-the
-> > +      * userspace facing perf buffer we always copy an additional 4
-bytes
-> > +      * from the subsequent report to make up for the miss alignment,
-but
-> > +      * when a report is at the end of the gpu mapped buffer we need to
-> > +      * read 4 bytes past the end of the buffer.
-> > +      */
-> > +     bo = i915_gem_alloc_object(dev_priv->dev, OA_BUFFER_SIZE +
-PAGE_SIZE);
-> > +     if (bo == NULL) {
-> > +             DRM_ERROR("Failed to allocate OA buffer\n");
-> > +             ret = -ENOMEM;
-> > +             goto err;
-> > +     }
-> > +     dev_priv->oa_pmu.oa_buffer.obj = bo;
-> > +
-> > +     ret = i915_gem_object_set_cache_level(bo, I915_CACHE_LLC);
-> > +     if (ret)
-> > +             goto err_unref;
-> > +
-> > +     /* PreHSW required 512K alignment, HSW requires 16M */
-> > +     ret = i915_gem_obj_ggtt_pin(bo, SZ_16M, 0);
-> > +     if (ret)
-> > +             goto err_unref;
-> > +
-> > +     dev_priv->oa_pmu.oa_buffer.gtt_offset =
-i915_gem_obj_ggtt_offset(bo);
-> > +     dev_priv->oa_pmu.oa_buffer.addr = vmap_oa_buffer(bo);
->
-> You can look forward to both i915_gem_object_create_internal() and
-> i915_gem_object_pin_vmap()
-
-Okey, will do, thanks.
-
->
-> > +
-> > +     /* Pre-DevBDW: OABUFFER must be set with counters off,
-> > +      * before OASTATUS1, but after OASTATUS2 */
-> > +     I915_WRITE(GEN7_OASTATUS2, dev_priv->oa_pmu.oa_buffer.gtt_offset |
-> > +                GEN7_OASTATUS2_GGTT); /* head */
-> > +     I915_WRITE(GEN7_OABUFFER, dev_priv->oa_pmu.oa_buffer.gtt_offset);
-> > +     I915_WRITE(GEN7_OASTATUS1, dev_priv->oa_pmu.oa_buffer.gtt_offset |
-> > +                GEN7_OASTATUS1_OABUFFER_SIZE_16M); /* tail */
-> > +
-> > +     DRM_DEBUG_DRIVER("OA Buffer initialized, gtt offset = 0x%x, vaddr
-= %p",
-> > +                      dev_priv->oa_pmu.oa_buffer.gtt_offset,
-> > +                      dev_priv->oa_pmu.oa_buffer.addr);
-> > +
-> > +     return 0;
-> > +
-> > +err_unref:
-> > +     drm_gem_object_unreference_unlocked(&bo->base);
->
-> But what I really what to say was:
-> mutex deadlock^^^
-
-Yikes, I've pushed an updated patch addressing this and can reply with a
-new patch here in a bit.
-
-Thanks,
-- Robert
-
-
-> -Chris
->
-> --
-> Chris Wilson, Intel Open Source Technology Centre
-
---047d7bb03eb06e761f05165d9639
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><p dir=3D"ltr"><br>
-On 7 May 2015 15:37, &quot;Chris Wilson&quot; &lt;<a href=3D"mailto:chris@c=
-hris-wilson.co.uk" target=3D"_blank">chris@chris-wilson.co.uk</a>&gt; wrote=
-:<br>
-&gt;<br>
-&gt; On Thu, May 07, 2015 at 03:15:50PM +0100, Robert Bragg wrote:<br>
-&gt; &gt; +static int init_oa_buffer(struct perf_event *event)<br>
-&gt; &gt; +{<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0struct drm_i915_private *dev_priv =3D<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0container_of(eve=
-nt-&gt;pmu, typeof(*dev_priv), oa_pmu.pmu);<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0struct drm_i915_gem_object *bo;<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0int ret;<br>
-&gt; &gt; +<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0BUG_ON(!IS_HASWELL(dev_priv-&gt;dev));<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0BUG_ON(!mutex_is_locked(&amp;dev_priv-&gt;de=
-v-&gt;struct_mutex));<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0BUG_ON(dev_priv-&gt;oa_pmu.oa_buffer.obj);<b=
-r>
-&gt; &gt; +<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0spin_lock_init(&amp;dev_priv-&gt;oa_pmu.oa_b=
-uffer.flush_lock);<br>
-&gt; &gt; +<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0/* NB: We over allocate the OA buffer due to=
- the way raw sample data<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 * gets copied from the gpu mapped circular =
-buffer into the perf<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 * circular buffer so that only one copy is =
-required.<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 *<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 * For each perf sample (raw-&gt;size + 4) n=
-eeds to be 8 byte aligned,<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 * where the 4 corresponds to the 32bit raw-=
-&gt;size member that&#39;s<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 * added to the sample header that userspace=
- sees.<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 *<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 * Due to the + 4 for the size member: when =
-we copy a report to the<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 * userspace facing perf buffer we always co=
-py an additional 4 bytes<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 * from the subsequent report to make up for=
- the miss alignment, but<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 * when a report is at the end of the gpu ma=
-pped buffer we need to<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 * read 4 bytes past the end of the buffer.<=
-br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 */<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0bo =3D i915_gem_alloc_object(dev_priv-&gt;de=
-v, OA_BUFFER_SIZE + PAGE_SIZE);<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0if (bo =3D=3D NULL) {<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0DRM_ERROR(&quot;=
-Failed to allocate OA buffer\n&quot;);<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0ret =3D -ENOMEM;=
-<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0goto err;<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0}<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0dev_priv-&gt;oa_pmu.oa_buffer.obj =3D bo;<br=
->
-&gt; &gt; +<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0ret =3D i915_gem_object_set_cache_level(bo, =
-I915_CACHE_LLC);<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0if (ret)<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0goto err_unref;<=
-br>
-&gt; &gt; +<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0/* PreHSW required 512K alignment, HSW requi=
-res 16M */<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0ret =3D i915_gem_obj_ggtt_pin(bo, SZ_16M, 0)=
-;<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0if (ret)<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0goto err_unref;<=
-br>
-&gt; &gt; +<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0dev_priv-&gt;oa_pmu.oa_buffer.gtt_offset =3D=
- i915_gem_obj_ggtt_offset(bo);<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0dev_priv-&gt;oa_pmu.oa_buffer.addr =3D vmap_=
-oa_buffer(bo);<br>
-&gt;<br>
-&gt; You can look forward to both i915_gem_object_create_internal() and<br>
-&gt; i915_gem_object_pin_vmap()</p>
-<p dir=3D"ltr">Okey, will do, thanks.</p>
-<p dir=3D"ltr">&gt;<br>
-&gt; &gt; +<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0/* Pre-DevBDW: OABUFFER must be set with cou=
-nters off,<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 * before OASTATUS1, but after OASTATUS2 */<=
-br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0I915_WRITE(GEN7_OASTATUS2, dev_priv-&gt;oa_p=
-mu.oa_buffer.gtt_offset |<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 GEN7_OAS=
-TATUS2_GGTT); /* head */<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0I915_WRITE(GEN7_OABUFFER, dev_priv-&gt;oa_pm=
-u.oa_buffer.gtt_offset);<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0I915_WRITE(GEN7_OASTATUS1, dev_priv-&gt;oa_p=
-mu.oa_buffer.gtt_offset |<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 GEN7_OAS=
-TATUS1_OABUFFER_SIZE_16M); /* tail */<br>
-&gt; &gt; +<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0DRM_DEBUG_DRIVER(&quot;OA Buffer initialized=
-, gtt offset =3D 0x%x, vaddr =3D %p&quot;,<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 dev_priv-&gt;oa_pmu.oa_buffer.gtt_offset,<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 dev_priv-&gt;oa_pmu.oa_buffer.addr);<br>
-&gt; &gt; +<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0return 0;<br>
-&gt; &gt; +<br>
-&gt; &gt; +err_unref:<br>
-&gt; &gt; +=C2=A0 =C2=A0 =C2=A0drm_gem_object_unreference_unlocked(&amp;bo-=
-&gt;base);<br>
-&gt;<br>
-&gt; But what I really what to say was:<br>
-&gt; mutex deadlock^^^</p>
-<p dir=3D"ltr">Yikes, I&#39;ve pushed an updated patch addressing this and =
-can reply with a new patch here in a bit.</p>
-<p dir=3D"ltr">Thanks,<br>
-- Robert</p><p dir=3D"ltr"><br>
-&gt; -Chris<br>
-&gt;<br>
-&gt; --<br>
-&gt; Chris Wilson, Intel Open Source Technology Centre<br>
-</p>
-</div>
-
---047d7bb03eb06e761f05165d9639--
-
---===============0124365893==
-Content-Type: text/plain; charset="utf-8"
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: inline
-
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KSW50ZWwtZ2Z4
-IG1haWxpbmcgbGlzdApJbnRlbC1nZnhAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHA6Ly9saXN0
-cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9pbnRlbC1nZngK
-
---===============0124365893==--
+T24gNyBNYXkgMjAxNSAxNTo1OCwgIkNocmlzIFdpbHNvbiIgPGNocmlzQGNocmlzLXdpbHNvbi5j
+by51az4gd3JvdGU6Cj4KPiBPbiBUaHUsIE1heSAwNywgMjAxNSBhdCAwMzoxNTo1MFBNICswMTAw
+LCBSb2JlcnQgQnJhZ2cgd3JvdGU6Cj4gPiArICAgICAvKiBXZSBieXBhc3MgdGhlIGRlZmF1bHQg
+cGVyZiBjb3JlIHBlcmZfcGFyYW5vaWRfY3B1KCkgfHwKPiA+ICsgICAgICAqIENBUF9TWVNfQURN
+SU4gY2hlY2sgYnkgdXNpbmcgdGhlIFBFUkZfUE1VX0NBUF9JU19ERVZJQ0UKPiA+ICsgICAgICAq
+IGZsYWcgYW5kIGluc3RlYWQgYXV0aGVudGljYXRlIGJhc2VkIG9uIHdoZXRoZXIgdGhlIGN1cnJl
+bnQKPiA+ICsgICAgICAqIHBpZCBvd25zIHRoZSBzcGVjaWZpZWQgY29udGV4dCwgb3IgcmVxdWly
+ZSBDQVBfU1lTX0FETUlOCj4gPiArICAgICAgKiB3aGVuIGNvbGxlY3RpbmcgY3Jvc3MtY29udGV4
+dCBtZXRyaWNzLgo+ID4gKyAgICAgICovCj4gPiArICAgICBkZXZfcHJpdi0+b2FfcG11LnNwZWNp
+ZmljX2N0eCA9IE5VTEw7Cj4gPiArICAgICBpZiAob2FfYXR0ci5zaW5nbGVfY29udGV4dCkgewo+
+ID4gKyAgICAgICAgICAgICB1MzIgY3R4X2lkID0gb2FfYXR0ci5jdHhfaWQ7Cj4gPiArICAgICAg
+ICAgICAgIHVuc2lnbmVkIGludCBkcm1fZmQgPSBvYV9hdHRyLmRybV9mZDsKPiA+ICsgICAgICAg
+ICAgICAgc3RydWN0IGZkIGZkID0gZmRnZXQoZHJtX2ZkKTsKPiA+ICsKPiA+ICsgICAgICAgICAg
+ICAgaWYgKGZkLmZpbGUpIHsKPgo+IFNwZWNpZnkgYSBjdHggYW5kIG5vdCBwcm92aWRpbmcgdGhl
+IHJpZ2h0IGZkIHNob3VsZCBiZSBpdHMgb3duIGVycm9yLAo+IGVpdGhlciBFQkFERiBvciBFSU5W
+QUwuCgpSaWdodCwgSSB3ZW50IGZvciBib3RoIGluIHRoZSBlbmQ7IEVCQURGIGlmIGZkZ2V0IGZh
+aWxzIGFuZCBFSU5WQUwgaWYKdGhlIGZkIGlzIG9rIGJ1dCB3ZSBmYWlsIHRvIGxvb2t1cCBhIGNv
+bnRleHQgd2l0aCBpdC4KCj4KPiA+ICsgICAgICAgICAgICAgICAgICAgICBkZXZfcHJpdi0+b2Ff
+cG11LnNwZWNpZmljX2N0eCA9Cj4gPiArICAgICAgICAgICAgICAgICAgICAgICAgICAgICBsb29r
+dXBfY29udGV4dChkZXZfcHJpdiwgZmQuZmlsZSwgY3R4X2lkKTsKPiA+ICsgICAgICAgICAgICAg
+fQo+Cj4gTWlzc2luZyBmZHB1dAoKQWggeWVzOyBmaXhlZC4KCj4KPiA+ICsgICAgIH0KPiA+ICsK
+PiA+ICsgICAgIGlmICghZGV2X3ByaXYtPm9hX3BtdS5zcGVjaWZpY19jdHggJiYgIWNhcGFibGUo
+Q0FQX1NZU19BRE1JTikpCj4gPiArICAgICAgICAgICAgIHJldHVybiAtRUFDQ0VTOwo+ID4gKwo+
+ID4gKyAgICAgbXV0ZXhfbG9jaygmZGV2X3ByaXYtPmRldi0+c3RydWN0X211dGV4KTsKPgo+IGk5
+MTVfbXV0ZXhfaW50ZXJydXB0aWJsZSwgcHJvYmFibHkgYmVzdCB0byBjb3VwbGUgaW50byB0aGUg
+R1BVIGVycm9yCj4gaGFuZGxpbmcgaGVyZSBhcyB3ZWxsIGVzcGVjaWFsbHkgYXMgaW5pdF9vYV9i
+dWZmZXIoKSB3aWxsIGdvIG9udG8gdG91Y2gKPiBHUFUgaW50ZXJuYWxzLgoKT2ssIHVzaW5nIGk5
+MTVfbXV0ZXhfaW50ZXJydXB0aWJsZSBtYWtlcyBzZW5zZSwgSSd2ZSBhbHNvIG1vdmVkIHRoZQps
+b2NraW5nIGludG8gaW5pdF9vYV9idWZmZXIuCgpBYm91dCB0aGUgR1BVIGVycm9yIGhhbmRsaW5n
+LCBkbyB5b3UgaGF2ZSBhbnkgdGhvdWdodHMgb24gd2hhdCBjb3VsZApiZSBtb3N0IGhlbHBmdWwg
+aGVyZT8gSSdtIHRoaW5raW5nIGEudC5tIG9mIGV4dGVuZGluZwppOTE1X2NhcHR1cmVfcmVnX3N0
+YXRlKCkgaW4gaTkxNV9ncHVfZXJyb3IuYyB0byBjYXB0dXJlIHRoZSBPQUNPTlRST0wKKyBPQVNU
+QVRVUyBzdGF0ZSBhbmQgcGVyaGFwcyBhbGwgdGhlIFVDR0NUTCB1bml0IGNsb2NrIGdhdGluZyBz
+dGF0ZQp0b28uCgo+Cj4gPiArICAgICByZXQgPSBpbml0X29hX2J1ZmZlcihldmVudCk7Cj4gPiAr
+ICAgICBtdXRleF91bmxvY2soJmRldl9wcml2LT5kZXYtPnN0cnVjdF9tdXRleCk7Cj4gPiArCj4g
+PiArICAgICBpZiAocmV0KQo+ID4gKyAgICAgICAgICAgICByZXR1cm4gcmV0Owo+ID4gKwo+ID4g
+KyAgICAgQlVHX09OKGRldl9wcml2LT5vYV9wbXUuZXhjbHVzaXZlX2V2ZW50KTsKPiA+ICsgICAg
+IGRldl9wcml2LT5vYV9wbXUuZXhjbHVzaXZlX2V2ZW50ID0gZXZlbnQ7Cj4gPiArCj4gPiArICAg
+ICBldmVudC0+ZGVzdHJveSA9IGk5MTVfb2FfZXZlbnRfZGVzdHJveTsKPiA+ICsKPiA+ICsgICAg
+IC8qIFBSTSAtIG9ic2VydmFiaWxpdHkgcGVyZm9ybWFuY2UgY291bnRlcnM6Cj4gPiArICAgICAg
+Kgo+ID4gKyAgICAgICogICBPQUNPTlRST0wsIHBlcmZvcm1hbmNlIGNvdW50ZXIgZW5hYmxlLCBu
+b3RlOgo+ID4gKyAgICAgICoKPiA+ICsgICAgICAqICAgIldoZW4gdGhpcyBiaXQgaXMgc2V0LCBp
+biBvcmRlciB0byBoYXZlIGNvaGVyZW50IGNvdW50cywKPiA+ICsgICAgICAqICAgUkM2IHBvd2Vy
+IHN0YXRlIGFuZCB0cnVuayBjbG9jayBnYXRpbmcgbXVzdCBiZSBkaXNhYmxlZC4KPiA+ICsgICAg
+ICAqICAgVGhpcyBjYW4gYmUgYWNoaWV2ZWQgYnkgcHJvZ3JhbW1pbmcgTU1JTyByZWdpc3RlcnMg
+YXMKPiA+ICsgICAgICAqICAgMHhBMDk0PTAgYW5kIDB4QTA5MFszMV09MSIKPiA+ICsgICAgICAq
+Cj4gPiArICAgICAgKiAgIEluIG91ciBjYXNlIHdlIGFyZSBleHBlY3RlZCB0aGF0IHRha2luZyBw
+bSArIEZPUkNFV0FLRQo+ID4gKyAgICAgICogICByZWZlcmVuY2VzIHdpbGwgZWZmZWN0aXZlbHkg
+ZGlzYWJsZSBSQzYgYW5kIHRydW5rIGNsb2NrCj4gPiArICAgICAgKiAgIGdhdGluZy4KPiA+ICsg
+ICAgICAqLwo+ID4gKyAgICAgaW50ZWxfcnVudGltZV9wbV9nZXQoZGV2X3ByaXYpOwo+ID4gKyAg
+ICAgaW50ZWxfdW5jb3JlX2ZvcmNld2FrZV9nZXQoZGV2X3ByaXYsIEZPUkNFV0FLRV9BTEwpOwo+
+Cj4gVGhhdCBpcyBhIG51aXNhbmNlLiBBc2lkZTogV2h5IGlzbid0IE9BIGluc2lkZSB0aGUgcG93
+ZXJjdHg/IElzIGEgc3Vic2V0Cj4gdmFsaWQgd2l0aCBmb3JjZXdha2U/IEl0IGRvZXMgcGVydHVy
+YiB0aGUgc3lzdGVtIGdyZWF0bHkgdG8gZGlzYWJsZSByYzYsCj4gc28gSSB3b25kZXIgaWYgaXQg
+Y291bGQgYmUgbWFkZSBvcHRpb25hbD8KClllcywgaXQncyBhIHNoYW1lLgoKSSBwcm9iYWJseSBv
+bmx5IHJlYWxseSBrbm93IGVub3VnaCBhYm91dCB0aGUgT0EgdW5pdCBkZXNpZ24gdG8gYmUKZGFu
+Z2Vyb3VzIGFuZCB3b24ndCB0cnkgYW5kIGNvbW1lbnQgaW4gZGV0YWlsIGhlcmUsIGJ1dCBJIHRo
+aW5rCnRoZXJlJ3MgbW9yZSB0byBpdCB0aGFuIG5vdCBzYXZpbmcgc3RhdGUgaW4gYSBwb3dlciBj
+b250ZXh0LiBBcyBJCnVuZGVyc3RhbmQgaXQsIHRoZXJlIHdlcmUgYSBudW1iZXIgb2YgZGVzaWdu
+IGNoYW5nZXMgbWFkZSB0byBlbmFibGUKT0ErUkM2IHN1cHBvcnQgZm9yIEJEVyssIGluY2x1ZGlu
+ZyBoYXZpbmcgdGhlIE9BIHVuaXQgYXV0b21hdGljYWxseQp3cml0ZSBvdXQgcmVwb3J0cyB0byB0
+aGUgT0EgYnVmZmVyIHdoZW4gZW50ZXJpbmcgUkM2LgoKSSB0aGluayBqdXN0IEZPUkNFV0FLRV9S
+RU5ERVIgd291bGQgd29yayBoZXJlLCBidXQgb25seSBzYXkgdGhhdApiZWNhdXNlIGl0IGxvb2tz
+IGxpa2UgSFNXIG9ubHkgaGFzIHRoZSByZW5kZXIgZm9yY2V3YWtlIGRvbWFpbiBmcm9tCndoYXQg
+SSBjb3VsZCB0ZWxsLgoKSSB0aGluayBJIG5lZWQgdG8gdXBkYXRlIHRoZSBjb21tZW50IGFib3Zl
+IHRoZXNlIGxpbmVzIGFzIEkgZG9uJ3QKdGhpbmsgdGhlc2Ugd2lsbCBhZmZlY3QgY3JjbGsgZ2F0
+aW5nOyB0aGVzZSBqdXN0IGhhbmRsZSBkaXNhYmxpbmcgUkM2LgoKVGhlIFdJUCBwYXRjaCBJIHNl
+bnQgb3V0IGJhc2ljYWxseSByZXByZXNlbnRzIG1lIHRyeWluZyB0byBnZXQgdG8gdGhlCmJvdHRv
+bSBvZiB0aGUgY2xvY2sgZ2F0aW5nIGNvbnN0cmFpbnRzIHdlIGhhdmUuCgpBdCB0aGlzIHBvaW50
+IEkgdGhpbmsgSSBuZWVkIHRvIGRpc2FibGUgQ1MgdW5pdCBnYXRpbmcgdmlhIFVDR0NUTDEsIGFz
+CndlbGwgYXMgRE9QIGdhdGluZyBmb3IgdGhlIHJlbmRlciB0cnVuayBjbG9jayB2aWEgTUlTQ0NQ
+Q1RMIGJ1dCBJJ20Kbm90IGVudGlyZWx5IGNvbmZpZGVudCBhYm91dCB0aGF0IGp1c3QgeWV0LiBB
+dCBsZWFzdCBlbXBpcmljYWxseSBJIHNlZQp0aGVzZSBmaXhpbmcgc29tZSBpc3N1ZXMgaW4gcnVk
+aW1lbnRhcnkgdGVzdGluZy4KCj4KPiA+ICsKPiA+ICsgICAgIHJldHVybiAwOwo+ID4gK30KPiA+
+ICsKPiA+ICtzdGF0aWMgdm9pZCB1cGRhdGVfb2Fjb250cm9sKHN0cnVjdCBkcm1faTkxNV9wcml2
+YXRlICpkZXZfcHJpdikKPiA+ICt7Cj4gPiArICAgICBCVUdfT04oIXNwaW5faXNfbG9ja2VkKCZk
+ZXZfcHJpdi0+b2FfcG11LmxvY2spKTsKPiA+ICsKPiA+ICsgICAgIGlmIChkZXZfcHJpdi0+b2Ff
+cG11LmV2ZW50X2FjdGl2ZSkgewo+ID4gKyAgICAgICAgICAgICB1bnNpZ25lZCBsb25nIGN0eF9p
+ZCA9IDA7Cj4gPiArICAgICAgICAgICAgIGJvb2wgcGlubmluZ19vayA9IGZhbHNlOwo+ID4gKwo+
+ID4gKyAgICAgICAgICAgICBpZiAoZGV2X3ByaXYtPm9hX3BtdS5zcGVjaWZpY19jdHgpIHsKPiA+
+ICsgICAgICAgICAgICAgICAgICAgICBzdHJ1Y3QgaW50ZWxfY29udGV4dCAqY3R4ID0KPiA+ICsg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgIGRldl9wcml2LT5vYV9wbXUuc3BlY2lmaWNfY3R4
+Owo+ID4gKyAgICAgICAgICAgICAgICAgICAgIHN0cnVjdCBkcm1faTkxNV9nZW1fb2JqZWN0ICpv
+YmogPQo+ID4gKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY3R4LT5sZWdhY3lfaHdfY3R4
+LnJjc19zdGF0ZTsKPgo+IElmIG9ubHkgdGhlcmUgd2FzIGN0eC0+bGVnYWN5X2h3X2N0eC5yY3Nf
+dm1hLi4uCgpvaywgbm90IHN1cmUgaWYgdGhpcyBpcyBhIHByb2QgdG8gYWRkIHRoYXQsIGEgaGVh
+ZHMgdXAgdGhhdCB0aGlzIGlzCmNvbWluZyBvciBzZWV0aGluZyBiZWNhdXNlIHNvbWUgcHJpb3Ig
+YXR0ZW1wdCB0byBhZGQgdGhpcyB3YXMgbmFjaydkLgoKCj4KPiA+ICsKPiA+ICsgICAgICAgICAg
+ICAgICAgICAgICBpZiAoaTkxNV9nZW1fb2JqX2lzX3Bpbm5lZChvYmopKSB7Cj4gPiArICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICBjdHhfaWQgPSBpOTE1X2dlbV9vYmpfZ2d0dF9vZmZzZXQo
+b2JqKTsKPiA+ICsgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHBpbm5pbmdfb2sgPSB0cnVl
+Owo+ID4gKyAgICAgICAgICAgICAgICAgICAgIH0KPiA+ICsgICAgICAgICAgICAgfQo+ID4gKwo+
+ID4gKyAgICAgICAgICAgICBpZiAoKGN0eF9pZCA9PSAwIHx8IHBpbm5pbmdfb2spKSB7Cj4gPiAr
+ICAgICAgICAgICAgICAgICAgICAgYm9vbCBwZXJpb2RpYyA9IGRldl9wcml2LT5vYV9wbXUucGVy
+aW9kaWM7Cj4gPiArICAgICAgICAgICAgICAgICAgICAgdTMyIHBlcmlvZF9leHBvbmVudCA9IGRl
+dl9wcml2LT5vYV9wbXUucGVyaW9kX2V4cG9uZW50Owo+ID4gKyAgICAgICAgICAgICAgICAgICAg
+IHUzMiByZXBvcnRfZm9ybWF0ID0gZGV2X3ByaXYtPm9hX3BtdS5vYV9idWZmZXIuZm9ybWF0Owo+
+ID4gKwo+ID4gKyAgICAgICAgICAgICAgICAgICAgIEk5MTVfV1JJVEUoR0VON19PQUNPTlRST0ws
+Cj4gPiArICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAoY3R4X2lkICYgR0VON19PQUNP
+TlRST0xfQ1RYX01BU0spIHwKPiA+ICsgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIChw
+ZXJpb2RfZXhwb25lbnQgPDwKPiA+ICsgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBH
+RU43X09BQ09OVFJPTF9USU1FUl9QRVJJT0RfU0hJRlQpIHwKPiA+ICsgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgIChwZXJpb2RpYyA/Cj4gPiArICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgR0VON19PQUNPTlRST0xfVElNRVJfRU5BQkxFIDogMCkgfAo+ID4gKyAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgKHJlcG9ydF9mb3JtYXQgPDwKPiA+ICsgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICBHRU43X09BQ09OVFJPTF9GT1JNQVRfU0hJRlQpIHwKPiA+
+ICsgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIChjdHhfaWQgPwo+ID4gKyAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgIEdFTjdfT0FDT05UUk9MX1BFUl9DVFhfRU5BQkxFIDog
+MCkgfAo+ID4gKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgR0VON19PQUNPTlRST0xf
+RU5BQkxFKTsKPgo+IEkgbm90aWNlIHlvdSBkb24ndCB1c2UgYW55IHdyaXRlIGJhcnJpZXJzLi4u
+Cgpvaywgc28gSSBzdGlsbCBoYXZlbid0IHB1dCB3cml0ZSBiYXJyaWVycyB3aXRoaW4gdXBkYXRl
+X29hY29udHJvbCgpCml0c2VsZiwgYnV0IEkndmUgbm93IGFkZGVkIG1taW93YigpcyBqdXN0IGJl
+Zm9yZSB1bmxvY2tpbmcgd2hpY2ggaXMKZG9uZSBvdXRzaWRlIG9mIHRoZSB1cGRhdGVfb2Fjb250
+cm9sKCkuIEkgdGhpbmsgYSBiYXJyaWVyIGp1c3Qgd2l0aGluCnVwZGF0ZV9vYWNvbnRyb2woKSBj
+b3VsZCBiZSBvayBhLnQubSB3aGlsZSB0aGUgcGlubmluZyBob29rcyBjdXJyZW50bHkKanVzdCB1
+c2UgdXBkYXRlX29hY29udG9sKCksIGJ1dCBpbiBjYXNlIHdlIG1pZ2h0IGludHJvZHVjZSBtb3Jl
+Cm92ZXJsYXBwaW5nIG1taW8gY29uZmlndXJhdGlvbiB3aXRoaW4gdGhlc2UgY3JpdGljYWwgc2Vj
+dGlvbnMsIHdhaXRpbmcKdW50aWwgdGhlIHVubG9jayBtaWdodCBiZSBwcmVmZXJhYmxlLiBPbiB0
+aGUgb3RoZXIgaGFuZCwgYS50Lm0gdGhlCnBpbm5pbmcgY2FsbGJhY2tzIG5vdyBoYXZlIHJlZHVu
+ZGFudCB3YigpcyB3aGlsZSB0aGVyZSBpcyBubyBzcGVjaWZpYwpjb250ZXh0IGZpbHRlcmluZyAt
+IG5vdCBzdXJlIGlmIHRoYXQgc2hvdWxkIGJlIGEgY29uY2Vybi4KCkxvb2tpbmcgYXQgdGhpcywg
+SSBhbHNvIGRpZG4ndCBmZWVsIGhhcHB5IHdpdGggdGhlIHdheSBJIHJlc2V0Cm9hX3BtdS0+c3Bl
+Y2lmaWNfY29udGV4dCB3aGVuIGRlc3Ryb3lpbmcgYW4gZXZlbnQsIGNvbnNpZGVyaW5nIHRoYXQK
+LT5zcGVjaWZpY19jb250ZXh0IGJlaW5nIHNldCBpcyB3aGF0IGRldGVybWluZXMgd2hldGhlciB0
+aGUgcGlubmluZwpjYWxsYmFja3MgbWF5IGNhbGwgdXBkYXRlX29hY29udHJvbCgpIGFzeW5jaHJv
+bm91c2x5IHdpdGggcmVzcGVjdCB0bwp0aGUgcG11IG1ldGhvZHMuIEFsdGhvdWdoIHdlIGtub3cg
+b2Fjb250cm9sIHdpbGwgYmUgZGlzYWJsZWQgYnkgdGhlCnRpbWUgd2UgY29tZSB0byBkZXN0cm95
+IGFuIGV2ZW50LCBpdCBkaWRuJ3Qgc2VlbSBncmVhdCB0aGF0IHRoYXQgd2UKY291bGQgYmUgY29u
+dGludWluZyB0byBydW4gdXBkYXRlX29hY29udHJvbCgpIHVwIHRvIHRoZSBwb2ludCB3aGVyZSB3
+ZQphcmUgcmVzZXR0aW5nIGFsbCB0aGUgY2xvY2sgZ2F0aW5nLCBwb3dlciBtYW5hZ2VtZW50IGFu
+ZCBOT0EgZW5hYmxlCnN0YXRlLiBJJ2xsIGF0dGFjaCBhIHNlcGFyYXRlIHBhdGNoIHRvIHNlZSBp
+ZiB5b3UgYWdyZWUgdGhpcyBpcyB3b3J0aApjaGFuZ2luZy4KClRoYW5rcyBmb3IgdGhlIGNvbW1l
+bnRzLgoKLSBSb2JlcnQKCj4gLUNocmlzCj4gLS0KPiBDaHJpcyBXaWxzb24sIEludGVsIE9wZW4g
+U291cmNlIFRlY2hub2xvZ3kgQ2VudHJlCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fCkludGVsLWdmeCBtYWlsaW5nIGxpc3QKSW50ZWwtZ2Z4QGxpc3RzLmZy
+ZWVkZXNrdG9wLm9yZwpodHRwOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGlu
+Zm8vaW50ZWwtZ2Z4Cg==
