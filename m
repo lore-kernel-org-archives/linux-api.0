@@ -1,62 +1,46 @@
 From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH v8 04/16] clocksource/drivers: Add ARM System timer driver
-Date: Mon, 18 May 2015 14:57:08 +0200
-Message-ID: <CALszF6A5Z0wDpBOFveVjL19sMPAuqfnQJ+CwSgfXygmx46s7tQ@mail.gmail.com>
+Subject: Re: [PATCH v8 09/16] clockevents/drivers: Add STM32 Timer driver
+Date: Mon, 18 May 2015 14:59:46 +0200
+Message-ID: <CALszF6C0CR=MGCnPfEy16sRP1vTgw8kUgwjKOzbA1YSc5dtdqw@mail.gmail.com>
 References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com>
-	<1431158038-3813-5-git-send-email-mcoquelin.stm32@gmail.com>
-	<CALszF6BiKwDKejfpVgs6ojTxC4LSRfLSEaszXTGVy7xfbHLHZg@mail.gmail.com>
-	<5559DFD6.3050603@linaro.org>
+ <1431158038-3813-10-git-send-email-mcoquelin.stm32@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <5559DFD6.3050603@linaro.org>
-Sender: linux-doc-owner@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <1431158038-3813-10-git-send-email-mcoquelin.stm32@gmail.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
 To: Daniel Lezcano <daniel.lezcano@linaro.org>
-Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Peter Hurley <peter@hurleysoftware.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Chanwoo Choi <cw00.choi@samsung.com>, Russell King <linux@arm.linux.org.uk>, Joe Perches <joe@perches.com>, Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>, Lee Jones <lee.jones@linaro.org>, Daniel Thompson <daniel.thompson@linaro.org>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@he>
+Cc: Mark Rutland <mark.rutland@arm.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linus Walleij <linus.walleij@linaro.org>, Will Deacon <will.deacon@arm.com>, Stefan Agner <stefan@agner.ch>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Peter Meerwald <pmeerw@pmeerw.net>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Lee Jones <lee.jones@linaro.org>, Linux-Arch <linux-arch@vger.kernel.org>, Daniel Thompson <daniel.thompson@linaro.org>, Russell King <linux@arm.linux.org.uk>, Pawel Moll <pawel.moll@arm.com>, Jonathan Corbet <corbet@lwn.net>, Jiri Slaby <jslaby@suse.cz>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Chanwoo Choi <cw00.choi@samsung.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Antti Palosaari <crope@iki.fi>, Geert Uytterhoeven <geert@linux-m68k.org>, "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>, =?UTF-8?Q?Uwe_Kl
 List-Id: linux-api@vger.kernel.org
 
-2015-05-18 14:49 GMT+02:00 Daniel Lezcano <daniel.lezcano@linaro.org>:
-> On 05/18/2015 01:55 PM, Maxime Coquelin wrote:
->>
->> Hi Daniel,
->>
->> 2015-05-09 9:53 GMT+02:00 Maxime Coquelin <mcoquelin.stm32@gmail.com=
->:
->>>
->>> This patch adds clocksource support for ARMv7-M's System timer,
->>> also known as SysTick.
->>>
->>> Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
->>> Acked-by: Daniel Lezcano <daniel.lezcano@linaro.org>
->>> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
->>> ---
->>>   drivers/clocksource/Kconfig          |  7 ++++
->>>   drivers/clocksource/Makefile         |  1 +
->>>   drivers/clocksource/armv7m_systick.c | 79
->>> ++++++++++++++++++++++++++++++++++++
->>>   3 files changed, 87 insertions(+)
->>>   create mode 100644 drivers/clocksource/armv7m_systick.c
->>>
->>
->> Could you consider applying this patch and its dt-bindings
->> documentation (patch 3/16) on your tree for v4.2?
->
->
-> Patches applied for 4.2.
+Daniel,
 
-Thanks Daniel!
+2015-05-09 9:53 GMT+02:00 Maxime Coquelin <mcoquelin.stm32@gmail.com>:
+> STM32 MCUs feature 16 and 32 bits general purpose timers with prescalers.
+> The drivers detects whether the time is 16 or 32 bits, and applies a
+> 1024 prescaler value if it is 16 bits.
+>
+> Reviewed-by: Linus Walleij <linus.walleij@linaro.org>
+> Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
+> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+> ---
+>  drivers/clocksource/Kconfig       |   8 ++
+>  drivers/clocksource/Makefile      |   1 +
+>  drivers/clocksource/timer-stm32.c | 184 ++++++++++++++++++++++++++++++++++++++
+>  3 files changed, 193 insertions(+)
+>  create mode 100644 drivers/clocksource/timer-stm32.c
+>
 
->
-> Thanks
->
->   -- Daniel
->
-> --
->  <http://www.linaro.org/> Linaro.org =E2=94=82 Open source software f=
-or ARM SoCs
->
-> Follow Linaro:  <http://www.facebook.com/pages/Linaro> Facebook |
-> <http://twitter.com/#!/linaroorg> Twitter |
-> <http://www.linaro.org/linaro-blog/> Blog
->
+I forgot to as you to also pick this one an its documentation (patch 8).
+
+Best regards,
+Maxime
