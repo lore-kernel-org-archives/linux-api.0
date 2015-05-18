@@ -1,66 +1,79 @@
-From: Martin Kepplinger <martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
-Subject: Re: [PATCH] iio: doc: fix typo
-Date: Sun, 17 May 2015 18:16:06 +0200
-Message-ID: <6D256937-6698-4D42-A786-EC798545EA8F@posteo.de>
-References: <1430404582-13115-1-git-send-email-martink@posteo.de> <5546737A.9000407@kernel.org>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [PATCH v2] Documentation/arch: Add kernel feature descriptions
+ and arch support status under Documentation/features/
+Date: Mon, 18 May 2015 11:37:13 +1000
+Message-ID: <1431913033.13218.2.camel@ellerman.id.au>
+References: <20150513094622.GC11030@gmail.com>
+	 <20150513094756.GD11030@gmail.com> <20150513131835.GJ1517@pd.tnic>
+	 <20150513134842.GA1657@gmail.com> <20150513162757.GA21894@x>
+	 <20150513150523.ddd65d7cd51f820b78f0c8e3@linux-foundation.org>
+	 <20150514101518.GA27550@gmail.com> <20150514103544.GA7027@gmail.com>
+	 <20150514123835.1bf436bc35d711f8dbf9bc0f@linux-foundation.org>
+	 <1431644248.2981.1.camel@ellerman.id.au> <20150515074949.GB14993@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=UTF-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5546737A.9000407-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20150515074949.GB14993@gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Ingo Molnar <mingo@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Josh Triplett <josh@joshtriplett.org>, Borislav Petkov <bp@alien8.de>, Jonathan Corbet <corbet@lwn.net>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, x86@kernel.org, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+On Fri, 2015-05-15 at 09:49 +0200, Ingo Molnar wrote:
+> * Michael Ellerman <mpe@ellerman.id.au> wrote:
+> 
+> > On Thu, 2015-05-14 at 12:38 -0700, Andrew Morton wrote:
+> > > > Add arch support matrices for more than 40 generic kernel features
+> > > > that need per architecture support.
+> > > > 
+> > > > Each feature has its own directory under Documentation/features/feature_name/,
+> > > > and the arch-support.txt file shows its current arch porting status.
+> > > 
+> > > It would be nice to provide people with commit IDs to look at, but the
+> > > IDs won't be known at the time the documentation file is created.  We
+> > > could provide patch titles.
+> > 
+> > +1 on patch titles.
+> 
+> Ok, I'll solve this.
+
+Thanks.
+
+> > > But still, let's not overdo it - get something in there, see how 
+> > > well it works, evolve it over time.
+> > > 
+> > > I don't think we've heard from any (non-x86) arch maintainers?  Do 
+> > > they consider this useful at all?  Poke.
+> > 
+> > Yes it is. I have my own version I've cobbled together for powerpc, 
+> > but this is much better.
+> 
+> Please double check the PowerPC support matrix for correctness (if you 
+> haven't yet):
+
+It looks good except for:
+
+>        rwsem-optimized:  |  ok  |                              Optimized asm/rwsem.h #  arch provides optimized rwsem APIs
+
+I don't see an rwsem.h in powerpc anywhere?
 
 
-Am 3. Mai 2015 21:14:02 MESZ, schrieb Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>:
->On 30/04/15 15:36, Martin Kepplinger wrote:
->> Since we have deviceX, we don't need accelX. This has no users as of
->now, so
->> correcting this is no problem.
->> 
->> Signed-off-by: Martin Kepplinger <martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
->The X is certainly misleading.  The interface could have a number
->there,
->(if we have a device with multiple parallel accelerometers - unusual,
->but
->not unheard of) but it would be the channel index, not the device index
->and hence should be Y not X.
+And this is correct but a bit confusing:
+
+>          irq-time-acct:  |  ok  |                           HAVE_IRQ_TIME_ACCOUNTING #  arch supports precise IRQ time accounting
+
+I think you and Paul agreed it's "ok" on powerpc because we have
+VIRT_CPU_ACCOUNTING instead, but that's not obvious.
+
+> > I'd like to see more description in the individual files of what the
+> > feature is, and preferably some pointers to what's needed to
+> > implement it.
 >
->Or as we don't have any of these anyway, just drop the X and leave it
->as
->an un-indexed accelerometer channel.
->
->Jonathan
+> Yeah, so I tried to add a short description to the feature file 
+> itself, and for many of these features that single sentence is the 
+> only documentation we have in the kernel source ...
 
-There actually is a user, without the index, bma180.c and if it's done correctly there I plan to use it aswell.
+Yep, so that's better than what we had, and we can always improve it.
 
-I think removing this index would be the right thing now and your scenario may be a bigger change.
-
-      martin
-
->> ---
->> 
->> That's really just a question now. If I'm wrong, sorry for the noise.
->> 
->>  Documentation/ABI/testing/sysfs-bus-iio | 2 +-
->>  1 file changed, 1 insertion(+), 1 deletion(-)
->> 
->> diff --git a/Documentation/ABI/testing/sysfs-bus-iio
->b/Documentation/ABI/testing/sysfs-bus-iio
->> index 3befcb1..efd1334 100644
->> --- a/Documentation/ABI/testing/sysfs-bus-iio
->> +++ b/Documentation/ABI/testing/sysfs-bus-iio
->> @@ -1119,7 +1119,7 @@ Description:
->>  		This attribute is used to read the amount of quadrature error
->>  		present in the device at a given time.
->>  
->> -What:		/sys/.../iio:deviceX/in_accelX_power_mode
->> +What:		/sys/.../iio:deviceX/in_accel_power_mode
->>  KernelVersion:	3.11
->>  Contact:	linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>  Description:
->> 
+cheers
