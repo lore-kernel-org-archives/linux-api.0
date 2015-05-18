@@ -1,62 +1,44 @@
-From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH v8 09/16] clockevents/drivers: Add STM32 Timer driver
-Date: Mon, 18 May 2015 16:03:49 +0200
-Message-ID: <CALszF6CK7axU0qrWNf38aqrt2R2126ZACn7wx5jNY_1KE+4H+g@mail.gmail.com>
-References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com>
-	<1431158038-3813-10-git-send-email-mcoquelin.stm32@gmail.com>
-	<5559E4B0.70506@linaro.org>
+From: Pavel Emelyanov <xemul@parallels.com>
+Subject: Re: [PATCH 00/23] userfaultfd v4
+Date: Mon, 18 May 2015 17:24:26 +0300
+Message-ID: <5559F61A.2020206@parallels.com>
+References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <5559E4B0.70506@linaro.org>
-Sender: linux-arch-owner@vger.kernel.org
-To: Daniel Lezcano <daniel.lezcano@linaro.org>
-Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Peter Hurley <peter@hurleysoftware.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Chanwoo Choi <cw00.choi@samsung.com>, Russell King <linux@arm.linux.org.uk>, Joe Perches <joe@perches.com>, Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>, Lee Jones <lee.jones@linaro.org>, Daniel Thompson <daniel.thompson@linaro.org>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@he>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Andrea Arcangeli <aarcange@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-2015-05-18 15:10 GMT+02:00 Daniel Lezcano <daniel.lezcano@linaro.org>:
-> On 05/09/2015 09:53 AM, Maxime Coquelin wrote:
->>
->> STM32 MCUs feature 16 and 32 bits general purpose timers with prescalers.
->> The drivers detects whether the time is 16 or 32 bits, and applies a
->> 1024 prescaler value if it is 16 bits.
->>
->> Reviewed-by: Linus Walleij <linus.walleij@linaro.org>
->> Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
->> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
->> ---
->>   drivers/clocksource/Kconfig       |   8 ++
->>   drivers/clocksource/Makefile      |   1 +
->>   drivers/clocksource/timer-stm32.c | 184
->> ++++++++++++++++++++++++++++++++++++++
->>   3 files changed, 193 insertions(+)
->>   create mode 100644 drivers/clocksource/timer-stm32.c
->>
->> diff --git a/drivers/clocksource/Kconfig b/drivers/clocksource/Kconfig
->> index bf9364c..2443520 100644
->> --- a/drivers/clocksource/Kconfig
->> +++ b/drivers/clocksource/Kconfig
->> @@ -106,6 +106,14 @@ config CLKSRC_EFM32
->>           Support to use the timers of EFM32 SoCs as clock source and
->> clock
->>           event device.
->>
->> +config CLKSRC_STM32
->> +       bool "Clocksource for STM32 SoCs" if !ARCH_STM32
->> +       depends on OF && ARM && (ARCH_STM32 || COMPILE_TEST)
->
->
-> Are the interactive bool and the 'COMPILE_TEST' necessary ?
->
+On 05/14/2015 08:30 PM, Andrea Arcangeli wrote:
+> Hello everyone,
+> 
+> This is the latest userfaultfd patchset against mm-v4.1-rc3
+> 2015-05-14-10:04.
+> 
+> The postcopy live migration feature on the qemu side is mostly ready
+> to be merged and it entirely depends on the userfaultfd syscall to be
+> merged as well. So it'd be great if this patchset could be reviewed
+> for merging in -mm.
+> 
+> Userfaults allow to implement on demand paging from userland and more
+> generally they allow userland to more efficiently take control of the
+> behavior of page faults than what was available before
+> (PROT_NONE + SIGSEGV trap).
 
-The interactive bool is necessary if we want to be able to
-select/deselect it in COMPILE_TEST configuration.
-And personnaly, I think COMPILE_TEST use makes sense.
+Not to spam with 23 e-mails, all patches are
 
-Note that other timer drivers are doing the same thing today
-(CLKSRC_EFM32, SH_TIMER_CMT, EM_TIMER_STI...).
+Acked-by: Pavel Emelyanov <xemul@parallels.com>
 
-Do you have a specific concern regarding COMPILE_TEST?
+Thanks!
 
-Kind regards,
-Maxime
+-- Pavel
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
