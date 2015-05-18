@@ -1,50 +1,55 @@
-From: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
-Subject: Re: [PATCH] media: uapi: vsp1: Use __u32 instead of u32
-Date: Mon, 18 May 2015 13:30:25 +0300
-Message-ID: <2148994.nAnETH4BnO@avalon>
-References: <1431799900.15709.84.camel@perches.com>
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Subject: Re: [PATCH v8 01/16] scripts: link-vmlinux: Don't pass page offset to
+ kallsyms if XIP Kernel
+Date: Mon, 18 May 2015 13:47:06 +0200
+Message-ID: <CALszF6B0=dgSDfLFwDi9YmEzrrNVuYbUnqMu5DmDhhy--emtpw@mail.gmail.com>
+References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com>
+	<1431158038-3813-2-git-send-email-mcoquelin.stm32@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1431799900.15709.84.camel-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <1431158038-3813-2-git-send-email-mcoquelin.stm32@gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Michal Marek <mmarek@suse.cz>
+Cc: Philipp Zabel <p.zabel@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Rob Herring <robh+dt@kernel.org>, Geert Uytterhoeven <geert@linux-m68k.org>, Jonathan Corbet <corbet@lwn.net>, =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Linus Walleij <linus.walleij@linaro.org>, Stefan Agner <stefan@agner.ch>, Lee Jones <lee.jones@linaro.org>, Joe Perches <joe@perches.com>, Russell King <linux@arm.linux.org.uk>, Andy Shevchenko <andy.shevchenko@gmail.com>, Paul Bolle <pebolle@tiscali.nl>, Peter Hurley <peter@hurleysoftware.com>, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Andrew Morton <akpm@linux-foundation.>
 List-Id: linux-api@vger.kernel.org
 
-Hi Joe,
+Hi Michal,
 
-Thank you for the patch.
-
-On Saturday 16 May 2015 11:11:40 Joe Perches wrote:
-> Don't use the kernel types in uapi headers.
-> 
-> Signed-off-by: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
-
-Acked-by: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
-
-and applied to my tree.
-
+2015-05-09 9:53 GMT+02:00 Maxime Coquelin <mcoquelin.stm32@gmail.com>:
+> When Kernel is executed in place from ROM, the symbol addresses can be
+> lower than the page offset.
+>
+> Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
+> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
 > ---
->  include/uapi/linux/vsp1.h | 2 +-
+>  scripts/link-vmlinux.sh | 2 +-
 >  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/include/uapi/linux/vsp1.h b/include/uapi/linux/vsp1.h
-> index e18858f..9a82369 100644
-> --- a/include/uapi/linux/vsp1.h
-> +++ b/include/uapi/linux/vsp1.h
-> @@ -28,7 +28,7 @@
->  	_IOWR('V', BASE_VIDIOC_PRIVATE + 1, struct vsp1_lut_config)
-> 
->  struct vsp1_lut_config {
-> -	u32 lut[256];
-> +	__u32 lut[256];
->  };
-> 
->  #endif	/* __VSP1_USER_H__ */
+>
+> diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
+> index 86a4fe7..b055d9d 100755
+> --- a/scripts/link-vmlinux.sh
+> +++ b/scripts/link-vmlinux.sh
+> @@ -82,7 +82,7 @@ kallsyms()
+>                 kallsymopt="${kallsymopt} --all-symbols"
+>         fi
+>
+> -       if [ -n "${CONFIG_ARM}" ] && [ -n "${CONFIG_PAGE_OFFSET}" ]; then
+> +       if [ -n "${CONFIG_ARM}" ] && [ -z "${CONFIG_XIP_KERNEL}" ] && [ -n "${CONFIG_PAGE_OFFSET}" ]; then
+>                 kallsymopt="${kallsymopt} --page-offset=$CONFIG_PAGE_OFFSET"
+>         fi
+>
+> --
+> 1.9.1
+>
 
--- 
-Regards,
+The get_maintainer.pl does not explicitly provide your name as
+maintainer for this file.
+But looking at MAINTAINERS file, I think you are the one for it.
 
-Laurent Pinchart
+Do you confirm?
+If this is the case and you agree with the patch, could you consider
+taking it for v4.2?
+
+Thanks in advance,
+Maxime
