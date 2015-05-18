@@ -1,63 +1,76 @@
-From: Ricardo Ribalda Delgado <ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 0/4] Add support for V4L2_PIX_FMT_Y16_BE
-Date: Mon, 18 May 2015 21:31:49 +0200
-Message-ID: <CAPybu_3GMM0oz7Qcr6Nyp9WKFTp7y+H02Qq7vTj+UFq390AgFQ@mail.gmail.com>
-References: <1430726852-11715-1-git-send-email-ricardo.ribalda@gmail.com> <20150518162657.031a86fc@recife.lan>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v2 1/2] capabilities: Ambient capabilities
+Date: Mon, 18 May 2015 12:43:42 -0700
+Message-ID: <CALCETrU5B3aR0s9c7qsktLJ4hiBfs0+LqyVNmq1ZVNfF0zFECQ@mail.gmail.com>
+References: <cover.1431671529.git.luto@kernel.org> <cc4749638a21079cce12f9f30c806170558e56e5.1431671529.git.luto@kernel.org>
+ <alpine.DEB.2.11.1505150921040.20285@gentwo.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150518162657.031a86fc-+RedX5hVuTR+urZeOPWqwQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>, Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>, Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ramakrishnan Muthukrishnan <ramakrmu-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, linux-media <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.11.1505150921040.20285@gentwo.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Lameter <cl@linux.com>
+Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Andrew Morton <akpm@linuxfoundation.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Serge Hallyn <serge.hallyn@canonical.com>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-Hello Mauro
-
-
-it is here https://patchwork.linuxtv.org/patch/29669/
-
-
-Thanks!
-
-On Mon, May 18, 2015 at 9:26 PM, Mauro Carvalho Chehab
-<mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
-> Em Mon,  4 May 2015 10:07:28 +0200
-> Ricardo Ribalda Delgado <ricardo.ribalda-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> escreveu:
+On May 15, 2015 11:31 PM, "Christoph Lameter" <cl@linux.com> wrote:
 >
->> New pixel format type Y16_BE (16 bits greyscale big-endian).
->>
->> Once I get the fist feedback on this patch I will send the patches for
->> v4lconvert and qv4l2.
+> It would be best to start a complete new thread about this. You
+> replied to earlier posts about ambient capabilities and
+> people may not see it as a new release.
 >
-> Hmm...
+> > pA obeys the invariant that no bit can ever be set in pA if it is
+> > not set in both pP and pI.  Dropping a bit from pP or pI drops that
+> > bit from pA.  This ensures that existing programs that try to drop
+> > capabilities still do so, with a complication.  Because capability
 >
->         Error: no ID for constraint linkend: V4L2-PIX-FMT-Y16-BE.
+> Ok that is a good improvement.
 >
-> Where's the documentation for this new format?
+> > inheritance is so broken, setting KEEPCAPS, using setresuid to
+> > switch to nonroot uids, or calling execve effectively drops
+> > capabilities.  Therefore, setresuid from root to nonroot
+> > conditionally clears pA unless SECBIT_NO_SETUID_FIXUP is set.
+> > Processes that don't like this can re-add bits to pA afterwards.
+> >
+> > The capability evolution rules are changed:
+> >
+> >   pA' = (file caps or setuid or setgid ? 0 : pA)
+> >   pP' = (X & fP) | (pI & fI) | pA'
+> >   pI' = pI
+> >   pE' = (fE ? pP' : pA')
 >
-> Regards,
-> Mauro
+> Isnt this equal to
 >
+>     pE' = (fE & pP') | pA'
 >
->>
->>
->> Thanks
->>
->> Ricardo Ribalda Delgado (4):
->>   media/vivid: Add support for Y16 format
->>   media/v4l2-core: Add support for V4L2_PIX_FMT_Y16_BE
->>   media/vivid: Add support for Y16_BE format
->>   media/vivid: Code cleanout
->>
->>  drivers/media/platform/vivid/vivid-tpg.c        | 20 ++++++++++++++++----
->>  drivers/media/platform/vivid/vivid-vid-common.c | 16 ++++++++++++++++
->>  drivers/media/v4l2-core/v4l2-ioctl.c            |  1 +
->>  include/uapi/linux/videodev2.h                  |  1 +
->>  4 files changed, 34 insertions(+), 4 deletions(-)
->>
+> which does not require conditionals and is symmetric to how pP' is
+> calculated. Your formula seems to indicate that pA' bits are not set if
+> fE is set. However they are already set unconditionally in pP' regardless.
+> This makes it more explicit I think. And I thought we are dealing with
+> bitmask arithmetic here?
 
+I think you're right, except that fE is a Boolean, not a bit mask, so
+fE | pP' is an odd thing to talk about.
 
+We could say (fE ? pP' : 0) | pA', which could simplify the code a tiny bit.
 
--- 
-Ricardo Ribalda
+>
+>
+> > If you are nonroot but you have a capability, you can add it to pA.
+> > If you do so, your children get that capability in pA, pP, and pE.
+> > For example, you can set pA = CAP_NET_BIND_SERVICE, and your
+> > children can automatically bind low-numbered ports.  Hallelujah!
+>
+> I love this solution.
+>
+> > [2] The libcap capability mask parsers and formatters are
+> > dangerously misleading and the documentation is flat-out wrong.  fE
+> > is *not* a mask; it's a single bit.  This has probably confused
+> > every single person who has tried to use file capabilities.
+>
+> Hmmm... yes lets clean that up as well. Then your formula makes sense.
+>
+
+Maybe a follow-up patch to change the docs would be a good idea.
+
+--Andy
