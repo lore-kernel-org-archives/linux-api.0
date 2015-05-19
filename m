@@ -1,46 +1,87 @@
-From: Richard Weinberger <richard.weinberger@gmail.com>
-Subject: Re: [PATCH 00/23] userfaultfd v4
-Date: Tue, 19 May 2015 23:59:42 +0200
-Message-ID: <CAFLxGvwGGZH1bbMw+qReZFMK+dc6zoOTCNsuOMdp+xw_jPzPDg@mail.gmail.com>
-References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
-	<20150519143801.8ba477c3813e93a2637c19cf@linux-foundation.org>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH v2 2/3] fbcon: use the cursor blink interval provided by
+ vt
+Date: Tue, 19 May 2015 16:41:12 -0700
+Message-ID: <20150519234112.GA25218@kroah.com>
+References: <20150226220243.GC9935@amd>
+ <alpine.LNX.2.11.1502271905580.4212@localhost>
+ <alpine.LNX.2.11.1502271911380.4248@localhost>
+ <20150325111949.GA24230@kroah.com>
+ <alpine.DEB.2.11.1503261341260.2164@local>
+ <alpine.DEB.2.11.1503261354550.2411@local>
+ <CAMAWPa-6ZbE5cDkEZq0XpYa2pHcnf3qweSSVHAXhfhUAUCbKcA@mail.gmail.com>
+ <20150519214011.GA27047@ulmo.nvidia.com>
+ <CAMAWPa88E2pfViKLXjxWHuT4ZkVhzYt_BsXGePzc-70ZrEmJFA@mail.gmail.com>
+ <20150519215228.GA27163@ulmo.nvidia.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <kvm-owner@vger.kernel.org>
-In-Reply-To: <20150519143801.8ba477c3813e93a2637c19cf@linux-foundation.org>
-Sender: kvm-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Andrea Arcangeli <aarcange@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, qemu-devel@nongnu.org, kvm <kvm@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150519215228.GA27163@ulmo.nvidia.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thierry Reding <thierry.reding@gmail.com>
+Cc: Kevin Hilman <khilman@kernel.org>, Scot Doyle <lkml14@scotdoyle.com>, Tomi Valkeinen <tomi.valkeinen@ti.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Jiri Slaby <jslaby@suse.cz>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, Pavel Machek <pavel@ucw.cz>, Geert Uytterhoeven <geert@linux-m68k.org>, lkml <linux-kernel@vger.kernel.org>, linux-fbdev@vger.kernel.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, Tyler Baker <tyler.baker@linaro.org>, Olof Johansson <olof@lixom.net>, Daniel Stone <daniel@fooishbar.org>, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 19, 2015 at 11:38 PM, Andrew Morton
-<akpm@linux-foundation.org> wrote:
-> On Thu, 14 May 2015 19:30:57 +0200 Andrea Arcangeli <aarcange@redhat.com> wrote:
->
->> This is the latest userfaultfd patchset against mm-v4.1-rc3
->> 2015-05-14-10:04.
->
-> It would be useful to have some userfaultfd testcases in
-> tools/testing/selftests/.  Partly as an aid to arch maintainers when
-> enabling this.  And also as a standalone thing to give people a
-> practical way of exercising this interface.
->
-> What are your thoughts on enabling userfaultfd for other architectures,
-> btw?  Are there good use cases, are people working on it, etc?
+On Tue, May 19, 2015 at 11:52:29PM +0200, Thierry Reding wrote:
+> On Tue, May 19, 2015 at 02:45:19PM -0700, Kevin Hilman wrote:
+> > On Tue, May 19, 2015 at 2:40 PM, Thierry Reding
+> > <thierry.reding@gmail.com> wrote:
+> > > On Tue, May 19, 2015 at 02:15:41PM -0700, Kevin Hilman wrote:
+> > >> On Thu, Mar 26, 2015 at 6:56 AM, Scot Doyle <lkml14@scotdoyle.com> wrote:
+> > >> > vt now provides a cursor blink interval via vc_data. Use this
+> > >> > interval instead of the currently hardcoded 200 msecs. Store it in
+> > >> > fbcon_ops to avoid locking the console in cursor_timer_handler().
+> > >> >
+> > >> > Signed-off-by: Scot Doyle <lkml14@scotdoyle.com>
+> > >> > Acked-by: Pavel Machek <pavel@ucw.cz>
+> > >>
+> > >> This patch hit next-20150519 in the form of commit 27a4c827c34a
+> > >> (fbcon: use the cursor blink interval provided by vt) and has caused
+> > >> boot failure on a handful of ARM platforms when booting a MMC root
+> > >> filesystem.  This error was spotted by the kernelci.org bot on
+> > >> exynos5800-peach-pi[1] and Thierry and Daniel (Cc'd) have seen it on
+> > >> some tegra platforms too.
+> > >>
+> > >> Thierry spotted this commit as a potential cause, and both Daniel and
+> > >> I have reverted and boot tested on exynos5 and tegra respectively and
+> > >> the boot panics disappear.
+> > >
+> > > FWIW, if I apply the below on top of next-20150519 things seem to be
+> > > back to normal as well:
+> > >
+> > > diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
+> > > index 05b1d1a71ef9..658c34bb9076 100644
+> > > --- a/drivers/video/console/fbcon.c
+> > > +++ b/drivers/video/console/fbcon.c
+> > > @@ -1310,8 +1310,9 @@ static void fbcon_cursor(struct vc_data *vc, int mode)
+> > >                 return;
+> > >
+> > >         ops->cur_blink_jiffies = msecs_to_jiffies(vc->vc_cur_blink_ms);
+> > > -       fbcon_del_cursor_timer(info);
+> > > -       if (!(vc->vc_cursor_type & 0x10))
+> > > +       if (vc->vc_cursor_type & 0x10)
+> > > +               fbcon_del_cursor_timer(info);
+> > > +       else
+> > >                 fbcon_add_cursor_timer(info);
+> > >
+> > >         ops->cursor_flash = (mode == CM_ERASE) ? 0 : 1;
+> > 
+> > Applying this on next-20150519 makes my exynos board happily boot again as well.
+> > 
+> > Tested-by: Kevin Hilman <khilman@linaro.org>
+> 
+> Excellent. Greg, Scot, any opinions on whether or not this is the right
+> thing to do? It restores a bit that looks suspiciously like it snuck in
+> in the original (at least it isn't documented in the commit message).
+> 
+> Greg, feel free to squash this in if everybody agrees this is good to
+> go. If you prefer a patch on top let me know and I'll come up with a
+> proper commit message.
 
-UML is using SIGSEGV for page faults.
-i.e. the UML processes receives a SIGSEGV, learns the faulting address
-from the mcontext
-and resolves the fault by installing a new mapping.
+Please send a real patch and I'll apply it on top, as I can't rebase my
+public tree.
 
-If userfaultfd is faster that the SIGSEGV notification it could speed
-up UML a bit.
-For UML I'm only interested in the notification, not the resolving
-part. The "missing"
-data is present, only a new mapping is needed. No copy of data.
+thanks,
 
-Andrea, what do you think?
-
--- 
-Thanks,
-//richard
+greg k-h
