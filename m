@@ -1,87 +1,97 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH v2 2/3] fbcon: use the cursor blink interval provided by
- vt
-Date: Tue, 19 May 2015 16:41:12 -0700
-Message-ID: <20150519234112.GA25218@kroah.com>
-References: <20150226220243.GC9935@amd>
- <alpine.LNX.2.11.1502271905580.4212@localhost>
- <alpine.LNX.2.11.1502271911380.4248@localhost>
- <20150325111949.GA24230@kroah.com>
- <alpine.DEB.2.11.1503261341260.2164@local>
- <alpine.DEB.2.11.1503261354550.2411@local>
- <CAMAWPa-6ZbE5cDkEZq0XpYa2pHcnf3qweSSVHAXhfhUAUCbKcA@mail.gmail.com>
- <20150519214011.GA27047@ulmo.nvidia.com>
- <CAMAWPa88E2pfViKLXjxWHuT4ZkVhzYt_BsXGePzc-70ZrEmJFA@mail.gmail.com>
- <20150519215228.GA27163@ulmo.nvidia.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150519215228.GA27163@ulmo.nvidia.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Thierry Reding <thierry.reding@gmail.com>
-Cc: Kevin Hilman <khilman@kernel.org>, Scot Doyle <lkml14@scotdoyle.com>, Tomi Valkeinen <tomi.valkeinen@ti.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Jiri Slaby <jslaby@suse.cz>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, Pavel Machek <pavel@ucw.cz>, Geert Uytterhoeven <geert@linux-m68k.org>, lkml <linux-kernel@vger.kernel.org>, linux-fbdev@vger.kernel.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, Tyler Baker <tyler.baker@linaro.org>, Olof Johansson <olof@lixom.net>, Daniel Stone <daniel@fooishbar.org>, Arnd Bergmann <arnd@arndb.de>
+From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
+Subject: [PATCH net-next 0/4] bpf: introduce bpf_tail_call() helper
+Date: Tue, 19 May 2015 16:59:02 -0700
+Message-ID: <1432079946-9878-1-git-send-email-ast@plumgrid.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Michael Holzheu <holzheu-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Zi Shen Lim <zlim.lnx-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 19, 2015 at 11:52:29PM +0200, Thierry Reding wrote:
-> On Tue, May 19, 2015 at 02:45:19PM -0700, Kevin Hilman wrote:
-> > On Tue, May 19, 2015 at 2:40 PM, Thierry Reding
-> > <thierry.reding@gmail.com> wrote:
-> > > On Tue, May 19, 2015 at 02:15:41PM -0700, Kevin Hilman wrote:
-> > >> On Thu, Mar 26, 2015 at 6:56 AM, Scot Doyle <lkml14@scotdoyle.com> wrote:
-> > >> > vt now provides a cursor blink interval via vc_data. Use this
-> > >> > interval instead of the currently hardcoded 200 msecs. Store it in
-> > >> > fbcon_ops to avoid locking the console in cursor_timer_handler().
-> > >> >
-> > >> > Signed-off-by: Scot Doyle <lkml14@scotdoyle.com>
-> > >> > Acked-by: Pavel Machek <pavel@ucw.cz>
-> > >>
-> > >> This patch hit next-20150519 in the form of commit 27a4c827c34a
-> > >> (fbcon: use the cursor blink interval provided by vt) and has caused
-> > >> boot failure on a handful of ARM platforms when booting a MMC root
-> > >> filesystem.  This error was spotted by the kernelci.org bot on
-> > >> exynos5800-peach-pi[1] and Thierry and Daniel (Cc'd) have seen it on
-> > >> some tegra platforms too.
-> > >>
-> > >> Thierry spotted this commit as a potential cause, and both Daniel and
-> > >> I have reverted and boot tested on exynos5 and tegra respectively and
-> > >> the boot panics disappear.
-> > >
-> > > FWIW, if I apply the below on top of next-20150519 things seem to be
-> > > back to normal as well:
-> > >
-> > > diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
-> > > index 05b1d1a71ef9..658c34bb9076 100644
-> > > --- a/drivers/video/console/fbcon.c
-> > > +++ b/drivers/video/console/fbcon.c
-> > > @@ -1310,8 +1310,9 @@ static void fbcon_cursor(struct vc_data *vc, int mode)
-> > >                 return;
-> > >
-> > >         ops->cur_blink_jiffies = msecs_to_jiffies(vc->vc_cur_blink_ms);
-> > > -       fbcon_del_cursor_timer(info);
-> > > -       if (!(vc->vc_cursor_type & 0x10))
-> > > +       if (vc->vc_cursor_type & 0x10)
-> > > +               fbcon_del_cursor_timer(info);
-> > > +       else
-> > >                 fbcon_add_cursor_timer(info);
-> > >
-> > >         ops->cursor_flash = (mode == CM_ERASE) ? 0 : 1;
-> > 
-> > Applying this on next-20150519 makes my exynos board happily boot again as well.
-> > 
-> > Tested-by: Kevin Hilman <khilman@linaro.org>
-> 
-> Excellent. Greg, Scot, any opinions on whether or not this is the right
-> thing to do? It restores a bit that looks suspiciously like it snuck in
-> in the original (at least it isn't documented in the commit message).
-> 
-> Greg, feel free to squash this in if everybody agrees this is good to
-> go. If you prefer a patch on top let me know and I'll come up with a
-> proper commit message.
+Hi All,
 
-Please send a real patch and I'll apply it on top, as I can't rebase my
-public tree.
+introduce bpf_tail_call(ctx, &jmp_table, index) helper function
+which can be used from BPF programs like:
+int bpf_prog(struct pt_regs *ctx)
+{
+  ...
+  bpf_tail_call(ctx, &jmp_table, index);
+  ...
+}
+that is roughly equivalent to:
+int bpf_prog(struct pt_regs *ctx)
+{
+  ...
+  if (jmp_table[index])
+    return (*jmp_table[index])(ctx);
+  ...
+}
+The important detail that it's not a normal call, but a tail call.
+The kernel stack is precious, so this helper reuses the current
+stack frame and jumps into another BPF program without adding
+extra call frame.
+It's trivially done in interpreter and a bit trickier in JITs.
 
-thanks,
+Use cases:
+- simplify complex programs
+- dispatch into other programs
+  (for example: index in jump table can be syscall number or network protocol)
+- build dynamic chains of programs
 
-greg k-h
+The chain of tail calls can form unpredictable dynamic loops therefore
+tail_call_cnt is used to limit the number of calls and currently is set to 32.
+
+patch 1 - support bpf_tail_call() in interpreter
+patch 2 - support in x64 JIT
+We've discussed what's neccessary to support it in arm64/s390 JITs
+and it looks fine.
+patch 3 - sample example for tracing
+patch 4 - sample example for networking
+
+More details in every patch.
+
+This set went through several iterations of reviews/fixes and older
+attempts can be seen:
+https://git.kernel.org/cgit/linux/kernel/git/ast/bpf.git/log/?h=tail_call_v[123456]
+- tail_call_v1 does it without touching JITs but introduces overhead
+  for all programs that don't use this helper function.
+- tail_call_v2 still has some overhead and x64 JIT does full stack
+  unwind (prologue skipping optimization wasn't there)
+- tail_call_v3 reuses 'call' instruction encoding and has interpreter
+  overhead for every normal call
+- tail_call_v4 fixes above architectural shortcomings and v5,v6 fix few
+  more bugs
+
+This last tail_call_v6 approach seems to be the best.
+
+Alexei Starovoitov (4):
+  bpf: allow bpf programs to tail-call other bpf programs
+  x86: bpf_jit: implement bpf_tail_call() helper
+  samples/bpf: bpf_tail_call example for tracing
+  samples/bpf: bpf_tail_call example for networking
+
+ arch/x86/net/bpf_jit_comp.c |  150 +++++++++++++++++----
+ include/linux/bpf.h         |   22 ++++
+ include/linux/filter.h      |    2 +-
+ include/uapi/linux/bpf.h    |   10 ++
+ kernel/bpf/arraymap.c       |  113 +++++++++++++++-
+ kernel/bpf/core.c           |   73 ++++++++++-
+ kernel/bpf/syscall.c        |   23 +++-
+ kernel/bpf/verifier.c       |   17 +++
+ kernel/trace/bpf_trace.c    |    2 +
+ net/core/filter.c           |    2 +
+ samples/bpf/Makefile        |    8 ++
+ samples/bpf/bpf_helpers.h   |    4 +
+ samples/bpf/bpf_load.c      |   57 ++++++--
+ samples/bpf/sockex3_kern.c  |  303 +++++++++++++++++++++++++++++++++++++++++++
+ samples/bpf/sockex3_user.c  |   66 ++++++++++
+ samples/bpf/tracex5_kern.c  |   75 +++++++++++
+ samples/bpf/tracex5_user.c  |   46 +++++++
+ 17 files changed, 928 insertions(+), 45 deletions(-)
+ create mode 100644 samples/bpf/sockex3_kern.c
+ create mode 100644 samples/bpf/sockex3_user.c
+ create mode 100644 samples/bpf/tracex5_kern.c
+ create mode 100644 samples/bpf/tracex5_user.c
+
+-- 
+1.7.9.5
