@@ -1,179 +1,45 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [PATCH 0/3] Allow user to request memory to be locked on page
- fault
-Date: Tue, 19 May 2015 16:30:05 -0400
-Message-ID: <20150519203005.GB2454@akamai.com>
-References: <1431113626-19153-1-git-send-email-emunson@akamai.com>
- <20150508124203.6679b1d35ad9555425003929@linux-foundation.org>
- <20150511180631.GA1227@akamai.com>
- <20150513150036.GG1227@akamai.com>
- <20150514080812.GC6433@dhcp22.suse.cz>
- <20150515153550.GA2454@akamai.com>
+From: Kevin Hilman <khilman-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 2/3] fbcon: use the cursor blink interval provided by vt
+Date: Tue, 19 May 2015 14:15:41 -0700
+Message-ID: <CAMAWPa-6ZbE5cDkEZq0XpYa2pHcnf3qweSSVHAXhfhUAUCbKcA@mail.gmail.com>
+References: <alpine.DEB.2.11.1501262034380.1945@localhost.localdomain>
+	<alpine.DEB.2.11.1501262040380.2052@localhost.localdomain>
+	<20150225094946.GA24627@amd>
+	<alpine.LNX.2.11.1502252319330.276@localhost>
+	<20150226220243.GC9935@amd>
+	<alpine.LNX.2.11.1502271905580.4212@localhost>
+	<alpine.LNX.2.11.1502271911380.4248@localhost>
+	<20150325111949.GA24230@kroah.com>
+	<alpine.DEB.2.11.1503261341260.2164@local>
+	<alpine.DEB.2.11.1503261354550.2411@local>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="pvezYHf7grwyp3Bc"
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150515153550.GA2454@akamai.com>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@suse.cz>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Shuah Khan <shuahkh@osg.samsung.com>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.11.1503261354550.2411@local>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Tomi Valkeinen <tomi.valkeinen-l0cyMroinI0@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tyler Baker <tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Olof Johansson <olof-nZhT3qVonbNeoWH0uzbU5w@public.gmane.org>, Daniel Stone <daniel-rLtY4a/8tF1rovVCs/uTlw@public.gmane.org>, Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Thu, Mar 26, 2015 at 6:56 AM, Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org> wrote:
+> vt now provides a cursor blink interval via vc_data. Use this
+> interval instead of the currently hardcoded 200 msecs. Store it in
+> fbcon_ops to avoid locking the console in cursor_timer_handler().
+>
+> Signed-off-by: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
+> Acked-by: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
 
---pvezYHf7grwyp3Bc
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+This patch hit next-20150519 in the form of commit 27a4c827c34a
+(fbcon: use the cursor blink interval provided by vt) and has caused
+boot failure on a handful of ARM platforms when booting a MMC root
+filesystem.  This error was spotted by the kernelci.org bot on
+exynos5800-peach-pi[1] and Thierry and Daniel (Cc'd) have seen it on
+some tegra platforms too.
 
-On Fri, 15 May 2015, Eric B Munson wrote:
+Thierry spotted this commit as a potential cause, and both Daniel and
+I have reverted and boot tested on exynos5 and tegra respectively and
+the boot panics disappear.
 
-> On Thu, 14 May 2015, Michal Hocko wrote:
->=20
-> > On Wed 13-05-15 11:00:36, Eric B Munson wrote:
-> > > On Mon, 11 May 2015, Eric B Munson wrote:
-> > >=20
-> > > > On Fri, 08 May 2015, Andrew Morton wrote:
-> > > >=20
-> > > > > On Fri,  8 May 2015 15:33:43 -0400 Eric B Munson <emunson@akamai.=
-com> wrote:
-> > > > >=20
-> > > > > > mlock() allows a user to control page out of program memory, bu=
-t this
-> > > > > > comes at the cost of faulting in the entire mapping when it is
-> > > > > > allocated.  For large mappings where the entire area is not nec=
-essary
-> > > > > > this is not ideal.
-> > > > > >=20
-> > > > > > This series introduces new flags for mmap() and mlockall() that=
- allow a
-> > > > > > user to specify that the covered are should not be paged out, b=
-ut only
-> > > > > > after the memory has been used the first time.
-> > > > >=20
-> > > > > Please tell us much much more about the value of these changes: t=
-he use
-> > > > > cases, the behavioural improvements and performance results which=
- the
-> > > > > patchset brings to those use cases, etc.
-> > > > >=20
-> > > >=20
-> > > > To illustrate the proposed use case I wrote a quick program that mm=
-aps
-> > > > a 5GB file which is filled with random data and accesses 150,000 pa=
-ges
-> > > > from that mapping.  Setup and processing were timed separately to
-> > > > illustrate the differences between the three tested approaches.  the
-> > > > setup portion is simply the call to mmap, the processing is the
-> > > > accessing of the various locations in  that mapping.  The following
-> > > > values are in milliseconds and are the averages of 20 runs each wit=
-h a
-> > > > call to echo 3 > /proc/sys/vm/drop_caches between each run.
-> > > >=20
-> > > > The first mapping was made with MAP_PRIVATE | MAP_LOCKED as a basel=
-ine:
-> > > > Startup average:    9476.506
-> > > > Processing average: 3.573
-> > > >=20
-> > > > The second mapping was simply MAP_PRIVATE but each page was passed =
-to
-> > > > mlock() before being read:
-> > > > Startup average:    0.051
-> > > > Processing average: 721.859
-> > > >=20
-> > > > The final mapping was MAP_PRIVATE | MAP_LOCKONFAULT:
-> > > > Startup average:    0.084
-> > > > Processing average: 42.125
-> > > >=20
-> > >=20
-> > > Michal's suggestion of changing protections and locking in a signal
-> > > handler was better than the locking as needed, but still significantly
-> > > more work required than the LOCKONFAULT case.
-> > >=20
-> > > Startup average:    0.047
-> > > Processing average: 86.431
-> >=20
-> > Have you played with batching? Has it helped? Anyway it is to be
-> > expected that the overhead will be higher than a single mmap call. The
-> > question is whether you can live with it because adding a new semantic
-> > to mlock sounds trickier and MAP_LOCKED is tricky enough already...
-> >=20
->=20
-> I reworked the experiment to better cover the batching solution.  The
-> same 5GB data file is used, however instead of 150,000 accesses at
-> regular intervals, the test program now does 15,000,000 accesses to
-> random pages in the mapping.  The rest of the setup remains the same.
->=20
-> mmap with MAP_LOCKED:
-> Setup avg:      11821.193
-> Processing avg: 3404.286
->=20
-> mmap with mlock() before each access:
-> Setup avg:      0.054
-> Processing avg: 34263.201
->=20
-> mmap with PROT_NONE and signal handler and batch size of 1 page:
-> With the default value in max_map_count, this gets ENOMEM as I attempt
-> to change the permissions, after upping the sysctl significantly I get:
-> Setup avg:      0.050
-> Processing avg: 67690.625
->=20
-> mmap with PROT_NONE and signal handler and batch size of 8 pages:
-> Setup avg:      0.098
-> Processing avg: 37344.197
->=20
-> mmap with PROT_NONE and signal handler and batch size of 16 pages:
-> Setup avg:      0.0548
-> Processing avg: 29295.669
->=20
-> mmap with MAP_LOCKONFAULT:
-> Setup avg:      0.073
-> Processing avg: 18392.136
->=20
-> The signal handler in the batch cases faulted in memory in two steps to
-> avoid having to know the start and end of the faulting mapping.  The
-> first step covers the page that caused the fault as we know that it will
-> be possible to lock.  The second step speculatively tries to mlock and
-> mprotect the batch size - 1 pages that follow.  There may be a clever
-> way to avoid this without having the program track each mapping to be
-> covered by this handeler in a globally accessible structure, but I could
-> not find it.
->=20
-> These results show that if the developer knows that a majority of the
-> mapping will be used, it is better to try and fault it in at once,
-> otherwise MAP_LOCKONFAULT is significantly faster.
->=20
-> Eric
+Kevin
 
-Is there anything else I can add to the discussion here?
-
-
---pvezYHf7grwyp3Bc
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJVW51NAAoJELbVsDOpoOa9PQIQAJYsWV/aTxT1NeePEHXXzgc2
-mZLqLo0f1XF66qBn4eFO8mSy3CD+MKTqxMxF5dtRJhHkelz7s6JJqwRjfQgr6IT6
-bsGSERcshD3rpNdJQnfkGd3mTmq6FmfvTeaUYPopZrN1zkZU/SmrAvm6GpPhjnH2
-TrXEVm2MEcESl3Q7mNZfNDeduI1sKSw03BaBj2uSVMY7EllwpnvlO4pujmAC9ZBY
-fb+lNttd0wTErNUHvHrUtBT7dCqLuOjAqANT78k+aXROCuIIkmnHjJctVRjRz9Bh
-KFCY9JQTTZ3llNFdO6w/EYGD+u8qVN+8NnGYlR31rQUgVQ9EkLkaoCTdWVl/4dlF
-GklDSDyG7ICUly7lTRSE59Zbph+8SiLPAd9YnGI/Tv5QUTrKRtv2sBD7ahU39eF0
-XLFB02ZX9nzOTTYxKp4UO8iFcRhIkVrefIB467HeW1k15jOoY9Js8Wv1DMcGuUcb
-6iETzFsnYhi/+vQq27rUGNq8MVN0dEsqlI80hfUdmhuSZeeHefmWSPIA7fsROdYk
-zx11IRSbEVzSkcLTKn3Y15futwTl6oAHg3uKcfehxSiY3HmLm7w1EWJ64XKLpWry
-5Dr4G78pWTLTm+Z9TqpBtg5sAcPPnMZwzJybMGHBaNAJqB6ZW83oDM5ght/kStpT
-n6kIODdplDv+SdRLA+3k
-=Cgdc
------END PGP SIGNATURE-----
-
---pvezYHf7grwyp3Bc--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+[1] http://storage.kernelci.org/next/next-20150519/arm-exynos_defconfig/lab-khilman/boot-exynos5800-peach-pi_rootfs:mmc.html
