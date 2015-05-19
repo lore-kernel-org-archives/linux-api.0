@@ -1,47 +1,55 @@
-From: Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v8 09/16] clockevents/drivers: Add STM32 Timer driver
-Date: Tue, 19 May 2015 15:49:52 +0200
-Message-ID: <555B3F80.8070605@linaro.org>
-References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com>	<555B098A.8030202@linaro.org>	<CALszF6AJ3Zf598wYeUx=iNWHHKT24xUyfagB=+4GocwZ-Fd-0g@mail.gmail.com>	<6177628.0ZDPLeVyah@wuerfel> <CALszF6BZKD-CPTZ6Hc85wv2Z3Y7JmUv-cMkBtbk2Ga6WeeWU=A@mail.gmail.com>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH V6 05/10] audit: log creation and deletion of namespace instances
+Date: Tue, 19 May 2015 10:27:30 -0400
+Message-ID: <CAHC9VhTHj24cjFE9imjm5C8FLvykF70ZvziC7s7pvMmpZED-vA@mail.gmail.com>
+References: <cover.1429252659.git.rgb@redhat.com>
+	<20150515023221.GC965@madcap2.tricolour.ca>
+	<CALCETrWzM4+Vs8OVJWBcWJfbR_DRSb+e7SmUyy6CS4sHQaTkRw@mail.gmail.com>
+	<9125391.7ZiCneo6Xn@sifl>
+	<555711FA.50703@redhat.com>
+	<CAHC9VhRKSK9=9qPF3dgALS=x1g3LinNeQvuhNV5TvQ=D7Szuag@mail.gmail.com>
+	<87r3qgpol6.fsf@x220.int.ebiederm.org>
+	<CAHC9VhQs6pxFC3dvZic5XzuJr1xdJZyPjXdBoipwY3OOkng0ng@mail.gmail.com>
+	<20150519130911.GB20131@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALszF6BZKD-CPTZ6Hc85wv2Z3Y7JmUv-cMkBtbk2Ga6WeeWU=A@mail.gmail.com>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, =?UTF-8?B?QW5kcmVhcyBGw6RyYmVy?= <afaerber-l3A5Bk7waGM@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>, Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>, Andy Shevchenko <andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Chanwoo Choi <cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Vladimir Zapolskiy <vladimir_zapolskiy-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>Kumar Gala <g>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20150519130911.GB20131@madcap2.tricolour.ca>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, linux-audit@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, Network Development <netdev@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>
 List-Id: linux-api@vger.kernel.org
 
-On 05/19/2015 03:42 PM, Maxime Coquelin wrote:
-> 2015-05-19 12:55 GMT+02:00 Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>:
->> Please also make it possible to select this driver on other architec=
-tures
->> with COMPILE_TEST, so we get coverage from all the x86 test infrastr=
-ucture.
+On Tue, May 19, 2015 at 9:09 AM, Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 15/05/16, Paul Moore wrote:
+>> On Sat, May 16, 2015 at 10:46 AM, Eric W. Biederman wrote:
+>> > It sounds nice but containers are not just a per process construct.
+>> > Sometimes you might know anamespace but not which process instigated
+>> > action to happen on that namespace.
+>>
+>> From an auditing perspective I'm not sure we will ever hit those
+>> cases; did you have a particular example in mind?
 >
-> You proposal is to revert back to the original patch, except that
-> ARCH_STM32 should select CLKSRC_STM32, right?
->
-> Daniel, what do you think?
+> The example that immediately came to mind when I first read Eric's
+> comment was a packet coming in off a network in a particular network
+> namespace.  That could narrow it down to a subset of containers based on
+> which network namespace it inhabits, but since it isn't associated with
+> a particular task yet (other than a kernel thread) it will not be
+> possible to select the precise nsproxy, let alone the container.
 
-It is not exactly as the initial patch.
+Thanks, I was stuck thinking about syscall based auditing and forgot
+about the various LSM based audit records.  Of all people you would
+think I would remember per-packet audit records ;)
 
-I think Arnd is proposing:
+Anyway, in this case I think including the namespace ID is sufficient,
+largely because the container userspace doesn't have access to the
+packet at this point.  In order to actually receive the data the
+container's userspace will need to issue a syscall where we can
+include the container ID.  An overly zealous security officer who
+wants to trace all the kernel level audit events, like the one you
+describe, can match up the namespace to a container in post-processing
+if needed.
 
-config CLKSRC_STM32
-	bool "Clocksource for STM32 SoCs" if COMPILE_TEST
-	select CLKSRC_MMIO
-
-
-
-
-
---=20
-  <http://www.linaro.org/> Linaro.org =E2=94=82 Open source software fo=
-r ARM SoCs
-
-=46ollow Linaro:  <http://www.facebook.com/pages/Linaro> Facebook |
-<http://twitter.com/#!/linaroorg> Twitter |
-<http://www.linaro.org/linaro-blog/> Blog
+-- 
+paul moore
+www.paul-moore.com
