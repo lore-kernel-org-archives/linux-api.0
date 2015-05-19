@@ -1,36 +1,141 @@
 From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v2 1/2] capabilities: Ambient capabilities
-Date: Tue, 19 May 2015 10:20:02 -0700
-Message-ID: <CALCETrV1+3ZuL0MkqQaRoQ8r2V=EcQQEodOdCdP0p-BK1PixGg@mail.gmail.com>
-References: <cover.1431671529.git.luto@kernel.org> <cc4749638a21079cce12f9f30c806170558e56e5.1431671529.git.luto@kernel.org>
- <alpine.DEB.2.11.1505150916330.20103@gentwo.org> <CALCETrXKRt9MJQEZc=EEGMFB_vwKDQbZ7ReMNqE-5tRTxxJu2Q@mail.gmail.com>
- <alpine.DEB.2.11.1505191036490.28005@gentwo.org>
+Subject: Re: [PATCH man-pages v2] capabilities.7, prctl.2: Document ambient capabilities
+Date: Tue, 19 May 2015 10:21:44 -0700
+Message-ID: <CALCETrWn2zB2reYjXbA5iUJpwwZ-0S2tr3Q1nS2+Z-Rcir2udQ@mail.gmail.com>
+References: <f85ae308af4946436e82aaa9dd71bcd4b39bd196.1431672156.git.luto@kernel.org>
+ <555AECC3.4040408@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.11.1505191036490.28005@gentwo.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Lameter <cl@linux.com>
-Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Andrew Morton <akpm@linuxfoundation.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Serge Hallyn <serge.hallyn@canonical.com>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <555AECC3.4040408@gmail.com>
+Sender: linux-security-module-owner@vger.kernel.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, Andrew Morton <akpm@linuxfoundation.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-On May 19, 2015 8:37 AM, "Christoph Lameter" <cl@linux.com> wrote:
+On Tue, May 19, 2015 at 12:56 AM, Michael Kerrisk (man-pages)
+<mtk.manpages@gmail.com> wrote:
+> Hi Andy,
 >
-> On Mon, 18 May 2015, Andy Lutomirski wrote:
+> Thanks for this patch. There are some broken pieces though. Also,
+> I have some minor questions about the API design. See below.
 >
-> > > Could you provide an example to demonstrate how it is to be used?
-> > > Something similar to what I had in my patch?
-> > >
-> >
-> > Do you mean something like:
-> >
-> > setpriv --ambient-caps=+net_bind_service --inh-haps=+net_bind_service
-> > --euid=500 --ruid=500 bash
+> On 05/15/2015 08:43 AM, Andy Lutomirski wrote:
+>> Signed-off-by: Andy Lutomirski <luto@kernel.org>
+>> ---
+>>
+>> There was no v1.  I'm calling this v2 to keep it in sync with the kernel
+>> patch versioning.
+>>
+>>  man2/prctl.2        | 10 ++++++++++
+>>  man7/capabilities.7 | 32 ++++++++++++++++++++++++++------
+>>  2 files changed, 36 insertions(+), 6 deletions(-)
+>>
+>> diff --git a/man2/prctl.2 b/man2/prctl.2
+>> index b352f6283624..5861e3aefe9a 100644
+>> --- a/man2/prctl.2
+>> +++ b/man2/prctl.2
+>> @@ -949,6 +949,16 @@ had been called.
+>>  For further information on Intel MPX, see the kernel source file
+>>  .IR Documentation/x86/intel_mpx.txt .
+>>  .\"
+>> +.TP
+>> +.BR PR_CAP_AMBIENT " (since Linux 4.2)"
+>> +Reads or changes the ambient capability set.  If arg2 is PR_CAP_AMBIENT_RAISE,
+>> +then the capability specified in arg3 is added to the ambient set.  This will
+>> +fail, returning EPERM, if the capability is not already both permitted and
+>> +inheritable or if the SECBIT_NO_CAP_AMBIENT_RAISE securebit is set.  If arg2
+>> +is PR_CAP_AMBIENT_LOWER, then the capability specified in arg3 is removed
+>> +from the ambient set.  If arg2 is PR_CAP_AMBIENT_GET, then
+>> +.BR prctl (2)
+>> +will return 1 if the capability in arg3 is in the ambient set and 0 if not.
 >
-> Ok that means we also depend on a tool upgrade.
+> Some API design questions:
 >
+> 1. We already have prctl() operations that work on some capability sets:
+>    PR_CAPBSET_READ and PR_CAPBSET_DROP. These don't use arg3; the operation
+>    is directly encoded in the first argument of prctl(). Just to keep some
+>    consistency, why not do things the same way for these new operations?
 
-I think this is unavoidable, unless we want to change the semantics of
-inheritable caps, and that would open a giant can of worms.
+I'm torn.  On the one hand, consistency is nice.  On the other hand,
+prctl is a mess and trying to organize new additions seems like a good
+idea.
+
+>
+>    Also, you could opt for some consistency in the naming, so using "READ"
+>    rather than "GET", for example. On the other hand, both "READ" and "GET"
+>    are suboptimal names: this is really a test operation. So, maybe a
+>    clean break to a good name, PR_CAP_AMBIENT_IS_SET, is best?
+
+I like IS_SET.
+
+>
+>    Thus:
+>
+>      prctl(PR_CAP_AMBIENT_READ, cap, 0, 0, 0);  // or PR_CAP_AMBIENT_IS_SET?
+>      prctl(PR_CAP_AMBIENT_RAISE, cap, 0, 0, 0);
+>      prctl(PR_CAP_AMBIENT_LOWER, cap, 0, 0, 0);
+>
+> 2. In terms of the API design, would it be useful to have a prctl() operation
+>    that clears the entire ambient set?
+>
+>      prctl(PR_CAP_AMBIENT_ZERO, 0, 0, 0, 0);    // or PR_CAP_AMBIENT_EMPTY?
+
+Seems like a good idea.  How about _CLEAR?
+
+>
+>>  .SH RETURN VALUE
+>>  On success,
+>>  .BR PR_GET_DUMPABLE ,
+>> diff --git a/man7/capabilities.7 b/man7/capabilities.7
+>> index d75ec65de05b..dae62f0be3b7 100644
+>> --- a/man7/capabilities.7
+>> +++ b/man7/capabilities.7
+>> @@ -697,13 +697,26 @@ a program whose associated file capabilities grant that capability).
+>>  .IR Inheritable :
+>>  This is a set of capabilities preserved across an
+>>  .BR execve (2).
+>> -It provides a mechanism for a process to assign capabilities
+>> -to the permitted set of the new program during an
+>> -.BR execve (2).
+>> +Inheritable capabilities remain inheritable when executing any program,
+>> +and inheritable capabilities are added to the permitted set when executing
+>> +a program that has the corresponding bits set in the file inheritable set.
+>> +When executing programs without file capabilities, ambient capabilities
+>
+> That last line is incomplete. Something needs adding/removing.
+
+Whoops, will fix.
+
+>
+>>  .TP
+>>  .IR Effective :
+>>  This is the set of capabilities used by the kernel to
+>>  perform permission checks for the thread.
+>> +.TP
+>> +.IR Ambient " (since Linux 4.2) :"
+>
+> Minor knit: s/ :/:/ for next version.
+
+Will fix.
+
+>
+>> +This is a set of capabilities that are preserved across an
+>> +.BR execve (2)
+>> +of a program that does not have file capabilities.  The ambient capability
+>> +set obeys the invariant that no capability can ever be ambient if it is
+>> +not both permitted and inheritable.  Ambient capabilities are, with some
+>> +exceptions, preserved in the permitted set and added to the effective
+>> +set when
+>> +.BR execve (2)
+>> +is called.  The ambient capability set is modified using
+>> +.BR prctl (2).
+>
+> I think it would be helpful to add a couple of sentences here on why the
+> ambient set is useful (i.e., explain what deficiencies in the pre-existing
+> API are addressed by the addition of this set--a brief piece from your
+> 1/2 patch, for example).
+
+Will do.
 
 --Andy
