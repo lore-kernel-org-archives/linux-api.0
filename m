@@ -1,70 +1,62 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [klibc] kernel/libc uapi changes for y2038
-Date: Mon, 18 May 2015 22:35:40 +0200
-Message-ID: <3622889.d8DplXjbu8@wuerfel>
-References: <2664016.bYZKg6FQqR@wuerfel> <10173485.f8yUt0lQ60@wuerfel>
- <Pine.BSM.4.64L.1505181658330.32668@herc.mirbsd.org>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH v2] Documentation/arch: Add kernel feature descriptions
+ and arch support status under Documentation/features/
+Date: Tue, 19 May 2015 12:02:11 +1000
+Message-ID: <1432000931.8339.2.camel@ellerman.id.au>
+References: <20150513131835.GJ1517@pd.tnic>
+	 <20150513134842.GA1657@gmail.com> <20150513162757.GA21894@x>
+	 <20150513150523.ddd65d7cd51f820b78f0c8e3@linux-foundation.org>
+	 <20150514101518.GA27550@gmail.com> <20150514103544.GA7027@gmail.com>
+	 <20150514123835.1bf436bc35d711f8dbf9bc0f@linux-foundation.org>
+	 <1431644248.2981.1.camel@ellerman.id.au> <20150515074949.GB14993@gmail.com>
+	 <1431913033.13218.2.camel@ellerman.id.au>
+	 <20150518085423.GA24944@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <Pine.BSM.4.64L.1505181658330.32668@herc.mirbsd.org>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: y2038@lists.linaro.org
-Cc: klibc@zytor.com, libc-alpha@sourceware.org, linux-api@vger.kernel.org, musl@lists.openwall.com, linux-kernel@vger.kernel.org, Rich Felker <dalias@libc.org>, Thorsten Glaser <tg@mirbsd.de>, cferris@google.com, enh@google.com, "Joseph S. Myers" <joseph@codesourcery.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150518085423.GA24944-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-T24gTW9uZGF5IDE4IE1heSAyMDE1IDE3OjAzOjA4IFRob3JzdGVuIEdsYXNlciB3cm90ZToKCj4g
-Pk1JUFMgb24gdGhlIG90aGVyIGhhbmQgaXMgbm8gbW9yZSBicm9rZW4gdGhhbiBhbnkgb2YgdGhl
-IG90aGVyIDMyLWJpdAo+ID5BQklzLCBiZWNhdXNlIGl0IGRvZXMgbm90IHVzZSA2NC1iaXQgX19r
-ZXJuZWxfbG9uZ190IGluIGl0cyBuMzIgQUJJLgo+IAo+IEkgaGF2ZSBoZWFyZCBmcm9tIGEgTUlQ
-UyBwb3J0ZXIgdGhhdCBvbmUgb2YgdGhlIGZsYXZvdXJzIHN1ZmZlcnMKPiBmcm9tIHNpbWlsYXIg
-cHJvYmxlbXMgYXMgeDMyLCBqdXN0IG5vdCB0byB0aGF0IGV4dGVudC4gQnV0IEkKPiBkb27igJl0
-IHJlY2FsbCBteSBzb3VyY2XigKYKCk1JUFMgbjMyIGhhcyBhIGxvdCBvZiB0aGUgc2FtZSBpc3N1
-ZXMgYXMgeDg2IHgzMiwgYnV0IEknbSBwcmV0dHkKc3VyZSB0aGF0IHRoZSB0aW1lX3Qgb25lIGlz
-IG5vdCBhbW9uZyB0aGVtLgoKPiA+aW9jdGxzLiBNeSBwbGFuIGF0IHRoaXMgcG9pbnQgaXMgdG8g
-ZWxpbWluYXRlIGFsbCB1c2VzIG9mIHRpbWVfdCBpbgo+ID50aGUga2VybmVsIGFuZCByZXBsYWNl
-IHRoZW0gd2l0aCB0aW1lNjRfdCBvciBvdGhlciBzYWZlIHR5cGVzLgo+ID5UaGlzIHdheSwgd2Ug
-d2lsbCBldmVudHVhbGx5IGZpbmQgYWxsIGNvZGUgdGhhdCBwYXNzZXMgMzItYml0IHRpbWUgdHlw
-ZXMKPiA+dG8gdXNlciBzcGFjZSBhbmQgY2FuIGZpeCBpdC4gVGhpcyB3aWxsIHRha2UgY2FyZSBv
-ZiB0aGUgdGltZV90Cj4gPnJlbGF0ZWQgcHJvYmxlbXMgb24geDMyIGFzIHdlbGwuCj4gCj4gQWgs
-IGludGVyZXN0aW5nIGFwcHJvYWNoLiBBbmQgZXhpc3RpbmcgdXNlcnNwYWNlLCBhcyB3ZWxsIGFz
-IG5ldwo+IHVzZXJzcGFjZSB0aGF0IGRvZXMgbm90IGRlY2xhcmUgNjQtYml0IHRpbWVfdCByZWFk
-aW5lc3MsIGlzIHN0aWxsCj4gc2FmZSBvbiBjdXJyZW50bHktbm90LWJyb2tlbiBhcmNoaXRlY3R1
-cmVzPyBTbywgdGhlcmXigJlzIGVub3VnaCB0aW1lCj4gdG8gZml4IHRoaXMgYmVmb3JlIHRoZSB2
-YXJpb3VzIGxpYmNzIHR1cm4gdGhhdCBvbiAoYW5kIGl0IGhhZCBiZXR0ZXIKPiBiZSBmaXhlZCBi
-eSB0aGVuLCBiZWNhdXNlIGl0IGJlY29tZXMgQUJJIGJ5IHRoZW4pLiBOaWNlIGlkZWEuCgpDb3Jy
-ZWN0LiBBbm90aGVyIGFzcGVjdCBvZiB0aGUgYXBwcm9hY2ggSSdtIHRha2luZyBpcyB0aGF0IHRo
-ZQpzeXN0ZW0tY2FsbCBpbXBsZW1lbnRhdGlvbiBpcyBzaGFyZWQgYmV0d2VlbiB0aGUgbmF0aXZl
-IDY0LWJpdApjYXNlIGFuZCB0aGUgbmV3IDMyLWJpdCBjYXNlLCB3aGlsZSB0aGUgaGFuZGxpbmcg
-Zm9yIHRoZSBleGlzdGluZwpzeXNjYWxscyBvbiAzMi1iaXQgYXJjaGl0ZWN0dXJlcyBpcyBzaGFy
-ZWQgd2l0aCB0aGUgMzItYml0IGNvbXBhdApjb2RlIG9uIDY0LWJpdCBhcmNoaXRlY3R1cmVzLiBU
-aGlzIG1lYW5zIGlmIHdlIGludHJvZHVjZSBhIGJ1ZwppbiBlaXRoZXIgb2YgdGhlbSwgd2Ugd2ls
-bCBmaW5kIG91dCB2ZXJ5IHF1aWNrbHkgYW5kIGRvbid0IGhhdmUKdG8gd2FpdCB1bnRpbCBwZW9w
-bGUgc3RhcnQgdXNpbmcgNjQtYml0IHRpbWVfdCBvbiAzMi1iaXQgdXNlciBsYW5kLgoKPiBJIGFt
-IHdvbmRlcmluZyBhIGJpdCBhYm91dCB0aGUgaW9jdGxzIGJlaW5nIGhhcmQgdG8gZmluZC4gSSBo
-YXZlCj4gbm90IG11Y2ggZXhwZXJpZW5jZSB3aXRoIGtlcm5lbCBwcm9ncmFtbWluZywgYW5kIGV2
-ZW4gbGVzcyB3aXRoCj4gTGludXggdGhhbiB3aXRoIE1TLURPUyBhbmQgQlNELCBidXQgc2hvdWxk
-IG5vdCBlYWNoIGRyaXZlciBoYXZlCj4gYSBjZW50cmFsIGlvY3RsIGVudHJ5IHBvaW50LCBmcm9t
-IHdoaWNoIGl0IHNob3VsZCBjYXN0IHRoZSB1c2VyCj4gc3BhY2UgZGF0YSBpbnRvIGEgKHBvc3Np
-Ymx5IGxvY2FsbHkgZGVjbGFyZWQpIHN0cnVjdHVyZT8KClllcywgdGhhdCdzIGhvdyBpdCB3b3Jr
-cywgYnV0IHVuZm9ydHVuYXRlbHkgd2UgaGF2ZSBhIGZldyB0aG91c2FuZApkcml2ZXJzIHRoYXQg
-ZGVjbGFyZSBhbiBpb2N0bCBmdW5jdGlvbiwgYW5kIEkgaG9wZSB0byBkbyBzb21ldGhpbmcKYmV0
-dGVyIHRoYW4gYnJ1dGUtZm9yY2Ugc2VhcmNoIGFsbCBvZiB0aGVtLiBUaGUgb3RoZXIgcG9pbnQg
-aXMgdGhhdAp3ZSByZWFsbHkgbmVlZCB0byBmaXggYWxsIHkyMDM4LXJlbGF0ZWQgYnVnIGluIGRy
-aXZlcnMsIG5vdCBqdXN0CnRoZSBvbmVzIGluIGlvY3RsLiBUaGlzIGluY2x1ZGVzIHRoaW5ncyBs
-aWtlIGZpbGUgc3lzdGVtcyBzdG9yaW5nCnRpbWUgaW4gMzItYml0IHVuaXRzIG9uIGRpc2ssIG9y
-IGRyaXZlcnMgdHJ5aW5nIHRvIG1lYXN1cmUgaG93IG11Y2gKdGltZSBoYXMgZWxhcHNlZCB3aXRo
-b3V0IGNvbW11bmljYXRpbmcgdGhhdCB2YWx1ZSBlbHNld2hlcmUsIGJ1dApmYWlsaW5nIHdoZW4g
-dGhlIHRpbWVfdCBudW1iZXIgZ29lcyBuZWdhdGl2ZS4KCglBcm5kCl9fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBs
-aXN0cy5saW5hcm8ub3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZv
-L3kyMDM4Cg==
+On Mon, 2015-05-18 at 10:54 +0200, Ingo Molnar wrote:
+> * Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org> wrote:
+> 
+> > > > Yes it is. I have my own version I've cobbled together for 
+> > > > powerpc, but this is much better.
+> > > 
+> > > Please double check the PowerPC support matrix for correctness (if 
+> > > you haven't yet):
+> > 
+> > It looks good except for:
+> > 
+> > >        rwsem-optimized:  |  ok  |                              Optimized asm/rwsem.h #  arch provides optimized rwsem APIs
+> > 
+> > I don't see an rwsem.h in powerpc anywhere?
+> 
+> Indeed, that slipped through. I fixed it to:
+> 
+>     triton:~/tip> cat Documentation/features/locking/rwsem-optimized/arch-support.txt 
+>     #
+>     # Feature name:          rwsem-optimized
+>     #         Kconfig:       Optimized asm/rwsem.h
+>     #         description:   arch provides optimized rwsem APIs
+>     #
+>         |     powerpc: | TODO |
+> 
+>     triton:~/tip> cat Documentation/features/time/irq-time-acct/arch-support.txt
+>     #
+>     # Feature name:          irq-time-acct
+>     #         Kconfig:       HAVE_IRQ_TIME_ACCOUNTING
+>     #         description:   arch supports precise IRQ time accounting
+>     #
+>         |     powerpc: |  ..  |
+> 
+> i.e. it's not marked as TODO, but not as supported either which would 
+> be misleading.
+
+Great thanks.
+
+cheers
