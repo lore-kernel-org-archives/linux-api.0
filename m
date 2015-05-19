@@ -1,109 +1,47 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC PATCH 00/11] drm/i915: Expose OA metrics via
-	perf PMU
-Date: Tue, 19 May 2015 16:53:37 +0200
-Message-ID: <20150519145337.GD3644@twins.programming.kicks-ass.net>
-References: <1431008154-6833-1-git-send-email-robert@sixbynine.org>
- <20150508162452.GR27504@twins.programming.kicks-ass.net>
- <CAMou1-1Q1_kKGrRPz36Fox=gxhGF6v+DiR5HZ6TOyQyxtMsysA@mail.gmail.com>
+From: Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v8 09/16] clockevents/drivers: Add STM32 Timer driver
+Date: Tue, 19 May 2015 17:03:49 +0200
+Message-ID: <555B50D5.4010100@linaro.org>
+References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com>	<555B098A.8030202@linaro.org>	<CALszF6AJ3Zf598wYeUx=iNWHHKT24xUyfagB=+4GocwZ-Fd-0g@mail.gmail.com>	<6177628.0ZDPLeVyah@wuerfel>	<CALszF6BZKD-CPTZ6Hc85wv2Z3Y7JmUv-cMkBtbk2Ga6WeeWU=A@mail.gmail.com>	<555B3F80.8070605@linaro.org> <CALszF6A-De6dvcRNoa9ruL+y6Wt_rc7bi-O-VxHWkFF9NSt5_g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <intel-gfx-bounces@lists.freedesktop.org>
-Content-Disposition: inline
-In-Reply-To: <CAMou1-1Q1_kKGrRPz36Fox=gxhGF6v+DiR5HZ6TOyQyxtMsysA@mail.gmail.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/intel-gfx>
-List-Post: <mailto:intel-gfx@lists.freedesktop.org>
-List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: intel-gfx-bounces@lists.freedesktop.org
-Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
-To: Robert Bragg <robert@sixbynine.org>
-Cc: dri-devel@lists.freedesktop.org, David Airlie <airlied@linux.ie>, linux-api@vger.kernel.org, intel-gfx@lists.freedesktop.org, linux-kernel@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Daniel Vetter <daniel.vetter@intel.com>
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALszF6A-De6dvcRNoa9ruL+y6Wt_rc7bi-O-VxHWkFF9NSt5_g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, =?UTF-8?B?QW5kcmVhcyBGw6RyYmVy?= <afaerber-l3A5Bk7waGM@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Paul Bolle <pebolle-IWqWACnzNjzz+pZb47iToQ@public.gmane.org>, Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>, Andy Shevchenko <andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Chanwoo Choi <cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Vladimir Zapolskiy <vladimir_zapolskiy-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>Kumar Gala <g>
 List-Id: linux-api@vger.kernel.org
 
-T24gRnJpLCBNYXkgMTUsIDIwMTUgYXQgMDI6MDc6MjlBTSArMDEwMCwgUm9iZXJ0IEJyYWdnIHdy
-b3RlOgo+IE9uIEZyaSwgTWF5IDgsIDIwMTUgYXQgNToyNCBQTSwgUGV0ZXIgWmlqbHN0cmEgPHBl
-dGVyekBpbmZyYWRlYWQub3JnPiB3cm90ZToKPiA+IE9uIFRodSwgTWF5IDA3LCAyMDE1IGF0IDAz
-OjE1OjQzUE0gKzAxMDAsIFJvYmVydCBCcmFnZyB3cm90ZToKPiA+Cj4gPj4gSSd2ZSBjaGFuZ2Vk
-IHRoZSB1YXBpIGZvciBjb25maWd1cmluZyB0aGUgaTkxNV9vYSBzcGVjaWZpYyBhdHRyaWJ1dGVz
-Cj4gPj4gd2hlbiBjYWxsaW5nIHBlcmZfZXZlbnRfb3BlbigyKSB3aGVyZWJ5IGluc3RlYWQgb2Yg
-Y3JhbW1pbmcgbG90cyBvZgo+ID4+IGJpdGZpZWxkcyBpbnRvIHRoZSBwZXJmX2V2ZW50X2F0dHIg
-Y29uZmlnIG1lbWJlcnMsIEknbSBub3cKPiA+PiBkYWlzeS1jaGFpbmluZyBhIGRybV9pOTE1X29h
-X2V2ZW50X2F0dHJfdCBzdHJ1Y3R1cmUgb2ZmIG9mIGEgc2luZ2xlCj4gPj4gY29uZmlnIG1lbWJl
-ciB0aGF0J3MgZXh0ZW5zaWJsZSBhbmQgdmFsaWRhdGVkIGluIHRoZSBzYW1lIHdheSBhcyB0aGUK
-PiA+PiBwZXJmX2V2ZW50X2F0dHIgc3RydWN0LiBJJ3ZlIGZvdW5kIHRoaXMgbXVjaCBuaWNlciB0
-byB3b3JrIHdpdGggd2hpbGUKPiA+PiBiZWluZyBuZWF0bHkgZXh0ZW5zaWJsZSB0b28uCj4gPgo+
-ID4gVGhpcyB3b3JyaWVzIG1lIGEgYml0Li4gaXMgdGhlcmUgbW9yZSBiYWNrZ3JvdW5kIGZvciB0
-aGlzPwo+IAo+IFdvdWxkIGl0IG1heWJlIGJlIGhlbHBmdWwgdG8gc2VlIHRoZSBiZWZvcmUgYW5k
-IGFmdGVyPyBJIGhhZCBrZXB0IHRoaXMKPiB1YXBpIGNoYW5nZSBpbiBhIHNlcGFyYXRlIHBhdGNo
-IGZvciBhIHdoaWxlIGxvY2FsbHkgYnV0IGluIHRoZSBlbmQKPiBkZWNpZGVkIHRvIHNxdWFzaCBp
-dCBiZWZvcmUgc2VuZGluZyBvdXQgbXkgdXBkYXRlZCBzZXJpZXMuCj4gCj4gQWx0aG91Z2ggSSBk
-aWQgZmluZCBpdCBhIGJpdCBhd2t3YXJkIHdpdGggdGhlIGJpdGZpZWxkcywgSSB3YXMgbWFpbmx5
-Cj4gY29uY2VybmVkIGFib3V0IHRoZSBleHRlbnNpYmlsaXR5IG9mIHBhY2tpbmcgbG9naWNhbGx5
-IHNlcGFyYXRlCj4gYXR0cmlidXRlcyBpbnRvIHRoZSBjb25maWcgbWVtYmVycyBhbmQgaGFkIGhl
-YXJkIHNpbWlsYXIgY29uY2VybnMgZnJvbQo+IGEgZmV3IG90aGVycyB3aG8gaGFkIGJlZW4gZXhw
-ZXJpbWVudGluZyB3aXRoIG15IHBhdGNoZXMgdG9vLgo+IAo+IEEgZmV3IHNpbXBsZSBhdHRyaWJ1
-dGVzIEkgY2FuIHRoaW5rIG9mIGEudC5tIHRoYXQgd2UgbWlnaHQgd2FudCB0byBhZGQKPiBpbiB0
-aGUgZnV0dXJlIGFyZToKPiAtIGNvbnRyb2wgb2YgdGhlIE9BQlVGRkVSIHNpemUKPiAtIGEgd2F5
-IHRvIGFzayB0aGUga2VybmVsIHRvIGNvbGxlY3QgcmVwb3J0cyBhdCB0aGUgYmVnaW5uaW5nIGFu
-ZCBlbmQKPiBvZiBiYXRjaCBidWZmZXJzLCBpbiBhZGRpdGlvbiB0byBwZXJpb2RpYyByZXBvcnRz
-Cj4gLSBhbHRlcm5hdGl2ZSB3YXlzIHRvIHVuaXF1ZWx5IGlkZW50aWZ5IGEgY29udGV4dCB0byBz
-dXBwb3J0IHRvb2xzCj4gcHJvZmlsaW5nIGEgc2luZ2xlIGNvbnRleHQgbm90IG5lY2Vzc2FyaWx5
-IG93bmVkIGJ5IHRoZSBjdXJyZW50Cj4gcHJvY2Vzcwo+IAo+IEl0IGNvdWxkIGFsc28gYmUgaW50
-ZXJlc3RpbmcgdG8gZXhwb3NlIHNvbWUgY291bnRlciBjb25maWd1cmF0aW9uCj4gdGhyb3VnaCB0
-aGVzZSBhdHRyaWJ1dGVzIHRvby4gRS5nLiBvbiBCcm9hZHdlbGwrIHdlIGhhdmUgMTQgJ0ZsZXhp
-YmxlCj4gRVUnIGNvdW50ZXJzIGluY2x1ZGVkIGluIHRoZSBPQSB1bml0IHJlcG9ydHMsIGVhY2gg
-d2l0aCBhIDE2Yml0Cj4gY29uZmlndXJhdGlvbi4KPiAKPiBJbiBhIG1vcmUgZXh0cmVtZSBjYXNl
-IGl0IG1pZ2h0IGFsc28gYmUgdXNlZnVsIHRvIGFsbG93IHVzZXJzcGFjZSB0bwo+IHNwZWNpZnkg
-YSBjb21wbGV0ZSBjb3VudGVyIGNvbmZpZywgd2hpY2ggKGRlcGVuZGluZyBvbiB0aGUKPiBjb25m
-aWd1cmF0aW9uKSBjb3VsZCBiZSBvdmVyIDEwMCAzMmJpdCB2YWx1ZXMgdG8gc2VsZWN0IHRoZSBj
-b3VudGVyCj4gc2lnbmFscyArIGNvbmZpZ3VyZSB0aGUgY29ycmVzcG9uZGluZyBjb21iaW5pbmcg
-bG9naWMuCj4gCj4gU2luY2UgdGhpcyBwbXUgaXMgaW4gYSBkZXZpY2UgZHJpdmVyIGl0IGFsc28g
-c2VlbWVkIHJlYXNvbmFibHkKPiBhcHByb3ByaWF0ZSB0byBkZS1jb3VwbGUgaXQgc2xpZ2h0bHkg
-ZnJvbSB0aGUgY29yZSBwZXJmX2V2ZW50X2F0dHIKPiBzdHJ1Y3R1cmUgYnkgYWxsb3dpbmcgZHJp
-dmVyIGV4dGVuc2libGUgYXR0cmlidXRlcy4KPiAKPiBJIHdvbmRlciBpZiBpdCBtaWdodCBiZSBs
-ZXNzIHdvcnJpc29tZSBpZiB0aGUgaTkxNV9vYV9jb3B5X2F0dHIoKSBjb2RlCj4gd2VyZSBpbnN0
-ZWFkIGEgcmUtdXNhYmxlIHV0aWxpdHkgcGVyaGFwcyBtYWludGFpbmVkIGluIGV2ZW50cy9jb3Jl
-LmMsCj4gc28gaWYgb3RoZXIgcG11IGRyaXZlcnMgd2VyZSB0byBmb2xsb3cgc3VpdGUgdGhlcmUg
-d291bGQgYmUgbGVzcyByaXNrCj4gb2YgYSBtaXN0YWtlIGJlaW5nIG1hZGUgaGVyZT8KCgpTbyBJ
-IGhhZCBhIHBlZWsgYXQ6CgogIGh0dHBzOi8vMDEub3JnL3NpdGVzL2RlZmF1bHQvZmlsZXMvZG9j
-dW1lbnRhdGlvbi9vYnNlcnZhYmlsaXR5X3BlcmZvcm1hbmNlX2NvdW50ZXJzX2hhc3dlbGwucGRm
-CgpJbiBhbiBhdHRlbXB0IHRvIGluZm9ybSBteXNlbGYgb2YgaG93IHRoZSBoYXJkd2FyZSB3b3Jr
-ZWQuIEJ1dCB0aGUKZG9jdW1lbnQgaXMgcmF0aGVyIHNwYXJzZSAoYW5kIGRvZXMgbm90IGluY2x1
-ZGUgYnJvYWR3ZWxsKS4KClNvIGZyb20gd2hhdCBJIGNhbiBnYXRoZXIgdGhlcmUncyB0d28gd2F5
-cyB0byBvYnNlcnZlIHRoZSBjb3VudGVycywKdGhyb3VnaCBNTUlPIG9yIHRyb3VnaCB0aGUgcmlu
-Zy1idWZmZXIsIHdoaWNoIGluIHR1cm4gc2VlbXMgdHJpZ2dlcmVkIGJ5CmEgTUlfUkVQT1JUX1BF
-UkZfQ09VTlQgY29tbWFuZC4KClsgTm93IHRoZSBkb2N1bWVudCB0YWxrcyBhYm91dCBzaG9ydGNv
-bWluZ3Mgb2YgdGhpcyBzY2hlbWUsIHdoZXJlIHRoZQpNSV9SRVBPUlRfUEVSRl9DT1VOVCBjb21t
-YW5kIGNhbiBvbmx5IGJlIHBsYWNlZCBldmVyeSBvdGhlciBjb21tYW5kLCBidXQKYSBzaW5nbGUg
-Y29tbWFuZCBjYW4gY29udGFpbiBzbyBtdWNoIGNvbXB1dGF0aW9uIHRoYXQgdGhpcyBpcyBub3Qg
-ZmluZQpncmFpbmVkIGVub3VnaCAtLSBsZWFkaW5nIHRvIHRoZSBzdWdnZXN0aW9uIG9mIGEgdGlt
-ZXIvY3ljbGUgYmFzZWQKcmVwb3J0aW5nLCBidXQgdGhhdCBpcyBub3QgYWN0dWFsbHkgbWVudGlv
-bmVkIGFmYWljdCBdCgpOb3cgdGhlIE1JX1JFUE9SVF9QRVJGX0NPVU5UIGNhbiBzZWxlY3QgYSB2
-ZWN0b3IgKENvdW50ZXIgU2VsZWN0KSBvZgp3aGljaCBldmVudHMgaXQgd2lsbCB3cml0ZSBvdXQu
-CgpUaGlzIGNvdmVycyB0aGUgcmVndWxhciAnQScgY291bnRlcnMuIElzIHRoaXMgY29ycmVjdD8K
-ClRoZW4gdGhlcmUgYXJlIHRoZSAnQicgY291bnRlcnMsIHdoaWNoIGFwcGVhciB0byBiZSBwcm9n
-cmFtbWFibGUgdGhyb3VnaAp0aGUgQ0VDIE1NSU8gcmVnaXN0ZXJzLgoKVGhlc2UgQiBldmVudHMg
-Y2FuIGFsc28gYmUgcGFydCBvZiB0aGUgTUlfUkVQT1JUX1BFUkZfQ09VTlQgdmVjdG9yLgoKUmln
-aHQ/CgoKU28gZm9yIG1lIHRoZSAnbmF0dXJhbCcgd2F5IHRvIHJlcHJlc2VudCB0aGlzIGluIHBl
-cmYgd291bGQgYmUgdGhyb3VnaApldmVudCBncm91cHMuIENyZWF0ZSBhIHBlcmYgZXZlbnQgZm9y
-IGV2ZXJ5IHNpbmdsZSBldmVudCAtLSB5ZXMgdGhpcyBpcwo1MyBldmVudHMuCgpVc2UgdGhlIE1N
-SU8gcmVhZHMgZm9yIHRoZSByZWd1bGFyIHJlYWQoKSBpbnRlcmZhY2UsIGFuZCB1c2UgYSBocnRp
-bWVyCnBsYWNpbmcgTUlfUkVQT1JUX1BFUkZfQ09VTlQgY29tbWFuZHMsIHdpdGggYSBjb3VudGVy
-IHNlbGVjdCBtYXNrCmNvdmVyaW5nIHRoZSBhbGwgZXZlbnRzIGluIHRoZSBjdXJyZW50IGdyb3Vw
-LCBmb3Igc2FtcGxpbmcuCgpUaGVuIG9idGFpbiB0aGUgdmVjdG9yIHZhbHVlcyB1c2luZyBQRVJG
-X1NBTVBMRV9SRUFEIGFuZApQRVJGX0ZPUk1BVF9SRUFEIC0tIGFuZCB1c2UgdGhlIHJlYWQgdHhu
-IHN1cHBvcnQgdG8gY29uc3VtZSB0aGUKcmluZy1idWZmZXIgdmVjdG9ycyBpbnN0ZWFkIG9mIHRo
-ZSBNTUlPIHJlZ2lzdGVycy4KCllvdSBjYW4gdXNlIHRoZSBwZXJmX2V2ZW50X2F0dHI6OmNvbmZp
-ZyB0byBzZWxlY3QgdGhlIGNvdW50ZXIgKEEwLUE0NCwKQjAtQjcpIGFuZCB1c2UgcGVyZl9ldmVu
-dF9hdHRyOjpjb25maWcxIChsb3cgYW5kIGhpZ2ggZHdvcmQpIGZvciB0aGUKY29ycmVzcG9uZGlu
-ZyBDRUMgcmVnaXN0ZXJzLgoKClRoaXMgZG9lcyBub3QgcmVxdWlyZSByYW5kb20gcGVyIGRyaXZl
-ciBBQkkgZXh0ZW50aW9ucyBmb3IKcGVyZl9ldmVudF9hdHRyLCBub3IgeW91ciBjdXN0b20gb3V0
-cHV0IGZvcm1hdC4KCkFtIEkgbWlzc2luZyBzb21ldGhpbmcgb2J2aW91cyBoZXJlPwpfX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpJbnRlbC1nZnggbWFpbGlu
-ZyBsaXN0CkludGVsLWdmeEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVk
-ZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2ludGVsLWdmeAo=
+On 05/19/2015 04:41 PM, Maxime Coquelin wrote:
+> 2015-05-19 15:49 GMT+02:00 Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>=
+:
+>>
+>>
+>> It is not exactly as the initial patch.
+>>
+>> I think Arnd is proposing:
+>>
+>> config CLKSRC_STM32
+>>          bool "Clocksource for STM32 SoCs" if COMPILE_TEST
+>>          select CLKSRC_MMIO
+>>
+>
+> Isn't "depends on OF" missing for COMPILE_TEST case?
+
+Hmm, yes. Probably.
+
+> Other than that, I'm fine with the proposal.
+> Daniel, is it the case for you too?
+
+Yep.
+
+
+--=20
+  <http://www.linaro.org/> Linaro.org =E2=94=82 Open source software fo=
+r ARM SoCs
+
+=46ollow Linaro:  <http://www.facebook.com/pages/Linaro> Facebook |
+<http://twitter.com/#!/linaroorg> Twitter |
+<http://www.linaro.org/linaro-blog/> Blog
