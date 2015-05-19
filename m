@@ -1,110 +1,37 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH man-pages v2] capabilities.7, prctl.2: Document ambient
- capabilities
-Date: Tue, 19 May 2015 21:13:49 +0200
-Message-ID: <555B8B6D.4010608@gmail.com>
-References: <f85ae308af4946436e82aaa9dd71bcd4b39bd196.1431672156.git.luto@kernel.org> <555AECC3.4040408@gmail.com> <CALCETrWn2zB2reYjXbA5iUJpwwZ-0S2tr3Q1nS2+Z-Rcir2udQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <CALCETrWn2zB2reYjXbA5iUJpwwZ-0S2tr3Q1nS2+Z-Rcir2udQ@mail.gmail.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: mtk.manpages@gmail.com, Andy Lutomirski <luto@kernel.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, Andrew Morton <akpm@linuxfoundation.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
+From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 1/2] capabilities: Ambient capabilities
+Date: Tue, 19 May 2015 15:03:23 -0500 (CDT)
+Message-ID: <alpine.DEB.2.11.1505191502570.31044@gentwo.org>
+References: <cover.1431671529.git.luto@kernel.org> <cc4749638a21079cce12f9f30c806170558e56e5.1431671529.git.luto@kernel.org> <alpine.DEB.2.11.1505150916330.20103@gentwo.org> <CALCETrXKRt9MJQEZc=EEGMFB_vwKDQbZ7ReMNqE-5tRTxxJu2Q@mail.gmail.com>
+ <alpine.DEB.2.11.1505191036490.28005@gentwo.org> <CALCETrV1+3ZuL0MkqQaRoQ8r2V=EcQQEodOdCdP0p-BK1PixGg@mail.gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrV1+3ZuL0MkqQaRoQ8r2V=EcQQEodOdCdP0p-BK1PixGg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Andy,
+On Tue, 19 May 2015, Andy Lutomirski wrote:
 
-On 05/19/2015 07:21 PM, Andy Lutomirski wrote:
-> On Tue, May 19, 2015 at 12:56 AM, Michael Kerrisk (man-pages)
-> <mtk.manpages@gmail.com> wrote:
->> Hi Andy,
->>
->> Thanks for this patch. There are some broken pieces though. Also,
->> I have some minor questions about the API design. See below.
->>
->> On 05/15/2015 08:43 AM, Andy Lutomirski wrote:
->>> Signed-off-by: Andy Lutomirski <luto@kernel.org>
->>> ---
->>>
->>> There was no v1.  I'm calling this v2 to keep it in sync with the kernel
->>> patch versioning.
->>>
->>>  man2/prctl.2        | 10 ++++++++++
->>>  man7/capabilities.7 | 32 ++++++++++++++++++++++++++------
->>>  2 files changed, 36 insertions(+), 6 deletions(-)
->>>
->>> diff --git a/man2/prctl.2 b/man2/prctl.2
->>> index b352f6283624..5861e3aefe9a 100644
->>> --- a/man2/prctl.2
->>> +++ b/man2/prctl.2
->>> @@ -949,6 +949,16 @@ had been called.
->>>  For further information on Intel MPX, see the kernel source file
->>>  .IR Documentation/x86/intel_mpx.txt .
->>>  .\"
->>> +.TP
->>> +.BR PR_CAP_AMBIENT " (since Linux 4.2)"
->>> +Reads or changes the ambient capability set.  If arg2 is PR_CAP_AMBIENT_RAISE,
->>> +then the capability specified in arg3 is added to the ambient set.  This will
->>> +fail, returning EPERM, if the capability is not already both permitted and
->>> +inheritable or if the SECBIT_NO_CAP_AMBIENT_RAISE securebit is set.  If arg2
->>> +is PR_CAP_AMBIENT_LOWER, then the capability specified in arg3 is removed
->>> +from the ambient set.  If arg2 is PR_CAP_AMBIENT_GET, then
->>> +.BR prctl (2)
->>> +will return 1 if the capability in arg3 is in the ambient set and 0 if not.
->>
->> Some API design questions:
->>
->> 1. We already have prctl() operations that work on some capability sets:
->>    PR_CAPBSET_READ and PR_CAPBSET_DROP. These don't use arg3; the operation
->>    is directly encoded in the first argument of prctl(). Just to keep some
->>    consistency, why not do things the same way for these new operations?
-> 
-> I'm torn.  On the one hand, consistency is nice.  On the other hand,
-> prctl is a mess 
+> On May 19, 2015 8:37 AM, "Christoph Lameter" <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org> wrote:
+> >
+> > On Mon, 18 May 2015, Andy Lutomirski wrote:
+> >
+> > > > Could you provide an example to demonstrate how it is to be used?
+> > > > Something similar to what I had in my patch?
+> > > >
+> > >
+> > > Do you mean something like:
+> > >
+> > > setpriv --ambient-caps=+net_bind_service --inh-haps=+net_bind_service
+> > > --euid=500 --ruid=500 bash
+> >
+> > Ok that means we also depend on a tool upgrade.
+> >
+>
+> I think this is unavoidable, unless we want to change the semantics of
+> inheritable caps, and that would open a giant can of worms.
 
-Agreed.
-
-> and trying to organize new additions seems like a good
-> idea.
-
-Sure, but what is your organizing principle here? (I don't feel strongly
-about it, but it's not clear to me what trumps the (mild) degree of 
-consistency that I suggest.)
-
-
->>    Also, you could opt for some consistency in the naming, so using "READ"
->>    rather than "GET", for example. On the other hand, both "READ" and "GET"
->>    are suboptimal names: this is really a test operation. So, maybe a
->>    clean break to a good name, PR_CAP_AMBIENT_IS_SET, is best?
-> 
-> I like IS_SET.
-
-Okay.
-
->>    Thus:
->>
->>      prctl(PR_CAP_AMBIENT_READ, cap, 0, 0, 0);  // or PR_CAP_AMBIENT_IS_SET?
->>      prctl(PR_CAP_AMBIENT_RAISE, cap, 0, 0, 0);
->>      prctl(PR_CAP_AMBIENT_LOWER, cap, 0, 0, 0);
->>
->> 2. In terms of the API design, would it be useful to have a prctl() operation
->>    that clears the entire ambient set?
->>
->>      prctl(PR_CAP_AMBIENT_ZERO, 0, 0, 0, 0);    // or PR_CAP_AMBIENT_EMPTY?
-> 
-> Seems like a good idea.  How about _CLEAR?
-
-Also good.
-
-[...]
-
-Thanks,
-
-Michael
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Ok then include a patch and references to that material. Or did I just not
+see that?
