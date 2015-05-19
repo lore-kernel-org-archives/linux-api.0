@@ -1,55 +1,38 @@
-From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH V6 05/10] audit: log creation and deletion of namespace instances
-Date: Tue, 19 May 2015 10:27:30 -0400
-Message-ID: <CAHC9VhTHj24cjFE9imjm5C8FLvykF70ZvziC7s7pvMmpZED-vA@mail.gmail.com>
-References: <cover.1429252659.git.rgb@redhat.com>
-	<20150515023221.GC965@madcap2.tricolour.ca>
-	<CALCETrWzM4+Vs8OVJWBcWJfbR_DRSb+e7SmUyy6CS4sHQaTkRw@mail.gmail.com>
-	<9125391.7ZiCneo6Xn@sifl>
-	<555711FA.50703@redhat.com>
-	<CAHC9VhRKSK9=9qPF3dgALS=x1g3LinNeQvuhNV5TvQ=D7Szuag@mail.gmail.com>
-	<87r3qgpol6.fsf@x220.int.ebiederm.org>
-	<CAHC9VhQs6pxFC3dvZic5XzuJr1xdJZyPjXdBoipwY3OOkng0ng@mail.gmail.com>
-	<20150519130911.GB20131@madcap2.tricolour.ca>
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Subject: Re: [PATCH v8 09/16] clockevents/drivers: Add STM32 Timer driver
+Date: Tue, 19 May 2015 16:41:58 +0200
+Message-ID: <CALszF6A-De6dvcRNoa9ruL+y6Wt_rc7bi-O-VxHWkFF9NSt5_g@mail.gmail.com>
+References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com>
+	<555B098A.8030202@linaro.org>
+	<CALszF6AJ3Zf598wYeUx=iNWHHKT24xUyfagB=+4GocwZ-Fd-0g@mail.gmail.com>
+	<6177628.0ZDPLeVyah@wuerfel>
+	<CALszF6BZKD-CPTZ6Hc85wv2Z3Y7JmUv-cMkBtbk2Ga6WeeWU=A@mail.gmail.com>
+	<555B3F80.8070605@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20150519130911.GB20131@madcap2.tricolour.ca>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, linux-audit@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, Network Development <netdev@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>
+Return-path: <linux-gpio-owner@vger.kernel.org>
+In-Reply-To: <555B3F80.8070605@linaro.org>
+Sender: linux-gpio-owner@vger.kernel.org
+To: Daniel Lezcano <daniel.lezcano@linaro.org>, Arnd Bergmann <arnd@arndb.de>
+Cc: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, Linus Walleij <linus.walleij@linaro.org>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Peter Hurley <peter@hurleysoftware.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Chanwoo Choi <cw00.choi@samsung.com>, Russell King <linux@arm.linux.org.uk>, Joe Perches <joe@perches.com>, Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>, Lee Jones <lee.jones@linaro.org>, Daniel Thompson <daniel.thompson@linaro.org>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <gal>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 19, 2015 at 9:09 AM, Richard Guy Briggs <rgb@redhat.com> wrote:
-> On 15/05/16, Paul Moore wrote:
->> On Sat, May 16, 2015 at 10:46 AM, Eric W. Biederman wrote:
->> > It sounds nice but containers are not just a per process construct.
->> > Sometimes you might know anamespace but not which process instigated
->> > action to happen on that namespace.
->>
->> From an auditing perspective I'm not sure we will ever hit those
->> cases; did you have a particular example in mind?
+2015-05-19 15:49 GMT+02:00 Daniel Lezcano <daniel.lezcano@linaro.org>:
 >
-> The example that immediately came to mind when I first read Eric's
-> comment was a packet coming in off a network in a particular network
-> namespace.  That could narrow it down to a subset of containers based on
-> which network namespace it inhabits, but since it isn't associated with
-> a particular task yet (other than a kernel thread) it will not be
-> possible to select the precise nsproxy, let alone the container.
+>
+> It is not exactly as the initial patch.
+>
+> I think Arnd is proposing:
+>
+> config CLKSRC_STM32
+>         bool "Clocksource for STM32 SoCs" if COMPILE_TEST
+>         select CLKSRC_MMIO
+>
 
-Thanks, I was stuck thinking about syscall based auditing and forgot
-about the various LSM based audit records.  Of all people you would
-think I would remember per-packet audit records ;)
+Isn't "depends on OF" missing for COMPILE_TEST case?
 
-Anyway, in this case I think including the namespace ID is sufficient,
-largely because the container userspace doesn't have access to the
-packet at this point.  In order to actually receive the data the
-container's userspace will need to issue a syscall where we can
-include the container ID.  An overly zealous security officer who
-wants to trace all the kernel level audit events, like the one you
-describe, can match up the namespace to a container in post-processing
-if needed.
+Other than that, I'm fine with the proposal.
+Daniel, is it the case for you too?
 
--- 
-paul moore
-www.paul-moore.com
+Regards,
+Maxime
