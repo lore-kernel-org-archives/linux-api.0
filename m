@@ -1,62 +1,170 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [PATCH v2] Documentation/arch: Add kernel feature descriptions
- and arch support status under Documentation/features/
-Date: Tue, 19 May 2015 12:02:11 +1000
-Message-ID: <1432000931.8339.2.camel@ellerman.id.au>
-References: <20150513131835.GJ1517@pd.tnic>
-	 <20150513134842.GA1657@gmail.com> <20150513162757.GA21894@x>
-	 <20150513150523.ddd65d7cd51f820b78f0c8e3@linux-foundation.org>
-	 <20150514101518.GA27550@gmail.com> <20150514103544.GA7027@gmail.com>
-	 <20150514123835.1bf436bc35d711f8dbf9bc0f@linux-foundation.org>
-	 <1431644248.2981.1.camel@ellerman.id.au> <20150515074949.GB14993@gmail.com>
-	 <1431913033.13218.2.camel@ellerman.id.au>
-	 <20150518085423.GA24944@gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH man-pages v2] capabilities.7, prctl.2: Document ambient
+ capabilities
+Date: Tue, 19 May 2015 09:56:51 +0200
+Message-ID: <555AECC3.4040408@gmail.com>
+References: <f85ae308af4946436e82aaa9dd71bcd4b39bd196.1431672156.git.luto@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150518085423.GA24944-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <f85ae308af4946436e82aaa9dd71bcd4b39bd196.1431672156.git.luto@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@kernel.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, Andrew Morton <akpm@linuxfoundation.org>
+Cc: mtk.manpages@gmail.com, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2015-05-18 at 10:54 +0200, Ingo Molnar wrote:
-> * Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org> wrote:
-> 
-> > > > Yes it is. I have my own version I've cobbled together for 
-> > > > powerpc, but this is much better.
-> > > 
-> > > Please double check the PowerPC support matrix for correctness (if 
-> > > you haven't yet):
-> > 
-> > It looks good except for:
-> > 
-> > >        rwsem-optimized:  |  ok  |                              Optimized asm/rwsem.h #  arch provides optimized rwsem APIs
-> > 
-> > I don't see an rwsem.h in powerpc anywhere?
-> 
-> Indeed, that slipped through. I fixed it to:
-> 
->     triton:~/tip> cat Documentation/features/locking/rwsem-optimized/arch-support.txt 
->     #
->     # Feature name:          rwsem-optimized
->     #         Kconfig:       Optimized asm/rwsem.h
->     #         description:   arch provides optimized rwsem APIs
->     #
->         |     powerpc: | TODO |
-> 
->     triton:~/tip> cat Documentation/features/time/irq-time-acct/arch-support.txt
->     #
->     # Feature name:          irq-time-acct
->     #         Kconfig:       HAVE_IRQ_TIME_ACCOUNTING
->     #         description:   arch supports precise IRQ time accounting
->     #
->         |     powerpc: |  ..  |
-> 
-> i.e. it's not marked as TODO, but not as supported either which would 
-> be misleading.
+Hi Andy,
 
-Great thanks.
+Thanks for this patch. There are some broken pieces though. Also,
+I have some minor questions about the API design. See below.
 
-cheers
+On 05/15/2015 08:43 AM, Andy Lutomirski wrote:
+> Signed-off-by: Andy Lutomirski <luto@kernel.org>
+> ---
+> 
+> There was no v1.  I'm calling this v2 to keep it in sync with the kernel
+> patch versioning.
+> 
+>  man2/prctl.2        | 10 ++++++++++
+>  man7/capabilities.7 | 32 ++++++++++++++++++++++++++------
+>  2 files changed, 36 insertions(+), 6 deletions(-)
+> 
+> diff --git a/man2/prctl.2 b/man2/prctl.2
+> index b352f6283624..5861e3aefe9a 100644
+> --- a/man2/prctl.2
+> +++ b/man2/prctl.2
+> @@ -949,6 +949,16 @@ had been called.
+>  For further information on Intel MPX, see the kernel source file
+>  .IR Documentation/x86/intel_mpx.txt .
+>  .\"
+> +.TP
+> +.BR PR_CAP_AMBIENT " (since Linux 4.2)"
+> +Reads or changes the ambient capability set.  If arg2 is PR_CAP_AMBIENT_RAISE,
+> +then the capability specified in arg3 is added to the ambient set.  This will
+> +fail, returning EPERM, if the capability is not already both permitted and
+> +inheritable or if the SECBIT_NO_CAP_AMBIENT_RAISE securebit is set.  If arg2
+> +is PR_CAP_AMBIENT_LOWER, then the capability specified in arg3 is removed
+> +from the ambient set.  If arg2 is PR_CAP_AMBIENT_GET, then
+> +.BR prctl (2)
+> +will return 1 if the capability in arg3 is in the ambient set and 0 if not.
+
+Some API design questions:
+
+1. We already have prctl() operations that work on some capability sets:
+   PR_CAPBSET_READ and PR_CAPBSET_DROP. These don't use arg3; the operation 
+   is directly encoded in the first argument of prctl(). Just to keep some
+   consistency, why not do things the same way for these new operations?
+
+   Also, you could opt for some consistency in the naming, so using "READ"
+   rather than "GET", for example. On the other hand, both "READ" and "GET" 
+   are suboptimal names: this is really a test operation. So, maybe a
+   clean break to a good name, PR_CAP_AMBIENT_IS_SET, is best?
+
+   Thus:
+
+     prctl(PR_CAP_AMBIENT_READ, cap, 0, 0, 0);  // or PR_CAP_AMBIENT_IS_SET?
+     prctl(PR_CAP_AMBIENT_RAISE, cap, 0, 0, 0);
+     prctl(PR_CAP_AMBIENT_LOWER, cap, 0, 0, 0);
+
+2. In terms of the API design, would it be useful to have a prctl() operation
+   that clears the entire ambient set?
+
+     prctl(PR_CAP_AMBIENT_ZERO, 0, 0, 0, 0);    // or PR_CAP_AMBIENT_EMPTY?
+
+>  .SH RETURN VALUE
+>  On success,
+>  .BR PR_GET_DUMPABLE ,
+> diff --git a/man7/capabilities.7 b/man7/capabilities.7
+> index d75ec65de05b..dae62f0be3b7 100644
+> --- a/man7/capabilities.7
+> +++ b/man7/capabilities.7
+> @@ -697,13 +697,26 @@ a program whose associated file capabilities grant that capability).
+>  .IR Inheritable :
+>  This is a set of capabilities preserved across an
+>  .BR execve (2).
+> -It provides a mechanism for a process to assign capabilities
+> -to the permitted set of the new program during an
+> -.BR execve (2).
+> +Inheritable capabilities remain inheritable when executing any program,
+> +and inheritable capabilities are added to the permitted set when executing
+> +a program that has the corresponding bits set in the file inheritable set.
+> +When executing programs without file capabilities, ambient capabilities
+
+That last line is incomplete. Something needs adding/removing.
+
+>  .TP
+>  .IR Effective :
+>  This is the set of capabilities used by the kernel to
+>  perform permission checks for the thread.
+> +.TP
+> +.IR Ambient " (since Linux 4.2) :"
+
+Minor knit: s/ :/:/ for next version.
+
+> +This is a set of capabilities that are preserved across an
+> +.BR execve (2)
+> +of a program that does not have file capabilities.  The ambient capability
+> +set obeys the invariant that no capability can ever be ambient if it is
+> +not both permitted and inheritable.  Ambient capabilities are, with some
+> +exceptions, preserved in the permitted set and added to the effective
+> +set when
+> +.BR execve (2)
+> +is called.  The ambient capability set is modified using
+> +.BR prctl (2).
+
+I think it would be helpful to add a couple of sentences here on why the
+ambient set is useful (i.e., explain what deficiencies in the pre-existing
+API are addressed by the addition of this set--a brief piece from your
+1/2 patch, for example).
+
+>  .PP
+>  A child created via
+>  .BR fork (2)
+> @@ -785,10 +798,12 @@ the process using the following algorithm:
+>  .in +4n
+>  .nf
+>  
+> +P'(ambient) = (file has capabilities or is setuid or setgid) ? 0 : P(ambient)
+> +
+>  P'(permitted) = (P(inheritable) & F(inheritable)) |
+> -                (F(permitted) & cap_bset)
+> +                (F(permitted) & cap_bset) | P'(ambient)
+>  
+> -P'(effective) = F(effective) ? P'(permitted) : 0
+> +P'(effective) = F(effective) ? P'(permitted) : P'(ambient)
+>  
+>  P'(inheritable) = P(inheritable)    [i.e., unchanged]
+>  
+> @@ -1071,6 +1086,10 @@ an effective or real UID of 0 calls
+>  .BR execve (2).
+>  (See the subsection
+>  .IR "Capabilities and execution of programs by root" .)
+> +.TP
+> +.B SECBIT_NO_CAP_AMBIENT_RAISE
+> +Setting this flag disallows
+> +.BR PR_CAP_AMBIENT_RAISE .
+>  .PP
+>  Each of the above "base" flags has a companion "locked" flag.
+>  Setting any of the "locked" flags is irreversible,
+> @@ -1079,8 +1098,9 @@ corresponding "base" flag.
+>  The locked flags are:
+>  .BR SECBIT_KEEP_CAPS_LOCKED ,
+>  .BR SECBIT_NO_SETUID_FIXUP_LOCKED ,
+> +.BR SECBIT_NOROOT_LOCKED ,
+>  and
+> -.BR SECBIT_NOROOT_LOCKED .
+> +.BR SECBIT_NO_CAP_AMBIENT_RAISE .
+>  .PP
+>  The
+>  .I securebits
+
+Thanks,
+
+Michael
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
