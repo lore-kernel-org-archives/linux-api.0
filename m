@@ -1,67 +1,91 @@
-From: Scot Doyle <lkml14@scotdoyle.com>
-Subject: Re: [PATCH v2 2/3] fbcon: use the cursor blink interval provided by
- vt
-Date: Wed, 20 May 2015 00:36:24 +0000 (UTC)
-Message-ID: <alpine.DEB.2.11.1505200022510.1617@local>
-References: <alpine.LNX.2.11.1502252319330.276@localhost> <20150226220243.GC9935@amd> <alpine.LNX.2.11.1502271905580.4212@localhost> <alpine.LNX.2.11.1502271911380.4248@localhost> <20150325111949.GA24230@kroah.com> <alpine.DEB.2.11.1503261341260.2164@local>
- <alpine.DEB.2.11.1503261354550.2411@local> <CAMAWPa-6ZbE5cDkEZq0XpYa2pHcnf3qweSSVHAXhfhUAUCbKcA@mail.gmail.com> <20150519214011.GA27047@ulmo.nvidia.com> <CAMAWPa88E2pfViKLXjxWHuT4ZkVhzYt_BsXGePzc-70ZrEmJFA@mail.gmail.com>
- <20150519215228.GA27163@ulmo.nvidia.com>
+From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC PATCH v2] perf: Add PERF_EVENT_IOC_FLUSH ioctl
+Date: Wed, 20 May 2015 14:12:26 +0200
+Message-ID: <20150520121226.GA11195@gmail.com>
+References: <20150507142009.GX22099@nuc-i3427.alporthouse.com>
+ <1431969919-32233-1-git-send-email-robert@sixbynine.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150519215228.GA27163@ulmo.nvidia.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Thierry Reding <thierry.reding@gmail.com>
-Cc: Kevin Hilman <khilman@kernel.org>, Scot Doyle <lkml14@scotdoyle.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tomi Valkeinen <tomi.valkeinen@ti.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Jiri Slaby <jslaby@suse.cz>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, Pavel Machek <pavel@ucw.cz>, Geert Uytterhoeven <geert@linux-m68k.org>, lkml <linux-kernel@vger.kernel.org>, linux-fbdev@vger.kernel.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, Tyler Baker <tyler.baker@linaro.org>, Olof Johansson <olof@lixom.net>, Daniel Stone <daniel@fooishbar.org>, Arnd Bergmann <arnd@arndb.de>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1431969919-32233-1-git-send-email-robert-St23OQVBDYPNLxjTenLetw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Robert Bragg <robert-St23OQVBDYPNLxjTenLetw@public.gmane.org>
+Cc: intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Daniel Vetter <daniel.vetter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Wilson <chris-Y6uKTt2uX1cEflXRtASbqLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 19 May 2015, Thierry Reding wrote:
-> On Tue, May 19, 2015 at 02:45:19PM -0700, Kevin Hilman wrote:
-> > On Tue, May 19, 2015 at 2:40 PM, Thierry Reding
-> > <thierry.reding@gmail.com> wrote:
 
-...
+* Robert Bragg <robert-St23OQVBDYPNLxjTenLetw@public.gmane.org> wrote:
 
-> > >
-> > > FWIW, if I apply the below on top of next-20150519 things seem to be
-> > > back to normal as well:
-> > >
-> > > diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
-> > > index 05b1d1a71ef9..658c34bb9076 100644
-> > > --- a/drivers/video/console/fbcon.c
-> > > +++ b/drivers/video/console/fbcon.c
-> > > @@ -1310,8 +1310,9 @@ static void fbcon_cursor(struct vc_data *vc, int mode)
-> > >                 return;
-> > >
-> > >         ops->cur_blink_jiffies = msecs_to_jiffies(vc->vc_cur_blink_ms);
-> > > -       fbcon_del_cursor_timer(info);
-> > > -       if (!(vc->vc_cursor_type & 0x10))
-> > > +       if (vc->vc_cursor_type & 0x10)
-> > > +               fbcon_del_cursor_timer(info);
-> > > +       else
-> > >                 fbcon_add_cursor_timer(info);
-> > >
-> > >         ops->cursor_flash = (mode == CM_ERASE) ? 0 : 1;
-> > 
-> > Applying this on next-20150519 makes my exynos board happily boot again as well.
-> > 
-> > Tested-by: Kevin Hilman <khilman@linaro.org>
+> To allow for pmus that may have internal buffering (e.g. the hardware
+> itself writes out data to its own circular buffer which is only
+> periodically forwarded to userspace via perf) this ioctl enables
+> userspace to explicitly ensure it has received all samples before a
+> point in time.
 > 
-> Excellent. Greg, Scot, any opinions on whether or not this is the right
-> thing to do? It restores a bit that looks suspiciously like it snuck in
-> in the original (at least it isn't documented in the commit message).
+> v2: return int error status
 > 
-> Greg, feel free to squash this in if everybody agrees this is good to
-> go. If you prefer a patch on top let me know and I'll come up with a
-> proper commit message.
+> Signed-off-by: Robert Bragg <robert-St23OQVBDYPNLxjTenLetw@public.gmane.org>
+> ---
+>  include/linux/perf_event.h      | 7 +++++++
+>  include/uapi/linux/perf_event.h | 1 +
+>  kernel/events/core.c            | 5 +++++
+>  3 files changed, 13 insertions(+)
 > 
-> Thierry
+> diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
+> index cf1d096..0c591eb 100644
+> --- a/include/linux/perf_event.h
+> +++ b/include/linux/perf_event.h
+> @@ -305,6 +305,13 @@ struct pmu {
+>  	 * Free pmu-private AUX data structures
+>  	 */
+>  	void (*free_aux)		(void *aux); /* optional */
+> +
+> +	/*
+> +	 * Flush buffered samples (E.g. for pmu hardware that writes samples to
+> +	 * some intermediate buffer) userspace may need to explicitly ensure
+> +	 * such samples have been forwarded to perf.
+> +	 */
+> +	int (*flush)			(struct perf_event *event); /*optional */
+>  };
+>  
+>  /**
+> diff --git a/include/uapi/linux/perf_event.h b/include/uapi/linux/perf_event.h
+> index 309211b..cbf1b80 100644
+> --- a/include/uapi/linux/perf_event.h
+> +++ b/include/uapi/linux/perf_event.h
+> @@ -389,6 +389,7 @@ struct perf_event_attr {
+>  #define PERF_EVENT_IOC_SET_FILTER	_IOW('$', 6, char *)
+>  #define PERF_EVENT_IOC_ID		_IOR('$', 7, __u64 *)
+>  #define PERF_EVENT_IOC_SET_BPF		_IOW('$', 8, __u32)
+> +#define PERF_EVENT_IOC_FLUSH		_IO ('$', 9)
+>  
+>  enum perf_event_ioc_flags {
+>  	PERF_IOC_FLAG_GROUP		= 1U << 0,
+> diff --git a/kernel/events/core.c b/kernel/events/core.c
+> index 3fe532a..72daee6 100644
+> --- a/kernel/events/core.c
+> +++ b/kernel/events/core.c
+> @@ -4079,6 +4079,11 @@ static long _perf_ioctl(struct perf_event *event, unsigned int cmd, unsigned lon
+>  	case PERF_EVENT_IOC_SET_BPF:
+>  		return perf_event_set_bpf_prog(event, arg);
+>  
+> +	case PERF_EVENT_IOC_FLUSH:
+> +		if (event->pmu->flush)
+> +			return event->pmu->flush(event);
+> +		return 0;
+> +
+>  	default:
+>  		return -ENOTTY;
+>  	}
 
-Hi all, sorry for the trouble.
+So 'struct file_operations' has a callback for:
 
-The timer delete was to prevent blink stutter when updating the interval. 
-Since the stutter isn't so noticable when changing from the default 200ms, 
-and since most people seem to prefer leaving the fbcon code alone if 
-possible, I agree with Thierry's approach.
+        int (*fsync) (struct file *, loff_t, loff_t, int datasync);
 
-Tested-by: Scot Doyle <lkml14@scotdoyle.com>
+Could we use that perhaps, instead of an ioctl()? Not sure how it all 
+integrates with the VFS though.
+
+Thanks,
+
+	Ingo
