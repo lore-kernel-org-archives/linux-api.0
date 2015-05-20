@@ -1,100 +1,276 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: Re: [PATCH 00/23] userfaultfd v4
-Date: Wed, 20 May 2015 16:17:30 +0200
-Message-ID: <20150520141730.GO19097@redhat.com>
-References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
- <20150519143801.8ba477c3813e93a2637c19cf@linux-foundation.org>
- <CAFLxGvwGGZH1bbMw+qReZFMK+dc6zoOTCNsuOMdp+xw_jPzPDg@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <CAFLxGvwGGZH1bbMw+qReZFMK+dc6zoOTCNsuOMdp+xw_jPzPDg@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Richard Weinberger <richard.weinberger@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, qemu-devel@nongnu.org, kvm <kvm@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, J
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH 3/9] y2038: mips: extend sysvipc data structures
+Date: Wed, 20 May 2015 17:07:19 +0200
+Message-ID: <1432134445-804487-4-git-send-email-arnd@arndb.de>
+References: <1432134445-804487-1-git-send-email-arnd@arndb.de>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <1432134445-804487-1-git-send-email-arnd@arndb.de>
+Sender: linux-arch-owner@vger.kernel.org
+To: y2038@lists.linaro.org
+Cc: baolin.wang@linaro.org, albert.aribaud@3adev.fr, john.stultz@linaro.org, bamvor.zhangjian@linaro.org, ruchandani.tina@gmail.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, libc-alpha@sourceware.org, linux-arch@vger.kernel.org, Manfred Spraul <manfred@colorfullife.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-Hello Richard,
+MIPS is the weirdest case for sysvipc, because each of the
+three data structures is done differently:
 
-On Tue, May 19, 2015 at 11:59:42PM +0200, Richard Weinberger wrote:
-> On Tue, May 19, 2015 at 11:38 PM, Andrew Morton
-> <akpm@linux-foundation.org> wrote:
-> > On Thu, 14 May 2015 19:30:57 +0200 Andrea Arcangeli <aarcange@redhat.com> wrote:
-> >
-> >> This is the latest userfaultfd patchset against mm-v4.1-rc3
-> >> 2015-05-14-10:04.
-> >
-> > It would be useful to have some userfaultfd testcases in
-> > tools/testing/selftests/.  Partly as an aid to arch maintainers when
-> > enabling this.  And also as a standalone thing to give people a
-> > practical way of exercising this interface.
-> >
-> > What are your thoughts on enabling userfaultfd for other architectures,
-> > btw?  Are there good use cases, are people working on it, etc?
-> 
-> UML is using SIGSEGV for page faults.
-> i.e. the UML processes receives a SIGSEGV, learns the faulting address
-> from the mcontext
-> and resolves the fault by installing a new mapping.
-> 
-> If userfaultfd is faster that the SIGSEGV notification it could speed
-> up UML a bit.
-> For UML I'm only interested in the notification, not the resolving
-> part. The "missing"
-> data is present, only a new mapping is needed. No copy of data.
-> 
-> Andrea, what do you think?
+* msqid64_ds has padding in the right place so we could in theory
+  extend this one to just have 64-bit values instead of time_t.
+  As this does not work for most of the other combinations,
+  we just handle it in the common manner though.
 
-I think you need some kind of UFFDIO_MPROTECT ioctl that is the same
-ioctl wrprotect tracking also needs. At the moment we focused the
-future plans mostly on wrprotection tracking but it could be extended
-to protnone tracking, either with the same feature flag as
-wrprotection (with a generic UFFDIO_MPROTECT) or with two separate
-feature flags and two separate ioctl.
+* semid64_ds has no padding for 64-bit time_t, but has two reserved
+  'long' fields, which are sufficient to extend the sem_otime
+  and sem_ctime fields to 64 bit. In order to do this, the libc
+  implementation will have to copy the data into another structure
+  that has the fields in a different order. MIPS is the only
+  architecture with this problem, so this is best done in MIPS
+  specific libc code.
 
-Your pages are not missing, like in the postcopy live snapshotting
-case the pages are not missing. The userfaultfd memory protection
-ioctl will not modify the VMA, but it'll just selectively mark
-pte/trans_huge_pmd wrprotected/protnone in order to get the faults. In
-the case of postcopy live snapshotting a single ioctl call will mark
-the entire guest address space readonly.
+* shmid64_ds is slightly worse than that, because it has three
+  time_t fields but only two unused 32-bit words. As a workaround,
+  we extend each field only by 16 bits, ending up with 48-bit
+  timestamps that user space again has to work around by itself.
 
-For live snapshotting the fault resolution is a no brainer: when you
-get the fault the page is still readable and it just needs to be
-copied off by the live snapshotting thread to a different location,
-and then the UFFDIO_MPROTECT will be called again to make the page
-writable and wake the blocked fault.
+The compat versions of the data structures are changed in the
+same way.
 
-For the protnone, you need to modify the page before waking the
-blocked userfault, you can't just remove the protnone or other threads
-could modify it (if there are other threads). You'd need a further
-ioctl to copy the page off to a different place by using its kernel
-address (the userland address is not mapped) and copy it back to
-overwrite the original page.
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ arch/mips/include/asm/compat.h      | 38 +++++++++++++------------
+ arch/mips/include/uapi/asm/msgbuf.h | 56 +++++++++++++++++++++++++------------
+ arch/mips/include/uapi/asm/sembuf.h | 15 ++++++++--
+ arch/mips/include/uapi/asm/shmbuf.h | 23 +++++++++++++--
+ 4 files changed, 92 insertions(+), 40 deletions(-)
 
-Alternatively once we extend the handle_userfault to tmpfs you could
-map the page in two virtual mappings and track the faults in one
-mapping (where the tracked app runs) and read/write the page contents
-in the other mapping that isn't tracked by the userfault.
-
-These are the first thoughts that comes to mind without knowing
-exactly what you need to do after you get the fault address, and
-without knowing exactly why you need to mark the region PROT_NONE.
-
-There will be some complications in adding the wrprotection/protnone
-feature: if faults could already happen when the wrprotect/protnone is
-armed, the handle_userfault() could be invoked in a retry-fault, that
-is not ok without allowing the userfault to return VM_FAULT_RETRY even
-during a refault (i.e. FAULT_FLAG_TRIED set but FAULT_FLAG_ALLOW_RETRY
-not set). The invariants of vma->vm_page_prot and pte/trans_huge_pmd
-permissions must also not break anywhere. These are the two main
-reasons why these features that requires to flip protection bits are
-left implemented later and made visible later with uffdio_api.feature
-flags and/or through uffdio_register.ioctl during UFFDIO_REGISTER.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/arch/mips/include/asm/compat.h b/arch/mips/include/asm/compat.h
+index 6495b37a6fbc..97e014aa2bf3 100644
+--- a/arch/mips/include/asm/compat.h
++++ b/arch/mips/include/asm/compat.h
+@@ -225,35 +225,35 @@ struct compat_ipc64_perm {
+ 
+ struct compat_semid64_ds {
+ 	struct compat_ipc64_perm sem_perm;
+-	compat_time_t	sem_otime;
+-	compat_time_t	sem_ctime;
++	compat_ulong_t	sem_otime;
++	compat_ulong_t	sem_ctime;
+ 	compat_ulong_t	sem_nsems;
+-	compat_ulong_t	__unused1;
+-	compat_ulong_t	__unused2;
++	compat_ulong_t	sem_otime_high;
++	compat_ulong_t	sem_ctime_high;
+ };
+ 
+ struct compat_msqid64_ds {
+ 	struct compat_ipc64_perm msg_perm;
+ #ifndef CONFIG_CPU_LITTLE_ENDIAN
+-	compat_ulong_t	__unused1;
++	compat_ulong_t	msg_stime_high;
+ #endif
+-	compat_time_t	msg_stime;
++	compat_ulong_t	msg_stime;
+ #ifdef CONFIG_CPU_LITTLE_ENDIAN
+-	compat_ulong_t	__unused1;
++	compat_ulong_t	msg_stime_high;
+ #endif
+ #ifndef CONFIG_CPU_LITTLE_ENDIAN
+-	compat_ulong_t	__unused2;
++	compat_ulong_t	msg_rtime_high;
+ #endif
+-	compat_time_t	msg_rtime;
++	compat_ulong_t	msg_rtime;
+ #ifdef CONFIG_CPU_LITTLE_ENDIAN
+-	compat_ulong_t	__unused2;
++	compat_ulong_t	msg_rtime_high;
+ #endif
+ #ifndef CONFIG_CPU_LITTLE_ENDIAN
+-	compat_ulong_t	__unused3;
++	compat_ulong_t	msg_ctime_high;
+ #endif
+-	compat_time_t	msg_ctime;
++	compat_ulong_t	msg_ctime;
+ #ifdef CONFIG_CPU_LITTLE_ENDIAN
+-	compat_ulong_t	__unused3;
++	compat_ulong_t	msg_ctime_high;
+ #endif
+ 	compat_ulong_t	msg_cbytes;
+ 	compat_ulong_t	msg_qnum;
+@@ -267,14 +267,16 @@ struct compat_msqid64_ds {
+ struct compat_shmid64_ds {
+ 	struct compat_ipc64_perm shm_perm;
+ 	compat_size_t	shm_segsz;
+-	compat_time_t	shm_atime;
+-	compat_time_t	shm_dtime;
+-	compat_time_t	shm_ctime;
++	compat_ulong_t	shm_atime;
++	compat_ulong_t	shm_dtime;
++	compat_ulong_t	shm_ctime;
+ 	compat_pid_t	shm_cpid;
+ 	compat_pid_t	shm_lpid;
+ 	compat_ulong_t	shm_nattch;
+-	compat_ulong_t	__unused1;
+-	compat_ulong_t	__unused2;
++	compat_ushort_t	shm_atime_high;
++	compat_ushort_t	shm_dtime_high;
++	compat_ushort_t	shm_ctime_high;
++	compat_ushort_t	__unused2;
+ };
+ 
+ /* MIPS has unusual order of fields in stack_t */
+diff --git a/arch/mips/include/uapi/asm/msgbuf.h b/arch/mips/include/uapi/asm/msgbuf.h
+index df849e87d9ae..460c3117912c 100644
+--- a/arch/mips/include/uapi/asm/msgbuf.h
++++ b/arch/mips/include/uapi/asm/msgbuf.h
+@@ -12,29 +12,12 @@
+  * - 2 miscellaneous unsigned long values
+  */
+ 
++#if defined(__mips64)
+ struct msqid64_ds {
+ 	struct ipc64_perm msg_perm;
+-#if !defined(__mips64) && defined(__MIPSEB__)
+-	unsigned long	__unused1;
+-#endif
+ 	__kernel_time_t msg_stime;	/* last msgsnd time */
+-#if !defined(__mips64) && defined(__MIPSEL__)
+-	unsigned long	__unused1;
+-#endif
+-#if !defined(__mips64) && defined(__MIPSEB__)
+-	unsigned long	__unused2;
+-#endif
+ 	__kernel_time_t msg_rtime;	/* last msgrcv time */
+-#if !defined(__mips64) && defined(__MIPSEL__)
+-	unsigned long	__unused2;
+-#endif
+-#if !defined(__mips64) && defined(__MIPSEB__)
+-	unsigned long	__unused3;
+-#endif
+ 	__kernel_time_t msg_ctime;	/* last change time */
+-#if !defined(__mips64) && defined(__MIPSEL__)
+-	unsigned long	__unused3;
+-#endif
+ 	unsigned long  msg_cbytes;	/* current number of bytes on queue */
+ 	unsigned long  msg_qnum;	/* number of messages in queue */
+ 	unsigned long  msg_qbytes;	/* max number of bytes on queue */
+@@ -43,5 +26,42 @@ struct msqid64_ds {
+ 	unsigned long  __unused4;
+ 	unsigned long  __unused5;
+ };
++#elif defined (__MIPSEB__)
++struct msqid64_ds {
++	struct ipc64_perm msg_perm;
++	unsigned long  msg_stime_high;
++	unsigned long  msg_stime;	/* last msgsnd time */
++	unsigned long  msg_rtime_high;
++	unsigned long  msg_rtime;	/* last msgrcv time */
++	unsigned long  msg_ctime_high;
++	unsigned long  msg_ctime;	/* last change time */
++	unsigned long  msg_cbytes;	/* current number of bytes on queue */
++	unsigned long  msg_qnum;	/* number of messages in queue */
++	unsigned long  msg_qbytes;	/* max number of bytes on queue */
++	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
++	__kernel_pid_t msg_lrpid;	/* last receive pid */
++	unsigned long  __unused4;
++	unsigned long  __unused5;
++};
++#elif defined (__MIPSEL__)
++struct msqid64_ds {
++	struct ipc64_perm msg_perm;
++	unsigned long  msg_stime;	/* last msgsnd time */
++	unsigned long  msg_stime_high;
++	unsigned long  msg_rtime;	/* last msgrcv time */
++	unsigned long  msg_rtime_high;
++	unsigned long  msg_ctime;	/* last change time */
++	unsigned long  msg_ctime_high;
++	unsigned long  msg_cbytes;	/* current number of bytes on queue */
++	unsigned long  msg_qnum;	/* number of messages in queue */
++	unsigned long  msg_qbytes;	/* max number of bytes on queue */
++	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
++	__kernel_pid_t msg_lrpid;	/* last receive pid */
++	unsigned long  __unused4;
++	unsigned long  __unused5;
++};
++#else
++#warning no endianess set
++#endif
+ 
+ #endif /* _ASM_MSGBUF_H */
+diff --git a/arch/mips/include/uapi/asm/sembuf.h b/arch/mips/include/uapi/asm/sembuf.h
+index e1085ac880f2..055fddb4fdb0 100644
+--- a/arch/mips/include/uapi/asm/sembuf.h
++++ b/arch/mips/include/uapi/asm/sembuf.h
+@@ -6,10 +6,11 @@
+  * Note extra padding because this structure is passed back and forth
+  * between kernel and user space.
+  *
+- * Pad space is left for:
+- * - 2 miscellaneous 64-bit values
++ * Pad space is left for 2 miscellaneous 64-bit values on mips64,
++ * but used for the upper 32 bit of the time values on mips32.
+  */
+ 
++#ifdef __mips64
+ struct semid64_ds {
+ 	struct ipc64_perm sem_perm;		/* permissions .. see ipc.h */
+ 	__kernel_time_t sem_otime;		/* last semop time */
+@@ -18,5 +19,15 @@ struct semid64_ds {
+ 	unsigned long	__unused1;
+ 	unsigned long	__unused2;
+ };
++#else
++struct semid64_ds {
++	struct ipc64_perm sem_perm;		/* permissions .. see ipc.h */
++	unsigned long   sem_otime;		/* last semop time */
++	unsigned long   sem_ctime;		/* last change time */
++	unsigned long	sem_nsems;		/* no. of semaphores in array */
++	unsigned long	sem_otime_high;
++	unsigned long	sem_otime_high;
++};
++#endif
+ 
+ #endif /* _ASM_SEMBUF_H */
+diff --git a/arch/mips/include/uapi/asm/shmbuf.h b/arch/mips/include/uapi/asm/shmbuf.h
+index f994438277bf..3a1399f7dfdc 100644
+--- a/arch/mips/include/uapi/asm/shmbuf.h
++++ b/arch/mips/include/uapi/asm/shmbuf.h
+@@ -6,10 +6,13 @@
+  * Note extra padding because this structure is passed back and forth
+  * between kernel and user space.
+  *
+- * Pad space is left for:
+- * - 2 miscellaneous 32-bit rsp. 64-bit values
++ * As MIPS was lacking proper padding after shm_?time, we use 48 bits
++ * of the padding at the end to store a few additional bits of the time.
++ * libc implementations need to take care to convert this into a proper
++ * data structure when moving to 64-bit time_t.
+  */
+ 
++#ifdef __mips64
+ struct shmid64_ds {
+ 	struct ipc64_perm	shm_perm;	/* operation perms */
+ 	size_t			shm_segsz;	/* size of segment (bytes) */
+@@ -22,6 +25,22 @@ struct shmid64_ds {
+ 	unsigned long		__unused1;
+ 	unsigned long		__unused2;
+ };
++#else
++struct shmid64_ds {
++	struct ipc64_perm	shm_perm;	/* operation perms */
++	size_t			shm_segsz;	/* size of segment (bytes) */
++	unsigned long		shm_atime;	/* last attach time */
++	unsigned long		shm_dtime;	/* last detach time */
++	unsigned long		shm_ctime;	/* last change time */
++	__kernel_pid_t		shm_cpid;	/* pid of creator */
++	__kernel_pid_t		shm_lpid;	/* pid of last operator */
++	unsigned long		shm_nattch;	/* no. of current attaches */
++	unsigned short		shm_atime_high;
++	unsigned short		shm_dtime_high;
++	unsigned short		shm_ctime_high;
++	unsigned short		__unused1;
++};
++#endif
+ 
+ struct shminfo64 {
+ 	unsigned long	shmmax;
+-- 
+2.1.0.rc2
