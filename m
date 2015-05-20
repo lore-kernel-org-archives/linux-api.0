@@ -1,96 +1,202 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 0/9] converting system calls to 64-bit time_t, part 2
-Date: Wed, 20 May 2015 17:07:16 +0200
-Message-ID: <1432134445-804487-1-git-send-email-arnd@arndb.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+Subject: [PATCH 5/9] y2038: parisc: extend sysvipc data structures
+Date: Wed, 20 May 2015 17:07:21 +0200
+Message-ID: <1432134445-804487-6-git-send-email-arnd@arndb.de>
+References: <1432134445-804487-1-git-send-email-arnd@arndb.de>
+Return-path: <libc-alpha-return-59081-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <1432134445-804487-1-git-send-email-arnd@arndb.de>
 To: y2038@lists.linaro.org
-Cc: linux-arch@vger.kernel.org, libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>, baolin.wang@linaro.org, linux-api@vger.kernel.org, ruchandani.tina@gmail.com, linux-kernel@vger.kernel.org, albert.aribaud@3adev.fr, john.stultz@linaro.org, Michael Kerrisk <mtk.manpages@gmail.com>, Manfred Spraul <manfred@colorfullife.com>, bamvor.zhangjian@linaro.org
+Cc: baolin.wang@linaro.org, albert.aribaud@3adev.fr, john.stultz@linaro.org, bamvor.zhangjian@linaro.org, ruchandani.tina@gmail.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, libc-alpha@sourceware.org, linux-arch@vger.kernel.org, Manfred Spraul <manfred@colorfullife.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-VGhpcyBpcyBhIGZvbGxvdy11cCB0byB0aGUgc2VyaWVzIHBvc3RlZCBhdCBbMV0uIFRvIG1ha2Ug
-cmV2aWV3CmEgbGl0dGxlIGVhc2llciwgSSdtIGZvY3VzaW5nIG9uIGp1c3Qgb25lIGNsYXNzIG9m
-IHN5c3RlbSBjYWxscwpoZXJlLCBhbmQgdGhpcyBpcyBvbmUgdGhhdCBpcyBoYW5kbGVkIGRpZmZl
-cmVudGx5IGZyb20gYWxsIHRoZQpvdGhlcnMuCgpJbiBwYXJ0aWN1bGFyLCBmb3Igc3lzX21zZ2N0
-bCwgc3lzX3NlbWN0bCBhbmQgc3lzX3NobWN0bCwgSSBkbwpub3QgaW50cm9kdWNlIGEgY29tcGxl
-dGVseSBuZXcgc2V0IG9mIHJlcGxhY2VtZW50IHN5c3RlbSBjYWxscywKYnV0IGluc3RlYWQgZXh0
-ZW5kIHRoZSBleGlzdGluZyBvbmVzIHRvIHJldHVybiBkYXRhIGluIHRoZQpyZXNlcnZlZCBmaWVs
-ZHMgb2YgdGhlIG5vcm1hbCBkYXRhIHN0cnVjdHVyZS4KClRoaXMgc2hvdWxkIGJlIGNvbXBsZXRl
-bHkgdHJhbnNwYXJlbnQgdG8gYW55IGV4aXN0aW5nIHVzZXIgc3BhY2UsCmFuZCBvbmx5IGFmdGVy
-IHRoZSAzMi1iaXQgdGltZV90IHdyYXBzLCBpdCB3aWxsIG1ha2UgYSBkaWZmZXJlbmNlCmluIHRo
-ZSByZXR1cm5lZCBkYXRhLgoKbGliYyBpbXBsZW1lbnRhdGlvbnMgd2lsbCBjb25zZXF1ZW50bHkg
-aGF2ZSB0byBwcm92aWRlIHRoZWlyIG93bgpkYXRhIHN0cnVjdHVyZXMgd2hlbiB0aGV5IG1vdmUg
-dG8gNjQtYml0IHRpbWVfdCwgYW5kIGNvbnZlcnQKdGhlIHN0cnVjdHVyZXMgaW4gdXNlciBzcGFj
-ZSBmcm9tIHRoZSBvbmVzIHJldHVybmVkIGJ5IHRoZSBrZXJuZWwuCgpUaGVyZSBhcmUgdGhyZWUg
-Y2FzZXMgaGVyZToKCi0gbGl0dGxlLWVuZGlhbiBhcmNoaXRlY3R1cmVzIChleGNlcHQgcG93ZXJw
-YyBhbmQgbWlwcykgY2FuIHVzZQogIHRoZSBub3JtYWwgbGF5b3V0IGFuZCBqdXN0IGNhc3QgdGhl
-IGRhdGEgc3RydWN0dXJlIHRvIHRoZQogIHVzZXIgc3BhY2UgdHlwZSB0aGF0IGNvbnRhaW5zIDY0
-LWJpdCBudW1iZXJzLgoKLSBwYXJpc2MgYW5kIHNwYXJjIGNhbiBkbyB0aGUgc2FtZSB0aGluZyB3
-aXRoIGJpZy1lbmRpYW4gdXNlcgogIHNwYWNlCgotIGxpdHRsZS1lbmRpYW4gcG93ZXJwYyBhbmQg
-bW9zdCBiaWctZW5kaWFuIGFyY2hpdGVjdHVyZXMgaGF2ZQogIHRvIGZsaXAgdGhlIHVwcGVyIGFu
-ZCBsb3dlciAzMi1iaXQgaGFsdmVzIG9mIHRoZSB0aW1lX3QgdmFsdWUKICBpbiBtZW1vcnksIGJ1
-dCBjYW4gb3RoZXJ3aXNlIGtlZXAgdXNpbmcgdGhlIG5vcm1hbCBsYXlvdXQKCi0gbWlwcyBhbmQg
-YmlnLWVuZGlhbiB4dGVuc2EgbmVlZCB0byBiZSBtb3JlIGNhcmVmdWwgYmVjYXVzZQogIHRoZXkg
-YXJlIG5vdCBjb25zaXN0ZW50IGluIHRoZWlyIGRlZmluaXRpb25zLCBhbmQgdGhleQogIGhhdmUg
-dG8gcHJvdmlkZSBjdXN0b20gbGliYyBpbXBsZW1lbnRhdGlvbnMgZm9yIHRoZSBzeXN0ZW0KICBj
-YWxscyB0byB1c2UgNjQtYml0IHRpbWVfdC4KClBsZWFzZSByZXZpZXcuCgoJQXJuZAoKWzFdIGh0
-dHA6Ly9sd24ubmV0L0FydGljbGVzLzY0MzQwNy8KCkFybmQgQmVyZ21hbm4gKDgpOgogIHkyMDM4
-OiBhc20tZ2VuZXJpYzogZXh0ZW5kIHN5c3ZpcGMgZGF0YSBzdHJ1Y3R1cmVzCiAgeTIwMzg6IG1p
-cHM6IGV4dGVuZCBzeXN2aXBjIGRhdGEgc3RydWN0dXJlcwogIHkyMDM4OiB4ODY6IGV4dGVuZCBz
-eXN2aXBjIGRhdGEgc3RydWN0dXJlcwogIHkyMDM4OiBwYXJpc2M6IGV4dGVuZCBzeXN2aXBjIGRh
-dGEgc3RydWN0dXJlcwogIHkyMDM4OiBzcGFyYzogZXh0ZW5kIHN5c3ZpcGMgZGF0YSBzdHJ1Y3R1
-cmVzCiAgeTIwMzg6IHBvd2VycGM6IGV4dGVuZCBzeXN2aXBjIGRhdGEgc3RydWN0dXJlcwogIHky
-MDM4OiB4dGVuc2E6IGV4dGVuZCBzeXN2aXBjIGRhdGEgc3RydWN0dXJlcwogIHkyMDM4OiBpcGM6
-IHJlcG9ydCBsb25nIHRpbWVzIHRvIHVzZXIgc3BhY2UKCiBhcmNoL2FybTY0L2luY2x1ZGUvYXNt
-L2NvbXBhdC5oICAgICAgICB8IDMyICsrKysrKysrKy0tLS0tLS0tLS0KIGFyY2gvbWlwcy9pbmNs
-dWRlL2FzbS9jb21wYXQuaCAgICAgICAgIHwgMzggKysrKysrKysrKystLS0tLS0tLS0tLQogYXJj
-aC9taXBzL2luY2x1ZGUvdWFwaS9hc20vbXNnYnVmLmggICAgfCA1NiArKysrKysrKysrKysrKysr
-KysrKystLS0tLS0tLS0tLQogYXJjaC9taXBzL2luY2x1ZGUvdWFwaS9hc20vc2VtYnVmLmggICAg
-fCAxNSArKysrKysrLS0KIGFyY2gvbWlwcy9pbmNsdWRlL3VhcGkvYXNtL3NobWJ1Zi5oICAgIHwg
-MjMgKysrKysrKysrKysrLS0KIGFyY2gvcGFyaXNjL2luY2x1ZGUvYXNtL2NvbXBhdC5oICAgICAg
-IHwgMzIgKysrKysrKysrLS0tLS0tLS0tLQogYXJjaC9wYXJpc2MvaW5jbHVkZS91YXBpL2FzbS9t
-c2didWYuaCAgfCAzMiArKysrKysrKystLS0tLS0tLS0tCiBhcmNoL3BhcmlzYy9pbmNsdWRlL3Vh
-cGkvYXNtL3NlbWJ1Zi5oICB8IDEzICsrKystLS0tCiBhcmNoL3BhcmlzYy9pbmNsdWRlL3VhcGkv
-YXNtL3NobWJ1Zi5oICB8IDE4ICsrKysrLS0tLS0tCiBhcmNoL3Bvd2VycGMvaW5jbHVkZS9hc20v
-Y29tcGF0LmggICAgICB8IDMyICsrKysrKysrKy0tLS0tLS0tLS0KIGFyY2gvcG93ZXJwYy9pbmNs
-dWRlL3VhcGkvYXNtL21zZ2J1Zi5oIHwgMTggKysrKystLS0tLS0KIGFyY2gvcG93ZXJwYy9pbmNs
-dWRlL3VhcGkvYXNtL3NlbWJ1Zi5oIHwgMTQgKysrKy0tLS0KIGFyY2gvcG93ZXJwYy9pbmNsdWRl
-L3VhcGkvYXNtL3NobWJ1Zi5oIHwgMTggKysrKystLS0tLS0KIGFyY2gvc3BhcmMvaW5jbHVkZS9h
-c20vY29tcGF0LmggICAgICAgIHwgMzIgKysrKysrKysrLS0tLS0tLS0tLQogYXJjaC9zcGFyYy9p
-bmNsdWRlL3VhcGkvYXNtL21zZ2J1Zi5oICAgfCAyMSArKysrKystLS0tLS0KIGFyY2gvc3BhcmMv
-aW5jbHVkZS91YXBpL2FzbS9zZW1idWYuaCAgIHwgMTUgKysrKy0tLS0tCiBhcmNoL3NwYXJjL2lu
-Y2x1ZGUvdWFwaS9hc20vc2htYnVmLmggICB8IDIwICsrKysrKy0tLS0tLQogYXJjaC90aWxlL2lu
-Y2x1ZGUvYXNtL2NvbXBhdC5oICAgICAgICAgfCAzMiArKysrKysrKystLS0tLS0tLS0tCiBhcmNo
-L3g4Ni9pbmNsdWRlL2FzbS9jb21wYXQuaCAgICAgICAgICB8IDMyICsrKysrKysrKy0tLS0tLS0t
-LS0KIGFyY2gveDg2L2luY2x1ZGUvdWFwaS9hc20vbXNnYnVmLmggICAgIHwgNDEgKysrKysrKysr
-KysrKysrKysrKysrKystCiBhcmNoL3g4Ni9pbmNsdWRlL3VhcGkvYXNtL3NlbWJ1Zi5oICAgICB8
-IDEwICsrKysrKwogYXJjaC94ODYvaW5jbHVkZS91YXBpL2FzbS9zaG1idWYuaCAgICAgfCA1OCAr
-KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKystCiBhcmNoL3h0ZW5zYS9pbmNsdWRlL3Vh
-cGkvYXNtL21zZ2J1Zi5oICB8IDI0ICsrKysrKystLS0tLS0tCiBhcmNoL3h0ZW5zYS9pbmNsdWRl
-L3VhcGkvYXNtL3NlbWJ1Zi5oICB8IDE2ICsrKysrLS0tLS0KIGFyY2gveHRlbnNhL2luY2x1ZGUv
-dWFwaS9hc20vc2htYnVmLmggIHwgMzYgKysrKystLS0tLS0tLS0tLS0tLS0tCiBpbmNsdWRlL2xp
-bnV4L21zZy5oICAgICAgICAgICAgICAgICAgICB8ICA3ICsrLS0KIGluY2x1ZGUvbGludXgvc2Vt
-LmggICAgICAgICAgICAgICAgICAgIHwgIDMgKy0KIGluY2x1ZGUvbGludXgvc2htLmggICAgICAg
-ICAgICAgICAgICAgIHwgIDcgKystLQogaW5jbHVkZS91YXBpL2FzbS1nZW5lcmljL21zZ2J1Zi5o
-ICAgICAgfCAxNiArKysrKy0tLS0tCiBpbmNsdWRlL3VhcGkvYXNtLWdlbmVyaWMvc2VtYnVmLmgg
-ICAgICB8IDI2ICsrKysrKysrKy0tLS0tLQogaW5jbHVkZS91YXBpL2FzbS1nZW5lcmljL3NobWJ1
-Zi5oICAgICAgfCAxNiArKysrKy0tLS0tCiBpcGMvY29tcGF0LmMgICAgICAgICAgICAgICAgICAg
-ICAgICAgICB8ICA4ICsrKysrCiBpcGMvbXNnLmMgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICB8IDIzICsrKysrKysrLS0tLS0tCiBpcGMvc2VtLmMgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICB8IDMyICsrKysrKysrKysrLS0tLS0tLS0KIGlwYy9zaG0uYyAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgIHwgMjEgKysrKysrKy0tLS0tCiAzNSBmaWxlcyBjaGFuZ2VkLCA0OTkgaW5z
-ZXJ0aW9ucygrKSwgMzM4IGRlbGV0aW9ucygtKQoKLS0gCjIuMS4wLnJjMgoKX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KWTIwMzggbWFpbGluZyBsaXN0Clky
-MDM4QGxpc3RzLmxpbmFyby5vcmcKaHR0cHM6Ly9saXN0cy5saW5hcm8ub3JnL21haWxtYW4vbGlz
-dGluZm8veTIwMzgK
+parisc, uses a nonstandard variation of the generic sysvipc
+data structures, intended to have the padding moved around
+so it can deal with big-endian 32-bit user space that has
+64-bit time_t.
+
+Unlike most architectures, parisc actually succeeded in
+defining this right for big-endian CPUs, but as everyone else
+got it wrong, we just use the same hack everywhere.
+
+This takes just take the same approach here that we have for
+the asm-generic headers and adds separate 32-bit fields for the
+upper halves of the timestamps, to let libc deal with the mess
+in user space.
+
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ arch/parisc/include/asm/compat.h      | 32 ++++++++++++++++----------------
+ arch/parisc/include/uapi/asm/msgbuf.h | 32 ++++++++++++++++----------------
+ arch/parisc/include/uapi/asm/sembuf.h | 13 +++++++------
+ arch/parisc/include/uapi/asm/shmbuf.h | 18 ++++++++----------
+ 4 files changed, 47 insertions(+), 48 deletions(-)
+
+diff --git a/arch/parisc/include/asm/compat.h b/arch/parisc/include/asm/compat.h
+index cc20c7b203f4..3113a7f8e1be 100644
+--- a/arch/parisc/include/asm/compat.h
++++ b/arch/parisc/include/asm/compat.h
+@@ -195,10 +195,10 @@ struct compat_ipc64_perm {
+ 
+ struct compat_semid64_ds {
+ 	struct compat_ipc64_perm sem_perm;
+-	compat_time_t sem_otime;
+-	unsigned int __unused1;
+-	compat_time_t sem_ctime;
+-	unsigned int __unused2;
++	unsigned int sem_otime;
++	unsigned int sem_otime_high;
++	unsigned int sem_ctime;
++	unsigned int sem_ctime_high;
+ 	compat_ulong_t sem_nsems;
+ 	compat_ulong_t __unused3;
+ 	compat_ulong_t __unused4;
+@@ -206,12 +206,12 @@ struct compat_semid64_ds {
+ 
+ struct compat_msqid64_ds {
+ 	struct compat_ipc64_perm msg_perm;
+-	unsigned int __unused1;
+-	compat_time_t msg_stime;
+-	unsigned int __unused2;
+-	compat_time_t msg_rtime;
+-	unsigned int __unused3;
+-	compat_time_t msg_ctime;
++	unsigned int msg_stime_high;
++	unsigned int msg_stime;
++	unsigned int msg_rtime_high;
++	unsigned int msg_rtime;
++	unsigned int msg_ctime_high;
++	unsigned int msg_ctime;
+ 	compat_ulong_t msg_cbytes;
+ 	compat_ulong_t msg_qnum;
+ 	compat_ulong_t msg_qbytes;
+@@ -223,12 +223,12 @@ struct compat_msqid64_ds {
+ 
+ struct compat_shmid64_ds {
+ 	struct compat_ipc64_perm shm_perm;
+-	unsigned int __unused1;
+-	compat_time_t shm_atime;
+-	unsigned int __unused2;
+-	compat_time_t shm_dtime;
+-	unsigned int __unused3;
+-	compat_time_t shm_ctime;
++	unsigned int shm_atime_high;
++	unsigned int shm_atime;
++	unsigned int shm_dtime_high;
++	unsigned int shm_dtime;
++	unsigned int shm_ctime_high;
++	unsigned int shm_ctime;
+ 	unsigned int __unused4;
+ 	compat_size_t shm_segsz;
+ 	compat_pid_t shm_cpid;
+diff --git a/arch/parisc/include/uapi/asm/msgbuf.h b/arch/parisc/include/uapi/asm/msgbuf.h
+index 342138983914..8f60abe9f2de 100644
+--- a/arch/parisc/include/uapi/asm/msgbuf.h
++++ b/arch/parisc/include/uapi/asm/msgbuf.h
+@@ -15,25 +15,25 @@
+ 
+ struct msqid64_ds {
+ 	struct ipc64_perm msg_perm;
+-#if __BITS_PER_LONG != 64
+-	unsigned int   __pad1;
+-#endif
++#if __BITS_PER_LONG == 64
+ 	__kernel_time_t msg_stime;	/* last msgsnd time */
+-#if __BITS_PER_LONG != 64
+-	unsigned int   __pad2;
+-#endif
+ 	__kernel_time_t msg_rtime;	/* last msgrcv time */
+-#if __BITS_PER_LONG != 64
+-	unsigned int   __pad3;
+-#endif
+ 	__kernel_time_t msg_ctime;	/* last change time */
+-	unsigned int  msg_cbytes;	/* current number of bytes on queue */
+-	unsigned int  msg_qnum;	/* number of messages in queue */
+-	unsigned int  msg_qbytes;	/* max number of bytes on queue */
+-	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
+-	__kernel_pid_t msg_lrpid;	/* last receive pid */
+-	unsigned int  __unused1;
+-	unsigned int  __unused2;
++#else
++	unsigned long	msg_stime_high;
++	unsigned long	msg_stime;	/* last msgsnd time */
++	unsigned long	msg_rtime_high;
++	unsigned long	msg_rtime;	/* last msgrcv time */
++	unsigned long	msg_ctime_high;
++	unsigned long	msg_ctime;	/* last change time */
++#endif
++	unsigned int	msg_cbytes;	/* current number of bytes on queue */
++	unsigned int	msg_qnum;	/* number of messages in queue */
++	unsigned int	msg_qbytes;	/* max number of bytes on queue */
++	__kernel_pid_t	msg_lspid;	/* pid of last msgsnd */
++	__kernel_pid_t	msg_lrpid;	/* last receive pid */
++	unsigned int	__unused1;
++	unsigned int	__unused2;
+ };
+ 
+ #endif /* _PARISC_MSGBUF_H */
+diff --git a/arch/parisc/include/uapi/asm/sembuf.h b/arch/parisc/include/uapi/asm/sembuf.h
+index f01d89e30d73..2a02cd19b74a 100644
+--- a/arch/parisc/include/uapi/asm/sembuf.h
++++ b/arch/parisc/include/uapi/asm/sembuf.h
+@@ -15,14 +15,15 @@
+ 
+ struct semid64_ds {
+ 	struct ipc64_perm sem_perm;		/* permissions .. see ipc.h */
+-#if __BITS_PER_LONG != 64
+-	unsigned int	__pad1;
+-#endif
++#if __BITS_PER_LONG == 64
+ 	__kernel_time_t	sem_otime;		/* last semop time */
+-#if __BITS_PER_LONG != 64
+-	unsigned int	__pad2;
+-#endif
+ 	__kernel_time_t	sem_ctime;		/* last change time */
++#else
++	unsigned long	sem_otime_high;
++	unsigned long	sem_otime;		/* last semop time */
++	unsigned long	sem_ctime_high;
++	unsigned long	sem_ctime;		/* last change time */
++#endif
+ 	unsigned int	sem_nsems;		/* no. of semaphores in array */
+ 	unsigned int	__unused1;
+ 	unsigned int	__unused2;
+diff --git a/arch/parisc/include/uapi/asm/shmbuf.h b/arch/parisc/include/uapi/asm/shmbuf.h
+index 8496c38560c6..edc2553b00e8 100644
+--- a/arch/parisc/include/uapi/asm/shmbuf.h
++++ b/arch/parisc/include/uapi/asm/shmbuf.h
+@@ -15,19 +15,17 @@
+ 
+ struct shmid64_ds {
+ 	struct ipc64_perm	shm_perm;	/* operation perms */
+-#if __BITS_PER_LONG != 64
+-	unsigned int		__pad1;
+-#endif
++#if __BITS_PER_LONG == 64
+ 	__kernel_time_t		shm_atime;	/* last attach time */
+-#if __BITS_PER_LONG != 64
+-	unsigned int		__pad2;
+-#endif
+ 	__kernel_time_t		shm_dtime;	/* last detach time */
+-#if __BITS_PER_LONG != 64
+-	unsigned int		__pad3;
+-#endif
+ 	__kernel_time_t		shm_ctime;	/* last change time */
+-#if __BITS_PER_LONG != 64
++#else
++	unsigned long		shm_atime_high;
++	unsigned long		shm_atime;	/* last attach time */
++	unsigned long		shm_dtime_high;
++	unsigned long		shm_dtime;	/* last detach time */
++	unsigned long		shm_ctime_high;
++	unsigned long		shm_ctime;	/* last change time */
+ 	unsigned int		__pad4;
+ #endif
+ 	size_t			shm_segsz;	/* size of segment (bytes) */
+-- 
+2.1.0.rc2
