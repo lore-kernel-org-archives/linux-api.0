@@ -1,210 +1,238 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 6/9] y2038: sparc: extend sysvipc data structures
-Date: Wed, 20 May 2015 17:07:22 +0200
-Message-ID: <1432134445-804487-7-git-send-email-arnd@arndb.de>
+Subject: [PATCH 4/9] y2038: x86: extend sysvipc data structures
+Date: Wed, 20 May 2015 17:07:20 +0200
+Message-ID: <1432134445-804487-5-git-send-email-arnd@arndb.de>
 References: <1432134445-804487-1-git-send-email-arnd@arndb.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <libc-alpha-return-59082-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 In-Reply-To: <1432134445-804487-1-git-send-email-arnd@arndb.de>
-Sender: linux-kernel-owner@vger.kernel.org
 To: y2038@lists.linaro.org
 Cc: baolin.wang@linaro.org, albert.aribaud@3adev.fr, john.stultz@linaro.org, bamvor.zhangjian@linaro.org, ruchandani.tina@gmail.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, libc-alpha@sourceware.org, linux-arch@vger.kernel.org, Manfred Spraul <manfred@colorfullife.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-sparc, uses a nonstandard variation of the generic sysvipc
-data structures, intended to have the padding moved around
-so it can deal with big-endian 32-bit user space that has
-64-bit time_t.
+This extends the x86 copy of the sysvipc data structures
+to deal with 32-bit user space that has 64-bit time_t
+and wants to see timestamps beyond 2038.
 
-Unlike most architectures, sparc actually succeeded in
-defining this right for big-endian CPUs, but as everyone else
-got it wrong, we just use the same hack everywhere.
+Fortunately, x86 has padding for this purpose in all the
+data structures, so we can just add extra fields. For consistency
+with big-endian architectures that copied the definitions from
+x86 without moving around that padding, we however don't just
+us a 64-bit value here, but instead use two unsigned 32-bit
+fields, and expect the libc to provide a correct definition
+to user space in a way that works across all architectures.
 
-This takes just take the same approach here that we have for
-the asm-generic headers and adds separate 32-bit fields for the
-upper halves of the timestamps, to let libc deal with the mess
-in user space.
+Interestingly, x86-64 is the only 64-bit architecture that
+uses padding for 128-bit time_t, which seems to be have been
+a mistake in the original x86_64 port. All other 64-bit
+architectures have dropped those padding words.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- arch/sparc/include/asm/compat.h      | 32 ++++++++++++++++----------------
- arch/sparc/include/uapi/asm/msgbuf.h | 21 +++++++++------------
- arch/sparc/include/uapi/asm/sembuf.h | 15 +++++++--------
- arch/sparc/include/uapi/asm/shmbuf.h | 20 +++++++++-----------
- 4 files changed, 41 insertions(+), 47 deletions(-)
+ arch/x86/include/asm/compat.h      | 32 ++++++++++-----------
+ arch/x86/include/uapi/asm/msgbuf.h | 41 ++++++++++++++++++++++++++-
+ arch/x86/include/uapi/asm/sembuf.h | 10 +++++++
+ arch/x86/include/uapi/asm/shmbuf.h | 58 +++++++++++++++++++++++++++++++++++++-
+ 4 files changed, 123 insertions(+), 18 deletions(-)
 
-diff --git a/arch/sparc/include/asm/compat.h b/arch/sparc/include/asm/compat.h
-index c7e71a6d7232..f7ce331561dd 100644
---- a/arch/sparc/include/asm/compat.h
-+++ b/arch/sparc/include/asm/compat.h
-@@ -249,10 +249,10 @@ struct compat_ipc64_perm {
+diff --git a/arch/x86/include/asm/compat.h b/arch/x86/include/asm/compat.h
+index b8ce4e15b511..bfe98a2b3b01 100644
+--- a/arch/x86/include/asm/compat.h
++++ b/arch/x86/include/asm/compat.h
+@@ -205,10 +205,10 @@ struct compat_ipc64_perm {
  
  struct compat_semid64_ds {
  	struct compat_ipc64_perm sem_perm;
--	unsigned int	__pad1;
--	compat_time_t	sem_otime;
--	unsigned int	__pad2;
--	compat_time_t	sem_ctime;
-+	unsigned int	sem_otime_high;
-+	unsigned int	sem_otime;
-+	unsigned int	sem_ctime_high;
-+	unsigned int	sem_ctime;
- 	u32		sem_nsems;
- 	u32		__unused1;
- 	u32		__unused2;
-@@ -260,12 +260,12 @@ struct compat_semid64_ds {
+-	compat_time_t  sem_otime;
+-	compat_ulong_t __unused1;
+-	compat_time_t  sem_ctime;
+-	compat_ulong_t __unused2;
++	compat_ulong_t sem_otime;
++	compat_ulong_t sem_otime_high;
++	compat_ulong_t sem_ctime;
++	compat_ulong_t sem_ctime_high;
+ 	compat_ulong_t sem_nsems;
+ 	compat_ulong_t __unused3;
+ 	compat_ulong_t __unused4;
+@@ -216,12 +216,12 @@ struct compat_semid64_ds {
  
  struct compat_msqid64_ds {
  	struct compat_ipc64_perm msg_perm;
--	unsigned int	__pad1;
--	compat_time_t	msg_stime;
--	unsigned int	__pad2;
--	compat_time_t	msg_rtime;
--	unsigned int	__pad3;
--	compat_time_t	msg_ctime;
-+	unsigned int	msg_stime_high;
-+	unsigned int	msg_stime;
-+	unsigned int	msg_rtime_high;
-+	unsigned int	msg_rtime;
-+	unsigned int	msg_ctime_high;
-+	unsigned int	msg_ctime;
- 	unsigned int	msg_cbytes;
- 	unsigned int	msg_qnum;
- 	unsigned int	msg_qbytes;
-@@ -277,12 +277,12 @@ struct compat_msqid64_ds {
- 
+-	compat_time_t  msg_stime;
+-	compat_ulong_t __unused1;
+-	compat_time_t  msg_rtime;
+-	compat_ulong_t __unused2;
+-	compat_time_t  msg_ctime;
+-	compat_ulong_t __unused3;
++	compat_ulong_t msg_stime;
++	compat_ulong_t msg_stime_high;
++	compat_ulong_t msg_rtime;
++	compat_ulong_t msg_rtime_high;
++	compat_ulong_t msg_ctime;
++	compat_ulong_t msg_ctime_high;
+ 	compat_ulong_t msg_cbytes;
+ 	compat_ulong_t msg_qnum;
+ 	compat_ulong_t msg_qbytes;
+@@ -234,12 +234,12 @@ struct compat_msqid64_ds {
  struct compat_shmid64_ds {
  	struct compat_ipc64_perm shm_perm;
--	unsigned int	__pad1;
--	compat_time_t	shm_atime;
--	unsigned int	__pad2;
--	compat_time_t	shm_dtime;
--	unsigned int	__pad3;
--	compat_time_t	shm_ctime;
-+	unsigned int	shm_atime_high;
-+	unsigned int	shm_atime;
-+	unsigned int	shm_dtime_high;
-+	unsigned int	shm_dtime;
-+	unsigned int	shm_ctime_high;
-+	unsigned int	shm_ctime;
- 	compat_size_t	shm_segsz;
- 	compat_pid_t	shm_cpid;
- 	compat_pid_t	shm_lpid;
-diff --git a/arch/sparc/include/uapi/asm/msgbuf.h b/arch/sparc/include/uapi/asm/msgbuf.h
-index efc7cbe9788f..50b79ebadc99 100644
---- a/arch/sparc/include/uapi/asm/msgbuf.h
-+++ b/arch/sparc/include/uapi/asm/msgbuf.h
-@@ -10,22 +10,20 @@
-  * - 64-bit time_t to solve y2038 problem
-  * - 2 miscellaneous 32-bit values
-  */
--
--#if defined(__sparc__) && defined(__arch64__)
--# define PADDING(x)
--#else
--# define PADDING(x) unsigned int x;
--#endif
--
--
- struct msqid64_ds {
- 	struct ipc64_perm msg_perm;
--	PADDING(__pad1)
-+#if defined(__sparc__) && defined(__arch64__)
+ 	compat_size_t  shm_segsz;
+-	compat_time_t  shm_atime;
+-	compat_ulong_t __unused1;
+-	compat_time_t  shm_dtime;
+-	compat_ulong_t __unused2;
+-	compat_time_t  shm_ctime;
+-	compat_ulong_t __unused3;
++	compat_ulong_t shm_atime;
++	compat_ulong_t shm_atime_high;
++	compat_ulong_t shm_dtime;
++	compat_ulong_t shm_dtime_high;
++	compat_ulong_t shm_ctime;
++	compat_ulong_t shm_ctime_high;
+ 	compat_pid_t   shm_cpid;
+ 	compat_pid_t   shm_lpid;
+ 	compat_ulong_t shm_nattch;
+diff --git a/arch/x86/include/uapi/asm/msgbuf.h b/arch/x86/include/uapi/asm/msgbuf.h
+index 809134c644a6..51a2d7091c19 100644
+--- a/arch/x86/include/uapi/asm/msgbuf.h
++++ b/arch/x86/include/uapi/asm/msgbuf.h
+@@ -1 +1,40 @@
+-#include <asm-generic/msgbuf.h>
++/*
++ * x86 msqid64_ds structure.
++ *
++ * Note extra padding because this structure is passed back and forth
++ * between kernel and user space.
++ *
++ * msqid64_ds was originally meant to be architecture specific, but
++ * everyone just ended up making identical copies without specific
++ * optimizations, so we may just as well all use the same one.
++ *
++ * i386 uses the padding words to extend the time_t values, so user
++ * space must combine the two words. x32 and x86_64 have a 64-bit
++ * __kernel_time_t, so the data is already in the right place.
++ *
++ * Pad space is left for:
++ * - 2 miscellaneous 32-bit values
++ */
++
++struct msqid64_ds {
++	struct ipc64_perm msg_perm;
++#ifdef __i386__
++	unsigned long	msg_stime;	/* last msgsnd time */
++	unsigned long	msg_stime_high;
++	unsigned long	msg_rtime;	/* last msgrcv time */
++	unsigned long	msg_rtime_high;
++	unsigned long	msg_ctime;	/* last change time */
++	unsigned long	msg_ctime_high;
++#else
 +	__kernel_time_t msg_stime;	/* last msgsnd time */
 +	__kernel_time_t msg_rtime;	/* last msgrcv time */
 +	__kernel_time_t msg_ctime;	/* last change time */
-+#else
-+	__kernel_time_t msg_stime_high;
- 	__kernel_time_t msg_stime;	/* last msgsnd time */
--	PADDING(__pad2)
-+	__kernel_time_t msg_rtime_high;
- 	__kernel_time_t msg_rtime;	/* last msgrcv time */
--	PADDING(__pad3)
-+	__kernel_time_t msg_ctime_high;
- 	__kernel_time_t msg_ctime;	/* last change time */
 +#endif
- 	unsigned long  msg_cbytes;	/* current number of bytes on queue */
- 	unsigned long  msg_qnum;	/* number of messages in queue */
- 	unsigned long  msg_qbytes;	/* max number of bytes on queue */
-@@ -34,5 +32,4 @@ struct msqid64_ds {
- 	unsigned long  __unused1;
- 	unsigned long  __unused2;
- };
--#undef PADDING
- #endif /* _SPARC_MSGBUF_H */
-diff --git a/arch/sparc/include/uapi/asm/sembuf.h b/arch/sparc/include/uapi/asm/sembuf.h
-index faee1be08d67..f981e235f41f 100644
---- a/arch/sparc/include/uapi/asm/sembuf.h
-+++ b/arch/sparc/include/uapi/asm/sembuf.h
-@@ -10,22 +10,21 @@
++	__kernel_ulong_t msg_cbytes;	/* current number of bytes on queue */
++	__kernel_ulong_t msg_qnum;	/* number of messages in queue */
++	__kernel_ulong_t msg_qbytes;	/* max number of bytes on queue */
++	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
++	__kernel_pid_t msg_lrpid;	/* last receive pid */
++	__kernel_ulong_t __unused4;
++	__kernel_ulong_t __unused5;
++};
+diff --git a/arch/x86/include/uapi/asm/sembuf.h b/arch/x86/include/uapi/asm/sembuf.h
+index cc2d6a3aeae7..04ee697e2ae1 100644
+--- a/arch/x86/include/uapi/asm/sembuf.h
++++ b/arch/x86/include/uapi/asm/sembuf.h
+@@ -9,13 +9,23 @@
+  * Pad space is left for:
   * - 64-bit time_t to solve y2038 problem
   * - 2 miscellaneous 32-bit values
++ *
++ * x86_64 and x32 incorrectly added padding here, so the structures
++ * are still incompatible with the padding on x86.
   */
--#if defined(__sparc__) && defined(__arch64__)
--# define PADDING(x)
--#else
--# define PADDING(x) unsigned int x;
--#endif
- 
  struct semid64_ds {
- 	struct ipc64_perm sem_perm;		/* permissions .. see ipc.h */
--	PADDING(__pad1)
-+#if defined(__sparc__) && defined(__arch64__)
+ 	struct ipc64_perm sem_perm;	/* permissions .. see ipc.h */
++#ifdef __i386__
++	unsigned long	sem_otime;	/* last semop time */
 +	unsigned long	sem_otime_high;
-+	unsigned long	sem_otime;		/* last semop time */
++	unsigned long	sem_ctime;	/* last change time */
 +	unsigned long	sem_ctime_high;
-+	unsigned long	sem_ctime;		/* last change time */
 +#else
- 	__kernel_time_t	sem_otime;		/* last semop time */
--	PADDING(__pad2)
- 	__kernel_time_t	sem_ctime;		/* last change time */
+ 	__kernel_time_t	sem_otime;	/* last semop time */
+ 	__kernel_ulong_t __unused1;
+ 	__kernel_time_t	sem_ctime;	/* last change time */
+ 	__kernel_ulong_t __unused2;
 +#endif
- 	unsigned long	sem_nsems;		/* no. of semaphores in array */
- 	unsigned long	__unused1;
- 	unsigned long	__unused2;
- };
--#undef PADDING
- 
- #endif /* _SPARC64_SEMBUF_H */
-diff --git a/arch/sparc/include/uapi/asm/shmbuf.h b/arch/sparc/include/uapi/asm/shmbuf.h
-index 83a16055363f..99ccd39225a7 100644
---- a/arch/sparc/include/uapi/asm/shmbuf.h
-+++ b/arch/sparc/include/uapi/asm/shmbuf.h
-@@ -11,20 +11,20 @@
-  * - 2 miscellaneous 32-bit values
-  */
- 
--#if defined(__sparc__) && defined(__arch64__)
--# define PADDING(x)
--#else
--# define PADDING(x) unsigned int x;
--#endif
--
- struct shmid64_ds {
- 	struct ipc64_perm	shm_perm;	/* operation perms */
--	PADDING(__pad1)
-+#if defined(__sparc__) && defined(__arch64__)
- 	__kernel_time_t		shm_atime;	/* last attach time */
--	PADDING(__pad2)
- 	__kernel_time_t		shm_dtime;	/* last detach time */
--	PADDING(__pad3)
- 	__kernel_time_t		shm_ctime;	/* last change time */
-+#else
-+	unsigned long		shm_atime_high;
+ 	__kernel_ulong_t sem_nsems;	/* no. of semaphores in array */
+ 	__kernel_ulong_t __unused3;
+ 	__kernel_ulong_t __unused4;
+diff --git a/arch/x86/include/uapi/asm/shmbuf.h b/arch/x86/include/uapi/asm/shmbuf.h
+index 83c05fc2de38..d3f61b93854d 100644
+--- a/arch/x86/include/uapi/asm/shmbuf.h
++++ b/arch/x86/include/uapi/asm/shmbuf.h
+@@ -1 +1,57 @@
+-#include <asm-generic/shmbuf.h>
++#ifndef __ASM_GENERIC_SHMBUF_H
++#define __ASM_GENERIC_SHMBUF_H
++
++#include <asm/bitsperlong.h>
++
++/*
++ * The shmid64_ds structure for x86 architecture.
++ * Note extra padding because this structure is passed back and forth
++ * between kernel and user space.
++ *
++ * shmid64_ds was originally meant to be architecture specific, but
++ * everyone just ended up making identical copies without specific
++ * optimizations, so we may just as well all use the same one.
++ *
++ * i386 uses the padding for 64-bit time_t as it was originally designed,
++ * but uses two 'unsigned long' members to keep existing user space happy.
++ * x32 and x86_64 have a 64-bit __kernel_time_t.
++ *
++ * Pad space is left for:
++ * - 2 miscellaneous 32-bit values
++ */
++
++struct shmid64_ds {
++	struct ipc64_perm	shm_perm;	/* operation perms */
++	size_t			shm_segsz;	/* size of segment (bytes) */
++#ifdef __i386__
 +	unsigned long		shm_atime;	/* last attach time */
-+	unsigned long		shm_dtime_high;
++	unsigned long		shm_atime_high;
 +	unsigned long		shm_dtime;	/* last detach time */
-+	unsigned long		shm_ctime_high;
++	unsigned long		shm_dtime_high;
 +	unsigned long		shm_ctime;	/* last change time */
++	unsigned long		shm_ctime_high;
++#else
++	__kernel_time_t		shm_atime;	/* last attach time */
++	__kernel_time_t		shm_dtime;	/* last detach time */
++	__kernel_time_t		shm_ctime;	/* last change time */
 +#endif
- 	size_t			shm_segsz;	/* size of segment (bytes) */
- 	__kernel_pid_t		shm_cpid;	/* pid of creator */
- 	__kernel_pid_t		shm_lpid;	/* pid of last operator */
-@@ -45,6 +45,4 @@ struct shminfo64 {
- 	unsigned long	__unused4;
- };
- 
--#undef PADDING
--
- #endif /* _SPARC_SHMBUF_H */
++	__kernel_pid_t		shm_cpid;	/* pid of creator */
++	__kernel_pid_t		shm_lpid;	/* pid of last operator */
++	__kernel_ulong_t	shm_nattch;	/* no. of current attaches */
++	__kernel_ulong_t	__unused4;
++	__kernel_ulong_t	__unused5;
++};
++
++struct shminfo64 {
++	__kernel_ulong_t	shmmax;
++	__kernel_ulong_t	shmmin;
++	__kernel_ulong_t	shmmni;
++	__kernel_ulong_t	shmseg;
++	__kernel_ulong_t	shmall;
++	__kernel_ulong_t	__unused1;
++	__kernel_ulong_t	__unused2;
++	__kernel_ulong_t	__unused3;
++	__kernel_ulong_t	__unused4;
++};
++
++#endif /* __ASM_GENERIC_SHMBUF_H */
 -- 
 2.1.0.rc2
