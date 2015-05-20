@@ -1,69 +1,41 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: Re: [PATCH 00/23] userfaultfd v4
-Date: Wed, 20 May 2015 15:23:19 +0200
-Message-ID: <20150520132319.GN19097@redhat.com>
-References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
- <20150519143801.8ba477c3813e93a2637c19cf@linux-foundation.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150519143801.8ba477c3813e93a2637c19cf@linux-foundation.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH v6 0/3] Enable PPI sysfs interface for TPM 2.0
+Date: Wed, 20 May 2015 16:49:21 +0300
+Message-ID: <1432129766-7289-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: peterhuewe-Mmb7MZpHnFY@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Simon Wunderlich <sw-2YrNx6rUIHYiY0qSoAWiAoQuADTiUCJX@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vivien Didelot <vivien.didelot-4ysUXcep3aM1wj+D4I0NRVaTQe2KTcn/@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Andrew,
+Changes since v5:
+* Updated documentation.
 
-On Tue, May 19, 2015 at 02:38:01PM -0700, Andrew Morton wrote:
-> On Thu, 14 May 2015 19:30:57 +0200 Andrea Arcangeli <aarcange@redhat.com> wrote:
-> 
-> > This is the latest userfaultfd patchset against mm-v4.1-rc3
-> > 2015-05-14-10:04.
-> 
-> It would be useful to have some userfaultfd testcases in
-> tools/testing/selftests/.  Partly as an aid to arch maintainers when
-> enabling this.  And also as a standalone thing to give people a
-> practical way of exercising this interface.
+Changes since v4:
+* Removed dangling export of kernfs_remove_by_name_ns() from the sysfs
+  patch.
 
-Agreed.
+Changes since v3:
+* Use sysfs_remove_link()
 
-I was also thinking about writing a trinity module for it, I wrote it
-for an older version but it was much easier to do that back then
-before we had ioctls, now it's more tricky because the ioctls requires
-the fd open first etc... it's not enough to just call a syscall with a
-flood of supervised-random params anymore.
+Changes since v2:
+* Fixed to_tpm_chip() macro.
+* Split into two patches.
+* Renamed sysfs_link_group_to_kobj to sysfs_link_entry_to_kobj
+* Only create the "backwards compatibility" symlink for TPM 1.x devices.
 
-> What are your thoughts on enabling userfaultfd for other architectures,
-> btw?  Are there good use cases, are people working on it, etc?
+Jarkko Sakkinen (3):
+  sysfs: added sysfs_link_entry_to_kobj()
+  tpm: move the PPI attributes to character device directory.
+  tpm: update PPI documentation to address the location change.
 
-powerpc should be enabled and functional already. There's not much
-arch dependent code in it, so in theory if the postcopy live migration
-patchset is applied to qemu, it should work on powerpc out of the
-box. Nobody tested it yet but I don't expect trouble on the kernel side.
+ Documentation/ABI/testing/sysfs-driver-ppi | 19 +++++++++-----
+ drivers/char/tpm/tpm-chip.c                | 24 +++++++++++------
+ drivers/char/tpm/tpm.h                     | 17 +++++-------
+ drivers/char/tpm/tpm_ppi.c                 | 34 ++++++++----------------
+ fs/sysfs/group.c                           | 42 ++++++++++++++++++++++++++++++
+ include/linux/sysfs.h                      |  8 ++++++
+ 6 files changed, 95 insertions(+), 49 deletions(-)
 
-Adding support for all other archs is just a few liner patch that
-defines the syscall number. I didn't do that out of tree because every
-time a new syscall materialized I would get more rejects during
-rebase.
-
-> Also, I assume a manpage is in the works?  Sooner rather than later
-> would be good - Michael's review of proposed kernel interfaces has
-> often been valuable.
-
-Yes, the manpage was certainly planned. It would require updates as we
-keep adding features (like the wrprotect tracking, the non-cooperative
-usage, and extending the availability of the ioctls to tmpfs). We can
-definitely write a manpage with the current features.
-
-Ok, so I'll continue working on the testcase and on the manpage.
-
-Thanks!!
-Andrea
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+2.1.4
