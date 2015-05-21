@@ -1,71 +1,269 @@
-From: Alban Crequy <alban.crequy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] [RFC] fs, proc: don't guard /proc/<pid>/task/<tid>/children on CONFIG_CHECKPOINT_RESTORE
-Date: Thu, 21 May 2015 12:30:21 +0200
-Message-ID: <1432204221-1933-1-git-send-email-alban@endocode.com>
+From: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: [PATCH 0/8] Smack namespace
+Date: Thu, 21 May 2015 13:53:34 +0200
+Message-ID: <1432209222-8479-1-git-send-email-l.pawelczyk__30156.8573726856$1432209260$gmane$org@samsung.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, KAMEZAWA Hiroyuki <kamezawa.hiroyu-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alban Crequy <alban-973cpzSjLbNWk0Htik3J/w@public.gmane.org>, Iago Lopez Galeiras <iago-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
+To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ionut Alexa <ionut.m.alexa-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jeff Layton <jlayton-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Mauro Carvalho Chehab <mchehab@os>
+Cc: Lukasz Pawelczyk <havner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Alban Crequy <alban-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
+Hello,
 
-commit 818411616baf ("fs, proc: introduce
-/proc/<pid>/task/<tid>/children entry") introduced the children entry
-for checkpoint restore and the file is only available on kernels
-configured with CONFIG_EXPERT and CONFIG_CHECKPOINT_RESTORE.
+Some time ago I sent a Smack namespace documentation and a preliminary
+LSM namespace for RFC. I've been suggested that there shouldn't be a
+separate LSM namespace and that it should live within user namespace.
+And this version does. This is a complete set of patches required for
+Smack namespace.
 
-This is available in most distributions (Fedora, Debian, Ubuntu, CoreOS)
-because they usually enable CONFIG_EXPERT and CONFIG_CHECKPOINT_RESTORE.
-But Arch does not enable CONFIG_EXPERT or CONFIG_CHECKPOINT_RESTORE.
+This was designed with a collaboration of Smack maintainer Casey
+Schaufler.
 
-However, the children proc file is useful outside of checkpoint restore.
-I would like to use it in rkt. The rkt process exec() another program it
-does not control, and that other program will fork()+exec() a child
-process. I would like to find the pid of the child process from an
-external tool without iterating in /proc over all processes to find
-which one has a parent pid equal to rkt.
+Smack namespace have been implemented using user namespace hooks added
+by one of the patches. To put some context to it I paste here a
+documentation on what Smack namespace wants to achieve.
 
-Since the children proc file is useful outside of checkpoint-restore,
-I am removing the guard on CONFIG_CHECKPOINT_RESTORE.
+LSM hooks themselves are documented in the security.h file inside the
+patch.
 
-Signed-off-by: Alban Crequy <alban-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
-Cc: Iago Lopez Galeiras <iago-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
----
- fs/proc/array.c | 2 --
- fs/proc/base.c  | 2 --
- 2 files changed, 4 deletions(-)
+The patches are based on:
+https://github.com/cschaufler/smack-next/tree/smack-for-4.2-stacked
 
-diff --git a/fs/proc/array.c b/fs/proc/array.c
-index fd02a9e..6edec57 100644
---- a/fs/proc/array.c
-+++ b/fs/proc/array.c
-@@ -569,7 +569,6 @@ int proc_pid_statm(struct seq_file *m, struct pid_namespace *ns,
- 	return 0;
- }
- 
--#ifdef CONFIG_CHECKPOINT_RESTORE
- static struct pid *
- get_children_pid(struct inode *inode, struct pid *pid_prev, loff_t pos)
- {
-@@ -692,4 +691,3 @@ const struct file_operations proc_tid_children_operations = {
- 	.llseek  = seq_lseek,
- 	.release = children_seq_release,
- };
--#endif /* CONFIG_CHECKPOINT_RESTORE */
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 093ca14..b743007 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -2922,9 +2922,7 @@ static const struct pid_entry tid_base_stuff[] = {
- 	ONE("stat",      S_IRUGO, proc_tid_stat),
- 	ONE("statm",     S_IRUGO, proc_pid_statm),
- 	REG("maps",      S_IRUGO, proc_tid_maps_operations),
--#ifdef CONFIG_CHECKPOINT_RESTORE
- 	REG("children",  S_IRUGO, proc_tid_children_operations),
--#endif
- #ifdef CONFIG_NUMA
- 	REG("numa_maps", S_IRUGO, proc_tid_numa_maps_operations),
- #endif
+
+===================================================================
+
+--- What is a Smack namespace ---
+
+Smack namespace was developed to make it possible for Smack to work
+nicely with Linux containers where there is a full operating system
+with its own init inside the namespace. Such a system working with
+Smack expects to have at least partially working SMACK_MAC_ADMIN to be
+able to change labels of processes and files. This is required to be
+able to securely start applications under the control of Smack and
+manage their access rights.
+
+It was implemented using new LSM hooks added to the user namespace
+that were developed together with Smack namespace.
+
+
+--- Design ideas ---
+
+"Smack namespace" is rather "Smack labels namespace" as not the whole
+MAC is namespaced, only the labels. There is a great analogy between
+Smack labels namespace and the user namespace part that remaps UIDs.
+
+The idea is to create a map of labels for a namespace so the namespace
+is only allowed to use those labels. Smack rules are always the same
+as in the init namespace (limited only by what labels are mapped) and
+cannot be manipulated from the child namespace. The map is actually
+only for labels' names. The underlying structures for labels remain
+the same. The filesystem also stores the "unmapped" labels from the
+init namespace.
+
+Let's say we have those labels in the init namespace:
+label1
+label2
+label3
+
+and those rules:
+label1 label2 rwx
+label1 label3 rwx
+label2 label3 rwx
+
+We create a map for a namespace:
+label1 -> mapped1
+label2 -> mapped2
+
+This means that 'label3' is completely invisible in the namespace. As if
+it didn't exist. All the rules that include it are ignored.
+
+Effectively in the namespace we have only one rule:
+mapped1 mapped2 rwx
+
+Which in reality is:
+label1 label2 rwx
+
+All requests to access an object with a 'label3' will be denied. If it
+ever comes to a situation where 'label3' would have to be printed
+(e.g. reading an exec or mmap label from a file to which we have
+access) then huh sign '?' will be printed instead.
+
+All the operations in the namespace on the remaining labels will have
+to be performed using their mapped names. Things like changing own
+process's label, changing filesystem label. Labels will also be
+printed with their mapped names.
+
+You cannot import new labels in a namespace. Every operation that
+would do so in an init namespace will return an error in the child
+namespace. You cannot assign an unmapped or not existing label to an
+object. You can only operate on labels that have been explicitly
+mapped.
+
+
+--- Capabilities ---
+
+Enabling Smack related capabilities (CAP_MAC_ADMIN and
+CAP_MAC_OVERRIDE) is main goal of Smack namespace, so it can work
+properly in the container. And those capabilities do work to some
+extent. In several places where capabilities are checked compatibility
+with Smack namespace has been introduced. Capabilities are of course
+limited to operate only on mapped labels.
+
+CAP_MAC_OVERRIDE works fully, will allow you to ignore Smack access
+rules, but only between objects that have labels mapped. So in the
+example above having this CAP will allow e.g. label2 to write to
+label1, but will not allow any access to label3.
+
+With CAP_MAC_ADMIN the following operations has been allowed inside
+the namespace:
+- setting and removing xattr on files, including the security.* ones
+- setting process's own label (/proc/self/attr/current)
+- mounting in a privileged Smack mode, which means one can specify
+  additional mount options like: smackfsdef, smackfsfloor etc.
+
+Again this is also allowed only on the mapped labels. Labels on the
+filesystem will be stored in unmapped form so they are preserved
+through reboots.
+
+Such a namespace construct allows e.g. systemd (with Smack support)
+working in a container to assign labels properly to daemons and other
+processes.
+
+
+--- Usage ---
+
+Smack namespace is written using LSM hooks inside user namespace. That
+means it's connected to it.
+
+To create a new Smack namespace you need to unshare() user namespace
+as usual. If that is all you do though, than there is no difference to
+what is now. To activate the Smack namespace you need to fill the
+labels' map. It is in a file /proc/$PID/smack_map.
+
+By default the map is empty and Smack namespaces are inactive (labels
+are taken directly from a parent namespace). It also means that the
+Smack capabilities will be inactive. After you fill the map it starts
+to take effect in the namespace and Smack capabilities (only on mapped
+labels) start to work.
+
+Due to the way Smack works only CAP_MAC_ADMIN from the parent
+namespace (init_user_ns for now, see the "Current limitations" below)
+is allowed to fill the map. That means that an unprivileged user is
+still allowed to create the user namespace but it will not be able to
+fill the labels' map (activate Smack namespace). An administrator
+intervention is required.
+
+The attr_map write format is:
+unmapped_label mapped_label
+
+When reading the file it shows an active map for a namespace the
+process in question is in in the format:
+unmapped_label -> mapped_label
+
+If the smack_map file is empty it means the namespace is not mapped
+and Smack namespace is inactive (no mappings, MAC related capabilities
+behave as they did before, meaning they are active only in
+init_user_ns). For init_user_ns the map will always be empty.
+
+Writing to the map file is not disabled after the first write as it is
+in uid_map. For Smack we have no means to map ranges of labels, hence
+it can really be advantageous to be able to expand the map later
+on. But you can only add to the map. You cannot remove already mapped
+labels. You cannot change the already existing mappings. Also mappings
+has to be 1-1. All requests to create a map where either the unmapped
+or the mapped label already exists in the map will be denied.
+
+setns() with Smack namespace active has an additional check that the
+label of a process that is calling setns() has to be already mapped in
+the target Smack namespace for the call to succeed.
+
+
+--- Special labels ---
+
+Smack is using some special labels that have built-in rules. Things
+like floor '_', dash '^', star '*', etc. Those labels are not
+automatically mapped to the namespace. Moreover, you can choose to map
+a different label from the init namespace to behave e.g. like floor
+inside the namespace.
+
+Let's say we have no rules and those labels in the init namespace:
+_
+floor_to_be
+label
+
+Both 'label' and 'floor_to_be' can read objects with '_'. But they
+have no access rights to each other.
+
+Now let's create a map like this:
+_             ordinary_label
+floor_to_be   _
+label         mapped
+
+Right now label 'mapped' can read label '_' which means that
+effectively inside this namespace label 'label' has gained read access
+to the 'floor_to_be'. The label 'ordinary_label' is exactly it, an
+ordinary label that the built-in rules no longer apply to inside the
+namespace.
+
+To sum up, special labels in the namespace behave the same as in the
+init namespace. Not the original special labels though, but the ones
+we map to specials. This is the only case where a namespace can have
+access rights the init namespace does not have (like the 'label' to
+'floor_to_be' in the example above).
+
+Of course mappings like these are perfectly legal:
+_   _
+*   *
+^   ^
+
+
+--- Current limitations ---
+
+The Smack namespace is not hierarchical yet. It is currently not
+possible to fill a smack_map of a nested user namespace (you can still
+create nested user namespace, it will just inherit its parent's map
+and won't have active Smack capabilities). When hierarchy will be
+implemented the process creating another namespace will be allowed to
+map only labels that it has permission to itself (those that it has in
+its own map).
+
+Special files inside the virtual smackfs needs to be reviewed whether
+it's beneficial to have some of their functionality namespaced as well
+(e.g. onlycap, syslog. ambient, etc). This would increase
+CAP_MAC_ADMIN privileges inside the namespace.
+
+
+Lukasz Pawelczyk (8):
+  kernel/exit.c: make sure current's nsproxy != NULL while checking caps
+  user_ns: 3 new hooks for LSM namespace operations
+  smack: extend capability functions and fix 2 checks
+  smack: abstraction layer for 2 common Smack operations
+  smack: misc cleanups in preparation for a namespace patch
+  smack: namespace groundwork
+  smack: namespace implementation
+  smack: documentation for the Smack namespace
+
+ Documentation/security/00-INDEX            |   2 +
+ Documentation/security/Smack-namespace.txt | 221 ++++++++++++
+ MAINTAINERS                                |   1 +
+ fs/proc/base.c                             |  57 ++++
+ include/linux/security.h                   |  46 +++
+ include/linux/user_namespace.h             |   9 +
+ kernel/exit.c                              |   8 +-
+ kernel/user.c                              |   3 +
+ kernel/user_namespace.c                    |  18 +
+ security/capability.c                      |  21 ++
+ security/security.c                        |  20 ++
+ security/smack/Kconfig                     |  12 +
+ security/smack/Makefile                    |   1 +
+ security/smack/smack.h                     | 187 +++++++++-
+ security/smack/smack_access.c              | 191 +++++++++--
+ security/smack/smack_lsm.c                 | 531 ++++++++++++++++++++---------
+ security/smack/smack_ns.c                  | 484 ++++++++++++++++++++++++++
+ security/smack/smackfs.c                   | 154 +++++----
+ 18 files changed, 1719 insertions(+), 247 deletions(-)
+ create mode 100644 Documentation/security/Smack-namespace.txt
+ create mode 100644 security/smack/smack_ns.c
+
 -- 
-2.1.4
+2.1.0
