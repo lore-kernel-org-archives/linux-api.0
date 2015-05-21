@@ -1,256 +1,148 @@
-From: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH 2/8] user_ns: 3 new hooks for LSM namespace operations
-Date: Thu, 21 May 2015 13:53:36 +0200
-Message-ID: <1432209222-8479-3-git-send-email-l.pawelczyk__8720.88149558312$1432209416$gmane$org@samsung.com>
-References: <1432209222-8479-1-git-send-email-l.pawelczyk@samsung.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <1432209222-8479-1-git-send-email-l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ionut Alexa <ionut.m.alexa-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jeff Layton <jlayton-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Mauro Carvalho Chehab <mchehab@os>
-Cc: Lukasz Pawelczyk <havner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Kirill Smelkov <kirr@nexedi.com>
+Subject: Re: [PATCH 00/23] userfaultfd v4
+Date: Thu, 21 May 2015 16:11:11 +0300
+Message-ID: <20150521131111.GA8932@teco.navytux.spb.ru>
+References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Andrea Arcangeli <aarcange@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-This commit implements 3 new LSM hooks that provide the means for LSMs
-to embed their own security context within user namespace, effectively
-creating some sort of a user_ns related security namespace.
+Hello up there,
 
-The first one to take advantage of this mechanism is Smack.
+On Thu, May 14, 2015 at 07:30:57PM +0200, Andrea Arcangeli wrote:
+> Hello everyone,
+> 
+> This is the latest userfaultfd patchset against mm-v4.1-rc3
+> 2015-05-14-10:04.
+> 
+> The postcopy live migration feature on the qemu side is mostly ready
+> to be merged and it entirely depends on the userfaultfd syscall to be
+> merged as well. So it'd be great if this patchset could be reviewed
+> for merging in -mm.
+> 
+> Userfaults allow to implement on demand paging from userland and more
+> generally they allow userland to more efficiently take control of the
+> behavior of page faults than what was available before
+> (PROT_NONE + SIGSEGV trap).
+> 
+> The use cases are:
 
-The hooks has been documented in the in the security.h below.
+[...]
 
-Signed-off-by: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
----
- include/linux/lsm_hooks.h      | 28 ++++++++++++++++++++++++++++
- include/linux/security.h       | 23 +++++++++++++++++++++++
- include/linux/user_namespace.h |  4 ++++
- kernel/user.c                  |  3 +++
- kernel/user_namespace.c        | 18 ++++++++++++++++++
- security/security.c            | 28 ++++++++++++++++++++++++++++
- 6 files changed, 104 insertions(+)
+> Even though there wasn't a real use case requesting it yet, it also
+> allows to implement distributed shared memory in a way that readonly
+> shared mappings can exist simultaneously in different hosts and they
+> can be become exclusive at the first wrprotect fault.
 
-diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-index f014f25..b6e0c3d 100644
---- a/include/linux/lsm_hooks.h
-+++ b/include/linux/lsm_hooks.h
-@@ -1260,6 +1260,23 @@
-  *	audit_rule_init.
-  *	@rule contains the allocated rule
-  *
-+ * @userns_create:
-+ *	Allocates and fills the security part of a new user namespace.
-+ *	@ns points to a newly created user namespace.
-+ *	Returns 0 or an error code.
-+ *
-+ * @userns_free:
-+ *	Deallocates the security part of a user namespace.
-+ *	@ns points to a user namespace about to be destroyed.
-+ *
-+ * @userns_setns:
-+ *	Run during a setns syscall to add a process to an already existing
-+ *	user namespace. Returning failure here will block the operation
-+ *	requested from userspace (setns() with CLONE_NEWUSER).
-+ *	@nsproxy contains a nsproxy to which the user namespace will be assigned.
-+ *	@ns contains user namespace that is to be incorporated to the nsproxy.
-+ *	Returns 0 or an error code.
-+ *
-  * @inode_notifysecctx:
-  *	Notify the security module of what the security context of an inode
-  *	should be.  Initializes the incore security context managed by the
-@@ -1611,6 +1628,12 @@ union security_list_options {
- 				struct audit_context *actx);
- 	void (*audit_rule_free)(void *lsmrule);
- #endif /* CONFIG_AUDIT */
-+
-+#ifdef CONFIG_SECURITY
-+	int (*userns_create)(struct user_namespace *ns);
-+	void (*userns_free)(struct user_namespace *ns);
-+	int (*userns_setns)(struct nsproxy *nsproxy, struct user_namespace *ns);
-+#endif /* CONFIG_SECURITY */
- };
- 
- struct security_hook_heads {
-@@ -1822,6 +1845,11 @@ struct security_hook_heads {
- 	struct list_head audit_rule_match;
- 	struct list_head audit_rule_free;
- #endif /* CONFIG_AUDIT */
-+#ifdef CONFIG_SECURITY
-+	struct list_head userns_create;
-+	struct list_head userns_free;
-+	struct list_head userns_setns;
-+#endif /* CONFIG_SECURITY */
- };
- 
- /*
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 8c8175d..ec17ae1 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -1583,6 +1583,29 @@ static inline void security_audit_rule_free(void *lsmrule)
- #endif /* CONFIG_SECURITY */
- #endif /* CONFIG_AUDIT */
- 
-+#ifdef CONFIG_SECURITY
-+int security_userns_create(struct user_namespace *ns);
-+void security_userns_free(struct user_namespace *ns);
-+int security_userns_setns(struct nsproxy *nsproxy, struct user_namespace *ns);
-+
-+#else
-+
-+static inline int security_userns_create(struct user_namespace *ns)
-+{
-+	return 0;
-+}
-+
-+static inline void security_userns_free(struct user_namespace *ns)
-+{ }
-+
-+static inline int security_userns_setns(struct nsproxy *nsproxy,
-+					struct user_namespace *ns)
-+{
-+	return 0;
-+}
-+
-+#endif /* CONFIG_SECURITY */
-+
- #ifdef CONFIG_SECURITYFS
- 
- extern struct dentry *securityfs_create_file(const char *name, umode_t mode,
-diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-index 8297e5b..a9400cc 100644
---- a/include/linux/user_namespace.h
-+++ b/include/linux/user_namespace.h
-@@ -39,6 +39,10 @@ struct user_namespace {
- 	struct key		*persistent_keyring_register;
- 	struct rw_semaphore	persistent_keyring_register_sem;
- #endif
-+
-+#ifdef CONFIG_SECURITY
-+	void *security;
-+#endif
- };
- 
- extern struct user_namespace init_user_ns;
-diff --git a/kernel/user.c b/kernel/user.c
-index b069ccb..ce5419e 100644
---- a/kernel/user.c
-+++ b/kernel/user.c
-@@ -59,6 +59,9 @@ struct user_namespace init_user_ns = {
- 	.persistent_keyring_register_sem =
- 	__RWSEM_INITIALIZER(init_user_ns.persistent_keyring_register_sem),
- #endif
-+#ifdef CONFIG_SECURITY
-+	.security = NULL,
-+#endif
- };
- EXPORT_SYMBOL_GPL(init_user_ns);
- 
-diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index 4109f83..cadffb6 100644
---- a/kernel/user_namespace.c
-+++ b/kernel/user_namespace.c
-@@ -22,6 +22,7 @@
- #include <linux/ctype.h>
- #include <linux/projid.h>
- #include <linux/fs_struct.h>
-+#include <linux/security.h>
- 
- static struct kmem_cache *user_ns_cachep __read_mostly;
- static DEFINE_MUTEX(userns_state_mutex);
-@@ -108,6 +109,15 @@ int create_user_ns(struct cred *new)
- 
- 	set_cred_user_ns(new, ns);
- 
-+#ifdef CONFIG_SECURITY
-+	ret = security_userns_create(ns);
-+	if (ret) {
-+		ns_free_inum(&ns->ns);
-+		kmem_cache_free(user_ns_cachep, ns);
-+		return ret;
-+	}
-+#endif
-+
- #ifdef CONFIG_PERSISTENT_KEYRINGS
- 	init_rwsem(&ns->persistent_keyring_register_sem);
- #endif
-@@ -143,6 +153,9 @@ void free_user_ns(struct user_namespace *ns)
- #ifdef CONFIG_PERSISTENT_KEYRINGS
- 		key_put(ns->persistent_keyring_register);
- #endif
-+#ifdef CONFIG_SECURITY
-+		security_userns_free(ns);
-+#endif
- 		ns_free_inum(&ns->ns);
- 		kmem_cache_free(user_ns_cachep, ns);
- 		ns = parent;
-@@ -969,6 +982,7 @@ static int userns_install(struct nsproxy *nsproxy, struct ns_common *ns)
- {
- 	struct user_namespace *user_ns = to_user_ns(ns);
- 	struct cred *cred;
-+	int err;
- 
- 	/* Don't allow gaining capabilities by reentering
- 	 * the same user namespace.
-@@ -986,6 +1000,10 @@ static int userns_install(struct nsproxy *nsproxy, struct ns_common *ns)
- 	if (!ns_capable(user_ns, CAP_SYS_ADMIN))
- 		return -EPERM;
- 
-+	err = security_userns_setns(nsproxy, user_ns);
-+	if (err)
-+		return err;
-+
- 	cred = prepare_creds();
- 	if (!cred)
- 		return -ENOMEM;
-diff --git a/security/security.c b/security/security.c
-index bd4c5f6..e902f3b 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -25,6 +25,7 @@
- #include <linux/mount.h>
- #include <linux/personality.h>
- #include <linux/backing-dev.h>
-+#include <linux/user_namespace.h>
- #include <net/flow.h>
- 
- #define MAX_LSM_EVM_XATTR	2
-@@ -1541,6 +1542,25 @@ int security_audit_rule_match(u32 secid, u32 field, u32 op, void *lsmrule,
- }
- #endif /* CONFIG_AUDIT */
- 
-+#ifdef CONFIG_SECURITY
-+
-+int security_userns_create(struct user_namespace *ns)
-+{
-+	return call_int_hook(userns_create, 0, ns);
-+}
-+
-+void security_userns_free(struct user_namespace *ns)
-+{
-+	call_void_hook(userns_free, ns);
-+}
-+
-+int security_userns_setns(struct nsproxy *nsproxy, struct user_namespace *ns)
-+{
-+	return call_int_hook(userns_setns, 0, nsproxy, ns);
-+}
-+
-+#endif /* CONFIG_SECURITY */
-+
- struct security_hook_heads security_hook_heads = {
- 	.binder_set_context_mgr =
- 		LIST_HEAD_INIT(security_hook_heads.binder_set_context_mgr),
-@@ -1885,4 +1905,12 @@ struct security_hook_heads security_hook_heads = {
- 	.audit_rule_free =
- 		LIST_HEAD_INIT(security_hook_heads.audit_rule_free),
- #endif /* CONFIG_AUDIT */
-+#ifdef CONFIG_SECURITY
-+	.userns_create =
-+		LIST_HEAD_INIT(security_hook_heads.userns_create),
-+	.userns_free =
-+		LIST_HEAD_INIT(security_hook_heads.userns_free),
-+	.userns_setns =
-+		LIST_HEAD_INIT(security_hook_heads.userns_setns),
-+#endif /* CONFIG_SECURITY */
- };
--- 
-2.1.0
+Sorry for maybe speaking up too late, but here is additional real
+potential use-case which in my view is overlapping with the above:
+
+Recently we needed to implement persistency for NumPy arrays - that is
+to track made changes to array memory and transactionally either abandon
+the changes on transaction abort, or store them back to storage on
+transaction commit.
+
+Since arrays can be large, it would be slow and thus not practical to
+have original data copy and compare memory to original to find what
+array parts have been changed.
+
+So I've implemented a scheme where array data is initially PROT_READ
+protected, then we catch SIGSEGV, if it is write and area belongs to array
+data - we mark that page as PROT_WRITE and continue. On commit time we
+know which parts were modified.
+
+Also, since arrays could be large - bigger than RAM, and only sparse
+parts of it could be needed to get needed information, for reading it
+also makes sense to lazily load data in SIGSEGV handler with initial
+PROT_NONE protection.
+
+This is very similar to how memory mapped files work, but adds
+transactionality which, as far as I know, is not provided by any
+currently in-kernel filesystem on Linux.
+
+The system is done as files, and arrays are then build on top of
+this-way memory-mapped files. So from now on we can forget about NumPy
+arrays and only talk about files, their mapping, lazy loading and
+transactionally storing in-memory changes back to file storage.
+
+To get this working, a custom user-space virtual memory manager is
+unrolled, which manages RAM memory "pages", file mappings into virtual
+address-space, tracks pages protection and does SIGSEGV handling
+appropriately.
+
+
+The gist of virtual memory-manager is this:
+
+    https://lab.nexedi.cn/kirr/wendelin.core/blob/master/include/wendelin/bigfile/virtmem.h
+    https://lab.nexedi.cn/kirr/wendelin.core/blob/master/bigfile/virtmem.c  (vma_on_pagefault)
+
+
+For operations it currently needs
+
+    - establishing virtual memory areas and connecting to tracking it
+
+    - changing pages protection
+
+        PROT_NONE or absent                             - initially
+        PROT_NONE       -> PROT_READ                    - after read
+        PROT_READ       -> PROT_READWRITE               - after write
+        PROT_READWRITE  -> PROT_READ                    - after commit
+        PROT_READWRITE  -> PROT_NONE or absent (again)  - after abort
+        PROT_READ       -> PROT_NONE or absent (again)  - on reclaim
+
+    - working with aliasable memory (thus taken from tmpfs)
+
+        there could be two overlapping-in-file mapping for file (array)
+        requested at different time, and changes from one mapping should
+        propagate to another one -> for common parts only 1 page should
+        be memory-mapped into 2 places in address-space.
+
+so what is currently lacking on userfaultfd side is:
+
+    - ability to remove / make PROT_NONE already mapped pages
+      (UFFDIO_REMAP was recently dropped)
+
+    - ability to arbitrarily change pages protection (e.g. RW -> R)
+
+    - inject aliasable memory from tmpfs (or better hugetlbfs) and into
+      several places (UFFDIO_REMAP + some mapping copy semantic).
+
+
+The code is ugly because it is only a prototype. You can clone/read it
+all from here:
+
+    https://lab.nexedi.cn/kirr/wendelin.core
+
+Virtual memory-manager even has tests, and from them it could be seen
+how the system is supposed to work (after each access - what pages and
+where are mapped and how):
+
+    https://lab.nexedi.cn/kirr/wendelin.core/blob/master/bigfile/tests/test_virtmem.c
+
+The performance currently is not great, partly because of page clearing
+when getting ram from tmpfs, and partly because of mprotect/SIGSEGV/vmas
+overhead and other dumb things on my side.
+
+I still wanted to show the case, as userfaultd here has potential to
+remove overhead related to kernel.
+
+Thanks beforehand for feedback,
+
+Kirill
+
+
+P.S. some context
+
+http://www.wendelin.io/NXD-Wendelin.Core.Non.Secret/asEntireHTML
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
