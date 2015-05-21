@@ -1,54 +1,71 @@
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Subject: Re: [PATCH 2/9] y2038: asm-generic: extend sysvipc data structures
-Date: Thu, 21 May 2015 10:56:34 +0200
-Message-ID: <CAMuHMdUtJ2x+axBLj5qdsRwod=XdRkmeYJm1N7H5V_CXLo5J0g@mail.gmail.com>
-References: <1432134445-804487-1-git-send-email-arnd@arndb.de>
-	<1432134445-804487-3-git-send-email-arnd@arndb.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <1432134445-804487-3-git-send-email-arnd@arndb.de>
-Sender: linux-arch-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: y2038@lists.linaro.org, baolin.wang@linaro.org, albert.aribaud@3adev.fr, John Stultz <john.stultz@linaro.org>, bamvor.zhangjian@linaro.org, ruchandani.tina@gmail.com, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, libc-alpha@sourceware.org, Linux-Arch <linux-arch@vger.kernel.org>, Manfred Spraul <manfred@colorfullife.com>, Michael Kerrisk <mtk.manpages@gmail.com>
+From: Alban Crequy <alban.crequy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] [RFC] fs, proc: don't guard /proc/<pid>/task/<tid>/children on CONFIG_CHECKPOINT_RESTORE
+Date: Thu, 21 May 2015 12:30:21 +0200
+Message-ID: <1432204221-1933-1-git-send-email-alban@endocode.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, KAMEZAWA Hiroyuki <kamezawa.hiroyu-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alban Crequy <alban-973cpzSjLbNWk0Htik3J/w@public.gmane.org>, Iago Lopez Galeiras <iago-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Arnd,
+From: Alban Crequy <alban-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
 
-On Wed, May 20, 2015 at 5:07 PM, Arnd Bergmann <arnd@arndb.de> wrote:
-> --- a/include/uapi/asm-generic/sembuf.h
-> +++ b/include/uapi/asm-generic/sembuf.h
-> @@ -12,23 +12,29 @@
->   * everyone just ended up making identical copies without specific
->   * optimizations, so we may just as well all use the same one.
->   *
-> - * 64 bit architectures typically define a 64 bit __kernel_time_t,
-> + * 64 bit architectures use a 64-bit __kernel_time_t here, while
-> + * 32 bit architectures have a pair of unsigned long values.
->   * so they do not need the first two padding words.
-> - * On big-endian systems, the padding is in the wrong place.
->   *
-> - * Pad space is left for:
-> - * - 64-bit time_t to solve y2038 problem
-> - * - 2 miscellaneous 32-bit values
-> + * On big-endian systems, the padding is in the wrong place for
-> + * historic reasons, so user space has to reconstruct a time_t
-> + * value using
-> + *
-> + * user_semid_ds.sem_otime = kernel_semid64_ds.sem_otime +
-> + *             (long long)(kernel_semid64_ds.sem_otime_high << 32)
+commit 818411616baf ("fs, proc: introduce
+/proc/<pid>/task/<tid>/children entry") introduced the children entry
+for checkpoint restore and the file is only available on kernels
+configured with CONFIG_EXPERT and CONFIG_CHECKPOINT_RESTORE.
 
-The cast to "long long" should be inside the parentheses, to promote the
-(32-bit) sem_otime_high to a first 64-bit integer first.
-Else it will be shifted into oblivion (oh no, C undefined behavior).
+This is available in most distributions (Fedora, Debian, Ubuntu, CoreOS)
+because they usually enable CONFIG_EXPERT and CONFIG_CHECKPOINT_RESTORE.
+But Arch does not enable CONFIG_EXPERT or CONFIG_CHECKPOINT_RESTORE.
 
-Gr{oetje,eeting}s,
+However, the children proc file is useful outside of checkpoint restore.
+I would like to use it in rkt. The rkt process exec() another program it
+does not control, and that other program will fork()+exec() a child
+process. I would like to find the pid of the child process from an
+external tool without iterating in /proc over all processes to find
+which one has a parent pid equal to rkt.
 
-                        Geert
+Since the children proc file is useful outside of checkpoint-restore,
+I am removing the guard on CONFIG_CHECKPOINT_RESTORE.
 
---
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
+Signed-off-by: Alban Crequy <alban-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
+Cc: Iago Lopez Galeiras <iago-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
+---
+ fs/proc/array.c | 2 --
+ fs/proc/base.c  | 2 --
+ 2 files changed, 4 deletions(-)
 
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-                                -- Linus Torvalds
+diff --git a/fs/proc/array.c b/fs/proc/array.c
+index fd02a9e..6edec57 100644
+--- a/fs/proc/array.c
++++ b/fs/proc/array.c
+@@ -569,7 +569,6 @@ int proc_pid_statm(struct seq_file *m, struct pid_namespace *ns,
+ 	return 0;
+ }
+ 
+-#ifdef CONFIG_CHECKPOINT_RESTORE
+ static struct pid *
+ get_children_pid(struct inode *inode, struct pid *pid_prev, loff_t pos)
+ {
+@@ -692,4 +691,3 @@ const struct file_operations proc_tid_children_operations = {
+ 	.llseek  = seq_lseek,
+ 	.release = children_seq_release,
+ };
+-#endif /* CONFIG_CHECKPOINT_RESTORE */
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index 093ca14..b743007 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -2922,9 +2922,7 @@ static const struct pid_entry tid_base_stuff[] = {
+ 	ONE("stat",      S_IRUGO, proc_tid_stat),
+ 	ONE("statm",     S_IRUGO, proc_pid_statm),
+ 	REG("maps",      S_IRUGO, proc_tid_maps_operations),
+-#ifdef CONFIG_CHECKPOINT_RESTORE
+ 	REG("children",  S_IRUGO, proc_tid_children_operations),
+-#endif
+ #ifdef CONFIG_NUMA
+ 	REG("numa_maps", S_IRUGO, proc_tid_numa_maps_operations),
+ #endif
+-- 
+2.1.4
