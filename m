@@ -1,98 +1,69 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH net-next 1/4] bpf: allow bpf programs to tail-call other
- bpf programs
-Date: Thu, 21 May 2015 10:16:52 -0700
-Message-ID: <555E1304.7080909@plumgrid.com>
-References: <1432079946-9878-1-git-send-email-ast@plumgrid.com> <1432079946-9878-2-git-send-email-ast@plumgrid.com> <CALCETrVP=7sCM12cCZVZCCMozGcHyqTsOFvjv7cEpc7Frxj4Xg@mail.gmail.com> <555BD2E4.5050608@plumgrid.com> <CALCETrVNwOVRJ4KH6mEo4hPq_QjTCb8mcwRf1sy5kd1nmnSZ+A@mail.gmail.com> <555E0A93.2020803@plumgrid.com> <CALCETrX7xAuRoRv7WV+LS-r_pOknQdXPpBEbFy5TqB_6eGTD5Q@mail.gmail.com> <555E0D81.6060703@plumgrid.com> <CALCETrWLpL8o9=P0sDGXUgcQ_LOkgJGrVdv0R6eaec=+WHPfkg@mail.gmail.com>
+From: Robert Bragg <robert@sixbynine.org>
+Subject: [RFC PATCH] perf: enable fsync to flush buffered samples
+Date: Thu, 21 May 2015 18:40:28 +0100
+Message-ID: <1432230028-30987-1-git-send-email-robert@sixbynine.org>
+References: <20150520121226.GA11195@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrWLpL8o9=P0sDGXUgcQ_LOkgJGrVdv0R6eaec=+WHPfkg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Michael Holzheu <holzheu-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Zi Shen Lim <zlim.lnx-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+In-Reply-To: <20150520121226.GA11195@gmail.com>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: intel-gfx@lists.freedesktop.org
+Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>, David Airlie <airlied@linux.ie>, linux-api@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Daniel Vetter <daniel.vetter@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On 5/21/15 9:57 AM, Andy Lutomirski wrote:
-> On Thu, May 21, 2015 at 9:53 AM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org> wrote:
->> On 5/21/15 9:43 AM, Andy Lutomirski wrote:
->>>
->>> On Thu, May 21, 2015 at 9:40 AM, Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
->>> wrote:
->>>>
->>>> On 5/21/15 9:20 AM, Andy Lutomirski wrote:
->>>>>
->>>>>
->>>>>
->>>>> What I mean is: why do we need the interface to be "look up this index
->>>>> in an array and just to what it references" as a single atomic
->>>>> instruction?  Can't we break it down into first "look up this index in
->>>>> an array" and then "do this tail call"?
->>>>
->>>>
->>>>
->>>> I've actually considered to do this split and do first part as map lookup
->>>> and 2nd as 'tail call to this ptr' insn, but it turned out to be
->>>> painful: verifier gets more complicated, ctx pointer needs to kept
->>>> somewhere, JITs need to special case two things instead of one.
->>>> Also I couldn't see a use case for exposing program pointer to the
->>>> program itself. I've explored this path only because it felt more
->>>> traditional 'goto *ptr' like, but adding new PTR_TO_PROG type to
->>>> verifier looked wasteful.
->>>
->>>
->>> At some point, I think that it would be worth extending the verifier
->>> to support more general non-integral scalar types. "Pointer to
->>> tail-call target" would be just one of them.  "Pointer to skb" might
->>> be nice as a real first-class scalar type that lives in a register as
->>> opposed to just being magic typed context.
->>
->>
->> well, I don't see a use case for 'pointer to tail-call target',
->> but more generic 'pointer to skb' indeed is a useful concept.
->> I was thinking more like 'pointer to structure of the type X',
->> then we can natively support 'pointer to task_struct',
->> 'pointer to inode', etc which will help tracing programs to be
->> written in more convenient way.
->> Right now pointer walking has to be done via bpf_probe_read()
->> helper as demonstrated in tracex1_kern.c example.
->> With this future 'pointer to struct of type X' knowledge in verifier
->> we'll be able to do 'ptr->field' natively with higher performance.
->
-> If you implement that, then you get "pointer to tail-call target" as
-> well, right?  You wouldn't be allowed to dereference the pointer, but
-> you could jump to it.
-
-not really. Such 'pointer to tail-call target' would still be separate
-type and treated specially through the verifier.
-'pointer to datastructure' can be generalized for different structs,
-because they are data, whereas 'pointer to code' is different in
-a sense of what program will be able to do with such pointer.
-The program will be able to read certain fields with proper alignment
-from such 'pointer to datastruct' and type of datastruct would need
-to be tracked, but 'pointer to code' have nothing interesting from
-the program point of view. It can only jump there.
-It cannot store in anywhere, because the life time of code pointer
-is within this program lifetime (programs run under rcu).
-As soon as program got this 'pointer to code' it needs to jump to it.
-Whereas 'pointer to data' have different lifetimes.
-
->>> We'd still need some way to stick fds into a map, but that's not
->>> really the verifier's problem.
->>
->>
->> well, they both need to be aware of that. When it comes to safety
->> generalization suffers. Have to do extra checks both in map_update_elem
->> and in verifier. No way around that.
->>
->
-> Sure, the verifier needs to know that the things you read from the map
-> are "pointer to tail-call target", but that seems like a nice thing to
-> generalize, too.  After all, you could also have arrays of pointers to
-> other things, too.
-
-Theoretically, yes, but I'd like to implement only practical things ;)
-This bpf_tail_call() solves real need while 'array of pointers to
-other things' sounds really nice, but I don't see a demand for it yet.
-I'm not saying we'll never implement it, only not right now.
+SW5zdGVhZCBvZiBoYXZpbmcgYSBQRVJGX0VWRU5UX0lPQ19GTFVTSCBpb2N0bCB0aGlzIGluc3Rl
+YWQgYWxsb3dzCnVzZXJzcGFjZSB0byB1c2UgZnN5bmMgZm9yIGZsdXNoaW5nIHBtdSBzYW1wbGVz
+LCBhcyBzdWdnZXN0ZWQgYnkgSW5nbwpNb2xuYXIgLSB0aGFua3MuCgpGb3IgcmVmZXJlbmNlIEkn
+dmUgYWxzbyBwdXNoZWQgYSBwYXRjaCB0byBteSBNZXNhIGJyYW5jaCB0byB0ZXN0CnRoaXM6IGh0
+dHBzOi8vZ2l0aHViLmNvbS9yaWIvbWVzYSB3aXAvcmliL29hLWhzdy00LjAuMAoKLSBSb2JlcnQK
+Ci0tLSA+OCAtLS0KClRvIGFsbG93IGZvciBwbXVzIHRoYXQgbWF5IGhhdmUgaW50ZXJuYWwgYnVm
+ZmVyaW5nIChlLmcuIHRoZSBoYXJkd2FyZQp3cml0ZXMgb3V0IGRhdGEgdG8gYSBjaXJjdWxhciBi
+dWZmZXIgd2hpY2ggaXMgb25seSBwZXJpb2RpY2FsbHkKZm9yd2FyZGVkIHRvIHVzZXJzcGFjZSB2
+aWEgcGVyZikgdGhpcyBlbmFibGVzIHVzZXJzcGFjZSB0byBleHBsaWNpdGx5CmVuc3VyZSBpdCBo
+YXMgcmVjZWl2ZWQgYWxsIHNhbXBsZXMgYmVmb3JlIGEgcG9pbnQgaW4gdGltZS4KClNpZ25lZC1v
+ZmYtYnk6IFJvYmVydCBCcmFnZyA8cm9iZXJ0QHNpeGJ5bmluZS5vcmc+Ci0tLQogaW5jbHVkZS9s
+aW51eC9wZXJmX2V2ZW50LmggfCAgNyArKysrKysrCiBrZXJuZWwvZXZlbnRzL2NvcmUuYyAgICAg
+ICB8IDIzICsrKysrKysrKysrKysrKysrKysrKysrCiAyIGZpbGVzIGNoYW5nZWQsIDMwIGluc2Vy
+dGlvbnMoKykKCmRpZmYgLS1naXQgYS9pbmNsdWRlL2xpbnV4L3BlcmZfZXZlbnQuaCBiL2luY2x1
+ZGUvbGludXgvcGVyZl9ldmVudC5oCmluZGV4IDA0ZTk4YzguLmQ3ZmFjMDUgMTAwNjQ0Ci0tLSBh
+L2luY2x1ZGUvbGludXgvcGVyZl9ldmVudC5oCisrKyBiL2luY2x1ZGUvbGludXgvcGVyZl9ldmVu
+dC5oCkBAIC0zMDUsNiArMzA1LDEzIEBAIHN0cnVjdCBwbXUgewogCSAqIEZyZWUgcG11LXByaXZh
+dGUgQVVYIGRhdGEgc3RydWN0dXJlcwogCSAqLwogCXZvaWQgKCpmcmVlX2F1eCkJCSh2b2lkICph
+dXgpOyAvKiBvcHRpb25hbCAqLworCisJLyoKKwkgKiBGbHVzaCBidWZmZXJlZCBzYW1wbGVzIChF
+LmcuIGZvciBwbXUgaGFyZHdhcmUgdGhhdCB3cml0ZXMgc2FtcGxlcyB0bworCSAqIHNvbWUgaW50
+ZXJtZWRpYXRlIGJ1ZmZlcikgdXNlcnNwYWNlIG1heSBuZWVkIHRvIGV4cGxpY2l0bHkgZW5zdXJl
+CisJICogc3VjaCBzYW1wbGVzIGhhdmUgYmVlbiBmb3J3YXJkZWQgdG8gcGVyZi4KKwkgKi8KKwlp
+bnQgKCpmbHVzaCkJCQkoc3RydWN0IHBlcmZfZXZlbnQgKmV2ZW50KTsgLypvcHRpb25hbCAqLwog
+fTsKIAogLyoqCmRpZmYgLS1naXQgYS9rZXJuZWwvZXZlbnRzL2NvcmUuYyBiL2tlcm5lbC9ldmVu
+dHMvY29yZS5jCmluZGV4IDJiYTg5YTEuLmE2MDRlMGMgMTAwNjQ0Ci0tLSBhL2tlcm5lbC9ldmVu
+dHMvY29yZS5jCisrKyBiL2tlcm5lbC9ldmVudHMvY29yZS5jCkBAIC00NzI4LDYgKzQ3MjgsMjgg
+QEAgc3RhdGljIGludCBwZXJmX2Zhc3luYyhpbnQgZmQsIHN0cnVjdCBmaWxlICpmaWxwLCBpbnQg
+b24pCiAJcmV0dXJuIDA7CiB9CiAKK3N0YXRpYyBpbnQgcGVyZl9mc3luYyhzdHJ1Y3QgZmlsZSAq
+ZmlscCwgbG9mZl90IHN0YXJ0LCBsb2ZmX3QgZW5kLCBpbnQgZGF0YXN5bmMpCit7CisJc3RydWN0
+IHBlcmZfZXZlbnQgKmV2ZW50ID0gZmlscC0+cHJpdmF0ZV9kYXRhOworCXN0cnVjdCBwZXJmX2V2
+ZW50X2NvbnRleHQgKmN0eDsKKwlpbnQgcmV0OworCisJLyogV2UgZG9uJ3QgaGF2ZSBhIHVzZSBm
+b3Igc3luY2hvbml6aW5nIGEgc3BlY2lmaWMgcmFuZ2UsIG9yIGRhdGFzeW5jCisJICogYnV0IGxl
+dHMgbm90IHNpbGVudGx5IGlnbm9yZSB0aGVtIGluIGNhc2Ugd2UgdGhpbmsgb2YgdXNlcyBsYXRl
+ci4uLgorCSAqLworCWlmIChzdGFydCAhPSAwIHx8IGVuZCAhPSBMTE9OR19NQVggfHwgZGF0YXN5
+bmMgIT0gMCkKKwkJcmV0dXJuIC1FSU5WQUw7CisKKwlpZiAoIWV2ZW50LT5wbXUtPmZsdXNoKQor
+CQlyZXR1cm4gMDsKKworCWN0eCA9IHBlcmZfZXZlbnRfY3R4X2xvY2soZXZlbnQpOworCXJldCA9
+IGV2ZW50LT5wbXUtPmZsdXNoKGV2ZW50KTsKKwlwZXJmX2V2ZW50X2N0eF91bmxvY2soZXZlbnQs
+IGN0eCk7CisKKwlyZXR1cm4gcmV0OworfQorCiBzdGF0aWMgY29uc3Qgc3RydWN0IGZpbGVfb3Bl
+cmF0aW9ucyBwZXJmX2ZvcHMgPSB7CiAJLmxsc2VlawkJCT0gbm9fbGxzZWVrLAogCS5yZWxlYXNl
+CQk9IHBlcmZfcmVsZWFzZSwKQEAgLTQ3MzcsNiArNDc1OSw3IEBAIHN0YXRpYyBjb25zdCBzdHJ1
+Y3QgZmlsZV9vcGVyYXRpb25zIHBlcmZfZm9wcyA9IHsKIAkuY29tcGF0X2lvY3RsCQk9IHBlcmZf
+Y29tcGF0X2lvY3RsLAogCS5tbWFwCQkJPSBwZXJmX21tYXAsCiAJLmZhc3luYwkJCT0gcGVyZl9m
+YXN5bmMsCisJLmZzeW5jCQkJPSBwZXJmX2ZzeW5jLAogfTsKIAogLyoKLS0gCjIuNC4xCgpfX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpJbnRlbC1nZnggbWFp
+bGluZyBsaXN0CkludGVsLWdmeEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZy
+ZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2ludGVsLWdmeAo=
