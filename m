@@ -1,7 +1,7 @@
 From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: [PATCH v5 05/11] nvmem: Add nvmem_device based consumer apis.
-Date: Thu, 21 May 2015 17:43:23 +0100
-Message-ID: <1432226603-8863-1-git-send-email-srinivas.kandagatla@linaro.org>
+Subject: [PATCH v5 06/11] nvmem: Add bindings for simple nvmem framework
+Date: Thu, 21 May 2015 17:44:12 +0100
+Message-ID: <1432226652-8947-1-git-send-email-srinivas.kandagatla@linaro.org>
 References: <1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org>
@@ -10,264 +10,106 @@ To: linux-arm-kernel@lists.infradead.org
 Cc: Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, pantelis.antoniou@konsulko.com, mporter@konsulko.com
 List-Id: linux-api@vger.kernel.org
 
-This patch adds read/write apis which are based on nvmem_device. It is
-common that the drivers like omap cape manager or qcom cpr driver to access
-bytes directly at particular offset in the eeprom and not from nvmem
-cell info in DT. These driver would need to get access to the nvmem
-directly, which is what these new APIS provide.
+This patch adds bindings for simple nvmem framework which allows nvmem
+consumers to talk to nvmem providers to get access to nvmem cell data.
 
-These wrapper apis would help such users to avoid code duplication in
-there drivers and also avoid them reading a big eeprom blob and parsing
-it internally in there driver.
-
+Signed-off-by: Maxime Ripard <maxime.ripard@free-electrons.com>
+[Maxime Ripard: intial version of eeprom framework]
 Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 ---
- drivers/nvmem/core.c           | 120 +++++++++++++++++++++++++++++++++++++++++
- include/linux/nvmem-consumer.h |  57 ++++++++++++++++++++
- include/linux/nvmem-provider.h |  10 +---
- 3 files changed, 179 insertions(+), 8 deletions(-)
+ Documentation/devicetree/bindings/nvmem/nvmem.txt | 84 +++++++++++++++++++++++
+ 1 file changed, 84 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/nvmem/nvmem.txt
 
-diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
-index 8a4b358..68ee8d1 100644
---- a/drivers/nvmem/core.c
-+++ b/drivers/nvmem/core.c
-@@ -436,6 +436,51 @@ static int __nvmem_device_put(struct nvmem_device *nvmem)
- 	return 0;
- }
- 
-+static int nvmem_match(struct device *dev, const void *data)
-+{
-+	return !strcmp(dev_name(dev), (const char *)data);
-+}
+diff --git a/Documentation/devicetree/bindings/nvmem/nvmem.txt b/Documentation/devicetree/bindings/nvmem/nvmem.txt
+new file mode 100644
+index 0000000..ecea654
+--- /dev/null
++++ b/Documentation/devicetree/bindings/nvmem/nvmem.txt
+@@ -0,0 +1,84 @@
++= NVMEM Data Device Tree Bindings =
 +
-+static struct nvmem_device *nvmem_find(const char *name)
-+{
-+	struct device *d;
++This binding is intended to represent the location of hardware
++configuration data stored in NVMEMs.
 +
-+	d = class_find_device(&nvmem_class, NULL, (void *)name, nvmem_match);
++On a significant proportion of boards, the manufacturer has stored
++some data on NVMEM, for the OS to be able to retrieve these information
++and act upon it. Obviously, the OS has to know about where to retrieve
++these data from, and where they are stored on the storage device.
 +
-+	return d ? to_nvmem_device(d) : NULL;
-+}
++This document is here to document this.
 +
-+struct nvmem_device *nvmem_device_get(struct device *dev, const char *dev_name)
-+{
-+	struct device_node *nvmem_np, *np = dev->of_node;
-+	struct nvmem_device *nvmem;
-+	int index;
++= Data providers =
++Contains bindings specific to provider drivers and data cells as children
++to this node.
 +
-+	if (np) { /* try dt first */
-+		index = of_property_match_string(np, "nvmem-names", dev_name);
++Optional properties:
++ read-only: Mark the provider as read only.
 +
-+		nvmem_np = of_parse_phandle(np, "nvmem", index);
-+		if (!nvmem_np)
-+			return ERR_PTR(-EINVAL);
++= Data cells =
++These are the child nodes of the provider which contain data cell
++information like offset and size in nvmem provider.
 +
-+		nvmem = __nvmem_device_get(nvmem_np, NULL, NULL);
++Required properties:
++reg:	specifies the offset in byte within that storage device, start bit
++	in the byte and the length in bits of the data we care about.
++	There could be more then one offset-length pairs in this property.
 +
-+		if (!IS_ERR(nvmem) || PTR_ERR(nvmem) == -EPROBE_DEFER)
-+			return nvmem;
++Optional properties:
 +
-+	}
++bit-offset: specifies the offset in bit within the address range specified
++	by reg property. Can take values from 0-7.
++nbits: specifies number of bits this cell occupies starting from bit-offset.
 +
-+	return nvmem_find(dev_name);
++For example:
 +
-+}
-+EXPORT_SYMBOL_GPL(nvmem_device_get);
++	/* Provider */
++	qfprom: qfprom@00700000 {
++		...
 +
-+void nvmem_device_put(struct nvmem_device *nvmem)
-+{
-+	__nvmem_device_put(nvmem);
-+}
-+EXPORT_SYMBOL_GPL(nvmem_device_put);
++		/* Data cells */
++		tsens_calibration: calib@404 {
++			reg = <0x404 0x10>;
++		};
 +
- static struct nvmem_cell *nvmem_cell_get_from_list(const char *cell_id)
- {
- 	struct nvmem_cell *cell = NULL;
-@@ -725,6 +770,81 @@ int nvmem_cell_write(struct nvmem_cell *cell, void *buf, ssize_t len)
- }
- EXPORT_SYMBOL_GPL(nvmem_cell_write);
- 
-+int nvmem_device_cell_read(struct nvmem_device *nvmem,
-+			   struct nvmem_cell_info *info, void *buf)
-+{
-+	struct nvmem_cell cell;
-+	int rc, len;
++		tsens_calibration_bckp: calib_bckp@504 {
++			reg = <0x504 0x11>;
++			bit-offset = 6;
++			nbits = 128;
++		};
 +
-+	if (!nvmem || !nvmem->regmap)
-+		return -EINVAL;
++		pvs_version: pvs-version@6 {
++			reg = <0x6 0x2>
++			bit-offset = 7;
++			nbits = 2;
++		};
 +
-+	rc = nvmem_cell_info_to_nvmem_cell(nvmem, info, &cell);
-+	if (IS_ERR_VALUE(rc))
-+		return rc;
++		speed_bin: speed-bin@c{
++			reg = <0xc 0x1>;
++			bit-offset = 2;
++			nbits	= 3;
 +
-+	rc = __nvmem_cell_read(nvmem, &cell, buf, &len);
-+	if (IS_ERR_VALUE(rc))
-+		return rc;
++		};
++		...
++	};
 +
-+	return len;
-+}
-+EXPORT_SYMBOL_GPL(nvmem_device_cell_read);
++= Data consumers =
++Are device nodes which consume nvmem data cells/providers.
 +
-+int nvmem_device_cell_write(struct nvmem_device *nvmem,
-+			    struct nvmem_cell_info *info, void *buf)
-+{
-+	struct nvmem_cell cell;
-+	int rc;
++Required-properties:
++nvmem-cell: list of phandle to the nvmem data cells.
++nvmem-cell-names: names for the each nvmem-cell specified
 +
-+	if (!nvmem || !nvmem->regmap)
-+		return -EINVAL;
++Optional-properties:
++nvmem	: list of phandles to nvmem providers.
++nvmem-names: names for the each nvmem provider.
 +
-+	rc = nvmem_cell_info_to_nvmem_cell(nvmem, info, &cell);
-+	if (IS_ERR_VALUE(rc))
-+		return rc;
++For example:
 +
-+	return nvmem_cell_write(&cell, buf, cell.bytes);
-+}
-+EXPORT_SYMBOL_GPL(nvmem_device_cell_write);
-+
-+int nvmem_device_read(struct nvmem_device *nvmem,
-+		      unsigned int offset,
-+		      size_t bytes, void *buf)
-+{
-+	int rc;
-+
-+	if (!nvmem || !nvmem->regmap)
-+		return -EINVAL;
-+
-+	rc = regmap_raw_read(nvmem->regmap, offset, buf, bytes);
-+
-+	if (IS_ERR_VALUE(rc))
-+		return rc;
-+
-+	return bytes;
-+}
-+EXPORT_SYMBOL_GPL(nvmem_device_read);
-+
-+int nvmem_device_write(struct nvmem_device *nvmem,
-+		       unsigned int offset,
-+		       size_t bytes, void *buf)
-+{
-+	int rc;
-+
-+	if (!nvmem || !nvmem->regmap)
-+		return -EINVAL;
-+
-+	rc = regmap_raw_write(nvmem->regmap, offset, buf, bytes);
-+
-+	if (IS_ERR_VALUE(rc))
-+		return rc;
-+
-+
-+	return bytes;
-+}
-+EXPORT_SYMBOL_GPL(nvmem_device_write);
-+
- static int nvmem_init(void)
- {
- 	return class_register(&nvmem_class);
-diff --git a/include/linux/nvmem-consumer.h b/include/linux/nvmem-consumer.h
-index c3fa8c7..66c67ba 100644
---- a/include/linux/nvmem-consumer.h
-+++ b/include/linux/nvmem-consumer.h
-@@ -14,6 +14,15 @@
- 
- /* consumer cookie */
- struct nvmem_cell;
-+struct nvmem_device;
-+
-+struct nvmem_cell_info {
-+	const char		*name;
-+	int			offset;
-+	int			bytes;
-+	int			bit_offset;
-+	int			nbits;
-+};
- 
- #if IS_ENABLED(CONFIG_NVMEM)
- 
-@@ -23,6 +32,18 @@ void nvmem_cell_put(struct nvmem_cell *cell);
- void *nvmem_cell_read(struct nvmem_cell *cell, ssize_t *len);
- int nvmem_cell_write(struct nvmem_cell *cell, void *buf, ssize_t len);
- 
-+/* direct nvmem device read/write interface */
-+struct nvmem_device *nvmem_device_get(struct device *dev, const char *name);
-+void nvmem_device_put(struct nvmem_device *nvmem);
-+int nvmem_device_read(struct nvmem_device *nvmem, unsigned int offset,
-+		      size_t bytes, void *buf);
-+int nvmem_device_write(struct nvmem_device *nvmem, unsigned int offset,
-+		       size_t bytes, void *buf);
-+int nvmem_device_cell_read(struct nvmem_device *nvmem,
-+			   struct nvmem_cell_info *info, void *buf);
-+int nvmem_device_cell_write(struct nvmem_device *nvmem,
-+			    struct nvmem_cell_info *info, void *buf);
-+
- #else
- 
- struct nvmem_cell *nvmem_cell_get(struct device *dev, const char *name)
-@@ -44,6 +65,42 @@ static inline int nvmem_cell_write(struct nvmem_cell *cell,
- {
- 	return -ENOSYS;
- }
-+
-+static inline struct nvmem_device *nvmem_device_get(struct device *dev,
-+						    const char *name)
-+{
-+	return ERR_PTR(-ENOSYS);
-+}
-+
-+static inline void nvmem_device_put(struct nvmem_device *nvmem)
-+{
-+}
-+
-+static inline int nvmem_device_cell_read(struct nvmem_device *nvmem,
-+					 struct nvmem_cell_info *info,
-+					 void *buf)
-+{
-+	return -ENOSYS;
-+}
-+
-+static inline int nvmem_device_cell_write(struct nvmem_device *nvmem,
-+					  struct nvmem_cell_info *info,
-+					  void *buf)
-+{
-+	return -ENOSYS;
-+}
-+
-+static inline int nvmem_device_read(struct nvmem_device *nvmem,
-+				    unsigned int offset, size_t bytes, void *buf)
-+{
-+	return -ENOSYS;
-+}
-+
-+static inline int nvmem_device_write(struct nvmem_device *nvmem,
-+				     unsigned int offset, size_t bytes, void *buf)
-+{
-+	return -ENOSYS;
-+}
- #endif /* CONFIG_NVMEM */
- 
- #endif  /* ifndef _LINUX_NVMEM_CONSUMER_H */
-diff --git a/include/linux/nvmem-provider.h b/include/linux/nvmem-provider.h
-index 4908b37..7a982cd 100644
---- a/include/linux/nvmem-provider.h
-+++ b/include/linux/nvmem-provider.h
-@@ -12,15 +12,9 @@
- #ifndef _LINUX_NVMEM_PROVIDER_H
- #define _LINUX_NVMEM_PROVIDER_H
- 
--struct nvmem_device;
-+#include <linux/nvmem-consumer.h>
- 
--struct nvmem_cell_info {
--	const char		*name;
--	int			offset;
--	int			bytes;
--	int			bit_offset;
--	int			nbits;
--};
-+struct nvmem_device;
- 
- struct nvmem_config {
- 	struct device		*dev;
++	tsens {
++		...
++		nvmem-cell = <&tsens_calibration>;
++		nvmem-cell-names = "calibration";
++	};
 -- 
 1.9.1
