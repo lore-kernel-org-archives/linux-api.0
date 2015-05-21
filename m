@@ -1,69 +1,60 @@
-From: Robert Bragg <robert@sixbynine.org>
-Subject: [RFC PATCH] perf: enable fsync to flush buffered samples
-Date: Thu, 21 May 2015 18:40:28 +0100
-Message-ID: <1432230028-30987-1-git-send-email-robert@sixbynine.org>
-References: <20150520121226.GA11195@gmail.com>
+From: =?ISO-8859-15?Q?Andreas_F=E4rber?= <afaerber@suse.de>
+Subject: Re: [PATCH v8 07/16] drivers: reset: Add STM32 reset driver
+Date: Thu, 21 May 2015 19:58:28 +0200
+Message-ID: <555E1CC4.9090605@suse.de>
+References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com> <1431158038-3813-8-git-send-email-mcoquelin.stm32@gmail.com> <555D1C7D.1060205@suse.de> <CALszF6CrouFF3oS_Qz6+qQRqa4a5PurdYNdvHnZRDb4zwOJ6mQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <intel-gfx-bounces@lists.freedesktop.org>
-In-Reply-To: <20150520121226.GA11195@gmail.com>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/intel-gfx>
-List-Post: <mailto:intel-gfx@lists.freedesktop.org>
-List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: intel-gfx-bounces@lists.freedesktop.org
-Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
-To: intel-gfx@lists.freedesktop.org
-Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>, David Airlie <airlied@linux.ie>, linux-api@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Paul Mackerras <paulus@samba.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Daniel Vetter <daniel.vetter@intel.com>
+Content-Type: text/plain; charset=iso-8859-15
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <CALszF6CrouFF3oS_Qz6+qQRqa4a5PurdYNdvHnZRDb4zwOJ6mQ@mail.gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Cc: Mark Rutland <mark.rutland@arm.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linus Walleij <linus.walleij@linaro.org>, Will Deacon <will.deacon@arm.com>, Stefan Agner <stefan@agner.ch>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Peter Meerwald <pmeerw@pmeerw.net>, Lee Jones <lee.jones@linaro.org>, Linux-Arch <linux-arch@vger.kernel.org>, Daniel Thompson <daniel.thompson@linaro.org>, Russell King <linux@arm.linux.org.uk>, Pawel Moll <pawel.moll@arm.com>, Jonathan Corbet <corbet@lwn.net>, Jiri Slaby <jslaby@suse.cz>, Daniel Lezcano <daniel.lezcano@linaro.org>, Chanwoo Choi <cw00.choi@samsung.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Antti Palosaari <crope@iki.fi>, Geert Uytterhoeven <geert@linux-m68k.org>, "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>, =?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?= <u.kleine-koenig@pengutronix.de>
 List-Id: linux-api@vger.kernel.org
 
-SW5zdGVhZCBvZiBoYXZpbmcgYSBQRVJGX0VWRU5UX0lPQ19GTFVTSCBpb2N0bCB0aGlzIGluc3Rl
-YWQgYWxsb3dzCnVzZXJzcGFjZSB0byB1c2UgZnN5bmMgZm9yIGZsdXNoaW5nIHBtdSBzYW1wbGVz
-LCBhcyBzdWdnZXN0ZWQgYnkgSW5nbwpNb2xuYXIgLSB0aGFua3MuCgpGb3IgcmVmZXJlbmNlIEkn
-dmUgYWxzbyBwdXNoZWQgYSBwYXRjaCB0byBteSBNZXNhIGJyYW5jaCB0byB0ZXN0CnRoaXM6IGh0
-dHBzOi8vZ2l0aHViLmNvbS9yaWIvbWVzYSB3aXAvcmliL29hLWhzdy00LjAuMAoKLSBSb2JlcnQK
-Ci0tLSA+OCAtLS0KClRvIGFsbG93IGZvciBwbXVzIHRoYXQgbWF5IGhhdmUgaW50ZXJuYWwgYnVm
-ZmVyaW5nIChlLmcuIHRoZSBoYXJkd2FyZQp3cml0ZXMgb3V0IGRhdGEgdG8gYSBjaXJjdWxhciBi
-dWZmZXIgd2hpY2ggaXMgb25seSBwZXJpb2RpY2FsbHkKZm9yd2FyZGVkIHRvIHVzZXJzcGFjZSB2
-aWEgcGVyZikgdGhpcyBlbmFibGVzIHVzZXJzcGFjZSB0byBleHBsaWNpdGx5CmVuc3VyZSBpdCBo
-YXMgcmVjZWl2ZWQgYWxsIHNhbXBsZXMgYmVmb3JlIGEgcG9pbnQgaW4gdGltZS4KClNpZ25lZC1v
-ZmYtYnk6IFJvYmVydCBCcmFnZyA8cm9iZXJ0QHNpeGJ5bmluZS5vcmc+Ci0tLQogaW5jbHVkZS9s
-aW51eC9wZXJmX2V2ZW50LmggfCAgNyArKysrKysrCiBrZXJuZWwvZXZlbnRzL2NvcmUuYyAgICAg
-ICB8IDIzICsrKysrKysrKysrKysrKysrKysrKysrCiAyIGZpbGVzIGNoYW5nZWQsIDMwIGluc2Vy
-dGlvbnMoKykKCmRpZmYgLS1naXQgYS9pbmNsdWRlL2xpbnV4L3BlcmZfZXZlbnQuaCBiL2luY2x1
-ZGUvbGludXgvcGVyZl9ldmVudC5oCmluZGV4IDA0ZTk4YzguLmQ3ZmFjMDUgMTAwNjQ0Ci0tLSBh
-L2luY2x1ZGUvbGludXgvcGVyZl9ldmVudC5oCisrKyBiL2luY2x1ZGUvbGludXgvcGVyZl9ldmVu
-dC5oCkBAIC0zMDUsNiArMzA1LDEzIEBAIHN0cnVjdCBwbXUgewogCSAqIEZyZWUgcG11LXByaXZh
-dGUgQVVYIGRhdGEgc3RydWN0dXJlcwogCSAqLwogCXZvaWQgKCpmcmVlX2F1eCkJCSh2b2lkICph
-dXgpOyAvKiBvcHRpb25hbCAqLworCisJLyoKKwkgKiBGbHVzaCBidWZmZXJlZCBzYW1wbGVzIChF
-LmcuIGZvciBwbXUgaGFyZHdhcmUgdGhhdCB3cml0ZXMgc2FtcGxlcyB0bworCSAqIHNvbWUgaW50
-ZXJtZWRpYXRlIGJ1ZmZlcikgdXNlcnNwYWNlIG1heSBuZWVkIHRvIGV4cGxpY2l0bHkgZW5zdXJl
-CisJICogc3VjaCBzYW1wbGVzIGhhdmUgYmVlbiBmb3J3YXJkZWQgdG8gcGVyZi4KKwkgKi8KKwlp
-bnQgKCpmbHVzaCkJCQkoc3RydWN0IHBlcmZfZXZlbnQgKmV2ZW50KTsgLypvcHRpb25hbCAqLwog
-fTsKIAogLyoqCmRpZmYgLS1naXQgYS9rZXJuZWwvZXZlbnRzL2NvcmUuYyBiL2tlcm5lbC9ldmVu
-dHMvY29yZS5jCmluZGV4IDJiYTg5YTEuLmE2MDRlMGMgMTAwNjQ0Ci0tLSBhL2tlcm5lbC9ldmVu
-dHMvY29yZS5jCisrKyBiL2tlcm5lbC9ldmVudHMvY29yZS5jCkBAIC00NzI4LDYgKzQ3MjgsMjgg
-QEAgc3RhdGljIGludCBwZXJmX2Zhc3luYyhpbnQgZmQsIHN0cnVjdCBmaWxlICpmaWxwLCBpbnQg
-b24pCiAJcmV0dXJuIDA7CiB9CiAKK3N0YXRpYyBpbnQgcGVyZl9mc3luYyhzdHJ1Y3QgZmlsZSAq
-ZmlscCwgbG9mZl90IHN0YXJ0LCBsb2ZmX3QgZW5kLCBpbnQgZGF0YXN5bmMpCit7CisJc3RydWN0
-IHBlcmZfZXZlbnQgKmV2ZW50ID0gZmlscC0+cHJpdmF0ZV9kYXRhOworCXN0cnVjdCBwZXJmX2V2
-ZW50X2NvbnRleHQgKmN0eDsKKwlpbnQgcmV0OworCisJLyogV2UgZG9uJ3QgaGF2ZSBhIHVzZSBm
-b3Igc3luY2hvbml6aW5nIGEgc3BlY2lmaWMgcmFuZ2UsIG9yIGRhdGFzeW5jCisJICogYnV0IGxl
-dHMgbm90IHNpbGVudGx5IGlnbm9yZSB0aGVtIGluIGNhc2Ugd2UgdGhpbmsgb2YgdXNlcyBsYXRl
-ci4uLgorCSAqLworCWlmIChzdGFydCAhPSAwIHx8IGVuZCAhPSBMTE9OR19NQVggfHwgZGF0YXN5
-bmMgIT0gMCkKKwkJcmV0dXJuIC1FSU5WQUw7CisKKwlpZiAoIWV2ZW50LT5wbXUtPmZsdXNoKQor
-CQlyZXR1cm4gMDsKKworCWN0eCA9IHBlcmZfZXZlbnRfY3R4X2xvY2soZXZlbnQpOworCXJldCA9
-IGV2ZW50LT5wbXUtPmZsdXNoKGV2ZW50KTsKKwlwZXJmX2V2ZW50X2N0eF91bmxvY2soZXZlbnQs
-IGN0eCk7CisKKwlyZXR1cm4gcmV0OworfQorCiBzdGF0aWMgY29uc3Qgc3RydWN0IGZpbGVfb3Bl
-cmF0aW9ucyBwZXJmX2ZvcHMgPSB7CiAJLmxsc2VlawkJCT0gbm9fbGxzZWVrLAogCS5yZWxlYXNl
-CQk9IHBlcmZfcmVsZWFzZSwKQEAgLTQ3MzcsNiArNDc1OSw3IEBAIHN0YXRpYyBjb25zdCBzdHJ1
-Y3QgZmlsZV9vcGVyYXRpb25zIHBlcmZfZm9wcyA9IHsKIAkuY29tcGF0X2lvY3RsCQk9IHBlcmZf
-Y29tcGF0X2lvY3RsLAogCS5tbWFwCQkJPSBwZXJmX21tYXAsCiAJLmZhc3luYwkJCT0gcGVyZl9m
-YXN5bmMsCisJLmZzeW5jCQkJPSBwZXJmX2ZzeW5jLAogfTsKIAogLyoKLS0gCjIuNC4xCgpfX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpJbnRlbC1nZnggbWFp
-bGluZyBsaXN0CkludGVsLWdmeEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZy
-ZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2ludGVsLWdmeAo=
+Am 21.05.2015 um 09:46 schrieb Maxime Coquelin:
+> 2015-05-21 1:45 GMT+02:00 Andreas F=E4rber <afaerber@suse.de>:
+>> Am 09.05.2015 um 09:53 schrieb Maxime Coquelin:
+>>> +static const struct of_device_id stm32_reset_dt_ids[] =3D {
+>>> +      { .compatible =3D "st,stm32-rcc", },
+>>> +      { /* sentinel */ },
+>>> +};
+>>> +MODULE_DEVICE_TABLE(of, sstm32_reset_dt_ids);
+>>
+>> Typo.
+>=20
+> Indeed, thanks for pointing this out.
+>=20
+>>
+>> IIUC the timer depends on the reset controller, so it must be built =
+in
+>> anyway, and that's what's enforced in the Makefile above. Drop the l=
+ine?
+>>
+>=20
+> Agree it must be built-in.
+> I will fix that in next version.
+
+Actually, I've updated a timer implementation of mine to invoke a reset
+controller similar to how you do in the STM32 clocksource patch, but no
+reset controller is getting returned.
+
+It seems to me, you are working around that by simply ignoring the erro=
+r
+in the timer code and not doing a reset then, so the STM32 timer does i=
+n
+fact _not_ depend on the reset controller? What happened to your effort=
+s
+of making the reset controller usable for the timer? In my case, my
+timer is originally in reset state and needs to be deasserted, so I
+can't just ignore it.
+
+Regards,
+Andreas
+
+--=20
+SUSE Linux GmbH, Maxfeldstr. 5, 90409 N=FCrnberg, Germany
+GF: Felix Imend=F6rffer, Jane Smithard, Dilip Upmanyu, Graham Norton; H=
+RB
+21284 (AG N=FCrnberg)
