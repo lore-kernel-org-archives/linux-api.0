@@ -1,121 +1,69 @@
-From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: [PATCH v5 08/11] nvmem: qfprom: Add Qualcomm QFPROM support.
-Date: Thu, 21 May 2015 17:44:35 +0100
-Message-ID: <1432226675-9039-1-git-send-email-srinivas.kandagatla@linaro.org>
+From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH v5 09/11] nvmem: qfprom: Add bindings for qfprom
+Date: Thu, 21 May 2015 17:44:45 +0100
+Message-ID: <1432226685-9081-1-git-send-email-srinivas.kandagatla@linaro.org>
 References: <1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-arm-kernel@lists.infradead.org
-Cc: Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, pantelis.antoniou@konsulko.com, mporter@konsulko.com
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1432226535-8640-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This patch adds QFPROM support driver which is used by other drivers
-like thermal sensor and cpufreq.
+This patch adds bindings for qfprom found in QCOM SOCs. QFPROM driver
+is based on simple nvmem framework.
 
-On MSM parts there are some efuses (called qfprom) these fuses store
-things like calibration data, speed bins.. etc. Drivers like cpufreq,
-thermal sensors would read out this data for configuring the driver.
-
-Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 ---
- drivers/nvmem/Kconfig  | 15 +++++++++++++++
- drivers/nvmem/Makefile |  4 ++++
- drivers/nvmem/qfprom.c | 51 ++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 70 insertions(+)
- create mode 100644 drivers/nvmem/qfprom.c
+ Documentation/devicetree/bindings/nvmem/qfprom.txt | 35 ++++++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/nvmem/qfprom.txt
 
-diff --git a/drivers/nvmem/Kconfig b/drivers/nvmem/Kconfig
-index f157b6d..e665e23 100644
---- a/drivers/nvmem/Kconfig
-+++ b/drivers/nvmem/Kconfig
-@@ -8,3 +8,18 @@ menuconfig NVMEM
- 	  from both the Linux Kernel and the userspace.
- 
- 	  If unsure, say no.
-+
-+if NVMEM
-+
-+config QCOM_QFPROM
-+	tristate "QCOM QFPROM Support"
-+	depends on ARCH_QCOM
-+	select REGMAP_MMIO
-+	help
-+	  Say y here to enable QFPROM support. The QFPROM provides access
-+	  functions for QFPROM data to rest of the drivers via nvmem interface.
-+
-+	  This driver can also be built as a module. If so, the module
-+	  will be called nvmem-qfprom.
-+
-+endif
-diff --git a/drivers/nvmem/Makefile b/drivers/nvmem/Makefile
-index f694cfc..caea611 100644
---- a/drivers/nvmem/Makefile
-+++ b/drivers/nvmem/Makefile
-@@ -5,3 +5,7 @@
- obj-$(CONFIG_NVMEM)		+= nvmem_core.o
- nvmem_core-y			:= core.o
- nvmem_core-y			+= nvmem-mmio.o
-+
-+# Devices
-+obj-$(CONFIG_QCOM_QFPROM)	+= nvmem_qfprom.o
-+nvmem_qfprom-y			:= qfprom.o
-diff --git a/drivers/nvmem/qfprom.c b/drivers/nvmem/qfprom.c
+diff --git a/Documentation/devicetree/bindings/nvmem/qfprom.txt b/Documentation/devicetree/bindings/nvmem/qfprom.txt
 new file mode 100644
-index 0000000..5ea84bb
+index 0000000..8a8d55f
 --- /dev/null
-+++ b/drivers/nvmem/qfprom.c
-@@ -0,0 +1,51 @@
-+/*
-+ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License version 2 and
-+ * only version 2 as published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ */
++++ b/Documentation/devicetree/bindings/nvmem/qfprom.txt
+@@ -0,0 +1,35 @@
++= Qualcomm QFPROM device tree bindings =
 +
-+#include <linux/module.h>
-+#include <linux/of.h>
-+#include "nvmem-mmio.h"
++This binding is intended to represent QFPROM which is found in most QCOM SOCs.
 +
-+static struct regmap_config qfprom_regmap_config = {
-+	.reg_bits = 32,
-+	.val_bits = 8,
-+	.reg_stride = 1,
-+};
++Required properties:
++- compatible: should be "qcom,qfprom"
++- reg: Should contain registers location and length
 +
-+static struct nvmem_config econfig = {
-+	.name = "qfprom",
-+	.owner = THIS_MODULE,
-+};
++= Data cells =
++Are child nodes of qfprom, bindings of which as described in
++bindings/nvmem/nvmem.txt
 +
-+static struct nvmem_mmio_data qfprom_data = {
-+	.nvmem_config = &econfig,
-+	.regmap_config = &qfprom_regmap_config,
-+};
++Example:
 +
-+static const struct of_device_id qfprom_of_match[] = {
-+	{ .compatible = "qcom,qfprom", .data = &qfprom_data},
-+	{/* sentinel */},
-+};
-+MODULE_DEVICE_TABLE(of, qfprom_of_match);
++	qfprom: qfprom@00700000 {
++		compatible 	= "qcom,qfprom";
++		reg		= <0x00700000 0x8000>;
++		...
++		/* Data cells */
++		tsens_calibration: calib@404 {
++			reg = <0x4404 0x10>;
++		};
++	};
 +
-+static struct platform_driver qfprom_driver = {
-+	.probe = nvmem_mmio_probe,
-+	.remove = nvmem_mmio_remove,
-+	.driver = {
-+		.name = "qcom,qfprom",
-+		.of_match_table = qfprom_of_match,
-+	},
-+};
-+module_platform_driver(qfprom_driver);
-+MODULE_AUTHOR("Srinivas Kandagatla <srinivas.kandagatla@linaro.org>");
-+MODULE_DESCRIPTION("Qualcomm QFPROM driver");
-+MODULE_LICENSE("GPL v2");
++
++= Data consumers =
++Are device nodes which consume nvmem data cells.
++
++For example:
++
++	tsens {
++		...
++		nvmem-cell = <&tsens_calibration>;
++		nvmem-cell-names = "calibration";
++	};
 -- 
 1.9.1
+
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
