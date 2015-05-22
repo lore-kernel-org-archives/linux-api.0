@@ -1,40 +1,63 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe as
- bind mounts (take 2)
-Date: Fri, 22 May 2015 11:59:03 -0700
-Message-ID: <CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>
-References: <87pp63jcca.fsf@x220.int.ebiederm.org> <87siaxuvik.fsf@x220.int.ebiederm.org>
- <87wq004im1.fsf@x220.int.ebiederm.org>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH 22/23] userfaultfd: avoid mmap_sem read recursion in
+ mcopy_atomic
+Date: Fri, 22 May 2015 13:18:22 -0700
+Message-ID: <20150522131822.74f374dd5a75a0285577c714@linux-foundation.org>
+References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
+	<1431624680-20153-23-git-send-email-aarcange@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87wq004im1.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, =?UTF-8?Q?St=C3=A9phane_Graber?= <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Eric Windisch <ewindisch-FCduhRhOUaTQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <kvm-owner@vger.kernel.org>
+In-Reply-To: <1431624680-20153-23-git-send-email-aarcange@redhat.com>
+Sender: kvm-owner@vger.kernel.org
+To: Andrea Arcangeli <aarcange@redhat.com>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 22, 2015 at 10:39 AM, Eric W. Biederman
-<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> I had hoped to get some Tested-By's on that patch series.
+On Thu, 14 May 2015 19:31:19 +0200 Andrea Arcangeli <aarcange@redhat.com> wrote:
 
-Sorry, I've been totally swamped.
-
-I suspect that Sandstorm is okay, but I haven't had a chance to test
-it for real.  Sandstorm makes only limited use of proc and sysfs in
-containers, but I'll see if I can test it for real this weekend.
-
+> If the rwsem starves writers it wasn't strictly a bug but lockdep
+> doesn't like it and this avoids depending on lowlevel implementation
+> details of the lock.
+> 
+> ...
 >
-> Oh well.  The fundamentals seem sound, and my biggest concern the
-> implicit nodev does not apply so I will put this patchset in linux-next
-> and aim at merging it in the next merge window.  Hopefully that will
-> leave enough time catch problems.
->
-> Eric
->
+> @@ -229,13 +246,33 @@ static __always_inline ssize_t __mcopy_atomic(struct mm_struct *dst_mm,
+>  
+>  		if (!zeropage)
+>  			err = mcopy_atomic_pte(dst_mm, dst_pmd, dst_vma,
+> -					       dst_addr, src_addr);
+> +					       dst_addr, src_addr, &page);
+>  		else
+>  			err = mfill_zeropage_pte(dst_mm, dst_pmd, dst_vma,
+>  						 dst_addr);
+>  
+>  		cond_resched();
+>  
+> +		if (unlikely(err == -EFAULT)) {
+> +			void *page_kaddr;
+> +
+> +			BUILD_BUG_ON(zeropage);
 
+I'm not sure what this is trying to do.  BUILD_BUG_ON(local_variable)?
 
+It goes bang in my build.  I'll just delete it.
 
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
+> +			up_read(&dst_mm->mmap_sem);
+> +			BUG_ON(!page);
+> +
+> +			page_kaddr = kmap(page);
+> +			err = copy_from_user(page_kaddr,
+> +					     (const void __user *) src_addr,
+> +					     PAGE_SIZE);
+> +			kunmap(page);
+> +			if (unlikely(err)) {
+> +				err = -EFAULT;
+> +				goto out;
+> +			}
+> +			goto retry;
+> +		} else
+> +			BUG_ON(page);
+> +
+
