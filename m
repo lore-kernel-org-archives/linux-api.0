@@ -1,55 +1,123 @@
-From: Daniel Thompson <daniel.thompson@linaro.org>
-Subject: Re: [PATCH v8 14/16] ARM: dts: Introduce STM32F429 MCU
-Date: Fri, 22 May 2015 13:43:43 +0100
-Message-ID: <555F247F.9060100@linaro.org>
-References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com>	<2282066.NWoIT9ZyLc@wuerfel>	<CALszF6CaO_yuNiSDuDV+4d2NRe_+32j=zcSE1HPhB1UH59cW9w@mail.gmail.com>	<13641152.Yt4ZI3oT6L@wuerfel>	<CALszF6CK5ezrO6D=4zr6zEPC7VanzbQjnZJwKOZekEZ5L4D-Dg@mail.gmail.com>	<1432285588.3929.28.camel@pengutronix.de>	<20150522091822.GF8557@lukather>	<1432289231.3929.60.camel@pengutronix.de> <CALszF6CQ1_HQXJ8=vgytvVo2t4_ue5_nsE06HPyHMzSLrntqKg@mail.gmail.com>
+From: =?UTF-8?q?Iago=20L=C3=B3pez=20Galeiras?= <iago@endocode.com>
+Subject: [PATCH] fs, proc: introduce CONFIG_PROC_CHILDREN
+Date: Fri, 22 May 2015 14:47:39 +0200
+Message-ID: <1432298859-2059-1-git-send-email-iago@endocode.com>
+References: <20150521135703.22af370fdd0799101a6a1b91@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <CALszF6CQ1_HQXJ8=vgytvVo2t4_ue5_nsE06HPyHMzSLrntqKg@mail.gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Maxime Coquelin <mcoquelin.stm32@gmail.com>, Philipp Zabel <p.zabel@pengutronix.de>
-Cc: Maxime Ripard <maxime.ripard@free-electrons.com>, Arnd Bergmann <arnd@arndb.de>, =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?= <u.kleine-koenig@pengutronix.de>, =?UTF-8?B?QW5kcmVhcyBGw6RyYmVy?= <afaerber@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Linus Walleij <linus.walleij@linaro.org>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Peter Hurley <peter@hurleysoftware.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Chanwoo Choi <cw00.choi@samsung.com>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Joe Perches <joe@perches.com>, Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>, Lee Jones <lee.jones@linaro.org>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20150521135703.22af370fdd0799101a6a1b91@linux-foundation.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Cyrill Gorcunov <gorcunov@openvz.org>
+Cc: =?UTF-8?q?Iago=20L=C3=B3pez=20Galeiras?= <iago@endocode.com>, Oleg Nesterov <oleg@redhat.com>, Kees Cook <keescook@chromium.org>, Pavel Emelyanov <xemul@parallels.com>, Serge Hallyn <serge.hallyn@canonical.com>, KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>, linux-api@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Alban Crequy <alban@endocode.com>
 List-Id: linux-api@vger.kernel.org
 
-On 22/05/15 13:32, Maxime Coquelin wrote:
-> 2015-05-22 12:07 GMT+02:00 Philipp Zabel <p.zabel@pengutronix.de>:
->> And that's how I'd expect it to be described by the device tree:
->>
->>      rcc: rcc@40023800 {
->>          compatible = "st,stm32-rcc";
->>          reg = <0x40023800 0xc0>;
->>      };
->>
->
-> Doing that, since this register bank contains both reset and clock
-> registers, the reset device cannot get the IO resource at probe time
-> because the clock driver has already reserved it.
-> Daniel, who has started to work on the clock driver is facing this issue.
-> This is why I proposed this binding for "reg" property.
+commit 818411616baf ("fs, proc: introduce
+/proc/<pid>/task/<tid>/children entry") introduced the children entry
+for checkpoint restore and the file is only available on kernels
+configured with CONFIG_EXPERT and CONFIG_CHECKPOINT_RESTORE.
 
-Temporarily I've kept things working for me by avoiding 
-of_io_request_and_map() in the clock driver (I am using raw of_iomap() 
-instead).
+This is available in most distributions (Fedora, Debian, Ubuntu, CoreOS=
+)
+because they usually enable CONFIG_EXPERT and CONFIG_CHECKPOINT_RESTORE=
+=2E
+But Arch does not enable CONFIG_EXPERT or CONFIG_CHECKPOINT_RESTORE.
 
-I view this as a hack rather than a solution!
+However, the children proc file is useful outside of checkpoint restore=
+=2E
+I would like to use it in rkt. The rkt process exec() another program i=
+t
+does not control, and that other program will fork()+exec() a child
+process. I would like to find the pid of the child process from an
+external tool without iterating in /proc over all processes to find
+which one has a parent pid equal to rkt.
 
-Note that, with or without the hack, I do hope to be able to post the 
-clock driver this weekend. I am acutely aware that at the moment we are 
-discussing code I haven't posted yet.
+This commit introduces CONFIG_PROC_CHILDREN and makes
+CONFIG_CHECKPOINT_RESTORE depend on it. This allows enabling
+/proc/<pid>/task/<tid>/children without needing to enable
+CONFIG_CHECKPOINT_RESTORE and CONFIG_EXPERT.
 
+Alban tested that /proc/<pid>/task/<tid>/children is present when the
+kernel is configured with CONFIG_PROC_CHILDREN=3Dy but without
+CONFIG_CHECKPOINT_RESTORE
 
-> We could think of creating a MFD driver, but the problem is that clock
-> need to be intialized before a MFD device can be probed.
->
-> Maybe there is a way to have you binding working properly, but I
-> haven't found one for now.
+Signed-off-by: Iago L=C3=B3pez Galeiras <iago@endocode.com>
+Cc: Alban Crequy <alban@endocode.com>
+Tested-by: Alban Crequy <alban@endocode.com>
+---
+ fs/proc/Kconfig | 4 ++++
+ fs/proc/array.c | 4 ++--
+ fs/proc/base.c  | 2 +-
+ init/Kconfig    | 1 +
+ 4 files changed, 8 insertions(+), 3 deletions(-)
 
-I guess a driver doesn't *have* to reserve all the register space 
-described in DT. The driver could replace of_io_request_and_map() with 
-lower level calls.
+diff --git a/fs/proc/Kconfig b/fs/proc/Kconfig
+index 2183fcf..d751fcb 100644
+--- a/fs/proc/Kconfig
++++ b/fs/proc/Kconfig
+@@ -71,3 +71,7 @@ config PROC_PAGE_MONITOR
+ 	  /proc/pid/smaps, /proc/pid/clear_refs, /proc/pid/pagemap,
+ 	  /proc/kpagecount, and /proc/kpageflags. Disabling these
+           interfaces will reduce the size of the kernel by approximate=
+ly 4kb.
++
++config PROC_CHILDREN
++	bool "Include /proc/<pid>/task/<tid>/children file"
++	default n
+diff --git a/fs/proc/array.c b/fs/proc/array.c
+index fd02a9e..ddc4b2c 100644
+--- a/fs/proc/array.c
++++ b/fs/proc/array.c
+@@ -569,7 +569,7 @@ int proc_pid_statm(struct seq_file *m, struct pid_n=
+amespace *ns,
+ 	return 0;
+ }
+=20
+-#ifdef CONFIG_CHECKPOINT_RESTORE
++#ifdef CONFIG_PROC_CHILDREN
+ static struct pid *
+ get_children_pid(struct inode *inode, struct pid *pid_prev, loff_t pos=
+)
+ {
+@@ -692,4 +692,4 @@ const struct file_operations proc_tid_children_oper=
+ations =3D {
+ 	.llseek  =3D seq_lseek,
+ 	.release =3D children_seq_release,
+ };
+-#endif /* CONFIG_CHECKPOINT_RESTORE */
++#endif /* CONFIG_PROC_CHILDREN */
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index 093ca14..5477a4a 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -2922,7 +2922,7 @@ static const struct pid_entry tid_base_stuff[] =3D=
+ {
+ 	ONE("stat",      S_IRUGO, proc_tid_stat),
+ 	ONE("statm",     S_IRUGO, proc_pid_statm),
+ 	REG("maps",      S_IRUGO, proc_tid_maps_operations),
+-#ifdef CONFIG_CHECKPOINT_RESTORE
++#ifdef CONFIG_PROC_CHILDREN
+ 	REG("children",  S_IRUGO, proc_tid_children_operations),
+ #endif
+ #ifdef CONFIG_NUMA
+diff --git a/init/Kconfig b/init/Kconfig
+index dc24dec..daa7941 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1145,6 +1145,7 @@ endif # CGROUPS
+=20
+ config CHECKPOINT_RESTORE
+ 	bool "Checkpoint/restore support" if EXPERT
++	depends on PROC_CHILDREN
+ 	default n
+ 	help
+ 	  Enables additional kernel features in a sake of checkpoint/restore.
+--=20
+2.4.1
 
-Thus if we wanted to keep this detail out of DT then I guess the two 
-drivers could simply make an agreement not to request registers they do 
-not use.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
+" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
