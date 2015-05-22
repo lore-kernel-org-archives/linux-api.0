@@ -1,43 +1,82 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe as
-	bind mounts (take 2)
-Date: Fri, 22 May 2015 15:41:45 -0500
-Message-ID: <87d21s4a5y.fsf@x220.int.ebiederm.org>
-References: <87pp63jcca.fsf@x220.int.ebiederm.org>
-	<87siaxuvik.fsf@x220.int.ebiederm.org>
-	<87wq004im1.fsf@x220.int.ebiederm.org>
-	<CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: Re: [PATCH 22/23] userfaultfd: avoid mmap_sem read recursion in
+ mcopy_atomic
+Date: Fri, 22 May 2015 22:48:09 +0200
+Message-ID: <20150522204809.GB4251@redhat.com>
+References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
+ <1431624680-20153-23-git-send-email-aarcange@redhat.com>
+ <20150522131822.74f374dd5a75a0285577c714@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-	(Andy Lutomirski's message of "Fri, 22 May 2015 11:59:03 -0700")
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20150522131822.74f374dd5a75a0285577c714@linux-foundation.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
+On Fri, May 22, 2015 at 01:18:22PM -0700, Andrew Morton wrote:
+> On Thu, 14 May 2015 19:31:19 +0200 Andrea Arcangeli <aarcange@redhat.com> wrote:
+> 
+> > If the rwsem starves writers it wasn't strictly a bug but lockdep
+> > doesn't like it and this avoids depending on lowlevel implementation
+> > details of the lock.
+> > 
+> > ...
+> >
+> > @@ -229,13 +246,33 @@ static __always_inline ssize_t __mcopy_atomic(struct mm_struct *dst_mm,
+> >  
+> >  		if (!zeropage)
+> >  			err = mcopy_atomic_pte(dst_mm, dst_pmd, dst_vma,
+> > -					       dst_addr, src_addr);
+> > +					       dst_addr, src_addr, &page);
+> >  		else
+> >  			err = mfill_zeropage_pte(dst_mm, dst_pmd, dst_vma,
+> >  						 dst_addr);
+> >  
+> >  		cond_resched();
+> >  
+> > +		if (unlikely(err == -EFAULT)) {
+> > +			void *page_kaddr;
+> > +
+> > +			BUILD_BUG_ON(zeropage);
+> 
+> I'm not sure what this is trying to do.  BUILD_BUG_ON(local_variable)?
+> 
+> It goes bang in my build.  I'll just delete it.
 
-> On Fri, May 22, 2015 at 10:39 AM, Eric W. Biederman
-> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->> I had hoped to get some Tested-By's on that patch series.
->
-> Sorry, I've been totally swamped.
->
-> I suspect that Sandstorm is okay, but I haven't had a chance to test
-> it for real.  Sandstorm makes only limited use of proc and sysfs in
-> containers, but I'll see if I can test it for real this weekend.
+Yes, it has to be a false positive failure, so it's fine to drop
+it. My gcc 4.8.4 can go inside the static called function and see that
+only mcopy_atomic_pte can return -EFAULT. RHEL7 (4.8.3) gcc didn't
+complain either. Perhaps to make the BUILD_BUG_ON work with older gcc,
+it requrires a local variable set explicitly in the callee, but it's
+not worth it.
 
-Thanks.
+It would be bad if we end up in the -EFAULT path in the zeropage case
+(if somebody later adds an apparently innocent -EFAULT retval and
+unexpectedly ends up in the mcopy_atomic_pte retry logic), but it's
+not important, the caller should be reviewed before improvising new
+retvals anyway.
 
-Eric
+The retry loop addition and the BUILD_BUG_ON is all about the
+copy_from_user run while we already hold the mmap_sem (potentially of
+a different process in the non-cooperative case but it's a problem if
+it's the current task mmap_sem in case the rwlock implementation
+changes to avoid write starvation and becomes non-reentrant). lockdep
+definitely complains (even if I think in practice it'd be safe to
+read-lock recurse, we just got lockdep complains never deadlocks in
+fact). I didn't want to call gup_fast as copy_from_user is faster and
+I got an usable user mapping with likely TLB entry hot too. The
+lockdep warnings we hit I think were associated with NUMA hinting
+faults or something infrequent like that, the fast path doesn't need
+to retry.
+
+Thanks,
+Andrea
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
