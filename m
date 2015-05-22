@@ -1,43 +1,53 @@
-From: Daniel Thompson <daniel.thompson@linaro.org>
-Subject: Re: [PATCH v8 14/16] ARM: dts: Introduce STM32F429 MCU
-Date: Fri, 22 May 2015 15:14:53 +0100
-Message-ID: <555F39DD.9060209@linaro.org>
-References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com>	<2282066.NWoIT9ZyLc@wuerfel>	<CALszF6CaO_yuNiSDuDV+4d2NRe_+32j=zcSE1HPhB1UH59cW9w@mail.gmail.com>	<13641152.Yt4ZI3oT6L@wuerfel>	<CALszF6CK5ezrO6D=4zr6zEPC7VanzbQjnZJwKOZekEZ5L4D-Dg@mail.gmail.com>	<1432285588.3929.28.camel@pengutronix.de>	<20150522091822.GF8557@lukather>	<1432289231.3929.60.camel@pengutronix.de>	<CALszF6CQ1_HQXJ8=vgytvVo2t4_ue5_nsE06HPyHMzSLrntqKg@mail.gmail.com>	<555F2A8A.5020205@suse.de> <CALszF6A=TZ_EROrfuBOAGiY3mbydC5fepWLSWrZLLt4nV9sr4w@mail.gmail.com>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH v2 2/3] fbcon: use the cursor blink interval provided by
+ vt
+Date: Fri, 22 May 2015 07:32:05 -0700
+Message-ID: <20150522143205.GA6508@kroah.com>
+References: <alpine.DEB.2.11.1503261354550.2411@local>
+ <20150522020031.GA3516@kroah.com>
+ <20150522100002.GB16507@ulmo>
+ <3661627.JqpS87pBks@wuerfel>
+ <20150522114957.GF16507@ulmo>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <CALszF6A=TZ_EROrfuBOAGiY3mbydC5fepWLSWrZLLt4nV9sr4w@mail.gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Maxime Coquelin <mcoquelin.stm32@gmail.com>, =?UTF-8?B?QW5kcmVhcyBGw6Q=?= =?UTF-8?B?cmJlcg==?= <afaerber@suse.de>
-Cc: Philipp Zabel <p.zabel@pengutronix.de>, Maxime Ripard <maxime.ripard@free-electrons.com>, Arnd Bergmann <arnd@arndb.de>, =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?= <u.kleine-koenig@pengutronix.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Rob Herring <robh+dt@kernel.org>, Linus Walleij <linus.walleij@linaro.org>, Stefan Agner <stefan@agner.ch>, Peter Meerwald <pmeerw@pmeerw.net>, Paul Bolle <pebolle@tiscali.nl>, Peter Hurley <peter@hurleysoftware.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Chanwoo Choi <cw00.choi@samsung.com>, Russell King <linux@arm.linux.org.uk>, Daniel Lezcano <daniel.lezcano@linaro.org>, Joe Perches <joe@perches.com>, Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>, Lee Jones <lee.jones@linaro.org>, Jonathan Corbet <corbet@lwn.net>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hell>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150522114957.GF16507@ulmo>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Kevin Hilman <khilman-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>, Tomi Valkeinen <tomi.valkeinen-l0cyMroinI0@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tyler Baker <tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Olof Johansson <olof-nZhT3qVonbNeoWH0uzbU5w@public.gmane.org>, Daniel Stone <daniel-rLtY4a/8tF1rovVCs/uTlw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 22/05/15 14:57, Maxime Coquelin wrote:
-> 2015-05-22 15:09 GMT+02:00 Andreas F=C3=A4rber <afaerber@suse.de>:
->> As you should know, I did have an RCC clk driver, and there is no su=
-ch
->> issue. The two drivers use different mechanisms for initialization. =
-And
->> I'm pretty sure that I've already remarked that on the list, too.
->
-> Yes, you use of_iomap in your clock driver [0].
-> Daniel, would you accept to do the same?
-> That would remove one difference between stm32/sunxi/socfpga reset dr=
-ivers.
+On Fri, May 22, 2015 at 01:49:58PM +0200, Thierry Reding wrote:
+> On Fri, May 22, 2015 at 12:33:42PM +0200, Arnd Bergmann wrote:
+> > On Friday 22 May 2015 12:00:03 Thierry Reding wrote:
+> > > 
+> > > > Remember, if I have to hand-edit, or do something special with your
+> > > > patch, I will not do it, you need to do it correctly to make
+> > > > maintainer's lives easier, not harder, given that maintainers are the
+> > > > limited resouce, not developers.
+> > > 
+> > > I understand. I'll make a mental note to never send you patches as
+> > > attachment again.
+> > > 
+> > 
+> > Better make that a general rule. My workflow is different from Greg's
+> > but also doesn't cope well with attachments. A lot of people in turn
+> > have problems quoting from an attachment when replying to the patch,
+> > which happens to work for me.
+> 
+> Okay. Any hints on how to simplify sending out such patches with the
+> same list of recipients? I find it very annoying to have to manually
+> copy each recipient into the git send-email command-line, but I don't
+> know of a better way to do it. Replying to an email from the MUA will
+> at least do that automatically.
 
-In fact, that is exactly what I am currently doing, though I was=20
-planning for it to be temporary.
+Reply from the MUA and then just put the patch in the email body.  If
+you have a good MUA it should be trivial to do[1]
 
-It seems a bit weird to me that one driver (which requests too much=20
-register space) only works because another driver chooses not to reques=
-t=20
-any.
+thanks,
 
-BTW in drivers/clk there are ~110 of_iomaps and only 10=20
-of_io_request_and_maps... so I don't think anyone will yell at me for=20
-using of_iomap().
+greg k-h
 
-
-Daniel.
+1) mutt drops you to your editor, and then you can just read in the
+   patch file directly to that buffer.
