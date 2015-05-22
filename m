@@ -1,37 +1,38 @@
-From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] fs, proc: introduce CONFIG_PROC_CHILDREN
-Date: Fri, 22 May 2015 18:37:05 +0300
-Message-ID: <20150522153705.GI16716@uranus>
-References: <20150521135703.22af370fdd0799101a6a1b91@linux-foundation.org>
- <1432298859-2059-1-git-send-email-iago@endocode.com>
+From: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Subject: Re: [PATCH v2] Documentation/arch: Add kernel feature descriptions
+ and arch support status under Documentation/features/
+Date: Fri, 22 May 2015 09:49:31 -0600
+Message-ID: <20150522094931.78a43421@lwn.net>
+References: <20150513083441.GA17336@gmail.com>
+	<20150513085636.GA11030@gmail.com>
+	<20150513092421.GB11030@gmail.com>
+	<20150513094622.GC11030@gmail.com>
+	<20150513094756.GD11030@gmail.com>
+	<20150513131835.GJ1517@pd.tnic>
+	<20150513134842.GA1657@gmail.com>
+	<20150513162757.GA21894@x>
+	<20150513150523.ddd65d7cd51f820b78f0c8e3@linux-foundation.org>
+	<20150514101518.GA27550@gmail.com>
+	<20150514103544.GA7027@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1432298859-2059-1-git-send-email-iago-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <20150514103544.GA7027-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Iago =?iso-8859-1?Q?L=F3pez?= Galeiras <iago-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
-Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, KAMEZAWA Hiroyuki <kamezawa.hiroyu-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Alban Crequy <alban-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
+To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 22, 2015 at 02:47:39PM +0200, Iago L=F3pez Galeiras wrote:
-> --- a/init/Kconfig
-> +++ b/init/Kconfig
-> @@ -1145,6 +1145,7 @@ endif # CGROUPS
-> =20
->  config CHECKPOINT_RESTORE
->  	bool "Checkpoint/restore support" if EXPERT
-> +	depends on PROC_CHILDREN
->  	default n
->  	help
->  	  Enables additional kernel features in a sake of checkpoint/restor=
-e.
+On Thu, 14 May 2015 12:35:44 +0200
+Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
 
-Maybe better select PROC_CHILDREN here? Also I must admit I don't under=
-stand
-why similar patch from Andy has not been merged earlier? Andy, there wa=
-s
-some problem I forgot about?
+> Updated patch attached.
 
-(to be clear, I don't mind enabling it since we use it in criu alot ;)
+This seems to have slowed down a bit; I've taken the liberty of pulling it
+into the docs tree.  It can be replaced, though, should you decide to
+completely rework the format again...:)
+
+Thanks,
+
+jon
