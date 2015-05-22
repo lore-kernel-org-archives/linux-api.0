@@ -1,48 +1,48 @@
-From: Mark Brown <broonie@kernel.org>
-Subject: Re: [PATCH v5 01/11] regmap: Introduce regmap_get_max_register.
-Date: Fri, 22 May 2015 12:18:08 +0100
-Message-ID: <20150522111808.GC21391@sirena.org.uk>
-References: <1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org>
- <1432226563-8689-1-git-send-email-srinivas.kandagatla@linaro.org>
+From: Silvan Jegen <s.jegen-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 2/3] fbcon: use the cursor blink interval provided by vt
+Date: Fri, 22 May 2015 15:07:07 +0200
+Message-ID: <CAKvUva-8_3EdjtAYf9C5KHEWEJ7OQj1M8yQF3BJu538FtEmGRQ@mail.gmail.com>
+References: <alpine.DEB.2.11.1503261354550.2411@local> <20150522020031.GA3516@kroah.com>
+ <20150522100002.GB16507@ulmo> <3661627.JqpS87pBks@wuerfel> <20150522114957.GF16507@ulmo>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="OBd5C1Lgu00Gd/Tn"
-Return-path: <linux-arm-msm-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1432226563-8689-1-git-send-email-srinivas.kandagatla@linaro.org>
-Sender: linux-arm-msm-owner@vger.kernel.org
-To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Cc: linux-arm-kernel@lists.infradead.org, Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, s.hauer@pengutronix.de, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, pantelis.antoniou@konsulko.com, mporter@konsulko.com
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150522114957.GF16507@ulmo>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Kevin Hilman <khilman-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>, Tomi Valkeinen <tomi.valkeinen-l0cyMroinI0@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tyler Baker <tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Olof Johansson <olof-nZhT3qVonbNeoWH0uzbU5w@public.gmane.org>, Daniel Stone <daniel-rLtY4a/8tF1rovVCs/uTlw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Fri, May 22, 2015 at 1:49 PM, Thierry Reding
+<thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> On Fri, May 22, 2015 at 12:33:42PM +0200, Arnd Bergmann wrote:
+>> On Friday 22 May 2015 12:00:03 Thierry Reding wrote:
+>> >
+>> > > Remember, if I have to hand-edit, or do something special with your
+>> > > patch, I will not do it, you need to do it correctly to make
+>> > > maintainer's lives easier, not harder, given that maintainers are the
+>> > > limited resouce, not developers.
+>> >
+>> > I understand. I'll make a mental note to never send you patches as
+>> > attachment again.
+>> >
+>>
+>> Better make that a general rule. My workflow is different from Greg's
+>> but also doesn't cope well with attachments. A lot of people in turn
+>> have problems quoting from an attachment when replying to the patch,
+>> which happens to work for me.
+>
+> Okay. Any hints on how to simplify sending out such patches with the
+> same list of recipients? I find it very annoying to have to manually
+> copy each recipient into the git send-email command-line, but I don't
+> know of a better way to do it. Replying to an email from the MUA will
+> at least do that automatically.
 
---OBd5C1Lgu00Gd/Tn
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-
-On Thu, May 21, 2015 at 05:42:43PM +0100, Srinivas Kandagatla wrote:
-> This patch introduces regmap_get_max_register() function which would be
-> used by the infrastructures like nvmem framework built on top of
-> regmap.
-
-Applied, thanks.  If the rest of the framework is ready to get merged
-somewhere before it reaches Linus' tree let me know and we can handle it
-then.
-
---OBd5C1Lgu00Gd/Tn
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQEcBAEBCAAGBQJVXxBvAAoJECTWi3JdVIfQRn0H/2wyd8X6RayGvMml6XyfHmL0
-s64SMhFu5BPN8hE7b1tRWlLINLhYUMib2OleQy+sxwlsX7K2QftAEztEHY1w3wPm
-sYZ319CA2h8Xmj4P2FXlrEuBYTy5LxfPbNjxj5ho3Ur6Ts5f+N7JUparboGicFtH
-EuxpgJT+QcmPIxKLwokoyFt4lmi7ZohMRvDxNVW10j+K1EwBIIWZsa4t/K5NUoux
-gv1LL+AU7uthYo2pARABmKTgBlSnHVaC2xW4RaWipDPRmJg0V7FpPZ0y2Y58ZCpk
-vvJAvbQKHatzikOYn5GCFK+xA9mGaKfu/HrOXTAzjYjm308ny54+aw+tdzONjJ4=
-=XDR0
------END PGP SIGNATURE-----
-
---OBd5C1Lgu00Gd/Tn--
+You can write your recipients to the "To:" header of the patch you
+generated using git format-patch. git send-email will pick all
+recipients thus specified up automatically. In later iterations you
+can just copy the "To:" line.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
