@@ -1,82 +1,97 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: Re: [PATCH 22/23] userfaultfd: avoid mmap_sem read recursion in
- mcopy_atomic
-Date: Fri, 22 May 2015 22:48:09 +0200
-Message-ID: <20150522204809.GB4251@redhat.com>
-References: <1431624680-20153-1-git-send-email-aarcange@redhat.com>
- <1431624680-20153-23-git-send-email-aarcange@redhat.com>
- <20150522131822.74f374dd5a75a0285577c714@linux-foundation.org>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [RFC PATCH] percpu system call: fast userspace percpu critical sections
+Date: Fri, 22 May 2015 13:53:43 -0700
+Message-ID: <CALCETrUSBqHG3tbOq1yFz33v1_ckEgLNorgAxwLFi7MkjNcwLA@mail.gmail.com>
+References: <1432219487-13364-1-git-send-email-mathieu.desnoyers@efficios.com> <CAHO5Pa0Kok4_QN0v3JNWyzGT=GbZNZcRyLhu02R2npV9hSdt7g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150522131822.74f374dd5a75a0285577c714@linux-foundation.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, qemu-devel@nongnu.org, kvm@vger.kernel.org, linux-api@vger.kernel.org, Pavel Emelyanov <xemul@parallels.com>, Sanidhya Kashyap <sanidhya.gatech@gmail.com>, zhang.zhanghailiang@huawei.com, Linus Torvalds <torvalds@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andres Lagar-Cavilla <andreslc@google.com>, Dave Hansen <dave.hansen@intel.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Mel Gorman <mgorman@suse.de>, Andy Lutomirski <luto@amacapital.net>, Hugh Dickins <hughd@google.com>, Peter Feiner <pfeiner@google.com>, "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, "Huangpeng (Peter)" <peter.huangpeng@huawei.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAHO5Pa0Kok4_QN0v3JNWyzGT=GbZNZcRyLhu02R2npV9hSdt7g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 22, 2015 at 01:18:22PM -0700, Andrew Morton wrote:
-> On Thu, 14 May 2015 19:31:19 +0200 Andrea Arcangeli <aarcange@redhat.com> wrote:
-> 
-> > If the rwsem starves writers it wasn't strictly a bug but lockdep
-> > doesn't like it and this avoids depending on lowlevel implementation
-> > details of the lock.
-> > 
-> > ...
-> >
-> > @@ -229,13 +246,33 @@ static __always_inline ssize_t __mcopy_atomic(struct mm_struct *dst_mm,
-> >  
-> >  		if (!zeropage)
-> >  			err = mcopy_atomic_pte(dst_mm, dst_pmd, dst_vma,
-> > -					       dst_addr, src_addr);
-> > +					       dst_addr, src_addr, &page);
-> >  		else
-> >  			err = mfill_zeropage_pte(dst_mm, dst_pmd, dst_vma,
-> >  						 dst_addr);
-> >  
-> >  		cond_resched();
-> >  
-> > +		if (unlikely(err == -EFAULT)) {
-> > +			void *page_kaddr;
-> > +
-> > +			BUILD_BUG_ON(zeropage);
-> 
-> I'm not sure what this is trying to do.  BUILD_BUG_ON(local_variable)?
-> 
-> It goes bang in my build.  I'll just delete it.
+On Fri, May 22, 2015 at 1:26 PM, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> [CC += linux-api@]
+>
+> On Thu, May 21, 2015 at 4:44 PM, Mathieu Desnoyers
+> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+>> Expose a new system call allowing userspace threads to register
+>> a TLS area used as an ABI between the kernel and userspace to
+>> share information required to create efficient per-cpu critical
+>> sections in user-space.
+>>
+>> This ABI consists of a thread-local structure containing:
+>>
+>> - a nesting count surrounding the critical section,
+>> - a signal number to be sent to the thread when preempting a thread
+>>   with non-zero nesting count,
+>> - a flag indicating whether the signal has been sent within the
+>>   critical section,
+>> - an integer where to store the current CPU number, updated whenever
+>>   the thread is preempted. This CPU number cache is not strictly
+>>   needed, but performs better than getcpu vdso.
+>>
+>> This approach is inspired by Paul Turner and Andrew Hunter's work
+>> on percpu atomics, which lets the kernel handle restart of critical
+>> sections, ref. http://www.linuxplumbersconf.org/2013/ocw/system/presentations/1695/original/LPC%20-%20PerCpu%20Atomics.pdf
+>>
+>> What is done differently here compared to percpu atomics: we track
+>> a single nesting counter per thread rather than many ranges of
+>> instruction pointer values. We deliver a signal to user-space and
+>> let the logic of restart be handled in user-space, thus moving
+>> the complexity out of the kernel. The nesting counter approach
+>> allows us to skip the complexity of interacting with signals that
+>> would be otherwise needed with the percpu atomics approach, which
+>> needs to know which instruction pointers are preempted, including
+>> when preemption occurs on a signal handler nested over an instruction
+>> pointer of interest.
+>>
 
-Yes, it has to be a false positive failure, so it's fine to drop
-it. My gcc 4.8.4 can go inside the static called function and see that
-only mcopy_atomic_pte can return -EFAULT. RHEL7 (4.8.3) gcc didn't
-complain either. Perhaps to make the BUILD_BUG_ON work with older gcc,
-it requrires a local variable set explicitly in the callee, but it's
-not worth it.
+I talked about this kind of thing with PeterZ at LSF/MM, and I was
+unable to convince myself that the kernel needs to help at all.  To do
+this without kernel help, I want to relax the requirements slightly.
+With true per-cpu atomic sections, you have a guarantee that you are
+either really running on the same CPU for the entire duration of the
+atomic section or you abort.  I propose a weaker primitive: you
+acquire one of an array of locks (probably one per cpu), and you are
+guaranteed that, if you don't abort, no one else acquires the same
+lock while you hold it.  Here's how:
 
-It would be bad if we end up in the -EFAULT path in the zeropage case
-(if somebody later adds an apparently innocent -EFAULT retval and
-unexpectedly ends up in the mcopy_atomic_pte retry logic), but it's
-not important, the caller should be reviewed before improvising new
-retvals anyway.
+Create an array of user-managed locks, one per cpu.  Call them lock[i]
+for 0 <= i < ncpus.
 
-The retry loop addition and the BUILD_BUG_ON is all about the
-copy_from_user run while we already hold the mmap_sem (potentially of
-a different process in the non-cooperative case but it's a problem if
-it's the current task mmap_sem in case the rwlock implementation
-changes to avoid write starvation and becomes non-reentrant). lockdep
-definitely complains (even if I think in practice it'd be safe to
-read-lock recurse, we just got lockdep complains never deadlocks in
-fact). I didn't want to call gup_fast as copy_from_user is faster and
-I got an usable user mapping with likely TLB entry hot too. The
-lockdep warnings we hit I think were associated with NUMA hinting
-faults or something infrequent like that, the fast path doesn't need
-to retry.
+To acquire, look up your CPU number.  Then, atomically, check that
+lock[cpu] isn't held and, if so, mark it held and record both your tid
+and your lock acquisition count.  If you learn that the lock *was*
+held after all, signal the holder (with kill or your favorite other
+mechanism), telling it which lock acquisition count is being aborted.
+Then atomically steal the lock, but only if the lock acquisition count
+hasn't changed.
 
-Thanks,
-Andrea
+This has a few benefits over the in-kernel approach:
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+1. No kernel patch.
+
+2. No unnecessary abort if you are preempted in favor of a thread that
+doesn't content for your lock.
+
+3. Greatly improved debuggability.
+
+4. With long critical sections and heavy load, you can improve
+performance by having several locks per cpu and choosing one at
+random.
+
+Is there a reason that a scheme like this doesn't work?
+
+>> Benchmarking sched_getcpu() vs tls cache approach. Getting the
+>> current CPU number:
+>>
+>> - With Linux vdso:            12.7 ns
+>> - With TLS-cached cpu number:  0.3 ns
+
+Slightly off-topic: try this again on a newer kernel.  The vdso should
+have gotten a bit faster in 3.19 or 4.0 IIRC.
+
+--Andy
