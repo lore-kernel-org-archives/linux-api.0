@@ -1,110 +1,79 @@
-From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH v2 2/3] fbcon: use the cursor blink interval provided by
- vt
-Date: Thu, 21 May 2015 19:00:31 -0700
-Message-ID: <20150522020031.GA3516@kroah.com>
-References: <alpine.DEB.2.11.1503261341260.2164@local>
- <alpine.DEB.2.11.1503261354550.2411@local>
- <CAMAWPa-6ZbE5cDkEZq0XpYa2pHcnf3qweSSVHAXhfhUAUCbKcA@mail.gmail.com>
- <20150519214011.GA27047@ulmo.nvidia.com>
- <CAMAWPa88E2pfViKLXjxWHuT4ZkVhzYt_BsXGePzc-70ZrEmJFA@mail.gmail.com>
- <20150519215228.GA27163@ulmo.nvidia.com>
- <20150519234112.GA25218@kroah.com>
- <20150520123615.GA24016@ulmo.nvidia.com>
- <20150521042638.GB22632@kroah.com>
- <20150521080049.GA25079@ulmo>
+From: Philipp Zabel <p.zabel@pengutronix.de>
+Subject: Re: [PATCH v8 14/16] ARM: dts: Introduce STM32F429 MCU
+Date: Fri, 22 May 2015 11:06:28 +0200
+Message-ID: <1432285588.3929.28.camel@pengutronix.de>
+References: <1431158038-3813-1-git-send-email-mcoquelin.stm32@gmail.com>
+ <2282066.NWoIT9ZyLc@wuerfel>
+ <CALszF6CaO_yuNiSDuDV+4d2NRe_+32j=zcSE1HPhB1UH59cW9w@mail.gmail.com>
+ <13641152.Yt4ZI3oT6L@wuerfel>
+ <CALszF6CK5ezrO6D=4zr6zEPC7VanzbQjnZJwKOZekEZ5L4D-Dg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150521080049.GA25079@ulmo>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Kevin Hilman <khilman-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>, Tomi Valkeinen <tomi.valkeinen-l0cyMroinI0@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tyler Baker <tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Olof Johansson <olof-nZhT3qVonbNeoWH0uzbU5w@public.gmane.org>, Daniel Stone <daniel-rLtY4a/8tF1rovVCs/uTlw@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <CALszF6CK5ezrO6D=4zr6zEPC7VanzbQjnZJwKOZekEZ5L4D-Dg@mail.gmail.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Cc: Mark Rutland <mark.rutland@arm.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linus Walleij <linus.walleij@linaro.org>, Will Deacon <will.deacon@arm.com>, Stefan Agner <stefan@agner.ch>, Nikolay Borisov <Nikolay.Borisov@arm.com>, Peter Meerwald <pmeerw@pmeerw.net>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Lee Jones <lee.jones@linaro.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Linux-Arch <linux-arch@vger.kernel.org>, Daniel Thompson <daniel.thompson@linaro.org>, Russell King <linux@arm.linux.org.uk>, Pawel Moll <pawel.moll@arm.com>, Jonathan Corbet <corbet@lwn.net>, Jiri Slaby <jslaby@suse.cz>, Daniel Lezcano <daniel.lezcano@linaro.org>, Nicolae Rosia <nicolae.rosia@gmail.com>, Chanwoo Choi <cw00.choi@samsung.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Antti Palosaari <crope@iki.fi>, Geert Uytterhoeven <geert@linux-m68k.>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 21, 2015 at 10:00:50AM +0200, Thierry Reding wrote:
-> On Wed, May 20, 2015 at 09:26:38PM -0700, Greg Kroah-Hartman wrote:
-> > On Wed, May 20, 2015 at 02:36:17PM +0200, Thierry Reding wrote:
-> > > On Tue, May 19, 2015 at 04:41:12PM -0700, Greg Kroah-Hartman wrote:
-> > > > On Tue, May 19, 2015 at 11:52:29PM +0200, Thierry Reding wrote:
-> > > > > On Tue, May 19, 2015 at 02:45:19PM -0700, Kevin Hilman wrote:
-> > > > > > On Tue, May 19, 2015 at 2:40 PM, Thierry Reding
-> > > > > > <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > > > > > > On Tue, May 19, 2015 at 02:15:41PM -0700, Kevin Hilman wrote:
-> > > > > > >> On Thu, Mar 26, 2015 at 6:56 AM, Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org> wrote:
-> > > > > > >> > vt now provides a cursor blink interval via vc_data. Use this
-> > > > > > >> > interval instead of the currently hardcoded 200 msecs. Store it in
-> > > > > > >> > fbcon_ops to avoid locking the console in cursor_timer_handler().
-> > > > > > >> >
-> > > > > > >> > Signed-off-by: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
-> > > > > > >> > Acked-by: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
-> > > > > > >>
-> > > > > > >> This patch hit next-20150519 in the form of commit 27a4c827c34a
-> > > > > > >> (fbcon: use the cursor blink interval provided by vt) and has caused
-> > > > > > >> boot failure on a handful of ARM platforms when booting a MMC root
-> > > > > > >> filesystem.  This error was spotted by the kernelci.org bot on
-> > > > > > >> exynos5800-peach-pi[1] and Thierry and Daniel (Cc'd) have seen it on
-> > > > > > >> some tegra platforms too.
-> > > > > > >>
-> > > > > > >> Thierry spotted this commit as a potential cause, and both Daniel and
-> > > > > > >> I have reverted and boot tested on exynos5 and tegra respectively and
-> > > > > > >> the boot panics disappear.
-> > > > > > >
-> > > > > > > FWIW, if I apply the below on top of next-20150519 things seem to be
-> > > > > > > back to normal as well:
-> > > > > > >
-> > > > > > > diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
-> > > > > > > index 05b1d1a71ef9..658c34bb9076 100644
-> > > > > > > --- a/drivers/video/console/fbcon.c
-> > > > > > > +++ b/drivers/video/console/fbcon.c
-> > > > > > > @@ -1310,8 +1310,9 @@ static void fbcon_cursor(struct vc_data *vc, int mode)
-> > > > > > >                 return;
-> > > > > > >
-> > > > > > >         ops->cur_blink_jiffies = msecs_to_jiffies(vc->vc_cur_blink_ms);
-> > > > > > > -       fbcon_del_cursor_timer(info);
-> > > > > > > -       if (!(vc->vc_cursor_type & 0x10))
-> > > > > > > +       if (vc->vc_cursor_type & 0x10)
-> > > > > > > +               fbcon_del_cursor_timer(info);
-> > > > > > > +       else
-> > > > > > >                 fbcon_add_cursor_timer(info);
-> > > > > > >
-> > > > > > >         ops->cursor_flash = (mode == CM_ERASE) ? 0 : 1;
-> > > > > > 
-> > > > > > Applying this on next-20150519 makes my exynos board happily boot again as well.
-> > > > > > 
-> > > > > > Tested-by: Kevin Hilman <khilman-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-> > > > > 
-> > > > > Excellent. Greg, Scot, any opinions on whether or not this is the right
-> > > > > thing to do? It restores a bit that looks suspiciously like it snuck in
-> > > > > in the original (at least it isn't documented in the commit message).
-> > > > > 
-> > > > > Greg, feel free to squash this in if everybody agrees this is good to
-> > > > > go. If you prefer a patch on top let me know and I'll come up with a
-> > > > > proper commit message.
-> > > > 
-> > > > Please send a real patch and I'll apply it on top, as I can't rebase my
-> > > > public tree.
-> > > 
-> > > Attached.
-> > 
-> > Ugh, no, please resend it as a stand-alone patch, I can't easily apply
-> > attachments.
+Am Mittwoch, den 20.05.2015, 18:17 +0200 schrieb Maxime Coquelin:
+> Hi Arnd, Philipp,
 > 
-> Really? Your MUA can't dissect multipart messages? Anyway, sent
-> separately for your convenience.
+> 2015-05-13 21:11 GMT+02:00 Arnd Bergmann <arnd@arndb.de>:
+> > Ideally the binding should follow closely what is documented
+> > in the data sheet.
+> >
+> 
+> Daniel and myself would like your opinion about this binding:
+> 
+> rcc: rcc@40023800 {
+>     #reset-cells = <1>;
+>     #clock-cells = <2>;
+>     compatible = "st,stm32-rcc";
+>     reg = <0x40023800 0x10>, <0x40023810 0x20>, <0x40023830 0x20>;
+>     reg-names = "clock-cfg", "reset", "clock-gates";
 
-"git am" doesn't do that.  I apply patches in huge chunks of mbox files.
+"reset" singular, "clock-gates" plural seems inconsistent to me.
 
-Remember, if I have to hand-edit, or do something special with your
-patch, I will not do it, you need to do it correctly to make
-maintainer's lives easier, not harder, given that maintainers are the
-limited resouce, not developers.
+> };
+> 
+> It would solve a problem Daniel is facing due to conflicting mem
+> region when clock and reset drivers are enabled, as both would reserve
+> the same region.
+> 
+> Also, it would make the reset driver very generic.
+> Doing that, we could even create a generic-reset.c driver that would
+> be used by STM32 and Sunxi (at least).
 
-thanks,
+Adding support for providing the reset register range via of_device_id
+data and the possibility to invert set/clear ops would allow to also
+include the socfpga driver.
 
-greg k-h
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> In the probe function, it would check the number of reg resources.
+> If a single resource is passed, it would take it, else it would look
+> the one named "reset".
+> The driver and bindings would be the same for the two families, and
+> the bindings would be backward compatible with sunxi ones.
+> 
+> Philip, Arnd, what do you think?
+
+I'm not a fan of describing the register layout in the device tree as
+detailed as the sunxi bindings do. I'd prefer the reg property to
+describe the device's register address space with one entry per
+contiguous block of registers.
+Unifying the mostly identical drivers is a good idea though, and reusing
+preexisting bindings is better than inventing new ones. I favor the
+socfpga binding, but I still like the sunxi bindings and this proposal
+better than encoding the register offset in the reset index.
+
+best regards
+Philipp
