@@ -1,97 +1,114 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [RFC PATCH] percpu system call: fast userspace percpu critical sections
-Date: Fri, 22 May 2015 13:53:43 -0700
-Message-ID: <CALCETrUSBqHG3tbOq1yFz33v1_ckEgLNorgAxwLFi7MkjNcwLA@mail.gmail.com>
-References: <1432219487-13364-1-git-send-email-mathieu.desnoyers@efficios.com> <CAHO5Pa0Kok4_QN0v3JNWyzGT=GbZNZcRyLhu02R2npV9hSdt7g@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAHO5Pa0Kok4_QN0v3JNWyzGT=GbZNZcRyLhu02R2npV9hSdt7g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
+Subject: [PATCH v9 0/5] Add support to STMicroelectronics STM32 family
+Date: Fri, 22 May 2015 23:03:31 +0200
+Message-ID: <1432328616-16964-1-git-send-email-mcoquelin.stm32@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Lezcano <daniel.lezcano@linaro.org>, Daniel Thompson <daniel.thompson@linaro.org>, Kamil Lulko <rev13@wp.pl>, u.kleine-koenig@pengutronix.de, afaerber@suse.de, geert@linux-m68k.org
+Cc: Rob Herring <robh+dt@kernel.org>, Pawel Moll <pawel.moll@arm.com>, Mark Rutland <mark.rutland@arm.com>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Kumar Gala <galak@codeaurora.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Jiri Slaby <jslaby@suse.cz>, Maxime Coquelin <mcoquelin.stm32@gmail.com>, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-serial@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 22, 2015 at 1:26 PM, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> [CC += linux-api@]
->
-> On Thu, May 21, 2015 at 4:44 PM, Mathieu Desnoyers
-> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
->> Expose a new system call allowing userspace threads to register
->> a TLS area used as an ABI between the kernel and userspace to
->> share information required to create efficient per-cpu critical
->> sections in user-space.
->>
->> This ABI consists of a thread-local structure containing:
->>
->> - a nesting count surrounding the critical section,
->> - a signal number to be sent to the thread when preempting a thread
->>   with non-zero nesting count,
->> - a flag indicating whether the signal has been sent within the
->>   critical section,
->> - an integer where to store the current CPU number, updated whenever
->>   the thread is preempted. This CPU number cache is not strictly
->>   needed, but performs better than getcpu vdso.
->>
->> This approach is inspired by Paul Turner and Andrew Hunter's work
->> on percpu atomics, which lets the kernel handle restart of critical
->> sections, ref. http://www.linuxplumbersconf.org/2013/ocw/system/presentations/1695/original/LPC%20-%20PerCpu%20Atomics.pdf
->>
->> What is done differently here compared to percpu atomics: we track
->> a single nesting counter per thread rather than many ranges of
->> instruction pointer values. We deliver a signal to user-space and
->> let the logic of restart be handled in user-space, thus moving
->> the complexity out of the kernel. The nesting counter approach
->> allows us to skip the complexity of interacting with signals that
->> would be otherwise needed with the percpu atomics approach, which
->> needs to know which instruction pointers are preempted, including
->> when preemption occurs on a signal handler nested over an instruction
->> pointer of interest.
->>
+This ninth round counts less patches as some have already been applied,
+and the reset driver will be part of another series because it will
+introduce a generic reset driver to be used by several SoCs (sunxi, socfpga).
+Main change in remaining patches is the rework of the STM32 clocksource 
+Kconfig entry.
 
-I talked about this kind of thing with PeterZ at LSF/MM, and I was
-unable to convince myself that the kernel needs to help at all.  To do
-this without kernel help, I want to relax the requirements slightly.
-With true per-cpu atomic sections, you have a guarantee that you are
-either really running on the same CPU for the entire duration of the
-atomic section or you abort.  I propose a weaker primitive: you
-acquire one of an array of locks (probably one per cpu), and you are
-guaranteed that, if you don't abort, no one else acquires the same
-lock while you hold it.  Here's how:
+STM32 MCUs are Cortex-M CPU, used in various applications (consumer
+electronics, industrial applications, hobbyists...).
+Datasheets, user and programming manuals are publicly available on
+STMicroelectronics website.
 
-Create an array of user-managed locks, one per cpu.  Call them lock[i]
-for 0 <= i < ncpus.
+Changes since v8:
+-----------------
+ - Rework clocksource driver Kconfig entry.
+ - Remove reset driver from the series.
 
-To acquire, look up your CPU number.  Then, atomically, check that
-lock[cpu] isn't held and, if so, mark it held and record both your tid
-and your lock acquisition count.  If you learn that the lock *was*
-held after all, signal the holder (with kill or your favorite other
-mechanism), telling it which lock acquisition count is being aborted.
-Then atomically steal the lock, but only if the lock acquisition count
-hasn't changed.
+Changes since v7:
+-----------------
+ - Add DT-bindings header file for RCC IP (Daniel)
+ - Fix uninitialized variables in serial driver
+ - Enable CONFIG_NO_HZ in stm32_defconfig
 
-This has a few benefits over the in-kernel approach:
+Changes since v6:
+-----------------
+ - serial: Fix locking in case of sysrq (Vladimir)
+ - Rebase on top of v4.1-rc1
+ - Apply Acked-by and Reviewed-by
+ - Clean-up stm32_defconfig
 
-1. No kernel patch.
+Changes since v5:
+-----------------
+ - Change st,hw-flow-ctrl property to auto-flow-control (Rob)
+ - Constify stm32_uart_ops (Joe)
+ - Propagate request_irq error in USART driver (Andy)
+ - Applies Acked-by and Reviewed-by (Rob, Peter)
 
-2. No unnecessary abort if you are preempted in favor of a thread that
-doesn't content for your lock.
+Changes since v4:
+-----------------
+ - Cosmetic changes in USART driver (Andy)
+ - Apply Acks on reset driver & bindings (Philipp & Rob)
 
-3. Greatly improved debuggability.
+Changes since v3:
+-----------------
+ - Fix and simplify error path in ARMv7-M Systick driver (Daniel)
+ - Improve reset bindings documentation (Philipp)
+ - Fix trailing lines anf typos in reset driver & doc (Philipp & Chanwoo)
+ - Fix MODULE_LICENCE in USART driver (Paul)
+ - Refactor USART baudrate calculation (Peter & Andy)
+ - Fix error path in USART init (Peter & Russell)
+ - Fix HW flow control in USART driver (Peter)
+ - Fix serial port type number to unused one (Peter)
+ - Applies Chanwoo's Tested-by on the series
 
-4. With long critical sections and heavy load, you can improve
-performance by having several locks per cpu and choosing one at
-random.
+Changes since v2:
+-----------------
+ - Remove pinctrl driver from the series. 
+ - Remove reset_controller_of_init(), and reset the timers in the bootloader
+ - Add HW flow contrl property for serial driver
+ - Lots of changes in the DTS file, as per Andreas recommendations
+ - Some Kconfig clean-ups
+ - Adapt the config to be compatible with Andreas' bootwrapper, except UART port.
+ - Various fixes in documentation
 
-Is there a reason that a scheme like this doesn't work?
+Changes since v1:
+-----------------
+ - Move bindings documentation in their own patches (Andreas)
+ - Rename ARM System timer to armv7m-systick (Rob)
+ - Add clock-frequency property handling in armv7m-systick (Rob)
+ - Re-factor the reset controllers into a single controller (Philipp)
+ - Add kerneldoc to reset_controller_of_init (Philipp)
+ - Add named constants in include/dt-bindings/reset/ (Philipp)
+ - Make pinctrl driver to depend on ARCH_STM32 or COMPILE_TEST (Geert)
+ - Introduce CPUV7M_NUM_IRQ config flag to indicate the number of interrupts
+supported by the MCU, in order to limit memory waste in vectors' table (Uwe)
 
->> Benchmarking sched_getcpu() vs tls cache approach. Getting the
->> current CPU number:
->>
->> - With Linux vdso:            12.7 ns
->> - With TLS-cached cpu number:  0.3 ns
+Maxime Coquelin (5):
+  dt-bindings: Document the STM32 timer bindings
+  clockevents/drivers: Add STM32 Timer driver
+  dt-bindings: Document the STM32 USART bindings
+  serial: stm32-usart: Add STM32 USART Driver
+  ARM: dts: Introduce STM32F429 MCU
 
-Slightly off-topic: try this again on a newer kernel.  The vdso should
-have gotten a bit faster in 3.19 or 4.0 IIRC.
+ .../devicetree/bindings/serial/st,stm32-usart.txt  |  32 +
+ .../devicetree/bindings/timer/st,stm32-timer.txt   |  22 +
+ arch/arm/boot/dts/Makefile                         |   1 +
+ arch/arm/boot/dts/stm32f429-disco.dts              |  71 ++
+ arch/arm/boot/dts/stm32f429.dtsi                   | 214 ++++++
+ drivers/clocksource/Kconfig                        |   5 +
+ drivers/clocksource/Makefile                       |   1 +
+ drivers/clocksource/timer-stm32.c                  | 184 +++++
+ drivers/tty/serial/Kconfig                         |  17 +
+ drivers/tty/serial/Makefile                        |   1 +
+ drivers/tty/serial/stm32-usart.c                   | 739 +++++++++++++++++++++
+ include/uapi/linux/serial_core.h                   |   3 +
+ 12 files changed, 1290 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/serial/st,stm32-usart.txt
+ create mode 100644 Documentation/devicetree/bindings/timer/st,stm32-timer.txt
+ create mode 100644 arch/arm/boot/dts/stm32f429-disco.dts
+ create mode 100644 arch/arm/boot/dts/stm32f429.dtsi
+ create mode 100644 drivers/clocksource/timer-stm32.c
+ create mode 100644 drivers/tty/serial/stm32-usart.c
 
---Andy
+-- 
+1.9.1
