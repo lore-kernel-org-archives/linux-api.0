@@ -1,48 +1,47 @@
-From: Silvan Jegen <s.jegen-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 2/3] fbcon: use the cursor blink interval provided by vt
-Date: Fri, 22 May 2015 15:07:07 +0200
-Message-ID: <CAKvUva-8_3EdjtAYf9C5KHEWEJ7OQj1M8yQF3BJu538FtEmGRQ@mail.gmail.com>
-References: <alpine.DEB.2.11.1503261354550.2411@local> <20150522020031.GA3516@kroah.com>
- <20150522100002.GB16507@ulmo> <3661627.JqpS87pBks@wuerfel> <20150522114957.GF16507@ulmo>
+From: Mark Brown <broonie@kernel.org>
+Subject: Re: [PATCH v5 02/11] regmap: Introduce regmap_get_reg_stride.
+Date: Fri, 22 May 2015 12:19:05 +0100
+Message-ID: <20150522111905.GD21391@sirena.org.uk>
+References: <1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org>
+ <1432226574-8733-1-git-send-email-srinivas.kandagatla@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150522114957.GF16507@ulmo>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thierry Reding <thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Kevin Hilman <khilman-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>, Tomi Valkeinen <tomi.valkeinen-l0cyMroinI0@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tyler Baker <tyler.baker-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Olof Johansson <olof-nZhT3qVonbNeoWH0uzbU5w@public.gmane.org>, Daniel Stone <daniel-rLtY4a/8tF1rovVCs/uTlw@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="NklN7DEeGtkPCoo3"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1432226574-8733-1-git-send-email-srinivas.kandagatla@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Cc: linux-arm-kernel@lists.infradead.org, Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, s.hauer@pengutronix.de, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, pantelis.antoniou@konsulko.com, mporter@konsulko.com
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 22, 2015 at 1:49 PM, Thierry Reding
-<thierry.reding-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Fri, May 22, 2015 at 12:33:42PM +0200, Arnd Bergmann wrote:
->> On Friday 22 May 2015 12:00:03 Thierry Reding wrote:
->> >
->> > > Remember, if I have to hand-edit, or do something special with your
->> > > patch, I will not do it, you need to do it correctly to make
->> > > maintainer's lives easier, not harder, given that maintainers are the
->> > > limited resouce, not developers.
->> >
->> > I understand. I'll make a mental note to never send you patches as
->> > attachment again.
->> >
->>
->> Better make that a general rule. My workflow is different from Greg's
->> but also doesn't cope well with attachments. A lot of people in turn
->> have problems quoting from an attachment when replying to the patch,
->> which happens to work for me.
->
-> Okay. Any hints on how to simplify sending out such patches with the
-> same list of recipients? I find it very annoying to have to manually
-> copy each recipient into the git send-email command-line, but I don't
-> know of a better way to do it. Replying to an email from the MUA will
-> at least do that automatically.
 
-You can write your recipients to the "To:" header of the patch you
-generated using git format-patch. git send-email will pick all
-recipients thus specified up automatically. In later iterations you
-can just copy the "To:" line.
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--NklN7DEeGtkPCoo3
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+
+On Thu, May 21, 2015 at 05:42:54PM +0100, Srinivas Kandagatla wrote:
+> This patch introduces regmap_get_reg_stride() function which would
+> be used by the infrastructures like nvmem framework built on top of
+> regmap. Mostly this function would be used for sanity checks on inputs
+> within such infrastructure.
+
+Applied, thanks.
+
+--NklN7DEeGtkPCoo3
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQEcBAEBCAAGBQJVXxCoAAoJECTWi3JdVIfQB6gH/RC8RBhaiGRnyRS3h/KIzU3u
+N/KdCCA3danrkP9eSK/CbEmW57ZA9T0wMEipa5VM601sHd46mtTpj+6EI+ZUFdXR
+5+ICUGwHs+pWEewrBqCT+V4IdgUrZ+eDx94uW/RgdcZLSCyCYEhIaNcC8Wc9SDVi
+ielsSbd0Y0CMt4wBd2+SvVlJT23imMIB7nvR/vBTc/yf9j1dNMwsAWFQ52tutjrB
+4A3re3to6zSI3JJlWIcGxOjJ35w818/4SFwy2BXb83T8QIlG5Nf1IpZqBEEgj3QS
+XZQH5IRpLDlqTsMlNDQmZoLlEjKh/MXP7y2BWBSQf0CnQ6eS96jC4xIAAIB7tdc=
+=a6Fo
+-----END PGP SIGNATURE-----
+
+--NklN7DEeGtkPCoo3--
