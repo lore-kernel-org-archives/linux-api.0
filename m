@@ -1,52 +1,48 @@
-From: Alban Crequy <alban-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH] [RFC] fs, proc: don't guard /proc/<pid>/task/<tid>/children
- on CONFIG_CHECKPOINT_RESTORE
-Date: Fri, 22 May 2015 14:49:01 +0200
-Message-ID: <CALdWxct549hxJHPGM+7VtZ7uiyD_JVp0wUkG52XKTOABxKhCpw@mail.gmail.com>
-References: <1432204221-1933-1-git-send-email-alban@endocode.com>
-	<CALCETrVbaKnqj7qLBr+ufirPHfdjAYzo6_e362N0muVGnH7HTg@mail.gmail.com>
+From: Mark Brown <broonie@kernel.org>
+Subject: Re: [PATCH v5 01/11] regmap: Introduce regmap_get_max_register.
+Date: Fri, 22 May 2015 12:18:08 +0100
+Message-ID: <20150522111808.GC21391@sirena.org.uk>
+References: <1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org>
+ <1432226563-8689-1-git-send-email-srinivas.kandagatla@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrVbaKnqj7qLBr+ufirPHfdjAYzo6_e362N0muVGnH7HTg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Alban Crequy <alban.crequy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, KAMEZAWA Hiroyuki <kamezawa.hiroyu-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Iago Lopez Galeiras <iago-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="OBd5C1Lgu00Gd/Tn"
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1432226563-8689-1-git-send-email-srinivas.kandagatla@linaro.org>
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Cc: linux-arm-kernel@lists.infradead.org, Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, s.hauer@pengutronix.de, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, pantelis.antoniou@konsulko.com, mporter@konsulko.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 21, 2015 at 11:47 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> On Thu, May 21, 2015 at 3:30 AM, Alban Crequy <alban.crequy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> From: Alban Crequy <alban-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
->>
->> commit 818411616baf ("fs, proc: introduce
->> /proc/<pid>/task/<tid>/children entry") introduced the children entry
->> for checkpoint restore and the file is only available on kernels
->> configured with CONFIG_EXPERT and CONFIG_CHECKPOINT_RESTORE.
->>
->> This is available in most distributions (Fedora, Debian, Ubuntu, CoreOS)
->> because they usually enable CONFIG_EXPERT and CONFIG_CHECKPOINT_RESTORE.
->> But Arch does not enable CONFIG_EXPERT or CONFIG_CHECKPOINT_RESTORE.
->>
->> However, the children proc file is useful outside of checkpoint restore.
->> I would like to use it in rkt. The rkt process exec() another program it
->> does not control, and that other program will fork()+exec() a child
->> process. I would like to find the pid of the child process from an
->> external tool without iterating in /proc over all processes to find
->> which one has a parent pid equal to rkt.
->>
->> Since the children proc file is useful outside of checkpoint-restore,
->> I am removing the guard on CONFIG_CHECKPOINT_RESTORE.
->
-> I sent an essentially identical patch a couple years ago, and it got
-> some interesting comments:
->
-> http://lkml.kernel.org/g/0e00e9073855c02a382d49ba1ede9c4fda3451b7.1372189875.git.luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org
 
-Thanks for the pointer, I didn't see it.
+--OBd5C1Lgu00Gd/Tn
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-> See also:
->
-> http://lkml.kernel.org/g/5f9a6b3ab75b12f2c5ba61ea1f6f3b08e9952b55.1372280661.git.luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org
+On Thu, May 21, 2015 at 05:42:43PM +0100, Srinivas Kandagatla wrote:
+> This patch introduces regmap_get_max_register() function which would be
+> used by the infrastructures like nvmem framework built on top of
+> regmap.
 
-Your paragraph seems good to have in the documentation but I am also
-not qualified to comment on the behavior.
+Applied, thanks.  If the rest of the framework is ready to get merged
+somewhere before it reaches Linus' tree let me know and we can handle it
+then.
+
+--OBd5C1Lgu00Gd/Tn
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQEcBAEBCAAGBQJVXxBvAAoJECTWi3JdVIfQRn0H/2wyd8X6RayGvMml6XyfHmL0
+s64SMhFu5BPN8hE7b1tRWlLINLhYUMib2OleQy+sxwlsX7K2QftAEztEHY1w3wPm
+sYZ319CA2h8Xmj4P2FXlrEuBYTy5LxfPbNjxj5ho3Ur6Ts5f+N7JUparboGicFtH
+EuxpgJT+QcmPIxKLwokoyFt4lmi7ZohMRvDxNVW10j+K1EwBIIWZsa4t/K5NUoux
+gv1LL+AU7uthYo2pARABmKTgBlSnHVaC2xW4RaWipDPRmJg0V7FpPZ0y2Y58ZCpk
+vvJAvbQKHatzikOYn5GCFK+xA9mGaKfu/HrOXTAzjYjm308ny54+aw+tdzONjJ4=
+=XDR0
+-----END PGP SIGNATURE-----
+
+--OBd5C1Lgu00Gd/Tn--
