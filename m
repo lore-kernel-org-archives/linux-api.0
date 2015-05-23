@@ -1,98 +1,236 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH 1/8] kernel/exit.c: make sure current's nsproxy != NULL while checking caps
-Date: Sat, 23 May 2015 12:49:27 -0500
-Message-ID: <878ucf2nh4.fsf@x220.int.ebiederm.org>
-References: <1432209222-8479-1-git-send-email-l.pawelczyk@samsung.com>
-	<1432209222-8479-2-git-send-email-l.pawelczyk@samsung.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [RFC PATCH] percpu system call: fast userspace percpu critical sections
+Date: Sat, 23 May 2015 12:15:55 -0700
+Message-ID: <CALCETrWzoFX7hXqvQqDEq=r=7PNaGKVjZeHEBWxPvC28Zi1AKA@mail.gmail.com>
+References: <1432219487-13364-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <CAHO5Pa0Kok4_QN0v3JNWyzGT=GbZNZcRyLhu02R2npV9hSdt7g@mail.gmail.com>
+ <CALCETrUSBqHG3tbOq1yFz33v1_ckEgLNorgAxwLFi7MkjNcwLA@mail.gmail.com>
+ <757752240.6470.1432330487312.JavaMail.zimbra@efficios.com>
+ <CALCETrUxp-dP-kaTy4prEdciM-=sTXjpqnMbkvk38g5BTEvX0g@mail.gmail.com> <1839774559.6579.1432400944032.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1432209222-8479-2-git-send-email-l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-	(Lukasz Pawelczyk's message of "Thu, 21 May 2015 13:53:35 +0200")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ionut Alexa <ionut.m.alexa-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jeff Layton <jlayton-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Nick
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1839774559.6579.1432400944032.JavaMail.zimbra@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Lai Jiangshan <laijs@cn.fujitsu.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Ben Maurer <bmaurer@fb.com>, Josh Triplett <josh@joshtriplett.org>, Ingo Molnar <mingo@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux Kernel <linux-kernel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Steven Rostedt <rostedt@goodmis.org>, Andrew Hunter <ahh@google.com>
 List-Id: linux-api@vger.kernel.org
 
+On May 23, 2015 10:09 AM, "Mathieu Desnoyers"
+<mathieu.desnoyers@efficios.com> wrote:
+>
+> ----- Original Message -----
+> > On Fri, May 22, 2015 at 2:34 PM, Mathieu Desnoyers
+> > <mathieu.desnoyers@efficios.com> wrote:
+> > > ----- Original Message -----
+> > >> On Fri, May 22, 2015 at 1:26 PM, Michael Kerrisk <mtk.manpages@gmail.com>
+> > >> wrote:
+> > >> > [CC += linux-api@]
+> > >> >
+> > >> > On Thu, May 21, 2015 at 4:44 PM, Mathieu Desnoyers
+> > >> > <mathieu.desnoyers@efficios.com> wrote:
+> > >> >> Expose a new system call allowing userspace threads to register
+> > >> >> a TLS area used as an ABI between the kernel and userspace to
+> > >> >> share information required to create efficient per-cpu critical
+> > >> >> sections in user-space.
+> > >> >>
+> > >> >> This ABI consists of a thread-local structure containing:
+> > >> >>
+> > >> >> - a nesting count surrounding the critical section,
+> > >> >> - a signal number to be sent to the thread when preempting a thread
+> > >> >>   with non-zero nesting count,
+> > >> >> - a flag indicating whether the signal has been sent within the
+> > >> >>   critical section,
+> > >> >> - an integer where to store the current CPU number, updated whenever
+> > >> >>   the thread is preempted. This CPU number cache is not strictly
+> > >> >>   needed, but performs better than getcpu vdso.
+> > >> >>
+> > >> >> This approach is inspired by Paul Turner and Andrew Hunter's work
+> > >> >> on percpu atomics, which lets the kernel handle restart of critical
+> > >> >> sections, ref.
+> > >> >> http://www.linuxplumbersconf.org/2013/ocw/system/presentations/1695/original/LPC%20-%20PerCpu%20Atomics.pdf
+> > >> >>
+> > >> >> What is done differently here compared to percpu atomics: we track
+> > >> >> a single nesting counter per thread rather than many ranges of
+> > >> >> instruction pointer values. We deliver a signal to user-space and
+> > >> >> let the logic of restart be handled in user-space, thus moving
+> > >> >> the complexity out of the kernel. The nesting counter approach
+> > >> >> allows us to skip the complexity of interacting with signals that
+> > >> >> would be otherwise needed with the percpu atomics approach, which
+> > >> >> needs to know which instruction pointers are preempted, including
+> > >> >> when preemption occurs on a signal handler nested over an instruction
+> > >> >> pointer of interest.
+> > >> >>
+> > >>
+> > >> I talked about this kind of thing with PeterZ at LSF/MM, and I was
+> > >> unable to convince myself that the kernel needs to help at all.  To do
+> > >> this without kernel help, I want to relax the requirements slightly.
+> > >> With true per-cpu atomic sections, you have a guarantee that you are
+> > >> either really running on the same CPU for the entire duration of the
+> > >> atomic section or you abort.  I propose a weaker primitive: you
+> > >> acquire one of an array of locks (probably one per cpu), and you are
+> > >> guaranteed that, if you don't abort, no one else acquires the same
+> > >> lock while you hold it.
+> > >
+> > > In my proof of concept (https://github.com/compudj/percpu-dev) I
+> > > actually implement an array of per-cpu lock. The issue here boils
+> > > down to grabbing this per-cpu lock efficiently. Once the lock is taken,
+> > > the thread has exclusive access to that per-cpu lock, even if it
+> > > migrates.
+> > >
+> > >>  Here's how:
+> > >>
+> > >> Create an array of user-managed locks, one per cpu.  Call them lock[i]
+> > >> for 0 <= i < ncpus.
+> > >>
+> > >> To acquire, look up your CPU number.  Then, atomically, check that
+> > >> lock[cpu] isn't held and, if so, mark it held and record both your tid
+> > >> and your lock acquisition count.  If you learn that the lock *was*
+> > >> held after all, signal the holder (with kill or your favorite other
+> > >> mechanism), telling it which lock acquisition count is being aborted.
+> > >> Then atomically steal the lock, but only if the lock acquisition count
+> > >> hasn't changed.
+> > >>
+> > >> This has a few benefits over the in-kernel approach:
+> > >>
+> > >> 1. No kernel patch.
+> > >>
+> > >> 2. No unnecessary abort if you are preempted in favor of a thread that
+> > >> doesn't content for your lock.
+> > >>
+> > >> 3. Greatly improved debuggability.
+> > >>
+> > >> 4. With long critical sections and heavy load, you can improve
+> > >> performance by having several locks per cpu and choosing one at
+> > >> random.
+> > >>
+> > >> Is there a reason that a scheme like this doesn't work?
+> > >
+> > > What do you mean exactly by "atomically check that lock is not
+> > > held and, if so, mark it held" ? Do you imply using a lock-prefixed
+> > > atomic operation ?
+> >
+> > Yes.
+> >
+> > >
+> > > The goal of this whole restart section approach is to allow grabbing
+> > > a lock (or doing other sequences of operations ending with a single
+> > > store) on per-cpu data without having to use slow lock-prefixed
+> > > atomic operations.
+> >
+> > Ah, ok, I assumed it was to allow multiple threads to work in parallel.
+> >
+> > How arch-specific are you willing to be?
+>
+> I'd want this to be usable on every major architectures.
+>
+> > On x86, it might be possible
+> > to play some GDT games so that an unlocked xchg relative
+>
+> AFAIK, there is no such thing as an unlocked xchg. xchg always
+> imply the lock prefix on x86. I guess you mean cmpxchg here.
+>
 
-Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org> writes:
+Right, got my special cases mixed up.
 
-> There is a rare case where current's nsproxy might be NULL but we are
-> required to check for credentials and capabilities. It sometimes happens
-> during an exit_group() syscall while destroying user's session (logging
-> out).
->
-> My understanding is that while we have to lock the task to get task's
-> nsproxy and check whether it's NULL, for the 'current' we don't have to
-> and it's expected not to be NULL. There is a code in the kernel
-> currently that does current->nsproxy->user_ns without any checks.
-> And include/linux/nsproxy.h confirms that:
->
-> 2. when accessing (i.e. reading) current task's namespaces - no
->    precautions should be taken - just dereference the pointers
->
-> There seem to be no crash currently because of this, but with accessing
-> nsproxy from LSM hooks there is. This is the backtrace:
->
-> 0  smk_tskacc (task=0xffff88003b0b92e0, obj_known=0x2 <irq_stack_union+2>, mode=2, a=0xffff88003be53dd8) at security/smack/smack_access.c:261
-> 1  0xffffffff8130e2aa in smk_curacc (obj_known=<optimized out>, mode=<optimized out>, a=<optimized out>) at security/smack/smack_access.c:318
-> 2  0xffffffff8130a50d in smack_task_kill (p=0xffff88003b0b92e0, info=<optimized out>, sig=<optimized out>, secid=<optimized out>) at security/smack/smack_lsm.c:2071
-> 3  0xffffffff812ea4f6 in security_task_kill (p=<optimized out>, info=<optimized out>, sig=<optimized out>, secid=<optimized out>) at security/security.c:952
-> 4  0xffffffff8109ac80 in check_kill_permission (sig=15, info=0x0 <irq_stack_union>, t=0xffff88003b0b8000) at kernel/signal.c:796
-> 5  0xffffffff8109d3ab in group_send_sig_info (sig=15, info=0x0 <irq_stack_union>, p=0xffff88003b0b8000) at kernel/signal.c:1296
-> 6  0xffffffff8108e527 in forget_original_parent (father=<optimized out>) at kernel/exit.c:575
-> 7  exit_notify (group_dead=<optimized out>, tsk=<optimized out>) at kernel/exit.c:606
-> 8  do_exit (code=<optimized out>) at kernel/exit.c:775
-> 9  0xffffffff8108ec0f in do_group_exit (exit_code=0) at kernel/exit.c:891
-> 10 0xffffffff8108ec84 in SYSC_exit_group (error_code=<optimized out>) at kernel/exit.c:902
-> 11 SyS_exit_group (error_code=<optimized out>) at kernel/exit.c:900
->
-> This backtrace clearly shows that there is an LSM hook task_kill() that
-> happens during an exit_group() syscall and that this happens after
-> exit_task_namespaces(). LSM hooks with namespaces might need nsproxy to
-> be able to check for capabilities. At this point this is impossible. The
-> current's nsproxy is already NULL/destroyed.
->
-> This is the case because exit_task_namespaces() is called before the
-> exit_notify() where all of the above happens. This patch changes their
-> order.
+I wonder if we could instead have a vdso function that did something like:
 
-Nacked-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+unsigned long __vdso_cpu_local_exchange(unsigned long *base, int
+shift, unsigned long newval)
+{
+  unsigned long *ptr = base + (cpu << shift);
+  unsigned long old = *ptr;
+  *ptr = new;
+  return *ptr;
+}
 
-current->nsproxy->user_ns does not exist,
-and changing where exit_task_namespaces is fragile and I am really not
-interested in messing with it right now, to solve a problem that does
-not exist.
+I think this primitive would be sufficient to let user code do the
+rest.  There might be other more simple primitives that would work.
+It could be implemented by fiddling with IP ranges, but we could
+change the implementation later without breaking anything.  The only
+really hard part would be efficiently figuring out what CPU we're on.
+
+FWIW, 'xchg' to cache-hot memory is only about 20 cycles on my laptop,
+and cmpxchg seems to be about 6 cycles.  Both are faster than getcpu.
+How much are we really saving with any of this over the pure userspace
+approach?  I think that the most that the kernel can possibly help us
+is to give us a faster getcpu and to help us deal with being migrated
+to a different cpu if we want to avoid expensive operations and don't
+want to play unlocked cmpxchg tricks.
+
+I was wrong about set_thread_area giving us efficient per-cpu data,
+BTW, although it would be easy to add a similar feature that would
+give us a per-cpu segment base on x86.
+
+> > to gs would
+> > work if you arranged for gs to refer to the GDT.  On 32-bit userspace,
+> > you can do this with set_thread_area and on 64-bit userspace you can
+> > do it with arch_prctl.  You'd be relying on nothing else in the
+> > process using gs, but your proposal already relies on nothing else in
+> > the process using your signal number.
+>
+> Ideally, and this is indeed a limitation of my own approach, I would
+> like to be able to use this scheme from a library injected into
+> processes for tracing purposes, which means that I would be tempted
+> to stay away from solutions that affect the application too much.
+> This includes sending a signal unfortunately.
+>
+> In addition, the gs approach you propose here would work as long
+> as we use non-lock-prefixed atomic operations (e.g. cmpxchg), but
+> it would not work for sequences of instructions that need to be
+> performed over the same data (e.g. load, test, conditional branch,
+> store), which performs slightly faster than non-lock-prefixed atomic
+> ops.
+>
+
+> > >> >> - With Linux vdso:            12.7 ns
+> > >> >> - With TLS-cached cpu number:  0.3 ns
+> > >>
+> > >> Slightly off-topic: try this again on a newer kernel.  The vdso should
+> > >> have gotten a bit faster in 3.19 or 4.0 IIRC.
+> > >
+> > > Those benchmarks were done on Linux 4.0.
+> >
+> > What cpu?  I'm surprised it's that bad.
+>
+> Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz
+> (Haswell)
+> Please note that I run this benchmark under a kvm guest VM, but
+> I doubt it would impact these numbers.
+
+Go figure.  My laptop (SNB, 2.7GHz) can do it in 8ns or so.
 
 >
-> Signed-off-by: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-> ---
->  kernel/exit.c | 8 +++++++-
->  1 file changed, 7 insertions(+), 1 deletion(-)
+> > (TLS-cached will always be
+> > better, but still.  Although I'm curious how you're making the
+> > TLS-cached value work reliably enough.)
 >
-> diff --git a/kernel/exit.c b/kernel/exit.c
-> index 22fcc05..da1bb18 100644
-> --- a/kernel/exit.c
-> +++ b/kernel/exit.c
-> @@ -742,7 +742,6 @@ void do_exit(long code)
->  	exit_fs(tsk);
->  	if (group_dead)
->  		disassociate_ctty(1);
-> -	exit_task_namespaces(tsk);
->  	exit_task_work(tsk);
->  	exit_thread();
->  
-> @@ -763,6 +762,13 @@ void do_exit(long code)
->  
->  	TASKS_RCU(tasks_rcu_i = __srcu_read_lock(&tasks_rcu_exit_srcu));
->  	exit_notify(tsk, group_dead);
-> +
-> +	/*
-> +	 * This should be after all things that potentially require
-> +	 * process's namespaces (e.g. capability checks).
-> +	 */
-> +	exit_task_namespaces(tsk);
-> +
->  	proc_exit_connector(tsk);
->  #ifdef CONFIG_NUMA
->  	task_lock(tsk);
+> What do you have in mind as possibility of having an unreliable TLS-cached
+> value ?
+
+Something like the old vdso getcpu cache -- re-read the cpu count if
+it has expired since last time.
+
+> In my approach, the tls-cached value is updated in the preempt in
+> notifier, whenever the CPU number has changed compared to the value in
+> user-space.
+
+Ah, I missed that part.
+
+This ABI is kind of unfortunate in that it can't be shared between
+multiple libraries.
+
+Accessing the TLS value from user-space is performed with the
+> help of the compiler, including all the complexity involved in using a
+> TLS from a library if need be (lazy allocation, internal glibc mutex, etc).
+> However, since I control very precisely where in my critical section the
+> execution flow can be restarted (it's only on the store operation that
+> touch the write-protected memory range), there is no need to worry about
+> restarting in the middle of a held lock. It also works if a system call
+> is issued within the critical section (e.g. sys_futex due to lock), and
+> works with function calls.
+
+Oh, you're delivering a signal every time you're preempted, even
+outside the critical section?  That sounds expensive.
+
+--Andy
