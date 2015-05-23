@@ -1,14 +1,13 @@
-From: Jeremy Allison <jra@samba.org>
+From: =?UTF-8?Q?Andreas_Gr=C3=BCnbacher?= <andreas.gruenbacher@gmail.com>
 Subject: Re: [RFC v3 00/45] Richacls
-Date: Sat, 23 May 2015 08:50:56 -0700
-Message-ID: <20150523155056.GA2845@jeremy-HP>
+Date: Sat, 23 May 2015 17:56:47 +0200
+Message-ID: <CAHpGcML9wwdS3kYPkOEzf=4X8KH3WBeo+QhnK+4heOW-T23v0Q@mail.gmail.com>
 References: <cover.1429868795.git.agruenba@redhat.com>
-Reply-To: Jeremy Allison <jra@samba.org>
+	<20150523155056.GA2845@jeremy-HP>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <samba-technical-bounces@lists.samba.org>
-Content-Disposition: inline
-In-Reply-To: <cover.1429868795.git.agruenba@redhat.com>
+In-Reply-To: <20150523155056.GA2845@jeremy-HP>
 List-Unsubscribe: <https://lists.samba.org/mailman/options/samba-technical>,
 	<mailto:samba-technical-request@lists.samba.org?subject=unsubscribe>
 List-Archive: <http://lists.samba.org/pipermail/samba-technical>
@@ -18,41 +17,16 @@ List-Subscribe: <https://lists.samba.org/mailman/listinfo/samba-technical>,
 	<mailto:samba-technical-request@lists.samba.org?subject=subscribe>
 Sender: samba-technical-bounces@lists.samba.org
 Errors-To: samba-technical-bounces@lists.samba.org
-To: Andreas Gruenbacher <andreas.gruenbacher@gmail.com>
-Cc: linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, samba-technical@lists.samba.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org
+To: Jeremy Allison <jra@samba.org>
+Cc: linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, samba-technical <samba-technical@lists.samba.org>, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 24, 2015 at 01:03:57PM +0200, Andreas Gruenbacher wrote:
-> Hello,
-> 
-> here's another update of the richacl patch queue.  The changes since the last
-> posting (https://lwn.net/Articles/638242/) include:
-> 
->  * The nfs client now allocates pages for received acls on demand like the
->    server does.  It no longer caches the acl size between calls.
-> 
->  * All possible acls consisting of only owner@, group@, and everyone@ entries
->    which are equivalent to the file mode permission bits are now recognized.
->    This is needed because by the NFSv4 specification, the nfs server must
->    translate the file mode permission bits into an acl if it supports acls at
->    all.
-> 
->  * Support for the dacl attribute over NFSv4.1 for Automatic Inheritance, and
->    also for the write_retention and write_retention_hold permissions.
-> 
->  * The richacl_compute_max_masks() documentation has been improved.
-> 
->  * Various minor bug fixes.
-> 
-> The git version is available here:
-> 
->   git://git.kernel.org/pub/scm/linux/kernel/git/agruen/linux-richacl.git \
-> 	richacl-2015-04-24
+Jeremy,
 
-FYI. I have a mostly (needs test suite adding) working module
-for Samba for Andreas's richacls code.
+2015-05-23 17:50 GMT+02:00 Jeremy Allison <jra@samba.org>:
+> FYI. I have a mostly (needs test suite adding) working module
+> for Samba for Andreas's richacls code.
 
-Using it we map incoming Windows ACLs directly to richacls
-using the same mapping as we use for existing ZFS ACLs.
+great, thanks. I'll be doing some testing as soon as I get to it.
 
-Jeremy.
+Andreas
