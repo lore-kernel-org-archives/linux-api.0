@@ -1,236 +1,502 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [RFC PATCH] percpu system call: fast userspace percpu critical sections
-Date: Sat, 23 May 2015 12:15:55 -0700
-Message-ID: <CALCETrWzoFX7hXqvQqDEq=r=7PNaGKVjZeHEBWxPvC28Zi1AKA@mail.gmail.com>
-References: <1432219487-13364-1-git-send-email-mathieu.desnoyers@efficios.com>
- <CAHO5Pa0Kok4_QN0v3JNWyzGT=GbZNZcRyLhu02R2npV9hSdt7g@mail.gmail.com>
- <CALCETrUSBqHG3tbOq1yFz33v1_ckEgLNorgAxwLFi7MkjNcwLA@mail.gmail.com>
- <757752240.6470.1432330487312.JavaMail.zimbra@efficios.com>
- <CALCETrUxp-dP-kaTy4prEdciM-=sTXjpqnMbkvk38g5BTEvX0g@mail.gmail.com> <1839774559.6579.1432400944032.JavaMail.zimbra@efficios.com>
+From: Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2 1/2] capabilities: Ambient capabilities
+Date: Sat, 23 May 2015 14:37:06 -0500
+Message-ID: <20150523193705.GA30563@mail.hallyn.com>
+References: <cover.1431671529.git.luto@kernel.org>
+ <cc4749638a21079cce12f9f30c806170558e56e5.1431671529.git.luto@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1839774559.6579.1432400944032.JavaMail.zimbra@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Lai Jiangshan <laijs@cn.fujitsu.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Ben Maurer <bmaurer@fb.com>, Josh Triplett <josh@joshtriplett.org>, Ingo Molnar <mingo@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux Kernel <linux-kernel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Steven Rostedt <rostedt@goodmis.org>, Andrew Hunter <ahh@google.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <cc4749638a21079cce12f9f30c806170558e56e5.1431671529.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On May 23, 2015 10:09 AM, "Mathieu Desnoyers"
-<mathieu.desnoyers@efficios.com> wrote:
->
-> ----- Original Message -----
-> > On Fri, May 22, 2015 at 2:34 PM, Mathieu Desnoyers
-> > <mathieu.desnoyers@efficios.com> wrote:
-> > > ----- Original Message -----
-> > >> On Fri, May 22, 2015 at 1:26 PM, Michael Kerrisk <mtk.manpages@gmail.com>
-> > >> wrote:
-> > >> > [CC += linux-api@]
-> > >> >
-> > >> > On Thu, May 21, 2015 at 4:44 PM, Mathieu Desnoyers
-> > >> > <mathieu.desnoyers@efficios.com> wrote:
-> > >> >> Expose a new system call allowing userspace threads to register
-> > >> >> a TLS area used as an ABI between the kernel and userspace to
-> > >> >> share information required to create efficient per-cpu critical
-> > >> >> sections in user-space.
-> > >> >>
-> > >> >> This ABI consists of a thread-local structure containing:
-> > >> >>
-> > >> >> - a nesting count surrounding the critical section,
-> > >> >> - a signal number to be sent to the thread when preempting a thread
-> > >> >>   with non-zero nesting count,
-> > >> >> - a flag indicating whether the signal has been sent within the
-> > >> >>   critical section,
-> > >> >> - an integer where to store the current CPU number, updated whenever
-> > >> >>   the thread is preempted. This CPU number cache is not strictly
-> > >> >>   needed, but performs better than getcpu vdso.
-> > >> >>
-> > >> >> This approach is inspired by Paul Turner and Andrew Hunter's work
-> > >> >> on percpu atomics, which lets the kernel handle restart of critical
-> > >> >> sections, ref.
-> > >> >> http://www.linuxplumbersconf.org/2013/ocw/system/presentations/1695/original/LPC%20-%20PerCpu%20Atomics.pdf
-> > >> >>
-> > >> >> What is done differently here compared to percpu atomics: we track
-> > >> >> a single nesting counter per thread rather than many ranges of
-> > >> >> instruction pointer values. We deliver a signal to user-space and
-> > >> >> let the logic of restart be handled in user-space, thus moving
-> > >> >> the complexity out of the kernel. The nesting counter approach
-> > >> >> allows us to skip the complexity of interacting with signals that
-> > >> >> would be otherwise needed with the percpu atomics approach, which
-> > >> >> needs to know which instruction pointers are preempted, including
-> > >> >> when preemption occurs on a signal handler nested over an instruction
-> > >> >> pointer of interest.
-> > >> >>
-> > >>
-> > >> I talked about this kind of thing with PeterZ at LSF/MM, and I was
-> > >> unable to convince myself that the kernel needs to help at all.  To do
-> > >> this without kernel help, I want to relax the requirements slightly.
-> > >> With true per-cpu atomic sections, you have a guarantee that you are
-> > >> either really running on the same CPU for the entire duration of the
-> > >> atomic section or you abort.  I propose a weaker primitive: you
-> > >> acquire one of an array of locks (probably one per cpu), and you are
-> > >> guaranteed that, if you don't abort, no one else acquires the same
-> > >> lock while you hold it.
-> > >
-> > > In my proof of concept (https://github.com/compudj/percpu-dev) I
-> > > actually implement an array of per-cpu lock. The issue here boils
-> > > down to grabbing this per-cpu lock efficiently. Once the lock is taken,
-> > > the thread has exclusive access to that per-cpu lock, even if it
-> > > migrates.
-> > >
-> > >>  Here's how:
-> > >>
-> > >> Create an array of user-managed locks, one per cpu.  Call them lock[i]
-> > >> for 0 <= i < ncpus.
-> > >>
-> > >> To acquire, look up your CPU number.  Then, atomically, check that
-> > >> lock[cpu] isn't held and, if so, mark it held and record both your tid
-> > >> and your lock acquisition count.  If you learn that the lock *was*
-> > >> held after all, signal the holder (with kill or your favorite other
-> > >> mechanism), telling it which lock acquisition count is being aborted.
-> > >> Then atomically steal the lock, but only if the lock acquisition count
-> > >> hasn't changed.
-> > >>
-> > >> This has a few benefits over the in-kernel approach:
-> > >>
-> > >> 1. No kernel patch.
-> > >>
-> > >> 2. No unnecessary abort if you are preempted in favor of a thread that
-> > >> doesn't content for your lock.
-> > >>
-> > >> 3. Greatly improved debuggability.
-> > >>
-> > >> 4. With long critical sections and heavy load, you can improve
-> > >> performance by having several locks per cpu and choosing one at
-> > >> random.
-> > >>
-> > >> Is there a reason that a scheme like this doesn't work?
-> > >
-> > > What do you mean exactly by "atomically check that lock is not
-> > > held and, if so, mark it held" ? Do you imply using a lock-prefixed
-> > > atomic operation ?
-> >
-> > Yes.
-> >
-> > >
-> > > The goal of this whole restart section approach is to allow grabbing
-> > > a lock (or doing other sequences of operations ending with a single
-> > > store) on per-cpu data without having to use slow lock-prefixed
-> > > atomic operations.
-> >
-> > Ah, ok, I assumed it was to allow multiple threads to work in parallel.
-> >
-> > How arch-specific are you willing to be?
->
-> I'd want this to be usable on every major architectures.
->
-> > On x86, it might be possible
-> > to play some GDT games so that an unlocked xchg relative
->
-> AFAIK, there is no such thing as an unlocked xchg. xchg always
-> imply the lock prefix on x86. I guess you mean cmpxchg here.
->
+Thanks very much, Andy.  Comments and ack below.
 
-Right, got my special cases mixed up.
+Quoting Andy Lutomirski (luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org):
+> Credit where credit is due: this idea comes from Christoph Lameter
+> with a lot of valuable input from Serge Hallyn.  This patch is
+> heavily based on Christoph's patch.
+> 
+> ===== The status quo =====
+> 
+> On Linux, there are a number of capabilities defined by the kernel.
+> To perform various privileged tasks, processes can wield
+> capabilities that they hold.
+> 
+> Each task has four capability masks: effective (pE), permitted (pP),
+> inheritable (pI), and a bounding set (X).  When the kernel checks
+> for a capability, it checks pE.  The other capability masks serve to
+> modify what capabilities can be in pE.
+> 
+> Any task can remove capabilities from pE, pP, or pI at any time.  If
+> a task has a capability in pP, it can add that capability to pE
+> and/or pI.  If a task has CAP_SETPCAP, then it can add any
+> capability to pI, and it can remove capabilities from X.
+> 
+> Tasks are not the only things that can have capabilities; files can
+> also have capabilities.  A file can have no capabilty information at
+> all [1].  If a file has capability information, then it has a
+> permitted mask (fP) and an inheritable mask (fI) as well as a single
+> effective bit (fE) [2].  File capabilities modify the capabilities
+> of tasks that execve(2) them.
+> 
+> A task that successfully calls execve has its capabilities modified
+> for the file ultimately being excecuted (i.e. the binary itself if
+> that binary is ELF or for the interpreter if the binary is a
+> script.) [3] In the capability evolution rules, for each mask Z, pZ
+> represents the old value and pZ' represents the new value.  The
+> rules are:
+> 
+>   pP' = (X & fP) | (pI & fI)
+>   pI' = pI
+>   pE' = (fE ? pP' : 0)
+>   X is unchanged
+> 
+> For setuid binaries, fP, fI, and fE are modified by a moderately
+> complicated set of rules that emulate POSIX behavior.  Similarly, if
+> euid == 0 or ruid == 0, then fP, fI, and fE are modified differently
+> (primary, fP and fI usually end up being the full set).  For nonroot
+> users executing binaries with neither setuid nor file caps, fI and
+> fP are empty and fE is false.
+> 
+> As an extra complication, if you execute a process as nonroot and fE
+> is set, then the "secure exec" rules are in effect: AT_SECURE gets
+> set, LD_PRELOAD doesn't work, etc.
+> 
+> This is rather messy.  We've learned that making any changes is
+> dangerous, though: if a new kernel version allows an unprivileged
+> program to change its security state in a way that persists cross
+> execution of a setuid program or a program with file caps, this
+> persistent state is surprisingly likely to allow setuid or
+> file-capped programs to be exploited for privilege escalation.
+> 
+> ===== The problem =====
+> 
+> Capability inheritance is basically useless.
+> 
+> If you aren't root and you execute an ordinary binary, fI is zero,
+> so your capabilities have no effect whatsoever on pP'.  This means
+> that you can't usefully execute a helper process or a shell command
+> with elevated capabilities if you aren't root.
+> 
+> On current kernels, you can sort of work around this by setting fI
+> to the full set for most or all non-setuid executable files.  This
+> causes pP' = pI for nonroot, and inheritance works.  No one does
+> this because it's a PITA and it isn't even supported on most
+> filesystems.
+> 
+> If you try this, you'll discover that every nonroot program ends up
+> with secure exec rules, breaking many things.
 
-I wonder if we could instead have a vdso function that did something like:
+PI would have worked great if most programs wanting privilege were
+self-contained and compiled.  Shell scripts and lots of fork+execing
+make pI [much less useful] [completely useless].  See also golang's
+predisposition to fork+exec.
 
-unsigned long __vdso_cpu_local_exchange(unsigned long *base, int
-shift, unsigned long newval)
-{
-  unsigned long *ptr = base + (cpu << shift);
-  unsigned long old = *ptr;
-  *ptr = new;
-  return *ptr;
-}
+> This is a problem that has bitten many people who have tried to use
+> capabilities for anything useful.
+> 
+> ===== The proposed change =====
+> 
+> This patch adds a fifth capability mask called the ambient mask
+> (pA).  pA does what pI should have done.
 
-I think this primitive would be sufficient to let user code do the
-rest.  There might be other more simple primitives that would work.
-It could be implemented by fiddling with IP ranges, but we could
-change the implementation later without breaking anything.  The only
-really hard part would be efficiently figuring out what CPU we're on.
+Or at least what most people want it to do.
 
-FWIW, 'xchg' to cache-hot memory is only about 20 cycles on my laptop,
-and cmpxchg seems to be about 6 cycles.  Both are faster than getcpu.
-How much are we really saving with any of this over the pure userspace
-approach?  I think that the most that the kernel can possibly help us
-is to give us a faster getcpu and to help us deal with being migrated
-to a different cpu if we want to avoid expensive operations and don't
-want to play unlocked cmpxchg tricks.
+> pA obeys the invariant that no bit can ever be set in pA if it is
+> not set in both pP and pI.  Dropping a bit from pP or pI drops that
+> bit from pA.  This ensures that existing programs that try to drop
+> capabilities still do so, with a complication.  Because capability
+> inheritance is so broken, setting KEEPCAPS, using setresuid to
 
-I was wrong about set_thread_area giving us efficient per-cpu data,
-BTW, although it would be easy to add a similar feature that would
-give us a per-cpu segment base on x86.
+Sorry, did you mean "... setting KEEPCAPS and then either using
+setresuid to a nonroot uid or calling execve ..." ?
 
-> > to gs would
-> > work if you arranged for gs to refer to the GDT.  On 32-bit userspace,
-> > you can do this with set_thread_area and on 64-bit userspace you can
-> > do it with arch_prctl.  You'd be relying on nothing else in the
-> > process using gs, but your proposal already relies on nothing else in
-> > the process using your signal number.
->
-> Ideally, and this is indeed a limitation of my own approach, I would
-> like to be able to use this scheme from a library injected into
-> processes for tracing purposes, which means that I would be tempted
-> to stay away from solutions that affect the application too much.
-> This includes sending a signal unfortunately.
->
-> In addition, the gs approach you propose here would work as long
-> as we use non-lock-prefixed atomic operations (e.g. cmpxchg), but
-> it would not work for sequences of instructions that need to be
-> performed over the same data (e.g. load, test, conditional branch,
-> store), which performs slightly faster than non-lock-prefixed atomic
-> ops.
->
+> switch to nonroot uids, or calling execve effectively drops
+> capabilities.  Therefore, setresuid from root to nonroot
+> conditionally clears pA unless SECBIT_NO_SETUID_FIXUP is set.
+> Processes that don't like this can re-add bits to pA afterwards.
+> 
+> The capability evolution rules are changed:
+> 
+>   pA' = (file caps or setuid or setgid ? 0 : pA)
+>   pP' = (X & fP) | (pI & fI) | pA'
+>   pI' = pI
+>   pE' = (fE ? pP' : pA')
+>   X is unchanged
+> 
+> If you are nonroot but you have a capability, you can add it to pA.
+> If you do so, your children get that capability in pA, pP, and pE.
+> For example, you can set pA = CAP_NET_BIND_SERVICE, and your
+> children can automatically bind low-numbered ports.  Hallelujah!
+> 
+> Unprivileged users can create user namespaces, map themselves to a
+> nonzero uid, and create both privileged (relative to their
+> namespace) and unprivileged process trees.  This is currently more
+> or less impossible.  Hallelujah!
+> 
+> You cannot use pA to try to subvert a setuid, setgid, or file-capped
+> program: if you execute any such program, pA gets cleared and the
+> resulting evolution rules are unchanged by this patch.
 
-> > >> >> - With Linux vdso:            12.7 ns
-> > >> >> - With TLS-cached cpu number:  0.3 ns
-> > >>
-> > >> Slightly off-topic: try this again on a newer kernel.  The vdso should
-> > >> have gotten a bit faster in 3.19 or 4.0 IIRC.
-> > >
-> > > Those benchmarks were done on Linux 4.0.
-> >
-> > What cpu?  I'm surprised it's that bad.
->
-> Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz
-> (Haswell)
-> Please note that I run this benchmark under a kvm guest VM, but
-> I doubt it would impact these numbers.
+Christoph, just to be sure, is this ^ going to suffice for you?
 
-Go figure.  My laptop (SNB, 2.7GHz) can do it in 8ns or so.
+Seems like it should since any program which is setuid-root, i.e.
+passwd, isn't likely to be designed to exec other programs.
 
->
-> > (TLS-cached will always be
-> > better, but still.  Although I'm curious how you're making the
-> > TLS-cached value work reliably enough.)
->
-> What do you have in mind as possibility of having an unreliable TLS-cached
-> value ?
+> Users with nonzero pA are unlikely to unintentionally leak that
+> capability.  If they run programs that try to drop privileges,
+> dropping privileges will still work.
+> 
+> It's worth noting that the degree of paranoia in this patch could
+> possibly be reduced without causing serious problems.  Specifically,
+> if we allowed pA to persist across executing non-pA-aware setuid
+> binaries and across setresuid, then, naively, the only capabilities
+> that could leak as a result would be the capabilities in pA, and any
+> attacker *already* has those capabilities.  This would make me
+> nervous, though -- setuid binaries that tried to privilege-separate
+> might fail to do so, and putting CAP_DAC_READ_SEARCH or
+> CAP_DAC_OVERRIDE into pA could have unexpected side effects.
+> (Whether these unexpected side effects would be exploitable is an
+> open question.)  I've therefore taken the more paranoid route.
 
-Something like the old vdso getcpu cache -- re-read the cpu count if
-it has expired since last time.
+I'm definitely open to revisiting this question after the current
+patch has been in use for awhile.
 
-> In my approach, the tls-cached value is updated in the preempt in
-> notifier, whenever the CPU number has changed compared to the value in
-> user-space.
+> An alternative would be to require PR_SET_NO_NEW_PRIVS before
+> setting ambient capabilities.  I think that this would be annoying
+> and would make granting otherwise unprivileged users minor ambient
+> capabilities (CAP_NET_BIND_SERVICE or CAP_NET_RAW for example) much
+> less useful than it is with this patch.
+> 
+> ===== Footnotes =====
+> 
+> [1] Files that are missing the "security.capability" xattr or that
+> have unrecognized values for that xattr end up with has_cap set to
+> false.  The code that does that appears to be complicated for no
+> good reason.
+> 
+> [2] The libcap capability mask parsers and formatters are
+> dangerously misleading and the documentation is flat-out wrong.  fE
+> is *not* a mask; it's a single bit.  This has probably confused
+> every single person who has tried to use file capabilities.
+> 
+> [3] Linux very confusingly processes both the script and the
+> interpreter if applicable, for reasons that elude me.  The results
+> from thinking about a script's file capabilities and/or setuid bits
+> are mostly discarded.
 
-Ah, I missed that part.
+Not quite sure what you mean here - setuid and fX are ignored on
+shell scripts, but I think you're saying something less simple is
+going on?
 
-This ABI is kind of unfortunate in that it can't be shared between
-multiple libraries.
+> Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+> Cc: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+> Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+> Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+> Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+> Cc: Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> CC: Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+> Cc: linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Cc: akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org
+> Cc: Andrew G. Morgan <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> Cc: Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+> Cc: Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> Cc: Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>
+> Cc: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 
-Accessing the TLS value from user-space is performed with the
-> help of the compiler, including all the complexity involved in using a
-> TLS from a library if need be (lazy allocation, internal glibc mutex, etc).
-> However, since I control very precisely where in my critical section the
-> execution flow can be restarted (it's only on the store operation that
-> touch the write-protected memory range), there is no need to worry about
-> restarting in the middle of a held lock. It also works if a system call
-> is issued within the critical section (e.g. sys_futex due to lock), and
-> works with function calls.
+Acked-by: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 
-Oh, you're delivering a signal every time you're preempted, even
-outside the critical section?  That sounds expensive.
+> ---
+>  fs/proc/array.c              |  5 ++-
+>  include/linux/cred.h         |  8 ++++
+>  include/uapi/linux/prctl.h   |  6 +++
+>  kernel/user_namespace.c      |  1 +
+>  security/commoncap.c         | 87 +++++++++++++++++++++++++++++++++++++++-----
+>  security/keys/process_keys.c |  1 +
+>  6 files changed, 97 insertions(+), 11 deletions(-)
+> 
+> diff --git a/fs/proc/array.c b/fs/proc/array.c
+> index 1295a00ca316..bc15356d6551 100644
+> --- a/fs/proc/array.c
+> +++ b/fs/proc/array.c
+> @@ -282,7 +282,8 @@ static void render_cap_t(struct seq_file *m, const char *header,
+>  static inline void task_cap(struct seq_file *m, struct task_struct *p)
+>  {
+>  	const struct cred *cred;
+> -	kernel_cap_t cap_inheritable, cap_permitted, cap_effective, cap_bset;
+> +	kernel_cap_t cap_inheritable, cap_permitted, cap_effective,
+> +			cap_bset, cap_ambient;
+>  
+>  	rcu_read_lock();
+>  	cred = __task_cred(p);
+> @@ -290,12 +291,14 @@ static inline void task_cap(struct seq_file *m, struct task_struct *p)
+>  	cap_permitted	= cred->cap_permitted;
+>  	cap_effective	= cred->cap_effective;
+>  	cap_bset	= cred->cap_bset;
+> +	cap_ambient	= cred->cap_ambient;
+>  	rcu_read_unlock();
+>  
+>  	render_cap_t(m, "CapInh:\t", &cap_inheritable);
+>  	render_cap_t(m, "CapPrm:\t", &cap_permitted);
+>  	render_cap_t(m, "CapEff:\t", &cap_effective);
+>  	render_cap_t(m, "CapBnd:\t", &cap_bset);
+> +	render_cap_t(m, "CapAmb:\t", &cap_ambient);
+>  }
+>  
+>  static inline void task_seccomp(struct seq_file *m, struct task_struct *p)
+> diff --git a/include/linux/cred.h b/include/linux/cred.h
+> index 2fb2ca2127ed..05178874e771 100644
+> --- a/include/linux/cred.h
+> +++ b/include/linux/cred.h
+> @@ -122,6 +122,7 @@ struct cred {
+>  	kernel_cap_t	cap_permitted;	/* caps we're permitted */
+>  	kernel_cap_t	cap_effective;	/* caps we can actually use */
+>  	kernel_cap_t	cap_bset;	/* capability bounding set */
+> +	kernel_cap_t	cap_ambient;	/* Ambient capability set */
+>  #ifdef CONFIG_KEYS
+>  	unsigned char	jit_keyring;	/* default keyring to attach requested
+>  					 * keys to */
+> @@ -197,6 +198,13 @@ static inline void validate_process_creds(void)
+>  }
+>  #endif
+>  
+> +static inline bool cap_ambient_invariant_ok(const struct cred *cred)
+> +{
+> +	return cap_issubset(cred->cap_ambient,
+> +			    cap_intersect(cred->cap_permitted,
+> +					  cred->cap_inheritable));
+> +}
+> +
+>  /**
+>   * get_new_cred - Get a reference on a new set of credentials
+>   * @cred: The new credentials to reference
+> diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
+> index 31891d9535e2..65407f867e82 100644
+> --- a/include/uapi/linux/prctl.h
+> +++ b/include/uapi/linux/prctl.h
+> @@ -190,4 +190,10 @@ struct prctl_mm_map {
+>  # define PR_FP_MODE_FR		(1 << 0)	/* 64b FP registers */
+>  # define PR_FP_MODE_FRE		(1 << 1)	/* 32b compatibility */
+>  
+> +/* Control the ambient capability set */
+> +#define PR_CAP_AMBIENT		47
+> +# define PR_CAP_AMBIENT_GET	1
+> +# define PR_CAP_AMBIENT_RAISE	2
+> +# define PR_CAP_AMBIENT_LOWER	3
+> +
+>  #endif /* _LINUX_PRCTL_H */
+> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+> index 4109f8320684..dab0f808235a 100644
+> --- a/kernel/user_namespace.c
+> +++ b/kernel/user_namespace.c
+> @@ -39,6 +39,7 @@ static void set_cred_user_ns(struct cred *cred, struct user_namespace *user_ns)
+>  	cred->cap_inheritable = CAP_EMPTY_SET;
+>  	cred->cap_permitted = CAP_FULL_SET;
+>  	cred->cap_effective = CAP_FULL_SET;
+> +	cred->cap_ambient = CAP_EMPTY_SET;
+>  	cred->cap_bset = CAP_FULL_SET;
+>  #ifdef CONFIG_KEYS
+>  	key_put(cred->request_key_auth);
+> diff --git a/security/commoncap.c b/security/commoncap.c
+> index f66713bd7450..09541a6a85a0 100644
+> --- a/security/commoncap.c
+> +++ b/security/commoncap.c
+> @@ -272,6 +272,16 @@ int cap_capset(struct cred *new,
+>  	new->cap_effective   = *effective;
+>  	new->cap_inheritable = *inheritable;
+>  	new->cap_permitted   = *permitted;
+> +
+> +	/*
+> +	 * Mask off ambient bits that are no longer both permitted and
+> +	 * inheritable.
+> +	 */
+> +	new->cap_ambient = cap_intersect(new->cap_ambient,
+> +					 cap_intersect(*permitted,
+> +						       *inheritable));
+> +	if (WARN_ON(!cap_ambient_invariant_ok(new)))
 
---Andy
+This seems redundant (but safe) in this particular case since you've just
+calculated it to be precisely (pA & pP & pI)
+
+> +		return -EINVAL;
+>  	return 0;
+>  }
+>  
+> @@ -352,6 +362,7 @@ static inline int bprm_caps_from_vfs_caps(struct cpu_vfs_cap_data *caps,
+>  
+>  		/*
+>  		 * pP' = (X & fP) | (pI & fI)
+> +		 * The addition of pA' is handled later.
+>  		 */
+>  		new->cap_permitted.cap[i] =
+>  			(new->cap_bset.cap[i] & permitted) |
+> @@ -479,10 +490,13 @@ int cap_bprm_set_creds(struct linux_binprm *bprm)
+>  {
+>  	const struct cred *old = current_cred();
+>  	struct cred *new = bprm->cred;
+> -	bool effective, has_cap = false;
+> +	bool effective, has_cap = false, is_setid;
+>  	int ret;
+>  	kuid_t root_uid;
+>  
+> +	if (WARN_ON(!cap_ambient_invariant_ok(old)))
+> +		return -EPERM;
+> +
+>  	effective = false;
+>  	ret = get_file_caps(bprm, &effective, &has_cap);
+>  	if (ret < 0)
+> @@ -527,8 +541,9 @@ skip:
+>  	 *
+>  	 * In addition, if NO_NEW_PRIVS, then ensure we get no new privs.
+>  	 */
+> -	if ((!uid_eq(new->euid, old->uid) ||
+> -	     !gid_eq(new->egid, old->gid) ||
+> +	is_setid = !uid_eq(new->euid, old->uid) || !gid_eq(new->egid, old->gid);
+> +
+> +	if ((is_setid ||
+>  	     !cap_issubset(new->cap_permitted, old->cap_permitted)) &&
+>  	    bprm->unsafe & ~LSM_UNSAFE_PTRACE_CAP) {
+>  		/* downgrade; they get no more than they had, and maybe less */
+> @@ -544,10 +559,24 @@ skip:
+>  	new->suid = new->fsuid = new->euid;
+>  	new->sgid = new->fsgid = new->egid;
+>  
+> +	/* File caps or setid cancels ambient. */
+> +	if (has_cap || is_setid)
+> +		cap_clear(new->cap_ambient);
+> +
+> +	/*
+> +	 * Now that we've computed pA', update pP' to give:
+> +	 *   pP' = (X & fP) | (pI & fI) | pA'
+> +	 */
+> +	new->cap_permitted = cap_combine(new->cap_permitted, new->cap_ambient);
+> +
+>  	if (effective)
+>  		new->cap_effective = new->cap_permitted;
+>  	else
+> -		cap_clear(new->cap_effective);
+> +		new->cap_effective = new->cap_ambient;
+> +
+> +	if (WARN_ON(!cap_ambient_invariant_ok(new)))
+> +		return -EPERM;
+> +
+>  	bprm->cap_effective = effective;
+>  
+>  	/*
+> @@ -562,7 +591,7 @@ skip:
+>  	 * Number 1 above might fail if you don't have a full bset, but I think
+>  	 * that is interesting information to audit.
+>  	 */
+> -	if (!cap_isclear(new->cap_effective)) {
+> +	if (!cap_issubset(new->cap_effective, new->cap_ambient)) {
+>  		if (!cap_issubset(CAP_FULL_SET, new->cap_effective) ||
+>  		    !uid_eq(new->euid, root_uid) || !uid_eq(new->uid, root_uid) ||
+>  		    issecure(SECURE_NOROOT)) {
+> @@ -573,6 +602,10 @@ skip:
+>  	}
+>  
+>  	new->securebits &= ~issecure_mask(SECURE_KEEP_CAPS);
+> +
+> +	if (WARN_ON(!cap_ambient_invariant_ok(new)))
+> +		return -EPERM;
+> +
+>  	return 0;
+>  }
+>  
+> @@ -594,7 +627,7 @@ int cap_bprm_secureexec(struct linux_binprm *bprm)
+>  	if (!uid_eq(cred->uid, root_uid)) {
+>  		if (bprm->cap_effective)
+>  			return 1;
+> -		if (!cap_isclear(cred->cap_permitted))
+> +		if (!cap_issubset(cred->cap_permitted, cred->cap_ambient))
+>  			return 1;
+>  	}
+>  
+> @@ -696,10 +729,18 @@ static inline void cap_emulate_setxuid(struct cred *new, const struct cred *old)
+>  	     uid_eq(old->suid, root_uid)) &&
+>  	    (!uid_eq(new->uid, root_uid) &&
+>  	     !uid_eq(new->euid, root_uid) &&
+> -	     !uid_eq(new->suid, root_uid)) &&
+> -	    !issecure(SECURE_KEEP_CAPS)) {
+> -		cap_clear(new->cap_permitted);
+> -		cap_clear(new->cap_effective);
+> +	     !uid_eq(new->suid, root_uid))) {
+> +		if (!issecure(SECURE_KEEP_CAPS)) {
+> +			cap_clear(new->cap_permitted);
+> +			cap_clear(new->cap_effective);
+> +		}
+> +
+> +		/*
+> +		 * Pre-ambient programs except setresuid to nonroot followed
+
+[ I see 'except' has already been pointed out in the thread :) ]
+
+> +		 * by exec to drop capabilities.  We should make sure that
+> +		 * this remains the case.
+> +		 */
+> +		cap_clear(new->cap_ambient);
+>  	}
+>  	if (uid_eq(old->euid, root_uid) && !uid_eq(new->euid, root_uid))
+>  		cap_clear(new->cap_effective);
+> @@ -929,6 +970,32 @@ int cap_task_prctl(int option, unsigned long arg2, unsigned long arg3,
+>  			new->securebits &= ~issecure_mask(SECURE_KEEP_CAPS);
+>  		return commit_creds(new);
+>  
+> +	case PR_CAP_AMBIENT:
+> +		if (((!cap_valid(arg3)) | arg4 | arg5))
+> +			return -EINVAL;
+> +
+> +		if (arg2 == PR_CAP_AMBIENT_GET) {
+> +			return !!cap_raised(current_cred()->cap_ambient, arg3);
+> +		} else if (arg2 != PR_CAP_AMBIENT_RAISE &&
+> +			   arg2 != PR_CAP_AMBIENT_LOWER) {
+> +			return -EINVAL;
+> +		} else {
+> +			if (arg2 == PR_CAP_AMBIENT_RAISE &&
+> +			    (!cap_raised(current_cred()->cap_permitted, arg3) ||
+> +			     !cap_raised(current_cred()->cap_inheritable,
+> +					 arg3)))
+> +				return -EPERM;
+> +
+> +			new = prepare_creds();
+> +			if (!new)
+> +				return -ENOMEM;
+> +			if (arg2 == PR_CAP_AMBIENT_RAISE)
+> +				cap_raise(new->cap_ambient, arg3);
+> +			else
+> +				cap_lower(new->cap_ambient, arg3);
+> +			return commit_creds(new);
+> +		}
+> +
+>  	default:
+>  		/* No functionality available - continue with default */
+>  		return -ENOSYS;
+> diff --git a/security/keys/process_keys.c b/security/keys/process_keys.c
+> index bd536cb221e2..43b4cddbf2b3 100644
+> --- a/security/keys/process_keys.c
+> +++ b/security/keys/process_keys.c
+> @@ -848,6 +848,7 @@ void key_change_session_keyring(struct callback_head *twork)
+>  	new->cap_inheritable	= old->cap_inheritable;
+>  	new->cap_permitted	= old->cap_permitted;
+>  	new->cap_effective	= old->cap_effective;
+> +	new->cap_ambient	= old->cap_ambient;
+>  	new->cap_bset		= old->cap_bset;
+>  
+>  	new->jit_keyring	= old->jit_keyring;
+> -- 
+> 2.1.0
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
