@@ -1,7 +1,7 @@
 From: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v2 3/7] smack: abstraction layer for 2 common Smack operations
-Date: Mon, 25 May 2015 14:32:38 +0200
-Message-ID: <1432557162-19123-4-git-send-email-l.pawelczyk__42382.4871461422$1432557357$gmane$org@samsung.com>
+Subject: [PATCH v2 7/7] smack: documentation for the Smack namespace
+Date: Mon, 25 May 2015 14:32:42 +0200
+Message-ID: <1432557162-19123-8-git-send-email-l.pawelczyk__30541.3901493468$1432557394$gmane$org@samsung.com>
 References: <1432209222-8479-1-git-send-email-l.pawelczyk@samsung.com>
  <1432557162-19123-1-git-send-email-l.pawelczyk@samsung.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -11,577 +11,289 @@ To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "Eric W. 
 Cc: Lukasz Pawelczyk <havner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds two new functions that provide an abstraction layer for
-two common internal Smack operations:
-
-smk_find_label_name() - returns a label name (char*) from a struct
-                        smack_known pointer
-smk_get_label()       - either finds or imports a label from a raw label
-                        name (char*) and returns struct smack_known point
-
-This patch also simplifies some pieces of code due to addition of those
-2 functions (e.g. smack_inode_post_setxattr, smk_fill_rule,
-smk_write_revoke_subj).
-
-It is meant as a preparation for namespaces patches. Those 2 functions
-will serve as entry points for namespace operations.
-
-This patch should not change the Smack behaviour in any way.
+Adds Documentation/smack-namespace.txt.
 
 Signed-off-by: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 ---
- security/smack/smack.h        |   2 +
- security/smack/smack_access.c |  40 ++++++++++++
- security/smack/smack_lsm.c    |  76 ++++++++++++-----------
- security/smack/smackfs.c      | 137 ++++++++++++++++++++++--------------------
- 4 files changed, 155 insertions(+), 100 deletions(-)
+ Documentation/security/00-INDEX            |   2 +
+ Documentation/security/Smack-namespace.txt | 231 +++++++++++++++++++++++++++++
+ MAINTAINERS                                |   1 +
+ security/smack/Kconfig                     |   2 +
+ 4 files changed, 236 insertions(+)
+ create mode 100644 Documentation/security/Smack-namespace.txt
 
-diff --git a/security/smack/smack.h b/security/smack/smack.h
-index fa8fa87..fa32495 100644
---- a/security/smack/smack.h
-+++ b/security/smack/smack.h
-@@ -249,6 +249,8 @@ int smk_netlbl_mls(int, char *, struct netlbl_lsm_secattr *, int);
- struct smack_known *smk_import_entry(const char *, int);
- void smk_insert_entry(struct smack_known *skp);
- struct smack_known *smk_find_entry(const char *);
-+char *smk_find_label_name(struct smack_known *skp);
-+struct smack_known *smk_get_label(const char *string, int len, bool import);
- 
- /*
-  * Shared data.
-diff --git a/security/smack/smack_access.c b/security/smack/smack_access.c
-index 408e20b..3bf4cad 100644
---- a/security/smack/smack_access.c
-+++ b/security/smack/smack_access.c
-@@ -617,3 +617,43 @@ struct smack_known *smack_from_secid(const u32 secid)
- 	rcu_read_unlock();
- 	return &smack_known_invalid;
- }
+diff --git a/Documentation/security/00-INDEX b/Documentation/security/00-INDEX
+index 45c82fd..c03a220 100644
+--- a/Documentation/security/00-INDEX
++++ b/Documentation/security/00-INDEX
+@@ -6,6 +6,8 @@ SELinux.txt
+ 	- how to get started with the SELinux security enhancement.
+ Smack.txt
+ 	- documentation on the Smack Linux Security Module.
++Smack-namespace.txt
++	- documentation on the Smack namespace implementation.
+ Yama.txt
+ 	- documentation on the Yama Linux Security Module.
+ apparmor.txt
+diff --git a/Documentation/security/Smack-namespace.txt b/Documentation/security/Smack-namespace.txt
+new file mode 100644
+index 0000000..85197ff
+--- /dev/null
++++ b/Documentation/security/Smack-namespace.txt
+@@ -0,0 +1,231 @@
 +
-+/**
-+ * smk_find_label_name - A helper to get a string value of a label
-+ * @skp: a label we want a string value from
-+ *
-+ * Returns a pointer to a label name or NULL if label name not found.
-+ */
-+char *smk_find_label_name(struct smack_known *skp)
-+{
-+	return skp->smk_known;
-+}
++                                      "Quis custodiet ipsos custodes?"
++                                                 - Satires of Juvenal
 +
-+/**
-+ * smk_get_label - A helper to get the smack_known value from a string using
-+ *                 either import or find functions if it already exists
-+ * @string: a name of a label we look for or want to import
-+ * @len: the string size, or zero if it is NULL terminated
-+ * @import: whether we should import the label if not found
-+ *
-+ * Returns a smack_known label that is either imported or found.
-+ * NULL if label not found (only when import == false).
-+ * Error code otherwise.
-+ */
-+struct smack_known *smk_get_label(const char *string, int len, bool import)
-+{
-+	struct smack_known *skp;
-+	char *cp;
 +
-+	if (import) {
-+		skp = smk_import_entry(string, len);
-+	} else {
-+		cp = smk_parse_smack(string, len);
-+		if (IS_ERR(cp))
-+			return ERR_CAST(cp);
++--- What is a Smack namespace ---
 +
-+		skp = smk_find_entry(cp);
-+	}
++Smack namespace was developed to make it possible for Smack to work
++nicely with Linux containers where there is a full operating system
++with its own init inside the namespace. Such a system working with
++Smack expects to have at least partially working SMACK_MAC_ADMIN to be
++able to change labels of processes and files. This is required to be
++able to securely start applications under the control of Smack and
++manage their access rights.
 +
-+	return skp;
-+}
-diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
-index ee7bb63..4a197b6 100644
---- a/security/smack/smack_lsm.c
-+++ b/security/smack/smack_lsm.c
-@@ -608,7 +608,7 @@ static int smack_sb_kern_mount(struct super_block *sb, int flags, void *data)
- 
- 		if (strncmp(op, SMK_FSHAT, strlen(SMK_FSHAT)) == 0) {
- 			op += strlen(SMK_FSHAT);
--			skp = smk_import_entry(op, 0);
-+			skp = smk_get_label(op, 0, true);
- 			if (IS_ERR(skp))
- 				return PTR_ERR(skp);
- 			sp->smk_hat = skp;
-@@ -616,7 +616,7 @@ static int smack_sb_kern_mount(struct super_block *sb, int flags, void *data)
- 
- 		} else if (strncmp(op, SMK_FSFLOOR, strlen(SMK_FSFLOOR)) == 0) {
- 			op += strlen(SMK_FSFLOOR);
--			skp = smk_import_entry(op, 0);
-+			skp = smk_get_label(op, 0, true);
- 			if (IS_ERR(skp))
- 				return PTR_ERR(skp);
- 			sp->smk_floor = skp;
-@@ -625,7 +625,7 @@ static int smack_sb_kern_mount(struct super_block *sb, int flags, void *data)
- 		} else if (strncmp(op, SMK_FSDEFAULT,
- 				   strlen(SMK_FSDEFAULT)) == 0) {
- 			op += strlen(SMK_FSDEFAULT);
--			skp = smk_import_entry(op, 0);
-+			skp = smk_get_label(op, 0, true);
- 			if (IS_ERR(skp))
- 				return PTR_ERR(skp);
- 			sp->smk_default = skp;
-@@ -633,7 +633,7 @@ static int smack_sb_kern_mount(struct super_block *sb, int flags, void *data)
- 
- 		} else if (strncmp(op, SMK_FSROOT, strlen(SMK_FSROOT)) == 0) {
- 			op += strlen(SMK_FSROOT);
--			skp = smk_import_entry(op, 0);
-+			skp = smk_get_label(op, 0, true);
- 			if (IS_ERR(skp))
- 				return PTR_ERR(skp);
- 			sp->smk_root = skp;
-@@ -641,7 +641,7 @@ static int smack_sb_kern_mount(struct super_block *sb, int flags, void *data)
- 
- 		} else if (strncmp(op, SMK_FSTRANS, strlen(SMK_FSTRANS)) == 0) {
- 			op += strlen(SMK_FSTRANS);
--			skp = smk_import_entry(op, 0);
-+			skp = smk_get_label(op, 0, true);
- 			if (IS_ERR(skp))
- 				return PTR_ERR(skp);
- 			sp->smk_root = skp;
-@@ -1125,7 +1125,7 @@ static int smack_inode_setxattr(struct dentry *dentry, const char *name,
- 		rc = -EPERM;
- 
- 	if (rc == 0 && check_import) {
--		skp = size ? smk_import_entry(value, size) : NULL;
-+		skp = size ? smk_get_label(value, size, true) : NULL;
- 		if (IS_ERR(skp))
- 			rc = PTR_ERR(skp);
- 		else if (skp == NULL || (check_star &&
-@@ -1159,6 +1159,7 @@ static void smack_inode_post_setxattr(struct dentry *dentry, const char *name,
- 				      const void *value, size_t size, int flags)
- {
- 	struct smack_known *skp;
-+	struct smack_known **skpp = NULL;
- 	struct inode_smack *isp = d_backing_inode(dentry)->i_security;
- 
- 	if (strcmp(name, XATTR_NAME_SMACKTRANSMUTE) == 0) {
-@@ -1166,27 +1167,21 @@ static void smack_inode_post_setxattr(struct dentry *dentry, const char *name,
- 		return;
- 	}
- 
--	if (strcmp(name, XATTR_NAME_SMACK) == 0) {
--		skp = smk_import_entry(value, size);
--		if (!IS_ERR(skp))
--			isp->smk_inode = skp;
--		else
--			isp->smk_inode = &smack_known_invalid;
--	} else if (strcmp(name, XATTR_NAME_SMACKEXEC) == 0) {
--		skp = smk_import_entry(value, size);
--		if (!IS_ERR(skp))
--			isp->smk_task = skp;
--		else
--			isp->smk_task = &smack_known_invalid;
--	} else if (strcmp(name, XATTR_NAME_SMACKMMAP) == 0) {
--		skp = smk_import_entry(value, size);
-+	if (strcmp(name, XATTR_NAME_SMACK) == 0)
-+		skpp = &isp->smk_inode;
-+	else if (strcmp(name, XATTR_NAME_SMACKEXEC) == 0)
-+		skpp = &isp->smk_task;
-+	else if (strcmp(name, XATTR_NAME_SMACKMMAP) == 0)
-+		skpp = &isp->smk_mmap;
++It was implemented using new LSM hooks added to the user namespace
++that were developed together with Smack namespace.
 +
-+	if (skpp) {
-+		skp = smk_get_label(value, size, true);
 +
- 		if (!IS_ERR(skp))
--			isp->smk_mmap = skp;
-+			*skpp = skp;
- 		else
--			isp->smk_mmap = &smack_known_invalid;
-+			*skpp = &smack_known_invalid;
- 	}
--
--	return;
- }
- 
- /**
-@@ -1280,15 +1275,17 @@ static int smack_inode_getsecurity(const struct inode *inode,
- 	struct socket *sock;
- 	struct super_block *sbp;
- 	struct inode *ip = (struct inode *)inode;
--	struct smack_known *isp;
--	int ilen;
-+	struct smack_known *isp = NULL;
- 	int rc = 0;
- 
--	if (strcmp(name, XATTR_SMACK_SUFFIX) == 0) {
-+	if (strcmp(name, XATTR_SMACK_SUFFIX) == 0)
- 		isp = smk_of_inode(inode);
--		ilen = strlen(isp->smk_known);
--		*buffer = isp->smk_known;
--		return ilen;
++--- Design ideas ---
 +
-+	if (isp) {
-+		*buffer = smk_find_label_name(isp);
-+		if (*buffer == NULL)
-+			*buffer = smack_known_huh.smk_known;
-+		return strlen(*buffer);
- 	}
- 
- 	/*
-@@ -1311,10 +1308,11 @@ static int smack_inode_getsecurity(const struct inode *inode,
- 	else
- 		return -EOPNOTSUPP;
- 
--	ilen = strlen(isp->smk_known);
- 	if (rc == 0) {
--		*buffer = isp->smk_known;
--		rc = ilen;
-+		*buffer = smk_find_label_name(isp);
-+		if (*buffer == NULL)
-+			*buffer = smack_known_huh.smk_known;
-+		rc = strlen(*buffer);
- 	}
- 
- 	return rc;
-@@ -3270,7 +3268,10 @@ static int smack_getprocattr(struct task_struct *p, char *name, char **value)
- 	if (strcmp(name, "current") != 0)
- 		return -EINVAL;
- 
--	cp = kstrdup(skp->smk_known, GFP_KERNEL);
-+	cp = smk_find_label_name(skp);
-+	if (cp == NULL)
-+		cp = smack_known_huh.smk_known;
-+	cp = kstrdup(cp, GFP_KERNEL);
- 	if (cp == NULL)
- 		return -ENOMEM;
- 
-@@ -3314,7 +3315,7 @@ static int smack_setprocattr(struct task_struct *p, char *name,
- 	if (strcmp(name, "current") != 0)
- 		return -EINVAL;
- 
--	skp = smk_import_entry(value, size);
-+	skp = smk_get_label(value, size, true);
- 	if (IS_ERR(skp))
- 		return PTR_ERR(skp);
- 
-@@ -4042,7 +4043,10 @@ static int smack_key_getsecurity(struct key *key, char **_buffer)
- 		return 0;
- 	}
- 
--	copy = kstrdup(skp->smk_known, GFP_KERNEL);
-+	copy = smk_find_label_name(skp);
-+	if (copy == NULL)
-+		copy = smack_known_huh.smk_known;
-+	copy = kstrdup(copy, GFP_KERNEL);
- 	if (copy == NULL)
- 		return -ENOMEM;
- 	length = strlen(copy) + 1;
-diff --git a/security/smack/smackfs.c b/security/smack/smackfs.c
-index 3e42426..5ec1e8e 100644
---- a/security/smack/smackfs.c
-+++ b/security/smack/smackfs.c
-@@ -345,36 +345,17 @@ static int smk_fill_rule(const char *subject, const char *object,
- 				struct smack_parsed_rule *rule, int import,
- 				int len)
- {
--	const char *cp;
--	struct smack_known *skp;
--
--	if (import) {
--		rule->smk_subject = smk_import_entry(subject, len);
--		if (IS_ERR(rule->smk_subject))
--			return PTR_ERR(rule->smk_subject);
--
--		rule->smk_object = smk_import_entry(object, len);
--		if (IS_ERR(rule->smk_object))
--			return PTR_ERR(rule->smk_object);
--	} else {
--		cp = smk_parse_smack(subject, len);
--		if (IS_ERR(cp))
--			return PTR_ERR(cp);
--		skp = smk_find_entry(cp);
--		kfree(cp);
--		if (skp == NULL)
--			return -ENOENT;
--		rule->smk_subject = skp;
--
--		cp = smk_parse_smack(object, len);
--		if (IS_ERR(cp))
--			return PTR_ERR(cp);
--		skp = smk_find_entry(cp);
--		kfree(cp);
--		if (skp == NULL)
--			return -ENOENT;
--		rule->smk_object = skp;
--	}
-+	rule->smk_subject = smk_get_label(subject, len, import);
-+	if (IS_ERR(rule->smk_subject))
-+		return PTR_ERR(rule->smk_subject);
-+	if (rule->smk_subject == NULL)
-+		return -ENOENT;
++"Smack namespace" is rather "Smack labels namespace" as not the whole
++MAC is namespaced, only the labels. There is a great analogy between
++Smack labels namespace and the user namespace part that remaps UIDs.
 +
-+	rule->smk_object = smk_get_label(object, len, import);
-+	if (IS_ERR(rule->smk_object))
-+		return PTR_ERR(rule->smk_object);
-+	if (rule->smk_object == NULL)
-+		return -ENOENT;
- 
- 	rule->smk_access1 = smk_perm_from_str(access1);
- 	if (access2)
-@@ -605,6 +586,9 @@ static void smk_seq_stop(struct seq_file *s, void *v)
- 
- static void smk_rule_show(struct seq_file *s, struct smack_rule *srp, int max)
- {
-+	char *sbj;
-+	char *obj;
++The idea is to create a map of labels for a namespace so the namespace
++is only allowed to use those labels. Smack rules are always the same
++as in the init namespace (limited only by what labels are mapped) and
++cannot be manipulated from the child namespace. The map is actually
++only for labels' names. The underlying structures for labels remain
++the same. The filesystem also stores the "unmapped" labels from the
++init namespace.
 +
- 	/*
- 	 * Don't show any rules with label names too long for
- 	 * interface file (/smack/load or /smack/load2)
-@@ -618,9 +602,13 @@ static void smk_rule_show(struct seq_file *s, struct smack_rule *srp, int max)
- 	if (srp->smk_access == 0)
- 		return;
- 
--	seq_printf(s, "%s %s",
--		   srp->smk_subject->smk_known,
--		   srp->smk_object->smk_known);
-+	sbj = smk_find_label_name(srp->smk_subject);
-+	obj = smk_find_label_name(srp->smk_object);
++Let's say we have those labels in the init namespace:
++label1
++label2
++label3
 +
-+	if (sbj == NULL || obj == NULL)
-+		return;
++and those rules:
++label1 label2 rwx
++label1 label3 rwx
++label2 label3 rwx
 +
-+	seq_printf(s, "%s %s", sbj, obj);
- 
- 	seq_putc(s, ' ');
- 
-@@ -811,6 +799,7 @@ static int cipso_seq_show(struct seq_file *s, void *v)
- 		 list_entry(list, struct smack_known, list);
- 	struct netlbl_lsm_catmap *cmp = skp->smk_netlabel.attr.mls.cat;
- 	char sep = '/';
-+	char *cp;
- 	int i;
- 
- 	/*
-@@ -824,7 +813,11 @@ static int cipso_seq_show(struct seq_file *s, void *v)
- 	if (strlen(skp->smk_known) >= SMK_LABELLEN)
- 		return 0;
- 
--	seq_printf(s, "%s %3d", skp->smk_known, skp->smk_netlabel.attr.mls.lvl);
-+	cp = smk_find_label_name(skp);
-+	if (cp == NULL)
-+		return 0;
++We create a map for a namespace:
++label1 -> mapped1
++label2 -> mapped2
 +
-+	seq_printf(s, "%s %3d", cp, skp->smk_netlabel.attr.mls.lvl);
- 
- 	for (i = netlbl_catmap_walk(cmp, 0); i >= 0;
- 	     i = netlbl_catmap_walk(cmp, i + 1)) {
-@@ -913,7 +906,7 @@ static ssize_t smk_set_cipso(struct file *file, const char __user *buf,
- 	 */
- 	mutex_lock(&smack_cipso_lock);
- 
--	skp = smk_import_entry(rule, 0);
-+	skp = smk_get_label(rule, 0, true);
- 	if (IS_ERR(skp)) {
- 		rc = PTR_ERR(skp);
- 		goto out;
-@@ -1002,9 +995,14 @@ static int cipso2_seq_show(struct seq_file *s, void *v)
- 		 list_entry(list, struct smack_known, list);
- 	struct netlbl_lsm_catmap *cmp = skp->smk_netlabel.attr.mls.cat;
- 	char sep = '/';
-+	char *cp;
- 	int i;
- 
--	seq_printf(s, "%s %3d", skp->smk_known, skp->smk_netlabel.attr.mls.lvl);
-+	cp = smk_find_label_name(skp);
-+	if (cp == NULL)
-+		return 0;
++This means that 'label3' is completely invisible in the namespace. As if
++it didn't exist. All the rules that include it are ignored.
 +
-+	seq_printf(s, "%s %3d", cp, skp->smk_netlabel.attr.mls.lvl);
- 
- 	for (i = netlbl_catmap_walk(cmp, 0); i >= 0;
- 	     i = netlbl_catmap_walk(cmp, i + 1)) {
-@@ -1087,11 +1085,15 @@ static int netlbladdr_seq_show(struct seq_file *s, void *v)
- 	unsigned char *hp = (char *) &skp->smk_host.sin_addr.s_addr;
- 	int maskn;
- 	u32 temp_mask = be32_to_cpu(skp->smk_mask.s_addr);
-+	char *label = smk_find_label_name(skp->smk_label);
++Effectively in the namespace we have only one rule:
++mapped1 mapped2 rwx
 +
-+	if (label == NULL)
-+		return 0;
- 
- 	for (maskn = 0; temp_mask; temp_mask <<= 1, maskn++);
- 
- 	seq_printf(s, "%u.%u.%u.%u/%d %s\n",
--		hp[0], hp[1], hp[2], hp[3], maskn, skp->smk_label->smk_known);
-+		hp[0], hp[1], hp[2], hp[3], maskn, label);
- 
- 	return 0;
- }
-@@ -1237,7 +1239,7 @@ static ssize_t smk_write_netlbladdr(struct file *file, const char __user *buf,
- 	 * If smack begins with '-', it is an option, don't import it
- 	 */
- 	if (smack[0] != '-') {
--		skp = smk_import_entry(smack, 0);
-+		skp = smk_get_label(smack, 0, true);
- 		if (IS_ERR(skp)) {
- 			rc = PTR_ERR(skp);
- 			goto free_out;
-@@ -1566,6 +1568,7 @@ static ssize_t smk_read_ambient(struct file *filp, char __user *buf,
- 				size_t cn, loff_t *ppos)
- {
- 	ssize_t rc;
-+	char *cp;
- 	int asize;
- 
- 	if (*ppos != 0)
-@@ -1576,12 +1579,14 @@ static ssize_t smk_read_ambient(struct file *filp, char __user *buf,
- 	 */
- 	mutex_lock(&smack_ambient_lock);
- 
--	asize = strlen(smack_net_ambient->smk_known) + 1;
-+	cp = smk_find_label_name(smack_net_ambient);
-+	if (cp == NULL)
-+		cp = smack_known_huh.smk_known;
++Which in reality is:
++label1 label2 rwx
 +
-+	asize = strlen(cp) + 1;
++All requests to access an object with a 'label3' will be denied. If it
++ever comes to a situation where 'label3' would have to be printed
++(e.g. reading an exec or mmap label from a file to which we have
++access) then huh sign '?' will be printed instead.
++
++All the operations in the namespace on the remaining labels will have
++to be performed using their mapped names. Things like changing own
++process's label, changing filesystem label. Labels will also be
++printed with their mapped names.
++
++You cannot import new labels in a namespace. Every operation that
++would do so in an init namespace will return an error in the child
++namespace. You cannot assign an unmapped or not existing label to an
++object. You can only operate on labels that have been explicitly
++mapped.
++
++
++--- Capabilities ---
++
++Enabling Smack related capabilities (CAP_MAC_ADMIN and
++CAP_MAC_OVERRIDE) is main goal of Smack namespace, so it can work
++properly in the container. And those capabilities do work to some
++extent. In several places where capabilities are checked compatibility
++with Smack namespace has been introduced. Capabilities are of course
++limited to operate only on mapped labels.
++
++CAP_MAC_OVERRIDE works fully, will allow you to ignore Smack access
++rules, but only between objects that have labels mapped. So in the
++example above having this CAP will allow e.g. label2 to write to
++label1, but will not allow any access to label3.
++
++With CAP_MAC_ADMIN the following operations has been allowed inside
++the namespace:
++- setting and removing xattr on files, including the security.* ones
++- setting process's own label (/proc/self/attr/current)
++- mounting in a privileged Smack mode, which means one can specify
++  additional mount options like: smackfsdef, smackfsfloor etc.
++
++Again this is also allowed only on the mapped labels. Labels on the
++filesystem will be stored in unmapped form so they are preserved
++through reboots.
++
++Such a namespace construct allows e.g. systemd (with Smack support)
++working in a container to assign labels properly to daemons and other
++processes.
++
++
++--- Usage ---
++
++Smack namespace is written using LSM hooks inside user namespace. That
++means it's connected to it.
++
++To create a new Smack namespace you need to unshare() user namespace
++as usual. If that is all you do though, than there is no difference to
++what is now. To activate the Smack namespace you need to fill the
++labels' map. It is in a file /proc/$PID/smack_map.
++
++By default the map is empty and Smack namespaces are inactive (labels
++are taken directly from a parent namespace). It also means that the
++Smack capabilities will be inactive. After you fill the map it starts
++to take effect in the namespace and Smack capabilities (only on mapped
++labels) start to work.
++
++Due to the way Smack works only CAP_MAC_ADMIN from the parent
++namespace (init_user_ns for now, see the "Current limitations" below)
++is allowed to fill the map. That means that an unprivileged user is
++still allowed to create the user namespace but it will not be able to
++fill the labels' map (activate Smack namespace). An administrator
++intervention is required.
++
++The attr_map write format is:
++unmapped_label mapped_label
++
++When reading the file it shows an active map for a namespace the
++process in question is in in the format:
++unmapped_label -> mapped_label
++
++If the smack_map file is empty it means the namespace is not mapped
++and Smack namespace is inactive (no mappings, MAC related capabilities
++behave as they did before, meaning they are active only in
++init_user_ns). For init_user_ns the map will always be empty.
++
++Writing to the map file is not disabled after the first write as it is
++in uid_map. For Smack we have no means to map ranges of labels, hence
++it can really be advantageous to be able to expand the map later
++on. But you can only add to the map. You cannot remove already mapped
++labels. You cannot change the already existing mappings. Also mappings
++has to be 1-1. All requests to create a map where either the unmapped
++or the mapped label already exists in the map will be denied.
++
++setns() with Smack namespace active has an additional check that the
++label of a process that is calling setns() has to be already mapped in
++the target Smack namespace for the call to succeed.
++
++
++--- Special labels ---
++
++Smack is using some special labels that have built-in rules. Things
++like floor '_', dash '^', star '*', etc. Those labels are not
++automatically mapped to the namespace. Moreover, you can choose to map
++a different label from the init namespace to behave e.g. like floor
++inside the namespace.
++
++Let's say we have no rules and those labels in the init namespace:
++_
++floor_to_be
++label
++
++Both 'label' and 'floor_to_be' can read objects with '_'. But they
++have no access rights to each other.
++
++Now let's create a map like this:
++_             ordinary_label
++floor_to_be   _
++label         mapped
++
++Right now label 'mapped' can read label '_' which means that
++effectively inside this namespace label 'label' has gained read access
++to the 'floor_to_be'. The label 'ordinary_label' is exactly it, an
++ordinary label that the built-in rules no longer apply to inside the
++namespace.
++
++To sum up, special labels in the namespace behave the same as in the
++init namespace. Not the original special labels though, but the ones
++we map to specials. This is the only case where a namespace can have
++access rights the init namespace does not have (like the 'label' to
++'floor_to_be' in the example above).
++
++Of course mappings like these are perfectly legal:
++_   _
++*   *
++^   ^
++
++
++--- Current limitations ---
++
++The Smack namespace is not hierarchical yet. It is currently not
++possible to fill a smack_map of a nested user namespace (you can still
++create nested user namespace, it will just inherit its parent's map
++and won't have active Smack capabilities). When hierarchy will be
++implemented the process creating another namespace will be allowed to
++map only labels that it has permission to itself (those that it has in
++its own map).
++
++Special files inside the virtual smackfs needs to be reviewed whether
++it's beneficial to have some of their functionality namespaced as well
++(e.g. onlycap, syslog. ambient, etc). This would increase
++CAP_MAC_ADMIN privileges inside the namespace.
++
++
++--- Error codes ---
++
++While working in the namespace patches the error codes has been made
++to propagate properly from a place they occurred. New error codes has
++also been introduced for Smack in the context of namespace usage. This
++is a complete summary of error codes used throughout the Smack now:
++
++ENOMEM      and other system errors that might come from low level
++            kernel functions like memory allocations
++EOPNOTSUPP  means the underlying system operation is not
++            supported (eg. getxattr)
++EINVAL      means invalid syntax (e.g. empty label or one starting
++            with '-')
++EEXIST      when creating map means that a label is already mapped
++EBADR       is used for wrong namespace usage:
++            - trying to import a label inside a namespace (like trying
++              to use an unmapped label that would otherwise be imported)
++            - trying to create a Smack label map in the init namespace
++ENOENT      when failed to find a label we expected to exist (will not
++            be propagated to user-space)
++EPERM       means no permission to operate on an object, e.g. due to
++            insufficient capabilities or simply because the object
++	    cannot be operated on in the current context
++EACCESS     when access has been denied due to Smack access checks
++            (including object being outside of a namespace)
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 2e5bbc0..66ab25b 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -9059,6 +9059,7 @@ W:	http://schaufler-ca.com
+ T:	git git://git.gitorious.org/smack-next/kernel.git
+ S:	Maintained
+ F:	Documentation/security/Smack.txt
++F:	Documentation/security/Smack-namespace.txt
+ F:	security/smack/
  
- 	if (cn >= asize)
--		rc = simple_read_from_buffer(buf, cn, ppos,
--					     smack_net_ambient->smk_known,
--					     asize);
-+		rc = simple_read_from_buffer(buf, cn, ppos, cp, asize);
- 	else
- 		rc = -EINVAL;
- 
-@@ -1619,7 +1624,7 @@ static ssize_t smk_write_ambient(struct file *file, const char __user *buf,
- 		goto out;
- 	}
- 
--	skp = smk_import_entry(data, count);
-+	skp = smk_get_label(data, count, true);
- 	if (IS_ERR(skp)) {
- 		rc = PTR_ERR(skp);
- 		goto out;
-@@ -1663,8 +1668,11 @@ static ssize_t smk_read_onlycap(struct file *filp, char __user *buf,
- 	if (*ppos != 0)
- 		return 0;
- 
--	if (smack_onlycap != NULL)
--		smack = smack_onlycap->smk_known;
-+	if (smack_onlycap != NULL) {
-+		smack = smk_find_label_name(smack_onlycap);
-+		if (smack == NULL)
-+			smack = smack_known_huh.smk_known;
-+	}
- 
- 	asize = strlen(smack) + 1;
- 
-@@ -1719,7 +1727,7 @@ static ssize_t smk_write_onlycap(struct file *file, const char __user *buf,
- 	 *
- 	 * But do so only on invalid label, not on system errors.
- 	 */
--	skp = smk_import_entry(data, count);
-+	skp = smk_get_label(data, count, true);
- 	if (PTR_ERR(skp) == -EINVAL)
- 		skp = NULL;
- 	else if (IS_ERR(skp)) {
-@@ -1760,8 +1768,11 @@ static ssize_t smk_read_unconfined(struct file *filp, char __user *buf,
- 	if (*ppos != 0)
- 		return 0;
- 
--	if (smack_unconfined != NULL)
--		smack = smack_unconfined->smk_known;
-+	if (smack_unconfined != NULL) {
-+		smack = smk_find_label_name(smack_unconfined);
-+		if (smack == NULL)
-+			smack = smack_known_huh.smk_known;
-+	}
- 
- 	asize = strlen(smack) + 1;
- 
-@@ -1808,7 +1819,7 @@ static ssize_t smk_write_unconfined(struct file *file, const char __user *buf,
- 	 *
- 	 * But do so only on invalid label, not on system errors.
- 	 */
--	skp = smk_import_entry(data, count);
-+	skp = smk_get_label(data, count, true);
- 	if (PTR_ERR(skp) == -EINVAL)
- 		skp = NULL;
- 	else if (IS_ERR(skp)) {
-@@ -2205,7 +2216,6 @@ static ssize_t smk_write_revoke_subj(struct file *file, const char __user *buf,
- 				size_t count, loff_t *ppos)
- {
- 	char *data = NULL;
--	const char *cp = NULL;
- 	struct smack_known *skp;
- 	struct smack_rule *sp;
- 	struct list_head *rule_list;
-@@ -2230,13 +2240,11 @@ static ssize_t smk_write_revoke_subj(struct file *file, const char __user *buf,
- 		goto free_out;
- 	}
- 
--	cp = smk_parse_smack(data, count);
--	if (IS_ERR(cp)) {
--		rc = PTR_ERR(cp);
-+	skp = smk_get_label(data, count, false);
-+	if (IS_ERR(skp)) {
-+		rc = PTR_ERR(skp);
- 		goto free_out;
- 	}
--
--	skp = smk_find_entry(cp);
- 	if (skp == NULL)
- 		goto free_out;
- 
-@@ -2252,7 +2260,6 @@ static ssize_t smk_write_revoke_subj(struct file *file, const char __user *buf,
- 
- free_out:
- 	kfree(data);
--	kfree(cp);
- 	return rc;
- }
- 
-@@ -2315,23 +2322,25 @@ static const struct file_operations smk_change_rule_ops = {
- static ssize_t smk_read_syslog(struct file *filp, char __user *buf,
- 				size_t cn, loff_t *ppos)
- {
--	struct smack_known *skp;
- 	ssize_t rc = -EINVAL;
-+	char *cp;
- 	int asize;
- 
- 	if (*ppos != 0)
- 		return 0;
- 
- 	if (smack_syslog_label == NULL)
--		skp = &smack_known_star;
--	else
--		skp = smack_syslog_label;
-+		cp = smack_known_star.smk_known;
-+	else {
-+		cp = smk_find_label_name(smack_syslog_label);
-+		if (cp == NULL)
-+			cp = smack_known_huh.smk_known;
-+	}
- 
--	asize = strlen(skp->smk_known) + 1;
-+	asize = strlen(cp) + 1;
- 
- 	if (cn >= asize)
--		rc = simple_read_from_buffer(buf, cn, ppos, skp->smk_known,
--						asize);
-+		rc = simple_read_from_buffer(buf, cn, ppos, cp, asize);
- 
- 	return rc;
- }
-@@ -2362,7 +2371,7 @@ static ssize_t smk_write_syslog(struct file *file, const char __user *buf,
- 	if (copy_from_user(data, buf, count) != 0)
- 		rc = -EFAULT;
- 	else {
--		skp = smk_import_entry(data, count);
-+		skp = smk_get_label(data, count, true);
- 		if (IS_ERR(skp))
- 			rc = PTR_ERR(skp);
- 		else
+ DRIVERS FOR ADAPTIVE VOLTAGE SCALING (AVS)
+diff --git a/security/smack/Kconfig b/security/smack/Kconfig
+index b19a7fb..a6e0f3f 100644
+--- a/security/smack/Kconfig
++++ b/security/smack/Kconfig
+@@ -49,4 +49,6 @@ config SECURITY_SMACK_NS
+ 	  This enables Smack namespace that makes it possible to map
+ 	  specific labels within user namespace (analogously to mapping
+ 	  UIDs) and to gain MAC capabilities over them.
++	  Documentation is availabile here:
++	  Documentation/security/Smack-namespace.txt
+ 	  If you are unsure how to answer this question, answer N.
 -- 
 2.1.0
