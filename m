@@ -1,7 +1,7 @@
 From: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH v2 1/7] user_ns: 3 new hooks for user namespace operations
-Date: Mon, 25 May 2015 14:32:36 +0200
-Message-ID: <1432557162-19123-2-git-send-email-l.pawelczyk__15724.9781456359$1432557332$gmane$org@samsung.com>
+Subject: [PATCH v2 2/7] smack: extend capability functions and fix 2 checks
+Date: Mon, 25 May 2015 14:32:37 +0200
+Message-ID: <1432557162-19123-3-git-send-email-l.pawelczyk__23413.0475474105$1432557347$gmane$org@samsung.com>
 References: <1432209222-8479-1-git-send-email-l.pawelczyk@samsung.com>
  <1432557162-19123-1-git-send-email-l.pawelczyk@samsung.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -11,247 +11,142 @@ To: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "Eric W. 
 Cc: Lukasz Pawelczyk <havner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This commit implements 3 new LSM hooks that provide the means for LSMs
-to embed their own security context within user namespace, effectively
-creating some sort of a user_ns related security namespace.
+This patch extends smack capability functions to a full list to those
+equivalent in the kernel
 
-The first one to take advantage of this mechanism is Smack.
+has_ns_capability -> smack_has_ns_privilege
+has_capability    -> smack_has_privilege
+ns_capable        -> smack_ns_privileged
+capable           -> smack_privileged
 
-The hooks has been documented in the in the security.h below.
+It also puts the smack related part to a common function:
+smack_capability_allowed()
+
+Those functions will be needed for capability checks in the upcoming
+Smack namespace patches.
+
+Additionally there were 2 smack capability checks that used generic
+capability functions instead of specific Smack ones effectively ignoring
+the onlycap rule. This has been fixed now with the introduction of those
+new functions.
+
+This has implications on the Smack namespace as well as the additional
+Smack checks in smack_capability_allowed() will be extended beyond the
+onlycap rule. Not using Smack specific checks in those 2 places could
+mean breaking the Smack label namespace separation.
 
 Signed-off-by: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 ---
- include/linux/lsm_hooks.h      | 28 ++++++++++++++++++++++++++++
- include/linux/security.h       | 23 +++++++++++++++++++++++
- include/linux/user_namespace.h |  4 ++++
- kernel/user.c                  |  3 +++
- kernel/user_namespace.c        | 18 ++++++++++++++++++
- security/security.c            | 28 ++++++++++++++++++++++++++++
- 6 files changed, 104 insertions(+)
+ security/smack/smack.h     | 63 +++++++++++++++++++++++++++++++++++++++++++---
+ security/smack/smack_lsm.c |  4 +--
+ 2 files changed, 61 insertions(+), 6 deletions(-)
 
-diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-index f014f25..b6e0c3d 100644
---- a/include/linux/lsm_hooks.h
-+++ b/include/linux/lsm_hooks.h
-@@ -1260,6 +1260,23 @@
-  *	audit_rule_init.
-  *	@rule contains the allocated rule
-  *
-+ * @userns_create:
-+ *	Allocates and fills the security part of a new user namespace.
-+ *	@ns points to a newly created user namespace.
-+ *	Returns 0 or an error code.
-+ *
-+ * @userns_free:
-+ *	Deallocates the security part of a user namespace.
-+ *	@ns points to a user namespace about to be destroyed.
-+ *
-+ * @userns_setns:
-+ *	Run during a setns syscall to add a process to an already existing
-+ *	user namespace. Returning failure here will block the operation
-+ *	requested from userspace (setns() with CLONE_NEWUSER).
-+ *	@nsproxy contains a nsproxy to which the user namespace will be assigned.
-+ *	@ns contains user namespace that is to be incorporated to the nsproxy.
-+ *	Returns 0 or an error code.
-+ *
-  * @inode_notifysecctx:
-  *	Notify the security module of what the security context of an inode
-  *	should be.  Initializes the incore security context managed by the
-@@ -1611,6 +1628,12 @@ union security_list_options {
- 				struct audit_context *actx);
- 	void (*audit_rule_free)(void *lsmrule);
- #endif /* CONFIG_AUDIT */
-+
-+#ifdef CONFIG_SECURITY
-+	int (*userns_create)(struct user_namespace *ns);
-+	void (*userns_free)(struct user_namespace *ns);
-+	int (*userns_setns)(struct nsproxy *nsproxy, struct user_namespace *ns);
-+#endif /* CONFIG_SECURITY */
- };
- 
- struct security_hook_heads {
-@@ -1822,6 +1845,11 @@ struct security_hook_heads {
- 	struct list_head audit_rule_match;
- 	struct list_head audit_rule_free;
- #endif /* CONFIG_AUDIT */
-+#ifdef CONFIG_SECURITY
-+	struct list_head userns_create;
-+	struct list_head userns_free;
-+	struct list_head userns_setns;
-+#endif /* CONFIG_SECURITY */
- };
+diff --git a/security/smack/smack.h b/security/smack/smack.h
+index b8c1a86..fa8fa87 100644
+--- a/security/smack/smack.h
++++ b/security/smack/smack.h
+@@ -332,21 +332,76 @@ static inline struct smack_known *smk_of_current(void)
+ }
  
  /*
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 8c8175d..ec17ae1 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -1583,6 +1583,29 @@ static inline void security_audit_rule_free(void *lsmrule)
- #endif /* CONFIG_SECURITY */
- #endif /* CONFIG_AUDIT */
- 
-+#ifdef CONFIG_SECURITY
-+int security_userns_create(struct user_namespace *ns);
-+void security_userns_free(struct user_namespace *ns);
-+int security_userns_setns(struct nsproxy *nsproxy, struct user_namespace *ns);
-+
-+#else
-+
-+static inline int security_userns_create(struct user_namespace *ns)
++ * Internal smack capability check complimentary to the
++ * set of kernel capable() and has_capability() functions
++ *
++ * For a capability in smack related checks to be effective it needs to:
++ * - have empty onlycap or the current label be the same as onlycap
++ * - be in the initial user ns
++ */
++static inline int smack_capability_allowed(struct smack_known *skp,
++					   struct user_namespace *user_ns)
 +{
++	if (user_ns != &init_user_ns)
++		return 0;
++
++	if (smack_onlycap != NULL && smack_onlycap != skp)
++		return 0;
++
++	return 1;
++}
++
++/*
++ * Is the task privileged in a namespace and allowed to be privileged
++ * by additional smack rules.
++ */
++static inline int smack_has_ns_privilege(struct task_struct *task,
++					 struct user_namespace *user_ns,
++					 int cap)
++{
++	struct smack_known *skp = smk_of_task_struct(task);
++
++	if (!has_ns_capability(task, user_ns, cap))
++		return 0;
++	if (smack_capability_allowed(skp, user_ns))
++		return 1;
 +	return 0;
 +}
 +
-+static inline void security_userns_free(struct user_namespace *ns)
-+{ }
-+
-+static inline int security_userns_setns(struct nsproxy *nsproxy,
-+					struct user_namespace *ns)
++/*
+  * Is the task privileged and allowed to be privileged
+- * by the onlycap rule.
++ * by additional smack rules.
+  */
+-static inline int smack_privileged(int cap)
++static inline int smack_has_privilege(struct task_struct *task, int cap)
 +{
-+	return 0;
++	return smack_has_ns_privilege(task, &init_user_ns, cap);
 +}
 +
-+#endif /* CONFIG_SECURITY */
-+
- #ifdef CONFIG_SECURITYFS
- 
- extern struct dentry *securityfs_create_file(const char *name, umode_t mode,
-diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-index 8297e5b..a9400cc 100644
---- a/include/linux/user_namespace.h
-+++ b/include/linux/user_namespace.h
-@@ -39,6 +39,10 @@ struct user_namespace {
- 	struct key		*persistent_keyring_register;
- 	struct rw_semaphore	persistent_keyring_register_sem;
- #endif
-+
-+#ifdef CONFIG_SECURITY
-+	void *security;
-+#endif
- };
- 
- extern struct user_namespace init_user_ns;
-diff --git a/kernel/user.c b/kernel/user.c
-index b069ccb..ce5419e 100644
---- a/kernel/user.c
-+++ b/kernel/user.c
-@@ -59,6 +59,9 @@ struct user_namespace init_user_ns = {
- 	.persistent_keyring_register_sem =
- 	__RWSEM_INITIALIZER(init_user_ns.persistent_keyring_register_sem),
- #endif
-+#ifdef CONFIG_SECURITY
-+	.security = NULL,
-+#endif
- };
- EXPORT_SYMBOL_GPL(init_user_ns);
- 
-diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index 4109f83..cadffb6 100644
---- a/kernel/user_namespace.c
-+++ b/kernel/user_namespace.c
-@@ -22,6 +22,7 @@
- #include <linux/ctype.h>
- #include <linux/projid.h>
- #include <linux/fs_struct.h>
-+#include <linux/security.h>
- 
- static struct kmem_cache *user_ns_cachep __read_mostly;
- static DEFINE_MUTEX(userns_state_mutex);
-@@ -108,6 +109,15 @@ int create_user_ns(struct cred *new)
- 
- 	set_cred_user_ns(new, ns);
- 
-+#ifdef CONFIG_SECURITY
-+	ret = security_userns_create(ns);
-+	if (ret) {
-+		ns_free_inum(&ns->ns);
-+		kmem_cache_free(user_ns_cachep, ns);
-+		return ret;
-+	}
-+#endif
-+
- #ifdef CONFIG_PERSISTENT_KEYRINGS
- 	init_rwsem(&ns->persistent_keyring_register_sem);
- #endif
-@@ -143,6 +153,9 @@ void free_user_ns(struct user_namespace *ns)
- #ifdef CONFIG_PERSISTENT_KEYRINGS
- 		key_put(ns->persistent_keyring_register);
- #endif
-+#ifdef CONFIG_SECURITY
-+		security_userns_free(ns);
-+#endif
- 		ns_free_inum(&ns->ns);
- 		kmem_cache_free(user_ns_cachep, ns);
- 		ns = parent;
-@@ -969,6 +982,7 @@ static int userns_install(struct nsproxy *nsproxy, struct ns_common *ns)
++/*
++ * Is the current task privileged in a namespace and allowed to be privileged
++ * by additional smack rules.
++ */
++static inline int smack_ns_privileged(struct user_namespace *user_ns, int cap)
  {
- 	struct user_namespace *user_ns = to_user_ns(ns);
- 	struct cred *cred;
-+	int err;
+ 	struct smack_known *skp = smk_of_current();
  
- 	/* Don't allow gaining capabilities by reentering
- 	 * the same user namespace.
-@@ -986,6 +1000,10 @@ static int userns_install(struct nsproxy *nsproxy, struct ns_common *ns)
- 	if (!ns_capable(user_ns, CAP_SYS_ADMIN))
- 		return -EPERM;
- 
-+	err = security_userns_setns(nsproxy, user_ns);
-+	if (err)
-+		return err;
-+
- 	cred = prepare_creds();
- 	if (!cred)
- 		return -ENOMEM;
-diff --git a/security/security.c b/security/security.c
-index bd4c5f6..e902f3b 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -25,6 +25,7 @@
- #include <linux/mount.h>
- #include <linux/personality.h>
- #include <linux/backing-dev.h>
-+#include <linux/user_namespace.h>
- #include <net/flow.h>
- 
- #define MAX_LSM_EVM_XATTR	2
-@@ -1541,6 +1542,25 @@ int security_audit_rule_match(u32 secid, u32 field, u32 op, void *lsmrule,
+-	if (!capable(cap))
++	if (!ns_capable(user_ns, cap))
+ 		return 0;
+-	if (smack_onlycap == NULL || smack_onlycap == skp)
++	if (smack_capability_allowed(skp, user_ns))
+ 		return 1;
+ 	return 0;
  }
- #endif /* CONFIG_AUDIT */
  
-+#ifdef CONFIG_SECURITY
-+
-+int security_userns_create(struct user_namespace *ns)
+ /*
++ * Is the current task privileged and allowed to be privileged
++ * by additional smack rules.
++ */
++static inline int smack_privileged(int cap)
 +{
-+	return call_int_hook(userns_create, 0, ns);
++	return smack_ns_privileged(&init_user_ns, cap);
 +}
 +
-+void security_userns_free(struct user_namespace *ns)
-+{
-+	call_void_hook(userns_free, ns);
-+}
-+
-+int security_userns_setns(struct nsproxy *nsproxy, struct user_namespace *ns)
-+{
-+	return call_int_hook(userns_setns, 0, nsproxy, ns);
-+}
-+
-+#endif /* CONFIG_SECURITY */
-+
- struct security_hook_heads security_hook_heads = {
- 	.binder_set_context_mgr =
- 		LIST_HEAD_INIT(security_hook_heads.binder_set_context_mgr),
-@@ -1885,4 +1905,12 @@ struct security_hook_heads security_hook_heads = {
- 	.audit_rule_free =
- 		LIST_HEAD_INIT(security_hook_heads.audit_rule_free),
- #endif /* CONFIG_AUDIT */
-+#ifdef CONFIG_SECURITY
-+	.userns_create =
-+		LIST_HEAD_INIT(security_hook_heads.userns_create),
-+	.userns_free =
-+		LIST_HEAD_INIT(security_hook_heads.userns_free),
-+	.userns_setns =
-+		LIST_HEAD_INIT(security_hook_heads.userns_setns),
-+#endif /* CONFIG_SECURITY */
- };
++/*
+  * logging functions
+  */
+ #define SMACK_AUDIT_DENIED 0x1
+diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
+index a143328..ee7bb63 100644
+--- a/security/smack/smack_lsm.c
++++ b/security/smack/smack_lsm.c
+@@ -403,7 +403,7 @@ static int smk_ptrace_rule_check(struct task_struct *tracer,
+ 			rc = 0;
+ 		else if (smack_ptrace_rule == SMACK_PTRACE_DRACONIAN)
+ 			rc = -EACCES;
+-		else if (capable(CAP_SYS_PTRACE))
++		else if (smack_has_privilege(tracer, CAP_SYS_PTRACE))
+ 			rc = 0;
+ 		else
+ 			rc = -EACCES;
+@@ -1646,7 +1646,7 @@ static int smack_file_send_sigiotask(struct task_struct *tsk,
+ 	skp = file->f_security;
+ 	rc = smk_access(skp, tkp, MAY_WRITE, NULL);
+ 	rc = smk_bu_note("sigiotask", skp, tkp, MAY_WRITE, rc);
+-	if (rc != 0 && has_capability(tsk, CAP_MAC_OVERRIDE))
++	if (rc != 0 && smack_has_privilege(tsk, CAP_MAC_OVERRIDE))
+ 		rc = 0;
+ 
+ 	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_TASK);
 -- 
 2.1.0
