@@ -1,128 +1,25 @@
-From: =?UTF-8?q?Iago=20L=C3=B3pez=20Galeiras?= <iago@endocode.com>
-Subject: [PATCH v3] fs, proc: introduce CONFIG_PROC_CHILDREN
-Date: Tue, 26 May 2015 17:12:42 +0200
-Message-ID: <1432653162-20973-1-git-send-email-iago@endocode.com>
-References: <20150522153705.GI16716@uranus>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20150522153705.GI16716@uranus>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Cyrill Gorcunov <gorcunov@openvz.org>
-Cc: =?UTF-8?q?Iago=20L=C3=B3pez=20Galeiras?= <iago@endocode.com>, Oleg Nesterov <oleg@redhat.com>, Kees Cook <keescook@chromium.org>, Pavel Emelyanov <xemul@parallels.com>, Serge Hallyn <serge.hallyn@canonical.com>, KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>, linux-api@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Djalal Harouni <djalal@endocode.com>, Alban Crequy <alban@endocode.com>
+From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 1/2] capabilities: Ambient capabilities
+Date: Tue, 26 May 2015 11:23:10 -0500 (CDT)
+Message-ID: <alpine.DEB.2.11.1505261122030.12282@gentwo.org>
+References: <cover.1431671529.git.luto@kernel.org> <cc4749638a21079cce12f9f30c806170558e56e5.1431671529.git.luto@kernel.org> <20150523193705.GA30563@mail.hallyn.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150523193705.GA30563-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-commit 818411616baf ("fs, proc: introduce
-/proc/<pid>/task/<tid>/children entry") introduced the children entry
-for checkpoint restore and the file is only available on kernels
-configured with CONFIG_EXPERT and CONFIG_CHECKPOINT_RESTORE.
+On Sat, 23 May 2015, Serge Hallyn wrote:
 
-This is available in most distributions (Fedora, Debian, Ubuntu, CoreOS=
-)
-because they usually enable CONFIG_EXPERT and CONFIG_CHECKPOINT_RESTORE=
-=2E
-But Arch does not enable CONFIG_EXPERT or CONFIG_CHECKPOINT_RESTORE.
+> > You cannot use pA to try to subvert a setuid, setgid, or file-capped
+> > program: if you execute any such program, pA gets cleared and the
+> > resulting evolution rules are unchanged by this patch.
+>
+> Christoph, just to be sure, is this ^ going to suffice for you?
+>
+> Seems like it should since any program which is setuid-root, i.e.
+> passwd, isn't likely to be designed to exec other programs.
 
-However, the children proc file is useful outside of checkpoint restore=
-=2E
-I would like to use it in rkt. The rkt process exec() another program i=
-t
-does not control, and that other program will fork()+exec() a child
-process. I would like to find the pid of the child process from an
-external tool without iterating in /proc over all processes to find
-which one has a parent pid equal to rkt.
-
-This commit introduces CONFIG_PROC_CHILDREN and makes
-CONFIG_CHECKPOINT_RESTORE select it. This allows enabling
-/proc/<pid>/task/<tid>/children without needing to enable
-CONFIG_CHECKPOINT_RESTORE and CONFIG_EXPERT.
-
-Alban tested that /proc/<pid>/task/<tid>/children is present when the
-kernel is configured with CONFIG_PROC_CHILDREN=3Dy but without
-CONFIG_CHECKPOINT_RESTORE
-
-v3: change depend -> select
-v2: introduce CONFIG_PROC_CHILDREN http://marc.info/?l=3Dlinux-fsdevel&=
-m=3D143229890217280&w=3D2
-v1: http://marc.info/?l=3Dlinux-api&m=3D143220431121869&w=3D2
-
-Signed-off-by: Iago L=C3=B3pez Galeiras <iago@endocode.com>
-Cc: Alban Crequy <alban@endocode.com>
-Tested-by: Alban Crequy <alban@endocode.com>
----
- fs/proc/Kconfig | 4 ++++
- fs/proc/array.c | 4 ++--
- fs/proc/base.c  | 2 +-
- init/Kconfig    | 1 +
- 4 files changed, 8 insertions(+), 3 deletions(-)
-
-diff --git a/fs/proc/Kconfig b/fs/proc/Kconfig
-index 2183fcf..d751fcb 100644
---- a/fs/proc/Kconfig
-+++ b/fs/proc/Kconfig
-@@ -71,3 +71,7 @@ config PROC_PAGE_MONITOR
- 	  /proc/pid/smaps, /proc/pid/clear_refs, /proc/pid/pagemap,
- 	  /proc/kpagecount, and /proc/kpageflags. Disabling these
-           interfaces will reduce the size of the kernel by approximate=
-ly 4kb.
-+
-+config PROC_CHILDREN
-+	bool "Include /proc/<pid>/task/<tid>/children file"
-+	default n
-diff --git a/fs/proc/array.c b/fs/proc/array.c
-index fd02a9e..ddc4b2c 100644
---- a/fs/proc/array.c
-+++ b/fs/proc/array.c
-@@ -569,7 +569,7 @@ int proc_pid_statm(struct seq_file *m, struct pid_n=
-amespace *ns,
- 	return 0;
- }
-=20
--#ifdef CONFIG_CHECKPOINT_RESTORE
-+#ifdef CONFIG_PROC_CHILDREN
- static struct pid *
- get_children_pid(struct inode *inode, struct pid *pid_prev, loff_t pos=
-)
- {
-@@ -692,4 +692,4 @@ const struct file_operations proc_tid_children_oper=
-ations =3D {
- 	.llseek  =3D seq_lseek,
- 	.release =3D children_seq_release,
- };
--#endif /* CONFIG_CHECKPOINT_RESTORE */
-+#endif /* CONFIG_PROC_CHILDREN */
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 093ca14..5477a4a 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -2922,7 +2922,7 @@ static const struct pid_entry tid_base_stuff[] =3D=
- {
- 	ONE("stat",      S_IRUGO, proc_tid_stat),
- 	ONE("statm",     S_IRUGO, proc_pid_statm),
- 	REG("maps",      S_IRUGO, proc_tid_maps_operations),
--#ifdef CONFIG_CHECKPOINT_RESTORE
-+#ifdef CONFIG_PROC_CHILDREN
- 	REG("children",  S_IRUGO, proc_tid_children_operations),
- #endif
- #ifdef CONFIG_NUMA
-diff --git a/init/Kconfig b/init/Kconfig
-index dc24dec..fa09e5e 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -1145,6 +1145,7 @@ endif # CGROUPS
-=20
- config CHECKPOINT_RESTORE
- 	bool "Checkpoint/restore support" if EXPERT
-+	select PROC_CHILDREN
- 	default n
- 	help
- 	  Enables additional kernel features in a sake of checkpoint/restore.
---=20
-2.4.1
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
-" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Yes that should work.
