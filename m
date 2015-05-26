@@ -1,60 +1,68 @@
-From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: Re: [PATCH v5 00/11] Add simple NVMEM Framework via regmap.
-Date: Tue, 26 May 2015 10:12:31 +0100
-Message-ID: <556438FF.7020105@linaro.org>
-References: <1427752492-17039-1-git-send-email-srinivas.kandagatla@linaro.org>
- <1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org>
- <E5772084-6CF5-41DE-B68B-073D9F75F0BC@konsulko.com>
+From: Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>
+Subject: Re: [PATCH v2 0/7] Smack namespace
+Date: Tue, 26 May 2015 10:35:41 -0400
+Message-ID: <556484BD.2060004__18764.2145007432$1432652027$gmane$org@tycho.nsa.gov>
+References: <1432209222-8479-1-git-send-email-l.pawelczyk@samsung.com> <1432557162-19123-1-git-send-email-l.pawelczyk@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <E5772084-6CF5-41DE-B68B-073D9F75F0BC@konsulko.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
-Cc: linux-arm-msm@vger.kernel.org, devicetree <devicetree@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Sascha Hauer <s.hauer@pengutronix.de>, sboyd@codeaurora.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Rob Herring <robh+dt@kernel.org>, Mark Brown <broonie@kernel.org>, Kumar Gala <galak@codeaurora.org>, Matt Porter <mporter@konsulko.com>, Maxime Ripard <maxime.ripard@free-electrons.com>, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1432557162-19123-1-git-send-email-l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Fabian Frederick <fabf-AgBVmzD5pcezQB+pC5nmwQ@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jeff Layton <jlayton-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Jingoo Han <jg1.han-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, John Johansen <john.johansen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Oleg
+Cc: Lukasz Pawelczyk <havner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-SGkgUGFudGVsaXMsCgpPbiAyNS8wNS8xNSAxNzo1MSwgUGFudGVsaXMgQW50b25pb3Ugd3JvdGU6
-Cj4gSGkgU3Jpbml2YXMsCj4KPj4gT24gTWF5IDIxLCAyMDE1LCBhdCAxOTo0MiAsIFNyaW5pdmFz
-IEthbmRhZ2F0bGEgPHNyaW5pdmFzLmthbmRhZ2F0bGFAbGluYXJvLm9yZz4gd3JvdGU6Cj4+Cj4+
-IFRoYW5reW91IGFsbCBmb3IgcHJvdmlkaW5nIGlucHV0cyBhbmQgY29tbWVudHMgb24gcHJldmlv
-dXMgdmVyc2lvbnMgb2YgdGhpcyBwYXRjaHNldC4KPj4gSGVyZSBpcyB0aGUgdjUgb2YgdGhlIHBh
-dGNoc2V0IGFkZHJlc3NpbmcgYWxsIHRoZSBpc3N1ZXMgcmFpc2VkIGFzCj4+IHBhcnQgb2YgcHJl
-dmlvdXMgdmVyc2lvbnMgcmV2aWV3Lgo+Pgo+Cj4+Cj4KPiBbc25pcF0KPgo+IEkgdHJpZWQgdG8g
-dXNlIHRoZSB1cGRhdGVkIHBhdGNoc2V0IHdpdGggbXkgYXQyNCAmIGJlYWdsZWJvbmUgY2FwZW1h
-bmFnZXIgcGF0Y2hlcy4KVGhhbmtzIGZvciB0cnlpbmcgaXQgb3V0IGFuZCBtaWdyYXRpbmcgYXQy
-NCB0byBpdC4KCj4KPiBJIGhhdmUgYSBiaWcgcHJvYmxlbSB3aXRoIHRoZSByZW1vdmFsIG9mIHRo
-ZSByYXcgb2ZfKiBhY2Nlc3MgQVBJcy4KT2ssCj4KPiBUYWtlIGZvciBpbnN0YW5jZSB0aGUgY2Fz
-ZSB3aGVyZSB5b3UgaGF2ZSBtdWx0aXBsZSBzbG90IGFjY2Vzc2luZyBkaWZmZXJlbnQgRUVQUk9N
-cy4KPgo+PiBzbG90cyB7Cj4+IAlzbG90QDAgewo+PiAJCWVlcHJvbSA9IDwmY2FwZTBfZGF0YT47
-Cj4+IAl9Owo+Pgo+PiAJc2xvdEAxIHsKPj4gCQllZXByb20gPSA8JmNhcGUxX2RhdGE+Owo+PiAJ
-fTsKPj4gfTsKCkNhbiBJIGFzayB5b3Ugd2h5IHNob3VsZCB0aGUgc2xvdHMgYmUgaW4gc3ViLW5v
-ZGVzPwpEbyB5b3UgZXhwZWN0IHRvIGhhdmUgbW9yZSBwcm9wZXJ0aWVzIGFzc29jaWF0ZWQgd2l0
-aCBlYWNoIHNsb3QgaW4gZnV0dXJlPwpPciBpcyBpdCBqdXN0IHRvIGdldCBob2xkIG9mIGVlcHJv
-bSBkYXRhPwoKPgo+IEluIHRoYXQgY2FzZSB0aGVyZSBpcyBubyBwZXItZGV2aWNlIG5vZGUgbWFw
-cGluZzsgaXTigJlzIGEgcGVyLXN1YiBub2RlLgo+Cj4gRm9yIG5vdyBJ4oCZbSBleHBvcnRpbmcg
-dGhlIG9mXyogYWNjZXNzb3JzIGFnYWluLCBwbGVhc2UgY29uc2lkZXIgZXhwb3NpbmcgdGhlIG9m
-XyogQVBJIGFnYWluLgpTdXJlLCB3ZSBjYW4gZXhwb3J0IG9mX252bWVtX2NlbGxfZ2V0IHN5bWJv
-bCBmb3IgdXNlY2FzZXMgbGlrZSB0aGlzLgoKSGF2aW5nIHNhaWQgdGhhdCwgSSBnb3Qgb25lIGNv
-bW1lbnQgb24gdGhlIHdheSB0aGUgbnZtZW0gaXMgdXNlZCBpbiB5b3VyIApjYXNlLiBZb3Ugc2hv
-dWxkIHRyeSB0byB1c2UgbnZtZW1fZGV2aWNlX2dldCgpIGFuZCB0aGVuIHVzZSAKbnZtZW1fZGV2
-aWNlX3JlYWQoKSBhcGlzLCBUaGVzZSBhcGlzIGFyZSBmb3IgY29uc3VtZXJzIGxpa2UgdGhpcyBv
-bmUuIApUaGUgYWR2YW50YWdlIG9mIHRoaXMgd291bGQgYmUgeW91IGRvIG5vdCBuZWVkIHJlYWQg
-YW5kIHN0b3JlIGFsbCBkYXRhIAppbiB0aGUgZHJpdmVyIGFuZCBwYXJzZSB0aGVtIGludGVybmFs
-bHkuIEJhc2ljYWxseSB5b3VyIGVlX2ZpZWxkX2dldCAKd291bGQganVzdCBkbyBudm1lbV9kZXZp
-Y2VfcmVhZCgpOyBEb2VzIGl0IG1ha2Ugc2Vuc2U/CgpXZSBjYW4gd29yayBvbiBob3cgdG8gZ2V0
-IHRoZSBvZl8qYmFzZWQgb25jZSB5b3UgZGVjaWRlIHRvIG1vdmUgdG8gdGhpcyBhcGkuCgoKCi0t
-c3JpbmkKPgo+PiAtLQo+PiAxLjkuMQo+Pgo+Cj4gUmVnYXJkcwo+Cj4g4oCUIFBhbnRlbGlzCj4K
-Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmxpbnV4LWFy
-bS1rZXJuZWwgbWFpbGluZyBsaXN0CmxpbnV4LWFybS1rZXJuZWxAbGlzdHMuaW5mcmFkZWFkLm9y
-ZwpodHRwOi8vbGlzdHMuaW5mcmFkZWFkLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2xpbnV4LWFybS1r
-ZXJuZWwK
+On 05/25/2015 08:32 AM, Lukasz Pawelczyk wrote:
+> --- Design ideas ---
+> 
+> "Smack namespace" is rather "Smack labels namespace" as not the whole
+> MAC is namespaced, only the labels. There is a great analogy between
+> Smack labels namespace and the user namespace part that remaps UIDs.
+> 
+> The idea is to create a map of labels for a namespace so the namespace
+> is only allowed to use those labels. Smack rules are always the same
+> as in the init namespace (limited only by what labels are mapped) and
+> cannot be manipulated from the child namespace. The map is actually
+> only for labels' names. The underlying structures for labels remain
+> the same. The filesystem also stores the "unmapped" labels from the
+> init namespace.
+
+How do you achieve that without introducing additional hooks or
+reworking the current hooks in the setxattr code path?  At present, the
+security module is allowed to rewrite getxattr requests on the
+security.* namespace but it isn't allowed to do that for setxattr, so if
+the process invokes setxattr with a mapped label, then it will be the
+mapped label that gets passed to the filesystem implementation, not the
+unmapped label.  The security module may internally store it in unmapped
+form and may even return that upon getxattr() calls, but if you then
+reboot the system and later fetch from the filesystem, it will get the
+mapped label value.
+
+> --- Usage ---
+> 
+> Smack namespace is written using LSM hooks inside user namespace. That
+> means it's connected to it.
+> 
+> To create a new Smack namespace you need to unshare() user namespace
+> as usual. If that is all you do though, than there is no difference to
+> what is now. To activate the Smack namespace you need to fill the
+> labels' map. It is in a file /proc/$PID/smack_map.
+
+This should be /proc/$PID/attr/label_map or similar, modeled after the
+existing /proc/$PID/attr/current and similar nodes.  Then it isn't
+module-specific and can be reused for other modules.
+
+> Writing to the map file is not disabled after the first write as it is
+> in uid_map. For Smack we have no means to map ranges of labels, hence
+> it can really be advantageous to be able to expand the map later
+> on. But you can only add to the map. You cannot remove already mapped
+> labels. You cannot change the already existing mappings. Also mappings
+> has to be 1-1. All requests to create a map where either the unmapped
+> or the mapped label already exists in the map will be denied.
+
+Isn't it a concern that I can then add additional labels to the mapping
+for which I am not authorized?  Or is this mitigated by the fact that I
+cannot alter the rules?  What about the situation for the predefined
+labels in Smack - are you assuming that they will always be mapped up
+front in the mapping file?
