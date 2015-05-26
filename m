@@ -1,240 +1,54 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [RFC PATCH] percpu system call: fast userspace percpu critical sections
-Date: Mon, 25 May 2015 11:54:38 -0700
-Message-ID: <CALCETrW3_Hv0jc3cpiwsHTinBqJzvab_EiPS8BVJhX-xe5D8qw@mail.gmail.com>
-References: <1432219487-13364-1-git-send-email-mathieu.desnoyers@efficios.com>
- <CAHO5Pa0Kok4_QN0v3JNWyzGT=GbZNZcRyLhu02R2npV9hSdt7g@mail.gmail.com>
- <CALCETrUSBqHG3tbOq1yFz33v1_ckEgLNorgAxwLFi7MkjNcwLA@mail.gmail.com>
- <757752240.6470.1432330487312.JavaMail.zimbra@efficios.com>
- <CALCETrUxp-dP-kaTy4prEdciM-=sTXjpqnMbkvk38g5BTEvX0g@mail.gmail.com>
- <1839774559.6579.1432400944032.JavaMail.zimbra@efficios.com>
- <CALCETrWzoFX7hXqvQqDEq=r=7PNaGKVjZeHEBWxPvC28Zi1AKA@mail.gmail.com> <1184354091.7499.1432578613872.JavaMail.zimbra@efficios.com>
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH v6 0/3] Enable PPI sysfs interface for TPM 2.0
+Date: Tue, 26 May 2015 11:22:05 +0300
+Message-ID: <20150526082205.GA3360@intel.com>
+References: <1432129766-7289-1-git-send-email-jarkko.sakkinen@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1184354091.7499.1432578613872.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1432129766-7289-1-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
-Cc: Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+To: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: peterhuewe-Mmb7MZpHnFY@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Simon Wunderlich <sw-2YrNx6rUIHYiY0qSoAWiAoQuADTiUCJX@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vivien Didelot <vivien.didelot-4ysUXcep3aM1wj+D4I0NRVaTQe2KTcn/@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-[cc: hpa, Borislav and Andi]
+Hi
 
-On Mon, May 25, 2015 at 11:30 AM, Mathieu Desnoyers
-<mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
-> ----- Original Message -----
->> On May 23, 2015 10:09 AM, "Mathieu Desnoyers"
->> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
->> >
->> > ----- Original Message -----
->> > > On Fri, May 22, 2015 at 2:34 PM, Mathieu Desnoyers
->> > > <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
->> > > > ----- Original Message -----
->> > > >> On Fri, May 22, 2015 at 1:26 PM, Michael Kerrisk
->> > > >> <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> > > >> wrote:
->> > > >> > [CC += linux-api@]
->> > > >> >
->> > > >> > On Thu, May 21, 2015 at 4:44 PM, Mathieu Desnoyers
->> > > >> > <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
->> > > >> >> Expose a new system call allowing userspace threads to register
->> > > >> >> a TLS area used as an ABI between the kernel and userspace to
->> > > >> >> share information required to create efficient per-cpu critical
->> > > >> >> sections in user-space.
->> > > >> >>
->> > > >> >> This ABI consists of a thread-local structure containing:
->> > > >> >>
->> > > >> >> - a nesting count surrounding the critical section,
->> > > >> >> - a signal number to be sent to the thread when preempting a thread
->> > > >> >>   with non-zero nesting count,
->> > > >> >> - a flag indicating whether the signal has been sent within the
->> > > >> >>   critical section,
->> > > >> >> - an integer where to store the current CPU number, updated
->> > > >> >> whenever
->> > > >> >>   the thread is preempted. This CPU number cache is not strictly
->> > > >> >>   needed, but performs better than getcpu vdso.
->> > > >> >>
->> > > >> >> This approach is inspired by Paul Turner and Andrew Hunter's work
->> > > >> >> on percpu atomics, which lets the kernel handle restart of critical
->> > > >> >> sections, ref.
->> > > >> >> http://www.linuxplumbersconf.org/2013/ocw/system/presentations/1695/original/LPC%20-%20PerCpu%20Atomics.pdf
->> > > >> >>
->> > > >> >> What is done differently here compared to percpu atomics: we track
->> > > >> >> a single nesting counter per thread rather than many ranges of
->> > > >> >> instruction pointer values. We deliver a signal to user-space and
->> > > >> >> let the logic of restart be handled in user-space, thus moving
->> > > >> >> the complexity out of the kernel. The nesting counter approach
->> > > >> >> allows us to skip the complexity of interacting with signals that
->> > > >> >> would be otherwise needed with the percpu atomics approach, which
->> > > >> >> needs to know which instruction pointers are preempted, including
->> > > >> >> when preemption occurs on a signal handler nested over an
->> > > >> >> instruction
->> > > >> >> pointer of interest.
->> > > >> >>
->> > > >>
->> > > >> I talked about this kind of thing with PeterZ at LSF/MM, and I was
->> > > >> unable to convince myself that the kernel needs to help at all.  To do
->> > > >> this without kernel help, I want to relax the requirements slightly.
->> > > >> With true per-cpu atomic sections, you have a guarantee that you are
->> > > >> either really running on the same CPU for the entire duration of the
->> > > >> atomic section or you abort.  I propose a weaker primitive: you
->> > > >> acquire one of an array of locks (probably one per cpu), and you are
->> > > >> guaranteed that, if you don't abort, no one else acquires the same
->> > > >> lock while you hold it.
->> > > >
->> > > > In my proof of concept (https://github.com/compudj/percpu-dev) I
->> > > > actually implement an array of per-cpu lock. The issue here boils
->> > > > down to grabbing this per-cpu lock efficiently. Once the lock is taken,
->> > > > the thread has exclusive access to that per-cpu lock, even if it
->> > > > migrates.
->> > > >
->> > > >>  Here's how:
->> > > >>
->> > > >> Create an array of user-managed locks, one per cpu.  Call them lock[i]
->> > > >> for 0 <= i < ncpus.
->> > > >>
->> > > >> To acquire, look up your CPU number.  Then, atomically, check that
->> > > >> lock[cpu] isn't held and, if so, mark it held and record both your tid
->> > > >> and your lock acquisition count.  If you learn that the lock *was*
->> > > >> held after all, signal the holder (with kill or your favorite other
->> > > >> mechanism), telling it which lock acquisition count is being aborted.
->> > > >> Then atomically steal the lock, but only if the lock acquisition count
->> > > >> hasn't changed.
->> > > >>
->> > > >> This has a few benefits over the in-kernel approach:
->> > > >>
->> > > >> 1. No kernel patch.
->> > > >>
->> > > >> 2. No unnecessary abort if you are preempted in favor of a thread that
->> > > >> doesn't content for your lock.
->> > > >>
->> > > >> 3. Greatly improved debuggability.
->> > > >>
->> > > >> 4. With long critical sections and heavy load, you can improve
->> > > >> performance by having several locks per cpu and choosing one at
->> > > >> random.
->> > > >>
->> > > >> Is there a reason that a scheme like this doesn't work?
->> > > >
->> > > > What do you mean exactly by "atomically check that lock is not
->> > > > held and, if so, mark it held" ? Do you imply using a lock-prefixed
->> > > > atomic operation ?
->> > >
->> > > Yes.
->> > >
->> > > >
->> > > > The goal of this whole restart section approach is to allow grabbing
->> > > > a lock (or doing other sequences of operations ending with a single
->> > > > store) on per-cpu data without having to use slow lock-prefixed
->> > > > atomic operations.
->> > >
->> > > Ah, ok, I assumed it was to allow multiple threads to work in parallel.
->> > >
->> > > How arch-specific are you willing to be?
->> >
->> > I'd want this to be usable on every major architectures.
->> >
->> > > On x86, it might be possible
->> > > to play some GDT games so that an unlocked xchg relative
->> >
->> > AFAIK, there is no such thing as an unlocked xchg. xchg always
->> > imply the lock prefix on x86. I guess you mean cmpxchg here.
->> >
->>
->> Right, got my special cases mixed up.
->>
->> I wonder if we could instead have a vdso function that did something like:
->>
->> unsigned long __vdso_cpu_local_exchange(unsigned long *base, int
->> shift, unsigned long newval)
->> {
->>   unsigned long *ptr = base + (cpu << shift);
->>   unsigned long old = *ptr;
->>   *ptr = new;
->>   return *ptr;
->> }
->>
->> I think this primitive would be sufficient to let user code do the
->> rest.  There might be other more simple primitives that would work.
->> It could be implemented by fiddling with IP ranges, but we could
->> change the implementation later without breaking anything.  The only
->> really hard part would be efficiently figuring out what CPU we're on.
->
-> The "fiddling with IP ranges" is where the restart sections come into
-> play. Paul Turner's approach indeed knows about IP ranges, and performs
-> the restart from the kernel. My alternative approach uses a signal and
-> page protection in user-space to reach the same result. It appears that
-> CONFIG_PREEMPT kernels are difficult to handle with Paul's approach, so
-> perhaps we could combine our approaches to get the best of both.
+Any feedback on this?
 
-I'm not sure why CONFIG_PREEMPT would matter.  What am I missing?
+/Jarkko
 
-Doing this in the vdso has some sneaky benefits: rather than aborting
-a very short vdso-based primitive on context switch, we could just fix
-it up in the kernel and skip ahead to the end.
-
->
->>
->> FWIW, 'xchg' to cache-hot memory is only about 20 cycles on my laptop,
->> and cmpxchg seems to be about 6 cycles.  Both are faster than getcpu.
->> How much are we really saving with any of this over the pure userspace
->> approach?  I think that the most that the kernel can possibly help us
->> is to give us a faster getcpu and to help us deal with being migrated
->> to a different cpu if we want to avoid expensive operations and don't
->> want to play unlocked cmpxchg tricks.
->
-> You appear to summarize the two things that are added to the kernel with
-> this RFC patch:
-> - faster getcpu(): 12.7 ns -> 0.3 ns
-
-Yeah, I figured that out the second time I read your email and re-read
-the original message, but I apparently forgot to fix up the email I
-was typing.
-
-> - allow using less expensive operations to perform per-cpu-atomic ops:
->   (on my system):
->   - lock; cmpxchg (18 ns) -> load-test-branch-store (5.4 ns)
->
-
-When you say "load-test-branch-store", do you mean that sequence of
-normal code or a literal cmpxchg?  On x86, we really can pull off the
-sneaky trick of gs-relative cmpxchg in a single instruction, which
-gives us per-cpu atomic locking without any special kernel fixups,
-although that locks down gs and isn't currently supported.
-
-IIRC some other OS's use gs as a userspace per-cpu pointer instead of
-a per-thread pointer.  Would we want to consider enabling that?
-This may interact oddly with the WIP wrgsbase stuff.  (Grr, Intel, why
-couldn't you have made wrgsbase reset the gs selector to zero?  That
-would have been so much nicer.)
-
->>
->> I was wrong about set_thread_area giving us efficient per-cpu data,
->> BTW, although it would be easy to add a similar feature that would
->> give us a per-cpu segment base on x86.
->
-> ok
->
-
->>
->> This ABI is kind of unfortunate in that it can't be shared between
->> multiple libraries.
->
-> Well ideally you'd want one library to implement this (e.g. glibc), and
-> other libraries to use it. I'm not sure doing a linked list of TLS entries
-> per thread would really be useful here.
-
-True, but that may not play so well with tracing injection.
-
-At least a pure vdso approach is guaranteed not to have this problem.
-
-
->> Oh, you're delivering a signal every time you're preempted, even
->> outside the critical section?  That sounds expensive.
->
-> No, the signal is only delivered if the kernel preempts the critical
-> section.
-
-As noted above, I meant to delete this before sending :)
-
---Andy
+On Wed, May 20, 2015 at 04:49:21PM +0300, Jarkko Sakkinen wrote:
+> Changes since v5:
+> * Updated documentation.
+> 
+> Changes since v4:
+> * Removed dangling export of kernfs_remove_by_name_ns() from the sysfs
+>   patch.
+> 
+> Changes since v3:
+> * Use sysfs_remove_link()
+> 
+> Changes since v2:
+> * Fixed to_tpm_chip() macro.
+> * Split into two patches.
+> * Renamed sysfs_link_group_to_kobj to sysfs_link_entry_to_kobj
+> * Only create the "backwards compatibility" symlink for TPM 1.x devices.
+> 
+> Jarkko Sakkinen (3):
+>   sysfs: added sysfs_link_entry_to_kobj()
+>   tpm: move the PPI attributes to character device directory.
+>   tpm: update PPI documentation to address the location change.
+> 
+>  Documentation/ABI/testing/sysfs-driver-ppi | 19 +++++++++-----
+>  drivers/char/tpm/tpm-chip.c                | 24 +++++++++++------
+>  drivers/char/tpm/tpm.h                     | 17 +++++-------
+>  drivers/char/tpm/tpm_ppi.c                 | 34 ++++++++----------------
+>  fs/sysfs/group.c                           | 42 ++++++++++++++++++++++++++++++
+>  include/linux/sysfs.h                      |  8 ++++++
+>  6 files changed, 95 insertions(+), 49 deletions(-)
+> 
+> -- 
+> 2.1.4
+> 
