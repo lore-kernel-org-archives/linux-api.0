@@ -1,43 +1,43 @@
-From: Casey Schaufler <casey@schaufler-ca.com>
-Subject: Re: [PATCH v2 0/7] Smack namespace
-Date: Wed, 27 May 2015 06:05:57 -0700
-Message-ID: <5565C135.7020504@schaufler-ca.com>
-References: <1432209222-8479-1-git-send-email-l.pawelczyk@samsung.com> <1432557162-19123-1-git-send-email-l.pawelczyk@samsung.com> <55651823.10304@schaufler-ca.com> <1432718944.1784.1.camel@samsung.com>
+From: Beata Michalska <b.michalska@samsung.com>
+Subject: Re: [RFC v2 1/4] fs: Add generic file system event notifications
+Date: Wed, 27 May 2015 15:32:24 +0200
+Message-ID: <5565C768.6030906@samsung.com>
+References: <20150428135653.GD9955@quack.suse.cz>
+ <20150428140936.GA13406@kroah.com> <553F9D56.6030301@samsung.com>
+ <20150428173900.GA16708@kroah.com> <5540822C.10000@samsung.com>
+ <20150429074259.GA31089@quack.suse.cz> <20150429091303.GA4090@kroah.com>
+ <5548B4BB.7050503@samsung.com> <554B5329.8040907@samsung.com>
+ <5564A1D4.4040309@samsung.com> <20150527023412.GA20070@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <1432718944.1784.1.camel@samsung.com>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Lukasz Pawelczyk <l.pawelczyk@samsung.com>
-Cc: "David S. Miller" <davem@davemloft.net>, "Eric W. Biederman" <ebiederm@xmission.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, "Serge E. Hallyn" <serge@hallyn.com>, Al Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, David Howells <dhowells@redhat.com>, Fabian Frederick <fabf@skynet.be>, Greg KH <gregkh@linuxfoundation.org>, James Morris <james.l.morris@oracle.com>, Jeff Layton <jlayton@primarydata.com>, Jingoo Han <jg1.han@samsung.com>, Joe Perches <joe@perches.com>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Miklos Szeredi <miklos@szeredi.hu>, Oleg Nesterov <oleg@redhat.com>, Paul Moore <paul@paul-moore.com>, Stephen Smalley <sds@tycho.>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-reply-to: <20150527023412.GA20070@kroah.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Greg KH <greg@kroah.com>
+Cc: Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On 5/27/2015 2:29 AM, Lukasz Pawelczyk wrote:
-> On wto, 2015-05-26 at 18:04 -0700, Casey Schaufler wrote:
->> On 5/25/2015 5:32 AM, Lukasz Pawelczyk wrote:
->>> Hello,
->>>
->>> Some time ago I sent a Smack namespace documentation and a preliminary
->>> LSM namespace for RFC. I've been suggested that there shouldn't be a
->>> separate LSM namespace and that it should live within user namespace.
->>> And this version does. This is a complete set of patches required for
->>> Smack namespace.
->>>
->>> This was designed with a collaboration of Smack maintainer Casey
->>> Schaufler.
->>>
->> I have reviewed these patches (again!) and don't have
->> any issues. I see that Mr. Smalley has some insightful
->> suggestions, and once those are addressed I think that
->> we should be lined up to sell it to the infrastructure.
->
-> Thank you.
->
-> Can I add
-> Reviewed-by: Casey Schaufler <casey@schaufler-ca.com>
->
-> to those 7 the patches?
+On 05/27/2015 04:34 AM, Greg KH wrote:
+> On Tue, May 26, 2015 at 06:39:48PM +0200, Beata Michalska wrote:
+>> Hi,
+>>
+>> Things has gone a bit quiet thread wise ...
+>> As I believe I've managed to snap back to reality, I was hoping we could continue with this?
+>> I'm not sure if we've got everything cleared up or ... have we reached a dead end?
+>> Please let me know if we can move to the next stage? Or, if there are any showstoppers?
+> 
+> Please resend if you think it's ready and you have addressed the issues
+> raised so far.
+> 
+> thanks,
+> 
+> greg k-h
+> 
 
-Yes, but please be sure to address the issues raised by Stephen and Eric.
+Alright.
+I'm still running some tests so I'll resend it most probably tomorrow
+or on Friday.
 
+Best Regards
+Beata
