@@ -1,47 +1,86 @@
 From: Andy Lutomirski <luto@kernel.org>
-Subject: [PATCH v3 0/2] capabilities: Ambient capability patchset
-Date: Wed, 27 May 2015 16:47:57 -0700
-Message-ID: <cover.1432770087.git.luto@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Subject: [PATCH v3 2/2] capabilities: Add a securebit to disable PR_CAP_AMBIENT_RAISE
+Date: Wed, 27 May 2015 16:47:59 -0700
+Message-ID: <8b3a8b2fa031e043483f2f444f0b51aed0681e85.1432770087.git.luto@kernel.org>
+References: <cover.1432770087.git.luto@kernel.org>
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <cover.1432770087.git.luto@kernel.org>
+In-Reply-To: <cover.1432770087.git.luto@kernel.org>
+References: <cover.1432770087.git.luto@kernel.org>
+Sender: linux-security-module-owner@vger.kernel.org
 To: Serge Hallyn <serge.hallyn@ubuntu.com>, Andrew Morton <akpm@linuxfoundation.org>, James Morris <james.l.morris@oracle.com>
-Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Andrew Lutomirski <luto@kernel.org>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
+Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Andrew Lutomirski <luto@kernel.org>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>, Christoph Lameter <cl@linux.com>, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-This adds ambient capabilities.  See the individual patch changelogs
-for details.
+Per Andrew Morgan's request, add a securebit to allow admins to
+disable PR_CAP_AMBIENT_RAISE.  This securebit will prevent processes
+from adding capabilities to their ambient set.
 
-Preliminary userspace code is here:
+For simplicity, this disables PR_CAP_AMBIENT_RAISE entirely rather
+than just disabling setting previously cleared bits.
 
-https://git.kernel.org/cgit/linux/kernel/git/luto/util-linux-playground.git/commit/?h=cap_ambient&id=7f5afbd175d2
+Acked-By: Andrew G. Morgan <morgan@kernel.org>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Christoph Lameter <cl@linux.com>
+Cc: Serge Hallyn <serge.hallyn@canonical.com>
+Cc: Andy Lutomirski <luto@amacapital.net>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: Aaron Jones <aaronmdjones@gmail.com>
+CC: Ted Ts'o <tytso@mit.edu>
+Cc: linux-security-module@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org
+Cc: akpm@linuxfoundation.org
+Cc: Andrew G. Morgan <morgan@kernel.org>
+Cc: Mimi Zohar <zohar@linux.vnet.ibm.com>
+Cc: Austin S Hemmelgarn <ahferroin7@gmail.com>
+Cc: Markku Savela <msa@moth.iki.fi>
+Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+---
+ include/uapi/linux/securebits.h | 11 ++++++++++-
+ security/commoncap.c            |  3 ++-
+ 2 files changed, 12 insertions(+), 2 deletions(-)
 
-James or akpm, I think this is ready for 4.2.  Can one of you queue it up?
-
-Thanks,
-Andy
-
-Changes from v2:
- - Improve the patch 1 changelog a bit.
- - Add acks.
- - Add comment clarifying the pE' rule.
- - s/except/expect
-
-Changes from v1:
- - Lots of cleanups to the ambient cap code.
- - The securebit is new.
-
-Andy Lutomirski (2):
-  capabilities: Ambient capabilities
-  capabilities: Add a securebit to disable PR_CAP_AMBIENT_RAISE
-
- fs/proc/array.c                 |  5 ++-
- include/linux/cred.h            |  8 ++++
- include/uapi/linux/prctl.h      |  6 +++
- include/uapi/linux/securebits.h | 11 ++++-
- kernel/user_namespace.c         |  1 +
- security/commoncap.c            | 92 ++++++++++++++++++++++++++++++++++++-----
- security/keys/process_keys.c    |  1 +
- 7 files changed, 112 insertions(+), 12 deletions(-)
-
+diff --git a/include/uapi/linux/securebits.h b/include/uapi/linux/securebits.h
+index 985aac9e6bf8..35ac35cef217 100644
+--- a/include/uapi/linux/securebits.h
++++ b/include/uapi/linux/securebits.h
+@@ -43,9 +43,18 @@
+ #define SECBIT_KEEP_CAPS	(issecure_mask(SECURE_KEEP_CAPS))
+ #define SECBIT_KEEP_CAPS_LOCKED (issecure_mask(SECURE_KEEP_CAPS_LOCKED))
+ 
++/* When set, a process cannot add new capabilities to its ambient set. */
++#define SECURE_NO_CAP_AMBIENT_RAISE		6
++#define SECURE_NO_CAP_AMBIENT_RAISE_LOCKED	7  /* make bit-6 immutable */
++
++#define SECBIT_NO_CAP_AMBIENT_RAISE (issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE))
++#define SECBIT_NO_CAP_AMBIENT_RAISE_LOCKED \
++			(issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE_LOCKED))
++
+ #define SECURE_ALL_BITS		(issecure_mask(SECURE_NOROOT) | \
+ 				 issecure_mask(SECURE_NO_SETUID_FIXUP) | \
+-				 issecure_mask(SECURE_KEEP_CAPS))
++				 issecure_mask(SECURE_KEEP_CAPS) | \
++				 issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE))
+ #define SECURE_ALL_LOCKS	(SECURE_ALL_BITS << 1)
+ 
+ #endif /* _UAPI_LINUX_SECUREBITS_H */
+diff --git a/security/commoncap.c b/security/commoncap.c
+index 835a7584f7ea..22b7b91c5eae 100644
+--- a/security/commoncap.c
++++ b/security/commoncap.c
+@@ -987,7 +987,8 @@ int cap_task_prctl(int option, unsigned long arg2, unsigned long arg3,
+ 			if (arg2 == PR_CAP_AMBIENT_RAISE &&
+ 			    (!cap_raised(current_cred()->cap_permitted, arg3) ||
+ 			     !cap_raised(current_cred()->cap_inheritable,
+-					 arg3)))
++					 arg3) ||
++			     issecure(SECURE_NO_CAP_AMBIENT_RAISE)))
+ 				return -EPERM;
+ 
+ 			new = prepare_creds();
 -- 
 2.1.0
+
