@@ -1,78 +1,61 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [klibc] kernel/libc uapi changes for y2038
-Date: Wed, 27 May 2015 22:19:52 +0200
-Message-ID: <2268301.gQGnhXiZzi@wuerfel>
-References: <2664016.bYZKg6FQqR@wuerfel> <5565E2AC.3070306@zytor.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v2 1/2] capabilities: Ambient capabilities
+Date: Wed, 27 May 2015 15:35:58 -0700
+Message-ID: <CALCETrUS7vMODCDTrd2XHd4CRW46=7DFCt-Bg94L7UOKrN_H1Q@mail.gmail.com>
+References: <cover.1431671529.git.luto@kernel.org> <cc4749638a21079cce12f9f30c806170558e56e5.1431671529.git.luto@kernel.org>
+ <alpine.DEB.2.11.1505150921040.20285@gentwo.org> <CALCETrU5B3aR0s9c7qsktLJ4hiBfs0+LqyVNmq1ZVNfF0zFECQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5565E2AC.3070306-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, klibc-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, musl-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, cferris-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, enh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, "Joseph S. Myers" <joseph-qD8j1LwMmJjtCj0u4l0SBw@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CALCETrU5B3aR0s9c7qsktLJ4hiBfs0+LqyVNmq1ZVNfF0zFECQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Lameter <cl@linux.com>
+Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Andrew Morton <akpm@linuxfoundation.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Serge Hallyn <serge.hallyn@canonical.com>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday 27 May 2015 08:28:44 H. Peter Anvin wrote:
-> On 05/18/2015 02:53 AM, Arnd Bergmann wrote:
-> > In the patch series I posted recently [1], I introduce new system calls to deal
-> > with modified data structures, but left the question open on how these should
-> > be best accessed from libc. The patches introduce a new __kernel_time64_t type
-> > and based on that five new data structured: struct __kernel_timespec,
-> > struct __kernel_itimerspec, struct __kernel_stat, struct __kernel_rusage,
-> > and struct __kernel_timex. This works fine for the case when all libc
-> > implementations provide their own definitions to user space, but not for
-> > the simplest case (e.g. klibc) where the user-visible structures come directly
-> > from the kernel uapi headers.
-> > 
-> > I still don't know what model the various libc developers prefer, so here is
-> > an alternative approach, as a patch on top of the previous series:
-> > 
-> > Now, we rename the original structures to struct __old_kernel_*, and use a
-> > macro to define either the __old_kernel_* or the __kernel_* structure name
-> > to the name we actually want in user space, based on a __KERNEL_TIME_BITS
-> > macro that can be set to either 32 or 64 for 32-bit architectures by
-> > the libc. Depending on that macro, the compiler will either see one
-> > of these combinations (for each of the five structures):
-> > 
-> > a) __BITS_PER_LONG == 32 && __KERNEL_TIME_BITS == 32:
-> > 
-> >    struct timespec              based on 32-bit __kernel_time_t
-> >    struct __kernel_timespec     based on 64-bit __kernel_time64_t
-> > 
-> > b) __BITS_PER_LONG == 64 && __KERNEL_TIME_BITS == 64:
-> > 
-> >    struct timespec              based on 64-bit __kernel_time_t
-> >    struct __kernel_timespec     based on 64-bit __kernel_time64_t
-> > 
-> > c) __BITS_PER_LONG == 32 && __KERNEL_TIME_BITS == 64:
-> > 
-> >    struct __old_kernel_timespec based on 32-bit __kernel_time_t
-> >    struct timespec              based on 64-bit __kernel_time64_t
-> > 
-> > Would this work for everyone?  Any alternative suggestions?
-> > 
-> 
-> It seems to work, except I don't really understand why there is a
-> difference between (b) and (c).
+On Mon, May 18, 2015 at 12:43 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+> On May 15, 2015 11:31 PM, "Christoph Lameter" <cl@linux.com> wrote:
+>>
+>> It would be best to start a complete new thread about this. You
+>> replied to earlier posts about ambient capabilities and
+>> people may not see it as a new release.
+>>
+>> > pA obeys the invariant that no bit can ever be set in pA if it is
+>> > not set in both pP and pI.  Dropping a bit from pP or pI drops that
+>> > bit from pA.  This ensures that existing programs that try to drop
+>> > capabilities still do so, with a complication.  Because capability
+>>
+>> Ok that is a good improvement.
+>>
+>> > inheritance is so broken, setting KEEPCAPS, using setresuid to
+>> > switch to nonroot uids, or calling execve effectively drops
+>> > capabilities.  Therefore, setresuid from root to nonroot
+>> > conditionally clears pA unless SECBIT_NO_SETUID_FIXUP is set.
+>> > Processes that don't like this can re-add bits to pA afterwards.
+>> >
+>> > The capability evolution rules are changed:
+>> >
+>> >   pA' = (file caps or setuid or setgid ? 0 : pA)
+>> >   pP' = (X & fP) | (pI & fI) | pA'
+>> >   pI' = pI
+>> >   pE' = (fE ? pP' : pA')
+>>
+>> Isnt this equal to
+>>
+>>     pE' = (fE & pP') | pA'
+>>
+>> which does not require conditionals and is symmetric to how pP' is
+>> calculated. Your formula seems to indicate that pA' bits are not set if
+>> fE is set. However they are already set unconditionally in pP' regardless.
+>> This makes it more explicit I think. And I thought we are dealing with
+>> bitmask arithmetic here?
+>
+> I think you're right, except that fE is a Boolean, not a bit mask, so
+> fE | pP' is an odd thing to talk about.
+>
+> We could say (fE ? pP' : 0) | pA', which could simplify the code a tiny bit.
 
-I tried to keep a) and b) similar, and change nothing other than the
-introduction of the extra __kernel_time64_t and __kernel_timespec
-here, for the case of __KERNEL_TIME_BITS == __BITS_PER_LONG, in order
-to minimize the risk of introducing regressions for existing libc
-builds against new kernel headers.
+It turns out that would be almost a pure addition of code, so I'll
+leave it as is.
 
-Case c) is the only one that actually changes the existing definitions,
-which makes it different from both a) and b).
-
-> I also have no problem just having klibc contain its own definitions of
-> these structures, as long as one can prevent the kernel from defining them.
-
-Ok, good to know. If that works for all libc implementations, we
-could take a simpler approach and just define __old_kernel_timespec
-plus __kernel_timespec but not timespec (and respectively for the
-other structures) when __KERNEL_TIME_BITS == 64 is set, and leave
-the real user space definitions up to libc (which can then
-add the #defines or not if they want to).
-
-	Arnd
+--Andy
