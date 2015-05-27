@@ -1,83 +1,78 @@
-From: "Winkler, Tomas" <tomas.winkler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: RE: [char-misc-next 04/11 V2] uuid: extract macros for assigning
- raw arrays
-Date: Wed, 27 May 2015 17:42:22 +0000
-Message-ID: <5B8DA87D05A7694D9FA63FD143655C1B3C4A2CDF@hasmsx109.ger.corp.intel.com>
-References: <1432741333-11889-1-git-send-email-tomas.winkler@intel.com>
- <20150527165054.GB3533@kroah.com>
- <5B8DA87D05A7694D9FA63FD143655C1B3C4A2C8C@hasmsx109.ger.corp.intel.com>
- <20150527172919.GA5525@kroah.com>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [klibc] kernel/libc uapi changes for y2038
+Date: Wed, 27 May 2015 22:19:52 +0200
+Message-ID: <2268301.gQGnhXiZzi@wuerfel>
+References: <2664016.bYZKg6FQqR@wuerfel> <5565E2AC.3070306@zytor.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150527172919.GA5525-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Content-Language: en-US
+In-Reply-To: <5565E2AC.3070306-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: "arnd-r2nGTMty4D4@public.gmane.org" <arnd-r2nGTMty4D4@public.gmane.org>, Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, klibc-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, musl-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, cferris-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, enh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, "Joseph S. Myers" <joseph-qD8j1LwMmJjtCj0u4l0SBw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-
-
-> -----Original Message-----
-> From: Greg KH [mailto:gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org]
-> Sent: Wednesday, May 27, 2015 20:29
-> To: Winkler, Tomas
-> Cc: arnd-r2nGTMty4D4@public.gmane.org; Stephen Rothwell; linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> Subject: Re: [char-misc-next 04/11 V2] uuid: extract macros for assigning raw
-> arrays
+On Wednesday 27 May 2015 08:28:44 H. Peter Anvin wrote:
+> On 05/18/2015 02:53 AM, Arnd Bergmann wrote:
+> > In the patch series I posted recently [1], I introduce new system calls to deal
+> > with modified data structures, but left the question open on how these should
+> > be best accessed from libc. The patches introduce a new __kernel_time64_t type
+> > and based on that five new data structured: struct __kernel_timespec,
+> > struct __kernel_itimerspec, struct __kernel_stat, struct __kernel_rusage,
+> > and struct __kernel_timex. This works fine for the case when all libc
+> > implementations provide their own definitions to user space, but not for
+> > the simplest case (e.g. klibc) where the user-visible structures come directly
+> > from the kernel uapi headers.
+> > 
+> > I still don't know what model the various libc developers prefer, so here is
+> > an alternative approach, as a patch on top of the previous series:
+> > 
+> > Now, we rename the original structures to struct __old_kernel_*, and use a
+> > macro to define either the __old_kernel_* or the __kernel_* structure name
+> > to the name we actually want in user space, based on a __KERNEL_TIME_BITS
+> > macro that can be set to either 32 or 64 for 32-bit architectures by
+> > the libc. Depending on that macro, the compiler will either see one
+> > of these combinations (for each of the five structures):
+> > 
+> > a) __BITS_PER_LONG == 32 && __KERNEL_TIME_BITS == 32:
+> > 
+> >    struct timespec              based on 32-bit __kernel_time_t
+> >    struct __kernel_timespec     based on 64-bit __kernel_time64_t
+> > 
+> > b) __BITS_PER_LONG == 64 && __KERNEL_TIME_BITS == 64:
+> > 
+> >    struct timespec              based on 64-bit __kernel_time_t
+> >    struct __kernel_timespec     based on 64-bit __kernel_time64_t
+> > 
+> > c) __BITS_PER_LONG == 32 && __KERNEL_TIME_BITS == 64:
+> > 
+> >    struct __old_kernel_timespec based on 32-bit __kernel_time_t
+> >    struct timespec              based on 64-bit __kernel_time64_t
+> > 
+> > Would this work for everyone?  Any alternative suggestions?
+> > 
 > 
-> On Wed, May 27, 2015 at 05:24:01PM +0000, Winkler, Tomas wrote:
-> >
-> > >
-> > > On Wed, May 27, 2015 at 06:42:13PM +0300, Tomas Winkler wrote:
-> > > > In order for mei client devices to use device id based on uuid we
-> > > > have to use common types between user space (file2alias.c).
-> > > > Similarly to vmbus,  mei  uses raw 16 byte array for that.
-> > > > To leverage on existing infrastructure around uuid_le type
-> > > > defined in uuid.h we add helper macros to handle conversions between
-> > > > raw 16 byte array and uuid_{le,be} types.
-> > >
-> > > You aren't adding a helper macro, you are just redefining the existing
-> > > macros using a different one.
-> >
-> > Not exactly I'm using both the one I've added for device ids and the old one for
-> all the other flows.
-> >
-> >  But I can't see why this is needed, what
-> > > does this solve that vmbus and other uses of the existing macros don't
-> > > need?  In other words, what makes mei so special that it needs a "lower"
-> > > level macro than every other subsystem?
-> >
-> > It's not special there is actually a lot of code duplication around uuid handling
-> > every subsystem is using their own macros but it can be consolidated around
-> uuid.h
-> >
-> > So vmbus can use that
-> > Instead of
-> > /*
-> >  * Network GUID
-> >  * {f8615163-df3e-46c5-913f-f2d2f965ed0e}
-> >  */
-> > #define HV_NIC_GUID \
-> >         .guid = { \
-> >                         0x63, 0x51, 0x61, 0xf8, 0x3e, 0xdf, 0xc5, 0x46, \
-> >                         0x91, 0x3f, 0xf2, 0xd2, 0xf9, 0x65, 0xed, 0x0e \
-> >                 }
-> >
-> > The can use the new macro to make it more readable, something in spirit of:
-> >
-> > #define HV_NIC_GUID __UUID_LE(f8615163-df3e-46c5-913f-f2d2f965ed0e)
-> 
-> Why the "__" usage here?  That signifies a "private" namespace, why add
-> that to the user visible header files?
+> It seems to work, except I don't really understand why there is a
+> difference between (b) and (c).
 
-I take any other suggestion for macro names.  
-Not sure how I would reuse the macros if I don't export them both, second this can be used also by user space.  
-> 
-> And are you going to send patches for vmbus and other drivers to fix
-> everything up to use these new macros?  Someone has to...
+I tried to keep a) and b) similar, and change nothing other than the
+introduction of the extra __kernel_time64_t and __kernel_timespec
+here, for the case of __KERNEL_TIME_BITS == __BITS_PER_LONG, in order
+to minimize the risk of introducing regressions for existing libc
+builds against new kernel headers.
 
-Can be done but I cannot test their code and  now I'm busy with splitting the big bus patch :)
-Tomas
+Case c) is the only one that actually changes the existing definitions,
+which makes it different from both a) and b).
+
+> I also have no problem just having klibc contain its own definitions of
+> these structures, as long as one can prevent the kernel from defining them.
+
+Ok, good to know. If that works for all libc implementations, we
+could take a simpler approach and just define __old_kernel_timespec
+plus __kernel_timespec but not timespec (and respectively for the
+other structures) when __KERNEL_TIME_BITS == 64 is set, and leave
+the real user space definitions up to libc (which can then
+add the #defines or not if they want to).
+
+	Arnd
