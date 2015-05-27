@@ -1,32 +1,52 @@
-From: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
-Subject: Re: [PATCH 2/2] fbcon: use the cursor blink interval provided by
- vt
-Date: Wed, 27 May 2015 07:52:50 +0000 (UTC)
-Message-ID: <alpine.DEB.2.11.1505270737270.6667@local>
-References: <alpine.DEB.2.11.1501262034380.1945@localhost.localdomain> <alpine.DEB.2.11.1501262040380.2052@localhost.localdomain> <20150225094946.GA24627@amd> <alpine.LNX.2.11.1502252319330.276@localhost> <20150226220243.GC9935@amd> <alpine.LNX.2.11.1502271905580.4212@localhost>
- <alpine.LNX.2.11.1502271914040.4248@localhost> <CANaxB-zX4GkExeCzwgYZVDVZE47DHOCnRiYe86difk4fRMK=9A@mail.gmail.com>
+From: Lukasz Pawelczyk <l.pawelczyk@samsung.com>
+Subject: Re: [PATCH v2 0/7] Smack namespace
+Date: Wed, 27 May 2015 11:29:04 +0200
+Message-ID: <1432718944.1784.1.camel@samsung.com>
+References: <1432209222-8479-1-git-send-email-l.pawelczyk@samsung.com>
+ <1432557162-19123-1-git-send-email-l.pawelczyk@samsung.com>
+ <55651823.10304@schaufler-ca.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CANaxB-zX4GkExeCzwgYZVDVZE47DHOCnRiYe86difk4fRMK=9A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrey Wagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Tomi Valkeinen <tomi.valkeinen-l0cyMroinI0@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-reply-to: <55651823.10304@schaufler-ca.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Casey Schaufler <casey@schaufler-ca.com>
+Cc: "David S. Miller" <davem@davemloft.net>, "Eric W. Biederman" <ebiederm@xmission.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, "Serge E. Hallyn" <serge@hallyn.com>, Al Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, David Howells <dhowells@redhat.com>, Fabian Frederick <fabf@skynet.be>, Greg KH <gregkh@linuxfoundation.org>, James Morris <james.l.morris@oracle.com>, Jeff Layton <jlayton@primarydata.com>, Jingoo Han <jg1.han@samsung.com>, Joe Perches <joe@perches.com>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Miklos Szeredi <miklos@szeredi.hu>, Oleg Nesterov <oleg@redhat.com>, Paul Moore <paul@paul-moore.com>, Stephen Smalley <sds@tycho.>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 27 May 2015, Andrey Wagin wrote:
-...
-> I regularly execute criu tests on linux-next. For this, I use virtual
-> machine from the digitalocean clould. The current version of
-> linux-next hangs after a few seconds. I use git bisect to find the
-> commit where the problem is appeaed. And it looks like the problem is
-> in this patch.
-...
-> Thanks,
-> Andrew
+On wto, 2015-05-26 at 18:04 -0700, Casey Schaufler wrote:
+> On 5/25/2015 5:32 AM, Lukasz Pawelczyk wrote:
+> > Hello,
+> >
+> > Some time ago I sent a Smack namespace documentation and a preliminary
+> > LSM namespace for RFC. I've been suggested that there shouldn't be a
+> > separate LSM namespace and that it should live within user namespace.
+> > And this version does. This is a complete set of patches required for
+> > Smack namespace.
+> >
+> > This was designed with a collaboration of Smack maintainer Casey
+> > Schaufler.
+> >
+> 
+> I have reviewed these patches (again!) and don't have
+> any issues. I see that Mr. Smalley has some insightful
+> suggestions, and once those are addressed I think that
+> we should be lined up to sell it to the infrastructure.
 
-Perhaps this pending patch will help: 
-http://marc.info/?l=linux-kernel&m=143219509918969&w=2
 
-Thanks,
-Scot
+Thank you.
+
+Can I add
+Reviewed-by: Casey Schaufler <casey@schaufler-ca.com>
+
+to those 7 the patches?
+
+
+-- 
+Lukasz Pawelczyk
+Samsung R&D Institute Poland
+Samsung Electronics
+
+
+
