@@ -1,43 +1,42 @@
-From: Beata Michalska <b.michalska@samsung.com>
-Subject: Re: [RFC v2 1/4] fs: Add generic file system event notifications
-Date: Wed, 27 May 2015 15:32:24 +0200
-Message-ID: <5565C768.6030906@samsung.com>
-References: <20150428135653.GD9955@quack.suse.cz>
- <20150428140936.GA13406@kroah.com> <553F9D56.6030301@samsung.com>
- <20150428173900.GA16708@kroah.com> <5540822C.10000@samsung.com>
- <20150429074259.GA31089@quack.suse.cz> <20150429091303.GA4090@kroah.com>
- <5548B4BB.7050503@samsung.com> <554B5329.8040907@samsung.com>
- <5564A1D4.4040309@samsung.com> <20150527023412.GA20070@kroah.com>
+From: Stephen Smalley <sds@tycho.nsa.gov>
+Subject: Re: [PATCH v2 0/7] Smack namespace
+Date: Wed, 27 May 2015 09:33:25 -0400
+Message-ID: <5565C7A5.4060802@tycho.nsa.gov>
+References: <1432209222-8479-1-git-send-email-l.pawelczyk@samsung.com> <1432557162-19123-1-git-send-email-l.pawelczyk@samsung.com> <556484BD.2060004@tycho.nsa.gov> <1432719372.1784.4.camel@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <20150527023412.GA20070@kroah.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Greg KH <greg@kroah.com>
-Cc: Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1432719372.1784.4.camel@samsung.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Lukasz Pawelczyk <l.pawelczyk@samsung.com>
+Cc: "David S. Miller" <davem@davemloft.net>, "Eric W. Biederman" <ebiederm@xmission.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, "Serge E. Hallyn" <serge@hallyn.com>, Al Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Casey Schaufler <casey@schaufler-ca.com>, David Howells <dhowells@redhat.com>, Fabian Frederick <fabf@skynet.be>, Greg KH <gregkh@linuxfoundation.org>, James Morris <james.l.morris@oracle.com>, Jeff Layton <jlayton@primarydata.com>, Jingoo Han <jg1.han@samsung.com>, Joe Perches <joe@perches.com>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Miklos Szeredi <miklos@szeredi.hu>, Oleg Nesterov <oleg@redhat.com>, Paul Moore <paul@pa>
 List-Id: linux-api@vger.kernel.org
 
-On 05/27/2015 04:34 AM, Greg KH wrote:
-> On Tue, May 26, 2015 at 06:39:48PM +0200, Beata Michalska wrote:
->> Hi,
+On 05/27/2015 05:36 AM, Lukasz Pawelczyk wrote:
+> On wto, 2015-05-26 at 10:35 -0400, Stephen Smalley wrote:
+>> On 05/25/2015 08:32 AM, Lukasz Pawelczyk wrote:
+>>> --- Usage ---
+>>>
+>>> Smack namespace is written using LSM hooks inside user namespace. That
+>>> means it's connected to it.
+>>>
+>>> To create a new Smack namespace you need to unshare() user namespace
+>>> as usual. If that is all you do though, than there is no difference to
+>>> what is now. To activate the Smack namespace you need to fill the
+>>> labels' map. It is in a file /proc/$PID/smack_map.
 >>
->> Things has gone a bit quiet thread wise ...
->> As I believe I've managed to snap back to reality, I was hoping we could continue with this?
->> I'm not sure if we've got everything cleared up or ... have we reached a dead end?
->> Please let me know if we can move to the next stage? Or, if there are any showstoppers?
+>> This should be /proc/$PID/attr/label_map or similar, modeled after the
+>> existing /proc/$PID/attr/current and similar nodes.  Then it isn't
+>> module-specific and can be reused for other modules.
 > 
-> Please resend if you think it's ready and you have addressed the issues
-> raised so far.
-> 
-> thanks,
-> 
-> greg k-h
-> 
+> To make this generic I'll have to introduce new LSH hooks to handle this
+> file (much like /proc/$PID/attr/current).
+> I take this is what you had in mind.
 
-Alright.
-I'm still running some tests so I'll resend it most probably tomorrow
-or on Friday.
+We don't have separate hooks for the
+/proc/self/attr/{current,exec,fscreate,keycreate,socketcreate,prev}
+nodes.  Just one hook that passes the attribute name, and then the
+security hook implementation can distinguish on that.
 
-Best Regards
-Beata
+
