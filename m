@@ -1,46 +1,35 @@
-From: Andrey Wagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 2/2] fbcon: use the cursor blink interval provided by vt
-Date: Wed, 27 May 2015 08:57:47 +0300
-Message-ID: <CANaxB-zX4GkExeCzwgYZVDVZE47DHOCnRiYe86difk4fRMK=9A@mail.gmail.com>
-References: <alpine.DEB.2.11.1501262034380.1945@localhost.localdomain>
-	<alpine.DEB.2.11.1501262040380.2052@localhost.localdomain>
-	<20150225094946.GA24627@amd>
-	<alpine.LNX.2.11.1502252319330.276@localhost>
-	<20150226220243.GC9935@amd>
-	<alpine.LNX.2.11.1502271905580.4212@localhost>
-	<alpine.LNX.2.11.1502271914040.4248@localhost>
+From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3] fs, proc: introduce CONFIG_PROC_CHILDREN
+Date: Wed, 27 May 2015 10:29:54 +0300
+Message-ID: <20150527072954.GA1887@uranus>
+References: <20150522153705.GI16716@uranus>
+ <1432653162-20973-1-git-send-email-iago@endocode.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.LNX.2.11.1502271914040.4248@localhost>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
-Cc: Tomi Valkeinen <tomi.valkeinen-l0cyMroinI0@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1432653162-20973-1-git-send-email-iago-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Iago =?iso-8859-1?Q?L=F3pez?= Galeiras <iago-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
+Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, KAMEZAWA Hiroyuki <kamezawa.hiroyu-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Djalal Harouni <djalal-973cpzSjLbNWk0Htik3J/w@public.gmane.org>, Alban Crequy <alban-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-2015-02-27 22:15 GMT+03:00 Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>:
-> vt now provides a cursor blink interval via vc_data. Use this
-> interval instead of the currently hardcoded 200 msecs. Store it in
-> fbcon_ops to avoid locking the console in cursor_timer_handler().
+On Tue, May 26, 2015 at 05:12:42PM +0200, Iago L=F3pez Galeiras wrote:
+=2E..
+> Alban tested that /proc/<pid>/task/<tid>/children is present when the
+> kernel is configured with CONFIG_PROC_CHILDREN=3Dy but without
+> CONFIG_CHECKPOINT_RESTORE
+>=20
+> v3: change depend -> select
+> v2: introduce CONFIG_PROC_CHILDREN http://marc.info/?l=3Dlinux-fsdeve=
+l&m=3D143229890217280&w=3D2
+> v1: http://marc.info/?l=3Dlinux-api&m=3D143220431121869&w=3D2
+>=20
+> Signed-off-by: Iago L=F3pez Galeiras <iago-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
+> Cc: Alban Crequy <alban-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
+> Tested-by: Alban Crequy <alban-973cpzSjLbNWk0Htik3J/w@public.gmane.org>
 
-I regularly execute criu tests on linux-next. For this, I use virtual
-machine from the digitalocean clould. The current version of
-linux-next hangs after a few seconds. I use git bisect to find the
-commit where the problem is appeaed. And it looks like the problem is
-in this patch.
+Looks ok to me, thanks.
 
-When the kernel hangs, it doesn't report anything on the screen and
-there is nothing suspicious in logs after reboot.
-
-I will try to reproduce the problem in my local enviroment to get more
-information.
-
-There is my config file:
-https://github.com/avagin/criu-jenkins-digitalocean/blob/d95d9e30a7da8755c47b290630bac7ee1fe7132d/jenkins-scripts/config
-
-Thanks,
-Andrew
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Reviewed-by: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
