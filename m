@@ -1,78 +1,118 @@
-From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH 07/35] dvb: split enum from typedefs at frontend.h
-Date: Thu, 28 May 2015 19:22:23 -0300
-Message-ID: <20150528192223.70b36203@recife.lan>
-References: <cover.1432844837.git.mchehab@osg.samsung.com>
-	<6576f479a6e2449132811f5681e35d3794110d25.1432844837.git.mchehab@osg.samsung.com>
-	<55678F64.6080801@xs4all.nl>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH 6/6] nd_blk: add support for NVDIMM flags
+Date: Thu, 28 May 2015 16:35:53 -0600
+Message-ID: <1432852553-24865-7-git-send-email-ross.zwisler@linux.intel.com>
+References: <1432852553-24865-1-git-send-email-ross.zwisler@linux.intel.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55678F64.6080801-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
+In-Reply-To: <1432852553-24865-1-git-send-email-ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org>
-Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Em Thu, 28 May 2015 23:57:56 +0200
-Hans Verkuil <hverkuil-qWit8jRvyhVmR6Xm/wNWPw@public.gmane.org> escreveu:
+Add support in the ND_BLK I/O path for the "latch" and "flush" flags
+defined in the "Get Block NVDIMM Flags" _DSM function:
 
-> On 05/28/2015 11:49 PM, Mauro Carvalho Chehab wrote:
-> > Using typedefs is already bad enough, but doing it together
-> > with enum declaration is even worse.
-> > 
-> > Also, it breaks the scripts at DocBook that would be generating
-> > reference pointers for the enums.
-> > 
-> > Well, we can't get rid of typedef right now, but let's at least
-> > declare it on a separate line, and let the scripts to generate
-> > the cross-reference, as this is needed for the next DocBook
-> > patches.
-> > 
-> > Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-> > 
-> > diff --git a/include/uapi/linux/dvb/frontend.h b/include/uapi/linux/dvb/frontend.h
-> > index 466f56997272..7aeeb5a69fdf 100644
-> > --- a/include/uapi/linux/dvb/frontend.h
-> > +++ b/include/uapi/linux/dvb/frontend.h
-> > @@ -36,7 +36,7 @@ typedef enum fe_type {
-> >  } fe_type_t;
-> >  
-> >  
-> > -typedef enum fe_caps {
-> > +enum fe_caps {
-> >  	FE_IS_STUPID			= 0,
-> >  	FE_CAN_INVERSION_AUTO		= 0x1,
-> >  	FE_CAN_FEC_1_2			= 0x2,
-> > @@ -68,7 +68,9 @@ typedef enum fe_caps {
-> >  	FE_NEEDS_BENDING		= 0x20000000, /* not supported anymore, don't use (frontend requires frequency bending) */
-> >  	FE_CAN_RECOVER			= 0x40000000, /* frontend can recover from a cable unplug automatically */
-> >  	FE_CAN_MUTE_TS			= 0x80000000  /* frontend can stop spurious TS data output */
-> > -} fe_caps_t;
-> > +};
-> > +
-> > +typedef enum fe_caps_t;
-> 
-> This can't be right. This should be:
-> 
-> typedef enum fe_caps fe_caps_t;
-> 
-> Does it even compile?
-> 
-> Regards,
-> 
-> 	Hans
+http://pmem.io/documents/NVDIMM_DSM_Interface_Example.pdf
 
+Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>
+Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Cc: linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+---
+ drivers/acpi/nfit.c        | 26 ++++++++++++++++++++++++--
+ drivers/acpi/nfit.h        |  1 +
+ include/uapi/linux/ndctl.h |  5 +++++
+ 3 files changed, 30 insertions(+), 2 deletions(-)
 
-Heh, true. Thanks for checking.
-
-Yeah, this won't likely compile. 
-
-
-I'll double check the building troubles and fix them.
-
-Thanks for pointing it.
-
-Regards,
-Mauro
+diff --git a/drivers/acpi/nfit.c b/drivers/acpi/nfit.c
+index 6cca50d1c690..0da84e067643 100644
+--- a/drivers/acpi/nfit.c
++++ b/drivers/acpi/nfit.c
+@@ -951,7 +951,9 @@ static void write_blk_ctl(struct nfit_blk *nfit_blk, unsigned int bw,
+ 	/* mmio->base must be mapped uncacheable */
+ 	writeq(cmd, mmio->base + offset);
+ 	nfit_blk->psync(nfit_blk);
+-	/* FIXME: conditionally perform read-back if mandated by firmware */
++
++	if (nfit_blk->dimm_flags & ND_BLK_DCR_LATCH)
++		readq(mmio->base + offset);
+ }
+ 
+ static int acpi_nfit_blk_single_io(struct nfit_blk *nfit_blk, void *iobuf,
+@@ -983,8 +985,12 @@ static int acpi_nfit_blk_single_io(struct nfit_blk *nfit_blk, void *iobuf,
+ 
+ 		if (write)
+ 			persistent_copy(mmio->aperture + offset, iobuf + copied, c);
+-		else
++		else {
++			if (nfit_blk->dimm_flags & ND_BLK_FLUSH_REQUIRED)
++				persistent_flush(mmio->aperture + offset, c);
++
+ 			memcpy(iobuf + copied, mmio->aperture + offset, c);
++		}
+ 
+ 		copied += c;
+ 		len -= c;
+@@ -1146,6 +1152,20 @@ static int nfit_blk_init_interleave(struct nfit_blk_mmio *mmio,
+ 	return 0;
+ }
+ 
++static void nd_acpi_blk_get_flags(struct nd_bus_descriptor *nd_desc,
++		struct nd_dimm *nd_dimm, struct nfit_blk *nfit_blk)
++{
++	struct nd_cmd_dimm_flags flags;
++	int rc;
++
++	memset(&flags, 0, sizeof(flags));
++	rc = nd_desc->ndctl(nd_desc, nd_dimm, ND_CMD_DIMM_FLAGS, &flags,
++			sizeof(flags));
++
++	if (rc >= 0 && !flags.status)
++		nfit_blk->dimm_flags = flags.flags;
++}
++
+ static int acpi_nfit_blk_region_enable(struct nd_bus *nd_bus, struct device *dev)
+ {
+ 	struct nd_bus_descriptor *nd_desc = to_nd_desc(nd_bus);
+@@ -1217,6 +1237,8 @@ static int acpi_nfit_blk_region_enable(struct nd_bus *nd_bus, struct device *dev
+ 		return rc;
+ 	}
+ 
++	nd_acpi_blk_get_flags(nd_desc, nd_dimm, nfit_blk);
++
+ 	nfit_flush = nfit_mem->nfit_flush;
+ 	if (nfit_flush && nfit_flush->flush->hint_count != 0) {
+ 		struct acpi_nfit_flush_address *flush = nfit_flush->flush;
+diff --git a/drivers/acpi/nfit.h b/drivers/acpi/nfit.h
+index 858719017bef..d22b04ac3d2c 100644
+--- a/drivers/acpi/nfit.h
++++ b/drivers/acpi/nfit.h
+@@ -139,6 +139,7 @@ struct nfit_blk {
+ 	u64 bdw_offset; /* post interleave offset */
+ 	u64 stat_offset;
+ 	u64 cmd_offset;
++	u32 dimm_flags;
+ 	void __iomem *flush_hint;
+ 	void (*psync)(struct nfit_blk *nfit_blk);
+ };
+diff --git a/include/uapi/linux/ndctl.h b/include/uapi/linux/ndctl.h
+index e595751c613d..bb0fa1c611e0 100644
+--- a/include/uapi/linux/ndctl.h
++++ b/include/uapi/linux/ndctl.h
+@@ -30,6 +30,11 @@ struct nd_cmd_dimm_flags {
+ 	__u32 flags;
+ } __packed;
+ 
++enum {
++	ND_BLK_FLUSH_REQUIRED = 1,
++	ND_BLK_DCR_LATCH = 2,
++};
++
+ struct nd_cmd_get_config_size {
+ 	__u32 status;
+ 	__u32 config_size;
+-- 
+1.9.3
