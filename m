@@ -1,14 +1,14 @@
 From: David Gibson <david@gibson.dropbear.id.au>
-Subject: Re: [PATCH v6 6/8] virtio: add explicit big-endian support to memory
-	accessors
-Date: Thu, 28 May 2015 14:59:00 +1000
-Message-ID: <20150528045900.GG6681@voom.redhat.com>
+Subject: Re: [PATCH v6 8/8] macvtap/tun: cross-endian support for
+	little-endian hosts
+Date: Thu, 28 May 2015 14:59:38 +1000
+Message-ID: <20150528045938.GI6681@voom.redhat.com>
 References: <20150424122211.19156.97626.stgit@bahia.local>
-	<20150424122521.19156.65586.stgit@bahia.local>
+	<20150424122732.19156.77709.stgit@bahia.local>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6901740345731471672=="
+Content-Type: multipart/mixed; boundary="===============0132229076794719926=="
 Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <20150424122521.19156.65586.stgit@bahia.local>
+In-Reply-To: <20150424122732.19156.77709.stgit@bahia.local>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
 	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
@@ -23,32 +23,31 @@ Cc: Thomas Huth <thuth@redhat.com>, kvm@vger.kernel.org, "Michael S. Tsirkin" <m
 List-Id: linux-api@vger.kernel.org
 
 
---===============6901740345731471672==
+--===============0132229076794719926==
 Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="Sw7tCqrGA+HQ0/zt"
+	protocol="application/pgp-signature"; boundary="/GPgYEyhnw15BExa"
 Content-Disposition: inline
 
 
---Sw7tCqrGA+HQ0/zt
+--/GPgYEyhnw15BExa
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, Apr 24, 2015 at 02:26:24PM +0200, Greg Kurz wrote:
-> The current memory accessors logic is:
-> - little endian if little_endian
-> - native endian (i.e. no byteswap) if !little_endian
+On Fri, Apr 24, 2015 at 02:50:36PM +0200, Greg Kurz wrote:
+> The VNET_LE flag was introduced to fix accesses to virtio 1.0 headers
+> that are always little-endian. It can also be used to handle the special
+> case of a legacy little-endian device implemented by a big-endian host.
 >=20
-> If we want to fully support cross-endian vhost, we also need to be
-> able to convert to big endian.
+> Let's add a flag and ioctls for big-endian devices as well. If both flags
+> are set, little-endian wins.
 >=20
-> Instead of changing the little_endian argument to some 3-value enum, this
-> patch changes the logic to:
-> - little endian if little_endian
-> - big endian if !little_endian
+> Since this is isn't a common usecase, the feature is controlled by a kern=
+el
+> config option (not set by default).
 >=20
-> The native endian case is handled by all users with a trivial helper. This
-> patch doesn't change any functionality, nor it does add overhead.
+> Both macvtap and tun are covered by this patch since they share the same
+> API with userland.
 >=20
 > Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
 
@@ -60,30 +59,30 @@ david AT gibson.dropbear.id.au	| minimalist, thank you.  NOT _the_ _other_
 				| _way_ _around_!
 http://www.ozlabs.org/~dgibson
 
---Sw7tCqrGA+HQ0/zt
+--/GPgYEyhnw15BExa
 Content-Type: application/pgp-signature
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1
 
-iQIcBAEBAgAGBQJVZqCUAAoJEGw4ysog2bOSLaAP/2r1v1u7XHeYB3GT0bqEBJBz
-ki7ef7ib/ety7z/HhyZYhTbZlCyEdqRhaPfQBpTS+r+Err0mmKFsPJoecwGFiuBc
-Hz9APDGwEVRhvhhE67mStzk4V/45OYuN/BsgRWFjPsYWAwvdUBSRZnAvUDaNkfxu
-yEy6HBZtjWAU4f7cAZ/rlrw3zs8CvlTU0QTg6gTiZfcqDb9SNYc07SrXQJ5GDIcj
-7eRNqBLMNyLxWD86iz/UUp0+WJ3ISxnwz9KGqs9VsJ5Pp7XiDQ9CAKpN1ApSxnrJ
-oi9/+Fq1lCtW+wvJO8O7IPAEEMQdcMTTaqSZDINgyU32MZA1Kvqe2PMLZVcGgkP1
-5dqtXzrGOWLMHxU+l9PRijVolFgDKUJ3XW5o7TTYdHMi/7LEHpnPk9Tmske1y0P3
-OIoGpHzv2/ZkDfRpFMC7ZF9MrGN3CzxaUsak2I/p8ZWQizCgl8qC8FodoqqtG6Si
-Akh6HH91HCjv6+3Oy+Ibcc/1uH0V13miUsSlOo2jijDYzxyGGVz3MhxIKxtku7xU
-jLXHO7dPoPTEwu8MhpTSPhcmBR2apb9ErTwE/kTbV0jjzrGz/J93VjIT8v0QuzQm
-FqiG9k5PEXzy8zSBHyyv65TFz07JK5ziUBySIYi9s/3eTNItJaqx/C/BAfOPv3GG
-K7NrpyYDiSdmvxEp0WTg
-=s7iV
+iQIcBAEBAgAGBQJVZqC5AAoJEGw4ysog2bOS/LsQALvsAgPfm3NYRmihQsfB7g7U
+6CGyjdomngZo2MKv2Y/c2fUnxi6rzSvvz9ufWNwskOuMa8D45LOjTOP0W10UgAlo
+2/W7RUQwwVo/SkrlAAZ6liARv67hVDp53RcA6ogdhisEGLdD82NwKcEdZYIE3pZH
+VS+07C5wjUgGPMj7RqWGRKsSNNO8c4c+b+zK/4gpc7OJF8Vz3zHflCvDoda79q90
+06hqMJkLmRnLjpyiWafWvUiUEAS0oFNY4Gh9bA0t3aUDYcdVNOSGmQFaB7Jr1Vwe
+Uyx78bWvTYmIXGCDjoLEO8aon+00sGj1DFl7JJ7twea+YPeTZCHhpaLZDFa3xRVM
+I+JdcG/p38noXVZA534tGSPv+dat6YWE83QStYnQ/Hh4Lo7886bCu/CS+o0QSYoL
+gLpY0qxnSVJMhCYD2W4x0w2Pu7Gxqrhj+vNZFyd6BVfd1U069bmzAgxpyuiyMIOA
+gyTiHXDHYbHlu8uKWkvq6QbPhtO130eBFJ2dSztipbjFs+Go+Nj993T6jsPYlxzc
+MXo30PPpFm5t+R0IuiBzjNiUel0/ixGaXwFgPjsbivV26IQ4KnyTmv2z54sAzcy8
+hMLTz11/EZqzv/YqT5gvgmWqAeB7F3wMqQ73Kt1Z8XtUl907QXjQIJpPi9OGrwYU
+5IsgdNjOBFXsD7xAtXC0
+=yttj
 -----END PGP SIGNATURE-----
 
---Sw7tCqrGA+HQ0/zt--
+--/GPgYEyhnw15BExa--
 
---===============6901740345731471672==
+--===============0132229076794719926==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -93,4 +92,4 @@ _______________________________________________
 Virtualization mailing list
 Virtualization@lists.linux-foundation.org
 https://lists.linuxfoundation.org/mailman/listinfo/virtualization
---===============6901740345731471672==--
+--===============0132229076794719926==--
