@@ -1,73 +1,73 @@
-From: Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>
-Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe as
- bind mounts (take 2)
-Date: Thu, 28 May 2015 13:12:04 -0700
-Message-ID: <CAOP=4wieEaR_wESNyba7EKPAhi6kf+ujxhoMAFKVRozqWtXHvQ@mail.gmail.com>
-References: <87pp63jcca.fsf@x220.int.ebiederm.org> <87siaxuvik.fsf@x220.int.ebiederm.org>
- <87wq004im1.fsf@x220.int.ebiederm.org> <CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>
- <20150528140839.GD28842@ubuntumail> <87lhg8pwvz.fsf@x220.int.ebiederm.org>
- <CALCETrXXax28s9kMTQ-zDx0MttQWG4rg2y-oz3bSGiumSL=3sg@mail.gmail.com>
- <CAOP=4wid+N_80iyPpiVMN96_fuHZZRGtYQ6AOPn-HFBj2H6Vgg@mail.gmail.com> <87fv6gikfn.fsf@x220.int.ebiederm.org>
+From: Richard Weinberger <richard@nod.at>
+Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe
+ as bind mounts (take 2)
+Date: Thu, 28 May 2015 22:30:39 +0200
+Message-ID: <55677AEF.1090809@nod.at>
+References: <87pp63jcca.fsf@x220.int.ebiederm.org>	<87siaxuvik.fsf@x220.int.ebiederm.org>	<87wq004im1.fsf@x220.int.ebiederm.org>	<CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>	<20150528140839.GD28842@ubuntumail> <55676E32.3050006@nod.at> <87382gh3uo.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87fv6gikfn.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=iso-8859-15
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <87382gh3uo.fsf@x220.int.ebiederm.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Serge Hallyn <serge.hallyn@ubuntu.com>, Andy Lutomirski <luto@amacapital.net>, Seth Forshee <seth.forshee@canonical.com>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Kenton Varda <kenton@sandstorm.io>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Tejun Heo <tj@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 28, 2015 at 12:14 PM, Eric W. Biederman
-<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> But please someone test sandstorm with this patchset and tell me if it
-> bites you.  The impetus to find a way to avoid breaking slightly buggy
-> userspace is higher if it is more than unprivileged lxc that is broken.
+Am 28.05.2015 um 21:57 schrieb Eric W. Biederman:
+>> FWIW, it breaks also libvirt-lxc:
+>> Error: internal error: guest failed to start: Failed to re-mount /proc/sys on /proc/sys flags=1021: Operation not permitted
+> 
+> Interesting.  I had not anticipated a failure there?  And it is failing
+> in remount?  Oh that is interesting.
+> 
+> That implies that there is some flag of the original mount of /proc that
+> the remount of /proc/sys is clearing, and that previously 
+> 
+> The flags specified are current rdonly,remount,bind so I expect there
+> are some other flags on proc that libvirt-lxc is clearing by accident
+> and we did not fail before because the kernel was not enforcing things.
 
-One of these days I'm going to learn how to compile and test kernels
-again (last time I did it was 1999). Unfortunately I don't think I
-have time at the moment, but hopefully Andy can do it.
+Please see:
+http://libvirt.org/git/?p=libvirt.git;a=blob;f=src/lxc/lxc_container.c;h=9a9ae5c2aaf0f90ff472f24fda43c077b44998c7;hb=HEAD#l933
+lxcContainerMountBasicFS()
 
-I note, though, that we only have two mount() calls in the sandstorm
-codebase that seem like they could be affected:
+and:
+http://libvirt.org/git/?p=libvirt.git;a=blob;f=src/lxc/lxc_container.c;h=9a9ae5c2aaf0f90ff472f24fda43c077b44998c7;hb=HEAD#l850
+lxcBasicMounts
 
-run-bundle.c++:1264: KJ_SYSCALL(mount("proc", "proc", "proc",
-MS_NOSUID | MS_NODEV | MS_NOEXEC, ""));
-minibox.c++:251: KJ_SYSCALL(mount("proc", vpath.cStr(), "proc",
-MS_NOSUID | MS_NODEV | MS_NOEXEC, ""),
-supervisor.c++:921: KJ_SYSCALL(mount("/proc", "proc", nullptr, MS_BIND
-| MS_REC, nullptr));
+> What are the mount flags in a working libvirt-lxc?
 
-The first two seem like they should be fine since they set all the
-flags (except readonly, which would be inappropriate for proc). I
-guess my habit of setting every security flag I see came in handy. The
-third case looks like it will be broken, BUT this line is in a
-debug-only code path, so I don't care. Also we have the ability to
-push any needed update within 24 hours, so we're generally in good
-shape.
+See:
+test1:~ # cat /proc/self/mountinfo
+147 100 0:30 /srv/container/test1/rootfs / rw,relatime - btrfs /dev/sda2 rw,space_cache
+149 147 0:56 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
+150 149 0:56 /sys /proc/sys ro,nodev,relatime - proc proc rw
+151 150 0:3 /sys/net/ipv4 /proc/sys/net/ipv4 rw,nosuid,nodev,noexec,relatime - proc proc rw
+152 150 0:3 /sys/net/ipv6 /proc/sys/net/ipv6 rw,nosuid,nodev,noexec,relatime - proc proc rw
+153 147 0:57 / /sys ro,nodev,relatime - sysfs sysfs rw
+154 149 0:53 /meminfo /proc/meminfo rw,nosuid,nodev,relatime - fuse libvirt rw,user_id=0,group_id=0,allow_other
+155 153 0:58 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=64k,mode=755,uid=10000,gid=10000
+156 155 0:22 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/cpu,cpuacct rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,cpu,cpuacct
+157 155 0:21 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/cpuset rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,cpuset
+158 155 0:23 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/memory rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,memory
+159 155 0:24 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/devices rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,devices
+160 155 0:25 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/freezer rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,freezer
+161 155 0:27 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/blkio rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,blkio
+162 155 0:26 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/net_cls,net_prio rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,net_cls,net_prio
+163 155 0:28 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/perf_event rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,perf_event
+164 155 0:19 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/systemd rw,nosuid,nodev,noexec,relatime - cgroup cgroup
+rw,xattr,release_agent=/usr/lib/systemd/systemd-cgroups-agent,name=systemd
+165 147 0:52 / /dev rw,nosuid,relatime - tmpfs devfs rw,size=64k,mode=755
+166 165 0:51 / /dev/pts rw,nosuid,relatime - devpts devpts rw,gid=10005,mode=620,ptmxmode=666
+167 165 0:51 /ptmx /dev/ptmx rw,nosuid,relatime - devpts devpts rw,gid=10005,mode=620,ptmxmode=666
+101 165 0:55 / /dev/shm rw,nosuid,nodev - tmpfs tmpfs rw,uid=10000,gid=10000
+102 147 0:59 / /run rw,nosuid,nodev - tmpfs tmpfs rw,mode=755,uid=10000,gid=10000
+103 165 0:54 / /dev/mqueue rw,nodev,relatime - mqueue mqueue rw
+104 147 0:59 / /var/run rw,nosuid,nodev - tmpfs tmpfs rw,mode=755,uid=10000,gid=10000
+105 147 0:59 /lock /var/lock rw,nosuid,nodev - tmpfs tmpfs rw,mode=755,uid=10000,gid=10000
 
-We never mount sysfs in Sandstorm.
+If you need more info, please let me know. :-)
 
-> If I mount proc read-write I likely want to be able to write to proc
-> files, and I will be much happier if the mount fails than if a bazillion
-> syscalls later something else fails when it tries to write to proc.
-
-I'm not sure that's true. Consider the broader context:
-1) Your system's /proc is mounted read-only.
-2) Now you're trying to mount a new proc in a new pid namespace, and
-you do *not* specify MS_READONLY.
-
-What should we expect here? Let's back off a bit and state user intent:
-1) The system administrator has set a system-wide policy that /proc
-may only be read, not written.
-2) You made a PID namespace and it needed its own proc.
-
-It seems intuitive here that the administrator's policy should apply
-in the namespace. Certainly everyone using the system and/or all
-software on the system already needs to be aware of this policy, since
-it's unusual and will break things. Running software on this system
-outside of any container already has the problem that syscalls
-randomly break, so why should it be surprising when this happens
-inside the container as well? Why do we need to go out of our way to
-break at mount() time?
-
--Kenton
+Thanks,
+//richard
