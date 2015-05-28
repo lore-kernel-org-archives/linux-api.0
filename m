@@ -1,27 +1,55 @@
 From: David Gibson <david@gibson.dropbear.id.au>
-Subject: Re: [PATCH v6 5/8] vhost: introduce vhost_is_little_endian() helper
-Date: Thu, 28 May 2015 14:58:44 +1000
-Message-ID: <20150528045844.GF6681@voom.redhat.com>
+Subject: Re: [PATCH v6 7/8] vhost: cross-endian support for legacy devices
+Date: Thu, 28 May 2015 14:59:19 +1000
+Message-ID: <20150528045919.GH6681@voom.redhat.com>
 References: <20150424122211.19156.97626.stgit@bahia.local>
- <20150424122507.19156.55673.stgit@bahia.local>
+	<20150424122632.19156.88058.stgit@bahia.local>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="SnV5plBeK2Ge1I9g"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150424122507.19156.55673.stgit@bahia.local>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: multipart/mixed; boundary="===============8228653873239979939=="
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <20150424122632.19156.88058.stgit@bahia.local>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
 To: Greg Kurz <gkurz@linux.vnet.ibm.com>
-Cc: Rusty Russell <rusty@rustcorp.com.au>, "Michael S. Tsirkin" <mst@redhat.com>, Thomas Huth <thuth@redhat.com>, kvm@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, Cornelia Huck <cornelia.huck@de.ibm.com>
+Cc: Thomas Huth <thuth@redhat.com>, kvm@vger.kernel.org, "Michael S. Tsirkin" <mst@redhat.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
 
---SnV5plBeK2Ge1I9g
+--===============8228653873239979939==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="Uu2n37VG4rOBDVuR"
+Content-Disposition: inline
+
+
+--Uu2n37VG4rOBDVuR
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, Apr 24, 2015 at 02:25:12PM +0200, Greg Kurz wrote:
+On Fri, Apr 24, 2015 at 02:27:24PM +0200, Greg Kurz wrote:
+> This patch brings cross-endian support to vhost when used to implement
+> legacy virtio devices. Since it is a relatively rare situation, the
+> feature availability is controlled by a kernel config option (not set
+> by default).
+>=20
+> The vq->is_le boolean field is added to cache the endianness to be
+> used for ring accesses. It defaults to native endian, as expected
+> by legacy virtio devices. When the ring gets active, we force little
+> endian if the device is modern. When the ring is deactivated, we
+> revert to the native endian default.
+>=20
+> If cross-endian was compiled in, a vq->user_be boolean field is added
+> so that userspace may request a specific endianness. This field is
+> used to override the default when activating the ring of a legacy
+> device. It has no effect on modern devices.
+>=20
 > Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
 
 Reviewed-by: David Gibson <david@gibson.dropbear.id.au>
@@ -32,25 +60,37 @@ david AT gibson.dropbear.id.au	| minimalist, thank you.  NOT _the_ _other_
 				| _way_ _around_!
 http://www.ozlabs.org/~dgibson
 
---SnV5plBeK2Ge1I9g
+--Uu2n37VG4rOBDVuR
 Content-Type: application/pgp-signature
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1
 
-iQIcBAEBAgAGBQJVZqCDAAoJEGw4ysog2bOSlkEP/j5ogrXL3gtovTH1g9CqNyZa
-nIbxaALKFqaeqr26wbI0rCMuvjlKQGY/pYHzgHIfR+xcuozvcbjtt/5Wa+r1ZhQN
-qHxxPghiCBSk/BeMfgEZAFaIp/UrBoShKrpicorF7QKEfKUpb62ZPXWxvsJCiY4B
-moQttFcU4fhfMUhw6yQ2H0hvEkFaCOiuu5jm4k/Rurn/pAEHmILiJFAe9fXQwYkV
-NJPVkLGkUD1EysR7rQpbFyUR3mj2f4q3+UkglJC0qjZn/EAbo8HD2bPVm7K4lZoA
-EREtBhavRTaSZSj7Ixz+HrX1OFkWwh3xlH5BgMW4VCef8qe2NP/gnyjrkAkuERQx
-ybxn05W+j3ZC6McUR67eOdsNPnJE7BPGtg4I1qhA5Pa++W/KMS/0airXXLIOCXHu
-SBaKacKSf0QC8iU2PR80nj23GZ7iykYLf+E1PJrBtmrfq9L8tKLi6XavroJs7mXd
-pdJmhbK4Qy17SFEp7ORqehgiDDq20062d8iSGv2l1nGm5W7lxi7y886uT4GbajHS
-Z7rAv/o9y1wI3vKzAenxqWGZIA4yjqjvI6m0BWgK1l3t1YqnV5QwUniIT4ohYmyx
-BeeRwF/DgZRatwZ8Tv/hVxmNhuiQ09VFvJl0h9aaToGhyN2/WaOfBNTtUovXAjhW
-723bSJCEYGR8dWtxNTnC
-=Edey
+iQIcBAEBAgAGBQJVZqCnAAoJEGw4ysog2bOSHh8P/iQXAlZAk6uVRICEqhnOfpyq
+Ui/vR2lOISix8TPuEl0vUyZwLTxu4eT6DivWvA0KPRCSuUrwXp4GYxp/vPtV4uG7
+SQC2kHQB2+cWsuMzR0QIkHT3aBTQhUky4w8nMlqjoDCWLUE1EYt7k4vHq9yJZHur
+3h0DMjcgpUkUhdc92eDbchuF6JICaeyTbl7eEP+N721g5fSBs0rbaKDXvsOMMYC4
+35qwaTY2MIrZ1snI9jSdvkXnlfU+MN58AA5J8UXXvlvh0m+YE9C3NJ/NUswBqgLh
+1jtF2qdaK7GHYsLdgJ0Ui685V2ChSNTSH3HEfnGghDvStQnODb+CSyXtxXsOccwn
+3ht7aJQ/47SyFn4I2L0RoaBUFac6c2+dm+tnOp/Yn94Dp+++UB1IeA9GqJZbZiFm
+IVgCSZeUrJQOEyD0oM8vbi2Tel/TMlrKtYkS3968HV/C+WZj94Mg9XCAplEhDBD2
+zfj5IDxlmOcD/HPlqLyRjoVAfR049IpSu3kc/w+T+UZ1UjW7LiNuRh4PMF6ZcAGb
+viP381G6VCqguFaea6snA+81OgkPyvD3eQVgcDwluYiwRI8eJlFBqBG0M3hGrbfJ
+dBVPUnEvh/pBCZMOentNEPLVzkKFJv2cWZUqoEDhnKqqtUg8Q2DHl7loZnqeOo52
+fyiGJZcNClqYJmHqu1mW
+=RAE5
 -----END PGP SIGNATURE-----
 
---SnV5plBeK2Ge1I9g--
+--Uu2n37VG4rOBDVuR--
+
+--===============8228653873239979939==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+Virtualization mailing list
+Virtualization@lists.linux-foundation.org
+https://lists.linuxfoundation.org/mailman/listinfo/virtualization
+--===============8228653873239979939==--
