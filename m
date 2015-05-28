@@ -1,73 +1,161 @@
-From: Richard Weinberger <richard@nod.at>
-Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe
- as bind mounts (take 2)
-Date: Thu, 28 May 2015 22:30:39 +0200
-Message-ID: <55677AEF.1090809@nod.at>
-References: <87pp63jcca.fsf@x220.int.ebiederm.org>	<87siaxuvik.fsf@x220.int.ebiederm.org>	<87wq004im1.fsf@x220.int.ebiederm.org>	<CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>	<20150528140839.GD28842@ubuntumail> <55676E32.3050006@nod.at> <87382gh3uo.fsf@x220.int.ebiederm.org>
+From: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2 1/5] nohz_full: add support for "cpu_isolated" mode
+Date: Thu, 28 May 2015 16:38:45 -0400
+Message-ID: <55677CD5.7050408@ezchip.com>
+References: <1431725178-20876-1-git-send-email-cmetcalf@ezchip.com> <1431725251-20943-1-git-send-email-cmetcalf@ezchip.com> <alpine.DEB.2.11.1505152337170.4225@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <87382gh3uo.fsf@x220.int.ebiederm.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Serge Hallyn <serge.hallyn@ubuntu.com>, Andy Lutomirski <luto@amacapital.net>, Seth Forshee <seth.forshee@canonical.com>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Kenton Varda <kenton@sandstorm.io>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Tejun Heo <tj@kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.11.1505152337170.4225@nanos>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Am 28.05.2015 um 21:57 schrieb Eric W. Biederman:
->> FWIW, it breaks also libvirt-lxc:
->> Error: internal error: guest failed to start: Failed to re-mount /proc/sys on /proc/sys flags=1021: Operation not permitted
-> 
-> Interesting.  I had not anticipated a failure there?  And it is failing
-> in remount?  Oh that is interesting.
-> 
-> That implies that there is some flag of the original mount of /proc that
-> the remount of /proc/sys is clearing, and that previously 
-> 
-> The flags specified are current rdonly,remount,bind so I expect there
-> are some other flags on proc that libvirt-lxc is clearing by accident
-> and we did not fail before because the kernel was not enforcing things.
+Thomas, thanks for the feedback.  My reply was delayed by being in meetings
+all last week and then catching up this week - sorry about that.
 
-Please see:
-http://libvirt.org/git/?p=libvirt.git;a=blob;f=src/lxc/lxc_container.c;h=9a9ae5c2aaf0f90ff472f24fda43c077b44998c7;hb=HEAD#l933
-lxcContainerMountBasicFS()
+On 05/15/2015 06:17 PM, Thomas Gleixner wrote:
+> On Fri, 15 May 2015, Chris Metcalf wrote:
+>> +/*
+>> + * We normally return immediately to userspace.
+>> + *
+>> + * In "cpu_isolated" mode we wait until no more interrupts are
+>> + * pending.  Otherwise we nap with interrupts enabled and wait for the
+>> + * next interrupt to fire, then loop back and retry.
+>> + *
+>> + * Note that if you schedule two "cpu_isolated" processes on the same
+>> + * core, neither will ever leave the kernel, and one will have to be
+>> + * killed manually.
+> And why are we not preventing that situation in the first place? The
+> scheduler should be able to figure that out easily..
 
-and:
-http://libvirt.org/git/?p=libvirt.git;a=blob;f=src/lxc/lxc_container.c;h=9a9ae5c2aaf0f90ff472f24fda43c077b44998c7;hb=HEAD#l850
-lxcBasicMounts
+This is an interesting observation.  My instinct is that adding tests in the
+scheduler costs time on a hot path for all processes, and I'm trying to
+avoid adding cost where we don't need it.  It's pretty much a straight-up
+application bug if two threads or processes explicitly request the
+cpu_isolated semantics, and then explicitly schedule themselves onto
+the same core, so my preference was to let the application writer
+identify and fix the problem if it comes up.
 
-> What are the mount flags in a working libvirt-lxc?
+However, I'm certainly open to thinking about checking for this failure
+mode in the scheduler, though I don't know enough about the
+scheduler to immediately identify where such a change might go.
+Would it be appropriate to think about this as a follow-on patch, if it's
+determined that the cost of testing for this condition is worth it?
 
-See:
-test1:~ # cat /proc/self/mountinfo
-147 100 0:30 /srv/container/test1/rootfs / rw,relatime - btrfs /dev/sda2 rw,space_cache
-149 147 0:56 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
-150 149 0:56 /sys /proc/sys ro,nodev,relatime - proc proc rw
-151 150 0:3 /sys/net/ipv4 /proc/sys/net/ipv4 rw,nosuid,nodev,noexec,relatime - proc proc rw
-152 150 0:3 /sys/net/ipv6 /proc/sys/net/ipv6 rw,nosuid,nodev,noexec,relatime - proc proc rw
-153 147 0:57 / /sys ro,nodev,relatime - sysfs sysfs rw
-154 149 0:53 /meminfo /proc/meminfo rw,nosuid,nodev,relatime - fuse libvirt rw,user_id=0,group_id=0,allow_other
-155 153 0:58 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=64k,mode=755,uid=10000,gid=10000
-156 155 0:22 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/cpu,cpuacct rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,cpu,cpuacct
-157 155 0:21 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/cpuset rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,cpuset
-158 155 0:23 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/memory rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,memory
-159 155 0:24 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/devices rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,devices
-160 155 0:25 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/freezer rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,freezer
-161 155 0:27 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/blkio rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,blkio
-162 155 0:26 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/net_cls,net_prio rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,net_cls,net_prio
-163 155 0:28 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/perf_event rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,perf_event
-164 155 0:19 /machine.slice/machine-lxc\134x2dtest1.scope /sys/fs/cgroup/systemd rw,nosuid,nodev,noexec,relatime - cgroup cgroup
-rw,xattr,release_agent=/usr/lib/systemd/systemd-cgroups-agent,name=systemd
-165 147 0:52 / /dev rw,nosuid,relatime - tmpfs devfs rw,size=64k,mode=755
-166 165 0:51 / /dev/pts rw,nosuid,relatime - devpts devpts rw,gid=10005,mode=620,ptmxmode=666
-167 165 0:51 /ptmx /dev/ptmx rw,nosuid,relatime - devpts devpts rw,gid=10005,mode=620,ptmxmode=666
-101 165 0:55 / /dev/shm rw,nosuid,nodev - tmpfs tmpfs rw,uid=10000,gid=10000
-102 147 0:59 / /run rw,nosuid,nodev - tmpfs tmpfs rw,mode=755,uid=10000,gid=10000
-103 165 0:54 / /dev/mqueue rw,nodev,relatime - mqueue mqueue rw
-104 147 0:59 / /var/run rw,nosuid,nodev - tmpfs tmpfs rw,mode=755,uid=10000,gid=10000
-105 147 0:59 /lock /var/lock rw,nosuid,nodev - tmpfs tmpfs rw,mode=755,uid=10000,gid=10000
+>> +  Otherwise in situations where another process is
+>> + * in the runqueue on this cpu, this task will just wait for that
+>> + * other task to go idle before returning to user space.
+>> + */
+>> +void tick_nohz_cpu_isolated_enter(void)
+>> +{
+>> +	struct clock_event_device *dev =
+>> +		__this_cpu_read(tick_cpu_device.evtdev);
+>> +	struct task_struct *task = current;
+>> +	unsigned long start = jiffies;
+>> +	bool warned = false;
+>> +
+>> +	/* Drain the pagevecs to avoid unnecessary IPI flushes later. */
+>> +	lru_add_drain();
+>> +
+>> +	while (ACCESS_ONCE(dev->next_event.tv64) != KTIME_MAX) {
+> What's the ACCESS_ONCE for?
 
-If you need more info, please let me know. :-)
+We are technically in a loop here where we are waiting for an
+interrupt handler to update dev->next_event.tv64, so I felt it was
+appropriate to flag it as such.  If we didn't have function calls inside
+the loop, the compiler would eliminate the loop.
 
-Thanks,
-//richard
+But it's just a style thing, and we can certainly drop it if it seems
+confusing.  In any case I've changed it to READ_ONCE() since
+that's preferred now anyway; this code was originally written
+a while ago.
+
+>> +		if (!warned && (jiffies - start) >= (5 * HZ)) {
+>> +			pr_warn("%s/%d: cpu %d: cpu_isolated task blocked for %ld jiffies\n",
+>> +				task->comm, task->pid, smp_processor_id(),
+>> +				(jiffies - start));
+> What additional value has the jiffies delta over a plain human
+> readable '5sec' ?
+
+Good point.  I've changed it to emit a value in seconds.
+
+>> +			warned = true;
+>> +		}
+>> +		if (should_resched())
+>> +			schedule();
+>> +		if (test_thread_flag(TIF_SIGPENDING))
+>> +			break;
+>> +
+>> +		/* Idle with interrupts enabled and wait for the tick. */
+>> +		set_current_state(TASK_INTERRUPTIBLE);
+>> +		arch_cpu_idle();
+> Oh NO! Not another variant of fake idle task. The idle implementations
+> can call into code which rightfully expects that the CPU is actually
+> IDLE.
+>
+> I wasted enough time already debugging the resulting wreckage. Feel
+> free to use it for experimental purposes, but this is not going
+> anywhere near to a mainline kernel.
+>
+> I completely understand WHY you want to do that, but we need proper
+> mechanisms for that and not some duct tape engineering band aids which
+> will create hard to debug side effects.
+
+Yes, I worried about that a little when I put it in.  In particular it's
+certainly true that arch_cpu_idle() isn't necessarily designed to
+behave properly in this context, even if it may do the right thing
+somewhat by accident.
+
+In fact, we don't need the cpu-idling semantics in this loop;
+the loop can spin quite happily waiting for next_event in the
+tick_cpu_device to stop being defined (or a signal or scheduling
+request to occur).  I've changed the code to make it opt-in, so
+that a weak no-op function that just calls cpu_relax() can be
+replaced by an architecture-defined function that safely waits
+until an interrupt is delivered, reducing the number of times we
+spin around in the outer loop.
+
+> Hint: It's a scheduler job to make sure that the machine has quiesced
+>        _BEFORE_ letting the magic task off to user land.
+
+This is not so clear to me.  There may, for example, be RCU events
+that occur after the scheduler is done with its part, that still require
+another timer tick on the cpu to finish quiescing RCU.  I think we
+need to check for the timer-quiesced state as late as possible to
+handle things like this.
+
+Arguably the scheduler could also try to do the right thing with
+a cpu_isolated task, but again, this feels like time spent in the
+scheduler hot path that affects the non-cpu_isolated tasks.  For
+cpu_isolated tasks they should be the only thing that's runnable
+on the core 99.999% of the time, or you've done something quite
+wrong anyway.
+
+>> +		set_current_state(TASK_RUNNING);
+>> +	}
+>> +	if (warned) {
+>> +		pr_warn("%s/%d: cpu %d: cpu_isolated task unblocked after %ld jiffies\n",
+>> +			task->comm, task->pid, smp_processor_id(),
+>> +			(jiffies - start));
+>> +		dump_stack();
+> And that dump_stack() tells us which important information?
+>
+>      	 tick_nohz_cpu_isolated_enter
+> 	 context_tracking_enter
+> 	 context_tracking_user_enter
+> 	 arch_return_to_user_code
+
+For tile, the dump_stack() includes the register state, which includes
+the interrupt type that took us into the kernel, which might be helpful.
+That said, I'm certainly willing to remove it, or make it call a weak
+no-op function where architectures can add more info if they have it.
+
+Thanks again!  I'll put out v3 of the patch series shortly, with changes
+from your comments incorporated.
+
+-- 
+Chris Metcalf, EZChip Semiconductor
+http://www.ezchip.com
