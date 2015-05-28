@@ -1,95 +1,64 @@
-From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [PATCH 26/35] DocBook: better document FE_DISEQC_SEND_BURST ioctl
-Date: Thu, 28 May 2015 18:49:29 -0300
-Message-ID: <d68e777ec46bb9f68bb620d5f2eb2cb4b99c19c3.1432844837.git.mchehab@osg.samsung.com>
+From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Subject: [PATCH 34/35] DocBook: Better document enum fe_modulation
+Date: Thu, 28 May 2015 18:49:37 -0300
+Message-ID: <057967adc76bbca08c671869313c0fda5f92ad9b.1432844837.git.mchehab@osg.samsung.com>
 References: <cover.1432844837.git.mchehab@osg.samsung.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1432844837.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-In-Reply-To: <cover.1432844837.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-References: <cover.1432844837.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <cover.1432844837.git.mchehab@osg.samsung.com>
+In-Reply-To: <cover.1432844837.git.mchehab@osg.samsung.com>
+References: <cover.1432844837.git.mchehab@osg.samsung.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Linux Media Mailing List <linux-media@vger.kernel.org>
+Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Mauro Carvalho Chehab <mchehab@infradead.org>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Use the proper format for FE_DISEQC_SEND_BURST documentation
-and  improve the documentation.
+Instead of using programlisting, use a table, as this provides
+a better view of the structure.
 
-Keep the enum fe_sec_mini_cmd description together with
-the ioctl, as both are used together.
+Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
 
-Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-
- create mode 100644 Documentation/DocBook/media/dvb/fe-diseqc-send-burst.xml
-
-diff --git a/Documentation/DocBook/media/dvb/fe-diseqc-send-burst.xml b/Documentation/DocBook/media/dvb/fe-diseqc-send-burst.xml
-new file mode 100644
-index 000000000000..d1a798048641
---- /dev/null
-+++ b/Documentation/DocBook/media/dvb/fe-diseqc-send-burst.xml
-@@ -0,0 +1,86 @@
-+<refentry id="FE_DISEQC_SEND_BURST">
-+  <refmeta>
-+    <refentrytitle>ioctl FE_DISEQC_SEND_BURST</refentrytitle>
-+    &manvol;
-+  </refmeta>
+diff --git a/Documentation/DocBook/media/dvb/dvbproperty.xml b/Documentation/DocBook/media/dvb/dvbproperty.xml
+index 0fa4ccfd406d..d9861b54f8c8 100644
+--- a/Documentation/DocBook/media/dvb/dvbproperty.xml
++++ b/Documentation/DocBook/media/dvb/dvbproperty.xml
+@@ -137,25 +137,78 @@ get/set up to 64 properties. The actual meaning of each property is described on
+ 	</section>
+ 	<section id="DTV-MODULATION">
+ 	<title><constant>DTV_MODULATION</constant></title>
+-<para>Specifies the frontend modulation type for cable and satellite types. The modulation can be one of the types bellow:</para>
+-<programlisting>
+- typedef enum fe_modulation {
+-	QPSK,
+-	QAM_16,
+-	QAM_32,
+-	QAM_64,
+-	QAM_128,
+-	QAM_256,
+-	QAM_AUTO,
+-	VSB_8,
+-	VSB_16,
+-	PSK_8,
+-	APSK_16,
+-	APSK_32,
+-	DQPSK,
+-	QAM_4_NR,
+- } fe_modulation_t;
+-</programlisting>
++<para>Specifies the frontend modulation type for delivery systems that supports
++    more than one modulation type. The modulation can be one of the types
++    defined by &fe-modulation;.</para>
 +
-+  <refnamediv>
-+    <refname>FE_DISEQC_SEND_BURST</refname>
-+    <refpurpose>Sends a 22KHz tone burst for 2x1 mini DiSEqC satellite selection.</refpurpose>
-+  </refnamediv>
 +
-+  <refsynopsisdiv>
-+    <funcsynopsis>
-+      <funcprototype>
-+	<funcdef>int <function>ioctl</function></funcdef>
-+	<paramdef>int <parameter>fd</parameter></paramdef>
-+	<paramdef>int <parameter>request</parameter></paramdef>
-+	<paramdef>&fe-sec-mini-cmd; *<parameter>tone</parameter></paramdef>
-+      </funcprototype>
-+    </funcsynopsis>
-+  </refsynopsisdiv>
++<section id="fe-modulation-t">
++<title>Modulation property</title>
 +
-+  <refsect1>
-+    <title>Arguments</title>
-+        <variablelist>
-+      <varlistentry>
-+	<term><parameter>fd</parameter></term>
-+	<listitem>
-+	  <para>&fe_fd;</para>
-+	</listitem>
-+      </varlistentry>
-+      <varlistentry>
-+	<term><parameter>request</parameter></term>
-+	<listitem>
-+	  <para>FE_DISEQC_SEND_BURST</para>
-+	</listitem>
-+      </varlistentry>
-+      <varlistentry>
-+	<term><parameter>pointer to &fe-sec-mini-cmd;</parameter></term>
-+      </varlistentry>
-+    </variablelist>
-+  </refsect1>
++<para>Most of the digital TV standards currently offers more than one possible
++    modulation (sometimes called as "constellation" on some standards). This
++    enum contains the values used by the Kernel. Please notice that not all
++    modulations are supported by a given standard.</para>
 +
-+  <refsect1>
-+    <title>Description</title>
-+
-+<para>This ioctl is used to set the generation of a 22kHz tone burst for mini
-+    DiSEqC satellite
-+    selection for 2x1 switches.
-+    This call requires read/write permissions.</para>
-+<para>It provides support for what's specified at
-+    <ulink url="http://www.eutelsat.com/files/contributed/satellites/pdf/Diseqc/associated%20docs/simple_tone_burst_detec.pdf">Digital Satellite Equipment Control
-+	(DiSEqC) - Simple "ToneBurst" Detection Circuit specification.</ulink>
-+    </para>
-+&return-value-dvb;
-+</refsect1>
-+
-+<section id="fe-sec-mini-cmd-t">
-+<title>enum fe_sec_mini_cmd</title>
-+
-+<table pgwide="1" frame="none" id="fe-sec-mini-cmd">
-+    <title>enum fe_sec_tone_mode</title>
++<table pgwide="1" frame="none" id="fe-modulation">
++    <title>enum fe_modulation</title>
 +    <tgroup cols="2">
 +	&cs-def;
 +	<thead>
@@ -100,123 +69,117 @@ index 000000000000..d1a798048641
 +	</thead>
 +	<tbody valign="top">
 +	<row>
-+	    <entry align="char">SEC_MINI_A</entry>
-+	    <entry align="char">Sends a mini-DiSEqC 22kHz '0' Tone Burst to
-+		select satellite-A</entry>
++	    <entry>QPSK</entry>
++	    <entry>QPSK modulation</entry>
 +	</row><row>
-+	    <entry align="char">SEC_MINI_B</entry>
-+	    <entry align="char">Sends a mini-DiSEqC 22kHz '1' Data Burst to
-+		select satellite-B</entry>
++	    <entry>QAM_16</entry>
++	    <entry>16-QAM modulation</entry>
++	</row><row>
++	    <entry>QAM_32</entry>
++	    <entry>32-QAM modulation</entry>
++	</row><row>
++	    <entry>QAM_64</entry>
++	    <entry>64-QAM modulation</entry>
++	</row><row>
++	    <entry>QAM_128</entry>
++	    <entry>128-QAM modulation</entry>
++	</row><row>
++	    <entry>QAM_256</entry>
++	    <entry>256-QAM modulation</entry>
++	</row><row>
++	    <entry>QAM_AUTO</entry>
++	    <entry>Autodetect QAM modulation</entry>
++	</row><row>
++	    <entry>VSB_8</entry>
++	    <entry>8-VSB modulation</entry>
++	</row><row>
++	    <entry>VSB_16</entry>
++	    <entry>16-VSB modulation</entry>
++	</row><row>
++	    <entry>PSK_8</entry>
++	    <entry>8-PSK modulation</entry>
++	</row><row>
++	    <entry>APSK_16</entry>
++	    <entry>16-APSK modulation</entry>
++	</row><row>
++	    <entry>APSK_32</entry>
++	    <entry>32-APSK modulation</entry>
++	</row><row>
++	    <entry>DQPSK</entry>
++	    <entry>DQPSK modulation</entry>
++	</row><row>
++	    <entry>QAM_4_NR</entry>
++	    <entry>4-QAM-NR modulation</entry>
 +	</row>
 +        </tbody>
 +    </tgroup>
 +</table>
 +</section>
 +
-+</refentry>
+ 	</section>
+ 	<section id="DTV-BANDWIDTH-HZ">
+ 		<title><constant>DTV_BANDWIDTH_HZ</constant></title>
 diff --git a/Documentation/DocBook/media/dvb/frontend.xml b/Documentation/DocBook/media/dvb/frontend.xml
-index f05da4abb3fe..17050152a48a 100644
+index 16a4648043d6..07c1284e88c8 100644
 --- a/Documentation/DocBook/media/dvb/frontend.xml
 +++ b/Documentation/DocBook/media/dvb/frontend.xml
-@@ -75,23 +75,6 @@ specification is available at
- </programlisting>
+@@ -100,32 +100,6 @@ detection.
+ </para>
  </section>
  
--<section id="fe-sec-mini-cmd-t">
--<title>SEC tone burst</title>
--
--<para>The 22KHz tone burst is usually used with non-DiSEqC capable switches to select
--between two connected LNBs/satellites. When using DiSEqC epuipment this voltage has to
--be switched consistently to the DiSEqC commands as described in the DiSEqC
--spec.</para>
+-<section id="fe-modulation-t">
+-<title>frontend modulation type for QAM, OFDM and VSB</title>
+-<para>For cable and terrestrial frontends, e. g. for
+-<link linkend="dvb-qam-parameters"><constant>struct dvb_qpsk_parameters</constant></link>,
+-<link linkend="dvb-ofdm-parameters"><constant>struct dvb_qam_parameters</constant></link> and
+-<link linkend="dvb-vsb-parameters"><constant>struct dvb_qam_parameters</constant></link>,
+-it needs to specify the quadrature modulation mode which can be one of the following:
+-</para>
 -<programlisting>
--	typedef enum fe_sec_mini_cmd {
--	SEC_MINI_A,
--	SEC_MINI_B
--	} fe_sec_mini_cmd_t;
+- typedef enum fe_modulation {
+-	QPSK,
+-	QAM_16,
+-	QAM_32,
+-	QAM_64,
+-	QAM_128,
+-	QAM_256,
+-	QAM_AUTO,
+-	VSB_8,
+-	VSB_16,
+-	PSK_8,
+-	APSK_16,
+-	APSK_32,
+-	DQPSK,
+- } fe_modulation_t;
 -</programlisting>
--
--<para></para>
 -</section>
--
- <section id="fe-spectral-inversion-t">
- <title>frontend spectral inversion</title>
- <para>The Inversion field can take one of these values:
-@@ -519,55 +502,7 @@ typedef enum fe_hierarchy {
- &return-value-dvb;
- </section>
  
--<section id="FE_DISEQC_SEND_BURST">
--<title>FE_DISEQC_SEND_BURST</title>
--<para>DESCRIPTION
--</para>
--<informaltable><tgroup cols="1"><tbody><row><entry
-- align="char">
--<para>This ioctl call is used to send a 22KHz tone burst.</para>
--</entry>
-- </row></tbody></tgroup></informaltable>
--
--<para>SYNOPSIS
--</para>
--<informaltable><tgroup cols="1"><tbody><row><entry
-- align="char">
--<para>int ioctl(int fd, int request =
-- <link linkend="FE_DISEQC_SEND_BURST">FE_DISEQC_SEND_BURST</link>, fe_sec_mini_cmd_t burst);</para>
--</entry>
-- </row></tbody></tgroup></informaltable>
--
--<para>PARAMETERS
--</para>
--<informaltable><tgroup cols="2"><tbody><row><entry
-- align="char">
--<para>int fd</para>
--</entry><entry
-- align="char">
--<para>File descriptor returned by a previous call to open().</para>
--</entry>
-- </row><row><entry
-- align="char">
--<para>int request</para>
--</entry><entry
-- align="char">
--<para>Equals <link linkend="FE_DISEQC_SEND_BURST">FE_DISEQC_SEND_BURST</link> for this command.</para>
--</entry>
-- </row><row><entry
-- align="char">
--<para>fe_sec_mini_cmd_t
-- burst</para>
--</entry><entry
-- align="char">
--<para>burst A or B.</para>
--</entry>
-- </row></tbody></tgroup></informaltable>
--
--&return-value-dvb;
--</section>
--
--
-+&sub-fe-diseqc-send-burst;
- &sub-fe-set-tone;
- &sub-fe-set-voltage;
- &sub-fe-enable-high-lnb-voltage;
+ <section>
+ <title>More OFDM parameters</title>
 diff --git a/include/uapi/linux/dvb/frontend.h b/include/uapi/linux/dvb/frontend.h
-index 009ff0534806..8bc672d57829 100644
+index 8bc672d57829..b2a27a15371c 100644
 --- a/include/uapi/linux/dvb/frontend.h
 +++ b/include/uapi/linux/dvb/frontend.h
-@@ -122,10 +122,12 @@ enum fe_sec_tone_mode {
- typedef enum fe_sec_tone_mode fe_sec_tone_mode_t;
+@@ -178,7 +178,7 @@ typedef enum fe_code_rate {
+ } fe_code_rate_t;
  
  
--typedef enum fe_sec_mini_cmd {
-+enum fe_sec_mini_cmd {
- 	SEC_MINI_A,
- 	SEC_MINI_B
--} fe_sec_mini_cmd_t;
+-typedef enum fe_modulation {
++enum fe_modulation {
+ 	QPSK,
+ 	QAM_16,
+ 	QAM_32,
+@@ -193,7 +193,9 @@ typedef enum fe_modulation {
+ 	APSK_32,
+ 	DQPSK,
+ 	QAM_4_NR,
+-} fe_modulation_t;
 +};
 +
-+typedef enum fe_sec_mini_cmd fe_sec_mini_cmd_t;
++typedef enum fe_modulation fe_modulation_t;
  
- 
- /**
+ typedef enum fe_transmit_mode {
+ 	TRANSMISSION_MODE_2K,
 -- 
 2.4.1
+
