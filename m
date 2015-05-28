@@ -1,8 +1,7 @@
-From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [char-misc-next 04/11 V2] uuid: extract macros for assigning raw
- arrays
-Date: Wed, 27 May 2015 17:13:03 -0700
-Message-ID: <20150528001303.GA2033@kroah.com>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: [PATCH] mei: fix up uuid matching
+Date: Wed, 27 May 2015 17:17:27 -0700
+Message-ID: <20150528001727.GB2033@kroah.com>
 References: <1432741333-11889-1-git-send-email-tomas.winkler@intel.com>
  <20150527165054.GB3533@kroah.com>
  <5B8DA87D05A7694D9FA63FD143655C1B3C4A2C8C@hasmsx109.ger.corp.intel.com>
@@ -13,139 +12,109 @@ References: <1432741333-11889-1-git-send-email-tomas.winkler@intel.com>
  <5B8DA87D05A7694D9FA63FD143655C1B3C4A3096@hasmsx109.ger.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <5B8DA87D05A7694D9FA63FD143655C1B3C4A3096-Jy8z56yoSI/jxeytcECX8bfspsVTdybXVpNB7YpNyf8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Winkler, Tomas" <tomas.winkler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: "arnd-r2nGTMty4D4@public.gmane.org" <arnd-r2nGTMty4D4@public.gmane.org>, Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5B8DA87D05A7694D9FA63FD143655C1B3C4A3096@hasmsx109.ger.corp.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Winkler, Tomas" <tomas.winkler@intel.com>
+Cc: Samuel Ortiz <sameo@linux.intel.com>, "arnd@arndb.de" <arnd@arndb.de>, Stephen Rothwell <sfr@canb.auug.org.au>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 27, 2015 at 11:25:59PM +0000, Winkler, Tomas wrote:
-> 
-> 
-> > -----Original Message-----
-> > From: Greg KH [mailto:gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org]
-> > Sent: Thursday, May 28, 2015 02:23
-> > To: Winkler, Tomas
-> > Cc: arnd-r2nGTMty4D4@public.gmane.org; Stephen Rothwell; linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > Subject: Re: [char-misc-next 04/11 V2] uuid: extract macros for assigning raw
-> > arrays
-> > 
-> > On Wed, May 27, 2015 at 04:14:20PM -0700, Greg KH wrote:
-> > > On Wed, May 27, 2015 at 05:42:22PM +0000, Winkler, Tomas wrote:
-> > > >
-> > > >
-> > > > > -----Original Message-----
-> > > > > From: Greg KH [mailto:gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org]
-> > > > > Sent: Wednesday, May 27, 2015 20:29
-> > > > > To: Winkler, Tomas
-> > > > > Cc: arnd-r2nGTMty4D4@public.gmane.org; Stephen Rothwell; linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > > > > Subject: Re: [char-misc-next 04/11 V2] uuid: extract macros for assigning
-> > raw
-> > > > > arrays
-> > > > >
-> > > > > On Wed, May 27, 2015 at 05:24:01PM +0000, Winkler, Tomas wrote:
-> > > > > >
-> > > > > > >
-> > > > > > > On Wed, May 27, 2015 at 06:42:13PM +0300, Tomas Winkler wrote:
-> > > > > > > > In order for mei client devices to use device id based on uuid we
-> > > > > > > > have to use common types between user space (file2alias.c).
-> > > > > > > > Similarly to vmbus,  mei  uses raw 16 byte array for that.
-> > > > > > > > To leverage on existing infrastructure around uuid_le type
-> > > > > > > > defined in uuid.h we add helper macros to handle conversions
-> > between
-> > > > > > > > raw 16 byte array and uuid_{le,be} types.
-> > > > > > >
-> > > > > > > You aren't adding a helper macro, you are just redefining the existing
-> > > > > > > macros using a different one.
-> > > > > >
-> > > > > > Not exactly I'm using both the one I've added for device ids and the old
-> > one for
-> > > > > all the other flows.
-> > > > > >
-> > > > > >  But I can't see why this is needed, what
-> > > > > > > does this solve that vmbus and other uses of the existing macros don't
-> > > > > > > need?  In other words, what makes mei so special that it needs a
-> > "lower"
-> > > > > > > level macro than every other subsystem?
-> > > > > >
-> > > > > > It's not special there is actually a lot of code duplication around uuid
-> > handling
-> > > > > > every subsystem is using their own macros but it can be consolidated
-> > around
-> > > > > uuid.h
-> > > > > >
-> > > > > > So vmbus can use that
-> > > > > > Instead of
-> > > > > > /*
-> > > > > >  * Network GUID
-> > > > > >  * {f8615163-df3e-46c5-913f-f2d2f965ed0e}
-> > > > > >  */
-> > > > > > #define HV_NIC_GUID \
-> > > > > >         .guid = { \
-> > > > > >                         0x63, 0x51, 0x61, 0xf8, 0x3e, 0xdf, 0xc5, 0x46, \
-> > > > > >                         0x91, 0x3f, 0xf2, 0xd2, 0xf9, 0x65, 0xed, 0x0e \
-> > > > > >                 }
-> > > > > >
-> > > > > > The can use the new macro to make it more readable, something in spirit
-> > of:
-> > > > > >
-> > > > > > #define HV_NIC_GUID __UUID_LE(f8615163-df3e-46c5-913f-
-> > f2d2f965ed0e)
-> > > > >
-> > > > > Why the "__" usage here?  That signifies a "private" namespace, why add
-> > > > > that to the user visible header files?
-> > > >
-> > > > I take any other suggestion for macro names.
-> > > > Not sure how I would reuse the macros if I don't export them both,
-> > > > second this can be used also by user space.
-> > >
-> > > But it's not needed at all.
-> > >
-> > > Below is a patch on top of my current tree that makes this patch not
-> > > needed.  Any objection to me just applying it instead?
-> > >
-> > > > > And are you going to send patches for vmbus and other drivers to fix
-> > > > > everything up to use these new macros?  Someone has to...
-> > > >
-> > > > Can be done but I cannot test their code and  now I'm busy with splitting the
-> > big bus patch :)
-> > >
-> > > Ok, that means no one is ever going to do that work, so it's not a valid
-> > > reason to accept such a change.  I prefer the patch below.
-> > 
-> > Oops, that didn't build, I forgot one change in the mei core (getting
-> > rid of two casts.)  Try this one instead.
-> > 
-> > thanks,
-> > 
-> > greg k-h
-> > 
-> > 
-> > diff --git a/drivers/misc/mei/bus.c b/drivers/misc/mei/bus.c
-> > index de8fd089a8a4..dd52f224027e 100644
-> > --- a/drivers/misc/mei/bus.c
-> > +++ b/drivers/misc/mei/bus.c
-> > @@ -54,9 +54,9 @@ static int mei_cl_device_match(struct device *dev, struct
-> > device_driver *drv)
-> > 
-> >  	id = driver->id_table;
-> > 
-> > -	while (uuid_le_cmp(NULL_UUID_LE, uuid_le_cast(id->uuid))) {
-> > +	while (uuid_le_cmp(NULL_UUID_LE, id->uuid)) {
-> > 
-> > -		if (!uuid_le_cmp(*uuid, uuid_le_cast(id->uuid))) {
-> > +		if (!uuid_le_cmp(*uuid, id->uuid)) {
-> >  			if (id->name[0]) {
-> >  				if (!strncmp(name, id->name, sizeof(id->name)))
-> >  					return 1;
-> 
-> You can also drop the uuid_le_cast function 
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
-Odd that gcc didn't complain about that.  Now removed, I'll resend it in
-"official" form.
+A previous commit, c93b76b34b4d ("mei: bus: report also uuid in module
+alias") caused a build error as I missed applying a needed patch to add
+some macros to uapi/linux/uuid.h.  Instead of those additional macros,
+change the mei code to use the existing uuid structure directly.
 
-thanks,
+Fixes: c93b76b34b4d
+Cc: Tomas Winkler <tomas.winkler@intel.com>
+Cc: Samuel Ortiz <sameo@linux.intel.com>
+Reported-by: Stephen Rothwell <sfr@canb.auug.org.au>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
-greg k-h
+
+diff --git a/drivers/misc/mei/bus.c b/drivers/misc/mei/bus.c
+index de8fd089a8a4..357b6ae4d207 100644
+--- a/drivers/misc/mei/bus.c
++++ b/drivers/misc/mei/bus.c
+@@ -30,11 +30,6 @@
+ #define to_mei_cl_driver(d) container_of(d, struct mei_cl_driver, driver)
+ #define to_mei_cl_device(d) container_of(d, struct mei_cl_device, dev)
+ 
+-static inline uuid_le uuid_le_cast(const __u8 uuid[16])
+-{
+-	return *(uuid_le *)uuid;
+-}
+-
+ static int mei_cl_device_match(struct device *dev, struct device_driver *drv)
+ {
+ 	struct mei_cl_device *device = to_mei_cl_device(dev);
+@@ -54,9 +49,9 @@ static int mei_cl_device_match(struct device *dev, struct device_driver *drv)
+ 
+ 	id = driver->id_table;
+ 
+-	while (uuid_le_cmp(NULL_UUID_LE, uuid_le_cast(id->uuid))) {
++	while (uuid_le_cmp(NULL_UUID_LE, id->uuid)) {
+ 
+-		if (!uuid_le_cmp(*uuid, uuid_le_cast(id->uuid))) {
++		if (!uuid_le_cmp(*uuid, id->uuid)) {
+ 			if (id->name[0]) {
+ 				if (!strncmp(name, id->name, sizeof(id->name)))
+ 					return 1;
+diff --git a/drivers/nfc/mei_phy.h b/drivers/nfc/mei_phy.h
+index a51f8f2685cc..fbfa3e61738f 100644
+--- a/drivers/nfc/mei_phy.h
++++ b/drivers/nfc/mei_phy.h
+@@ -5,7 +5,7 @@
+ #include <net/nfc/hci.h>
+ #include <linux/uuid.h>
+ 
+-#define MEI_NFC_UUID __UUID_LE(0x0bb17a78, 0x2a8e, 0x4c50, \
++#define MEI_NFC_UUID UUID_LE(0x0bb17a78, 0x2a8e, 0x4c50, \
+ 		0x94, 0xd4, 0x50, 0x26, 0x67, 0x23, 0x77, 0x5c)
+ #define MEI_NFC_HEADER_SIZE 10
+ #define MEI_NFC_MAX_HCI_PAYLOAD 300
+diff --git a/include/linux/mod_devicetable.h b/include/linux/mod_devicetable.h
+index 2d2b2b571d61..048c270822f9 100644
+--- a/include/linux/mod_devicetable.h
++++ b/include/linux/mod_devicetable.h
+@@ -614,7 +614,7 @@ struct ipack_device_id {
+  */
+ struct mei_cl_device_id {
+ 	char name[MEI_CL_NAME_SIZE];
+-	__u8 uuid[16];
++	uuid_le uuid;
+ 	kernel_ulong_t driver_info;
+ };
+ 
+diff --git a/scripts/mod/file2alias.c b/scripts/mod/file2alias.c
+index 62c517f4b592..718b2a29bd43 100644
+--- a/scripts/mod/file2alias.c
++++ b/scripts/mod/file2alias.c
+@@ -34,6 +34,9 @@ typedef Elf64_Addr	kernel_ulong_t;
+ typedef uint32_t	__u32;
+ typedef uint16_t	__u16;
+ typedef unsigned char	__u8;
++typedef struct {
++	__u8 b[16];
++} uuid_le;
+ 
+ /* Big exception to the "don't include kernel headers into userspace, which
+  * even potentially has different endianness and word sizes, since
+@@ -131,13 +134,13 @@ static inline void add_wildcard(char *str)
+ 		strcat(str + len, "*");
+ }
+ 
+-static inline void add_uuid(char *str, __u8 uuid[16])
++static inline void add_uuid(char *str, uuid_le uuid)
+ {
+ 	int len = strlen(str);
+ 	int i;
+ 
+ 	for (i = 0; i < 16; i++)
+-		sprintf(str + len + (i << 1), "%02x", uuid[i]);
++		sprintf(str + len + (i << 1), "%02x", uuid.b[i]);
+ }
+ 
+ /**
