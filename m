@@ -1,120 +1,56 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: [PATCH] mei: fix up uuid matching
-Date: Wed, 27 May 2015 17:17:27 -0700
-Message-ID: <20150528001727.GB2033@kroah.com>
-References: <1432741333-11889-1-git-send-email-tomas.winkler@intel.com>
- <20150527165054.GB3533@kroah.com>
- <5B8DA87D05A7694D9FA63FD143655C1B3C4A2C8C@hasmsx109.ger.corp.intel.com>
- <20150527172919.GA5525@kroah.com>
- <5B8DA87D05A7694D9FA63FD143655C1B3C4A2CDF@hasmsx109.ger.corp.intel.com>
- <20150527231420.GA29446@kroah.com>
- <20150527232254.GA8737@kroah.com>
- <5B8DA87D05A7694D9FA63FD143655C1B3C4A3096@hasmsx109.ger.corp.intel.com>
+From: David Gibson <david-xT8FGy+AXnRB3Ne2BGzF6laj5H9X9Tb+@public.gmane.org>
+Subject: Re: [PATCH v6 1/8] virtio: introduce virtio_is_little_endian() helper
+Date: Thu, 28 May 2015 14:57:38 +1000
+Message-ID: <20150528045738.GB6681@voom.redhat.com>
+References: <20150424122211.19156.97626.stgit@bahia.local>
+ <20150424122423.19156.34555.stgit@bahia.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="IiVenqGWf+H9Y6IX"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <5B8DA87D05A7694D9FA63FD143655C1B3C4A3096@hasmsx109.ger.corp.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Winkler, Tomas" <tomas.winkler@intel.com>
-Cc: Samuel Ortiz <sameo@linux.intel.com>, "arnd@arndb.de" <arnd@arndb.de>, Stephen Rothwell <sfr@canb.auug.org.au>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, linux-kernel@vger.kernel.org
+In-Reply-To: <20150424122423.19156.34555.stgit-GiB8zCg7hOfDOqzlkpFKJg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Huth <thuth-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Cornelia Huck <cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
-A previous commit, c93b76b34b4d ("mei: bus: report also uuid in module
-alias") caused a build error as I missed applying a needed patch to add
-some macros to uapi/linux/uuid.h.  Instead of those additional macros,
-change the mei code to use the existing uuid structure directly.
+--IiVenqGWf+H9Y6IX
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Fixes: c93b76b34b4d
-Cc: Tomas Winkler <tomas.winkler@intel.com>
-Cc: Samuel Ortiz <sameo@linux.intel.com>
-Reported-by: Stephen Rothwell <sfr@canb.auug.org.au>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+On Fri, Apr 24, 2015 at 02:24:27PM +0200, Greg Kurz wrote:
+> Signed-off-by: Greg Kurz <gkurz-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 
+Reviewed-by: David Gibson <david-xT8FGy+AXnRB3Ne2BGzF6laj5H9X9Tb+@public.gmane.org>
 
-diff --git a/drivers/misc/mei/bus.c b/drivers/misc/mei/bus.c
-index de8fd089a8a4..357b6ae4d207 100644
---- a/drivers/misc/mei/bus.c
-+++ b/drivers/misc/mei/bus.c
-@@ -30,11 +30,6 @@
- #define to_mei_cl_driver(d) container_of(d, struct mei_cl_driver, driver)
- #define to_mei_cl_device(d) container_of(d, struct mei_cl_device, dev)
- 
--static inline uuid_le uuid_le_cast(const __u8 uuid[16])
--{
--	return *(uuid_le *)uuid;
--}
--
- static int mei_cl_device_match(struct device *dev, struct device_driver *drv)
- {
- 	struct mei_cl_device *device = to_mei_cl_device(dev);
-@@ -54,9 +49,9 @@ static int mei_cl_device_match(struct device *dev, struct device_driver *drv)
- 
- 	id = driver->id_table;
- 
--	while (uuid_le_cmp(NULL_UUID_LE, uuid_le_cast(id->uuid))) {
-+	while (uuid_le_cmp(NULL_UUID_LE, id->uuid)) {
- 
--		if (!uuid_le_cmp(*uuid, uuid_le_cast(id->uuid))) {
-+		if (!uuid_le_cmp(*uuid, id->uuid)) {
- 			if (id->name[0]) {
- 				if (!strncmp(name, id->name, sizeof(id->name)))
- 					return 1;
-diff --git a/drivers/nfc/mei_phy.h b/drivers/nfc/mei_phy.h
-index a51f8f2685cc..fbfa3e61738f 100644
---- a/drivers/nfc/mei_phy.h
-+++ b/drivers/nfc/mei_phy.h
-@@ -5,7 +5,7 @@
- #include <net/nfc/hci.h>
- #include <linux/uuid.h>
- 
--#define MEI_NFC_UUID __UUID_LE(0x0bb17a78, 0x2a8e, 0x4c50, \
-+#define MEI_NFC_UUID UUID_LE(0x0bb17a78, 0x2a8e, 0x4c50, \
- 		0x94, 0xd4, 0x50, 0x26, 0x67, 0x23, 0x77, 0x5c)
- #define MEI_NFC_HEADER_SIZE 10
- #define MEI_NFC_MAX_HCI_PAYLOAD 300
-diff --git a/include/linux/mod_devicetable.h b/include/linux/mod_devicetable.h
-index 2d2b2b571d61..048c270822f9 100644
---- a/include/linux/mod_devicetable.h
-+++ b/include/linux/mod_devicetable.h
-@@ -614,7 +614,7 @@ struct ipack_device_id {
-  */
- struct mei_cl_device_id {
- 	char name[MEI_CL_NAME_SIZE];
--	__u8 uuid[16];
-+	uuid_le uuid;
- 	kernel_ulong_t driver_info;
- };
- 
-diff --git a/scripts/mod/file2alias.c b/scripts/mod/file2alias.c
-index 62c517f4b592..718b2a29bd43 100644
---- a/scripts/mod/file2alias.c
-+++ b/scripts/mod/file2alias.c
-@@ -34,6 +34,9 @@ typedef Elf64_Addr	kernel_ulong_t;
- typedef uint32_t	__u32;
- typedef uint16_t	__u16;
- typedef unsigned char	__u8;
-+typedef struct {
-+	__u8 b[16];
-+} uuid_le;
- 
- /* Big exception to the "don't include kernel headers into userspace, which
-  * even potentially has different endianness and word sizes, since
-@@ -131,13 +134,13 @@ static inline void add_wildcard(char *str)
- 		strcat(str + len, "*");
- }
- 
--static inline void add_uuid(char *str, __u8 uuid[16])
-+static inline void add_uuid(char *str, uuid_le uuid)
- {
- 	int len = strlen(str);
- 	int i;
- 
- 	for (i = 0; i < 16; i++)
--		sprintf(str + len + (i << 1), "%02x", uuid[i]);
-+		sprintf(str + len + (i << 1), "%02x", uuid.b[i]);
- }
- 
- /**
+--=20
+David Gibson			| I'll have my music baroque, and my code
+david AT gibson.dropbear.id.au	| minimalist, thank you.  NOT _the_ _other_
+				| _way_ _around_!
+http://www.ozlabs.org/~dgibson
+
+--IiVenqGWf+H9Y6IX
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJVZqBBAAoJEGw4ysog2bOSBxQQANV4rrrHjGImeZGatGiUHdU6
+/Qc4wpkRyRi4TpkoINQpgPdA4smE0vi/UHS20p2G3Onfg1P6ynO8ug3qvxvqgDT2
+KqVap/wX/4/9efOrIvJU5/vC2hfYphfavY2o4isN890voFBRFQ1Lak8l1/WVdE1z
+I34edejpXqNKLtHE26OSnUH7JVdo590uQ3QAgTBEOeGx8iWRCPVHUloLceCClovH
+KRfqX6+fVI/5EA+4fxKSDJyZbzHtnx4V6t237wrDhqHENKZKMs8oQV4ausKyAi30
+yny4pXD8czqy6rDqqQuODU1evESJcvg8sHfgdP/pxTKxmX6aVtl8NTNcrGC08yCy
+7KDPlwvBkM3dfS+WqS+EGiX/mQEnpSg8QfI6DTHU+Vic2UKzOBakYP2G5DcMx3QL
+3gvs2PbyZheZwyWfY6NZhLq5ItMeijUODJXLDHvi+5ILxrGs9/rvEM350/LogogS
+0njbdT8+mcdMXKXtuqCEqsRd59TlQzTzYRCnTFQ4/4sjEaNydT+55oVljAZd9EOy
+dz70a5ADR3tfzSQddfxbUBvcGfKfrUm++Y5Stn31pJtPI0jgxYB5HWn70Kj4BeHq
+Rj9USBAKFnTGwIec1V4320gI/AoN3dZ6viqLPzSkTtJY9Gk2OTtLvYm1ckxEy4aZ
+oDU3B9126Beafaaaf2pp
+=92Tk
+-----END PGP SIGNATURE-----
+
+--IiVenqGWf+H9Y6IX--
