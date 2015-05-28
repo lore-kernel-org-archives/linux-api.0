@@ -1,42 +1,42 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: [PATCH 25/35] DocBook: better document FE_SET_TONE ioctl
-Date: Thu, 28 May 2015 18:49:28 -0300
-Message-ID: <7ec16730d944eb47423b67dea14ac2032c406ad7.1432844837.git.mchehab@osg.samsung.com>
+From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [PATCH 26/35] DocBook: better document FE_DISEQC_SEND_BURST ioctl
+Date: Thu, 28 May 2015 18:49:29 -0300
+Message-ID: <d68e777ec46bb9f68bb620d5f2eb2cb4b99c19c3.1432844837.git.mchehab@osg.samsung.com>
 References: <cover.1432844837.git.mchehab@osg.samsung.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <cover.1432844837.git.mchehab@osg.samsung.com>
-In-Reply-To: <cover.1432844837.git.mchehab@osg.samsung.com>
-References: <cover.1432844837.git.mchehab@osg.samsung.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Linux Media Mailing List <linux-media@vger.kernel.org>
-Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Mauro Carvalho Chehab <mchehab@infradead.org>, Jonathan Corbet <corbet@lwn.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1432844837.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <cover.1432844837.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+References: <cover.1432844837.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Use the proper format for FE_SET_TONE documentation and
-improve the documentation.
+Use the proper format for FE_DISEQC_SEND_BURST documentation
+and  improve the documentation.
 
-Keep the enum fe_sec_tone_mode description together with
+Keep the enum fe_sec_mini_cmd description together with
 the ioctl, as both are used together.
 
-Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 
- create mode 100644 Documentation/DocBook/media/dvb/fe-set-tone.xml
+ create mode 100644 Documentation/DocBook/media/dvb/fe-diseqc-send-burst.xml
 
-diff --git a/Documentation/DocBook/media/dvb/fe-set-tone.xml b/Documentation/DocBook/media/dvb/fe-set-tone.xml
+diff --git a/Documentation/DocBook/media/dvb/fe-diseqc-send-burst.xml b/Documentation/DocBook/media/dvb/fe-diseqc-send-burst.xml
 new file mode 100644
-index 000000000000..b4b1f5303170
+index 000000000000..d1a798048641
 --- /dev/null
-+++ b/Documentation/DocBook/media/dvb/fe-set-tone.xml
-@@ -0,0 +1,88 @@
-+<refentry id="FE_SET_TONE">
++++ b/Documentation/DocBook/media/dvb/fe-diseqc-send-burst.xml
+@@ -0,0 +1,86 @@
++<refentry id="FE_DISEQC_SEND_BURST">
 +  <refmeta>
-+    <refentrytitle>ioctl FE_SET_TONE</refentrytitle>
++    <refentrytitle>ioctl FE_DISEQC_SEND_BURST</refentrytitle>
 +    &manvol;
 +  </refmeta>
 +
 +  <refnamediv>
-+    <refname>FE_SET_TONE</refname>
-+    <refpurpose>Sets/resets the generation of the continuous 22kHz tone.</refpurpose>
++    <refname>FE_DISEQC_SEND_BURST</refname>
++    <refpurpose>Sends a 22KHz tone burst for 2x1 mini DiSEqC satellite selection.</refpurpose>
 +  </refnamediv>
 +
 +  <refsynopsisdiv>
@@ -45,7 +45,7 @@ index 000000000000..b4b1f5303170
 +	<funcdef>int <function>ioctl</function></funcdef>
 +	<paramdef>int <parameter>fd</parameter></paramdef>
 +	<paramdef>int <parameter>request</parameter></paramdef>
-+	<paramdef>&fe-sec-tone-mode; *<parameter>tone</parameter></paramdef>
++	<paramdef>&fe-sec-mini-cmd; *<parameter>tone</parameter></paramdef>
 +      </funcprototype>
 +    </funcsynopsis>
 +  </refsynopsisdiv>
@@ -62,11 +62,11 @@ index 000000000000..b4b1f5303170
 +      <varlistentry>
 +	<term><parameter>request</parameter></term>
 +	<listitem>
-+	  <para>FE_SET_TONE</para>
++	  <para>FE_DISEQC_SEND_BURST</para>
 +	</listitem>
 +      </varlistentry>
 +      <varlistentry>
-+	<term><parameter>pointer to &fe-sec-tone-mode;</parameter></term>
++	<term><parameter>pointer to &fe-sec-mini-cmd;</parameter></term>
 +      </varlistentry>
 +    </variablelist>
 +  </refsect1>
@@ -74,24 +74,21 @@ index 000000000000..b4b1f5303170
 +  <refsect1>
 +    <title>Description</title>
 +
-+<para>This ioctl is used to set the generation of the continuous 22kHz tone.
++<para>This ioctl is used to set the generation of a 22kHz tone burst for mini
++    DiSEqC satellite
++    selection for 2x1 switches.
 +    This call requires read/write permissions.</para>
-+<para>Usually, satellital antenna subsystems require that the digital TV
-+    device to send a 22kHz tone in order to select between high/low band on
-+    some dual-band LNBf. It is also used to send signals to DiSEqC equipment,
-+    but this is done using the DiSEqC ioctls.</para>
-+<para>NOTE: if more than one device is connected to the same antenna,
-+    setting a tone may interfere on other devices, as they may lose
-+    the capability of selecting the band. So, it is recommended that
-+    applications would change to SEC_TONE_OFF when the device is not used.</para>
-+
++<para>It provides support for what's specified at
++    <ulink url="http://www.eutelsat.com/files/contributed/satellites/pdf/Diseqc/associated%20docs/simple_tone_burst_detec.pdf">Digital Satellite Equipment Control
++	(DiSEqC) - Simple "ToneBurst" Detection Circuit specification.</ulink>
++    </para>
 +&return-value-dvb;
 +</refsect1>
 +
-+<section id="fe-sec-tone-mode-t">
-+<title>enum fe_sec_voltage</title>
++<section id="fe-sec-mini-cmd-t">
++<title>enum fe_sec_mini_cmd</title>
 +
-+<table pgwide="1" frame="none" id="fe-sec-tone-mode">
++<table pgwide="1" frame="none" id="fe-sec-mini-cmd">
 +    <title>enum fe_sec_tone_mode</title>
 +    <tgroup cols="2">
 +	&cs-def;
@@ -103,12 +100,13 @@ index 000000000000..b4b1f5303170
 +	</thead>
 +	<tbody valign="top">
 +	<row>
-+	    <entry align="char">SEC_TONE_ON</entry>
-+	    <entry align="char">Sends a 22kHz tone burst to the antenna</entry>
++	    <entry align="char">SEC_MINI_A</entry>
++	    <entry align="char">Sends a mini-DiSEqC 22kHz '0' Tone Burst to
++		select satellite-A</entry>
 +	</row><row>
-+	    <entry align="char">SEC_TONE_OFF</entry>
-+	    <entry align="char">Don't send a 22kHz tone to the antenna
-+		(except if the FE_DISEQC_* ioctls are called)</entry>
++	    <entry align="char">SEC_MINI_B</entry>
++	    <entry align="char">Sends a mini-DiSEqC 22kHz '1' Data Burst to
++		select satellite-B</entry>
 +	</row>
 +        </tbody>
 +    </tgroup>
@@ -117,53 +115,56 @@ index 000000000000..b4b1f5303170
 +
 +</refentry>
 diff --git a/Documentation/DocBook/media/dvb/frontend.xml b/Documentation/DocBook/media/dvb/frontend.xml
-index 584c759b6bbe..f05da4abb3fe 100644
+index f05da4abb3fe..17050152a48a 100644
 --- a/Documentation/DocBook/media/dvb/frontend.xml
 +++ b/Documentation/DocBook/media/dvb/frontend.xml
-@@ -75,21 +75,6 @@ specification is available at
+@@ -75,23 +75,6 @@ specification is available at
  </programlisting>
  </section>
  
--<section id="fe-sec-tone-mode-t">
--<title>SEC continuous tone</title>
+-<section id="fe-sec-mini-cmd-t">
+-<title>SEC tone burst</title>
 -
--<para>The continuous 22KHz tone is usually used with non-DiSEqC capable LNBs to switch the
--high/low band of a dual-band LNB. When using DiSEqC epuipment this voltage has to
+-<para>The 22KHz tone burst is usually used with non-DiSEqC capable switches to select
+-between two connected LNBs/satellites. When using DiSEqC epuipment this voltage has to
 -be switched consistently to the DiSEqC commands as described in the DiSEqC
 -spec.</para>
 -<programlisting>
--	typedef enum fe_sec_tone_mode {
--	SEC_TONE_ON,
--	SEC_TONE_OFF
--	} fe_sec_tone_mode_t;
+-	typedef enum fe_sec_mini_cmd {
+-	SEC_MINI_A,
+-	SEC_MINI_B
+-	} fe_sec_mini_cmd_t;
 -</programlisting>
+-
+-<para></para>
 -</section>
 -
- <section id="fe-sec-mini-cmd-t">
- <title>SEC tone burst</title>
- 
-@@ -582,52 +567,8 @@ typedef enum fe_hierarchy {
+ <section id="fe-spectral-inversion-t">
+ <title>frontend spectral inversion</title>
+ <para>The Inversion field can take one of these values:
+@@ -519,55 +502,7 @@ typedef enum fe_hierarchy {
  &return-value-dvb;
  </section>
  
--<section id="FE_SET_TONE">
--<title>FE_SET_TONE</title>
+-<section id="FE_DISEQC_SEND_BURST">
+-<title>FE_DISEQC_SEND_BURST</title>
 -<para>DESCRIPTION
 -</para>
 -<informaltable><tgroup cols="1"><tbody><row><entry
 - align="char">
--<para>This call is used to set the generation of the continuous 22kHz tone. This call
-- requires read/write permissions.</para>
+-<para>This ioctl call is used to send a 22KHz tone burst.</para>
 -</entry>
 - </row></tbody></tgroup></informaltable>
+-
 -<para>SYNOPSIS
 -</para>
 -<informaltable><tgroup cols="1"><tbody><row><entry
 - align="char">
--<para>int ioctl(int fd, int request = <link linkend="FE_SET_TONE">FE_SET_TONE</link>,
-- fe_sec_tone_mode_t tone);</para>
+-<para>int ioctl(int fd, int request =
+- <link linkend="FE_DISEQC_SEND_BURST">FE_DISEQC_SEND_BURST</link>, fe_sec_mini_cmd_t burst);</para>
 -</entry>
 - </row></tbody></tgroup></informaltable>
+-
 -<para>PARAMETERS
 -</para>
 -<informaltable><tgroup cols="2"><tbody><row><entry
@@ -178,43 +179,44 @@ index 584c759b6bbe..f05da4abb3fe 100644
 -<para>int request</para>
 -</entry><entry
 - align="char">
--<para>Equals <link linkend="FE_SET_TONE">FE_SET_TONE</link> for this command.</para>
+-<para>Equals <link linkend="FE_DISEQC_SEND_BURST">FE_DISEQC_SEND_BURST</link> for this command.</para>
 -</entry>
 - </row><row><entry
 - align="char">
--<para>fe_sec_tone_mode_t
-- tone</para>
+-<para>fe_sec_mini_cmd_t
+- burst</para>
 -</entry><entry
 - align="char">
--<para>The requested tone generation mode (on/off).</para>
+-<para>burst A or B.</para>
 -</entry>
 - </row></tbody></tgroup></informaltable>
+-
 -&return-value-dvb;
 -</section>
- 
-+&sub-fe-set-tone;
+-
+-
++&sub-fe-diseqc-send-burst;
+ &sub-fe-set-tone;
  &sub-fe-set-voltage;
  &sub-fe-enable-high-lnb-voltage;
- &sub-fe-set-frontend-tune-mode;
 diff --git a/include/uapi/linux/dvb/frontend.h b/include/uapi/linux/dvb/frontend.h
-index 985b76896388..009ff0534806 100644
+index 009ff0534806..8bc672d57829 100644
 --- a/include/uapi/linux/dvb/frontend.h
 +++ b/include/uapi/linux/dvb/frontend.h
-@@ -114,10 +114,12 @@ enum fe_sec_voltage {
- typedef enum fe_sec_voltage fe_sec_voltage_t;
+@@ -122,10 +122,12 @@ enum fe_sec_tone_mode {
+ typedef enum fe_sec_tone_mode fe_sec_tone_mode_t;
  
  
--typedef enum fe_sec_tone_mode {
-+enum fe_sec_tone_mode {
- 	SEC_TONE_ON,
- 	SEC_TONE_OFF
--} fe_sec_tone_mode_t;
-+}
+-typedef enum fe_sec_mini_cmd {
++enum fe_sec_mini_cmd {
+ 	SEC_MINI_A,
+ 	SEC_MINI_B
+-} fe_sec_mini_cmd_t;
++};
 +
-+typedef enum fe_sec_tone_mode fe_sec_tone_mode_t;
++typedef enum fe_sec_mini_cmd fe_sec_mini_cmd_t;
  
  
- typedef enum fe_sec_mini_cmd {
+ /**
 -- 
 2.4.1
-
