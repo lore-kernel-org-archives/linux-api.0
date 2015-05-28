@@ -1,227 +1,97 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: [PATCH 24/35] DocBook: better document FE_SET_VOLTAGE ioctl
-Date: Thu, 28 May 2015 18:49:27 -0300
-Message-ID: <cc3ad7676eb5b91b53033d36911892d0d72abee8.1432844837.git.mchehab@osg.samsung.com>
-References: <cover.1432844837.git.mchehab@osg.samsung.com>
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <cover.1432844837.git.mchehab@osg.samsung.com>
-In-Reply-To: <cover.1432844837.git.mchehab@osg.samsung.com>
-References: <cover.1432844837.git.mchehab@osg.samsung.com>
-Sender: linux-media-owner@vger.kernel.org
-To: Linux Media Mailing List <linux-media@vger.kernel.org>
-Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Mauro Carvalho Chehab <mchehab@infradead.org>, Jonathan Corbet <corbet@lwn.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+From: "Serge E. Hallyn" <serge@hallyn.com>
+Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe
+ as bind mounts (take 2)
+Date: Thu, 28 May 2015 16:52:14 -0500
+Message-ID: <20150528215214.GA15675@mail.hallyn.com>
+References: <87pp63jcca.fsf@x220.int.ebiederm.org>
+ <87siaxuvik.fsf@x220.int.ebiederm.org>
+ <87wq004im1.fsf@x220.int.ebiederm.org>
+ <CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>
+ <20150528140839.GD28842@ubuntumail>
+ <87lhg8pwvz.fsf@x220.int.ebiederm.org>
+ <20150528210438.GA14849@mail.hallyn.com>
+ <871ti0fkfp.fsf@x220.int.ebiederm.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <871ti0fkfp.fsf@x220.int.ebiederm.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Richard Weinberger <richard@nod.at>, Kenton Varda <kenton@sandstorm.io>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Seth Forshee <seth.forshee@canonical.com>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Tejun Heo <tj@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Use the proper format for FE_SET_VOLTAGE documentation and fix
-the documentation. The description for the enum is not 100%,
-and it is missing the voltage off value.
+On Thu, May 28, 2015 at 04:42:34PM -0500, Eric W. Biederman wrote:
+> "Serge E. Hallyn" <serge@hallyn.com> writes:
+> 
+> > On Thu, May 28, 2015 at 10:03:28AM -0500, Eric W. Biederman wrote:
+> >> Serge Hallyn <serge.hallyn@ubuntu.com> writes:
+> >> 
+> >> > Quoting Andy Lutomirski (luto@amacapital.net):
+> >> >> On Fri, May 22, 2015 at 10:39 AM, Eric W. Biederman
+> >> >> <ebiederm@xmission.com> wrote:
+> >> >> > I had hoped to get some Tested-By's on that patch series.
+> >> >> 
+> >> >> Sorry, I've been totally swamped.
+> >> >> 
+> >> >> I suspect that Sandstorm is okay, but I haven't had a chance to test
+> >> >> it for real.  Sandstorm makes only limited use of proc and sysfs in
+> >> >> containers, but I'll see if I can test it for real this weekend.
+> >> >
+> >> > Testing this with unprivileged containers, I get
+> >> >
+> >> > lxc-start: conf.c: lxc_mount_auto_mounts: 808 Operation not permitted
+> >> > - error mounting sysfs on
+> >> > /usr/lib/x86_64-linux-gnu/lxc/sys/devices/virtual/net flags 0
+> >> 
+> >> Grr..  I was afraid this would break something. :(
+> >> 
+> >> Looking at my system I see that sysfs is currently mounted
+> >> "nosuid,nodev,noexec"
+> >> 
+> >> Looking at the lxc-start code I don't see it as including any of those
+> >> mount options.  In practice for sysfs I think those options are
+> >> meaningless (as there should be no devices and nothing executable in
+> >> sysfs) but I can understand the past concerns with chmod on virtual
+> >> filesystems that would incline people to use them, so I think the
+> >> failure is reporting a legitimate security issue in the lxc userspace
+> >> code where the the unprivileged code is currently attempting to give
+> >> greater access to sysfs than was given by the original mount of sysfs.
+> >> 
+> >> As nosuid,nodev,noexec should not impair the operation of sysfs
+> >> operation it looks like you can always specify those options and just
+> >> make this concern go away.
+> >> 
+> >> Something like the untested patch below I expect.
+> >> 
+> >> diff --git a/src/lxc/conf.c b/src/lxc/conf.c
+> >> index 9870455b3cae..d9ccd03afe68 100644
+> >> --- a/src/lxc/conf.c
+> >> +++ b/src/lxc/conf.c
+> >> @@ -770,8 +770,8 @@ static int lxc_mount_auto_mounts(struct lxc_conf *conf, int flags, struct lxc_ha
+> >>  		{ LXC_AUTO_PROC_MASK, LXC_AUTO_PROC_MIXED, "%r/proc/sysrq-trigger",                             "%r/proc/sysrq-trigger",        NULL,       MS_BIND,                        NULL },
+> >>  		{ LXC_AUTO_PROC_MASK, LXC_AUTO_PROC_MIXED, NULL,                                                "%r/proc/sysrq-trigger",        NULL,       MS_REMOUNT|MS_BIND|MS_RDONLY,   NULL },
+> >>  		{ LXC_AUTO_PROC_MASK, LXC_AUTO_PROC_RW,    "proc",                                              "%r/proc",                      "proc",     MS_NODEV|MS_NOEXEC|MS_NOSUID,   NULL },
+> >> -		{ LXC_AUTO_SYS_MASK,  LXC_AUTO_SYS_RW,     "sysfs",                                             "%r/sys",                       "sysfs",    0,                              NULL },
+> >> -		{ LXC_AUTO_SYS_MASK,  LXC_AUTO_SYS_RO,     "sysfs",                                             "%r/sys",                       "sysfs",    MS_RDONLY,                      NULL },
+> >> +		{ LXC_AUTO_SYS_MASK,  LXC_AUTO_SYS_RW,     "sysfs",                                             "%r/sys",                       "sysfs",    MS_NODEV|MS_NOEXEC|MS_NOSUID,   NULL },
+> >> +		{ LXC_AUTO_SYS_MASK,  LXC_AUTO_SYS_RO,     "sysfs",                                             "%r/sys",                       "sysfs",    MS_NODEV|MS_NOEXEC|MS_NOSUID|MS_RDONLY, NULL },
+> >>  		{ LXC_AUTO_SYS_MASK,  LXC_AUTO_SYS_MIXED,  "sysfs",                                             "%r/sys",                       "sysfs",    MS_NODEV|MS_NOEXEC|MS_NOSUID,   NULL },
+> >>  		{ LXC_AUTO_SYS_MASK,  LXC_AUTO_SYS_MIXED,  "%r/sys",                                            "%r/sys",                       NULL,       MS_BIND,                        NULL },
+> >>  		{ LXC_AUTO_SYS_MASK,  LXC_AUTO_SYS_MIXED,  NULL,                                                "%r/sys",                       NULL,       MS_REMOUNT|MS_BIND|MS_RDONLY,   NULL },
+> >
+> > fwiw - the first one works, the second one does not due to an apparent
+> > inability to statvfs the origin.
+> 
+> Good to hear.  That confirms there are no other gotchas waiting in the
+> wings.
+> 
+> Apparently my second suggested patch is buggy due to an invalid source
+> string.  The source would need to be %r/proc or %r/sysfs to use statvfs
+> productively.
 
-Also, it is better to keep the enum description together with
-the ioctl, as both are used together.
-
-Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-
- create mode 100644 Documentation/DocBook/media/dvb/fe-set-voltage.xml
-
-diff --git a/Documentation/DocBook/media/dvb/fe-set-voltage.xml b/Documentation/DocBook/media/dvb/fe-set-voltage.xml
-new file mode 100644
-index 000000000000..a1ee5f9c28e0
---- /dev/null
-+++ b/Documentation/DocBook/media/dvb/fe-set-voltage.xml
-@@ -0,0 +1,94 @@
-+<refentry id="FE_SET_VOLTAGE">
-+  <refmeta>
-+    <refentrytitle>ioctl FE_SET_VOLTAGE</refentrytitle>
-+    &manvol;
-+  </refmeta>
-+
-+  <refnamediv>
-+    <refname>FE_SET_VOLTAGE</refname>
-+    <refpurpose>Allow setting the DC level sent to the antenna subsystem.</refpurpose>
-+  </refnamediv>
-+
-+  <refsynopsisdiv>
-+    <funcsynopsis>
-+      <funcprototype>
-+	<funcdef>int <function>ioctl</function></funcdef>
-+	<paramdef>int <parameter>fd</parameter></paramdef>
-+	<paramdef>int <parameter>request</parameter></paramdef>
-+	<paramdef>&fe-sec-voltage; *<parameter>voltage</parameter></paramdef>
-+      </funcprototype>
-+    </funcsynopsis>
-+  </refsynopsisdiv>
-+
-+  <refsect1>
-+    <title>Arguments</title>
-+        <variablelist>
-+      <varlistentry>
-+	<term><parameter>fd</parameter></term>
-+	<listitem>
-+	  <para>&fe_fd;</para>
-+	</listitem>
-+      </varlistentry>
-+      <varlistentry>
-+	<term><parameter>request</parameter></term>
-+	<listitem>
-+	  <para>FE_SET_VOLTAGE</para>
-+	</listitem>
-+      </varlistentry>
-+      <varlistentry>
-+	<term><parameter>pointer to &fe-sec-voltage;</parameter></term>
-+      </varlistentry>
-+    </variablelist>
-+  </refsect1>
-+
-+  <refsect1>
-+    <title>Description</title>
-+
-+<para>This ioctl allows to set the DC voltage level sent through the antenna
-+    cable to 13V, 18V or off.</para>
-+<para>Usually, a satellital antenna subsystems require that the digital TV
-+    device to send a DC voltage to feed power to the LNBf. Depending on the
-+    LNBf type, the polarization or the intermediate frequency (IF) of the LNBf
-+    can controlled by the voltage level. Other devices (for example, the ones
-+    that implement DISEqC and multipoint LNBf's don't need to control the
-+    voltage level, provided that either 13V or 18V is sent to power up the
-+    LNBf.</para>
-+<para>NOTE: if more than one device is connected to the same antenna,
-+    setting a voltage level may interfere on other devices, as they may lose
-+    the capability of setting polarization or IF. So, on those
-+    cases, setting the voltage to SEC_VOLTAGE_OFF while the device is not is
-+    used is recommended.</para>
-+
-+&return-value-dvb;
-+</refsect1>
-+
-+<section id="fe-sec-voltage-t">
-+<title>enum fe_sec_voltage</title>
-+
-+<table pgwide="1" frame="none" id="fe-sec-voltage">
-+    <title>enum fe_status</title>
-+    <tgroup cols="2">
-+	&cs-def;
-+	<thead>
-+	<row>
-+	    <entry>ID</entry>
-+	    <entry>Description</entry>
-+	</row>
-+	</thead>
-+	<tbody valign="top">
-+	<row>
-+	    <entry align="char">SEC_VOLTAGE_13</entry>
-+	    <entry align="char">Set DC voltage level to 13V</entry>
-+	</row><row>
-+	    <entry align="char">SEC_VOLTAGE_18</entry>
-+	    <entry align="char">Set DC voltage level to 18V</entry>
-+	</row><row>
-+	    <entry align="char">SEC_VOLTAGE_OFF</entry>
-+	    <entry align="char">Don't send any voltage to the antenna</entry>
-+	</row>
-+        </tbody>
-+    </tgroup>
-+</table>
-+</section>
-+
-+</refentry>
-diff --git a/Documentation/DocBook/media/dvb/frontend.xml b/Documentation/DocBook/media/dvb/frontend.xml
-index bb2cd9ef3b03..584c759b6bbe 100644
---- a/Documentation/DocBook/media/dvb/frontend.xml
-+++ b/Documentation/DocBook/media/dvb/frontend.xml
-@@ -75,19 +75,6 @@ specification is available at
- </programlisting>
- </section>
- 
--<section id="fe-sec-voltage-t">
--<title>diseqc slave reply</title>
--<para>The voltage is usually used with non-DiSEqC capable LNBs to switch the polarzation
--(horizontal/vertical). When using DiSEqC epuipment this voltage has to be switched
--consistently to the DiSEqC commands as described in the DiSEqC spec.</para>
--<programlisting>
--	typedef enum fe_sec_voltage {
--	SEC_VOLTAGE_13,
--	SEC_VOLTAGE_18
--	} fe_sec_voltage_t;
--</programlisting>
--</section>
--
- <section id="fe-sec-tone-mode-t">
- <title>SEC continuous tone</title>
- 
-@@ -641,54 +628,7 @@ typedef enum fe_hierarchy {
- &return-value-dvb;
- </section>
- 
--<section id="FE_SET_VOLTAGE">
--<title>FE_SET_VOLTAGE</title>
--<para>DESCRIPTION
--</para>
--<informaltable><tgroup cols="1"><tbody><row><entry
-- align="char">
--<para>This call is used to set the bus voltage. This call requires read/write
-- permissions.</para>
--</entry>
-- </row></tbody></tgroup></informaltable>
--<para>SYNOPSIS
--</para>
--<informaltable><tgroup cols="1"><tbody><row><entry
-- align="char">
--<para>int ioctl(int fd, int request = <link linkend="FE_SET_VOLTAGE">FE_SET_VOLTAGE</link>,
-- fe_sec_voltage_t voltage);</para>
--</entry>
-- </row></tbody></tgroup></informaltable>
--
--<para>PARAMETERS
--</para>
--<informaltable><tgroup cols="2"><tbody><row><entry
-- align="char">
--<para>int fd</para>
--</entry><entry
-- align="char">
--<para>File descriptor returned by a previous call to open().</para>
--</entry>
-- </row><row><entry
-- align="char">
--<para>int request</para>
--</entry><entry
-- align="char">
--<para>Equals <link linkend="FE_SET_VOLTAGE">FE_SET_VOLTAGE</link> for this command.</para>
--</entry>
-- </row><row><entry
-- align="char">
--<para>fe_sec_voltage_t
-- voltage</para>
--</entry><entry
-- align="char">
--<para>The requested bus voltage.</para>
--</entry>
-- </row></tbody></tgroup></informaltable>
--
--&return-value-dvb;
--</section>
--
-+&sub-fe-set-voltage;
- &sub-fe-enable-high-lnb-voltage;
- &sub-fe-set-frontend-tune-mode;
- 
-diff --git a/include/uapi/linux/dvb/frontend.h b/include/uapi/linux/dvb/frontend.h
-index 7aeeb5a69fdf..985b76896388 100644
---- a/include/uapi/linux/dvb/frontend.h
-+++ b/include/uapi/linux/dvb/frontend.h
-@@ -105,11 +105,13 @@ struct dvb_diseqc_slave_reply {
- };			/*  errorcode when no message was received  */
- 
- 
--typedef enum fe_sec_voltage {
-+enum fe_sec_voltage {
- 	SEC_VOLTAGE_13,
- 	SEC_VOLTAGE_18,
- 	SEC_VOLTAGE_OFF
--} fe_sec_voltage_t;
-+};
-+
-+typedef enum fe_sec_voltage fe_sec_voltage_t;
- 
- 
- typedef enum fe_sec_tone_mode {
--- 
-2.4.1
+Right, in these cases they're only passing in "sysfs".  The first way
+is more explicit anyway (though may not help some people who have a
+"lxc.mount.entry = sysfs sys sysfs ro 0 0" line in their configuration
+instead, so maybe we'll have to go with the second after all, d'oh.
+I'll have to look into it next week)
