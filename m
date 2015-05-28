@@ -1,93 +1,64 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe as bind mounts (take 2)
-Date: Thu, 28 May 2015 10:03:28 -0500
-Message-ID: <87lhg8pwvz.fsf@x220.int.ebiederm.org>
-References: <87pp63jcca.fsf@x220.int.ebiederm.org>
-	<87siaxuvik.fsf@x220.int.ebiederm.org>
-	<87wq004im1.fsf@x220.int.ebiederm.org>
-	<CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>
-	<20150528140839.GD28842@ubuntumail>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe as
+ bind mounts (take 2)
+Date: Thu, 28 May 2015 10:33:29 -0700
+Message-ID: <CALCETrXXax28s9kMTQ-zDx0MttQWG4rg2y-oz3bSGiumSL=3sg@mail.gmail.com>
+References: <87pp63jcca.fsf@x220.int.ebiederm.org> <87siaxuvik.fsf@x220.int.ebiederm.org>
+ <87wq004im1.fsf@x220.int.ebiederm.org> <CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>
+ <20150528140839.GD28842@ubuntumail> <87lhg8pwvz.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150528140839.GD28842@ubuntumail> (Serge Hallyn's message of
-	"Thu, 28 May 2015 14:08:39 +0000")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <87lhg8pwvz.fsf@x220.int.ebiederm.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Serge Hallyn <serge.hallyn@ubuntu.com>, Seth Forshee <seth.forshee@canonical.com>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Kenton Varda <kenton@sandstorm.io>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Richard Weinberger <richard@nod.at>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Tejun Heo <tj@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> writes:
-
-> Quoting Andy Lutomirski (luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org):
->> On Fri, May 22, 2015 at 10:39 AM, Eric W. Biederman
->> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->> > I had hoped to get some Tested-By's on that patch series.
->> 
->> Sorry, I've been totally swamped.
->> 
->> I suspect that Sandstorm is okay, but I haven't had a chance to test
->> it for real.  Sandstorm makes only limited use of proc and sysfs in
->> containers, but I'll see if I can test it for real this weekend.
+On Thu, May 28, 2015 at 8:03 AM, Eric W. Biederman
+<ebiederm@xmission.com> wrote:
+> Serge Hallyn <serge.hallyn@ubuntu.com> writes:
 >
-> Testing this with unprivileged containers, I get
+>> Quoting Andy Lutomirski (luto@amacapital.net):
+>>> On Fri, May 22, 2015 at 10:39 AM, Eric W. Biederman
+>>> <ebiederm@xmission.com> wrote:
+>>> > I had hoped to get some Tested-By's on that patch series.
+>>>
+>>> Sorry, I've been totally swamped.
+>>>
+>>> I suspect that Sandstorm is okay, but I haven't had a chance to test
+>>> it for real.  Sandstorm makes only limited use of proc and sysfs in
+>>> containers, but I'll see if I can test it for real this weekend.
+>>
+>> Testing this with unprivileged containers, I get
+>>
+>> lxc-start: conf.c: lxc_mount_auto_mounts: 808 Operation not permitted
+>> - error mounting sysfs on
+>> /usr/lib/x86_64-linux-gnu/lxc/sys/devices/virtual/net flags 0
 >
-> lxc-start: conf.c: lxc_mount_auto_mounts: 808 Operation not permitted
-> - error mounting sysfs on
-> /usr/lib/x86_64-linux-gnu/lxc/sys/devices/virtual/net flags 0
+> Grr..  I was afraid this would break something. :(
+>
+> Looking at my system I see that sysfs is currently mounted
+> "nosuid,nodev,noexec"
+>
+> Looking at the lxc-start code I don't see it as including any of those
+> mount options.  In practice for sysfs I think those options are
+> meaningless (as there should be no devices and nothing executable in
+> sysfs) but I can understand the past concerns with chmod on virtual
+> filesystems that would incline people to use them, so I think the
+> failure is reporting a legitimate security issue in the lxc userspace
+> code where the the unprivileged code is currently attempting to give
+> greater access to sysfs than was given by the original mount of sysfs.
+>
+> As nosuid,nodev,noexec should not impair the operation of sysfs
+> operation it looks like you can always specify those options and just
+> make this concern go away.
 
-Grr..  I was afraid this would break something. :(
+Linus is pretty strict about not breaking the ABI, and this definitely
+counts as breaking the ABI.  There's an exception for security issues,
+but is there really a security issue here?  That is, do we lose
+anything important if we just drop the offending part of the patch
+set?  As you've said, there shouldn't be sensitive device nodes,
+executables, or setuid files in proc or sysfs in the first place.
 
-Looking at my system I see that sysfs is currently mounted
-"nosuid,nodev,noexec"
-
-Looking at the lxc-start code I don't see it as including any of those
-mount options.  In practice for sysfs I think those options are
-meaningless (as there should be no devices and nothing executable in
-sysfs) but I can understand the past concerns with chmod on virtual
-filesystems that would incline people to use them, so I think the
-failure is reporting a legitimate security issue in the lxc userspace
-code where the the unprivileged code is currently attempting to give
-greater access to sysfs than was given by the original mount of sysfs.
-
-As nosuid,nodev,noexec should not impair the operation of sysfs
-operation it looks like you can always specify those options and just
-make this concern go away.
-
-Something like the untested patch below I expect.
-
-diff --git a/src/lxc/conf.c b/src/lxc/conf.c
-index 9870455b3cae..d9ccd03afe68 100644
---- a/src/lxc/conf.c
-+++ b/src/lxc/conf.c
-@@ -770,8 +770,8 @@ static int lxc_mount_auto_mounts(struct lxc_conf *conf, int flags, struct lxc_ha
- 		{ LXC_AUTO_PROC_MASK, LXC_AUTO_PROC_MIXED, "%r/proc/sysrq-trigger",                             "%r/proc/sysrq-trigger",        NULL,       MS_BIND,                        NULL },
- 		{ LXC_AUTO_PROC_MASK, LXC_AUTO_PROC_MIXED, NULL,                                                "%r/proc/sysrq-trigger",        NULL,       MS_REMOUNT|MS_BIND|MS_RDONLY,   NULL },
- 		{ LXC_AUTO_PROC_MASK, LXC_AUTO_PROC_RW,    "proc",                                              "%r/proc",                      "proc",     MS_NODEV|MS_NOEXEC|MS_NOSUID,   NULL },
--		{ LXC_AUTO_SYS_MASK,  LXC_AUTO_SYS_RW,     "sysfs",                                             "%r/sys",                       "sysfs",    0,                              NULL },
--		{ LXC_AUTO_SYS_MASK,  LXC_AUTO_SYS_RO,     "sysfs",                                             "%r/sys",                       "sysfs",    MS_RDONLY,                      NULL },
-+		{ LXC_AUTO_SYS_MASK,  LXC_AUTO_SYS_RW,     "sysfs",                                             "%r/sys",                       "sysfs",    MS_NODEV|MS_NOEXEC|MS_NOSUID,   NULL },
-+		{ LXC_AUTO_SYS_MASK,  LXC_AUTO_SYS_RO,     "sysfs",                                             "%r/sys",                       "sysfs",    MS_NODEV|MS_NOEXEC|MS_NOSUID|MS_RDONLY, NULL },
- 		{ LXC_AUTO_SYS_MASK,  LXC_AUTO_SYS_MIXED,  "sysfs",                                             "%r/sys",                       "sysfs",    MS_NODEV|MS_NOEXEC|MS_NOSUID,   NULL },
- 		{ LXC_AUTO_SYS_MASK,  LXC_AUTO_SYS_MIXED,  "%r/sys",                                            "%r/sys",                       NULL,       MS_BIND,                        NULL },
- 		{ LXC_AUTO_SYS_MASK,  LXC_AUTO_SYS_MIXED,  NULL,                                                "%r/sys",                       NULL,       MS_REMOUNT|MS_BIND|MS_RDONLY,   NULL },
-
-Alternately you can read the flags off of the original mount of proc or sysfs.
-
-diff --git a/src/lxc/conf.c b/src/lxc/conf.c
-index 9870455b3cae..50ea49973e80 100644
---- a/src/lxc/conf.c
-+++ b/src/lxc/conf.c
-@@ -712,7 +712,9 @@ static unsigned long add_required_remount_flags(const char *s, const char *d,
-        struct statvfs sb;
-        unsigned long required_flags = 0;
- 
--       if (!(flags & MS_REMOUNT))
-+       if (!(flags & MS_REMOUNT) &&
-+           (strcmp(s, "proc") != 0) &&
-+           (strcmp(s, "sysfs") != 0))
-                return flags;
- 
-        if (!s)
-
-Eric
+--Andy
