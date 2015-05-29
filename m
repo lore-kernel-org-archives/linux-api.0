@@ -1,118 +1,127 @@
-From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH 6/6] nd_blk: add support for NVDIMM flags
-Date: Thu, 28 May 2015 16:35:53 -0600
-Message-ID: <1432852553-24865-7-git-send-email-ross.zwisler@linux.intel.com>
-References: <1432852553-24865-1-git-send-email-ross.zwisler@linux.intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1432852553-24865-1-git-send-email-ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe as
+	bind mounts (take 2)
+Date: Thu, 28 May 2015 17:30:55 -0700
+Message-ID: <CALCETrV4csiHBrLRrtfOvjqwUtOQnGCg8EMw9mfigDDRGchheQ@mail.gmail.com>
+References: <87pp63jcca.fsf@x220.int.ebiederm.org>
+	<87siaxuvik.fsf@x220.int.ebiederm.org>
+	<87wq004im1.fsf@x220.int.ebiederm.org>
+	<CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>
+	<20150528140839.GD28842@ubuntumail>
+	<87lhg8pwvz.fsf@x220.int.ebiederm.org>
+	<CALCETrXXax28s9kMTQ-zDx0MttQWG4rg2y-oz3bSGiumSL=3sg@mail.gmail.com>
+	<CAOP=4wid+N_80iyPpiVMN96_fuHZZRGtYQ6AOPn-HFBj2H6Vgg@mail.gmail.com>
+	<87fv6gikfn.fsf@x220.int.ebiederm.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <87fv6gikfn.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Add support in the ND_BLK I/O path for the "latch" and "flush" flags
-defined in the "Get Block NVDIMM Flags" _DSM function:
+On May 28, 2015 12:19 PM, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>
+> Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org> writes:
+>
+> > On Thu, May 28, 2015 at 10:33 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+wrote:
+> >> On Thu, May 28, 2015 at 8:03 AM, Eric W. Biederman
+> >> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+> >>> Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> writes:
+> >>>
+> >>>> Quoting Andy Lutomirski (luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org):
+> >>>>> On Fri, May 22, 2015 at 10:39 AM, Eric W. Biederman
+> >>>>> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+> >>>>> > I had hoped to get some Tested-By's on that patch series.
+> >>>>>
+> >>>>> Sorry, I've been totally swamped.
+> >>>>>
+> >>>>> I suspect that Sandstorm is okay, but I haven't had a chance to test
+> >>>>> it for real.  Sandstorm makes only limited use of proc and sysfs in
+> >>>>> containers, but I'll see if I can test it for real this weekend.
+> >>>>
+> >>>> Testing this with unprivileged containers, I get
+> >>>>
+> >>>> lxc-start: conf.c: lxc_mount_auto_mounts: 808 Operation not permitted
+> >>>> - error mounting sysfs on
+> >>>> /usr/lib/x86_64-linux-gnu/lxc/sys/devices/virtual/net flags 0
+> >>>
+> >>> Grr..  I was afraid this would break something. :(
+> >>>
+> >>> Looking at my system I see that sysfs is currently mounted
+> >>> "nosuid,nodev,noexec"
+> >>>
+> >>> Looking at the lxc-start code I don't see it as including any of those
+> >>> mount options.  In practice for sysfs I think those options are
+> >>> meaningless (as there should be no devices and nothing executable in
+> >>> sysfs) but I can understand the past concerns with chmod on virtual
+> >>> filesystems that would incline people to use them, so I think the
+> >>> failure is reporting a legitimate security issue in the lxc userspace
+> >>> code where the the unprivileged code is currently attempting to give
+> >>> greater access to sysfs than was given by the original mount of sysfs.
+> >>>
+> >>> As nosuid,nodev,noexec should not impair the operation of sysfs
+> >>> operation it looks like you can always specify those options and just
+> >>> make this concern go away.
+> >>
+> >> Linus is pretty strict about not breaking the ABI, and this definitely
+> >> counts as breaking the ABI.  There's an exception for security issues,
+> >> but is there really a security issue here?  That is, do we lose
+> >> anything important if we just drop the offending part of the patch
+> >> set?  As you've said, there shouldn't be sensitive device nodes,
+> >> executables, or setuid files in proc or sysfs in the first place.
+>
+> We do need to enforce retaining the existing mount flags one way or
+> another.  Where this really matters is with MS_RDONLY.  We don't want
+> any old user to be able to mount /proc read-write when root mounted it
+> read-only.  There is a very real attack vector there.  That attack
+> almost works in docker container today and is avoided simply because
+> docker mounts over a few files on proc.
 
-http://pmem.io/documents/NVDIMM_DSM_Interface_Example.pdf
+You could drop the nosuid, noexec, and nodev changes and keep just the ro
+part.  The ro part is probably not an ABI break in the sense of something
+that actually breaks real programs.
 
-Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
----
- drivers/acpi/nfit.c        | 26 ++++++++++++++++++++++++--
- drivers/acpi/nfit.h        |  1 +
- include/uapi/linux/ndctl.h |  5 +++++
- 3 files changed, 30 insertions(+), 2 deletions(-)
+>
+> Which leads to the second side of the reason for these changes.   I am
+> fixing a very small but long standing ABI break.   That is in some small
+> ways I broke some sandboxes and when I realized they were broken I could
+> not imagine think how to fix the code until now.
+>
+> It is the goal that user namespaces don't introduce anything for people
+> to worry about security wise more than simply the ability to execute
+> more kernel code.  So at least when the kernel implementation is correct
+> developers of existing applications simply do not need care.  Sadly we are
+> not quite there yet.
+>
+> > Speaking as a user of the mount() interfaces, I really think it would
+> > be less confusing overall if mount() simply ignored the requested
+> > flags when the caller doesn't have a choice. That is, in cases where
+> > mount() currently fails with EPERM when not given, say, MS_NOSUID, it
+> > should instead just pretend the caller actually set MS_NOSUID and go
+> > ahead with a nosuid mount. Or put another way, the absence of
+> > MS_NOSUID should not be interpreted as "remove the nosuid bit" but
+> > rather "don't set the nosuid bit if not required".
+>
+> I am conflicted.  Implicits are nice but confusing.  If we can do
+> something reliable and robust and maintainable here that is truly worth
+> the cost I am all for it.
+>
+> If I mount proc read-write I likely want to be able to write to proc
+> files, and I will be much happier if the mount fails than if a bazillion
+> syscalls later something else fails when it tries to write to proc.
 
-diff --git a/drivers/acpi/nfit.c b/drivers/acpi/nfit.c
-index 6cca50d1c690..0da84e067643 100644
---- a/drivers/acpi/nfit.c
-+++ b/drivers/acpi/nfit.c
-@@ -951,7 +951,9 @@ static void write_blk_ctl(struct nfit_blk *nfit_blk, unsigned int bw,
- 	/* mmio->base must be mapped uncacheable */
- 	writeq(cmd, mmio->base + offset);
- 	nfit_blk->psync(nfit_blk);
--	/* FIXME: conditionally perform read-back if mandated by firmware */
-+
-+	if (nfit_blk->dimm_flags & ND_BLK_DCR_LATCH)
-+		readq(mmio->base + offset);
- }
- 
- static int acpi_nfit_blk_single_io(struct nfit_blk *nfit_blk, void *iobuf,
-@@ -983,8 +985,12 @@ static int acpi_nfit_blk_single_io(struct nfit_blk *nfit_blk, void *iobuf,
- 
- 		if (write)
- 			persistent_copy(mmio->aperture + offset, iobuf + copied, c);
--		else
-+		else {
-+			if (nfit_blk->dimm_flags & ND_BLK_FLUSH_REQUIRED)
-+				persistent_flush(mmio->aperture + offset, c);
-+
- 			memcpy(iobuf + copied, mmio->aperture + offset, c);
-+		}
- 
- 		copied += c;
- 		len -= c;
-@@ -1146,6 +1152,20 @@ static int nfit_blk_init_interleave(struct nfit_blk_mmio *mmio,
- 	return 0;
- }
- 
-+static void nd_acpi_blk_get_flags(struct nd_bus_descriptor *nd_desc,
-+		struct nd_dimm *nd_dimm, struct nfit_blk *nfit_blk)
-+{
-+	struct nd_cmd_dimm_flags flags;
-+	int rc;
-+
-+	memset(&flags, 0, sizeof(flags));
-+	rc = nd_desc->ndctl(nd_desc, nd_dimm, ND_CMD_DIMM_FLAGS, &flags,
-+			sizeof(flags));
-+
-+	if (rc >= 0 && !flags.status)
-+		nfit_blk->dimm_flags = flags.flags;
-+}
-+
- static int acpi_nfit_blk_region_enable(struct nd_bus *nd_bus, struct device *dev)
- {
- 	struct nd_bus_descriptor *nd_desc = to_nd_desc(nd_bus);
-@@ -1217,6 +1237,8 @@ static int acpi_nfit_blk_region_enable(struct nd_bus *nd_bus, struct device *dev
- 		return rc;
- 	}
- 
-+	nd_acpi_blk_get_flags(nd_desc, nd_dimm, nfit_blk);
-+
- 	nfit_flush = nfit_mem->nfit_flush;
- 	if (nfit_flush && nfit_flush->flush->hint_count != 0) {
- 		struct acpi_nfit_flush_address *flush = nfit_flush->flush;
-diff --git a/drivers/acpi/nfit.h b/drivers/acpi/nfit.h
-index 858719017bef..d22b04ac3d2c 100644
---- a/drivers/acpi/nfit.h
-+++ b/drivers/acpi/nfit.h
-@@ -139,6 +139,7 @@ struct nfit_blk {
- 	u64 bdw_offset; /* post interleave offset */
- 	u64 stat_offset;
- 	u64 cmd_offset;
-+	u32 dimm_flags;
- 	void __iomem *flush_hint;
- 	void (*psync)(struct nfit_blk *nfit_blk);
- };
-diff --git a/include/uapi/linux/ndctl.h b/include/uapi/linux/ndctl.h
-index e595751c613d..bb0fa1c611e0 100644
---- a/include/uapi/linux/ndctl.h
-+++ b/include/uapi/linux/ndctl.h
-@@ -30,6 +30,11 @@ struct nd_cmd_dimm_flags {
- 	__u32 flags;
- } __packed;
- 
-+enum {
-+	ND_BLK_FLUSH_REQUIRED = 1,
-+	ND_BLK_DCR_LATCH = 2,
-+};
-+
- struct nd_cmd_get_config_size {
- 	__u32 status;
- 	__u32 config_size;
--- 
-1.9.3
+I agree.  I don't like the implicit thing.
+
+--Andy
