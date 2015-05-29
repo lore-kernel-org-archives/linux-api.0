@@ -1,48 +1,151 @@
-From: Thiago Macieira <thiago.macieira@intel.com>
-Subject: Re: [PATCH v2 0/7] CLONE_FD: Task exit notification via file descriptor
-Date: Fri, 29 May 2015 13:27:13 -0700
-Message-ID: <1775865.3maNSqUW4u@tjmaciei-mobl4>
-References: <cover.1426376419.git.josh@joshtriplett.org> <556818A7.3030804@redhat.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v5 00/11] Add simple NVMEM Framework via regmap.
+Date: Fri, 29 May 2015 14:44:33 -0700
+Message-ID: <CAA9_cmcfQ-cYHtQR63ENtygZwaz6OPFsXbmQEZBZesyJqC=qsw@mail.gmail.com>
+References: <1427752492-17039-1-git-send-email-srinivas.kandagatla@linaro.org>
+	<1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org>
+	<CAA9_cmetqnqTQPCd8ya5AJPKQw8ary8CwsE6TUv=f57O=_MH5w@mail.gmail.com>
+	<556810AB.40906@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <556818A7.3030804@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Josh Triplett <josh@joshtriplett.org>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, Rik van Riel <riel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, x86@kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+In-Reply-To: <556810AB.40906@linaro.org>
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Cc: linux-arm-msm@vger.kernel.org, devicetree@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Sascha Hauer <s.hauer@pengutronix.de>, sboyd@codeaurora.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Pantelis Antoniou <pantelis.antoniou@konsulko.com>, Rob Herring <robh+dt@kernel.org>, Mark Brown <broonie@kernel.org>, Kumar Gala <galak@codeaurora.org>, Matthew Porter <mporter@konsulko.com>, Maxime Ripard <maxime.ripard@free-electrons.com>, linux-api@vger.kernel.org, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-On Friday 29 May 2015 09:43:35 Florian Weimer wrote:
-> On 03/15/2015 08:59 AM, Josh Triplett wrote:
-> > This patch series introduces a new clone flag, CLONE_FD, which lets the
-> > caller receive child process exit notification via a file descriptor
-> > rather than SIGCHLD.  CLONE_FD makes it possible for libraries to safely
-> > launch and manage child processes on behalf of their caller, *without*
-> > taking over process-wide SIGCHLD handling (either via signal handler or
-> > signalfd).
-> > 
-> > Note that signalfd for SIGCHLD does not suffice here, because that still
-> > receives notification for all child processes, and interferes with
-> > process-wide signal handling.
-> 
-> It has been suggested (e.g.,
-> <https://sourceware.org/bugzilla/show_bug.cgi?id=15661#c3>) that you can
-> use the existing clone(2) without specifying SIGCHLD to create a new
-> process.  The resulting child process is not supposed to show up in
-> wait(2), only in a waitpid(2) (or similar) explicitly specifying the
-> PID.  Is this not the case?
+On Fri, May 29, 2015 at 12:09 AM, Srinivas Kandagatla
+<srinivas.kandagatla@linaro.org> wrote:
+>
+>
+> On 29/05/15 02:20, Dan Williams wrote:
+>>
+>> On Thu, May 21, 2015 at 9:42 AM, Srinivas Kandagatla
+>> <srinivas.kandagatla@linaro.org> wrote:
+>>>
+>>> Thankyou all for providing inputs and comments on previous versions of
+>>> this patchset.
+>>> Here is the v5 of the patchset addressing all the issues raised as
+>>> part of previous versions review.
+>>>
+>>> This patchset adds a new simple NVMEM framework to kernel.
+>>>
+>>> Up until now, NVMEM drivers were stored in drivers/misc, where they all
+>>> had to
+>>> duplicate pretty much the same code to register a sysfs file, allow
+>>> in-kernel
+>>> users to access the content of the devices they were driving, etc.
+>>>
+>>> This was also a problem as far as other in-kernel users were involved,
+>>> since
+>>> the solutions used were pretty much different from on driver to another,
+>>> there
+>>> was a rather big abstraction leak.
+>>>
+>>> Introduction of this framework aims at solving this. It also introduces
+>>> DT
+>>> representation for consumer devices to go get the data they require (MAC
+>>> Addresses, SoC/Revision ID, part numbers, and so on) from the NVMEMs.
+>>>
+>>> After learning few things about QCOM qfprom and other eeprom/efuses,
+>>> which
+>>> has packed fields at bit level. Which makes it important to add support
+>>> to
+>>> such memories. This version adds support to this type of non volatile
+>>> memories by adding support to bit level nvmem-cells.
+>>>
+>>> Having regmap interface to this framework would give much better
+>>> abstraction for nvmems on different buses.
+>>>
+>>> patch 1-2 Introduces two regmap helper functions.
+>>> patch 3-6 Introduces the NVMEM framework.
+>>> Patch 7 Adds helper functions for nvmems based on mmio.
+>>> Patch 8 migrates an existing driver to nvmem framework.
+>>> Patch 9-10 Adds Qualcomm specific qfprom driver.
+>>> Patch 11 adds entry in MAINTAINERS.
+>>>
+>>> Its also possible to migrate other nvmem drivers to this framework.
+>>>
+>>> Providers APIs:
+>>>          nvmem_register/unregister();
+>>>
+>>> Consumers APIs:
+>>> Cell based apis for both DT/Non-DT:
+>>>          nvmem_cell_get()/nvmem_cell_put();
+>>>          nvmem_cell_read()/nvmem_cell_write();
+>>>
+>>> Raw byte access apis for both DT/non-DT.
+>>>          nvmem_device_get()/nvmem_device_put()
+>>>          nvmem_device_read()/nvmem_device_write();
+>>>          nvmem_device_cell_read()/nvmem_device_cell_write();
+>>>
+>>> Device Tree:
+>>>
+>>>          /* Provider */
+>>>          qfprom: qfprom@00700000 {
+>>>                  ...
+>>>
+>>>                  /* Data cells */
+>>>                  tsens_calibration: calib@404 {
+>>>                          reg = <0x404 0x10>;
+>>>                  };
+>>>
+>>>                  tsens_calibration_bckp: calib_bckp@504 {
+>>>                          reg = <0x504 0x11>;
+>>>                          bit-offset = 6;
+>>>                          nbits = 128;
+>>>                  };
+>>>
+>>>                  pvs_version: pvs-version@6 {
+>>>                          reg = <0x6 0x2>
+>>>                          bit-offset = 7;
+>>>                          nbits = 2;
+>>>                  };
+>>>
+>>>                  speed_bin: speed-bin@c{
+>>>                          reg = <0xc 0x1>;
+>>>                          bit-offset = 2;
+>>>                          nbits   = 3;
+>>>
+>>>                  };
+>>>                  ...
+>>>          };
+>>>
+>>> userspace interface: binary file in /sys/class/nvmem/*/nvmem
+>>>
+>>> ex:
+>>> hexdump /sys/class/nvmem/qfprom0/nvmem
+>>>
+>>> 0000000 0000 0000 0000 0000 0000 0000 0000 0000
+>>> *
+>>> 00000a0 db10 2240 0000 e000 0c00 0c00 0000 0c00
+>>> 0000000 0000 0000 0000 0000 0000 0000 0000 0000
+>>> ...
+>>> *
+>>> 0001000
+>>>
+>>> Changes since v4(https://lkml.org/lkml/2015/3/30/725)
+>>>   * rename eeprom to nvmem suggested by Matt Porter
+>>
+>>
+>> Apologies for the bikeshed fly-by review, but given we already have
+>> NVME and are adding an NVDIMM driver sub-system is s/eeprom/nvmem/ a
+>> good idea?
+>>
+> IMO yes.
+>
+> I did briefly looked at NVME before renaming the eeprom to nvmem,
+> NVME is aimed at defining the command/feature set for PCIe-based SSDs with
+> the goals of increased and efficient performance and interoperability.
+>
+> This patch-set introduces simple nvmem which is applicable for non volatile
+> memories like efuses, eeprom, ROM, NVRAM .. etc, which are used in most
+> boards/SBC's. Data like calibration table, mac address or opps, are
+> generally stored this. This data is required by multiple drivers and
+> currently there is no framework in the kernel to address/abstract this,
+> resulting in code duplication.
 
-Hi Florian
-
-That sounds orthogonal to what we're looking for. Our objective is to get 
-notification of when the child exited without resorting to SIGCHLD. If we use 
-the regular clone(2) without SIGCHLD and without CLONE_FD, we get no 
-notification. The only way to know of the child's termination is by a blocking 
-waitpid(2), like you indicated, which is counter productive to our needs.
-
-We need something we can select(2)/poll(2) on.
--- 
-Thiago Macieira - thiago.macieira (AT) intel.com
-  Software Architect - Intel Open Source Technology Center
-
+Understood, but don't be surprised when people confuse NVMEM support
+(sub to single digit megabyte capacities for firmware) and NVDIMM
+support (multiple gigabyte capacities for i/o).
