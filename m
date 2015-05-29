@@ -1,61 +1,45 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: [PATCH 5/8] DocBook: move fe_bandwidth to the frontend legacy section
-Date: Thu, 28 May 2015 22:28:54 -0300
-Message-ID: <7a3d45f9e8c246b00208487b0794223873b949d4.1432862317.git.mchehab@osg.samsung.com>
+From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [PATCH 8/8] DocBook: improve documentation for hierarchy
+Date: Thu, 28 May 2015 22:28:57 -0300
+Message-ID: <bd97fcf94495df76ee2fc9ac8749ff962e18fa0a.1432862317.git.mchehab@osg.samsung.com>
 References: <cover.1432862317.git.mchehab@osg.samsung.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <cover.1432862317.git.mchehab@osg.samsung.com>
-In-Reply-To: <cover.1432862317.git.mchehab@osg.samsung.com>
-References: <cover.1432862317.git.mchehab@osg.samsung.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Linux Media Mailing List <linux-media@vger.kernel.org>
-Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Mauro Carvalho Chehab <mchehab@infradead.org>, Jonathan Corbet <corbet@lwn.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1432862317.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <cover.1432862317.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+References: <cover.1432862317.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-fe_bandwidth/fe_bandwidth_t is used only on DVBv3 API. So, move
-it to the frontend legacy xml, and convert it into a table.
+Format it as a table and links it with the legacy API xml.
 
-Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 
-diff --git a/Documentation/DocBook/media/dvb/frontend.xml b/Documentation/DocBook/media/dvb/frontend.xml
-index 3b6a169ac8f3..93d22486f20c 100644
---- a/Documentation/DocBook/media/dvb/frontend.xml
-+++ b/Documentation/DocBook/media/dvb/frontend.xml
-@@ -87,21 +87,6 @@ detection.
- <section>
- <title>More OFDM parameters</title>
- 
--<section id="fe-bandwidth-t">
--<title>frontend bandwidth</title>
--<programlisting>
--typedef enum fe_bandwidth {
--	BANDWIDTH_8_MHZ,
--	BANDWIDTH_7_MHZ,
--	BANDWIDTH_6_MHZ,
--	BANDWIDTH_AUTO,
--	BANDWIDTH_5_MHZ,
--	BANDWIDTH_10_MHZ,
--	BANDWIDTH_1_712_MHZ,
--} fe_bandwidth_t;
--</programlisting>
--</section>
--
- <section id="fe-guard-interval-t">
- <title>frontend guard inverval</title>
- <programlisting>
-diff --git a/Documentation/DocBook/media/dvb/frontend_legacy_api.xml b/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
-index fa0c6649abfd..ed393f22f7a7 100644
---- a/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
-+++ b/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
-@@ -60,6 +60,48 @@ supported via the new <link linkend="FE_GET_PROPERTY">FE_GET_PROPERTY/FE_GET_SET
-     using the &DTV-DELIVERY-SYSTEM; property.</para>
- </section>
- 
-+<section id="fe-bandwidth-t">
-+<title>Frontend bandwidth</title>
+diff --git a/Documentation/DocBook/media/dvb/dvbproperty.xml b/Documentation/DocBook/media/dvb/dvbproperty.xml
+index 5f30a28a15b0..ae9bc1e089cc 100644
+--- a/Documentation/DocBook/media/dvb/dvbproperty.xml
++++ b/Documentation/DocBook/media/dvb/dvbproperty.xml
+@@ -951,15 +951,43 @@ typedef enum atscmh_sccc_code_mode {
+ 	<section id="DTV-HIERARCHY">
+ 	<title><constant>DTV_HIERARCHY</constant></title>
+ 	<para>Frontend hierarchy</para>
+-	<programlisting>
+-typedef enum fe_hierarchy {
+-	 HIERARCHY_NONE,
+-	 HIERARCHY_1,
+-	 HIERARCHY_2,
+-	 HIERARCHY_4,
+-	 HIERARCHY_AUTO
+- } fe_hierarchy_t;
+-	</programlisting>
 +
-+<table pgwide="1" frame="none" id="fe-bandwidth">
-+    <title>enum fe_bandwidth</title>
++
++<section id="fe-hierarchy-t">
++<title>Frontend hierarchy</title>
++
++<table pgwide="1" frame="none" id="fe-hierarchy">
++    <title>enum fe_hierarchy</title>
 +    <tgroup cols="2">
 +	&cs-def;
 +	<thead>
@@ -66,69 +50,92 @@ index fa0c6649abfd..ed393f22f7a7 100644
 +	</thead>
 +	<tbody valign="top">
 +	<row>
-+	    <entry>BANDWIDTH_AUTO</entry>
-+	    <entry>Autodetect bandwidth (if supported)</entry>
++	     <entry>HIERARCHY_NONE</entry>
++	    <entry>No hierarchy</entry>
 +	</row><row>
-+	    <entry>BANDWIDTH_1_712_MHZ</entry>
-+	    <entry>1.712 MHz</entry>
++	     <entry>HIERARCHY_AUTO</entry>
++	    <entry>Autodetect hierarchy (if supported)</entry>
 +	</row><row>
-+	    <entry>BANDWIDTH_5_MHZ</entry>
-+	    <entry>5 MHz</entry>
++	     <entry>HIERARCHY_1</entry>
++	    <entry>Hierarchy 1</entry>
 +	</row><row>
-+	    <entry>BANDWIDTH_6_MHZ</entry>
-+	    <entry>6 MHz</entry>
++	     <entry>HIERARCHY_2</entry>
++	    <entry>Hierarchy 2</entry>
 +	</row><row>
-+	    <entry>BANDWIDTH_7_MHZ</entry>
-+	    <entry>7 MHz</entry>
-+	</row><row>
-+	    <entry>BANDWIDTH_8_MHZ</entry>
-+	    <entry>8 MHz</entry>
-+	</row><row>
-+	    <entry>BANDWIDTH_10_MHZ</entry>
-+	    <entry>10 MHz</entry>
-+	</row><row>
++	     <entry>HIERARCHY_4</entry>
++	    <entry>Hierarchy 4</entry>
 +	</row>
 +        </tbody>
 +    </tgroup>
 +</table>
-+
 +</section>
++
+ 	</section>
+ 	<section id="DTV-STREAM-ID">
+ 	<title><constant>DTV_STREAM_ID</constant></title>
+diff --git a/Documentation/DocBook/media/dvb/frontend.xml b/Documentation/DocBook/media/dvb/frontend.xml
+index a005c4b472f5..d81b3ff33295 100644
+--- a/Documentation/DocBook/media/dvb/frontend.xml
++++ b/Documentation/DocBook/media/dvb/frontend.xml
+@@ -56,24 +56,6 @@ specification is available at
  
- <section id="dvb-frontend-parameters">
- <title>frontend parameters</title>
-@@ -135,7 +177,7 @@ struct dvb_vsb_parameters {
- <para>DVB-T frontends are supported by the <constant>dvb_ofdm_parameters</constant> structure:</para>
- <programlisting>
-  struct dvb_ofdm_parameters {
--	 fe_bandwidth_t      bandwidth;
-+	 &fe-bandwidth-t;      bandwidth;
- 	 fe_code_rate_t      code_rate_HP;  /&#x22C6; high priority stream code rate &#x22C6;/
- 	 fe_code_rate_t      code_rate_LP;  /&#x22C6; low priority stream code rate &#x22C6;/
+ &sub-dvbproperty;
+ 
+-<section>
+-<title>More OFDM parameters</title>
+-
+-<section id="fe-hierarchy-t">
+-<title>frontend hierarchy</title>
+-<programlisting>
+-typedef enum fe_hierarchy {
+-	 HIERARCHY_NONE,
+-	 HIERARCHY_1,
+-	 HIERARCHY_2,
+-	 HIERARCHY_4,
+-	 HIERARCHY_AUTO
+- } fe_hierarchy_t;
+-</programlisting>
+-</section>
+-
+-</section>
+-
+ <section id="frontend_fcalls">
+ <title>Frontend Function Calls</title>
+ 
+diff --git a/Documentation/DocBook/media/dvb/frontend_legacy_api.xml b/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
+index d20f1fd75fa9..cb2e18381305 100644
+--- a/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
++++ b/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
+@@ -183,7 +183,7 @@ struct dvb_vsb_parameters {
  	 &fe-modulation-t;     constellation; /&#x22C6; modulation type (see above) &#x22C6;/
+ 	 &fe-transmit-mode-t;  transmission_mode;
+ 	 &fe-guard-interval-t; guard_interval;
+-	 fe_hierarchy_t      hierarchy_information;
++	 &fe-hierarchy-t;      hierarchy_information;
+  };
+ </programlisting>
+ </section>
 diff --git a/include/uapi/linux/dvb/frontend.h b/include/uapi/linux/dvb/frontend.h
-index c42e6d849f52..43e6faf91849 100644
+index 1d2b7c6dee04..3a7ff9002654 100644
 --- a/include/uapi/linux/dvb/frontend.h
 +++ b/include/uapi/linux/dvb/frontend.h
-@@ -213,7 +213,7 @@ enum fe_transmit_mode {
- typedef enum fe_transmit_mode fe_transmit_mode_t;
+@@ -244,13 +244,15 @@ enum fe_guard_interval {
  
- #if defined(__DVB_CORE__) || !defined (__KERNEL__)
--typedef enum fe_bandwidth {
-+enum fe_bandwidth {
- 	BANDWIDTH_8_MHZ,
- 	BANDWIDTH_7_MHZ,
- 	BANDWIDTH_6_MHZ,
-@@ -221,7 +221,9 @@ typedef enum fe_bandwidth {
- 	BANDWIDTH_5_MHZ,
- 	BANDWIDTH_10_MHZ,
- 	BANDWIDTH_1_712_MHZ,
--} fe_bandwidth_t;
+ typedef enum fe_guard_interval fe_guard_interval_t;
+ 
+-typedef enum fe_hierarchy {
++enum fe_hierarchy {
+ 	HIERARCHY_NONE,
+ 	HIERARCHY_1,
+ 	HIERARCHY_2,
+ 	HIERARCHY_4,
+ 	HIERARCHY_AUTO
+-} fe_hierarchy_t;
 +};
 +
-+typedef enum fe_bandwidth fe_bandwidth_t;
- #endif
++typedef enum fe_hierarchy fe_hierarchy_t;
  
- typedef enum fe_guard_interval {
+ enum fe_interleaving {
+ 	INTERLEAVING_NONE,
 -- 
 2.4.1
-
