@@ -1,114 +1,190 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe as
- bind mounts (take 2)
-Date: Thu, 28 May 2015 17:35:03 -0700
-Message-ID: <CALCETrXO21Y7PR=pKqaqJb1YZArNyjAv7Z-J44O53FcfLM_0Tw@mail.gmail.com>
-References: <87pp63jcca.fsf@x220.int.ebiederm.org> <87siaxuvik.fsf@x220.int.ebiederm.org>
- <87wq004im1.fsf@x220.int.ebiederm.org> <CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>
- <20150528140839.GD28842@ubuntumail> <87lhg8pwvz.fsf@x220.int.ebiederm.org>
- <CALCETrXXax28s9kMTQ-zDx0MttQWG4rg2y-oz3bSGiumSL=3sg@mail.gmail.com>
- <CAOP=4wid+N_80iyPpiVMN96_fuHZZRGtYQ6AOPn-HFBj2H6Vgg@mail.gmail.com> <87fv6gikfn.fsf@x220.int.ebiederm.org>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [RFC PATCH 01/21] e820, efi: add ACPI 6.0 persistent memory types
+Date: Thu, 28 May 2015 20:57:09 -0400
+Message-ID: <20150529005709.3482.92281.stgit@dwillia2-desk3.amr.corp.intel.com>
+References: <20150529005536.3482.48349.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <87fv6gikfn.fsf@x220.int.ebiederm.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Kenton Varda <kenton@sandstorm.io>, Serge Hallyn <serge.hallyn@ubuntu.com>, Seth Forshee <seth.forshee@canonical.com>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Richard Weinberger <richard@nod.at>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Tejun Heo <tj@kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150529005536.3482.48349.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-[resend due to HTML. Sorry.]
+ACPI 6.0 formalizes e820-type-7 and efi-type-14 as persistent memory.
+Mark it "reserved" and allow it to be claimed by a persistent memory
+device driver.
 
+This definition is in addition to the Linux kernel's existing type-12
+definition that was recently added in support of shipping platforms with
+NVDIMM support that predate ACPI 6.0 (which now classifies type-12 as
+OEM reserved).
 
-On May 28, 2015 12:19 PM, "Eric W. Biederman" <ebiederm@xmission.com> wrote:
->
-> Kenton Varda <kenton@sandstorm.io> writes:
->
-> > On Thu, May 28, 2015 at 10:33 AM, Andy Lutomirski <luto@amacapital.net> wrote:
-> >> On Thu, May 28, 2015 at 8:03 AM, Eric W. Biederman
-> >> <ebiederm@xmission.com> wrote:
-> >>> Serge Hallyn <serge.hallyn@ubuntu.com> writes:
-> >>>
-> >>>> Quoting Andy Lutomirski (luto@amacapital.net):
-> >>>>> On Fri, May 22, 2015 at 10:39 AM, Eric W. Biederman
-> >>>>> <ebiederm@xmission.com> wrote:
-> >>>>> > I had hoped to get some Tested-By's on that patch series.
-> >>>>>
-> >>>>> Sorry, I've been totally swamped.
-> >>>>>
-> >>>>> I suspect that Sandstorm is okay, but I haven't had a chance to test
-> >>>>> it for real.  Sandstorm makes only limited use of proc and sysfs in
-> >>>>> containers, but I'll see if I can test it for real this weekend.
-> >>>>
-> >>>> Testing this with unprivileged containers, I get
-> >>>>
-> >>>> lxc-start: conf.c: lxc_mount_auto_mounts: 808 Operation not permitted
-> >>>> - error mounting sysfs on
-> >>>> /usr/lib/x86_64-linux-gnu/lxc/sys/devices/virtual/net flags 0
-> >>>
-> >>> Grr..  I was afraid this would break something. :(
-> >>>
-> >>> Looking at my system I see that sysfs is currently mounted
-> >>> "nosuid,nodev,noexec"
-> >>>
-> >>> Looking at the lxc-start code I don't see it as including any of those
-> >>> mount options.  In practice for sysfs I think those options are
-> >>> meaningless (as there should be no devices and nothing executable in
-> >>> sysfs) but I can understand the past concerns with chmod on virtual
-> >>> filesystems that would incline people to use them, so I think the
-> >>> failure is reporting a legitimate security issue in the lxc userspace
-> >>> code where the the unprivileged code is currently attempting to give
-> >>> greater access to sysfs than was given by the original mount of sysfs.
-> >>>
-> >>> As nosuid,nodev,noexec should not impair the operation of sysfs
-> >>> operation it looks like you can always specify those options and just
-> >>> make this concern go away.
-> >>
-> >> Linus is pretty strict about not breaking the ABI, and this definitely
-> >> counts as breaking the ABI.  There's an exception for security issues,
-> >> but is there really a security issue here?  That is, do we lose
-> >> anything important if we just drop the offending part of the patch
-> >> set?  As you've said, there shouldn't be sensitive device nodes,
-> >> executables, or setuid files in proc or sysfs in the first place.
->
-> We do need to enforce retaining the existing mount flags one way or
-> another.  Where this really matters is with MS_RDONLY.  We don't want
-> any old user to be able to mount /proc read-write when root mounted it
-> read-only.  There is a very real attack vector there.  That attack
-> almost works in docker container today and is avoided simply because
-> docker mounts over a few files on proc.
+Note, /proc/iomem can be consulted for differentiating legacy
+"Persistent Memory (legacy)" E820_PRAM vs standard "Persistent Memory"
+E820_PMEM.
 
-You could drop the nosuid, noexec, and nodev changes and keep just the
-ro part.  The ro part is probably not an ABI break in the sense of
-something that actually breaks real programs.
+Cc: Boaz Harrosh <boaz-/8YdC2HfS5554TAoqtyWWQ@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
+Cc: H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Matthew Wilcox <willy-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Acked-by: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Acked-by: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+---
+ arch/arm64/kernel/efi.c          |    1 +
+ arch/ia64/kernel/efi.c           |    4 ++++
+ arch/x86/boot/compressed/eboot.c |    4 ++++
+ arch/x86/include/uapi/asm/e820.h |    1 +
+ arch/x86/kernel/e820.c           |   28 ++++++++++++++++++++++++----
+ arch/x86/platform/efi/efi.c      |    3 +++
+ include/linux/efi.h              |    3 ++-
+ 7 files changed, 39 insertions(+), 5 deletions(-)
 
->
-> Which leads to the second side of the reason for these changes.   I am
-> fixing a very small but long standing ABI break.   That is in some small
-> ways I broke some sandboxes and when I realized they were broken I could
-> not imagine think how to fix the code until now.
->
-> It is the goal that user namespaces don't introduce anything for people
-> to worry about security wise more than simply the ability to execute
-> more kernel code.  So at least when the kernel implementation is correct
-> developers of existing applications simply do not need care.  Sadly we are
-> not quite there yet.
->
-> > Speaking as a user of the mount() interfaces, I really think it would
-> > be less confusing overall if mount() simply ignored the requested
-> > flags when the caller doesn't have a choice. That is, in cases where
-> > mount() currently fails with EPERM when not given, say, MS_NOSUID, it
-> > should instead just pretend the caller actually set MS_NOSUID and go
-> > ahead with a nosuid mount. Or put another way, the absence of
-> > MS_NOSUID should not be interpreted as "remove the nosuid bit" but
-> > rather "don't set the nosuid bit if not required".
->
-> I am conflicted.  Implicits are nice but confusing.  If we can do
-> something reliable and robust and maintainable here that is truly worth
-> the cost I am all for it.
->
-> If I mount proc read-write I likely want to be able to write to proc
-> files, and I will be much happier if the mount fails than if a bazillion
-> syscalls later something else fails when it tries to write to proc.
-
-I agree.  I don't like the implicit thing.
+diff --git a/arch/arm64/kernel/efi.c b/arch/arm64/kernel/efi.c
+index ab21e0d58278..9d4aa18f2a82 100644
+--- a/arch/arm64/kernel/efi.c
++++ b/arch/arm64/kernel/efi.c
+@@ -158,6 +158,7 @@ static __init int is_reserve_region(efi_memory_desc_t *md)
+ 	case EFI_BOOT_SERVICES_CODE:
+ 	case EFI_BOOT_SERVICES_DATA:
+ 	case EFI_CONVENTIONAL_MEMORY:
++	case EFI_PERSISTENT_MEMORY:
+ 		return 0;
+ 	default:
+ 		break;
+diff --git a/arch/ia64/kernel/efi.c b/arch/ia64/kernel/efi.c
+index c52d7540dc05..5f6be9dd6968 100644
+--- a/arch/ia64/kernel/efi.c
++++ b/arch/ia64/kernel/efi.c
+@@ -1223,6 +1223,10 @@ efi_initialize_iomem_resources(struct resource *code_resource,
+ 				flags |= IORESOURCE_DISABLED;
+ 				break;
+ 
++			case EFI_PERSISTENT_MEMORY:
++				name = "Persistent Memory";
++				break;
++
+ 			case EFI_RESERVED_TYPE:
+ 			case EFI_RUNTIME_SERVICES_CODE:
+ 			case EFI_RUNTIME_SERVICES_DATA:
+diff --git a/arch/x86/boot/compressed/eboot.c b/arch/x86/boot/compressed/eboot.c
+index 48304b89b601..2c82bd150d43 100644
+--- a/arch/x86/boot/compressed/eboot.c
++++ b/arch/x86/boot/compressed/eboot.c
+@@ -1224,6 +1224,10 @@ static efi_status_t setup_e820(struct boot_params *params,
+ 			e820_type = E820_NVS;
+ 			break;
+ 
++		case EFI_PERSISTENT_MEMORY:
++			e820_type = E820_PMEM;
++			break;
++
+ 		default:
+ 			continue;
+ 		}
+diff --git a/arch/x86/include/uapi/asm/e820.h b/arch/x86/include/uapi/asm/e820.h
+index 960a8a9dc4ab..0f457e6eab18 100644
+--- a/arch/x86/include/uapi/asm/e820.h
++++ b/arch/x86/include/uapi/asm/e820.h
+@@ -32,6 +32,7 @@
+ #define E820_ACPI	3
+ #define E820_NVS	4
+ #define E820_UNUSABLE	5
++#define E820_PMEM	7
+ 
+ /*
+  * This is a non-standardized way to represent ADR or NVDIMM regions that
+diff --git a/arch/x86/kernel/e820.c b/arch/x86/kernel/e820.c
+index e2ce85db2283..c857d53269dd 100644
+--- a/arch/x86/kernel/e820.c
++++ b/arch/x86/kernel/e820.c
+@@ -149,6 +149,7 @@ static void __init e820_print_type(u32 type)
+ 	case E820_UNUSABLE:
+ 		printk(KERN_CONT "unusable");
+ 		break;
++	case E820_PMEM:
+ 	case E820_PRAM:
+ 		printk(KERN_CONT "persistent (type %u)", type);
+ 		break;
+@@ -918,11 +919,32 @@ static inline const char *e820_type_to_string(int e820_type)
+ 	case E820_ACPI:	return "ACPI Tables";
+ 	case E820_NVS:	return "ACPI Non-volatile Storage";
+ 	case E820_UNUSABLE:	return "Unusable memory";
+-	case E820_PRAM: return "Persistent RAM";
++	case E820_PRAM: return "Persistent Memory (legacy)";
++	case E820_PMEM: return "Persistent Memory";
+ 	default:	return "reserved";
+ 	}
+ }
+ 
++static bool do_mark_busy(u32 type, struct resource *res)
++{
++	/* this is the legacy bios/dos rom-shadow + mmio region */
++	if (res->start < (1ULL<<20))
++		return true;
++
++	/*
++	 * Treat persistent memory like device memory, i.e. reserve it
++	 * for exclusive use of a driver
++	 */
++	switch (type) {
++	case E820_RESERVED:
++	case E820_PRAM:
++	case E820_PMEM:
++		return false;
++	default:
++		return true;
++	}
++}
++
+ /*
+  * Mark e820 reserved areas as busy for the resource manager.
+  */
+@@ -952,9 +974,7 @@ void __init e820_reserve_resources(void)
+ 		 * pci device BAR resource and insert them later in
+ 		 * pcibios_resource_survey()
+ 		 */
+-		if (((e820.map[i].type != E820_RESERVED) &&
+-		     (e820.map[i].type != E820_PRAM)) ||
+-		     res->start < (1ULL<<20)) {
++		if (do_mark_busy(e820.map[i].type, res)) {
+ 			res->flags |= IORESOURCE_BUSY;
+ 			insert_resource(&iomem_resource, res);
+ 		}
+diff --git a/arch/x86/platform/efi/efi.c b/arch/x86/platform/efi/efi.c
+index 02744df576d5..fe01ae37a2a4 100644
+--- a/arch/x86/platform/efi/efi.c
++++ b/arch/x86/platform/efi/efi.c
+@@ -153,6 +153,9 @@ static void __init do_add_efi_memmap(void)
+ 		case EFI_UNUSABLE_MEMORY:
+ 			e820_type = E820_UNUSABLE;
+ 			break;
++		case EFI_PERSISTENT_MEMORY:
++			e820_type = E820_PMEM;
++			break;
+ 		default:
+ 			/*
+ 			 * EFI_RESERVED_TYPE EFI_RUNTIME_SERVICES_CODE
+diff --git a/include/linux/efi.h b/include/linux/efi.h
+index af5be0368dec..825b6e3d69cb 100644
+--- a/include/linux/efi.h
++++ b/include/linux/efi.h
+@@ -85,7 +85,8 @@ typedef	struct {
+ #define EFI_MEMORY_MAPPED_IO		11
+ #define EFI_MEMORY_MAPPED_IO_PORT_SPACE	12
+ #define EFI_PAL_CODE			13
+-#define EFI_MAX_MEMORY_TYPE		14
++#define EFI_PERSISTENT_MEMORY		14
++#define EFI_MAX_MEMORY_TYPE		15
+ 
+ /* Attribute values: */
+ #define EFI_MEMORY_UC		((u64)0x0000000000000001ULL)	/* uncached */
