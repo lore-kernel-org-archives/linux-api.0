@@ -1,34 +1,76 @@
-From: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v2 0/7] CLONE_FD: Task exit notification via file descriptor
-Date: Fri, 29 May 2015 09:43:35 +0200
-Message-ID: <556818A7.3030804@redhat.com>
-References: <cover.1426376419.git.josh@joshtriplett.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1426376419.git.josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thiago Macieira <thiago.macieira-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+From: Kevin Tsai <ktsai-GubuWUlQtMwciDkP5Hr2oA@public.gmane.org>
+Subject: [PATCH 1/1] iio: Add iio_mod_light_uva, iio_mod_light_uvb, and iio_mod_light_uvc.
+Date: Fri, 29 May 2015 01:04:43 -0700
+Message-ID: <1432886683-7467-1-git-send-email-ktsai@capellamicro.com>
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Irina Tirdea <irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Srinivas Pandruvada <srinivas.pandruvada-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Reyad Attiyat <reyad.attiyat-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kevin Tsai <ktsai-GubuWUlQtMwciDkP5Hr2oA@public.gmane.org>
+Cc: linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/15/2015 08:59 AM, Josh Triplett wrote:
-> This patch series introduces a new clone flag, CLONE_FD, which lets the caller
-> receive child process exit notification via a file descriptor rather than
-> SIGCHLD.  CLONE_FD makes it possible for libraries to safely launch and manage
-> child processes on behalf of their caller, *without* taking over process-wide
-> SIGCHLD handling (either via signal handler or signalfd).
-> 
-> Note that signalfd for SIGCHLD does not suffice here, because that still
-> receives notification for all child processes, and interferes with process-wide
-> signal handling.
+Add Ultraviolet(UV) support:
+UVA: 315 ~ 400 nm
+UVB: 280 ~ 315 nm
+UVC: 100 ~ 280 nm
 
-It has been suggested (e.g.,
-<https://sourceware.org/bugzilla/show_bug.cgi?id=15661#c3>) that you can
-use the existing clone(2) without specifying SIGCHLD to create a new
-process.  The resulting child process is not supposed to show up in
-wait(2), only in a waitpid(2) (or similar) explicitly specifying the
-PID.  Is this not the case?
+Signed-off-by: Kevin Tsai <ktsai-GubuWUlQtMwciDkP5Hr2oA@public.gmane.org>
+---
+ drivers/iio/industrialio-core.c | 3 +++
+ include/uapi/linux/iio/types.h  | 3 +++
+ tools/iio/iio_event_monitor.c   | 6 ++++++
+ 3 files changed, 12 insertions(+)
 
+diff --git a/drivers/iio/industrialio-core.c b/drivers/iio/industrialio-core.c
+index 3524b0d..ecbdd1e 100644
+--- a/drivers/iio/industrialio-core.c
++++ b/drivers/iio/industrialio-core.c
+@@ -89,6 +89,9 @@ static const char * const iio_modifier_names[] = {
+ 	[IIO_MOD_LIGHT_RED] = "red",
+ 	[IIO_MOD_LIGHT_GREEN] = "green",
+ 	[IIO_MOD_LIGHT_BLUE] = "blue",
++	[IIO_MOD_LIGHT_UVA] = "uva",
++	[IIO_MOD_LIGHT_UVB] = "uvb",
++	[IIO_MOD_LIGHT_UVC] = "uvc",
+ 	[IIO_MOD_QUATERNION] = "quaternion",
+ 	[IIO_MOD_TEMP_AMBIENT] = "ambient",
+ 	[IIO_MOD_TEMP_OBJECT] = "object",
+diff --git a/include/uapi/linux/iio/types.h b/include/uapi/linux/iio/types.h
+index 2f8b117..5c99090 100644
+--- a/include/uapi/linux/iio/types.h
++++ b/include/uapi/linux/iio/types.h
+@@ -72,6 +72,9 @@ enum iio_modifier {
+ 	IIO_MOD_ROOT_SUM_SQUARED_X_Y_Z,
+ 	IIO_MOD_I,
+ 	IIO_MOD_Q,
++	IIO_MOD_LIGHT_UVA,
++	IIO_MOD_LIGHT_UVB,
++	IIO_MOD_LIGHT_UVC,
+ };
+ 
+ enum iio_event_type {
+diff --git a/tools/iio/iio_event_monitor.c b/tools/iio/iio_event_monitor.c
+index 427c271..46dd27f 100644
+--- a/tools/iio/iio_event_monitor.c
++++ b/tools/iio/iio_event_monitor.c
+@@ -88,6 +88,9 @@ static const char * const iio_modifier_names[] = {
+ 	[IIO_MOD_LIGHT_RED] = "red",
+ 	[IIO_MOD_LIGHT_GREEN] = "green",
+ 	[IIO_MOD_LIGHT_BLUE] = "blue",
++	[IIO_MOD_LIGHT_UVA] = "uva",
++	[IIO_MOD_LIGHT_UVB] = "uvb",
++	[IIO_MOD_LIGHT_UVC] = "uvc",
+ 	[IIO_MOD_QUATERNION] = "quaternion",
+ 	[IIO_MOD_TEMP_AMBIENT] = "ambient",
+ 	[IIO_MOD_TEMP_OBJECT] = "object",
+@@ -156,6 +159,9 @@ static bool event_is_known(struct iio_event_data *event)
+ 	case IIO_MOD_LIGHT_RED:
+ 	case IIO_MOD_LIGHT_GREEN:
+ 	case IIO_MOD_LIGHT_BLUE:
++	case IIO_MOD_LIGHT_UVA:
++	case IIO_MOD_LIGHT_UVB:
++	case IIO_MOD_LIGHT_UVC:
+ 	case IIO_MOD_QUATERNION:
+ 	case IIO_MOD_TEMP_AMBIENT:
+ 	case IIO_MOD_TEMP_OBJECT:
 -- 
-Florian Weimer / Red Hat Product Security
+1.8.3.1
