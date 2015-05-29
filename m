@@ -1,264 +1,110 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: [PATCH 6/8] DocBook: improve documentation for FEC fields
-Date: Thu, 28 May 2015 22:28:55 -0300
-Message-ID: <68173ff8e9279a842f8ec2e52db7743bf77719fc.1432862317.git.mchehab@osg.samsung.com>
-References: <cover.1432862317.git.mchehab@osg.samsung.com>
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <cover.1432862317.git.mchehab@osg.samsung.com>
-In-Reply-To: <cover.1432862317.git.mchehab@osg.samsung.com>
-References: <cover.1432862317.git.mchehab@osg.samsung.com>
-Sender: linux-media-owner@vger.kernel.org
-To: Linux Media Mailing List <linux-media@vger.kernel.org>
-Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Mauro Carvalho Chehab <mchehab@infradead.org>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe as bind mounts (take 2)
+Date: Thu, 28 May 2015 23:36:08 -0500
+Message-ID: <87fv6g80g7.fsf@x220.int.ebiederm.org>
+References: <87pp63jcca.fsf@x220.int.ebiederm.org>
+	<87siaxuvik.fsf@x220.int.ebiederm.org>
+	<87wq004im1.fsf@x220.int.ebiederm.org>
+	<CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>
+	<20150528140839.GD28842@ubuntumail>
+	<87lhg8pwvz.fsf@x220.int.ebiederm.org>
+	<CALCETrXXax28s9kMTQ-zDx0MttQWG4rg2y-oz3bSGiumSL=3sg@mail.gmail.com>
+	<CAOP=4wid+N_80iyPpiVMN96_fuHZZRGtYQ6AOPn-HFBj2H6Vgg@mail.gmail.com>
+	<87fv6gikfn.fsf@x220.int.ebiederm.org>
+	<CALCETrXO21Y7PR=pKqaqJb1YZArNyjAv7Z-J44O53FcfLM_0Tw@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrXO21Y7PR=pKqaqJb1YZArNyjAv7Z-J44O53FcfLM_0Tw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+	(Andy Lutomirski's message of "Thu, 28 May 2015 17:35:03 -0700")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Format it as a table and add more details. Also, remove the
-duplicated occurrences.
+Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
+> On May 28, 2015 12:19 PM, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>> Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org> writes:
+>>
+>> We do need to enforce retaining the existing mount flags one way or
+>> another.  Where this really matters is with MS_RDONLY.  We don't want
+>> any old user to be able to mount /proc read-write when root mounted it
+>> read-only.  There is a very real attack vector there.  That attack
+>> almost works in docker container today and is avoided simply because
+>> docker mounts over a few files on proc.
+>
+> You could drop the nosuid, noexec, and nodev changes and keep just the
+> ro part.  The ro part is probably not an ABI break in the sense of
+> something that actually breaks real programs.
 
-Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+As a change simply removing the code from the existing patches that
+worries about nosuid, noexec, and the nodev flags is certainly doable.
+It is the best proposal I have heard so far.
 
-diff --git a/Documentation/DocBook/media/dvb/dvbproperty.xml b/Documentation/DocBook/media/dvb/dvbproperty.xml
-index 06a12f1c57c5..b96a91a1494d 100644
---- a/Documentation/DocBook/media/dvb/dvbproperty.xml
-+++ b/Documentation/DocBook/media/dvb/dvbproperty.xml
-@@ -290,25 +290,70 @@ get/set up to 64 properties. The actual meaning of each property is described on
- 	<title><constant>DTV_INNER_FEC</constant></title>
- 	<para>Used cable/satellite transmissions. The acceptable values are:
- 	</para>
--	<programlisting>
--typedef enum fe_code_rate {
--	FEC_NONE = 0,
--	FEC_1_2,
--	FEC_2_3,
--	FEC_3_4,
--	FEC_4_5,
--	FEC_5_6,
--	FEC_6_7,
--	FEC_7_8,
--	FEC_8_9,
--	FEC_AUTO,
--	FEC_3_5,
--	FEC_9_10,
--	FEC_2_5,
--} fe_code_rate_t;
--	</programlisting>
--	<para>which correspond to error correction rates of 1/2, 2/3, etc.,
--	no error correction or auto detection.</para>
-+<section id="fe-code-rate-t">
-+<title>enum fe_code_rate: type of the Forward Error Correction.</title>
-+
-+<table pgwide="1" frame="none" id="fe-code-rate">
-+    <title>enum fe_code_rate</title>
-+    <tgroup cols="2">
-+	&cs-def;
-+	<thead>
-+	<row>
-+	    <entry>ID</entry>
-+	    <entry>Description</entry>
-+	</row>
-+	</thead>
-+	<tbody valign="top">
-+	<row>
-+	    <entry>TRANSMISSION_MODE_AUTO</entry>
-+	    <entry>Autodetect transmission mode. The hardware will try to find
-+		the correct FFT-size (if capable) to fill in the missing
-+		parameters.</entry>
-+	</row><row>
-+	    <entry>FEC_NONE</entry>
-+	    <entry>No Forward Error Correction Code</entry>
-+	</row><row>
-+	    <entry>FEC_AUTO</entry>
-+	    <entry>Autodetect Error Correction Code</entry>
-+	</row><row>
-+	    <entry>FEC_1_2</entry>
-+	    <entry>Forward Error Correction Code 1/2</entry>
-+	</row><row>
-+	    <entry>FEC_2_3</entry>
-+	    <entry>Forward Error Correction Code 2/3</entry>
-+	</row><row>
-+	    <entry>FEC_3_4</entry>
-+	    <entry>Forward Error Correction Code 3/4</entry>
-+	</row><row>
-+	    <entry>FEC_4_5</entry>
-+	    <entry>Forward Error Correction Code 4/5</entry>
-+	</row><row>
-+	    <entry>FEC_5_6</entry>
-+	    <entry>Forward Error Correction Code 5/6</entry>
-+	</row><row>
-+	    <entry>FEC_6_7</entry>
-+	    <entry>Forward Error Correction Code 6/7</entry>
-+	</row><row>
-+	    <entry>FEC_7_8</entry>
-+	    <entry>Forward Error Correction Code 7/8</entry>
-+	</row><row>
-+	    <entry>FEC_8_9</entry>
-+	    <entry>Forward Error Correction Code 8/9</entry>
-+	</row><row>
-+	    <entry>FEC_9_10</entry>
-+	    <entry>Forward Error Correction Code 9/10</entry>
-+	</row><row>
-+	    <entry>FEC_2_5</entry>
-+	    <entry>Forward Error Correction Code 2/5</entry>
-+	</row><row>
-+	    <entry>FEC_3_5</entry>
-+	    <entry>Forward Error Correction Code 3/5</entry>
-+	</row><row>
-+	</row>
-+        </tbody>
-+    </tgroup>
-+</table>
-+</section>
- 	</section>
- 	<section id="DTV-VOLTAGE">
- 	<title><constant>DTV_VOLTAGE</constant></title>
-@@ -757,46 +802,18 @@ typedef enum atscmh_sccc_code_mode {
- 	</section>
- 	<section id="DTV-CODE-RATE-HP">
- 	<title><constant>DTV_CODE_RATE_HP</constant></title>
--	<para>Used on terrestrial transmissions. The acceptable values are:
-+	<para>Used on terrestrial transmissions.  The acceptable values are
-+	    the ones described at &fe-transmit-mode-t;.
- 	</para>
--	<programlisting>
--typedef enum fe_code_rate {
--	FEC_NONE = 0,
--	FEC_1_2,
--	FEC_2_3,
--	FEC_3_4,
--	FEC_4_5,
--	FEC_5_6,
--	FEC_6_7,
--	FEC_7_8,
--	FEC_8_9,
--	FEC_AUTO,
--	FEC_3_5,
--	FEC_9_10,
--} fe_code_rate_t;
--	</programlisting>
- 	</section>
- 	<section id="DTV-CODE-RATE-LP">
- 	<title><constant>DTV_CODE_RATE_LP</constant></title>
--	<para>Used on terrestrial transmissions. The acceptable values are:
-+	<para>Used on terrestrial transmissions. The acceptable values are
-+	    the ones described at &fe-transmit-mode-t;.
- 	</para>
--	<programlisting>
--typedef enum fe_code_rate {
--	FEC_NONE = 0,
--	FEC_1_2,
--	FEC_2_3,
--	FEC_3_4,
--	FEC_4_5,
--	FEC_5_6,
--	FEC_6_7,
--	FEC_7_8,
--	FEC_8_9,
--	FEC_AUTO,
--	FEC_3_5,
--	FEC_9_10,
--} fe_code_rate_t;
--	</programlisting>
-+
- 	</section>
-+
- 	<section id="DTV-GUARD-INTERVAL">
- 		<title><constant>DTV_GUARD_INTERVAL</constant></title>
- 
-diff --git a/Documentation/DocBook/media/dvb/frontend.xml b/Documentation/DocBook/media/dvb/frontend.xml
-index 93d22486f20c..563800eb1216 100644
---- a/Documentation/DocBook/media/dvb/frontend.xml
-+++ b/Documentation/DocBook/media/dvb/frontend.xml
-@@ -56,34 +56,6 @@ specification is available at
- 
- &sub-dvbproperty;
- 
--<section id="fe-code-rate-t">
--<title>frontend code rate</title>
--<para>The possible values for the <constant>fec_inner</constant> field used on
--<link linkend="dvb-qpsk-parameters"><constant>struct dvb_qpsk_parameters</constant></link> and
--<link linkend="dvb-qam-parameters"><constant>struct dvb_qam_parameters</constant></link> are:
--</para>
--<programlisting>
--typedef enum fe_code_rate {
--	FEC_NONE = 0,
--	FEC_1_2,
--	FEC_2_3,
--	FEC_3_4,
--	FEC_4_5,
--	FEC_5_6,
--	FEC_6_7,
--	FEC_7_8,
--	FEC_8_9,
--	FEC_AUTO,
--	FEC_3_5,
--	FEC_9_10,
--} fe_code_rate_t;
--</programlisting>
--<para>which correspond to error correction rates of 1/2, 2/3, etc., no error correction or auto
--detection.
--</para>
--</section>
--
--
- <section>
- <title>More OFDM parameters</title>
- 
-diff --git a/Documentation/DocBook/media/dvb/frontend_legacy_api.xml b/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
-index ed393f22f7a7..c1dfbd8096bd 100644
---- a/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
-+++ b/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
-@@ -145,7 +145,7 @@ OFDM frontends the <constant>frequency</constant> specifies the absolute frequen
- <programlisting>
-  struct dvb_qpsk_parameters {
- 	 uint32_t        symbol_rate;  /&#x22C6; symbol rate in Symbols per second &#x22C6;/
--	 fe_code_rate_t  fec_inner;    /&#x22C6; forward error correction (see above) &#x22C6;/
-+	 &fe-code-rate-t;  fec_inner;    /&#x22C6; forward error correction (see above) &#x22C6;/
-  };
- </programlisting>
- </section>
-@@ -156,7 +156,7 @@ OFDM frontends the <constant>frequency</constant> specifies the absolute frequen
- <programlisting>
-  struct dvb_qam_parameters {
- 	 uint32_t         symbol_rate; /&#x22C6; symbol rate in Symbols per second &#x22C6;/
--	 fe_code_rate_t   fec_inner;   /&#x22C6; forward error correction (see above) &#x22C6;/
-+	 &fe-code-rate-t;   fec_inner;   /&#x22C6; forward error correction (see above) &#x22C6;/
- 	 &fe-modulation-t;  modulation;  /&#x22C6; modulation type (see above) &#x22C6;/
-  };
- </programlisting>
-@@ -178,8 +178,8 @@ struct dvb_vsb_parameters {
- <programlisting>
-  struct dvb_ofdm_parameters {
- 	 &fe-bandwidth-t;      bandwidth;
--	 fe_code_rate_t      code_rate_HP;  /&#x22C6; high priority stream code rate &#x22C6;/
--	 fe_code_rate_t      code_rate_LP;  /&#x22C6; low priority stream code rate &#x22C6;/
-+	 &fe-code-rate-t;      code_rate_HP;  /&#x22C6; high priority stream code rate &#x22C6;/
-+	 &fe-code-rate-t;      code_rate_LP;  /&#x22C6; low priority stream code rate &#x22C6;/
- 	 &fe-modulation-t;     constellation; /&#x22C6; modulation type (see above) &#x22C6;/
- 	 &fe-transmit-mode-t;  transmission_mode;
- 	 fe_guard_interval_t guard_interval;
-diff --git a/include/uapi/linux/dvb/frontend.h b/include/uapi/linux/dvb/frontend.h
-index 43e6faf91849..49f6e980125b 100644
---- a/include/uapi/linux/dvb/frontend.h
-+++ b/include/uapi/linux/dvb/frontend.h
-@@ -162,7 +162,7 @@ enum fe_spectral_inversion {
- 
- typedef enum fe_spectral_inversion fe_spectral_inversion_t;
- 
--typedef enum fe_code_rate {
-+enum fe_code_rate {
- 	FEC_NONE = 0,
- 	FEC_1_2,
- 	FEC_2_3,
-@@ -176,7 +176,9 @@ typedef enum fe_code_rate {
- 	FEC_3_5,
- 	FEC_9_10,
- 	FEC_2_5,
--} fe_code_rate_t;
-+};
-+
-+typedef enum fe_code_rate fe_code_rate_t;
- 
- 
- enum fe_modulation {
--- 
-2.4.1
+I remain unconvinced about ignoring those flags:
+- There are clearly people who think it matters (or else proc and sysfs
+  would not have those flags specified).
+
+- There have been times when it actually has mattered.
+  Aka when files like /proc/self/env could be chmodded and used for
+  privilege escalation.
+
+- The code in lxc and libvirt-lxc so far has been clearly buggy.
+  * lxc only has problems with sysfs (in some configurations).
+  * libvirt-lxc only has problems on a bind mount remount of
+    proc after remounting proc properly.
+
+So I am leaning towards enforcing all of the mount flags including
+nosuid, noexec, and nodev.  Then when the next subtle bug in proc or
+sysfs with respect to chmod shows up I will be able to sleep soundly at
+night because the mount flags of those filesystems allow a mitigation,
+and I did not sabatage the mitigation.
+
+Plus contemplating code that just enforces a couple of mount flags but
+not all of the feels wrong.
+
+I don't think it is actually a maintainable position to just enforce a
+couple of those flags.  If nothing else I would expect someone to look
+at the code and to generate a bug fix to start enforcing the rest of the
+flags.  Or perhaps it is in a few years time and something gets
+refactored and the enforcing starts happening by virtue of using a new
+common function that no-one realizes will be a problem.
+
+Additionally if we don't enforce nosuid, noexec, and nodev people are
+going to ask questions, that will be hard to explain.  When what is
+truly desirable is to say that sysfs and proc are a little odd but they
+don't allow anything that a bind mount won't.
+
+I can be persuaded otherwise but right now I do think the kernel code
+needs to enforce nosuid, noexec, and nodev as it is a security issue (if
+only a defence in depth one), and a maintenance issue as I do not
+believe in the long term it is a maintanable or an explicable position.
+
+>> > Speaking as a user of the mount() interfaces, I really think it would
+>> > be less confusing overall if mount() simply ignored the requested
+>> > flags when the caller doesn't have a choice. That is, in cases where
+>> > mount() currently fails with EPERM when not given, say, MS_NOSUID, it
+>> > should instead just pretend the caller actually set MS_NOSUID and go
+>> > ahead with a nosuid mount. Or put another way, the absence of
+>> > MS_NOSUID should not be interpreted as "remove the nosuid bit" but
+>> > rather "don't set the nosuid bit if not required".
+>>
+>> I am conflicted.  Implicits are nice but confusing.  If we can do
+>> something reliable and robust and maintainable here that is truly worth
+>> the cost I am all for it.
+>>
+>> If I mount proc read-write I likely want to be able to write to proc
+>> files, and I will be much happier if the mount fails than if a bazillion
+>> syscalls later something else fails when it tries to write to proc.
+>
+> I agree.  I don't like the implicit thing.
+
+My memory returns of our last round of looking at this and for whatever
+it's warts the existing mount API for remounting filesystems needs to
+have the flags have exactly the same meaning as at mount time.  There
+are existing userspace applications that depend on that behavior.
+
+Implicits for only the locked mount flags is a little different but
+still ick.
+
+Eric
