@@ -1,63 +1,142 @@
-From: =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>
-Subject: [PATCH v5 01/12] KVM: add comments for kvm_debug_exit_arch struct
-Date: Fri, 29 May 2015 10:30:17 +0100
-Message-ID: <1432891828-4816-2-git-send-email-alex.bennee@linaro.org>
-References: <1432891828-4816-1-git-send-email-alex.bennee@linaro.org>
+From: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
+Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe
+	as bind mounts (take 2)
+Date: Fri, 29 May 2015 11:30:55 +0200
+Message-ID: <556831CF.9040600@nod.at>
+References: <87pp63jcca.fsf@x220.int.ebiederm.org>	<87siaxuvik.fsf@x220.int.ebiederm.org>	<87wq004im1.fsf@x220.int.ebiederm.org>	<CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>	<20150528140839.GD28842@ubuntumail>
+	<55676E32.3050006@nod.at>	<87382gh3uo.fsf@x220.int.ebiederm.org>
+	<55677AEF.1090809@nod.at> <87iobcfkwx.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
-In-Reply-To: <1432891828-4816-1-git-send-email-alex.bennee@linaro.org>
-List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
-List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
-List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
-List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
-List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
-Errors-To: kvmarm-bounces@lists.cs.columbia.edu
-Sender: kvmarm-bounces@lists.cs.columbia.edu
-To: kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kvmarm@lists.cs.columbia.edu, christoffer.dall@linaro.org, marc.zyngier@arm.com, peter.maydell@linaro.org, agraf@suse.de, drjones@redhat.com, pbonzini@redhat.com, zhichao.huang@linaro.org
-Cc: Jonathan Corbet <corbet@lwn.net>, Gleb Natapov <gleb@kernel.org>, jan.kiszka@siemens.com, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, dahi@linux.vnet.ibm.com, r65777@freescale.com, bp@suse.de
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <87iobcfkwx.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, "libvir-list-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <libvir-list-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Cedric Bosdonnat <cbosdonnat-IBi9RG/b67k@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-QnJpbmcgaW50byBsaW5lIHdpdGggdGhlIGNvbW1lbnRzIGZvciB0aGUgb3RoZXIgc3RydWN0dXJl
-cyBhbmQgdGhlaXIKS1ZNX0VYSVRfKiBjYXNlcy4gQWxzbyB1cGRhdGUgYXBpLnR4dCB0byByZWZs
-ZWN0IHVzZSBpbiBrdm1fcnVuCmRvY3VtZW50YXRpb24uCgpTaWduZWQtb2ZmLWJ5OiBBbGV4IEJl
-bm7DqWUgPGFsZXguYmVubmVlQGxpbmFyby5vcmc+ClJldmlld2VkLWJ5OiBEYXZpZCBIaWxkZW5i
-cmFuZCA8ZGFoaUBsaW51eC52bmV0LmlibS5jb20+ClJldmlld2VkLWJ5OiBBbmRyZXcgSm9uZXMg
-PGRyam9uZXNAcmVkaGF0LmNvbT4KQWNrZWQtYnk6IENocmlzdG9mZmVyIERhbGwgPGNocmlzdG9m
-ZmVyLmRhbGxAbGluYXJvLm9yZz4KCi0tLQoKdjIKICAtIGFkZCBjb21tZW50cyBmb3Igb3RoZXIg
-ZXhpdCB0eXBlcwp2MwogIC0gcy9jb21tZW50YXJ5L2NvbW1lbnRzLwogIC0gYWRkIHJiIHRhZ3MK
-ICAtIHVwZGF0ZSBhcGkudHh0IGt2bV9ydW4gdG8gaW5jbHVkZSBLVk1fRVhJVF9ERUJVRyBkZXNj
-CnY0CiAgLSBzcCBmaXhlcwogIC0gYWRkIGEtYgotLS0KIERvY3VtZW50YXRpb24vdmlydHVhbC9r
-dm0vYXBpLnR4dCB8IDQgKysrLQogaW5jbHVkZS91YXBpL2xpbnV4L2t2bS5oICAgICAgICAgIHwg
-MyArKysKIDIgZmlsZXMgY2hhbmdlZCwgNiBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9uKC0pCgpk
-aWZmIC0tZ2l0IGEvRG9jdW1lbnRhdGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0IGIvRG9jdW1lbnRh
-dGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0CmluZGV4IDlmYTJiZjguLmMzNGMzMmQgMTAwNjQ0Ci0t
-LSBhL0RvY3VtZW50YXRpb24vdmlydHVhbC9rdm0vYXBpLnR4dAorKysgYi9Eb2N1bWVudGF0aW9u
-L3ZpcnR1YWwva3ZtL2FwaS50eHQKQEAgLTMwNzAsMTEgKzMwNzAsMTMgQEAgZGF0YV9vZmZzZXQg
-ZGVzY3JpYmVzIHdoZXJlIHRoZSBkYXRhIGlzIGxvY2F0ZWQgKEtWTV9FWElUX0lPX09VVCkgb3IK
-IHdoZXJlIGt2bSBleHBlY3RzIGFwcGxpY2F0aW9uIGNvZGUgdG8gcGxhY2UgdGhlIGRhdGEgZm9y
-IHRoZSBuZXh0CiBLVk1fUlVOIGludm9jYXRpb24gKEtWTV9FWElUX0lPX0lOKS4gIERhdGEgZm9y
-bWF0IGlzIGEgcGFja2VkIGFycmF5LgogCisJCS8qIEtWTV9FWElUX0RFQlVHICovCiAJCXN0cnVj
-dCB7CiAJCQlzdHJ1Y3Qga3ZtX2RlYnVnX2V4aXRfYXJjaCBhcmNoOwogCQl9IGRlYnVnOwogCi1V
-bnVzZWQuCitJZiB0aGUgZXhpdF9yZWFzb24gaXMgS1ZNX0VYSVRfREVCVUcsIHRoZW4gYSB2Y3B1
-IGlzIHByb2Nlc3NpbmcgYSBkZWJ1ZyBldmVudAorZm9yIHdoaWNoIGFyY2hpdGVjdHVyZSBzcGVj
-aWZpYyBpbmZvcm1hdGlvbiBpcyByZXR1cm5lZC4KIAogCQkvKiBLVk1fRVhJVF9NTUlPICovCiAJ
-CXN0cnVjdCB7CmRpZmYgLS1naXQgYS9pbmNsdWRlL3VhcGkvbGludXgva3ZtLmggYi9pbmNsdWRl
-L3VhcGkvbGludXgva3ZtLmgKaW5kZXggNGI2MDA1Ni4uNzBhYzY0MSAxMDA2NDQKLS0tIGEvaW5j
-bHVkZS91YXBpL2xpbnV4L2t2bS5oCisrKyBiL2luY2x1ZGUvdWFwaS9saW51eC9rdm0uaApAQCAt
-MjM3LDYgKzIzNyw3IEBAIHN0cnVjdCBrdm1fcnVuIHsKIAkJCV9fdTMyIGNvdW50OwogCQkJX191
-NjQgZGF0YV9vZmZzZXQ7IC8qIHJlbGF0aXZlIHRvIGt2bV9ydW4gc3RhcnQgKi8KIAkJfSBpbzsK
-KwkJLyogS1ZNX0VYSVRfREVCVUcgKi8KIAkJc3RydWN0IHsKIAkJCXN0cnVjdCBrdm1fZGVidWdf
-ZXhpdF9hcmNoIGFyY2g7CiAJCX0gZGVidWc7CkBAIC0yODUsNiArMjg2LDcgQEAgc3RydWN0IGt2
-bV9ydW4gewogCQkJX191MzIgZGF0YTsKIAkJCV9fdTggIGlzX3dyaXRlOwogCQl9IGRjcjsKKwkJ
-LyogS1ZNX0VYSVRfSU5URVJOQUxfRVJST1IgKi8KIAkJc3RydWN0IHsKIAkJCV9fdTMyIHN1YmVy
-cm9yOwogCQkJLyogQXZhaWxhYmxlIHdpdGggS1ZNX0NBUF9JTlRFUk5BTF9FUlJPUl9EQVRBOiAq
-LwpAQCAtMjk1LDYgKzI5Nyw3IEBAIHN0cnVjdCBrdm1fcnVuIHsKIAkJc3RydWN0IHsKIAkJCV9f
-dTY0IGdwcnNbMzJdOwogCQl9IG9zaTsKKwkJLyogS1ZNX0VYSVRfUEFQUl9IQ0FMTCAqLwogCQlz
-dHJ1Y3QgewogCQkJX191NjQgbnI7CiAJCQlfX3U2NCByZXQ7Ci0tIAoyLjQuMQoKX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18Ka3ZtYXJtIG1haWxpbmcgbGlz
-dAprdm1hcm1AbGlzdHMuY3MuY29sdW1iaWEuZWR1Cmh0dHBzOi8vbGlzdHMuY3MuY29sdW1iaWEu
-ZWR1L21haWxtYW4vbGlzdGluZm8va3ZtYXJtCg==
+[CC'ing libvirt-lxc folks]
+
+Am 28.05.2015 um 23:32 schrieb Eric W. Biederman:
+> Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org> writes:
+> 
+>> Am 28.05.2015 um 21:57 schrieb Eric W. Biederman:
+>>>> FWIW, it breaks also libvirt-lxc:
+>>>> Error: internal error: guest failed to start: Failed to re-mount /proc/sys on /proc/sys flags=1021: Operation not permitted
+>>>
+>>> Interesting.  I had not anticipated a failure there?  And it is failing
+>>> in remount?  Oh that is interesting.
+>>>
+>>> That implies that there is some flag of the original mount of /proc that
+>>> the remount of /proc/sys is clearing, and that previously 
+>>>
+>>> The flags specified are current rdonly,remount,bind so I expect there
+>>> are some other flags on proc that libvirt-lxc is clearing by accident
+>>> and we did not fail before because the kernel was not enforcing things.
+>>
+>> Please see:
+>> http://libvirt.org/git/?p=libvirt.git;a=blob;f=src/lxc/lxc_container.c;h=9a9ae5c2aaf0f90ff472f24fda43c077b44998c7;hb=HEAD#l933
+>> lxcContainerMountBasicFS()
+>>
+>> and:
+>> http://libvirt.org/git/?p=libvirt.git;a=blob;f=src/lxc/lxc_container.c;h=9a9ae5c2aaf0f90ff472f24fda43c077b44998c7;hb=HEAD#l850
+>> lxcBasicMounts
+>>
+>>> What are the mount flags in a working libvirt-lxc?
+>>
+>> See:
+>> test1:~ # cat /proc/self/mountinfo
+>> 149 147 0:56 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
+>> 150 149 0:56 /sys /proc/sys ro,nodev,relatime - proc proc rw
+> 
+>> If you need more info, please let me know. :-)
+> 
+> Oh interesting I had not realized libvirt-lxc had grown an unprivileged
+> mode using user namespaces.
+> 
+> This does appear to be a classic remount bug, where you are not
+> preserving the permissions.  It appears the fact that the code
+> failed to enforce locked permissions on the fresh mount of proc
+> was hiding this bug until now.
+> 
+> I expect what you actually want is the code below:
+> 
+> diff --git a/src/lxc/lxc_container.c b/src/lxc/lxc_container.c
+> index 9a9ae5c2aaf0..f008a7484bfe 100644
+> --- a/src/lxc/lxc_container.c
+> +++ b/src/lxc/lxc_container.c
+> @@ -850,7 +850,7 @@ typedef struct {
+>  
+>  static const virLXCBasicMountInfo lxcBasicMounts[] = {
+>      { "proc", "/proc", "proc", MS_NOSUID|MS_NOEXEC|MS_NODEV, false, false, false },
+> -    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, false, false, false },
+> +    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
+>      { "/.oldroot/proc/sys/net/ipv4", "/proc/sys/net/ipv4", NULL, MS_BIND, false, false, true },
+>      { "/.oldroot/proc/sys/net/ipv6", "/proc/sys/net/ipv6", NULL, MS_BIND, false, false, true },
+>      { "sysfs", "/sys", "sysfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
+> 
+> Or possibly just:
+> 
+> diff --git a/src/lxc/lxc_container.c b/src/lxc/lxc_container.c
+> index 9a9ae5c2aaf0..a60ccbd12bfc 100644
+> --- a/src/lxc/lxc_container.c
+> +++ b/src/lxc/lxc_container.c
+> @@ -850,7 +850,7 @@ typedef struct {
+>  
+>  static const virLXCBasicMountInfo lxcBasicMounts[] = {
+>      { "proc", "/proc", "proc", MS_NOSUID|MS_NOEXEC|MS_NODEV, false, false, false },
+> -    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, false, false, false },
+> +    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, true, false, false },
+>      { "/.oldroot/proc/sys/net/ipv4", "/proc/sys/net/ipv4", NULL, MS_BIND, false, false, true },
+>      { "/.oldroot/proc/sys/net/ipv6", "/proc/sys/net/ipv6", NULL, MS_BIND, false, false, true },
+>      { "sysfs", "/sys", "sysfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
+> 
+> As the there is little point in making /proc/sys read-only in a
+> user-namespace, as the permission checks are uid based and no-one should
+> have the global uid 0 in your container.  Making mounting /proc/sys
+> read-only rather pointless.
+
+Eric, using the patch below I was able to spawn a user-namespace enabled container
+using libvirt-lxc. :-)
+
+I had to:
+1. Disable the read-only mount of /proc/sys which is anyway useless in the user-namespace case.
+2. Disable the /proc/sys/net/ipv{4,6} bind mounts, this ugly hack is only needed for the non user-namespace case.
+3. Remove MS_RDONLY from the sysfs mount (For the non user-namespace case we'd have to keep this, though).
+
+Daniel, I'd take this as a chance to disable all the MS_RDONLY games if user-namespace are configured.
+With Eric's fixes they hurt us. And as I wrote many times before if root within the user-namespace
+is able to do nasty things in /sys and /proc that's a plain kernel bug which needs fixing. There is no
+point in mounting these read-only. Except for the case then no user-namespace is used.
+
+diff --git a/src/lxc/lxc_container.c b/src/lxc/lxc_container.c
+index 9a9ae5c..497e05f 100644
+--- a/src/lxc/lxc_container.c
++++ b/src/lxc/lxc_container.c
+@@ -850,10 +850,10 @@ typedef struct {
+
+ static const virLXCBasicMountInfo lxcBasicMounts[] = {
+     { "proc", "/proc", "proc", MS_NOSUID|MS_NOEXEC|MS_NODEV, false, false, false },
+-    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, false, false, false },
+-    { "/.oldroot/proc/sys/net/ipv4", "/proc/sys/net/ipv4", NULL, MS_BIND, false, false, true },
+-    { "/.oldroot/proc/sys/net/ipv6", "/proc/sys/net/ipv6", NULL, MS_BIND, false, false, true },
+-    { "sysfs", "/sys", "sysfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
++    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, true, false, false },
++    { "/.oldroot/proc/sys/net/ipv4", "/proc/sys/net/ipv4", NULL, MS_BIND, true, false, true },
++    { "/.oldroot/proc/sys/net/ipv6", "/proc/sys/net/ipv6", NULL, MS_BIND, true, false, true },
++    { "sysfs", "/sys", "sysfs", MS_NOSUID|MS_NOEXEC|MS_NODEV, false, false, false },
+     { "securityfs", "/sys/kernel/security", "securityfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, true, true, false },
+ #if WITH_SELINUX
+     { SELINUX_MOUNT, SELINUX_MOUNT, "selinuxfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, true, true, false },
+
+Thanks,
+//richard
