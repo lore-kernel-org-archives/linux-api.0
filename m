@@ -1,40 +1,57 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: [PATCH 4/8] DocBook: improve documentation for OFDM transmission mode
-Date: Thu, 28 May 2015 22:28:53 -0300
-Message-ID: <abb97d457a590324e19ebb727b46761c287dae14.1432862317.git.mchehab@osg.samsung.com>
+From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [PATCH 3/8] DocBook: improve documentation for DVB spectral inversion
+Date: Thu, 28 May 2015 22:28:52 -0300
+Message-ID: <52d67c92016544f4489e8ad8ae6d175b5d22dfc4.1432862317.git.mchehab@osg.samsung.com>
 References: <cover.1432862317.git.mchehab@osg.samsung.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <cover.1432862317.git.mchehab@osg.samsung.com>
-In-Reply-To: <cover.1432862317.git.mchehab@osg.samsung.com>
-References: <cover.1432862317.git.mchehab@osg.samsung.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Linux Media Mailing List <linux-media@vger.kernel.org>
-Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Mauro Carvalho Chehab <mchehab@infradead.org>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1432862317.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <cover.1432862317.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+References: <cover.1432862317.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Format it as a table and add more details, in special, for
-the DTMB modes.
+Format it as a table and provide more details.
 
-Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 
 diff --git a/Documentation/DocBook/media/dvb/dvbproperty.xml b/Documentation/DocBook/media/dvb/dvbproperty.xml
-index 41085537acfc..06a12f1c57c5 100644
+index d9861b54f8c8..41085537acfc 100644
 --- a/Documentation/DocBook/media/dvb/dvbproperty.xml
 +++ b/Documentation/DocBook/media/dvb/dvbproperty.xml
-@@ -827,22 +827,61 @@ typedef enum fe_guard_interval {
- 	<section id="DTV-TRANSMISSION-MODE">
- 		<title><constant>DTV_TRANSMISSION_MODE</constant></title>
- 
--		<para>Specifies the number of carriers used by the standard</para>
-+		<para>Specifies the number of carriers used by the standard.
-+		    This is used only on OFTM-based standards, e. g.
-+		    DVB-T/T2, ISDB-T, DTMB</para>
+@@ -238,19 +238,45 @@ get/set up to 64 properties. The actual meaning of each property is described on
+ 	</section>
+ 	<section id="DTV-INVERSION">
+ 	<title><constant>DTV_INVERSION</constant></title>
+-	<para>The Inversion field can take one of these values:
+-	</para>
+-	<programlisting>
+-	typedef enum fe_spectral_inversion {
+-		INVERSION_OFF,
+-		INVERSION_ON,
+-		INVERSION_AUTO
+-	} fe_spectral_inversion_t;
+-	</programlisting>
+-	<para>It indicates if spectral inversion should be presumed or not. In the automatic setting
+-	(<constant>INVERSION_AUTO</constant>) the hardware will try to figure out the correct setting by
+-	itself.
+-	</para>
 +
-+<section id="fe-transmit-mode-t">
-+<title>enum fe_transmit_mode: Number of carriers per channel</title>
++	<para>Specifies if the frontend should do spectral inversion or not.</para>
 +
-+<table pgwide="1" frame="none" id="fe-transmit-mode">
-+    <title>enum fe_transmit_mode</title>
++<section id="fe-spectral-inversion-t">
++<title>enum fe_modulation: Frontend spectral inversion</title>
++
++<para>This parameter indicates if spectral inversion should be presumed or not.
++    In the automatic setting (<constant>INVERSION_AUTO</constant>) the hardware
++    will try to figure out the correct setting by itself. If the hardware
++    doesn't support, the DVB core will try to lock at the carrier first with
++    inversion off. If it fails, it will try to enable inversion.
++</para>
++
++<table pgwide="1" frame="none" id="fe-spectral-inversion">
++    <title>enum fe_modulation</title>
 +    <tgroup cols="2">
 +	&cs-def;
 +	<thead>
@@ -45,122 +62,83 @@ index 41085537acfc..06a12f1c57c5 100644
 +	</thead>
 +	<tbody valign="top">
 +	<row>
-+	    <entry>TRANSMISSION_MODE_AUTO</entry>
-+	    <entry>Autodetect transmission mode. The hardware will try to find
-+		the correct FFT-size (if capable) to fill in the missing
-+		parameters.</entry>
++	    <entry>INVERSION_OFF</entry>
++	    <entry>Don't do spectral band inversion.</entry>
 +	</row><row>
-+	    <entry>TRANSMISSION_MODE_1K</entry>
-+	    <entry>Transmission mode 1K</entry>
++	    <entry>INVERSION_ON</entry>
++	    <entry>Do spectral band inversion.</entry>
 +	</row><row>
-+	    <entry>TRANSMISSION_MODE_2K</entry>
-+	    <entry>Transmission mode 2K</entry>
-+	</row><row>
-+	    <entry>TRANSMISSION_MODE_8K</entry>
-+	    <entry>Transmission mode 8K</entry>
-+	</row><row>
-+	    <entry>TRANSMISSION_MODE_4K</entry>
-+	    <entry>Transmission mode 4K</entry>
-+	</row><row>
-+	    <entry>TRANSMISSION_MODE_16K</entry>
-+	    <entry>Transmission mode 16K</entry>
-+	</row><row>
-+	    <entry>TRANSMISSION_MODE_32K</entry>
-+	    <entry>Transmission mode 32K</entry>
-+	</row><row>
-+	    <entry>TRANSMISSION_MODE_C1</entry>
-+	    <entry>Single Carrier (C=1) transmission mode (DTMB)</entry>
-+	</row><row>
-+	    <entry>TRANSMISSION_MODE_C3780</entry>
-+	    <entry>Multi Carrier (C=3780) transmission mode (DTMB)</entry>
-+	</row><row>
++	    <entry>INVERSION_AUTO</entry>
++	    <entry>Autodetect spectral band inversion.</entry>
 +	</row>
 +        </tbody>
 +    </tgroup>
 +</table>
 +</section>
 +
- 
--		<para>Possible values are:</para>
--<programlisting>
--typedef enum fe_transmit_mode {
--	TRANSMISSION_MODE_2K,
--	TRANSMISSION_MODE_8K,
--	TRANSMISSION_MODE_AUTO,
--	TRANSMISSION_MODE_4K,
--	TRANSMISSION_MODE_1K,
--	TRANSMISSION_MODE_16K,
--	TRANSMISSION_MODE_32K,
--	TRANSMISSION_MODE_C1,
--	TRANSMISSION_MODE_C3780,
--} fe_transmit_mode_t;
--</programlisting>
- 		<para>Notes:</para>
- 		<para>1) ISDB-T supports three carrier/symbol-size: 8K, 4K, 2K. It is called
- 			'mode' in the standard: Mode 1 is 2K, mode 2 is 4K, mode 3 is 8K</para>
+ 	</section>
+ 	<section id="DTV-DISEQC-MASTER">
+ 	<title><constant>DTV_DISEQC_MASTER</constant></title>
 diff --git a/Documentation/DocBook/media/dvb/frontend.xml b/Documentation/DocBook/media/dvb/frontend.xml
-index 77dd88ceeedd..3b6a169ac8f3 100644
+index 07c1284e88c8..77dd88ceeedd 100644
 --- a/Documentation/DocBook/media/dvb/frontend.xml
 +++ b/Documentation/DocBook/media/dvb/frontend.xml
-@@ -87,21 +87,6 @@ detection.
- <section>
- <title>More OFDM parameters</title>
+@@ -56,23 +56,6 @@ specification is available at
  
--<section id="fe-transmit-mode-t">
--<title>Number of carriers per channel</title>
+ &sub-dvbproperty;
+ 
+-<section id="fe-spectral-inversion-t">
+-<title>frontend spectral inversion</title>
+-<para>The Inversion field can take one of these values:
+-</para>
 -<programlisting>
--typedef enum fe_transmit_mode {
--	TRANSMISSION_MODE_2K,
--	TRANSMISSION_MODE_8K,
--	TRANSMISSION_MODE_AUTO,
--	TRANSMISSION_MODE_4K,
--	TRANSMISSION_MODE_1K,
--	TRANSMISSION_MODE_16K,
--	TRANSMISSION_MODE_32K,
-- } fe_transmit_mode_t;
+-typedef enum fe_spectral_inversion {
+-	INVERSION_OFF,
+-	INVERSION_ON,
+-	INVERSION_AUTO
+-} fe_spectral_inversion_t;
 -</programlisting>
+-<para>It indicates if spectral inversion should be presumed or not. In the automatic setting
+-(<constant>INVERSION_AUTO</constant>) the hardware will try to figure out the correct setting by
+-itself.
+-</para>
 -</section>
 -
- <section id="fe-bandwidth-t">
- <title>frontend bandwidth</title>
- <programlisting>
+ <section id="fe-code-rate-t">
+ <title>frontend code rate</title>
+ <para>The possible values for the <constant>fec_inner</constant> field used on
 diff --git a/Documentation/DocBook/media/dvb/frontend_legacy_api.xml b/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
-index fe1117e91f51..fa0c6649abfd 100644
+index 7d5823858df0..fe1117e91f51 100644
 --- a/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
 +++ b/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
-@@ -139,7 +139,7 @@ struct dvb_vsb_parameters {
- 	 fe_code_rate_t      code_rate_HP;  /&#x22C6; high priority stream code rate &#x22C6;/
- 	 fe_code_rate_t      code_rate_LP;  /&#x22C6; low priority stream code rate &#x22C6;/
- 	 &fe-modulation-t;     constellation; /&#x22C6; modulation type (see above) &#x22C6;/
--	 fe_transmit_mode_t  transmission_mode;
-+	 &fe-transmit-mode-t;  transmission_mode;
- 	 fe_guard_interval_t guard_interval;
- 	 fe_hierarchy_t      hierarchy_information;
-  };
+@@ -82,7 +82,7 @@ DVB-C2, ISDB, etc.</para>
+ struct dvb_frontend_parameters {
+ 	uint32_t frequency;     /&#x22C6; (absolute) frequency in Hz for QAM/OFDM &#x22C6;/
+ 				/&#x22C6; intermediate frequency in kHz for QPSK &#x22C6;/
+-	fe_spectral_inversion_t inversion;
++	&fe-spectral-inversion-t; inversion;
+ 	union {
+ 		struct dvb_qpsk_parameters qpsk;
+ 		struct dvb_qam_parameters  qam;
 diff --git a/include/uapi/linux/dvb/frontend.h b/include/uapi/linux/dvb/frontend.h
-index 223905563676..c42e6d849f52 100644
+index d4b1718046ae..223905563676 100644
 --- a/include/uapi/linux/dvb/frontend.h
 +++ b/include/uapi/linux/dvb/frontend.h
-@@ -198,7 +198,7 @@ enum fe_modulation {
+@@ -154,12 +154,13 @@ enum fe_status {
  
- typedef enum fe_modulation fe_modulation_t;
+ typedef enum fe_status fe_status_t;
  
--typedef enum fe_transmit_mode {
-+enum fe_transmit_mode {
- 	TRANSMISSION_MODE_2K,
- 	TRANSMISSION_MODE_8K,
- 	TRANSMISSION_MODE_AUTO,
-@@ -208,7 +208,9 @@ typedef enum fe_transmit_mode {
- 	TRANSMISSION_MODE_32K,
- 	TRANSMISSION_MODE_C1,
- 	TRANSMISSION_MODE_C3780,
--} fe_transmit_mode_t;
+-typedef enum fe_spectral_inversion {
++enum fe_spectral_inversion {
+ 	INVERSION_OFF,
+ 	INVERSION_ON,
+ 	INVERSION_AUTO
+-} fe_spectral_inversion_t;
 +};
-+
-+typedef enum fe_transmit_mode fe_transmit_mode_t;
  
- #if defined(__DVB_CORE__) || !defined (__KERNEL__)
- typedef enum fe_bandwidth {
++typedef enum fe_spectral_inversion fe_spectral_inversion_t;
+ 
+ typedef enum fe_code_rate {
+ 	FEC_NONE = 0,
 -- 
 2.4.1
-
