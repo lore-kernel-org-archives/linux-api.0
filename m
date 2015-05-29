@@ -1,26 +1,63 @@
-From: Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>
-Subject: Re: [PATCH 1/1] iio: Add iio_mod_light_uva, iio_mod_light_uvb, and
- iio_mod_light_uvc.
-Date: Fri, 29 May 2015 10:07:35 +0200
-Message-ID: <55681E47.1000001@metafoo.de>
-References: <1432886683-7467-1-git-send-email-ktsai@capellamicro.com>
+From: =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>
+Subject: [PATCH v5 01/12] KVM: add comments for kvm_debug_exit_arch struct
+Date: Fri, 29 May 2015 10:30:17 +0100
+Message-ID: <1432891828-4816-2-git-send-email-alex.bennee@linaro.org>
+References: <1432891828-4816-1-git-send-email-alex.bennee@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1432886683-7467-1-git-send-email-ktsai-GubuWUlQtMwciDkP5Hr2oA@public.gmane.org>
-Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kevin Tsai <ktsai-GubuWUlQtMwciDkP5Hr2oA@public.gmane.org>, Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Irina Tirdea <irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Srinivas Pandruvada <srinivas.pandruvada-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Reyad Attiyat <reyad.attiyat-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
+In-Reply-To: <1432891828-4816-1-git-send-email-alex.bennee@linaro.org>
+List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
+List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
+List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
+List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
+List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
+Errors-To: kvmarm-bounces@lists.cs.columbia.edu
+Sender: kvmarm-bounces@lists.cs.columbia.edu
+To: kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kvmarm@lists.cs.columbia.edu, christoffer.dall@linaro.org, marc.zyngier@arm.com, peter.maydell@linaro.org, agraf@suse.de, drjones@redhat.com, pbonzini@redhat.com, zhichao.huang@linaro.org
+Cc: Jonathan Corbet <corbet@lwn.net>, Gleb Natapov <gleb@kernel.org>, jan.kiszka@siemens.com, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, dahi@linux.vnet.ibm.com, r65777@freescale.com, bp@suse.de
 List-Id: linux-api@vger.kernel.org
 
-On 05/29/2015 10:04 AM, Kevin Tsai wrote:
-> Add Ultraviolet(UV) support:
-> UVA: 315 ~ 400 nm
-> UVB: 280 ~ 315 nm
-> UVC: 100 ~ 280 nm
-
-We need documentation for these new modifiers in 
-Documentation/ABI/testing/sys-bus-iio. Otherwise looks ok.
-
-- Lars
+QnJpbmcgaW50byBsaW5lIHdpdGggdGhlIGNvbW1lbnRzIGZvciB0aGUgb3RoZXIgc3RydWN0dXJl
+cyBhbmQgdGhlaXIKS1ZNX0VYSVRfKiBjYXNlcy4gQWxzbyB1cGRhdGUgYXBpLnR4dCB0byByZWZs
+ZWN0IHVzZSBpbiBrdm1fcnVuCmRvY3VtZW50YXRpb24uCgpTaWduZWQtb2ZmLWJ5OiBBbGV4IEJl
+bm7DqWUgPGFsZXguYmVubmVlQGxpbmFyby5vcmc+ClJldmlld2VkLWJ5OiBEYXZpZCBIaWxkZW5i
+cmFuZCA8ZGFoaUBsaW51eC52bmV0LmlibS5jb20+ClJldmlld2VkLWJ5OiBBbmRyZXcgSm9uZXMg
+PGRyam9uZXNAcmVkaGF0LmNvbT4KQWNrZWQtYnk6IENocmlzdG9mZmVyIERhbGwgPGNocmlzdG9m
+ZmVyLmRhbGxAbGluYXJvLm9yZz4KCi0tLQoKdjIKICAtIGFkZCBjb21tZW50cyBmb3Igb3RoZXIg
+ZXhpdCB0eXBlcwp2MwogIC0gcy9jb21tZW50YXJ5L2NvbW1lbnRzLwogIC0gYWRkIHJiIHRhZ3MK
+ICAtIHVwZGF0ZSBhcGkudHh0IGt2bV9ydW4gdG8gaW5jbHVkZSBLVk1fRVhJVF9ERUJVRyBkZXNj
+CnY0CiAgLSBzcCBmaXhlcwogIC0gYWRkIGEtYgotLS0KIERvY3VtZW50YXRpb24vdmlydHVhbC9r
+dm0vYXBpLnR4dCB8IDQgKysrLQogaW5jbHVkZS91YXBpL2xpbnV4L2t2bS5oICAgICAgICAgIHwg
+MyArKysKIDIgZmlsZXMgY2hhbmdlZCwgNiBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9uKC0pCgpk
+aWZmIC0tZ2l0IGEvRG9jdW1lbnRhdGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0IGIvRG9jdW1lbnRh
+dGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0CmluZGV4IDlmYTJiZjguLmMzNGMzMmQgMTAwNjQ0Ci0t
+LSBhL0RvY3VtZW50YXRpb24vdmlydHVhbC9rdm0vYXBpLnR4dAorKysgYi9Eb2N1bWVudGF0aW9u
+L3ZpcnR1YWwva3ZtL2FwaS50eHQKQEAgLTMwNzAsMTEgKzMwNzAsMTMgQEAgZGF0YV9vZmZzZXQg
+ZGVzY3JpYmVzIHdoZXJlIHRoZSBkYXRhIGlzIGxvY2F0ZWQgKEtWTV9FWElUX0lPX09VVCkgb3IK
+IHdoZXJlIGt2bSBleHBlY3RzIGFwcGxpY2F0aW9uIGNvZGUgdG8gcGxhY2UgdGhlIGRhdGEgZm9y
+IHRoZSBuZXh0CiBLVk1fUlVOIGludm9jYXRpb24gKEtWTV9FWElUX0lPX0lOKS4gIERhdGEgZm9y
+bWF0IGlzIGEgcGFja2VkIGFycmF5LgogCisJCS8qIEtWTV9FWElUX0RFQlVHICovCiAJCXN0cnVj
+dCB7CiAJCQlzdHJ1Y3Qga3ZtX2RlYnVnX2V4aXRfYXJjaCBhcmNoOwogCQl9IGRlYnVnOwogCi1V
+bnVzZWQuCitJZiB0aGUgZXhpdF9yZWFzb24gaXMgS1ZNX0VYSVRfREVCVUcsIHRoZW4gYSB2Y3B1
+IGlzIHByb2Nlc3NpbmcgYSBkZWJ1ZyBldmVudAorZm9yIHdoaWNoIGFyY2hpdGVjdHVyZSBzcGVj
+aWZpYyBpbmZvcm1hdGlvbiBpcyByZXR1cm5lZC4KIAogCQkvKiBLVk1fRVhJVF9NTUlPICovCiAJ
+CXN0cnVjdCB7CmRpZmYgLS1naXQgYS9pbmNsdWRlL3VhcGkvbGludXgva3ZtLmggYi9pbmNsdWRl
+L3VhcGkvbGludXgva3ZtLmgKaW5kZXggNGI2MDA1Ni4uNzBhYzY0MSAxMDA2NDQKLS0tIGEvaW5j
+bHVkZS91YXBpL2xpbnV4L2t2bS5oCisrKyBiL2luY2x1ZGUvdWFwaS9saW51eC9rdm0uaApAQCAt
+MjM3LDYgKzIzNyw3IEBAIHN0cnVjdCBrdm1fcnVuIHsKIAkJCV9fdTMyIGNvdW50OwogCQkJX191
+NjQgZGF0YV9vZmZzZXQ7IC8qIHJlbGF0aXZlIHRvIGt2bV9ydW4gc3RhcnQgKi8KIAkJfSBpbzsK
+KwkJLyogS1ZNX0VYSVRfREVCVUcgKi8KIAkJc3RydWN0IHsKIAkJCXN0cnVjdCBrdm1fZGVidWdf
+ZXhpdF9hcmNoIGFyY2g7CiAJCX0gZGVidWc7CkBAIC0yODUsNiArMjg2LDcgQEAgc3RydWN0IGt2
+bV9ydW4gewogCQkJX191MzIgZGF0YTsKIAkJCV9fdTggIGlzX3dyaXRlOwogCQl9IGRjcjsKKwkJ
+LyogS1ZNX0VYSVRfSU5URVJOQUxfRVJST1IgKi8KIAkJc3RydWN0IHsKIAkJCV9fdTMyIHN1YmVy
+cm9yOwogCQkJLyogQXZhaWxhYmxlIHdpdGggS1ZNX0NBUF9JTlRFUk5BTF9FUlJPUl9EQVRBOiAq
+LwpAQCAtMjk1LDYgKzI5Nyw3IEBAIHN0cnVjdCBrdm1fcnVuIHsKIAkJc3RydWN0IHsKIAkJCV9f
+dTY0IGdwcnNbMzJdOwogCQl9IG9zaTsKKwkJLyogS1ZNX0VYSVRfUEFQUl9IQ0FMTCAqLwogCQlz
+dHJ1Y3QgewogCQkJX191NjQgbnI7CiAJCQlfX3U2NCByZXQ7Ci0tIAoyLjQuMQoKX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18Ka3ZtYXJtIG1haWxpbmcgbGlz
+dAprdm1hcm1AbGlzdHMuY3MuY29sdW1iaWEuZWR1Cmh0dHBzOi8vbGlzdHMuY3MuY29sdW1iaWEu
+ZWR1L21haWxtYW4vbGlzdGluZm8va3ZtYXJtCg==
