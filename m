@@ -1,48 +1,37 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+From: Andy Lutomirski <luto@amacapital.net>
 Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe as
-	bind mounts (take 2)
-Date: Thu, 28 May 2015 17:30:55 -0700
-Message-ID: <CALCETrV4csiHBrLRrtfOvjqwUtOQnGCg8EMw9mfigDDRGchheQ@mail.gmail.com>
-References: <87pp63jcca.fsf@x220.int.ebiederm.org>
-	<87siaxuvik.fsf@x220.int.ebiederm.org>
-	<87wq004im1.fsf@x220.int.ebiederm.org>
-	<CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>
-	<20150528140839.GD28842@ubuntumail>
-	<87lhg8pwvz.fsf@x220.int.ebiederm.org>
-	<CALCETrXXax28s9kMTQ-zDx0MttQWG4rg2y-oz3bSGiumSL=3sg@mail.gmail.com>
-	<CAOP=4wid+N_80iyPpiVMN96_fuHZZRGtYQ6AOPn-HFBj2H6Vgg@mail.gmail.com>
-	<87fv6gikfn.fsf@x220.int.ebiederm.org>
+ bind mounts (take 2)
+Date: Thu, 28 May 2015 17:35:03 -0700
+Message-ID: <CALCETrXO21Y7PR=pKqaqJb1YZArNyjAv7Z-J44O53FcfLM_0Tw@mail.gmail.com>
+References: <87pp63jcca.fsf@x220.int.ebiederm.org> <87siaxuvik.fsf@x220.int.ebiederm.org>
+ <87wq004im1.fsf@x220.int.ebiederm.org> <CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>
+ <20150528140839.GD28842@ubuntumail> <87lhg8pwvz.fsf@x220.int.ebiederm.org>
+ <CALCETrXXax28s9kMTQ-zDx0MttQWG4rg2y-oz3bSGiumSL=3sg@mail.gmail.com>
+ <CAOP=4wid+N_80iyPpiVMN96_fuHZZRGtYQ6AOPn-HFBj2H6Vgg@mail.gmail.com> <87fv6gikfn.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87fv6gikfn.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <87fv6gikfn.fsf@x220.int.ebiederm.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Kenton Varda <kenton@sandstorm.io>, Serge Hallyn <serge.hallyn@ubuntu.com>, Seth Forshee <seth.forshee@canonical.com>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Richard Weinberger <richard@nod.at>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Tejun Heo <tj@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On May 28, 2015 12:19 PM, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+[resend due to HTML. Sorry.]
+
+
+On May 28, 2015 12:19 PM, "Eric W. Biederman" <ebiederm@xmission.com> wrote:
 >
-> Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org> writes:
+> Kenton Varda <kenton@sandstorm.io> writes:
 >
-> > On Thu, May 28, 2015 at 10:33 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-wrote:
+> > On Thu, May 28, 2015 at 10:33 AM, Andy Lutomirski <luto@amacapital.net> wrote:
 > >> On Thu, May 28, 2015 at 8:03 AM, Eric W. Biederman
-> >> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> >>> Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> writes:
+> >> <ebiederm@xmission.com> wrote:
+> >>> Serge Hallyn <serge.hallyn@ubuntu.com> writes:
 > >>>
-> >>>> Quoting Andy Lutomirski (luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org):
+> >>>> Quoting Andy Lutomirski (luto@amacapital.net):
 > >>>>> On Fri, May 22, 2015 at 10:39 AM, Eric W. Biederman
-> >>>>> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+> >>>>> <ebiederm@xmission.com> wrote:
 > >>>>> > I had hoped to get some Tested-By's on that patch series.
 > >>>>>
 > >>>>> Sorry, I've been totally swamped.
@@ -89,9 +78,9 @@ wrote:
 > almost works in docker container today and is avoided simply because
 > docker mounts over a few files on proc.
 
-You could drop the nosuid, noexec, and nodev changes and keep just the ro
-part.  The ro part is probably not an ABI break in the sense of something
-that actually breaks real programs.
+You could drop the nosuid, noexec, and nodev changes and keep just the
+ro part.  The ro part is probably not an ABI break in the sense of
+something that actually breaks real programs.
 
 >
 > Which leads to the second side of the reason for these changes.   I am
@@ -123,5 +112,3 @@ that actually breaks real programs.
 > syscalls later something else fails when it tries to write to proc.
 
 I agree.  I don't like the implicit thing.
-
---Andy
