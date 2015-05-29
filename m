@@ -1,8 +1,8 @@
 From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [RFC PATCH 20/21] nfit-test: manufactured NFITs for interface
- development
-Date: Thu, 28 May 2015 20:58:53 -0400
-Message-ID: <20150529005853.3482.19844.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [RFC PATCH 19/21] libnd, nfit,
+ nd_blk: driver for BLK-mode access persistent memory
+Date: Thu, 28 May 2015 20:58:48 -0400
+Message-ID: <20150529005848.3482.43768.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <20150529005536.3482.48349.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,1270 +13,415 @@ Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Manually create and register NFITs to describe 2 topologies.  Topology1
-is an advanced plausible configuration for BLK/PMEM aliased NVDIMMs.
-Topology2 is an example configuration for current platforms that only
-ship with a persistent address range.
+From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 
- Kernel provider "nfit_test.0" produces an NFIT with the following attributes:
+The libnd implementation handles allocating dimm address space (DPA)
+between PMEM and BLK mode interfaces.  After DPA has been allocated from
+a BLK-region to a BLK-namespace the nd_blk driver attaches to handle I/O
+as a struct bio based block device. Unlike PMEM, BLK is required to
+handle platform specific details like mmio register formats and memory
+controller interleave.  For this reason the libnd generic nd_blk driver
+calls back into the bus provider to carry out the I/O.
 
-                              (a)               (b)           DIMM   BLK-REGION
-           +-------------------+--------+--------+--------+
- +------+  |       pm0.0       | blk2.0 | pm1.0  | blk2.1 |    0      region2
- | imc0 +--+- - - region0- - - +--------+        +--------+
- +--+---+  |       pm0.0       | blk3.0 | pm1.0  | blk3.1 |    1      region3
-    |      +-------------------+--------v        v--------+
- +--+---+                               |                 |
- | cpu0 |                                     region1
- +--+---+                               |                 |
-    |      +----------------------------^        ^--------+
- +--+---+  |           blk4.0           | pm1.0  | blk4.0 |    2      region4
- | imc1 +--+----------------------------|        +--------+
- +------+  |           blk5.0           | pm1.0  | blk5.0 |    3      region5
-           +----------------------------+--------+--------+
+This initial implementation handles the BLK interface defined by the
+ACPI 6 NFIT [1] and the NVDIMM DSM Interface Example [2] composed from
+DCR (dimm control region), BDW (block data window), IDT (interleave
+descriptor) NFIT structures and the hardware register format.
+[1]: http://www.uefi.org/sites/default/files/resources/ACPI_6.0.pdf
+[2]: http://pmem.io/documents/NVDIMM_DSM_Interface_Example.pdf
 
- *) In this layout we have four dimms and two memory controllers in one
-    socket.  Each unique interface ("block" or "pmem") to DPA space
-    is identified by a region device with a dynamically assigned id.
-
- *) The first portion of dimm0 and dimm1 are interleaved as REGION0.
-    A single "pmem" namespace is created in the REGION0-"spa"-range
-    that spans dimm0 and dimm1 with a user-specified name of "pm0.0".
-    Some of that interleaved "spa" range is reclaimed as "bdw"
-    accessed space starting at offset (a) into each dimm.  In that
-    reclaimed space we create two "bdw" "namespaces" from REGION2 and
-    REGION3 where "blk2.0" and "blk3.0" are just human readable names
-    that could be set to any user-desired name in the label.
-
- *) In the last portion of dimm0 and dimm1 we have an interleaved
-    "spa" range, REGION1, that spans those two dimms as well as dimm2
-    and dimm3.  Some of REGION1 allocated to a "pmem" namespace named
-    "pm1.0" the rest is reclaimed in 4 "bdw" namespaces (for each
-    dimm in the interleave set), "blk2.1", "blk3.1", "blk4.0", and
-    "blk5.0".
-
- *) The portion of dimm2 and dimm3 that do not participate in the
-    REGION1 interleaved "spa" range (i.e. the DPA address below
-    offset (b) are also included in the "blk4.0" and "blk5.0"
-    namespaces.  Note, that this example shows that "bdw" namespaces
-    don't need to be contiguous in DPA-space.
-
- Kernel provider "nfit_test.1" produces an NFIT with the following attributes:
-
- region2
- +---------------------+
- |---------------------|
- ||       pm2.0       ||
- |---------------------|
- +---------------------+
-
- *) Describes a simple system-physical-address range with no backing
-    dimm or interleave description.
-
-Cc: <linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Lv Zheng <lv.zheng-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Robert Moore <robert.moore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Rafael J. Wysocki <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Boaz Harrosh <boaz-/8YdC2HfS5554TAoqtyWWQ@public.gmane.org>
+Cc: H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- drivers/acpi/nfit.c               |    6 
- drivers/acpi/nfit.h               |   12 
- drivers/block/nd/Kconfig          |   22 +
- drivers/block/nd/Makefile         |    9 
- drivers/block/nd/test/Makefile    |    5 
- drivers/block/nd/test/iomap.c     |  151 +++++
- drivers/block/nd/test/nfit.c      | 1171 +++++++++++++++++++++++++++++++++++++
- drivers/block/nd/test/nfit_test.h |   28 +
- 8 files changed, 1402 insertions(+), 2 deletions(-)
- create mode 100644 drivers/block/nd/test/Makefile
- create mode 100644 drivers/block/nd/test/iomap.c
- create mode 100644 drivers/block/nd/test/nfit.c
- create mode 100644 drivers/block/nd/test/nfit_test.h
+ drivers/acpi/nfit.c               |  442 +++++++++++++++++++++++++++++++++++--
+ drivers/acpi/nfit.h               |   53 ++++
+ drivers/block/nd/Kconfig          |   13 +
+ drivers/block/nd/Makefile         |    3 
+ drivers/block/nd/blk.c            |  252 +++++++++++++++++++++
+ drivers/block/nd/dimm_devs.c      |    9 +
+ drivers/block/nd/namespace_devs.c |   47 ++++
+ drivers/block/nd/nd-private.h     |    3 
+ drivers/block/nd/nd.h             |   13 +
+ drivers/block/nd/region.c         |    8 +
+ drivers/block/nd/region_devs.c    |   90 ++++++--
+ include/linux/libnd.h             |   17 +
+ 12 files changed, 912 insertions(+), 38 deletions(-)
+ create mode 100644 drivers/block/nd/blk.c
 
 diff --git a/drivers/acpi/nfit.c b/drivers/acpi/nfit.c
-index 7f5ef18755c5..df14652ea13e 100644
+index 3f3e93d4cf7e..7f5ef18755c5 100644
 --- a/drivers/acpi/nfit.c
 +++ b/drivers/acpi/nfit.c
-@@ -29,10 +29,11 @@ MODULE_PARM_DESC(force_enable_dimms, "Ignore _STA (ACPI DIMM device) status");
+@@ -13,12 +13,16 @@
+ #include <linux/list_sort.h>
+ #include <linux/module.h>
+ #include <linux/libnd.h>
++#include <linux/mutex.h>
+ #include <linux/ndctl.h>
+ #include <linux/list.h>
+ #include <linux/acpi.h>
+ #include <linux/sort.h>
++#include <linux/io.h>
+ #include "nfit.h"
  
- static u8 nfit_uuid[NFIT_UUID_MAX][16];
++#include <asm-generic/io-64-nonatomic-hi-lo.h>
++
+ static bool force_enable_dimms;
+ module_param(force_enable_dimms, bool, S_IRUGO|S_IWUSR);
+ MODULE_PARM_DESC(force_enable_dimms, "Ignore _STA (ACPI DIMM device) status");
+@@ -71,7 +75,7 @@ static int acpi_nfit_ctl(struct nd_bus_descriptor *nd_desc,
  
--static const u8 *to_nfit_uuid(enum nfit_uuids id)
-+const u8 *to_nfit_uuid(enum nfit_uuids id)
+ 		if (!adev)
+ 			return -ENOTTY;
+-		dimm_name = dev_name(&adev->dev);
++		dimm_name = nd_dimm_name(nd_dimm);
+ 		cmd_name = nd_dimm_cmd_name(cmd);
+ 		dsm_mask = nfit_mem->dsm_mask;
+ 		desc = nd_cmd_dimm_desc(cmd);
+@@ -266,10 +270,20 @@ static void *add_table(struct acpi_nfit_desc *acpi_desc, void *table, const void
+ 				bdw->region_index, bdw->windows);
+ 		break;
+ 	}
+-	/* TODO */
+-	case ACPI_NFIT_TYPE_INTERLEAVE:
+-		dev_dbg(dev, "%s: idt\n", __func__);
++	case ACPI_NFIT_TYPE_INTERLEAVE: {
++		struct nfit_idt *nfit_idt = devm_kzalloc(dev, sizeof(*nfit_idt),
++				GFP_KERNEL);
++		struct acpi_nfit_interleave *idt = table;
++
++		if (!nfit_idt)
++			return err;
++		INIT_LIST_HEAD(&nfit_idt->list);
++		nfit_idt->idt = idt;
++		list_add_tail(&nfit_idt->list, &acpi_desc->idts);
++		dev_dbg(dev, "%s: idt index: %d num_lines: %d\n", __func__,
++				idt->interleave_index, idt->line_count);
+ 		break;
++	}
+ 	case ACPI_NFIT_TYPE_FLUSH_ADDRESS:
+ 		dev_dbg(dev, "%s: flush\n", __func__);
+ 		break;
+@@ -321,8 +335,11 @@ static int nfit_mem_add(struct acpi_nfit_desc *acpi_desc,
+ 		struct nfit_mem *nfit_mem, struct acpi_nfit_system_address *spa)
  {
- 	return nfit_uuid[id];
- }
-+EXPORT_SYMBOL(to_nfit_uuid);
+ 	u16 dcr_index = __to_nfit_memdev(nfit_mem)->region_index;
++	struct nfit_memdev *nfit_memdev;
+ 	struct nfit_dcr *nfit_dcr;
+ 	struct nfit_bdw *nfit_bdw;
++	struct nfit_idt *nfit_idt;
++	u16 idt_index, range_index;
  
- static struct acpi_nfit_desc *to_acpi_nfit_desc(struct nd_bus_descriptor *nd_desc)
- {
-@@ -1330,7 +1331,7 @@ static int acpi_nfit_register_regions(struct acpi_nfit_desc *acpi_desc)
+ 	list_for_each_entry(nfit_dcr, &acpi_desc->dcrs, list) {
+ 		if (nfit_dcr->dcr->region_index != dcr_index)
+@@ -355,6 +372,26 @@ static int nfit_mem_add(struct acpi_nfit_desc *acpi_desc,
+ 		return 0;
+ 
+ 	nfit_mem_find_spa_bdw(acpi_desc, nfit_mem);
++
++	if (!nfit_mem->spa_bdw)
++		return 0;
++
++	range_index = nfit_mem->spa_bdw->range_index;
++	list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list) {
++		if (nfit_memdev->memdev->range_index != range_index ||
++				nfit_memdev->memdev->region_index != dcr_index)
++			continue;
++		nfit_mem->memdev_bdw = nfit_memdev->memdev;
++		idt_index = nfit_memdev->memdev->interleave_index;
++		list_for_each_entry(nfit_idt, &acpi_desc->idts, list) {
++			if (nfit_idt->idt->interleave_index != idt_index)
++				continue;
++			nfit_mem->idt_bdw = nfit_idt->idt;
++			break;
++		}
++		break;
++	}
++
  	return 0;
  }
  
--static int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
-+int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
- {
- 	struct device *dev = acpi_desc->dev;
- 	const void *end;
-@@ -1369,6 +1370,7 @@ static int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
+@@ -398,9 +435,19 @@ static int nfit_mem_dcr_init(struct acpi_nfit_desc *acpi_desc,
+ 		}
  
- 	return acpi_nfit_register_regions(acpi_desc);
- }
-+EXPORT_SYMBOL_GPL(acpi_nfit_init);
- 
- static int acpi_nfit_add(struct acpi_device *adev)
- {
-diff --git a/drivers/acpi/nfit.h b/drivers/acpi/nfit.h
-index dfa3e53336b4..b882a22ee7bb 100644
---- a/drivers/acpi/nfit.h
-+++ b/drivers/acpi/nfit.h
-@@ -37,6 +37,15 @@ enum nfit_uuids {
- 	NFIT_UUID_MAX,
- };
- 
-+#define NFIT_DIMM_HANDLE(node, socket, imc, chan, dimm) \
-+	(((node & 0xfff) << 16) | ((socket & 0xf) << 12) \
-+	 | ((imc & 0xf) << 8) | ((chan & 0xf) << 4) | (dimm & 0xf))
-+#define NFIT_DIMM_NODE(handle) ((handle) >> 16 & 0xfff)
-+#define NFIT_DIMM_SOCKET(handle) ((handle) >> 12 & 0xf)
-+#define NFIT_DIMM_CHAN(handle) ((handle) >> 8 & 0xf)
-+#define NFIT_DIMM_IMC(handle) ((handle) >> 4 & 0xf)
-+#define NFIT_DIMM_DIMM(handle) ((handle) & 0xf)
+ 		if (type == NFIT_SPA_DCR) {
++			struct nfit_idt *nfit_idt;
++			u16 idt_index;
 +
- struct nfit_spa {
- 	struct acpi_nfit_system_address *spa;
- 	struct list_head list;
-@@ -148,4 +157,7 @@ static inline struct acpi_nfit_desc *to_acpi_desc(struct nd_bus_descriptor *nd_d
- {
- 	return container_of(nd_desc, struct acpi_nfit_desc, nd_desc);
- }
-+
-+const u8 *to_nfit_uuid(enum nfit_uuids id);
-+int acpi_nfit_init(struct acpi_nfit_desc *nfit, acpi_size sz);
- #endif /* __NFIT_H__ */
-diff --git a/drivers/block/nd/Kconfig b/drivers/block/nd/Kconfig
-index 1464120b530f..2ba8d80647f1 100644
---- a/drivers/block/nd/Kconfig
-+++ b/drivers/block/nd/Kconfig
-@@ -17,6 +17,28 @@ if ND_DEVICES
- config LIBND
- 	tristate
- 
-+config NFIT_TEST
-+	tristate "NFIT TEST: Manufactured NFIT for interface testing"
-+	default n
-+	depends on EXPERT
-+	depends on DMA_CMA
-+	depends on LIBND=m
-+	depends on ACPI_NFIT
-+	depends on m
-+	help
-+	  For development purposes register a manufactured
-+	  NFIT table to verify the resulting device model topology.
-+	  Note, this module arranges for ioremap_cache() to be
-+	  overridden locally to allow simulation of system-memory as an
-+	  io-memory-resource.
-+
-+	  Note, this test expects to be able to find at least 256MB of
-+	  contiguous DMA space (CONFIG_CMA_SIZE_MBYTES, cma=) or it
-+	  will fail to load.  This much contiguos memory is needed to
-+	  properly simulate a DAX capable memory region.
-+
-+	  Say N unless you are doing development of the 'libnd' subsystem.
-+
- config BLK_DEV_PMEM
- 	tristate "PMEM: Persistent memory block device support"
- 	depends on LIBND
-diff --git a/drivers/block/nd/Makefile b/drivers/block/nd/Makefile
-index 29a797686429..e1e0f01ae960 100644
---- a/drivers/block/nd/Makefile
-+++ b/drivers/block/nd/Makefile
-@@ -1,4 +1,13 @@
-+ifdef CONFIG_NFIT_TEST
-+ldflags-y += --wrap=ioremap_cache
-+ldflags-y += --wrap=ioremap_nocache
-+ldflags-y += --wrap=iounmap
-+ldflags-y += --wrap=__request_region
-+ldflags-y += --wrap=__release_region
-+endif
-+
- obj-$(CONFIG_LIBND) += libnd.o
-+obj-$(CONFIG_NFIT_TEST) += test/
- obj-$(CONFIG_BLK_DEV_PMEM) += nd_pmem.o
- obj-$(CONFIG_ND_BTT) += nd_btt.o
- obj-$(CONFIG_ND_BLK) += nd_blk.o
-diff --git a/drivers/block/nd/test/Makefile b/drivers/block/nd/test/Makefile
-new file mode 100644
-index 000000000000..c7f319cbd082
---- /dev/null
-+++ b/drivers/block/nd/test/Makefile
-@@ -0,0 +1,5 @@
-+obj-$(CONFIG_NFIT_TEST) += nfit_test.o
-+obj-$(CONFIG_NFIT_TEST) += nfit_test_iomap.o
-+
-+nfit_test-y := nfit.o
-+nfit_test_iomap-y := iomap.o
-diff --git a/drivers/block/nd/test/iomap.c b/drivers/block/nd/test/iomap.c
-new file mode 100644
-index 000000000000..c85a6f6ba559
---- /dev/null
-+++ b/drivers/block/nd/test/iomap.c
-@@ -0,0 +1,151 @@
-+/*
-+ * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of version 2 of the GNU General Public License as
-+ * published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+ * General Public License for more details.
-+ */
-+#include <linux/rculist.h>
-+#include <linux/export.h>
-+#include <linux/ioport.h>
-+#include <linux/module.h>
-+#include <linux/types.h>
-+#include <linux/io.h>
-+#include "nfit_test.h"
-+
-+static LIST_HEAD(iomap_head);
-+
-+static struct iomap_ops {
-+	nfit_test_lookup_fn nfit_test_lookup;
-+	struct list_head list;
-+} iomap_ops = {
-+	.list = LIST_HEAD_INIT(iomap_ops.list),
-+};
-+
-+void nfit_test_setup(nfit_test_lookup_fn lookup)
-+{
-+	iomap_ops.nfit_test_lookup = lookup;
-+	list_add_rcu(&iomap_ops.list, &iomap_head);
-+}
-+EXPORT_SYMBOL(nfit_test_setup);
-+
-+void nfit_test_teardown(void)
-+{
-+	list_del_rcu(&iomap_ops.list);
-+	synchronize_rcu();
-+}
-+EXPORT_SYMBOL(nfit_test_teardown);
-+
-+static struct nfit_test_resource *get_nfit_res(resource_size_t resource)
-+{
-+	struct iomap_ops *ops;
-+
-+	ops = list_first_or_null_rcu(&iomap_head, typeof(*ops), list);
-+	if (ops)
-+		return ops->nfit_test_lookup(resource);
-+	return NULL;
-+}
-+
-+void __iomem *__nfit_test_ioremap(resource_size_t offset, unsigned long size,
-+		void __iomem *(*fallback_fn)(resource_size_t, unsigned long))
-+{
-+	struct nfit_test_resource *nfit_res;
-+
-+	rcu_read_lock();
-+	nfit_res = get_nfit_res(offset);
-+	rcu_read_unlock();
-+	if (nfit_res)
-+		return (void __iomem *) nfit_res->buf + offset
-+			- nfit_res->res->start;
-+	return fallback_fn(offset, size);
-+}
-+
-+void __iomem *__wrap_ioremap_cache(resource_size_t offset, unsigned long size)
-+{
-+	return __nfit_test_ioremap(offset, size, ioremap_cache);
-+}
-+EXPORT_SYMBOL(__wrap_ioremap_cache);
-+
-+void __iomem *__wrap_ioremap_nocache(resource_size_t offset, unsigned long size)
-+{
-+	return __nfit_test_ioremap(offset, size, ioremap_nocache);
-+}
-+EXPORT_SYMBOL(__wrap_ioremap_nocache);
-+
-+void __wrap_iounmap(volatile void __iomem *addr)
-+{
-+	struct nfit_test_resource *nfit_res;
-+
-+	rcu_read_lock();
-+	nfit_res = get_nfit_res((unsigned long) addr);
-+	rcu_read_unlock();
-+	if (nfit_res)
-+		return;
-+	return iounmap(addr);
-+}
-+EXPORT_SYMBOL(__wrap_iounmap);
-+
-+struct resource *__wrap___request_region(struct resource *parent,
-+		resource_size_t start, resource_size_t n, const char *name,
-+		int flags)
-+{
-+	struct nfit_test_resource *nfit_res;
-+
-+	if (parent == &iomem_resource) {
-+		rcu_read_lock();
-+		nfit_res = get_nfit_res(start);
-+		rcu_read_unlock();
-+		if (nfit_res) {
-+			struct resource *res = nfit_res->res + 1;
-+
-+			if (start + n > nfit_res->res->start
-+					+ resource_size(nfit_res->res)) {
-+				pr_debug("%s: start: %llx n: %llx overflow: %pr\n",
-+						__func__, start, n,
-+						nfit_res->res);
-+				return NULL;
+ 			/* multiple dimms may share a SPA when interleaved */
+ 			nfit_mem->spa_dcr = spa;
+ 			nfit_mem->memdev_dcr = nfit_memdev->memdev;
++			idt_index = nfit_memdev->memdev->interleave_index;
++			list_for_each_entry(nfit_idt, &acpi_desc->idts, list) {
++				if (nfit_idt->idt->interleave_index != idt_index)
++					continue;
++				nfit_mem->idt_dcr = nfit_idt->idt;
++				break;
 +			}
+ 		} else {
+ 			/*
+ 			 * A single dimm may belong to multiple SPA-PM
+@@ -830,13 +877,362 @@ static int acpi_nfit_init_interleave_set(struct acpi_nfit_desc *acpi_desc,
+ 	return 0;
+ }
+ 
++static u64 to_interleave_offset(u64 offset, struct nfit_blk_mmio *mmio)
++{
++	struct acpi_nfit_interleave *idt = mmio->idt;
++	u32 sub_line_offset, line_index, line_offset;
++	u64 line_no, table_skip_count, table_offset;
 +
-+			res->start = start;
-+			res->end = start + n - 1;
-+			res->name = name;
-+			res->flags = resource_type(parent);
-+			res->flags |= IORESOURCE_BUSY | flags;
-+			pr_debug("%s: %pr\n", __func__, res);
-+			return res;
++	line_no = div_u64_rem(offset, mmio->line_size, &sub_line_offset);
++	table_skip_count = div_u64_rem(line_no, mmio->num_lines, &line_index);
++	line_offset = idt->line_offset[line_index]
++		* mmio->line_size;
++	table_offset = table_skip_count * mmio->table_size;
++
++	return mmio->base_offset + line_offset + table_offset + sub_line_offset;
++}
++
++static u64 read_blk_stat(struct nfit_blk *nfit_blk, unsigned int bw)
++{
++	struct nfit_blk_mmio *mmio = &nfit_blk->mmio[DCR];
++	u64 offset = nfit_blk->stat_offset + mmio->size * bw;
++
++	if (mmio->num_lines)
++		offset = to_interleave_offset(offset, mmio);
++
++	return readq(mmio->base + offset);
++}
++
++static void write_blk_ctl(struct nfit_blk *nfit_blk, unsigned int bw,
++		resource_size_t dpa, unsigned int len, unsigned int write)
++{
++	u64 cmd, offset;
++	struct nfit_blk_mmio *mmio = &nfit_blk->mmio[DCR];
++
++	enum {
++		BCW_OFFSET_MASK = (1ULL << 48)-1,
++		BCW_LEN_SHIFT = 48,
++		BCW_LEN_MASK = (1ULL << 8) - 1,
++		BCW_CMD_SHIFT = 56,
++	};
++
++	cmd = (dpa >> L1_CACHE_SHIFT) & BCW_OFFSET_MASK;
++	len = len >> L1_CACHE_SHIFT;
++	cmd |= ((u64) len & BCW_LEN_MASK) << BCW_LEN_SHIFT;
++	cmd |= ((u64) write) << BCW_CMD_SHIFT;
++
++	offset = nfit_blk->cmd_offset + mmio->size * bw;
++	if (mmio->num_lines)
++		offset = to_interleave_offset(offset, mmio);
++
++	writeq(cmd, mmio->base + offset);
++	/* FIXME: conditionally perform read-back if mandated by firmware */
++}
++
++static int acpi_nfit_blk_single_io(struct nfit_blk *nfit_blk, void *iobuf,
++		unsigned int len, int write, resource_size_t dpa,
++		unsigned int bw)
++{
++	struct nfit_blk_mmio *mmio = &nfit_blk->mmio[BDW];
++	unsigned int copied = 0;
++	u64 base_offset;
++	int rc;
++
++	base_offset = nfit_blk->bdw_offset + dpa % L1_CACHE_BYTES + bw * mmio->size;
++	/* TODO: non-temporal access, flush hints, cache management etc... */
++	write_blk_ctl(nfit_blk, bw, dpa, len, write);
++	while (len) {
++		unsigned int c;
++		u64 offset;
++
++		if (mmio->num_lines) {
++			u32 line_offset;
++
++			offset = to_interleave_offset(base_offset + copied,
++					mmio);
++			div_u64_rem(offset, mmio->line_size, &line_offset);
++			c = min(len, mmio->line_size - line_offset);
++		} else {
++			offset = base_offset + nfit_blk->bdw_offset;
++			c = len;
 +		}
++
++		if (write)
++			memcpy(mmio->aperture + offset, iobuf + copied, c);
++		else
++			memcpy(iobuf + copied, mmio->aperture + offset, c);
++
++		copied += c;
++		len -= c;
 +	}
-+	return __request_region(parent, start, n, name, flags);
-+}
-+EXPORT_SYMBOL(__wrap___request_region);
-+
-+void __wrap___release_region(struct resource *parent, resource_size_t start,
-+				resource_size_t n)
-+{
-+	struct nfit_test_resource *nfit_res;
-+
-+	if (parent == &iomem_resource) {
-+		rcu_read_lock();
-+		nfit_res = get_nfit_res(start);
-+		rcu_read_unlock();
-+		if (nfit_res) {
-+			struct resource *res = nfit_res->res + 1;
-+
-+			if (start != res->start || resource_size(res) != n)
-+				pr_info("%s: start: %llx n: %llx mismatch: %pr\n",
-+						__func__, start, n, res);
-+			else
-+				memset(res, 0, sizeof(*res));
-+			return;
-+		}
-+	}
-+	__release_region(parent, start, n);
-+}
-+EXPORT_SYMBOL(__wrap___release_region);
-+
-+MODULE_LICENSE("GPL v2");
-diff --git a/drivers/block/nd/test/nfit.c b/drivers/block/nd/test/nfit.c
-new file mode 100644
-index 000000000000..f37a6838f4bd
---- /dev/null
-+++ b/drivers/block/nd/test/nfit.c
-@@ -0,0 +1,1171 @@
-+/*
-+ * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of version 2 of the GNU General Public License as
-+ * published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+ * General Public License for more details.
-+ */
-+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-+#include <linux/platform_device.h>
-+#include <linux/dma-mapping.h>
-+#include <linux/device.h>
-+#include <linux/module.h>
-+#include <linux/libnd.h>
-+#include <linux/ndctl.h>
-+#include <linux/sizes.h>
-+#include <linux/slab.h>
-+#include "../../../acpi/nfit.h"
-+#include "nfit_test.h"
-+#include "../nd.h"
-+
-+/*
-+ * Generate an NFIT table to describe the following topology:
-+ *
-+ * BUS0: Interleaved PMEM regions, and aliasing with BLK regions
-+ *
-+ *                     (a)                       (b)            DIMM   BLK-REGION
-+ *           +----------+--------------+----------+---------+
-+ * +------+  |  blk2.0  |     pm0.0    |  blk2.1  |  pm1.0  |    0      region2
-+ * | imc0 +--+- - - - - region0 - - - -+----------+         +
-+ * +--+---+  |  blk3.0  |     pm0.0    |  blk3.1  |  pm1.0  |    1      region3
-+ *    |      +----------+--------------v----------v         v
-+ * +--+---+                            |                    |
-+ * | cpu0 |                                    region1
-+ * +--+---+                            |                    |
-+ *    |      +-------------------------^----------^         ^
-+ * +--+---+  |                 blk4.0             |  pm1.0  |    2      region4
-+ * | imc1 +--+-------------------------+----------+         +
-+ * +------+  |                 blk5.0             |  pm1.0  |    3      region5
-+ *           +-------------------------+----------+-+-------+
-+ *
-+ * *) In this layout we have four dimms and two memory controllers in one
-+ *    socket.  Each unique interface (BLK or PMEM) to DPA space
-+ *    is identified by a region device with a dynamically assigned id.
-+ *
-+ * *) The first portion of dimm0 and dimm1 are interleaved as REGION0.
-+ *    A single PMEM namespace "pm0.0" is created using half of the
-+ *    REGION0 SPA-range.  REGION0 spans dimm0 and dimm1.  PMEM namespace
-+ *    allocate from from the bottom of a region.  The unallocated
-+ *    portion of REGION0 aliases with REGION2 and REGION3.  That
-+ *    unallacted capacity is reclaimed as BLK namespaces ("blk2.0" and
-+ *    "blk3.0") starting at the base of each DIMM to offset (a) in those
-+ *    DIMMs.  "pm0.0", "blk2.0" and "blk3.0" are free-form readable
-+ *    names that can be assigned to a namespace.
-+ *
-+ * *) In the last portion of dimm0 and dimm1 we have an interleaved
-+ *    SPA range, REGION1, that spans those two dimms as well as dimm2
-+ *    and dimm3.  Some of REGION1 allocated to a PMEM namespace named
-+ *    "pm1.0" the rest is reclaimed in 4 BLK namespaces (for each
-+ *    dimm in the interleave set), "blk2.1", "blk3.1", "blk4.0", and
-+ *    "blk5.0".
-+ *
-+ * *) The portion of dimm2 and dimm3 that do not participate in the
-+ *    REGION1 interleaved SPA range (i.e. the DPA address below offset
-+ *    (b) are also included in the "blk4.0" and "blk5.0" namespaces.
-+ *    Note, that BLK namespaces need not be contiguous in DPA-space, and
-+ *    can consume aliased capacity from multiple interleave sets.
-+ *
-+ * BUS1: Legacy NVDIMM (single contiguous range)
-+ *
-+ *  region2
-+ * +---------------------+
-+ * |---------------------|
-+ * ||       pm2.0       ||
-+ * |---------------------|
-+ * +---------------------+
-+ *
-+ * *) A NFIT-table may describe a simple system-physical-address range
-+ *    with no BLK aliasing.  This type of region may optionally
-+ *    reference an NVDIMM.
-+ */
-+enum {
-+	NUM_PM  = 2,
-+	NUM_DCR = 4,
-+	NUM_BDW = NUM_DCR,
-+	NUM_SPA = NUM_PM + NUM_DCR + NUM_BDW,
-+	NUM_MEM = NUM_DCR + NUM_BDW + 2 /* spa0 iset */ + 4 /* spa1 iset */,
-+	DIMM_SIZE = SZ_32M,
-+	LABEL_SIZE = SZ_128K,
-+	SPA0_SIZE = DIMM_SIZE,
-+	SPA1_SIZE = DIMM_SIZE*2,
-+	SPA2_SIZE = DIMM_SIZE,
-+	BDW_SIZE = 64 << 8,
-+	DCR_SIZE = 12,
-+	NUM_NFITS = 2, /* permit testing multiple NFITs per system */
-+};
-+
-+struct nfit_test_dcr {
-+	__le64 bdw_addr;
-+	__le32 bdw_status;
-+	__u8 aperature[BDW_SIZE];
-+};
-+
-+static u32 handle[NUM_DCR] = {
-+	[0] = NFIT_DIMM_HANDLE(0, 0, 0, 0, 0),
-+	[1] = NFIT_DIMM_HANDLE(0, 0, 0, 0, 1),
-+	[2] = NFIT_DIMM_HANDLE(0, 0, 1, 0, 0),
-+	[3] = NFIT_DIMM_HANDLE(0, 0, 1, 0, 1),
-+};
-+
-+struct nfit_test {
-+	struct acpi_nfit_desc acpi_desc;
-+	struct platform_device pdev;
-+	struct list_head resources;
-+	void *nfit_buf;
-+	dma_addr_t nfit_dma;
-+	size_t nfit_size;
-+	int num_dcr;
-+	int num_pm;
-+	void **dimm;
-+	dma_addr_t *dimm_dma;
-+	void **label;
-+	dma_addr_t *label_dma;
-+	void **spa_set;
-+	dma_addr_t *spa_set_dma;
-+	struct nfit_test_dcr **dcr;
-+	dma_addr_t *dcr_dma;
-+	int (*alloc)(struct nfit_test *t);
-+	void (*setup)(struct nfit_test *t);
-+};
-+
-+static struct nfit_test *to_nfit_test(struct device *dev)
-+{
-+	struct platform_device *pdev = to_platform_device(dev);
-+
-+	return container_of(pdev, struct nfit_test, pdev);
++	rc = read_blk_stat(nfit_blk, bw) ? -EIO : 0;
++	return rc;
 +}
 +
-+static int nfit_test_ctl(struct nd_bus_descriptor *nd_desc,
-+		struct nd_dimm *nd_dimm, unsigned int cmd, void *buf,
-+		unsigned int buf_len)
++static int acpi_nfit_blk_region_do_io(struct nd_blk_region *ndbr, void *iobuf,
++		u64 len, int write, resource_size_t dpa)
 +{
-+	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
-+	struct nfit_test *t = container_of(acpi_desc, typeof(*t), acpi_desc);
-+	struct nfit_mem *nfit_mem = nd_dimm_provider_data(nd_dimm);
-+	int i, rc;
++	struct nfit_blk *nfit_blk = nd_blk_region_provider_data(ndbr);
++	struct nfit_blk_mmio *mmio = &nfit_blk->mmio[BDW];
++	struct nd_region *nd_region = nfit_blk->nd_region;
++	unsigned int bw, copied = 0;
++	int rc = 0;
 +
-+	if (!nfit_mem || !test_bit(cmd, &nfit_mem->dsm_mask))
-+		return -ENXIO;
++	bw = nd_region_acquire_lane(nd_region);
++	while (len) {
++		u64 c = min(len, mmio->size);
 +
-+	/* lookup label space for the given dimm */
-+	for (i = 0; i < ARRAY_SIZE(handle); i++)
-+		if (__to_nfit_memdev(nfit_mem)->device_handle == handle[i])
++		rc = acpi_nfit_blk_single_io(nfit_blk, iobuf + copied, c, write,
++				dpa + copied, bw);
++		if (rc)
 +			break;
-+	if (i >= ARRAY_SIZE(handle))
-+		return -ENXIO;
 +
-+	switch (cmd) {
-+	case ND_CMD_GET_CONFIG_SIZE: {
-+		struct nd_cmd_get_config_size *nd_cmd = buf;
-+
-+		if (buf_len < sizeof(*nd_cmd))
-+			return -EINVAL;
-+		nd_cmd->status = 0;
-+		nd_cmd->config_size = LABEL_SIZE;
-+		nd_cmd->max_xfer = SZ_4K;
-+		rc = 0;
-+		break;
++		copied += c;
++		len -= c;
 +	}
-+	case ND_CMD_GET_CONFIG_DATA: {
-+		struct nd_cmd_get_config_data_hdr *nd_cmd = buf;
-+		unsigned int len, offset = nd_cmd->in_offset;
-+
-+		if (buf_len < sizeof(*nd_cmd))
-+			return -EINVAL;
-+		if (offset >= LABEL_SIZE)
-+			return -EINVAL;
-+		if (nd_cmd->in_length + sizeof(*nd_cmd) > buf_len)
-+			return -EINVAL;
-+
-+		nd_cmd->status = 0;
-+		len = min(nd_cmd->in_length, LABEL_SIZE - offset);
-+		memcpy(nd_cmd->out_buf, t->label[i] + offset, len);
-+		rc = buf_len - sizeof(*nd_cmd) - len;
-+		break;
-+	}
-+	case ND_CMD_SET_CONFIG_DATA: {
-+		struct nd_cmd_set_config_hdr *nd_cmd = buf;
-+		unsigned int len, offset = nd_cmd->in_offset;
-+		u32 *status;
-+
-+		if (buf_len < sizeof(*nd_cmd))
-+			return -EINVAL;
-+		if (offset >= LABEL_SIZE)
-+			return -EINVAL;
-+		if (nd_cmd->in_length + sizeof(*nd_cmd) + 4 > buf_len)
-+			return -EINVAL;
-+
-+		status = buf + nd_cmd->in_length + sizeof(*nd_cmd);
-+		*status = 0;
-+		len = min(nd_cmd->in_length, LABEL_SIZE - offset);
-+		memcpy(t->label[i] + offset, nd_cmd->in_buf, len);
-+		rc = buf_len - sizeof(*nd_cmd) - (len + 4);
-+		break;
-+	}
-+	default:
-+		return -ENOTTY;
-+	}
++	nd_region_release_lane(nd_region, bw);
 +
 +	return rc;
 +}
 +
-+static DEFINE_SPINLOCK(nfit_test_lock);
-+static struct nfit_test *instances[NUM_NFITS];
-+
-+static void release_nfit_res(void *data)
++static void nfit_spa_mapping_release(struct kref *kref)
 +{
-+	struct nfit_test_resource *nfit_res = data;
-+	struct resource *res = nfit_res->res;
++	struct nfit_spa_mapping *spa_map = to_spa_map(kref);
++	struct acpi_nfit_system_address *spa = spa_map->spa;
++	struct acpi_nfit_desc *acpi_desc = spa_map->acpi_desc;
 +
-+	spin_lock(&nfit_test_lock);
-+	list_del(&nfit_res->list);
-+	spin_unlock(&nfit_test_lock);
-+
-+	if (is_vmalloc_addr(nfit_res->buf))
-+		vfree(nfit_res->buf);
-+	else
-+		dma_free_coherent(nfit_res->dev, resource_size(res),
-+				nfit_res->buf, res->start);
-+	kfree(res);
-+	kfree(nfit_res);
++	WARN_ON(!mutex_is_locked(&acpi_desc->spa_map_mutex));
++	dev_dbg(acpi_desc->dev, "%s: SPA%d\n", __func__, spa->range_index);
++	iounmap(spa_map->iomem);
++	release_mem_region(spa->address, spa->length);
++	list_del(&spa_map->list);
++	kfree(spa_map);
 +}
 +
-+static void *__test_alloc(struct nfit_test *t, size_t size, dma_addr_t *dma,
-+		void *buf)
++static struct nfit_spa_mapping *find_spa_mapping(struct acpi_nfit_desc *acpi_desc,
++		struct acpi_nfit_system_address *spa)
 +{
-+	struct device *dev = &t->pdev.dev;
-+	struct resource *res = kzalloc(sizeof(*res) * 2, GFP_KERNEL);
-+	struct nfit_test_resource *nfit_res = kzalloc(sizeof(*nfit_res),
-+			GFP_KERNEL);
-+	int rc;
++	struct nfit_spa_mapping *spa_map;
 +
-+	if (!res || !buf || !nfit_res)
-+		goto err;
-+	rc = devm_add_action(dev, release_nfit_res, nfit_res);
-+	if (rc)
-+		goto err;
-+	INIT_LIST_HEAD(&nfit_res->list);
-+	memset(buf, 0, size);
-+	nfit_res->dev = dev;
-+	nfit_res->buf = buf;
-+	nfit_res->res = res;
-+	res->start = *dma;
-+	res->end = *dma + size - 1;
-+	res->name = "NFIT";
-+	spin_lock(&nfit_test_lock);
-+	list_add(&nfit_res->list, &t->resources);
-+	spin_unlock(&nfit_test_lock);
-+
-+	return nfit_res->buf;
-+ err:
-+	if (buf && !is_vmalloc_addr(buf))
-+		dma_free_coherent(dev, size, buf, *dma);
-+	else if (buf)
-+		vfree(buf);
-+	kfree(res);
-+	kfree(nfit_res);
-+	return NULL;
-+}
-+
-+static void *test_alloc(struct nfit_test *t, size_t size, dma_addr_t *dma)
-+{
-+	void *buf = vmalloc(size);
-+
-+	*dma = (unsigned long) buf;
-+	return __test_alloc(t, size, dma, buf);
-+}
-+
-+static void *test_alloc_coherent(struct nfit_test *t, size_t size, dma_addr_t *dma)
-+{
-+	struct device *dev = &t->pdev.dev;
-+	void *buf = dma_alloc_coherent(dev, size, dma, GFP_KERNEL);
-+
-+	return __test_alloc(t, size, dma, buf);
-+}
-+
-+static struct nfit_test_resource *nfit_test_lookup(resource_size_t addr)
-+{
-+	int i;
-+
-+	for (i = 0; i < ARRAY_SIZE(instances); i++) {
-+		struct nfit_test_resource *n, *nfit_res = NULL;
-+		struct nfit_test *t = instances[i];
-+
-+		if (!t)
-+			continue;
-+		spin_lock(&nfit_test_lock);
-+		list_for_each_entry(n, &t->resources, list) {
-+			if (addr >= n->res->start && (addr < n->res->start
-+						+ resource_size(n->res))) {
-+				nfit_res = n;
-+				break;
-+			} else if (addr >= (unsigned long) n->buf
-+					&& (addr < (unsigned long) n->buf
-+						+ resource_size(n->res))) {
-+				nfit_res = n;
-+				break;
-+			}
-+		}
-+		spin_unlock(&nfit_test_lock);
-+		if (nfit_res)
-+			return nfit_res;
-+	}
++	WARN_ON(!mutex_is_locked(&acpi_desc->spa_map_mutex));
++	list_for_each_entry(spa_map, &acpi_desc->spa_maps, list)
++		if (spa_map->spa == spa)
++			return spa_map;
 +
 +	return NULL;
 +}
 +
-+static int nfit_test0_alloc(struct nfit_test *t)
++static void nfit_spa_unmap(struct acpi_nfit_desc *acpi_desc,
++		struct acpi_nfit_system_address *spa)
 +{
-+	size_t nfit_size = sizeof(struct acpi_table_nfit)
-+			+ sizeof(struct acpi_nfit_system_address) * NUM_SPA
-+			+ sizeof(struct acpi_nfit_memory_map) * NUM_MEM
-+			+ sizeof(struct acpi_nfit_control_region) * NUM_DCR
-+			+ sizeof(struct acpi_nfit_data_region) * NUM_BDW;
-+	int i;
++	struct nfit_spa_mapping *spa_map;
 +
-+	t->nfit_buf = test_alloc(t, nfit_size, &t->nfit_dma);
-+	if (!t->nfit_buf)
-+		return -ENOMEM;
-+	t->nfit_size = nfit_size;
++	mutex_lock(&acpi_desc->spa_map_mutex);
++	spa_map = find_spa_mapping(acpi_desc, spa);
 +
-+	t->spa_set[0] = test_alloc_coherent(t, SPA0_SIZE, &t->spa_set_dma[0]);
-+	if (!t->spa_set[0])
-+		return -ENOMEM;
++	if (spa_map)
++		kref_put(&spa_map->kref, nfit_spa_mapping_release);
++	mutex_unlock(&acpi_desc->spa_map_mutex);
++}
 +
-+	t->spa_set[1] = test_alloc_coherent(t, SPA1_SIZE, &t->spa_set_dma[1]);
-+	if (!t->spa_set[1])
-+		return -ENOMEM;
++static void __iomem *__nfit_spa_map(struct acpi_nfit_desc *acpi_desc,
++		struct acpi_nfit_system_address *spa)
++{
++	resource_size_t start = spa->address;
++	resource_size_t n = spa->length;
++	struct nfit_spa_mapping *spa_map;
++	struct resource *res;
 +
-+	for (i = 0; i < NUM_DCR; i++) {
-+		t->dimm[i] = test_alloc(t, DIMM_SIZE, &t->dimm_dma[i]);
-+		if (!t->dimm[i])
-+			return -ENOMEM;
++	WARN_ON(!mutex_is_locked(&acpi_desc->spa_map_mutex));
 +
-+		t->label[i] = test_alloc(t, LABEL_SIZE, &t->label_dma[i]);
-+		if (!t->label[i])
-+			return -ENOMEM;
-+		sprintf(t->label[i], "label%d", i);
++	spa_map = find_spa_mapping(acpi_desc, spa);
++	if (spa_map) {
++		kref_get(&spa_map->kref);
++		return spa_map->iomem;
 +	}
 +
-+	for (i = 0; i < NUM_DCR; i++) {
-+		t->dcr[i] = test_alloc(t, LABEL_SIZE, &t->dcr_dma[i]);
-+		if (!t->dcr[i])
-+			return -ENOMEM;
++	spa_map = kzalloc(sizeof(*spa_map), GFP_KERNEL);
++	if (!spa_map)
++		return NULL;
++
++	INIT_LIST_HEAD(&spa_map->list);
++	spa_map->spa = spa;
++	kref_init(&spa_map->kref);
++	spa_map->acpi_desc = acpi_desc;
++
++	res = request_mem_region(start, n, dev_name(acpi_desc->dev));
++	if (!res)
++		goto err_mem;
++
++	/* TODO: cacheability based on the spa type */
++	spa_map->iomem = ioremap_nocache(start, n);
++	if (!spa_map->iomem)
++		goto err_map;
++
++	list_add_tail(&spa_map->list, &acpi_desc->spa_maps);
++	return spa_map->iomem;
++
++ err_map:
++	release_mem_region(start, n);
++ err_mem:
++	kfree(spa_map);
++	return NULL;
++}
++
++/**
++ * nfit_spa_map - interleave-aware managed-mappings of acpi_nfit_system_address ranges
++ * @nd_bus: NFIT-bus that provided the spa table entry
++ * @nfit_spa: spa table to map
++ *
++ * In the case where block-data-window apertures and
++ * dimm-control-regions are interleaved they will end up sharing a
++ * single request_mem_region() + ioremap() for the address range.  In
++ * the style of devm nfit_spa_map() mappings are automatically dropped
++ * when all region devices referencing the same mapping are disabled /
++ * unbound.
++ */
++static void __iomem *nfit_spa_map(struct acpi_nfit_desc *acpi_desc,
++		struct acpi_nfit_system_address *spa)
++{
++	void __iomem *iomem;
++
++	mutex_lock(&acpi_desc->spa_map_mutex);
++	iomem = __nfit_spa_map(acpi_desc, spa);
++	mutex_unlock(&acpi_desc->spa_map_mutex);
++
++	return iomem;
++}
++
++static int nfit_blk_init_interleave(struct nfit_blk_mmio *mmio,
++		struct acpi_nfit_interleave *idt, u16 interleave_ways)
++{
++	if (idt) {
++		mmio->num_lines = idt->line_count;
++		mmio->line_size = idt->line_size;
++		if (interleave_ways == 0)
++			return -ENXIO;
++		mmio->table_size = mmio->num_lines * interleave_ways
++			* mmio->line_size;
 +	}
 +
 +	return 0;
 +}
 +
-+static int nfit_test1_alloc(struct nfit_test *t)
++static int acpi_nfit_blk_region_enable(struct nd_bus *nd_bus, struct device *dev)
 +{
-+	size_t nfit_size = sizeof(struct acpi_table_nfit)
-+		+ sizeof(struct acpi_nfit_system_address) + sizeof(struct acpi_nfit_memory_map)
-+		+ sizeof(struct acpi_nfit_control_region);
-+
-+	t->nfit_buf = test_alloc(t, nfit_size, &t->nfit_dma);
-+	if (!t->nfit_buf)
-+		return -ENOMEM;
-+	t->nfit_size = nfit_size;
-+
-+	t->spa_set[0] = test_alloc_coherent(t, SPA2_SIZE, &t->spa_set_dma[0]);
-+	if (!t->spa_set[0])
-+		return -ENOMEM;
-+
-+	return 0;
-+}
-+
-+static void nfit_test_init_header(struct acpi_table_nfit *nfit, size_t size)
-+{
-+	memcpy(nfit->header.signature, ACPI_SIG_NFIT, 4);
-+	nfit->header.length = size;
-+	nfit->header.revision = 1;
-+	memcpy(nfit->header.oem_id, "LIBND", 6);
-+	memcpy(nfit->header.oem_table_id, "TEST", 5);
-+	nfit->header.oem_revision = 1;
-+	memcpy(nfit->header.asl_compiler_id, "TST", 4);
-+	nfit->header.asl_compiler_revision = 1;
-+}
-+
-+static void nfit_test0_setup(struct nfit_test *t)
-+{
-+	struct nd_bus_descriptor *nd_desc;
-+	struct acpi_nfit_desc *acpi_desc;
-+	struct acpi_nfit_memory_map *memdev;
-+	void *nfit_buf = t->nfit_buf;
-+	size_t size = t->nfit_size;
-+	struct acpi_nfit_system_address *spa;
-+	struct acpi_nfit_control_region *dcr;
-+	struct acpi_nfit_data_region *bdw;
-+	unsigned int offset;
-+
-+	nfit_test_init_header(nfit_buf, size);
-+
-+	/*
-+	 * spa0 (interleave first half of dimm0 and dimm1, note storage
-+	 * does not actually alias the related block-data-window
-+	 * regions)
-+	 */
-+	spa = nfit_buf + sizeof(struct acpi_table_nfit);
-+	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-+	spa->header.length = sizeof(*spa);
-+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_PM), 16);
-+	spa->range_index = 0+1;
-+	spa->address = t->spa_set_dma[0];
-+	spa->length = SPA0_SIZE;
-+
-+	/*
-+	 * spa1 (interleave last half of the 4 DIMMS, note storage
-+	 * does not actually alias the related block-data-window
-+	 * regions)
-+	 */
-+	spa = nfit_buf + sizeof(struct acpi_table_nfit) + sizeof(*spa);
-+	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-+	spa->header.length = sizeof(*spa);
-+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_PM), 16);
-+	spa->range_index = 1+1;
-+	spa->address = t->spa_set_dma[1];
-+	spa->length = SPA1_SIZE;
-+
-+	/* spa2 (dcr0) dimm0 */
-+	spa = nfit_buf + sizeof(struct acpi_table_nfit) + sizeof(*spa) * 2;
-+	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-+	spa->header.length = sizeof(*spa);
-+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_DCR), 16);
-+	spa->range_index = 2+1;
-+	spa->address = t->dcr_dma[0];
-+	spa->length = DCR_SIZE;
-+
-+	/* spa3 (dcr1) dimm1 */
-+	spa = nfit_buf + sizeof(struct acpi_table_nfit) + sizeof(*spa) * 3;
-+	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-+	spa->header.length = sizeof(*spa);
-+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_DCR), 16);
-+	spa->range_index = 3+1;
-+	spa->address = t->dcr_dma[1];
-+	spa->length = DCR_SIZE;
-+
-+	/* spa4 (dcr2) dimm2 */
-+	spa = nfit_buf + sizeof(struct acpi_table_nfit) + sizeof(*spa) * 4;
-+	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-+	spa->header.length = sizeof(*spa);
-+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_DCR), 16);
-+	spa->range_index = 4+1;
-+	spa->address = t->dcr_dma[2];
-+	spa->length = DCR_SIZE;
-+
-+	/* spa5 (dcr3) dimm3 */
-+	spa = nfit_buf + sizeof(struct acpi_table_nfit) + sizeof(*spa) * 5;
-+	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-+	spa->header.length = sizeof(*spa);
-+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_DCR), 16);
-+	spa->range_index = 5+1;
-+	spa->address = t->dcr_dma[3];
-+	spa->length = DCR_SIZE;
-+
-+	/* spa6 (bdw for dcr0) dimm0 */
-+	spa = nfit_buf + sizeof(struct acpi_table_nfit) + sizeof(*spa) * 6;
-+	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-+	spa->header.length = sizeof(*spa);
-+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_BDW), 16);
-+	spa->range_index = 6+1;
-+	spa->address = t->dimm_dma[0];
-+	spa->length = DIMM_SIZE;
-+
-+	/* spa7 (bdw for dcr1) dimm1 */
-+	spa = nfit_buf + sizeof(struct acpi_table_nfit) + sizeof(*spa) * 7;
-+	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-+	spa->header.length = sizeof(*spa);
-+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_BDW), 16);
-+	spa->range_index = 7+1;
-+	spa->address = t->dimm_dma[1];
-+	spa->length = DIMM_SIZE;
-+
-+	/* spa8 (bdw for dcr2) dimm2 */
-+	spa = nfit_buf + sizeof(struct acpi_table_nfit) + sizeof(*spa) * 8;
-+	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-+	spa->header.length = sizeof(*spa);
-+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_BDW), 16);
-+	spa->range_index = 8+1;
-+	spa->address = t->dimm_dma[2];
-+	spa->length = DIMM_SIZE;
-+
-+	/* spa9 (bdw for dcr3) dimm3 */
-+	spa = nfit_buf + sizeof(struct acpi_table_nfit) + sizeof(*spa) * 9;
-+	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-+	spa->header.length = sizeof(*spa);
-+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_BDW), 16);
-+	spa->range_index = 9+1;
-+	spa->address = t->dimm_dma[3];
-+	spa->length = DIMM_SIZE;
-+
-+	offset = sizeof(struct acpi_table_nfit) + sizeof(*spa) * 10;
-+	/* mem-region0 (spa0, dimm0) */
-+	memdev = nfit_buf + offset;
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = handle[0];
-+	memdev->physical_id = 0;
-+	memdev->region_id = 0;
-+	memdev->range_index = 0+1;
-+	memdev->region_index = 0+1;
-+	memdev->region_size = SPA0_SIZE/2;
-+	memdev->region_offset = t->spa_set_dma[0];
-+	memdev->address = 0;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 2;
-+
-+	/* mem-region1 (spa0, dimm1) */
-+	memdev = nfit_buf + offset + sizeof(struct acpi_nfit_memory_map);
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = handle[1];
-+	memdev->physical_id = 1;
-+	memdev->region_id = 0;
-+	memdev->range_index = 0+1;
-+	memdev->region_index = 1+1;
-+	memdev->region_size = SPA0_SIZE/2;
-+	memdev->region_offset = t->spa_set_dma[0] + SPA0_SIZE/2;
-+	memdev->address = 0;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 2;
-+
-+	/* mem-region2 (spa1, dimm0) */
-+	memdev = nfit_buf + offset + sizeof(struct acpi_nfit_memory_map) * 2;
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = handle[0];
-+	memdev->physical_id = 0;
-+	memdev->region_id = 1;
-+	memdev->range_index = 1+1;
-+	memdev->region_index = 0+1;
-+	memdev->region_size = SPA1_SIZE/4;
-+	memdev->region_offset = t->spa_set_dma[1];
-+	memdev->address = SPA0_SIZE/2;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 4;
-+
-+	/* mem-region3 (spa1, dimm1) */
-+	memdev = nfit_buf + offset + sizeof(struct acpi_nfit_memory_map) * 3;
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = handle[1];
-+	memdev->physical_id = 1;
-+	memdev->region_id = 1;
-+	memdev->range_index = 1+1;
-+	memdev->region_index = 1+1;
-+	memdev->region_size = SPA1_SIZE/4;
-+	memdev->region_offset = t->spa_set_dma[1] + SPA1_SIZE/4;
-+	memdev->address = SPA0_SIZE/2;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 4;
-+
-+	/* mem-region4 (spa1, dimm2) */
-+	memdev = nfit_buf + offset + sizeof(struct acpi_nfit_memory_map) * 4;
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = handle[2];
-+	memdev->physical_id = 2;
-+	memdev->region_id = 0;
-+	memdev->range_index = 1+1;
-+	memdev->region_index = 2+1;
-+	memdev->region_size = SPA1_SIZE/4;
-+	memdev->region_offset = t->spa_set_dma[1] + 2*SPA1_SIZE/4;
-+	memdev->address = SPA0_SIZE/2;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 4;
-+
-+	/* mem-region5 (spa1, dimm3) */
-+	memdev = nfit_buf + offset + sizeof(struct acpi_nfit_memory_map) * 5;
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = handle[3];
-+	memdev->physical_id = 3;
-+	memdev->region_id = 0;
-+	memdev->range_index = 1+1;
-+	memdev->region_index = 3+1;
-+	memdev->region_size = SPA1_SIZE/4;
-+	memdev->region_offset = t->spa_set_dma[1] + 3*SPA1_SIZE/4;
-+	memdev->address = SPA0_SIZE/2;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 4;
-+
-+	/* mem-region6 (spa/dcr0, dimm0) */
-+	memdev = nfit_buf + offset + sizeof(struct acpi_nfit_memory_map) * 6;
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = handle[0];
-+	memdev->physical_id = 0;
-+	memdev->region_id = 0;
-+	memdev->range_index = 2+1;
-+	memdev->region_index = 0+1;
-+	memdev->region_size = 0;
-+	memdev->region_offset = 0;
-+	memdev->address = 0;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 1;
-+
-+	/* mem-region7 (spa/dcr1, dimm1) */
-+	memdev = nfit_buf + offset + sizeof(struct acpi_nfit_memory_map) * 7;
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = handle[1];
-+	memdev->physical_id = 1;
-+	memdev->region_id = 0;
-+	memdev->range_index = 3+1;
-+	memdev->region_index = 1+1;
-+	memdev->region_size = 0;
-+	memdev->region_offset = 0;
-+	memdev->address = 0;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 1;
-+
-+	/* mem-region8 (spa/dcr2, dimm2) */
-+	memdev = nfit_buf + offset + sizeof(struct acpi_nfit_memory_map) * 8;
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = handle[2];
-+	memdev->physical_id = 2;
-+	memdev->region_id = 0;
-+	memdev->range_index = 4+1;
-+	memdev->region_index = 2+1;
-+	memdev->region_size = 0;
-+	memdev->region_offset = 0;
-+	memdev->address = 0;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 1;
-+
-+	/* mem-region9 (spa/dcr3, dimm3) */
-+	memdev = nfit_buf + offset + sizeof(struct acpi_nfit_memory_map) * 9;
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = handle[3];
-+	memdev->physical_id = 3;
-+	memdev->region_id = 0;
-+	memdev->range_index = 5+1;
-+	memdev->region_index = 3+1;
-+	memdev->region_size = 0;
-+	memdev->region_offset = 0;
-+	memdev->address = 0;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 1;
-+
-+	/* mem-region10 (spa/bdw0, dimm0) */
-+	memdev = nfit_buf + offset + sizeof(struct acpi_nfit_memory_map) * 10;
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = handle[0];
-+	memdev->physical_id = 0;
-+	memdev->region_id = 0;
-+	memdev->range_index = 6+1;
-+	memdev->region_index = 0+1;
-+	memdev->region_size = 0;
-+	memdev->region_offset = 0;
-+	memdev->address = 0;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 1;
-+
-+	/* mem-region11 (spa/bdw1, dimm1) */
-+	memdev = nfit_buf + offset + sizeof(struct acpi_nfit_memory_map) * 11;
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = handle[1];
-+	memdev->physical_id = 1;
-+	memdev->region_id = 0;
-+	memdev->range_index = 7+1;
-+	memdev->region_index = 1+1;
-+	memdev->region_size = 0;
-+	memdev->region_offset = 0;
-+	memdev->address = 0;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 1;
-+
-+	/* mem-region12 (spa/bdw2, dimm2) */
-+	memdev = nfit_buf + offset + sizeof(struct acpi_nfit_memory_map) * 12;
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = handle[2];
-+	memdev->physical_id = 2;
-+	memdev->region_id = 0;
-+	memdev->range_index = 8+1;
-+	memdev->region_index = 2+1;
-+	memdev->region_size = 0;
-+	memdev->region_offset = 0;
-+	memdev->address = 0;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 1;
-+
-+	/* mem-region13 (spa/dcr3, dimm3) */
-+	memdev = nfit_buf + offset + sizeof(struct acpi_nfit_memory_map) * 13;
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = handle[3];
-+	memdev->physical_id = 3;
-+	memdev->region_id = 0;
-+	memdev->range_index = 9+1;
-+	memdev->region_index = 3+1;
-+	memdev->region_size = 0;
-+	memdev->region_offset = 0;
-+	memdev->address = 0;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 1;
-+
-+	offset = offset + sizeof(struct acpi_nfit_memory_map) * 14;
-+	/* dcr-descriptor0 */
-+	dcr = nfit_buf + offset;
-+	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-+	dcr->header.length = sizeof(struct acpi_nfit_control_region);
-+	dcr->region_index = 0+1;
-+	dcr->vendor_id = 0xabcd;
-+	dcr->device_id = 0;
-+	dcr->revision_id = 1;
-+	dcr->serial_number = ~handle[0];
-+	dcr->windows = 1;
-+	dcr->window_size = DCR_SIZE;
-+	dcr->command_offset = 0;
-+	dcr->command_size = 8;
-+	dcr->status_offset = 8;
-+	dcr->status_size = 4;
-+
-+	/* dcr-descriptor1 */
-+	dcr = nfit_buf + offset + sizeof(struct acpi_nfit_control_region);
-+	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-+	dcr->header.length = sizeof(struct acpi_nfit_control_region);
-+	dcr->region_index = 1+1;
-+	dcr->vendor_id = 0xabcd;
-+	dcr->device_id = 0;
-+	dcr->revision_id = 1;
-+	dcr->serial_number = ~handle[1];
-+	dcr->windows = 1;
-+	dcr->window_size = DCR_SIZE;
-+	dcr->command_offset = 0;
-+	dcr->command_size = 8;
-+	dcr->status_offset = 8;
-+	dcr->status_size = 4;
-+
-+	/* dcr-descriptor2 */
-+	dcr = nfit_buf + offset + sizeof(struct acpi_nfit_control_region) * 2;
-+	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-+	dcr->header.length = sizeof(struct acpi_nfit_control_region);
-+	dcr->region_index = 2+1;
-+	dcr->vendor_id = 0xabcd;
-+	dcr->device_id = 0;
-+	dcr->revision_id = 1;
-+	dcr->serial_number = ~handle[2];
-+	dcr->windows = 1;
-+	dcr->window_size = DCR_SIZE;
-+	dcr->command_offset = 0;
-+	dcr->command_size = 8;
-+	dcr->status_offset = 8;
-+	dcr->status_size = 4;
-+
-+	/* dcr-descriptor3 */
-+	dcr = nfit_buf + offset + sizeof(struct acpi_nfit_control_region) * 3;
-+	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-+	dcr->header.length = sizeof(struct acpi_nfit_control_region);
-+	dcr->region_index = 3+1;
-+	dcr->vendor_id = 0xabcd;
-+	dcr->device_id = 0;
-+	dcr->revision_id = 1;
-+	dcr->serial_number = ~handle[3];
-+	dcr->windows = 1;
-+	dcr->window_size = DCR_SIZE;
-+	dcr->command_offset = 0;
-+	dcr->command_size = 8;
-+	dcr->status_offset = 8;
-+	dcr->status_size = 4;
-+
-+	offset = offset + sizeof(struct acpi_nfit_control_region) * 4;
-+	/* bdw0 (spa/dcr0, dimm0) */
-+	bdw = nfit_buf + offset;
-+	bdw->header.type = ACPI_NFIT_TYPE_DATA_REGION;
-+	bdw->header.length = sizeof(struct acpi_nfit_data_region);
-+	bdw->region_index = 0+1;
-+	bdw->windows = 1;
-+	bdw->offset = 0;
-+	bdw->size = BDW_SIZE;
-+	bdw->capacity = DIMM_SIZE;
-+	bdw->start_address = 0;
-+
-+	/* bdw1 (spa/dcr1, dimm1) */
-+	bdw = nfit_buf + offset + sizeof(struct acpi_nfit_data_region);
-+	bdw->header.type = ACPI_NFIT_TYPE_DATA_REGION;
-+	bdw->header.length = sizeof(struct acpi_nfit_data_region);
-+	bdw->region_index = 1+1;
-+	bdw->windows = 1;
-+	bdw->offset = 0;
-+	bdw->size = BDW_SIZE;
-+	bdw->capacity = DIMM_SIZE;
-+	bdw->start_address = 0;
-+
-+	/* bdw2 (spa/dcr2, dimm2) */
-+	bdw = nfit_buf + offset + sizeof(struct acpi_nfit_data_region) * 2;
-+	bdw->header.type = ACPI_NFIT_TYPE_DATA_REGION;
-+	bdw->header.length = sizeof(struct acpi_nfit_data_region);
-+	bdw->region_index = 2+1;
-+	bdw->windows = 1;
-+	bdw->offset = 0;
-+	bdw->size = BDW_SIZE;
-+	bdw->capacity = DIMM_SIZE;
-+	bdw->start_address = 0;
-+
-+	/* bdw3 (spa/dcr3, dimm3) */
-+	bdw = nfit_buf + offset + sizeof(struct acpi_nfit_data_region) * 3;
-+	bdw->header.type = ACPI_NFIT_TYPE_DATA_REGION;
-+	bdw->header.length = sizeof(struct acpi_nfit_data_region);
-+	bdw->region_index = 3+1;
-+	bdw->windows = 1;
-+	bdw->offset = 0;
-+	bdw->size = BDW_SIZE;
-+	bdw->capacity = DIMM_SIZE;
-+	bdw->start_address = 0;
-+
-+	acpi_desc = &t->acpi_desc;
-+	set_bit(ND_CMD_GET_CONFIG_SIZE, &acpi_desc->dimm_dsm_force_en);
-+	set_bit(ND_CMD_GET_CONFIG_DATA, &acpi_desc->dimm_dsm_force_en);
-+	set_bit(ND_CMD_SET_CONFIG_DATA, &acpi_desc->dimm_dsm_force_en);
-+	nd_desc = &acpi_desc->nd_desc;
-+	nd_desc->ndctl = nfit_test_ctl;
-+}
-+
-+static void nfit_test1_setup(struct nfit_test *t)
-+{
-+	size_t size = t->nfit_size, offset;
-+	void *nfit_buf = t->nfit_buf;
-+	struct acpi_nfit_memory_map *memdev;
-+	struct acpi_nfit_control_region *dcr;
-+	struct acpi_nfit_system_address *spa;
-+
-+	nfit_test_init_header(nfit_buf, size);
-+
-+	offset = sizeof(struct acpi_table_nfit);
-+	/* spa0 (flat range with no bdw aliasing) */
-+	spa = nfit_buf + offset;
-+	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-+	spa->header.length = sizeof(*spa);
-+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_PM), 16);
-+	spa->range_index = 0+1;
-+	spa->address = t->spa_set_dma[0];
-+	spa->length = SPA2_SIZE;
-+
-+	offset += sizeof(*spa);
-+	/* mem-region0 (spa0, dimm0) */
-+	memdev = nfit_buf + offset;
-+	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-+	memdev->header.length = sizeof(*memdev);
-+	memdev->device_handle = 0;
-+	memdev->physical_id = 0;
-+	memdev->region_id = 0;
-+	memdev->range_index = 0+1;
-+	memdev->region_index = 0+1;
-+	memdev->region_size = SPA2_SIZE;
-+	memdev->region_offset = 0;
-+	memdev->address = 0;
-+	memdev->interleave_index = 0;
-+	memdev->interleave_ways = 1;
-+
-+	offset += sizeof(*memdev);
-+	/* dcr-descriptor0 */
-+	dcr = nfit_buf + offset;
-+	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-+	dcr->header.length = sizeof(struct acpi_nfit_control_region);
-+	dcr->region_index = 0+1;
-+	dcr->vendor_id = 0xabcd;
-+	dcr->device_id = 0;
-+	dcr->revision_id = 1;
-+	dcr->serial_number = ~0;
-+	dcr->code = 0x201;
-+	dcr->windows = 0;
-+	dcr->window_size = 0;
-+	dcr->command_offset = 0;
-+	dcr->command_size = 0;
-+	dcr->status_offset = 0;
-+	dcr->status_size = 0;
-+}
-+
-+static int nfit_test_blk_region_enable(struct nd_bus *nd_bus, struct device *dev)
-+{
++	struct nd_bus_descriptor *nd_desc = to_nd_desc(nd_bus);
++	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
 +	struct nd_blk_region *ndbr = to_nd_blk_region(dev);
-+	struct acpi_nfit_system_address *spa_bdw;
 +	struct nfit_blk_mmio *mmio;
 +	struct nfit_blk *nfit_blk;
 +	struct nfit_mem *nfit_mem;
 +	struct nd_dimm *nd_dimm;
++	int rc;
 +
 +	nd_dimm = nd_blk_region_to_dimm(ndbr);
 +	nfit_mem = nd_dimm_provider_data(nd_dimm);
@@ -1294,294 +439,931 @@ index 000000000000..f37a6838f4bd
 +	nd_blk_region_set_provider_data(ndbr, nfit_blk);
 +	nfit_blk->nd_region = to_nd_region(dev);
 +
-+	/* block aperture memory is all we use in nfit_test */
++	/* map block aperture memory */
 +	nfit_blk->bdw_offset = nfit_mem->bdw->offset;
 +	mmio = &nfit_blk->mmio[BDW];
-+	spa_bdw = nfit_mem->spa_bdw;
-+	mmio->base = __wrap_ioremap_nocache(spa_bdw->address, spa_bdw->length);
++	mmio->base = nfit_spa_map(acpi_desc, nfit_mem->spa_bdw);
 +	if (!mmio->base) {
-+		release_mem_region(spa_bdw->address, spa_bdw->length);
 +		dev_dbg(dev, "%s: %s failed to map bdw\n", __func__,
 +				nd_dimm_name(nd_dimm));
 +		return -ENOMEM;
 +	}
++	mmio->size = nfit_mem->bdw->size;
++	mmio->base_offset = nfit_mem->memdev_bdw->region_offset;
++	mmio->idt = nfit_mem->idt_bdw;
++	mmio->spa = nfit_mem->spa_bdw;
++	rc = nfit_blk_init_interleave(mmio, nfit_mem->idt_bdw,
++			nfit_mem->memdev_bdw->interleave_ways);
++	if (rc) {
++		dev_dbg(dev, "%s: %s failed to init bdw interleave\n",
++				__func__, nd_dimm_name(nd_dimm));
++		return rc;
++	}
++
++	/* map block control memory */
++	nfit_blk->cmd_offset = nfit_mem->dcr->command_offset;
++	nfit_blk->stat_offset = nfit_mem->dcr->status_offset;
++	mmio = &nfit_blk->mmio[DCR];
++	mmio->base = nfit_spa_map(acpi_desc, nfit_mem->spa_dcr);
++	if (!mmio->base) {
++		dev_dbg(dev, "%s: %s failed to map dcr\n", __func__,
++				nd_dimm_name(nd_dimm));
++		return -ENOMEM;
++	}
++	mmio->size = nfit_mem->dcr->window_size;
++	mmio->base_offset = nfit_mem->memdev_dcr->region_offset;
++	mmio->idt = nfit_mem->idt_dcr;
++	mmio->spa = nfit_mem->spa_dcr;
++	rc = nfit_blk_init_interleave(mmio, nfit_mem->idt_dcr,
++			nfit_mem->memdev_dcr->interleave_ways);
++	if (rc) {
++		dev_dbg(dev, "%s: %s failed to init dcr interleave\n",
++				__func__, nd_dimm_name(nd_dimm));
++		return rc;
++	}
++
++	if (mmio->line_size == 0)
++		return 0;
++
++	if ((u32) nfit_blk->cmd_offset % mmio->line_size + 8 > mmio->line_size) {
++		dev_dbg(dev, "cmd_offset crosses interleave boundary\n");
++		return -ENXIO;
++	} else if ((u32) nfit_blk->stat_offset % mmio->line_size + 8 > mmio->line_size) {
++		dev_dbg(dev, "stat_offset crosses interleave boundary\n");
++		return -ENXIO;
++	}
 +
 +	return 0;
 +}
 +
-+static void nfit_test_blk_region_disable(struct nd_bus *nd_bus, struct device *dev)
++static void acpi_nfit_blk_region_disable(struct nd_bus *nd_bus,
++		struct device *dev)
 +{
++	struct nd_bus_descriptor *nd_desc = to_nd_desc(nd_bus);
++	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
 +	struct nd_blk_region *ndbr = to_nd_blk_region(dev);
 +	struct nfit_blk *nfit_blk = nd_blk_region_provider_data(ndbr);
-+	struct acpi_nfit_system_address *spa_bdw;
-+	struct nfit_blk_mmio *mmio;
-+	struct nfit_mem *nfit_mem;
-+	struct nd_dimm *nd_dimm;
++	int i;
 +
 +	if (!nfit_blk)
 +		return; /* never enabled */
 +
-+	nd_dimm = nd_blk_region_to_dimm(ndbr);
-+	nfit_mem = nd_dimm_provider_data(nd_dimm);
-+	spa_bdw = nfit_mem->spa_bdw;
-+	mmio = &nfit_blk->mmio[BDW];
-+	__wrap_iounmap(mmio->base);
++	/* auto-free BLK spa mappings */
++	for (i = 0; i < 2; i++) {
++		struct nfit_blk_mmio *mmio = &nfit_blk->mmio[i];
++
++		if (mmio->base)
++			nfit_spa_unmap(acpi_desc, mmio->spa);
++	}
 +	nd_blk_region_set_provider_data(ndbr, NULL);
++	/* devm will free nfit_blk */
 +}
 +
-+static int nfit_test_blk_do_io(struct nd_blk_region *ndbr, void *iobuf,
-+		u64 len, int rw, resource_size_t dpa)
-+{
-+	struct nfit_blk *nfit_blk = ndbr->blk_provider_data;
-+	struct nfit_blk_mmio *mmio = &nfit_blk->mmio[BDW];
-+	struct nd_region *nd_region = &ndbr->nd_region;
-+	struct nfit_test_resource *nfit_res;
-+	unsigned int bw;
+ static int acpi_nfit_register_region(struct acpi_nfit_desc *acpi_desc,
+ 		struct nfit_spa *nfit_spa)
+ {
+ 	static struct nd_mapping nd_mappings[ND_MAX_MAPPINGS];
+ 	struct acpi_nfit_system_address *spa = nfit_spa->spa;
++	struct nd_blk_region_desc ndbr_desc;
++	struct nd_region_desc *ndr_desc;
+ 	struct nfit_memdev *nfit_memdev;
+-	struct nd_region_desc ndr_desc;
+ 	int spa_type, count = 0, rc;
+ 	struct resource res;
+ 	u16 range_index;
+@@ -851,12 +1247,13 @@ static int acpi_nfit_register_region(struct acpi_nfit_desc *acpi_desc,
+ 
+ 	memset(&res, 0, sizeof(res));
+ 	memset(&nd_mappings, 0, sizeof(nd_mappings));
+-	memset(&ndr_desc, 0, sizeof(ndr_desc));
++	memset(&ndbr_desc, 0, sizeof(ndr_desc));
+ 	res.start = spa->address;
+ 	res.end = res.start + spa->length - 1;
+-	ndr_desc.res = &res;
+-	ndr_desc.provider_data = nfit_spa;
+-	ndr_desc.attr_groups = acpi_nfit_region_attribute_groups;
++	ndr_desc = &ndbr_desc.ndr_desc;
++	ndr_desc->res = &res;
++	ndr_desc->provider_data = nfit_spa;
++	ndr_desc->attr_groups = acpi_nfit_region_attribute_groups;
+ 	list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list) {
+ 		struct acpi_nfit_memory_map *memdev = nfit_memdev->memdev;
+ 		struct nd_mapping *nd_mapping;
+@@ -892,26 +1289,29 @@ static int acpi_nfit_register_region(struct acpi_nfit_desc *acpi_desc,
+ 			} else {
+ 				nd_mapping->size = nfit_mem->bdw->capacity;
+ 				nd_mapping->start = nfit_mem->bdw->start_address;
+-				ndr_desc.num_lanes = nfit_mem->bdw->windows;
++				ndr_desc->num_lanes = nfit_mem->bdw->windows;
+ 			}
+ 
+-			ndr_desc.nd_mapping = nd_mapping;
+-			ndr_desc.num_mappings = blk_valid;
+-			if (!nd_blk_region_create(acpi_desc->nd_bus, &ndr_desc))
++			ndr_desc->nd_mapping = nd_mapping;
++			ndr_desc->num_mappings = blk_valid;
++			ndbr_desc.enable = acpi_desc->blk_enable;
++			ndbr_desc.disable = acpi_desc->blk_disable;
++			ndbr_desc.do_io = acpi_desc->blk_do_io;
++			if (!nd_blk_region_create(acpi_desc->nd_bus, ndr_desc))
+ 				return -ENOMEM;
+ 		}
+ 	}
+ 
+-	ndr_desc.nd_mapping = nd_mappings;
+-	ndr_desc.num_mappings = count;
+-	rc = acpi_nfit_init_interleave_set(acpi_desc, &ndr_desc, spa);
++	ndr_desc->nd_mapping = nd_mappings;
++	ndr_desc->num_mappings = count;
++	rc = acpi_nfit_init_interleave_set(acpi_desc, ndr_desc, spa);
+ 	if (rc)
+ 		return rc;
+ 	if (spa_type == NFIT_SPA_PM) {
+-		if (!nd_pmem_region_create(acpi_desc->nd_bus, &ndr_desc))
++		if (!nd_pmem_region_create(acpi_desc->nd_bus, ndr_desc))
+ 			return -ENOMEM;
+ 	} else if (spa_type == NFIT_SPA_VOLATILE) {
+-		if (!nd_volatile_region_create(acpi_desc->nd_bus, &ndr_desc))
++		if (!nd_volatile_region_create(acpi_desc->nd_bus, ndr_desc))
+ 			return -ENOMEM;
+ 	}
+ 	return 0;
+@@ -937,11 +1337,14 @@ static int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
+ 	u8 *data;
+ 	int rc;
+ 
++	INIT_LIST_HEAD(&acpi_desc->spa_maps);
+ 	INIT_LIST_HEAD(&acpi_desc->spas);
+ 	INIT_LIST_HEAD(&acpi_desc->dcrs);
+ 	INIT_LIST_HEAD(&acpi_desc->bdws);
++	INIT_LIST_HEAD(&acpi_desc->idts);
+ 	INIT_LIST_HEAD(&acpi_desc->memdevs);
+ 	INIT_LIST_HEAD(&acpi_desc->dimms);
++	mutex_init(&acpi_desc->spa_map_mutex);
+ 
+ 	data = (u8 *) acpi_desc->nfit;
+ 	end = data + sz;
+@@ -990,6 +1393,9 @@ static int acpi_nfit_add(struct acpi_device *adev)
+ 	dev_set_drvdata(dev, acpi_desc);
+ 	acpi_desc->dev = dev;
+ 	acpi_desc->nfit = (struct acpi_table_nfit *) tbl;
++	acpi_desc->blk_enable = acpi_nfit_blk_region_enable;
++	acpi_desc->blk_disable = acpi_nfit_blk_region_disable;
++	acpi_desc->blk_do_io = acpi_nfit_blk_region_do_io;
+ 	nd_desc = &acpi_desc->nd_desc;
+ 	nd_desc->provider_name = "ACPI.NFIT";
+ 	nd_desc->ndctl = acpi_nfit_ctl;
+diff --git a/drivers/acpi/nfit.h b/drivers/acpi/nfit.h
+index cc496ba6bbd2..dfa3e53336b4 100644
+--- a/drivers/acpi/nfit.h
++++ b/drivers/acpi/nfit.h
+@@ -52,6 +52,11 @@ struct nfit_bdw {
+ 	struct list_head list;
+ };
+ 
++struct nfit_idt {
++	struct acpi_nfit_interleave *idt;
++	struct list_head list;
++};
 +
-+	nfit_res = nfit_test_lookup((unsigned long) mmio->base);
-+	if (!nfit_res) {
-+		dev_WARN_ONCE(&nd_region->dev, 1, "no test resource\n");
-+		return -EIO;
-+	}
-+	dev_vdbg(&nd_region->dev, "%s: base: %p offset: %pa\n",
-+			__func__, mmio->base, &dpa);
-+	bw = nd_region_acquire_lane(nd_region);
-+	if (rw)
-+		memcpy(nfit_res->buf + dpa, iobuf, len);
-+	else
-+		memcpy(iobuf, nfit_res->buf + dpa, len);
-+	nd_region_release_lane(nd_region, bw);
+ struct nfit_memdev {
+ 	struct acpi_nfit_memory_map *memdev;
+ 	struct list_head list;
+@@ -62,10 +67,13 @@ struct nfit_mem {
+ 	struct nd_dimm *nd_dimm;
+ 	struct acpi_nfit_memory_map *memdev_dcr;
+ 	struct acpi_nfit_memory_map *memdev_pmem;
++	struct acpi_nfit_memory_map *memdev_bdw;
+ 	struct acpi_nfit_control_region *dcr;
+ 	struct acpi_nfit_data_region *bdw;
+ 	struct acpi_nfit_system_address *spa_dcr;
+ 	struct acpi_nfit_system_address *spa_bdw;
++	struct acpi_nfit_interleave *idt_dcr;
++	struct acpi_nfit_interleave *idt_bdw;
+ 	struct list_head list;
+ 	struct acpi_device *adev;
+ 	unsigned long dsm_mask;
+@@ -74,16 +82,61 @@ struct nfit_mem {
+ struct acpi_nfit_desc {
+ 	struct nd_bus_descriptor nd_desc;
+ 	struct acpi_table_nfit *nfit;
++	struct mutex spa_map_mutex;
++	struct list_head spa_maps;
+ 	struct list_head memdevs;
+ 	struct list_head dimms;
+ 	struct list_head spas;
+ 	struct list_head dcrs;
+ 	struct list_head bdws;
++	struct list_head idts;
+ 	struct nd_bus *nd_bus;
+ 	struct device *dev;
+ 	unsigned long dimm_dsm_force_en;
++	int (*blk_enable)(struct nd_bus *nd_bus, struct device *dev);
++	void (*blk_disable)(struct nd_bus *nd_bus, struct device *dev);
++	int (*blk_do_io)(struct nd_blk_region *ndbr, void *iobuf,
++			u64 len, int write, resource_size_t dpa);
++};
 +
-+	return 0;
-+}
++enum nd_blk_mmio_selector {
++	BDW,
++	DCR,
++};
 +
-+extern const struct attribute_group *acpi_nfit_attribute_groups[];
-+
-+static int nfit_test_probe(struct platform_device *pdev)
-+{
-+	struct nd_bus_descriptor *nd_desc;
++struct nfit_blk {
++	struct nfit_blk_mmio {
++		union {
++			void __iomem *base;
++			void *aperture;
++		};
++		u64 size;
++		u64 base_offset;
++		u32 line_size;
++		u32 num_lines;
++		u32 table_size;
++		struct acpi_nfit_interleave *idt;
++		struct acpi_nfit_system_address *spa;
++	} mmio[2];
++	struct nd_region *nd_region;
++	u64 bdw_offset; /* post interleave offset */
++	u64 stat_offset;
++	u64 cmd_offset;
+ };
+ 
++struct nfit_spa_mapping {
 +	struct acpi_nfit_desc *acpi_desc;
-+	struct device *dev = &pdev->dev;
-+	struct nfit_test *nfit_test;
-+	int rc;
-+
-+	nfit_test = to_nfit_test(&pdev->dev);
-+
-+	/* common alloc */
-+	if (nfit_test->num_dcr) {
-+		int num = nfit_test->num_dcr;
-+
-+		nfit_test->dimm = devm_kcalloc(dev, num, sizeof(void *), GFP_KERNEL);
-+		nfit_test->dimm_dma = devm_kcalloc(dev, num, sizeof(dma_addr_t), GFP_KERNEL);
-+		nfit_test->label = devm_kcalloc(dev, num, sizeof(void *), GFP_KERNEL);
-+		nfit_test->label_dma = devm_kcalloc(dev, num, sizeof(dma_addr_t), GFP_KERNEL);
-+		nfit_test->dcr = devm_kcalloc(dev, num, sizeof(struct nfit_test_dcr *), GFP_KERNEL);
-+		nfit_test->dcr_dma = devm_kcalloc(dev, num, sizeof(dma_addr_t), GFP_KERNEL);
-+		if (nfit_test->dimm && nfit_test->dimm_dma && nfit_test->label
-+				&& nfit_test->label_dma && nfit_test->dcr
-+				&& nfit_test->dcr_dma)
-+			/* pass */;
-+		else
-+			return -ENOMEM;
-+	}
-+
-+	if (nfit_test->num_pm) {
-+		int num = nfit_test->num_pm;
-+
-+		nfit_test->spa_set = devm_kcalloc(dev, num, sizeof(void *), GFP_KERNEL);
-+		nfit_test->spa_set_dma = devm_kcalloc(dev, num,
-+				sizeof(dma_addr_t), GFP_KERNEL);
-+		if (nfit_test->spa_set && nfit_test->spa_set_dma)
-+			/* pass */;
-+		else
-+			return -ENOMEM;
-+	}
-+
-+	/* per-nfit specific alloc */
-+	if (nfit_test->alloc(nfit_test))
-+		return -ENOMEM;
-+
-+	nfit_test->setup(nfit_test);
-+	acpi_desc = &nfit_test->acpi_desc;
-+	acpi_desc->dev = &pdev->dev;
-+	acpi_desc->nfit = nfit_test->nfit_buf;
-+	acpi_desc->blk_enable = nfit_test_blk_region_enable;
-+	acpi_desc->blk_disable = nfit_test_blk_region_disable;
-+	acpi_desc->blk_do_io = nfit_test_blk_do_io;
-+	nd_desc = &acpi_desc->nd_desc;
-+	nd_desc->attr_groups = acpi_nfit_attribute_groups;
-+	acpi_desc->nd_bus = nd_bus_register(&pdev->dev, nd_desc);
-+	if (!acpi_desc->nd_bus)
-+		return -ENXIO;
-+
-+	rc = acpi_nfit_init(acpi_desc, nfit_test->nfit_size);
-+	if (rc) {
-+		nd_bus_unregister(acpi_desc->nd_bus);
-+		return rc;
-+	}
-+
-+	return 0;
-+}
-+
-+static int nfit_test_remove(struct platform_device *pdev)
-+{
-+	struct nfit_test *nfit_test = to_nfit_test(&pdev->dev);
-+	struct acpi_nfit_desc *acpi_desc = &nfit_test->acpi_desc;
-+
-+	nd_bus_unregister(acpi_desc->nd_bus);
-+
-+	return 0;
-+}
-+
-+static void nfit_test_release(struct device *dev)
-+{
-+	struct nfit_test *nfit_test = to_nfit_test(dev);
-+
-+	kfree(nfit_test);
-+}
-+
-+static const struct platform_device_id nfit_test_id[] = {
-+	{ KBUILD_MODNAME },
-+	{ },
++	struct acpi_nfit_system_address *spa;
++	struct list_head list;
++	struct kref kref;
++	void __iomem *iomem;
 +};
 +
-+static struct platform_driver nfit_test_driver = {
-+	.probe = nfit_test_probe,
-+	.remove = nfit_test_remove,
-+	.driver = {
-+		.name = KBUILD_MODNAME,
-+	},
-+	.id_table = nfit_test_id,
-+};
-+
-+#ifdef CONFIG_CMA_SIZE_MBYTES
-+#define CMA_SIZE_MBYTES CONFIG_CMA_SIZE_MBYTES
-+#else
-+#define CMA_SIZE_MBYTES 0
-+#endif
-+
-+static __init int nfit_test_init(void)
++static inline struct nfit_spa_mapping *to_spa_map(struct kref *kref)
 +{
-+	int rc, i;
-+
-+	nfit_test_setup(nfit_test_lookup);
-+
-+	for (i = 0; i < NUM_NFITS; i++) {
-+		struct nfit_test *nfit_test;
-+		struct platform_device *pdev;
-+		static int once;
-+
-+		nfit_test = kzalloc(sizeof(*nfit_test), GFP_KERNEL);
-+		if (!nfit_test) {
-+			rc = -ENOMEM;
-+			goto err_register;
-+		}
-+		INIT_LIST_HEAD(&nfit_test->resources);
-+		switch (i) {
-+		case 0:
-+			nfit_test->num_pm = NUM_PM;
-+			nfit_test->num_dcr = NUM_DCR;
-+			nfit_test->alloc = nfit_test0_alloc;
-+			nfit_test->setup = nfit_test0_setup;
-+			break;
-+		case 1:
-+			nfit_test->num_pm = 1;
-+			nfit_test->alloc = nfit_test1_alloc;
-+			nfit_test->setup = nfit_test1_setup;
-+			break;
-+		default:
-+			rc = -EINVAL;
-+			goto err_register;
-+		}
-+		pdev = &nfit_test->pdev;
-+		pdev->name = KBUILD_MODNAME;
-+		pdev->id = i;
-+		pdev->dev.release = nfit_test_release;
-+		rc = platform_device_register(pdev);
-+		if (rc) {
-+			put_device(&pdev->dev);
-+			goto err_register;
-+		}
-+
-+		rc = dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
-+		if (rc)
-+			goto err_register;
-+
-+		instances[i] = nfit_test;
-+
-+		if (!once++) {
-+			dma_addr_t dma;
-+			void *buf;
-+
-+			buf = dma_alloc_coherent(&pdev->dev, SZ_128M, &dma,
-+					GFP_KERNEL);
-+			if (!buf) {
-+				rc = -ENOMEM;
-+				dev_warn(&pdev->dev, "need 128M of free cma\n");
-+				goto err_register;
-+			}
-+			dma_free_coherent(&pdev->dev, SZ_128M, buf, dma);
-+		}
-+	}
-+
-+	rc = platform_driver_register(&nfit_test_driver);
-+	if (rc)
-+		goto err_register;
-+	return 0;
-+
-+ err_register:
-+	for (i = 0; i < NUM_NFITS; i++)
-+		if (instances[i])
-+			platform_device_unregister(&instances[i]->pdev);
-+	nfit_test_teardown();
-+	return rc;
++	return container_of(kref, struct nfit_spa_mapping, kref);
 +}
 +
-+static __exit void nfit_test_exit(void)
+ static inline struct acpi_nfit_memory_map *__to_nfit_memdev(struct nfit_mem *nfit_mem)
+ {
+ 	if (nfit_mem->memdev_dcr)
+diff --git a/drivers/block/nd/Kconfig b/drivers/block/nd/Kconfig
+index 8fbbf1e6f54c..1464120b530f 100644
+--- a/drivers/block/nd/Kconfig
++++ b/drivers/block/nd/Kconfig
+@@ -34,6 +34,19 @@ config BLK_DEV_PMEM
+ 
+ 	  Say Y if you want to use a NVDIMM described by ACPI, E820, etc...
+ 
++config ND_BLK
++	tristate "BLK: Block data window (aperture) device support"
++	depends on LIBND
++	default LIBND
++	help
++	  Support NVDIMMs, or other devices, that implement a BLK-mode
++	  access capability.  BLK-mode access uses memory-mapped-i/o
++	  apertures to access persistent media.
++
++	  Say Y if your platform firmware emits an ACPI.NFIT table
++	  (CONFIG_ACPI_NFIT), or otherwise exposes BLK-mode
++	  capabilities.
++
+ config ND_BTT_DEVS
+ 	bool
+ 
+diff --git a/drivers/block/nd/Makefile b/drivers/block/nd/Makefile
+index 1e8fe93a0a42..29a797686429 100644
+--- a/drivers/block/nd/Makefile
++++ b/drivers/block/nd/Makefile
+@@ -1,11 +1,14 @@
+ obj-$(CONFIG_LIBND) += libnd.o
+ obj-$(CONFIG_BLK_DEV_PMEM) += nd_pmem.o
+ obj-$(CONFIG_ND_BTT) += nd_btt.o
++obj-$(CONFIG_ND_BLK) += nd_blk.o
+ 
+ nd_pmem-y := pmem.o
+ 
+ nd_btt-y := btt.o
+ 
++nd_blk-y := blk.o
++
+ libnd-y := core.o
+ libnd-y += bus.o
+ libnd-y += dimm_devs.o
+diff --git a/drivers/block/nd/blk.c b/drivers/block/nd/blk.c
+new file mode 100644
+index 000000000000..464a3442fd40
+--- /dev/null
++++ b/drivers/block/nd/blk.c
+@@ -0,0 +1,252 @@
++/*
++ * NVDIMM Block Window Driver
++ * Copyright (c) 2014, Intel Corporation.
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms and conditions of the GNU General Public License,
++ * version 2, as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
++ * more details.
++ */
++
++#include <linux/blkdev.h>
++#include <linux/fs.h>
++#include <linux/genhd.h>
++#include <linux/module.h>
++#include <linux/moduleparam.h>
++#include <linux/nd.h>
++#include <linux/sizes.h>
++#include "nd.h"
++
++struct nd_blk_device {
++	struct request_queue *queue;
++	struct gendisk *disk;
++	struct nd_namespace_blk *nsblk;
++	struct nd_blk_region *ndbr;
++	struct nd_io ndio;
++	size_t disk_size;
++};
++
++static int nd_blk_major;
++
++static resource_size_t to_dev_offset(struct nd_namespace_blk *nsblk,
++				resource_size_t ns_offset, unsigned int len)
 +{
 +	int i;
 +
-+	platform_driver_unregister(&nfit_test_driver);
-+	for (i = 0; i < NUM_NFITS; i++)
-+		platform_device_unregister(&instances[i]->pdev);
-+	nfit_test_teardown();
++	for (i = 0; i < nsblk->num_resources; i++) {
++		if (ns_offset < resource_size(nsblk->res[i])) {
++			if (ns_offset + len > resource_size(nsblk->res[i])) {
++				dev_WARN_ONCE(&nsblk->dev, 1,
++					"%s: illegal request\n", __func__);
++				return SIZE_MAX;
++			}
++			return nsblk->res[i]->start + ns_offset;
++		}
++		ns_offset -= resource_size(nsblk->res[i]);
++	}
++
++	dev_WARN_ONCE(&nsblk->dev, 1, "%s: request out of range\n", __func__);
++	return SIZE_MAX;
 +}
 +
-+module_init(nfit_test_init);
-+module_exit(nfit_test_exit);
-+MODULE_LICENSE("GPL v2");
-+MODULE_AUTHOR("Intel Corporation");
-diff --git a/drivers/block/nd/test/nfit_test.h b/drivers/block/nd/test/nfit_test.h
-new file mode 100644
-index 000000000000..4a1215ec45c0
---- /dev/null
-+++ b/drivers/block/nd/test/nfit_test.h
-@@ -0,0 +1,28 @@
-+/*
-+ * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of version 2 of the GNU General Public License as
-+ * published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+ * General Public License for more details.
-+ */
-+#ifndef __NFIT_TEST_H__
-+#define __NFIT_TEST_H__
++static void nd_blk_make_request(struct request_queue *q, struct bio *bio)
++{
++	struct block_device *bdev = bio->bi_bdev;
++	struct gendisk *disk = bdev->bd_disk;
++	struct nd_namespace_blk *nsblk;
++	struct nd_blk_device *blk_dev;
++	struct nd_blk_region *ndbr;
++	struct bvec_iter iter;
++	struct bio_vec bvec;
++	int err = 0, rw;
++	sector_t sector;
 +
-+struct nfit_test_resource {
-+	struct list_head list;
-+	struct resource *res;
-+	struct device *dev;
-+	void *buf;
++	sector = bio->bi_iter.bi_sector;
++	if (bio_end_sector(bio) > get_capacity(disk)) {
++		err = -EIO;
++		goto out;
++	}
++
++	BUG_ON(bio->bi_rw & REQ_DISCARD);
++
++	rw = bio_data_dir(bio);
++
++	blk_dev = disk->private_data;
++	nsblk = blk_dev->nsblk;
++	ndbr = blk_dev->ndbr;
++	bio_for_each_segment(bvec, bio, iter) {
++		unsigned int len = bvec.bv_len;
++		resource_size_t	dev_offset;
++		void *iobuf;
++
++		BUG_ON(len > PAGE_SIZE);
++
++		dev_offset = to_dev_offset(nsblk, sector << SECTOR_SHIFT, len);
++		if (dev_offset == SIZE_MAX) {
++			err = -EIO;
++			goto out;
++		}
++
++		iobuf = kmap_atomic(bvec.bv_page);
++		err = ndbr->do_io(ndbr, iobuf + bvec.bv_offset, len, rw, dev_offset);
++		kunmap_atomic(iobuf);
++		if (err)
++			goto out;
++
++		sector += len >> SECTOR_SHIFT;
++	}
++
++ out:
++	bio_endio(bio, err);
++}
++
++static int nd_blk_rw_bytes(struct nd_io *ndio, void *iobuf, size_t offset,
++		size_t n, unsigned long flags)
++{
++	struct nd_namespace_blk *nsblk;
++	struct nd_blk_device *blk_dev;
++	int rw = nd_data_dir(flags);
++	struct nd_blk_region *ndbr;
++	resource_size_t	dev_offset;
++
++	blk_dev = container_of(ndio, typeof(*blk_dev), ndio);
++	ndbr = blk_dev->ndbr;
++	nsblk = blk_dev->nsblk;
++	dev_offset = to_dev_offset(nsblk, offset, n);
++
++	if (unlikely(offset + n > blk_dev->disk_size)) {
++		dev_WARN_ONCE(ndio->dev, 1, "%s: request out of range\n",
++				__func__);
++		return -EFAULT;
++	}
++
++	if (dev_offset == SIZE_MAX)
++		return -EIO;
++
++	return ndbr->do_io(ndbr, iobuf, n, rw, dev_offset);
++}
++
++static const struct block_device_operations nd_blk_fops = {
++	.owner =		THIS_MODULE,
 +};
 +
-+typedef struct nfit_test_resource *(*nfit_test_lookup_fn)(resource_size_t);
-+void __iomem *__wrap_ioremap_nocache(resource_size_t offset, unsigned long size);
-+void __wrap_iounmap(volatile void __iomem *addr);
-+void nfit_test_setup(nfit_test_lookup_fn lookup);
-+void nfit_test_teardown(void);
-+#endif
++static int nd_blk_probe(struct device *dev)
++{
++	struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
++	struct nd_region *nd_region = to_nd_region(dev->parent);
++	struct nd_blk_device *blk_dev;
++	resource_size_t disk_size;
++	struct gendisk *disk;
++	int err;
++
++	disk_size = nd_namespace_blk_validate(nsblk);
++	if (disk_size < ND_MIN_NAMESPACE_SIZE)
++		return -ENXIO;
++
++	blk_dev = kzalloc(sizeof(*blk_dev), GFP_KERNEL);
++	if (!blk_dev)
++		return -ENOMEM;
++
++	blk_dev->disk_size	= disk_size;
++
++	blk_dev->queue = blk_alloc_queue(GFP_KERNEL);
++	if (!blk_dev->queue) {
++		err = -ENOMEM;
++		goto err_alloc_queue;
++	}
++
++	blk_queue_make_request(blk_dev->queue, nd_blk_make_request);
++	blk_queue_max_hw_sectors(blk_dev->queue, 1024);
++	blk_queue_bounce_limit(blk_dev->queue, BLK_BOUNCE_ANY);
++	blk_queue_logical_block_size(blk_dev->queue, nsblk->lbasize);
++
++	disk = blk_dev->disk = alloc_disk(0);
++	if (!disk) {
++		err = -ENOMEM;
++		goto err_alloc_disk;
++	}
++
++	blk_dev->ndbr = to_nd_blk_region(nsblk->dev.parent);
++	blk_dev->nsblk = nsblk;
++
++	disk->driverfs_dev	= dev;
++	disk->major		= nd_blk_major;
++	disk->first_minor	= 0;
++	disk->fops		= &nd_blk_fops;
++	disk->private_data	= blk_dev;
++	disk->queue		= blk_dev->queue;
++	disk->flags		= GENHD_FL_EXT_DEVT;
++	sprintf(disk->disk_name, "ndblk%d.%d", nd_region->id, nsblk->id);
++	set_capacity(disk, disk_size >> SECTOR_SHIFT);
++
++	nd_bus_lock(dev);
++	dev_set_drvdata(dev, blk_dev);
++
++	add_disk(disk);
++	nd_init_ndio(&blk_dev->ndio, nd_blk_rw_bytes, dev, disk, 0);
++	nd_register_ndio(&blk_dev->ndio);
++	nd_bus_unlock(dev);
++
++	return 0;
++
++ err_alloc_disk:
++	blk_cleanup_queue(blk_dev->queue);
++ err_alloc_queue:
++	kfree(blk_dev);
++	return err;
++}
++
++static int nd_blk_remove(struct device *dev)
++{
++	struct nd_blk_device *blk_dev = dev_get_drvdata(dev);
++
++	nd_unregister_ndio(&blk_dev->ndio);
++	del_gendisk(blk_dev->disk);
++	put_disk(blk_dev->disk);
++	blk_cleanup_queue(blk_dev->queue);
++	kfree(blk_dev);
++
++	return 0;
++}
++
++static struct nd_device_driver nd_blk_driver = {
++	.probe = nd_blk_probe,
++	.remove = nd_blk_remove,
++	.drv = {
++		.name = "nd_blk",
++	},
++	.type = ND_DRIVER_NAMESPACE_BLK,
++};
++
++static int __init nd_blk_init(void)
++{
++	int rc;
++
++	rc = register_blkdev(0, "nd_blk");
++	if (rc < 0)
++		return rc;
++
++	nd_blk_major = rc;
++	rc = nd_driver_register(&nd_blk_driver);
++
++	if (rc < 0)
++		unregister_blkdev(nd_blk_major, "nd_blk");
++
++	return rc;
++}
++
++static void __exit nd_blk_exit(void)
++{
++	driver_unregister(&nd_blk_driver.drv);
++	unregister_blkdev(nd_blk_major, "nd_blk");
++}
++
++MODULE_AUTHOR("Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>");
++MODULE_LICENSE("GPL v2");
++MODULE_ALIAS_ND_DEVICE(ND_DEVICE_NAMESPACE_BLK);
++module_init(nd_blk_init);
++module_exit(nd_blk_exit);
+diff --git a/drivers/block/nd/dimm_devs.c b/drivers/block/nd/dimm_devs.c
+index 4b225c8b7d0a..df6c98fc2ae6 100644
+--- a/drivers/block/nd/dimm_devs.c
++++ b/drivers/block/nd/dimm_devs.c
+@@ -209,6 +209,15 @@ struct nd_dimm *to_nd_dimm(struct device *dev)
+ }
+ EXPORT_SYMBOL_GPL(to_nd_dimm);
+ 
++struct nd_dimm *nd_blk_region_to_dimm(struct nd_blk_region *ndbr)
++{
++	struct nd_region *nd_region = &ndbr->nd_region;
++	struct nd_mapping *nd_mapping = &nd_region->mapping[0];
++
++	return nd_mapping->nd_dimm;
++}
++EXPORT_SYMBOL_GPL(nd_blk_region_to_dimm);
++
+ struct nd_dimm_drvdata *to_ndd(struct nd_mapping *nd_mapping)
+ {
+ 	struct nd_dimm *nd_dimm = nd_mapping->nd_dimm;
+diff --git a/drivers/block/nd/namespace_devs.c b/drivers/block/nd/namespace_devs.c
+index 0f67afd2cd2f..d3042662f4b6 100644
+--- a/drivers/block/nd/namespace_devs.c
++++ b/drivers/block/nd/namespace_devs.c
+@@ -151,6 +151,53 @@ static resource_size_t nd_namespace_blk_size(struct nd_namespace_blk *nsblk)
+ 	return size;
+ }
+ 
++resource_size_t nd_namespace_blk_validate(struct nd_namespace_blk *nsblk)
++{
++	struct nd_region *nd_region = to_nd_region(nsblk->dev.parent);
++	struct nd_mapping *nd_mapping = &nd_region->mapping[0];
++	struct nd_dimm_drvdata *ndd = to_ndd(nd_mapping);
++	struct nd_label_id label_id;
++	struct resource *res;
++	int count, i;
++
++	if (!nsblk->uuid || !nsblk->lbasize)
++		return 0;
++
++	count = 0;
++	nd_label_gen_id(&label_id, nsblk->uuid, NSLABEL_FLAG_LOCAL);
++	for_each_dpa_resource(ndd, res) {
++		if (strcmp(res->name, label_id.id) != 0)
++			continue;
++		/*
++		 * Resources with unacknoweldged adjustments indicate a
++		 * failure to update labels
++		 */
++		if (res->flags & DPA_RESOURCE_ADJUSTED)
++			return 0;
++		count++;
++	}
++
++	/* These values match after a successful label update */
++	if (count != nsblk->num_resources)
++		return 0;
++
++	for (i = 0; i < nsblk->num_resources; i++) {
++		struct resource *found = NULL;
++
++		for_each_dpa_resource(ndd, res)
++			if (res == nsblk->res[i]) {
++				found = res;
++				break;
++			}
++		/* stale resource */
++		if (!found)
++			return 0;
++	}
++
++	return nd_namespace_blk_size(nsblk);
++}
++EXPORT_SYMBOL(nd_namespace_blk_validate);
++
+ static int nd_namespace_label_update(struct nd_region *nd_region, struct device *dev)
+ {
+ 	dev_WARN_ONCE(dev, dev->driver,
+diff --git a/drivers/block/nd/nd-private.h b/drivers/block/nd/nd-private.h
+index 6a864e9ae97a..b0571e334af9 100644
+--- a/drivers/block/nd/nd-private.h
++++ b/drivers/block/nd/nd-private.h
+@@ -22,7 +22,6 @@ extern struct list_head nd_bus_list;
+ extern struct mutex nd_bus_list_mutex;
+ extern int nd_dimm_major;
+ 
+-struct block_device;
+ struct nd_io_claim;
+ struct nd_btt;
+ struct nd_io;
+@@ -50,8 +49,8 @@ struct nd_dimm {
+ 
+ struct nd_io *ndio_lookup(struct nd_bus *nd_bus, const char *diskname);
+ bool is_nd_dimm(struct device *dev);
+-bool is_nd_blk(struct device *dev);
+ bool is_nd_pmem(struct device *dev);
++bool is_nd_blk(struct device *dev);
+ #if IS_ENABLED(CONFIG_ND_BTT_DEVS)
+ bool is_nd_btt(struct device *dev);
+ struct nd_btt *nd_btt_create(struct nd_bus *nd_bus);
+diff --git a/drivers/block/nd/nd.h b/drivers/block/nd/nd.h
+index b706f25da7e5..b830801c9892 100644
+--- a/drivers/block/nd/nd.h
++++ b/drivers/block/nd/nd.h
+@@ -113,6 +113,15 @@ struct nd_region {
+ 	struct nd_mapping mapping[0];
+ };
+ 
++struct nd_blk_region {
++	int (*enable)(struct nd_bus *nd_bus, struct device *dev);
++	void (*disable)(struct nd_bus *nd_bus, struct device *dev);
++	int (*do_io)(struct nd_blk_region *ndbr, void *iobuf, u64 len,
++			int write, resource_size_t dpa);
++	void *blk_provider_data;
++	struct nd_region nd_region;
++};
++
+ /*
+  * Lookup next in the repeating sequence of 01, 10, and 11.
+  */
+@@ -232,8 +241,6 @@ struct nd_btt *to_nd_btt(struct device *dev);
+ struct btt_sb;
+ u64 nd_btt_sb_checksum(struct btt_sb *btt_sb);
+ struct nd_region *to_nd_region(struct device *dev);
+-unsigned int nd_region_acquire_lane(struct nd_region *nd_region);
+-void nd_region_release_lane(struct nd_region *nd_region, unsigned int lane);
+ int nd_region_to_namespace_type(struct nd_region *nd_region);
+ int nd_region_register_namespaces(struct nd_region *nd_region, int *err);
+ u64 nd_region_interleave_set_cookie(struct nd_region *nd_region);
+@@ -245,4 +252,6 @@ void nd_dimm_free_dpa(struct nd_dimm_drvdata *ndd, struct resource *res);
+ struct resource *nd_dimm_allocate_dpa(struct nd_dimm_drvdata *ndd,
+ 		struct nd_label_id *label_id, resource_size_t start,
+ 		resource_size_t n);
++int nd_blk_region_init(struct nd_region *nd_region);
++resource_size_t nd_namespace_blk_validate(struct nd_namespace_blk *nsblk);
+ #endif /* __ND_H__ */
+diff --git a/drivers/block/nd/region.c b/drivers/block/nd/region.c
+index 0e872f54dcd2..75ae27279f0e 100644
+--- a/drivers/block/nd/region.c
++++ b/drivers/block/nd/region.c
+@@ -94,11 +94,10 @@ EXPORT_SYMBOL(nd_region_release_lane);
+ 
+ static int nd_region_probe(struct device *dev)
+ {
+-	int err;
++	int err, rc;
+ 	static unsigned long once;
+ 	struct nd_region_namespaces *num_ns;
+ 	struct nd_region *nd_region = to_nd_region(dev);
+-	int rc = nd_region_register_namespaces(nd_region, &err);
+ 
+ 	if (nd_region->num_lanes > num_online_cpus()
+ 			&& nd_region->num_lanes < num_possible_cpus()
+@@ -110,6 +109,11 @@ static int nd_region_probe(struct device *dev)
+ 				nd_region->num_lanes);
+ 	}
+ 
++	rc = nd_blk_region_init(nd_region);
++	if (rc)
++		return rc;
++
++	rc = nd_region_register_namespaces(nd_region, &err);
+ 	num_ns = devm_kzalloc(dev, sizeof(*num_ns), GFP_KERNEL);
+ 	if (!num_ns)
+ 		return -ENOMEM;
+diff --git a/drivers/block/nd/region_devs.c b/drivers/block/nd/region_devs.c
+index 4965004147ae..88af2a42397f 100644
+--- a/drivers/block/nd/region_devs.c
++++ b/drivers/block/nd/region_devs.c
+@@ -11,6 +11,7 @@
+  * General Public License for more details.
+  */
+ #include <linux/scatterlist.h>
++#include <linux/highmem.h>
+ #include <linux/sched.h>
+ #include <linux/slab.h>
+ #include <linux/sort.h>
+@@ -33,7 +34,10 @@ static void nd_region_release(struct device *dev)
+ 		put_device(&nd_dimm->dev);
+ 	}
+ 	ida_simple_remove(&region_ida, nd_region->id);
+-	kfree(nd_region);
++	if (is_nd_blk(dev))
++		kfree(to_nd_blk_region(dev));
++	else
++		kfree(nd_region);
+ }
+ 
+ static struct device_type nd_blk_device_type = {
+@@ -70,6 +74,33 @@ struct nd_region *to_nd_region(struct device *dev)
+ }
+ EXPORT_SYMBOL_GPL(to_nd_region);
+ 
++struct nd_blk_region *to_nd_blk_region(struct device *dev)
++{
++	struct nd_region *nd_region = to_nd_region(dev);
++
++	WARN_ON(!is_nd_blk(dev));
++	return container_of(nd_region, struct nd_blk_region, nd_region);
++}
++EXPORT_SYMBOL_GPL(to_nd_blk_region);
++
++void *nd_region_provider_data(struct nd_region *nd_region)
++{
++	return nd_region->provider_data;
++}
++EXPORT_SYMBOL_GPL(nd_region_provider_data);
++
++void *nd_blk_region_provider_data(struct nd_blk_region *ndbr)
++{
++	return ndbr->blk_provider_data;
++}
++EXPORT_SYMBOL_GPL(nd_blk_region_provider_data);
++
++void nd_blk_region_set_provider_data(struct nd_blk_region *ndbr, void *data)
++{
++	ndbr->blk_provider_data = data;
++}
++EXPORT_SYMBOL_GPL(nd_blk_region_set_provider_data);
++
+ /**
+  * nd_region_to_namespace_type() - region to an integer namespace type
+  * @nd_region: region-device to interrogate
+@@ -344,14 +375,13 @@ u64 nd_region_interleave_set_cookie(struct nd_region *nd_region)
+ 
+ /*
+  * Upon successful probe/remove, take/release a reference on the
+- * associated interleave set (if present)
++ * associated dimms in the interleave set, on successful probe of a BLK
++ * namespace check if we need a new seed, and on remove or failed probe
++ * of a BLK region notify the provider to disable the region.
+  */
+ static void nd_region_notify_driver_action(struct nd_bus *nd_bus,
+ 		struct device *dev, int rc, bool probe)
+ {
+-	if (rc)
+-		return;
+-
+ 	if (is_nd_pmem(dev) || is_nd_blk(dev)) {
+ 		struct nd_region *nd_region = to_nd_region(dev);
+ 		int i;
+@@ -360,11 +390,16 @@ static void nd_region_notify_driver_action(struct nd_bus *nd_bus,
+ 			struct nd_mapping *nd_mapping = &nd_region->mapping[i];
+ 			struct nd_dimm *nd_dimm = nd_mapping->nd_dimm;
+ 
+-			if (probe)
++			if (probe && rc == 0)
+ 				atomic_inc(&nd_dimm->busy);
+-			else
++			else if (!probe)
+ 				atomic_dec(&nd_dimm->busy);
+ 		}
++
++		if (is_nd_pmem(dev) || (probe && rc == 0))
++			return;
++
++		to_nd_blk_region(dev)->disable(nd_bus, dev);
+ 	} else if (dev->parent && is_nd_blk(dev->parent) && probe && rc == 0) {
+ 		struct nd_region *nd_region = to_nd_region(dev->parent);
+ 
+@@ -508,11 +543,21 @@ struct attribute_group nd_mapping_attribute_group = {
+ };
+ EXPORT_SYMBOL_GPL(nd_mapping_attribute_group);
+ 
+-void *nd_region_provider_data(struct nd_region *nd_region)
++int nd_blk_region_init(struct nd_region *nd_region)
+ {
+-	return nd_region->provider_data;
++	struct device *dev = &nd_region->dev;
++	struct nd_bus *nd_bus = walk_to_nd_bus(dev);
++
++	if (!is_nd_blk(dev))
++		return 0;
++
++	if (nd_region->ndr_mappings < 1) {
++		dev_err(dev, "invalid BLK region\n");
++		return -ENXIO;
++	}
++
++	return to_nd_blk_region(dev)->enable(nd_bus, dev);
+ }
+-EXPORT_SYMBOL_GPL(nd_region_provider_data);
+ 
+ static noinline struct nd_region *nd_region_create(struct nd_bus *nd_bus,
+ 		struct nd_region_desc *ndr_desc, struct device_type *dev_type)
+@@ -534,9 +579,28 @@ static noinline struct nd_region *nd_region_create(struct nd_bus *nd_bus,
+ 		}
+ 	}
+ 
+-	nd_region = kzalloc(sizeof(struct nd_region)
+-			+ sizeof(struct nd_mapping) * ndr_desc->num_mappings,
+-			GFP_KERNEL);
++	if (dev_type == &nd_blk_device_type) {
++		struct nd_blk_region_desc *ndbr_desc;
++		struct nd_blk_region *ndbr;
++
++		ndbr_desc = container_of(ndr_desc, typeof(*ndbr_desc), ndr_desc);
++		ndbr = kzalloc(sizeof(*ndbr) + sizeof(struct nd_mapping)
++				* ndr_desc->num_mappings,
++				GFP_KERNEL);
++		if (ndbr) {
++			nd_region = &ndbr->nd_region;
++			ndbr->enable = ndbr_desc->enable;
++			ndbr->disable = ndbr_desc->disable;
++			ndbr->do_io = ndbr_desc->do_io;
++		} else
++			nd_region = NULL;
++	} else {
++		nd_region = kzalloc(sizeof(struct nd_region)
++				+ sizeof(struct nd_mapping)
++				* ndr_desc->num_mappings,
++				GFP_KERNEL);
++	}
++
+ 	if (!nd_region)
+ 		return NULL;
+ 	nd_region->id = ida_simple_get(&region_ida, 0, 0, GFP_KERNEL);
+diff --git a/include/linux/libnd.h b/include/linux/libnd.h
+index 6146690b23e7..31969f082407 100644
+--- a/include/linux/libnd.h
++++ b/include/linux/libnd.h
+@@ -81,6 +81,15 @@ struct nd_region_desc {
+ 
+ struct nd_bus;
+ struct device;
++struct nd_blk_region;
++struct nd_blk_region_desc {
++	int (*enable)(struct nd_bus *nd_bus, struct device *dev);
++	void (*disable)(struct nd_bus *nd_bus, struct device *dev);
++	int (*do_io)(struct nd_blk_region *ndbr, void *iobuf, u64 len,
++			int write, resource_size_t dpa);
++	struct nd_region_desc ndr_desc;
++};
++
+ struct nd_bus *__nd_bus_register(struct device *parent,
+ 		struct nd_bus_descriptor *nfit_desc, struct module *module);
+ #define nd_bus_register(parent, desc) \
+@@ -89,10 +98,10 @@ void nd_bus_unregister(struct nd_bus *nd_bus);
+ struct nd_bus *to_nd_bus(struct device *dev);
+ struct nd_dimm *to_nd_dimm(struct device *dev);
+ struct nd_region *to_nd_region(struct device *dev);
++struct nd_blk_region *to_nd_blk_region(struct device *dev);
+ struct nd_bus_descriptor *to_nd_desc(struct nd_bus *nd_bus);
+ const char *nd_dimm_name(struct nd_dimm *nd_dimm);
+ void *nd_dimm_provider_data(struct nd_dimm *nd_dimm);
+-void *nd_region_provider_data(struct nd_region *nd_region);
+ struct nd_dimm *nd_dimm_create(struct nd_bus *nd_bus, void *provider_data,
+ 		const struct attribute_group **groups, unsigned long flags,
+ 		unsigned long *dsm_mask);
+@@ -110,5 +119,11 @@ struct nd_region *nd_blk_region_create(struct nd_bus *nd_bus,
+ 		struct nd_region_desc *ndr_desc);
+ struct nd_region *nd_volatile_region_create(struct nd_bus *nd_bus,
+ 		struct nd_region_desc *ndr_desc);
++void *nd_region_provider_data(struct nd_region *nd_region);
++void *nd_blk_region_provider_data(struct nd_blk_region *ndbr);
++void nd_blk_region_set_provider_data(struct nd_blk_region *ndbr, void *data);
++struct nd_dimm *nd_blk_region_to_dimm(struct nd_blk_region *ndbr);
++unsigned int nd_region_acquire_lane(struct nd_region *nd_region);
++void nd_region_release_lane(struct nd_region *nd_region, unsigned int lane);
+ u64 nd_fletcher64(void *addr, size_t len, bool le);
+ #endif /* __LIBND_H__ */
