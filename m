@@ -1,151 +1,121 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v5 00/11] Add simple NVMEM Framework via regmap.
-Date: Fri, 29 May 2015 14:44:33 -0700
-Message-ID: <CAA9_cmcfQ-cYHtQR63ENtygZwaz6OPFsXbmQEZBZesyJqC=qsw@mail.gmail.com>
-References: <1427752492-17039-1-git-send-email-srinivas.kandagatla@linaro.org>
-	<1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org>
-	<CAA9_cmetqnqTQPCd8ya5AJPKQw8ary8CwsE6TUv=f57O=_MH5w@mail.gmail.com>
-	<556810AB.40906@linaro.org>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH for v4.2 v18 1/3] sys_membarrier(): system-wide memory
+ barrier (generic, x86)
+Date: Fri, 29 May 2015 15:40:36 -0700
+Message-ID: <20150529154036.9695b6c153ed37aed3343f3b@linux-foundation.org>
+References: <1431820100-17040-1-git-send-email-mathieu.desnoyers@efficios.com>
+	<1431820100-17040-2-git-send-email-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-arm-msm-owner@vger.kernel.org>
-In-Reply-To: <556810AB.40906@linaro.org>
-Sender: linux-arm-msm-owner@vger.kernel.org
-To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Cc: linux-arm-msm@vger.kernel.org, devicetree@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Sascha Hauer <s.hauer@pengutronix.de>, sboyd@codeaurora.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Pantelis Antoniou <pantelis.antoniou@konsulko.com>, Rob Herring <robh+dt@kernel.org>, Mark Brown <broonie@kernel.org>, Kumar Gala <galak@codeaurora.org>, Matthew Porter <mporter@konsulko.com>, Maxime Ripard <maxime.ripard@free-electrons.com>, linux-api@vger.kernel.org, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1431820100-17040-2-git-send-email-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, KOSAKI Motohiro <kosaki.motohiro-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Nicholas Miell <nmiell-Wuw85uim5zDR7s880joybQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alan Cox <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Stephen Hemminger <stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pranith Kumar <bobby.prani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 29, 2015 at 12:09 AM, Srinivas Kandagatla
-<srinivas.kandagatla@linaro.org> wrote:
->
->
-> On 29/05/15 02:20, Dan Williams wrote:
->>
->> On Thu, May 21, 2015 at 9:42 AM, Srinivas Kandagatla
->> <srinivas.kandagatla@linaro.org> wrote:
->>>
->>> Thankyou all for providing inputs and comments on previous versions of
->>> this patchset.
->>> Here is the v5 of the patchset addressing all the issues raised as
->>> part of previous versions review.
->>>
->>> This patchset adds a new simple NVMEM framework to kernel.
->>>
->>> Up until now, NVMEM drivers were stored in drivers/misc, where they all
->>> had to
->>> duplicate pretty much the same code to register a sysfs file, allow
->>> in-kernel
->>> users to access the content of the devices they were driving, etc.
->>>
->>> This was also a problem as far as other in-kernel users were involved,
->>> since
->>> the solutions used were pretty much different from on driver to another,
->>> there
->>> was a rather big abstraction leak.
->>>
->>> Introduction of this framework aims at solving this. It also introduces
->>> DT
->>> representation for consumer devices to go get the data they require (MAC
->>> Addresses, SoC/Revision ID, part numbers, and so on) from the NVMEMs.
->>>
->>> After learning few things about QCOM qfprom and other eeprom/efuses,
->>> which
->>> has packed fields at bit level. Which makes it important to add support
->>> to
->>> such memories. This version adds support to this type of non volatile
->>> memories by adding support to bit level nvmem-cells.
->>>
->>> Having regmap interface to this framework would give much better
->>> abstraction for nvmems on different buses.
->>>
->>> patch 1-2 Introduces two regmap helper functions.
->>> patch 3-6 Introduces the NVMEM framework.
->>> Patch 7 Adds helper functions for nvmems based on mmio.
->>> Patch 8 migrates an existing driver to nvmem framework.
->>> Patch 9-10 Adds Qualcomm specific qfprom driver.
->>> Patch 11 adds entry in MAINTAINERS.
->>>
->>> Its also possible to migrate other nvmem drivers to this framework.
->>>
->>> Providers APIs:
->>>          nvmem_register/unregister();
->>>
->>> Consumers APIs:
->>> Cell based apis for both DT/Non-DT:
->>>          nvmem_cell_get()/nvmem_cell_put();
->>>          nvmem_cell_read()/nvmem_cell_write();
->>>
->>> Raw byte access apis for both DT/non-DT.
->>>          nvmem_device_get()/nvmem_device_put()
->>>          nvmem_device_read()/nvmem_device_write();
->>>          nvmem_device_cell_read()/nvmem_device_cell_write();
->>>
->>> Device Tree:
->>>
->>>          /* Provider */
->>>          qfprom: qfprom@00700000 {
->>>                  ...
->>>
->>>                  /* Data cells */
->>>                  tsens_calibration: calib@404 {
->>>                          reg = <0x404 0x10>;
->>>                  };
->>>
->>>                  tsens_calibration_bckp: calib_bckp@504 {
->>>                          reg = <0x504 0x11>;
->>>                          bit-offset = 6;
->>>                          nbits = 128;
->>>                  };
->>>
->>>                  pvs_version: pvs-version@6 {
->>>                          reg = <0x6 0x2>
->>>                          bit-offset = 7;
->>>                          nbits = 2;
->>>                  };
->>>
->>>                  speed_bin: speed-bin@c{
->>>                          reg = <0xc 0x1>;
->>>                          bit-offset = 2;
->>>                          nbits   = 3;
->>>
->>>                  };
->>>                  ...
->>>          };
->>>
->>> userspace interface: binary file in /sys/class/nvmem/*/nvmem
->>>
->>> ex:
->>> hexdump /sys/class/nvmem/qfprom0/nvmem
->>>
->>> 0000000 0000 0000 0000 0000 0000 0000 0000 0000
->>> *
->>> 00000a0 db10 2240 0000 e000 0c00 0c00 0000 0c00
->>> 0000000 0000 0000 0000 0000 0000 0000 0000 0000
->>> ...
->>> *
->>> 0001000
->>>
->>> Changes since v4(https://lkml.org/lkml/2015/3/30/725)
->>>   * rename eeprom to nvmem suggested by Matt Porter
->>
->>
->> Apologies for the bikeshed fly-by review, but given we already have
->> NVME and are adding an NVDIMM driver sub-system is s/eeprom/nvmem/ a
->> good idea?
->>
-> IMO yes.
->
-> I did briefly looked at NVME before renaming the eeprom to nvmem,
-> NVME is aimed at defining the command/feature set for PCIe-based SSDs with
-> the goals of increased and efficient performance and interoperability.
->
-> This patch-set introduces simple nvmem which is applicable for non volatile
-> memories like efuses, eeprom, ROM, NVRAM .. etc, which are used in most
-> boards/SBC's. Data like calibration table, mac address or opps, are
-> generally stored this. This data is required by multiple drivers and
-> currently there is no framework in the kernel to address/abstract this,
-> resulting in code duplication.
+On Sat, 16 May 2015 19:48:18 -0400 Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
 
-Understood, but don't be surprised when people confuse NVMEM support
-(sub to single digit megabyte capacities for firmware) and NVDIMM
-support (multiple gigabyte capacities for i/o).
+> Here is an implementation of a new system call, sys_membarrier(), which
+> executes a memory barrier on all threads running on the system. It is
+> implemented by calling synchronize_sched(). It can be used to distribute
+> the cost of user-space memory barriers asymmetrically by transforming
+> pairs of memory barriers into pairs consisting of sys_membarrier() and a
+> compiler barrier. For synchronization primitives that distinguish
+> between read-side and write-side (e.g. userspace RCU [1], rwlocks), the
+> read-side can be accelerated significantly by moving the bulk of the
+> memory barrier overhead to the write-side.
+>
+> ...
+>
+
+It would be nice to hear about the real world value of this syscall to
+our users.  I'm seeing test results for a microbenchmark but so what. 
+What actual applications or application classes are calling for this and
+what results can they expect to see?
+
+> 
+> membarrier(2) man page:
+> --------------- snip -------------------
+> MEMBARRIER(2)              Linux Programmer's Manual             MEMBARRIER(2)
+> 
+> NAME
+>        membarrier - issue memory barriers on a set of threads
+> 
+> SYNOPSIS
+>        #include <linux/membarrier.h>
+> 
+>        int membarrier(int cmd, int flags);
+> 
+> DESCRIPTION
+>        The cmd argument is one of the following:
+> 
+>        MEMBARRIER_CMD_QUERY
+>               Query  the  set  of  supported commands. It returns a bitmask of
+>               supported commands.
+> 
+>        MEMBARRIER_CMD_SHARED
+>               Execute a memory barrier on all threads running on  the  system.
+>               Upon  return from system call, the caller thread is ensured that
+>               all running threads have passed through a state where all memory
+>               accesses  to  user-space  addresses  match program order between
+>               entry to and return from the system  call  (non-running  threads
+>               are de facto in such a state). This covers threads from all pro___
+>               cesses running on the system.  This command returns 0.
+> 
+>        The flags argument needs to be 0. For future extensions.
+> 
+>        All memory accesses performed  in  program  order  from  each  targeted
+>        thread is guaranteed to be ordered with respect to sys_membarrier(). If
+>        we use the semantic "barrier()" to represent a compiler barrier forcing
+>        memory  accesses  to  be performed in program order across the barrier,
+>        and smp_mb() to represent explicit memory barriers forcing full  memory
+>        ordering  across  the barrier, we have the following ordering table for
+>        each pair of barrier(), sys_membarrier() and smp_mb():
+> 
+>        The pair ordering is detailed as (O: ordered, X: not ordered):
+> 
+>                               barrier()   smp_mb() sys_membarrier()
+>               barrier()          X           X            O
+>               smp_mb()           X           O            O
+>               sys_membarrier()   O           O            O
+> 
+> RETURN VALUE
+>        On success, these system calls return zero.  On error, -1 is  returned,
+>        and errno is set appropriately. For a given command, with flags
+>        argument set to 0, this system call is guaranteed to always return the
+>        same value until reboot.
+
+I suggest "with flags argument set to MEMBARRIER_CMD_QUERY" here.
+
+> 
+> ERRORS
+>        ENOSYS System call is not implemented.
+> 
+>        EINVAL Invalid arguments.
+> 
+> ...
+>
+> +SYSCALL_DEFINE2(membarrier, int, cmd, int, flags)
+> +{
+> +	if (flags)
+> +		return -EINVAL;
+
+I'm not a huge fan of this "add a flags arg to syscalls" rule.  Is
+there any realistic expectation that we'll ever *use* this thing?  If
+not, why add it?
+
+You may as well put an unlikely() in there btw.
+
+> +	switch (cmd) {
+> +	case MEMBARRIER_CMD_QUERY:
+> +		return MEMBARRIER_CMD_BITMASK;
+> +	case MEMBARRIER_CMD_SHARED:
+> +		if (num_online_cpus() > 1)
+> +			synchronize_sched();
+> +		return 0;
+> +	default:
+> +		return -EINVAL;
+> +	}
+> +}
