@@ -1,7 +1,7 @@
 From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: [PATCH 7/8] DocBook: improve documentation for guard interval
-Date: Thu, 28 May 2015 22:28:56 -0300
-Message-ID: <46da1278eaccfe26cf61017d50dc2f231a8622ee.1432862317.git.mchehab@osg.samsung.com>
+Subject: [PATCH 4/8] DocBook: improve documentation for OFDM transmission mode
+Date: Thu, 28 May 2015 22:28:53 -0300
+Message-ID: <abb97d457a590324e19ebb727b46761c287dae14.1432862317.git.mchehab@osg.samsung.com>
 References: <cover.1432862317.git.mchehab@osg.samsung.com>
 Return-path: <linux-doc-owner@vger.kernel.org>
 In-Reply-To: <cover.1432862317.git.mchehab@osg.samsung.com>
@@ -12,40 +12,29 @@ To: Linux Media Mailing List <linux-media@vger.kernel.org>
 Cc: Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Mauro Carvalho Chehab <mchehab@infradead.org>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Format it as a table and add more details, in special for
-DTMB guard intervals.
+Format it as a table and add more details, in special, for
+the DTMB modes.
 
 Signed-off-by: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
 
 diff --git a/Documentation/DocBook/media/dvb/dvbproperty.xml b/Documentation/DocBook/media/dvb/dvbproperty.xml
-index b96a91a1494d..5f30a28a15b0 100644
+index 41085537acfc..06a12f1c57c5 100644
 --- a/Documentation/DocBook/media/dvb/dvbproperty.xml
 +++ b/Documentation/DocBook/media/dvb/dvbproperty.xml
-@@ -818,21 +818,59 @@ typedef enum atscmh_sccc_code_mode {
- 		<title><constant>DTV_GUARD_INTERVAL</constant></title>
+@@ -827,22 +827,61 @@ typedef enum fe_guard_interval {
+ 	<section id="DTV-TRANSMISSION-MODE">
+ 		<title><constant>DTV_TRANSMISSION_MODE</constant></title>
  
- 		<para>Possible values are:</para>
--<programlisting>
--typedef enum fe_guard_interval {
--	GUARD_INTERVAL_1_32,
--	GUARD_INTERVAL_1_16,
--	GUARD_INTERVAL_1_8,
--	GUARD_INTERVAL_1_4,
--	GUARD_INTERVAL_AUTO,
--	GUARD_INTERVAL_1_128,
--	GUARD_INTERVAL_19_128,
--	GUARD_INTERVAL_19_256,
--	GUARD_INTERVAL_PN420,
--	GUARD_INTERVAL_PN595,
--	GUARD_INTERVAL_PN945,
--} fe_guard_interval_t;
--</programlisting>
+-		<para>Specifies the number of carriers used by the standard</para>
++		<para>Specifies the number of carriers used by the standard.
++		    This is used only on OFTM-based standards, e. g.
++		    DVB-T/T2, ISDB-T, DTMB</para>
 +
-+<section id="fe-guard-interval-t">
-+<title>Modulation guard interval</title>
++<section id="fe-transmit-mode-t">
++<title>enum fe_transmit_mode: Number of carriers per channel</title>
 +
-+<table pgwide="1" frame="none" id="fe-guard-interval">
-+    <title>enum fe_guard_interval</title>
++<table pgwide="1" frame="none" id="fe-transmit-mode">
++    <title>enum fe_transmit_mode</title>
 +    <tgroup cols="2">
 +	&cs-def;
 +	<thead>
@@ -56,110 +45,122 @@ index b96a91a1494d..5f30a28a15b0 100644
 +	</thead>
 +	<tbody valign="top">
 +	<row>
-+	    <entry>GUARD_INTERVAL_AUTO</entry>
-+	    <entry>Autodetect the guard interval</entry>
++	    <entry>TRANSMISSION_MODE_AUTO</entry>
++	    <entry>Autodetect transmission mode. The hardware will try to find
++		the correct FFT-size (if capable) to fill in the missing
++		parameters.</entry>
 +	</row><row>
-+	    <entry>GUARD_INTERVAL_1_128</entry>
-+	    <entry>Guard interval 1/128</entry>
++	    <entry>TRANSMISSION_MODE_1K</entry>
++	    <entry>Transmission mode 1K</entry>
 +	</row><row>
-+	    <entry>GUARD_INTERVAL_1_32</entry>
-+	    <entry>Guard interval 1/32</entry>
++	    <entry>TRANSMISSION_MODE_2K</entry>
++	    <entry>Transmission mode 2K</entry>
 +	</row><row>
-+	    <entry>GUARD_INTERVAL_1_16</entry>
-+	    <entry>Guard interval 1/16</entry>
++	    <entry>TRANSMISSION_MODE_8K</entry>
++	    <entry>Transmission mode 8K</entry>
 +	</row><row>
-+	    <entry>GUARD_INTERVAL_1_8</entry>
-+	    <entry>Guard interval 1/8</entry>
++	    <entry>TRANSMISSION_MODE_4K</entry>
++	    <entry>Transmission mode 4K</entry>
 +	</row><row>
-+	    <entry>GUARD_INTERVAL_1_4</entry>
-+	    <entry>Guard interval 1/4</entry>
++	    <entry>TRANSMISSION_MODE_16K</entry>
++	    <entry>Transmission mode 16K</entry>
 +	</row><row>
-+	    <entry>GUARD_INTERVAL_19_128</entry>
-+	    <entry>Guard interval 19/128</entry>
++	    <entry>TRANSMISSION_MODE_32K</entry>
++	    <entry>Transmission mode 32K</entry>
 +	</row><row>
-+	    <entry>GUARD_INTERVAL_19_256</entry>
-+	    <entry>Guard interval 19/256</entry>
++	    <entry>TRANSMISSION_MODE_C1</entry>
++	    <entry>Single Carrier (C=1) transmission mode (DTMB)</entry>
 +	</row><row>
-+	    <entry>GUARD_INTERVAL_PN420</entry>
-+	    <entry>PN length 420 (1/4)</entry>
++	    <entry>TRANSMISSION_MODE_C3780</entry>
++	    <entry>Multi Carrier (C=3780) transmission mode (DTMB)</entry>
 +	</row><row>
-+	    <entry>GUARD_INTERVAL_PN595</entry>
-+	    <entry>PN length 595 (1/6)</entry>
-+	</row><row>
-+	    <entry>GUARD_INTERVAL_PN945</entry>
-+	    <entry>PN length 945 (1/9)</entry>
 +	</row>
 +        </tbody>
 +    </tgroup>
 +</table>
 +</section>
++
  
+-		<para>Possible values are:</para>
+-<programlisting>
+-typedef enum fe_transmit_mode {
+-	TRANSMISSION_MODE_2K,
+-	TRANSMISSION_MODE_8K,
+-	TRANSMISSION_MODE_AUTO,
+-	TRANSMISSION_MODE_4K,
+-	TRANSMISSION_MODE_1K,
+-	TRANSMISSION_MODE_16K,
+-	TRANSMISSION_MODE_32K,
+-	TRANSMISSION_MODE_C1,
+-	TRANSMISSION_MODE_C3780,
+-} fe_transmit_mode_t;
+-</programlisting>
  		<para>Notes:</para>
- 		<para>1) If <constant>DTV_GUARD_INTERVAL</constant> is set the <constant>GUARD_INTERVAL_AUTO</constant> the hardware will
+ 		<para>1) ISDB-T supports three carrier/symbol-size: 8K, 4K, 2K. It is called
+ 			'mode' in the standard: Mode 1 is 2K, mode 2 is 4K, mode 3 is 8K</para>
 diff --git a/Documentation/DocBook/media/dvb/frontend.xml b/Documentation/DocBook/media/dvb/frontend.xml
-index 563800eb1216..a005c4b472f5 100644
+index 77dd88ceeedd..3b6a169ac8f3 100644
 --- a/Documentation/DocBook/media/dvb/frontend.xml
 +++ b/Documentation/DocBook/media/dvb/frontend.xml
-@@ -59,22 +59,6 @@ specification is available at
+@@ -87,21 +87,6 @@ detection.
  <section>
  <title>More OFDM parameters</title>
  
--<section id="fe-guard-interval-t">
--<title>frontend guard inverval</title>
+-<section id="fe-transmit-mode-t">
+-<title>Number of carriers per channel</title>
 -<programlisting>
--typedef enum fe_guard_interval {
--	GUARD_INTERVAL_1_32,
--	GUARD_INTERVAL_1_16,
--	GUARD_INTERVAL_1_8,
--	GUARD_INTERVAL_1_4,
--	GUARD_INTERVAL_AUTO,
--	GUARD_INTERVAL_1_128,
--	GUARD_INTERVAL_19_128,
--	GUARD_INTERVAL_19_256,
--} fe_guard_interval_t;
+-typedef enum fe_transmit_mode {
+-	TRANSMISSION_MODE_2K,
+-	TRANSMISSION_MODE_8K,
+-	TRANSMISSION_MODE_AUTO,
+-	TRANSMISSION_MODE_4K,
+-	TRANSMISSION_MODE_1K,
+-	TRANSMISSION_MODE_16K,
+-	TRANSMISSION_MODE_32K,
+- } fe_transmit_mode_t;
 -</programlisting>
 -</section>
 -
- <section id="fe-hierarchy-t">
- <title>frontend hierarchy</title>
+ <section id="fe-bandwidth-t">
+ <title>frontend bandwidth</title>
  <programlisting>
 diff --git a/Documentation/DocBook/media/dvb/frontend_legacy_api.xml b/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
-index c1dfbd8096bd..d20f1fd75fa9 100644
+index fe1117e91f51..fa0c6649abfd 100644
 --- a/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
 +++ b/Documentation/DocBook/media/dvb/frontend_legacy_api.xml
-@@ -182,7 +182,7 @@ struct dvb_vsb_parameters {
- 	 &fe-code-rate-t;      code_rate_LP;  /&#x22C6; low priority stream code rate &#x22C6;/
+@@ -139,7 +139,7 @@ struct dvb_vsb_parameters {
+ 	 fe_code_rate_t      code_rate_HP;  /&#x22C6; high priority stream code rate &#x22C6;/
+ 	 fe_code_rate_t      code_rate_LP;  /&#x22C6; low priority stream code rate &#x22C6;/
  	 &fe-modulation-t;     constellation; /&#x22C6; modulation type (see above) &#x22C6;/
- 	 &fe-transmit-mode-t;  transmission_mode;
--	 fe_guard_interval_t guard_interval;
-+	 &fe-guard-interval-t; guard_interval;
+-	 fe_transmit_mode_t  transmission_mode;
++	 &fe-transmit-mode-t;  transmission_mode;
+ 	 fe_guard_interval_t guard_interval;
  	 fe_hierarchy_t      hierarchy_information;
   };
- </programlisting>
 diff --git a/include/uapi/linux/dvb/frontend.h b/include/uapi/linux/dvb/frontend.h
-index 49f6e980125b..1d2b7c6dee04 100644
+index 223905563676..c42e6d849f52 100644
 --- a/include/uapi/linux/dvb/frontend.h
 +++ b/include/uapi/linux/dvb/frontend.h
-@@ -228,7 +228,7 @@ enum fe_bandwidth {
- typedef enum fe_bandwidth fe_bandwidth_t;
- #endif
+@@ -198,7 +198,7 @@ enum fe_modulation {
  
--typedef enum fe_guard_interval {
-+enum fe_guard_interval {
- 	GUARD_INTERVAL_1_32,
- 	GUARD_INTERVAL_1_16,
- 	GUARD_INTERVAL_1_8,
-@@ -240,8 +240,9 @@ typedef enum fe_guard_interval {
- 	GUARD_INTERVAL_PN420,
- 	GUARD_INTERVAL_PN595,
- 	GUARD_INTERVAL_PN945,
--} fe_guard_interval_t;
+ typedef enum fe_modulation fe_modulation_t;
+ 
+-typedef enum fe_transmit_mode {
++enum fe_transmit_mode {
+ 	TRANSMISSION_MODE_2K,
+ 	TRANSMISSION_MODE_8K,
+ 	TRANSMISSION_MODE_AUTO,
+@@ -208,7 +208,9 @@ typedef enum fe_transmit_mode {
+ 	TRANSMISSION_MODE_32K,
+ 	TRANSMISSION_MODE_C1,
+ 	TRANSMISSION_MODE_C3780,
+-} fe_transmit_mode_t;
 +};
++
++typedef enum fe_transmit_mode fe_transmit_mode_t;
  
-+typedef enum fe_guard_interval fe_guard_interval_t;
- 
- typedef enum fe_hierarchy {
- 	HIERARCHY_NONE,
+ #if defined(__DVB_CORE__) || !defined (__KERNEL__)
+ typedef enum fe_bandwidth {
 -- 
 2.4.1
 
