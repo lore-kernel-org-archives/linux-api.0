@@ -1,142 +1,211 @@
-From: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
-Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe
-	as bind mounts (take 2)
-Date: Fri, 29 May 2015 11:30:55 +0200
-Message-ID: <556831CF.9040600@nod.at>
-References: <87pp63jcca.fsf@x220.int.ebiederm.org>	<87siaxuvik.fsf@x220.int.ebiederm.org>	<87wq004im1.fsf@x220.int.ebiederm.org>	<CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>	<20150528140839.GD28842@ubuntumail>
-	<55676E32.3050006@nod.at>	<87382gh3uo.fsf@x220.int.ebiederm.org>
-	<55677AEF.1090809@nod.at> <87iobcfkwx.fsf@x220.int.ebiederm.org>
+From: =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>
+Subject: [PATCH v5 10/12] KVM: arm64: guest debug, HW assisted debug support
+Date: Fri, 29 May 2015 10:30:26 +0100
+Message-ID: <1432891828-4816-11-git-send-email-alex.bennee@linaro.org>
+References: <1432891828-4816-1-git-send-email-alex.bennee@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87iobcfkwx.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, "libvir-list-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <libvir-list-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Cedric Bosdonnat <cbosdonnat-IBi9RG/b67k@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
+In-Reply-To: <1432891828-4816-1-git-send-email-alex.bennee@linaro.org>
+List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
+List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
+List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
+List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
+List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
+Errors-To: kvmarm-bounces@lists.cs.columbia.edu
+Sender: kvmarm-bounces@lists.cs.columbia.edu
+To: kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kvmarm@lists.cs.columbia.edu, christoffer.dall@linaro.org, marc.zyngier@arm.com, peter.maydell@linaro.org, agraf@suse.de, drjones@redhat.com, pbonzini@redhat.com, zhichao.huang@linaro.org
+Cc: Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>, Russell King <linux@arm.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>, Gleb Natapov <gleb@kernel.org>, jan.kiszka@siemens.com, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Will Deacon <will.deacon@arm.com>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, dahi@linux.vnet.ibm.com, Peter Zijlstra <peterz@infradead.org>, Catalin Marinas <catalin.marinas@arm.com>, r65777@freescale.com, bp@suse.de, Ingo Molnar <mingo@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-[CC'ing libvirt-lxc folks]
-
-Am 28.05.2015 um 23:32 schrieb Eric W. Biederman:
-> Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org> writes:
-> 
->> Am 28.05.2015 um 21:57 schrieb Eric W. Biederman:
->>>> FWIW, it breaks also libvirt-lxc:
->>>> Error: internal error: guest failed to start: Failed to re-mount /proc/sys on /proc/sys flags=1021: Operation not permitted
->>>
->>> Interesting.  I had not anticipated a failure there?  And it is failing
->>> in remount?  Oh that is interesting.
->>>
->>> That implies that there is some flag of the original mount of /proc that
->>> the remount of /proc/sys is clearing, and that previously 
->>>
->>> The flags specified are current rdonly,remount,bind so I expect there
->>> are some other flags on proc that libvirt-lxc is clearing by accident
->>> and we did not fail before because the kernel was not enforcing things.
->>
->> Please see:
->> http://libvirt.org/git/?p=libvirt.git;a=blob;f=src/lxc/lxc_container.c;h=9a9ae5c2aaf0f90ff472f24fda43c077b44998c7;hb=HEAD#l933
->> lxcContainerMountBasicFS()
->>
->> and:
->> http://libvirt.org/git/?p=libvirt.git;a=blob;f=src/lxc/lxc_container.c;h=9a9ae5c2aaf0f90ff472f24fda43c077b44998c7;hb=HEAD#l850
->> lxcBasicMounts
->>
->>> What are the mount flags in a working libvirt-lxc?
->>
->> See:
->> test1:~ # cat /proc/self/mountinfo
->> 149 147 0:56 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
->> 150 149 0:56 /sys /proc/sys ro,nodev,relatime - proc proc rw
-> 
->> If you need more info, please let me know. :-)
-> 
-> Oh interesting I had not realized libvirt-lxc had grown an unprivileged
-> mode using user namespaces.
-> 
-> This does appear to be a classic remount bug, where you are not
-> preserving the permissions.  It appears the fact that the code
-> failed to enforce locked permissions on the fresh mount of proc
-> was hiding this bug until now.
-> 
-> I expect what you actually want is the code below:
-> 
-> diff --git a/src/lxc/lxc_container.c b/src/lxc/lxc_container.c
-> index 9a9ae5c2aaf0..f008a7484bfe 100644
-> --- a/src/lxc/lxc_container.c
-> +++ b/src/lxc/lxc_container.c
-> @@ -850,7 +850,7 @@ typedef struct {
->  
->  static const virLXCBasicMountInfo lxcBasicMounts[] = {
->      { "proc", "/proc", "proc", MS_NOSUID|MS_NOEXEC|MS_NODEV, false, false, false },
-> -    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, false, false, false },
-> +    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
->      { "/.oldroot/proc/sys/net/ipv4", "/proc/sys/net/ipv4", NULL, MS_BIND, false, false, true },
->      { "/.oldroot/proc/sys/net/ipv6", "/proc/sys/net/ipv6", NULL, MS_BIND, false, false, true },
->      { "sysfs", "/sys", "sysfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
-> 
-> Or possibly just:
-> 
-> diff --git a/src/lxc/lxc_container.c b/src/lxc/lxc_container.c
-> index 9a9ae5c2aaf0..a60ccbd12bfc 100644
-> --- a/src/lxc/lxc_container.c
-> +++ b/src/lxc/lxc_container.c
-> @@ -850,7 +850,7 @@ typedef struct {
->  
->  static const virLXCBasicMountInfo lxcBasicMounts[] = {
->      { "proc", "/proc", "proc", MS_NOSUID|MS_NOEXEC|MS_NODEV, false, false, false },
-> -    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, false, false, false },
-> +    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, true, false, false },
->      { "/.oldroot/proc/sys/net/ipv4", "/proc/sys/net/ipv4", NULL, MS_BIND, false, false, true },
->      { "/.oldroot/proc/sys/net/ipv6", "/proc/sys/net/ipv6", NULL, MS_BIND, false, false, true },
->      { "sysfs", "/sys", "sysfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
-> 
-> As the there is little point in making /proc/sys read-only in a
-> user-namespace, as the permission checks are uid based and no-one should
-> have the global uid 0 in your container.  Making mounting /proc/sys
-> read-only rather pointless.
-
-Eric, using the patch below I was able to spawn a user-namespace enabled container
-using libvirt-lxc. :-)
-
-I had to:
-1. Disable the read-only mount of /proc/sys which is anyway useless in the user-namespace case.
-2. Disable the /proc/sys/net/ipv{4,6} bind mounts, this ugly hack is only needed for the non user-namespace case.
-3. Remove MS_RDONLY from the sysfs mount (For the non user-namespace case we'd have to keep this, though).
-
-Daniel, I'd take this as a chance to disable all the MS_RDONLY games if user-namespace are configured.
-With Eric's fixes they hurt us. And as I wrote many times before if root within the user-namespace
-is able to do nasty things in /sys and /proc that's a plain kernel bug which needs fixing. There is no
-point in mounting these read-only. Except for the case then no user-namespace is used.
-
-diff --git a/src/lxc/lxc_container.c b/src/lxc/lxc_container.c
-index 9a9ae5c..497e05f 100644
---- a/src/lxc/lxc_container.c
-+++ b/src/lxc/lxc_container.c
-@@ -850,10 +850,10 @@ typedef struct {
-
- static const virLXCBasicMountInfo lxcBasicMounts[] = {
-     { "proc", "/proc", "proc", MS_NOSUID|MS_NOEXEC|MS_NODEV, false, false, false },
--    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, false, false, false },
--    { "/.oldroot/proc/sys/net/ipv4", "/proc/sys/net/ipv4", NULL, MS_BIND, false, false, true },
--    { "/.oldroot/proc/sys/net/ipv6", "/proc/sys/net/ipv6", NULL, MS_BIND, false, false, true },
--    { "sysfs", "/sys", "sysfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
-+    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, true, false, false },
-+    { "/.oldroot/proc/sys/net/ipv4", "/proc/sys/net/ipv4", NULL, MS_BIND, true, false, true },
-+    { "/.oldroot/proc/sys/net/ipv6", "/proc/sys/net/ipv6", NULL, MS_BIND, true, false, true },
-+    { "sysfs", "/sys", "sysfs", MS_NOSUID|MS_NOEXEC|MS_NODEV, false, false, false },
-     { "securityfs", "/sys/kernel/security", "securityfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, true, true, false },
- #if WITH_SELINUX
-     { SELINUX_MOUNT, SELINUX_MOUNT, "selinuxfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, true, true, false },
-
-Thanks,
-//richard
+VGhpcyBhZGRzIHN1cHBvcnQgZm9yIHVzZXJzcGFjZSB0byBjb250cm9sIHRoZSBIVyBkZWJ1ZyBy
+ZWdpc3RlcnMgZm9yCmd1ZXN0IGRlYnVnLiBJbiB0aGUgZGVidWcgaW9jdGwgd2UgY29weSB0aGUg
+SU1QREVGIGRlZmluZWQgbnVtYmVyIG9mCnJlZ2lzdGVycyBpbnRvIGEgbmV3IHJlZ2lzdGVyIHNl
+dCBjYWxsZWQgaG9zdF9kZWJ1Z19zdGF0ZS4gVGhlcmUgaXMgbm93CmEgbmV3IHZjcHUgcGFyYW1l
+dGVyIGNhbGxlZCBkZWJ1Z19wdHIgd2hpY2ggc2VsZWN0cyB3aGljaCByZWdpc3RlciBzZXQKaXMg
+dG8gY29waWVkIGludG8gdGhlIHJlYWwgcmVnaXN0ZXJzIHdoZW4gd29ybGQgc3dpdGNoIG9jY3Vy
+cy4KCkkndmUgbW92ZWQgc29tZSBoZWxwZXIgZnVuY3Rpb25zIGludG8gdGhlIGh3X2JyZWFrcG9p
+bnQuaCBoZWFkZXIgZm9yCnJlLXVzZS4KCkFzIHdpdGggc2luZ2xlIHN0ZXAgd2UgbmVlZCB0byB0
+d2VhayB0aGUgZ3Vlc3QgcmVnaXN0ZXJzIHRvIGVuYWJsZSB0aGUKZXhjZXB0aW9ucyBzbyB3ZSBu
+ZWVkIHRvIHNhdmUgYW5kIHJlc3RvcmUgdGhvc2UgYml0cy4KClR3byBuZXcgY2FwYWJpbGl0aWVz
+IGhhdmUgYmVlbiBhZGRlZCB0byB0aGUgS1ZNX0VYVEVOU0lPTiBpb2N0bCB0byBhbGxvdwp1c2Vy
+c3BhY2UgdG8gcXVlcnkgdGhlIG51bWJlciBvZiBoYXJkd2FyZSBicmVhayBhbmQgd2F0Y2ggcG9p
+bnRzCmF2YWlsYWJsZSBvbiB0aGUgaG9zdCBoYXJkd2FyZS4KClNpZ25lZC1vZmYtYnk6IEFsZXgg
+QmVubsOpZSA8YWxleC5iZW5uZWVAbGluYXJvLm9yZz4KCi0tLQp2MgogICAtIHN3aXRjaGVkIHRv
+IEMgc2V0dXAKICAgLSByZXBsYWNlIGhvc3QgZGVidWcgcmVnaXN0ZXJzIGRpcmVjdGx5IGludG8g
+Y29udGV4dAogICAtIG1pbm9yIHR3ZWFrIHRvIGFwaSBkb2NzCiAgIC0gc2V0dXAgcmlnaHQgcmVn
+aXN0ZXIgZm9yIGRlYnVnCiAgIC0gYWRkIEZBUl9FTDIgdG8gZGVidWcgZXhpdCBzdHJ1Y3R1cmUK
+ICAgLSBhZGQgc3VwcG9ydCBmb3IgdHJhcHBpbmcgZGVidWcgcmVnaXN0ZXIgYWNjZXNzCnYzCiAg
+IC0gcmVtb3ZlIHN0cmF5IHRyYWNlIHN0YXRlbWVudAogICAtIGZpeCBzcGFjaW5nIGFyb3VuZCBv
+cGVyYXRvcnMgKHZhcmlvdXMpCiAgIC0gY2xlYW4tdXAgdXNhZ2Ugb2YgdHJhcF9kZWJ1ZwogICAt
+IGludHJvZHVjZSBkZWJ1Z19wdHIsIHJlcGxhY2UgZXhjZXNzaXZlIG1lbWNweSBzdHVmZgogICAt
+IGRvbid0IHVzZSBtZW1jcHkgaW4gaW9jdGwsIGp1c3QgYXNzaWduCiAgIC0gdXBkYXRlIGNhcCBp
+b2N0bCBkb2N1bWVudGF0aW9uCiAgIC0gcmV3b3JkIGEgbnVtYmVyIGNvbW1lbnRzCiAgIC0gcmVu
+YW1lIGhvc3RfZGVidWdfc3RhdGUtPmV4dGVybmFsX2RlYnVnX3N0YXRlCnY0CiAgIC0gdXNlIHRo
+ZSBuZXcgdTMyL3U2NCBzcGxpdCBkZWJ1Z19wdHIgYXBwcm9hY2gKICAgLSBmaXggc29tZSB3b3Jk
+aW5nL2NvbW1lbnRzCnY1CiAgIC0gZG9uJ3Qgc2V0IE1EU0NSX0VMMS5LREUgKG5vdCBuZWVkZWQp
+Ci0tLQogRG9jdW1lbnRhdGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0ICAgICAgfCAgNyArKysrKyst
+CiBhcmNoL2FybS9rdm0vYXJtLmMgICAgICAgICAgICAgICAgICAgICB8ICA3ICsrKysrKysKIGFy
+Y2gvYXJtNjQvaW5jbHVkZS9hc20vaHdfYnJlYWtwb2ludC5oIHwgMTIgKysrKysrKysrKysKIGFy
+Y2gvYXJtNjQvaW5jbHVkZS9hc20va3ZtX2hvc3QuaCAgICAgIHwgIDMgKystCiBhcmNoL2FybTY0
+L2luY2x1ZGUvdWFwaS9hc20va3ZtLmggICAgICB8ICAyICstCiBhcmNoL2FybTY0L2tlcm5lbC9o
+d19icmVha3BvaW50LmMgICAgICB8IDEyIC0tLS0tLS0tLS0tCiBhcmNoL2FybTY0L2t2bS9kZWJ1
+Zy5jICAgICAgICAgICAgICAgICB8IDM3ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrLS0t
+LS0KIGFyY2gvYXJtNjQva3ZtL2hhbmRsZV9leGl0LmMgICAgICAgICAgIHwgIDYgKysrKysrCiBh
+cmNoL2FybTY0L2t2bS9yZXNldC5jICAgICAgICAgICAgICAgICB8IDEyICsrKysrKysrKysrCiBp
+bmNsdWRlL3VhcGkvbGludXgva3ZtLmggICAgICAgICAgICAgICB8ICAyICsrCiAxMCBmaWxlcyBj
+aGFuZ2VkLCA4MCBpbnNlcnRpb25zKCspLCAyMCBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9E
+b2N1bWVudGF0aW9uL3ZpcnR1YWwva3ZtL2FwaS50eHQgYi9Eb2N1bWVudGF0aW9uL3ZpcnR1YWwv
+a3ZtL2FwaS50eHQKaW5kZXggMzNjODE0My4uYWRhNTdkZiAxMDA2NDQKLS0tIGEvRG9jdW1lbnRh
+dGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0CisrKyBiL0RvY3VtZW50YXRpb24vdmlydHVhbC9rdm0v
+YXBpLnR4dApAQCAtMjY2OCw3ICsyNjY4LDcgQEAgVGhlIHRvcCAxNiBiaXRzIG9mIHRoZSBjb250
+cm9sIGZpZWxkIGFyZSBhcmNoaXRlY3R1cmUgc3BlY2lmaWMgY29udHJvbAogZmxhZ3Mgd2hpY2gg
+Y2FuIGluY2x1ZGUgdGhlIGZvbGxvd2luZzoKIAogICAtIEtWTV9HVUVTVERCR19VU0VfU1dfQlA6
+ICAgICB1c2luZyBzb2Z0d2FyZSBicmVha3BvaW50cyBbeDg2LCBhcm02NF0KLSAgLSBLVk1fR1VF
+U1REQkdfVVNFX0hXX0JQOiAgICAgdXNpbmcgaGFyZHdhcmUgYnJlYWtwb2ludHMgW3g4NiwgczM5
+MF0KKyAgLSBLVk1fR1VFU1REQkdfVVNFX0hXX0JQOiAgICAgdXNpbmcgaGFyZHdhcmUgYnJlYWtw
+b2ludHMgW3g4NiwgczM5MCwgYXJtNjRdCiAgIC0gS1ZNX0dVRVNUREJHX0lOSkVDVF9EQjogICAg
+IGluamVjdCBEQiB0eXBlIGV4Y2VwdGlvbiBbeDg2XQogICAtIEtWTV9HVUVTVERCR19JTkpFQ1Rf
+QlA6ICAgICBpbmplY3QgQlAgdHlwZSBleGNlcHRpb24gW3g4Nl0KICAgLSBLVk1fR1VFU1REQkdf
+RVhJVF9QRU5ESU5HOiAgdHJpZ2dlciBhbiBpbW1lZGlhdGUgZ3Vlc3QgZXhpdCBbczM5MF0KQEAg
+LTI2ODMsNiArMjY4MywxMSBAQCB1cGRhdGVkIHRvIHRoZSBjb3JyZWN0IChzdXBwbGllZCkgdmFs
+dWVzLgogVGhlIHNlY29uZCBwYXJ0IG9mIHRoZSBzdHJ1Y3R1cmUgaXMgYXJjaGl0ZWN0dXJlIHNw
+ZWNpZmljIGFuZAogdHlwaWNhbGx5IGNvbnRhaW5zIGEgc2V0IG9mIGRlYnVnIHJlZ2lzdGVycy4K
+IAorRm9yIGFybTY0IHRoZSBudW1iZXIgb2YgZGVidWcgcmVnaXN0ZXJzIGlzIGltcGxlbWVudGF0
+aW9uIGRlZmluZWQgYW5kCitjYW4gYmUgZGV0ZXJtaW5lZCBieSBxdWVyeWluZyB0aGUgS1ZNX0NB
+UF9HVUVTVF9ERUJVR19IV19CUFMgYW5kCitLVk1fQ0FQX0dVRVNUX0RFQlVHX0hXX1dQUyBjYXBh
+YmlsaXRpZXMgd2hpY2ggcmV0dXJuIGEgcG9zaXRpdmUgbnVtYmVyCitpbmRpY2F0aW5nIHRoZSBu
+dW1iZXIgb2Ygc3VwcG9ydGVkIHJlZ2lzdGVycy4KKwogV2hlbiBkZWJ1ZyBldmVudHMgZXhpdCB0
+aGUgbWFpbiBydW4gbG9vcCB3aXRoIHRoZSByZWFzb24KIEtWTV9FWElUX0RFQlVHIHdpdGggdGhl
+IGt2bV9kZWJ1Z19leGl0X2FyY2ggcGFydCBvZiB0aGUga3ZtX3J1bgogc3RydWN0dXJlIGNvbnRh
+aW5pbmcgYXJjaGl0ZWN0dXJlIHNwZWNpZmljIGRlYnVnIGluZm9ybWF0aW9uLgpkaWZmIC0tZ2l0
+IGEvYXJjaC9hcm0va3ZtL2FybS5jIGIvYXJjaC9hcm0va3ZtL2FybS5jCmluZGV4IDBkMTdjN2Iu
+LjZkZjQ3YzEgMTAwNjQ0Ci0tLSBhL2FyY2gvYXJtL2t2bS9hcm0uYworKysgYi9hcmNoL2FybS9r
+dm0vYXJtLmMKQEAgLTMwNyw2ICszMDcsNyBAQCB2b2lkIGt2bV9hcmNoX3ZjcHVfcHV0KHN0cnVj
+dCBrdm1fdmNwdSAqdmNwdSkKIAogI2RlZmluZSBLVk1fR1VFU1REQkdfVkFMSURfTUFTSyAoS1ZN
+X0dVRVNUREJHX0VOQUJMRSB8ICAgIFwKIAkJCSAgICBLVk1fR1VFU1REQkdfVVNFX1NXX0JQIHwg
+XAorCQkJICAgIEtWTV9HVUVTVERCR19VU0VfSFdfQlAgfCBcCiAJCQkgICAgS1ZNX0dVRVNUREJH
+X1NJTkdMRVNURVApCiAKIC8qKgpAQCAtMzI3LDYgKzMyOCwxMiBAQCBpbnQga3ZtX2FyY2hfdmNw
+dV9pb2N0bF9zZXRfZ3Vlc3RfZGVidWcoc3RydWN0IGt2bV92Y3B1ICp2Y3B1LAogCiAJaWYgKGRi
+Zy0+Y29udHJvbCAmIEtWTV9HVUVTVERCR19FTkFCTEUpIHsKIAkJdmNwdS0+Z3Vlc3RfZGVidWcg
+PSBkYmctPmNvbnRyb2w7CisKKwkJLyogSGFyZHdhcmUgYXNzaXN0ZWQgQnJlYWsgYW5kIFdhdGNo
+IHBvaW50cyAqLworCQlpZiAodmNwdS0+Z3Vlc3RfZGVidWcgJiBLVk1fR1VFU1REQkdfVVNFX0hX
+X0JQKSB7CisJCQl2Y3B1LT5hcmNoLmV4dGVybmFsX2RlYnVnX3N0YXRlID0gZGJnLT5hcmNoOwor
+CQl9CisKIAl9IGVsc2UgewogCQkvKiBJZiBub3QgZW5hYmxlZCBjbGVhciBhbGwgZmxhZ3MgKi8K
+IAkJdmNwdS0+Z3Vlc3RfZGVidWcgPSAwOwpkaWZmIC0tZ2l0IGEvYXJjaC9hcm02NC9pbmNsdWRl
+L2FzbS9od19icmVha3BvaW50LmggYi9hcmNoL2FybTY0L2luY2x1ZGUvYXNtL2h3X2JyZWFrcG9p
+bnQuaAppbmRleCA1MmI0ODRiLi5jNDUwNTUyIDEwMDY0NAotLS0gYS9hcmNoL2FybTY0L2luY2x1
+ZGUvYXNtL2h3X2JyZWFrcG9pbnQuaAorKysgYi9hcmNoL2FybTY0L2luY2x1ZGUvYXNtL2h3X2Jy
+ZWFrcG9pbnQuaApAQCAtMTMwLDYgKzEzMCwxOCBAQCBzdGF0aWMgaW5saW5lIHZvaWQgcHRyYWNl
+X2h3X2NvcHlfdGhyZWFkKHN0cnVjdCB0YXNrX3N0cnVjdCAqdGFzaykKIH0KICNlbmRpZgogCisv
+KiBEZXRlcm1pbmUgbnVtYmVyIG9mIEJSUCByZWdpc3RlcnMgYXZhaWxhYmxlLiAqLworc3RhdGlj
+IGlubGluZSBpbnQgZ2V0X251bV9icnBzKHZvaWQpCit7CisJcmV0dXJuICgocmVhZF9jcHVpZChJ
+RF9BQTY0REZSMF9FTDEpID4+IDEyKSAmIDB4ZikgKyAxOworfQorCisvKiBEZXRlcm1pbmUgbnVt
+YmVyIG9mIFdSUCByZWdpc3RlcnMgYXZhaWxhYmxlLiAqLworc3RhdGljIGlubGluZSBpbnQgZ2V0
+X251bV93cnBzKHZvaWQpCit7CisJcmV0dXJuICgocmVhZF9jcHVpZChJRF9BQTY0REZSMF9FTDEp
+ID4+IDIwKSAmIDB4ZikgKyAxOworfQorCiBleHRlcm4gc3RydWN0IHBtdSBwZXJmX29wc19icDsK
+IAogI2VuZGlmCS8qIF9fS0VSTkVMX18gKi8KZGlmZiAtLWdpdCBhL2FyY2gvYXJtNjQvaW5jbHVk
+ZS9hc20va3ZtX2hvc3QuaCBiL2FyY2gvYXJtNjQvaW5jbHVkZS9hc20va3ZtX2hvc3QuaAppbmRl
+eCBlNTA0MGI2Li40OThkNGY3IDEwMDY0NAotLS0gYS9hcmNoL2FybTY0L2luY2x1ZGUvYXNtL2t2
+bV9ob3N0LmgKKysrIGIvYXJjaC9hcm02NC9pbmNsdWRlL2FzbS9rdm1faG9zdC5oCkBAIC0xMTMs
+MTIgKzExMywxMyBAQCBzdHJ1Y3Qga3ZtX3ZjcHVfYXJjaCB7CiAKIAkvKgogCSAqIEZvciBkZWJ1
+Z2dpbmcgdGhlIGd1ZXN0IHdlIG5lZWQgdG8ga2VlcCBhIHNldCBvZiBkZWJ1ZwotCSAqIHJlZ2lz
+dGVycyB3aGljaCBjYW4gb3ZlcnJpZGUgdGhlIGd1ZXN0cyBvd24gZGVidWcgc3RhdGUKKwkgKiBy
+ZWdpc3RlcnMgd2hpY2ggY2FuIG92ZXJyaWRlIHRoZSBndWVzdCdzIG93biBkZWJ1ZyBzdGF0ZQog
+CSAqIHdoaWxlIGJlaW5nIHVzZWQuIFRoZXNlIGFyZSBzZXQgdmlhIHRoZSBLVk1fU0VUX0dVRVNU
+X0RFQlVHCiAJICogaW9jdGwuCiAJICovCiAJc3RydWN0IGt2bV9ndWVzdF9kZWJ1Z19hcmNoICpk
+ZWJ1Z19wdHI7CiAJc3RydWN0IGt2bV9ndWVzdF9kZWJ1Z19hcmNoIHZjcHVfZGVidWdfc3RhdGU7
+CisJc3RydWN0IGt2bV9ndWVzdF9kZWJ1Z19hcmNoIGV4dGVybmFsX2RlYnVnX3N0YXRlOwogCiAJ
+LyogUG9pbnRlciB0byBob3N0IENQVSBjb250ZXh0ICovCiAJa3ZtX2NwdV9jb250ZXh0X3QgKmhv
+c3RfY3B1X2NvbnRleHQ7CmRpZmYgLS1naXQgYS9hcmNoL2FybTY0L2luY2x1ZGUvdWFwaS9hc20v
+a3ZtLmggYi9hcmNoL2FybTY0L2luY2x1ZGUvdWFwaS9hc20va3ZtLmgKaW5kZXggNDM3NThlNy4u
+OTUxNjhjMiAxMDA2NDQKLS0tIGEvYXJjaC9hcm02NC9pbmNsdWRlL3VhcGkvYXNtL2t2bS5oCisr
+KyBiL2FyY2gvYXJtNjQvaW5jbHVkZS91YXBpL2FzbS9rdm0uaApAQCAtMTE2LDcgKzExNiw3IEBA
+IHN0cnVjdCBrdm1fZ3Vlc3RfZGVidWdfYXJjaCB7CiAKIHN0cnVjdCBrdm1fZGVidWdfZXhpdF9h
+cmNoIHsKIAlfX3UzMiBoc3I7Ci0JX191NjQgZmFyOworCV9fdTY0IGZhcjsJLyogdXNlZCBmb3Ig
+d2F0Y2hwb2ludHMgKi8KIH07CiAKIC8qCmRpZmYgLS1naXQgYS9hcmNoL2FybTY0L2tlcm5lbC9o
+d19icmVha3BvaW50LmMgYi9hcmNoL2FybTY0L2tlcm5lbC9od19icmVha3BvaW50LmMKaW5kZXgg
+ZTdkOTM0ZC4uM2E0MWJiZiAxMDA2NDQKLS0tIGEvYXJjaC9hcm02NC9rZXJuZWwvaHdfYnJlYWtw
+b2ludC5jCisrKyBiL2FyY2gvYXJtNjQva2VybmVsL2h3X2JyZWFrcG9pbnQuYwpAQCAtNDksMTgg
+KzQ5LDYgQEAgc3RhdGljIERFRklORV9QRVJfQ1BVKGludCwgc3RlcHBpbmdfa2VybmVsX2JwKTsK
+IHN0YXRpYyBpbnQgY29yZV9udW1fYnJwczsKIHN0YXRpYyBpbnQgY29yZV9udW1fd3JwczsKIAot
+LyogRGV0ZXJtaW5lIG51bWJlciBvZiBCUlAgcmVnaXN0ZXJzIGF2YWlsYWJsZS4gKi8KLXN0YXRp
+YyBpbnQgZ2V0X251bV9icnBzKHZvaWQpCi17Ci0JcmV0dXJuICgocmVhZF9jcHVpZChJRF9BQTY0
+REZSMF9FTDEpID4+IDEyKSAmIDB4ZikgKyAxOwotfQotCi0vKiBEZXRlcm1pbmUgbnVtYmVyIG9m
+IFdSUCByZWdpc3RlcnMgYXZhaWxhYmxlLiAqLwotc3RhdGljIGludCBnZXRfbnVtX3dycHModm9p
+ZCkKLXsKLQlyZXR1cm4gKChyZWFkX2NwdWlkKElEX0FBNjRERlIwX0VMMSkgPj4gMjApICYgMHhm
+KSArIDE7Ci19Ci0KIGludCBod19icmVha3BvaW50X3Nsb3RzKGludCB0eXBlKQogewogCS8qCmRp
+ZmYgLS1naXQgYS9hcmNoL2FybTY0L2t2bS9kZWJ1Zy5jIGIvYXJjaC9hcm02NC9rdm0vZGVidWcu
+YwppbmRleCAxMGE2YmFhLi4zYzBkYWFlIDEwMDY0NAotLS0gYS9hcmNoL2FybTY0L2t2bS9kZWJ1
+Zy5jCisrKyBiL2FyY2gvYXJtNjQva3ZtL2RlYnVnLmMKQEAgLTk4LDEwICs5OCw2IEBAIHZvaWQg
+a3ZtX2FybV9zZXR1cF9kZWJ1ZyhzdHJ1Y3Qga3ZtX3ZjcHUgKnZjcHUpCiAJCQkJTURDUl9FTDJf
+VERSQSB8CiAJCQkJTURDUl9FTDJfVERPU0EpOwogCi0JLyogVHJhcCBvbiBhY2Nlc3MgdG8gZGVi
+dWcgcmVnaXN0ZXJzPyAqLwotCWlmICh0cmFwX2RlYnVnKQotCQl2Y3B1LT5hcmNoLm1kY3JfZWwy
+IHw9IE1EQ1JfRUwyX1REQTsKLQogCS8qIElzIEd1ZXN0IGRlYnVnZ2luZyBpbiBlZmZlY3Q/ICov
+CiAJaWYgKHZjcHUtPmd1ZXN0X2RlYnVnKSB7CiAJCXZjcHUtPmFyY2gubWRjcl9lbDIgfD0gTURD
+Ul9FTDJfVERFOwpAQCAtMTI0LDExICsxMjAsNDIgQEAgdm9pZCBrdm1fYXJtX3NldHVwX2RlYnVn
+KHN0cnVjdCBrdm1fdmNwdSAqdmNwdSkKIAkJfSBlbHNlIHsKIAkJCXZjcHVfc3lzX3JlZyh2Y3B1
+LCBNRFNDUl9FTDEpICY9IH5EQkdfTURTQ1JfU1M7CiAJCX0KKworCQkvKgorCQkgKiBIVyBCcmVh
+ay9XYXRjaCBwb2ludHMKKwkJICoKKwkJICogV2Ugc2ltcGx5IHN3aXRjaCB0aGUgZGVidWdfcHRy
+IHRvIHBvaW50IHRvIG91ciBuZXcKKwkJICogZXh0ZXJuYWxfZGVidWdfc3RhdGUgd2hpY2ggaGFz
+IGJlZW4gcG9wdWxhdGVkIGJ5IHRoZQorCQkgKiBkZWJ1ZyBpb2N0bC4gVGhlIGV4aXN0aW5nIEtW
+TV9BUk02NF9ERUJVR19ESVJUWQorCQkgKiBtZWNoYW5pc20gZW5zdXJlcyB0aGUgcmVnaXN0ZXJz
+IGFyZSB1cGRhdGVkIG9uIHRoZQorCQkgKiB3b3JsZCBzd2l0Y2guCisJCSAqLworCQlpZiAodmNw
+dS0+Z3Vlc3RfZGVidWcgJiBLVk1fR1VFU1REQkdfVVNFX0hXX0JQKSB7CisJCQkvKiBFbmFibGUg
+YnJlYWtwb2ludHMvd2F0Y2hwb2ludHMgKi8KKwkJCXZjcHVfc3lzX3JlZyh2Y3B1LCBNRFNDUl9F
+TDEpIHw9IERCR19NRFNDUl9NREU7CisKKwkJCXZjcHUtPmFyY2guZGVidWdfcHRyID0gJnZjcHUt
+PmFyY2guZXh0ZXJuYWxfZGVidWdfc3RhdGU7CisJCQl2Y3B1LT5hcmNoLmRlYnVnX2ZsYWdzIHw9
+IEtWTV9BUk02NF9ERUJVR19ESVJUWTsKKwkJCXRyYXBfZGVidWcgPSB0cnVlOworCQl9CiAJfQor
+CisJLyogVHJhcCBkZWJ1ZyByZWdpc3RlciBhY2Nlc3MgKi8KKwlpZiAodHJhcF9kZWJ1ZykKKwkJ
+dmNwdS0+YXJjaC5tZGNyX2VsMiB8PSBNRENSX0VMMl9UREE7CiB9CiAKIHZvaWQga3ZtX2FybV9j
+bGVhcl9kZWJ1ZyhzdHJ1Y3Qga3ZtX3ZjcHUgKnZjcHUpCiB7Ci0JaWYgKHZjcHUtPmd1ZXN0X2Rl
+YnVnKQorCWlmICh2Y3B1LT5ndWVzdF9kZWJ1ZykgewogCQlyZXN0b3JlX2d1ZXN0X2RlYnVnX3Jl
+Z3ModmNwdSk7CisKKwkJLyoKKwkJICogSWYgd2Ugd2VyZSB1c2luZyBIVyBkZWJ1ZyB3ZSBuZWVk
+IHRvIHJlc3RvcmUgdGhlCisJCSAqIGRlYnVnX3B0ciB0byB0aGUgZ3Vlc3QgZGVidWcgc3RhdGUu
+CisJCSAqLworCQlpZiAodmNwdS0+Z3Vlc3RfZGVidWcgJiBLVk1fR1VFU1REQkdfVVNFX0hXX0JQ
+KQorCQkJdmNwdS0+YXJjaC5kZWJ1Z19wdHIgPSAmdmNwdS0+YXJjaC52Y3B1X2RlYnVnX3N0YXRl
+OworCisJfQogfQpkaWZmIC0tZ2l0IGEvYXJjaC9hcm02NC9rdm0vaGFuZGxlX2V4aXQuYyBiL2Fy
+Y2gvYXJtNjQva3ZtL2hhbmRsZV9leGl0LmMKaW5kZXggZTlkZTEzZS4uNjhhMDc1OSAxMDA2NDQK
+LS0tIGEvYXJjaC9hcm02NC9rdm0vaGFuZGxlX2V4aXQuYworKysgYi9hcmNoL2FybTY0L2t2bS9o
+YW5kbGVfZXhpdC5jCkBAIC0xMDMsNyArMTAzLDExIEBAIHN0YXRpYyBpbnQga3ZtX2hhbmRsZV9n
+dWVzdF9kZWJ1ZyhzdHJ1Y3Qga3ZtX3ZjcHUgKnZjcHUsIHN0cnVjdCBrdm1fcnVuICpydW4pCiAJ
+cnVuLT5kZWJ1Zy5hcmNoLmhzciA9IGhzcjsKIAogCXN3aXRjaCAoaHNyID4+IEVTUl9FTHhfRUNf
+U0hJRlQpIHsKKwljYXNlIEVTUl9FTHhfRUNfV0FUQ0hQVF9MT1c6CisJCXJ1bi0+ZGVidWcuYXJj
+aC5mYXIgPSB2Y3B1LT5hcmNoLmZhdWx0LmZhcl9lbDI7CisJCS8qIGZhbGwgdGhyb3VnaCAqLwog
+CWNhc2UgRVNSX0VMeF9FQ19TT0ZUU1RQX0xPVzoKKwljYXNlIEVTUl9FTHhfRUNfQlJFQUtQVF9M
+T1c6CiAJY2FzZSBFU1JfRUx4X0VDX0JLUFQzMjoKIAljYXNlIEVTUl9FTHhfRUNfQlJLNjQ6CiAJ
+CWJyZWFrOwpAQCAtMTMyLDYgKzEzNiw4IEBAIHN0YXRpYyBleGl0X2hhbmRsZV9mbiBhcm1fZXhp
+dF9oYW5kbGVyc1tdID0gewogCVtFU1JfRUx4X0VDX0lBQlRfTE9XXQk9IGt2bV9oYW5kbGVfZ3Vl
+c3RfYWJvcnQsCiAJW0VTUl9FTHhfRUNfREFCVF9MT1ddCT0ga3ZtX2hhbmRsZV9ndWVzdF9hYm9y
+dCwKIAlbRVNSX0VMeF9FQ19TT0ZUU1RQX0xPV109IGt2bV9oYW5kbGVfZ3Vlc3RfZGVidWcsCisJ
+W0VTUl9FTHhfRUNfV0FUQ0hQVF9MT1ddPSBrdm1faGFuZGxlX2d1ZXN0X2RlYnVnLAorCVtFU1Jf
+RUx4X0VDX0JSRUFLUFRfTE9XXT0ga3ZtX2hhbmRsZV9ndWVzdF9kZWJ1ZywKIAlbRVNSX0VMeF9F
+Q19CS1BUMzJdCT0ga3ZtX2hhbmRsZV9ndWVzdF9kZWJ1ZywKIAlbRVNSX0VMeF9FQ19CUks2NF0J
+PSBrdm1faGFuZGxlX2d1ZXN0X2RlYnVnLAogfTsKZGlmZiAtLWdpdCBhL2FyY2gvYXJtNjQva3Zt
+L3Jlc2V0LmMgYi9hcmNoL2FybTY0L2t2bS9yZXNldC5jCmluZGV4IDBiNDMyNjUuLjIxZDVhNjIg
+MTAwNjQ0Ci0tLSBhL2FyY2gvYXJtNjQva3ZtL3Jlc2V0LmMKKysrIGIvYXJjaC9hcm02NC9rdm0v
+cmVzZXQuYwpAQCAtNTYsNiArNTYsMTIgQEAgc3RhdGljIGJvb2wgY3B1X2hhc18zMmJpdF9lbDEo
+dm9pZCkKIAlyZXR1cm4gISEocGZyMCAmIDB4MjApOwogfQogCisvKioKKyAqIGt2bV9hcmNoX2Rl
+dl9pb2N0bF9jaGVja19leHRlbnNpb24KKyAqCisgKiBXZSBjdXJyZW50bHkgYXNzdW1lIHRoYXQg
+dGhlIG51bWJlciBvZiBIVyByZWdpc3RlcnMgaXMgdW5pZm9ybQorICogYWNyb3NzIGFsbCBDUFVz
+IChzZWUgY3B1aW5mb19zYW5pdHlfY2hlY2spLgorICovCiBpbnQga3ZtX2FyY2hfZGV2X2lvY3Rs
+X2NoZWNrX2V4dGVuc2lvbihsb25nIGV4dCkKIHsKIAlpbnQgcjsKQEAgLTY0LDYgKzcwLDEyIEBA
+IGludCBrdm1fYXJjaF9kZXZfaW9jdGxfY2hlY2tfZXh0ZW5zaW9uKGxvbmcgZXh0KQogCWNhc2Ug
+S1ZNX0NBUF9BUk1fRUwxXzMyQklUOgogCQlyID0gY3B1X2hhc18zMmJpdF9lbDEoKTsKIAkJYnJl
+YWs7CisJY2FzZSBLVk1fQ0FQX0dVRVNUX0RFQlVHX0hXX0JQUzoKKwkJciA9IGdldF9udW1fYnJw
+cygpOworCQlicmVhazsKKwljYXNlIEtWTV9DQVBfR1VFU1RfREVCVUdfSFdfV1BTOgorCQlyICA9
+IGdldF9udW1fd3JwcygpOworCQlicmVhazsKIAlkZWZhdWx0OgogCQlyID0gMDsKIAl9CmRpZmYg
+LS1naXQgYS9pbmNsdWRlL3VhcGkvbGludXgva3ZtLmggYi9pbmNsdWRlL3VhcGkvbGludXgva3Zt
+LmgKaW5kZXggNzBhYzY0MS4uZjAyMGRkMCAxMDA2NDQKLS0tIGEvaW5jbHVkZS91YXBpL2xpbnV4
+L2t2bS5oCisrKyBiL2luY2x1ZGUvdWFwaS9saW51eC9rdm0uaApAQCAtODE3LDYgKzgxNyw4IEBA
+IHN0cnVjdCBrdm1fcHBjX3NtbXVfaW5mbyB7CiAjZGVmaW5lIEtWTV9DQVBfUzM5MF9JTkpFQ1Rf
+SVJRIDExMwogI2RlZmluZSBLVk1fQ0FQX1MzOTBfSVJRX1NUQVRFIDExNAogI2RlZmluZSBLVk1f
+Q0FQX1BQQ19IV1JORyAxMTUKKyNkZWZpbmUgS1ZNX0NBUF9HVUVTVF9ERUJVR19IV19CUFMgMTE2
+CisjZGVmaW5lIEtWTV9DQVBfR1VFU1RfREVCVUdfSFdfV1BTIDExNwogCiAjaWZkZWYgS1ZNX0NB
+UF9JUlFfUk9VVElORwogCi0tIAoyLjQuMQoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX18Ka3ZtYXJtIG1haWxpbmcgbGlzdAprdm1hcm1AbGlzdHMuY3MuY29s
+dW1iaWEuZWR1Cmh0dHBzOi8vbGlzdHMuY3MuY29sdW1iaWEuZWR1L21haWxtYW4vbGlzdGluZm8v
+a3ZtYXJtCg==
