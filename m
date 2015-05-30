@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH 66/98] include/uapi/linux/netfilter_bridge/ebt_nat.h: include linux/if_ether.h
-Date: Sat, 30 May 2015 17:38:58 +0200
-Message-ID: <1433000370-19509-67-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH 87/98] include/uapi/linux/kexec.h: use __kernel_size_t instead of size_t
+Date: Sat, 30 May 2015 17:39:19 +0200
+Message-ID: <1433000370-19509-88-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,32 +10,34 @@ Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Eric Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compile error:
+=46ixes userspace compilation error:
 
-error: =E2=80=98ETH_ALEN=E2=80=99 undeclared here (not in a function)
- unsigned char mac[ETH_ALEN];
+error: unknown type name =E2=80=98size_t=E2=80=99
+  size_t bufsz;
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 ---
- include/uapi/linux/netfilter_bridge/ebt_nat.h | 2 ++
- 1 file changed, 2 insertions(+)
+ include/uapi/linux/kexec.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/include/uapi/linux/netfilter_bridge/ebt_nat.h b/include/ua=
-pi/linux/netfilter_bridge/ebt_nat.h
-index 5e74e3b..c990d74 100644
---- a/include/uapi/linux/netfilter_bridge/ebt_nat.h
-+++ b/include/uapi/linux/netfilter_bridge/ebt_nat.h
-@@ -1,6 +1,8 @@
- #ifndef __LINUX_BRIDGE_EBT_NAT_H
- #define __LINUX_BRIDGE_EBT_NAT_H
+diff --git a/include/uapi/linux/kexec.h b/include/uapi/linux/kexec.h
+index 99048e5..26be201 100644
+--- a/include/uapi/linux/kexec.h
++++ b/include/uapi/linux/kexec.h
+@@ -50,9 +50,9 @@
+  */
+ struct kexec_segment {
+ 	const void *buf;
+-	size_t bufsz;
++	__kernel_size_t bufsz;
+ 	const void *mem;
+-	size_t memsz;
++	__kernel_size_t memsz;
+ };
 =20
-+#include <linux/if_ether.h>
-+
- #define NAT_ARP_BIT  (0x00000010)
- struct ebt_nat_info {
- 	unsigned char mac[ETH_ALEN];
+ #endif /* __KERNEL__ */
 --=20
 2.1.4
