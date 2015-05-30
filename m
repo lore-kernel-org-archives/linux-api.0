@@ -1,45 +1,73 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH 91/98] include/uapi/linux/android/binder.h: use __kernel_pid_t and __kernel_uid_t
-Date: Sat, 30 May 2015 17:39:23 +0200
-Message-ID: <1433000370-19509-92-git-send-email-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: [PATCH 75/98] include/uapi/linux/netfilter/xt_sctp.h: use _Bool type, 1 for true and 0 for false
+Date: Sat, 30 May 2015 17:39:07 +0200
+Message-ID: <1433000370-19509-76-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Purnendu Kapadia <pro8linux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <netfilter-devel-owner@vger.kernel.org>
+In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
+Sender: netfilter-devel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, Pablo Neira Ayuso <pablo@netfilter.org>, Patrick McHardy <kaber@trash.net>, Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>, netfilter-devel@vger.kernel.org, coreteam@netfilter.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compilation errors:
+=46ixes userspace compilation errors like:
 
-error: unknown type name =E2=80=98pid_t=E2=80=99
-  pid_t  sender_pid
-error: unknown type name =E2=80=98uid_t=E2=80=99
-  uid_t  sender_euid;
+error: unknown type name =E2=80=98bool=E2=80=99
+ static __inline__ bool
+error: =E2=80=98false=E2=80=99 undeclared (first use in this function)
+    return false;
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/linux/android/binder.h | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ include/uapi/linux/netfilter/xt_sctp.h | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/include/uapi/linux/android/binder.h b/include/uapi/linux/a=
-ndroid/binder.h
-index 41420e3..4e4a385 100644
---- a/include/uapi/linux/android/binder.h
-+++ b/include/uapi/linux/android/binder.h
-@@ -142,8 +142,8 @@ struct binder_transaction_data {
+diff --git a/include/uapi/linux/netfilter/xt_sctp.h b/include/uapi/linu=
+x/netfilter/xt_sctp.h
+index 29287be..58ffcfb 100644
+--- a/include/uapi/linux/netfilter/xt_sctp.h
++++ b/include/uapi/linux/netfilter/xt_sctp.h
+@@ -66,26 +66,26 @@ struct xt_sctp_info {
 =20
- 	/* General information about the transaction. */
- 	__u32	        flags;
--	pid_t		sender_pid;
--	uid_t		sender_euid;
-+	__kernel_pid_t		sender_pid;
-+	__kernel_uid_t		sender_euid;
- 	binder_size_t	data_size;	/* number of bytes of data */
- 	binder_size_t	offsets_size;	/* number of bytes of offsets */
+ #define SCTP_CHUNKMAP_IS_CLEAR(chunkmap) \
+ 	__sctp_chunkmap_is_clear((chunkmap), ARRAY_SIZE(chunkmap))
+-static inline bool
++static inline _Bool
+ __sctp_chunkmap_is_clear(const __u32 *chunkmap, unsigned int n)
+ {
+ 	unsigned int i;
+ 	for (i =3D 0; i < n; ++i)
+ 		if (chunkmap[i])
+-			return false;
+-	return true;
++			return 0;
++	return 1;
+ }
 =20
+ #define SCTP_CHUNKMAP_IS_ALL_SET(chunkmap) \
+ 	__sctp_chunkmap_is_all_set((chunkmap), ARRAY_SIZE(chunkmap))
+-static inline bool
++static inline _Bool
+ __sctp_chunkmap_is_all_set(const __u32 *chunkmap, unsigned int n)
+ {
+ 	unsigned int i;
+ 	for (i =3D 0; i < n; ++i)
+ 		if (chunkmap[i] !=3D ~0U)
+-			return false;
+-	return true;
++			return 0;
++	return 1;
+ }
+=20
+ #endif /* _XT_SCTP_H_ */
 --=20
 2.1.4
+
+--
+To unsubscribe from this list: send the line "unsubscribe netfilter-dev=
+el" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
