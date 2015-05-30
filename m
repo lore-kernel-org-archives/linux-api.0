@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH 50/98] include/uapi/linux/packet_diag.h: include linux/netdevice.h
-Date: Sat, 30 May 2015 17:38:42 +0200
-Message-ID: <1433000370-19509-51-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH 83/98] include/uapi/linux/omapfb.h: use __kernel_size_t instead of size_t
+Date: Sat, 30 May 2015 17:39:15 +0200
+Message-ID: <1433000370-19509-84-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -15,26 +15,25 @@ List-Id: linux-api@vger.kernel.org
 
 =46ixes userspace compilation error:
 
-error: =E2=80=98MAX_ADDR_LEN=E2=80=99 undeclared here (not in a functio=
-n)
+error: unknown type name =E2=80=98size_t=E2=80=99
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 ---
- include/uapi/linux/packet_diag.h | 1 +
- 1 file changed, 1 insertion(+)
+ include/uapi/linux/omapfb.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/uapi/linux/packet_diag.h b/include/uapi/linux/pack=
-et_diag.h
-index d08c63f..2a75e97 100644
---- a/include/uapi/linux/packet_diag.h
-+++ b/include/uapi/linux/packet_diag.h
-@@ -2,6 +2,7 @@
- #define __PACKET_DIAG_H__
+diff --git a/include/uapi/linux/omapfb.h b/include/uapi/linux/omapfb.h
+index 7c97bc0..b637a92 100644
+--- a/include/uapi/linux/omapfb.h
++++ b/include/uapi/linux/omapfb.h
+@@ -181,7 +181,7 @@ struct omapfb_memory_read {
+ 	__u16 y;
+ 	__u16 w;
+ 	__u16 h;
+-	size_t buffer_size;
++	__kernel_size_t buffer_size;
+ 	void __user *buffer;
+ };
 =20
- #include <linux/types.h>
-+#include <linux/netdevice.h>
-=20
- struct packet_diag_req {
- 	__u8	sdiag_family;
 --=20
 2.1.4
