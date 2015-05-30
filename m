@@ -1,41 +1,37 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH 54/98] include/uapi/linux/dlm_netlink.h: include linux/dlmconstants.h
-Date: Sat, 30 May 2015 17:38:46 +0200
-Message-ID: <1433000370-19509-55-git-send-email-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: [PATCH 61/98] include/uapi/linux/netfilter_ipv6/ip6t_rt.h: include linux/in6.h
+Date: Sat, 30 May 2015 17:38:53 +0200
+Message-ID: <1433000370-19509-62-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compilation error:
+Fixes userspace compiler error:
 
-error: =E2=80=98DLM_RESNAME_MAXLEN=E2=80=99 undeclared here (not in a f=
-unction)
-  char resource_name[DLM_RESNAME_MAXLEN];
+error: array type has incomplete element type
+  struct in6_addr addrs[IP6T_RT_HOPS]; /* Hops */
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/linux/dlm_netlink.h | 1 +
- 1 file changed, 1 insertion(+)
+ include/uapi/linux/netfilter_ipv6/ip6t_rt.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/uapi/linux/dlm_netlink.h b/include/uapi/linux/dlm_=
-netlink.h
-index 647c8ef..ef1e2e0 100644
---- a/include/uapi/linux/dlm_netlink.h
-+++ b/include/uapi/linux/dlm_netlink.h
-@@ -10,6 +10,7 @@
- #define _DLM_NETLINK_H
-=20
+diff --git a/include/uapi/linux/netfilter_ipv6/ip6t_rt.h b/include/uapi/linux/netfilter_ipv6/ip6t_rt.h
+index 7605a5f..558f81e 100644
+--- a/include/uapi/linux/netfilter_ipv6/ip6t_rt.h
++++ b/include/uapi/linux/netfilter_ipv6/ip6t_rt.h
+@@ -2,7 +2,7 @@
+ #define _IP6T_RT_H
+ 
  #include <linux/types.h>
-+#include <linux/dlmconstants.h>
-=20
- enum {
- 	DLM_STATUS_WAITING =3D 1,
---=20
+-/*#include <linux/in6.h>*/
++#include <linux/in6.h>
+ 
+ #define IP6T_RT_HOPS 16
+ 
+-- 
 2.1.4
