@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH 22/98] ebtables.h: use __u64 from linux/types.h
-Date: Sat, 30 May 2015 17:38:14 +0200
-Message-ID: <1433000370-19509-23-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH 30/98] hdspm.h: use __u8, __u32 and __u64 from linux/types.h
+Date: Sat, 30 May 2015 17:38:22 +0200
+Message-ID: <1433000370-19509-31-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,43 +10,99 @@ Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Arturo Borrero Gonzalez <arturo.borrero.glez-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, Takashi Iwai <tiwai-l3A5Bk7waGM@public.gmane.org>, alsa-devel-K7yf7f+aM1XWsZ/bQMPhNw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compilation error:
+=46ixes userspace compilation errors like:
 
-linux/netfilter_bridge/ebtables.h:38:2: error: unknown type name =E2=80=
-=98uint64_t=E2=80=99
+sound/hdspm.h:43:2: error: unknown type name =E2=80=98uint32_t=E2=80=99
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 ---
- include/uapi/linux/netfilter_bridge/ebtables.h | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ include/uapi/sound/hdspm.h | 40 ++++++++++++++++++--------------------=
+--
+ 1 file changed, 18 insertions(+), 22 deletions(-)
 
-diff --git a/include/uapi/linux/netfilter_bridge/ebtables.h b/include/u=
-api/linux/netfilter_bridge/ebtables.h
-index 773dfe8..461145e 100644
---- a/include/uapi/linux/netfilter_bridge/ebtables.h
-+++ b/include/uapi/linux/netfilter_bridge/ebtables.h
-@@ -12,6 +12,8 @@
+diff --git a/include/uapi/sound/hdspm.h b/include/uapi/sound/hdspm.h
+index 5737332..c4db6f5 100644
+--- a/include/uapi/sound/hdspm.h
++++ b/include/uapi/sound/hdspm.h
+@@ -20,11 +20,7 @@
+  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
 =20
- #ifndef _UAPI__LINUX_BRIDGE_EFF_H
- #define _UAPI__LINUX_BRIDGE_EFF_H
-+#include <linux/types.h>
-+#include <linux/if.h>
- #include <linux/netfilter_bridge.h>
+-#ifdef __KERNEL__
+ #include <linux/types.h>
+-#else
+-#include <stdint.h>
+-#endif
 =20
- #define EBT_TABLE_MAXNAMELEN 32
-@@ -33,8 +35,8 @@ struct xt_match;
- struct xt_target;
+ /* Maximum channels is 64 even on 56Mode you have 64playbacks to matri=
+x */
+ #define HDSPM_MAX_CHANNELS      64
+@@ -46,15 +42,15 @@ enum hdspm_speed {
+ /* -------------------- IOCTL Peak/RMS Meters -------------------- */
 =20
- struct ebt_counter {
--	uint64_t pcnt;
--	uint64_t bcnt;
-+	__u64 pcnt;
-+	__u64 bcnt;
+ struct hdspm_peak_rms {
+-	uint32_t input_peaks[64];
+-	uint32_t playback_peaks[64];
+-	uint32_t output_peaks[64];
++	__u32 input_peaks[64];
++	__u32 playback_peaks[64];
++	__u32 output_peaks[64];
+=20
+-	uint64_t input_rms[64];
+-	uint64_t playback_rms[64];
+-	uint64_t output_rms[64];
++	__u64 input_rms[64];
++	__u64 playback_rms[64];
++	__u64 output_rms[64];
+=20
+-	uint8_t speed; /* enum {ss, ds, qs} */
++	__u8 speed; /* enum {ss, ds, qs} */
+ 	int status2;
  };
 =20
- struct ebt_replace {
+@@ -155,21 +151,21 @@ enum hdspm_syncsource {
+ };
+=20
+ struct hdspm_status {
+-	uint8_t card_type; /* enum hdspm_io_type */
++	__u8 card_type; /* enum hdspm_io_type */
+ 	enum hdspm_syncsource autosync_source;
+=20
+-	uint64_t card_clock;
+-	uint32_t master_period;
++	__u64 card_clock;
++	__u32 master_period;
+=20
+ 	union {
+ 		struct {
+-			uint8_t sync_wc; /* enum hdspm_sync */
+-			uint8_t sync_madi; /* enum hdspm_sync */
+-			uint8_t sync_tco; /* enum hdspm_sync */
+-			uint8_t sync_in; /* enum hdspm_sync */
+-			uint8_t madi_input; /* enum hdspm_madi_input */
+-			uint8_t channel_format; /* enum hdspm_madi_channel_format */
+-			uint8_t frame_format; /* enum hdspm_madi_frame_format */
++			__u8 sync_wc; /* enum hdspm_sync */
++			__u8 sync_madi; /* enum hdspm_sync */
++			__u8 sync_tco; /* enum hdspm_sync */
++			__u8 sync_in; /* enum hdspm_sync */
++			__u8 madi_input; /* enum hdspm_madi_input */
++			__u8 channel_format; /* enum hdspm_madi_channel_format */
++			__u8 frame_format; /* enum hdspm_madi_frame_format */
+ 		} madi;
+ 	} card_specific;
+ };
+@@ -184,7 +180,7 @@ struct hdspm_status {
+ #define HDSPM_ADDON_TCO 1
+=20
+ struct hdspm_version {
+-	uint8_t card_type; /* enum hdspm_io_type */
++	__u8 card_type; /* enum hdspm_io_type */
+ 	char cardname[20];
+ 	unsigned int serial;
+ 	unsigned short firmware_rev;
 --=20
 2.1.4
