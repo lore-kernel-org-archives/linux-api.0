@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH 58/98] include/uapi/linux/netfilter_ipv4/ip_tables.h: include linux/if.h
-Date: Sat, 30 May 2015 17:38:50 +0200
-Message-ID: <1433000370-19509-59-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH 72/98] include/uapi/linux/netfilter/xt_TPROXY.h: include linux/netfilter.h
+Date: Sat, 30 May 2015 17:39:04 +0200
+Message-ID: <1433000370-19509-73-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,30 +10,31 @@ Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>, Jozsef Kadlecsik <kadlec-K40Dz/62t/MgiyqX0sVFJYdd74u8MsAO@public.gmane.org>, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 =46ixes userspace compilation error:
 
-error: =E2=80=98IFNAMSIZ=E2=80=99 undeclared here (not in a function)
+error: field =E2=80=98laddr=E2=80=99 has incomplete type
+  union nf_inet_addr laddr;
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 ---
- include/uapi/linux/netfilter_ipv4/ip_tables.h | 1 +
+ include/uapi/linux/netfilter/xt_TPROXY.h | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/include/uapi/linux/netfilter_ipv4/ip_tables.h b/include/ua=
-pi/linux/netfilter_ipv4/ip_tables.h
-index f1e6ef2..d0da53d 100644
---- a/include/uapi/linux/netfilter_ipv4/ip_tables.h
-+++ b/include/uapi/linux/netfilter_ipv4/ip_tables.h
-@@ -17,6 +17,7 @@
+diff --git a/include/uapi/linux/netfilter/xt_TPROXY.h b/include/uapi/li=
+nux/netfilter/xt_TPROXY.h
+index 902043c..8d693ee 100644
+--- a/include/uapi/linux/netfilter/xt_TPROXY.h
++++ b/include/uapi/linux/netfilter/xt_TPROXY.h
+@@ -2,6 +2,7 @@
+ #define _XT_TPROXY_H
 =20
  #include <linux/types.h>
- #include <linux/compiler.h>
-+#include <linux/if.h>
- #include <linux/netfilter_ipv4.h>
++#include <linux/netfilter.h>
 =20
- #include <linux/netfilter/x_tables.h>
+ /* TPROXY target is capable of marking the packet to perform
+  * redirection. We can get rid of that whenever we get support for
 --=20
 2.1.4
