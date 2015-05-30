@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH 16/98] include/uapi/drm/msm_drm.h: use __s32, __s64, __u32 and __u64 from linux/types.h
-Date: Sat, 30 May 2015 17:38:08 +0200
-Message-ID: <1433000370-19509-17-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH 15/98] include/uapi/drm/qxl_drm.h: use __s32, __u32 and __u64 from linux/types.h
+Date: Sat, 30 May 2015 17:38:07 +0200
+Message-ID: <1433000370-19509-16-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -19,172 +19,135 @@ error: unknown type name =E2=80=98uint32_t=E2=80=99
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/drm/msm_drm.h | 76 +++++++++++++++++++++++---------------=
+ include/uapi/drm/qxl_drm.h | 74 +++++++++++++++++++++++---------------=
 --------
- 1 file changed, 38 insertions(+), 38 deletions(-)
+ 1 file changed, 37 insertions(+), 37 deletions(-)
 
-diff --git a/include/uapi/drm/msm_drm.h b/include/uapi/drm/msm_drm.h
-index 0664c31..75a232b 100644
---- a/include/uapi/drm/msm_drm.h
-+++ b/include/uapi/drm/msm_drm.h
-@@ -23,7 +23,7 @@
-=20
+diff --git a/include/uapi/drm/qxl_drm.h b/include/uapi/drm/qxl_drm.h
+index ebebd36..dface36 100644
+--- a/include/uapi/drm/qxl_drm.h
++++ b/include/uapi/drm/qxl_drm.h
+@@ -30,7 +30,7 @@
  /* Please note that modifications to all structs defined here are
-  * subject to backwards-compatibility constraints:
-- *  1) Do not use pointers, use uint64_t instead for 32 bit / 64 bit
-+ *  1) Do not use pointers, use __u64 instead for 32 bit / 64 bit
-  *     user/kernel compatibility
-  *  2) Keep fields aligned to their size
-  *  3) Because of how drm_ioctl() works, we can add new fields at
-@@ -44,8 +44,8 @@
-  * same as 'struct timespec' but 32/64b ABI safe.
+  * subject to backwards-compatibility constraints.
+  *
+- * Do not use pointers, use uint64_t instead for 32 bit / 64 bit user/=
+kernel
++ * Do not use pointers, use __u64 instead for 32 bit / 64 bit user/ker=
+nel
+  * compatibility Keep fields aligned to their size
   */
- struct drm_msm_timespec {
--	int64_t tv_sec;          /* seconds */
--	int64_t tv_nsec;         /* nanoseconds */
-+	__s64 tv_sec;          /* seconds */
-+	__s64 tv_nsec;         /* nanoseconds */
+=20
+@@ -48,14 +48,14 @@
+ #define DRM_QXL_ALLOC_SURF  0x06
+=20
+ struct drm_qxl_alloc {
+-	uint32_t size;
+-	uint32_t handle; /* 0 is an invalid handle */
++	__u32 size;
++	__u32 handle; /* 0 is an invalid handle */
  };
 =20
- #define MSM_PARAM_GPU_ID     0x01
-@@ -53,9 +53,9 @@ struct drm_msm_timespec {
- #define MSM_PARAM_CHIP_ID    0x03
-=20
- struct drm_msm_param {
--	uint32_t pipe;           /* in, MSM_PIPE_x */
--	uint32_t param;          /* in, MSM_PARAM_x */
--	uint64_t value;          /* out (get_param) or in (set_param) */
-+	__u32 pipe;           /* in, MSM_PIPE_x */
-+	__u32 param;          /* in, MSM_PARAM_x */
-+	__u64 value;          /* out (get_param) or in (set_param) */
+ struct drm_qxl_map {
+-	uint64_t offset; /* use for mmap system call */
+-	uint32_t handle;
+-	uint32_t pad;
++	__u64 offset; /* use for mmap system call */
++	__u32 handle;
++	__u32 pad;
  };
 =20
  /*
-@@ -77,15 +77,15 @@ struct drm_msm_param {
-                               MSM_BO_UNCACHED)
+@@ -68,59 +68,59 @@ struct drm_qxl_map {
+ #define QXL_RELOC_TYPE_SURF 2
 =20
- struct drm_msm_gem_new {
--	uint64_t size;           /* in */
--	uint32_t flags;          /* in, mask of MSM_BO_x */
--	uint32_t handle;         /* out */
-+	__u64 size;           /* in */
-+	__u32 flags;          /* in, mask of MSM_BO_x */
-+	__u32 handle;         /* out */
- };
-=20
- struct drm_msm_gem_info {
--	uint32_t handle;         /* in */
+ struct drm_qxl_reloc {
+-	uint64_t src_offset; /* offset into src_handle or src buffer */
+-	uint64_t dst_offset; /* offset in dest handle */
+-	uint32_t src_handle; /* dest handle to compute address from */
+-	uint32_t dst_handle; /* 0 if to command buffer */
+-	uint32_t reloc_type;
 -	uint32_t pad;
--	uint64_t offset;         /* out, offset to pass to mmap() */
-+	__u32 handle;         /* in */
++	__u64 src_offset; /* offset into src_handle or src buffer */
++	__u64 dst_offset; /* offset in dest handle */
++	__u32 src_handle; /* dest handle to compute address from */
++	__u32 dst_handle; /* 0 if to command buffer */
++	__u32 reloc_type;
 +	__u32 pad;
-+	__u64 offset;         /* out, offset to pass to mmap() */
  };
 =20
- #define MSM_PREP_READ        0x01
-@@ -95,13 +95,13 @@ struct drm_msm_gem_info {
- #define MSM_PREP_FLAGS       (MSM_PREP_READ | MSM_PREP_WRITE | MSM_PRE=
-P_NOSYNC)
-=20
- struct drm_msm_gem_cpu_prep {
--	uint32_t handle;         /* in */
--	uint32_t op;             /* in, mask of MSM_PREP_x */
-+	__u32 handle;         /* in */
-+	__u32 op;             /* in, mask of MSM_PREP_x */
- 	struct drm_msm_timespec timeout;   /* in */
+ struct drm_qxl_command {
+-	uint64_t	 __user command; /* void* */
+-	uint64_t	 __user relocs; /* struct drm_qxl_reloc* */
+-	uint32_t		type;
+-	uint32_t		command_size;
+-	uint32_t		relocs_num;
+-	uint32_t                pad;
++	__u64	 __user command; /* void* */
++	__u64	 __user relocs; /* struct drm_qxl_reloc* */
++	__u32		type;
++	__u32		command_size;
++	__u32		relocs_num;
++	__u32                pad;
  };
 =20
- struct drm_msm_gem_cpu_fini {
--	uint32_t handle;         /* in */
-+	__u32 handle;         /* in */
+ /* XXX: call it drm_qxl_commands? */
+ struct drm_qxl_execbuffer {
+-	uint32_t		flags;		/* for future use */
+-	uint32_t		commands_num;
+-	uint64_t	 __user commands;	/* struct drm_qxl_command* */
++	__u32		flags;		/* for future use */
++	__u32		commands_num;
++	__u64	 __user commands;	/* struct drm_qxl_command* */
  };
 =20
- /*
-@@ -120,11 +120,11 @@ struct drm_msm_gem_cpu_fini {
-  * otherwise EINVAL.
-  */
- struct drm_msm_gem_submit_reloc {
--	uint32_t submit_offset;  /* in, offset from submit_bo */
--	uint32_t or;             /* in, value OR'd with result */
--	int32_t  shift;          /* in, amount of left shift (can be negative=
-) */
--	uint32_t reloc_idx;      /* in, index of reloc_bo buffer */
--	uint64_t reloc_offset;   /* in, offset from start of reloc_bo */
-+	__u32 submit_offset;  /* in, offset from submit_bo */
-+	__u32 or;             /* in, value OR'd with result */
-+	__s32  shift;          /* in, amount of left shift (can be negative) =
-*/
-+	__u32 reloc_idx;      /* in, index of reloc_bo buffer */
-+	__u64 reloc_offset;   /* in, offset from start of reloc_bo */
- };
-=20
- /* submit-types:
-@@ -139,13 +139,13 @@ struct drm_msm_gem_submit_reloc {
- #define MSM_SUBMIT_CMD_IB_TARGET_BUF   0x0002
- #define MSM_SUBMIT_CMD_CTX_RESTORE_BUF 0x0003
- struct drm_msm_gem_submit_cmd {
--	uint32_t type;           /* in, one of MSM_SUBMIT_CMD_x */
--	uint32_t submit_idx;     /* in, index of submit_bo cmdstream buffer *=
-/
--	uint32_t submit_offset;  /* in, offset into submit_bo */
--	uint32_t size;           /* in, cmdstream size */
+ struct drm_qxl_update_area {
+-	uint32_t handle;
+-	uint32_t top;
+-	uint32_t left;
+-	uint32_t bottom;
+-	uint32_t right;
 -	uint32_t pad;
--	uint32_t nr_relocs;      /* in, number of submit_reloc's */
--	uint64_t __user relocs;  /* in, ptr to array of submit_reloc's */
-+	__u32 type;           /* in, one of MSM_SUBMIT_CMD_x */
-+	__u32 submit_idx;     /* in, index of submit_bo cmdstream buffer */
-+	__u32 submit_offset;  /* in, offset into submit_bo */
-+	__u32 size;           /* in, cmdstream size */
++	__u32 handle;
++	__u32 top;
++	__u32 left;
++	__u32 bottom;
++	__u32 right;
 +	__u32 pad;
-+	__u32 nr_relocs;      /* in, number of submit_reloc's */
-+	__u64 __user relocs;  /* in, ptr to array of submit_reloc's */
  };
 =20
- /* Each buffer referenced elsewhere in the cmdstream submit (ie. the
-@@ -165,9 +165,9 @@ struct drm_msm_gem_submit_cmd {
- #define MSM_SUBMIT_BO_FLAGS            (MSM_SUBMIT_BO_READ | MSM_SUBMI=
-T_BO_WRITE)
-=20
- struct drm_msm_gem_submit_bo {
--	uint32_t flags;          /* in, mask of MSM_SUBMIT_BO_x */
--	uint32_t handle;         /* in, GEM handle */
--	uint64_t presumed;       /* in/out, presumed buffer address */
-+	__u32 flags;          /* in, mask of MSM_SUBMIT_BO_x */
-+	__u32 handle;         /* in, GEM handle */
-+	__u64 presumed;       /* in/out, presumed buffer address */
+ #define QXL_PARAM_NUM_SURFACES 1 /* rom->n_surfaces */
+ #define QXL_PARAM_MAX_RELOCS 2
+ struct drm_qxl_getparam {
+-	uint64_t param;
+-	uint64_t value;
++	__u64 param;
++	__u64 value;
  };
 =20
- /* Each cmdstream submit consists of a table of buffers involved, and
-@@ -175,12 +175,12 @@ struct drm_msm_gem_submit_bo {
-  * (context-restore), and IB buffers needed for per tile/bin draw cmds=
-=2E
-  */
- struct drm_msm_gem_submit {
--	uint32_t pipe;           /* in, MSM_PIPE_x */
--	uint32_t fence;          /* out */
--	uint32_t nr_bos;         /* in, number of submit_bo's */
--	uint32_t nr_cmds;        /* in, number of submit_cmd's */
--	uint64_t __user bos;     /* in, ptr to array of submit_bo's */
--	uint64_t __user cmds;    /* in, ptr to array of submit_cmd's */
-+	__u32 pipe;           /* in, MSM_PIPE_x */
-+	__u32 fence;          /* out */
-+	__u32 nr_bos;         /* in, number of submit_bo's */
-+	__u32 nr_cmds;        /* in, number of submit_cmd's */
-+	__u64 __user bos;     /* in, ptr to array of submit_bo's */
-+	__u64 __user cmds;    /* in, ptr to array of submit_cmd's */
- };
-=20
- /* The normal way to synchronize with the GPU is just to CPU_PREP on
-@@ -191,8 +191,8 @@ struct drm_msm_gem_submit {
-  * APIs without requiring a dummy bo to synchronize on.
-  */
- struct drm_msm_wait_fence {
--	uint32_t fence;          /* in */
+ /* these are one bit values */
+ struct drm_qxl_clientcap {
+-	uint32_t index;
 -	uint32_t pad;
-+	__u32 fence;          /* in */
++	__u32 index;
 +	__u32 pad;
- 	struct drm_msm_timespec timeout;   /* in */
  };
 =20
+ struct drm_qxl_alloc_surf {
+-	uint32_t format;
+-	uint32_t width;
+-	uint32_t height;
+-	int32_t stride;
+-	uint32_t handle;
+-	uint32_t pad;
++	__u32 format;
++	__u32 width;
++	__u32 height;
++	__s32 stride;
++	__u32 handle;
++	__u32 pad;
+ };
+=20
+ #define DRM_IOCTL_QXL_ALLOC \
 --=20
 2.1.4
