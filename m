@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH 60/98] include/uapi/linux/netfilter/xt_osf.h: include linux/ip.h and linux/tcp.h
-Date: Sat, 30 May 2015 17:38:52 +0200
-Message-ID: <1433000370-19509-61-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH 64/98] include/uapi/linux/netfilter_bridge/ebt_arp.h: include linux/if_ether.h
+Date: Sat, 30 May 2015 17:38:56 +0200
+Message-ID: <1433000370-19509-65-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,34 +10,31 @@ Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>, Jozsef Kadlecsik <kadlec-K40Dz/62t/MgiyqX0sVFJYdd74u8MsAO@public.gmane.org>, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compilation errors:
+=46ixes userspace compile error:
 
-error: =E2=80=98MAX_IPOPTLEN=E2=80=99 undeclared here (not in a functio=
-n)
-error: field =E2=80=98ip=E2=80=99 has incomplete type
-error: field =E2=80=98tcp=E2=80=99 has incomplete type
+error: =E2=80=98ETH_ALEN=E2=80=99 undeclared here (not in a function)
+ unsigned char smaddr[ETH_ALEN];
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 ---
- include/uapi/linux/netfilter/xt_osf.h | 2 ++
- 1 file changed, 2 insertions(+)
+ include/uapi/linux/netfilter_bridge/ebt_arp.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/include/uapi/linux/netfilter/xt_osf.h b/include/uapi/linux=
-/netfilter/xt_osf.h
-index 5d66cae..e615995 100644
---- a/include/uapi/linux/netfilter/xt_osf.h
-+++ b/include/uapi/linux/netfilter/xt_osf.h
-@@ -20,6 +20,8 @@
- #define _XT_OSF_H
+diff --git a/include/uapi/linux/netfilter_bridge/ebt_arp.h b/include/ua=
+pi/linux/netfilter_bridge/ebt_arp.h
+index 522f3e4..dd4df25 100644
+--- a/include/uapi/linux/netfilter_bridge/ebt_arp.h
++++ b/include/uapi/linux/netfilter_bridge/ebt_arp.h
+@@ -2,6 +2,7 @@
+ #define __LINUX_BRIDGE_EBT_ARP_H
 =20
  #include <linux/types.h>
-+#include <linux/ip.h>
-+#include <linux/tcp.h>
++#include <linux/if_ether.h>
 =20
- #define MAXGENRELEN		32
-=20
+ #define EBT_ARP_OPCODE 0x01
+ #define EBT_ARP_HTYPE 0x02
 --=20
 2.1.4
