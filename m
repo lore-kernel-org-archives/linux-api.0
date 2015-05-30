@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH 73/98] include/uapi/linux/netfilter/xt_ipvs.h: include linux/netfilter.h
-Date: Sat, 30 May 2015 17:39:05 +0200
-Message-ID: <1433000370-19509-74-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH 86/98] include/uapi/linux/btrfs.h: define NULL
+Date: Sat, 30 May 2015 17:39:18 +0200
+Message-ID: <1433000370-19509-87-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,34 +10,39 @@ Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>, Jozsef Kadlecsik <kadlec-K40Dz/62t/MgiyqX0sVFJYdd74u8MsAO@public.gmane.org>, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, David Sterba <dsterba-AlSwsSmVLrQ@public.gmane.org>, Anand Jain <Anand.Jain-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Takeuchi Satoru <takeuchi_satoru-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, Eryu Guan <guaneryu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Gerhard Heift <gerhard-CKiHmMNdoX1BDLzU/O5InQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compilation errors:
+Copied the NULL definition from include/linux/stddef.h which does not h=
+ave
+it in userspace.
 
-error: field =E2=80=98vaddr=E2=80=99 has incomplete type
-  union nf_inet_addr vaddr, vmask;
-error: field =E2=80=98vmask=E2=80=99 has incomplete type
-  union nf_inet_addr vaddr, vmask;
+=46ixes userspace compilation error:
+
+error: =E2=80=98NULL=E2=80=99 undeclared (first use in this function)
+    return NULL;
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 ---
- include/uapi/linux/netfilter/xt_ipvs.h | 1 +
- 1 file changed, 1 insertion(+)
+ include/uapi/linux/btrfs.h | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/include/uapi/linux/netfilter/xt_ipvs.h b/include/uapi/linu=
-x/netfilter/xt_ipvs.h
-index eff34ac..e03b9c3 100644
---- a/include/uapi/linux/netfilter/xt_ipvs.h
-+++ b/include/uapi/linux/netfilter/xt_ipvs.h
-@@ -2,6 +2,7 @@
- #define _XT_IPVS_H
-=20
+diff --git a/include/uapi/linux/btrfs.h b/include/uapi/linux/btrfs.h
+index b6dec05..a8ae69b 100644
+--- a/include/uapi/linux/btrfs.h
++++ b/include/uapi/linux/btrfs.h
+@@ -20,6 +20,12 @@
+ #define _UAPI_LINUX_BTRFS_H
  #include <linux/types.h>
-+#include <linux/netfilter.h>
+ #include <linux/ioctl.h>
++#include <linux/stddef.h>
++
++/* for userspace where linux/stddef.h doesn't define this */
++#ifndef NULL
++#define NULL ((void *)0)
++#endif
 =20
- enum {
- 	XT_IPVS_IPVS_PROPERTY =3D	1 << 0, /* all other options imply this one=
- */
+ #define BTRFS_IOCTL_MAGIC 0x94
+ #define BTRFS_VOL_NAME_MAX 255
 --=20
 2.1.4
