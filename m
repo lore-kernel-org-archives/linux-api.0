@@ -1,39 +1,34 @@
 From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH 98/98] HACK include/uapi/linux/errqueue.h: include time.h in userspace
-Date: Sat, 30 May 2015 17:39:30 +0200
-Message-ID: <1433000370-19509-99-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH 89/98] include/uapi/linux/patchkey.h: change #error to #warning if file included directly
+Date: Sat, 30 May 2015 17:39:21 +0200
+Message-ID: <1433000370-19509-90-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Willem de Bruijn <willemb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-linux/time.h conflicts with userspace header time.h. Try to be compatible
-for kernel and userspace.
+Would be nice to be able to compile all userspace header files also alone.
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 ---
- include/uapi/linux/errqueue.h | 5 +++++
- 1 file changed, 5 insertions(+)
+ include/uapi/linux/patchkey.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/uapi/linux/errqueue.h b/include/uapi/linux/errqueue.h
-index 6b1cdc6..b310b2c 100644
---- a/include/uapi/linux/errqueue.h
-+++ b/include/uapi/linux/errqueue.h
-@@ -2,7 +2,12 @@
- #define _UAPI_LINUX_ERRQUEUE_H
+diff --git a/include/uapi/linux/patchkey.h b/include/uapi/linux/patchkey.h
+index 1bda0e5..cee195d 100644
+--- a/include/uapi/linux/patchkey.h
++++ b/include/uapi/linux/patchkey.h
+@@ -11,7 +11,7 @@
+  */
  
- #include <linux/types.h>
-+
-+#ifdef __KERNEL__
- #include <linux/time.h>
-+#else
-+#include <time.h>
-+#endif /* __KERNEL__ */
+ #ifndef _LINUX_PATCHKEY_H_INDIRECT
+-#error "patchkey.h included directly"
++#warning "patchkey.h included directly"
+ #endif
  
- struct sock_extended_err {
- 	__u32	ee_errno;	
+ #ifndef _UAPI_LINUX_PATCHKEY_H
 -- 
 2.1.4
