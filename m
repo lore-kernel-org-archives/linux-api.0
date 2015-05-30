@@ -1,42 +1,40 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH 42/98] include/uapi/linux/if_tunnel.h: include linux/if.h, linux/ip.h and linux/in6.h
-Date: Sat, 30 May 2015 17:38:34 +0200
-Message-ID: <1433000370-19509-43-git-send-email-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Subject: [PATCH 45/98] include/uapi/linux/ipv6_route.h: include linux/in6.h
+Date: Sat, 30 May 2015 17:38:37 +0200
+Message-ID: <1433000370-19509-46-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
-Sender: netdev-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, "David S. Miller" <davem@davemloft.net>, Tom Herbert <therbert@google.com>, Dmitry Popov <ixaphire@qrator.net>, netdev@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compilation errors like:
+=46ixes userspace compile errors like:
 
-error: field =E2=80=98iph=E2=80=99 has incomplete type
-error: field =E2=80=98prefix=E2=80=99 has incomplete type
+error: field =E2=80=98mf6cc_origin=E2=80=99 has incomplete type
+  struct sockaddr_in6 mf6cc_origin;  /* Origin of mcast */
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 ---
- include/uapi/linux/if_tunnel.h | 3 +++
- 1 file changed, 3 insertions(+)
+ include/uapi/linux/mroute6.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/include/uapi/linux/if_tunnel.h b/include/uapi/linux/if_tun=
-nel.h
-index bd3cc11..2a36080 100644
---- a/include/uapi/linux/if_tunnel.h
-+++ b/include/uapi/linux/if_tunnel.h
-@@ -2,6 +2,9 @@
- #define _UAPI_IF_TUNNEL_H_
+diff --git a/include/uapi/linux/mroute6.h b/include/uapi/linux/mroute6.=
+h
+index ce91215..5e17444 100644
+--- a/include/uapi/linux/mroute6.h
++++ b/include/uapi/linux/mroute6.h
+@@ -3,6 +3,7 @@
 =20
  #include <linux/types.h>
-+#include <linux/if.h>
-+#include <linux/ip.h>
+ #include <linux/sockios.h>
 +#include <linux/in6.h>
- #include <asm/byteorder.h>
 =20
-=20
+ /*
+  *	Based on the MROUTING 3.5 defines primarily to keep
 --=20
 2.1.4
