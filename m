@@ -1,108 +1,42 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH 30/98] hdspm.h: use __u8, __u32 and __u64 from linux/types.h
-Date: Sat, 30 May 2015 17:38:22 +0200
-Message-ID: <1433000370-19509-31-git-send-email-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: [PATCH 37/98] asm-generic/sembuf.h: include asm/posix_types.h and asm/ipcbuf.h
+Date: Sat, 30 May 2015 17:38:29 +0200
+Message-ID: <1433000370-19509-38-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, Takashi Iwai <tiwai-l3A5Bk7waGM@public.gmane.org>, alsa-devel-K7yf7f+aM1XWsZ/bQMPhNw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
+Sender: linux-arch-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, Arnd Bergmann <arnd@arndb.de>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 =46ixes userspace compilation errors like:
 
-sound/hdspm.h:43:2: error: unknown type name =E2=80=98uint32_t=E2=80=99
+error: field =E2=80=98msg_perm=E2=80=99 has incomplete type
+struct ipc64_perm msg_perm;
+error: unknown type name =E2=80=98__kernel_ulong_t=E2=80=99
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/sound/hdspm.h | 40 ++++++++++++++++++--------------------=
---
- 1 file changed, 18 insertions(+), 22 deletions(-)
+ include/uapi/asm-generic/sembuf.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/include/uapi/sound/hdspm.h b/include/uapi/sound/hdspm.h
-index 5737332..c4db6f5 100644
---- a/include/uapi/sound/hdspm.h
-+++ b/include/uapi/sound/hdspm.h
-@@ -20,11 +20,7 @@
-  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-  */
+diff --git a/include/uapi/asm-generic/sembuf.h b/include/uapi/asm-gener=
+ic/sembuf.h
+index 4cb2c13..17d523f 100644
+--- a/include/uapi/asm-generic/sembuf.h
++++ b/include/uapi/asm-generic/sembuf.h
+@@ -2,6 +2,8 @@
+ #define __ASM_GENERIC_SEMBUF_H
 =20
--#ifdef __KERNEL__
- #include <linux/types.h>
--#else
--#include <stdint.h>
--#endif
+ #include <asm/bitsperlong.h>
++#include <asm/posix_types.h>
++#include <asm/ipcbuf.h>
 =20
- /* Maximum channels is 64 even on 56Mode you have 64playbacks to matri=
-x */
- #define HDSPM_MAX_CHANNELS      64
-@@ -46,15 +42,15 @@ enum hdspm_speed {
- /* -------------------- IOCTL Peak/RMS Meters -------------------- */
-=20
- struct hdspm_peak_rms {
--	uint32_t input_peaks[64];
--	uint32_t playback_peaks[64];
--	uint32_t output_peaks[64];
-+	__u32 input_peaks[64];
-+	__u32 playback_peaks[64];
-+	__u32 output_peaks[64];
-=20
--	uint64_t input_rms[64];
--	uint64_t playback_rms[64];
--	uint64_t output_rms[64];
-+	__u64 input_rms[64];
-+	__u64 playback_rms[64];
-+	__u64 output_rms[64];
-=20
--	uint8_t speed; /* enum {ss, ds, qs} */
-+	__u8 speed; /* enum {ss, ds, qs} */
- 	int status2;
- };
-=20
-@@ -155,21 +151,21 @@ enum hdspm_syncsource {
- };
-=20
- struct hdspm_status {
--	uint8_t card_type; /* enum hdspm_io_type */
-+	__u8 card_type; /* enum hdspm_io_type */
- 	enum hdspm_syncsource autosync_source;
-=20
--	uint64_t card_clock;
--	uint32_t master_period;
-+	__u64 card_clock;
-+	__u32 master_period;
-=20
- 	union {
- 		struct {
--			uint8_t sync_wc; /* enum hdspm_sync */
--			uint8_t sync_madi; /* enum hdspm_sync */
--			uint8_t sync_tco; /* enum hdspm_sync */
--			uint8_t sync_in; /* enum hdspm_sync */
--			uint8_t madi_input; /* enum hdspm_madi_input */
--			uint8_t channel_format; /* enum hdspm_madi_channel_format */
--			uint8_t frame_format; /* enum hdspm_madi_frame_format */
-+			__u8 sync_wc; /* enum hdspm_sync */
-+			__u8 sync_madi; /* enum hdspm_sync */
-+			__u8 sync_tco; /* enum hdspm_sync */
-+			__u8 sync_in; /* enum hdspm_sync */
-+			__u8 madi_input; /* enum hdspm_madi_input */
-+			__u8 channel_format; /* enum hdspm_madi_channel_format */
-+			__u8 frame_format; /* enum hdspm_madi_frame_format */
- 		} madi;
- 	} card_specific;
- };
-@@ -184,7 +180,7 @@ struct hdspm_status {
- #define HDSPM_ADDON_TCO 1
-=20
- struct hdspm_version {
--	uint8_t card_type; /* enum hdspm_io_type */
-+	__u8 card_type; /* enum hdspm_io_type */
- 	char cardname[20];
- 	unsigned int serial;
- 	unsigned short firmware_rev;
+ /*
+  * The semid64_ds structure for x86 architecture.
 --=20
 2.1.4
