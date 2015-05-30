@@ -1,40 +1,45 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH 46/98] include/uapi/linux/ipv6_route.h: include linux/in6.h
-Date: Sat, 30 May 2015 17:38:38 +0200
-Message-ID: <1433000370-19509-47-git-send-email-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: [PATCH 47/98] include/uapi/linux/if_pppol2tp.h: include linux/in.h and linux/in6.h
+Date: Sat, 30 May 2015 17:38:39 +0200
+Message-ID: <1433000370-19509-48-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
+Sender: netdev-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, James Chapman <jchapman@katalix.com>, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compile errors like:
+=46ixes userspace compilation errors like:
 
-error: field =E2=80=98rtmsg_dst=E2=80=99 has incomplete type
-  struct in6_addr  rtmsg_dst;
+error: field =E2=80=98addr=E2=80=99 has incomplete type
+ struct sockaddr_in addr; /* IP address and port to send to */
+                    ^
+error: field =E2=80=98addr=E2=80=99 has incomplete type
+ struct sockaddr_in6 addr; /* IP address and port to send to */
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 ---
- include/uapi/linux/ipv6_route.h | 1 +
- 1 file changed, 1 insertion(+)
+ include/uapi/linux/if_pppol2tp.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/include/uapi/linux/ipv6_route.h b/include/uapi/linux/ipv6_=
-route.h
-index 2be7bd1..e300640 100644
---- a/include/uapi/linux/ipv6_route.h
-+++ b/include/uapi/linux/ipv6_route.h
-@@ -14,6 +14,7 @@
- #define _UAPI_LINUX_IPV6_ROUTE_H
+diff --git a/include/uapi/linux/if_pppol2tp.h b/include/uapi/linux/if_p=
+ppol2tp.h
+index 163e8ad..4bd1f55 100644
+--- a/include/uapi/linux/if_pppol2tp.h
++++ b/include/uapi/linux/if_pppol2tp.h
+@@ -16,7 +16,8 @@
+ #define _UAPI__LINUX_IF_PPPOL2TP_H
 =20
  #include <linux/types.h>
+-
++#include <linux/in.h>
 +#include <linux/in6.h>
 =20
- #define RTF_DEFAULT	0x00010000	/* default - learned via ND	*/
- #define RTF_ALLONLINK	0x00020000	/* (deprecated and will be removed)
+ /* Structure used to connect() the socket to a particular tunnel UDP
+  * socket over IPv4.
 --=20
 2.1.4
