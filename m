@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH 41/98] include/uapi/linux/if_pppox.h: include linux/if.h
-Date: Sat, 30 May 2015 17:38:33 +0200
-Message-ID: <1433000370-19509-42-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH 38/98] include/uapi/asm-generic/signal.h: use __kernel_size_t instead of size_t
+Date: Sat, 30 May 2015 17:38:30 +0200
+Message-ID: <1433000370-19509-39-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,30 +10,31 @@ Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1433000370-19509-1-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-=46ixes userspace compilation error:
+=46ixes userspace compiler error:
 
-error: =E2=80=98IFNAMSIZ=E2=80=99 undeclared here (not in a function)
+error: unknown type name =E2=80=98size_t=E2=80=99
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 ---
- include/uapi/linux/if_pppox.h | 1 +
- 1 file changed, 1 insertion(+)
+ include/uapi/asm-generic/signal.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/uapi/linux/if_pppox.h b/include/uapi/linux/if_pppo=
-x.h
-index e128769..473c3c4 100644
---- a/include/uapi/linux/if_pppox.h
-+++ b/include/uapi/linux/if_pppox.h
-@@ -21,6 +21,7 @@
- #include <asm/byteorder.h>
+diff --git a/include/uapi/asm-generic/signal.h b/include/uapi/asm-gener=
+ic/signal.h
+index 9df61f1..0a7c415 100644
+--- a/include/uapi/asm-generic/signal.h
++++ b/include/uapi/asm-generic/signal.h
+@@ -111,7 +111,7 @@ struct sigaction {
+ typedef struct sigaltstack {
+ 	void __user *ss_sp;
+ 	int ss_flags;
+-	size_t ss_size;
++	__kernel_size_t ss_size;
+ } stack_t;
 =20
- #include <linux/socket.h>
-+#include <linux/if.h>
- #include <linux/if_ether.h>
- #include <linux/if_pppol2tp.h>
-=20
+ #endif /* __ASSEMBLY__ */
 --=20
 2.1.4
