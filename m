@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH 88/98] include/uapi/linux/reiserfs_xattr.h: use __kernel_size_t instead of size_t
-Date: Sat, 30 May 2015 17:39:20 +0200
-Message-ID: <1433000370-19509-89-git-send-email-mikko.rapeli@iki.fi>
+Subject: [PATCH 58/98] include/uapi/linux/netfilter_ipv4/ip_tables.h: include linux/if.h
+Date: Sat, 30 May 2015 17:38:50 +0200
+Message-ID: <1433000370-19509-59-git-send-email-mikko.rapeli@iki.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -15,27 +15,25 @@ List-Id: linux-api@vger.kernel.org
 
 =46ixes userspace compilation error:
 
-error: unknown type name =E2=80=98size_t=E2=80=99
-  size_t length;
+error: =E2=80=98IFNAMSIZ=E2=80=99 undeclared here (not in a function)
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 ---
- include/uapi/linux/reiserfs_xattr.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/uapi/linux/netfilter_ipv4/ip_tables.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/include/uapi/linux/reiserfs_xattr.h b/include/uapi/linux/r=
-eiserfs_xattr.h
-index 38fdd64..af52b38 100644
---- a/include/uapi/linux/reiserfs_xattr.h
-+++ b/include/uapi/linux/reiserfs_xattr.h
-@@ -18,7 +18,7 @@ struct reiserfs_xattr_header {
- struct reiserfs_security_handle {
- 	const char *name;
- 	void *value;
--	size_t length;
-+	__kernel_size_t length;
- };
+diff --git a/include/uapi/linux/netfilter_ipv4/ip_tables.h b/include/ua=
+pi/linux/netfilter_ipv4/ip_tables.h
+index f1e6ef2..d0da53d 100644
+--- a/include/uapi/linux/netfilter_ipv4/ip_tables.h
++++ b/include/uapi/linux/netfilter_ipv4/ip_tables.h
+@@ -17,6 +17,7 @@
 =20
- #endif  /*  _LINUX_REISERFS_XATTR_H  */
+ #include <linux/types.h>
+ #include <linux/compiler.h>
++#include <linux/if.h>
+ #include <linux/netfilter_ipv4.h>
+=20
+ #include <linux/netfilter/x_tables.h>
 --=20
 2.1.4
