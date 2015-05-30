@@ -1,43 +1,55 @@
-From: Russell King - ARM Linux <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
-Subject: Re: [PATCH 05/98] exynos_drm.h: use __u64 from linux/types.h
-Date: Sat, 30 May 2015 17:46:56 +0100
-Message-ID: <20150530164655.GM2067@n2100.arm.linux.org.uk>
+From: Andrew Cooper <andrew.cooper3-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [Xen-devel] [PATCH 95/98] HACK: fix include/uapi/xen/privcmd.h
+ compilation in userspace
+Date: Sat, 30 May 2015 18:56:25 +0100
+Message-ID: <5569F9C9.8000607@citrix.com>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
- <1433000370-19509-6-git-send-email-mikko.rapeli@iki.fi>
+ <1433000370-19509-96-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1433000370-19509-6-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+In-Reply-To: <1433000370-19509-96-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Joonyoung Shim <jy0922.shim-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Seung-Woo Kim <sw0312.kim-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Inki Dae <inki.dae-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Juergen Gross <jgross-IBi9RG/b67k@public.gmane.org>, Alexander Yarygin <yarygin-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Arnaldo Carvalho de Melo <acme-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christian Borntraeger <borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Vrabel <david.vrabel-Sxgqhf6Nn4DQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Cornelia Huck <cornelia.huck-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, May 30, 2015 at 05:37:57PM +0200, Mikko Rapeli wrote:
-> Fixes userspace compilation error:
->=20
-> drm/exynos_drm.h:30:2: error: unknown type name =E2=80=98uint64_t=E2=80=
-=99
->=20
+On 30/05/15 16:39, Mikko Rapeli wrote:
+> privcmd.h depends on xen/interface/xen.h which is now exported to use=
+rspace.
+> xen/interface/xen.h then depends on asm/xen/interface.h which is now
+> exported to userspace together with its dependencies asm/xen/interfac=
+e_32.h,
+> asm/xen/interface_64.h and asm/pvclock-abi.h on x86 architecture.
+>
+> Then all of these headers were fixed to use __u8 etc from linux/types=
+=2Eh
+> instead of custom types.
+>
+> Then define uint64_t and uint32_t if needed.
+>
+> After all these changes these header files now compile in userspace t=
+oo
+> on x86.
+>
+> HACK since I have no idea if this is correct way to fix this.
+>
 > Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 
-This is another thing which we need to address.  We should not be using
-unsigned int/unsigned long/uintXX_t/etc in here, but the __uXX and __sX=
-X
-types.
+Historical reasons expect xen/interface/xen.h to be a verbatim copy of
+the master version kept in the Xen repository.
 
-The lesson learned from other DRM developers is that using these types
-simplifies the API especially when it comes to the differences between
-32-bit and 64-bit machines, and compat applications.
+The only things privcmd.h need from interface/xen.h are domid_t
+(uint16_t), and xen_pfn_t (unsigned long, or uint64_t in arm32 iirc),
+while the majority of the rest absolutely shouldn't be in Linux=92s uap=
+i.
 
-Note that drm/drm.h is all that should need to be included - drm/drm.h
-takes care of including linux/types.h when building on Linux platforms.
-(note: if your compiler doesn't set __linux__ then you're probably not
-using the proper compiler...)
+It would probably be best to provide just these two types and nuke the
+"#include <xen/interface/xen.h>".  Any user of privcmd needs to include
+the Xen interface themselves anyway, and will have a different copy
+which includes the toolstack half of the interface (missing from the
+kernel copy) which is the useful set of definitions for driving the
+privcmd ioctl()s.
 
---=20
-=46TTC broadband for 0.8mile line: currently at 10.5Mbps down 400kbps u=
-p
-according to speedtest.net.
+~Andrew
