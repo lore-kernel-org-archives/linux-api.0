@@ -1,60 +1,27 @@
-From: Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
-Subject: Re: [PATCH 67/98] include/uapi/linux/netfilter/ipset/ip_set_bitmap.h:
- include linux/netfilter/ipset/ip_set.h
-Date: Sun, 31 May 2015 20:15:48 +0200 (CEST)
-Message-ID: <alpine.DEB.2.10.1505312014550.2712@blackhole.kfki.hu>
-References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi> <1433000370-19509-68-git-send-email-mikko.rapeli@iki.fi>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH v9 4/5] serial: stm32-usart: Add STM32 USART Driver
+Date: Mon, 1 Jun 2015 06:52:46 +0900
+Message-ID: <20150531215246.GA24174@kroah.com>
+References: <1432328616-16964-1-git-send-email-mcoquelin.stm32@gmail.com>
+ <1432328616-16964-5-git-send-email-mcoquelin.stm32@gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1433000370-19509-68-git-send-email-mikko.rapeli@iki.fi>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikko Rapeli <mikko.rapeli@iki.fi>
-Cc: linux-kernel@vger.kernel.org, Pablo Neira Ayuso <pablo@netfilter.org>, Patrick McHardy <kaber@trash.net>, netfilter-devel@vger.kernel.org, coreteam@netfilter.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1432328616-16964-5-git-send-email-mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Kamil Lulko <rev13-5tc4TXWwyLM@public.gmane.org>, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, 30 May 2015, Mikko Rapeli wrote:
-
-> Fixes userspace compilation error:
+On Fri, May 22, 2015 at 11:03:35PM +0200, Maxime Coquelin wrote:
+> This drivers adds support to the STM32 USART controller, which is a
+> standard serial driver.
 > 
-> error: ?IPSET_ERR_TYPE_SPECIFIC? undeclared here (not in a function)
->   IPSET_ERR_BITMAP_RANGE = IPSET_ERR_TYPE_SPECIFIC,
+> Tested-by: Chanwoo Choi <cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+> Reviewed-by: Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
+> Reviewed-by: Vladimir Zapolskiy <vladimir_zapolskiy-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>
+> Reviewed-by: Andy Shevchenko <andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-What kind of userspace compilation generates the error message above? How 
-can one reproduce it?
-
-Best regards,
-Jozsef
- 
-> Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
-> ---
->  include/uapi/linux/netfilter/ipset/ip_set_bitmap.h | 2 ++
->  1 file changed, 2 insertions(+)
-> 
-> diff --git a/include/uapi/linux/netfilter/ipset/ip_set_bitmap.h b/include/uapi/linux/netfilter/ipset/ip_set_bitmap.h
-> index 6a2c038..fd5024d 100644
-> --- a/include/uapi/linux/netfilter/ipset/ip_set_bitmap.h
-> +++ b/include/uapi/linux/netfilter/ipset/ip_set_bitmap.h
-> @@ -1,6 +1,8 @@
->  #ifndef _UAPI__IP_SET_BITMAP_H
->  #define _UAPI__IP_SET_BITMAP_H
->  
-> +#include <linux/netfilter/ipset/ip_set.h>
-> +
->  /* Bitmap type specific error codes */
->  enum {
->  	/* The element is out of the range of the set */
-> -- 
-> 2.1.4
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe netfilter-devel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
-
--
-E-mail  : kadlec@blackhole.kfki.hu, kadlecsik.jozsef@wigner.mta.hu
-PGP key : http://www.kfki.hu/~kadlec/pgp_public_key.txt
-Address : Wigner Research Centre for Physics, Hungarian Academy of Sciences
-          H-1525 Budapest 114, POB. 49, Hungary
+Acked-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
