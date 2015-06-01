@@ -1,27 +1,60 @@
-From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH v9 4/5] serial: stm32-usart: Add STM32 USART Driver
-Date: Mon, 1 Jun 2015 06:52:46 +0900
-Message-ID: <20150531215246.GA24174@kroah.com>
-References: <1432328616-16964-1-git-send-email-mcoquelin.stm32@gmail.com>
- <1432328616-16964-5-git-send-email-mcoquelin.stm32@gmail.com>
+From: =?UTF-8?B?Q2hyaXN0aWFuIEvDtm5pZw==?= <christian.koenig@amd.com>
+Subject: Re: [PATCH 05/98] exynos_drm.h: use __u64 from linux/types.h
+Date: Mon, 1 Jun 2015 10:20:10 +0200
+Message-ID: <556C15BA.7000909@amd.com>
+References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
+ <1433000370-19509-6-git-send-email-mikko.rapeli@iki.fi>
+ <20150530164655.GM2067@n2100.arm.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1432328616-16964-5-git-send-email-mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Kamil Lulko <rev13-5tc4TXWwyLM@public.gmane.org>, u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, afaerber-l3A5Bk7waGM@public.gmane.org, geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <20150530164655.GM2067@n2100.arm.linux.org.uk>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Russell King - ARM Linux <linux@arm.linux.org.uk>, Mikko Rapeli <mikko.rapeli@iki.fi>
+Cc: Krzysztof Kozlowski <k.kozlowski@samsung.com>, linux-samsung-soc@vger.kernel.org, linux-api@vger.kernel.org, Seung-Woo Kim <sw0312.kim@samsung.com>, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, Kyungmin Park <kyungmin.park@samsung.com>, Kukjin Kim <kgene@kernel.org>, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 22, 2015 at 11:03:35PM +0200, Maxime Coquelin wrote:
-> This drivers adds support to the STM32 USART controller, which is a
-> standard serial driver.
-> 
-> Tested-by: Chanwoo Choi <cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-> Reviewed-by: Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
-> Reviewed-by: Vladimir Zapolskiy <vladimir_zapolskiy-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>
-> Reviewed-by: Andy Shevchenko <andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-
-Acked-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+T24gMzAuMDUuMjAxNSAxODo0NiwgUnVzc2VsbCBLaW5nIC0gQVJNIExpbnV4IHdyb3RlOgo+IE9u
+IFNhdCwgTWF5IDMwLCAyMDE1IGF0IDA1OjM3OjU3UE0gKzAyMDAsIE1pa2tvIFJhcGVsaSB3cm90
+ZToKPj4gRml4ZXMgdXNlcnNwYWNlIGNvbXBpbGF0aW9uIGVycm9yOgo+Pgo+PiBkcm0vZXh5bm9z
+X2RybS5oOjMwOjI6IGVycm9yOiB1bmtub3duIHR5cGUgbmFtZSDigJh1aW50NjRfdOKAmQo+Pgo+
+PiBTaWduZWQtb2ZmLWJ5OiBNaWtrbyBSYXBlbGkgPG1pa2tvLnJhcGVsaUBpa2kuZmk+Cj4gVGhp
+cyBpcyBhbm90aGVyIHRoaW5nIHdoaWNoIHdlIG5lZWQgdG8gYWRkcmVzcy4gIFdlIHNob3VsZCBu
+b3QgYmUgdXNpbmcKPiB1bnNpZ25lZCBpbnQvdW5zaWduZWQgbG9uZy91aW50WFhfdC9ldGMgaW4g
+aGVyZSwgYnV0IHRoZSBfX3VYWCBhbmQgX19zWFgKPiB0eXBlcy4KPgo+IFRoZSBsZXNzb24gbGVh
+cm5lZCBmcm9tIG90aGVyIERSTSBkZXZlbG9wZXJzIGlzIHRoYXQgdXNpbmcgdGhlc2UgdHlwZXMK
+PiBzaW1wbGlmaWVzIHRoZSBBUEkgZXNwZWNpYWxseSB3aGVuIGl0IGNvbWVzIHRvIHRoZSBkaWZm
+ZXJlbmNlcyBiZXR3ZWVuCj4gMzItYml0IGFuZCA2NC1iaXQgbWFjaGluZXMsIGFuZCBjb21wYXQg
+YXBwbGljYXRpb25zLgo+Cj4gTm90ZSB0aGF0IGRybS9kcm0uaCBpcyBhbGwgdGhhdCBzaG91bGQg
+bmVlZCB0byBiZSBpbmNsdWRlZCAtIGRybS9kcm0uaAo+IHRha2VzIGNhcmUgb2YgaW5jbHVkaW5n
+IGxpbnV4L3R5cGVzLmggd2hlbiBidWlsZGluZyBvbiBMaW51eCBwbGF0Zm9ybXMuCj4gKG5vdGU6
+IGlmIHlvdXIgY29tcGlsZXIgZG9lc24ndCBzZXQgX19saW51eF9fIHRoZW4geW91J3JlIHByb2Jh
+Ymx5IG5vdAo+IHVzaW5nIHRoZSBwcm9wZXIgY29tcGlsZXIuLi4pCj4KClVzaW5nIHR5cGVzIHRo
+YXQgZGlmZmVycyBvbiAzMi1iaXQgYW5kIDY0LWJpdCBtYWNoaW5lcyBmb3IgYSBrZXJuZWwgCmlu
+dGVyZmFjZSBpcyBpbmRlZWQgYSByYXRoZXIgYmFkIGlkZWEuIFRoaXMgbm90IG9ubHkgaW5jbHVk
+ZXMgbG9uZ3MsIGJ1dCAKcG9pbnRlcnMgYXMgd2VsbC4KCkJ1dCB0aGUgaW50OF90LCBpbnQxNl90
+IGludDMyX3QsIGludDY0X3QgYW5kIHRoZWlyIHVuc2lnbmVkIGNvdW50ZXJwYXJ0cyAKYXJlIGRl
+ZmluZWQgaW4gc3RkaW50Lmggd2hpY2ggaXMgcGFydCBvZiB0aGUgSVNPL0lFQyA5ODk5OjE5OTkg
+c3RhbmRhcmQsIApzaW1pbGFyIGlzIHRydWUgZm9yIHNpemVfdC4KClRoZSBfX3VYWCwgX19zWFgg
+YW5kIF9rZXJuZWxfc2l6ZV90IHR5cGVzIGFyZSBsaW51eCBzcGVjaWZpYyBhcyBmYXIgYXMgSSAK
+a25vdy4KCkZvciBiZXN0IGludGVyb3BlcmFiaWxpdHkgYW5kIHN0YW5kYXJkIGNvbmZvcm1hbmNl
+IEkgdGhpbmsgdGhhdCAKZGVmaW5pdGlvbnMgZnJvbSB0aGUgQyBzdGFuZGFyZCB3ZSB1c2Ugc2hv
+dWxkIG91dC1ydWxlIGxpbnV4IHNwZWNpZmljIApkZWZpbml0aW9ucy4KCkFkZGl0aW9uYWwgdG8g
+dGhhdCAibGludXgvdHlwZXMuaCIgaXMgbm90IHBhcnQgb2YgdGhlIHVhcGkgYXMgZmFyIGFzIEkg
+Cmtub3csIHNvIGluY2x1ZGluZyBpdCBpbiBhIGhlYWRlciB3aGljaCBpcyBwYXJ0IG9mIHRoZSB1
+YXBpIHNob3VsZCBiZSAKZm9yYmlkZGVuLgoKU28gdGhpcyBpcyBhIE5BSyBmcm9tIG15IHNpZGUg
+Zm9yIHRoZSB3aG9sZSBzZXJpZXMsIHVzZXJzcGFjZSBwcm9ncmFtcyAKc2hvdWxkIGluY2x1ZGUg
+PHN0ZGludC5oPiBmb3IgdGhlIGRlZmluaXRpb24gb2YgdGhlIElTTy9JRUMgOTg5OToxOTk5IApz
+dGFuZGFyZCB0eXBlcyBpZiBuZWNlc3NhcnkuCgpSZWdhcmRzLApDaHJpc3RpYW4uCgpfX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpsaW51eC1hcm0ta2VybmVs
+IG1haWxpbmcgbGlzdApsaW51eC1hcm0ta2VybmVsQGxpc3RzLmluZnJhZGVhZC5vcmcKaHR0cDov
+L2xpc3RzLmluZnJhZGVhZC5vcmcvbWFpbG1hbi9saXN0aW5mby9saW51eC1hcm0ta2VybmVsCg==
