@@ -1,134 +1,68 @@
-From: Alex =?utf-8?Q?Benn=C3=A9e?= <alex.bennee@linaro.org>
-Subject: Re: [PATCH v5 10/12] KVM: arm64: guest debug,
- HW assisted debug support
-Date: Mon, 01 Jun 2015 13:41:22 +0100
-Message-ID: <87y4k3bnyl.fsf@linaro.org>
-References: <1432891828-4816-1-git-send-email-alex.bennee@linaro.org>
- <1432891828-4816-11-git-send-email-alex.bennee@linaro.org>
- <20150601091552.GA1641@arm.com>
+From: Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>
+Subject: Re: [PATCH 25/98] sctp.h: use __u8 and __u32 from linux/types.h
+Date: Mon, 1 Jun 2015 09:40:00 -0400
+Message-ID: <20150601134000.GA21592@hmsreliant.think-freely.org>
+References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
+ <1433000370-19509-26-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
-In-reply-to: <20150601091552.GA1641@arm.com>
-List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
-List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
-List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
-List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
-List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
-Errors-To: kvmarm-bounces@lists.cs.columbia.edu
-Sender: kvmarm-bounces@lists.cs.columbia.edu
-To: Will Deacon <will.deacon@arm.com>
-Cc: "kvm@vger.kernel.org" <kvm@vger.kernel.org>, "open list:DOCUMENTA
- TION" <linux-doc@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "jan.kiszka@siemens.com" <jan.kiszka@siemens.com>, Ingo Molnar <mingo@kernel.org>, Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, Russell King <linux@arm.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>, "kvmarm@lists.cs.columbia.edu" <kvmarm@lists.cs.columbia.edu>, Gleb Natapov <gleb@kernel.org>, "zhichao.huang@linaro.org" <zhichao.huang@linaro.org>, Catalin Marinas <Catalin.Marinas@arm.com>, "bp@suse.de" <bp@suse.de>, Marc Zyngier <Marc.Zyngier@arm.com>, "r65777@freescale.com" <r65777@freescale.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "dahi@linux.vnet.ibm.com" <dahi@linux.vnet.ibm.com>, pbonzini@r
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1433000370-19509-26-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Vlad Yasevich <vyasevich-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-sctp-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-CldpbGwgRGVhY29uIDx3aWxsLmRlYWNvbkBhcm0uY29tPiB3cml0ZXM6Cgo+IEhpIEFsZXgsCj4K
-PiBPbiBGcmksIE1heSAyOSwgMjAxNSBhdCAxMDozMDoyNkFNICswMTAwLCBBbGV4IEJlbm7DqWUg
-d3JvdGU6Cj4+IFRoaXMgYWRkcyBzdXBwb3J0IGZvciB1c2Vyc3BhY2UgdG8gY29udHJvbCB0aGUg
-SFcgZGVidWcgcmVnaXN0ZXJzIGZvcgo+PiBndWVzdCBkZWJ1Zy4gSW4gdGhlIGRlYnVnIGlvY3Rs
-IHdlIGNvcHkgdGhlIElNUERFRiBkZWZpbmVkIG51bWJlciBvZgo+PiByZWdpc3RlcnMgaW50byBh
-IG5ldyByZWdpc3RlciBzZXQgY2FsbGVkIGhvc3RfZGVidWdfc3RhdGUuIFRoZXJlIGlzIG5vdwo+
-PiBhIG5ldyB2Y3B1IHBhcmFtZXRlciBjYWxsZWQgZGVidWdfcHRyIHdoaWNoIHNlbGVjdHMgd2hp
-Y2ggcmVnaXN0ZXIgc2V0Cj4+IGlzIHRvIGNvcGllZCBpbnRvIHRoZSByZWFsIHJlZ2lzdGVycyB3
-aGVuIHdvcmxkIHN3aXRjaCBvY2N1cnMuCj4+IAo+PiBJJ3ZlIG1vdmVkIHNvbWUgaGVscGVyIGZ1
-bmN0aW9ucyBpbnRvIHRoZSBod19icmVha3BvaW50LmggaGVhZGVyIGZvcgo+PiByZS11c2UuCj4+
-IAo+PiBBcyB3aXRoIHNpbmdsZSBzdGVwIHdlIG5lZWQgdG8gdHdlYWsgdGhlIGd1ZXN0IHJlZ2lz
-dGVycyB0byBlbmFibGUgdGhlCj4+IGV4Y2VwdGlvbnMgc28gd2UgbmVlZCB0byBzYXZlIGFuZCBy
-ZXN0b3JlIHRob3NlIGJpdHMuCj4+IAo+PiBUd28gbmV3IGNhcGFiaWxpdGllcyBoYXZlIGJlZW4g
-YWRkZWQgdG8gdGhlIEtWTV9FWFRFTlNJT04gaW9jdGwgdG8gYWxsb3cKPj4gdXNlcnNwYWNlIHRv
-IHF1ZXJ5IHRoZSBudW1iZXIgb2YgaGFyZHdhcmUgYnJlYWsgYW5kIHdhdGNoIHBvaW50cwo+PiBh
-dmFpbGFibGUgb24gdGhlIGhvc3QgaGFyZHdhcmUuCj4+IAo+PiBTaWduZWQtb2ZmLWJ5OiBBbGV4
-IEJlbm7DqWUgPGFsZXguYmVubmVlQGxpbmFyby5vcmc+Cj4KPiBbLi4uXQo+Cj4+IGRpZmYgLS1n
-aXQgYS9Eb2N1bWVudGF0aW9uL3ZpcnR1YWwva3ZtL2FwaS50eHQgYi9Eb2N1bWVudGF0aW9uL3Zp
-cnR1YWwva3ZtL2FwaS50eHQKPj4gaW5kZXggMzNjODE0My4uYWRhNTdkZiAxMDA2NDQKPj4gLS0t
-IGEvRG9jdW1lbnRhdGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0Cj4+ICsrKyBiL0RvY3VtZW50YXRp
-b24vdmlydHVhbC9rdm0vYXBpLnR4dAo+PiBAQCAtMjY2OCw3ICsyNjY4LDcgQEAgVGhlIHRvcCAx
-NiBiaXRzIG9mIHRoZSBjb250cm9sIGZpZWxkIGFyZSBhcmNoaXRlY3R1cmUgc3BlY2lmaWMgY29u
-dHJvbAo+PiAgZmxhZ3Mgd2hpY2ggY2FuIGluY2x1ZGUgdGhlIGZvbGxvd2luZzoKPj4gIAo+PiAg
-ICAtIEtWTV9HVUVTVERCR19VU0VfU1dfQlA6ICAgICB1c2luZyBzb2Z0d2FyZSBicmVha3BvaW50
-cyBbeDg2LCBhcm02NF0KPj4gLSAgLSBLVk1fR1VFU1REQkdfVVNFX0hXX0JQOiAgICAgdXNpbmcg
-aGFyZHdhcmUgYnJlYWtwb2ludHMgW3g4NiwgczM5MF0KPj4gKyAgLSBLVk1fR1VFU1REQkdfVVNF
-X0hXX0JQOiAgICAgdXNpbmcgaGFyZHdhcmUgYnJlYWtwb2ludHMgW3g4NiwgczM5MCwgYXJtNjRd
-Cj4+ICAgIC0gS1ZNX0dVRVNUREJHX0lOSkVDVF9EQjogICAgIGluamVjdCBEQiB0eXBlIGV4Y2Vw
-dGlvbiBbeDg2XQo+PiAgICAtIEtWTV9HVUVTVERCR19JTkpFQ1RfQlA6ICAgICBpbmplY3QgQlAg
-dHlwZSBleGNlcHRpb24gW3g4Nl0KPj4gICAgLSBLVk1fR1VFU1REQkdfRVhJVF9QRU5ESU5HOiAg
-dHJpZ2dlciBhbiBpbW1lZGlhdGUgZ3Vlc3QgZXhpdCBbczM5MF0KPj4gQEAgLTI2ODMsNiArMjY4
-MywxMSBAQCB1cGRhdGVkIHRvIHRoZSBjb3JyZWN0IChzdXBwbGllZCkgdmFsdWVzLgo+PiAgVGhl
-IHNlY29uZCBwYXJ0IG9mIHRoZSBzdHJ1Y3R1cmUgaXMgYXJjaGl0ZWN0dXJlIHNwZWNpZmljIGFu
-ZAo+PiAgdHlwaWNhbGx5IGNvbnRhaW5zIGEgc2V0IG9mIGRlYnVnIHJlZ2lzdGVycy4KPj4gIAo+
-PiArRm9yIGFybTY0IHRoZSBudW1iZXIgb2YgZGVidWcgcmVnaXN0ZXJzIGlzIGltcGxlbWVudGF0
-aW9uIGRlZmluZWQgYW5kCj4+ICtjYW4gYmUgZGV0ZXJtaW5lZCBieSBxdWVyeWluZyB0aGUgS1ZN
-X0NBUF9HVUVTVF9ERUJVR19IV19CUFMgYW5kCj4+ICtLVk1fQ0FQX0dVRVNUX0RFQlVHX0hXX1dQ
-UyBjYXBhYmlsaXRpZXMgd2hpY2ggcmV0dXJuIGEgcG9zaXRpdmUgbnVtYmVyCj4+ICtpbmRpY2F0
-aW5nIHRoZSBudW1iZXIgb2Ygc3VwcG9ydGVkIHJlZ2lzdGVycy4KPj4gKwo+PiAgV2hlbiBkZWJ1
-ZyBldmVudHMgZXhpdCB0aGUgbWFpbiBydW4gbG9vcCB3aXRoIHRoZSByZWFzb24KPj4gIEtWTV9F
-WElUX0RFQlVHIHdpdGggdGhlIGt2bV9kZWJ1Z19leGl0X2FyY2ggcGFydCBvZiB0aGUga3ZtX3J1
-bgo+PiAgc3RydWN0dXJlIGNvbnRhaW5pbmcgYXJjaGl0ZWN0dXJlIHNwZWNpZmljIGRlYnVnIGlu
-Zm9ybWF0aW9uLgo+PiBkaWZmIC0tZ2l0IGEvYXJjaC9hcm0va3ZtL2FybS5jIGIvYXJjaC9hcm0v
-a3ZtL2FybS5jCj4+IGluZGV4IDBkMTdjN2IuLjZkZjQ3YzEgMTAwNjQ0Cj4+IC0tLSBhL2FyY2gv
-YXJtL2t2bS9hcm0uYwo+PiArKysgYi9hcmNoL2FybS9rdm0vYXJtLmMKPj4gQEAgLTMwNyw2ICsz
-MDcsNyBAQCB2b2lkIGt2bV9hcmNoX3ZjcHVfcHV0KHN0cnVjdCBrdm1fdmNwdSAqdmNwdSkKPj4g
-IAo+PiAgI2RlZmluZSBLVk1fR1VFU1REQkdfVkFMSURfTUFTSyAoS1ZNX0dVRVNUREJHX0VOQUJM
-RSB8ICAgIFwKPj4gIAkJCSAgICBLVk1fR1VFU1REQkdfVVNFX1NXX0JQIHwgXAo+PiArCQkJICAg
-IEtWTV9HVUVTVERCR19VU0VfSFdfQlAgfCBcCj4+ICAJCQkgICAgS1ZNX0dVRVNUREJHX1NJTkdM
-RVNURVApCj4+ICAKPj4gIC8qKgo+PiBAQCAtMzI3LDYgKzMyOCwxMiBAQCBpbnQga3ZtX2FyY2hf
-dmNwdV9pb2N0bF9zZXRfZ3Vlc3RfZGVidWcoc3RydWN0IGt2bV92Y3B1ICp2Y3B1LAo+PiAgCj4+
-ICAJaWYgKGRiZy0+Y29udHJvbCAmIEtWTV9HVUVTVERCR19FTkFCTEUpIHsKPj4gIAkJdmNwdS0+
-Z3Vlc3RfZGVidWcgPSBkYmctPmNvbnRyb2w7Cj4+ICsKPj4gKwkJLyogSGFyZHdhcmUgYXNzaXN0
-ZWQgQnJlYWsgYW5kIFdhdGNoIHBvaW50cyAqLwo+PiArCQlpZiAodmNwdS0+Z3Vlc3RfZGVidWcg
-JiBLVk1fR1VFU1REQkdfVVNFX0hXX0JQKSB7Cj4+ICsJCQl2Y3B1LT5hcmNoLmV4dGVybmFsX2Rl
-YnVnX3N0YXRlID0gZGJnLT5hcmNoOwo+PiArCQl9Cj4+ICsKPj4gIAl9IGVsc2Ugewo+PiAgCQkv
-KiBJZiBub3QgZW5hYmxlZCBjbGVhciBhbGwgZmxhZ3MgKi8KPj4gIAkJdmNwdS0+Z3Vlc3RfZGVi
-dWcgPSAwOwo+PiBkaWZmIC0tZ2l0IGEvYXJjaC9hcm02NC9pbmNsdWRlL2FzbS9od19icmVha3Bv
-aW50LmggYi9hcmNoL2FybTY0L2luY2x1ZGUvYXNtL2h3X2JyZWFrcG9pbnQuaAo+PiBpbmRleCA1
-MmI0ODRiLi5jNDUwNTUyIDEwMDY0NAo+PiAtLS0gYS9hcmNoL2FybTY0L2luY2x1ZGUvYXNtL2h3
-X2JyZWFrcG9pbnQuaAo+PiArKysgYi9hcmNoL2FybTY0L2luY2x1ZGUvYXNtL2h3X2JyZWFrcG9p
-bnQuaAo+PiBAQCAtMTMwLDYgKzEzMCwxOCBAQCBzdGF0aWMgaW5saW5lIHZvaWQgcHRyYWNlX2h3
-X2NvcHlfdGhyZWFkKHN0cnVjdCB0YXNrX3N0cnVjdCAqdGFzaykKPj4gIH0KPj4gICNlbmRpZgo+
-PiAgCj4+ICsvKiBEZXRlcm1pbmUgbnVtYmVyIG9mIEJSUCByZWdpc3RlcnMgYXZhaWxhYmxlLiAq
-Lwo+PiArc3RhdGljIGlubGluZSBpbnQgZ2V0X251bV9icnBzKHZvaWQpCj4+ICt7Cj4+ICsJcmV0
-dXJuICgocmVhZF9jcHVpZChJRF9BQTY0REZSMF9FTDEpID4+IDEyKSAmIDB4ZikgKyAxOwo+PiAr
-fQo+PiArCj4+ICsvKiBEZXRlcm1pbmUgbnVtYmVyIG9mIFdSUCByZWdpc3RlcnMgYXZhaWxhYmxl
-LiAqLwo+PiArc3RhdGljIGlubGluZSBpbnQgZ2V0X251bV93cnBzKHZvaWQpCj4+ICt7Cj4+ICsJ
-cmV0dXJuICgocmVhZF9jcHVpZChJRF9BQTY0REZSMF9FTDEpID4+IDIwKSAmIDB4ZikgKyAxOwo+
-PiArfQo+Cj4gSSdtIGZpbmUgd2l0aCBtb3ZpbmcgdGhlc2UgaW50byB0aGUgaGVhZGVyIGZpbGUs
-IGJ1dCB3ZSBzaG91bGQgcHJvYmFibHkKPiByZXZpc2l0IHRoaXMgYXQgc29tZSBwb2ludCBzbyB0
-aGF0IHdlIHVzZSBhIHNoYWRvdyB2YWx1ZSB0byBpbmRpY2F0ZSB0aGUKPiBtaW5pbXVtIG51bWJl
-ciBvZiByZWdpc3RlcnMgYWNyb3NzIHRoZSBzeXN0ZW0gZm9yIGUuZy4gYmlnLkxJVFRMRSBwbGF0
-Zm9ybXMKPiB0aGF0IGRvbid0IGhhdmUgdW5pZm9ybSBkZWJ1ZyByZXNvdXJjZXMuCgpUaGVyZSBp
-cyB3b3JrIGdvaW5nIGZvcndhcmQgaW4gUUVNVSB0byBzcGVjaWZ5IHRoaXMgbGltaXRhdGlvbiB3
-aGVuCmNyZWF0aW5nIHZjcHVzLiBBdCB0aGUgbW9tZW50IHRoZSBrZXJuZWwgc2FuaXR5IGNoZWNr
-cyB0aGVzZSBhcmUgYWxsIHRoZQpzYW1lIG9uIGJvb3QgdXAgYnV0IEkgZ3Vlc3Mgd2Ugd2lsbCBo
-YXZlIHRvIGRlY2lkZSB3aGVyZSB0aGUgc21hcnRzIHdpbGwKZW5kIHVwLiBEbyB3ZToKCiAgLSBy
-ZXBvcnQgdGhlIHJlYWwgbnVtYmVyIHBlciByZWFsLWNwdSAoUUVNVSBmaWd1cmVzIG91dCB2Y3B1
-ICBjb25maWcpCgogIG9yCgogIC0gcmVwb3J0IHRoZSBsb3dlc3QgY29tbW9uIGRlbm9taW5hdG9y
-CiAgCgo+Cj4+ICBleHRlcm4gc3RydWN0IHBtdSBwZXJmX29wc19icDsKPj4gIAo+PiAgI2VuZGlm
-CS8qIF9fS0VSTkVMX18gKi8KPj4gZGlmZiAtLWdpdCBhL2FyY2gvYXJtNjQvaW5jbHVkZS9hc20v
-a3ZtX2hvc3QuaCBiL2FyY2gvYXJtNjQvaW5jbHVkZS9hc20va3ZtX2hvc3QuaAo+PiBpbmRleCBl
-NTA0MGI2Li40OThkNGY3IDEwMDY0NAo+PiAtLS0gYS9hcmNoL2FybTY0L2luY2x1ZGUvYXNtL2t2
-bV9ob3N0LmgKPj4gKysrIGIvYXJjaC9hcm02NC9pbmNsdWRlL2FzbS9rdm1faG9zdC5oCj4+IEBA
-IC0xMTMsMTIgKzExMywxMyBAQCBzdHJ1Y3Qga3ZtX3ZjcHVfYXJjaCB7Cj4+ICAKPj4gIAkvKgo+
-PiAgCSAqIEZvciBkZWJ1Z2dpbmcgdGhlIGd1ZXN0IHdlIG5lZWQgdG8ga2VlcCBhIHNldCBvZiBk
-ZWJ1Zwo+PiAtCSAqIHJlZ2lzdGVycyB3aGljaCBjYW4gb3ZlcnJpZGUgdGhlIGd1ZXN0cyBvd24g
-ZGVidWcgc3RhdGUKPj4gKwkgKiByZWdpc3RlcnMgd2hpY2ggY2FuIG92ZXJyaWRlIHRoZSBndWVz
-dCdzIG93biBkZWJ1ZyBzdGF0ZQo+PiAgCSAqIHdoaWxlIGJlaW5nIHVzZWQuIFRoZXNlIGFyZSBz
-ZXQgdmlhIHRoZSBLVk1fU0VUX0dVRVNUX0RFQlVHCj4+ICAJICogaW9jdGwuCj4+ICAJICovCj4+
-ICAJc3RydWN0IGt2bV9ndWVzdF9kZWJ1Z19hcmNoICpkZWJ1Z19wdHI7Cj4+ICAJc3RydWN0IGt2
-bV9ndWVzdF9kZWJ1Z19hcmNoIHZjcHVfZGVidWdfc3RhdGU7Cj4+ICsJc3RydWN0IGt2bV9ndWVz
-dF9kZWJ1Z19hcmNoIGV4dGVybmFsX2RlYnVnX3N0YXRlOwo+PiAgCj4+ICAJLyogUG9pbnRlciB0
-byBob3N0IENQVSBjb250ZXh0ICovCj4+ICAJa3ZtX2NwdV9jb250ZXh0X3QgKmhvc3RfY3B1X2Nv
-bnRleHQ7Cj4+IGRpZmYgLS1naXQgYS9hcmNoL2FybTY0L2luY2x1ZGUvdWFwaS9hc20va3ZtLmgg
-Yi9hcmNoL2FybTY0L2luY2x1ZGUvdWFwaS9hc20va3ZtLmgKPj4gaW5kZXggNDM3NThlNy4uOTUx
-NjhjMiAxMDA2NDQKPj4gLS0tIGEvYXJjaC9hcm02NC9pbmNsdWRlL3VhcGkvYXNtL2t2bS5oCj4+
-ICsrKyBiL2FyY2gvYXJtNjQvaW5jbHVkZS91YXBpL2FzbS9rdm0uaAo+PiBAQCAtMTE2LDcgKzEx
-Niw3IEBAIHN0cnVjdCBrdm1fZ3Vlc3RfZGVidWdfYXJjaCB7Cj4+ICAKPj4gIHN0cnVjdCBrdm1f
-ZGVidWdfZXhpdF9hcmNoIHsKPj4gIAlfX3UzMiBoc3I7Cj4+IC0JX191NjQgZmFyOwo+PiArCV9f
-dTY0IGZhcjsJLyogdXNlZCBmb3Igd2F0Y2hwb2ludHMgKi8KPgo+IFdoeSBub3QganVzdCBhZGQg
-dGhlIGNvbW1lbnQgd2l0aCB0aGUgZmllbGQgaW4geW91ciBlYXJsaWVyIHBhdGNoPwoKSSBjYW4g
-Zml4IHRoYXQgdXAgaWYgdGhlcmUgaXMgbmVlZCB0byBhIHJlLXNwaW4uCgotLSAKQWxleCBCZW5u
-w6llCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmt2bWFy
-bSBtYWlsaW5nIGxpc3QKa3ZtYXJtQGxpc3RzLmNzLmNvbHVtYmlhLmVkdQpodHRwczovL2xpc3Rz
-LmNzLmNvbHVtYmlhLmVkdS9tYWlsbWFuL2xpc3RpbmZvL2t2bWFybQo=
+On Sat, May 30, 2015 at 05:38:17PM +0200, Mikko Rapeli wrote:
+> Fixes userspace compilation errors like:
+>=20
+> linux/sctp.h:652:2: error: unknown type name =E2=80=98uint32_t=E2=80=99
+>=20
+> Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+> ---
+>  include/uapi/linux/sctp.h | 8 ++++----
+>  1 file changed, 4 insertions(+), 4 deletions(-)
+>=20
+> diff --git a/include/uapi/linux/sctp.h b/include/uapi/linux/sctp.h
+> index ce70fe6..dd0a9c2 100644
+> --- a/include/uapi/linux/sctp.h
+> +++ b/include/uapi/linux/sctp.h
+> @@ -718,13 +718,13 @@ struct sctp_authkeyid {
+>   */
+>  struct sctp_sack_info {
+>  	sctp_assoc_t	sack_assoc_id;
+> -	uint32_t	sack_delay;
+> -	uint32_t	sack_freq;
+> +	__u32	sack_delay;
+> +	__u32	sack_freq;
+>  };
+> =20
+>  struct sctp_assoc_value {
+>      sctp_assoc_t            assoc_id;
+> -    uint32_t                assoc_value;
+> +    __u32                assoc_value;
+>  };
+> =20
+>  /*
+> @@ -794,7 +794,7 @@ struct sctp_status {
+>  struct sctp_authchunks {
+>  	sctp_assoc_t	gauth_assoc_id;
+>  	__u32		gauth_number_of_chunks;
+> -	uint8_t		gauth_chunks[];
+> +	__u8		gauth_chunks[];
+>  };
+> =20
+>  /* The broken spelling has been released already in lksctp-tools hea=
+der,
+> --=20
+> 2.1.4
+>=20
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-sctp"=
+ in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>=20
+Acked-by: Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>
