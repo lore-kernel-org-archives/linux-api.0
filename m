@@ -1,68 +1,204 @@
-From: Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>
-Subject: Re: [PATCH 25/98] sctp.h: use __u8 and __u32 from linux/types.h
-Date: Mon, 1 Jun 2015 09:40:00 -0400
-Message-ID: <20150601134000.GA21592@hmsreliant.think-freely.org>
-References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
- <1433000370-19509-26-git-send-email-mikko.rapeli@iki.fi>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Subject: [PATCH] seccomp: add ptrace commands for suspend/resume
+Date: Mon,  1 Jun 2015 13:28:38 -0600
+Message-ID: <1433186918-9626-1-git-send-email-tycho.andersen@canonical.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1433000370-19509-26-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Vlad Yasevich <vyasevich-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-sctp-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, May 30, 2015 at 05:38:17PM +0200, Mikko Rapeli wrote:
-> Fixes userspace compilation errors like:
->=20
-> linux/sctp.h:652:2: error: unknown type name =E2=80=98uint32_t=E2=80=99
->=20
-> Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-> ---
->  include/uapi/linux/sctp.h | 8 ++++----
->  1 file changed, 4 insertions(+), 4 deletions(-)
->=20
-> diff --git a/include/uapi/linux/sctp.h b/include/uapi/linux/sctp.h
-> index ce70fe6..dd0a9c2 100644
-> --- a/include/uapi/linux/sctp.h
-> +++ b/include/uapi/linux/sctp.h
-> @@ -718,13 +718,13 @@ struct sctp_authkeyid {
->   */
->  struct sctp_sack_info {
->  	sctp_assoc_t	sack_assoc_id;
-> -	uint32_t	sack_delay;
-> -	uint32_t	sack_freq;
-> +	__u32	sack_delay;
-> +	__u32	sack_freq;
->  };
-> =20
->  struct sctp_assoc_value {
->      sctp_assoc_t            assoc_id;
-> -    uint32_t                assoc_value;
-> +    __u32                assoc_value;
->  };
-> =20
->  /*
-> @@ -794,7 +794,7 @@ struct sctp_status {
->  struct sctp_authchunks {
->  	sctp_assoc_t	gauth_assoc_id;
->  	__u32		gauth_number_of_chunks;
-> -	uint8_t		gauth_chunks[];
-> +	__u8		gauth_chunks[];
->  };
-> =20
->  /* The broken spelling has been released already in lksctp-tools hea=
-der,
-> --=20
-> 2.1.4
->=20
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-sctp"=
- in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->=20
-Acked-by: Neil Horman <nhorman-2XuSBdqkA4R54TAoqtyWWQ@public.gmane.org>
+This patch is the first step in enabling checkpoint/restore of processes
+with seccomp enabled.
+
+One of the things CRIU does while dumping tasks is inject code into them
+via ptrace to collect information that is only available to the process
+itself. However, if we are in a seccomp mode where these processes are
+prohibited from making these syscalls, then what CRIU does kills the task.
+
+This patch adds a new ptrace command, PTRACE_SUSPEND_SECCOMP that enables a
+task from the init user namespace which has CAP_SYS_ADMIN to disable (and
+re-enable) seccomp filters for another task so that they can be
+successfully dumped (and restored).
+
+Signed-off-by: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+CC: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+CC: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+CC: Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>
+CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+CC: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+---
+ include/linux/seccomp.h     |  8 ++++++
+ include/uapi/linux/ptrace.h |  1 +
+ kernel/ptrace.c             | 10 ++++++++
+ kernel/seccomp.c            | 62 ++++++++++++++++++++++++++++++++++++++++++++-
+ 4 files changed, 80 insertions(+), 1 deletion(-)
+
+diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+index a19ddac..7cc870f 100644
+--- a/include/linux/seccomp.h
++++ b/include/linux/seccomp.h
+@@ -25,6 +25,9 @@ struct seccomp_filter;
+ struct seccomp {
+ 	int mode;
+ 	struct seccomp_filter *filter;
++#ifdef CONFIG_CHECKPOINT_RESTORE
++	bool suspended;
++#endif
+ };
+ 
+ #ifdef CONFIG_HAVE_ARCH_SECCOMP_FILTER
+@@ -53,6 +56,11 @@ static inline int seccomp_mode(struct seccomp *s)
+ 	return s->mode;
+ }
+ 
++#ifdef CONFIG_CHECKPOINT_RESTORE
++extern int suspend_seccomp(struct task_struct *);
++extern int resume_seccomp(struct task_struct *);
++#endif
++
+ #else /* CONFIG_SECCOMP */
+ 
+ #include <linux/errno.h>
+diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
+index cf1019e..8ba4e4f 100644
+--- a/include/uapi/linux/ptrace.h
++++ b/include/uapi/linux/ptrace.h
+@@ -17,6 +17,7 @@
+ #define PTRACE_CONT		   7
+ #define PTRACE_KILL		   8
+ #define PTRACE_SINGLESTEP	   9
++#define PTRACE_SUSPEND_SECCOMP	   10
+ 
+ #define PTRACE_ATTACH		  16
+ #define PTRACE_DETACH		  17
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index c8e0e05..a6b6527 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -15,6 +15,7 @@
+ #include <linux/highmem.h>
+ #include <linux/pagemap.h>
+ #include <linux/ptrace.h>
++#include <linux/seccomp.h>
+ #include <linux/security.h>
+ #include <linux/signal.h>
+ #include <linux/uio.h>
+@@ -1003,6 +1004,15 @@ int ptrace_request(struct task_struct *child, long request,
+ 		break;
+ 	}
+ #endif
++
++#if defined(CONFIG_SECCOMP) && defined(CONFIG_CHECKPOINT_RESTORE)
++	case PTRACE_SUSPEND_SECCOMP:
++		if (data)
++			return suspend_seccomp(child);
++		else
++			return resume_seccomp(child);
++#endif
++
+ 	default:
+ 		break;
+ 	}
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index 980fd26..a358a58 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -569,6 +569,7 @@ static int mode1_syscalls_32[] = {
+ static void __secure_computing_strict(int this_syscall)
+ {
+ 	int *syscall_whitelist = mode1_syscalls;
++
+ #ifdef CONFIG_COMPAT
+ 	if (is_compat_task())
+ 		syscall_whitelist = mode1_syscalls_32;
+@@ -590,6 +591,11 @@ void secure_computing_strict(int this_syscall)
+ {
+ 	int mode = current->seccomp.mode;
+ 
++#ifdef CONFIG_CHECKPOINT_RESTORE
++	if (current->seccomp.suspended)
++		return;
++#endif
++
+ 	if (mode == 0)
+ 		return;
+ 	else if (mode == SECCOMP_MODE_STRICT)
+@@ -691,6 +697,11 @@ u32 seccomp_phase1(struct seccomp_data *sd)
+ 	int this_syscall = sd ? sd->nr :
+ 		syscall_get_nr(current, task_pt_regs(current));
+ 
++#ifdef CONFIG_CHECKPOINT_RESTORE
++	if (unlikely(current->seccomp.suspended))
++		return SECCOMP_PHASE1_OK;
++#endif
++
+ 	switch (mode) {
+ 	case SECCOMP_MODE_STRICT:
+ 		__secure_computing_strict(this_syscall);  /* may call do_exit */
+@@ -769,7 +780,8 @@ static long seccomp_set_mode_strict(void)
+ 		goto out;
+ 
+ #ifdef TIF_NOTSC
+-	disable_TSC();
++	if (!current->seccomp.suspended)
++		disable_TSC();
+ #endif
+ 	seccomp_assign_mode(current, seccomp_mode);
+ 	ret = 0;
+@@ -901,3 +913,51 @@ long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
+ 	/* prctl interface doesn't have flags, so they are always zero. */
+ 	return do_seccomp(op, 0, uargs);
+ }
++
++#ifdef CONFIG_CHECKPOINT_RESTORE
++int suspend_seccomp(struct task_struct *task)
++{
++	int ret = -EACCES;
++
++	spin_lock_irq(&task->sighand->siglock);
++
++	if (!capable(CAP_SYS_ADMIN))
++		goto out;
++
++	task->seccomp.suspended = true;
++
++#ifdef TIF_NOTSC
++	if (task->seccomp.mode == SECCOMP_MODE_STRICT)
++		clear_tsk_thread_flag(task, TIF_NOTSC);
++#endif
++
++	ret = 0;
++out:
++	spin_unlock_irq(&task->sighand->siglock);
++
++	return ret;
++}
++
++int resume_seccomp(struct task_struct *task)
++{
++	int ret = -EACCES;
++
++	spin_lock_irq(&task->sighand->siglock);
++
++	if (!capable(CAP_SYS_ADMIN))
++		goto out;
++
++	task->seccomp.suspended = false;
++
++#ifdef TIF_NOTSC
++	if (task->seccomp.mode == SECCOMP_MODE_STRICT)
++		set_tsk_thread_flag(task, TIF_NOTSC);
++#endif
++
++	ret = 0;
++out:
++	spin_unlock_irq(&task->sighand->siglock);
++
++	return ret;
++}
++#endif /* CONFIG_CHECKPOINT_RESTORE */
+-- 
+2.1.4
