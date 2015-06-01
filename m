@@ -1,45 +1,28 @@
-From: Frans Klaver <fransklaver@gmail.com>
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 Subject: Re: [PATCH 05/98] exynos_drm.h: use __u64 from linux/types.h
-Date: Mon, 1 Jun 2015 11:14:12 +0200
-Message-ID: <CAH6sp9PEuukeGrzXVKmgFZ+CcyfYdT=4VyGQdAGdnhD-chh+sQ@mail.gmail.com>
+Date: Mon, 1 Jun 2015 12:15:31 +0300
+Message-ID: <20150601091531.GL12550@lakka.kapsi.fi>
 References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
-	<1433000370-19509-6-git-send-email-mikko.rapeli@iki.fi>
-	<20150530164655.GM2067@n2100.arm.linux.org.uk>
-	<556C15BA.7000909@amd.com>
-	<20150601085605.GN2067@n2100.arm.linux.org.uk>
-	<556C2105.2090607@amd.com>
+ <1433000370-19509-6-git-send-email-mikko.rapeli@iki.fi>
+ <20150530164655.GM2067@n2100.arm.linux.org.uk>
+ <556C15BA.7000909@amd.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <556C2105.2090607@amd.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?Q?Christian_K=C3=B6nig?= <christian.koenig@amd.com>
-Cc: Russell King - ARM Linux <linux@arm.linux.org.uk>, Krzysztof Kozlowski <k.kozlowski@samsung.com>, linux-samsung-soc@vger.kernel.org, Mikko Rapeli <mikko.rapeli@iki.fi>, Seung-Woo Kim <sw0312.kim@samsung.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, DRI mailing list <dri-devel@lists.freedesktop.org>, Kyungmin Park <kyungmin.park@samsung.com>, Kukjin Kim <kgene@kernel.org>, linux-api <linux-api@vger.kernel.org>, linux-arm-kernel@lists.infradead.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <556C15BA.7000909-5C7GfCeVMHo@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christian =?iso-8859-1?Q?K=F6nig?= <christian.koenig-5C7GfCeVMHo@public.gmane.org>
+Cc: Russell King - ARM Linux <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Seung-Woo Kim <sw0312.kim-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 1, 2015 at 11:08 AM, Christian K=C3=B6nig
-<christian.koenig@amd.com> wrote:
-> Yeah, completely agree with Linus on the visibility problem and that'=
-s
-> exactly the reason why we don't include <stdint.h> in the kernel head=
-er and
-> expect userspace to define the ISO types somewhere.
->
-> But using the types from "include/linux/types.h" and especially inclu=
-ding it
-> into the uapi headers doesn't make the situation better, but rather w=
-orse.
->
-> With this step we not only make the headers depend on another header =
-that
-> isn't part of the uapi, but also pollute the user space namespace wit=
-h __sXX
-> and __uXX types which aren't defined anywhere else.
+On Mon, Jun 01, 2015 at 10:20:10AM +0200, Christian K=F6nig wrote:
+> Additional to that "linux/types.h" is not part of the uapi as far as
+> I know, so including it in a header which is part of the uapi should
+> be forbidden.
 
-These __uXX and __sXX types are defined in
-include/uapi/asm-generic/ll64.h and pulled in by
-include/uapi/linux/types.h. Including linux/types.h is therefore
-valid.
+linux/types.h is part of uapi. See usr/include after 'make headers_inst=
+all'.
 
-=46rans
+-Mikko
