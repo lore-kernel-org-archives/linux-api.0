@@ -1,29 +1,40 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: Re: [PATCH 05/98] exynos_drm.h: use __u64 from linux/types.h
-Date: Tue, 2 Jun 2015 21:59:24 +0300
-Message-ID: <20150602185924.GO12550@lakka.kapsi.fi>
-References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
- <1433000370-19509-6-git-send-email-mikko.rapeli@iki.fi>
- <20150530164655.GM2067@n2100.arm.linux.org.uk>
+From: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Subject: Re: [PATCH] seccomp: add ptrace commands for suspend/resume
+Date: Tue, 2 Jun 2015 22:02:10 +0300
+Message-ID: <556DFDB2.3050205@parallels.com>
+References: <1433186918-9626-1-git-send-email-tycho.andersen@canonical.com> <20150602182829.GA23449@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-samsung-soc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150530164655.GM2067@n2100.arm.linux.org.uk>
-Sender: linux-samsung-soc-owner@vger.kernel.org
-To: Russell King - ARM Linux <linux@arm.linux.org.uk>
-Cc: linux-kernel@vger.kernel.org, Krzysztof Kozlowski <k.kozlowski@samsung.com>, linux-samsung-soc@vger.kernel.org, Joonyoung Shim <jy0922.shim@samsung.com>, David Airlie <airlied@linux.ie>, Seung-Woo Kim <sw0312.kim@samsung.com>, dri-devel@lists.freedesktop.org, Inki Dae <inki.dae@samsung.com>, Kyungmin Park <kyungmin.park@samsung.com>, Kukjin Kim <kgene@kernel.org>, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150602182829.GA23449-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, May 30, 2015 at 05:46:56PM +0100, Russell King - ARM Linux wrote:
-> Note that drm/drm.h is all that should need to be included - drm/drm.h
-> takes care of including linux/types.h when building on Linux platforms.
-> (note: if your compiler doesn't set __linux__ then you're probably not
-> using the proper compiler...)
 
-Thanks, I'll fix this by including only drm/drm.h in exynos_drm.h,
-nouveau_drm.h, radeon_drm.h and via_drm.h patches.
+>> +int suspend_seccomp(struct task_struct *task)
+>> +{
+>> +	int ret = -EACCES;
+>> +
+>> +	spin_lock_irq(&task->sighand->siglock);
+>> +
+>> +	if (!capable(CAP_SYS_ADMIN))
+>> +		goto out;
+> 
+> I am puzzled ;) Why do we need ->siglock? And even if we need it, why
+> we can't check CAP_SYS_ADMIN lockless?
+> 
+> And I am not sure I understand why do we need the additional security
+> check, but I leave this to you and Andy.
+> 
+> If you have the rights to trace this task, then you can do anything
+> the tracee could do without the filtering.
 
-I'm using standard gcc from Debian for the x86 compilation.
+I think _this_ check is required, otherwise the seccomp-ed task (in
+filtered mode) fork-s a child, then this child ptrace-attach to parent
+(allowed) then suspend its seccomd. And -- we have unpriviledged process 
+de-seccomped.
 
--Mikko
+-- Pavel
