@@ -1,216 +1,513 @@
 From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH v5 00/21] libnvdimm: non-volatile memory devices
-Date: Mon, 01 Jun 2015 20:14:08 -0400
-Message-ID: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [PATCH v5 04/21] libnvdimm, nfit: dimm/memory-devices
+Date: Mon, 01 Jun 2015 20:14:30 -0400
+Message-ID: <20150602001430.4506.23525.stgit@dwillia2-desk3.amr.corp.intel.com>
+References: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-acpi-owner@vger.kernel.org>
+In-Reply-To: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com>
 Sender: linux-acpi-owner@vger.kernel.org
 To: linux-nvdimm@lists.01.org
 Cc: axboe@kernel.dk, sfr@canb.auug.org.au, rafael@kernel.org, neilb@suse.de, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, mingo@kernel.org, linux-acpi@vger.kernel.org, jmoyer@redhat.com, linux-api@vger.kernel.org, akpm@linux-foundation.org, hch@lst.de
 List-Id: linux-api@vger.kernel.org
 
-Changes since v4 [1]:
+Enable dimm devices to be registered on a libnvdimm bus.  The kernel
+assigned device id for dimms is dynamic.  If userspace needs a more
+static identifier it should consult a provider-specific attribute.  In
+the case where NFIT is the provider, the 'nmemX/nfit/handle' or
+'nmemX/nfit/serial' attributes may be used for this purpose.
 
-1/ Rename libnd to libnvdimm, move the implementation from
-   drivers/block/nd to drivers/nvdimm, and replace the "nd" prefix with
-   "nvdimm" where it makes sense.  For example, the module name and public
-   header filename for the major library entry points are libnvdimm.ko
-   and libnvdimm.h respectively.  The entry points are prefixed with
-   "nvdimm" and the primary bus objects are renamed, i.e.
-   s/nd_bus/nvdimm_bus/ and s/nd_dimm/nvdimm/.  The "nd" prefix remains
-   as a short lead-in identifier for implementation internal items that
-   are not nvdimms like regions, commands, labels, etc... (Christoph [2])
-
-2/ Move the unit test infrastructure to an external module in
-   tools/testing/nvdimm.  The linker hack received a strong NAK from
-   Christoph and it is also problematic that an "allmodconfig" build would
-   result in including the mocked symbols.  With the move and conversion to
-   an external module we keep the unit tests in tree where they can be
-   maintained effectively without impacting production builds. (Christoph
-   [2])
-
-3/ Fixup some miscellaneous 0day sparse reports [3]
-
-4/ Rebased on top of linux-pm.git/acpica (Rafael [4])
-
-[1]: https://lists.01.org/pipermail/linux-nvdimm/2015-May/000804.html
-[2]: https://lists.01.org/pipermail/linux-nvdimm/2015-May/000923.html
-[3]: https://lists.01.org/pipermail/linux-nvdimm/2015-May/000983.html
-[4]: https://lists.01.org/pipermail/linux-nvdimm/2015-May/000921.html
-
-Diffstat since v4:
-
- Documentation/{blockdev => nvdimm}/btt.txt         |   0
- .../{blockdev/libnd.txt => nvdimm/nvdimm.txt}      |  97 ++++----
- drivers/acpi/nfit.c                                | 148 ++++++------
- drivers/acpi/nfit.h                                |  19 +-
- drivers/block/nd/Makefile                          |  29 ---
- drivers/block/nd/test/Makefile                     |   5 -
- drivers/{block/nd => nvdimm}/Kconfig               |  42 +---
- drivers/nvdimm/Makefile                            |  21 ++
- drivers/{block/nd => nvdimm}/blk.c                 |   6 +-
- drivers/{block/nd => nvdimm}/btt.c                 |   6 +-
- drivers/{block/nd => nvdimm}/btt.h                 |   0
- drivers/{block/nd => nvdimm}/btt_devs.c            |  38 +--
- drivers/{block/nd => nvdimm}/bus.c                 | 258 ++++++++++-----------
- drivers/{block/nd => nvdimm}/core.c                | 196 ++++++++--------
- drivers/{block/nd => nvdimm}/dimm.c                |  44 ++--
- drivers/{block/nd => nvdimm}/dimm_devs.c           | 188 +++++++--------
- drivers/{block/nd => nvdimm}/label.c               | 116 ++++-----
- drivers/{block/nd => nvdimm}/label.h               |  22 +-
- drivers/{block/nd => nvdimm}/namespace_devs.c      | 108 ++++-----
- drivers/{block/nd => nvdimm}/nd-private.h          |  62 +++--
- drivers/{block/nd => nvdimm}/nd.h                  |  44 ++--
- drivers/{block/nd => nvdimm}/pmem.c                |   6 +-
- drivers/{block/nd => nvdimm}/region.c              |  10 +-
- drivers/{block/nd => nvdimm}/region_devs.c         | 126 +++++-----
- include/linux/{libnd.h => libnvdimm.h}             |  68 +++---
- tools/testing/nvdimm/Kbuild                        |  37 +++
- tools/testing/nvdimm/Makefile                      |   7 +
- tools/testing/nvdimm/test/Kbuild                   |   8 +
- .../block/nd => tools/testing/nvdimm}/test/iomap.c |   0
- .../block/nd => tools/testing/nvdimm}/test/nfit.c  | 122 +++-------
- .../nd => tools/testing/nvdimm}/test/nfit_test.h   |   0
- 31 files changed, 895 insertions(+), 938 deletions(-)
- rename Documentation/{blockdev => nvdimm}/btt.txt (100%)
- rename Documentation/{blockdev/libnd.txt => nvdimm/nvdimm.txt} (92%)
- delete mode 100644 drivers/block/nd/Makefile
- delete mode 100644 drivers/block/nd/test/Makefile
- rename drivers/{block/nd => nvdimm}/Kconfig (72%)
- create mode 100644 drivers/nvdimm/Makefile
- rename drivers/{block/nd => nvdimm}/blk.c (98%)
- rename drivers/{block/nd => nvdimm}/btt.c (99%)
- rename drivers/{block/nd => nvdimm}/btt.h (100%)
- rename drivers/{block/nd => nvdimm}/btt_devs.c (90%)
- rename drivers/{block/nd => nvdimm}/bus.c (68%)
- rename drivers/{block/nd => nvdimm}/core.c (62%)
- rename drivers/{block/nd => nvdimm}/dimm.c (71%)
- rename drivers/{block/nd => nvdimm}/dimm_devs.c (69%)
- rename drivers/{block/nd => nvdimm}/label.c (89%)
- rename drivers/{block/nd => nvdimm}/label.h (87%)
- rename drivers/{block/nd => nvdimm}/namespace_devs.c (94%)
- rename drivers/{block/nd => nvdimm}/nd-private.h (57%)
- rename drivers/{block/nd => nvdimm}/nd.h (86%)
- rename drivers/{block/nd => nvdimm}/pmem.c (99%)
- rename drivers/{block/nd => nvdimm}/region.c (96%)
- rename drivers/{block/nd => nvdimm}/region_devs.c (83%)
- rename include/linux/{libnd.h => libnvdimm.h} (62%)
- create mode 100644 tools/testing/nvdimm/Kbuild
- create mode 100644 tools/testing/nvdimm/Makefile
- create mode 100644 tools/testing/nvdimm/test/Kbuild
- rename {drivers/block/nd => tools/testing/nvdimm}/test/iomap.c (100%)
- rename {drivers/block/nd => tools/testing/nvdimm}/test/nfit.c (91%)
- rename {drivers/block/nd => tools/testing/nvdimm}/test/nfit_test.h (100%)
-
+Cc: Neil Brown <neilb@suse.de>
+Cc: <linux-acpi@vger.kernel.org>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: Robert Moore <robert.moore@intel.com>
+Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 ---
-
-Dan Williams (18):
-      e820, efi: add ACPI 6.0 persistent memory types
-      libnvdimm, nfit: initial libnvdimm infrastructure and NFIT support
-      libnvdimm: control character device and libnvdimm bus sysfs attributes
-      libnvdimm, nfit: dimm/memory-devices
-      libnvdimm: control (ioctl) messages for libnvdimm bus and dimm devices
-      libnvdimm, nvdimm: dimm driver and base libnvdimm device-driver infrastructure
-      libnvdimm, nfit: regions (block-data-window, persistent memory, volatile memory)
-      libnvdimm: support for legacy (non-aliasing) nvdimms
-      libnvdimm, nd_pmem: add libnvdimm support to the pmem driver
-      libnvdimm, nfit: add interleave-set state-tracking infrastructure
-      libnvdimm: namespace indices: read and validate
-      libnvdimm: pmem label sets and namespace instantiation.
-      libnvdimm: blk labels and namespace instantiation
-      libnvdimm: write pmem label set
-      libnvdimm: write blk label set
-      libnvdimm: infrastructure for btt devices
-      tools/testing/nvdimm: manufactured NFITs for interface development
-      libnvdimm: Non-Volatile Devices
-
-Ross Zwisler (2):
-      pmem: Dynamically allocate partition numbers
-      libnvdimm, nfit, nd_blk: driver for BLK-mode access persistent memory
-
-Vishal Verma (1):
-      nd_btt: atomic sector updates
-
-
- Documentation/nvdimm/btt.txt          |  273 +++++
- Documentation/nvdimm/nvdimm.txt       |  805 ++++++++++++++++
- MAINTAINERS                           |   39 +
- arch/arm64/kernel/efi.c               |    1 
- arch/ia64/kernel/efi.c                |    4 
- arch/x86/Kconfig                      |    4 
- arch/x86/boot/compressed/eboot.c      |    4 
- arch/x86/include/uapi/asm/e820.h      |    1 
- arch/x86/kernel/e820.c                |   28 -
- arch/x86/kernel/pmem.c                |   92 +-
- arch/x86/platform/efi/efi.c           |    3 
- drivers/Kconfig                       |    2 
- drivers/Makefile                      |    1 
- drivers/acpi/Kconfig                  |   27 +
- drivers/acpi/Makefile                 |    2 
- drivers/acpi/nfit.c                   | 1474 +++++++++++++++++++++++++++++
- drivers/acpi/nfit.h                   |  161 +++
- drivers/block/Kconfig                 |   11 
- drivers/block/Makefile                |    1 
- drivers/nvdimm/Kconfig                |   79 ++
- drivers/nvdimm/Makefile               |   21 
- drivers/nvdimm/blk.c                  |  252 +++++
- drivers/nvdimm/btt.c                  | 1440 ++++++++++++++++++++++++++++
- drivers/nvdimm/btt.h                  |  186 ++++
- drivers/nvdimm/btt_devs.c             |  443 +++++++++
- drivers/nvdimm/bus.c                  |  770 +++++++++++++++
- drivers/nvdimm/core.c                 |  472 +++++++++
- drivers/nvdimm/dimm.c                 |  115 ++
- drivers/nvdimm/dimm_devs.c            |  516 ++++++++++
- drivers/nvdimm/label.c                |  926 ++++++++++++++++++
- drivers/nvdimm/label.h                |  143 +++
- drivers/nvdimm/namespace_devs.c       | 1702 +++++++++++++++++++++++++++++++++
- drivers/nvdimm/nd-private.h           |  107 ++
- drivers/nvdimm/nd.h                   |  261 +++++
- drivers/nvdimm/pmem.c                 |  107 +-
- drivers/nvdimm/region.c               |  189 ++++
- drivers/nvdimm/region_devs.c          |  667 +++++++++++++
- include/linux/efi.h                   |    3 
- include/linux/libnvdimm.h             |  131 +++
- include/linux/nd.h                    |   98 ++
- include/uapi/linux/Kbuild             |    1 
- include/uapi/linux/ndctl.h            |  199 ++++
- tools/testing/nvdimm/Kbuild           |   37 +
- tools/testing/nvdimm/Makefile         |    7 
- tools/testing/nvdimm/test/Kbuild      |    8 
- tools/testing/nvdimm/test/iomap.c     |  151 +++
- tools/testing/nvdimm/test/nfit.c      | 1101 +++++++++++++++++++++
- tools/testing/nvdimm/test/nfit_test.h |   28 +
- 48 files changed, 13004 insertions(+), 89 deletions(-)
- create mode 100644 Documentation/nvdimm/btt.txt
- create mode 100644 Documentation/nvdimm/nvdimm.txt
- create mode 100644 drivers/acpi/nfit.c
- create mode 100644 drivers/acpi/nfit.h
- create mode 100644 drivers/nvdimm/Kconfig
- create mode 100644 drivers/nvdimm/Makefile
- create mode 100644 drivers/nvdimm/blk.c
- create mode 100644 drivers/nvdimm/btt.c
- create mode 100644 drivers/nvdimm/btt.h
- create mode 100644 drivers/nvdimm/btt_devs.c
- create mode 100644 drivers/nvdimm/bus.c
- create mode 100644 drivers/nvdimm/core.c
- create mode 100644 drivers/nvdimm/dimm.c
+ drivers/acpi/nfit.c         |  160 +++++++++++++++++++++++++++++++++++++++++++
+ drivers/acpi/nfit.h         |    1 
+ drivers/nvdimm/Makefile     |    1 
+ drivers/nvdimm/bus.c        |   14 +++-
+ drivers/nvdimm/core.c       |   33 ++++++++-
+ drivers/nvdimm/dimm_devs.c  |   92 +++++++++++++++++++++++++
+ drivers/nvdimm/nd-private.h |   12 +++
+ include/linux/libnvdimm.h   |   11 +++
+ 8 files changed, 320 insertions(+), 4 deletions(-)
  create mode 100644 drivers/nvdimm/dimm_devs.c
- create mode 100644 drivers/nvdimm/label.c
- create mode 100644 drivers/nvdimm/label.h
- create mode 100644 drivers/nvdimm/namespace_devs.c
- create mode 100644 drivers/nvdimm/nd-private.h
- create mode 100644 drivers/nvdimm/nd.h
- rename drivers/{block/pmem.c => nvdimm/pmem.c} (70%)
- create mode 100644 drivers/nvdimm/region.c
- create mode 100644 drivers/nvdimm/region_devs.c
- create mode 100644 include/linux/libnvdimm.h
- create mode 100644 include/linux/nd.h
- create mode 100644 include/uapi/linux/ndctl.h
- create mode 100644 tools/testing/nvdimm/Kbuild
- create mode 100644 tools/testing/nvdimm/Makefile
- create mode 100644 tools/testing/nvdimm/test/Kbuild
- create mode 100644 tools/testing/nvdimm/test/iomap.c
- create mode 100644 tools/testing/nvdimm/test/nfit.c
- create mode 100644 tools/testing/nvdimm/test/nfit_test.h
+
+diff --git a/drivers/acpi/nfit.c b/drivers/acpi/nfit.c
+index ec228ab336b3..a17678b7d74a 100644
+--- a/drivers/acpi/nfit.c
++++ b/drivers/acpi/nfit.c
+@@ -343,6 +343,164 @@ static const struct attribute_group *acpi_nfit_attribute_groups[] = {
+ 	NULL,
+ };
+ 
++static struct acpi_nfit_memory_map *to_nfit_memdev(struct device *dev)
++{
++	struct nvdimm *nvdimm = to_nvdimm(dev);
++	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
++
++	return __to_nfit_memdev(nfit_mem);
++}
++
++static struct acpi_nfit_control_region *to_nfit_dcr(struct device *dev)
++{
++	struct nvdimm *nvdimm = to_nvdimm(dev);
++	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
++
++	return nfit_mem->dcr;
++}
++
++static ssize_t handle_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct acpi_nfit_memory_map *memdev = to_nfit_memdev(dev);
++
++	return sprintf(buf, "%#x\n", memdev->device_handle);
++}
++static DEVICE_ATTR_RO(handle);
++
++static ssize_t phys_id_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct acpi_nfit_memory_map *memdev = to_nfit_memdev(dev);
++
++	return sprintf(buf, "%#x\n", memdev->physical_id);
++}
++static DEVICE_ATTR_RO(phys_id);
++
++static ssize_t vendor_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
++
++	return sprintf(buf, "%#x\n", dcr->vendor_id);
++}
++static DEVICE_ATTR_RO(vendor);
++
++static ssize_t rev_id_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
++
++	return sprintf(buf, "%#x\n", dcr->revision_id);
++}
++static DEVICE_ATTR_RO(rev_id);
++
++static ssize_t device_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
++
++	return sprintf(buf, "%#x\n", dcr->device_id);
++}
++static DEVICE_ATTR_RO(device);
++
++static ssize_t format_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
++
++	return sprintf(buf, "%#x\n", dcr->code);
++}
++static DEVICE_ATTR_RO(format);
++
++static ssize_t serial_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
++
++	return sprintf(buf, "%#x\n", dcr->serial_number);
++}
++static DEVICE_ATTR_RO(serial);
++
++static struct attribute *acpi_nfit_dimm_attributes[] = {
++	&dev_attr_handle.attr,
++	&dev_attr_phys_id.attr,
++	&dev_attr_vendor.attr,
++	&dev_attr_device.attr,
++	&dev_attr_format.attr,
++	&dev_attr_serial.attr,
++	&dev_attr_rev_id.attr,
++	NULL,
++};
++
++static umode_t acpi_nfit_dimm_attr_visible(struct kobject *kobj, struct attribute *a, int n)
++{
++	struct device *dev = container_of(kobj, struct device, kobj);
++
++	if (to_nfit_dcr(dev))
++		return a->mode;
++	else
++		return 0;
++}
++
++static struct attribute_group acpi_nfit_dimm_attribute_group = {
++	.name = "nfit",
++	.attrs = acpi_nfit_dimm_attributes,
++	.is_visible = acpi_nfit_dimm_attr_visible,
++};
++
++static const struct attribute_group *acpi_nfit_dimm_attribute_groups[] = {
++	&acpi_nfit_dimm_attribute_group,
++	NULL,
++};
++
++static struct nvdimm *acpi_nfit_dimm_by_handle(struct acpi_nfit_desc *acpi_desc,
++		u32 device_handle)
++{
++	struct nfit_mem *nfit_mem;
++
++	list_for_each_entry(nfit_mem, &acpi_desc->dimms, list)
++		if (__to_nfit_memdev(nfit_mem)->device_handle == device_handle)
++			return nfit_mem->nvdimm;
++
++	return NULL;
++}
++
++static int acpi_nfit_register_dimms(struct acpi_nfit_desc *acpi_desc)
++{
++	struct nfit_mem *nfit_mem;
++
++	list_for_each_entry(nfit_mem, &acpi_desc->dimms, list) {
++		struct nvdimm *nvdimm;
++		unsigned long flags = 0;
++		u32 device_handle;
++
++		device_handle = __to_nfit_memdev(nfit_mem)->device_handle;
++		nvdimm = acpi_nfit_dimm_by_handle(acpi_desc, device_handle);
++		if (nvdimm) {
++			/*
++			 * If for some reason we find multiple DCRs the
++			 * first one wins
++			 */
++			dev_err(acpi_desc->dev, "duplicate DCR detected: %s\n",
++					nvdimm_name(nvdimm));
++			continue;
++		}
++
++		if (nfit_mem->bdw && nfit_mem->memdev_pmem)
++			flags |= NDD_ALIASING;
++
++		nvdimm = nvdimm_create(acpi_desc->nvdimm_bus, nfit_mem,
++				acpi_nfit_dimm_attribute_groups, flags);
++		if (!nvdimm)
++			return -ENOMEM;
++
++		nfit_mem->nvdimm = nvdimm;
++	}
++
++	return 0;
++}
++
+ static int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
+ {
+ 	struct device *dev = acpi_desc->dev;
+@@ -370,7 +528,7 @@ static int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
+ 	if (nfit_mem_init(acpi_desc) != 0)
+ 		return -ENOMEM;
+ 
+-	return 0;
++	return acpi_nfit_register_dimms(acpi_desc);
+ }
+ 
+ static int acpi_nfit_add(struct acpi_device *adev)
+diff --git a/drivers/acpi/nfit.h b/drivers/acpi/nfit.h
+index 735e463edbf7..5f1bd10053ce 100644
+--- a/drivers/acpi/nfit.h
++++ b/drivers/acpi/nfit.h
+@@ -59,6 +59,7 @@ struct nfit_memdev {
+ 
+ /* assembled tables for a given dimm/memory-device */
+ struct nfit_mem {
++	struct nvdimm *nvdimm;
+ 	struct acpi_nfit_memory_map *memdev_dcr;
+ 	struct acpi_nfit_memory_map *memdev_pmem;
+ 	struct acpi_nfit_control_region *dcr;
+diff --git a/drivers/nvdimm/Makefile b/drivers/nvdimm/Makefile
+index 8a8293c72c7c..5b68738ba406 100644
+--- a/drivers/nvdimm/Makefile
++++ b/drivers/nvdimm/Makefile
+@@ -2,3 +2,4 @@ obj-$(CONFIG_LIBNVDIMM) += libnvdimm.o
+ 
+ libnvdimm-y := core.o
+ libnvdimm-y += bus.o
++libnvdimm-y += dimm_devs.o
+diff --git a/drivers/nvdimm/bus.c b/drivers/nvdimm/bus.c
+index 312caef5b0e9..a368076c6729 100644
+--- a/drivers/nvdimm/bus.c
++++ b/drivers/nvdimm/bus.c
+@@ -13,6 +13,7 @@
+ #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+ #include <linux/uaccess.h>
+ #include <linux/fcntl.h>
++#include <linux/async.h>
+ #include <linux/slab.h>
+ #include <linux/fs.h>
+ #include <linux/io.h>
+@@ -21,6 +22,10 @@
+ static int nvdimm_bus_major;
+ static struct class *nd_class;
+ 
++struct bus_type nvdimm_bus_type = {
++	.name = "nd",
++};
++
+ int nvdimm_bus_create_ndctl(struct nvdimm_bus *nvdimm_bus)
+ {
+ 	dev_t devt = MKDEV(nvdimm_bus_major, nvdimm_bus->id);
+@@ -59,9 +64,13 @@ int __init nvdimm_bus_init(void)
+ {
+ 	int rc;
+ 
++	rc = bus_register(&nvdimm_bus_type);
++	if (rc)
++		return rc;
++
+ 	rc = register_chrdev(0, "ndctl", &nvdimm_bus_fops);
+ 	if (rc < 0)
+-		return rc;
++		goto err_chrdev;
+ 	nvdimm_bus_major = rc;
+ 
+ 	nd_class = class_create(THIS_MODULE, "nd");
+@@ -72,6 +81,8 @@ int __init nvdimm_bus_init(void)
+ 
+  err_class:
+ 	unregister_chrdev(nvdimm_bus_major, "ndctl");
++ err_chrdev:
++	bus_unregister(&nvdimm_bus_type);
+ 
+ 	return rc;
+ }
+@@ -80,4 +91,5 @@ void __exit nvdimm_bus_exit(void)
+ {
+ 	class_destroy(nd_class);
+ 	unregister_chrdev(nvdimm_bus_major, "ndctl");
++	bus_unregister(&nvdimm_bus_type);
+ }
+diff --git a/drivers/nvdimm/core.c b/drivers/nvdimm/core.c
+index 86b4da096de1..45c916fe72dc 100644
+--- a/drivers/nvdimm/core.c
++++ b/drivers/nvdimm/core.c
+@@ -18,8 +18,8 @@
+ #include <linux/slab.h>
+ #include "nd-private.h"
+ 
+-static LIST_HEAD(nvdimm_bus_list);
+-static DEFINE_MUTEX(nvdimm_bus_list_mutex);
++LIST_HEAD(nvdimm_bus_list);
++DEFINE_MUTEX(nvdimm_bus_list_mutex);
+ static DEFINE_IDA(nd_ida);
+ 
+ static void nvdimm_bus_release(struct device *dev)
+@@ -46,6 +46,19 @@ struct nvdimm_bus_descriptor *to_nd_desc(struct nvdimm_bus *nvdimm_bus)
+ }
+ EXPORT_SYMBOL_GPL(to_nd_desc);
+ 
++struct nvdimm_bus *walk_to_nvdimm_bus(struct device *nd_dev)
++{
++	struct device *dev;
++
++	for (dev = nd_dev; dev; dev = dev->parent)
++		if (dev->release == nvdimm_bus_release)
++			break;
++	dev_WARN_ONCE(nd_dev, !dev, "invalid dev, not on nd bus\n");
++	if (dev)
++		return to_nvdimm_bus(dev);
++	return NULL;
++}
++
+ static const char *nvdimm_bus_provider(struct nvdimm_bus *nvdimm_bus)
+ {
+ 	struct nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
+@@ -118,6 +131,21 @@ struct nvdimm_bus *nvdimm_bus_register(struct device *parent,
+ }
+ EXPORT_SYMBOL_GPL(nvdimm_bus_register);
+ 
++static int child_unregister(struct device *dev, void *data)
++{
++	/*
++	 * the singular ndctl class device per bus needs to be
++	 * "device_destroy"ed, so skip it here
++	 *
++	 * i.e. remove classless children
++	 */
++	if (dev->class)
++		/* pass */;
++	else
++		device_unregister(dev);
++	return 0;
++}
++
+ void nvdimm_bus_unregister(struct nvdimm_bus *nvdimm_bus)
+ {
+ 	if (!nvdimm_bus)
+@@ -127,6 +155,7 @@ void nvdimm_bus_unregister(struct nvdimm_bus *nvdimm_bus)
+ 	list_del_init(&nvdimm_bus->list);
+ 	mutex_unlock(&nvdimm_bus_list_mutex);
+ 
++	device_for_each_child(&nvdimm_bus->dev, NULL, child_unregister);
+ 	nvdimm_bus_destroy_ndctl(nvdimm_bus);
+ 
+ 	device_unregister(&nvdimm_bus->dev);
+diff --git a/drivers/nvdimm/dimm_devs.c b/drivers/nvdimm/dimm_devs.c
+new file mode 100644
+index 000000000000..8246a629f813
+--- /dev/null
++++ b/drivers/nvdimm/dimm_devs.c
+@@ -0,0 +1,92 @@
++/*
++ * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of version 2 of the GNU General Public License as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ */
++#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
++#include <linux/device.h>
++#include <linux/slab.h>
++#include <linux/io.h>
++#include <linux/fs.h>
++#include <linux/mm.h>
++#include "nd-private.h"
++
++static DEFINE_IDA(dimm_ida);
++
++static void nvdimm_release(struct device *dev)
++{
++	struct nvdimm *nvdimm = to_nvdimm(dev);
++
++	ida_simple_remove(&dimm_ida, nvdimm->id);
++	kfree(nvdimm);
++}
++
++static struct device_type nvdimm_device_type = {
++	.name = "nvdimm",
++	.release = nvdimm_release,
++};
++
++static bool is_nvdimm(struct device *dev)
++{
++	return dev->type == &nvdimm_device_type;
++}
++
++struct nvdimm *to_nvdimm(struct device *dev)
++{
++	struct nvdimm *nvdimm = container_of(dev, struct nvdimm, dev);
++
++	WARN_ON(!is_nvdimm(dev));
++	return nvdimm;
++}
++EXPORT_SYMBOL_GPL(to_nvdimm);
++
++const char *nvdimm_name(struct nvdimm *nvdimm)
++{
++	return dev_name(&nvdimm->dev);
++}
++EXPORT_SYMBOL_GPL(nvdimm_name);
++
++void *nvdimm_provider_data(struct nvdimm *nvdimm)
++{
++	return nvdimm->provider_data;
++}
++EXPORT_SYMBOL_GPL(nvdimm_provider_data);
++
++struct nvdimm *nvdimm_create(struct nvdimm_bus *nvdimm_bus, void *provider_data,
++		const struct attribute_group **groups, unsigned long flags)
++{
++	struct nvdimm *nvdimm = kzalloc(sizeof(*nvdimm), GFP_KERNEL);
++	struct device *dev;
++
++	if (!nvdimm)
++		return NULL;
++
++	nvdimm->id = ida_simple_get(&dimm_ida, 0, 0, GFP_KERNEL);
++	if (nvdimm->id < 0) {
++		kfree(nvdimm);
++		return NULL;
++	}
++	nvdimm->provider_data = provider_data;
++	nvdimm->flags = flags;
++
++	dev = &nvdimm->dev;
++	dev_set_name(dev, "nmem%d", nvdimm->id);
++	dev->parent = &nvdimm_bus->dev;
++	dev->type = &nvdimm_device_type;
++	dev->bus = &nvdimm_bus_type;
++	dev->groups = groups;
++	if (device_register(dev) != 0) {
++		put_device(dev);
++		return NULL;
++	}
++
++	return nvdimm;
++}
++EXPORT_SYMBOL_GPL(nvdimm_create);
+diff --git a/drivers/nvdimm/nd-private.h b/drivers/nvdimm/nd-private.h
+index f31fc3396683..f64202747fb7 100644
+--- a/drivers/nvdimm/nd-private.h
++++ b/drivers/nvdimm/nd-private.h
+@@ -15,6 +15,10 @@
+ #include <linux/libnvdimm.h>
+ #include <linux/device.h>
+ 
++extern struct list_head nvdimm_bus_list;
++extern struct mutex nvdimm_bus_list_mutex;
++extern struct bus_type nvdimm_bus_type;
++
+ struct nvdimm_bus {
+ 	struct nvdimm_bus_descriptor *nd_desc;
+ 	struct list_head list;
+@@ -22,6 +26,14 @@ struct nvdimm_bus {
+ 	int id;
+ };
+ 
++struct nvdimm {
++	unsigned long flags;
++	void *provider_data;
++	struct device dev;
++	int id;
++};
++
++struct nvdimm_bus *walk_to_nvdimm_bus(struct device *nd_dev);
+ int __init nvdimm_bus_init(void);
+ void __exit nvdimm_bus_exit(void);
+ int nvdimm_bus_create_ndctl(struct nvdimm_bus *nvdimm_bus);
+diff --git a/include/linux/libnvdimm.h b/include/linux/libnvdimm.h
+index d375cdc4abd5..07787f0dd7de 100644
+--- a/include/linux/libnvdimm.h
++++ b/include/linux/libnvdimm.h
+@@ -14,6 +14,12 @@
+  */
+ #ifndef __LIBNVDIMM_H__
+ #define __LIBNVDIMM_H__
++
++enum {
++	/* when a dimm supports both PMEM and BLK access a label is required */
++	NDD_ALIASING = 1 << 0,
++};
++
+ extern struct attribute_group nvdimm_bus_attribute_group;
+ 
+ struct nvdimm;
+@@ -34,5 +40,10 @@ struct nvdimm_bus *nvdimm_bus_register(struct device *parent,
+ 		struct nvdimm_bus_descriptor *nfit_desc);
+ void nvdimm_bus_unregister(struct nvdimm_bus *nvdimm_bus);
+ struct nvdimm_bus *to_nvdimm_bus(struct device *dev);
++struct nvdimm *to_nvdimm(struct device *dev);
+ struct nvdimm_bus_descriptor *to_nd_desc(struct nvdimm_bus *nvdimm_bus);
++const char *nvdimm_name(struct nvdimm *nvdimm);
++void *nvdimm_provider_data(struct nvdimm *nvdimm);
++struct nvdimm *nvdimm_create(struct nvdimm_bus *nvdimm_bus, void *provider_data,
++		const struct attribute_group **groups, unsigned long flags);
+ #endif /* __LIBNVDIMM_H__ */
+
