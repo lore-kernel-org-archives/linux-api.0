@@ -1,39 +1,42 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: Re: [PATCH 67/98]
- include/uapi/linux/netfilter/ipset/ip_set_bitmap.h: include
- linux/netfilter/ipset/ip_set.h
-Date: Tue, 2 Jun 2015 22:42:16 +0300
-Message-ID: <20150602194216.GT12550@lakka.kapsi.fi>
-References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
- <1433000370-19509-68-git-send-email-mikko.rapeli@iki.fi>
- <alpine.DEB.2.10.1505312014550.2712@blackhole.kfki.hu>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] seccomp: add ptrace commands for suspend/resume
+Date: Tue, 2 Jun 2015 23:27:22 +0200
+Message-ID: <20150602212722.GA32356@redhat.com>
+References: <1433186918-9626-1-git-send-email-tycho.andersen@canonical.com> <20150602182829.GA23449@redhat.com> <556DFDB2.3050205@parallels.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.10.1505312014550.2712-K40Dz/62t/MgiyqX0sVFJYdd74u8MsAO@public.gmane.org>
+In-Reply-To: <556DFDB2.3050205-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jozsef Kadlecsik <kadlec-K40Dz/62t/MgiyqX0sVFJYdd74u8MsAO@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>, netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Cc: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, May 31, 2015 at 08:15:48PM +0200, Jozsef Kadlecsik wrote:
-> On Sat, 30 May 2015, Mikko Rapeli wrote:
-> 
-> > Fixes userspace compilation error:
-> > 
-> > error: ?IPSET_ERR_TYPE_SPECIFIC? undeclared here (not in a function)
-> >   IPSET_ERR_BITMAP_RANGE = IPSET_ERR_TYPE_SPECIFIC,
-> 
-> What kind of userspace compilation generates the error message above? How 
-> can one reproduce it?
+On 06/02, Pavel Emelyanov wrote:
+>
+> > And I am not sure I understand why do we need the additional security
+> > check, but I leave this to you and Andy.
+> >
+> > If you have the rights to trace this task, then you can do anything
+> > the tracee could do without the filtering.
+>
+> I think _this_ check is required, otherwise the seccomp-ed task (in
+> filtered mode) fork-s a child, then this child ptrace-attach to parent
+> (allowed) then suspend its seccomd.
 
-Here's the test which reproduces this https://lkml.org/lkml/2015/5/30/98
+If you force (hack) that task to do this. And if the seccomp-ed task
+does this by its own we do not care.
 
-Should run on at least Debian based distributions and some cross compilers.
-In the end the script generates a .c file which includes only this header file
-and tries to compile it with a call like:
+> And -- we have unpriviledged process
+> de-seccomped.
 
-cc -Wall -c -nostdinc -I /usr/lib/gcc/i586-linux-gnu/4.9/include -I /usr/lib/gcc/i586-linux-gnu/4.9/include-fixed -I . -I ../headers_compile_test_include -I ../headers_compile_test_include/i586-linux-gnu ./linux/netfilter/ipset/ip_set_bitmap.c
+Heh. The case when the priviledged CAP_SYS_ADMIN process escapes the
+filtering is much worse I think ;)
 
--Mikko
+But as I said I will nott argue, just I think this needs a bit of
+documentantion. And I agree in advance with something like "better
+be safe than sorry, we can always remove this later" comment or a
+note in the changelog.
+
+Oleg.
