@@ -1,61 +1,113 @@
-From: Tycho Andersen <tycho.andersen@canonical.com>
-Subject: Re: [PATCH] seccomp: add ptrace commands for suspend/resume
-Date: Tue, 2 Jun 2015 09:46:14 -0600
-Message-ID: <20150602154614.GG1823@hopstrocity>
-References: <1433186918-9626-1-git-send-email-tycho.andersen@canonical.com>
- <CALCETrVaE5UsTSQDf=48R8J9gG6YiMdp30wOMD+aZvxtOjrLRQ@mail.gmail.com>
- <20150601194707.GA2818@hopstrocity>
- <CALCETrU2c99wQHfVS6Bi_7=sAYSr-gEUpRdgz=+FiGgGxbPyMg@mail.gmail.com>
- <20150601201233.GC2818@hopstrocity>
+From: Eric B Munson <emunson@akamai.com>
+Subject: Re: [RESEND PATCH 3/3] Add tests for lock on fault
+Date: Tue, 2 Jun 2015 12:05:46 -0400
+Message-ID: <20150602160545.GA2253@akamai.com>
+References: <1432908808-31150-1-git-send-email-emunson@akamai.com>
+ <1432908808-31150-4-git-send-email-emunson@akamai.com>
+ <556DCB05.1010102@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="zhXaljGHf11kAtnf"
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20150601201233.GC2818@hopstrocity>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Will Drewry <wad@chromium.org>, Roland McGrath <roland@hack.frob.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>
+In-Reply-To: <556DCB05.1010102@osg.samsung.com>
+Sender: owner-linux-mm@kvack.org
+To: Shuah Khan <shuahkh@osg.samsung.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Andy,
 
-On Mon, Jun 01, 2015 at 02:12:33PM -0600, Tycho Andersen wrote:
-> On Mon, Jun 01, 2015 at 12:51:12PM -0700, Andy Lutomirski wrote:
-> > On Mon, Jun 1, 2015 at 12:47 PM, Tycho Andersen
-> > <tycho.andersen@canonical.com> wrote:
-> > > On Mon, Jun 01, 2015 at 12:38:57PM -0700, Andy Lutomirski wrote:
-> > >> On Mon, Jun 1, 2015 at 12:28 PM, Tycho Andersen
-> > >> > +int resume_seccomp(struct task_struct *task)
-> > >> > +{
-> > >> > +       int ret = -EACCES;
-> > >> > +
-> > >> > +       spin_lock_irq(&task->sighand->siglock);
-> > >> > +
-> > >> > +       if (!capable(CAP_SYS_ADMIN))
-> > >> > +               goto out;
-> > >> > +
-> > >> > +       task->seccomp.suspended = false;
-> > >> > +
-> > >> > +#ifdef TIF_NOTSC
-> > >> > +       if (task->seccomp.mode == SECCOMP_MODE_STRICT)
-> > >> > +               set_tsk_thread_flag(task, TIF_NOTSC);
-> > >> > +#endif
-> > >>
-> > >> Ditto.  Or can the task not be running here?
-> > >
-> > > It is stopped since ptrace requires it to be stopped; I don't know if
-> > > that's enough to guarantee correctness, though. Is there some
-> > > additional barrier that is needed?
-> > 
-> > Dunno.  Does ptrace actually guarantee that for new operations?
-> 
-> It seems to; it kept giving me ESRCH when I didn't wait for it to
-> stop. I'll poke around and see if I can confirm this via the code.
+--zhXaljGHf11kAtnf
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-It looks to me like ptrace does guarantee this. The commands that
-don't require a task to be stopped are all special cases in the ptrace
-syscall definition, and anything that's not one of those is protected
-by a ptrace_check_attach(), which IIUC enforces that the task is
-stopped.
+On Tue, 02 Jun 2015, Shuah Khan wrote:
 
-Tycho
+> On 05/29/2015 08:13 AM, Eric B Munson wrote:
+> > Test the mmap() flag, the mlockall() flag, and ensure that mlock limits
+> > are respected.  Note that the limit test needs to be run a normal user.
+> >=20
+> > Signed-off-by: Eric B Munson <emunson@akamai.com>
+> > Cc: Shuah Khan <shuahkh@osg.samsung.com>
+> > Cc: linux-mm@kvack.org
+> > Cc: linux-kernel@vger.kernel.org
+> > Cc: linux-api@vger.kernel.org
+> > ---
+> >  tools/testing/selftests/vm/Makefile         |   8 +-
+> >  tools/testing/selftests/vm/lock-on-fault.c  | 145 ++++++++++++++++++++=
+++++++++
+> >  tools/testing/selftests/vm/on-fault-limit.c |  47 +++++++++
+> >  tools/testing/selftests/vm/run_vmtests      |  23 +++++
+> >  4 files changed, 222 insertions(+), 1 deletion(-)
+> >  create mode 100644 tools/testing/selftests/vm/lock-on-fault.c
+> >  create mode 100644 tools/testing/selftests/vm/on-fault-limit.c
+> >=20
+> > diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selfte=
+sts/vm/Makefile
+> > index a5ce953..32f3d20 100644
+> > --- a/tools/testing/selftests/vm/Makefile
+> > +++ b/tools/testing/selftests/vm/Makefile
+> > @@ -1,7 +1,13 @@
+> >  # Makefile for vm selftests
+> > =20
+> >  CFLAGS =3D -Wall
+> > -BINARIES =3D hugepage-mmap hugepage-shm map_hugetlb thuge-gen hugetlbf=
+stest
+> > +BINARIES =3D hugepage-mmap
+> > +BINARIES +=3D hugepage-shm
+> > +BINARIES +=3D hugetlbfstest
+> > +BINARIES +=3D lock-on-fault
+> > +BINARIES +=3D map_hugetlb
+> > +BINARIES +=3D on-fault-limit
+> > +BINARIES +=3D thuge-gen
+> >  BINARIES +=3D transhuge-stress
+> > =20
+> >  all: $(BINARIES)
+> > diff --git a/tools/testing/selftests/vm/lock-on-fault.c b/tools/testing=
+/selftests/vm/lock-on-fault.c
+> > new file mode 100644
+> > index 0000000..e6a9688
+>=20
+> Hi Eric,
+>=20
+> Could you please make sure make kselftest run from kernel main
+> Makefile works and tools/testing/selftests/kselftest_install.sh
+> works. For now you have to be in tools/testing/selftests to run
+> kselftest_install.sh
+>=20
+
+I am working on getting V2 ready, I will ensure these work and make any
+necessary adjustments before sending V2 out.
+
+Eric
+
+--zhXaljGHf11kAtnf
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJVbdRZAAoJELbVsDOpoOa9x3kQANSTBRYpmlw8NoSvCMWz/yqQ
+12ZdZ/5G5upe7YMBFGD6bupYQ3+nNiarUb7T+pgbIw0+dAEuTSQ7euls3RA2KKDL
+TlvgPfcdAnVsIAPhlFY+g7aqh5zhXzSKM/wf+ltoE+Kl6c0rzq4ZIzkTVf9guflY
+KwjzGOEtYsGt8RwdYTl/N2Q4vhPJ30tBXPtviANV13Ax/pAwkiYzeFVbK1ifCaUl
+dqM3SEjqbmMFkO5Cr+3zKi4F4ay5Kn69qAQ4H/rnVoTv3GzhCJyur2qK24pw6Nf+
+iorgd9s5RjE1Rc5uJ48ofgtlG0K70Y4clyHUSHTUXct+sDMlNAQTCCb3Eehl2SRt
+KmuYEghyC9sFbL4qembwq+C/s+Fd7DqVTMTvP5BMIiVcs3/KcVdebvrfAYHNbIMa
+82d12bSWR5Gfyr2X4bvr4n1gOM1bUkvtbpyL+P7+BA1j9b5JcrbF9Xj0IvmEpiCS
+uSWNG757eLba3nKF6I8OCFdZL6ha4fldEUrklUcTLuF3nopm7WWaI7a9SNq6/HdH
+fjwShyD1ZcNkIIWctZlFANgH24X703495mgFjOhqRggA2TMxNxIMD4BUFoBoEJCk
+6Hh1tKlKxXyYUMdDffDXQrrHGpeqTLyYWY3kwslpYCb3QJAbh2XWEYQ1siY8//NB
+ACOVHuBMjYdXwqM8Q8/J
+=b+/S
+-----END PGP SIGNATURE-----
+
+--zhXaljGHf11kAtnf--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
