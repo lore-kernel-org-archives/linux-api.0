@@ -1,394 +1,640 @@
 From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH v5 09/21] libnvdimm,
- nd_pmem: add libnvdimm support to the pmem driver
-Date: Mon, 01 Jun 2015 20:14:58 -0400
-Message-ID: <20150602001458.4506.76492.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [PATCH v5 07/21] libnvdimm, nfit: regions (block-data-window,
+ persistent memory, volatile memory)
+Date: Mon, 01 Jun 2015 20:14:46 -0400
+Message-ID: <20150602001446.4506.35495.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-acpi-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: linux-acpi-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-nvdimm@lists.01.org
 Cc: axboe@kernel.dk, sfr@canb.auug.org.au, rafael@kernel.org, neilb@suse.de, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, mingo@kernel.org, linux-acpi@vger.kernel.org, jmoyer@redhat.com, linux-api@vger.kernel.org, akpm@linux-foundation.org, hch@lst.de
 List-Id: linux-api@vger.kernel.org
 
-nd_pmem attaches to persistent memory regions and namespaces emitted by
-the libnvdimm subsystem, and, same as the original pmem driver, presents
-the system-physical-address range as a block device.
+A "region" device represents the maximum capacity of a BLK range (mmio
+block-data-window(s)), or a PMEM range (DAX-capable persistent memory or
+volatile memory), without regard for aliasing.  Aliasing, in the
+dimm-local address space (DPA), is resolved by metadata on a dimm to
+designate which exclusive interface will access the aliased DPA ranges.
+Support for the per-dimm metadata/label arrvies is in a subsequent
+patch.
 
-The existing e820-type-12 to pmem setup is converted to a full libnvdimm
-bus that emits an nd_namespace_io device.
+The name format of "region" devices is "regionN" where, like dimms, N is
+a global ida index assigned at discovery time.  This id is not reliable
+across reboots nor in the presence of hotplug.  Look to attributes of
+the region or static id-data of the sub-namespace to generate a
+persistent name.  However, if the platform configuration does not change
+it is reasonable to expect the same region id to be assigned at the next
+boot.
 
-Cc: Andy Lutomirski <luto@amacapital.net>
-Cc: Boaz Harrosh <boaz@plexistor.com>
-Cc: H. Peter Anvin <hpa@zytor.com>
-Cc: Jens Axboe <axboe@fb.com>
-Cc: Ingo Molnar <mingo@kernel.org>
-Cc: Christoph Hellwig <hch@lst.de>
+"region"s have 2 generic attributes "size", and "mapping"s where:
+- size: the BLK accessible capacity or the span of the
+  system physical address range in the case of PMEM.
+
+- mappingN: a tuple describing a dimm's contribution to the region's
+  capacity in the format (<nmemX>,<dpa>,<size>).  For a
+  PMEM-region there will be at least one mapping per dimm in the interleave
+  set.  For a BLK-region there is only "mapping0" listing the starting
+  DPA of the BLK-region and the available DPA capacity of that space
+  (matches "size" above).
+
+The max number of mappings per "region" is hard coded per the constraints of
+sysfs attribute groups.  That said the number of mappings per region should
+never exceed the maximum number of possible dimms in the system.  If the
+current number turns out to not be enough then the "mappings" attribute
+clarifies how many there are supposed to be. "32 should be enough for
+anybody...".
+
+Cc: Neil Brown <neilb@suse.de>
+Cc: <linux-acpi@vger.kernel.org>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: Robert Moore <robert.moore@intel.com>
+Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 ---
- arch/x86/Kconfig        |    4 ++
- arch/x86/kernel/pmem.c  |   92 +++++++++++++++++++++++++++++++----------------
- drivers/block/Kconfig   |   11 ------
- drivers/block/Makefile  |    1 -
- drivers/nvdimm/Kconfig  |   17 +++++++++
- drivers/nvdimm/Makefile |    3 ++
- drivers/nvdimm/pmem.c   |   60 +++++++++++++++----------------
- 7 files changed, 113 insertions(+), 75 deletions(-)
- rename drivers/{block/pmem.c => nvdimm/pmem.c} (85%)
+ drivers/acpi/nfit.c          |  130 ++++++++++++++++++-
+ drivers/nvdimm/Makefile      |    1 
+ drivers/nvdimm/nd-private.h  |    3 
+ drivers/nvdimm/nd.h          |   11 ++
+ drivers/nvdimm/region_devs.c |  294 ++++++++++++++++++++++++++++++++++++++++++
+ include/linux/libnvdimm.h    |   25 ++++
+ 6 files changed, 463 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/nvdimm/region_devs.c
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 226d5696e1d1..3fa273d47bba 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -1424,6 +1424,10 @@ source "mm/Kconfig"
+diff --git a/drivers/acpi/nfit.c b/drivers/acpi/nfit.c
+index 1bec597107d2..6c79c4ec9216 100644
+--- a/drivers/acpi/nfit.c
++++ b/drivers/acpi/nfit.c
+@@ -715,11 +715,135 @@ static void acpi_nfit_init_dsms(struct acpi_nfit_desc *acpi_desc)
+ 			set_bit(i, &nd_desc->dsm_mask);
+ }
  
- config X86_PMEM_LEGACY
- 	bool "Support non-standard NVDIMMs and ADR protected memory"
-+	depends on PHYS_ADDR_T_64BIT
-+	depends on BLK_DEV
-+	select NVDIMM_DEVICES
-+	select LIBNVDIMM
- 	help
- 	  Treat memory marked using the non-standard e820 type of 12 as used
- 	  by the Intel Sandy Bridge-EP reference BIOS as protected memory.
-diff --git a/arch/x86/kernel/pmem.c b/arch/x86/kernel/pmem.c
-index 3420c874ddc5..40d734c8e3b1 100644
---- a/arch/x86/kernel/pmem.c
-+++ b/arch/x86/kernel/pmem.c
-@@ -1,53 +1,81 @@
- /*
-  * Copyright (c) 2015, Christoph Hellwig.
-+ * Copyright (c) 2015, Intel Corporation.
-  */
--#include <linux/memblock.h>
- #include <linux/platform_device.h>
--#include <linux/slab.h>
-+#include <linux/libnvdimm.h>
-+#include <linux/module.h>
- #include <asm/e820.h>
--#include <asm/page_types.h>
--#include <asm/setup.h>
- 
--static __init void register_pmem_device(struct resource *res)
-+static void e820_pmem_release(struct device *dev)
- {
--	struct platform_device *pdev;
--	int error;
-+	struct nvdimm_bus *nvdimm_bus = dev->platform_data;
- 
--	pdev = platform_device_alloc("pmem", PLATFORM_DEVID_AUTO);
--	if (!pdev)
--		return;
-+	if (nvdimm_bus)
-+		nvdimm_bus_unregister(nvdimm_bus);
-+}
- 
--	error = platform_device_add_resources(pdev, res, 1);
--	if (error)
--		goto out_put_pdev;
-+static struct platform_device e820_pmem = {
-+	.name = "e820_pmem",
-+	.id = -1,
-+	.dev = {
-+		.release = e820_pmem_release,
-+	},
-+};
- 
--	error = platform_device_add(pdev);
--	if (error)
--		goto out_put_pdev;
--	return;
-+static const struct attribute_group *e820_pmem_attribute_groups[] = {
-+	&nvdimm_bus_attribute_group,
-+	NULL,
-+};
- 
--out_put_pdev:
--	dev_warn(&pdev->dev, "failed to add 'pmem' (persistent memory) device!\n");
--	platform_device_put(pdev);
--}
-+static const struct attribute_group *e820_pmem_region_attribute_groups[] = {
-+	&nd_region_attribute_group,
-+	&nd_device_attribute_group,
-+	NULL,
-+};
- 
--static __init int register_pmem_devices(void)
-+static __init int register_e820_pmem(void)
- {
--	int i;
-+	static struct nvdimm_bus_descriptor nd_desc;
-+	struct device *dev = &e820_pmem.dev;
-+	struct nvdimm_bus *nvdimm_bus;
-+	int rc, i;
++static ssize_t range_index_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct nd_region *nd_region = to_nd_region(dev);
++	struct nfit_spa *nfit_spa = nd_region_provider_data(nd_region);
 +
-+	rc = platform_device_register(&e820_pmem);
++	return sprintf(buf, "%d\n", nfit_spa->spa->range_index);
++}
++static DEVICE_ATTR_RO(range_index);
++
++static struct attribute *acpi_nfit_region_attributes[] = {
++	&dev_attr_range_index.attr,
++	NULL,
++};
++
++static struct attribute_group acpi_nfit_region_attribute_group = {
++	.name = "nfit",
++	.attrs = acpi_nfit_region_attributes,
++};
++
++static const struct attribute_group *acpi_nfit_region_attribute_groups[] = {
++	&nd_region_attribute_group,
++	&nd_mapping_attribute_group,
++	&acpi_nfit_region_attribute_group,
++	NULL,
++};
++
++static int acpi_nfit_register_region(struct acpi_nfit_desc *acpi_desc,
++		struct nfit_spa *nfit_spa)
++{
++	static struct nd_mapping nd_mappings[ND_MAX_MAPPINGS];
++	struct acpi_nfit_system_address *spa = nfit_spa->spa;
++	struct nfit_memdev *nfit_memdev;
++	struct nd_region_desc ndr_desc;
++	int spa_type, count = 0;
++	struct resource res;
++	u16 range_index;
++
++	spa_type = nfit_spa_type(spa);
++	range_index = spa->range_index;
++	if (range_index == 0) {
++		dev_dbg(acpi_desc->dev, "%s: detected invalid spa index\n",
++				__func__);
++		return 0;
++	}
++
++	memset(&res, 0, sizeof(res));
++	memset(&nd_mappings, 0, sizeof(nd_mappings));
++	memset(&ndr_desc, 0, sizeof(ndr_desc));
++	res.start = spa->address;
++	res.end = res.start + spa->length - 1;
++	ndr_desc.res = &res;
++	ndr_desc.provider_data = nfit_spa;
++	ndr_desc.attr_groups = acpi_nfit_region_attribute_groups;
++	list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list) {
++		struct acpi_nfit_memory_map *memdev = nfit_memdev->memdev;
++		struct nd_mapping *nd_mapping;
++		struct nvdimm *nvdimm;
++
++		if (memdev->range_index != range_index)
++			continue;
++		if (count >= ND_MAX_MAPPINGS) {
++			dev_err(acpi_desc->dev, "spa%d exceeds max mappings %d\n",
++					range_index, ND_MAX_MAPPINGS);
++			return -ENXIO;
++		}
++		nvdimm = acpi_nfit_dimm_by_handle(acpi_desc, memdev->device_handle);
++		if (!nvdimm) {
++			dev_err(acpi_desc->dev, "spa%d dimm: %#x not found\n",
++					range_index, memdev->device_handle);
++			return -ENODEV;
++		}
++		nd_mapping = &nd_mappings[count++];
++		nd_mapping->nvdimm = nvdimm;
++		if (spa_type == NFIT_SPA_PM || spa_type == NFIT_SPA_VOLATILE) {
++			nd_mapping->start = memdev->address;
++			nd_mapping->size = memdev->region_size;
++		} else if (spa_type == NFIT_SPA_DCR) {
++			struct nfit_mem *nfit_mem;
++			int blk_valid = 1;
++
++			nfit_mem = nvdimm_provider_data(nvdimm);
++			if (!nfit_mem || !nfit_mem->bdw) {
++				dev_dbg(acpi_desc->dev, "%s: spa%d missing bdw\n",
++						nvdimm_name(nvdimm), range_index);
++				blk_valid = 0;
++			} else {
++				nd_mapping->size = nfit_mem->bdw->capacity;
++				nd_mapping->start = nfit_mem->bdw->start_address;
++			}
++
++			ndr_desc.nd_mapping = nd_mapping;
++			ndr_desc.num_mappings = blk_valid;
++			if (!nvdimm_blk_region_create(acpi_desc->nvdimm_bus, &ndr_desc))
++				return -ENOMEM;
++		}
++	}
++
++	ndr_desc.nd_mapping = nd_mappings;
++	ndr_desc.num_mappings = count;
++	if (spa_type == NFIT_SPA_PM) {
++		if (!nvdimm_pmem_region_create(acpi_desc->nvdimm_bus, &ndr_desc))
++			return -ENOMEM;
++	} else if (spa_type == NFIT_SPA_VOLATILE) {
++		if (!nvdimm_volatile_region_create(acpi_desc->nvdimm_bus, &ndr_desc))
++			return -ENOMEM;
++	}
++	return 0;
++}
++
++static int acpi_nfit_register_regions(struct acpi_nfit_desc *acpi_desc)
++{
++	struct nfit_spa *nfit_spa;
++
++	list_for_each_entry(nfit_spa, &acpi_desc->spas, list) {
++		int rc = acpi_nfit_register_region(acpi_desc, nfit_spa);
++
++		if (rc)
++			return rc;
++	}
++	return 0;
++}
++
+ static int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
+ {
+ 	struct device *dev = acpi_desc->dev;
+ 	const void *end;
+ 	u8 *data;
++	int rc;
+ 
+ 	INIT_LIST_HEAD(&acpi_desc->spas);
+ 	INIT_LIST_HEAD(&acpi_desc->dcrs);
+@@ -744,7 +868,11 @@ static int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
+ 
+ 	acpi_nfit_init_dsms(acpi_desc);
+ 
+-	return acpi_nfit_register_dimms(acpi_desc);
++	rc = acpi_nfit_register_dimms(acpi_desc);
 +	if (rc)
 +		return rc;
 +
-+	nd_desc.attr_groups = e820_pmem_attribute_groups;
-+	nd_desc.provider_name = "e820";
-+	nvdimm_bus = nvdimm_bus_register(dev, &nd_desc);
-+	if (!nvdimm_bus)
-+		goto err;
-+	dev->platform_data = nvdimm_bus;
- 
- 	for (i = 0; i < e820.nr_map; i++) {
- 		struct e820entry *ei = &e820.map[i];
-+		struct resource res = {
-+			.flags	= IORESOURCE_MEM,
-+			.start	= ei->addr,
-+			.end	= ei->addr + ei->size - 1,
-+		};
-+		struct nd_region_desc ndr_desc;
-+
-+		if (ei->type != E820_PRAM)
-+			continue;
- 
--		if (ei->type == E820_PRAM) {
--			struct resource res = {
--				.flags	= IORESOURCE_MEM,
--				.start	= ei->addr,
--				.end	= ei->addr + ei->size - 1,
--			};
--			register_pmem_device(&res);
--		}
-+		memset(&ndr_desc, 0, sizeof(ndr_desc));
-+		ndr_desc.res = &res;
-+		ndr_desc.attr_groups = e820_pmem_region_attribute_groups;
-+		if (!nvdimm_pmem_region_create(nvdimm_bus, &ndr_desc))
-+			goto err;
- 	}
- 
- 	return 0;
-+
-+ err:
-+	dev_err(dev, "failed to register legacy persistent memory ranges\n");
-+	platform_device_unregister(&e820_pmem);
-+	return -ENXIO;
++	return acpi_nfit_register_regions(acpi_desc);
  }
--device_initcall(register_pmem_devices);
-+late_initcall(register_e820_pmem);
-diff --git a/drivers/block/Kconfig b/drivers/block/Kconfig
-index eb1fed5bd516..1b8094d4d7af 100644
---- a/drivers/block/Kconfig
-+++ b/drivers/block/Kconfig
-@@ -404,17 +404,6 @@ config BLK_DEV_RAM_DAX
- 	  and will prevent RAM block device backing store memory from being
- 	  allocated from highmem (only a problem for highmem systems).
  
--config BLK_DEV_PMEM
--	tristate "Persistent memory block device support"
--	help
--	  Saying Y here will allow you to use a contiguous range of reserved
--	  memory as one or more persistent block devices.
--
--	  To compile this driver as a module, choose M here: the module will be
--	  called 'pmem'.
--
--	  If unsure, say N.
--
- config CDROM_PKTCDVD
- 	tristate "Packet writing on CD/DVD media"
- 	depends on !UML
-diff --git a/drivers/block/Makefile b/drivers/block/Makefile
-index 9cc6c18a1c7e..02b688d1438d 100644
---- a/drivers/block/Makefile
-+++ b/drivers/block/Makefile
-@@ -14,7 +14,6 @@ obj-$(CONFIG_PS3_VRAM)		+= ps3vram.o
- obj-$(CONFIG_ATARI_FLOPPY)	+= ataflop.o
- obj-$(CONFIG_AMIGA_Z2RAM)	+= z2ram.o
- obj-$(CONFIG_BLK_DEV_RAM)	+= brd.o
--obj-$(CONFIG_BLK_DEV_PMEM)	+= pmem.o
- obj-$(CONFIG_BLK_DEV_LOOP)	+= loop.o
- obj-$(CONFIG_BLK_CPQ_DA)	+= cpqarray.o
- obj-$(CONFIG_BLK_CPQ_CISS_DA)  += cciss.o
-diff --git a/drivers/nvdimm/Kconfig b/drivers/nvdimm/Kconfig
-index 24b51dbc8215..020acf860258 100644
---- a/drivers/nvdimm/Kconfig
-+++ b/drivers/nvdimm/Kconfig
-@@ -17,4 +17,21 @@ if NVDIMM_DEVICES
- config LIBNVDIMM
- 	tristate
- 
-+config BLK_DEV_PMEM
-+	tristate "PMEM: Persistent memory block device support"
-+	depends on LIBNVDIMM
-+	default LIBNVDIMM
-+	help
-+	  Memory ranges for PMEM are described by either an NFIT
-+	  (NVDIMM Firmware Interface Table, see CONFIG_NFIT_ACPI), a
-+	  non-standard OEM-specific E820 memory type (type-12, see
-+	  CONFIG_X86_PMEM_LEGACY), or it is manually specified by the
-+	  'memmap=nn[KMG]!ss[KMG]' kernel command line (see
-+	  Documentation/kernel-parameters.txt).  This driver converts
-+	  these persistent memory ranges into block devices that are
-+	  capable of DAX (direct-access) file system mappings.  See
-+	  Documentation/blockdev/nd.txt for more details.
-+
-+	  Say Y if you want to use a NVDIMM described by NFIT
-+
- endif
+ static int acpi_nfit_add(struct acpi_device *adev)
 diff --git a/drivers/nvdimm/Makefile b/drivers/nvdimm/Makefile
-index af5e2760ddbd..4d2a27f52faa 100644
+index d44b5c1fcd3b..88afd0d849c3 100644
 --- a/drivers/nvdimm/Makefile
 +++ b/drivers/nvdimm/Makefile
-@@ -1,4 +1,7 @@
- obj-$(CONFIG_LIBNVDIMM) += libnvdimm.o
-+obj-$(CONFIG_BLK_DEV_PMEM) += nd_pmem.o
-+
-+nd_pmem-y := pmem.o
- 
- libnvdimm-y := core.o
+@@ -4,3 +4,4 @@ libnvdimm-y := core.o
  libnvdimm-y += bus.o
-diff --git a/drivers/block/pmem.c b/drivers/nvdimm/pmem.c
-similarity index 85%
-rename from drivers/block/pmem.c
-rename to drivers/nvdimm/pmem.c
-index eabf4a8d0085..cf5d53eda9e5 100644
---- a/drivers/block/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -1,7 +1,7 @@
- /*
-  * Persistent Memory Driver
-  *
-- * Copyright (c) 2014, Intel Corporation.
-+ * Copyright (c) 2014-2015, Intel Corporation.
-  * Copyright (c) 2015, Christoph Hellwig <hch@lst.de>.
-  * Copyright (c) 2015, Boaz Harrosh <boaz@plexistor.com>.
-  *
-@@ -23,6 +23,8 @@
- #include <linux/module.h>
- #include <linux/moduleparam.h>
- #include <linux/slab.h>
-+#include <linux/nd.h>
+ libnvdimm-y += dimm_devs.o
+ libnvdimm-y += dimm.o
++libnvdimm-y += region_devs.o
+diff --git a/drivers/nvdimm/nd-private.h b/drivers/nvdimm/nd-private.h
+index 4c0a27966000..9ac24c975251 100644
+--- a/drivers/nvdimm/nd-private.h
++++ b/drivers/nvdimm/nd-private.h
+@@ -40,5 +40,8 @@ void nvdimm_bus_exit(void);
+ int nvdimm_bus_create_ndctl(struct nvdimm_bus *nvdimm_bus);
+ void nvdimm_bus_destroy_ndctl(struct nvdimm_bus *nvdimm_bus);
+ void nd_synchronize(void);
++int nvdimm_bus_register_dimms(struct nvdimm_bus *nvdimm_bus);
++int nvdimm_bus_register_regions(struct nvdimm_bus *nvdimm_bus);
++int nd_match_dimm(struct device *dev, void *data);
+ bool is_nvdimm(struct device *dev);
+ #endif /* __ND_PRIVATE_H__ */
+diff --git a/drivers/nvdimm/nd.h b/drivers/nvdimm/nd.h
+index 1f7f6ecab0fc..ea0cca337aa6 100644
+--- a/drivers/nvdimm/nd.h
++++ b/drivers/nvdimm/nd.h
+@@ -12,6 +12,7 @@
+  */
+ #ifndef __ND_H__
+ #define __ND_H__
++#include <linux/libnvdimm.h>
+ #include <linux/device.h>
+ #include <linux/mutex.h>
+ #include <linux/ndctl.h>
+@@ -22,6 +23,16 @@ struct nvdimm_drvdata {
+ 	void *data;
+ };
+ 
++struct nd_region {
++	struct device dev;
++	u16 ndr_mappings;
++	u64 ndr_size;
++	u64 ndr_start;
++	int id;
++	void *provider_data;
++	struct nd_mapping mapping[0];
++};
++
+ enum nd_async_mode {
+ 	ND_SYNC,
+ 	ND_ASYNC,
+diff --git a/drivers/nvdimm/region_devs.c b/drivers/nvdimm/region_devs.c
+new file mode 100644
+index 000000000000..c6fdf3cea2d1
+--- /dev/null
++++ b/drivers/nvdimm/region_devs.c
+@@ -0,0 +1,294 @@
++/*
++ * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of version 2 of the GNU General Public License as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ */
++#include <linux/slab.h>
++#include <linux/io.h>
++#include "nd-private.h"
 +#include "nd.h"
- 
- #define PMEM_MINORS		16
- 
-@@ -37,7 +39,6 @@ struct pmem_device {
- };
- 
- static int pmem_major;
--static atomic_t pmem_index;
- 
- static void pmem_do_bvec(struct pmem_device *pmem, struct page *page,
- 			unsigned int len, unsigned int off, int rw,
-@@ -118,11 +119,11 @@ static const struct block_device_operations pmem_fops = {
- 	.direct_access =	pmem_direct_access,
- };
- 
--static struct pmem_device *pmem_alloc(struct device *dev, struct resource *res)
-+static struct pmem_device *pmem_alloc(struct device *dev, struct resource *res, int id)
- {
- 	struct pmem_device *pmem;
- 	struct gendisk *disk;
--	int idx, err;
-+	int err;
- 
- 	err = -ENOMEM;
- 	pmem = kzalloc(sizeof(*pmem), GFP_KERNEL);
-@@ -159,15 +160,13 @@ static struct pmem_device *pmem_alloc(struct device *dev, struct resource *res)
- 	if (!disk)
- 		goto out_free_queue;
- 
--	idx = atomic_inc_return(&pmem_index) - 1;
--
- 	disk->major		= pmem_major;
--	disk->first_minor	= PMEM_MINORS * idx;
-+	disk->first_minor	= PMEM_MINORS * id;
- 	disk->fops		= &pmem_fops;
- 	disk->private_data	= pmem;
- 	disk->queue		= pmem->pmem_queue;
- 	disk->flags		= GENHD_FL_EXT_DEVT;
--	sprintf(disk->disk_name, "pmem%d", idx);
-+	sprintf(disk->disk_name, "pmem%d", id);
- 	disk->driverfs_dev = dev;
- 	set_capacity(disk, pmem->size >> 9);
- 	pmem->pmem_disk = disk;
-@@ -198,42 +197,38 @@ static void pmem_free(struct pmem_device *pmem)
- 	kfree(pmem);
- }
- 
--static int pmem_probe(struct platform_device *pdev)
-+static int nd_pmem_probe(struct device *dev)
- {
-+	struct nd_region *nd_region = to_nd_region(dev->parent);
-+	struct nd_namespace_io *nsio = to_nd_namespace_io(dev);
- 	struct pmem_device *pmem;
--	struct resource *res;
--
--	if (WARN_ON(pdev->num_resources > 1))
--		return -ENXIO;
--
--	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
--	if (!res)
--		return -ENXIO;
- 
--	pmem = pmem_alloc(&pdev->dev, res);
-+	pmem = pmem_alloc(dev, &nsio->res, nd_region->id);
- 	if (IS_ERR(pmem))
- 		return PTR_ERR(pmem);
- 
--	platform_set_drvdata(pdev, pmem);
-+	dev_set_drvdata(dev, pmem);
- 
- 	return 0;
- }
- 
--static int pmem_remove(struct platform_device *pdev)
-+static int nd_pmem_remove(struct device *dev)
- {
--	struct pmem_device *pmem = platform_get_drvdata(pdev);
-+	struct pmem_device *pmem = dev_get_drvdata(dev);
- 
- 	pmem_free(pmem);
- 	return 0;
- }
- 
--static struct platform_driver pmem_driver = {
--	.probe		= pmem_probe,
--	.remove		= pmem_remove,
--	.driver		= {
--		.owner	= THIS_MODULE,
--		.name	= "pmem",
-+MODULE_ALIAS("pmem");
-+MODULE_ALIAS_ND_DEVICE(ND_DEVICE_NAMESPACE_IO);
-+static struct nd_device_driver nd_pmem_driver = {
-+	.probe = nd_pmem_probe,
-+	.remove = nd_pmem_remove,
-+	.drv = {
-+		.name = "nd_pmem",
- 	},
-+	.type = ND_DRIVER_NAMESPACE_IO,
- };
- 
- static int __init pmem_init(void)
-@@ -244,16 +239,19 @@ static int __init pmem_init(void)
- 	if (pmem_major < 0)
- 		return pmem_major;
- 
--	error = platform_driver_register(&pmem_driver);
--	if (error)
-+	error = nd_driver_register(&nd_pmem_driver);
-+	if (error) {
- 		unregister_blkdev(pmem_major, "pmem");
--	return error;
-+		return error;
++
++static DEFINE_IDA(region_ida);
++
++static void nd_region_release(struct device *dev)
++{
++	struct nd_region *nd_region = to_nd_region(dev);
++	u16 i;
++
++	for (i = 0; i < nd_region->ndr_mappings; i++) {
++		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
++		struct nvdimm *nvdimm = nd_mapping->nvdimm;
++
++		put_device(&nvdimm->dev);
++	}
++	ida_simple_remove(&region_ida, nd_region->id);
++	kfree(nd_region);
++}
++
++static struct device_type nd_blk_device_type = {
++	.name = "nd_blk",
++	.release = nd_region_release,
++};
++
++static struct device_type nd_pmem_device_type = {
++	.name = "nd_pmem",
++	.release = nd_region_release,
++};
++
++static struct device_type nd_volatile_device_type = {
++	.name = "nd_volatile",
++	.release = nd_region_release,
++};
++
++static bool is_nd_pmem(struct device *dev)
++{
++	return dev ? dev->type == &nd_pmem_device_type : false;
++}
++
++struct nd_region *to_nd_region(struct device *dev)
++{
++	struct nd_region *nd_region = container_of(dev, struct nd_region, dev);
++
++	WARN_ON(dev->type->release != nd_region_release);
++	return nd_region;
++}
++EXPORT_SYMBOL_GPL(to_nd_region);
++
++static ssize_t size_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct nd_region *nd_region = to_nd_region(dev);
++	unsigned long long size = 0;
++
++	if (is_nd_pmem(dev)) {
++		size = nd_region->ndr_size;
++	} else if (nd_region->ndr_mappings == 1) {
++		struct nd_mapping *nd_mapping = &nd_region->mapping[0];
++
++		size = nd_mapping->size;
 +	}
 +
++	return sprintf(buf, "%llu\n", size);
++}
++static DEVICE_ATTR_RO(size);
++
++static ssize_t mappings_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct nd_region *nd_region = to_nd_region(dev);
++
++	return sprintf(buf, "%d\n", nd_region->ndr_mappings);
++}
++static DEVICE_ATTR_RO(mappings);
++
++static struct attribute *nd_region_attributes[] = {
++	&dev_attr_size.attr,
++	&dev_attr_mappings.attr,
++	NULL,
++};
++
++struct attribute_group nd_region_attribute_group = {
++	.attrs = nd_region_attributes,
++};
++EXPORT_SYMBOL_GPL(nd_region_attribute_group);
++
++static ssize_t mappingN(struct device *dev, char *buf, int n)
++{
++	struct nd_region *nd_region = to_nd_region(dev);
++	struct nd_mapping *nd_mapping;
++	struct nvdimm *nvdimm;
++
++	if (n >= nd_region->ndr_mappings)
++		return -ENXIO;
++	nd_mapping = &nd_region->mapping[n];
++	nvdimm = nd_mapping->nvdimm;
++
++	return sprintf(buf, "%s,%llu,%llu\n", dev_name(&nvdimm->dev),
++			nd_mapping->start, nd_mapping->size);
++}
++
++#define REGION_MAPPING(idx) \
++static ssize_t mapping##idx##_show(struct device *dev,		\
++		struct device_attribute *attr, char *buf)	\
++{								\
++	return mappingN(dev, buf, idx);				\
++}								\
++static DEVICE_ATTR_RO(mapping##idx)
++
++/*
++ * 32 should be enough for a while, even in the presence of socket
++ * interleave a 32-way interleave set is a degenerate case.
++ */
++REGION_MAPPING(0);
++REGION_MAPPING(1);
++REGION_MAPPING(2);
++REGION_MAPPING(3);
++REGION_MAPPING(4);
++REGION_MAPPING(5);
++REGION_MAPPING(6);
++REGION_MAPPING(7);
++REGION_MAPPING(8);
++REGION_MAPPING(9);
++REGION_MAPPING(10);
++REGION_MAPPING(11);
++REGION_MAPPING(12);
++REGION_MAPPING(13);
++REGION_MAPPING(14);
++REGION_MAPPING(15);
++REGION_MAPPING(16);
++REGION_MAPPING(17);
++REGION_MAPPING(18);
++REGION_MAPPING(19);
++REGION_MAPPING(20);
++REGION_MAPPING(21);
++REGION_MAPPING(22);
++REGION_MAPPING(23);
++REGION_MAPPING(24);
++REGION_MAPPING(25);
++REGION_MAPPING(26);
++REGION_MAPPING(27);
++REGION_MAPPING(28);
++REGION_MAPPING(29);
++REGION_MAPPING(30);
++REGION_MAPPING(31);
++
++static umode_t nd_mapping_visible(struct kobject *kobj, struct attribute *a, int n)
++{
++	struct device *dev = container_of(kobj, struct device, kobj);
++	struct nd_region *nd_region = to_nd_region(dev);
++
++	if (n < nd_region->ndr_mappings)
++		return a->mode;
 +	return 0;
- }
- module_init(pmem_init);
++}
++
++static struct attribute *nd_mapping_attributes[] = {
++	&dev_attr_mapping0.attr,
++	&dev_attr_mapping1.attr,
++	&dev_attr_mapping2.attr,
++	&dev_attr_mapping3.attr,
++	&dev_attr_mapping4.attr,
++	&dev_attr_mapping5.attr,
++	&dev_attr_mapping6.attr,
++	&dev_attr_mapping7.attr,
++	&dev_attr_mapping8.attr,
++	&dev_attr_mapping9.attr,
++	&dev_attr_mapping10.attr,
++	&dev_attr_mapping11.attr,
++	&dev_attr_mapping12.attr,
++	&dev_attr_mapping13.attr,
++	&dev_attr_mapping14.attr,
++	&dev_attr_mapping15.attr,
++	&dev_attr_mapping16.attr,
++	&dev_attr_mapping17.attr,
++	&dev_attr_mapping18.attr,
++	&dev_attr_mapping19.attr,
++	&dev_attr_mapping20.attr,
++	&dev_attr_mapping21.attr,
++	&dev_attr_mapping22.attr,
++	&dev_attr_mapping23.attr,
++	&dev_attr_mapping24.attr,
++	&dev_attr_mapping25.attr,
++	&dev_attr_mapping26.attr,
++	&dev_attr_mapping27.attr,
++	&dev_attr_mapping28.attr,
++	&dev_attr_mapping29.attr,
++	&dev_attr_mapping30.attr,
++	&dev_attr_mapping31.attr,
++	NULL,
++};
++
++struct attribute_group nd_mapping_attribute_group = {
++	.is_visible = nd_mapping_visible,
++	.attrs = nd_mapping_attributes,
++};
++EXPORT_SYMBOL_GPL(nd_mapping_attribute_group);
++
++void *nd_region_provider_data(struct nd_region *nd_region)
++{
++	return nd_region->provider_data;
++}
++EXPORT_SYMBOL_GPL(nd_region_provider_data);
++
++static noinline struct nd_region *nd_region_create(struct nvdimm_bus *nvdimm_bus,
++		struct nd_region_desc *ndr_desc, struct device_type *dev_type)
++{
++	struct nd_region *nd_region;
++	struct device *dev;
++	u16 i;
++
++	for (i = 0; i < ndr_desc->num_mappings; i++) {
++		struct nd_mapping *nd_mapping = &ndr_desc->nd_mapping[i];
++		struct nvdimm *nvdimm = nd_mapping->nvdimm;
++
++		if ((nd_mapping->start | nd_mapping->size) % SZ_4K) {
++			dev_err(&nvdimm_bus->dev, "%pf: %s mapping%d is not 4K aligned\n",
++					__builtin_return_address(0),
++					dev_name(&nvdimm->dev), i);
++
++			return NULL;
++		}
++	}
++
++	nd_region = kzalloc(sizeof(struct nd_region)
++			+ sizeof(struct nd_mapping) * ndr_desc->num_mappings,
++			GFP_KERNEL);
++	if (!nd_region)
++		return NULL;
++	nd_region->id = ida_simple_get(&region_ida, 0, 0, GFP_KERNEL);
++	if (nd_region->id < 0) {
++		kfree(nd_region);
++		return NULL;
++	}
++
++	memcpy(nd_region->mapping, ndr_desc->nd_mapping,
++			sizeof(struct nd_mapping) * ndr_desc->num_mappings);
++	for (i = 0; i < ndr_desc->num_mappings; i++) {
++		struct nd_mapping *nd_mapping = &ndr_desc->nd_mapping[i];
++		struct nvdimm *nvdimm = nd_mapping->nvdimm;
++
++		get_device(&nvdimm->dev);
++	}
++	nd_region->ndr_mappings = ndr_desc->num_mappings;
++	nd_region->provider_data = ndr_desc->provider_data;
++	dev = &nd_region->dev;
++	dev_set_name(dev, "region%d", nd_region->id);
++	dev->parent = &nvdimm_bus->dev;
++	dev->type = dev_type;
++	dev->groups = ndr_desc->attr_groups;
++	nd_region->ndr_size = resource_size(ndr_desc->res);
++	nd_region->ndr_start = ndr_desc->res->start;
++	nd_device_register(dev);
++
++	return nd_region;
++}
++
++struct nd_region *nvdimm_pmem_region_create(struct nvdimm_bus *nvdimm_bus,
++		struct nd_region_desc *ndr_desc)
++{
++	return nd_region_create(nvdimm_bus, ndr_desc, &nd_pmem_device_type);
++}
++EXPORT_SYMBOL_GPL(nvdimm_pmem_region_create);
++
++struct nd_region *nvdimm_blk_region_create(struct nvdimm_bus *nvdimm_bus,
++		struct nd_region_desc *ndr_desc)
++{
++	if (ndr_desc->num_mappings > 1)
++		return NULL;
++	return nd_region_create(nvdimm_bus, ndr_desc, &nd_blk_device_type);
++}
++EXPORT_SYMBOL_GPL(nvdimm_blk_region_create);
++
++struct nd_region *nvdimm_volatile_region_create(struct nvdimm_bus *nvdimm_bus,
++		struct nd_region_desc *ndr_desc)
++{
++	return nd_region_create(nvdimm_bus, ndr_desc, &nd_volatile_device_type);
++}
++EXPORT_SYMBOL_GPL(nvdimm_volatile_region_create);
+diff --git a/include/linux/libnvdimm.h b/include/linux/libnvdimm.h
+index 73f15c6fceb9..4de60198a778 100644
+--- a/include/linux/libnvdimm.h
++++ b/include/linux/libnvdimm.h
+@@ -26,11 +26,14 @@ enum {
+ 	ND_CMD_MAX_ELEM = 4,
+ 	ND_CMD_MAX_ENVELOPE = 16,
+ 	ND_CMD_ARS_QUERY_MAX = SZ_4K,
++	ND_MAX_MAPPINGS = 32,
+ };
  
- static void pmem_exit(void)
- {
--	platform_driver_unregister(&pmem_driver);
-+	driver_unregister(&nd_pmem_driver.drv);
- 	unregister_blkdev(pmem_major, "pmem");
- }
- module_exit(pmem_exit);
-
+ extern struct attribute_group nvdimm_bus_attribute_group;
+ extern struct attribute_group nvdimm_attribute_group;
+ extern struct attribute_group nd_device_attribute_group;
++extern struct attribute_group nd_region_attribute_group;
++extern struct attribute_group nd_mapping_attribute_group;
+ 
+ struct nvdimm;
+ struct nvdimm_bus_descriptor;
+@@ -38,6 +41,12 @@ typedef int (*ndctl_fn)(struct nvdimm_bus_descriptor *nd_desc,
+ 		struct nvdimm *nvdimm, unsigned int cmd, void *buf,
+ 		unsigned int buf_len);
+ 
++struct nd_mapping {
++	struct nvdimm *nvdimm;
++	u64 start;
++	u64 size;
++};
++
+ struct nvdimm_bus_descriptor {
+ 	const struct attribute_group **attr_groups;
+ 	unsigned long dsm_mask;
+@@ -52,6 +61,14 @@ struct nd_cmd_desc {
+ 	int out_sizes[ND_CMD_MAX_ELEM];
+ };
+ 
++struct nd_region_desc {
++	struct resource *res;
++	struct nd_mapping *nd_mapping;
++	u16 num_mappings;
++	const struct attribute_group **attr_groups;
++	void *provider_data;
++};
++
+ struct nvdimm_bus;
+ struct device;
+ struct nvdimm_bus *nvdimm_bus_register(struct device *parent,
+@@ -59,9 +76,11 @@ struct nvdimm_bus *nvdimm_bus_register(struct device *parent,
+ void nvdimm_bus_unregister(struct nvdimm_bus *nvdimm_bus);
+ struct nvdimm_bus *to_nvdimm_bus(struct device *dev);
+ struct nvdimm *to_nvdimm(struct device *dev);
++struct nd_region *to_nd_region(struct device *dev);
+ struct nvdimm_bus_descriptor *to_nd_desc(struct nvdimm_bus *nvdimm_bus);
+ const char *nvdimm_name(struct nvdimm *nvdimm);
+ void *nvdimm_provider_data(struct nvdimm *nvdimm);
++void *nd_region_provider_data(struct nd_region *nd_region);
+ struct nvdimm *nvdimm_create(struct nvdimm_bus *nvdimm_bus, void *provider_data,
+ 		const struct attribute_group **groups, unsigned long flags,
+ 		unsigned long *dsm_mask);
+@@ -73,4 +92,10 @@ u32 nd_cmd_out_size(struct nvdimm *nvdimm, int cmd,
+ 		const struct nd_cmd_desc *desc, int idx, const u32 *in_field,
+ 		const u32 *out_field);
+ int nvdimm_bus_validate_dimm_count(struct nvdimm_bus *nvdimm_bus, int dimm_count);
++struct nd_region *nvdimm_pmem_region_create(struct nvdimm_bus *nvdimm_bus,
++		struct nd_region_desc *ndr_desc);
++struct nd_region *nvdimm_blk_region_create(struct nvdimm_bus *nvdimm_bus,
++		struct nd_region_desc *ndr_desc);
++struct nd_region *nvdimm_volatile_region_create(struct nvdimm_bus *nvdimm_bus,
++		struct nd_region_desc *ndr_desc);
+ #endif /* __LIBNVDIMM_H__ */
