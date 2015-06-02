@@ -1,43 +1,119 @@
-From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [PATCH] seccomp: add ptrace commands for suspend/resume
-Date: Tue, 2 Jun 2015 07:05:06 -0600
-Message-ID: <20150602130506.GA1823@hopstrocity>
-References: <1433186918-9626-1-git-send-email-tycho.andersen@canonical.com>
- <CANaxB-zacYuo21jLVZyEfyf=UdDnTjYvHdgNpfL+c_DXWRz-eg@mail.gmail.com>
+From: Eric B Munson <emunson@akamai.com>
+Subject: Re: [RESEND PATCH 0/3] Allow user to request memory to be locked on
+ page fault
+Date: Tue, 2 Jun 2015 10:25:20 -0400
+Message-ID: <20150602142520.GB2364@akamai.com>
+References: <1432908808-31150-1-git-send-email-emunson@akamai.com>
+ <20150601152746.abbbbb9d479c0e2dbdec2aaf@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="GRPZ8SYKNexpdSJ7"
+Return-path: <sparclinux-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CANaxB-zacYuo21jLVZyEfyf=UdDnTjYvHdgNpfL+c_DXWRz-eg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrey Wagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20150601152746.abbbbb9d479c0e2dbdec2aaf@linux-foundation.org>
+Sender: sparclinux-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, Michal Hocko <mhocko@suse.cz>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 02, 2015 at 12:36:16PM +0300, Andrey Wagin wrote:
-> 2015-06-01 22:28 GMT+03:00 Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>:
-> > This patch is the first step in enabling checkpoint/restore of processes
-> > with seccomp enabled.
-> >
-> > One of the things CRIU does while dumping tasks is inject code into them
-> > via ptrace to collect information that is only available to the process
-> > itself. However, if we are in a seccomp mode where these processes are
-> > prohibited from making these syscalls, then what CRIU does kills the task.
-> >
-> > This patch adds a new ptrace command, PTRACE_SUSPEND_SECCOMP that enables a
-> > task from the init user namespace which has CAP_SYS_ADMIN to disable (and
-> > re-enable) seccomp filters for another task so that they can be
-> > successfully dumped (and restored).
-> 
-> Do we need to re-enable seccomp if a tracer detaches unexpectedly.
-> CRIU can be killed and we should try to not affect the task state even
-> in this case.
 
-Yes, I think Pavel's suggestion on the CRIU list of simply
-automatically re-enabling seccomp on ptrace detach is the right way to
-go here; it should cover this case. The only question is whether or
-not to leave the explicit ability to re-enable seccomp before detach
-or not. I don't think it's necessary for CRIU, so perhaps I'll remove
-it in the next version.
+--GRPZ8SYKNexpdSJ7
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Tycho
+On Mon, 01 Jun 2015, Andrew Morton wrote:
+
+> On Fri, 29 May 2015 10:13:25 -0400 Eric B Munson <emunson@akamai.com> wro=
+te:
+>=20
+> > mlock() allows a user to control page out of program memory, but this
+> > comes at the cost of faulting in the entire mapping when it is
+> > allocated.  For large mappings where the entire area is not necessary
+> > this is not ideal.
+> >=20
+> > This series introduces new flags for mmap() and mlockall() that allow a
+> > user to specify that the covered are should not be paged out, but only
+> > after the memory has been used the first time.
+>=20
+> I almost applied these, but the naming issue (below) stopped me.
+>=20
+> A few things...
+>=20
+> - The 0/n changelog should reveal how MAP_LOCKONFAULT interacts with
+>   rlimit(RLIMIT_MEMLOCK).
+>=20
+>   I see the implementation is "as if the entire mapping will be
+>   faulted in" (for mmap) and "as if it was MCL_FUTURE" (for mlockall)
+>   which seems fine.  Please include changelog text explaining and
+>   justifying these decisions.  This stuff will need to be in the
+>   manpage updates as well.
+
+Change logs are updated, and this will be included in the man page
+update as well.
+
+>=20
+> - I think I already asked "why not just use MCL_FUTURE" but I forget
+>   the answer ;) In general it is a good idea to update changelogs in
+>   response to reviewer questions, because other people will be
+>   wondering the same things.  Or maybe I forgot to ask.  Either way,
+>   please address this in the changelogs.
+
+I must have missed that question.  Here is the text from the updated
+mlockall changelog:
+
+MCL_ONFAULT is preferrable to MCL_FUTURE for the use cases enumerated
+in the previous patch becuase MCL_FUTURE will behave as if each mapping
+was made with MAP_LOCKED, causing the entire mapping to be faulted in
+when new space is allocated or mapped.  MCL_ONFAULT allows the user to
+delay the fault in cost of any given page until it is actually needed,
+but then guarantees that that page will always be resident.
+
+>=20
+> - I can perhaps see the point in mmap(MAP_LOCKONFAULT) (other
+>   mappings don't get lock-in-memory treatment), but what's the benefit
+>   in mlockall(MCL_ON_FAULT) over MCL_FUTURE?  (Add to changelog also,
+>   please).
+>=20
+> - Is there a manpage update?
+
+I will send one out when I post V2
+
+>=20
+> - Can we rename patch 1/3 from "add flag to ..." to "add mmap flag to
+>   ...", to distinguish from 2/3 "add mlockall flag ..."?
+
+Done
+
+>=20
+> - The MAP_LOCKONFAULT versus MCL_ON_FAULT inconsistency is
+>   irritating!  Can we get these consistent please: switch to either
+>   MAP_LOCK_ON_FAULT or MCL_ONFAULT.
+
+Yes, will do for V2.
+
+>=20
+
+--GRPZ8SYKNexpdSJ7
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJVbbzQAAoJELbVsDOpoOa9EtAP+wamgfoxHetODtEfMUqzYJgN
+GxcPBHPjo32fPtFoQu+IvDCqI48ySC4Syx0DqjzZJah+Uo8ngxUDQz3U9dTFrZq+
+wv18PEj5CV4ejsEPn6pPuFYpQk/s6UvaexGCXONeHD8Zp20zoPpa4foUMyOvvUnC
+tTA+fUJNsinYLGmzidV/1ebXUZYA2ur8Keur7e/kVqzZUWCkClpEVa7ZWnclral9
+8mcvrgnI0Z7HnXlZzgUzncUt/OpVwp6jH8Cg4l2qGvSN0q4w77LWhac4n+ut7ogZ
+XUIZiem41vBBzWuRjI9TiikFv83wQUPgFrlazWaScEl1Ht5N6HBs20EwHS86sBHe
+cMk6SdwUhhCi7rRsZQPcYq+Re6XKXMZPUhfoMqU09TMIpN0t01XGdkAQehgHoyvY
+N2hI4zuLIiFNYouXQKLwp+a7++tzI7XxfIo67CmdzCEb/Buxalhd+rSOQWF28Sos
+F4vRxeyhzE0CjWPcp9qDt4EIJci1TNwvQpOzT0HbX1PXJEJM44cRZxvLIYq9Almy
+g0rQ2LSYZP1gf9ngo/zh02ghenboKwYAMVOZDbOOjUMvtw5RS97voJ5ZOX+/fK95
+AQAEPZnJICFKmP/yNGtWpKuK3yfeYxDL0mAopbzXe2SGgk9eS6Dgsg0gVI4hyu33
+uQVVmWf17Owqb8CI9gAt
+=Aoeb
+-----END PGP SIGNATURE-----
+
+--GRPZ8SYKNexpdSJ7--
