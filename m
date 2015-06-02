@@ -1,119 +1,73 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [RESEND PATCH 0/3] Allow user to request memory to be locked on
- page fault
-Date: Tue, 2 Jun 2015 10:25:20 -0400
-Message-ID: <20150602142520.GB2364@akamai.com>
-References: <1432908808-31150-1-git-send-email-emunson@akamai.com>
- <20150601152746.abbbbb9d479c0e2dbdec2aaf@linux-foundation.org>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [RESEND PATCH 3/3] Add tests for lock on fault
+Date: Tue, 02 Jun 2015 09:25:57 -0600
+Message-ID: <556DCB05.1010102@osg.samsung.com>
+References: <1432908808-31150-1-git-send-email-emunson@akamai.com> <1432908808-31150-4-git-send-email-emunson@akamai.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="GRPZ8SYKNexpdSJ7"
-Return-path: <sparclinux-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150601152746.abbbbb9d479c0e2dbdec2aaf@linux-foundation.org>
-Sender: sparclinux-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, Michal Hocko <mhocko@suse.cz>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1432908808-31150-4-git-send-email-emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On 05/29/2015 08:13 AM, Eric B Munson wrote:
+> Test the mmap() flag, the mlockall() flag, and ensure that mlock limits
+> are respected.  Note that the limit test needs to be run a normal user.
+> 
+> Signed-off-by: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+> Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+> Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> ---
+>  tools/testing/selftests/vm/Makefile         |   8 +-
+>  tools/testing/selftests/vm/lock-on-fault.c  | 145 ++++++++++++++++++++++++++++
+>  tools/testing/selftests/vm/on-fault-limit.c |  47 +++++++++
+>  tools/testing/selftests/vm/run_vmtests      |  23 +++++
+>  4 files changed, 222 insertions(+), 1 deletion(-)
+>  create mode 100644 tools/testing/selftests/vm/lock-on-fault.c
+>  create mode 100644 tools/testing/selftests/vm/on-fault-limit.c
+> 
+> diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
+> index a5ce953..32f3d20 100644
+> --- a/tools/testing/selftests/vm/Makefile
+> +++ b/tools/testing/selftests/vm/Makefile
+> @@ -1,7 +1,13 @@
+>  # Makefile for vm selftests
+>  
+>  CFLAGS = -Wall
+> -BINARIES = hugepage-mmap hugepage-shm map_hugetlb thuge-gen hugetlbfstest
+> +BINARIES = hugepage-mmap
+> +BINARIES += hugepage-shm
+> +BINARIES += hugetlbfstest
+> +BINARIES += lock-on-fault
+> +BINARIES += map_hugetlb
+> +BINARIES += on-fault-limit
+> +BINARIES += thuge-gen
+>  BINARIES += transhuge-stress
+>  
+>  all: $(BINARIES)
+> diff --git a/tools/testing/selftests/vm/lock-on-fault.c b/tools/testing/selftests/vm/lock-on-fault.c
+> new file mode 100644
+> index 0000000..e6a9688
 
---GRPZ8SYKNexpdSJ7
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Hi Eric,
 
-On Mon, 01 Jun 2015, Andrew Morton wrote:
+Could you please make sure make kselftest run from kernel main
+Makefile works and tools/testing/selftests/kselftest_install.sh
+works. For now you have to be in tools/testing/selftests to run
+kselftest_install.sh
 
-> On Fri, 29 May 2015 10:13:25 -0400 Eric B Munson <emunson@akamai.com> wro=
-te:
->=20
-> > mlock() allows a user to control page out of program memory, but this
-> > comes at the cost of faulting in the entire mapping when it is
-> > allocated.  For large mappings where the entire area is not necessary
-> > this is not ideal.
-> >=20
-> > This series introduces new flags for mmap() and mlockall() that allow a
-> > user to specify that the covered are should not be paged out, but only
-> > after the memory has been used the first time.
->=20
-> I almost applied these, but the naming issue (below) stopped me.
->=20
-> A few things...
->=20
-> - The 0/n changelog should reveal how MAP_LOCKONFAULT interacts with
->   rlimit(RLIMIT_MEMLOCK).
->=20
->   I see the implementation is "as if the entire mapping will be
->   faulted in" (for mmap) and "as if it was MCL_FUTURE" (for mlockall)
->   which seems fine.  Please include changelog text explaining and
->   justifying these decisions.  This stuff will need to be in the
->   manpage updates as well.
+thanks,
+-- Shuah
 
-Change logs are updated, and this will be included in the man page
-update as well.
 
->=20
-> - I think I already asked "why not just use MCL_FUTURE" but I forget
->   the answer ;) In general it is a good idea to update changelogs in
->   response to reviewer questions, because other people will be
->   wondering the same things.  Or maybe I forgot to ask.  Either way,
->   please address this in the changelogs.
-
-I must have missed that question.  Here is the text from the updated
-mlockall changelog:
-
-MCL_ONFAULT is preferrable to MCL_FUTURE for the use cases enumerated
-in the previous patch becuase MCL_FUTURE will behave as if each mapping
-was made with MAP_LOCKED, causing the entire mapping to be faulted in
-when new space is allocated or mapped.  MCL_ONFAULT allows the user to
-delay the fault in cost of any given page until it is actually needed,
-but then guarantees that that page will always be resident.
-
->=20
-> - I can perhaps see the point in mmap(MAP_LOCKONFAULT) (other
->   mappings don't get lock-in-memory treatment), but what's the benefit
->   in mlockall(MCL_ON_FAULT) over MCL_FUTURE?  (Add to changelog also,
->   please).
->=20
-> - Is there a manpage update?
-
-I will send one out when I post V2
-
->=20
-> - Can we rename patch 1/3 from "add flag to ..." to "add mmap flag to
->   ...", to distinguish from 2/3 "add mlockall flag ..."?
-
-Done
-
->=20
-> - The MAP_LOCKONFAULT versus MCL_ON_FAULT inconsistency is
->   irritating!  Can we get these consistent please: switch to either
->   MAP_LOCK_ON_FAULT or MCL_ONFAULT.
-
-Yes, will do for V2.
-
->=20
-
---GRPZ8SYKNexpdSJ7
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJVbbzQAAoJELbVsDOpoOa9EtAP+wamgfoxHetODtEfMUqzYJgN
-GxcPBHPjo32fPtFoQu+IvDCqI48ySC4Syx0DqjzZJah+Uo8ngxUDQz3U9dTFrZq+
-wv18PEj5CV4ejsEPn6pPuFYpQk/s6UvaexGCXONeHD8Zp20zoPpa4foUMyOvvUnC
-tTA+fUJNsinYLGmzidV/1ebXUZYA2ur8Keur7e/kVqzZUWCkClpEVa7ZWnclral9
-8mcvrgnI0Z7HnXlZzgUzncUt/OpVwp6jH8Cg4l2qGvSN0q4w77LWhac4n+ut7ogZ
-XUIZiem41vBBzWuRjI9TiikFv83wQUPgFrlazWaScEl1Ht5N6HBs20EwHS86sBHe
-cMk6SdwUhhCi7rRsZQPcYq+Re6XKXMZPUhfoMqU09TMIpN0t01XGdkAQehgHoyvY
-N2hI4zuLIiFNYouXQKLwp+a7++tzI7XxfIo67CmdzCEb/Buxalhd+rSOQWF28Sos
-F4vRxeyhzE0CjWPcp9qDt4EIJci1TNwvQpOzT0HbX1PXJEJM44cRZxvLIYq9Almy
-g0rQ2LSYZP1gf9ngo/zh02ghenboKwYAMVOZDbOOjUMvtw5RS97voJ5ZOX+/fK95
-AQAEPZnJICFKmP/yNGtWpKuK3yfeYxDL0mAopbzXe2SGgk9eS6Dgsg0gVI4hyu33
-uQVVmWf17Owqb8CI9gAt
-=Aoeb
------END PGP SIGNATURE-----
-
---GRPZ8SYKNexpdSJ7--
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
