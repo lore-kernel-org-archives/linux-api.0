@@ -1,117 +1,174 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: [CFT][PATCH 11/10] mnt: Avoid unnecessary regressions in
-	fs_fully_visible
-Date: Wed, 03 Jun 2015 16:15:10 -0500
-Message-ID: <87eglseboh.fsf_-_@x220.int.ebiederm.org>
-References: <87pp63jcca.fsf@x220.int.ebiederm.org>
-	<87siaxuvik.fsf@x220.int.ebiederm.org>
-	<87wq004im1.fsf@x220.int.ebiederm.org>
-	<CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>
-	<20150528140839.GD28842@ubuntumail>
-	<87lhg8pwvz.fsf@x220.int.ebiederm.org>
-	<CALCETrXXax28s9kMTQ-zDx0MttQWG4rg2y-oz3bSGiumSL=3sg@mail.gmail.com>
-	<CAOP=4wid+N_80iyPpiVMN96_fuHZZRGtYQ6AOPn-HFBj2H6Vgg@mail.gmail.com>
-	<87fv6gikfn.fsf@x220.int.ebiederm.org>
-	<CALCETrXO21Y7PR=pKqaqJb1YZArNyjAv7Z-J44O53FcfLM_0Tw@mail.gmail.com>
-	<87fv6g80g7.fsf@x220.int.ebiederm.org>
-	<CALCETrVEA0Ug+3aj5rjupqZub-1tPLw+szzbs4kTyEyVvNs7qg@mail.gmail.com>
-	<87k2vkebri.fsf@x220.int.ebiederm.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87k2vkebri.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org> (Eric W. Biederman's
-	message of "Wed, 03 Jun 2015 16:13:21 -0500")
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Subject: [PATCH v2] seccomp: add ptrace options for suspend/resume
+Date: Wed,  3 Jun 2015 16:09:56 -0600
+Message-ID: <1433369396-13360-1-git-send-email-tycho.andersen@canonical.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+This patch is the first step in enabling checkpoint/restore of processes
+with seccomp enabled.
 
-Not allowing programs to clear nosuid, nodev, and noexec on new mounts
-of sysfs or proc will cause lxc and libvirt-lxc to fail to start (a
-regression).  There are no device nodes or executables on sysfs or
-proc today which means clearing these flags is harmless today.
+One of the things CRIU does while dumping tasks is inject code into them
+via ptrace to collect information that is only available to the process
+itself. However, if we are in a seccomp mode where these processes are
+prohibited from making these syscalls, then what CRIU does kills the task.
 
-Instead of failing the fresh mounts of sysfs and proc emit a warning
-when these flags are improprely cleared.  We only reach this point
-because lxc and libvirt-lxc clear flags they mount flags had not
-intended to.
+This patch adds a new ptrace option, PTRACE_O_SUSPEND_SECCOMP, that enables
+a task from the init user namespace which has CAP_SYS_ADMIN and no seccomp
+filters to disable (and re-enable) seccomp filters for another task so that
+they can be successfully dumped (and restored). We restrict the set of
+processes that can disable seccomp through ptrace because although today
+ptrace can be used to bypass seccomp, there is some discussion of closing
+this loophole in the future and we would like this patch to not depend on
+that behavior and be future proofed for when it is removed.
 
-In a couple of kernel releases when lxc and libvirt-lxc have been
-fixed we can start failing fresh mounts proc and sysfs that clear
-nosuid, nodev and noexec.  Userspace clearly means to enforce those
-attributes and historically they have avoided bugs.
+Note that seccomp can be suspended before any filters are actually
+installed; this behavior is useful on criu restore, so that we can suspend
+seccomp, restore the filters, unmap our restore code from the restored
+process' address space, and then resume the task by detaching and have the
+filters resumed as well.
 
-Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+v2 changes:
+
+* require that the tracer have no seccomp filters installed
+* drop TIF_NOTSC manipulation from the patch
+* change from ptrace command to a ptrace option and use this ptrace option
+  as the flag to check. This means that as soon as the tracer
+  detaches/dies, seccomp is re-enabled and as a corrollary that one can not
+  disable seccomp across PTRACE_ATTACHs.
+
+Signed-off-by: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+CC: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+CC: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+CC: Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>
+CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+CC: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/namespace.c | 27 +++++++++++++++++++++++++++
- 1 file changed, 27 insertions(+)
+ include/linux/ptrace.h      |  1 +
+ include/linux/seccomp.h     |  4 ++++
+ include/uapi/linux/ptrace.h |  6 ++++--
+ kernel/ptrace.c             |  6 ++++++
+ kernel/seccomp.c            | 23 +++++++++++++++++++++++
+ 5 files changed, 38 insertions(+), 2 deletions(-)
 
-diff --git a/fs/namespace.c b/fs/namespace.c
-index eccd925c6e82..eaa49b628d28 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -3198,6 +3198,7 @@ static bool fs_fully_visible(struct file_system_type *type, int *new_mnt_flags)
- 		if ((mnt->mnt.mnt_flags & MNT_LOCK_READONLY) &&
- 		    !(new_flags & MNT_READONLY))
- 			continue;
-+#if 0		/* Avoid unnecessary regressions */
- 		if ((mnt->mnt.mnt_flags & MNT_LOCK_NODEV) &&
- 		    !(new_flags & MNT_NODEV))
- 			continue;
-@@ -3207,6 +3208,7 @@ static bool fs_fully_visible(struct file_system_type *type, int *new_mnt_flags)
- 		if ((mnt->mnt.mnt_flags & MNT_LOCK_NOEXEC) &&
- 		    !(new_flags & MNT_NOEXEC))
- 			continue;
+diff --git a/include/linux/ptrace.h b/include/linux/ptrace.h
+index 987a73a..061265f 100644
+--- a/include/linux/ptrace.h
++++ b/include/linux/ptrace.h
+@@ -34,6 +34,7 @@
+ #define PT_TRACE_SECCOMP	PT_EVENT_FLAG(PTRACE_EVENT_SECCOMP)
+ 
+ #define PT_EXITKILL		(PTRACE_O_EXITKILL << PT_OPT_FLAG_SHIFT)
++#define PT_SUSPEND_SECCOMP	(PTRACE_O_SUSPEND_SECCOMP << PT_OPT_FLAG_SHIFT)
+ 
+ /* single stepping state bits (used on ARM and PA-RISC) */
+ #define PT_SINGLESTEP_BIT	31
+diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+index a19ddac..ae3ec52 100644
+--- a/include/linux/seccomp.h
++++ b/include/linux/seccomp.h
+@@ -53,6 +53,10 @@ static inline int seccomp_mode(struct seccomp *s)
+ 	return s->mode;
+ }
+ 
++#ifdef CONFIG_CHECKPOINT_RESTORE
++extern bool may_suspend_seccomp(void);
 +#endif
- 		if ((mnt->mnt.mnt_flags & MNT_LOCK_ATIME) &&
- 		    ((mnt->mnt.mnt_flags & MNT_ATIME_MASK) != (new_flags & MNT_ATIME_MASK)))
- 			continue;
-@@ -3226,10 +3228,35 @@ static bool fs_fully_visible(struct file_system_type *type, int *new_mnt_flags)
- 		}
- 		/* Preserve the locked attributes */
- 		*new_mnt_flags |= mnt->mnt.mnt_flags & (MNT_LOCK_READONLY | \
-+						/* Avoid unnecessary regressions \
- 							MNT_LOCK_NODEV    | \
- 							MNT_LOCK_NOSUID   | \
- 							MNT_LOCK_NOEXEC   | \
-+						 */ \
- 							MNT_LOCK_ATIME);
-+		/* For now, warn about the "harmless" but invalid mnt flags */
-+		{
-+			bool nodev = false, nosuid = false, noexec = false;
-+			if ((mnt->mnt.mnt_flags & MNT_LOCK_NODEV) &&
-+			    !(new_flags & MNT_NODEV))
-+				nodev = true;
-+			if ((mnt->mnt.mnt_flags & MNT_LOCK_NOSUID) &&
-+			    !(new_flags & MNT_NOSUID))
-+				nosuid = true;
-+			if ((mnt->mnt.mnt_flags & MNT_LOCK_NOEXEC) &&
-+			    !(new_flags & MNT_NOEXEC))
-+				noexec = true;
 +
-+			if ((nodev || nosuid || noexec) && printk_ratelimit()) {
-+				printk(KERN_INFO
-+				       "warning: process `%s' clears %s%s%sin mount of %s\n",
-+				       current->comm,
-+				       nodev ? "nodev ":"",
-+				       nosuid ? "nosuid ":"",
-+				       noexec ? "noexec ":"",
-+				       type->name);
-+			}
-+		}
- 		visible = true;
- 		goto found;
- 	next:	;
+ #else /* CONFIG_SECCOMP */
+ 
+ #include <linux/errno.h>
+diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
+index cf1019e..a7a6979 100644
+--- a/include/uapi/linux/ptrace.h
++++ b/include/uapi/linux/ptrace.h
+@@ -89,9 +89,11 @@ struct ptrace_peeksiginfo_args {
+ #define PTRACE_O_TRACESECCOMP	(1 << PTRACE_EVENT_SECCOMP)
+ 
+ /* eventless options */
+-#define PTRACE_O_EXITKILL	(1 << 20)
++#define PTRACE_O_EXITKILL		(1 << 20)
++#define PTRACE_O_SUSPEND_SECCOMP	(1 << 21)
+ 
+-#define PTRACE_O_MASK		(0x000000ff | PTRACE_O_EXITKILL)
++#define PTRACE_O_MASK		(\
++	0x000000ff | PTRACE_O_EXITKILL | PTRACE_O_SUSPEND_SECCOMP)
+ 
+ #include <asm/ptrace.h>
+ 
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index c8e0e05..e3e68a2 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -15,6 +15,7 @@
+ #include <linux/highmem.h>
+ #include <linux/pagemap.h>
+ #include <linux/ptrace.h>
++#include <linux/seccomp.h>
+ #include <linux/security.h>
+ #include <linux/signal.h>
+ #include <linux/uio.h>
+@@ -556,6 +557,11 @@ static int ptrace_setoptions(struct task_struct *child, unsigned long data)
+ 	if (data & ~(unsigned long)PTRACE_O_MASK)
+ 		return -EINVAL;
+ 
++#ifdef CONFIG_CHECKPOINT_RESTORE
++	if (data & PTRACE_O_SUSPEND_SECCOMP && !may_suspend_seccomp())
++		return -EPERM;
++#endif
++
+ 	/* Avoid intermediate state when all opts are cleared */
+ 	flags = child->ptrace;
+ 	flags &= ~(PTRACE_O_MASK << PT_OPT_FLAG_SHIFT);
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index 980fd26..2a1bd35 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -590,6 +590,11 @@ void secure_computing_strict(int this_syscall)
+ {
+ 	int mode = current->seccomp.mode;
+ 
++#ifdef CONFIG_CHECKPOINT_RESTORE
++	if (unlikely(current->ptrace & PT_SUSPEND_SECCOMP))
++		return;
++#endif
++
+ 	if (mode == 0)
+ 		return;
+ 	else if (mode == SECCOMP_MODE_STRICT)
+@@ -691,6 +696,11 @@ u32 seccomp_phase1(struct seccomp_data *sd)
+ 	int this_syscall = sd ? sd->nr :
+ 		syscall_get_nr(current, task_pt_regs(current));
+ 
++#ifdef CONFIG_CHECKPOINT_RESTORE
++	if (unlikely(current->ptrace & PT_SUSPEND_SECCOMP))
++		return SECCOMP_PHASE1_OK;
++#endif
++
+ 	switch (mode) {
+ 	case SECCOMP_MODE_STRICT:
+ 		__secure_computing_strict(this_syscall);  /* may call do_exit */
+@@ -901,3 +911,16 @@ long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
+ 	/* prctl interface doesn't have flags, so they are always zero. */
+ 	return do_seccomp(op, 0, uargs);
+ }
++
++#ifdef CONFIG_CHECKPOINT_RESTORE
++bool may_suspend_seccomp(void)
++{
++	if (!capable(CAP_SYS_ADMIN))
++		return false;
++
++	if (current->seccomp.mode != SECCOMP_MODE_DISABLED)
++		return false;
++
++	return true;
++}
++#endif /* CONFIG_CHECKPOINT_RESTORE */
 -- 
-2.2.1
+2.1.4
