@@ -1,32 +1,31 @@
 From: tip-bot for Ingo Molnar <tipbot@zytor.com>
-Subject: [tip:core/documentation] Documentation/features/time:
-  Add feature description and arch support status file for '
- arch-tick-broadcast'
-Date: Wed, 3 Jun 2015 04:15:31 -0700
-Message-ID: <tip-6a6787724dc21925f6d289c9a019ed6026db5183@git.kernel.org>
-Reply-To: torvalds@linux-foundation.org, mingo@kernel.org,
-	  tglx@linutronix.de, corbet@lwn.net, linux-arch@vger.kernel.org,
-	  peterz@infradead.org, hpa@zytor.com, akpm@linux-foundation.org,
-	  josh@joshtriplett.org, linux-api@vger.kernel.org,
-	  linux-kernel@vger.kernel.org
+Subject: [tip:core/documentation] Documentation/features/debug:
+  Add feature description and arch support status file for 'kprobes'
+Date: Wed, 3 Jun 2015 04:15:49 -0700
+Message-ID: <tip-fd7d6cee93aae351b671621ad9024a8f09214284@git.kernel.org>
+Reply-To: josh@joshtriplett.org, linux-arch@vger.kernel.org,
+	  linux-kernel@vger.kernel.org, tglx@linutronix.de,
+	  peterz@infradead.org, hpa@zytor.com, corbet@lwn.net,
+	  akpm@linux-foundation.org, linux-api@vger.kernel.org,
+	  mingo@kernel.org, torvalds@linux-foundation.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-arch-owner@vger.kernel.org
 To: linux-tip-commits@vger.kernel.org
-Cc: akpm@linux-foundation.org, hpa@zytor.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, josh@joshtriplett.org, mingo@kernel.org, torvalds@linux-foundation.org, peterz@infradead.org, linux-arch@vger.kernel.org, corbet@lwn.net, tglx@linutronix.de
+Cc: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, josh@joshtriplett.org, tglx@linutronix.de, peterz@infradead.org, hpa@zytor.com, corbet@lwn.net, linux-api@vger.kernel.org, akpm@linux-foundation.org, torvalds@linux-foundation.org, mingo@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Commit-ID:  6a6787724dc21925f6d289c9a019ed6026db5183
-Gitweb:     http://git.kernel.org/tip/6a6787724dc21925f6d289c9a019ed6026db5183
+Commit-ID:  fd7d6cee93aae351b671621ad9024a8f09214284
+Gitweb:     http://git.kernel.org/tip/fd7d6cee93aae351b671621ad9024a8f09214284
 Author:     Ingo Molnar <mingo@kernel.org>
-AuthorDate: Wed, 3 Jun 2015 12:37:26 +0200
+AuthorDate: Wed, 3 Jun 2015 12:37:27 +0200
 Committer:  Ingo Molnar <mingo@kernel.org>
 CommitDate: Wed, 3 Jun 2015 12:51:39 +0200
 
-Documentation/features/time: Add feature description and arch support status file for 'arch-tick-broadcast'
+Documentation/features/debug: Add feature description and arch support status file for 'kprobes'
 
 Cc: <linux-api@vger.kernel.org>
 Cc: <linux-arch@vger.kernel.org>
@@ -40,41 +39,60 @@ Cc: Peter Zijlstra <peterz@infradead.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Ingo Molnar <mingo@kernel.org>
 ---
- .../arch-tick-broadcast}/arch-support.txt                      | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ .../ioremap_prot => debug/kprobes}/arch-support.txt    | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
 
-diff --git a/Documentation/features/io/dma-contiguous/arch-support.txt b/Documentation/features/time/arch-tick-broadcast/arch-support.txt
-similarity index 80%
-copy from Documentation/features/io/dma-contiguous/arch-support.txt
-copy to Documentation/features/time/arch-tick-broadcast/arch-support.txt
-index a97e8e3..8acb439 100644
---- a/Documentation/features/io/dma-contiguous/arch-support.txt
-+++ b/Documentation/features/time/arch-tick-broadcast/arch-support.txt
-@@ -1,7 +1,7 @@
+diff --git a/Documentation/features/vm/ioremap_prot/arch-support.txt b/Documentation/features/debug/kprobes/arch-support.txt
+similarity index 72%
+copy from Documentation/features/vm/ioremap_prot/arch-support.txt
+copy to Documentation/features/debug/kprobes/arch-support.txt
+index 90c5374..a44bfff 100644
+--- a/Documentation/features/vm/ioremap_prot/arch-support.txt
++++ b/Documentation/features/debug/kprobes/arch-support.txt
+@@ -1,37 +1,37 @@
  #
--# Feature name:          dma-contiguous
--#         Kconfig:       HAVE_DMA_CONTIGUOUS
--#         description:   arch supports the DMA CMA (continuous memory allocator)
-+# Feature name:          arch-tick-broadcast
-+#         Kconfig:       ARCH_HAS_TICK_BROADCAST
-+#         description:   arch provides tick_broadcast()
+-# Feature name:          ioremap_prot
+-#         Kconfig:       HAVE_IOREMAP_PROT
+-#         description:   arch has ioremap_prot()
++# Feature name:          kprobes
++#         Kconfig:       HAVE_KPROBES
++#         description:   arch supports live patched kernel probe
  #
      -----------------------
      |         arch |status|
-@@ -27,7 +27,7 @@
+     -----------------------
+     |       alpha: | TODO |
+     |         arc: |  ok  |
+-    |         arm: | TODO |
++    |         arm: |  ok  |
+     |       arm64: | TODO |
+-    |       avr32: | TODO |
++    |       avr32: |  ok  |
+     |    blackfin: | TODO |
+     |         c6x: | TODO |
+     |        cris: | TODO |
+     |         frv: | TODO |
+     |       h8300: | TODO |
+     |     hexagon: | TODO |
+-    |        ia64: | TODO |
++    |        ia64: |  ok  |
+     |        m32r: | TODO |
+     |        m68k: | TODO |
+     |       metag: | TODO |
+     |  microblaze: | TODO |
+-    |        mips: | TODO |
++    |        mips: |  ok  |
+     |     mn10300: | TODO |
      |       nios2: | TODO |
      |    openrisc: | TODO |
      |      parisc: | TODO |
--    |     powerpc: | TODO |
-+    |     powerpc: |  ok  |
-     |        s390: | TODO |
+     |     powerpc: |  ok  |
+-    |        s390: | TODO |
++    |        s390: |  ok  |
      |       score: | TODO |
-     |          sh: | TODO |
-@@ -35,6 +35,6 @@
-     |        tile: | TODO |
+     |          sh: |  ok  |
+-    |       sparc: | TODO |
++    |       sparc: |  ok  |
+     |        tile: |  ok  |
      |          um: | TODO |
      |   unicore32: | TODO |
--    |         x86: |  ok  |
-+    |         x86: | TODO |
-     |      xtensa: | TODO |
-     -----------------------
