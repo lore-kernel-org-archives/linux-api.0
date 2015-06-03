@@ -1,72 +1,54 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH] seccomp: add ptrace commands for suspend/resume
-Date: Wed, 3 Jun 2015 10:11:43 -0700
-Message-ID: <CALCETrWq12bmire=XwaPCtiJs3-80McaZJzyVt3U5dTHge8LxQ@mail.gmail.com>
-References: <1433186918-9626-1-git-send-email-tycho.andersen@canonical.com>
- <20150602182829.GA23449@redhat.com> <20150603144303.GC3160@smitten> <20150603164121.GA19189@redhat.com>
+From: Emil Velikov <emil.l.velikov@gmail.com>
+Subject: Re: [PATCH 09/98] via_drm.h: include linux/types.h instead of
+ non-existing via_drmclient.h
+Date: Wed, 3 Jun 2015 18:16:41 +0100
+Message-ID: <CACvgo52DtJNLGPT2j93kFUZcS_1fDdE8RQHWmHUrMQgbfx88dw@mail.gmail.com>
+References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
+ <1433000370-19509-10-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150603164121.GA19189@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: Tycho Andersen <tycho.andersen@canonical.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Will Drewry <wad@chromium.org>, Roland McGrath <roland@hack.frob.com>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <1433000370-19509-10-git-send-email-mikko.rapeli@iki.fi>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Mikko Rapeli <mikko.rapeli@iki.fi>
+Cc: linux-api@vger.kernel.org, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel@vger.kernel.org>, ML dri-devel <dri-devel@lists.freedesktop.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jun 3, 2015 at 9:41 AM, Oleg Nesterov <oleg@redhat.com> wrote:
-> On 06/03, Tycho Andersen wrote:
->>
->> On Tue, Jun 02, 2015 at 08:28:29PM +0200, Oleg Nesterov wrote:
->> > On 06/01, Tycho Andersen wrote:
->> > >
->> > > --- a/include/linux/seccomp.h
->> > > +++ b/include/linux/seccomp.h
->> > > @@ -25,6 +25,9 @@ struct seccomp_filter;
->> > >  struct seccomp {
->> > >   int mode;
->> > >   struct seccomp_filter *filter;
->> > > +#ifdef CONFIG_CHECKPOINT_RESTORE
->> > > + bool suspended;
->> > > +#endif
->> >
->> > Then afaics you need to change copy_seccomp() to clear ->suspended.
->> > At least if the child is not traced.
->>
->> Yes, thank you.
->
-> And if we really need to play with TIF_NOTSC, then copy_seccomp() should
-> set it too if SUSPEND has cleared in parent's flags.
->
->> > But why do we bother to play with TIF_NOTSC, could you explain?
->>
->> The procedure for restoring is to call seccomp suspend, restore the
->> seccomp filters (and potentially other stuff), and then resume them at
->> the end. If the other stuff happens to use RDTSC, the process gets
->> killed because TIF_NOTSC has been set.
->
-> This is clear, just I thought that CRIU doesn't use rdtsc on behalf of
-> the traced task...
->
->> We can work around this in criu by doing the seccomp restore as the
->> very last thing before the final sigreturn,
->
-> Not sure I understand... You need to suspend at "dump" time too afaics,
-> otherwise, say, syscall_seized() can fail because this syscall is nacked
-> by seccomp?
->
->> but that seems like the
->> seccomp suspend API is incomplete, IMO. However, since both you and
->> Andy complained, perhaps I should remove it :)
->
-> Well, this is up to you ;)
->
-> But. Note that a process can also disable TSC via PR_SET_TSC. So if
-> dump or restore can't work without enabling TSC you probably want to
-> handle this case too.
->
-> And this makes me think that this needs a separate interface. I dunno.
->
-
-True.  Or we could keep track of all the reasons the TSC is off.
-
---Andy
+SGkgTWlra28sCgpPbiAzMCBNYXkgMjAxNSBhdCAxNjozOCwgTWlra28gUmFwZWxpIDxtaWtrby5y
+YXBlbGlAaWtpLmZpPiB3cm90ZToKPiBGaXhlcyBjb21waWxlciBlcnJvcjoKPgo+IGRybS92aWFf
+ZHJtLmg6MzY6Mjc6IGZhdGFsIGVycm9yOiB2aWFfZHJtY2xpZW50Lmg6IE5vIHN1Y2ggZmlsZSBv
+ciBkaXJlY3RvcnkKPgo+IFNpZ25lZC1vZmYtYnk6IE1pa2tvIFJhcGVsaSA8bWlra28ucmFwZWxp
+QGlraS5maT4KPiAtLS0KPiAgaW5jbHVkZS91YXBpL2RybS92aWFfZHJtLmggfCA0ICstLS0KPiAg
+MSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCspLCAzIGRlbGV0aW9ucygtKQo+Cj4gZGlmZiAt
+LWdpdCBhL2luY2x1ZGUvdWFwaS9kcm0vdmlhX2RybS5oIGIvaW5jbHVkZS91YXBpL2RybS92aWFf
+ZHJtLmgKPiBpbmRleCA4YjA1MzNjLi43OTE1MzFlIDEwMDY0NAo+IC0tLSBhL2luY2x1ZGUvdWFw
+aS9kcm0vdmlhX2RybS5oCj4gKysrIGIvaW5jbHVkZS91YXBpL2RybS92aWFfZHJtLmgKPiBAQCAt
+MjQsNiArMjQsNyBAQAo+ICAjaWZuZGVmIF9WSUFfRFJNX0hfCj4gICNkZWZpbmUgX1ZJQV9EUk1f
+SF8KPgo+ICsjaW5jbHVkZSA8bGludXgvdHlwZXMuaD4KQXMgbWVudGlvbmVkIGVsc2V3aGVyZSBv
+bmUgY291bGQgYXZvaWQgdGhpcywgYW5kIGp1c3QgdXNlIGRybS5oIHRvCm1hbmFnZSB0aGUgYXBw
+cm9hcHJpYXRlIHR5cGVzICh1aW50MzJfdCB2cyBfX3UzMiBhbmQgc28gb24pLgoKPiAgI2luY2x1
+ZGUgPGRybS9kcm0uaD4KPgo+ICAvKiBXQVJOSU5HOiBUaGVzZSBkZWZpbmVzIG11c3QgYmUgdGhl
+IHNhbWUgYXMgd2hhdCB0aGUgWHNlcnZlciB1c2VzLgo+IEBAIC0zMyw5ICszNCw2IEBACj4gICNp
+Zm5kZWYgX1ZJQV9ERUZJTkVTXwo+ICAjZGVmaW5lIF9WSUFfREVGSU5FU18KPgo+IC0jaWZuZGVm
+IF9fS0VSTkVMX18KPiAtI2luY2x1ZGUgInZpYV9kcm1jbGllbnQuaCIKPiAtI2VuZGlmCj4KSSBm
+ZWFyIHRoYXQgdGhpcyBvbmUgaXMgYSBwYXJ0aWN1bGFyIGV4YW1wbGUgb2YgYSBuYXN0eSBsZWdh
+Y3kgZnJvbQp0aGUgVU1TIGRheXMuIFRoZSBmaWxlIGlzIGF2YWlsYWJsZS9wcm92aWRlZCBpbiB2
+ZXJ5IG9sZCBtZXNhIHZlcnNpb25zCmFuZCBhdCB0aGUgdmVyeSBzYW1lIHRpbWUgbWVzYSByZXF1
+aXJlcyB2aWFfZHJtLmguIFNvIEkgd291bGQga2luZGx5CmFzayB0aGF0IHlvdToKCiAtIEdyYWIg
+dGhlIGxpYmRybSB1c2Vyc3BhY2UgcGFja2FnZSwgYW5kIGFwcGx5IGEgc2ltaWxhciBjaGFuZ2Uu
+CiAtIFJlYnVpbGQvaW5zdGFsbCB0aGUgYWJvdmUuCiAtIEZldGNoIG1lc2EgNy4xMSwgYW5kIHRy
+eSBidWlsZGluZyB0aGUgdmlhIGRyaSBtb2R1bGUuIElkZWFsbHkKdGhpbmdzIHdpbGwgY29udGlu
+dWUgdG8gYnVpbGQsIGFsdGVybmF0aXZlbHkgd2UgbWlnaHQgbmVlZCB0byBhZGQKYW5vdGhlci9h
+ZGRpdGlvbmFsIGd1YXJkIGZvciB0aGlzIGluY2x1ZGUuCgpUaGFua3MKRW1pbApfX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpkcmktZGV2ZWwgbWFpbGluZyBs
+aXN0CmRyaS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNr
+dG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
