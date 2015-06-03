@@ -1,13 +1,14 @@
 From: tip-bot for Ingo Molnar <tipbot-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Subject: [tip:core/documentation] Documentation/features/debug:
-  Add feature description and arch support status file for 'uprobes'
-Date: Wed, 3 Jun 2015 04:16:48 -0700
-Message-ID: <tip-138943ea3aa2b69960250c218637468bb157f49c@git.kernel.org>
-Reply-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	  corbet-T1hC0tSOHrs@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	  mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org,
-	  tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org,
-	  akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org
+Subject: [tip:core/documentation] Documentation/features/time:
+  Add feature description and arch support status file for '
+ modern-timekeeping'
+Date: Wed, 3 Jun 2015 04:09:40 -0700
+Message-ID: <tip-44121b9ed0384088a6899cfb2ca4ede1428d412f@git.kernel.org>
+Reply-To: peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org,
+	  linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+	  corbet-T1hC0tSOHrs@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+	  torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org,
+	  tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -15,17 +16,17 @@ Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-tip-commits-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Cc: josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Commit-ID:  138943ea3aa2b69960250c218637468bb157f49c
-Gitweb:     http://git.kernel.org/tip/138943ea3aa2b69960250c218637468bb157f49c
+Commit-ID:  44121b9ed0384088a6899cfb2ca4ede1428d412f
+Gitweb:     http://git.kernel.org/tip/44121b9ed0384088a6899cfb2ca4ede1428d412f
 Author:     Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-AuthorDate: Wed, 3 Jun 2015 12:37:31 +0200
+AuthorDate: Wed, 3 Jun 2015 12:37:04 +0200
 Committer:  Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-CommitDate: Wed, 3 Jun 2015 12:51:40 +0200
+CommitDate: Wed, 3 Jun 2015 12:51:34 +0200
 
-Documentation/features/debug: Add feature description and arch support status file for 'uprobes'
+Documentation/features/time: Add feature description and arch support status file for 'modern-timekeeping'
 
 Cc: <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Cc: <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -39,42 +40,52 @@ Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
 Signed-off-by: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 ---
- .../features/{vm/ELF-ASLR => debug/uprobes}/arch-support.txt   | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ .../time/modern-timekeeping/arch-support.txt       | 40 ++++++++++++++++++++++
+ 1 file changed, 40 insertions(+)
 
-diff --git a/Documentation/features/vm/ELF-ASLR/arch-support.txt b/Documentation/features/debug/uprobes/arch-support.txt
-similarity index 80%
-copy from Documentation/features/vm/ELF-ASLR/arch-support.txt
-copy to Documentation/features/debug/uprobes/arch-support.txt
-index ec4dd28..4efe36c 100644
---- a/Documentation/features/vm/ELF-ASLR/arch-support.txt
-+++ b/Documentation/features/debug/uprobes/arch-support.txt
-@@ -1,7 +1,7 @@
- #
--# Feature name:          ELF-ASLR
--#         Kconfig:       ARCH_HAS_ELF_RANDOMIZE
--#         description:   arch randomizes the stack, heap and binary images of ELF binaries
-+# Feature name:          uprobes
-+#         Kconfig:       ARCH_SUPPORTS_UPROBES
-+#         description:   arch supports live patched user probes
- #
-     -----------------------
-     |         arch |status|
-@@ -9,7 +9,7 @@
-     |       alpha: | TODO |
-     |         arc: | TODO |
-     |         arm: |  ok  |
--    |       arm64: |  ok  |
-+    |       arm64: | TODO |
-     |       avr32: | TODO |
-     |    blackfin: | TODO |
-     |         c6x: | TODO |
-@@ -22,7 +22,7 @@
-     |        m68k: | TODO |
-     |       metag: | TODO |
-     |  microblaze: | TODO |
--    |        mips: |  ok  |
-+    |        mips: | TODO |
-     |     mn10300: | TODO |
-     |       nios2: | TODO |
-     |    openrisc: | TODO |
+diff --git a/Documentation/features/time/modern-timekeeping/arch-support.txt b/Documentation/features/time/modern-timekeeping/arch-support.txt
+new file mode 100644
+index 0000000..17f68a0
+--- /dev/null
++++ b/Documentation/features/time/modern-timekeeping/arch-support.txt
+@@ -0,0 +1,40 @@
++#
++# Feature name:          modern-timekeeping
++#         Kconfig:       !ARCH_USES_GETTIMEOFFSET
++#         description:   arch does not use arch_gettimeoffset() anymore
++#
++    -----------------------
++    |         arch |status|
++    -----------------------
++    |       alpha: |  ok  |
++    |         arc: |  ok  |
++    |         arm: | TODO |
++    |       arm64: |  ok  |
++    |       avr32: |  ok  |
++    |    blackfin: | TODO |
++    |         c6x: |  ok  |
++    |        cris: | TODO |
++    |         frv: |  ok  |
++    |       h8300: |  ok  |
++    |     hexagon: |  ok  |
++    |        ia64: |  ok  |
++    |        m32r: | TODO |
++    |        m68k: | TODO |
++    |       metag: |  ok  |
++    |  microblaze: |  ok  |
++    |        mips: |  ok  |
++    |     mn10300: |  ok  |
++    |       nios2: |  ok  |
++    |    openrisc: |  ok  |
++    |      parisc: |  ok  |
++    |     powerpc: |  ok  |
++    |        s390: |  ok  |
++    |       score: |  ok  |
++    |          sh: |  ok  |
++    |       sparc: |  ok  |
++    |        tile: |  ok  |
++    |          um: |  ok  |
++    |   unicore32: |  ok  |
++    |         x86: |  ok  |
++    |      xtensa: |  ok  |
++    -----------------------
