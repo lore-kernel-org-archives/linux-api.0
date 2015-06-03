@@ -1,58 +1,67 @@
-From: Emil Velikov <emil.l.velikov@gmail.com>
-Subject: Re: [PATCH 03/98] drm.h: use __kernel_size_t instead of size_t
-Date: Wed, 3 Jun 2015 18:19:48 +0100
-Message-ID: <CACvgo50OLHbvk4scG+pSOW53gR8Ze=yrD4GvbmdE=YRgALjdow@mail.gmail.com>
-References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
- <1433000370-19509-4-git-send-email-mikko.rapeli@iki.fi>
+From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Subject: Re: [PATCH] seccomp: add ptrace commands for suspend/resume
+Date: Wed, 3 Jun 2015 12:36:00 -0600
+Message-ID: <20150603183600.GH3337@hopstrocity>
+References: <1433186918-9626-1-git-send-email-tycho.andersen@canonical.com>
+ <CANaxB-zacYuo21jLVZyEfyf=UdDnTjYvHdgNpfL+c_DXWRz-eg@mail.gmail.com>
+ <20150602130506.GA1823@hopstrocity>
+ <20150602184848.GA24907@redhat.com>
+ <20150603161321.GD3337@hopstrocity>
+ <20150603165451.GA20911@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <1433000370-19509-4-git-send-email-mikko.rapeli@iki.fi>
-List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Mikko Rapeli <mikko.rapeli@iki.fi>
-Cc: linux-api@vger.kernel.org, "Linux-Kernel@Vger. Kernel. Org" <linux-kernel@vger.kernel.org>, ML dri-devel <dri-devel@lists.freedesktop.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150603165451.GA20911-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Andrey Wagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gMzAgTWF5IDIwMTUgYXQgMTY6MzcsIE1pa2tvIFJhcGVsaSA8bWlra28ucmFwZWxpQGlraS5m
-aT4gd3JvdGU6Cj4gRml4ZXMgdXNlcnNwYWNlIGNvbXBpbGF0aW9uIGVycm9yOgo+Cj4gZHJtL2Ry
-bS5oOjEzMjoyOiBlcnJvcjogdW5rbm93biB0eXBlIG5hbWUg4oCYc2l6ZV904oCZCj4KPiBTaWdu
-ZWQtb2ZmLWJ5OiBNaWtrbyBSYXBlbGkgPG1pa2tvLnJhcGVsaUBpa2kuZmk+Cj4gLS0tCj4gIGlu
-Y2x1ZGUvdWFwaS9kcm0vZHJtLmggfCA4ICsrKystLS0tCj4gIDEgZmlsZSBjaGFuZ2VkLCA0IGlu
-c2VydGlvbnMoKyksIDQgZGVsZXRpb25zKC0pCj4KPiBkaWZmIC0tZ2l0IGEvaW5jbHVkZS91YXBp
-L2RybS9kcm0uaCBiL2luY2x1ZGUvdWFwaS9kcm0vZHJtLmgKPiBpbmRleCBmZjZlZjYyLi5iMTk3
-NjUwIDEwMDY0NAo+IC0tLSBhL2luY2x1ZGUvdWFwaS9kcm0vZHJtLmgKPiArKysgYi9pbmNsdWRl
-L3VhcGkvZHJtL2RybS5oCj4gQEAgLTEyOSwxMSArMTI5LDExIEBAIHN0cnVjdCBkcm1fdmVyc2lv
-biB7Cj4gICAgICAgICBpbnQgdmVyc2lvbl9tYWpvcjsgICAgICAgIC8qKjwgTWFqb3IgdmVyc2lv
-biAqLwo+ICAgICAgICAgaW50IHZlcnNpb25fbWlub3I7ICAgICAgICAvKio8IE1pbm9yIHZlcnNp
-b24gKi8KPiAgICAgICAgIGludCB2ZXJzaW9uX3BhdGNobGV2ZWw7ICAgLyoqPCBQYXRjaCBsZXZl
-bCAqLwo+IC0gICAgICAgc2l6ZV90IG5hbWVfbGVuOyAgICAgICAgICAvKio8IExlbmd0aCBvZiBu
-YW1lIGJ1ZmZlciAqLwo+ICsgICAgICAgX19rZXJuZWxfc2l6ZV90IG5hbWVfbGVuOyAgICAgICAg
-IC8qKjwgTGVuZ3RoIG9mIG5hbWUgYnVmZmVyICovCj4gICAgICAgICBjaGFyIF9fdXNlciAqbmFt
-ZTsgICAgICAgIC8qKjwgTmFtZSBvZiBkcml2ZXIgKi8KPiAtICAgICAgIHNpemVfdCBkYXRlX2xl
-bjsgICAgICAgICAgLyoqPCBMZW5ndGggb2YgZGF0ZSBidWZmZXIgKi8KPiArICAgICAgIF9fa2Vy
-bmVsX3NpemVfdCBkYXRlX2xlbjsgICAgICAgICAvKio8IExlbmd0aCBvZiBkYXRlIGJ1ZmZlciAq
-Lwo+ICAgICAgICAgY2hhciBfX3VzZXIgKmRhdGU7ICAgICAgICAvKio8IFVzZXItc3BhY2UgYnVm
-ZmVyIHRvIGhvbGQgZGF0ZSAqLwo+IC0gICAgICAgc2l6ZV90IGRlc2NfbGVuOyAgICAgICAgICAv
-Kio8IExlbmd0aCBvZiBkZXNjIGJ1ZmZlciAqLwo+ICsgICAgICAgX19rZXJuZWxfc2l6ZV90IGRl
-c2NfbGVuOyAgICAgICAgIC8qKjwgTGVuZ3RoIG9mIGRlc2MgYnVmZmVyICovCj4gICAgICAgICBj
-aGFyIF9fdXNlciAqZGVzYzsgICAgICAgIC8qKjwgVXNlci1zcGFjZSBidWZmZXIgdG8gaG9sZCBk
-ZXNjICovCj4gIH07Cj4KPiBAQCAtMTQzLDcgKzE0Myw3IEBAIHN0cnVjdCBkcm1fdmVyc2lvbiB7
-Cj4gICAqIFxzYSBkcm1HZXRCdXNpZCgpIGFuZCBkcm1TZXRCdXNJZCgpLgo+ICAgKi8KPiAgc3Ry
-dWN0IGRybV91bmlxdWUgewo+IC0gICAgICAgc2l6ZV90IHVuaXF1ZV9sZW47ICAgICAgICAvKio8
-IExlbmd0aCBvZiB1bmlxdWUgKi8KPiArICAgICAgIF9fa2VybmVsX3NpemVfdCB1bmlxdWVfbGVu
-OyAgICAgICAvKio8IExlbmd0aCBvZiB1bmlxdWUgKi8KQXMgdGhlIGZpbGUgaXMgdXNlZCBieSBv
-dGhlciBwbGF0Zm9ybXMgdGhhbiBMaW51eCB0aGlzIGNoYW5nZSB3aWxsCmJyZWFrIHRoZW0uIENh
-biB5b3UgYWRkIGEgdHlwZWRlZiBzaW1pbGFyIHRvIGhvdyBfX3U4IGFuZCBmcmllbmRzIGFyZQpo
-YW5kbGVkIGF0IHRoZSB0b3Agb2YgdGhlIGZpbGUuCgpUaGFua3MKRW1pbApfX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpkcmktZGV2ZWwgbWFpbGluZyBsaXN0
-CmRyaS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cDovL2xpc3RzLmZyZWVkZXNrdG9w
-Lm9yZy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
+On Wed, Jun 03, 2015 at 06:54:51PM +0200, Oleg Nesterov wrote:
+> On 06/03, Tycho Andersen wrote:
+> >
+> > On Tue, Jun 02, 2015 at 08:48:48PM +0200, Oleg Nesterov wrote:
+> >
+> > > Otherwise, if we use PTRACE_O_ instead, it goes away automatically if
+> > > the tracer dies or does PTRACE_DETACH.
+> >
+> > IIRC the flag goes away, but we still have to do something in
+> > __ptrace_unlink to clear the seccomp suspended, so I'm not sure if the
+> > automatic-ness helps us.
+> 
+> But we do not need seccomp->suspended at all?
+> 
+> Unless I missed something PTRACE_O_ needs a one-liner patch (ignoring
+> the defines in include files),
+> 
+> --- x/kernel/seccomp.c
+> +++ x/kernel/seccomp.c
+> @@ -692,6 +692,9 @@ u32 seccomp_phase1(struct seccomp_data *
+>  	int this_syscall = sd ? sd->nr :
+>  		syscall_get_nr(current, task_pt_regs(current));
+>  
+> +	if (unlikely(current->ptrace & PT_NAME_OF_THIS_OPTION))
+> +		return OK;
+> +
+>  	switch (mode) {
+>  	case SECCOMP_MODE_STRICT:
+>  		__secure_computing_strict(this_syscall);  /* may call do_exit */
+> 	
+> 
+> OK, and the same check in secure_computing_strict().
+> 
+> No?
+
+One problem with this is that we still incur the runtime overhead of
+checking, which I guess is a question of ptrace vs. seccomp
+complexity.
+
+Andy had suggested multiplexing seccomp->suspended into seccomp->mode
+directly to avoid this, but the above still requires a check. We could
+play with TIF_SECCOMP, but that has the same problems as playing with
+TIF_NOTSC.
+
+Thoughts?
+
+Tycho
