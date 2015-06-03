@@ -1,97 +1,48 @@
-From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] seccomp: add ptrace commands for suspend/resume
-Date: Wed, 3 Jun 2015 18:41:21 +0200
-Message-ID: <20150603164121.GA19189@redhat.com>
-References: <1433186918-9626-1-git-send-email-tycho.andersen@canonical.com> <20150602182829.GA23449@redhat.com> <20150603144303.GC3160@smitten>
+From: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 10/98] via_drm.h: hide struct via_file_private in userspace
+Date: Wed, 3 Jun 2015 17:50:22 +0100
+Message-ID: <CACvgo52HDRuaQ+1qXg6O9ikhwNFSRCgopv6aAbujywOG+msmYQ@mail.gmail.com>
+References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
+	<1433000370-19509-11-git-send-email-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150603144303.GC3160@smitten>
+In-Reply-To: <1433000370-19509-11-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Cc: "Linux-Kernel@Vger. Kernel. Org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ML dri-devel <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 06/03, Tycho Andersen wrote:
+Hi Mikko,
+
+On 30 May 2015 at 16:38, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wrote:
+> Fixes compiler error since list_head is not exported to userspace headers.
 >
-> On Tue, Jun 02, 2015 at 08:28:29PM +0200, Oleg Nesterov wrote:
-> > On 06/01, Tycho Andersen wrote:
-> > >
-> > > --- a/include/linux/seccomp.h
-> > > +++ b/include/linux/seccomp.h
-> > > @@ -25,6 +25,9 @@ struct seccomp_filter;
-> > >  struct seccomp {
-> > >  	int mode;
-> > >  	struct seccomp_filter *filter;
-> > > +#ifdef CONFIG_CHECKPOINT_RESTORE
-> > > +	bool suspended;
-> > > +#endif
-> >
-> > Then afaics you need to change copy_seccomp() to clear ->suspended.
-> > At least if the child is not traced.
+> Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+> ---
+>  include/uapi/drm/via_drm.h | 2 ++
+>  1 file changed, 2 insertions(+)
 >
-> Yes, thank you.
-
-And if we really need to play with TIF_NOTSC, then copy_seccomp() should
-set it too if SUSPEND has cleared in parent's flags.
-
-> > But why do we bother to play with TIF_NOTSC, could you explain?
+> diff --git a/include/uapi/drm/via_drm.h b/include/uapi/drm/via_drm.h
+> index 791531e..34ce658 100644
+> --- a/include/uapi/drm/via_drm.h
+> +++ b/include/uapi/drm/via_drm.h
+> @@ -272,8 +272,10 @@ typedef struct drm_via_dmablit {
+>         drm_via_blitsync_t sync;
+>  } drm_via_dmablit_t;
 >
-> The procedure for restoring is to call seccomp suspend, restore the
-> seccomp filters (and potentially other stuff), and then resume them at
-> the end. If the other stuff happens to use RDTSC, the process gets
-> killed because TIF_NOTSC has been set.
-
-This is clear, just I thought that CRIU doesn't use rdtsc on behalf of
-the traced task...
-
-> We can work around this in criu by doing the seccomp restore as the
-> very last thing before the final sigreturn,
-
-Not sure I understand... You need to suspend at "dump" time too afaics,
-otherwise, say, syscall_seized() can fail because this syscall is nacked
-by seccomp?
-
-> but that seems like the
-> seccomp suspend API is incomplete, IMO. However, since both you and
-> Andy complained, perhaps I should remove it :)
-
-Well, this is up to you ;)
-
-But. Note that a process can also disable TSC via PR_SET_TSC. So if
-dump or restore can't work without enabling TSC you probably want to
-handle this case too.
-
-And this makes me think that this needs a separate interface. I dunno.
-
-> > And I am not sure I understand why do we need the additional security
-> > check, but I leave this to you and Andy.
+> +#ifdef __KERNEL__
+>  struct via_file_private {
+>         struct list_head obj_list;
+>  };
+> +#endif
 >
-> Yes, it is required to prevent the case Pavel mentions (although there
-> are other ways to get around seccomp with ptrace, the goal here is to
-> not depend on that behavior so that when it is eventually fixed this
-> doesn't break).
+We might want to follow the example of other drivers (i915) and move
+it to drivers/gpu/drm/via_drv.h, There are two users of this struct
+(via_drv.c and via_mm.c), and each one explicitly includes the header.
+How does that sound ?
 
-I still do not think it makes any sense. again, if you can trace this
-process then you can disable the filtering anyway. Lets assume that
-seccomp_run_filters() acks, say, sys_getpid(). Or fork() in the case
-Pavel mentioned, this doesn't matter. Now you can force the tracee to
-call this syscall, then change syscall_nr.
+Same suggestion goes for the equivalent sis patch.
 
-But as I said I won't argue, please forget.
-
-> Ok, this has changed slightly with the "always resume on
-> detach/unlink" change Pavel suggested,
-
-To remind, it is not easy to restore TIF_NOTSC if the tracer dies.
-
-PTRACE_DETACH can do this because the tracee can't be woken up. But
-personally I'd prefer the expicit RESUME request rather than "rely
-on PTRACE_DETACH".
-
-If we avoid the TSC games, then, again, please consider
-PTRACE_O_SECCOMP_DISABLE. This will solve the problems with
-fork/detach/tracer-death automatically.
-
-Oleg.
+Cheers
+Emil
