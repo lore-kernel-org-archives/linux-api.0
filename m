@@ -1,263 +1,85 @@
-From: Chris Metcalf <cmetcalf@ezchip.com>
-Subject: [PATCH v3 2/5] nohz: support PR_CPU_ISOLATED_STRICT mode
-Date: Wed, 3 Jun 2015 11:29:22 -0400
-Message-ID: <1433345365-29506-3-git-send-email-cmetcalf@ezchip.com>
+From: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v3 3/5] nohz: cpu_isolated strict mode configurable signal
+Date: Wed, 3 Jun 2015 11:29:23 -0400
+Message-ID: <1433345365-29506-4-git-send-email-cmetcalf@ezchip.com>
 References: <1433345365-29506-1-git-send-email-cmetcalf@ezchip.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1433345365-29506-1-git-send-email-cmetcalf@ezchip.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Chris Metcalf <cmetcalf@ezchip.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1433345365-29506-1-git-send-email-cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-With cpu_isolated mode, the task is in principle guaranteed not to be
-interrupted by the kernel, but only if it behaves.  In particular, if it
-enters the kernel via system call, page fault, or any of a number of other
-synchronous traps, it may be unexpectedly exposed to long latencies.
-Add a simple flag that puts the process into a state where any such
-kernel entry is fatal.
+Allow userspace to override the default SIGKILL delivered
+when a cpu_isolated process in STRICT mode does a syscall
+or otherwise synchronously enters the kernel.
 
-To allow the state to be entered and exited, we add an internal bit to
-current->cpu_isolated_flags that is set when prctl() sets the flags.
-We check the bit on syscall entry as well as on any exception_enter().
-The prctl() syscall is ignored to allow clearing the bit again later,
-and exit/exit_group are ignored to allow exiting the task without
-a pointless signal killing you as you try to do so.
+In addition to being able to set the signal, we now also
+pass whether or not the interruption was from a syscall in
+the si_code field of the siginfo.
 
-This change adds the syscall-detection hooks only for x86 and tile;
-I am happy to try to add more for additional platforms in the final
-version.
-
-The signature of context_tracking_exit() changes to report whether
-we, in fact, are exiting back to user space, so that we can track
-user exceptions properly separately from other kernel entries.
-
-Signed-off-by: Chris Metcalf <cmetcalf@ezchip.com>
+Signed-off-by: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
 ---
- arch/tile/kernel/ptrace.c        |  6 +++++-
- arch/x86/kernel/ptrace.c         |  2 ++
- include/linux/context_tracking.h | 11 ++++++++---
- include/linux/tick.h             | 16 ++++++++++++++++
- include/uapi/linux/prctl.h       |  1 +
- kernel/context_tracking.c        |  9 ++++++---
- kernel/time/tick-sched.c         | 38 ++++++++++++++++++++++++++++++++++++++
- 7 files changed, 76 insertions(+), 7 deletions(-)
+ include/uapi/linux/prctl.h |  2 ++
+ kernel/time/tick-sched.c   | 15 +++++++++++----
+ 2 files changed, 13 insertions(+), 4 deletions(-)
 
-diff --git a/arch/tile/kernel/ptrace.c b/arch/tile/kernel/ptrace.c
-index f84eed8243da..d4e43a13bab1 100644
---- a/arch/tile/kernel/ptrace.c
-+++ b/arch/tile/kernel/ptrace.c
-@@ -259,8 +259,12 @@ int do_syscall_trace_enter(struct pt_regs *regs)
- 	 * If TIF_NOHZ is set, we are required to call user_exit() before
- 	 * doing anything that could touch RCU.
- 	 */
--	if (work & _TIF_NOHZ)
-+	if (work & _TIF_NOHZ) {
- 		user_exit();
-+		if (tick_nohz_cpu_isolated_strict())
-+			tick_nohz_cpu_isolated_syscall(
-+				regs->regs[TREG_SYSCALL_NR]);
-+	}
- 
- 	if (work & _TIF_SYSCALL_TRACE) {
- 		if (tracehook_report_syscall_entry(regs))
-diff --git a/arch/x86/kernel/ptrace.c b/arch/x86/kernel/ptrace.c
-index a7bc79480719..7f784054ddea 100644
---- a/arch/x86/kernel/ptrace.c
-+++ b/arch/x86/kernel/ptrace.c
-@@ -1479,6 +1479,8 @@ unsigned long syscall_trace_enter_phase1(struct pt_regs *regs, u32 arch)
- 	if (work & _TIF_NOHZ) {
- 		user_exit();
- 		work &= ~_TIF_NOHZ;
-+		if (tick_nohz_cpu_isolated_strict())
-+			tick_nohz_cpu_isolated_syscall(regs->orig_ax);
- 	}
- 
- #ifdef CONFIG_SECCOMP
-diff --git a/include/linux/context_tracking.h b/include/linux/context_tracking.h
-index 2821838256b4..d042f4cda39d 100644
---- a/include/linux/context_tracking.h
-+++ b/include/linux/context_tracking.h
-@@ -3,6 +3,7 @@
- 
- #include <linux/sched.h>
- #include <linux/vtime.h>
-+#include <linux/tick.h>
- #include <linux/context_tracking_state.h>
- #include <asm/ptrace.h>
- 
-@@ -11,7 +12,7 @@
- extern void context_tracking_cpu_set(int cpu);
- 
- extern void context_tracking_enter(enum ctx_state state);
--extern void context_tracking_exit(enum ctx_state state);
-+extern bool context_tracking_exit(enum ctx_state state);
- extern void context_tracking_user_enter(void);
- extern void context_tracking_user_exit(void);
- extern void __context_tracking_task_switch(struct task_struct *prev,
-@@ -37,8 +38,12 @@ static inline enum ctx_state exception_enter(void)
- 		return 0;
- 
- 	prev_ctx = this_cpu_read(context_tracking.state);
--	if (prev_ctx != CONTEXT_KERNEL)
--		context_tracking_exit(prev_ctx);
-+	if (prev_ctx != CONTEXT_KERNEL) {
-+		if (context_tracking_exit(prev_ctx)) {
-+			if (tick_nohz_cpu_isolated_strict())
-+				tick_nohz_cpu_isolated_exception();
-+		}
-+	}
- 
- 	return prev_ctx;
- }
-diff --git a/include/linux/tick.h b/include/linux/tick.h
-index ec1953474a65..b7ffb10337ba 100644
---- a/include/linux/tick.h
-+++ b/include/linux/tick.h
-@@ -147,6 +147,8 @@ extern void tick_nohz_full_kick_cpu(int cpu);
- extern void tick_nohz_full_kick_all(void);
- extern void __tick_nohz_task_switch(struct task_struct *tsk);
- extern void tick_nohz_cpu_isolated_enter(void);
-+extern void tick_nohz_cpu_isolated_syscall(int nr);
-+extern void tick_nohz_cpu_isolated_exception(void);
- #else
- static inline bool tick_nohz_full_enabled(void) { return false; }
- static inline bool tick_nohz_full_cpu(int cpu) { return false; }
-@@ -157,6 +159,8 @@ static inline void tick_nohz_full_kick_all(void) { }
- static inline void __tick_nohz_task_switch(struct task_struct *tsk) { }
- static inline bool tick_nohz_is_cpu_isolated(void) { return false; }
- static inline void tick_nohz_cpu_isolated_enter(void) { }
-+static inline void tick_nohz_cpu_isolated_syscall(int nr) { }
-+static inline void tick_nohz_cpu_isolated_exception(void) { }
- #endif
- 
- static inline bool is_housekeeping_cpu(int cpu)
-@@ -189,4 +193,16 @@ static inline void tick_nohz_task_switch(struct task_struct *tsk)
- 		__tick_nohz_task_switch(tsk);
- }
- 
-+static inline bool tick_nohz_cpu_isolated_strict(void)
-+{
-+#ifdef CONFIG_NO_HZ_FULL
-+	if (tick_nohz_full_cpu(smp_processor_id()) &&
-+	    (current->cpu_isolated_flags &
-+	     (PR_CPU_ISOLATED_ENABLE | PR_CPU_ISOLATED_STRICT)) ==
-+	    (PR_CPU_ISOLATED_ENABLE | PR_CPU_ISOLATED_STRICT))
-+		return true;
-+#endif
-+	return false;
-+}
-+
- #endif
 diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-index edb40b6b84db..0c11238a84fb 100644
+index 0c11238a84fb..ab45bd3d5799 100644
 --- a/include/uapi/linux/prctl.h
 +++ b/include/uapi/linux/prctl.h
-@@ -194,5 +194,6 @@ struct prctl_mm_map {
- #define PR_SET_CPU_ISOLATED	47
+@@ -195,5 +195,7 @@ struct prctl_mm_map {
  #define PR_GET_CPU_ISOLATED	48
  # define PR_CPU_ISOLATED_ENABLE	(1 << 0)
-+# define PR_CPU_ISOLATED_STRICT	(1 << 1)
+ # define PR_CPU_ISOLATED_STRICT	(1 << 1)
++# define PR_CPU_ISOLATED_SET_SIG(sig)  (((sig) & 0x7f) << 8)
++# define PR_CPU_ISOLATED_GET_SIG(bits) (((bits) >> 8) & 0x7f)
  
  #endif /* _LINUX_PRCTL_H */
-diff --git a/kernel/context_tracking.c b/kernel/context_tracking.c
-index 66739d7c1350..c82509caa42e 100644
---- a/kernel/context_tracking.c
-+++ b/kernel/context_tracking.c
-@@ -131,15 +131,16 @@ NOKPROBE_SYMBOL(context_tracking_user_enter);
-  * This call supports re-entrancy. This way it can be called from any exception
-  * handler without needing to know if we came from userspace or not.
-  */
--void context_tracking_exit(enum ctx_state state)
-+bool context_tracking_exit(enum ctx_state state)
- {
- 	unsigned long flags;
-+	bool from_user = false;
- 
- 	if (!context_tracking_is_enabled())
--		return;
-+		return false;
- 
- 	if (in_interrupt())
--		return;
-+		return false;
- 
- 	local_irq_save(flags);
- 	if (__this_cpu_read(context_tracking.state) == state) {
-@@ -150,6 +151,7 @@ void context_tracking_exit(enum ctx_state state)
- 			 */
- 			rcu_user_exit();
- 			if (state == CONTEXT_USER) {
-+				from_user = true;
- 				vtime_user_exit(current);
- 				trace_user_exit(0);
- 			}
-@@ -157,6 +159,7 @@ void context_tracking_exit(enum ctx_state state)
- 		__this_cpu_write(context_tracking.state, CONTEXT_KERNEL);
- 	}
- 	local_irq_restore(flags);
-+	return from_user;
- }
- NOKPROBE_SYMBOL(context_tracking_exit);
- EXPORT_SYMBOL_GPL(context_tracking_exit);
 diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
-index f6236b66788f..ce3bcf29a0f6 100644
+index ce3bcf29a0f6..f09c003da22f 100644
 --- a/kernel/time/tick-sched.c
 +++ b/kernel/time/tick-sched.c
-@@ -27,6 +27,7 @@
- #include <linux/swap.h>
- 
- #include <asm/irq_regs.h>
-+#include <asm/unistd.h>
- 
- #include "tick-internal.h"
- 
-@@ -446,6 +447,43 @@ void tick_nohz_cpu_isolated_enter(void)
+@@ -447,11 +447,18 @@ void tick_nohz_cpu_isolated_enter(void)
  	}
  }
  
-+static void kill_cpu_isolated_strict_task(void)
-+{
-+	dump_stack();
-+	current->cpu_isolated_flags &= ~PR_CPU_ISOLATED_ENABLE;
-+	send_sig(SIGKILL, current, 1);
-+}
+-static void kill_cpu_isolated_strict_task(void)
++static void kill_cpu_isolated_strict_task(int is_syscall)
+ {
++	siginfo_t info = {};
++	int sig;
 +
-+/*
-+ * This routine is called from syscall entry (with the syscall number
-+ * passed in) if the _STRICT flag is set.
-+ */
-+void tick_nohz_cpu_isolated_syscall(int syscall)
-+{
-+	/* Ignore prctl() syscalls or any task exit. */
-+	switch (syscall) {
-+	case __NR_prctl:
-+	case __NR_exit:
-+	case __NR_exit_group:
-+		return;
-+	}
+ 	dump_stack();
+ 	current->cpu_isolated_flags &= ~PR_CPU_ISOLATED_ENABLE;
+-	send_sig(SIGKILL, current, 1);
 +
-+	pr_warn("%s/%d: cpu_isolated strict mode violated by syscall %d\n",
-+		current->comm, current->pid, syscall);
-+	kill_cpu_isolated_strict_task();
-+}
-+
-+/*
-+ * This routine is called from any userspace exception if the _STRICT
-+ * flag is set.
-+ */
-+void tick_nohz_cpu_isolated_exception(void)
-+{
-+	pr_warn("%s/%d: cpu_isolated strict mode violated by exception\n",
-+		current->comm, current->pid);
-+	kill_cpu_isolated_strict_task();
-+}
-+
- #endif
++	sig = PR_CPU_ISOLATED_GET_SIG(current->cpu_isolated_flags) ?: SIGKILL;
++	info.si_signo = sig;
++	info.si_code = is_syscall;
++	send_sig_info(sig, &info, current);
+ }
  
  /*
+@@ -470,7 +477,7 @@ void tick_nohz_cpu_isolated_syscall(int syscall)
+ 
+ 	pr_warn("%s/%d: cpu_isolated strict mode violated by syscall %d\n",
+ 		current->comm, current->pid, syscall);
+-	kill_cpu_isolated_strict_task();
++	kill_cpu_isolated_strict_task(1);
+ }
+ 
+ /*
+@@ -481,7 +488,7 @@ void tick_nohz_cpu_isolated_exception(void)
+ {
+ 	pr_warn("%s/%d: cpu_isolated strict mode violated by exception\n",
+ 		current->comm, current->pid);
+-	kill_cpu_isolated_strict_task();
++	kill_cpu_isolated_strict_task(0);
+ }
+ 
+ #endif
 -- 
 2.1.2
-
