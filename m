@@ -1,160 +1,94 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH v5 02/21] libnvdimm, nfit: initial libnvdimm
-	infrastructure and NFIT support
-Date: Wed, 3 Jun 2015 16:57:04 +0200
-Message-ID: <20150603145704.GA22311@lst.de>
-References: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com> <20150602001419.4506.41953.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v3 0/5] support "cpu_isolated" mode for nohz_full
+Date: Wed, 3 Jun 2015 11:29:20 -0400
+Message-ID: <1433345365-29506-1-git-send-email-cmetcalf@ezchip.com>
+References: <1431725178-20876-1-git-send-email-cmetcalf@ezchip.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150602001419.4506.41953.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: linux-nvdimm@lists.01.org, axboe@kernel.dk, sfr@canb.auug.org.au, rafael@kernel.org, neilb@suse.de, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, mingo@kernel.org, linux-acpi@vger.kernel.org, jmoyer@redhat.com, linux-api@vger.kernel.org, akpm@linux-foundation.org, hch@lst.de
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1431725178-20876-1-git-send-email-cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 01, 2015 at 08:14:19PM -0400, Dan Williams wrote:
-> A libnvdimm bus is the anchor device for registering nvdimm resources and
-> interfaces, for example, a character control device, nvdimm devices,
-> and I/O region devices.  The ACPI NFIT (NVDIMM Firmware Interface Table)
-> is one possible platform description for such non-volatile memory
-> resources in a system.  The nfit.ko driver attaches to the "ACPI0012"
-> device that indicates the presence of the NFIT and parses the table to
-> register a libnvdimm bus instance.
+The existing nohz_full mode does a nice job of suppressing extraneous
+kernel interrupts for cores that desire it.  However, there is a need
+for a more deterministic mode that rigorously disallows kernel
+interrupts, even at a higher cost in user/kernel transition time:
+for example, high-speed networking applications running userspace
+drivers that will drop packets if they are ever interrupted.
 
-Havin lib in a name of a bus seems odd.  Why not simply the nvdimm bus?
+These changes attempt to provide an initial draft of such a framework;
+the changes do not add any overhead to the usual non-nohz_full mode,
+and only very small overhead to the typical nohz_full mode.  A prctl()
+option (PR_SET_CPU_ISOLATED) is added to control whether processes have
+requested this stricter semantics, and within that prctl() option we
+provide a number of different bits for more precise control.
+Additionally, we add a new command-line boot argument to facilitate
+debugging where unexpected interrupts are being delivered from.
 
-Also this seems to both have the generic nvdimm infrastructure as well
-as the acpi wiring.  Might make sense to split this into two patches?
+Code that is conceptually similar has been in use in Tilera's
+Multicore Development Environment since 2008, known as Zero-Overhead
+Linux, and has seen wide adoption by a range of customers.  This patch
+series represents the first serious attempt to upstream that
+functionality.  Although the current state of the kernel isn't quite
+ready to run with absolutely no kernel interrupts (for example,
+workqueues on cpu_isolated cores still remain to be dealt with), this
+patch series provides a way to make dynamic tradeoffs between avoiding
+kernel interrupts on the one hand, and making voluntary calls in and
+out of the kernel more expensive, for tasks that want it.
 
-> +config ACPI_NFIT
-> +	tristate "ACPI NVDIMM Firmware Interface Table (NFIT)"
-> +	depends on PHYS_ADDR_T_64BIT
-> +	depends on BLK_DEV
-> +	select NVDIMM_DEVICES
-> +	select LIBNVDIMM
+The series (based currently on my arch/tile master tree for 4.2,
+in turn based on 4.1-rc1) is available at:
 
-Is this the right way for the user to chose it?  It seems like enabling
-the NVMDIMM subsystem would be the obvious choice, and ACPI would
-simply enable the table parsing in that case.
+  git://git.kernel.org/pub/scm/linux/kernel/git/cmetcalf/linux-tile.git dataplane
 
-> +static u8 nfit_uuid[NFIT_UUID_MAX][16];
+v3:
+  remove dependency on cpu_idle subsystem (Thomas Gleixner)
+  use READ_ONCE instead of ACCESS_ONCE in tick_nohz_cpu_isolated_enter
+  use seconds for console messages instead of jiffies (Thomas Gleixner)
+  updated commit description for patch 5/5
 
-Should this use the uuid_le type?
+v2:
+  rename "dataplane" to "cpu_isolated"
+  drop ksoftirqd suppression changes (believed no longer needed)
+  merge previous "QUIESCE" functionality into baseline functionality
+  explicitly track syscalls and exceptions for "STRICT" functionality
+  allow configuring a signal to be delivered for STRICT mode failures
+  move debug tracking to irq_enter(), not irq_exit()
 
-> +static const char *spa_type_name(u16 type)
-> +{
-> +	switch (type) {
-> +	case NFIT_SPA_VOLATILE: return "volatile";
-> +	case NFIT_SPA_PM: return "pmem";
-> +	case NFIT_SPA_DCR: return "dimm-control-region";
-> +	case NFIT_SPA_BDW: return "block-data-window";
-> +	default: return "unknown";
+Note: I have not removed the commit to disable the 1Hz timer tick
+fallback that was nack'ed by PeterZ, pending a decision on that thread
+as to what to do (https://lkml.org/lkml/2015/5/8/555); also since if
+we remove the 1Hz tick, cpu_isolated threads will never re-enter
+userspace since a tick will always be pending.
 
-Please never put code on the same line as a switch (or goto) label.
+Chris Metcalf (5):
+  nohz_full: add support for "cpu_isolated" mode
+  nohz: support PR_CPU_ISOLATED_STRICT mode
+  nohz: cpu_isolated strict mode configurable signal
+  nohz: add cpu_isolated_debug boot flag
+  nohz: cpu_isolated: allow tick to be fully disabled
 
-> +static void *add_table(struct acpi_nfit_desc *acpi_desc, void *table, const void *end)
-> +{
-> +	struct device *dev = acpi_desc->dev;
-> +	struct acpi_nfit_header *hdr;
-> +	void *err = ERR_PTR(-ENOMEM);
-> +
-> +	if (table >= end)
-> +		return NULL;
-> +
-> +	hdr = (struct acpi_nfit_header *) table;
+ Documentation/kernel-parameters.txt |   6 +++
+ arch/tile/kernel/process.c          |   9 ++++
+ arch/tile/kernel/ptrace.c           |   6 ++-
+ arch/tile/mm/homecache.c            |   5 +-
+ arch/x86/kernel/ptrace.c            |   2 +
+ include/linux/context_tracking.h    |  11 ++--
+ include/linux/sched.h               |   3 ++
+ include/linux/tick.h                |  28 ++++++++++
+ include/uapi/linux/prctl.h          |   8 +++
+ kernel/context_tracking.c           |  12 +++--
+ kernel/irq_work.c                   |   4 +-
+ kernel/sched/core.c                 |  18 +++++++
+ kernel/signal.c                     |   5 ++
+ kernel/smp.c                        |   4 ++
+ kernel/softirq.c                    |   6 +++
+ kernel/sys.c                        |   8 +++
+ kernel/time/tick-sched.c            | 104 +++++++++++++++++++++++++++++++++++-
+ 17 files changed, 229 insertions(+), 10 deletions(-)
 
-No need to case from void * to another pointer type.
-
-> +	switch (hdr->type) {
-> +	case ACPI_NFIT_TYPE_SYSTEM_ADDRESS: {
-> +		struct nfit_spa *nfit_spa = devm_kzalloc(dev, sizeof(*nfit_spa),
-> +				GFP_KERNEL);
-> +		struct acpi_nfit_system_address *spa = table;
-> +
-> +		if (!nfit_spa)
-> +			return err;
-> +		INIT_LIST_HEAD(&nfit_spa->list);
-> +		nfit_spa->spa = spa;
-> +		list_add_tail(&nfit_spa->list, &acpi_desc->spas);
-> +		dev_dbg(dev, "%s: spa index: %d type: %s\n", __func__,
-> +				spa->range_index,
-> +				spa_type_name(nfit_spa_type(spa)));
-
-If you need local variables inside a switch statement you probably
-want to split each case into a separate helper function.
-
-> +static inline struct acpi_nfit_memory_map *__to_nfit_memdev(struct nfit_mem *nfit_mem)
-
-This line is over 80 characters.
-
-Also why the odd __-prefix?
-
-> new file mode 100644
-> index 000000000000..24b51dbc8215
-> --- /dev/null
-> +++ b/drivers/nvdimm/Kconfig
-> @@ -0,0 +1,20 @@
-> +menuconfig NVDIMM_DEVICES
-> +	bool "NVDIMM (Non-Volatile Memory Device) Support"
-> +	help
-> +	  Generic support for non-volatile memory devices including
-> +	  ACPI-6-NFIT defined resources.  On platforms that define an
-> +	  NFIT, or otherwise can discover NVDIMM resources, a libnvdimm
-> +	  bus is registered to advertise PMEM (persistent memory)
-> +	  namespaces (/dev/pmemX) and BLK (sliding mmio window(s))
-> +	  namespaces (/dev/ndX). A PMEM namespace refers to a memory
-> +	  resource that may span multiple DIMMs and support DAX (see
-> +	  CONFIG_DAX).  A BLK namespace refers to an NVDIMM control
-> +	  region which exposes an mmio register set for windowed
-> +	  access mode to non-volatile memory.
-> +
-> +if NVDIMM_DEVICES
-> +
-> +config LIBNVDIMM
-> +	tristate
-> +
-> +endif
-
-What different meanings will CONFIG_NVDIMM_DEVICES and CONFIG_LIBNVDIMM
-have?
-
-> diff --git a/drivers/nvdimm/nd-private.h b/drivers/nvdimm/nd-private.h
-> new file mode 100644
-> index 000000000000..e7c4e99a22a4
-> --- /dev/null
-> +++ b/drivers/nvdimm/nd-private.h
-
-No need for -private if you're already under drivers/nvdimm..
-
-> +#ifndef __ND_PRIVATE_H__
-> +#define __ND_PRIVATE_H__
-> +#include <linux/libnvdimm.h>
-> +#include <linux/device.h>
-> +
-> +struct nvdimm_bus {
-> +	struct nvdimm_bus_descriptor *nd_desc;
-> +	struct device dev;
-> +	int id;
-> +};
-> +#endif /* __ND_PRIVATE_H__ */
-
-At least so far this header doesn't need libnvdimm.h
-
-> +#ifndef __LIBNVDIMM_H__
-> +#define __LIBNVDIMM_H__
-> +struct nvdimm;
-> +struct nvdimm_bus_descriptor;
-> +typedef int (*ndctl_fn)(struct nvdimm_bus_descriptor *nd_desc,
-> +		struct nvdimm *nvdimm, unsigned int cmd, void *buf,
-> +		unsigned int buf_len);
-> +
-> +struct nvdimm_bus_descriptor {
-> +	unsigned long dsm_mask;
-> +	char *provider_name;
-> +	ndctl_fn ndctl;
-> +};
-
-Please provide proper methods that do one thing properly instead of
-ioctl-like multiplexers.
+-- 
+2.1.2
