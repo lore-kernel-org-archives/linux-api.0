@@ -1,32 +1,32 @@
 From: tip-bot for Ingo Molnar <tipbot@zytor.com>
-Subject: [tip:core/documentation] Documentation/features/debug:
+Subject: [tip:core/documentation] Documentation/features/locking:
   Add feature description and arch support status file for '
- gcov-profile-all'
-Date: Wed, 3 Jun 2015 04:19:41 -0700
-Message-ID: <tip-5fac5f55f3fd4d9e639778c0d6e412d8ff0b5528@git.kernel.org>
-Reply-To: torvalds@linux-foundation.org, tglx@linutronix.de, hpa@zytor.com,
-	  peterz@infradead.org, mingo@kernel.org,
-	  akpm@linux-foundation.org, corbet@lwn.net,
-	  linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-	  linux-kernel@vger.kernel.org, josh@joshtriplett.org
+ queued-spinlocks'
+Date: Wed, 3 Jun 2015 04:20:01 -0700
+Message-ID: <tip-33006fae4bd7633ba4486a3cf64ad1cd1e8aa093@git.kernel.org>
+Reply-To: linux-kernel@vger.kernel.org, peterz@infradead.org,
+	  mingo@kernel.org, linux-arch@vger.kernel.org, hpa@zytor.com,
+	  torvalds@linux-foundation.org, linux-api@vger.kernel.org,
+	  josh@joshtriplett.org, corbet@lwn.net, tglx@linutronix.de,
+	  akpm@linux-foundation.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-arch-owner@vger.kernel.org
 To: linux-tip-commits@vger.kernel.org
-Cc: tglx@linutronix.de, torvalds@linux-foundation.org, hpa@zytor.com, peterz@infradead.org, linux-arch@vger.kernel.org, corbet@lwn.net, linux-api@vger.kernel.org, mingo@kernel.org, akpm@linux-foundation.org, josh@joshtriplett.org, linux-kernel@vger.kernel.org
+Cc: hpa@zytor.com, torvalds@linux-foundation.org, linux-arch@vger.kernel.org, akpm@linux-foundation.org, tglx@linutronix.de, corbet@lwn.net, josh@joshtriplett.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, peterz@infradead.org, mingo@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Commit-ID:  5fac5f55f3fd4d9e639778c0d6e412d8ff0b5528
-Gitweb:     http://git.kernel.org/tip/5fac5f55f3fd4d9e639778c0d6e412d8ff0b5528
+Commit-ID:  33006fae4bd7633ba4486a3cf64ad1cd1e8aa093
+Gitweb:     http://git.kernel.org/tip/33006fae4bd7633ba4486a3cf64ad1cd1e8aa093
 Author:     Ingo Molnar <mingo@kernel.org>
-AuthorDate: Wed, 3 Jun 2015 12:37:40 +0200
+AuthorDate: Wed, 3 Jun 2015 12:37:42 +0200
 Committer:  Ingo Molnar <mingo@kernel.org>
 CommitDate: Wed, 3 Jun 2015 12:51:43 +0200
 
-Documentation/features/debug: Add feature description and arch support status file for 'gcov-profile-all'
+Documentation/features/locking: Add feature description and arch support status file for 'queued-spinlocks'
 
 Cc: <linux-api@vger.kernel.org>
 Cc: <linux-arch@vger.kernel.org>
@@ -40,42 +40,24 @@ Cc: Peter Zijlstra <peterz@infradead.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Ingo Molnar <mingo@kernel.org>
 ---
- .../pte_special => debug/gcov-profile-all}/arch-support.txt    | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ .../{debug/KASAN => locking/queued-spinlocks}/arch-support.txt      | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/Documentation/features/vm/pte_special/arch-support.txt b/Documentation/features/debug/gcov-profile-all/arch-support.txt
-similarity index 80%
-copy from Documentation/features/vm/pte_special/arch-support.txt
-copy to Documentation/features/debug/gcov-profile-all/arch-support.txt
-index aaaa21d..38dea8e 100644
---- a/Documentation/features/vm/pte_special/arch-support.txt
-+++ b/Documentation/features/debug/gcov-profile-all/arch-support.txt
+diff --git a/Documentation/features/debug/KASAN/arch-support.txt b/Documentation/features/locking/queued-spinlocks/arch-support.txt
+similarity index 86%
+copy from Documentation/features/debug/KASAN/arch-support.txt
+copy to Documentation/features/locking/queued-spinlocks/arch-support.txt
+index 14531da..e973b1a 100644
+--- a/Documentation/features/debug/KASAN/arch-support.txt
++++ b/Documentation/features/locking/queued-spinlocks/arch-support.txt
 @@ -1,7 +1,7 @@
  #
--# Feature name:          pte_special
--#         Kconfig:       __HAVE_ARCH_PTE_SPECIAL
--#         description:   arch supports the pte_special()/pte_mkspecial() VM APIs
-+# Feature name:          gcov-profile-all
-+#         Kconfig:       ARCH_HAS_GCOV_PROFILE_ALL
-+#         description:   arch supports whole-kernel GCOV code coverage profiling
+-# Feature name:          KASAN
+-#         Kconfig:       HAVE_ARCH_KASAN
+-#         description:   arch supports the KASAN runtime memory checker
++# Feature name:          queued-spinlocks
++#         Kconfig:       ARCH_USE_QUEUED_SPINLOCKS
++#         description:   arch supports queued spinlocks
  #
      -----------------------
      |         arch |status|
-@@ -21,7 +21,7 @@
-     |        m32r: | TODO |
-     |        m68k: | TODO |
-     |       metag: | TODO |
--    |  microblaze: | TODO |
-+    |  microblaze: |  ok  |
-     |        mips: | TODO |
-     |     mn10300: | TODO |
-     |       nios2: | TODO |
-@@ -31,7 +31,7 @@
-     |        s390: |  ok  |
-     |       score: | TODO |
-     |          sh: |  ok  |
--    |       sparc: |  ok  |
-+    |       sparc: | TODO |
-     |        tile: | TODO |
-     |          um: | TODO |
-     |   unicore32: | TODO |
