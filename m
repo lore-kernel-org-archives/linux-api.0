@@ -1,63 +1,71 @@
-From: tip-bot for Ingo Molnar <tipbot@zytor.com>
+From: tip-bot for Ingo Molnar <tipbot-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
 Subject: [tip:core/documentation] Documentation/features/debug:
-  Add feature description and arch support status file for '
- kprobes-on-ftrace'
-Date: Wed, 3 Jun 2015 04:16:29 -0700
-Message-ID: <tip-9cf5bcc3ddc4f291f54e680b75ad3957e2d468f9@git.kernel.org>
-Reply-To: mingo@kernel.org, tglx@linutronix.de, peterz@infradead.org,
-	  akpm@linux-foundation.org, josh@joshtriplett.org,
-	  linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-	  linux-arch@vger.kernel.org, torvalds@linux-foundation.org,
-	  corbet@lwn.net, hpa@zytor.com
+  Add feature description and arch support status file for 'kretprobes'
+Date: Wed, 3 Jun 2015 04:17:06 -0700
+Message-ID: <tip-a382c9694c2a8fb0d9525fa3289c1c7eeee73ae8@git.kernel.org>
+Reply-To: peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org,
+	  hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org,
+	  torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+	  linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org,
+	  linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-tip-commits@vger.kernel.org
-Cc: tglx@linutronix.de, mingo@kernel.org, akpm@linux-foundation.org, josh@joshtriplett.org, peterz@infradead.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, hpa@zytor.com, corbet@lwn.net, torvalds@linux-foundation.org, linux-arch@vger.kernel.org
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-tip-commits-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Commit-ID:  9cf5bcc3ddc4f291f54e680b75ad3957e2d468f9
-Gitweb:     http://git.kernel.org/tip/9cf5bcc3ddc4f291f54e680b75ad3957e2d468f9
-Author:     Ingo Molnar <mingo@kernel.org>
-AuthorDate: Wed, 3 Jun 2015 12:37:29 +0200
-Committer:  Ingo Molnar <mingo@kernel.org>
+Commit-ID:  a382c9694c2a8fb0d9525fa3289c1c7eeee73ae8
+Gitweb:     http://git.kernel.org/tip/a382c9694c2a8fb0d9525fa3289c1c7eeee73ae8
+Author:     Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+AuthorDate: Wed, 3 Jun 2015 12:37:32 +0200
+Committer:  Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 CommitDate: Wed, 3 Jun 2015 12:51:40 +0200
 
-Documentation/features/debug: Add feature description and arch support status file for 'kprobes-on-ftrace'
+Documentation/features/debug: Add feature description and arch support status file for 'kretprobes'
 
-Cc: <linux-api@vger.kernel.org>
-Cc: <linux-arch@vger.kernel.org>
-Cc: <linux-kernel@vger.kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: H. Peter Anvin <hpa@zytor.com>
-Cc: Jonathan Corbet <corbet@lwn.net>
-Cc: Josh Triplett <josh@joshtriplett.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Ingo Molnar <mingo@kernel.org>
+Cc: <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Cc: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Signed-off-by: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 ---
- .../features/debug/{KASAN => kprobes-on-ftrace}/arch-support.txt    | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ .../features/debug/{kprobes => kretprobes}/arch-support.txt       | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/Documentation/features/debug/KASAN/arch-support.txt b/Documentation/features/debug/kprobes-on-ftrace/arch-support.txt
-similarity index 85%
-copy from Documentation/features/debug/KASAN/arch-support.txt
-copy to Documentation/features/debug/kprobes-on-ftrace/arch-support.txt
-index 14531da..40f44d0 100644
---- a/Documentation/features/debug/KASAN/arch-support.txt
-+++ b/Documentation/features/debug/kprobes-on-ftrace/arch-support.txt
+diff --git a/Documentation/features/debug/kprobes/arch-support.txt b/Documentation/features/debug/kretprobes/arch-support.txt
+similarity index 84%
+copy from Documentation/features/debug/kprobes/arch-support.txt
+copy to Documentation/features/debug/kretprobes/arch-support.txt
+index a44bfff..d87c1ce 100644
+--- a/Documentation/features/debug/kprobes/arch-support.txt
++++ b/Documentation/features/debug/kretprobes/arch-support.txt
 @@ -1,7 +1,7 @@
  #
--# Feature name:          KASAN
--#         Kconfig:       HAVE_ARCH_KASAN
--#         description:   arch supports the KASAN runtime memory checker
-+# Feature name:          kprobes-on-ftrace
-+#         Kconfig:       HAVE_KPROBES_ON_FTRACE
-+#         description:   arch supports combined kprobes and ftrace live patching
+-# Feature name:          kprobes
+-#         Kconfig:       HAVE_KPROBES
+-#         description:   arch supports live patched kernel probe
++# Feature name:          kretprobes
++#         Kconfig:       HAVE_KRETPROBES
++#         description:   arch supports kernel function-return probes
  #
      -----------------------
      |         arch |status|
+@@ -10,7 +10,7 @@
+     |         arc: |  ok  |
+     |         arm: |  ok  |
+     |       arm64: | TODO |
+-    |       avr32: |  ok  |
++    |       avr32: | TODO |
+     |    blackfin: | TODO |
+     |         c6x: | TODO |
+     |        cris: | TODO |
