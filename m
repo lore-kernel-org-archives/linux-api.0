@@ -1,161 +1,31 @@
 From: tip-bot for Ingo Molnar <tipbot@zytor.com>
-Subject: [tip:core/documentation] Documentation/features:
-  Explain kernel feature descriptions and add visualization script
-Date: Wed, 3 Jun 2015 04:20:55 -0700
-Message-ID: <tip-669f6f96c680a741257ada44a28b580df2e1fc25@git.kernel.org>
-Reply-To: linux-arch@vger.kernel.org, linux-kernel@vger.kernel.org,
-	  corbet@lwn.net, peterz@infradead.org, tglx@linutronix.de,
-	  torvalds@linux-foundation.org, josh@joshtriplett.org,
-	  hpa@zytor.com, akpm@linux-foundation.org, mingo@kernel.org,
-	  linux-api@vger.kernel.org
+Subject: [tip:core/documentation] Documentation/features/debug:
+  Add feature description and arch support status file for 'KASAN'
+Date: Wed, 3 Jun 2015 04:09:23 -0700
+Message-ID: <tip-2729924765bcfa9e4cf7595c49b472b561413255@git.kernel.org>
+Reply-To: linux-api@vger.kernel.org, hpa@zytor.com,
+	  akpm@linux-foundation.org, josh@joshtriplett.org,
+	  mingo@kernel.org, peterz@infradead.org, tglx@linutronix.de,
+	  torvalds@linux-foundation.org, linux-kernel@vger.kernel.org,
+	  corbet@lwn.net, linux-arch@vger.kernel.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-arch-owner@vger.kernel.org
 To: linux-tip-commits@vger.kernel.org
-Cc: peterz@infradead.org, linux-kernel@vger.kernel.org, corbet@lwn.net, linux-arch@vger.kernel.org, tglx@linutronix.de, josh@joshtriplett.org, torvalds@linux-foundation.org, hpa@zytor.com, mingo@kernel.org, akpm@linux-foundation.org, linux-api@vger.kernel.org
+Cc: hpa@zytor.com, linux-api@vger.kernel.org, josh@joshtriplett.org, akpm@linux-foundation.org, mingo@kernel.org, tglx@linutronix.de, peterz@infradead.org, torvalds@linux-foundation.org, corbet@lwn.net, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Commit-ID:  669f6f96c680a741257ada44a28b580df2e1fc25
-Gitweb:     http://git.kernel.org/tip/669f6f96c680a741257ada44a28b580df2e1fc25
+Commit-ID:  2729924765bcfa9e4cf7595c49b472b561413255
+Gitweb:     http://git.kernel.org/tip/2729924765bcfa9e4cf7595c49b472b561413255
 Author:     Ingo Molnar <mingo@kernel.org>
-AuthorDate: Wed, 3 Jun 2015 12:39:26 +0200
+AuthorDate: Wed, 3 Jun 2015 12:37:03 +0200
 Committer:  Ingo Molnar <mingo@kernel.org>
-CommitDate: Wed, 3 Jun 2015 12:59:38 +0200
+CommitDate: Wed, 3 Jun 2015 12:51:34 +0200
 
-Documentation/features: Explain kernel feature descriptions and add visualization script
-
-The previous patches added arch support matrices for more than 40 generic kernel features
-that need per architecture support.
-
-The structure of the feature descriptions is the following:
-
-Each feature has its own directory under Documentation/features/subsystem_name/feature_name/,
-and the arch-support.txt file shows its current arch porting status.
-
-For example, lockdep support is shown the following way:
-
-    triton:~/tip> cat Documentation/features/locking/lockdep/arch-support.txt
-    #
-    # Feature name:          lockdep
-    #         Kconfig:       LOCKDEP_SUPPORT
-    #         description:   arch supports the runtime locking correctness debug facility
-    #
-        -----------------------
-        |         arch |status|
-        -----------------------
-        |       alpha: | TODO |
-        |         arc: |  ok  |
-        |         arm: |  ok  |
-        |       arm64: |  ok  |
-        |       avr32: |  ok  |
-        |    blackfin: |  ok  |
-        |         c6x: | TODO |
-        |        cris: | TODO |
-        |         frv: | TODO |
-        |       h8300: | TODO |
-        |     hexagon: |  ok  |
-        |        ia64: | TODO |
-        |        m32r: | TODO |
-        |        m68k: | TODO |
-        |       metag: |  ok  |
-        |  microblaze: |  ok  |
-        |        mips: |  ok  |
-        |     mn10300: | TODO |
-        |       nios2: | TODO |
-        |    openrisc: | TODO |
-        |      parisc: | TODO |
-        |     powerpc: |  ok  |
-        |        s390: |  ok  |
-        |       score: |  ok  |
-        |          sh: |  ok  |
-        |       sparc: |  ok  |
-        |        tile: |  ok  |
-        |          um: |  ok  |
-        |   unicore32: |  ok  |
-        |         x86: |  ok  |
-        |      xtensa: |  ok  |
-        -----------------------
-
-For generic kernel features that need architecture support, the
-arch-support.txt file in each feature directory shows the arch
-support matrix, for all upstream Linux architectures.
-
-The meaning of entries in the tables is:
-
-    | ok |  # feature supported by the architecture
-    |TODO|  # feature not yet supported by the architecture
-    | .. |  # feature cannot be supported by the hardware
-
-This directory structure can be used in the future to add other
-files - such as porting guides, testing description, etc.
-
-The Documentation/features/ hierarchy may also include generic
-kernel features that works on every architecture, in that case
-the arch-support.txt file will list every architecture as
-supported.
-
-To list an architecture's unsupported features, just do something
-like:
-
-  triton:~/tip>  git grep -lE 'x86.*TODO' Documentation/features/*/*/arch-support.txt
-  Documentation/features/lib/strncasecmp/arch-support.txt
-  Documentation/features/time/arch-tick-broadcast/arch-support.txt
-
-which will print the list of not yet supported features.
-
-The Documentation/features/list-arch.sh script will print the current
-support matrix of one architecture:
-
-  triton:~/tip> Documentation/features/list-arch.sh
-  #
-  # Kernel feature support matrix of the 'x86' architecture:
-  #
-      core/ BPF-JIT              :  ok  |                        HAVE_BPF_JIT #  arch supports BPF JIT optimizations
-      core/ generic-idle-thread  :  ok  |             GENERIC_SMP_IDLE_THREAD #  arch makes use of the generic SMP idle thread facility
-      core/ jump-labels          :  ok  |                HAVE_ARCH_JUMP_LABEL #  arch supports live patched, high efficiency branches
-      core/ tracehook            :  ok  |                 HAVE_ARCH_TRACEHOOK #  arch supports tracehook (ptrace) register handling APIs
-     debug/ gcov-profile-all     :  ok  |           ARCH_HAS_GCOV_PROFILE_ALL #  arch supports whole-kernel GCOV code coverage profiling
-     debug/ KASAN                :  ok  |                     HAVE_ARCH_KASAN #  arch supports the KASAN runtime memory checker
-     debug/ kgdb                 :  ok  |                      HAVE_ARCH_KGDB #  arch supports the kGDB kernel debugger
-     debug/ kprobes              :  ok  |                        HAVE_KPROBES #  arch supports live patched kernel probe
-     debug/ kprobes-on-ftrace    :  ok  |              HAVE_KPROBES_ON_FTRACE #  arch supports combined kprobes and ftrace live patching
-     debug/ kretprobes           :  ok  |                     HAVE_KRETPROBES #  arch supports kernel function-return probes
-     debug/ optprobes            :  ok  |                      HAVE_OPTPROBES #  arch supports live patched optprobes
-     debug/ stackprotector       :  ok  |              HAVE_CC_STACKPROTECTOR #  arch supports compiler driven stack overflow protection
-     debug/ uprobes              :  ok  |               ARCH_SUPPORTS_UPROBES #  arch supports live patched user probes
-     debug/ user-ret-profiler    :  ok  |           HAVE_USER_RETURN_NOTIFIER #  arch supports user-space return from system call profiler
-        io/ dma-api-debug        :  ok  |                  HAVE_DMA_API_DEBUG #  arch supports DMA debug facilities
-        io/ dma-contiguous       :  ok  |                 HAVE_DMA_CONTIGUOUS #  arch supports the DMA CMA (continuous memory allocator)
-        io/ dma_map_attrs        :  ok  |                      HAVE_DMA_ATTRS #  arch provides dma_*map*_attrs() APIs
-        io/ sg-chain             :  ok  |                   ARCH_HAS_SG_CHAIN #  arch supports chained scatter-gather lists
-       lib/ strncasecmp          : TODO |             __HAVE_ARCH_STRNCASECMP #  arch provides an optimized strncasecmp() function
-   locking/ cmpxchg-local        :  ok  |                  HAVE_CMPXCHG_LOCAL #  arch supports the this_cpu_cmpxchg() API
-   locking/ lockdep              :  ok  |                     LOCKDEP_SUPPORT #  arch supports the runtime locking correctness debug facility
-   locking/ queued-rwlocks       :  ok  |             ARCH_USE_QUEUED_RWLOCKS #  arch supports queued rwlocks
-   locking/ queued-spinlocks     :  ok  |           ARCH_USE_QUEUED_SPINLOCKS #  arch supports queued spinlocks
-   locking/ rwsem-optimized      :  ok  |               Optimized asm/rwsem.h #  arch provides optimized rwsem APIs
-      perf/ kprobes-event        :  ok  |      HAVE_REGS_AND_STACK_ACCESS_API #  arch supports kprobes with perf events
-      perf/ perf-regs            :  ok  |                      HAVE_PERF_REGS #  arch supports perf events register access
-      perf/ perf-stackdump       :  ok  |           HAVE_PERF_USER_STACK_DUMP #  arch supports perf events stack dumps
-     sched/ numa-balancing       :  ok  |        ARCH_SUPPORTS_NUMA_BALANCING #  arch supports NUMA balancing
-   seccomp/ seccomp-filter       :  ok  |            HAVE_ARCH_SECCOMP_FILTER #  arch supports seccomp filters
-      time/ arch-tick-broadcast  : TODO |             ARCH_HAS_TICK_BROADCAST #  arch provides tick_broadcast()
-      time/ clockevents          :  ok  |                 GENERIC_CLOCKEVENTS #  arch support generic clock events
-      time/ context-tracking     :  ok  |               HAVE_CONTEXT_TRACKING #  arch supports context tracking for NO_HZ_FULL
-      time/ irq-time-acct        :  ok  |            HAVE_IRQ_TIME_ACCOUNTING #  arch supports precise IRQ time accounting
-      time/ modern-timekeeping   :  ok  |            !ARCH_USES_GETTIMEOFFSET #  arch does not use arch_gettimeoffset() anymore
-      time/ virt-cpuacct         :  ok  |            HAVE_VIRT_CPU_ACCOUNTING #  arch supports precise virtual CPU time accounting
-        vm/ ELF-ASLR             :  ok  |              ARCH_HAS_ELF_RANDOMIZE #  arch randomizes the stack, heap and binary images of ELF binaries
-        vm/ huge-vmap            :  ok  |                 HAVE_ARCH_HUGE_VMAP #  arch supports the ioremap_pud_enabled() and ioremap_pmd_enabled() VM APIs
-        vm/ ioremap_prot         :  ok  |                   HAVE_IOREMAP_PROT #  arch has ioremap_prot()
-        vm/ numa-memblock        :  ok  |              HAVE_MEMBLOCK_NODE_MAP #  arch supports NUMA aware memblocks
-        vm/ PG_uncached          :  ok  |               ARCH_USES_PG_UNCACHED #  arch supports the PG_uncached page flag
-        vm/ pmdp_splitting_flush :  ok  |    __HAVE_ARCH_PMDP_SPLITTING_FLUSH #  arch supports the pmdp_splitting_flush() VM API
-        vm/ pte_special          :  ok  |             __HAVE_ARCH_PTE_SPECIAL #  arch supports the pte_special()/pte_mkspecial() VM APIs
-        vm/ THP                  :  ok  |      HAVE_ARCH_TRANSPARENT_HUGEPAGE #  arch supports transparent hugepages
+Documentation/features/debug: Add feature description and arch support status file for 'KASAN'
 
 Cc: <linux-api@vger.kernel.org>
 Cc: <linux-arch@vger.kernel.org>
@@ -169,54 +39,24 @@ Cc: Peter Zijlstra <peterz@infradead.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Ingo Molnar <mingo@kernel.org>
 ---
- Documentation/features/arch-support.txt | 11 +++++++++++
- Documentation/features/list-arch.sh     | 24 ++++++++++++++++++++++++
- 2 files changed, 35 insertions(+)
+ .../features/{vm/huge-vmap => debug/KASAN}/arch-support.txt         | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/Documentation/features/arch-support.txt b/Documentation/features/arch-support.txt
-new file mode 100644
-index 0000000..d22a109
---- /dev/null
-+++ b/Documentation/features/arch-support.txt
-@@ -0,0 +1,11 @@
-+
-+For generic kernel features that need architecture support, the
-+arch-support.txt file in each feature directory shows the arch
-+support matrix, for all upstream Linux architectures.
-+
-+The meaning of entries in the tables is:
-+
-+    | ok |  # feature supported by the architecture
-+    |TODO|  # feature not yet supported by the architecture
-+    | .. |  # feature cannot be supported by the hardware
-+
-diff --git a/Documentation/features/list-arch.sh b/Documentation/features/list-arch.sh
-new file mode 100755
-index 0000000..6065124
---- /dev/null
-+++ b/Documentation/features/list-arch.sh
-@@ -0,0 +1,24 @@
-+#
-+# Small script that visualizes the kernel feature support status
-+# of an architecture.
-+#
-+# (If no arguments are given then it will print the host architecture's status.)
-+#
-+
-+ARCH=${1:-$(arch | sed 's/x86_64/x86/' | sed 's/i386/x86/')}
-+
-+cd $(dirname $0)
-+echo "#"
-+echo "# Kernel feature support matrix of the '$ARCH' architecture:"
-+echo "#"
-+
-+for F in */*/arch-support.txt; do
-+  SUBSYS=$(echo $F | cut -d/ -f1)
-+  N=$(grep -h "^# Feature name:"        $F | cut -c25-)
-+  C=$(grep -h "^#         Kconfig:"     $F | cut -c25-)
-+  D=$(grep -h "^#         description:" $F | cut -c25-)
-+  S=$(grep -hw $ARCH $F | cut -d\| -f3)
-+
-+  printf "%10s/%-22s:%s| %35s # %s\n" "$SUBSYS" "$N" "$S" "$C" "$D"
-+done
-+
+diff --git a/Documentation/features/vm/huge-vmap/arch-support.txt b/Documentation/features/debug/KASAN/arch-support.txt
+similarity index 84%
+copy from Documentation/features/vm/huge-vmap/arch-support.txt
+copy to Documentation/features/debug/KASAN/arch-support.txt
+index af6816b..14531da 100644
+--- a/Documentation/features/vm/huge-vmap/arch-support.txt
++++ b/Documentation/features/debug/KASAN/arch-support.txt
+@@ -1,7 +1,7 @@
+ #
+-# Feature name:          huge-vmap
+-#         Kconfig:       HAVE_ARCH_HUGE_VMAP
+-#         description:   arch supports the ioremap_pud_enabled() and ioremap_pmd_enabled() VM APIs
++# Feature name:          KASAN
++#         Kconfig:       HAVE_ARCH_KASAN
++#         description:   arch supports the KASAN runtime memory checker
+ #
+     -----------------------
+     |         arch |status|
