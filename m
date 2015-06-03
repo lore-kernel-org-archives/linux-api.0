@@ -1,48 +1,50 @@
-From: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 10/98] via_drm.h: hide struct via_file_private in userspace
-Date: Wed, 3 Jun 2015 17:50:22 +0100
-Message-ID: <CACvgo52HDRuaQ+1qXg6O9ikhwNFSRCgopv6aAbujywOG+msmYQ@mail.gmail.com>
-References: <1433000370-19509-1-git-send-email-mikko.rapeli@iki.fi>
-	<1433000370-19509-11-git-send-email-mikko.rapeli@iki.fi>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] seccomp: add ptrace commands for suspend/resume
+Date: Wed, 3 Jun 2015 18:54:51 +0200
+Message-ID: <20150603165451.GA20911@redhat.com>
+References: <1433186918-9626-1-git-send-email-tycho.andersen@canonical.com> <CANaxB-zacYuo21jLVZyEfyf=UdDnTjYvHdgNpfL+c_DXWRz-eg@mail.gmail.com> <20150602130506.GA1823@hopstrocity> <20150602184848.GA24907@redhat.com> <20150603161321.GD3337@hopstrocity>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1433000370-19509-11-git-send-email-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150603161321.GD3337@hopstrocity>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Cc: "Linux-Kernel@Vger. Kernel. Org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ML dri-devel <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Cc: Andrey Wagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Mikko,
+On 06/03, Tycho Andersen wrote:
+>
+> On Tue, Jun 02, 2015 at 08:48:48PM +0200, Oleg Nesterov wrote:
+>
+> > Otherwise, if we use PTRACE_O_ instead, it goes away automatically if
+> > the tracer dies or does PTRACE_DETACH.
+>
+> IIRC the flag goes away, but we still have to do something in
+> __ptrace_unlink to clear the seccomp suspended, so I'm not sure if the
+> automatic-ness helps us.
 
-On 30 May 2015 at 16:38, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org> wrote:
-> Fixes compiler error since list_head is not exported to userspace headers.
->
-> Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-> ---
->  include/uapi/drm/via_drm.h | 2 ++
->  1 file changed, 2 insertions(+)
->
-> diff --git a/include/uapi/drm/via_drm.h b/include/uapi/drm/via_drm.h
-> index 791531e..34ce658 100644
-> --- a/include/uapi/drm/via_drm.h
-> +++ b/include/uapi/drm/via_drm.h
-> @@ -272,8 +272,10 @@ typedef struct drm_via_dmablit {
->         drm_via_blitsync_t sync;
->  } drm_via_dmablit_t;
->
-> +#ifdef __KERNEL__
->  struct via_file_private {
->         struct list_head obj_list;
->  };
-> +#endif
->
-We might want to follow the example of other drivers (i915) and move
-it to drivers/gpu/drm/via_drv.h, There are two users of this struct
-(via_drv.c and via_mm.c), and each one explicitly includes the header.
-How does that sound ?
+But we do not need seccomp->suspended at all?
 
-Same suggestion goes for the equivalent sis patch.
+Unless I missed something PTRACE_O_ needs a one-liner patch (ignoring
+the defines in include files),
 
-Cheers
-Emil
+--- x/kernel/seccomp.c
++++ x/kernel/seccomp.c
+@@ -692,6 +692,9 @@ u32 seccomp_phase1(struct seccomp_data *
+ 	int this_syscall = sd ? sd->nr :
+ 		syscall_get_nr(current, task_pt_regs(current));
+ 
++	if (unlikely(current->ptrace & PT_NAME_OF_THIS_OPTION))
++		return OK;
++
+ 	switch (mode) {
+ 	case SECCOMP_MODE_STRICT:
+ 		__secure_computing_strict(this_syscall);  /* may call do_exit */
+	
+
+OK, and the same check in secure_computing_strict().
+
+No?
+
+Oleg.
