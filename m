@@ -1,96 +1,104 @@
-From: tip-bot for Ingo Molnar <tipbot-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Subject: [tip:core/documentation] Documentation/features/io:
-  Add feature description and arch support status file for 'dma_map_attrs'
-Date: Wed, 3 Jun 2015 04:11:55 -0700
-Message-ID: <tip-3c1b5142691f094591b6c1d6e7a9fc5599409c28@git.kernel.org>
-Reply-To: hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org,
-	  tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org,
-	  josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	  torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org,
-	  linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: tip-bot for Ingo Molnar <tipbot@zytor.com>
+Subject: [tip:core/documentation] Documentation/features/core:
+  Add feature description and arch support status file for 'tracehook'
+Date: Wed, 3 Jun 2015 04:12:13 -0700
+Message-ID: <tip-f58519e9f7d65c41c17944e25d5343a07454b3a7@git.kernel.org>
+Reply-To: corbet@lwn.net, torvalds@linux-foundation.org, mingo@kernel.org,
+	  linux-api@vger.kernel.org, akpm@linux-foundation.org,
+	  josh@joshtriplett.org, linux-kernel@vger.kernel.org,
+	  peterz@infradead.org, linux-arch@vger.kernel.org, hpa@zytor.com,
+	  tglx@linutronix.de
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-tip-commits-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+Sender: linux-arch-owner@vger.kernel.org
+To: linux-tip-commits@vger.kernel.org
+Cc: tglx@linutronix.de, hpa@zytor.com, linux-kernel@vger.kernel.org, peterz@infradead.org, linux-arch@vger.kernel.org, corbet@lwn.net, torvalds@linux-foundation.org, linux-api@vger.kernel.org, mingo@kernel.org, josh@joshtriplett.org, akpm@linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-Commit-ID:  3c1b5142691f094591b6c1d6e7a9fc5599409c28
-Gitweb:     http://git.kernel.org/tip/3c1b5142691f094591b6c1d6e7a9fc5599409c28
-Author:     Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-AuthorDate: Wed, 3 Jun 2015 12:37:14 +0200
-Committer:  Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Commit-ID:  f58519e9f7d65c41c17944e25d5343a07454b3a7
+Gitweb:     http://git.kernel.org/tip/f58519e9f7d65c41c17944e25d5343a07454b3a7
+Author:     Ingo Molnar <mingo@kernel.org>
+AuthorDate: Wed, 3 Jun 2015 12:37:15 +0200
+Committer:  Ingo Molnar <mingo@kernel.org>
 CommitDate: Wed, 3 Jun 2015 12:51:36 +0200
 
-Documentation/features/io: Add feature description and arch support status file for 'dma_map_attrs'
+Documentation/features/core: Add feature description and arch support status file for 'tracehook'
 
-Cc: <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
-Cc: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Signed-off-by: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: <linux-api@vger.kernel.org>
+Cc: <linux-arch@vger.kernel.org>
+Cc: <linux-kernel@vger.kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: Josh Triplett <josh@joshtriplett.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
 ---
- .../dma_map_attrs}/arch-support.txt                  | 20 ++++++++++----------
- 1 file changed, 10 insertions(+), 10 deletions(-)
+ .../tracehook}/arch-support.txt                    | 28 +++++++++++-----------
+ 1 file changed, 14 insertions(+), 14 deletions(-)
 
-diff --git a/Documentation/features/time/virt-cpuacct/arch-support.txt b/Documentation/features/io/dma_map_attrs/arch-support.txt
-similarity index 68%
-copy from Documentation/features/time/virt-cpuacct/arch-support.txt
-copy to Documentation/features/io/dma_map_attrs/arch-support.txt
-index cf3c3e3..51d0f1c 100644
---- a/Documentation/features/time/virt-cpuacct/arch-support.txt
-+++ b/Documentation/features/io/dma_map_attrs/arch-support.txt
-@@ -1,7 +1,7 @@
+diff --git a/Documentation/features/io/dma_map_attrs/arch-support.txt b/Documentation/features/core/tracehook/arch-support.txt
+similarity index 59%
+copy from Documentation/features/io/dma_map_attrs/arch-support.txt
+copy to Documentation/features/core/tracehook/arch-support.txt
+index 51d0f1c..728061d 100644
+--- a/Documentation/features/io/dma_map_attrs/arch-support.txt
++++ b/Documentation/features/core/tracehook/arch-support.txt
+@@ -1,30 +1,30 @@
  #
--# Feature name:          virt-cpuacct
--#         Kconfig:       HAVE_VIRT_CPU_ACCOUNTING
--#         description:   arch supports precise virtual CPU time accounting
-+# Feature name:          dma_map_attrs
-+#         Kconfig:       HAVE_DMA_ATTRS
-+#         description:   arch provides dma_*map*_attrs() APIs
+-# Feature name:          dma_map_attrs
+-#         Kconfig:       HAVE_DMA_ATTRS
+-#         description:   arch provides dma_*map*_attrs() APIs
++# Feature name:          tracehook
++#         Kconfig:       HAVE_ARCH_TRACEHOOK
++#         description:   arch supports tracehook (ptrace) register handling APIs
  #
      -----------------------
      |         arch |status|
-@@ -15,26 +15,26 @@
-     |         c6x: | TODO |
+     -----------------------
+-    |       alpha: |  ok  |
+-    |         arc: | TODO |
++    |       alpha: | TODO |
++    |         arc: |  ok  |
+     |         arm: |  ok  |
+     |       arm64: |  ok  |
+     |       avr32: | TODO |
+-    |    blackfin: | TODO |
+-    |         c6x: | TODO |
++    |    blackfin: |  ok  |
++    |         c6x: |  ok  |
      |        cris: | TODO |
-     |         frv: | TODO |
--    |       h8300: | TODO |
--    |     hexagon: | TODO |
-+    |       h8300: |  ok  |
-+    |     hexagon: |  ok  |
+-    |         frv: | TODO |
+-    |       h8300: |  ok  |
++    |         frv: |  ok  |
++    |       h8300: | TODO |
+     |     hexagon: |  ok  |
      |        ia64: |  ok  |
      |        m32r: | TODO |
      |        m68k: | TODO |
-     |       metag: | TODO |
--    |  microblaze: | TODO |
-+    |  microblaze: |  ok  |
+-    |       metag: | TODO |
+-    |  microblaze: |  ok  |
++    |       metag: |  ok  |
++    |  microblaze: | TODO |
      |        mips: |  ok  |
-     |     mn10300: | TODO |
-     |       nios2: | TODO |
--    |    openrisc: | TODO |
--    |      parisc: |  ok  |
-+    |    openrisc: |  ok  |
-+    |      parisc: | TODO |
+-    |     mn10300: | TODO |
+-    |       nios2: | TODO |
++    |     mn10300: |  ok  |
++    |       nios2: |  ok  |
+     |    openrisc: |  ok  |
+     |      parisc: | TODO |
      |     powerpc: |  ok  |
-     |        s390: |  ok  |
-     |       score: | TODO |
--    |          sh: | TODO |
-+    |          sh: |  ok  |
+@@ -34,7 +34,7 @@
      |       sparc: |  ok  |
      |        tile: |  ok  |
      |          um: | TODO |
--    |   unicore32: | TODO |
-+    |   unicore32: |  ok  |
+-    |   unicore32: |  ok  |
++    |   unicore32: | TODO |
      |         x86: |  ok  |
      |      xtensa: | TODO |
      -----------------------
