@@ -1,31 +1,31 @@
 From: tip-bot for Ingo Molnar <tipbot@zytor.com>
-Subject: [tip:core/documentation] Documentation/features/lib:
-  Add feature description and arch support status file for 'strncasecmp'
-Date: Wed, 3 Jun 2015 04:07:41 -0700
-Message-ID: <tip-b85c92c32739bc6dacb8e1f89a760d4ccf095a0d@git.kernel.org>
-Reply-To: linux-arch@vger.kernel.org, tglx@linutronix.de,
-	  akpm@linux-foundation.org, josh@joshtriplett.org,
-	  torvalds@linux-foundation.org, hpa@zytor.com,
-	  linux-kernel@vger.kernel.org, corbet@lwn.net, mingo@kernel.org,
-	  peterz@infradead.org, linux-api@vger.kernel.org
+Subject: [tip:core/documentation] Documentation/features/io:
+  Add feature description and arch support status file for 'sg-chain'
+Date: Wed, 3 Jun 2015 04:08:03 -0700
+Message-ID: <tip-6c7cca4dc10950ee299ef2cb1db81733679380df@git.kernel.org>
+Reply-To: mingo@kernel.org, torvalds@linux-foundation.org, corbet@lwn.net,
+	  peterz@infradead.org, akpm@linux-foundation.org,
+	  linux-arch@vger.kernel.org, josh@joshtriplett.org, hpa@zytor.com,
+	  linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
+	  tglx@linutronix.de
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-arch-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-arch-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-tip-commits@vger.kernel.org
-Cc: torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, hpa@zytor.com, linux-arch@vger.kernel.org, tglx@linutronix.de, akpm@linux-foundation.org, josh@joshtriplett.org, mingo@kernel.org, peterz@infradead.org, linux-api@vger.kernel.org, corbet@lwn.net
+Cc: mingo@kernel.org, torvalds@linux-foundation.org, corbet@lwn.net, peterz@infradead.org, hpa@zytor.com, josh@joshtriplett.org, linux-arch@vger.kernel.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, tglx@linutronix.de
 List-Id: linux-api@vger.kernel.org
 
-Commit-ID:  b85c92c32739bc6dacb8e1f89a760d4ccf095a0d
-Gitweb:     http://git.kernel.org/tip/b85c92c32739bc6dacb8e1f89a760d4ccf095a0d
+Commit-ID:  6c7cca4dc10950ee299ef2cb1db81733679380df
+Gitweb:     http://git.kernel.org/tip/6c7cca4dc10950ee299ef2cb1db81733679380df
 Author:     Ingo Molnar <mingo@kernel.org>
-AuthorDate: Wed, 3 Jun 2015 12:36:57 +0200
+AuthorDate: Wed, 3 Jun 2015 12:36:59 +0200
 Committer:  Ingo Molnar <mingo@kernel.org>
 CommitDate: Wed, 3 Jun 2015 12:51:33 +0200
 
-Documentation/features/lib: Add feature description and arch support status file for 'strncasecmp'
+Documentation/features/io: Add feature description and arch support status file for 'sg-chain'
 
 Cc: <linux-api@vger.kernel.org>
 Cc: <linux-arch@vger.kernel.org>
@@ -39,41 +39,49 @@ Cc: Peter Zijlstra <peterz@infradead.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Ingo Molnar <mingo@kernel.org>
 ---
- .../{vm/PG_uncached => lib/strncasecmp}/arch-support.txt       | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ .../{vm/PG_uncached => io/sg-chain}/arch-support.txt     | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
 
-diff --git a/Documentation/features/vm/PG_uncached/arch-support.txt b/Documentation/features/lib/strncasecmp/arch-support.txt
-similarity index 81%
+diff --git a/Documentation/features/vm/PG_uncached/arch-support.txt b/Documentation/features/io/sg-chain/arch-support.txt
+similarity index 74%
 copy from Documentation/features/vm/PG_uncached/arch-support.txt
-copy to Documentation/features/lib/strncasecmp/arch-support.txt
-index 9919742..12b1c93 100644
+copy to Documentation/features/io/sg-chain/arch-support.txt
+index 9919742..b9b6755 100644
 --- a/Documentation/features/vm/PG_uncached/arch-support.txt
-+++ b/Documentation/features/lib/strncasecmp/arch-support.txt
-@@ -1,7 +1,7 @@
++++ b/Documentation/features/io/sg-chain/arch-support.txt
+@@ -1,15 +1,15 @@
  #
 -# Feature name:          PG_uncached
 -#         Kconfig:       ARCH_USES_PG_UNCACHED
 -#         description:   arch supports the PG_uncached page flag
-+# Feature name:          strncasecmp
-+#         Kconfig:       __HAVE_ARCH_STRNCASECMP
-+#         description:   arch provides an optimized strncasecmp() function
++# Feature name:          sg-chain
++#         Kconfig:       ARCH_HAS_SG_CHAIN
++#         description:   arch supports chained scatter-gather lists
  #
      -----------------------
      |         arch |status|
-@@ -17,7 +17,7 @@
-     |         frv: | TODO |
-     |       h8300: | TODO |
-     |     hexagon: | TODO |
--    |        ia64: |  ok  |
-+    |        ia64: | TODO |
-     |        m32r: | TODO |
-     |        m68k: | TODO |
-     |       metag: | TODO |
-@@ -35,6 +35,6 @@
+     -----------------------
+     |       alpha: | TODO |
+     |         arc: | TODO |
+-    |         arm: | TODO |
+-    |       arm64: | TODO |
++    |         arm: |  ok  |
++    |       arm64: |  ok  |
+     |       avr32: | TODO |
+     |    blackfin: | TODO |
+     |         c6x: | TODO |
+@@ -27,11 +27,11 @@
+     |       nios2: | TODO |
+     |    openrisc: | TODO |
+     |      parisc: | TODO |
+-    |     powerpc: | TODO |
+-    |        s390: | TODO |
++    |     powerpc: |  ok  |
++    |        s390: |  ok  |
+     |       score: | TODO |
+     |          sh: | TODO |
+-    |       sparc: | TODO |
++    |       sparc: |  ok  |
      |        tile: | TODO |
      |          um: | TODO |
      |   unicore32: | TODO |
--    |         x86: |  ok  |
-+    |         x86: | TODO |
-     |      xtensa: | TODO |
-     -----------------------
