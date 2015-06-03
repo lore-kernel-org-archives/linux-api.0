@@ -1,13 +1,13 @@
 From: tip-bot for Ingo Molnar <tipbot-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
 Subject: [tip:core/documentation] Documentation/features/time:
-  Add feature description and arch support status file for 'virt-cpuacct'
-Date: Wed, 3 Jun 2015 04:09:58 -0700
-Message-ID: <tip-4e3cd4571904933300620f5464872c4e10d3bd4a@git.kernel.org>
-Reply-To: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	  josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	  linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org,
-	  tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org,
-	  peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org
+  Add feature description and arch support status file for 'irq-time-acct'
+Date: Wed, 3 Jun 2015 04:10:18 -0700
+Message-ID: <tip-1aebadbca627c8840adcf78e68a9ab81c6490307@git.kernel.org>
+Reply-To: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+	  linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org,
+	  linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org,
+	  torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org,
+	  peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -15,17 +15,17 @@ Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-tip-commits-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Commit-ID:  4e3cd4571904933300620f5464872c4e10d3bd4a
-Gitweb:     http://git.kernel.org/tip/4e3cd4571904933300620f5464872c4e10d3bd4a
+Commit-ID:  1aebadbca627c8840adcf78e68a9ab81c6490307
+Gitweb:     http://git.kernel.org/tip/1aebadbca627c8840adcf78e68a9ab81c6490307
 Author:     Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-AuthorDate: Wed, 3 Jun 2015 12:37:05 +0200
+AuthorDate: Wed, 3 Jun 2015 12:37:07 +0200
 Committer:  Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-CommitDate: Wed, 3 Jun 2015 12:51:34 +0200
+CommitDate: Wed, 3 Jun 2015 12:51:35 +0200
 
-Documentation/features/time: Add feature description and arch support status file for 'virt-cpuacct'
+Documentation/features/time: Add feature description and arch support status file for 'irq-time-acct'
 
 Cc: <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Cc: <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -39,51 +39,65 @@ Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
 Signed-off-by: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 ---
- .../{io/sg-chain => time/virt-cpuacct}/arch-support.txt    | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ .../arch-support.txt                               | 24 +++++++++++-----------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
 
-diff --git a/Documentation/features/io/sg-chain/arch-support.txt b/Documentation/features/time/virt-cpuacct/arch-support.txt
-similarity index 76%
-copy from Documentation/features/io/sg-chain/arch-support.txt
-copy to Documentation/features/time/virt-cpuacct/arch-support.txt
-index b9b6755..cf3c3e3 100644
---- a/Documentation/features/io/sg-chain/arch-support.txt
-+++ b/Documentation/features/time/virt-cpuacct/arch-support.txt
-@@ -1,12 +1,12 @@
+diff --git a/Documentation/features/time/virt-cpuacct/arch-support.txt b/Documentation/features/time/irq-time-acct/arch-support.txt
+similarity index 63%
+copy from Documentation/features/time/virt-cpuacct/arch-support.txt
+copy to Documentation/features/time/irq-time-acct/arch-support.txt
+index cf3c3e3..e633162 100644
+--- a/Documentation/features/time/virt-cpuacct/arch-support.txt
++++ b/Documentation/features/time/irq-time-acct/arch-support.txt
+@@ -1,15 +1,15 @@
  #
--# Feature name:          sg-chain
--#         Kconfig:       ARCH_HAS_SG_CHAIN
--#         description:   arch supports chained scatter-gather lists
-+# Feature name:          virt-cpuacct
-+#         Kconfig:       HAVE_VIRT_CPU_ACCOUNTING
-+#         description:   arch supports precise virtual CPU time accounting
+-# Feature name:          virt-cpuacct
+-#         Kconfig:       HAVE_VIRT_CPU_ACCOUNTING
+-#         description:   arch supports precise virtual CPU time accounting
++# Feature name:          irq-time-acct
++#         Kconfig:       HAVE_IRQ_TIME_ACCOUNTING
++#         description:   arch supports precise IRQ time accounting
  #
      -----------------------
      |         arch |status|
      -----------------------
--    |       alpha: | TODO |
-+    |       alpha: |  ok  |
+-    |       alpha: |  ok  |
++    |       alpha: |  ..  |
      |         arc: | TODO |
      |         arm: |  ok  |
-     |       arm64: |  ok  |
-@@ -22,17 +22,17 @@
+-    |       arm64: |  ok  |
++    |       arm64: |  ..  |
+     |       avr32: | TODO |
+     |    blackfin: | TODO |
+     |         c6x: | TODO |
+@@ -17,7 +17,7 @@
+     |         frv: | TODO |
+     |       h8300: | TODO |
+     |     hexagon: | TODO |
+-    |        ia64: |  ok  |
++    |        ia64: |  ..  |
+     |        m32r: | TODO |
      |        m68k: | TODO |
      |       metag: | TODO |
-     |  microblaze: | TODO |
--    |        mips: | TODO |
-+    |        mips: |  ok  |
+@@ -26,15 +26,15 @@
      |     mn10300: | TODO |
      |       nios2: | TODO |
      |    openrisc: | TODO |
--    |      parisc: | TODO |
-+    |      parisc: |  ok  |
-     |     powerpc: |  ok  |
-     |        s390: |  ok  |
+-    |      parisc: |  ok  |
+-    |     powerpc: |  ok  |
+-    |        s390: |  ok  |
++    |      parisc: |  ..  |
++    |     powerpc: |  ..  |
++    |        s390: |  ..  |
      |       score: | TODO |
      |          sh: | TODO |
-     |       sparc: |  ok  |
--    |        tile: | TODO |
-+    |        tile: |  ok  |
+-    |       sparc: |  ok  |
+-    |        tile: |  ok  |
++    |       sparc: |  ..  |
++    |        tile: |  ..  |
      |          um: | TODO |
      |   unicore32: | TODO |
      |         x86: |  ok  |
+-    |      xtensa: | TODO |
++    |      xtensa: |  ok  |
+     -----------------------
