@@ -1,31 +1,31 @@
 From: tip-bot for Ingo Molnar <tipbot@zytor.com>
-Subject: [tip:core/documentation] Documentation/features/core:
-  Add feature description and arch support status file for 'tracehook'
-Date: Wed, 3 Jun 2015 04:12:13 -0700
-Message-ID: <tip-f58519e9f7d65c41c17944e25d5343a07454b3a7@git.kernel.org>
-Reply-To: corbet@lwn.net, torvalds@linux-foundation.org, mingo@kernel.org,
-	  linux-api@vger.kernel.org, akpm@linux-foundation.org,
-	  josh@joshtriplett.org, linux-kernel@vger.kernel.org,
-	  peterz@infradead.org, linux-arch@vger.kernel.org, hpa@zytor.com,
-	  tglx@linutronix.de
+Subject: [tip:core/documentation] Documentation/features/vm:
+  Add feature description and arch support status file for 'ioremap_prot'
+Date: Wed, 3 Jun 2015 04:12:33 -0700
+Message-ID: <tip-c0512abd5a3fef006975e8e9bb15b1eb99d12d79@git.kernel.org>
+Reply-To: linux-kernel@vger.kernel.org, mingo@kernel.org,
+	  akpm@linux-foundation.org, linux-api@vger.kernel.org,
+	  tglx@linutronix.de, peterz@infradead.org,
+	  torvalds@linux-foundation.org, linux-arch@vger.kernel.org,
+	  hpa@zytor.com, corbet@lwn.net, josh@joshtriplett.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-arch-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-arch-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-tip-commits@vger.kernel.org
-Cc: tglx@linutronix.de, hpa@zytor.com, linux-kernel@vger.kernel.org, peterz@infradead.org, linux-arch@vger.kernel.org, corbet@lwn.net, torvalds@linux-foundation.org, linux-api@vger.kernel.org, mingo@kernel.org, josh@joshtriplett.org, akpm@linux-foundation.org
+Cc: josh@joshtriplett.org, linux-arch@vger.kernel.org, corbet@lwn.net, hpa@zytor.com, mingo@kernel.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, torvalds@linux-foundation.org, tglx@linutronix.de, peterz@infradead.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Commit-ID:  f58519e9f7d65c41c17944e25d5343a07454b3a7
-Gitweb:     http://git.kernel.org/tip/f58519e9f7d65c41c17944e25d5343a07454b3a7
+Commit-ID:  c0512abd5a3fef006975e8e9bb15b1eb99d12d79
+Gitweb:     http://git.kernel.org/tip/c0512abd5a3fef006975e8e9bb15b1eb99d12d79
 Author:     Ingo Molnar <mingo@kernel.org>
-AuthorDate: Wed, 3 Jun 2015 12:37:15 +0200
+AuthorDate: Wed, 3 Jun 2015 12:37:16 +0200
 Committer:  Ingo Molnar <mingo@kernel.org>
-CommitDate: Wed, 3 Jun 2015 12:51:36 +0200
+CommitDate: Wed, 3 Jun 2015 12:51:37 +0200
 
-Documentation/features/core: Add feature description and arch support status file for 'tracehook'
+Documentation/features/vm: Add feature description and arch support status file for 'ioremap_prot'
 
 Cc: <linux-api@vger.kernel.org>
 Cc: <linux-arch@vger.kernel.org>
@@ -39,66 +39,47 @@ Cc: Peter Zijlstra <peterz@infradead.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Ingo Molnar <mingo@kernel.org>
 ---
- .../tracehook}/arch-support.txt                    | 28 +++++++++++-----------
- 1 file changed, 14 insertions(+), 14 deletions(-)
+ .../{debug/KASAN => vm/ioremap_prot}/arch-support.txt      | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/Documentation/features/io/dma_map_attrs/arch-support.txt b/Documentation/features/core/tracehook/arch-support.txt
-similarity index 59%
-copy from Documentation/features/io/dma_map_attrs/arch-support.txt
-copy to Documentation/features/core/tracehook/arch-support.txt
-index 51d0f1c..728061d 100644
---- a/Documentation/features/io/dma_map_attrs/arch-support.txt
-+++ b/Documentation/features/core/tracehook/arch-support.txt
-@@ -1,30 +1,30 @@
+diff --git a/Documentation/features/debug/KASAN/arch-support.txt b/Documentation/features/vm/ioremap_prot/arch-support.txt
+similarity index 77%
+copy from Documentation/features/debug/KASAN/arch-support.txt
+copy to Documentation/features/vm/ioremap_prot/arch-support.txt
+index 14531da..90c5374 100644
+--- a/Documentation/features/debug/KASAN/arch-support.txt
++++ b/Documentation/features/vm/ioremap_prot/arch-support.txt
+@@ -1,13 +1,13 @@
  #
--# Feature name:          dma_map_attrs
--#         Kconfig:       HAVE_DMA_ATTRS
--#         description:   arch provides dma_*map*_attrs() APIs
-+# Feature name:          tracehook
-+#         Kconfig:       HAVE_ARCH_TRACEHOOK
-+#         description:   arch supports tracehook (ptrace) register handling APIs
+-# Feature name:          KASAN
+-#         Kconfig:       HAVE_ARCH_KASAN
+-#         description:   arch supports the KASAN runtime memory checker
++# Feature name:          ioremap_prot
++#         Kconfig:       HAVE_IOREMAP_PROT
++#         description:   arch has ioremap_prot()
  #
      -----------------------
      |         arch |status|
      -----------------------
--    |       alpha: |  ok  |
+     |       alpha: | TODO |
 -    |         arc: | TODO |
-+    |       alpha: | TODO |
 +    |         arc: |  ok  |
-     |         arm: |  ok  |
-     |       arm64: |  ok  |
+     |         arm: | TODO |
+     |       arm64: | TODO |
      |       avr32: | TODO |
--    |    blackfin: | TODO |
--    |         c6x: | TODO |
-+    |    blackfin: |  ok  |
-+    |         c6x: |  ok  |
-     |        cris: | TODO |
--    |         frv: | TODO |
--    |       h8300: |  ok  |
-+    |         frv: |  ok  |
-+    |       h8300: | TODO |
-     |     hexagon: |  ok  |
-     |        ia64: |  ok  |
-     |        m32r: | TODO |
-     |        m68k: | TODO |
--    |       metag: | TODO |
--    |  microblaze: |  ok  |
-+    |       metag: |  ok  |
-+    |  microblaze: | TODO |
-     |        mips: |  ok  |
--    |     mn10300: | TODO |
--    |       nios2: | TODO |
-+    |     mn10300: |  ok  |
-+    |       nios2: |  ok  |
-     |    openrisc: |  ok  |
+@@ -27,12 +27,12 @@
+     |       nios2: | TODO |
+     |    openrisc: | TODO |
      |      parisc: | TODO |
-     |     powerpc: |  ok  |
-@@ -34,7 +34,7 @@
-     |       sparc: |  ok  |
-     |        tile: |  ok  |
+-    |     powerpc: | TODO |
++    |     powerpc: |  ok  |
+     |        s390: | TODO |
+     |       score: | TODO |
+-    |          sh: | TODO |
++    |          sh: |  ok  |
+     |       sparc: | TODO |
+-    |        tile: | TODO |
++    |        tile: |  ok  |
      |          um: | TODO |
--    |   unicore32: |  ok  |
-+    |   unicore32: | TODO |
+     |   unicore32: | TODO |
      |         x86: |  ok  |
-     |      xtensa: | TODO |
-     -----------------------
