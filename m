@@ -1,64 +1,85 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH v3 0/2] capabilities: Ambient capability patchset
-Date: Thu, 4 Jun 2015 12:33:18 -0700
-Message-ID: <CALCETrW8s8eCAK_Ei=H27KQq-BynbTBPdA9qVjYRZ=Vu4Dif+g@mail.gmail.com>
-References: <cover.1432770087.git.luto@kernel.org>
+From: Tycho Andersen <tycho.andersen@canonical.com>
+Subject: Re: [PATCH v2] seccomp: add ptrace options for suspend/resume
+Date: Thu, 4 Jun 2015 15:05:29 -0600
+Message-ID: <20150604210529.GJ3160@smitten>
+References: <1433369396-13360-1-git-send-email-tycho.andersen@canonical.com>
+ <20150604183149.GA560@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cover.1432770087.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150604183149.GA560@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Roland McGrath <roland@hack.frob.com>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 27, 2015 at 4:47 PM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> This adds ambient capabilities.  See the individual patch changelogs
-> for details.
->
-> Preliminary userspace code is here:
->
-> https://git.kernel.org/cgit/linux/kernel/git/luto/util-linux-playground.git/commit/?h=cap_ambient&id=7f5afbd175d2
->
-> James or akpm, I think this is ready for 4.2.  Can one of you queue it up?
+Hi Oleg,
 
-akpm / James: Ping?  Do I need more acks?
+On Thu, Jun 04, 2015 at 08:31:49PM +0200, Oleg Nesterov wrote:
+> On 06/03, Tycho Andersen wrote:
+> >
+> > @@ -556,6 +557,11 @@ static int ptrace_setoptions(struct task_struct *child, unsigned long data)
+> >  	if (data & ~(unsigned long)PTRACE_O_MASK)
+> >  		return -EINVAL;
+> >
+> > +#ifdef CONFIG_CHECKPOINT_RESTORE
+> > +	if (data & PTRACE_O_SUSPEND_SECCOMP && !may_suspend_seccomp())
+> > +		return -EPERM;
+> > +#endif
+> > +
+> 
+> Well. This -EPERM doesn't look consistent...
+> 
+> if config_enabled(CONFIG_CHECKPOINT_RESTORE) == F, we return success
+> but PTRACE_O_SUSPEND_SECCOMP has no effect because of another ifdef in
+> seccomp.
+>
+> OTOH, if CONFIG_SECCOMP=n, this option has no effect too but we return
+> -EPERM even.
 
---Andy
+Yes, something like:
 
->
-> Thanks,
-> Andy
->
-> Changes from v2:
->  - Improve the patch 1 changelog a bit.
->  - Add acks.
->  - Add comment clarifying the pE' rule.
->  - s/except/expect
->
-> Changes from v1:
->  - Lots of cleanups to the ambient cap code.
->  - The securebit is new.
->
-> Andy Lutomirski (2):
->   capabilities: Ambient capabilities
->   capabilities: Add a securebit to disable PR_CAP_AMBIENT_RAISE
->
->  fs/proc/array.c                 |  5 ++-
->  include/linux/cred.h            |  8 ++++
->  include/uapi/linux/prctl.h      |  6 +++
->  include/uapi/linux/securebits.h | 11 ++++-
->  kernel/user_namespace.c         |  1 +
->  security/commoncap.c            | 92 ++++++++++++++++++++++++++++++++++++-----
->  security/keys/process_keys.c    |  1 +
->  7 files changed, 112 insertions(+), 12 deletions(-)
->
-> --
-> 2.1.0
->
+if (unlikely(data & PTRACE_O_SUSPEND_SECCOMP)) {
+        if (!config_enabled(CONFIG_CHECKPOINT_RESTORE) ||
+            !config_enabled(CONFIG_SECCOMP))
+                return -EINVAL;
 
+        if (!may_suspend_seccomp())
+                return -EPERM;
+}
 
+I guess.
 
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
+> Also. Suppose that the tracer sets SUSPEND_SECCOMP and then drops
+> CAP_SYS_ADMIN. After that it can't set or clear other ptrace options.
+
+Is this a case we're concerned about? I think this should be ok (i.e.
+"don't do that" :).
+
+> So if we really want the security checks (I still think we do not ;)
+> then we should probably check "flags & SUSPEND_SECCOMP" as well.
+
+Good point.
+
+> > +#ifdef CONFIG_CHECKPOINT_RESTORE
+> > +bool may_suspend_seccomp(void)
+> > +{
+> > +	if (!capable(CAP_SYS_ADMIN))
+> > +		return false;
+> > +
+> > +	if (current->seccomp.mode != SECCOMP_MODE_DISABLED)
+> > +		return false;
+> 
+> Heh. OK, I won't argue with the new check too ;)
+
+Actually now that I think about it I agree with you, these checks
+don't seem necessary. Even inside a user namespace, if you can ptrace
+a process you can make it do whatever you want irrespective of
+seccomp, as long as it has the necessary capabilities. Once the
+seccomp checks are run after ptrace, they'll be enforced so you
+couldn't have it call whatever you want in the first place.
+
+Still, perhaps I'm missing something...
+
+Tycho
