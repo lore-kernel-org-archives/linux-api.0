@@ -1,85 +1,98 @@
-From: Tycho Andersen <tycho.andersen@canonical.com>
-Subject: Re: [PATCH v2] seccomp: add ptrace options for suspend/resume
-Date: Thu, 4 Jun 2015 15:05:29 -0600
-Message-ID: <20150604210529.GJ3160@smitten>
-References: <1433369396-13360-1-git-send-email-tycho.andersen@canonical.com>
- <20150604183149.GA560@redhat.com>
+From: "Serge E. Hallyn" <serge@hallyn.com>
+Subject: Re: [PATCH v3 2/2] capabilities: Add a securebit to disable
+ PR_CAP_AMBIENT_RAISE
+Date: Thu, 4 Jun 2015 17:03:01 -0500
+Message-ID: <20150604220301.GA5920@mail.hallyn.com>
+References: <cover.1432770087.git.luto@kernel.org>
+ <8b3a8b2fa031e043483f2f444f0b51aed0681e85.1432770087.git.luto@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150604183149.GA560@redhat.com>
+In-Reply-To: <8b3a8b2fa031e043483f2f444f0b51aed0681e85.1432770087.git.luto@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Roland McGrath <roland@hack.frob.com>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Serge Hallyn <serge.hallyn@ubuntu.com>, Andrew Morton <akpm@linuxfoundation.org>, James Morris <james.l.morris@oracle.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>, Christoph Lameter <cl@linux.com>, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-Hi Oleg,
-
-On Thu, Jun 04, 2015 at 08:31:49PM +0200, Oleg Nesterov wrote:
-> On 06/03, Tycho Andersen wrote:
-> >
-> > @@ -556,6 +557,11 @@ static int ptrace_setoptions(struct task_struct *child, unsigned long data)
-> >  	if (data & ~(unsigned long)PTRACE_O_MASK)
-> >  		return -EINVAL;
-> >
-> > +#ifdef CONFIG_CHECKPOINT_RESTORE
-> > +	if (data & PTRACE_O_SUSPEND_SECCOMP && !may_suspend_seccomp())
-> > +		return -EPERM;
-> > +#endif
-> > +
+On Wed, May 27, 2015 at 04:47:59PM -0700, Andy Lutomirski wrote:
+> Per Andrew Morgan's request, add a securebit to allow admins to
+> disable PR_CAP_AMBIENT_RAISE.  This securebit will prevent processes
+> from adding capabilities to their ambient set.
 > 
-> Well. This -EPERM doesn't look consistent...
+> For simplicity, this disables PR_CAP_AMBIENT_RAISE entirely rather
+> than just disabling setting previously cleared bits.
 > 
-> if config_enabled(CONFIG_CHECKPOINT_RESTORE) == F, we return success
-> but PTRACE_O_SUSPEND_SECCOMP has no effect because of another ifdef in
-> seccomp.
->
-> OTOH, if CONFIG_SECCOMP=n, this option has no effect too but we return
-> -EPERM even.
+> Acked-By: Andrew G. Morgan <morgan@kernel.org>
+> Cc: Kees Cook <keescook@chromium.org>
+> Cc: Christoph Lameter <cl@linux.com>
+> Cc: Serge Hallyn <serge.hallyn@canonical.com>
 
-Yes, something like:
+Acked-by: Serge Hallyn <serge.hallyn@canonical.com>
 
-if (unlikely(data & PTRACE_O_SUSPEND_SECCOMP)) {
-        if (!config_enabled(CONFIG_CHECKPOINT_RESTORE) ||
-            !config_enabled(CONFIG_SECCOMP))
-                return -EINVAL;
-
-        if (!may_suspend_seccomp())
-                return -EPERM;
-}
-
-I guess.
-
-> Also. Suppose that the tracer sets SUSPEND_SECCOMP and then drops
-> CAP_SYS_ADMIN. After that it can't set or clear other ptrace options.
-
-Is this a case we're concerned about? I think this should be ok (i.e.
-"don't do that" :).
-
-> So if we really want the security checks (I still think we do not ;)
-> then we should probably check "flags & SUSPEND_SECCOMP" as well.
-
-Good point.
-
-> > +#ifdef CONFIG_CHECKPOINT_RESTORE
-> > +bool may_suspend_seccomp(void)
-> > +{
-> > +	if (!capable(CAP_SYS_ADMIN))
-> > +		return false;
-> > +
-> > +	if (current->seccomp.mode != SECCOMP_MODE_DISABLED)
-> > +		return false;
+> Cc: Andy Lutomirski <luto@amacapital.net>
+> Cc: Jonathan Corbet <corbet@lwn.net>
+> Cc: Aaron Jones <aaronmdjones@gmail.com>
+> CC: Ted Ts'o <tytso@mit.edu>
+> Cc: linux-security-module@vger.kernel.org
+> Cc: linux-kernel@vger.kernel.org
+> Cc: linux-api@vger.kernel.org
+> Cc: akpm@linuxfoundation.org
+> Cc: Andrew G. Morgan <morgan@kernel.org>
+> Cc: Mimi Zohar <zohar@linux.vnet.ibm.com>
+> Cc: Austin S Hemmelgarn <ahferroin7@gmail.com>
+> Cc: Markku Savela <msa@moth.iki.fi>
+> Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+> Signed-off-by: Andy Lutomirski <luto@kernel.org>
+> ---
+>  include/uapi/linux/securebits.h | 11 ++++++++++-
+>  security/commoncap.c            |  3 ++-
+>  2 files changed, 12 insertions(+), 2 deletions(-)
 > 
-> Heh. OK, I won't argue with the new check too ;)
-
-Actually now that I think about it I agree with you, these checks
-don't seem necessary. Even inside a user namespace, if you can ptrace
-a process you can make it do whatever you want irrespective of
-seccomp, as long as it has the necessary capabilities. Once the
-seccomp checks are run after ptrace, they'll be enforced so you
-couldn't have it call whatever you want in the first place.
-
-Still, perhaps I'm missing something...
-
-Tycho
+> diff --git a/include/uapi/linux/securebits.h b/include/uapi/linux/securebits.h
+> index 985aac9e6bf8..35ac35cef217 100644
+> --- a/include/uapi/linux/securebits.h
+> +++ b/include/uapi/linux/securebits.h
+> @@ -43,9 +43,18 @@
+>  #define SECBIT_KEEP_CAPS	(issecure_mask(SECURE_KEEP_CAPS))
+>  #define SECBIT_KEEP_CAPS_LOCKED (issecure_mask(SECURE_KEEP_CAPS_LOCKED))
+>  
+> +/* When set, a process cannot add new capabilities to its ambient set. */
+> +#define SECURE_NO_CAP_AMBIENT_RAISE		6
+> +#define SECURE_NO_CAP_AMBIENT_RAISE_LOCKED	7  /* make bit-6 immutable */
+> +
+> +#define SECBIT_NO_CAP_AMBIENT_RAISE (issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE))
+> +#define SECBIT_NO_CAP_AMBIENT_RAISE_LOCKED \
+> +			(issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE_LOCKED))
+> +
+>  #define SECURE_ALL_BITS		(issecure_mask(SECURE_NOROOT) | \
+>  				 issecure_mask(SECURE_NO_SETUID_FIXUP) | \
+> -				 issecure_mask(SECURE_KEEP_CAPS))
+> +				 issecure_mask(SECURE_KEEP_CAPS) | \
+> +				 issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE))
+>  #define SECURE_ALL_LOCKS	(SECURE_ALL_BITS << 1)
+>  
+>  #endif /* _UAPI_LINUX_SECUREBITS_H */
+> diff --git a/security/commoncap.c b/security/commoncap.c
+> index 835a7584f7ea..22b7b91c5eae 100644
+> --- a/security/commoncap.c
+> +++ b/security/commoncap.c
+> @@ -987,7 +987,8 @@ int cap_task_prctl(int option, unsigned long arg2, unsigned long arg3,
+>  			if (arg2 == PR_CAP_AMBIENT_RAISE &&
+>  			    (!cap_raised(current_cred()->cap_permitted, arg3) ||
+>  			     !cap_raised(current_cred()->cap_inheritable,
+> -					 arg3)))
+> +					 arg3) ||
+> +			     issecure(SECURE_NO_CAP_AMBIENT_RAISE)))
+>  				return -EPERM;
+>  
+>  			new = prepare_creds();
+> -- 
+> 2.1.0
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
