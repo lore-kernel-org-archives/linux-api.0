@@ -1,70 +1,55 @@
 From: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
-Subject: [RFC PATCH 08/18] kthread: Allow to get struct kthread_iterant from task_struct
-Date: Fri,  5 Jun 2015 17:01:07 +0200
-Message-ID: <1433516477-5153-9-git-send-email-pmladek@suse.cz>
+Subject: [RFC PATCH 05/18] freezer/scheduler: Add freezable_cond_resched()
+Date: Fri,  5 Jun 2015 17:01:04 +0200
+Message-ID: <1433516477-5153-6-git-send-email-pmladek@suse.cz>
 References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1433516477-5153-1-git-send-email-pmladek-AlSwsSmVLrQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-It is easy to make a mistake when one implements sleeping between kthread
-iterations. We will want to do it a more uniform way. For this we will
-want to set some flags in struct kthread_iterant from the current
-task (kthread). This patch adds the basic infrastructure to make
-it possible.
+It makes sense to call cond_resched() in freezable kthreads.
+But there is the chicken&egg problem whether to call try_to_freeze()
+before or after the schedule.
+
+This patch adds freezable_cond_resched(). It uses the same trick as
+freezable_schedule(). It tells the freezer that it might ignore
+the sleeping process.
+
+Note that it might be used only on locations where the freezing
+is safe. It means that no lock is taken and we are ready to sleep
+for a very long time.
 
 Signed-off-by: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
 ---
- kernel/kthread.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ include/linux/freezer.h | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/kernel/kthread.c b/kernel/kthread.c
-index e34f67cb8ecf..41fb6a43a1f1 100644
---- a/kernel/kthread.c
-+++ b/kernel/kthread.c
-@@ -44,6 +44,7 @@ struct kthread {
- 	void *data;
- 	struct completion parked;
- 	struct completion exited;
-+	struct kthread_iterant *kti;
- };
- 
- enum KTHREAD_BITS {
-@@ -69,6 +70,11 @@ static struct kthread *to_live_kthread(struct task_struct *k)
- 	return NULL;
+diff --git a/include/linux/freezer.h b/include/linux/freezer.h
+index 6b7fd9cf5ea2..1446f210dfc6 100644
+--- a/include/linux/freezer.h
++++ b/include/linux/freezer.h
+@@ -172,6 +172,14 @@ static inline void freezable_schedule(void)
+ 	freezer_count();
  }
  
-+static struct kthread_iterant *to_kthread_iterant(struct task_struct *k)
++/* Like cond_resched(), but should not block the freezer. */
++static inline void freezable_cond_resched(void)
 +{
-+	return __to_kthread(k->vfork_done)->kti;
++	freezer_do_not_count();
++	cond_resched();
++	freezer_count();
 +}
 +
- /**
-  * kthread_stop_current - make the current kthread to terminate a safe way
-  *
-@@ -199,6 +205,7 @@ static int kthread(void *_create)
- 	self.data = data;
- 	init_completion(&self.exited);
- 	init_completion(&self.parked);
-+	self.kti = NULL;
- 	current->vfork_done = &self.exited;
- 
- 	/* If user was SIGKILLed, I release the structure. */
-@@ -421,9 +428,12 @@ struct task_struct *kthread_create_on_cpu(int (*threadfn)(void *data),
-  */
- static int kthread_iterant_fn(void *kti_ptr)
+ /* DO NOT ADD ANY NEW CALLERS OF THIS FUNCTION */
+ static inline void freezable_schedule_unsafe(void)
  {
-+	struct kthread *kt = to_kthread(current);
- 	struct kthread_iterant *kti = kti_ptr;
- 	void *data = kti->data;
- 
-+	kt->kti = kti;
-+
- 	set_freezable();
- 
- 	if (kti->init)
 -- 
 1.8.5.6
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
