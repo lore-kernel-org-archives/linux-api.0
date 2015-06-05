@@ -1,74 +1,60 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC PATCH 00/18] kthreads/signal: Safer kthread API and signal
- handling
-Date: Fri, 5 Jun 2015 18:22:16 +0200
-Message-ID: <20150605162216.GK19282@twins.programming.kicks-ass.net>
-References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v2] seccomp: add ptrace options for suspend/resume
+Date: Fri, 5 Jun 2015 23:16:50 +0200
+Message-ID: <20150605211650.GA25718@redhat.com>
+References: <1433369396-13360-1-git-send-email-tycho.andersen@canonical.com> <20150604183149.GA560@redhat.com> <20150604210529.GJ3160@smitten>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
+In-Reply-To: <20150604210529.GJ3160@smitten>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Petr Mladek <pmladek@suse.cz>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Richard Weinberger <richard@nod.at>, Steven Rostedt <rostedt@goodmis.org>, David Woodhouse <dwmw2@infradead.org>, linux-mtd@lists.infradead.org, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-nfs@vger.kernel.org, Chris Mason <clm@fb.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Tycho Andersen <tycho.andersen@canonical.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Roland McGrath <roland@hack.frob.com>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jun 05, 2015 at 05:00:59PM +0200, Petr Mladek wrote:
-> Workqueue
-> 
-> 
-> Workqueues are quite popular and many kthreads have already been
-> converted into them.
-> 
-> Work queues allow to split the function into even more pieces and
-> reach the common check point more often. It is especially useful
-> when a kthread handles more tasks and is woken when some work
-> is needed. Then we could queue the appropriate work instead
-> of waking the whole kthread and checking what exactly needs
-> to be done.
-> 
-> But there are many kthreads that need to cycle many times
-> until some work is finished, e.g. khugepaged, virtio_balloon,
-> jffs2_garbage_collect_thread. They would need to queue the
-> work item repeatedly from the same work item or between
-> more work items. It would be a strange semantic.
-> 
-> Work queues allow to share the same kthread between more users.
-> It helps to reduce the number of running kthreads. It is especially
-> useful if you would need a kthread for each CPU.
-> 
-> But this might also be a disadvantage. Just look into the output
-> of the command "ps" and see the many [kworker*] processes. One
-> might see this a black hole. If a kworker makes the system busy,
-> it is less obvious what the problem is in compare with the old
-> "simple" and dedicated kthreads.
-> 
-> Yes, we could add some debugging tools for work queues but
-> it would be another non-standard thing that developers and
-> system administrators would need to understand.
-> 
-> Another thing is that work queues have their own scheduler. If we
-> move even more tasks there it might need even more love. Anyway,
-> the extra scheduler adds another level of complexity when
-> debugging problems.
+Hi Tycho,
 
-There's a lot more problems with workqueues:
+On 06/04, Tycho Andersen wrote:
+>
+> On Thu, Jun 04, 2015 at 08:31:49PM +0200, Oleg Nesterov wrote:
+> > Also. Suppose that the tracer sets SUSPEND_SECCOMP and then drops
+> > CAP_SYS_ADMIN. After that it can't set or clear other ptrace options.
+>
+> Is this a case we're concerned about? I think this should be ok (i.e.
+> "don't do that" :).
 
- - they're not regular tasks and all the task controls don't work on
-   them. This means all things scheduler, like cpu-affinity, nice, and
-   RT/deadline scheduling policies. Instead there is some half baked
-   secondary interface for some of these.
+Sure, I won't insist. Just this looks a bit confusing. I mean, if you
+read this code it is not clear why may_suspend_seccomp() is called even
+if the tracer changes other bits, and "data & PTRACE_O_SUSPEND" is true
+only because the tracer does _not_ change this option.
 
-   But this also very much includes things like cgroups, which brings me
-   to the second point.
+IOW, imo the code will just look better if may_suspend_seccomp() is
+called only when PTRACE_O_SUSPEND is set.  But this is minor, feel free
+to ignore.
 
- - its oblivious to cgroups (as it is to RT priority for example) both
-   leading to priority inversion. A work enqueued from a deep/limited
-   cgroup does not inherit the task's cgroup. Instead this work is ran
-   from the root cgroup.
+> > > +#ifdef CONFIG_CHECKPOINT_RESTORE
+> > > +bool may_suspend_seccomp(void)
+> > > +{
+> > > +	if (!capable(CAP_SYS_ADMIN))
+> > > +		return false;
+> > > +
+> > > +	if (current->seccomp.mode != SECCOMP_MODE_DISABLED)
+> > > +		return false;
+> >
+> > Heh. OK, I won't argue with the new check too ;)
+>
+> Actually now that I think about it I agree with you, these checks
+> don't seem necessary. Even inside a user namespace, if you can ptrace
+> a process you can make it do whatever you want irrespective of
+> seccomp, as long as it has the necessary capabilities. Once the
+> seccomp checks are run after ptrace, they'll be enforced so you
+> couldn't have it call whatever you want in the first place.
 
-   This breaks cgroup isolation, more significantly so when a large part
-   of the actual work is done from workqueues (as some workloads end up
-   being). Instead of being able to control the work, it all ends up in
-   the root cgroup outside of control.
+Good ;)
+
+> Still, perhaps I'm missing something...
+
+Kees, Andy?
+
+Oleg.
