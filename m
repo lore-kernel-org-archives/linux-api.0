@@ -1,7 +1,7 @@
 From: Petr Mladek <pmladek@suse.cz>
-Subject: [RFC PATCH 07/18] kthread: Make iterant kthreads freezable by default
-Date: Fri,  5 Jun 2015 17:01:06 +0200
-Message-ID: <1433516477-5153-8-git-send-email-pmladek@suse.cz>
+Subject: [RFC PATCH 18/18] jffs2: Use the new API for a sleep with a timeout
+Date: Fri,  5 Jun 2015 17:01:17 +0200
+Message-ID: <1433516477-5153-19-git-send-email-pmladek@suse.cz>
 References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
@@ -10,47 +10,64 @@ To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, 
 Cc: Richard Weinberger <richard@nod.at>, Steven Rostedt <rostedt@goodmis.org>, David Woodhouse <dwmw2@infradead.org>, linux-mtd@lists.infradead.org, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-nfs@vger.kernel.org, Chris Mason <clm@fb.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-Many kthreads already calls set_freezable() before they enter the main
-cycle. One of the reasons for creating iterant kthreads is to create
-a safe point for freezing and make even more kthreads properly
-freezable. Therefore it would make sense to set all iterant
-kthreads freezable by default.
+It allows to maintain the checks for freezing, parking, and signal
+handling on a single place.
 
-However some kthreads might be hard to make properly freezable.
-For example, if they do non-interruptible sleeps. They would
-need to explicitly clear PF_NOFREEZE flag in the init() call.
-But it should be avoided whenever possible.
+Note that the sleep with the timeout is used here to slow down
+the progress a bit. It does not matter if we do it before or after
+calling jffs2_garbage_collect_pass().
 
 Signed-off-by: Petr Mladek <pmladek@suse.cz>
 ---
- kernel/kthread.c | 9 ++++++++-
- 1 file changed, 8 insertions(+), 1 deletion(-)
+ fs/jffs2/background.c | 29 +++++++++++------------------
+ 1 file changed, 11 insertions(+), 18 deletions(-)
 
-diff --git a/kernel/kthread.c b/kernel/kthread.c
-index 185902d0e293..e34f67cb8ecf 100644
---- a/kernel/kthread.c
-+++ b/kernel/kthread.c
-@@ -412,13 +412,20 @@ struct task_struct *kthread_create_on_cpu(int (*threadfn)(void *data),
-  *
-  * This function defines the work flow of iterant kthreads. It calls
-  * the given callbacks. Also it defines and implements a common
-- * check point for freezing and stopping.
-+ * check point for freezing, stopping, and signal handling.
-+ *
-+ * IMPORTANT: Iterant kthreads are freezable by default. The functions
-+ * defined in the given struct kthread_iterant still have to explicitly
-+ * call try_to_freeze() after each interruptible sleep. They must avoid
-+ * non-interruptible sleep if freezing is allowed.
-  */
- static int kthread_iterant_fn(void *kti_ptr)
- {
- 	struct kthread_iterant *kti = kti_ptr;
- 	void *data = kti->data;
+diff --git a/fs/jffs2/background.c b/fs/jffs2/background.c
+index 50c16048ba2d..2d38d40e0ad1 100644
+--- a/fs/jffs2/background.c
++++ b/fs/jffs2/background.c
+@@ -62,6 +62,16 @@ static void jffs2_garbage_collect_thread_func(void *_c)
+ 	}
+ 	spin_unlock(&c->erase_completion_lock);
  
-+	set_freezable();
++	/* We don't want SIGHUP to interrupt us. STOP and KILL are OK though. */
++	sigprocmask(SIG_BLOCK, &hupmask, NULL);
 +
- 	if (kti->init)
- 		kti->init(data);
++	jffs2_dbg(1, "%s(): pass\n", __func__);
++	if (jffs2_garbage_collect_pass(c) == -ENOSPC) {
++		pr_notice("No space for garbage collection. Aborting GC thread\n");
++		kthread_stop_current();
++	}
++	sigprocmask(SIG_UNBLOCK, &hupmask, NULL);
++
+ 	/* Problem - immediately after bootup, the GCD spends a lot
+ 	 * of time in places like jffs2_kill_fragtree(); so much so
+ 	 * that userspace processes (like gdm and X) are starved
+@@ -73,24 +83,7 @@ static void jffs2_garbage_collect_thread_func(void *_c)
+ 	 * inode in with read_inode() is much preferable to having
+ 	 * the GC thread get there first.
+ 	 */
+-	schedule_timeout_interruptible(msecs_to_jiffies(50));
+-
+-	if (kthread_should_stop()) {
+-		jffs2_dbg(1, "%s(): kthread_stop() called\n", __func__);
+-		return;
+-	}
+-
+-	try_to_freeze();
+-
+-	/* We don't want SIGHUP to interrupt us. STOP and KILL are OK though. */
+-	sigprocmask(SIG_BLOCK, &hupmask, NULL);
+-
+-	jffs2_dbg(1, "%s(): pass\n", __func__);
+-	if (jffs2_garbage_collect_pass(c) == -ENOSPC) {
+-		pr_notice("No space for garbage collection. Aborting GC thread\n");
+-		kthread_stop_current();
+-	}
+-	sigprocmask(SIG_UNBLOCK, &hupmask, NULL);
++	set_kthread_iterant_int_sleep_timeout(msecs_to_jiffies(50));
+ }
  
+ static void jffs2_garbage_collect_thread_destroy(void *_c)
 -- 
 1.8.5.6
