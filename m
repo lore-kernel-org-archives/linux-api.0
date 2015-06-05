@@ -1,121 +1,192 @@
-From: Kevin Tsai <ktsai@capellamicro.com>
-Subject: [PATCH V2 1/1] iio: Add iio_mod_light_uva, iio_mod_light_uvb, and iio_mod_light_uvc.
-Date: Thu,  4 Jun 2015 18:47:51 -0700
-Message-ID: <1433468871-14351-1-git-send-email-ktsai@capellamicro.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jonathan Cameron <jic23@kernel.org>, Hartmut Knaack <knaack.h@gmx.de>, Lars-Peter Clausen <lars@metafoo.de>, Peter Meerwald <pmeerw@pmeerw.net>, Irina Tirdea <irina.tirdea@intel.com>, Daniel Baluta <daniel.baluta@intel.com>, Haneen Mohammed <hamohammed.sa@gmail.com>, Darshana Padmadas <darshanapadmadas@gmail.com>, Roberta Dobrescu <roberta.dobrescu@gmail.com>, Vlad Dogaru <vlad.dogaru@intel.com>, Reyad Attiyat <reyad.attiyat@gmail.com>, Octavian Purdila <octavian.purdila@intel.com>, Martin Fuzzey <mfuzzey@parkeon.com>, Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>, Kevin Tsai <ktsai@capellamicro.com>
-Cc: linux-iio@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+From: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
+Subject: [RFC PATCH 00/18] kthreads/signal: Safer kthread API and signal handling
+Date: Fri,  5 Jun 2015 17:00:59 +0200
+Message-ID: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Add Ultraviolet(UV) support:
-UVA: 315 ~ 400 nm
-UVB: 280 ~ 315 nm
-UVC: 100 ~ 280 nm
+Kthreads are implemented as an infinite loop. They include check points
+for termination, freezer, parking, and even signal handling.
 
-/sys/bus/iio/devices/iio:deviceX/in_intensity_uva_input
-/sys/bus/iio/devices/iio:deviceX/in_intensity_uvb_input
-/sys/bus/iio/devices/iio:deviceX/in_intensity_uvc_input
-The SI unit is "uW/mm^2".
+We need to touch all kthreads every time we want to add or
+modify the behavior of such checkpoints. It is not easy because
+there are several hundreds of kthreads and each of them is
+implemented in a slightly different way.
 
-/sys/bus/iio/devices/iio:deviceX/in_intensity_uva_min_wavelength
-/sys/bus/iio/devices/iio:deviceX/in_intensity_uva_max_wavelength
-/sys/bus/iio/devices/iio:deviceX/in_intensity_uvb_min_wavelength
-/sys/bus/iio/devices/iio:deviceX/in_intensity_uvb_max_wavelength
-/sys/bus/iio/devices/iio:deviceX/in_intensity_uvc_min_wavelength
-/sys/bus/iio/devices/iio:deviceX/in_intensity_uvc_max_wavelength
-The SI unit is "nm".
+This anarchy brings potentially broken or non-standard behavior.
+For example, few kthreads already handle signals a strange way.
 
-Signed-off-by: Kevin Tsai <ktsai@capellamicro.com>
----
- Documentation/ABI/testing/sysfs-bus-iio | 23 +++++++++++++++++++++++
- drivers/iio/industrialio-core.c         |  3 +++
- include/uapi/linux/iio/types.h          |  3 +++
- tools/iio/iio_event_monitor.c           |  6 ++++++
- 4 files changed, 35 insertions(+)
 
-diff --git a/Documentation/ABI/testing/sysfs-bus-iio b/Documentation/ABI/testing/sysfs-bus-iio
-index bbed111..2960142 100644
---- a/Documentation/ABI/testing/sysfs-bus-iio
-+++ b/Documentation/ABI/testing/sysfs-bus-iio
-@@ -1463,3 +1463,26 @@ Description:
- 		measurements and return the average value as output data. Each
- 		value resulted from <type>[_name]_oversampling_ratio measurements
- 		is considered as one sample for <type>[_name]_sampling_frequency.
-+
-+What:		/sys/.../iio:deviceX/in_intensity_uva[_input|_raw]
-+What:		/sys/.../iio:deviceX/in_intensity_uvb[_input|_raw]
-+What:		/sys/.../iio:deviceX/in_intensity_uvc[_input|_raw]
-+KernelVersion:	4.1.1
-+Description:
-+		uva is the ultraviolet wavelength from 315nm to 400nm.
-+		uvb is the ultraviolet wavelength from 280nm to 315nm.
-+		uvc is the ultraviolet wavelength from 100nm to 280nm.
-+		The SI unit is "uW/mm^2". Otherwise it should include _raw.
-+
-+What:		/sys/.../iio:deviceX/in_intensity_uva_min_wavelength
-+What:		/sys/.../iio:deviceX/in_intensity_uva_max_wavelength
-+What:		/sys/.../iio:deviceX/in_intensity_uvb_min_wavelength
-+What:		/sys/.../iio:deviceX/in_intensity_uvb_max_wavelength
-+What:		/sys/.../iio:deviceX/in_intensity_uvc_min_wavelength
-+What:		/sys/.../iio:deviceX/in_intensity_uvc_max_wavelength
-+KernelVersion:	4.1.1
-+Description:
-+		Sensor may not cover the whole uva/uvb/uvc channel. Add the
-+		min/max wavelength properties to descript sensor range.
-+		The SI unit is "nm".
-+
-diff --git a/drivers/iio/industrialio-core.c b/drivers/iio/industrialio-core.c
-index 3524b0d..ecbdd1e 100644
---- a/drivers/iio/industrialio-core.c
-+++ b/drivers/iio/industrialio-core.c
-@@ -89,6 +89,9 @@ static const char * const iio_modifier_names[] = {
- 	[IIO_MOD_LIGHT_RED] = "red",
- 	[IIO_MOD_LIGHT_GREEN] = "green",
- 	[IIO_MOD_LIGHT_BLUE] = "blue",
-+	[IIO_MOD_LIGHT_UVA] = "uva",
-+	[IIO_MOD_LIGHT_UVB] = "uvb",
-+	[IIO_MOD_LIGHT_UVC] = "uvc",
- 	[IIO_MOD_QUATERNION] = "quaternion",
- 	[IIO_MOD_TEMP_AMBIENT] = "ambient",
- 	[IIO_MOD_TEMP_OBJECT] = "object",
-diff --git a/include/uapi/linux/iio/types.h b/include/uapi/linux/iio/types.h
-index 2f8b117..5c99090 100644
---- a/include/uapi/linux/iio/types.h
-+++ b/include/uapi/linux/iio/types.h
-@@ -72,6 +72,9 @@ enum iio_modifier {
- 	IIO_MOD_ROOT_SUM_SQUARED_X_Y_Z,
- 	IIO_MOD_I,
- 	IIO_MOD_Q,
-+	IIO_MOD_LIGHT_UVA,
-+	IIO_MOD_LIGHT_UVB,
-+	IIO_MOD_LIGHT_UVC,
- };
- 
- enum iio_event_type {
-diff --git a/tools/iio/iio_event_monitor.c b/tools/iio/iio_event_monitor.c
-index 427c271..46dd27f 100644
---- a/tools/iio/iio_event_monitor.c
-+++ b/tools/iio/iio_event_monitor.c
-@@ -88,6 +88,9 @@ static const char * const iio_modifier_names[] = {
- 	[IIO_MOD_LIGHT_RED] = "red",
- 	[IIO_MOD_LIGHT_GREEN] = "green",
- 	[IIO_MOD_LIGHT_BLUE] = "blue",
-+	[IIO_MOD_LIGHT_UVA] = "uva",
-+	[IIO_MOD_LIGHT_UVB] = "uvb",
-+	[IIO_MOD_LIGHT_UVC] = "uvc",
- 	[IIO_MOD_QUATERNION] = "quaternion",
- 	[IIO_MOD_TEMP_AMBIENT] = "ambient",
- 	[IIO_MOD_TEMP_OBJECT] = "object",
-@@ -156,6 +159,9 @@ static bool event_is_known(struct iio_event_data *event)
- 	case IIO_MOD_LIGHT_RED:
- 	case IIO_MOD_LIGHT_GREEN:
- 	case IIO_MOD_LIGHT_BLUE:
-+	case IIO_MOD_LIGHT_UVA:
-+	case IIO_MOD_LIGHT_UVB:
-+	case IIO_MOD_LIGHT_UVC:
- 	case IIO_MOD_QUATERNION:
- 	case IIO_MOD_TEMP_AMBIENT:
- 	case IIO_MOD_TEMP_OBJECT:
+This patchset is a _proof-of-concept_ how to improve the situation.
+
+
+The goal is:
+
+
+  + enforce cleaner and better maintainable kthreads implementation
+    using a new API
+
+  + standardize signal handling in kthreads
+
+  + hopefully solve some existing problems, e.g. with suspend
+
+
+Why new API?
+
+
+First, I do not want to add yet another API that would need
+to be supported. The aim is to _replace_ the current API.
+Well, the old API would need to stay around for some time until
+all kthreads are converted.
+
+Second, there are two more existing alternatives. They fulfill
+the needs and can be used for some conversions. But IMHO, they
+are not well usable in all cases. Let's talk more about them.
+
+
+Workqueue
+
+
+Workqueues are quite popular and many kthreads have already been
+converted into them.
+
+Work queues allow to split the function into even more pieces and
+reach the common check point more often. It is especially useful
+when a kthread handles more tasks and is woken when some work
+is needed. Then we could queue the appropriate work instead
+of waking the whole kthread and checking what exactly needs
+to be done.
+
+But there are many kthreads that need to cycle many times
+until some work is finished, e.g. khugepaged, virtio_balloon,
+jffs2_garbage_collect_thread. They would need to queue the
+work item repeatedly from the same work item or between
+more work items. It would be a strange semantic.
+
+Work queues allow to share the same kthread between more users.
+It helps to reduce the number of running kthreads. It is especially
+useful if you would need a kthread for each CPU.
+
+But this might also be a disadvantage. Just look into the output
+of the command "ps" and see the many [kworker*] processes. One
+might see this a black hole. If a kworker makes the system busy,
+it is less obvious what the problem is in compare with the old
+"simple" and dedicated kthreads.
+
+Yes, we could add some debugging tools for work queues but
+it would be another non-standard thing that developers and
+system administrators would need to understand.
+
+Another thing is that work queues have their own scheduler. If we
+move even more tasks there it might need even more love. Anyway,
+the extra scheduler adds another level of complexity when
+debugging problems.
+
+
+kthread_worker
+
+
+kthread_worker is similar to workqueues in many ways. You need to
+
+  + define work functions
+  + define and initialize work structs
+  + queue work items (structs pointing to the functions and data)
+
+We could repeat the paragraphs about splitting the work
+and sharing the kthread between more users here.
+
+Well, the kthread_worker implementation is much simpler than
+the one for workqueues. It is more similar to a simple
+kthread. Especially, it uses the system scheduler.
+But it is still more complex that the simple kthread.
+
+One interesting thing is that kthread_workers add internal work
+items into the queue. They typically use a completion. An example
+is the flush work. see flush_kthread_work(). It is a nice trick
+but you need to be careful. For example, if you would want to
+terminate the kthread, you might want to remove some work item
+from the queue, especially if you need to break a work item that
+is called in a cycle (queues itself). The question is what to do
+with the internal tasks. If you keep them, they might wake up
+sleepers when the work was not really completed. If you remove
+them, the counter part might sleep forever.
+
+
+Conclusion
+
+
+I think that we still want some rather simple API for kthreads
+but it need to be more enforcing that the current simple one.
+
+
+Content
+
+
+This patchset is split the following way:
+
+  + 2nd patch: defines basic structure of a new kthread API that
+      allows to get most of the checks into a single place
+
+  + 6th patch: proposal of signal handling in kthreads
+
+  + 7th patch: makes kthreads using the new API freezable by default
+
+  + 9th, 16th patches: proposal how to maintain sleeping between
+    kthread iterations on a single place
+
+  + 10th, 11th, 12th, 17th, 18th patches: show how the new API
+    could be used in some kthreads and hopefully clean them
+    a bit
+
+  + the other patches add some helper functions or do some
+    related clean up
+
+
+The patchset touches many areas: kthreads, scheduler, signal handling,
+freezer, parking, many subsystems and drivers are using kthreads. This
+is why I added so many people into CC.
+
+The patch set can be applied against current Linus' tree for 4.1.0-rc6.
+
+
+Petr Mladek (18):
+  kthread: Allow to call __kthread_create_on_node() with va_list args
+  kthread: Add API for iterant kthreads
+  kthread: Add kthread_stop_current()
+  signal: Rename kernel_sigaction() to kthread_sigaction() and clean it
+    up
+  freezer/scheduler: Add freezable_cond_resched()
+  signal/kthread: Initial implementation of kthread signal handling
+  kthread: Make iterant kthreads freezable by default
+  kthread: Allow to get struct kthread_iterant from task_struct
+  kthread: Make it easier to correctly sleep in iterant kthreads
+  jffs2: Remove forward definition of jffs2_garbage_collect_thread()
+  jffs2: Convert jffs2_gcd_mtd kthread into the iterant API
+  lockd: Convert the central lockd service to kthread_iterant API
+  ring_buffer: Use iterant kthreads API in the ring buffer benchmark
+  ring_buffer: Allow to cleanly freeze the ring buffer benchmark
+    kthreads
+  ring_buffer: Allow to exit the ring buffer benchmark immediately
+  kthread: Support interruptible sleep with a timeout by iterant
+    kthreads
+  ring_buffer: Use the new API for a sleep with a timeout in the
+    benchmark
+  jffs2: Use the new API for a sleep with a timeout
+
+ fs/jffs2/background.c                | 178 ++++++++++------------
+ fs/lockd/svc.c                       |  80 +++++-----
+ include/linux/freezer.h              |   8 +
+ include/linux/kthread.h              |  67 ++++++++
+ include/linux/signal.h               |  24 ++-
+ include/linux/sunrpc/svc.h           |   2 +
+ kernel/kmod.c                        |   2 +-
+ kernel/kthread.c                     | 286 +++++++++++++++++++++++++++++++----
+ kernel/signal.c                      |  84 +++++++++-
+ kernel/trace/ring_buffer_benchmark.c | 110 +++++++-------
+ 10 files changed, 611 insertions(+), 230 deletions(-)
+
 -- 
-1.8.3.1
+1.8.5.6
