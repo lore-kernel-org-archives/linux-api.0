@@ -1,128 +1,111 @@
-From: Petr Mladek <pmladek@suse.cz>
-Subject: [RFC PATCH 01/18] kthread: Allow to call __kthread_create_on_node() with va_list args
-Date: Fri,  5 Jun 2015 17:01:00 +0200
-Message-ID: <1433516477-5153-2-git-send-email-pmladek@suse.cz>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [RFC PATCH 09/18] kthread: Make it easier to correctly sleep in
+ iterant kthreads
+Date: Fri, 5 Jun 2015 18:10:21 +0200
+Message-ID: <20150605161021.GJ19282@twins.programming.kicks-ass.net>
 References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
-Cc: Richard Weinberger <richard@nod.at>, Steven Rostedt <rostedt@goodmis.org>, David Woodhouse <dwmw2@infradead.org>, linux-mtd@lists.infradead.org, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-nfs@vger.kernel.org, Chris Mason <clm@fb.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.cz>
+ <1433516477-5153-10-git-send-email-pmladek@suse.cz>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1433516477-5153-10-git-send-email-pmladek-AlSwsSmVLrQ@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-kthread_create_on_node() implements a bunch of logic to create
-the kthread. It is already called by kthread_create_on_cpu().
+On Fri, Jun 05, 2015 at 05:01:08PM +0200, Petr Mladek wrote:
+> Many kthreads go into an interruptible sleep when there is nothing
+> to do. They should check if anyone did not requested the kthread
+> to terminate, freeze, or park in the meantime. It is easy to do
+> it a wrong way.
 
-We are going to add a new API that will allow to standardize kthreads
-and define safe points for termination, freezing, parking, and even
-signal handling. It will want to call kthread_create_on_node()
-with va_list args.
+INTERRUPTIBLE is the wrong state to idle in for kthreads, use
+TASK_IDLE.
 
-This patch does only a refactoring and does not modify the existing
-behavior.
-
-Signed-off-by: Petr Mladek <pmladek@suse.cz>
 ---
- kernel/kthread.c | 71 +++++++++++++++++++++++++++++++++-----------------------
- 1 file changed, 42 insertions(+), 29 deletions(-)
 
-diff --git a/kernel/kthread.c b/kernel/kthread.c
-index 10e489c448fe..fca7cd124512 100644
---- a/kernel/kthread.c
-+++ b/kernel/kthread.c
-@@ -242,32 +242,10 @@ static void create_kthread(struct kthread_create_info *create)
- 	}
- }
+commit 80ed87c8a9ca0cad7ca66cf3bbdfb17559a66dcf
+Author: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Date:   Fri May 8 14:23:45 2015 +0200
+
+    sched/wait: Introduce TASK_NOLOAD and TASK_IDLE
+    
+    Currently people use TASK_INTERRUPTIBLE to idle kthreads and wait for
+    'work' because TASK_UNINTERRUPTIBLE contributes to the loadavg. Having
+    all idle kthreads contribute to the loadavg is somewhat silly.
+    
+    Now mostly this works OK, because kthreads have all their signals
+    masked. However there's a few sites where this is causing problems and
+    TASK_UNINTERRUPTIBLE should be used, except for that loadavg issue.
+    
+    This patch adds TASK_NOLOAD which, when combined with
+    TASK_UNINTERRUPTIBLE avoids the loadavg accounting.
+    
+    As most of imagined usage sites are loops where a thread wants to
+    idle, waiting for work, a helper TASK_IDLE is introduced.
+    
+    Signed-off-by: Peter Zijlstra (Intel) <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+    Cc: Julian Anastasov <ja-FgGsKACvmQM@public.gmane.org>
+    Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+    Cc: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+    Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+    Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+    Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+    Signed-off-by: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index dd07ac03f82a..7de815c6fa78 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -218,9 +218,10 @@ print_cfs_rq(struct seq_file *m, int cpu, struct cfs_rq *cfs_rq);
+ #define TASK_WAKEKILL		128
+ #define TASK_WAKING		256
+ #define TASK_PARKED		512
+-#define TASK_STATE_MAX		1024
++#define TASK_NOLOAD		1024
++#define TASK_STATE_MAX		2048
  
--/**
-- * kthread_create_on_node - create a kthread.
-- * @threadfn: the function to run until signal_pending(current).
-- * @data: data ptr for @threadfn.
-- * @node: memory node number.
-- * @namefmt: printf-style name for the thread.
-- *
-- * Description: This helper function creates and names a kernel
-- * thread.  The thread will be stopped: use wake_up_process() to start
-- * it.  See also kthread_run().
-- *
-- * If thread is going to be bound on a particular cpu, give its node
-- * in @node, to get NUMA affinity for kthread stack, or else give -1.
-- * When woken, the thread will run @threadfn() with @data as its
-- * argument. @threadfn() can either call do_exit() directly if it is a
-- * standalone thread for which no one will call kthread_stop(), or
-- * return when 'kthread_should_stop()' is true (which means
-- * kthread_stop() has been called).  The return value should be zero
-- * or a negative error number; it will be passed to kthread_stop().
-- *
-- * Returns a task_struct or ERR_PTR(-ENOMEM) or ERR_PTR(-EINTR).
-- */
--struct task_struct *kthread_create_on_node(int (*threadfn)(void *data),
--					   void *data, int node,
--					   const char namefmt[],
--					   ...)
-+static struct task_struct *__kthread_create_on_node(int (*threadfn)(void *data),
-+						    void *data, int node,
-+						    const char namefmt[],
-+						    va_list args)
- {
- 	DECLARE_COMPLETION_ONSTACK(done);
- 	struct task_struct *task;
-@@ -308,11 +286,8 @@ struct task_struct *kthread_create_on_node(int (*threadfn)(void *data),
- 	task = create->result;
- 	if (!IS_ERR(task)) {
- 		static const struct sched_param param = { .sched_priority = 0 };
--		va_list args;
+-#define TASK_STATE_TO_CHAR_STR "RSDTtXZxKWP"
++#define TASK_STATE_TO_CHAR_STR "RSDTtXZxKWPN"
  
--		va_start(args, namefmt);
- 		vsnprintf(task->comm, sizeof(task->comm), namefmt, args);
--		va_end(args);
- 		/*
- 		 * root may have changed our (kthreadd's) priority or CPU mask.
- 		 * The kernel thread should not inherit these properties.
-@@ -323,6 +298,44 @@ struct task_struct *kthread_create_on_node(int (*threadfn)(void *data),
- 	kfree(create);
- 	return task;
- }
-+
-+
-+/**
-+ * kthread_create_on_node - create a kthread.
-+ * @threadfn: the function to run until signal_pending(current).
-+ * @data: data ptr for @threadfn.
-+ * @node: memory node number.
-+ * @namefmt: printf-style name for the thread.
-+ *
-+ * Description: This helper function creates and names a kernel
-+ * thread.  The thread will be stopped: use wake_up_process() to start
-+ * it.  See also kthread_run().
-+ *
-+ * If thread is going to be bound on a particular cpu, give its node
-+ * in @node, to get NUMA affinity for kthread stack, or else give -1.
-+ * When woken, the thread will run @threadfn() with @data as its
-+ * argument. @threadfn() can either call do_exit() directly if it is a
-+ * standalone thread for which no one will call kthread_stop(), or
-+ * return when 'kthread_should_stop()' is true (which means
-+ * kthread_stop() has been called).  The return value should be zero
-+ * or a negative error number; it will be passed to kthread_stop().
-+ *
-+ * Returns a task_struct or ERR_PTR(-ENOMEM) or ERR_PTR(-EINTR).
-+ */
-+struct task_struct *kthread_create_on_node(int (*threadfn)(void *data),
-+					   void *data, int node,
-+					   const char namefmt[],
-+					   ...)
-+{
-+	struct task_struct *task;
-+	va_list args;
-+
-+	va_start(args, namefmt);
-+	task = __kthread_create_on_node(threadfn, data, node, namefmt, args);
-+	va_end(args);
-+
-+	return task;
-+}
- EXPORT_SYMBOL(kthread_create_on_node);
+ extern char ___assert_task_state[1 - 2*!!(
+ 		sizeof(TASK_STATE_TO_CHAR_STR)-1 != ilog2(TASK_STATE_MAX)+1)];
+@@ -230,6 +231,8 @@ extern char ___assert_task_state[1 - 2*!!(
+ #define TASK_STOPPED		(TASK_WAKEKILL | __TASK_STOPPED)
+ #define TASK_TRACED		(TASK_WAKEKILL | __TASK_TRACED)
  
- static void __kthread_bind(struct task_struct *p, unsigned int cpu, long state)
--- 
-1.8.5.6
++#define TASK_IDLE		(TASK_UNINTERRUPTIBLE | TASK_NOLOAD)
++
+ /* Convenience macros for the sake of wake_up */
+ #define TASK_NORMAL		(TASK_INTERRUPTIBLE | TASK_UNINTERRUPTIBLE)
+ #define TASK_ALL		(TASK_NORMAL | __TASK_STOPPED | __TASK_TRACED)
+@@ -245,7 +248,8 @@ extern char ___assert_task_state[1 - 2*!!(
+ 			((task->state & (__TASK_STOPPED | __TASK_TRACED)) != 0)
+ #define task_contributes_to_load(task)	\
+ 				((task->state & TASK_UNINTERRUPTIBLE) != 0 && \
+-				 (task->flags & PF_FROZEN) == 0)
++				 (task->flags & PF_FROZEN) == 0 && \
++				 (task->state & TASK_NOLOAD) == 0)
+ 
+ #ifdef CONFIG_DEBUG_ATOMIC_SLEEP
+ 
+diff --git a/include/trace/events/sched.h b/include/trace/events/sched.h
+index 30fedaf3e56a..d57a575fe31f 100644
+--- a/include/trace/events/sched.h
++++ b/include/trace/events/sched.h
+@@ -147,7 +147,8 @@ TRACE_EVENT(sched_switch,
+ 		  __print_flags(__entry->prev_state & (TASK_STATE_MAX-1), "|",
+ 				{ 1, "S"} , { 2, "D" }, { 4, "T" }, { 8, "t" },
+ 				{ 16, "Z" }, { 32, "X" }, { 64, "x" },
+-				{ 128, "K" }, { 256, "W" }, { 512, "P" }) : "R",
++				{ 128, "K" }, { 256, "W" }, { 512, "P" },
++				{ 1024, "N" }) : "R",
+ 		__entry->prev_state & TASK_STATE_MAX ? "+" : "",
+ 		__entry->next_comm, __entry->next_pid, __entry->next_prio)
+ );
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
