@@ -1,55 +1,85 @@
-From: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
-Subject: [RFC PATCH 05/18] freezer/scheduler: Add freezable_cond_resched()
-Date: Fri,  5 Jun 2015 17:01:04 +0200
-Message-ID: <1433516477-5153-6-git-send-email-pmladek@suse.cz>
+From: Petr Mladek <pmladek@suse.cz>
+Subject: [RFC PATCH 03/18] kthread: Add kthread_stop_current()
+Date: Fri,  5 Jun 2015 17:01:02 +0200
+Message-ID: <1433516477-5153-4-git-send-email-pmladek@suse.cz>
 References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1433516477-5153-1-git-send-email-pmladek-AlSwsSmVLrQ@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
+In-Reply-To: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
+List-Post: <mailto:linux-mtd@lists.infradead.org>
+List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
+Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
+To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
+Cc: linux-nfs@vger.kernel.org, Borislav Petkov <bp@suse.de>, Jiri Kosina <jkosina@suse.cz>, Richard Weinberger <richard@nod.at>, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, Michal Hocko <mhocko@suse.cz>, Chris Mason <clm@fb.com>, Petr Mladek <pmladek@suse.cz>, linux-mtd@lists.infradead.org, linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, live-patching@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, David Woodhouse <dwmw2@infradead.org>, Anna Schumaker <anna.schumaker@netapp.com>
 List-Id: linux-api@vger.kernel.org
 
-It makes sense to call cond_resched() in freezable kthreads.
-But there is the chicken&egg problem whether to call try_to_freeze()
-before or after the schedule.
+For example, jffs2_gcd_mtd kthread can be stopped by SIGKILL.
+The signal is handled inside the main function.
 
-This patch adds freezable_cond_resched(). It uses the same trick as
-freezable_schedule(). It tells the freezer that it might ignore
-the sleeping process.
+We would like to convert such kthreads to the iterant API
+and use proper signal handlers.
 
-Note that it might be used only on locations where the freezing
-is safe. It means that no lock is taken and we are ready to sleep
-for a very long time.
+The new functions will allow to pass the information
+between the signal handler and the main kthread functions.
 
-Signed-off-by: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
+kthread_stop_current() allows to quit the kthread correctly.
+It means to leave the main cycle on a safe point and call
+clean up actions via post() function.
+
+Signed-off-by: Petr Mladek <pmladek@suse.cz>
 ---
- include/linux/freezer.h | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ include/linux/kthread.h |  1 +
+ kernel/kthread.c        | 13 +++++++++++++
+ 2 files changed, 14 insertions(+)
 
-diff --git a/include/linux/freezer.h b/include/linux/freezer.h
-index 6b7fd9cf5ea2..1446f210dfc6 100644
---- a/include/linux/freezer.h
-+++ b/include/linux/freezer.h
-@@ -172,6 +172,14 @@ static inline void freezable_schedule(void)
- 	freezer_count();
+diff --git a/include/linux/kthread.h b/include/linux/kthread.h
+index 06fe9ad192dd..100c1e006729 100644
+--- a/include/linux/kthread.h
++++ b/include/linux/kthread.h
+@@ -86,6 +86,7 @@ kthread_iterant_create_on_cpu(struct kthread_iterant *kti,
+ })
+ 
+ void kthread_bind(struct task_struct *k, unsigned int cpu);
++void kthread_stop_current(void);
+ int kthread_stop(struct task_struct *k);
+ bool kthread_should_stop(void);
+ bool kthread_should_park(void);
+diff --git a/kernel/kthread.c b/kernel/kthread.c
+index 4b2698bcc622..688bb4cfd807 100644
+--- a/kernel/kthread.c
++++ b/kernel/kthread.c
+@@ -70,6 +70,19 @@ static struct kthread *to_live_kthread(struct task_struct *k)
  }
  
-+/* Like cond_resched(), but should not block the freezer. */
-+static inline void freezable_cond_resched(void)
+ /**
++ * kthread_stop_current - make the current kthread to terminate a safe way
++ *
++ * This function sets KTHREAD_SHOULD_STOP flags. It makes kthread to break
++ * the main loop and do some clean up actions before the main kthread
++ * function finishes. It is the standard behavior for SIGTERM signal.
++ */
++void kthread_stop_current(void)
 +{
-+	freezer_do_not_count();
-+	cond_resched();
-+	freezer_count();
++	set_bit(KTHREAD_SHOULD_STOP, &to_kthread(current)->flags);
 +}
++EXPORT_SYMBOL(kthread_stop_current);
 +
- /* DO NOT ADD ANY NEW CALLERS OF THIS FUNCTION */
- static inline void freezable_schedule_unsafe(void)
- {
++/**
+  * kthread_should_stop - should this kthread return now?
+  *
+  * When someone calls kthread_stop() on your kthread, it will be woken
 -- 
 1.8.5.6
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+______________________________________________________
+Linux MTD discussion mailing list
+http://lists.infradead.org/mailman/listinfo/linux-mtd/
