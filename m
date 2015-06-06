@@ -1,39 +1,153 @@
-From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v3] seccomp: add ptrace options for suspend/resume
-Date: Sat, 6 Jun 2015 01:48:00 +0200
-Message-ID: <20150605234800.GA31991@redhat.com>
-References: <1433539312-3999-1-git-send-email-tycho.andersen@canonical.com> <20150605215208.GA27105@redhat.com> <20150605220619.GI31599@hopstrocity>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe as bind mounts (take 2)
+Date: Sat, 06 Jun 2015 13:56:54 -0500
+Message-ID: <87mw0c1x8p.fsf@x220.int.ebiederm.org>
+References: <87pp63jcca.fsf@x220.int.ebiederm.org>
+	<87siaxuvik.fsf@x220.int.ebiederm.org>
+	<87wq004im1.fsf@x220.int.ebiederm.org>
+	<CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>
+	<20150528140839.GD28842@ubuntumail> <55676E32.3050006@nod.at>
+	<87382gh3uo.fsf@x220.int.ebiederm.org> <55677AEF.1090809@nod.at>
+	<87iobcfkwx.fsf@x220.int.ebiederm.org> <556831CF.9040600@nod.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150605220619.GI31599@hopstrocity>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <556831CF.9040600@nod.at> (Richard Weinberger's message of "Fri,
+	29 May 2015 11:30:55 +0200")
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Richard Weinberger <richard@nod.at>
+Cc: Serge Hallyn <serge.hallyn@ubuntu.com>, Andy Lutomirski <luto@amacapital.net>, Seth Forshee <seth.forshee@canonical.com>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Kenton Varda <kenton@sandstorm.io>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Tejun Heo <tj@kernel.org>, "libvir-list@redhat.com" <libvir-list@redhat.com>, "Daniel P. Berrange" <berrange@redhat.com>, Cedric Bosdonnat <cbosdonnat@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-On 06/05, Tycho Andersen wrote:
+Richard Weinberger <richard@nod.at> writes:
+
+> [CC'ing libvirt-lxc folks]
 >
-> right thing to do, just leave out the definition of
-> may_suspend_seccomp all together, or add in another if defined() in
-> the header?
+> Am 28.05.2015 um 23:32 schrieb Eric W. Biederman:
+>> Richard Weinberger <richard@nod.at> writes:
+>> 
+>>> Am 28.05.2015 um 21:57 schrieb Eric W. Biederman:
+>>>>> FWIW, it breaks also libvirt-lxc:
+>>>>> Error: internal error: guest failed to start: Failed to re-mount /proc/sys on /proc/sys flags=1021: Operation not permitted
+>>>>
+>>>> Interesting.  I had not anticipated a failure there?  And it is failing
+>>>> in remount?  Oh that is interesting.
+>>>>
+>>>> That implies that there is some flag of the original mount of /proc that
+>>>> the remount of /proc/sys is clearing, and that previously 
+>>>>
+>>>> The flags specified are current rdonly,remount,bind so I expect there
+>>>> are some other flags on proc that libvirt-lxc is clearing by accident
+>>>> and we did not fail before because the kernel was not enforcing things.
+>>>
+>>> Please see:
+>>> http://libvirt.org/git/?p=libvirt.git;a=blob;f=src/lxc/lxc_container.c;h=9a9ae5c2aaf0f90ff472f24fda43c077b44998c7;hb=HEAD#l933
+>>> lxcContainerMountBasicFS()
+>>>
+>>> and:
+>>> http://libvirt.org/git/?p=libvirt.git;a=blob;f=src/lxc/lxc_container.c;h=9a9ae5c2aaf0f90ff472f24fda43c077b44998c7;hb=HEAD#l850
+>>> lxcBasicMounts
+>>>
+>>>> What are the mount flags in a working libvirt-lxc?
+>>>
+>>> See:
+>>> test1:~ # cat /proc/self/mountinfo
+>>> 149 147 0:56 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
+>>> 150 149 0:56 /sys /proc/sys ro,nodev,relatime - proc proc rw
+>> 
+>>> If you need more info, please let me know. :-)
+>> 
+>> Oh interesting I had not realized libvirt-lxc had grown an unprivileged
+>> mode using user namespaces.
+>> 
+>> This does appear to be a classic remount bug, where you are not
+>> preserving the permissions.  It appears the fact that the code
+>> failed to enforce locked permissions on the fresh mount of proc
+>> was hiding this bug until now.
+>> 
+>> I expect what you actually want is the code below:
+>> 
+>> diff --git a/src/lxc/lxc_container.c b/src/lxc/lxc_container.c
+>> index 9a9ae5c2aaf0..f008a7484bfe 100644
+>> --- a/src/lxc/lxc_container.c
+>> +++ b/src/lxc/lxc_container.c
+>> @@ -850,7 +850,7 @@ typedef struct {
+>>  
+>>  static const virLXCBasicMountInfo lxcBasicMounts[] = {
+>>      { "proc", "/proc", "proc", MS_NOSUID|MS_NOEXEC|MS_NODEV, false, false, false },
+>> -    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, false, false, false },
+>> +    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
+>>      { "/.oldroot/proc/sys/net/ipv4", "/proc/sys/net/ipv4", NULL, MS_BIND, false, false, true },
+>>      { "/.oldroot/proc/sys/net/ipv6", "/proc/sys/net/ipv6", NULL, MS_BIND, false, false, true },
+>>      { "sysfs", "/sys", "sysfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
+>> 
+>> Or possibly just:
+>> 
+>> diff --git a/src/lxc/lxc_container.c b/src/lxc/lxc_container.c
+>> index 9a9ae5c2aaf0..a60ccbd12bfc 100644
+>> --- a/src/lxc/lxc_container.c
+>> +++ b/src/lxc/lxc_container.c
+>> @@ -850,7 +850,7 @@ typedef struct {
+>>  
+>>  static const virLXCBasicMountInfo lxcBasicMounts[] = {
+>>      { "proc", "/proc", "proc", MS_NOSUID|MS_NOEXEC|MS_NODEV, false, false, false },
+>> -    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, false, false, false },
+>> +    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, true, false, false },
+>>      { "/.oldroot/proc/sys/net/ipv4", "/proc/sys/net/ipv4", NULL, MS_BIND, false, false, true },
+>>      { "/.oldroot/proc/sys/net/ipv6", "/proc/sys/net/ipv6", NULL, MS_BIND, false, false, true },
+>>      { "sysfs", "/sys", "sysfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
+>> 
+>> As the there is little point in making /proc/sys read-only in a
+>> user-namespace, as the permission checks are uid based and no-one should
+>> have the global uid 0 in your container.  Making mounting /proc/sys
+>> read-only rather pointless.
+>
+> Eric, using the patch below I was able to spawn a user-namespace enabled container
+> using libvirt-lxc. :-)
+>
+> I had to:
+> 1. Disable the read-only mount of /proc/sys which is anyway useless in the user-namespace case.
+> 2. Disable the /proc/sys/net/ipv{4,6} bind mounts, this ugly hack is only needed for the non user-namespace case.
+> 3. Remove MS_RDONLY from the sysfs mount (For the non user-namespace case we'd have to keep this, though).
+>
+> Daniel, I'd take this as a chance to disable all the MS_RDONLY games if user-namespace are configured.
+> With Eric's fixes they hurt us. And as I wrote many times before if root within the user-namespace
+> is able to do nasty things in /sys and /proc that's a plain kernel bug which needs fixing. There is no
+> point in mounting these read-only. Except for the case then no user-namespace is used.
+>
 
-Just declare it unconditionally in .h. The kernel relies on this kind
-of dead-code elimination anyway. For example, please look at
-"extern void __put_user_bad(void)" in uaccess.h.
+For clarity the patch below appears to be the minimal change needed to
+fix this security issue.
 
-IOW,
+AKA add mnt_mflags in when remounting something read-only.
 
-	extern void undefined_func(void);
+/proc/sys needed to be updated so it had the proper flags to be added
+back in.
 
-	if (0)
-		undefined_func();
+I hope this helps.
 
-should be safe.
+diff --git a/src/lxc/lxc_container.c b/src/lxc/lxc_container.c
+index 9a9ae5c2aaf0..11e9514e0761 100644
+--- a/src/lxc/lxc_container.c
++++ b/src/lxc/lxc_container.c
+@@ -850,7 +850,7 @@ typedef struct {
+ 
+ static const virLXCBasicMountInfo lxcBasicMounts[] = {
+     { "proc", "/proc", "proc", MS_NOSUID|MS_NOEXEC|MS_NODEV, false, false, false },
+-    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, false, false, false },
++    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
+     { "/.oldroot/proc/sys/net/ipv4", "/proc/sys/net/ipv4", NULL, MS_BIND, false, false, true },
+     { "/.oldroot/proc/sys/net/ipv6", "/proc/sys/net/ipv6", NULL, MS_BIND, false, false, true },
+     { "sysfs", "/sys", "sysfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
+@@ -1030,7 +1030,7 @@ static int lxcContainerMountBasicFS(bool userns_enabled,
+ 
+         if (bindOverReadonly &&
+             mount(mnt_src, mnt->dst, NULL,
+-                  MS_BIND|MS_REMOUNT|MS_RDONLY, NULL) < 0) {
++                  MS_BIND|MS_REMOUNT|mnt_mflags|MS_RDONLY, NULL) < 0) {
+             virReportSystemError(errno,
+                                  _("Failed to re-mount %s on %s flags=%x"),
+                                  mnt_src, mnt->dst,
 
-> Maybe we will get rid of this pesky function all together though...
 
-Yes ;)
-
-Oleg.
+Eric
