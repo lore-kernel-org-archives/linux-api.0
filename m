@@ -1,79 +1,195 @@
-From: Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
-Subject: Re: [PATCH RFC 0/3] pagemap: make useable for non-privilege users
-Date: Mon, 8 Jun 2015 13:53:36 +0100
-Message-ID: <CAEVpBaLmw54FX25Kmrw0owOjDW-ijekS5OJO7iZM3UcV1o3fGA@mail.gmail.com>
-References: <20150512090156.24768.2521.stgit@buzz>
-	<CAEVpBa+-wwf5Q3CwQAAad3V0pJ+uD50uaHKW=EnChLDLOLSAGg@mail.gmail.com>
-	<CAEVpBaLPDa8tacKKeHmcLMdmYZ86aZBfGqCnAcQ8R=JKSUoagQ@mail.gmail.com>
+From: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [RFC PATCH 06/18] signal/kthread: Initial implementation of
+ kthread signal handling
+Date: Mon, 8 Jun 2015 15:51:07 +0200
+Message-ID: <20150608135107.GB3135@pathway.suse.cz>
+References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
+ <1433516477-5153-7-git-send-email-pmladek@suse.cz>
+ <20150606215816.GB15591@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAEVpBaLPDa8tacKKeHmcLMdmYZ86aZBfGqCnAcQ8R=JKSUoagQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150606215816.GB15591-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Mark Seaborn <mseaborn-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Daniel James <djames-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, Finn Grimwood <fgrimwood-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
+To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Konstantin,
+On Sat 2015-06-06 23:58:16, Oleg Nesterov wrote:
+> On 06/05, Petr Mladek wrote:
+> >
+> > The main question is how much it should follow POSIX and the signal
+> > handling of user space processes. On one hand, we want to be as close
+> > as possible.
+> 
+> Why? Let the kthread decide what it should if it gets, say, SIGSTOP.
 
-Would you still be intending to re-submit this patch?  We'd be quite
-keen to assist, so if there's anything further I can do please let me
-know!
+I agree that it does not make sense to follow POSIX too much for
+kthreads. They are special. Signals can be send from userspace and
+userspace should not be able to affect the core kernel services, for
+example, to stop or kill some kthreas.
 
-Just to re-confirm - we do think that the patch will solve our problem
-(relatively minor changes required on our side).
+On the other hand, I was surprised how signals were handled in the few
+kthreads. It looked like a mess to me. For example, lockd dropped locks
+when it got SIGKILL, r8712_cmd_thread() allowed SIGTERM and then just
+flushed the signal.
 
-Thanks,
-Mark
+To be honest, this patch set does _not_ make any big change. All
+signals are still ignored by default. There is default action
+only for SIGSTOP and fatal signals.
 
-On Thu, May 14, 2015 at 7:40 PM, Mark Williamson
-<mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org> wrote:
-> Hi Konstantin,
+On the other hand, it should motivate developers to use the signals
+a reasonable way. And if nothing, it will help to handle the signals
+correctly without races.
+
+
+> > Finally, kthread_do_signal() is called on a safe place in the main
+> > iterant kthread cycle. Then we will not need any special code for
+> > signals when using this kthread API.
+> 
+> OK, I will not comment other parts of iterant API in this thread.
+> 
+> But as for signal handling, to me a single kthread_iterant->do_signal()
+> callback looks better. Rather than multiple callbacks passed as
+> ->kthread_sa_handler.
+
+I think that we should make it independent on the iterant kthread API.
+I thought about handling signals also in the kthread worker and
+workqueues.
+
+One of the side plans here is to make freezing more reliable. Freezer
+already pokes normal processes using a fake signal. The same technique
+might be usable also for kthreads. A signal could wake them and
+navigate to a safe place (fridge).
+
+Another example is kthread_stop(). It sets some flag, wakes the
+kthread, and waits for completion. IMHO, it would be more elegant to
+send a signal that would wake the kthread and push it to the safe
+place where signals might be handled and where the kthread might
+get terminated.
+
+The advantage is that a pending signal will not allow to sleep on
+a location that is not safe for the given action (freezing, stopping)
+and might skip even more sleeps on the way.
+
+
+> That single callback can deque a signal and decide what it should do.
+> 
+> > +	spin_lock_irqsave(&sighand->siglock, flags);
+> > +
+> > +	if (unlikely(signal->flags & SIGNAL_CLD_MASK)) {
+> > +		WARN(1, "there are no parents for kernel threads\n");
+> > +		signal->flags &= ~SIGNAL_CLD_MASK;
+> > +	}
+> > +
+> > +	for (;;) {
+> > +		struct k_sigaction *ka;
+> > +
+> > +		signr = dequeue_signal(current, &current->blocked, &ksig.info);
+> > +
+> > +		if (!signr)
+> > +			break;
+> > +
+> > +		ka = &sighand->action[signr-1];
+> > +
+> > +		/* Do nothing for ignored signals */
+> > +		if (ka->sa.kthread_sa_handler == KTHREAD_SIG_IGN)
+> > +			continue;
 >
-> I modified our code to check for the map-exclusive flag where it used
-> to compare pageframe numbers.  First tests look pretty promising, so
-> this patch looks like a viable approach for us.
->
-> Is there anything further we can do to help?
->
-> Thanks,
-> Mark
->
-> On Tue, May 12, 2015 at 12:13 PM, Mark Williamson
-> <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org> wrote:
->> Hi Konstantin,
->>
->> Thanks very much for continuing to look at this!  It's very much
->> appreciated.  I've been investigating from our end but got caught up
->> in some gnarly details of our pagemap-consuming code.
->>
->> I like the approach and it seems like the information you're exposing
->> will be useful for our application.  I'll test the patch and see if it
->> works for us as-is.
->>
->> Will follow up with any comments on the individual patches.
->>
->> Thanks,
->> Mark
->>
->> On Tue, May 12, 2015 at 10:43 AM, Konstantin Khlebnikov
->> <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org> wrote:
->>> This patchset tries to make pagemap useable again in the safe way.
->>> First patch adds bit 'map-exlusive' which is set if page is mapped only here.
->>> Second patch restores access for non-privileged users but hides pfn if task
->>> has no capability CAP_SYS_ADMIN. Third patch removes page-shift bits and
->>> completes migration to the new pagemap format (flags soft-dirty and
->>> mmap-exlusive are available only in the new format).
->>>
->>> ---
->>>
->>> Konstantin Khlebnikov (3):
->>>       pagemap: add mmap-exclusive bit for marking pages mapped only here
->>>       pagemap: hide physical addresses from non-privileged users
->>>       pagemap: switch to the new format and do some cleanup
->>>
->>>
->>>  Documentation/vm/pagemap.txt |    3 -
->>>  fs/proc/task_mmu.c           |  178 +++++++++++++++++-------------------------
->>>  tools/vm/page-types.c        |   35 ++++----
->>>  3 files changed, 91 insertions(+), 125 deletions(-)
+> Again, I agree something like the simple kthread_dequeue_signal() makes
+> sense. Say, to drop the ignore signal like this code does. Although I
+> do not think this is really important, SIG_IGN is only possible if this
+> kthread does something strange. Say, blocks/unblocs the ignored signal.
+
+Yup, I can't find any usecase for this at the moment. I do not resist
+on SIG_IGN handling.
+
+I did this only for completness. I thought that any similarity with
+the normal userspace handling would be useful: the-least-surprise
+approach.
+
+Well, note that allow_signal() sets some "crazy" value (2) for the
+signal handler. IMHO, we should check for these values and handle
+them reasonably even in kthreads. It will make the code more secure.
+
+
+> > +
+> > +		/* Run the custom handler if any */
+> > +		if (ka->sa.kthread_sa_handler != KTHREAD_SIG_DFL) {
+> > +			ksig.ka = *ka;
+> > +
+> > +			if (ka->sa.sa_flags & SA_ONESHOT)
+> > +				ka->sa.kthread_sa_handler = KTHREAD_SIG_DFL;
+> > +
+> > +			spin_unlock_irqrestore(&sighand->siglock, flags);
+> > +			/* could run directly for kthreads */
+> > +			ksig.ka.sa.kthread_sa_handler(signr);
+> > +			freezable_cond_resched();
+> > +			goto relock;
+> 
+> Well. But for what? A simple "switch (signr)" after kthread_dequeue_signal()
+> can do the same. Or, speaking of kthread_iterant_fn() it can even dequeue the
+> signal and pass it to kti->whatever(signr).
+
+I wanted to make it independent on the iterant API. Also if you want to
+handle more signals, you need even more code, e.g. the cycle,
+cond_resched(). So, I think that some generic helper is useful.
+
+
+
+> > +		if (sig_kernel_ignore(signr))
+> > +			continue;
+> 
+> For what? Why a kthread should unignore (say) SIGWINCH if it is not going
+> to react?
+
+I do not resist on this.
+
+
+> > +		if (sig_kernel_stop(signr)) {
+> > +			__set_current_state(TASK_STOPPED);
+> > +			spin_unlock_irqrestore(&sighand->siglock, flags);
+> > +			/* Don't run again until woken by SIGCONT or SIGKILL */
+> > +			freezable_schedule();
+> > +			goto relock;
+> 
+> Yes this avoids the race with SIGCONT. But as I said we can add another
+> trivial helper which checks JOBCTL_STOP_DEQUEUED. So a kthread can do
+> this itself.
+
+Hmm, the helper would have a strange semantic. You need to take
+sighand->siglock, dequeue the signal (SIGSTOP), and call
+__set_current_state(TASK_STOPPED) before you release the lock.
+But what would happen if the dequeued signal is _not_ SIGSTOP?
+
+I think that we should support only the standard handling of
+SIGSTOP. It is closely related with SIGCONT. Both are manipulated
+in prepare_signal(). I think that it is nice to share the code here
+and dangerous to use it othrewise.
+
+
+> To me, SIG_DFL behaviour just makes makes no sense when it comes to
+> kthreads. I do not even think this can simplify the code. Unlike user-
+> space task, kthread can happily dequeue SIGSTOP, so why should we mimic
+> the userspace SIG_DFL logic.
+
+Maybe, we should handle only SIGSTOP here and do not mimic the
+standard behavior for the other sig_kernel_stop(),
+sig_kernel_ignore(), and death signals here. I think
+about printing some warning in case that the handler
+is not defined.
+
+Best Regards,
+Petr
+
+
+> > +		/* Death signals, but try to terminate cleanly */
+> > +		kthread_stop_current();
+> > +		__flush_signals(current);
+> > +		break;
+> 
+> The same.
+> 
+> Oleg.
+> 
