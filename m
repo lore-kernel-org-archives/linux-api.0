@@ -1,140 +1,128 @@
-From: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH V2 1/1] iio: Add iio_mod_light_uva, iio_mod_light_uvb,
- and iio_mod_light_uvc.
-Date: Sun, 07 Jun 2015 18:17:52 +0100
-Message-ID: <55747CC0.1000803@kernel.org>
-References: <1433468871-14351-1-git-send-email-ktsai@capellamicro.com>
+From: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [RFC PATCH 09/18] kthread: Make it easier to correctly sleep in
+ iterant kthreads
+Date: Mon, 8 Jun 2015 12:01:07 +0200
+Message-ID: <20150608100107.GA3135@pathway.suse.cz>
+References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
+ <1433516477-5153-10-git-send-email-pmladek@suse.cz>
+ <20150605161021.GJ19282@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1433468871-14351-1-git-send-email-ktsai-GubuWUlQtMwciDkP5Hr2oA@public.gmane.org>
-Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kevin Tsai <ktsai-GubuWUlQtMwciDkP5Hr2oA@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>, Irina Tirdea <irina.tirdea-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Daniel Baluta <daniel.baluta-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Haneen Mohammed <hamohammed.sa-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Darshana Padmadas <darshanapadmadas-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Roberta Dobrescu <roberta.dobrescu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Vlad Dogaru <vlad.dogaru-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Reyad Attiyat <reyad.attiyat-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Octavian Purdila <octavian.purdila-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Martin Fuzzey <mfuzzey-mB3Nsq4MPf1BDgjK7y7TUQ@public.gmane.org>, Srinivas Pandruvada <srinivas.pandruvada-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150605161021.GJ19282-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 05/06/15 02:47, Kevin Tsai wrote:
-> Add Ultraviolet(UV) support:
-> UVA: 315 ~ 400 nm
-> UVB: 280 ~ 315 nm
-> UVC: 100 ~ 280 nm
+On Fri 2015-06-05 18:10:21, Peter Zijlstra wrote:
+> On Fri, Jun 05, 2015 at 05:01:08PM +0200, Petr Mladek wrote:
+> > Many kthreads go into an interruptible sleep when there is nothing
+> > to do. They should check if anyone did not requested the kthread
+> > to terminate, freeze, or park in the meantime. It is easy to do
+> > it a wrong way.
 > 
-> /sys/bus/iio/devices/iio:deviceX/in_intensity_uva_input
-> /sys/bus/iio/devices/iio:deviceX/in_intensity_uvb_input
-> /sys/bus/iio/devices/iio:deviceX/in_intensity_uvc_input
-> The SI unit is "uW/mm^2".
+> INTERRUPTIBLE is the wrong state to idle in for kthreads, use
+> TASK_IDLE.
 > 
-> /sys/bus/iio/devices/iio:deviceX/in_intensity_uva_min_wavelength
-> /sys/bus/iio/devices/iio:deviceX/in_intensity_uva_max_wavelength
-> /sys/bus/iio/devices/iio:deviceX/in_intensity_uvb_min_wavelength
-> /sys/bus/iio/devices/iio:deviceX/in_intensity_uvb_max_wavelength
-> /sys/bus/iio/devices/iio:deviceX/in_intensity_uvc_min_wavelength
-> /sys/bus/iio/devices/iio:deviceX/in_intensity_uvc_max_wavelength
-I'd flip these around so 
-in_intensity_uvc_wavelength_max etc
-
-Fits better with existing forms in the ABI (I think) and also will
-list them in a more useful order when the directory is sorted by name.
-
-Otherwise, I'd like to let this sit for others who work with light
-sensors to comment as ideally we'd extend this to visible wavelengths
-as well.
-> The SI unit is "nm".
-> 
-> Signed-off-by: Kevin Tsai <ktsai-GubuWUlQtMwciDkP5Hr2oA@public.gmane.org>
-
 > ---
->  Documentation/ABI/testing/sysfs-bus-iio | 23 +++++++++++++++++++++++
->  drivers/iio/industrialio-core.c         |  3 +++
->  include/uapi/linux/iio/types.h          |  3 +++
->  tools/iio/iio_event_monitor.c           |  6 ++++++
->  4 files changed, 35 insertions(+)
 > 
-> diff --git a/Documentation/ABI/testing/sysfs-bus-iio b/Documentation/ABI/testing/sysfs-bus-iio
-> index bbed111..2960142 100644
-> --- a/Documentation/ABI/testing/sysfs-bus-iio
-> +++ b/Documentation/ABI/testing/sysfs-bus-iio
-> @@ -1463,3 +1463,26 @@ Description:
->  		measurements and return the average value as output data. Each
->  		value resulted from <type>[_name]_oversampling_ratio measurements
->  		is considered as one sample for <type>[_name]_sampling_frequency.
-> +
-> +What:		/sys/.../iio:deviceX/in_intensity_uva[_input|_raw]
-> +What:		/sys/.../iio:deviceX/in_intensity_uvb[_input|_raw]
-> +What:		/sys/.../iio:deviceX/in_intensity_uvc[_input|_raw]
-We have carefully killed off wild cards in the actual What lines as they make
-automated parsing of these files tricky.  So just list both options out longhand..
-> +KernelVersion:	4.1.1
-> +Description:
-> +		uva is the ultraviolet wavelength from 315nm to 400nm.
-> +		uvb is the ultraviolet wavelength from 280nm to 315nm.
-> +		uvc is the ultraviolet wavelength from 100nm to 280nm.
-> +		The SI unit is "uW/mm^2". Otherwise it should include _raw.
-> +
-> +What:		/sys/.../iio:deviceX/in_intensity_uva_min_wavelength
-> +What:		/sys/.../iio:deviceX/in_intensity_uva_max_wavelength
-> +What:		/sys/.../iio:deviceX/in_intensity_uvb_min_wavelength
-> +What:		/sys/.../iio:deviceX/in_intensity_uvb_max_wavelength
-> +What:		/sys/.../iio:deviceX/in_intensity_uvc_min_wavelength
-> +What:		/sys/.../iio:deviceX/in_intensity_uvc_max_wavelength
-> +KernelVersion:	4.1.1
-> +Description:
-> +		Sensor may not cover the whole uva/uvb/uvc channel. Add the
-> +		min/max wavelength properties to descript sensor range.
-describe
-> +		The SI unit is "nm".
-> +
-> diff --git a/drivers/iio/industrialio-core.c b/drivers/iio/industrialio-core.c
-> index 3524b0d..ecbdd1e 100644
-> --- a/drivers/iio/industrialio-core.c
-> +++ b/drivers/iio/industrialio-core.c
-> @@ -89,6 +89,9 @@ static const char * const iio_modifier_names[] = {
->  	[IIO_MOD_LIGHT_RED] = "red",
->  	[IIO_MOD_LIGHT_GREEN] = "green",
->  	[IIO_MOD_LIGHT_BLUE] = "blue",
-> +	[IIO_MOD_LIGHT_UVA] = "uva",
-> +	[IIO_MOD_LIGHT_UVB] = "uvb",
-> +	[IIO_MOD_LIGHT_UVC] = "uvc",
->  	[IIO_MOD_QUATERNION] = "quaternion",
->  	[IIO_MOD_TEMP_AMBIENT] = "ambient",
->  	[IIO_MOD_TEMP_OBJECT] = "object",
-> diff --git a/include/uapi/linux/iio/types.h b/include/uapi/linux/iio/types.h
-> index 2f8b117..5c99090 100644
-> --- a/include/uapi/linux/iio/types.h
-> +++ b/include/uapi/linux/iio/types.h
-> @@ -72,6 +72,9 @@ enum iio_modifier {
->  	IIO_MOD_ROOT_SUM_SQUARED_X_Y_Z,
->  	IIO_MOD_I,
->  	IIO_MOD_Q,
-> +	IIO_MOD_LIGHT_UVA,
-> +	IIO_MOD_LIGHT_UVB,
-> +	IIO_MOD_LIGHT_UVC,
->  };
+> commit 80ed87c8a9ca0cad7ca66cf3bbdfb17559a66dcf
+> Author: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+> Date:   Fri May 8 14:23:45 2015 +0200
+> 
+>     sched/wait: Introduce TASK_NOLOAD and TASK_IDLE
+>     
+>     Currently people use TASK_INTERRUPTIBLE to idle kthreads and wait for
+>     'work' because TASK_UNINTERRUPTIBLE contributes to the loadavg. Having
+>     all idle kthreads contribute to the loadavg is somewhat silly.
+>     
+>     Now mostly this works OK, because kthreads have all their signals
+>     masked. However there's a few sites where this is causing problems and
+>     TASK_UNINTERRUPTIBLE should be used, except for that loadavg issue.
+>     
+>     This patch adds TASK_NOLOAD which, when combined with
+>     TASK_UNINTERRUPTIBLE avoids the loadavg accounting.
+>     
+>     As most of imagined usage sites are loops where a thread wants to
+>     idle, waiting for work, a helper TASK_IDLE is introduced.
+
+Just to be sure. Do you suggest to use TASK_IDLE everywhere in
+kthreads or only when the uninterruptible sleep is really needed?
+
+IMHO, we should not use TASK_IDLE in freezable kthreads because
+it would break freezing. Well, we could freezable_schedule() but only
+on locations where it is safe to get freezed. Anyway, we need to
+be careful here.
+
+BTW: What is the preferred way of freezing, please? Is it better
+to end up in the fridge or is it fine to call freezer_do_not_count();
+or set PF_NOFREEZE when it is safe?
+
+The fridge looks more clean to me but in this case we should avoid
+uninterruptible sleep as much as possible.
+
+
+Best Regards,
+Petr
+
+>     Signed-off-by: Peter Zijlstra (Intel) <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+>     Cc: Julian Anastasov <ja-FgGsKACvmQM@public.gmane.org>
+>     Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+>     Cc: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+>     Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>     Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+>     Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+>     Signed-off-by: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> 
+> diff --git a/include/linux/sched.h b/include/linux/sched.h
+> index dd07ac03f82a..7de815c6fa78 100644
+> --- a/include/linux/sched.h
+> +++ b/include/linux/sched.h
+> @@ -218,9 +218,10 @@ print_cfs_rq(struct seq_file *m, int cpu, struct cfs_rq *cfs_rq);
+>  #define TASK_WAKEKILL		128
+>  #define TASK_WAKING		256
+>  #define TASK_PARKED		512
+> -#define TASK_STATE_MAX		1024
+> +#define TASK_NOLOAD		1024
+> +#define TASK_STATE_MAX		2048
 >  
->  enum iio_event_type {
-> diff --git a/tools/iio/iio_event_monitor.c b/tools/iio/iio_event_monitor.c
-> index 427c271..46dd27f 100644
-> --- a/tools/iio/iio_event_monitor.c
-> +++ b/tools/iio/iio_event_monitor.c
-> @@ -88,6 +88,9 @@ static const char * const iio_modifier_names[] = {
->  	[IIO_MOD_LIGHT_RED] = "red",
->  	[IIO_MOD_LIGHT_GREEN] = "green",
->  	[IIO_MOD_LIGHT_BLUE] = "blue",
-> +	[IIO_MOD_LIGHT_UVA] = "uva",
-> +	[IIO_MOD_LIGHT_UVB] = "uvb",
-> +	[IIO_MOD_LIGHT_UVC] = "uvc",
->  	[IIO_MOD_QUATERNION] = "quaternion",
->  	[IIO_MOD_TEMP_AMBIENT] = "ambient",
->  	[IIO_MOD_TEMP_OBJECT] = "object",
-> @@ -156,6 +159,9 @@ static bool event_is_known(struct iio_event_data *event)
->  	case IIO_MOD_LIGHT_RED:
->  	case IIO_MOD_LIGHT_GREEN:
->  	case IIO_MOD_LIGHT_BLUE:
-> +	case IIO_MOD_LIGHT_UVA:
-> +	case IIO_MOD_LIGHT_UVB:
-> +	case IIO_MOD_LIGHT_UVC:
->  	case IIO_MOD_QUATERNION:
->  	case IIO_MOD_TEMP_AMBIENT:
->  	case IIO_MOD_TEMP_OBJECT:
-> 
+> -#define TASK_STATE_TO_CHAR_STR "RSDTtXZxKWP"
+> +#define TASK_STATE_TO_CHAR_STR "RSDTtXZxKWPN"
+>  
+>  extern char ___assert_task_state[1 - 2*!!(
+>  		sizeof(TASK_STATE_TO_CHAR_STR)-1 != ilog2(TASK_STATE_MAX)+1)];
+> @@ -230,6 +231,8 @@ extern char ___assert_task_state[1 - 2*!!(
+>  #define TASK_STOPPED		(TASK_WAKEKILL | __TASK_STOPPED)
+>  #define TASK_TRACED		(TASK_WAKEKILL | __TASK_TRACED)
+>  
+> +#define TASK_IDLE		(TASK_UNINTERRUPTIBLE | TASK_NOLOAD)
+> +
+>  /* Convenience macros for the sake of wake_up */
+>  #define TASK_NORMAL		(TASK_INTERRUPTIBLE | TASK_UNINTERRUPTIBLE)
+>  #define TASK_ALL		(TASK_NORMAL | __TASK_STOPPED | __TASK_TRACED)
+> @@ -245,7 +248,8 @@ extern char ___assert_task_state[1 - 2*!!(
+>  			((task->state & (__TASK_STOPPED | __TASK_TRACED)) != 0)
+>  #define task_contributes_to_load(task)	\
+>  				((task->state & TASK_UNINTERRUPTIBLE) != 0 && \
+> -				 (task->flags & PF_FROZEN) == 0)
+> +				 (task->flags & PF_FROZEN) == 0 && \
+> +				 (task->state & TASK_NOLOAD) == 0)
+>  
+>  #ifdef CONFIG_DEBUG_ATOMIC_SLEEP
+>  
+> diff --git a/include/trace/events/sched.h b/include/trace/events/sched.h
+> index 30fedaf3e56a..d57a575fe31f 100644
+> --- a/include/trace/events/sched.h
+> +++ b/include/trace/events/sched.h
+> @@ -147,7 +147,8 @@ TRACE_EVENT(sched_switch,
+>  		  __print_flags(__entry->prev_state & (TASK_STATE_MAX-1), "|",
+>  				{ 1, "S"} , { 2, "D" }, { 4, "T" }, { 8, "t" },
+>  				{ 16, "Z" }, { 32, "X" }, { 64, "x" },
+> -				{ 128, "K" }, { 256, "W" }, { 512, "P" }) : "R",
+> +				{ 128, "K" }, { 256, "W" }, { 512, "P" },
+> +				{ 1024, "N" }) : "R",
+>  		__entry->prev_state & TASK_STATE_MAX ? "+" : "",
+>  		__entry->next_comm, __entry->next_pid, __entry->next_prio)
+>  );
