@@ -1,49 +1,79 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC PATCH 09/18] kthread: Make it easier to correctly sleep in
- iterant kthreads
-Date: Mon, 08 Jun 2015 13:39:55 +0200
-Message-ID: <1433763595.1495.35.camel@twins>
-References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
-	 <1433516477-5153-10-git-send-email-pmladek@suse.cz>
-	 <20150605161021.GJ19282@twins.programming.kicks-ass.net>
-	 <20150608100107.GA3135@pathway.suse.cz>
+From: Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
+Subject: Re: [PATCH RFC 0/3] pagemap: make useable for non-privilege users
+Date: Mon, 8 Jun 2015 13:53:36 +0100
+Message-ID: <CAEVpBaLmw54FX25Kmrw0owOjDW-ijekS5OJO7iZM3UcV1o3fGA@mail.gmail.com>
+References: <20150512090156.24768.2521.stgit@buzz>
+	<CAEVpBa+-wwf5Q3CwQAAad3V0pJ+uD50uaHKW=EnChLDLOLSAGg@mail.gmail.com>
+	<CAEVpBaLPDa8tacKKeHmcLMdmYZ86aZBfGqCnAcQ8R=JKSUoagQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150608100107.GA3135@pathway.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Petr Mladek <pmladek@suse.cz>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Richard Weinberger <richard@nod.at>, Steven Rostedt <rostedt@goodmis.org>, David Woodhouse <dwmw2@infradead.org>, linux-mtd@lists.infradead.org, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-nfs@vger.kernel.org, Chris Mason <clm@fb.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAEVpBaLPDa8tacKKeHmcLMdmYZ86aZBfGqCnAcQ8R=JKSUoagQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Mark Seaborn <mseaborn-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Daniel James <djames-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, Finn Grimwood <fgrimwood-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2015-06-08 at 12:01 +0200, Petr Mladek wrote:
+Hi Konstantin,
 
-> Just to be sure. Do you suggest to use TASK_IDLE everywhere in
-> kthreads or only when the uninterruptible sleep is really needed?
+Would you still be intending to re-submit this patch?  We'd be quite
+keen to assist, so if there's anything further I can do please let me
+know!
 
-Always, only use INTERRUPTIBLE when you're actually interruptible, that
-is you want signals or such muck to terminate your wait.
+Just to re-confirm - we do think that the patch will solve our problem
+(relatively minor changes required on our side).
 
-> IMHO, we should not use TASK_IDLE in freezable kthreads because
-> it would break freezing.
+Thanks,
+Mark
 
-How so? The task is IDLE, its not doing anything.
-
->  Well, we could freezable_schedule() but only
-> on locations where it is safe to get freezed. Anyway, we need to
-> be careful here.
-
-s/freezed/frozen/
-
-Bah, you made me look at the freezer code, karma reduction for you.
-
-And this is the arch typical freeze point if ever there was one, you're
-checking kthread_stop, if we can terminate the kthread, we can certainly
-get frozen.
-
-> BTW: What is the preferred way of freezing, please? Is it better
-> to end up in the fridge or is it fine to call freezer_do_not_count();
-> or set PF_NOFREEZE when it is safe?
-
-freezable_schedule() is fine in this case.
+On Thu, May 14, 2015 at 7:40 PM, Mark Williamson
+<mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org> wrote:
+> Hi Konstantin,
+>
+> I modified our code to check for the map-exclusive flag where it used
+> to compare pageframe numbers.  First tests look pretty promising, so
+> this patch looks like a viable approach for us.
+>
+> Is there anything further we can do to help?
+>
+> Thanks,
+> Mark
+>
+> On Tue, May 12, 2015 at 12:13 PM, Mark Williamson
+> <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org> wrote:
+>> Hi Konstantin,
+>>
+>> Thanks very much for continuing to look at this!  It's very much
+>> appreciated.  I've been investigating from our end but got caught up
+>> in some gnarly details of our pagemap-consuming code.
+>>
+>> I like the approach and it seems like the information you're exposing
+>> will be useful for our application.  I'll test the patch and see if it
+>> works for us as-is.
+>>
+>> Will follow up with any comments on the individual patches.
+>>
+>> Thanks,
+>> Mark
+>>
+>> On Tue, May 12, 2015 at 10:43 AM, Konstantin Khlebnikov
+>> <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org> wrote:
+>>> This patchset tries to make pagemap useable again in the safe way.
+>>> First patch adds bit 'map-exlusive' which is set if page is mapped only here.
+>>> Second patch restores access for non-privileged users but hides pfn if task
+>>> has no capability CAP_SYS_ADMIN. Third patch removes page-shift bits and
+>>> completes migration to the new pagemap format (flags soft-dirty and
+>>> mmap-exlusive are available only in the new format).
+>>>
+>>> ---
+>>>
+>>> Konstantin Khlebnikov (3):
+>>>       pagemap: add mmap-exclusive bit for marking pages mapped only here
+>>>       pagemap: hide physical addresses from non-privileged users
+>>>       pagemap: switch to the new format and do some cleanup
+>>>
+>>>
+>>>  Documentation/vm/pagemap.txt |    3 -
+>>>  fs/proc/task_mmu.c           |  178 +++++++++++++++++-------------------------
+>>>  tools/vm/page-types.c        |   35 ++++----
+>>>  3 files changed, 91 insertions(+), 125 deletions(-)
