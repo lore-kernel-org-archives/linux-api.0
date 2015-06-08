@@ -1,55 +1,85 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH v5 0/4] idle memory tracking
-Date: Mon, 8 Jun 2015 12:35:35 -0700
-Message-ID: <20150608123535.d82543cedbb9060612a10113@linux-foundation.org>
-References: <cover.1431437088.git.vdavydov@parallels.com>
-	<CAC4Lta1isOa+OK7mqCDjL+aV1j=mXBA8p5xnrMEMj+jy6dRMaw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CAC4Lta1isOa+OK7mqCDjL+aV1j=mXBA8p5xnrMEMj+jy6dRMaw@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Raghavendra KT <raghavendra.kt@linux.vnet.ibm.com>
-Cc: Vladimir Davydov <vdavydov@parallels.com>, Minchan Kim <minchan@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: [PATCH 13/26] [media] DocBook: document DVB-S2 pilot in a table
+Date: Mon,  8 Jun 2015 16:53:57 -0300
+Message-ID: <812131f645515b00d9f154f55cf7ee28f2f4cb94.1433792665.git.mchehab@osg.samsung.com>
+References: <cover.1433792665.git.mchehab@osg.samsung.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1433792665.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+In-Reply-To: <cover.1433792665.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+References: <cover.1433792665.git.mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, 7 Jun 2015 11:41:15 +0530 Raghavendra KT <raghavendra.kt@linux.vnet.ibm.com> wrote:
+Putting it into a table allows to comment each possible
+values, with makes more clear what field means.
 
-> On Tue, May 12, 2015 at 7:04 PM, Vladimir Davydov
-> <vdavydov@parallels.com> wrote:
-> > Hi,
-> >
-> > This patch set introduces a new user API for tracking user memory pages
-> > that have not been used for a given period of time. The purpose of this
-> > is to provide the userspace with the means of tracking a workload's
-> > working set, i.e. the set of pages that are actively used by the
-> > workload. Knowing the working set size can be useful for partitioning
-> > the system more efficiently, e.g. by tuning memory cgroup limits
-> > appropriately, or for job placement within a compute cluster.
-> >
-> > ---- USE CASES ----
-> >
-> > The unified cgroup hierarchy has memory.low and memory.high knobs, which
-> > are defined as the low and high boundaries for the workload working set
-> > size. However, the working set size of a workload may be unknown or
-> > change in time. With this patch set, one can periodically estimate the
-> > amount of memory unused by each cgroup and tune their memory.low and
-> > memory.high parameters accordingly, therefore optimizing the overall
-> > memory utilization.
-> >
-> 
-> Hi Vladimir,
-> 
-> Thanks for the patches, I was able test how the series is helpful to determine
-> docker container workingset / idlemem with these patches. (tested on ppc64le
-> after porting to a distro kernel).
+Also, it allows to do cross-references with the frontend.h.
 
-And what were the results of your testing?  The more details the
-better, please.
+Signed-off-by: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/Documentation/DocBook/media/dvb/dvbproperty.xml b/Documentation/DocBook/media/dvb/dvbproperty.xml
+index 8d57f0c9b6aa..e31d9457671f 100644
+--- a/Documentation/DocBook/media/dvb/dvbproperty.xml
++++ b/Documentation/DocBook/media/dvb/dvbproperty.xml
+@@ -417,13 +417,30 @@ get/set up to 64 properties. The actual meaning of each property is described on
+ 	<para>Sets DVB-S2 pilot</para>
+ 	<section id="fe-pilot-t">
+ 		<title>fe_pilot type</title>
+-		<programlisting>
+-typedef enum fe_pilot {
+-	PILOT_ON,
+-	PILOT_OFF,
+-	PILOT_AUTO,
+-} fe_pilot_t;
+-		</programlisting>
++<table pgwide="1" frame="none" id="fe-pilot">
++    <title>enum fe_pilot</title>
++    <tgroup cols="2">
++	&cs-def;
++	<thead>
++	<row>
++	    <entry>ID</entry>
++	    <entry>Description</entry>
++	</row>
++	</thead>
++	<tbody valign="top">
++	<row>
++	    <entry align="char" id="PILOT-ON"><constant>PILOT_ON</constant></entry>
++	    <entry align="char">Pilot tones enabled</entry>
++	</row><row>
++	    <entry align="char" id="PILOT-OFF"><constant>PILOT_OFF</constant></entry>
++	    <entry align="char">Pilot tones disabled</entry>
++	</row><row>
++	    <entry align="char" id="PILOT-AUTO"><constant>PILOT_AUTO</constant></entry>
++	    <entry align="char">Autodetect pilot tones</entry>
++	</row>
++        </tbody>
++    </tgroup>
++</table>
+ 		</section>
+ 	</section>
+ 	<section id="DTV-ROLLOFF">
+diff --git a/include/uapi/linux/dvb/frontend.h b/include/uapi/linux/dvb/frontend.h
+index 3a7ff9002654..bb222eb04627 100644
+--- a/include/uapi/linux/dvb/frontend.h
++++ b/include/uapi/linux/dvb/frontend.h
+@@ -399,11 +399,13 @@ struct dvb_frontend_event {
+ 
+ #define DTV_MAX_COMMAND		DTV_STAT_TOTAL_BLOCK_COUNT
+ 
+-typedef enum fe_pilot {
++enum fe_pilot {
+ 	PILOT_ON,
+ 	PILOT_OFF,
+ 	PILOT_AUTO,
+-} fe_pilot_t;
++};
++
++typedef enum fe_pilot fe_pilot_t;
+ 
+ typedef enum fe_rolloff {
+ 	ROLLOFF_35, /* Implied value in DVB-S, default for DVB-S2 */
+-- 
+2.4.2
