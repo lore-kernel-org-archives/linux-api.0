@@ -1,195 +1,46 @@
-From: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [RFC PATCH 06/18] signal/kthread: Initial implementation of
- kthread signal handling
-Date: Mon, 8 Jun 2015 15:51:07 +0200
-Message-ID: <20150608135107.GB3135@pathway.suse.cz>
+From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Subject: Re: [RFC PATCH 15/18] ring_buffer: Allow to exit the ring buffer
+ benchmark immediately
+Date: Mon, 8 Jun 2015 13:44:17 -0400
+Message-ID: <20150608134417.3fb7a811@gandalf.local.home>
 References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
- <1433516477-5153-7-git-send-email-pmladek@suse.cz>
- <20150606215816.GB15591@redhat.com>
+	<1433516477-5153-16-git-send-email-pmladek@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150606215816.GB15591-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1433516477-5153-16-git-send-email-pmladek-AlSwsSmVLrQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat 2015-06-06 23:58:16, Oleg Nesterov wrote:
-> On 06/05, Petr Mladek wrote:
-> >
-> > The main question is how much it should follow POSIX and the signal
-> > handling of user space processes. On one hand, we want to be as close
-> > as possible.
+On Fri,  5 Jun 2015 17:01:14 +0200
+Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org> wrote:
+
+> It takes a while until the ring_buffer_benchmark module is removed
+> when the ring buffer hammer is running. It is because it takes
+> few seconds and kthread_should_terminate() is not being checked.
 > 
-> Why? Let the kthread decide what it should if it gets, say, SIGSTOP.
-
-I agree that it does not make sense to follow POSIX too much for
-kthreads. They are special. Signals can be send from userspace and
-userspace should not be able to affect the core kernel services, for
-example, to stop or kill some kthreas.
-
-On the other hand, I was surprised how signals were handled in the few
-kthreads. It looked like a mess to me. For example, lockd dropped locks
-when it got SIGKILL, r8712_cmd_thread() allowed SIGTERM and then just
-flushed the signal.
-
-To be honest, this patch set does _not_ make any big change. All
-signals are still ignored by default. There is default action
-only for SIGSTOP and fatal signals.
-
-On the other hand, it should motivate developers to use the signals
-a reasonable way. And if nothing, it will help to handle the signals
-correctly without races.
-
-
-> > Finally, kthread_do_signal() is called on a safe place in the main
-> > iterant kthread cycle. Then we will not need any special code for
-> > signals when using this kthread API.
+> This patch adds the check for kthread termination into the producer.
+> It uses the existing kill_test flag to finish the kthreads as
+> cleanly as possible.
 > 
-> OK, I will not comment other parts of iterant API in this thread.
+> It disables printing the "ERROR" message when the kthread is going.
 > 
-> But as for signal handling, to me a single kthread_iterant->do_signal()
-> callback looks better. Rather than multiple callbacks passed as
-> ->kthread_sa_handler.
+> Also it makes sure that producer does not go into the 10sec sleep
+> when it is being killed.
 
-I think that we should make it independent on the iterant kthread API.
-I thought about handling signals also in the kthread worker and
-workqueues.
+This patch looks like something I may take regardless of the other
+patches (if it applies cleanly).
 
-One of the side plans here is to make freezing more reliable. Freezer
-already pokes normal processes using a fake signal. The same technique
-might be usable also for kthreads. A signal could wake them and
-navigate to a safe place (fridge).
+As for the other patches, the ring buffer benchmark is just that, a
+benchmark that I use when making changes to the ring buffer. It's not
+something for production systems.
 
-Another example is kthread_stop(). It sets some flag, wakes the
-kthread, and waits for completion. IMHO, it would be more elegant to
-send a signal that would wake the kthread and push it to the safe
-place where signals might be handled and where the kthread might
-get terminated.
+What about just adding a depend on !LIVE_PATCHING to
+RING_BUFFER_BENCHMARK, or force it to shut down during patching.
+There's no reason to make it safe to be running when you patch the
+kernel. Just adds complexity to some simple code.
 
-The advantage is that a pending signal will not allow to sleep on
-a location that is not safe for the given action (freezing, stopping)
-and might skip even more sleeps on the way.
-
-
-> That single callback can deque a signal and decide what it should do.
-> 
-> > +	spin_lock_irqsave(&sighand->siglock, flags);
-> > +
-> > +	if (unlikely(signal->flags & SIGNAL_CLD_MASK)) {
-> > +		WARN(1, "there are no parents for kernel threads\n");
-> > +		signal->flags &= ~SIGNAL_CLD_MASK;
-> > +	}
-> > +
-> > +	for (;;) {
-> > +		struct k_sigaction *ka;
-> > +
-> > +		signr = dequeue_signal(current, &current->blocked, &ksig.info);
-> > +
-> > +		if (!signr)
-> > +			break;
-> > +
-> > +		ka = &sighand->action[signr-1];
-> > +
-> > +		/* Do nothing for ignored signals */
-> > +		if (ka->sa.kthread_sa_handler == KTHREAD_SIG_IGN)
-> > +			continue;
->
-> Again, I agree something like the simple kthread_dequeue_signal() makes
-> sense. Say, to drop the ignore signal like this code does. Although I
-> do not think this is really important, SIG_IGN is only possible if this
-> kthread does something strange. Say, blocks/unblocs the ignored signal.
-
-Yup, I can't find any usecase for this at the moment. I do not resist
-on SIG_IGN handling.
-
-I did this only for completness. I thought that any similarity with
-the normal userspace handling would be useful: the-least-surprise
-approach.
-
-Well, note that allow_signal() sets some "crazy" value (2) for the
-signal handler. IMHO, we should check for these values and handle
-them reasonably even in kthreads. It will make the code more secure.
-
-
-> > +
-> > +		/* Run the custom handler if any */
-> > +		if (ka->sa.kthread_sa_handler != KTHREAD_SIG_DFL) {
-> > +			ksig.ka = *ka;
-> > +
-> > +			if (ka->sa.sa_flags & SA_ONESHOT)
-> > +				ka->sa.kthread_sa_handler = KTHREAD_SIG_DFL;
-> > +
-> > +			spin_unlock_irqrestore(&sighand->siglock, flags);
-> > +			/* could run directly for kthreads */
-> > +			ksig.ka.sa.kthread_sa_handler(signr);
-> > +			freezable_cond_resched();
-> > +			goto relock;
-> 
-> Well. But for what? A simple "switch (signr)" after kthread_dequeue_signal()
-> can do the same. Or, speaking of kthread_iterant_fn() it can even dequeue the
-> signal and pass it to kti->whatever(signr).
-
-I wanted to make it independent on the iterant API. Also if you want to
-handle more signals, you need even more code, e.g. the cycle,
-cond_resched(). So, I think that some generic helper is useful.
-
-
-
-> > +		if (sig_kernel_ignore(signr))
-> > +			continue;
-> 
-> For what? Why a kthread should unignore (say) SIGWINCH if it is not going
-> to react?
-
-I do not resist on this.
-
-
-> > +		if (sig_kernel_stop(signr)) {
-> > +			__set_current_state(TASK_STOPPED);
-> > +			spin_unlock_irqrestore(&sighand->siglock, flags);
-> > +			/* Don't run again until woken by SIGCONT or SIGKILL */
-> > +			freezable_schedule();
-> > +			goto relock;
-> 
-> Yes this avoids the race with SIGCONT. But as I said we can add another
-> trivial helper which checks JOBCTL_STOP_DEQUEUED. So a kthread can do
-> this itself.
-
-Hmm, the helper would have a strange semantic. You need to take
-sighand->siglock, dequeue the signal (SIGSTOP), and call
-__set_current_state(TASK_STOPPED) before you release the lock.
-But what would happen if the dequeued signal is _not_ SIGSTOP?
-
-I think that we should support only the standard handling of
-SIGSTOP. It is closely related with SIGCONT. Both are manipulated
-in prepare_signal(). I think that it is nice to share the code here
-and dangerous to use it othrewise.
-
-
-> To me, SIG_DFL behaviour just makes makes no sense when it comes to
-> kthreads. I do not even think this can simplify the code. Unlike user-
-> space task, kthread can happily dequeue SIGSTOP, so why should we mimic
-> the userspace SIG_DFL logic.
-
-Maybe, we should handle only SIGSTOP here and do not mimic the
-standard behavior for the other sig_kernel_stop(),
-sig_kernel_ignore(), and death signals here. I think
-about printing some warning in case that the handler
-is not defined.
-
-Best Regards,
-Petr
-
-
-> > +		/* Death signals, but try to terminate cleanly */
-> > +		kthread_stop_current();
-> > +		__flush_signals(current);
-> > +		break;
-> 
-> The same.
-> 
-> Oleg.
-> 
+-- Steve
