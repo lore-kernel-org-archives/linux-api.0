@@ -1,79 +1,57 @@
-From: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [RFC PATCH 07/18] kthread: Make iterant kthreads freezable by
- default
-Date: Tue, 9 Jun 2015 17:53:13 +0200
-Message-ID: <20150609155313.GC9409@pathway.suse.cz>
-References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
- <1433516477-5153-8-git-send-email-pmladek@suse.cz>
- <20150609072003.GY21465@mtj.duckdns.org>
+From: Vishal Verma <vishal.l.verma@linux.intel.com>
+Subject: Re: [PATCH v5 18/21] nd_btt: atomic sector updates
+Date: Tue, 09 Jun 2015 12:27:11 -0600
+Message-ID: <1433874431.32607.37.camel@linux.intel.com>
+References: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com>
+	 <20150602001546.4506.15713.stgit@dwillia2-desk3.amr.corp.intel.com>
+	 <20150609064425.GF9804@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150609072003.GY21465-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-acpi-owner@vger.kernel.org>
+In-Reply-To: <20150609064425.GF9804@lst.de>
+Sender: linux-acpi-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Dan Williams <dan.j.williams@intel.com>, axboe@kernel.dk, sfr@canb.auug.org.au, rafael@kernel.org, neilb@suse.de, gregkh@linuxfoundation.org, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-api@vger.kernel.org, akpm@linux-foundation.org, mingo@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue 2015-06-09 16:20:03, Tejun Heo wrote:
-> Hello, Petr.
-> 
-> On Fri, Jun 05, 2015 at 05:01:06PM +0200, Petr Mladek wrote:
-> > Many kthreads already calls set_freezable() before they enter the main
-> > cycle. One of the reasons for creating iterant kthreads is to create
-> > a safe point for freezing and make even more kthreads properly
-> > freezable. Therefore it would make sense to set all iterant
-> > kthreads freezable by default.
-> 
-> Actually, for most cases, making kthreads freezable is unnecessary and
-> often indicative of something going wrong.  This is a crude mechanism
-> which goes along the line of "if all threads are stopped, the machine
-> should be safe to be put into whatever state", which isn't true at all
-> as there usually are a lot of stuff going on asynchronously especially
-> when interacting with hardware.
+On Tue, 2015-06-09 at 08:44 +0200, Christoph Hellwig wrote:
+> I really want to see a good explanation why this is not a blk-mq driver
+> given that it does fairly substantial work and has synchronization
+> in its make_request function.
 
-I think that the interaction with the hardware should be the reason to
-make them properly freezable. In the current state they are stopped at
-some random place, they might either miss some event from the hardware
-or the hardware might get resumed into another state and the kthread
-might wait forever.
+The biggest reason, I think, is that the BTT (just like pmem, brd etc),
+does all its IOs synchronously. There isn't any queuing being done by
+the device.
 
-Also I think that freezing kthreads on some well defined location
-should help with reproducing and fixing problems.
+There are three places where we do synchronization in the BTT. Two of
+them - map locks, and lanes are intrinsic to the BTT algorithm, so the
+one you referred to must be the 'RTT' (the path that stalls writes if
+the free block they picked to write to is being read from). My reasoning
+is that since we're talking about DRAM-like speeds,  and the reader(s)
+will be reading at most one LBA, the wait for the writer is really
+bounded, and queuing and switching to a different IO on a CPU seems more
+expensive than just waiting out the readers.
 
-Note that _only_ kthreads using the _new API_ should be freezable by
-default. The move need to be done carefully. It is chance to review
-and clean up the freezer stuff.
+Even for the lane locks, we did a comparison between two lane lock
+strategies - first where we kept an atomic counter around that tracked
+which was the last lane that was used, and 'our' lane was determined by
+atomically incrementing that. That way, if there are more CPUs than
+lanes available, theoretically, no CPU would be blocked waiting for a
+lane. The other strategy was to use the cpu number we're scheduled on to
+and hash it to a lane number. Theoretically, this could block an IO that
+could've otherwise run using a different, free lane. But some fio
+workloads showed that the direct cpu -> lane hash performed faster than
+tracking 'last lane' - my reasoning is the cache thrash caused by moving
+the atomic variable made that approach slower than simply waiting out
+the in-progress IO. Wouldn't adding to a queue be even more overhead
+than a bit of cache thrash on a single variable?
 
-Of course, I might be too optimistic here.
+The devices being synchronous, there is also no question of async
+completions that might need to be handled - so I don't really see any
+benefits that request queues might get us. Allow me to turn the question
+around, and ask what will blk-mq get us?
 
-> In most cases, we want to implement proper power management callbacks
-> which plug new issuance of whatever work-unit the code is dealing with
-> and drain in-flight ones.  Whether the worker threads are frozen or
-> not doesn't matter once that's implemented.
+Thanks,
+	-Vishal
 
-I see. The power management is important here.
-
-
-> It seems that people have been marking kthreads freezable w/o really
-> thinking about it - some of them are subtly broken due to missing
-> drainage of in-flight things while others simply don't need freezing
-> for correctness.
-
-I have similar feeling.
-
-> We do want to clean up freezer usage in the kernel but definitely do
-> not want to make kthreads freezable by default especially given that
-> the freezer essentially is one giant lockdep-less system-wide lock.
-
-I think that we both want to clean up freezing. I would like to make
-it more deterministic and you suggest to make it more relaxed.
-Do I understand it correctly?
-
-Best Regards,
-Petr
-
-
-PS: Thanks a lot everyone for feedback. I try hard to get it
-somehow sorted and more confident about the conclusions.
