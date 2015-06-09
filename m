@@ -1,85 +1,34 @@
-From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [PATCH v2] seccomp: add ptrace options for suspend/resume
-Date: Tue, 9 Jun 2015 16:13:26 -0600
-Message-ID: <20150609221326.GH2045@hopstrocity>
-References: <1433369396-13360-1-git-send-email-tycho.andersen@canonical.com>
- <20150604183149.GA560@redhat.com>
- <20150604210529.GJ3160@smitten>
- <20150605211650.GA25718@redhat.com>
- <20150609212222.GE2045@hopstrocity>
- <CAGXu5jLC-DcS-Mg5OTM-LEkuOKMMGrV2tq+Lky1Mxh_rDLa4Bg@mail.gmail.com>
- <20150609215227.GG2045@hopstrocity>
- <CAGXu5jKB1TZF7KpqpeRVaPZ4P4Zy+Y=WhMqDdrH0GJfs1bAfzA@mail.gmail.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v5 02/21] libnvdimm, nfit: initial libnvdimm
+ infrastructure and NFIT support
+Date: Tue, 9 Jun 2015 15:27:09 -0700
+Message-ID: <CAPcyv4jfy9Yg1u5Qj736X3n9muW-Jkt_Ka-zPFDEtn8bMXmqoA@mail.gmail.com>
+References: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com>
+	<20150602001419.4506.41953.stgit@dwillia2-desk3.amr.corp.intel.com>
+	<20150603145704.GA22311@lst.de>
+	<1433359473.21035.27.camel@intel.com>
+	<20150609063312.GA9804@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAGXu5jKB1TZF7KpqpeRVaPZ4P4Zy+Y=WhMqDdrH0GJfs1bAfzA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Will Drewry <drewry-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-acpi-owner@vger.kernel.org>
+In-Reply-To: <20150609063312.GA9804@lst.de>
+Sender: linux-acpi-owner@vger.kernel.org
+To: "hch@lst.de" <hch@lst.de>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "mingo@kernel.org" <mingo@kernel.org>, "neilb@suse.de" <neilb@suse.de>, "jmoyer@redhat.com" <jmoyer@redhat.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "axboe@kernel.dk" <axboe@kernel.dk>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>, "sfr@canb.auug.org.au" <sfr@canb.auug.org.au>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>, "rafael@kernel.org" <rafael@kernel.org>, "linux-acpi@vger.kernel.org" <linux-acpi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 09, 2015 at 03:06:07PM -0700, Kees Cook wrote:
-> On Tue, Jun 9, 2015 at 2:52 PM, Tycho Andersen
-> <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
-> > On Tue, Jun 09, 2015 at 02:45:49PM -0700, Kees Cook wrote:
-> >> On Tue, Jun 9, 2015 at 2:22 PM, Tycho Andersen
-> >> <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
-> >> > Hi Kees, Andy,
-> >> >
-> >> > On Fri, Jun 05, 2015 at 11:16:50PM +0200, Oleg Nesterov wrote:
-> >> >> Hi Tycho,
-> >> >>
-> >> >> On 06/04, Tycho Andersen wrote:
-> >> >> > > > +#ifdef CONFIG_CHECKPOINT_RESTORE
-> >> >> > > > +bool may_suspend_seccomp(void)
-> >> >> > > > +{
-> >> >> > > > +       if (!capable(CAP_SYS_ADMIN))
-> >> >> > > > +               return false;
-> >> >> > > > +
-> >> >> > > > +       if (current->seccomp.mode != SECCOMP_MODE_DISABLED)
-> >> >> > > > +               return false;
-> >> >> > >
-> >> >> > > Heh. OK, I won't argue with the new check too ;)
-> >> >> >
-> >> >> > Actually now that I think about it I agree with you, these checks
-> >> >> > don't seem necessary. Even inside a user namespace, if you can ptrace
-> >> >> > a process you can make it do whatever you want irrespective of
-> >> >> > seccomp, as long as it has the necessary capabilities. Once the
-> >> >> > seccomp checks are run after ptrace, they'll be enforced so you
-> >> >> > couldn't have it call whatever you want in the first place.
-> >> >>
-> >> >> Good ;)
-> >> >>
-> >> >> > Still, perhaps I'm missing something...
-> >> >>
-> >> >> Kees, Andy?
-> >> >
-> >> > Any thoughts on removing may_suspend_seccomp() all together?
-> >>
-> >> As in, just open-code the check? That would be fine by me.
-> >
-> > Sorry, I meant getting rid of any checks entirely. Using my argument
-> > above I've managed to convince myself they don't add any value. You
-> > guys know a lot more about this than I do, though.
-> 
-> Well, as things stand currently, yes, that check would be redundant.
-> The fact that ptrace can be used to bypass seccomp is kind of an
-> accident, though. The design for ptrace-based seccomp managers was
-> that the manager would do the work, rather than rewriting the syscall
-> on behalf of the child. I don't think anything actually uses this
-> effect. It's something we've wanted to fix, though a clean solution
-> isn't obvious. As a result, I'm cautious to add this behavior in such
-> a wide open fashion. For now, I'd like to limit the scope of this to
-> CAP_SYS_ADMIN.
-> 
-> I do think dropping the seccomp.mode check is fine -- this would mean
-> you could set this flag before the child even added seccomp filters.
-> So, instead of the function call, maybe just add the capable() call?
+On Mon, Jun 8, 2015 at 11:33 PM, hch@lst.de <hch@lst.de> wrote:
+> On Wed, Jun 03, 2015 at 07:24:34PM +0000, Williams, Dan J wrote:
+>> > > +static inline struct acpi_nfit_memory_map *__to_nfit_memdev(struct nfit_mem *nfit_mem)
+>> >
+>> > This line is over 80 characters.
+>>
+>> I generally don't see the point of fixing up occasional small incursions
+>> over 80 characters if it makes the code more amenable to grep.
+>
+> Just use shorter type names or add a line break before the symbol
+> names.  Too long lines are highly annoying.
 
-Ok, sounds good; I'll make the change and re-send.
-
-Thanks!
-
-Tycho
+Note that "acpi_nfit_memory_map" is the identifier chosen by ACPICA,
+I'm just a consumer.  That said I've gone and done a 80 column cleanup
+across all the patches.
