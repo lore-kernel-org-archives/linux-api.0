@@ -1,35 +1,100 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v5 05/21] libnvdimm: control (ioctl) messages for
- libnvdimm bus and dimm devices
-Date: Mon, 8 Jun 2015 23:57:42 -0700
-Message-ID: <CAPcyv4jmHpg4YrseBWH-k=achv4N-V8n2X0CkFw+-AFsiRuH8A@mail.gmail.com>
-References: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com>
-	<20150602001435.4506.42614.stgit@dwillia2-desk3.amr.corp.intel.com>
-	<20150609063418.GB9804@lst.de>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC PATCH 06/18] signal/kthread: Initial implementation of
+ kthread signal handling
+Date: Tue, 9 Jun 2015 16:10:22 +0900
+Message-ID: <20150609071022.GX21465@mtj.duckdns.org>
+References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
+ <1433516477-5153-7-git-send-email-pmladek@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150609063418.GB9804-jcswGhMUV9g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>, "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux ACPI <linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, jmoyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1433516477-5153-7-git-send-email-pmladek-AlSwsSmVLrQ@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 8, 2015 at 11:34 PM, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
-> On Mon, Jun 01, 2015 at 08:14:35PM -0400, Dan Williams wrote:
->> Most discovery/configuration of the libnvdimm-subsystem is done via
->> sysfs attributes.  However, some libnvdimm buses, particularly the
->> ACPI.NFIT bus, define a small set of messages that can be passed to the
->> platform.  For convenience we derive the initial libnvdimm-ioctl command
->> formats directly from the NFIT DSM Interface Example formats.
->
-> Why not merge these into the extensive sysfs interface?
+Hello, Petr.
 
-Data payload size for one, these commands transfer more than a page
-worth of data at a time.
+On Fri, Jun 05, 2015 at 05:01:05PM +0200, Petr Mladek wrote:
+> Several kthreads already handle signals some way. They do so
+> in different ways, search for allow_signal().
+> 
+> This patch allows to handle the signals in a more uniform way using
+> kthread_do_signal().
+> 
+> The main question is how much it should follow POSIX and the signal
+> handling of user space processes. On one hand, we want to be as close
+> as possible. On the other hand, we need to be very careful. All signals
+> were ignored until now, except for the few kthreads that somehow
+> handled them.
+> 
+> POSIX behavior might cause some surprises and crazy bug reports.
+> For example, imagine a home user stopping or killing kswapd because
+> it makes the system too busy. It is like shooting in its own leg.
+> 
+> Also the signals are already used a strange way. For example, klockd
+> drops all locks when it gets SIGKILL. This was added before initial
+> git commit, so the archaeology was not easy. The most likely explanation
+> is that it is used during the system shutdown. It would make sense
+> to drop all locks when user space processes are killed and before
+> filesystems get unmounted.
+> 
+> Now, the patch does the following compromise:
+> 
+>   + defines default actions for SIGSTOP, SIGCONT, and fatal signals
+>   + custom actions can be defined by kthread_sigaction()
+>   + all signals are still ignored by default
+> 
+> Well, fatal signals do not terminate the kthread immediately. They just
+> set a flag to terminate the kthread, flush all other pending signals,
+> and return to the main kthread cycle. The kthread is supposed to check
+> the flag, leave the main cycle, do some cleanup actions when necessary
+> and return from the kthread.
+> 
+> Note that kthreads are running in the kernel address space. It makes
+> the life much easier. The signal handler can be called directly and
+> we do not need any arch-specific code to process it in the userspace.
+> Also we do not care about ptrace.
+> 
+> Finally, kthread_do_signal() is called on a safe place in the main
+> iterant kthread cycle. Then we will not need any special code for
+> signals when using this kthread API.
+> 
+> This change does not affect any existing kthread. The plan is to
+> use them only in safe kthreads that can be converted into
+> the iterant kthread API.
 
-Even if we killed the ioctl interface to userspace we still need all
-the ugly data marshaling code in the kernel to craft properly
-formatted ACPI _DSM messages.  I try to share as much common
-infrastructure from the ACPI _DSM implementation to the ioctl
-interface (nd_cmd_dimm_desc() + nd_cmd_bus_desc()).
+While I agree that it'd be great to consolidate the existing kthread
+signal users, I feel quite uncomfortable with doing full-fledged
+signal handling for kthreads which try to mimic the userland behavior.
+Most of the default behaviors don't make sense for kthreads and it'd
+be awful to have different kthreads interpreting arbitrary signals for
+differing custom behaviors, which often happens when there's no
+default.
+
+While we do have several kthread signal users, they aren't too many
+and majority of them use it to allow userland to tell it to shutdown
+and there seem to be a couple which use HUP/USR1 to cancel whatever
+it's processing / waiting on at the moment.  Hmmm... jffs uses
+STOP/CONT too.
+
+I don't know how this should be done but let's please try to
+
+1. Encourage uniform behaviors across the signals.
+
+2. Ultimately discourage usage of signals on kthreads as this closely
+   ties implementation detail (use of single kthread) to the userland
+   visible interface in a way where we can't easily get back out of.
+   For example, what if jffs needs its gc workers to be multi-threaded
+   and per-NUMA for high-iops devices later on?
+
+Thanks.
+
+-- 
+tejun
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
