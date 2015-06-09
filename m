@@ -1,27 +1,32 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: Re: [PATCH v5 12/21] libnvdimm: namespace indices: read and
-	validate
-Date: Tue, 9 Jun 2015 08:39:00 +0200
-Message-ID: <20150609063900.GD9804@lst.de>
-References: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com> <20150602001514.4506.13974.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH v5 17/21] libnvdimm: infrastructure for btt devices
+Date: Tue, 9 Jun 2015 08:42:00 +0200
+Message-ID: <20150609064200.GE9804@lst.de>
+References: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com> <20150602001541.4506.90125.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-acpi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150602001514.4506.13974.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org, rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
+In-Reply-To: <20150602001541.4506.90125.stgit@dwillia2-desk3.amr.corp.intel.com>
+Sender: linux-acpi-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: linux-nvdimm@lists.01.org, axboe@kernel.dk, sfr@canb.auug.org.au, rafael@kernel.org, neilb@suse.de, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, mingo@kernel.org, linux-acpi@vger.kernel.org, jmoyer@redhat.com, linux-api@vger.kernel.org, akpm@linux-foundation.org, hch@lst.de
 List-Id: linux-api@vger.kernel.org
 
-> +#include <asm-generic/io-64-nonatomic-lo-hi.h>
-> +
-> +#ifndef __io_virt
-> +#define __io_virt(x) ((void __force *) (x))
-> +#endif
+On Mon, Jun 01, 2015 at 08:15:41PM -0400, Dan Williams wrote:
+> Block devices from an nd bus, in addition to accepting "struct bio"
+> based requests, also have the capability to perform byte-aligned
+> accesses.  By default only the bio/block interface is used.  However, if
+> another driver can make effective use of the byte-aligned capability it
+> can claim/disable the block interface and use the byte-aligned "nd_io"
+> interface.
+> 
+> The BTT driver is the initial first consumer of this mechanism to allow
+> layering atomic sector update guarantees on top of nd_io capable
+> libnvdimm-block-devices, or their partitions.
 
-NAK. driver code mus never include asm-generic headers directly,
-and __io_virt isn't something that's up to a driver to redefine either.
-
-I think we really need the memremap series in first before trying to
-do the things done in this patch.
+As mentioned during the last time of the review the layering here
+is complete broken.  If you expose additional capabilities from a block
+device do it at the block device level.  That is enhance the rw_page
+callback to allo byte sized access, add a capability flag on the queue,
+etc.
