@@ -1,67 +1,524 @@
-From: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [RFC PATCH 06/18] signal/kthread: Initial implementation of
- kthread signal handling
-Date: Tue, 9 Jun 2015 14:15:24 +0200 (CEST)
-Message-ID: <alpine.LNX.2.00.1506091405360.12753@pobox.suse.cz>
-References: <1433516477-5153-1-git-send-email-pmladek@suse.cz> <1433516477-5153-7-git-send-email-pmladek@suse.cz> <20150609071022.GX21465@mtj.duckdns.org>
+From: Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH 18/26] [media] dvb: Get rid of typedev usage for enums
+Date: Tue, 9 Jun 2015 11:03:34 -0300
+Message-ID: <20150609110334.3c9a63b1@recife.lan>
+References: <cover.1433792665.git.mchehab@osg.samsung.com>
+	<336c59e13064f2fa872a1682268f1995deb18fa5.1433792665.git.mchehab@osg.samsung.com>
+	<1433793783.2730.9.camel@perches.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150609071022.GX21465-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
+In-Reply-To: <1433793783.2730.9.camel-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+Cc: Linux Media Mailing List <linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Antti Palosaari <crope-X3B1VOXEql0@public.gmane.org>, Jemma Denson <jdenson-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Patrick Boettcher <patrick.boettcher-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>, Michael Krufky <mkrufky-dJidKbW2IEtAfugRpC6u6w@public.gmane.org>, Malcolm Priestley <tvboxspy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Stefan Richter <stefanr-MtYdepGKPcBMYopoZt5u/LNAH6kLmebB@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Shuah Khan <shuah.kh-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Akihiro Tsukada <tskd08-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Martin Kepplinger <martink-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>, Richard Vollkommer <linux-tHsjnVUC+Ghl57MIdRCFDg@public.gmane.org>, Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Geert Uytterhoeven <geert+renesas-gXvu3+zWzMSzQB+pC5nmwQ@public.gmane.org>, Julia Lawall <julia.lawall-L2FTfq7BK8M@public.gmane.org>, Himangi Saraogi <himangi774-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>, Cheolhyun Park <pch851130-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Markus Elfring <elfring-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, Benoit
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 9 Jun 2015, Tejun Heo wrote:
+Em Mon, 08 Jun 2015 13:03:03 -0700
+Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org> escreveu:
 
-> While I agree that it'd be great to consolidate the existing kthread
-> signal users, I feel quite uncomfortable with doing full-fledged
-> signal handling for kthreads which try to mimic the userland behavior.
-> Most of the default behaviors don't make sense for kthreads and it'd
-> be awful to have different kthreads interpreting arbitrary signals for
-> differing custom behaviors, which often happens when there's no
-> default.
-
-I don't think the ultimate goal is to mimic what userspace does; 
-especially when it comes to default actions.
-
-To me, the ultimate goal (*) is to make it possible for kthread to be able 
-to decide whether it wants "some kind of default behavior" (however that'd 
-be defined), or "ignore all", or "just handle this set of signals with 
-these handlers", and make API for this that would avoid every kthread 
-implementing its own complete signal handling.
-
-(*) Well, the ultimate goal really is to bring sanity to how kthreads are 
-    handling their main loop. Trying to bring some consistency to how 
-    kthreads are handling signals is just an (optional) added value on 
-    top of that.
-
-> While we do have several kthread signal users, they aren't too many and 
-> majority of them use it to allow userland to tell it to shutdown and 
-
-Yeah. Via SIGKILL. Or SIGTERM. Or SIGINT. Or SIGQUIT. Not really 
-consistent either.
-
-> there seem to be a couple which use HUP/USR1 to cancel whatever it's 
-> processing / waiting on at the moment.  Hmmm... jffs uses STOP/CONT too.
-
-> I don't know how this should be done but let's please try to
+> On Mon, 2015-06-08 at 16:54 -0300, Mauro Carvalho Chehab wrote:
+> > The DVB API was originally defined using typedefs. This is against
+> > Kernel CodingStyle, and there's no good usage here. While we can't
+> > remove its usage on userspace, we can avoid its usage in Kernelspace.
+> > 
+> > So, let's do it.
+> > 
+> > This patch was generated by this shell script:
+> > 
+> > 	for j in $(grep typedef include/uapi/linux/dvb/frontend.h |cut -d' ' -f 3); do for i in $(find drivers/media -name '*.[ch]' -type f) $(find drivers/staging/media -name '*.[ch]' -type f); do sed "s,${j}_t,enum $j," <$i >a && mv a $i; done; done
 > 
-> 1. Encourage uniform behaviors across the signals.
+> Seems sensible, thanks.
+> 
+> > While here, make CodingStyle fixes on the affected lines.
+> 
+> Trivial note examples:
+> 
+> > diff --git a/drivers/media/common/b2c2/flexcop-fe-tuner.c b/drivers/media/common/b2c2/flexcop-fe-tuner.c
+> []
+> > @@ -39,7 +39,8 @@ static int flexcop_fe_request_firmware(struct dvb_frontend *fe,
+> >  
+> >  /* lnb control */
+> >  #if FE_SUPPORTED(MT312) || FE_SUPPORTED(STV0299)
+> > -static int flexcop_set_voltage(struct dvb_frontend *fe, fe_sec_voltage_t voltage)
+> > +static int flexcop_set_voltage(struct dvb_frontend *fe,
+> > +			       enum fe_sec_voltage voltage)
+> 
+> Aligned to open paren.
+> 
+> > @@ -157,7 +158,7 @@ static int flexcop_diseqc_send_master_cmd(struct dvb_frontend *fe,
+> >  }
+> >  
+> >  static int flexcop_diseqc_send_burst(struct dvb_frontend *fe,
+> > -	fe_sec_mini_cmd_t minicmd)
+> > +	enum fe_sec_mini_cmd minicmd)
+> 
+> Not aligned to open paren.
+> 
+> Why some and not all?
 
-Fully agreed.
+Because checkpatch.pl didn't complain ;)
 
-> 2. Ultimately discourage usage of signals on kthreads as this closely
->    ties implementation detail (use of single kthread) to the userland
->    visible interface in a way where we can't easily get back out of.
->    For example, what if jffs needs its gc workers to be multi-threaded
->    and per-NUMA for high-iops devices later on?
+Yet, I agree that it makes sense to do it too. See the enclosed diff.
 
-What kind of multi-threading kthreads are you referring to here? Something 
-more sophisticated than simply spawning several per-CPU (or 
-per-whatever-resource) full-fledged kthreads?
+Please notice that I left a few ones without aligning, because doing the
+open parenthesis alignment would cause the 80-cols warning.
 
--- 
-Jiri Kosina
-SUSE Labs
+I also fixed a few other checkpatch warnings (to satisfy --strict).
+
+Only whitespaces/line breaks were changed below.
+
+> 
+> > diff --git a/drivers/media/common/siano/smsdvb.h b/drivers/media/common/siano/smsdvb.h
+> []
+> > @@ -40,7 +40,7 @@ struct smsdvb_client_t {
+> >  	struct dmxdev           dmxdev;
+> >  	struct dvb_frontend     frontend;
+> >  
+> > -	fe_status_t             fe_status;
+> > +	enum fe_status             fe_status;
+> 
+> Maybe realign these too.
+
+Agreed.
+
+Ok, did a patch fixing the miss-aligns I saw.
+
+I'll fold this one together with patch 18/26.
+
+Regards,
+Mauro
+
+diff --git a/drivers/media/common/b2c2/flexcop-fe-tuner.c b/drivers/media/common/b2c2/flexcop-fe-tuner.c
+index 45bfa2f243cd..5e5696729eca 100644
+--- a/drivers/media/common/b2c2/flexcop-fe-tuner.c
++++ b/drivers/media/common/b2c2/flexcop-fe-tuner.c
+@@ -158,7 +158,7 @@ static int flexcop_diseqc_send_master_cmd(struct dvb_frontend *fe,
+ }
+ 
+ static int flexcop_diseqc_send_burst(struct dvb_frontend *fe,
+-	enum fe_sec_mini_cmd minicmd)
++				     enum fe_sec_mini_cmd minicmd)
+ {
+ 	return flexcop_send_diseqc_msg(fe, 0, NULL, minicmd);
+ }
+diff --git a/drivers/media/common/siano/smsdvb.h b/drivers/media/common/siano/smsdvb.h
+index 6390ec93ecdf..b15754d95ec0 100644
+--- a/drivers/media/common/siano/smsdvb.h
++++ b/drivers/media/common/siano/smsdvb.h
+@@ -40,7 +40,7 @@ struct smsdvb_client_t {
+ 	struct dmxdev           dmxdev;
+ 	struct dvb_frontend     frontend;
+ 
+-	enum fe_status             fe_status;
++	enum fe_status          fe_status;
+ 
+ 	struct completion       tune_done;
+ 	struct completion       stats_done;
+diff --git a/drivers/media/dvb-core/dvb_frontend.c b/drivers/media/dvb-core/dvb_frontend.c
+index 59643ab9e89a..55a6b0500615 100644
+--- a/drivers/media/dvb-core/dvb_frontend.c
++++ b/drivers/media/dvb-core/dvb_frontend.c
+@@ -2413,7 +2413,7 @@ static int dvb_frontend_ioctl_legacy(struct file *file,
+ 	case FE_DISEQC_SEND_BURST:
+ 		if (fe->ops.diseqc_send_burst) {
+ 			err = fe->ops.diseqc_send_burst(fe,
+-						(enum fe_sec_mini_cmd) parg);
++						(enum fe_sec_mini_cmd)parg);
+ 			fepriv->state = FESTATE_DISEQC;
+ 			fepriv->status = 0;
+ 		}
+@@ -2422,8 +2422,8 @@ static int dvb_frontend_ioctl_legacy(struct file *file,
+ 	case FE_SET_TONE:
+ 		if (fe->ops.set_tone) {
+ 			err = fe->ops.set_tone(fe,
+-					       (enum fe_sec_tone_mode) parg);
+-			fepriv->tone = (enum fe_sec_tone_mode) parg;
++					       (enum fe_sec_tone_mode)parg);
++			fepriv->tone = (enum fe_sec_tone_mode)parg;
+ 			fepriv->state = FESTATE_DISEQC;
+ 			fepriv->status = 0;
+ 		}
+@@ -2432,8 +2432,8 @@ static int dvb_frontend_ioctl_legacy(struct file *file,
+ 	case FE_SET_VOLTAGE:
+ 		if (fe->ops.set_voltage) {
+ 			err = fe->ops.set_voltage(fe,
+-						  (enum fe_sec_voltage) parg);
+-			fepriv->voltage = (enum fe_sec_voltage) parg;
++						  (enum fe_sec_voltage)parg);
++			fepriv->voltage = (enum fe_sec_voltage)parg;
+ 			fepriv->state = FESTATE_DISEQC;
+ 			fepriv->status = 0;
+ 		}
+@@ -2442,7 +2442,7 @@ static int dvb_frontend_ioctl_legacy(struct file *file,
+ 	case FE_DISHNETWORK_SEND_LEGACY_CMD:
+ 		if (fe->ops.dishnetwork_send_legacy_command) {
+ 			err = fe->ops.dishnetwork_send_legacy_command(fe,
+-							 (unsigned long) parg);
++							 (unsigned long)parg);
+ 			fepriv->state = FESTATE_DISEQC;
+ 			fepriv->status = 0;
+ 		} else if (fe->ops.set_voltage) {
+diff --git a/drivers/media/dvb-frontends/cx24117.c b/drivers/media/dvb-frontends/cx24117.c
+index bf755a0aaa69..5f77bc80a896 100644
+--- a/drivers/media/dvb-frontends/cx24117.c
++++ b/drivers/media/dvb-frontends/cx24117.c
+@@ -906,7 +906,7 @@ static int cx24117_wait_for_lnb(struct dvb_frontend *fe)
+ }
+ 
+ static int cx24117_set_voltage(struct dvb_frontend *fe,
+-	enum fe_sec_voltage voltage)
++			       enum fe_sec_voltage voltage)
+ {
+ 	struct cx24117_state *state = fe->demodulator_priv;
+ 	struct cx24117_cmd cmd;
+@@ -958,7 +958,7 @@ static int cx24117_set_voltage(struct dvb_frontend *fe,
+ }
+ 
+ static int cx24117_set_tone(struct dvb_frontend *fe,
+-	enum fe_sec_tone_mode tone)
++			    enum fe_sec_tone_mode tone)
+ {
+ 	struct cx24117_state *state = fe->demodulator_priv;
+ 	struct cx24117_cmd cmd;
+diff --git a/drivers/media/dvb-frontends/cx24123.c b/drivers/media/dvb-frontends/cx24123.c
+index b6c1b2094bc5..e18cf9e1185e 100644
+--- a/drivers/media/dvb-frontends/cx24123.c
++++ b/drivers/media/dvb-frontends/cx24123.c
+@@ -290,7 +290,7 @@ static int cx24123_i2c_readreg(struct cx24123_state *state, u8 i2c_addr, u8 reg)
+ 	cx24123_i2c_writereg(state, state->config->demod_address, reg, val)
+ 
+ static int cx24123_set_inversion(struct cx24123_state *state,
+-	enum fe_spectral_inversion inversion)
++				 enum fe_spectral_inversion inversion)
+ {
+ 	u8 nom_reg = cx24123_readreg(state, 0x0e);
+ 	u8 auto_reg = cx24123_readreg(state, 0x10);
+@@ -318,7 +318,7 @@ static int cx24123_set_inversion(struct cx24123_state *state,
+ }
+ 
+ static int cx24123_get_inversion(struct cx24123_state *state,
+-	enum fe_spectral_inversion *inversion)
++				 enum fe_spectral_inversion *inversion)
+ {
+ 	u8 val;
+ 
+@@ -720,7 +720,7 @@ static int cx24123_initfe(struct dvb_frontend *fe)
+ }
+ 
+ static int cx24123_set_voltage(struct dvb_frontend *fe,
+-	enum fe_sec_voltage voltage)
++			       enum fe_sec_voltage voltage)
+ {
+ 	struct cx24123_state *state = fe->demodulator_priv;
+ 	u8 val;
+@@ -795,7 +795,7 @@ static int cx24123_send_diseqc_msg(struct dvb_frontend *fe,
+ }
+ 
+ static int cx24123_diseqc_send_burst(struct dvb_frontend *fe,
+-	enum fe_sec_mini_cmd burst)
++				     enum fe_sec_mini_cmd burst)
+ {
+ 	struct cx24123_state *state = fe->demodulator_priv;
+ 	int val, tone;
+diff --git a/drivers/media/dvb-frontends/cxd2820r_core.c b/drivers/media/dvb-frontends/cxd2820r_core.c
+index 70cc420c6ebe..def6d21d1445 100644
+--- a/drivers/media/dvb-frontends/cxd2820r_core.c
++++ b/drivers/media/dvb-frontends/cxd2820r_core.c
+@@ -287,6 +287,7 @@ static int cxd2820r_set_frontend(struct dvb_frontend *fe)
+ err:
+ 	return ret;
+ }
++
+ static int cxd2820r_read_status(struct dvb_frontend *fe, enum fe_status *status)
+ {
+ 	struct cxd2820r_priv *priv = fe->demodulator_priv;
+diff --git a/drivers/media/dvb-frontends/ds3000.c b/drivers/media/dvb-frontends/ds3000.c
+index 8ee59a18dbfe..e8fc0329ea64 100644
+--- a/drivers/media/dvb-frontends/ds3000.c
++++ b/drivers/media/dvb-frontends/ds3000.c
+@@ -767,7 +767,7 @@ static int ds3000_send_diseqc_msg(struct dvb_frontend *fe,
+ 
+ /* Send DiSEqC burst */
+ static int ds3000_diseqc_send_burst(struct dvb_frontend *fe,
+-					enum fe_sec_mini_cmd burst)
++				    enum fe_sec_mini_cmd burst)
+ {
+ 	struct ds3000_state *state = fe->demodulator_priv;
+ 	int i;
+diff --git a/drivers/media/dvb-frontends/lnbp21.c b/drivers/media/dvb-frontends/lnbp21.c
+index 01a92ec8f9a2..4aca0fb9a8a7 100644
+--- a/drivers/media/dvb-frontends/lnbp21.c
++++ b/drivers/media/dvb-frontends/lnbp21.c
+@@ -45,7 +45,7 @@ struct lnbp21 {
+ };
+ 
+ static int lnbp21_set_voltage(struct dvb_frontend *fe,
+-					enum fe_sec_voltage voltage)
++			      enum fe_sec_voltage voltage)
+ {
+ 	struct lnbp21 *lnbp21 = (struct lnbp21 *) fe->sec_priv;
+ 	struct i2c_msg msg = {	.addr = lnbp21->i2c_addr, .flags = 0,
+@@ -92,7 +92,7 @@ static int lnbp21_enable_high_lnb_voltage(struct dvb_frontend *fe, long arg)
+ }
+ 
+ static int lnbp21_set_tone(struct dvb_frontend *fe,
+-				enum fe_sec_tone_mode tone)
++			   enum fe_sec_tone_mode tone)
+ {
+ 	struct lnbp21 *lnbp21 = (struct lnbp21 *) fe->sec_priv;
+ 	struct i2c_msg msg = {	.addr = lnbp21->i2c_addr, .flags = 0,
+diff --git a/drivers/media/dvb-frontends/m88rs2000.c b/drivers/media/dvb-frontends/m88rs2000.c
+index 04178f9c7e00..9b6f464c48bd 100644
+--- a/drivers/media/dvb-frontends/m88rs2000.c
++++ b/drivers/media/dvb-frontends/m88rs2000.c
+@@ -247,7 +247,7 @@ static int m88rs2000_send_diseqc_msg(struct dvb_frontend *fe,
+ }
+ 
+ static int m88rs2000_send_diseqc_burst(struct dvb_frontend *fe,
+-						enum fe_sec_mini_cmd burst)
++				       enum fe_sec_mini_cmd burst)
+ {
+ 	struct m88rs2000_state *state = fe->demodulator_priv;
+ 	u8 reg0, reg1;
+@@ -542,7 +542,7 @@ static int m88rs2000_read_ucblocks(struct dvb_frontend *fe, u32 *ucblocks)
+ }
+ 
+ static int m88rs2000_set_fec(struct m88rs2000_state *state,
+-		enum fe_code_rate fec)
++			     enum fe_code_rate fec)
+ {
+ 	u8 fec_set, reg;
+ 	int ret;
+diff --git a/drivers/media/dvb-frontends/nxt6000.c b/drivers/media/dvb-frontends/nxt6000.c
+index 8eab07810b9e..73f9505367ac 100644
+--- a/drivers/media/dvb-frontends/nxt6000.c
++++ b/drivers/media/dvb-frontends/nxt6000.c
+@@ -149,8 +149,9 @@ static int nxt6000_set_inversion(struct nxt6000_state *state,
+ 	}
+ }
+ 
+-static int nxt6000_set_transmission_mode(struct nxt6000_state *state,
+-				 enum fe_transmit_mode transmission_mode)
++static int
++nxt6000_set_transmission_mode(struct nxt6000_state *state,
++			      enum fe_transmit_mode transmission_mode)
+ {
+ 	int result;
+ 
+diff --git a/drivers/media/dvb-frontends/si21xx.c b/drivers/media/dvb-frontends/si21xx.c
+index 4ee88d36681e..62ad7a7be9f8 100644
+--- a/drivers/media/dvb-frontends/si21xx.c
++++ b/drivers/media/dvb-frontends/si21xx.c
+@@ -410,7 +410,7 @@ static int si21xx_send_diseqc_msg(struct dvb_frontend *fe,
+ }
+ 
+ static int si21xx_send_diseqc_burst(struct dvb_frontend *fe,
+-						enum fe_sec_mini_cmd burst)
++				    enum fe_sec_mini_cmd burst)
+ {
+ 	struct si21xx_state *state = fe->demodulator_priv;
+ 	u8 val;
+@@ -641,7 +641,7 @@ static int si21_read_ucblocks(struct dvb_frontend *fe, u32 *ucblocks)
+ /*	initiates a channel acquisition sequence
+ 	using the specified symbol rate and code rate */
+ static int si21xx_setacquire(struct dvb_frontend *fe, int symbrate,
+-						enum fe_code_rate crate)
++			     enum fe_code_rate crate)
+ {
+ 
+ 	struct si21xx_state *state = fe->demodulator_priv;
+diff --git a/drivers/media/dvb-frontends/stv0288.c b/drivers/media/dvb-frontends/stv0288.c
+index d942410e11d9..c93d9a45f7f7 100644
+--- a/drivers/media/dvb-frontends/stv0288.c
++++ b/drivers/media/dvb-frontends/stv0288.c
+@@ -174,7 +174,7 @@ static int stv0288_send_diseqc_msg(struct dvb_frontend *fe,
+ }
+ 
+ static int stv0288_send_diseqc_burst(struct dvb_frontend *fe,
+-						enum fe_sec_mini_cmd burst)
++				     enum fe_sec_mini_cmd burst)
+ {
+ 	struct stv0288_state *state = fe->demodulator_priv;
+ 
+diff --git a/drivers/media/dvb-frontends/stv0367.c b/drivers/media/dvb-frontends/stv0367.c
+index 5ac28b7f22eb..ec3e18e5ff50 100644
+--- a/drivers/media/dvb-frontends/stv0367.c
++++ b/drivers/media/dvb-frontends/stv0367.c
+@@ -70,7 +70,7 @@ struct stv0367ter_state {
+ 	enum fe_guard_interval guard;
+ 	enum stv0367_ter_hierarchy hierarchy;
+ 	u32 frequency;
+-	enum fe_spectral_inversion  sense; /*  current search spectrum */
++	enum fe_spectral_inversion sense; /*  current search spectrum */
+ 	u8  force; /* force mode/guard */
+ 	u8  bw; /* channel width 6, 7 or 8 in MHz */
+ 	u8  pBW; /* channel width used during previous lock */
+diff --git a/drivers/media/pci/cx23885/cx23885-f300.h b/drivers/media/pci/cx23885/cx23885-f300.h
+index 8b513eb668d5..be14d7de7cd8 100644
+--- a/drivers/media/pci/cx23885/cx23885-f300.h
++++ b/drivers/media/pci/cx23885/cx23885-f300.h
+@@ -1,2 +1,2 @@
+ extern int f300_set_voltage(struct dvb_frontend *fe,
+-				enum fe_sec_voltage voltage);
++			    enum fe_sec_voltage voltage);
+diff --git a/drivers/media/pci/cx23885/cx23885.h b/drivers/media/pci/cx23885/cx23885.h
+index 6f57c4e1cadc..027ead438194 100644
+--- a/drivers/media/pci/cx23885/cx23885.h
++++ b/drivers/media/pci/cx23885/cx23885.h
+@@ -309,7 +309,7 @@ struct cx23885_tsport {
+ 
+ 	int (*set_frontend)(struct dvb_frontend *fe);
+ 	int (*fe_set_voltage)(struct dvb_frontend *fe,
+-				enum fe_sec_voltage voltage);
++			      enum fe_sec_voltage voltage);
+ };
+ 
+ struct cx23885_kernel_ir {
+diff --git a/drivers/media/pci/cx88/cx88-dvb.c b/drivers/media/pci/cx88/cx88-dvb.c
+index 445bb34037e5..9dfa5ee32a8f 100644
+--- a/drivers/media/pci/cx88/cx88-dvb.c
++++ b/drivers/media/pci/cx88/cx88-dvb.c
+@@ -481,7 +481,7 @@ static int geniatech_dvbs_set_voltage(struct dvb_frontend *fe,
+ }
+ 
+ static int tevii_dvbs_set_voltage(struct dvb_frontend *fe,
+-				      enum fe_sec_voltage voltage)
++				  enum fe_sec_voltage voltage)
+ {
+ 	struct cx8802_dev *dev= fe->dvb->priv;
+ 	struct cx88_core *core = dev->core;
+@@ -505,7 +505,7 @@ static int tevii_dvbs_set_voltage(struct dvb_frontend *fe,
+ }
+ 
+ static int vp1027_set_voltage(struct dvb_frontend *fe,
+-				    enum fe_sec_voltage voltage)
++			      enum fe_sec_voltage voltage)
+ {
+ 	struct cx8802_dev *dev = fe->dvb->priv;
+ 	struct cx88_core *core = dev->core;
+@@ -919,7 +919,7 @@ static int samsung_smt_7020_set_tone(struct dvb_frontend *fe,
+ }
+ 
+ static int samsung_smt_7020_set_voltage(struct dvb_frontend *fe,
+-	enum fe_sec_voltage voltage)
++					enum fe_sec_voltage voltage)
+ {
+ 	struct cx8802_dev *dev = fe->dvb->priv;
+ 	struct cx88_core *core = dev->core;
+diff --git a/drivers/media/usb/dvb-usb-v2/lmedm04.c b/drivers/media/usb/dvb-usb-v2/lmedm04.c
+index 1609d451df70..1b6ca42ad116 100644
+--- a/drivers/media/usb/dvb-usb-v2/lmedm04.c
++++ b/drivers/media/usb/dvb-usb-v2/lmedm04.c
+@@ -802,7 +802,7 @@ static struct ts2020_config ts2020_config = {
+ };
+ 
+ static int dm04_lme2510_set_voltage(struct dvb_frontend *fe,
+-					enum fe_sec_voltage voltage)
++				    enum fe_sec_voltage voltage)
+ {
+ 	struct dvb_usb_device *d = fe_to_d(fe);
+ 	struct lme2510_state *st = fe_to_priv(fe);
+diff --git a/drivers/media/usb/dvb-usb-v2/mxl111sf-demod.c b/drivers/media/usb/dvb-usb-v2/mxl111sf-demod.c
+index 34a96aebb3d1..ea3753653368 100644
+--- a/drivers/media/usb/dvb-usb-v2/mxl111sf-demod.c
++++ b/drivers/media/usb/dvb-usb-v2/mxl111sf-demod.c
+@@ -103,7 +103,7 @@ fail:
+ 
+ static
+ int mxl1x1sf_demod_get_tps_modulation(struct mxl111sf_demod_state *state,
+-					 enum fe_modulation *modulation)
++				      enum fe_modulation *modulation)
+ {
+ 	u8 val;
+ 	int ret = mxl111sf_demod_read_reg(state, V6_MODORDER_TPS_REG, &val);
+diff --git a/drivers/media/usb/dvb-usb/cinergyT2-fe.c b/drivers/media/usb/dvb-usb/cinergyT2-fe.c
+index 43e271485200..b3ec743a7a2e 100644
+--- a/drivers/media/usb/dvb-usb/cinergyT2-fe.c
++++ b/drivers/media/usb/dvb-usb/cinergyT2-fe.c
+@@ -142,7 +142,7 @@ struct cinergyt2_fe_state {
+ };
+ 
+ static int cinergyt2_fe_read_status(struct dvb_frontend *fe,
+-					enum fe_status *status)
++				    enum fe_status *status)
+ {
+ 	struct cinergyt2_fe_state *state = fe->demodulator_priv;
+ 	struct dvbt_get_status_msg result;
+diff --git a/drivers/media/usb/dvb-usb/dib0700_devices.c b/drivers/media/usb/dvb-usb/dib0700_devices.c
+index 70e97fe2f485..7ed49646a699 100644
+--- a/drivers/media/usb/dvb-usb/dib0700_devices.c
++++ b/drivers/media/usb/dvb-usb/dib0700_devices.c
+@@ -3309,7 +3309,7 @@ static int stk7070pd_frontend_attach1(struct dvb_usb_adapter *adap)
+ }
+ 
+ static int novatd_read_status_override(struct dvb_frontend *fe,
+-		enum fe_status *stat)
++				       enum fe_status *stat)
+ {
+ 	struct dvb_usb_adapter *adap = fe->dvb->priv;
+ 	struct dvb_usb_device *dev = adap->dev;
+diff --git a/drivers/media/usb/dvb-usb/dw2102.c b/drivers/media/usb/dvb-usb/dw2102.c
+index ef5f4c384938..14ef25dc6cd3 100644
+--- a/drivers/media/usb/dvb-usb/dw2102.c
++++ b/drivers/media/usb/dvb-usb/dw2102.c
+@@ -123,7 +123,7 @@ struct dw2102_state {
+ 	/* fe hook functions*/
+ 	int (*old_set_voltage)(struct dvb_frontend *f, enum fe_sec_voltage v);
+ 	int (*fe_read_status)(struct dvb_frontend *fe,
+-		enum fe_status *status);
++			      enum fe_status *status);
+ };
+ 
+ /* debug */
+diff --git a/drivers/media/usb/dvb-usb/gp8psk-fe.c b/drivers/media/usb/dvb-usb/gp8psk-fe.c
+index a5b3702ab41d..db6eb79cde07 100644
+--- a/drivers/media/usb/dvb-usb/gp8psk-fe.c
++++ b/drivers/media/usb/dvb-usb/gp8psk-fe.c
+@@ -237,8 +237,8 @@ static int gp8psk_fe_send_diseqc_msg (struct dvb_frontend* fe,
+ 	return 0;
+ }
+ 
+-static int gp8psk_fe_send_diseqc_burst (struct dvb_frontend* fe,
+-				    enum fe_sec_mini_cmd burst)
++static int gp8psk_fe_send_diseqc_burst(struct dvb_frontend *fe,
++				       enum fe_sec_mini_cmd burst)
+ {
+ 	struct gp8psk_fe_state *st = fe->demodulator_priv;
+ 	u8 cmd;
+diff --git a/drivers/media/usb/dvb-usb/technisat-usb2.c b/drivers/media/usb/dvb-usb/technisat-usb2.c
+index 79739aab06d5..03f334d3a8f4 100644
+--- a/drivers/media/usb/dvb-usb/technisat-usb2.c
++++ b/drivers/media/usb/dvb-usb/technisat-usb2.c
+@@ -453,7 +453,7 @@ static struct stv090x_config technisat_usb2_stv090x_config;
+ 
+ /* frontend attach */
+ static int technisat_usb2_set_voltage(struct dvb_frontend *fe,
+-		enum fe_sec_voltage voltage)
++				      enum fe_sec_voltage voltage)
+ {
+ 	int i;
+ 	u8 gpio[3] = { 0 }; /* 0 = 2, 1 = 3, 2 = 4 */
+diff --git a/drivers/media/usb/ttusb-dec/ttusbdecfe.c b/drivers/media/usb/ttusb-dec/ttusbdecfe.c
+index e46380c562ee..8781335ab92f 100644
+--- a/drivers/media/usb/ttusb-dec/ttusbdecfe.c
++++ b/drivers/media/usb/ttusb-dec/ttusbdecfe.c
+@@ -39,7 +39,7 @@ struct ttusbdecfe_state {
+ 
+ 
+ static int ttusbdecfe_dvbs_read_status(struct dvb_frontend *fe,
+-	enum fe_status *status)
++				       enum fe_status *status)
+ {
+ 	*status = FE_HAS_SIGNAL | FE_HAS_VITERBI |
+ 		FE_HAS_SYNC | FE_HAS_CARRIER | FE_HAS_LOCK;
+@@ -48,7 +48,7 @@ static int ttusbdecfe_dvbs_read_status(struct dvb_frontend *fe,
+ 
+ 
+ static int ttusbdecfe_dvbt_read_status(struct dvb_frontend *fe,
+-	enum fe_status *status)
++				       enum fe_status *status)
+ {
+ 	struct ttusbdecfe_state* state = fe->demodulator_priv;
+ 	u8 b[] = { 0x00, 0x00, 0x00, 0x00,
