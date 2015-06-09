@@ -1,152 +1,79 @@
 From: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [RFC PATCH 09/18] kthread: Make it easier to correctly sleep in
- iterant kthreads
-Date: Tue, 9 Jun 2015 17:25:26 +0200
-Message-ID: <20150609152526.GB9409@pathway.suse.cz>
+Subject: Re: [RFC PATCH 07/18] kthread: Make iterant kthreads freezable by
+ default
+Date: Tue, 9 Jun 2015 17:53:13 +0200
+Message-ID: <20150609155313.GC9409@pathway.suse.cz>
 References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
- <1433516477-5153-10-git-send-email-pmladek@suse.cz>
- <20150605161021.GJ19282@twins.programming.kicks-ass.net>
- <20150608100107.GA3135@pathway.suse.cz>
- <1433763595.1495.35.camel@twins>
+ <1433516477-5153-8-git-send-email-pmladek@suse.cz>
+ <20150609072003.GY21465@mtj.duckdns.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1433763595.1495.35.camel@twins>
+In-Reply-To: <20150609072003.GY21465-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 2015-06-08 13:39:55, Peter Zijlstra wrote:
-> On Mon, 2015-06-08 at 12:01 +0200, Petr Mladek wrote:
+On Tue 2015-06-09 16:20:03, Tejun Heo wrote:
+> Hello, Petr.
 > 
-> > Just to be sure. Do you suggest to use TASK_IDLE everywhere in
-> > kthreads or only when the uninterruptible sleep is really needed?
->
-> Always, only use INTERRUPTIBLE when you're actually interruptible, that
-> is you want signals or such muck to terminate your wait.
-
-I like that TASK_IDLE clearly describes that the state of the task.
-I am just curious. Is there any particular advantage of using
-uninterruptible sleep over the interruptible one, please?
-
-I ask because making freezable kthreads is quite tricky. You need to
-call try_to_freeze() after each schedule or call freezable_* variants
-of schedule(). I think that it is easy to make a mistake. I wonder if
-it might be more elegant to use interruptible sleep whenever possible,
-send the fake signal also to kthreads and force them moving into some
-location where the freeze is safe and handled.
-
-
-> > IMHO, we should not use TASK_IDLE in freezable kthreads because
-> > it would break freezing.
+> On Fri, Jun 05, 2015 at 05:01:06PM +0200, Petr Mladek wrote:
+> > Many kthreads already calls set_freezable() before they enter the main
+> > cycle. One of the reasons for creating iterant kthreads is to create
+> > a safe point for freezing and make even more kthreads properly
+> > freezable. Therefore it would make sense to set all iterant
+> > kthreads freezable by default.
 > 
-> How so? The task is IDLE, its not doing anything.
+> Actually, for most cases, making kthreads freezable is unnecessary and
+> often indicative of something going wrong.  This is a crude mechanism
+> which goes along the line of "if all threads are stopped, the machine
+> should be safe to be put into whatever state", which isn't true at all
+> as there usually are a lot of stuff going on asynchronously especially
+> when interacting with hardware.
 
-Well, it might cause the freeze. I have just double checked this
-with ubi_thread(). It calls set_freezable().
+I think that the interaction with the hardware should be the reason to
+make them properly freezable. In the current state they are stopped at
+some random place, they might either miss some event from the hardware
+or the hardware might get resumed into another state and the kthread
+might wait forever.
 
-I did the following change:
+Also I think that freezing kthreads on some well defined location
+should help with reproducing and fixing problems.
 
-diff --git a/drivers/mtd/ubi/wl.c b/drivers/mtd/ubi/wl.c
-index 16214d3d57a4..d528fa5e93ba 100644
---- a/drivers/mtd/ubi/wl.c
-+++ b/drivers/mtd/ubi/wl.c
-@@ -1428,7 +1428,7 @@ int ubi_thread(void *u)
-                spin_lock(&ubi->wl_lock);
-                if (list_empty(&ubi->works) || ubi->ro_mode ||
-                    !ubi->thread_enabled || ubi_dbg_is_bgt_disabled(ubi)) {
--                       set_current_state(TASK_INTERRUPTIBLE);
-+                       set_current_state(TASK_IDLE);
-                        spin_unlock(&ubi->wl_lock);
-                        schedule();
-                        continue;
+Note that _only_ kthreads using the _new API_ should be freezable by
+default. The move need to be done carefully. It is chance to review
+and clean up the freezer stuff.
 
+Of course, I might be too optimistic here.
 
-  enabled this stuff:
+> In most cases, we want to implement proper power management callbacks
+> which plug new issuance of whatever work-unit the code is dealing with
+> and drain in-flight ones.  Whether the worker threads are frozen or
+> not doesn't matter once that's implemented.
 
-$> grep UBI .config
-CONFIG_TCP_CONG_CUBIC=y
-CONFIG_DEFAULT_CUBIC=y
-CONFIG_MTD_UBI=y
-CONFIG_MTD_UBI_WL_THRESHOLD=4096
-CONFIG_MTD_UBI_BEB_LIMIT=20
-# CONFIG_MTD_UBI_FASTMAP is not set
-CONFIG_MTD_UBI_GLUEBI=y
-CONFIG_MTD_UBI_BLOCK=y
-# CONFIG_JFFS2_RUBIN is not set
-CONFIG_UBIFS_FS=y
-# CONFIG_UBIFS_FS_ADVANCED_COMPR is not set
-CONFIG_UBIFS_FS_LZO=y
-CONFIG_UBIFS_FS_ZLIB=y
-# CONFIG_CRYPTO_ANUBIS is not set
-
-  called on the running system:
-
-$> ubiattach /dev/ubi_ctrl -m 0
-
-  to launch "ubi_bgt0d"
-
-  and it started to block freezer:
-
-$> echo freezer >/sys/power/pm_test
-$> echo reboot >/sys/power/disk
-$> echo disk >/sys/power/state
--bash: echo: write error: Device or resource busy
-
-$dmesg
-[  658.874518] Freezing of tasks failed after 20.008 seconds (1 tasks refusing to freeze, wq_busy=0):
-[  658.874527] ubi_bgt0d       D ffff880136e2be38     0  3107      2 0x00000000
-[  658.874530]  ffff880136e2be38 ffff88013a456410 ffff880133808210 ffff8800b3f5cd00
-[  658.874532]  ffff880136e2c000 ffff880133808210 ffff8800ba1fd15c ffff8800ba1fd1d8
-[  658.874533]  ffff8800ba1fd1fc ffff880136e2be58 ffffffff81905737 ffff8800ba1fd15c
-[  658.874535] Call Trace:
-[  658.874540]  [<ffffffff81905737>] schedule+0x37/0x90
-[  658.874543]  [<ffffffff816b3065>] ubi_thread+0xd5/0x1f0
-[  658.874545]  [<ffffffff816b2f90>] ? ubi_wl_flush+0x1f0/0x1f0
-[  658.874547]  [<ffffffff81085219>] kthread+0xc9/0xe0
-[  658.874549]  [<ffffffff81085150>] ? kthread_create_on_node+0x180/0x180
-[  658.874551]  [<ffffffff81909962>] ret_from_fork+0x42/0x70
-[  658.874552]  [<ffffffff81085150>] ? kthread_create_on_node+0x180/0x180
-
-[  658.874554] Restarting kernel threads ... done.
-[  658.892995] PM: Basic memory bitmaps freed
-[  658.892999] Restarting tasks ... done.
+I see. The power management is important here.
 
 
-  It is because freeze_task() tries to wake up inly kthreads in
-  interruptible state. I does:
+> It seems that people have been marking kthreads freezable w/o really
+> thinking about it - some of them are subtly broken due to missing
+> drainage of in-flight things while others simply don't need freezing
+> for correctness.
 
-		wake_up_state(p, TASK_INTERRUPTIBLE);
+I have similar feeling.
 
+> We do want to clean up freezer usage in the kernel but definitely do
+> not want to make kthreads freezable by default especially given that
+> the freezer essentially is one giant lockdep-less system-wide lock.
 
-Solutions would be to try in freeze_task() also
-
-		wake_up_state(p, TASK_IDLE);
-
-or use in ubi_thread()
-
-		freezable_schedule()
-
-or always ignore freezing when the task sets TASK_IDLE.
-
-
-> >  Well, we could freezable_schedule() but only
-> > on locations where it is safe to get freezed. Anyway, we need to
-> > be careful here.
-> 
-> Bah, you made me look at the freezer code, karma reduction for you.
-
-I feel like it has happened.
-
-
-> And this is the arch typical freeze point if ever there was one, you're
-> checking kthread_stop, if we can terminate the kthread, we can certainly
-> get frozen.
-
-It makes sense. The tasks should be in some sane state when it goes
-into the idle state. I hope that people will not misuse it too much.
+I think that we both want to clean up freezing. I would like to make
+it more deterministic and you suggest to make it more relaxed.
+Do I understand it correctly?
 
 Best Regards,
 Petr
+
+
+PS: Thanks a lot everyone for feedback. I try hard to get it
+somehow sorted and more confident about the conclusions.
