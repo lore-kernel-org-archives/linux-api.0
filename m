@@ -1,35 +1,32 @@
-From: Vishal Verma <vishal.l.verma@linux.intel.com>
-Subject: Re: [PATCH v5 18/21] nd_btt: atomic sector updates
-Date: Wed, 10 Jun 2015 12:24:42 -0600
-Message-ID: <1433960682.32607.45.camel@linux.intel.com>
+From: Matthew Wilcox <willy@linux.intel.com>
+Subject: Re: [PATCH v5 17/21] libnvdimm: infrastructure for btt devices
+Date: Wed, 10 Jun 2015 14:46:16 -0400
+Message-ID: <20150610184616.GL2729@linux.intel.com>
 References: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com>
-	 <20150602001546.4506.15713.stgit@dwillia2-desk3.amr.corp.intel.com>
-	 <20150609064425.GF9804@lst.de> <1433874431.32607.37.camel@linux.intel.com>
-	 <20150610073434.GC3369@lst.de>
+ <20150602001541.4506.90125.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20150609064200.GE9804@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150610073434.GC3369@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-acpi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150609064200.GE9804@lst.de>
+Sender: linux-acpi-owner@vger.kernel.org
 To: Christoph Hellwig <hch@lst.de>
 Cc: Dan Williams <dan.j.williams@intel.com>, axboe@kernel.dk, sfr@canb.auug.org.au, rafael@kernel.org, neilb@suse.de, gregkh@linuxfoundation.org, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-api@vger.kernel.org, akpm@linux-foundation.org, mingo@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2015-06-10 at 09:34 +0200, Christoph Hellwig wrote:
-> Hi Vishal,
+On Tue, Jun 09, 2015 at 08:42:00AM +0200, Christoph Hellwig wrote:
+> > The BTT driver is the initial first consumer of this mechanism to allow
+> > layering atomic sector update guarantees on top of nd_io capable
+> > libnvdimm-block-devices, or their partitions.
 > 
-> I'm mostly worried about handling scalability to large CPU counts
-> properly.  If you think this is the best way to handle it that fine,
-> but please document the decisions on the changelog in a similar form
-> to what you did below.
+> As mentioned during the last time of the review the layering here
+> is complete broken.  If you expose additional capabilities from a block
+> device do it at the block device level.  That is enhance the rw_page
+> callback to allo byte sized access, add a capability flag on the queue,
+> etc.
 
-Thanks Christoph.
-
-I'll update the changelog for the next version. Scalability and
-performance are of course at the top of my head - this implementation is
-a first shot at what we think will work best, but if there are
-experiments/changes/data that show otherwise, I'll be more than happy to
-incorporate those.
-
-	-Vishal
+Don't screw up rw_page.  The point of rw_page is to read or write a page
+cache page.  It can sleep, and it indicates success by using the page
+flags.  Don't try and scqueeze rw_bytes into it.  If you want rw_bytes
+to be a queue operation, that's one thing, but don't mess with rw_page.
