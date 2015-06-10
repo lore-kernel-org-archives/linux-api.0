@@ -1,71 +1,123 @@
 From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH v3 1/2] capabilities: Ambient capabilities
-Date: Wed, 10 Jun 2015 12:24:58 -0700
-Message-ID: <CAGXu5jKLa1JtoSvoUTRPb02=NFh62Ge4oNSv=z=Z9q9SG62D6A@mail.gmail.com>
-References: <cover.1432770087.git.luto@kernel.org>
-	<eb28c29616751f0b17bfc1be7eae5bb718d58f9f.1432770087.git.luto@kernel.org>
-	<CAGXu5j+Y85U9pjZUO0LM8rOO-YJrqvwzsXNjmaxN=D+JiQrpJw@mail.gmail.com>
-	<CALCETrXz9e_PiAZaGRLuunyDu3-nRW_jopvvXcQwU3gN=sm_SA@mail.gmail.com>
+Subject: Re: [PATCH v4] seccomp: add ptrace options for suspend/resume
+Date: Wed, 10 Jun 2015 13:18:53 -0700
+Message-ID: <CAGXu5jJovcC1S4OANpqbVe6e86xr4W9Y7897MsSDOpvEqezpnA@mail.gmail.com>
+References: <1433897388-9567-1-git-send-email-tycho.andersen@canonical.com>
+	<CALCETrVuNzZRAw40reo_2ne9saO5KbbG-omFUQXDo=+XFhpuWA@mail.gmail.com>
+	<20150610163149.GA5092@redhat.com>
+	<CALCETrX_GXgjPRXXT4jMZtjR6vMQrmYbk_OwrAoxaJWFT0+0Fw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrXz9e_PiAZaGRLuunyDu3-nRW_jopvvXcQwU3gN=sm_SA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <CALCETrX_GXgjPRXXT4jMZtjR6vMQrmYbk_OwrAoxaJWFT0+0Fw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 9, 2015 at 5:00 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> On Tue, Jun 9, 2015 at 4:09 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
->> On Wed, May 27, 2015 at 4:47 PM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
->>> [1] Files that are missing the "security.capability" xattr or that
->>> have unrecognized values for that xattr end up with has_cap set to
->>> false.  The code that does that appears to be complicated for no
->>> good reason.
+On Wed, Jun 10, 2015 at 10:20 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> On Wed, Jun 10, 2015 at 9:31 AM, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> On 06/09, Andy Lutomirski wrote:
+>>>
+>>> On Tue, Jun 9, 2015 at 5:49 PM, Tycho Andersen
+>>> >
+>>> > @@ -556,6 +556,15 @@ static int ptrace_setoptions(struct task_struct *child, unsigned long data)
+>>> >         if (data & ~(unsigned long)PTRACE_O_MASK)
+>>> >                 return -EINVAL;
+>>> >
+>>> > +       if (unlikely(data & PTRACE_O_SUSPEND_SECCOMP)) {
 >>
->> Would it make more sense to have has_cap true, but have it lack any actual caps?
->
-> I assume you're referring to the case where we fail to parse the
-> xattr.  If so, I don't really know if or when this happens.  Should
-> that be addressed separately from this patch set?
-
-No, no. All of these footnotes seem to be separate from the series. I
-just wanted to chime in on them, since none of them really sounded
-like they should get dropped.
-
->>> [2] The libcap capability mask parsers and formatters are
->>> dangerously misleading and the documentation is flat-out wrong.  fE
->>> is *not* a mask; it's a single bit.  This has probably confused
->>> every single person who has tried to use file capabilities.
+>> Well, we should do this if
 >>
->> Sounds like it would be a valuable documentation patch.
->
-> I'll try.  Let's get the current thing done first.
-
-Yup! No worries. I'm happy to help with the docs, too.
-
->>> [3] Linux very confusingly processes both the script and the
->>> interpreter if applicable, for reasons that elude me.  The results
->>> from thinking about a script's file capabilities and/or setuid bits
->>> are mostly discarded.
+>>                         (data & O_SUSPEND) && !(flags & O_SUSPEND)
 >>
->> I wonder if this is important enough to fix?
+>> or at least if
+>>
+>>                         (data ^ flags) & O_SUSPEND
+>>
+>>
+>>> > +               if (!config_enabled(CONFIG_CHECKPOINT_RESTORE) ||
+>>> > +                   !config_enabled(CONFIG_SECCOMP))
+>>> > +                       return -EINVAL;
+>>> > +
+>>> > +               if (!capable(CAP_SYS_ADMIN))
+>>> > +                       return -EPERM;
+>>>
+>>> I tend to think that we should also require that current not be using
+>>> seccomp.  Otherwise, in principle, there's a seccomp bypass for
+>>> privileged-but-seccomped programs.
+>>
+>> Andy, I simply can't understand why do we need any security check at all.
+>>
+>> OK, yes, in theory we can have a seccomped CAP_SYS_ADMIN process, seccomp
+>> doesn't filter ptrace, you hack that process and force it to attach to
+>> another CAP_SYS_ADMIN/seccomped process, etc, etc... Looks too paranoid
+>> to me.
 >
-> Not sure.
+> I've sometimes considered having privileged processes I write fork and
+> seccomp their child.  Of course, if you're allowing ptrace through
+> your seccomp filter, you open a giant can of worms, but I think we
+> should take the more paranoid approach to start and relax it later as
+> needed.  After all, for the intended use of this patch, stuff will
+> break regardless of what we do if the ptracer is itself seccomped.
 >
-> However, the fact that AFAICT LSM due to a script (as opposed to an
-> interpreter) is preserved sounds rather dangerous to me.  I'm not sure
-> whether we can safely fix that at this point.
+> I could be convinced that if the ptracer is outside seccomp then we
+> shouldn't need the CAP_SYS_ADMIN check.  That would at least make this
+> work in a user namespace.
 
-Agreed.
+But not if that namespace is running under a manager that has added a
+seccomp filter to do things like drop finit_module, as lxc does.
 
-I missed adding:
+Let's start with CAP_SYS_ADMIN, and when we have an actual use-case,
+we can change it then.
 
-Acked-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>
+>>> > @@ -590,6 +590,10 @@ void secure_computing_strict(int this_syscall)
+>>> >  {
+>>> >         int mode = current->seccomp.mode;
+>>> >
+>>> > +       if (config_enabled(CONFIG_CHECKPOINT_RESTORE) &&
+>>> > +           unlikely(current->ptrace & PT_SUSPEND_SECCOMP))
+>>> > +               return;
+>>> > +
+>>> >         if (mode == 0)
+>>> >                 return;
+>>> >         else if (mode == SECCOMP_MODE_STRICT)
+>>> > @@ -691,6 +695,10 @@ u32 seccomp_phase1(struct seccomp_data *sd)
+>>> >         int this_syscall = sd ? sd->nr :
+>>> >                 syscall_get_nr(current, task_pt_regs(current));
+>>> >
+>>> > +       if (config_enabled(CONFIG_CHECKPOINT_RESTORE) &&
+>>> > +           unlikely(current->ptrace & PT_SUSPEND_SECCOMP))
+>>> > +               return SECCOMP_PHASE1_OK;
+>>> > +
+>>>
+>>> If it's not hard, it might still be nice to try to fold this into
+>>> mode.  This code is rather hot.  If it would be a mess, then don't
+>>> worry about it for now.
+>>
+>> IMO, this would be a mess ;) At least compared to this simple patch.
+>>
+>> Suppose we add SECCOMP_MODE_SUSPENDED. Not only this adds the problems
+>> with detach if the tracer dies.
+>>
+>> We need to change copy_seccomp(). And it is not clear what should we
+>> do if the child is traced too.
+>>
+>> We need to change prctl_set_seccomp() paths.
+>>
+>> And even the "tracee->seccomp.mode = SECCOMP_MODE_SUSPENDED" code needs
+>> some locking even if the tracee is stopped, we need to avoid the races
+>> with SECCOMP_FILTER_FLAG_TSYNC from other threads.
+>>
+>
+> Agreed.  Let's hold off until this becomes a problem (if it ever does).
 
-I would love to use this already. :)
+Arg, right, no. I don't want this represented in seccomp.mode. Way too
+much would get touched for little benefit.
 
--Kees
+Thanks! And sorry Tycho as we all disagree about how to disagree with
+your patch... :)
 
 -- 
 Kees Cook
