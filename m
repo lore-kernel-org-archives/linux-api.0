@@ -1,43 +1,31 @@
-From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH v9 4/5] serial: stm32-usart: Add STM32 USART Driver
-Date: Wed, 10 Jun 2015 08:42:40 -0700
-Message-ID: <20150610154240.GC22214@kroah.com>
-References: <1432328616-16964-1-git-send-email-mcoquelin.stm32@gmail.com>
- <1432328616-16964-5-git-send-email-mcoquelin.stm32@gmail.com>
- <20150531215246.GA24174@kroah.com>
- <CALszF6B7_xOMvO9pRJJPNeR4JnOgAQAohSARDivzt2d1DQWP_Q@mail.gmail.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v5 12/21] libnvdimm: namespace indices: read and validate
+Date: Wed, 10 Jun 2015 08:54:32 -0700
+Message-ID: <CAPcyv4jZe7K0CSLceXeUft0EzKUH1H_7EoGeVVX5FjWfES2n_Q@mail.gmail.com>
+References: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com>
+	<20150602001514.4506.13974.stgit@dwillia2-desk3.amr.corp.intel.com>
+	<20150609063900.GD9804@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CALszF6B7_xOMvO9pRJJPNeR4JnOgAQAohSARDivzt2d1DQWP_Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Daniel Thompson <daniel.thompson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Kamil Lulko <rev13-5tc4TXWwyLM@public.gmane.org>, Uwe =?iso-8859-1?Q?Kleine-K=F6nig?= <u.kleine-koenig-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Andreas =?iso-8859-1?Q?F=E4rber?= <afaerber-l3A5Bk7waGM@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pawel Moll <pawel.moll-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Ian Campbell <ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>li
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150609063900.GD9804@lst.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Jens Axboe <axboe@kernel.dk>, Stephen Rothwell <sfr@canb.auug.org.au>, "Rafael J. Wysocki" <rafael@kernel.org>, Neil Brown <neilb@suse.de>, Greg KH <gregkh@linuxfoundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@kernel.org>, Linux ACPI <linux-acpi@vger.kernel.org>, jmoyer <jmoyer@redhat.com>, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jun 10, 2015 at 01:33:22PM +0200, Maxime Coquelin wrote:
-> 2015-05-31 23:52 GMT+02:00 Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>:
-> > On Fri, May 22, 2015 at 11:03:35PM +0200, Maxime Coquelin wrote:
-> >> This drivers adds support to the STM32 USART controller, which is a
-> >> standard serial driver.
-> >>
-> >> Tested-by: Chanwoo Choi <cw00.choi-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-> >> Reviewed-by: Peter Hurley <peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org>
-> >> Reviewed-by: Vladimir Zapolskiy <vladimir_zapolskiy-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>
-> >> Reviewed-by: Andy Shevchenko <andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> >> Signed-off-by: Maxime Coquelin <mcoquelin.stm32-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> >
-> > Acked-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-> 
-> Thanks Greg.
-> 
-> Will you apply it to your tty tree for v4.2? Or it should go in
-> someone else tree?
+On Mon, Jun 8, 2015 at 11:39 PM, Christoph Hellwig <hch@lst.de> wrote:
+>> +#include <asm-generic/io-64-nonatomic-lo-hi.h>
+>> +
+>> +#ifndef __io_virt
+>> +#define __io_virt(x) ((void __force *) (x))
+>> +#endif
+>
+> NAK. driver code mus never include asm-generic headers directly,
+> and __io_virt isn't something that's up to a driver to redefine either.
+>
+> I think we really need the memremap series in first before trying to
+> do the things done in this patch.
 
-It's not in my queue, I'm guessing it goes in through some other tree as
-there are build dependancies here preventing me from taking it.
-
-thanks,
-
-greg k-h
+I was abusing read[wlq] and write[wlq].  All this patch needs is a
+conversion to use __leXXto_cpu and __cpu_to_leXX helpers.
