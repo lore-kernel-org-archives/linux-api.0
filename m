@@ -1,162 +1,85 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH v4] seccomp: add ptrace options for suspend/resume
-Date: Tue, 9 Jun 2015 18:08:42 -0700
-Message-ID: <CALCETrVuNzZRAw40reo_2ne9saO5KbbG-omFUQXDo=+XFhpuWA@mail.gmail.com>
-References: <1433897388-9567-1-git-send-email-tycho.andersen@canonical.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC PATCH 06/18] signal/kthread: Initial implementation of
+ kthread signal handling
+Date: Wed, 10 Jun 2015 12:13:21 +0900
+Message-ID: <20150610031321.GF11955@mtj.duckdns.org>
+References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
+ <1433516477-5153-7-git-send-email-pmladek@suse.cz>
+ <20150609071022.GX21465@mtj.duckdns.org>
+ <alpine.LNX.2.00.1506091405360.12753@pobox.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1433897388-9567-1-git-send-email-tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LNX.2.00.1506091405360.12753-ztGlSCb7Y1iN3ZZ/Hiejyg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+To: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
+Cc: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 9, 2015 at 5:49 PM, Tycho Andersen
-<tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
-> This patch is the first step in enabling checkpoint/restore of processes
-> with seccomp enabled.
->
-> One of the things CRIU does while dumping tasks is inject code into them
-> via ptrace to collect information that is only available to the process
-> itself. However, if we are in a seccomp mode where these processes are
-> prohibited from making these syscalls, then what CRIU does kills the task.
->
-> This patch adds a new ptrace option, PTRACE_O_SUSPEND_SECCOMP, that enables
-> a task from the init user namespace which has CAP_SYS_ADMIN and no seccomp
-> filters to disable (and re-enable) seccomp filters for another task so that
-> they can be successfully dumped (and restored). We restrict the set of
-> processes that can disable seccomp through ptrace because although today
-> ptrace can be used to bypass seccomp, there is some discussion of closing
-> this loophole in the future and we would like this patch to not depend on
-> that behavior and be future proofed for when it is removed.
->
-> Note that seccomp can be suspended before any filters are actually
-> installed; this behavior is useful on criu restore, so that we can suspend
-> seccomp, restore the filters, unmap our restore code from the restored
-> process' address space, and then resume the task by detaching and have the
-> filters resumed as well.
->
-> v2 changes:
->
-> * require that the tracer have no seccomp filters installed
-> * drop TIF_NOTSC manipulation from the patch
-> * change from ptrace command to a ptrace option and use this ptrace option
->   as the flag to check. This means that as soon as the tracer
->   detaches/dies, seccomp is re-enabled and as a corrollary that one can not
->   disable seccomp across PTRACE_ATTACHs.
->
-> v3 changes:
->
-> * get rid of various #ifdefs everywhere
-> * report more sensible errors when PTRACE_O_SUSPEND_SECCOMP is incorrectly
->   used
->
-> v4 changes:
->
-> * get rid of may_suspend_seccomp() in favor of a capable() check in ptrace
->   directly
->
-> Signed-off-by: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-> CC: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-> CC: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> CC: Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>
-> CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-> CC: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-> ---
->  include/linux/ptrace.h      | 1 +
->  include/uapi/linux/ptrace.h | 6 ++++--
->  kernel/ptrace.c             | 9 +++++++++
->  kernel/seccomp.c            | 8 ++++++++
->  4 files changed, 22 insertions(+), 2 deletions(-)
->
-> diff --git a/include/linux/ptrace.h b/include/linux/ptrace.h
-> index 987a73a..061265f 100644
-> --- a/include/linux/ptrace.h
-> +++ b/include/linux/ptrace.h
-> @@ -34,6 +34,7 @@
->  #define PT_TRACE_SECCOMP       PT_EVENT_FLAG(PTRACE_EVENT_SECCOMP)
->
->  #define PT_EXITKILL            (PTRACE_O_EXITKILL << PT_OPT_FLAG_SHIFT)
-> +#define PT_SUSPEND_SECCOMP     (PTRACE_O_SUSPEND_SECCOMP << PT_OPT_FLAG_SHIFT)
->
->  /* single stepping state bits (used on ARM and PA-RISC) */
->  #define PT_SINGLESTEP_BIT      31
-> diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
-> index cf1019e..a7a6979 100644
-> --- a/include/uapi/linux/ptrace.h
-> +++ b/include/uapi/linux/ptrace.h
-> @@ -89,9 +89,11 @@ struct ptrace_peeksiginfo_args {
->  #define PTRACE_O_TRACESECCOMP  (1 << PTRACE_EVENT_SECCOMP)
->
->  /* eventless options */
-> -#define PTRACE_O_EXITKILL      (1 << 20)
-> +#define PTRACE_O_EXITKILL              (1 << 20)
-> +#define PTRACE_O_SUSPEND_SECCOMP       (1 << 21)
->
-> -#define PTRACE_O_MASK          (0x000000ff | PTRACE_O_EXITKILL)
-> +#define PTRACE_O_MASK          (\
-> +       0x000000ff | PTRACE_O_EXITKILL | PTRACE_O_SUSPEND_SECCOMP)
->
->  #include <asm/ptrace.h>
->
-> diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-> index c8e0e05..11fa460 100644
-> --- a/kernel/ptrace.c
-> +++ b/kernel/ptrace.c
-> @@ -556,6 +556,15 @@ static int ptrace_setoptions(struct task_struct *child, unsigned long data)
->         if (data & ~(unsigned long)PTRACE_O_MASK)
->                 return -EINVAL;
->
-> +       if (unlikely(data & PTRACE_O_SUSPEND_SECCOMP)) {
-> +               if (!config_enabled(CONFIG_CHECKPOINT_RESTORE) ||
-> +                   !config_enabled(CONFIG_SECCOMP))
-> +                       return -EINVAL;
-> +
-> +               if (!capable(CAP_SYS_ADMIN))
-> +                       return -EPERM;
+Hello, Jiri.
 
-I tend to think that we should also require that current not be using
-seccomp.  Otherwise, in principle, there's a seccomp bypass for
-privileged-but-seccomped programs.  In any event, CRIU isn't going to
-work well if you run the restorer under seccomp, since it'll start
-nesting in a manner that probably isn't desirable.
+On Tue, Jun 09, 2015 at 02:15:24PM +0200, Jiri Kosina wrote:
+> To me, the ultimate goal (*) is to make it possible for kthread to be able 
+> to decide whether it wants "some kind of default behavior" (however that'd 
+> be defined), or "ignore all", or "just handle this set of signals with 
+> these handlers", and make API for this that would avoid every kthread 
+> implementing its own complete signal handling.
 
-> +       }
-> +
->         /* Avoid intermediate state when all opts are cleared */
->         flags = child->ptrace;
->         flags &= ~(PTRACE_O_MASK << PT_OPT_FLAG_SHIFT);
-> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-> index 980fd26..645e42d 100644
-> --- a/kernel/seccomp.c
-> +++ b/kernel/seccomp.c
-> @@ -590,6 +590,10 @@ void secure_computing_strict(int this_syscall)
->  {
->         int mode = current->seccomp.mode;
->
-> +       if (config_enabled(CONFIG_CHECKPOINT_RESTORE) &&
-> +           unlikely(current->ptrace & PT_SUSPEND_SECCOMP))
-> +               return;
-> +
->         if (mode == 0)
->                 return;
->         else if (mode == SECCOMP_MODE_STRICT)
-> @@ -691,6 +695,10 @@ u32 seccomp_phase1(struct seccomp_data *sd)
->         int this_syscall = sd ? sd->nr :
->                 syscall_get_nr(current, task_pt_regs(current));
->
-> +       if (config_enabled(CONFIG_CHECKPOINT_RESTORE) &&
-> +           unlikely(current->ptrace & PT_SUSPEND_SECCOMP))
-> +               return SECCOMP_PHASE1_OK;
-> +
+Yes, cleaning up the current usages like above would be great but one
+concern is that the above might inadvertantly encourage usage of
+signals in kthreads which I don't think is a good idea.  It'd be great
+if we can consolidate the current users while also making it clear
+that we shouldn't be adding new ones.
 
-If it's not hard, it might still be nice to try to fold this into
-mode.  This code is rather hot.  If it would be a mess, then don't
-worry about it for now.
+> > While we do have several kthread signal users, they aren't too many and 
+> > majority of them use it to allow userland to tell it to shutdown and 
+> 
+> Yeah. Via SIGKILL. Or SIGTERM. Or SIGINT. Or SIGQUIT. Not really 
+> consistent either.
 
-Otherwise seems reasonable.
+Exactly, and it's pretty confusing from userland.  Why do some
+kthreads take SIGTERM but not SIGKILL while others do the other way
+and yet others ignore them all?  This is too low level for a userland
+visible interface which is tied too closely to the implementation
+detail (usage of one kthread) and often unclear in terms of the
+meaning of the action.
 
---Andy
+> > there seem to be a couple which use HUP/USR1 to cancel whatever it's 
+> > processing / waiting on at the moment.  Hmmm... jffs uses STOP/CONT too.
+> 
+> > I don't know how this should be done but let's please try to
+> > 
+> > 1. Encourage uniform behaviors across the signals.
+> 
+> Fully agreed.
+> 
+> > 2. Ultimately discourage usage of signals on kthreads as this closely
+> >    ties implementation detail (use of single kthread) to the userland
+> >    visible interface in a way where we can't easily get back out of.
+> >    For example, what if jffs needs its gc workers to be multi-threaded
+> >    and per-NUMA for high-iops devices later on?
+> 
+> What kind of multi-threading kthreads are you referring to here? Something 
+> more sophisticated than simply spawning several per-CPU (or 
+> per-whatever-resource) full-fledged kthreads?
+
+Becoming simple multi-threaded or per-cpu are good examples but these
+things not too rarely develop into something which needs more
+sophiscation.  e.g. jobs which process considerable amount data are
+usually best served by NUMA-node-affine workers roughly matching the
+number of CPUs in each node.  workqueue is half way there but still
+lacking an automatic way to regulate concurrency in those cases.
+
+For certain use cases, you really can't avoid employing a pool of
+workers and once things get there, having tied userland interface to a
+single kthread becomes pretty awkward.  It sure works for certain use
+cases and sending signals to kthreads *might* be considered a "softer"
+interface where userland is meddling with kernel implementation
+details that it can be changed later on but it can still be painful
+for users depending on it.
+
+Thanks.
+
+-- 
+tejun
