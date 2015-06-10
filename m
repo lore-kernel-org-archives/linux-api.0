@@ -1,201 +1,146 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH v3 1/2] capabilities: Ambient capabilities
-Date: Tue, 9 Jun 2015 17:00:56 -0700
-Message-ID: <CALCETrXz9e_PiAZaGRLuunyDu3-nRW_jopvvXcQwU3gN=sm_SA@mail.gmail.com>
-References: <cover.1432770087.git.luto@kernel.org> <eb28c29616751f0b17bfc1be7eae5bb718d58f9f.1432770087.git.luto@kernel.org>
- <CAGXu5j+Y85U9pjZUO0LM8rOO-YJrqvwzsXNjmaxN=D+JiQrpJw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Subject: [PATCH v4] seccomp: add ptrace options for suspend/resume
+Date: Tue,  9 Jun 2015 18:49:48 -0600
+Message-ID: <1433897388-9567-1-git-send-email-tycho.andersen@canonical.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGXu5j+Y85U9pjZUO0LM8rOO-YJrqvwzsXNjmaxN=D+JiQrpJw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 9, 2015 at 4:09 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
-> On Wed, May 27, 2015 at 4:47 PM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
->> Credit where credit is due: this idea comes from Christoph Lameter
->> with a lot of valuable input from Serge Hallyn.  This patch is
->> heavily based on Christoph's patch.
->>
->> ===== The status quo =====
->>
->> On Linux, there are a number of capabilities defined by the kernel.
->> To perform various privileged tasks, processes can wield
->> capabilities that they hold.
->>
->> Each task has four capability masks: effective (pE), permitted (pP),
->> inheritable (pI), and a bounding set (X).  When the kernel checks
->> for a capability, it checks pE.  The other capability masks serve to
->> modify what capabilities can be in pE.
->>
->> Any task can remove capabilities from pE, pP, or pI at any time.  If
->> a task has a capability in pP, it can add that capability to pE
->> and/or pI.  If a task has CAP_SETPCAP, then it can add any
->> capability to pI, and it can remove capabilities from X.
->>
->> Tasks are not the only things that can have capabilities; files can
->> also have capabilities.  A file can have no capabilty information at
->> all [1].  If a file has capability information, then it has a
->> permitted mask (fP) and an inheritable mask (fI) as well as a single
->> effective bit (fE) [2].  File capabilities modify the capabilities
->> of tasks that execve(2) them.
->>
->> A task that successfully calls execve has its capabilities modified
->> for the file ultimately being excecuted (i.e. the binary itself if
->> that binary is ELF or for the interpreter if the binary is a
->> script.) [3] In the capability evolution rules, for each mask Z, pZ
->> represents the old value and pZ' represents the new value.  The
->> rules are:
->>
->>   pP' = (X & fP) | (pI & fI)
->>   pI' = pI
->>   pE' = (fE ? pP' : 0)
->>   X is unchanged
->>
->> For setuid binaries, fP, fI, and fE are modified by a moderately
->> complicated set of rules that emulate POSIX behavior.  Similarly, if
->> euid == 0 or ruid == 0, then fP, fI, and fE are modified differently
->> (primary, fP and fI usually end up being the full set).  For nonroot
->> users executing binaries with neither setuid nor file caps, fI and
->> fP are empty and fE is false.
->>
->> As an extra complication, if you execute a process as nonroot and fE
->> is set, then the "secure exec" rules are in effect: AT_SECURE gets
->> set, LD_PRELOAD doesn't work, etc.
->>
->> This is rather messy.  We've learned that making any changes is
->> dangerous, though: if a new kernel version allows an unprivileged
->> program to change its security state in a way that persists cross
->> execution of a setuid program or a program with file caps, this
->> persistent state is surprisingly likely to allow setuid or
->> file-capped programs to be exploited for privilege escalation.
->>
->> ===== The problem =====
->>
->> Capability inheritance is basically useless.
->>
->> If you aren't root and you execute an ordinary binary, fI is zero,
->> so your capabilities have no effect whatsoever on pP'.  This means
->> that you can't usefully execute a helper process or a shell command
->> with elevated capabilities if you aren't root.
->>
->> On current kernels, you can sort of work around this by setting fI
->> to the full set for most or all non-setuid executable files.  This
->> causes pP' = pI for nonroot, and inheritance works.  No one does
->> this because it's a PITA and it isn't even supported on most
->> filesystems.
->>
->> If you try this, you'll discover that every nonroot program ends up
->> with secure exec rules, breaking many things.
->>
->> This is a problem that has bitten many people who have tried to use
->> capabilities for anything useful.
->>
->> ===== The proposed change =====
->>
->> This patch adds a fifth capability mask called the ambient mask
->> (pA).  pA does what most people expect pI to do.
->>
->> pA obeys the invariant that no bit can ever be set in pA if it is
->> not set in both pP and pI.  Dropping a bit from pP or pI drops that
->> bit from pA.  This ensures that existing programs that try to drop
->> capabilities still do so, with a complication.  Because capability
->> inheritance is so broken, setting KEEPCAPS, using setresuid to
->> switch to nonroot uids, and then calling execve effectively drops
->> capabilities.  Therefore, setresuid from root to nonroot
->> conditionally clears pA unless SECBIT_NO_SETUID_FIXUP is set.
->> Processes that don't like this can re-add bits to pA afterwards.
->>
->> The capability evolution rules are changed:
->>
->>   pA' = (file caps or setuid or setgid ? 0 : pA)
->>   pP' = (X & fP) | (pI & fI) | pA'
->>   pI' = pI
->>   pE' = (fE ? pP' : pA')
->>   X is unchanged
->>
->> If you are nonroot but you have a capability, you can add it to pA.
->> If you do so, your children get that capability in pA, pP, and pE.
->> For example, you can set pA = CAP_NET_BIND_SERVICE, and your
->> children can automatically bind low-numbered ports.  Hallelujah!
->
-> Chrome OS could use this right now. :)
->
->> Unprivileged users can create user namespaces, map themselves to a
->> nonzero uid, and create both privileged (relative to their
->> namespace) and unprivileged process trees.  This is currently more
->> or less impossible.  Hallelujah!
->>
->> You cannot use pA to try to subvert a setuid, setgid, or file-capped
->> program: if you execute any such program, pA gets cleared and the
->> resulting evolution rules are unchanged by this patch.
->>
->> Users with nonzero pA are unlikely to unintentionally leak that
->> capability.  If they run programs that try to drop privileges,
->> dropping privileges will still work.
->>
->> It's worth noting that the degree of paranoia in this patch could
->> possibly be reduced without causing serious problems.  Specifically,
->> if we allowed pA to persist across executing non-pA-aware setuid
->> binaries and across setresuid, then, naively, the only capabilities
->> that could leak as a result would be the capabilities in pA, and any
->> attacker *already* has those capabilities.  This would make me
->> nervous, though -- setuid binaries that tried to privilege-separate
->> might fail to do so, and putting CAP_DAC_READ_SEARCH or
->> CAP_DAC_OVERRIDE into pA could have unexpected side effects.
->> (Whether these unexpected side effects would be exploitable is an
->> open question.)  I've therefore taken the more paranoid route.  We
->> can revisit this later.
->
-> I think this is correct. Stuff using file caps, or set*id bits are
-> fundamentally using a different privilege management model. Keeping pA
-> separate makes a lot of sense to me.
->
->> An alternative would be to require PR_SET_NO_NEW_PRIVS before
->> setting ambient capabilities.  I think that this would be annoying
->> and would make granting otherwise unprivileged users minor ambient
->> capabilities (CAP_NET_BIND_SERVICE or CAP_NET_RAW for example) much
->> less useful than it is with this patch.
->
-> Agreed: we should keep nnp out of this.
->
->> ===== Footnotes =====
->>
->> [1] Files that are missing the "security.capability" xattr or that
->> have unrecognized values for that xattr end up with has_cap set to
->> false.  The code that does that appears to be complicated for no
->> good reason.
->
-> Would it make more sense to have has_cap true, but have it lack any actual caps?
+This patch is the first step in enabling checkpoint/restore of processes
+with seccomp enabled.
 
-I assume you're referring to the case where we fail to parse the
-xattr.  If so, I don't really know if or when this happens.  Should
-that be addressed separately from this patch set?
+One of the things CRIU does while dumping tasks is inject code into them
+via ptrace to collect information that is only available to the process
+itself. However, if we are in a seccomp mode where these processes are
+prohibited from making these syscalls, then what CRIU does kills the task.
 
->
->> [2] The libcap capability mask parsers and formatters are
->> dangerously misleading and the documentation is flat-out wrong.  fE
->> is *not* a mask; it's a single bit.  This has probably confused
->> every single person who has tried to use file capabilities.
->
-> Sounds like it would be a valuable documentation patch.
+This patch adds a new ptrace option, PTRACE_O_SUSPEND_SECCOMP, that enables
+a task from the init user namespace which has CAP_SYS_ADMIN and no seccomp
+filters to disable (and re-enable) seccomp filters for another task so that
+they can be successfully dumped (and restored). We restrict the set of
+processes that can disable seccomp through ptrace because although today
+ptrace can be used to bypass seccomp, there is some discussion of closing
+this loophole in the future and we would like this patch to not depend on
+that behavior and be future proofed for when it is removed.
 
-I'll try.  Let's get the current thing done first.
+Note that seccomp can be suspended before any filters are actually
+installed; this behavior is useful on criu restore, so that we can suspend
+seccomp, restore the filters, unmap our restore code from the restored
+process' address space, and then resume the task by detaching and have the
+filters resumed as well.
 
->
->> [3] Linux very confusingly processes both the script and the
->> interpreter if applicable, for reasons that elude me.  The results
->> from thinking about a script's file capabilities and/or setuid bits
->> are mostly discarded.
->
-> I wonder if this is important enough to fix?
+v2 changes:
 
-Not sure.
+* require that the tracer have no seccomp filters installed
+* drop TIF_NOTSC manipulation from the patch
+* change from ptrace command to a ptrace option and use this ptrace option
+  as the flag to check. This means that as soon as the tracer
+  detaches/dies, seccomp is re-enabled and as a corrollary that one can not
+  disable seccomp across PTRACE_ATTACHs.
 
-However, the fact that AFAICT LSM due to a script (as opposed to an
-interpreter) is preserved sounds rather dangerous to me.  I'm not sure
-whether we can safely fix that at this point.
+v3 changes:
 
---Andy
+* get rid of various #ifdefs everywhere
+* report more sensible errors when PTRACE_O_SUSPEND_SECCOMP is incorrectly
+  used
+
+v4 changes:
+
+* get rid of may_suspend_seccomp() in favor of a capable() check in ptrace
+  directly
+
+Signed-off-by: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+CC: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+CC: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+CC: Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>
+CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+CC: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+---
+ include/linux/ptrace.h      | 1 +
+ include/uapi/linux/ptrace.h | 6 ++++--
+ kernel/ptrace.c             | 9 +++++++++
+ kernel/seccomp.c            | 8 ++++++++
+ 4 files changed, 22 insertions(+), 2 deletions(-)
+
+diff --git a/include/linux/ptrace.h b/include/linux/ptrace.h
+index 987a73a..061265f 100644
+--- a/include/linux/ptrace.h
++++ b/include/linux/ptrace.h
+@@ -34,6 +34,7 @@
+ #define PT_TRACE_SECCOMP	PT_EVENT_FLAG(PTRACE_EVENT_SECCOMP)
+ 
+ #define PT_EXITKILL		(PTRACE_O_EXITKILL << PT_OPT_FLAG_SHIFT)
++#define PT_SUSPEND_SECCOMP	(PTRACE_O_SUSPEND_SECCOMP << PT_OPT_FLAG_SHIFT)
+ 
+ /* single stepping state bits (used on ARM and PA-RISC) */
+ #define PT_SINGLESTEP_BIT	31
+diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
+index cf1019e..a7a6979 100644
+--- a/include/uapi/linux/ptrace.h
++++ b/include/uapi/linux/ptrace.h
+@@ -89,9 +89,11 @@ struct ptrace_peeksiginfo_args {
+ #define PTRACE_O_TRACESECCOMP	(1 << PTRACE_EVENT_SECCOMP)
+ 
+ /* eventless options */
+-#define PTRACE_O_EXITKILL	(1 << 20)
++#define PTRACE_O_EXITKILL		(1 << 20)
++#define PTRACE_O_SUSPEND_SECCOMP	(1 << 21)
+ 
+-#define PTRACE_O_MASK		(0x000000ff | PTRACE_O_EXITKILL)
++#define PTRACE_O_MASK		(\
++	0x000000ff | PTRACE_O_EXITKILL | PTRACE_O_SUSPEND_SECCOMP)
+ 
+ #include <asm/ptrace.h>
+ 
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index c8e0e05..11fa460 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -556,6 +556,15 @@ static int ptrace_setoptions(struct task_struct *child, unsigned long data)
+ 	if (data & ~(unsigned long)PTRACE_O_MASK)
+ 		return -EINVAL;
+ 
++	if (unlikely(data & PTRACE_O_SUSPEND_SECCOMP)) {
++		if (!config_enabled(CONFIG_CHECKPOINT_RESTORE) ||
++		    !config_enabled(CONFIG_SECCOMP))
++			return -EINVAL;
++
++		if (!capable(CAP_SYS_ADMIN))
++			return -EPERM;
++	}
++
+ 	/* Avoid intermediate state when all opts are cleared */
+ 	flags = child->ptrace;
+ 	flags &= ~(PTRACE_O_MASK << PT_OPT_FLAG_SHIFT);
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index 980fd26..645e42d 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -590,6 +590,10 @@ void secure_computing_strict(int this_syscall)
+ {
+ 	int mode = current->seccomp.mode;
+ 
++	if (config_enabled(CONFIG_CHECKPOINT_RESTORE) &&
++	    unlikely(current->ptrace & PT_SUSPEND_SECCOMP))
++		return;
++
+ 	if (mode == 0)
+ 		return;
+ 	else if (mode == SECCOMP_MODE_STRICT)
+@@ -691,6 +695,10 @@ u32 seccomp_phase1(struct seccomp_data *sd)
+ 	int this_syscall = sd ? sd->nr :
+ 		syscall_get_nr(current, task_pt_regs(current));
+ 
++	if (config_enabled(CONFIG_CHECKPOINT_RESTORE) &&
++	    unlikely(current->ptrace & PT_SUSPEND_SECCOMP))
++		return SECCOMP_PHASE1_OK;
++
+ 	switch (mode) {
+ 	case SECCOMP_MODE_STRICT:
+ 		__secure_computing_strict(this_syscall);  /* may call do_exit */
+-- 
+2.1.4
