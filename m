@@ -1,66 +1,72 @@
-From: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-Subject: Re: [PATCH v9 4/5] serial: stm32-usart: Add STM32 USART Driver
-Date: Wed, 10 Jun 2015 21:22:59 +0200
-Message-ID: <CALszF6BhyKqKUkWpEr_Fcc_jVrhEy7cZTY3oHKyo3sZK1exUtw@mail.gmail.com>
-References: <1432328616-16964-1-git-send-email-mcoquelin.stm32@gmail.com>
- <1432328616-16964-5-git-send-email-mcoquelin.stm32@gmail.com>
- <20150531215246.GA24174@kroah.com>
- <CALszF6B7_xOMvO9pRJJPNeR4JnOgAQAohSARDivzt2d1DQWP_Q@mail.gmail.com>
- <20150610154240.GC22214@kroah.com>
- <CALszF6AaS-i2MBF64mJKtY2h5Sb710Z50Mf8wHotUBysukfZbw@mail.gmail.com>
- <20150610174955.GA6527@kroah.com>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH v3 1/2] capabilities: Ambient capabilities
+Date: Wed, 10 Jun 2015 12:24:58 -0700
+Message-ID: <CAGXu5jKLa1JtoSvoUTRPb02=NFh62Ge4oNSv=z=Z9q9SG62D6A@mail.gmail.com>
+References: <cover.1432770087.git.luto@kernel.org>
+	<eb28c29616751f0b17bfc1be7eae5bb718d58f9f.1432770087.git.luto@kernel.org>
+	<CAGXu5j+Y85U9pjZUO0LM8rOO-YJrqvwzsXNjmaxN=D+JiQrpJw@mail.gmail.com>
+	<CALCETrXz9e_PiAZaGRLuunyDu3-nRW_jopvvXcQwU3gN=sm_SA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <20150610174955.GA6527@kroah.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Mark Rutland <mark.rutland@arm.com>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, Daniel Thompson <daniel.thompson@linaro.org>, Russell King <linux@arm.linux.org.uk>, Pawel Moll <pawel.moll@arm.com>, Arnd Bergmann <arnd@arndb.de>, khilman@kernel.org, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Daniel Lezcano <daniel.lezcano@linaro.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Kamil Lulko <rev13@wp.pl>, Rob Herring <robh+dt@kernel.org>, Geert Uytterhoeven <geert@linux-m68k.org>, "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>, =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?= <u.kleine-koenig@pengutronix.de>, Kumar Gala <galak@codeaurora.org>, Thomas Gleixner <tglx@linutronix.de>, Ian Campbell <ijc+devicetree@hellion.org.uk>, Jiri Slaby <jslaby@suse.cz>, =?UTF-8?Q?Andreas_F=C3=A4rber?= <afaerber@suse.de>, linux-arm-kern
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrXz9e_PiAZaGRLuunyDu3-nRW_jopvvXcQwU3gN=sm_SA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-2015-06-10 19:49 GMT+02:00 Greg Kroah-Hartman <gregkh@linuxfoundation.org>:
-> On Wed, Jun 10, 2015 at 06:18:37PM +0200, Maxime Coquelin wrote:
->> 2015-06-10 17:42 GMT+02:00 Greg Kroah-Hartman <gregkh@linuxfoundation.org>:
->> > On Wed, Jun 10, 2015 at 01:33:22PM +0200, Maxime Coquelin wrote:
->> >> 2015-05-31 23:52 GMT+02:00 Greg Kroah-Hartman <gregkh@linuxfoundation.org>:
->> >> > On Fri, May 22, 2015 at 11:03:35PM +0200, Maxime Coquelin wrote:
->> >> >> This drivers adds support to the STM32 USART controller, which is a
->> >> >> standard serial driver.
->> >> >>
->> >> >> Tested-by: Chanwoo Choi <cw00.choi@samsung.com>
->> >> >> Reviewed-by: Peter Hurley <peter@hurleysoftware.com>
->> >> >> Reviewed-by: Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>
->> >> >> Reviewed-by: Andy Shevchenko <andy.shevchenko@gmail.com>
->> >> >> Signed-off-by: Maxime Coquelin <mcoquelin.stm32@gmail.com>
->> >> >
->> >> > Acked-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
->> >>
->> >> Thanks Greg.
->> >>
->> >> Will you apply it to your tty tree for v4.2? Or it should go in
->> >> someone else tree?
->> >
->> > It's not in my queue, I'm guessing it goes in through some other tree as
->> > there are build dependancies here preventing me from taking it.
+On Tue, Jun 9, 2015 at 5:00 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> On Tue, Jun 9, 2015 at 4:09 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
+>> On Wed, May 27, 2015 at 4:47 PM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>>> [1] Files that are missing the "security.capability" xattr or that
+>>> have unrecognized values for that xattr end up with has_cap set to
+>>> false.  The code that does that appears to be complicated for no
+>>> good reason.
 >>
->> There should not be any build dependencies.
->> I just tested it on my x86 machine with COMPILE_TEST on both v4.1-rc1
->> and tty-next branch.
->> In both case it compiles without warnings.
+>> Would it make more sense to have has_cap true, but have it lack any actual caps?
 >
-> Ok, then feel free to resend it as a stand-alone patch please and I will
-> queue it up.
+> I assume you're referring to the case where we fail to parse the
+> xattr.  If so, I don't really know if or when this happens.  Should
+> that be addressed separately from this patch set?
 
-Patch resent as a standalone patch.
+No, no. All of these footnotes seem to be separate from the series. I
+just wanted to chime in on them, since none of them really sounded
+like they should get dropped.
 
-Thanks!
-Maxime
+>>> [2] The libcap capability mask parsers and formatters are
+>>> dangerously misleading and the documentation is flat-out wrong.  fE
+>>> is *not* a mask; it's a single bit.  This has probably confused
+>>> every single person who has tried to use file capabilities.
+>>
+>> Sounds like it would be a valuable documentation patch.
+>
+> I'll try.  Let's get the current thing done first.
+
+Yup! No worries. I'm happy to help with the docs, too.
+
+>>> [3] Linux very confusingly processes both the script and the
+>>> interpreter if applicable, for reasons that elude me.  The results
+>>> from thinking about a script's file capabilities and/or setuid bits
+>>> are mostly discarded.
+>>
+>> I wonder if this is important enough to fix?
+>
+> Not sure.
+>
+> However, the fact that AFAICT LSM due to a script (as opposed to an
+> interpreter) is preserved sounds rather dangerous to me.  I'm not sure
+> whether we can safely fix that at this point.
+
+Agreed.
+
+I missed adding:
+
+Acked-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+
+I would love to use this already. :)
+
+-Kees
+
+-- 
+Kees Cook
+Chrome OS Security
