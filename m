@@ -1,8 +1,8 @@
 From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v6 07/21] libnvdimm, nfit: regions (block-data-window,
- persistent memory, volatile memory)
-Date: Thu, 11 Jun 2015 16:10:47 -0400
-Message-ID: <20150611201047.25175.43773.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [PATCH v6 11/21] libnvdimm,
+ nfit: add interleave-set state-tracking infrastructure
+Date: Thu, 11 Jun 2015 16:11:09 -0400
+Message-ID: <20150611201109.25175.32607.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <20150611183830.25175.51256.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -14,39 +14,25 @@ To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Cc: mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org, rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, "Rafael J. Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Robert Moore <robert.moore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-A "region" device represents the maximum capacity of a BLK range (mmio
-block-data-window(s)), or a PMEM range (DAX-capable persistent memory or
-volatile memory), without regard for aliasing.  Aliasing, in the
-dimm-local address space (DPA), is resolved by metadata on a dimm to
-designate which exclusive interface will access the aliased DPA ranges.
-Support for the per-dimm metadata/label arrvies is in a subsequent
-patch.
+On platforms that have firmware support for reading/writing per-dimm
+label space, a portion of the dimm may be accessible via an interleave
+set PMEM mapping in addition to the dimm's BLK (block-data-window
+aperture(s)) interface.  A label, stored in a "configuration data
+region" on the dimm, disambiguates which dimm addresses are accessed
+through which exclusive interface.
 
-The name format of "region" devices is "regionN" where, like dimms, N is
-a global ida index assigned at discovery time.  This id is not reliable
-across reboots nor in the presence of hotplug.  Look to attributes of
-the region or static id-data of the sub-namespace to generate a
-persistent name.  However, if the platform configuration does not change
-it is reasonable to expect the same region id to be assigned at the next
-boot.
+Add infrastructure that allows the kernel to block modifications to a
+label in the set while any member dimm is active.  Note that this is
+meant only for enforcing "no modifications of active labels" via the
+coarse ioctl command.  Adding/deleting namespaces from an active
+interleave set is always possible via sysfs.
 
-"region"s have 2 generic attributes "size", and "mapping"s where:
-- size: the BLK accessible capacity or the span of the
-  system physical address range in the case of PMEM.
-
-- mappingN: a tuple describing a dimm's contribution to the region's
-  capacity in the format (<nmemX>,<dpa>,<size>).  For a PMEM-region
-  there will be at least one mapping per dimm in the interleave set.  For
-  a BLK-region there is only "mapping0" listing the starting DPA of the
-  BLK-region and the available DPA capacity of that space (matches "size"
-  above).
-
-The max number of mappings per "region" is hard coded per the
-constraints of sysfs attribute groups.  That said the number of mappings
-per region should never exceed the maximum number of possible dimms in
-the system.  If the current number turns out to not be enough then the
-"mappings" attribute clarifies how many there are supposed to be. "32
-should be enough for anybody...".
+Another aspect of tracking interleave sets is tracking their integrity
+when DIMMs in a set are physically re-ordered.  For this purpose we
+generate an "interleave-set cookie" that can be recorded in a label and
+validated against the current configuration.  It is the bus provider
+implementation's responsibility to calculate the interleave set cookie
+and attach it to a given region.
 
 Cc: Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>
 Cc: <linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
@@ -55,607 +41,520 @@ Cc: Robert Moore <robert.moore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Cc: Rafael J. Wysocki <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- drivers/acpi/nfit.c          |  148 +++++++++++++++++++++
- drivers/nvdimm/Makefile      |    1 
- drivers/nvdimm/nd-core.h     |    3 
- drivers/nvdimm/nd.h          |   11 ++
- drivers/nvdimm/region_devs.c |  297 ++++++++++++++++++++++++++++++++++++++++++
- include/linux/libnvdimm.h    |   25 ++++
- 6 files changed, 484 insertions(+), 1 deletion(-)
- create mode 100644 drivers/nvdimm/region_devs.c
+ drivers/acpi/nfit.c          |   93 +++++++++++++++++++++++++++++++++++++++++-
+ drivers/nvdimm/bus.c         |   59 ++++++++++++++++++++++++++-
+ drivers/nvdimm/core.c        |   17 ++++++++
+ drivers/nvdimm/dimm_devs.c   |   19 ++++++++-
+ drivers/nvdimm/nd-core.h     |   10 ++++-
+ drivers/nvdimm/nd.h          |    1 
+ drivers/nvdimm/region_devs.c |   69 +++++++++++++++++++++++++++++++
+ include/linux/libnvdimm.h    |    6 +++
+ 8 files changed, 269 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/acpi/nfit.c b/drivers/acpi/nfit.c
-index fcff81fa1395..38a6bcdcb3da 100644
+index e86beb50f54f..dc5a44554e55 100644
 --- a/drivers/acpi/nfit.c
 +++ b/drivers/acpi/nfit.c
-@@ -757,11 +757,153 @@ static void acpi_nfit_init_dsms(struct acpi_nfit_desc *acpi_desc)
- 			set_bit(i, &nd_desc->dsm_mask);
- }
+@@ -16,6 +16,7 @@
+ #include <linux/ndctl.h>
+ #include <linux/list.h>
+ #include <linux/acpi.h>
++#include <linux/sort.h>
+ #include "nfit.h"
  
-+static ssize_t range_index_show(struct device *dev,
-+		struct device_attribute *attr, char *buf)
+ static bool force_enable_dimms;
+@@ -785,6 +786,91 @@ static const struct attribute_group *acpi_nfit_region_attribute_groups[] = {
+ 	NULL,
+ };
+ 
++/* enough info to uniquely specify an interleave set */
++struct nfit_set_info {
++	struct nfit_set_info_map {
++		u64 region_offset;
++		u32 serial_number;
++		u32 pad;
++	} mapping[0];
++};
++
++static size_t sizeof_nfit_set_info(int num_mappings)
 +{
-+	struct nd_region *nd_region = to_nd_region(dev);
-+	struct nfit_spa *nfit_spa = nd_region_provider_data(nd_region);
-+
-+	return sprintf(buf, "%d\n", nfit_spa->spa->range_index);
++	return sizeof(struct nfit_set_info)
++		+ num_mappings * sizeof(struct nfit_set_info_map);
 +}
-+static DEVICE_ATTR_RO(range_index);
 +
-+static struct attribute *acpi_nfit_region_attributes[] = {
-+	&dev_attr_range_index.attr,
-+	NULL,
-+};
++static int cmp_map(const void *m0, const void *m1)
++{
++	const struct nfit_set_info_map *map0 = m0;
++	const struct nfit_set_info_map *map1 = m1;
 +
-+static struct attribute_group acpi_nfit_region_attribute_group = {
-+	.name = "nfit",
-+	.attrs = acpi_nfit_region_attributes,
-+};
++	return memcmp(&map0->region_offset, &map1->region_offset,
++			sizeof(u64));
++}
 +
-+static const struct attribute_group *acpi_nfit_region_attribute_groups[] = {
-+	&nd_region_attribute_group,
-+	&nd_mapping_attribute_group,
-+	&acpi_nfit_region_attribute_group,
-+	NULL,
-+};
++/* Retrieve the nth entry referencing this spa */
++static struct acpi_nfit_memory_map *memdev_from_spa(
++		struct acpi_nfit_desc *acpi_desc, u16 range_index, int n)
++{
++	struct nfit_memdev *nfit_memdev;
 +
-+static int acpi_nfit_init_mapping(struct acpi_nfit_desc *acpi_desc,
-+		struct nd_mapping *nd_mapping, struct nd_region_desc *ndr_desc,
-+		struct acpi_nfit_memory_map *memdev,
++	list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list)
++		if (nfit_memdev->memdev->range_index == range_index)
++			if (n-- == 0)
++				return nfit_memdev->memdev;
++	return NULL;
++}
++
++static int acpi_nfit_init_interleave_set(struct acpi_nfit_desc *acpi_desc,
++		struct nd_region_desc *ndr_desc,
 +		struct acpi_nfit_system_address *spa)
 +{
-+	struct nvdimm *nvdimm = acpi_nfit_dimm_by_handle(acpi_desc,
-+			memdev->device_handle);
-+	struct nfit_mem *nfit_mem;
-+	int blk_valid = 0;
++	int i, spa_type = nfit_spa_type(spa);
++	struct device *dev = acpi_desc->dev;
++	struct nd_interleave_set *nd_set;
++	u16 nr = ndr_desc->num_mappings;
++	struct nfit_set_info *info;
 +
-+	if (!nvdimm) {
-+		dev_err(acpi_desc->dev, "spa%d dimm: %#x not found\n",
-+				spa->range_index, memdev->device_handle);
-+		return -ENODEV;
-+	}
-+
-+	nd_mapping->nvdimm = nvdimm;
-+	switch (nfit_spa_type(spa)) {
-+	case NFIT_SPA_PM:
-+	case NFIT_SPA_VOLATILE:
-+		nd_mapping->start = memdev->address;
-+		nd_mapping->size = memdev->region_size;
-+		break;
-+	case NFIT_SPA_DCR:
-+		nfit_mem = nvdimm_provider_data(nvdimm);
-+		if (!nfit_mem || !nfit_mem->bdw) {
-+			dev_dbg(acpi_desc->dev, "spa%d %s missing bdw\n",
-+					spa->range_index, nvdimm_name(nvdimm));
-+		} else {
-+			nd_mapping->size = nfit_mem->bdw->capacity;
-+			nd_mapping->start = nfit_mem->bdw->start_address;
-+			blk_valid = 1;
-+		}
-+
-+		ndr_desc->nd_mapping = nd_mapping;
-+		ndr_desc->num_mappings = blk_valid;
-+		if (!nvdimm_blk_region_create(acpi_desc->nvdimm_bus, ndr_desc))
-+			return -ENOMEM;
-+		break;
-+	}
-+
-+	return 0;
-+}
-+
-+static int acpi_nfit_register_region(struct acpi_nfit_desc *acpi_desc,
-+		struct nfit_spa *nfit_spa)
-+{
-+	static struct nd_mapping nd_mappings[ND_MAX_MAPPINGS];
-+	struct acpi_nfit_system_address *spa = nfit_spa->spa;
-+	struct nfit_memdev *nfit_memdev;
-+	struct nd_region_desc ndr_desc;
-+	struct nvdimm_bus *nvdimm_bus;
-+	struct resource res;
-+	int count = 0;
-+
-+	if (spa->range_index == 0) {
-+		dev_dbg(acpi_desc->dev, "%s: detected invalid spa index\n",
-+				__func__);
++	if (spa_type == NFIT_SPA_PM || spa_type == NFIT_SPA_VOLATILE)
++		/* pass */;
++	else
 +		return 0;
-+	}
 +
-+	memset(&res, 0, sizeof(res));
-+	memset(&nd_mappings, 0, sizeof(nd_mappings));
-+	memset(&ndr_desc, 0, sizeof(ndr_desc));
-+	res.start = spa->address;
-+	res.end = res.start + spa->length - 1;
-+	ndr_desc.res = &res;
-+	ndr_desc.provider_data = nfit_spa;
-+	ndr_desc.attr_groups = acpi_nfit_region_attribute_groups;
-+	list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list) {
-+		struct acpi_nfit_memory_map *memdev = nfit_memdev->memdev;
-+		struct nd_mapping *nd_mapping;
-+		int rc;
++	nd_set = devm_kzalloc(dev, sizeof(*nd_set), GFP_KERNEL);
++	if (!nd_set)
++		return -ENOMEM;
 +
-+		if (memdev->range_index != spa->range_index)
-+			continue;
-+		if (count >= ND_MAX_MAPPINGS) {
-+			dev_err(acpi_desc->dev, "spa%d exceeds max mappings %d\n",
-+					spa->range_index, ND_MAX_MAPPINGS);
-+			return -ENXIO;
++	info = devm_kzalloc(dev, sizeof_nfit_set_info(nr), GFP_KERNEL);
++	if (!info)
++		return -ENOMEM;
++	for (i = 0; i < nr; i++) {
++		struct nd_mapping *nd_mapping = &ndr_desc->nd_mapping[i];
++		struct nfit_set_info_map *map = &info->mapping[i];
++		struct nvdimm *nvdimm = nd_mapping->nvdimm;
++		struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
++		struct acpi_nfit_memory_map *memdev = memdev_from_spa(acpi_desc,
++				spa->range_index, i);
++
++		if (!memdev || !nfit_mem->dcr) {
++			dev_err(dev, "%s: failed to find DCR\n", __func__);
++			return -ENODEV;
 +		}
-+		nd_mapping = &nd_mappings[count++];
-+		rc = acpi_nfit_init_mapping(acpi_desc, nd_mapping, &ndr_desc,
-+				memdev, spa);
-+		if (rc)
-+			return rc;
++
++		map->region_offset = memdev->region_offset;
++		map->serial_number = nfit_mem->dcr->serial_number;
 +	}
 +
-+	ndr_desc.nd_mapping = nd_mappings;
-+	ndr_desc.num_mappings = count;
-+	nvdimm_bus = acpi_desc->nvdimm_bus;
-+	if (nfit_spa_type(spa) == NFIT_SPA_PM) {
-+		if (!nvdimm_pmem_region_create(nvdimm_bus, &ndr_desc))
-+			return -ENOMEM;
-+	} else if (nfit_spa_type(spa) == NFIT_SPA_VOLATILE) {
-+		if (!nvdimm_volatile_region_create(nvdimm_bus, &ndr_desc))
-+			return -ENOMEM;
-+	}
++	sort(&info->mapping[0], nr, sizeof(struct nfit_set_info_map),
++			cmp_map, NULL);
++	nd_set->cookie = nd_fletcher64(info, sizeof_nfit_set_info(nr), 0);
++	ndr_desc->nd_set = nd_set;
++	devm_kfree(dev, info);
++
 +	return 0;
 +}
 +
-+static int acpi_nfit_register_regions(struct acpi_nfit_desc *acpi_desc)
-+{
-+	struct nfit_spa *nfit_spa;
-+
-+	list_for_each_entry(nfit_spa, &acpi_desc->spas, list) {
-+		int rc = acpi_nfit_register_region(acpi_desc, nfit_spa);
-+
-+		if (rc)
-+			return rc;
-+	}
-+	return 0;
-+}
-+
- static int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
- {
- 	struct device *dev = acpi_desc->dev;
- 	const void *end;
- 	u8 *data;
-+	int rc;
+ static int acpi_nfit_init_mapping(struct acpi_nfit_desc *acpi_desc,
+ 		struct nd_mapping *nd_mapping, struct nd_region_desc *ndr_desc,
+ 		struct acpi_nfit_memory_map *memdev,
+@@ -838,7 +924,7 @@ static int acpi_nfit_register_region(struct acpi_nfit_desc *acpi_desc,
+ 	struct nd_region_desc ndr_desc;
+ 	struct nvdimm_bus *nvdimm_bus;
+ 	struct resource res;
+-	int count = 0;
++	int count = 0, rc;
  
- 	INIT_LIST_HEAD(&acpi_desc->spas);
- 	INIT_LIST_HEAD(&acpi_desc->dcrs);
-@@ -786,7 +928,11 @@ static int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
+ 	if (spa->range_index == 0) {
+ 		dev_dbg(acpi_desc->dev, "%s: detected invalid spa index\n",
+@@ -857,7 +943,6 @@ static int acpi_nfit_register_region(struct acpi_nfit_desc *acpi_desc,
+ 	list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list) {
+ 		struct acpi_nfit_memory_map *memdev = nfit_memdev->memdev;
+ 		struct nd_mapping *nd_mapping;
+-		int rc;
  
- 	acpi_nfit_init_dsms(acpi_desc);
+ 		if (memdev->range_index != spa->range_index)
+ 			continue;
+@@ -875,6 +960,10 @@ static int acpi_nfit_register_region(struct acpi_nfit_desc *acpi_desc,
  
--	return acpi_nfit_register_dimms(acpi_desc);
-+	rc = acpi_nfit_register_dimms(acpi_desc);
+ 	ndr_desc.nd_mapping = nd_mappings;
+ 	ndr_desc.num_mappings = count;
++	rc = acpi_nfit_init_interleave_set(acpi_desc, &ndr_desc, spa);
 +	if (rc)
 +		return rc;
 +
-+	return acpi_nfit_register_regions(acpi_desc);
+ 	nvdimm_bus = acpi_desc->nvdimm_bus;
+ 	if (nfit_spa_type(spa) == NFIT_SPA_PM) {
+ 		if (!nvdimm_pmem_region_create(nvdimm_bus, &ndr_desc))
+diff --git a/drivers/nvdimm/bus.c b/drivers/nvdimm/bus.c
+index 4b77665a6cc8..ffb43cada625 100644
+--- a/drivers/nvdimm/bus.c
++++ b/drivers/nvdimm/bus.c
+@@ -68,6 +68,21 @@ static struct module *to_bus_provider(struct device *dev)
+ 	return NULL;
  }
  
- static int acpi_nfit_add(struct acpi_device *adev)
-diff --git a/drivers/nvdimm/Makefile b/drivers/nvdimm/Makefile
-index d44b5c1fcd3b..88afd0d849c3 100644
---- a/drivers/nvdimm/Makefile
-+++ b/drivers/nvdimm/Makefile
-@@ -4,3 +4,4 @@ libnvdimm-y := core.o
- libnvdimm-y += bus.o
- libnvdimm-y += dimm_devs.o
- libnvdimm-y += dimm.o
-+libnvdimm-y += region_devs.o
-diff --git a/drivers/nvdimm/nd-core.h b/drivers/nvdimm/nd-core.h
-index f2004b790874..1d760bf24857 100644
---- a/drivers/nvdimm/nd-core.h
-+++ b/drivers/nvdimm/nd-core.h
-@@ -40,5 +40,8 @@ void nvdimm_bus_exit(void);
- int nvdimm_bus_create_ndctl(struct nvdimm_bus *nvdimm_bus);
- void nvdimm_bus_destroy_ndctl(struct nvdimm_bus *nvdimm_bus);
- void nd_synchronize(void);
-+int nvdimm_bus_register_dimms(struct nvdimm_bus *nvdimm_bus);
-+int nvdimm_bus_register_regions(struct nvdimm_bus *nvdimm_bus);
-+int nd_match_dimm(struct device *dev, void *data);
- bool is_nvdimm(struct device *dev);
- #endif /* __ND_CORE_H__ */
-diff --git a/drivers/nvdimm/nd.h b/drivers/nvdimm/nd.h
-index 1f7f6ecab0fc..ea0cca337aa6 100644
---- a/drivers/nvdimm/nd.h
-+++ b/drivers/nvdimm/nd.h
-@@ -12,6 +12,7 @@
-  */
- #ifndef __ND_H__
- #define __ND_H__
-+#include <linux/libnvdimm.h>
- #include <linux/device.h>
- #include <linux/mutex.h>
- #include <linux/ndctl.h>
-@@ -22,6 +23,16 @@ struct nvdimm_drvdata {
- 	void *data;
- };
++static void nvdimm_bus_probe_start(struct nvdimm_bus *nvdimm_bus)
++{
++	nvdimm_bus_lock(&nvdimm_bus->dev);
++	nvdimm_bus->probe_active++;
++	nvdimm_bus_unlock(&nvdimm_bus->dev);
++}
++
++static void nvdimm_bus_probe_end(struct nvdimm_bus *nvdimm_bus)
++{
++	nvdimm_bus_lock(&nvdimm_bus->dev);
++	if (--nvdimm_bus->probe_active == 0)
++		wake_up(&nvdimm_bus->probe_wait);
++	nvdimm_bus_unlock(&nvdimm_bus->dev);
++}
++
+ static int nvdimm_bus_probe(struct device *dev)
+ {
+ 	struct nd_device_driver *nd_drv = to_nd_device_driver(dev->driver);
+@@ -78,7 +93,12 @@ static int nvdimm_bus_probe(struct device *dev)
+ 	if (!try_module_get(provider))
+ 		return -ENXIO;
  
-+struct nd_region {
-+	struct device dev;
-+	u16 ndr_mappings;
-+	u64 ndr_size;
-+	u64 ndr_start;
-+	int id;
-+	void *provider_data;
-+	struct nd_mapping mapping[0];
-+};
++	nvdimm_bus_probe_start(nvdimm_bus);
+ 	rc = nd_drv->probe(dev);
++	if (rc == 0)
++		nd_region_probe_success(nvdimm_bus, dev);
++	nvdimm_bus_probe_end(nvdimm_bus);
 +
- enum nd_async_mode {
- 	ND_SYNC,
- 	ND_ASYNC,
-diff --git a/drivers/nvdimm/region_devs.c b/drivers/nvdimm/region_devs.c
-new file mode 100644
-index 000000000000..4bda2e0df8f7
---- /dev/null
-+++ b/drivers/nvdimm/region_devs.c
-@@ -0,0 +1,297 @@
-+/*
-+ * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of version 2 of the GNU General Public License as
-+ * published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+ * General Public License for more details.
-+ */
-+#include <linux/slab.h>
-+#include <linux/io.h>
-+#include "nd-core.h"
-+#include "nd.h"
+ 	dev_dbg(&nvdimm_bus->dev, "%s.probe(%s) = %d\n", dev->driver->name,
+ 			dev_name(dev), rc);
+ 	if (rc != 0)
+@@ -94,6 +114,8 @@ static int nvdimm_bus_remove(struct device *dev)
+ 	int rc;
+ 
+ 	rc = nd_drv->remove(dev);
++	nd_region_disable(nvdimm_bus, dev);
 +
-+static DEFINE_IDA(region_ida);
-+
-+static void nd_region_release(struct device *dev)
+ 	dev_dbg(&nvdimm_bus->dev, "%s.remove(%s) = %d\n", dev->driver->name,
+ 			dev_name(dev), rc);
+ 	module_put(provider);
+@@ -359,6 +381,34 @@ u32 nd_cmd_out_size(struct nvdimm *nvdimm, int cmd,
+ }
+ EXPORT_SYMBOL_GPL(nd_cmd_out_size);
+ 
++static void wait_nvdimm_bus_probe_idle(struct nvdimm_bus *nvdimm_bus)
 +{
-+	struct nd_region *nd_region = to_nd_region(dev);
-+	u16 i;
-+
-+	for (i = 0; i < nd_region->ndr_mappings; i++) {
-+		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
-+		struct nvdimm *nvdimm = nd_mapping->nvdimm;
-+
-+		put_device(&nvdimm->dev);
-+	}
-+	ida_simple_remove(&region_ida, nd_region->id);
-+	kfree(nd_region);
++	do {
++		if (nvdimm_bus->probe_active == 0)
++			break;
++		nvdimm_bus_unlock(&nvdimm_bus->dev);
++		wait_event(nvdimm_bus->probe_wait,
++				nvdimm_bus->probe_active == 0);
++		nvdimm_bus_lock(&nvdimm_bus->dev);
++	} while (true);
 +}
 +
-+static struct device_type nd_blk_device_type = {
-+	.name = "nd_blk",
-+	.release = nd_region_release,
-+};
-+
-+static struct device_type nd_pmem_device_type = {
-+	.name = "nd_pmem",
-+	.release = nd_region_release,
-+};
-+
-+static struct device_type nd_volatile_device_type = {
-+	.name = "nd_volatile",
-+	.release = nd_region_release,
-+};
-+
-+static bool is_nd_pmem(struct device *dev)
++/* set_config requires an idle interleave set */
++static int nd_cmd_clear_to_send(struct nvdimm *nvdimm, unsigned int cmd)
 +{
-+	return dev ? dev->type == &nd_pmem_device_type : false;
-+}
++	struct nvdimm_bus *nvdimm_bus;
 +
-+struct nd_region *to_nd_region(struct device *dev)
-+{
-+	struct nd_region *nd_region = container_of(dev, struct nd_region, dev);
++	if (!nvdimm || cmd != ND_CMD_SET_CONFIG_DATA)
++		return 0;
 +
-+	WARN_ON(dev->type->release != nd_region_release);
-+	return nd_region;
-+}
-+EXPORT_SYMBOL_GPL(to_nd_region);
++	nvdimm_bus = walk_to_nvdimm_bus(&nvdimm->dev);
++	wait_nvdimm_bus_probe_idle(nvdimm_bus);
 +
-+static ssize_t size_show(struct device *dev,
-+		struct device_attribute *attr, char *buf)
-+{
-+	struct nd_region *nd_region = to_nd_region(dev);
-+	unsigned long long size = 0;
-+
-+	if (is_nd_pmem(dev)) {
-+		size = nd_region->ndr_size;
-+	} else if (nd_region->ndr_mappings == 1) {
-+		struct nd_mapping *nd_mapping = &nd_region->mapping[0];
-+
-+		size = nd_mapping->size;
-+	}
-+
-+	return sprintf(buf, "%llu\n", size);
-+}
-+static DEVICE_ATTR_RO(size);
-+
-+static ssize_t mappings_show(struct device *dev,
-+		struct device_attribute *attr, char *buf)
-+{
-+	struct nd_region *nd_region = to_nd_region(dev);
-+
-+	return sprintf(buf, "%d\n", nd_region->ndr_mappings);
-+}
-+static DEVICE_ATTR_RO(mappings);
-+
-+static struct attribute *nd_region_attributes[] = {
-+	&dev_attr_size.attr,
-+	&dev_attr_mappings.attr,
-+	NULL,
-+};
-+
-+struct attribute_group nd_region_attribute_group = {
-+	.attrs = nd_region_attributes,
-+};
-+EXPORT_SYMBOL_GPL(nd_region_attribute_group);
-+
-+static ssize_t mappingN(struct device *dev, char *buf, int n)
-+{
-+	struct nd_region *nd_region = to_nd_region(dev);
-+	struct nd_mapping *nd_mapping;
-+	struct nvdimm *nvdimm;
-+
-+	if (n >= nd_region->ndr_mappings)
-+		return -ENXIO;
-+	nd_mapping = &nd_region->mapping[n];
-+	nvdimm = nd_mapping->nvdimm;
-+
-+	return sprintf(buf, "%s,%llu,%llu\n", dev_name(&nvdimm->dev),
-+			nd_mapping->start, nd_mapping->size);
-+}
-+
-+#define REGION_MAPPING(idx) \
-+static ssize_t mapping##idx##_show(struct device *dev,		\
-+		struct device_attribute *attr, char *buf)	\
-+{								\
-+	return mappingN(dev, buf, idx);				\
-+}								\
-+static DEVICE_ATTR_RO(mapping##idx)
-+
-+/*
-+ * 32 should be enough for a while, even in the presence of socket
-+ * interleave a 32-way interleave set is a degenerate case.
-+ */
-+REGION_MAPPING(0);
-+REGION_MAPPING(1);
-+REGION_MAPPING(2);
-+REGION_MAPPING(3);
-+REGION_MAPPING(4);
-+REGION_MAPPING(5);
-+REGION_MAPPING(6);
-+REGION_MAPPING(7);
-+REGION_MAPPING(8);
-+REGION_MAPPING(9);
-+REGION_MAPPING(10);
-+REGION_MAPPING(11);
-+REGION_MAPPING(12);
-+REGION_MAPPING(13);
-+REGION_MAPPING(14);
-+REGION_MAPPING(15);
-+REGION_MAPPING(16);
-+REGION_MAPPING(17);
-+REGION_MAPPING(18);
-+REGION_MAPPING(19);
-+REGION_MAPPING(20);
-+REGION_MAPPING(21);
-+REGION_MAPPING(22);
-+REGION_MAPPING(23);
-+REGION_MAPPING(24);
-+REGION_MAPPING(25);
-+REGION_MAPPING(26);
-+REGION_MAPPING(27);
-+REGION_MAPPING(28);
-+REGION_MAPPING(29);
-+REGION_MAPPING(30);
-+REGION_MAPPING(31);
-+
-+static umode_t mapping_visible(struct kobject *kobj, struct attribute *a, int n)
-+{
-+	struct device *dev = container_of(kobj, struct device, kobj);
-+	struct nd_region *nd_region = to_nd_region(dev);
-+
-+	if (n < nd_region->ndr_mappings)
-+		return a->mode;
++	if (atomic_read(&nvdimm->busy))
++		return -EBUSY;
 +	return 0;
 +}
 +
-+static struct attribute *mapping_attributes[] = {
-+	&dev_attr_mapping0.attr,
-+	&dev_attr_mapping1.attr,
-+	&dev_attr_mapping2.attr,
-+	&dev_attr_mapping3.attr,
-+	&dev_attr_mapping4.attr,
-+	&dev_attr_mapping5.attr,
-+	&dev_attr_mapping6.attr,
-+	&dev_attr_mapping7.attr,
-+	&dev_attr_mapping8.attr,
-+	&dev_attr_mapping9.attr,
-+	&dev_attr_mapping10.attr,
-+	&dev_attr_mapping11.attr,
-+	&dev_attr_mapping12.attr,
-+	&dev_attr_mapping13.attr,
-+	&dev_attr_mapping14.attr,
-+	&dev_attr_mapping15.attr,
-+	&dev_attr_mapping16.attr,
-+	&dev_attr_mapping17.attr,
-+	&dev_attr_mapping18.attr,
-+	&dev_attr_mapping19.attr,
-+	&dev_attr_mapping20.attr,
-+	&dev_attr_mapping21.attr,
-+	&dev_attr_mapping22.attr,
-+	&dev_attr_mapping23.attr,
-+	&dev_attr_mapping24.attr,
-+	&dev_attr_mapping25.attr,
-+	&dev_attr_mapping26.attr,
-+	&dev_attr_mapping27.attr,
-+	&dev_attr_mapping28.attr,
-+	&dev_attr_mapping29.attr,
-+	&dev_attr_mapping30.attr,
-+	&dev_attr_mapping31.attr,
-+	NULL,
-+};
+ static int __nd_ioctl(struct nvdimm_bus *nvdimm_bus, struct nvdimm *nvdimm,
+ 		int read_only, unsigned int ioctl_cmd, unsigned long arg)
+ {
+@@ -469,11 +519,18 @@ static int __nd_ioctl(struct nvdimm_bus *nvdimm_bus, struct nvdimm *nvdimm,
+ 		goto out;
+ 	}
+ 
++	nvdimm_bus_lock(&nvdimm_bus->dev);
++	rc = nd_cmd_clear_to_send(nvdimm, cmd);
++	if (rc)
++		goto out_unlock;
 +
-+struct attribute_group nd_mapping_attribute_group = {
-+	.is_visible = mapping_visible,
-+	.attrs = mapping_attributes,
-+};
-+EXPORT_SYMBOL_GPL(nd_mapping_attribute_group);
-+
-+void *nd_region_provider_data(struct nd_region *nd_region)
+ 	rc = nd_desc->ndctl(nd_desc, nvdimm, cmd, buf, buf_len);
+ 	if (rc < 0)
+-		goto out;
++		goto out_unlock;
+ 	if (copy_to_user(p, buf, buf_len))
+ 		rc = -EFAULT;
++ out_unlock:
++	nvdimm_bus_unlock(&nvdimm_bus->dev);
+  out:
+ 	vfree(buf);
+ 	return rc;
+diff --git a/drivers/nvdimm/core.c b/drivers/nvdimm/core.c
+index e16a22902e90..74adb225d132 100644
+--- a/drivers/nvdimm/core.c
++++ b/drivers/nvdimm/core.c
+@@ -54,6 +54,22 @@ bool is_nvdimm_bus_locked(struct device *dev)
+ }
+ EXPORT_SYMBOL(is_nvdimm_bus_locked);
+ 
++u64 nd_fletcher64(void *addr, size_t len, bool le)
 +{
-+	return nd_region->provider_data;
-+}
-+EXPORT_SYMBOL_GPL(nd_region_provider_data);
++	u32 *buf = addr;
++	u32 lo32 = 0;
++	u64 hi32 = 0;
++	int i;
 +
-+static struct nd_region *nd_region_create(struct nvdimm_bus *nvdimm_bus,
-+		struct nd_region_desc *ndr_desc, struct device_type *dev_type,
-+		const char *caller)
-+{
-+	struct nd_region *nd_region;
-+	struct device *dev;
-+	u16 i;
-+
-+	for (i = 0; i < ndr_desc->num_mappings; i++) {
-+		struct nd_mapping *nd_mapping = &ndr_desc->nd_mapping[i];
-+		struct nvdimm *nvdimm = nd_mapping->nvdimm;
-+
-+		if ((nd_mapping->start | nd_mapping->size) % SZ_4K) {
-+			dev_err(&nvdimm_bus->dev, "%s: %s mapping%d is not 4K aligned\n",
-+					caller, dev_name(&nvdimm->dev), i);
-+
-+			return NULL;
-+		}
++	for (i = 0; i < len / sizeof(u32); i++) {
++		lo32 += le ? le32_to_cpu((__le32) buf[i]) : buf[i];
++		hi32 += lo32;
 +	}
 +
-+	nd_region = kzalloc(sizeof(struct nd_region)
-+			+ sizeof(struct nd_mapping) * ndr_desc->num_mappings,
-+			GFP_KERNEL);
-+	if (!nd_region)
-+		return NULL;
-+	nd_region->id = ida_simple_get(&region_ida, 0, 0, GFP_KERNEL);
-+	if (nd_region->id < 0) {
-+		kfree(nd_region);
-+		return NULL;
-+	}
-+
-+	memcpy(nd_region->mapping, ndr_desc->nd_mapping,
-+			sizeof(struct nd_mapping) * ndr_desc->num_mappings);
-+	for (i = 0; i < ndr_desc->num_mappings; i++) {
-+		struct nd_mapping *nd_mapping = &ndr_desc->nd_mapping[i];
-+		struct nvdimm *nvdimm = nd_mapping->nvdimm;
-+
-+		get_device(&nvdimm->dev);
-+	}
-+	nd_region->ndr_mappings = ndr_desc->num_mappings;
-+	nd_region->provider_data = ndr_desc->provider_data;
-+	dev = &nd_region->dev;
-+	dev_set_name(dev, "region%d", nd_region->id);
-+	dev->parent = &nvdimm_bus->dev;
-+	dev->type = dev_type;
-+	dev->groups = ndr_desc->attr_groups;
-+	nd_region->ndr_size = resource_size(ndr_desc->res);
-+	nd_region->ndr_start = ndr_desc->res->start;
-+	nd_device_register(dev);
-+
-+	return nd_region;
++	return hi32 << 32 | lo32;
 +}
++EXPORT_SYMBOL_GPL(nd_fletcher64);
 +
-+struct nd_region *nvdimm_pmem_region_create(struct nvdimm_bus *nvdimm_bus,
-+		struct nd_region_desc *ndr_desc)
+ static void nvdimm_bus_release(struct device *dev)
+ {
+ 	struct nvdimm_bus *nvdimm_bus;
+@@ -175,6 +191,7 @@ struct nvdimm_bus *__nvdimm_bus_register(struct device *parent,
+ 	if (!nvdimm_bus)
+ 		return NULL;
+ 	INIT_LIST_HEAD(&nvdimm_bus->list);
++	init_waitqueue_head(&nvdimm_bus->probe_wait);
+ 	nvdimm_bus->id = ida_simple_get(&nd_ida, 0, 0, GFP_KERNEL);
+ 	mutex_init(&nvdimm_bus->reconfig_mutex);
+ 	if (nvdimm_bus->id < 0) {
+diff --git a/drivers/nvdimm/dimm_devs.c b/drivers/nvdimm/dimm_devs.c
+index b3ae86f2e1da..bdf8241b6525 100644
+--- a/drivers/nvdimm/dimm_devs.c
++++ b/drivers/nvdimm/dimm_devs.c
+@@ -185,7 +185,24 @@ static ssize_t commands_show(struct device *dev,
+ }
+ static DEVICE_ATTR_RO(commands);
+ 
++static ssize_t state_show(struct device *dev, struct device_attribute *attr,
++		char *buf)
 +{
-+	return nd_region_create(nvdimm_bus, ndr_desc, &nd_pmem_device_type,
-+			__func__);
-+}
-+EXPORT_SYMBOL_GPL(nvdimm_pmem_region_create);
++	struct nvdimm *nvdimm = to_nvdimm(dev);
 +
-+struct nd_region *nvdimm_blk_region_create(struct nvdimm_bus *nvdimm_bus,
-+		struct nd_region_desc *ndr_desc)
-+{
-+	if (ndr_desc->num_mappings > 1)
-+		return NULL;
-+	return nd_region_create(nvdimm_bus, ndr_desc, &nd_blk_device_type,
-+			__func__);
++	/*
++	 * The state may be in the process of changing, userspace should
++	 * quiesce probing if it wants a static answer
++	 */
++	nvdimm_bus_lock(dev);
++	nvdimm_bus_unlock(dev);
++	return sprintf(buf, "%s\n", atomic_read(&nvdimm->busy)
++			? "active" : "idle");
 +}
-+EXPORT_SYMBOL_GPL(nvdimm_blk_region_create);
++static DEVICE_ATTR_RO(state);
 +
-+struct nd_region *nvdimm_volatile_region_create(struct nvdimm_bus *nvdimm_bus,
-+		struct nd_region_desc *ndr_desc)
-+{
-+	return nd_region_create(nvdimm_bus, ndr_desc, &nd_volatile_device_type,
-+			__func__);
-+}
-+EXPORT_SYMBOL_GPL(nvdimm_volatile_region_create);
-diff --git a/include/linux/libnvdimm.h b/include/linux/libnvdimm.h
-index d3ebccf4ea8b..39e7e606092a 100644
---- a/include/linux/libnvdimm.h
-+++ b/include/linux/libnvdimm.h
-@@ -26,11 +26,14 @@ enum {
- 	ND_CMD_MAX_ELEM = 4,
- 	ND_CMD_MAX_ENVELOPE = 16,
- 	ND_CMD_ARS_STATUS_MAX = SZ_4K,
-+	ND_MAX_MAPPINGS = 32,
+ static struct attribute *nvdimm_attributes[] = {
++	&dev_attr_state.attr,
+ 	&dev_attr_commands.attr,
+ 	NULL,
+ };
+@@ -213,7 +230,7 @@ struct nvdimm *nvdimm_create(struct nvdimm_bus *nvdimm_bus, void *provider_data,
+ 	nvdimm->provider_data = provider_data;
+ 	nvdimm->flags = flags;
+ 	nvdimm->dsm_mask = dsm_mask;
+-
++	atomic_set(&nvdimm->busy, 0);
+ 	dev = &nvdimm->dev;
+ 	dev_set_name(dev, "nmem%d", nvdimm->id);
+ 	dev->parent = &nvdimm_bus->dev;
+diff --git a/drivers/nvdimm/nd-core.h b/drivers/nvdimm/nd-core.h
+index 0e9b41fd2546..6a4b2c066ee7 100644
+--- a/drivers/nvdimm/nd-core.h
++++ b/drivers/nvdimm/nd-core.h
+@@ -14,6 +14,9 @@
+ #define __ND_CORE_H__
+ #include <linux/libnvdimm.h>
+ #include <linux/device.h>
++#include <linux/libnvdimm.h>
++#include <linux/sizes.h>
++#include <linux/mutex.h>
+ 
+ extern struct list_head nvdimm_bus_list;
+ extern struct mutex nvdimm_bus_list_mutex;
+@@ -21,10 +24,11 @@ extern int nvdimm_major;
+ 
+ struct nvdimm_bus {
+ 	struct nvdimm_bus_descriptor *nd_desc;
++	wait_queue_head_t probe_wait;
+ 	struct module *module;
+ 	struct list_head list;
+ 	struct device dev;
+-	int id;
++	int id, probe_active;
+ 	struct mutex reconfig_mutex;
  };
  
- extern struct attribute_group nvdimm_bus_attribute_group;
- extern struct attribute_group nvdimm_attribute_group;
- extern struct attribute_group nd_device_attribute_group;
-+extern struct attribute_group nd_region_attribute_group;
-+extern struct attribute_group nd_mapping_attribute_group;
+@@ -33,6 +37,7 @@ struct nvdimm {
+ 	void *provider_data;
+ 	unsigned long *dsm_mask;
+ 	struct device dev;
++	atomic_t busy;
+ 	int id;
+ };
  
- struct nvdimm;
- struct nvdimm_bus_descriptor;
-@@ -38,6 +41,12 @@ typedef int (*ndctl_fn)(struct nvdimm_bus_descriptor *nd_desc,
- 		struct nvdimm *nvdimm, unsigned int cmd, void *buf,
- 		unsigned int buf_len);
+@@ -42,10 +47,13 @@ bool is_nd_pmem(struct device *dev);
+ struct nvdimm_bus *walk_to_nvdimm_bus(struct device *nd_dev);
+ int __init nvdimm_bus_init(void);
+ void nvdimm_bus_exit(void);
++void nd_region_probe_success(struct nvdimm_bus *nvdimm_bus, struct device *dev);
++void nd_region_disable(struct nvdimm_bus *nvdimm_bus, struct device *dev);
+ int nvdimm_bus_create_ndctl(struct nvdimm_bus *nvdimm_bus);
+ void nvdimm_bus_destroy_ndctl(struct nvdimm_bus *nvdimm_bus);
+ void nd_synchronize(void);
+ int nvdimm_bus_register_dimms(struct nvdimm_bus *nvdimm_bus);
+ int nvdimm_bus_register_regions(struct nvdimm_bus *nvdimm_bus);
++int nvdimm_bus_init_interleave_sets(struct nvdimm_bus *nvdimm_bus);
+ int nd_match_dimm(struct device *dev, void *data);
+ #endif /* __ND_CORE_H__ */
+diff --git a/drivers/nvdimm/nd.h b/drivers/nvdimm/nd.h
+index bc5a08e36a25..0285e4588b03 100644
+--- a/drivers/nvdimm/nd.h
++++ b/drivers/nvdimm/nd.h
+@@ -35,6 +35,7 @@ struct nd_region {
+ 	u64 ndr_start;
+ 	int id;
+ 	void *provider_data;
++	struct nd_interleave_set *nd_set;
+ 	struct nd_mapping mapping[0];
+ };
  
-+struct nd_mapping {
-+	struct nvdimm *nvdimm;
-+	u64 start;
-+	u64 size;
-+};
+diff --git a/drivers/nvdimm/region_devs.c b/drivers/nvdimm/region_devs.c
+index b5c5b9095b28..1571424578f0 100644
+--- a/drivers/nvdimm/region_devs.c
++++ b/drivers/nvdimm/region_devs.c
+@@ -10,7 +10,10 @@
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  * General Public License for more details.
+  */
++#include <linux/scatterlist.h>
++#include <linux/sched.h>
+ #include <linux/slab.h>
++#include <linux/sort.h>
+ #include <linux/io.h>
+ #include "nd-core.h"
+ #include "nd.h"
+@@ -133,6 +136,21 @@ static ssize_t nstype_show(struct device *dev,
+ }
+ static DEVICE_ATTR_RO(nstype);
+ 
++static ssize_t set_cookie_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	struct nd_region *nd_region = to_nd_region(dev);
++	struct nd_interleave_set *nd_set = nd_region->nd_set;
 +
- struct nvdimm_bus_descriptor {
- 	const struct attribute_group **attr_groups;
- 	unsigned long dsm_mask;
-@@ -52,6 +61,14 @@ struct nd_cmd_desc {
++	if (is_nd_pmem(dev) && nd_set)
++		/* pass, should be precluded by region_visible */;
++	else
++		return -ENXIO;
++
++	return sprintf(buf, "%#llx\n", nd_set->cookie);
++}
++static DEVICE_ATTR_RO(set_cookie);
++
+ static ssize_t init_namespaces_show(struct device *dev,
+ 		struct device_attribute *attr, char *buf)
+ {
+@@ -154,15 +172,65 @@ static struct attribute *nd_region_attributes[] = {
+ 	&dev_attr_size.attr,
+ 	&dev_attr_nstype.attr,
+ 	&dev_attr_mappings.attr,
++	&dev_attr_set_cookie.attr,
+ 	&dev_attr_init_namespaces.attr,
+ 	NULL,
+ };
+ 
++static umode_t region_visible(struct kobject *kobj, struct attribute *a, int n)
++{
++	struct device *dev = container_of(kobj, typeof(*dev), kobj);
++	struct nd_region *nd_region = to_nd_region(dev);
++	struct nd_interleave_set *nd_set = nd_region->nd_set;
++
++	if (a != &dev_attr_set_cookie.attr)
++		return a->mode;
++
++	if (is_nd_pmem(dev) && nd_set)
++			return a->mode;
++
++	return 0;
++}
++
+ struct attribute_group nd_region_attribute_group = {
+ 	.attrs = nd_region_attributes,
++	.is_visible = region_visible,
+ };
+ EXPORT_SYMBOL_GPL(nd_region_attribute_group);
+ 
++/*
++ * Upon successful probe/remove, take/release a reference on the
++ * associated interleave set (if present)
++ */
++static void nd_region_notify_driver_action(struct nvdimm_bus *nvdimm_bus,
++		struct device *dev, bool probe)
++{
++	if (is_nd_pmem(dev) || is_nd_blk(dev)) {
++		struct nd_region *nd_region = to_nd_region(dev);
++		int i;
++
++		for (i = 0; i < nd_region->ndr_mappings; i++) {
++			struct nd_mapping *nd_mapping = &nd_region->mapping[i];
++			struct nvdimm *nvdimm = nd_mapping->nvdimm;
++
++			if (probe)
++				atomic_inc(&nvdimm->busy);
++			else
++				atomic_dec(&nvdimm->busy);
++		}
++	}
++}
++
++void nd_region_probe_success(struct nvdimm_bus *nvdimm_bus, struct device *dev)
++{
++	nd_region_notify_driver_action(nvdimm_bus, dev, true);
++}
++
++void nd_region_disable(struct nvdimm_bus *nvdimm_bus, struct device *dev)
++{
++	nd_region_notify_driver_action(nvdimm_bus, dev, false);
++}
++
+ static ssize_t mappingN(struct device *dev, char *buf, int n)
+ {
+ 	struct nd_region *nd_region = to_nd_region(dev);
+@@ -322,6 +390,7 @@ static struct nd_region *nd_region_create(struct nvdimm_bus *nvdimm_bus,
+ 	}
+ 	nd_region->ndr_mappings = ndr_desc->num_mappings;
+ 	nd_region->provider_data = ndr_desc->provider_data;
++	nd_region->nd_set = ndr_desc->nd_set;
+ 	dev = &nd_region->dev;
+ 	dev_set_name(dev, "region%d", nd_region->id);
+ 	dev->parent = &nvdimm_bus->dev;
+diff --git a/include/linux/libnvdimm.h b/include/linux/libnvdimm.h
+index 37f966aff386..1b627b109360 100644
+--- a/include/linux/libnvdimm.h
++++ b/include/linux/libnvdimm.h
+@@ -61,11 +61,16 @@ struct nd_cmd_desc {
  	int out_sizes[ND_CMD_MAX_ELEM];
  };
  
-+struct nd_region_desc {
-+	struct resource *res;
-+	struct nd_mapping *nd_mapping;
-+	u16 num_mappings;
-+	const struct attribute_group **attr_groups;
-+	void *provider_data;
++struct nd_interleave_set {
++	u64 cookie;
 +};
 +
- struct nvdimm_bus;
- struct device;
- struct nvdimm_bus *nvdimm_bus_register(struct device *parent,
-@@ -59,9 +76,11 @@ struct nvdimm_bus *nvdimm_bus_register(struct device *parent,
- void nvdimm_bus_unregister(struct nvdimm_bus *nvdimm_bus);
- struct nvdimm_bus *to_nvdimm_bus(struct device *dev);
- struct nvdimm *to_nvdimm(struct device *dev);
-+struct nd_region *to_nd_region(struct device *dev);
- struct nvdimm_bus_descriptor *to_nd_desc(struct nvdimm_bus *nvdimm_bus);
- const char *nvdimm_name(struct nvdimm *nvdimm);
- void *nvdimm_provider_data(struct nvdimm *nvdimm);
-+void *nd_region_provider_data(struct nd_region *nd_region);
- struct nvdimm *nvdimm_create(struct nvdimm_bus *nvdimm_bus, void *provider_data,
- 		const struct attribute_group **groups, unsigned long flags,
- 		unsigned long *dsm_mask);
-@@ -73,4 +92,10 @@ u32 nd_cmd_out_size(struct nvdimm *nvdimm, int cmd,
- 		const struct nd_cmd_desc *desc, int idx, const u32 *in_field,
- 		const u32 *out_field);
- int nvdimm_bus_check_dimm_count(struct nvdimm_bus *nvdimm_bus, int dimm_count);
-+struct nd_region *nvdimm_pmem_region_create(struct nvdimm_bus *nvdimm_bus,
-+		struct nd_region_desc *ndr_desc);
-+struct nd_region *nvdimm_blk_region_create(struct nvdimm_bus *nvdimm_bus,
-+		struct nd_region_desc *ndr_desc);
-+struct nd_region *nvdimm_volatile_region_create(struct nvdimm_bus *nvdimm_bus,
-+		struct nd_region_desc *ndr_desc);
+ struct nd_region_desc {
+ 	struct resource *res;
+ 	struct nd_mapping *nd_mapping;
+ 	u16 num_mappings;
+ 	const struct attribute_group **attr_groups;
++	struct nd_interleave_set *nd_set;
+ 	void *provider_data;
+ };
+ 
+@@ -101,4 +106,5 @@ struct nd_region *nvdimm_blk_region_create(struct nvdimm_bus *nvdimm_bus,
+ 		struct nd_region_desc *ndr_desc);
+ struct nd_region *nvdimm_volatile_region_create(struct nvdimm_bus *nvdimm_bus,
+ 		struct nd_region_desc *ndr_desc);
++u64 nd_fletcher64(void *addr, size_t len, bool le);
  #endif /* __LIBNVDIMM_H__ */
