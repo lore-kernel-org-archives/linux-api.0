@@ -1,19 +1,35 @@
 From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH v6 21/21] libnvdimm: Non-Volatile Devices
-Date: Thu, 11 Jun 2015 16:12:04 -0400
-Message-ID: <20150611201204.25175.1670.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [PATCH v6 19/21] libnvdimm, nfit,
+ nd_blk: driver for BLK-mode access persistent memory
+Date: Thu, 11 Jun 2015 16:11:53 -0400
+Message-ID: <20150611201153.25175.83474.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <20150611183830.25175.51256.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-acpi-owner@vger.kernel.org>
 In-Reply-To: <20150611183830.25175.51256.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-acpi-owner@vger.kernel.org
 To: linux-nvdimm@lists.01.org
-Cc: axboe@kernel.dk, Boaz Harrosh <boaz@plexistor.com>, sfr@canb.auug.org.au, neilb@suse.de, gregkh@linuxfoundation.org, rafael@kernel.org, linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Jens Axboe <axboe@fb.com>, linux-acpi@vger.kernel.org, jmoyer@redhat.com, "H. Peter Anvin" <hpa@zytor.com>, akpm@linux-foundation.org, linux-api@vger.kernel.org, hch@lst.de, mingo@kernel.org
+Cc: axboe@kernel.dk, Boaz Harrosh <boaz@plexistor.com>, akpm@linux-foundation.org, sfr@canb.auug.org.au, neilb@suse.de, gregkh@linuxfoundation.org, rafael@kernel.org, linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Jens Axboe <axboe@fb.com>, linux-acpi@vger.kernel.org, jmoyer@redhat.com, "H. Peter Anvin" <hpa@zytor.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, linux-api@vger.kernel.org, hch@lst.de, mingo@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Maintainer information and documentation for drivers/nvdimm
+From: Ross Zwisler <ross.zwisler@linux.intel.com>
+
+The libnvdimm implementation handles allocating dimm address space (DPA)
+between PMEM and BLK mode interfaces.  After DPA has been allocated from
+a BLK-region to a BLK-namespace the nd_blk driver attaches to handle I/O
+as a struct bio based block device. Unlike PMEM, BLK is required to
+handle platform specific details like mmio register formats and memory
+controller interleave.  For this reason the libnvdimm generic nd_blk
+driver calls back into the bus provider to carry out the I/O.
+
+This initial implementation handles the BLK interface defined by the
+ACPI 6 NFIT [1] and the NVDIMM DSM Interface Example [2] composed from
+DCR (dimm control region), BDW (block data window), IDT (interleave
+descriptor) NFIT structures and the hardware register format.
+[1]: http://www.uefi.org/sites/default/files/resources/ACPI_6.0.pdf
+[2]: http://pmem.io/documents/NVDIMM_DSM_Interface_Example.pdf
 
 Cc: Andy Lutomirski <luto@amacapital.net>
 Cc: Boaz Harrosh <boaz@plexistor.com>
@@ -21,880 +37,1387 @@ Cc: H. Peter Anvin <hpa@zytor.com>
 Cc: Jens Axboe <axboe@fb.com>
 Cc: Ingo Molnar <mingo@kernel.org>
 Cc: Christoph Hellwig <hch@lst.de>
-Cc: Neil Brown <neilb@suse.de>
-Cc: Greg KH <gregkh@linuxfoundation.org>
+Signed-off-by: Ross Zwisler <ross.zwisler@linux.intel.com>
 Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 ---
- Documentation/nvdimm/nvdimm.txt |  805 +++++++++++++++++++++++++++++++++++++++
- MAINTAINERS                     |   39 ++
- 2 files changed, 838 insertions(+), 6 deletions(-)
- create mode 100644 Documentation/nvdimm/nvdimm.txt
+ drivers/acpi/nfit.c             |  445 ++++++++++++++++++++++++++++++++++++++-
+ drivers/acpi/nfit.h             |   49 ++++
+ drivers/nvdimm/Kconfig          |   12 +
+ drivers/nvdimm/Makefile         |    3 
+ drivers/nvdimm/blk.c            |  241 +++++++++++++++++++++
+ drivers/nvdimm/bus.c            |    2 
+ drivers/nvdimm/dimm_devs.c      |    9 +
+ drivers/nvdimm/namespace_devs.c |   48 ++++
+ drivers/nvdimm/nd-core.h        |    6 -
+ drivers/nvdimm/nd.h             |   13 +
+ drivers/nvdimm/region.c         |    8 +
+ drivers/nvdimm/region_devs.c    |   92 +++++++-
+ include/linux/libnvdimm.h       |   27 ++
+ 13 files changed, 922 insertions(+), 33 deletions(-)
+ create mode 100644 drivers/nvdimm/blk.c
 
-diff --git a/Documentation/nvdimm/nvdimm.txt b/Documentation/nvdimm/nvdimm.txt
-new file mode 100644
-index 000000000000..854f0a7c96c5
---- /dev/null
-+++ b/Documentation/nvdimm/nvdimm.txt
-@@ -0,0 +1,805 @@
-+			  LIBNVDIMM: Non-Volatile Devices
-+	      libnvdimm - kernel / libndctl - userspace helper library
-+			   linux-nvdimm@lists.01.org
-+				      v12
-+
-+
-+	Glossary
-+	Overview
-+	    Supporting Documents
-+	    Git Trees
-+	LIBNVDIMM PMEM and BLK
-+	Why BLK?
-+	    PMEM vs BLK
-+	        BLK-REGIONs, PMEM-REGIONs, Atomic Sectors, and DAX
-+	Example NVDIMM Platform
-+	LIBNVDIMM Kernel Device Model and LIBNDCTL Userspace API
-+	    LIBNDCTL: Context
-+	        libndctl: instantiate a new library context example
-+	    LIBNVDIMM/LIBNDCTL: Bus
-+	        libnvdimm: control class device in /sys/class
-+	        libnvdimm: bus
-+	        libndctl: bus enumeration example
-+	    LIBNVDIMM/LIBNDCTL: DIMM (NMEM)
-+	        libnvdimm: DIMM (NMEM)
-+	        libndctl: DIMM enumeration example
-+	    LIBNVDIMM/LIBNDCTL: Region
-+	        libnvdimm: region
-+	        libndctl: region enumeration example
-+	        Why Not Encode the Region Type into the Region Name?
-+	        How Do I Determine the Major Type of a Region?
-+	    LIBNVDIMM/LIBNDCTL: Namespace
-+	        libnvdimm: namespace
-+	        libndctl: namespace enumeration example
-+	        libndctl: namespace creation example
-+	        Why the Term "namespace"?
-+	    LIBNVDIMM/LIBNDCTL: Block Translation Table "btt"
-+	        libnvdimm: btt layout
-+	        libndctl: btt creation example
-+	Summary LIBNDCTL Diagram
-+
-+
-+Glossary
-+--------
-+
-+PMEM: A system-physical-address range where writes are persistent.  A
-+block device composed of PMEM is capable of DAX.  A PMEM address range
-+may span an interleave of several DIMMs.
-+
-+BLK: A set of one or more programmable memory mapped apertures provided
-+by a DIMM to access its media.  This indirection precludes the
-+performance benefit of interleaving, but enables DIMM-bounded failure
-+modes.
-+
-+DPA: DIMM Physical Address, is a DIMM-relative offset.  With one DIMM in
-+the system there would be a 1:1 system-physical-address:DPA association.
-+Once more DIMMs are added a memory controller interleave must be
-+decoded to determine the DPA associated with a given
-+system-physical-address.  BLK capacity always has a 1:1 relationship
-+with a single-DIMM's DPA range.
-+
-+DAX: File system extensions to bypass the page cache and block layer to
-+mmap persistent memory, from a PMEM block device, directly into a
-+process address space.
-+
-+BTT: Block Translation Table: Persistent memory is byte addressable.
-+Existing software may have an expectation that the power-fail-atomicity
-+of writes is at least one sector, 512 bytes.  The BTT is an indirection
-+table with atomic update semantics to front a PMEM/BLK block device
-+driver and present arbitrary atomic sector sizes.
-+
-+LABEL: Metadata stored on a DIMM device that partitions and identifies
-+(persistently names) storage between PMEM and BLK.  It also partitions
-+BLK storage to host BTTs with different parameters per BLK-partition.
-+Note that traditional partition tables, GPT/MBR, are layered on top of a
-+BLK or PMEM device.
-+
-+
-+Overview
-+--------
-+
-+The LIBNVDIMM subsystem provides support for three types of NVDIMMs, namely,
-+PMEM, BLK, and NVDIMM devices that can simultaneously support both PMEM
-+and BLK mode access.  These three modes of operation are described by
-+the "NVDIMM Firmware Interface Table" (NFIT) in ACPI 6.  While the LIBNVDIMM
-+implementation is generic and supports pre-NFIT platforms, it was guided
-+by the superset of capabilities need to support this ACPI 6 definition
-+for NVDIMM resources.  The bulk of the kernel implementation is in place
-+to handle the case where DPA accessible via PMEM is aliased with DPA
-+accessible via BLK.  When that occurs a LABEL is needed to reserve DPA
-+for exclusive access via one mode a time.
-+
-+Supporting Documents
-+ACPI 6: http://www.uefi.org/sites/default/files/resources/ACPI_6.0.pdf
-+NVDIMM Namespace: http://pmem.io/documents/NVDIMM_Namespace_Spec.pdf
-+DSM Interface Example: http://pmem.io/documents/NVDIMM_DSM_Interface_Example.pdf
-+Driver Writer's Guide: http://pmem.io/documents/NVDIMM_Driver_Writers_Guide.pdf
-+
-+Git Trees
-+LIBNVDIMM: https://git.kernel.org/cgit/linux/kernel/git/djbw/nvdimm.git
-+LIBNDCTL: https://github.com/pmem/ndctl.git
-+PMEM: https://github.com/01org/prd
-+
-+
-+LIBNVDIMM PMEM and BLK
-+------------------
-+
-+Prior to the arrival of the NFIT, non-volatile memory was described to a
-+system in various ad-hoc ways.  Usually only the bare minimum was
-+provided, namely, a single system-physical-address range where writes
-+are expected to be durable after a system power loss.  Now, the NFIT
-+specification standardizes not only the description of PMEM, but also
-+BLK and platform message-passing entry points for control and
-+configuration.
-+
-+For each NVDIMM access method (PMEM, BLK), LIBNVDIMM provides a block
-+device driver:
-+
-+    1. PMEM (nd_pmem.ko): Drives a system-physical-address range.  This
-+    range is contiguous in system memory and may be interleaved (hardware
-+    memory controller striped) across multiple DIMMs.  When interleaved the
-+    platform may optionally provide details of which DIMMs are participating
-+    in the interleave.
-+
-+    Note that while LIBNVDIMM describes system-physical-address ranges that may
-+    alias with BLK access as ND_NAMESPACE_PMEM ranges and those without
-+    alias as ND_NAMESPACE_IO ranges, to the nd_pmem driver there is no
-+    distinction.  The different device-types are an implementation detail
-+    that userspace can exploit to implement policies like "only interface
-+    with address ranges from certain DIMMs".  It is worth noting that when
-+    aliasing is present and a DIMM lacks a label, then no block device can
-+    be created by default as userspace needs to do at least one allocation
-+    of DPA to the PMEM range.  In contrast ND_NAMESPACE_IO ranges, once
-+    registered, can be immediately attached to nd_pmem.
-+
-+    2. BLK (nd_blk.ko): This driver performs I/O using a set of platform
-+    defined apertures.  A set of apertures will all access just one DIMM.
-+    Multiple windows allow multiple concurrent accesses, much like
-+    tagged-command-queuing, and would likely be used by different threads or
-+    different CPUs.
-+
-+    The NFIT specification defines a standard format for a BLK-aperture, but
-+    the spec also allows for vendor specific layouts, and non-NFIT BLK
-+    implementations may other designs for BLK I/O.  For this reason "nd_blk"
-+    calls back into platform-specific code to perform the I/O.  One such
-+    implementation is defined in the "Driver Writer's Guide" and "DSM
-+    Interface Example".
-+
-+
-+Why BLK?
-+--------
-+
-+While PMEM provides direct byte-addressable CPU-load/store access to
-+NVDIMM storage, it does not provide the best system RAS (recovery,
-+availability, and serviceability) model.  An access to a corrupted
-+system-physical-address address causes a cpu exception while an access
-+to a corrupted address through an BLK-aperture causes that block window
-+to raise an error status in a register.  The latter is more aligned with
-+the standard error model that host-bus-adapter attached disks present.
-+Also, if an administrator ever wants to replace a memory it is easier to
-+service a system at DIMM module boundaries.  Compare this to PMEM where
-+data could be interleaved in an opaque hardware specific manner across
-+several DIMMs.
-+
-+PMEM vs BLK
-+BLK-apertures solve this RAS problem, but their presence is also the
-+major contributing factor to the complexity of the ND subsystem.  They
-+complicate the implementation because PMEM and BLK alias in DPA space.
-+Any given DIMM's DPA-range may contribute to one or more
-+system-physical-address sets of interleaved DIMMs, *and* may also be
-+accessed in its entirety through its BLK-aperture.  Accessing a DPA
-+through a system-physical-address while simultaneously accessing the
-+same DPA through a BLK-aperture has undefined results.  For this reason,
-+DIMMs with this dual interface configuration include a DSM function to
-+store/retrieve a LABEL.  The LABEL effectively partitions the DPA-space
-+into exclusive system-physical-address and BLK-aperture accessible
-+regions.  For simplicity a DIMM is allowed a PMEM "region" per each
-+interleave set in which it is a member.  The remaining DPA space can be
-+carved into an arbitrary number of BLK devices with discontiguous
-+extents.
-+
-+BLK-REGIONs, PMEM-REGIONs, Atomic Sectors, and DAX
-+--------------------------------------------------
-+
-+One of the few
-+reasons to allow multiple BLK namespaces per REGION is so that each
-+BLK-namespace can be configured with a BTT with unique atomic sector
-+sizes.  While a PMEM device can host a BTT the LABEL specification does
-+not provide for a sector size to be specified for a PMEM namespace.
-+This is due to the expectation that the primary usage model for PMEM is
-+via DAX, and the BTT is incompatible with DAX.  However, for the cases
-+where an application or filesystem still needs atomic sector update
-+guarantees it can register a BTT on a PMEM device or partition.  See
-+LIBNVDIMM/NDCTL: Block Translation Table "btt"
-+
-+
-+Example NVDIMM Platform
-+-----------------------
-+
-+For the remainder of this document the following diagram will be
-+referenced for any example sysfs layouts.
-+
-+
-+                             (a)               (b)           DIMM   BLK-REGION
-+          +-------------------+--------+--------+--------+
-++------+  |       pm0.0       | blk2.0 | pm1.0  | blk2.1 |    0      region2
-+| imc0 +--+- - - region0- - - +--------+        +--------+
-++--+---+  |       pm0.0       | blk3.0 | pm1.0  | blk3.1 |    1      region3
-+   |      +-------------------+--------v        v--------+
-++--+---+                               |                 |
-+| cpu0 |                                     region1
-++--+---+                               |                 |
-+   |      +----------------------------^        ^--------+
-++--+---+  |           blk4.0           | pm1.0  | blk4.0 |    2      region4
-+| imc1 +--+----------------------------|        +--------+
-++------+  |           blk5.0           | pm1.0  | blk5.0 |    3      region5
-+          +----------------------------+--------+--------+
-+
-+In this platform we have four DIMMs and two memory controllers in one
-+socket.  Each unique interface (BLK or PMEM) to DPA space is identified
-+by a region device with a dynamically assigned id (REGION0 - REGION5).
-+
-+    1. The first portion of DIMM0 and DIMM1 are interleaved as REGION0. A
-+    single PMEM namespace is created in the REGION0-SPA-range that spans
-+    DIMM0 and DIMM1 with a user-specified name of "pm0.0". Some of that
-+    interleaved system-physical-address range is reclaimed as BLK-aperture
-+    accessed space starting at DPA-offset (a) into each DIMM.  In that
-+    reclaimed space we create two BLK-aperture "namespaces" from REGION2 and
-+    REGION3 where "blk2.0" and "blk3.0" are just human readable names that
-+    could be set to any user-desired name in the LABEL.
-+
-+    2. In the last portion of DIMM0 and DIMM1 we have an interleaved
-+    system-physical-address range, REGION1, that spans those two DIMMs as
-+    well as DIMM2 and DIMM3.  Some of REGION1 allocated to a PMEM namespace
-+    named "pm1.0" the rest is reclaimed in 4 BLK-aperture namespaces (for
-+    each DIMM in the interleave set), "blk2.1", "blk3.1", "blk4.0", and
-+    "blk5.0".
-+
-+    3. The portion of DIMM2 and DIMM3 that do not participate in the REGION1
-+    interleaved system-physical-address range (i.e. the DPA address below
-+    offset (b) are also included in the "blk4.0" and "blk5.0" namespaces.
-+    Note, that this example shows that BLK-aperture namespaces don't need to
-+    be contiguous in DPA-space.
-+
-+    This bus is provided by the kernel under the device
-+    /sys/devices/platform/nfit_test.0 when CONFIG_NFIT_TEST is enabled and
-+    the nfit_test.ko module is loaded.  This not only test LIBNVDIMM but the
-+    acpi_nfit.ko driver as well.
-+
-+
-+LIBNVDIMM Kernel Device Model and LIBNDCTL Userspace API
-+----------------------------------------------------
-+
-+What follows is a description of the LIBNVDIMM sysfs layout and a
-+corresponding object hierarchy diagram as viewed through the LIBNDCTL
-+api.  The example sysfs paths and diagrams are relative to the Example
-+NVDIMM Platform which is also the LIBNVDIMM bus used in the LIBNDCTL unit
-+test.
-+
-+LIBNDCTL: Context
-+Every api call in the LIBNDCTL library requires a context that holds the
-+logging parameters and other library instance state.  The library is
-+based on the libabc template:
-+https://git.kernel.org/cgit/linux/kernel/git/kay/libabc.git/
-+
-+LIBNDCTL: instantiate a new library context example
-+
-+	struct ndctl_ctx *ctx;
-+
-+	if (ndctl_new(&ctx) == 0)
-+		return ctx;
-+	else
-+		return NULL;
-+
-+LIBNVDIMM/LIBNDCTL: Bus
-+-------------------
-+
-+A bus has a 1:1 relationship with an NFIT.  The current expectation for
-+ACPI based systems is that there is only ever one platform-global NFIT.
-+That said, it is trivial to register multiple NFITs, the specification
-+does not preclude it.  The infrastructure supports multiple busses and
-+we we use this capability to test multiple NFIT configurations in the
-+unit test.
-+
-+LIBNVDIMM: control class device in /sys/class
-+
-+This character device accepts DSM messages to be passed to DIMM
-+identified by its NFIT handle.
-+
-+	/sys/class/nd/ndctl0
-+	|-- dev
-+	|-- device -> ../../../ndbus0
-+	|-- subsystem -> ../../../../../../../class/nd
-+
-+
-+
-+LIBNVDIMM: bus
-+
-+	struct nvdimm_bus *nvdimm_bus_register(struct device *parent,
-+	       struct nvdimm_bus_descriptor *nfit_desc);
-+
-+	/sys/devices/platform/nfit_test.0/ndbus0
-+	|-- btt0
-+	|-- btt_seed
-+	|-- commands
-+	|-- nd
-+	|-- nfit
-+	|-- nmem0
-+	|-- nmem1
-+	|-- nmem2
-+	|-- nmem3
-+	|-- power
-+	|-- provider
-+	|-- region0
-+	|-- region1
-+	|-- region2
-+	|-- region3
-+	|-- region4
-+	|-- region5
-+	|-- uevent
-+	`-- wait_probe
-+
-+LIBNDCTL: bus enumeration example
-+Find the bus handle that describes the bus from Example NVDIMM Platform
-+
-+	static struct ndctl_bus *get_bus_by_provider(struct ndctl_ctx *ctx,
-+			const char *provider)
-+	{
-+		struct ndctl_bus *bus;
-+
-+		ndctl_bus_foreach(ctx, bus)
-+			if (strcmp(provider, ndctl_bus_get_provider(bus)) == 0)
-+				return bus;
-+
-+		return NULL;
-+	}
-+
-+	bus = get_bus_by_provider(ctx, "nfit_test.0");
-+
-+
-+LIBNVDIMM/LIBNDCTL: DIMM (NMEM)
-+---------------------------
-+
-+The DIMM device provides a character device for sending commands to
-+hardware, and it is a container for LABELs.  If the DIMM is defined by
-+NFIT then an optional 'nfit' attribute sub-directory is available to add
-+NFIT-specifics.
-+
-+Note that the kernel device name for "DIMMs" is "nmemX".  The NFIT
-+describes these devices via "Memory Device to System Physical Address
-+Range Mapping Structure", and there is no requirement that they actually
-+be physical DIMMs, so we use a more generic name.
-+
-+LIBNVDIMM: DIMM (NMEM)
-+
-+	struct nvdimm *nvdimm_create(struct nvdimm_bus *nvdimm_bus, void *provider_data,
-+			const struct attribute_group **groups, unsigned long flags,
-+			unsigned long *dsm_mask);
-+
-+	/sys/devices/platform/nfit_test.0/ndbus0
-+	|-- nmem0
-+	|   |-- available_slots
-+	|   |-- commands
-+	|   |-- dev
-+	|   |-- devtype
-+	|   |-- driver -> ../../../../../bus/nd/drivers/nvdimm
-+	|   |-- modalias
-+	|   |-- nfit
-+	|   |   |-- device
-+	|   |   |-- format
-+	|   |   |-- handle
-+	|   |   |-- phys_id
-+	|   |   |-- rev_id
-+	|   |   |-- serial
-+	|   |   `-- vendor
-+	|   |-- state
-+	|   |-- subsystem -> ../../../../../bus/nd
-+	|   `-- uevent
-+	|-- nmem1
-+	[..]
-+
-+
-+LIBNDCTL: DIMM enumeration example
-+
-+Note, in this example we are assuming NFIT-defined DIMMs which are
-+identified by an "nfit_handle" a 32-bit value where:
-+Bit 3:0 DIMM number within the memory channel
-+Bit 7:4 memory channel number
-+Bit 11:8 memory controller ID
-+Bit 15:12 socket ID (within scope of a Node controller if node controller is present)
-+Bit 27:16 Node Controller ID
-+Bit 31:28 Reserved
-+
-+	static struct ndctl_dimm *get_dimm_by_handle(struct ndctl_bus *bus,
-+	       unsigned int handle)
-+	{
-+		struct ndctl_dimm *dimm;
-+
-+		ndctl_dimm_foreach(bus, dimm)
-+			if (ndctl_dimm_get_handle(dimm) == handle)
-+				return dimm;
-+
-+		return NULL;
-+	}
-+
-+	#define DIMM_HANDLE(n, s, i, c, d) \
-+		(((n & 0xfff) << 16) | ((s & 0xf) << 12) | ((i & 0xf) << 8) \
-+		 | ((c & 0xf) << 4) | (d & 0xf))
-+
-+	dimm = get_dimm_by_handle(bus, DIMM_HANDLE(0, 0, 0, 0, 0));
-+
-+LIBNVDIMM/LIBNDCTL: Region
-+----------------------
-+
-+A generic REGION device is registered for each PMEM range orBLK-aperture
-+set.  Per the example there are 6 regions: 2 PMEM and 4 BLK-aperture
-+sets on the "nfit_test.0" bus.  The primary role of regions are to be a
-+container of "mappings".  A mapping is a tuple of <DIMM,
-+DPA-start-offset, length>.
-+
-+LIBNVDIMM provides a built-in driver for these REGION devices.  This driver
-+is responsible for reconciling the aliased DPA mappings across all
-+regions, parsing the LABEL, if present, and then emitting NAMESPACE
-+devices with the resolved/exclusive DPA-boundaries for the nd_pmem or
-+nd_blk device driver to consume.
-+
-+In addition to the generic attributes of "mapping"s, "interleave_ways"
-+and "size" the REGION device also exports some convenience attributes.
-+"nstype" indicates the integer type of namespace-device this region
-+emits, "devtype" duplicates the DEVTYPE variable stored by udev at the
-+'add' event, "modalias" duplicates the MODALIAS variable stored by udev
-+at the 'add' event, and finally, the optional "spa_index" is provided in
-+the case where the region is defined by a SPA.
-+
-+LIBNVDIMM: region
-+
-+	struct nd_region *nvdimm_pmem_region_create(struct nvdimm_bus *nvdimm_bus,
-+			struct nd_region_desc *ndr_desc);
-+	struct nd_region *nvdimm_blk_region_create(struct nvdimm_bus *nvdimm_bus,
-+			struct nd_region_desc *ndr_desc);
-+
-+	/sys/devices/platform/nfit_test.0/ndbus0
-+	|-- region0
-+	|   |-- available_size
-+	|   |-- devtype
-+	|   |-- driver -> ../../../../../bus/nd/drivers/nd_region
-+	|   |-- init_namespaces
-+	|   |-- mapping0
-+	|   |-- mapping1
-+	|   |-- mappings
-+	|   |-- modalias
-+	|   |-- namespace0.0
-+	|   |-- namespace_seed
-+	|   |-- nfit
-+	|   |   `-- spa_index
-+	|   |-- nstype
-+	|   |-- set_cookie
-+	|   |-- size
-+	|   |-- subsystem -> ../../../../../bus/nd
-+	|   `-- uevent
-+	|-- region1
-+	[..]
-+
-+LIBNDCTL: region enumeration example
-+
-+Sample region retrieval routines based on NFIT-unique data like
-+"spa_index" (interleave set id) for PMEM and "nfit_handle" (dimm id) for
-+BLK.
-+
-+	static struct ndctl_region *get_pmem_region_by_spa_index(struct ndctl_bus *bus,
-+			unsigned int spa_index)
-+	{
-+		struct ndctl_region *region;
-+
-+		ndctl_region_foreach(bus, region) {
-+			if (ndctl_region_get_type(region) != ND_DEVICE_REGION_PMEM)
+diff --git a/drivers/acpi/nfit.c b/drivers/acpi/nfit.c
+index efff5206f3b0..9e025d1dd246 100644
+--- a/drivers/acpi/nfit.c
++++ b/drivers/acpi/nfit.c
+@@ -13,12 +13,16 @@
+ #include <linux/list_sort.h>
+ #include <linux/libnvdimm.h>
+ #include <linux/module.h>
++#include <linux/mutex.h>
+ #include <linux/ndctl.h>
+ #include <linux/list.h>
+ #include <linux/acpi.h>
+ #include <linux/sort.h>
++#include <linux/io.h>
+ #include "nfit.h"
+ 
++#include <asm-generic/io-64-nonatomic-hi-lo.h>
++
+ static bool force_enable_dimms;
+ module_param(force_enable_dimms, bool, S_IRUGO|S_IWUSR);
+ MODULE_PARM_DESC(force_enable_dimms, "Ignore _STA (ACPI DIMM device) status");
+@@ -72,7 +76,7 @@ static int acpi_nfit_ctl(struct nvdimm_bus_descriptor *nd_desc,
+ 
+ 		if (!adev)
+ 			return -ENOTTY;
+-		dimm_name = dev_name(&adev->dev);
++		dimm_name = nvdimm_name(nvdimm);
+ 		cmd_name = nvdimm_cmd_name(cmd);
+ 		dsm_mask = nfit_mem->dsm_mask;
+ 		desc = nd_cmd_dimm_desc(cmd);
+@@ -279,6 +283,23 @@ static bool add_bdw(struct acpi_nfit_desc *acpi_desc,
+ 	return true;
+ }
+ 
++static bool add_idt(struct acpi_nfit_desc *acpi_desc,
++		struct acpi_nfit_interleave *idt)
++{
++	struct device *dev = acpi_desc->dev;
++	struct nfit_idt *nfit_idt = devm_kzalloc(dev, sizeof(*nfit_idt),
++			GFP_KERNEL);
++
++	if (!nfit_idt)
++		return false;
++	INIT_LIST_HEAD(&nfit_idt->list);
++	nfit_idt->idt = idt;
++	list_add_tail(&nfit_idt->list, &acpi_desc->idts);
++	dev_dbg(dev, "%s: idt index: %d num_lines: %d\n", __func__,
++			idt->interleave_index, idt->line_count);
++	return true;
++}
++
+ static void *add_table(struct acpi_nfit_desc *acpi_desc, void *table,
+ 		const void *end)
+ {
+@@ -307,9 +328,9 @@ static void *add_table(struct acpi_nfit_desc *acpi_desc, void *table,
+ 		if (!add_bdw(acpi_desc, table))
+ 			return err;
+ 		break;
+-	/* TODO */
+ 	case ACPI_NFIT_TYPE_INTERLEAVE:
+-		dev_dbg(dev, "%s: idt\n", __func__);
++		if (!add_idt(acpi_desc, table))
++			return err;
+ 		break;
+ 	case ACPI_NFIT_TYPE_FLUSH_ADDRESS:
+ 		dev_dbg(dev, "%s: flush\n", __func__);
+@@ -362,8 +383,11 @@ static int nfit_mem_add(struct acpi_nfit_desc *acpi_desc,
+ 		struct nfit_mem *nfit_mem, struct acpi_nfit_system_address *spa)
+ {
+ 	u16 dcr = __to_nfit_memdev(nfit_mem)->region_index;
++	struct nfit_memdev *nfit_memdev;
+ 	struct nfit_dcr *nfit_dcr;
+ 	struct nfit_bdw *nfit_bdw;
++	struct nfit_idt *nfit_idt;
++	u16 idt_idx, range_index;
+ 
+ 	list_for_each_entry(nfit_dcr, &acpi_desc->dcrs, list) {
+ 		if (nfit_dcr->dcr->region_index != dcr)
+@@ -396,6 +420,26 @@ static int nfit_mem_add(struct acpi_nfit_desc *acpi_desc,
+ 		return 0;
+ 
+ 	nfit_mem_find_spa_bdw(acpi_desc, nfit_mem);
++
++	if (!nfit_mem->spa_bdw)
++		return 0;
++
++	range_index = nfit_mem->spa_bdw->range_index;
++	list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list) {
++		if (nfit_memdev->memdev->range_index != range_index ||
++				nfit_memdev->memdev->region_index != dcr)
++			continue;
++		nfit_mem->memdev_bdw = nfit_memdev->memdev;
++		idt_idx = nfit_memdev->memdev->interleave_index;
++		list_for_each_entry(nfit_idt, &acpi_desc->idts, list) {
++			if (nfit_idt->idt->interleave_index != idt_idx)
 +				continue;
-+			if (ndctl_region_get_spa_index(region) == spa_index)
-+				return region;
++			nfit_mem->idt_bdw = nfit_idt->idt;
++			break;
 +		}
-+		return NULL;
++		break;
 +	}
 +
-+	static struct ndctl_region *get_blk_region_by_dimm_handle(struct ndctl_bus *bus,
-+			unsigned int handle)
-+	{
-+		struct ndctl_region *region;
+ 	return 0;
+ }
+ 
+@@ -439,9 +483,19 @@ static int nfit_mem_dcr_init(struct acpi_nfit_desc *acpi_desc,
+ 		}
+ 
+ 		if (type == NFIT_SPA_DCR) {
++			struct nfit_idt *nfit_idt;
++			u16 idt_idx;
 +
-+		ndctl_region_foreach(bus, region) {
-+			struct ndctl_mapping *map;
-+
-+			if (ndctl_region_get_type(region) != ND_DEVICE_REGION_BLOCK)
-+				continue;
-+			ndctl_mapping_foreach(region, map) {
-+				struct ndctl_dimm *dimm = ndctl_mapping_get_dimm(map);
-+
-+				if (ndctl_dimm_get_handle(dimm) == handle)
-+					return region;
+ 			/* multiple dimms may share a SPA when interleaved */
+ 			nfit_mem->spa_dcr = spa;
+ 			nfit_mem->memdev_dcr = nfit_memdev->memdev;
++			idt_idx = nfit_memdev->memdev->interleave_index;
++			list_for_each_entry(nfit_idt, &acpi_desc->idts, list) {
++				if (nfit_idt->idt->interleave_index != idt_idx)
++					continue;
++				nfit_mem->idt_dcr = nfit_idt->idt;
++				break;
 +			}
+ 		} else {
+ 			/*
+ 			 * A single dimm may belong to multiple SPA-PM
+@@ -871,6 +925,359 @@ static int acpi_nfit_init_interleave_set(struct acpi_nfit_desc *acpi_desc,
+ 	return 0;
+ }
+ 
++static u64 to_interleave_offset(u64 offset, struct nfit_blk_mmio *mmio)
++{
++	struct acpi_nfit_interleave *idt = mmio->idt;
++	u32 sub_line_offset, line_index, line_offset;
++	u64 line_no, table_skip_count, table_offset;
++
++	line_no = div_u64_rem(offset, mmio->line_size, &sub_line_offset);
++	table_skip_count = div_u64_rem(line_no, mmio->num_lines, &line_index);
++	line_offset = idt->line_offset[line_index]
++		* mmio->line_size;
++	table_offset = table_skip_count * mmio->table_size;
++
++	return mmio->base_offset + line_offset + table_offset + sub_line_offset;
++}
++
++static u64 read_blk_stat(struct nfit_blk *nfit_blk, unsigned int bw)
++{
++	struct nfit_blk_mmio *mmio = &nfit_blk->mmio[DCR];
++	u64 offset = nfit_blk->stat_offset + mmio->size * bw;
++
++	if (mmio->num_lines)
++		offset = to_interleave_offset(offset, mmio);
++
++	return readq(mmio->base + offset);
++}
++
++static void write_blk_ctl(struct nfit_blk *nfit_blk, unsigned int bw,
++		resource_size_t dpa, unsigned int len, unsigned int write)
++{
++	u64 cmd, offset;
++	struct nfit_blk_mmio *mmio = &nfit_blk->mmio[DCR];
++
++	enum {
++		BCW_OFFSET_MASK = (1ULL << 48)-1,
++		BCW_LEN_SHIFT = 48,
++		BCW_LEN_MASK = (1ULL << 8) - 1,
++		BCW_CMD_SHIFT = 56,
++	};
++
++	cmd = (dpa >> L1_CACHE_SHIFT) & BCW_OFFSET_MASK;
++	len = len >> L1_CACHE_SHIFT;
++	cmd |= ((u64) len & BCW_LEN_MASK) << BCW_LEN_SHIFT;
++	cmd |= ((u64) write) << BCW_CMD_SHIFT;
++
++	offset = nfit_blk->cmd_offset + mmio->size * bw;
++	if (mmio->num_lines)
++		offset = to_interleave_offset(offset, mmio);
++
++	writeq(cmd, mmio->base + offset);
++	/* FIXME: conditionally perform read-back if mandated by firmware */
++}
++
++static int acpi_nfit_blk_single_io(struct nfit_blk *nfit_blk,
++		resource_size_t dpa, void *iobuf, size_t len, int rw,
++		unsigned int lane)
++{
++	struct nfit_blk_mmio *mmio = &nfit_blk->mmio[BDW];
++	unsigned int copied = 0;
++	u64 base_offset;
++	int rc;
++
++	base_offset = nfit_blk->bdw_offset + dpa % L1_CACHE_BYTES
++		+ lane * mmio->size;
++	/* TODO: non-temporal access, flush hints, cache management etc... */
++	write_blk_ctl(nfit_blk, lane, dpa, len, rw);
++	while (len) {
++		unsigned int c;
++		u64 offset;
++
++		if (mmio->num_lines) {
++			u32 line_offset;
++
++			offset = to_interleave_offset(base_offset + copied,
++					mmio);
++			div_u64_rem(offset, mmio->line_size, &line_offset);
++			c = min_t(size_t, len, mmio->line_size - line_offset);
++		} else {
++			offset = base_offset + nfit_blk->bdw_offset;
++			c = len;
 +		}
-+		return NULL;
++
++		if (rw)
++			memcpy(mmio->aperture + offset, iobuf + copied, c);
++		else
++			memcpy(iobuf + copied, mmio->aperture + offset, c);
++
++		copied += c;
++		len -= c;
 +	}
-+
-+
-+Why Not Encode the Region Type into the Region Name?
-+----------------------------------------------------
-+
-+At first glance it seems since NFIT defines just PMEM and BLK interface
-+types that we should simply name REGION devices with something derived
-+from those type names.  However, the ND subsystem explicitly keeps the
-+REGION name generic and expects userspace to always consider the
-+region-attributes for 4 reasons:
-+
-+    1. There are already more than two REGION and "namespace" types.  For
-+    PMEM there are two subtypes.  As mentioned previously we have PMEM where
-+    the constituent DIMM devices are known and anonymous PMEM.  For BLK
-+    regions the NFIT specification already anticipates vendor specific
-+    implementations.  The exact distinction of what a region contains is in
-+    the region-attributes not the region-name or the region-devtype.
-+
-+    2. A region with zero child-namespaces is a possible configuration.  For
-+    example, the NFIT allows for a DCR to be published without a
-+    corresponding BLK-aperture.  This equates to a DIMM that can only accept
-+    control/configuration messages, but no i/o through a descendant block
-+    device.  Again, this "type" is advertised in the attributes ('mappings'
-+    == 0) and the name does not tell you much.
-+
-+    3. What if a third major interface type arises in the future?  Outside
-+    of vendor specific implementations, it's not difficult to envision a
-+    third class of interface type beyond BLK and PMEM.  With a generic name
-+    for the REGION level of the device-hierarchy old userspace
-+    implementations can still make sense of new kernel advertised
-+    region-types.  Userspace can always rely on the generic region
-+    attributes like "mappings", "size", etc and the expected child devices
-+    named "namespace".  This generic format of the device-model hierarchy
-+    allows the LIBNVDIMM and LIBNDCTL implementations to be more uniform and
-+    future-proof.
-+
-+    4. There are more robust mechanisms for determining the major type of a
-+    region than a device name.  See the next section, How Do I Determine the
-+    Major Type of a Region?
-+
-+How Do I Determine the Major Type of a Region?
-+----------------------------------------------
-+
-+Outside of the blanket recommendation of "use libndctl", or simply
-+looking at the kernel header (/usr/include/linux/ndctl.h) to decode the
-+"nstype" integer attribute, here are some other options.
-+
-+    1. module alias lookup:
-+
-+    The whole point of region/namespace device type differentiation is to
-+    decide which block-device driver will attach to a given LIBNVDIMM namespace.
-+    One can simply use the modalias to lookup the resulting module.  It's
-+    important to note that this method is robust in the presence of a
-+    vendor-specific driver down the road.  If a vendor-specific
-+    implementation wants to supplant the standard nd_blk driver it can with
-+    minimal impact to the rest of LIBNVDIMM.
-+
-+    In fact, a vendor may also want to have a vendor-specific region-driver
-+    (outside of nd_region).  For example, if a vendor defined its own LABEL
-+    format it would need its own region driver to parse that LABEL and emit
-+    the resulting namespaces.  The output from module resolution is more
-+    accurate than a region-name or region-devtype.
-+
-+    2. udev:
-+
-+    The kernel "devtype" is registered in the udev database
-+    # udevadm info --path=/devices/platform/nfit_test.0/ndbus0/region0
-+    P: /devices/platform/nfit_test.0/ndbus0/region0
-+    E: DEVPATH=/devices/platform/nfit_test.0/ndbus0/region0
-+    E: DEVTYPE=nd_pmem
-+    E: MODALIAS=nd:t2
-+    E: SUBSYSTEM=nd
-+
-+    # udevadm info --path=/devices/platform/nfit_test.0/ndbus0/region4
-+    P: /devices/platform/nfit_test.0/ndbus0/region4
-+    E: DEVPATH=/devices/platform/nfit_test.0/ndbus0/region4
-+    E: DEVTYPE=nd_blk
-+    E: MODALIAS=nd:t3
-+    E: SUBSYSTEM=nd
-+
-+    ...and is available as a region attribute, but keep in mind that the
-+    "devtype" does not indicate sub-type variations and scripts should
-+    really be understanding the other attributes.
-+
-+    3. type specific attributes:
-+
-+    As it currently stands a BLK-aperture region will never have a
-+    "nfit/spa_index" attribute, but neither will a non-NFIT PMEM region.  A
-+    BLK region with a "mappings" value of 0 is, as mentioned above, a DIMM
-+    that does not allow I/O.  A PMEM region with a "mappings" value of zero
-+    is a simple system-physical-address range.
-+
-+
-+LIBNVDIMM/LIBNDCTL: Namespace
-+-------------------------
-+
-+A REGION, after resolving DPA aliasing and LABEL specified boundaries,
-+surfaces one or more "namespace" devices.  The arrival of a "namespace"
-+device currently triggers either the nd_blk or nd_pmem driver to load
-+and register a disk/block device.
-+
-+LIBNVDIMM: namespace
-+Here is a sample layout from the three major types of NAMESPACE where
-+namespace0.0 represents DIMM-info-backed PMEM (note that it has a 'uuid'
-+attribute), namespace2.0 represents a BLK namespace (note it has a
-+'sector_size' attribute) that, and namespace6.0 represents an anonymous
-+PMEM namespace (note that has no 'uuid' attribute due to not support a
-+LABEL).
-+
-+	/sys/devices/platform/nfit_test.0/ndbus0/region0/namespace0.0
-+	|-- alt_name
-+	|-- devtype
-+	|-- dpa_extents
-+	|-- modalias
-+	|-- resource
-+	|-- size
-+	|-- subsystem -> ../../../../../../bus/nd
-+	|-- type
-+	|-- uevent
-+	`-- uuid
-+	/sys/devices/platform/nfit_test.0/ndbus0/region2/namespace2.0
-+	|-- alt_name
-+	|-- devtype
-+	|-- dpa_extents
-+	|-- modalias
-+	|-- sector_size
-+	|-- size
-+	|-- subsystem -> ../../../../../../bus/nd
-+	|-- type
-+	|-- uevent
-+	`-- uuid
-+	/sys/devices/platform/nfit_test.1/ndbus1/region6/namespace6.0
-+	|-- block
-+	|   `-- pmem0
-+	|-- devtype
-+	|-- driver -> ../../../../../../bus/nd/drivers/pmem
-+	|-- modalias
-+	|-- resource
-+	|-- size
-+	|-- subsystem -> ../../../../../../bus/nd
-+	|-- type
-+	`-- uevent
-+
-+LIBNDCTL: namespace enumeration example
-+Namespaces are indexed relative to their parent region, example below.
-+These indexes are mostly static from boot to boot, but subsystem makes
-+no guarantees in this regard.  For a static namespace identifier use its
-+'uuid' attribute.
-+
-+static struct ndctl_namespace *get_namespace_by_id(struct ndctl_region *region,
-+                unsigned int id)
-+{
-+        struct ndctl_namespace *ndns;
-+
-+        ndctl_namespace_foreach(region, ndns)
-+                if (ndctl_namespace_get_id(ndns) == id)
-+                        return ndns;
-+
-+        return NULL;
++	rc = read_blk_stat(nfit_blk, lane) ? -EIO : 0;
++	return rc;
 +}
 +
-+LIBNDCTL: namespace creation example
-+Idle namespaces are automatically created by the kernel if a given
-+region has enough available capacity to create a new namespace.
-+Namespace instantiation involves finding an idle namespace and
-+configuring it.  For the most part the setting of namespace attributes
-+can occur in any order, the only constraint is that 'uuid' must be set
-+before 'size'.  This enables the kernel to track DPA allocations
-+internally with a static identifier.
-+
-+static int configure_namespace(struct ndctl_region *region,
-+                struct ndctl_namespace *ndns,
-+                struct namespace_parameters *parameters)
++static int acpi_nfit_blk_region_do_io(struct nd_blk_region *ndbr,
++		resource_size_t dpa, void *iobuf, u64 len, int rw)
 +{
-+        char devname[50];
++	struct nfit_blk *nfit_blk = nd_blk_region_provider_data(ndbr);
++	struct nfit_blk_mmio *mmio = &nfit_blk->mmio[BDW];
++	struct nd_region *nd_region = nfit_blk->nd_region;
++	unsigned int lane, copied = 0;
++	int rc = 0;
 +
-+        snprintf(devname, sizeof(devname), "namespace%d.%d",
-+                        ndctl_region_get_id(region), paramaters->id);
++	lane = nd_region_acquire_lane(nd_region);
++	while (len) {
++		u64 c = min(len, mmio->size);
 +
-+        ndctl_namespace_set_alt_name(ndns, devname);
-+        /* 'uuid' must be set prior to setting size! */
-+        ndctl_namespace_set_uuid(ndns, paramaters->uuid);
-+        ndctl_namespace_set_size(ndns, paramaters->size);
-+        /* unlike pmem namespaces, blk namespaces have a sector size */
-+        if (parameters->lbasize)
-+                ndctl_namespace_set_sector_size(ndns, parameters->lbasize);
-+        ndctl_namespace_enable(ndns);
++		rc = acpi_nfit_blk_single_io(nfit_blk, dpa + copied,
++				iobuf + copied, c, rw, lane);
++		if (rc)
++			break;
++
++		copied += c;
++		len -= c;
++	}
++	nd_region_release_lane(nd_region, lane);
++
++	return rc;
 +}
 +
++static void nfit_spa_mapping_release(struct kref *kref)
++{
++	struct nfit_spa_mapping *spa_map = to_spa_map(kref);
++	struct acpi_nfit_system_address *spa = spa_map->spa;
++	struct acpi_nfit_desc *acpi_desc = spa_map->acpi_desc;
 +
-+Why the Term "namespace"?
++	WARN_ON(!mutex_is_locked(&acpi_desc->spa_map_mutex));
++	dev_dbg(acpi_desc->dev, "%s: SPA%d\n", __func__, spa->range_index);
++	iounmap(spa_map->iomem);
++	release_mem_region(spa->address, spa->length);
++	list_del(&spa_map->list);
++	kfree(spa_map);
++}
 +
-+    1. Why not "volume" for instance?  "volume" ran the risk of confusing ND
-+    as a volume manager like device-mapper.
++static struct nfit_spa_mapping *find_spa_mapping(
++		struct acpi_nfit_desc *acpi_desc,
++		struct acpi_nfit_system_address *spa)
++{
++	struct nfit_spa_mapping *spa_map;
 +
-+    2. The term originated to describe the sub-devices that can be created
-+    within a NVME controller (see the nvme specification:
-+    http://www.nvmexpress.org/specifications/), and NFIT namespaces are
-+    meant to parallel the capabilities and configurability of
-+    NVME-namespaces.
++	WARN_ON(!mutex_is_locked(&acpi_desc->spa_map_mutex));
++	list_for_each_entry(spa_map, &acpi_desc->spa_maps, list)
++		if (spa_map->spa == spa)
++			return spa_map;
 +
++	return NULL;
++}
 +
-+LIBNVDIMM/LIBNDCTL: Block Translation Table "btt"
-+---------------------------------------------
++static void nfit_spa_unmap(struct acpi_nfit_desc *acpi_desc,
++		struct acpi_nfit_system_address *spa)
++{
++	struct nfit_spa_mapping *spa_map;
 +
-+A BTT (design document: http://pmem.io/2014/09/23/btt.html) is a stacked
-+block device driver that fronts either the whole block device or a
-+partition of a block device emitted by either a PMEM or BLK NAMESPACE.
++	mutex_lock(&acpi_desc->spa_map_mutex);
++	spa_map = find_spa_mapping(acpi_desc, spa);
 +
-+LIBNVDIMM: btt layout
-+Every bus will start out with at least one BTT device which is the seed
-+device.  To activate it set the "backing_dev", "uuid", and "sector_size"
-+attributes and then bind the device to the nd_btt driver.
++	if (spa_map)
++		kref_put(&spa_map->kref, nfit_spa_mapping_release);
++	mutex_unlock(&acpi_desc->spa_map_mutex);
++}
 +
-+	/sys/devices/platform/nfit_test.1/ndbus0/btt0/
-+	|-- backing_dev
-+	|-- delete
-+	|-- devtype
-+	|-- modalias
-+	|-- sector_size
-+	|-- subsystem -> ../../../../../bus/nd
-+	|-- uevent
-+	`-- uuid
++static void __iomem *__nfit_spa_map(struct acpi_nfit_desc *acpi_desc,
++		struct acpi_nfit_system_address *spa)
++{
++	resource_size_t start = spa->address;
++	resource_size_t n = spa->length;
++	struct nfit_spa_mapping *spa_map;
++	struct resource *res;
 +
-+LIBNDCTL: btt creation example
-+Similar to namespaces an idle BTT device is automatically created per
-+bus.  Each time this "seed" btt device is configured and enabled a new
-+seed is created.  Creating a BTT configuration involves two steps of
-+finding and idle BTT and assigning it to front a PMEM or BLK namespace.
++	WARN_ON(!mutex_is_locked(&acpi_desc->spa_map_mutex));
 +
-+	static struct ndctl_btt *get_idle_btt(struct ndctl_bus *bus)
-+	{
-+		struct ndctl_btt *btt;
++	spa_map = find_spa_mapping(acpi_desc, spa);
++	if (spa_map) {
++		kref_get(&spa_map->kref);
++		return spa_map->iomem;
++	}
 +
-+		ndctl_btt_foreach(bus, btt)
-+			if (!ndctl_btt_is_enabled(btt) && !ndctl_btt_is_configured(btt))
-+				return btt;
-+
++	spa_map = kzalloc(sizeof(*spa_map), GFP_KERNEL);
++	if (!spa_map)
 +		return NULL;
++
++	INIT_LIST_HEAD(&spa_map->list);
++	spa_map->spa = spa;
++	kref_init(&spa_map->kref);
++	spa_map->acpi_desc = acpi_desc;
++
++	res = request_mem_region(start, n, dev_name(acpi_desc->dev));
++	if (!res)
++		goto err_mem;
++
++	/* TODO: cacheability based on the spa type */
++	spa_map->iomem = ioremap_nocache(start, n);
++	if (!spa_map->iomem)
++		goto err_map;
++
++	list_add_tail(&spa_map->list, &acpi_desc->spa_maps);
++	return spa_map->iomem;
++
++ err_map:
++	release_mem_region(start, n);
++ err_mem:
++	kfree(spa_map);
++	return NULL;
++}
++
++/**
++ * nfit_spa_map - interleave-aware managed-mappings of acpi_nfit_system_address ranges
++ * @nvdimm_bus: NFIT-bus that provided the spa table entry
++ * @nfit_spa: spa table to map
++ *
++ * In the case where block-data-window apertures and
++ * dimm-control-regions are interleaved they will end up sharing a
++ * single request_mem_region() + ioremap() for the address range.  In
++ * the style of devm nfit_spa_map() mappings are automatically dropped
++ * when all region devices referencing the same mapping are disabled /
++ * unbound.
++ */
++static void __iomem *nfit_spa_map(struct acpi_nfit_desc *acpi_desc,
++		struct acpi_nfit_system_address *spa)
++{
++	void __iomem *iomem;
++
++	mutex_lock(&acpi_desc->spa_map_mutex);
++	iomem = __nfit_spa_map(acpi_desc, spa);
++	mutex_unlock(&acpi_desc->spa_map_mutex);
++
++	return iomem;
++}
++
++static int nfit_blk_init_interleave(struct nfit_blk_mmio *mmio,
++		struct acpi_nfit_interleave *idt, u16 interleave_ways)
++{
++	if (idt) {
++		mmio->num_lines = idt->line_count;
++		mmio->line_size = idt->line_size;
++		if (interleave_ways == 0)
++			return -ENXIO;
++		mmio->table_size = mmio->num_lines * interleave_ways
++			* mmio->line_size;
 +	}
 +
-+	static int configure_btt(struct ndctl_bus *bus, struct btt_parameters *parameters)
-+	{
-+		btt = get_idle_btt(bus);
++	return 0;
++}
 +
-+		sprintf(bdevpath, "/dev/%s",
-+				ndctl_namespace_get_block_device(parameters->ndns));
-+		ndctl_btt_set_uuid(btt, parameters->uuid);
-+		ndctl_btt_set_sector_size(btt, parameters->sector_size);
-+		ndctl_btt_set_backing_dev(btt, parameters->bdevpath);
-+		ndctl_btt_enable(btt);
++static int acpi_nfit_blk_region_enable(struct nvdimm_bus *nvdimm_bus,
++		struct device *dev)
++{
++	struct nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
++	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
++	struct nd_blk_region *ndbr = to_nd_blk_region(dev);
++	struct nfit_blk_mmio *mmio;
++	struct nfit_blk *nfit_blk;
++	struct nfit_mem *nfit_mem;
++	struct nvdimm *nvdimm;
++	int rc;
++
++	nvdimm = nd_blk_region_to_dimm(ndbr);
++	nfit_mem = nvdimm_provider_data(nvdimm);
++	if (!nfit_mem || !nfit_mem->dcr || !nfit_mem->bdw) {
++		dev_dbg(dev, "%s: missing%s%s%s\n", __func__,
++				nfit_mem ? "" : " nfit_mem",
++				nfit_mem->dcr ? "" : " dcr",
++				nfit_mem->bdw ? "" : " bdw");
++		return -ENXIO;
 +	}
 +
-+Once instantiated a "nd_btt" link will be created under the
-+"backing_dev" (pmem0) block device:
++	nfit_blk = devm_kzalloc(dev, sizeof(*nfit_blk), GFP_KERNEL);
++	if (!nfit_blk)
++		return -ENOMEM;
++	nd_blk_region_set_provider_data(ndbr, nfit_blk);
++	nfit_blk->nd_region = to_nd_region(dev);
 +
-+	/sys/block/pmem0/
-+	|-- alignment_offset
-+	|-- bdi -> ../../../../../../../virtual/bdi/259:0
-+	|-- capability
-+	|-- dev
-+	|-- device -> ../../../namespace0.0
-+	|-- discard_alignment
-+	|-- ext_range
-+	|-- holders
-+	|-- inflight
-+	|-- nd_btt -> ../../../../btt0
++	/* map block aperture memory */
++	nfit_blk->bdw_offset = nfit_mem->bdw->offset;
++	mmio = &nfit_blk->mmio[BDW];
++	mmio->base = nfit_spa_map(acpi_desc, nfit_mem->spa_bdw);
++	if (!mmio->base) {
++		dev_dbg(dev, "%s: %s failed to map bdw\n", __func__,
++				nvdimm_name(nvdimm));
++		return -ENOMEM;
++	}
++	mmio->size = nfit_mem->bdw->size;
++	mmio->base_offset = nfit_mem->memdev_bdw->region_offset;
++	mmio->idt = nfit_mem->idt_bdw;
++	mmio->spa = nfit_mem->spa_bdw;
++	rc = nfit_blk_init_interleave(mmio, nfit_mem->idt_bdw,
++			nfit_mem->memdev_bdw->interleave_ways);
++	if (rc) {
++		dev_dbg(dev, "%s: %s failed to init bdw interleave\n",
++				__func__, nvdimm_name(nvdimm));
++		return rc;
++	}
 +
-+...and a new inactive seed device will appear on the bus.
++	/* map block control memory */
++	nfit_blk->cmd_offset = nfit_mem->dcr->command_offset;
++	nfit_blk->stat_offset = nfit_mem->dcr->status_offset;
++	mmio = &nfit_blk->mmio[DCR];
++	mmio->base = nfit_spa_map(acpi_desc, nfit_mem->spa_dcr);
++	if (!mmio->base) {
++		dev_dbg(dev, "%s: %s failed to map dcr\n", __func__,
++				nvdimm_name(nvdimm));
++		return -ENOMEM;
++	}
++	mmio->size = nfit_mem->dcr->window_size;
++	mmio->base_offset = nfit_mem->memdev_dcr->region_offset;
++	mmio->idt = nfit_mem->idt_dcr;
++	mmio->spa = nfit_mem->spa_dcr;
++	rc = nfit_blk_init_interleave(mmio, nfit_mem->idt_dcr,
++			nfit_mem->memdev_dcr->interleave_ways);
++	if (rc) {
++		dev_dbg(dev, "%s: %s failed to init dcr interleave\n",
++				__func__, nvdimm_name(nvdimm));
++		return rc;
++	}
 +
-+Once a "backing_dev" is disabled its associated BTT will be
-+automatically deleted.  This deletion is only at the device model level.
-+In order to destroy a BTT the "info block" needs to be destroyed.
++	if (mmio->line_size == 0)
++		return 0;
 +
++	if ((u32) nfit_blk->cmd_offset % mmio->line_size
++			+ 8 > mmio->line_size) {
++		dev_dbg(dev, "cmd_offset crosses interleave boundary\n");
++		return -ENXIO;
++	} else if ((u32) nfit_blk->stat_offset % mmio->line_size
++			+ 8 > mmio->line_size) {
++		dev_dbg(dev, "stat_offset crosses interleave boundary\n");
++		return -ENXIO;
++	}
 +
-+Summary LIBNDCTL Diagram
-+------------------------
++	return 0;
++}
 +
-+For the given example above, here is the view of the objects as seen by the LIBNDCTL api:
-+            +---+
-+            |CTX|    +---------+   +--------------+  +---------------+
-+            +-+-+  +-> REGION0 +---> NAMESPACE0.0 +--> PMEM8 "pm0.0" |
-+              |    | +---------+   +--------------+  +---------------+
-++-------+     |    | +---------+   +--------------+  +---------------+
-+| DIMM0 <-+   |    +-> REGION1 +---> NAMESPACE1.0 +--> PMEM6 "pm1.0" |
-++-------+ |   |    | +---------+   +--------------+  +---------------+
-+| DIMM1 <-+ +-v--+ | +---------+   +--------------+  +---------------+
-++-------+ +-+BUS0+---> REGION2 +-+-> NAMESPACE2.0 +--> ND6  "blk2.0" |
-+| DIMM2 <-+ +----+ | +---------+ | +--------------+  +----------------------+
-++-------+ |        |             +-> NAMESPACE2.1 +--> ND5  "blk2.1" | BTT2 |
-+| DIMM3 <-+        |               +--------------+  +----------------------+
-++-------+          | +---------+   +--------------+  +---------------+
-+                   +-> REGION3 +-+-> NAMESPACE3.0 +--> ND4  "blk3.0" |
-+                   | +---------+ | +--------------+  +----------------------+
-+                   |             +-> NAMESPACE3.1 +--> ND3  "blk3.1" | BTT1 |
-+                   |               +--------------+  +----------------------+
-+                   | +---------+   +--------------+  +---------------+
-+                   +-> REGION4 +---> NAMESPACE4.0 +--> ND2  "blk4.0" |
-+                   | +---------+   +--------------+  +---------------+
-+                   | +---------+   +--------------+  +----------------------+
-+                   +-> REGION5 +---> NAMESPACE5.0 +--> ND1  "blk5.0" | BTT0 |
-+                     +---------+   +--------------+  +---------------+------+
++static void acpi_nfit_blk_region_disable(struct nvdimm_bus *nvdimm_bus,
++		struct device *dev)
++{
++	struct nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
++	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
++	struct nd_blk_region *ndbr = to_nd_blk_region(dev);
++	struct nfit_blk *nfit_blk = nd_blk_region_provider_data(ndbr);
++	int i;
 +
++	if (!nfit_blk)
++		return; /* never enabled */
 +
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 590304b96b03..c2f55aed811d 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -5912,6 +5912,39 @@ M:	Sasha Levin <sasha.levin@oracle.com>
- S:	Maintained
- F:	tools/lib/lockdep/
++	/* auto-free BLK spa mappings */
++	for (i = 0; i < 2; i++) {
++		struct nfit_blk_mmio *mmio = &nfit_blk->mmio[i];
++
++		if (mmio->base)
++			nfit_spa_unmap(acpi_desc, mmio->spa);
++	}
++	nd_blk_region_set_provider_data(ndbr, NULL);
++	/* devm will free nfit_blk */
++}
++
+ static int acpi_nfit_init_mapping(struct acpi_nfit_desc *acpi_desc,
+ 		struct nd_mapping *nd_mapping, struct nd_region_desc *ndr_desc,
+ 		struct acpi_nfit_memory_map *memdev,
+@@ -878,6 +1285,7 @@ static int acpi_nfit_init_mapping(struct acpi_nfit_desc *acpi_desc,
+ {
+ 	struct nvdimm *nvdimm = acpi_nfit_dimm_by_handle(acpi_desc,
+ 			memdev->device_handle);
++	struct nd_blk_region_desc *ndbr_desc;
+ 	struct nfit_mem *nfit_mem;
+ 	int blk_valid = 0;
  
-+LIBNVDIMM: NON-VOLATILE MEMORY DEVICE SUBSYSTEM
-+M:	Dan Williams <dan.j.williams@intel.com>
-+L:	linux-nvdimm@lists.01.org
-+Q:	https://patchwork.kernel.org/project/linux-nvdimm/list/
-+S:	Supported
-+F:	drivers/nvdimm/*
-+F:	include/linux/nd.h
-+F:	include/linux/libnvdimm.h
-+F:	include/uapi/linux/ndctl.h
-+
-+LIBNVDIMM BLK: MMIO-APERTURE DRIVER
-+M:	Ross Zwisler <ross.zwisler@linux.intel.com>
-+L:	linux-nvdimm@lists.01.org
-+Q:	https://patchwork.kernel.org/project/linux-nvdimm/list/
-+S:	Supported
-+F:	drivers/nvdimm/blk.c
-+F:	drivers/nvdimm/region_devs.c
-+F:	drivers/acpi/nfit*
-+
-+LIBNVDIMM BTT: BLOCK TRANSLATION TABLE
-+M:	Vishal Verma <vishal.l.verma@intel.com>
-+L:	linux-nvdimm@lists.01.org
-+Q:	https://patchwork.kernel.org/project/linux-nvdimm/list/
-+S:	Supported
-+F:	drivers/nvdimm/btt*
-+
-+LIBNVDIMM PMEM: PERSISTENT MEMORY DRIVER
-+M:	Ross Zwisler <ross.zwisler@linux.intel.com>
-+L:	linux-nvdimm@lists.01.org
-+Q:	https://patchwork.kernel.org/project/linux-nvdimm/list/
-+S:	Supported
-+F:	drivers/nvdimm/pmem.c
-+
- LINUX FOR IBM pSERIES (RS/6000)
- M:	Paul Mackerras <paulus@au.ibm.com>
- W:	http://www.ibm.com/linux/ltc/projects/ppc
-@@ -8136,12 +8169,6 @@ S:	Maintained
- F:	Documentation/blockdev/ramdisk.txt
- F:	drivers/block/brd.c
+@@ -908,6 +1316,10 @@ static int acpi_nfit_init_mapping(struct acpi_nfit_desc *acpi_desc,
  
--PERSISTENT MEMORY DRIVER
--M:	Ross Zwisler <ross.zwisler@linux.intel.com>
--L:	linux-nvdimm@lists.01.org
--S:	Supported
--F:	drivers/block/pmem.c
--
- RANDOM NUMBER DRIVER
- M:	"Theodore Ts'o" <tytso@mit.edu>
- S:	Maintained
+ 		ndr_desc->nd_mapping = nd_mapping;
+ 		ndr_desc->num_mappings = blk_valid;
++		ndbr_desc = to_blk_region_desc(ndr_desc);
++		ndbr_desc->enable = acpi_nfit_blk_region_enable;
++		ndbr_desc->disable = acpi_nfit_blk_region_disable;
++		ndbr_desc->do_io = acpi_nfit_blk_region_do_io;
+ 		if (!nvdimm_blk_region_create(acpi_desc->nvdimm_bus, ndr_desc))
+ 			return -ENOMEM;
+ 		break;
+@@ -921,8 +1333,9 @@ static int acpi_nfit_register_region(struct acpi_nfit_desc *acpi_desc,
+ {
+ 	static struct nd_mapping nd_mappings[ND_MAX_MAPPINGS];
+ 	struct acpi_nfit_system_address *spa = nfit_spa->spa;
++	struct nd_blk_region_desc ndbr_desc;
++	struct nd_region_desc *ndr_desc;
+ 	struct nfit_memdev *nfit_memdev;
+-	struct nd_region_desc ndr_desc;
+ 	struct nvdimm_bus *nvdimm_bus;
+ 	struct resource res;
+ 	int count = 0, rc;
+@@ -935,12 +1348,13 @@ static int acpi_nfit_register_region(struct acpi_nfit_desc *acpi_desc,
+ 
+ 	memset(&res, 0, sizeof(res));
+ 	memset(&nd_mappings, 0, sizeof(nd_mappings));
+-	memset(&ndr_desc, 0, sizeof(ndr_desc));
++	memset(&ndbr_desc, 0, sizeof(ndbr_desc));
+ 	res.start = spa->address;
+ 	res.end = res.start + spa->length - 1;
+-	ndr_desc.res = &res;
+-	ndr_desc.provider_data = nfit_spa;
+-	ndr_desc.attr_groups = acpi_nfit_region_attribute_groups;
++	ndr_desc = &ndbr_desc.ndr_desc;
++	ndr_desc->res = &res;
++	ndr_desc->provider_data = nfit_spa;
++	ndr_desc->attr_groups = acpi_nfit_region_attribute_groups;
+ 	list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list) {
+ 		struct acpi_nfit_memory_map *memdev = nfit_memdev->memdev;
+ 		struct nd_mapping *nd_mapping;
+@@ -953,24 +1367,24 @@ static int acpi_nfit_register_region(struct acpi_nfit_desc *acpi_desc,
+ 			return -ENXIO;
+ 		}
+ 		nd_mapping = &nd_mappings[count++];
+-		rc = acpi_nfit_init_mapping(acpi_desc, nd_mapping, &ndr_desc,
++		rc = acpi_nfit_init_mapping(acpi_desc, nd_mapping, ndr_desc,
+ 				memdev, spa);
+ 		if (rc)
+ 			return rc;
+ 	}
+ 
+-	ndr_desc.nd_mapping = nd_mappings;
+-	ndr_desc.num_mappings = count;
+-	rc = acpi_nfit_init_interleave_set(acpi_desc, &ndr_desc, spa);
++	ndr_desc->nd_mapping = nd_mappings;
++	ndr_desc->num_mappings = count;
++	rc = acpi_nfit_init_interleave_set(acpi_desc, ndr_desc, spa);
+ 	if (rc)
+ 		return rc;
+ 
+ 	nvdimm_bus = acpi_desc->nvdimm_bus;
+ 	if (nfit_spa_type(spa) == NFIT_SPA_PM) {
+-		if (!nvdimm_pmem_region_create(nvdimm_bus, &ndr_desc))
++		if (!nvdimm_pmem_region_create(nvdimm_bus, ndr_desc))
+ 			return -ENOMEM;
+ 	} else if (nfit_spa_type(spa) == NFIT_SPA_VOLATILE) {
+-		if (!nvdimm_volatile_region_create(nvdimm_bus, &ndr_desc))
++		if (!nvdimm_volatile_region_create(nvdimm_bus, ndr_desc))
+ 			return -ENOMEM;
+ 	}
+ 	return 0;
+@@ -996,11 +1410,14 @@ static int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
+ 	u8 *data;
+ 	int rc;
+ 
++	INIT_LIST_HEAD(&acpi_desc->spa_maps);
+ 	INIT_LIST_HEAD(&acpi_desc->spas);
+ 	INIT_LIST_HEAD(&acpi_desc->dcrs);
+ 	INIT_LIST_HEAD(&acpi_desc->bdws);
++	INIT_LIST_HEAD(&acpi_desc->idts);
+ 	INIT_LIST_HEAD(&acpi_desc->memdevs);
+ 	INIT_LIST_HEAD(&acpi_desc->dimms);
++	mutex_init(&acpi_desc->spa_map_mutex);
+ 
+ 	data = (u8 *) acpi_desc->nfit;
+ 	end = data + sz;
+diff --git a/drivers/acpi/nfit.h b/drivers/acpi/nfit.h
+index b76e33629098..7bd38b7baf39 100644
+--- a/drivers/acpi/nfit.h
++++ b/drivers/acpi/nfit.h
+@@ -52,6 +52,11 @@ struct nfit_bdw {
+ 	struct list_head list;
+ };
+ 
++struct nfit_idt {
++	struct acpi_nfit_interleave *idt;
++	struct list_head list;
++};
++
+ struct nfit_memdev {
+ 	struct acpi_nfit_memory_map *memdev;
+ 	struct list_head list;
+@@ -62,10 +67,13 @@ struct nfit_mem {
+ 	struct nvdimm *nvdimm;
+ 	struct acpi_nfit_memory_map *memdev_dcr;
+ 	struct acpi_nfit_memory_map *memdev_pmem;
++	struct acpi_nfit_memory_map *memdev_bdw;
+ 	struct acpi_nfit_control_region *dcr;
+ 	struct acpi_nfit_data_region *bdw;
+ 	struct acpi_nfit_system_address *spa_dcr;
+ 	struct acpi_nfit_system_address *spa_bdw;
++	struct acpi_nfit_interleave *idt_dcr;
++	struct acpi_nfit_interleave *idt_bdw;
+ 	struct list_head list;
+ 	struct acpi_device *adev;
+ 	unsigned long dsm_mask;
+@@ -74,16 +82,57 @@ struct nfit_mem {
+ struct acpi_nfit_desc {
+ 	struct nvdimm_bus_descriptor nd_desc;
+ 	struct acpi_table_nfit *nfit;
++	struct mutex spa_map_mutex;
++	struct list_head spa_maps;
+ 	struct list_head memdevs;
+ 	struct list_head dimms;
+ 	struct list_head spas;
+ 	struct list_head dcrs;
+ 	struct list_head bdws;
++	struct list_head idts;
+ 	struct nvdimm_bus *nvdimm_bus;
+ 	struct device *dev;
+ 	unsigned long dimm_dsm_force_en;
+ };
+ 
++enum nd_blk_mmio_selector {
++	BDW,
++	DCR,
++};
++
++struct nfit_blk {
++	struct nfit_blk_mmio {
++		union {
++			void __iomem *base;
++			void *aperture;
++		};
++		u64 size;
++		u64 base_offset;
++		u32 line_size;
++		u32 num_lines;
++		u32 table_size;
++		struct acpi_nfit_interleave *idt;
++		struct acpi_nfit_system_address *spa;
++	} mmio[2];
++	struct nd_region *nd_region;
++	u64 bdw_offset; /* post interleave offset */
++	u64 stat_offset;
++	u64 cmd_offset;
++};
++
++struct nfit_spa_mapping {
++	struct acpi_nfit_desc *acpi_desc;
++	struct acpi_nfit_system_address *spa;
++	struct list_head list;
++	struct kref kref;
++	void __iomem *iomem;
++};
++
++static inline struct nfit_spa_mapping *to_spa_map(struct kref *kref)
++{
++	return container_of(kref, struct nfit_spa_mapping, kref);
++}
++
+ static inline struct acpi_nfit_memory_map *__to_nfit_memdev(
+ 		struct nfit_mem *nfit_mem)
+ {
+diff --git a/drivers/nvdimm/Kconfig b/drivers/nvdimm/Kconfig
+index 46df21e5de16..bbef6cc8ca0a 100644
+--- a/drivers/nvdimm/Kconfig
++++ b/drivers/nvdimm/Kconfig
+@@ -32,6 +32,18 @@ config BLK_DEV_PMEM
+ 
+ 	  Say Y if you want to use an NVDIMM
+ 
++config ND_BLK
++	tristate "BLK: Block data window (aperture) device support"
++	default LIBNVDIMM
++	help
++	  Support NVDIMMs, or other devices, that implement a BLK-mode
++	  access capability.  BLK-mode access uses memory-mapped-i/o
++	  apertures to access persistent media.
++
++	  Say Y if your platform firmware emits an ACPI.NFIT table
++	  (CONFIG_ACPI_NFIT), or otherwise exposes BLK-mode
++	  capabilities.
++
+ config ND_BTT_DEVS
+ 	bool
+ 
+diff --git a/drivers/nvdimm/Makefile b/drivers/nvdimm/Makefile
+index aa5bb1acf831..b5682e70904a 100644
+--- a/drivers/nvdimm/Makefile
++++ b/drivers/nvdimm/Makefile
+@@ -1,11 +1,14 @@
+ obj-$(CONFIG_LIBNVDIMM) += libnvdimm.o
+ obj-$(CONFIG_BLK_DEV_PMEM) += nd_pmem.o
+ obj-$(CONFIG_ND_BTT) += nd_btt.o
++obj-$(CONFIG_ND_BLK) += nd_blk.o
+ 
+ nd_pmem-y := pmem.o
+ 
+ nd_btt-y := btt.o
+ 
++nd_blk-y := blk.o
++
+ libnvdimm-y := core.o
+ libnvdimm-y += bus.o
+ libnvdimm-y += dimm_devs.o
+diff --git a/drivers/nvdimm/blk.c b/drivers/nvdimm/blk.c
+new file mode 100644
+index 000000000000..a2749b5e43d7
+--- /dev/null
++++ b/drivers/nvdimm/blk.c
+@@ -0,0 +1,241 @@
++/*
++ * NVDIMM Block Window Driver
++ * Copyright (c) 2014, Intel Corporation.
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms and conditions of the GNU General Public License,
++ * version 2, as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
++ * more details.
++ */
++
++#include <linux/blkdev.h>
++#include <linux/fs.h>
++#include <linux/genhd.h>
++#include <linux/module.h>
++#include <linux/moduleparam.h>
++#include <linux/nd.h>
++#include <linux/sizes.h>
++#include "nd.h"
++
++struct nd_blk_device {
++	struct request_queue *queue;
++	struct gendisk *disk;
++	struct nd_namespace_blk *nsblk;
++	struct nd_blk_region *ndbr;
++	size_t disk_size;
++};
++
++static int nd_blk_major;
++
++static resource_size_t to_dev_offset(struct nd_namespace_blk *nsblk,
++				resource_size_t ns_offset, unsigned int len)
++{
++	int i;
++
++	for (i = 0; i < nsblk->num_resources; i++) {
++		if (ns_offset < resource_size(nsblk->res[i])) {
++			if (ns_offset + len > resource_size(nsblk->res[i])) {
++				dev_WARN_ONCE(&nsblk->dev, 1,
++					"%s: illegal request\n", __func__);
++				return SIZE_MAX;
++			}
++			return nsblk->res[i]->start + ns_offset;
++		}
++		ns_offset -= resource_size(nsblk->res[i]);
++	}
++
++	dev_WARN_ONCE(&nsblk->dev, 1, "%s: request out of range\n", __func__);
++	return SIZE_MAX;
++}
++
++static void nd_blk_make_request(struct request_queue *q, struct bio *bio)
++{
++	struct block_device *bdev = bio->bi_bdev;
++	struct gendisk *disk = bdev->bd_disk;
++	struct nd_namespace_blk *nsblk;
++	struct nd_blk_device *blk_dev;
++	struct nd_blk_region *ndbr;
++	struct bvec_iter iter;
++	struct bio_vec bvec;
++	int err = 0, rw;
++	sector_t sector;
++
++	sector = bio->bi_iter.bi_sector;
++	if (bio_end_sector(bio) > get_capacity(disk)) {
++		err = -EIO;
++		goto out;
++	}
++
++	BUG_ON(bio->bi_rw & REQ_DISCARD);
++
++	rw = bio_data_dir(bio);
++
++	blk_dev = disk->private_data;
++	nsblk = blk_dev->nsblk;
++	ndbr = blk_dev->ndbr;
++	bio_for_each_segment(bvec, bio, iter) {
++		unsigned int len = bvec.bv_len;
++		resource_size_t	dev_offset;
++		void *iobuf;
++
++		BUG_ON(len > PAGE_SIZE);
++
++		dev_offset = to_dev_offset(nsblk, sector << SECTOR_SHIFT, len);
++		if (dev_offset == SIZE_MAX) {
++			err = -EIO;
++			goto out;
++		}
++
++		iobuf = kmap_atomic(bvec.bv_page);
++		err = ndbr->do_io(ndbr, dev_offset, iobuf + bvec.bv_offset,
++				len, rw);
++		kunmap_atomic(iobuf);
++		if (err)
++			goto out;
++
++		sector += len >> SECTOR_SHIFT;
++	}
++
++ out:
++	bio_endio(bio, err);
++}
++
++static int nd_blk_rw_bytes(struct gendisk *disk, resource_size_t offset,
++		void *iobuf, size_t n, int rw)
++{
++	struct nd_blk_device *blk_dev = disk->private_data;
++	struct nd_namespace_blk *nsblk = blk_dev->nsblk;
++	struct nd_blk_region *ndbr = blk_dev->ndbr;
++	resource_size_t	dev_offset;
++
++	dev_offset = to_dev_offset(nsblk, offset, n);
++
++	if (unlikely(offset + n > blk_dev->disk_size)) {
++		dev_WARN_ONCE(disk_to_dev(disk), 1, "request out of range\n");
++		return -EFAULT;
++	}
++
++	if (dev_offset == SIZE_MAX)
++		return -EIO;
++
++	return ndbr->do_io(ndbr, dev_offset, iobuf, n, rw);
++}
++
++static const struct block_device_operations nd_blk_fops = {
++	.owner = THIS_MODULE,
++	.rw_bytes = nd_blk_rw_bytes,
++};
++
++static int nd_blk_probe(struct device *dev)
++{
++	struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
++	struct nd_region *nd_region = to_nd_region(dev->parent);
++	struct nd_blk_device *blk_dev;
++	resource_size_t disk_size;
++	struct gendisk *disk;
++	int err;
++
++	disk_size = nd_namespace_blk_validate(nsblk);
++	if (disk_size < ND_MIN_NAMESPACE_SIZE)
++		return -ENXIO;
++
++	blk_dev = kzalloc(sizeof(*blk_dev), GFP_KERNEL);
++	if (!blk_dev)
++		return -ENOMEM;
++
++	blk_dev->disk_size	= disk_size;
++
++	blk_dev->queue = blk_alloc_queue(GFP_KERNEL);
++	if (!blk_dev->queue) {
++		err = -ENOMEM;
++		goto err_alloc_queue;
++	}
++
++	blk_queue_make_request(blk_dev->queue, nd_blk_make_request);
++	blk_queue_max_hw_sectors(blk_dev->queue, 1024);
++	blk_queue_bounce_limit(blk_dev->queue, BLK_BOUNCE_ANY);
++	blk_queue_logical_block_size(blk_dev->queue, nsblk->lbasize);
++
++	disk = blk_dev->disk = alloc_disk(0);
++	if (!disk) {
++		err = -ENOMEM;
++		goto err_alloc_disk;
++	}
++
++	blk_dev->ndbr = to_nd_blk_region(nsblk->dev.parent);
++	blk_dev->nsblk = nsblk;
++
++	disk->driverfs_dev	= dev;
++	disk->major		= nd_blk_major;
++	disk->first_minor	= 0;
++	disk->fops		= &nd_blk_fops;
++	disk->private_data	= blk_dev;
++	disk->queue		= blk_dev->queue;
++	disk->flags		= GENHD_FL_EXT_DEVT;
++	sprintf(disk->disk_name, "ndblk%d.%d", nd_region->id, nsblk->id);
++	set_capacity(disk, disk_size >> SECTOR_SHIFT);
++
++	dev_set_drvdata(dev, blk_dev);
++	nvdimm_bus_add_disk(disk);
++
++	return 0;
++
++ err_alloc_disk:
++	blk_cleanup_queue(blk_dev->queue);
++ err_alloc_queue:
++	kfree(blk_dev);
++	return err;
++}
++
++static int nd_blk_remove(struct device *dev)
++{
++	struct nd_blk_device *blk_dev = dev_get_drvdata(dev);
++
++	nvdimm_bus_remove_disk(blk_dev->disk);
++	blk_cleanup_queue(blk_dev->queue);
++	kfree(blk_dev);
++
++	return 0;
++}
++
++static struct nd_device_driver nd_blk_driver = {
++	.probe = nd_blk_probe,
++	.remove = nd_blk_remove,
++	.drv = {
++		.name = "nd_blk",
++	},
++	.type = ND_DRIVER_NAMESPACE_BLK,
++};
++
++static int __init nd_blk_init(void)
++{
++	int rc;
++
++	rc = register_blkdev(0, "nd_blk");
++	if (rc < 0)
++		return rc;
++
++	nd_blk_major = rc;
++	rc = nd_driver_register(&nd_blk_driver);
++
++	if (rc < 0)
++		unregister_blkdev(nd_blk_major, "nd_blk");
++
++	return rc;
++}
++
++static void __exit nd_blk_exit(void)
++{
++	driver_unregister(&nd_blk_driver.drv);
++	unregister_blkdev(nd_blk_major, "nd_blk");
++}
++
++MODULE_AUTHOR("Ross Zwisler <ross.zwisler@linux.intel.com>");
++MODULE_LICENSE("GPL v2");
++MODULE_ALIAS_ND_DEVICE(ND_DEVICE_NAMESPACE_BLK);
++module_init(nd_blk_init);
++module_exit(nd_blk_exit);
+diff --git a/drivers/nvdimm/bus.c b/drivers/nvdimm/bus.c
+index 14373e67ee65..798b5e32e782 100644
+--- a/drivers/nvdimm/bus.c
++++ b/drivers/nvdimm/bus.c
+@@ -101,6 +101,8 @@ static int nvdimm_bus_probe(struct device *dev)
+ 	rc = nd_drv->probe(dev);
+ 	if (rc == 0)
+ 		nd_region_probe_success(nvdimm_bus, dev);
++	else
++		nd_region_probe_fail(nvdimm_bus, dev);
+ 	nvdimm_bus_probe_end(nvdimm_bus);
+ 
+ 	dev_dbg(&nvdimm_bus->dev, "%s.probe(%s) = %d\n", dev->driver->name,
+diff --git a/drivers/nvdimm/dimm_devs.c b/drivers/nvdimm/dimm_devs.c
+index 5185f3c4bf03..0f9e3398222a 100644
+--- a/drivers/nvdimm/dimm_devs.c
++++ b/drivers/nvdimm/dimm_devs.c
+@@ -209,6 +209,15 @@ struct nvdimm *to_nvdimm(struct device *dev)
+ }
+ EXPORT_SYMBOL_GPL(to_nvdimm);
+ 
++struct nvdimm *nd_blk_region_to_dimm(struct nd_blk_region *ndbr)
++{
++	struct nd_region *nd_region = &ndbr->nd_region;
++	struct nd_mapping *nd_mapping = &nd_region->mapping[0];
++
++	return nd_mapping->nvdimm;
++}
++EXPORT_SYMBOL_GPL(nd_blk_region_to_dimm);
++
+ struct nvdimm_drvdata *to_ndd(struct nd_mapping *nd_mapping)
+ {
+ 	struct nvdimm *nvdimm = nd_mapping->nvdimm;
+diff --git a/drivers/nvdimm/namespace_devs.c b/drivers/nvdimm/namespace_devs.c
+index 16744ad051bf..4fb501daf894 100644
+--- a/drivers/nvdimm/namespace_devs.c
++++ b/drivers/nvdimm/namespace_devs.c
+@@ -149,6 +149,54 @@ static resource_size_t nd_namespace_blk_size(struct nd_namespace_blk *nsblk)
+ 	return size;
+ }
+ 
++resource_size_t nd_namespace_blk_validate(struct nd_namespace_blk *nsblk)
++{
++	struct nd_region *nd_region = to_nd_region(nsblk->dev.parent);
++	struct nd_mapping *nd_mapping = &nd_region->mapping[0];
++	struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
++	struct nd_label_id label_id;
++	struct resource *res;
++	int count, i;
++
++	if (!nsblk->uuid || !nsblk->lbasize)
++		return 0;
++
++	count = 0;
++	nd_label_gen_id(&label_id, nsblk->uuid, NSLABEL_FLAG_LOCAL);
++	for_each_dpa_resource(ndd, res) {
++		if (strcmp(res->name, label_id.id) != 0)
++			continue;
++		/*
++		 * Resources with unacknoweldged adjustments indicate a
++		 * failure to update labels
++		 */
++		if (res->flags & DPA_RESOURCE_ADJUSTED)
++			return 0;
++		count++;
++	}
++
++	/* These values match after a successful label update */
++	if (count != nsblk->num_resources)
++		return 0;
++
++	for (i = 0; i < nsblk->num_resources; i++) {
++		struct resource *found = NULL;
++
++		for_each_dpa_resource(ndd, res)
++			if (res == nsblk->res[i]) {
++				found = res;
++				break;
++			}
++		/* stale resource */
++		if (!found)
++			return 0;
++	}
++
++	return nd_namespace_blk_size(nsblk);
++}
++EXPORT_SYMBOL(nd_namespace_blk_validate);
++
++
+ static int nd_namespace_label_update(struct nd_region *nd_region,
+ 		struct device *dev)
+ {
+diff --git a/drivers/nvdimm/nd-core.h b/drivers/nvdimm/nd-core.h
+index fec3376be164..9d7687c53d8f 100644
+--- a/drivers/nvdimm/nd-core.h
++++ b/drivers/nvdimm/nd-core.h
+@@ -23,10 +23,7 @@ extern struct list_head nvdimm_bus_list;
+ extern struct mutex nvdimm_bus_list_mutex;
+ extern int nvdimm_major;
+ 
+-struct block_device;
+-struct nd_io_claim;
+ struct nd_btt;
+-struct nd_io;
+ 
+ struct nvdimm_bus {
+ 	struct nvdimm_bus_descriptor *nd_desc;
+@@ -49,8 +46,8 @@ struct nvdimm {
+ };
+ 
+ bool is_nvdimm(struct device *dev);
+-bool is_nd_blk(struct device *dev);
+ bool is_nd_pmem(struct device *dev);
++bool is_nd_blk(struct device *dev);
+ struct gendisk;
+ #if IS_ENABLED(CONFIG_ND_BTT_DEVS)
+ bool is_nd_btt(struct device *dev);
+@@ -82,6 +79,7 @@ struct nvdimm_bus *walk_to_nvdimm_bus(struct device *nd_dev);
+ int __init nvdimm_bus_init(void);
+ void nvdimm_bus_exit(void);
+ void nd_region_probe_success(struct nvdimm_bus *nvdimm_bus, struct device *dev);
++void nd_region_probe_fail(struct nvdimm_bus *nvdimm_bus, struct device *dev);
+ struct nd_region;
+ void nd_region_create_blk_seed(struct nd_region *nd_region);
+ void nd_region_disable(struct nvdimm_bus *nvdimm_bus, struct device *dev);
+diff --git a/drivers/nvdimm/nd.h b/drivers/nvdimm/nd.h
+index d6f481250cf2..1362c49babd8 100644
+--- a/drivers/nvdimm/nd.h
++++ b/drivers/nvdimm/nd.h
+@@ -95,6 +95,15 @@ struct nd_region {
+ 	struct nd_mapping mapping[0];
+ };
+ 
++struct nd_blk_region {
++	int (*enable)(struct nvdimm_bus *nvdimm_bus, struct device *dev);
++	void (*disable)(struct nvdimm_bus *nvdimm_bus, struct device *dev);
++	int (*do_io)(struct nd_blk_region *ndbr, resource_size_t dpa,
++			void *iobuf, u64 len, int rw);
++	void *blk_provider_data;
++	struct nd_region nd_region;
++};
++
+ /*
+  * Lookup next in the repeating sequence of 01, 10, and 11.
+  */
+@@ -141,8 +150,6 @@ struct nd_btt *to_nd_btt(struct device *dev);
+ struct btt_sb;
+ u64 nd_btt_sb_checksum(struct btt_sb *btt_sb);
+ struct nd_region *to_nd_region(struct device *dev);
+-unsigned int nd_region_acquire_lane(struct nd_region *nd_region);
+-void nd_region_release_lane(struct nd_region *nd_region, unsigned int lane);
+ int nd_region_to_nstype(struct nd_region *nd_region);
+ int nd_region_register_namespaces(struct nd_region *nd_region, int *err);
+ u64 nd_region_interleave_set_cookie(struct nd_region *nd_region);
+@@ -156,4 +163,6 @@ void nvdimm_free_dpa(struct nvdimm_drvdata *ndd, struct resource *res);
+ struct resource *nvdimm_allocate_dpa(struct nvdimm_drvdata *ndd,
+ 		struct nd_label_id *label_id, resource_size_t start,
+ 		resource_size_t n);
++int nd_blk_region_init(struct nd_region *nd_region);
++resource_size_t nd_namespace_blk_validate(struct nd_namespace_blk *nsblk);
+ #endif /* __ND_H__ */
+diff --git a/drivers/nvdimm/region.c b/drivers/nvdimm/region.c
+index aa617bf86506..d9d82e7a90fa 100644
+--- a/drivers/nvdimm/region.c
++++ b/drivers/nvdimm/region.c
+@@ -94,11 +94,10 @@ EXPORT_SYMBOL(nd_region_release_lane);
+ 
+ static int nd_region_probe(struct device *dev)
+ {
+-	int err;
++	int err, rc;
+ 	static unsigned long once;
+ 	struct nd_region_namespaces *num_ns;
+ 	struct nd_region *nd_region = to_nd_region(dev);
+-	int rc = nd_region_register_namespaces(nd_region, &err);
+ 
+ 	if (nd_region->num_lanes > num_online_cpus()
+ 			&& nd_region->num_lanes < num_possible_cpus()
+@@ -110,6 +109,11 @@ static int nd_region_probe(struct device *dev)
+ 				nd_region->num_lanes);
+ 	}
+ 
++	rc = nd_blk_region_init(nd_region);
++	if (rc)
++		return rc;
++
++	rc = nd_region_register_namespaces(nd_region, &err);
+ 	num_ns = devm_kzalloc(dev, sizeof(*num_ns), GFP_KERNEL);
+ 	if (!num_ns)
+ 		return -ENOMEM;
+diff --git a/drivers/nvdimm/region_devs.c b/drivers/nvdimm/region_devs.c
+index 30bb283ecee2..cbae6cec0e5d 100644
+--- a/drivers/nvdimm/region_devs.c
++++ b/drivers/nvdimm/region_devs.c
+@@ -11,6 +11,7 @@
+  * General Public License for more details.
+  */
+ #include <linux/scatterlist.h>
++#include <linux/highmem.h>
+ #include <linux/sched.h>
+ #include <linux/slab.h>
+ #include <linux/sort.h>
+@@ -33,7 +34,10 @@ static void nd_region_release(struct device *dev)
+ 		put_device(&nvdimm->dev);
+ 	}
+ 	ida_simple_remove(&region_ida, nd_region->id);
+-	kfree(nd_region);
++	if (is_nd_blk(dev))
++		kfree(to_nd_blk_region(dev));
++	else
++		kfree(nd_region);
+ }
+ 
+ static struct device_type nd_blk_device_type = {
+@@ -70,6 +74,33 @@ struct nd_region *to_nd_region(struct device *dev)
+ }
+ EXPORT_SYMBOL_GPL(to_nd_region);
+ 
++struct nd_blk_region *to_nd_blk_region(struct device *dev)
++{
++	struct nd_region *nd_region = to_nd_region(dev);
++
++	WARN_ON(!is_nd_blk(dev));
++	return container_of(nd_region, struct nd_blk_region, nd_region);
++}
++EXPORT_SYMBOL_GPL(to_nd_blk_region);
++
++void *nd_region_provider_data(struct nd_region *nd_region)
++{
++	return nd_region->provider_data;
++}
++EXPORT_SYMBOL_GPL(nd_region_provider_data);
++
++void *nd_blk_region_provider_data(struct nd_blk_region *ndbr)
++{
++	return ndbr->blk_provider_data;
++}
++EXPORT_SYMBOL_GPL(nd_blk_region_provider_data);
++
++void nd_blk_region_set_provider_data(struct nd_blk_region *ndbr, void *data)
++{
++	ndbr->blk_provider_data = data;
++}
++EXPORT_SYMBOL_GPL(nd_blk_region_set_provider_data);
++
+ /**
+  * nd_region_to_nstype() - region to an integer namespace type
+  * @nd_region: region-device to interrogate
+@@ -345,7 +376,9 @@ u64 nd_region_interleave_set_cookie(struct nd_region *nd_region)
+ 
+ /*
+  * Upon successful probe/remove, take/release a reference on the
+- * associated interleave set (if present)
++ * associated dimms in the interleave set, on successful probe of a BLK
++ * namespace check if we need a new seed, and on remove of a BLK region
++ * notify the provider to disable the region.
+  */
+ static void nd_region_notify_driver_action(struct nvdimm_bus *nvdimm_bus,
+ 		struct device *dev, bool probe)
+@@ -360,9 +393,14 @@ static void nd_region_notify_driver_action(struct nvdimm_bus *nvdimm_bus,
+ 
+ 			if (probe)
+ 				atomic_inc(&nvdimm->busy);
+-			else
++			else if (!probe)
+ 				atomic_dec(&nvdimm->busy);
+ 		}
++
++		if (is_nd_pmem(dev) || probe)
++			return;
++
++		to_nd_blk_region(dev)->disable(nvdimm_bus, dev);
+ 	} else if (dev->parent && is_nd_blk(dev->parent) && probe) {
+ 		struct nd_region *nd_region = to_nd_region(dev->parent);
+ 
+@@ -378,6 +416,13 @@ void nd_region_probe_success(struct nvdimm_bus *nvdimm_bus, struct device *dev)
+ 	nd_region_notify_driver_action(nvdimm_bus, dev, true);
+ }
+ 
++/* on failed probe of a blk region tell the provider to undo the enable */
++void nd_region_probe_fail(struct nvdimm_bus *nvdimm_bus, struct device *dev)
++{
++	if (is_nd_blk(dev))
++		to_nd_blk_region(dev)->disable(nvdimm_bus, dev);
++}
++
+ void nd_region_disable(struct nvdimm_bus *nvdimm_bus, struct device *dev)
+ {
+ 	nd_region_notify_driver_action(nvdimm_bus, dev, false);
+@@ -495,11 +540,21 @@ struct attribute_group nd_mapping_attribute_group = {
+ };
+ EXPORT_SYMBOL_GPL(nd_mapping_attribute_group);
+ 
+-void *nd_region_provider_data(struct nd_region *nd_region)
++int nd_blk_region_init(struct nd_region *nd_region)
+ {
+-	return nd_region->provider_data;
++	struct device *dev = &nd_region->dev;
++	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
++
++	if (!is_nd_blk(dev))
++		return 0;
++
++	if (nd_region->ndr_mappings < 1) {
++		dev_err(dev, "invalid BLK region\n");
++		return -ENXIO;
++	}
++
++	return to_nd_blk_region(dev)->enable(nvdimm_bus, dev);
+ }
+-EXPORT_SYMBOL_GPL(nd_region_provider_data);
+ 
+ static struct nd_region *nd_region_create(struct nvdimm_bus *nvdimm_bus,
+ 		struct nd_region_desc *ndr_desc, struct device_type *dev_type,
+@@ -521,9 +576,28 @@ static struct nd_region *nd_region_create(struct nvdimm_bus *nvdimm_bus,
+ 		}
+ 	}
+ 
+-	nd_region = kzalloc(sizeof(struct nd_region)
+-			+ sizeof(struct nd_mapping) * ndr_desc->num_mappings,
+-			GFP_KERNEL);
++	if (dev_type == &nd_blk_device_type) {
++		struct nd_blk_region_desc *ndbr_desc;
++		struct nd_blk_region *ndbr;
++
++		ndbr_desc = to_blk_region_desc(ndr_desc);
++		ndbr = kzalloc(sizeof(*ndbr) + sizeof(struct nd_mapping)
++				* ndr_desc->num_mappings,
++				GFP_KERNEL);
++		if (ndbr) {
++			nd_region = &ndbr->nd_region;
++			ndbr->enable = ndbr_desc->enable;
++			ndbr->disable = ndbr_desc->disable;
++			ndbr->do_io = ndbr_desc->do_io;
++		} else
++			nd_region = NULL;
++	} else {
++		nd_region = kzalloc(sizeof(struct nd_region)
++				+ sizeof(struct nd_mapping)
++				* ndr_desc->num_mappings,
++				GFP_KERNEL);
++	}
++
+ 	if (!nd_region)
+ 		return NULL;
+ 	nd_region->id = ida_simple_get(&region_ida, 0, 0, GFP_KERNEL);
+diff --git a/include/linux/libnvdimm.h b/include/linux/libnvdimm.h
+index 39c6a9c15d21..5362fd92023a 100644
+--- a/include/linux/libnvdimm.h
++++ b/include/linux/libnvdimm.h
+@@ -14,6 +14,7 @@
+  */
+ #ifndef __LIBNVDIMM_H__
+ #define __LIBNVDIMM_H__
++#include <linux/kernel.h>
+ #include <linux/sizes.h>
+ #include <linux/types.h>
+ 
+@@ -81,8 +82,24 @@ struct nd_region_desc {
+ };
+ 
+ struct nvdimm_bus;
+-struct device;
+ struct module;
++struct device;
++struct nd_blk_region;
++struct nd_blk_region_desc {
++	int (*enable)(struct nvdimm_bus *nvdimm_bus, struct device *dev);
++	void (*disable)(struct nvdimm_bus *nvdimm_bus, struct device *dev);
++	int (*do_io)(struct nd_blk_region *ndbr, resource_size_t dpa,
++			void *iobuf, u64 len, int rw);
++	struct nd_region_desc ndr_desc;
++};
++
++static inline struct nd_blk_region_desc *to_blk_region_desc(
++		struct nd_region_desc *ndr_desc)
++{
++	return container_of(ndr_desc, struct nd_blk_region_desc, ndr_desc);
++
++}
++
+ struct nvdimm_bus *__nvdimm_bus_register(struct device *parent,
+ 		struct nvdimm_bus_descriptor *nfit_desc, struct module *module);
+ #define nvdimm_bus_register(parent, desc) \
+@@ -91,10 +108,10 @@ void nvdimm_bus_unregister(struct nvdimm_bus *nvdimm_bus);
+ struct nvdimm_bus *to_nvdimm_bus(struct device *dev);
+ struct nvdimm *to_nvdimm(struct device *dev);
+ struct nd_region *to_nd_region(struct device *dev);
++struct nd_blk_region *to_nd_blk_region(struct device *dev);
+ struct nvdimm_bus_descriptor *to_nd_desc(struct nvdimm_bus *nvdimm_bus);
+ const char *nvdimm_name(struct nvdimm *nvdimm);
+ void *nvdimm_provider_data(struct nvdimm *nvdimm);
+-void *nd_region_provider_data(struct nd_region *nd_region);
+ struct nvdimm *nvdimm_create(struct nvdimm_bus *nvdimm_bus, void *provider_data,
+ 		const struct attribute_group **groups, unsigned long flags,
+ 		unsigned long *dsm_mask);
+@@ -112,5 +129,11 @@ struct nd_region *nvdimm_blk_region_create(struct nvdimm_bus *nvdimm_bus,
+ 		struct nd_region_desc *ndr_desc);
+ struct nd_region *nvdimm_volatile_region_create(struct nvdimm_bus *nvdimm_bus,
+ 		struct nd_region_desc *ndr_desc);
++void *nd_region_provider_data(struct nd_region *nd_region);
++void *nd_blk_region_provider_data(struct nd_blk_region *ndbr);
++void nd_blk_region_set_provider_data(struct nd_blk_region *ndbr, void *data);
++struct nvdimm *nd_blk_region_to_dimm(struct nd_blk_region *ndbr);
++unsigned int nd_region_acquire_lane(struct nd_region *nd_region);
++void nd_region_release_lane(struct nd_region *nd_region, unsigned int lane);
+ u64 nd_fletcher64(void *addr, size_t len, bool le);
+ #endif /* __LIBNVDIMM_H__ */
+
