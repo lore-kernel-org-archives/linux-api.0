@@ -1,44 +1,23 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: Generic kernel features that need architecture(mips) support
-Date: Thu, 11 Jun 2015 08:24:53 +0200
-Message-ID: <20150611062452.GB32133@gmail.com>
-References: <55759543.1010408@gmail.com>
- <20150610145804.GG2753@linux-mips.org>
- <5578679D.2030307@gmail.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH v5 17/21] libnvdimm: infrastructure for btt devices
+Date: Thu, 11 Jun 2015 09:28:12 +0200
+Message-ID: <20150611072812.GB1905@lst.de>
+References: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com> <20150602001541.4506.90125.stgit@dwillia2-desk3.amr.corp.intel.com> <20150609064200.GE9804@lst.de> <20150610184616.GL2729@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
+Return-path: <linux-acpi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <5578679D.2030307@gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Jonathan Corbet <corbet@lwn.net>
-Cc: Ralf Baechle <ralf@linux-mips.org>, linux-mips@linux-mips.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
+In-Reply-To: <20150610184616.GL2729@linux.intel.com>
+Sender: linux-acpi-owner@vger.kernel.org
+To: Matthew Wilcox <willy@linux.intel.com>
+Cc: Christoph Hellwig <hch@lst.de>, Dan Williams <dan.j.williams@intel.com>, axboe@kernel.dk, sfr@canb.auug.org.au, rafael@kernel.org, neilb@suse.de, gregkh@linuxfoundation.org, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-api@vger.kernel.org, akpm@linux-foundation.org, mingo@kernel.org
 List-Id: linux-api@vger.kernel.org
 
+On Wed, Jun 10, 2015 at 02:46:16PM -0400, Matthew Wilcox wrote:
+> Don't screw up rw_page.  The point of rw_page is to read or write a page
+> cache page.  It can sleep, and it indicates success by using the page
+> flags.  Don't try and scqueeze rw_bytes into it.  If you want rw_bytes
+> to be a queue operation, that's one thing, but don't mess with rw_page.
 
-(Jon Cc:-ed)
-
-* Xose Vazquez Perez <xose.vazquez@gmail.com> wrote:
-
-> On 06/10/2015 04:58 PM, Ralf Baechle wrote:
-> 
-> > How are the documentation files in Documentation/features/ maintained?
-> > They were automatically generated so I wonder if I have to take care
-> > of anything.
-> 
-> CC: Ingo and related ml.
-
-So changes to Documentation/features/ should come as simple patches done from hand 
-editing, there's no need to preserve any initial (half-)automated generation. 
-Formatting should be preserved so that Documentation/features/list-arch.sh still 
-works as before.
-
-Jon: would you like to receive all patches to Documentation/features/ so you can 
-collect them in the documentation tree, or can maintainers patch it as part of any 
-feature work that affects the tables? I think it's all finegrained enough to not 
-create conflicts. That way they would become partly self-maintaining. (Or at least 
-one can always hope! ;-)
-
-Thanks,
-
-	Ingo
+Oh, I forgot about the page manipulating nature.  Yes, we'll need a different
+operation in this case.
