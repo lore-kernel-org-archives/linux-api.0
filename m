@@ -1,127 +1,73 @@
-From: Eric B Munson <emunson@akamai.com>
+From: Andrew Morton <akpm@linux-foundation.org>
 Subject: Re: [RESEND PATCH V2 0/3] Allow user to request memory to be locked
  on page fault
-Date: Thu, 11 Jun 2015 15:21:30 -0400
-Message-ID: <5579DFBA.80809@akamai.com>
-References: <1433942810-7852-1-git-send-email-emunson@akamai.com> <20150610145929.b22be8647887ea7091b09ae1@linux-foundation.org>
+Date: Thu, 11 Jun 2015 12:34:24 -0700
+Message-ID: <20150611123424.4bb07cffd0e5bb146cc92231@linux-foundation.org>
+References: <1433942810-7852-1-git-send-email-emunson@akamai.com>
+	<20150610145929.b22be8647887ea7091b09ae1@linux-foundation.org>
+	<5579DFBA.80809@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150610145929.b22be8647887ea7091b09ae1@linux-foundation.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <5579DFBA.80809@akamai.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Eric B Munson <emunson@akamai.com>
 Cc: Shuah Khan <shuahkh@osg.samsung.com>, Michal Hocko <mhocko@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+On Thu, 11 Jun 2015 15:21:30 -0400 Eric B Munson <emunson@akamai.com> wrote:
 
-On 06/10/2015 05:59 PM, Andrew Morton wrote:
-> On Wed, 10 Jun 2015 09:26:47 -0400 Eric B Munson
-> <emunson@akamai.com> wrote:
->=20
->> mlock() allows a user to control page out of program memory, but
->> this comes at the cost of faulting in the entire mapping when it
->> is
->=20
-> s/mapping/locked area/
+> > Ditto mlockall(MCL_ONFAULT) followed by munlock().  I'm not sure
+> > that even makes sense but the behaviour should be understood and
+> > tested.
+>
+> I have extended the kselftest for lock-on-fault to try both of these
+> scenarios and they work as expected.  The VMA is split and the VM
+> flags are set appropriately for the resulting VMAs.
 
-Done.
+munlock() should do vma merging as well.  I *think* we implemented
+that.  More tests for you to add ;)
 
->=20
->> allocated.  For large mappings where the entire area is not
->> necessary this is not ideal.
->>=20
->> This series introduces new flags for mmap() and mlockall() that
->> allow a user to specify that the covered are should not be paged
->> out, but only after the memory has been used the first time.
->=20
-> The comparison with MCL_FUTURE is hiding over in the 2/3 changelog.
->  It's important so let's copy it here.
->=20
-> : MCL_ONFAULT is preferrable to MCL_FUTURE for the use cases
-> enumerated : in the previous patch becuase MCL_FUTURE will behave
-> as if each mapping : was made with MAP_LOCKED, causing the entire
-> mapping to be faulted in : when new space is allocated or mapped.
-> MCL_ONFAULT allows the user to : delay the fault in cost of any
-> given page until it is actually needed, : but then guarantees that
-> that page will always be resident.
+How are you testing the vma merging and splitting, btw?  Parsing
+the profcs files?
 
-Done
+> > What's missing here is a syscall to set VM_LOCKONFAULT on an
+> > arbitrary range of memory - mlock() for lock-on-fault.  It's a
+> > shame that mlock() didn't take a `mode' argument.  Perhaps we
+> > should add such a syscall - that would make the mmap flag unneeded
+> > but I suppose it should be kept for symmetry.
+> 
+> Do you want such a system call as part of this set?  I would need some
+> time to make sure I had thought through all the possible corners one
+> could get into with such a call, so it would delay a V3 quite a bit.
+> Otherwise I can send a V3 out immediately.
 
->=20
-> I *think* it all looks OK.  I'd like someone else to go over it
-> also if poss.
->=20
->=20
-> I guess the 2/3 changelog should have something like
->=20
-> : munlockall() will clear MCL_ONFAULT on all vma's in the process's
-> VM.
+I think the way to look at this is to pretend that mm/mlock.c doesn't
+exist and ask "how should we design these features".
 
-Done
+And that would be:
 
->=20
-> It's pretty obvious, but the manpage delta should make this clear
-> also.
+- mmap() takes a `flags' argument: MAP_LOCKED|MAP_LOCKONFAULT.
 
-Done
+- mlock() takes a `flags' argument.  Presently that's
+  MLOCK_LOCKED|MLOCK_LOCKONFAULT.
 
->=20
->=20
-> Also the changelog(s) and manpage delta should explain that
-> munlock() clears MCL_ONFAULT.
+- munlock() takes a `flags' arument.  MLOCK_LOCKED|MLOCK_LOCKONFAULT
+  to specify which flags are being cleared.
 
-Done
+- mlockall() and munlockall() ditto.
 
->=20
-> And now I'm wondering what happens if userspace does=20
-> mmap(MAP_LOCKONFAULT) and later does munlock() on just part of
-> that region.  Does the vma get split?  Is this tested?  Should also
-> be in the changelogs and manpage.
->=20
-> Ditto mlockall(MCL_ONFAULT) followed by munlock().  I'm not sure
-> that even makes sense but the behaviour should be understood and
-> tested.
 
-I have extended the kselftest for lock-on-fault to try both of these
-scenarios and they work as expected.  The VMA is split and the VM
-flags are set appropriately for the resulting VMAs.
+IOW, LOCKED and LOCKEDONFAULT are treated identically and independently.
 
->=20
->=20
-> What's missing here is a syscall to set VM_LOCKONFAULT on an
-> arbitrary range of memory - mlock() for lock-on-fault.  It's a
-> shame that mlock() didn't take a `mode' argument.  Perhaps we
-> should add such a syscall - that would make the mmap flag unneeded
-> but I suppose it should be kept for symmetry.
+Now, that's how we would have designed all this on day one.  And I
+think we can do this now, by adding new mlock2() and munlock2()
+syscalls.  And we may as well deprecate the old mlock() and munlock(),
+not that this matters much.
 
-Do you want such a system call as part of this set?  I would need some
-time to make sure I had thought through all the possible corners one
-could get into with such a call, so it would delay a V3 quite a bit.
-Otherwise I can send a V3 out immediately.
+*should* we do this?  I'm thinking "yes" - it's all pretty simple
+boilerplate and wrappers and such, and it gets the interface correct,
+and extensible.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJVed+3AAoJELbVsDOpoOa9eHwP+gO8QmNdUKN55wiTLxXdFTRo
-TTm62MJ3Yk45+JJ+8xI1POMSUVEBAX7pxnL8TpNPmwp+UF6IQT/hAnnEFNud8/aQ
-5bAxU9a5fRO6Q5533woaVpYfXZXwXAla+37MGQziL7O0VEi2aQ9abX7AKnkjmXwq
-e1Fc3vutAycNCzSxg42GwZxqHw83TYztyv3C4Cc7lShbCezABYvaDvXcUZkGwhjG
-KJxSPYS2E0nv0MEy995P0L0H1A/KHq6mCOFFKQw6aVbPDs8J/0RhvQIlp/BBCPMV
-TqDVxMBpTpdWs6reJnUZpouKBTA11KTvUA2HBVn5B14u2V7Np+NBpLKH2DUqAP2v
-Gyg4Nj0MknqB1rutaBjHjI0ZefrWK5o+zWAVKZs+wtq9WkmCvTYWp505XnlJO+qo
-1CEnab2kX8P74UYcsJUrJxAtxc94t6oLh305KnJheQUdcx/ZNKboB2vl1+np10jj
-oZLmP2RfajZoPojPZ/bI6mj9Ffqf/Ptau+kLQ56G1IuVmQRi4ZgQ9D1+BILXyKHi
-uycKovcHVffiQ+z1Ama2b4wP1t5yjNdxBH0oV1KMeScCxfyYHPFuDBe36Krjo8FO
-dDMyibNIRJMX6SeYNIRni40Eafon5h21I95/yWxUaq0FGBZ1NuuSTofxAA53wJJz
-f0FUI7f53Oxk9EKk8nfg
-=3DgfVJ
------END PGP SIGNATURE-----
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
+What do others think?
