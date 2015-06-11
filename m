@@ -1,108 +1,66 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [RESEND PATCH V2 0/3] Allow user to request memory to be locked
- on page fault
-Date: Thu, 11 Jun 2015 15:55:47 -0400
-Message-ID: <5579E7C3.2020601@akamai.com>
-References: <1433942810-7852-1-git-send-email-emunson@akamai.com>	<20150610145929.b22be8647887ea7091b09ae1@linux-foundation.org>	<5579DFBA.80809@akamai.com> <20150611123424.4bb07cffd0e5bb146cc92231@linux-foundation.org>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v5 20/21] tools/testing/nvdimm: manufactured NFITs for
+ interface development
+Date: Thu, 11 Jun 2015 13:12:32 -0700
+Message-ID: <CAPcyv4j8pTGZF_4vubPBTRDHwo=JSmq=mnZ5bhMpEhy7uYj7nw@mail.gmail.com>
+References: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com>
+	<20150602001557.4506.57136.stgit@dwillia2-desk3.amr.corp.intel.com>
+	<20150609064811.GG9804@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-parisc-owner@vger.kernel.org>
-In-Reply-To: <20150611123424.4bb07cffd0e5bb146cc92231@linux-foundation.org>
-Sender: linux-parisc-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, Michal Hocko <mhocko@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-acpi-owner@vger.kernel.org>
+In-Reply-To: <20150609064811.GG9804@lst.de>
+Sender: linux-acpi-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Jens Axboe <axboe@kernel.dk>, Stephen Rothwell <sfr@canb.auug.org.au>, "Rafael J. Wysocki" <rafael@kernel.org>, Neil Brown <neilb@suse.de>, Greg KH <gregkh@linuxfoundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@kernel.org>, Linux ACPI <linux-acpi@vger.kernel.org>, jmoyer <jmoyer@redhat.com>, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+On Mon, Jun 8, 2015 at 11:48 PM, Christoph Hellwig <hch@lst.de> wrote:
+> The description fails to mention the hacks how this is archived.  I don't
+> think the include hackery and otherwise needed exports are acceptable
+> if with an explanation, though.
 
-On 06/11/2015 03:34 PM, Andrew Morton wrote:
-> On Thu, 11 Jun 2015 15:21:30 -0400 Eric B Munson
-> <emunson@akamai.com> wrote:
-> 
->>> Ditto mlockall(MCL_ONFAULT) followed by munlock().  I'm not
->>> sure that even makes sense but the behaviour should be
->>> understood and tested.
->> 
->> I have extended the kselftest for lock-on-fault to try both of
->> these scenarios and they work as expected.  The VMA is split and
->> the VM flags are set appropriately for the resulting VMAs.
-> 
-> munlock() should do vma merging as well.  I *think* we implemented 
-> that.  More tests for you to add ;)
+I've killed the include hackery.
 
-I will add a test for this as well.  But the code is in place to merge
-VMAs IIRC.
+> Really - get your fake hardware into qemu right now and don't bother
+> with trying to hack the subsystem like this.
 
-> 
-> How are you testing the vma merging and splitting, btw?  Parsing 
-> the profcs files?
+Rest assured that NFIT enabling for QEMU/KVM is well under way, but I
+disagree that QEMU is the right place to enable unit tests.  Here is
+the updated changelog that appears in "[PATCH v6 20/21]
+tools/testing/nvdimm: libnvdimm unit test infrastructure":
 
-To show the VMA split happened, I dropped a printk in mlock_fixup()
-and the user space test simply checks that unlocked pages are not
-marked as unevictable.  The test does not parse maps or smaps for
-actual VMA layout.  Given that we want to check the merging of VMAs as
-well I will add this.
+---
 
-> 
->>> What's missing here is a syscall to set VM_LOCKONFAULT on an 
->>> arbitrary range of memory - mlock() for lock-on-fault.  It's a 
->>> shame that mlock() didn't take a `mode' argument.  Perhaps we 
->>> should add such a syscall - that would make the mmap flag
->>> unneeded but I suppose it should be kept for symmetry.
->> 
->> Do you want such a system call as part of this set?  I would need
->> some time to make sure I had thought through all the possible
->> corners one could get into with such a call, so it would delay a
->> V3 quite a bit. Otherwise I can send a V3 out immediately.
-> 
-> I think the way to look at this is to pretend that mm/mlock.c
-> doesn't exist and ask "how should we design these features".
-> 
-> And that would be:
-> 
-> - mmap() takes a `flags' argument: MAP_LOCKED|MAP_LOCKONFAULT.
-> 
-> - mlock() takes a `flags' argument.  Presently that's 
-> MLOCK_LOCKED|MLOCK_LOCKONFAULT.
-> 
-> - munlock() takes a `flags' arument.
-> MLOCK_LOCKED|MLOCK_LOCKONFAULT to specify which flags are being
-> cleared.
-> 
-> - mlockall() and munlockall() ditto.
-> 
-> 
-> IOW, LOCKED and LOCKEDONFAULT are treated identically and
-> independently.
-> 
-> Now, that's how we would have designed all this on day one.  And I 
-> think we can do this now, by adding new mlock2() and munlock2() 
-> syscalls.  And we may as well deprecate the old mlock() and
-> munlock(), not that this matters much.
-> 
-> *should* we do this?  I'm thinking "yes" - it's all pretty simple 
-> boilerplate and wrappers and such, and it gets the interface
-> correct, and extensible.
-> 
-> What do others think?
-> 
+tools/testing/nvdimm: libnvdimm unit test infrastructure
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
+'libnvdimm' is the first driver sub-system in the kernel to implement
+mocking for unit test coverage.  The nfit_test module gets built as an
+external module and arranges for external module replacements of nfit,
+libnvdimm, nd_pmem, and nd_blk.  These replacements use the linker
+--wrap option to redirect calls to ioremap() + request_mem_region() to
+custom defined unit test resources.  The end result is a fully
+functional nvdimm_bus, as far as userspace is concerned, but with the
+capability to perform otherwise destructive tests on emulated
+resources.
 
-iQIcBAEBAgAGBQJVeefAAAoJELbVsDOpoOa9930P/j32OhsgPdxt8pmlYddpHBJg
-PJ4EOYZLoNJ0bWAoePRAQvb9Rd0UumXukkQKVdFCFW72QfMPkjqyMWWOA5BZ6dYl
-q3h3FTzcnAtVHG7bqFheV+Ie9ZX0dplTmuGlqTZzEIVePry9VXzqp9BADbWn3bVR
-ucq1CFikyEB2yu8pMtykJmEaz4CO7fzCHz6oB7RNX5oHElWmi9AieuUr5eAw6enQ
-6ofuNy/N3rTCwcjeRfdL7Xhs6vn62u4nw1Jey6l9hBQUx/ujMktKcn4VwkDXIYCi
-+h7lfXWruqOuC+lspBRJO7OL2e6nRdedpDWJypeUGcKXokxB2FEB25Yu31K9sk/8
-jDfaKNqmcfgOseLHb+DjJqG6nq9lsUhozg8C17SJpT8qFwQ8q7iJe+1GhUF1EBsL
-+DpqLU56geBY6fyIfurOfp/4Hsx2u1KzezkEnMYT/8LkbGwqbq7Zj4rquLMSHCUt
-uG5j0MuhmP8/Fuf8OMsIHHUMjBHRjH4rTyaCKxNj3T8uSuLfcnIqEZiJu2qaSA8l
-PxpQ6yy2szw9lDxPvxLnh8Rkx+SGEc1ciamyppDTI4LQRiCjMQ7bHAKo0RwAaPJL
-ZSHrdlDnUHrYTnd0EZwg0peh8AgkROgxna/pLpfQTeW1g3erqPfbI0Ab8N0cu5j0
-8+qA5C+DeSjaMAoMskTG
-=82B8
------END PGP SIGNATURE-----
+Q: Why not use QEMU for this emulation?
+QEMU is not suitable for unit testing.  QEMU's role is to faithfully
+emulate the platform.  A unit test's role is to unfaithfully implement
+the platform with the goal of triggering bugs in the corners of the
+sub-system implementation.  As bugs are discovered in platforms, or
+the sub-system itself, the unit tests are extended to backstop a fix
+with a reproducer unit test.
+
+Another problem with QEMU is that it would require coordination of 3
+software projects instead of 2 (kernel + libndctl [1]) to maintain and
+execute the tests.  The chances for bit rot and the difficulty of
+getting the tests running goes up non-linearly the more components
+involved.
+
+Q: Why submit this to the kernel tree instead of external modules in libndctl?
+Simple, to alleviate the same risk that out-of-tree external modules
+face.  Updates to drivers/nvdimm/ can be immediately evaluated to see
+if they have any impact on tools/testing/nvdimm/.
+
+[1]: https://github.com/pmem/ndctl
