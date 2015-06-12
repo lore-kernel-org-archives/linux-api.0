@@ -1,43 +1,79 @@
-From: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Subject: Re: [PATCH v13 1/2] crypto: AF_ALG: add AEAD support
-Date: Fri, 12 Jun 2015 01:03:50 +0200
-Message-ID: <3778379.0alfAEIvmc@tauon.atsec.com>
-References: <2180298.gqj58NYuqx@tachyon.chronox.de> <14853152.iudhcNpbrH@tachyon.chronox.de> <557A12D1.90409@intel.com>
+From: Vladimir Davydov <vdavydov@parallels.com>
+Subject: [PATCH -mm v6 1/6] memcg: add page_cgroup_ino helper
+Date: Fri, 12 Jun 2015 12:52:21 +0300
+Message-ID: <d582e15ceeb2097fde2796e091e507f5a2bb19f0.1434102076.git.vdavydov@parallels.com>
+References: <cover.1434102076.git.vdavydov@parallels.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <557A12D1.90409-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tadeusz Struk <tadeusz.struk-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: 'Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, 'Quentin Gouchet' <quentin.gouchet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Borkmann <dborkman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <cover.1434102076.git.vdavydov@parallels.com>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Am Thursday 11 June 2015, 15:59:29 schrieb Tadeusz Struk:
+This function returns the inode number of the closest online ancestor of
+the memory cgroup a page is charged to. It is required for exporting
+information about which page is charged to which cgroup to userspace,
+which will be introduced by a following patch.
 
-Hi Tadeusz,
+Signed-off-by: Vladimir Davydov <vdavydov@parallels.com>
+---
+ include/linux/memcontrol.h |  1 +
+ mm/memcontrol.c            | 23 +++++++++++++++++++++++
+ 2 files changed, 24 insertions(+)
 
->Hi Stephan,
->
->On 02/28/2015 11:50 AM, Stephan Mueller wrote:
->> +	err = af_alg_wait_for_completion(ctx->enc ?
->> +					 crypto_aead_encrypt(&ctx->aead_req) :
->> +					 crypto_aead_decrypt(&ctx->aead_req),
->> +					 &ctx->completion);
->> +
->> +	if (err) {
->> +		/* EBADMSG implies a valid cipher operation took place */
->> +		if (err == -EBADMSG)
->> +			aead_put_sgl(sk);
->> +		goto unlock;
->
->Shouldn't we free the TX sgl regardless of the error was?
->Or do we expect that the user will try to read again and it will be Ok the
->second time? Hope you still remember :)
+diff --git a/include/linux/memcontrol.h b/include/linux/memcontrol.h
+index 73b02b0a8f60..50069abebc3c 100644
+--- a/include/linux/memcontrol.h
++++ b/include/linux/memcontrol.h
+@@ -116,6 +116,7 @@ static inline bool mm_match_cgroup(struct mm_struct *mm,
+ 
+ extern struct cgroup_subsys_state *mem_cgroup_css(struct mem_cgroup *memcg);
+ extern struct cgroup_subsys_state *mem_cgroup_css_from_page(struct page *page);
++extern unsigned long page_cgroup_ino(struct page *page);
+ 
+ struct mem_cgroup *mem_cgroup_iter(struct mem_cgroup *,
+ 				   struct mem_cgroup *,
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index acb93c554f6e..894dc2169979 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -631,6 +631,29 @@ struct cgroup_subsys_state *mem_cgroup_css_from_page(struct page *page)
+ 	return &memcg->css;
+ }
+ 
++/**
++ * page_cgroup_ino - return inode number of the memcg a page is charged to
++ * @page: the page
++ *
++ * Look up the closest online ancestor of the memory cgroup @page is charged to
++ * and return its inode number or 0 if @page is not charged to any cgroup. It
++ * is safe to call this function without holding a reference to @page.
++ */
++unsigned long page_cgroup_ino(struct page *page)
++{
++	struct mem_cgroup *memcg;
++	unsigned long ino = 0;
++
++	rcu_read_lock();
++	memcg = READ_ONCE(page->mem_cgroup);
++	while (memcg && !(memcg->css.flags & CSS_ONLINE))
++		memcg = parent_mem_cgroup(memcg);
++	if (memcg)
++		ino = cgroup_ino(memcg->css.cgroup);
++	rcu_read_unlock();
++	return ino;
++}
++
+ static struct mem_cgroup_per_zone *
+ mem_cgroup_page_zoneinfo(struct mem_cgroup *memcg, struct page *page)
+ {
+-- 
+2.1.4
 
-It is the latter: as the crypto was not completed properly, leave the data in 
-memory. This may allow a user to send more data if he needs to for completing 
-the AEAD operation.
-
-Ciao
-Stephan
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
