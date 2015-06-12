@@ -1,163 +1,166 @@
-From: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [RFC PATCH 07/18] kthread: Make iterant kthreads freezable by
- default
-Date: Fri, 12 Jun 2015 15:24:40 +0200
-Message-ID: <20150612132440.GH9409@pathway.suse.cz>
-References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
- <1433516477-5153-8-git-send-email-pmladek@suse.cz>
- <20150609072003.GY21465@mtj.duckdns.org>
- <20150609155313.GC9409@pathway.suse.cz>
- <20150610043154.GG11955@mtj.duckdns.org>
+From: Mark Williamson <mwilliamson@undo-software.com>
+Subject: Re: [PATCH v3 1/4] pagemap: check permissions and capabilities at
+ open time
+Date: Fri, 12 Jun 2015 19:44:32 +0100
+Message-ID: <CAEVpBa+f2SfU5wvq8PZ3h762KVYsDFkNv3f5brJXar9=pm+wuw@mail.gmail.com>
+References: <20150609195333.21971.58194.stgit@zurg>
+	<20150609200015.21971.25692.stgit@zurg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150610043154.GG11955-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20150609200015.21971.25692.stgit@zurg>
+Sender: owner-linux-mm@kvack.org
+To: Konstantin Khlebnikov <koct9i@gmail.com>
+Cc: linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Linux API <linux-api@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, "Kirill A. Shutemov" <kirill@shutemov.name>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 2015-06-10 13:31:54, Tejun Heo wrote:
-> Hello, Petr.
-> 
-> On Tue, Jun 09, 2015 at 05:53:13PM +0200, Petr Mladek wrote:
-> > I think that the interaction with the hardware should be the reason to
-> > make them properly freezable. In the current state they are stopped at
-> > some random place, they might either miss some event from the hardware
-> > or the hardware might get resumed into another state and the kthread
-> > might wait forever.
-> 
-> Yes, IIUC, there are two classes of use cases where freezing kthreads
-> makes sense.
+This looks good from our side - thanks!
 
-First, thanks a lot for detailed explanation.
+Reviewed-by: mwilliamson@undo-software.com
+Tested-by: mwilliamson@undo-software.com
 
-> * While hibernating, freezing writeback workers and whoever else which
->   might issue IOs.  This is because we have to thaw devices to issue
->   IOs to write out the prepared hibernation image.  If new IOs are
->   issued from page cache or whereever when the devices are thawed for
->   writing out the hibernation image, the hibernation image and the
->   data on the disk deviate.
-
-Just an idea. I do not say that it is a good solution. If we already
-thaw devices needed to write the data. It should be possible to thaw
-also kthreads needed to write the data.
-
-
->   Note that this only works because currently none of the block
->   drivers which may be used to write out hibernation images depend on
->   freezable kthreads and hopefully nobody issues IOs from unfreezable
->   kthreads or bh or softirq, which, I think, can happen with
->   preallocated requests or bio based devices.
-
-It means that some kthreads must be stopped, some must be available,
-and we do not mind about the rest. I wonder which group is bigger.
-It might help to decide about the more safe default. It is not easy
-for me to decide :-/
-
-
->   This is a very brittle approach.  Instead of controlling things
->   where it actually can be controlled - the IO ingress point - we're
->   trying to control all its users with a pretty blunt tool while at
->   the same time depending on the fact that some of the low level
->   subsystems don't happen to make use of the said blunt tool.
+On Tue, Jun 9, 2015 at 9:00 PM, Konstantin Khlebnikov <koct9i@gmail.com> wrote:
+> From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
 >
->   I think what we should do is simply blocking all non-image IOs from
->   the block layer while writing out hibernation image.  It'd be
->   simpler and a lot more reliable.
+> This patch moves permission checks from pagemap_read() into pagemap_open().
+>
+> Pointer to mm is saved in file->private_data. This reference pins only
+> mm_struct itself. /proc/*/mem, maps, smaps already work in the same way.
+>
+> Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+> Link: http://lkml.kernel.org/r/CA+55aFyKpWrt_Ajzh1rzp_GcwZ4=6Y=kOv8hBz172CFJp6L8Tg@mail.gmail.com
+> ---
+>  fs/proc/task_mmu.c |   48 ++++++++++++++++++++++++++++--------------------
+>  1 file changed, 28 insertions(+), 20 deletions(-)
+>
+> diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+> index 6dee68d..21bc251 100644
+> --- a/fs/proc/task_mmu.c
+> +++ b/fs/proc/task_mmu.c
+> @@ -1227,40 +1227,33 @@ static int pagemap_hugetlb_range(pte_t *pte, unsigned long hmask,
+>  static ssize_t pagemap_read(struct file *file, char __user *buf,
+>                             size_t count, loff_t *ppos)
+>  {
+> -       struct task_struct *task = get_proc_task(file_inode(file));
+> -       struct mm_struct *mm;
+> +       struct mm_struct *mm = file->private_data;
+>         struct pagemapread pm;
+> -       int ret = -ESRCH;
+>         struct mm_walk pagemap_walk = {};
+>         unsigned long src;
+>         unsigned long svpfn;
+>         unsigned long start_vaddr;
+>         unsigned long end_vaddr;
+> -       int copied = 0;
+> +       int ret = 0, copied = 0;
+>
+> -       if (!task)
+> +       if (!mm || !atomic_inc_not_zero(&mm->mm_users))
+>                 goto out;
+>
+>         ret = -EINVAL;
+>         /* file position must be aligned */
+>         if ((*ppos % PM_ENTRY_BYTES) || (count % PM_ENTRY_BYTES))
+> -               goto out_task;
+> +               goto out_mm;
+>
+>         ret = 0;
+>         if (!count)
+> -               goto out_task;
+> +               goto out_mm;
+>
+>         pm.v2 = soft_dirty_cleared;
+>         pm.len = (PAGEMAP_WALK_SIZE >> PAGE_SHIFT);
+>         pm.buffer = kmalloc(pm.len * PM_ENTRY_BYTES, GFP_TEMPORARY);
+>         ret = -ENOMEM;
+>         if (!pm.buffer)
+> -               goto out_task;
+> -
+> -       mm = mm_access(task, PTRACE_MODE_READ);
+> -       ret = PTR_ERR(mm);
+> -       if (!mm || IS_ERR(mm))
+> -               goto out_free;
+> +               goto out_mm;
+>
+>         pagemap_walk.pmd_entry = pagemap_pte_range;
+>         pagemap_walk.pte_hole = pagemap_pte_hole;
+> @@ -1273,10 +1266,10 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
+>         src = *ppos;
+>         svpfn = src / PM_ENTRY_BYTES;
+>         start_vaddr = svpfn << PAGE_SHIFT;
+> -       end_vaddr = TASK_SIZE_OF(task);
+> +       end_vaddr = mm->task_size;
+>
+>         /* watch out for wraparound */
+> -       if (svpfn > TASK_SIZE_OF(task) >> PAGE_SHIFT)
+> +       if (svpfn > mm->task_size >> PAGE_SHIFT)
+>                 start_vaddr = end_vaddr;
+>
+>         /*
+> @@ -1303,7 +1296,7 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
+>                 len = min(count, PM_ENTRY_BYTES * pm.pos);
+>                 if (copy_to_user(buf, pm.buffer, len)) {
+>                         ret = -EFAULT;
+> -                       goto out_mm;
+> +                       goto out_free;
+>                 }
+>                 copied += len;
+>                 buf += len;
+> @@ -1313,24 +1306,38 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
+>         if (!ret || ret == PM_END_OF_BUFFER)
+>                 ret = copied;
+>
+> -out_mm:
+> -       mmput(mm);
+>  out_free:
+>         kfree(pm.buffer);
+> -out_task:
+> -       put_task_struct(task);
+> +out_mm:
+> +       mmput(mm);
+>  out:
+>         return ret;
+>  }
+>
+>  static int pagemap_open(struct inode *inode, struct file *file)
+>  {
+> +       struct mm_struct *mm;
+> +
+>         /* do not disclose physical addresses: attack vector */
+>         if (!capable(CAP_SYS_ADMIN))
+>                 return -EPERM;
+>         pr_warn_once("Bits 55-60 of /proc/PID/pagemap entries are about "
+>                         "to stop being page-shift some time soon. See the "
+>                         "linux/Documentation/vm/pagemap.txt for details.\n");
+> +
+> +       mm = proc_mem_open(inode, PTRACE_MODE_READ);
+> +       if (IS_ERR(mm))
+> +               return PTR_ERR(mm);
+> +       file->private_data = mm;
+> +       return 0;
+> +}
+> +
+> +static int pagemap_release(struct inode *inode, struct file *file)
+> +{
+> +       struct mm_struct *mm = file->private_data;
+> +
+> +       if (mm)
+> +               mmdrop(mm);
+>         return 0;
+>  }
+>
+> @@ -1338,6 +1345,7 @@ const struct file_operations proc_pagemap_operations = {
+>         .llseek         = mem_lseek, /* borrow this */
+>         .read           = pagemap_read,
+>         .open           = pagemap_open,
+> +       .release        = pagemap_release,
+>  };
+>  #endif /* CONFIG_PROC_PAGE_MONITOR */
+>
+>
 
-This sounds like an interesting idea to me. Do you already have some
-more precise plan in mind?
-
-Unfortunately, for me it is not easy to judge it. I wonder how many
-interfaces would need to get hacked to make this working.
-Also I wonder if they would be considered as a hack or a clean
-solution by the affected parties. By other words, I wonder if it is
-realistic.
-
-
-> * Device drivers which interact with their devices in a fully
->   synchronous manner so that blocking the kthread always reliably
->   quiesces the device.  For this to be true, the device shouldn't
->   carry over any state across the freezing points.  There are drivers
->   which are actually like this and it works for them.
-
-I am trying to sort it in my head. In each case, we need to stop these
-kthreads in some well defined state. Also the kthread (or device)
-must be able to block the freezing if they are not in the state yet.
-
-The stop points are defined by try_to_freeze() now. And freezable
-kthreads block the freezer until they reach these points.
-
-
->   However, my impression is that people don't really scrutinize why
->   freezer works for a specific case and tend to spray them all over
->   and develop a fuzzy sense that freezing will somehow magically make
->   the driver ready for PM operatoins.  It doesn't help that freezer is
->   such a blunt tool and our historical usage has always been fuzzy -
->   in the earlier days, we depended on freezer even when we knew it
->   wasn't sufficient probably because updating all subsystems and
->   drivers were such a huge undertaking and freezer kinda sorta works
->   in many cases.
-
-I try to better understand why freezer is considered to be a blunt
-tool. Is it because it is a generic API, try_to_freeze() is put on
-"random" locations, so that it does not define the safe point
-precisely enough?
-
-
->   IMHO we'd be a lot better served by blocking the kthread from PM
->   callbacks explicitly for these drivers to unify control points for
->   PM operations and make what's going on a lot more explicit.  This
->   will surely involve a bit more boilerplate code but with the right
->   helpers it should be mostly trivial and I believe that it's likely
->   to encourage higher quality PM operations why getting rid of this
->   fuzzy feeling around the freezer.
-
-I agree. There is needed some synchronization between the device
-drivers and kthread to make sure that they are on the same note.
-
-If I get this correctly. It works the following way now. PM notifies
-both kthreads (via freezer) and device drivers (via callbacks) about
-that the suspend is in progress. They are supposed to go into a sane
-state. But there is no explicit communication between the kthread
-and the driver.
-
-What do you exactly mean with the callbacks? Should they set some
-flags that would navigate the kthread into some state?
-
-
-> I'm strongly against this.  We really don't want to make it even
-> fuzzier.  There are finite things which need to be controlled for PM
-> operations and I believe what we need to do is identifying them and
-> implementing explicit and clear control mechanisms for them, not
-> spreading this feel-good mechanism even more, further obscuring where
-> those points are.
-
-I see. This explains why you are so strongly against changing the
-default. I see the following in the kernel sources:
-
-	 61  set_freezable()
-	 97  kthread_create()
-	 259 kthread_run()
-
-I means that only about 17% kthreads are freezable these days.
-
-> This becomes the game of "is it frozen ENOUGH yet?"  and that "enough"
-> is extremely difficult to determine as we're not looking at the choke
-> spots at all and freezable kthreads only cover part of kernel
-> activity.  The fuzzy enoughness also actually inhibits development of
-> proper mechanisms - "I believe this is frozen ENOUGH at this point so
-> it is probably safe to assume that X, Y and Z aren't happening
-> anymore" and it usually is except when it's not.
-
-I am not sure what you mean by frozen enough? I think that a tasks
-is either frozen or not. Do I miss something, please?
-
-Best Regards,
-Petr
 --
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
