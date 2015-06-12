@@ -1,99 +1,163 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [RESEND PATCH V2 0/3] Allow user to request memory to be locked
- on page fault
-Date: Fri, 12 Jun 2015 14:05:16 +0200
-Message-ID: <557ACAFC.90608@suse.cz>
-References: <1433942810-7852-1-git-send-email-emunson@akamai.com>	<20150610145929.b22be8647887ea7091b09ae1@linux-foundation.org>	<5579DFBA.80809@akamai.com> <20150611123424.4bb07cffd0e5bb146cc92231@linux-foundation.org>
+From: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [RFC PATCH 07/18] kthread: Make iterant kthreads freezable by
+ default
+Date: Fri, 12 Jun 2015 15:24:40 +0200
+Message-ID: <20150612132440.GH9409@pathway.suse.cz>
+References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
+ <1433516477-5153-8-git-send-email-pmladek@suse.cz>
+ <20150609072003.GY21465@mtj.duckdns.org>
+ <20150609155313.GC9409@pathway.suse.cz>
+ <20150610043154.GG11955@mtj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-alpha-owner@vger.kernel.org>
-In-Reply-To: <20150611123424.4bb07cffd0e5bb146cc92231@linux-foundation.org>
-Sender: linux-alpha-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>, Eric B Munson <emunson@akamai.com>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, Michal Hocko <mhocko@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150610043154.GG11955-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 06/11/2015 09:34 PM, Andrew Morton wrote:
-> On Thu, 11 Jun 2015 15:21:30 -0400 Eric B Munson <emunson@akamai.com> wrote:
->
->>> Ditto mlockall(MCL_ONFAULT) followed by munlock().  I'm not sure
->>> that even makes sense but the behaviour should be understood and
->>> tested.
->>
->> I have extended the kselftest for lock-on-fault to try both of these
->> scenarios and they work as expected.  The VMA is split and the VM
->> flags are set appropriately for the resulting VMAs.
->
-> munlock() should do vma merging as well.  I *think* we implemented
-> that.  More tests for you to add ;)
->
-> How are you testing the vma merging and splitting, btw?  Parsing
-> the profcs files?
->
->>> What's missing here is a syscall to set VM_LOCKONFAULT on an
->>> arbitrary range of memory - mlock() for lock-on-fault.  It's a
->>> shame that mlock() didn't take a `mode' argument.  Perhaps we
->>> should add such a syscall - that would make the mmap flag unneeded
->>> but I suppose it should be kept for symmetry.
->>
->> Do you want such a system call as part of this set?  I would need some
->> time to make sure I had thought through all the possible corners one
->> could get into with such a call, so it would delay a V3 quite a bit.
->> Otherwise I can send a V3 out immediately.
->
-> I think the way to look at this is to pretend that mm/mlock.c doesn't
-> exist and ask "how should we design these features".
->
-> And that would be:
->
-> - mmap() takes a `flags' argument: MAP_LOCKED|MAP_LOCKONFAULT.
+On Wed 2015-06-10 13:31:54, Tejun Heo wrote:
+> Hello, Petr.
+> 
+> On Tue, Jun 09, 2015 at 05:53:13PM +0200, Petr Mladek wrote:
+> > I think that the interaction with the hardware should be the reason to
+> > make them properly freezable. In the current state they are stopped at
+> > some random place, they might either miss some event from the hardware
+> > or the hardware might get resumed into another state and the kthread
+> > might wait forever.
+> 
+> Yes, IIUC, there are two classes of use cases where freezing kthreads
+> makes sense.
 
-Note that the semantic of MAP_LOCKED can be subtly surprising:
+First, thanks a lot for detailed explanation.
 
-"mlock(2) fails if the memory range cannot get populated to guarantee
-that no future major faults will happen on the range. mmap(MAP_LOCKED) 
-on the other hand silently succeeds even if the range was populated only
-partially."
+> * While hibernating, freezing writeback workers and whoever else which
+>   might issue IOs.  This is because we have to thaw devices to issue
+>   IOs to write out the prepared hibernation image.  If new IOs are
+>   issued from page cache or whereever when the devices are thawed for
+>   writing out the hibernation image, the hibernation image and the
+>   data on the disk deviate.
 
-( from http://marc.info/?l=linux-mm&m=143152790412727&w=2 )
+Just an idea. I do not say that it is a good solution. If we already
+thaw devices needed to write the data. It should be possible to thaw
+also kthreads needed to write the data.
 
-So MAP_LOCKED can silently behave like MAP_LOCKONFAULT. While 
-MAP_LOCKONFAULT doesn't suffer from such problem, I wonder if that's 
-sufficient reason not to extend mmap by new mlock() flags that can be 
-instead applied to the VMA after mmapping, using the proposed mlock2() 
-with flags. So I think instead we could deprecate MAP_LOCKED more 
-prominently. I doubt the overhead of calling the extra syscall matters here?
 
-> - mlock() takes a `flags' argument.  Presently that's
->    MLOCK_LOCKED|MLOCK_LOCKONFAULT.
->
-> - munlock() takes a `flags' arument.  MLOCK_LOCKED|MLOCK_LOCKONFAULT
->    to specify which flags are being cleared.
->
-> - mlockall() and munlockall() ditto.
->
->
-> IOW, LOCKED and LOCKEDONFAULT are treated identically and independently.
->
-> Now, that's how we would have designed all this on day one.  And I
-> think we can do this now, by adding new mlock2() and munlock2()
-> syscalls.  And we may as well deprecate the old mlock() and munlock(),
-> not that this matters much.
->
-> *should* we do this?  I'm thinking "yes" - it's all pretty simple
-> boilerplate and wrappers and such, and it gets the interface correct,
-> and extensible.
+>   Note that this only works because currently none of the block
+>   drivers which may be used to write out hibernation images depend on
+>   freezable kthreads and hopefully nobody issues IOs from unfreezable
+>   kthreads or bh or softirq, which, I think, can happen with
+>   preallocated requests or bio based devices.
 
-If the new LOCKONFAULT functionality is indeed desired (I haven't still 
-decided myself) then I agree that would be the cleanest way.
+It means that some kthreads must be stopped, some must be available,
+and we do not mind about the rest. I wonder which group is bigger.
+It might help to decide about the more safe default. It is not easy
+for me to decide :-/
 
-> What do others think?
->
-> --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo@kvack.org.  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
->
 
+>   This is a very brittle approach.  Instead of controlling things
+>   where it actually can be controlled - the IO ingress point - we're
+>   trying to control all its users with a pretty blunt tool while at
+>   the same time depending on the fact that some of the low level
+>   subsystems don't happen to make use of the said blunt tool.
+>
+>   I think what we should do is simply blocking all non-image IOs from
+>   the block layer while writing out hibernation image.  It'd be
+>   simpler and a lot more reliable.
+
+This sounds like an interesting idea to me. Do you already have some
+more precise plan in mind?
+
+Unfortunately, for me it is not easy to judge it. I wonder how many
+interfaces would need to get hacked to make this working.
+Also I wonder if they would be considered as a hack or a clean
+solution by the affected parties. By other words, I wonder if it is
+realistic.
+
+
+> * Device drivers which interact with their devices in a fully
+>   synchronous manner so that blocking the kthread always reliably
+>   quiesces the device.  For this to be true, the device shouldn't
+>   carry over any state across the freezing points.  There are drivers
+>   which are actually like this and it works for them.
+
+I am trying to sort it in my head. In each case, we need to stop these
+kthreads in some well defined state. Also the kthread (or device)
+must be able to block the freezing if they are not in the state yet.
+
+The stop points are defined by try_to_freeze() now. And freezable
+kthreads block the freezer until they reach these points.
+
+
+>   However, my impression is that people don't really scrutinize why
+>   freezer works for a specific case and tend to spray them all over
+>   and develop a fuzzy sense that freezing will somehow magically make
+>   the driver ready for PM operatoins.  It doesn't help that freezer is
+>   such a blunt tool and our historical usage has always been fuzzy -
+>   in the earlier days, we depended on freezer even when we knew it
+>   wasn't sufficient probably because updating all subsystems and
+>   drivers were such a huge undertaking and freezer kinda sorta works
+>   in many cases.
+
+I try to better understand why freezer is considered to be a blunt
+tool. Is it because it is a generic API, try_to_freeze() is put on
+"random" locations, so that it does not define the safe point
+precisely enough?
+
+
+>   IMHO we'd be a lot better served by blocking the kthread from PM
+>   callbacks explicitly for these drivers to unify control points for
+>   PM operations and make what's going on a lot more explicit.  This
+>   will surely involve a bit more boilerplate code but with the right
+>   helpers it should be mostly trivial and I believe that it's likely
+>   to encourage higher quality PM operations why getting rid of this
+>   fuzzy feeling around the freezer.
+
+I agree. There is needed some synchronization between the device
+drivers and kthread to make sure that they are on the same note.
+
+If I get this correctly. It works the following way now. PM notifies
+both kthreads (via freezer) and device drivers (via callbacks) about
+that the suspend is in progress. They are supposed to go into a sane
+state. But there is no explicit communication between the kthread
+and the driver.
+
+What do you exactly mean with the callbacks? Should they set some
+flags that would navigate the kthread into some state?
+
+
+> I'm strongly against this.  We really don't want to make it even
+> fuzzier.  There are finite things which need to be controlled for PM
+> operations and I believe what we need to do is identifying them and
+> implementing explicit and clear control mechanisms for them, not
+> spreading this feel-good mechanism even more, further obscuring where
+> those points are.
+
+I see. This explains why you are so strongly against changing the
+default. I see the following in the kernel sources:
+
+	 61  set_freezable()
+	 97  kthread_create()
+	 259 kthread_run()
+
+I means that only about 17% kthreads are freezable these days.
+
+> This becomes the game of "is it frozen ENOUGH yet?"  and that "enough"
+> is extremely difficult to determine as we're not looking at the choke
+> spots at all and freezable kthreads only cover part of kernel
+> activity.  The fuzzy enoughness also actually inhibits development of
+> proper mechanisms - "I believe this is frozen ENOUGH at this point so
+> it is probably safe to assume that X, Y and Z aren't happening
+> anymore" and it usually is except when it's not.
+
+I am not sure what you mean by frozen enough? I think that a tasks
+is either frozen or not. Do I miss something, please?
+
+Best Regards,
+Petr
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
