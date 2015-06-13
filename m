@@ -1,211 +1,164 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [RFC PATCH 07/18] kthread: Make iterant kthreads freezable by
- default
-Date: Sat, 13 Jun 2015 18:22:22 -0500
-Message-ID: <20150613232222.GB346@mtj.duckdns.org>
-References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
- <1433516477-5153-8-git-send-email-pmladek@suse.cz>
- <20150609072003.GY21465@mtj.duckdns.org>
- <20150609155313.GC9409@pathway.suse.cz>
- <20150610043154.GG11955@mtj.duckdns.org>
- <20150612132440.GH9409@pathway.suse.cz>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v5] seccomp: add ptrace options for suspend/resume
+Date: Sun, 14 Jun 2015 01:52:50 +0200
+Message-ID: <20150613235250.GA25252@redhat.com>
+References: <1434207768-16729-1-git-send-email-tycho.andersen@canonical.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150612132440.GH9409-KsEp0d+Q8qECVLCxKZUutA@public.gmane.org>
+In-Reply-To: <1434207768-16729-1-git-send-email-tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hey, Petr.
+On 06/13, Tycho Andersen wrote:
+>
+> This patch is the first step in enabling checkpoint/restore of processes
+> with seccomp enabled.
 
-On Fri, Jun 12, 2015 at 03:24:40PM +0200, Petr Mladek wrote:
-> > * While hibernating, freezing writeback workers and whoever else which
-> >   might issue IOs.  This is because we have to thaw devices to issue
-> >   IOs to write out the prepared hibernation image.  If new IOs are
-> >   issued from page cache or whereever when the devices are thawed for
-> >   writing out the hibernation image, the hibernation image and the
-> >   data on the disk deviate.
+So just in case, I am fine with this version.
+
+> One of the things CRIU does while dumping tasks is inject code into them
+> via ptrace to collect information that is only available to the process
+> itself. However, if we are in a seccomp mode where these processes are
+> prohibited from making these syscalls, then what CRIU does kills the task.
 > 
-> Just an idea. I do not say that it is a good solution. If we already
-> thaw devices needed to write the data. It should be possible to thaw
-> also kthreads needed to write the data.
-
-Sure, we'd end up having to mark the involved kthreads and whatever
-they may depend on with "freeze for snapshotting but not for writing
-out images".
-
-> >   Note that this only works because currently none of the block
-> >   drivers which may be used to write out hibernation images depend on
-> >   freezable kthreads and hopefully nobody issues IOs from unfreezable
-> >   kthreads or bh or softirq, which, I think, can happen with
-> >   preallocated requests or bio based devices.
+> This patch adds a new ptrace option, PTRACE_O_SUSPEND_SECCOMP, that enables
+> a task from the init user namespace which has CAP_SYS_ADMIN and no seccomp
+> filters to disable (and re-enable) seccomp filters for another task so that
+> they can be successfully dumped (and restored). We restrict the set of
+> processes that can disable seccomp through ptrace because although today
+> ptrace can be used to bypass seccomp, there is some discussion of closing
+> this loophole in the future and we would like this patch to not depend on
+> that behavior and be future proofed for when it is removed.
 > 
-> It means that some kthreads must be stopped, some must be available,
-> and we do not mind about the rest. I wonder which group is bigger.
-> It might help to decide about the more safe default. It is not easy
-> for me to decide :-/
-
-Please do not spread freezer more than necessary.  It's not about
-which part is larger but about not completely losing track of what's
-going on.  At least now we can say "this needs freezer because XYZ"
-and that XYZ actually points to something which needs to be
-synchronized for PM operations.  If we flip the polarity, all we're
-left with is "this can't be frozen because it deadlocks with XYZ"
-which is a lot less information, both in terms of relevance and
-amount, than the other way around.
-
-> >   This is a very brittle approach.  Instead of controlling things
-> >   where it actually can be controlled - the IO ingress point - we're
-> >   trying to control all its users with a pretty blunt tool while at
-> >   the same time depending on the fact that some of the low level
-> >   subsystems don't happen to make use of the said blunt tool.
-> >
-> >   I think what we should do is simply blocking all non-image IOs from
-> >   the block layer while writing out hibernation image.  It'd be
-> >   simpler and a lot more reliable.
+> Note that seccomp can be suspended before any filters are actually
+> installed; this behavior is useful on criu restore, so that we can suspend
+> seccomp, restore the filters, unmap our restore code from the restored
+> process' address space, and then resume the task by detaching and have the
+> filters resumed as well.
 > 
-> This sounds like an interesting idea to me. Do you already have some
-> more precise plan in mind?
-
-Unfortunately, no.  No concrete plans or patches yet but even then I'm
-pretty sure we don't wanna head the other direction.  It's just wrong.
-
-> Unfortunately, for me it is not easy to judge it. I wonder how many
-> interfaces would need to get hacked to make this working.
-
-Not much really.  We just need a way to flag IOs to write image - be
-that a bio / request flag or task flag and then a way to tell the
-block layer to block everything else.
-
-> Also I wonder if they would be considered as a hack or a clean
-> solution by the affected parties. By other words, I wonder if it is
-> realistic.
-
-I'd say it's pretty realistic.  This is synchronizing where the
-operations need to be synchronized.  What part would be hackish?
-
-> > * Device drivers which interact with their devices in a fully
-> >   synchronous manner so that blocking the kthread always reliably
-> >   quiesces the device.  For this to be true, the device shouldn't
-> >   carry over any state across the freezing points.  There are drivers
-> >   which are actually like this and it works for them.
+> v2 changes:
 > 
-> I am trying to sort it in my head. In each case, we need to stop these
-> kthreads in some well defined state. Also the kthread (or device)
-> must be able to block the freezing if they are not in the state yet.
-
-Whether kthreads need to be stopped or not is periphery once you have
-a proper blocking / draining mechanism.  The thing is most of these
-kthreads are blocked on requests coming down from upper layers anyway.
-Once you plug queueing of new requests and drain whatever is in
-flight, the kthread isn't gonna do anything anyway.
-
-> The stop points are defined by try_to_freeze() now. And freezable
-> kthreads block the freezer until they reach these points.
-
-I'm repeating myself but that only works for fully synchronous devices
-(ie. kthread processing one command at a time).  You need to drain
-whatever is in flight too.  You can't do that with simple freezing
-points.  There's a reason why a lot of drivers can't rely on freezer
-for PM operations.  Drivers which can fully depend on freezer would be
-minority.
-
-> >   However, my impression is that people don't really scrutinize why
-> >   freezer works for a specific case and tend to spray them all over
-> >   and develop a fuzzy sense that freezing will somehow magically make
-> >   the driver ready for PM operatoins.  It doesn't help that freezer is
-> >   such a blunt tool and our historical usage has always been fuzzy -
-> >   in the earlier days, we depended on freezer even when we knew it
-> >   wasn't sufficient probably because updating all subsystems and
-> >   drivers were such a huge undertaking and freezer kinda sorta works
-> >   in many cases.
+> * require that the tracer have no seccomp filters installed
+> * drop TIF_NOTSC manipulation from the patch
+> * change from ptrace command to a ptrace option and use this ptrace option
+>   as the flag to check. This means that as soon as the tracer
+>   detaches/dies, seccomp is re-enabled and as a corrollary that one can not
+>   disable seccomp across PTRACE_ATTACHs.
 > 
-> I try to better understand why freezer is considered to be a blunt
-> tool. Is it because it is a generic API, try_to_freeze() is put on
-> "random" locations, so that it does not define the safe point
-> precisely enough?
-
-Not that.  I don't know how to explain it better.  Hmmm... okay, let's
-say there's a shared queue Q and N users o fit.  If you wanna make Q
-empty and keep it that way for a while, the right thing to do is
-blocking new queueing and then wait till Q drains - you choke the
-entity that you wanna control.
-
-Instead of that, freezer is trying to block the "N" users part.  In
-majority of cases, it blocks enough but it's pretty difficult to be
-sure whether you actually got all N of them (as some of them may not
-involve kthreads at all or unfreezable kthreads might end up doing
-those operations too on corner cases) and it's also not that clear
-whether blocking the N users actually make Q empty.  Maybe there are
-things which can be in flight asynchronously on Q even all its N users
-are blocked.  This is inherently finicky.
-
-> >   IMHO we'd be a lot better served by blocking the kthread from PM
-> >   callbacks explicitly for these drivers to unify control points for
-> >   PM operations and make what's going on a lot more explicit.  This
-> >   will surely involve a bit more boilerplate code but with the right
-> >   helpers it should be mostly trivial and I believe that it's likely
-> >   to encourage higher quality PM operations why getting rid of this
-> >   fuzzy feeling around the freezer.
+> v3 changes:
 > 
-> I agree. There is needed some synchronization between the device
-> drivers and kthread to make sure that they are on the same note.
-
-No, not kthreads.  They should be synchronizing on the actual entities
-that they wanna keep empty.  Where the kthreads are don't matter at
-all.  It's the wrong thing to control in most cases.  In the minority
-of cases where blocking kthread is enough, we can do that explicitly
-from the usual PM callbacks.
-
-> If I get this correctly. It works the following way now. PM notifies
-> both kthreads (via freezer) and device drivers (via callbacks) about
-> that the suspend is in progress. They are supposed to go into a sane
-> state. But there is no explicit communication between the kthread
-> and the driver.
+> * get rid of various #ifdefs everywhere
+> * report more sensible errors when PTRACE_O_SUSPEND_SECCOMP is incorrectly
+>   used
 > 
-> What do you exactly mean with the callbacks? Should they set some
-> flags that would navigate the kthread into some state?
-
-The driver PM callbacks.
-
-> > I'm strongly against this.  We really don't want to make it even
-> > fuzzier.  There are finite things which need to be controlled for PM
-> > operations and I believe what we need to do is identifying them and
-> > implementing explicit and clear control mechanisms for them, not
-> > spreading this feel-good mechanism even more, further obscuring where
-> > those points are.
+> v4 changes:
 > 
-> I see. This explains why you are so strongly against changing the
-> default. I see the following in the kernel sources:
+> * get rid of may_suspend_seccomp() in favor of a capable() check in ptrace
+>   directly
 > 
-> 	 61  set_freezable()
-> 	 97  kthread_create()
-> 	 259 kthread_run()
+> v5 changes:
 > 
-> I means that only about 17% kthreads are freezable these days.
-
-And some of them probably don't even need it.
-
-> > This becomes the game of "is it frozen ENOUGH yet?"  and that "enough"
-> > is extremely difficult to determine as we're not looking at the choke
-> > spots at all and freezable kthreads only cover part of kernel
-> > activity.  The fuzzy enoughness also actually inhibits development of
-> > proper mechanisms - "I believe this is frozen ENOUGH at this point so
-> > it is probably safe to assume that X, Y and Z aren't happening
-> > anymore" and it usually is except when it's not.
+> * check that seccomp is not enabled (or suspended) on the tracer
 > 
-> I am not sure what you mean by frozen enough? I think that a tasks
-> is either frozen or not. Do I miss something, please?
-
-Please refer back to the above Q and N users example.  Sure, each
-kthread is either frozen or thawed; however, whether you got all of N
-or not is pretty difficult to tell reliably and I'd say a lot of the
-currently existing freezer usage is pretty fuzzy on that respect.
-
-Thanks.
-
--- 
-tejun
+> Signed-off-by: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+> CC: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+> CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+> CC: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+> CC: Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>
+> CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+> CC: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+> ---
+>  include/linux/ptrace.h      |  1 +
+>  include/uapi/linux/ptrace.h |  6 ++++--
+>  kernel/ptrace.c             | 13 +++++++++++++
+>  kernel/seccomp.c            |  8 ++++++++
+>  4 files changed, 26 insertions(+), 2 deletions(-)
+> 
+> diff --git a/include/linux/ptrace.h b/include/linux/ptrace.h
+> index 987a73a..061265f 100644
+> --- a/include/linux/ptrace.h
+> +++ b/include/linux/ptrace.h
+> @@ -34,6 +34,7 @@
+>  #define PT_TRACE_SECCOMP	PT_EVENT_FLAG(PTRACE_EVENT_SECCOMP)
+>  
+>  #define PT_EXITKILL		(PTRACE_O_EXITKILL << PT_OPT_FLAG_SHIFT)
+> +#define PT_SUSPEND_SECCOMP	(PTRACE_O_SUSPEND_SECCOMP << PT_OPT_FLAG_SHIFT)
+>  
+>  /* single stepping state bits (used on ARM and PA-RISC) */
+>  #define PT_SINGLESTEP_BIT	31
+> diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
+> index cf1019e..a7a6979 100644
+> --- a/include/uapi/linux/ptrace.h
+> +++ b/include/uapi/linux/ptrace.h
+> @@ -89,9 +89,11 @@ struct ptrace_peeksiginfo_args {
+>  #define PTRACE_O_TRACESECCOMP	(1 << PTRACE_EVENT_SECCOMP)
+>  
+>  /* eventless options */
+> -#define PTRACE_O_EXITKILL	(1 << 20)
+> +#define PTRACE_O_EXITKILL		(1 << 20)
+> +#define PTRACE_O_SUSPEND_SECCOMP	(1 << 21)
+>  
+> -#define PTRACE_O_MASK		(0x000000ff | PTRACE_O_EXITKILL)
+> +#define PTRACE_O_MASK		(\
+> +	0x000000ff | PTRACE_O_EXITKILL | PTRACE_O_SUSPEND_SECCOMP)
+>  
+>  #include <asm/ptrace.h>
+>  
+> diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+> index c8e0e05..496028b 100644
+> --- a/kernel/ptrace.c
+> +++ b/kernel/ptrace.c
+> @@ -556,6 +556,19 @@ static int ptrace_setoptions(struct task_struct *child, unsigned long data)
+>  	if (data & ~(unsigned long)PTRACE_O_MASK)
+>  		return -EINVAL;
+>  
+> +	if (unlikely(data & PTRACE_O_SUSPEND_SECCOMP)) {
+> +		if (!config_enabled(CONFIG_CHECKPOINT_RESTORE) ||
+> +		    !config_enabled(CONFIG_SECCOMP))
+> +			return -EINVAL;
+> +
+> +		if (!capable(CAP_SYS_ADMIN))
+> +			return -EPERM;
+> +
+> +		if (current->seccomp.mode != SECCOMP_MODE_DISABLED ||
+> +		    current->ptrace & PT_SUSPEND_SECCOMP)
+> +			return -EPERM;
+> +	}
+> +
+>  	/* Avoid intermediate state when all opts are cleared */
+>  	flags = child->ptrace;
+>  	flags &= ~(PTRACE_O_MASK << PT_OPT_FLAG_SHIFT);
+> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+> index 980fd26..645e42d 100644
+> --- a/kernel/seccomp.c
+> +++ b/kernel/seccomp.c
+> @@ -590,6 +590,10 @@ void secure_computing_strict(int this_syscall)
+>  {
+>  	int mode = current->seccomp.mode;
+>  
+> +	if (config_enabled(CONFIG_CHECKPOINT_RESTORE) &&
+> +	    unlikely(current->ptrace & PT_SUSPEND_SECCOMP))
+> +		return;
+> +
+>  	if (mode == 0)
+>  		return;
+>  	else if (mode == SECCOMP_MODE_STRICT)
+> @@ -691,6 +695,10 @@ u32 seccomp_phase1(struct seccomp_data *sd)
+>  	int this_syscall = sd ? sd->nr :
+>  		syscall_get_nr(current, task_pt_regs(current));
+>  
+> +	if (config_enabled(CONFIG_CHECKPOINT_RESTORE) &&
+> +	    unlikely(current->ptrace & PT_SUSPEND_SECCOMP))
+> +		return SECCOMP_PHASE1_OK;
+> +
+>  	switch (mode) {
+>  	case SECCOMP_MODE_STRICT:
+>  		__secure_computing_strict(this_syscall);  /* may call do_exit */
+> -- 
+> 2.1.4
+> 
