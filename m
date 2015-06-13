@@ -1,154 +1,94 @@
 From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: [PATCH v5] seccomp: add ptrace options for suspend/resume
-Date: Sat, 13 Jun 2015 09:02:48 -0600
-Message-ID: <1434207768-16729-1-git-send-email-tycho.andersen@canonical.com>
+Subject: Re: [PATCH v4] seccomp: add ptrace options for suspend/resume
+Date: Sat, 13 Jun 2015 09:06:39 -0600
+Message-ID: <20150613150639.GA8128@hopstrocity>
+References: <1433897388-9567-1-git-send-email-tycho.andersen@canonical.com>
+ <CALCETrVuNzZRAw40reo_2ne9saO5KbbG-omFUQXDo=+XFhpuWA@mail.gmail.com>
+ <20150610163149.GA5092@redhat.com>
+ <CALCETrX_GXgjPRXXT4jMZtjR6vMQrmYbk_OwrAoxaJWFT0+0Fw@mail.gmail.com>
+ <CAGXu5jJovcC1S4OANpqbVe6e86xr4W9Y7897MsSDOpvEqezpnA@mail.gmail.com>
+ <CALCETrUSjKVWoMM8aVeevAZRHqtiE7zOSUvjdW_yCBTnR07Ahg@mail.gmail.com>
+ <CAGXu5jKD8nj-E87em6BqS_TAeca4-kqL2u7jqYFompzqPrvqfA@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAGXu5jKD8nj-E87em6BqS_TAeca4-kqL2u7jqYFompzqPrvqfA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch is the first step in enabling checkpoint/restore of processes
-with seccomp enabled.
+On Fri, Jun 12, 2015 at 04:29:00PM -0700, Kees Cook wrote:
+> On Fri, Jun 12, 2015 at 4:27 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> > On Wed, Jun 10, 2015 at 1:18 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
+> >> On Wed, Jun 10, 2015 at 10:20 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> >>> On Wed, Jun 10, 2015 at 9:31 AM, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> >>>> On 06/09, Andy Lutomirski wrote:
+> >>>>>
+> >>>>> On Tue, Jun 9, 2015 at 5:49 PM, Tycho Andersen
+> >>>>> >
+> >>>>> > @@ -556,6 +556,15 @@ static int ptrace_setoptions(struct task_struct *child, unsigned long data)
+> >>>>> >         if (data & ~(unsigned long)PTRACE_O_MASK)
+> >>>>> >                 return -EINVAL;
+> >>>>> >
+> >>>>> > +       if (unlikely(data & PTRACE_O_SUSPEND_SECCOMP)) {
+> >>>>
+> >>>> Well, we should do this if
+> >>>>
+> >>>>                         (data & O_SUSPEND) && !(flags & O_SUSPEND)
+> >>>>
+> >>>> or at least if
+> >>>>
+> >>>>                         (data ^ flags) & O_SUSPEND
+> >>>>
+> >>>>
+> >>>>> > +               if (!config_enabled(CONFIG_CHECKPOINT_RESTORE) ||
+> >>>>> > +                   !config_enabled(CONFIG_SECCOMP))
+> >>>>> > +                       return -EINVAL;
+> >>>>> > +
+> >>>>> > +               if (!capable(CAP_SYS_ADMIN))
+> >>>>> > +                       return -EPERM;
+> >>>>>
+> >>>>> I tend to think that we should also require that current not be using
+> >>>>> seccomp.  Otherwise, in principle, there's a seccomp bypass for
+> >>>>> privileged-but-seccomped programs.
+> >>>>
+> >>>> Andy, I simply can't understand why do we need any security check at all.
+> >>>>
+> >>>> OK, yes, in theory we can have a seccomped CAP_SYS_ADMIN process, seccomp
+> >>>> doesn't filter ptrace, you hack that process and force it to attach to
+> >>>> another CAP_SYS_ADMIN/seccomped process, etc, etc... Looks too paranoid
+> >>>> to me.
+> >>>
+> >>> I've sometimes considered having privileged processes I write fork and
+> >>> seccomp their child.  Of course, if you're allowing ptrace through
+> >>> your seccomp filter, you open a giant can of worms, but I think we
+> >>> should take the more paranoid approach to start and relax it later as
+> >>> needed.  After all, for the intended use of this patch, stuff will
+> >>> break regardless of what we do if the ptracer is itself seccomped.
+> >>>
+> >>> I could be convinced that if the ptracer is outside seccomp then we
+> >>> shouldn't need the CAP_SYS_ADMIN check.  That would at least make this
+> >>> work in a user namespace.
+> >>
+> >> But not if that namespace is running under a manager that has added a
+> >> seccomp filter to do things like drop finit_module, as lxc does.
+> >
+> > In that case, criu isn't going to handle seccomp right regardless of
+> > what our security check is, so I think we can safely deal with the
+> > security aspects of that case once we figure out the functionality
+> > part.
+> >
+> > IOW, I think I still like the direct "you must not be seccomped in
+> > order to suspend seccomp" rule.
+> 
+> Adding that restriction would be fine by me.
 
-One of the things CRIU does while dumping tasks is inject code into them
-via ptrace to collect information that is only available to the process
-itself. However, if we are in a seccomp mode where these processes are
-prohibited from making these syscalls, then what CRIU does kills the task.
+Ok, I just sent v5 with this change. I didn't carry your ack in the
+hopes that I could get you to take this patch in the seccomp tree. Let
+me know if that's not the right thing to do.
 
-This patch adds a new ptrace option, PTRACE_O_SUSPEND_SECCOMP, that enables
-a task from the init user namespace which has CAP_SYS_ADMIN and no seccomp
-filters to disable (and re-enable) seccomp filters for another task so that
-they can be successfully dumped (and restored). We restrict the set of
-processes that can disable seccomp through ptrace because although today
-ptrace can be used to bypass seccomp, there is some discussion of closing
-this loophole in the future and we would like this patch to not depend on
-that behavior and be future proofed for when it is removed.
+Thanks,
 
-Note that seccomp can be suspended before any filters are actually
-installed; this behavior is useful on criu restore, so that we can suspend
-seccomp, restore the filters, unmap our restore code from the restored
-process' address space, and then resume the task by detaching and have the
-filters resumed as well.
-
-v2 changes:
-
-* require that the tracer have no seccomp filters installed
-* drop TIF_NOTSC manipulation from the patch
-* change from ptrace command to a ptrace option and use this ptrace option
-  as the flag to check. This means that as soon as the tracer
-  detaches/dies, seccomp is re-enabled and as a corrollary that one can not
-  disable seccomp across PTRACE_ATTACHs.
-
-v3 changes:
-
-* get rid of various #ifdefs everywhere
-* report more sensible errors when PTRACE_O_SUSPEND_SECCOMP is incorrectly
-  used
-
-v4 changes:
-
-* get rid of may_suspend_seccomp() in favor of a capable() check in ptrace
-  directly
-
-v5 changes:
-
-* check that seccomp is not enabled (or suspended) on the tracer
-
-Signed-off-by: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-CC: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-CC: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-CC: Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>
-CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-CC: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
----
- include/linux/ptrace.h      |  1 +
- include/uapi/linux/ptrace.h |  6 ++++--
- kernel/ptrace.c             | 13 +++++++++++++
- kernel/seccomp.c            |  8 ++++++++
- 4 files changed, 26 insertions(+), 2 deletions(-)
-
-diff --git a/include/linux/ptrace.h b/include/linux/ptrace.h
-index 987a73a..061265f 100644
---- a/include/linux/ptrace.h
-+++ b/include/linux/ptrace.h
-@@ -34,6 +34,7 @@
- #define PT_TRACE_SECCOMP	PT_EVENT_FLAG(PTRACE_EVENT_SECCOMP)
- 
- #define PT_EXITKILL		(PTRACE_O_EXITKILL << PT_OPT_FLAG_SHIFT)
-+#define PT_SUSPEND_SECCOMP	(PTRACE_O_SUSPEND_SECCOMP << PT_OPT_FLAG_SHIFT)
- 
- /* single stepping state bits (used on ARM and PA-RISC) */
- #define PT_SINGLESTEP_BIT	31
-diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
-index cf1019e..a7a6979 100644
---- a/include/uapi/linux/ptrace.h
-+++ b/include/uapi/linux/ptrace.h
-@@ -89,9 +89,11 @@ struct ptrace_peeksiginfo_args {
- #define PTRACE_O_TRACESECCOMP	(1 << PTRACE_EVENT_SECCOMP)
- 
- /* eventless options */
--#define PTRACE_O_EXITKILL	(1 << 20)
-+#define PTRACE_O_EXITKILL		(1 << 20)
-+#define PTRACE_O_SUSPEND_SECCOMP	(1 << 21)
- 
--#define PTRACE_O_MASK		(0x000000ff | PTRACE_O_EXITKILL)
-+#define PTRACE_O_MASK		(\
-+	0x000000ff | PTRACE_O_EXITKILL | PTRACE_O_SUSPEND_SECCOMP)
- 
- #include <asm/ptrace.h>
- 
-diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-index c8e0e05..496028b 100644
---- a/kernel/ptrace.c
-+++ b/kernel/ptrace.c
-@@ -556,6 +556,19 @@ static int ptrace_setoptions(struct task_struct *child, unsigned long data)
- 	if (data & ~(unsigned long)PTRACE_O_MASK)
- 		return -EINVAL;
- 
-+	if (unlikely(data & PTRACE_O_SUSPEND_SECCOMP)) {
-+		if (!config_enabled(CONFIG_CHECKPOINT_RESTORE) ||
-+		    !config_enabled(CONFIG_SECCOMP))
-+			return -EINVAL;
-+
-+		if (!capable(CAP_SYS_ADMIN))
-+			return -EPERM;
-+
-+		if (current->seccomp.mode != SECCOMP_MODE_DISABLED ||
-+		    current->ptrace & PT_SUSPEND_SECCOMP)
-+			return -EPERM;
-+	}
-+
- 	/* Avoid intermediate state when all opts are cleared */
- 	flags = child->ptrace;
- 	flags &= ~(PTRACE_O_MASK << PT_OPT_FLAG_SHIFT);
-diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 980fd26..645e42d 100644
---- a/kernel/seccomp.c
-+++ b/kernel/seccomp.c
-@@ -590,6 +590,10 @@ void secure_computing_strict(int this_syscall)
- {
- 	int mode = current->seccomp.mode;
- 
-+	if (config_enabled(CONFIG_CHECKPOINT_RESTORE) &&
-+	    unlikely(current->ptrace & PT_SUSPEND_SECCOMP))
-+		return;
-+
- 	if (mode == 0)
- 		return;
- 	else if (mode == SECCOMP_MODE_STRICT)
-@@ -691,6 +695,10 @@ u32 seccomp_phase1(struct seccomp_data *sd)
- 	int this_syscall = sd ? sd->nr :
- 		syscall_get_nr(current, task_pt_regs(current));
- 
-+	if (config_enabled(CONFIG_CHECKPOINT_RESTORE) &&
-+	    unlikely(current->ptrace & PT_SUSPEND_SECCOMP))
-+		return SECCOMP_PHASE1_OK;
-+
- 	switch (mode) {
- 	case SECCOMP_MODE_STRICT:
- 		__secure_computing_strict(this_syscall);  /* may call do_exit */
--- 
-2.1.4
+Tycho
