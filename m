@@ -1,164 +1,101 @@
-From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v5] seccomp: add ptrace options for suspend/resume
-Date: Sun, 14 Jun 2015 01:52:50 +0200
-Message-ID: <20150613235250.GA25252@redhat.com>
-References: <1434207768-16729-1-git-send-email-tycho.andersen@canonical.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Finn Thain <fthain-PnMVE5gNl/W9dxLkCovUHLpzq4S04n8Q@public.gmane.org>
+Subject: [RFC v2 23/24] m68k/mac: Fix PRAM accessors
+Date: Sun, 14 Jun 2015 17:46:30 +1000
+Message-ID: <20150614074613.054681242@telegraphics.com.au>
+References: <20150614074607.242676098@telegraphics.com.au>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1434207768-16729-1-git-send-email-tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Content-Disposition: inline; filename=mac68k-fix-pram-accessors
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-m68k-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 06/13, Tycho Andersen wrote:
->
-> This patch is the first step in enabling checkpoint/restore of processes
-> with seccomp enabled.
+Signed-off-by: Finn Thain <fthain-PnMVE5gNl/W9dxLkCovUHLpzq4S04n8Q@public.gmane.org>
 
-So just in case, I am fine with this version.
+---
 
-> One of the things CRIU does while dumping tasks is inject code into them
-> via ptrace to collect information that is only available to the process
-> itself. However, if we are in a seccomp mode where these processes are
-> prohibited from making these syscalls, then what CRIU does kills the task.
-> 
-> This patch adds a new ptrace option, PTRACE_O_SUSPEND_SECCOMP, that enables
-> a task from the init user namespace which has CAP_SYS_ADMIN and no seccomp
-> filters to disable (and re-enable) seccomp filters for another task so that
-> they can be successfully dumped (and restored). We restrict the set of
-> processes that can disable seccomp through ptrace because although today
-> ptrace can be used to bypass seccomp, there is some discussion of closing
-> this loophole in the future and we would like this patch to not depend on
-> that behavior and be future proofed for when it is removed.
-> 
-> Note that seccomp can be suspended before any filters are actually
-> installed; this behavior is useful on criu restore, so that we can suspend
-> seccomp, restore the filters, unmap our restore code from the restored
-> process' address space, and then resume the task by detaching and have the
-> filters resumed as well.
-> 
-> v2 changes:
-> 
-> * require that the tracer have no seccomp filters installed
-> * drop TIF_NOTSC manipulation from the patch
-> * change from ptrace command to a ptrace option and use this ptrace option
->   as the flag to check. This means that as soon as the tracer
->   detaches/dies, seccomp is re-enabled and as a corrollary that one can not
->   disable seccomp across PTRACE_ATTACHs.
-> 
-> v3 changes:
-> 
-> * get rid of various #ifdefs everywhere
-> * report more sensible errors when PTRACE_O_SUSPEND_SECCOMP is incorrectly
->   used
-> 
-> v4 changes:
-> 
-> * get rid of may_suspend_seccomp() in favor of a capable() check in ptrace
->   directly
-> 
-> v5 changes:
-> 
-> * check that seccomp is not enabled (or suspended) on the tracer
-> 
-> Signed-off-by: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-> CC: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-> CC: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> CC: Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>
-> CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> CC: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-> CC: Serge E. Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-> ---
->  include/linux/ptrace.h      |  1 +
->  include/uapi/linux/ptrace.h |  6 ++++--
->  kernel/ptrace.c             | 13 +++++++++++++
->  kernel/seccomp.c            |  8 ++++++++
->  4 files changed, 26 insertions(+), 2 deletions(-)
-> 
-> diff --git a/include/linux/ptrace.h b/include/linux/ptrace.h
-> index 987a73a..061265f 100644
-> --- a/include/linux/ptrace.h
-> +++ b/include/linux/ptrace.h
-> @@ -34,6 +34,7 @@
->  #define PT_TRACE_SECCOMP	PT_EVENT_FLAG(PTRACE_EVENT_SECCOMP)
->  
->  #define PT_EXITKILL		(PTRACE_O_EXITKILL << PT_OPT_FLAG_SHIFT)
-> +#define PT_SUSPEND_SECCOMP	(PTRACE_O_SUSPEND_SECCOMP << PT_OPT_FLAG_SHIFT)
->  
->  /* single stepping state bits (used on ARM and PA-RISC) */
->  #define PT_SINGLESTEP_BIT	31
-> diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
-> index cf1019e..a7a6979 100644
-> --- a/include/uapi/linux/ptrace.h
-> +++ b/include/uapi/linux/ptrace.h
-> @@ -89,9 +89,11 @@ struct ptrace_peeksiginfo_args {
->  #define PTRACE_O_TRACESECCOMP	(1 << PTRACE_EVENT_SECCOMP)
->  
->  /* eventless options */
-> -#define PTRACE_O_EXITKILL	(1 << 20)
-> +#define PTRACE_O_EXITKILL		(1 << 20)
-> +#define PTRACE_O_SUSPEND_SECCOMP	(1 << 21)
->  
-> -#define PTRACE_O_MASK		(0x000000ff | PTRACE_O_EXITKILL)
-> +#define PTRACE_O_MASK		(\
-> +	0x000000ff | PTRACE_O_EXITKILL | PTRACE_O_SUSPEND_SECCOMP)
->  
->  #include <asm/ptrace.h>
->  
-> diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-> index c8e0e05..496028b 100644
-> --- a/kernel/ptrace.c
-> +++ b/kernel/ptrace.c
-> @@ -556,6 +556,19 @@ static int ptrace_setoptions(struct task_struct *child, unsigned long data)
->  	if (data & ~(unsigned long)PTRACE_O_MASK)
->  		return -EINVAL;
->  
-> +	if (unlikely(data & PTRACE_O_SUSPEND_SECCOMP)) {
-> +		if (!config_enabled(CONFIG_CHECKPOINT_RESTORE) ||
-> +		    !config_enabled(CONFIG_SECCOMP))
-> +			return -EINVAL;
-> +
-> +		if (!capable(CAP_SYS_ADMIN))
-> +			return -EPERM;
-> +
-> +		if (current->seccomp.mode != SECCOMP_MODE_DISABLED ||
-> +		    current->ptrace & PT_SUSPEND_SECCOMP)
-> +			return -EPERM;
-> +	}
-> +
->  	/* Avoid intermediate state when all opts are cleared */
->  	flags = child->ptrace;
->  	flags &= ~(PTRACE_O_MASK << PT_OPT_FLAG_SHIFT);
-> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-> index 980fd26..645e42d 100644
-> --- a/kernel/seccomp.c
-> +++ b/kernel/seccomp.c
-> @@ -590,6 +590,10 @@ void secure_computing_strict(int this_syscall)
->  {
->  	int mode = current->seccomp.mode;
->  
-> +	if (config_enabled(CONFIG_CHECKPOINT_RESTORE) &&
-> +	    unlikely(current->ptrace & PT_SUSPEND_SECCOMP))
-> +		return;
-> +
->  	if (mode == 0)
->  		return;
->  	else if (mode == SECCOMP_MODE_STRICT)
-> @@ -691,6 +695,10 @@ u32 seccomp_phase1(struct seccomp_data *sd)
->  	int this_syscall = sd ? sd->nr :
->  		syscall_get_nr(current, task_pt_regs(current));
->  
-> +	if (config_enabled(CONFIG_CHECKPOINT_RESTORE) &&
-> +	    unlikely(current->ptrace & PT_SUSPEND_SECCOMP))
-> +		return SECCOMP_PHASE1_OK;
-> +
->  	switch (mode) {
->  	case SECCOMP_MODE_STRICT:
->  		__secure_computing_strict(this_syscall);  /* may call do_exit */
-> -- 
-> 2.1.4
-> 
+Tested on a PowerBook 520 and Quadra 650.
+
+---
+ arch/m68k/mac/misc.c     |   35 +++++++++++++++++++++++++++++------
+ include/uapi/linux/pmu.h |    2 ++
+ 2 files changed, 31 insertions(+), 6 deletions(-)
+
+Index: linux/arch/m68k/mac/misc.c
+===================================================================
+--- linux.orig/arch/m68k/mac/misc.c	2015-06-14 17:46:02.000000000 +1000
++++ linux/arch/m68k/mac/misc.c	2015-06-14 17:46:03.000000000 +1000
+@@ -119,19 +119,22 @@ static void pmu_write_time(long data)
+ static unsigned char pmu_pram_read_byte(int offset)
+ {
+ 	struct adb_request req;
+-	if (pmu_request(&req, NULL, 3, PMU_READ_NVRAM,
+-			(offset >> 8) & 0xFF, offset & 0xFF) < 0)
++
++	if (pmu_request(&req, NULL, 3, PMU_READ_XPRAM,
++	                offset & 0xFF, 1) < 0)
+ 		return 0;
+ 	while (!req.complete)
+ 		pmu_poll();
+-	return req.reply[3];
++
++	return req.reply[1];
+ }
+ 
+ static void pmu_pram_write_byte(unsigned char data, int offset)
+ {
+ 	struct adb_request req;
+-	if (pmu_request(&req, NULL, 4, PMU_WRITE_NVRAM,
+-			(offset >> 8) & 0xFF, offset & 0xFF, data) < 0)
++
++	if (pmu_request(&req, NULL, 4, PMU_WRITE_XPRAM,
++	                offset & 0xFF, 1, data) < 0)
+ 		return;
+ 	while (!req.complete)
+ 		pmu_poll();
+@@ -284,11 +287,31 @@ static void via_pram_command(int command
+ 
+ static unsigned char via_pram_read_byte(int offset)
+ {
+-	return 0;
++	unsigned char temp;
++	int addr = ((offset & 0xE0) << 3) | ((offset & 0x1F) << 2);
++
++	/* Use RTC command 0x38 for XPRAM access, as per MESS source code */
++	via_pram_command(addr | 0x3800 | 0x8001, &temp);
++
++	return temp;
+ }
+ 
+ static void via_pram_write_byte(unsigned char data, int offset)
+ {
++	unsigned char temp;
++	int addr = ((offset & 0xE0) << 3) | ((offset & 0x1F) << 2);
++
++	/* Clear the write protect bit */
++	temp = 0x55;
++	via_pram_command(0x34 | 0x01, &temp);
++
++	/* Write the byte to XPRAM */
++	temp = data;
++	via_pram_command(0x3800 | 0x0001 | addr, &temp);
++
++	/* Set the write protect bit */
++	temp = 0xD5;
++	via_pram_command(0x34 | 0x01, &temp);
+ }
+ 
+ /*
+Index: linux/include/uapi/linux/pmu.h
+===================================================================
+--- linux.orig/include/uapi/linux/pmu.h	2015-06-14 17:45:34.000000000 +1000
++++ linux/include/uapi/linux/pmu.h	2015-06-14 17:46:03.000000000 +1000
+@@ -18,7 +18,9 @@
+ #define PMU_POWER_CTRL		0x11	/* control power of some devices */
+ #define PMU_ADB_CMD		0x20	/* send ADB packet */
+ #define PMU_ADB_POLL_OFF	0x21	/* disable ADB auto-poll */
++#define PMU_WRITE_XPRAM		0x32	/* write eXtended Parameter RAM */
+ #define PMU_WRITE_NVRAM		0x33	/* write non-volatile RAM */
++#define PMU_READ_XPRAM		0x3a	/* read eXtended Parameter RAM */
+ #define PMU_READ_NVRAM		0x3b	/* read non-volatile RAM */
+ #define PMU_SET_RTC		0x30	/* set real-time clock */
+ #define PMU_READ_RTC		0x38	/* read real-time clock */
