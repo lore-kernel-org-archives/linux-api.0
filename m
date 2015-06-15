@@ -1,90 +1,75 @@
-From: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [RFC PATCH 06/18] signal/kthread: Initial implementation of
- kthread signal handling
-Date: Mon, 15 Jun 2015 15:13:41 +0200
-Message-ID: <20150615131341.GN9409@pathway.suse.cz>
-References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
- <1433516477-5153-7-git-send-email-pmladek@suse.cz>
- <20150606215816.GB15591@redhat.com>
- <20150608135107.GB3135@pathway.suse.cz>
- <20150608211336.GB24869@redhat.com>
+From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 4/4] Documentation: ABI: /sys/firmware/devicetree/overlays
+Date: Mon, 15 Jun 2015 08:24:04 -0500
+Message-ID: <CAL_JsqKm9PtDKaabx22Y8WQRJ+RCxWE9Fj+kO2dCJ7_UzriyzA@mail.gmail.com>
+References: <1434137896-13806-1-git-send-email-pantelis.antoniou@konsulko.com> <1434137896-13806-5-git-send-email-pantelis.antoniou@konsulko.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150608211336.GB24869-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1434137896-13806-5-git-send-email-pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+Cc: Grant Likely <grant.likely-s3s/WqlpOiPyB63q8FvJNQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Koen Kooi <koen-QLwJDigV5abLmq1fohREcCpxlwaOVQ5f@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pantelis Antoniou <panto-wVdstyuyKrO8r51toPun2/C9HSW9iNxf@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Oleg,
+On Fri, Jun 12, 2015 at 2:38 PM, Pantelis Antoniou
+<pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org> wrote:
+> Documentation ABI entry for overlays sysfs entries.
+>
+> Signed-off-by: Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+> ---
+>  .../ABI/testing/sysfs-firmware-devicetree-overlays | 35 ++++++++++++++++++++++
+>  1 file changed, 35 insertions(+)
+>  create mode 100644 Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
+>
+> diff --git a/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays b/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
+> new file mode 100644
+> index 0000000..be2d28b
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
+> @@ -0,0 +1,35 @@
+> +What:          /sys/firmware/devicetree/overlays/
+> +Date:          March 2015
+> +Contact:       Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+> +Description:
+> +               This directory contains the applied device tree overlays of
+> +               the running system, as directories of the overlay id.
+> +
+> +               enable: The master enable switch, by default is 1, and when
+> +                       set to 0 it cannot be re-enabled for security reasons.
+> +
+> +What:          /sys/firmware/devicetree/overlays/<id>
+> +Date:          March 2015
+> +Contact:       Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>
+> +Description:
+> +               Each directory represents an applied overlay, containing
+> +               the following attribute files.
+> +
+> +               The discussion about this switch takes place in:
+> +               http://comments.gmane.org/gmane.linux.drivers.devicetree/101871
+> +
+> +               Kees Cook:
+> +               "Coming from the perspective of drawing a bright line between
+> +               kernel and the root user (which tends to start with disabling
+> +               kernel module loading), I would say that there at least needs
+> +               to be a high-level one-way "off" switch for the interface so
+> +               that systems that have this interface can choose to turn it off
+> +               during initial boot, etc."
 
-I am sorry for the late reply. I wanted to think more before answering
-all the mails.
+Doesn't this below up above with "enable"?
 
-On Mon 2015-06-08 23:13:36, Oleg Nesterov wrote:
-> I do not. Contrary, I think this needs more code in the likely case.
-> Anyway, this API won't have too many users, so I don't even this this
-> is that important.
-> 
-> > > > +		if (sig_kernel_stop(signr)) {
-> > > > +			__set_current_state(TASK_STOPPED);
-> > > > +			spin_unlock_irqrestore(&sighand->siglock, flags);
-> > > > +			/* Don't run again until woken by SIGCONT or SIGKILL */
-> > > > +			freezable_schedule();
-> > > > +			goto relock;
-> > >
-> > > Yes this avoids the race with SIGCONT. But as I said we can add another
-> > > trivial helper which checks JOBCTL_STOP_DEQUEUED. So a kthread can do
-> > > this itself.
-> >
-> > Hmm, the helper would have a strange semantic. You need to take
-> > sighand->siglock, dequeue the signal (SIGSTOP), and call
-> > __set_current_state(TASK_STOPPED) before you release the lock.
-> > But what would happen if the dequeued signal is _not_ SIGSTOP?
-> 
-> Perhaps I missed your point, but no. If you want to handle SIGSTOP
-> you can do
-> 
+> +
+> +               targets: A file containing the list of targets of each overlay
+> +                        with each line containing a target.
 
-I think that we need to add:
+We have OF nodes in sysfs now. Would it be more useful if we created
+links to the target nodes instead of having a list of names?
 
-	spin_lock_irq(&sighand->siglock);
-
-> 	signr = kthread_signal_dequeue();
-> 	switch (signr) {
-> 	case SIGSTOP:
-> 		something_else();
-> 		kthread_do_signal_stop();
-> 	...
-> 	}
-
-And if we want to avoid any race, kthread_do_signal_stop() should look like:
-
-void kthread_do_signal_stop(unsigned long flags)
-{
-	struct sighand_struct *sighand = current->sighand;
-
-	__set_current_state(TASK_STOPPED);
-	spin_unlock_irqrestore(&sighand->siglock, flags);
-	/* Don't run again until woken by SIGCONT or SIGKILL */
-	freezable_schedule();
-}
-
-It means that we will have spin_lock() in one function and
-spin_unlock() in another one. This is what I meant with
-the strange semantic. This is why I think that it might be
-cleaner to implement some generic kthread_do_signal() or so
-and allow to (re)define/add sigactions via callbacks.
-
-Note that I am not aware of any kthread that would use SIGSTOP
-non-standard way.
-
-Anyway, I am going to concentrate on the main structure of the kthread
-API and will put the controversial signal handling a side for now.
-I will get back to it when converting the few kthreads that use
-signals. I will think more about your feedback in the meantime.
-
-Best Regards,
-Petr
+> +
+> +               can_remove: The attribute set to 1 means that the overlay can
+> +                           be removed, while 0 means that the overlay is being
+> +                           overlapped therefore removal is prohibited.
+> +
+> --
+> 1.7.12
+>
