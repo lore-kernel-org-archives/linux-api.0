@@ -1,80 +1,35 @@
-From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH 06/18] signal/kthread: Initial implementation of
-	kthread signal handling
-Date: Mon, 15 Jun 2015 21:14:29 +0200
-Message-ID: <20150615191429.GA29727@redhat.com>
-References: <1433516477-5153-1-git-send-email-pmladek@suse.cz> <1433516477-5153-7-git-send-email-pmladek@suse.cz> <20150606215816.GB15591@redhat.com> <20150608135107.GB3135@pathway.suse.cz> <20150608211336.GB24869@redhat.com> <20150615131341.GN9409@pathway.suse.cz>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH v5] seccomp: add ptrace options for suspend/resume
+Date: Mon, 15 Jun 2015 13:19:35 -0700
+Message-ID: <CAGXu5jJt93GKadDonjgYkrjh2Z44QyyzxmJwNOt1MVNM9gekJQ@mail.gmail.com>
+References: <1434207768-16729-1-git-send-email-tycho.andersen@canonical.com>
+	<20150613235250.GA25252@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150615131341.GN9409-KsEp0d+Q8qECVLCxKZUutA@public.gmane.org>
+In-Reply-To: <20150613235250.GA25252-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Petr,
-
-On 06/15, Petr Mladek wrote:
+On Sat, Jun 13, 2015 at 4:52 PM, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> On 06/13, Tycho Andersen wrote:
+>>
+>> This patch is the first step in enabling checkpoint/restore of processes
+>> with seccomp enabled.
 >
-> I am sorry for the late reply. I wanted to think more before answering
-> all the mails.
+> So just in case, I am fine with this version.
 
-Don't worry I am always late ;)
+Should I add your Ack? Though I really like the idea of a
+"Fine-with-this:" tag. ;)
 
-> On Mon 2015-06-08 23:13:36, Oleg Nesterov wrote:
-> > >
-> > > Hmm, the helper would have a strange semantic. You need to take
-> > > sighand->siglock, dequeue the signal (SIGSTOP), and call
-> > > __set_current_state(TASK_STOPPED) before you release the lock.
-> > > But what would happen if the dequeued signal is _not_ SIGSTOP?
-> >
-> > Perhaps I missed your point, but no. If you want to handle SIGSTOP
-> > you can do
-> >
->
-> I think that we need to add:
->
-> 	spin_lock_irq(&sighand->siglock);
->
-> > 	signr = kthread_signal_dequeue();
-> > 	switch (signr) {
-> > 	case SIGSTOP:
-> > 		something_else();
-> > 		kthread_do_signal_stop();
-> > 	...
-> > 	}
->
-> And if we want to avoid any race, kthread_do_signal_stop() should look like:
->
-> void kthread_do_signal_stop(unsigned long flags)
-> {
-> 	struct sighand_struct *sighand = current->sighand;
->
-> 	__set_current_state(TASK_STOPPED);
-> 	spin_unlock_irqrestore(&sighand->siglock, flags);
-> 	/* Don't run again until woken by SIGCONT or SIGKILL */
-> 	freezable_schedule();
-> }
+Andy, if you're okay with this too, I'll add it to my seccomp tree.
 
-Ah, understand. You think that we need to take ->siglock in advance
-to avoid the race with SIGCONT?
+Thanks again Tycho!
 
-No, we don't. Let me show you the code I suggested again:
+-Kees
 
-	void kthread_do_signal_stop(void)
-	{
-		spin_lock_irq(&curtent->sighand->siglock);
-		if (current->jobctl & JOBCTL_STOP_DEQUEUED)
-			__set_current_state(TASK_STOPPED);
-		spin_unlock_irq(&current->sighand->siglock);
-
-		schedule();
-	}
-	
-so you can dequeue_signal() and call kthread_do_signal_stop() without
-holding ->siglock. We can rely on JOBCTL_STOP_DEQUEUED bit. SIGCONT
-clears it, so kthread_do_signal_stop() can't race.
-
-Oleg.
+-- 
+Kees Cook
+Chrome OS Security
