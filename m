@@ -1,120 +1,80 @@
-From: Petr Mladek <pmladek@suse.cz>
-Subject: Re: [RFC PATCH 15/18] ring_buffer: Allow to exit the ring buffer
- benchmark immediately
-Date: Mon, 15 Jun 2015 17:54:28 +0200
-Message-ID: <20150615155428.GD3135@pathway.suse.cz>
-References: <1433516477-5153-1-git-send-email-pmladek@suse.cz>
- <1433516477-5153-16-git-send-email-pmladek@suse.cz>
- <20150608134417.3fb7a811@gandalf.local.home>
- <20150615152313.GC3135@pathway.suse.cz>
- <20150615113343.215bcd43@gandalf.local.home>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC PATCH 06/18] signal/kthread: Initial implementation of
+	kthread signal handling
+Date: Mon, 15 Jun 2015 21:14:29 +0200
+Message-ID: <20150615191429.GA29727@redhat.com>
+References: <1433516477-5153-1-git-send-email-pmladek@suse.cz> <1433516477-5153-7-git-send-email-pmladek@suse.cz> <20150606215816.GB15591@redhat.com> <20150608135107.GB3135@pathway.suse.cz> <20150608211336.GB24869@redhat.com> <20150615131341.GN9409@pathway.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150615113343.215bcd43@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Richard Weinberger <richard@nod.at>, David Woodhouse <dwmw2@infradead.org>, linux-mtd@lists.infradead.org, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, linux-nfs@vger.kernel.org, Chris Mason <clm@fb.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, live-patching@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20150615131341.GN9409-KsEp0d+Q8qECVLCxKZUutA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 2015-06-15 11:33:43, Steven Rostedt wrote:
-> On Mon, 15 Jun 2015 17:23:13 +0200
-> Petr Mladek <pmladek@suse.cz> wrote:
-> 
-> 
-> > Please, find below a version of the patch that can be applied against
-> > current Linus tree and also against your for-next branch.
-> > 
-> 
-> Thanks, just on Friday, I was testing ring buffer changes with the
-> ringbuffer benchmark, and was bitching about how I had to wait the 10
-> seconds before the module would unload ;-)
+Hi Petr,
 
-I am glad that it will be useful.
+On 06/15, Petr Mladek wrote:
+>
+> I am sorry for the late reply. I wanted to think more before answering
+> all the mails.
 
-Please, find below a version with a small typo fix. Heh, I spent a lot
-of time with doulbe checking the patch and then decided to do a last
-minute change. It produced "only" compilation warning that I missed.
-It was not visible with my testing :-(
+Don't worry I am always late ;)
 
+> On Mon 2015-06-08 23:13:36, Oleg Nesterov wrote:
+> > >
+> > > Hmm, the helper would have a strange semantic. You need to take
+> > > sighand->siglock, dequeue the signal (SIGSTOP), and call
+> > > __set_current_state(TASK_STOPPED) before you release the lock.
+> > > But what would happen if the dequeued signal is _not_ SIGSTOP?
+> >
+> > Perhaps I missed your point, but no. If you want to handle SIGSTOP
+> > you can do
+> >
+>
+> I think that we need to add:
+>
+> 	spin_lock_irq(&sighand->siglock);
+>
+> > 	signr = kthread_signal_dequeue();
+> > 	switch (signr) {
+> > 	case SIGSTOP:
+> > 		something_else();
+> > 		kthread_do_signal_stop();
+> > 	...
+> > 	}
+>
+> And if we want to avoid any race, kthread_do_signal_stop() should look like:
+>
+> void kthread_do_signal_stop(unsigned long flags)
+> {
+> 	struct sighand_struct *sighand = current->sighand;
+>
+> 	__set_current_state(TASK_STOPPED);
+> 	spin_unlock_irqrestore(&sighand->siglock, flags);
+> 	/* Don't run again until woken by SIGCONT or SIGKILL */
+> 	freezable_schedule();
+> }
 
+Ah, understand. You think that we need to take ->siglock in advance
+to avoid the race with SIGCONT?
 
->From 0049043e740c22bddc4306e448a015a9b8450825 Mon Sep 17 00:00:00 2001
-From: Petr Mladek <pmladek@suse.cz>
-Date: Mon, 15 Jun 2015 15:53:10 +0200
-Subject: [PATCH] ring_buffer: Allow to exit the ring buffer benchmark
- immediately
+No, we don't. Let me show you the code I suggested again:
 
-It takes a while until the ring_buffer_benchmark module is removed
-when the ring buffer hammer is running. It is because it takes
-few seconds and kthread_should_stop() is not being checked.
+	void kthread_do_signal_stop(void)
+	{
+		spin_lock_irq(&curtent->sighand->siglock);
+		if (current->jobctl & JOBCTL_STOP_DEQUEUED)
+			__set_current_state(TASK_STOPPED);
+		spin_unlock_irq(&current->sighand->siglock);
 
-This patch adds the check for kthread termination into the producer.
-It uses the existing @kill_test flag to finish the kthreads as
-cleanly as possible.
+		schedule();
+	}
+	
+so you can dequeue_signal() and call kthread_do_signal_stop() without
+holding ->siglock. We can rely on JOBCTL_STOP_DEQUEUED bit. SIGCONT
+clears it, so kthread_do_signal_stop() can't race.
 
-It disables printing the "ERROR" message when the kthread is going.
-
-It makes sure that producer does not go into the 10sec sleep
-when it is being killed.
-
-Finally, it does not call wait_to_die() when kthread_should_stop()
-already returns true.
-
-Signed-off-by: Petr Mladek <pmladek@suse.cz>
----
- kernel/trace/ring_buffer_benchmark.c | 11 ++++++++---
- 1 file changed, 8 insertions(+), 3 deletions(-)
-
-diff --git a/kernel/trace/ring_buffer_benchmark.c b/kernel/trace/ring_buffer_benchmark.c
-index 1b28df2d9104..c17f9c8d4908 100644
---- a/kernel/trace/ring_buffer_benchmark.c
-+++ b/kernel/trace/ring_buffer_benchmark.c
-@@ -263,6 +263,8 @@ static void ring_buffer_producer(void)
- 		if (cnt % wakeup_interval)
- 			cond_resched();
- #endif
-+		if (kthread_should_stop())
-+			kill_test = 1;
- 
- 	} while (ktime_before(end_time, timeout) && !kill_test);
- 	trace_printk("End ring buffer hammer\n");
-@@ -285,7 +287,7 @@ static void ring_buffer_producer(void)
- 	entries = ring_buffer_entries(buffer);
- 	overruns = ring_buffer_overruns(buffer);
- 
--	if (kill_test)
-+	if (kill_test && !kthread_should_stop())
- 		trace_printk("ERROR!\n");
- 
- 	if (!disable_reader) {
-@@ -379,7 +381,7 @@ static int ring_buffer_consumer_thread(void *arg)
- 	}
- 	__set_current_state(TASK_RUNNING);
- 
--	if (kill_test)
-+	if (!kthread_should_stop())
- 		wait_to_die();
- 
- 	return 0;
-@@ -399,13 +401,16 @@ static int ring_buffer_producer_thread(void *arg)
- 		}
- 
- 		ring_buffer_producer();
-+		if (kill_test)
-+			goto out_kill;
- 
- 		trace_printk("Sleeping for 10 secs\n");
- 		set_current_state(TASK_INTERRUPTIBLE);
- 		schedule_timeout(HZ * SLEEP_TIME);
- 	}
- 
--	if (kill_test)
-+out_kill:
-+	if (!kthread_should_stop())
- 		wait_to_die();
- 
- 	return 0;
--- 
-1.8.5.6
+Oleg.
