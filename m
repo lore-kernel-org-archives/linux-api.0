@@ -1,92 +1,121 @@
-From: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
-Subject: Re: [PATCH v4 4/4] Documentation: ABI: /sys/firmware/devicetree/overlays
-Date: Mon, 15 Jun 2015 17:02:24 +0300
-Message-ID: <8C477D79-68E9-4B10-BFC0-D967F257ED34@konsulko.com>
-References: <1434137896-13806-1-git-send-email-pantelis.antoniou@konsulko.com> <1434137896-13806-5-git-send-email-pantelis.antoniou@konsulko.com> <CAL_JsqKm9PtDKaabx22Y8WQRJ+RCxWE9Fj+kO2dCJ7_UzriyzA@mail.gmail.com> <B474B6B9-0C7C-4A46-B64F-BD76DA4B7F3B@konsulko.com> <CAL_JsqLQ2fU1KgN=KprLJmGeJjGxcfX9CZfRpWwd-BUYr7g5qw@mail.gmail.com>
-Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2098\))
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAL_JsqLQ2fU1KgN=KprLJmGeJjGxcfX9CZfRpWwd-BUYr7g5qw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Rob Herring <robherring2@gmail.com>
-Cc: Grant Likely <grant.likely@secretlab.ca>, Andrew Morton <akpm@linux-foundation.org>, Matt Porter <mporter@konsulko.com>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+From: Eric B Munson <emunson@akamai.com>
+Subject: Re: [RESEND PATCH V2 0/3] Allow user to request memory to be locked
+ on page fault
+Date: Mon, 15 Jun 2015 10:39:34 -0400
+Message-ID: <20150615143934.GA12300@akamai.com>
+References: <1433942810-7852-1-git-send-email-emunson@akamai.com>
+ <20150610145929.b22be8647887ea7091b09ae1@linux-foundation.org>
+ <5579DFBA.80809@akamai.com>
+ <20150611123424.4bb07cffd0e5bb146cc92231@linux-foundation.org>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="3MwIy2ne0vdjdPXF"
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20150611123424.4bb07cffd0e5bb146cc92231@linux-foundation.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, Michal Hocko <mhocko@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Rob,
 
-> On Jun 15, 2015, at 16:42 , Rob Herring <robherring2@gmail.com> wrote=
-:
->=20
-> On Mon, Jun 15, 2015 at 8:26 AM, Pantelis Antoniou
-> <pantelis.antoniou@konsulko.com> wrote:
->> Hi Rob,
->>=20
->>> On Jun 15, 2015, at 16:24 , Rob Herring <robherring2@gmail.com> wro=
+--3MwIy2ne0vdjdPXF
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Thu, 11 Jun 2015, Andrew Morton wrote:
+
+> On Thu, 11 Jun 2015 15:21:30 -0400 Eric B Munson <emunson@akamai.com> wro=
 te:
->>>=20
->>> On Fri, Jun 12, 2015 at 2:38 PM, Pantelis Antoniou
->>> <pantelis.antoniou@konsulko.com> wrote:
->>>> Documentation ABI entry for overlays sysfs entries.
->>>>=20
->>>> Signed-off-by: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
->>>> ---
->>>> .../ABI/testing/sysfs-firmware-devicetree-overlays | 35 ++++++++++=
-++++++++++++
->>>> 1 file changed, 35 insertions(+)
->>>> create mode 100644 Documentation/ABI/testing/sysfs-firmware-device=
-tree-overlays
->>>>=20
->>>> diff --git a/Documentation/ABI/testing/sysfs-firmware-devicetree-o=
-verlays b/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
->>>> new file mode 100644
->>>> index 0000000..be2d28b
->>>> --- /dev/null
->>>> +++ b/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
->>>> @@ -0,0 +1,35 @@
 >=20
-> [...]
+> > > Ditto mlockall(MCL_ONFAULT) followed by munlock().  I'm not sure
+> > > that even makes sense but the behaviour should be understood and
+> > > tested.
+> >
+> > I have extended the kselftest for lock-on-fault to try both of these
+> > scenarios and they work as expected.  The VMA is split and the VM
+> > flags are set appropriately for the resulting VMAs.
 >=20
->>>> +
->>>> +               targets: A file containing the list of targets of =
-each overlay
->>>> +                        with each line containing a target.
->>>=20
->>> We have OF nodes in sysfs now. Would it be more useful if we create=
-d
->>> links to the target nodes instead of having a list of names?
->>>=20
->>=20
->> Probably, this interface is merely informational; things get complic=
-ated by
->> the fact that there can be more than one target in each overlay.
+> munlock() should do vma merging as well.  I *think* we implemented
+> that.  More tests for you to add ;)
 >=20
-> Right, you would need 'targetN' or perhaps '<node name>' (with a '.N'
-> for duplicates) as the link names.
+> How are you testing the vma merging and splitting, btw?  Parsing
+> the profcs files?
+
+The lock-on-fault test now covers VMA splitting and merging by parsing
+/proc/self/maps.  VMA splitting and merging works as it should with both
+MAP_LOCKONFAULT and MCL_ONFAULT.
+
 >=20
-> If it is informational, then perhaps debugfs should be used instead?
+> > > What's missing here is a syscall to set VM_LOCKONFAULT on an
+> > > arbitrary range of memory - mlock() for lock-on-fault.  It's a
+> > > shame that mlock() didn't take a `mode' argument.  Perhaps we
+> > > should add such a syscall - that would make the mmap flag unneeded
+> > > but I suppose it should be kept for symmetry.
+> >=20
+> > Do you want such a system call as part of this set?  I would need some
+> > time to make sure I had thought through all the possible corners one
+> > could get into with such a call, so it would delay a V3 quite a bit.
+> > Otherwise I can send a V3 out immediately.
 >=20
-
-I=E2=80=99d rather not pull in debugfs here. It=E2=80=99s informational=
-, but not only for
-debugging. I=E2=80=99ll see what I can do with the targets.
-
-> What else if anything do you envision adding here?
+> I think the way to look at this is to pretend that mm/mlock.c doesn't
+> exist and ask "how should we design these features".
 >=20
+> And that would be:
+>=20
+> - mmap() takes a `flags' argument: MAP_LOCKED|MAP_LOCKONFAULT.
+>=20
+> - mlock() takes a `flags' argument.  Presently that's
+>   MLOCK_LOCKED|MLOCK_LOCKONFAULT.
+>=20
+> - munlock() takes a `flags' arument.  MLOCK_LOCKED|MLOCK_LOCKONFAULT
+>   to specify which flags are being cleared.
+>=20
+> - mlockall() and munlockall() ditto.
+>=20
+>=20
+> IOW, LOCKED and LOCKEDONFAULT are treated identically and independently.
+>=20
+> Now, that's how we would have designed all this on day one.  And I
+> think we can do this now, by adding new mlock2() and munlock2()
+> syscalls.  And we may as well deprecate the old mlock() and munlock(),
+> not that this matters much.
+>=20
+> *should* we do this?  I'm thinking "yes" - it's all pretty simple
+> boilerplate and wrappers and such, and it gets the interface correct,
+> and extensible.
+>=20
+> What do others think?
 
-As far as generic infrastructure properties, I hope nothing else.
-However I do intend to use the kobj directory to make the overlay users
-=E2=80=98hang=E2=80=99 properties relevant to their use.
+I am working on V3 which will introduce the new system calls.
 
-=46or instance the beaglebone capemanager could put there the compatibl=
-e
-and the resource declaration properties. But that=E2=80=99s going to co=
-me later.
+--3MwIy2ne0vdjdPXF
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
 
-> Rob
-> =E2=80=94
+iQIcBAEBAgAGBQJVfuOmAAoJELbVsDOpoOa9s3IP/3PHZ6S5YUFkxUlalwmhJoDD
+YtCVtwakGJ0GjPMI4iM+H1TsCym6AYH/Kv0dxfnTbFMTqClzHq7V3QZt9IHJH7Pb
+Z8gBH247JOk7opOsB3Cb3gLvAkQ4bfgXObSsgvPLCID2GumlUOINBpXwYBpNLh00
++4blC/0gdEp0C8xAPbJIzguSEI5wAwmOISlSQipb2ptEl+aAFjxRLARl47pD6EES
+N6pYgeVfNZ/F63Ywoley/s2RE7pvm3ofCVcrNC8AH1lolbbEZgrQBJKB/Sq5RC2W
+pcO4Z6Y3UOziTyNuWcHRVOGjK/gpoFnncdFJzmjMubx8N+8dus1Wl3xwvXidYT8e
+bLqc3acsUy2zLFQJRZIxuR9PPXVpKLCc0GF5Ufqa6ej5PKEsMJ2Baqy7x5Ujgyts
+ceNH2d1JRtkxdVw+WqBetjatM2icb+Yf/e3hOzr85thaAVGyoNJtlyhAciY4aIbW
+JhCpFuhvCuUcag2nNrrN5Ry3noGv3pm2AuqmUVSEZjorLsQnN5/3FxntVSb4YWkg
+VSLD4QHMiE0UeWnhCzKN7I5e/QhrnJ+HABx0GfTgjcXt1VQiKwxEp9A8+JsRmGiF
+G0oOTWsE/oUx+KCluuIRPpKuuiX0Nc50IEH3vklCIAkAWriMfh/jZvDTIeR1Wtci
+3BTlJ2Z0erX8IPh+BVnI
+=jO18
+-----END PGP SIGNATURE-----
 
-Regards
+--3MwIy2ne0vdjdPXF--
 
-=E2=80=94 Pantelis
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
