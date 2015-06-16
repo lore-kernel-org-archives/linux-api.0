@@ -1,54 +1,64 @@
-From: Tycho Andersen <tycho.andersen@canonical.com>
-Subject: Re: [PATCH v5] seccomp: add ptrace options for suspend/resume
-Date: Tue, 16 Jun 2015 07:25:24 -0600
-Message-ID: <20150616132524.GV3160@smitten>
-References: <1434207768-16729-1-git-send-email-tycho.andersen@canonical.com>
- <20150613235250.GA25252@redhat.com>
- <CAGXu5jJt93GKadDonjgYkrjh2Z44QyyzxmJwNOt1MVNM9gekJQ@mail.gmail.com>
- <20150615212017.GA10538@redhat.com>
- <CAGXu5jK9XA6hpjvOma647aKmLL7q89UJhQy_0BB90wUSPNT0hQ@mail.gmail.com>
- <CAGXu5jJPLF70gm96ms+yk8HuLHLa=M1Zp2HLP-kZxfjHxGMJGw@mail.gmail.com>
+From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Subject: Re: [RFC v3 1/4] fs: Add generic file system event notifications
+Date: Tue, 16 Jun 2015 17:21:47 +0100
+Message-ID: <20150616162147.GA17109@ZenIV.linux.org.uk>
+References: <1434460173-18427-1-git-send-email-b.michalska@samsung.com>
+ <1434460173-18427-2-git-send-email-b.michalska@samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAGXu5jJPLF70gm96ms+yk8HuLHLa=M1Zp2HLP-kZxfjHxGMJGw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Oleg Nesterov <oleg@redhat.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Will Drewry <wad@chromium.org>, Roland McGrath <roland@hack.frob.com>, Pavel Emelyanov <xemul@parallels.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Andy Lutomirski <luto@amacapital.net>
+In-Reply-To: <1434460173-18427-2-git-send-email-b.michalska-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Beata Michalska <b.michalska-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, lczerner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kmpark-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 15, 2015 at 03:50:59PM -0700, Kees Cook wrote:
-> On Mon, Jun 15, 2015 at 3:04 PM, Kees Cook <keescook@chromium.org> wrote:
-> > On Mon, Jun 15, 2015 at 2:20 PM, Oleg Nesterov <oleg@redhat.com> wrote:
-> >> On 06/15, Kees Cook wrote:
-> >>>
-> >>> On Sat, Jun 13, 2015 at 4:52 PM, Oleg Nesterov <oleg@redhat.com> wrote:
-> >>> > On 06/13, Tycho Andersen wrote:
-> >>> >>
-> >>> >> This patch is the first step in enabling checkpoint/restore of processes
-> >>> >> with seccomp enabled.
-> >>> >
-> >>> > So just in case, I am fine with this version.
-> >>>
-> >>> Should I add your Ack? Though I really like the idea of a
-> >>> "Fine-with-this:" tag. ;)
-> >>
-> >> Yes, please feel free to add ;)
-> >
-> > Thanks!
-> >
-> > I've added this to the seccomp tree. It may be a bit delayed appearing
-> > in -next, due to 4.2 opening soon.
-> >
-> > -Kees
+On Tue, Jun 16, 2015 at 03:09:30PM +0200, Beata Michalska wrote:
+> Introduce configurable generic interface for file
+> system-wide event notifications, to provide file
+> systems with a common way of reporting any potential
+> issues as they emerge.
 > 
-> Tycho, would you be willing to send some man-page updates for this new
-> interface, so it's documented correctly for ptrace?
-> https://www.kernel.org/doc/man-pages/patches.html
+> The notifications are to be issued through generic
+> netlink interface by newly introduced multicast group.
+> 
+> Threshold notifications have been included, allowing
+> triggering an event whenever the amount of free space drops
+> below a certain level - or levels to be more precise as two
+> of them are being supported: the lower and the upper range.
+> The notifications work both ways: once the threshold level
+> has been reached, an event shall be generated whenever
+> the number of available blocks goes up again re-activating
+> the threshold.
+> 
+> The interface has been exposed through a vfs. Once mounted,
+> it serves as an entry point for the set-up where one can
+> register for particular file system events.
 
-Yep, sounds good. I'll send some ASAP.
+Hmm...
 
-Thanks,
+1) what happens if two processes write to that file at the same time,
+trying to create an entry for the same fs?  WARN_ON() and fail for one
+of them if they race?
 
-Tycho
+2) what happens if fs is mounted more than once (e.g. in different
+namespaces, or bound at different mountpoints, or just plain mounted
+several times in different places) and we add an event for each?
+More specifically, what should happen when one of those gets unmounted?
+
+3) what's the meaning of ->active?  Is that "fs_drop_trace_entry() hadn't
+been called yet" flag?  Unless I'm misreading it, we can very well get
+explicit removal race with umount, resulting in cleanup_mnt() returning
+from fs_event_mount_dropped() before the first process (i.e. write
+asking to remove that entry) gets around to its deactivate_super(),
+ending up with umount(2) on a filesystem that isn't mounted anywhere
+else reporting success to userland before the actual fs shutdown, which
+is not a nice thing to do...
+
+4) test in fs_event_mount_dropped() looks very odd - by that point we
+are absolutely guaranteed to have ->mnt_ns == NULL.  What's that supposed
+to do?
+
+
+Al, trying to figure out the lifetime rules in all of that...
