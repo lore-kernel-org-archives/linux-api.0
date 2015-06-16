@@ -1,37 +1,161 @@
-From: Alexei Starovoitov <ast-uqk4Ao+rVK5Wk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v2 net-next 0/3] bpf: share helpers between tracing and
- networking
-Date: Tue, 16 Jun 2015 10:10:56 -0700
-Message-ID: <558058A0.7030201@plumgrid.com>
-References: <1434163154-5218-1-git-send-email-ast@plumgrid.com> <20150615.160130.583783771772303463.davem@davemloft.net> <557F97F3.6060400@plumgrid.com> <557FEA2C.5080408@iogearbox.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+From: Kevin Strasser <kevin.strasser-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH] usbcore: add sysfs support to xHCI usb3 hardware LPM
+Date: Tue, 16 Jun 2015 10:35:30 -0700
+Message-ID: <1434476130-12047-1-git-send-email-kevin.strasser@linux.intel.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <557FEA2C.5080408-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, wangnan0-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, daniel.wagner-98C5kh4wR6ohFhg+JK9F0w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Lu Baolu <baolu.lu-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Mathias Nyman <mathias.nyman-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 6/16/15 2:19 AM, Daniel Borkmann wrote:
-> if you really want to, you
-> could go via skb->sk->sk_socket->file and then retrieve credentials
-> from there for egress side (you can have a look at xt_owner). You'd
-> need a different *_proto helper for tc in that case, which would
-> then map to BPF_FUNC_get_current_uid_gid, etc. But that doesn't work
-> for ingress however, even if you would have early demux, so you
-> would need to let the eBPF helper function return an error code in
-> that case.
+Add a sysfs node to make it easier to verify if LPM is supported and being
+enabled for USB 3.0 devices.
 
-was looking at cls_flow to do exactly that, but with different helper
-name. Like bpf_get_socket_uid_gid(). The use case is to collect
-network statistics per-user and per-process. I think android still using
-some out of tree hacks for that. Ingress indeed is not solved by this
-skb->sk->sk_socket approach. I considered kprobe style, but accessing
-skb->len via probe_read is kernel specific, nonportable and slow-ish.
-Ideally we would allow a blend of tracing and networking programs,
-then the best solution would be one or two stable tracepoints in
-networking stack where skb is visible and receiving/transmitting task
-is also visible, then skb->len and task->pid together would give nice
-foundation for accurate stats.
+Signed-off-by: Kevin Strasser <kevin.strasser-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+---
+ Documentation/ABI/testing/sysfs-bus-usb | 14 ++++++++++++++
+ Documentation/usb/power-management.txt  | 15 +++++++++++++--
+ drivers/usb/core/hub.c                  |  4 ++++
+ drivers/usb/core/sysfs.c                | 31 +++++++++++++++++++++++++++++++
+ 4 files changed, 62 insertions(+), 2 deletions(-)
+
+diff --git a/Documentation/ABI/testing/sysfs-bus-usb b/Documentation/ABI/testing/sysfs-bus-usb
+index e5cc763..e935625 100644
+--- a/Documentation/ABI/testing/sysfs-bus-usb
++++ b/Documentation/ABI/testing/sysfs-bus-usb
+@@ -114,6 +114,20 @@ Description:
+ 		enabled for the device. Developer can write y/Y/1 or n/N/0 to
+ 		the file to enable/disable the feature.
+ 
++What:		/sys/bus/usb/devices/.../power/usb3_hardware_lpm
++Date:		June 2015
++Contact:	Kevin Strasser <kevin.strasser-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
++Description:
++		If CONFIG_PM_RUNTIME is set and a USB 3.0 lpm-capable device is
++		plugged in to a xHCI host which supports link PM, it will check
++		if U1 and U2 exit latencies have been set in the BOS
++		descriptor; if the check is is passed and the host supports
++		USB3 hardware LPM, USB3 hardware LPM will be enabled for the
++		device and the USB device directory will contain a file named
++		power/usb3_hardware_lpm. The file holds a string value (enable
++		or disable) indicating whether or not USB3 hardware LPM is
++		enabled for the device.
++
+ What:		/sys/bus/usb/devices/.../removable
+ Date:		February 2012
+ Contact:	Matthew Garrett <mjg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+diff --git a/Documentation/usb/power-management.txt b/Documentation/usb/power-management.txt
+index b5f8391..4a15c90 100644
+--- a/Documentation/usb/power-management.txt
++++ b/Documentation/usb/power-management.txt
+@@ -521,10 +521,10 @@ enabling hardware LPM, the host can automatically put the device into
+ lower power state(L1 for usb2.0 devices, or U1/U2 for usb3.0 devices),
+ which state device can enter and resume very quickly.
+ 
+-The user interface for controlling USB2 hardware LPM is located in the
++The user interface for controlling hardware LPM is located in the
+ power/ subdirectory of each USB device's sysfs directory, that is, in
+ /sys/bus/usb/devices/.../power/ where "..." is the device's ID. The
+-relevant attribute files is usb2_hardware_lpm.
++relevant attribute files are usb2_hardware_lpm and usb3_hardware_lpm.
+ 
+ 	power/usb2_hardware_lpm
+ 
+@@ -537,6 +537,17 @@ relevant attribute files is usb2_hardware_lpm.
+ 		can write y/Y/1 or n/N/0 to the file to	enable/disable
+ 		USB2 hardware LPM manually. This is for	test purpose mainly.
+ 
++	power/usb3_hardware_lpm
++
++		When a USB 3.0 lpm-capable device is plugged in to a
++		xHCI host which supports link PM, it will check if U1
++		and U2 exit latencies have been set in the BOS
++		descriptor; if the check is is passed and the host
++		supports USB3 hardware LPM, USB3 hardware LPM will be
++		enabled for the device and this file will be created.
++		The file holds a string value (enable or disable)
++		indicating whether or not USB3 hardware LPM is
++		enabled for the device.
+ 
+ 	USB Port Power Control
+ 	----------------------
+diff --git a/drivers/usb/core/hub.c b/drivers/usb/core/hub.c
+index 43cb2f2..d9ce8f9 100644
+--- a/drivers/usb/core/hub.c
++++ b/drivers/usb/core/hub.c
+@@ -3950,6 +3950,8 @@ int usb_disable_lpm(struct usb_device *udev)
+ 	if (usb_disable_link_state(hcd, udev, USB3_LPM_U2))
+ 		goto enable_lpm;
+ 
++	udev->usb3_lpm_enabled = 0;
++
+ 	return 0;
+ 
+ enable_lpm:
+@@ -4007,6 +4009,8 @@ void usb_enable_lpm(struct usb_device *udev)
+ 
+ 	usb_enable_link_state(hcd, udev, USB3_LPM_U1);
+ 	usb_enable_link_state(hcd, udev, USB3_LPM_U2);
++
++	udev->usb3_lpm_enabled = 1;
+ }
+ EXPORT_SYMBOL_GPL(usb_enable_lpm);
+ 
+diff --git a/drivers/usb/core/sysfs.c b/drivers/usb/core/sysfs.c
+index d269738..cfc68c1 100644
+--- a/drivers/usb/core/sysfs.c
++++ b/drivers/usb/core/sysfs.c
+@@ -531,6 +531,25 @@ static ssize_t usb2_lpm_besl_store(struct device *dev,
+ }
+ static DEVICE_ATTR_RW(usb2_lpm_besl);
+ 
++static ssize_t usb3_hardware_lpm_show(struct device *dev,
++				      struct device_attribute *attr, char *buf)
++{
++	struct usb_device *udev = to_usb_device(dev);
++	const char *p;
++
++	usb_lock_device(udev);
++
++	if (udev->usb3_lpm_enabled)
++		p = "enabled";
++	else
++		p = "disabled";
++
++	usb_unlock_device(udev);
++
++	return sprintf(buf, "%s\n", p);
++}
++static DEVICE_ATTR_RO(usb3_hardware_lpm);
++
+ static struct attribute *usb2_hardware_lpm_attr[] = {
+ 	&dev_attr_usb2_hardware_lpm.attr,
+ 	&dev_attr_usb2_lpm_l1_timeout.attr,
+@@ -542,6 +561,15 @@ static struct attribute_group usb2_hardware_lpm_attr_group = {
+ 	.attrs	= usb2_hardware_lpm_attr,
+ };
+ 
++static struct attribute *usb3_hardware_lpm_attr[] = {
++	&dev_attr_usb3_hardware_lpm.attr,
++	NULL,
++};
++static struct attribute_group usb3_hardware_lpm_attr_group = {
++	.name	= power_group_name,
++	.attrs	= usb3_hardware_lpm_attr,
++};
++
+ static struct attribute *power_attrs[] = {
+ 	&dev_attr_autosuspend.attr,
+ 	&dev_attr_level.attr,
+@@ -564,6 +592,9 @@ static int add_power_attributes(struct device *dev)
+ 		if (udev->usb2_hw_lpm_capable == 1)
+ 			rc = sysfs_merge_group(&dev->kobj,
+ 					&usb2_hardware_lpm_attr_group);
++		if (udev->lpm_capable == 1)
++			rc = sysfs_merge_group(&dev->kobj,
++					&usb3_hardware_lpm_attr_group);
+ 	}
+ 
+ 	return rc;
+-- 
+1.9.1
