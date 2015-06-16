@@ -1,109 +1,131 @@
 From: "Daniel P. Berrange" <berrange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [CFT][PATCH 00/10] Making new mounts of proc and sysfs as safe
  as bind mounts (take 2)
-Date: Tue, 16 Jun 2015 13:23:12 +0100
-Message-ID: <20150616122312.GA18689@redhat.com>
-References: <87lhg8pwvz.fsf@x220.int.ebiederm.org>
- <CALCETrXXax28s9kMTQ-zDx0MttQWG4rg2y-oz3bSGiumSL=3sg@mail.gmail.com>
- <CAOP=4wid+N_80iyPpiVMN96_fuHZZRGtYQ6AOPn-HFBj2H6Vgg@mail.gmail.com>
- <87fv6gikfn.fsf@x220.int.ebiederm.org>
- <CALCETrXO21Y7PR=pKqaqJb1YZArNyjAv7Z-J44O53FcfLM_0Tw@mail.gmail.com>
- <87fv6g80g7.fsf@x220.int.ebiederm.org>
- <CALCETrVEA0Ug+3aj5rjupqZub-1tPLw+szzbs4kTyEyVvNs7qg@mail.gmail.com>
- <87k2vkebri.fsf@x220.int.ebiederm.org>
- <20150604051958.GA21049@kroah.com>
- <87h9qo6la9.fsf@x220.int.ebiederm.org>
+Date: Tue, 16 Jun 2015 13:30:54 +0100
+Message-ID: <20150616123053.GA18926@redhat.com>
+References: <87pp63jcca.fsf@x220.int.ebiederm.org>
+ <87siaxuvik.fsf@x220.int.ebiederm.org>
+ <87wq004im1.fsf@x220.int.ebiederm.org>
+ <CALCETrUhXBR5WQ6gXr9KzGc4=7tph7kzopY29Hug4g+FhOzEKg@mail.gmail.com>
+ <20150528140839.GD28842@ubuntumail>
+ <55676E32.3050006@nod.at>
+ <87382gh3uo.fsf@x220.int.ebiederm.org>
+ <55677AEF.1090809@nod.at>
+ <87iobcfkwx.fsf@x220.int.ebiederm.org>
+ <55678CCA.80807@nod.at>
 Reply-To: "Daniel P. Berrange" <berrange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <87h9qo6la9.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+In-Reply-To: <55678CCA.80807-/L3Ra7n9ekc@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+To: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
+Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 04, 2015 at 01:27:10AM -0500, Eric W. Biederman wrote:
-> Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> writes:
+On Thu, May 28, 2015 at 11:46:50PM +0200, Richard Weinberger wrote:
+> Am 28.05.2015 um 23:32 schrieb Eric W. Biederman:
+> > Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org> writes:
+> > 
+> >> Am 28.05.2015 um 21:57 schrieb Eric W. Biederman:
+> >>>> FWIW, it breaks also libvirt-lxc:
+> >>>> Error: internal error: guest failed to start: Failed to re-mount /proc/sys on /proc/sys flags=1021: Operation not permitted
+> >>>
+> >>> Interesting.  I had not anticipated a failure there?  And it is failing
+> >>> in remount?  Oh that is interesting.
+> >>>
+> >>> That implies that there is some flag of the original mount of /proc that
+> >>> the remount of /proc/sys is clearing, and that previously 
+> >>>
+> >>> The flags specified are current rdonly,remount,bind so I expect there
+> >>> are some other flags on proc that libvirt-lxc is clearing by accident
+> >>> and we did not fail before because the kernel was not enforcing things.
+> >>
+> >> Please see:
+> >> http://libvirt.org/git/?p=libvirt.git;a=blob;f=src/lxc/lxc_container.c;h=9a9ae5c2aaf0f90ff472f24fda43c077b44998c7;hb=HEAD#l933
+> >> lxcContainerMountBasicFS()
+> >>
+> >> and:
+> >> http://libvirt.org/git/?p=libvirt.git;a=blob;f=src/lxc/lxc_container.c;h=9a9ae5c2aaf0f90ff472f24fda43c077b44998c7;hb=HEAD#l850
+> >> lxcBasicMounts
+> >>
+> >>> What are the mount flags in a working libvirt-lxc?
+> >>
+> >> See:
+> >> test1:~ # cat /proc/self/mountinfo
+> >> 149 147 0:56 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
+> >> 150 149 0:56 /sys /proc/sys ro,nodev,relatime - proc proc rw
+> > 
+> >> If you need more info, please let me know. :-)
+> > 
+> > Oh interesting I had not realized libvirt-lxc had grown an unprivileged
+> > mode using user namespaces.
 > 
-> > On Wed, Jun 03, 2015 at 04:13:21PM -0500, Eric W. Biederman wrote:
-> >> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
-> >> 
-> >> > One option would be to break the nosuid, nodev, and noexec parts into
-> >> > their own patch and then avoid tagging that patch for -stable if at
-> >> > all possible.  It would be nice to avoid another -stable ABI break if
-> >> > at all possible.
-> >> 
-> >> So I don't think we actually have anything that could be called an ABI
-> >> break in the whole mess, but it is definitely a behavioral change that
-> >> is a regression for lxc and libvirt-lxc that prevents them from starting.
-> >> 
-> >> nodev does not actually matter because of the implicit silliness that
-> >> is being added right now.
-> >> 
-> >> We do want those programs fixed and after those programs are fixed we
-> >> can safely begin failing mount when those attributes are being cleared
-> >> in a fresh mount.
-> >> 
-> >> So it looks to me like the best thing to do is to print a warning
-> >> whenever lxc or libvirt-lxc gets it wrong, which should ensure the
-> >> authors are sufficiently pestered that in a kernel release or 3 we can
-> >> begin enforcing those attributes.  Especially as the discussion on the
-> >> fix for those applications has already begun.
-> >
-> > "pestering" never works, look at some of the SCSI drivers for examples
-> > of how a distro will just patch out the "warning this driver is using an
-> > old api and needs to be fixed" messages.
+> Yep. It works quite well. I've migrated all my containers from lxc
+> to libvirt-lxc because libvirt-lxc had a working user-namespace
+> implementation before lxc.
 > 
-> > You can't break stuff like this, people will get upset :(
+> > This does appear to be a classic remount bug, where you are not
+> > preserving the permissions.  It appears the fact that the code
+> > failed to enforce locked permissions on the fresh mount of proc
+> > was hiding this bug until now.
+> > 
+> > I expect what you actually want is the code below:
+> > 
+> > diff --git a/src/lxc/lxc_container.c b/src/lxc/lxc_container.c
+> > index 9a9ae5c2aaf0..f008a7484bfe 100644
+> > --- a/src/lxc/lxc_container.c
+> > +++ b/src/lxc/lxc_container.c
+> > @@ -850,7 +850,7 @@ typedef struct {
+> >  
+> >  static const virLXCBasicMountInfo lxcBasicMounts[] = {
+> >      { "proc", "/proc", "proc", MS_NOSUID|MS_NOEXEC|MS_NODEV, false, false, false },
+> > -    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, false, false, false },
+> > +    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
+> >      { "/.oldroot/proc/sys/net/ipv4", "/proc/sys/net/ipv4", NULL, MS_BIND, false, false, true },
+> >      { "/.oldroot/proc/sys/net/ipv6", "/proc/sys/net/ipv6", NULL, MS_BIND, false, false, true },
+> >      { "sysfs", "/sys", "sysfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
+> > 
+> > Or possibly just:
+> > 
+> > diff --git a/src/lxc/lxc_container.c b/src/lxc/lxc_container.c
+> > index 9a9ae5c2aaf0..a60ccbd12bfc 100644
+> > --- a/src/lxc/lxc_container.c
+> > +++ b/src/lxc/lxc_container.c
+> > @@ -850,7 +850,7 @@ typedef struct {
+> >  
+> >  static const virLXCBasicMountInfo lxcBasicMounts[] = {
+> >      { "proc", "/proc", "proc", MS_NOSUID|MS_NOEXEC|MS_NODEV, false, false, false },
+> > -    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, false, false, false },
+> > +    { "/proc/sys", "/proc/sys", NULL, MS_BIND|MS_RDONLY, true, false, false },
+> >      { "/.oldroot/proc/sys/net/ipv4", "/proc/sys/net/ipv4", NULL, MS_BIND, false, false, true },
+> >      { "/.oldroot/proc/sys/net/ipv6", "/proc/sys/net/ipv6", NULL, MS_BIND, false, false, true },
+> >      { "sysfs", "/sys", "sysfs", MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_RDONLY, false, false, false },
 > 
-> A) To the best of my knowledge there are two programs on the face of the
->    planet where this matters. (lxc and libvirt-lxc)
+> I'll test your diff tomorrow with a fresh brain.
+> I sent a similar patch to libvirt folks some time ago, looks like it got lost. ;-\
 > 
-> B) The code in those two programs is buggy.  That is the code in those
->    two programs does not do what the authors intended.  That is fixing
->    those programs is something that should be done regardless of what
->    I do in the kernel.  I have already reached out to the developers of
->    those programs.  The pestering in the kernel is a form of reminder,
->    not the primary source of communication.
+> > As the there is little point in making /proc/sys read-only in a
+> > user-namespace, as the permission checks are uid based and no-one should
+> > have the global uid 0 in your container.  Making mounting /proc/sys
+> > read-only rather pointless.
 > 
-> C) These bugs really are security holes.  Currently they do not appear
->    exploitable (thank goodness) but they are security holes.
-> 
->    Since they are not currently exploitable it does make sense
->    to give people a little time to get their act together.
-> 
->    The bugs are larger then the case that is being hit here,
->    this is just where they are noticed.
-> 
-> D) Letting people know that there is a problem as part of a larger
->    effort has actually worked for me.  Distro's have stopped enabling
->    the sysctl system call.
-> 
-> E) Given that I have not audited sysfs and proc closely in recent years
->    I may actually be wrong.  Those bugs may actually be exploitable.
->    All it takes is chmod to be supported on one file that can be made
->    executable.  That bug has existed in the past and I don't doubt
->    someone will overlook something and we will see the bug again in the
->    future.
-> 
-> So it is my best judgment that I disable the code that stops
-> containers from starting and just making it a warning (for now).
-> Then in a release or so I start failing these operations instead of
-> warning.
-> 
-> This is the most fair and reasonable I can see to be.
+> Yeah, I've been ranting about that for ages...
+> libvirt-lxc contains a lot of cruft to make privileged container
+> kind of secure. Some users still fear using the user-namespace.
 
-While I generally like & support the kernel standard that userspace must
-never be broken, as libvirt LXC maintainer I think what Eric proposes is
-acceptable from the libvirt POV.
+Yes, we've discussed this before and I'd like to simplify this. The
+thing that has been stopping me tackling it has been figuring out a
+way to ensure we don't change semantics for existing deployed users.
+ie when RHEL-7 rebases to newer libvirt, I don't want existing
+containers to suddenly change their setup, because although the
+existing setup is sub-optimal, some apps / users might be relying
+on its behaviour in ways I can't predict.
 
-We'll get the fix into libvirt LXC in this month's release and backport
-it to our stable branches. So as long as there are a few months/releases
-grace period between this being a kernel warning and it turning into a
-hard error, libvirt users will have the fix already, or at least have it
-easily available to them.
+I do believe I have figured out a way to allow backwards compatibility
+now though, so we should have able to have another stab at simplifying
+and removing this cruft for newly deployed containers.
 
 Regards,
 Daniel
