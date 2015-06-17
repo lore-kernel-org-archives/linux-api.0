@@ -1,299 +1,183 @@
 From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH v7 07/16] libnvdimm, nfit: regions (block-data-window,
- persistent memory, volatile memory)
-Date: Wed, 17 Jun 2015 19:13:58 -0400
-Message-ID: <20150617231358.11597.39579.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [PATCH v7 12/16] libnvdimm: namespace indices: read and validate
+Date: Wed, 17 Jun 2015 19:14:25 -0400
+Message-ID: <20150617231425.11597.76306.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <20150617215027.11597.61414.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-acpi-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20150617215027.11597.61414.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: linux-acpi-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-nvdimm@lists.01.org
-Cc: mingo@kernel.org, sfr@canb.auug.org.au, rafael@kernel.org, neilb@suse.de, gregkh@linuxfoundation.org, "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>, Robert Moore <robert.moore@intel.com>, linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, jmoyer@redhat.com, axboe@kernel.dk, linux-api@vger.kernel.org, akpm@linux-foundation.org, hch@lst.de
+Cc: axboe@kernel.dk, sfr@canb.auug.org.au, rafael@kernel.org, neilb@suse.de, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, mingo@kernel.org, linux-acpi@vger.kernel.org, jmoyer@redhat.com, linux-api@vger.kernel.org, akpm@linux-foundation.org, hch@lst.de
 List-Id: linux-api@vger.kernel.org
 
-A "region" device represents the maximum capacity of a BLK range (mmio
-block-data-window(s)), or a PMEM range (DAX-capable persistent memory or
-volatile memory), without regard for aliasing.  Aliasing, in the
-dimm-local address space (DPA), is resolved by metadata on a dimm to
-designate which exclusive interface will access the aliased DPA ranges.
-Support for the per-dimm metadata/label arrvies is in a subsequent
-patch.
+This on media label format [1] consists of two index blocks followed by
+an array of labels.  None of these structures are ever updated in place.
+A sequence number tracks the current active index and the next one to
+write, while labels are written to free slots.
 
-The name format of "region" devices is "regionN" where, like dimms, N is
-a global ida index assigned at discovery time.  This id is not reliable
-across reboots nor in the presence of hotplug.  Look to attributes of
-the region or static id-data of the sub-namespace to generate a
-persistent name.  However, if the platform configuration does not change
-it is reasonable to expect the same region id to be assigned at the next
-boot.
+    +------------+
+    |            |
+    |  nsindex0  |
+    |            |
+    +------------+
+    |            |
+    |  nsindex1  |
+    |            |
+    +------------+
+    |   label0   |
+    +------------+
+    |   label1   |
+    +------------+
+    |            |
+     ....nslot...
+    |            |
+    +------------+
+    |   labelN   |
+    +------------+
 
-"region"s have 2 generic attributes "size", and "mapping"s where:
-- size: the BLK accessible capacity or the span of the
-  system physical address range in the case of PMEM.
+After reading valid labels, store the dpa ranges they claim into
+per-dimm resource trees.
 
-- mappingN: a tuple describing a dimm's contribution to the region's
-  capacity in the format (<nmemX>,<dpa>,<size>).  For a PMEM-region
-  there will be at least one mapping per dimm in the interleave set.  For
-  a BLK-region there is only "mapping0" listing the starting DPA of the
-  BLK-region and the available DPA capacity of that space (matches "size"
-  above).
-
-The max number of mappings per "region" is hard coded per the
-constraints of sysfs attribute groups.  That said the number of mappings
-per region should never exceed the maximum number of possible dimms in
-the system.  If the current number turns out to not be enough then the
-"mappings" attribute clarifies how many there are supposed to be. "32
-should be enough for anybody...".
+[1]: http://pmem.io/documents/NVDIMM_Namespace_Spec.pdf
 
 Cc: Neil Brown <neilb@suse.de>
-Cc: <linux-acpi@vger.kernel.org>
-Cc: Greg KH <gregkh@linuxfoundation.org>
-Cc: Robert Moore <robert.moore@intel.com>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 Acked-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 ---
- drivers/acpi/nfit.c          |  148 +++++++++++++++++++++
- drivers/nvdimm/Makefile      |    1 
- drivers/nvdimm/nd-core.h     |    3 
- drivers/nvdimm/nd.h          |   11 ++
- drivers/nvdimm/region_devs.c |  297 ++++++++++++++++++++++++++++++++++++++++++
- include/linux/libnvdimm.h    |   25 ++++
- 6 files changed, 484 insertions(+), 1 deletion(-)
- create mode 100644 drivers/nvdimm/region_devs.c
+ drivers/nvdimm/Makefile    |    1 
+ drivers/nvdimm/dimm.c      |   23 +++
+ drivers/nvdimm/dimm_devs.c |   30 ++++-
+ drivers/nvdimm/label.c     |  290 ++++++++++++++++++++++++++++++++++++++++++++
+ drivers/nvdimm/label.h     |  128 +++++++++++++++++++
+ drivers/nvdimm/nd.h        |   49 +++++++
+ include/uapi/linux/ndctl.h |    1 
+ 7 files changed, 520 insertions(+), 2 deletions(-)
+ create mode 100644 drivers/nvdimm/label.c
+ create mode 100644 drivers/nvdimm/label.h
 
-diff --git a/drivers/acpi/nfit.c b/drivers/acpi/nfit.c
-index c4ccec1bc60b..068f69d70c9e 100644
---- a/drivers/acpi/nfit.c
-+++ b/drivers/acpi/nfit.c
-@@ -757,11 +757,153 @@ static void acpi_nfit_init_dsms(struct acpi_nfit_desc *acpi_desc)
- 			set_bit(i, &nd_desc->dsm_mask);
- }
- 
-+static ssize_t range_index_show(struct device *dev,
-+		struct device_attribute *attr, char *buf)
-+{
-+	struct nd_region *nd_region = to_nd_region(dev);
-+	struct nfit_spa *nfit_spa = nd_region_provider_data(nd_region);
-+
-+	return sprintf(buf, "%d\n", nfit_spa->spa->range_index);
-+}
-+static DEVICE_ATTR_RO(range_index);
-+
-+static struct attribute *acpi_nfit_region_attributes[] = {
-+	&dev_attr_range_index.attr,
-+	NULL,
-+};
-+
-+static struct attribute_group acpi_nfit_region_attribute_group = {
-+	.name = "nfit",
-+	.attrs = acpi_nfit_region_attributes,
-+};
-+
-+static const struct attribute_group *acpi_nfit_region_attribute_groups[] = {
-+	&nd_region_attribute_group,
-+	&nd_mapping_attribute_group,
-+	&acpi_nfit_region_attribute_group,
-+	NULL,
-+};
-+
-+static int acpi_nfit_init_mapping(struct acpi_nfit_desc *acpi_desc,
-+		struct nd_mapping *nd_mapping, struct nd_region_desc *ndr_desc,
-+		struct acpi_nfit_memory_map *memdev,
-+		struct acpi_nfit_system_address *spa)
-+{
-+	struct nvdimm *nvdimm = acpi_nfit_dimm_by_handle(acpi_desc,
-+			memdev->device_handle);
-+	struct nfit_mem *nfit_mem;
-+	int blk_valid = 0;
-+
-+	if (!nvdimm) {
-+		dev_err(acpi_desc->dev, "spa%d dimm: %#x not found\n",
-+				spa->range_index, memdev->device_handle);
-+		return -ENODEV;
-+	}
-+
-+	nd_mapping->nvdimm = nvdimm;
-+	switch (nfit_spa_type(spa)) {
-+	case NFIT_SPA_PM:
-+	case NFIT_SPA_VOLATILE:
-+		nd_mapping->start = memdev->address;
-+		nd_mapping->size = memdev->region_size;
-+		break;
-+	case NFIT_SPA_DCR:
-+		nfit_mem = nvdimm_provider_data(nvdimm);
-+		if (!nfit_mem || !nfit_mem->bdw) {
-+			dev_dbg(acpi_desc->dev, "spa%d %s missing bdw\n",
-+					spa->range_index, nvdimm_name(nvdimm));
-+		} else {
-+			nd_mapping->size = nfit_mem->bdw->capacity;
-+			nd_mapping->start = nfit_mem->bdw->start_address;
-+			blk_valid = 1;
-+		}
-+
-+		ndr_desc->nd_mapping = nd_mapping;
-+		ndr_desc->num_mappings = blk_valid;
-+		if (!nvdimm_blk_region_create(acpi_desc->nvdimm_bus, ndr_desc))
-+			return -ENOMEM;
-+		break;
-+	}
-+
-+	return 0;
-+}
-+
-+static int acpi_nfit_register_region(struct acpi_nfit_desc *acpi_desc,
-+		struct nfit_spa *nfit_spa)
-+{
-+	static struct nd_mapping nd_mappings[ND_MAX_MAPPINGS];
-+	struct acpi_nfit_system_address *spa = nfit_spa->spa;
-+	struct nfit_memdev *nfit_memdev;
-+	struct nd_region_desc ndr_desc;
-+	struct nvdimm_bus *nvdimm_bus;
-+	struct resource res;
-+	int count = 0;
-+
-+	if (spa->range_index == 0) {
-+		dev_dbg(acpi_desc->dev, "%s: detected invalid spa index\n",
-+				__func__);
-+		return 0;
-+	}
-+
-+	memset(&res, 0, sizeof(res));
-+	memset(&nd_mappings, 0, sizeof(nd_mappings));
-+	memset(&ndr_desc, 0, sizeof(ndr_desc));
-+	res.start = spa->address;
-+	res.end = res.start + spa->length - 1;
-+	ndr_desc.res = &res;
-+	ndr_desc.provider_data = nfit_spa;
-+	ndr_desc.attr_groups = acpi_nfit_region_attribute_groups;
-+	list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list) {
-+		struct acpi_nfit_memory_map *memdev = nfit_memdev->memdev;
-+		struct nd_mapping *nd_mapping;
-+		int rc;
-+
-+		if (memdev->range_index != spa->range_index)
-+			continue;
-+		if (count >= ND_MAX_MAPPINGS) {
-+			dev_err(acpi_desc->dev, "spa%d exceeds max mappings %d\n",
-+					spa->range_index, ND_MAX_MAPPINGS);
-+			return -ENXIO;
-+		}
-+		nd_mapping = &nd_mappings[count++];
-+		rc = acpi_nfit_init_mapping(acpi_desc, nd_mapping, &ndr_desc,
-+				memdev, spa);
-+		if (rc)
-+			return rc;
-+	}
-+
-+	ndr_desc.nd_mapping = nd_mappings;
-+	ndr_desc.num_mappings = count;
-+	nvdimm_bus = acpi_desc->nvdimm_bus;
-+	if (nfit_spa_type(spa) == NFIT_SPA_PM) {
-+		if (!nvdimm_pmem_region_create(nvdimm_bus, &ndr_desc))
-+			return -ENOMEM;
-+	} else if (nfit_spa_type(spa) == NFIT_SPA_VOLATILE) {
-+		if (!nvdimm_volatile_region_create(nvdimm_bus, &ndr_desc))
-+			return -ENOMEM;
-+	}
-+	return 0;
-+}
-+
-+static int acpi_nfit_register_regions(struct acpi_nfit_desc *acpi_desc)
-+{
-+	struct nfit_spa *nfit_spa;
-+
-+	list_for_each_entry(nfit_spa, &acpi_desc->spas, list) {
-+		int rc = acpi_nfit_register_region(acpi_desc, nfit_spa);
-+
-+		if (rc)
-+			return rc;
-+	}
-+	return 0;
-+}
-+
- static int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
- {
- 	struct device *dev = acpi_desc->dev;
- 	const void *end;
- 	u8 *data;
-+	int rc;
- 
- 	INIT_LIST_HEAD(&acpi_desc->spas);
- 	INIT_LIST_HEAD(&acpi_desc->dcrs);
-@@ -786,7 +928,11 @@ static int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
- 
- 	acpi_nfit_init_dsms(acpi_desc);
- 
--	return acpi_nfit_register_dimms(acpi_desc);
-+	rc = acpi_nfit_register_dimms(acpi_desc);
-+	if (rc)
-+		return rc;
-+
-+	return acpi_nfit_register_regions(acpi_desc);
- }
- 
- static int acpi_nfit_add(struct acpi_device *adev)
 diff --git a/drivers/nvdimm/Makefile b/drivers/nvdimm/Makefile
-index d44b5c1fcd3b..88afd0d849c3 100644
+index 4d2a27f52faa..abce98f87f16 100644
 --- a/drivers/nvdimm/Makefile
 +++ b/drivers/nvdimm/Makefile
-@@ -4,3 +4,4 @@ libnvdimm-y := core.o
- libnvdimm-y += bus.o
- libnvdimm-y += dimm_devs.o
- libnvdimm-y += dimm.o
-+libnvdimm-y += region_devs.o
-diff --git a/drivers/nvdimm/nd-core.h b/drivers/nvdimm/nd-core.h
-index f2004b790874..1d760bf24857 100644
---- a/drivers/nvdimm/nd-core.h
-+++ b/drivers/nvdimm/nd-core.h
-@@ -40,5 +40,8 @@ void nvdimm_bus_exit(void);
- int nvdimm_bus_create_ndctl(struct nvdimm_bus *nvdimm_bus);
- void nvdimm_bus_destroy_ndctl(struct nvdimm_bus *nvdimm_bus);
- void nd_synchronize(void);
-+int nvdimm_bus_register_dimms(struct nvdimm_bus *nvdimm_bus);
-+int nvdimm_bus_register_regions(struct nvdimm_bus *nvdimm_bus);
-+int nd_match_dimm(struct device *dev, void *data);
- bool is_nvdimm(struct device *dev);
- #endif /* __ND_CORE_H__ */
-diff --git a/drivers/nvdimm/nd.h b/drivers/nvdimm/nd.h
-index 1f7f6ecab0fc..ea0cca337aa6 100644
---- a/drivers/nvdimm/nd.h
-+++ b/drivers/nvdimm/nd.h
-@@ -12,6 +12,7 @@
-  */
- #ifndef __ND_H__
- #define __ND_H__
-+#include <linux/libnvdimm.h>
- #include <linux/device.h>
- #include <linux/mutex.h>
- #include <linux/ndctl.h>
-@@ -22,6 +23,16 @@ struct nvdimm_drvdata {
- 	void *data;
- };
+@@ -10,3 +10,4 @@ libnvdimm-y += dimm.o
+ libnvdimm-y += region_devs.o
+ libnvdimm-y += region.o
+ libnvdimm-y += namespace_devs.o
++libnvdimm-y += label.o
+diff --git a/drivers/nvdimm/dimm.c b/drivers/nvdimm/dimm.c
+index eb20fc2df32b..2df97c3c3b34 100644
+--- a/drivers/nvdimm/dimm.c
++++ b/drivers/nvdimm/dimm.c
+@@ -18,6 +18,7 @@
+ #include <linux/slab.h>
+ #include <linux/mm.h>
+ #include <linux/nd.h>
++#include "label.h"
+ #include "nd.h"
  
-+struct nd_region {
-+	struct device dev;
-+	u16 ndr_mappings;
-+	u64 ndr_size;
-+	u64 ndr_start;
-+	int id;
-+	void *provider_data;
-+	struct nd_mapping mapping[0];
-+};
+ static void free_data(struct nvdimm_drvdata *ndd)
+@@ -42,6 +43,11 @@ static int nvdimm_probe(struct device *dev)
+ 		return -ENOMEM;
+ 
+ 	dev_set_drvdata(dev, ndd);
++	ndd->dpa.name = dev_name(dev);
++	ndd->ns_current = -1;
++	ndd->ns_next = -1;
++	ndd->dpa.start = 0;
++	ndd->dpa.end = -1;
+ 	ndd->dev = dev;
+ 
+ 	rc = nvdimm_init_nsarea(ndd);
+@@ -54,6 +60,17 @@ static int nvdimm_probe(struct device *dev)
+ 
+ 	dev_dbg(dev, "config data size: %d\n", ndd->nsarea.config_size);
+ 
++	nvdimm_bus_lock(dev);
++	ndd->ns_current = nd_label_validate(ndd);
++	ndd->ns_next = nd_label_next_nsindex(ndd->ns_current);
++	nd_label_copy(ndd, to_next_namespace_index(ndd),
++			to_current_namespace_index(ndd));
++	rc = nd_label_reserve_dpa(ndd);
++	nvdimm_bus_unlock(dev);
 +
- enum nd_async_mode {
- 	ND_SYNC,
- 	ND_ASYNC,
-diff --git a/drivers/nvdimm/region_devs.c b/drivers/nvdimm/region_devs.c
++	if (rc)
++		goto err;
++
+ 	return 0;
+ 
+  err:
+@@ -64,7 +81,13 @@ static int nvdimm_probe(struct device *dev)
+ static int nvdimm_remove(struct device *dev)
+ {
+ 	struct nvdimm_drvdata *ndd = dev_get_drvdata(dev);
++	struct resource *res, *_r;
+ 
++	nvdimm_bus_lock(dev);
++	dev_set_drvdata(dev, NULL);
++	for_each_dpa_resource_safe(ndd, res, _r)
++		nvdimm_free_dpa(ndd, res);
++	nvdimm_bus_unlock(dev);
+ 	free_data(ndd);
+ 
+ 	return 0;
+diff --git a/drivers/nvdimm/dimm_devs.c b/drivers/nvdimm/dimm_devs.c
+index bdf8241b6525..d2ef02e4be6c 100644
+--- a/drivers/nvdimm/dimm_devs.c
++++ b/drivers/nvdimm/dimm_devs.c
+@@ -92,8 +92,12 @@ int nvdimm_init_config_data(struct nvdimm_drvdata *ndd)
+ 	if (ndd->data)
+ 		return 0;
+ 
+-	if (ndd->nsarea.status || ndd->nsarea.max_xfer == 0)
++	if (ndd->nsarea.status || ndd->nsarea.max_xfer == 0
++			|| ndd->nsarea.config_size < ND_LABEL_MIN_SIZE) {
++		dev_dbg(ndd->dev, "failed to init config data area: (%d:%d)\n",
++				ndd->nsarea.max_xfer, ndd->nsarea.config_size);
+ 		return -ENXIO;
++	}
+ 
+ 	ndd->data = kmalloc(ndd->nsarea.config_size, GFP_KERNEL);
+ 	if (!ndd->data)
+@@ -243,6 +247,30 @@ struct nvdimm *nvdimm_create(struct nvdimm_bus *nvdimm_bus, void *provider_data,
+ }
+ EXPORT_SYMBOL_GPL(nvdimm_create);
+ 
++void nvdimm_free_dpa(struct nvdimm_drvdata *ndd, struct resource *res)
++{
++	WARN_ON_ONCE(!is_nvdimm_bus_locked(ndd->dev));
++	kfree(res->name);
++	__release_region(&ndd->dpa, res->start, resource_size(res));
++}
++
++struct resource *nvdimm_allocate_dpa(struct nvdimm_drvdata *ndd,
++		struct nd_label_id *label_id, resource_size_t start,
++		resource_size_t n)
++{
++	char *name = kmemdup(label_id, sizeof(*label_id), GFP_KERNEL);
++	struct resource *res;
++
++	if (!name)
++		return NULL;
++
++	WARN_ON_ONCE(!is_nvdimm_bus_locked(ndd->dev));
++	res = __request_region(&ndd->dpa, start, n, name, 0);
++	if (!res)
++		kfree(name);
++	return res;
++}
++
+ static int count_dimms(struct device *dev, void *c)
+ {
+ 	int *count = c;
+diff --git a/drivers/nvdimm/label.c b/drivers/nvdimm/label.c
 new file mode 100644
-index 000000000000..4bda2e0df8f7
+index 000000000000..db5d7492dc8d
 --- /dev/null
-+++ b/drivers/nvdimm/region_devs.c
-@@ -0,0 +1,297 @@
++++ b/drivers/nvdimm/label.c
+@@ -0,0 +1,290 @@
 +/*
 + * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
 + *
@@ -306,359 +190,511 @@ index 000000000000..4bda2e0df8f7
 + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 + * General Public License for more details.
 + */
-+#include <linux/slab.h>
++#include <linux/device.h>
++#include <linux/ndctl.h>
 +#include <linux/io.h>
++#include <linux/nd.h>
 +#include "nd-core.h"
++#include "label.h"
 +#include "nd.h"
 +
-+static DEFINE_IDA(region_ida);
-+
-+static void nd_region_release(struct device *dev)
++static u32 best_seq(u32 a, u32 b)
 +{
-+	struct nd_region *nd_region = to_nd_region(dev);
-+	u16 i;
++	a &= NSINDEX_SEQ_MASK;
++	b &= NSINDEX_SEQ_MASK;
 +
-+	for (i = 0; i < nd_region->ndr_mappings; i++) {
-+		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
-+		struct nvdimm *nvdimm = nd_mapping->nvdimm;
++	if (a == 0 || a == b)
++		return b;
++	else if (b == 0)
++		return a;
++	else if (nd_inc_seq(a) == b)
++		return b;
++	else
++		return a;
++}
 +
-+		put_device(&nvdimm->dev);
++size_t sizeof_namespace_index(struct nvdimm_drvdata *ndd)
++{
++	u32 index_span;
++
++	if (ndd->nsindex_size)
++		return ndd->nsindex_size;
++
++	/*
++	 * The minimum index space is 512 bytes, with that amount of
++	 * index we can describe ~1400 labels which is less than a byte
++	 * of overhead per label.  Round up to a byte of overhead per
++	 * label and determine the size of the index region.  Yes, this
++	 * starts to waste space at larger config_sizes, but it's
++	 * unlikely we'll ever see anything but 128K.
++	 */
++	index_span = ndd->nsarea.config_size / 129;
++	index_span /= NSINDEX_ALIGN * 2;
++	ndd->nsindex_size = index_span * NSINDEX_ALIGN;
++
++	return ndd->nsindex_size;
++}
++
++int nd_label_validate(struct nvdimm_drvdata *ndd)
++{
++	/*
++	 * On media label format consists of two index blocks followed
++	 * by an array of labels.  None of these structures are ever
++	 * updated in place.  A sequence number tracks the current
++	 * active index and the next one to write, while labels are
++	 * written to free slots.
++	 *
++	 *     +------------+
++	 *     |            |
++	 *     |  nsindex0  |
++	 *     |            |
++	 *     +------------+
++	 *     |            |
++	 *     |  nsindex1  |
++	 *     |            |
++	 *     +------------+
++	 *     |   label0   |
++	 *     +------------+
++	 *     |   label1   |
++	 *     +------------+
++	 *     |            |
++	 *      ....nslot...
++	 *     |            |
++	 *     +------------+
++	 *     |   labelN   |
++	 *     +------------+
++	 */
++	struct nd_namespace_index *nsindex[] = {
++		to_namespace_index(ndd, 0),
++		to_namespace_index(ndd, 1),
++	};
++	const int num_index = ARRAY_SIZE(nsindex);
++	struct device *dev = ndd->dev;
++	bool valid[2] = { 0 };
++	int i, num_valid = 0;
++	u32 seq;
++
++	for (i = 0; i < num_index; i++) {
++		u32 nslot;
++		u8 sig[NSINDEX_SIG_LEN];
++		u64 sum_save, sum, size;
++
++		memcpy(sig, nsindex[i]->sig, NSINDEX_SIG_LEN);
++		if (memcmp(sig, NSINDEX_SIGNATURE, NSINDEX_SIG_LEN) != 0) {
++			dev_dbg(dev, "%s: nsindex%d signature invalid\n",
++					__func__, i);
++			continue;
++		}
++		sum_save = __le64_to_cpu(nsindex[i]->checksum);
++		nsindex[i]->checksum = __cpu_to_le64(0);
++		sum = nd_fletcher64(nsindex[i], sizeof_namespace_index(ndd), 1);
++		nsindex[i]->checksum = __cpu_to_le64(sum_save);
++		if (sum != sum_save) {
++			dev_dbg(dev, "%s: nsindex%d checksum invalid\n",
++					__func__, i);
++			continue;
++		}
++
++		seq = __le32_to_cpu(nsindex[i]->seq);
++		if ((seq & NSINDEX_SEQ_MASK) == 0) {
++			dev_dbg(dev, "%s: nsindex%d sequence: %#x invalid\n",
++					__func__, i, seq);
++			continue;
++		}
++
++		/* sanity check the index against expected values */
++		if (__le64_to_cpu(nsindex[i]->myoff)
++				!= i * sizeof_namespace_index(ndd)) {
++			dev_dbg(dev, "%s: nsindex%d myoff: %#llx invalid\n",
++					__func__, i, (unsigned long long)
++					__le64_to_cpu(nsindex[i]->myoff));
++			continue;
++		}
++		if (__le64_to_cpu(nsindex[i]->otheroff)
++				!= (!i) * sizeof_namespace_index(ndd)) {
++			dev_dbg(dev, "%s: nsindex%d otheroff: %#llx invalid\n",
++					__func__, i, (unsigned long long)
++					__le64_to_cpu(nsindex[i]->otheroff));
++			continue;
++		}
++
++		size = __le64_to_cpu(nsindex[i]->mysize);
++		if (size > sizeof_namespace_index(ndd)
++				|| size < sizeof(struct nd_namespace_index)) {
++			dev_dbg(dev, "%s: nsindex%d mysize: %#llx invalid\n",
++					__func__, i, size);
++			continue;
++		}
++
++		nslot = __le32_to_cpu(nsindex[i]->nslot);
++		if (nslot * sizeof(struct nd_namespace_label)
++				+ 2 * sizeof_namespace_index(ndd)
++				> ndd->nsarea.config_size) {
++			dev_dbg(dev, "%s: nsindex%d nslot: %u invalid, config_size: %#x\n",
++					__func__, i, nslot,
++					ndd->nsarea.config_size);
++			continue;
++		}
++		valid[i] = true;
++		num_valid++;
 +	}
-+	ida_simple_remove(&region_ida, nd_region->id);
-+	kfree(nd_region);
-+}
 +
-+static struct device_type nd_blk_device_type = {
-+	.name = "nd_blk",
-+	.release = nd_region_release,
-+};
-+
-+static struct device_type nd_pmem_device_type = {
-+	.name = "nd_pmem",
-+	.release = nd_region_release,
-+};
-+
-+static struct device_type nd_volatile_device_type = {
-+	.name = "nd_volatile",
-+	.release = nd_region_release,
-+};
-+
-+static bool is_nd_pmem(struct device *dev)
-+{
-+	return dev ? dev->type == &nd_pmem_device_type : false;
-+}
-+
-+struct nd_region *to_nd_region(struct device *dev)
-+{
-+	struct nd_region *nd_region = container_of(dev, struct nd_region, dev);
-+
-+	WARN_ON(dev->type->release != nd_region_release);
-+	return nd_region;
-+}
-+EXPORT_SYMBOL_GPL(to_nd_region);
-+
-+static ssize_t size_show(struct device *dev,
-+		struct device_attribute *attr, char *buf)
-+{
-+	struct nd_region *nd_region = to_nd_region(dev);
-+	unsigned long long size = 0;
-+
-+	if (is_nd_pmem(dev)) {
-+		size = nd_region->ndr_size;
-+	} else if (nd_region->ndr_mappings == 1) {
-+		struct nd_mapping *nd_mapping = &nd_region->mapping[0];
-+
-+		size = nd_mapping->size;
++	switch (num_valid) {
++	case 0:
++		break;
++	case 1:
++		for (i = 0; i < num_index; i++)
++			if (valid[i])
++				return i;
++		/* can't have num_valid > 0 but valid[] = { false, false } */
++		WARN_ON(1);
++		break;
++	default:
++		/* pick the best index... */
++		seq = best_seq(__le32_to_cpu(nsindex[0]->seq),
++				__le32_to_cpu(nsindex[1]->seq));
++		if (seq == (__le32_to_cpu(nsindex[1]->seq) & NSINDEX_SEQ_MASK))
++			return 1;
++		else
++			return 0;
++		break;
 +	}
 +
-+	return sprintf(buf, "%llu\n", size);
++	return -1;
 +}
-+static DEVICE_ATTR_RO(size);
 +
-+static ssize_t mappings_show(struct device *dev,
-+		struct device_attribute *attr, char *buf)
++void nd_label_copy(struct nvdimm_drvdata *ndd, struct nd_namespace_index *dst,
++		struct nd_namespace_index *src)
 +{
-+	struct nd_region *nd_region = to_nd_region(dev);
++	if (dst && src)
++		/* pass */;
++	else
++		return;
 +
-+	return sprintf(buf, "%d\n", nd_region->ndr_mappings);
++	memcpy(dst, src, sizeof_namespace_index(ndd));
 +}
-+static DEVICE_ATTR_RO(mappings);
 +
-+static struct attribute *nd_region_attributes[] = {
-+	&dev_attr_size.attr,
-+	&dev_attr_mappings.attr,
-+	NULL,
-+};
-+
-+struct attribute_group nd_region_attribute_group = {
-+	.attrs = nd_region_attributes,
-+};
-+EXPORT_SYMBOL_GPL(nd_region_attribute_group);
-+
-+static ssize_t mappingN(struct device *dev, char *buf, int n)
++static struct nd_namespace_label *nd_label_base(struct nvdimm_drvdata *ndd)
 +{
-+	struct nd_region *nd_region = to_nd_region(dev);
-+	struct nd_mapping *nd_mapping;
-+	struct nvdimm *nvdimm;
++	void *base = to_namespace_index(ndd, 0);
 +
-+	if (n >= nd_region->ndr_mappings)
-+		return -ENXIO;
-+	nd_mapping = &nd_region->mapping[n];
-+	nvdimm = nd_mapping->nvdimm;
-+
-+	return sprintf(buf, "%s,%llu,%llu\n", dev_name(&nvdimm->dev),
-+			nd_mapping->start, nd_mapping->size);
++	return base + 2 * sizeof_namespace_index(ndd);
 +}
 +
-+#define REGION_MAPPING(idx) \
-+static ssize_t mapping##idx##_show(struct device *dev,		\
-+		struct device_attribute *attr, char *buf)	\
-+{								\
-+	return mappingN(dev, buf, idx);				\
-+}								\
-+static DEVICE_ATTR_RO(mapping##idx)
++#define for_each_clear_bit_le(bit, addr, size) \
++	for ((bit) = find_next_zero_bit_le((addr), (size), 0);  \
++	     (bit) < (size);                                    \
++	     (bit) = find_next_zero_bit_le((addr), (size), (bit) + 1))
 +
-+/*
-+ * 32 should be enough for a while, even in the presence of socket
-+ * interleave a 32-way interleave set is a degenerate case.
++/**
++ * preamble_current - common variable initialization for nd_label_* routines
++ * @ndd: dimm container for the relevant label set
++ * @nsindex_out: on return set to the currently active namespace index
++ * @free: on return set to the free label bitmap in the index
++ * @nslot: on return set to the number of slots in the label space
 + */
-+REGION_MAPPING(0);
-+REGION_MAPPING(1);
-+REGION_MAPPING(2);
-+REGION_MAPPING(3);
-+REGION_MAPPING(4);
-+REGION_MAPPING(5);
-+REGION_MAPPING(6);
-+REGION_MAPPING(7);
-+REGION_MAPPING(8);
-+REGION_MAPPING(9);
-+REGION_MAPPING(10);
-+REGION_MAPPING(11);
-+REGION_MAPPING(12);
-+REGION_MAPPING(13);
-+REGION_MAPPING(14);
-+REGION_MAPPING(15);
-+REGION_MAPPING(16);
-+REGION_MAPPING(17);
-+REGION_MAPPING(18);
-+REGION_MAPPING(19);
-+REGION_MAPPING(20);
-+REGION_MAPPING(21);
-+REGION_MAPPING(22);
-+REGION_MAPPING(23);
-+REGION_MAPPING(24);
-+REGION_MAPPING(25);
-+REGION_MAPPING(26);
-+REGION_MAPPING(27);
-+REGION_MAPPING(28);
-+REGION_MAPPING(29);
-+REGION_MAPPING(30);
-+REGION_MAPPING(31);
-+
-+static umode_t mapping_visible(struct kobject *kobj, struct attribute *a, int n)
++static bool preamble_current(struct nvdimm_drvdata *ndd,
++		struct nd_namespace_index **nsindex_out,
++		unsigned long **free, u32 *nslot)
 +{
-+	struct device *dev = container_of(kobj, struct device, kobj);
-+	struct nd_region *nd_region = to_nd_region(dev);
++	struct nd_namespace_index *nsindex;
 +
-+	if (n < nd_region->ndr_mappings)
-+		return a->mode;
++	nsindex = to_current_namespace_index(ndd);
++	if (nsindex == NULL)
++		return false;
++
++	*free = (unsigned long *) nsindex->free;
++	*nslot = __le32_to_cpu(nsindex->nslot);
++	*nsindex_out = nsindex;
++
++	return true;
++}
++
++static char *nd_label_gen_id(struct nd_label_id *label_id, u8 *uuid, u32 flags)
++{
++	if (!label_id || !uuid)
++		return NULL;
++	snprintf(label_id->id, ND_LABEL_ID_SIZE, "%s-%pUb",
++			flags & NSLABEL_FLAG_LOCAL ? "blk" : "pmem", uuid);
++	return label_id->id;
++}
++
++static bool slot_valid(struct nd_namespace_label *nd_label, u32 slot)
++{
++	/* check that we are written where we expect to be written */
++	if (slot != __le32_to_cpu(nd_label->slot))
++		return false;
++
++	/* check that DPA allocations are page aligned */
++	if ((__le64_to_cpu(nd_label->dpa)
++				| __le64_to_cpu(nd_label->rawsize)) % SZ_4K)
++		return false;
++
++	return true;
++}
++
++int nd_label_reserve_dpa(struct nvdimm_drvdata *ndd)
++{
++	struct nd_namespace_index *nsindex;
++	unsigned long *free;
++	u32 nslot, slot;
++
++	if (!preamble_current(ndd, &nsindex, &free, &nslot))
++		return 0; /* no label, nothing to reserve */
++
++	for_each_clear_bit_le(slot, free, nslot) {
++		struct nd_namespace_label *nd_label;
++		struct nd_region *nd_region = NULL;
++		u8 label_uuid[NSLABEL_UUID_LEN];
++		struct nd_label_id label_id;
++		struct resource *res;
++		u32 flags;
++
++		nd_label = nd_label_base(ndd) + slot;
++
++		if (!slot_valid(nd_label, slot))
++			continue;
++
++		memcpy(label_uuid, nd_label->uuid, NSLABEL_UUID_LEN);
++		flags = __le32_to_cpu(nd_label->flags);
++		nd_label_gen_id(&label_id, label_uuid, flags);
++		res = nvdimm_allocate_dpa(ndd, &label_id,
++				__le64_to_cpu(nd_label->dpa),
++				__le64_to_cpu(nd_label->rawsize));
++		nd_dbg_dpa(nd_region, ndd, res, "reserve\n");
++		if (!res)
++			return -EBUSY;
++	}
++
 +	return 0;
 +}
+diff --git a/drivers/nvdimm/label.h b/drivers/nvdimm/label.h
+new file mode 100644
+index 000000000000..d6aa0d5c6b4e
+--- /dev/null
++++ b/drivers/nvdimm/label.h
+@@ -0,0 +1,128 @@
++/*
++ * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of version 2 of the GNU General Public License as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ */
++#ifndef __LABEL_H__
++#define __LABEL_H__
 +
-+static struct attribute *mapping_attributes[] = {
-+	&dev_attr_mapping0.attr,
-+	&dev_attr_mapping1.attr,
-+	&dev_attr_mapping2.attr,
-+	&dev_attr_mapping3.attr,
-+	&dev_attr_mapping4.attr,
-+	&dev_attr_mapping5.attr,
-+	&dev_attr_mapping6.attr,
-+	&dev_attr_mapping7.attr,
-+	&dev_attr_mapping8.attr,
-+	&dev_attr_mapping9.attr,
-+	&dev_attr_mapping10.attr,
-+	&dev_attr_mapping11.attr,
-+	&dev_attr_mapping12.attr,
-+	&dev_attr_mapping13.attr,
-+	&dev_attr_mapping14.attr,
-+	&dev_attr_mapping15.attr,
-+	&dev_attr_mapping16.attr,
-+	&dev_attr_mapping17.attr,
-+	&dev_attr_mapping18.attr,
-+	&dev_attr_mapping19.attr,
-+	&dev_attr_mapping20.attr,
-+	&dev_attr_mapping21.attr,
-+	&dev_attr_mapping22.attr,
-+	&dev_attr_mapping23.attr,
-+	&dev_attr_mapping24.attr,
-+	&dev_attr_mapping25.attr,
-+	&dev_attr_mapping26.attr,
-+	&dev_attr_mapping27.attr,
-+	&dev_attr_mapping28.attr,
-+	&dev_attr_mapping29.attr,
-+	&dev_attr_mapping30.attr,
-+	&dev_attr_mapping31.attr,
-+	NULL,
++#include <linux/ndctl.h>
++#include <linux/sizes.h>
++#include <linux/io.h>
++
++enum {
++	NSINDEX_SIG_LEN = 16,
++	NSINDEX_ALIGN = 256,
++	NSINDEX_SEQ_MASK = 0x3,
++	NSLABEL_UUID_LEN = 16,
++	NSLABEL_NAME_LEN = 64,
++	NSLABEL_FLAG_ROLABEL = 0x1,  /* read-only label */
++	NSLABEL_FLAG_LOCAL = 0x2,    /* DIMM-local namespace */
++	NSLABEL_FLAG_BTT = 0x4,      /* namespace contains a BTT */
++	NSLABEL_FLAG_UPDATING = 0x8, /* label being updated */
++	BTT_ALIGN = 4096,            /* all btt structures */
++	BTTINFO_SIG_LEN = 16,
++	BTTINFO_UUID_LEN = 16,
++	BTTINFO_FLAG_ERROR = 0x1,    /* error state (read-only) */
++	BTTINFO_MAJOR_VERSION = 1,
++	ND_LABEL_MIN_SIZE = 512 * 129, /* see sizeof_namespace_index() */
++	ND_LABEL_ID_SIZE = 50,
 +};
 +
-+struct attribute_group nd_mapping_attribute_group = {
-+	.is_visible = mapping_visible,
-+	.attrs = mapping_attributes,
++static const char NSINDEX_SIGNATURE[] = "NAMESPACE_INDEX\0";
++
++/**
++ * struct nd_namespace_index - label set superblock
++ * @sig: NAMESPACE_INDEX\0
++ * @flags: placeholder
++ * @seq: sequence number for this index
++ * @myoff: offset of this index in label area
++ * @mysize: size of this index struct
++ * @otheroff: offset of other index
++ * @labeloff: offset of first label slot
++ * @nslot: total number of label slots
++ * @major: label area major version
++ * @minor: label area minor version
++ * @checksum: fletcher64 of all fields
++ * @free[0]: bitmap, nlabel bits
++ *
++ * The size of free[] is rounded up so the total struct size is a
++ * multiple of NSINDEX_ALIGN bytes.  Any bits this allocates beyond
++ * nlabel bits must be zero.
++ */
++struct nd_namespace_index {
++	u8 sig[NSINDEX_SIG_LEN];
++	__le32 flags;
++	__le32 seq;
++	__le64 myoff;
++	__le64 mysize;
++	__le64 otheroff;
++	__le64 labeloff;
++	__le32 nslot;
++	__le16 major;
++	__le16 minor;
++	__le64 checksum;
++	u8 free[0];
 +};
-+EXPORT_SYMBOL_GPL(nd_mapping_attribute_group);
 +
-+void *nd_region_provider_data(struct nd_region *nd_region)
++/**
++ * struct nd_namespace_label - namespace superblock
++ * @uuid: UUID per RFC 4122
++ * @name: optional name (NULL-terminated)
++ * @flags: see NSLABEL_FLAG_*
++ * @nlabel: num labels to describe this ns
++ * @position: labels position in set
++ * @isetcookie: interleave set cookie
++ * @lbasize: LBA size in bytes or 0 for pmem
++ * @dpa: DPA of NVM range on this DIMM
++ * @rawsize: size of namespace
++ * @slot: slot of this label in label area
++ * @unused: must be zero
++ */
++struct nd_namespace_label {
++	u8 uuid[NSLABEL_UUID_LEN];
++	u8 name[NSLABEL_NAME_LEN];
++	__le32 flags;
++	__le16 nlabel;
++	__le16 position;
++	__le64 isetcookie;
++	__le64 lbasize;
++	__le64 dpa;
++	__le64 rawsize;
++	__le32 slot;
++	__le32 unused;
++};
++
++/**
++ * struct nd_label_id - identifier string for dpa allocation
++ * @id: "{blk|pmem}-<namespace uuid>"
++ */
++struct nd_label_id {
++	char id[ND_LABEL_ID_SIZE];
++};
++
++/*
++ * If the 'best' index is invalid, so is the 'next' index.  Otherwise,
++ * the next index is MOD(index+1, 2)
++ */
++static inline int nd_label_next_nsindex(int index)
 +{
-+	return nd_region->provider_data;
-+}
-+EXPORT_SYMBOL_GPL(nd_region_provider_data);
++	if (index < 0)
++		return -1;
 +
-+static struct nd_region *nd_region_create(struct nvdimm_bus *nvdimm_bus,
-+		struct nd_region_desc *ndr_desc, struct device_type *dev_type,
-+		const char *caller)
-+{
-+	struct nd_region *nd_region;
-+	struct device *dev;
-+	u16 i;
-+
-+	for (i = 0; i < ndr_desc->num_mappings; i++) {
-+		struct nd_mapping *nd_mapping = &ndr_desc->nd_mapping[i];
-+		struct nvdimm *nvdimm = nd_mapping->nvdimm;
-+
-+		if ((nd_mapping->start | nd_mapping->size) % SZ_4K) {
-+			dev_err(&nvdimm_bus->dev, "%s: %s mapping%d is not 4K aligned\n",
-+					caller, dev_name(&nvdimm->dev), i);
-+
-+			return NULL;
-+		}
-+	}
-+
-+	nd_region = kzalloc(sizeof(struct nd_region)
-+			+ sizeof(struct nd_mapping) * ndr_desc->num_mappings,
-+			GFP_KERNEL);
-+	if (!nd_region)
-+		return NULL;
-+	nd_region->id = ida_simple_get(&region_ida, 0, 0, GFP_KERNEL);
-+	if (nd_region->id < 0) {
-+		kfree(nd_region);
-+		return NULL;
-+	}
-+
-+	memcpy(nd_region->mapping, ndr_desc->nd_mapping,
-+			sizeof(struct nd_mapping) * ndr_desc->num_mappings);
-+	for (i = 0; i < ndr_desc->num_mappings; i++) {
-+		struct nd_mapping *nd_mapping = &ndr_desc->nd_mapping[i];
-+		struct nvdimm *nvdimm = nd_mapping->nvdimm;
-+
-+		get_device(&nvdimm->dev);
-+	}
-+	nd_region->ndr_mappings = ndr_desc->num_mappings;
-+	nd_region->provider_data = ndr_desc->provider_data;
-+	dev = &nd_region->dev;
-+	dev_set_name(dev, "region%d", nd_region->id);
-+	dev->parent = &nvdimm_bus->dev;
-+	dev->type = dev_type;
-+	dev->groups = ndr_desc->attr_groups;
-+	nd_region->ndr_size = resource_size(ndr_desc->res);
-+	nd_region->ndr_start = ndr_desc->res->start;
-+	nd_device_register(dev);
-+
-+	return nd_region;
++	return (index + 1) % 2;
 +}
 +
-+struct nd_region *nvdimm_pmem_region_create(struct nvdimm_bus *nvdimm_bus,
-+		struct nd_region_desc *ndr_desc)
-+{
-+	return nd_region_create(nvdimm_bus, ndr_desc, &nd_pmem_device_type,
-+			__func__);
-+}
-+EXPORT_SYMBOL_GPL(nvdimm_pmem_region_create);
-+
-+struct nd_region *nvdimm_blk_region_create(struct nvdimm_bus *nvdimm_bus,
-+		struct nd_region_desc *ndr_desc)
-+{
-+	if (ndr_desc->num_mappings > 1)
-+		return NULL;
-+	return nd_region_create(nvdimm_bus, ndr_desc, &nd_blk_device_type,
-+			__func__);
-+}
-+EXPORT_SYMBOL_GPL(nvdimm_blk_region_create);
-+
-+struct nd_region *nvdimm_volatile_region_create(struct nvdimm_bus *nvdimm_bus,
-+		struct nd_region_desc *ndr_desc)
-+{
-+	return nd_region_create(nvdimm_bus, ndr_desc, &nd_volatile_device_type,
-+			__func__);
-+}
-+EXPORT_SYMBOL_GPL(nvdimm_volatile_region_create);
-diff --git a/include/linux/libnvdimm.h b/include/linux/libnvdimm.h
-index d3ebccf4ea8b..39e7e606092a 100644
---- a/include/linux/libnvdimm.h
-+++ b/include/linux/libnvdimm.h
-@@ -26,11 +26,14 @@ enum {
- 	ND_CMD_MAX_ELEM = 4,
- 	ND_CMD_MAX_ENVELOPE = 16,
- 	ND_CMD_ARS_STATUS_MAX = SZ_4K,
-+	ND_MAX_MAPPINGS = 32,
++struct nvdimm_drvdata;
++int nd_label_validate(struct nvdimm_drvdata *ndd);
++void nd_label_copy(struct nvdimm_drvdata *ndd, struct nd_namespace_index *dst,
++		struct nd_namespace_index *src);
++size_t sizeof_namespace_index(struct nvdimm_drvdata *ndd);
++#endif /* __LABEL_H__ */
+diff --git a/drivers/nvdimm/nd.h b/drivers/nvdimm/nd.h
+index 0285e4588b03..401fa0d5b6ea 100644
+--- a/drivers/nvdimm/nd.h
++++ b/drivers/nvdimm/nd.h
+@@ -16,11 +16,15 @@
+ #include <linux/device.h>
+ #include <linux/mutex.h>
+ #include <linux/ndctl.h>
++#include "label.h"
+ 
+ struct nvdimm_drvdata {
+ 	struct device *dev;
++	int nsindex_size;
+ 	struct nd_cmd_get_config_size nsarea;
+ 	void *data;
++	int ns_current, ns_next;
++	struct resource dpa;
  };
  
- extern struct attribute_group nvdimm_bus_attribute_group;
- extern struct attribute_group nvdimm_attribute_group;
- extern struct attribute_group nd_device_attribute_group;
-+extern struct attribute_group nd_region_attribute_group;
-+extern struct attribute_group nd_mapping_attribute_group;
- 
- struct nvdimm;
- struct nvdimm_bus_descriptor;
-@@ -38,6 +41,12 @@ typedef int (*ndctl_fn)(struct nvdimm_bus_descriptor *nd_desc,
- 		struct nvdimm *nvdimm, unsigned int cmd, void *buf,
- 		unsigned int buf_len);
- 
-+struct nd_mapping {
-+	struct nvdimm *nvdimm;
-+	u64 start;
-+	u64 size;
-+};
-+
- struct nvdimm_bus_descriptor {
- 	const struct attribute_group **attr_groups;
- 	unsigned long dsm_mask;
-@@ -52,6 +61,14 @@ struct nd_cmd_desc {
- 	int out_sizes[ND_CMD_MAX_ELEM];
+ struct nd_region_namespaces {
+@@ -28,6 +32,37 @@ struct nd_region_namespaces {
+ 	int active;
  };
  
-+struct nd_region_desc {
-+	struct resource *res;
-+	struct nd_mapping *nd_mapping;
-+	u16 num_mappings;
-+	const struct attribute_group **attr_groups;
-+	void *provider_data;
-+};
++static inline struct nd_namespace_index *to_namespace_index(
++		struct nvdimm_drvdata *ndd, int i)
++{
++	if (i < 0)
++		return NULL;
 +
- struct nvdimm_bus;
- struct device;
- struct nvdimm_bus *nvdimm_bus_register(struct device *parent,
-@@ -59,9 +76,11 @@ struct nvdimm_bus *nvdimm_bus_register(struct device *parent,
- void nvdimm_bus_unregister(struct nvdimm_bus *nvdimm_bus);
- struct nvdimm_bus *to_nvdimm_bus(struct device *dev);
- struct nvdimm *to_nvdimm(struct device *dev);
-+struct nd_region *to_nd_region(struct device *dev);
- struct nvdimm_bus_descriptor *to_nd_desc(struct nvdimm_bus *nvdimm_bus);
- const char *nvdimm_name(struct nvdimm *nvdimm);
- void *nvdimm_provider_data(struct nvdimm *nvdimm);
-+void *nd_region_provider_data(struct nd_region *nd_region);
- struct nvdimm *nvdimm_create(struct nvdimm_bus *nvdimm_bus, void *provider_data,
- 		const struct attribute_group **groups, unsigned long flags,
- 		unsigned long *dsm_mask);
-@@ -73,4 +92,10 @@ u32 nd_cmd_out_size(struct nvdimm *nvdimm, int cmd,
- 		const struct nd_cmd_desc *desc, int idx, const u32 *in_field,
- 		const u32 *out_field);
- int nvdimm_bus_check_dimm_count(struct nvdimm_bus *nvdimm_bus, int dimm_count);
-+struct nd_region *nvdimm_pmem_region_create(struct nvdimm_bus *nvdimm_bus,
-+		struct nd_region_desc *ndr_desc);
-+struct nd_region *nvdimm_blk_region_create(struct nvdimm_bus *nvdimm_bus,
-+		struct nd_region_desc *ndr_desc);
-+struct nd_region *nvdimm_volatile_region_create(struct nvdimm_bus *nvdimm_bus,
-+		struct nd_region_desc *ndr_desc);
- #endif /* __LIBNVDIMM_H__ */
-
++	return ndd->data + sizeof_namespace_index(ndd) * i;
++}
++
++static inline struct nd_namespace_index *to_current_namespace_index(
++		struct nvdimm_drvdata *ndd)
++{
++	return to_namespace_index(ndd, ndd->ns_current);
++}
++
++static inline struct nd_namespace_index *to_next_namespace_index(
++		struct nvdimm_drvdata *ndd)
++{
++	return to_namespace_index(ndd, ndd->ns_next);
++}
++
++#define nd_dbg_dpa(r, d, res, fmt, arg...) \
++	dev_dbg((r) ? &(r)->dev : (d)->dev, "%s: %.13s: %#llx @ %#llx " fmt, \
++		(r) ? dev_name((d)->dev) : "", res ? res->name : "null", \
++		(unsigned long long) (res ? resource_size(res) : 0), \
++		(unsigned long long) (res ? res->start : 0), ##arg)
++
++#define for_each_dpa_resource_safe(ndd, res, next) \
++	for (res = (ndd)->dpa.child, next = res ? res->sibling : NULL; \
++			res; res = next, next = next ? next->sibling : NULL)
++
+ struct nd_region {
+ 	struct device dev;
+ 	u16 ndr_mappings;
+@@ -39,6 +74,15 @@ struct nd_region {
+ 	struct nd_mapping mapping[0];
+ };
+ 
++/*
++ * Lookup next in the repeating sequence of 01, 10, and 11.
++ */
++static inline unsigned nd_inc_seq(unsigned seq)
++{
++	static const unsigned next[] = { 0, 2, 3, 1 };
++
++	return next[seq & 3];
++}
+ enum nd_async_mode {
+ 	ND_SYNC,
+ 	ND_ASYNC,
+@@ -58,4 +102,9 @@ int nd_region_register_namespaces(struct nd_region *nd_region, int *err);
+ void nvdimm_bus_lock(struct device *dev);
+ void nvdimm_bus_unlock(struct device *dev);
+ bool is_nvdimm_bus_locked(struct device *dev);
++int nd_label_reserve_dpa(struct nvdimm_drvdata *ndd);
++void nvdimm_free_dpa(struct nvdimm_drvdata *ndd, struct resource *res);
++struct resource *nvdimm_allocate_dpa(struct nvdimm_drvdata *ndd,
++		struct nd_label_id *label_id, resource_size_t start,
++		resource_size_t n);
+ #endif /* __ND_H__ */
+diff --git a/include/uapi/linux/ndctl.h b/include/uapi/linux/ndctl.h
+index 174b6371dcc1..1357a87b8714 100644
+--- a/include/uapi/linux/ndctl.h
++++ b/include/uapi/linux/ndctl.h
+@@ -175,7 +175,6 @@ static inline const char *nvdimm_cmd_name(unsigned cmd)
+ #define ND_IOCTL_ARS_STATUS		_IOWR(ND_IOCTL, ND_CMD_ARS_STATUS,\
+ 					struct nd_cmd_ars_status)
+ 
+-
+ #define ND_DEVICE_DIMM 1            /* nd_dimm: container for "config data" */
+ #define ND_DEVICE_REGION_PMEM 2     /* nd_region: (parent of PMEM namespaces) */
+ #define ND_DEVICE_REGION_BLK 3      /* nd_region: (parent of BLK namespaces) */
