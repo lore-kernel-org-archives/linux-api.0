@@ -1,45 +1,177 @@
-From: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>
-Subject: Re: [PATCH v6 19/21] libnvdimm, nfit, nd_blk: driver for BLK-mode access persistent memory
-Date: Thu, 18 Jun 2015 00:09:14 +0200
-Message-ID: <1633410.TKJVXEEQrM@vostro.rjw.lan>
-References: <20150611183830.25175.51256.stgit@dwillia2-desk3.amr.corp.intel.com> <20150611201153.25175.83474.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [RFC v3 1/4] fs: Add generic file system event notifications
+Date: Thu, 18 Jun 2015 09:06:05 +1000
+Message-ID: <20150617230605.GK10224@dastard>
+References: <1434460173-18427-1-git-send-email-b.michalska@samsung.com>
+ <1434460173-18427-2-git-send-email-b.michalska@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150611201153.25175.83474.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, Boaz Harrosh <boaz-/8YdC2HfS5554TAoqtyWWQ@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org, neilb-l3A5Bk7waGM@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1434460173-18427-2-git-send-email-b.michalska@samsung.com>
+Sender: owner-linux-mm@kvack.org
+To: Beata Michalska <b.michalska@samsung.com>
+Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, greg@kroah.com, jack@suse.cz, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Thursday, June 11, 2015 04:11:53 PM Dan Williams wrote:
-> From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+On Tue, Jun 16, 2015 at 03:09:30PM +0200, Beata Michalska wrote:
+> Introduce configurable generic interface for file
+> system-wide event notifications, to provide file
+> systems with a common way of reporting any potential
+> issues as they emerge.
 > 
-> The libnvdimm implementation handles allocating dimm address space (DPA)
-> between PMEM and BLK mode interfaces.  After DPA has been allocated from
-> a BLK-region to a BLK-namespace the nd_blk driver attaches to handle I/O
-> as a struct bio based block device. Unlike PMEM, BLK is required to
-> handle platform specific details like mmio register formats and memory
-> controller interleave.  For this reason the libnvdimm generic nd_blk
-> driver calls back into the bus provider to carry out the I/O.
+> The notifications are to be issued through generic
+> netlink interface by newly introduced multicast group.
 > 
-> This initial implementation handles the BLK interface defined by the
-> ACPI 6 NFIT [1] and the NVDIMM DSM Interface Example [2] composed from
-> DCR (dimm control region), BDW (block data window), IDT (interleave
-> descriptor) NFIT structures and the hardware register format.
-> [1]: http://www.uefi.org/sites/default/files/resources/ACPI_6.0.pdf
-> [2]: http://pmem.io/documents/NVDIMM_DSM_Interface_Example.pdf
+> Threshold notifications have been included, allowing
+> triggering an event whenever the amount of free space drops
+> below a certain level - or levels to be more precise as two
+> of them are being supported: the lower and the upper range.
+> The notifications work both ways: once the threshold level
+> has been reached, an event shall be generated whenever
+> the number of available blocks goes up again re-activating
+> the threshold.
 > 
-> Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-> Cc: Boaz Harrosh <boaz-/8YdC2HfS5554TAoqtyWWQ@public.gmane.org>
-> Cc: H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-> Cc: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>
-> Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-> Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> The interface has been exposed through a vfs. Once mounted,
+> it serves as an entry point for the set-up where one can
+> register for particular file system events.
+> 
+> Signed-off-by: Beata Michalska <b.michalska@samsung.com>
 
-For the ACPI part:
+This has massive scalability problems:
 
-Acked-by: Rafael J. Wysocki <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> + 4.3 Threshold notifications:
+> +
+> + #include <linux/fs_event.h>
+> + void fs_event_alloc_space(struct super_block *sb, u64 ncount);
+> + void fs_event_free_space(struct super_block *sb, u64 ncount);
+> +
+> + Each filesystme supporting the threshold notifications should call
+> + fs_event_alloc_space/fs_event_free_space respectively whenever the
+> + amount of available blocks changes.
+> + - sb:     the filesystem's super block
+> + - ncount: number of blocks being acquired/released
+
+... here.
+
+> + Note that to properly handle the threshold notifications the fs events
+> + interface needs to be kept up to date by the filesystems. Each should
+> + register fs_trace_operations to enable querying the current number of
+> + available blocks.
+
+Have you noticed that the filesystems have percpu counters for
+tracking global space usage? There's good reason for that - taking a
+spinlock in such a hot accounting path causes severe contention.
+
+> +static void fs_event_send(struct fs_trace_entry *en, unsigned int event_id)
+> +{
+> +	size_t size = nla_total_size(sizeof(u32)) * 2 +
+> +		      nla_total_size(sizeof(u64));
+> +
+> +	fs_netlink_send_event(size, event_id, create_common_msg, en);
+> +}
+> +
+> +static void fs_event_send_thresh(struct fs_trace_entry *en,
+> +				  unsigned int event_id)
+> +{
+> +	size_t size = nla_total_size(sizeof(u32)) * 2 +
+> +		      nla_total_size(sizeof(u64)) * 2;
+> +
+> +	fs_netlink_send_event(size, event_id, create_thresh_msg, en);
+> +}
+> +
+> +void fs_event_notify(struct super_block *sb, unsigned int event_id)
+> +{
+> +	struct fs_trace_entry *en;
+> +
+> +	en = fs_trace_entry_get_rcu(sb);
+> +	if (!en)
+> +		return;
+> +
+> +	spin_lock(&en->lock);
+> +	if (atomic_read(&en->active) && (en->notify & FS_EVENT_GENERIC))
+> +		fs_event_send(en, event_id);
+> +	spin_unlock(&en->lock);
+> +	fs_trace_entry_put(en);
+> +}
+> +EXPORT_SYMBOL(fs_event_notify);
+> +
+> +void fs_event_alloc_space(struct super_block *sb, u64 ncount)
+> +{
+> +	struct fs_trace_entry *en;
+> +	s64 count;
+> +
+> +	en = fs_trace_entry_get_rcu(sb);
+> +	if (!en)
+> +		return;
+
+Adds an atomic write to get the trace entry,
+
+> +	spin_lock(&en->lock);
+
+a spin lock to lock the entry,
+
+
+> +	if (!atomic_read(&en->active) || !(en->notify & FS_EVENT_THRESH))
+> +		goto leave;
+> +	/*
+> +	 * we shouldn't drop below 0 here,
+> +	 * unless there is a sync issue somewhere (?)
+> +	 */
+> +	count = en->th.avail_space - ncount;
+> +	en->th.avail_space = count < 0 ? 0 : count;
+> +
+> +	if (en->th.avail_space > en->th.lrange)
+> +		/* Not 'even' close - leave */
+> +		goto leave;
+> +
+> +	if (en->th.avail_space > en->th.urange) {
+> +		/* Close enough - the lower range has been reached */
+> +		if (!(en->th.state & THRESH_LR_BEYOND)) {
+> +			/* Send notification */
+> +			fs_event_send_thresh(en, FS_THR_LRBELOW);
+> +			en->th.state &= ~THRESH_LR_BELOW;
+> +			en->th.state |= THRESH_LR_BEYOND;
+> +		}
+> +		goto leave;
+
+Then puts the entire netlink send path inside this spinlock, which
+includes memory allocation and all sorts of non-filesystem code
+paths. And it may be inside critical filesystem locks as well....
+
+Apart from the serialisation problem of the locking, adding
+memory allocation and the network send path to filesystem code
+that is effectively considered "innermost" filesystem code is going
+to have all sorts of problems for various filesystems. In the XFS
+case, we simply cannot execute this sort of function in the places
+where we update global space accounting.
+
+As it is, I think the basic concept of separate tracking of free
+space if fundamentally flawed. What I think needs to be done is that
+filesystems need access to the thresholds for events, and then the
+filesystems call fs_event_send_thresh() themselves from appropriate
+contexts (ie. without compromising locking, scalability, memory
+allocation recursion constraints, etc).
+
+e.g. instead of tracking every change in free space, a filesystem
+might execute this once every few seconds from a workqueue:
+
+	event = fs_event_need_space_warning(sb, <fs_free_space>)
+	if (event)
+		fs_event_send_thresh(sb, event);
+
+User still gets warnings about space usage, but there's no runtime
+overhead or problems with lock/memory allocation contexts, etc.
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
