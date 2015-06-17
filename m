@@ -1,8 +1,7 @@
 From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH v7 05/16] libnvdimm: control (ioctl) messages for nvdimm_bus
- and nvdimm devices
-Date: Wed, 17 Jun 2015 19:13:47 -0400
-Message-ID: <20150617231346.11597.7607.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [PATCH v7 09/16] libnvdimm, pmem: move pmem to drivers/nvdimm/
+Date: Wed, 17 Jun 2015 19:14:08 -0400
+Message-ID: <20150617231408.11597.28725.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <20150617215027.11597.61414.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -11,1160 +10,639 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20150617215027.11597.61414.stgit@dwillia2-desk3.amr.corp.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-nvdimm@lists.01.org
-Cc: mingo@kernel.org, sfr@canb.auug.org.au, rafael@kernel.org, neilb@suse.de, gregkh@linuxfoundation.org, "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>, linux-kernel@vger.kernel.org, Robert Moore <robert.moore@intel.com>, linux-acpi@vger.kernel.org, jmoyer@redhat.com, axboe@kernel.dk, Nicholas Moulin <nicholas.w.moulin@linux.intel.com>, linux-api@vger.kernel.org, akpm@linux-foundation.org, hch@lst.de
+Cc: axboe@kernel.dk, sfr@canb.auug.org.au, rafael@kernel.org, neilb@suse.de, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, mingo@kernel.org, linux-acpi@vger.kernel.org, jmoyer@redhat.com, linux-api@vger.kernel.org, akpm@linux-foundation.org, hch@lst.de
 List-Id: linux-api@vger.kernel.org
 
-Most discovery/configuration of the nvdimm-subsystem is done via sysfs
-attributes.  However, some nvdimm_bus instances, particularly the
-ACPI.NFIT bus, define a small set of messages that can be passed to the
-platform.  For convenience we derive the initial libnvdimm-ioctl command
-formats directly from the NFIT DSM Interface Example formats.
+Prepare the pmem driver to consume PMEM namespaces emitted by regions of
+an nvdimm_bus instance.  No functional change.
 
-    ND_CMD_SMART: media health and diagnostics
-    ND_CMD_GET_CONFIG_SIZE: size of the label space
-    ND_CMD_GET_CONFIG_DATA: read label space
-    ND_CMD_SET_CONFIG_DATA: write label space
-    ND_CMD_VENDOR: vendor-specific command passthrough
-    ND_CMD_ARS_CAP: report address-range-scrubbing capabilities
-    ND_CMD_ARS_START: initiate scrubbing
-    ND_CMD_ARS_STATUS: report on scrubbing state
-    ND_CMD_SMART_THRESHOLD: configure alarm thresholds for smart events
-
-If a platform later defines different commands than this set it is
-straightforward to extend support to those formats.
-
-Most of the commands target a specific dimm.  However, the
-address-range-scrubbing commands target the bus.  The 'commands'
-attribute in sysfs of an nvdimm_bus, or nvdimm, enumerate the supported
-commands for that object.
-
-Cc: <linux-acpi@vger.kernel.org>
-Cc: Robert Moore <robert.moore@intel.com>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Reported-by: Nicholas Moulin <nicholas.w.moulin@linux.intel.com>
 Acked-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 ---
- drivers/acpi/Kconfig       |   12 ++
- drivers/acpi/nfit.c        |  216 +++++++++++++++++++++++++++++
- drivers/acpi/nfit.h        |    3 
- drivers/nvdimm/bus.c       |  326 +++++++++++++++++++++++++++++++++++++++++++-
- drivers/nvdimm/core.c      |   16 ++
- drivers/nvdimm/dimm_devs.c |   38 +++++
- drivers/nvdimm/nd-core.h   |    3 
- include/linux/libnvdimm.h  |   27 ++++
- include/uapi/linux/Kbuild  |    1 
- include/uapi/linux/ndctl.h |  178 ++++++++++++++++++++++++
- 10 files changed, 810 insertions(+), 10 deletions(-)
- create mode 100644 include/uapi/linux/ndctl.h
+ drivers/block/Kconfig   |   11 --
+ drivers/block/Makefile  |    1 
+ drivers/block/pmem.c    |  262 -----------------------------------------------
+ drivers/nvdimm/Kconfig  |   23 ++++
+ drivers/nvdimm/Makefile |    3 +
+ drivers/nvdimm/pmem.c   |  262 +++++++++++++++++++++++++++++++++++++++++++++++
+ 6 files changed, 287 insertions(+), 275 deletions(-)
+ delete mode 100644 drivers/block/pmem.c
+ create mode 100644 drivers/nvdimm/pmem.c
 
-diff --git a/drivers/acpi/Kconfig b/drivers/acpi/Kconfig
-index 300b4ef3712b..9c43ae301300 100644
---- a/drivers/acpi/Kconfig
-+++ b/drivers/acpi/Kconfig
-@@ -397,6 +397,18 @@ config ACPI_NFIT
- 	  To compile this driver as a module, choose M here:
- 	  the module will be called nfit.
+diff --git a/drivers/block/Kconfig b/drivers/block/Kconfig
+index eb1fed5bd516..1b8094d4d7af 100644
+--- a/drivers/block/Kconfig
++++ b/drivers/block/Kconfig
+@@ -404,17 +404,6 @@ config BLK_DEV_RAM_DAX
+ 	  and will prevent RAM block device backing store memory from being
+ 	  allocated from highmem (only a problem for highmem systems).
  
-+config ACPI_NFIT_DEBUG
-+	bool "NFIT DSM debug"
-+	depends on ACPI_NFIT
-+	depends on DYNAMIC_DEBUG
-+	default n
+-config BLK_DEV_PMEM
+-	tristate "Persistent memory block device support"
+-	help
+-	  Saying Y here will allow you to use a contiguous range of reserved
+-	  memory as one or more persistent block devices.
+-
+-	  To compile this driver as a module, choose M here: the module will be
+-	  called 'pmem'.
+-
+-	  If unsure, say N.
+-
+ config CDROM_PKTCDVD
+ 	tristate "Packet writing on CD/DVD media"
+ 	depends on !UML
+diff --git a/drivers/block/Makefile b/drivers/block/Makefile
+index 9cc6c18a1c7e..02b688d1438d 100644
+--- a/drivers/block/Makefile
++++ b/drivers/block/Makefile
+@@ -14,7 +14,6 @@ obj-$(CONFIG_PS3_VRAM)		+= ps3vram.o
+ obj-$(CONFIG_ATARI_FLOPPY)	+= ataflop.o
+ obj-$(CONFIG_AMIGA_Z2RAM)	+= z2ram.o
+ obj-$(CONFIG_BLK_DEV_RAM)	+= brd.o
+-obj-$(CONFIG_BLK_DEV_PMEM)	+= pmem.o
+ obj-$(CONFIG_BLK_DEV_LOOP)	+= loop.o
+ obj-$(CONFIG_BLK_CPQ_DA)	+= cpqarray.o
+ obj-$(CONFIG_BLK_CPQ_CISS_DA)  += cciss.o
+diff --git a/drivers/block/pmem.c b/drivers/block/pmem.c
+deleted file mode 100644
+index eabf4a8d0085..000000000000
+--- a/drivers/block/pmem.c
++++ /dev/null
+@@ -1,262 +0,0 @@
+-/*
+- * Persistent Memory Driver
+- *
+- * Copyright (c) 2014, Intel Corporation.
+- * Copyright (c) 2015, Christoph Hellwig <hch@lst.de>.
+- * Copyright (c) 2015, Boaz Harrosh <boaz@plexistor.com>.
+- *
+- * This program is free software; you can redistribute it and/or modify it
+- * under the terms and conditions of the GNU General Public License,
+- * version 2, as published by the Free Software Foundation.
+- *
+- * This program is distributed in the hope it will be useful, but WITHOUT
+- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+- * more details.
+- */
+-
+-#include <asm/cacheflush.h>
+-#include <linux/blkdev.h>
+-#include <linux/hdreg.h>
+-#include <linux/init.h>
+-#include <linux/platform_device.h>
+-#include <linux/module.h>
+-#include <linux/moduleparam.h>
+-#include <linux/slab.h>
+-
+-#define PMEM_MINORS		16
+-
+-struct pmem_device {
+-	struct request_queue	*pmem_queue;
+-	struct gendisk		*pmem_disk;
+-
+-	/* One contiguous memory region per device */
+-	phys_addr_t		phys_addr;
+-	void			*virt_addr;
+-	size_t			size;
+-};
+-
+-static int pmem_major;
+-static atomic_t pmem_index;
+-
+-static void pmem_do_bvec(struct pmem_device *pmem, struct page *page,
+-			unsigned int len, unsigned int off, int rw,
+-			sector_t sector)
+-{
+-	void *mem = kmap_atomic(page);
+-	size_t pmem_off = sector << 9;
+-
+-	if (rw == READ) {
+-		memcpy(mem + off, pmem->virt_addr + pmem_off, len);
+-		flush_dcache_page(page);
+-	} else {
+-		flush_dcache_page(page);
+-		memcpy(pmem->virt_addr + pmem_off, mem + off, len);
+-	}
+-
+-	kunmap_atomic(mem);
+-}
+-
+-static void pmem_make_request(struct request_queue *q, struct bio *bio)
+-{
+-	struct block_device *bdev = bio->bi_bdev;
+-	struct pmem_device *pmem = bdev->bd_disk->private_data;
+-	int rw;
+-	struct bio_vec bvec;
+-	sector_t sector;
+-	struct bvec_iter iter;
+-	int err = 0;
+-
+-	if (bio_end_sector(bio) > get_capacity(bdev->bd_disk)) {
+-		err = -EIO;
+-		goto out;
+-	}
+-
+-	BUG_ON(bio->bi_rw & REQ_DISCARD);
+-
+-	rw = bio_data_dir(bio);
+-	sector = bio->bi_iter.bi_sector;
+-	bio_for_each_segment(bvec, bio, iter) {
+-		pmem_do_bvec(pmem, bvec.bv_page, bvec.bv_len, bvec.bv_offset,
+-			     rw, sector);
+-		sector += bvec.bv_len >> 9;
+-	}
+-
+-out:
+-	bio_endio(bio, err);
+-}
+-
+-static int pmem_rw_page(struct block_device *bdev, sector_t sector,
+-		       struct page *page, int rw)
+-{
+-	struct pmem_device *pmem = bdev->bd_disk->private_data;
+-
+-	pmem_do_bvec(pmem, page, PAGE_CACHE_SIZE, 0, rw, sector);
+-	page_endio(page, rw & WRITE, 0);
+-
+-	return 0;
+-}
+-
+-static long pmem_direct_access(struct block_device *bdev, sector_t sector,
+-			      void **kaddr, unsigned long *pfn, long size)
+-{
+-	struct pmem_device *pmem = bdev->bd_disk->private_data;
+-	size_t offset = sector << 9;
+-
+-	if (!pmem)
+-		return -ENODEV;
+-
+-	*kaddr = pmem->virt_addr + offset;
+-	*pfn = (pmem->phys_addr + offset) >> PAGE_SHIFT;
+-
+-	return pmem->size - offset;
+-}
+-
+-static const struct block_device_operations pmem_fops = {
+-	.owner =		THIS_MODULE,
+-	.rw_page =		pmem_rw_page,
+-	.direct_access =	pmem_direct_access,
+-};
+-
+-static struct pmem_device *pmem_alloc(struct device *dev, struct resource *res)
+-{
+-	struct pmem_device *pmem;
+-	struct gendisk *disk;
+-	int idx, err;
+-
+-	err = -ENOMEM;
+-	pmem = kzalloc(sizeof(*pmem), GFP_KERNEL);
+-	if (!pmem)
+-		goto out;
+-
+-	pmem->phys_addr = res->start;
+-	pmem->size = resource_size(res);
+-
+-	err = -EINVAL;
+-	if (!request_mem_region(pmem->phys_addr, pmem->size, "pmem")) {
+-		dev_warn(dev, "could not reserve region [0x%pa:0x%zx]\n", &pmem->phys_addr, pmem->size);
+-		goto out_free_dev;
+-	}
+-
+-	/*
+-	 * Map the memory as non-cachable, as we can't write back the contents
+-	 * of the CPU caches in case of a crash.
+-	 */
+-	err = -ENOMEM;
+-	pmem->virt_addr = ioremap_nocache(pmem->phys_addr, pmem->size);
+-	if (!pmem->virt_addr)
+-		goto out_release_region;
+-
+-	pmem->pmem_queue = blk_alloc_queue(GFP_KERNEL);
+-	if (!pmem->pmem_queue)
+-		goto out_unmap;
+-
+-	blk_queue_make_request(pmem->pmem_queue, pmem_make_request);
+-	blk_queue_max_hw_sectors(pmem->pmem_queue, 1024);
+-	blk_queue_bounce_limit(pmem->pmem_queue, BLK_BOUNCE_ANY);
+-
+-	disk = alloc_disk(PMEM_MINORS);
+-	if (!disk)
+-		goto out_free_queue;
+-
+-	idx = atomic_inc_return(&pmem_index) - 1;
+-
+-	disk->major		= pmem_major;
+-	disk->first_minor	= PMEM_MINORS * idx;
+-	disk->fops		= &pmem_fops;
+-	disk->private_data	= pmem;
+-	disk->queue		= pmem->pmem_queue;
+-	disk->flags		= GENHD_FL_EXT_DEVT;
+-	sprintf(disk->disk_name, "pmem%d", idx);
+-	disk->driverfs_dev = dev;
+-	set_capacity(disk, pmem->size >> 9);
+-	pmem->pmem_disk = disk;
+-
+-	add_disk(disk);
+-
+-	return pmem;
+-
+-out_free_queue:
+-	blk_cleanup_queue(pmem->pmem_queue);
+-out_unmap:
+-	iounmap(pmem->virt_addr);
+-out_release_region:
+-	release_mem_region(pmem->phys_addr, pmem->size);
+-out_free_dev:
+-	kfree(pmem);
+-out:
+-	return ERR_PTR(err);
+-}
+-
+-static void pmem_free(struct pmem_device *pmem)
+-{
+-	del_gendisk(pmem->pmem_disk);
+-	put_disk(pmem->pmem_disk);
+-	blk_cleanup_queue(pmem->pmem_queue);
+-	iounmap(pmem->virt_addr);
+-	release_mem_region(pmem->phys_addr, pmem->size);
+-	kfree(pmem);
+-}
+-
+-static int pmem_probe(struct platform_device *pdev)
+-{
+-	struct pmem_device *pmem;
+-	struct resource *res;
+-
+-	if (WARN_ON(pdev->num_resources > 1))
+-		return -ENXIO;
+-
+-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+-	if (!res)
+-		return -ENXIO;
+-
+-	pmem = pmem_alloc(&pdev->dev, res);
+-	if (IS_ERR(pmem))
+-		return PTR_ERR(pmem);
+-
+-	platform_set_drvdata(pdev, pmem);
+-
+-	return 0;
+-}
+-
+-static int pmem_remove(struct platform_device *pdev)
+-{
+-	struct pmem_device *pmem = platform_get_drvdata(pdev);
+-
+-	pmem_free(pmem);
+-	return 0;
+-}
+-
+-static struct platform_driver pmem_driver = {
+-	.probe		= pmem_probe,
+-	.remove		= pmem_remove,
+-	.driver		= {
+-		.owner	= THIS_MODULE,
+-		.name	= "pmem",
+-	},
+-};
+-
+-static int __init pmem_init(void)
+-{
+-	int error;
+-
+-	pmem_major = register_blkdev(0, "pmem");
+-	if (pmem_major < 0)
+-		return pmem_major;
+-
+-	error = platform_driver_register(&pmem_driver);
+-	if (error)
+-		unregister_blkdev(pmem_major, "pmem");
+-	return error;
+-}
+-module_init(pmem_init);
+-
+-static void pmem_exit(void)
+-{
+-	platform_driver_unregister(&pmem_driver);
+-	unregister_blkdev(pmem_major, "pmem");
+-}
+-module_exit(pmem_exit);
+-
+-MODULE_AUTHOR("Ross Zwisler <ross.zwisler@linux.intel.com>");
+-MODULE_LICENSE("GPL v2");
+diff --git a/drivers/nvdimm/Kconfig b/drivers/nvdimm/Kconfig
+index 92933551f846..07a29113b870 100644
+--- a/drivers/nvdimm/Kconfig
++++ b/drivers/nvdimm/Kconfig
+@@ -1,4 +1,4 @@
+-config LIBNVDIMM
++menuconfig LIBNVDIMM
+ 	tristate "NVDIMM (Non-Volatile Memory Device) Support"
+ 	depends on PHYS_ADDR_T_64BIT
+ 	depends on BLK_DEV
+@@ -13,3 +13,24 @@ config LIBNVDIMM
+ 	  CONFIG_DAX).  A BLK namespace refers to an NVDIMM control
+ 	  region which exposes an mmio register set for windowed
+ 	  access mode to non-volatile memory.
++
++if LIBNVDIMM
++
++config BLK_DEV_PMEM
++	tristate "PMEM: Persistent memory block device support"
++	default LIBNVDIMM
++	depends on HAS_IOMEM
 +	help
-+	  Enabling this option causes the nfit driver to dump the
-+	  input and output buffers of _DSM operations on the ACPI0012
-+	  device and its children.  This can be very verbose, so leave
-+	  it disabled unless you are debugging a hardware / firmware
-+	  issue.
++	  Memory ranges for PMEM are described by either an NFIT
++	  (NVDIMM Firmware Interface Table, see CONFIG_NFIT_ACPI), a
++	  non-standard OEM-specific E820 memory type (type-12, see
++	  CONFIG_X86_PMEM_LEGACY), or it is manually specified by the
++	  'memmap=nn[KMG]!ss[KMG]' kernel command line (see
++	  Documentation/kernel-parameters.txt).  This driver converts
++	  these persistent memory ranges into block devices that are
++	  capable of DAX (direct-access) file system mappings.  See
++	  Documentation/nvdimm/nvdimm.txt for more details.
 +
- source "drivers/acpi/apei/Kconfig"
++	  Say Y if you want to use an NVDIMM
++
++endif
+diff --git a/drivers/nvdimm/Makefile b/drivers/nvdimm/Makefile
+index af5e2760ddbd..4d2a27f52faa 100644
+--- a/drivers/nvdimm/Makefile
++++ b/drivers/nvdimm/Makefile
+@@ -1,4 +1,7 @@
+ obj-$(CONFIG_LIBNVDIMM) += libnvdimm.o
++obj-$(CONFIG_BLK_DEV_PMEM) += nd_pmem.o
++
++nd_pmem-y := pmem.o
  
- config ACPI_EXTLOG
-diff --git a/drivers/acpi/nfit.c b/drivers/acpi/nfit.c
-index 9fd7781f966e..9112a6210a4b 100644
---- a/drivers/acpi/nfit.c
-+++ b/drivers/acpi/nfit.c
-@@ -13,6 +13,7 @@
- #include <linux/list_sort.h>
- #include <linux/libnvdimm.h>
- #include <linux/module.h>
-+#include <linux/ndctl.h>
- #include <linux/list.h>
- #include <linux/acpi.h>
- #include "nfit.h"
-@@ -24,11 +25,153 @@ static const u8 *to_nfit_uuid(enum nfit_uuids id)
- 	return nfit_uuid[id];
- }
- 
-+static struct acpi_nfit_desc *to_acpi_nfit_desc(
-+		struct nvdimm_bus_descriptor *nd_desc)
-+{
-+	return container_of(nd_desc, struct acpi_nfit_desc, nd_desc);
-+}
-+
-+static struct acpi_device *to_acpi_dev(struct acpi_nfit_desc *acpi_desc)
-+{
-+	struct nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
-+
-+	/*
-+	 * If provider == 'ACPI.NFIT' we can assume 'dev' is a struct
-+	 * acpi_device.
-+	 */
-+	if (!nd_desc->provider_name
-+			|| strcmp(nd_desc->provider_name, "ACPI.NFIT") != 0)
-+		return NULL;
-+
-+	return to_acpi_device(acpi_desc->dev);
-+}
-+
- static int acpi_nfit_ctl(struct nvdimm_bus_descriptor *nd_desc,
- 		struct nvdimm *nvdimm, unsigned int cmd, void *buf,
- 		unsigned int buf_len)
- {
--	return -ENOTTY;
-+	struct acpi_nfit_desc *acpi_desc = to_acpi_nfit_desc(nd_desc);
-+	const struct nd_cmd_desc *desc = NULL;
-+	union acpi_object in_obj, in_buf, *out_obj;
-+	struct device *dev = acpi_desc->dev;
-+	const char *cmd_name, *dimm_name;
-+	unsigned long dsm_mask;
-+	acpi_handle handle;
-+	const u8 *uuid;
-+	u32 offset;
-+	int rc, i;
-+
-+	if (nvdimm) {
-+		struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-+		struct acpi_device *adev = nfit_mem->adev;
-+
-+		if (!adev)
-+			return -ENOTTY;
-+		dimm_name = dev_name(&adev->dev);
-+		cmd_name = nvdimm_cmd_name(cmd);
-+		dsm_mask = nfit_mem->dsm_mask;
-+		desc = nd_cmd_dimm_desc(cmd);
-+		uuid = to_nfit_uuid(NFIT_DEV_DIMM);
-+		handle = adev->handle;
-+	} else {
-+		struct acpi_device *adev = to_acpi_dev(acpi_desc);
-+
-+		cmd_name = nvdimm_bus_cmd_name(cmd);
-+		dsm_mask = nd_desc->dsm_mask;
-+		desc = nd_cmd_bus_desc(cmd);
-+		uuid = to_nfit_uuid(NFIT_DEV_BUS);
-+		handle = adev->handle;
-+		dimm_name = "bus";
-+	}
-+
-+	if (!desc || (cmd && (desc->out_num + desc->in_num == 0)))
-+		return -ENOTTY;
-+
-+	if (!test_bit(cmd, &dsm_mask))
-+		return -ENOTTY;
-+
-+	in_obj.type = ACPI_TYPE_PACKAGE;
-+	in_obj.package.count = 1;
-+	in_obj.package.elements = &in_buf;
-+	in_buf.type = ACPI_TYPE_BUFFER;
-+	in_buf.buffer.pointer = buf;
-+	in_buf.buffer.length = 0;
-+
-+	/* libnvdimm has already validated the input envelope */
-+	for (i = 0; i < desc->in_num; i++)
-+		in_buf.buffer.length += nd_cmd_in_size(nvdimm, cmd, desc,
-+				i, buf);
-+
-+	if (IS_ENABLED(CONFIG_ACPI_NFIT_DEBUG)) {
-+		dev_dbg(dev, "%s:%s cmd: %s input length: %d\n", __func__,
-+				dimm_name, cmd_name, in_buf.buffer.length);
-+		print_hex_dump_debug(cmd_name, DUMP_PREFIX_OFFSET, 4,
-+				4, in_buf.buffer.pointer, min_t(u32, 128,
-+					in_buf.buffer.length), true);
-+	}
-+
-+	out_obj = acpi_evaluate_dsm(handle, uuid, 1, cmd, &in_obj);
-+	if (!out_obj) {
-+		dev_dbg(dev, "%s:%s _DSM failed cmd: %s\n", __func__, dimm_name,
-+				cmd_name);
-+		return -EINVAL;
-+	}
-+
-+	if (out_obj->package.type != ACPI_TYPE_BUFFER) {
-+		dev_dbg(dev, "%s:%s unexpected output object type cmd: %s type: %d\n",
-+				__func__, dimm_name, cmd_name, out_obj->type);
-+		rc = -EINVAL;
-+		goto out;
-+	}
-+
-+	if (IS_ENABLED(CONFIG_ACPI_NFIT_DEBUG)) {
-+		dev_dbg(dev, "%s:%s cmd: %s output length: %d\n", __func__,
-+				dimm_name, cmd_name, out_obj->buffer.length);
-+		print_hex_dump_debug(cmd_name, DUMP_PREFIX_OFFSET, 4,
-+				4, out_obj->buffer.pointer, min_t(u32, 128,
-+					out_obj->buffer.length), true);
-+	}
-+
-+	for (i = 0, offset = 0; i < desc->out_num; i++) {
-+		u32 out_size = nd_cmd_out_size(nvdimm, cmd, desc, i, buf,
-+				(u32 *) out_obj->buffer.pointer);
-+
-+		if (offset + out_size > out_obj->buffer.length) {
-+			dev_dbg(dev, "%s:%s output object underflow cmd: %s field: %d\n",
-+					__func__, dimm_name, cmd_name, i);
-+			break;
-+		}
-+
-+		if (in_buf.buffer.length + offset + out_size > buf_len) {
-+			dev_dbg(dev, "%s:%s output overrun cmd: %s field: %d\n",
-+					__func__, dimm_name, cmd_name, i);
-+			rc = -ENXIO;
-+			goto out;
-+		}
-+		memcpy(buf + in_buf.buffer.length + offset,
-+				out_obj->buffer.pointer + offset, out_size);
-+		offset += out_size;
-+	}
-+	if (offset + in_buf.buffer.length < buf_len) {
-+		if (i >= 1) {
-+			/*
-+			 * status valid, return the number of bytes left
-+			 * unfilled in the output buffer
-+			 */
-+			rc = buf_len - offset - in_buf.buffer.length;
-+		} else {
-+			dev_err(dev, "%s:%s underrun cmd: %s buf_len: %d out_len: %d\n",
-+					__func__, dimm_name, cmd_name, buf_len,
-+					offset);
-+			rc = -ENXIO;
-+		}
-+	} else
-+		rc = 0;
-+
-+ out:
-+	ACPI_FREE(out_obj);
-+
-+	return rc;
- }
- 
- static const char *spa_type_name(u16 type)
-@@ -489,6 +632,7 @@ static struct attribute_group acpi_nfit_dimm_attribute_group = {
- };
- 
- static const struct attribute_group *acpi_nfit_dimm_attribute_groups[] = {
-+	&nvdimm_attribute_group,
- 	&acpi_nfit_dimm_attribute_group,
- 	NULL,
- };
-@@ -505,6 +649,50 @@ static struct nvdimm *acpi_nfit_dimm_by_handle(struct acpi_nfit_desc *acpi_desc,
- 	return NULL;
- }
- 
-+static int acpi_nfit_add_dimm(struct acpi_nfit_desc *acpi_desc,
-+		struct nfit_mem *nfit_mem, u32 device_handle)
-+{
-+	struct acpi_device *adev, *adev_dimm;
-+	struct device *dev = acpi_desc->dev;
-+	const u8 *uuid = to_nfit_uuid(NFIT_DEV_DIMM);
-+	unsigned long long sta;
-+	int i, rc = -ENODEV;
-+	acpi_status status;
-+
-+	nfit_mem->dsm_mask = acpi_desc->dimm_dsm_force_en;
-+	adev = to_acpi_dev(acpi_desc);
-+	if (!adev)
-+		return 0;
-+
-+	adev_dimm = acpi_find_child_device(adev, device_handle, false);
-+	nfit_mem->adev = adev_dimm;
-+	if (!adev_dimm) {
-+		dev_err(dev, "no ACPI.NFIT device with _ADR %#x, disabling...\n",
-+				device_handle);
-+		return -ENODEV;
-+	}
-+
-+	status = acpi_evaluate_integer(adev_dimm->handle, "_STA", NULL, &sta);
-+	if (status == AE_NOT_FOUND) {
-+		dev_dbg(dev, "%s missing _STA, assuming enabled...\n",
-+				dev_name(&adev_dimm->dev));
-+		rc = 0;
-+	} else if (ACPI_FAILURE(status))
-+		dev_err(dev, "%s failed to retrieve_STA, disabling...\n",
-+				dev_name(&adev_dimm->dev));
-+	else if ((sta & ACPI_STA_DEVICE_ENABLED) == 0)
-+		dev_info(dev, "%s disabled by firmware\n",
-+				dev_name(&adev_dimm->dev));
-+	else
-+		rc = 0;
-+
-+	for (i = ND_CMD_SMART; i <= ND_CMD_VENDOR; i++)
-+		if (acpi_check_dsm(adev_dimm->handle, uuid, 1, 1ULL << i))
-+			set_bit(i, &nfit_mem->dsm_mask);
-+
-+	return rc;
-+}
-+
- static int acpi_nfit_register_dimms(struct acpi_nfit_desc *acpi_desc)
- {
- 	struct nfit_mem *nfit_mem;
-@@ -513,6 +701,7 @@ static int acpi_nfit_register_dimms(struct acpi_nfit_desc *acpi_desc)
- 		struct nvdimm *nvdimm;
- 		unsigned long flags = 0;
- 		u32 device_handle;
-+		int rc;
- 
- 		device_handle = __to_nfit_memdev(nfit_mem)->device_handle;
- 		nvdimm = acpi_nfit_dimm_by_handle(acpi_desc, device_handle);
-@@ -529,8 +718,13 @@ static int acpi_nfit_register_dimms(struct acpi_nfit_desc *acpi_desc)
- 		if (nfit_mem->bdw && nfit_mem->memdev_pmem)
- 			flags |= NDD_ALIASING;
- 
-+		rc = acpi_nfit_add_dimm(acpi_desc, nfit_mem, device_handle);
-+		if (rc)
-+			continue;
-+
- 		nvdimm = nvdimm_create(acpi_desc->nvdimm_bus, nfit_mem,
--				acpi_nfit_dimm_attribute_groups, flags);
-+				acpi_nfit_dimm_attribute_groups,
-+				flags, &nfit_mem->dsm_mask);
- 		if (!nvdimm)
- 			return -ENOMEM;
- 
-@@ -540,6 +734,22 @@ static int acpi_nfit_register_dimms(struct acpi_nfit_desc *acpi_desc)
- 	return 0;
- }
- 
-+static void acpi_nfit_init_dsms(struct acpi_nfit_desc *acpi_desc)
-+{
-+	struct nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
-+	const u8 *uuid = to_nfit_uuid(NFIT_DEV_BUS);
-+	struct acpi_device *adev;
-+	int i;
-+
-+	adev = to_acpi_dev(acpi_desc);
-+	if (!adev)
-+		return;
-+
-+	for (i = ND_CMD_ARS_CAP; i <= ND_CMD_ARS_STATUS; i++)
-+		if (acpi_check_dsm(adev->handle, uuid, 1, 1ULL << i))
-+			set_bit(i, &nd_desc->dsm_mask);
-+}
-+
- static int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
- {
- 	struct device *dev = acpi_desc->dev;
-@@ -567,6 +777,8 @@ static int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, acpi_size sz)
- 	if (nfit_mem_init(acpi_desc) != 0)
- 		return -ENOMEM;
- 
-+	acpi_nfit_init_dsms(acpi_desc);
-+
- 	return acpi_nfit_register_dimms(acpi_desc);
- }
- 
-diff --git a/drivers/acpi/nfit.h b/drivers/acpi/nfit.h
-index 9dd437fe5563..b76e33629098 100644
---- a/drivers/acpi/nfit.h
-+++ b/drivers/acpi/nfit.h
-@@ -67,6 +67,8 @@ struct nfit_mem {
- 	struct acpi_nfit_system_address *spa_dcr;
- 	struct acpi_nfit_system_address *spa_bdw;
- 	struct list_head list;
-+	struct acpi_device *adev;
-+	unsigned long dsm_mask;
- };
- 
- struct acpi_nfit_desc {
-@@ -79,6 +81,7 @@ struct acpi_nfit_desc {
- 	struct list_head bdws;
- 	struct nvdimm_bus *nvdimm_bus;
- 	struct device *dev;
-+	unsigned long dimm_dsm_force_en;
- };
- 
- static inline struct acpi_nfit_memory_map *__to_nfit_memdev(
-diff --git a/drivers/nvdimm/bus.c b/drivers/nvdimm/bus.c
-index a8802577fb55..15f3a3ddc225 100644
---- a/drivers/nvdimm/bus.c
-+++ b/drivers/nvdimm/bus.c
-@@ -11,14 +11,18 @@
-  * General Public License for more details.
-  */
- #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-+#include <linux/vmalloc.h>
- #include <linux/uaccess.h>
- #include <linux/fcntl.h>
- #include <linux/async.h>
-+#include <linux/ndctl.h>
- #include <linux/slab.h>
- #include <linux/fs.h>
- #include <linux/io.h>
-+#include <linux/mm.h>
- #include "nd-core.h"
- 
-+int nvdimm_major;
- static int nvdimm_bus_major;
- static struct class *nd_class;
- 
-@@ -47,19 +51,325 @@ void nvdimm_bus_destroy_ndctl(struct nvdimm_bus *nvdimm_bus)
- 	device_destroy(nd_class, MKDEV(nvdimm_bus_major, nvdimm_bus->id));
- }
- 
-+static const struct nd_cmd_desc __nd_cmd_dimm_descs[] = {
-+	[ND_CMD_IMPLEMENTED] = { },
-+	[ND_CMD_SMART] = {
-+		.out_num = 2,
-+		.out_sizes = { 4, 8, },
-+	},
-+	[ND_CMD_SMART_THRESHOLD] = {
-+		.out_num = 2,
-+		.out_sizes = { 4, 8, },
-+	},
-+	[ND_CMD_DIMM_FLAGS] = {
-+		.out_num = 2,
-+		.out_sizes = { 4, 4 },
-+	},
-+	[ND_CMD_GET_CONFIG_SIZE] = {
-+		.out_num = 3,
-+		.out_sizes = { 4, 4, 4, },
-+	},
-+	[ND_CMD_GET_CONFIG_DATA] = {
-+		.in_num = 2,
-+		.in_sizes = { 4, 4, },
-+		.out_num = 2,
-+		.out_sizes = { 4, UINT_MAX, },
-+	},
-+	[ND_CMD_SET_CONFIG_DATA] = {
-+		.in_num = 3,
-+		.in_sizes = { 4, 4, UINT_MAX, },
-+		.out_num = 1,
-+		.out_sizes = { 4, },
-+	},
-+	[ND_CMD_VENDOR] = {
-+		.in_num = 3,
-+		.in_sizes = { 4, 4, UINT_MAX, },
-+		.out_num = 3,
-+		.out_sizes = { 4, 4, UINT_MAX, },
-+	},
-+};
-+
-+const struct nd_cmd_desc *nd_cmd_dimm_desc(int cmd)
-+{
-+	if (cmd < ARRAY_SIZE(__nd_cmd_dimm_descs))
-+		return &__nd_cmd_dimm_descs[cmd];
-+	return NULL;
-+}
-+EXPORT_SYMBOL_GPL(nd_cmd_dimm_desc);
-+
-+static const struct nd_cmd_desc __nd_cmd_bus_descs[] = {
-+	[ND_CMD_IMPLEMENTED] = { },
-+	[ND_CMD_ARS_CAP] = {
-+		.in_num = 2,
-+		.in_sizes = { 8, 8, },
-+		.out_num = 2,
-+		.out_sizes = { 4, 4, },
-+	},
-+	[ND_CMD_ARS_START] = {
-+		.in_num = 4,
-+		.in_sizes = { 8, 8, 2, 6, },
-+		.out_num = 1,
-+		.out_sizes = { 4, },
-+	},
-+	[ND_CMD_ARS_STATUS] = {
-+		.out_num = 2,
-+		.out_sizes = { 4, UINT_MAX, },
-+	},
-+};
-+
-+const struct nd_cmd_desc *nd_cmd_bus_desc(int cmd)
-+{
-+	if (cmd < ARRAY_SIZE(__nd_cmd_bus_descs))
-+		return &__nd_cmd_bus_descs[cmd];
-+	return NULL;
-+}
-+EXPORT_SYMBOL_GPL(nd_cmd_bus_desc);
-+
-+u32 nd_cmd_in_size(struct nvdimm *nvdimm, int cmd,
-+		const struct nd_cmd_desc *desc, int idx, void *buf)
-+{
-+	if (idx >= desc->in_num)
-+		return UINT_MAX;
-+
-+	if (desc->in_sizes[idx] < UINT_MAX)
-+		return desc->in_sizes[idx];
-+
-+	if (nvdimm && cmd == ND_CMD_SET_CONFIG_DATA && idx == 2) {
-+		struct nd_cmd_set_config_hdr *hdr = buf;
-+
-+		return hdr->in_length;
-+	} else if (nvdimm && cmd == ND_CMD_VENDOR && idx == 2) {
-+		struct nd_cmd_vendor_hdr *hdr = buf;
-+
-+		return hdr->in_length;
-+	}
-+
-+	return UINT_MAX;
-+}
-+EXPORT_SYMBOL_GPL(nd_cmd_in_size);
-+
-+u32 nd_cmd_out_size(struct nvdimm *nvdimm, int cmd,
-+		const struct nd_cmd_desc *desc, int idx, const u32 *in_field,
-+		const u32 *out_field)
-+{
-+	if (idx >= desc->out_num)
-+		return UINT_MAX;
-+
-+	if (desc->out_sizes[idx] < UINT_MAX)
-+		return desc->out_sizes[idx];
-+
-+	if (nvdimm && cmd == ND_CMD_GET_CONFIG_DATA && idx == 1)
-+		return in_field[1];
-+	else if (nvdimm && cmd == ND_CMD_VENDOR && idx == 2)
-+		return out_field[1];
-+	else if (!nvdimm && cmd == ND_CMD_ARS_STATUS && idx == 1)
-+		return ND_CMD_ARS_STATUS_MAX;
-+
-+	return UINT_MAX;
-+}
-+EXPORT_SYMBOL_GPL(nd_cmd_out_size);
-+
-+static int __nd_ioctl(struct nvdimm_bus *nvdimm_bus, struct nvdimm *nvdimm,
-+		int read_only, unsigned int ioctl_cmd, unsigned long arg)
-+{
-+	struct nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
-+	size_t buf_len = 0, in_len = 0, out_len = 0;
-+	static char out_env[ND_CMD_MAX_ENVELOPE];
-+	static char in_env[ND_CMD_MAX_ENVELOPE];
-+	const struct nd_cmd_desc *desc = NULL;
-+	unsigned int cmd = _IOC_NR(ioctl_cmd);
-+	void __user *p = (void __user *) arg;
-+	struct device *dev = &nvdimm_bus->dev;
-+	const char *cmd_name, *dimm_name;
-+	unsigned long dsm_mask;
-+	void *buf;
-+	int rc, i;
-+
-+	if (nvdimm) {
-+		desc = nd_cmd_dimm_desc(cmd);
-+		cmd_name = nvdimm_cmd_name(cmd);
-+		dsm_mask = nvdimm->dsm_mask ? *(nvdimm->dsm_mask) : 0;
-+		dimm_name = dev_name(&nvdimm->dev);
-+	} else {
-+		desc = nd_cmd_bus_desc(cmd);
-+		cmd_name = nvdimm_bus_cmd_name(cmd);
-+		dsm_mask = nd_desc->dsm_mask;
-+		dimm_name = "bus";
-+	}
-+
-+	if (!desc || (desc->out_num + desc->in_num == 0) ||
-+			!test_bit(cmd, &dsm_mask))
-+		return -ENOTTY;
-+
-+	/* fail write commands (when read-only) */
-+	if (read_only)
-+		switch (ioctl_cmd) {
-+		case ND_IOCTL_VENDOR:
-+		case ND_IOCTL_SET_CONFIG_DATA:
-+		case ND_IOCTL_ARS_START:
-+			dev_dbg(&nvdimm_bus->dev, "'%s' command while read-only.\n",
-+					nvdimm ? nvdimm_cmd_name(cmd)
-+					: nvdimm_bus_cmd_name(cmd));
-+			return -EPERM;
-+		default:
-+			break;
-+		}
-+
-+	/* process an input envelope */
-+	for (i = 0; i < desc->in_num; i++) {
-+		u32 in_size, copy;
-+
-+		in_size = nd_cmd_in_size(nvdimm, cmd, desc, i, in_env);
-+		if (in_size == UINT_MAX) {
-+			dev_err(dev, "%s:%s unknown input size cmd: %s field: %d\n",
-+					__func__, dimm_name, cmd_name, i);
-+			return -ENXIO;
-+		}
-+		if (!access_ok(VERIFY_READ, p + in_len, in_size))
-+			return -EFAULT;
-+		if (in_len < sizeof(in_env))
-+			copy = min_t(u32, sizeof(in_env) - in_len, in_size);
-+		else
-+			copy = 0;
-+		if (copy && copy_from_user(&in_env[in_len], p + in_len, copy))
-+			return -EFAULT;
-+		in_len += in_size;
-+	}
-+
-+	/* process an output envelope */
-+	for (i = 0; i < desc->out_num; i++) {
-+		u32 out_size = nd_cmd_out_size(nvdimm, cmd, desc, i,
-+				(u32 *) in_env, (u32 *) out_env);
-+		u32 copy;
-+
-+		if (out_size == UINT_MAX) {
-+			dev_dbg(dev, "%s:%s unknown output size cmd: %s field: %d\n",
-+					__func__, dimm_name, cmd_name, i);
-+			return -EFAULT;
-+		}
-+		if (!access_ok(VERIFY_WRITE, p + in_len + out_len, out_size))
-+			return -EFAULT;
-+		if (out_len < sizeof(out_env))
-+			copy = min_t(u32, sizeof(out_env) - out_len, out_size);
-+		else
-+			copy = 0;
-+		if (copy && copy_from_user(&out_env[out_len],
-+					p + in_len + out_len, copy))
-+			return -EFAULT;
-+		out_len += out_size;
-+	}
-+
-+	buf_len = out_len + in_len;
-+	if (!access_ok(VERIFY_WRITE, p, sizeof(buf_len)))
-+		return -EFAULT;
-+
-+	if (buf_len > ND_IOCTL_MAX_BUFLEN) {
-+		dev_dbg(dev, "%s:%s cmd: %s buf_len: %zu > %d\n", __func__,
-+				dimm_name, cmd_name, buf_len,
-+				ND_IOCTL_MAX_BUFLEN);
-+		return -EINVAL;
-+	}
-+
-+	buf = vmalloc(buf_len);
-+	if (!buf)
-+		return -ENOMEM;
-+
-+	if (copy_from_user(buf, p, buf_len)) {
-+		rc = -EFAULT;
-+		goto out;
-+	}
-+
-+	rc = nd_desc->ndctl(nd_desc, nvdimm, cmd, buf, buf_len);
-+	if (rc < 0)
-+		goto out;
-+	if (copy_to_user(p, buf, buf_len))
-+		rc = -EFAULT;
-+ out:
-+	vfree(buf);
-+	return rc;
-+}
-+
- static long nd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- {
--	return -ENXIO;
-+	long id = (long) file->private_data;
-+	int rc = -ENXIO, read_only;
-+	struct nvdimm_bus *nvdimm_bus;
-+
-+	read_only = (O_RDWR != (file->f_flags & O_ACCMODE));
-+	mutex_lock(&nvdimm_bus_list_mutex);
-+	list_for_each_entry(nvdimm_bus, &nvdimm_bus_list, list) {
-+		if (nvdimm_bus->id == id) {
-+			rc = __nd_ioctl(nvdimm_bus, NULL, read_only, cmd, arg);
-+			break;
-+		}
-+	}
-+	mutex_unlock(&nvdimm_bus_list_mutex);
-+
-+	return rc;
-+}
-+
-+static int match_dimm(struct device *dev, void *data)
-+{
-+	long id = (long) data;
-+
-+	if (is_nvdimm(dev)) {
-+		struct nvdimm *nvdimm = to_nvdimm(dev);
-+
-+		return nvdimm->id == id;
-+	}
-+
-+	return 0;
-+}
-+
-+static long nvdimm_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-+{
-+	int rc = -ENXIO, read_only;
-+	struct nvdimm_bus *nvdimm_bus;
-+
-+	read_only = (O_RDWR != (file->f_flags & O_ACCMODE));
-+	mutex_lock(&nvdimm_bus_list_mutex);
-+	list_for_each_entry(nvdimm_bus, &nvdimm_bus_list, list) {
-+		struct device *dev = device_find_child(&nvdimm_bus->dev,
-+				file->private_data, match_dimm);
-+		struct nvdimm *nvdimm;
-+
-+		if (!dev)
-+			continue;
-+
-+		nvdimm = to_nvdimm(dev);
-+		rc = __nd_ioctl(nvdimm_bus, nvdimm, read_only, cmd, arg);
-+		put_device(dev);
-+		break;
-+	}
-+	mutex_unlock(&nvdimm_bus_list_mutex);
-+
-+	return rc;
-+}
-+
-+static int nd_open(struct inode *inode, struct file *file)
-+{
-+	long minor = iminor(inode);
-+
-+	file->private_data = (void *) minor;
-+	return 0;
- }
- 
- static const struct file_operations nvdimm_bus_fops = {
- 	.owner = THIS_MODULE,
--	.open = nonseekable_open,
-+	.open = nd_open,
- 	.unlocked_ioctl = nd_ioctl,
- 	.compat_ioctl = nd_ioctl,
- 	.llseek = noop_llseek,
- };
- 
-+static const struct file_operations nvdimm_fops = {
-+	.owner = THIS_MODULE,
-+	.open = nd_open,
-+	.unlocked_ioctl = nvdimm_ioctl,
-+	.compat_ioctl = nvdimm_ioctl,
-+	.llseek = noop_llseek,
-+};
-+
- int __init nvdimm_bus_init(void)
- {
- 	int rc;
-@@ -70,9 +380,14 @@ int __init nvdimm_bus_init(void)
- 
- 	rc = register_chrdev(0, "ndctl", &nvdimm_bus_fops);
- 	if (rc < 0)
--		goto err_chrdev;
-+		goto err_bus_chrdev;
- 	nvdimm_bus_major = rc;
- 
-+	rc = register_chrdev(0, "dimmctl", &nvdimm_fops);
-+	if (rc < 0)
-+		goto err_dimm_chrdev;
-+	nvdimm_major = rc;
-+
- 	nd_class = class_create(THIS_MODULE, "nd");
- 	if (IS_ERR(nd_class))
- 		goto err_class;
-@@ -80,8 +395,10 @@ int __init nvdimm_bus_init(void)
- 	return 0;
- 
-  err_class:
-+	unregister_chrdev(nvdimm_major, "dimmctl");
-+ err_dimm_chrdev:
- 	unregister_chrdev(nvdimm_bus_major, "ndctl");
-- err_chrdev:
-+ err_bus_chrdev:
- 	bus_unregister(&nvdimm_bus_type);
- 
- 	return rc;
-@@ -91,5 +408,6 @@ void __exit nvdimm_bus_exit(void)
- {
- 	class_destroy(nd_class);
- 	unregister_chrdev(nvdimm_bus_major, "ndctl");
-+	unregister_chrdev(nvdimm_major, "dimmctl");
- 	bus_unregister(&nvdimm_bus_type);
- }
-diff --git a/drivers/nvdimm/core.c b/drivers/nvdimm/core.c
-index ef957eb37c90..1ce159095c52 100644
---- a/drivers/nvdimm/core.c
-+++ b/drivers/nvdimm/core.c
-@@ -14,6 +14,7 @@
- #include <linux/export.h>
- #include <linux/module.h>
- #include <linux/device.h>
-+#include <linux/ndctl.h>
- #include <linux/mutex.h>
- #include <linux/slab.h>
- #include "nd-core.h"
-@@ -61,6 +62,20 @@ struct nvdimm_bus *walk_to_nvdimm_bus(struct device *nd_dev)
- 	return NULL;
- }
- 
-+static ssize_t commands_show(struct device *dev,
-+		struct device_attribute *attr, char *buf)
-+{
-+	int cmd, len = 0;
-+	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
-+	struct nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
-+
-+	for_each_set_bit(cmd, &nd_desc->dsm_mask, BITS_PER_LONG)
-+		len += sprintf(buf + len, "%s ", nvdimm_bus_cmd_name(cmd));
-+	len += sprintf(buf + len, "\n");
-+	return len;
-+}
-+static DEVICE_ATTR_RO(commands);
-+
- static const char *nvdimm_bus_provider(struct nvdimm_bus *nvdimm_bus)
- {
- 	struct nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
-@@ -84,6 +99,7 @@ static ssize_t provider_show(struct device *dev,
- static DEVICE_ATTR_RO(provider);
- 
- static struct attribute *nvdimm_bus_attributes[] = {
-+	&dev_attr_commands.attr,
- 	&dev_attr_provider.attr,
- 	NULL,
- };
-diff --git a/drivers/nvdimm/dimm_devs.c b/drivers/nvdimm/dimm_devs.c
-index 51ea52cc2079..c3dd7227d1bb 100644
---- a/drivers/nvdimm/dimm_devs.c
-+++ b/drivers/nvdimm/dimm_devs.c
-@@ -12,6 +12,7 @@
-  */
- #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
- #include <linux/device.h>
-+#include <linux/ndctl.h>
- #include <linux/slab.h>
- #include <linux/io.h>
- #include <linux/fs.h>
-@@ -33,7 +34,7 @@ static struct device_type nvdimm_device_type = {
- 	.release = nvdimm_release,
- };
- 
--static bool is_nvdimm(struct device *dev)
-+bool is_nvdimm(struct device *dev)
- {
- 	return dev->type == &nvdimm_device_type;
- }
-@@ -55,12 +56,41 @@ EXPORT_SYMBOL_GPL(nvdimm_name);
- 
- void *nvdimm_provider_data(struct nvdimm *nvdimm)
- {
--	return nvdimm->provider_data;
-+	if (nvdimm)
-+		return nvdimm->provider_data;
-+	return NULL;
- }
- EXPORT_SYMBOL_GPL(nvdimm_provider_data);
- 
-+static ssize_t commands_show(struct device *dev,
-+		struct device_attribute *attr, char *buf)
-+{
-+	struct nvdimm *nvdimm = to_nvdimm(dev);
-+	int cmd, len = 0;
-+
-+	if (!nvdimm->dsm_mask)
-+		return sprintf(buf, "\n");
-+
-+	for_each_set_bit(cmd, nvdimm->dsm_mask, BITS_PER_LONG)
-+		len += sprintf(buf + len, "%s ", nvdimm_cmd_name(cmd));
-+	len += sprintf(buf + len, "\n");
-+	return len;
-+}
-+static DEVICE_ATTR_RO(commands);
-+
-+static struct attribute *nvdimm_attributes[] = {
-+	&dev_attr_commands.attr,
-+	NULL,
-+};
-+
-+struct attribute_group nvdimm_attribute_group = {
-+	.attrs = nvdimm_attributes,
-+};
-+EXPORT_SYMBOL_GPL(nvdimm_attribute_group);
-+
- struct nvdimm *nvdimm_create(struct nvdimm_bus *nvdimm_bus, void *provider_data,
--		const struct attribute_group **groups, unsigned long flags)
-+		const struct attribute_group **groups, unsigned long flags,
-+		unsigned long *dsm_mask)
- {
- 	struct nvdimm *nvdimm = kzalloc(sizeof(*nvdimm), GFP_KERNEL);
- 	struct device *dev;
-@@ -75,12 +105,14 @@ struct nvdimm *nvdimm_create(struct nvdimm_bus *nvdimm_bus, void *provider_data,
- 	}
- 	nvdimm->provider_data = provider_data;
- 	nvdimm->flags = flags;
-+	nvdimm->dsm_mask = dsm_mask;
- 
- 	dev = &nvdimm->dev;
- 	dev_set_name(dev, "nmem%d", nvdimm->id);
- 	dev->parent = &nvdimm_bus->dev;
- 	dev->type = &nvdimm_device_type;
- 	dev->bus = &nvdimm_bus_type;
-+	dev->devt = MKDEV(nvdimm_major, nvdimm->id);
- 	dev->groups = groups;
- 	if (device_register(dev) != 0) {
- 		put_device(dev);
-diff --git a/drivers/nvdimm/nd-core.h b/drivers/nvdimm/nd-core.h
-index 9b8303413b60..59528b3c9de8 100644
---- a/drivers/nvdimm/nd-core.h
-+++ b/drivers/nvdimm/nd-core.h
-@@ -18,6 +18,7 @@
- extern struct list_head nvdimm_bus_list;
- extern struct mutex nvdimm_bus_list_mutex;
- extern struct bus_type nvdimm_bus_type;
-+extern int nvdimm_major;
- 
- struct nvdimm_bus {
- 	struct nvdimm_bus_descriptor *nd_desc;
-@@ -29,10 +30,12 @@ struct nvdimm_bus {
- struct nvdimm {
- 	unsigned long flags;
- 	void *provider_data;
-+	unsigned long *dsm_mask;
- 	struct device dev;
- 	int id;
- };
- 
-+bool is_nvdimm(struct device *dev);
- struct nvdimm_bus *walk_to_nvdimm_bus(struct device *nd_dev);
- int __init nvdimm_bus_init(void);
- void __exit nvdimm_bus_exit(void);
-diff --git a/include/linux/libnvdimm.h b/include/linux/libnvdimm.h
-index 07787f0dd7de..a39235819af3 100644
---- a/include/linux/libnvdimm.h
-+++ b/include/linux/libnvdimm.h
-@@ -14,13 +14,22 @@
-  */
- #ifndef __LIBNVDIMM_H__
- #define __LIBNVDIMM_H__
-+#include <linux/sizes.h>
-+#include <linux/types.h>
- 
- enum {
- 	/* when a dimm supports both PMEM and BLK access a label is required */
- 	NDD_ALIASING = 1 << 0,
-+
-+	/* need to set a limit somewhere, but yes, this is likely overkill */
-+	ND_IOCTL_MAX_BUFLEN = SZ_4M,
-+	ND_CMD_MAX_ELEM = 4,
-+	ND_CMD_MAX_ENVELOPE = 16,
-+	ND_CMD_ARS_STATUS_MAX = SZ_4K,
- };
- 
- extern struct attribute_group nvdimm_bus_attribute_group;
-+extern struct attribute_group nvdimm_attribute_group;
- 
- struct nvdimm;
- struct nvdimm_bus_descriptor;
-@@ -35,6 +44,14 @@ struct nvdimm_bus_descriptor {
- 	ndctl_fn ndctl;
- };
- 
-+struct nd_cmd_desc {
-+	int in_num;
-+	int out_num;
-+	u32 in_sizes[ND_CMD_MAX_ELEM];
-+	int out_sizes[ND_CMD_MAX_ELEM];
-+};
-+
-+struct nvdimm_bus;
- struct device;
- struct nvdimm_bus *nvdimm_bus_register(struct device *parent,
- 		struct nvdimm_bus_descriptor *nfit_desc);
-@@ -45,5 +62,13 @@ struct nvdimm_bus_descriptor *to_nd_desc(struct nvdimm_bus *nvdimm_bus);
- const char *nvdimm_name(struct nvdimm *nvdimm);
- void *nvdimm_provider_data(struct nvdimm *nvdimm);
- struct nvdimm *nvdimm_create(struct nvdimm_bus *nvdimm_bus, void *provider_data,
--		const struct attribute_group **groups, unsigned long flags);
-+		const struct attribute_group **groups, unsigned long flags,
-+		unsigned long *dsm_mask);
-+const struct nd_cmd_desc *nd_cmd_dimm_desc(int cmd);
-+const struct nd_cmd_desc *nd_cmd_bus_desc(int cmd);
-+u32 nd_cmd_in_size(struct nvdimm *nvdimm, int cmd,
-+		const struct nd_cmd_desc *desc, int idx, void *buf);
-+u32 nd_cmd_out_size(struct nvdimm *nvdimm, int cmd,
-+		const struct nd_cmd_desc *desc, int idx, const u32 *in_field,
-+		const u32 *out_field);
- #endif /* __LIBNVDIMM_H__ */
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 1a0006a76b00..200cc5ea2998 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -271,6 +271,7 @@ header-y += ncp_fs.h
- header-y += ncp.h
- header-y += ncp_mount.h
- header-y += ncp_no.h
-+header-y += ndctl.h
- header-y += neighbour.h
- header-y += netconf.h
- header-y += netdevice.h
-diff --git a/include/uapi/linux/ndctl.h b/include/uapi/linux/ndctl.h
+ libnvdimm-y := core.o
+ libnvdimm-y += bus.o
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
 new file mode 100644
-index 000000000000..ff13c23b26df
+index 000000000000..eabf4a8d0085
 --- /dev/null
-+++ b/include/uapi/linux/ndctl.h
-@@ -0,0 +1,178 @@
++++ b/drivers/nvdimm/pmem.c
+@@ -0,0 +1,262 @@
 +/*
-+ * Copyright (c) 2014-2015, Intel Corporation.
++ * Persistent Memory Driver
++ *
++ * Copyright (c) 2014, Intel Corporation.
++ * Copyright (c) 2015, Christoph Hellwig <hch@lst.de>.
++ * Copyright (c) 2015, Boaz Harrosh <boaz@plexistor.com>.
 + *
 + * This program is free software; you can redistribute it and/or modify it
-+ * under the terms and conditions of the GNU Lesser General Public License,
-+ * version 2.1, as published by the Free Software Foundation.
++ * under the terms and conditions of the GNU General Public License,
++ * version 2, as published by the Free Software Foundation.
 + *
-+ * This program is distributed in the hope it will be useful, but WITHOUT ANY
-+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-+ * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
++ * This program is distributed in the hope it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
 + * more details.
 + */
-+#ifndef __NDCTL_H__
-+#define __NDCTL_H__
 +
-+#include <linux/types.h>
++#include <asm/cacheflush.h>
++#include <linux/blkdev.h>
++#include <linux/hdreg.h>
++#include <linux/init.h>
++#include <linux/platform_device.h>
++#include <linux/module.h>
++#include <linux/moduleparam.h>
++#include <linux/slab.h>
 +
-+struct nd_cmd_smart {
-+	__u32 status;
-+	__u8 data[128];
-+} __packed;
++#define PMEM_MINORS		16
 +
-+struct nd_cmd_smart_threshold {
-+	__u32 status;
-+	__u8 data[8];
-+} __packed;
++struct pmem_device {
++	struct request_queue	*pmem_queue;
++	struct gendisk		*pmem_disk;
 +
-+struct nd_cmd_dimm_flags {
-+	__u32 status;
-+	__u32 flags;
-+} __packed;
-+
-+struct nd_cmd_get_config_size {
-+	__u32 status;
-+	__u32 config_size;
-+	__u32 max_xfer;
-+} __packed;
-+
-+struct nd_cmd_get_config_data_hdr {
-+	__u32 in_offset;
-+	__u32 in_length;
-+	__u32 status;
-+	__u8 out_buf[0];
-+} __packed;
-+
-+struct nd_cmd_set_config_hdr {
-+	__u32 in_offset;
-+	__u32 in_length;
-+	__u8 in_buf[0];
-+} __packed;
-+
-+struct nd_cmd_vendor_hdr {
-+	__u32 opcode;
-+	__u32 in_length;
-+	__u8 in_buf[0];
-+} __packed;
-+
-+struct nd_cmd_vendor_tail {
-+	__u32 status;
-+	__u32 out_length;
-+	__u8 out_buf[0];
-+} __packed;
-+
-+struct nd_cmd_ars_cap {
-+	__u64 address;
-+	__u64 length;
-+	__u32 status;
-+	__u32 max_ars_out;
-+} __packed;
-+
-+struct nd_cmd_ars_start {
-+	__u64 address;
-+	__u64 length;
-+	__u16 type;
-+	__u8 reserved[6];
-+	__u32 status;
-+} __packed;
-+
-+struct nd_cmd_ars_status {
-+	__u32 status;
-+	__u32 out_length;
-+	__u64 address;
-+	__u64 length;
-+	__u16 type;
-+	__u32 num_records;
-+	struct nd_ars_record {
-+		__u32 handle;
-+		__u32 flags;
-+		__u64 err_address;
-+		__u64 mask;
-+	} __packed records[0];
-+} __packed;
-+
-+enum {
-+	ND_CMD_IMPLEMENTED = 0,
-+
-+	/* bus commands */
-+	ND_CMD_ARS_CAP = 1,
-+	ND_CMD_ARS_START = 2,
-+	ND_CMD_ARS_STATUS = 3,
-+
-+	/* per-dimm commands */
-+	ND_CMD_SMART = 1,
-+	ND_CMD_SMART_THRESHOLD = 2,
-+	ND_CMD_DIMM_FLAGS = 3,
-+	ND_CMD_GET_CONFIG_SIZE = 4,
-+	ND_CMD_GET_CONFIG_DATA = 5,
-+	ND_CMD_SET_CONFIG_DATA = 6,
-+	ND_CMD_VENDOR_EFFECT_LOG_SIZE = 7,
-+	ND_CMD_VENDOR_EFFECT_LOG = 8,
-+	ND_CMD_VENDOR = 9,
++	/* One contiguous memory region per device */
++	phys_addr_t		phys_addr;
++	void			*virt_addr;
++	size_t			size;
 +};
 +
-+static inline const char *nvdimm_bus_cmd_name(unsigned cmd)
-+{
-+	static const char * const names[] = {
-+		[ND_CMD_ARS_CAP] = "ars_cap",
-+		[ND_CMD_ARS_START] = "ars_start",
-+		[ND_CMD_ARS_STATUS] = "ars_status",
-+	};
++static int pmem_major;
++static atomic_t pmem_index;
 +
-+	if (cmd < ARRAY_SIZE(names) && names[cmd])
-+		return names[cmd];
-+	return "unknown";
++static void pmem_do_bvec(struct pmem_device *pmem, struct page *page,
++			unsigned int len, unsigned int off, int rw,
++			sector_t sector)
++{
++	void *mem = kmap_atomic(page);
++	size_t pmem_off = sector << 9;
++
++	if (rw == READ) {
++		memcpy(mem + off, pmem->virt_addr + pmem_off, len);
++		flush_dcache_page(page);
++	} else {
++		flush_dcache_page(page);
++		memcpy(pmem->virt_addr + pmem_off, mem + off, len);
++	}
++
++	kunmap_atomic(mem);
 +}
 +
-+static inline const char *nvdimm_cmd_name(unsigned cmd)
++static void pmem_make_request(struct request_queue *q, struct bio *bio)
 +{
-+	static const char * const names[] = {
-+		[ND_CMD_SMART] = "smart",
-+		[ND_CMD_SMART_THRESHOLD] = "smart_thresh",
-+		[ND_CMD_DIMM_FLAGS] = "flags",
-+		[ND_CMD_GET_CONFIG_SIZE] = "get_size",
-+		[ND_CMD_GET_CONFIG_DATA] = "get_data",
-+		[ND_CMD_SET_CONFIG_DATA] = "set_data",
-+		[ND_CMD_VENDOR_EFFECT_LOG_SIZE] = "effect_size",
-+		[ND_CMD_VENDOR_EFFECT_LOG] = "effect_log",
-+		[ND_CMD_VENDOR] = "vendor",
-+	};
++	struct block_device *bdev = bio->bi_bdev;
++	struct pmem_device *pmem = bdev->bd_disk->private_data;
++	int rw;
++	struct bio_vec bvec;
++	sector_t sector;
++	struct bvec_iter iter;
++	int err = 0;
 +
-+	if (cmd < ARRAY_SIZE(names) && names[cmd])
-+		return names[cmd];
-+	return "unknown";
++	if (bio_end_sector(bio) > get_capacity(bdev->bd_disk)) {
++		err = -EIO;
++		goto out;
++	}
++
++	BUG_ON(bio->bi_rw & REQ_DISCARD);
++
++	rw = bio_data_dir(bio);
++	sector = bio->bi_iter.bi_sector;
++	bio_for_each_segment(bvec, bio, iter) {
++		pmem_do_bvec(pmem, bvec.bv_page, bvec.bv_len, bvec.bv_offset,
++			     rw, sector);
++		sector += bvec.bv_len >> 9;
++	}
++
++out:
++	bio_endio(bio, err);
 +}
 +
-+#define ND_IOCTL 'N'
++static int pmem_rw_page(struct block_device *bdev, sector_t sector,
++		       struct page *page, int rw)
++{
++	struct pmem_device *pmem = bdev->bd_disk->private_data;
 +
-+#define ND_IOCTL_SMART			_IOWR(ND_IOCTL, ND_CMD_SMART,\
-+					struct nd_cmd_smart)
++	pmem_do_bvec(pmem, page, PAGE_CACHE_SIZE, 0, rw, sector);
++	page_endio(page, rw & WRITE, 0);
 +
-+#define ND_IOCTL_SMART_THRESHOLD	_IOWR(ND_IOCTL, ND_CMD_SMART_THRESHOLD,\
-+					struct nd_cmd_smart_threshold)
++	return 0;
++}
 +
-+#define ND_IOCTL_DIMM_FLAGS		_IOWR(ND_IOCTL, ND_CMD_DIMM_FLAGS,\
-+					struct nd_cmd_dimm_flags)
++static long pmem_direct_access(struct block_device *bdev, sector_t sector,
++			      void **kaddr, unsigned long *pfn, long size)
++{
++	struct pmem_device *pmem = bdev->bd_disk->private_data;
++	size_t offset = sector << 9;
 +
-+#define ND_IOCTL_GET_CONFIG_SIZE	_IOWR(ND_IOCTL, ND_CMD_GET_CONFIG_SIZE,\
-+					struct nd_cmd_get_config_size)
++	if (!pmem)
++		return -ENODEV;
 +
-+#define ND_IOCTL_GET_CONFIG_DATA	_IOWR(ND_IOCTL, ND_CMD_GET_CONFIG_DATA,\
-+					struct nd_cmd_get_config_data_hdr)
++	*kaddr = pmem->virt_addr + offset;
++	*pfn = (pmem->phys_addr + offset) >> PAGE_SHIFT;
 +
-+#define ND_IOCTL_SET_CONFIG_DATA	_IOWR(ND_IOCTL, ND_CMD_SET_CONFIG_DATA,\
-+					struct nd_cmd_set_config_hdr)
++	return pmem->size - offset;
++}
 +
-+#define ND_IOCTL_VENDOR			_IOWR(ND_IOCTL, ND_CMD_VENDOR,\
-+					struct nd_cmd_vendor_hdr)
++static const struct block_device_operations pmem_fops = {
++	.owner =		THIS_MODULE,
++	.rw_page =		pmem_rw_page,
++	.direct_access =	pmem_direct_access,
++};
 +
-+#define ND_IOCTL_ARS_CAP		_IOWR(ND_IOCTL, ND_CMD_ARS_CAP,\
-+					struct nd_cmd_ars_cap)
++static struct pmem_device *pmem_alloc(struct device *dev, struct resource *res)
++{
++	struct pmem_device *pmem;
++	struct gendisk *disk;
++	int idx, err;
 +
-+#define ND_IOCTL_ARS_START		_IOWR(ND_IOCTL, ND_CMD_ARS_START,\
-+					struct nd_cmd_ars_start)
++	err = -ENOMEM;
++	pmem = kzalloc(sizeof(*pmem), GFP_KERNEL);
++	if (!pmem)
++		goto out;
 +
-+#define ND_IOCTL_ARS_STATUS		_IOWR(ND_IOCTL, ND_CMD_ARS_STATUS,\
-+					struct nd_cmd_ars_status)
++	pmem->phys_addr = res->start;
++	pmem->size = resource_size(res);
 +
-+#endif /* __NDCTL_H__ */
++	err = -EINVAL;
++	if (!request_mem_region(pmem->phys_addr, pmem->size, "pmem")) {
++		dev_warn(dev, "could not reserve region [0x%pa:0x%zx]\n", &pmem->phys_addr, pmem->size);
++		goto out_free_dev;
++	}
++
++	/*
++	 * Map the memory as non-cachable, as we can't write back the contents
++	 * of the CPU caches in case of a crash.
++	 */
++	err = -ENOMEM;
++	pmem->virt_addr = ioremap_nocache(pmem->phys_addr, pmem->size);
++	if (!pmem->virt_addr)
++		goto out_release_region;
++
++	pmem->pmem_queue = blk_alloc_queue(GFP_KERNEL);
++	if (!pmem->pmem_queue)
++		goto out_unmap;
++
++	blk_queue_make_request(pmem->pmem_queue, pmem_make_request);
++	blk_queue_max_hw_sectors(pmem->pmem_queue, 1024);
++	blk_queue_bounce_limit(pmem->pmem_queue, BLK_BOUNCE_ANY);
++
++	disk = alloc_disk(PMEM_MINORS);
++	if (!disk)
++		goto out_free_queue;
++
++	idx = atomic_inc_return(&pmem_index) - 1;
++
++	disk->major		= pmem_major;
++	disk->first_minor	= PMEM_MINORS * idx;
++	disk->fops		= &pmem_fops;
++	disk->private_data	= pmem;
++	disk->queue		= pmem->pmem_queue;
++	disk->flags		= GENHD_FL_EXT_DEVT;
++	sprintf(disk->disk_name, "pmem%d", idx);
++	disk->driverfs_dev = dev;
++	set_capacity(disk, pmem->size >> 9);
++	pmem->pmem_disk = disk;
++
++	add_disk(disk);
++
++	return pmem;
++
++out_free_queue:
++	blk_cleanup_queue(pmem->pmem_queue);
++out_unmap:
++	iounmap(pmem->virt_addr);
++out_release_region:
++	release_mem_region(pmem->phys_addr, pmem->size);
++out_free_dev:
++	kfree(pmem);
++out:
++	return ERR_PTR(err);
++}
++
++static void pmem_free(struct pmem_device *pmem)
++{
++	del_gendisk(pmem->pmem_disk);
++	put_disk(pmem->pmem_disk);
++	blk_cleanup_queue(pmem->pmem_queue);
++	iounmap(pmem->virt_addr);
++	release_mem_region(pmem->phys_addr, pmem->size);
++	kfree(pmem);
++}
++
++static int pmem_probe(struct platform_device *pdev)
++{
++	struct pmem_device *pmem;
++	struct resource *res;
++
++	if (WARN_ON(pdev->num_resources > 1))
++		return -ENXIO;
++
++	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	if (!res)
++		return -ENXIO;
++
++	pmem = pmem_alloc(&pdev->dev, res);
++	if (IS_ERR(pmem))
++		return PTR_ERR(pmem);
++
++	platform_set_drvdata(pdev, pmem);
++
++	return 0;
++}
++
++static int pmem_remove(struct platform_device *pdev)
++{
++	struct pmem_device *pmem = platform_get_drvdata(pdev);
++
++	pmem_free(pmem);
++	return 0;
++}
++
++static struct platform_driver pmem_driver = {
++	.probe		= pmem_probe,
++	.remove		= pmem_remove,
++	.driver		= {
++		.owner	= THIS_MODULE,
++		.name	= "pmem",
++	},
++};
++
++static int __init pmem_init(void)
++{
++	int error;
++
++	pmem_major = register_blkdev(0, "pmem");
++	if (pmem_major < 0)
++		return pmem_major;
++
++	error = platform_driver_register(&pmem_driver);
++	if (error)
++		unregister_blkdev(pmem_major, "pmem");
++	return error;
++}
++module_init(pmem_init);
++
++static void pmem_exit(void)
++{
++	platform_driver_unregister(&pmem_driver);
++	unregister_blkdev(pmem_major, "pmem");
++}
++module_exit(pmem_exit);
++
++MODULE_AUTHOR("Ross Zwisler <ross.zwisler@linux.intel.com>");
++MODULE_LICENSE("GPL v2");
