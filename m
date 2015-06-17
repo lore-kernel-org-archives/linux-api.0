@@ -1,46 +1,39 @@
-From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [PATCH] selftests: add seccomp suite
-Date: Wed, 17 Jun 2015 17:31:26 +1000
-Message-ID: <1434526286.28933.2.camel@ellerman.id.au>
-References: <20150616175414.GA24958@www.outflux.net>
+From: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+Subject: Re: [PATCH v3 1/4] pagemap: check permissions and capabilities at
+ open time
+Date: Wed, 17 Jun 2015 07:58:10 +0000
+Message-ID: <20150617075809.GB384@hori1.linux.bs1.fc.nec.co.jp>
+References: <20150609195333.21971.58194.stgit@zurg>
+ <20150609200015.21971.25692.stgit@zurg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150616175414.GA24958-0X9Bc/hWBUTk6RaD4rd5nQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Jingoo Han <jingoohan1-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="iso-2022-jp"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20150609200015.21971.25692.stgit@zurg>
+Content-Language: ja-JP
+Content-ID: <4D66D730AA62554CA938E4CF12CCA0A0@gisp.nec.co.jp>
+Sender: owner-linux-mm@kvack.org
+To: Konstantin Khlebnikov <koct9i@gmail.com>
+Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Mark Williamson <mwilliamson@undo-software.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Kirill A. Shutemov" <kirill@shutemov.name>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2015-06-16 at 10:54 -0700, Kees Cook wrote:
-> This imports the existing seccomp test suite into the kernel's selftests
-> tree. It contains extensive testing of seccomp features and corner cases.
-> There remain additional tests to move into the kernel tree, but they have
-> not yet been ported to all the architectures seccomp supports:
-> https://github.com/redpig/seccomp/tree/master/tests
->
-> Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> ---
->  MAINTAINERS                                    |    1 +
->  tools/testing/selftests/Makefile               |    1 +
->  tools/testing/selftests/seccomp/.gitignore     |    1 +
->  tools/testing/selftests/seccomp/Makefile       |   10 +
->  tools/testing/selftests/seccomp/seccomp_bpf.c  | 2109 ++++++++++++++++++++++++
->  tools/testing/selftests/seccomp/test_harness.h |  537 ++++++
+On Tue, Jun 09, 2015 at 11:00:15PM +0300, Konstantin Khlebnikov wrote:
+> From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+>=20
+> This patch moves permission checks from pagemap_read() into pagemap_open(=
+).
+>=20
+> Pointer to mm is saved in file->private_data. This reference pins only
+> mm_struct itself. /proc/*/mem, maps, smaps already work in the same way.
+>=20
+> Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+> Link: http://lkml.kernel.org/r/CA+55aFyKpWrt_Ajzh1rzp_GcwZ4=3D6Y=3DkOv8hB=
+z172CFJp6L8Tg@mail.gmail.com
+                                                          =20
+Reviewed-by: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>   =
 
-
-Thanks very much for adding this, it would have been very helpful recently when
-I was trying to get seccomp filter working on powerpc :)
-
-I get one failure in TRACE_syscall.syscall_dropped:
-
-  seccomp_bpf.c:1394:TRACE_syscall.syscall_dropped:Expected 1 (1) == syscall(207) (18446744073709551615)
-
-
-So it looks like we're returning -1 instead of 1.
-
-That's probably a bug in our handling of the return value, or maybe an
-inconsistency across the arches. I'll try and find time to dig into it.
-
-cheers
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
