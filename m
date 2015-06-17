@@ -1,71 +1,144 @@
-From: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
-Subject: Re: [PATCH v3 2/4] pagemap: add mmap-exclusive bit for marking
- pages mapped only here
-Date: Wed, 17 Jun 2015 08:11:51 +0000
-Message-ID: <20150617081151.GD384@hori1.linux.bs1.fc.nec.co.jp>
-References: <20150609195333.21971.58194.stgit@zurg>
- <20150609200017.21971.23391.stgit@zurg>
+From: Beata Michalska <b.michalska@samsung.com>
+Subject: Re: [RFC v3 1/4] fs: Add generic file system event notifications
+Date: Wed, 17 Jun 2015 11:22:49 +0200
+Message-ID: <55813C69.2040401@samsung.com>
+References: <1434460173-18427-1-git-send-email-b.michalska@samsung.com>
+ <1434460173-18427-2-git-send-email-b.michalska@samsung.com>
+ <20150616162147.GA17109@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-2022-jp"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150609200017.21971.23391.stgit@zurg>
-Content-Language: ja-JP
-Content-ID: <F167C1AF14AAD2479227BBB1AD5A22B5@gisp.nec.co.jp>
+In-reply-to: <20150616162147.GA17109@ZenIV.linux.org.uk>
 Sender: owner-linux-mm@kvack.org
-To: Konstantin Khlebnikov <koct9i@gmail.com>
-Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Mark Williamson <mwilliamson@undo-software.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Kirill A. Shutemov" <kirill@shutemov.name>
+To: Al Viro <viro@ZenIV.linux.org.uk>
+Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, greg@kroah.com, jack@suse.cz, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 09, 2015 at 11:00:17PM +0300, Konstantin Khlebnikov wrote:
-> From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
->=20
-> This patch sets bit 56 in pagemap if this page is mapped only once.
-> It allows to detect exclusively used pages without exposing PFN:
->=20
-> present file exclusive state
-> 0       0    0         non-present
-> 1       1    0         file page mapped somewhere else
-> 1       1    1         file page mapped only here
-> 1       0    0         anon non-CoWed page (shared with parent/child)
-> 1       0    1         anon CoWed page (or never forked)
->=20
-> CoWed pages in MAP_FILE|MAP_PRIVATE areas are anon in this context.
->=20
-> Mmap-exclusive bit doesn't reflect potential page-sharing via swapcache:
-> page could be mapped once but has several swap-ptes which point to it.
-> Application could detect that by swap bit in pagemap entry and touch
-> that pte via /proc/pid/mem to get real information.
->=20
-> Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-> Link: http://lkml.kernel.org/r/CAEVpBa+_RyACkhODZrRvQLs80iy0sqpdrd0AaP_-t=
-gnX3Y9yNQ@mail.gmail.com
->=20
-> ---
->=20
-> v2:
-> * handle transparent huge pages
-> * invert bit and rename shared -> exclusive (less confusing name)
-> ---
-...
+Hi,
 
-> @@ -1119,6 +1122,13 @@ static int pagemap_pte_range(pmd_t *pmd, unsigned =
-long addr, unsigned long end,
->  		else
->  			pmd_flags2 =3D 0;
-> =20
-> +		if (pmd_present(*pmd)) {
-> +			struct page *page =3D pmd_page(*pmd);
-> +
-> +			if (page_mapcount(page) =3D=3D 1)
-> +				pmd_flags2 |=3D __PM_MMAP_EXCLUSIVE;
-> +		}
-> +
+On 06/16/2015 06:21 PM, Al Viro wrote:
+> On Tue, Jun 16, 2015 at 03:09:30PM +0200, Beata Michalska wrote:
+>> Introduce configurable generic interface for file
+>> system-wide event notifications, to provide file
+>> systems with a common way of reporting any potential
+>> issues as they emerge.
+>>
+>> The notifications are to be issued through generic
+>> netlink interface by newly introduced multicast group.
+>>
+>> Threshold notifications have been included, allowing
+>> triggering an event whenever the amount of free space drops
+>> below a certain level - or levels to be more precise as two
+>> of them are being supported: the lower and the upper range.
+>> The notifications work both ways: once the threshold level
+>> has been reached, an event shall be generated whenever
+>> the number of available blocks goes up again re-activating
+>> the threshold.
+>>
+>> The interface has been exposed through a vfs. Once mounted,
+>> it serves as an entry point for the set-up where one can
+>> register for particular file system events.
+> 
+> Hmm...
+> 
+> 1) what happens if two processes write to that file at the same time,
+> trying to create an entry for the same fs?  WARN_ON() and fail for one
+> of them if they race?
+>
 
-Could you do the same thing for huge_pte_to_pagemap_entry(), too?=20
-                                                                 =20
-Thanks,                                                          =20
-Naoya Horiguchi                                                   =
+There are some limits here - I admit. The entries in the config file
+
+might be overwritten at any time - there is no support for multiple 
+
+config entries for the same mounted fs. This is mainly due to the threshold
+
+notifications: handling potentially numerous threshold limits each time
+
+the number of available blocks changes didn't seem like a good idea.
+
+So this is more like a global config, resembling sysfs fs-related tune options.
+
+
+> 2) what happens if fs is mounted more than once (e.g. in different
+> namespaces, or bound at different mountpoints, or just plain mounted
+> several times in different places) and we add an event for each?
+> More specifically, what should happen when one of those gets unmounted?
+> 
+
+Each write to that file is being handled within the current namespace.
+Setting up an entry for a mount point from a different mnt namespace
+needs switching to that ns. As for bound mounts: the entry exists
+
+until the mount point it has been registered with is detached. 
+The events can only be registered for one of the mount points,
+as they are tied with the super
+ block - so one cannot have a separate
+config entry for each bound mounts.
+
+
+> 3) what's the meaning of ->active?  Is that "fs_drop_trace_entry() hadn't
+> been called yet" flag?  Unless I'm misreading it, we can very well get
+> explicit removal race with umount, resulting in cleanup_mnt() returning
+> from fs_event_mount_dropped() before the first process (i.e. write
+> asking to remove that entry) gets around to its deactivate_super(),
+> ending up with umount(2) on a filesystem that isn't mounted anywhere
+> else reporting success to userland before the actual fs shutdown, which
+> is not a nice thing to do...
+> 
+
+The 'active' means simply that the entry for a given mounted fs
+is still
+ valid in a way that the events are still required: the entry
+in the config file
+ has not been removed. When the trace is
+ being removed
+- it's 'active' filed gets invalidated to mark that the events for related
+fs are no longer needed. deactivate_super() should get called only once,
+dropping the
+ reference acquired while creating the entry (fs_new_trace_entry).
+
+While in fs_drop_trace_entry, lock is being held (in both cases: unmount and
+explicit 
+entry removal). The fs_drop_trace_entry will silently skip all
+the clean-up if the 
+entry is inactive. I might be missing smth here - though.
+If so,I would really appreciate some more of your comments.
+
+> 4) test in fs_event_mount_dropped() looks very odd - by that point we
+> are absolutely guaranteed to have ->mnt_ns == NULL.  What's that supposed
+> to do?
+>
+
+I have totally missed the fact that the mnt namespace pointer is invalidated
+
+during unmount_tree - cannot really explain why that did happen. So thank You
+
+for pointing that out. 
+	This should be simply checking if it's still valid.
+ This verification is
+needed in case the mount that is being detached is not
+ the one the events have
+been registered with as they refer to fs not a particular
+ mount point. This is
+the case with the mnt namespaces: let's assume one registers
+ for events for
+particular mounted fs in an init mnt namespace, then the new mnt
+ namespace is
+being created with shared moutn points being cloned: so the same
+ mount point
+exists in both namespaces. Now if this mnt point gets detached:
+ either through
+umount or during the mnt namespace being swept out - the entry
+ in the init mnt
+namespace should remain untouched - same applies the other way round.
+ 
+> 
+> Al, trying to figure out the lifetime rules in all of that...
+> 
+
+Best Regards
+Beata
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
