@@ -1,118 +1,41 @@
-From: Sergei Zviagintsev <sergei@s15v.net>
-Subject: [PATCH v2 5/5] selftests/kdbus: fix error paths in __kdbus_msg_send()
-Date: Wed, 17 Jun 2015 19:33:28 +0300
-Message-ID: <1434558808-16129-6-git-send-email-sergei@s15v.net>
+From: Sergei Zviagintsev <sergei-E844GTqJAzo@public.gmane.org>
+Subject: [PATCH v2 2/5] selftests/kdbus: drop useless assignment
+Date: Wed, 17 Jun 2015 19:33:25 +0300
+Message-ID: <1434558808-16129-3-git-send-email-sergei@s15v.net>
 References: <1434558808-16129-1-git-send-email-sergei@s15v.net>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1434558808-16129-1-git-send-email-sergei@s15v.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, David Herrmann <dh.herrmann@googlemail.com>, Djalal Harouni <tixxdz@opendz.org>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Sergei Zviagintsev <sergei@s15v.net>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1434558808-16129-1-git-send-email-sergei-E844GTqJAzo@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, David Herrmann <dh.herrmann-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sergei Zviagintsev <sergei-E844GTqJAzo@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Handle errors properly, free allocated resources.
+Assign returned file descriptor directly to `fd', without intermediate
+`ret' variable.
 
-Signed-off-by: Sergei Zviagintsev <sergei@s15v.net>
+Signed-off-by: Sergei Zviagintsev <sergei-E844GTqJAzo@public.gmane.org>
 ---
- tools/testing/selftests/kdbus/kdbus-util.c | 31 ++++++++++++++++++------------
- 1 file changed, 19 insertions(+), 12 deletions(-)
+ tools/testing/selftests/kdbus/kdbus-util.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
 
 diff --git a/tools/testing/selftests/kdbus/kdbus-util.c b/tools/testing/selftests/kdbus/kdbus-util.c
-index ae81da63d810..29a0cb1aace2 100644
+index a3e49b04f3a7..f9102264cfb9 100644
 --- a/tools/testing/selftests/kdbus/kdbus-util.c
 +++ b/tools/testing/selftests/kdbus/kdbus-util.c
-@@ -452,8 +452,8 @@ static int __kdbus_msg_send(const struct kdbus_conn *conn,
- 			    uint64_t cmd_flags,
- 			    int cancel_fd)
+@@ -408,11 +408,9 @@ int sys_memfd_create(const char *name, __u64 size)
  {
--	struct kdbus_cmd_send *cmd;
--	struct kdbus_msg *msg;
-+	struct kdbus_cmd_send *cmd = NULL;
-+	struct kdbus_msg *msg = NULL;
- 	const char ref1[1024 * 128 + 3] = "0123456789_0";
- 	const char ref2[] = "0123456789_1";
- 	struct kdbus_item *item;
-@@ -476,14 +476,14 @@ static int __kdbus_msg_send(const struct kdbus_conn *conn,
- 		if (write(memfd, "kdbus memfd 1234567", 19) != 19) {
- 			ret = -errno;
- 			kdbus_printf("writing to memfd failed: %m\n");
--			return ret;
-+			goto out;
- 		}
+ 	int ret, fd;
  
- 		ret = sys_memfd_seal_set(memfd);
- 		if (ret < 0) {
- 			ret = -errno;
- 			kdbus_printf("memfd sealing failed: %m\n");
--			return ret;
-+			goto out;
- 		}
- 
- 		size += KDBUS_ITEM_SIZE(sizeof(struct kdbus_memfd));
-@@ -496,7 +496,7 @@ static int __kdbus_msg_send(const struct kdbus_conn *conn,
- 	if (!msg) {
- 		ret = -errno;
- 		kdbus_printf("unable to malloc()!?\n");
+-	ret = syscall(__NR_memfd_create, name, MFD_ALLOW_SEALING);
+-	if (ret < 0)
 -		return ret;
-+		goto out;
- 	}
- 
- 	if (dst_id == KDBUS_DST_ID_BROADCAST)
-@@ -514,7 +514,7 @@ static int __kdbus_msg_send(const struct kdbus_conn *conn,
- 	if (timeout) {
- 		ret = clock_gettime(CLOCK_MONOTONIC_COARSE, &now);
- 		if (ret < 0)
--			return ret;
-+			goto out;
- 
- 		msg->timeout_ns = now.tv_sec * 1000000000ULL +
- 				  now.tv_nsec + timeout;
-@@ -565,6 +565,12 @@ static int __kdbus_msg_send(const struct kdbus_conn *conn,
- 		size += KDBUS_ITEM_SIZE(sizeof(cancel_fd));
- 
- 	cmd = malloc(size);
-+	if (!cmd) {
-+		ret = -errno;
-+		kdbus_printf("unable to malloc()!?\n");
-+		goto out;
-+	}
-+
- 	cmd->size = size;
- 	cmd->flags = cmd_flags;
- 	cmd->msg_address = (uintptr_t)msg;
-@@ -579,12 +585,9 @@ static int __kdbus_msg_send(const struct kdbus_conn *conn,
- 	}
- 
- 	ret = kdbus_cmd_send(conn->fd, cmd);
--	if (memfd >= 0)
--		close(memfd);
 -
+-	fd = ret;
++	fd = syscall(__NR_memfd_create, name, MFD_ALLOW_SEALING);
++	if (fd < 0)
++		return fd;
+ 
+ 	ret = ftruncate(fd, size);
  	if (ret < 0) {
- 		kdbus_printf("error sending message: %d (%m)\n", ret);
--		return ret;
-+		goto out;
- 	}
- 
- 	if (cmd_flags & KDBUS_SEND_SYNC_REPLY) {
-@@ -598,13 +601,17 @@ static int __kdbus_msg_send(const struct kdbus_conn *conn,
- 
- 		ret = kdbus_free(conn, cmd->reply.offset);
- 		if (ret < 0)
--			return ret;
-+			goto out;
- 	}
- 
-+out:
- 	free(msg);
- 	free(cmd);
- 
--	return 0;
-+	if (memfd >= 0)
-+		close(memfd);
-+
-+	return ret < 0 ? ret : 0;
- }
- 
- int kdbus_msg_send(const struct kdbus_conn *conn, const char *name,
 -- 
 1.8.3.1
