@@ -1,52 +1,38 @@
 From: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Subject: Re: [PATCH v6 07/21] libnvdimm, nfit: regions (block-data-window, persistent memory, volatile memory)
-Date: Thu, 18 Jun 2015 00:03:50 +0200
-Message-ID: <2337285.ixNCaGxhrS@vostro.rjw.lan>
-References: <20150611183830.25175.51256.stgit@dwillia2-desk3.amr.corp.intel.com> <20150611201047.25175.43773.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: Re: [PATCH v6 11/21] libnvdimm, nfit: add interleave-set state-tracking infrastructure
+Date: Thu, 18 Jun 2015 00:06:39 +0200
+Message-ID: <1495615.0cZhPQCH7Y@vostro.rjw.lan>
+References: <20150611183830.25175.51256.stgit@dwillia2-desk3.amr.corp.intel.com> <20150611201109.25175.32607.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7Bit
 Return-path: <linux-acpi-owner@vger.kernel.org>
-In-Reply-To: <20150611201047.25175.43773.stgit@dwillia2-desk3.amr.corp.intel.com>
+In-Reply-To: <20150611201109.25175.32607.stgit@dwillia2-desk3.amr.corp.intel.com>
 Sender: linux-acpi-owner@vger.kernel.org
 To: Dan Williams <dan.j.williams@intel.com>
 Cc: linux-nvdimm@lists.01.org, mingo@kernel.org, sfr@canb.auug.org.au, rafael@kernel.org, neilb@suse.de, gregkh@linuxfoundation.org, "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>, Robert Moore <robert.moore@intel.com>, linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, jmoyer@redhat.com, axboe@kernel.dk, linux-api@vger.kernel.org, akpm@linux-foundation.org, hch@lst.de
 List-Id: linux-api@vger.kernel.org
 
-On Thursday, June 11, 2015 04:10:47 PM Dan Williams wrote:
-> A "region" device represents the maximum capacity of a BLK range (mmio
-> block-data-window(s)), or a PMEM range (DAX-capable persistent memory or
-> volatile memory), without regard for aliasing.  Aliasing, in the
-> dimm-local address space (DPA), is resolved by metadata on a dimm to
-> designate which exclusive interface will access the aliased DPA ranges.
-> Support for the per-dimm metadata/label arrvies is in a subsequent
-> patch.
+On Thursday, June 11, 2015 04:11:09 PM Dan Williams wrote:
+> On platforms that have firmware support for reading/writing per-dimm
+> label space, a portion of the dimm may be accessible via an interleave
+> set PMEM mapping in addition to the dimm's BLK (block-data-window
+> aperture(s)) interface.  A label, stored in a "configuration data
+> region" on the dimm, disambiguates which dimm addresses are accessed
+> through which exclusive interface.
 > 
-> The name format of "region" devices is "regionN" where, like dimms, N is
-> a global ida index assigned at discovery time.  This id is not reliable
-> across reboots nor in the presence of hotplug.  Look to attributes of
-> the region or static id-data of the sub-namespace to generate a
-> persistent name.  However, if the platform configuration does not change
-> it is reasonable to expect the same region id to be assigned at the next
-> boot.
+> Add infrastructure that allows the kernel to block modifications to a
+> label in the set while any member dimm is active.  Note that this is
+> meant only for enforcing "no modifications of active labels" via the
+> coarse ioctl command.  Adding/deleting namespaces from an active
+> interleave set is always possible via sysfs.
 > 
-> "region"s have 2 generic attributes "size", and "mapping"s where:
-> - size: the BLK accessible capacity or the span of the
->   system physical address range in the case of PMEM.
-> 
-> - mappingN: a tuple describing a dimm's contribution to the region's
->   capacity in the format (<nmemX>,<dpa>,<size>).  For a PMEM-region
->   there will be at least one mapping per dimm in the interleave set.  For
->   a BLK-region there is only "mapping0" listing the starting DPA of the
->   BLK-region and the available DPA capacity of that space (matches "size"
->   above).
-> 
-> The max number of mappings per "region" is hard coded per the
-> constraints of sysfs attribute groups.  That said the number of mappings
-> per region should never exceed the maximum number of possible dimms in
-> the system.  If the current number turns out to not be enough then the
-> "mappings" attribute clarifies how many there are supposed to be. "32
-> should be enough for anybody...".
+> Another aspect of tracking interleave sets is tracking their integrity
+> when DIMMs in a set are physically re-ordered.  For this purpose we
+> generate an "interleave-set cookie" that can be recorded in a label and
+> validated against the current configuration.  It is the bus provider
+> implementation's responsibility to calculate the interleave set cookie
+> and attach it to a given region.
 > 
 > Cc: Neil Brown <neilb@suse.de>
 > Cc: <linux-acpi@vger.kernel.org>
