@@ -1,54 +1,71 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH v2 0/5] selftests/kdbus: small fixes
-Date: Wed, 17 Jun 2015 11:07:46 -0600
-Message-ID: <5581A962.3040601@osg.samsung.com>
-References: <1434558808-16129-1-git-send-email-sergei@s15v.net>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v5 17/21] libnvdimm: infrastructure for btt devices
+Date: Wed, 17 Jun 2015 10:09:53 -0700
+Message-ID: <CAPcyv4hMDo+V3ny340F68kvrFfpxtO+NTo4ZYacrSpK9t_g+Xw@mail.gmail.com>
+References: <20150602001134.4506.45867.stgit@dwillia2-desk3.amr.corp.intel.com>
+	<20150602001541.4506.90125.stgit@dwillia2-desk3.amr.corp.intel.com>
+	<20150609064200.GE9804@lst.de>
+	<20150610184616.GL2729@linux.intel.com>
+	<20150611072812.GB1905@lst.de>
+	<x49381qp9ic.fsf@segfault.boston.devel.redhat.com>
+	<CAPcyv4g0CVzhDDiUjc3=5=Bx1HUFjJ7XmCJfxPG1oQAoZ8yvug@mail.gmail.com>
+	<x49twu6nugs.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1434558808-16129-1-git-send-email-sergei-E844GTqJAzo@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sergei Zviagintsev <sergei-E844GTqJAzo@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, David Herrmann <dh.herrmann-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-acpi-owner@vger.kernel.org>
+In-Reply-To: <x49twu6nugs.fsf@segfault.boston.devel.redhat.com>
+Sender: linux-acpi-owner@vger.kernel.org
+To: Jeff Moyer <jmoyer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, Matthew Wilcox <willy@linux.intel.com>, Jens Axboe <axboe@kernel.dk>, Stephen Rothwell <sfr@canb.auug.org.au>, Andrew Morton <akpm@linux-foundation.org>, "Rafael J. Wysocki" <rafael@kernel.org>, Neil Brown <neilb@suse.de>, Greg KH <gregkh@linuxfoundation.org>, linux-nvdimm <linux-nvdimm@ml01.01.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@kernel.org>, Linux ACPI <linux-acpi@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 06/17/2015 10:33 AM, Sergei Zviagintsev wrote:
-> Set of different fixes over selftests/kdbus.
-> 
-> These were first sent as independent patches, and in v2 they just
-> properly threaded.
-> 
-> Links to previous patches:
-> 
-> http://lkml.kernel.org/g/1434550697-24785-1-git-send-email-sergei-E844GTqJAzo@public.gmane.org
-> http://lkml.kernel.org/g/1434550697-24785-2-git-send-email-sergei-E844GTqJAzo@public.gmane.org
-> http://lkml.kernel.org/g/1434550697-24785-3-git-send-email-sergei-E844GTqJAzo@public.gmane.org
-> http://lkml.kernel.org/g/1434550697-24785-4-git-send-email-sergei-E844GTqJAzo@public.gmane.org
-> http://lkml.kernel.org/g/1434550697-24785-5-git-send-email-sergei-E844GTqJAzo@public.gmane.org
-> 
-> Sergei Zviagintsev (5):
->   selftests/kdbus: handle cap_get_proc() error properly
->   selftests/kdbus: drop useless assignment
->   selftests/kdbus: remove useless initializations from
->     kdbus_clone_userns_test()
->   selftests/kdbus: drop duplicated code from __kdbus_msg_send()
->   selftests/kdbus: fix error paths in __kdbus_msg_send()
-> 
->  tools/testing/selftests/kdbus/kdbus-util.c       | 46 ++++++++++++------------
->  tools/testing/selftests/kdbus/test-metadata-ns.c |  9 ++---
->  2 files changed, 27 insertions(+), 28 deletions(-)
-> 
+On Wed, Jun 17, 2015 at 9:57 AM, Jeff Moyer <jmoyer@redhat.com> wrote:
+> Dan Williams <dan.j.williams@intel.com> writes:
+>
+>> On Wed, Jun 17, 2015 at 9:47 AM, Jeff Moyer <jmoyer@redhat.com> wrote:
+>>> Christoph Hellwig <hch@lst.de> writes:
+>>>
+>>>> On Wed, Jun 10, 2015 at 02:46:16PM -0400, Matthew Wilcox wrote:
+>>>>> Don't screw up rw_page.  The point of rw_page is to read or write a page
+>>>>> cache page.  It can sleep, and it indicates success by using the page
+>>>>> flags.  Don't try and scqueeze rw_bytes into it.  If you want rw_bytes
+>>>>> to be a queue operation, that's one thing, but don't mess with rw_page.
+>>>>
+>>>> Oh, I forgot about the page manipulating nature.  Yes, we'll need a different
+>>>> operation in this case.
+>>>
+>>> I didn't see this addressed in the new patch set.  I'm also concerned
+>>> about the layering, but I haven't put enough time into it to really make
+>>> a better suggestion.  I really dislike the idea of yet another device
+>>> stacking model in the kernel and I'm worried the code will go in, and the
+>>> sysfs interface will end up as a "user abi" and we won't be able to
+>>> change it in the future.
+>>>
+>>> Dan, have you made any progress on this, or do you have plans to?
+>>
+>> ? in v6 ->rw_bytes() moved from libnvdimm local hackery to a top-level
+>> block device operation.  Is that your concern or something else?
+>
+> Hmm, I guess I was conflating two things.  I see now that you did move
+> the rw_bytes into the block device operations, that looks good.  I'll
+> table my concerns over yet another stacking model until I can say
+> something intelligent about it.
 
-Nice work! Thanks for these fixes.
-Greg! Are you going to apply these into your kdbus tree?
+MD and DM guys can jump in here if I mis-characterize, but I believe
+the libnvdimm stacking model:
 
-thanks,
--- Shuah
+1/ is warranted because ->rw_bytes() is unique to nvdimm devices and
+there are plans for other drivers btt-like drivers to stack on top, a
+"struct page" driver is an example
 
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
+2/ avoids the mistakes of the MD and DM stacking implementations by
+having a device-model handle in existence *prior* to attaching a
+backing device.  MD requires the parent block device to be created
+first which causes the implementation to jump through hoops trying to
+determine when the MD device has lost its "last opener".  DM's model
+is mostly opaque to sysfs, it just pops into existence after a magic
+sequence of ioctls+netlink.
+
+It also solves the "autodetect" problem of needing to scan every block
+device in the system, the scanning is asynchronous and contained to a
+given nvdimm bus.
