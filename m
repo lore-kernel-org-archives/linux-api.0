@@ -1,43 +1,46 @@
-From: Konstantin Khlebnikov <koct9i@gmail.com>
-Subject: Re: [PATCH v4] pagemap: switch to the new format and do some cleanup
-Date: Wed, 17 Jun 2015 09:40:48 +0300
-Message-ID: <CALYGNiNLxx4uDbpdhP2_F+TZiTbvky1LrPw+ORrQ_BVkOtL2tg@mail.gmail.com>
-References: <20150609200021.21971.13598.stgit@zurg>
-	<20150615055649.4485.92087.stgit@zurg>
-	<20150616142935.b8f679650e35534e75806399@linux-foundation.org>
-	<CALYGNiNrEPffQwhjhqB6jor5b8w6BQ=KnAa3LrxQ6QFKERH_mQ@mail.gmail.com>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH] selftests: add seccomp suite
+Date: Wed, 17 Jun 2015 17:31:26 +1000
+Message-ID: <1434526286.28933.2.camel@ellerman.id.au>
+References: <20150616175414.GA24958@www.outflux.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CALYGNiNrEPffQwhjhqB6jor5b8w6BQ=KnAa3LrxQ6QFKERH_mQ@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, Mark Williamson <mwilliamson@undo-software.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Kirill A. Shutemov" <kirill@shutemov.name>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150616175414.GA24958-0X9Bc/hWBUTk6RaD4rd5nQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Jingoo Han <jingoohan1-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jun 17, 2015 at 7:59 AM, Konstantin Khlebnikov <koct9i@gmail.com> wrote:
-> On Wed, Jun 17, 2015 at 12:29 AM, Andrew Morton
-> <akpm@linux-foundation.org> wrote:
->> On Mon, 15 Jun 2015 08:56:49 +0300 Konstantin Khlebnikov <koct9i@gmail.com> wrote:
->>
->>> This patch removes page-shift bits (scheduled to remove since 3.11) and
->>> completes migration to the new bit layout. Also it cleans messy macro.
->>
->> hm, I can't find any kernel version to which this patch comes close to
->> applying.
+On Tue, 2015-06-16 at 10:54 -0700, Kees Cook wrote:
+> This imports the existing seccomp test suite into the kernel's selftests
+> tree. It contains extensive testing of seccomp features and corner cases.
+> There remain additional tests to move into the kernel tree, but they have
+> not yet been ported to all the architectures seccomp supports:
+> https://github.com/redpig/seccomp/tree/master/tests
 >
-> This patchset applies to  4.1-rc8 and current mmotm without problems.
-> I guess you've tried pick this patch alone without previous changes.
+> Signed-off-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+> ---
+>  MAINTAINERS                                    |    1 +
+>  tools/testing/selftests/Makefile               |    1 +
+>  tools/testing/selftests/seccomp/.gitignore     |    1 +
+>  tools/testing/selftests/seccomp/Makefile       |   10 +
+>  tools/testing/selftests/seccomp/seccomp_bpf.c  | 2109 ++++++++++++++++++++++++
+>  tools/testing/selftests/seccomp/test_harness.h |  537 ++++++
 
-My bad. I've sent single v4 patch as a reply to v3 patch and forget
-'4/4' in subject.
-That's fourth patch in patchset.
 
-Here is v3 patchset cover letter: https://lkml.org/lkml/2015/6/9/804
-"[PATCHSET v3 0/4] pagemap: make useable for non-privilege users"
+Thanks very much for adding this, it would have been very helpful recently when
+I was trying to get seccomp filter working on powerpc :)
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+I get one failure in TRACE_syscall.syscall_dropped:
+
+  seccomp_bpf.c:1394:TRACE_syscall.syscall_dropped:Expected 1 (1) == syscall(207) (18446744073709551615)
+
+
+So it looks like we're returning -1 instead of 1.
+
+That's probably a bug in our handling of the return value, or maybe an
+inconsistency across the arches. I'll try and find time to dig into it.
+
+cheers
