@@ -1,186 +1,33 @@
-From: Beata Michalska <b.michalska@samsung.com>
-Subject: Re: [RFC v3 1/4] fs: Add generic file system event notifications
-Date: Thu, 18 Jun 2015 10:25:08 +0200
-Message-ID: <55828064.5040301@samsung.com>
-References: <1434460173-18427-1-git-send-email-b.michalska@samsung.com>
- <1434460173-18427-2-git-send-email-b.michalska@samsung.com>
- <20150617230605.GK10224@dastard>
+From: Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH] HID: roccat: Removing all modules except Kone
+Date: Thu, 18 Jun 2015 11:42:19 +0200 (CEST)
+Message-ID: <alpine.LNX.2.00.1506181141150.12753@pobox.suse.cz>
+References: <1429202372.2351.6.camel@neuromancer.tessier-ashpool>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <20150617230605.GK10224@dastard>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, greg@kroah.com, jack@suse.cz, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1429202372.2351.6.camel-/ZsuMndpQpv+LLWKTYdlgUWBcfzl8p5a/AviwAImx+Y@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stefan Achatz <erazor_de-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+On Thu, 16 Apr 2015, Stefan Achatz wrote:
 
-On 06/18/2015 01:06 AM, Dave Chinner wrote:
-> On Tue, Jun 16, 2015 at 03:09:30PM +0200, Beata Michalska wrote:
->> Introduce configurable generic interface for file
->> system-wide event notifications, to provide file
->> systems with a common way of reporting any potential
->> issues as they emerge.
->>
->> The notifications are to be issued through generic
->> netlink interface by newly introduced multicast group.
->>
->> Threshold notifications have been included, allowing
->> triggering an event whenever the amount of free space drops
->> below a certain level - or levels to be more precise as two
->> of them are being supported: the lower and the upper range.
->> The notifications work both ways: once the threshold level
->> has been reached, an event shall be generated whenever
->> the number of available blocks goes up again re-activating
->> the threshold.
->>
->> The interface has been exposed through a vfs. Once mounted,
->> it serves as an entry point for the set-up where one can
->> register for particular file system events.
->>
->> Signed-off-by: Beata Michalska <b.michalska@samsung.com>
+> This patch removes all roccat hid modules except the one for the first Kone.
 > 
-> This has massive scalability problems:
-> 
->> + 4.3 Threshold notifications:
->> +
->> + #include <linux/fs_event.h>
->> + void fs_event_alloc_space(struct super_block *sb, u64 ncount);
->> + void fs_event_free_space(struct super_block *sb, u64 ncount);
->> +
->> + Each filesystme supporting the threshold notifications should call
->> + fs_event_alloc_space/fs_event_free_space respectively whenever the
->> + amount of available blocks changes.
->> + - sb:     the filesystem's super block
->> + - ncount: number of blocks being acquired/released
-> 
-> ... here.
-> 
->> + Note that to properly handle the threshold notifications the fs events
->> + interface needs to be kept up to date by the filesystems. Each should
->> + register fs_trace_operations to enable querying the current number of
->> + available blocks.
-> 
-> Have you noticed that the filesystems have percpu counters for
-> tracking global space usage? There's good reason for that - taking a
-> spinlock in such a hot accounting path causes severe contention.
-> 
->> +static void fs_event_send(struct fs_trace_entry *en, unsigned int event_id)
->> +{
->> +	size_t size = nla_total_size(sizeof(u32)) * 2 +
->> +		      nla_total_size(sizeof(u64));
->> +
->> +	fs_netlink_send_event(size, event_id, create_common_msg, en);
->> +}
->> +
->> +static void fs_event_send_thresh(struct fs_trace_entry *en,
->> +				  unsigned int event_id)
->> +{
->> +	size_t size = nla_total_size(sizeof(u32)) * 2 +
->> +		      nla_total_size(sizeof(u64)) * 2;
->> +
->> +	fs_netlink_send_event(size, event_id, create_thresh_msg, en);
->> +}
->> +
->> +void fs_event_notify(struct super_block *sb, unsigned int event_id)
->> +{
->> +	struct fs_trace_entry *en;
->> +
->> +	en = fs_trace_entry_get_rcu(sb);
->> +	if (!en)
->> +		return;
->> +
->> +	spin_lock(&en->lock);
->> +	if (atomic_read(&en->active) && (en->notify & FS_EVENT_GENERIC))
->> +		fs_event_send(en, event_id);
->> +	spin_unlock(&en->lock);
->> +	fs_trace_entry_put(en);
->> +}
->> +EXPORT_SYMBOL(fs_event_notify);
->> +
->> +void fs_event_alloc_space(struct super_block *sb, u64 ncount)
->> +{
->> +	struct fs_trace_entry *en;
->> +	s64 count;
->> +
->> +	en = fs_trace_entry_get_rcu(sb);
->> +	if (!en)
->> +		return;
-> 
-> Adds an atomic write to get the trace entry,
-> 
->> +	spin_lock(&en->lock);
-> 
-> a spin lock to lock the entry,
-> 
-> 
->> +	if (!atomic_read(&en->active) || !(en->notify & FS_EVENT_THRESH))
->> +		goto leave;
->> +	/*
->> +	 * we shouldn't drop below 0 here,
->> +	 * unless there is a sync issue somewhere (?)
->> +	 */
->> +	count = en->th.avail_space - ncount;
->> +	en->th.avail_space = count < 0 ? 0 : count;
->> +
->> +	if (en->th.avail_space > en->th.lrange)
->> +		/* Not 'even' close - leave */
->> +		goto leave;
->> +
->> +	if (en->th.avail_space > en->th.urange) {
->> +		/* Close enough - the lower range has been reached */
->> +		if (!(en->th.state & THRESH_LR_BEYOND)) {
->> +			/* Send notification */
->> +			fs_event_send_thresh(en, FS_THR_LRBELOW);
->> +			en->th.state &= ~THRESH_LR_BELOW;
->> +			en->th.state |= THRESH_LR_BEYOND;
->> +		}
->> +		goto leave;
-> 
-> Then puts the entire netlink send path inside this spinlock, which
-> includes memory allocation and all sorts of non-filesystem code
-> paths. And it may be inside critical filesystem locks as well....
-> 
-> Apart from the serialisation problem of the locking, adding
-> memory allocation and the network send path to filesystem code
-> that is effectively considered "innermost" filesystem code is going
-> to have all sorts of problems for various filesystems. In the XFS
-> case, we simply cannot execute this sort of function in the places
-> where we update global space accounting.
-> 
-> As it is, I think the basic concept of separate tracking of free
-> space if fundamentally flawed. What I think needs to be done is that
-> filesystems need access to the thresholds for events, and then the
-> filesystems call fs_event_send_thresh() themselves from appropriate
-> contexts (ie. without compromising locking, scalability, memory
-> allocation recursion constraints, etc).
-> 
-> e.g. instead of tracking every change in free space, a filesystem
-> might execute this once every few seconds from a workqueue:
-> 
-> 	event = fs_event_need_space_warning(sb, <fs_free_space>)
-> 	if (event)
-> 		fs_event_send_thresh(sb, event);
-> 
-> User still gets warnings about space usage, but there's no runtime
-> overhead or problems with lock/memory allocation contexts, etc.
-> 
-> Cheers,
-> 
-> Dave.
-> 
+> Package roccat-tools is the only known user of these modules. Starting with
+> roccat-tools-2.2.0, released 7 months ago, I'm not using these modules
+> anymore. All functionality has been moved to userspace using hidraw.
 
-Having fs to keep a firm hand on thresholds limits would indeed be
-far more sane approach though that would require each fs to
-add support for that and handle most of it on their own. Avoiding
-this was the main rationale behind this rfc.
+7 months means 2 or 3 major kernel releases, and no depreciation process 
+has happened.
 
-If fs people agree to that, I'll be more than willing to drop this
-in favour of the per-fs tracking solution. 
-Personally, I hope they will.
+Could you please work on more user-friendly depreciation plan for these 
+drivers?
 
+Thanks,
 
-Best Regards
-Beata 
+-- 
+Jiri Kosina
+SUSE Labs
