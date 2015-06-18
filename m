@@ -1,365 +1,256 @@
-From: Kinglong Mee <kinglongmee@gmail.com>
-Subject: Re: [RFC v3 1/4] fs: Add generic file system event notifications
-Date: Thu, 18 Jun 2015 19:17:21 +0800
-Message-ID: <5582A8C1.3000002@gmail.com>
-References: <1434460173-18427-1-git-send-email-b.michalska@samsung.com> <1434460173-18427-2-git-send-email-b.michalska@samsung.com>
+From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v5 03/11] nvmem: Add a simple NVMEM framework for nvmem
+ providers
+Date: Thu, 18 Jun 2015 13:46:38 +0100
+Message-ID: <5582BDAE.5040008@linaro.org>
+References: <1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org> <1432226583-8775-1-git-send-email-srinivas.kandagatla@linaro.org> <5580A678.4080304@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1434460173-18427-2-git-send-email-b.michalska@samsung.com>
-Sender: owner-linux-mm@kvack.org
-To: Beata Michalska <b.michalska@samsung.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: greg@kroah.com, jack@suse.cz, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org, kinglongmee@gmail.com
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5580A678.4080304-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 6/16/2015 9:09 PM, Beata Michalska wrote:
-> Introduce configurable generic interface for file
-> system-wide event notifications, to provide file
-> systems with a common way of reporting any potential
-> issues as they emerge.
-... snip ...
-> +
-> +Sample request could look like the following:
-> +
-> + echo /sample/mount/point G T 710000 500000 > /sys/fs/events/config
-> +
-> +Multiple request might be specified provided they are separated with semicolon.
-> +
-> +The configuration itself might be modified at any time. One can add/remove
-> +particular event types for given fielsystem, modify the threshold levels,
-> +and remove single or all entries from the 'config' file.
-> +
-> + - Adding new event type:
-> +
-> + $ echo MOUNT EVENT_TYPE > /sys/fs/events/config
-> +
-> +(Note that is is enough to provide the event type to be enabled without
+Many thanks for review.
 
-Should be "Note that it is ... " here ?
+On 16/06/15 23:43, Stephen Boyd wrote:
+> On 05/21/2015 09:43 AM, Srinivas Kandagatla wrote:
+>>
+>> diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
+>> new file mode 100644
+>> index 0000000..6c2f0b1
+>> --- /dev/null
+>> +++ b/drivers/nvmem/core.c
+>> @@ -0,0 +1,398 @@
+>> +/*
+>> + * nvmem framework core.
+>> + *
+>> + * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+>> + * Copyright (C) 2013 Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+>> + *
+>> + * This program is free software; you can redistribute it and/or modify
+>> + * it under the terms of the GNU General Public License version 2 and
+>> + * only version 2 as published by the Free Software Foundation.
+>> + *
+>> + * This program is distributed in the hope that it will be useful,
+>> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+>> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+>> + * GNU General Public License for more details.
+>> + */
+>> +
+>> +#include <linux/device.h>
+>> +#include <linux/nvmem-provider.h>
+>> +#include <linux/export.h>
+>> +#include <linux/fs.h>
+>> +#include <linux/idr.h>
+>> +#include <linux/init.h>
+>> +#include <linux/regmap.h>
+>> +#include <linux/module.h>
+>> +#include <linux/of.h>
+>> +#include <linux/slab.h>
+>> +#include <linux/uaccess.h>
+>
+> Is this include used?
+>
+Yep, not required.
+>> +
+>> +static int of_nvmem_match(struct device *dev, const void *nvmem_np)
+>> +{
+>> +	return dev->of_node == nvmem_np;
+>> +}
+>> +
+>> +static struct nvmem_device *of_nvmem_find(struct device_node *nvmem_np)
+>
+> const?
+Sure,
+>
+>> +{
+>> +	struct device *d;
+>> +
+>> +	if (!nvmem_np)
+>> +		return NULL;
+>> +
+>> +	d = class_find_device(&nvmem_class, NULL, nvmem_np, of_nvmem_match);
+>> +
+>> +	return d ? to_nvmem_device(d) : NULL;
+>> +}
+>> +
+>> +static struct nvmem_cell *nvmem_find_cell(const char *cell_id)
+>> +{
+>> +	struct nvmem_cell *p;
+>> +
+>> +	list_for_each_entry(p, &nvmem_cells, node) {
+>
+> Unnecessary braces.
+Yep, Will remove it.
+>
+>> +		if (p && !strcmp(p->name, cell_id))
+>> +			return p;
+>> +	}
+>> +
+>> +	return NULL;
+>> +}
+>> +
+>> +static void nvmem_cell_drop(struct nvmem_cell *cell)
+>> +{
+>> +	mutex_lock(&nvmem_cells_mutex);
+>> +	list_del(&cell->node);
+>> +	mutex_unlock(&nvmem_cells_mutex);
+>> +	kfree(cell);
+>> +}
+>> +
+>> +static void nvmem_device_remove_all_cells(struct nvmem_device *nvmem)
+>> +{
+>> +	struct nvmem_cell *cell = NULL;
+>
+> Unnecessary initialization
+Yes.
+>
+>> +	struct list_head *p, *n;
+>> +
+>> +	list_for_each_safe(p, n, &nvmem_cells) {
+>> +		cell = list_entry(p, struct nvmem_cell, node);
+>> +		if (cell->nvmem == nvmem)
+>> +			nvmem_cell_drop(cell);
+>> +	}
+> [..]
+>> +
+>> +static int nvmem_add_cells(struct nvmem_device *nvmem,
+>> +			   struct nvmem_config *cfg)
+>> +{
+>> +	struct nvmem_cell **cells;
+>> +	struct nvmem_cell_info *info = cfg->cells;
+>> +	int i, rval;
+>> +
+>> +	cells = kzalloc(sizeof(*cells) * cfg->ncells, GFP_KERNEL);
+>
+> kcalloc
+This is temporary array, I did this on intention, to make it easy to 
+kfree cells which are found invalid at runtime.
+>
+>> +	if (!cells)
+>> +		return -ENOMEM;
+>> +
+>> +	for (i = 0; i < cfg->ncells; i++) {
+>> +		cells[i] = kzalloc(sizeof(struct nvmem_cell), GFP_KERNEL);
+>
+> sizeof(**cells) ?
+Yep.
 
-> +the already set ones.)
-> +
-> + - Removing event type:
-> +
-> + $ echo '!MOUNT EVENT_TYPE' > /sys/fs/events/config
-> +
-> + - Updating threshold limits:
-> +
-> + $ echo MOUNT T L1 L2 > /sys/fs/events/config
-> +
-> + - Removing single entry:
-> +
-> + $ echo '!MOUNT' > /sys/fs/events/config
-> +
-> + - Removing all entries:
-> +
-> + $ echo > /sys/fs/events/config
-> +
-> +Reading the file will list all registered entries with their current set-up
-> +along with some additional info like the filesystem type and the backing device
-> +name if available.
-> +
-> +Final, though a very important note on the configuration: when and if the
-> +actual events are being triggered falls way beyond the scope of the generic
-> +filesystem events interface. It is up to a particular filesystem
-> +implementation which events are to be supported - if any at all. So if
-> +given filesystem does not support the event notifications, an attempt to
-> +enable those through 'config' file will fail.
-> +
-> +
-> +3. The generic netlink interface support:
-> +=========================================
-> +
-> +Whenever an event notification is triggered (by given filesystem) the current
-> +configuration is being validated to decide whether a userpsace notification
-> +should be launched. If there has been no request (in a mean of 'config' file
-> +entry) for given event, one will be silently disregarded. If, on the other
-> +hand, someone is 'watching' given filesystem for specific events, a generic
-> +netlink message will be sent. A dedicated multicast group has been provided
-> +solely for this purpose so in order to receive such notifications, one should
-> +subscribe to this new multicast group. As for now only the init network
-> +namespace is being supported.
-> +
-> +3.1 Message format
-> +
-> +The FS_NL_C_EVENT shall be stored within the generic netlink message header
-> +as the command field. The message payload will provide more detailed info:
-> +the backing device major and minor numbers, the event code and the id of
-> +the process which action led to the event occurrence. In case of threshold
-> +notifications, the current number of available blocks will be included
-> +in the payload as well.
-> +
-> +
-> +	 0                   1                   2                   3
-> +	 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-> +	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-> +	|	            NETLINK MESSAGE HEADER			|
-> +	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-> +	| 		GENERIC NETLINK MESSAGE HEADER   		|
-> +	| 	   (with FS_NL_C_EVENT as genlmsghdr cdm field)		|
+>
+>> +
+>> +/**
+>> + * nvmem_register(): Register a nvmem device for given nvmem.
+>> + * Also creates an binary entry in /sys/class/nvmem/dev-name/nvmem
+>> + *
+>> + * @nvmem: nvmem device that needs to be created
+>
+> You mean @config?
+>
+Yes, I will fix it.
 
-cmd, not cdm.
+>> + *
+>> + * The return value will be an ERR_PTR() on error or a valid pointer
+>> +	nvmem->dev.of_node = config->dev->of_node;
+>> +	dev_set_name(&nvmem->dev, "%s%d",
+>> +		     config->name ? : "nvmem", config->id);
+>
+> It may be better to always name it nvmem%d so that we don't allow the
+> possibility of conflicts.
+We can do that, but I wanted to make the sysfs and dev entries more 
+readable than just nvmem0, nvmem1...
+>
+>> +
+>> +	nvmem->read_only = of_property_read_bool(nvmem->dev.of_node,
+>> +						 "read-only");
+>
+> What if we're not using DT? How would we specify read_only?
+>
+Thanks for spotting, you are correct, I need to add read_only flag to 
+nvmem_config too.
 
-> +	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-> +	| 	      Optional user specific message header		|
-> +	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-> +	|		   GENERIC MESSAGE PAYLOAD:			|
-> +	+---------------------------------------------------------------+
-> +	| 		  FS_NL_A_EVENT_ID  (NLA_U32)			|
-> +	+---------------------------------------------------------------+
-> +	|	  	  FS_NL_A_DEV_MAJOR (NLA_U32)			|
-> +	+---------------------------------------------------------------+
-> +	| 	  	  FS_NL_A_DEV_MINOR (NLA_U32) 			|
-> +	+---------------------------------------------------------------+
-> +	|  		  FS_NL_A_CAUSED_ID (NLA_U32)			|
 
-Should be NLA_U64 ? The following uses as, 
+>> +
+>> +	device_initialize(&nvmem->dev);
+>> +
+>> +	dev_dbg(&nvmem->dev, "Registering nvmem device %s\n",
+>> +		dev_name(&nvmem->dev));
+>> +
+>> +	rval = device_add(&nvmem->dev);
+>> +	if (rval) {
+>> +		ida_simple_remove(&nvmem_ida, nvmem->id);
+>> +		kfree(nvmem);
+>> +		return ERR_PTR(rval);
+>> +	}
+>> +
+>> +	/* update sysfs attributes */
+>> +	if (nvmem->read_only)
+>> +		sysfs_update_group(&nvmem->dev.kobj, &nvmem_bin_ro_group);
+>
+> It would be nice if this could be done before the device was registered.
+> Perhaps have two device_types, one for read-only and one for read/write?
 
-+	if (nla_put_u64(skb, FS_NL_A_CAUSED_ID, pid_vnr(task_pid(current))))
-+		return -EINVAL;
+The attributes are actually coming from the class object, so we have no 
+choice to update the attributes before the device is registered.
 
-Also, I'd like FS_NL_A_CAUSED_PID than FS_NL_A_CAUSED_ID.
+May it would be more safe to have default as read-only and modify it to 
+read/write based on read-only flag?
 
-> +	+---------------------------------------------------------------+
-> +	|  		    FS_NL_A_DATA (NLA_U64)			|
-> +	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-> +
-> +
-> +The above figure is based on:
-> + http://www.linuxfoundation.org/collaborate/workgroups/networking/generic_netlink_howto#Message_Format
-> +
-> +
-... snip... 
-> +	seq_putc(m, ' ');
-> +	if (sb->s_op->show_devname) {
-> +		sb->s_op->show_devname(m, en->mnt_path.mnt->mnt_root);
-> +	} else {
-> +		seq_escape(m, r_mnt->mnt_devname ? r_mnt->mnt_devname : "none",
-> +				" \t\n\\");
-> +	}
-> +	seq_puts(m, " (");
-> +
-> +	nmask = en->notify;
-> +	for (match = fs_etypes; match->pattern; ++match) {
-> +		if (match->token & nmask) {
-> +			seq_puts(m, match->pattern);
 
-Print here is better.
+>
+>> +
+>> + */
+>> +int nvmem_unregister(struct nvmem_device *nvmem)
+>> +{
+>> +	mutex_lock(&nvmem_mutex);
+>> +	if (nvmem->users) {
+>> +		mutex_unlock(&nvmem_mutex);
+>> +		return -EBUSY;
+>
+> Hmm... that doesn't seem nice. Typically when something is unregistered
+> we have to pull the rug out from underneath the users and start
+> returning errors to them. The provider needs to be free to unregister
+> because it's been forcibly removed. So really this function should
+> return void.
+>
+The consumer api is get/put style, so consumers who already have 
+references to the provider, removing provider forcefully might lead to 
+dangling pointer. Having said that I can give a try and see how it looks.
 
-if (match->pattern & FS_EVENT_THRESH)
-	seq_printf(m, " %llu %llu", en->th.lrange, en->th.urange);
+>> +	}
+>> +	mutex_unlock(&nvmem_mutex);
+>> +
+>> +	nvmem_device_remove_all_cells(nvmem);
+>> +	device_del(&nvmem->dev);
+>> +
+>> +	return 0;
+>> +}
+>> +EXPORT_SYMBOL_GPL(nvmem_unregister);
+>> +
+>> +static int nvmem_init(void)
+>
+> __init? And __exit on nvmem_exit?
+yep, will do that.
+>
+>> +{
+>> +	return class_register(&nvmem_class);
+>
+> I thought class was on the way out? Aren't we supposed to use bus types
+> for new stuff?
+Do you remember any conversation on the list about this? I could not 
+find it on web.
 
-> +			nmask &= ~match->token;
-> +			if (nmask)
-> +				seq_putc(m, ',');
-> +		}
-> +	}
-> +	seq_printf(m, " %llu %llu", en->th.lrange, en->th.urange);
+on the other hand, nvmem is not really a bus, making it a bus type 
+sounds incorrect to me.
 
-Don't print the lrange/urange (always be zero) when without FS_EVENT_THRESH.
 
-> +	seq_puts(m, ")\n");
-> +	return 0;
-> +}
-> +
-> +static const struct seq_operations fs_trace_seq_ops = {
-> +	.start	= fs_trace_seq_start,
-> +	.next	= fs_trace_seq_next,
-> +	.stop	= fs_trace_seq_stop,
-> +	.show	= fs_trace_seq_show,
-> +};
-> +
-> +static int fs_trace_open(struct inode *inode, struct file *file)
-> +{
-> +	return seq_open(file, &fs_trace_seq_ops);
-> +}
-> +
-> +static const struct file_operations fs_trace_fops = {
-> +	.owner		= THIS_MODULE,
-> +	.open		= fs_trace_open,
-> +	.write		= fs_trace_write,
-> +	.read		= seq_read,
-> +	.llseek		= seq_lseek,
-> +	.release	= seq_release,
-> +};
-> +
-> +static int fs_trace_init(void)
-> +{
-> +	fs_trace_cachep = KMEM_CACHE(fs_trace_entry, 0);
-> +	if (!fs_trace_cachep)
-> +		return -EINVAL;
-> +	init_waitqueue_head(&trace_wq);
-> +	return 0;
-> +}
-> +
-> +/* VFS support */
-> +static int fs_trace_fill_super(struct super_block *sb, void *data, int silen)
-> +{
-> +	int ret;
-> +	static struct tree_descr desc[] = {
-> +		[2] = {
-> +			.name	= "config",
-> +			.ops	= &fs_trace_fops,
-> +			.mode	= S_IWUSR | S_IRUGO,
-> +		},
-> +		{""},
-> +	};
-> +
-> +	ret = simple_fill_super(sb, 0x7246332, desc);
-> +	return !ret ? fs_trace_init() : ret;
-> +}
-> +
-> +static struct dentry *fs_trace_do_mount(struct file_system_type *fs_type,
-> +		 int ntype, const char *dev_name, void *data)
-> +{
-> +	return mount_single(fs_type, ntype, data, fs_trace_fill_super);
-> +}
-> +
-> +static void fs_trace_kill_super(struct super_block *sb)
-> +{
-> +	/*
-> +	 * The rcu_barrier here will/should make sure all call_rcu
-> +	 * callbacks are completed - still there might be some active
-> +	 * trace objects in use which can make calling the
-> +	 * kmem_cache_destroy unsafe. So we wait until all traces
-> +	 * are finally released.
-> +	 */
-> +	fs_remove_all_traces();
-> +	rcu_barrier();
-> +	wait_event(trace_wq, !atomic_read(&stray_traces));
-> +
-> +	kmem_cache_destroy(fs_trace_cachep);
-> +	kill_litter_super(sb);
-> +}
-> +
-> +static struct kset	*fs_trace_kset;
-> +
-> +static struct file_system_type fs_trace_fstype = {
-> +	.name		= "fstrace",
-> +	.mount		= fs_trace_do_mount,
-> +	.kill_sb	= fs_trace_kill_super,
-> +};
-> +
-> +static void __init fs_trace_vfs_init(void)
-> +{
-> +	fs_trace_kset = kset_create_and_add("events", NULL, fs_kobj);
-> +
-> +	if (!fs_trace_kset)
-> +		return;
-> +
-> +	if (!register_filesystem(&fs_trace_fstype)) {
-> +		if (!fs_event_netlink_register())
-> +			return;
-> +		unregister_filesystem(&fs_trace_fstype);
-> +	}
-> +	kset_unregister(fs_trace_kset);
-> +}
-> +
-> +static int __init fs_trace_evens_init(void)
-> +{
-> +	fs_trace_vfs_init();
-> +	return 0;
-> +};
-> +module_init(fs_trace_evens_init);
-> +
-> diff --git a/fs/events/fs_event.h b/fs/events/fs_event.h
-> new file mode 100644
-> index 0000000..23f24c8
-> --- /dev/null
-> +++ b/fs/events/fs_event.h
-> @@ -0,0 +1,22 @@
-> +/*
-> + * Copyright(c) 2015 Samsung Electronics. All rights reserved.
-> + *
-> + * This program is free software; you can redistribute it and/or modify it
-> + * under the terms of the GNU General Public License version 2.
-> + *
-> + * The full GNU General Public License is included in this distribution in the
-> + * file called COPYING.
-> + *
-> + * This program is distributed in the hope that it will be useful, but WITHOUT
-> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-> + * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-> + * more details.
-> + */
-> +
-> +#ifndef __GENERIC_FS_EVENTS_H
-> +#define __GENERIC_FS_EVENTS_H
-> +
-> +int  fs_event_netlink_register(void);
-> +void fs_event_netlink_unregister(void);
-> +
-> +#endif /* __GENERIC_FS_EVENTS_H */
-> diff --git a/fs/events/fs_event_netlink.c b/fs/events/fs_event_netlink.c
-> new file mode 100644
-> index 0000000..0c97eb7
-> --- /dev/null
-> +++ b/fs/events/fs_event_netlink.c
-> @@ -0,0 +1,104 @@
-> +/*
-> + * Copyright(c) 2015 Samsung Electronics. All rights reserved.
-> + *
-> + * This program is free software; you can redistribute it and/or modify it
-> + * under the terms of the GNU General Public License version 2.
-> + *
-> + * The full GNU General Public License is included in this distribution in the
-> + * file called COPYING.
-> + *
-> + * This program is distributed in the hope that it will be useful, but WITHOUT
-> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-> + * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-> + * more details.
-> + */
-> +#include <linux/fs.h>
-> +#include <linux/init.h>
-> +#include <linux/kernel.h>
-> +#include <linux/sched.h>
-> +#include <linux/slab.h>
-> +#include <net/netlink.h>
-> +#include <net/genetlink.h>
-> +#include "fs_event.h"
-> +
-> +static const struct genl_multicast_group fs_event_mcgroups[] = {
-> +	{ .name = FS_EVENTS_MCAST_GRP_NAME, },
-> +};
-> +
-> +static struct genl_family fs_event_family = {
-> +	.id		= GENL_ID_GENERATE,
-> +	.name		= FS_EVENTS_FAMILY_NAME,
-> +	.version	= 1,
-> +	.maxattr	= FS_NL_A_MAX,
-> +	.mcgrps		= fs_event_mcgroups,
-> +	.n_mcgrps	= ARRAY_SIZE(fs_event_mcgroups),
-> +};
-> +
-> +int fs_netlink_send_event(size_t size, unsigned int event_id,
-> +			  int (*compose_msg)(struct sk_buff *skb,  void *data),
-> +			  void *cbdata)
-> +{
-> +	static atomic_t seq;
-> +	struct sk_buff *skb;
-> +	void *msg_head;
-> +	int ret = 0;
-> +
-> +	if (!size || !compose_msg)
-> +		return -EINVAL;
-> +
-> +	/* Skip if there are no listeners */
-> +	if (!genl_has_listeners(&fs_event_family, &init_net, 0))
-> +		return 0;
-> +
-> +	if (event_id != FS_EVENT_NONE)
-> +		size += nla_total_size(sizeof(u32));
-> +	size += nla_total_size(sizeof(u64));
+--srini
 
-What is this for ?
-
-thanks
-Kinglong Mee
-
+>
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
