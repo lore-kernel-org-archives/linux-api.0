@@ -1,123 +1,98 @@
-From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v5 07/11] nvmem: Add simple nvmem-mmio consumer helper
- functions.
-Date: Thu, 18 Jun 2015 14:08:48 +0100
-Message-ID: <5582C2E0.9080503@linaro.org>
-References: <1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org> <1432226665-8994-1-git-send-email-srinivas.kandagatla@linaro.org> <5580AA05.90709@codeaurora.org>
+From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Subject: Re: [PATCH v5 10/11] nvmem: sunxi: Move the SID driver to the nvmem
+ framework
+Date: Thu, 18 Jun 2015 14:09:52 +0100
+Message-ID: <5582C320.40605@linaro.org>
+References: <1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org> <1432226733-9243-1-git-send-email-srinivas.kandagatla@linaro.org> <5580AB72.6010909@codeaurora.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5580AA05.90709-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
-Cc: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5580AB72.6010909@codeaurora.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Stephen Boyd <sboyd@codeaurora.org>, linux-arm-kernel@lists.infradead.org
+Cc: Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, pantelis.antoniou@konsulko.com, mporter@konsulko.com
 List-Id: linux-api@vger.kernel.org
 
 
 
-On 16/06/15 23:58, Stephen Boyd wrote:
-> On 05/21/2015 09:44 AM, Srinivas Kandagatla wrote:
->> diff --git a/drivers/nvmem/nvmem-mmio.c b/drivers/nvmem/nvmem-mmio.c
+On 17/06/15 00:04, Stephen Boyd wrote:
+> On 05/21/2015 09:45 AM, Srinivas Kandagatla wrote:
+>> diff --git a/drivers/nvmem/Makefile b/drivers/nvmem/Makefile
+>> index caea611..cc46791 100644
+>> --- a/drivers/nvmem/Makefile
+>> +++ b/drivers/nvmem/Makefile
+>> @@ -9,3 +9,5 @@ nvmem_core-y			+= nvmem-mmio.o
+>>   # Devices
+>>   obj-$(CONFIG_QCOM_QFPROM)	+= nvmem_qfprom.o
+>>   nvmem_qfprom-y			:= qfprom.o
+>> +obj-$(CONFIG_NVMEM_SUNXI_SID)	+= nvmem-sunxi-sid.o
+>> +nvmem-sunxi-sid-y		:= sunxi-sid.o
+>
+> Oh I see, so the module has nvmem- in the name. Isn't there some way to
+> add a rule to do that for all provider drivers?
+>
+I will give it a try, and also fix the other comments on this patch.
+
+
+>> diff --git a/drivers/nvmem/sunxi-sid.c b/drivers/nvmem/sunxi-sid.c
 >> new file mode 100644
->> index 0000000..0d8131f
+>> index 0000000..5bfce35
 >> --- /dev/null
->> +++ b/drivers/nvmem/nvmem-mmio.c
->> @@ -0,0 +1,69 @@
+>> +++ b/drivers/nvmem/sunxi-sid.c
+>> @@ -0,0 +1,64 @@
 >> +/*
->> + * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+>> + * Allwinner sunXi SoCs Security ID support.
+>> + *
+>> + * Copyright (c) 2013 Oliver Schinagl <oliver@schinagl.nl>
+>> + * Copyright (C) 2014 Maxime Ripard <maxime.ripard@free-electrons.com>
 >> + *
 >> + * This program is free software; you can redistribute it and/or modify
->> + * it under the terms of the GNU General Public License version 2 and
->> + * only version 2 as published by the Free Software Foundation.
+>> + * it under the terms of the GNU General Public License as published by
+>> + * the Free Software Foundation; either version 2 of the License, or
+>> + * (at your option) any later version.
 >> + *
 >> + * This program is distributed in the hope that it will be useful,
 >> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
 >> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 >> + * GNU General Public License for more details.
+>> + *
 >> + */
 >> +
->> +#include <linux/device.h>
 >> +#include <linux/module.h>
->> +#include <linux/err.h>
 >> +#include <linux/of.h>
->> +#include <linux/of_device.h>
->
-> #include <linux/platform_device.h>
-> #include <linux/nvmem_provider.h>
-> #include <linux/regmap.h>
->
-These are included in nvmem-mmio.h, however for clarity sake I could add 
-them here too.
 >> +#include "nvmem-mmio.h"
 >> +
->> +int nvmem_mmio_remove(struct platform_device *pdev)
+>> +static bool sunxi_sid_writeable_reg(struct device *dev, unsigned int reg)
 >> +{
->> +	struct nvmem_device *nvmem = platform_get_drvdata(pdev);
->> +
->> +	return nvmem_unregister(nvmem);
+>> +	return false;
 >> +}
->> +EXPORT_SYMBOL_GPL(nvmem_mmio_remove);
 >> +
->> +int nvmem_mmio_probe(struct platform_device *pdev)
->> +{
->> +
-> [...]
->> +
->> +	platform_set_drvdata(pdev, nvmem);
+>> +static struct nvmem_config econfig = {
 >
-> It may be better to return the nvmem device instead so that the one
-> drvdata member is usable by the calling driver.
-Makes sense.. I will give it a try.
-
+> const?
 >
->> +
->> +	return 0;
->> +}
->> +EXPORT_SYMBOL_GPL(nvmem_mmio_probe);
->
-> Kernel-doc on these exported functions?
-Yep, thanks for spotting, I will fix it.
->
->> diff --git a/drivers/nvmem/nvmem-mmio.h b/drivers/nvmem/nvmem-mmio.h
->> new file mode 100644
->> index 0000000..a2ad4e5
->> --- /dev/null
->> +++ b/drivers/nvmem/nvmem-mmio.h
->> @@ -0,0 +1,41 @@
->> +/*
->> + * MMIO based nvmem providers.
->> + *
->> + * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
->> + *
->> + * This file is licensed under the terms of the GNU General Public
->> + * License version 2.  This program is licensed "as is" without any
->> + * warranty of any kind, whether express or implied.
->> + */
->> +
->> +#ifndef _LINUX_NVMEM_MMIO_H
->> +#define _LINUX_NVMEM_MMIO_H
->> +
->> +#include <linux/platform_device.h>
->
-> Forward declare struct platform_device instead.
->
->> +#include <linux/nvmem-provider.h>
->
-> Forward declare nvmem_config instead.
->
->> +#include <linux/regmap.h>
->
-> Forward declare regmap_config instead.
->
->> +
->> +struct nvmem_mmio_data {
->> +	struct regmap_config *regmap_config;
->> +	struct nvmem_config *nvmem_config;
+>> +	.name = "sunix-sid",
+>> +	.owner = THIS_MODULE,
 >> +};
 >> +
->> +#if IS_ENABLED(CONFIG_NVMEM)
+>> +static struct regmap_config sunxi_sid_regmap_config = {
+>
+> const?
+>
+>> +	.reg_bits = 32,
+>> +	.val_bits = 32,
+>> +	.reg_stride = 4,
+>> +	.writeable_reg = sunxi_sid_writeable_reg,
+>> +};
 >> +
->> +int nvmem_mmio_probe(struct platform_device *pdev);
->> +int nvmem_mmio_remove(struct platform_device *pdev);
+>> +static struct nvmem_mmio_data sunxi_data = {
+>
+> const?
+>
+>> +	.nvmem_config = &econfig,
+>> +	.regmap_config = &sunxi_sid_regmap_config,
+>> +};
+>> +
+>
 >
