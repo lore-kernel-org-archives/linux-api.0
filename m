@@ -1,164 +1,138 @@
-From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: Re: [PATCH v5 04/11] nvmem: Add a simple NVMEM framework for consumers
-Date: Thu, 18 Jun 2015 13:56:23 +0100
-Message-ID: <5582BFF7.9070309@linaro.org>
-References: <1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org> <1432226593-8817-1-git-send-email-srinivas.kandagatla@linaro.org> <5580A345.30204@codeaurora.org>
+From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v5 05/11] nvmem: Add nvmem_device based consumer apis.
+Date: Thu, 18 Jun 2015 13:57:57 +0100
+Message-ID: <5582C055.6040908@linaro.org>
+References: <1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org> <1432226603-8863-1-git-send-email-srinivas.kandagatla@linaro.org> <5580A7EA.2090909@codeaurora.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-msm-owner@vger.kernel.org>
-In-Reply-To: <5580A345.30204@codeaurora.org>
-Sender: linux-arm-msm-owner@vger.kernel.org
-To: Stephen Boyd <sboyd@codeaurora.org>, linux-arm-kernel@lists.infradead.org
-Cc: devicetree@vger.kernel.org, arnd@arndb.de, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, s.hauer@pengutronix.de, linux-kernel@vger.kernel.org, pantelis.antoniou@konsulko.com, Rob Herring <robh+dt@kernel.org>, Mark Brown <broonie@kernel.org>, Kumar Gala <galak@codeaurora.org>, mporter@konsulko.com, Maxime Ripard <maxime.ripard@free-electrons.com>, linux-api@vger.kernel.org, linux-arm-msm@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5580A7EA.2090909-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 
 
-On 16/06/15 23:29, Stephen Boyd wrote:
+On 16/06/15 23:49, Stephen Boyd wrote:
 > On 05/21/2015 09:43 AM, Srinivas Kandagatla wrote:
->> @@ -379,6 +380,351 @@ int nvmem_unregister(struct nvmem_device *nvmem)
+>> diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
+>> index 8a4b358..68ee8d1 100644
+>> --- a/drivers/nvmem/core.c
+>> +++ b/drivers/nvmem/core.c
+>> @@ -436,6 +436,51 @@ static int __nvmem_device_put(struct nvmem_device *nvmem)
+>>   	return 0;
+>>   }
+>>
+>> +static int nvmem_match(struct device *dev, const void *data)
+>> +{
+>> +	return !strcmp(dev_name(dev), (const char *)data);
+>
+> Unnecessary cast.
+Sure, will fix it.
+>
+>> +}
+>> +
+>> +static struct nvmem_device *nvmem_find(const char *name)
+>> +{
+>> +	struct device *d;
+>> +
+>> +	d = class_find_device(&nvmem_class, NULL, (void *)name, nvmem_match);
+>
+> Unnecessary cast
+Will fix it.
+>
+>> +
+>> +	return d ? to_nvmem_device(d) : NULL;
+>> +}
+>
 > [...]
 >> +
->> +	return nvmem;
->> +}
->> +
->> +static int __nvmem_device_put(struct nvmem_device *nvmem)
->
-> Why does this return int? It's not used anywhere.
->
-I can remove it.
+>> +void nvmem_device_put(struct nvmem_device *nvmem)
 >> +{
->> +	module_put(nvmem->owner);
->> +	mutex_lock(&nvmem_mutex);
->> +	nvmem->users--;
->> +	mutex_unlock(&nvmem_mutex);
->> +
->> +	return 0;
+>> +	__nvmem_device_put(nvmem);
 >> +}
->> +
->> +static struct nvmem_cell *nvmem_cell_get_from_list(const char *cell_id)
+>> +EXPORT_SYMBOL_GPL(nvmem_device_put);
+>>
+>> +int nvmem_device_cell_read(struct nvmem_device *nvmem,
+>> +			   struct nvmem_cell_info *info, void *buf)
 >> +{
->> +	struct nvmem_cell *cell = NULL;
->> +	struct nvmem_device *nvmem;
->> +
->> +	nvmem = __nvmem_device_get(NULL, &cell, cell_id);
->> +	if (IS_ERR(nvmem))
->> +		return (struct nvmem_cell *)nvmem;
->
-> ERR_CAST?
-Will fix it.
->
->> +
->> +
->> +	return cell;
->> +
 >> +}
+>> +EXPORT_SYMBOL_GPL(nvmem_device_cell_read);
 >> +
->> +static struct nvmem_cell *of_nvmem_cell_get(struct device_node *np,
->> +					    const char *name)
+>> +int nvmem_device_cell_write(struct nvmem_device *nvmem,
+>> +			    struct nvmem_cell_info *info, void *buf)
 >> +{
->> +	struct device_node *cell_np, *nvmem_np;
->> +	struct nvmem_cell *cell;
->> +	struct nvmem_device *nvmem;
->> +	const __be32 *addr;
->> +	int rval, len, index;
->> +
->> +	index = of_property_match_string(np, "nvmem-cell-names", name);
->> +
->> +	cell_np = of_parse_phandle(np, "nvmem-cell", index);
->> +	if (!cell_np)
->> +		return ERR_PTR(-EINVAL);
->> +
->> +	nvmem_np = of_get_next_parent(cell_np);
->> +	if (!nvmem_np)
->> +		return ERR_PTR(-EINVAL);
->> +
->> +	nvmem = __nvmem_device_get(nvmem_np, NULL, NULL);
->> +	if (IS_ERR(nvmem))
->> +		return (struct nvmem_cell *)nvmem;
->
-> ERR_CAST?
-Will fix it.
-
->
->> +
->> +	addr = of_get_property(cell_np, "reg", &len);
->> +	if (!addr || (len < 2 * sizeof(int))) {
->> +		dev_err(&nvmem->dev, "of_i2c: invalid reg on %s\n",
->
-> huh? of_i2c?
->
-  :-)
-Will fix it.
->
->> +
->> +	/* if it's not end on byte boundary */
->> +	if ((nbits + bit_offset) % BITS_PER_BYTE) {
->> +		/* setup the last byte with msb bits from nvmem */
->> +		rc = regmap_raw_read(nvmem->regmap,
->> +				    cell->offset + cell->bytes - 1, &v, 1);
->> +		*p |= GENMASK(7, (nbits + bit_offset) % BITS_PER_BYTE) & v;
->> +
->> +	}
->> +
->> +	return buf;
 >> +}
+>> +EXPORT_SYMBOL_GPL(nvmem_device_cell_write);
 >> +
->> +/**
->> + * nvmem_cell_write(): Write to a given nvmem cell
+>> +int nvmem_device_read(struct nvmem_device *nvmem,
+>> +		      unsigned int offset,
+>> +		      size_t bytes, void *buf)
+>> +{
+>> +}
+>> +EXPORT_SYMBOL_GPL(nvmem_device_read);
+>> +
+>> +int nvmem_device_write(struct nvmem_device *nvmem,
+>> +		       unsigned int offset,
+>> +		       size_t bytes, void *buf)
+>> +{
+>> +}
+>> +EXPORT_SYMBOL_GPL(nvmem_device_write);
 >
-> This isn't kernel doc notation. It should be like
+> Can you please add kernel-doc on these exported APIs?
 >
->      nvmem_cell_write - Write to a given nvmem cell
->
-Will fix as suggested by Sascha as
+Thanks for spotting, I will add them.
 
-foobar() - short function description of foobar
-
-Looks correct according to Documentation/kernel-doc-nano-HOWTO.txt
-
->> + *
->> + * @cell: nvmem cell to be written.
->> + * @buf: Buffer to be written.
->> + * @len: length of buffer to be written to nvmem cell.
->> + *
->> + * The return value will be an length of bytes written or non zero on failure.
->> + */
->> +int nvmem_cell_write(struct nvmem_cell *cell, void *buf, ssize_t len)
-> [..]
 >> +
 >>   static int nvmem_init(void)
 >>   {
 >>   	return class_register(&nvmem_class);
 >> diff --git a/include/linux/nvmem-consumer.h b/include/linux/nvmem-consumer.h
->> new file mode 100644
->> index 0000000..c3fa8c7
->> --- /dev/null
+>> index c3fa8c7..66c67ba 100644
+>> --- a/include/linux/nvmem-consumer.h
 >> +++ b/include/linux/nvmem-consumer.h
->> @@ -0,0 +1,49 @@
->> +/*
->> + * nvmem framework consumer.
->> + *
->> + * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
->> + * Copyright (C) 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
->> + *
->> + * This file is licensed under the terms of the GNU General Public
->> + * License version 2.  This program is licensed "as is" without any
->> + * warranty of any kind, whether express or implied.
->> + */
+>> @@ -23,6 +32,18 @@ void nvmem_cell_put(struct nvmem_cell *cell);
+>>   void *nvmem_cell_read(struct nvmem_cell *cell, ssize_t *len);
+>>   int nvmem_cell_write(struct nvmem_cell *cell, void *buf, ssize_t len);
+>>
+>> +/* direct nvmem device read/write interface */
+>> +struct nvmem_device *nvmem_device_get(struct device *dev, const char *name);
+>> +void nvmem_device_put(struct nvmem_device *nvmem);
+>> +int nvmem_device_read(struct nvmem_device *nvmem, unsigned int offset,
+>> +		      size_t bytes, void *buf);
+>> +int nvmem_device_write(struct nvmem_device *nvmem, unsigned int offset,
+>> +		       size_t bytes, void *buf);
+>> +int nvmem_device_cell_read(struct nvmem_device *nvmem,
+>> +			   struct nvmem_cell_info *info, void *buf);
+>> +int nvmem_device_cell_write(struct nvmem_device *nvmem,
+>> +			    struct nvmem_cell_info *info, void *buf);
 >> +
->> +#ifndef _LINUX_NVMEM_CONSUMER_H
->> +#define _LINUX_NVMEM_CONSUMER_H
->> +
->> +/* consumer cookie */
->> +struct nvmem_cell;
->> +
->> +#if IS_ENABLED(CONFIG_NVMEM)
->> +
->> +/* Cell based interface */
->> +struct nvmem_cell *nvmem_cell_get(struct device *dev, const char *name);
 >
-> We should probably forward declare struct device in this file too.
-Yep I will do it.
+> Can we also have devm_nvmem_*_get() APIs please?
+Sure, I will spin it in next version.
+>
+>> diff --git a/include/linux/nvmem-provider.h b/include/linux/nvmem-provider.h
+>> index 4908b37..7a982cd 100644
+>> --- a/include/linux/nvmem-provider.h
+>> +++ b/include/linux/nvmem-provider.h
+>> @@ -12,15 +12,9 @@
+>>   #ifndef _LINUX_NVMEM_PROVIDER_H
+>>   #define _LINUX_NVMEM_PROVIDER_H
+>>
+>> -struct nvmem_device;
+>> +#include <linux/nvmem-consumer.h>
+>>
+>> -struct nvmem_cell_info {
+>> -	const char		*name;
+>> -	int			offset;
+>> -	int			bytes;
+>> -	int			bit_offset;
+>> -	int			nbits;
+>> -};
+>> +struct nvmem_device;
+>
+> Should this diff be part of an earlier patch?
+Possibly, something wrong with this diff, I will fix it.
 >
