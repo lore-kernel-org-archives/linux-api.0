@@ -1,353 +1,327 @@
-From: Alexander Duyck <alexander.h.duyck-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH net-next 1/3] ipv4: Lock-less per-packet multipath
-Date: Thu, 18 Jun 2015 12:42:05 -0700
-Message-ID: <55831F0D.3040703@redhat.com>
-References: <1434571686-5149-1-git-send-email-pch@ordbogen.com> <1434571686-5149-2-git-send-email-pch@ordbogen.com>
+From: Eric B Munson <emunson@akamai.com>
+Subject: Re: [RESEND PATCH V2 1/3] Add mmap flag to request pages are locked
+ after page fault
+Date: Thu, 18 Jun 2015 16:30:48 -0400
+Message-ID: <20150618203048.GB2329@akamai.com>
+References: <1433942810-7852-1-git-send-email-emunson@akamai.com>
+ <1433942810-7852-2-git-send-email-emunson@akamai.com>
+ <20150618152907.GG5858@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1434571686-5149-2-git-send-email-pch-chEQUL3jiZBWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?UTF-8?B?UGV0ZXIgTsO4cmx1bmQ=?= <pch-chEQUL3jiZBWk0Htik3J/w@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Alexey Kuznetsov <kuznet-v/Mj1YrvjDBInbfyfbPRSQ@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Hideaki YOSHIFUJI <yoshfuji-VfPWfsRibaP+Ru+s062T9g@public.gmane.org>, Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="WhfpMioaduB5tiZL"
+Return-path: <linux-parisc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150618152907.GG5858@dhcp22.suse.cz>
+Sender: linux-parisc-owner@vger.kernel.org
+To: Michal Hocko <mhocko@suse.cz>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 06/17/2015 01:08 PM, Peter N=C3=B8rlund wrote:
-> The current multipath attempted to be quasi random, but in most cases=
- it
-> behaved just like a round robin balancing. This patch refactors the
-> algorithm to be exactly that and in doing so, avoids the spin lock.
->
-> The new design paves the way for hash-based multipath, replacing the
-> modulo with thresholds, minimizing disruption in case of failing path=
-s or
-> route replacements.
->
-> Signed-off-by: Peter N=C3=B8rlund <pch-chEQUL3jiZBWk0Htik3J/w@public.gmane.org>
-> ---
->   include/net/ip_fib.h     |   6 +--
->   net/ipv4/Kconfig         |   1 +
->   net/ipv4/fib_semantics.c | 116 ++++++++++++++++++++++++++----------=
------------
->   3 files changed, 68 insertions(+), 55 deletions(-)
->
-> diff --git a/include/net/ip_fib.h b/include/net/ip_fib.h
-> index 54271ed..4be4f25 100644
-> --- a/include/net/ip_fib.h
-> +++ b/include/net/ip_fib.h
-> @@ -76,8 +76,8 @@ struct fib_nh {
->   	unsigned int		nh_flags;
->   	unsigned char		nh_scope;
->   #ifdef CONFIG_IP_ROUTE_MULTIPATH
-> -	int			nh_weight;
-> -	int			nh_power;
-> +	int			nh_mp_weight;
-> +	atomic_t		nh_mp_upper_bound;
->   #endif
->   #ifdef CONFIG_IP_ROUTE_CLASSID
->   	__u32			nh_tclassid;
-> @@ -115,7 +115,7 @@ struct fib_info {
->   #define fib_advmss fib_metrics[RTAX_ADVMSS-1]
->   	int			fib_nhs;
->   #ifdef CONFIG_IP_ROUTE_MULTIPATH
-> -	int			fib_power;
-> +	int			fib_mp_weight;
->   #endif
->   	struct rcu_head		rcu;
->   	struct fib_nh		fib_nh[0];
 
-I could do without some of this renaming.  For example you could=20
-probably not bother with adding the _mp piece to the name.  That way we=
-=20
-don't have to track all the nh_weight -> nh_mp_weight changes.   Also=20
-you could probably just use the name fib_weight since not including the=
-=20
-_mp was already the convention for the multipath portions of the=20
-structure anyway.
+--WhfpMioaduB5tiZL
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-This isn't really improving readability at all so I would say don't=20
-bother renaming it.
+On Thu, 18 Jun 2015, Michal Hocko wrote:
 
-> diff --git a/net/ipv4/Kconfig b/net/ipv4/Kconfig
-> index d83071d..cb91f67 100644
-> --- a/net/ipv4/Kconfig
-> +++ b/net/ipv4/Kconfig
-> @@ -81,6 +81,7 @@ config IP_MULTIPLE_TABLES
->   config IP_ROUTE_MULTIPATH
->   	bool "IP: equal cost multipath"
->   	depends on IP_ADVANCED_ROUTER
-> +	select BITREVERSE
->   	help
->   	  Normally, the routing tables specify a single action to be taken=
- in
->   	  a deterministic manner for a given packet. If you say Y here
-> diff --git a/net/ipv4/fib_semantics.c b/net/ipv4/fib_semantics.c
-> index 28ec3c1..8c8df80 100644
-> --- a/net/ipv4/fib_semantics.c
-> +++ b/net/ipv4/fib_semantics.c
-> @@ -15,6 +15,7 @@
->
->   #include <asm/uaccess.h>
->   #include <linux/bitops.h>
-> +#include <linux/bitrev.h>
->   #include <linux/types.h>
->   #include <linux/kernel.h>
->   #include <linux/jiffies.h>
-> @@ -57,7 +58,7 @@ static struct hlist_head fib_info_devhash[DEVINDEX_=
-HASHSIZE];
->
->   #ifdef CONFIG_IP_ROUTE_MULTIPATH
->
-> -static DEFINE_SPINLOCK(fib_multipath_lock);
-> +static DEFINE_PER_CPU(u8, fib_mp_rr_counter);
->
->   #define for_nexthops(fi) {						\
->   	int nhsel; const struct fib_nh *nh;				\
-> @@ -261,7 +262,7 @@ static inline int nh_comp(const struct fib_info *=
-fi, const struct fib_info *ofi)
->   		    nh->nh_gw  !=3D onh->nh_gw ||
->   		    nh->nh_scope !=3D onh->nh_scope ||
->   #ifdef CONFIG_IP_ROUTE_MULTIPATH
-> -		    nh->nh_weight !=3D onh->nh_weight ||
-> +		    nh->nh_mp_weight !=3D onh->nh_mp_weight ||
->   #endif
->   #ifdef CONFIG_IP_ROUTE_CLASSID
->   		    nh->nh_tclassid !=3D onh->nh_tclassid ||
-> @@ -449,6 +450,43 @@ static int fib_count_nexthops(struct rtnexthop *=
-rtnh, int remaining)
->   	return remaining > 0 ? 0 : nhs;
->   }
->
+> [Sorry for the late reply - I meant to answer in the previous threads
+>  but something always preempted me from that]
+>=20
+> On Wed 10-06-15 09:26:48, Eric B Munson wrote:
+> > The cost of faulting in all memory to be locked can be very high when
+> > working with large mappings.  If only portions of the mapping will be
+> > used this can incur a high penalty for locking.
+> >=20
+> > For the example of a large file, this is the usage pattern for a large
+> > statical language model (probably applies to other statical or graphical
+> > models as well).  For the security example, any application transacting
+> > in data that cannot be swapped out (credit card data, medical records,
+> > etc).
+>=20
+> Such a use case makes some sense to me but I am not sure the way you
+> implement it is the right one. This is another mlock related flag for
+> mmap with a different semantic. You do not want to prefault but e.g. is
+> the readahead or fault around acceptable? I do not see anything in your
+> patch to handle those...
 
-This is a good example.  If we don't do the rename we don't have to=20
-review changes like the one above which just add extra overhead to the=20
-patch.
+We haven't bumped into readahead or fault around causing performance
+problems for us.  If they cause problems for users when LOCKONFAULT is
+in use then we can address them.
 
-> +static void fib_rebalance(struct fib_info *fi)
-> +{
-> +	int factor;
-> +	int total;
-> +	int w;
-> +
-> +	if (fi->fib_nhs < 2)
-> +		return;
-> +
-> +	total =3D 0;
-> +	for_nexthops(fi) {
-> +		if (!(nh->nh_flags & RTNH_F_DEAD))
-> +			total +=3D nh->nh_mp_weight;
-> +	} endfor_nexthops(fi);
-> +
-> +	if (likely(total !=3D 0)) {
-> +		factor =3D DIV_ROUND_UP(total, 8388608);
-> +		total /=3D factor;
-> +	} else {
-> +		factor =3D 1;
-> +	}
-> +
+>=20
+> Wouldn't it be much more reasonable and straightforward to have
+> MAP_FAULTPOPULATE as a counterpart for MAP_POPULATE which would
+> explicitly disallow any form of pre-faulting? It would be usable for
+> other usecases than with MAP_LOCKED combination.
 
-So where does the 8388608 value come from?  Is it just here to help=20
-restrict the upper_bound to a u8 value?
+I don't see a clear case for it being more reasonable, it is one
+possible way to solve the problem.  But I think it leaves us in an even
+more akward state WRT VMA flags.  As you noted in your fix for the
+mmap() man page, one can get into a state where a VMA is VM_LOCKED, but
+not present.  Having VM_LOCKONFAULT states that this was intentional, if
+we go to using MAP_FAULTPOPULATE instead of MAP_LOCKONFAULT, we no
+longer set VM_LOCKONFAULT (unless we want to start mapping it to the
+presence of two MAP_ flags).  This can make detecting the MAP_LOCKED +
+populate failure state harder.
 
-> +	w =3D 0;
-> +	change_nexthops(fi) {
-> +		int upper_bound;
-> +
-> +		if (nexthop_nh->nh_flags & RTNH_F_DEAD) {
-> +			upper_bound =3D -1;
-> +		} else {
-> +			w +=3D nexthop_nh->nh_mp_weight / factor;
-> +			upper_bound =3D DIV_ROUND_CLOSEST(256 * w, total);
-> +		}
+If this is the preferred path for mmap(), I am fine with that.  However,
+I would like to see the new system calls that Andrew mentioned (and that
+I am testing patches for) go in as well.  That way we give users the
+ability to request VM_LOCKONFAULT for memory allocated using something
+other than mmap.
 
-This is doing some confusing stuff.  I assume the whole point is to get=
-=20
-the value to convert the upper_bound into a u8 value based on the weigh=
-t=20
-where you end with 256 as the last value, do I have that right?
+>=20
+> > This patch introduces the ability to request that pages are not
+> > pre-faulted, but are placed on the unevictable LRU when they are finally
+> > faulted in.
+> >=20
+> > To keep accounting checks out of the page fault path, users are billed
+> > for the entire mapping lock as if MAP_LOCKED was used.
+> >=20
+> > Signed-off-by: Eric B Munson <emunson@akamai.com>
+> > Cc: Michal Hocko <mhocko@suse.cz>
+> > Cc: linux-alpha@vger.kernel.org
+> > Cc: linux-kernel@vger.kernel.org
+> > Cc: linux-mips@linux-mips.org
+> > Cc: linux-parisc@vger.kernel.org
+> > Cc: linuxppc-dev@lists.ozlabs.org
+> > Cc: sparclinux@vger.kernel.org
+> > Cc: linux-xtensa@linux-xtensa.org
+> > Cc: linux-mm@kvack.org
+> > Cc: linux-arch@vger.kernel.org
+> > Cc: linux-api@vger.kernel.org
+> > ---
+> >  arch/alpha/include/uapi/asm/mman.h   | 1 +
+> >  arch/mips/include/uapi/asm/mman.h    | 1 +
+> >  arch/parisc/include/uapi/asm/mman.h  | 1 +
+> >  arch/powerpc/include/uapi/asm/mman.h | 1 +
+> >  arch/sparc/include/uapi/asm/mman.h   | 1 +
+> >  arch/tile/include/uapi/asm/mman.h    | 1 +
+> >  arch/xtensa/include/uapi/asm/mman.h  | 1 +
+> >  include/linux/mm.h                   | 1 +
+> >  include/linux/mman.h                 | 3 ++-
+> >  include/uapi/asm-generic/mman.h      | 1 +
+> >  mm/mmap.c                            | 4 ++--
+> >  mm/swap.c                            | 3 ++-
+> >  12 files changed, 15 insertions(+), 4 deletions(-)
+> >=20
+> > diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/ua=
+pi/asm/mman.h
+> > index 0086b47..15e96e1 100644
+> > --- a/arch/alpha/include/uapi/asm/mman.h
+> > +++ b/arch/alpha/include/uapi/asm/mman.h
+> > @@ -30,6 +30,7 @@
+> >  #define MAP_NONBLOCK	0x40000		/* do not block on IO */
+> >  #define MAP_STACK	0x80000		/* give out an address that is best suited =
+for process/thread stacks */
+> >  #define MAP_HUGETLB	0x100000	/* create a huge page mapping */
+> > +#define MAP_LOCKONFAULT	0x200000	/* Lock pages after they are faulted =
+in, do not prefault */
+> > =20
+> >  #define MS_ASYNC	1		/* sync memory asynchronously */
+> >  #define MS_SYNC		2		/* synchronous memory sync */
+> > diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi=
+/asm/mman.h
+> > index cfcb876..47846a5 100644
+> > --- a/arch/mips/include/uapi/asm/mman.h
+> > +++ b/arch/mips/include/uapi/asm/mman.h
+> > @@ -48,6 +48,7 @@
+> >  #define MAP_NONBLOCK	0x20000		/* do not block on IO */
+> >  #define MAP_STACK	0x40000		/* give out an address that is best suited =
+for process/thread stacks */
+> >  #define MAP_HUGETLB	0x80000		/* create a huge page mapping */
+> > +#define MAP_LOCKONFAULT	0x100000	/* Lock pages after they are faulted =
+in, do not prefault */
+> > =20
+> >  /*
+> >   * Flags for msync
+> > diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/=
+uapi/asm/mman.h
+> > index 294d251..1514cd7 100644
+> > --- a/arch/parisc/include/uapi/asm/mman.h
+> > +++ b/arch/parisc/include/uapi/asm/mman.h
+> > @@ -24,6 +24,7 @@
+> >  #define MAP_NONBLOCK	0x20000		/* do not block on IO */
+> >  #define MAP_STACK	0x40000		/* give out an address that is best suited =
+for process/thread stacks */
+> >  #define MAP_HUGETLB	0x80000		/* create a huge page mapping */
+> > +#define MAP_LOCKONFAULT	0x100000	/* Lock pages after they are faulted =
+in, do not prefault */
+> > =20
+> >  #define MS_SYNC		1		/* synchronous memory sync */
+> >  #define MS_ASYNC	2		/* sync memory asynchronously */
+> > diff --git a/arch/powerpc/include/uapi/asm/mman.h b/arch/powerpc/includ=
+e/uapi/asm/mman.h
+> > index 6ea26df..fce74fe 100644
+> > --- a/arch/powerpc/include/uapi/asm/mman.h
+> > +++ b/arch/powerpc/include/uapi/asm/mman.h
+> > @@ -27,5 +27,6 @@
+> >  #define MAP_NONBLOCK	0x10000		/* do not block on IO */
+> >  #define MAP_STACK	0x20000		/* give out an address that is best suited =
+for process/thread stacks */
+> >  #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
+> > +#define MAP_LOCKONFAULT	0x80000		/* Lock pages after they are faulted =
+in, do not prefault */
+> > =20
+> >  #endif /* _UAPI_ASM_POWERPC_MMAN_H */
+> > diff --git a/arch/sparc/include/uapi/asm/mman.h b/arch/sparc/include/ua=
+pi/asm/mman.h
+> > index 0b14df3..12425d8 100644
+> > --- a/arch/sparc/include/uapi/asm/mman.h
+> > +++ b/arch/sparc/include/uapi/asm/mman.h
+> > @@ -22,6 +22,7 @@
+> >  #define MAP_NONBLOCK	0x10000		/* do not block on IO */
+> >  #define MAP_STACK	0x20000		/* give out an address that is best suited =
+for process/thread stacks */
+> >  #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
+> > +#define MAP_LOCKONFAULT	0x80000		/* Lock pages after they are faulted =
+in, do not prefault */
+> > =20
+> > =20
+> >  #endif /* _UAPI__SPARC_MMAN_H__ */
+> > diff --git a/arch/tile/include/uapi/asm/mman.h b/arch/tile/include/uapi=
+/asm/mman.h
+> > index 81b8fc3..ec04eaf 100644
+> > --- a/arch/tile/include/uapi/asm/mman.h
+> > +++ b/arch/tile/include/uapi/asm/mman.h
+> > @@ -29,6 +29,7 @@
+> >  #define MAP_DENYWRITE	0x0800		/* ETXTBSY */
+> >  #define MAP_EXECUTABLE	0x1000		/* mark it as an executable */
+> >  #define MAP_HUGETLB	0x4000		/* create a huge page mapping */
+> > +#define MAP_LOCKONFAULT	0x8000		/* Lock pages after they are faulted i=
+n, do not prefault */
+> > =20
+> > =20
+> >  /*
+> > diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/=
+uapi/asm/mman.h
+> > index 201aec0..42d43cc 100644
+> > --- a/arch/xtensa/include/uapi/asm/mman.h
+> > +++ b/arch/xtensa/include/uapi/asm/mman.h
+> > @@ -55,6 +55,7 @@
+> >  #define MAP_NONBLOCK	0x20000		/* do not block on IO */
+> >  #define MAP_STACK	0x40000		/* give out an address that is best suited =
+for process/thread stacks */
+> >  #define MAP_HUGETLB	0x80000		/* create a huge page mapping */
+> > +#define MAP_LOCKONFAULT	0x100000	/* Lock pages after they are faulted =
+in, do not prefault */
+> >  #ifdef CONFIG_MMAP_ALLOW_UNINITIALIZED
+> >  # define MAP_UNINITIALIZED 0x4000000	/* For anonymous mmap, memory cou=
+ld be
+> >  					 * uninitialized */
+> > diff --git a/include/linux/mm.h b/include/linux/mm.h
+> > index 0755b9f..3e31457 100644
+> > --- a/include/linux/mm.h
+> > +++ b/include/linux/mm.h
+> > @@ -126,6 +126,7 @@ extern unsigned int kobjsize(const void *objp);
+> >  #define VM_PFNMAP	0x00000400	/* Page-ranges managed without "struct pa=
+ge", just pure PFN */
+> >  #define VM_DENYWRITE	0x00000800	/* ETXTBSY on write attempts.. */
+> > =20
+> > +#define VM_LOCKONFAULT	0x00001000	/* Lock the pages covered when they =
+are faulted in */
+> >  #define VM_LOCKED	0x00002000
+> >  #define VM_IO           0x00004000	/* Memory mapped I/O or similar */
+> > =20
+> > diff --git a/include/linux/mman.h b/include/linux/mman.h
+> > index 16373c8..437264b 100644
+> > --- a/include/linux/mman.h
+> > +++ b/include/linux/mman.h
+> > @@ -86,7 +86,8 @@ calc_vm_flag_bits(unsigned long flags)
+> >  {
+> >  	return _calc_vm_trans(flags, MAP_GROWSDOWN,  VM_GROWSDOWN ) |
+> >  	       _calc_vm_trans(flags, MAP_DENYWRITE,  VM_DENYWRITE ) |
+> > -	       _calc_vm_trans(flags, MAP_LOCKED,     VM_LOCKED    );
+> > +	       _calc_vm_trans(flags, MAP_LOCKED,     VM_LOCKED    ) |
+> > +	       _calc_vm_trans(flags, MAP_LOCKONFAULT,VM_LOCKONFAULT);
+> >  }
+> > =20
+> >  unsigned long vm_commit_limit(void);
+> > diff --git a/include/uapi/asm-generic/mman.h b/include/uapi/asm-generic=
+/mman.h
+> > index e9fe6fd..fc4e586 100644
+> > --- a/include/uapi/asm-generic/mman.h
+> > +++ b/include/uapi/asm-generic/mman.h
+> > @@ -12,6 +12,7 @@
+> >  #define MAP_NONBLOCK	0x10000		/* do not block on IO */
+> >  #define MAP_STACK	0x20000		/* give out an address that is best suited =
+for process/thread stacks */
+> >  #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
+> > +#define MAP_LOCKONFAULT	0x80000		/* Lock pages after they are faulted =
+in, do not prefault */
+> > =20
+> >  /* Bits [26:31] are reserved, see mman-common.h for MAP_HUGETLB usage =
+*/
+> > =20
+> > diff --git a/mm/mmap.c b/mm/mmap.c
+> > index bb50cac..ba1a6bf 100644
+> > --- a/mm/mmap.c
+> > +++ b/mm/mmap.c
+> > @@ -1233,7 +1233,7 @@ static inline int mlock_future_check(struct mm_st=
+ruct *mm,
+> >  	unsigned long locked, lock_limit;
+> > =20
+> >  	/*  mlock MCL_FUTURE? */
+> > -	if (flags & VM_LOCKED) {
+> > +	if (flags & (VM_LOCKED | VM_LOCKONFAULT)) {
+> >  		locked =3D len >> PAGE_SHIFT;
+> >  		locked +=3D mm->locked_vm;
+> >  		lock_limit =3D rlimit(RLIMIT_MEMLOCK);
+> > @@ -1301,7 +1301,7 @@ unsigned long do_mmap_pgoff(struct file *file, un=
+signed long addr,
+> >  	vm_flags =3D calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags) |
+> >  			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
+> > =20
+> > -	if (flags & MAP_LOCKED)
+> > +	if (flags & (MAP_LOCKED | MAP_LOCKONFAULT))
+> >  		if (!can_do_mlock())
+> >  			return -EPERM;
+> > =20
+> > diff --git a/mm/swap.c b/mm/swap.c
+> > index a7251a8..07c905e 100644
+> > --- a/mm/swap.c
+> > +++ b/mm/swap.c
+> > @@ -711,7 +711,8 @@ void lru_cache_add_active_or_unevictable(struct pag=
+e *page,
+> >  {
+> >  	VM_BUG_ON_PAGE(PageLRU(page), page);
+> > =20
+> > -	if (likely((vma->vm_flags & (VM_LOCKED | VM_SPECIAL)) !=3D VM_LOCKED)=
+) {
+> > +	if (likely((vma->vm_flags & (VM_LOCKED | VM_LOCKONFAULT)) =3D=3D 0) ||
+> > +		   (vma->vm_flags & VM_SPECIAL)) {
+> >  		SetPageActive(page);
+> >  		lru_cache_add(page);
+> >  		return;
+> > --=20
+> > 1.9.1
+> >=20
+>=20
+> --=20
+> Michal Hocko
+> SUSE Labs
 
-I'm not really sure that is the best way to go from a code standpoint=20
-since fib_nhs is an int which technically means we could support more=20
-than 256 next hops for a given route.
+--WhfpMioaduB5tiZL
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
-Also I assume that it is safe to divide by total because the assumption=
-=20
-is that if one or more routes are not dead then total has a non-zero=20
-value, do I have that right?  If so what is the point of setting the=20
-factor to 1 above, unless you are just hacking around a divide by 0 err=
-or.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
 
-Maybe what you should do above is simply return if total =3D=3D 0 since=
- it=20
-doesn't look like you can safely update anything otherwise.
+iQIcBAEBAgAGBQJVgyp4AAoJELbVsDOpoOa9kdsQAJZLqaF1u5hI3XO+tpM5P/hk
+Aa1VfdcpEBg27WM9YEVF6bwEOTEGmu50fzkMURr71dqw0SQIkXXxn+IKBF309tF2
+CCqll9Yau9+XHZmuvABXGr6WSBKl5Vo7JSZ9OUiGvDYN44Qj1Qc1npw29rDss5OF
+FV537cKdnrcaiX12TLFIyfl/tOQEl26ZUyewH+V6FPQsDblP+Um5UOJmjz0B5RT6
+pBk8Guz36NYtCUouOMuPSy0aI/Lmss9LQIDNJJ3P3cFC04duWXKCNXyX8dV7YBbT
+uLJZSrTBI4bkIzO6h4iQQEJ/ZApI9A0PaB43uypsehjnbnsS4TIc47yNIcnNWVi/
+0+8KcUGdruh4SANSQdgCoQW51v8R3rhjAF1P/oqsZhL4yRffp6jJ03/olkR5myi5
+mLvW+P0+TrnCTAqYp7ztV66pCagufjSA+JI1ZKe6Sm68dIzdGEA47nftVuLRwSe5
+26QMiMMdyIibK0M01Uy50DOJi9CNBny3o2hStcRz+IbbhFh8qegUBJDEXQkGKy4k
+MzjcLRihmWO5dNNLjmdsu7tMcYD95VJtWDFpvGszt1coKPkuyQmD6eL+YoIbfuOs
+Zahv7yrHDLq32DZBvJ3z6HnH0F9HttksnsnZYkABLmJv8DLj5HJjSg85dC1+1nGo
+W38/v4H0T6dmB/3AN1Q3
+=kvxI
+-----END PGP SIGNATURE-----
 
-> +
-> +		atomic_set(&nexthop_nh->nh_mp_upper_bound, upper_bound);
-> +	} endfor_nexthops(fi);
-> +}
-> +
->   static int fib_get_nhs(struct fib_info *fi, struct rtnexthop *rtnh,
->   		       int remaining, struct fib_config *cfg)
->   {
-> @@ -461,7 +499,7 @@ static int fib_get_nhs(struct fib_info *fi, struc=
-t rtnexthop *rtnh,
->   		nexthop_nh->nh_flags =3D
->   			(cfg->fc_flags & ~0xFF) | rtnh->rtnh_flags;
->   		nexthop_nh->nh_oif =3D rtnh->rtnh_ifindex;
-> -		nexthop_nh->nh_weight =3D rtnh->rtnh_hops + 1;
-> +		nexthop_nh->nh_mp_weight =3D rtnh->rtnh_hops + 1;
->
->   		attrlen =3D rtnh_attrlen(rtnh);
->   		if (attrlen > 0) {
-> @@ -884,7 +922,7 @@ struct fib_info *fib_create_info(struct fib_confi=
-g *cfg)
->   			fi->fib_net->ipv4.fib_num_tclassid_users++;
->   #endif
->   #ifdef CONFIG_IP_ROUTE_MULTIPATH
-> -		nh->nh_weight =3D 1;
-> +		nh->nh_mp_weight =3D 1;
->   #endif
->   	}
->
-
-More unnecessary rename noise.
-
-> @@ -936,8 +974,15 @@ struct fib_info *fib_create_info(struct fib_conf=
-ig *cfg)
->
->   	change_nexthops(fi) {
->   		fib_info_update_nh_saddr(net, nexthop_nh);
-> +#ifdef CONFIG_IP_ROUTE_MULTIPATH
-> +		fi->fib_mp_weight +=3D nexthop_nh->nh_mp_weight;
-> +#endif
->   	} endfor_nexthops(fi)
->
-> +#ifdef CONFIG_IP_ROUTE_MULTIPATH
-> +	fib_rebalance(fi);
-> +#endif
-> +
->   link_it:
->   	ofi =3D fib_find_info(fi);
->   	if (ofi) {
-> @@ -1050,7 +1095,7 @@ int fib_dump_info(struct sk_buff *skb, u32 port=
-id, u32 seq, int event,
->   				goto nla_put_failure;
->
->   			rtnh->rtnh_flags =3D nh->nh_flags & 0xFF;
-> -			rtnh->rtnh_hops =3D nh->nh_weight - 1;
-> +			rtnh->rtnh_hops =3D nh->nh_mp_weight - 1;
->   			rtnh->rtnh_ifindex =3D nh->nh_oif;
->
->   			if (nh->nh_gw &&
-> @@ -1130,12 +1175,6 @@ int fib_sync_down_dev(struct net_device *dev, =
-int force)
->   			else if (nexthop_nh->nh_dev =3D=3D dev &&
->   				 nexthop_nh->nh_scope !=3D scope) {
->   				nexthop_nh->nh_flags |=3D RTNH_F_DEAD;
-> -#ifdef CONFIG_IP_ROUTE_MULTIPATH
-> -				spin_lock_bh(&fib_multipath_lock);
-> -				fi->fib_power -=3D nexthop_nh->nh_power;
-> -				nexthop_nh->nh_power =3D 0;
-> -				spin_unlock_bh(&fib_multipath_lock);
-> -#endif
->   				dead++;
->   			}
->   #ifdef CONFIG_IP_ROUTE_MULTIPATH
-> @@ -1149,6 +1188,10 @@ int fib_sync_down_dev(struct net_device *dev, =
-int force)
->   			fi->fib_flags |=3D RTNH_F_DEAD;
->   			ret++;
->   		}
-> +
-> +#ifdef CONFIG_IP_ROUTE_MULTIPATH
-> +		fib_rebalance(fi);
-> +#endif
->   	}
->
->   	return ret;
-> @@ -1254,16 +1297,15 @@ int fib_sync_up(struct net_device *dev)
->   			    !__in_dev_get_rtnl(dev))
->   				continue;
->   			alive++;
-> -			spin_lock_bh(&fib_multipath_lock);
-> -			nexthop_nh->nh_power =3D 0;
->   			nexthop_nh->nh_flags &=3D ~RTNH_F_DEAD;
-> -			spin_unlock_bh(&fib_multipath_lock);
->   		} endfor_nexthops(fi)
->
->   		if (alive > 0) {
->   			fi->fib_flags &=3D ~RTNH_F_DEAD;
->   			ret++;
->   		}
-> +
-> +		fib_rebalance(fi);
->   	}
->
->   	return ret;
-> @@ -1276,49 +1318,19 @@ int fib_sync_up(struct net_device *dev)
->   void fib_select_multipath(struct fib_result *res)
->   {
->   	struct fib_info *fi =3D res->fi;
-> -	int w;
-> -
-> -	spin_lock_bh(&fib_multipath_lock);
-> -	if (fi->fib_power <=3D 0) {
-> -		int power =3D 0;
-> -		change_nexthops(fi) {
-> -			if (!(nexthop_nh->nh_flags & RTNH_F_DEAD)) {
-> -				power +=3D nexthop_nh->nh_weight;
-> -				nexthop_nh->nh_power =3D nexthop_nh->nh_weight;
-> -			}
-> -		} endfor_nexthops(fi);
-> -		fi->fib_power =3D power;
-> -		if (power <=3D 0) {
-> -			spin_unlock_bh(&fib_multipath_lock);
-> -			/* Race condition: route has just become dead. */
-> -			res->nh_sel =3D 0;
-> -			return;
-> -		}
-> -	}
-> +	u8 w;
->
-> +	w =3D bitrev8(this_cpu_inc_return(fib_mp_rr_counter));
->
-> -	/* w should be random number [0..fi->fib_power-1],
-> -	 * it is pretty bad approximation.
-> -	 */
-> -
-> -	w =3D jiffies % fi->fib_power;
-> +	for_nexthops(fi) {
-> +		if (w >=3D atomic_read(&nh->nh_mp_upper_bound))
-> +			continue;
->
-> -	change_nexthops(fi) {
-> -		if (!(nexthop_nh->nh_flags & RTNH_F_DEAD) &&
-> -		    nexthop_nh->nh_power) {
-> -			w -=3D nexthop_nh->nh_power;
-> -			if (w <=3D 0) {
-> -				nexthop_nh->nh_power--;
-> -				fi->fib_power--;
-> -				res->nh_sel =3D nhsel;
-> -				spin_unlock_bh(&fib_multipath_lock);
-> -				return;
-> -			}
-> -		}
-> +		res->nh_sel =3D nhsel;
-> +		return;
->   	} endfor_nexthops(fi);
->
-> -	/* Race condition: route has just become dead. */
-> +	/* Race condition: route has just become dead */
->   	res->nh_sel =3D 0;
-> -	spin_unlock_bh(&fib_multipath_lock);
->   }
->   #endif
->
-
-Instead of doing bitrev8 why not just hash jiffies since that is=20
-essentially what you are doing with this counter anyway.  You could=20
-probably even look at converting from a u8 to something like a u32 whic=
-h=20
-would give you a more pseudo random distribution.
+--WhfpMioaduB5tiZL--
