@@ -1,106 +1,44 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [RFC v3 1/4] fs: Add generic file system event notifications
-Date: Fri, 19 Jun 2015 10:03:41 +1000
-Message-ID: <20150619000341.GM10224@dastard>
-References: <1434460173-18427-1-git-send-email-b.michalska@samsung.com>
- <1434460173-18427-2-git-send-email-b.michalska@samsung.com>
- <20150617230605.GK10224@dastard>
- <55828064.5040301@samsung.com>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH v2 0/5] selftests/kdbus: small fixes
+Date: Thu, 18 Jun 2015 21:27:54 -0700
+Message-ID: <20150619042754.GA16564@kroah.com>
+References: <1434558808-16129-1-git-send-email-sergei@s15v.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <55828064.5040301@samsung.com>
-Sender: owner-linux-mm@kvack.org
-To: Beata Michalska <b.michalska@samsung.com>
-Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, greg@kroah.com, jack@suse.cz, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org
+In-Reply-To: <1434558808-16129-1-git-send-email-sergei-E844GTqJAzo@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Sergei Zviagintsev <sergei-E844GTqJAzo@public.gmane.org>
+Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, David Herrmann <dh.herrmann-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 18, 2015 at 10:25:08AM +0200, Beata Michalska wrote:
-> On 06/18/2015 01:06 AM, Dave Chinner wrote:
-> > On Tue, Jun 16, 2015 at 03:09:30PM +0200, Beata Michalska wrote:
-> >> Introduce configurable generic interface for file
-> >> system-wide event notifications, to provide file
-> >> systems with a common way of reporting any potential
-> >> issues as they emerge.
-> >>
-> >> The notifications are to be issued through generic
-> >> netlink interface by newly introduced multicast group.
-> >>
-> >> Threshold notifications have been included, allowing
-> >> triggering an event whenever the amount of free space drops
-> >> below a certain level - or levels to be more precise as two
-> >> of them are being supported: the lower and the upper range.
-> >> The notifications work both ways: once the threshold level
-> >> has been reached, an event shall be generated whenever
-> >> the number of available blocks goes up again re-activating
-> >> the threshold.
-> >>
-> >> The interface has been exposed through a vfs. Once mounted,
-> >> it serves as an entry point for the set-up where one can
-> >> register for particular file system events.
-> >>
-> >> Signed-off-by: Beata Michalska <b.michalska@samsung.com>
-> > 
-> > This has massive scalability problems:
-....
-> > Have you noticed that the filesystems have percpu counters for
-> > tracking global space usage? There's good reason for that - taking a
-> > spinlock in such a hot accounting path causes severe contention.
-....
-> > Then puts the entire netlink send path inside this spinlock, which
-> > includes memory allocation and all sorts of non-filesystem code
-> > paths. And it may be inside critical filesystem locks as well....
-> > 
-> > Apart from the serialisation problem of the locking, adding
-> > memory allocation and the network send path to filesystem code
-> > that is effectively considered "innermost" filesystem code is going
-> > to have all sorts of problems for various filesystems. In the XFS
-> > case, we simply cannot execute this sort of function in the places
-> > where we update global space accounting.
-> > 
-> > As it is, I think the basic concept of separate tracking of free
-> > space if fundamentally flawed. What I think needs to be done is that
-> > filesystems need access to the thresholds for events, and then the
-> > filesystems call fs_event_send_thresh() themselves from appropriate
-> > contexts (ie. without compromising locking, scalability, memory
-> > allocation recursion constraints, etc).
-> > 
-> > e.g. instead of tracking every change in free space, a filesystem
-> > might execute this once every few seconds from a workqueue:
-> > 
-> > 	event = fs_event_need_space_warning(sb, <fs_free_space>)
-> > 	if (event)
-> > 		fs_event_send_thresh(sb, event);
-> > 
-> > User still gets warnings about space usage, but there's no runtime
-> > overhead or problems with lock/memory allocation contexts, etc.
+On Wed, Jun 17, 2015 at 07:33:23PM +0300, Sergei Zviagintsev wrote:
+> Set of different fixes over selftests/kdbus.
 > 
-> Having fs to keep a firm hand on thresholds limits would indeed be
-> far more sane approach though that would require each fs to
-> add support for that and handle most of it on their own. Avoiding
->> this was the main rationale behind this rfc.
-> If fs people agree to that, I'll be more than willing to drop this
-> in favour of the per-fs tracking solution. 
-> Personally, I hope they will.
+> These were first sent as independent patches, and in v2 they just
+> properly threaded.
+> 
+> Links to previous patches:
+> 
+> http://lkml.kernel.org/g/1434550697-24785-1-git-send-email-sergei-E844GTqJAzo@public.gmane.org
+> http://lkml.kernel.org/g/1434550697-24785-2-git-send-email-sergei-E844GTqJAzo@public.gmane.org
+> http://lkml.kernel.org/g/1434550697-24785-3-git-send-email-sergei-E844GTqJAzo@public.gmane.org
+> http://lkml.kernel.org/g/1434550697-24785-4-git-send-email-sergei-E844GTqJAzo@public.gmane.org
+> http://lkml.kernel.org/g/1434550697-24785-5-git-send-email-sergei-E844GTqJAzo@public.gmane.org
+> 
+> Sergei Zviagintsev (5):
+>   selftests/kdbus: handle cap_get_proc() error properly
+>   selftests/kdbus: drop useless assignment
+>   selftests/kdbus: remove useless initializations from
+>     kdbus_clone_userns_test()
+>   selftests/kdbus: drop duplicated code from __kdbus_msg_send()
+>   selftests/kdbus: fix error paths in __kdbus_msg_send()
+> 
+>  tools/testing/selftests/kdbus/kdbus-util.c       | 46 ++++++++++++------------
+>  tools/testing/selftests/kdbus/test-metadata-ns.c |  9 ++---
+>  2 files changed, 27 insertions(+), 28 deletions(-)
 
-I was hoping that you'd think a little more about my suggestion and
-work out how to do background threshold event detection generically.
-I kind of left it as "an exercise for the reader" because it seems
-obvious to me.
+All now applied, thanks.
 
-Hint: ->statfs allows you to get the total, free and used space
-from filesystems in a generic manner.
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+greg k-h
