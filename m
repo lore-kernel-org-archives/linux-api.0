@@ -1,162 +1,127 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [RESEND PATCH V2 1/3] Add mmap flag to request pages are locked
- after page fault
-Date: Fri, 19 Jun 2015 12:43:33 -0400
-Message-ID: <20150619164333.GD2329@akamai.com>
-References: <1433942810-7852-1-git-send-email-emunson@akamai.com>
- <1433942810-7852-2-git-send-email-emunson@akamai.com>
- <20150618152907.GG5858@dhcp22.suse.cz>
- <20150618203048.GB2329@akamai.com>
- <20150619145708.GG4913@dhcp22.suse.cz>
+From: Beata Michalska <b.michalska-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [RFC v3 1/4] fs: Add generic file system event notifications
+Date: Fri, 19 Jun 2015 19:28:11 +0200
+Message-ID: <5584512B.5020301@samsung.com>
+References: <1434460173-18427-1-git-send-email-b.michalska@samsung.com>
+ <1434460173-18427-2-git-send-email-b.michalska@samsung.com>
+ <20150617230605.GK10224@dastard> <55828064.5040301@samsung.com>
+ <20150619000341.GM10224@dastard>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="tEFtbjk+mNEviIIX"
-Return-path: <linux-alpha-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150619145708.GG4913@dhcp22.suse.cz>
-Sender: linux-alpha-owner@vger.kernel.org
-To: Michal Hocko <mhocko@suse.cz>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-reply-to: <20150619000341.GM10224@dastard>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, lczerner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, kmpark-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On 06/19/2015 02:03 AM, Dave Chinner wrote:
+> On Thu, Jun 18, 2015 at 10:25:08AM +0200, Beata Michalska wrote:
+>> On 06/18/2015 01:06 AM, Dave Chinner wrote:
+>>> On Tue, Jun 16, 2015 at 03:09:30PM +0200, Beata Michalska wrote:
+>>>> Introduce configurable generic interface for file
+>>>> system-wide event notifications, to provide file
+>>>> systems with a common way of reporting any potential
+>>>> issues as they emerge.
+>>>>
+>>>> The notifications are to be issued through generic
+>>>> netlink interface by newly introduced multicast group.
+>>>>
+>>>> Threshold notifications have been included, allowing
+>>>> triggering an event whenever the amount of free space drops
+>>>> below a certain level - or levels to be more precise as two
+>>>> of them are being supported: the lower and the upper range.
+>>>> The notifications work both ways: once the threshold level
+>>>> has been reached, an event shall be generated whenever
+>>>> the number of available blocks goes up again re-activating
+>>>> the threshold.
+>>>>
+>>>> The interface has been exposed through a vfs. Once mounted,
+>>>> it serves as an entry point for the set-up where one can
+>>>> register for particular file system events.
+>>>>
+>>>> Signed-off-by: Beata Michalska <b.michalska-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+>>>
+>>> This has massive scalability problems:
+> ....
+>>> Have you noticed that the filesystems have percpu counters for
+>>> tracking global space usage? There's good reason for that - taking a
+>>> spinlock in such a hot accounting path causes severe contention.
+> ....
+>>> Then puts the entire netlink send path inside this spinlock, which
+>>> includes memory allocation and all sorts of non-filesystem code
+>>> paths. And it may be inside critical filesystem locks as well....
+>>>
+>>> Apart from the serialisation problem of the locking, adding
+>>> memory allocation and the network send path to filesystem code
+>>> that is effectively considered "innermost" filesystem code is going
+>>> to have all sorts of problems for various filesystems. In the XFS
+>>> case, we simply cannot execute this sort of function in the places
+>>> where we update global space accounting.
+>>>
+>>> As it is, I think the basic concept of separate tracking of free
+>>> space if fundamentally flawed. What I think needs to be done is that
+>>> filesystems need access to the thresholds for events, and then the
+>>> filesystems call fs_event_send_thresh() themselves from appropriate
+>>> contexts (ie. without compromising locking, scalability, memory
+>>> allocation recursion constraints, etc).
+>>>
+>>> e.g. instead of tracking every change in free space, a filesystem
+>>> might execute this once every few seconds from a workqueue:
+>>>
+>>> 	event = fs_event_need_space_warning(sb, <fs_free_space>)
+>>> 	if (event)
+>>> 		fs_event_send_thresh(sb, event);
+>>>
+>>> User still gets warnings about space usage, but there's no runtime
+>>> overhead or problems with lock/memory allocation contexts, etc.
+>>
+>> Having fs to keep a firm hand on thresholds limits would indeed be
+>> far more sane approach though that would require each fs to
+>> add support for that and handle most of it on their own. Avoiding
+>>> this was the main rationale behind this rfc.
+>> If fs people agree to that, I'll be more than willing to drop this
+>> in favour of the per-fs tracking solution. 
+>> Personally, I hope they will.
+> 
+> I was hoping that you'd think a little more about my suggestion and
+> work out how to do background threshold event detection generically.
+> I kind of left it as "an exercise for the reader" because it seems
+> obvious to me.
+> 
+> Hint: ->statfs allows you to get the total, free and used space
+> from filesystems in a generic manner.
+> 
+> Cheers,
+> 
+> Dave.
+> 
 
---tEFtbjk+mNEviIIX
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+I haven't given up on that, so yes, I'm still working on a more suitable
+generic solution.
+Background detection is one of the options, though it needs some more thoughts.
+Giving up the sync approach means less accuracy for the threshold notifications,
+but I guess this could be fine-tuned to get an acceptable level. Another bump:
+how this tuning is supposed to be done (additional config option maybe)? 
+The interface would have to keep it somehow sane - but what would 'sane' mean
+in this case (?) Also, I'm not sure whether single approach would server here
+well for all the potentially supported file systems so this would have to be
+properly adjusted (taking the threshold levels into consideration as well). 
+And still,it would require some form of synchronization with tracked fs so that
+this 'detection' is not being unnecessarily performed (i.e. while fs remains frozen).
 
-On Fri, 19 Jun 2015, Michal Hocko wrote:
+There is also an idea of using an interface resembling the stackable fs:
+a transparent file system layered on top of the tracked one 
+(solely for the tracking purposes). This would simplify handling the trace 
+object's lifetime - no more list of registered traces.
+It would also give a way of tracking (to some extent) the changes in the amount
+of available space, which combined with tweaked background check could give
+a solution with less performance overhead than the original one.
+I'll try this one and see how it goes.
 
-> On Thu 18-06-15 16:30:48, Eric B Munson wrote:
-> > On Thu, 18 Jun 2015, Michal Hocko wrote:
-> [...]
-> > > Wouldn't it be much more reasonable and straightforward to have
-> > > MAP_FAULTPOPULATE as a counterpart for MAP_POPULATE which would
-> > > explicitly disallow any form of pre-faulting? It would be usable for
-> > > other usecases than with MAP_LOCKED combination.
-> >=20
-> > I don't see a clear case for it being more reasonable, it is one
-> > possible way to solve the problem.
->=20
-> MAP_FAULTPOPULATE would be usable for other cases as well. E.g. fault
-> around is all or nothing feature. Either all mappings (which support
-> this) fault around or none. There is no way to tell the kernel that
-> this particular mapping shouldn't fault around. I haven't seen such a
-> request yet but we have seen requests to have a way to opt out from
-> a global policy in the past (e.g. per-process opt out from THP). So
-> I can imagine somebody will come with a request to opt out from any
-> speculative operations on the mapped area in the future.
->=20
-> > But I think it leaves us in an even
-> > more akward state WRT VMA flags.  As you noted in your fix for the
-> > mmap() man page, one can get into a state where a VMA is VM_LOCKED, but
-> > not present.  Having VM_LOCKONFAULT states that this was intentional, if
-> > we go to using MAP_FAULTPOPULATE instead of MAP_LOCKONFAULT, we no
-> > longer set VM_LOCKONFAULT (unless we want to start mapping it to the
-> > presence of two MAP_ flags).  This can make detecting the MAP_LOCKED +
-> > populate failure state harder.
->=20
-> I am not sure I understand your point here. Could you be more specific
-> how would you check for that and what for?
+Thank You for your feedback so far - I really appreciate it.
 
-My thought on detecting was that someone might want to know if they had
-a VMA that was VM_LOCKED but had not been made present becuase of a
-failure in mmap.  We don't have a way today, but adding VM_LOCKONFAULT
-is at least explicit about what is happening which would make detecting
-the VM_LOCKED but not present state easier.  This assumes that
-MAP_FAULTPOPULATE does not translate to a VMA flag, but it sounds like
-it would have to.
 
->=20
-> From my understanding MAP_LOCKONFAULT is essentially
-> MAP_FAULTPOPULATE|MAP_LOCKED with a quite obvious semantic (unlike
-> single MAP_LOCKED unfortunately). I would love to also have
-> MAP_LOCKED|MAP_POPULATE (aka full mlock semantic) but I am really
-> skeptical considering how my previous attempt to make MAP_POPULATE
-> reasonable went.
-
-Are you objecting to the addition of the VMA flag VM_LOCKONFAULT, or the
-new MAP_LOCKONFAULT flag (or both)?  If you prefer that MAP_LOCKED |
-MAP_FAULTPOPULATE means that VM_LOCKONFAULT is set, I am fine with that
-instead of introducing MAP_LOCKONFAULT.  I went with the new flag
-because to date, we have a one to one mapping of MAP_* to VM_* flags.
-
->=20
-> > If this is the preferred path for mmap(), I am fine with that.=20
->=20
-> > However,
-> > I would like to see the new system calls that Andrew mentioned (and that
-> > I am testing patches for) go in as well.=20
->=20
-> mlock with flags sounds like a good step but I am not sure it will make
-> sense in the future. POSIX has screwed that and I am not sure how many
-> applications would use it. This ship has sailed long time ago.
-
-I don't know either, but the code is the question, right?  I know that
-we have at least one team that wants it here.
-
->=20
-> > That way we give users the
-> > ability to request VM_LOCKONFAULT for memory allocated using something
-> > other than mmap.
->=20
-> mmap(MAP_FAULTPOPULATE); mlock() would have the same semantic even
-> without changing mlock syscall.
-
-That is true as long as MAP_FAULTPOPULATE set a flag in the VMA(s).  It
-doesn't cover the actual case I was asking about, which is how do I get
-lock on fault on malloc'd memory?
-
-> =20
-> > > > This patch introduces the ability to request that pages are not
-> > > > pre-faulted, but are placed on the unevictable LRU when they are fi=
-nally
-> > > > faulted in.
-> > > >=20
-> > > > To keep accounting checks out of the page fault path, users are bil=
-led
-> > > > for the entire mapping lock as if MAP_LOCKED was used.
-> > > >=20
-> > > > Signed-off-by: Eric B Munson <emunson@akamai.com>
-> > > > Cc: Michal Hocko <mhocko@suse.cz>
-> > > > Cc: linux-alpha@vger.kernel.org
-> > > > Cc: linux-kernel@vger.kernel.org
-> > > > Cc: linux-mips@linux-mips.org
-> > > > Cc: linux-parisc@vger.kernel.org
-> > > > Cc: linuxppc-dev@lists.ozlabs.org
-> > > > Cc: sparclinux@vger.kernel.org
-> > > > Cc: linux-xtensa@linux-xtensa.org
-> > > > Cc: linux-mm@kvack.org
-> > > > Cc: linux-arch@vger.kernel.org
-> > > > Cc: linux-api@vger.kernel.org
-> > > > ---
-> [...]
-> --=20
-> Michal Hocko
-> SUSE Labs
-
---tEFtbjk+mNEviIIX
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJVhEa1AAoJELbVsDOpoOa9G9AQAIFwslEVTMGceV83OYvdwX89
-JQHGpfvXIZh/BbujjzOFKIFk4BcZhVxGlkvrA9vg/0H3xbXyVg5DXK9hXwKAuGBn
-HquXUVb7DtDgLoEbJgBi/LLfJ2ADfIVeiIsUM3fGb/DBTiMqX3QOCM2x63JT9iG1
-xtg8hHQ/Ee2PAtR4GO6N4/PCbPWjOEJgdYjSp5avR57h2Keu8xTsHbYUK8CKA496
-Pf5SusNzWqwBewdMfr+bLYbs3U9njdLUeLaRGqQuYwETUaALEeL3CIzyyFpDtQjv
-WbCBng8aR8Mquz3ogYjz+FPrdftF90abox4yqb8o4V9qF5VW/JotgS/D/H327Lat
-SlwKimGCvvOisB01VPNQ03P5x6cwa1Ld2MPltOaTxIjxoSz5lIY8KEkXca37kFj8
-fzkR2fFcdb0RLSDWhk3vLNaZj7lcFkBTtx7YLoWLkj9/s3xiVtPmIC9vaMUvI3JZ
-QPcX6gENRnDDT+SMZP5giAM4yyJjc50ILXFXkhY4iJuRgK6i4iu61+LASLTqsjeu
-UqOfualtpXqLz1oaAgPOtwWxaGm6yr2SWMDuioRZ4oKjMZgPpnk5Yhshvos31MPa
-L4pp2SSSKfkFyyIyyD/3tFMFh70xtN5oG1h9IvUi563aMbPZ9pjQq1me6c0ItUxW
-tzFfJHu6+Vfws6lONsKF
-=6RVh
------END PGP SIGNATURE-----
-
---tEFtbjk+mNEviIIX--
---
-To unsubscribe from this list: send the line "unsubscribe linux-alpha" in
+Best Regards
+Beata 
