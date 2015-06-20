@@ -1,148 +1,71 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [RFC v3 1/4] fs: Add generic file system event notifications
-Date: Sat, 20 Jun 2015 09:21:17 +1000
-Message-ID: <20150619232117.GN10224@dastard>
-References: <1434460173-18427-1-git-send-email-b.michalska@samsung.com>
- <1434460173-18427-2-git-send-email-b.michalska@samsung.com>
- <20150617230605.GK10224@dastard>
- <55828064.5040301@samsung.com>
- <20150619000341.GM10224@dastard>
- <5584512B.5020301@samsung.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <5584512B.5020301@samsung.com>
-Sender: owner-linux-mm@kvack.org
-To: Beata Michalska <b.michalska@samsung.com>
-Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, greg@kroah.com, jack@suse.cz, tytso@mit.edu, adilger.kernel@dilger.ca, hughd@google.com, lczerner@redhat.com, hch@infradead.org, linux-ext4@vger.kernel.org, linux-mm@kvack.org, kyungmin.park@samsung.com, kmpark@infradead.org
+From: Masanari Iida <standby24x7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] Doc:ABI/testing: Fix typo in sysfs-bus-fcoe
+Date: Sat, 20 Jun 2015 11:17:20 +0900
+Message-ID: <1434766640-23799-1-git-send-email-standby24x7@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, vasu.dev-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, fcoe-devel-s9riP+hp16TNLxjTenLetw@public.gmane.org
+Cc: Masanari Iida <standby24x7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jun 19, 2015 at 07:28:11PM +0200, Beata Michalska wrote:
-> On 06/19/2015 02:03 AM, Dave Chinner wrote:
-> > On Thu, Jun 18, 2015 at 10:25:08AM +0200, Beata Michalska wrote:
-> >> On 06/18/2015 01:06 AM, Dave Chinner wrote:
-> >>> On Tue, Jun 16, 2015 at 03:09:30PM +0200, Beata Michalska wrote:
-> >>>> Introduce configurable generic interface for file
-> >>>> system-wide event notifications, to provide file
-> >>>> systems with a common way of reporting any potential
-> >>>> issues as they emerge.
-> >>>>
-> >>>> The notifications are to be issued through generic
-> >>>> netlink interface by newly introduced multicast group.
-> >>>>
-> >>>> Threshold notifications have been included, allowing
-> >>>> triggering an event whenever the amount of free space drops
-> >>>> below a certain level - or levels to be more precise as two
-> >>>> of them are being supported: the lower and the upper range.
-> >>>> The notifications work both ways: once the threshold level
-> >>>> has been reached, an event shall be generated whenever
-> >>>> the number of available blocks goes up again re-activating
-> >>>> the threshold.
-> >>>>
-> >>>> The interface has been exposed through a vfs. Once mounted,
-> >>>> it serves as an entry point for the set-up where one can
-> >>>> register for particular file system events.
-> >>>>
-> >>>> Signed-off-by: Beata Michalska <b.michalska@samsung.com>
-> >>>
-> >>> This has massive scalability problems:
-> > ....
-> >>> Have you noticed that the filesystems have percpu counters for
-> >>> tracking global space usage? There's good reason for that - taking a
-> >>> spinlock in such a hot accounting path causes severe contention.
-> > ....
-> >>> Then puts the entire netlink send path inside this spinlock, which
-> >>> includes memory allocation and all sorts of non-filesystem code
-> >>> paths. And it may be inside critical filesystem locks as well....
-> >>>
-> >>> Apart from the serialisation problem of the locking, adding
-> >>> memory allocation and the network send path to filesystem code
-> >>> that is effectively considered "innermost" filesystem code is going
-> >>> to have all sorts of problems for various filesystems. In the XFS
-> >>> case, we simply cannot execute this sort of function in the places
-> >>> where we update global space accounting.
-> >>>
-> >>> As it is, I think the basic concept of separate tracking of free
-> >>> space if fundamentally flawed. What I think needs to be done is that
-> >>> filesystems need access to the thresholds for events, and then the
-> >>> filesystems call fs_event_send_thresh() themselves from appropriate
-> >>> contexts (ie. without compromising locking, scalability, memory
-> >>> allocation recursion constraints, etc).
-> >>>
-> >>> e.g. instead of tracking every change in free space, a filesystem
-> >>> might execute this once every few seconds from a workqueue:
-> >>>
-> >>> 	event = fs_event_need_space_warning(sb, <fs_free_space>)
-> >>> 	if (event)
-> >>> 		fs_event_send_thresh(sb, event);
-> >>>
-> >>> User still gets warnings about space usage, but there's no runtime
-> >>> overhead or problems with lock/memory allocation contexts, etc.
-> >>
-> >> Having fs to keep a firm hand on thresholds limits would indeed be
-> >> far more sane approach though that would require each fs to
-> >> add support for that and handle most of it on their own. Avoiding
-> >>> this was the main rationale behind this rfc.
-> >> If fs people agree to that, I'll be more than willing to drop this
-> >> in favour of the per-fs tracking solution. 
-> >> Personally, I hope they will.
-> > 
-> > I was hoping that you'd think a little more about my suggestion and
-> > work out how to do background threshold event detection generically.
-> > I kind of left it as "an exercise for the reader" because it seems
-> > obvious to me.
-> > 
-> > Hint: ->statfs allows you to get the total, free and used space
-> > from filesystems in a generic manner.
-> > 
-> > Cheers,
-> > 
-> > Dave.
-> > 
-> 
-> I haven't given up on that, so yes, I'm still working on a more suitable
-> generic solution.
-> Background detection is one of the options, though it needs some more thoughts.
-> Giving up the sync approach means less accuracy for the threshold notifications,
-> but I guess this could be fine-tuned to get an acceptable level.
+This patch fix some spelling typo in sysfs-bus-fcoe
 
-Accuracy really doesn't matter for threshold notifications - by the
-time the event is delivered to userspace it can already be wrong.
+Signed-off-by: Masanari Iida <standby24x7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+ Documentation/ABI/testing/sysfs-bus-fcoe | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-> Another bump:
-> how this tuning is supposed to be done (additional config option maybe)? 
-
-Why would you need to tune it at all? You can't *stop* the operation
-that is triggering the threshold, so a few seconds delay on delivery
-isn't going to make any difference to anyone....
-
-You're overthinking this massively. All this needs is a work item
-per superblock, and when the thresholds are turned on it queues a
-self-repeating delayed work that calls ->statfs, checks against the
-configured threshold, issues an event if necessary, and then queues
-itself again to run next period. When the threshold is turned off,
-the work is cancelled.
-
-Another option: a kernel thread that runs periodically and just
-calls iterate_supers() with a function that checks the sb for
-threshold events, and if configured runs ->statfs and does the work,
-otherwise skips the sb. That avoids all the lifetime issues with
-using workqueues, you don't need a struct work, etc.
-
-> There is also an idea of using an interface resembling the stackable fs:
-
-No. Just .... No.
-
-Cheers,
-
-Dave.
+diff --git a/Documentation/ABI/testing/sysfs-bus-fcoe b/Documentation/ABI/testing/sysfs-bus-fcoe
+index 21640ea..657df13 100644
+--- a/Documentation/ABI/testing/sysfs-bus-fcoe
++++ b/Documentation/ABI/testing/sysfs-bus-fcoe
+@@ -32,7 +32,7 @@ Description:	'FCoE Controller' instances on the fcoe bus.
+ 
+ Attributes:
+ 
+-	fcf_dev_loss_tmo: Device loss timeout peroid (see below). Changing
++	fcf_dev_loss_tmo: Device loss timeout period (see below). Changing
+ 			  this value will change the dev_loss_tmo for all
+ 			  FCFs discovered by this controller.
+ 
+@@ -61,7 +61,7 @@ Attributes:
+ 	lesb/err_block:   Link Error Status Block (LESB) block error count.
+ 
+ 	lesb/fcs_error:   Link Error Status Block (LESB) Fibre Channel
+-			  Serivces error count.
++			  Services error count.
+ 
+ Notes: ctlr_X (global increment starting at 0)
+ 
+@@ -85,7 +85,7 @@ Attributes:
+ 		     fabric.
+ 
+ 	selected:    1 indicates that the switch has been selected for use;
+-		     0 indicates that the swich will not be used.
++		     0 indicates that the switch will not be used.
+ 
+ 	fc_map:      The Fibre Channel MAP
+ 
+@@ -93,7 +93,7 @@ Attributes:
+ 
+ 	mac:         The FCF's MAC address
+ 
+-	fka_peroid:  The FIP Keep-Alive peroid
++	fka_period:  The FIP Keep-Alive period
+ 
+ 	fabric_state: The internal kernel state
+ 		      "Unknown" - Initialization value
+@@ -101,9 +101,9 @@ Attributes:
+ 		      "Connected" - Host is connected to the FCF
+ 		      "Deleted" - FCF is being removed from the system
+ 
+-	dev_loss_tmo: The device loss timeout peroid for this FCF.
++	dev_loss_tmo: The device loss timeout period for this FCF.
+ 
+-Notes: A device loss infrastructre similar to the FC Transport's
++Notes: A device loss infrastructure similar to the FC Transport's
+        is present in fcoe_sysfs. It is nice to have so that a
+        link flapping adapter doesn't continually advance the count
+        used to identify the discovered FCF. FCFs will exist in a
 -- 
-Dave Chinner
-david@fromorbit.com
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+2.4.4.408.g16da57c
