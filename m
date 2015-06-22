@@ -1,223 +1,562 @@
-From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: [PATCH v6 0/9] Add simple NVMEM Framework via regmap.
-Date: Tue, 23 Jun 2015 00:07:39 +0100
-Message-ID: <1435014459-26138-1-git-send-email-srinivas.kandagatla@linaro.org>
-Return-path: <linux-arm-msm-owner@vger.kernel.org>
-Sender: linux-arm-msm-owner@vger.kernel.org
-To: linux-arm-kernel@lists.infradead.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, pantelis.antoniou@konsulko.com, mporter@konsulko.com, stefan.wahren@i2se.com, wxt@rock-chips.com, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH v6 1/9] nvmem: Add a simple NVMEM framework for nvmem providers
+Date: Tue, 23 Jun 2015 00:08:27 +0100
+Message-ID: <1435014507-26181-1-git-send-email-srinivas.kandagatla@linaro.org>
+References: <1435014459-26138-1-git-send-email-srinivas.kandagatla@linaro.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1435014459-26138-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, stefan.wahren-eS4NqCHxEME@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Thankyou all for providing inputs and comments on previous versions of this
-patchset. Here is the v6 of the patchset addressing all the issues raised as
-part of previous versions review.
+This patch adds just providers part of the framework just to enable easy
+review.
 
-This patchset adds a new simple NVMEM framework to kernel, and it is tested
-with various drivers like "QCOM thermal sensors", "QCOM cpr driver",
-"begal bone cape manager" and few more on the way.
+Up until now, NVMEM drivers like eeprom were stored in drivers/misc,
+where they all had to duplicate pretty much the same code to register
+a sysfs file, allow in-kernel users to access the content of the devices
+they were driving, etc.
 
-Greg KH,
- Is it possible to take these patches via your tree Or do you think it
- should go via ARM-SOC tree?
+This was also a problem as far as other in-kernel users were involved,
+since the solutions used were pretty much different from on driver to
+another, there was a rather big abstraction leak.
 
-Up until now, NVMEM drivers like eeprom were stored in drivers/misc, where they
-all had to duplicate pretty much the same code to register a sysfs file, allow
-in-kernel users to access the content of the devices they were driving, etc.
-    
-This was also a problem as far as other in-kernel users were involved, since
-the solutions used were pretty much different from on driver to another, there
-was a rather big abstraction leak.
-    
-Introduction of this framework aims at solving this. It also introduces DT
-representation for consumer devices to go get the data they require (MAC
-Addresses, SoC/Revision ID, part numbers, and so on) from the NVMEMs.
-    
-After learning few things about QCOM qfprom and other eeprom/efuses, which
-has packed fields at bit level. Which makes it important to add support to
-such memories. This version adds support to this type of non volatile
-memories by adding support to bit level nvmem-cells.
+This introduction of this framework aims at solving this. It also
+introduces DT representation for consumer devices to go get the data
+they require (MAC Addresses, SoC/Revision ID, part numbers, and so on)
+from the nvmems.
 
 Having regmap interface to this framework would give much better
 abstraction for nvmems on different buses.
 
-patch 1-4 Introduces the NVMEM framework.
-Patch 5-6 Adds Qualcomm specific qfprom driver.
-Patch 7 migrates an existing driver to nvmem framework.
-Patch 8 adds entry in MAINTAINERS.
-
-Its also possible to migrate other nvmem drivers to this framework.
-
-Providers APIs:
-	nvmem_register/unregister();
-
-Consumers APIs:
-Cell based apis for both DT/Non-DT:
-	nvmem_cell_get()/nvmem_cell_put();
-	devm_nvmem_cell_get()/devm_nvmem_cell_put();
-	of_nvmem_cell_get()
-	nvmem_cell_read()/nvmem_cell_write();
-
-Raw byte access apis for both DT/non-DT.
-	nvmem_device_get()/nvmem_device_put()
-	devm_nvmem_device_get()/nvmem_device_put()
-	of_nvmem_device_get()
-
-	nvmem_device_read()/nvmem_device_write();
-	nvmem_device_cell_read()/nvmem_device_cell_write();
-
-Device Tree:
-
-	/* Provider */
-	qfprom: qfprom@00700000 {
-		...
-
-		/* Data cells */
-		tsens_calibration: calib@404 {
-			reg = <0x404 0x10>;
-		};
-
-		tsens_calibration_bckp: calib_bckp@504 {
-			reg = <0x504 0x11>;
-			bit-offset = 6;
-			nbits = 128;
-		};
-
-		pvs_version: pvs-version@6 {
-			reg = <0x6 0x2>
-			bit-offset = 7;
-			nbits = 2;
-		};
-
-		speed_bin: speed-bin@c{
-			reg = <0xc 0x1>;
-			bit-offset = 2;
-			nbits	= 3;
-
-		};
-		...
-	};
-
-userspace interface: binary file in /sys/class/nvmem/*/nvmem
-
-ex:
-hexdump /sys/class/nvmem/qfprom0/nvmem
-                                                                                                                                                                                                                  
-0000000 0000 0000 0000 0000 0000 0000 0000 0000
-*
-00000a0 db10 2240 0000 e000 0c00 0c00 0000 0c00
-0000000 0000 0000 0000 0000 0000 0000 0000 0000
-...
-*
-0001000
-
-Changes since v5(https://lkml.org/lkml/2015/5/21/643)
- * skipped regmap patches which are already merged by Mark.
- * Fixed lot of style related comments by Stephen.
- * Fixed sunxi driver.
- * added devm_* variants requested by Stephen.
- * added of_* variants requested by Pantelis Antoniou
- * added read_only options for non-dt drivers.
- * added basic how-to doc.
-
-Changes since v4(https://lkml.org/lkml/2015/3/30/725)
- * rename eeprom to nvmem suggested by Matt Porter
- * added bit level support to nvmem cells, if not framework is
- 	not usable for qcom platforms.
- * removed ternary operator shortcut suggested by Mark B.
- * unified consumer/provider apis for both DT and non-DT.
- * added name support for cell.
- * added bit level bindings.
- * added read-only support suggested by Matt Porter and others.
- * added new nvmem_device based consumer apis.
-
-Changes since v3(https://lkml.org/lkml/2015/3/24/1066)
- * simplified logic in bin_attr_eeprom_read/write spotted by Mark Brown.
- * moved from using regmap_bulk_read/write to regmap_raw_read/write
- spotted by Mark Brown
- * Fixed return error codes for the dummy wrappers spotted by Sascha Hauer
- * Fixed various error code checks in core spotted by Sascha Hauer.
- * Simplified consumer bindings suggested by Sascha Hauer.
- * Added eeprom-mmio helper functions.
-
-Changes since v2(https://lkml.org/lkml/2015/3/13/168)
- * Fixed error handling in eeprom_register spotted by Mark Brown
- * Added new regmap_get_max_register() and regmap_get_reg_stride().
- * Fixed module build errors reported by kbuild robot.
- * recycle the ids when eeprom provider is released.
-
-Changes since v1(https://lkml.org/lkml/2015/3/5/153)
- * Fix various Licencing issues spotted by Paul Bolle and Mark Brown
- * Allow eeprom core to build as module spotted by Paul Bolle.
- * Fix various kconfig issues spotted by Paul Bolle.
- * remove unessary atomic varible spotted by Mark Brown.
- * Few cleanups and common up some of the code in core.
- * Add qfprom bindings.
-
-Changes since RFC(https://lkml.org/lkml/2015/2/19/307)
- * Fix documentation and error checks in read/write spotted by Andrew Lunn
- * Kconfig fix suggested by Stephen Boyd.
- * Add module owner suggested by Stephen Boyd and others.
- * Fix unsafe handling of eeprom in unregister spotted by Russell and Mark Brown.
- * seperate bindings patch as suggested by Rob.
- * Add MAINTAINERS as suggested by Rob.
- * Added support to allow reading eeprom for things like serial number which
- * canbe scatters across.
- * Added eeprom data using reg property suggested by Sascha and Stephen.
- * Added non-DT support.
- * Move kerneldoc to the src files spotted by Mark Brown.
- * Remove local list and do eeprom lookup by using class_find_device()
-
-
-Thanks,
-srini
-
-Maxime Ripard (1):
-  nvmem: sunxi: Move the SID driver to the nvmem framework
-
-Srinivas Kandagatla (8):
-  nvmem: Add a simple NVMEM framework for nvmem providers
-  nvmem: Add a simple NVMEM framework for consumers
-  nvmem: Add nvmem_device based consumer apis.
-  nvmem: Add bindings for simple nvmem framework
-  Documentation: nvmem: add nvmem api level and how-to doc
-  nvmem: qfprom: Add Qualcomm QFPROM support.
-  nvmem: qfprom: Add bindings for qfprom
-  nvmem: Add to MAINTAINERS for nvmem framework
-
- Documentation/ABI/testing/sysfs-driver-sunxi-sid   |   22 -
- .../bindings/misc/allwinner,sunxi-sid.txt          |   17 -
- .../bindings/nvmem/allwinner,sunxi-sid.txt         |   21 +
- Documentation/devicetree/bindings/nvmem/nvmem.txt  |   85 ++
- Documentation/devicetree/bindings/nvmem/qfprom.txt |   35 +
- Documentation/nvmem/nvmem.txt                      |  151 +++
- MAINTAINERS                                        |    9 +
- drivers/Kconfig                                    |    2 +
- drivers/Makefile                                   |    1 +
- drivers/misc/eeprom/Kconfig                        |   13 -
- drivers/misc/eeprom/Makefile                       |    1 -
- drivers/misc/eeprom/sunxi_sid.c                    |  156 ---
- drivers/nvmem/Kconfig                              |   36 +
- drivers/nvmem/Makefile                             |   12 +
- drivers/nvmem/core.c                               | 1069 ++++++++++++++++++++
- drivers/nvmem/qfprom.c                             |   89 ++
- drivers/nvmem/sunxi-sid.c                          |  160 +++
- include/linux/nvmem-consumer.h                     |  154 +++
- include/linux/nvmem-provider.h                     |   48 +
- 19 files changed, 1872 insertions(+), 209 deletions(-)
- delete mode 100644 Documentation/ABI/testing/sysfs-driver-sunxi-sid
- delete mode 100644 Documentation/devicetree/bindings/misc/allwinner,sunxi-sid.txt
- create mode 100644 Documentation/devicetree/bindings/nvmem/allwinner,sunxi-sid.txt
- create mode 100644 Documentation/devicetree/bindings/nvmem/nvmem.txt
- create mode 100644 Documentation/devicetree/bindings/nvmem/qfprom.txt
- create mode 100644 Documentation/nvmem/nvmem.txt
- delete mode 100644 drivers/misc/eeprom/sunxi_sid.c
+Signed-off-by: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+[Maxime Ripard: intial version of eeprom framework]
+Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+---
+ drivers/Kconfig                |   2 +
+ drivers/Makefile               |   1 +
+ drivers/nvmem/Kconfig          |  10 ++
+ drivers/nvmem/Makefile         |   6 +
+ drivers/nvmem/core.c           | 398 +++++++++++++++++++++++++++++++++++++++++
+ include/linux/nvmem-provider.h |  54 ++++++
+ 6 files changed, 471 insertions(+)
  create mode 100644 drivers/nvmem/Kconfig
  create mode 100644 drivers/nvmem/Makefile
  create mode 100644 drivers/nvmem/core.c
- create mode 100644 drivers/nvmem/qfprom.c
- create mode 100644 drivers/nvmem/sunxi-sid.c
- create mode 100644 include/linux/nvmem-consumer.h
  create mode 100644 include/linux/nvmem-provider.h
 
+diff --git a/drivers/Kconfig b/drivers/Kconfig
+index c0cc96b..69d7305 100644
+--- a/drivers/Kconfig
++++ b/drivers/Kconfig
+@@ -182,4 +182,6 @@ source "drivers/thunderbolt/Kconfig"
+ 
+ source "drivers/android/Kconfig"
+ 
++source "drivers/nvmem/Kconfig"
++
+ endmenu
+diff --git a/drivers/Makefile b/drivers/Makefile
+index 46d2554..f86b897 100644
+--- a/drivers/Makefile
++++ b/drivers/Makefile
+@@ -165,3 +165,4 @@ obj-$(CONFIG_RAS)		+= ras/
+ obj-$(CONFIG_THUNDERBOLT)	+= thunderbolt/
+ obj-$(CONFIG_CORESIGHT)		+= hwtracing/coresight/
+ obj-$(CONFIG_ANDROID)		+= android/
++obj-$(CONFIG_NVMEM)		+= nvmem/
+diff --git a/drivers/nvmem/Kconfig b/drivers/nvmem/Kconfig
+new file mode 100644
+index 0000000..f157b6d
+--- /dev/null
++++ b/drivers/nvmem/Kconfig
+@@ -0,0 +1,10 @@
++menuconfig NVMEM
++	tristate "NVMEM Support"
++	select REGMAP
++	help
++	  Support for NVMEM devices.
++
++	  This framework is designed to provide a generic interface to NVMEM
++	  from both the Linux Kernel and the userspace.
++
++	  If unsure, say no.
+diff --git a/drivers/nvmem/Makefile b/drivers/nvmem/Makefile
+new file mode 100644
+index 0000000..6df2c69
+--- /dev/null
++++ b/drivers/nvmem/Makefile
+@@ -0,0 +1,6 @@
++#
++# Makefile for nvmem drivers.
++#
++
++obj-$(CONFIG_NVMEM)		+= nvmem_core.o
++nvmem_core-y			:= core.o
+diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
+new file mode 100644
+index 0000000..17a826d
+--- /dev/null
++++ b/drivers/nvmem/core.c
+@@ -0,0 +1,398 @@
++/*
++ * nvmem framework core.
++ *
++ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
++ * Copyright (C) 2013 Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 and
++ * only version 2 as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include <linux/device.h>
++#include <linux/nvmem-provider.h>
++#include <linux/export.h>
++#include <linux/fs.h>
++#include <linux/idr.h>
++#include <linux/init.h>
++#include <linux/regmap.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/slab.h>
++
++struct nvmem_device {
++	const char		*name;
++	struct regmap		*regmap;
++	struct module		*owner;
++	struct device		dev;
++	int			stride;
++	int			word_size;
++	int			ncells;
++	int			id;
++	int			users;
++	size_t			size;
++	bool			read_only;
++};
++
++struct nvmem_cell {
++	const char *name;
++	int			offset;
++	int			bytes;
++	int			bit_offset;
++	int			nbits;
++	struct nvmem_device	*nvmem;
++	struct list_head	node;
++};
++
++static DEFINE_MUTEX(nvmem_mutex);
++static DEFINE_IDA(nvmem_ida);
++
++static LIST_HEAD(nvmem_cells);
++static DEFINE_MUTEX(nvmem_cells_mutex);
++
++#define to_nvmem_device(d) container_of(d, struct nvmem_device, dev)
++
++static ssize_t bin_attr_nvmem_read(struct file *filp, struct kobject *kobj,
++				    struct bin_attribute *attr,
++				    char *buf, loff_t pos, size_t count)
++{
++	struct device *dev = container_of(kobj, struct device, kobj);
++	struct nvmem_device *nvmem = to_nvmem_device(dev);
++	int rc;
++
++	/* Stop the user from reading */
++	if (pos > nvmem->size)
++		return 0;
++
++	if (pos + count > nvmem->size)
++		count = nvmem->size - pos;
++
++	count = count/nvmem->word_size * nvmem->word_size;
++
++	rc = regmap_raw_read(nvmem->regmap, pos, buf, count);
++
++	if (IS_ERR_VALUE(rc))
++		return rc;
++
++	return count;
++}
++
++static ssize_t bin_attr_nvmem_write(struct file *filp, struct kobject *kobj,
++				     struct bin_attribute *attr,
++				     char *buf, loff_t pos, size_t count)
++{
++	struct device *dev = container_of(kobj, struct device, kobj);
++	struct nvmem_device *nvmem = to_nvmem_device(dev);
++	int rc;
++
++	/* Stop the user from writing */
++	if (pos > nvmem->size)
++		return 0;
++
++	if (pos + count > nvmem->size)
++		count = nvmem->size - pos;
++
++	count = count/nvmem->word_size * nvmem->word_size;
++
++	rc = regmap_raw_write(nvmem->regmap, pos, buf, count);
++
++	if (IS_ERR_VALUE(rc))
++		return rc;
++
++	return count;
++}
++
++/* default read/write permissions */
++static struct bin_attribute bin_attr_nvmem = {
++	.attr	= {
++		.name	= "nvmem",
++		.mode	= S_IWUSR | S_IRUGO,
++	},
++	.read	= bin_attr_nvmem_read,
++	.write	= bin_attr_nvmem_write,
++};
++
++static struct bin_attribute *nvmem_bin_attributes[] = {
++	&bin_attr_nvmem,
++	NULL,
++};
++
++static const struct attribute_group nvmem_bin_group = {
++	.bin_attrs	= nvmem_bin_attributes,
++};
++
++static const struct attribute_group *nvmem_dev_groups[] = {
++	&nvmem_bin_group,
++	NULL,
++};
++
++/* read only permission */
++static struct bin_attribute bin_attr_ro_nvmem = {
++	.attr	= {
++		.name	= "nvmem",
++		.mode	= S_IRUGO,
++	},
++	.read	= bin_attr_nvmem_read,
++};
++
++static struct bin_attribute *nvmem_bin_ro_attributes[] = {
++	&bin_attr_ro_nvmem,
++	NULL,
++};
++static const struct attribute_group nvmem_bin_ro_group = {
++	.bin_attrs	= nvmem_bin_ro_attributes,
++};
++
++static void nvmem_release(struct device *dev)
++{
++	struct nvmem_device *nvmem = to_nvmem_device(dev);
++
++	ida_simple_remove(&nvmem_ida, nvmem->id);
++	kfree(nvmem);
++}
++
++static struct class nvmem_class = {
++	.name		= "nvmem",
++	.dev_groups	= nvmem_dev_groups,
++	.dev_release	= nvmem_release,
++};
++
++static int of_nvmem_match(struct device *dev, const void *nvmem_np)
++{
++	return dev->of_node == nvmem_np;
++}
++
++static struct nvmem_device *of_nvmem_find(struct device_node *nvmem_np)
++{
++	struct device *d;
++
++	if (!nvmem_np)
++		return NULL;
++
++	d = class_find_device(&nvmem_class, NULL, nvmem_np, of_nvmem_match);
++
++	return d ? to_nvmem_device(d) : NULL;
++}
++
++static struct nvmem_cell *nvmem_find_cell(const char *cell_id)
++{
++	struct nvmem_cell *p;
++
++	list_for_each_entry(p, &nvmem_cells, node)
++		if (p && !strcmp(p->name, cell_id))
++			return p;
++
++	return NULL;
++}
++
++static void nvmem_cell_drop(struct nvmem_cell *cell)
++{
++	mutex_lock(&nvmem_cells_mutex);
++	list_del(&cell->node);
++	mutex_unlock(&nvmem_cells_mutex);
++	kfree(cell);
++}
++
++static void nvmem_device_remove_all_cells(struct nvmem_device *nvmem)
++{
++	struct nvmem_cell *cell;
++	struct list_head *p, *n;
++
++	list_for_each_safe(p, n, &nvmem_cells) {
++		cell = list_entry(p, struct nvmem_cell, node);
++		if (cell->nvmem == nvmem)
++			nvmem_cell_drop(cell);
++	}
++}
++
++static void nvmem_cell_add(struct nvmem_cell *cell)
++{
++	mutex_lock(&nvmem_cells_mutex);
++	list_add_tail(&cell->node, &nvmem_cells);
++	mutex_unlock(&nvmem_cells_mutex);
++}
++
++static int nvmem_cell_info_to_nvmem_cell(struct nvmem_device *nvmem,
++				   struct nvmem_cell_info *info,
++				   struct nvmem_cell *cell)
++{
++	cell->nvmem = nvmem;
++	cell->offset = info->offset;
++	cell->bytes = info->bytes;
++	cell->name = info->name;
++
++	cell->bit_offset = info->bit_offset;
++	cell->nbits = info->nbits;
++
++	if (cell->nbits)
++		cell->bytes = DIV_ROUND_UP(cell->nbits + cell->bit_offset,
++					   BITS_PER_BYTE);
++
++	if (!IS_ALIGNED(cell->offset, nvmem->stride)) {
++		dev_err(&nvmem->dev,
++			"cell %s unaligned to nvmem stride %d\n",
++			cell->name, nvmem->stride);
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++static int nvmem_add_cells(struct nvmem_device *nvmem,
++			   struct nvmem_config *cfg)
++{
++	struct nvmem_cell **cells;
++	struct nvmem_cell_info *info = cfg->cells;
++	int i, rval;
++
++	cells = kzalloc(sizeof(*cells) * cfg->ncells, GFP_KERNEL);
++	if (!cells)
++		return -ENOMEM;
++
++	for (i = 0; i < cfg->ncells; i++) {
++		cells[i] = kzalloc(sizeof(**cells), GFP_KERNEL);
++		if (!cells[i]) {
++			rval = -ENOMEM;
++			goto err;
++		}
++
++		rval = nvmem_cell_info_to_nvmem_cell(nvmem, &info[i], cells[i]);
++		if (IS_ERR_VALUE(rval)) {
++			kfree(cells[i]);
++			goto err;
++		}
++
++		nvmem_cell_add(cells[i]);
++	}
++
++	nvmem->ncells = cfg->ncells;
++	/* remove tmp array */
++	kfree(cells);
++
++	return 0;
++err:
++	while (--i)
++		nvmem_cell_drop(cells[i]);
++
++	return rval;
++}
++
++/**
++ * nvmem_register() - Register a nvmem device for given nvmem_config.
++ * Also creates an binary entry in /sys/class/nvmem/dev-name/nvmem
++ *
++ * @config: nvmem device configuration with which nvmem device is created.
++ *
++ * The return value will be an ERR_PTR() on error or a valid pointer
++ * to nvmem_device.
++ */
++
++struct nvmem_device *nvmem_register(struct nvmem_config *config)
++{
++	struct nvmem_device *nvmem;
++	struct regmap *rm;
++	int rval;
++
++	if (!config->dev)
++		return ERR_PTR(-EINVAL);
++
++	rm = dev_get_regmap(config->dev, NULL);
++	if (!rm) {
++		dev_err(config->dev, "Regmap not found\n");
++		return ERR_PTR(-EINVAL);
++	}
++
++	nvmem = kzalloc(sizeof(*nvmem), GFP_KERNEL);
++	if (!nvmem)
++		return ERR_PTR(-ENOMEM);
++
++	nvmem->id = ida_simple_get(&nvmem_ida, 0, 0, GFP_KERNEL);
++	if (nvmem->id < 0) {
++		kfree(nvmem);
++		return ERR_PTR(nvmem->id);
++	}
++
++	nvmem->regmap = rm;
++	nvmem->owner = config->owner;
++	nvmem->stride = regmap_get_reg_stride(rm);
++	nvmem->word_size = regmap_get_val_bytes(rm);
++	nvmem->size = regmap_get_max_register(rm) + nvmem->stride;
++	nvmem->dev.class = &nvmem_class;
++	nvmem->dev.parent = config->dev;
++	nvmem->dev.of_node = config->dev->of_node;
++	dev_set_name(&nvmem->dev, "%s%d",
++		     config->name ? : "nvmem", config->id);
++
++	nvmem->read_only = nvmem->dev.of_node ?
++				of_property_read_bool(nvmem->dev.of_node,
++				"read-only") :
++				config->read_only;
++
++	device_initialize(&nvmem->dev);
++
++	dev_dbg(&nvmem->dev, "Registering nvmem device %s\n",
++		dev_name(&nvmem->dev));
++
++	rval = device_add(&nvmem->dev);
++	if (rval) {
++		ida_simple_remove(&nvmem_ida, nvmem->id);
++		kfree(nvmem);
++		return ERR_PTR(rval);
++	}
++
++	/* update sysfs attributes */
++	if (nvmem->read_only)
++		sysfs_update_group(&nvmem->dev.kobj, &nvmem_bin_ro_group);
++
++	if (config->cells)
++		nvmem_add_cells(nvmem, config);
++
++	return nvmem;
++}
++EXPORT_SYMBOL_GPL(nvmem_register);
++
++/**
++ * nvmem_unregister() - Unregister previously registered nvmem device
++ *
++ * @nvmem: Pointer to previously registered nvmem device.
++ *
++ * The return value will be an non zero on error or a zero on success.
++ */
++int nvmem_unregister(struct nvmem_device *nvmem)
++{
++	mutex_lock(&nvmem_mutex);
++	if (nvmem->users) {
++		mutex_unlock(&nvmem_mutex);
++		return -EBUSY;
++	}
++	mutex_unlock(&nvmem_mutex);
++
++	nvmem_device_remove_all_cells(nvmem);
++	device_del(&nvmem->dev);
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(nvmem_unregister);
++
++static int __init nvmem_init(void)
++{
++	return class_register(&nvmem_class);
++}
++
++static void __exit nvmem_exit(void)
++{
++	class_unregister(&nvmem_class);
++}
++
++subsys_initcall(nvmem_init);
++module_exit(nvmem_exit);
++
++MODULE_AUTHOR("Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org");
++MODULE_AUTHOR("Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org");
++MODULE_DESCRIPTION("nvmem Driver Core");
++MODULE_LICENSE("GPL v2");
+diff --git a/include/linux/nvmem-provider.h b/include/linux/nvmem-provider.h
+new file mode 100644
+index 0000000..f589d3b
+--- /dev/null
++++ b/include/linux/nvmem-provider.h
+@@ -0,0 +1,54 @@
++/*
++ * nvmem framework provider.
++ *
++ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
++ * Copyright (C) 2013 Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
++ *
++ * This file is licensed under the terms of the GNU General Public
++ * License version 2.  This program is licensed "as is" without any
++ * warranty of any kind, whether express or implied.
++ */
++
++#ifndef _LINUX_NVMEM_PROVIDER_H
++#define _LINUX_NVMEM_PROVIDER_H
++
++struct nvmem_device;
++
++struct nvmem_cell_info {
++	const char		*name;
++	int			offset;
++	int			bytes;
++	int			bit_offset;
++	int			nbits;
++};
++
++struct nvmem_config {
++	struct device		*dev;
++	const char		*name;
++	int			id;
++	struct module		*owner;
++	struct nvmem_cell_info	*cells;
++	int			ncells;
++	bool			read_only;
++};
++
++#if IS_ENABLED(CONFIG_NVMEM)
++
++struct nvmem_device *nvmem_register(struct nvmem_config *cfg);
++int nvmem_unregister(struct nvmem_device *nvmem);
++
++#else
++
++static inline struct nvmem_device *nvmem_register(struct nvmem_config *cfg)
++{
++	return ERR_PTR(-ENOSYS);
++}
++
++static inline int nvmem_unregister(struct nvmem_device *nvmem)
++{
++	return -ENOSYS;
++}
++
++#endif /* CONFIG_NVMEM */
++
++#endif  /* ifndef _LINUX_NVMEM_PROVIDER_H */
 -- 
 1.9.1
