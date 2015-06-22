@@ -1,116 +1,180 @@
-From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH v6 4/9] nvmem: Add bindings for simple nvmem framework
-Date: Tue, 23 Jun 2015 00:08:58 +0100
-Message-ID: <1435014538-26308-1-git-send-email-srinivas.kandagatla@linaro.org>
+From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Subject: [PATCH v6 5/9] Documentation: nvmem: add nvmem api level and how-to doc
+Date: Tue, 23 Jun 2015 00:09:07 +0100
+Message-ID: <1435014547-26350-1-git-send-email-srinivas.kandagatla@linaro.org>
 References: <1435014459-26138-1-git-send-email-srinivas.kandagatla@linaro.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1435014459-26138-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, stefan.wahren-eS4NqCHxEME@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+In-Reply-To: <1435014459-26138-1-git-send-email-srinivas.kandagatla@linaro.org>
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: linux-arm-kernel@lists.infradead.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, pantelis.antoniou@konsulko.com, mporter@konsulko.com, stefan.wahren@i2se.com, wxt@rock-chips.com, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds bindings for simple nvmem framework which allows nvmem
-consumers to talk to nvmem providers to get access to nvmem cell data.
+This patch add basic how-to and api summary documentation for simple
+NVMEM framework.
 
-Signed-off-by: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-[Maxime Ripard: intial version of eeprom framework]
-Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 ---
- Documentation/devicetree/bindings/nvmem/nvmem.txt | 85 +++++++++++++++++++++++
- 1 file changed, 85 insertions(+)
- create mode 100644 Documentation/devicetree/bindings/nvmem/nvmem.txt
+ Documentation/nvmem/nvmem.txt | 151 ++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 151 insertions(+)
+ create mode 100644 Documentation/nvmem/nvmem.txt
 
-diff --git a/Documentation/devicetree/bindings/nvmem/nvmem.txt b/Documentation/devicetree/bindings/nvmem/nvmem.txt
+diff --git a/Documentation/nvmem/nvmem.txt b/Documentation/nvmem/nvmem.txt
 new file mode 100644
-index 0000000..d1a37e7
+index 0000000..28b3579
 --- /dev/null
-+++ b/Documentation/devicetree/bindings/nvmem/nvmem.txt
-@@ -0,0 +1,85 @@
-+= NVMEM(Non Volatile Memory) Data Device Tree Bindings =
++++ b/Documentation/nvmem/nvmem.txt
+@@ -0,0 +1,151 @@
++			    NVMEM SUBSYSTEM
++	  Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 +
-+This binding is intended to represent the location of hardware
-+configuration data stored in NVMEMs like eeprom, efuses and so on.
++This document explains the Simple NVMEM Framework along with the APIs provided,
++and how-to-use.
 +
-+On a significant proportion of boards, the manufacturer has stored
-+some data on NVMEM, for the OS to be able to retrieve these information
-+and act upon it. Obviously, the OS has to know about where to retrieve
-+these data from, and where they are stored on the storage device.
++1. Introduction
++===============
++*NVMEM* is the abbreviation for Non Volatile Memory layer. It is used to
++retrieve configuration or SOC or Device specific data from a non volatile memories
++like eeprom, efuses and so on.
 +
-+This document is here to document this.
++Up until now, NVMEM drivers like eeprom were stored in drivers/misc, where they
++all had to duplicate pretty much the same code to register a sysfs file, allow
++in-kernel users to access the content of the devices they were driving, etc.
 +
-+= Data providers =
-+Contains bindings specific to provider drivers and data cells as children
-+of this node.
++This was also a problem as far as other in-kernel users were involved, since
++the solutions used were pretty much different from on driver to another, there
++was a rather big abstraction leak.
 +
-+Optional properties:
-+ read-only: Mark the provider as read only.
++Introduction of this framework aims at solving this. It also introduces DT
++representation for consumer devices to go get the data they require (MAC
++Addresses, SoC/Revision ID, part numbers, and so on) from the NVMEMs.
++This framework is based on regmap, so that most of the abstraction
++available in regmap can be reused, across multiple types of buses.
 +
-+= Data cells =
-+These are the child nodes of the provider which contain data cell
-+information like offset and size in nvmem provider.
++NVMEM Providers
+++++++++++++++++
 +
-+Required properties:
-+reg:	specifies the offset in byte within that storage device, start bit
-+	in the byte and the length in bits of the data we care about.
-+	There could be more than one offset-length pairs in this property.
++NVMEM provider refers to an entity that implements methods to initialize, read
++and write the non-volatile memory.
 +
-+Optional properties:
++2. Registering/Unregistering the NVMEM provider
++===============================================
 +
-+bit-offset: specifies the offset in bit within the address range specified
-+	by reg property. Can take values from 0-7.
-+nbits: specifies number of bits this cell occupies starting from bit-offset.
++A NVMEM provider can register with NVMEM core by suppling relevant
++nvmem configuration to nvmem_register(), on success core would return a valid
++nvmem_device pointer.
 +
-+For example:
++nvmem_unregister(nvmem) is used to unregister the already registered provider.
 +
-+	/* Provider */
-+	qfprom: qfprom@00700000 {
-+		...
++For example for simple qfprom case:
 +
-+		/* Data cells */
-+		tsens_calibration: calib@404 {
-+			reg = <0x404 0x10>;
-+		};
++static struct nvmem_config econfig = {
++	.name = "qfprom",
++	.owner = THIS_MODULE,
++};
 +
-+		tsens_calibration_bckp: calib_bckp@504 {
-+			reg = <0x504 0x11>;
-+			bit-offset = 6;
-+			nbits = 128;
-+		};
++static int qfprom_probe(struct platform_device *pdev)
++{
++	...
++	econfig.dev = &pdev->dev;
++	nvmem = nvmem_register(&econfig);
++	...
++}
 +
-+		pvs_version: pvs-version@6 {
-+			reg = <0x6 0x2>
-+			bit-offset = 7;
-+			nbits = 2;
-+		};
++It is mandatory that the NVMEM provider has a regmap associated with its
++struct device.
 +
-+		speed_bin: speed-bin@c{
-+			reg = <0xc 0x1>;
-+			bit-offset = 2;
-+			nbits	= 3;
++NVMEM Consumers
+++++++++++++++++
 +
-+		};
-+		...
-+	};
++NVMEM consumers are the entities which make use of the NVMEM provider to
++read/write into NVMEM.
 +
-+= Data consumers =
-+Are device nodes which consume nvmem data cells/providers.
++3. NVMEM cell based consumer APIs.
++=================================
 +
-+Required-properties:
-+nvmem-cell: list of phandle to the nvmem data cells.
-+nvmem-cell-names: names for the each nvmem-cell specified. Required if
-+	nvmem-cell is used.
++NVMEM cells are the data entries/fields in the NVMEM.
++The NVMEM framework provides 3 APIs to read/write NVMEM cells.
 +
-+Optional-properties:
-+nvmem	: list of phandles to nvmem providers.
-+nvmem-names: names for the each nvmem provider. required if nvmem is used.
++struct nvmem_cell *nvmem_cell_get(struct device *dev, const char *name);
++struct nvmem_cell *devm_nvmem_cell_get(struct device *dev, const char *name);
 +
-+For example:
++void nvmem_cell_put(struct nvmem_cell *cell);
++void devm_nvmem_cell_put(struct device *dev, struct nvmem_cell *cell);
 +
-+	tsens {
-+		...
-+		nvmem-cell = <&tsens_calibration>;
-+		nvmem-cell-names = "calibration";
-+	};
++void *nvmem_cell_read(struct nvmem_cell *cell, ssize_t *len);
++int nvmem_cell_write(struct nvmem_cell *cell, void *buf, ssize_t len);
++
++*nvmem_cell_get() apis will get a reference to nvmem cell for a given id,
++and nvmem_cell_read/write() can then directly read or write to the cell.
++Once the usage of the cell is finished the consumer should call *nvmem_cell_put()
++to free all the allocation memory for the cell.
++
++4. Direct NVMEM device based consumer APIs.
++==========================================
++
++In some instances it is necessary to directly read/write the NVMEM.
++To facilitate such consumers NVMEM framework provides below apis.
++
++struct nvmem_device *nvmem_device_get(struct device *dev, const char *name);
++struct nvmem_device *devm_nvmem_device_get(struct device *dev,
++					   const char *name);
++void nvmem_device_put(struct nvmem_device *nvmem);
++int nvmem_device_read(struct nvmem_device *nvmem, unsigned int offset,
++		      size_t bytes, void *buf);
++int nvmem_device_write(struct nvmem_device *nvmem, unsigned int offset,
++		       size_t bytes, void *buf);
++int nvmem_device_cell_read(struct nvmem_device *nvmem,
++			   struct nvmem_cell_info *info, void *buf);
++int nvmem_device_cell_write(struct nvmem_device *nvmem,
++			    struct nvmem_cell_info *info, void *buf);
++
++Before the consumers can read/write NVMEM directly, it should get hold
++of nvmem_controller from one of the *nvmem_device_get() api.
++
++Difference between these apis and cell based apis is that these apis
++always take nvmem_device as parameter.
++
++5. Releasing a reference to the NVMEM
++=====================================
++
++When the consumers no longer needs the NVMEM, it has to release the reference
++to the NVMEM it has obtained using the APIs mentioned in the above section.
++NVMEM framework provides 2 APIs to release a reference to the NVMEM.
++
++void nvmem_cell_put(struct nvmem_cell *cell);
++void devm_nvmem_cell_put(struct device *dev, struct nvmem_cell *cell);
++void nvmem_device_put(struct nvmem_device *nvmem);
++void devm_nvmem_device_put(struct device *dev, struct nvmem_device *nvmem);
++
++Both these APIs are used to release a reference to the NVMEM and
++devm_nvmem_cell_put and devm_nvmem_device_put destroys the devres associated
++with this NVMEM.
++
++Userspace
+++++++++++
++
++6. Userspace binary interface.
++==============================
++
++Userspace can read/write the raw NVMEM file located at /sys/class/nvmem/*/nvmem
++
++ex:
++
++hexdump /sys/class/nvmem/qfprom0/nvmem
++
++0000000 0000 0000 0000 0000 0000 0000 0000 0000
++*
++00000a0 db10 2240 0000 e000 0c00 0c00 0000 0c00
++0000000 0000 0000 0000 0000 0000 0000 0000 0000
++...
++*
++0001000
++
++7. DeviceTree Binding
++=====================
++
++The documentation for NVMEM dt binding can be found @
++Documentation/devicetree/bindings/nvmem/nvmem.txt
 -- 
 1.9.1
