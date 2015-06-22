@@ -1,25 +1,44 @@
-From: Jonathan Corbet <corbet@lwn.net>
-Subject: Re: [PATCH] Doc:ABI/testing: Fix typo in sysfs-bus-fcoe
-Date: Mon, 22 Jun 2015 10:35:40 -0600
-Message-ID: <20150622103540.6b7a3498@lwn.net>
-References: <1434766640-23799-1-git-send-email-standby24x7@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1434766640-23799-1-git-send-email-standby24x7@gmail.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Masanari Iida <standby24x7@gmail.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, vasu.dev@intel.com, linux-doc@vger.kernel.org, fcoe-devel@open-fcoe.org
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH v7 0/3] Enable PPI sysfs interface for TPM 2.0
+Date: Mon, 22 Jun 2015 20:24:49 +0300
+Message-ID: <1434993894-5911-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: peterhuewe-Mmb7MZpHnFY@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, 20 Jun 2015 11:17:20 +0900
-Masanari Iida <standby24x7@gmail.com> wrote:
+v7:
+* Fixed compile error when CONFIG_SYSFS is not enabled.
 
-> This patch fix some spelling typo in sysfs-bus-fcoe
+v6:
+* Updated documentation.
 
-Applied to the docs tree, thanks.
+v5:
+* Removed dangling export of kernfs_remove_by_name_ns() from the sysfs
+  patch.
 
-jon
---
-To unsubscribe from this list: send the line "unsubscribe linux-doc" in
+v4:
+* Use sysfs_remove_link()
+
+v3:
+* Fixed to_tpm_chip() macro.
+* Split into two patches.
+* Renamed sysfs_link_group_to_kobj to sysfs_link_entry_to_kobj
+* Only create the "backwards compatibility" symlink for TPM 1.x devices.
+
+Jarkko Sakkinen (3):
+  sysfs: added sysfs_link_entry_to_kobj()
+  tpm: move the PPI attributes to character device directory.
+  tpm: update PPI documentation to address the location change.
+
+ Documentation/ABI/testing/sysfs-driver-ppi | 19 +++++++++-----
+ drivers/char/tpm/tpm-chip.c                | 24 +++++++++++------
+ drivers/char/tpm/tpm.h                     | 17 +++++-------
+ drivers/char/tpm/tpm_ppi.c                 | 34 ++++++++----------------
+ fs/sysfs/group.c                           | 42 ++++++++++++++++++++++++++++++
+ include/linux/sysfs.h                      |  9 +++++++
+ 6 files changed, 96 insertions(+), 49 deletions(-)
+
+-- 
+2.1.4
