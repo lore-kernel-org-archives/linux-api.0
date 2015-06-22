@@ -1,94 +1,130 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: [PATCH v7 3/3] tpm: update PPI documentation to address the location change.
-Date: Mon, 22 Jun 2015 20:24:52 +0300
-Message-ID: <1434993894-5911-4-git-send-email-jarkko.sakkinen@linux.intel.com>
-References: <1434993894-5911-1-git-send-email-jarkko.sakkinen@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1434993894-5911-1-git-send-email-jarkko.sakkinen@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: tpmdd-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org
-Cc: peterhuewe@gmx.de, gregkh@linuxfoundation.org, jgunthorpe@obsidianresearch.com, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, "open list:ABI/API" <linux-api@vger.kernel.org>
+From: Marcus Gelderie <marcus.gelderie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v2] ipc: Modify message queue accounting to reflect both
+ total user data and auxiliary kernel data
+Date: Tue, 23 Jun 2015 00:25:46 +0200
+Message-ID: <20150622222546.GA32432@ramsey.localdomain>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, John Duffy <jb_duffy-FhtRXb7CoQBt1OO0OYaSVA@public.gmane.org>, Arto Bendiken <arto-TQ6thHYR8Svk1uMJSBkQmQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, redmnic-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Updated Documentation/ABI/testing/sysfs-driver-ppi in order to explain
-where PPI attributes are located and how backwards compatiblity is
-addressed.
+A while back, the message queue implementation in the kernel was
+improved to use btrees to speed up retrieval of messages (commit
+d6629859b36). The patch introducing the improved kernel handling of
+message queues (using btrees) has, as a by-product, changed the
+meaning of the QSIZE field in the pseudo-file created for the queue.
+Before, this field reflected the size of the user-data in the queue.
+Since, it also takes kernel data structures into account. For
+example, if 13 bytes of user data are in the queue, on my machine the
+file reports a size of 61 bytes.
 
-Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+There was some discussion on this topic before (for example
+https://lkml.org/lkml/2014/10/1/115). Commenting on the lkml, Michael
+Kerrisk gave the following background (https://lkml.org/lkml/2015/6/16/74):
+
+    The pseudofiles in the mqueue filesystem (usually mounted at
+    /dev/mqueue) expose fields with metadata describing a message
+    queue. One of these fields, QSIZE, as originally implemented,
+    showed the total number of bytes of user data in all messages in
+    the message queue, and this feature was documented from the
+    beginning in the mq_overview(7) page. In 3.5, some other (useful)
+    work happened to break the user-space API in a couple of places,
+    including the value exposed via QSIZE, which now includes a measure
+    of kernel overhead bytes for the queue, a figure that renders QSIZE
+    useless for its original purpose, since there's no way to deduce
+    the number of overhead bytes consumed by the implementation.
+    (The other user-space breakage was subsequently fixed.)
+
+Reporting the size of the message queue in kernel has its merits, but
+doing so in the QSIZE field of the pseudo file corresponding to the
+queue is a breaking change, as mentioned above. This patch therefore
+returns the QSIZE  field to its original meaning. At the same time,
+it introduces a new field QKERSIZE that reflects the size of the queue
+in kernel (user data + kernel data).
+
+It should be noted that the resource limit RLIMIT_MSGQUEUE is counted
+against the worst-case size of the queue (in both the old and the new
+implementation) and is therefore not affected by this change, nor by
+the previous one changing the way of accounting.
+
+Signed-off-by: Marcus Gelderie <redmnic-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
- Documentation/ABI/testing/sysfs-driver-ppi | 19 ++++++++++++-------
- 1 file changed, 12 insertions(+), 7 deletions(-)
+ ipc/mqueue.c | 20 ++++++++++++++------
+ 1 file changed, 14 insertions(+), 6 deletions(-)
 
-diff --git a/Documentation/ABI/testing/sysfs-driver-ppi b/Documentation/ABI/testing/sysfs-driver-ppi
-index 7d1435b..9921ef2 100644
---- a/Documentation/ABI/testing/sysfs-driver-ppi
-+++ b/Documentation/ABI/testing/sysfs-driver-ppi
-@@ -1,4 +1,4 @@
--What:		/sys/devices/pnp0/<bus-num>/ppi/
-+What:		/sys/class/tpm/tpmX/ppi/
- Date:		August 2012
- Kernel Version:	3.6
- Contact:	xiaoyan.zhang@intel.com
-@@ -8,9 +8,14 @@ Description:
- 		folder makes sense. The folder path can be got by command
- 		'find /sys/ -name 'pcrs''. For the detail information of PPI,
- 		please refer to the PPI specification from
+diff --git a/ipc/mqueue.c b/ipc/mqueue.c
+index 3aaea7f..7d4c464 100644
+--- a/ipc/mqueue.c
++++ b/ipc/mqueue.c
+@@ -41,7 +41,7 @@
+ 
+ #define MQUEUE_MAGIC	0x19800202
+ #define DIRENT_SIZE	20
+-#define FILENT_SIZE	80
++#define FILENT_SIZE	90
+ 
+ #define SEND		0
+ #define RECV		1
+@@ -82,8 +82,12 @@ struct mqueue_inode_info {
+ 	/* for tasks waiting for free space and messages, respectively */
+ 	struct ext_wait_queue e_wait_q[2];
+ 
+-	unsigned long qsize; /* size of queue in memory (sum of all msgs) */
+-};
++	/* size of queue in memory (sum of all msgs plus kernel
++	 * data structures) */
++	unsigned long qsize;
 +
- 		http://www.trustedcomputinggroup.org/
++	/* size of user data in the queue (sum of all msgs) */
++	unsigned long q_usersize; };
  
--What:		/sys/devices/pnp0/<bus-num>/ppi/version
-+		In Linux 4.2 ppi was moved to the character device directory.
-+		A symlink from tpmX/device/ppi to tpmX/ppi to provide backwards
-+		compatibility.
-+
-+What:		/sys/class/tpm/tpmX/ppi/version
- Date:		August 2012
- Contact:	xiaoyan.zhang@intel.com
- Description:
-@@ -18,7 +23,7 @@ Description:
- 		platform.
- 		This file is readonly.
+ static const struct inode_operations mqueue_dir_inode_operations;
+ static const struct file_operations mqueue_file_operations;
+@@ -151,6 +155,7 @@ static int msg_insert(struct msg_msg *msg, struct mqueue_inode_info *info)
+ insert_msg:
+ 	info->attr.mq_curmsgs++;
+ 	info->qsize += msg->m_ts;
++	info->q_usersize += msg->m_ts;
+ 	list_add_tail(&msg->m_list, &leaf->msg_list);
+ 	return 0;
+ }
+@@ -210,6 +215,7 @@ try_again:
+ 	}
+ 	info->attr.mq_curmsgs--;
+ 	info->qsize -= msg->m_ts;
++	info->q_usersize -= msg->m_ts;
+ 	return msg;
+ }
  
--What:		/sys/devices/pnp0/<bus-num>/ppi/request
-+What:		/sys/class/tpm/tpmX/ppi/request
- Date:		August 2012
- Contact:	xiaoyan.zhang@intel.com
- Description:
-@@ -28,7 +33,7 @@ Description:
- 		integer value range from 1 to 160, and 0 means no request.
- 		This file can be read and written.
+@@ -246,6 +252,7 @@ static struct inode *mqueue_get_inode(struct super_block *sb,
+ 		info->notify_owner = NULL;
+ 		info->notify_user_ns = NULL;
+ 		info->qsize = 0;
++		info->q_usersize = 0;
+ 		info->user = NULL;	/* set when all is ok */
+ 		info->msg_tree = RB_ROOT;
+ 		info->node_cache = NULL;
+@@ -491,13 +498,14 @@ static ssize_t mqueue_read_file(struct file *filp, char __user *u_data,
  
--What:		/sys/devices/pnp0/00:<bus-num>/ppi/response
-+What:		/sys/class/tpm/tpmX/ppi/response
- Date:		August 2012
- Contact:	xiaoyan.zhang@intel.com
- Description:
-@@ -37,7 +42,7 @@ Description:
- 		: <response description>".
- 		This file is readonly.
+ 	spin_lock(&info->lock);
+ 	snprintf(buffer, sizeof(buffer),
+-			"QSIZE:%-10lu NOTIFY:%-5d SIGNO:%-5d NOTIFY_PID:%-6d\n",
+-			info->qsize,
++			"QSIZE:%-10lu NOTIFY:%-5d SIGNO:%-5d NOTIFY_PID:%-6d QKERSIZE:%-10lu\n",
++			info->q_usersize,
+ 			info->notify_owner ? info->notify.sigev_notify : 0,
+ 			(info->notify_owner &&
+ 			 info->notify.sigev_notify == SIGEV_SIGNAL) ?
+ 				info->notify.sigev_signo : 0,
+-			pid_vnr(info->notify_owner));
++			pid_vnr(info->notify_owner),
++			info->qsize);
+ 	spin_unlock(&info->lock);
+ 	buffer[sizeof(buffer)-1] = '\0';
  
--What:		/sys/devices/pnp0/<bus-num>/ppi/transition_action
-+What:		/sys/class/tpm/tpmX/ppi/transition_action
- Date:		August 2012
- Contact:	xiaoyan.zhang@intel.com
- Description:
-@@ -47,7 +52,7 @@ Description:
- 		description>".
- 		This file is readonly.
- 
--What:		/sys/devices/pnp0/<bus-num>/ppi/tcg_operations
-+What:		/sys/class/tpm/tpmX/ppi/tcg_operations
- Date:		August 2012
- Contact:	xiaoyan.zhang@intel.com
- Description:
-@@ -58,7 +63,7 @@ Description:
- 		This attribute is only supported by PPI version 1.2+.
- 		This file is readonly.
- 
--What:		/sys/devices/pnp0/<bus-num>/ppi/vs_operations
-+What:		/sys/class/tpm/tpmX/ppi/vs_operations
- Date:		August 2012
- Contact:	xiaoyan.zhang@intel.com
- Description:
 -- 
-2.1.4
+2.4.4
