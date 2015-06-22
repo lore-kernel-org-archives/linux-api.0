@@ -1,451 +1,122 @@
-From: Peter =?UTF-8?B?TsO4cmx1bmQ=?= <pch@ordbogen.com>
-Subject: Re: [PATCH net-next 2/3] ipv4: L3 and L4 hash-based multipath
- routing
-Date: Sat, 20 Jun 2015 20:46:16 +0200
-Message-ID: <20150620204616.21f33494@tyr>
-References: <1434571686-5149-1-git-send-email-pch@ordbogen.com>
- <1434571686-5149-3-git-send-email-pch@ordbogen.com>
- <55834BA6.7050405@redhat.com>
+From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [RESEND PATCH V2 1/3] Add mmap flag to request pages are locked
+ after page fault
+Date: Mon, 22 Jun 2015 14:38:26 +0200
+Message-ID: <20150622123826.GF4430@dhcp22.suse.cz>
+References: <1433942810-7852-1-git-send-email-emunson@akamai.com>
+ <1433942810-7852-2-git-send-email-emunson@akamai.com>
+ <20150618152907.GG5858@dhcp22.suse.cz>
+ <20150618203048.GB2329@akamai.com>
+ <20150619145708.GG4913@dhcp22.suse.cz>
+ <20150619164333.GD2329@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <55834BA6.7050405@redhat.com>
-Sender: netdev-owner@vger.kernel.org
-To: Alexander Duyck <alexander.h.duyck@redhat.com>
-Cc: netdev@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>, James Morris <jmorris@namei.org>, Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>, Patrick McHardy <kaber@trash.net>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150619164333.GD2329-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-alpha-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, linux-parisc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 18 Jun 2015 15:52:22 -0700
-Alexander Duyck <alexander.h.duyck@redhat.com> wrote:
+On Fri 19-06-15 12:43:33, Eric B Munson wrote:
+> On Fri, 19 Jun 2015, Michal Hocko wrote:
+> 
+> > On Thu 18-06-15 16:30:48, Eric B Munson wrote:
+> > > On Thu, 18 Jun 2015, Michal Hocko wrote:
+> > [...]
+> > > > Wouldn't it be much more reasonable and straightforward to have
+> > > > MAP_FAULTPOPULATE as a counterpart for MAP_POPULATE which would
+> > > > explicitly disallow any form of pre-faulting? It would be usable for
+> > > > other usecases than with MAP_LOCKED combination.
+> > > 
+> > > I don't see a clear case for it being more reasonable, it is one
+> > > possible way to solve the problem.
+> > 
+> > MAP_FAULTPOPULATE would be usable for other cases as well. E.g. fault
+> > around is all or nothing feature. Either all mappings (which support
+> > this) fault around or none. There is no way to tell the kernel that
+> > this particular mapping shouldn't fault around. I haven't seen such a
+> > request yet but we have seen requests to have a way to opt out from
+> > a global policy in the past (e.g. per-process opt out from THP). So
+> > I can imagine somebody will come with a request to opt out from any
+> > speculative operations on the mapped area in the future.
+> > 
+> > > But I think it leaves us in an even
+> > > more akward state WRT VMA flags.  As you noted in your fix for the
+> > > mmap() man page, one can get into a state where a VMA is VM_LOCKED, but
+> > > not present.  Having VM_LOCKONFAULT states that this was intentional, if
+> > > we go to using MAP_FAULTPOPULATE instead of MAP_LOCKONFAULT, we no
+> > > longer set VM_LOCKONFAULT (unless we want to start mapping it to the
+> > > presence of two MAP_ flags).  This can make detecting the MAP_LOCKED +
+> > > populate failure state harder.
+> > 
+> > I am not sure I understand your point here. Could you be more specific
+> > how would you check for that and what for?
+> 
+> My thought on detecting was that someone might want to know if they had
+> a VMA that was VM_LOCKED but had not been made present becuase of a
+> failure in mmap.  We don't have a way today, but adding VM_LOCKONFAULT
+> is at least explicit about what is happening which would make detecting
+> the VM_LOCKED but not present state easier. 
 
->=20
->=20
-> On 06/17/2015 01:08 PM, Peter N=C3=B8rlund wrote:
-> > This patch adds L3 and L4 hash-based multipath routing, selectable
-> > on a per-route basis with the reintroduced RTA_MP_ALGO attribute.
-> > The default is now RT_MP_ALG_L3_HASH.
-> >
-> > Signed-off-by: Peter N=C3=B8rlund <pch@ordbogen.com>
-> > ---
-> >   include/net/ip_fib.h           |  4 ++-
-> >   include/net/route.h            |  5 ++--
-> >   include/uapi/linux/rtnetlink.h | 14 ++++++++++-
-> >   net/ipv4/fib_frontend.c        |  4 +++
-> >   net/ipv4/fib_semantics.c       | 34 ++++++++++++++++++++++---
-> >   net/ipv4/icmp.c                |  4 +--
-> >   net/ipv4/route.c               | 56
-> > +++++++++++++++++++++++++++++++++++-------
-> > net/ipv4/xfrm4_policy.c        |  2 +- 8 files changed, 103
-> > insertions(+), 20 deletions(-)
-> >
-> > diff --git a/include/net/ip_fib.h b/include/net/ip_fib.h
-> > index 4be4f25..250d98e 100644
-> > --- a/include/net/ip_fib.h
-> > +++ b/include/net/ip_fib.h
-> > @@ -37,6 +37,7 @@ struct fib_config {
-> >   	u32			fc_flags;
-> >   	u32			fc_priority;
-> >   	__be32			fc_prefsrc;
-> > +	int			fc_mp_alg;
-> >   	struct nlattr		*fc_mx;
-> >   	struct rtnexthop	*fc_mp;
-> >   	int			fc_mx_len;
-> > @@ -116,6 +117,7 @@ struct fib_info {
-> >   	int			fib_nhs;
-> >   #ifdef CONFIG_IP_ROUTE_MULTIPATH
-> >   	int			fib_mp_weight;
-> > +	int			fib_mp_alg;
-> >   #endif
-> >   	struct rcu_head		rcu;
-> >   	struct fib_nh		fib_nh[0];
-> > @@ -308,7 +310,7 @@ int ip_fib_check_default(__be32 gw, struct
-> > net_device *dev); int fib_sync_down_dev(struct net_device *dev, int
-> > force); int fib_sync_down_addr(struct net *net, __be32 local);
-> >   int fib_sync_up(struct net_device *dev);
-> > -void fib_select_multipath(struct fib_result *res);
-> > +void fib_select_multipath(struct fib_result *res, const struct
-> > flowi4 *flow);
-> >
-> >   /* Exported by fib_trie.c */
-> >   void fib_trie_init(void);
-> > diff --git a/include/net/route.h b/include/net/route.h
-> > index fe22d03..1fc7deb 100644
-> > --- a/include/net/route.h
-> > +++ b/include/net/route.h
-> > @@ -110,7 +110,8 @@ struct in_device;
-> >   int ip_rt_init(void);
-> >   void rt_cache_flush(struct net *net);
-> >   void rt_flush_dev(struct net_device *dev);
-> > -struct rtable *__ip_route_output_key(struct net *, struct flowi4
-> > *flp); +struct rtable *__ip_route_output_key(struct net *, struct
-> > flowi4 *flp,
-> > +				     const struct flowi4 *mp_flow);
-> >   struct rtable *ip_route_output_flow(struct net *, struct flowi4
-> > *flp, struct sock *sk);
-> >   struct dst_entry *ipv4_blackhole_route(struct net *net,
-> > @@ -267,7 +268,7 @@ static inline struct rtable
-> > *ip_route_connect(struct flowi4 *fl4, sport, dport, sk);
-> >
-> >   	if (!dst || !src) {
-> > -		rt =3D __ip_route_output_key(net, fl4);
-> > +		rt =3D __ip_route_output_key(net, fl4, NULL);
-> >   		if (IS_ERR(rt))
-> >   			return rt;
-> >   		ip_rt_put(rt);
-> > diff --git a/include/uapi/linux/rtnetlink.h
-> > b/include/uapi/linux/rtnetlink.h index 17fb02f..dff4a72 100644
-> > --- a/include/uapi/linux/rtnetlink.h
-> > +++ b/include/uapi/linux/rtnetlink.h
-> > @@ -271,6 +271,18 @@ enum rt_scope_t {
-> >   #define RTM_F_EQUALIZE		0x400	/* Multipath
-> > equalizer: NI	*/ #define RTM_F_PREFIX
-> > 0x800	/* Prefix addresses		*/
-> >
-> > +/* Multipath algorithms */
-> > +
-> > +enum rt_mp_alg_t {
-> > +	RT_MP_ALG_L3_HASH,	/* Was IP_MP_ALG_NONE */
-> > +	RT_MP_ALG_PER_PACKET,	/* Was IP_MP_ALG_RR */
-> > +	RT_MP_ALG_DRR,		/* not used */
-> > +	RT_MP_ALG_RANDOM,	/* not used */
-> > +	RT_MP_ALG_WRANDOM,	/* not used */
-> > +	RT_MP_ALG_L4_HASH,
-> > +	__RT_MP_ALG_MAX
-> > +};
-> > +
-> >   /* Reserved table identifiers */
-> >
-> >   enum rt_class_t {
-> > @@ -301,7 +313,7 @@ enum rtattr_type_t {
-> >   	RTA_FLOW,
-> >   	RTA_CACHEINFO,
-> >   	RTA_SESSION, /* no longer used */
-> > -	RTA_MP_ALGO, /* no longer used */
-> > +	RTA_MP_ALGO,
-> >   	RTA_TABLE,
-> >   	RTA_MARK,
-> >   	RTA_MFC_STATS,
-> > diff --git a/net/ipv4/fib_frontend.c b/net/ipv4/fib_frontend.c
-> > index 872494e..376e8c1 100644
-> > --- a/net/ipv4/fib_frontend.c
-> > +++ b/net/ipv4/fib_frontend.c
-> > @@ -590,6 +590,7 @@ const struct nla_policy rtm_ipv4_policy[RTA_MAX
-> > + 1] =3D { [RTA_PREFSRC]		=3D { .type =3D NLA_U32 },
-> >   	[RTA_METRICS]		=3D { .type =3D NLA_NESTED },
-> >   	[RTA_MULTIPATH]		=3D { .len =3D sizeof(struct
-> > rtnexthop) },
-> > +	[RTA_MP_ALGO]		=3D { .type =3D NLA_U32 },
-> >   	[RTA_FLOW]		=3D { .type =3D NLA_U32 },
-> >   };
-> >
-> > @@ -650,6 +651,9 @@ static int rtm_to_fib_config(struct net *net,
-> > struct sk_buff *skb, cfg->fc_mp =3D nla_data(attr);
-> >   			cfg->fc_mp_len =3D nla_len(attr);
-> >   			break;
-> > +		case RTA_MP_ALGO:
-> > +			cfg->fc_mp_alg =3D nla_get_u32(attr);
-> > +			break;
-> >   		case RTA_FLOW:
-> >   			cfg->fc_flow =3D nla_get_u32(attr);
-> >   			break;
-> > diff --git a/net/ipv4/fib_semantics.c b/net/ipv4/fib_semantics.c
-> > index 8c8df80..da06e88 100644
-> > --- a/net/ipv4/fib_semantics.c
-> > +++ b/net/ipv4/fib_semantics.c
-> > @@ -257,6 +257,11 @@ static inline int nh_comp(const struct
-> > fib_info *fi, const struct fib_info *ofi) {
-> >   	const struct fib_nh *onh =3D ofi->fib_nh;
-> >
-> > +#ifdef CONFIG_IP_ROUTE_MULTIPATH
-> > +	if (fi->fib_mp_alg !=3D ofi->fib_mp_alg)
-> > +		return -1;
-> > +#endif
-> > +
-> >   	for_nexthops(fi) {
-> >   		if (nh->nh_oif !=3D onh->nh_oif ||
-> >   		    nh->nh_gw  !=3D onh->nh_gw ||
-> > @@ -896,6 +901,7 @@ struct fib_info *fib_create_info(struct
-> > fib_config *cfg)
-> >
-> >   	if (cfg->fc_mp) {
-> >   #ifdef CONFIG_IP_ROUTE_MULTIPATH
-> > +		fi->fib_mp_alg =3D cfg->fc_mp_alg;
-> >   		err =3D fib_get_nhs(fi, cfg->fc_mp, cfg->fc_mp_len,
-> > cfg); if (err !=3D 0)
-> >   			goto failure;
-> > @@ -1085,6 +1091,10 @@ int fib_dump_info(struct sk_buff *skb, u32
-> > portid, u32 seq, int event, struct rtnexthop *rtnh;
-> >   		struct nlattr *mp;
-> >
-> > +		if (fi->fib_mp_alg &&
-> > +		    nla_put_u32(skb, RTA_MP_ALGO, fi->fib_mp_alg))
-> > +			goto nla_put_failure;
-> > +
-> >   		mp =3D nla_nest_start(skb, RTA_MULTIPATH);
-> >   		if (!mp)
-> >   			goto nla_put_failure;
-> > @@ -1312,15 +1322,31 @@ int fib_sync_up(struct net_device *dev)
-> >   }
-> >
-> >   /*
-> > - * The algorithm is suboptimal, but it provides really
-> > - * fair weighted route distribution.
-> > + * Compute multipath hash based on 3- or 5-tuple
-> >    */
-> > -void fib_select_multipath(struct fib_result *res)
-> > +static int fib_multipath_hash(const struct fib_result *res,
-> > +			      const struct flowi4 *flow)
-> > +{
-> > +	u32 hash =3D flow->saddr ^ flow->daddr;
-> > +
-> > +	if (res->fi->fib_mp_alg =3D=3D RT_MP_ALG_L4_HASH &&
-> > flow->flowi4_proto !=3D 0)
-> > +		hash ^=3D flow->flowi4_proto ^ flow->fl4_sport ^
-> > flow->fl4_dport; +
-> > +	hash ^=3D hash >> 16;
-> > +	hash ^=3D hash >> 8;
-> > +	return hash & 0xFF;
-> > +}
-> > +
->=20
-> This hash is still far from optimal.  Really I think you should look
-> at something such as jhash_3words or the like for mixing up the
-> addresses. Right now just XORing the values together like you are
-> will end up with a fairly high collision rate since for example in
-> the case of two endpoints on the same subnet you would lose the
-> subnet as a result of XORing the source and destination addresses.
-> Also you would lose the port data in the case of a protocol using
-> something such as UDP where the source and destination ports might be
-> the same value.
->=20
+One could use /proc/<pid>/pagemap to query the residency.
 
-When I begun to work on the multipath code, I took a look at what the
-hardware routers did, and found that you could typically choose between
-XOR, CRC16, and CRC32. CRC32 produces excellent hashes but is slow
-(unless you take advantage of SSE 4.2), while XOR is fast but less
-optimal. When I tested the XOR hash on the routers of ordbogen.com (my
-work place), I was actually surprised to see that the XOR hash was
-sufficient as long as I stuck with 8 bits. But you are probably right.
-While HTTP-traffic will likely balance well enough with XOR, other kind
-of traffic might not. I didn't know the Jenkins hash function, so I
-haven't tested it, but by the looks of it, I too think it is a good
-candidate. It also adds the possibility of extending the key space to
-16 bits or more.
+> This assumes that
+> MAP_FAULTPOPULATE does not translate to a VMA flag, but it sounds like
+> it would have to.
 
-> > +void fib_select_multipath(struct fib_result *res, const struct
-> > flowi4 *flow) {
-> >   	struct fib_info *fi =3D res->fi;
-> >   	u8 w;
-> >
-> > -	w =3D bitrev8(this_cpu_inc_return(fib_mp_rr_counter));
-> > +	if (res->fi->fib_mp_alg =3D=3D RT_MP_ALG_PER_PACKET) {
-> > +		w =3D
-> > bitrev8(this_cpu_inc_return(fib_mp_rr_counter));
-> > +	} else {
-> > +		w =3D fib_multipath_hash(res, flow);
-> > +	}
-> >
-> >   	for_nexthops(fi) {
-> >   		if (w >=3D atomic_read(&nh->nh_mp_upper_bound))
-> > diff --git a/net/ipv4/icmp.c b/net/ipv4/icmp.c
-> > index f5203fb..3abcfea 100644
-> > --- a/net/ipv4/icmp.c
-> > +++ b/net/ipv4/icmp.c
-> > @@ -459,7 +459,7 @@ static struct rtable *icmp_route_lookup(struct
-> > net *net, fl4->fl4_icmp_type =3D type;
-> >   	fl4->fl4_icmp_code =3D code;
-> >   	security_skb_classify_flow(skb_in, flowi4_to_flowi(fl4));
-> > -	rt =3D __ip_route_output_key(net, fl4);
-> > +	rt =3D __ip_route_output_key(net, fl4, NULL);
-> >   	if (IS_ERR(rt))
-> >   		return rt;
-> >
-> > @@ -481,7 +481,7 @@ static struct rtable *icmp_route_lookup(struct
-> > net *net, goto relookup_failed;
-> >
-> >   	if (inet_addr_type(net, fl4_dec.saddr) =3D=3D RTN_LOCAL) {
-> > -		rt2 =3D __ip_route_output_key(net, &fl4_dec);
-> > +		rt2 =3D __ip_route_output_key(net, &fl4_dec, NULL);
-> >   		if (IS_ERR(rt2))
-> >   			err =3D PTR_ERR(rt2);
-> >   	} else {
-> > diff --git a/net/ipv4/route.c b/net/ipv4/route.c
-> > index f605598..a1ec62c 100644
-> > --- a/net/ipv4/route.c
-> > +++ b/net/ipv4/route.c
-> > @@ -1006,7 +1006,7 @@ void ipv4_update_pmtu(struct sk_buff *skb,
-> > struct net *net, u32 mtu,
-> >
-> >   	__build_flow_key(&fl4, NULL, iph, oif,
-> >   			 RT_TOS(iph->tos), protocol, mark,
-> > flow_flags);
-> > -	rt =3D __ip_route_output_key(net, &fl4);
-> > +	rt =3D __ip_route_output_key(net, &fl4, NULL);
-> >   	if (!IS_ERR(rt)) {
-> >   		__ip_rt_update_pmtu(rt, &fl4, mtu);
-> >   		ip_rt_put(rt);
-> > @@ -1025,7 +1025,7 @@ static void __ipv4_sk_update_pmtu(struct
-> > sk_buff *skb, struct sock *sk, u32 mtu) if (!fl4.flowi4_mark)
-> >   		fl4.flowi4_mark =3D IP4_REPLY_MARK(sock_net(sk),
-> > skb->mark);
-> >
-> > -	rt =3D __ip_route_output_key(sock_net(sk), &fl4);
-> > +	rt =3D __ip_route_output_key(sock_net(sk), &fl4, NULL);
-> >   	if (!IS_ERR(rt)) {
-> >   		__ip_rt_update_pmtu(rt, &fl4, mtu);
-> >   		ip_rt_put(rt);
-> > @@ -1094,7 +1094,7 @@ void ipv4_redirect(struct sk_buff *skb,
-> > struct net *net,
-> >
-> >   	__build_flow_key(&fl4, NULL, iph, oif,
-> >   			 RT_TOS(iph->tos), protocol, mark,
-> > flow_flags);
-> > -	rt =3D __ip_route_output_key(net, &fl4);
-> > +	rt =3D __ip_route_output_key(net, &fl4, NULL);
-> >   	if (!IS_ERR(rt)) {
-> >   		__ip_do_redirect(rt, skb, &fl4, false);
-> >   		ip_rt_put(rt);
-> > @@ -1109,7 +1109,7 @@ void ipv4_sk_redirect(struct sk_buff *skb,
-> > struct sock *sk) struct rtable *rt;
-> >
-> >   	__build_flow_key(&fl4, sk, iph, 0, 0, 0, 0, 0);
-> > -	rt =3D __ip_route_output_key(sock_net(sk), &fl4);
-> > +	rt =3D __ip_route_output_key(sock_net(sk), &fl4, NULL);
-> >   	if (!IS_ERR(rt)) {
-> >   		__ip_do_redirect(rt, skb, &fl4, false);
-> >   		ip_rt_put(rt);
-> > @@ -1631,6 +1631,39 @@ out:
-> >   	return err;
-> >   }
-> >
-> > +#ifdef CONFIG_IP_ROUTE_MULTIPATH
-> > +/* Fill flow key data based on packet for use in multipath
-> > routing. */ +static void ip_multipath_flow(const struct sk_buff
-> > *skb, struct flowi4 *flow) +{
-> > +	const struct iphdr *iph;
-> > +
-> > +	iph =3D ip_hdr(skb);
-> > +
-> > +	flow->saddr =3D iph->saddr;
-> > +	flow->daddr =3D iph->daddr;
-> > +	flow->flowi4_proto =3D iph->protocol;
-> > +	flow->fl4_sport =3D 0;
-> > +	flow->fl4_dport =3D 0;
-> > +
-> > +	if (unlikely(ip_is_fragment(iph)))
-> > +		return;
-> > +
->=20
-> I'm not sure if checking for fragmentation is enough.  For example if=
-=20
-> this system is routing and received a flow of UDP packets, some=20
-> fragmented some not then it might end up mixing them over 2 separate=20
-> next hops since some will include L4 header data and some won't.
->=20
-> As such you may want to have the option to exclude UDP from the=20
-> protocols listed below.
->=20
+Yes, it would have to have a VM flag for the vma.
 
-Just like the hash algorithms, I looked at the hardware routers for
-inspiration, and they typically do like this. It is a known problem,
-and it can just as well happen with TCP, so I don't think adding a
-special case for UDP is the way to go. But what about looking at the
-don't-fragment-bit? If the DF-bit is set on a packet, it is usually set
-on all packets in that flow, so one can assume that that flow will
-never fragment. If it is clear, you can't be sure and should probably
-avoid L4 hashing altogether. The interesting question is how many flows
-will be excluded from L4 hashing with this approach.
+> > From my understanding MAP_LOCKONFAULT is essentially
+> > MAP_FAULTPOPULATE|MAP_LOCKED with a quite obvious semantic (unlike
+> > single MAP_LOCKED unfortunately). I would love to also have
+> > MAP_LOCKED|MAP_POPULATE (aka full mlock semantic) but I am really
+> > skeptical considering how my previous attempt to make MAP_POPULATE
+> > reasonable went.
+> 
+> Are you objecting to the addition of the VMA flag VM_LOCKONFAULT, or the
+> new MAP_LOCKONFAULT flag (or both)? 
 
-> > +	if (iph->protocol =3D=3D IPPROTO_TCP ||
-> > +	    iph->protocol =3D=3D IPPROTO_UDP ||
-> > +	    iph->protocol =3D=3D IPPROTO_SCTP) {
-> > +		__be16 _ports;
-> > +		const __be16 *ports;
-> > +
-> > +		ports =3D skb_header_pointer(skb, iph->ihl * 4,
-> > sizeof(_ports),
-> > +					   &_ports);
-> > +		if (ports) {
-> > +			flow->fl4_sport =3D ports[0];
-> > +			flow->fl4_dport =3D ports[1];
-> > +		}
-> > +	}
-> > +}
-> > +#endif /* CONFIG_IP_ROUTE_MULTIPATH */
-> > +
-> >   static int ip_mkroute_input(struct sk_buff *skb,
-> >   			    struct fib_result *res,
-> >   			    const struct flowi4 *fl4,
-> > @@ -1638,8 +1671,12 @@ static int ip_mkroute_input(struct sk_buff
-> > *skb, __be32 daddr, __be32 saddr, u32 tos)
-> >   {
-> >   #ifdef CONFIG_IP_ROUTE_MULTIPATH
-> > -	if (res->fi && res->fi->fib_nhs > 1)
-> > -		fib_select_multipath(res);
-> > +	if (res->fi && res->fi->fib_nhs > 1) {
-> > +		struct flowi4 mp_flow;
-> > +
-> > +		ip_multipath_flow(skb, &mp_flow);
-> > +		fib_select_multipath(res, &mp_flow);
-> > +	}
->=20
-> What is the point in populating the mp_flow if you don't know if it
-> is going to be used?  You are populating it in ip_multipath_flow, and
-> then you might completely ignore it in fib_select_multipath.
->=20
-> Maybe instead of passing the mp_flow you could instead look at
-> passing a function pointer that would alter the flow for the
-> multipath case instead.
->=20
+I thought the MAP_FAULTPOPULATE (or any other better name) would
+directly translate into VM_FAULTPOPULATE and wouldn't be tight to the
+locked semantic. We already have VM_LOCKED for that. The direct effect
+of the flag would be to prevent from population other than the direct
+page fault - including any speculative actions like fault around or
+read-ahead.
 
-Definably not a bad idea. It would remove unnecessary overhead when
-running per-packet multipath.
+> If you prefer that MAP_LOCKED |
+> MAP_FAULTPOPULATE means that VM_LOCKONFAULT is set, I am fine with that
+> instead of introducing MAP_LOCKONFAULT.  I went with the new flag
+> because to date, we have a one to one mapping of MAP_* to VM_* flags.
+> 
+> > 
+> > > If this is the preferred path for mmap(), I am fine with that. 
+> > 
+> > > However,
+> > > I would like to see the new system calls that Andrew mentioned (and that
+> > > I am testing patches for) go in as well. 
+> > 
+> > mlock with flags sounds like a good step but I am not sure it will make
+> > sense in the future. POSIX has screwed that and I am not sure how many
+> > applications would use it. This ship has sailed long time ago.
+> 
+> I don't know either, but the code is the question, right?  I know that
+> we have at least one team that wants it here.
+> 
+> > 
+> > > That way we give users the
+> > > ability to request VM_LOCKONFAULT for memory allocated using something
+> > > other than mmap.
+> > 
+> > mmap(MAP_FAULTPOPULATE); mlock() would have the same semantic even
+> > without changing mlock syscall.
+> 
+> That is true as long as MAP_FAULTPOPULATE set a flag in the VMA(s).  It
+> doesn't cover the actual case I was asking about, which is how do I get
+> lock on fault on malloc'd memory?
 
-> >   #endif
-> >
-> >   	/* create a routing cache entry */
-> > @@ -2012,7 +2049,8 @@ add:
-> >    * Major route resolver routine.
-> >    */
-> >
-> > -struct rtable *__ip_route_output_key(struct net *net, struct
-> > flowi4 *fl4) +struct rtable *__ip_route_output_key(struct net *net,
-> > struct flowi4 *fl4,
-> > +				     const struct flowi4 *mp_flow)
-> >   {
-> >   	struct net_device *dev_out =3D NULL;
-> >   	__u8 tos =3D RT_FL_TOS(fl4);
-> > @@ -2170,7 +2208,7 @@ struct rtable *__ip_route_output_key(struct
-> > net *net, struct flowi4 *fl4)
-> >
-> >   #ifdef CONFIG_IP_ROUTE_MULTIPATH
-> >   	if (res.fi->fib_nhs > 1 && fl4->flowi4_oif =3D=3D 0)
-> > -		fib_select_multipath(&res);
-> > +		fib_select_multipath(&res, (mp_flow ? mp_flow :
-> > fl4)); else
-> >   #endif
-> >   	if (!res.prefixlen &&
-> > @@ -2273,7 +2311,7 @@ struct dst_entry *ipv4_blackhole_route(struct
-> > net *net, struct dst_entry *dst_or struct rtable
-> > *ip_route_output_flow(struct net *net, struct flowi4 *flp4, struct
-> > sock *sk) {
-> > -	struct rtable *rt =3D __ip_route_output_key(net, flp4);
-> > +	struct rtable *rt =3D __ip_route_output_key(net, flp4, NULL);
-> >
-> >   	if (IS_ERR(rt))
-> >   		return rt;
-> > diff --git a/net/ipv4/xfrm4_policy.c b/net/ipv4/xfrm4_policy.c
-> > index bff6974..7eae158 100644
-> > --- a/net/ipv4/xfrm4_policy.c
-> > +++ b/net/ipv4/xfrm4_policy.c
-> > @@ -31,7 +31,7 @@ static struct dst_entry
-> > *__xfrm4_dst_lookup(struct net *net, struct flowi4 *fl4, if (saddr)
-> >   		fl4->saddr =3D saddr->a4;
-> >
-> > -	rt =3D __ip_route_output_key(net, fl4);
-> > +	rt =3D __ip_route_output_key(net, fl4, NULL);
-> >   	if (!IS_ERR(rt))
-> >   		return &rt->dst;
-> >
-> >
+OK I see your point now. We would indeed need a flag argument for mlock.
+-- 
+Michal Hocko
+SUSE Labs
