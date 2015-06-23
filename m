@@ -1,44 +1,47 @@
-From: Rajendra Nayak <rnayak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-Subject: Re: [PATCH v6 7/9] nvmem: qfprom: Add bindings for qfprom
-Date: Tue, 23 Jun 2015 14:55:22 +0530
-Message-ID: <55892602.2030809@codeaurora.org>
-References: <1435014459-26138-1-git-send-email-srinivas.kandagatla@linaro.org> <1435014570-26434-1-git-send-email-srinivas.kandagatla@linaro.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1435014570-26434-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, stefan.wahren-eS4NqCHxEME@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org
+From: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+Subject: Re: [PATCH v6 1/9] nvmem: Add a simple NVMEM framework for nvmem providers
+Date: Tue, 23 Jun 2015 10:26:28 +0100
+Message-ID: <7BE8C921-180A-411D-A3C0-5D2A7AE3AB6A@konsulko.com>
+References: <1435014459-26138-1-git-send-email-srinivas.kandagatla@linaro.org> <1435014507-26181-1-git-send-email-srinivas.kandagatla@linaro.org> <1435035173.9808.35.camel@perches.com>
+Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2098\))
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+In-Reply-To: <1435035173.9808.35.camel@perches.com>
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: Joe Perches <joe@perches.com>
+Cc: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, linux-arm-kernel@lists.infradead.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Maxime Ripard <maxime.ripard@free-electrons.com>, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, sboyd@codeaurora.org, Matt Porter <mporter@konsulko.com>, stefan.wahren@i2se.com, wxt@rock-chips.com
 List-Id: linux-api@vger.kernel.org
 
-[]..
+Hi Joe,
 
-> +Example:
-> +
-> +	qfprom: qfprom@00700000 {
-> +		compatible 	= "qcom,qfprom";
-> +		reg		= <0x00700000 0x8000>;
-> +		...
-> +		/* Data cells */
-> +		tsens_calibration: calib@404 {
-> +			reg = <0x4404 0x10>;
-> +		};
-> +	};
-> +
-> +
-> += Data consumers =
-> +Are device nodes which consume nvmem data cells.
-> +
-> +For example:
-> +
-> +	tsens {
-> +		...
-> +		nvmem-cell = <&tsens_calibration>;
+> On Jun 23, 2015, at 05:52 , Joe Perches <joe@perches.com> wrote:
+>=20
+> On Tue, 2015-06-23 at 00:08 +0100, Srinivas Kandagatla wrote:
+>> This patch adds just providers part of the framework just to enable =
+easy
+>> review.
+> []
+>> include/linux/nvmem-provider.h |  54 ++++++
+>=20
+> Unless there are going to be users of nvmem-provider.h
+> outside of the drivers/nvmem directory, perhaps that
+> file (and nvmem-consumer.h) should be in drivers/nvmem/
+>=20
+>=20
 
-Shouldn't this be nvmem-cells instead?
+nvmem-consumer.h should be accessible from any driver, no?
 
-> +		nvmem-cell-names = "calibration";
-> +	};
->
+And unfortunately nvmem-provider should be accessible too.
+There are already eeprom drivers in the eeprom/misc directory that
+cannot be moved yet to drivers/nvmem (like at24).
+
+They need the provider definitions while they provide both the old
+style interface, and the new NVMEM based one.
+
+When we move them to the drivers/nvmem directory, then yes the
+provider header file should move there.
+
+Regards
+
+=97 Pantelis
