@@ -1,125 +1,44 @@
-From: "Seymour, Shane M" <shane.seymour@hp.com>
-Subject: [PATCH] st: convert to using driver attr groups for sysfs
-Date: Tue, 23 Jun 2015 08:11:00 +0000
-Message-ID: <DDB9C85B850785449757F9914A034FCB3BFF68D9@G9W0766.americas.hpqcorp.net>
+From: Rajendra Nayak <rnayak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Subject: Re: [PATCH v6 7/9] nvmem: qfprom: Add bindings for qfprom
+Date: Tue, 23 Jun 2015 14:55:22 +0530
+Message-ID: <55892602.2030809@codeaurora.org>
+References: <1435014459-26138-1-git-send-email-srinivas.kandagatla@linaro.org> <1435014570-26434-1-git-send-email-srinivas.kandagatla@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Kai.Makisara@kolumbus.fi" <Kai.Makisara@kolumbus.fi>
-Cc: "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1435014570-26434-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, stefan.wahren-eS4NqCHxEME@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This patch changes the st driver to use attribute groups so
-driver sysfs files are created automatically. See the
-following for reference:
+[]..
 
-http://kroah.com/log/blog/2013/06/26/how-to-create-a-sysfs-file-correctly/
+> +Example:
+> +
+> +	qfprom: qfprom@00700000 {
+> +		compatible 	= "qcom,qfprom";
+> +		reg		= <0x00700000 0x8000>;
+> +		...
+> +		/* Data cells */
+> +		tsens_calibration: calib@404 {
+> +			reg = <0x4404 0x10>;
+> +		};
+> +	};
+> +
+> +
+> += Data consumers =
+> +Are device nodes which consume nvmem data cells.
+> +
+> +For example:
+> +
+> +	tsens {
+> +		...
+> +		nvmem-cell = <&tsens_calibration>;
 
-Signed-off-by: Shane Seymour <shane.seymour@hp.com>
----
---- a/drivers/scsi/st.c	2015-06-22 14:20:40.829612661 -0500
-+++ b/drivers/scsi/st.c	2015-06-22 15:49:49.357248393 -0500
-@@ -85,6 +85,7 @@ static int debug_flag;
- 
- static struct class st_sysfs_class;
- static const struct attribute_group *st_dev_groups[];
-+static const struct attribute_group *st_drv_groups[];
- 
- MODULE_AUTHOR("Kai Makisara");
- MODULE_DESCRIPTION("SCSI tape (st) driver");
-@@ -198,15 +199,13 @@ static int sgl_unmap_user_pages(struct s
- static int st_probe(struct device *);
- static int st_remove(struct device *);
- 
--static int do_create_sysfs_files(void);
--static void do_remove_sysfs_files(void);
--
- static struct scsi_driver st_template = {
- 	.gendrv = {
- 		.name		= "st",
- 		.owner		= THIS_MODULE,
- 		.probe		= st_probe,
- 		.remove		= st_remove,
-+		.groups		= st_drv_groups,
- 	},
- };
- 
-@@ -4404,14 +4403,8 @@ static int __init init_st(void)
- 	if (err)
- 		goto err_chrdev;
- 
--	err = do_create_sysfs_files();
--	if (err)
--		goto err_scsidrv;
--
- 	return 0;
- 
--err_scsidrv:
--	scsi_unregister_driver(&st_template.gendrv);
- err_chrdev:
- 	unregister_chrdev_region(MKDEV(SCSI_TAPE_MAJOR, 0),
- 				 ST_MAX_TAPE_ENTRIES);
-@@ -4422,7 +4415,6 @@ err_class:
- 
- static void __exit exit_st(void)
- {
--	do_remove_sysfs_files();
- 	scsi_unregister_driver(&st_template.gendrv);
- 	unregister_chrdev_region(MKDEV(SCSI_TAPE_MAJOR, 0),
- 				 ST_MAX_TAPE_ENTRIES);
-@@ -4459,44 +4451,14 @@ static ssize_t st_version_show(struct de
- }
- static DRIVER_ATTR(version, S_IRUGO, st_version_show, NULL);
- 
--static int do_create_sysfs_files(void)
--{
--	struct device_driver *sysfs = &st_template.gendrv;
--	int err;
--
--	err = driver_create_file(sysfs, &driver_attr_try_direct_io);
--	if (err)
--		return err;
--	err = driver_create_file(sysfs, &driver_attr_fixed_buffer_size);
--	if (err)
--		goto err_try_direct_io;
--	err = driver_create_file(sysfs, &driver_attr_max_sg_segs);
--	if (err)
--		goto err_attr_fixed_buf;
--	err = driver_create_file(sysfs, &driver_attr_version);
--	if (err)
--		goto err_attr_max_sg;
--
--	return 0;
--
--err_attr_max_sg:
--	driver_remove_file(sysfs, &driver_attr_max_sg_segs);
--err_attr_fixed_buf:
--	driver_remove_file(sysfs, &driver_attr_fixed_buffer_size);
--err_try_direct_io:
--	driver_remove_file(sysfs, &driver_attr_try_direct_io);
--	return err;
--}
--
--static void do_remove_sysfs_files(void)
--{
--	struct device_driver *sysfs = &st_template.gendrv;
--
--	driver_remove_file(sysfs, &driver_attr_version);
--	driver_remove_file(sysfs, &driver_attr_max_sg_segs);
--	driver_remove_file(sysfs, &driver_attr_fixed_buffer_size);
--	driver_remove_file(sysfs, &driver_attr_try_direct_io);
--}
-+static struct attribute *st_drv_attrs[] = {
-+	&driver_attr_try_direct_io.attr,
-+	&driver_attr_fixed_buffer_size.attr,
-+	&driver_attr_max_sg_segs.attr,
-+	&driver_attr_version.attr,
-+	NULL,
-+};
-+ATTRIBUTE_GROUPS(st_drv);
- 
- /* The sysfs simple class interface */
- static ssize_t
+Shouldn't this be nvmem-cells instead?
+
+> +		nvmem-cell-names = "calibration";
+> +	};
+>
