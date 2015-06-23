@@ -1,71 +1,67 @@
-From: Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>
-Subject: Re: [PATCH v6 3/9] nvmem: Add nvmem_device based consumer apis.
-Date: Tue, 23 Jun 2015 22:28:50 +0200 (CEST)
-Message-ID: <1344600420.252283.1435091331020.JavaMail.open-xchange@oxbsltgw00.schlund.de>
-References: <1435014459-26138-1-git-send-email-srinivas.kandagatla@linaro.org> <1435014527-26265-1-git-send-email-srinivas.kandagatla@linaro.org>
-Reply-To: Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>
+From: Stefan Wahren <stefan.wahren@i2se.com>
+Subject: Re: [PATCH v6 4/9] nvmem: Add bindings for simple nvmem framework
+Date: Tue, 23 Jun 2015 22:35:35 +0200 (CEST)
+Message-ID: <1670081084.252423.1435091735127.JavaMail.open-xchange@oxbsltgw00.schlund.de>
+References: <1435014459-26138-1-git-send-email-srinivas.kandagatla@linaro.org> <1435014538-26308-1-git-send-email-srinivas.kandagatla@linaro.org>
+Reply-To: Stefan Wahren <stefan.wahren@i2se.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1435014527-26265-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
-Cc: wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+In-Reply-To: <1435014538-26308-1-git-send-email-srinivas.kandagatla@linaro.org>
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-arm-kernel@lists.infradead.org
+Cc: wxt@rock-chips.com, linux-api@vger.kernel.org, Kumar Gala <galak@codeaurora.org>, Rob Herring <robh+dt@kernel.org>, sboyd@codeaurora.org, arnd@arndb.de, s.hauer@pengutronix.de, linux-kernel@vger.kernel.org, linux-arm-msm@vger.kernel.org, mporter@konsulko.com, Maxime Ripard <maxime.ripard@free-electrons.com>, pantelis.antoniou@konsulko.com, devicetree@vger.kernel.org, Mark Brown <broonie@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
 
-> Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> hat am 23. Juni 2015 um
+> Srinivas Kandagatla <srinivas.kandagatla@linaro.org> hat am 23. Juni 2015 um
 > 01:08 geschrieben:
 >
 >
-> This patch adds read/write apis which are based on nvmem_device. It is
-> common that the drivers like omap cape manager or qcom cpr driver to
-> access bytes directly at particular offset in the eeprom and not from
-> nvmem cell info in DT. These driver would need to get access to the nvmem
-> directly, which is what these new APIS provide.
+> This patch adds bindings for simple nvmem framework which allows nvmem
+> consumers to talk to nvmem providers to get access to nvmem cell data.
 >
-> [...]
-> diff --git a/include/linux/nvmem-consumer.h b/include/linux/nvmem-consumer.h
-> index 123af62..f9acc43 100644
-> --- a/include/linux/nvmem-consumer.h
-> +++ b/include/linux/nvmem-consumer.h
-> @@ -15,6 +15,15 @@
-> struct device;
-> /* consumer cookie */
-> struct nvmem_cell;
-> +struct nvmem_device;
+> Signed-off-by: Maxime Ripard <maxime.ripard@free-electrons.com>
+> [Maxime Ripard: intial version of eeprom framework]
+> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+> ---
+> Documentation/devicetree/bindings/nvmem/nvmem.txt | 85 +++++++++++++++++++++++
+> 1 file changed, 85 insertions(+)
+> create mode 100644 Documentation/devicetree/bindings/nvmem/nvmem.txt
+>
+> diff --git a/Documentation/devicetree/bindings/nvmem/nvmem.txt
+> b/Documentation/devicetree/bindings/nvmem/nvmem.txt
+> new file mode 100644
+> index 0000000..d1a37e7
+> --- /dev/null
+> +++ b/Documentation/devicetree/bindings/nvmem/nvmem.txt
+> @@ -0,0 +1,85 @@
+> += NVMEM(Non Volatile Memory) Data Device Tree Bindings =
 > +
-> +struct nvmem_cell_info {
-> + const char *name;
-> + int offset;
-> + int bytes;
-> + int bit_offset;
-> + int nbits;
-> +};
->
-> #if IS_ENABLED(CONFIG_NVMEM)
->
-> @@ -26,6 +35,21 @@ void devm_nvmem_cell_put(struct device *dev, struct
-> nvmem_cell *cell);
-> void *nvmem_cell_read(struct nvmem_cell *cell, ssize_t *len);
-> int nvmem_cell_write(struct nvmem_cell *cell, void *buf, ssize_t len);
->
-> +/* direct nvmem device read/write interface */
-> +struct nvmem_device *nvmem_device_get(struct device *dev, const char *name);
-> +struct nvmem_device *devm_nvmem_device_get(struct device *dev,
-> + const char *name);
-> +void nvmem_device_put(struct nvmem_device *nvmem);
-> +void devm_nvmem_device_put(struct device *dev, struct nvmem_device *nvmem);
-> +int nvmem_device_read(struct nvmem_device *nvmem, unsigned int offset,
-> + size_t bytes, void *buf);
-> +int nvmem_device_write(struct nvmem_device *nvmem, unsigned int offset,
-> + size_t bytes, void *buf);
+> +This binding is intended to represent the location of hardware
+> +configuration data stored in NVMEMs like eeprom, efuses and so on.
+> +
+> +On a significant proportion of boards, the manufacturer has stored
+> +some data on NVMEM, for the OS to be able to retrieve these information
+> +and act upon it. Obviously, the OS has to know about where to retrieve
+> +these data from, and where they are stored on the storage device.
+> +
+> +This document is here to document this.
+> +
+> += Data providers =
+> +Contains bindings specific to provider drivers and data cells as children
+> +of this node.
+> +
+> +Optional properties:
+> + read-only: Mark the provider as read only.
+> +
+> += Data cells =
+> +These are the child nodes of the provider which contain data cell
+> +information like offset and size in nvmem provider.
+> +
+> +Required properties:
+> +reg: specifies the offset in byte within that storage device, start bit
+> + in the byte and the length in bits of the data we care about.
 
-Maybe i mixed something but those functions use the datatype unsigned int for
-offset
-and the offset in the structs use datatype int. Looks a little bit inconsistent.
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Is the second parameter really in bits, not bytes?
