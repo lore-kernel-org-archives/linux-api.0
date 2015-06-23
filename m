@@ -1,82 +1,74 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [RESEND PATCH V2 0/3] Allow user to request memory to be locked
- on page fault
-Date: Tue, 23 Jun 2015 15:04:22 +0200
-Message-ID: <55895956.5020707@suse.cz>
-References: <1433942810-7852-1-git-send-email-emunson@akamai.com> <20150610145929.b22be8647887ea7091b09ae1@linux-foundation.org> <5579DFBA.80809@akamai.com> <20150611123424.4bb07cffd0e5bb146cc92231@linux-foundation.org> <557ACAFC.90608@suse.cz> <20150615144356.GB12300@akamai.com>
+From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 10/23] userfaultfd: add new syscall to provide memory
+ externalization
+Date: Tue, 23 Jun 2015 12:00:19 -0700
+Message-ID: <5589ACC3.3060401@intel.com>
+References: <1431624680-20153-1-git-send-email-aarcange@redhat.com> <1431624680-20153-11-git-send-email-aarcange@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150615144356.GB12300-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1431624680-20153-11-git-send-email-aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-alpha-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, linux-parisc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Sanidhya Kashyap <sanidhya.gatech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, zhang.zhanghailiang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Feiner <pfeiner-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Dr. David Alan Gilbert" <dgilbert-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, "Huangpeng (Peter)" <peter.huangpeng-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 06/15/2015 04:43 PM, Eric B Munson wrote:
->> Note that the semantic of MAP_LOCKED can be subtly surprising:
->>
->> "mlock(2) fails if the memory range cannot get populated to guarantee
->> that no future major faults will happen on the range.
->> mmap(MAP_LOCKED) on the other hand silently succeeds even if the
->> range was populated only
->> partially."
->>
->> ( from http://marc.info/?l=linux-mm&m=143152790412727&w=2 )
->>
->> So MAP_LOCKED can silently behave like MAP_LOCKONFAULT. While
->> MAP_LOCKONFAULT doesn't suffer from such problem, I wonder if that's
->> sufficient reason not to extend mmap by new mlock() flags that can
->> be instead applied to the VMA after mmapping, using the proposed
->> mlock2() with flags. So I think instead we could deprecate
->> MAP_LOCKED more prominently. I doubt the overhead of calling the
->> extra syscall matters here?
->
-> We could talk about retiring the MAP_LOCKED flag but I suspect that
-> would get significantly more pushback than adding a new mmap flag.
+On 05/14/2015 10:31 AM, Andrea Arcangeli wrote:
+> +static int userfaultfd_wake_function(wait_queue_t *wq, unsigned mode,
+> +				     int wake_flags, void *key)
+> +{
+> +	struct userfaultfd_wake_range *range = key;
+> +	int ret;
+> +	struct userfaultfd_wait_queue *uwq;
+> +	unsigned long start, len;
+> +
+> +	uwq = container_of(wq, struct userfaultfd_wait_queue, wq);
+> +	ret = 0;
+> +	/* don't wake the pending ones to avoid reads to block */
+> +	if (uwq->pending && !ACCESS_ONCE(uwq->ctx->released))
+> +		goto out;
+> +	/* len == 0 means wake all */
+> +	start = range->start;
+> +	len = range->len;
+> +	if (len && (start > uwq->address || start + len <= uwq->address))
+> +		goto out;
+> +	ret = wake_up_state(wq->private, mode);
+> +	if (ret)
+> +		/* wake only once, autoremove behavior */
+> +		list_del_init(&wq->task_list);
+> +out:
+> +	return ret;
+> +}
+...
+> +static __always_inline int validate_range(struct mm_struct *mm,
+> +					  __u64 start, __u64 len)
+> +{
+> +	__u64 task_size = mm->task_size;
+> +
+> +	if (start & ~PAGE_MASK)
+> +		return -EINVAL;
+> +	if (len & ~PAGE_MASK)
+> +		return -EINVAL;
+> +	if (!len)
+> +		return -EINVAL;
+> +	if (start < mmap_min_addr)
+> +		return -EINVAL;
+> +	if (start >= task_size)
+> +		return -EINVAL;
+> +	if (len > task_size - start)
+> +		return -EINVAL;
+> +	return 0;
+> +}
 
-Oh no we can't "retire" as in remove the flag, ever. Just not continue 
-the way of mmap() flags related to mlock().
+Hey Andrea,
 
-> Likely that the overhead does not matter in most cases, but presumably
-> there are cases where it does (as we have a MAP_LOCKED flag today).
-> Even with the proposed new system calls I think we should have the
-> MAP_LOCKONFAULT for parity with MAP_LOCKED.
+Down in userfaultfd_wake_function(), it looks like you intended for a
+len=0 to mean "wake all".  But the validate_range() that we do from
+userspace has a !len check in it, which keeps us from passing a len=0 in
+from userspace.
 
-I'm not convinced, but it's not a major issue.
+Was that "wake all" for some internal use, or is the check too strict?
 
->>
->>> - mlock() takes a `flags' argument.  Presently that's
->>>    MLOCK_LOCKED|MLOCK_LOCKONFAULT.
->>>
->>> - munlock() takes a `flags' arument.  MLOCK_LOCKED|MLOCK_LOCKONFAULT
->>>    to specify which flags are being cleared.
->>>
->>> - mlockall() and munlockall() ditto.
->>>
->>>
->>> IOW, LOCKED and LOCKEDONFAULT are treated identically and independently.
->>>
->>> Now, that's how we would have designed all this on day one.  And I
->>> think we can do this now, by adding new mlock2() and munlock2()
->>> syscalls.  And we may as well deprecate the old mlock() and munlock(),
->>> not that this matters much.
->>>
->>> *should* we do this?  I'm thinking "yes" - it's all pretty simple
->>> boilerplate and wrappers and such, and it gets the interface correct,
->>> and extensible.
->>
->> If the new LOCKONFAULT functionality is indeed desired (I haven't
->> still decided myself) then I agree that would be the cleanest way.
->
-> Do you disagree with the use cases I have listed or do you think there
-> is a better way of addressing those cases?
-
-I'm somewhat sceptical about the security one. Are security sensitive 
-buffers that large to matter? The performance one is more convincing and 
-I don't see a better way, so OK.
-
->
->>
->>> What do others think?
+I was trying to use the wake ioctl after an madvise() (as opposed to
+filling things in using a userfd copy).
