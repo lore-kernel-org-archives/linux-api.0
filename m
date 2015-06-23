@@ -1,74 +1,77 @@
-From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 10/23] userfaultfd: add new syscall to provide memory
- externalization
-Date: Tue, 23 Jun 2015 12:00:19 -0700
-Message-ID: <5589ACC3.3060401@intel.com>
-References: <1431624680-20153-1-git-send-email-aarcange@redhat.com> <1431624680-20153-11-git-send-email-aarcange@redhat.com>
+From: Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>
+Subject: Re: [PATCH v6 0/9] Add simple NVMEM Framework via regmap.
+Date: Tue, 23 Jun 2015 21:47:34 +0200 (CEST)
+Message-ID: <235181230.251177.1435088854197.JavaMail.open-xchange@oxbsltgw00.schlund.de>
+References: <1435014459-26138-1-git-send-email-srinivas.kandagatla@linaro.org>
+Reply-To: Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1431624680-20153-11-git-send-email-aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1435014459-26138-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Sanidhya Kashyap <sanidhya.gatech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, zhang.zhanghailiang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Feiner <pfeiner-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Dr. David Alan Gilbert" <dgilbert-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, "Huangpeng (Peter)" <peter.huangpeng-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 05/14/2015 10:31 AM, Andrea Arcangeli wrote:
-> +static int userfaultfd_wake_function(wait_queue_t *wq, unsigned mode,
-> +				     int wake_flags, void *key)
-> +{
-> +	struct userfaultfd_wake_range *range = key;
-> +	int ret;
-> +	struct userfaultfd_wait_queue *uwq;
-> +	unsigned long start, len;
-> +
-> +	uwq = container_of(wq, struct userfaultfd_wait_queue, wq);
-> +	ret = 0;
-> +	/* don't wake the pending ones to avoid reads to block */
-> +	if (uwq->pending && !ACCESS_ONCE(uwq->ctx->released))
-> +		goto out;
-> +	/* len == 0 means wake all */
-> +	start = range->start;
-> +	len = range->len;
-> +	if (len && (start > uwq->address || start + len <= uwq->address))
-> +		goto out;
-> +	ret = wake_up_state(wq->private, mode);
-> +	if (ret)
-> +		/* wake only once, autoremove behavior */
-> +		list_del_init(&wq->task_list);
-> +out:
-> +	return ret;
-> +}
-...
-> +static __always_inline int validate_range(struct mm_struct *mm,
-> +					  __u64 start, __u64 len)
-> +{
-> +	__u64 task_size = mm->task_size;
-> +
-> +	if (start & ~PAGE_MASK)
-> +		return -EINVAL;
-> +	if (len & ~PAGE_MASK)
-> +		return -EINVAL;
-> +	if (!len)
-> +		return -EINVAL;
-> +	if (start < mmap_min_addr)
-> +		return -EINVAL;
-> +	if (start >= task_size)
-> +		return -EINVAL;
-> +	if (len > task_size - start)
-> +		return -EINVAL;
-> +	return 0;
-> +}
+Hi Srinivas,
 
-Hey Andrea,
+> Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> hat am 23. Juni 2015 um
+> 01:07 geschrieben:
+>
+>
+> [...]
+>
+> Device Tree:
+>
+> /* Provider */
+> qfprom: qfprom@00700000 {
+> ...
+>
+> /* Data cells */
+> tsens_calibration: calib@404 {
+> reg = <0x404 0x10>;
+> };
+>
+> tsens_calibration_bckp: calib_bckp@504 {
+> reg = <0x504 0x11>;
+> bit-offset = 6;
+> nbits = 128;
+> };
+>
+> pvs_version: pvs-version@6 {
+> reg = <0x6 0x2>
+> bit-offset = 7;
+> nbits = 2;
+> };
+>
+> speed_bin: speed-bin@c{
+> reg = <0xc 0x1>;
+> bit-offset = 2;
+> nbits = 3;
+>
+> };
+> ...
+> };
+>
+> userspace interface: binary file in /sys/class/nvmem/*/nvmem
+>
+> ex:
+> hexdump /sys/class/nvmem/qfprom0/nvmem
+>
+> 0000000 0000 0000 0000 0000 0000 0000 0000 0000
+> *
+> 00000a0 db10 2240 0000 e000 0c00 0c00 0000 0c00
+> 0000000 0000 0000 0000 0000 0000 0000 0000 0000
+> ...
+> *
+> 0001000
+>
 
-Down in userfaultfd_wake_function(), it looks like you intended for a
-len=0 to mean "wake all".  But the validate_range() that we do from
-userspace has a !len check in it, which keeps us from passing a len=0 in
-from userspace.
+i want to port OCOTP driver for MXS, which hasn't MMIO. From my understanding
+hexdump would readout the complete register range defined in provider DT node.
 
-Was that "wake all" for some internal use, or is the check too strict?
+How can i achieve that hexdump only reads the data area within the register
+range?
 
-I was trying to use the wake ioctl after an madvise() (as opposed to
-filling things in using a userfd copy).
+Stefan
