@@ -1,112 +1,89 @@
-From: Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-Subject: Re: [PATCH v5 03/11] nvmem: Add a simple NVMEM framework for nvmem
- providers
-Date: Tue, 23 Jun 2015 17:24:34 -0700
-Message-ID: <5589F8C2.3030502@codeaurora.org>
-References: <1432226535-8640-1-git-send-email-srinivas.kandagatla@linaro.org> <1432226583-8775-1-git-send-email-srinivas.kandagatla@linaro.org> <5580A678.4080304@codeaurora.org> <5582BDAE.5040008@linaro.org>
+From: Greg KH <greg@kroah.com>
+Subject: Re: [PATCH] st: convert to using driver attr groups for sysfs
+Date: Tue, 23 Jun 2015 19:37:55 -0700
+Message-ID: <20150624023755.GB18357@kroah.com>
+References: <DDB9C85B850785449757F9914A034FCB3BFF68D9@G9W0766.americas.hpqcorp.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5582BDAE.5040008-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
-Cc: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <DDB9C85B850785449757F9914A034FCB3BFF68D9@G9W0766.americas.hpqcorp.net>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Seymour, Shane M" <shane.seymour@hp.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Kai.Makisara@kolumbus.fi" <Kai.Makisara@kolumbus.fi>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 06/18/2015 05:46 AM, Srinivas Kandagatla wrote:
-> Many thanks for review.
->
-> On 16/06/15 23:43, Stephen Boyd wrote:
->> On 05/21/2015 09:43 AM, Srinivas Kandagatla wrote:
->>>
->>>> +
->>>> +static int nvmem_add_cells(struct nvmem_device *nvmem,
->>>> +               struct nvmem_config *cfg)
->>>> +{
->>>> +    struct nvmem_cell **cells;
->>>> +    struct nvmem_cell_info *info = cfg->cells;
->>>> +    int i, rval;
->>>> +
->>>> +    cells = kzalloc(sizeof(*cells) * cfg->ncells, GFP_KERNEL);
->>>
->>> kcalloc
-> This is temporary array, I did this on intention, to make it easy to
-> kfree cells which are found invalid at runtime.
+On Tue, Jun 23, 2015 at 08:11:00AM +0000, Seymour, Shane M wrote:
+> This patch changes the st driver to use attribute groups so
+> driver sysfs files are created automatically. See the
+> following for reference:
+> 
+> http://kroah.com/log/blog/2013/06/26/how-to-create-a-sysfs-file-correctly/
+> 
+> Signed-off-by: Shane Seymour <shane.seymour@hp.com>
 
-Ok, but how does that change using kcalloc over kzalloc? I must have
-missed something.
+Very nice, thanks for doing this.
 
->
->
->>> + *
->>> + * The return value will be an ERR_PTR() on error or a valid pointer
->>> +    nvmem->dev.of_node = config->dev->of_node;
->>> +    dev_set_name(&nvmem->dev, "%s%d",
->>> +             config->name ? : "nvmem", config->id);
->>
->> It may be better to always name it nvmem%d so that we don't allow the
->> possibility of conflicts.
-> We can do that, but I wanted to make the sysfs and dev entries more
-> readable than just nvmem0, nvmem1...
+Acked-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
-Well sysfs is not really for humans. It's for machines. The nvmem
-devices could have a name property so that a more human readable string
-is present.
+> ---
+> --- a/drivers/scsi/st.c	2015-06-22 14:20:40.829612661 -0500
+> +++ b/drivers/scsi/st.c	2015-06-22 15:49:49.357248393 -0500
+> @@ -85,6 +85,7 @@ static int debug_flag;
+>  
+>  static struct class st_sysfs_class;
+>  static const struct attribute_group *st_dev_groups[];
+> +static const struct attribute_group *st_drv_groups[];
+>  
+>  MODULE_AUTHOR("Kai Makisara");
+>  MODULE_DESCRIPTION("SCSI tape (st) driver");
+> @@ -198,15 +199,13 @@ static int sgl_unmap_user_pages(struct s
+>  static int st_probe(struct device *);
+>  static int st_remove(struct device *);
+>  
+> -static int do_create_sysfs_files(void);
+> -static void do_remove_sysfs_files(void);
+> -
+>  static struct scsi_driver st_template = {
+>  	.gendrv = {
+>  		.name		= "st",
+>  		.owner		= THIS_MODULE,
+>  		.probe		= st_probe,
+>  		.remove		= st_remove,
+> +		.groups		= st_drv_groups,
+>  	},
+>  };
+>  
+> @@ -4404,14 +4403,8 @@ static int __init init_st(void)
+>  	if (err)
+>  		goto err_chrdev;
+>  
+> -	err = do_create_sysfs_files();
+> -	if (err)
+> -		goto err_scsidrv;
+> -
+>  	return 0;
+>  
+> -err_scsidrv:
+> -	scsi_unregister_driver(&st_template.gendrv);
+>  err_chrdev:
+>  	unregister_chrdev_region(MKDEV(SCSI_TAPE_MAJOR, 0),
+>  				 ST_MAX_TAPE_ENTRIES);
+> @@ -4422,7 +4415,6 @@ err_class:
+>  
+>  static void __exit exit_st(void)
+>  {
+> -	do_remove_sysfs_files();
+>  	scsi_unregister_driver(&st_template.gendrv);
+>  	unregister_chrdev_region(MKDEV(SCSI_TAPE_MAJOR, 0),
+>  				 ST_MAX_TAPE_ENTRIES);
+> @@ -4459,44 +4451,14 @@ static ssize_t st_version_show(struct de
+>  }
+>  static DRIVER_ATTR(version, S_IRUGO, st_version_show, NULL);
 
->
->>> +
->>> +    device_initialize(&nvmem->dev);
->>> +
->>> +    dev_dbg(&nvmem->dev, "Registering nvmem device %s\n",
->>> +        dev_name(&nvmem->dev));
->>> +
->>> +    rval = device_add(&nvmem->dev);
->>> +    if (rval) {
->>> +        ida_simple_remove(&nvmem_ida, nvmem->id);
->>> +        kfree(nvmem);
->>> +        return ERR_PTR(rval);
->>> +    }
->>> +
->>> +    /* update sysfs attributes */
->>> +    if (nvmem->read_only)
->>> +        sysfs_update_group(&nvmem->dev.kobj, &nvmem_bin_ro_group);
->>
->> It would be nice if this could be done before the device was registered.
->> Perhaps have two device_types, one for read-only and one for read/write?
->
-> The attributes are actually coming from the class object, so we have
-> no choice to update the attributes before the device is registered.
->
-> May it would be more safe to have default as read-only and modify it
-> to read/write based on read-only flag?
->
->
+For a future patch, you might want to convert these type of declarations
+to use DRIVER_ATTR_RO() and friends.
 
-Can you assign the attributes to the device_type in the nvmem::struct
-device? I don't see why these attributes need to be part of the class.
+thanks,
 
->>
->>> +{
->>> +    return class_register(&nvmem_class);
->>
->> I thought class was on the way out? Aren't we supposed to use bus types
->> for new stuff?
-> Do you remember any conversation on the list about this? I could not
-> find it on web.
->
-> on the other hand, nvmem is not really a bus, making it a bus type
-> sounds incorrect to me.
->
-
-I found this post on the cpu class that Sudeep tried to introduce[1].
-And there's this post from Kay that alludes to a unification of busses
-and classes[2]. And some other post where Kay says class is dead [3].
-
-[1] https://lkml.org/lkml/2014/8/21/191
-[2] https://lwn.net/Articles/471821/
-[3] https://lkml.org/lkml/2010/11/11/17
-
--- 
-Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum,
-a Linux Foundation Collaborative Project
+greg k-h
