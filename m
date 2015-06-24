@@ -1,396 +1,217 @@
-From: Andreas Gruenbacher <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [RFC v4 31/31] nfsd: Add support for the v4.1 dacl attribute
-Date: Wed, 24 Jun 2015 23:57:20 +0200
-Message-ID: <1435183040-22726-32-git-send-email-agruenba@redhat.com>
+From: Andreas Gruenbacher <andreas.gruenbacher@gmail.com>
+Subject: [RFC v4 07/31] richacl: Permission mapping functions
+Date: Wed, 24 Jun 2015 23:56:56 +0200
+Message-ID: <1435183040-22726-8-git-send-email-agruenba@redhat.com>
 References: <1435183040-22726-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1435183040-22726-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <samba-technical-bounces@lists.samba.org>
+In-Reply-To: <1435183040-22726-1-git-send-email-agruenba@redhat.com>
+List-Unsubscribe: <https://lists.samba.org/mailman/options/samba-technical>,
+	<mailto:samba-technical-request@lists.samba.org?subject=unsubscribe>
+List-Archive: <http://lists.samba.org/pipermail/samba-technical>
+List-Post: <mailto:samba-technical@lists.samba.org>
+List-Help: <mailto:samba-technical-request@lists.samba.org?subject=help>
+List-Subscribe: <https://lists.samba.org/mailman/listinfo/samba-technical>,
+	<mailto:samba-technical-request@lists.samba.org?subject=subscribe>
+Sender: samba-technical-bounces@lists.samba.org
+Errors-To: samba-technical-bounces@lists.samba.org
+To: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, samba-technical@lists.samba.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Richacls support the Automatic Inheritance permission propagation mechanism as
-specified in NFSv4.1.  Over NFS, this requires support for the dacl attribute:
-compared to the acl attribute, the dacl attribute has an additional flags field
-which indicates when Automatic Inheritance is in use.
+We need to map from POSIX permissions to NFSv4 permissions when a
+chmod() is done, from NFSv4 permissions to POSIX permissions when an acl
+is set (which implicitly sets the file permission bits), and from the
+MAY_READ/MAY_WRITE/MAY_EXEC/MAY_APPEND flags to NFSv4 permissions when
+doing an access check in a richacl.
 
-The server will only indicate dacl attribute support in protocol version 4.1
-and later, on file systems with richacl support.
-
-This commit also adds support for the NFSv4.1 NFS4_ACE_WRITE_RETENTION and
-NFS4_ACE_WRITE_RETENTION_HOLD ACL permissions.
-
-Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- fs/nfsd/nfs4proc.c        |   2 +
- fs/nfsd/nfs4xdr.c         | 219 ++++++++++++++++++++++++++++++----------------
- fs/nfsd/nfsd.h            |   6 +-
- include/linux/nfs4.h      |   1 +
- include/uapi/linux/nfs4.h |   3 +-
- 5 files changed, 155 insertions(+), 76 deletions(-)
+ fs/richacl_base.c       | 113 ++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/richacl.h |  46 ++++++++++++++++++++
+ 2 files changed, 159 insertions(+)
 
-diff --git a/fs/nfsd/nfs4proc.c b/fs/nfsd/nfs4proc.c
-index a245528..2152f9d 100644
---- a/fs/nfsd/nfs4proc.c
-+++ b/fs/nfsd/nfs4proc.c
-@@ -1817,6 +1817,8 @@ static inline u32 nfsd4_getattr_rsize(struct svc_rqst *rqstp,
- 		ret += NFS4_FHSIZE + 4;
- 		bmap0 &= ~FATTR4_WORD0_FILEHANDLE;
+diff --git a/fs/richacl_base.c b/fs/richacl_base.c
+index 164b902..032c756 100644
+--- a/fs/richacl_base.c
++++ b/fs/richacl_base.c
+@@ -56,3 +56,116 @@ richacl_clone(const struct richacl *acl, gfp_t gfp)
  	}
-+	if (bmap1 & FATTR4_WORD1_DACL)
-+		return svc_max_payload(rqstp);
- 	if (bmap2 & FATTR4_WORD2_SECURITY_LABEL) {
- 		ret += NFS4_MAXLABELLEN + 12;
- 		bmap2 &= ~FATTR4_WORD2_SECURITY_LABEL;
-diff --git a/fs/nfsd/nfs4xdr.c b/fs/nfsd/nfs4xdr.c
-index 853e0d0..89ca93c 100644
---- a/fs/nfsd/nfs4xdr.c
-+++ b/fs/nfsd/nfs4xdr.c
-@@ -300,6 +300,68 @@ nfsd4_decode_bitmap(struct nfsd4_compoundargs *argp, u32 *bmval)
- 	DECODE_TAIL;
+ 	return dup;
  }
- 
-+static unsigned int
-+nfsd4_ace_mask(int minorversion)
++
++/**
++ * richacl_mask_to_mode  -  compute the file permission bits which correspond to @mask
++ * @mask:	%RICHACE_* permission mask
++ *
++ * See richacl_masks_to_mode().
++ */
++static int
++richacl_mask_to_mode(unsigned int mask)
 +{
-+	return minorversion == 0 ?  NFS40_ACE_MASK_ALL : NFS4_ACE_MASK_ALL;
++	int mode = 0;
++
++	if (mask & RICHACE_POSIX_MODE_READ)
++		mode |= S_IROTH;
++	if (mask & RICHACE_POSIX_MODE_WRITE)
++		mode |= S_IWOTH;
++	if (mask & RICHACE_POSIX_MODE_EXEC)
++		mode |= S_IXOTH;
++
++	return mode;
 +}
 +
-+static __be32
-+nfsd4_decode_acl_entries(struct nfsd4_compoundargs *argp, struct richacl **acl,
-+			 unsigned short flags_mask, unsigned int ace_mask,
-+			 int *plen)
++/**
++ * richacl_masks_to_mode  -  compute the file permission bits from the file masks
++ *
++ * When setting a richacl, we set the file permission bits to indicate maximum
++ * permissions: for example, we set the Write permission when a mask contains
++ * RICHACE_APPEND_DATA even if it does not also contain RICHACE_WRITE_DATA.
++ *
++ * Permissions which are not in RICHACE_POSIX_MODE_READ, RICHACE_POSIX_MODE_WRITE, or
++ * RICHACE_POSIX_MODE_EXEC cannot be represented in the file permission bits.
++ * Such permissions can still be effective, but not for new files or after a
++ * chmod(); they must be explicitly enabled in the richacl.
++ */
++int
++richacl_masks_to_mode(const struct richacl *acl)
 +{
-+	struct richace *ace;
-+	u32 dummy32;
-+	char *buf;
-+	int len = 0;
++	return richacl_mask_to_mode(acl->a_owner_mask) << 6 |
++	       richacl_mask_to_mode(acl->a_group_mask) << 3 |
++	       richacl_mask_to_mode(acl->a_other_mask);
++}
++EXPORT_SYMBOL_GPL(richacl_masks_to_mode);
 +
-+	DECODE_HEAD;
++/**
++ * richacl_mode_to_mask  - compute a file mask from the lowest three mode bits
++ *
++ * When the file permission bits of a file are set with chmod(), this specifies
++ * the maximum permissions that processes will get.  All permissions beyond
++ * that will be removed from the file masks, and become ineffective.
++ */
++unsigned int
++richacl_mode_to_mask(mode_t mode)
++{
++	unsigned int mask = 0;
 +
-+	flags_mask &= RICHACE_VALID_FLAGS & ~RICHACE_SPECIAL_WHO;
++	if (mode & S_IROTH)
++		mask |= RICHACE_POSIX_MODE_READ;
++	if (mode & S_IWOTH)
++		mask |= RICHACE_POSIX_MODE_WRITE;
++	if (mode & S_IXOTH)
++		mask |= RICHACE_POSIX_MODE_EXEC;
 +
-+	READ_BUF(4); len += 4;
-+	dummy32 = be32_to_cpup(p++);
-+
-+	if (dummy32 > NFSD4_ACL_MAX)
-+		return nfserr_fbig;
-+
-+	*acl = svcxdr_alloc_richacl(argp, dummy32);
-+	if (*acl == NULL)
-+		return nfserr_jukebox;
-+
-+	richacl_for_each_entry(ace, *acl) {
-+		READ_BUF(16); len += 16;
-+
-+		dummy32 = be32_to_cpup(p++);
-+		if (dummy32 > RICHACE_ACCESS_DENIED_ACE_TYPE)
-+			return nfserr_inval;
-+		ace->e_type = dummy32;
-+
-+		dummy32 = be32_to_cpup(p++);
-+		if (dummy32 & ~flags_mask)
-+			return nfserr_inval;
-+		ace->e_flags = dummy32;
-+
-+		dummy32 = be32_to_cpup(p++);
-+		if (dummy32 & ~ace_mask)
-+			return nfserr_inval;
-+		ace->e_mask = dummy32;
-+
-+		dummy32 = be32_to_cpup(p++);
-+		READ_BUF(dummy32);
-+		len += XDR_QUADLEN(dummy32) << 2;
-+		READMEM(buf, dummy32);
-+		status = nfsd4_decode_ace_who(ace, argp->rqstp,
-+					      buf, dummy32);
-+		if (status)
-+			return status;
-+	}
-+	*plen += len;
-+
-+	DECODE_TAIL;
++	return mask;
 +}
 +
- static __be32
- nfsd4_decode_fattr(struct nfsd4_compoundargs *argp, u32 *bmval,
- 		   struct iattr *iattr, struct richacl **acl,
-@@ -311,6 +373,7 @@ nfsd4_decode_fattr(struct nfsd4_compoundargs *argp, u32 *bmval,
- 
- 	DECODE_HEAD;
- 	iattr->ia_valid = 0;
-+	*acl = NULL;
- 	if ((status = nfsd4_decode_bitmap(argp, bmval)))
- 		return status;
- 
-@@ -324,50 +387,18 @@ nfsd4_decode_fattr(struct nfsd4_compoundargs *argp, u32 *bmval,
- 		iattr->ia_valid |= ATTR_SIZE;
- 	}
- 	if (bmval[0] & FATTR4_WORD0_ACL) {
--		u32 nace;
--		struct richace *ace;
--
--		READ_BUF(4); len += 4;
--		nace = be32_to_cpup(p++);
--
--		if (nace > NFSD4_ACL_MAX)
--			return nfserr_fbig;
-+		if (bmval[1] & FATTR4_WORD1_DACL)
-+			return nfserr_inval;
- 
--		*acl = svcxdr_alloc_richacl(argp, nace);
--		if (*acl == NULL)
-+		status = nfsd4_decode_acl_entries(argp, acl,
-+				~NFS4_ACE_INHERITED_ACE,
-+				nfsd4_ace_mask(argp->minorversion),
-+				&len);
-+		if (status)
-+			return status;
-+		else if (*acl == NULL)
- 			return nfserr_jukebox;
--
--		richacl_for_each_entry(ace, *acl) {
--			READ_BUF(16); len += 16;
--
--			dummy32 = be32_to_cpup(p++);
--			if (dummy32 > RICHACE_ACCESS_DENIED_ACE_TYPE)
--				return nfserr_inval;
--			ace->e_type = dummy32;
--
--			dummy32 = be32_to_cpup(p++);
--			if (dummy32 & (~RICHACE_VALID_FLAGS |
--				       RICHACE_INHERITED_ACE |
--				       RICHACE_SPECIAL_WHO))
--				return nfserr_inval;
--			ace->e_flags = dummy32;
--
--			dummy32 = be32_to_cpup(p++);
--			if (dummy32 & ~NFS4_ACE_MASK_ALL)
--				return nfserr_inval;
--			ace->e_mask = dummy32;
--
--			dummy32 = be32_to_cpup(p++);
--			READ_BUF(dummy32);
--			len += XDR_QUADLEN(dummy32) << 2;
--			READMEM(buf, dummy32);
--			status = nfsd4_decode_ace_who(ace, argp->rqstp,
--						      buf, dummy32);
--			if (status)
--				return status;
--		}
--	} else
--		*acl = NULL;
-+	}
- 	if (bmval[1] & FATTR4_WORD1_MODE) {
- 		READ_BUF(4);
- 		len += 4;
-@@ -435,6 +466,22 @@ nfsd4_decode_fattr(struct nfsd4_compoundargs *argp, u32 *bmval,
- 			goto xdr_error;
- 		}
- 	}
-+	if (bmval[1] & FATTR4_WORD1_DACL) {
-+		READ_BUF(4);
-+		len += 4;
-+		dummy32 = be32_to_cpup(p++);
-+		if (dummy32 & (~RICHACL_VALID_FLAGS | RICHACL_MASKED))
-+			return nfserr_inval;
-+		status = nfsd4_decode_acl_entries(argp, acl,
-+				~0,
-+				nfsd4_ace_mask(argp->minorversion),
-+				&len);
-+		if (status)
-+			return status;
-+		else if (*acl == NULL)
-+			return nfserr_jukebox;
-+		(*acl)->a_flags = dummy32;
-+	}
- 
- 	label->len = 0;
- #ifdef CONFIG_NFSD_V4_SECURITY_LABEL
-@@ -2215,6 +2262,42 @@ static int get_parent_attributes(struct svc_export *exp, struct kstat *stat)
- 	return err;
- }
- 
-+static __be32 nfsd4_encode_acl_entries(struct xdr_stream *xdr,
-+		struct richacl *acl, struct svc_rqst *rqstp,
-+		unsigned short flags_mask, unsigned int ace_mask)
++/**
++ * richacl_want_to_mask  - convert the iop->permission want argument to a mask
++ * @want:	@want argument of the permission inode operation
++ *
++ * When checking for append, @want is (MAY_WRITE | MAY_APPEND).
++ *
++ * Richacls use the iop->may_create and iop->may_delete hooks which are
++ * used for checking if creating and deleting files is allowed.  These hooks do
++ * not use richacl_want_to_mask(), so we do not have to deal with mapping
++ * MAY_WRITE to RICHACE_ADD_FILE, RICHACE_ADD_SUBDIRECTORY, and RICHACE_DELETE_CHILD
++ * here.
++ */
++unsigned int
++richacl_want_to_mask(unsigned int want)
 +{
-+	__be32 *p;
++	unsigned int mask = 0;
 +
-+	flags_mask &= ~RICHACE_SPECIAL_WHO;
-+
-+	p = xdr_reserve_space(xdr, 4);
-+	if (!p)
-+		return nfserr_resource;
-+
-+	if (acl == NULL) {
-+		*p++ = cpu_to_be32(0);
-+	} else {
-+		struct richace *ace;
-+
-+		*p++ = cpu_to_be32(acl->a_count);
-+
-+		richacl_for_each_entry(ace, acl) {
-+			__be32 status;
-+
-+			p = xdr_reserve_space(xdr, 4*3);
-+			if (!p)
-+				return nfserr_resource;
-+			*p++ = cpu_to_be32(ace->e_type);
-+			*p++ = cpu_to_be32(ace->e_flags & flags_mask);
-+			*p++ = cpu_to_be32(ace->e_mask & ace_mask);
-+			status = nfsd4_encode_ace_who(xdr, rqstp, ace);
-+			if (status)
-+				return status;
-+		}
-+	}
-+	return 0;
++	if (want & MAY_READ)
++		mask |= RICHACE_READ_DATA;
++	if (want & MAY_DELETE_SELF)
++		mask |= RICHACE_DELETE;
++	if (want & MAY_TAKE_OWNERSHIP)
++		mask |= RICHACE_WRITE_OWNER;
++	if (want & MAY_CHMOD)
++		mask |= RICHACE_WRITE_ACL;
++	if (want & MAY_SET_TIMES)
++		mask |= RICHACE_WRITE_ATTRIBUTES;
++	if (want & MAY_EXEC)
++		mask |= RICHACE_EXECUTE;
++	/*
++	 * differentiate MAY_WRITE from these request
++	 */
++	if (want & (MAY_APPEND |
++		    MAY_CREATE_FILE | MAY_CREATE_DIR |
++		    MAY_DELETE_CHILD)) {
++		if (want & MAY_APPEND)
++			mask |= RICHACE_APPEND_DATA;
++		if (want & MAY_CREATE_FILE)
++			mask |= RICHACE_ADD_FILE;
++		if (want & MAY_CREATE_DIR)
++			mask |= RICHACE_ADD_SUBDIRECTORY;
++		if (want & MAY_DELETE_CHILD)
++			mask |= RICHACE_DELETE_CHILD;
++	} else if (want & MAY_WRITE)
++		mask |= RICHACE_WRITE_DATA;
++	return mask;
 +}
-+
- /*
-  * Note: @fhp can be NULL; in this case, we might have to compose the filehandle
-  * ourselves.
-@@ -2286,15 +2369,16 @@ nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
- 			goto out;
- 		fhp = tempfh;
- 	}
--	if (bmval0 & FATTR4_WORD0_ACL) {
-+	if ((bmval0 & FATTR4_WORD0_ACL) || (bmval1 & FATTR4_WORD1_DACL)) {
- 		acl = nfsd4_get_acl(rqstp, dentry);
- 		if (IS_ERR(acl)) {
- 			err = PTR_ERR(acl);
- 			acl = NULL;
- 		}
--		if (err == -EOPNOTSUPP)
-+		if (err == -EOPNOTSUPP) {
- 			bmval0 &= ~FATTR4_WORD0_ACL;
--		else if (err == -EINVAL) {
-+			bmval1 &= ~FATTR4_WORD1_DACL;
-+		} else if (err == -EINVAL) {
- 			status = nfserr_attrnotsupp;
- 			goto out;
- 		} else if (err != 0)
-@@ -2352,6 +2436,8 @@ nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
++EXPORT_SYMBOL_GPL(richacl_want_to_mask);
+diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+index feebc2f..7957bbf 100644
+--- a/include/linux/richacl.h
++++ b/include/linux/richacl.h
+@@ -118,6 +118,49 @@ struct richacl {
+ 	RICHACE_WRITE_OWNER |					\
+ 	RICHACE_SYNCHRONIZE)
  
- 		if (!IS_ACL(d_inode(dentry)))
- 			word0 &= ~FATTR4_WORD0_ACL;
-+		if (!IS_RICHACL(d_inode(dentry)))
-+			word1 &= ~FATTR4_WORD1_DACL;
- 		if (!contextsupport)
- 			word2 &= ~FATTR4_WORD2_SECURITY_LABEL;
- 		if (!word2) {
-@@ -2465,35 +2551,12 @@ nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
- 		*p++ = cpu_to_be32(rdattr_err);
- 	}
- 	if (bmval0 & FATTR4_WORD0_ACL) {
--		struct richace *ace;
--
--		if (acl == NULL) {
--			p = xdr_reserve_space(xdr, 4);
--			if (!p)
--				goto out_resource;
--
--			*p++ = cpu_to_be32(0);
--			goto out_acl;
--		}
--		p = xdr_reserve_space(xdr, 4);
--		if (!p)
--			goto out_resource;
--		*p++ = cpu_to_be32(acl->a_count);
--
--		richacl_for_each_entry(ace, acl) {
--			p = xdr_reserve_space(xdr, 4*3);
--			if (!p)
--				goto out_resource;
--			*p++ = cpu_to_be32(ace->e_type);
--			*p++ = cpu_to_be32(ace->e_flags &
--				~(RICHACE_SPECIAL_WHO | RICHACE_INHERITED_ACE));
--			*p++ = cpu_to_be32(ace->e_mask & NFS4_ACE_MASK_ALL);
--			status = nfsd4_encode_ace_who(xdr, rqstp, ace);
--			if (status)
--				goto out;
--		}
-+		status = nfsd4_encode_acl_entries(xdr, acl, rqstp,
-+				~NFS4_ACE_INHERITED_ACE,
-+				nfsd4_ace_mask(minorversion));
-+		if (status)
-+			goto out;
- 	}
--out_acl:
- 	if (bmval0 & FATTR4_WORD0_ACLSUPPORT) {
- 		p = xdr_reserve_space(xdr, 4);
- 		if (!p)
-@@ -2702,6 +2765,16 @@ out_acl:
- 			get_parent_attributes(exp, &stat);
- 		p = xdr_encode_hyper(p, stat.ino);
- 	}
-+	if (bmval1 & FATTR4_WORD1_DACL) {
-+		p = xdr_reserve_space(xdr, 4);
-+		if (!p)
-+			goto out_resource;
-+		*p++ = cpu_to_be32(acl->a_flags);
-+		status = nfsd4_encode_acl_entries(xdr, acl, rqstp,
-+				~0, nfsd4_ace_mask(minorversion));
-+		if (status)
-+			goto out;
-+	}
- #ifdef CONFIG_NFSD_PNFS
- 	if ((bmval1 & FATTR4_WORD1_FS_LAYOUT_TYPES) ||
- 	    (bmval2 & FATTR4_WORD2_LAYOUT_TYPES)) {
-diff --git a/fs/nfsd/nfsd.h b/fs/nfsd/nfsd.h
-index cf98052..cb5c3ed 100644
---- a/fs/nfsd/nfsd.h
-+++ b/fs/nfsd/nfsd.h
-@@ -339,7 +339,8 @@ void		nfsd_lockd_shutdown(void);
- 	NFSD4_SUPPORTED_ATTRS_WORD0
++/*
++ * The POSIX permissions are supersets of the following NFSv4 permissions:
++ *
++ *  - MAY_READ maps to READ_DATA or LIST_DIRECTORY, depending on the type
++ *    of the file system object.
++ *
++ *  - MAY_WRITE maps to WRITE_DATA or RICHACE_APPEND_DATA for files, and to
++ *    ADD_FILE, RICHACE_ADD_SUBDIRECTORY, or RICHACE_DELETE_CHILD for directories.
++ *
++ *  - MAY_EXECUTE maps to RICHACE_EXECUTE.
++ *
++ *  (Some of these NFSv4 permissions have the same bit values.)
++ */
++#define RICHACE_POSIX_MODE_READ (			\
++		RICHACE_READ_DATA |		\
++		RICHACE_LIST_DIRECTORY)
++#define RICHACE_POSIX_MODE_WRITE (			\
++		RICHACE_WRITE_DATA |		\
++		RICHACE_ADD_FILE |			\
++		RICHACE_APPEND_DATA |		\
++		RICHACE_ADD_SUBDIRECTORY |		\
++		RICHACE_DELETE_CHILD)
++#define RICHACE_POSIX_MODE_EXEC RICHACE_EXECUTE
++#define RICHACE_POSIX_MODE_ALL (			\
++		RICHACE_POSIX_MODE_READ |		\
++		RICHACE_POSIX_MODE_WRITE |		\
++		RICHACE_POSIX_MODE_EXEC)
++/*
++ * These permissions are always allowed
++ * no matter what the acl says.
++ */
++#define RICHACE_POSIX_ALWAYS_ALLOWED (	\
++		RICHACE_SYNCHRONIZE |	\
++		RICHACE_READ_ATTRIBUTES |	\
++		RICHACE_READ_ACL)
++/*
++ * The owner is implicitly granted
++ * these permissions under POSIX.
++ */
++#define RICHACE_POSIX_OWNER_ALLOWED (		\
++		RICHACE_WRITE_ATTRIBUTES |		\
++		RICHACE_WRITE_OWNER |		\
++		RICHACE_WRITE_ACL)
+ /**
+  * richacl_get  -  grab another reference to a richacl handle
+  */
+@@ -254,5 +297,8 @@ richace_is_same_identifier(const struct richace *a, const struct richace *b)
  
- #define NFSD4_1_SUPPORTED_ATTRS_WORD1 \
--	(NFSD4_SUPPORTED_ATTRS_WORD1	| PNFSD_SUPPORTED_ATTRS_WORD1)
-+	(NFSD4_SUPPORTED_ATTRS_WORD1	| PNFSD_SUPPORTED_ATTRS_WORD1 | \
-+	 FATTR4_WORD1_DACL)
+ extern struct richacl *richacl_alloc(int, gfp_t);
+ extern struct richacl *richacl_clone(const struct richacl *, gfp_t);
++extern int richacl_masks_to_mode(const struct richacl *);
++extern unsigned int richacl_mode_to_mask(mode_t);
++extern unsigned int richacl_want_to_mask(unsigned int);
  
- #define NFSD4_1_SUPPORTED_ATTRS_WORD2 \
- 	(NFSD4_SUPPORTED_ATTRS_WORD2	| PNFSD_SUPPORTED_ATTRS_WORD2 | \
-@@ -386,7 +387,8 @@ static inline u32 nfsd_suppattrs2(u32 minorversion)
- 	(FATTR4_WORD0_SIZE | FATTR4_WORD0_ACL)
- #define NFSD_WRITEABLE_ATTRS_WORD1 \
- 	(FATTR4_WORD1_MODE | FATTR4_WORD1_OWNER | FATTR4_WORD1_OWNER_GROUP \
--	| FATTR4_WORD1_TIME_ACCESS_SET | FATTR4_WORD1_TIME_MODIFY_SET)
-+	| FATTR4_WORD1_TIME_ACCESS_SET | FATTR4_WORD1_TIME_MODIFY_SET \
-+	| FATTR4_WORD1_DACL)
- #ifdef CONFIG_NFSD_V4_SECURITY_LABEL
- #define NFSD_WRITEABLE_ATTRS_WORD2 FATTR4_WORD2_SECURITY_LABEL
- #else
-diff --git a/include/linux/nfs4.h b/include/linux/nfs4.h
-index 095854c..814ab60 100644
---- a/include/linux/nfs4.h
-+++ b/include/linux/nfs4.h
-@@ -394,6 +394,7 @@ enum lock_type4 {
- #define FATTR4_WORD1_TIME_MODIFY        (1UL << 21)
- #define FATTR4_WORD1_TIME_MODIFY_SET    (1UL << 22)
- #define FATTR4_WORD1_MOUNTED_ON_FILEID  (1UL << 23)
-+#define FATTR4_WORD1_DACL               (1UL << 26)
- #define FATTR4_WORD1_FS_LAYOUT_TYPES    (1UL << 30)
- #define FATTR4_WORD2_LAYOUT_TYPES       (1UL << 0)
- #define FATTR4_WORD2_LAYOUT_BLKSIZE     (1UL << 1)
-diff --git a/include/uapi/linux/nfs4.h b/include/uapi/linux/nfs4.h
-index 2119c7c..64e4c6c 100644
---- a/include/uapi/linux/nfs4.h
-+++ b/include/uapi/linux/nfs4.h
-@@ -121,7 +121,8 @@
- #define NFS4_ACE_GENERIC_READ                 0x00120081
- #define NFS4_ACE_GENERIC_WRITE                0x00160106
- #define NFS4_ACE_GENERIC_EXECUTE              0x001200A0
--#define NFS4_ACE_MASK_ALL                     0x001F01FF
-+#define NFS40_ACE_MASK_ALL                    0x001F01FF
-+#define NFS4_ACE_MASK_ALL                     0x001F07FF
- 
- #define EXCHGID4_FLAG_SUPP_MOVED_REFER		0x00000001
- #define EXCHGID4_FLAG_SUPP_MOVED_MIGR		0x00000002
+ #endif /* __RICHACL_H */
 -- 
 2.4.2
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
