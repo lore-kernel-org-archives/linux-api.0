@@ -1,38 +1,38 @@
 From: =?utf-8?Q?=22Kai_M=C3=A4kisara_=28Kolumbus=29=22?=
-	<kai.makisara-9Aww8k/80nUxHbG02/KK1g@public.gmane.org>
-Subject: Re: [PATCH v2] st: convert DRIVER_ATTR macros to DRIVER_ATTR_RO
-Date: Wed, 24 Jun 2015 23:15:26 +0300
-Message-ID: <374DC3D5-CA5E-48B8-838A-D95962C39275@kolumbus.fi>
-References: <DDB9C85B850785449757F9914A034FCB3F8E9E02@G4W3219.americas.hpqcorp.net>
+	<kai.makisara@kolumbus.fi>
+Subject: Re: [PATCH] st: convert to using driver attr groups for sysfs
+Date: Wed, 24 Jun 2015 23:19:16 +0300
+Message-ID: <C5C1C6D6-DD20-4E6F-89DB-417A85D32E43@kolumbus.fi>
+References: <DDB9C85B850785449757F9914A034FCB3BFF68D9@G9W0766.americas.hpqcorp.net>
 Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2098\))
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <DDB9C85B850785449757F9914A034FCB3F8E9E02-MCKW7lC+H9ISZAcGdq5asR6epYMZPwEe5NbjCUgZEJk@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Seymour, Shane M" <shane.seymour-VXdhtT5mjnY@public.gmane.org>
-Cc: "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> (gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org)" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <DDB9C85B850785449757F9914A034FCB3BFF68D9@G9W0766.americas.hpqcorp.net>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Seymour, Shane M" <shane.seymour@hp.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
 
-> On 24.6.2015, at 9.54, Seymour, Shane M <shane.seymour-VXdhtT5mjnY@public.gmane.org> wrote:
+> On 23.6.2015, at 11.11, Seymour, Shane M <shane.seymour@hp.com> wrote=
+:
 >=20
+> This patch changes the st driver to use attribute groups so
+> driver sysfs files are created automatically. See the
+> following for reference:
 >=20
-> Convert DRIVER_ATTR macros to DRIVER_ATTR_RO requested by
-> Greg KH. Also switched to using scnprintf instead of snprintf
-> per Documentation/filesystems/sysfs.txt.
+> http://kroah.com/log/blog/2013/06/26/how-to-create-a-sysfs-file-corre=
+ctly/
 >=20
-> Suggested-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-> Signed-off-by: Shane Seymour <shane.seymour-VXdhtT5mjnY@public.gmane.org>
-> ---
-> This patch was implemented on top of the previous patch to
-> convert to using driver attr groups.
->=20
-> Changes from v1:
-> - switched to scnprintf from sprintf after feedback from Sergey
-> Senozhatsky.
 
-Acked-by: Kai M=C3=A4kisara <kai.makisara-9Aww8k/80nUxHbG02/KK1g@public.gmane.org>
+Acked-by: Kai M=C3=A4kisara <kai.makisara@kolumbus.fi>
 
 Thanks,
 Kai
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
