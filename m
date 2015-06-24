@@ -1,252 +1,83 @@
-From: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [RFC PATCH 2/3] restartable sequences: x86 ABI
+From: Paul Turner <pjt@google.com>
+Subject: [RFC PATCH 0/3] restartable sequences: fast user-space percpu
+ critical sections
 Date: Wed, 24 Jun 2015 15:26:09 -0700
-Message-ID: <20150624222609.6116.30992.stgit@kitami.mtv.corp.google.com>
-References: <20150624222609.6116.86035.stgit@kitami.mtv.corp.google.com>
+Message-ID: <20150624222609.6116.86035.stgit@kitami.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150624222609.6116.86035.stgit-tdHu5vqousHHt/MElyovVYaSKrA+ACpX0E9HWUfgJXw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Lai Jiangshan <laijs@cn.fujitsu.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Ingo Molnar <mingo@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Linus Torvalds <torvalds@linux-foundation.org>, Chris Lameter <cl@linux.com>
 List-Id: linux-api@vger.kernel.org
 
-Implements the x86 (i386 & x86-64) ABIs for interrupting and restarting
-execution within restartable sequence sections.
+This is a fairly small series demonstrating a feature we've found to be quite
+powerful in practice, "restartable sequences".
 
-With respect to the x86-specific ABI:
-  On 32-bit:           Upon restart, the interrupted rip is placed in %ecx
-  On 64-bit (or x32):  Upon restart, the interrupted rip is placed in %r10
+Most simply: these sequences comprise small snippets of user-code that are
+guaranteed to be (effectively) executed serially, with support for restart (or
+other handling) in the event of preemption or interruption.
 
-While potentially surprising at first glance, this choice is strongly motivated
-by the fact that the available scratch registers under the i386 function call
-ABI overlap with those used as argument registers under x86_64.
+This (when combined with an in-memory cpu-id; potentially optional on some
+architectures) can be used to implement extremely fast per-cpu operations that
+do not rely on the use of actual processor atomics.  We've used this to back
+performance critical code such as our malloc implementation with good results.
 
-Given that sequences are already personality specific and that we always want
-the arguments to be available for sequence restart, it's much more natural to
-ultimately differentiate the ABI in these two cases.
+We previously discussed this feature at LPC:
+  http://www.linuxplumbersconf.org/2013/ocw/system/presentations/1695/original/LPC%20-%20PerCpu%20Atomics.pdf
 
-Signed-off-by: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
----
- arch/x86/include/asm/restartable_sequences.h |   50 +++++++++++++++++++
- arch/x86/kernel/Makefile                     |    2 +
- arch/x86/kernel/restartable_sequences.c      |   69 ++++++++++++++++++++++++++
- arch/x86/kernel/signal.c                     |   12 +++++
- kernel/restartable_sequences.c               |   11 +++-
- 5 files changed, 141 insertions(+), 3 deletions(-)
- create mode 100644 arch/x86/include/asm/restartable_sequences.h
- create mode 100644 arch/x86/kernel/restartable_sequences.c
+Mathieu Desnoyers posted an alternate implementation based on the ideas above
+at:
+  https://lkml.org/lkml/2015/5/21/472
 
-diff --git a/arch/x86/include/asm/restartable_sequences.h b/arch/x86/include/asm/restartable_sequences.h
-new file mode 100644
-index 0000000..0ceb024
---- /dev/null
-+++ b/arch/x86/include/asm/restartable_sequences.h
-@@ -0,0 +1,50 @@
-+#ifndef _ASM_X86_RESTARTABLE_SEQUENCES_H
-+#define _ASM_X86_RESTARTABLE_SEQUENCES_H
-+
-+#include <asm/processor.h>
-+#include <asm/ptrace.h>
-+#include <linux/sched.h>
-+
-+#ifdef CONFIG_RESTARTABLE_SEQUENCES
-+
-+static inline bool arch_rseq_in_crit_section(struct task_struct *p,
-+					     struct pt_regs *regs)
-+{
-+	struct task_struct *leader = p->group_leader;
-+	struct restartable_sequence_state *rseq_state = &leader->rseq_state;
-+
-+	unsigned long ip = (unsigned long)regs->ip;
-+	if (unlikely(ip < (unsigned long)rseq_state->crit_end &&
-+		     ip >= (unsigned long)rseq_state->crit_start))
-+		return true;
-+
-+	return false;
-+}
-+
-+static inline bool arch_rseq_needs_notify_resume(struct task_struct *p)
-+{
-+#ifdef CONFIG_PREEMPT
-+	/*
-+	 * Under CONFIG_PREEMPT it's possible for regs to be incoherent in the
-+	 * case that we took an interrupt during syscall entry.  Avoid this by
-+	 * always deferring to our notify-resume handler.
-+	 */
-+	return true;
-+#else
-+	return arch_rseq_in_crit_section(p, task_pt_regs(p));
-+#endif
-+}
-+
-+void arch_rseq_handle_notify_resume(struct pt_regs *regs);
-+void arch_rseq_check_critical_section(struct task_struct *p,
-+				      struct pt_regs *regs);
-+
-+#else /* !CONFIG_RESTARTABLE_SEQUENCES */
-+
-+static inline void arch_rseq_handle_notify_resume(struct pt_regs *regs) {}
-+static inline void arch_rseq_check_critical_section(struct task_struct *p,
-+						    struct pt_regs *regs) {}
-+
-+#endif
-+
-+#endif /* _ASM_X86_RESTARTABLE_SEQUENCES_H */
-diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-index febaf18..bd7827d 100644
---- a/arch/x86/kernel/Makefile
-+++ b/arch/x86/kernel/Makefile
-@@ -113,6 +113,8 @@ obj-$(CONFIG_TRACING)			+= tracepoint.o
- obj-$(CONFIG_IOSF_MBI)			+= iosf_mbi.o
- obj-$(CONFIG_PMC_ATOM)			+= pmc_atom.o
- 
-+obj-$(CONFIG_RESTARTABLE_SEQUENCES)	+= restartable_sequences.o
-+
- ###
- # 64 bit specific files
- ifeq ($(CONFIG_X86_64),y)
-diff --git a/arch/x86/kernel/restartable_sequences.c b/arch/x86/kernel/restartable_sequences.c
-new file mode 100644
-index 0000000..3b38013
---- /dev/null
-+++ b/arch/x86/kernel/restartable_sequences.c
-@@ -0,0 +1,69 @@
-+/*
-+ * Restartable Sequences: x86 ABI.
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-+ *
-+ * Copyright (C) 2015, Google, Inc.,
-+ * Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> and Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-+ *
-+ */
-+
-+#include <linux/sched.h>
-+#include <linux/uaccess.h>
-+#include <asm/restartable_sequences.h>
-+
-+void arch_rseq_check_critical_section(struct task_struct *p,
-+				      struct pt_regs *regs)
-+{
-+	if (!arch_rseq_in_crit_section(p, regs))
-+		return;
-+
-+	/* RSEQ only applies to user-mode execution */
-+	BUG_ON(!user_mode(regs));
-+
-+	/*
-+	 * The ABI is slightly different for {32,64}-bit threads on x86
-+	 *
-+	 * Short version:
-+	 *   x86-64 (or x32): interrupted rip => %r10
-+	 *   i386:            interrupted rip => %ecx
-+	 *
-+	 * Longer version:
-+	 * The scratch registers available under the i386 function call ABI
-+	 * overlap with those used by argument registers under the x86_64 ABI.
-+	 *
-+	 * Given that the sequence block is already personality specific in
-+	 * that it must be entered by 'call' and that we always want the
-+	 * arguments available for a sequence restart; it's more natural to
-+	 * differentiate the ABI in these two cases.
-+	 */
-+	if (unlikely(test_tsk_thread_flag(p, TIF_IA32)))
-+		regs->cx = regs->ip; /* i386 */
-+	else
-+		regs->r10 = regs->ip; /* x86-64/x32 */
-+
-+	regs->ip = (unsigned long)p->group_leader->rseq_state.crit_restart;
-+}
-+
-+void arch_rseq_handle_notify_resume(struct pt_regs *regs)
-+{
-+	struct restartable_sequence_state *rseq_state = &current->rseq_state;
-+
-+	/* If this update fails our user-state is incoherent. */
-+	if (put_user(task_cpu(current), rseq_state->cpu_pointer))
-+		force_sig(SIGSEGV, current);
-+
-+	arch_rseq_check_critical_section(current, regs);
-+}
-diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
-index 206996c..987c50b 100644
---- a/arch/x86/kernel/signal.c
-+++ b/arch/x86/kernel/signal.c
-@@ -31,6 +31,7 @@
- #include <asm/vdso.h>
- #include <asm/mce.h>
- #include <asm/sighandling.h>
-+#include <asm/restartable_sequences.h>
- 
- #ifdef CONFIG_X86_64
- #include <asm/proto.h>
-@@ -617,6 +618,15 @@ setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
- 	sigset_t *set = sigmask_to_save();
- 	compat_sigset_t *cset = (compat_sigset_t *) set;
- 
-+	/*
-+	 * If we are executing in the critical section of a restartable
-+	 * sequence we need to fix up the user's stack saved ip at this point
-+	 * so that signal handler return does not allow us to jump back into
-+	 * the block across a context switch boundary.
-+	 */
-+	if (rseq_active(current))
-+		arch_rseq_check_critical_section(current, regs);
-+
- 	/* Set up the stack frame */
- 	if (is_ia32_frame()) {
- 		if (ksig->ka.sa.sa_flags & SA_SIGINFO)
-@@ -755,6 +765,8 @@ do_notify_resume(struct pt_regs *regs, void *unused, __u32 thread_info_flags)
- 	if (thread_info_flags & _TIF_NOTIFY_RESUME) {
- 		clear_thread_flag(TIF_NOTIFY_RESUME);
- 		tracehook_notify_resume(regs);
-+		if (rseq_active(current))
-+			arch_rseq_handle_notify_resume(regs);
- 	}
- 	if (thread_info_flags & _TIF_USER_RETURN_NOTIFY)
- 		fire_user_return_notifiers();
-diff --git a/kernel/restartable_sequences.c b/kernel/restartable_sequences.c
-index 72945f2..9102241 100644
---- a/kernel/restartable_sequences.c
-+++ b/kernel/restartable_sequences.c
-@@ -24,17 +24,22 @@
- 
- #ifdef CONFIG_RESTARTABLE_SEQUENCES
- 
-+#include <asm/restartable_sequences.h>
- #include <linux/uaccess.h>
- #include <linux/preempt.h>
- #include <linux/syscalls.h>
- 
- static void rseq_sched_in_nop(struct preempt_notifier *pn, int cpu) {}
--static void rseq_sched_out_nop(struct preempt_notifier *pn,
--			       struct task_struct *next) {}
-+static void rseq_sched_out(struct preempt_notifier *pn,
-+			   struct task_struct *next)
-+{
-+	if (arch_rseq_needs_notify_resume(current))
-+		set_thread_flag(TIF_NOTIFY_RESUME);
-+}
- 
- static __read_mostly struct preempt_ops rseq_preempt_ops = {
- 	.sched_in = rseq_sched_in_nop,
--	.sched_out = rseq_sched_out_nop,
-+	.sched_out = rseq_sched_out,
- };
- 
- int rseq_register_cpu_pointer_current(int __user *cpu_pointer)
+This RFC is based on the approach we currently use internally.  However, I'll
+likely posit that neither this approach, nor the one posted above, is what we
+should ultimately adopt (provided sufficient interest exists).
+
+The implementation in this series can be summarized as follows:
+- We allow a single (per-address) space critical section (and associated
+  handler) to be defined.
+- When a thread with RSEQ configured (via new syscall) is interrupted within
+  a critical section, we modify its return address.  Either within signal
+  delivery, or the notify-resume path.  The scheduler touchpoint is only a
+  preempt_notifier which (potentially, dependent on config) examines the
+  kernel copy of pt_regs.
+
+There are a few core requirements which motivate the approach taken here:
+1) We must not interfere with regular scheduling.  Unlike preemption protection
+   (or similar), there are no special considerations for code running within a
+   critical region beyond that we must move to the restart handler if
+   interrupted.
+2) The code executing in scheduler context must be tightly constrained, both in
+   terms of overhead and that it must not require access to user memory.
+3) The fast-path must be fast.  That is, user entry/execution/exit of a
+   non-interrupted critical section is the most important case.  The restart
+   handler is a 'slow' path that should only happen comparatively infrequently.
+   We're strongly motivated here by high-performance, low-level primitives:
+   think malloc, or rcu_read_lock.
+
+While the contained implementation performs well under these constraints, it
+has some notable limitations which we should consider for more general usage:
+
+1) The definition of a single region works well for statically linked binaries
+   but can be challenging when shared-libraries want to use this feature.  This
+   is partially mitigated in our experience that a library of primitives is
+   generally more useful than a myriad of custom sequences, but it's still a
+   major concern.
+2) Due to the nature of restart and explicit location requirements it's only
+   really reasonable to write this critical section in assembly; which makes
+   porting and maintenance less convenient.  (One of the included tests shows a
+   reasonable example of what this looks like.)
+3) TLS spreads the entrails of its implementation all over compile _and_ link.
+   This makes properly handling it within the critical section cumbersome in
+   the shared binary case.
+
+We've been thinking about how to address these issues and are considering some
+alternate ABIs that still satisfy (1)-(3), but have a more convenient
+programming model.  I'll send this as a follow-up, but wanted to first share
+the approach we've used to date.
+
+Thanks,
+
+- Paul
