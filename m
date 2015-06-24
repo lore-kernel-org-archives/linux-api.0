@@ -1,50 +1,69 @@
-From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: Re: [PATCH v6 0/9] Add simple NVMEM Framework via regmap.
-Date: Wed, 24 Jun 2015 10:46:58 +0100
-Message-ID: <558A7C92.2040102@linaro.org>
-References: <1435014459-26138-1-git-send-email-srinivas.kandagatla@linaro.org> <235181230.251177.1435088854197.JavaMail.open-xchange@oxbsltgw00.schlund.de>
+From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [RESEND PATCH V2 1/3] Add mmap flag to request pages are locked
+ after page fault
+Date: Wed, 24 Jun 2015 11:47:42 +0200
+Message-ID: <20150624094742.GD32756@dhcp22.suse.cz>
+References: <1433942810-7852-1-git-send-email-emunson@akamai.com>
+ <1433942810-7852-2-git-send-email-emunson@akamai.com>
+ <20150618152907.GG5858@dhcp22.suse.cz>
+ <20150618203048.GB2329@akamai.com>
+ <20150619145708.GG4913@dhcp22.suse.cz>
+ <20150619164333.GD2329@akamai.com>
+ <20150622123826.GF4430@dhcp22.suse.cz>
+ <20150622141806.GE2329@akamai.com>
+ <558954DD.4060405@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-msm-owner@vger.kernel.org>
-In-Reply-To: <235181230.251177.1435088854197.JavaMail.open-xchange@oxbsltgw00.schlund.de>
-Sender: linux-arm-msm-owner@vger.kernel.org
-To: Stefan Wahren <stefan.wahren@i2se.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-arm-kernel@lists.infradead.org
-Cc: wxt@rock-chips.com, linux-api@vger.kernel.org, Kumar Gala <galak@codeaurora.org>, Rob Herring <robh+dt@kernel.org>, sboyd@codeaurora.org, arnd@arndb.de, s.hauer@pengutronix.de, linux-kernel@vger.kernel.org, linux-arm-msm@vger.kernel.org, mporter@konsulko.com, Maxime Ripard <maxime.ripard@free-electrons.com>, pantelis.antoniou@konsulko.com, devicetree@vger.kernel.org, Mark Brown <broonie@kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <558954DD.4060405-AlSwsSmVLrQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Cc: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-alpha-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, linux-parisc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On Tue 23-06-15 14:45:17, Vlastimil Babka wrote:
+> On 06/22/2015 04:18 PM, Eric B Munson wrote:
+> >On Mon, 22 Jun 2015, Michal Hocko wrote:
+> >
+> >>On Fri 19-06-15 12:43:33, Eric B Munson wrote:
+[...]
+> >>>My thought on detecting was that someone might want to know if they had
+> >>>a VMA that was VM_LOCKED but had not been made present becuase of a
+> >>>failure in mmap.  We don't have a way today, but adding VM_LOCKONFAULT
+> >>>is at least explicit about what is happening which would make detecting
+> >>>the VM_LOCKED but not present state easier.
+> >>
+> >>One could use /proc/<pid>/pagemap to query the residency.
+> 
+> I think that's all too much complex scenario for a little gain. If someone
+> knows that mmap(MAP_LOCKED|MAP_POPULATE) is not perfect, he should either
+> mlock() separately from mmap(), or fault the range manually with a for loop.
+> Why try to detect if the corner case was hit?
 
+No idea. I have just offered a way to do that. I do not think it is
+anyhow useful but who knows... I do agree that the mlock should be used
+for the full mlock semantic.
 
-On 23/06/15 20:47, Stefan Wahren wrote:
->> 0001000
->> >
-> i want to port OCOTP driver for MXS, which hasn't MMIO. From my understanding
-That's cool.
+> >>>This assumes that
+> >>>MAP_FAULTPOPULATE does not translate to a VMA flag, but it sounds like
+> >>>it would have to.
+> >>
+> >>Yes, it would have to have a VM flag for the vma.
+> 
+> So with your approach, VM_LOCKED flag is enough, right? The new MAP_ /
+> MLOCK_ flags just cause setting VM_LOCKED to not fault the whole vma, but
+> otherwise nothing changes.
 
-> hexdump would readout the complete register range defined in provider DT node.
->
-> How can i achieve that hexdump only reads the data area within the register
-> range?
+VM_FAULTPOPULATE would have to be sticky to prevent from other
+speculative poppulation of the mapping. I mean, is it OK to have a new
+mlock semantic (on fault) which might still populate&lock memory which
+hasn't been faulted directly? Who knows what kind of speculative things
+we will do in the future and then find out that the semantic of
+lock-on-fault is not usable anymore.
 
-If the question is just about hexdump, then hexdump itself can read file 
-from given offset and size.
+[...]
 
-But I believe the real question is "How can we dump each nvmem cell 
-independently"
-
-In one of my replies I mentioned that am planning to add sysfs entries 
-under /sys/class/nvmem/<provider>/cells/
-
-ex:
-for qfprom tsens calibration it would look like:
-
-$ hexdump /sys/class/nvmem/qfprom0/cells/tsens_calibration
-
-0000000 e000 0c00 0c00 0000 0c00
-...
-
-Is that what you guys are looking for?
-
---srini
->
-> Stefan
+-- 
+Michal Hocko
+SUSE Labs
