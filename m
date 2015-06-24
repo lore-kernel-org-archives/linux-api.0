@@ -1,72 +1,90 @@
-From: "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH] mm: fix status code move_pages() returns for zero page
-Date: Wed, 24 Jun 2015 13:23:48 +0300
-Message-ID: <1435141428-98266-1-git-send-email-kirill.shutemov@linux.intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+From: Stefan Wahren <stefan.wahren@i2se.com>
+Subject: Re: [PATCH v6 0/9] Add simple NVMEM Framework via regmap.
+Date: Wed, 24 Jun 2015 14:30:26 +0200
+Message-ID: <558AA2E2.1010606@i2se.com>
+References: <1435014459-26138-1-git-send-email-srinivas.kandagatla@linaro.org> <235181230.251177.1435088854197.JavaMail.open-xchange@oxbsltgw00.schlund.de> <558A7C92.2040102@linaro.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+In-Reply-To: <558A7C92.2040102@linaro.org>
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, linux-arm-kernel@lists.infradead.org
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, wxt@rock-chips.com, linux-api@vger.kernel.org, Kumar Gala <galak@codeaurora.org>, Rob Herring <robh+dt@kernel.org>, sboyd@codeaurora.org, arnd@arndb.de, s.hauer@pengutronix.de, linux-kernel@vger.kernel.org, linux-arm-msm@vger.kernel.org, mporter@konsulko.com, Maxime Ripard <maxime.ripard@free-electrons.com>, pantelis.antoniou@konsulko.com, devicetree@vger.kernel.org, Mark Brown <broonie@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Man page for move_pages(2) specifies that status code for zero page is
-supposed to be -EFAULT. Currently kernel return -ENOENT in this case.
+Hi Srinivas,
 
-follow_page() can do it for us, if we would ask for FOLL_DUMP.
+Am 24.06.2015 um 11:46 schrieb Srinivas Kandagatla:
+>
+>
+> On 23/06/15 20:47, Stefan Wahren wrote:
+>>> 0001000
+>>> >
+>> i want to port OCOTP driver for MXS, which hasn't MMIO. From my
+>> understanding
+> That's cool.
+>
+>> hexdump would readout the complete register range defined in provider
+>> DT node.
+>>
+>> How can i achieve that hexdump only reads the data area within the
+>> register
+>> range?
+>
+> If the question is just about hexdump, then hexdump itself can read
+> file from given offset and size.
 
-Signed-off-by: Kirill A. Shutemov <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Cc: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
----
- mm/migrate.c | 18 ++++++------------
- 1 file changed, 6 insertions(+), 12 deletions(-)
+yes, this is my question at first. Let me show the difference between
+the current implementation and my expectations as a user.
 
-diff --git a/mm/migrate.c b/mm/migrate.c
-index 236ee25e79d9..d3529d620a5b 100644
---- a/mm/migrate.c
-+++ b/mm/migrate.c
-@@ -1222,7 +1222,9 @@ static int do_move_page_to_node_array(struct mm_struct *mm,
- 		if (!vma || pp->addr < vma->vm_start || !vma_migratable(vma))
- 			goto set_status;
- 
--		page = follow_page(vma, pp->addr, FOLL_GET|FOLL_SPLIT);
-+		/* FOLL_DUMP to ignore special (like zero) pages */
-+		page = follow_page(vma, pp->addr,
-+				FOLL_GET | FOLL_SPLIT | FOLL_DUMP);
- 
- 		err = PTR_ERR(page);
- 		if (IS_ERR(page))
-@@ -1232,10 +1234,6 @@ static int do_move_page_to_node_array(struct mm_struct *mm,
- 		if (!page)
- 			goto set_status;
- 
--		/* Use PageReserved to check for zero page */
--		if (PageReserved(page))
--			goto put_and_set;
--
- 		pp->page = page;
- 		err = page_to_nid(page);
- 
-@@ -1392,18 +1390,14 @@ static void do_pages_stat_array(struct mm_struct *mm, unsigned long nr_pages,
- 		if (!vma || addr < vma->vm_start)
- 			goto set_status;
- 
--		page = follow_page(vma, addr, 0);
-+		/* FOLL_DUMP to ignore special (like zero) pages */
-+		page = follow_page(vma, addr, FOLL_DUMP);
- 
- 		err = PTR_ERR(page);
- 		if (IS_ERR(page))
- 			goto set_status;
- 
--		err = -ENOENT;
--		/* Use PageReserved to check for zero page */
--		if (!page || PageReserved(page))
--			goto set_status;
--
--		err = page_to_nid(page);
-+		err = page ? page_to_nid(page) : -ENOENT;
- set_status:
- 		*status = err;
- 
--- 
-2.1.4
+$ hexdump /sys/class/nvmem/mxs-ocotp/nvmem
+
+Current implementation: dump the complete register range defined in DT
+
+User expectation: dump only the data from OCOTP block
+
+Let me explain it for i.MX28 OCOTP
+
+0x8002c000 // Start of OCOTP register block (defined in DT)
+
+0x8002c020 // First data register
+
+0x8002c290 // Last data register
+
+0x8002dfff // End of OCOTP register block (defined in DT)
+
+My knowledge about regmap is limited, but how can i achieve that hexdump
+give me only the data registers? From my understanding this should be
+handled in regmap and not in the read function.
+
+Are my expectations about the raw access wrong?
+
+
+>
+> But I believe the real question is "How can we dump each nvmem cell
+> independently"
+>
+> In one of my replies I mentioned that am planning to add sysfs entries
+> under /sys/class/nvmem/<provider>/cells/
+>
+> ex:
+> for qfprom tsens calibration it would look like:
+>
+> $ hexdump /sys/class/nvmem/qfprom0/cells/tsens_calibration
+>
+> 0000000 e000 0c00 0c00 0000 0c00
+> ...
+>
+> Is that what you guys are looking for?
+
+That would be nice, too :-)
+
+>
+> --srini
+>>
+>> Stefan
+
+TIA
+
+Stefan
