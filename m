@@ -1,119 +1,288 @@
-From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: Re: [PATCH v6 0/9] Add simple NVMEM Framework via regmap.
-Date: Wed, 24 Jun 2015 19:50:51 +0100
-Message-ID: <558AFC0B.1050400@linaro.org>
-References: <1435014459-26138-1-git-send-email-srinivas.kandagatla@linaro.org> <235181230.251177.1435088854197.JavaMail.open-xchange@oxbsltgw00.schlund.de> <558A7C92.2040102@linaro.org> <558AA2E2.1010606@i2se.com> <558AAA8D.8030209@linaro.org> <1641569650.41238.1435168054323.JavaMail.open-xchange@oxbsltgw35.schlund.de>
+From: Christoffer Dall <christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v6 10/12] KVM: arm64: guest debug, HW assisted debug
+ support
+Date: Wed, 24 Jun 2015 22:22:16 +0200
+Message-ID: <20150624202216.GE22785@cbox>
+References: <1434716630-18260-1-git-send-email-alex.bennee@linaro.org>
+ <1434716630-18260-11-git-send-email-alex.bennee@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-msm-owner@vger.kernel.org>
-In-Reply-To: <1641569650.41238.1435168054323.JavaMail.open-xchange@oxbsltgw35.schlund.de>
-Sender: linux-arm-msm-owner@vger.kernel.org
-To: Stefan Wahren <stefan.wahren@i2se.com>, linux-arm-kernel@lists.infradead.org
-Cc: wxt@rock-chips.com, linux-api@vger.kernel.org, Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, sboyd@codeaurora.org, arnd@arndb.de, s.hauer@pengutronix.de, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-kernel@vger.kernel.org, linux-arm-msm@vger.kernel.org, mporter@konsulko.com, Maxime Ripard <maxime.ripard@free-electrons.com>, pantelis.antoniou@konsulko.com, devicetree@vger.kernel.org, Mark Brown <broonie@kernel.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1434716630-18260-11-git-send-email-alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alex =?iso-8859-1?Q?Benn=E9e?= <alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, marc.zyngier-5wv7dgnIgG8@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, agraf-l3A5Bk7waGM@public.gmane.org, drjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, zhichao.huang-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org, dahi-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, r65777-KZfg59tc24xl57MIdRCFDg@public.gmane.org, bp-l3A5Bk7waGM@public.gmane.org, Gleb Natapov <gleb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Lorenzo Pieralisi <lorenzo.pieralisi-5wv7dgnIgG8@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "open list:DOCUMENTATION" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Fri, Jun 19, 2015 at 01:23:48PM +0100, Alex Benn=E9e wrote:
+> This adds support for userspace to control the HW debug registers for
+> guest debug. In the debug ioctl we copy the IMPDEF defined number of
 
+s/defined//
 
-On 24/06/15 18:47, Stefan Wahren wrote:
-> Hi Srinivas,
->
->> Srinivas Kandagatla <srinivas.kandagatla@linaro.org> hat am 24. Juni 2015 um
->> 15:03 geschrieben:
->>
->>
->>
->>
->> On 24/06/15 13:30, Stefan Wahren wrote:
->>>>> If the question is just about hexdump, then hexdump itself can read
->>>>> file from given offset and size.
->>> yes, this is my question at first. Let me show the difference between
->>> the current implementation and my expectations as a user.
->>>
->>> $ hexdump /sys/class/nvmem/mxs-ocotp/nvmem
->>>
->>> Current implementation: dump the complete register range defined in DT
->>>
->> Its dumping the range which is specified in the provider regmap. If the
->> requirement is to dump only particular range, this has to be made
->> explicit while creating regmap, which is to specify the base address to
->> start from "First data register" and max_register to be "Last data
->> register "- "First data register"
->
-> i know about max_register, but i can't find the base address in regmap_config.
->
-Base is not in the regmap config, its the value which you pass to the
+> registers into a new register set called host_debug_state. There is n=
+ow
+> a new vcpu parameter called debug_ptr which selects which register se=
+t
+> is to copied into the real registers when world switch occurs.
 
-For example, if I had to do similar change to qfprom driver It would 
-look like:
+But this patch doesn't seem to add the debug_ptr field?
 
+s/to//
 
- ><-----------------------cut---------------------------------><
-diff --git a/drivers/nvmem/qfprom.c b/drivers/nvmem/qfprom.c
-index 7f7a82f..26ced95 100644
---- a/drivers/nvmem/qfprom.c
-+++ b/drivers/nvmem/qfprom.c
-@@ -52,9 +52,9 @@ static int qfprom_probe(struct platform_device *pdev)
-         if (IS_ERR(base))
-                 return PTR_ERR(base);
+>=20
+> I've moved some helper functions into the hw_breakpoint.h header for
+> re-use.
+>=20
+> As with single step we need to tweak the guest registers to enable th=
+e
+> exceptions so we need to save and restore those bits.
+>=20
+> Two new capabilities have been added to the KVM_EXTENSION ioctl to al=
+low
+> userspace to query the number of hardware break and watch points
+> available on the host hardware.
+>=20
+> Signed-off-by: Alex Benn=E9e <alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+>=20
+> ---
+> v2
+>    - switched to C setup
+>    - replace host debug registers directly into context
+>    - minor tweak to api docs
+>    - setup right register for debug
+>    - add FAR_EL2 to debug exit structure
+>    - add support for trapping debug register access
+> v3
+>    - remove stray trace statement
+>    - fix spacing around operators (various)
+>    - clean-up usage of trap_debug
+>    - introduce debug_ptr, replace excessive memcpy stuff
+>    - don't use memcpy in ioctl, just assign
+>    - update cap ioctl documentation
+>    - reword a number comments
+>    - rename host_debug_state->external_debug_state
+> v4
+>    - use the new u32/u64 split debug_ptr approach
+>    - fix some wording/comments
+> v5
+>    - don't set MDSCR_EL1.KDE (not needed)
+> v6
+>    - update wording given change in commentary
+>    - KVM_GUESTDBG_USE_HW_BP->KVM_GUESTDBG_USE_HW
+> ---
+>  Documentation/virtual/kvm/api.txt      |  7 ++++++-
+>  arch/arm/kvm/arm.c                     |  7 +++++++
+>  arch/arm64/include/asm/hw_breakpoint.h | 12 +++++++++++
+>  arch/arm64/include/asm/kvm_host.h      |  6 +++++-
+>  arch/arm64/kernel/hw_breakpoint.c      | 12 -----------
+>  arch/arm64/kvm/debug.c                 | 37 ++++++++++++++++++++++++=
++++++-----
+>  arch/arm64/kvm/handle_exit.c           |  6 ++++++
+>  arch/arm64/kvm/reset.c                 | 12 +++++++++++
+>  include/uapi/linux/kvm.h               |  2 ++
+>  9 files changed, 82 insertions(+), 19 deletions(-)
+>=20
+> diff --git a/Documentation/virtual/kvm/api.txt b/Documentation/virtua=
+l/kvm/api.txt
+> index 33c8143..ada57df 100644
+> --- a/Documentation/virtual/kvm/api.txt
+> +++ b/Documentation/virtual/kvm/api.txt
+> @@ -2668,7 +2668,7 @@ The top 16 bits of the control field are archit=
+ecture specific control
+>  flags which can include the following:
+> =20
+>    - KVM_GUESTDBG_USE_SW_BP:     using software breakpoints [x86, arm=
+64]
+> -  - KVM_GUESTDBG_USE_HW_BP:     using hardware breakpoints [x86, s39=
+0]
+> +  - KVM_GUESTDBG_USE_HW_BP:     using hardware breakpoints [x86, s39=
+0, arm64]
+>    - KVM_GUESTDBG_INJECT_DB:     inject DB type exception [x86]
+>    - KVM_GUESTDBG_INJECT_BP:     inject BP type exception [x86]
+>    - KVM_GUESTDBG_EXIT_PENDING:  trigger an immediate guest exit [s39=
+0]
+> @@ -2683,6 +2683,11 @@ updated to the correct (supplied) values.
+>  The second part of the structure is architecture specific and
+>  typically contains a set of debug registers.
+> =20
+> +For arm64 the number of debug registers is implementation defined an=
+d
+> +can be determined by querying the KVM_CAP_GUEST_DEBUG_HW_BPS and
+> +KVM_CAP_GUEST_DEBUG_HW_WPS capabilities which return a positive numb=
+er
+> +indicating the number of supported registers.
+> +
+>  When debug events exit the main run loop with the reason
+>  KVM_EXIT_DEBUG with the kvm_debug_exit_arch part of the kvm_run
+>  structure containing architecture specific debug information.
+> diff --git a/arch/arm/kvm/arm.c b/arch/arm/kvm/arm.c
+> index 0d17c7b..60c4045 100644
+> --- a/arch/arm/kvm/arm.c
+> +++ b/arch/arm/kvm/arm.c
+> @@ -307,6 +307,7 @@ void kvm_arch_vcpu_put(struct kvm_vcpu *vcpu)
+> =20
+>  #define KVM_GUESTDBG_VALID_MASK (KVM_GUESTDBG_ENABLE |    \
+>  			    KVM_GUESTDBG_USE_SW_BP | \
+> +			    KVM_GUESTDBG_USE_HW | \
+>  			    KVM_GUESTDBG_SINGLESTEP)
+> =20
+>  /**
+> @@ -327,6 +328,12 @@ int kvm_arch_vcpu_ioctl_set_guest_debug(struct k=
+vm_vcpu *vcpu,
+> =20
+>  	if (dbg->control & KVM_GUESTDBG_ENABLE) {
+>  		vcpu->guest_debug =3D dbg->control;
+> +
+> +		/* Hardware assisted Break and Watch points */
+> +		if (vcpu->guest_debug & KVM_GUESTDBG_USE_HW) {
+> +			vcpu->arch.external_debug_state =3D dbg->arch;
+> +		}
+> +
+>  	} else {
+>  		/* If not enabled clear all flags */
+>  		vcpu->guest_debug =3D 0;
+> diff --git a/arch/arm64/include/asm/hw_breakpoint.h b/arch/arm64/incl=
+ude/asm/hw_breakpoint.h
+> index 52b484b..c450552 100644
+> --- a/arch/arm64/include/asm/hw_breakpoint.h
+> +++ b/arch/arm64/include/asm/hw_breakpoint.h
+> @@ -130,6 +130,18 @@ static inline void ptrace_hw_copy_thread(struct =
+task_struct *task)
+>  }
+>  #endif
+> =20
+> +/* Determine number of BRP registers available. */
+> +static inline int get_num_brps(void)
+> +{
+> +	return ((read_cpuid(ID_AA64DFR0_EL1) >> 12) & 0xf) + 1;
+> +}
+> +
+> +/* Determine number of WRP registers available. */
+> +static inline int get_num_wrps(void)
+> +{
+> +	return ((read_cpuid(ID_AA64DFR0_EL1) >> 20) & 0xf) + 1;
+> +}
+> +
+>  extern struct pmu perf_ops_bp;
+> =20
+>  #endif	/* __KERNEL__ */
+> diff --git a/arch/arm64/include/asm/kvm_host.h b/arch/arm64/include/a=
+sm/kvm_host.h
+> index 9697daf..0a3ee7b 100644
+> --- a/arch/arm64/include/asm/kvm_host.h
+> +++ b/arch/arm64/include/asm/kvm_host.h
+> @@ -116,13 +116,17 @@ struct kvm_vcpu_arch {
+>  	 * debugging the guest from the host and to maintain separate host =
+and
+>  	 * guest state during world switches. vcpu_debug_state are the debu=
+g
+>  	 * registers of the vcpu as the guest sees them.  host_debug_state =
+are
+> -	 * the host registers which are saved and restored during world swi=
+tches.
+> +	 * the host registers which are saved and restored during
+> +	 * world switches. external_debug_state contains the debug
+> +	 * values we want to debugging the guest. This is set via the
 
--       qfprom_regmap_config.max_register = resource_size(res) - 1;
-+       qfprom_regmap_config.max_register = my_data_size;
+nit: s/debugging/debug/
 
--       regmap = devm_regmap_init_mmio(dev, base, &qfprom_regmap_config);
-+       regmap = devm_regmap_init_mmio(dev, base + data_offset, 
-&qfprom_regmap_config);
-         if (IS_ERR(regmap)) {
-                 dev_err(dev, "regmap init failed\n");
-                 return PTR_ERR(regmap);
- ><-----------------------cut---------------------------------><
+> +	 * KVM_SET_GUEST_DEBUG ioctl.
+>  	 *
+>  	 * debug_ptr points to the set of debug registers that should be lo=
+aded
+>  	 * onto the hardware when running the guest.
+>  	 */
+>  	struct kvm_guest_debug_arch *debug_ptr;
+>  	struct kvm_guest_debug_arch vcpu_debug_state;
+> +	struct kvm_guest_debug_arch external_debug_state;
+> =20
+>  	/* Pointer to host CPU context */
+>  	kvm_cpu_context_t *host_cpu_context;
+> diff --git a/arch/arm64/kernel/hw_breakpoint.c b/arch/arm64/kernel/hw=
+_breakpoint.c
+> index e7d934d..3a41bbf 100644
+> --- a/arch/arm64/kernel/hw_breakpoint.c
+> +++ b/arch/arm64/kernel/hw_breakpoint.c
+> @@ -49,18 +49,6 @@ static DEFINE_PER_CPU(int, stepping_kernel_bp);
+>  static int core_num_brps;
+>  static int core_num_wrps;
+> =20
+> -/* Determine number of BRP registers available. */
+> -static int get_num_brps(void)
+> -{
+> -	return ((read_cpuid(ID_AA64DFR0_EL1) >> 12) & 0xf) + 1;
+> -}
+> -
+> -/* Determine number of WRP registers available. */
+> -static int get_num_wrps(void)
+> -{
+> -	return ((read_cpuid(ID_AA64DFR0_EL1) >> 20) & 0xf) + 1;
+> -}
+> -
+>  int hw_breakpoint_slots(int type)
+>  {
+>  	/*
+> diff --git a/arch/arm64/kvm/debug.c b/arch/arm64/kvm/debug.c
+> index d439eb8..b287bbc 100644
+> --- a/arch/arm64/kvm/debug.c
+> +++ b/arch/arm64/kvm/debug.c
+> @@ -96,10 +96,6 @@ void kvm_arm_setup_debug(struct kvm_vcpu *vcpu)
+>  				MDCR_EL2_TDRA |
+>  				MDCR_EL2_TDOSA);
+> =20
+> -	/* Trap on access to debug registers? */
+> -	if (trap_debug)
+> -		vcpu->arch.mdcr_el2 |=3D MDCR_EL2_TDA;
+> -
+>  	/* Is Guest debugging in effect? */
+>  	if (vcpu->guest_debug) {
+>  		/* Route all software debug exceptions to EL2 */
+> @@ -134,11 +130,42 @@ void kvm_arm_setup_debug(struct kvm_vcpu *vcpu)
+>  		} else {
+>  			vcpu_sys_reg(vcpu, MDSCR_EL1) &=3D ~DBG_MDSCR_SS;
+>  		}
+> +
+> +		/*
+> +		 * HW Breakpoints and watchpoints
+> +		 *
+> +		 * We simply switch the debug_ptr to point to our new
+> +		 * external_debug_state which has been populated by the
+> +		 * debug ioctl. The existing KVM_ARM64_DEBUG_DIRTY
+> +		 * mechanism ensures the registers are updated on the
+> +		 * world switch.
+> +		 */
+> +		if (vcpu->guest_debug & KVM_GUESTDBG_USE_HW) {
+> +			/* Enable breakpoints/watchpoints */
+> +			vcpu_sys_reg(vcpu, MDSCR_EL1) |=3D DBG_MDSCR_MDE;
+> +
+> +			vcpu->arch.debug_ptr =3D &vcpu->arch.external_debug_state;
+> +			vcpu->arch.debug_flags |=3D KVM_ARM64_DEBUG_DIRTY;
+> +			trap_debug =3D true;
+> +		}
+>  	}
+> +
+> +	/* Trap debug register access */
+> +	if (trap_debug)
+> +		vcpu->arch.mdcr_el2 |=3D MDCR_EL2_TDA;
+>  }
+> =20
+>  void kvm_arm_clear_debug(struct kvm_vcpu *vcpu)
+>  {
+> -	if (vcpu->guest_debug)
+> +	if (vcpu->guest_debug) {
+>  		restore_guest_debug_regs(vcpu);
+> +
+> +		/*
+> +		 * If we were using HW debug we need to restore the
+> +		 * debug_ptr to the guest debug state.
+> +		 */
+> +		if (vcpu->guest_debug & KVM_GUESTDBG_USE_HW)
+> +			vcpu->arch.debug_ptr =3D &vcpu->arch.vcpu_debug_state;
 
+I still think this would be more cleanly done in the setup_debug
+function, but ok:
 
---srini
-
-
-> Do you mean struct regmap_access_table *rd_table ?
->
->>
->>> User expectation: dump only the data from OCOTP block
->>>
->>> Let me explain it for i.MX28 OCOTP
->>>
->>> 0x8002c000 // Start of OCOTP register block (defined in DT)
->>>
->>> 0x8002c020 // First data register
->>>
->>> 0x8002c290 // Last data register
->>>
->>> 0x8002dfff // End of OCOTP register block (defined in DT)
->>>
->>> My knowledge about regmap is limited, but how can i achieve that hexdump
->>> give me only the data registers? From my understanding this should be
->>> handled in regmap and not in the read function.
->>
->> Setup the base and regmap_config correctly in the provider driver before
->> calling regmap_init_mmio().
->>
->> Let me know if you need more details.
->
-> Yes, please.
->
-> Stefan
->
->>
->> --srini
->>
->>>
->>> Are my expectations about the raw access wrong?
->>>
->>>
->>
->> _______________________________________________
->> linux-arm-kernel mailing list
->> linux-arm-kernel@lists.infradead.org
->> http://lists.infradead.org/mailman/listinfo/linux-arm-kernel
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-arm-msm" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
+Reviewed-by: Christoffer Dall <christoffer.dall-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
