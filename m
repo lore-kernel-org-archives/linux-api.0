@@ -1,60 +1,159 @@
-From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v6 0/9] Add simple NVMEM Framework via regmap.
-Date: Wed, 24 Jun 2015 14:03:09 +0100
-Message-ID: <558AAA8D.8030209@linaro.org>
-References: <1435014459-26138-1-git-send-email-srinivas.kandagatla@linaro.org> <235181230.251177.1435088854197.JavaMail.open-xchange@oxbsltgw00.schlund.de> <558A7C92.2040102@linaro.org> <558AA2E2.1010606@i2se.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+From: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Subject: [PATCH v6 4/5] block: loop: prepare for supporing direct IO
+Date: Wed, 24 Jun 2015 21:07:45 +0800
+Message-ID: <1435151266-13819-5-git-send-email-ming.lei@canonical.com>
+References: <1435151266-13819-1-git-send-email-ming.lei@canonical.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <558AA2E2.1010606-eS4NqCHxEME@public.gmane.org>
+In-Reply-To: <1435151266-13819-1-git-send-email-ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Kleikamp <dave.kleikamp-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Zach Brown <zab-ugsP4Wv/S6ZeoWH0uzbU5w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Maxim Patlasov <mpatlasov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+This patches provides one interface for enabling direct IO
+from user space:
 
+	- userspace(such as losetup) can pass 'file' which is
+	opened/fcntl as O_DIRECT
 
-On 24/06/15 13:30, Stefan Wahren wrote:
->> >If the question is just about hexdump, then hexdump itself can read
->> >file from given offset and size.
-> yes, this is my question at first. Let me show the difference between
-> the current implementation and my expectations as a user.
->
-> $ hexdump /sys/class/nvmem/mxs-ocotp/nvmem
->
-> Current implementation: dump the complete register range defined in DT
->
-Its dumping the range which is specified in the provider regmap. If the 
-requirement is to dump only particular range, this has to be made 
-explicit while creating regmap, which is to specify the base address to 
-start from "First data register" and max_register to be "Last data 
-register "- "First data register"
+Also __loop_update_dio() is introduced to check if direct I/O
+can be used on current loop setting.
 
-> User expectation: dump only the data from OCOTP block
->
-> Let me explain it for i.MX28 OCOTP
->
-> 0x8002c000 // Start of OCOTP register block (defined in DT)
->
-> 0x8002c020 // First data register
->
-> 0x8002c290 // Last data register
->
-> 0x8002dfff // End of OCOTP register block (defined in DT)
->
-> My knowledge about regmap is limited, but how can i achieve that hexdump
-> give me only the data registers? From my understanding this should be
-> handled in regmap and not in the read function.
+The last big change is to introduce LO_FLAGS_DIRECT_IO flag
+for userspace to know if direct IO is used to access backing
+file.
 
-Setup the base and regmap_config correctly in the provider driver before 
-calling regmap_init_mmio().
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Signed-off-by: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+---
+ drivers/block/loop.c      | 56 +++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/block/loop.h      |  1 +
+ include/uapi/linux/loop.h |  1 +
+ 3 files changed, 58 insertions(+)
 
-Let me know if you need more details.
-
---srini
-
->
-> Are my expectations about the raw access wrong?
->
->
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index 555b895..599d668 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -421,6 +421,51 @@ struct switch_request {
+ 	struct completion wait;
+ };
+ 
++static void __loop_update_dio(struct loop_device *lo, bool dio)
++{
++	struct file *file = lo->lo_backing_file;
++	struct inode *inode = file->f_mapping->host;
++	bool use_dio;
++
++	/*
++	 * loop block's logical block size is 512, now
++	 * we support direct I/O only if the backing
++	 * block devices' minimize I/O size is 512 and
++	 * the offset is aligned with 512.
++	 */
++	if (dio) {
++		if (inode->i_sb->s_bdev &&
++			bdev_io_min(inode->i_sb->s_bdev) == 512 &&
++			!(lo->lo_offset & 511))
++			use_dio = true;
++		else
++			use_dio = false;
++	} else {
++		use_dio = false;
++	}
++
++	if (lo->use_dio == use_dio)
++		return;
++
++	/* flush dirty pages before changing direct IO */
++	vfs_fsync(file, 0);
++
++	/*
++	 * The flag of LO_FLAGS_DIRECT_IO is handled similarly with
++	 * LO_FLAGS_READ_ONLY, both are set from kernel, and losetup
++	 * will get updated by ioctl(LOOP_GET_STATUS)
++	 */
++	blk_mq_freeze_queue(lo->lo_queue);
++	lo->use_dio = use_dio;
++	lo->lo_flags |= use_dio ? LO_FLAGS_DIRECT_IO : 0;
++	blk_mq_unfreeze_queue(lo->lo_queue);
++}
++
++static inline void loop_update_dio(struct loop_device *lo)
++{
++	__loop_update_dio(lo, io_is_direct(lo->lo_backing_file));
++}
++
+ /*
+  * Do the actual switch; called from the BIO completion routine
+  */
+@@ -441,6 +486,7 @@ static void do_loop_switch(struct loop_device *lo, struct switch_request *p)
+ 		mapping->host->i_bdev->bd_block_size : PAGE_SIZE;
+ 	lo->old_gfp_mask = mapping_gfp_mask(mapping);
+ 	mapping_set_gfp_mask(mapping, lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
++	loop_update_dio(lo);
+ }
+ 
+ /*
+@@ -627,11 +673,19 @@ static ssize_t loop_attr_partscan_show(struct loop_device *lo, char *buf)
+ 	return sprintf(buf, "%s\n", partscan ? "1" : "0");
+ }
+ 
++static ssize_t loop_attr_dio_show(struct loop_device *lo, char *buf)
++{
++	int dio = (lo->lo_flags & LO_FLAGS_DIRECT_IO);
++
++	return sprintf(buf, "%s\n", dio ? "1" : "0");
++}
++
+ LOOP_ATTR_RO(backing_file);
+ LOOP_ATTR_RO(offset);
+ LOOP_ATTR_RO(sizelimit);
+ LOOP_ATTR_RO(autoclear);
+ LOOP_ATTR_RO(partscan);
++LOOP_ATTR_RO(dio);
+ 
+ static struct attribute *loop_attrs[] = {
+ 	&loop_attr_backing_file.attr,
+@@ -639,6 +693,7 @@ static struct attribute *loop_attrs[] = {
+ 	&loop_attr_sizelimit.attr,
+ 	&loop_attr_autoclear.attr,
+ 	&loop_attr_partscan.attr,
++	&loop_attr_dio.attr,
+ 	NULL,
+ };
+ 
+@@ -783,6 +838,7 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
+ 	if (!(lo_flags & LO_FLAGS_READ_ONLY) && file->f_op->fsync)
+ 		blk_queue_flush(lo->lo_queue, REQ_FLUSH);
+ 
++	loop_update_dio(lo);
+ 	set_capacity(lo->lo_disk, size);
+ 	bd_set_size(bdev, size << 9);
+ 	loop_sysfs_init(lo);
+diff --git a/drivers/block/loop.h b/drivers/block/loop.h
+index b6c7d21..d1de221 100644
+--- a/drivers/block/loop.h
++++ b/drivers/block/loop.h
+@@ -58,6 +58,7 @@ struct loop_device {
+ 	struct mutex		lo_ctl_mutex;
+ 	struct kthread_worker	worker;
+ 	struct task_struct	*worker_task;
++	bool			use_dio;
+ 
+ 	struct request_queue	*lo_queue;
+ 	struct blk_mq_tag_set	tag_set;
+diff --git a/include/uapi/linux/loop.h b/include/uapi/linux/loop.h
+index e0cecd2..949851c 100644
+--- a/include/uapi/linux/loop.h
++++ b/include/uapi/linux/loop.h
+@@ -21,6 +21,7 @@ enum {
+ 	LO_FLAGS_READ_ONLY	= 1,
+ 	LO_FLAGS_AUTOCLEAR	= 4,
+ 	LO_FLAGS_PARTSCAN	= 8,
++	LO_FLAGS_DIRECT_IO	= 16,
+ };
+ 
+ #include <asm/posix_types.h>	/* for __kernel_old_dev_t */
+-- 
+1.9.1
