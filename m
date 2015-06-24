@@ -1,141 +1,199 @@
 From: Andreas Gruenbacher <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [RFC v4 00/31] Richacls
-Date: Wed, 24 Jun 2015 23:56:49 +0200
-Message-ID: <1435183040-22726-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Subject: [RFC v4 02/31] vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR permission flags
+Date: Wed, 24 Jun 2015 23:56:51 +0200
+Message-ID: <1435183040-22726-3-git-send-email-agruenba@redhat.com>
+References: <1435183040-22726-1-git-send-email-agruenba@redhat.com>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1435183040-22726-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+Richacls distinguish between creating non-directories and directories. To
+support that, add an isdir parameter to may_create(). When checking
+inode_permission() for create permission, pass in an additional MAY_CREATE_FILE
+or MAY_CREATE_DIR mask flag.
 
-here's another update of the richacl patch queue.  The changes since the last
-posting (https://lwn.net/Articles/641764/) include:
+To allow checking for delete *and* create access when replacing an existing
+file via vfs_rename(), add a replace parameter to may_delete().
 
-* The owner and other masks now determine the owner and other
-  permissions rather than just limiting them. For example, a
-  'chmod u=rw' will always grant the owner read and write access.
-  The group mask still behaves as before and only limits the group
-  class permissions.  Hence, the owner, group, and other masks
-  now behave like the 'user::', 'group::', and 'mask::' entries in
-  POSIX ACLs.
+Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+---
+ fs/namei.c         | 42 ++++++++++++++++++++++++------------------
+ include/linux/fs.h |  2 ++
+ 2 files changed, 26 insertions(+), 18 deletions(-)
 
-* ACL entries for users matching the current owner are treated similar to
-  owner@ entries; they match the file owner. This differs from how such
-  entries are treated in POSIX ACLs but is more consistent with the
-  NFSv4 / Windows ACL model.
-
-* Permissions implicitly granted to the owner ("ACo") are no longer added to
-  owner@ entries automatically (they are still granted though). The idea
-  behind adding them was to make the acl reflect the actual permissions
-  more closely, but that didn't turn out to be helpful.
-
-* Various smaller improvements and bug fixes.
-
-The complete patch queue is available here:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/agruen/linux-richacl.git \
-        richacl-2015-06-24
-
-I'm leaving out patches here which have been queued for 4.2 already.  Also,
-the nfs patches need some more work before another round of reviews.
-
-Thanks,
-Andreas
-
-Andreas Gruenbacher (29):
-  vfs: Add IS_ACL() and IS_RICHACL() tests
-  vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR permission flags
-  vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD permission flags
-  vfs: Make the inode passed to inode_change_ok non-const
-  vfs: Add permission flags for setting file attributes
-  richacl: In-memory representation and helper functions
-  richacl: Permission mapping functions
-  richacl: Compute maximum file masks from an acl
-  richacl: Update the file masks in chmod()
-  richacl: Permission check algorithm
-  vfs: Cache base_acl objects in inodes
-  vfs: Cache richacl in struct inode
-  richacl: Check if an acl is equivalent to a file mode
-  richacl: Create-time inheritance
-  richacl: Automatic Inheritance
-  richacl: xattr mapping functions
-  vfs: Add richacl permission checking
-  richacl: acl editing helper functions
-  richacl: Move everyone@ aces down the acl
-  richacl: Propagate everyone@ permissions to other aces
-  richacl: Set the owner permissions to the owner mask
-  richacl: Set the other permissions to the other mask
-  richacl: Isolate the owner and group classes
-  richacl: Apply the file masks to a richacl
-  richacl: Create richacl from mode values
-  nfsd: Keep list of acls to dispose of in compoundargs
-  nfsd: Use richacls as internal acl representation
-  nfsd: Add richacl support
-  nfsd: Add support for the v4.1 dacl attribute
-
-Aneesh Kumar K.V (2):
-  ext4: Add richacl support
-  ext4: Add richacl feature flag
-
- drivers/staging/lustre/lustre/llite/llite_lib.c |   2 +-
- fs/Kconfig                                      |   9 +
- fs/Makefile                                     |   3 +
- fs/attr.c                                       |  81 ++-
- fs/ext4/Kconfig                                 |  15 +
- fs/ext4/Makefile                                |   1 +
- fs/ext4/acl.c                                   |   6 +-
- fs/ext4/acl.h                                   |  12 +-
- fs/ext4/ext4.h                                  |   6 +-
- fs/ext4/file.c                                  |   6 +-
- fs/ext4/ialloc.c                                |   7 +-
- fs/ext4/inode.c                                 |  10 +-
- fs/ext4/namei.c                                 |  11 +-
- fs/ext4/richacl.c                               | 211 ++++++
- fs/ext4/richacl.h                               |  47 ++
- fs/ext4/super.c                                 |  41 +-
- fs/ext4/xattr.c                                 |   6 +
- fs/ext4/xattr.h                                 |   1 +
- fs/f2fs/acl.c                                   |   4 +-
- fs/inode.c                                      |  15 +-
- fs/namei.c                                      | 108 ++-
- fs/nfs_common/Makefile                          |   1 +
- fs/nfs_common/nfs4acl.c                         |  41 ++
- fs/nfsd/Kconfig                                 |   1 +
- fs/nfsd/acl.h                                   |  23 +-
- fs/nfsd/nfs4acl.c                               | 483 +++++++------
- fs/nfsd/nfs4proc.c                              |  19 +-
- fs/nfsd/nfs4xdr.c                               | 267 ++++---
- fs/nfsd/nfsd.h                                  |   6 +-
- fs/nfsd/xdr4.h                                  |  12 +-
- fs/posix_acl.c                                  |  26 +-
- fs/richacl_base.c                               | 539 ++++++++++++++
- fs/richacl_compat.c                             | 908 ++++++++++++++++++++++++
- fs/richacl_inode.c                              | 264 +++++++
- fs/richacl_xattr.c                              | 210 ++++++
- fs/xattr.c                                      |  34 +-
- include/linux/fs.h                              |  50 +-
- include/linux/nfs4.h                            |  24 +-
- include/linux/nfs4acl.h                         |   7 +
- include/linux/posix_acl.h                       |  12 +-
- include/linux/richacl.h                         | 342 +++++++++
- include/linux/richacl_compat.h                  |  40 ++
- include/linux/richacl_xattr.h                   |  52 ++
- include/uapi/linux/fs.h                         |   3 +-
- include/uapi/linux/nfs4.h                       |   3 +-
- include/uapi/linux/xattr.h                      |   2 +
- 46 files changed, 3498 insertions(+), 473 deletions(-)
- create mode 100644 fs/ext4/richacl.c
- create mode 100644 fs/ext4/richacl.h
- create mode 100644 fs/nfs_common/nfs4acl.c
- create mode 100644 fs/richacl_base.c
- create mode 100644 fs/richacl_compat.c
- create mode 100644 fs/richacl_inode.c
- create mode 100644 fs/richacl_xattr.c
- create mode 100644 include/linux/nfs4acl.h
- create mode 100644 include/linux/richacl.h
- create mode 100644 include/linux/richacl_compat.h
- create mode 100644 include/linux/richacl_xattr.h
-
+diff --git a/fs/namei.c b/fs/namei.c
+index f5715fb..c6eac96 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -453,7 +453,8 @@ static int sb_permission(struct super_block *sb, struct inode *inode, int mask)
+  * this, letting us set arbitrary permissions for filesystem access without
+  * changing the "normal" UIDs which are used for other things.
+  *
+- * When checking for MAY_APPEND, MAY_WRITE must also be set in @mask.
++ * When checking for MAY_APPEND, MAY_CREATE_FILE, MAY_CREATE_DIR,
++ * MAY_WRITE must also be set in @mask.
+  */
+ int inode_permission(struct inode *inode, int mask)
+ {
+@@ -2454,10 +2455,11 @@ EXPORT_SYMBOL(__check_sticky);
+  * 10. We don't allow removal of NFS sillyrenamed files; it's handled by
+  *     nfs_async_unlink().
+  */
+-static int may_delete(struct inode *dir, struct dentry *victim, bool isdir)
++static int may_delete(struct inode *dir, struct dentry *victim,
++		      bool isdir, bool replace)
+ {
+ 	struct inode *inode = victim->d_inode;
+-	int error;
++	int error, mask = MAY_WRITE | MAY_EXEC;
+ 
+ 	if (d_is_negative(victim))
+ 		return -ENOENT;
+@@ -2466,7 +2468,9 @@ static int may_delete(struct inode *dir, struct dentry *victim, bool isdir)
+ 	BUG_ON(victim->d_parent->d_inode != dir);
+ 	audit_inode_child(dir, victim, AUDIT_TYPE_CHILD_DELETE);
+ 
+-	error = inode_permission(dir, MAY_WRITE | MAY_EXEC);
++	if (replace)
++		mask |= isdir ? MAY_CREATE_DIR : MAY_CREATE_FILE;
++	error = inode_permission(dir, mask);
+ 	if (error)
+ 		return error;
+ 	if (IS_APPEND(dir))
+@@ -2497,14 +2501,16 @@ static int may_delete(struct inode *dir, struct dentry *victim, bool isdir)
+  *  3. We should have write and exec permissions on dir
+  *  4. We can't do it if dir is immutable (done in permission())
+  */
+-static inline int may_create(struct inode *dir, struct dentry *child)
++static inline int may_create(struct inode *dir, struct dentry *child, bool isdir)
+ {
++	int mask = isdir ? MAY_CREATE_DIR : MAY_CREATE_FILE;
++
+ 	audit_inode_child(dir, child, AUDIT_TYPE_CHILD_CREATE);
+ 	if (child->d_inode)
+ 		return -EEXIST;
+ 	if (IS_DEADDIR(dir))
+ 		return -ENOENT;
+-	return inode_permission(dir, MAY_WRITE | MAY_EXEC);
++	return inode_permission(dir, MAY_WRITE | MAY_EXEC | mask);
+ }
+ 
+ /*
+@@ -2554,7 +2560,7 @@ EXPORT_SYMBOL(unlock_rename);
+ int vfs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
+ 		bool want_excl)
+ {
+-	int error = may_create(dir, dentry);
++	int error = may_create(dir, dentry, false);
+ 	if (error)
+ 		return error;
+ 
+@@ -3430,7 +3436,7 @@ EXPORT_SYMBOL(user_path_create);
+ 
+ int vfs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t dev)
+ {
+-	int error = may_create(dir, dentry);
++	int error = may_create(dir, dentry, false);
+ 
+ 	if (error)
+ 		return error;
+@@ -3522,7 +3528,7 @@ SYSCALL_DEFINE3(mknod, const char __user *, filename, umode_t, mode, unsigned, d
+ 
+ int vfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
+ {
+-	int error = may_create(dir, dentry);
++	int error = may_create(dir, dentry, true);
+ 	unsigned max_links = dir->i_sb->s_max_links;
+ 
+ 	if (error)
+@@ -3603,7 +3609,7 @@ EXPORT_SYMBOL(dentry_unhash);
+ 
+ int vfs_rmdir(struct inode *dir, struct dentry *dentry)
+ {
+-	int error = may_delete(dir, dentry, 1);
++	int error = may_delete(dir, dentry, true, false);
+ 
+ 	if (error)
+ 		return error;
+@@ -3723,7 +3729,7 @@ SYSCALL_DEFINE1(rmdir, const char __user *, pathname)
+ int vfs_unlink(struct inode *dir, struct dentry *dentry, struct inode **delegated_inode)
+ {
+ 	struct inode *target = dentry->d_inode;
+-	int error = may_delete(dir, dentry, 0);
++	int error = may_delete(dir, dentry, false, false);
+ 
+ 	if (error)
+ 		return error;
+@@ -3855,7 +3861,7 @@ SYSCALL_DEFINE1(unlink, const char __user *, pathname)
+ 
+ int vfs_symlink(struct inode *dir, struct dentry *dentry, const char *oldname)
+ {
+-	int error = may_create(dir, dentry);
++	int error = may_create(dir, dentry, false);
+ 
+ 	if (error)
+ 		return error;
+@@ -3938,7 +3944,7 @@ int vfs_link(struct dentry *old_dentry, struct inode *dir, struct dentry *new_de
+ 	if (!inode)
+ 		return -ENOENT;
+ 
+-	error = may_create(dir, new_dentry);
++	error = may_create(dir, new_dentry, false);
+ 	if (error)
+ 		return error;
+ 
+@@ -4126,19 +4132,19 @@ int vfs_rename(struct inode *old_dir, struct dentry *old_dentry,
+ 	if (source == target)
+ 		return 0;
+ 
+-	error = may_delete(old_dir, old_dentry, is_dir);
++	error = may_delete(old_dir, old_dentry, is_dir, false);
+ 	if (error)
+ 		return error;
+ 
+ 	if (!target) {
+-		error = may_create(new_dir, new_dentry);
++		error = may_create(new_dir, new_dentry, is_dir);
+ 	} else {
+ 		new_is_dir = d_is_dir(new_dentry);
+ 
+ 		if (!(flags & RENAME_EXCHANGE))
+-			error = may_delete(new_dir, new_dentry, is_dir);
++			error = may_delete(new_dir, new_dentry, is_dir, true);
+ 		else
+-			error = may_delete(new_dir, new_dentry, new_is_dir);
++			error = may_delete(new_dir, new_dentry, new_is_dir, true);
+ 	}
+ 	if (error)
+ 		return error;
+@@ -4402,7 +4408,7 @@ SYSCALL_DEFINE2(rename, const char __user *, oldname, const char __user *, newna
+ 
+ int vfs_whiteout(struct inode *dir, struct dentry *dentry)
+ {
+-	int error = may_create(dir, dentry);
++	int error = may_create(dir, dentry, false);
+ 	if (error)
+ 		return error;
+ 
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 2b8cabb..8c78d91 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -80,6 +80,8 @@ typedef void (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
+ #define MAY_CHDIR		0x00000040
+ /* called from RCU mode, don't block */
+ #define MAY_NOT_BLOCK		0x00000080
++#define MAY_CREATE_FILE		0x00000100
++#define MAY_CREATE_DIR		0x00000200
+ 
+ /*
+  * flags in file.f_mode.  Note that FMODE_READ and FMODE_WRITE must correspond
 -- 
 2.4.2
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
