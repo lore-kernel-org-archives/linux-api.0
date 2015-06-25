@@ -1,61 +1,53 @@
-From: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH 0/3] restartable sequences: fast user-space percpu
- critical sections
-Date: Wed, 24 Jun 2015 19:54:41 -0700
-Message-ID: <CAPM31R+GUtD_9S+m7U0DGpeqSCT1n98bvQ0NUOwMHX7-CoKigQ@mail.gmail.com>
-References: <20150624222609.6116.86035.stgit@kitami.mtv.corp.google.com> <CALCETrXAtYDZBbpwZceFyhLOnqFmTDqTxhGfbrrVrY+34cxSFg@mail.gmail.com>
+From: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
+Subject: Re: [PATCH v2] ipc: Modify message queue accounting to reflect both
+ total user data and auxiliary kernel data
+Date: Wed, 24 Jun 2015 22:47:09 -0700
+Message-ID: <1435211229.11852.23.camel@stgolabs.net>
+References: <20150622222546.GA32432@ramsey.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrXAtYDZBbpwZceFyhLOnqFmTDqTxhGfbrrVrY+34cxSFg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20150622222546.GA32432-W7fNxlbxG8VSq9BJjBFyUp/QNRX+jHPU@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+To: Marcus Gelderie <marcus.gelderie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, John Duffy <jb_duffy-FhtRXb7CoQBt1OO0OYaSVA@public.gmane.org>, Arto Bendiken <arto-TQ6thHYR8Svk1uMJSBkQmQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, redmnic-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jun 24, 2015 at 5:07 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> On Wed, Jun 24, 2015 at 3:26 PM, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
->> This is a fairly small series demonstrating a feature we've found to be quite
->> powerful in practice, "restartable sequences".
->>
->
-> On an extremely short glance, I'm starting to think that the right
-> approach, at least for x86, is to implement per-cpu gsbase.  Then you
-> could do cmpxchg with a gs prefix to atomically take a percpu lock and
-> atomically release a percpu lock and check whether someone else stole
-> the lock from you.  (Note: cmpxchg, unlike lock cmpxchg, is very
-> fast.)
->
-> This is totally useless for other architectures, but I think it would
-> be reasonable clean on x86.  Thoughts?
+On Tue, 2015-06-23 at 00:25 +0200, Marcus Gelderie wrote:
+> A while back, the message queue implementation in the kernel was
+> improved to use btrees to speed up retrieval of messages (commit
+> d6629859b36). The patch introducing the improved kernel handling of
+> message queues (using btrees) has, as a by-product, changed the
+> meaning of the QSIZE field in the pseudo-file created for the queue.
+> Before, this field reflected the size of the user-data in the queue.
+> Since, it also takes kernel data structures into account. For
+> example, if 13 bytes of user data are in the queue, on my machine the
+> file reports a size of 61 bytes.
 
-So this gives semantics that are obviously similar to this_cpu().
-This provides allows reasonable per-cpu counters (which is alone
-almost sufficient for a strong user-space RCU implementation giving
-this some legs).
+Good catch, and a nice opportunity to make the mq manpage more specific
+wrt to queue sizes.
 
-However, unless there's a nice implementation trick I'm missing, the
-thing that stands out to me for locks (or other primitives) is that
-this forces a two-phase commit.  There's no way (short of say,
-cmpxchg16b) to perform a write conditional on the lock not having been
-stolen from us (and subsequently release the lock).
+[...]
 
-e.g.
- 1) We take the operation in some sort of speculative mode, that
-another thread on the same cpu is stilled allowed to steal from us
- 2) We prepare what we want to commit
- 3) At this point we have to promote the lock taken in (1) to perform
-our actual commit, or see that someone else has stolen (1)
- 4) Release the promoted lock in (3)
+> Reporting the size of the message queue in kernel has its merits, but
+> doing so in the QSIZE field of the pseudo file corresponding to the
+> queue is a breaking change, as mentioned above. This patch therefore
+> returns the QSIZE  field to its original meaning. At the same time,
+> it introduces a new field QKERSIZE that reflects the size of the queue
+> in kernel (user data + kernel data).
 
-However, this means that if we're preempted at (3) then no other
-thread on that cpu can make progress until we've been rescheduled and
-released the lock; a nice property of the model we have today is that
-threads sharing a cpu can not impede each other beyond what the
-scheduler allows.
+Hmmm I'm not sure about this. What are the specific benefits of having
+QKERSIZE? We don't export in-kernel data like this in any other ipc
+(posix or sysv) mechanism, afaik. Plus, we do not compromise kernel data
+structures like this, as we would break userspace if later we change
+posix_msg_tree_node. So NAK to this.
 
-A lesser concern, but worth mentioning, is that there are also
-potential pitfalls in the interaction with signal handlers,
-particularly if a 2-phase commit is used.
+I would just remove the extra
++       info->qsize += sizeof(struct posix_msg_tree_node);
 
-- Paul
+bits from d6629859b36 (along with -stable v3.5), plus a patch updating
+the manpage that this field only reflects user data.
+
+Thanks,
+Davidlohr
