@@ -1,53 +1,58 @@
-From: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
-Subject: Re: [PATCH v2] ipc: Modify message queue accounting to reflect both
- total user data and auxiliary kernel data
-Date: Wed, 24 Jun 2015 22:47:09 -0700
-Message-ID: <1435211229.11852.23.camel@stgolabs.net>
-References: <20150622222546.GA32432@ramsey.localdomain>
+From: "Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> (gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org)"
+	<gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH] sysfs.txt: update show method notes about
+ sprintf/snprintf/scnprintf usage
+Date: Wed, 24 Jun 2015 23:03:05 -0700
+Message-ID: <20150625060305.GA11905@kroah.com>
+References: <DDB9C85B850785449757F9914A034FCB3F8EA364@G4W3219.americas.hpqcorp.net>
+ <20150625015957.GB3365@swordfish>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150622222546.GA32432-W7fNxlbxG8VSq9BJjBFyUp/QNRX+jHPU@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150625015957.GB3365@swordfish>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Marcus Gelderie <marcus.gelderie-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, John Duffy <jb_duffy-FhtRXb7CoQBt1OO0OYaSVA@public.gmane.org>, Arto Bendiken <arto-TQ6thHYR8Svk1uMJSBkQmQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, redmnic-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: Sergey Senozhatsky <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "Seymour, Shane M" <shane.seymour-VXdhtT5mjnY@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2015-06-23 at 00:25 +0200, Marcus Gelderie wrote:
-> A while back, the message queue implementation in the kernel was
-> improved to use btrees to speed up retrieval of messages (commit
-> d6629859b36). The patch introducing the improved kernel handling of
-> message queues (using btrees) has, as a by-product, changed the
-> meaning of the QSIZE field in the pseudo-file created for the queue.
-> Before, this field reflected the size of the user-data in the queue.
-> Since, it also takes kernel data structures into account. For
-> example, if 13 bytes of user data are in the queue, on my machine the
-> file reports a size of 61 bytes.
+On Thu, Jun 25, 2015 at 10:59:57AM +0900, Sergey Senozhatsky wrote:
+> On (06/25/15 00:55), Seymour, Shane M wrote:
+> > Changed the documentation to allow sprintf() for small
+> > single values and explicitly say snprintf() must never be used in
+> > a show function to format data to be returned to user space.
+> > 
+> > Change based on a discussion about the patch
+> > st: convert DRIVER_ATTR macros to DRIVER_ATTR_RO
+> > 
+> > Suggested-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+> > Signed-off-by: Shane Seymour <shane.seymour-VXdhtT5mjnY@public.gmane.org>
+> > ---
+> > --- a/Documentation/filesystems/sysfs.txt	2015-06-22 14:18:40.278620871 -0500
+> > +++ b/Documentation/filesystems/sysfs.txt	2015-06-24 13:42:21.344446532 -0500
+> > @@ -212,7 +212,9 @@ Other notes:
+> >  - show() methods should return the number of bytes printed into the
+> >    buffer. This is the return value of scnprintf().
+> >  
+> > -- show() should always use scnprintf().
+> > +- show() must not use snprintf() when formatting a value to be
+> > +  returned to user space. For small single values you can use
+> > +  sprintf() otherwise you must use scnprintf().
+> 
+> Well, a single value can easily overflow
+> 
+> 	sprintf(buf, "%s", dev->large_value);
 
-Good catch, and a nice opportunity to make the mq manpage more specific
-wrt to queue sizes.
+That's an obviously foolish sysfs attribute, if you do that, you deserve
+the kernel crash :)
 
-[...]
+> Probably the wording better be "if you guarantee that overflow will
+> never happen, then you can use ...".
 
-> Reporting the size of the message queue in kernel has its merits, but
-> doing so in the QSIZE field of the pseudo file corresponding to the
-> queue is a breaking change, as mentioned above. This patch therefore
-> returns the QSIZE  field to its original meaning. At the same time,
-> it introduces a new field QKERSIZE that reflects the size of the queue
-> in kernel (user data + kernel data).
+For a document that no one has obviously read in the past 5 years, I
+really doubt we need to work too hard on the exact specific wording of
+it.
 
-Hmmm I'm not sure about this. What are the specific benefits of having
-QKERSIZE? We don't export in-kernel data like this in any other ipc
-(posix or sysv) mechanism, afaik. Plus, we do not compromise kernel data
-structures like this, as we would break userspace if later we change
-posix_msg_tree_node. So NAK to this.
+thanks,
 
-I would just remove the extra
-+       info->qsize += sizeof(struct posix_msg_tree_node);
-
-bits from d6629859b36 (along with -stable v3.5), plus a patch updating
-the manpage that this field only reflects user data.
-
-Thanks,
-Davidlohr
+greg k-h
