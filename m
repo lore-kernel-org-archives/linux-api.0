@@ -1,46 +1,46 @@
-From: Sergey Senozhatsky <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] sysfs.txt: update show method notes about
+From: "Seymour, Shane M" <shane.seymour-VXdhtT5mjnY@public.gmane.org>
+Subject: [PATCH v2] sysfs.txt: update show method notes about
  sprintf/snprintf/scnprintf usage
-Date: Thu, 25 Jun 2015 10:59:57 +0900
-Message-ID: <20150625015957.GB3365@swordfish>
-References: <DDB9C85B850785449757F9914A034FCB3F8EA364@G4W3219.americas.hpqcorp.net>
+Date: Thu, 25 Jun 2015 02:33:08 +0000
+Message-ID: <DDB9C85B850785449757F9914A034FCB3F8EA406@G4W3219.americas.hpqcorp.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <DDB9C85B850785449757F9914A034FCB3F8EA364-MCKW7lC+H9ISZAcGdq5asR6epYMZPwEe5NbjCUgZEJk@public.gmane.org>
+Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Seymour, Shane M" <shane.seymour-VXdhtT5mjnY@public.gmane.org>
-Cc: "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> (gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org)" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+To: "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org> (gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org)" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Sergey Senozhatsky <sergey.senozhatsky.work-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On (06/25/15 00:55), Seymour, Shane M wrote:
-> Changed the documentation to allow sprintf() for small
-> single values and explicitly say snprintf() must never be used in
-> a show function to format data to be returned to user space.
-> 
-> Change based on a discussion about the patch
-> st: convert DRIVER_ATTR macros to DRIVER_ATTR_RO
-> 
-> Suggested-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-> Signed-off-by: Shane Seymour <shane.seymour-VXdhtT5mjnY@public.gmane.org>
-> ---
-> --- a/Documentation/filesystems/sysfs.txt	2015-06-22 14:18:40.278620871 -0500
-> +++ b/Documentation/filesystems/sysfs.txt	2015-06-24 13:42:21.344446532 -0500
-> @@ -212,7 +212,9 @@ Other notes:
->  - show() methods should return the number of bytes printed into the
->    buffer. This is the return value of scnprintf().
->  
-> -- show() should always use scnprintf().
-> +- show() must not use snprintf() when formatting a value to be
-> +  returned to user space. For small single values you can use
-> +  sprintf() otherwise you must use scnprintf().
 
-Well, a single value can easily overflow
+Changed the documentation to allow sprintf() when the buffer
+provided by sysfs cannot be overflowed. Explicitly say
+snprintf() must never be used in a show function to format
+data to be returned to user space.
 
-	sprintf(buf, "%s", dev->large_value);
+Change based on a discussion about the patch
+st: convert DRIVER_ATTR macros to DRIVER_ATTR_RO
 
-Probably the wording better be "if you guarantee that overflow will
-never happen, then you can use ...".
-
-	-ss
+Suggested-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Signed-off-by: Shane Seymour <shane.seymour-VXdhtT5mjnY@public.gmane.org>
+---
+Changes from v1:
+- Changed the text after feedback from Sergey Senozhatsky
+need to be more explicit that sprintf() can only be used when
+you know that you will never overflow the buffer provided
+by sysfs.
+--- a/Documentation/filesystems/sysfs.txt	2015-06-22 14:18:40.278620871 -0500
++++ b/Documentation/filesystems/sysfs.txt	2015-06-24 15:42:32.617955400 -0500
+@@ -212,7 +212,10 @@ Other notes:
+ - show() methods should return the number of bytes printed into the
+   buffer. This is the return value of scnprintf().
+ 
+-- show() should always use scnprintf().
++- show() must not use snprintf() when formatting the value to be
++  returned to user space. If you can guarantee that an overflow
++  will never happen you can use sprintf() otherwise you must use
++  scnprintf().
+ 
+ - store() should return the number of bytes used from the buffer. If the
+   entire buffer has been used, just return the count argument.
