@@ -1,128 +1,96 @@
-From: Marcus Gelderie <redmnic@gmail.com>
-Subject: Re: [PATCH v2] ipc: Modify message queue accounting to reflect both
- total user data and auxiliary kernel data
-Date: Thu, 25 Jun 2015 20:50:19 +0200
-Message-ID: <20150625185019.GA17933@ramsey.Speedport_W_724V_09011603_00_009>
-References: <20150622222546.GA32432@ramsey.localdomain>
- <1435211229.11852.23.camel@stgolabs.net>
- <CAKgNAkieR5zdpKm=P2dcTDJ_3X4HMRoeOQ2D8yghYVKOjDsYAg@mail.gmail.com>
+From: "Stefan (metze) Metzmacher" <metze@samba.org>
+Subject: Re: [RFC v4 06/31] richacl: In-memory representation and helper
+	functions
+Date: Thu, 25 Jun 2015 21:58:45 +0200
+Message-ID: <558C5D75.6050608@samba.org>
+References: <1435183040-22726-1-git-send-email-agruenba@redhat.com>
+	<1435183040-22726-7-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAKgNAkieR5zdpKm=P2dcTDJ_3X4HMRoeOQ2D8yghYVKOjDsYAg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Davidlohr Bueso <dave@stgolabs.net>, Doug Ledford <dledford@redhat.com>, lkml <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, John Duffy <jb_duffy@btinternet.com>, Arto Bendiken <arto@bendiken.net>, Linux API <linux-api@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature";
+	boundary="QcxN29qXk8Xkw7dkUjF2iWHhCpuWdK8Vv"
+Return-path: <samba-technical-bounces@lists.samba.org>
+In-Reply-To: <1435183040-22726-7-git-send-email-agruenba@redhat.com>
+List-Unsubscribe: <https://lists.samba.org/mailman/options/samba-technical>,
+	<mailto:samba-technical-request@lists.samba.org?subject=unsubscribe>
+List-Archive: <http://lists.samba.org/pipermail/samba-technical>
+List-Post: <mailto:samba-technical@lists.samba.org>
+List-Help: <mailto:samba-technical-request@lists.samba.org?subject=help>
+List-Subscribe: <https://lists.samba.org/mailman/listinfo/samba-technical>,
+	<mailto:samba-technical-request@lists.samba.org?subject=subscribe>
+Sender: samba-technical-bounces@lists.samba.org
+Errors-To: samba-technical-bounces@lists.samba.org
+To: Andreas Gruenbacher <andreas.gruenbacher@gmail.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, samba-technical@lists.samba.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hey all,
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--QcxN29qXk8Xkw7dkUjF2iWHhCpuWdK8Vv
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-answers in text below... 
+Hi Andreas,
 
-TLDR: I can remove the QKERSIZE field, as I believe that it does not affect he
-RLIMIT accounting (details [=code] below). Question is: Should it?
+> +#define RICHACE_OWNER_SPECIAL_ID	0
+> +#define RICHACE_GROUP_SPECIAL_ID	1
+> +#define RICHACE_EVERYONE_SPECIAL_ID	2
+> +
+> +struct richace {
+> +	unsigned short	e_type;
+> +	unsigned short	e_flags;
+> +	unsigned int	e_mask;
+> +	union {
+> +		kuid_t		uid;
+> +		kgid_t		gid;
+> +		unsigned int	special;
+> +	} e_id;
+> +};
+> +
+> +struct richacl {
+> +	atomic_t	a_refcount;
+> +	unsigned int	a_owner_mask;
+> +	unsigned int	a_group_mask;
+> +	unsigned int	a_other_mask;
+> +	unsigned short	a_count;
+> +	unsigned short	a_flags;
+> +	struct richace	a_entries[0];
+> +};
 
-Before I provide another patch, I would appreciate another round of feedback, though.
+Is that also the on disk representation?
 
-So...
+I'm wondering if the size of an ace should be dynamic,
+which might make it possible to support other ace types
+in future. E.g. supporting other identities like 128-bit values
+to make it easier to map Windows SIDS.
 
-On Thu, Jun 25, 2015 at 09:23:33AM +0200, Michael Kerrisk (man-pages) wrote:
-> On 25 June 2015 at 07:47, Davidlohr Bueso <dave@stgolabs.net> wrote:
-> > Good catch, and a nice opportunity to make the mq manpage more specific
-> > wrt to queue sizes.
-> >
-> > [...]
-> >
-ACK, I can write a patch for the manpage once we figure out what to do
-here.
-> >> Reporting the size of the message queue in kernel has its merits, but
-> >> doing so in the QSIZE field of the pseudo file corresponding to the
-> >> queue is a breaking change, as mentioned above. This patch therefore
-> >> returns the QSIZE  field to its original meaning. At the same time,
-> >> it introduces a new field QKERSIZE that reflects the size of the queue
-> >> in kernel (user data + kernel data).
-> >
-> > Hmmm I'm not sure about this. What are the specific benefits of having
-> > QKERSIZE? We don't export in-kernel data like this in any other ipc
-> > (posix or sysv) mechanism, afaik. Plus, we do not compromise kernel data
-> > structures like this, as we would break userspace if later we change
-> > posix_msg_tree_node. So NAK to this.
-> >
-> > I would just remove the extra
-> > +       info->qsize += sizeof(struct posix_msg_tree_node);
-> >
-> > bits from d6629859b36 (along with -stable v3.5), plus a patch updating
-> > the manpage that this field only reflects user data.
-> 
-This can be done if the RLIMIT accounting is not done against that
-value (more below).
+Even without 128-bit ids, it would be very useful to mark an
+ace so that it applies to a uid or gid at the same time.
+This would reduce the size of the ace list when Samba uses
+IDMAP_TYPE_BOTH, which means a SID is mapped to a unix id, which
+is user (uid) and group (gid) at the same time. This feature is required
+in order to support SID-Histories on accounts.
+Currently Samba needs to add two aces (one uid and one gid)
+in order to represent one Windows ace.
 
-> I've been hoping that Doug would jump into this discussion...
-> 
-> If I recall/understand Doug correctly (see
-> http://thread.gmane.org/gmane.linux.man/7050/focus=1797645 ), his
-> rationale for the QSIZE change was that it then revealed a value that
-> was closer to what was being used to account against the
-> RLIMIT_MSGQUEUE resource limit. (Even with these changes, the QSIZE
-> value was not 100% accurate for accounting against RLIMIT_MSGQUEUE,
-> since some pieces of kernel overhead were still not being accounted
-> for. Nevertheless, it's much closer than the old (pre 3.5) QSIZE for
-> some corner cases.) Thus, Marcus's rationale for preserving this info
-> as QKERSIZE.
-> 
+I haven't looked at the claims based acls on Windows, but it would be
+good if the new infrastructure is dynamic enough to support something
+like that in a future version.
 
-Actually, looking at the code, it seems to me that the QKERSIZE
-(a.k.a. the current qsize field) is actually not used for the purpose of
-accounting at all. From ipc/mqueue.c (line 281 ff, comments added by me):
-		
-		/* worst case estimate for the btree in memory */
-		
-		mq_treesize = info->attr.mq_maxmsg * sizeof(struct msg_msg) +
-			min_t(unsigned int, info->attr.mq_maxmsg, MQ_PRIO_MAX) *
-			sizeof(struct posix_msg_tree_node);
+Thanks very much on your persistent to bring richacls forward!
 
-		/* worst case estimate for the user data in the queue */
-		
-		mq_bytes = mq_treesize + (info->attr.mq_maxmsg *
-					  info->attr.mq_msgsize);
-
-		spin_lock(&mq_lock);
-		    
-		    /* acutal accounting; u->mq_bytes is the other
-		     * message queus for this user (computed in the way
-		     * above (i.e. worst-case estimates) 
-		     */
-
-		if (u->mq_bytes + mq_bytes < u->mq_bytes ||
-		    u->mq_bytes + mq_bytes > rlimit(RLIMIT_MSGQUEUE)) {
-			[....]
-			ret = -EMFILE;
-			[.....]
-
-So, I think that if the RLIMIT should take the actual size (not the
-worst case) into account, then we have a bug. I can write a patch, but that
-should be separate from this... meaning I'll turn this into a patchset.
-
-However, we should decide what we want first: If I read the manpage (mq_overview), I
-am inclined to think that the RLIMIT should use the acutal amount of
-data occupied by the queue (or at least the user data). But it does not
-necessarily rule out an accounting against worst-case estimation (to me
-at least).
+metze
 
 
-> Now whether QKERSIZE is actually useful or used by anyone is another
-> question. As far as I know, there was no user request that drove the
-> change. But Doug can perhaps say something to this. QSIZE should I
-> think definitely be fixed (reverted to pre-3.5 behavior). I'm agnostic
-> about QKERSIZE.
-> 
-> Cheers,
-> 
-> Michael
-> 
-> 
-> -- 
-> Michael Kerrisk
-> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-> Linux/UNIX System Programming Training: http://man7.org/training/
+--QcxN29qXk8Xkw7dkUjF2iWHhCpuWdK8Vv
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.22 (GNU/Linux)
+
+iEUEARECAAYFAlWMXXkACgkQm70gjA5TCD+E+ACgzY4eEne/+mbPaeueSYN80wqv
+WtQAmLy/OellwD9vtiw4M55Jfu95w0E=
+=am4e
+-----END PGP SIGNATURE-----
+
+--QcxN29qXk8Xkw7dkUjF2iWHhCpuWdK8Vv--
