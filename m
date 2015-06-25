@@ -1,120 +1,61 @@
-From: "Stefan (metze) Metzmacher" <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
-Subject: Re: [RFC v4 06/31] richacl: In-memory representation and helper functions
-Date: Thu, 25 Jun 2015 23:40:05 +0200
-Message-ID: <558C7535.9050502@samba.org>
-References: <1435183040-22726-1-git-send-email-agruenba@redhat.com>	<1435183040-22726-7-git-send-email-agruenba@redhat.com>	<558C5D75.6050608@samba.org> <CAHpGcM+AwRubQqX96V3WbwLKXKTfk3YcgFG_eqG6r7cVbCTV-w@mail.gmail.com>
+From: Vinson Lee <vlee-xCSkyg8dI+0RB7SZvlqPiA@public.gmane.org>
+Subject: [PATCH] selftests/exec: Fix build on older distros.
+Date: Thu, 25 Jun 2015 16:29:08 -0700
+Message-ID: <1435274950-17106-1-git-send-email-vlee@twopensource.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="aC1M27CKf9tWKRLKcLCCiKarTR1aSIoOt"
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAHpGcM+AwRubQqX96V3WbwLKXKTfk3YcgFG_eqG6r7cVbCTV-w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?UTF-8?B?QW5kcmVhcyBHcsO8bmJhY2hlcg==?= <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, samba-technical <samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Vinson Lee <vlee-1v8oiQdgUNlBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---aC1M27CKf9tWKRLKcLCCiKarTR1aSIoOt
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+=46rom: Vinson Lee <vlee-1v8oiQdgUNlBDgjK7y7TUQ@public.gmane.org>
 
-Hi Andreas,
+This patch fixes this build error on CentOS 5.
 
->> I'm wondering if the size of an ace should be dynamic,
->> which might make it possible to support other ace types
->> in future. E.g. supporting other identities like 128-bit values
->> to make it easier to map Windows SIDS.
->=20
-> I'm working on additionally supporting unmapped user@domain and
-> group@domain identifier strings; we have to deal with that case in the
-> nfs client; that may be useful for Samba as well.
+execveat.c: In function =E2=80=98check_execveat_pathmax=E2=80=99:
+execveat.c:185: error: =E2=80=98AT_EMPTY_PATH=E2=80=99 undeclared (firs=
+t use in this function)
+execveat.c:185: error: (Each undeclared identifier is reported only onc=
+e
+execveat.c:185: error: for each function it appears in.)
+execveat.c: In function =E2=80=98run_tests=E2=80=99:
+execveat.c:221: error: =E2=80=98O_PATH=E2=80=99 undeclared (first use i=
+n this function)
+execveat.c:222: error: =E2=80=98O_CLOEXEC=E2=80=99 undeclared (first us=
+e in this function)
+execveat.c:258: error: =E2=80=98AT_EMPTY_PATH=E2=80=99 undeclared (firs=
+t use in this function)
 
-Can this be any string? So would
-"S-1-5-21-4052121579-2079768045-1474639452-1001" also work?
+Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org # 3.19+
+Signed-off-by: Vinson Lee <vlee-1v8oiQdgUNlBDgjK7y7TUQ@public.gmane.org>
+---
+ tools/testing/selftests/exec/execveat.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-How would the current thread/process get a "token" that would match such
-an ace?
-
->> Even without 128-bit ids, it would be very useful to mark an
->> ace so that it applies to a uid or gid at the same time.
->> This would reduce the size of the ace list when Samba uses
->> IDMAP_TYPE_BOTH, which means a SID is mapped to a unix id, which
->> is user (uid) and group (gid) at the same time. This feature is requir=
-ed
->> in order to support SID-Histories on accounts.
->> Currently Samba needs to add two aces (one uid and one gid)
->> in order to represent one Windows ace.
->=20
-> It's not clear to me if supporting this would be a good idea right now.=
-
-> The kernel would have to treat each such entry like two separate entrie=
-s
-> internally. How would we map a combined user-space "uid + gid"
-> number to a kernel uid and gid since it could map to two distinct
-> numbers there?
-
-No, the numeric value is the same.
-
-I think richacl_permission() is the only place that requires any action.
-
-	richacl_for_each_entry(ace, acl) {
-		unsigned int ace_mask =3D ace->e_mask;
-
-		if (richace_is_inherit_only(ace))
-			continue;
-		if (richace_is_owner(ace)) {
-			if (!uid_eq(current_fsuid(), inode->i_uid))
-				continue;
-		} else if (richace_is_group(ace)) {
-			if (!in_owning_group)
-				continue;
-+		} else if (richace_is_unix_both(ace)) {
-+			kuid_t uid =3D current_fsuid();
+diff --git a/tools/testing/selftests/exec/execveat.c b/tools/testing/se=
+lftests/exec/execveat.c
+index 8d5d1d2..170148d 100644
+--- a/tools/testing/selftests/exec/execveat.c
++++ b/tools/testing/selftests/exec/execveat.c
+@@ -20,6 +20,16 @@
+ #include <string.h>
+ #include <unistd.h>
+=20
++#ifndef AT_EMPTY_PATH
++# define AT_EMPTY_PATH 0x1000
++#endif
++#ifndef O_PATH
++# define O_PATH 010000000
++#endif
++#ifndef O_CLOEXEC
++# define O_CLOEXEC 02000000
++#endif
 +
-+			if (!uid_eq(uid, ace->e_id.xid) && !in_group_p(ace->e_id.xid))
-+				continue;
-		} else if (richace_is_unix_user(ace)) {
-			kuid_t uid =3D current_fsuid();
-
-			if (!uid_eq(uid, ace->e_id.uid))
-				continue;
-		} else if (richace_is_unix_group(ace)) {
-			if (!in_group_p(ace->e_id.gid))
-				continue;
-		} else
-			goto entry_matches_everyone;
-
-In general shouldn't kuid_t uid =3D current_fsuid(); be at the top of the=
-
-function just once?
-
->> I haven't looked at the claims based acls on Windows, but it would be
->> good if the new infrastructure is dynamic enough to support something
->> like that in a future version.
->=20
-> I don't know, I have yet to see a use case that isn't totally crazy.
-
-Ok, I found the a_version in struct richacl_xattr.
-
-metze
-
-
---aC1M27CKf9tWKRLKcLCCiKarTR1aSIoOt
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.22 (GNU/Linux)
-
-iEYEARECAAYFAlWMdTgACgkQm70gjA5TCD8w2ACdEy9YtMXiH2k8cKTgcQm9nKeJ
-em0AnAykqCZgGuPWl8KTjX7vgJNcirg2
-=0Opo
------END PGP SIGNATURE-----
-
---aC1M27CKf9tWKRLKcLCCiKarTR1aSIoOt--
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+ static char longpath[2 * PATH_MAX] =3D "";
+ static char *envp[] =3D { "IN_TEST=3Dyes", NULL, NULL };
+ static char *argv[] =3D { "execveat", "99", NULL };
+--=20
+1.8.2.1
