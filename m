@@ -1,47 +1,73 @@
-From: =?UTF-8?Q?Andreas_Gr=C3=BCnbacher?= <andreas.gruenbacher-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC v4 06/31] richacl: In-memory representation and helper functions
-Date: Fri, 26 Jun 2015 09:55:34 +0200
-Message-ID: <CAHpGcM+Bf+ZhQEbKmtGhNMp2dJ8Btha7_gLi0Tu+Uk-zyCpQjg@mail.gmail.com>
-References: <1435183040-22726-1-git-send-email-agruenba@redhat.com>
-	<1435183040-22726-7-git-send-email-agruenba@redhat.com>
-	<558C5D75.6050608@samba.org>
-	<CAHpGcM+AwRubQqX96V3WbwLKXKTfk3YcgFG_eqG6r7cVbCTV-w@mail.gmail.com>
-	<558C7535.9050502@samba.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+From: Gioh Kim <gioh.kim-Hm3cg6mZ9cc@public.gmane.org>
+Subject: [RFCv2 0/5] enable migration of driver pages
+Date: Fri, 26 Jun 2015 18:58:25 +0900
+Message-ID: <1435312710-15108-1-git-send-email-gioh.kim@lge.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <558C7535.9050502-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Stefan (metze) Metzmacher" <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
-Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, samba-technical <samba-technical-w/Ol4Ecudpl8XjKLYN78aQ@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, vbabka-AlSwsSmVLrQ@public.gmane.org, iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, aquini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Gioh Kim <gioh.kim-Hm3cg6mZ9cc@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-2015-06-25 23:40 GMT+02:00 Stefan (metze) Metzmacher <metze-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>:
->>> I'm wondering if the size of an ace should be dynamic,
->>> which might make it possible to support other ace types
->>> in future. E.g. supporting other identities like 128-bit values
->>> to make it easier to map Windows SIDS.
->>
->> I'm working on additionally supporting unmapped user@domain and
->> group@domain identifier strings; we have to deal with that case in the
->> nfs client; that may be useful for Samba as well.
->
-> Can this be any string? So would
-> "S-1-5-21-4052121579-2079768045-1474639452-1001" also work?
+Hello,
 
-I don't see why not, we'd just need to prevent namespace clashes.
+This series try to enable migration of non-LRU pages, such as driver's page.
 
-> How would the current thread/process get a "token" that would match such
-> an ace?
+My ARM-based platform occured severe fragmentation problem after long-term
+(several days) test. Sometimes even order-3 page allocation failed. It has
+memory size 512MB ~ 1024MB. 30% ~ 40% memory is consumed for graphic processing
+and 20~30 memory is reserved for zram.
 
-Solaris seems to solve this by what they call ephemeral ids; that concept may
-become useful.
+I found that many pages of GPU driver and zram are non-movable pages. So I
+reported Minchan Kim, the maintainer of zram, and he made the internal 
+compaction logic of zram. And I made the internal compaction of GPU driver.
 
-> [...]
-> In general shouldn't kuid_t uid = current_fsuid(); be at the top of the
-> function just once?
+They reduced some fragmentation but they are not enough effective.
+They are activated by its own interface, /sys, so they are not cooperative
+with kernel compaction. If there is too much fragmentation and kernel starts
+to compaction, zram and GPU driver cannot work with the kernel compaction.
 
-It really is just a pointer dereference.
+The first this patch adds a generic isolate/migrate/putback callbacks for page
+address-space. The zram and GPU, and any other modules can register
+its own migration method. The kernel compaction can call the registered
+migration when it works. Therefore all page in the system can be migrated
+at once.
 
-Thanks,
-Andreas
+The 2nd the generic migration callbacks are applied into balloon driver.
+My gpu driver code is not open so I apply generic migration into balloon
+to show how it works. I've tested it with qemu enabled by kvm like followings:
+- turn on Ubuntu 14.04 with 1G memory on qemu.
+- do kernel building
+- after several seconds check more than 512MB is used with free command
+- command "balloon 512" in qemu monitor
+- check hundreds MB of pages are migrated
+
+Next kernel compaction code can call generic migration callbacks instead of
+balloon driver interface.
+Finally calling migration of balloon driver is removed.
+
+This patch-set is based on v4.1
+
+Gioh Kim (5):
+  mm/compaction: enable driver page migration
+  fs/anon_inode: get a new inode
+  mm/balloon: apply driver page migratable into balloon driver
+  mm/compaction: compaction calls generic migration
+  mm: remove direct calling of migration
+
+ drivers/virtio/virtio_balloon.c        |  4 ++++
+ fs/anon_inodes.c                       |  6 ++++++
+ fs/proc/page.c                         |  3 +++
+ include/linux/anon_inodes.h            |  1 +
+ include/linux/balloon_compaction.h     | 33 +++++++++++++++++++++------------
+ include/linux/compaction.h             | 11 +++++++++++
+ include/linux/fs.h                     |  2 ++
+ include/linux/page-flags.h             | 19 +++++++++++++++++++
+ include/linux/pagemap.h                | 27 +++++++++++++++++++++++++++
+ include/uapi/linux/kernel-page-flags.h |  2 +-
+ mm/balloon_compaction.c                | 25 ++++++++++++++++---------
+ mm/compaction.c                        |  9 +++++----
+ mm/migrate.c                           | 24 ++++++------------------
+ 13 files changed, 122 insertions(+), 44 deletions(-)
+
+-- 
+1.9.1
