@@ -1,138 +1,64 @@
 From: Gioh Kim <gioh.kim@lge.com>
-Subject: [RFCv2 4/5] mm/compaction: compaction calls generic migration
-Date: Fri, 26 Jun 2015 18:58:29 +0900
-Message-ID: <1435312710-15108-5-git-send-email-gioh.kim@lge.com>
+Subject: [RFCv2 2/5] fs/anon_inodes: get a new inode
+Date: Fri, 26 Jun 2015 18:58:27 +0900
+Message-ID: <1435312710-15108-3-git-send-email-gioh.kim@lge.com>
 References: <1435312710-15108-1-git-send-email-gioh.kim@lge.com>
-Return-path: <owner-linux-mm@kvack.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
 In-Reply-To: <1435312710-15108-1-git-send-email-gioh.kim@lge.com>
-Sender: owner-linux-mm@kvack.org
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
 To: jlayton@poochiereds.net, bfields@fieldses.org, vbabka@suse.cz, iamjoonsoo.kim@lge.com, viro@zeniv.linux.org.uk, mst@redhat.com, koct9i@gmail.com, minchan@kernel.org, aquini@redhat.com, linux-fsdevel@vger.kernel.org, virtualization@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org
 Cc: akpm@linux-foundation.org, Gioh Kim <gioh.kim@lge.com>
 List-Id: linux-api@vger.kernel.org
 
-Compaction calls interfaces of driver page migration
-instead of calling balloon migration directly.
+A inode is necessary for some drivers that needs special address_space
+and address_space_operation for page migration. Each drivers can create
+inode with the anon_inodefs.
 
 Signed-off-by: Gioh Kim <gioh.kim@lge.com>
 ---
- drivers/virtio/virtio_balloon.c |  1 +
- mm/compaction.c                 |  9 +++++----
- mm/migrate.c                    | 21 ++++++++++++---------
- 3 files changed, 18 insertions(+), 13 deletions(-)
+ fs/anon_inodes.c            | 6 ++++++
+ include/linux/anon_inodes.h | 1 +
+ 2 files changed, 7 insertions(+)
 
-diff --git a/drivers/virtio/virtio_balloon.c b/drivers/virtio/virtio_balloon.c
-index c49b553..5e5cbea 100644
---- a/drivers/virtio/virtio_balloon.c
-+++ b/drivers/virtio/virtio_balloon.c
-@@ -30,6 +30,7 @@
- #include <linux/balloon_compaction.h>
- #include <linux/oom.h>
- #include <linux/wait.h>
-+#include <linux/anon_inodes.h>
+diff --git a/fs/anon_inodes.c b/fs/anon_inodes.c
+index 80ef38c..1d51f96 100644
+--- a/fs/anon_inodes.c
++++ b/fs/anon_inodes.c
+@@ -162,6 +162,12 @@ err_put_unused_fd:
+ }
+ EXPORT_SYMBOL_GPL(anon_inode_getfd);
  
- /*
-  * Balloon device works in 4K page units.  So each page is pointed to by
-diff --git a/mm/compaction.c b/mm/compaction.c
-index 16e1b57..cc5ec81 100644
---- a/mm/compaction.c
-+++ b/mm/compaction.c
-@@ -14,7 +14,7 @@
- #include <linux/backing-dev.h>
- #include <linux/sysctl.h>
- #include <linux/sysfs.h>
--#include <linux/balloon_compaction.h>
-+#include <linux/compaction.h>
- #include <linux/page-isolation.h>
- #include <linux/kasan.h>
- #include "internal.h"
-@@ -714,12 +714,13 @@ isolate_migratepages_block(struct compact_control *cc, unsigned long low_pfn,
++struct inode *anon_inode_new(void)
++{
++	return alloc_anon_inode(anon_inode_mnt->mnt_sb);
++}
++EXPORT_SYMBOL_GPL(anon_inode_new);
++
+ static int __init anon_inode_init(void)
+ {
+ 	anon_inode_mnt = kern_mount(&anon_inode_fs_type);
+diff --git a/include/linux/anon_inodes.h b/include/linux/anon_inodes.h
+index 8013a45..ddbd67f 100644
+--- a/include/linux/anon_inodes.h
++++ b/include/linux/anon_inodes.h
+@@ -15,6 +15,7 @@ struct file *anon_inode_getfile(const char *name,
+ 				void *priv, int flags);
+ int anon_inode_getfd(const char *name, const struct file_operations *fops,
+ 		     void *priv, int flags);
++struct inode *anon_inode_new(void);
  
- 		/*
- 		 * Check may be lockless but that's ok as we recheck later.
--		 * It's possible to migrate LRU pages and balloon pages
-+		 * It's possible to migrate LRU pages and driver pages
- 		 * Skip any other type of page
- 		 */
- 		if (!PageLRU(page)) {
--			if (unlikely(balloon_page_movable(page))) {
--				if (balloon_page_isolate(page)) {
-+			if (unlikely(driver_page_migratable(page))) {
-+				if (page->mapping->a_ops->isolatepage(page,
-+								isolate_mode)) {
- 					/* Successfully isolated */
- 					goto isolate_success;
- 				}
-diff --git a/mm/migrate.c b/mm/migrate.c
-index 236ee25..a0bc1e4 100644
---- a/mm/migrate.c
-+++ b/mm/migrate.c
-@@ -35,7 +35,7 @@
- #include <linux/hugetlb.h>
- #include <linux/hugetlb_cgroup.h>
- #include <linux/gfp.h>
--#include <linux/balloon_compaction.h>
-+#include <linux/compaction.h>
- #include <linux/mmu_notifier.h>
+ #endif /* _LINUX_ANON_INODES_H */
  
- #include <asm/tlbflush.h>
-@@ -76,7 +76,7 @@ int migrate_prep_local(void)
-  * from where they were once taken off for compaction/migration.
-  *
-  * This function shall be used whenever the isolated pageset has been
-- * built from lru, balloon, hugetlbfs page. See isolate_migratepages_range()
-+ * built from lru, driver, hugetlbfs page. See isolate_migratepages_range()
-  * and isolate_huge_page().
-  */
- void putback_movable_pages(struct list_head *l)
-@@ -92,8 +92,8 @@ void putback_movable_pages(struct list_head *l)
- 		list_del(&page->lru);
- 		dec_zone_page_state(page, NR_ISOLATED_ANON +
- 				page_is_file_cache(page));
--		if (unlikely(isolated_balloon_page(page)))
--			balloon_page_putback(page);
-+		if (unlikely(driver_page_migratable(page)))
-+			page->mapping->a_ops->putbackpage(page);
- 		else
- 			putback_lru_page(page);
- 	}
-@@ -844,15 +844,18 @@ static int __unmap_and_move(struct page *page, struct page *newpage,
- 		}
- 	}
- 
--	if (unlikely(isolated_balloon_page(page))) {
-+	if (unlikely(driver_page_migratable(page))) {
- 		/*
--		 * A ballooned page does not need any special attention from
-+		 * A driver page does not need any special attention from
- 		 * physical to virtual reverse mapping procedures.
- 		 * Skip any attempt to unmap PTEs or to remap swap cache,
- 		 * in order to avoid burning cycles at rmap level, and perform
- 		 * the page migration right away (proteced by page lock).
- 		 */
--		rc = balloon_page_migrate(newpage, page, mode);
-+		rc = page->mapping->a_ops->migratepage(page->mapping,
-+						       newpage,
-+						       page,
-+						       mode);
- 		goto out_unlock;
- 	}
- 
-@@ -962,8 +965,8 @@ out:
- 	if (rc != MIGRATEPAGE_SUCCESS && put_new_page) {
- 		ClearPageSwapBacked(newpage);
- 		put_new_page(newpage, private);
--	} else if (unlikely(__is_movable_balloon_page(newpage))) {
--		/* drop our reference, page already in the balloon */
-+	} else if (unlikely(driver_page_migratable(newpage))) {
-+		/* drop our reference */
- 		put_page(newpage);
- 	} else
- 		putback_lru_page(newpage);
 -- 
 1.9.1
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
