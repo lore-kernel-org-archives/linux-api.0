@@ -1,106 +1,116 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [RFC PATCH 0/3] restartable sequences: fast user-space percpu
- critical sections
-Date: Sat, 27 Jun 2015 09:25:02 -0700
-Message-ID: <CALCETrVRE+6nM6DGa8ph84cX+CdRXh+qXyReU+jHgx9-+uCTyg@mail.gmail.com>
-References: <20150624222609.6116.86035.stgit@kitami.mtv.corp.google.com>
- <CALCETrXAtYDZBbpwZceFyhLOnqFmTDqTxhGfbrrVrY+34cxSFg@mail.gmail.com>
- <CAPM31R+GUtD_9S+m7U0DGpeqSCT1n98bvQ0NUOwMHX7-CoKigQ@mail.gmail.com>
- <842897619.3710.1435281350583.JavaMail.zimbra@efficios.com> <CAPM31RJwFJXjxLnwFMCBE1=wVXyU06ttrT-_fNr1rb=+ewxVrg@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAPM31RJwFJXjxLnwFMCBE1=wVXyU06ttrT-_fNr1rb=+ewxVrg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+From: Finn Thain <fthain@telegraphics.com.au>
+Subject: [RFC v3 23/24] m68k/mac: Fix PRAM accessors
+Date: Sun, 28 Jun 2015 11:42:22 +1000
+Message-ID: <20150628014205.292610325@telegraphics.com.au>
+References: <20150628014159.732792697@telegraphics.com.au>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=mac68k-fix-pram-accessors
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-m68k@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, Geert Uytterhoeven <geert@linux-m68k.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Let me try to summarize some of the approaches with their pros and cons:
+Signed-off-by: Finn Thain <fthain@telegraphics.com.au>
 
---- percpu segment ---
+---
 
-This is probably the simplest and might make sense regardless.
-cmpxchg can be used to do an atomic push onto a linked list.  I think
-that unlocked cmpxchg16b can be used to get an atomic pop.  (You'd
-have the list head pointer next to an auxiliary pointer to the second
-element in the list, perhaps.)
+Tested on a PowerBook 520 and Quadra 650.
 
-You can also use this for limited forms of speculative locking.
-Aborting cleanly if your lock is stolen might require the kernel's
-help, though (you're now on the wrong cpu, so you can't atomically
-poke the lock variable any more).
+Changes since v2:
+- Make use of the RTC_* macros from the previous patch and add a few more
+besides.
 
-The ABI is straightforward, and the only limitation on multiple users
-in the same process is that they need to coordinate their offsets into
-the percpu segment.
+---
+ arch/m68k/mac/misc.c     |   39 +++++++++++++++++++++++++++++++++------
+ include/uapi/linux/pmu.h |    2 ++
+ 2 files changed, 35 insertions(+), 6 deletions(-)
 
---- vdso-provided atomic ops ---
-
-This could be quite flexible.  The upside is that the ABI would be
-straightforward (call a function with clearly-specified behavior).
-The downside is that implementing it well might require percpu
-segments and a certain amount of coordination, and it requires a
-function call.
-
-One nice thing about doing it in the vdso is that we can change the
-implementation down the road.
-
---- kernel preemption hooks ---
-
-I'm defining a preemption hook as an action taken by the kernel when a
-user task is preempted during a critical section.
-
-As an upside, we get extremely efficient, almost arbitrary percpu
-operations.  We don't need to worry about memory ordering at all,
-because the whole sequence aborts if anything else might run on the
-same cpu.  Push and pop are both easy.
-
-One con is that actually defining where the critical section is might
-be nasty.  If there's a single IP range, then two libraries could
-fight over it.  We could have a variable somewhere that you write to
-arm the critical section, but that's a bit slower.
-
-Another con is that you can't single-step through this type of
-critical section.  It will be preempted every time.
-
---- kernel migration hooks ---
-
-I'm not sure either Paul or Mattieu discussed this, but another option
-would be to have some special handling if a task is migrated during a
-critical section or to allow a task to prevent migration entirely
-during a critical section.  From the user's point of view, this is
-weaker than preemption hooks: it's possible to start your critical
-section, be preempted, and have another thread enter its own critical
-section, then get rescheduled on the same cpu without aborting.  Users
-would have to use local atomics (like cmpxchg) to make it useful.
-
-As a major advantage, single-stepping still works.
-
-This shares the coordination downside with preemption hooks (users
-have to tell the kernel about their critical sections somehow).
-
-Push can certainly be implemented using cmpxchg.  The gs prefix isn't
-even needed.  Pop might be harder to implement directly without
-resorting to cmpxchg16b or similar.
-
---- Unnamed trick ---
-
-On entry to a critical section, try to take a per-cpu lock that stores
-the holder's tid.  This might require percpu segments.
-
-If you get the lock, then start doing your thing.  For example, you
-could pop by reading head->next and writing it back to head.
-
-If, however, you miss the lock, then you need to either wait or
-forcibly abort the lock holder.  You could do the latter by sending a
-signal or possibly using a new syscall that atomically aborts the lock
-holder and takes the lock.  You don't need to wait, though -- all you
-need to do is queue the signal and, if the lock holder is actually
-running, wait for signal delivery to start.
-
-
-Thoughts?  I personally like the other options better than preemption
-hooks.  I prefer solutions that don't interfere with debugging.
-
---Andy
+Index: linux/arch/m68k/mac/misc.c
+===================================================================
+--- linux.orig/arch/m68k/mac/misc.c	2015-06-28 11:41:54.000000000 +1000
++++ linux/arch/m68k/mac/misc.c	2015-06-28 11:41:55.000000000 +1000
+@@ -119,19 +119,22 @@ static void pmu_write_time(long data)
+ static unsigned char pmu_pram_read_byte(int offset)
+ {
+ 	struct adb_request req;
+-	if (pmu_request(&req, NULL, 3, PMU_READ_NVRAM,
+-			(offset >> 8) & 0xFF, offset & 0xFF) < 0)
++
++	if (pmu_request(&req, NULL, 3, PMU_READ_XPRAM,
++	                offset & 0xFF, 1) < 0)
+ 		return 0;
+ 	while (!req.complete)
+ 		pmu_poll();
+-	return req.reply[3];
++
++	return req.reply[1];
+ }
+ 
+ static void pmu_pram_write_byte(unsigned char data, int offset)
+ {
+ 	struct adb_request req;
+-	if (pmu_request(&req, NULL, 4, PMU_WRITE_NVRAM,
+-			(offset >> 8) & 0xFF, offset & 0xFF, data) < 0)
++
++	if (pmu_request(&req, NULL, 4, PMU_WRITE_XPRAM,
++	                offset & 0xFF, 1, data) < 0)
+ 		return;
+ 	while (!req.complete)
+ 		pmu_poll();
+@@ -257,6 +260,16 @@ static void via_rtc_send(__u8 data)
+ #define RTC_REG_WRITE_PROTECT   13
+ 
+ /*
++ * Inside Mac has no information about two-byte RTC commands but
++ * the MESS source code has the essentials.
++ */
++
++#define RTC_REG_XPRAM           14
++#define RTC_CMD_XPRAM_READ      (RTC_CMD_READ(RTC_REG_XPRAM) << 8)
++#define RTC_CMD_XPRAM_WRITE     (RTC_CMD_WRITE(RTC_REG_XPRAM) << 8)
++#define RTC_CMD_XPRAM_ARG(a)    (((a & 0xE0) << 3) | ((a & 0x1F) << 2))
++
++/*
+  * Execute a VIA PRAM/RTC command. For read commands
+  * data should point to a one-byte buffer for the
+  * resulting data. For write commands it should point
+@@ -303,11 +316,25 @@ static void via_rtc_command(int command,
+ 
+ static unsigned char via_pram_read_byte(int offset)
+ {
+-	return 0;
++	unsigned char temp;
++
++	via_rtc_command(RTC_CMD_XPRAM_READ | RTC_CMD_XPRAM_ARG(offset), &temp);
++
++	return temp;
+ }
+ 
+ static void via_pram_write_byte(unsigned char data, int offset)
+ {
++	unsigned char temp;
++
++	temp = 0x55;
++	via_rtc_command(RTC_CMD_WRITE(RTC_REG_WRITE_PROTECT), &temp);
++
++	temp = data;
++	via_rtc_command(RTC_CMD_XPRAM_WRITE | RTC_CMD_XPRAM_ARG(offset), &temp);
++
++	temp = 0x55 | RTC_FLG_WRITE_PROTECT;
++	via_rtc_command(RTC_CMD_WRITE(RTC_REG_WRITE_PROTECT), &temp);
+ }
+ 
+ /*
+Index: linux/include/uapi/linux/pmu.h
+===================================================================
+--- linux.orig/include/uapi/linux/pmu.h	2015-06-28 11:41:27.000000000 +1000
++++ linux/include/uapi/linux/pmu.h	2015-06-28 11:41:55.000000000 +1000
+@@ -18,7 +18,9 @@
+ #define PMU_POWER_CTRL		0x11	/* control power of some devices */
+ #define PMU_ADB_CMD		0x20	/* send ADB packet */
+ #define PMU_ADB_POLL_OFF	0x21	/* disable ADB auto-poll */
++#define PMU_WRITE_XPRAM		0x32	/* write eXtended Parameter RAM */
+ #define PMU_WRITE_NVRAM		0x33	/* write non-volatile RAM */
++#define PMU_READ_XPRAM		0x3a	/* read eXtended Parameter RAM */
+ #define PMU_READ_NVRAM		0x3b	/* read non-volatile RAM */
+ #define PMU_SET_RTC		0x30	/* set real-time clock */
+ #define PMU_READ_RTC		0x38	/* read real-time clock */
