@@ -1,7 +1,7 @@
 From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 Subject: Re: [PATCH]: MUX n_gsm debug print improvements
-Date: Mon, 29 Jun 2015 09:02:38 -0700
-Message-ID: <20150629160238.GA7455@kroah.com>
+Date: Mon, 29 Jun 2015 09:04:03 -0700
+Message-ID: <20150629160403.GB7455@kroah.com>
 References: <1435593298.25711.4.camel@tldlab125>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
@@ -32,14 +32,20 @@ On Mon, Jun 29, 2015 at 05:54:58PM +0200, Gwenn Bourr=E9e wrote:
 > Signed-off-by: Mustapha Ben Zoubeir <mustaphax.ben.zoubeir-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 > Signed-off-by: Nicolas LOUIS <nicolasx.louis-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 > Reviewed-by: Ravindran, Arun <arun.ravindran-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+>=20
+> ---
+>  drivers/tty/n_gsm.c | 49
+> ++++++++++++++++++++++++++++---------------------
+>  1 file changed, 28 insertions(+), 21 deletions(-)
 
-Any reason you didn't cc the linux-serial mailing list?  And linux-api
-only cares about external api changes, which I don't think you did here=
-=2E
+Also, your patch is line-wrapped and also base64 encoded, making it
+impossible to edit, or apply.  Please fix up your email client to use
+the proper configuration, as I'm sure Intel has documentation for how t=
+o
+do.
 
-Also, what's with the odd format, I would have to hand-edit this in
-order to apply it properly.  Please fix it up and send it without the
-"Dear..." lines, that's not needed at all, nor is the "From" lines.
+In fact, it has documentation for how to do all of this, why aren't you
+following it?
 
 thanks,
 
