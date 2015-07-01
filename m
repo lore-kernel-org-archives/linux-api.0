@@ -1,224 +1,138 @@
-From: =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>
-Subject: [PATCH v7 09/11] KVM: arm64: guest debug, HW assisted debug support
-Date: Wed,  1 Jul 2015 19:29:01 +0100
-Message-ID: <1435775343-20034-10-git-send-email-alex.bennee@linaro.org>
-References: <1435775343-20034-1-git-send-email-alex.bennee@linaro.org>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: [GIT PULL] User namespace related fixes for v4.2
+Date: Wed, 01 Jul 2015 15:41:37 -0500
+Message-ID: <878uazhapq.fsf@x220.int.ebiederm.org>
+References: <87381eyz26.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
-In-Reply-To: <1435775343-20034-1-git-send-email-alex.bennee@linaro.org>
-List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
-List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
-List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
-List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
-List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
-Errors-To: kvmarm-bounces@lists.cs.columbia.edu
-Sender: kvmarm-bounces@lists.cs.columbia.edu
-To: kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kvmarm@lists.cs.columbia.edu, christoffer.dall@linaro.org, marc.zyngier@arm.com, peter.maydell@linaro.org, agraf@suse.de, drjones@redhat.com, pbonzini@redhat.com, zhichao.huang@linaro.org
-Cc: Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Jonathan Corbet <corbet@lwn.net>, Gleb Natapov <gleb@kernel.org>, jan.kiszka@siemens.com, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Will Deacon <will.deacon@arm.com>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, dahi@linux.vnet.ibm.com, Peter Zijlstra <peterz@infradead.org>, r65777@freescale.com, bp@suse.de, Ingo Molnar <mingo@kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <87381eyz26.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org> (Eric W. Biederman's
+	message of "Fri, 26 Jun 2015 15:50:09 -0500")
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ivan Delalande <colona-nzgTgzXrdUbQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-VGhpcyBhZGRzIHN1cHBvcnQgZm9yIHVzZXJzcGFjZSB0byBjb250cm9sIHRoZSBIVyBkZWJ1ZyBy
-ZWdpc3RlcnMgZm9yCmd1ZXN0IGRlYnVnLiBJbiB0aGUgZGVidWcgaW9jdGwgd2UgY29weSBhbiBJ
-TVBERUYgcmVnaXN0ZXJzIGludG8gYSBuZXcKcmVnaXN0ZXIgc2V0IGNhbGxlZCBob3N0X2RlYnVn
-X3N0YXRlLgoKV2UgdXNlIHRoZSByZWNlbnRseSBpbnRyb2R1Y2VkIHZjcHUgcGFyYW1ldGVyIGRl
-YnVnX3B0ciB0byBzZWxlY3Qgd2hpY2gKcmVnaXN0ZXIgc2V0IGlzIGNvcGllZCBpbnRvIHRoZSBy
-ZWFsIHJlZ2lzdGVycyB3aGVuIHdvcmxkIHN3aXRjaCBvY2N1cnMuCgpJJ3ZlIG1hZGUgc29tZSBo
-ZWxwZXIgZnVuY3Rpb25zIGZyb20gaHdfYnJlYWtwb2ludC5jIG1vcmUgd2lkZWx5CmF2YWlsYWJs
-ZSBmb3IgcmUtdXNlLgoKQXMgd2l0aCBzaW5nbGUgc3RlcCB3ZSBuZWVkIHRvIHR3ZWFrIHRoZSBn
-dWVzdCByZWdpc3RlcnMgdG8gZW5hYmxlIHRoZQpleGNlcHRpb25zIHNvIHdlIG5lZWQgdG8gc2F2
-ZSBhbmQgcmVzdG9yZSB0aG9zZSBiaXRzLgoKVHdvIG5ldyBjYXBhYmlsaXRpZXMgaGF2ZSBiZWVu
-IGFkZGVkIHRvIHRoZSBLVk1fRVhURU5TSU9OIGlvY3RsIHRvIGFsbG93CnVzZXJzcGFjZSB0byBx
-dWVyeSB0aGUgbnVtYmVyIG9mIGhhcmR3YXJlIGJyZWFrIGFuZCB3YXRjaCBwb2ludHMKYXZhaWxh
-YmxlIG9uIHRoZSBob3N0IGhhcmR3YXJlLgoKU2lnbmVkLW9mZi1ieTogQWxleCBCZW5uw6llIDxh
-bGV4LmJlbm5lZUBsaW5hcm8ub3JnPgpSZXZpZXdlZC1ieTogQ2hyaXN0b2ZmZXIgRGFsbCA8Y2hy
-aXN0b2ZmZXIuZGFsbEBsaW5hcm8ub3JnPgoKLS0tCnYyCiAgIC0gc3dpdGNoZWQgdG8gQyBzZXR1
-cAogICAtIHJlcGxhY2UgaG9zdCBkZWJ1ZyByZWdpc3RlcnMgZGlyZWN0bHkgaW50byBjb250ZXh0
-CiAgIC0gbWlub3IgdHdlYWsgdG8gYXBpIGRvY3MKICAgLSBzZXR1cCByaWdodCByZWdpc3RlciBm
-b3IgZGVidWcKICAgLSBhZGQgRkFSX0VMMiB0byBkZWJ1ZyBleGl0IHN0cnVjdHVyZQogICAtIGFk
-ZCBzdXBwb3J0IGZvciB0cmFwcGluZyBkZWJ1ZyByZWdpc3RlciBhY2Nlc3MKdjMKICAgLSByZW1v
-dmUgc3RyYXkgdHJhY2Ugc3RhdGVtZW50CiAgIC0gZml4IHNwYWNpbmcgYXJvdW5kIG9wZXJhdG9y
-cyAodmFyaW91cykKICAgLSBjbGVhbi11cCB1c2FnZSBvZiB0cmFwX2RlYnVnCiAgIC0gaW50cm9k
-dWNlIGRlYnVnX3B0ciwgcmVwbGFjZSBleGNlc3NpdmUgbWVtY3B5IHN0dWZmCiAgIC0gZG9uJ3Qg
-dXNlIG1lbWNweSBpbiBpb2N0bCwganVzdCBhc3NpZ24KICAgLSB1cGRhdGUgY2FwIGlvY3RsIGRv
-Y3VtZW50YXRpb24KICAgLSByZXdvcmQgYSBudW1iZXIgY29tbWVudHMKICAgLSByZW5hbWUgaG9z
-dF9kZWJ1Z19zdGF0ZS0+ZXh0ZXJuYWxfZGVidWdfc3RhdGUKdjQKICAgLSB1c2UgdGhlIG5ldyB1
-MzIvdTY0IHNwbGl0IGRlYnVnX3B0ciBhcHByb2FjaAogICAtIGZpeCBzb21lIHdvcmRpbmcvY29t
-bWVudHMKdjUKICAgLSBkb24ndCBzZXQgTURTQ1JfRUwxLktERSAobm90IG5lZWRlZCkKdjYKICAg
-LSB1cGRhdGUgd29yZGluZyBnaXZlbiBjaGFuZ2UgaW4gY29tbWVudGFyeQogICAtIEtWTV9HVUVT
-VERCR19VU0VfSFdfQlAtPktWTV9HVUVTVERCR19VU0VfSFcKdjcKICAgLSBmaXggbWVyZ2UgY29u
-ZmxpY3RzIGZyb20gaW9jdGwgbW92ZSB0byBndWVzdC5jCiAgIC0gdXNlIGt2bV9hcm1fcmVzZXRf
-ZGVidWdfcHRyIHRvIHJlc2V0IHB0cgogICAtIGEgQlVHX09OKCkgdGVzdCBoYXMgYmVlbiBhZGRl
-ZCB0byB0cmFwIGZhaWx1cmUgdG8gcmVzZXQgZGVidWdfcHRyCiAgIC0gZGVidWdnaW5nLT5kZWJ1
-ZyBpbiBrdm1faG9zdC5oIGNvbW1lbnQKICAgLSBzL2RlZmluZWQvLyBzL3RvLy8gaW4gY29tbWl0
-IG1zZwogICAtIHJtIHJlZiB0byBpbnRyb2R1Y2luZyBkZWJ1Z19wdHIgaW4gY29tbWl0IG1zZwog
-ICAtIGFkZCByLWIgdGFnCi0tLQogRG9jdW1lbnRhdGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0ICAg
-ICAgfCAgNyArKysrKy0KIGFyY2gvYXJtNjQvaW5jbHVkZS9hc20vaHdfYnJlYWtwb2ludC5oIHwg
-IDQgKysrKwogYXJjaC9hcm02NC9pbmNsdWRlL2FzbS9rdm1faG9zdC5oICAgICAgfCAgNiArKysr
-LQogYXJjaC9hcm02NC9rZXJuZWwvaHdfYnJlYWtwb2ludC5jICAgICAgfCAgNCArKy0tCiBhcmNo
-L2FybTY0L2t2bS9kZWJ1Zy5jICAgICAgICAgICAgICAgICB8IDQwICsrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrLS0tLS0KIGFyY2gvYXJtNjQva3ZtL2d1ZXN0LmMgICAgICAgICAgICAgICAg
-IHwgIDcgKysrKysrCiBhcmNoL2FybTY0L2t2bS9oYW5kbGVfZXhpdC5jICAgICAgICAgICB8ICA2
-ICsrKysrCiBhcmNoL2FybTY0L2t2bS9yZXNldC5jICAgICAgICAgICAgICAgICB8IDEyICsrKysr
-KysrKysKIGFyY2gvYXJtNjQva3ZtL3N5c19yZWdzLmMgICAgICAgICAgICAgIHwgIDMgLS0tCiBp
-bmNsdWRlL3VhcGkvbGludXgva3ZtLmggICAgICAgICAgICAgICB8ICAyICsrCiAxMCBmaWxlcyBj
-aGFuZ2VkLCA3OSBpbnNlcnRpb25zKCspLCAxMiBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9E
-b2N1bWVudGF0aW9uL3ZpcnR1YWwva3ZtL2FwaS50eHQgYi9Eb2N1bWVudGF0aW9uL3ZpcnR1YWwv
-a3ZtL2FwaS50eHQKaW5kZXggMzNjODE0My4uYWRhNTdkZiAxMDA2NDQKLS0tIGEvRG9jdW1lbnRh
-dGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0CisrKyBiL0RvY3VtZW50YXRpb24vdmlydHVhbC9rdm0v
-YXBpLnR4dApAQCAtMjY2OCw3ICsyNjY4LDcgQEAgVGhlIHRvcCAxNiBiaXRzIG9mIHRoZSBjb250
-cm9sIGZpZWxkIGFyZSBhcmNoaXRlY3R1cmUgc3BlY2lmaWMgY29udHJvbAogZmxhZ3Mgd2hpY2gg
-Y2FuIGluY2x1ZGUgdGhlIGZvbGxvd2luZzoKIAogICAtIEtWTV9HVUVTVERCR19VU0VfU1dfQlA6
-ICAgICB1c2luZyBzb2Z0d2FyZSBicmVha3BvaW50cyBbeDg2LCBhcm02NF0KLSAgLSBLVk1fR1VF
-U1REQkdfVVNFX0hXX0JQOiAgICAgdXNpbmcgaGFyZHdhcmUgYnJlYWtwb2ludHMgW3g4NiwgczM5
-MF0KKyAgLSBLVk1fR1VFU1REQkdfVVNFX0hXX0JQOiAgICAgdXNpbmcgaGFyZHdhcmUgYnJlYWtw
-b2ludHMgW3g4NiwgczM5MCwgYXJtNjRdCiAgIC0gS1ZNX0dVRVNUREJHX0lOSkVDVF9EQjogICAg
-IGluamVjdCBEQiB0eXBlIGV4Y2VwdGlvbiBbeDg2XQogICAtIEtWTV9HVUVTVERCR19JTkpFQ1Rf
-QlA6ICAgICBpbmplY3QgQlAgdHlwZSBleGNlcHRpb24gW3g4Nl0KICAgLSBLVk1fR1VFU1REQkdf
-RVhJVF9QRU5ESU5HOiAgdHJpZ2dlciBhbiBpbW1lZGlhdGUgZ3Vlc3QgZXhpdCBbczM5MF0KQEAg
-LTI2ODMsNiArMjY4MywxMSBAQCB1cGRhdGVkIHRvIHRoZSBjb3JyZWN0IChzdXBwbGllZCkgdmFs
-dWVzLgogVGhlIHNlY29uZCBwYXJ0IG9mIHRoZSBzdHJ1Y3R1cmUgaXMgYXJjaGl0ZWN0dXJlIHNw
-ZWNpZmljIGFuZAogdHlwaWNhbGx5IGNvbnRhaW5zIGEgc2V0IG9mIGRlYnVnIHJlZ2lzdGVycy4K
-IAorRm9yIGFybTY0IHRoZSBudW1iZXIgb2YgZGVidWcgcmVnaXN0ZXJzIGlzIGltcGxlbWVudGF0
-aW9uIGRlZmluZWQgYW5kCitjYW4gYmUgZGV0ZXJtaW5lZCBieSBxdWVyeWluZyB0aGUgS1ZNX0NB
-UF9HVUVTVF9ERUJVR19IV19CUFMgYW5kCitLVk1fQ0FQX0dVRVNUX0RFQlVHX0hXX1dQUyBjYXBh
-YmlsaXRpZXMgd2hpY2ggcmV0dXJuIGEgcG9zaXRpdmUgbnVtYmVyCitpbmRpY2F0aW5nIHRoZSBu
-dW1iZXIgb2Ygc3VwcG9ydGVkIHJlZ2lzdGVycy4KKwogV2hlbiBkZWJ1ZyBldmVudHMgZXhpdCB0
-aGUgbWFpbiBydW4gbG9vcCB3aXRoIHRoZSByZWFzb24KIEtWTV9FWElUX0RFQlVHIHdpdGggdGhl
-IGt2bV9kZWJ1Z19leGl0X2FyY2ggcGFydCBvZiB0aGUga3ZtX3J1bgogc3RydWN0dXJlIGNvbnRh
-aW5pbmcgYXJjaGl0ZWN0dXJlIHNwZWNpZmljIGRlYnVnIGluZm9ybWF0aW9uLgpkaWZmIC0tZ2l0
-IGEvYXJjaC9hcm02NC9pbmNsdWRlL2FzbS9od19icmVha3BvaW50LmggYi9hcmNoL2FybTY0L2lu
-Y2x1ZGUvYXNtL2h3X2JyZWFrcG9pbnQuaAppbmRleCA1MmI0ODRiLi45ZGEyODI0IDEwMDY0NAot
-LS0gYS9hcmNoL2FybTY0L2luY2x1ZGUvYXNtL2h3X2JyZWFrcG9pbnQuaAorKysgYi9hcmNoL2Fy
-bTY0L2luY2x1ZGUvYXNtL2h3X2JyZWFrcG9pbnQuaApAQCAtMTMwLDYgKzEzMCwxMCBAQCBzdGF0
-aWMgaW5saW5lIHZvaWQgcHRyYWNlX2h3X2NvcHlfdGhyZWFkKHN0cnVjdCB0YXNrX3N0cnVjdCAq
-dGFzaykKIH0KICNlbmRpZgogCisvKiBEZXRlcm1pbmUgbnVtYmVyIG9mIEJSUC9XUlAgcmVnaXN0
-ZXJzIGF2YWlsYWJsZS4gKi8KK2V4dGVybiBpbnQgZ2V0X251bV9icnBzKHZvaWQpOworZXh0ZXJu
-IGludCBnZXRfbnVtX3dycHModm9pZCk7CisKIGV4dGVybiBzdHJ1Y3QgcG11IHBlcmZfb3BzX2Jw
-OwogCiAjZW5kaWYJLyogX19LRVJORUxfXyAqLwpkaWZmIC0tZ2l0IGEvYXJjaC9hcm02NC9pbmNs
-dWRlL2FzbS9rdm1faG9zdC5oIGIvYXJjaC9hcm02NC9pbmNsdWRlL2FzbS9rdm1faG9zdC5oCmlu
-ZGV4IDQ2MWQyODguLjZjNzQ1ZTAgMTAwNjQ0Ci0tLSBhL2FyY2gvYXJtNjQvaW5jbHVkZS9hc20v
-a3ZtX2hvc3QuaAorKysgYi9hcmNoL2FybTY0L2luY2x1ZGUvYXNtL2t2bV9ob3N0LmgKQEAgLTEx
-NiwxMyArMTE2LDE3IEBAIHN0cnVjdCBrdm1fdmNwdV9hcmNoIHsKIAkgKiBkZWJ1Z2dpbmcgdGhl
-IGd1ZXN0IGZyb20gdGhlIGhvc3QgYW5kIHRvIG1haW50YWluIHNlcGFyYXRlIGhvc3QgYW5kCiAJ
-ICogZ3Vlc3Qgc3RhdGUgZHVyaW5nIHdvcmxkIHN3aXRjaGVzLiB2Y3B1X2RlYnVnX3N0YXRlIGFy
-ZSB0aGUgZGVidWcKIAkgKiByZWdpc3RlcnMgb2YgdGhlIHZjcHUgYXMgdGhlIGd1ZXN0IHNlZXMg
-dGhlbS4gIGhvc3RfZGVidWdfc3RhdGUgYXJlCi0JICogdGhlIGhvc3QgcmVnaXN0ZXJzIHdoaWNo
-IGFyZSBzYXZlZCBhbmQgcmVzdG9yZWQgZHVyaW5nIHdvcmxkIHN3aXRjaGVzLgorCSAqIHRoZSBo
-b3N0IHJlZ2lzdGVycyB3aGljaCBhcmUgc2F2ZWQgYW5kIHJlc3RvcmVkIGR1cmluZworCSAqIHdv
-cmxkIHN3aXRjaGVzLiBleHRlcm5hbF9kZWJ1Z19zdGF0ZSBjb250YWlucyB0aGUgZGVidWcKKwkg
-KiB2YWx1ZXMgd2Ugd2FudCB0byBkZWJ1ZyB0aGUgZ3Vlc3QuIFRoaXMgaXMgc2V0IHZpYSB0aGUK
-KwkgKiBLVk1fU0VUX0dVRVNUX0RFQlVHIGlvY3RsLgogCSAqCiAJICogZGVidWdfcHRyIHBvaW50
-cyB0byB0aGUgc2V0IG9mIGRlYnVnIHJlZ2lzdGVycyB0aGF0IHNob3VsZCBiZSBsb2FkZWQKIAkg
-KiBvbnRvIHRoZSBoYXJkd2FyZSB3aGVuIHJ1bm5pbmcgdGhlIGd1ZXN0LgogCSAqLwogCXN0cnVj
-dCBrdm1fZ3Vlc3RfZGVidWdfYXJjaCAqZGVidWdfcHRyOwogCXN0cnVjdCBrdm1fZ3Vlc3RfZGVi
-dWdfYXJjaCB2Y3B1X2RlYnVnX3N0YXRlOworCXN0cnVjdCBrdm1fZ3Vlc3RfZGVidWdfYXJjaCBl
-eHRlcm5hbF9kZWJ1Z19zdGF0ZTsKIAogCS8qIFBvaW50ZXIgdG8gaG9zdCBDUFUgY29udGV4dCAq
-LwogCWt2bV9jcHVfY29udGV4dF90ICpob3N0X2NwdV9jb250ZXh0OwpkaWZmIC0tZ2l0IGEvYXJj
-aC9hcm02NC9rZXJuZWwvaHdfYnJlYWtwb2ludC5jIGIvYXJjaC9hcm02NC9rZXJuZWwvaHdfYnJl
-YWtwb2ludC5jCmluZGV4IGU3ZDkzNGQuLmFjMDdmMmEgMTAwNjQ0Ci0tLSBhL2FyY2gvYXJtNjQv
-a2VybmVsL2h3X2JyZWFrcG9pbnQuYworKysgYi9hcmNoL2FybTY0L2tlcm5lbC9od19icmVha3Bv
-aW50LmMKQEAgLTUwLDEzICs1MCwxMyBAQCBzdGF0aWMgaW50IGNvcmVfbnVtX2JycHM7CiBzdGF0
-aWMgaW50IGNvcmVfbnVtX3dycHM7CiAKIC8qIERldGVybWluZSBudW1iZXIgb2YgQlJQIHJlZ2lz
-dGVycyBhdmFpbGFibGUuICovCi1zdGF0aWMgaW50IGdldF9udW1fYnJwcyh2b2lkKQoraW50IGdl
-dF9udW1fYnJwcyh2b2lkKQogewogCXJldHVybiAoKHJlYWRfY3B1aWQoSURfQUE2NERGUjBfRUwx
-KSA+PiAxMikgJiAweGYpICsgMTsKIH0KIAogLyogRGV0ZXJtaW5lIG51bWJlciBvZiBXUlAgcmVn
-aXN0ZXJzIGF2YWlsYWJsZS4gKi8KLXN0YXRpYyBpbnQgZ2V0X251bV93cnBzKHZvaWQpCitpbnQg
-Z2V0X251bV93cnBzKHZvaWQpCiB7CiAJcmV0dXJuICgocmVhZF9jcHVpZChJRF9BQTY0REZSMF9F
-TDEpID4+IDIwKSAmIDB4ZikgKyAxOwogfQpkaWZmIC0tZ2l0IGEvYXJjaC9hcm02NC9rdm0vZGVi
-dWcuYyBiL2FyY2gvYXJtNjQva3ZtL2RlYnVnLmMKaW5kZXggZmZlZmI5Ny4uNDZiNzNkNyAxMDA2
-NDQKLS0tIGEvYXJjaC9hcm02NC9rdm0vZGVidWcuYworKysgYi9hcmNoL2FybTY0L2t2bS9kZWJ1
-Zy5jCkBAIC0xMDUsMTAgKzEwNSw2IEBAIHZvaWQga3ZtX2FybV9zZXR1cF9kZWJ1ZyhzdHJ1Y3Qg
-a3ZtX3ZjcHUgKnZjcHUpCiAJCQkJTURDUl9FTDJfVERSQSB8CiAJCQkJTURDUl9FTDJfVERPU0Ep
-OwogCi0JLyogVHJhcCBvbiBhY2Nlc3MgdG8gZGVidWcgcmVnaXN0ZXJzPyAqLwotCWlmICh0cmFw
-X2RlYnVnKQotCQl2Y3B1LT5hcmNoLm1kY3JfZWwyIHw9IE1EQ1JfRUwyX1REQTsKLQogCS8qIElz
-IEd1ZXN0IGRlYnVnZ2luZyBpbiBlZmZlY3Q/ICovCiAJaWYgKHZjcHUtPmd1ZXN0X2RlYnVnKSB7
-CiAJCS8qIFJvdXRlIGFsbCBzb2Z0d2FyZSBkZWJ1ZyBleGNlcHRpb25zIHRvIEVMMiAqLwpAQCAt
-MTQzLDExICsxMzksNDUgQEAgdm9pZCBrdm1fYXJtX3NldHVwX2RlYnVnKHN0cnVjdCBrdm1fdmNw
-dSAqdmNwdSkKIAkJfSBlbHNlIHsKIAkJCXZjcHVfc3lzX3JlZyh2Y3B1LCBNRFNDUl9FTDEpICY9
-IH5EQkdfTURTQ1JfU1M7CiAJCX0KKworCQkvKgorCQkgKiBIVyBCcmVha3BvaW50cyBhbmQgd2F0
-Y2hwb2ludHMKKwkJICoKKwkJICogV2Ugc2ltcGx5IHN3aXRjaCB0aGUgZGVidWdfcHRyIHRvIHBv
-aW50IHRvIG91ciBuZXcKKwkJICogZXh0ZXJuYWxfZGVidWdfc3RhdGUgd2hpY2ggaGFzIGJlZW4g
-cG9wdWxhdGVkIGJ5IHRoZQorCQkgKiBkZWJ1ZyBpb2N0bC4gVGhlIGV4aXN0aW5nIEtWTV9BUk02
-NF9ERUJVR19ESVJUWQorCQkgKiBtZWNoYW5pc20gZW5zdXJlcyB0aGUgcmVnaXN0ZXJzIGFyZSB1
-cGRhdGVkIG9uIHRoZQorCQkgKiB3b3JsZCBzd2l0Y2guCisJCSAqLworCQlpZiAodmNwdS0+Z3Vl
-c3RfZGVidWcgJiBLVk1fR1VFU1REQkdfVVNFX0hXKSB7CisJCQkvKiBFbmFibGUgYnJlYWtwb2lu
-dHMvd2F0Y2hwb2ludHMgKi8KKwkJCXZjcHVfc3lzX3JlZyh2Y3B1LCBNRFNDUl9FTDEpIHw9IERC
-R19NRFNDUl9NREU7CisKKwkJCXZjcHUtPmFyY2guZGVidWdfcHRyID0gJnZjcHUtPmFyY2guZXh0
-ZXJuYWxfZGVidWdfc3RhdGU7CisJCQl2Y3B1LT5hcmNoLmRlYnVnX2ZsYWdzIHw9IEtWTV9BUk02
-NF9ERUJVR19ESVJUWTsKKwkJCXRyYXBfZGVidWcgPSB0cnVlOworCQl9CiAJfQorCisJQlVHX09O
-KCF2Y3B1LT5ndWVzdF9kZWJ1ZyAmJgorCQl2Y3B1LT5hcmNoLmRlYnVnX3B0ciAhPSAmdmNwdS0+
-YXJjaC52Y3B1X2RlYnVnX3N0YXRlKTsKKworCS8qIFRyYXAgZGVidWcgcmVnaXN0ZXIgYWNjZXNz
-ICovCisJaWYgKHRyYXBfZGVidWcpCisJCXZjcHUtPmFyY2gubWRjcl9lbDIgfD0gTURDUl9FTDJf
-VERBOwogfQogCiB2b2lkIGt2bV9hcm1fY2xlYXJfZGVidWcoc3RydWN0IGt2bV92Y3B1ICp2Y3B1
-KQogewotCWlmICh2Y3B1LT5ndWVzdF9kZWJ1ZykKKwlpZiAodmNwdS0+Z3Vlc3RfZGVidWcpIHsK
-IAkJcmVzdG9yZV9ndWVzdF9kZWJ1Z19yZWdzKHZjcHUpOworCisJCS8qCisJCSAqIElmIHdlIHdl
-cmUgdXNpbmcgSFcgZGVidWcgd2UgbmVlZCB0byByZXN0b3JlIHRoZQorCQkgKiBkZWJ1Z19wdHIg
-dG8gdGhlIGd1ZXN0IGRlYnVnIHN0YXRlLgorCQkgKi8KKwkJaWYgKHZjcHUtPmd1ZXN0X2RlYnVn
-ICYgS1ZNX0dVRVNUREJHX1VTRV9IVykKKwkJCWt2bV9hcm1fcmVzZXRfZGVidWdfcHRyKHZjcHUp
-OworCisJfQogfQpkaWZmIC0tZ2l0IGEvYXJjaC9hcm02NC9rdm0vZ3Vlc3QuYyBiL2FyY2gvYXJt
-NjQva3ZtL2d1ZXN0LmMKaW5kZXggNDhkZTRmNC4uNmYxYjI0OSAxMDA2NDQKLS0tIGEvYXJjaC9h
-cm02NC9rdm0vZ3Vlc3QuYworKysgYi9hcmNoL2FybTY0L2t2bS9ndWVzdC5jCkBAIC0zMzQsNiAr
-MzM0LDcgQEAgaW50IGt2bV9hcmNoX3ZjcHVfaW9jdGxfdHJhbnNsYXRlKHN0cnVjdCBrdm1fdmNw
-dSAqdmNwdSwKIAogI2RlZmluZSBLVk1fR1VFU1REQkdfVkFMSURfTUFTSyAoS1ZNX0dVRVNUREJH
-X0VOQUJMRSB8ICAgIFwKIAkJCSAgICBLVk1fR1VFU1REQkdfVVNFX1NXX0JQIHwgXAorCQkJICAg
-IEtWTV9HVUVTVERCR19VU0VfSFcgfCBcCiAJCQkgICAgS1ZNX0dVRVNUREJHX1NJTkdMRVNURVAp
-CiAKIC8qKgpAQCAtMzU0LDYgKzM1NSwxMiBAQCBpbnQga3ZtX2FyY2hfdmNwdV9pb2N0bF9zZXRf
-Z3Vlc3RfZGVidWcoc3RydWN0IGt2bV92Y3B1ICp2Y3B1LAogCiAJaWYgKGRiZy0+Y29udHJvbCAm
-IEtWTV9HVUVTVERCR19FTkFCTEUpIHsKIAkJdmNwdS0+Z3Vlc3RfZGVidWcgPSBkYmctPmNvbnRy
-b2w7CisKKwkJLyogSGFyZHdhcmUgYXNzaXN0ZWQgQnJlYWsgYW5kIFdhdGNoIHBvaW50cyAqLwor
-CQlpZiAodmNwdS0+Z3Vlc3RfZGVidWcgJiBLVk1fR1VFU1REQkdfVVNFX0hXKSB7CisJCQl2Y3B1
-LT5hcmNoLmV4dGVybmFsX2RlYnVnX3N0YXRlID0gZGJnLT5hcmNoOworCQl9CisKIAl9IGVsc2Ug
-ewogCQkvKiBJZiBub3QgZW5hYmxlZCBjbGVhciBhbGwgZmxhZ3MgKi8KIAkJdmNwdS0+Z3Vlc3Rf
-ZGVidWcgPSAwOwpkaWZmIC0tZ2l0IGEvYXJjaC9hcm02NC9rdm0vaGFuZGxlX2V4aXQuYyBiL2Fy
-Y2gvYXJtNjQva3ZtL2hhbmRsZV9leGl0LmMKaW5kZXggZTlkZTEzZS4uNjhhMDc1OSAxMDA2NDQK
-LS0tIGEvYXJjaC9hcm02NC9rdm0vaGFuZGxlX2V4aXQuYworKysgYi9hcmNoL2FybTY0L2t2bS9o
-YW5kbGVfZXhpdC5jCkBAIC0xMDMsNyArMTAzLDExIEBAIHN0YXRpYyBpbnQga3ZtX2hhbmRsZV9n
-dWVzdF9kZWJ1ZyhzdHJ1Y3Qga3ZtX3ZjcHUgKnZjcHUsIHN0cnVjdCBrdm1fcnVuICpydW4pCiAJ
-cnVuLT5kZWJ1Zy5hcmNoLmhzciA9IGhzcjsKIAogCXN3aXRjaCAoaHNyID4+IEVTUl9FTHhfRUNf
-U0hJRlQpIHsKKwljYXNlIEVTUl9FTHhfRUNfV0FUQ0hQVF9MT1c6CisJCXJ1bi0+ZGVidWcuYXJj
-aC5mYXIgPSB2Y3B1LT5hcmNoLmZhdWx0LmZhcl9lbDI7CisJCS8qIGZhbGwgdGhyb3VnaCAqLwog
-CWNhc2UgRVNSX0VMeF9FQ19TT0ZUU1RQX0xPVzoKKwljYXNlIEVTUl9FTHhfRUNfQlJFQUtQVF9M
-T1c6CiAJY2FzZSBFU1JfRUx4X0VDX0JLUFQzMjoKIAljYXNlIEVTUl9FTHhfRUNfQlJLNjQ6CiAJ
-CWJyZWFrOwpAQCAtMTMyLDYgKzEzNiw4IEBAIHN0YXRpYyBleGl0X2hhbmRsZV9mbiBhcm1fZXhp
-dF9oYW5kbGVyc1tdID0gewogCVtFU1JfRUx4X0VDX0lBQlRfTE9XXQk9IGt2bV9oYW5kbGVfZ3Vl
-c3RfYWJvcnQsCiAJW0VTUl9FTHhfRUNfREFCVF9MT1ddCT0ga3ZtX2hhbmRsZV9ndWVzdF9hYm9y
-dCwKIAlbRVNSX0VMeF9FQ19TT0ZUU1RQX0xPV109IGt2bV9oYW5kbGVfZ3Vlc3RfZGVidWcsCisJ
-W0VTUl9FTHhfRUNfV0FUQ0hQVF9MT1ddPSBrdm1faGFuZGxlX2d1ZXN0X2RlYnVnLAorCVtFU1Jf
-RUx4X0VDX0JSRUFLUFRfTE9XXT0ga3ZtX2hhbmRsZV9ndWVzdF9kZWJ1ZywKIAlbRVNSX0VMeF9F
-Q19CS1BUMzJdCT0ga3ZtX2hhbmRsZV9ndWVzdF9kZWJ1ZywKIAlbRVNSX0VMeF9FQ19CUks2NF0J
-PSBrdm1faGFuZGxlX2d1ZXN0X2RlYnVnLAogfTsKZGlmZiAtLWdpdCBhL2FyY2gvYXJtNjQva3Zt
-L3Jlc2V0LmMgYi9hcmNoL2FybTY0L2t2bS9yZXNldC5jCmluZGV4IDBiNDMyNjUuLjIxZDVhNjIg
-MTAwNjQ0Ci0tLSBhL2FyY2gvYXJtNjQva3ZtL3Jlc2V0LmMKKysrIGIvYXJjaC9hcm02NC9rdm0v
-cmVzZXQuYwpAQCAtNTYsNiArNTYsMTIgQEAgc3RhdGljIGJvb2wgY3B1X2hhc18zMmJpdF9lbDEo
-dm9pZCkKIAlyZXR1cm4gISEocGZyMCAmIDB4MjApOwogfQogCisvKioKKyAqIGt2bV9hcmNoX2Rl
-dl9pb2N0bF9jaGVja19leHRlbnNpb24KKyAqCisgKiBXZSBjdXJyZW50bHkgYXNzdW1lIHRoYXQg
-dGhlIG51bWJlciBvZiBIVyByZWdpc3RlcnMgaXMgdW5pZm9ybQorICogYWNyb3NzIGFsbCBDUFVz
-IChzZWUgY3B1aW5mb19zYW5pdHlfY2hlY2spLgorICovCiBpbnQga3ZtX2FyY2hfZGV2X2lvY3Rs
-X2NoZWNrX2V4dGVuc2lvbihsb25nIGV4dCkKIHsKIAlpbnQgcjsKQEAgLTY0LDYgKzcwLDEyIEBA
-IGludCBrdm1fYXJjaF9kZXZfaW9jdGxfY2hlY2tfZXh0ZW5zaW9uKGxvbmcgZXh0KQogCWNhc2Ug
-S1ZNX0NBUF9BUk1fRUwxXzMyQklUOgogCQlyID0gY3B1X2hhc18zMmJpdF9lbDEoKTsKIAkJYnJl
-YWs7CisJY2FzZSBLVk1fQ0FQX0dVRVNUX0RFQlVHX0hXX0JQUzoKKwkJciA9IGdldF9udW1fYnJw
-cygpOworCQlicmVhazsKKwljYXNlIEtWTV9DQVBfR1VFU1RfREVCVUdfSFdfV1BTOgorCQlyICA9
-IGdldF9udW1fd3JwcygpOworCQlicmVhazsKIAlkZWZhdWx0OgogCQlyID0gMDsKIAl9CmRpZmYg
-LS1naXQgYS9hcmNoL2FybTY0L2t2bS9zeXNfcmVncy5jIGIvYXJjaC9hcm02NC9rdm0vc3lzX3Jl
-Z3MuYwppbmRleCAzMjY3Yjk2Li5mNzUzYTY3IDEwMDY0NAotLS0gYS9hcmNoL2FybTY0L2t2bS9z
-eXNfcmVncy5jCisrKyBiL2FyY2gvYXJtNjQva3ZtL3N5c19yZWdzLmMKQEAgLTM2Miw5ICszNjIs
-NiBAQCBzdGF0aWMgaW5saW5lIGJvb2wgdHJhcF93Y3Ioc3RydWN0IGt2bV92Y3B1ICp2Y3B1LAog
-CQkJdmNwdS0+YXJjaC52Y3B1X2RlYnVnX3N0YXRlLmRiZ193Y3JbcmQtPnJlZ10pOwogCX0KIAot
-CXRyYWNlX3RyYXBfcmVnKF9fZnVuY19fLCByZC0+cmVnLCBwLT5pc193cml0ZSwKLQkJdmNwdS0+
-YXJjaC52Y3B1X2RlYnVnX3N0YXRlLmRiZ193Y3JbcmQtPnJlZ10pOwotCiAJcmV0dXJuIHRydWU7
-CiB9CiAKZGlmZiAtLWdpdCBhL2luY2x1ZGUvdWFwaS9saW51eC9rdm0uaCBiL2luY2x1ZGUvdWFw
-aS9saW51eC9rdm0uaAppbmRleCA3MGFjNjQxLi5mMDIwZGQwIDEwMDY0NAotLS0gYS9pbmNsdWRl
-L3VhcGkvbGludXgva3ZtLmgKKysrIGIvaW5jbHVkZS91YXBpL2xpbnV4L2t2bS5oCkBAIC04MTcs
-NiArODE3LDggQEAgc3RydWN0IGt2bV9wcGNfc21tdV9pbmZvIHsKICNkZWZpbmUgS1ZNX0NBUF9T
-MzkwX0lOSkVDVF9JUlEgMTEzCiAjZGVmaW5lIEtWTV9DQVBfUzM5MF9JUlFfU1RBVEUgMTE0CiAj
-ZGVmaW5lIEtWTV9DQVBfUFBDX0hXUk5HIDExNQorI2RlZmluZSBLVk1fQ0FQX0dVRVNUX0RFQlVH
-X0hXX0JQUyAxMTYKKyNkZWZpbmUgS1ZNX0NBUF9HVUVTVF9ERUJVR19IV19XUFMgMTE3CiAKICNp
-ZmRlZiBLVk1fQ0FQX0lSUV9ST1VUSU5HCiAKLS0gCjIuNC41CgpfX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fXwprdm1hcm0gbWFpbGluZyBsaXN0Cmt2bWFybUBs
-aXN0cy5jcy5jb2x1bWJpYS5lZHUKaHR0cHM6Ly9saXN0cy5jcy5jb2x1bWJpYS5lZHUvbWFpbG1h
-bi9saXN0aW5mby9rdm1hcm0K
+Linus,
+
+Please pull the for-linus branch from the git tree:
+
+   git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-linus
+
+   HEAD: 93e3bce6287e1fb3e60d3324ed08555b5bbafa89 vfs: Remove incorrect debugging WARN in prepend_path
+
+Colds suck and I was tired and pushing a little too hard at the start of
+this merge window and I included a few things in my previous pull
+request that I felt a were not quite ready.  Those things have
+been dropped from my tree.  My apologies that was irresponsible.
+
+Long ago and far away when user namespaces where young it was realized
+that allowing fresh mounts of proc and sysfs with only user namespace
+permissions could violate the basic rule that only root gets to decide
+if proc or sysfs should be mounted at all.
+
+Some hacks were put in place to reduce the worst of the damage could be
+done, and the common sense rule was adopted that fresh mounts of proc
+and sysfs should allow no more than bind mounts of proc and sysfs.
+Unfortunately that rule has not been fully enforced.
+
+There are two kinds of gaps in that enforcement.  Only filesystems
+mounted on empty directories of proc and sysfs should be ignored but the
+test for empty directories was insufficient.  So in my tree directories
+on proc, sysctl and sysfs that will always be empty are created
+specially.  Every other technique is imperfect as an ordinary directory
+can have entries added even after a readdir returns and shows that the
+directory is empty.  Special creation of directories for mount points
+makes the code in the kernel a smidge clearer about it's purpose.  I
+asked container developers from the various container projects to help
+test this and no holes were found in the set of mount points on proc and
+sysfs that are created specially.
+
+This set of changes also starts enforcing the mount flags of fresh
+mounts of proc and sysfs are consistent with the existing mount of proc
+and sysfs.  I expected this to be the boring part of the work but
+unfortunately unprivileged userspace winds up mounting fresh copies of
+proc and sysfs with noexec and nosuid clear when root set those flags on
+the previous mount of proc and sysfs.  So for now only the atime,
+read-only and nodev attributes which userspace happens to keep
+consistent are enforced.  Dealing with the noexec and nosuid attributes
+remains for another time.
+
+This set of changes also addresses an issue with how open file
+descriptors from /proc/<pid>/ns/* are displayed.  Recently readlink of
+/proc/<pid>/fd has been triggering a WARN_ON that has not been
+meaningful since it was added (as all of the code in the kernel was
+converted) and is not now actively wrong.
+
+There is also a short list of issues that have not been fixed yet that I
+will mention briefly.
+
+It is possible to rename a directory from below to above a bind mount.
+At which point any directory pointers below the renamed directory can be
+walked up to the root directory of the filesystem.  With user namespaces
+enabled a bind mount of the bind mount can be created allowing the user
+to pick a directory whose children they can rename to outside of the
+bind mount.  This is challenging to fix and doubly so because all
+obvious solutions must touch code that is in the performance part of
+pathname resolution.
+
+As mentioned above there is also a question of how to ensure that
+developers by accident or with purpose do not introduce exectuable files
+on sysfs and proc and in doing so introduce security regressions in the
+current userspace that will not be immediately obvious and as such are
+likely to require breaking userspace in painful ways once they are
+recognized.
+
+Eric W. Biederman (11):
+      mnt: Refactor the logic for mounting sysfs and proc in a user namespace
+      mnt: Modify fs_fully_visible to deal with locked ro nodev and atime
+      vfs: Ignore unlocked mounts in fs_fully_visible
+      fs: Add helper functions for permanently empty directories.
+      sysctl: Allow creating permanently empty directories that serve as mountpoints.
+      proc: Allow creating permanently empty directories that serve as mount points
+      kernfs: Add support for always empty directories.
+      sysfs: Add support for permanently empty directories to serve as mount points.
+      sysfs: Create mountpoints with sysfs_create_mount_point
+      mnt: Update fs_fully_visible to test for permanently empty directories
+      vfs: Remove incorrect debugging WARN in prepend_path
+
+ arch/s390/hypfs/inode.c      | 12 ++----
+ drivers/firmware/efi/efi.c   |  6 +--
+ fs/configfs/mount.c          | 10 ++---
+ fs/dcache.c                  | 11 -----
+ fs/debugfs/inode.c           | 11 ++---
+ fs/fuse/inode.c              |  9 ++---
+ fs/kernfs/dir.c              | 38 +++++++++++++++++-
+ fs/kernfs/inode.c            |  2 +
+ fs/libfs.c                   | 96 ++++++++++++++++++++++++++++++++++++++++++++
+ fs/namespace.c               | 39 +++++++++++++++---
+ fs/proc/generic.c            | 23 +++++++++++
+ fs/proc/inode.c              |  4 ++
+ fs/proc/internal.h           |  6 +++
+ fs/proc/proc_sysctl.c        | 37 +++++++++++++++++
+ fs/proc/root.c               |  9 ++---
+ fs/pstore/inode.c            | 12 ++----
+ fs/sysfs/dir.c               | 34 ++++++++++++++++
+ fs/sysfs/mount.c             |  5 +--
+ fs/tracefs/inode.c           |  6 +--
+ include/linux/fs.h           |  4 +-
+ include/linux/kernfs.h       |  3 ++
+ include/linux/sysctl.h       |  3 ++
+ include/linux/sysfs.h        | 15 +++++++
+ kernel/cgroup.c              | 10 ++---
+ kernel/sysctl.c              |  8 +---
+ security/inode.c             | 10 ++---
+ security/selinux/selinuxfs.c | 11 +++--
+ security/smack/smackfs.c     |  8 ++--
+ 28 files changed, 341 insertions(+), 101 deletions(-)
+
+Eric
