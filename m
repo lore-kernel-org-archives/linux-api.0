@@ -1,36 +1,93 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v7 09/16] libnvdimm, pmem: move pmem to drivers/nvdimm/
-Date: Wed, 1 Jul 2015 10:24:53 -0700
-Message-ID: <CAPcyv4j-anyF1Tt3F5G7yoQpfik9SmhXEojUmSrPm+SMVN31Sw@mail.gmail.com>
-References: <20150617215027.11597.61414.stgit@dwillia2-desk3.amr.corp.intel.com>
-	<20150617231408.11597.28725.stgit@dwillia2-desk3.amr.corp.intel.com>
-	<CAMuHMdVMxoJFmzBZ_qAx5gDfZxsGUo2wJzawgMxS5TER==VUWQ@mail.gmail.com>
-	<CAPcyv4jEhoYsW_M3SPG1_YVQCXtnytg6Wi+BfXU=idFSp-2wYg@mail.gmail.com>
-	<CAMuHMdU8z7iUVaUaGs3f1kUcDus5Qg1+EQQ5uu7uCWrHO_kBaw@mail.gmail.com>
+From: =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>
+Subject: [PATCH v7 01/11] KVM: add comments for kvm_debug_exit_arch struct
+Date: Wed,  1 Jul 2015 19:28:53 +0100
+Message-ID: <1435775343-20034-2-git-send-email-alex.bennee@linaro.org>
+References: <1435775343-20034-1-git-send-email-alex.bennee@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAMuHMdU8z7iUVaUaGs3f1kUcDus5Qg1+EQQ5uu7uCWrHO_kBaw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
-Cc: "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>, "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, ACPI Devel Maling List <linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1435775343-20034-1-git-send-email-alex.bennee@linaro.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kvmarm@lists.cs.columbia.edu, christoffer.dall@linaro.org, marc.zyngier@arm.com, peter.maydell@linaro.org, agraf@suse.de, drjones@redhat.com, pbonzini@redhat.com, zhichao.huang@linaro.org
+Cc: jan.kiszka@siemens.com, dahi@linux.vnet.ibm.com, r65777@freescale.com, bp@suse.de, =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>, Gleb Natapov <gleb@kernel.org>, Jonathan Corbet <corbet@lwn.net>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 1, 2015 at 9:49 AM, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org> wrote:
-> On Wed, Jul 1, 2015 at 6:41 PM, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
->> On Wed, Jul 1, 2015 at 6:13 AM, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org> wrote:
->>> On Thu, Jun 18, 2015 at 1:14 AM, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
->>>> Prepare the pmem driver to consume PMEM namespaces emitted by regions of
->>>> an nvdimm_bus instance.  No functional change.
->>>
->>> As LIBNVDIMM depends on PHYS_ADDR_T_64BIT, the driver can no
->>> longer be enabled on pure 32-bit platforms. Is that intended?
->>
->> Yes it was intentional.  It still allows 32-bit platforms with 64-bit
->> resource_size_t to compile. Do you otherwise have a 32-bit use case
->> for pmem?  I'm of course open to working through the changes to add
->> wider architecture support.
->
-> Nope, just wondering, as the original didn't depend on PHYS_ADDR_T_64BIT.
+Bring into line with the comments for the other structures and their
+KVM_EXIT_* cases. Also update api.txt to reflect use in kvm_run
+documentation.
 
-Not explicitly, but it did rely on X86_PMEM_LEGACY.
+Signed-off-by: Alex Benn=C3=A9e <alex.bennee@linaro.org>
+Reviewed-by: David Hildenbrand <dahi@linux.vnet.ibm.com>
+Reviewed-by: Andrew Jones <drjones@redhat.com>
+Acked-by: Christoffer Dall <christoffer.dall@linaro.org>
+
+---
+
+v2
+  - add comments for other exit types
+v3
+  - s/commentary/comments/
+  - add rb tags
+  - update api.txt kvm_run to include KVM_EXIT_DEBUG desc
+v4
+  - sp fixes
+  - add a-b
+---
+ Documentation/virtual/kvm/api.txt | 4 +++-
+ include/uapi/linux/kvm.h          | 3 +++
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/Documentation/virtual/kvm/api.txt b/Documentation/virtual/=
+kvm/api.txt
+index 9fa2bf8..c34c32d 100644
+--- a/Documentation/virtual/kvm/api.txt
++++ b/Documentation/virtual/kvm/api.txt
+@@ -3070,11 +3070,13 @@ data_offset describes where the data is located=
+ (KVM_EXIT_IO_OUT) or
+ where kvm expects application code to place the data for the next
+ KVM_RUN invocation (KVM_EXIT_IO_IN).  Data format is a packed array.
+=20
++		/* KVM_EXIT_DEBUG */
+ 		struct {
+ 			struct kvm_debug_exit_arch arch;
+ 		} debug;
+=20
+-Unused.
++If the exit_reason is KVM_EXIT_DEBUG, then a vcpu is processing a debu=
+g event
++for which architecture specific information is returned.
+=20
+ 		/* KVM_EXIT_MMIO */
+ 		struct {
+diff --git a/include/uapi/linux/kvm.h b/include/uapi/linux/kvm.h
+index 4b60056..70ac641 100644
+--- a/include/uapi/linux/kvm.h
++++ b/include/uapi/linux/kvm.h
+@@ -237,6 +237,7 @@ struct kvm_run {
+ 			__u32 count;
+ 			__u64 data_offset; /* relative to kvm_run start */
+ 		} io;
++		/* KVM_EXIT_DEBUG */
+ 		struct {
+ 			struct kvm_debug_exit_arch arch;
+ 		} debug;
+@@ -285,6 +286,7 @@ struct kvm_run {
+ 			__u32 data;
+ 			__u8  is_write;
+ 		} dcr;
++		/* KVM_EXIT_INTERNAL_ERROR */
+ 		struct {
+ 			__u32 suberror;
+ 			/* Available with KVM_CAP_INTERNAL_ERROR_DATA: */
+@@ -295,6 +297,7 @@ struct kvm_run {
+ 		struct {
+ 			__u64 gprs[32];
+ 		} osi;
++		/* KVM_EXIT_PAPR_HCALL */
+ 		struct {
+ 			__u64 nr;
+ 			__u64 ret;
+--=20
+2.4.5
+
