@@ -1,24 +1,43 @@
-From: "Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org> (greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org)" <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 3/3] hpsa: Convert DEVICE_ATTR macro usage to
- DEVICE_ATTR_RO|WR|WO
-Date: Tue, 30 Jun 2015 22:45:11 -0700
-Message-ID: <20150701054511.GB23370@kroah.com>
-References: <DDB9C85B850785449757F9914A034FCB4442E19F@G9W0766.americas.hpqcorp.net>
+From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] pci_regs: reintroduce PCI_MSIX_FLAGS_BIRMASK
+Date: Wed, 1 Jul 2015 12:14:10 +0200
+Message-ID: <1435745608-21217-1-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <DDB9C85B850785449757F9914A034FCB4442E19F-4I1V4pQFGigSZAcGdq5asR6epYMZPwEe5NbjCUgZEJk@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Seymour, Shane M" <shane.seymour-VXdhtT5mjnY@public.gmane.org>
-Cc: "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "James Bottomley (JBottomley-O3H1v1f1dlM@public.gmane.org)" <JBottomley-O3H1v1f1dlM@public.gmane.org>, ISS StorageDev <iss_storagedev-VXdhtT5mjnY@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Rajat Jain <rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Chen, Gong" <gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Guenter Roeck <groeck-3r7Miqu9kMnR7s880joybQ@public.gmane.org>, =?us-ascii?B?PT9VVEYtOD9xP1JhZmE9QzU9ODI9MjBNaT1DNT04MmVja2k/PQ==?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 01, 2015 at 03:47:10AM +0000, Seymour, Shane M wrote:
-> 
-> Convert DEVICE_ATTR macro usage to DEVICE_ATTR_RO|WR|WO
-> Changes forced some function names to change.
-> 
-> Signed-off-by: Shane Seymour <shane.seymour-VXdhtT5mjnY@public.gmane.org>
+This partially reverts commit 09a2c73ddfc7f173237fc7209a65b34dd5bcb5ed.
+    PCI: Remove unused PCI_MSIX_FLAGS_BIRMASK definition
 
-Acked-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+That commit dropped a symbol from an exported header claiming "no one
+uses it". This isn't how Linux normally approaches userspace API though,
+and in fact QEMU build fails if trying to use updated headers from linux
+3.12 and up.
+
+Sure, userspace can be fixed to use the new symbol, but the cost
+of keeping the old one around is fairly low, too.
+
+Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+---
+ include/uapi/linux/pci_regs.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/include/uapi/linux/pci_regs.h b/include/uapi/linux/pci_regs.h
+index efe3443..66644ac 100644
+--- a/include/uapi/linux/pci_regs.h
++++ b/include/uapi/linux/pci_regs.h
+@@ -319,6 +319,7 @@
+ #define PCI_MSIX_PBA		8	/* Pending Bit Array offset */
+ #define  PCI_MSIX_PBA_BIR	0x00000007 /* BAR index */
+ #define  PCI_MSIX_PBA_OFFSET	0xfffffff8 /* Offset into specified BAR */
++#define  PCI_MSIX_FLAGS_BIRMASK	PCI_MSIX_PBA_BIR /* deprecated */
+ #define PCI_CAP_MSIX_SIZEOF	12	/* size of MSIX registers */
+ 
+ /* MSI-X Table entry format */
+-- 
+MST
