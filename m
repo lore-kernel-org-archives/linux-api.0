@@ -1,7 +1,7 @@
 From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: [PATCH 07/10] mm/hugetlb: alloc_huge_page handle areas hole punched by fallocate
-Date: Thu,  2 Jul 2015 08:38:43 -0700
-Message-ID: <1435851526-4200-8-git-send-email-mike.kravetz@oracle.com>
+Subject: [PATCH 10/10] mm: madvise allow remove operation for hugetlbfs
+Date: Thu,  2 Jul 2015 08:38:46 -0700
+Message-ID: <1435851526-4200-11-git-send-email-mike.kravetz@oracle.com>
 References: <1435851526-4200-1-git-send-email-mike.kravetz@oracle.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1435851526-4200-1-git-send-email-mike.kravetz@oracle.com>
@@ -10,111 +10,28 @@ To: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 Cc: Dave Hansen <dave.hansen@linux.intel.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Davidlohr Bueso <dave@stgolabs.net>, Aneesh Kumar <aneesh.kumar@linux.vnet.ibm.com>, Hillf Danton <hillf.zj@alibaba-inc.com>, Christoph Hellwig <hch@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-Areas hole punched by fallocate will not have entries in the
-region/reserve map.  However, shared mappings with min_size subpool
-reservations may still have reserved pages.  alloc_huge_page needs
-to handle this special case and do the proper accounting.
+Now that we have hole punching support for hugetlbfs, we can
+also support the MADV_REMOVE interface to it.
 
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
 Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
 ---
- mm/hugetlb.c | 54 +++++++++++++++++++++++++++++++++++++++---------------
- 1 file changed, 39 insertions(+), 15 deletions(-)
+ mm/madvise.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/mm/hugetlb.c b/mm/hugetlb.c
-index 5923c21..90d8250 100644
---- a/mm/hugetlb.c
-+++ b/mm/hugetlb.c
-@@ -1731,34 +1731,58 @@ static struct page *alloc_huge_page(struct vm_area_struct *vma,
- 	struct hugepage_subpool *spool = subpool_vma(vma);
- 	struct hstate *h = hstate_vma(vma);
- 	struct page *page;
--	long chg, commit;
-+	long map_chg, map_commit;
-+	long gbl_chg;
- 	int ret, idx;
- 	struct hugetlb_cgroup *h_cg;
+diff --git a/mm/madvise.c b/mm/madvise.c
+index d215ea9..3c1b7f0 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -467,7 +467,7 @@ static long madvise_remove(struct vm_area_struct *vma,
  
- 	idx = hstate_index(h);
- 	/*
--	 * Processes that did not create the mapping will have no
--	 * reserves and will not have accounted against subpool
--	 * limit. Check that the subpool limit can be made before
--	 * satisfying the allocation MAP_NORESERVE mappings may also
--	 * need pages and subpool limit allocated allocated if no reserve
--	 * mapping overlaps.
-+	 * Examine the region/reserve map to determine if the process
-+	 * has a reservation for the page to be allocated.  A return
-+	 * code of zero indicates a reservation exists (no change).
- 	 */
--	chg = vma_needs_reservation(h, vma, addr);
--	if (chg < 0)
-+	map_chg = gbl_chg = vma_needs_reservation(h, vma, addr);
-+	if (map_chg < 0)
- 		return ERR_PTR(-ENOMEM);
--	if (chg || avoid_reserve)
--		if (hugepage_subpool_get_pages(spool, 1) < 0) {
-+
-+	/*
-+	 * Processes that did not create the mapping will have no
-+	 * reserves as indicated by the region/reserve map. Check
-+	 * that the allocation will not exceed the subpool limit.
-+	 * Allocations for MAP_NORESERVE mappings also need to be
-+	 * checked against any subpool limit.
-+	 */
-+	if (map_chg || avoid_reserve) {
-+		gbl_chg = hugepage_subpool_get_pages(spool, 1);
-+		if (gbl_chg < 0) {
- 			vma_abort_reservation(h, vma, addr);
- 			return ERR_PTR(-ENOSPC);
- 		}
+ 	*prev = NULL;	/* tell sys_madvise we drop mmap_sem */
  
-+		/*
-+		 * Even though there was no reservation in the region/reserve
-+		 * map, there could be reservations associated with the
-+		 * subpool that can be used.  This would be indicated if the
-+		 * return value of hugepage_subpool_get_pages() is zero.
-+		 * However, if avoid_reserve is specified we still avoid even
-+		 * the subpool reservations.
-+		 */
-+		if (avoid_reserve)
-+			gbl_chg = 1;
-+	}
-+
- 	ret = hugetlb_cgroup_charge_cgroup(idx, pages_per_huge_page(h), &h_cg);
- 	if (ret)
- 		goto out_subpool_put;
+-	if (vma->vm_flags & (VM_LOCKED | VM_HUGETLB))
++	if (vma->vm_flags & VM_LOCKED)
+ 		return -EINVAL;
  
- 	spin_lock(&hugetlb_lock);
--	page = dequeue_huge_page_vma(h, vma, addr, avoid_reserve, chg);
-+	/*
-+	 * glb_chg is passed to indicate whether or not a page must be taken
-+	 * from the global free pool (global change).  gbl_chg == 0 indicates
-+	 * a reservation exists for the allocation.
-+	 */
-+	page = dequeue_huge_page_vma(h, vma, addr, avoid_reserve, gbl_chg);
- 	if (!page) {
- 		spin_unlock(&hugetlb_lock);
- 		page = alloc_buddy_huge_page(h, NUMA_NO_NODE);
-@@ -1774,8 +1798,8 @@ static struct page *alloc_huge_page(struct vm_area_struct *vma,
- 
- 	set_page_private(page, (unsigned long)spool);
- 
--	commit = vma_commit_reservation(h, vma, addr);
--	if (unlikely(chg > commit)) {
-+	map_commit = vma_commit_reservation(h, vma, addr);
-+	if (unlikely(map_chg > map_commit)) {
- 		/*
- 		 * The page was added to the reservation map between
- 		 * vma_needs_reservation and vma_commit_reservation.
-@@ -1795,7 +1819,7 @@ static struct page *alloc_huge_page(struct vm_area_struct *vma,
- out_uncharge_cgroup:
- 	hugetlb_cgroup_uncharge_cgroup(idx, pages_per_huge_page(h), h_cg);
- out_subpool_put:
--	if (chg || avoid_reserve)
-+	if (map_chg || avoid_reserve)
- 		hugepage_subpool_put_pages(spool, 1);
- 	vma_abort_reservation(h, vma, addr);
- 	return ERR_PTR(-ENOSPC);
+ 	f = vma->vm_file;
 -- 
 2.1.0
 
