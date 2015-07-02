@@ -1,81 +1,85 @@
 From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: [PATCH 00/10] hugetlbfs: add fallocate support
-Date: Thu,  2 Jul 2015 08:38:36 -0700
-Message-ID: <1435851526-4200-1-git-send-email-mike.kravetz@oracle.com>
+Subject: [PATCH 04/10] hugetlbfs: hugetlb_vmtruncate_list() needs to take a range to delete
+Date: Thu,  2 Jul 2015 08:38:40 -0700
+Message-ID: <1435851526-4200-5-git-send-email-mike.kravetz@oracle.com>
+References: <1435851526-4200-1-git-send-email-mike.kravetz@oracle.com>
 Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1435851526-4200-1-git-send-email-mike.kravetz@oracle.com>
 Sender: owner-linux-mm@kvack.org
 To: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 Cc: Dave Hansen <dave.hansen@linux.intel.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Davidlohr Bueso <dave@stgolabs.net>, Aneesh Kumar <aneesh.kumar@linux.vnet.ibm.com>, Hillf Danton <hillf.zj@alibaba-inc.com>, Christoph Hellwig <hch@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch set has gone through several revisions as an RFC which
-is documented in the log below.  The major change in this version
-is the addition of code to handle the region_chg/region_add calling
-sequence with the addition of fallocate hole punch.  This is the
-first patch in the series.  As suggested during the RFC process,
-tests have been proposed to libhugetlbfs as described at:
-http://librelist.com/browser//libhugetlbfs/2015/6/25/patch-tests-add-tests-for-fallocate-system-call/
-fallocate(2) man page modifications are also necessary to specify
-that fallocate for hugetlbfs only operates on whole pages.  This
-change will be submitted once the code has stabalized and been
-proposed for merging.
+fallocate hole punch will want to unmap a specific range of pages.
+Modify the existing hugetlb_vmtruncate_list() routine to take a
+start/end range.  If end is 0, this indicates all pages after start
+should be unmapped.  This is the same as the existing truncate
+functionality.  Modify existing callers to add 0 as end of range.
 
-hugetlbfs is used today by applications that want a high degree of
-control over huge page usage.  Often, large hugetlbfs files are used
-to map a large number huge pages into the application processes.
-The applications know when page ranges within these large files will
-no longer be used, and ideally would like to release them back to
-the subpool or global pools for other uses.  The fallocate() system
-call provides an interface for preallocation and hole punching within
-files.  This patch set adds fallocate functionality to hugetlbfs.
+Since the routine will be used in hole punch as well as truncate
+operations, it is more appropriately renamed to hugetlb_vmdelete_list().
 
-v1:
-  Add a cache of region descriptors to the resv_map for use by
-    region_add in case hole punch deletes entries necessary for
-    a successful operation.
-RFC v4:
-  Removed alloc_huge_page/hugetlb_reserve_pages race patches as already
-    in mmotm
-  Moved hugetlb_fix_reserve_counts in series as suggested by Naoya Horiguchi
-  Inline'ed hugetlb_fault_mutex routines as suggested by Davidlohr Bueso and
-    existing code changed to use new interfaces as suggested by Naoya
-  fallocate preallocation code cleaned up and made simpler
-  Modified alloc_huge_page to handle special case where allocation is
-    for a hole punched area with spool reserves
-RFC v3:
-  Folded in patch for alloc_huge_page/hugetlb_reserve_pages race
-    in current code
-  fallocate allocation and hole punch is synchronized with page
-    faults via existing mutex table
-   hole punch uses existing hugetlb_vmtruncate_list instead of more
-    generic unmap_mapping_range for unmapping
-   Error handling for the case when region_del() fauils
-RFC v2:
-  Addressed alignment and error handling issues noticed by Hillf Danton
-  New region_del() routine for region tracking/resv_map of ranges
-  Fixed several issues found during more extensive testing
-  Error handling in region_del() when kmalloc() fails stills needs
-    to be addressed
-  madvise remove support remains
+Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
+---
+ fs/hugetlbfs/inode.c | 25 ++++++++++++++++++-------
+ 1 file changed, 18 insertions(+), 7 deletions(-)
 
-Mike Kravetz (10):
-  mm/hugetlb: add cache of descriptors to resv_map for region_add
-  mm/hugetlb: add region_del() to delete a specific range of entries
-  mm/hugetlb: expose hugetlb fault mutex for use by fallocate
-  hugetlbfs: hugetlb_vmtruncate_list() needs to take a range to delete
-  hugetlbfs: truncate_hugepages() takes a range of pages
-  mm/hugetlb: vma_has_reserves() needs to handle fallocate hole punch
-  mm/hugetlb: alloc_huge_page handle areas hole punched by fallocate
-  hugetlbfs: New huge_add_to_page_cache helper routine
-  hugetlbfs: add hugetlbfs_fallocate()
-  mm: madvise allow remove operation for hugetlbfs
-
- fs/hugetlbfs/inode.c    | 281 +++++++++++++++++++++++++++++---
- include/linux/hugetlb.h |  17 +-
- mm/hugetlb.c            | 422 ++++++++++++++++++++++++++++++++++++++----------
- mm/madvise.c            |   2 +-
- 4 files changed, 618 insertions(+), 104 deletions(-)
-
+diff --git a/fs/hugetlbfs/inode.c b/fs/hugetlbfs/inode.c
+index e5a93d8..e9d4c8d 100644
+--- a/fs/hugetlbfs/inode.c
++++ b/fs/hugetlbfs/inode.c
+@@ -374,11 +374,15 @@ static void hugetlbfs_evict_inode(struct inode *inode)
+ }
+ 
+ static inline void
+-hugetlb_vmtruncate_list(struct rb_root *root, pgoff_t pgoff)
++hugetlb_vmdelete_list(struct rb_root *root, pgoff_t start, pgoff_t end)
+ {
+ 	struct vm_area_struct *vma;
+ 
+-	vma_interval_tree_foreach(vma, root, pgoff, ULONG_MAX) {
++	/*
++	 * end == 0 indicates that the entire range after
++	 * start should be unmapped.
++	 */
++	vma_interval_tree_foreach(vma, root, start, end ? end : ULONG_MAX) {
+ 		unsigned long v_offset;
+ 
+ 		/*
+@@ -387,13 +391,20 @@ hugetlb_vmtruncate_list(struct rb_root *root, pgoff_t pgoff)
+ 		 * which overlap the truncated area starting at pgoff,
+ 		 * and no vma on a 32-bit arch can span beyond the 4GB.
+ 		 */
+-		if (vma->vm_pgoff < pgoff)
+-			v_offset = (pgoff - vma->vm_pgoff) << PAGE_SHIFT;
++		if (vma->vm_pgoff < start)
++			v_offset = (start - vma->vm_pgoff) << PAGE_SHIFT;
+ 		else
+ 			v_offset = 0;
+ 
+-		unmap_hugepage_range(vma, vma->vm_start + v_offset,
+-				     vma->vm_end, NULL);
++		if (end) {
++			end = ((end - start) << PAGE_SHIFT) +
++			       vma->vm_start + v_offset;
++			if (end > vma->vm_end)
++				end = vma->vm_end;
++		} else
++			end = vma->vm_end;
++
++		unmap_hugepage_range(vma, vma->vm_start + v_offset, end, NULL);
+ 	}
+ }
+ 
+@@ -409,7 +420,7 @@ static int hugetlb_vmtruncate(struct inode *inode, loff_t offset)
+ 	i_size_write(inode, offset);
+ 	i_mmap_lock_write(mapping);
+ 	if (!RB_EMPTY_ROOT(&mapping->i_mmap))
+-		hugetlb_vmtruncate_list(&mapping->i_mmap, pgoff);
++		hugetlb_vmdelete_list(&mapping->i_mmap, pgoff, 0);
+ 	i_mmap_unlock_write(mapping);
+ 	truncate_hugepages(inode, offset);
+ 	return 0;
 -- 
 2.1.0
 
