@@ -1,7 +1,7 @@
 From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Subject: [PATCH v8 0/3] Enable PPI sysfs interface for TPM 2.0
-Date: Fri,  3 Jul 2015 17:25:54 +0300
-Message-ID: <1435933560-1325-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Date: Fri,  3 Jul 2015 17:27:17 +0300
+Message-ID: <1435933643-4516-1-git-send-email-jarkko.sakkinen@linux.intel.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: peterhuewe-Mmb7MZpHnFY@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
