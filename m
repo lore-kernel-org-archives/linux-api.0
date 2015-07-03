@@ -1,94 +1,72 @@
-From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v8 3/3] tpm: update PPI documentation to address the location change.
-Date: Fri,  3 Jul 2015 17:27:20 +0300
-Message-ID: <1435933643-4516-4-git-send-email-jarkko.sakkinen@linux.intel.com>
-References: <1435933643-4516-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+From: Marcin Niesluchowski <m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [RFC 0/8] Additional kmsg devices
+Date: Fri, 03 Jul 2015 17:09:03 +0200
+Message-ID: <5596A58F.7090208@samsung.com>
+References: <1435920595-30879-1-git-send-email-m.niesluchow@samsung.com>
+ <CAFLxGvxvaePEyCpLrB1cjNn4bvnCwt-_HE3zcT-6diMYNOraBw@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1435933643-4516-1-git-send-email-jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+In-reply-to: <CAFLxGvxvaePEyCpLrB1cjNn4bvnCwt-_HE3zcT-6diMYNOraBw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: peterhuewe-Mmb7MZpHnFY@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kay Sievers <kay-tD+1rO4QERM@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Updated Documentation/ABI/testing/sysfs-driver-ppi in order to explain
-where PPI attributes are located and how backwards compatiblity is
-addressed.
+On 07/03/2015 01:21 PM, Richard Weinberger wrote:
+> On Fri, Jul 3, 2015 at 12:49 PM, Marcin Niesluchowski
+> <m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org> wrote:
+>> Dear All,
+>>
+>> This series of patches extends kmsg interface with ability to dynamicaly
+>> create (and destroy) kmsg-like devices which can be used by user space
+>> for logging. Logging to kernel has number of benefits, including but not
+>> limited to - always available, requiring no userspace, automatically
+>> rotating and low overhead.
+>>
+>> User-space logging to kernel cyclic buffers was already successfully used
+>> in android logger concept but it had certain flaws that this commits try
+>> to address:
+>> * drops hardcoded number of devices and static paths in favor for dynamic
+>>    configuration by ioctl interface in userspace
+>> * extends existing driver instead of creating completely new one
+> So, now we start moving syslogd into kernel land because userspace is
+> too broken to provide
+> decent logging?
+>
+> I can understand the systemd is using kmsg if no other logging service
+> is available
+> but I really don't think we should encourage other programs to do so.
+>
+> Why can't you just make sure that your target has a working
+> syslogd/rsyslogd/journald/whatever?
+> All can be done perfectly fine in userspace.
+* Message credibility: Lets imagine simple service which collects logs 
+via unix sockets. There is no reliable way of identifying logging 
+process. getsockopt() with SO_PEERCRED option would give pid form cred 
+structure, but according to manual it may not be of actual logging process:
+   "The returned credentials are those that were in effect at the time 
+of the call to connect(2) or socketpair(2)."
+       - select(7)
 
-Signed-off-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
----
- Documentation/ABI/testing/sysfs-driver-ppi | 19 ++++++++++++-------
- 1 file changed, 12 insertions(+), 7 deletions(-)
+* Early userspace tool: Helpful especially for embeded systems.
 
-diff --git a/Documentation/ABI/testing/sysfs-driver-ppi b/Documentation/ABI/testing/sysfs-driver-ppi
-index 7d1435b..9921ef2 100644
---- a/Documentation/ABI/testing/sysfs-driver-ppi
-+++ b/Documentation/ABI/testing/sysfs-driver-ppi
-@@ -1,4 +1,4 @@
--What:		/sys/devices/pnp0/<bus-num>/ppi/
-+What:		/sys/class/tpm/tpmX/ppi/
- Date:		August 2012
- Kernel Version:	3.6
- Contact:	xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
-@@ -8,9 +8,14 @@ Description:
- 		folder makes sense. The folder path can be got by command
- 		'find /sys/ -name 'pcrs''. For the detail information of PPI,
- 		please refer to the PPI specification from
-+
- 		http://www.trustedcomputinggroup.org/
- 
--What:		/sys/devices/pnp0/<bus-num>/ppi/version
-+		In Linux 4.2 ppi was moved to the character device directory.
-+		A symlink from tpmX/device/ppi to tpmX/ppi to provide backwards
-+		compatibility.
-+
-+What:		/sys/class/tpm/tpmX/ppi/version
- Date:		August 2012
- Contact:	xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
- Description:
-@@ -18,7 +23,7 @@ Description:
- 		platform.
- 		This file is readonly.
- 
--What:		/sys/devices/pnp0/<bus-num>/ppi/request
-+What:		/sys/class/tpm/tpmX/ppi/request
- Date:		August 2012
- Contact:	xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
- Description:
-@@ -28,7 +33,7 @@ Description:
- 		integer value range from 1 to 160, and 0 means no request.
- 		This file can be read and written.
- 
--What:		/sys/devices/pnp0/00:<bus-num>/ppi/response
-+What:		/sys/class/tpm/tpmX/ppi/response
- Date:		August 2012
- Contact:	xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
- Description:
-@@ -37,7 +42,7 @@ Description:
- 		: <response description>".
- 		This file is readonly.
- 
--What:		/sys/devices/pnp0/<bus-num>/ppi/transition_action
-+What:		/sys/class/tpm/tpmX/ppi/transition_action
- Date:		August 2012
- Contact:	xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
- Description:
-@@ -47,7 +52,7 @@ Description:
- 		description>".
- 		This file is readonly.
- 
--What:		/sys/devices/pnp0/<bus-num>/ppi/tcg_operations
-+What:		/sys/class/tpm/tpmX/ppi/tcg_operations
- Date:		August 2012
- Contact:	xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
- Description:
-@@ -58,7 +63,7 @@ Description:
- 		This attribute is only supported by PPI version 1.2+.
- 		This file is readonly.
- 
--What:		/sys/devices/pnp0/<bus-num>/ppi/vs_operations
-+What:		/sys/class/tpm/tpmX/ppi/vs_operations
- Date:		August 2012
- Contact:	xiaoyan.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
- Description:
+* Reliability: Userspace service may be killed due to out of memory 
+(OOM). This is kernel cyclic buffer, which size can be specified 
+differently according to situation.
+
+* Possibility of using it with pstore: This code could be extended to 
+log additional buffers to persistent storage same way main (kmsg) log 
+buffer is.
+
+* Use case of attaching file descriptor to stdout/stderr: Especially in 
+early userspace.
+
+* Performance: Those services mentioned by You are weeker solutions in 
+that case. Especially systemd-journald is much too heavy soulution.
+
 -- 
-2.1.4
+
+Best Regards,
+Marcin Niesluchowski
