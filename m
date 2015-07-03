@@ -1,54 +1,302 @@
-From: Will Deacon <will.deacon@arm.com>
-Subject: Re: [PATCH v7 09/11] KVM: arm64: guest debug, HW assisted debug
- support
-Date: Fri, 3 Jul 2015 10:23:23 +0100
-Message-ID: <20150703092323.GA1588@arm.com>
-References: <1435775343-20034-1-git-send-email-alex.bennee@linaro.org>
- <1435775343-20034-10-git-send-email-alex.bennee@linaro.org>
- <20150702084847.GB3418@arm.com>
- <87pp4asm6u.fsf@linaro.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <87pp4asm6u.fsf@linaro.org>
-Sender: linux-doc-owner@vger.kernel.org
-To: Alex =?iso-8859-1?Q?Benn=E9e?= <alex.bennee@linaro.org>
-Cc: "kvm@vger.kernel.org" <kvm@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "kvmarm@lists.cs.columbia.edu" <kvmarm@lists.cs.columbia.edu>, "christoffer.dall@linaro.org" <christoffer.dall@linaro.org>, Marc Zyngier <Marc.Zyngier@arm.com>, "peter.maydell@linaro.org" <peter.maydell@linaro.org>, "agraf@suse.de" <agraf@suse.de>, "drjones@redhat.com" <drjones@redhat.com>, "pbonzini@redhat.com" <pbonzini@redhat.com>, "zhichao.huang@linaro.org" <zhichao.huang@linaro.org>, "jan.kiszka@siemens.com" <jan.kiszka@siemens.com>, "dahi@linux.vnet.ibm.com" <dahi@linux.vnet.ibm.com>, "r65777@freescale.com" <r65777@freescale.com>, "bp@suse.de" <bp@suse.de>, Gleb Natapov <gleb@kernel.org>, Jonathan Corbet <corbet@lwn.net>, Catalin Marinas <Catalin.Marinas@arm.com>, Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, Ingo Molnar <mingo@kernel.o>
+From: Marcin Niesluchowski <m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: [RFC 1/8] printk: move code regarding log message storing format
+Date: Fri, 03 Jul 2015 12:49:48 +0200
+Message-ID: <1435920595-30879-2-git-send-email-m.niesluchow@samsung.com>
+References: <1435920595-30879-1-git-send-email-m.niesluchow@samsung.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-reply-to: <1435920595-30879-1-git-send-email-m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kay Sievers <kay-tD+1rO4QERM@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Marcin Niesluchowski <m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Alex,
+Preparation commit for future changes purpose.
 
-On Thu, Jul 02, 2015 at 02:50:33PM +0100, Alex Benn=E9e wrote:
-> Are you happy with this?:
+Moves some code responsible for storing log messages in proper format.
 
-[...]
+Signed-off-by: Marcin Niesluchowski <m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+---
+ kernel/printk/printk.c | 254 ++++++++++++++++++++++++-------------------------
+ 1 file changed, 127 insertions(+), 127 deletions(-)
 
-> +/**
-> + * kvm_arch_dev_ioctl_check_extension
-> + *
-> + * We currently assume that the number of HW registers is uniform
-> + * across all CPUs (see cpuinfo_sanity_check).
-> + */
->  int kvm_arch_dev_ioctl_check_extension(long ext)
->  {
->         int r;
-> @@ -64,6 +71,12 @@ int kvm_arch_dev_ioctl_check_extension(long ext)
->         case KVM_CAP_ARM_EL1_32BIT:
->                 r =3D cpu_has_32bit_el1();
->                 break;
-> +       case KVM_CAP_GUEST_DEBUG_HW_BPS:
-> +               r =3D hw_breakpoint_slots(TYPE_INST);
-> +               break;
-> +       case KVM_CAP_GUEST_DEBUG_HW_WPS:
-> +               r  =3D hw_breakpoint_slots(TYPE_DATA);
-> +               break;
-
-Whilst I much prefer this code, it actually adds an unwanted dependency
-on PERF_EVENTS that I didn't think about to start with. Sorry to keep
-messing you about -- I guess your original patch is the best thing afte=
-r
-all.
-
-Will
+diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
+index cf8c242..98f5af5 100644
+--- a/kernel/printk/printk.c
++++ b/kernel/printk/printk.c
+@@ -475,6 +475,133 @@ static int log_store(int facility, int level,
+ 	return msg->text_len;
+ }
+ 
++static bool printk_time = IS_ENABLED(CONFIG_PRINTK_TIME);
++module_param_named(time, printk_time, bool, S_IRUGO | S_IWUSR);
++
++static size_t print_time(u64 ts, char *buf)
++{
++	unsigned long rem_nsec;
++
++	if (!printk_time)
++		return 0;
++
++	rem_nsec = do_div(ts, 1000000000);
++
++	if (!buf)
++		return snprintf(NULL, 0, "[%5lu.000000] ", (unsigned long)ts);
++
++	return sprintf(buf, "[%5lu.%06lu] ",
++		       (unsigned long)ts, rem_nsec / 1000);
++}
++
++/*
++ * Continuation lines are buffered, and not committed to the record buffer
++ * until the line is complete, or a race forces it. The line fragments
++ * though, are printed immediately to the consoles to ensure everything has
++ * reached the console in case of a kernel crash.
++ */
++static struct cont {
++	char buf[LOG_LINE_MAX];
++	size_t len;			/* length == 0 means unused buffer */
++	size_t cons;			/* bytes written to console */
++	struct task_struct *owner;	/* task of first print*/
++	u64 ts_nsec;			/* time of first print */
++	u8 level;			/* log level of first message */
++	u8 facility;			/* log facility of first message */
++	enum log_flags flags;		/* prefix, newline flags */
++	bool flushed:1;			/* buffer sealed and committed */
++} cont;
++
++static void cont_flush(enum log_flags flags)
++{
++	if (cont.flushed)
++		return;
++	if (cont.len == 0)
++		return;
++
++	if (cont.cons) {
++		/*
++		 * If a fragment of this line was directly flushed to the
++		 * console; wait for the console to pick up the rest of the
++		 * line. LOG_NOCONS suppresses a duplicated output.
++		 */
++		log_store(cont.facility, cont.level, flags | LOG_NOCONS,
++			  cont.ts_nsec, NULL, 0, cont.buf, cont.len);
++		cont.flags = flags;
++		cont.flushed = true;
++	} else {
++		/*
++		 * If no fragment of this line ever reached the console,
++		 * just submit it to the store and free the buffer.
++		 */
++		log_store(cont.facility, cont.level, flags, 0,
++			  NULL, 0, cont.buf, cont.len);
++		cont.len = 0;
++	}
++}
++
++static bool cont_add(int facility, int level, const char *text, size_t len)
++{
++	if (cont.len && cont.flushed)
++		return false;
++
++	/*
++	 * If ext consoles are present, flush and skip in-kernel
++	 * continuation.  See nr_ext_console_drivers definition.  Also, if
++	 * the line gets too long, split it up in separate records.
++	 */
++	if (nr_ext_console_drivers || cont.len + len > sizeof(cont.buf)) {
++		cont_flush(LOG_CONT);
++		return false;
++	}
++
++	if (!cont.len) {
++		cont.facility = facility;
++		cont.level = level;
++		cont.owner = current;
++		cont.ts_nsec = local_clock();
++		cont.flags = 0;
++		cont.cons = 0;
++		cont.flushed = false;
++	}
++
++	memcpy(cont.buf + cont.len, text, len);
++	cont.len += len;
++
++	if (cont.len > (sizeof(cont.buf) * 80) / 100)
++		cont_flush(LOG_CONT);
++
++	return true;
++}
++
++static size_t cont_print_text(char *text, size_t size)
++{
++	size_t textlen = 0;
++	size_t len;
++
++	if (cont.cons == 0 && (console_prev & LOG_NEWLINE)) {
++		textlen += print_time(cont.ts_nsec, text);
++		size -= textlen;
++	}
++
++	len = cont.len - cont.cons;
++	if (len > 0) {
++		if (len+1 > size)
++			len = size-1;
++		memcpy(text + textlen, cont.buf + cont.cons, len);
++		textlen += len;
++		cont.cons = cont.len;
++	}
++
++	if (cont.flushed) {
++		if (cont.flags & LOG_NEWLINE)
++			text[textlen++] = '\n';
++		/* got everything, release buffer */
++		cont.len = 0;
++	}
++	return textlen;
++}
++
+ int dmesg_restrict = IS_ENABLED(CONFIG_SECURITY_DMESG_RESTRICT);
+ 
+ static int syslog_action_restricted(int type)
+@@ -1030,25 +1157,6 @@ static inline void boot_delay_msec(int level)
+ }
+ #endif
+ 
+-static bool printk_time = IS_ENABLED(CONFIG_PRINTK_TIME);
+-module_param_named(time, printk_time, bool, S_IRUGO | S_IWUSR);
+-
+-static size_t print_time(u64 ts, char *buf)
+-{
+-	unsigned long rem_nsec;
+-
+-	if (!printk_time)
+-		return 0;
+-
+-	rem_nsec = do_div(ts, 1000000000);
+-
+-	if (!buf)
+-		return snprintf(NULL, 0, "[%5lu.000000] ", (unsigned long)ts);
+-
+-	return sprintf(buf, "[%5lu.%06lu] ",
+-		       (unsigned long)ts, rem_nsec / 1000);
+-}
+-
+ static size_t print_prefix(const struct printk_log *msg, bool syslog, char *buf)
+ {
+ 	size_t len = 0;
+@@ -1544,114 +1652,6 @@ static inline void printk_delay(void)
+ 	}
+ }
+ 
+-/*
+- * Continuation lines are buffered, and not committed to the record buffer
+- * until the line is complete, or a race forces it. The line fragments
+- * though, are printed immediately to the consoles to ensure everything has
+- * reached the console in case of a kernel crash.
+- */
+-static struct cont {
+-	char buf[LOG_LINE_MAX];
+-	size_t len;			/* length == 0 means unused buffer */
+-	size_t cons;			/* bytes written to console */
+-	struct task_struct *owner;	/* task of first print*/
+-	u64 ts_nsec;			/* time of first print */
+-	u8 level;			/* log level of first message */
+-	u8 facility;			/* log facility of first message */
+-	enum log_flags flags;		/* prefix, newline flags */
+-	bool flushed:1;			/* buffer sealed and committed */
+-} cont;
+-
+-static void cont_flush(enum log_flags flags)
+-{
+-	if (cont.flushed)
+-		return;
+-	if (cont.len == 0)
+-		return;
+-
+-	if (cont.cons) {
+-		/*
+-		 * If a fragment of this line was directly flushed to the
+-		 * console; wait for the console to pick up the rest of the
+-		 * line. LOG_NOCONS suppresses a duplicated output.
+-		 */
+-		log_store(cont.facility, cont.level, flags | LOG_NOCONS,
+-			  cont.ts_nsec, NULL, 0, cont.buf, cont.len);
+-		cont.flags = flags;
+-		cont.flushed = true;
+-	} else {
+-		/*
+-		 * If no fragment of this line ever reached the console,
+-		 * just submit it to the store and free the buffer.
+-		 */
+-		log_store(cont.facility, cont.level, flags, 0,
+-			  NULL, 0, cont.buf, cont.len);
+-		cont.len = 0;
+-	}
+-}
+-
+-static bool cont_add(int facility, int level, const char *text, size_t len)
+-{
+-	if (cont.len && cont.flushed)
+-		return false;
+-
+-	/*
+-	 * If ext consoles are present, flush and skip in-kernel
+-	 * continuation.  See nr_ext_console_drivers definition.  Also, if
+-	 * the line gets too long, split it up in separate records.
+-	 */
+-	if (nr_ext_console_drivers || cont.len + len > sizeof(cont.buf)) {
+-		cont_flush(LOG_CONT);
+-		return false;
+-	}
+-
+-	if (!cont.len) {
+-		cont.facility = facility;
+-		cont.level = level;
+-		cont.owner = current;
+-		cont.ts_nsec = local_clock();
+-		cont.flags = 0;
+-		cont.cons = 0;
+-		cont.flushed = false;
+-	}
+-
+-	memcpy(cont.buf + cont.len, text, len);
+-	cont.len += len;
+-
+-	if (cont.len > (sizeof(cont.buf) * 80) / 100)
+-		cont_flush(LOG_CONT);
+-
+-	return true;
+-}
+-
+-static size_t cont_print_text(char *text, size_t size)
+-{
+-	size_t textlen = 0;
+-	size_t len;
+-
+-	if (cont.cons == 0 && (console_prev & LOG_NEWLINE)) {
+-		textlen += print_time(cont.ts_nsec, text);
+-		size -= textlen;
+-	}
+-
+-	len = cont.len - cont.cons;
+-	if (len > 0) {
+-		if (len+1 > size)
+-			len = size-1;
+-		memcpy(text + textlen, cont.buf + cont.cons, len);
+-		textlen += len;
+-		cont.cons = cont.len;
+-	}
+-
+-	if (cont.flushed) {
+-		if (cont.flags & LOG_NEWLINE)
+-			text[textlen++] = '\n';
+-		/* got everything, release buffer */
+-		cont.len = 0;
+-	}
+-	return textlen;
+-}
+-
+ asmlinkage int vprintk_emit(int facility, int level,
+ 			    const char *dict, size_t dictlen,
+ 			    const char *fmt, va_list args)
+-- 
+1.9.1
