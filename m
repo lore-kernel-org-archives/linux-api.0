@@ -1,48 +1,48 @@
-From: Richard Weinberger <richard.weinberger@gmail.com>
-Subject: Re: [RFC 0/8] Additional kmsg devices
-Date: Fri, 3 Jul 2015 13:21:43 +0200
-Message-ID: <CAFLxGvxvaePEyCpLrB1cjNn4bvnCwt-_HE3zcT-6diMYNOraBw@mail.gmail.com>
-References: <1435920595-30879-1-git-send-email-m.niesluchow@samsung.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1435920595-30879-1-git-send-email-m.niesluchow@samsung.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Marcin Niesluchowski <m.niesluchow@samsung.com>
-Cc: "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, Jonathan Corbet <corbet@lwn.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Petr Mladek <pmladek@suse.cz>, Tejun Heo <tj@kernel.org>, Kay Sievers <kay@vrfy.org>, Andrew Morton <akpm@linux-foundation.org>, Joe Perches <joe@perches.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH v8 0/3] Enable PPI sysfs interface for TPM 2.0
+Date: Fri,  3 Jul 2015 17:25:54 +0300
+Message-ID: <1435933560-1325-1-git-send-email-jarkko.sakkinen@linux.intel.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: peterhuewe-Mmb7MZpHnFY@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vivien Didelot <vivien.didelot-4ysUXcep3aM1wj+D4I0NRVaTQe2KTcn/@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 3, 2015 at 12:49 PM, Marcin Niesluchowski
-<m.niesluchow@samsung.com> wrote:
-> Dear All,
->
-> This series of patches extends kmsg interface with ability to dynamicaly
-> create (and destroy) kmsg-like devices which can be used by user space
-> for logging. Logging to kernel has number of benefits, including but not
-> limited to - always available, requiring no userspace, automatically
-> rotating and low overhead.
->
-> User-space logging to kernel cyclic buffers was already successfully used
-> in android logger concept but it had certain flaws that this commits try
-> to address:
-> * drops hardcoded number of devices and static paths in favor for dynamic
->   configuration by ioctl interface in userspace
-> * extends existing driver instead of creating completely new one
+v8:
+* Renamed sysfs_link_entry_to_kobj() to
+  __compat_only_sysfs_link_entry_to_kobj()
 
-So, now we start moving syslogd into kernel land because userspace is
-too broken to provide
-decent logging?
+v7:
+* Fixed compile error when CONFIG_SYSFS is not enabled.
 
-I can understand the systemd is using kmsg if no other logging service
-is available
-but I really don't think we should encourage other programs to do so.
+v6:
+* Updated documentation.
 
-Why can't you just make sure that your target has a working
-syslogd/rsyslogd/journald/whatever?
-All can be done perfectly fine in userspace.
+v5:
+* Removed dangling export of kernfs_remove_by_name_ns() from the sysfs
+  patch.
 
-Just my two cents.
+v4:
+* Use sysfs_remove_link()
+
+v3:
+* Fixed to_tpm_chip() macro.
+* Split into two patches.
+* Renamed sysfs_link_group_to_kobj to sysfs_link_entry_to_kobj
+* Only create the "backwards compatibility" symlink for TPM 1.x devices.
+
+Jarkko Sakkinen (3):
+  sysfs: added sysfs_link_entry_to_kobj()
+  tpm: move the PPI attributes to character device directory.
+  tpm: update PPI documentation to address the location change.
+
+ Documentation/ABI/testing/sysfs-driver-ppi | 19 ++++++++-----
+ drivers/char/tpm/tpm-chip.c                | 24 ++++++++++------
+ drivers/char/tpm/tpm.h                     | 17 ++++--------
+ drivers/char/tpm/tpm_ppi.c                 | 34 ++++++++---------------
+ fs/sysfs/group.c                           | 44 ++++++++++++++++++++++++++++++
+ include/linux/sysfs.h                      | 10 +++++++
+ 6 files changed, 99 insertions(+), 49 deletions(-)
 
 -- 
-Thanks,
-//richard
+2.1.4
