@@ -1,254 +1,185 @@
 From: "Hillf Danton" <hillf.zj@alibaba-inc.com>
-Subject: Re: [PATCH 01/10] mm/hugetlb: add cache of descriptors to resv_map for region_add
-Date: Fri, 03 Jul 2015 12:21:18 +0800
-Message-ID: <008301d0b547$b62a10e0$227e32a0$@alibaba-inc.com>
-References: <1435851526-4200-1-git-send-email-mike.kravetz@oracle.com> <1435851526-4200-2-git-send-email-mike.kravetz@oracle.com>
+Subject: Re: [PATCH 02/10] mm/hugetlb: add region_del() to delete a specific range of entries
+Date: Fri, 03 Jul 2015 15:20:34 +0800
+Message-ID: <011301d0b560$c0ffc5a0$42ff50e0$@alibaba-inc.com>
+References: <1435851526-4200-1-git-send-email-mike.kravetz@oracle.com> <1435851526-4200-3-git-send-email-mike.kravetz@oracle.com>
 Reply-To: "Hillf Danton" <hillf.zj@alibaba-inc.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
 	charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1435851526-4200-2-git-send-email-mike.kravetz@oracle.com>
+In-Reply-To: <1435851526-4200-3-git-send-email-mike.kravetz@oracle.com>
 Content-Language: zh-cn
 Sender: owner-linux-mm@kvack.org
 To: 'Mike Kravetz' <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 Cc: 'Dave Hansen' <dave.hansen@linux.intel.com>, 'Naoya Horiguchi' <n-horiguchi@ah.jp.nec.com>, 'David Rientjes' <rientjes@google.com>, 'Hugh Dickins' <hughd@google.com>, 'Davidlohr Bueso' <dave@stgolabs.net>, 'Aneesh Kumar' <aneesh.kumar@linux.vnet.ibm.com>, 'Christoph Hellwig' <hch@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
+> fallocate hole punch will want to remove a specific range of pages.
+> The existing region_truncate() routine deletes all region/reserve
+> map entries after a specified offset.  region_del() will provide
+> this same functionality if the end of region is specified as -1.
+> Hence, region_del() can replace region_truncate().
 > 
-> fallocate hole punch will want to remove a specific range of
-> pages.  When pages are removed, their associated entries in
-> the region/reserve map will also be removed.  This will break
-> an assumption in the region_chg/region_add calling sequence.
-> If a new region descriptor must be allocated, it is done as
-> part of the region_chg processing.  In this way, region_add
-> can not fail because it does not need to attempt an allocation.
-> 
-> To prepare for fallocate hole punch, create a "cache" of
-> descriptors that can be used by region_add if necessary.
-> region_chg will ensure there are sufficient entries in the
-> cache.  It will be necessary to track the number of in progress
-> add operations to know a sufficient number of descriptors
-> reside in the cache.  A new routine region_abort is added to
-> adjust this in progress count when add operations are aborted.
-> vma_abort_reservation is also added for callers creating
-> reservations with vma_needs_reservation/vma_commit_reservation.
+> Unlike region_truncate(), region_del() can return an error in the
+> rare case where it can not allocate memory for a region descriptor.
+> This ONLY happens in the case where an existing region must be split.
+> Current callers passing -1 as end of range will never experience
+> this error and do not need to deal with error handling.  Future
+> callers of region_del() (such as fallocate hole punch) will need to
+> handle this error.
 > 
 > Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
 > ---
->  include/linux/hugetlb.h |   3 +
->  mm/hugetlb.c            | 166 ++++++++++++++++++++++++++++++++++++++++++------
->  2 files changed, 150 insertions(+), 19 deletions(-)
+>  mm/hugetlb.c | 101 ++++++++++++++++++++++++++++++++++++++++++++---------------
+>  1 file changed, 75 insertions(+), 26 deletions(-)
 > 
-> diff --git a/include/linux/hugetlb.h b/include/linux/hugetlb.h
-> index 2050261..f9c8cb2 100644
-> --- a/include/linux/hugetlb.h
-> +++ b/include/linux/hugetlb.h
-> @@ -35,6 +35,9 @@ struct resv_map {
->  	struct kref refs;
->  	spinlock_t lock;
->  	struct list_head regions;
-> +	long adds_in_progress;
-> +	struct list_head rgn_cache;
-> +	long rgn_cache_count;
->  };
->  extern struct resv_map *resv_map_alloc(void);
->  void resv_map_release(struct kref *ref);
 > diff --git a/mm/hugetlb.c b/mm/hugetlb.c
-> index a8c3087..189c0d7 100644
+> index 189c0d7..e8c7f68 100644
 > --- a/mm/hugetlb.c
 > +++ b/mm/hugetlb.c
-> @@ -240,11 +240,14 @@ struct file_region {
+> @@ -460,43 +460,92 @@ static void region_abort(struct resv_map *resv, long f, long t)
+>  }
 > 
 >  /*
->   * Add the huge page range represented by [f, t) to the reserve
-> - * map.  Existing regions will be expanded to accommodate the
-> - * specified range.  We know only existing regions need to be
-> - * expanded, because region_add is only called after region_chg
-> - * with the same range.  If a new file_region structure must
-> - * be allocated, it is done in region_chg.
-> + * map.  In the normal case, existing regions will be expanded
-> + * to accommodate the specified range.  Sufficient regions should
-> + * exist for expansion due to the previous call to region_chg
-> + * with the same range.  However, it is possible that region_del
-> + * could have been called after region_chg and modifed the map
-> + * in such a way that no region exists to be expanded.  In this
-> + * case, pull a region descriptor from the cache associated with
-> + * the map and use that for the new range.
->   *
->   * Return the number of new huge pages added to the map.  This
->   * number is greater than or equal to zero.
-> @@ -261,6 +264,27 @@ static long region_add(struct resv_map *resv, long f, long t)
->  		if (f <= rg->to)
->  			break;
-> 
-> +	if (&rg->link == head || t < rg->from) {
-> +		/*
-> +		 * No region exits which can be expanded to include the
-
-s/exits/exists/ ?
-> +		 * specified range.  Pull a region descriptor from the
-> +		 * cache, and use it for this range.
-> +		 */
-> +		VM_BUG_ON(!resv->rgn_cache_count);
-> +
-> +		resv->rgn_cache_count--;
-> +		nrg = list_first_entry(&resv->rgn_cache, struct file_region,
-> +					link);
-> +		list_del(&nrg->link);
-> +
-> +		nrg->from = f;
-> +		nrg->to = t;
-> +		list_add(&nrg->link, rg->link.prev);
-> +
-> +		add += t - f;
-> +		goto out_locked;
-> +	}
-> +
->  	/* Round our left edge to the current segment if it encloses us. */
->  	if (f > rg->from)
->  		f = rg->from;
-> @@ -294,6 +318,8 @@ static long region_add(struct resv_map *resv, long f, long t)
->  	add += t - nrg->to;		/* Added to end of region */
->  	nrg->to = t;
-> 
-> +out_locked:
-> +	resv->adds_in_progress--;
->  	spin_unlock(&resv->lock);
->  	VM_BUG_ON(add < 0);
->  	return add;
-> @@ -312,11 +338,16 @@ static long region_add(struct resv_map *resv, long f, long t)
->   * so that the subsequent region_add call will have all the
->   * regions it needs and will not fail.
->   *
-> + * Upon entry, region_chg will also examine the cache of
-> + * region descriptors associated with the map.  If there
-> + * not enough descriptors cached, one will be allocated
-> + * for the in progress add operation.
+> - * Truncate the reserve map at index 'end'.  Modify/truncate any
+> - * region which contains end.  Delete any regions past end.
+> - * Return the number of huge pages removed from the map.
+> + * Delete the specified range [f, t) from the reserve map.  If the
+> + * t parameter is -1, this indicates that ALL regions after f should
+> + * be deleted.  Locate the regions which intersect [f, t) and either
+> + * trim, delete or split the existing regions.
 > + *
->   * Returns the number of huge pages that need to be added
->   * to the existing reservation map for the range [f, t).
->   * This number is greater or equal to zero.  -ENOMEM is
-> - * returned if a new file_region structure is needed and can
-> - * not be allocated.
-> + * returned if a new file_region structure or cache entry
-> + * is needed and can not be allocated.
+> + * Returns the number of huge pages deleted from the reserve map.
+> + * In the normal case, the return value is zero or more.  In the
+> + * case where a region must be split, a new region descriptor must
+> + * be allocated.  If the allocation fails, -ENOMEM will be returned.
+> + * NOTE: If the parameter t == -1, then we will never split a region
+> + * and possibly return -ENOMEM.  Callers specifying t == -1 do not
+> + * need to check for -ENOMEM error.
 >   */
->  static long region_chg(struct resv_map *resv, long f, long t)
+> -static long region_truncate(struct resv_map *resv, long end)
+> +static long region_del(struct resv_map *resv, long f, long t)
 >  {
-> @@ -326,6 +357,30 @@ static long region_chg(struct resv_map *resv, long f, long t)
+>  	struct list_head *head = &resv->regions;
+>  	struct file_region *rg, *trg;
+> -	long chg = 0;
+> +	struct file_region *nrg = NULL;
+> +	long del = 0;
 > 
->  retry:
+> +	if (t == -1)
+> +		t = LONG_MAX;
+
+Why not use 
+> +retry:
 >  	spin_lock(&resv->lock);
-> +	resv->adds_in_progress++;
+> -	/* Locate the region we are either in or before. */
+> -	list_for_each_entry(rg, head, link)
+> -		if (end <= rg->to)
+> +	list_for_each_entry_safe(rg, trg, head, link) {
+> +		if (rg->to <= f)
+> +			continue;
+> +		if (rg->from >= t)
+>  			break;
+> -	if (&rg->link == head)
+> -		goto out;
+> 
+> -	/* If we are in the middle of a region then adjust it. */
+> -	if (end > rg->from) {
+> -		chg = rg->to - end;
+> -		rg->to = end;
+> -		rg = list_entry(rg->link.next, typeof(*rg), link);
+> -	}
+> +		if (f > rg->from && t < rg->to) { /* Must split region */
+> +			/*
+> +			 * Check for an entry in the cache before dropping
+> +			 * lock and attempting allocation.
+> +			 */
+> +			if (!nrg &&
+> +			    resv->rgn_cache_count > resv->adds_in_progress) {
+> +				nrg = list_first_entry(&resv->rgn_cache,
+> +							struct file_region,
+> +							link);
+> +				list_del(&nrg->link);
+> +				resv->rgn_cache_count--;
+> +			}
+> 
+> -	/* Drop any remaining regions. */
+> -	list_for_each_entry_safe(rg, trg, rg->link.prev, link) {
+> -		if (&rg->link == head)
+> +			if (!nrg) {
+> +				spin_unlock(&resv->lock);
+> +				nrg = kmalloc(sizeof(*nrg), GFP_KERNEL);
+> +				if (!nrg)
+> +					return -ENOMEM;
+> +				goto retry;
+> +			}
 > +
-> +	/*
-> +	 * Check for sufficient descriptors in the cache to accommodate
-> +	 * the number of in progress add operations.
-> +	 */
-> +	if (resv->adds_in_progress > resv->rgn_cache_count) {
-> +		struct file_region *trg;
+> +			del += t - f;
 > +
-> +		VM_BUG_ON(resv->adds_in_progress - resv->rgn_cache_count > 1);
-> +		/* Must drop lock to allocate a new descriptor. */
-> +		resv->adds_in_progress--;
-> +		spin_unlock(&resv->lock);
+> +			/* New entry for end of split region */
+> +			nrg->from = t;
+> +			nrg->to = rg->to;
+> +			INIT_LIST_HEAD(&nrg->link);
 > +
-> +		trg = kmalloc(sizeof(*trg), GFP_KERNEL);
-> +		if (!trg)
-> +			return -ENOMEM;
+> +			/* Original entry is trimmed */
+> +			rg->to = f;
 > +
-> +		spin_lock(&resv->lock);
-> +		resv->adds_in_progress++;
-> +		list_add(&trg->link, &resv->rgn_cache);
-> +		resv->rgn_cache_count++;
-> +	}
+> +			list_add(&nrg->link, &rg->link);
+> +			nrg = NULL;
+>  			break;
+> -		chg += rg->to - rg->from;
+> -		list_del(&rg->link);
+> -		kfree(rg);
+> +		}
 > +
->  	/* Locate the region we are before or in. */
->  	list_for_each_entry(rg, head, link)
->  		if (f <= rg->to)
-> @@ -336,6 +391,7 @@ retry:
->  	 * size such that we can guarantee to record the reservation. */
->  	if (&rg->link == head || t < rg->from) {
->  		if (!nrg) {
-> +			resv->adds_in_progress--;
->  			spin_unlock(&resv->lock);
->  			nrg = kmalloc(sizeof(*nrg), GFP_KERNEL);
->  			if (!nrg)
-> @@ -385,6 +441,25 @@ out_nrg:
+> +		if (f <= rg->from && t >= rg->to) { /* Remove entire region */
+> +			del += rg->to - rg->from;
+> +			list_del(&rg->link);
+> +			kfree(rg);
+> +			continue;
+> +		}
+> +
+> +		if (f <= rg->from) {	/* Trim beginning of region */
+> +			del += t - rg->from;
+> +			rg->from = t;
+> +		} else {		/* Trim end of region */
+> +			del += rg->to - f;
+> +			rg->to = f;
+> +		}
+>  	}
+> 
+> -out:
+>  	spin_unlock(&resv->lock);
+> -	return chg;
+> +	kfree(nrg);
+> +	return del;
 >  }
 > 
 >  /*
-> + * Abort the in progress add operation.  The adds_in_progress field
-> + * of the resv_map keeps track of the operations in progress between
-> + * calls to region_chg and region_add.  Operations are sometimes
-> + * aborted after the call to region_chg.  In such cases, region_abort
-> + * is called to decrement the adds_in_progress counter.
-> + *
-> + * NOTE: The range arguments [f, t) are not needed or used in this
-> + * routine.  They are kept to make reading the calling code easier as
-> + * arguments will match the associated region_chg call.
-> + */
-> +static void region_abort(struct resv_map *resv, long f, long t)
-> +{
-> +	spin_lock(&resv->lock);
-> +	VM_BUG_ON(!resv->rgn_cache_count);
-> +	resv->adds_in_progress--;
-> +	spin_unlock(&resv->lock);
-> +}
-> +
-> +/*
->   * Truncate the reserve map at index 'end'.  Modify/truncate any
->   * region which contains end.  Delete any regions past end.
->   * Return the number of huge pages removed from the map.
-> @@ -544,22 +619,42 @@ static void set_vma_private_data(struct vm_area_struct *vma,
->  struct resv_map *resv_map_alloc(void)
->  {
->  	struct resv_map *resv_map = kmalloc(sizeof(*resv_map), GFP_KERNEL);
-> -	if (!resv_map)
-> +	struct file_region *rg = kmalloc(sizeof(*rg), GFP_KERNEL);
-> +
-> +	if (!resv_map || !rg) {
-> +		kfree(resv_map);
-> +		kfree(rg);
->  		return NULL;
-> +	}
-> 
->  	kref_init(&resv_map->refs);
->  	spin_lock_init(&resv_map->lock);
->  	INIT_LIST_HEAD(&resv_map->regions);
-> 
-> +	resv_map->adds_in_progress = 0;
-> +
-> +	INIT_LIST_HEAD(&resv_map->rgn_cache);
-> +	list_add(&rg->link, &resv_map->rgn_cache);
-> +	resv_map->rgn_cache_count = 1;
-> +
->  	return resv_map;
->  }
-> 
->  void resv_map_release(struct kref *ref)
->  {
->  	struct resv_map *resv_map = container_of(ref, struct resv_map, refs);
-> +	struct list_head *head = &resv_map->regions;
-> +	struct file_region *rg, *trg;
+> @@ -647,7 +696,7 @@ void resv_map_release(struct kref *ref)
+>  	struct file_region *rg, *trg;
 > 
 >  	/* Clear out any active regions before we release the map. */
->  	region_truncate(resv_map, 0);
-> +
-> +	/* ... and any entries left in the cache */
-> +	list_for_each_entry_safe(rg, trg, head, link)
-> +		list_del(&rg->link);
-> +
+> -	region_truncate(resv_map, 0);
+> +	region_del(resv_map, 0, -1);
 
-I am wondering if `cache' is rgn_cache.
-And rg should be freed if yes.
-> +	VM_BUG_ON(resv_map->adds_in_progress);
-> +
->  	kfree(resv_map);
->  }
+LONG_MAX is not selected, why?
 > 
+>  	/* ... and any entries left in the cache */
+>  	list_for_each_entry_safe(rg, trg, head, link)
+> @@ -3868,7 +3917,7 @@ void hugetlb_unreserve_pages(struct inode *inode, long offset, long freed)
+>  	long gbl_reserve;
+> 
+>  	if (resv_map)
+> -		chg = region_truncate(resv_map, offset);
+> +		chg = region_del(resv_map, offset, -1);
+>  	spin_lock(&inode->i_lock);
+>  	inode->i_blocks -= (blocks_per_huge_page(h) * freed);
+>  	spin_unlock(&inode->i_lock);
+> --
+> 2.1.0
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
