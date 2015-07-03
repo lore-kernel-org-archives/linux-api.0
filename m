@@ -1,268 +1,219 @@
-From: Marcin Niesluchowski <m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: [RFC 7/8] kmsg: add ioctl for adding and deleting kmsg* devices
-Date: Fri, 03 Jul 2015 12:49:54 +0200
-Message-ID: <1435920595-30879-8-git-send-email-m.niesluchow@samsung.com>
+From: Marcin Niesluchowski <m.niesluchow@samsung.com>
+Subject: [RFC 4/8] kmsg: add function for adding and deleting additional buffers
+Date: Fri, 03 Jul 2015 12:49:51 +0200
+Message-ID: <1435920595-30879-5-git-send-email-m.niesluchow@samsung.com>
 References: <1435920595-30879-1-git-send-email-m.niesluchow@samsung.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <1435920595-30879-1-git-send-email-m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Petr Mladek <pmladek-AlSwsSmVLrQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kay Sievers <kay-tD+1rO4QERM@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Marcin Niesluchowski <m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-reply-to: <1435920595-30879-1-git-send-email-m.niesluchow@samsung.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Jonathan Corbet <corbet@lwn.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Petr Mladek <pmladek@suse.cz>, Tejun Heo <tj@kernel.org>, Kay Sievers <kay@vrfy.org>, Andrew Morton <akpm@linux-foundation.org>, Joe Perches <joe@perches.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Marcin Niesluchowski <m.niesluchow@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-There is no possibility to add/delete kmsg* buffers from userspace.
+Additional kmsg buffers should be created and deleted dynamically.
 
-Adds following ioctl for main kmsg device adding and deleting
-additional kmsg devices:
-* KMSG_CMD_BUFFER_ADD
-* KMSG_CMD_BUFFER_DEL
+Adding two functions
+* kmsg_sys_buffer_add() creates additional kmsg buffer returning minor
+* kmsg_sys_buffer_del() deletes one based on provided minor
 
-Signed-off-by: Marcin Niesluchowski <m.niesluchow-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Signed-off-by: Marcin Niesluchowski <m.niesluchow@samsung.com>
 ---
- Documentation/ioctl/ioctl-number.txt |   1 +
- drivers/char/mem.c                   | 134 +++++++++++++++++++++++++++++++++--
- include/uapi/linux/Kbuild            |   1 +
- include/uapi/linux/kmsg_ioctl.h      |  30 ++++++++
- 4 files changed, 159 insertions(+), 7 deletions(-)
- create mode 100644 include/uapi/linux/kmsg_ioctl.h
+ include/linux/printk.h |   3 ++
+ kernel/printk/printk.c | 122 +++++++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 122 insertions(+), 3 deletions(-)
 
-diff --git a/Documentation/ioctl/ioctl-number.txt b/Documentation/ioctl/ioctl-number.txt
-index 611c522..26c0e53 100644
---- a/Documentation/ioctl/ioctl-number.txt
-+++ b/Documentation/ioctl/ioctl-number.txt
-@@ -312,6 +312,7 @@ Code  Seq#(hex)	Include File		Comments
- 					<mailto:vgo-/IYFIZglx74@public.gmane.org>
- 0xB1	00-1F	PPPoX			<mailto:mostrows-TTukF6hB3AoKZpuMuFhwt/d9D2ou9A/h@public.gmane.org>
- 0xB3	00	linux/mmc/ioctl.h
-+0xBB	00-02	uapi/linux/kmsg_ioctl.h
- 0xC0	00-0F	linux/usb/iowarrior.h
- 0xCA	00-0F	uapi/misc/cxl.h
- 0xCB	00-1F	CBM serial IEC bus	in development:
-diff --git a/drivers/char/mem.c b/drivers/char/mem.c
-index 8d5ba0d..2893d8e 100644
---- a/drivers/char/mem.c
-+++ b/drivers/char/mem.c
-@@ -34,8 +34,14 @@
- # include <linux/efi.h>
+diff --git a/include/linux/printk.h b/include/linux/printk.h
+index d3b5f23..5806982 100644
+--- a/include/linux/printk.h
++++ b/include/linux/printk.h
+@@ -422,6 +422,9 @@ extern void init_kmsg_minor(int minor);
+ 
+ extern int kmsg_sys_mode(int minor, umode_t *mode);
+ 
++extern int kmsg_sys_buffer_add(size_t size, umode_t mode);
++extern void kmsg_sys_buffer_del(int minor);
++
+ enum {
+ 	DUMP_PREFIX_NONE,
+ 	DUMP_PREFIX_ADDRESS,
+diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
+index 7f30c8b..abe78c1 100644
+--- a/kernel/printk/printk.c
++++ b/kernel/printk/printk.c
+@@ -46,6 +46,9 @@
+ #include <linux/utsname.h>
+ #include <linux/ctype.h>
+ #include <linux/uio.h>
++#include <linux/slab.h>
++#include <linux/kref.h>
++#include <linux/kdev_t.h>
+ 
+ #include <asm/uaccess.h>
+ 
+@@ -240,6 +243,7 @@ struct log_buffer {
+ 	char *buf;		/* cyclic log buffer */
+ 	u32 len;		/* buffer length */
+ 	wait_queue_head_t wait;	/* wait queue for kmsg buffer */
++	struct kref refcount;	/* refcount for kmsg_sys buffers */
  #endif
+ /*
+  * The lock protects kmsg buffer, indices, counters. This can be taken within
+@@ -292,6 +296,7 @@ static struct log_buffer log_buf = {
+ 	.len		= __LOG_BUF_K_LEN,
+ 	.lock		= __RAW_SPIN_LOCK_UNLOCKED(log_buf.lock),
+ 	.wait		= __WAIT_QUEUE_HEAD_INITIALIZER(log_buf.wait),
++	.refcount	= { .refcount = { .counter = 0 } },
+ 	.first_seq	= 0,
+ 	.first_idx	= 0,
+ 	.next_seq	= 0,
+@@ -862,6 +867,15 @@ struct devkmsg_user {
+ 	char buf[CONSOLE_EXT_LOG_MAX];
+ };
  
-+#ifdef CONFIG_PRINTK
-+#include <linux/kmsg_ioctl.h>
-+#endif
++void log_buf_release(struct kref *ref)
++{
++	struct log_buffer *log_b = container_of(ref, struct log_buffer,
++						refcount);
 +
- #define DEVPORT_MINOR	4
- 
-+static struct class *mem_class;
++	kfree(log_b->buf);
++	kfree(log_b);
++}
 +
- static inline unsigned long size_inside_page(unsigned long start,
- 					     unsigned long size)
+ static int kmsg_sys_write(int minor, int level, const char *fmt, ...)
  {
-@@ -715,6 +721,113 @@ static int open_port(struct inode *inode, struct file *filp)
- 	return capable(CAP_SYS_RAWIO) ? 0 : -EPERM;
+ 	va_list args;
+@@ -969,10 +983,24 @@ static ssize_t kmsg_read(struct log_buffer *log_b, struct file *file,
+ 		}
+ 
+ 		raw_spin_unlock_irq(&log_b->lock);
+-		ret = wait_event_interruptible(log_b->wait,
+-					       user->seq != log_b->next_seq);
++
++		if (log_b == &log_buf) {
++			ret = wait_event_interruptible(log_b->wait,
++						user->seq != log_b->next_seq);
++		} else {
++			rcu_read_unlock();
++			kref_get(&log_b->refcount);
++			ret = wait_event_interruptible(log_b->wait,
++						user->seq != log_b->next_seq);
++			if (log_b->minor == -1)
++				ret = -ENXIO;
++			if (kref_put(&log_b->refcount, log_buf_release))
++				ret = -ENXIO;
++			rcu_read_lock();
++		}
+ 		if (ret)
+ 			goto out;
++
+ 		raw_spin_lock_irq(&log_b->lock);
+ 	}
+ 
+@@ -1140,8 +1168,14 @@ static unsigned int devkmsg_poll(struct file *file, poll_table *wait)
+ 	rcu_read_lock();
+ 	list_for_each_entry_rcu(log_b, &log_buf.list, list) {
+ 		if (log_b->minor == minor) {
++			kref_get(&log_b->refcount);
++			rcu_read_unlock();
++
+ 			ret = kmsg_poll(log_b, file, wait);
+-			break;
++
++			if (kref_put(&log_b->refcount, log_buf_release))
++				return POLLERR|POLLNVAL;
++			return ret;
+ 		}
+ 	}
+ 	rcu_read_unlock();
+@@ -1242,6 +1276,88 @@ int kmsg_sys_mode(int minor, umode_t *mode)
+ 	return ret;
  }
  
-+#ifdef CONFIG_PRINTK
-+#define KMSG_MINOR	11
++static DEFINE_SPINLOCK(kmsg_sys_list_lock);
 +
-+#define MAX_MINOR_LEN	20
-+
-+static int kmsg_open_ext(struct inode *inode, struct file *file)
++int kmsg_sys_buffer_add(size_t size, umode_t mode)
 +{
-+	return kmsg_fops.open(inode, file);
-+}
++	unsigned long flags;
++	int minor = log_buf.minor;
++	struct log_buffer *log_b;
++	struct log_buffer *log_b_new;
 +
-+static ssize_t kmsg_write_iter_ext(struct kiocb *iocb, struct iov_iter *from)
-+{
-+	return kmsg_fops.write_iter(iocb, from);
-+}
++	if (size < LOG_LINE_MAX + PREFIX_MAX)
++		return -EINVAL;
 +
-+static ssize_t kmsg_read_ext(struct file *file, char __user *buf,
-+			     size_t count, loff_t *ppos)
-+{
-+	return kmsg_fops.read(file, buf, count, ppos);
-+}
++	log_b_new = kzalloc(sizeof(struct log_buffer), GFP_KERNEL);
++	if (!log_b_new)
++		return -ENOMEM;
 +
-+static loff_t kmsg_llseek_ext(struct file *file, loff_t offset, int whence)
-+{
-+	return kmsg_fops.llseek(file, offset, whence);
-+}
-+
-+static unsigned int kmsg_poll_ext(struct file *file,
-+				  struct poll_table_struct *wait)
-+{
-+	return kmsg_fops.poll(file, wait);
-+}
-+
-+static long kmsg_ioctl_buffers(struct file *file, unsigned int cmd,
-+			       unsigned long arg)
-+{
-+	void __user *argp = (void __user *)arg;
-+	size_t size;
-+	umode_t mode;
-+	char name[4 + MAX_MINOR_LEN + 1];
-+	struct device *dev;
-+	int minor;
-+
-+	if (iminor(file->f_inode) != KMSG_MINOR)
-+		return -ENOTTY;
-+
-+	switch (cmd) {
-+	case KMSG_CMD_BUFFER_ADD:
-+		if (copy_from_user(&size, argp, sizeof(size)))
-+			return -EFAULT;
-+		argp += sizeof(size);
-+		if (copy_from_user(&mode, argp, sizeof(mode)))
-+			return -EFAULT;
-+		argp += sizeof(mode);
-+		minor = kmsg_sys_buffer_add(size, mode);
-+		if (minor < 0)
-+			return minor;
-+		sprintf(name, "kmsg%d", minor);
-+		dev = device_create(mem_class, NULL, MKDEV(MEM_MAJOR, minor),
-+				    NULL, name);
-+		if (IS_ERR(dev)) {
-+			kmsg_sys_buffer_del(minor);
-+			return PTR_ERR(dev);
-+		}
-+		if (copy_to_user(argp, &minor, sizeof(minor))) {
-+			device_destroy(mem_class, MKDEV(MEM_MAJOR, minor));
-+			kmsg_sys_buffer_del(minor);
-+			return -EFAULT;
-+		}
-+		return 0;
-+	case KMSG_CMD_BUFFER_DEL:
-+		if (copy_from_user(&minor, argp, sizeof(minor)))
-+			return -EFAULT;
-+		if (minor <= KMSG_MINOR)
-+			return -EINVAL;
-+		device_destroy(mem_class, MKDEV(MEM_MAJOR, minor));
-+		kmsg_sys_buffer_del(minor);
-+		return 0;
++	log_b_new->buf = kmalloc(size, GFP_KERNEL);
++	if (!log_b_new->buf) {
++		kfree(log_b_new);
++		return -ENOMEM;
 +	}
-+	return -ENOTTY;
++
++	log_b_new->len = size;
++	log_b_new->lock = __RAW_SPIN_LOCK_UNLOCKED(log_b_new->lock);
++	init_waitqueue_head(&log_b_new->wait);
++	kref_init(&log_b_new->refcount);
++	log_b_new->mode = mode;
++
++	kref_get(&log_b_new->refcount);
++
++	spin_lock_irqsave(&kmsg_sys_list_lock, flags);
++
++	list_for_each_entry(log_b, &log_buf.list, list) {
++		if (log_b->minor - minor > 1)
++			break;
++
++		minor = log_b->minor;
++	}
++
++	if (!(minor & MINORMASK)) {
++		kref_put(&log_b->refcount, log_buf_release);
++		spin_unlock_irqrestore(&kmsg_sys_list_lock, flags);
++		return -ERANGE;
++	}
++
++	minor += 1;
++	log_b_new->minor = minor;
++
++	list_add_tail_rcu(&log_b_new->list, &log_b->list);
++
++	spin_unlock_irqrestore(&kmsg_sys_list_lock, flags);
++
++	return minor;
 +}
 +
-+static long kmsg_unlocked_ioctl_ext(struct file *file, unsigned int cmd,
-+				    unsigned long arg)
++void kmsg_sys_buffer_del(int minor)
 +{
-+	long ret = kmsg_ioctl_buffers(file, cmd, arg);
++	unsigned long flags;
++	struct log_buffer *log_b;
 +
-+	if (ret == -ENOTTY)
-+		return kmsg_fops.unlocked_ioctl(file, cmd, arg);
-+	return ret;
++	spin_lock_irqsave(&kmsg_sys_list_lock, flags);
++
++	list_for_each_entry(log_b, &log_buf.list, list) {
++		if (log_b->minor == minor)
++			break;
++	}
++
++	if (log_b == &log_buf) {
++		spin_unlock_irqrestore(&kmsg_sys_list_lock, flags);
++		return;
++	}
++
++	list_del_rcu(&log_b->list);
++
++	spin_unlock_irqrestore(&kmsg_sys_list_lock, flags);
++
++	log_b->minor = -1;
++	wake_up_interruptible(&log_b->wait);
++
++	kref_put(&log_b->refcount, log_buf_release);
 +}
 +
-+static long kmsg_compat_ioctl_ext(struct file *file, unsigned int cmd,
-+				  unsigned long arg)
-+{
-+	long ret = kmsg_ioctl_buffers(file, cmd, arg);
-+
-+	if (ret == -ENOTTY)
-+		return kmsg_fops.compat_ioctl(file, cmd, arg);
-+	return ret;
-+}
-+
-+static int kmsg_release_ext(struct inode *inode, struct file *file)
-+{
-+	return kmsg_fops.release(inode, file);
-+}
-+#endif
-+
- #define zero_lseek	null_lseek
- #define full_lseek      null_lseek
- #define write_zero	write_null
-@@ -779,6 +892,19 @@ static const struct file_operations full_fops = {
- 	.write		= write_full,
- };
- 
-+#ifdef CONFIG_PRINTK
-+static const struct file_operations kmsg_fops_ext = {
-+	.open		= kmsg_open_ext,
-+	.read		= kmsg_read_ext,
-+	.write_iter	= kmsg_write_iter_ext,
-+	.llseek		= kmsg_llseek_ext,
-+	.poll		= kmsg_poll_ext,
-+	.unlocked_ioctl	= kmsg_unlocked_ioctl_ext,
-+	.compat_ioctl	= kmsg_compat_ioctl_ext,
-+	.release	= kmsg_release_ext,
-+};
-+#endif
-+
- static const struct memdev {
- 	const char *name;
- 	umode_t mode;
-@@ -800,14 +926,10 @@ static const struct memdev {
- 	 [8] = { "random", 0666, &random_fops, 0 },
- 	 [9] = { "urandom", 0666, &urandom_fops, 0 },
- #ifdef CONFIG_PRINTK
--	[11] = { "kmsg", 0644, &kmsg_fops, 0 },
-+	[11] = { "kmsg", 0644, &kmsg_fops_ext, 0 },
- #endif
- };
- 
--#ifdef CONFIG_PRINTK
--#define KMSG_MINOR	11
--#endif
--
- static int memory_open(struct inode *inode, struct file *filp)
- {
- 	int minor;
-@@ -858,8 +980,6 @@ static char *mem_devnode(struct device *dev, umode_t *mode)
- 	return NULL;
- }
- 
--static struct class *mem_class;
--
- static int __init chr_dev_init(void)
- {
- 	int minor;
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 1ff9942..faf13a8 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -224,6 +224,7 @@ header-y += kernel-page-flags.h
- header-y += kexec.h
- header-y += keyboard.h
- header-y += keyctl.h
-+header-y += kmsg_ioctl.h
- 
- ifneq ($(wildcard $(srctree)/arch/$(SRCARCH)/include/uapi/asm/kvm.h \
- 		  $(srctree)/arch/$(SRCARCH)/include/asm/kvm.h),)
-diff --git a/include/uapi/linux/kmsg_ioctl.h b/include/uapi/linux/kmsg_ioctl.h
-new file mode 100644
-index 0000000..89c0c61
---- /dev/null
-+++ b/include/uapi/linux/kmsg_ioctl.h
-@@ -0,0 +1,30 @@
-+/*
-+ * This is ioctl include for kmsg* devices
-+ */
-+
-+#ifndef _KMSG_IOCTL_H_
-+#define _KMSG_IOCTL_H_
-+
-+#include <linux/ioctl.h>
-+#include <linux/types.h>
-+
-+struct kmsg_cmd_buffer_add {
-+	size_t size;
-+	unsigned short mode;
-+	int minor;
-+} __attribute__((packed));
-+
-+#define KMSG_IOCTL_MAGIC	0xBB
-+
-+/*
-+ * A ioctl interface for kmsg device.
-+ *
-+ * KMSG_CMD_BUFFER_ADD:	Creates additional kmsg device based on its size
-+ *			and mode. Minor of created device is put.
-+ * KMSG_CMD_BUFFER_DEL:	Removes additional kmsg device based on its minor
-+ */
-+#define KMSG_CMD_BUFFER_ADD		_IOWR(KMSG_IOCTL_MAGIC, 0x00, \
-+					      struct kmsg_cmd_buffer_add)
-+#define KMSG_CMD_BUFFER_DEL		_IOW(KMSG_IOCTL_MAGIC, 0x01, int)
-+
-+#endif
+ #ifdef CONFIG_KEXEC
+ /*
+  * This appends the listed symbols to /proc/vmcore
 -- 
 1.9.1
+
