@@ -1,30 +1,153 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [GIT PULL] User namespace related fixes for v4.2
-Date: Fri, 3 Jul 2015 15:10:40 -0700
-Message-ID: <CA+55aFw-DK-xDC-3HYa=BMX8WNyQgT9O01tihrAS9+-7PPj_jA@mail.gmail.com>
-References: <87381eyz26.fsf@x220.int.ebiederm.org>
-	<CA+55aFysKDXr2HEwNzm3z9QOw=E4ZeWcvYQ-xLhy5_k+rGbeRg@mail.gmail.com>
-	<87pp4eqktr.fsf@x220.int.ebiederm.org>
+From: Konstantin Khlebnikov <koct9i@gmail.com>
+Subject: Re: [RFCv2 4/5] mm/compaction: compaction calls generic migration
+Date: Sat, 4 Jul 2015 21:13:03 +0300
+Message-ID: <CALYGNiPSXP5f9hnYjmHJrg7GQE+fM0RuKQOSu7QpWO5EmbiGoQ@mail.gmail.com>
+References: <1435312710-15108-1-git-send-email-gioh.kim@lge.com>
+	<1435312710-15108-5-git-send-email-gioh.kim@lge.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <87pp4eqktr.fsf@x220.int.ebiederm.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>, Al Viro <viro@zeniv.linux.org.uk>
-Cc: Linux Containers <containers@lists.linux-foundation.org>, "<linux-fsdevel@vger.kernel.org>" <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, "Serge E. Hallyn" <serge@hallyn.com>, Richard Weinberger <richard@nod.at>, Kenton Varda <kenton@sandstorm.io>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, =?UTF-8?Q?St=C3=A9phane_Graber?= <stgraber@ubuntu.com>, Eric Windisch <ewindisch@docker.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tejun Heo <tj@kernel.org>, Seth Forshee <seth.forshee@canonical.com>, Omar Sandoval <osandov@osandov.com>, Ivan Delalande <colona@arista.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1435312710-15108-5-git-send-email-gioh.kim@lge.com>
+Sender: owner-linux-mm@kvack.org
+To: Gioh Kim <gioh.kim@lge.com>
+Cc: Jeff Layton <jlayton@poochiereds.net>, Bruce Fields <bfields@fieldses.org>, Vlastimil Babka <vbabka@suse.cz>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Al Viro <viro@zeniv.linux.org.uk>, "Michael S. Tsirkin" <mst@redhat.com>, Minchan Kim <minchan@kernel.org>, Rafael Aquini <aquini@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, virtualization@lists.linux-foundation.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 29, 2015 at 2:13 PM, Eric W. Biederman
-<ebiederm@xmission.com> wrote:
+On Fri, Jun 26, 2015 at 12:58 PM, Gioh Kim <gioh.kim@lge.com> wrote:
+> Compaction calls interfaces of driver page migration
+> instead of calling balloon migration directly.
 >
-> Can you live with the patch below and committing to never supporting
-> executables on proc and sysfs?
+> Signed-off-by: Gioh Kim <gioh.kim@lge.com>
+> ---
+>  drivers/virtio/virtio_balloon.c |  1 +
+>  mm/compaction.c                 |  9 +++++----
+>  mm/migrate.c                    | 21 ++++++++++++---------
+>  3 files changed, 18 insertions(+), 13 deletions(-)
+>
+> diff --git a/drivers/virtio/virtio_balloon.c b/drivers/virtio/virtio_balloon.c
+> index c49b553..5e5cbea 100644
+> --- a/drivers/virtio/virtio_balloon.c
+> +++ b/drivers/virtio/virtio_balloon.c
+> @@ -30,6 +30,7 @@
+>  #include <linux/balloon_compaction.h>
+>  #include <linux/oom.h>
+>  #include <linux/wait.h>
+> +#include <linux/anon_inodes.h>
+>
+>  /*
+>   * Balloon device works in 4K page units.  So each page is pointed to by
+> diff --git a/mm/compaction.c b/mm/compaction.c
+> index 16e1b57..cc5ec81 100644
+> --- a/mm/compaction.c
+> +++ b/mm/compaction.c
+> @@ -14,7 +14,7 @@
+>  #include <linux/backing-dev.h>
+>  #include <linux/sysctl.h>
+>  #include <linux/sysfs.h>
+> -#include <linux/balloon_compaction.h>
+> +#include <linux/compaction.h>
+>  #include <linux/page-isolation.h>
+>  #include <linux/kasan.h>
+>  #include "internal.h"
+> @@ -714,12 +714,13 @@ isolate_migratepages_block(struct compact_control *cc, unsigned long low_pfn,
+>
+>                 /*
+>                  * Check may be lockless but that's ok as we recheck later.
+> -                * It's possible to migrate LRU pages and balloon pages
+> +                * It's possible to migrate LRU pages and driver pages
+>                  * Skip any other type of page
+>                  */
+>                 if (!PageLRU(page)) {
+> -                       if (unlikely(balloon_page_movable(page))) {
+> -                               if (balloon_page_isolate(page)) {
+> +                       if (unlikely(driver_page_migratable(page))) {
+> +                               if (page->mapping->a_ops->isolatepage(page,
+> +                                                               isolate_mode)) {
 
-Sure. I don't think executables make any sense what-so-ever in those
-filesystems. I think it's fine saying that /proc and /sys cannot have
-executables in them, and then use that flag to just ignore the
-relevant mount flags.
+Dereferencing page->mapping isn't safe here.
+Page could be "truncated" from mapping at any time.
 
-Al, comments?
+As you can see  balloon_page_isolate() calls get_page_unless_zero,
+trylock_page and only after that checks balloon_page_movable again.
 
-                  Linus
+Existing code already does similar unsafe dereference in
+__isolate_lru_page(): page->mapping->a_ops->migratepage
+
+>                                         /* Successfully isolated */
+>                                         goto isolate_success;
+>                                 }
+> diff --git a/mm/migrate.c b/mm/migrate.c
+> index 236ee25..a0bc1e4 100644
+> --- a/mm/migrate.c
+> +++ b/mm/migrate.c
+> @@ -35,7 +35,7 @@
+>  #include <linux/hugetlb.h>
+>  #include <linux/hugetlb_cgroup.h>
+>  #include <linux/gfp.h>
+> -#include <linux/balloon_compaction.h>
+> +#include <linux/compaction.h>
+>  #include <linux/mmu_notifier.h>
+>
+>  #include <asm/tlbflush.h>
+> @@ -76,7 +76,7 @@ int migrate_prep_local(void)
+>   * from where they were once taken off for compaction/migration.
+>   *
+>   * This function shall be used whenever the isolated pageset has been
+> - * built from lru, balloon, hugetlbfs page. See isolate_migratepages_range()
+> + * built from lru, driver, hugetlbfs page. See isolate_migratepages_range()
+>   * and isolate_huge_page().
+>   */
+>  void putback_movable_pages(struct list_head *l)
+> @@ -92,8 +92,8 @@ void putback_movable_pages(struct list_head *l)
+>                 list_del(&page->lru);
+>                 dec_zone_page_state(page, NR_ISOLATED_ANON +
+>                                 page_is_file_cache(page));
+> -               if (unlikely(isolated_balloon_page(page)))
+> -                       balloon_page_putback(page);
+> +               if (unlikely(driver_page_migratable(page)))
+> +                       page->mapping->a_ops->putbackpage(page);
+>                 else
+>                         putback_lru_page(page);
+>         }
+> @@ -844,15 +844,18 @@ static int __unmap_and_move(struct page *page, struct page *newpage,
+>                 }
+>         }
+>
+> -       if (unlikely(isolated_balloon_page(page))) {
+> +       if (unlikely(driver_page_migratable(page))) {
+>                 /*
+> -                * A ballooned page does not need any special attention from
+> +                * A driver page does not need any special attention from
+>                  * physical to virtual reverse mapping procedures.
+>                  * Skip any attempt to unmap PTEs or to remap swap cache,
+>                  * in order to avoid burning cycles at rmap level, and perform
+>                  * the page migration right away (proteced by page lock).
+>                  */
+> -               rc = balloon_page_migrate(newpage, page, mode);
+> +               rc = page->mapping->a_ops->migratepage(page->mapping,
+> +                                                      newpage,
+> +                                                      page,
+> +                                                      mode);
+>                 goto out_unlock;
+>         }
+>
+> @@ -962,8 +965,8 @@ out:
+>         if (rc != MIGRATEPAGE_SUCCESS && put_new_page) {
+>                 ClearPageSwapBacked(newpage);
+>                 put_new_page(newpage, private);
+> -       } else if (unlikely(__is_movable_balloon_page(newpage))) {
+> -               /* drop our reference, page already in the balloon */
+> +       } else if (unlikely(driver_page_migratable(newpage))) {
+> +               /* drop our reference */
+>                 put_page(newpage);
+>         } else
+>                 putback_lru_page(newpage);
+> --
+> 1.9.1
+>
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
