@@ -1,49 +1,86 @@
-From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Subject: Re: [GIT PULL] User namespace related fixes for v4.2
-Date: Sun, 5 Jul 2015 00:11:18 +0100
-Message-ID: <20150704231118.GT17109@ZenIV.linux.org.uk>
-References: <87381eyz26.fsf@x220.int.ebiederm.org>
-	<CA+55aFysKDXr2HEwNzm3z9QOw=E4ZeWcvYQ-xLhy5_k+rGbeRg@mail.gmail.com>
-	<87pp4eqktr.fsf@x220.int.ebiederm.org>
-	<CA+55aFw-DK-xDC-3HYa=BMX8WNyQgT9O01tihrAS9+-7PPj_jA@mail.gmail.com>
+From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH RESEND] virtio: Fix typecast of pointer in vring_init()
+Date: Sun, 5 Jul 2015 12:58:53 +0200
+Message-ID: <20150705124937-mutt-send-email-mst@redhat.com>
+References: <1435821682-1809-1-git-send-email-thuth@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CA+55aFw-DK-xDC-3HYa=BMX8WNyQgT9O01tihrAS9+-7PPj_jA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, "<linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ivan Delalande <colona-nzgTgzXrdUbQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1435821682-1809-1-git-send-email-thuth-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Thomas Huth <thuth-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 03, 2015 at 03:10:40PM -0700, Linus Torvalds wrote:
-> On Mon, Jun 29, 2015 at 2:13 PM, Eric W. Biederman
-> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> >
-> > Can you live with the patch below and committing to never supporting
-> > executables on proc and sysfs?
-> 
-> Sure. I don't think executables make any sense what-so-ever in those
-> filesystems. I think it's fine saying that /proc and /sys cannot have
-> executables in them, and then use that flag to just ignore the
-> relevant mount flags.
-> 
-> Al, comments?
+On Thu, Jul 02, 2015 at 09:21:22AM +0200, Thomas Huth wrote:
+> The virtio_ring.h header is used in userspace programs (ie. QEMU),
+> too. Here we can not assume that sizeof(pointer) is the same as
+> sizeof(long), e.g. when compiling for Windows, so the typecast in
+> vring_init() should be done with (uintptr_t) instead of (unsigned lon=
+g).
+>=20
+> Signed-off-by: Thomas Huth <thuth-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
-	I can live with that, but I would prefer that to be a superblock
-flag force-set in ->mount() (and preserved in ->remount_fs()) rather than
-Yet Another FS Type Flag.  OTOH, it's not hard to change afterwards.
+This seems to break some userspace too:
 
-	Al, bloody annoyed by having spent hours debugging an odd corruption
-in merge candidate, only to find that it correlated to temperature of the
-host ;-/  Seem to be all gone after replacing CPU fan and cleaning the
-mess under it...
+  INSTALL usr/include/linux/ (413 files)
+  CHECK   usr/include/linux/ (413 files)
+  HOSTCC  Documentation/accounting/getdelays
+  HOSTCC  Documentation/connector/ucon
+  HOSTCC  Documentation/mic/mpssd/mpssd.o
+In file included from Documentation/mic/mpssd/mpssd.c:36:0:
+=2E/usr/include/linux/virtio_ring.h: In function =E2=80=98vring_init=E2=
+=80=99:
+=2E/usr/include/linux/virtio_ring.h:146:24: error: =E2=80=98uintptr_t=E2=
+=80=99 undeclared
+(first use in this function)
+  vr->used =3D (void *)(((uintptr_t)&vr->avail->ring[num] +
+sizeof(__virtio16)
+                        ^
+=2E/usr/include/linux/virtio_ring.h:146:24: note: each undeclared
+identifier is reported only once for each function it appears in
+scripts/Makefile.host:108: recipe for target
+'Documentation/mic/mpssd/mpssd.o' failed
+make[3]: *** [Documentation/mic/mpssd/mpssd.o] Error 1
+scripts/Makefile.build:403: recipe for target 'Documentation/mic/mpssd'
+failed
+make[2]: *** [Documentation/mic/mpssd] Error 2
+scripts/Makefile.build:403: recipe for target 'Documentation/mic' faile=
+d
+make[1]: *** [Documentation/mic] Error 2
+
+
+E.g. fuse.h has this code:
+#ifdef __KERNEL__
+#include <linux/types.h>
+#else
+#include <stdint.h>
+#endif
+
+Maybe we need something similar.
+
+> ---
+>  include/uapi/linux/virtio_ring.h | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>=20
+> diff --git a/include/uapi/linux/virtio_ring.h b/include/uapi/linux/vi=
+rtio_ring.h
+> index 915980a..8682551 100644
+> --- a/include/uapi/linux/virtio_ring.h
+> +++ b/include/uapi/linux/virtio_ring.h
+> @@ -143,7 +143,7 @@ static inline void vring_init(struct vring *vr, u=
+nsigned int num, void *p,
+>  	vr->num =3D num;
+>  	vr->desc =3D p;
+>  	vr->avail =3D p + num*sizeof(struct vring_desc);
+> -	vr->used =3D (void *)(((unsigned long)&vr->avail->ring[num] + sizeo=
+f(__virtio16)
+> +	vr->used =3D (void *)(((uintptr_t)&vr->avail->ring[num] + sizeof(__=
+virtio16)
+>  		+ align-1) & ~(align - 1));
+>  }
+> =20
+> --=20
+> 1.8.3.1
