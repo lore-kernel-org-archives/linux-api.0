@@ -1,51 +1,23 @@
-From: "Winkler, Tomas" <tomas.winkler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: RE: Odd hang on suspend and shutdown
-Date: Mon, 6 Jul 2015 13:26:40 +0000
-Message-ID: <5B8DA87D05A7694D9FA63FD143655C1B3D3E1F3F@hasmsx108.ger.corp.intel.com>
+From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: Odd hang on suspend and shutdown
+Date: Mon, 6 Jul 2015 08:28:48 -0700
+Message-ID: <CA+55aFyY--40X6Qem1RkS9adP09GvHppD+YYh5f9W3CO__BXZQ@mail.gmail.com>
 References: <CA+55aFy1x6iwbdV8WfR+wawj_1+PxJ+P-Js=EVqD9ZsQetSNJA@mail.gmail.com>
+	<5B8DA87D05A7694D9FA63FD143655C1B3D3E1F3F@hasmsx108.ger.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CA+55aFy1x6iwbdV8WfR+wawj_1+PxJ+P-Js=EVqD9ZsQetSNJA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Content-Language: en-US
+In-Reply-To: <5B8DA87D05A7694D9FA63FD143655C1B3D3E1F3F-Jy8z56yoSI8MvF1YICWikbfspsVTdybXVpNB7YpNyf8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+To: "Winkler, Tomas" <tomas.winkler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-DQo+IA0KPiBPbiBteSBTb255IFZBSU8gUHJvIDExIGxhcHRvcCwgY29tbWl0IGM5M2I3NmIzNGI0
-ZCAoIm1laTogYnVzOiByZXBvcnQNCj4gYWxzbyB1dWlkIGluIG1vZHVsZSBhbGlhcyIpIHNlZW1z
-IHRvIGNhdXNlIHByb2JsZW1zIGF0IHN1c3BlbmQgYW5kDQo+IHNodXRkb3duLg0KPiANCj4gSW4g
-cGFydGljdWxhciwgcmV2ZXJ0aW5nIGp1c3QgdGhlIG9uZWxpbmVyIHRvIGRyaXZlcnMvbmZjL3Bu
-NTQ0L21laS5jDQo+IHNlZW1zIHRvIGZpeCB0aGluZ3MgZm9yIG1lLiBUaGUgYmlzZWN0aW9uIHdh
-cyBhIHBhaW4sIGJlY2F1c2UgaXQgdG9vaw0KPiBtZSBmb3JldmVyIHRvIHJlYWxpemUgdGhhdCBp
-dCB3YXMgdGhhdCBvbmUtbGluZXIgdGhhdCBjYXVzZWQgaXQ6IEkgaGFkDQo+IGluaXRpYWxseSB1
-bmRvbmUgdGhhdCBvbmUgbGluZSBzaW1wbHkgYmVjYXVzZSBpdCBkaWRuJ3QgY29tcGlsZSB3aXRo
-DQo+IGl0IGluIHBsYWNlIChjb21wbGFpbnRzIGFib3V0IE1FSV9ORkNfVVVJRCBub3QgYmVpbmcg
-Y29uc3RhbnQpLiBTbyBJDQo+IGNvbnRpbnVlZCB0byBiaXNlY3Qgd2l0aCB0aGUgZml4IHVuaW50
-ZW50aW9uYWxseSBpbiBwbGFjZS4NCj4gDQo+IFNvIGp1c3QgcmVtb3ZpbmcgdGhlIE1FSV9ORkNf
-VVVJRCBlbnRyeSBmcm9tIHRoZSBwbjU0NF9tZWlfdGJsW10gYXJyYXkNCj4gaW5pdGlhbGl6YXRp
-b24gbWFrZXMgdGhpbmdzIHdvcmsgZm9yIG1lIGFnYWluLg0KPiANCj4gVGhlIHN5bXB0b21zIGFy
-ZSBqdXN0IGEgaGFyZCBoYW5nIGF0IHN1c3BlbmQgb3Igc2h1dGRvd24uDQo+IA0KPiBUaGlzIGlz
-IGEgcHJldHR5IHJlZ3VsYXIgSW50ZWwtb25seSBsYXB0b3AsIHJ1bm5pbmcgRmVkb3JhIDIyLg0K
-PiANCj4gQW55IGlkZWFzPw0KPiANCj4gICAgICAgICAgICAgICAgICAgICBMaW51cw0KDQoNCkkn
-bSBsb29raW5nIGludG8gdGhpcyAobm90IHN1cmUgSSBnZXQgdGhlIGV4YWN0IHBsYXRmb3JtIHRv
-IHRlc3Qgd2l0aCkNCg0KVGhlcmUgd2FzIGEgbWlzcyBvcmRlciBpbiBob3cgcGF0Y2hlcyB3ZXJl
-IGFwcGxpZWQsIHdoaWNoIG1heSBjb25mdXNlIGJpc2VjdGlvbiBldmVuIG1vcmUgDQpUaGUgZml4
-IGZvciB0aGF0IHdhcyBwcm92aWRlZCBpbiB0aGlzIHBhdGNoDQoNCkluIGNvbW1pdCBiMTQ0Y2Uy
-ZDM3NjE5ZTA1YWZkYjBhMTU2NzY1MDBkNzZhNjRiMWJlDQpBdXRob3I6IEdyZWcgS3JvYWgtSGFy
-dG1hbiA8Z3JlZ2toQGxpbnV4Zm91bmRhdGlvbi5vcmc+DQpEYXRlOiAgIFdlZCBNYXkgMjcgMTc6
-MTc6MjcgMjAxNSAtMDcwMA0KDQogICAgbWVpOiBmaXggdXAgdXVpZCBtYXRjaGluZw0KDQoNCldl
-IGhhZCAgc3VzcGVuZCBpc3N1ZSB0aGF0IHdhcyByZXNvbHZlZCBieSBhIHBhdGNoIGJlbGxvdywg
-YnV0IGl0J3Mgbm90IHJlbGF0ZWQgdG8gdGhlIE5GQyBhdCBhbGwuIA0KVGhlIE5GQyB1bmRlciBI
-YXN3ZWxsIHNob3VsZCBub3QgYmUgYWN0dWFsbHkgb3BlcmF0aW9uYWwsIEknbSBub3Qgc3VyZSBp
-ZiBTYW11ZWwgaXMgcGxhbm5pbmcgdG8gc3VwcG9ydCBpdCBhdCBhbGwuDQpTdGlsbCBuZWVkIHRv
-IGZpZ3VyZSBvdXQgd2hhdCBjYXVzZWQgdGhhdCByZWdyZXNzaW9uLiANCiANCmNvbW1pdCAzZGMx
-OTZlYWUxZGI1NDhmMDVlNTNlNTg3NWZmODdiOGZmNzlmMjQ5DQpBdXRob3I6IEFsZXhhbmRlciBV
-c3lza2luIDxhbGV4YW5kZXIudXN5c2tpbkBpbnRlbC5jb20+DQpEYXRlOiAgIFNhdCBKdW4gMTMg
-MDg6NTE6MTcgMjAxNSArMDMwMA0KDQogICAgbWVpOiBtZTogd2FpdCBmb3IgcG93ZXIgZ2F0aW5n
-IGV4aXQgY29uZmlybWF0aW9uDQoNCiAgICBGaXggdGhlIGhibSBwb3dlciBnYXRpbmcgc3RhdGUg
-bWFjaGluZSBzbyBpdCB3aWxsIHdhaXQgdGlsbCBpdCByZWNlaXZlcw0KICAgIGNvbmZpcm1hdGlv
-biBpbnRlcnJ1cHQgZm9yIHRoZSBQR19JU09MQVRJT05fRVhJVCBtZXNzYWdlLg0KDQpUaGFua3MN
-ClRvbWFzDQoNCg0K
+On Mon, Jul 6, 2015 at 6:26 AM, Winkler, Tomas <tomas.winkler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+>
+> We had  suspend issue that was resolved by a patch below
+
+That patch is in 4.2-rc1, and that's what I see the problem with. So
+it doesn't fix anything for me, I'm afraid.
+
+                      Linus
