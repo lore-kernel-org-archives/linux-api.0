@@ -1,7 +1,7 @@
 From: Andrey Vagin <avagin@openvz.org>
-Subject: [PATCH 19/24] task_diag: Add option to dump all threads for all tasks
-Date: Mon,  6 Jul 2015 11:47:20 +0300
-Message-ID: <1436172445-6979-20-git-send-email-avagin@openvz.org>
+Subject: [PATCH 21/24] task diag: Add support for TGID attribute
+Date: Mon,  6 Jul 2015 11:47:22 +0300
+Message-ID: <1436172445-6979-22-git-send-email-avagin@openvz.org>
 References: <1436172445-6979-1-git-send-email-avagin@openvz.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1436172445-6979-1-git-send-email-avagin@openvz.org>
@@ -12,126 +12,60 @@ List-Id: linux-api@vger.kernel.org
 
 From: David Ahern <dsahern@gmail.com>
 
-New dump strategy to walk all threads of all processes.
+Add TGID attribute and put in every message. This is need for perf for
+example when processing messages with maps.
 
 Signed-off-by: David Ahern <dsahern@gmail.com>
 Signed-off-by: Andrey Vagin <avagin@openvz.org>
 ---
- include/uapi/linux/task_diag.h |  7 +++---
- kernel/taskdiag.c              | 55 ++++++++++++++++++++++++++++++++++++------
- 2 files changed, 52 insertions(+), 10 deletions(-)
+ include/uapi/linux/task_diag.h | 1 +
+ kernel/taskdiag.c              | 8 +++++++-
+ 2 files changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/include/uapi/linux/task_diag.h b/include/uapi/linux/task_diag.h
-index 4a1cecb..19c9579 100644
+index 19c9579..935502b 100644
 --- a/include/uapi/linux/task_diag.h
 +++ b/include/uapi/linux/task_diag.h
-@@ -149,9 +149,10 @@ static inline struct task_diag_vma_stat *task_diag_vma_stat(struct task_diag_vma
- 		vma = (void *) vma + vma->vma_len)
+@@ -15,6 +15,7 @@ enum {
  
- #define TASK_DIAG_DUMP_ALL	0
--#define TASK_DIAG_DUMP_CHILDREN	1
--#define TASK_DIAG_DUMP_THREAD	2
--#define TASK_DIAG_DUMP_ONE	3
-+#define TASK_DIAG_DUMP_ALL_THREAD	1
-+#define TASK_DIAG_DUMP_CHILDREN	2
-+#define TASK_DIAG_DUMP_THREAD	3
-+#define TASK_DIAG_DUMP_ONE	4
+ 	/* other attributes */
+ 	TASK_DIAG_PID	= 64,	/* u32 */
++	TASK_DIAG_TGID,		/* u32 */
  
- struct task_diag_pid {
- 	__u64	show_flags;
+ 	__TASK_DIAG_ATTR_MAX
+ #define TASK_DIAG_ATTR_MAX (__TASK_DIAG_ATTR_MAX - 1)
 diff --git a/kernel/taskdiag.c b/kernel/taskdiag.c
-index 20494ee..e5a5eed 100644
+index 6549df3..ccba538 100644
 --- a/kernel/taskdiag.c
 +++ b/kernel/taskdiag.c
-@@ -521,13 +521,9 @@ struct task_iter {
- 	struct netlink_callback *cb;
- 	struct task_struct *parent;
+@@ -13,6 +13,7 @@ static size_t taskdiag_packet_size(u64 show_flags, int n_vma)
+ 	size_t size;
  
--	union {
--		struct tgid_iter tgid;
--		struct {
--			unsigned int		pos;
--			struct task_struct	*task;
--		};
--	};
-+	struct tgid_iter tgid;
-+	unsigned int		pos;
-+	struct task_struct	*task;
- };
+ 	size = nla_total_size(sizeof(u32)); /* PID */
++	       + nla_total_size(sizeof(u32)); /* TGID */
  
- static void iter_stop(struct task_iter *iter)
-@@ -541,6 +537,12 @@ static void iter_stop(struct task_iter *iter)
- 	case TASK_DIAG_DUMP_ALL:
- 		task = iter->tgid.task;
- 		break;
-+	case TASK_DIAG_DUMP_ALL_THREAD:
-+		/* release both tgid task and thread task */
-+		if (iter->task)
-+			put_task_struct(iter->task);
-+		task = iter->tgid.task;
-+		break;
- 	default:
- 		task = iter->task;
- 	}
-@@ -590,6 +592,25 @@ static struct task_struct *iter_start(struct task_iter *iter)
- 		iter->tgid.task = NULL;
- 		iter->tgid = next_tgid(iter->ns, iter->tgid);
- 		return iter->tgid.task;
-+
-+	case TASK_DIAG_DUMP_ALL_THREAD:
-+		iter->pos = iter->cb->args[1];
-+		iter->tgid.tgid = iter->cb->args[0];
-+		iter->tgid.task = NULL;
-+		iter->tgid = next_tgid(iter->ns, iter->tgid);
-+		if (!iter->tgid.task)
-+			return NULL;
-+
-+		iter->task = task_first_tid(iter->tgid.task, 0, iter->pos, iter->ns);
-+		if (!iter->task) {
-+			iter->pos = 0;
-+			iter->tgid.tgid += 1;
-+			iter->tgid = next_tgid(iter->ns, iter->tgid);
-+			iter->task = iter->tgid.task;
-+			if (iter->task)
-+				get_task_struct(iter->task);
-+		}
-+		return iter->task;
- 	}
+ 	if (show_flags & TASK_DIAG_SHOW_BASE)
+ 		size += nla_total_size(sizeof(struct task_diag_base));
+@@ -451,7 +452,7 @@ static int task_diag_fill(struct task_struct *tsk, struct sk_buff *skb,
+ 	int err = 0, i = 0, n = 0;
+ 	bool progress = false;
+ 	int flags = 0;
+-	u32 pid;
++	u32 pid, tgid;
  
- 	return ERR_PTR(-EINVAL);
-@@ -622,6 +643,24 @@ static struct task_struct *iter_next(struct task_iter *iter)
- 		iter->tgid = next_tgid(iter->ns, iter->tgid);
- 		iter->cb->args[0] = iter->tgid.tgid;
- 		return iter->tgid.task;
-+
-+	case TASK_DIAG_DUMP_ALL_THREAD:
-+		iter->pos++;
-+		iter->task = task_next_tid(iter->task);
-+		if (!iter->task) {
-+			iter->pos = 0;
-+			iter->tgid.tgid += 1;
-+			iter->tgid = next_tgid(iter->ns, iter->tgid);
-+			iter->task = iter->tgid.task;
-+			if (iter->task)
-+				get_task_struct(iter->task);
-+		}
-+
-+		/* save current position */
-+		iter->cb->args[0] = iter->tgid.tgid;
-+		iter->cb->args[1] = iter->pos;
-+
-+		return iter->task;
- 	}
+ 	if (cb) {
+ 		n = cb->args[2];
+@@ -468,6 +469,11 @@ static int task_diag_fill(struct task_struct *tsk, struct sk_buff *skb,
+ 	if (err)
+ 		goto err;
  
- 	return NULL;
-@@ -647,6 +686,8 @@ int taskdiag_dumpit(struct sk_buff *skb, struct netlink_callback *cb)
- 	iter.ns     = ns;
- 	iter.cb     = cb;
- 	iter.parent = NULL;
-+	iter.pos    = 0;
-+	iter.task   = NULL;
- 
- 	task = iter_start(&iter);
- 	if (IS_ERR(task))
++	tgid = task_tgid_vnr(tsk);
++	err = nla_put_u32(skb, TASK_DIAG_TGID, tgid);
++	if (err)
++		goto err;
++
+ 	if (show_flags & TASK_DIAG_SHOW_BASE) {
+ 		if (i >= n)
+ 			err = fill_task_base(tsk, skb);
 -- 
 2.1.0
