@@ -1,83 +1,82 @@
-From: Will Deacon <will.deacon@arm.com>
-Subject: Re: [PATCH v7 09/11] KVM: arm64: guest debug, HW assisted debug
- support
-Date: Mon, 6 Jul 2015 09:51:40 +0100
-Message-ID: <20150706085140.GA30342@arm.com>
-References: <1435775343-20034-1-git-send-email-alex.bennee@linaro.org>
- <1435775343-20034-10-git-send-email-alex.bennee@linaro.org>
- <20150702084847.GB3418@arm.com>
- <87pp4asm6u.fsf@linaro.org>
- <20150703092323.GA1588@arm.com>
- <87h9plrzqq.fsf@linaro.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <kvm-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <87h9plrzqq.fsf@linaro.org>
-Sender: kvm-owner@vger.kernel.org
-To: Alex =?iso-8859-1?Q?Benn=E9e?= <alex.bennee@linaro.org>
-Cc: "kvm@vger.kernel.org" <kvm@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "kvmarm@lists.cs.columbia.edu" <kvmarm@lists.cs.columbia.edu>, "christoffer.dall@linaro.org" <christoffer.dall@linaro.org>, Marc Zyngier <Marc.Zyngier@arm.com>, "peter.maydell@linaro.org" <peter.maydell@linaro.org>, "agraf@suse.de" <agraf@suse.de>, "drjones@redhat.com" <drjones@redhat.com>, "pbonzini@redhat.com" <pbonzini@redhat.com>, "zhichao.huang@linaro.org" <zhichao.huang@linaro.org>, "jan.kiszka@siemens.com" <jan.kiszka@siemens.com>, "dahi@linux.vnet.ibm.com" <dahi@linux.vnet.ibm.com>, "r65777@freescale.com" <r65777@freescale.com>, "bp@suse.de" <bp@suse.de>, Gleb Natapov <gleb@kernel.org>, Jonathan Corbet <corbet@lwn.net>, Catalin Marinas <Catalin.Marinas@arm.com>, Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, Ingo Molnar <mingo@kernel.o>
+From: Andrey Vagin <avagin@openvz.org>
+Subject: [PATCH 20/24] task_diag: Only add VMAs for thread_group leader
+Date: Mon,  6 Jul 2015 11:47:21 +0300
+Message-ID: <1436172445-6979-21-git-send-email-avagin@openvz.org>
+References: <1436172445-6979-1-git-send-email-avagin@openvz.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1436172445-6979-1-git-send-email-avagin@openvz.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, Andrey Vagin <avagin@openvz.org>, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Cyrill Gorcunov <gorcunov@openvz.org>, Pavel Emelyanov <xemul@parallels.com>, Roger Luethi <rl@hellgate.ch>, Arnd Bergmann <arnd@arndb.de>, Arnaldo Carvalho de Melo <acme@kernel.org>, David Ahern <dsahern@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Pavel Odintsov <pavel.odintsov@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 03, 2015 at 05:07:41PM +0100, Alex Benn=E9e wrote:
-> Will Deacon <will.deacon@arm.com> writes:
-> > On Thu, Jul 02, 2015 at 02:50:33PM +0100, Alex Benn=E9e wrote:
-> >> Are you happy with this?:
-> >
-> > [...]
-> >
-> >> +/**
-> >> + * kvm_arch_dev_ioctl_check_extension
-> >> + *
-> >> + * We currently assume that the number of HW registers is uniform
-> >> + * across all CPUs (see cpuinfo_sanity_check).
-> >> + */
-> >>  int kvm_arch_dev_ioctl_check_extension(long ext)
-> >>  {
-> >>         int r;
-> >> @@ -64,6 +71,12 @@ int kvm_arch_dev_ioctl_check_extension(long ext=
-)
-> >>         case KVM_CAP_ARM_EL1_32BIT:
-> >>                 r =3D cpu_has_32bit_el1();
-> >>                 break;
-> >> +       case KVM_CAP_GUEST_DEBUG_HW_BPS:
-> >> +               r =3D hw_breakpoint_slots(TYPE_INST);
-> >> +               break;
-> >> +       case KVM_CAP_GUEST_DEBUG_HW_WPS:
-> >> +               r  =3D hw_breakpoint_slots(TYPE_DATA);
-> >> +               break;
-> >
-> > Whilst I much prefer this code, it actually adds an unwanted depend=
-ency
-> > on PERF_EVENTS that I didn't think about to start with. Sorry to ke=
-ep
-> > messing you about -- I guess your original patch is the best thing =
-after
-> > all.
->=20
-> Everything looks to be in hw_breakpoint.[ch] which does depend on
-> CONFIG_HAVE_HW_BREAKPOINT which depends on PERF_EVENTS to be built.
-> However the previous code depended on this behaviour as well.
+From: David Ahern <dsahern@gmail.com>
 
-I think your original approach (of sticking stuff in the header file) w=
-orks
-regardless of the CONFIG option, no?
+threads of a process share the same VMAs, so when dumping all threads
+for all processes only push vma data for group leader.
 
-> It would seem weird to enable guest debug using HW debug registers to
-> debug the guest yet not allowing the host kernel to use them? Of cour=
-se
-> this is the only code they would share as all the magic of guest
-> debugging is already mostly there for dirty guest handling.
->=20
-> I'm not familiar with Kconfig but it looks like this is all part of
-> arm64 defconfig. Are people really going to want to disable PERF_EVEN=
-TS
-> but still debug their guests with HW support?
+Signed-off-by: David Ahern <dsahern@gmail.com>
+Signed-off-by: Andrey Vagin <avagin@openvz.org>
+---
+ kernel/taskdiag.c | 17 +++++++++++++----
+ 1 file changed, 13 insertions(+), 4 deletions(-)
 
-Then it's your call. I just find the host dependency on perf a bit weir=
-d
-to get guest debug working (especially as the dependency is completely
-"fake" because we don't use any perf infrastructure at all).
-
-Will
+diff --git a/kernel/taskdiag.c b/kernel/taskdiag.c
+index e5a5eed..6549df3 100644
+--- a/kernel/taskdiag.c
++++ b/kernel/taskdiag.c
+@@ -443,9 +443,10 @@ err:
+ }
+ 
+ static int task_diag_fill(struct task_struct *tsk, struct sk_buff *skb,
+-				u64 show_flags, u32 portid, u32 seq,
+-				struct netlink_callback *cb)
++			  struct task_diag_pid *req, u32 portid, u32 seq,
++			  struct netlink_callback *cb)
+ {
++	u64 show_flags = req->show_flags;
+ 	void *reply;
+ 	int err = 0, i = 0, n = 0;
+ 	bool progress = false;
+@@ -492,6 +493,13 @@ static int task_diag_fill(struct task_struct *tsk, struct sk_buff *skb,
+ 	}
+ 
+ 	if (show_flags & TASK_DIAG_SHOW_VMA) {
++		/* if the request is to dump all threads of all processes
++		 * only show VMAs for group leader.
++		 */
++		if (req->dump_strategy == TASK_DIAG_DUMP_ALL_THREAD &&
++		    !thread_group_leader(tsk))
++			goto done;
++
+ 		if (i >= n)
+ 			err = fill_vma(tsk, skb, cb, &progress, show_flags);
+ 		if (err)
+@@ -499,6 +507,7 @@ static int task_diag_fill(struct task_struct *tsk, struct sk_buff *skb,
+ 		i++;
+ 	}
+ 
++done:
+ 	genlmsg_end(skb, reply);
+ 	if (cb)
+ 		cb->args[2] = 0;
+@@ -696,7 +705,7 @@ int taskdiag_dumpit(struct sk_buff *skb, struct netlink_callback *cb)
+ 	for (; task; task = iter_next(&iter)) {
+ 		if (!ptrace_may_access(task, PTRACE_MODE_READ))
+ 			continue;
+-		rc = task_diag_fill(task, skb, iter.req.show_flags,
++		rc = task_diag_fill(task, skb, &iter.req,
+ 				NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq, cb);
+ 		if (rc < 0) {
+ 			if (rc != -EMSGSIZE) {
+@@ -755,7 +764,7 @@ int taskdiag_doit(struct sk_buff *skb, struct genl_info *info)
+ 			return -EMSGSIZE;
+ 		}
+ 
+-		rc = task_diag_fill(tsk, msg, req.show_flags,
++		rc = task_diag_fill(tsk, msg, &req,
+ 					info->snd_portid, info->snd_seq, NULL);
+ 		if (rc != -EMSGSIZE)
+ 			break;
+-- 
+2.1.0
