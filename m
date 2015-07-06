@@ -1,92 +1,93 @@
-From: Alex =?utf-8?Q?Benn=C3=A9e?= <alex.bennee@linaro.org>
-Subject: Re: [PATCH v7 09/11] KVM: arm64: guest debug, HW assisted debug support
-Date: Mon, 06 Jul 2015 10:02:46 +0100
-Message-ID: <87vbdxacax.fsf@linaro.org>
-References: <1435775343-20034-1-git-send-email-alex.bennee@linaro.org> <1435775343-20034-10-git-send-email-alex.bennee@linaro.org> <20150702084847.GB3418@arm.com> <87pp4asm6u.fsf@linaro.org> <20150703092323.GA1588@arm.com> <87h9plrzqq.fsf@linaro.org> <20150706085140.GA30342@arm.com>
+From: Thomas Huth <thuth-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH RESEND] virtio: Fix typecast of pointer in vring_init()
+Date: Mon, 6 Jul 2015 11:24:42 +0200
+Message-ID: <20150706112442.60079de5@thh440s>
+References: <1435821682-1809-1-git-send-email-thuth@redhat.com>
+	<20150705124937-mutt-send-email-mst@redhat.com>
+	<20150705145917-mutt-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <20150706085140.GA30342@arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Will Deacon <will.deacon@arm.com>
-Cc: "kvm@vger.kernel.org" <kvm@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "kvmarm@lists.cs.columbia.edu" <kvmarm@lists.cs.columbia.edu>, "christoffer.dall@linaro.org" <christoffer.dall@linaro.org>, Marc Zyngier <Marc.Zyngier@arm.com>, "peter.maydell@linaro.org" <peter.maydell@linaro.org>, "agraf@suse.de" <agraf@suse.de>, "drjones@redhat.com" <drjones@redhat.com>, "pbonzini@redhat.com" <pbonzini@redhat.com>, "zhichao.huang@linaro.org" <zhichao.huang@linaro.org>, "jan.kiszka@siemens.com" <jan.kiszka@siemens.com>, "dahi@linux.vnet.ibm.com" <dahi@linux.vnet.ibm.com>, "r65777@freescale.com" <r65777@freescale.com>, "bp@suse.de" <bp@suse.de>, Gleb Natapov <gleb@kernel.org>, Jonathan Corbet <corbet@lwn.net>, Catalin Marinas <Catalin.Marinas@arm.com>, Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, Ingo Molnar <mingo@kernel.o>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150705145917-mutt-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On Sun, 5 Jul 2015 14:59:54 +0200
+"Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 
-Will Deacon <will.deacon@arm.com> writes:
+> On Sun, Jul 05, 2015 at 12:58:53PM +0200, Michael S. Tsirkin wrote:
+> > On Thu, Jul 02, 2015 at 09:21:22AM +0200, Thomas Huth wrote:
+> > > The virtio_ring.h header is used in userspace programs (ie. QEMU)=
+,
+> > > too. Here we can not assume that sizeof(pointer) is the same as
+> > > sizeof(long), e.g. when compiling for Windows, so the typecast in
+> > > vring_init() should be done with (uintptr_t) instead of (unsigned=
+ long).
+> > >=20
+> > > Signed-off-by: Thomas Huth <thuth-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> >=20
+> > This seems to break some userspace too:
+> >=20
+> >   INSTALL usr/include/linux/ (413 files)
+> >   CHECK   usr/include/linux/ (413 files)
+> >   HOSTCC  Documentation/accounting/getdelays
+> >   HOSTCC  Documentation/connector/ucon
+> >   HOSTCC  Documentation/mic/mpssd/mpssd.o
+> > In file included from Documentation/mic/mpssd/mpssd.c:36:0:
+> > ./usr/include/linux/virtio_ring.h: In function =E2=80=98vring_init=E2=
+=80=99:
+> > ./usr/include/linux/virtio_ring.h:146:24: error: =E2=80=98uintptr_t=
+=E2=80=99 undeclared
+> > (first use in this function)
+> >   vr->used =3D (void *)(((uintptr_t)&vr->avail->ring[num] +
+> > sizeof(__virtio16)
+> >                         ^
+> > ./usr/include/linux/virtio_ring.h:146:24: note: each undeclared
+> > identifier is reported only once for each function it appears in
+> > scripts/Makefile.host:108: recipe for target
 
-> On Fri, Jul 03, 2015 at 05:07:41PM +0100, Alex Benn=C3=A9e wrote:
->> Will Deacon <will.deacon@arm.com> writes:
->> > On Thu, Jul 02, 2015 at 02:50:33PM +0100, Alex Benn=C3=A9e wrote:
->> >> Are you happy with this?:
->> >
->> > [...]
->> >
->> >> +/**
->> >> + * kvm_arch_dev_ioctl_check_extension
->> >> + *
->> >> + * We currently assume that the number of HW registers is unifor=
-m
->> >> + * across all CPUs (see cpuinfo_sanity_check).
->> >> + */
->> >>  int kvm_arch_dev_ioctl_check_extension(long ext)
->> >>  {
->> >>         int r;
->> >> @@ -64,6 +71,12 @@ int kvm_arch_dev_ioctl_check_extension(long ex=
-t)
->> >>         case KVM_CAP_ARM_EL1_32BIT:
->> >>                 r =3D cpu_has_32bit_el1();
->> >>                 break;
->> >> +       case KVM_CAP_GUEST_DEBUG_HW_BPS:
->> >> +               r =3D hw_breakpoint_slots(TYPE_INST);
->> >> +               break;
->> >> +       case KVM_CAP_GUEST_DEBUG_HW_WPS:
->> >> +               r  =3D hw_breakpoint_slots(TYPE_DATA);
->> >> +               break;
->> >
->> > Whilst I much prefer this code, it actually adds an unwanted depen=
-dency
->> > on PERF_EVENTS that I didn't think about to start with. Sorry to k=
-eep
->> > messing you about -- I guess your original patch is the best thing=
- after
->> > all.
->>=20
->> Everything looks to be in hw_breakpoint.[ch] which does depend on
->> CONFIG_HAVE_HW_BREAKPOINT which depends on PERF_EVENTS to be built.
->> However the previous code depended on this behaviour as well.
->
-> I think your original approach (of sticking stuff in the header file)=
- works
-> regardless of the CONFIG option, no?
+D'oh, I only built the kernel for powerpc, that's why I did not notice
+this breakage in the MIC code. Sorry!
 
-Ahh yeah I reverted that to an extern due to random compile breakage:
+> > E.g. fuse.h has this code:
+> > #ifdef __KERNEL__
+> > #include <linux/types.h>
+> > #else
+> > #include <stdint.h>
+> > #endif
+> >=20
+> > Maybe we need something similar.
+>=20
+> The following seems to help.  Does it help the windows build?
+=2E..
+> diff --git a/include/uapi/linux/virtio_ring.h b/include/uapi/linux/vi=
+rtio_ring.h
+> index 8682551..c072959 100644
+> --- a/include/uapi/linux/virtio_ring.h
+> +++ b/include/uapi/linux/virtio_ring.h
+> @@ -31,6 +31,9 @@
+>   * SUCH DAMAGE.
+>   *
+>   * Copyright Rusty Russell IBM Corporation 2007. */
+> +#ifndef __KERNEL__
+> +#include <stdint.h>
+> +#endif
+>  #include <linux/types.h>
+>  #include <linux/virtio_types.h>
 
-http://storage.kernelci.org/alex/v4.1-12-gd38574dba3ec/arm64-allmodconf=
-ig/build.log
+Since the update-linux-headers.sh script from QEMU replaces the
+"#include <linux/types.h>" in virtio_ring.h to include a file that agai=
+n
+includes stdint.h already, your above patch should not do any
+difference for compiling QEMU for Windows, I think. It's really just
+about replacing the typecast there.
 
-I'll see if I can fix that up.
+But you're right of course for other user space applications which
+include this header by other means. So I'm fine if you change my patch
+with your hunk above (or add it as an additional patch). Or shall I
+rather resend my patch with your above hunk included?
 
->> It would seem weird to enable guest debug using HW debug registers t=
-o
->> debug the guest yet not allowing the host kernel to use them? Of cou=
-rse
->> this is the only code they would share as all the magic of guest
->> debugging is already mostly there for dirty guest handling.
->>=20
->> I'm not familiar with Kconfig but it looks like this is all part of
->> arm64 defconfig. Are people really going to want to disable PERF_EVE=
-NTS
->> but still debug their guests with HW support?
->
-> Then it's your call. I just find the host dependency on perf a bit we=
-ird
-> to get guest debug working (especially as the dependency is completel=
-y
-> "fake" because we don't use any perf infrastructure at all).
->
-> Will
-
---=20
-Alex Benn=C3=A9e
+ Thomas
