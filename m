@@ -1,7 +1,7 @@
 From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 08/24] proc: pick out a function to iterate task children
-Date: Mon,  6 Jul 2015 11:47:09 +0300
-Message-ID: <1436172445-6979-9-git-send-email-avagin@openvz.org>
+Subject: [PATCH 07/24] task_diag: add a new group to get process credentials
+Date: Mon,  6 Jul 2015 11:47:08 +0300
+Message-ID: <1436172445-6979-8-git-send-email-avagin@openvz.org>
 References: <1436172445-6979-1-git-send-email-avagin@openvz.org>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1436172445-6979-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
@@ -10,132 +10,157 @@ To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Odintsov <pavel.odintsov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This function will be used in task_diag.
+A response is represented by the task_diag_creds structure:
+
+struct task_diag_creds {
+       struct task_diag_caps cap_inheritable;
+       struct task_diag_caps cap_permitted;
+       struct task_diag_caps cap_effective;
+       struct task_diag_caps cap_bset;
+
+       __u32 uid;
+       __u32 euid;
+       __u32 suid;
+       __u32 fsuid;
+       __u32 gid;
+       __u32 egid;
+       __u32 sgid;
+       __u32 fsgid;
+};
+
+This group is optional and it's filled only if show_flags contains
+TASK_DIAG_SHOW_CRED.
 
 Signed-off-by: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 ---
- fs/proc/array.c | 67 ++++++++++++++++++++++++++++++++++-----------------------
- 1 file changed, 40 insertions(+), 27 deletions(-)
+ include/uapi/linux/task_diag.h | 22 ++++++++++++++++++
+ kernel/taskdiag.c              | 53 ++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 75 insertions(+)
 
-diff --git a/fs/proc/array.c b/fs/proc/array.c
-index ce065cf..52c4a7b 100644
---- a/fs/proc/array.c
-+++ b/fs/proc/array.c
-@@ -578,31 +578,26 @@ int proc_pid_statm(struct seq_file *m, struct pid_namespace *ns,
+diff --git a/include/uapi/linux/task_diag.h b/include/uapi/linux/task_diag.h
+index 3a1e6c4..0e659d6 100644
+--- a/include/uapi/linux/task_diag.h
++++ b/include/uapi/linux/task_diag.h
+@@ -7,6 +7,7 @@
+ enum {
+ 	/* optional attributes which can be specified in show_flags */
+ 	TASK_DIAG_BASE	= 0,
++	TASK_DIAG_CRED,
+ 
+ 	/* other attributes */
+ 	TASK_DIAG_PID	= 64,	/* u32 */
+@@ -16,6 +17,7 @@ enum {
+ };
+ 
+ #define TASK_DIAG_SHOW_BASE	(1ULL << TASK_DIAG_BASE)
++#define TASK_DIAG_SHOW_CRED	(1ULL << TASK_DIAG_CRED)
+ 
+ enum {
+ 	TASK_DIAG_RUNNING,
+@@ -40,6 +42,26 @@ struct task_diag_base {
+ 	char	comm[TASK_DIAG_COMM_LEN];
+ };
+ 
++struct task_diag_caps {
++	__u32 cap[_LINUX_CAPABILITY_U32S_3];
++};
++
++struct task_diag_creds {
++	struct task_diag_caps cap_inheritable;
++	struct task_diag_caps cap_permitted;
++	struct task_diag_caps cap_effective;
++	struct task_diag_caps cap_bset;
++
++	__u32 uid;
++	__u32 euid;
++	__u32 suid;
++	__u32 fsuid;
++	__u32 gid;
++	__u32 egid;
++	__u32 sgid;
++	__u32 fsgid;
++};
++
+ #define TASK_DIAG_DUMP_ALL	0
+ 
+ struct task_diag_pid {
+diff --git a/kernel/taskdiag.c b/kernel/taskdiag.c
+index 5771baf..5123e12 100644
+--- a/kernel/taskdiag.c
++++ b/kernel/taskdiag.c
+@@ -16,6 +16,9 @@ static size_t taskdiag_packet_size(u64 show_flags)
+ 	if (show_flags & TASK_DIAG_SHOW_BASE)
+ 		size += nla_total_size(sizeof(struct task_diag_base));
+ 
++	if (show_flags & TASK_DIAG_SHOW_CRED)
++		size += nla_total_size(sizeof(struct task_diag_creds));
++
+ 	return size;
  }
  
- #ifdef CONFIG_PROC_CHILDREN
--static struct pid *
--get_children_pid(struct inode *inode, struct pid *pid_prev, loff_t pos)
-+static struct task_struct *
-+task_next_child(struct task_struct *parent, struct task_struct *prev, unsigned int pos)
- {
--	struct task_struct *start, *task;
--	struct pid *pid = NULL;
-+	struct task_struct *task;
+@@ -83,6 +86,48 @@ static int fill_task_base(struct task_struct *p, struct sk_buff *skb)
+ 	return 0;
+ }
  
- 	read_lock(&tasklist_lock);
--
--	start = pid_task(proc_pid(inode), PIDTYPE_PID);
--	if (!start)
--		goto out;
--
- 	/*
- 	 * Lets try to continue searching first, this gives
- 	 * us significant speedup on children-rich processes.
- 	 */
--	if (pid_prev) {
--		task = pid_task(pid_prev, PIDTYPE_PID);
--		if (task && task->real_parent == start &&
-+	if (prev) {
-+		task = prev;
-+		if (task && task->real_parent == parent &&
- 		    !(list_empty(&task->sibling))) {
--			if (list_is_last(&task->sibling, &start->children))
-+			if (list_is_last(&task->sibling, &parent->children)) {
-+				task = NULL;
- 				goto out;
-+			}
- 			task = list_first_entry(&task->sibling,
- 						struct task_struct, sibling);
--			pid = get_pid(task_pid(task));
- 			goto out;
- 		}
- 	}
-@@ -622,16 +617,34 @@ get_children_pid(struct inode *inode, struct pid *pid_prev, loff_t pos)
- 	 * So one need to stop or freeze the leader and all
- 	 * its children to get a precise result.
- 	 */
--	list_for_each_entry(task, &start->children, sibling) {
--		if (pos-- == 0) {
--			pid = get_pid(task_pid(task));
--			break;
--		}
-+	list_for_each_entry(task, &parent->children, sibling) {
-+		if (pos-- == 0)
-+			goto out;
- 	}
--
-+	task = NULL;
- out:
-+	if (prev)
-+		put_task_struct(prev);
-+	if (task)
-+		get_task_struct(task);
- 	read_unlock(&tasklist_lock);
--	return pid;
-+	return task;
++static inline void caps2diag(struct task_diag_caps *diag, const kernel_cap_t *cap)
++{
++	int i;
++
++	for (i = 0; i < _LINUX_CAPABILITY_U32S_3; i++)
++		diag->cap[i] = cap->cap[i];
 +}
 +
-+static struct task_struct *
-+get_children_pid(struct inode *inode, struct task_struct *prev, loff_t pos)
++static int fill_creds(struct task_struct *p, struct sk_buff *skb)
 +{
-+	struct task_struct *start, *task = NULL;
++	struct user_namespace *user_ns = current_user_ns();
++	struct task_diag_creds *diag_cred;
++	const struct cred *cred;
++	struct nlattr *attr;
 +
-+	start = get_proc_task(inode);
-+	if (!start)
-+		goto out;
++	attr = nla_reserve(skb, TASK_DIAG_CRED, sizeof(struct task_diag_creds));
++	if (!attr)
++		return -EMSGSIZE;
 +
-+	task = task_next_child(start, prev, pos);
++	diag_cred = nla_data(attr);
 +
-+	put_task_struct(start);
-+out:
-+	return task;
- }
++	cred = get_task_cred(p);
++
++	caps2diag(&diag_cred->cap_inheritable, &cred->cap_inheritable);
++	caps2diag(&diag_cred->cap_permitted, &cred->cap_permitted);
++	caps2diag(&diag_cred->cap_effective, &cred->cap_effective);
++	caps2diag(&diag_cred->cap_bset, &cred->cap_bset);
++
++	diag_cred->uid   = from_kuid_munged(user_ns, cred->uid);
++	diag_cred->euid  = from_kuid_munged(user_ns, cred->euid);
++	diag_cred->suid  = from_kuid_munged(user_ns, cred->suid);
++	diag_cred->fsuid = from_kuid_munged(user_ns, cred->fsuid);
++	diag_cred->gid   = from_kgid_munged(user_ns, cred->gid);
++	diag_cred->egid  = from_kgid_munged(user_ns, cred->egid);
++	diag_cred->sgid  = from_kgid_munged(user_ns, cred->sgid);
++	diag_cred->fsgid = from_kgid_munged(user_ns, cred->fsgid);
++
++	put_cred(cred);
++
++	return 0;
++}
++
+ static int task_diag_fill(struct task_struct *tsk, struct sk_buff *skb,
+ 				u64 show_flags, u32 portid, u32 seq,
+ 				struct netlink_callback *cb)
+@@ -115,6 +160,14 @@ static int task_diag_fill(struct task_struct *tsk, struct sk_buff *skb,
+ 		i++;
+ 	}
  
- static int children_seq_show(struct seq_file *seq, void *v)
-@@ -639,7 +652,7 @@ static int children_seq_show(struct seq_file *seq, void *v)
- 	struct inode *inode = seq->private;
- 	pid_t pid;
- 
--	pid = pid_nr_ns(v, inode->i_sb->s_fs_info);
-+	pid = task_pid_nr_ns(v, inode->i_sb->s_fs_info);
- 	seq_printf(seq, "%d ", pid);
- 
- 	return 0;
-@@ -652,18 +665,18 @@ static void *children_seq_start(struct seq_file *seq, loff_t *pos)
- 
- static void *children_seq_next(struct seq_file *seq, void *v, loff_t *pos)
- {
--	struct pid *pid;
-+	struct task_struct *task;
- 
--	pid = get_children_pid(seq->private, v, *pos + 1);
--	put_pid(v);
-+	task = get_children_pid(seq->private, v, *pos + 1);
- 
- 	++*pos;
--	return pid;
-+	return task;
- }
- 
- static void children_seq_stop(struct seq_file *seq, void *v)
- {
--	put_pid(v);
-+	if (v)
-+		put_task_struct(v);
- }
- 
- static const struct seq_operations children_seq_ops = {
++	if (show_flags & TASK_DIAG_SHOW_CRED) {
++		if (i >= n)
++			err = fill_creds(tsk, skb);
++		if (err)
++			goto err;
++		i++;
++	}
++
+ 	genlmsg_end(skb, reply);
+ 	if (cb)
+ 		cb->args[2] = 0;
 -- 
 2.1.0
