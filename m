@@ -1,38 +1,76 @@
-From: Seth Forshee <seth.forshee@canonical.com>
-Subject: Re: [GIT PULL] User namespace related fixes for v4.2
-Date: Mon, 6 Jul 2015 15:47:48 -0500
-Message-ID: <20150706204748.GB22962@ubuntu-hedt>
-References: <87381eyz26.fsf@x220.int.ebiederm.org>
- <878uazhapq.fsf@x220.int.ebiederm.org>
+From: "Winkler, Tomas" <tomas.winkler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: RE: Odd hang on suspend and shutdown
+Date: Mon, 6 Jul 2015 21:12:59 +0000
+Message-ID: <5B8DA87D05A7694D9FA63FD143655C1B3D3E3583@hasmsx108.ger.corp.intel.com>
+References: <CA+55aFy1x6iwbdV8WfR+wawj_1+PxJ+P-Js=EVqD9ZsQetSNJA@mail.gmail.com>
+	<20150706160706.GA22015@zurbaran.home>
+	<CA+55aFxfENpyWSDxgaQhB1mBHE6zs=w=Mc0VEQLgdwSaCMX5eQ@mail.gmail.com>
+	<5B8DA87D05A7694D9FA63FD143655C1B3D3E3474@hasmsx108.ger.corp.intel.com>
+ <CA+55aFxjuufbJpn+MngBzO3QyaYQm_ZNsgQY3VqPpguVpzOk6A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <878uazhapq.fsf@x220.int.ebiederm.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Linux Containers <containers@lists.linux-foundation.org>, linux-fsdevel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, "Serge E. Hallyn" <serge@hallyn.com>, Richard Weinberger <richard@nod.at>, Kenton Varda <kenton@sandstorm.io>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, =?utf-8?B?U3TDqXBoYW5l?= Graber <stgraber@ubuntu.com>, Eric Windisch <ewindisch@docker.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tejun Heo <tj@kernel.org>, Omar Sandoval <osandov@osandov.com>, Ivan Delalande <colona@arista.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CA+55aFxjuufbJpn+MngBzO3QyaYQm_ZNsgQY3VqPpguVpzOk6A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 01, 2015 at 03:41:37PM -0500, Eric W. Biederman wrote:
-> This set of changes also starts enforcing the mount flags of fresh
-> mounts of proc and sysfs are consistent with the existing mount of proc
-> and sysfs.  I expected this to be the boring part of the work but
-> unfortunately unprivileged userspace winds up mounting fresh copies of
-> proc and sysfs with noexec and nosuid clear when root set those flags on
-> the previous mount of proc and sysfs.  So for now only the atime,
-> read-only and nodev attributes which userspace happens to keep
-> consistent are enforced.  Dealing with the noexec and nosuid attributes
-> remains for another time.
-
-Sorry to be the bearer of bad news, but I am seeing a regression in lxc
-with 4.2-rc1 due to this change. lxc is doing a fresh mount of sysfs
-that never specifies either read-only or nodev regardless of how sysfs
-has been mounted previously, and this is causing me to see mount
-failures because of the nodev check.
-
-If I comment out only the nodev check then the mount works on my system,
-but based on the code in lxc I don't think there's any guarantee at all
-of this mount having flags consistent with previous mounts.
-
-Seth
+PiA+PiBOb3BlLCA0LjEgaXMgZmluZS4gVGhpcyBpcyBteSB0cmF2ZWwgbGFwdG9wIGZvciB0aGUg
+bGFzdCBhbG1vc3QgdHdvDQo+ID4+IHllYXJzLiBCZXN0IGxhcHRvcCBJJ3ZlIGV2ZXIgaGFkIChJ
+IGxpa2UgdGhlbSBzbWFsbCBhbmQgbGlnaHQpLg0KPiA+DQo+ID4gSWYgdGhpcyB0d28geWVhcnMg
+b2xkIHRoYXQncyBwcm9iYWJseSBub3QgSFNXLCBjYW4geW91IHNlbmQgb3V0IHRoZSBleGFjdCBI
+Vw0KPiBpbmZvLCBtb3N0bHkgcGNpIGRldmljZSBpZHMgYXJlIGluIGludGVyZXN0Lg0KPiANCj4g
+T2gsIGl0J3MgSGFzd2VsbC4gSXQncyBhIGk1LTQyMDB1LiBBbmQgbm8sIGl0J3Mgbm90IHF1aXRl
+IHR3byB5ZWFycw0KPiBvbGQsIGJ1dCBpdCdzIGZyb20gZmFsbC0yMDEzLg0KDQpPa2F5IGhhdmUg
+c2ltaWxhciBtYWNoaW5lLCB3aWxsIGRpZyBpbnRvIGl0IHRvbW9ycm93IG1vcm5pbmcgDQo+IA0K
+PiBBbmQgaXQncyBsaXRlcmFsbHkgYWxsIEludGVsIChzZXJpZXMgOCBtb2JpbGUgY2hpcHNldCkg
+d2l0aCBhIGludGVsDQo+IDcyNjAgd2lyZWxlc3MuIEEgd2hvbGUgbG90IG9mIDgwODYgdGhlcmU6
+DQo+IA0KPiAgIFt0b3J2YWxkc0B2YWlvIH5dJCBsc3BjaSAtbg0KPiAgIDAwOjAwLjAgMDYwMDog
+ODA4NjowYTA0IChyZXYgMDkpDQo+ICAgMDA6MDIuMCAwMzAwOiA4MDg2OjBhMTYgKHJldiAwOSkN
+Cj4gICAwMDowMy4wIDA0MDM6IDgwODY6MGEwYyAocmV2IDA5KQ0KPiAgIDAwOjE0LjAgMGMwMzog
+ODA4Njo5YzMxIChyZXYgMDQpDQo+ICAgMDA6MTYuMCAwNzgwOiA4MDg2OjljM2EgKHJldiAwNCkN
+Cj4gICAwMDoxYi4wIDA0MDM6IDgwODY6OWMyMCAocmV2IDA0KQ0KPiAgIDAwOjFjLjAgMDYwNDog
+ODA4Njo5YzE0IChyZXYgZTQpDQo+ICAgMDA6MWMuMyAwNjA0OiA4MDg2OjljMTYgKHJldiBlNCkN
+Cj4gICAwMDoxZC4wIDBjMDM6IDgwODY6OWMyNiAocmV2IDA0KQ0KPiAgIDAwOjFmLjAgMDYwMTog
+ODA4Njo5YzQzIChyZXYgMDQpDQo+ICAgMDA6MWYuMiAwMTA2OiA4MDg2OjljMDMgKHJldiAwNCkN
+Cj4gICAwMDoxZi4zIDBjMDU6IDgwODY6OWMyMiAocmV2IDA0KQ0KPiAgIDAxOjAwLjAgMDI4MDog
+ODA4NjowOGIxIChyZXYgNmIpDQo+IA0KPiA+IFRoaXMgc2hvdWxkIGJlIGxvYWRlZCBvbmx5IGlm
+IHlvdSBoYXZlIE5GQyBvbiB0aGUgYm9hcmQgb3IgaXQgYmFpbGVkIG91dCBtb3JlDQo+IGNsZWFu
+bHkgYmVmb3JlLg0KPiA+IFRoZXJlIGlzIGEgZmlsZSB1bmRlciBkZWJ1Z2ZzIG1laTAvbWVjbGll
+bnRzICwgaWYgeW91IGNhbiBzZW5kIG91dCB0aGUgZHVtcCB3ZQ0KPiBjYW4gc2VlIHdoYXQNCj4g
+PiB3ZSBzdXBwb3J0IG9uIHRoYXQgcGxhdGZvcm0uDQo+IA0KPiAgIFt0b3J2YWxkc0B2YWlvIH5d
+JCBzdWRvIGNhdCAvc3lzL2tlcm5lbC9kZWJ1Zy9tZWkwL21lY2xpZW50cw0KPiAgICAgfGlkfGZp
+eHwgICAgICAgICBVVUlEICAgICAgICAgICAgICAgICAgICAgICB8Y29ufG1zZyBsZW58c2J8cmVm
+Y3wNCj4gICAgMHw0MnwgIDB8YjYzOGFiN2UtOTRlMi00ZWEyLWE1NTItZDFjNTRiNjI3ZjA0fCAg
+MXwgICAyMDQ4fCAwfCAgIDJ8DQo+ICAgIDF8NDF8ICAwfGZiZjZmY2YxLTk2Y2YtNGUyZS1hNmE2
+LTFiYWI4Y2JlMzZiMXwgIDN8ICAxNTM2MHwgMHwgICAyfA0KPiAgICAyfDQwfCAgMHwzYzQ4NTJk
+Ni1kNDdiLTRmNDYtYjA1ZS1iNWVkYzFhYTQ0MGV8ICAxfCAgIDQwOTZ8IDB8ICAgMnwNCj4gICAg
+M3wzOXwgIDB8MGJiMTdhNzgtMmE4ZS00YzUwLTk0ZDQtNTAyNjY3MjM3NzVjfCAgMXwgICAgMzEy
+fCAwfCAgIDR8DQpUaGUgYWJvdmUgaXMgTkZDLg0KDQo+IA0KPiA+IEZyYW5rbHksIGlmIHlvdSBh
+cmUgbm90IHVzaW5nIGFueSBvZiB0aGUgcHJvIG9yIE5GQyB5b3UgZG9uJ3QgcmVhbGx5IG5lZWQg
+dGhhdA0KPiBsb2FkZWQuDQo+IA0KPiBZZWFoLiBFeGNlcHQgSSB3aWxsIG5vdCBiZSByZWxlYXNp
+bmcgYSBrZXJuZWwgdGhhdCBJIGNhbiB0ZWxsIGlzIGJ1Z2d5DQo+IG9uIG15IG93biBoYXJkd2Fy
+ZSwgc28gaXQgcmVhbGx5IGRvZXNuJ3QgbWF0dGVyLg0KPiBTbyB0aGF0IGNvbW1pdCBnZXRzIHJl
+dmVydGVkIHVubGVzcyBzb21lYm9keSBmaWd1cmVzIG91dCB3aGF0J3Mgd3JvbmcuDQoNCk9oIG5v
+LCB0aGVyZSB3YXNuJ3QgYW55IGludGVudGlvbiB0byBsZWZ0IGl0IHVuYWRkcmVzc2VkLCBJIGhv
+cGUgdmVyeSBtdWNoIHNvbWVvbmUgaXMgYWN0dWFsbHkgdXNpbmcgaXQuDQoNCj4gDQo+IElmICpJ
+KiBzZWUgcHJvYmxlbXMgZnJvbSBteSB2ZXJ5IGxpbWl0ZWQgaGFyZHdhcmUgdGVzdGluZywgSSBn
+dWFyYW50ZWUNCj4gdGhhdCBvdGhlcnMgd2lsbCBzZWUgdGhlbSB0b28uIEFuZCBvdGhlcnMgd2ls
+bCBub3QgYmUgYWJsZSB0bw0KPiBuZWNlc3NhcmlseSBiaXNlY3QgYW5kIHRlc3QgdGhpbmdzLCB0
+aGV5J2xsIGp1c3Qgc2F5ICJpdCBoYW5ncyIgYW5kDQo+IG1heWJlIG5ldmVyIHRyeSBMaW51eCBh
+bnkgbW9yZSB0aGFuIHRoYXQuDQo+IA0KPiBTbyBidWdzIEkgY2FuIHNlZSBteXNlbGYgZW5kIHVw
+IGJlaW5nIHN0dWZmIHRoYXQgSSByZXZlcnQgcHJldHR5IG11Y2gNCj4gaW1tZWRpYXRlbHkuIEkg
+ZG9uJ3QgcnVuIG9kZCBoYXJkd2FyZS4NCg0KSSBob3BlIHdlIGZvdW5kIHRoZSBpc3N1ZSBxdWlj
+a2x5IG5vdywgIHRoZSBxdWljayBmaXggd291bGQgYmUgdG8gZW5hYmxlIHRoZSBORkMgb25seSBv
+biBpdnkgYnJpZGdlLiANCg0KPg0KPiA+IFRoZSBxdWVzdGlvbiBpZiB0aGUgbW9kdWxlIGdldCBi
+b3VuZCB0byB0aGUgTkZDIG1lIGNsaWVudD8NCj4gDQo+IC4uIGFuZCBob3cgd291bGQgdGhhdCBz
+aG93IHVwPw0KPiANCkkgdGhpbmsgdy9vIGluc3RhbGxpbmcgdGhlIHdob2xlIG5lYXJkIHN0YWNr
+IGl0IHdvdWxkIGJlIGp1c3Qgd2F0Y2hpbmcgdWRldiBldmVudHMgb3Igb3BlbiB0aGUgZHluYW1p
+YyBkZWJ1ZyBpbiB0aGUga2VybmVsIG9uIG1laV9waHkgYW5kIHBuNTQ0IG1vZHVsZXMuDQpXaGF0
+IEkga25vdyBmb3Igc3VyZSBpcyB0aGF0IE5GQyBpbiBjdXJyZW50IHN0YWdlIGlzIGp1c3QgIG5v
+dCBmdW5jdGlvbmFsIG9uIEhTVyBzbyBpdCBzaG91bGQgYmFpbCBvdXQgYXQgc29tZSBwb2ludCwg
+b2YgY291cnNlIGl0IHNob3VsZCBub3QgY2F1c2UgdGhlIHJlZ3Jlc3Npb24gZWl0aGVyLiBJdCBz
+aG91bGQgYmUgd29ya2luZyBvbiBpdnkgYnJpZGdlLiANCg0KVG9tYXMgDQoNCg==
