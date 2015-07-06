@@ -1,223 +1,92 @@
-From: Andrey Vagin <avagin@openvz.org>
-Subject: [PATCH 16/24] proc: move first_tid and next_tid out of proc
-Date: Mon,  6 Jul 2015 11:47:17 +0300
-Message-ID: <1436172445-6979-17-git-send-email-avagin@openvz.org>
-References: <1436172445-6979-1-git-send-email-avagin@openvz.org>
+From: Alex =?utf-8?Q?Benn=C3=A9e?= <alex.bennee@linaro.org>
+Subject: Re: [PATCH v7 09/11] KVM: arm64: guest debug, HW assisted debug support
+Date: Mon, 06 Jul 2015 10:02:46 +0100
+Message-ID: <87vbdxacax.fsf@linaro.org>
+References: <1435775343-20034-1-git-send-email-alex.bennee@linaro.org> <1435775343-20034-10-git-send-email-alex.bennee@linaro.org> <20150702084847.GB3418@arm.com> <87pp4asm6u.fsf@linaro.org> <20150703092323.GA1588@arm.com> <87h9plrzqq.fsf@linaro.org> <20150706085140.GA30342@arm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1436172445-6979-1-git-send-email-avagin@openvz.org>
+In-reply-to: <20150706085140.GA30342@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, Andrey Vagin <avagin@openvz.org>, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Cyrill Gorcunov <gorcunov@openvz.org>, Pavel Emelyanov <xemul@parallels.com>, Roger Luethi <rl@hellgate.ch>, Arnd Bergmann <arnd@arndb.de>, Arnaldo Carvalho de Melo <acme@kernel.org>, David Ahern <dsahern@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Pavel Odintsov <pavel.odintsov@gmail.com>
+To: Will Deacon <will.deacon@arm.com>
+Cc: "kvm@vger.kernel.org" <kvm@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "kvmarm@lists.cs.columbia.edu" <kvmarm@lists.cs.columbia.edu>, "christoffer.dall@linaro.org" <christoffer.dall@linaro.org>, Marc Zyngier <Marc.Zyngier@arm.com>, "peter.maydell@linaro.org" <peter.maydell@linaro.org>, "agraf@suse.de" <agraf@suse.de>, "drjones@redhat.com" <drjones@redhat.com>, "pbonzini@redhat.com" <pbonzini@redhat.com>, "zhichao.huang@linaro.org" <zhichao.huang@linaro.org>, "jan.kiszka@siemens.com" <jan.kiszka@siemens.com>, "dahi@linux.vnet.ibm.com" <dahi@linux.vnet.ibm.com>, "r65777@freescale.com" <r65777@freescale.com>, "bp@suse.de" <bp@suse.de>, Gleb Natapov <gleb@kernel.org>, Jonathan Corbet <corbet@lwn.net>, Catalin Marinas <Catalin.Marinas@arm.com>, Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>, Ingo Molnar <mingo@kernel.o>
 List-Id: linux-api@vger.kernel.org
 
-They will be used in task_diag
 
-Signed-off-by: Andrey Vagin <avagin@openvz.org>
----
- fs/proc/base.c          | 79 ++-----------------------------------------------
- include/linux/proc_fs.h |  4 +++
- kernel/pid.c            | 76 +++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 82 insertions(+), 77 deletions(-)
+Will Deacon <will.deacon@arm.com> writes:
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index af797d9..4b72053 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -3213,81 +3213,6 @@ out_no_task:
- 	return ERR_PTR(result);
- }
- 
--/*
-- * Find the first tid of a thread group to return to user space.
-- *
-- * Usually this is just the thread group leader, but if the users
-- * buffer was too small or there was a seek into the middle of the
-- * directory we have more work todo.
-- *
-- * In the case of a short read we start with find_task_by_pid.
-- *
-- * In the case of a seek we start with the leader and walk nr
-- * threads past it.
-- */
--static struct task_struct *
--first_tid(struct task_struct *task, int tid, loff_t f_pos,
--					struct pid_namespace *ns)
--{
--	struct task_struct *pos;
--	unsigned long nr = f_pos;
--
--	if (nr != f_pos)	/* 32bit overflow? */
--		return NULL;
--
--	rcu_read_lock();
--
--	/* Attempt to start with the tid of a thread */
--	if (tid && nr) {
--		pos = find_task_by_pid_ns(tid, ns);
--		if (pos && same_thread_group(pos, task))
--			goto found;
--	}
--
--	/* If nr exceeds the number of threads there is nothing todo */
--	if (nr >= get_nr_threads(task))
--		goto fail;
--
--	/* If we haven't found our starting place yet start
--	 * with the leader and walk nr threads forward.
--	 */
--	pos = task = task->group_leader;
--	do {
--		if (!nr--)
--			goto found;
--	} while_each_thread(task, pos);
--fail:
--	pos = NULL;
--	goto out;
--found:
--	get_task_struct(pos);
--out:
--	rcu_read_unlock();
--	return pos;
--}
--
--/*
-- * Find the next thread in the thread list.
-- * Return NULL if there is an error or no next thread.
-- *
-- * The reference to the input task_struct is released.
-- */
--static struct task_struct *next_tid(struct task_struct *start)
--{
--	struct task_struct *pos = NULL;
--	rcu_read_lock();
--	if (pid_alive(start)) {
--		pos = next_thread(start);
--		if (thread_group_leader(pos))
--			pos = NULL;
--		else
--			get_task_struct(pos);
--	}
--	rcu_read_unlock();
--	put_task_struct(start);
--	return pos;
--}
--
- /* for the /proc/TGID/task/ directories */
- static int proc_task_readdir(struct file *file, struct dir_context *ctx)
- {
-@@ -3312,9 +3237,9 @@ static int proc_task_readdir(struct file *file, struct dir_context *ctx)
- 	ns = inode->i_sb->s_fs_info;
- 	tid = (int)file->f_version;
- 	file->f_version = 0;
--	for (task = first_tid(start, tid, ctx->pos - 2, ns);
-+	for (task = task_first_tid(start, tid, ctx->pos - 2, ns);
- 	     task;
--	     task = next_tid(task), ctx->pos++) {
-+	     task = task_next_tid(task), ctx->pos++) {
- 		char name[PROC_NUMBUF];
- 		int len;
- 		tid = task_pid_nr_ns(task, ns);
-diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
-index 62d0079..178f526 100644
---- a/include/linux/proc_fs.h
-+++ b/include/linux/proc_fs.h
-@@ -92,6 +92,10 @@ struct tgid_iter next_tgid(struct pid_namespace *ns, struct tgid_iter iter);
- struct task_struct *
- task_next_child(struct task_struct *parent, struct task_struct *prev, unsigned int pos);
- 
-+struct task_struct *task_first_tid(struct task_struct *task, int tid, loff_t f_pos,
-+					struct pid_namespace *ns);
-+struct task_struct *task_next_tid(struct task_struct *start);
-+
- struct mem_size_stats {
- 	unsigned long resident;
- 	unsigned long shared_clean;
-diff --git a/kernel/pid.c b/kernel/pid.c
-index 42a6b40..b66f370 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -661,6 +661,82 @@ out:
- }
- 
- /*
-+ * Find the first tid of a thread group to return to user space.
-+ *
-+ * Usually this is just the thread group leader, but if the users
-+ * buffer was too small or there was a seek into the middle of the
-+ * directory we have more work todo.
-+ *
-+ * In the case of a short read we start with find_task_by_pid.
-+ *
-+ * In the case of a seek we start with the leader and walk nr
-+ * threads past it.
-+ */
-+struct task_struct *
-+task_first_tid(struct task_struct *task, int tid, loff_t f_pos,
-+					struct pid_namespace *ns)
-+{
-+	struct task_struct *pos;
-+	unsigned long nr = f_pos;
-+
-+	if (nr != f_pos)	/* 32bit overflow? */
-+		return NULL;
-+
-+	rcu_read_lock();
-+
-+	/* Attempt to start with the tid of a thread */
-+	if (tid && nr) {
-+		pos = find_task_by_pid_ns(tid, ns);
-+		if (pos && same_thread_group(pos, task))
-+			goto found;
-+	}
-+
-+	/* If nr exceeds the number of threads there is nothing todo */
-+	if (nr >= get_nr_threads(task))
-+		goto fail;
-+
-+	/* If we haven't found our starting place yet start
-+	 * with the leader and walk nr threads forward.
-+	 */
-+	pos = task = task->group_leader;
-+	do {
-+		if (!nr--)
-+			goto found;
-+	} while_each_thread(task, pos);
-+fail:
-+	pos = NULL;
-+	goto out;
-+found:
-+	get_task_struct(pos);
-+out:
-+	rcu_read_unlock();
-+	return pos;
-+}
-+
-+/*
-+ * Find the next thread in the thread list.
-+ * Return NULL if there is an error or no next thread.
-+ *
-+ * The reference to the input task_struct is released.
-+ */
-+struct task_struct *task_next_tid(struct task_struct *start)
-+{
-+	struct task_struct *pos = NULL;
-+	rcu_read_lock();
-+	if (pid_alive(start)) {
-+		pos = next_thread(start);
-+		if (thread_group_leader(pos))
-+			pos = NULL;
-+		else
-+			get_task_struct(pos);
-+	}
-+	rcu_read_unlock();
-+	put_task_struct(start);
-+	return pos;
-+}
-+
-+
-+/*
-  * The pid hash table is scaled according to the amount of memory in the
-  * machine.  From a minimum of 16 slots up to 4096 slots at one gigabyte or
-  * more.
--- 
-2.1.0
+> On Fri, Jul 03, 2015 at 05:07:41PM +0100, Alex Benn=C3=A9e wrote:
+>> Will Deacon <will.deacon@arm.com> writes:
+>> > On Thu, Jul 02, 2015 at 02:50:33PM +0100, Alex Benn=C3=A9e wrote:
+>> >> Are you happy with this?:
+>> >
+>> > [...]
+>> >
+>> >> +/**
+>> >> + * kvm_arch_dev_ioctl_check_extension
+>> >> + *
+>> >> + * We currently assume that the number of HW registers is unifor=
+m
+>> >> + * across all CPUs (see cpuinfo_sanity_check).
+>> >> + */
+>> >>  int kvm_arch_dev_ioctl_check_extension(long ext)
+>> >>  {
+>> >>         int r;
+>> >> @@ -64,6 +71,12 @@ int kvm_arch_dev_ioctl_check_extension(long ex=
+t)
+>> >>         case KVM_CAP_ARM_EL1_32BIT:
+>> >>                 r =3D cpu_has_32bit_el1();
+>> >>                 break;
+>> >> +       case KVM_CAP_GUEST_DEBUG_HW_BPS:
+>> >> +               r =3D hw_breakpoint_slots(TYPE_INST);
+>> >> +               break;
+>> >> +       case KVM_CAP_GUEST_DEBUG_HW_WPS:
+>> >> +               r  =3D hw_breakpoint_slots(TYPE_DATA);
+>> >> +               break;
+>> >
+>> > Whilst I much prefer this code, it actually adds an unwanted depen=
+dency
+>> > on PERF_EVENTS that I didn't think about to start with. Sorry to k=
+eep
+>> > messing you about -- I guess your original patch is the best thing=
+ after
+>> > all.
+>>=20
+>> Everything looks to be in hw_breakpoint.[ch] which does depend on
+>> CONFIG_HAVE_HW_BREAKPOINT which depends on PERF_EVENTS to be built.
+>> However the previous code depended on this behaviour as well.
+>
+> I think your original approach (of sticking stuff in the header file)=
+ works
+> regardless of the CONFIG option, no?
+
+Ahh yeah I reverted that to an extern due to random compile breakage:
+
+http://storage.kernelci.org/alex/v4.1-12-gd38574dba3ec/arm64-allmodconf=
+ig/build.log
+
+I'll see if I can fix that up.
+
+>> It would seem weird to enable guest debug using HW debug registers t=
+o
+>> debug the guest yet not allowing the host kernel to use them? Of cou=
+rse
+>> this is the only code they would share as all the magic of guest
+>> debugging is already mostly there for dirty guest handling.
+>>=20
+>> I'm not familiar with Kconfig but it looks like this is all part of
+>> arm64 defconfig. Are people really going to want to disable PERF_EVE=
+NTS
+>> but still debug their guests with HW support?
+>
+> Then it's your call. I just find the host dependency on perf a bit we=
+ird
+> to get guest debug working (especially as the dependency is completel=
+y
+> "fake" because we don't use any perf infrastructure at all).
+>
+> Will
+
+--=20
+Alex Benn=C3=A9e
