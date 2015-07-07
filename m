@@ -1,42 +1,63 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH 0/24] kernel: add a netlink interface to get information
- about processes (v2)
-Date: Tue, 7 Jul 2015 09:27:30 -0700
-Message-ID: <CALCETrWEXRif4pFUzVJq1T=KWKvd=tbEDf-vpr5MJtVK1_RWYA@mail.gmail.com>
-References: <1436172445-6979-1-git-send-email-avagin@openvz.org>
- <CALCETrVg5AyeXW_AGguFoGCPK9_2zeobEgT9JJFsakH6PyQf_A@mail.gmail.com>
- <20150707154345.GA1593@odin.com> <20150707162552.GM3326@kernel.org>
+From: =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>
+Subject: [PATCH v8 01/11] KVM: add comments for kvm_debug_exit_arch struct
+Date: Tue,  7 Jul 2015 17:29:53 +0100
+Message-ID: <1436286603-15192-2-git-send-email-alex.bennee@linaro.org>
+References: <1436286603-15192-1-git-send-email-alex.bennee@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150707162552.GM3326-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Vagin <avagin-wo1vFcy6AUs@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Odintsov <pavel.odintsov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
+In-Reply-To: <1436286603-15192-1-git-send-email-alex.bennee@linaro.org>
+List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
+List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
+List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
+List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
+List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
+Errors-To: kvmarm-bounces@lists.cs.columbia.edu
+Sender: kvmarm-bounces@lists.cs.columbia.edu
+To: kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kvmarm@lists.cs.columbia.edu, christoffer.dall@linaro.org, marc.zyngier@arm.com, peter.maydell@linaro.org, agraf@suse.de, drjones@redhat.com, pbonzini@redhat.com, zhichao.huang@linaro.org
+Cc: Jonathan Corbet <corbet@lwn.net>, Gleb Natapov <gleb@kernel.org>, jan.kiszka@siemens.com, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, dahi@linux.vnet.ibm.com, r65777@freescale.com, bp@suse.de
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 7, 2015 at 9:25 AM, Arnaldo Carvalho de Melo
-<acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> Em Tue, Jul 07, 2015 at 06:43:46PM +0300, Andrew Vagin escreveu:
->> On Mon, Jul 06, 2015 at 10:10:32AM -0700, Andy Lutomirski wrote:
->> > On Mon, Jul 6, 2015 at 1:47 AM, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> wrote:
->> > Would it make more sense to have a new syscall instead?  You could
->> > even still use nlattr formatting for the syscall results.
->>
->> Andy, thank you for the feedback. I got your points. I need time to
->> think about them. I suppose that a new syscall can be more suitable in
->> this case, and I need time to form a vision of it. If you have any ideas
->> or thoughts, I would be glad to know about them.
->
-> If a new syscall would indeed be better for this, then using
-> sys_perf_event_open and on one of the perf_event_attr flip a bit to ask
-> for those PERF_RECORD_{COMM,FORK,PERF_RECORD_MMAP2, etc} to be generated
-> in the perf buffer could make it reuse all the userspace tooling, with
-> really minimal change: flip the bit, don't synthesize it from /proc.
->
-
-Hmm, that's an interesting thought.
-
-Andrew, would that work for you?
-
---Andy
+QnJpbmcgaW50byBsaW5lIHdpdGggdGhlIGNvbW1lbnRzIGZvciB0aGUgb3RoZXIgc3RydWN0dXJl
+cyBhbmQgdGhlaXIKS1ZNX0VYSVRfKiBjYXNlcy4gQWxzbyB1cGRhdGUgYXBpLnR4dCB0byByZWZs
+ZWN0IHVzZSBpbiBrdm1fcnVuCmRvY3VtZW50YXRpb24uCgpTaWduZWQtb2ZmLWJ5OiBBbGV4IEJl
+bm7DqWUgPGFsZXguYmVubmVlQGxpbmFyby5vcmc+ClJldmlld2VkLWJ5OiBEYXZpZCBIaWxkZW5i
+cmFuZCA8ZGFoaUBsaW51eC52bmV0LmlibS5jb20+ClJldmlld2VkLWJ5OiBBbmRyZXcgSm9uZXMg
+PGRyam9uZXNAcmVkaGF0LmNvbT4KQWNrZWQtYnk6IENocmlzdG9mZmVyIERhbGwgPGNocmlzdG9m
+ZmVyLmRhbGxAbGluYXJvLm9yZz4KCi0tLQoKdjIKICAtIGFkZCBjb21tZW50cyBmb3Igb3RoZXIg
+ZXhpdCB0eXBlcwp2MwogIC0gcy9jb21tZW50YXJ5L2NvbW1lbnRzLwogIC0gYWRkIHJiIHRhZ3MK
+ICAtIHVwZGF0ZSBhcGkudHh0IGt2bV9ydW4gdG8gaW5jbHVkZSBLVk1fRVhJVF9ERUJVRyBkZXNj
+CnY0CiAgLSBzcCBmaXhlcwogIC0gYWRkIGEtYgotLS0KIERvY3VtZW50YXRpb24vdmlydHVhbC9r
+dm0vYXBpLnR4dCB8IDQgKysrLQogaW5jbHVkZS91YXBpL2xpbnV4L2t2bS5oICAgICAgICAgIHwg
+MyArKysKIDIgZmlsZXMgY2hhbmdlZCwgNiBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9uKC0pCgpk
+aWZmIC0tZ2l0IGEvRG9jdW1lbnRhdGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0IGIvRG9jdW1lbnRh
+dGlvbi92aXJ0dWFsL2t2bS9hcGkudHh0CmluZGV4IDlmYTJiZjguLmMzNGMzMmQgMTAwNjQ0Ci0t
+LSBhL0RvY3VtZW50YXRpb24vdmlydHVhbC9rdm0vYXBpLnR4dAorKysgYi9Eb2N1bWVudGF0aW9u
+L3ZpcnR1YWwva3ZtL2FwaS50eHQKQEAgLTMwNzAsMTEgKzMwNzAsMTMgQEAgZGF0YV9vZmZzZXQg
+ZGVzY3JpYmVzIHdoZXJlIHRoZSBkYXRhIGlzIGxvY2F0ZWQgKEtWTV9FWElUX0lPX09VVCkgb3IK
+IHdoZXJlIGt2bSBleHBlY3RzIGFwcGxpY2F0aW9uIGNvZGUgdG8gcGxhY2UgdGhlIGRhdGEgZm9y
+IHRoZSBuZXh0CiBLVk1fUlVOIGludm9jYXRpb24gKEtWTV9FWElUX0lPX0lOKS4gIERhdGEgZm9y
+bWF0IGlzIGEgcGFja2VkIGFycmF5LgogCisJCS8qIEtWTV9FWElUX0RFQlVHICovCiAJCXN0cnVj
+dCB7CiAJCQlzdHJ1Y3Qga3ZtX2RlYnVnX2V4aXRfYXJjaCBhcmNoOwogCQl9IGRlYnVnOwogCi1V
+bnVzZWQuCitJZiB0aGUgZXhpdF9yZWFzb24gaXMgS1ZNX0VYSVRfREVCVUcsIHRoZW4gYSB2Y3B1
+IGlzIHByb2Nlc3NpbmcgYSBkZWJ1ZyBldmVudAorZm9yIHdoaWNoIGFyY2hpdGVjdHVyZSBzcGVj
+aWZpYyBpbmZvcm1hdGlvbiBpcyByZXR1cm5lZC4KIAogCQkvKiBLVk1fRVhJVF9NTUlPICovCiAJ
+CXN0cnVjdCB7CmRpZmYgLS1naXQgYS9pbmNsdWRlL3VhcGkvbGludXgva3ZtLmggYi9pbmNsdWRl
+L3VhcGkvbGludXgva3ZtLmgKaW5kZXggNGI2MDA1Ni4uNzBhYzY0MSAxMDA2NDQKLS0tIGEvaW5j
+bHVkZS91YXBpL2xpbnV4L2t2bS5oCisrKyBiL2luY2x1ZGUvdWFwaS9saW51eC9rdm0uaApAQCAt
+MjM3LDYgKzIzNyw3IEBAIHN0cnVjdCBrdm1fcnVuIHsKIAkJCV9fdTMyIGNvdW50OwogCQkJX191
+NjQgZGF0YV9vZmZzZXQ7IC8qIHJlbGF0aXZlIHRvIGt2bV9ydW4gc3RhcnQgKi8KIAkJfSBpbzsK
+KwkJLyogS1ZNX0VYSVRfREVCVUcgKi8KIAkJc3RydWN0IHsKIAkJCXN0cnVjdCBrdm1fZGVidWdf
+ZXhpdF9hcmNoIGFyY2g7CiAJCX0gZGVidWc7CkBAIC0yODUsNiArMjg2LDcgQEAgc3RydWN0IGt2
+bV9ydW4gewogCQkJX191MzIgZGF0YTsKIAkJCV9fdTggIGlzX3dyaXRlOwogCQl9IGRjcjsKKwkJ
+LyogS1ZNX0VYSVRfSU5URVJOQUxfRVJST1IgKi8KIAkJc3RydWN0IHsKIAkJCV9fdTMyIHN1YmVy
+cm9yOwogCQkJLyogQXZhaWxhYmxlIHdpdGggS1ZNX0NBUF9JTlRFUk5BTF9FUlJPUl9EQVRBOiAq
+LwpAQCAtMjk1LDYgKzI5Nyw3IEBAIHN0cnVjdCBrdm1fcnVuIHsKIAkJc3RydWN0IHsKIAkJCV9f
+dTY0IGdwcnNbMzJdOwogCQl9IG9zaTsKKwkJLyogS1ZNX0VYSVRfUEFQUl9IQ0FMTCAqLwogCQlz
+dHJ1Y3QgewogCQkJX191NjQgbnI7CiAJCQlfX3U2NCByZXQ7Ci0tIAoyLjQuNQoKX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18Ka3ZtYXJtIG1haWxpbmcgbGlz
+dAprdm1hcm1AbGlzdHMuY3MuY29sdW1iaWEuZWR1Cmh0dHBzOi8vbGlzdHMuY3MuY29sdW1iaWEu
+ZWR1L21haWxtYW4vbGlzdGluZm8va3ZtYXJtCg==
