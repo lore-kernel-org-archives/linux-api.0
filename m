@@ -1,7 +1,7 @@
 From: Gioh Kim <gioh.kim@lge.com>
-Subject: [RFCv3 2/5] mm/compaction: enable mobile-page migration
-Date: Tue,  7 Jul 2015 13:36:22 +0900
-Message-ID: <1436243785-24105-3-git-send-email-gioh.kim@lge.com>
+Subject: [RFCv3 4/5] mm: call generic migration callbacks
+Date: Tue,  7 Jul 2015 13:36:24 +0900
+Message-ID: <1436243785-24105-5-git-send-email-gioh.kim@lge.com>
 References: <1436243785-24105-1-git-send-email-gioh.kim@lge.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1436243785-24105-1-git-send-email-gioh.kim@lge.com>
@@ -12,190 +12,108 @@ List-Id: linux-api@vger.kernel.org
 
 From: Gioh Kim <gurugio@hanmail.net>
 
-Add framework to register callback functions and check page mobility.
-There are some modes for page isolation so that isolate interface
-has arguments of page address and isolation mode while putback
-interface has only page address as argument.
+Compaction calls interfaces of mobile page migration
+instead of calling balloon migration directly.
 
 Signed-off-by: Gioh Kim <gioh.kim@lge.com>
 ---
- fs/proc/page.c                         |  3 ++
- include/linux/compaction.h             | 76 ++++++++++++++++++++++++++++++++++
- include/linux/fs.h                     |  2 +
- include/linux/page-flags.h             | 19 +++++++++
- include/uapi/linux/kernel-page-flags.h |  1 +
- 5 files changed, 101 insertions(+)
+ mm/compaction.c |  8 ++++----
+ mm/migrate.c    | 19 ++++++++++---------
+ 2 files changed, 14 insertions(+), 13 deletions(-)
 
-diff --git a/fs/proc/page.c b/fs/proc/page.c
-index 7eee2d8..a4f5a00 100644
---- a/fs/proc/page.c
-+++ b/fs/proc/page.c
-@@ -146,6 +146,9 @@ u64 stable_page_flags(struct page *page)
- 	if (PageBalloon(page))
- 		u |= 1 << KPF_BALLOON;
+diff --git a/mm/compaction.c b/mm/compaction.c
+index 81bafaf..60e4cbb 100644
+--- a/mm/compaction.c
++++ b/mm/compaction.c
+@@ -14,7 +14,7 @@
+ #include <linux/backing-dev.h>
+ #include <linux/sysctl.h>
+ #include <linux/sysfs.h>
+-#include <linux/balloon_compaction.h>
++#include <linux/compaction.h>
+ #include <linux/page-isolation.h>
+ #include <linux/kasan.h>
+ #include "internal.h"
+@@ -714,12 +714,12 @@ isolate_migratepages_block(struct compact_control *cc, unsigned long low_pfn,
  
-+	if (PageMobile(page))
-+		u |= 1 << KPF_MOBILE;
-+
- 	u |= kpf_copy_bit(k, KPF_LOCKED,	PG_locked);
+ 		/*
+ 		 * Check may be lockless but that's ok as we recheck later.
+-		 * It's possible to migrate LRU pages and balloon pages
++		 * It's possible to migrate LRU pages and mobile pages
+ 		 * Skip any other type of page
+ 		 */
+ 		if (!PageLRU(page)) {
+-			if (unlikely(balloon_page_movable(page))) {
+-				if (balloon_page_isolate(page, isolate_mode)) {
++			if (unlikely(mobile_page(page))) {
++				if (isolate_mobilepage(page, isolate_mode)) {
+ 					/* Successfully isolated */
+ 					goto isolate_success;
+ 				}
+diff --git a/mm/migrate.c b/mm/migrate.c
+index c94038e..e22be67 100644
+--- a/mm/migrate.c
++++ b/mm/migrate.c
+@@ -35,7 +35,7 @@
+ #include <linux/hugetlb.h>
+ #include <linux/hugetlb_cgroup.h>
+ #include <linux/gfp.h>
+-#include <linux/balloon_compaction.h>
++#include <linux/compaction.h>
+ #include <linux/mmu_notifier.h>
  
- 	u |= kpf_copy_bit(k, KPF_SLAB,		PG_slab);
-diff --git a/include/linux/compaction.h b/include/linux/compaction.h
-index aa8f61c..c375a89 100644
---- a/include/linux/compaction.h
-+++ b/include/linux/compaction.h
-@@ -1,6 +1,9 @@
- #ifndef _LINUX_COMPACTION_H
- #define _LINUX_COMPACTION_H
+ #include <asm/tlbflush.h>
+@@ -76,7 +76,7 @@ int migrate_prep_local(void)
+  * from where they were once taken off for compaction/migration.
+  *
+  * This function shall be used whenever the isolated pageset has been
+- * built from lru, balloon, hugetlbfs page. See isolate_migratepages_range()
++ * built from lru, mobile, hugetlbfs page. See isolate_migratepages_range()
+  * and isolate_huge_page().
+  */
+ void putback_movable_pages(struct list_head *l)
+@@ -92,8 +92,8 @@ void putback_movable_pages(struct list_head *l)
+ 		list_del(&page->lru);
+ 		dec_zone_page_state(page, NR_ISOLATED_ANON +
+ 				page_is_file_cache(page));
+-		if (unlikely(isolated_balloon_page(page)))
+-			balloon_page_putback(page);
++		if (unlikely(mobile_page(page)))
++			putback_mobilepage(page);
+ 		else
+ 			putback_lru_page(page);
+ 	}
+@@ -844,15 +844,16 @@ static int __unmap_and_move(struct page *page, struct page *newpage,
+ 		}
+ 	}
  
-+#include <linux/page-flags.h>
-+#include <linux/pagemap.h>
-+
- /* Return values for compact_zone() and try_to_compact_pages() */
- /* compaction didn't start as it was deferred due to past failures */
- #define COMPACT_DEFERRED	0
-@@ -51,6 +54,66 @@ extern void compaction_defer_reset(struct zone *zone, int order,
- 				bool alloc_success);
- extern bool compaction_restarting(struct zone *zone, int order);
+-	if (unlikely(isolated_balloon_page(page))) {
++	if (unlikely(mobile_page(page))) {
+ 		/*
+-		 * A ballooned page does not need any special attention from
++		 * A mobile page does not need any special attention from
+ 		 * physical to virtual reverse mapping procedures.
+ 		 * Skip any attempt to unmap PTEs or to remap swap cache,
+ 		 * in order to avoid burning cycles at rmap level, and perform
+ 		 * the page migration right away (proteced by page lock).
+ 		 */
+-		rc = balloon_page_migrate(page->mapping, newpage, page, mode);
++		rc = page->mapping->a_ops->migratepage(page->mapping,
++						       newpage, page, mode);
+ 		goto out_unlock;
+ 	}
  
-+static inline bool mobile_page(struct page *page)
-+{
-+	return page->mapping &&	page->mapping->a_ops &&
-+		(PageMobile(page) || PageBalloon(page));
-+}
-+
-+static inline bool isolate_mobilepage(struct page *page, isolate_mode_t mode)
-+{
-+	bool ret;
-+
-+	/*
-+	 * Avoid burning cycles with pages that are yet under __free_pages(),
-+	 * or just got freed under us.
-+	 *
-+	 * In case we 'win' a race for a mobile page being freed under us and
-+	 * raise its refcount preventing __free_pages() from doing its job
-+	 * the put_page() at the end of this block will take care of
-+	 * release this page, thus avoiding a nasty leakage.
-+	 */
-+	if (likely(get_page_unless_zero(page))) {
-+		/*
-+		 * As mobile pages are not isolated from LRU lists, concurrent
-+		 * compaction threads can race against page migration functions
-+		 * as well as race against the releasing a page.
-+		 *
-+		 * In order to avoid having an already isolated mobile page
-+		 * being (wrongly) re-isolated while it is under migration,
-+		 * or to avoid attempting to isolate pages being released,
-+		 * lets be sure we have the page lock
-+		 * before proceeding with the mobile page isolation steps.
-+		 */
-+		if (likely(trylock_page(page))) {
-+			if (mobile_page(page) &&
-+			    page->mapping->a_ops->isolatepage) {
-+				ret = page->mapping->a_ops->isolatepage(page,
-+									mode);
-+				unlock_page(page);
-+				return ret;
-+			}
-+			unlock_page(page);
-+		}
-+		put_page(page);
-+	}
-+	return false;
-+}
-+
-+static inline void putback_mobilepage(struct page *page)
-+{
-+	/*
-+	 * 'lock_page()' stabilizes the page and prevents races against
-+	 * concurrent isolation threads attempting to re-isolate it.
-+	 */
-+	lock_page(page);
-+	if (mobile_page(page) && page->mapping->a_ops->putbackpage) {
-+		page->mapping->a_ops->putbackpage(page);
-+		/* drop the extra ref count taken for mobile page isolation */
-+		put_page(page);
-+	}
-+	unlock_page(page);
-+}
- #else
- static inline unsigned long try_to_compact_pages(gfp_t gfp_mask,
- 			unsigned int order, int alloc_flags,
-@@ -83,6 +146,19 @@ static inline bool compaction_deferred(struct zone *zone, int order)
- 	return true;
- }
- 
-+static inline bool mobile_page(struct page *page)
-+{
-+	return false;
-+}
-+
-+static inline bool isolate_mobilepage(struct page *page, isolate_mode_t mode)
-+{
-+	return false;
-+}
-+
-+static inline void putback_mobilepage(struct page *page)
-+{
-+}
- #endif /* CONFIG_COMPACTION */
- 
- #if defined(CONFIG_COMPACTION) && defined(CONFIG_SYSFS) && defined(CONFIG_NUMA)
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 35ec87e..33c9aa5 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -395,6 +395,8 @@ struct address_space_operations {
- 	 */
- 	int (*migratepage) (struct address_space *,
- 			struct page *, struct page *, enum migrate_mode);
-+	bool (*isolatepage) (struct page *, isolate_mode_t);
-+	void (*putbackpage) (struct page *);
- 	int (*launder_page) (struct page *);
- 	int (*is_partially_uptodate) (struct page *, unsigned long,
- 					unsigned long);
-diff --git a/include/linux/page-flags.h b/include/linux/page-flags.h
-index f34e040..abef145 100644
---- a/include/linux/page-flags.h
-+++ b/include/linux/page-flags.h
-@@ -582,6 +582,25 @@ static inline void __ClearPageBalloon(struct page *page)
- 	atomic_set(&page->_mapcount, -1);
- }
- 
-+#define PAGE_MOBILE_MAPCOUNT_VALUE (-255)
-+
-+static inline int PageMobile(struct page *page)
-+{
-+	return atomic_read(&page->_mapcount) == PAGE_MOBILE_MAPCOUNT_VALUE;
-+}
-+
-+static inline void __SetPageMobile(struct page *page)
-+{
-+	VM_BUG_ON_PAGE(atomic_read(&page->_mapcount) != -1, page);
-+	atomic_set(&page->_mapcount, PAGE_MOBILE_MAPCOUNT_VALUE);
-+}
-+
-+static inline void __ClearPageMobile(struct page *page)
-+{
-+	VM_BUG_ON_PAGE(!PageMobile(page), page);
-+	atomic_set(&page->_mapcount, -1);
-+}
-+
- /*
-  * If network-based swap is enabled, sl*b must keep track of whether pages
-  * were allocated from pfmemalloc reserves.
-diff --git a/include/uapi/linux/kernel-page-flags.h b/include/uapi/linux/kernel-page-flags.h
-index a6c4962..d50d9e8 100644
---- a/include/uapi/linux/kernel-page-flags.h
-+++ b/include/uapi/linux/kernel-page-flags.h
-@@ -33,6 +33,7 @@
- #define KPF_THP			22
- #define KPF_BALLOON		23
- #define KPF_ZERO_PAGE		24
-+#define KPF_MOBILE		25
- 
- 
- #endif /* _UAPILINUX_KERNEL_PAGE_FLAGS_H */
+@@ -960,8 +961,8 @@ out:
+ 	if (rc != MIGRATEPAGE_SUCCESS && put_new_page) {
+ 		ClearPageSwapBacked(newpage);
+ 		put_new_page(newpage, private);
+-	} else if (unlikely(__is_movable_balloon_page(newpage))) {
+-		/* drop our reference, page already in the balloon */
++	} else if (unlikely(mobile_page(newpage))) {
++		/* drop our reference */
+ 		put_page(newpage);
+ 	} else
+ 		putback_lru_page(newpage);
 -- 
 2.1.4
 
