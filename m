@@ -1,482 +1,116 @@
-From: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH V3 5/5] selftests: vm: Add tests for lock on fault
-Date: Tue,  7 Jul 2015 13:03:43 -0400
-Message-ID: <1436288623-13007-6-git-send-email-emunson@akamai.com>
-References: <1436288623-13007-1-git-send-email-emunson@akamai.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1436288623-13007-1-git-send-email-emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Karol Lewandowski <k.lewandowsk@samsung.com>
+Subject: Re: [RFC 0/8] Additional kmsg devices
+Date: Tue, 07 Jul 2015 19:10:56 +0200
+Message-ID: <559C0820.3060805@samsung.com>
+References: <1435920595-30879-1-git-send-email-m.niesluchow@samsung.com>
+ <CAFLxGvxvaePEyCpLrB1cjNn4bvnCwt-_HE3zcT-6diMYNOraBw@mail.gmail.com>
+ <5596A58F.7090208@samsung.com> <20150707131124.GI32664@pathway.suse.cz>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-reply-to: <20150707131124.GI32664@pathway.suse.cz>
+Sender: linux-doc-owner@vger.kernel.org
+To: Petr Mladek <pmladek@suse.com>, Marcin Niesluchowski <m.niesluchow@samsung.com>
+Cc: Richard Weinberger <richard.weinberger@gmail.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, Jonathan Corbet <corbet@lwn.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tejun Heo <tj@kernel.org>, Kay Sievers <kay@vrfy.org>, Andrew Morton <akpm@linux-foundation.org>, Joe Perches <joe@perches.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, Kyungmin Park <kmpark@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-Test the mmap() flag, and the mlockall() flag.  These tests ensure that
-pages are not faulted in until they are accessed, that the pages are
-unevictable once faulted in, and that VMA splitting and merging works
-with the new VM flag.  The second test ensures that mlock limits are
-respected.  Note that the limit test needs to be run a normal user.
+On 2015-07-07 15:11, Petr Mladek wrote:
+> On Fri 2015-07-03 17:09:03, Marcin Niesluchowski wrote:
+>> On 07/03/2015 01:21 PM, Richard Weinberger wrote:
+>>> On Fri, Jul 3, 2015 at 12:49 PM, Marcin Niesluchowski
+>>> <m.niesluchow@samsung.com> wrote:
+>>>> Dear All,
+>>>>
+>>>> This series of patches extends kmsg interface with ability to dynamicaly
+>>>> create (and destroy) kmsg-like devices which can be used by user space
+>>>> for logging. Logging to kernel has number of benefits, including but not
+>>>> limited to - always available, requiring no userspace, automatically
+>>>> rotating and low overhead.
+>>>>
+>>>> User-space logging to kernel cyclic buffers was already successfully used
+>>>> in android logger concept but it had certain flaws that this commits try
+>>>> to address:
+>>>> * drops hardcoded number of devices and static paths in favor for dynamic
+>>>>   configuration by ioctl interface in userspace
+>>>> * extends existing driver instead of creating completely new one
+>>> So, now we start moving syslogd into kernel land because userspace is
+>>> too broken to provide
+>>> decent logging?
+>>>
+>>> I can understand the systemd is using kmsg if no other logging service
+>>> is available
+>>> but I really don't think we should encourage other programs to do so.
+>>>
+>>> Why can't you just make sure that your target has a working
+>>> syslogd/rsyslogd/journald/whatever?
+>>> All can be done perfectly fine in userspace.
+>> * Message credibility: Lets imagine simple service which collects
+>> logs via unix sockets. There is no reliable way of identifying
+>> logging process. getsockopt() with SO_PEERCRED option would give pid
+>> form cred structure, but according to manual it may not be of actual
+>> logging process:
+>>   "The returned credentials are those that were in effect at the
+>> time of the call to connect(2) or socketpair(2)."
+>>       - select(7)
+>>
+>> * Early userspace tool: Helpful especially for embeded systems.
+>>
+>> * Reliability: Userspace service may be killed due to out of memory
+>> (OOM). This is kernel cyclic buffer, which size can be specified
+>> differently according to situation.
+> But then many services will fight for the space in the kernel ring
+> buffer.
 
-Signed-off-by: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
-Cc: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
----
- tools/testing/selftests/vm/Makefile         |   2 +
- tools/testing/selftests/vm/lock-on-fault.c  | 342 ++++++++++++++++++++++++++++
- tools/testing/selftests/vm/on-fault-limit.c |  47 ++++
- tools/testing/selftests/vm/run_vmtests      |  22 ++
- 4 files changed, 413 insertions(+)
- create mode 100644 tools/testing/selftests/vm/lock-on-fault.c
- create mode 100644 tools/testing/selftests/vm/on-fault-limit.c
+Yes.   Please note however that problems you describe are also valid for
+/dev/kmsg today.
 
-diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
-index 231b9a0..01b4a90 100644
---- a/tools/testing/selftests/vm/Makefile
-+++ b/tools/testing/selftests/vm/Makefile
-@@ -5,7 +5,9 @@ BINARIES = compaction_test
- BINARIES += hugepage-mmap
- BINARIES += hugepage-shm
- BINARIES += hugetlbfstest
-+BINARIES += lock-on-fault
- BINARIES += map_hugetlb
-+BINARIES += on-fault-limit
- BINARIES += thuge-gen
- BINARIES += transhuge-stress
- 
-diff --git a/tools/testing/selftests/vm/lock-on-fault.c b/tools/testing/selftests/vm/lock-on-fault.c
-new file mode 100644
-index 0000000..6e0cdc7
---- /dev/null
-+++ b/tools/testing/selftests/vm/lock-on-fault.c
-@@ -0,0 +1,342 @@
-+#include <sys/mman.h>
-+#include <stdio.h>
-+#include <unistd.h>
-+#include <string.h>
-+#include <sys/time.h>
-+#include <sys/resource.h>
-+
-+struct vm_boundaries {
-+	unsigned long start;
-+	unsigned long end;
-+};
-+
-+static int get_vm_area(unsigned long addr, struct vm_boundaries *area)
-+{
-+	FILE *file;
-+	int ret = 1;
-+	char line[1024] = {0};
-+	char *end_addr;
-+	char *stop;
-+	unsigned long start;
-+	unsigned long end;
-+
-+	if (!area)
-+		return ret;
-+
-+	file = fopen("/proc/self/maps", "r");
-+	if (!file) {
-+		perror("fopen");
-+		return ret;
-+	}
-+
-+	memset(area, 0, sizeof(struct vm_boundaries));
-+
-+	while(fgets(line, 1024, file)) {
-+		end_addr = strchr(line, '-');
-+		if (!end_addr) {
-+			printf("cannot parse /proc/self/maps\n");
-+			goto out;
-+		}
-+		*end_addr = '\0';
-+		end_addr++;
-+		stop = strchr(end_addr, ' ');
-+		if (!stop) {
-+			printf("cannot parse /proc/self/maps\n");
-+			goto out;
-+		}
-+		stop = '\0';
-+
-+		sscanf(line, "%lx", &start);
-+		sscanf(end_addr, "%lx", &end);
-+
-+		if (start <= addr && end > addr) {
-+			area->start = start;
-+			area->end = end;
-+			ret = 0;
-+			goto out;
-+		}
-+	}
-+out:
-+	fclose(file);
-+	return ret;
-+}
-+
-+static unsigned long get_pageflags(unsigned long addr)
-+{
-+	FILE *file;
-+	unsigned long pfn;
-+	unsigned long offset;
-+
-+	file = fopen("/proc/self/pagemap", "r");
-+	if (!file) {
-+		perror("fopen");
-+		_exit(1);
-+	}
-+
-+	offset = addr / getpagesize() * sizeof(unsigned long);
-+	if (fseek(file, offset, SEEK_SET)) {
-+		perror("fseek");
-+		_exit(1);
-+	}
-+
-+	if (fread(&pfn, sizeof(unsigned long), 1, file) != 1) {
-+		perror("fread");
-+		_exit(1);
-+	}
-+
-+	fclose(file);
-+	return pfn;
-+}
-+
-+static unsigned long get_kpageflags(unsigned long pfn)
-+{
-+	unsigned long flags;
-+	FILE *file;
-+
-+	file = fopen("/proc/kpageflags", "r");
-+	if (!file) {
-+		perror("fopen");
-+		_exit(1);
-+	}
-+
-+	if (fseek(file, pfn * sizeof(unsigned long), SEEK_SET)) {
-+		perror("fseek");
-+		_exit(1);
-+	}
-+
-+	if (fread(&flags, sizeof(unsigned long), 1, file) != 1) {
-+		perror("fread");
-+		_exit(1);
-+	}
-+
-+	fclose(file);
-+	return flags;
-+}
-+
-+#define PRESENT_BIT	0x8000000000000000
-+#define PFN_MASK	0x007FFFFFFFFFFFFF
-+#define UNEVICTABLE_BIT	(1UL << 18)
-+
-+static int test_mmap(int flags)
-+{
-+	unsigned long page1_flags;
-+	unsigned long page2_flags;
-+	void *map;
-+	unsigned long page_size = getpagesize();
-+
-+	map = mmap(NULL, 2 * page_size, PROT_READ | PROT_WRITE, flags, 0, 0);
-+	if (map == MAP_FAILED) {
-+		perror("mmap()");
-+		return 1;
-+	}
-+
-+	/* Write something into the first page to ensure it is present */
-+	*(char *)map = 1;
-+
-+	page1_flags = get_pageflags((unsigned long)map);
-+	page2_flags = get_pageflags((unsigned long)map + page_size);
-+
-+	/* page2_flags should not be present */
-+	if (page2_flags & PRESENT_BIT) {
-+		printf("page map says 0x%lx\n", page2_flags);
-+		printf("present is    0x%lx\n", PRESENT_BIT);
-+		return 1;
-+	}
-+
-+	/* page1_flags should be present */
-+	if (page1_flags & PRESENT_BIT == 0) {
-+		printf("page map says 0x%lx\n", page1_flags);
-+		printf("present is    0x%lx\n", PRESENT_BIT);
-+		return 1;
-+	}
-+
-+	page1_flags = get_kpageflags(page1_flags & PFN_MASK);
-+
-+	/* page1_flags now contains the entry from kpageflags for the first
-+	 * page, the unevictable bit should be set */
-+	if (page1_flags & UNEVICTABLE_BIT == 0) {
-+		printf("kpageflags says 0x%lx\n", page1_flags);
-+		printf("unevictable is  0x%lx\n", UNEVICTABLE_BIT);
-+		return 1;
-+	}
-+
-+	munmap(map, 2 * page_size);
-+	return 0;
-+}
-+
-+static int test_munlock(int flags)
-+{
-+	int ret = 1;
-+	void *map;
-+	unsigned long page1_flags;
-+	unsigned long page2_flags;
-+	unsigned long page3_flags;
-+	unsigned long page_size = getpagesize();
-+
-+	map = mmap(NULL, 3 * page_size, PROT_READ | PROT_WRITE, flags, 0, 0);
-+	if (map == MAP_FAILED) {
-+		perror("mmap()");
-+		return ret;
-+	}
-+
-+	if (munlock(map + page_size, page_size)) {
-+		perror("munlock()");
-+		goto out;
-+	}
-+
-+	page1_flags = get_pageflags((unsigned long)map);
-+	page2_flags = get_pageflags((unsigned long)map + page_size);
-+	page3_flags = get_pageflags((unsigned long)map + page_size * 2);
-+
-+	/* No pages should be present */
-+	if ((page1_flags & PRESENT_BIT) || (page2_flags & PRESENT_BIT) ||
-+	    (page3_flags & PRESENT_BIT)) {
-+		printf("Page was made present by munlock()\n");
-+		goto out;
-+	}
-+
-+	/* Write something to each page so that they are faulted in */
-+	*(char*)map = 1;
-+	*(char*)(map + page_size) = 1;
-+	*(char*)(map + page_size * 2) = 1;
-+
-+	page1_flags = get_pageflags((unsigned long)map);
-+	page2_flags = get_pageflags((unsigned long)map + page_size);
-+	page3_flags = get_pageflags((unsigned long)map + page_size * 2);
-+
-+	page1_flags = get_kpageflags(page1_flags & PFN_MASK);
-+	page2_flags = get_kpageflags(page2_flags & PFN_MASK);
-+	page3_flags = get_kpageflags(page3_flags & PFN_MASK);
-+
-+	/* Pages 1 and 3 should be unevictable */
-+	if (!(page1_flags & UNEVICTABLE_BIT)) {
-+		printf("Missing unevictable bit on lock on fault page1\n");
-+		goto out;
-+	}
-+	if (!(page3_flags & UNEVICTABLE_BIT)) {
-+		printf("Missing unevictable bit on lock on fault page3\n");
-+		goto out;
-+	}
-+
-+	/* Page 2 should not be unevictable */
-+	if (page2_flags & UNEVICTABLE_BIT) {
-+		printf("Unlocked page is still marked unevictable\n");
-+		goto out;
-+	}
-+
-+	ret = 0;
-+
-+out:
-+	munmap(map, 3 * page_size);
-+	return ret;
-+}
-+
-+static int test_vma_management(int flags)
-+{
-+	int ret = 1;
-+	void *map;
-+	unsigned long page_size = getpagesize();
-+	struct vm_boundaries page1;
-+	struct vm_boundaries page2;
-+	struct vm_boundaries page3;
-+
-+	map = mmap(NULL, 3 * page_size, PROT_READ | PROT_WRITE, flags, 0, 0);
-+	if (map == MAP_FAILED) {
-+		perror("mmap()");
-+		return ret;
-+	}
-+
-+	if (get_vm_area((unsigned long)map, &page1) ||
-+	    get_vm_area((unsigned long)map + page_size, &page2) ||
-+	    get_vm_area((unsigned long)map + page_size * 2, &page3)) {
-+		printf("couldn't find mapping in /proc/self/maps\n");
-+		goto out;
-+	}
-+
-+	/*
-+	 * Before we unlock a portion, we need to that all three pages are in
-+	 * the same VMA.  If they are not we abort this test (Note that this is
-+	 * not a failure)
-+	 */
-+	if (page1.start != page2.start || page2.start != page3.start) {
-+		printf("VMAs are not merged to start, aborting test\n");
-+		ret = 0;
-+		goto out;
-+	}
-+
-+	if (munlock(map + page_size, page_size)) {
-+		perror("munlock()");
-+		goto out;
-+	}
-+
-+	if (get_vm_area((unsigned long)map, &page1) ||
-+	    get_vm_area((unsigned long)map + page_size, &page2) ||
-+	    get_vm_area((unsigned long)map + page_size * 2, &page3)) {
-+		printf("couldn't find mapping in /proc/self/maps\n");
-+		goto out;
-+	}
-+
-+	/* All three VMAs should be different */
-+	if (page1.start == page2.start || page2.start == page3.start) {
-+		printf("failed to split VMA for munlock\n");
-+		goto out;
-+	}
-+
-+	/* Now unlock the first and third page and check the VMAs again */
-+	if (munlock(map, page_size * 3)) {
-+		perror("munlock()");
-+		goto out;
-+	}
-+
-+	if (get_vm_area((unsigned long)map, &page1) ||
-+	    get_vm_area((unsigned long)map + page_size, &page2) ||
-+	    get_vm_area((unsigned long)map + page_size * 2, &page3)) {
-+		printf("couldn't find mapping in /proc/self/maps\n");
-+		goto out;
-+	}
-+
-+	/* Now all three VMAs should be the same */
-+	if (page1.start != page2.start || page2.start != page3.start) {
-+		printf("failed to merge VMAs after munlock\n");
-+		goto out;
-+	}
-+
-+	ret = 0;
-+out:
-+	munmap(map, 3 * page_size);
-+	return ret;
-+}
-+
-+#ifndef MCL_ONFAULT
-+#define MCL_ONFAULT (MCL_FUTURE << 1)
-+#endif
-+
-+static int test_mlockall(int (test_function)(int flags))
-+{
-+	int ret = 1;
-+
-+	if (mlockall(MCL_ONFAULT)) {
-+		perror("mlockall");
-+		return ret;
-+	}
-+
-+	ret = test_function(MAP_PRIVATE | MAP_ANONYMOUS);
-+	munlockall();
-+	return ret;
-+}
-+
-+#ifndef MAP_LOCKONFAULT
-+#define MAP_LOCKONFAULT (MAP_HUGETLB << 1)
-+#endif
-+
-+int main(int argc, char **argv)
-+{
-+	int ret = 0;
-+	ret += test_mmap(MAP_PRIVATE | MAP_ANONYMOUS | MAP_LOCKONFAULT);
-+	ret += test_mlockall(test_mmap);
-+	ret += test_munlock(MAP_PRIVATE | MAP_ANONYMOUS | MAP_LOCKONFAULT);
-+	ret += test_mlockall(test_munlock);
-+	ret += test_vma_management(MAP_PRIVATE | MAP_ANONYMOUS | MAP_LOCKONFAULT);
-+	ret += test_mlockall(test_vma_management);
-+	return ret;
-+}
-diff --git a/tools/testing/selftests/vm/on-fault-limit.c b/tools/testing/selftests/vm/on-fault-limit.c
-new file mode 100644
-index 0000000..ed2a109
---- /dev/null
-+++ b/tools/testing/selftests/vm/on-fault-limit.c
-@@ -0,0 +1,47 @@
-+#include <sys/mman.h>
-+#include <stdio.h>
-+#include <unistd.h>
-+#include <string.h>
-+#include <sys/time.h>
-+#include <sys/resource.h>
-+
-+#ifndef MCL_ONFAULT
-+#define MCL_ONFAULT (MCL_FUTURE << 1)
-+#endif
-+
-+static int test_limit(void)
-+{
-+	int ret = 1;
-+	struct rlimit lims;
-+	void *map;
-+
-+	if (getrlimit(RLIMIT_MEMLOCK, &lims)) {
-+		perror("getrlimit");
-+		return ret;
-+	}
-+
-+	if (mlockall(MCL_ONFAULT)) {
-+		perror("mlockall");
-+		return ret;
-+	}
-+
-+	map = mmap(NULL, 2 * lims.rlim_max, PROT_READ | PROT_WRITE,
-+		   MAP_PRIVATE | MAP_ANONYMOUS | MAP_POPULATE, 0, 0);
-+	if (map != MAP_FAILED)
-+		printf("mmap should have failed, but didn't\n");
-+	else {
-+		ret = 0;
-+		munmap(map, 2 * lims.rlim_max);
-+	}
-+
-+	munlockall();
-+	return ret;
-+}
-+
-+int main(int argc, char **argv)
-+{
-+	int ret = 0;
-+
-+	ret += test_limit();
-+	return ret;
-+}
-diff --git a/tools/testing/selftests/vm/run_vmtests b/tools/testing/selftests/vm/run_vmtests
-index 49ece11..45241df 100755
---- a/tools/testing/selftests/vm/run_vmtests
-+++ b/tools/testing/selftests/vm/run_vmtests
-@@ -102,4 +102,26 @@ else
- 	echo "[PASS]"
- fi
- 
-+echo "--------------------"
-+echo "running lock-on-fault"
-+echo "--------------------"
-+./lock-on-fault
-+if [ $? -ne 0 ]; then
-+	echo "[FAIL]"
-+	exitcode=1
-+else
-+	echo "[PASS]"
-+fi
-+
-+echo "--------------------"
-+echo "running on-fault-limit"
-+echo "--------------------"
-+sudo -u nobody ./on-fault-limit
-+if [ $? -ne 0 ]; then
-+	echo "[FAIL]"
-+	exitcode=1
-+else
-+	echo "[PASS]"
-+fi
-+
- exit $exitcode
+User space has used (one) writeable kmsg for some time already - which
+has caused number of interesting problems caused by the fact that
+messages from different domains (kernel, userspace) are written to one
+place (ie. systemd "debug" problem).  One of the goals is to avoid this
+particular problem and let userspace create, destroy and user their own
+buffers at will.
+
+> We will need a mechanism to guarantee a space for each service.
+
+We preserve semantics of kmsg, so I don't see why we would need to give
+any more guarantees that what was provided there.
+
+> We will need priorities to throttle various services various ways. 
+
+Appropriate buffer size will throttle messages automatically -  I don't
+think we need anything more than that.  See also below.
+
+> It will be easier to lost messages. 
+
+Ability to lose messages is one of the goals -  if we exceed buffer size
+and there are no one actively reading buffers this is what we want to
+happen.
+
+Say we have one buffer where debug messages go - we are not at all
+interested in the content and are very happy to lose these... unless in
+the case of crash, where we will have all of it dumped to persistent
+storage by pstore (this is when content might be interesting and helpful).
+
+This is just one of many possible scenarios.
+
+> It might be harder to get the important messages on the console when
+> the system is going down.
+
+Messages from additional buffers are not intended to be written to console.
+
+> It will be harder to handle continuous lines.
+
+I don't see how it would be different from what we have today.
+
+> I am not sure that we want to go this way.
+
+This is why this thread has RFC tag anyway :^)
+
+
+Thanks
+
 -- 
-1.9.1
+Karol Lewandowski, Samsung R&D Institute Poland
+
