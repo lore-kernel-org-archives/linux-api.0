@@ -1,57 +1,91 @@
-From: "Winkler, Tomas" <tomas.winkler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: RE: Odd hang on suspend and shutdown
-Date: Tue, 7 Jul 2015 14:38:52 +0000
-Message-ID: <5B8DA87D05A7694D9FA63FD143655C1B3D3E4682@hasmsx108.ger.corp.intel.com>
-References: <CA+55aFy1x6iwbdV8WfR+wawj_1+PxJ+P-Js=EVqD9ZsQetSNJA@mail.gmail.com>
- <20150706160706.GA22015@zurbaran.home>
- <CA+55aFxfENpyWSDxgaQhB1mBHE6zs=w=Mc0VEQLgdwSaCMX5eQ@mail.gmail.com>
- <20150706223133.GC22015@zurbaran.home>
- <CA+55aFwsrywW4fEt33BZFPSu5F0eAFB5YAY-zHUZ8-BLv1VcDg@mail.gmail.com>
- <CA+55aFxo064xa5m3KPjSJxQCrDL3H1QwuEcpCKMg0TL8C0aedQ@mail.gmail.com>
- <20150707040630.GB25900@kroah.com>
+From: Andrew Vagin <avagin@odin.com>
+Subject: Re: [PATCH 0/24] kernel: add a netlink interface to get information
+ about processes (v2)
+Date: Tue, 7 Jul 2015 18:43:46 +0300
+Message-ID: <20150707154345.GA1593@odin.com>
+References: <1436172445-6979-1-git-send-email-avagin@openvz.org>
+ <CALCETrVg5AyeXW_AGguFoGCPK9_2zeobEgT9JJFsakH6PyQf_A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150707040630.GB25900-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="koi8-r"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrVg5AyeXW_AGguFoGCPK9_2zeobEgT9JJFsakH6PyQf_A@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Andrey Vagin <avagin@openvz.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Cyrill Gorcunov <gorcunov@openvz.org>, Pavel Emelyanov <xemul@parallels.com>, Roger Luethi <rl@hellgate.ch>, Arnd Bergmann <arnd@arndb.de>, Arnaldo Carvalho de Melo <acme@kernel.org>, David Ahern <dsahern@gmail.com>, Pavel Odintsov <pavel.odintsov@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-
-
-> Subject: Re: Odd hang on suspend and shutdown
+On Mon, Jul 06, 2015 at 10:10:32AM -0700, Andy Lutomirski wrote:
+> On Mon, Jul 6, 2015 at 1:47 AM, Andrey Vagin <avagin@openvz.org> wrote:
+> > Currently we use the proc file system, where all information are
+> > presented in text files, what is convenient for humans.  But if we need
+> > to get information about processes from code (e.g. in C), the procfs
+> > doesn't look so cool.
+> >
+> > From code we would prefer to get information in binary format and to be
+> > able to specify which information and for which tasks are required. Here
+> > is a new interface with all these features, which is called task_diag.
+> > In addition it's much faster than procfs.
+> >
+> > task_diag is based on netlink sockets and looks like socket-diag, which
+> > is used to get information about sockets.
 > 
-> On Mon, Jul 06, 2015 at 05:04:18PM -0700, Linus Torvalds wrote:
-> > On Mon, Jul 6, 2015 at 4:06 PM, Linus Torvalds
-> > <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
-> > >
-> > > I'll go and test the plain revert case.
-> >
-> > So the "plain" revert ended up being more than a single revert, just
-> > because there were multiple changes in that area. But after doing
-> > this:
-> >
-> >     git revert b144ce2d3761
-> >     git revert 1d3ff76721fb
-> >     git revert be9b720a0ccb
-> >     git revert 007d64eb2232
-> >     git revert dbac993f6a6d
-> >     git revert d4b78c7290dd
-> >     git revert c93b76b34b4d
-> >
-> > I have a working kernel that loads the pn544 thing automatically, and
-> > shows it in /sys/class/nfc/, and suspend works.
-> >
-> > So I'm back to the pre-merge-window behavior.
+> I think I like this in principle, but I have can see a few potential
+> problems with using netlink for this:
 > 
-> I have no objection to just reverting all of these to get back to a
-> working system.
-I was able to reproduce the issue
-The bug was introduced in here be9b720a0ccba096d669bc86634f900b82b9bf71
-Hope to localize the actual root cause soon so we don't have  to revert the all the patches.  
+> 1. Netlink very naturally handles net namespaces, but it doesn't
+> naturally handle any other kind of namespace.  In fact, the taskstats
+> code that you're building on has highly broken user and pid namespace
+> support.  (Look for some obviously useless init_user_ns and
+> init_pid_ns references.  But that's only the obvious problem.  That
+> code calls current_user_ns() and task_active_pid_ns(current) from
+> .doit, which is, in turn, called from sys_write, and looking at
+> current's security state from sys_write is a big no-no.)
+> 
+> You could partially fix it by looking at f_cred's namespaces, but that
+> would be a change of what it means to create a netlink socket, and I'm
+> not sure that's a good idea.
 
-Thanks
-Tomas
+If I don't miss something, all problems around pidns and userns are
+related with multicast functionality. task_diag is using
+request/response scheme and doesn't send multicast packets.
+
+> 
+> 2. These look like generally useful interfaces, which means that
+> people might want to use them in common non-system software, which
+> means that some of that software might get run inside of sandboxes
+> (Sandstorm, xdg-app, etc.)  Sandboxes like that might block netlink
+> outright, since it can't be usefully filtered by seccomp.  (This isn't
+> really the case now, since netlink route queries are too common, but
+> still.)
+> 
+> 3. Netlink is a bit tedious to use from userspace.  Especially for
+> things like task_diag, which are really just queries that generate
+> single replies.
+
+I don't understand this point. Could you elaborate? I thought the
+netlink was designed for such purposes. (not only for them, but for them
+too)
+
+There are two features of netlink which are used.
+
+The netlink interface allows to split response into a few packets, if
+it's too big to be transferred for one iteration.
+
+And I want to mention "Memory mapped netlink I/O" functionality, which
+can be used to speed up task_diag.
+
+> 
+> Would it make more sense to have a new syscall instead?  You could
+> even still use nlattr formatting for the syscall results.
+
+Andy, thank you for the feedback. I got your points. I need time to
+think about them. I suppose that a new syscall can be more suitable in
+this case, and I need time to form a vision of it. If you have any ideas
+or thoughts, I would be glad to know about them.
+
+Thanks,
+Andrew
+
+> 
+> --Andy
