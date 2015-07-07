@@ -1,71 +1,57 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: Re: [RFC 0/8] Additional kmsg devices
-Date: Tue, 7 Jul 2015 15:11:24 +0200
-Message-ID: <20150707131124.GI32664@pathway.suse.cz>
-References: <1435920595-30879-1-git-send-email-m.niesluchow@samsung.com>
- <CAFLxGvxvaePEyCpLrB1cjNn4bvnCwt-_HE3zcT-6diMYNOraBw@mail.gmail.com>
- <5596A58F.7090208@samsung.com>
+From: "Winkler, Tomas" <tomas.winkler-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: RE: Odd hang on suspend and shutdown
+Date: Tue, 7 Jul 2015 14:38:52 +0000
+Message-ID: <5B8DA87D05A7694D9FA63FD143655C1B3D3E4682@hasmsx108.ger.corp.intel.com>
+References: <CA+55aFy1x6iwbdV8WfR+wawj_1+PxJ+P-Js=EVqD9ZsQetSNJA@mail.gmail.com>
+ <20150706160706.GA22015@zurbaran.home>
+ <CA+55aFxfENpyWSDxgaQhB1mBHE6zs=w=Mc0VEQLgdwSaCMX5eQ@mail.gmail.com>
+ <20150706223133.GC22015@zurbaran.home>
+ <CA+55aFwsrywW4fEt33BZFPSu5F0eAFB5YAY-zHUZ8-BLv1VcDg@mail.gmail.com>
+ <CA+55aFxo064xa5m3KPjSJxQCrDL3H1QwuEcpCKMg0TL8C0aedQ@mail.gmail.com>
+ <20150707040630.GB25900@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5596A58F.7090208@samsung.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Marcin Niesluchowski <m.niesluchow@samsung.com>
-Cc: Richard Weinberger <richard.weinberger@gmail.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, Jonathan Corbet <corbet@lwn.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tejun Heo <tj@kernel.org>, Kay Sievers <kay@vrfy.org>, Andrew Morton <akpm@linux-foundation.org>, Joe Perches <joe@perches.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150707040630.GB25900-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Samuel Ortiz <sameo-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri 2015-07-03 17:09:03, Marcin Niesluchowski wrote:
-> On 07/03/2015 01:21 PM, Richard Weinberger wrote:
-> >On Fri, Jul 3, 2015 at 12:49 PM, Marcin Niesluchowski
-> ><m.niesluchow@samsung.com> wrote:
-> >>Dear All,
-> >>
-> >>This series of patches extends kmsg interface with ability to dynamicaly
-> >>create (and destroy) kmsg-like devices which can be used by user space
-> >>for logging. Logging to kernel has number of benefits, including but not
-> >>limited to - always available, requiring no userspace, automatically
-> >>rotating and low overhead.
-> >>
-> >>User-space logging to kernel cyclic buffers was already successfully used
-> >>in android logger concept but it had certain flaws that this commits try
-> >>to address:
-> >>* drops hardcoded number of devices and static paths in favor for dynamic
-> >>   configuration by ioctl interface in userspace
-> >>* extends existing driver instead of creating completely new one
-> >So, now we start moving syslogd into kernel land because userspace is
-> >too broken to provide
-> >decent logging?
-> >
-> >I can understand the systemd is using kmsg if no other logging service
-> >is available
-> >but I really don't think we should encourage other programs to do so.
-> >
-> >Why can't you just make sure that your target has a working
-> >syslogd/rsyslogd/journald/whatever?
-> >All can be done perfectly fine in userspace.
-> * Message credibility: Lets imagine simple service which collects
-> logs via unix sockets. There is no reliable way of identifying
-> logging process. getsockopt() with SO_PEERCRED option would give pid
-> form cred structure, but according to manual it may not be of actual
-> logging process:
->   "The returned credentials are those that were in effect at the
-> time of the call to connect(2) or socketpair(2)."
->       - select(7)
-> 
-> * Early userspace tool: Helpful especially for embeded systems.
-> 
-> * Reliability: Userspace service may be killed due to out of memory
-> (OOM). This is kernel cyclic buffer, which size can be specified
-> differently according to situation.
 
-But then many services will fight for the space in the kernel ring
-buffer. We will need a mechanism to guarantee a space for each
-service. We will need priorities to throttle various services
-various ways. It will be easier to lost messages. It might be
-harder to get the important messages on the console when
-the system is going down. It will be harder to handle continuous
-lines. I am not sure that we want to go this way.
 
-Best Regards,
-Petr
+> Subject: Re: Odd hang on suspend and shutdown
+> 
+> On Mon, Jul 06, 2015 at 05:04:18PM -0700, Linus Torvalds wrote:
+> > On Mon, Jul 6, 2015 at 4:06 PM, Linus Torvalds
+> > <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
+> > >
+> > > I'll go and test the plain revert case.
+> >
+> > So the "plain" revert ended up being more than a single revert, just
+> > because there were multiple changes in that area. But after doing
+> > this:
+> >
+> >     git revert b144ce2d3761
+> >     git revert 1d3ff76721fb
+> >     git revert be9b720a0ccb
+> >     git revert 007d64eb2232
+> >     git revert dbac993f6a6d
+> >     git revert d4b78c7290dd
+> >     git revert c93b76b34b4d
+> >
+> > I have a working kernel that loads the pn544 thing automatically, and
+> > shows it in /sys/class/nfc/, and suspend works.
+> >
+> > So I'm back to the pre-merge-window behavior.
+> 
+> I have no objection to just reverting all of these to get back to a
+> working system.
+I was able to reproduce the issue
+The bug was introduced in here be9b720a0ccba096d669bc86634f900b82b9bf71
+Hope to localize the actual root cause soon so we don't have  to revert the all the patches.  
+
+Thanks
+Tomas
