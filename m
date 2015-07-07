@@ -1,136 +1,117 @@
-From: Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 1/5] coresight-etm3x: Change the name of the ctxid_val to ctxid_pid
-Date: Tue,  7 Jul 2015 16:41:54 +0800
-Message-ID: <1436258518-9339-2-git-send-email-zhang.chunyan@linaro.org>
-References: <1436258518-9339-1-git-send-email-zhang.chunyan@linaro.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3] ipc: Modify message queue accounting to not take
+ kernel data structures into account
+Date: Tue, 7 Jul 2015 15:01:17 +0200
+Message-ID: <CAKgNAkjy-+2TkN=0Fe11bVea4q6uLcUx=++Mf1eFxhmPmZoc9w@mail.gmail.com>
+References: <20150622222546.GA32432@ramsey.localdomain> <1435211229.11852.23.camel@stgolabs.net>
+ <CAKgNAkieR5zdpKm=P2dcTDJ_3X4HMRoeOQ2D8yghYVKOjDsYAg@mail.gmail.com>
+ <1435256484.11852.30.camel@stgolabs.net> <20150706154928.GA19828@ramsey.localdomain>
+ <1436246210.12255.71.camel@stgolabs.net>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1436258518-9339-1-git-send-email-zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+In-Reply-To: <1436246210.12255.71.camel-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org
-Cc: broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, serge.broslavsky-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
+Cc: Marcus Gelderie <redmnic-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, John Duffy <jb_duffy-FhtRXb7CoQBt1OO0OYaSVA@public.gmane.org>, Arto Bendiken <arto-TQ6thHYR8Svk1uMJSBkQmQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-'ctxid_val' array was used to store the value of ETM context ID comparator
-which actually stores the process ID to be traced, so using 'ctxid_pid' as
-its name instead make it easier to understand.
+Hi David,
 
-This patch also changes the ABI, it is normally not allowed, but
-fortunately it is a testing ABI and very new for now. Nevertheless,
-if you don't think it should be changed, we could always add an alias
-for userspace.
+On 7 July 2015 at 07:16, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org> wrote:
+> On Mon, 2015-07-06 at 17:49 +0200, Marcus Gelderie wrote:
+>> A while back, the message queue implementation in the kernel was
+>> improved to use btrees to speed up retrieval of messages (commit
+>> d6629859b36). The patch introducing the improved kernel handling of
+>> message queues (using btrees) has, as a by-product, changed the
+>> meaning of the QSIZE field in the pseudo-file created for the queue.
+>> Before, this field reflected the size of the user-data in the queue.
+>> Since, it also takes kernel data structures into account. For
+>> example, if 13 bytes of user data are in the queue, on my machine the
+>> file reports a size of 61 bytes.
+>>
+>> There was some discussion on this topic before (for example
+>> https://lkml.org/lkml/2014/10/1/115). Commenting on a th lkml, Michael
+>> Kerrisk gave the following background (https://lkml.org/lkml/2015/6/16/74):
+>>
+>>     The pseudofiles in the mqueue filesystem (usually mounted at
+>>     /dev/mqueue) expose fields with metadata describing a message
+>>     queue. One of these fields, QSIZE, as originally implemented,
+>>     showed the total number of bytes of user data in all messages in
+>>     the message queue, and this feature was documented from the
+>>     beginning in the mq_overview(7) page. In 3.5, some other (useful)
+>>     work happened to break the user-space API in a couple of places,
+>>     including the value exposed via QSIZE, which now includes a measure
+>>     of kernel overhead bytes for the queue, a figure that renders QSIZE
+>>     useless for its original purpose, since there's no way to deduce
+>>     the number of overhead bytes consumed by the implementation.
+>>     (The other user-space breakage was subsequently fixed.)
+>
+> Michael, this breakage was never finally documented in the manpage,
+> right?
 
-Signed-off-by: Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Reviewed-by: Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
----
- .../ABI/testing/sysfs-bus-coresight-devices-etm3x        |  2 +-
- drivers/hwtracing/coresight/coresight-etm.h              |  4 ++--
- drivers/hwtracing/coresight/coresight-etm3x.c            | 16 ++++++++--------
- 3 files changed, 11 insertions(+), 11 deletions(-)
+Right.
 
-diff --git a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x
-index b4d0b99..d72ca17 100644
---- a/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x
-+++ b/Documentation/ABI/testing/sysfs-bus-coresight-devices-etm3x
-@@ -112,7 +112,7 @@ KernelVersion:	3.19
- Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
- Description: 	(RW) Mask to apply to all the context ID comparator.
- 
--What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/ctxid_val
-+What:		/sys/bus/coresight/devices/<memory_map>.[etm|ptm]/ctxid_pid
- Date:		November 2014
- KernelVersion:	3.19
- Contact:	Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-diff --git a/drivers/hwtracing/coresight/coresight-etm.h b/drivers/hwtracing/coresight/coresight-etm.h
-index 098ffbe..52af5f0 100644
---- a/drivers/hwtracing/coresight/coresight-etm.h
-+++ b/drivers/hwtracing/coresight/coresight-etm.h
-@@ -183,7 +183,7 @@
-  * @seq_13_event: event causing the transition from 1 to 3.
-  * @seq_curr_state: current value of the sequencer register.
-  * @ctxid_idx: index for the context ID registers.
-- * @ctxid_val: value for the context ID to trigger on.
-+ * @ctxid_pid: value for the context ID to trigger on.
-  * @ctxid_mask: mask applicable to all the context IDs.
-  * @sync_freq:	Synchronisation frequency.
-  * @timestamp_event: Defines an event that requests the insertion
-@@ -235,7 +235,7 @@ struct etm_drvdata {
- 	u32				seq_13_event;
- 	u32				seq_curr_state;
- 	u8				ctxid_idx;
--	u32				ctxid_val[ETM_MAX_CTXID_CMP];
-+	u32				ctxid_pid[ETM_MAX_CTXID_CMP];
- 	u32				ctxid_mask;
- 	u32				sync_freq;
- 	u32				timestamp_event;
-diff --git a/drivers/hwtracing/coresight/coresight-etm3x.c b/drivers/hwtracing/coresight/coresight-etm3x.c
-index 018a00f..cfda302 100644
---- a/drivers/hwtracing/coresight/coresight-etm3x.c
-+++ b/drivers/hwtracing/coresight/coresight-etm3x.c
-@@ -238,7 +238,7 @@ static void etm_set_default(struct etm_drvdata *drvdata)
- 	drvdata->seq_curr_state = 0x0;
- 	drvdata->ctxid_idx = 0x0;
- 	for (i = 0; i < drvdata->nr_ctxid_cmp; i++)
--		drvdata->ctxid_val[i] = 0x0;
-+		drvdata->ctxid_pid[i] = 0x0;
- 	drvdata->ctxid_mask = 0x0;
- }
- 
-@@ -289,7 +289,7 @@ static void etm_enable_hw(void *info)
- 	for (i = 0; i < drvdata->nr_ext_out; i++)
- 		etm_writel(drvdata, ETM_DEFAULT_EVENT_VAL, ETMEXTOUTEVRn(i));
- 	for (i = 0; i < drvdata->nr_ctxid_cmp; i++)
--		etm_writel(drvdata, drvdata->ctxid_val[i], ETMCIDCVRn(i));
-+		etm_writel(drvdata, drvdata->ctxid_pid[i], ETMCIDCVRn(i));
- 	etm_writel(drvdata, drvdata->ctxid_mask, ETMCIDCMR);
- 	etm_writel(drvdata, drvdata->sync_freq, ETMSYNCFR);
- 	/* No external input selected */
-@@ -1386,20 +1386,20 @@ static ssize_t ctxid_idx_store(struct device *dev,
- }
- static DEVICE_ATTR_RW(ctxid_idx);
- 
--static ssize_t ctxid_val_show(struct device *dev,
-+static ssize_t ctxid_pid_show(struct device *dev,
- 			      struct device_attribute *attr, char *buf)
- {
- 	unsigned long val;
- 	struct etm_drvdata *drvdata = dev_get_drvdata(dev->parent);
- 
- 	spin_lock(&drvdata->spinlock);
--	val = drvdata->ctxid_val[drvdata->ctxid_idx];
-+	val = drvdata->ctxid_pid[drvdata->ctxid_idx];
- 	spin_unlock(&drvdata->spinlock);
- 
- 	return sprintf(buf, "%#lx\n", val);
- }
- 
--static ssize_t ctxid_val_store(struct device *dev,
-+static ssize_t ctxid_pid_store(struct device *dev,
- 			       struct device_attribute *attr,
- 			       const char *buf, size_t size)
- {
-@@ -1412,12 +1412,12 @@ static ssize_t ctxid_val_store(struct device *dev,
- 		return ret;
- 
- 	spin_lock(&drvdata->spinlock);
--	drvdata->ctxid_val[drvdata->ctxid_idx] = val;
-+	drvdata->ctxid_pid[drvdata->ctxid_idx] = val;
- 	spin_unlock(&drvdata->spinlock);
- 
- 	return size;
- }
--static DEVICE_ATTR_RW(ctxid_val);
-+static DEVICE_ATTR_RW(ctxid_pid);
- 
- static ssize_t ctxid_mask_show(struct device *dev,
- 			       struct device_attribute *attr, char *buf)
-@@ -1609,7 +1609,7 @@ static struct attribute *coresight_etm_attrs[] = {
- 	&dev_attr_seq_13_event.attr,
- 	&dev_attr_seq_curr_state.attr,
- 	&dev_attr_ctxid_idx.attr,
--	&dev_attr_ctxid_val.attr,
-+	&dev_attr_ctxid_pid.attr,
- 	&dev_attr_ctxid_mask.attr,
- 	&dev_attr_sync_freq.attr,
- 	&dev_attr_timestamp_event.attr,
+> I took a look and there is no mention, but it was a quick look.
+> It's just that if this patch goes in, I'd hate ending up with something
+> like this in the manpage:
+>
+> as of 3.5
+>   <accounts for kernel overhead>
+>
+> as of 4.3
+>   <behavior reverted back to not include kernel overhead... *sigh*>
+>
+> If there are changes to be made to the manpage, it should probably be
+> posted with this patch, methinks.
+
+I think something like the above will have to end up in the man page.
+The only thing I'd add is that the fix also has gone to -stable
+kernels. At least: I think this patch should also be marked for
+-stable. I'll take care of the man page updates as the patch goes
+through.
+
+>> This patch removes the accounting of kernel data structures in the
+>> queue. Reporting the size of these data-structures in the QSIZE field
+>> was a breaking change (see Michael's comment above). Without the QSIZE
+>> field reporting the total size of user-data in the queue, there is no
+>> way to deduce this number.
+>>
+>> It should be noted that the resource limit RLIMIT_MSGQUEUE is counted
+>> against the worst-case size of the queue (in both the old and the new
+>> implementation). Therefore, the kernel overhead accounting in QSIZE is
+>> not necessary to help the user understand the limitations RLIMIT imposes
+>> on the processes.
+>
+> Also, I would suggest adding some comment in struct mqueue_inode_info
+> for future reference, ie:
+>
+> -       unsigned long qsize; /* size of queue in memory (sum of all msgs) */
+> +       /*
+> +        * Size of queue in memory (sum of all msgs). Accounts for
+> +        * only userspace overhead; ignoring any in-kernel rbtree nodes.
+> +        */
+> +       unsigned long qsize;
+>
+> But no big deal in any case.
+>
+> I think this is the right approach,
+
+Me too.
+
+> but would still like to know if Doug
+> has any concerns about it.
+
+Looking on gmane, Doug does not appear to have been active on any
+lists since late May! Not sure why.
+
+Cheers,
+
+Michael
+
+
 -- 
-1.9.1
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
