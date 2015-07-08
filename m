@@ -1,335 +1,2172 @@
-From: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [RFC 5/8] kdbus: use LSM hooks in kdbus code
-Date: Wed, 08 Jul 2015 14:12:03 +0200 (CEST)
-Message-ID: <alpine.DEB.2.10.1507081411410.12441@AMDC1262.digital.local>
-References: <1436351110-5902-1-git-send-email-p.osmialowsk@samsung.com>
- <1436351110-5902-6-git-send-email-p.osmialowsk@samsung.com>
- <1436353775.2331.2.camel@samsung.com>
+From: Chunyan Zhang <zhang.lyra@gmail.com>
+Subject: Re: [PATCH v3 01/11] stm class: Introduce an abstraction for System
+ Trace Module devices
+Date: Wed, 8 Jul 2015 20:32:25 +0800
+Message-ID: <CAAfSe-vDUdA+kY04-u-SXT-pdy_hn1hY1yG6-e-k_tbLsFzjKQ@mail.gmail.com>
+References: <1436177344-16751-1-git-send-email-alexander.shishkin@linux.intel.com>
+	<1436177344-16751-2-git-send-email-alexander.shishkin@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-1448733694-1436357538=:12441"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <1436353775.2331.2.camel-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Cc: Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Mark Rustad <mark.d.rustad-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, David Herrmann <dh.herrmann-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Lukasz Skalski <l.skalski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1436177344-16751-2-git-send-email-alexander.shishkin@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexander Shishkin <alexander.shishkin@linux.intel.com>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, mathieu.poirier@linaro.org, peter.lachner@intel.com, norbert.schulz@intel.com, keven.boell@intel.com, yann.fouassier@intel.com, laurent.fert@intel.com, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
-
---8323329-1448733694-1436357538=:12441
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
-
-You're right about it. To be fixed. Thanks for spotting this.
-
-On Wed, 8 Jul 2015, Lukasz Pawelczyk wrote:
-
->> +		ret = -EPERM;
->> +		goto exit_unref;
->> +	}
+On Mon, Jul 6, 2015 at 6:08 PM, Alexander Shishkin
+<alexander.shishkin@linux.intel.com> wrote:
+> A System Trace Module (STM) is a device exporting data in System Trace
+> Protocol (STP) format as defined by MIPI STP standards. Examples of such
+> devices are Intel Trace Hub and Coresight STM.
 >
-> Also, why aren't the error codes passed from LSM? LSM can return
-> anything, from EINVAL, to ENOMEM. Returning EPERM can be misleading.
+> This abstraction provides a unified interface for software trace sources
+> to send their data over an STM device to a debug host. In order to do
+> that, such a trace source needs to be assigned a pair of master/channel
+> identifiers that all the data from this source will be tagged with. The
+> STP decoder on the debug host side will use these master/channel tags to
+> distinguish different trace streams from one another inside one STP
+> stream.
 >
---8323329-1448733694-1436357538=:12441
-Content-Type: TEXT/x-diff; name=0005-kdbus-use-LSM-hooks-in-kdbus-code.patch
-Content-Transfer-Encoding: BASE64
-Content-ID: <alpine.DEB.2.10.1507081411270.12441-rWxBz+Dn3+580y0nlK0+ubjjLBE8jN/0@public.gmane.org>
-Content-Description: 
-Content-Disposition: attachment; filename=0005-kdbus-use-LSM-hooks-in-kdbus-code.patch
+> This abstraction provides a configfs-based policy management mechanism
+> for dynamic allocation of these master/channel pairs based on trace
+> source-supplied string identifier. It has the flexibility of being
+> defined at runtime and at the same time (provided that the policy
+> definition is aligned with the decoding end) consistency.
+>
+> For userspace trace sources, this abstraction provides write()-based and
+> mmap()-based (if the underlying stm device allows this) output mechanism.
+>
+> For kernel-side trace sources, we provide "stm_source" device class that
+> can be connected to an stm device at run time.
+>
+> Cc: linux-api@vger.kernel.org
+> Cc: Mathieu Poirier <mathieu.poirier@linaro.org>
+> Signed-off-by: Alexander Shishkin <alexander.shishkin@linux.intel.com>
+> ---
+>  Documentation/ABI/testing/configfs-stp-policy    |   48 +
+>  Documentation/ABI/testing/sysfs-class-stm        |   14 +
+>  Documentation/ABI/testing/sysfs-class-stm_source |   11 +
+>  Documentation/ioctl/ioctl-number.txt             |    3 +
+>  Documentation/trace/stm.txt                      |   80 ++
+>  drivers/Kconfig                                  |    2 +
+>  drivers/Makefile                                 |    1 +
+>  drivers/hwtracing/stm/Kconfig                    |    8 +
+>  drivers/hwtracing/stm/Makefile                   |    3 +
+>  drivers/hwtracing/stm/core.c                     | 1029 ++++++++++++++++++++++
+>  drivers/hwtracing/stm/policy.c                   |  529 +++++++++++
+>  drivers/hwtracing/stm/stm.h                      |   87 ++
+>  include/linux/stm.h                              |  126 +++
+>  include/uapi/linux/stm.h                         |   50 ++
+>  14 files changed, 1991 insertions(+)
+>  create mode 100644 Documentation/ABI/testing/configfs-stp-policy
+>  create mode 100644 Documentation/ABI/testing/sysfs-class-stm
+>  create mode 100644 Documentation/ABI/testing/sysfs-class-stm_source
+>  create mode 100644 Documentation/trace/stm.txt
+>  create mode 100644 drivers/hwtracing/stm/Kconfig
+>  create mode 100644 drivers/hwtracing/stm/Makefile
+>  create mode 100644 drivers/hwtracing/stm/core.c
+>  create mode 100644 drivers/hwtracing/stm/policy.c
+>  create mode 100644 drivers/hwtracing/stm/stm.h
+>  create mode 100644 include/linux/stm.h
+>  create mode 100644 include/uapi/linux/stm.h
+>
+> diff --git a/Documentation/ABI/testing/configfs-stp-policy b/Documentation/ABI/testing/configfs-stp-policy
+> new file mode 100644
+> index 0000000000..421ce6825c
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/configfs-stp-policy
+> @@ -0,0 +1,48 @@
+> +What:          /config/stp-policy
+> +Date:          June 2015
+> +KernelVersion: 4.3
+> +Description:
+> +               This group contains policies mandating Master/Channel allocation
+> +               for software sources wishing to send trace data over an STM
+> +               device.
+> +
+> +What:          /config/stp-policy/<device>.<policy>
+> +Date:          June 2015
+> +KernelVersion: 4.3
+> +Description:
+> +               This group is the root of a policy; its name is a concatenation
+> +               of an stm device name to which this policy applies and an
+> +               arbitrary string. If <device> part doesn't match an existing
+> +               stm device, mkdir will fail with ENODEV; if that device already
+> +               has a policy assigned to it, mkdir will fail with EBUSY.
+> +
+> +What:          /config/stp-policy/<device>.<policy>/device
+> +Date:          June 2015
+> +KernelVersion: 4.3
+> +Description:
+> +               STM device to which this policy applies, read only. Same as the
+> +               <device> component of its parent directory.
+> +
+> +What:          /config/stp-policy/<device>.<policy>/<node>
+> +Date:          June 2015
+> +KernelVersion: 4.3
+> +Description:
+> +               Policy node is a string identifier that software clients will
+> +               use to request a master/channel to be allocated and assigned to
+> +               them.
+> +
+> +What:          /config/stp-policy/<device>.<policy>/<node>/masters
+> +Date:          June 2015
+> +KernelVersion: 4.3
+> +Description:
+> +               Range of masters from which to allocate for users of this node.
+> +               Write two numbers: the first master and the last master number.
+> +
+> +What:          /config/stp-policy/<device>.<policy>/<node>/channels
+> +Date:          June 2015
+> +KernelVersion: 4.3
+> +Description:
+> +               Range of channels from which to allocate for users of this node.
+> +               Write two numbers: the first channel and the last channel
+> +               number.
+> +
+> diff --git a/Documentation/ABI/testing/sysfs-class-stm b/Documentation/ABI/testing/sysfs-class-stm
+> new file mode 100644
+> index 0000000000..c9aa4f3fc9
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-class-stm
+> @@ -0,0 +1,14 @@
+> +What:          /sys/class/stm/<stm>/masters
+> +Date:          June 2015
+> +KernelVersion: 4.3
+> +Contact:       Alexander Shishkin <alexander.shishkin@linux.intel.com>
+> +Description:
+> +               Shows first and last available to software master numbers on
+> +               this STM device.
+> +
+> +What:          /sys/class/stm/<stm>/channels
+> +Date:          June 2015
+> +KernelVersion: 4.3
+> +Contact:       Alexander Shishkin <alexander.shishkin@linux.intel.com>
+> +Description:
+> +               Shows the number of channels per master on this STM device.
+> diff --git a/Documentation/ABI/testing/sysfs-class-stm_source b/Documentation/ABI/testing/sysfs-class-stm_source
+> new file mode 100644
+> index 0000000000..57b8dd39bb
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-class-stm_source
+> @@ -0,0 +1,11 @@
+> +What:          /sys/class/stm_source/<stm_source>/stm_source_link
+> +Date:          June 2015
+> +KernelVersion: 4.3
+> +Contact:       Alexander Shishkin <alexander.shishkin@linux.intel.com>
+> +Description:
+> +               stm_source device linkage to stm device, where its tracing data
+> +               is directed. Reads return an existing connection or "<none>" if
+> +               this stm_source is not connected to any stm device yet.
+> +               Write an existing (registered) stm device's name here to
+> +               connect that device. If a device is already connected to this
+> +               stm_source, it will first be disconnected.
+> diff --git a/Documentation/ioctl/ioctl-number.txt b/Documentation/ioctl/ioctl-number.txt
+> index 611c52267d..7fa29b4ece 100644
+> --- a/Documentation/ioctl/ioctl-number.txt
+> +++ b/Documentation/ioctl/ioctl-number.txt
+> @@ -81,6 +81,9 @@ Code  Seq#(hex)       Include File            Comments
+>  0x22   all     scsi/sg.h
+>  '#'    00-3F   IEEE 1394 Subsystem     Block for the entire subsystem
+>  '$'    00-0F   linux/perf_counter.h, linux/perf_event.h
+> +'%'    00-0F   include/uapi/linux/stm.h
+> +                                       System Trace Module subsystem
+> +                                       <mailto:alexander.shishkin@linux.intel.com>
+>  '&'    00-07   drivers/firewire/nosy-user.h
+>  '1'    00-1F   <linux/timepps.h>       PPS kit from Ulrich Windl
+>                                         <ftp://ftp.de.kernel.org/pub/linux/daemons/ntp/PPS/>
+> diff --git a/Documentation/trace/stm.txt b/Documentation/trace/stm.txt
+> new file mode 100644
+> index 0000000000..e140f2e8d7
+> --- /dev/null
+> +++ b/Documentation/trace/stm.txt
+> @@ -0,0 +1,80 @@
+> +System Trace Module
+> +===================
+> +
+> +System Trace Module (STM) is a device described in MIPI STP specs as
+> +STP trace stream generator. STP (System Trace Protocol) is a trace
+> +protocol multiplexing data from multiple trace sources, each one of
+> +which is assigned a unique pair of master and channel. While some of
+> +these masters and channels are statically allocated to certain
+> +hardware trace sources, others are available to software. Software
+> +trace sources are usually free to pick for themselves any
+> +master/channel combination from this pool.
+> +
+> +On the receiving end of this STP stream (the decoder side), trace
+> +sources can only be identified by master/channel combination, so in
+> +order for the decoder to be able to make sense of the trace that
+> +involves multiple trace sources, it needs to be able to map those
+> +master/channel pairs to the trace sources that it understands.
+> +
+> +For instance, it is helpful to know that syslog messages come on
+> +master 7 channel 15, while arbitrary user applications can use masters
+> +48 to 63 and channels 0 to 127.
+> +
+> +To solve this mapping problem, stm class provides a policy management
+> +mechanism via configfs, that allows defining rules that map string
+> +identifiers to ranges of masters and channels. If these rules (policy)
+> +are consistent with what decoder expects, it will be able to properly
+> +process the trace data.
+> +
+> +This policy is a tree structure containing rules (policy_node) that
+> +have a name (string identifier) and a range of masters and channels
+> +associated with it, located in "stp-policy" subsystem directory in
+> +configfs. The topmost directory's name (the policy) is formatted as
+> +the STM device name to which this policy applies and and arbitrary
+> +string identifier separated by a stop. From the examle above, a rule
+> +may look like this:
+> +
+> +$ ls /config/stp-policy/dummy_stm.my-policy/user
+> +channels masters
+> +$ cat /config/stp-policy/dummy_stm.my-policy/user/masters
+> +48 63
+> +$ cat /config/stp-policy/dummy_stm.my-policy/user/channels
+> +0 127
+> +
+> +which means that the master allocation pool for this rule consists of
+> +masters 48 through 63 and channel allocation pool has channels 0
+> +through 127 in it. Now, any producer (trace source) identifying itself
+> +with "user" identification string will be allocated a master and
+> +channel from within these ranges.
+> +
+> +These rules can be nested, for example, one can define a rule "dummy"
+> +under "user" directory from the example above and this new rule will
+> +be used for trace sources with the id string of "user/dummy".
+> +
+> +Trace sources have to open the stm class device's node and write their
+> +trace data into its file descriptor. In order to identify themselves
+> +to the policy, they need to do a STP_POLICY_ID_SET ioctl on this file
+> +descriptor providing their id string. Otherwise, they will be
+> +automatically allocated a master/channel pair upon first write to this
+> +file descriptor according to the "default" rule of the policy, if such
+> +exists.
+> +
+> +Some STM devices may allow direct mapping of the channel mmio regions
+> +to userspace for zero-copy writing. One mappable page (in terms of
+> +mmu) will usually contain multiple channels' mmios, so the user will
+> +need to allocate that many channels to themselves (via the
+> +aforementioned ioctl() call) to be able to do this. That is, if your
+> +stm device's channel mmio region is 64 bytes and hardware page size is
+> +4096 bytes, after a successful STP_POLICY_ID_SET ioctl() call with
+> +width==64, you should be able to mmap() one page on this file
+> +descriptor and obtain direct access to an mmio region for 64 channels.
+> +
+> +For kernel-based trace sources, there is "stm_source" device
+> +class. Devices of this class can be connected and disconnected to/from
+> +stm devices at runtime via a sysfs attribute.
+> +
+> +Examples of STM devices are Intel Trace Hub [1] and Coresight STM
+> +[2].
+> +
+> +[1] https://software.intel.com/sites/default/files/managed/d3/3c/intel-th-developer-manual.pdf
+> +[2] http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0444b/index.html
+> diff --git a/drivers/Kconfig b/drivers/Kconfig
+> index 6e973b8e3a..96efe4522c 100644
+> --- a/drivers/Kconfig
+> +++ b/drivers/Kconfig
+> @@ -184,4 +184,6 @@ source "drivers/android/Kconfig"
+>
+>  source "drivers/nvdimm/Kconfig"
+>
+> +source "drivers/hwtracing/stm/Kconfig"
+> +
+>  endmenu
+> diff --git a/drivers/Makefile b/drivers/Makefile
+> index b64b49f6e0..6647bc923f 100644
+> --- a/drivers/Makefile
+> +++ b/drivers/Makefile
+> @@ -164,4 +164,5 @@ obj-$(CONFIG_MCB)           += mcb/
+>  obj-$(CONFIG_RAS)              += ras/
+>  obj-$(CONFIG_THUNDERBOLT)      += thunderbolt/
+>  obj-$(CONFIG_CORESIGHT)                += hwtracing/coresight/
+> +obj-$(CONFIG_STM)              += hwtracing/stm/
+>  obj-$(CONFIG_ANDROID)          += android/
+> diff --git a/drivers/hwtracing/stm/Kconfig b/drivers/hwtracing/stm/Kconfig
+> new file mode 100644
+> index 0000000000..90ed327461
+> --- /dev/null
+> +++ b/drivers/hwtracing/stm/Kconfig
+> @@ -0,0 +1,8 @@
+> +config STM
+> +       tristate "System Trace Module devices"
+> +       help
+> +         A System Trace Module (STM) is a device exporting data in System
+> +         Trace Protocol (STP) format as defined by MIPI STP standards.
+> +         Examples of such devices are Intel Trace Hub and Coresight STM.
+> +
+> +         Say Y here to enable System Trace Module device support.
+> diff --git a/drivers/hwtracing/stm/Makefile b/drivers/hwtracing/stm/Makefile
+> new file mode 100644
+> index 0000000000..adec701649
+> --- /dev/null
+> +++ b/drivers/hwtracing/stm/Makefile
+> @@ -0,0 +1,3 @@
+> +obj-$(CONFIG_STM)      += stm_core.o
+> +
+> +stm_core-y             := core.o policy.o
+> diff --git a/drivers/hwtracing/stm/core.c b/drivers/hwtracing/stm/core.c
+> new file mode 100644
+> index 0000000000..b79c42c625
+> --- /dev/null
+> +++ b/drivers/hwtracing/stm/core.c
+> @@ -0,0 +1,1029 @@
+> +/*
+> + * System Trace Module (STM) infrastructure
+> + * Copyright (c) 2014, Intel Corporation.
+> + *
+> + * This program is free software; you can redistribute it and/or modify it
+> + * under the terms and conditions of the GNU General Public License,
+> + * version 2, as published by the Free Software Foundation.
+> + *
+> + * This program is distributed in the hope it will be useful, but WITHOUT
+> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+> + * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+> + * more details.
+> + *
+> + * STM class implements generic infrastructure for  System Trace Module devices
+> + * as defined in MIPI STPv2 specification.
+> + */
+> +
+> +#include <linux/uaccess.h>
+> +#include <linux/kernel.h>
+> +#include <linux/module.h>
+> +#include <linux/device.h>
+> +#include <linux/compat.h>
+> +#include <linux/kdev_t.h>
+> +#include <linux/srcu.h>
+> +#include <linux/slab.h>
+> +#include <linux/stm.h>
+> +#include <linux/fs.h>
+> +#include <linux/mm.h>
+> +#include "stm.h"
+> +
+> +#include <uapi/linux/stm.h>
+> +
+> +static unsigned int stm_core_up;
+> +
+> +/*
+> + * The SRCU here makes sure that STM device doesn't disappear from under a
+> + * stm_source_write() caller, which may want to have as little overhead as
+> + * possible.
+> + */
+> +static struct srcu_struct stm_source_srcu;
+> +
+> +static ssize_t masters_show(struct device *dev,
+> +                           struct device_attribute *attr,
+> +                           char *buf)
+> +{
+> +       struct stm_device *stm = to_stm_device(dev);
+> +       int ret;
+> +
+> +       ret = sprintf(buf, "%u %u\n", stm->data->sw_start, stm->data->sw_end);
+> +
+> +       return ret;
+> +}
+> +
+> +static DEVICE_ATTR_RO(masters);
+> +
+> +static ssize_t channels_show(struct device *dev,
+> +                            struct device_attribute *attr,
+> +                            char *buf)
+> +{
+> +       struct stm_device *stm = to_stm_device(dev);
+> +       int ret;
+> +
+> +       ret = sprintf(buf, "%u\n", stm->data->sw_nchannels);
+> +
+> +       return ret;
+> +}
+> +
+> +static DEVICE_ATTR_RO(channels);
+> +
+> +static struct attribute *stm_attrs[] = {
+> +       &dev_attr_masters.attr,
+> +       &dev_attr_channels.attr,
+> +       NULL,
+> +};
+> +
+> +ATTRIBUTE_GROUPS(stm);
+> +
+> +static struct class stm_class = {
+> +       .name           = "stm",
+> +       .dev_groups     = stm_groups,
+> +};
+> +
+> +static int stm_dev_match(struct device *dev, const void *data)
+> +{
+> +       const char *name = data;
+> +
+> +       return sysfs_streq(name, dev_name(dev));
+> +}
+> +
+> +/**
+> + * stm_find_device() - find stm device by name
+> + * @buf:       character buffer containing the name
+> + *
+> + * This is called when either policy gets assigned to an stm device or an
+> + * stm_source device gets linked to an stm device.
+> + *
+> + * This grabs device's reference (get_device()) and module reference, both
+> + * of which the calling path needs to make sure to drop with stm_put_device().
+> + *
+> + * Return:     stm device pointer or null if lookup failed.
+> + */
+> +struct stm_device *stm_find_device(const char *buf)
+> +{
+> +       struct stm_device *stm;
+> +       struct device *dev;
+> +
+> +       if (!stm_core_up)
+> +               return NULL;
+> +
+> +       dev = class_find_device(&stm_class, NULL, buf, stm_dev_match);
+> +       if (!dev)
+> +               return NULL;
+> +
+> +       stm = to_stm_device(dev);
+> +       if (!try_module_get(stm->owner)) {
+> +               put_device(dev);
+> +               return NULL;
+> +       }
+> +
+> +       return stm;
+> +}
+> +
+> +/**
+> + * stm_put_device() - drop references on the stm device
+> + * @stm:       stm device, previously acquired by stm_find_device()
+> + *
+> + * This drops the module reference and device reference taken by
+> + * stm_find_device().
+> + */
+> +void stm_put_device(struct stm_device *stm)
+> +{
+> +       module_put(stm->owner);
+> +       put_device(&stm->dev);
+> +}
+> +
+> +/*
+> + * Internally we only care about software-writable masters here, that is the
+> + * ones in the range [stm_data->sw_start..stm_data..sw_end], however we need
+> + * original master numbers to be visible externally, since they are the ones
+> + * that will appear in the STP stream. Thus, the internal bookkeeping uses
+> + * $master - stm_data->sw_start to reference master descriptors and such.
+> + */
+> +
+> +#define __stm_master(_s, _m)                           \
+> +       ((_s)->masters[(_m) - (_s)->data->sw_start])
+> +
+> +static inline struct stp_master *
+> +stm_master(struct stm_device *stm, unsigned int idx)
+> +{
+> +       if (idx < stm->data->sw_start || idx > stm->data->sw_end)
+> +               return NULL;
+> +
+> +       return __stm_master(stm, idx);
+> +}
+> +
+> +static int stp_master_alloc(struct stm_device *stm, unsigned int idx)
+> +{
+> +       struct stp_master *master;
+> +       size_t size;
+> +
+> +       size = ALIGN(stm->data->sw_nchannels, 8) / 8;
+> +       size += sizeof(struct stp_master);
+> +       master = kzalloc(size, GFP_ATOMIC);
+> +       if (!master)
+> +               return -ENOMEM;
+> +
+> +       master->nr_free = stm->data->sw_nchannels;
+> +       __stm_master(stm, idx) = master;
+> +
+> +       return 0;
+> +}
+> +
+> +static void stp_master_free(struct stm_device *stm, unsigned int idx)
+> +{
+> +       struct stp_master *master = stm_master(stm, idx);
+> +
+> +       if (!master)
+> +               return;
+> +
+> +       __stm_master(stm, idx) = NULL;
+> +       kfree(master);
+> +}
+> +
+> +static void stm_output_claim(struct stm_device *stm, struct stm_output *output)
+> +{
+> +       struct stp_master *master = stm_master(stm, output->master);
+> +
+> +       if (WARN_ON_ONCE(master->nr_free < output->nr_chans))
+> +               return;
+> +
+> +       bitmap_allocate_region(&master->chan_map[0], output->channel,
+> +                              ilog2(output->nr_chans));
+> +
+> +       master->nr_free -= output->nr_chans;
+> +}
+> +
+> +static void
+> +stm_output_disclaim(struct stm_device *stm, struct stm_output *output)
+> +{
+> +       struct stp_master *master = stm_master(stm, output->master);
+> +
+> +       bitmap_release_region(&master->chan_map[0], output->channel,
+> +                             ilog2(output->nr_chans));
+> +
+> +       output->nr_chans = 0;
+> +       master->nr_free += output->nr_chans;
+> +}
+> +
+> +/*
+> + * This is like bitmap_find_free_region(), except it can ignore @start bits
+> + * at the beginning.
+> + */
+> +static int find_free_channels(unsigned long *bitmap, unsigned int start,
+> +                             unsigned int end, unsigned int width)
+> +{
+> +       unsigned int pos;
+> +       int i;
+> +
+> +       for (pos = start; pos < end + 1; pos = ALIGN(pos, width)) {
+> +               pos = find_next_zero_bit(bitmap, end + 1, pos);
+> +               if (pos + width > end + 1)
+> +                       break;
+> +
+> +               if (pos & (width - 1))
+> +                       continue;
+> +
+> +               for (i = 1; i < width && !test_bit(pos + i, bitmap); i++)
+> +                       ;
+> +               if (i == width)
+> +                       return pos;
+> +       }
+> +
+> +       return -1;
+> +}
+> +
+> +static unsigned int
+> +stm_find_master_chan(struct stm_device *stm, unsigned int width,
+> +                    unsigned int *mstart, unsigned int mend,
+> +                    unsigned int *cstart, unsigned int cend)
+> +{
+> +       struct stp_master *master;
+> +       unsigned int midx;
+> +       int pos, err;
+> +
+> +       for (midx = *mstart; midx <= mend; midx++) {
+> +               if (!stm_master(stm, midx)) {
+> +                       err = stp_master_alloc(stm, midx);
+> +                       if (err)
+> +                               return err;
+> +               }
+> +
+> +               master = stm_master(stm, midx);
+> +
+> +               if (!master->nr_free)
+> +                       continue;
+> +
+> +               pos = find_free_channels(master->chan_map, *cstart, cend,
+> +                                        width);
+> +               if (pos < 0)
+> +                       continue;
+> +
+> +               *mstart = midx;
+> +               *cstart = pos;
+> +               return 0;
+> +       }
+> +
+> +       return -ENOSPC;
+> +}
+> +
+> +static int stm_output_assign(struct stm_device *stm, unsigned int width,
+> +                            struct stp_policy_node *policy_node,
+> +                            struct stm_output *output)
+> +{
+> +       unsigned int midx, cidx, mend, cend;
+> +       int ret = -EINVAL;
+> +
+> +       if (width > stm->data->sw_nchannels)
+> +               return -EINVAL;
+> +
+> +       if (policy_node) {
+> +               stp_policy_node_get_ranges(policy_node,
+> +                                          &midx, &mend, &cidx, &cend);
+> +       } else {
+> +               midx = stm->data->sw_start;
+> +               cidx = 0;
+> +               mend = stm->data->sw_end;
+> +               cend = stm->data->sw_nchannels - 1;
+> +       }
+> +
+> +       spin_lock(&stm->mc_lock);
+> +       /* output is already assigned -- shouldn't happen */
+> +       if (WARN_ON_ONCE(output->nr_chans))
+> +               goto unlock;
+> +
+> +       ret = stm_find_master_chan(stm, width, &midx, mend, &cidx, cend);
+> +       if (ret)
+> +               goto unlock;
+> +
+> +       output->master = midx;
+> +       output->channel = cidx;
+> +       output->nr_chans = width;
+> +       stm_output_claim(stm, output);
+> +       dev_dbg(&stm->dev, "assigned %u:%u (+%u)\n", midx, cidx, width);
+> +
+> +       ret = 0;
+> +unlock:
+> +       spin_unlock(&stm->mc_lock);
+> +
+> +       return ret;
+> +}
+> +
+> +static void stm_output_free(struct stm_device *stm, struct stm_output *output)
+> +{
+> +       spin_lock(&stm->mc_lock);
+> +       if (output->nr_chans)
+> +               stm_output_disclaim(stm, output);
+> +       spin_unlock(&stm->mc_lock);
+> +}
+> +
+> +static int major_match(struct device *dev, const void *data)
+> +{
+> +       unsigned int major = *(unsigned int *)data;
+> +
+> +       return MAJOR(dev->devt) == major;
+> +}
+> +
+> +static int stm_char_open(struct inode *inode, struct file *file)
+> +{
+> +       struct stm_file *stmf;
+> +       struct device *dev;
+> +       unsigned int major = imajor(inode);
+> +       int err = -ENODEV;
+> +
+> +       dev = class_find_device(&stm_class, NULL, &major, major_match);
+> +       if (!dev)
+> +               return -ENODEV;
+> +
+> +       stmf = kzalloc(sizeof(*stmf), GFP_KERNEL);
+> +       if (!stmf)
+> +               return -ENOMEM;
+> +
+> +       stmf->stm = to_stm_device(dev);
+> +
+> +       if (!try_module_get(stmf->stm->owner))
+> +               goto err_free;
+> +
+> +       file->private_data = stmf;
+> +
+> +       return nonseekable_open(inode, file);
+> +
+> +err_free:
+> +       kfree(stmf);
+> +
+> +       return err;
+> +}
+> +
+> +static int stm_char_release(struct inode *inode, struct file *file)
+> +{
+> +       struct stm_file *stmf = file->private_data;
+> +
+> +       stm_output_free(stmf->stm, &stmf->output);
+> +       stm_put_device(stmf->stm);
+> +       kfree(stmf);
+> +
+> +       return 0;
+> +}
+> +
+> +static int stm_file_assign(struct stm_file *stmf, char *id, unsigned int width)
+> +{
+> +       struct stm_device *stm = stmf->stm;
+> +       int ret;
+> +
+> +       stmf->policy_node = stp_policy_node_lookup(stm, id);
+> +
+> +       ret = stm_output_assign(stm, width, stmf->policy_node, &stmf->output);
+> +
+> +       if (stmf->policy_node)
+> +               stp_policy_node_put(stmf->policy_node);
+> +
+> +       return ret;
+> +}
+> +
+> +static void stm_write(struct stm_data *data, unsigned int master,
+> +                     unsigned int channel, const char *buf, size_t count)
+> +{
+> +       unsigned int flags = STP_PACKET_TIMESTAMPED;
+> +       const unsigned char *p = buf, nil = 0;
+> +       size_t pos;
+> +       ssize_t sz;
+> +
+> +       for (pos = 0, p = buf; count > pos; pos += sz, p += sz) {
+> +               sz = min_t(unsigned int, count - pos, 8);
+> +               sz = data->packet(data, master, channel, STP_PACKET_DATA, flags,
+> +                                 sz, p);
+> +               flags = 0;
+> +       }
+> +
+> +       data->packet(data, master, channel, STP_PACKET_FLAG, 0, 0, &nil);
+> +}
+> +
+> +static ssize_t stm_char_write(struct file *file, const char __user *buf,
+> +                             size_t count, loff_t *ppos)
+> +{
+> +       struct stm_file *stmf = file->private_data;
+> +       struct stm_device *stm = stmf->stm;
+> +       char *kbuf;
+> +       int err;
+> +
+> +       /*
+> +        * if no m/c have been assigned to this writer up to this
+> +        * point, use "default" policy entry
+> +        */
+> +       if (!stmf->output.nr_chans) {
+> +               err = stm_file_assign(stmf, "default", 1);
+> +               /*
+> +                * EBUSY means that somebody else just assigned this
+> +                * output, which is just fine for write()
+> +                */
+> +               if (err && err != -EBUSY)
+> +                       return err;
+> +       }
+> +
+> +       kbuf = kmalloc(count + 1, GFP_KERNEL);
+> +       if (!kbuf)
+> +               return -ENOMEM;
+> +
+> +       err = copy_from_user(kbuf, buf, count);
+> +       if (err) {
+> +               kfree(kbuf);
+> +               return -EFAULT;
+> +       }
+> +
+> +       stm_write(stm->data, stmf->output.master, stmf->output.channel, kbuf,
+> +                 count);
+> +
+> +       kfree(kbuf);
+> +
+> +       return count;
+> +}
+> +
+> +static int stm_char_mmap(struct file *file, struct vm_area_struct *vma)
+> +{
+> +       struct stm_file *stmf = file->private_data;
+> +       struct stm_device *stm = stmf->stm;
+> +       unsigned long size, phys;
+> +
+> +       if (!stm->data->mmio_addr)
+> +               return -EOPNOTSUPP;
+> +
+> +       if (vma->vm_pgoff)
+> +               return -EINVAL;
+> +
+> +       size = vma->vm_end - vma->vm_start;
+> +
+> +       if (stmf->output.nr_chans * stm->data->sw_mmiosz != size)
+> +               return -EINVAL;
+> +
+> +       phys = stm->data->mmio_addr(stm->data, stmf->output.master,
+> +                                   stmf->output.channel,
+> +                                   stmf->output.nr_chans);
+> +
+> +       if (!phys)
+> +               return -EINVAL;
+> +
+> +       vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+> +       vma->vm_flags |= VM_IO | VM_DONTEXPAND | VM_DONTDUMP;
+> +       vm_iomap_memory(vma, phys, size);
+> +
+> +       return 0;
+> +}
+> +
+> +static int stm_char_policy_set_ioctl(struct stm_file *stmf, void __user *arg)
+> +{
+> +       struct stm_device *stm = stmf->stm;
+> +       struct stp_policy_id *id;
+> +       int ret = -EINVAL;
+> +       u32 size;
+> +
+> +       if (stmf->output.nr_chans)
+> +               return -EBUSY;
+> +
+> +       if (copy_from_user(&size, arg, sizeof(size)))
+> +               return -EFAULT;
+> +
+> +       if (size >= PATH_MAX + sizeof(*id))
+> +               return -EINVAL;
+> +
+> +       /*
+> +        * size + 1 to make sure the .id string at the bottom is terminated,
+> +        * which is also why memdup_user() is not useful here
+> +        */
+> +       id = kzalloc(size + 1, GFP_KERNEL);
+> +       if (!id)
+> +               return -ENOMEM;
+> +
+> +       if (copy_from_user(id, arg, size)) {
+> +               ret = -EFAULT;
+> +               goto err_free;
+> +       }
+> +
+> +       if (id->__reserved_0 || id->__reserved_1)
+> +               goto err_free;
+> +
+> +       if (id->width < 1 ||
+> +           id->width > PAGE_SIZE / stm->data->sw_mmiosz)
+> +               goto err_free;
+> +
+> +       ret = stm_file_assign(stmf, id->id, id->width);
+> +       if (ret)
+> +               goto err_free;
+> +
+> +       ret = 0;
+> +
+> +       if (stm->data->link)
+> +               ret = stm->data->link(stm->data, stmf->output.master,
+> +                                     stmf->output.channel);
+> +
+> +       if (ret) {
+> +               stm_output_free(stmf->stm, &stmf->output);
+> +               stm_put_device(stmf->stm);
+> +       }
+> +
+> +err_free:
+> +       kfree(id);
+> +
+> +       return ret;
+> +}
+> +
+> +static int stm_char_policy_get_ioctl(struct stm_file *stmf, void __user *arg)
+> +{
+> +       struct stp_policy_id id = {
+> +               .size           = sizeof(id),
+> +               .master         = stmf->output.master,
+> +               .channel        = stmf->output.channel,
+> +               .width          = stmf->output.nr_chans,
+> +               .__reserved_0   = 0,
+> +               .__reserved_1   = 0,
+> +       };
+> +
+> +       return copy_to_user(arg, &id, id.size) ? -EFAULT : 0;
+> +}
+> +
+> +static long
+> +stm_char_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+> +{
+> +       struct stm_file *stmf = file->private_data;
+> +       struct stm_data *stm_data = stmf->stm->data;
+> +       int err = -ENOTTY;
+> +       u64 options;
+> +
+> +       switch (cmd) {
+> +       case STP_POLICY_ID_SET:
+> +               err = stm_char_policy_set_ioctl(stmf, (void __user *)arg);
+> +               if (err)
+> +                       return err;
+> +
+> +               return stm_char_policy_get_ioctl(stmf, (void __user *)arg);
+> +
+> +       case STP_POLICY_ID_GET:
+> +               return stm_char_policy_get_ioctl(stmf, (void __user *)arg);
+> +
+> +       case STP_SET_OPTIONS:
+> +               if (copy_from_user(&options, (u64 __user *)arg, sizeof(u64)))
+> +                       return -EFAULT;
+> +
+> +               if (stm_data->set_options)
+> +                       err = stm_data->set_options(stm_data,
+> +                                                   stmf->output.master,
+> +                                                   stmf->output.channel,
+> +                                                   stmf->output.nr_chans,
+> +                                                   options);
+> +
+> +               break;
+> +       default:
+> +               break;
+> +       }
+> +
+> +       return err;
+> +}
+> +
+> +#ifdef CONFIG_COMPAT
+> +static long
+> +stm_char_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+> +{
+> +       return stm_char_ioctl(file, cmd, (unsigned long)compat_ptr(arg));
+> +}
+> +#else
+> +#define stm_char_compat_ioctl  NULL
+> +#endif
+> +
+> +static const struct file_operations stm_fops = {
+> +       .open           = stm_char_open,
+> +       .release        = stm_char_release,
+> +       .write          = stm_char_write,
+> +       .mmap           = stm_char_mmap,
+> +       .unlocked_ioctl = stm_char_ioctl,
+> +       .compat_ioctl   = stm_char_compat_ioctl,
+> +       .llseek         = no_llseek,
+> +};
+> +
+> +static void stm_device_release(struct device *dev)
+> +{
+> +       struct stm_device *stm = to_stm_device(dev);
+> +
+> +       kfree(stm);
+> +}
+> +
+> +int stm_register_device(struct device *parent, struct stm_data *stm_data,
+> +                       struct module *owner)
+> +{
+> +       struct stm_device *stm;
+> +       unsigned int nmasters;
+> +       int err = -ENOMEM;
+> +
+> +       if (!stm_core_up)
+> +               return -EPROBE_DEFER;
+> +
+> +       if (!stm_data->packet || !stm_data->sw_nchannels)
+> +               return -EINVAL;
+> +
+> +       nmasters = stm_data->sw_end - stm_data->sw_start;
+> +       stm = kzalloc(sizeof(*stm) + nmasters * sizeof(void *), GFP_KERNEL);
+> +       if (!stm)
+> +               return -ENOMEM;
+> +
+> +       stm->major = register_chrdev(0, stm_data->name, &stm_fops);
+> +       if (stm->major < 0)
+> +               goto err_free;
+> +
+> +       device_initialize(&stm->dev);
+> +       stm->dev.devt = MKDEV(stm->major, 0);
+> +       stm->dev.class = &stm_class;
+> +       stm->dev.parent = parent;
+> +       stm->dev.release = stm_device_release;
+> +
+> +       err = kobject_set_name(&stm->dev.kobj, "%s", stm_data->name);
+> +       if (err)
+> +               goto err_device;
+> +
+> +       err = device_add(&stm->dev);
+> +       if (err)
+> +               goto err_device;
+> +
+> +       spin_lock_init(&stm->link_lock);
+> +       INIT_LIST_HEAD(&stm->link_list);
+> +
+> +       spin_lock_init(&stm->mc_lock);
+> +       mutex_init(&stm->policy_mutex);
+> +       stm->sw_nmasters = nmasters;
+> +       stm->owner = owner;
+> +       stm->data = stm_data;
+> +       stm_data->stm = stm;
+> +
+> +       return 0;
+> +
+> +err_device:
+> +       put_device(&stm->dev);
+> +err_free:
+> +       kfree(stm);
+> +
+> +       return err;
+> +}
+> +EXPORT_SYMBOL_GPL(stm_register_device);
+> +
+> +static void __stm_source_link_drop(struct stm_source_device *src,
+> +                                  struct stm_device *stm);
+> +
+> +void stm_unregister_device(struct stm_data *stm_data)
+> +{
+> +       struct stm_device *stm = stm_data->stm;
+> +       struct stm_source_device *src, *iter;
+> +       int i;
+> +
+> +       spin_lock(&stm->link_lock);
+> +       list_for_each_entry_safe(src, iter, &stm->link_list, link_entry) {
+> +               __stm_source_link_drop(src, stm);
+> +       }
+> +       spin_unlock(&stm->link_lock);
+> +
+> +       synchronize_srcu(&stm_source_srcu);
+> +
+> +       unregister_chrdev(stm->major, stm_data->name);
+> +
+> +       mutex_lock(&stm->policy_mutex);
+> +       if (stm->policy)
+> +               stp_policy_unbind(stm->policy);
+> +       mutex_unlock(&stm->policy_mutex);
+> +
+> +       for (i = 0; i < stm->sw_nmasters; i++)
+> +               stp_master_free(stm, i);
+> +
+> +       device_unregister(&stm->dev);
+> +       stm_data->stm = NULL;
+> +}
+> +EXPORT_SYMBOL_GPL(stm_unregister_device);
+> +
+> +/**
+> + * stm_source_link_add() - connect an stm_source device to an stm device
+> + * @src:       stm_source device
+> + * @stm:       stm device
+> + *
+> + * This function establishes a link from stm_source to an stm device so that
+> + * the former can send out trace data to the latter.
+> + *
+> + * Return:     0 on success, -errno otherwise.
+> + */
+> +static int stm_source_link_add(struct stm_source_device *src,
+> +                              struct stm_device *stm)
+> +{
+> +       char *id;
+> +       int err;
+> +
+> +       spin_lock(&stm->link_lock);
+> +       spin_lock(&src->link_lock);
+> +
+> +       /* src->link is dereferenced under stm_source_srcu but not the list */
+> +       rcu_assign_pointer(src->link, stm);
+> +       list_add_tail(&src->link_entry, &stm->link_list);
+> +
+> +       spin_unlock(&src->link_lock);
+> +       spin_unlock(&stm->link_lock);
+> +
+> +       id = kstrdup(src->data->name, GFP_KERNEL);
+> +       if (id) {
+> +               src->policy_node =
+> +                       stp_policy_node_lookup(stm, id);
+> +
+> +               kfree(id);
+> +       }
+> +
+> +       err = stm_output_assign(stm, src->data->nr_chans,
+> +                               src->policy_node, &src->output);
+> +
+> +       if (src->policy_node)
+> +               stp_policy_node_put(src->policy_node);
+> +
+> +       if (err)
+> +               goto fail_detach;
+> +
+> +       /* this is to notify the STM device that a new link has been made */
+> +       if (stm->data->link)
+> +               err = stm->data->link(stm->data, src->output.master,
+> +                                     src->output.channel);
+> +
+> +       if (err)
+> +               goto fail_free_output;
+> +
+> +       /* this is to let the source carry out all necessary preparations */
+> +       if (src->data->link)
+> +               src->data->link(src->data);
+> +
+> +       return 0;
+> +
+> +fail_free_output:
+> +       stm_output_free(stm, &src->output);
+> +       stm_put_device(stm);
+> +
+> +fail_detach:
+> +       spin_lock(&stm->link_lock);
+> +       spin_lock(&src->link_lock);
+> +
+> +       rcu_assign_pointer(src->link, NULL);
+> +       list_del_init(&src->link_entry);
+> +
+> +       spin_unlock(&src->link_lock);
+> +       spin_unlock(&stm->link_lock);
+> +
+> +       return err;
+> +}
+> +
+> +/**
+> + * __stm_source_link_drop() - detach stm_source from an stm device
+> + * @src:       stm_source device
+> + * @stm:       stm device
+> + *
+> + * If @stm is @src::link, disconnect them from one another and put the
+> + * reference on the @stm device.
+> + *
+> + * Caller must hold stm::link_lock.
+> + */
+> +static void __stm_source_link_drop(struct stm_source_device *src,
+> +                                  struct stm_device *stm)
+> +{
+> +       spin_lock(&src->link_lock);
+> +       if (WARN_ON_ONCE(src->link != stm)) {
+> +               spin_unlock(&src->link_lock);
+> +               return;
+> +       }
+> +
+> +       stm_output_free(src->link, &src->output);
+> +       /* caller must hold stm::link_lock */
+> +       list_del_init(&src->link_entry);
+> +       /* matches stm_find_device() from stm_source_link_store() */
+> +       stm_put_device(src->link);
+> +       rcu_assign_pointer(src->link, NULL);
+> +
+> +       spin_unlock(&src->link_lock);
+> +}
+> +
+> +/**
+> + * stm_source_link_drop() - detach stm_source from its stm device
+> + * @src:       stm_source device
+> + *
+> + * Unlinking means disconnecting from source's STM device; after this
+> + * writes will be unsuccessful until it is linked to a new STM device.
+> + *
+> + * This will happen on "stm_source_link" sysfs attribute write to undo
+> + * the existing link (if any), or on linked STM device's de-registration.
+> + */
+> +static void stm_source_link_drop(struct stm_source_device *src)
+> +{
+> +       struct stm_device *stm;
+> +       int idx;
+> +
+> +       idx = srcu_read_lock(&stm_source_srcu);
+> +       stm = srcu_dereference(src->link, &stm_source_srcu);
+> +
+> +       if (stm) {
+> +               if (src->data->unlink)
+> +                       src->data->unlink(src->data);
+> +
+> +               spin_lock(&stm->link_lock);
+> +               __stm_source_link_drop(src, stm);
+> +               spin_unlock(&stm->link_lock);
+> +       }
+> +
+> +       srcu_read_unlock(&stm_source_srcu, idx);
+> +}
+> +
+> +static ssize_t stm_source_link_show(struct device *dev,
+> +                                   struct device_attribute *attr,
+> +                                   char *buf)
+> +{
+> +       struct stm_source_device *src = to_stm_source_device(dev);
+> +       struct stm_device *stm;
+> +       int idx, ret;
+> +
+> +       idx = srcu_read_lock(&stm_source_srcu);
+> +       stm = srcu_dereference(src->link, &stm_source_srcu);
+> +       ret = sprintf(buf, "%s\n",
+> +                     stm ? dev_name(&stm->dev) : "<none>");
+> +       srcu_read_unlock(&stm_source_srcu, idx);
+> +
+> +       return ret;
+> +}
+> +
+> +static ssize_t stm_source_link_store(struct device *dev,
+> +                                    struct device_attribute *attr,
+> +                                    const char *buf, size_t count)
+> +{
+> +       struct stm_source_device *src = to_stm_source_device(dev);
+> +       struct stm_device *link;
+> +       int err;
+> +
+> +       stm_source_link_drop(src);
+> +
+> +       link = stm_find_device(buf);
+> +       if (!link)
+> +               return -EINVAL;
+> +
+> +       err = stm_source_link_add(src, link);
+> +       if (err)
+> +               stm_put_device(link);
+> +
+> +       return err ? : count;
+> +}
+> +
+> +static DEVICE_ATTR_RW(stm_source_link);
+> +
+> +static struct attribute *stm_source_attrs[] = {
+> +       &dev_attr_stm_source_link.attr,
+> +       NULL,
+> +};
+> +
+> +ATTRIBUTE_GROUPS(stm_source);
+> +
+> +static struct class stm_source_class = {
+> +       .name           = "stm_source",
+> +       .dev_groups     = stm_source_groups,
+> +};
+> +
+> +static void stm_source_device_release(struct device *dev)
+> +{
+> +       struct stm_source_device *src = to_stm_source_device(dev);
+> +
+> +       kfree(src);
+> +}
+> +
+> +/**
+> + * stm_source_register_device() - register an stm_source device
+> + * @parent:    parent device
+> + * @data:      device description structure
+> + *
+> + * This will create a device of stm_source class that can write
+> + * data to an stm device once linked.
+> + *
+> + * Return:     0 on success, -errno otherwise.
+> + */
+> +int stm_source_register_device(struct device *parent,
+> +                              struct stm_source_data *data)
+> +{
+> +       struct stm_source_device *src;
+> +       int err;
+> +
+> +       if (!stm_core_up)
+> +               return -EPROBE_DEFER;
+> +
+> +       src = kzalloc(sizeof(*src), GFP_KERNEL);
+> +       if (!src)
+> +               return -ENOMEM;
+> +
+> +       device_initialize(&src->dev);
+> +       src->dev.class = &stm_source_class;
+> +       src->dev.parent = parent;
+> +       src->dev.release = stm_source_device_release;
+> +
+> +       err = kobject_set_name(&src->dev.kobj, "%s", data->name);
+> +       if (err)
+> +               goto err;
+> +
+> +       err = device_add(&src->dev);
+> +       if (err)
+> +               goto err;
+> +
+> +       spin_lock_init(&src->link_lock);
+> +       INIT_LIST_HEAD(&src->link_entry);
+> +       src->data = data;
+> +       data->src = src;
+> +
+> +       return 0;
+> +
+> +err:
+> +       put_device(&src->dev);
+> +       kfree(src);
+> +
+> +       return err;
+> +}
+> +EXPORT_SYMBOL_GPL(stm_source_register_device);
+> +
+> +/**
+> + * stm_source_unregister_device() - unregister an stm_source device
+> + * @data:      device description that was used to register the device
+> + *
+> + * This will remove a previously created stm_source device from the system.
+> + */
+> +void stm_source_unregister_device(struct stm_source_data *data)
+> +{
+> +       struct stm_source_device *src = data->src;
+> +
+> +       stm_source_link_drop(src);
+> +
+> +       device_destroy(&stm_source_class, src->dev.devt);
+> +}
+> +EXPORT_SYMBOL_GPL(stm_source_unregister_device);
+> +
+> +int stm_source_write(struct stm_source_data *data, unsigned int chan,
+> +                    const char *buf, size_t count)
+> +{
+> +       struct stm_source_device *src = data->src;
+> +       struct stm_device *stm;
+> +       int idx;
+> +
+> +       if (!src->output.nr_chans)
+> +               return -ENODEV;
+> +
+> +       if (chan >= src->output.nr_chans)
+> +               return -EINVAL;
+> +
+> +       idx = srcu_read_lock(&stm_source_srcu);
+> +
+> +       stm = srcu_dereference(src->link, &stm_source_srcu);
+> +       if (stm)
+> +               stm_write(stm->data, src->output.master,
+> +                         src->output.channel + chan,
+> +                         buf, count);
+> +       else
+> +               count = -ENODEV;
+> +
+> +       srcu_read_unlock(&stm_source_srcu, idx);
+> +
+> +       return count;
+> +}
+> +EXPORT_SYMBOL_GPL(stm_source_write);
+> +
+> +static int __init stm_core_init(void)
+> +{
+> +       int err;
+> +
+> +       err = class_register(&stm_class);
+> +       if (err)
+> +               return err;
+> +
+> +       err = class_register(&stm_source_class);
+> +       if (err)
+> +               goto err_stm;
+> +
+> +       err = stp_configfs_init();
+> +       if (err)
+> +               goto err_src;
+> +
+> +       init_srcu_struct(&stm_source_srcu);
+> +
+> +       stm_core_up++;
+> +
+> +       return 0;
+> +
+> +err_src:
+> +       class_unregister(&stm_source_class);
+> +err_stm:
+> +       class_unregister(&stm_class);
+> +
+> +       return err;
+> +}
+> +
+> +module_init(stm_core_init);
+> +
+> +static void __exit stm_core_exit(void)
+> +{
+> +       cleanup_srcu_struct(&stm_source_srcu);
+> +       class_unregister(&stm_source_class);
+> +       class_unregister(&stm_class);
+> +       stp_configfs_exit();
+> +}
+> +
+> +module_exit(stm_core_exit);
+> +
+> +MODULE_LICENSE("GPL v2");
+> +MODULE_DESCRIPTION("System Trace Module device class");
+> +MODULE_AUTHOR("Alexander Shishkin <alexander.shishkin@linux.intel.com>");
+> diff --git a/drivers/hwtracing/stm/policy.c b/drivers/hwtracing/stm/policy.c
+> new file mode 100644
+> index 0000000000..6498a9dbb7
+> --- /dev/null
+> +++ b/drivers/hwtracing/stm/policy.c
+> @@ -0,0 +1,529 @@
+> +/*
+> + * System Trace Module (STM) master/channel allocation policy management
+> + * Copyright (c) 2014, Intel Corporation.
+> + *
+> + * This program is free software; you can redistribute it and/or modify it
+> + * under the terms and conditions of the GNU General Public License,
+> + * version 2, as published by the Free Software Foundation.
+> + *
+> + * This program is distributed in the hope it will be useful, but WITHOUT
+> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+> + * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+> + * more details.
+> + *
+> + * A master/channel allocation policy allows mapping string identifiers to
+> + * master and channel ranges, where allocation can be done.
+> + */
+> +
+> +#define pr_fmt(fmt)    KBUILD_MODNAME ": " fmt
+> +
+> +#include <linux/types.h>
+> +#include <linux/module.h>
+> +#include <linux/device.h>
+> +#include <linux/configfs.h>
+> +#include <linux/slab.h>
+> +#include <linux/stm.h>
+> +#include "stm.h"
+> +
+> +/*
+> + * STP Master/Channel allocation policy configfs layout.
+> + */
+> +
+> +struct stp_policy {
+> +       struct config_group     group;
+> +       struct stm_device       *stm;
+> +};
+> +
+> +struct stp_policy_node {
+> +       struct config_group     group;
+> +       struct stp_policy       *policy;
+> +       unsigned int            first_master;
+> +       unsigned int            last_master;
+> +       unsigned int            first_channel;
+> +       unsigned int            last_channel;
+> +};
+> +
+> +static struct configfs_subsystem stp_policy_subsys;
+> +
+> +void stp_policy_node_get_ranges(struct stp_policy_node *policy_node,
+> +                               unsigned int *mstart, unsigned int *mend,
+> +                               unsigned int *cstart, unsigned int *cend)
+> +{
+> +       *mstart = policy_node->first_master;
+> +       *mend   = policy_node->last_master;
+> +       *cstart = policy_node->first_channel;
+> +       *cend   = policy_node->last_channel;
+> +}
+> +
+> +static inline char *stp_policy_node_name(struct stp_policy_node *policy_node)
+> +{
+> +       return policy_node->group.cg_item.ci_name ? : "<none>";
+> +}
+> +
+> +static inline struct stp_policy *to_stp_policy(struct config_item *item)
+> +{
+> +       return item ?
+> +               container_of(to_config_group(item), struct stp_policy, group) :
+> +               NULL;
+> +}
+> +
+> +static inline struct stp_policy_node *
+> +to_stp_policy_node(struct config_item *item)
+> +{
+> +       return item ?
+> +               container_of(to_config_group(item), struct stp_policy_node,
+> +                            group) :
+> +               NULL;
+> +}
+> +
+> +static ssize_t stp_policy_node_masters_show(struct stp_policy_node *policy_node,
+> +                                           char *page)
+> +{
+> +       ssize_t count;
+> +
+> +       count = sprintf(page, "%u %u\n", policy_node->first_master,
+> +                       policy_node->last_master);
+> +
+> +       return count;
+> +}
+> +
+> +static ssize_t
+> +stp_policy_node_masters_store(struct stp_policy_node *policy_node,
+> +                             const char *page, size_t count)
+> +{
+> +       unsigned int first, last;
+> +       struct stm_device *stm;
+> +       char *p = (char *)page;
+> +       ssize_t ret = -ENODEV;
+> +
+> +       if (sscanf(p, "%u %u", &first, &last) != 2)
+> +               return -EINVAL;
+> +
+> +       mutex_lock(&stp_policy_subsys.su_mutex);
+> +       stm = policy_node->policy->stm;
+> +       if (!stm)
+> +               goto unlock;
+> +
+> +       /* must be within [sw_start..sw_end], which is an inclusive range */
+> +       if (first > INT_MAX || last > INT_MAX || first > last ||
+> +           first < stm->data->sw_start ||
+> +           last > stm->data->sw_end) {
+> +               ret = -ERANGE;
+> +               goto unlock;
+> +       }
+> +
+> +       ret = count;
+> +       policy_node->first_master = first;
+> +       policy_node->last_master = last;
+> +
+> +unlock:
+> +       mutex_unlock(&stp_policy_subsys.su_mutex);
+> +
+> +       return ret;
+> +}
+> +
+> +static ssize_t
+> +stp_policy_node_channels_show(struct stp_policy_node *policy_node, char *page)
+> +{
+> +       ssize_t count;
+> +
+> +       count = sprintf(page, "%u %u\n", policy_node->first_channel,
+> +                       policy_node->last_channel);
+> +
+> +       return count;
+> +}
+> +
+> +static ssize_t
+> +stp_policy_node_channels_store(struct stp_policy_node *policy_node,
+> +                              const char *page, size_t count)
+> +{
+> +       unsigned int first, last;
+> +       struct stm_device *stm;
+> +       char *p = (char *)page;
+> +       ssize_t ret = -ENODEV;
+> +
+> +       if (sscanf(p, "%u %u", &first, &last) != 2)
+> +               return -EINVAL;
+> +
+> +       mutex_lock(&stp_policy_subsys.su_mutex);
+> +       stm = policy_node->policy->stm;
+> +       if (!stm)
+> +               goto unlock;
+> +
+> +       if (first > INT_MAX || last > INT_MAX || first > last ||
+> +           last >= stm->data->sw_nchannels) {
+> +               ret = -ERANGE;
+> +               goto unlock;
+> +       }
+> +
+> +       ret = count;
+> +       policy_node->first_channel = first;
+> +       policy_node->last_channel = last;
+> +
+> +unlock:
+> +       mutex_unlock(&stp_policy_subsys.su_mutex);
+> +
+> +       return ret;
+> +}
+> +
+> +static void stp_policy_node_release(struct config_item *item)
+> +{
+> +       kfree(to_stp_policy_node(item));
+> +}
+> +
+> +struct stp_policy_node_attribute {
+> +       struct configfs_attribute       attr;
+> +       ssize_t (*show)(struct stp_policy_node *, char *);
+> +       ssize_t (*store)(struct stp_policy_node *, const char *, size_t);
+> +};
+> +
+> +static ssize_t stp_policy_node_attr_show(struct config_item *item,
+> +                                        struct configfs_attribute *attr,
+> +                                        char *page)
+> +{
+> +       struct stp_policy_node *policy_node = to_stp_policy_node(item);
+> +       struct stp_policy_node_attribute *pn_attr =
+> +               container_of(attr, struct stp_policy_node_attribute, attr);
+> +       ssize_t count = 0;
+> +
+> +       if (pn_attr->show)
+> +               count = pn_attr->show(policy_node, page);
+> +
+> +       return count;
+> +}
+> +
+> +static ssize_t stp_policy_node_attr_store(struct config_item *item,
+> +                                         struct configfs_attribute *attr,
+> +                                         const char *page, size_t len)
+> +{
+> +       struct stp_policy_node *policy_node = to_stp_policy_node(item);
+> +       struct stp_policy_node_attribute *pn_attr =
+> +               container_of(attr, struct stp_policy_node_attribute, attr);
+> +       ssize_t count = -EINVAL;
+> +
+> +       if (pn_attr->store)
+> +               count = pn_attr->store(policy_node, page, len);
+> +
+> +       return count;
+> +}
+> +
+> +static struct configfs_item_operations stp_policy_node_item_ops = {
+> +       .release                = stp_policy_node_release,
+> +       .show_attribute         = stp_policy_node_attr_show,
+> +       .store_attribute        = stp_policy_node_attr_store,
+> +};
+> +
+> +static struct stp_policy_node_attribute stp_policy_node_attr_range = {
+> +       .attr   = {
+> +               .ca_owner = THIS_MODULE,
+> +               .ca_name = "masters",
+> +               .ca_mode = S_IRUGO | S_IWUSR,
+> +       },
+> +       .show   = stp_policy_node_masters_show,
+> +       .store  = stp_policy_node_masters_store,
+> +};
+> +
+> +static struct stp_policy_node_attribute stp_policy_node_attr_channels = {
+> +       .attr   = {
+> +               .ca_owner = THIS_MODULE,
+> +               .ca_name = "channels",
+> +               .ca_mode = S_IRUGO | S_IWUSR,
+> +       },
+> +       .show   = stp_policy_node_channels_show,
+> +       .store  = stp_policy_node_channels_store,
+> +};
+> +
+> +static struct configfs_attribute *stp_policy_node_attrs[] = {
+> +       &stp_policy_node_attr_range.attr,
+> +       &stp_policy_node_attr_channels.attr,
+> +       NULL,
+> +};
+> +
+> +static struct config_item_type stp_policy_type;
+> +static struct config_item_type stp_policy_node_type;
+> +
+> +static struct config_group *
+> +stp_policy_node_make(struct config_group *group, const char *name)
+> +{
+> +       struct stp_policy_node *policy_node, *parent_node;
+> +       struct stp_policy *policy;
+> +
+> +       if (group->cg_item.ci_type == &stp_policy_type) {
+> +               policy = container_of(group, struct stp_policy, group);
+> +       } else {
+> +               parent_node = container_of(group, struct stp_policy_node,
+> +                                          group);
+> +               policy = parent_node->policy;
+> +       }
+> +
+> +       if (!policy->stm)
+> +               return ERR_PTR(-ENODEV);
+> +
+> +       policy_node = kzalloc(sizeof(struct stp_policy_node), GFP_KERNEL);
+> +       if (!policy_node)
+> +               return ERR_PTR(-ENOMEM);
+> +
+> +       config_group_init_type_name(&policy_node->group, name,
+> +                                   &stp_policy_node_type);
+> +
+> +       policy_node->policy = policy;
+> +
+> +       /* default values for the attributes */
+> +       policy_node->first_master = policy->stm->data->sw_start;
+> +       policy_node->last_master = policy->stm->data->sw_end;
+> +       policy_node->first_channel = 0;
+> +       policy_node->last_channel = policy->stm->data->sw_nchannels - 1;
+> +
+> +       return &policy_node->group;
+> +}
+> +
+> +static void
+> +stp_policy_node_drop(struct config_group *group, struct config_item *item)
+> +{
+> +       config_item_put(item);
+> +}
+> +
+> +static struct configfs_group_operations stp_policy_node_group_ops = {
+> +       .make_group     = stp_policy_node_make,
+> +       .drop_item      = stp_policy_node_drop,
+> +};
+> +
+> +static struct config_item_type stp_policy_node_type = {
+> +       .ct_item_ops    = &stp_policy_node_item_ops,
+> +       .ct_group_ops   = &stp_policy_node_group_ops,
+> +       .ct_attrs       = stp_policy_node_attrs,
+> +       .ct_owner       = THIS_MODULE,
+> +};
+> +
+> +/*
+> + * Root group: policies.
+> + */
+> +static struct configfs_attribute stp_policy_attr_device = {
+> +       .ca_owner = THIS_MODULE,
+> +       .ca_name = "device",
+> +       .ca_mode = S_IRUGO,
+> +};
+> +
+> +static struct configfs_attribute *stp_policy_attrs[] = {
+> +       &stp_policy_attr_device,
+> +       NULL,
+> +};
+> +
+> +static ssize_t stp_policy_attr_show(struct config_item *item,
+> +                                   struct configfs_attribute *attr,
+> +                                   char *page)
+> +{
+> +       struct stp_policy *policy = to_stp_policy(item);
+> +       ssize_t count;
+> +
+> +       count = sprintf(page, "%s\n",
+> +                       (policy && policy->stm) ?
+> +                       policy->stm->data->name :
+> +                       "<none>");
+> +
+> +       return count;
+> +}
+> +
+> +void stp_policy_unbind(struct stp_policy *policy)
+> +{
+> +       struct stm_device *stm = policy->stm;
+> +
+> +       if (WARN_ON_ONCE(!policy->stm))
+> +               return;
+> +
+> +       mutex_lock(&stm->policy_mutex);
+> +       stm->policy = NULL;
+> +       mutex_unlock(&stm->policy_mutex);
+> +
+> +       policy->stm = NULL;
+> +
+> +       stm_put_device(stm);
+> +}
+> +
+> +static void stp_policy_release(struct config_item *item)
+> +{
+> +       struct stp_policy *policy = to_stp_policy(item);
+> +
+> +       stp_policy_unbind(policy);
+> +       kfree(policy);
+> +}
+> +
+> +static struct configfs_item_operations stp_policy_item_ops = {
+> +       .release                = stp_policy_release,
+> +       .show_attribute         = stp_policy_attr_show,
+> +};
+> +
+> +static struct configfs_group_operations stp_policy_group_ops = {
+> +       .make_group     = stp_policy_node_make,
+> +};
+> +
+> +static struct config_item_type stp_policy_type = {
+> +       .ct_item_ops    = &stp_policy_item_ops,
+> +       .ct_group_ops   = &stp_policy_group_ops,
+> +       .ct_attrs       = stp_policy_attrs,
+> +       .ct_owner       = THIS_MODULE,
+> +};
+> +
+> +static struct config_group *
+> +stp_policies_make(struct config_group *group, const char *name)
+> +{
+> +       struct config_group *ret;
+> +       struct stm_device *stm;
+> +       char *devname, *p;
+> +
+> +       devname = kasprintf(GFP_KERNEL, "%s", name);
+> +       if (!devname)
+> +               return ERR_PTR(-ENOMEM);
+> +
+> +       /*
+> +        * node must look like <device_name>.<policy_name>, where
+> +        * <device_name> is the name of an existing stm device and
+> +        * <policy_name> is an arbitrary string
+> +        */
+> +       p = strchr(devname, '.');
+> +       if (!p) {
+> +               kfree(devname);
+> +               return ERR_PTR(-EINVAL);
+> +       }
+> +
+> +       *p++ = '\0';
+> +
+> +       stm = stm_find_device(devname);
+> +       kfree(devname);
+> +
+> +       if (!stm)
+> +               return ERR_PTR(-ENODEV);
+> +
+> +       mutex_lock(&stm->policy_mutex);
+> +       if (stm->policy) {
+> +               ret = ERR_PTR(-EBUSY);
+> +               goto unlock_policy;
+> +       }
+> +
+> +       stm->policy = kzalloc(sizeof(*stm->policy), GFP_KERNEL);
+> +       if (!stm->policy) {
+> +               ret = ERR_PTR(-ENOMEM);
+> +               goto unlock_policy;
+> +       }
+> +
+> +       config_group_init_type_name(&stm->policy->group, name,
+> +                                   &stp_policy_type);
+> +       stm->policy->stm = stm;
+> +
+> +       ret = &stm->policy->group;
+> +
+> +unlock_policy:
+> +       mutex_unlock(&stm->policy_mutex);
+> +
+> +       if (IS_ERR(ret))
+> +               stm_put_device(stm);
+> +
+> +       return ret;
+> +}
+> +
+> +static struct configfs_group_operations stp_policies_group_ops = {
+> +       .make_group     = stp_policies_make,
+> +};
+> +
+> +static struct config_item_type stp_policies_type = {
+> +       .ct_group_ops   = &stp_policies_group_ops,
+> +       .ct_owner       = THIS_MODULE,
+> +};
+> +
+> +static struct configfs_subsystem stp_policy_subsys = {
+> +       .su_group = {
+> +               .cg_item = {
+> +                       .ci_namebuf     = "stp-policy",
+> +                       .ci_type        = &stp_policies_type,
+> +               },
+> +       },
+> +};
+> +
+> +/*
+> + * Lock the policy mutex from the outside
+> + */
+> +static struct stp_policy_node *
+> +__stp_policy_node_lookup(struct stp_policy *policy, char *s)
+> +{
+> +       struct stp_policy_node *policy_node, *ret;
+> +       struct list_head *head = &policy->group.cg_children;
+> +       struct config_item *item;
+> +       char *start, *end = s;
+> +
+> +       if (list_empty(head))
+> +               return NULL;
+> +
+> +       /* return the first entry if everything else fails */
+> +       item = list_entry(head->next, struct config_item, ci_entry);
+> +       ret = to_stp_policy_node(item);
+> +
+> +next:
+> +       for (;;) {
+> +               start = strsep(&end, "/");
+> +               if (!start)
+> +                       break;
+> +
+> +               if (!*start)
+> +                       continue;
+> +
+> +               list_for_each_entry(item, head, ci_entry) {
+> +                       policy_node = to_stp_policy_node(item);
+> +
+> +                       if (!strcmp(start,
+> +                                   policy_node->group.cg_item.ci_name)) {
+> +                               ret = policy_node;
+> +
+> +                               if (!end)
+> +                                       goto out;
+> +
+> +                               head = &policy_node->group.cg_children;
+> +                               goto next;
+> +                       }
+> +               }
+> +               break;
+> +       }
+> +
+> +out:
+> +       return ret;
+> +}
+> +
+> +
+> +struct stp_policy_node *
+> +stp_policy_node_lookup(struct stm_device *stm, char *s)
+> +{
+> +       struct stp_policy_node *policy_node = NULL;
+> +
+> +       mutex_lock(&stp_policy_subsys.su_mutex);
+> +
+> +       mutex_lock(&stm->policy_mutex);
+> +       if (stm->policy)
+> +               policy_node = __stp_policy_node_lookup(stm->policy, s);
+> +       mutex_unlock(&stm->policy_mutex);
+> +
+> +       if (policy_node)
+> +               config_item_get(&policy_node->group.cg_item);
+> +       mutex_unlock(&stp_policy_subsys.su_mutex);
+> +
+> +       return policy_node;
+> +}
+> +
+> +void stp_policy_node_put(struct stp_policy_node *policy_node)
+> +{
+> +       config_item_put(&policy_node->group.cg_item);
+> +}
+> +
+> +int __init stp_configfs_init(void)
+> +{
+> +       int err;
+> +
+> +       config_group_init(&stp_policy_subsys.su_group);
+> +       mutex_init(&stp_policy_subsys.su_mutex);
+> +       err = configfs_register_subsystem(&stp_policy_subsys);
+> +
+> +       return err;
 
-RnJvbSA5YzM3NjY3MzAyZjEwNGUwZjQxMmJhMjcyN2M0ZDNkZjgxZmI1OWRh
-IE1vbiBTZXAgMTcgMDA6MDA6MDAgMjAwMQ0KRnJvbTogUGF1bCBPc21pYWxv
-d3NraSA8cC5vc21pYWxvd3NrQHNhbXN1bmcuY29tPg0KRGF0ZTogVHVlLCAy
-NiBNYXkgMjAxNSAxMjowMDozMyArMDIwMA0KU3ViamVjdDogW1JGQyA1Lzhd
-IGtkYnVzOiB1c2UgTFNNIGhvb2tzIGluIGtkYnVzIGNvZGUNCg0KT3JpZ2lu
-YXRlcyBmcm9tOg0KDQpodHRwczovL2dpdGh1Yi5jb20vbG1jdGwva2RidXMu
-Z2l0IChicmFuY2g6IGtkYnVzLWxzbS12NC5mb3Itc3lzdGVtZC12MjEyKQ0K
-Y29tbWl0OiBhYTA4ODU0ODlkMTliZTkyZmE0MWM2ZjBhNzFkZjI4NzYzMjI4
-YTQwDQoNClNpZ25lZC1vZmYtYnk6IEthcm9sIExld2FuZG93c2tpIDxrLmxl
-d2FuZG93c2tAc2Ftc3VuZy5jb20+DQpTaWduZWQtb2ZmLWJ5OiBQYXVsIE9z
-bWlhbG93c2tpIDxwLm9zbWlhbG93c2tAc2Ftc3VuZy5jb20+DQotLS0NCiBp
-cGMva2RidXMvYnVzLmMgICAgICAgIHwgMTEgKysrKysrKysrKy0NCiBpcGMv
-a2RidXMvYnVzLmggICAgICAgIHwgIDUgKysrKysNCiBpcGMva2RidXMvY29u
-bmVjdGlvbi5jIHwgNDggKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKysrDQogaXBjL2tkYnVzL2Nvbm5lY3Rpb24uaCB8
-ICA2ICsrKysrKw0KIGlwYy9rZGJ1cy9kb21haW4uYyAgICAgfCAgOSArKysr
-KysrKy0NCiBpcGMva2RidXMvZG9tYWluLmggICAgIHwgIDQgKysrKw0KIGlw
-Yy9rZGJ1cy9lbmRwb2ludC5jICAgfCAxMCArKysrKysrKysrDQogaXBjL2tk
-YnVzL25hbWVzLmMgICAgICB8IDEwICsrKysrKysrKysNCiBpcGMva2RidXMv
-cXVldWUuYyAgICAgIHwgMzAgKysrKysrKysrKysrKysrKysrKystLS0tLS0t
-LS0tDQogOSBmaWxlcyBjaGFuZ2VkLCAxMjEgaW5zZXJ0aW9ucygrKSwgMTIg
-ZGVsZXRpb25zKC0pDQoNCmRpZmYgLS1naXQgYS9pcGMva2RidXMvYnVzLmMg
-Yi9pcGMva2RidXMvYnVzLmMNCmluZGV4IGJiZGYwZjIuLmJlN2VkODEgMTAw
-NjQ0DQotLS0gYS9pcGMva2RidXMvYnVzLmMNCisrKyBiL2lwYy9rZGJ1cy9i
-dXMuYw0KQEAgLTIyLDYgKzIyLDcgQEANCiAjaW5jbHVkZSA8bGludXgvc2xh
-Yi5oPg0KICNpbmNsdWRlIDxsaW51eC91YWNjZXNzLmg+DQogI2luY2x1ZGUg
-PGxpbnV4L3Vpby5oPg0KKyNpbmNsdWRlIDxsaW51eC9zZWN1cml0eS5oPg0K
-IA0KICNpbmNsdWRlICJidXMuaCINCiAjaW5jbHVkZSAibm90aWZ5LmgiDQpA
-QCAtNTEsNiArNTIsNyBAQCBzdGF0aWMgdm9pZCBrZGJ1c19idXNfZnJlZShz
-dHJ1Y3Qga2RidXNfbm9kZSAqbm9kZSkNCiAJa2RidXNfZG9tYWluX3VucmVm
-KGJ1cy0+ZG9tYWluKTsNCiAJa2RidXNfcG9saWN5X2RiX2NsZWFyKCZidXMt
-PnBvbGljeV9kYik7DQogCWtkYnVzX21ldGFfcHJvY191bnJlZihidXMtPmNy
-ZWF0b3JfbWV0YSk7DQorCXNlY3VyaXR5X2tkYnVzX2J1c19mcmVlKGJ1cyk7
-DQogCWtmcmVlKGJ1cyk7DQogfQ0KIA0KQEAgLTE2MSw2ICsxNjMsMTEgQEAg
-c3RhdGljIHN0cnVjdCBrZGJ1c19idXMgKmtkYnVzX2J1c19uZXcoc3RydWN0
-IGtkYnVzX2RvbWFpbiAqZG9tYWluLA0KIAkJZ290byBleGl0X3VucmVmOw0K
-IAl9DQogDQorCXJldCA9IHNlY3VyaXR5X2tkYnVzX2J1c19hbGxvYyhiKTsN
-CisJaWYgKHJldCkgew0KKwkJZ290byBleGl0X3VucmVmOw0KKwl9DQorDQog
-CS8qDQogCSAqIEJ1cy1saW1pdHMgb2YgdGhlIGNyZWF0b3IgYXJlIGFjY291
-bnRlZCBvbiBpdHMgcmVhbCBVSUQsIGp1c3QgbGlrZQ0KIAkgKiBhbGwgb3Ro
-ZXIgcGVyLXVzZXIgbGltaXRzLg0KQEAgLTE2OSwxMSArMTc2LDEzIEBAIHN0
-YXRpYyBzdHJ1Y3Qga2RidXNfYnVzICprZGJ1c19idXNfbmV3KHN0cnVjdCBr
-ZGJ1c19kb21haW4gKmRvbWFpbiwNCiAJaWYgKElTX0VSUihiLT5jcmVhdG9y
-KSkgew0KIAkJcmV0ID0gUFRSX0VSUihiLT5jcmVhdG9yKTsNCiAJCWItPmNy
-ZWF0b3IgPSBOVUxMOw0KLQkJZ290byBleGl0X3VucmVmOw0KKwkJZ290byBl
-eGl0X2ZyZWVfc2VjdXJpdHk7DQogCX0NCiANCiAJcmV0dXJuIGI7DQogDQor
-ZXhpdF9mcmVlX3NlY3VyaXR5Og0KKwlzZWN1cml0eV9rZGJ1c19idXNfZnJl
-ZShiKTsNCiBleGl0X3VucmVmOg0KIAlrZGJ1c19ub2RlX2RlYWN0aXZhdGUo
-JmItPm5vZGUpOw0KIAlrZGJ1c19ub2RlX3VucmVmKCZiLT5ub2RlKTsNCmRp
-ZmYgLS1naXQgYS9pcGMva2RidXMvYnVzLmggYi9pcGMva2RidXMvYnVzLmgN
-CmluZGV4IDViZWE1ZWYuLjUyMWU2OTIgMTAwNjQ0DQotLS0gYS9pcGMva2Ri
-dXMvYnVzLmgNCisrKyBiL2lwYy9rZGJ1cy9idXMuaA0KQEAgLTUzLDYgKzUz
-LDcgQEAgc3RydWN0IGtkYnVzX3VzZXI7DQogICogQG5vdGlmeV9saXN0OglM
-aXN0IG9mIHBlbmRpbmcga2VybmVsLWdlbmVyYXRlZCBtZXNzYWdlcw0KICAq
-IEBub3RpZnlfbG9jazoJTm90aWZpY2F0aW9uIGxpc3QgbG9jaw0KICAqIEBu
-b3RpZnlfZmx1c2hfbG9jazoJTm90aWZpY2F0aW9uIGZsdXNoaW5nIGxvY2sN
-CisgKiBAc2VjdXJpdHk6CQlMU00gc2VjdXJpdHkgYmxvYg0KICAqLw0KIHN0
-cnVjdCBrZGJ1c19idXMgew0KIAlzdHJ1Y3Qga2RidXNfbm9kZSBub2RlOw0K
-QEAgLTgxLDYgKzgyLDEwIEBAIHN0cnVjdCBrZGJ1c19idXMgew0KIAlzdHJ1
-Y3QgbGlzdF9oZWFkIG5vdGlmeV9saXN0Ow0KIAlzcGlubG9ja190IG5vdGlm
-eV9sb2NrOw0KIAlzdHJ1Y3QgbXV0ZXggbm90aWZ5X2ZsdXNoX2xvY2s7DQor
-DQorI2lmZGVmIENPTkZJR19TRUNVUklUWQ0KKwl2b2lkICpzZWN1cml0eTsN
-CisjZW5kaWYNCiB9Ow0KIA0KIHN0cnVjdCBrZGJ1c19idXMgKmtkYnVzX2J1
-c19yZWYoc3RydWN0IGtkYnVzX2J1cyAqYnVzKTsNCmRpZmYgLS1naXQgYS9p
-cGMva2RidXMvY29ubmVjdGlvbi5jIGIvaXBjL2tkYnVzL2Nvbm5lY3Rpb24u
-Yw0KaW5kZXggOTk5Mzc1My4uNGI5ZjBiNiAxMDA2NDQNCi0tLSBhL2lwYy9r
-ZGJ1cy9jb25uZWN0aW9uLmMNCisrKyBiL2lwYy9rZGJ1cy9jb25uZWN0aW9u
-LmMNCkBAIC0zMSw2ICszMSw3IEBADQogI2luY2x1ZGUgPGxpbnV4L3NsYWIu
-aD4NCiAjaW5jbHVkZSA8bGludXgvc3lzY2FsbHMuaD4NCiAjaW5jbHVkZSA8
-bGludXgvdWlvLmg+DQorI2luY2x1ZGUgPGxpbnV4L3NlY3VyaXR5Lmg+DQog
-DQogI2luY2x1ZGUgImJ1cy5oIg0KICNpbmNsdWRlICJjb25uZWN0aW9uLmgi
-DQpAQCAtNzMsNiArNzQsOCBAQCBzdGF0aWMgc3RydWN0IGtkYnVzX2Nvbm4g
-KmtkYnVzX2Nvbm5fbmV3KHN0cnVjdCBrZGJ1c19lcCAqZXAsIGJvb2wgcHJp
-dmlsZWdlZCwNCiAJYm9vbCBpc19hY3RpdmF0b3I7DQogCWJvb2wgaXNfbW9u
-aXRvcjsNCiAJc3RydWN0IGt2ZWMga3ZlYzsNCisJdTMyIHNpZCwgbGVuOw0K
-KwljaGFyICpsYWJlbDsNCiAJaW50IHJldDsNCiANCiAJc3RydWN0IHsNCkBA
-IC0yMjIsNiArMjI1LDEzIEBAIHN0YXRpYyBzdHJ1Y3Qga2RidXNfY29ubiAq
-a2RidXNfY29ubl9uZXcoc3RydWN0IGtkYnVzX2VwICplcCwgYm9vbCBwcml2
-aWxlZ2VkLA0KIAkJfQ0KIAl9DQogDQorCXNlY3VyaXR5X3Rhc2tfZ2V0c2Vj
-aWQoY3VycmVudCwgJnNpZCk7DQorCXNlY3VyaXR5X3NlY2lkX3RvX3NlY2N0
-eChzaWQsICZsYWJlbCwgJmxlbik7DQorCXJldCA9IHNlY3VyaXR5X2tkYnVz
-X2Nvbm5lY3QoY29ubiwgbGFiZWwsIGxlbik7DQorCWlmIChyZXQpIHsNCisJ
-CWdvdG8gZXhpdF91bnJlZjsNCisJfQ0KKw0KIAlpZiAoYXRvbWljX2luY19y
-ZXR1cm4oJmNvbm4tPnVzZXItPmNvbm5lY3Rpb25zKSA+IEtEQlVTX1VTRVJf
-TUFYX0NPTk4pIHsNCiAJCS8qIGRlY3JlbWVudGVkIGJ5IGRlc3RydWN0b3Ig
-YXMgY29ubi0+dXNlciBpcyB2YWxpZCAqLw0KIAkJcmV0ID0gLUVNRklMRTsN
-CkBAIC0yNzYsNiArMjg2LDcgQEAgc3RhdGljIHZvaWQgX19rZGJ1c19jb25u
-X2ZyZWUoc3RydWN0IGtyZWYgKmtyZWYpDQogCWtkYnVzX3Bvb2xfZnJlZShj
-b25uLT5wb29sKTsNCiAJa2RidXNfZXBfdW5yZWYoY29ubi0+ZXApOw0KIAlw
-dXRfY3JlZChjb25uLT5jcmVkKTsNCisJc2VjdXJpdHlfa2RidXNfY29ubl9m
-cmVlKGNvbm4pOw0KIAlrZnJlZShjb25uLT5kZXNjcmlwdGlvbik7DQogCWtm
-cmVlKGNvbm4tPnF1b3RhKTsNCiAJa2ZyZWUoY29ubik7DQpAQCAtMTEwNyw2
-ICsxMTE4LDExIEBAIHN0YXRpYyBpbnQga2RidXNfY29ubl9yZXBseShzdHJ1
-Y3Qga2RidXNfY29ubiAqc3JjLCBzdHJ1Y3Qga2RidXNfa21zZyAqa21zZykN
-CiAJaWYgKHJldCA8IDApDQogCQlnb3RvIGV4aXQ7DQogDQorCXJldCA9IHNl
-Y3VyaXR5X2tkYnVzX3RhbGsoc3JjLCBkc3QpOw0KKwlpZiAocmV0KSB7DQor
-CQlnb3RvIGV4aXQ7DQorCX0NCisNCiAJbXV0ZXhfbG9jaygmZHN0LT5sb2Nr
-KTsNCiAJcmVwbHkgPSBrZGJ1c19yZXBseV9maW5kKHNyYywgZHN0LCBrbXNn
-LT5tc2cuY29va2llX3JlcGx5KTsNCiAJaWYgKHJlcGx5KSB7DQpAQCAtMTE4
-Nyw2ICsxMjAzLDExIEBAIHN0YXRpYyBzdHJ1Y3Qga2RidXNfcmVwbHkgKmtk
-YnVzX2Nvbm5fY2FsbChzdHJ1Y3Qga2RidXNfY29ubiAqc3JjLA0KIAlpZiAo
-cmV0IDwgMCkNCiAJCWdvdG8gZXhpdDsNCiANCisJcmV0ID0gc2VjdXJpdHlf
-a2RidXNfdGFsayhzcmMsIGRzdCk7DQorCWlmIChyZXQpIHsNCisJCWdvdG8g
-ZXhpdDsNCisJfQ0KKw0KIAlpZiAoIWtkYnVzX2Nvbm5fcG9saWN5X3RhbGso
-c3JjLCBjdXJyZW50X2NyZWQoKSwgZHN0KSkgew0KIAkJcmV0ID0gLUVQRVJN
-Ow0KIAkJZ290byBleGl0Ow0KQEAgLTEyNDgsNiArMTI2OSwxMSBAQCBzdGF0
-aWMgaW50IGtkYnVzX2Nvbm5fdW5pY2FzdChzdHJ1Y3Qga2RidXNfY29ubiAq
-c3JjLCBzdHJ1Y3Qga2RidXNfa21zZyAqa21zZykNCiAJaWYgKHJldCA8IDAp
-DQogCQlnb3RvIGV4aXQ7DQogDQorCXJldCA9IHNlY3VyaXR5X2tkYnVzX3Rh
-bGsoc3JjLCBkc3QpOw0KKwlpZiAocmV0KSB7DQorCQlnb3RvIGV4aXQ7DQor
-CX0NCisNCiAJaWYgKGlzX3NpZ25hbCkgew0KIAkJLyogbGlrZSBicm9hZGNh
-c3RzIHdlIGVhdmVzZHJvcCBldmVuIGlmIHRoZSBtc2cgaXMgZHJvcHBlZCAq
-Lw0KIAkJa2RidXNfYnVzX2VhdmVzZHJvcChidXMsIHNyYywga21zZyk7DQpA
-QCAtMTYzOSw2ICsxNjY1LDExIEBAIHN0cnVjdCBrZGJ1c19jb25uICprZGJ1
-c19jbWRfaGVsbG8oc3RydWN0IGtkYnVzX2VwICplcCwgYm9vbCBwcml2aWxl
-Z2VkLA0KIAkJaWYgKHJldCA8IDApDQogCQkJZ290byBleGl0Ow0KIA0KKwkJ
-cmV0ID0gc2VjdXJpdHlfa2RidXNfZXBfc2V0cG9saWN5KGMtPmVwLT5idXMp
-Ow0KKwkJaWYgKHJldCkgew0KKwkJCWdvdG8gZXhpdDsNCisJCX0NCisNCiAJ
-CXJldCA9IGtkYnVzX3BvbGljeV9zZXQoJmMtPmVwLT5idXMtPnBvbGljeV9k
-YiwgYXJncy5pdGVtcywNCiAJCQkJICAgICAgIGFyZ3MuaXRlbXNfc2l6ZSwg
-MSwNCiAJCQkJICAgICAgIGtkYnVzX2Nvbm5faXNfcG9saWN5X2hvbGRlcihj
-KSwgYyk7DQpAQCAtMTczMiw2ICsxNzYzLDEwIEBAIGludCBrZGJ1c19jbWRf
-Y29ubl9pbmZvKHN0cnVjdCBrZGJ1c19jb25uICpjb25uLCB2b2lkIF9fdXNl
-ciAqYXJncCkNCiAJaWYgKHJldCAhPSAwKQ0KIAkJcmV0dXJuIHJldDsNCiAN
-CisJcmV0ID0gc2VjdXJpdHlfa2RidXNfY29ubl9pbmZvKGNvbm4pOw0KKwlp
-ZiAocmV0KQ0KKwkJcmV0dXJuIHJldDsNCisNCiAJLyogcmVnaXN0cnkgbXVz
-dCBiZSBoZWxkIHRocm91Z2hvdXQgbG9va3VwICphbmQqIGNvbGxlY3Rpbmcg
-ZGF0YSAqLw0KIAlkb3duX3JlYWQoJmJ1cy0+bmFtZV9yZWdpc3RyeS0+cnds
-b2NrKTsNCiANCkBAIC0xOTA1LDYgKzE5NDAsMTEgQEAgaW50IGtkYnVzX2Nt
-ZF91cGRhdGUoc3RydWN0IGtkYnVzX2Nvbm4gKmNvbm4sIHZvaWQgX191c2Vy
-ICphcmdwKQ0KIAkvKiBub3cgdGhhdCB3ZSB2ZXJpZmllZCB0aGUgaW5wdXQs
-IHVwZGF0ZSB0aGUgY29ubmVjdGlvbiAqLw0KIA0KIAlpZiAoaXRlbV9wb2xp
-Y3kpIHsNCisJCXJldCA9IHNlY3VyaXR5X2tkYnVzX2VwX3NldHBvbGljeShj
-b25uLT5lcC0+YnVzKTsNCisJCWlmIChyZXQpIHsNCisJCQlnb3RvIGV4aXQ7
-DQorCQl9DQorDQogCQlyZXQgPSBrZGJ1c19wb2xpY3lfc2V0KCZjb25uLT5l
-cC0+YnVzLT5wb2xpY3lfZGIsIGNtZC0+aXRlbXMsDQogCQkJCSAgICAgICBL
-REJVU19JVEVNU19TSVpFKGNtZCwgaXRlbXMpLA0KIAkJCQkgICAgICAgMSwg
-dHJ1ZSwgY29ubik7DQpAQCAtMTk0OCw2ICsxOTg4LDEwIEBAIGludCBrZGJ1
-c19jbWRfc2VuZChzdHJ1Y3Qga2RidXNfY29ubiAqY29ubiwgc3RydWN0IGZp
-bGUgKmYsIHZvaWQgX191c2VyICphcmdwKQ0KIAkJLmFyZ2MgPSBBUlJBWV9T
-SVpFKGFyZ3YpLA0KIAl9Ow0KIA0KKwlyZXQgPSBzZWN1cml0eV9rZGJ1c19z
-ZW5kKGNvbm4sIGNvbm4tPmVwLT5idXMpOw0KKwlpZiAocmV0KQ0KKwkJcmV0
-dXJuIHJldDsNCisNCiAJaWYgKCFrZGJ1c19jb25uX2lzX29yZGluYXJ5KGNv
-bm4pKQ0KIAkJcmV0dXJuIC1FT1BOT1RTVVBQOw0KIA0KQEAgLTIwNDQsNiAr
-MjA4OCwxMCBAQCBpbnQga2RidXNfY21kX3JlY3Yoc3RydWN0IGtkYnVzX2Nv
-bm4gKmNvbm4sIHZvaWQgX191c2VyICphcmdwKQ0KIAkJLmFyZ2MgPSBBUlJB
-WV9TSVpFKGFyZ3YpLA0KIAl9Ow0KIA0KKwlyZXQgPSBzZWN1cml0eV9rZGJ1
-c19yZWN2KGNvbm4sIGNvbm4tPmVwLT5idXMpOw0KKwlpZiAocmV0KQ0KKwkJ
-cmV0dXJuIHJldDsNCisNCiAJaWYgKCFrZGJ1c19jb25uX2lzX29yZGluYXJ5
-KGNvbm4pICYmDQogCSAgICAha2RidXNfY29ubl9pc19tb25pdG9yKGNvbm4p
-ICYmDQogCSAgICAha2RidXNfY29ubl9pc19hY3RpdmF0b3IoY29ubikpDQpk
-aWZmIC0tZ2l0IGEvaXBjL2tkYnVzL2Nvbm5lY3Rpb24uaCBiL2lwYy9rZGJ1
-cy9jb25uZWN0aW9uLmgNCmluZGV4IGQxZmZlOTAuLjk1MWY5YjAgMTAwNjQ0
-DQotLS0gYS9pcGMva2RidXMvY29ubmVjdGlvbi5oDQorKysgYi9pcGMva2Ri
-dXMvY29ubmVjdGlvbi5oDQpAQCAtMTksNiArMTksNyBAQA0KICNpbmNsdWRl
-IDxsaW51eC9rcmVmLmg+DQogI2luY2x1ZGUgPGxpbnV4L2xvY2tkZXAuaD4N
-CiAjaW5jbHVkZSA8bGludXgvcGF0aC5oPg0KKyNpbmNsdWRlIDx1YXBpL2xp
-bnV4L2tkYnVzLmg+DQogDQogI2luY2x1ZGUgImxpbWl0cy5oIg0KICNpbmNs
-dWRlICJtZXRhZGF0YS5oIg0KQEAgLTczLDYgKzc0LDcgQEAgc3RydWN0IGtk
-YnVzX2ttc2c7DQogICogQG5hbWVzX3F1ZXVlX2xpc3Q6CVdlbGwta25vd24g
-bmFtZXMgdGhpcyBjb25uZWN0aW9uIHdhaXRzIGZvcg0KICAqIEBwcml2aWxl
-Z2VkOgkJV2hldGhlciB0aGlzIGNvbm5lY3Rpb24gaXMgcHJpdmlsZWdlZCBv
-biB0aGUgYnVzDQogICogQGZha2VkX21ldGE6CQlXaGV0aGVyIHRoZSBtZXRh
-ZGF0YSB3YXMgZmFrZWQgb24gSEVMTE8NCisgKiBAc2VjdXJpdHk6CQlMU00g
-c2VjdXJpdHkgYmxvYg0KICAqLw0KIHN0cnVjdCBrZGJ1c19jb25uIHsNCiAJ
-c3RydWN0IGtyZWYga3JlZjsNCkBAIC0xMTMsNiArMTE1LDEwIEBAIHN0cnVj
-dCBrZGJ1c19jb25uIHsNCiANCiAJYm9vbCBwcml2aWxlZ2VkOjE7DQogCWJv
-b2wgZmFrZWRfbWV0YToxOw0KKw0KKyNpZmRlZiBDT05GSUdfU0VDVVJJVFkN
-CisJdm9pZCAqc2VjdXJpdHk7DQorI2VuZGlmDQogfTsNCiANCiBzdHJ1Y3Qg
-a2RidXNfY29ubiAqa2RidXNfY29ubl9yZWYoc3RydWN0IGtkYnVzX2Nvbm4g
-KmNvbm4pOw0KZGlmZiAtLWdpdCBhL2lwYy9rZGJ1cy9kb21haW4uYyBiL2lw
-Yy9rZGJ1cy9kb21haW4uYw0KaW5kZXggYWM5Zjc2MC4uZTc5MDgwZiAxMDA2
-NDQNCi0tLSBhL2lwYy9rZGJ1cy9kb21haW4uYw0KKysrIGIvaXBjL2tkYnVz
-L2RvbWFpbi5jDQpAQCAtMjAsNiArMjAsNyBAQA0KICNpbmNsdWRlIDxsaW51
-eC9zaXplcy5oPg0KICNpbmNsdWRlIDxsaW51eC9zbGFiLmg+DQogI2luY2x1
-ZGUgPGxpbnV4L3VhY2Nlc3MuaD4NCisjaW5jbHVkZSA8bGludXgvc2VjdXJp
-dHkuaD4NCiANCiAjaW5jbHVkZSAiYnVzLmgiDQogI2luY2x1ZGUgImRvbWFp
-bi5oIg0KQEAgLTczLDYgKzc0LDcgQEAgc3RhdGljIHZvaWQga2RidXNfZG9t
-YWluX2ZyZWUoc3RydWN0IGtkYnVzX25vZGUgKm5vZGUpDQogCXB1dF91c2Vy
-X25zKGRvbWFpbi0+dXNlcl9uYW1lc3BhY2UpOw0KIAlpZGFfZGVzdHJveSgm
-ZG9tYWluLT51c2VyX2lkYSk7DQogCWlkcl9kZXN0cm95KCZkb21haW4tPnVz
-ZXJfaWRyKTsNCisJc2VjdXJpdHlfa2RidXNfZG9tYWluX2ZyZWUoZG9tYWlu
-KTsNCiAJa2ZyZWUoZG9tYWluKTsNCiB9DQogDQpAQCAtMTA0LDYgKzEwNiwx
-MCBAQCBzdHJ1Y3Qga2RidXNfZG9tYWluICprZGJ1c19kb21haW5fbmV3KHVu
-c2lnbmVkIGludCBhY2Nlc3MpDQogCWlkcl9pbml0KCZkLT51c2VyX2lkcik7
-DQogCWlkYV9pbml0KCZkLT51c2VyX2lkYSk7DQogDQorCXJldCA9IHNlY3Vy
-aXR5X2tkYnVzX2RvbWFpbl9hbGxvYyhkKTsNCisJaWYgKHJldCkNCisJCXJl
-dHVybiBFUlJfUFRSKHJldCk7DQorDQogCS8qIFBpbiB1c2VyIG5hbWVzcGFj
-ZSBzbyB3ZSBjYW4gZ3VhcmFudGVlIGRvbWFpbi11bmlxdWUgYnVzICogbmFt
-ZXMuICovDQogCWQtPnVzZXJfbmFtZXNwYWNlID0gZ2V0X3VzZXJfbnMoY3Vy
-cmVudF91c2VyX25zKCkpOw0KIA0KQEAgLTExNiw2ICsxMjIsNyBAQCBzdHJ1
-Y3Qga2RidXNfZG9tYWluICprZGJ1c19kb21haW5fbmV3KHVuc2lnbmVkIGlu
-dCBhY2Nlc3MpDQogZXhpdF91bnJlZjoNCiAJa2RidXNfbm9kZV9kZWFjdGl2
-YXRlKCZkLT5ub2RlKTsNCiAJa2RidXNfbm9kZV91bnJlZigmZC0+bm9kZSk7
-DQorCXNlY3VyaXR5X2tkYnVzX2RvbWFpbl9mcmVlKGQpOw0KIAlyZXR1cm4g
-RVJSX1BUUihyZXQpOw0KIH0NCiANCkBAIC0yNjQsNyArMjcxLDcgQEAgc3Rh
-dGljIHZvaWQgX19rZGJ1c191c2VyX2ZyZWUoc3RydWN0IGtyZWYgKmtyZWYp
-DQogCWlmICh1aWRfdmFsaWQodXNlci0+dWlkKSkNCiAJCWlkcl9yZW1vdmUo
-JnVzZXItPmRvbWFpbi0+dXNlcl9pZHIsIF9fa3VpZF92YWwodXNlci0+dWlk
-KSk7DQogCW11dGV4X3VubG9jaygmdXNlci0+ZG9tYWluLT5sb2NrKTsNCi0N
-CisJc2VjdXJpdHlfa2RidXNfZG9tYWluX2ZyZWUodXNlci0+ZG9tYWluKTsN
-CiAJa2RidXNfZG9tYWluX3VucmVmKHVzZXItPmRvbWFpbik7DQogCWtmcmVl
-KHVzZXIpOw0KIH0NCmRpZmYgLS1naXQgYS9pcGMva2RidXMvZG9tYWluLmgg
-Yi9pcGMva2RidXMvZG9tYWluLmgNCmluZGV4IDQ0N2EyYmQuLjRhOTM1YWEg
-MTAwNjQ0DQotLS0gYS9pcGMva2RidXMvZG9tYWluLmgNCisrKyBiL2lwYy9r
-ZGJ1cy9kb21haW4uaA0KQEAgLTMxLDYgKzMxLDcgQEANCiAgKiBAdXNlcl9p
-ZGE6CQlTZXQgb2YgYWxsIHVzZXJzIHRvIGNvbXB1dGUgc21hbGwgaW5kaWNl
-cw0KICAqIEB1c2VyX25hbWVzcGFjZToJVXNlciBuYW1lc3BhY2UsIHBpbm5l
-ZCBhdCBjcmVhdGlvbiB0aW1lDQogICogQGRlbnRyeToJCVJvb3QgZGVudHJ5
-IG9mIFZGUyBtb3VudCAoZG9uJ3QgdXNlIG91dHNpZGUgb2Yga2RidXNmcykN
-CisgKiBAc2VjdXJpdHk6CQlMU00gc2VjdXJpdHkgYmxvYg0KICAqLw0KIHN0
-cnVjdCBrZGJ1c19kb21haW4gew0KIAlzdHJ1Y3Qga2RidXNfbm9kZSBub2Rl
-Ow0KQEAgLTQwLDYgKzQxLDkgQEAgc3RydWN0IGtkYnVzX2RvbWFpbiB7DQog
-CXN0cnVjdCBpZGEgdXNlcl9pZGE7DQogCXN0cnVjdCB1c2VyX25hbWVzcGFj
-ZSAqdXNlcl9uYW1lc3BhY2U7DQogCXN0cnVjdCBkZW50cnkgKmRlbnRyeTsN
-CisjaWZkZWYgQ09ORklHX1NFQ1VSSVRZDQorCXZvaWQgKnNlY3VyaXR5Ow0K
-KyNlbmRpZg0KIH07DQogDQogLyoqDQpkaWZmIC0tZ2l0IGEvaXBjL2tkYnVz
-L2VuZHBvaW50LmMgYi9pcGMva2RidXMvZW5kcG9pbnQuYw0KaW5kZXggOWE5
-NWE1ZS4uNmZmNzRlZSAxMDA2NDQNCi0tLSBhL2lwYy9rZGJ1cy9lbmRwb2lu
-dC5jDQorKysgYi9pcGMva2RidXMvZW5kcG9pbnQuYw0KQEAgLTIxLDYgKzIx
-LDcgQEANCiAjaW5jbHVkZSA8bGludXgvc2xhYi5oPg0KICNpbmNsdWRlIDxs
-aW51eC91YWNjZXNzLmg+DQogI2luY2x1ZGUgPGxpbnV4L3Vpby5oPg0KKyNp
-bmNsdWRlIDxsaW51eC9zZWN1cml0eS5oPg0KIA0KICNpbmNsdWRlICJidXMu
-aCINCiAjaW5jbHVkZSAiY29ubmVjdGlvbi5oIg0KQEAgLTEyMiw2ICsxMjMs
-MTEgQEAgc3RydWN0IGtkYnVzX2VwICprZGJ1c19lcF9uZXcoc3RydWN0IGtk
-YnVzX2J1cyAqYnVzLCBjb25zdCBjaGFyICpuYW1lLA0KIAlrZGJ1c19wb2xp
-Y3lfZGJfaW5pdCgmZS0+cG9saWN5X2RiKTsNCiAJZS0+YnVzID0ga2RidXNf
-YnVzX3JlZihidXMpOw0KIA0KKwlyZXQgPSBzZWN1cml0eV9rZGJ1c19lcF9j
-cmVhdGUoYnVzKTsNCisJaWYgKHJldCkgew0KKwkJZ290byBleGl0X3VucmVm
-Ow0KKwl9DQorDQogCXJldCA9IGtkYnVzX25vZGVfbGluaygmZS0+bm9kZSwg
-JmJ1cy0+bm9kZSwgbmFtZSk7DQogCWlmIChyZXQgPCAwKQ0KIAkJZ290byBl
-eGl0X3VucmVmOw0KQEAgLTI2NSw2ICsyNzEsMTAgQEAgaW50IGtkYnVzX2Nt
-ZF9lcF91cGRhdGUoc3RydWN0IGtkYnVzX2VwICplcCwgdm9pZCBfX3VzZXIg
-KmFyZ3ApDQogCQkuYXJnYyA9IEFSUkFZX1NJWkUoYXJndiksDQogCX07DQog
-DQorCXJldCA9IHNlY3VyaXR5X2tkYnVzX2VwX3NldHBvbGljeShlcC0+YnVz
-KTsNCisJaWYgKHJldCkNCisJCXJldHVybiByZXQ7DQorDQogCXJldCA9IGtk
-YnVzX2FyZ3NfcGFyc2UoJmFyZ3MsIGFyZ3AsICZjbWQpOw0KIAlpZiAocmV0
-ICE9IDApDQogCQlyZXR1cm4gcmV0Ow0KZGlmZiAtLWdpdCBhL2lwYy9rZGJ1
-cy9uYW1lcy5jIGIvaXBjL2tkYnVzL25hbWVzLmMNCmluZGV4IGQ3N2VlMDgu
-LmZjYzFhNDkgMTAwNjQ0DQotLS0gYS9pcGMva2RidXMvbmFtZXMuYw0KKysr
-IGIvaXBjL2tkYnVzL25hbWVzLmMNCkBAIC0yNCw2ICsyNCw3IEBADQogI2lu
-Y2x1ZGUgPGxpbnV4L3NsYWIuaD4NCiAjaW5jbHVkZSA8bGludXgvdWFjY2Vz
-cy5oPg0KICNpbmNsdWRlIDxsaW51eC91aW8uaD4NCisjaW5jbHVkZSA8bGlu
-dXgvc2VjdXJpdHkuaD4NCiANCiAjaW5jbHVkZSAiYnVzLmgiDQogI2luY2x1
-ZGUgImNvbm5lY3Rpb24uaCINCkBAIC01MDMsNiArNTA0LDExIEBAIGludCBr
-ZGJ1c19jbWRfbmFtZV9hY3F1aXJlKHN0cnVjdCBrZGJ1c19jb25uICpjb25u
-LCB2b2lkIF9fdXNlciAqYXJncCkNCiAJCWdvdG8gZXhpdDsNCiAJfQ0KIA0K
-KwlyZXQgPSBzZWN1cml0eV9rZGJ1c19uYW1lX2FjcXVpcmUoY29ubiwgaXRl
-bV9uYW1lKTsNCisJaWYgKHJldCkgew0KKwkJZ290byBleGl0Ow0KKwl9DQor
-DQogCS8qDQogCSAqIERvIGF0b21pY19pbmNfcmV0dXJuIGhlcmUgdG8gcmVz
-ZXJ2ZSBvdXIgc2xvdCwgdGhlbiBkZWNyZW1lbnQNCiAJICogaXQgYmVmb3Jl
-IHJldHVybmluZy4NCkBAIC03MjQsNiArNzMwLDEwIEBAIGludCBrZGJ1c19j
-bWRfbGlzdChzdHJ1Y3Qga2RidXNfY29ubiAqY29ubiwgdm9pZCBfX3VzZXIg
-KmFyZ3ApDQogCWlmIChyZXQgIT0gMCkNCiAJCXJldHVybiByZXQ7DQogDQor
-CXJldCA9IHNlY3VyaXR5X2tkYnVzX25hbWVfbGlzdChjb25uLT5lcC0+YnVz
-KTsNCisJaWYgKHJldCkNCisJCXJldHVybiByZXQ7DQorDQogCS8qIGxvY2sg
-b3JkZXI6IGRvbWFpbiAtPiBidXMgLT4gZXAgLT4gbmFtZXMgLT4gY29ubiAq
-Lw0KIAlkb3duX3JlYWQoJnJlZy0+cndsb2NrKTsNCiAJZG93bl9yZWFkKCZj
-b25uLT5lcC0+YnVzLT5jb25uX3J3bG9jayk7DQpkaWZmIC0tZ2l0IGEvaXBj
-L2tkYnVzL3F1ZXVlLmMgYi9pcGMva2RidXMvcXVldWUuYw0KaW5kZXggMjVi
-YjNhZC4uOTg3MmZiNCAxMDA2NDQNCi0tLSBhL2lwYy9rZGJ1cy9xdWV1ZS5j
-DQorKysgYi9pcGMva2RidXMvcXVldWUuYw0KQEAgLTI4LDYgKzI4LDcgQEAN
-CiAjaW5jbHVkZSA8bGludXgvc2xhYi5oPg0KICNpbmNsdWRlIDxsaW51eC9z
-eXNjYWxscy5oPg0KICNpbmNsdWRlIDxsaW51eC91aW8uaD4NCisjaW5jbHVk
-ZSA8bGludXgvc2VjdXJpdHkuaD4NCiANCiAjaW5jbHVkZSAidXRpbC5oIg0K
-ICNpbmNsdWRlICJkb21haW4uaCINCkBAIC01MTQsMTIgKzUxNSwxNyBAQCBp
-bnQga2RidXNfcXVldWVfZW50cnlfaW5zdGFsbChzdHJ1Y3Qga2RidXNfcXVl
-dWVfZW50cnkgKmVudHJ5LA0KIA0KIAkJZm9yIChpID0gMDsgaSA8IHJlcy0+
-ZmRzX2NvdW50OyBpKyspIHsNCiAJCQlpZiAoaW5zdGFsbF9mZHMpIHsNCi0J
-CQkJZmRzW2ldID0gZ2V0X3VudXNlZF9mZF9mbGFncyhPX0NMT0VYRUMpOw0K
-LQkJCQlpZiAoZmRzW2ldID49IDApDQotCQkJCQlmZF9pbnN0YWxsKGZkc1tp
-XSwNCi0JCQkJCQkgICBnZXRfZmlsZShyZXMtPmZkc1tpXSkpOw0KLQkJCQll
-bHNlDQorCQkJCWlmIChzZWN1cml0eV9maWxlX3JlY2VpdmUocmVzLT5mZHNb
-aV0pKSB7DQorCQkJCQlmZHNbaV0gPSAtMTsNCiAJCQkJCWluY29tcGxldGVf
-ZmRzID0gdHJ1ZTsNCisJCQkJfSBlbHNlIHsNCisJCQkJCWZkc1tpXSA9IGdl
-dF91bnVzZWRfZmRfZmxhZ3MoT19DTE9FWEVDKTsNCisJCQkJCWlmIChmZHNb
-aV0gPj0gMCkNCisJCQkJCQlmZF9pbnN0YWxsKGZkc1tpXSwNCisJCQkJCQkJ
-Z2V0X2ZpbGUocmVzLT5mZHNbaV0pKTsNCisJCQkJCWVsc2UNCisJCQkJCQlp
-bmNvbXBsZXRlX2ZkcyA9IHRydWU7DQorCQkJCX0NCiAJCQl9IGVsc2Ugew0K
-IAkJCQlmZHNbaV0gPSAtMTsNCiAJCQl9DQpAQCAtNTU3LDEzICs1NjMsMTcg
-QEAgaW50IGtkYnVzX3F1ZXVlX2VudHJ5X2luc3RhbGwoc3RydWN0IGtkYnVz
-X3F1ZXVlX2VudHJ5ICplbnRyeSwNCiAJCW0uZmQgPSAtMTsNCiANCiAJCWlm
-IChpbnN0YWxsX2Zkcykgew0KLQkJCW0uZmQgPSBnZXRfdW51c2VkX2ZkX2Zs
-YWdzKE9fQ0xPRVhFQyk7DQotCQkJaWYgKG0uZmQgPCAwKSB7DQotCQkJCW0u
-ZmQgPSAtMTsNCisJCQlpZiAoc2VjdXJpdHlfZmlsZV9yZWNlaXZlKGQtPm1l
-bWZkLmZpbGUpKSB7DQogCQkJCWluY29tcGxldGVfZmRzID0gdHJ1ZTsNCiAJ
-CQl9IGVsc2Ugew0KLQkJCQlmZF9pbnN0YWxsKG0uZmQsDQotCQkJCQkgICBn
-ZXRfZmlsZShkLT5tZW1mZC5maWxlKSk7DQorCQkJCW0uZmQgPSBnZXRfdW51
-c2VkX2ZkX2ZsYWdzKE9fQ0xPRVhFQyk7DQorCQkJCWlmIChtLmZkIDwgMCkg
-ew0KKwkJCQkJbS5mZCA9IC0xOw0KKwkJCQkJaW5jb21wbGV0ZV9mZHMgPSB0
-cnVlOw0KKwkJCQl9IGVsc2Ugew0KKwkJCQkJZmRfaW5zdGFsbChtLmZkLA0K
-KwkJCQkJCWdldF9maWxlKGQtPm1lbWZkLmZpbGUpKTsNCisJCQkJfQ0KIAkJ
-CX0NCiAJCX0NCiANCi0tIA0KMS45LjENCg0K
+One small suggestion, is it better like this:
+return configfs_register_subsystem(&stp_policy_subsys);
+As such, we don't need the local variable "err" any more.
 
---8323329-1448733694-1436357538=:12441--
+> +}
+> +
+> +void __exit stp_configfs_exit(void)
+> +{
+> +       configfs_unregister_subsystem(&stp_policy_subsys);
+> +}
+> diff --git a/drivers/hwtracing/stm/stm.h b/drivers/hwtracing/stm/stm.h
+> new file mode 100644
+> index 0000000000..cf33bf976a
+> --- /dev/null
+> +++ b/drivers/hwtracing/stm/stm.h
+> @@ -0,0 +1,87 @@
+> +/*
+> + * System Trace Module (STM) infrastructure
+> + * Copyright (c) 2014, Intel Corporation.
+> + *
+> + * This program is free software; you can redistribute it and/or modify it
+> + * under the terms and conditions of the GNU General Public License,
+> + * version 2, as published by the Free Software Foundation.
+> + *
+> + * This program is distributed in the hope it will be useful, but WITHOUT
+> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+> + * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+> + * more details.
+> + *
+> + * STM class implements generic infrastructure for  System Trace Module devices
+> + * as defined in MIPI STPv2 specification.
+> + */
+> +
+> +#ifndef _STM_STM_H_
+> +#define _STM_STM_H_
+> +
+> +struct stp_policy;
+> +struct stp_policy_node;
+> +
+> +struct stp_policy_node *
+> +stp_policy_node_lookup(struct stm_device *stm, char *s);
+> +void stp_policy_node_put(struct stp_policy_node *policy_node);
+> +void stp_policy_unbind(struct stp_policy *policy);
+> +
+> +void stp_policy_node_get_ranges(struct stp_policy_node *policy_node,
+> +                               unsigned int *mstart, unsigned int *mend,
+> +                               unsigned int *cstart, unsigned int *cend);
+> +int stp_configfs_init(void);
+> +void stp_configfs_exit(void);
+> +
+> +struct stp_master {
+> +       unsigned int    nr_free;
+> +       unsigned long   chan_map[0];
+> +};
+> +
+> +struct stm_device {
+> +       struct device           dev;
+> +       struct module           *owner;
+> +       struct stp_policy       *policy;
+> +       struct mutex            policy_mutex;
+> +       int                     major;
+> +       unsigned int            sw_nmasters;
+> +       struct stm_data         *data;
+> +       spinlock_t              link_lock;
+> +       struct list_head        link_list;
+> +       /* master allocation */
+> +       spinlock_t              mc_lock;
+> +       struct stp_master       *masters[0];
+> +};
+> +
+> +#define to_stm_device(_d)                              \
+> +       container_of((_d), struct stm_device, dev)
+> +
+> +struct stm_output {
+> +       unsigned int            master;
+> +       unsigned int            channel;
+> +       unsigned int            nr_chans;
+> +};
+> +
+> +struct stm_file {
+> +       struct stm_device       *stm;
+> +       struct stp_policy_node  *policy_node;
+> +       struct stm_output       output;
+> +};
+> +
+> +struct stm_device *stm_find_device(const char *name);
+> +void stm_put_device(struct stm_device *stm);
+> +
+> +struct stm_source_device {
+> +       struct device           dev;
+> +       struct stm_source_data  *data;
+> +       spinlock_t              link_lock;
+> +       struct stm_device       *link;
+> +       struct list_head        link_entry;
+> +       /* one output per stm_source device */
+> +       struct stp_policy_node  *policy_node;
+> +       struct stm_output       output;
+> +};
+> +
+> +#define to_stm_source_device(_d)                               \
+> +       container_of((_d), struct stm_source_device, dev)
+> +
+> +#endif /* _STM_STM_H_ */
+> diff --git a/include/linux/stm.h b/include/linux/stm.h
+> new file mode 100644
+> index 0000000000..9d0083d364
+> --- /dev/null
+> +++ b/include/linux/stm.h
+> @@ -0,0 +1,126 @@
+> +/*
+> + * System Trace Module (STM) infrastructure apis
+> + * Copyright (C) 2014 Intel Corporation.
+> + *
+> + * This program is free software; you can redistribute it and/or modify it
+> + * under the terms and conditions of the GNU General Public License,
+> + * version 2, as published by the Free Software Foundation.
+> + *
+> + * This program is distributed in the hope it will be useful, but WITHOUT
+> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+> + * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+> + * more details.
+> + */
+> +
+> +#ifndef _STM_H_
+> +#define _STM_H_
+> +
+> +#include <linux/device.h>
+> +
+> +/**
+> + * enum stp_packet_type - STP packets that an STM driver sends
+> + */
+> +enum stp_packet_type {
+> +       STP_PACKET_DATA = 0,
+> +       STP_PACKET_FLAG,
+> +       STP_PACKET_USER,
+> +       STP_PACKET_MERR,
+> +       STP_PACKET_GERR,
+> +       STP_PACKET_TRIG,
+> +       STP_PACKET_XSYNC,
+> +};
+> +
+> +/**
+> + * enum stp_packet_flags - STP packet modifiers
+> + */
+> +enum stp_packet_flags {
+> +       STP_PACKET_MARKED       = 0x1,
+> +       STP_PACKET_TIMESTAMPED  = 0x2,
+> +};
+> +
+> +struct stp_policy;
+> +
+> +struct stm_device;
+> +
+> +/**
+> + * struct stm_data - STM device description and callbacks
+> + * @name:              device name
+> + * @stm:               internal structure, only used by stm class code
+> + * @sw_start:          first STP master available to software
+> + * @sw_end:            last STP master available to software
+> + * @sw_nchannels:      number of STP channels per master
+> + * @sw_mmiosz:         size of one channel's IO space, for mmap, optional
+> + * @packet:            callback that sends an STP packet
+> + * @mmio_addr:         mmap callback, optional
+> + * @link:              called when a new stm_source gets linked to us, optional
+> + * @unlink:            likewise for unlinking, again optional
+> + * @set_options:       set device-specific options on a channel
+> + *
+> + * Fill out this structure before calling stm_register_device() to create
+> + * an STM device and stm_unregister_device() to destroy it. It will also be
+> + * passed back to @packet(), @mmio_addr(), @link(), @unlink() and @set_options()
+> + * callbacks.
+> + *
+> + * Normally, an STM device will have a range of masters available to software
+> + * and the rest being statically assigned to various hardware trace sources.
+> + * The former is defined by the the range [@sw_start..@sw_end] of the device
+> + * description. That is, the lowest master that can be allocated to software
+> + * writers is @sw_start and data from this writer will appear is @sw_start
+> + * master in the STP stream.
+> + */
+> +struct stm_data {
+> +       const char              *name;
+> +       struct stm_device       *stm;
+> +       unsigned int            sw_start;
+> +       unsigned int            sw_end;
+> +       unsigned int            sw_nchannels;
+> +       unsigned int            sw_mmiosz;
+> +       ssize_t                 (*packet)(struct stm_data *, unsigned int,
+> +                                         unsigned int, unsigned int,
+> +                                         unsigned int, unsigned int,
+> +                                         const unsigned char *);
+> +       phys_addr_t             (*mmio_addr)(struct stm_data *, unsigned int,
+> +                                            unsigned int, unsigned int);
+> +       int                     (*link)(struct stm_data *, unsigned int,
+> +                                       unsigned int);
+> +       void                    (*unlink)(struct stm_data *, unsigned int,
+> +                                         unsigned int);
+> +       long                    (*set_options)(struct stm_data *, unsigned int,
+> +                                              unsigned int, unsigned int,
+> +                                              unsigned long);
+> +};
+> +
+> +int stm_register_device(struct device *parent, struct stm_data *stm_data,
+> +                       struct module *owner);
+> +void stm_unregister_device(struct stm_data *stm_data);
+> +
+> +struct stm_source_device;
+> +
+> +/**
+> + * struct stm_source_data - STM source device description and callbacks
+> + * @name:      device name, will be used for policy lookup
+> + * @src:       internal structure, only used by stm class code
+> + * @nr_chans:  number of channels to allocate
+> + * @link:      called when this source gets linked to an STM device
+> + * @unlink:    called when this source is about to get unlinked from its STM
+> + *
+> + * Fill in this structure before calling stm_source_register_device() to
+> + * register a source device. Also pass it to unregister and write calls.
+> + */
+> +struct stm_source_data {
+> +       const char              *name;
+> +       struct stm_source_device *src;
+> +       unsigned int            percpu;
+> +       unsigned int            nr_chans;
+> +       int                     (*link)(struct stm_source_data *data);
+> +       void                    (*unlink)(struct stm_source_data *data);
+> +};
+> +
+> +int stm_source_register_device(struct device *parent,
+> +                              struct stm_source_data *data);
+> +void stm_source_unregister_device(struct stm_source_data *data);
+> +
+> +int stm_source_write(struct stm_source_data *data, unsigned int chan,
+> +                    const char *buf, size_t count);
+> +
+> +#endif /* _STM_H_ */
+> diff --git a/include/uapi/linux/stm.h b/include/uapi/linux/stm.h
+> new file mode 100644
+> index 0000000000..626a8d3f63
+> --- /dev/null
+> +++ b/include/uapi/linux/stm.h
+> @@ -0,0 +1,50 @@
+> +/*
+> + * System Trace Module (STM) userspace interfaces
+> + * Copyright (c) 2014, Intel Corporation.
+> + *
+> + * This program is free software; you can redistribute it and/or modify it
+> + * under the terms and conditions of the GNU General Public License,
+> + * version 2, as published by the Free Software Foundation.
+> + *
+> + * This program is distributed in the hope it will be useful, but WITHOUT
+> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+> + * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+> + * more details.
+> + *
+> + * STM class implements generic infrastructure for  System Trace Module devices
+> + * as defined in MIPI STPv2 specification.
+> + */
+> +
+> +#ifndef _UAPI_LINUX_STM_H
+> +#define _UAPI_LINUX_STM_H
+> +
+> +#include <linux/types.h>
+> +
+> +/**
+> + * struct stp_policy_id - identification for the STP policy
+> + * @size:      size of the structure including real id[] length
+> + * @master:    assigned master
+> + * @channel:   first assigned channel
+> + * @width:     number of requested channels
+> + * @id:                identification string
+> + *
+> + * User must calculate the total size of the structure and put it into
+> + * @size field, fill out the @id and desired @width. In return, kernel
+> + * fills out @master, @channel and @width.
+> + */
+> +struct stp_policy_id {
+> +       __u32           size;
+> +       __u16           master;
+> +       __u16           channel;
+> +       __u16           width;
+> +       /* padding */
+> +       __u16           __reserved_0;
+> +       __u32           __reserved_1;
+> +       char            id[0];
+> +};
+> +
+> +#define STP_POLICY_ID_SET      _IOWR('%', 0, struct stp_policy_id)
+> +#define STP_POLICY_ID_GET      _IOR('%', 1, struct stp_policy_id)
+> +#define STP_SET_OPTIONS                _IOW('%', 2, __u64)
+> +
+> +#endif /* _UAPI_LINUX_STM_H */
+> --
+> 2.1.4
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
