@@ -1,56 +1,68 @@
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Subject: Re: [PATCH V3 2/5] mm: mlock: Add new mlock, munlock, and munlockall
- system calls
-Date: Wed, 8 Jul 2015 09:02:25 +0200
-Message-ID: <CAMuHMdUS72nYDo=chtcZMv-ZNVU0RhxvVLvMYvSFLtRk_wXrgw@mail.gmail.com>
-References: <1436288623-13007-1-git-send-email-emunson@akamai.com>
-	<1436288623-13007-3-git-send-email-emunson@akamai.com>
-	<20150708064607.GB7079@osiris>
+From: Marcin Niesluchowski <m.niesluchow@samsung.com>
+Subject: Re: [RFC 0/8] Additional kmsg devices
+Date: Wed, 08 Jul 2015 10:30:03 +0200
+Message-ID: <559CDF8B.2090000@samsung.com>
+References: <1435920595-30879-1-git-send-email-m.niesluchow@samsung.com>
+ <CAFLxGvxvaePEyCpLrB1cjNn4bvnCwt-_HE3zcT-6diMYNOraBw@mail.gmail.com>
+ <5596A58F.7090208@samsung.com> <5596A80D.5040109@nod.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-ia64-owner@vger.kernel.org>
-In-Reply-To: <20150708064607.GB7079@osiris>
-Sender: linux-ia64-owner@vger.kernel.org
-To: Heiko Carstens <heiko.carstens@de.ibm.com>
-Cc: Eric B Munson <emunson@akamai.com>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, alpha <linux-alpha@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "adi-buildroot-devel@lists.sourceforge.net" <adi-buildroot-devel@lists.sourceforge.net>, Cris <linux-cris-kernel@axis.com>, "linux-ia64@vger.kernel.org" <linux-ia64@vger.kernel.org>, linux-m68k <linux-m68k@lists.linux-m68k.org>, Linux MIPS Mailing List <linux-mips@linux-mips.org>, "moderated list:PANASONIC MN10300..." <linux-am33-list@redhat.com>, Parisc List <linux-parisc@vger.kernel.org>, "linuxppc-dev@lists.ozlabs.org" <linuxppc-dev@lists.ozlabs.org>, linux-s390 <linux-s390@vger.kernel.org>, Linux-sh list <linux-sh@vger.kernel.org>, sparclinux
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-reply-to: <5596A80D.5040109@nod.at>
+Sender: linux-doc-owner@vger.kernel.org
+To: Richard Weinberger <richard@nod.at>
+Cc: "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, Jonathan Corbet <corbet@lwn.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Petr Mladek <pmladek@suse.cz>, Tejun Heo <tj@kernel.org>, Kay Sievers <kay@vrfy.org>, Andrew Morton <akpm@linux-foundation.org>, Joe Perches <joe@perches.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 8, 2015 at 8:46 AM, Heiko Carstens
-<heiko.carstens@de.ibm.com> wrote:
->> diff --git a/arch/s390/kernel/syscalls.S b/arch/s390/kernel/syscalls.S
->> index 1acad02..f6d81d6 100644
->> --- a/arch/s390/kernel/syscalls.S
->> +++ b/arch/s390/kernel/syscalls.S
->> @@ -363,3 +363,6 @@ SYSCALL(sys_bpf,compat_sys_bpf)
->>  SYSCALL(sys_s390_pci_mmio_write,compat_sys_s390_pci_mmio_write)
->>  SYSCALL(sys_s390_pci_mmio_read,compat_sys_s390_pci_mmio_read)
->>  SYSCALL(sys_execveat,compat_sys_execveat)
->> +SYSCALL(sys_mlock2,compat_sys_mlock2)                        /* 355 */
->> +SYSCALL(sys_munlock2,compat_sys_munlock2)
->> +SYSCALL(sys_munlockall2,compat_sys_munlockall2)
->
-> FWIW, you would also need to add matching lines to the two files
->
-> arch/s390/include/uapi/asm/unistd.h
-> arch/s390/kernel/compat_wrapper.c
->
-> so that the system call would be wired up on s390.
+On 07/03/2015 05:19 PM, Richard Weinberger wrote:
+> Am 03.07.2015 um 17:09 schrieb Marcin Niesluchowski:
+>>> Why can't you just make sure that your target has a working
+>>> syslogd/rsyslogd/journald/whatever?
+>>> All can be done perfectly fine in userspace.
+>> * Message credibility: Lets imagine simple service which collects logs via unix sockets. There is no reliable way of identifying logging process. getsockopt() with SO_PEERCRED
+>> option would give pid form cred structure, but according to manual it may not be of actual logging process:
+>>    "The returned credentials are those that were in effect at the time of the call to connect(2) or socketpair(2)."
+>>        - select(7)
+> This interface can be improved. Should be easy.
 
-Similar comment for m68k:
+What kind of improvement do you have in mind?
 
-arch/m68k/include/asm/unistd.h
-arch/m68k/include/uapi/asm/unistd.h
+>> * Early userspace tool: Helpful especially for embeded systems.
+> This is what we do already. In early user space spawn your logger as early as possible.
+> "embedded Linux is special" is not an excuse btw. ;)
 
-I think you best look at the last commits that added system calls, for all
-architectures, to make sure you don't do partial updates.
+I would say "embedded Linux is real use case"instead of "special". What 
+I meant that it does only require one ioctl and no additional resources 
+are needed.
 
-Gr{oetje,eeting}s,
+>> * Reliability: Userspace service may be killed due to out of memory (OOM). This is kernel cyclic buffer, which size can be specified differently according to situation.
+> This is what we have /proc/<pid>/oom_adj and /proc/<pid>/oom_score_adj for.
 
-                        Geert
+You are right, but additional resources and complexity is required.
 
---
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
+>> * Possibility of using it with pstore: This code could be extended to log additional buffers to persistent storage same way main (kmsg) log buffer is.
+> pstorefs and friends?
 
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-                                -- Linus Torvalds
+pstore filesystem is used to access already stored kernel data (e.g. 
+kmsg buffer). But does not provide mechanism of storing userspace memory.
+
+>> * Use case of attaching file descriptor to stdout/stderr: Especially in early userspace.
+> You can redirect these also in userspace.
+
+True for that, but as I said in my first argument there is no 
+possibility of logging process identification in case of sockets.
+
+
+>> * Performance: Those services mentioned by You are weeker solutions in that case. Especially systemd-journald is much too heavy soulution.
+> Do you have numbers? I agree systemd-journald is heavy wight. But it is by far not the only logging daemon we have...
+
+I compared write operations on kmsg buffervia write/read operations on 
+socketon SOCK_STREAM socket and sendmsg/recv on SOCK_DGRAM socket. 
+Compared toSOCK_STREAM socket it was about 39% slowerbut compared 
+toSOCK_DGRAM socket it was about 326% faster.syslogfor example uses 
+SOCK_DGRAM sockets.In all cases there were 2^20 (1048576) write/sendmsg 
+operations of 2^8 (256) bytes.
+
+Best Regards,
+Marcin Niesluchowski
