@@ -1,125 +1,128 @@
 From: Stephen Smalley <sds@tycho.nsa.gov>
-Subject: Re: [RFC 5/8] kdbus: use LSM hooks in kdbus code
-Date: Wed, 08 Jul 2015 09:37:47 -0400
-Message-ID: <559D27AB.4010402@tycho.nsa.gov>
-References: <1436351110-5902-1-git-send-email-p.osmialowsk@samsung.com> <1436351110-5902-6-git-send-email-p.osmialowsk@samsung.com>
+Subject: Re: [RFC 4/8] lsm: smack: smack callbacks for kdbus security hooks
+Date: Wed, 08 Jul 2015 09:42:54 -0400
+Message-ID: <559D28DE.4070406@tycho.nsa.gov>
+References: <1436351110-5902-1-git-send-email-p.osmialowsk@samsung.com> <1436351110-5902-5-git-send-email-p.osmialowsk@samsung.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1436351110-5902-6-git-send-email-p.osmialowsk@samsung.com>
+In-Reply-To: <1436351110-5902-5-git-send-email-p.osmialowsk@samsung.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Paul Osmialowski <p.osmialowsk@samsung.com>, Paul Moore <pmoore@redhat.com>, James Morris <james.l.morris@oracle.com>, Casey Schaufler <casey@schaufler-ca.com>, "Serge E. Hallyn" <serge@hallyn.com>, Kees Cook <keescook@chromium.org>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Neil Brown <neilb@suse.de>, Mark Rustad <mark.d.rustad@intel.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, David Herrmann <dh.herrmann@googlemail.com>, Djalal Harouni <tixxdz@opendz.org>, Shuah Khan <shuahkh@osg.samsung.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 Cc: Karol Lewandowski <k.lewandowsk@samsung.com>, Lukasz Skalski <l.skalski@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
 On 07/08/2015 06:25 AM, Paul Osmialowski wrote:
+> This adds implementation of three smack callbacks sitting behind kdbus
+> security hooks as proposed by Karol Lewandowski.
+> 
 > Originates from:
 > 
-> https://github.com/lmctl/kdbus.git (branch: kdbus-lsm-v4.for-systemd-v212)
-> commit: aa0885489d19be92fa41c6f0a71df28763228a40
+> git://git.infradead.org/users/pcmoore/selinux (branch: working-kdbus)
+> commit: fc3505d058c001fe72a6f66b833e0be5b2d118f3
+> 
+> https://github.com/lmctl/linux.git (branch: kdbus-lsm-v4.for-systemd-v212)
+> commit: 103c26fd27d1ec8c32d85dd3d85681f936ac66fb
 > 
 > Signed-off-by: Karol Lewandowski <k.lewandowsk@samsung.com>
 > Signed-off-by: Paul Osmialowski <p.osmialowsk@samsung.com>
 > ---
->  ipc/kdbus/bus.c        | 12 ++++++++++-
->  ipc/kdbus/bus.h        |  3 +++
->  ipc/kdbus/connection.c | 54 ++++++++++++++++++++++++++++++++++++++++++++++++++
->  ipc/kdbus/connection.h |  4 ++++
->  ipc/kdbus/domain.c     |  9 ++++++++-
->  ipc/kdbus/domain.h     |  2 ++
->  ipc/kdbus/endpoint.c   | 11 ++++++++++
->  ipc/kdbus/names.c      | 11 ++++++++++
->  ipc/kdbus/queue.c      | 30 ++++++++++++++++++----------
->  9 files changed, 124 insertions(+), 12 deletions(-)
+>  security/smack/smack_lsm.c | 68 ++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 68 insertions(+)
 > 
->
-
-> diff --git a/ipc/kdbus/connection.c b/ipc/kdbus/connection.c
-> index 9993753..b85cdc7 100644
-> --- a/ipc/kdbus/connection.c
-> +++ b/ipc/kdbus/connection.c
-> @@ -31,6 +31,7 @@
->  #include <linux/slab.h>
->  #include <linux/syscalls.h>
->  #include <linux/uio.h>
-> +#include <linux/security.h>
+> diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
+> index a143328..033b756 100644
+> --- a/security/smack/smack_lsm.c
+> +++ b/security/smack/smack_lsm.c
+> @@ -41,6 +41,7 @@
+>  #include <linux/msg.h>
+>  #include <linux/shm.h>
+>  #include <linux/binfmts.h>
+> +#include <kdbus/connection.h>
+>  #include "smack.h"
 >  
->  #include "bus.h"
->  #include "connection.h"
-> @@ -73,6 +74,8 @@ static struct kdbus_conn *kdbus_conn_new(struct kdbus_ep *ep, bool privileged,
->  	bool is_activator;
->  	bool is_monitor;
->  	struct kvec kvec;
-> +	u32 sid, len;
-> +	char *label;
->  	int ret;
+>  #define TRANS_TRUE	"TRUE"
+> @@ -3336,6 +3337,69 @@ static int smack_setprocattr(struct task_struct *p, char *name,
+>  }
 >  
->  	struct {
-> @@ -222,6 +225,14 @@ static struct kdbus_conn *kdbus_conn_new(struct kdbus_ep *ep, bool privileged,
->  		}
->  	}
->  
-> +	security_task_getsecid(current, &sid);
-> +	security_secid_to_secctx(sid, &label, &len);
-> +	ret = security_kdbus_connect(conn, label, len);
-> +	if (ret) {
-> +		ret = -EPERM;
-> +		goto exit_unref;
-> +	}
-
-This seems convoluted and expensive.  If you always want the label of
-the current task here, then why not just have security_kdbus_connect()
-internally extract the label of the current task?
-
-> @@ -1107,6 +1119,12 @@ static int kdbus_conn_reply(struct kdbus_conn *src, struct kdbus_kmsg *kmsg)
->  	if (ret < 0)
->  		goto exit;
->  
-> +	ret = security_kdbus_talk(src, dst);
-> +	if (ret) {
-> +		ret = -EPERM;
-> +		goto exit;
-> +	}
-
-Where does kdbus apply its uid-based or other restrictions on
-connections?  Why do we need to insert separate hooks into each of these
-functions?  Is there no central chokepoint already for permission
-checking that we can hook?
-
-> diff --git a/ipc/kdbus/connection.h b/ipc/kdbus/connection.h
-> index d1ffe90..1f91d39 100644
-> --- a/ipc/kdbus/connection.h
-> +++ b/ipc/kdbus/connection.h
-> @@ -19,6 +19,7 @@
->  #include <linux/kref.h>
->  #include <linux/lockdep.h>
->  #include <linux/path.h>
-> +#include <uapi/linux/kdbus.h>
->  
->  #include "limits.h"
->  #include "metadata.h"
-> @@ -73,6 +74,7 @@ struct kdbus_kmsg;
->   * @names_queue_list:	Well-known names this connection waits for
->   * @privileged:		Whether this connection is privileged on the bus
->   * @faked_meta:		Whether the metadata was faked on HELLO
-> + * @security:		LSM security blob
->   */
->  struct kdbus_conn {
->  	struct kref kref;
-> @@ -113,6 +115,8 @@ struct kdbus_conn {
->  
->  	bool privileged:1;
->  	bool faked_meta:1;
+>  /**
+> + * smack_kdbus_connect - Set the security blob for a KDBus connection
+> + * @conn: the connection
+> + * @secctx: smack label
+> + * @seclen: smack label length
+> + *
+> + * Returns 0
+> + */
+> +static int smack_kdbus_connect(struct kdbus_conn *conn,
+> +			       const char *secctx, u32 seclen)
+> +{
+> +	struct smack_known *skp;
 > +
-> +	void *security;
+> +	if (secctx && seclen > 0)
+> +		skp = smk_import_entry(secctx, seclen);
+> +	else
+> +		skp = smk_of_current();
+> +	conn->security = skp;
+> +
+> +	return 0;
+> +}
+> +
+> +/**
+> + * smack_kdbus_conn_free - Clear the security blob for a KDBus connection
+> + * @conn: the connection
+> + *
+> + * Clears the blob pointer
+> + */
+> +static void smack_kdbus_conn_free(struct kdbus_conn *conn)
+> +{
+> +	conn->security = NULL;
+> +}
+> +
+> +/**
+> + * smack_kdbus_talk - Smack access on KDBus
+> + * @src: source kdbus connection
+> + * @dst: destination kdbus connection
+> + *
+> + * Return 0 if a subject with the smack of sock could access
+> + * an object with the smack of other, otherwise an error code
+> + */
+> +static int smack_kdbus_talk(const struct kdbus_conn *src,
+> +			    const struct kdbus_conn *dst)
+> +{
+> +	struct smk_audit_info ad;
+> +	struct smack_known *sskp = src->security;
+> +	struct smack_known *dskp = dst->security;
+> +	int ret;
+> +
+> +	BUG_ON(sskp == NULL);
+> +	BUG_ON(dskp == NULL);
+> +
+> +	if (smack_privileged(CAP_MAC_OVERRIDE))
+> +		return 0;
+> +
+> +	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_NONE);
+> +
+> +	ret = smk_access(sskp, dskp, MAY_WRITE, &ad);
+> +	if (ret)
+> +		return ret;
+> +	return 0;
+> +}
+> +
+> +/**
+>   * smack_unix_stream_connect - Smack access on UDS
+>   * @sock: one sock
+>   * @other: the other sock
+> @@ -4393,6 +4457,10 @@ struct security_hook_list smack_hooks[] = {
+>  	LSM_HOOK_INIT(inode_notifysecctx, smack_inode_notifysecctx),
+>  	LSM_HOOK_INIT(inode_setsecctx, smack_inode_setsecctx),
+>  	LSM_HOOK_INIT(inode_getsecctx, smack_inode_getsecctx),
+> +
+> +	LSM_HOOK_INIT(kdbus_connect, smack_kdbus_connect),
+> +	LSM_HOOK_INIT(kdbus_conn_free, smack_kdbus_conn_free),
+> +	LSM_HOOK_INIT(kdbus_talk, smack_kdbus_talk),
 >  };
 
-Unless I missed it, you may have missed the most important thing of all:
- controlling kdbus's notion of "privileged".  kdbus sets privileged to
-true if the process has CAP_IPC_OWNER or the process euid matches the
-uid of the bus creator, and then it allows those processes to do many
-dangerous things, including monitoring all traffic, impersonating
-credentials, pids, or seclabel, etc.
-
-I don't believe we should ever permit impersonating seclabel information.
+If Smack only truly needs 3 hooks, then it begs the question of why
+there are so many other hooks defined.  Are the other hooks just to
+support finer-grained distinctions, or is Smack's coverage incomplete?
