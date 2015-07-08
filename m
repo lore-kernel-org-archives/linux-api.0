@@ -1,31 +1,46 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH V3 0/5] Allow user to request memory to be locked on
- page fault
-Date: Wed, 8 Jul 2015 10:00:08 -0700
-Message-ID: <20150708100008.e8a000ec.akpm@linux-foundation.org>
-References: <1436288623-13007-1-git-send-email-emunson@akamai.com>
-	<20150707141613.f945c98279dcb71c9743d5f2@linux-foundation.org>
-	<20150708132302.GB4669@akamai.com>
+From: Daniel Mack <daniel@zonque.org>
+Subject: Re: [RFC 2/8] lsm: smack: Make ipc/kdbus includes visible so smack
+ callbacks could see them
+Date: Wed, 8 Jul 2015 12:43:53 -0400
+Message-ID: <559D5349.50409@zonque.org>
+References: <1436351110-5902-1-git-send-email-p.osmialowsk@samsung.com>
+ <1436351110-5902-3-git-send-email-p.osmialowsk@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20150708132302.GB4669@akamai.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Eric B Munson <emunson@akamai.com>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, Michal Hocko <mhocko@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, Vlastimil Babka <vbabka@suse.cz>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1436351110-5902-3-git-send-email-p.osmialowsk@samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Paul Osmialowski <p.osmialowsk@samsung.com>, Paul Moore <pmoore@redhat.com>, James Morris <james.l.morris@oracle.com>, Casey Schaufler <casey@schaufler-ca.com>, "Serge E. Hallyn" <serge@hallyn.com>, Kees Cook <keescook@chromium.org>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Stephen Smalley <sds@tycho.nsa.gov>, Neil Brown <neilb@suse.de>, Mark Rustad <mark.d.rustad@intel.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, David Herrmann <dh.herrmann@googlemail.com>, Djalal Harouni <tixxdz@opendz.org>, Shuah Khan <shuahkh@osg.samsung.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Karol Lewandowski <k.lewandowsk@samsung.com>, Lukasz Skalski <l.skalski@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 8 Jul 2015 09:23:02 -0400 Eric B Munson <emunson@akamai.com> wrote:
-
-> > I don't know whether these syscalls should be documented via new
-> > manpages, or if we should instead add them to the existing
-> > mlock/munlock/mlockall manpages.  Michael, could you please advise?
-> > 
+On 07/08/2015 06:25 AM, Paul Osmialowski wrote:
+> Signed-off-by: Paul Osmialowski <p.osmialowsk@samsung.com>
+> ---
+>  security/smack/Makefile | 2 ++
+>  1 file changed, 2 insertions(+)
 > 
-> Thanks for adding the series.  I owe you several updates (getting the
-> new syscall right for all architectures and a set of tests for the new
-> syscalls).  Would you prefer a new pair of patches or I update this set?
+> diff --git a/security/smack/Makefile b/security/smack/Makefile
+> index ee2ebd5..bd6927c 100644
+> --- a/security/smack/Makefile
+> +++ b/security/smack/Makefile
+> @@ -6,3 +6,5 @@ obj-$(CONFIG_SECURITY_SMACK) := smack.o
+>  
+>  smack-y := smack_lsm.o smack_access.o smackfs.o
+>  smack-$(CONFIG_SECURITY_SMACK_NETFILTER) += smack_netfilter.o
+> +
+> +ccflags-y += -Iipc
+> 
 
-It doesn't matter much.  I guess a full update will be more convenient
-at your end.
+I would really like to avoid exposing the internal structures of kdbus
+to LSM modules. This is going to get messy if any internals change in
+the future.
+
+The callbacks for smack currently only use the passed structure to
+access the opaque 'security' pointer. Can't you just pass that directly
+(as void**), along with other parameters the LSMs needs to know about?
+
+
+Thanks,
+Daniel
