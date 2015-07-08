@@ -1,8 +1,7 @@
 From: Paul Osmialowski <p.osmialowsk@samsung.com>
-Subject: [RFC 1/8] lsm: make security_file_receive available for external
- modules
-Date: Wed, 08 Jul 2015 12:25:03 +0200
-Message-ID: <1436351110-5902-2-git-send-email-p.osmialowsk@samsung.com>
+Subject: [RFC 8/8] kdbus: Ability to run kdbus test by executable binary name
+Date: Wed, 08 Jul 2015 12:25:10 +0200
+Message-ID: <1436351110-5902-9-git-send-email-p.osmialowsk@samsung.com>
 References: <1436351110-5902-1-git-send-email-p.osmialowsk@samsung.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-reply-to: <1436351110-5902-1-git-send-email-p.osmialowsk@samsung.com>
@@ -11,27 +10,48 @@ To: Paul Moore <pmoore@redhat.com>, James Morris <james.l.morris@oracle.com>, Ca
 Cc: Karol Lewandowski <k.lewandowsk@samsung.com>, Paul Osmialowski <p.osmialowsk@samsung.com>, Lukasz Skalski <l.skalski@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Karol Lewandowski <k.lewandowsk@samsung.com>
+With this applied, you can do following:
 
-This is required for using filedesc related LSM hooks in kdbus code
-if it is built as a module.
+$ cp kdbus-test daemon
+$ cp kdbus-test send
 
-Signed-off-by: Karol Lewandowski <k.lewandowsk@samsung.com>
+Then run 'daemon' in one shell session:
+
+$ ./daemon --bus test
+
+...and 'send' in another:
+
+$ ./send --bus test
+
+Useful for testing features introduced by previous patches.
+
+Signed-off-by: Paul Osmialowski <p.osmialowsk@samsung.com>
 ---
- security/security.c | 1 +
- 1 file changed, 1 insertion(+)
+ tools/testing/selftests/kdbus/kdbus-test.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/security/security.c b/security/security.c
-index 595fffa..b1e935b 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -837,6 +837,7 @@ int security_file_receive(struct file *file)
- {
- 	return call_int_hook(file_receive, 0, file);
- }
-+EXPORT_SYMBOL(security_file_receive);
+diff --git a/tools/testing/selftests/kdbus/kdbus-test.c b/tools/testing/selftests/kdbus/kdbus-test.c
+index 5a296da..9efbc5f 100644
+--- a/tools/testing/selftests/kdbus/kdbus-test.c
++++ b/tools/testing/selftests/kdbus/kdbus-test.c
+@@ -829,6 +829,7 @@ int main(int argc, char *argv[])
+ 		ARG_UIDMAP,
+ 		ARG_GIDMAP,
+ 	};
++	char *exec = basename(argv[0]);
  
- int security_file_open(struct file *file, const struct cred *cred)
- {
+ 	kdbus_args = malloc(sizeof(*kdbus_args));
+ 	if (!kdbus_args) {
+@@ -858,6 +859,10 @@ int main(int argc, char *argv[])
+ 
+ 	srand(time(NULL));
+ 
++	if (strcmp(exec, "kdbus-test") != 0) {
++		kdbus_args->test = exec;
++	}
++
+ 	while ((t = getopt_long(argc, argv, "hxfm:r:t:b:w:a", options, NULL)) >= 0) {
+ 		switch (t) {
+ 		case 'x':
 -- 
 1.9.1
