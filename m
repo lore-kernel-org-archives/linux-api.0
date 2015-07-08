@@ -1,68 +1,88 @@
-From: Marcin Niesluchowski <m.niesluchow@samsung.com>
-Subject: Re: [RFC 0/8] Additional kmsg devices
-Date: Wed, 08 Jul 2015 10:30:03 +0200
-Message-ID: <559CDF8B.2090000@samsung.com>
-References: <1435920595-30879-1-git-send-email-m.niesluchow@samsung.com>
- <CAFLxGvxvaePEyCpLrB1cjNn4bvnCwt-_HE3zcT-6diMYNOraBw@mail.gmail.com>
- <5596A58F.7090208@samsung.com> <5596A80D.5040109@nod.at>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-reply-to: <5596A80D.5040109@nod.at>
-Sender: linux-doc-owner@vger.kernel.org
-To: Richard Weinberger <richard@nod.at>
-Cc: "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, Jonathan Corbet <corbet@lwn.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Petr Mladek <pmladek@suse.cz>, Tejun Heo <tj@kernel.org>, Kay Sievers <kay@vrfy.org>, Andrew Morton <akpm@linux-foundation.org>, Joe Perches <joe@perches.com>, Karol Lewandowski <k.lewandowsk@samsung.com>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>
+From: Paul Osmialowski <p.osmialowsk@samsung.com>
+Subject: [RFC 0/8] Introduce LSM to KDBUS
+Date: Wed, 08 Jul 2015 12:25:02 +0200
+Message-ID: <1436351110-5902-1-git-send-email-p.osmialowsk@samsung.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Paul Moore <pmoore@redhat.com>, James Morris <james.l.morris@oracle.com>, Casey Schaufler <casey@schaufler-ca.com>, "Serge E. Hallyn" <serge@hallyn.com>, Kees Cook <keescook@chromium.org>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Stephen Smalley <sds@tycho.nsa.gov>, Neil Brown <neilb@suse.de>, Mark Rustad <mark.d.rustad@intel.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, David Herrmann <dh.herrmann@googlemail.com>, Djalal Harouni <tixxdz@opendz.org>, Shuah Khan <shuahkh@osg.samsung.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Karol Lewandowski <k.lewandowsk@samsung.com>, Paul Osmialowski <p.osmialowsk@samsung.com>, Lukasz Skalski <l.skalski@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On 07/03/2015 05:19 PM, Richard Weinberger wrote:
-> Am 03.07.2015 um 17:09 schrieb Marcin Niesluchowski:
->>> Why can't you just make sure that your target has a working
->>> syslogd/rsyslogd/journald/whatever?
->>> All can be done perfectly fine in userspace.
->> * Message credibility: Lets imagine simple service which collects logs via unix sockets. There is no reliable way of identifying logging process. getsockopt() with SO_PEERCRED
->> option would give pid form cred structure, but according to manual it may not be of actual logging process:
->>    "The returned credentials are those that were in effect at the time of the call to connect(2) or socketpair(2)."
->>        - select(7)
-> This interface can be improved. Should be easy.
+This patchset partially summarizes effects of collective work by
+Karol Lewandowski and Paul Moore towards introduction of LSM into KDBUS.
 
-What kind of improvement do you have in mind?
+These patches originate from following git repositories:
 
->> * Early userspace tool: Helpful especially for embeded systems.
-> This is what we do already. In early user space spawn your logger as early as possible.
-> "embedded Linux is special" is not an excuse btw. ;)
+git://git.infradead.org/users/pcmoore/selinux (branch: working-kdbus)
 
-I would say "embedded Linux is real use case"instead of "special". What 
-I meant that it does only require one ioctl and no additional resources 
-are needed.
+https://github.com/lmctl/linux.git (branch: kdbus-lsm-v4.for-systemd-v212)
 
->> * Reliability: Userspace service may be killed due to out of memory (OOM). This is kernel cyclic buffer, which size can be specified differently according to situation.
-> This is what we have /proc/<pid>/oom_adj and /proc/<pid>/oom_score_adj for.
+https://github.com/lmctl/kdbus.git (branch: kdbus-lsm-v4.for-systemd-v212)
 
-You are right, but additional resources and complexity is required.
+Since kdbus made its way to linux-next tree, I was kindly asked by
+Karol Lewandowski to fit his work into the current kdbus code existing
+there.
 
->> * Possibility of using it with pstore: This code could be extended to log additional buffers to persistent storage same way main (kmsg) log buffer is.
-> pstorefs and friends?
+As both kdbus and security related code changed a bit, so are my changes
+quite substantial in places.
 
-pstore filesystem is used to access already stored kernel data (e.g. 
-kmsg buffer). But does not provide mechanism of storing userspace memory.
+Note that SELinux kdbus access control patches are absent - only SMACK part
+of original work is included.
 
->> * Use case of attaching file descriptor to stdout/stderr: Especially in early userspace.
-> You can redirect these also in userspace.
+I've also made some changes to kdbus test suite. In order to see LSM hooks
+in action we need to be able to run tests from different executable
+binaries holding different security labels.
 
-True for that, but as I said in my first argument there is no 
-possibility of logging process identification in case of sockets.
+Therefore I added ability to select execution of particular test by
+executed binary name. This is essential for running newly added 'send' test
+which should communicate with 'daemon' test running in another process.
 
+Karol Lewandowski (1):
+  lsm: make security_file_receive available for external modules
 
->> * Performance: Those services mentioned by You are weeker solutions in that case. Especially systemd-journald is much too heavy soulution.
-> Do you have numbers? I agree systemd-journald is heavy wight. But it is by far not the only logging daemon we have...
+Paul Osmialowski (7):
+  lsm: smack: Make ipc/kdbus includes visible so smack callbacks could
+    see them
+  lsm: kdbus security hooks
+  lsm: smack: smack callbacks for kdbus security hooks
+  kdbus: use LSM hooks in kdbus code
+  kdbus: TEST_CREATE_CONN now does no depend on TEST_CREATE_BUS
+  kdbus: selftests extended
+  kdbus: Ability to run kdbus test by executable binary name
 
-I compared write operations on kmsg buffervia write/read operations on 
-socketon SOCK_STREAM socket and sendmsg/recv on SOCK_DGRAM socket. 
-Compared toSOCK_STREAM socket it was about 39% slowerbut compared 
-toSOCK_DGRAM socket it was about 326% faster.syslogfor example uses 
-SOCK_DGRAM sockets.In all cases there were 2^20 (1048576) write/sendmsg 
-operations of 2^8 (256) bytes.
+ include/linux/lsm_hooks.h                        |  67 +++++++++++++
+ include/linux/security.h                         |  99 +++++++++++++++++++
+ ipc/kdbus/bus.c                                  |  12 ++-
+ ipc/kdbus/bus.h                                  |   3 +
+ ipc/kdbus/connection.c                           |  54 +++++++++++
+ ipc/kdbus/connection.h                           |   4 +
+ ipc/kdbus/domain.c                               |   9 +-
+ ipc/kdbus/domain.h                               |   2 +
+ ipc/kdbus/endpoint.c                             |  11 +++
+ ipc/kdbus/names.c                                |  11 +++
+ ipc/kdbus/queue.c                                |  30 ++++--
+ security/security.c                              | 118 +++++++++++++++++++++++
+ security/smack/Makefile                          |   2 +
+ security/smack/smack_lsm.c                       |  68 +++++++++++++
+ tools/testing/selftests/kdbus/Makefile           |   1 +
+ tools/testing/selftests/kdbus/kdbus-test.c       |  37 ++++++-
+ tools/testing/selftests/kdbus/kdbus-test.h       |   1 +
+ tools/testing/selftests/kdbus/kdbus-util.c       |  37 ++++---
+ tools/testing/selftests/kdbus/kdbus-util.h       |   2 +-
+ tools/testing/selftests/kdbus/test-activator.c   |  20 ++--
+ tools/testing/selftests/kdbus/test-chat.c        |   6 +-
+ tools/testing/selftests/kdbus/test-connection.c  |   8 +-
+ tools/testing/selftests/kdbus/test-fd.c          |   2 +-
+ tools/testing/selftests/kdbus/test-message.c     |  69 ++++++++-----
+ tools/testing/selftests/kdbus/test-metadata-ns.c |  10 +-
+ tools/testing/selftests/kdbus/test-monitor.c     |   9 +-
+ tools/testing/selftests/kdbus/test-policy-ns.c   |   8 +-
+ tools/testing/selftests/kdbus/test-policy-priv.c |  48 +++++----
+ tools/testing/selftests/kdbus/test-send.c        |  84 ++++++++++++++++
+ tools/testing/selftests/kdbus/test-sync.c        |   2 +-
+ tools/testing/selftests/kdbus/test-timeout.c     |   2 +-
+ 31 files changed, 732 insertions(+), 104 deletions(-)
+ create mode 100644 tools/testing/selftests/kdbus/test-send.c
 
-Best Regards,
-Marcin Niesluchowski
+-- 
+1.9.1
