@@ -1,306 +1,174 @@
-From: Vladimir Davydov <vdavydov@parallels.com>
-Subject: Re: [PATCH -mm v6 0/6] idle memory tracking
-Date: Wed, 8 Jul 2015 20:47:42 +0300
-Message-ID: <20150708174742.GI2436@esperanza>
-References: <cover.1434102076.git.vdavydov@parallels.com>
+From: Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v3] ipc: Modify message queue accounting to not take kernel
+ data structures into account
+Date: Wed, 08 Jul 2015 15:17:52 -0400
+Message-ID: <559D7760.1020909@redhat.com>
+References: <20150622222546.GA32432@ramsey.localdomain> <1435211229.11852.23.camel@stgolabs.net> <CAKgNAkieR5zdpKm=P2dcTDJ_3X4HMRoeOQ2D8yghYVKOjDsYAg@mail.gmail.com> <1435256484.11852.30.camel@stgolabs.net> <20150706154928.GA19828@ramsey.localdomain> <1436246210.12255.71.camel@stgolabs.net> <CAKgNAkjy-+2TkN=0Fe11bVea4q6uLcUx=++Mf1eFxhmPmZoc9w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <cover.1434102076.git.vdavydov@parallels.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: multipart/signed; micalg=pgp-sha256;
+ protocol="application/pgp-signature";
+ boundary="xXsc2F1spLJgj0U9qhXjv5F5pUVibQt2P"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAKgNAkjy-+2TkN=0Fe11bVea4q6uLcUx=++Mf1eFxhmPmZoc9w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
+Cc: Marcus Gelderie <redmnic-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, John Duffy <jb_duffy-FhtRXb7CoQBt1OO0OYaSVA@public.gmane.org>, Arto Bendiken <arto-TQ6thHYR8Svk1uMJSBkQmQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--xXsc2F1spLJgj0U9qhXjv5F5pUVibQt2P
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-Any comments, thoughts, proposals regarding this patch? Any chance for
-it to get merged?
+On 07/07/2015 09:01 AM, Michael Kerrisk (man-pages) wrote:
+> Hi David,
+>=20
+> On 7 July 2015 at 07:16, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org> wrote:
+>> On Mon, 2015-07-06 at 17:49 +0200, Marcus Gelderie wrote:
+>>> A while back, the message queue implementation in the kernel was
+>>> improved to use btrees to speed up retrieval of messages (commit
+>>> d6629859b36). The patch introducing the improved kernel handling of
+>>> message queues (using btrees) has, as a by-product, changed the
+>>> meaning of the QSIZE field in the pseudo-file created for the queue.
+>>> Before, this field reflected the size of the user-data in the queue.
+>>> Since, it also takes kernel data structures into account. For
+>>> example, if 13 bytes of user data are in the queue, on my machine the=
 
-Thanks,
-Vladimir
+>>> file reports a size of 61 bytes.
+>>>
+>>> There was some discussion on this topic before (for example
+>>> https://lkml.org/lkml/2014/10/1/115). Commenting on a th lkml, Michae=
+l
+>>> Kerrisk gave the following background (https://lkml.org/lkml/2015/6/1=
+6/74):
+>>>
+>>>     The pseudofiles in the mqueue filesystem (usually mounted at
+>>>     /dev/mqueue) expose fields with metadata describing a message
+>>>     queue. One of these fields, QSIZE, as originally implemented,
+>>>     showed the total number of bytes of user data in all messages in
+>>>     the message queue, and this feature was documented from the
+>>>     beginning in the mq_overview(7) page. In 3.5, some other (useful)=
 
-On Fri, Jun 12, 2015 at 12:52:20PM +0300, Vladimir Davydov wrote:
-> Hi,
-> 
-> This patch set introduces a new user API for tracking user memory pages
-> that have not been used for a given period of time. The purpose of this
-> is to provide the userspace with the means of tracking a workload's
-> working set, i.e. the set of pages that are actively used by the
-> workload. Knowing the working set size can be useful for partitioning
-> the system more efficiently, e.g. by tuning memory cgroup limits
-> appropriately, or for job placement within a compute cluster.
-> 
-> ---- USE CASES ----
-> 
-> The unified cgroup hierarchy has memory.low and memory.high knobs, which
-> are defined as the low and high boundaries for the workload working set
-> size. However, the working set size of a workload may be unknown or
-> change in time. With this patch set, one can periodically estimate the
-> amount of memory unused by each cgroup and tune their memory.low and
-> memory.high parameters accordingly, therefore optimizing the overall
-> memory utilization.
-> 
-> Another use case is balancing workloads within a compute cluster.
-> Knowing how much memory is not really used by a workload unit may help
-> take a more optimal decision when considering migrating the unit to
-> another node within the cluster.
-> 
-> Also, as noted by Minchan, this would be useful for per-process reclaim
-> (https://lwn.net/Articles/545668/). With idle tracking, we could reclaim idle
-> pages only by smart user memory manager.
-> 
-> ---- USER API ----
-> 
-> The user API consists of two new proc files:
-> 
->  * /proc/kpageidle.  This file implements a bitmap where each bit corresponds
->    to a page, indexed by PFN. When the bit is set, the corresponding page is
->    idle. A page is considered idle if it has not been accessed since it was
->    marked idle. To mark a page idle one should set the bit corresponding to the
->    page by writing to the file. A value written to the file is OR-ed with the
->    current bitmap value. Only user memory pages can be marked idle, for other
->    page types input is silently ignored. Writing to this file beyond max PFN
->    results in the ENXIO error. Only available when CONFIG_IDLE_PAGE_TRACKING is
->    set.
-> 
->    This file can be used to estimate the amount of pages that are not
->    used by a particular workload as follows:
-> 
->    1. mark all pages of interest idle by setting corresponding bits in the
->       /proc/kpageidle bitmap
->    2. wait until the workload accesses its working set
->    3. read /proc/kpageidle and count the number of bits set
-> 
->  * /proc/kpagecgroup.  This file contains a 64-bit inode number of the
->    memory cgroup each page is charged to, indexed by PFN. Only available when
->    CONFIG_MEMCG is set.
-> 
->    This file can be used to find all pages (including unmapped file
->    pages) accounted to a particular cgroup. Using /proc/kpageidle, one
->    can then estimate the cgroup working set size.
-> 
-> For an example of using these files for estimating the amount of unused
-> memory pages per each memory cgroup, please see the script attached
-> below.
-> 
-> ---- REASONING ----
-> 
-> The reason to introduce the new user API instead of using
-> /proc/PID/{clear_refs,smaps} is that the latter has two serious
-> drawbacks:
-> 
->  - it does not count unmapped file pages
->  - it affects the reclaimer logic
-> 
-> The new API attempts to overcome them both. For more details on how it
-> is achieved, please see the comment to patch 5.
-> 
-> ---- CHANGE LOG ----
-> 
-> Changes in v6:
-> 
->  - Split the patch introducing page_cgroup_ino helper to ease review.
->  - Rebase on top of v4.1-rc7-mmotm-2015-06-09-16-55
-> 
-> Changes in v5:
-> 
->  - Fix possible race between kpageidle_clear_pte_refs() and
->    __page_set_anon_rmap() by checking that a page is on an LRU list
->    under zone->lru_lock (Minchan).
->  - Export idle flag via /proc/kpageflags (Minchan).
->  - Rebase on top of 4.1-rc3.
-> 
-> Changes in v4:
-> 
-> This iteration primarily addresses Minchan's comments to v3:
-> 
->  - Implement /proc/kpageidle as a bitmap instead of using u64 per each page,
->    because there does not seem to be any future uses for the other 63 bits.
->  - Do not double-increase pra->referenced in page_referenced_one() if the page
->    was young and referenced recently.
->  - Remove the pointless (page_count == 0) check from kpageidle_get_page().
->  - Rename kpageidle_clear_refs() to kpageidle_clear_pte_refs().
->  - Improve comments to kpageidle-related functions.
->  - Rebase on top of 4.1-rc2.
-> 
-> Note it does not address Minchan's concern of possible __page_set_anon_rmap vs
-> page_referenced race (see https://lkml.org/lkml/2015/5/3/220) since it is still
-> unclear if this race can really happen (see https://lkml.org/lkml/2015/5/4/160)
-> 
-> Changes in v3:
-> 
->  - Enable CONFIG_IDLE_PAGE_TRACKING for 32 bit. Since this feature
->    requires two extra page flags and there is no space for them on 32
->    bit, page ext is used (thanks to Minchan Kim).
->  - Minor code cleanups and comments improved.
->  - Rebase on top of 4.1-rc1.
-> 
-> Changes in v2:
-> 
->  - The main difference from v1 is the API change. In v1 the user can
->    only set the idle flag for all pages at once, and for clearing the
->    Idle flag on pages accessed via page tables /proc/PID/clear_refs
->    should be used.
->    The main drawback of the v1 approach, as noted by Minchan, is that on
->    big machines setting the idle flag for each pages can result in CPU
->    bursts, which would be especially frustrating if the user only wanted
->    to estimate the amount of idle pages for a particular process or VMA.
->    With the new API a more fine-grained approach is possible: one can
->    read a process's /proc/PID/pagemap and set/check the Idle flag only
->    for those pages of the process's address space he or she is
->    interested in.
->    Another good point about the v2 API is that it is possible to limit
->    /proc/kpage* scanning rate when the user wants to estimate the total
->    number of idle pages, which is unachievable with the v1 approach.
->  - Make /proc/kpagecgroup return the ino of the closest online ancestor
->    in case the cgroup a page is charged to is offline.
->  - Fix /proc/PID/clear_refs not clearing Young page flag.
->  - Rebase on top of v4.0-rc6-mmotm-2015-04-01-14-54
-> 
-> v4: https://lkml.org/lkml/2015/5/7/580
-> v3: https://lkml.org/lkml/2015/4/28/224
-> v2: https://lkml.org/lkml/2015/4/7/260
-> v1: https://lkml.org/lkml/2015/3/18/794
-> 
-> ---- PATCH SET STRUCTURE ----
-> 
-> The patch set is organized as follows:
-> 
->  - patch 1 adds page_cgroup_ino() helper for the sake of
->    /proc/kpagecgroup and patches 2-3 do related cleanup
->  - patch 4 adds /proc/kpagecgroup, which reports cgroup ino each page is
->    charged to
->  - patch 5 implements the idle page tracking feature, including the
->    userspace API, /proc/kpageidle
->  - patch 6 exports idle flag via /proc/kpageflags
-> 
-> ---- SIMILAR WORKS ----
-> 
-> Originally, the patch for tracking idle memory was proposed back in 2011
-> by Michel Lespinasse (see http://lwn.net/Articles/459269/). The main
-> difference between Michel's patch and this one is that Michel
-> implemented a kernel space daemon for estimating idle memory size per
-> cgroup while this patch only provides the userspace with the minimal API
-> for doing the job, leaving the rest up to the userspace. However, they
-> both share the same idea of Idle/Young page flags to avoid affecting the
-> reclaimer logic.
-> 
-> ---- SCRIPT FOR COUNTING IDLE PAGES PER CGROUP ----
-> #! /usr/bin/python
-> #
-> 
-> import os
-> import stat
-> import errno
-> import struct
-> 
-> CGROUP_MOUNT = "/sys/fs/cgroup/memory"
-> BUFSIZE = 8 * 1024  # must be multiple of 8
-> 
-> 
-> def set_idle():
->     f = open("/proc/kpageidle", "wb", BUFSIZE)
->     while True:
->         try:
->             f.write(struct.pack("Q", pow(2, 64) - 1))
->         except IOError as err:
->             if err.errno == errno.ENXIO:
->                 break
->             raise
->     f.close()
-> 
-> 
-> def count_idle():
->     f_flags = open("/proc/kpageflags", "rb", BUFSIZE)
->     f_cgroup = open("/proc/kpagecgroup", "rb", BUFSIZE)
->     f_idle = open("/proc/kpageidle", "rb", BUFSIZE)
-> 
->     pfn = 0
->     nr_idle = {}
->     while True:
->         s = f_flags.read(8)
->         if not s:
->             break
-> 
->         flags, = struct.unpack('Q', s)
->         cgino, = struct.unpack('Q', f_cgroup.read(8))
-> 
->         bit = pfn % 64
->         if not bit:
->             idle_bitmap, = struct.unpack('Q', f_idle.read(8))
-> 
->         idle = idle_bitmap >> bit & 1
->         pfn += 1
-> 
->         unevictable = flags >> 18 & 1
->         huge = flags >> 22 & 1
-> 
->         if idle and not unevictable:
->             nr_idle[cgino] = nr_idle.get(cgino, 0) + (512 if huge else 1)
-> 
->     f_flags.close()
->     f_cgroup.close()
->     f_idle.close()
->     return nr_idle
-> 
-> 
-> print "Setting the idle flag for each page..."
-> set_idle()
-> 
-> raw_input("Wait until the workload accesses its working set, then press Enter")
-> 
-> print "Counting idle pages..."
-> nr_idle = count_idle()
-> 
-> for dir, subdirs, files in os.walk(CGROUP_MOUNT):
->     ino = os.stat(dir)[stat.ST_INO]
->     print dir + ": " + str(nr_idle.get(ino, 0) * 4) + " KB"
-> ---- END SCRIPT ----
-> 
-> Comments are more than welcome.
-> 
-> Thanks,
-> 
-> Vladimir Davydov (6):
->   memcg: add page_cgroup_ino helper
->   hwpoison: use page_cgroup_ino for filtering by memcg
->   memcg: zap try_get_mem_cgroup_from_page
->   proc: add kpagecgroup file
->   proc: add kpageidle file
->   proc: export idle flag via kpageflags
-> 
->  Documentation/vm/pagemap.txt           |  22 +++-
->  fs/proc/page.c                         | 234 +++++++++++++++++++++++++++++++++
->  fs/proc/task_mmu.c                     |   4 +-
->  include/linux/memcontrol.h             |   7 +-
->  include/linux/mm.h                     |  88 +++++++++++++
->  include/linux/page-flags.h             |   9 ++
->  include/linux/page_ext.h               |   4 +
->  include/uapi/linux/kernel-page-flags.h |   1 +
->  mm/Kconfig                             |  12 ++
->  mm/debug.c                             |   4 +
->  mm/hwpoison-inject.c                   |   5 +-
->  mm/memcontrol.c                        |  71 +++++-----
->  mm/memory-failure.c                    |  16 +--
->  mm/page_ext.c                          |   3 +
->  mm/rmap.c                              |   8 ++
->  mm/swap.c                              |   2 +
->  16 files changed, 428 insertions(+), 62 deletions(-)
-> 
-> -- 
-> 2.1.4
-> 
-> --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo@kvack.org.  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
-> 
+>>>     work happened to break the user-space API in a couple of places,
+>>>     including the value exposed via QSIZE, which now includes a measu=
+re
+>>>     of kernel overhead bytes for the queue, a figure that renders QSI=
+ZE
+>>>     useless for its original purpose, since there's no way to deduce
+>>>     the number of overhead bytes consumed by the implementation.
+>>>     (The other user-space breakage was subsequently fixed.)
+>>
+>> Michael, this breakage was never finally documented in the manpage,
+>> right?
+>=20
+> Right.
+>=20
+>> I took a look and there is no mention, but it was a quick look.
+>> It's just that if this patch goes in, I'd hate ending up with somethin=
+g
+>> like this in the manpage:
+>>
+>> as of 3.5
+>>   <accounts for kernel overhead>
+>>
+>> as of 4.3
+>>   <behavior reverted back to not include kernel overhead... *sigh*>
+>>
+>> If there are changes to be made to the manpage, it should probably be
+>> posted with this patch, methinks.
+>=20
+> I think something like the above will have to end up in the man page.
+> The only thing I'd add is that the fix also has gone to -stable
+> kernels. At least: I think this patch should also be marked for
+> -stable. I'll take care of the man page updates as the patch goes
+> through.
+>=20
+>>> This patch removes the accounting of kernel data structures in the
+>>> queue. Reporting the size of these data-structures in the QSIZE field=
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+>>> was a breaking change (see Michael's comment above). Without the QSIZ=
+E
+>>> field reporting the total size of user-data in the queue, there is no=
+
+>>> way to deduce this number.
+>>>
+>>> It should be noted that the resource limit RLIMIT_MSGQUEUE is counted=
+
+>>> against the worst-case size of the queue (in both the old and the new=
+
+>>> implementation). Therefore, the kernel overhead accounting in QSIZE i=
+s
+>>> not necessary to help the user understand the limitations RLIMIT impo=
+ses
+>>> on the processes.
+>>
+>> Also, I would suggest adding some comment in struct mqueue_inode_info
+>> for future reference, ie:
+>>
+>> -       unsigned long qsize; /* size of queue in memory (sum of all ms=
+gs) */
+>> +       /*
+>> +        * Size of queue in memory (sum of all msgs). Accounts for
+>> +        * only userspace overhead; ignoring any in-kernel rbtree node=
+s.
+>> +        */
+>> +       unsigned long qsize;
+>>
+>> But no big deal in any case.
+>>
+>> I think this is the right approach,
+>=20
+> Me too.
+>=20
+>> but would still like to know if Doug
+>> has any concerns about it.
+>=20
+> Looking on gmane, Doug does not appear to have been active on any
+> lists since late May! Not sure why.
+
+I responded yesterday in the v2 patch thread I believe.  In any case, I
+think this patch is fine, and can go to stable.  This patch doesn't
+actually change the math related to the rlimit checks (which is the main
+thing I wanted to correct in my original patches), instead it corrects a
+mistake I made.  At the time, I mistakenly thought that the qsize
+included the current message data total + the struct msg_msg size total.
+ It didn't, it was just the current user data total.  I added the rbtree
+nodes in order to keep the total accurate but I shouldn't have added the
+rbtree nodes to this total because none of the other kernel usage was
+previously included.
+
+Acked-by: Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+
+
+
+--=20
+Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+              GPG KeyID: 0E572FDD
+
+
+
+--xXsc2F1spLJgj0U9qhXjv5F5pUVibQt2P
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+Comment: Using GnuPG with Thunderbird - http://www.enigmail.net/
+
+iQIcBAEBCAAGBQJVnXdgAAoJELgmozMOVy/dCfQP/3YC8/pVEHka8+Vi51sutou9
+M6gRc9s/kC11mwhpD39jHTf+nErHx9NYq+l4e1h8rmj6Gv+hSUWe26plhe1vtL/d
+8MquiawxxS1PuGKh6Pckv4zkAhVnFyY9c0VbNnt2UcYGRk8fp5oLCPwc99acMz/T
+plphc58aTya9UO5Dx5KFwKDGuSM/5lyTFPUoINqgway69WEfbvChxrWWAhHj8l2s
+Q+tXrgz4D42RAvkxOJ5xevH/vEp5EvYHfREIN0RMriymlVwRSMEwSJDKwh5TBrcB
+HU/KouxBbc4cbhuU9HjkShg9Z0Besab0BY0g0IILydXMT05oj6uTCY/X0qdefE0Y
+b9FTf95U71EErChI9wgDpizSJ2EmR//P/xmA+hwLGHiFI03xql1racdNZstrBjMV
+oAniFFGZ2aHeTAosdmkjTcVQi9vAOJbRFl2+N0js603+XIQv6OmBkatedVjdpGIA
+B17imG1KoxH+FEfWphe74XenC9267lJq0jqyFuOVqY4wIiuGnyBmBqgljkzfuH73
+NGLC5Rkx/cKBRzPZmCWWs5v1foUPPUJTldZRO3Hu16z59wgmq64rJ2jP1NeRQ/qh
+Xq+oiEIKwSt7xQAMFHZ2oKKxm7eXFfB4zQ2GJ/41400KEH+px+/GdTfoTaaT5CiW
+lrkKTIjzy2rFy1ymtBx4
+=qXYz
+-----END PGP SIGNATURE-----
+
+--xXsc2F1spLJgj0U9qhXjv5F5pUVibQt2P--
