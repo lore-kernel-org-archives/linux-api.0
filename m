@@ -1,40 +1,74 @@
-From: Paul Osmialowski <p.osmialowsk@samsung.com>
-Subject: Re: [RFC 8/8] kdbus: Ability to run kdbus test by executable binary
- name
-Date: Wed, 08 Jul 2015 16:58:21 +0200 (CEST)
-Message-ID: <alpine.DEB.2.10.1507081658000.23362@AMDC1262.digital.local>
-References: <1436351110-5902-1-git-send-email-p.osmialowsk@samsung.com>
- <1436351110-5902-9-git-send-email-p.osmialowsk@samsung.com>
- <20150708141608.GC10137@kroah.com>
+From: Andrew Vagin <avagin-wo1vFcy6AUs@public.gmane.org>
+Subject: Re: [PATCH 0/24] kernel: add a netlink interface to get information
+ about processes (v2)
+Date: Wed, 8 Jul 2015 19:10:24 +0300
+Message-ID: <20150708161022.GA1705@odin.com>
+References: <1436172445-6979-1-git-send-email-avagin@openvz.org>
+ <CALCETrVg5AyeXW_AGguFoGCPK9_2zeobEgT9JJFsakH6PyQf_A@mail.gmail.com>
+ <20150707154345.GA1593@odin.com>
+ <CALCETrVSRkMSAVPz9JW4XCV7DmrgkyGK54HRUrue2R756f5C=Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <20150708141608.GC10137@kroah.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Paul Moore <pmoore@redhat.com>, James Morris <james.l.morris@oracle.com>, Casey Schaufler <casey@schaufler-ca.com>, "Serge E. Hallyn" <serge@hallyn.com>, Kees Cook <keescook@chromium.org>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Stephen Smalley <sds@tycho.nsa.gov>, Neil Brown <neilb@suse.de>, Mark Rustad <mark.d.rustad@intel.com>, Daniel Mack <daniel@zonque.org>, David Herrmann <dh.herrmann@googlemail.com>, Djalal Harouni <tixxdz@opendz.org>, Shuah Khan <shuahkh@osg.samsung.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Karol Lewandowski <k.lewandowsk@samsung.com>, Lukasz Skalski <l.skalski@samsung.com>
+Content-Type: text/plain; charset="koi8-r"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrVSRkMSAVPz9JW4XCV7DmrgkyGK54HRUrue2R756f5C=Q@mail.gmail.com>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Pavel Odintsov <pavel.odintsov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Greg,
+On Tue, Jul 07, 2015 at 08:56:37AM -0700, Andy Lutomirski wrote:
+> On Tue, Jul 7, 2015 at 8:43 AM, Andrew Vagin <avagin-wo1vFcy6AUs@public.gmane.org> wrote:
+> > On Mon, Jul 06, 2015 at 10:10:32AM -0700, Andy Lutomirski wrote:
+> >> On Mon, Jul 6, 2015 at 1:47 AM, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> wrote:
+> >> > Currently we use the proc file system, where all information are
+> >> > presented in text files, what is convenient for humans.  But if we need
+> >> > to get information about processes from code (e.g. in C), the procfs
+> >> > doesn't look so cool.
+> >> >
+> >> > From code we would prefer to get information in binary format and to be
+> >> > able to specify which information and for which tasks are required. Here
+> >> > is a new interface with all these features, which is called task_diag.
+> >> > In addition it's much faster than procfs.
+> >> >
+> >> > task_diag is based on netlink sockets and looks like socket-diag, which
+> >> > is used to get information about sockets.
+> >>
+> >> I think I like this in principle, but I have can see a few potential
+> >> problems with using netlink for this:
+> >>
+> >> 1. Netlink very naturally handles net namespaces, but it doesn't
+> >> naturally handle any other kind of namespace.  In fact, the taskstats
+> >> code that you're building on has highly broken user and pid namespace
+> >> support.  (Look for some obviously useless init_user_ns and
+> >> init_pid_ns references.  But that's only the obvious problem.  That
+> >> code calls current_user_ns() and task_active_pid_ns(current) from
+> >> .doit, which is, in turn, called from sys_write, and looking at
+> >> current's security state from sys_write is a big no-no.)
+> >>
+> >> You could partially fix it by looking at f_cred's namespaces, but that
+> >> would be a change of what it means to create a netlink socket, and I'm
+> >> not sure that's a good idea.
+> >
+> > If I don't miss something, all problems around pidns and userns are
+> > related with multicast functionality. task_diag is using
+> > request/response scheme and doesn't send multicast packets.
+> 
+> It has nothing to do with multicast.  task_diag needs to know what
+> pidns and userns to use for a request, but netlink isn't set up to
+> give you any reasonably way to do that.  A netlink socket is
+> fundamentally tied to a *net* ns (it's a socket, after all).  But you
+> can send it requests using write(2), and calling current_user_ns()
+> from write(2) is bad.  There's a long history of bugs and
+> vulnerabilities related to thinking that current_cred() and similar
+> are acceptable things to use in write(2) implementations.
+> 
 
-Thanks for your comments,
+As far as I understand, socket_diag doesn't have this problem, becaus
+each socket has a link on a namespace where it was created.
 
-On Wed, 8 Jul 2015, Greg Kroah-Hartman wrote:
+What if we will pin the current pidns and credentials to a task_diag
+socket in a moment when it's created.
 
->
-> Why not create symlinks automatically so this works without having to
-> manually run 'cp'?
-
-It can be anything on which one can apply security label. Symlinks can do.
-
-> But really, is spelling out the command line option
-> really a big issue?
-
-Maybe. I couldn't think about any easier (and easy to present) use case 
-that could explain the purpose of this change.
-
->
-> thanks,
->
-> greg k-h
->
+Thanks,
+Andrew
