@@ -1,93 +1,125 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [PATCH V3 0/5] Allow user to request memory to be locked on page
- fault
-Date: Wed, 8 Jul 2015 09:23:02 -0400
-Message-ID: <20150708132302.GB4669@akamai.com>
-References: <1436288623-13007-1-git-send-email-emunson@akamai.com>
- <20150707141613.f945c98279dcb71c9743d5f2@linux-foundation.org>
+From: Stephen Smalley <sds@tycho.nsa.gov>
+Subject: Re: [RFC 5/8] kdbus: use LSM hooks in kdbus code
+Date: Wed, 08 Jul 2015 09:37:47 -0400
+Message-ID: <559D27AB.4010402@tycho.nsa.gov>
+References: <1436351110-5902-1-git-send-email-p.osmialowsk@samsung.com> <1436351110-5902-6-git-send-email-p.osmialowsk@samsung.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="3uo+9/B/ebqu+fSQ"
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150707141613.f945c98279dcb71c9743d5f2@linux-foundation.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>, Michal Hocko <mhocko@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, Vlastimil Babka <vbabka@suse.cz>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1436351110-5902-6-git-send-email-p.osmialowsk@samsung.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Paul Osmialowski <p.osmialowsk@samsung.com>, Paul Moore <pmoore@redhat.com>, James Morris <james.l.morris@oracle.com>, Casey Schaufler <casey@schaufler-ca.com>, "Serge E. Hallyn" <serge@hallyn.com>, Kees Cook <keescook@chromium.org>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Neil Brown <neilb@suse.de>, Mark Rustad <mark.d.rustad@intel.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, David Herrmann <dh.herrmann@googlemail.com>, Djalal Harouni <tixxdz@opendz.org>, Shuah Khan <shuahkh@osg.samsung.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Karol Lewandowski <k.lewandowsk@samsung.com>, Lukasz Skalski <l.skalski@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
+On 07/08/2015 06:25 AM, Paul Osmialowski wrote:
+> Originates from:
+> 
+> https://github.com/lmctl/kdbus.git (branch: kdbus-lsm-v4.for-systemd-v212)
+> commit: aa0885489d19be92fa41c6f0a71df28763228a40
+> 
+> Signed-off-by: Karol Lewandowski <k.lewandowsk@samsung.com>
+> Signed-off-by: Paul Osmialowski <p.osmialowsk@samsung.com>
+> ---
+>  ipc/kdbus/bus.c        | 12 ++++++++++-
+>  ipc/kdbus/bus.h        |  3 +++
+>  ipc/kdbus/connection.c | 54 ++++++++++++++++++++++++++++++++++++++++++++++++++
+>  ipc/kdbus/connection.h |  4 ++++
+>  ipc/kdbus/domain.c     |  9 ++++++++-
+>  ipc/kdbus/domain.h     |  2 ++
+>  ipc/kdbus/endpoint.c   | 11 ++++++++++
+>  ipc/kdbus/names.c      | 11 ++++++++++
+>  ipc/kdbus/queue.c      | 30 ++++++++++++++++++----------
+>  9 files changed, 124 insertions(+), 12 deletions(-)
+> 
+>
 
---3uo+9/B/ebqu+fSQ
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+> diff --git a/ipc/kdbus/connection.c b/ipc/kdbus/connection.c
+> index 9993753..b85cdc7 100644
+> --- a/ipc/kdbus/connection.c
+> +++ b/ipc/kdbus/connection.c
+> @@ -31,6 +31,7 @@
+>  #include <linux/slab.h>
+>  #include <linux/syscalls.h>
+>  #include <linux/uio.h>
+> +#include <linux/security.h>
+>  
+>  #include "bus.h"
+>  #include "connection.h"
+> @@ -73,6 +74,8 @@ static struct kdbus_conn *kdbus_conn_new(struct kdbus_ep *ep, bool privileged,
+>  	bool is_activator;
+>  	bool is_monitor;
+>  	struct kvec kvec;
+> +	u32 sid, len;
+> +	char *label;
+>  	int ret;
+>  
+>  	struct {
+> @@ -222,6 +225,14 @@ static struct kdbus_conn *kdbus_conn_new(struct kdbus_ep *ep, bool privileged,
+>  		}
+>  	}
+>  
+> +	security_task_getsecid(current, &sid);
+> +	security_secid_to_secctx(sid, &label, &len);
+> +	ret = security_kdbus_connect(conn, label, len);
+> +	if (ret) {
+> +		ret = -EPERM;
+> +		goto exit_unref;
+> +	}
 
-On Tue, 07 Jul 2015, Andrew Morton wrote:
+This seems convoluted and expensive.  If you always want the label of
+the current task here, then why not just have security_kdbus_connect()
+internally extract the label of the current task?
 
-> On Tue,  7 Jul 2015 13:03:38 -0400 Eric B Munson <emunson@akamai.com> wro=
-te:
->=20
-> > mlock() allows a user to control page out of program memory, but this
-> > comes at the cost of faulting in the entire mapping when it is
-> > allocated.  For large mappings where the entire area is not necessary
-> > this is not ideal.  Instead of forcing all locked pages to be present
-> > when they are allocated, this set creates a middle ground.  Pages are
-> > marked to be placed on the unevictable LRU (locked) when they are first
-> > used, but they are not faulted in by the mlock call.
-> >=20
-> > This series introduces a new mlock() system call that takes a flags
-> > argument along with the start address and size.  This flags argument
-> > gives the caller the ability to request memory be locked in the
-> > traditional way, or to be locked after the page is faulted in.  New
-> > calls are added for munlock() and munlockall() which give the called a
-> > way to specify which flags are supposed to be cleared.  A new MCL flag
-> > is added to mirror the lock on fault behavior from mlock() in
-> > mlockall().  Finally, a flag for mmap() is added that allows a user to
-> > specify that the covered are should not be paged out, but only after the
-> > memory has been used the first time.
->=20
-> Thanks for sticking with this.  Adding new syscalls is a bit of a
-> hassle but I do think we end up with a better interface - the existing
-> mlock/munlock/mlockall interfaces just aren't appropriate for these
-> things.
->=20
-> I don't know whether these syscalls should be documented via new
-> manpages, or if we should instead add them to the existing
-> mlock/munlock/mlockall manpages.  Michael, could you please advise?
->=20
+> @@ -1107,6 +1119,12 @@ static int kdbus_conn_reply(struct kdbus_conn *src, struct kdbus_kmsg *kmsg)
+>  	if (ret < 0)
+>  		goto exit;
+>  
+> +	ret = security_kdbus_talk(src, dst);
+> +	if (ret) {
+> +		ret = -EPERM;
+> +		goto exit;
+> +	}
 
-Thanks for adding the series.  I owe you several updates (getting the
-new syscall right for all architectures and a set of tests for the new
-syscalls).  Would you prefer a new pair of patches or I update this set?
+Where does kdbus apply its uid-based or other restrictions on
+connections?  Why do we need to insert separate hooks into each of these
+functions?  Is there no central chokepoint already for permission
+checking that we can hook?
 
-Eric
+> diff --git a/ipc/kdbus/connection.h b/ipc/kdbus/connection.h
+> index d1ffe90..1f91d39 100644
+> --- a/ipc/kdbus/connection.h
+> +++ b/ipc/kdbus/connection.h
+> @@ -19,6 +19,7 @@
+>  #include <linux/kref.h>
+>  #include <linux/lockdep.h>
+>  #include <linux/path.h>
+> +#include <uapi/linux/kdbus.h>
+>  
+>  #include "limits.h"
+>  #include "metadata.h"
+> @@ -73,6 +74,7 @@ struct kdbus_kmsg;
+>   * @names_queue_list:	Well-known names this connection waits for
+>   * @privileged:		Whether this connection is privileged on the bus
+>   * @faked_meta:		Whether the metadata was faked on HELLO
+> + * @security:		LSM security blob
+>   */
+>  struct kdbus_conn {
+>  	struct kref kref;
+> @@ -113,6 +115,8 @@ struct kdbus_conn {
+>  
+>  	bool privileged:1;
+>  	bool faked_meta:1;
+> +
+> +	void *security;
+>  };
 
---3uo+9/B/ebqu+fSQ
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+Unless I missed it, you may have missed the most important thing of all:
+ controlling kdbus's notion of "privileged".  kdbus sets privileged to
+true if the process has CAP_IPC_OWNER or the process euid matches the
+uid of the bus creator, and then it allows those processes to do many
+dangerous things, including monitoring all traffic, impersonating
+credentials, pids, or seclabel, etc.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJVnSQ2AAoJELbVsDOpoOa9jHcP/RLEmYajmHZ/hRFflieosbLl
-xfDDa3xIpZh7VCBCdjAu96XR7jc5Af66dF7GpeB2Vqv/PAI739slpzUqyaXSdEK9
-1HpgGkjAHYagYa/BSLRpmDCYKGph2zWsKEUK0xrCaRKbAwytEk2rw863ZoFHM4tv
-sftQYCqhB5bkdEQuVu4Hl9D7k9CnrshKl5rURSe+Ub5nj44W47IUyjFugRDi1eRO
-WbddZd8e9av7Qte7l1rtQMxch/L4WM5LICujQx9FrNiz0Cb/flG6v3JvW1G50fym
-NINBwp64GAbE4jYxpvn5zvIHc9IU8G1As6B7tcXTBzPnjx1zQQuxP7pTmpVoAsVQ
-dhJndlDWt3RhdcPz2QDtd9EbUvDdyeLmeyWciB1cx7CZbxnwzqiSXMVzswEqbXiq
-RPTEON/PJ3IsyeQ1Pi/Ygnf/LQVwQtYAut+fZZKUIEofARkUGf6V2ReWDdrBB2t5
-zdOL4Qgr+GNGpaPqp3kr+vcF7ouIFa7ldH7OblI9yqQHufVFX8slDLtial6j4xXa
-D6oU0KUJCjusSpSTbm+KxFPuaC1O+v4lit/GoMvIcdFC6CS5a/hZK+e1QNfOFCh3
-uwVDY1DpI0Qq4ESNAFgjyf/HgiKZUPwvTy5zeq42esGbvhBHgIl62NCrk96JYCoO
-nkBCH/HT50sOYD+mO/s8
-=+7yp
------END PGP SIGNATURE-----
-
---3uo+9/B/ebqu+fSQ--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+I don't believe we should ever permit impersonating seclabel information.
