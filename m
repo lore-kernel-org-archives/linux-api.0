@@ -1,108 +1,335 @@
-From: Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>
-Subject: Re: [RFC 0/8] Additional kmsg devices
-Date: Wed, 08 Jul 2015 13:17:19 +0200
-Message-ID: <2470387.lBYrfq1ai1@amdc1976>
-References: <1435920595-30879-1-git-send-email-m.niesluchow@samsung.com>
- <559CDF8B.2090000@samsung.com> <559CE110.70503@nod.at>
+From: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [RFC 5/8] kdbus: use LSM hooks in kdbus code
+Date: Wed, 08 Jul 2015 14:12:03 +0200 (CEST)
+Message-ID: <alpine.DEB.2.10.1507081411410.12441@AMDC1262.digital.local>
+References: <1436351110-5902-1-git-send-email-p.osmialowsk@samsung.com>
+ <1436351110-5902-6-git-send-email-p.osmialowsk@samsung.com>
+ <1436353775.2331.2.camel@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <559CE110.70503@nod.at>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Weinberger <richard@nod.at>
-Cc: Marcin Niesluchowski <m.niesluchow@samsung.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, Jonathan Corbet <corbet@lwn.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Petr Mladek <pmladek@suse.cz>, Tejun Heo <tj@kernel.org>, Kay Sievers <kay@vrfy.org>, Andrew Morton <akpm@linux-foundation.org>, Joe Perches <joe@perches.com>, Karol Lewandowski <k.lewandowsk@samsung.com>
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-1448733694-1436357538=:12441"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-reply-to: <1436353775.2331.2.camel-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Lukasz Pawelczyk <l.pawelczyk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Cc: Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Mark Rustad <mark.d.rustad-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, David Herrmann <dh.herrmann-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Lukasz Skalski <l.skalski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Hi,
+--8323329-1448733694-1436357538=:12441
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 
-On Wednesday, July 08, 2015 10:36:32 AM Richard Weinberger wrote:
-> Am 08.07.2015 um 10:30 schrieb Marcin Niesluchowski:
-> > On 07/03/2015 05:19 PM, Richard Weinberger wrote:
-> >> Am 03.07.2015 um 17:09 schrieb Marcin Niesluchowski:
-> >>>> Why can't you just make sure that your target has a working
-> >>>> syslogd/rsyslogd/journald/whatever?
-> >>>> All can be done perfectly fine in userspace.
-> >>> * Message credibility: Lets imagine simple service which collects logs via unix sockets. There is no reliable way of identifying logging process. getsockopt() with SO_PEERCRED
-> >>> option would give pid form cred structure, but according to manual it may not be of actual logging process:
-> >>>    "The returned credentials are those that were in effect at the time of the call to connect(2) or socketpair(2)."
-> >>>        - select(7)
-> >> This interface can be improved. Should be easy.
-> > 
-> > What kind of improvement do you have in mind?
-> 
-> I was wrong, we have the needed functionality already.
-> See Andy's reply.
+You're right about it. To be fixed. Thanks for spotting this.
 
-Please note that Andy has pointed out that the existing interface
-(SCM_CREDENTIALS) is dangerous (=> should not be used).
+On Wed, 8 Jul 2015, Lukasz Pawelczyk wrote:
 
-Unfortunately his code for SCM_IDENTITY (which would replace
-SCM_CREDENTIALS) has not materialized beyond initial 10% done
-a year ago during SCP_PROCINFO discussion (it also has not been
-explained enough to allow implementation by someone else).
+>> +		ret = -EPERM;
+>> +		goto exit_unref;
+>> +	}
+>
+> Also, why aren't the error codes passed from LSM? LSM can return
+> anything, from EINVAL, to ENOMEM. Returning EPERM can be misleading.
+>
+--8323329-1448733694-1436357538=:12441
+Content-Type: TEXT/x-diff; name=0005-kdbus-use-LSM-hooks-in-kdbus-code.patch
+Content-Transfer-Encoding: BASE64
+Content-ID: <alpine.DEB.2.10.1507081411270.12441-rWxBz+Dn3+580y0nlK0+ubjjLBE8jN/0@public.gmane.org>
+Content-Description: 
+Content-Disposition: attachment; filename=0005-kdbus-use-LSM-hooks-in-kdbus-code.patch
 
-> >>> * Early userspace tool: Helpful especially for embeded systems.
-> >> This is what we do already. In early user space spawn your logger as early as possible.
-> >> "embedded Linux is special" is not an excuse btw. ;)
-> > 
-> > I would say "embedded Linux is real use case"instead of "special". What I meant that it does only require one ioctl and no additional resources are needed.
-> > 
-> >>> * Reliability: Userspace service may be killed due to out of memory (OOM). This is kernel cyclic buffer, which size can be specified differently according to situation.
-> >> This is what we have /proc/<pid>/oom_adj and /proc/<pid>/oom_score_adj for.
-> > 
-> > You are right, but additional resources and complexity is required.
-> 
-> A few "echo foo > /proc/xy/bar" commands are far less complexity than adding a pseudo syslogd to kernel land...
+RnJvbSA5YzM3NjY3MzAyZjEwNGUwZjQxMmJhMjcyN2M0ZDNkZjgxZmI1OWRh
+IE1vbiBTZXAgMTcgMDA6MDA6MDAgMjAwMQ0KRnJvbTogUGF1bCBPc21pYWxv
+d3NraSA8cC5vc21pYWxvd3NrQHNhbXN1bmcuY29tPg0KRGF0ZTogVHVlLCAy
+NiBNYXkgMjAxNSAxMjowMDozMyArMDIwMA0KU3ViamVjdDogW1JGQyA1Lzhd
+IGtkYnVzOiB1c2UgTFNNIGhvb2tzIGluIGtkYnVzIGNvZGUNCg0KT3JpZ2lu
+YXRlcyBmcm9tOg0KDQpodHRwczovL2dpdGh1Yi5jb20vbG1jdGwva2RidXMu
+Z2l0IChicmFuY2g6IGtkYnVzLWxzbS12NC5mb3Itc3lzdGVtZC12MjEyKQ0K
+Y29tbWl0OiBhYTA4ODU0ODlkMTliZTkyZmE0MWM2ZjBhNzFkZjI4NzYzMjI4
+YTQwDQoNClNpZ25lZC1vZmYtYnk6IEthcm9sIExld2FuZG93c2tpIDxrLmxl
+d2FuZG93c2tAc2Ftc3VuZy5jb20+DQpTaWduZWQtb2ZmLWJ5OiBQYXVsIE9z
+bWlhbG93c2tpIDxwLm9zbWlhbG93c2tAc2Ftc3VuZy5jb20+DQotLS0NCiBp
+cGMva2RidXMvYnVzLmMgICAgICAgIHwgMTEgKysrKysrKysrKy0NCiBpcGMv
+a2RidXMvYnVzLmggICAgICAgIHwgIDUgKysrKysNCiBpcGMva2RidXMvY29u
+bmVjdGlvbi5jIHwgNDggKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKysrKysrKysrDQogaXBjL2tkYnVzL2Nvbm5lY3Rpb24uaCB8
+ICA2ICsrKysrKw0KIGlwYy9rZGJ1cy9kb21haW4uYyAgICAgfCAgOSArKysr
+KysrKy0NCiBpcGMva2RidXMvZG9tYWluLmggICAgIHwgIDQgKysrKw0KIGlw
+Yy9rZGJ1cy9lbmRwb2ludC5jICAgfCAxMCArKysrKysrKysrDQogaXBjL2tk
+YnVzL25hbWVzLmMgICAgICB8IDEwICsrKysrKysrKysNCiBpcGMva2RidXMv
+cXVldWUuYyAgICAgIHwgMzAgKysrKysrKysrKysrKysrKysrKystLS0tLS0t
+LS0tDQogOSBmaWxlcyBjaGFuZ2VkLCAxMjEgaW5zZXJ0aW9ucygrKSwgMTIg
+ZGVsZXRpb25zKC0pDQoNCmRpZmYgLS1naXQgYS9pcGMva2RidXMvYnVzLmMg
+Yi9pcGMva2RidXMvYnVzLmMNCmluZGV4IGJiZGYwZjIuLmJlN2VkODEgMTAw
+NjQ0DQotLS0gYS9pcGMva2RidXMvYnVzLmMNCisrKyBiL2lwYy9rZGJ1cy9i
+dXMuYw0KQEAgLTIyLDYgKzIyLDcgQEANCiAjaW5jbHVkZSA8bGludXgvc2xh
+Yi5oPg0KICNpbmNsdWRlIDxsaW51eC91YWNjZXNzLmg+DQogI2luY2x1ZGUg
+PGxpbnV4L3Vpby5oPg0KKyNpbmNsdWRlIDxsaW51eC9zZWN1cml0eS5oPg0K
+IA0KICNpbmNsdWRlICJidXMuaCINCiAjaW5jbHVkZSAibm90aWZ5LmgiDQpA
+QCAtNTEsNiArNTIsNyBAQCBzdGF0aWMgdm9pZCBrZGJ1c19idXNfZnJlZShz
+dHJ1Y3Qga2RidXNfbm9kZSAqbm9kZSkNCiAJa2RidXNfZG9tYWluX3VucmVm
+KGJ1cy0+ZG9tYWluKTsNCiAJa2RidXNfcG9saWN5X2RiX2NsZWFyKCZidXMt
+PnBvbGljeV9kYik7DQogCWtkYnVzX21ldGFfcHJvY191bnJlZihidXMtPmNy
+ZWF0b3JfbWV0YSk7DQorCXNlY3VyaXR5X2tkYnVzX2J1c19mcmVlKGJ1cyk7
+DQogCWtmcmVlKGJ1cyk7DQogfQ0KIA0KQEAgLTE2MSw2ICsxNjMsMTEgQEAg
+c3RhdGljIHN0cnVjdCBrZGJ1c19idXMgKmtkYnVzX2J1c19uZXcoc3RydWN0
+IGtkYnVzX2RvbWFpbiAqZG9tYWluLA0KIAkJZ290byBleGl0X3VucmVmOw0K
+IAl9DQogDQorCXJldCA9IHNlY3VyaXR5X2tkYnVzX2J1c19hbGxvYyhiKTsN
+CisJaWYgKHJldCkgew0KKwkJZ290byBleGl0X3VucmVmOw0KKwl9DQorDQog
+CS8qDQogCSAqIEJ1cy1saW1pdHMgb2YgdGhlIGNyZWF0b3IgYXJlIGFjY291
+bnRlZCBvbiBpdHMgcmVhbCBVSUQsIGp1c3QgbGlrZQ0KIAkgKiBhbGwgb3Ro
+ZXIgcGVyLXVzZXIgbGltaXRzLg0KQEAgLTE2OSwxMSArMTc2LDEzIEBAIHN0
+YXRpYyBzdHJ1Y3Qga2RidXNfYnVzICprZGJ1c19idXNfbmV3KHN0cnVjdCBr
+ZGJ1c19kb21haW4gKmRvbWFpbiwNCiAJaWYgKElTX0VSUihiLT5jcmVhdG9y
+KSkgew0KIAkJcmV0ID0gUFRSX0VSUihiLT5jcmVhdG9yKTsNCiAJCWItPmNy
+ZWF0b3IgPSBOVUxMOw0KLQkJZ290byBleGl0X3VucmVmOw0KKwkJZ290byBl
+eGl0X2ZyZWVfc2VjdXJpdHk7DQogCX0NCiANCiAJcmV0dXJuIGI7DQogDQor
+ZXhpdF9mcmVlX3NlY3VyaXR5Og0KKwlzZWN1cml0eV9rZGJ1c19idXNfZnJl
+ZShiKTsNCiBleGl0X3VucmVmOg0KIAlrZGJ1c19ub2RlX2RlYWN0aXZhdGUo
+JmItPm5vZGUpOw0KIAlrZGJ1c19ub2RlX3VucmVmKCZiLT5ub2RlKTsNCmRp
+ZmYgLS1naXQgYS9pcGMva2RidXMvYnVzLmggYi9pcGMva2RidXMvYnVzLmgN
+CmluZGV4IDViZWE1ZWYuLjUyMWU2OTIgMTAwNjQ0DQotLS0gYS9pcGMva2Ri
+dXMvYnVzLmgNCisrKyBiL2lwYy9rZGJ1cy9idXMuaA0KQEAgLTUzLDYgKzUz
+LDcgQEAgc3RydWN0IGtkYnVzX3VzZXI7DQogICogQG5vdGlmeV9saXN0OglM
+aXN0IG9mIHBlbmRpbmcga2VybmVsLWdlbmVyYXRlZCBtZXNzYWdlcw0KICAq
+IEBub3RpZnlfbG9jazoJTm90aWZpY2F0aW9uIGxpc3QgbG9jaw0KICAqIEBu
+b3RpZnlfZmx1c2hfbG9jazoJTm90aWZpY2F0aW9uIGZsdXNoaW5nIGxvY2sN
+CisgKiBAc2VjdXJpdHk6CQlMU00gc2VjdXJpdHkgYmxvYg0KICAqLw0KIHN0
+cnVjdCBrZGJ1c19idXMgew0KIAlzdHJ1Y3Qga2RidXNfbm9kZSBub2RlOw0K
+QEAgLTgxLDYgKzgyLDEwIEBAIHN0cnVjdCBrZGJ1c19idXMgew0KIAlzdHJ1
+Y3QgbGlzdF9oZWFkIG5vdGlmeV9saXN0Ow0KIAlzcGlubG9ja190IG5vdGlm
+eV9sb2NrOw0KIAlzdHJ1Y3QgbXV0ZXggbm90aWZ5X2ZsdXNoX2xvY2s7DQor
+DQorI2lmZGVmIENPTkZJR19TRUNVUklUWQ0KKwl2b2lkICpzZWN1cml0eTsN
+CisjZW5kaWYNCiB9Ow0KIA0KIHN0cnVjdCBrZGJ1c19idXMgKmtkYnVzX2J1
+c19yZWYoc3RydWN0IGtkYnVzX2J1cyAqYnVzKTsNCmRpZmYgLS1naXQgYS9p
+cGMva2RidXMvY29ubmVjdGlvbi5jIGIvaXBjL2tkYnVzL2Nvbm5lY3Rpb24u
+Yw0KaW5kZXggOTk5Mzc1My4uNGI5ZjBiNiAxMDA2NDQNCi0tLSBhL2lwYy9r
+ZGJ1cy9jb25uZWN0aW9uLmMNCisrKyBiL2lwYy9rZGJ1cy9jb25uZWN0aW9u
+LmMNCkBAIC0zMSw2ICszMSw3IEBADQogI2luY2x1ZGUgPGxpbnV4L3NsYWIu
+aD4NCiAjaW5jbHVkZSA8bGludXgvc3lzY2FsbHMuaD4NCiAjaW5jbHVkZSA8
+bGludXgvdWlvLmg+DQorI2luY2x1ZGUgPGxpbnV4L3NlY3VyaXR5Lmg+DQog
+DQogI2luY2x1ZGUgImJ1cy5oIg0KICNpbmNsdWRlICJjb25uZWN0aW9uLmgi
+DQpAQCAtNzMsNiArNzQsOCBAQCBzdGF0aWMgc3RydWN0IGtkYnVzX2Nvbm4g
+KmtkYnVzX2Nvbm5fbmV3KHN0cnVjdCBrZGJ1c19lcCAqZXAsIGJvb2wgcHJp
+dmlsZWdlZCwNCiAJYm9vbCBpc19hY3RpdmF0b3I7DQogCWJvb2wgaXNfbW9u
+aXRvcjsNCiAJc3RydWN0IGt2ZWMga3ZlYzsNCisJdTMyIHNpZCwgbGVuOw0K
+KwljaGFyICpsYWJlbDsNCiAJaW50IHJldDsNCiANCiAJc3RydWN0IHsNCkBA
+IC0yMjIsNiArMjI1LDEzIEBAIHN0YXRpYyBzdHJ1Y3Qga2RidXNfY29ubiAq
+a2RidXNfY29ubl9uZXcoc3RydWN0IGtkYnVzX2VwICplcCwgYm9vbCBwcml2
+aWxlZ2VkLA0KIAkJfQ0KIAl9DQogDQorCXNlY3VyaXR5X3Rhc2tfZ2V0c2Vj
+aWQoY3VycmVudCwgJnNpZCk7DQorCXNlY3VyaXR5X3NlY2lkX3RvX3NlY2N0
+eChzaWQsICZsYWJlbCwgJmxlbik7DQorCXJldCA9IHNlY3VyaXR5X2tkYnVz
+X2Nvbm5lY3QoY29ubiwgbGFiZWwsIGxlbik7DQorCWlmIChyZXQpIHsNCisJ
+CWdvdG8gZXhpdF91bnJlZjsNCisJfQ0KKw0KIAlpZiAoYXRvbWljX2luY19y
+ZXR1cm4oJmNvbm4tPnVzZXItPmNvbm5lY3Rpb25zKSA+IEtEQlVTX1VTRVJf
+TUFYX0NPTk4pIHsNCiAJCS8qIGRlY3JlbWVudGVkIGJ5IGRlc3RydWN0b3Ig
+YXMgY29ubi0+dXNlciBpcyB2YWxpZCAqLw0KIAkJcmV0ID0gLUVNRklMRTsN
+CkBAIC0yNzYsNiArMjg2LDcgQEAgc3RhdGljIHZvaWQgX19rZGJ1c19jb25u
+X2ZyZWUoc3RydWN0IGtyZWYgKmtyZWYpDQogCWtkYnVzX3Bvb2xfZnJlZShj
+b25uLT5wb29sKTsNCiAJa2RidXNfZXBfdW5yZWYoY29ubi0+ZXApOw0KIAlw
+dXRfY3JlZChjb25uLT5jcmVkKTsNCisJc2VjdXJpdHlfa2RidXNfY29ubl9m
+cmVlKGNvbm4pOw0KIAlrZnJlZShjb25uLT5kZXNjcmlwdGlvbik7DQogCWtm
+cmVlKGNvbm4tPnF1b3RhKTsNCiAJa2ZyZWUoY29ubik7DQpAQCAtMTEwNyw2
+ICsxMTE4LDExIEBAIHN0YXRpYyBpbnQga2RidXNfY29ubl9yZXBseShzdHJ1
+Y3Qga2RidXNfY29ubiAqc3JjLCBzdHJ1Y3Qga2RidXNfa21zZyAqa21zZykN
+CiAJaWYgKHJldCA8IDApDQogCQlnb3RvIGV4aXQ7DQogDQorCXJldCA9IHNl
+Y3VyaXR5X2tkYnVzX3RhbGsoc3JjLCBkc3QpOw0KKwlpZiAocmV0KSB7DQor
+CQlnb3RvIGV4aXQ7DQorCX0NCisNCiAJbXV0ZXhfbG9jaygmZHN0LT5sb2Nr
+KTsNCiAJcmVwbHkgPSBrZGJ1c19yZXBseV9maW5kKHNyYywgZHN0LCBrbXNn
+LT5tc2cuY29va2llX3JlcGx5KTsNCiAJaWYgKHJlcGx5KSB7DQpAQCAtMTE4
+Nyw2ICsxMjAzLDExIEBAIHN0YXRpYyBzdHJ1Y3Qga2RidXNfcmVwbHkgKmtk
+YnVzX2Nvbm5fY2FsbChzdHJ1Y3Qga2RidXNfY29ubiAqc3JjLA0KIAlpZiAo
+cmV0IDwgMCkNCiAJCWdvdG8gZXhpdDsNCiANCisJcmV0ID0gc2VjdXJpdHlf
+a2RidXNfdGFsayhzcmMsIGRzdCk7DQorCWlmIChyZXQpIHsNCisJCWdvdG8g
+ZXhpdDsNCisJfQ0KKw0KIAlpZiAoIWtkYnVzX2Nvbm5fcG9saWN5X3RhbGso
+c3JjLCBjdXJyZW50X2NyZWQoKSwgZHN0KSkgew0KIAkJcmV0ID0gLUVQRVJN
+Ow0KIAkJZ290byBleGl0Ow0KQEAgLTEyNDgsNiArMTI2OSwxMSBAQCBzdGF0
+aWMgaW50IGtkYnVzX2Nvbm5fdW5pY2FzdChzdHJ1Y3Qga2RidXNfY29ubiAq
+c3JjLCBzdHJ1Y3Qga2RidXNfa21zZyAqa21zZykNCiAJaWYgKHJldCA8IDAp
+DQogCQlnb3RvIGV4aXQ7DQogDQorCXJldCA9IHNlY3VyaXR5X2tkYnVzX3Rh
+bGsoc3JjLCBkc3QpOw0KKwlpZiAocmV0KSB7DQorCQlnb3RvIGV4aXQ7DQor
+CX0NCisNCiAJaWYgKGlzX3NpZ25hbCkgew0KIAkJLyogbGlrZSBicm9hZGNh
+c3RzIHdlIGVhdmVzZHJvcCBldmVuIGlmIHRoZSBtc2cgaXMgZHJvcHBlZCAq
+Lw0KIAkJa2RidXNfYnVzX2VhdmVzZHJvcChidXMsIHNyYywga21zZyk7DQpA
+QCAtMTYzOSw2ICsxNjY1LDExIEBAIHN0cnVjdCBrZGJ1c19jb25uICprZGJ1
+c19jbWRfaGVsbG8oc3RydWN0IGtkYnVzX2VwICplcCwgYm9vbCBwcml2aWxl
+Z2VkLA0KIAkJaWYgKHJldCA8IDApDQogCQkJZ290byBleGl0Ow0KIA0KKwkJ
+cmV0ID0gc2VjdXJpdHlfa2RidXNfZXBfc2V0cG9saWN5KGMtPmVwLT5idXMp
+Ow0KKwkJaWYgKHJldCkgew0KKwkJCWdvdG8gZXhpdDsNCisJCX0NCisNCiAJ
+CXJldCA9IGtkYnVzX3BvbGljeV9zZXQoJmMtPmVwLT5idXMtPnBvbGljeV9k
+YiwgYXJncy5pdGVtcywNCiAJCQkJICAgICAgIGFyZ3MuaXRlbXNfc2l6ZSwg
+MSwNCiAJCQkJICAgICAgIGtkYnVzX2Nvbm5faXNfcG9saWN5X2hvbGRlcihj
+KSwgYyk7DQpAQCAtMTczMiw2ICsxNzYzLDEwIEBAIGludCBrZGJ1c19jbWRf
+Y29ubl9pbmZvKHN0cnVjdCBrZGJ1c19jb25uICpjb25uLCB2b2lkIF9fdXNl
+ciAqYXJncCkNCiAJaWYgKHJldCAhPSAwKQ0KIAkJcmV0dXJuIHJldDsNCiAN
+CisJcmV0ID0gc2VjdXJpdHlfa2RidXNfY29ubl9pbmZvKGNvbm4pOw0KKwlp
+ZiAocmV0KQ0KKwkJcmV0dXJuIHJldDsNCisNCiAJLyogcmVnaXN0cnkgbXVz
+dCBiZSBoZWxkIHRocm91Z2hvdXQgbG9va3VwICphbmQqIGNvbGxlY3Rpbmcg
+ZGF0YSAqLw0KIAlkb3duX3JlYWQoJmJ1cy0+bmFtZV9yZWdpc3RyeS0+cnds
+b2NrKTsNCiANCkBAIC0xOTA1LDYgKzE5NDAsMTEgQEAgaW50IGtkYnVzX2Nt
+ZF91cGRhdGUoc3RydWN0IGtkYnVzX2Nvbm4gKmNvbm4sIHZvaWQgX191c2Vy
+ICphcmdwKQ0KIAkvKiBub3cgdGhhdCB3ZSB2ZXJpZmllZCB0aGUgaW5wdXQs
+IHVwZGF0ZSB0aGUgY29ubmVjdGlvbiAqLw0KIA0KIAlpZiAoaXRlbV9wb2xp
+Y3kpIHsNCisJCXJldCA9IHNlY3VyaXR5X2tkYnVzX2VwX3NldHBvbGljeShj
+b25uLT5lcC0+YnVzKTsNCisJCWlmIChyZXQpIHsNCisJCQlnb3RvIGV4aXQ7
+DQorCQl9DQorDQogCQlyZXQgPSBrZGJ1c19wb2xpY3lfc2V0KCZjb25uLT5l
+cC0+YnVzLT5wb2xpY3lfZGIsIGNtZC0+aXRlbXMsDQogCQkJCSAgICAgICBL
+REJVU19JVEVNU19TSVpFKGNtZCwgaXRlbXMpLA0KIAkJCQkgICAgICAgMSwg
+dHJ1ZSwgY29ubik7DQpAQCAtMTk0OCw2ICsxOTg4LDEwIEBAIGludCBrZGJ1
+c19jbWRfc2VuZChzdHJ1Y3Qga2RidXNfY29ubiAqY29ubiwgc3RydWN0IGZp
+bGUgKmYsIHZvaWQgX191c2VyICphcmdwKQ0KIAkJLmFyZ2MgPSBBUlJBWV9T
+SVpFKGFyZ3YpLA0KIAl9Ow0KIA0KKwlyZXQgPSBzZWN1cml0eV9rZGJ1c19z
+ZW5kKGNvbm4sIGNvbm4tPmVwLT5idXMpOw0KKwlpZiAocmV0KQ0KKwkJcmV0
+dXJuIHJldDsNCisNCiAJaWYgKCFrZGJ1c19jb25uX2lzX29yZGluYXJ5KGNv
+bm4pKQ0KIAkJcmV0dXJuIC1FT1BOT1RTVVBQOw0KIA0KQEAgLTIwNDQsNiAr
+MjA4OCwxMCBAQCBpbnQga2RidXNfY21kX3JlY3Yoc3RydWN0IGtkYnVzX2Nv
+bm4gKmNvbm4sIHZvaWQgX191c2VyICphcmdwKQ0KIAkJLmFyZ2MgPSBBUlJB
+WV9TSVpFKGFyZ3YpLA0KIAl9Ow0KIA0KKwlyZXQgPSBzZWN1cml0eV9rZGJ1
+c19yZWN2KGNvbm4sIGNvbm4tPmVwLT5idXMpOw0KKwlpZiAocmV0KQ0KKwkJ
+cmV0dXJuIHJldDsNCisNCiAJaWYgKCFrZGJ1c19jb25uX2lzX29yZGluYXJ5
+KGNvbm4pICYmDQogCSAgICAha2RidXNfY29ubl9pc19tb25pdG9yKGNvbm4p
+ICYmDQogCSAgICAha2RidXNfY29ubl9pc19hY3RpdmF0b3IoY29ubikpDQpk
+aWZmIC0tZ2l0IGEvaXBjL2tkYnVzL2Nvbm5lY3Rpb24uaCBiL2lwYy9rZGJ1
+cy9jb25uZWN0aW9uLmgNCmluZGV4IGQxZmZlOTAuLjk1MWY5YjAgMTAwNjQ0
+DQotLS0gYS9pcGMva2RidXMvY29ubmVjdGlvbi5oDQorKysgYi9pcGMva2Ri
+dXMvY29ubmVjdGlvbi5oDQpAQCAtMTksNiArMTksNyBAQA0KICNpbmNsdWRl
+IDxsaW51eC9rcmVmLmg+DQogI2luY2x1ZGUgPGxpbnV4L2xvY2tkZXAuaD4N
+CiAjaW5jbHVkZSA8bGludXgvcGF0aC5oPg0KKyNpbmNsdWRlIDx1YXBpL2xp
+bnV4L2tkYnVzLmg+DQogDQogI2luY2x1ZGUgImxpbWl0cy5oIg0KICNpbmNs
+dWRlICJtZXRhZGF0YS5oIg0KQEAgLTczLDYgKzc0LDcgQEAgc3RydWN0IGtk
+YnVzX2ttc2c7DQogICogQG5hbWVzX3F1ZXVlX2xpc3Q6CVdlbGwta25vd24g
+bmFtZXMgdGhpcyBjb25uZWN0aW9uIHdhaXRzIGZvcg0KICAqIEBwcml2aWxl
+Z2VkOgkJV2hldGhlciB0aGlzIGNvbm5lY3Rpb24gaXMgcHJpdmlsZWdlZCBv
+biB0aGUgYnVzDQogICogQGZha2VkX21ldGE6CQlXaGV0aGVyIHRoZSBtZXRh
+ZGF0YSB3YXMgZmFrZWQgb24gSEVMTE8NCisgKiBAc2VjdXJpdHk6CQlMU00g
+c2VjdXJpdHkgYmxvYg0KICAqLw0KIHN0cnVjdCBrZGJ1c19jb25uIHsNCiAJ
+c3RydWN0IGtyZWYga3JlZjsNCkBAIC0xMTMsNiArMTE1LDEwIEBAIHN0cnVj
+dCBrZGJ1c19jb25uIHsNCiANCiAJYm9vbCBwcml2aWxlZ2VkOjE7DQogCWJv
+b2wgZmFrZWRfbWV0YToxOw0KKw0KKyNpZmRlZiBDT05GSUdfU0VDVVJJVFkN
+CisJdm9pZCAqc2VjdXJpdHk7DQorI2VuZGlmDQogfTsNCiANCiBzdHJ1Y3Qg
+a2RidXNfY29ubiAqa2RidXNfY29ubl9yZWYoc3RydWN0IGtkYnVzX2Nvbm4g
+KmNvbm4pOw0KZGlmZiAtLWdpdCBhL2lwYy9rZGJ1cy9kb21haW4uYyBiL2lw
+Yy9rZGJ1cy9kb21haW4uYw0KaW5kZXggYWM5Zjc2MC4uZTc5MDgwZiAxMDA2
+NDQNCi0tLSBhL2lwYy9rZGJ1cy9kb21haW4uYw0KKysrIGIvaXBjL2tkYnVz
+L2RvbWFpbi5jDQpAQCAtMjAsNiArMjAsNyBAQA0KICNpbmNsdWRlIDxsaW51
+eC9zaXplcy5oPg0KICNpbmNsdWRlIDxsaW51eC9zbGFiLmg+DQogI2luY2x1
+ZGUgPGxpbnV4L3VhY2Nlc3MuaD4NCisjaW5jbHVkZSA8bGludXgvc2VjdXJp
+dHkuaD4NCiANCiAjaW5jbHVkZSAiYnVzLmgiDQogI2luY2x1ZGUgImRvbWFp
+bi5oIg0KQEAgLTczLDYgKzc0LDcgQEAgc3RhdGljIHZvaWQga2RidXNfZG9t
+YWluX2ZyZWUoc3RydWN0IGtkYnVzX25vZGUgKm5vZGUpDQogCXB1dF91c2Vy
+X25zKGRvbWFpbi0+dXNlcl9uYW1lc3BhY2UpOw0KIAlpZGFfZGVzdHJveSgm
+ZG9tYWluLT51c2VyX2lkYSk7DQogCWlkcl9kZXN0cm95KCZkb21haW4tPnVz
+ZXJfaWRyKTsNCisJc2VjdXJpdHlfa2RidXNfZG9tYWluX2ZyZWUoZG9tYWlu
+KTsNCiAJa2ZyZWUoZG9tYWluKTsNCiB9DQogDQpAQCAtMTA0LDYgKzEwNiwx
+MCBAQCBzdHJ1Y3Qga2RidXNfZG9tYWluICprZGJ1c19kb21haW5fbmV3KHVu
+c2lnbmVkIGludCBhY2Nlc3MpDQogCWlkcl9pbml0KCZkLT51c2VyX2lkcik7
+DQogCWlkYV9pbml0KCZkLT51c2VyX2lkYSk7DQogDQorCXJldCA9IHNlY3Vy
+aXR5X2tkYnVzX2RvbWFpbl9hbGxvYyhkKTsNCisJaWYgKHJldCkNCisJCXJl
+dHVybiBFUlJfUFRSKHJldCk7DQorDQogCS8qIFBpbiB1c2VyIG5hbWVzcGFj
+ZSBzbyB3ZSBjYW4gZ3VhcmFudGVlIGRvbWFpbi11bmlxdWUgYnVzICogbmFt
+ZXMuICovDQogCWQtPnVzZXJfbmFtZXNwYWNlID0gZ2V0X3VzZXJfbnMoY3Vy
+cmVudF91c2VyX25zKCkpOw0KIA0KQEAgLTExNiw2ICsxMjIsNyBAQCBzdHJ1
+Y3Qga2RidXNfZG9tYWluICprZGJ1c19kb21haW5fbmV3KHVuc2lnbmVkIGlu
+dCBhY2Nlc3MpDQogZXhpdF91bnJlZjoNCiAJa2RidXNfbm9kZV9kZWFjdGl2
+YXRlKCZkLT5ub2RlKTsNCiAJa2RidXNfbm9kZV91bnJlZigmZC0+bm9kZSk7
+DQorCXNlY3VyaXR5X2tkYnVzX2RvbWFpbl9mcmVlKGQpOw0KIAlyZXR1cm4g
+RVJSX1BUUihyZXQpOw0KIH0NCiANCkBAIC0yNjQsNyArMjcxLDcgQEAgc3Rh
+dGljIHZvaWQgX19rZGJ1c191c2VyX2ZyZWUoc3RydWN0IGtyZWYgKmtyZWYp
+DQogCWlmICh1aWRfdmFsaWQodXNlci0+dWlkKSkNCiAJCWlkcl9yZW1vdmUo
+JnVzZXItPmRvbWFpbi0+dXNlcl9pZHIsIF9fa3VpZF92YWwodXNlci0+dWlk
+KSk7DQogCW11dGV4X3VubG9jaygmdXNlci0+ZG9tYWluLT5sb2NrKTsNCi0N
+CisJc2VjdXJpdHlfa2RidXNfZG9tYWluX2ZyZWUodXNlci0+ZG9tYWluKTsN
+CiAJa2RidXNfZG9tYWluX3VucmVmKHVzZXItPmRvbWFpbik7DQogCWtmcmVl
+KHVzZXIpOw0KIH0NCmRpZmYgLS1naXQgYS9pcGMva2RidXMvZG9tYWluLmgg
+Yi9pcGMva2RidXMvZG9tYWluLmgNCmluZGV4IDQ0N2EyYmQuLjRhOTM1YWEg
+MTAwNjQ0DQotLS0gYS9pcGMva2RidXMvZG9tYWluLmgNCisrKyBiL2lwYy9r
+ZGJ1cy9kb21haW4uaA0KQEAgLTMxLDYgKzMxLDcgQEANCiAgKiBAdXNlcl9p
+ZGE6CQlTZXQgb2YgYWxsIHVzZXJzIHRvIGNvbXB1dGUgc21hbGwgaW5kaWNl
+cw0KICAqIEB1c2VyX25hbWVzcGFjZToJVXNlciBuYW1lc3BhY2UsIHBpbm5l
+ZCBhdCBjcmVhdGlvbiB0aW1lDQogICogQGRlbnRyeToJCVJvb3QgZGVudHJ5
+IG9mIFZGUyBtb3VudCAoZG9uJ3QgdXNlIG91dHNpZGUgb2Yga2RidXNmcykN
+CisgKiBAc2VjdXJpdHk6CQlMU00gc2VjdXJpdHkgYmxvYg0KICAqLw0KIHN0
+cnVjdCBrZGJ1c19kb21haW4gew0KIAlzdHJ1Y3Qga2RidXNfbm9kZSBub2Rl
+Ow0KQEAgLTQwLDYgKzQxLDkgQEAgc3RydWN0IGtkYnVzX2RvbWFpbiB7DQog
+CXN0cnVjdCBpZGEgdXNlcl9pZGE7DQogCXN0cnVjdCB1c2VyX25hbWVzcGFj
+ZSAqdXNlcl9uYW1lc3BhY2U7DQogCXN0cnVjdCBkZW50cnkgKmRlbnRyeTsN
+CisjaWZkZWYgQ09ORklHX1NFQ1VSSVRZDQorCXZvaWQgKnNlY3VyaXR5Ow0K
+KyNlbmRpZg0KIH07DQogDQogLyoqDQpkaWZmIC0tZ2l0IGEvaXBjL2tkYnVz
+L2VuZHBvaW50LmMgYi9pcGMva2RidXMvZW5kcG9pbnQuYw0KaW5kZXggOWE5
+NWE1ZS4uNmZmNzRlZSAxMDA2NDQNCi0tLSBhL2lwYy9rZGJ1cy9lbmRwb2lu
+dC5jDQorKysgYi9pcGMva2RidXMvZW5kcG9pbnQuYw0KQEAgLTIxLDYgKzIx
+LDcgQEANCiAjaW5jbHVkZSA8bGludXgvc2xhYi5oPg0KICNpbmNsdWRlIDxs
+aW51eC91YWNjZXNzLmg+DQogI2luY2x1ZGUgPGxpbnV4L3Vpby5oPg0KKyNp
+bmNsdWRlIDxsaW51eC9zZWN1cml0eS5oPg0KIA0KICNpbmNsdWRlICJidXMu
+aCINCiAjaW5jbHVkZSAiY29ubmVjdGlvbi5oIg0KQEAgLTEyMiw2ICsxMjMs
+MTEgQEAgc3RydWN0IGtkYnVzX2VwICprZGJ1c19lcF9uZXcoc3RydWN0IGtk
+YnVzX2J1cyAqYnVzLCBjb25zdCBjaGFyICpuYW1lLA0KIAlrZGJ1c19wb2xp
+Y3lfZGJfaW5pdCgmZS0+cG9saWN5X2RiKTsNCiAJZS0+YnVzID0ga2RidXNf
+YnVzX3JlZihidXMpOw0KIA0KKwlyZXQgPSBzZWN1cml0eV9rZGJ1c19lcF9j
+cmVhdGUoYnVzKTsNCisJaWYgKHJldCkgew0KKwkJZ290byBleGl0X3VucmVm
+Ow0KKwl9DQorDQogCXJldCA9IGtkYnVzX25vZGVfbGluaygmZS0+bm9kZSwg
+JmJ1cy0+bm9kZSwgbmFtZSk7DQogCWlmIChyZXQgPCAwKQ0KIAkJZ290byBl
+eGl0X3VucmVmOw0KQEAgLTI2NSw2ICsyNzEsMTAgQEAgaW50IGtkYnVzX2Nt
+ZF9lcF91cGRhdGUoc3RydWN0IGtkYnVzX2VwICplcCwgdm9pZCBfX3VzZXIg
+KmFyZ3ApDQogCQkuYXJnYyA9IEFSUkFZX1NJWkUoYXJndiksDQogCX07DQog
+DQorCXJldCA9IHNlY3VyaXR5X2tkYnVzX2VwX3NldHBvbGljeShlcC0+YnVz
+KTsNCisJaWYgKHJldCkNCisJCXJldHVybiByZXQ7DQorDQogCXJldCA9IGtk
+YnVzX2FyZ3NfcGFyc2UoJmFyZ3MsIGFyZ3AsICZjbWQpOw0KIAlpZiAocmV0
+ICE9IDApDQogCQlyZXR1cm4gcmV0Ow0KZGlmZiAtLWdpdCBhL2lwYy9rZGJ1
+cy9uYW1lcy5jIGIvaXBjL2tkYnVzL25hbWVzLmMNCmluZGV4IGQ3N2VlMDgu
+LmZjYzFhNDkgMTAwNjQ0DQotLS0gYS9pcGMva2RidXMvbmFtZXMuYw0KKysr
+IGIvaXBjL2tkYnVzL25hbWVzLmMNCkBAIC0yNCw2ICsyNCw3IEBADQogI2lu
+Y2x1ZGUgPGxpbnV4L3NsYWIuaD4NCiAjaW5jbHVkZSA8bGludXgvdWFjY2Vz
+cy5oPg0KICNpbmNsdWRlIDxsaW51eC91aW8uaD4NCisjaW5jbHVkZSA8bGlu
+dXgvc2VjdXJpdHkuaD4NCiANCiAjaW5jbHVkZSAiYnVzLmgiDQogI2luY2x1
+ZGUgImNvbm5lY3Rpb24uaCINCkBAIC01MDMsNiArNTA0LDExIEBAIGludCBr
+ZGJ1c19jbWRfbmFtZV9hY3F1aXJlKHN0cnVjdCBrZGJ1c19jb25uICpjb25u
+LCB2b2lkIF9fdXNlciAqYXJncCkNCiAJCWdvdG8gZXhpdDsNCiAJfQ0KIA0K
+KwlyZXQgPSBzZWN1cml0eV9rZGJ1c19uYW1lX2FjcXVpcmUoY29ubiwgaXRl
+bV9uYW1lKTsNCisJaWYgKHJldCkgew0KKwkJZ290byBleGl0Ow0KKwl9DQor
+DQogCS8qDQogCSAqIERvIGF0b21pY19pbmNfcmV0dXJuIGhlcmUgdG8gcmVz
+ZXJ2ZSBvdXIgc2xvdCwgdGhlbiBkZWNyZW1lbnQNCiAJICogaXQgYmVmb3Jl
+IHJldHVybmluZy4NCkBAIC03MjQsNiArNzMwLDEwIEBAIGludCBrZGJ1c19j
+bWRfbGlzdChzdHJ1Y3Qga2RidXNfY29ubiAqY29ubiwgdm9pZCBfX3VzZXIg
+KmFyZ3ApDQogCWlmIChyZXQgIT0gMCkNCiAJCXJldHVybiByZXQ7DQogDQor
+CXJldCA9IHNlY3VyaXR5X2tkYnVzX25hbWVfbGlzdChjb25uLT5lcC0+YnVz
+KTsNCisJaWYgKHJldCkNCisJCXJldHVybiByZXQ7DQorDQogCS8qIGxvY2sg
+b3JkZXI6IGRvbWFpbiAtPiBidXMgLT4gZXAgLT4gbmFtZXMgLT4gY29ubiAq
+Lw0KIAlkb3duX3JlYWQoJnJlZy0+cndsb2NrKTsNCiAJZG93bl9yZWFkKCZj
+b25uLT5lcC0+YnVzLT5jb25uX3J3bG9jayk7DQpkaWZmIC0tZ2l0IGEvaXBj
+L2tkYnVzL3F1ZXVlLmMgYi9pcGMva2RidXMvcXVldWUuYw0KaW5kZXggMjVi
+YjNhZC4uOTg3MmZiNCAxMDA2NDQNCi0tLSBhL2lwYy9rZGJ1cy9xdWV1ZS5j
+DQorKysgYi9pcGMva2RidXMvcXVldWUuYw0KQEAgLTI4LDYgKzI4LDcgQEAN
+CiAjaW5jbHVkZSA8bGludXgvc2xhYi5oPg0KICNpbmNsdWRlIDxsaW51eC9z
+eXNjYWxscy5oPg0KICNpbmNsdWRlIDxsaW51eC91aW8uaD4NCisjaW5jbHVk
+ZSA8bGludXgvc2VjdXJpdHkuaD4NCiANCiAjaW5jbHVkZSAidXRpbC5oIg0K
+ICNpbmNsdWRlICJkb21haW4uaCINCkBAIC01MTQsMTIgKzUxNSwxNyBAQCBp
+bnQga2RidXNfcXVldWVfZW50cnlfaW5zdGFsbChzdHJ1Y3Qga2RidXNfcXVl
+dWVfZW50cnkgKmVudHJ5LA0KIA0KIAkJZm9yIChpID0gMDsgaSA8IHJlcy0+
+ZmRzX2NvdW50OyBpKyspIHsNCiAJCQlpZiAoaW5zdGFsbF9mZHMpIHsNCi0J
+CQkJZmRzW2ldID0gZ2V0X3VudXNlZF9mZF9mbGFncyhPX0NMT0VYRUMpOw0K
+LQkJCQlpZiAoZmRzW2ldID49IDApDQotCQkJCQlmZF9pbnN0YWxsKGZkc1tp
+XSwNCi0JCQkJCQkgICBnZXRfZmlsZShyZXMtPmZkc1tpXSkpOw0KLQkJCQll
+bHNlDQorCQkJCWlmIChzZWN1cml0eV9maWxlX3JlY2VpdmUocmVzLT5mZHNb
+aV0pKSB7DQorCQkJCQlmZHNbaV0gPSAtMTsNCiAJCQkJCWluY29tcGxldGVf
+ZmRzID0gdHJ1ZTsNCisJCQkJfSBlbHNlIHsNCisJCQkJCWZkc1tpXSA9IGdl
+dF91bnVzZWRfZmRfZmxhZ3MoT19DTE9FWEVDKTsNCisJCQkJCWlmIChmZHNb
+aV0gPj0gMCkNCisJCQkJCQlmZF9pbnN0YWxsKGZkc1tpXSwNCisJCQkJCQkJ
+Z2V0X2ZpbGUocmVzLT5mZHNbaV0pKTsNCisJCQkJCWVsc2UNCisJCQkJCQlp
+bmNvbXBsZXRlX2ZkcyA9IHRydWU7DQorCQkJCX0NCiAJCQl9IGVsc2Ugew0K
+IAkJCQlmZHNbaV0gPSAtMTsNCiAJCQl9DQpAQCAtNTU3LDEzICs1NjMsMTcg
+QEAgaW50IGtkYnVzX3F1ZXVlX2VudHJ5X2luc3RhbGwoc3RydWN0IGtkYnVz
+X3F1ZXVlX2VudHJ5ICplbnRyeSwNCiAJCW0uZmQgPSAtMTsNCiANCiAJCWlm
+IChpbnN0YWxsX2Zkcykgew0KLQkJCW0uZmQgPSBnZXRfdW51c2VkX2ZkX2Zs
+YWdzKE9fQ0xPRVhFQyk7DQotCQkJaWYgKG0uZmQgPCAwKSB7DQotCQkJCW0u
+ZmQgPSAtMTsNCisJCQlpZiAoc2VjdXJpdHlfZmlsZV9yZWNlaXZlKGQtPm1l
+bWZkLmZpbGUpKSB7DQogCQkJCWluY29tcGxldGVfZmRzID0gdHJ1ZTsNCiAJ
+CQl9IGVsc2Ugew0KLQkJCQlmZF9pbnN0YWxsKG0uZmQsDQotCQkJCQkgICBn
+ZXRfZmlsZShkLT5tZW1mZC5maWxlKSk7DQorCQkJCW0uZmQgPSBnZXRfdW51
+c2VkX2ZkX2ZsYWdzKE9fQ0xPRVhFQyk7DQorCQkJCWlmIChtLmZkIDwgMCkg
+ew0KKwkJCQkJbS5mZCA9IC0xOw0KKwkJCQkJaW5jb21wbGV0ZV9mZHMgPSB0
+cnVlOw0KKwkJCQl9IGVsc2Ugew0KKwkJCQkJZmRfaW5zdGFsbChtLmZkLA0K
+KwkJCQkJCWdldF9maWxlKGQtPm1lbWZkLmZpbGUpKTsNCisJCQkJfQ0KIAkJ
+CX0NCiAJCX0NCiANCi0tIA0KMS45LjENCg0K
 
-Please read actual patches.  In roughly 600 new LOC they are doing
-mainly two things:
-
-* adding possibility to have more than one /dev/kmsg device & kernel
-  log buffer (~200 LOC)
-
-* adding user interface for managing these additional devices/buffers
-  (~400 LOC)
-
-I actually imagine that some time in the future we may also want to
-have separate kernel log buffers for kernel usage itself..
-
-> >>> * Possibility of using it with pstore: This code could be extended to log additional buffers to persistent storage same way main (kmsg) log buffer is.
-> >> pstorefs and friends?
-> > 
-> > pstore filesystem is used to access already stored kernel data (e.g. kmsg buffer). But does not provide mechanism of storing userspace memory.
-> 
-> Which can be easily improved. Again, it will be less complex than your current approach.
-> 
-> >>> * Use case of attaching file descriptor to stdout/stderr: Especially in early userspace.
-> >> You can redirect these also in userspace.
-> > 
-> > True for that, but as I said in my first argument there is no possibility of logging process identification in case of sockets.
-> > 
-> > 
-> >>> * Performance: Those services mentioned by You are weeker solutions in that case. Especially systemd-journald is much too heavy soulution.
-> >> Do you have numbers? I agree systemd-journald is heavy wight. But it is by far not the only logging daemon we have...
-> > 
-> > I compared write operations on kmsg buffervia write/read operations on socketon SOCK_STREAM socket and sendmsg/recv on SOCK_DGRAM socket. Compared toSOCK_STREAM socket it was about
-> > 39% slowerbut compared toSOCK_DGRAM socket it was about 326% faster.syslogfor example uses SOCK_DGRAM sockets.In all cases there were 2^20 (1048576) write/sendmsg operations of 2^8
-> > (256) bytes.
-> 
-> I still think the whole approach is wrong. Instead of giving up and going to kernel land, come up with a minimal userspace ringbuffer-syslogd.
-> If the kernel lacks some support you need, add it. But don't move the whole thing int the kernel.
-
-When it comes to possibility of logging things from user space to
-kernel log buffer (through /dev/kmsg) then it has been added 3 years
-ago in v3.5..
-
-The changes being proposed are not doing what you're are trying to
-imply - this is not kernel syslogd (like kdbus is a kernel dbus
-implementation).  They are merely enhancing existing /dev/kmsg
-interface and may be useful also for kernel logging purposes some
-time in the future..
-
-Best regards,
---
-Bartlomiej Zolnierkiewicz
-Samsung R&D Institute Poland
-Samsung Electronics
+--8323329-1448733694-1436357538=:12441--
