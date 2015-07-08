@@ -1,98 +1,31 @@
-From: Casey Schaufler <casey@schaufler-ca.com>
-Subject: Re: [RFC 0/8] Introduce LSM to KDBUS
-Date: Wed, 08 Jul 2015 09:46:50 -0700
-Message-ID: <559D53FA.10001@schaufler-ca.com>
-References: <1436351110-5902-1-git-send-email-p.osmialowsk@samsung.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH V3 0/5] Allow user to request memory to be locked on
+ page fault
+Date: Wed, 8 Jul 2015 10:00:08 -0700
+Message-ID: <20150708100008.e8a000ec.akpm@linux-foundation.org>
+References: <1436288623-13007-1-git-send-email-emunson@akamai.com>
+	<20150707141613.f945c98279dcb71c9743d5f2@linux-foundation.org>
+	<20150708132302.GB4669@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1436351110-5902-1-git-send-email-p.osmialowsk@samsung.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Osmialowski <p.osmialowsk@samsung.com>, Paul Moore <pmoore@redhat.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, Kees Cook <keescook@chromium.org>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Stephen Smalley <sds@tycho.nsa.gov>, Neil Brown <neilb@suse.de>, Mark Rustad <mark.d.rustad@intel.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Daniel Mack <daniel@zonque.org>, David Herrmann <dh.herrmann@googlemail.com>, Djalal Harouni <tixxdz@opendz.org>, Shuah Khan <shuahkh@osg.samsung.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Karol Lewandowski <k.lewandowsk@samsung.com>, Lukasz Skalski <l.skalski@samsung.com>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20150708132302.GB4669@akamai.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Eric B Munson <emunson@akamai.com>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, Michal Hocko <mhocko@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, Vlastimil Babka <vbabka@suse.cz>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 7/8/2015 3:25 AM, Paul Osmialowski wrote:
-> This patchset partially summarizes effects of collective work by
-> Karol Lewandowski and Paul Moore towards introduction of LSM into KDBUS.
->
-> These patches originate from following git repositories:
->
-> git://git.infradead.org/users/pcmoore/selinux (branch: working-kdbus)
->
-> https://github.com/lmctl/linux.git (branch: kdbus-lsm-v4.for-systemd-v212)
->
-> https://github.com/lmctl/kdbus.git (branch: kdbus-lsm-v4.for-systemd-v212)
->
-> Since kdbus made its way to linux-next tree, I was kindly asked by
-> Karol Lewandowski to fit his work into the current kdbus code existing
-> there.
->
-> As both kdbus and security related code changed a bit, so are my changes
-> quite substantial in places.
->
-> Note that SELinux kdbus access control patches are absent - only SMACK part
-> of original work is included.
+On Wed, 8 Jul 2015 09:23:02 -0400 Eric B Munson <emunson@akamai.com> wrote:
 
-Patches 2 and 3 need to be reversed. You can't add the Smack hooks
-until you've added the infrastructure for them.
+> > I don't know whether these syscalls should be documented via new
+> > manpages, or if we should instead add them to the existing
+> > mlock/munlock/mlockall manpages.  Michael, could you please advise?
+> > 
+> 
+> Thanks for adding the series.  I owe you several updates (getting the
+> new syscall right for all architectures and a set of tests for the new
+> syscalls).  Would you prefer a new pair of patches or I update this set?
 
-My comments should in no way be construed as an endorsement of kdbus.
-
->
-> I've also made some changes to kdbus test suite. In order to see LSM hooks
-> in action we need to be able to run tests from different executable
-> binaries holding different security labels.
->
-> Therefore I added ability to select execution of particular test by
-> executed binary name. This is essential for running newly added 'send' test
-> which should communicate with 'daemon' test running in another process.
->
-> Karol Lewandowski (1):
->   lsm: make security_file_receive available for external modules
->
-> Paul Osmialowski (7):
->   lsm: smack: Make ipc/kdbus includes visible so smack callbacks could
->     see them
->   lsm: kdbus security hooks
->   lsm: smack: smack callbacks for kdbus security hooks
->   kdbus: use LSM hooks in kdbus code
->   kdbus: TEST_CREATE_CONN now does no depend on TEST_CREATE_BUS
->   kdbus: selftests extended
->   kdbus: Ability to run kdbus test by executable binary name
->
->  include/linux/lsm_hooks.h                        |  67 +++++++++++++
->  include/linux/security.h                         |  99 +++++++++++++++++++
->  ipc/kdbus/bus.c                                  |  12 ++-
->  ipc/kdbus/bus.h                                  |   3 +
->  ipc/kdbus/connection.c                           |  54 +++++++++++
->  ipc/kdbus/connection.h                           |   4 +
->  ipc/kdbus/domain.c                               |   9 +-
->  ipc/kdbus/domain.h                               |   2 +
->  ipc/kdbus/endpoint.c                             |  11 +++
->  ipc/kdbus/names.c                                |  11 +++
->  ipc/kdbus/queue.c                                |  30 ++++--
->  security/security.c                              | 118 +++++++++++++++++++++++
->  security/smack/Makefile                          |   2 +
->  security/smack/smack_lsm.c                       |  68 +++++++++++++
->  tools/testing/selftests/kdbus/Makefile           |   1 +
->  tools/testing/selftests/kdbus/kdbus-test.c       |  37 ++++++-
->  tools/testing/selftests/kdbus/kdbus-test.h       |   1 +
->  tools/testing/selftests/kdbus/kdbus-util.c       |  37 ++++---
->  tools/testing/selftests/kdbus/kdbus-util.h       |   2 +-
->  tools/testing/selftests/kdbus/test-activator.c   |  20 ++--
->  tools/testing/selftests/kdbus/test-chat.c        |   6 +-
->  tools/testing/selftests/kdbus/test-connection.c  |   8 +-
->  tools/testing/selftests/kdbus/test-fd.c          |   2 +-
->  tools/testing/selftests/kdbus/test-message.c     |  69 ++++++++-----
->  tools/testing/selftests/kdbus/test-metadata-ns.c |  10 +-
->  tools/testing/selftests/kdbus/test-monitor.c     |   9 +-
->  tools/testing/selftests/kdbus/test-policy-ns.c   |   8 +-
->  tools/testing/selftests/kdbus/test-policy-priv.c |  48 +++++----
->  tools/testing/selftests/kdbus/test-send.c        |  84 ++++++++++++++++
->  tools/testing/selftests/kdbus/test-sync.c        |   2 +-
->  tools/testing/selftests/kdbus/test-timeout.c     |   2 +-
->  31 files changed, 732 insertions(+), 104 deletions(-)
->  create mode 100644 tools/testing/selftests/kdbus/test-send.c
->
+It doesn't matter much.  I guess a full update will be more convenient
+at your end.
