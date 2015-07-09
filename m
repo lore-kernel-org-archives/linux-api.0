@@ -1,130 +1,90 @@
-From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Subject: Re: [PATCH tip/master ] ftracetest: Update kprobe-tracer testcases
- because of renaming do_fork
-Date: Thu, 9 Jul 2015 08:03:11 -0400
-Message-ID: <20150709080311.37ae53c3@grimm.local.home>
-References: <20150709101012.21228.45338.stgit@localhost.localdomain>
+From: Daniel Vetter <daniel@ffwll.ch>
+Subject: Re: [RFCv3 0/5] enable migration of driver pages
+Date: Thu, 9 Jul 2015 15:08:48 +0200
+Message-ID: <20150709130848.GD21858@phenom.ffwll.local>
+References: <1436243785-24105-1-git-send-email-gioh.kim@lge.com>
+ <20150707153701.bfcde75108d1fb8aaedc8134@linux-foundation.org>
+ <559C68B3.3010105@lge.com>
+ <20150707170746.1b91ba0d07382cbc9ba3db92@linux-foundation.org>
+ <559C6CA6.1050809@lge.com>
+ <CAPM=9txmUJ58=CAxDhf12Y3Y8wz7CGBy-Bd4pQ8YAAKDsCxU8w@mail.gmail.com>
+ <559DB86D.40000@lge.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150709101012.21228.45338.stgit-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
-Cc: Vince Weaver <vincent.weaver-e7X0jjDqjFGHXe+LvDLADg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <559DB86D.40000@lge.com>
+Sender: owner-linux-mm@kvack.org
+To: Gioh Kim <gioh.kim@lge.com>
+Cc: Dave Airlie <airlied@gmail.com>, dri-devel <dri-devel@lists.freedesktop.org>, Andrew Morton <akpm@linux-foundation.org>, jlayton@poochiereds.net, bfields@fieldses.org, vbabka@suse.cz, iamjoonsoo.kim@lge.com, Al Viro <viro@zeniv.linux.org.uk>, "Michael S. Tsirkin" <mst@redhat.com>, koct9i@gmail.com, minchan@kernel.org, aquini@redhat.com, linux-fsdevel@vger.kernel.org, "open list:VIRTIO CORE, NET..." <virtualization@lists.linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, open@kvack.org, list@kvack.org, ABI/API <linux-api@vger.kernel.org>, Linux Memory Management List <linux-mm@kvack.org>, gunho.lee@lge.com, Gioh Kim <gurugio@hanmail.net>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 09 Jul 2015 19:10:12 +0900
-Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org> wrote:
+On Thu, Jul 09, 2015 at 08:55:25AM +0900, Gioh Kim wrote:
+>=20
+>=20
+> 2015-07-09 =EC=98=A4=EC=A0=84 7:47=EC=97=90 Dave Airlie =EC=9D=B4(=EA=B0=
+=80) =EC=93=B4 =EA=B8=80:
+> >>>
+> >>>
+> >>>Can the various in-kernel GPU drivers benefit from this?  If so, wir=
+ing
+> >>>up one or more of those would be helpful?
+> >>
+> >>
+> >>I'm sure that other in-kernel GPU drivers can have benefit.
+> >>It must be helpful.
+> >>
+> >>If I was familiar with other in-kernel GPU drivers code, I tried to p=
+atch
+> >>them.
+> >>It's too bad.
+> >
+> >I'll bring dri-devel into the loop here.
+> >
+> >ARM GPU developers please take a look at this stuff, Laurent, Rob,
+> >Eric I suppose.
+>=20
+> I sent a patch, https://lkml.org/lkml/2015/3/24/1182, and my opinion ab=
+out compaction
+> to ARM GPU developers via Korea ARM branch.
+> I got a reply that they had no time to review it.
+>=20
+> I hope they're interested to this patch.
 
->  echo 0 > events/enable
->  echo > kprobe_events
-> -echo p:myevent do_fork > kprobe_events
-> +echo p:myevent _do_fork > kprobe_events
->  grep myevent kprobe_events
->  test -d events/kprobes/myevent
->  echo > kprobe_events
-> diff --git a/tools/testing/selftests/ftrace/test.d/kprobe/busy_check.tc b/tools/testing/selftests/ftrace/test.d/kprobe/busy_check.tc
-> index d8c7bb6..74507db 100644
-> --- a/tools/testing/selftests/ftrace/test.d/kprobe/busy_check.tc
-> +++ b/tools/testing/selftests/ftrace/test.d/kprobe/busy_check.tc
-> @@ -5,7 +5,7 @@
->  
->  echo 0 > events/enable
->  echo > kprobe_events
-> -echo p:myevent do_fork > kprobe_events
-> +echo p:myevent _do_fork > kprobe_events
->  test -d events/kprobes/myevent
->  echo 1 > events/kprobes/myevent/enable
->  echo > kprobe_events && exit 1 # this must fail
-> diff --git a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_args.tc b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_args.tc
-> index c45ee27..64949d4 100644
-> --- a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_args.tc
-> +++ b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_args.tc
-> @@ -5,7 +5,7 @@
->  
->  echo 0 > events/enable
->  echo > kprobe_events
-> -echo 'p:testprobe do_fork $stack $stack0 +0($stack)' > kprobe_events
-> +echo 'p:testprobe _do_fork $stack $stack0 +0($stack)' > kprobe_events
->  grep testprobe kprobe_events
->  test -d events/kprobes/testprobe
->  echo 1 > events/kprobes/testprobe/enable
-> diff --git a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_ftrace.tc b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_ftrace.tc
-> index ab41d2b..d6f2f49 100644
-> --- a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_ftrace.tc
-> +++ b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_ftrace.tc
-> @@ -6,31 +6,31 @@ grep function available_tracers || exit_unsupported # this is configurable
->  
->  # prepare
->  echo nop > current_tracer
-> -echo do_fork > set_ftrace_filter
-> +echo _do_fork > set_ftrace_filter
->  echo 0 > events/enable
->  echo > kprobe_events
-> -echo 'p:testprobe do_fork' > kprobe_events
-> +echo 'p:testprobe _do_fork' > kprobe_events
->  
->  # kprobe on / ftrace off
->  echo 1 > events/kprobes/testprobe/enable
->  echo > trace
->  ( echo "forked")
->  grep testprobe trace
-> -! grep 'do_fork <-' trace
-> +! grep '_do_fork <-' trace
->  
->  # kprobe on / ftrace on
->  echo function > current_tracer
->  echo > trace
->  ( echo "forked")
->  grep testprobe trace
-> -grep 'do_fork <-' trace
-> +grep '_do_fork <-' trace
->  
->  # kprobe off / ftrace on
->  echo 0 > events/kprobes/testprobe/enable
->  echo > trace
->  ( echo "forked")
->  ! grep testprobe trace
-> -grep 'do_fork <-' trace
-> +grep '_do_fork <-' trace
->  
->  # kprobe on / ftrace on
->  echo 1 > events/kprobes/testprobe/enable
-> @@ -38,14 +38,14 @@ echo function > current_tracer
->  echo > trace
->  ( echo "forked")
->  grep testprobe trace
-> -grep 'do_fork <-' trace
-> +grep '_do_fork <-' trace
->  
->  # kprobe on / ftrace off
->  echo nop > current_tracer
->  echo > trace
->  ( echo "forked")
->  grep testprobe trace
-> -! grep 'do_fork <-' trace
-> +! grep '_do_fork <-' trace
->  
->  # cleanup
->  echo nop > current_tracer
-> diff --git a/tools/testing/selftests/ftrace/test.d/kprobe/kretprobe_args.tc b/tools/testing/selftests/ftrace/test.d/kprobe/kretprobe_args.tc
-> index 3171798..0d09546 100644
-> --- a/tools/testing/selftests/ftrace/test.d/kprobe/kretprobe_args.tc
-> +++ b/tools/testing/selftests/ftrace/test.d/kprobe/kretprobe_args.tc
-> @@ -5,7 +5,7 @@
->  
->  echo 0 > events/enable
->  echo > kprobe_events
-> -echo 'r:testprobe2 do_fork $retval' > kprobe_events
-> +echo 'r:testprobe2 _do_fork $retval' > kprobe_events
->  grep testprobe2 kprobe_events
->  test -d events/kprobes/testprobe2
->  echo 1 > events/kprobes/testprobe2/enable
+i915 gpus would support 64kb and 2mb pages, but we never implemented this=
+.
+I don't think this would fit for gem based drivers since our backing
+storage is shmemfs. So if we want to implement page migration (which we'd
+probably want to make large pages work well) we'd need to pimp shmem to a=
+)
+hand large pages to us b) forward the migrate calls. Probably that means
+we need to build our own gemfs reusing shmemfs code.
 
+I guess something similar would apply for ttm-based drivers (which use
+shmemfs just for swap-in/out but otherwise have their own page allocator,
+at least sometimes).
 
-Instead of hard coding the name, what about adding a global variable
-for the function, in case we need to change it again, it would only
-need to be changed in one place?
+Given all that I'd expect anything implementing migrate to just create a
+gpufs thing for the backing storage, no need for more hooks. There's also
+other areas for better code sharing among gpu drivers (e.g. mmu notifiers
+to get off userspace pages slurped in&pinned with gup or shrinker
+callbacks to get the gpu off it's memory binge). But that would all be
+helper libraries in drm, not sure we need anything new from the core vm.
 
--- Steve
+Also there's a bit a lack of gpu drivers from the arm world in upstream,
+which is probabyl why this patch series doesn't come with a user. Might b=
+e
+better to first upstream the driver before talking about additional
+infrastructure that it needs.
+-Daniel
+--=20
+Daniel Vetter
+Software Engineer, Intel Corporation
+http://blog.ffwll.ch
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
