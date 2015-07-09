@@ -1,149 +1,98 @@
-From: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
-Subject: Re: [RFC 4/8] lsm: smack: smack callbacks for kdbus security hooks
-Date: Thu, 09 Jul 2015 08:24:18 -0700
-Message-ID: <559E9222.8060604@schaufler-ca.com>
-References: <1436351110-5902-1-git-send-email-p.osmialowsk@samsung.com> <1436351110-5902-5-git-send-email-p.osmialowsk@samsung.com> <20150709100808.GH25971@localhost.localdomain>
+From: Eric B Munson <emunson@akamai.com>
+Subject: Re: [PATCH V3 3/5] mm: mlock: Introduce VM_LOCKONFAULT and add mlock
+ flags to enable it
+Date: Thu, 9 Jul 2015 14:46:35 -0400
+Message-ID: <20150709184635.GE4669@akamai.com>
+References: <1436288623-13007-1-git-send-email-emunson@akamai.com>
+ <1436288623-13007-4-git-send-email-emunson@akamai.com>
+ <20150708132351.61c13db6@lwn.net>
+ <20150708203456.GC4669@akamai.com>
+ <20150708151750.75e65859@lwn.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150709100808.GH25971-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sergei Zviagintsev <sergei-E844GTqJAzo@public.gmane.org>, Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
-Cc: Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Mark Rustad <mark.d.rustad-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, David Herrmann <dh.herrmann-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Lukasz Skalski <l.skalski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="d8Lz2Tf5e5STOWUP"
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20150708151750.75e65859@lwn.net>
+Sender: owner-linux-mm@kvack.org
+To: Jonathan Corbet <corbet@lwn.net>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 7/9/2015 3:08 AM, Sergei Zviagintsev wrote:
-> Hi,
->
-> On Wed, Jul 08, 2015 at 12:25:06PM +0200, Paul Osmialowski wrote:
->> This adds implementation of three smack callbacks sitting behind kdbus
->> security hooks as proposed by Karol Lewandowski.
->>
->> Originates from:
->>
->> git://git.infradead.org/users/pcmoore/selinux (branch: working-kdbus)
->> commit: fc3505d058c001fe72a6f66b833e0be5b2d118f3
->>
->> https://github.com/lmctl/linux.git (branch: kdbus-lsm-v4.for-systemd-v212)
->> commit: 103c26fd27d1ec8c32d85dd3d85681f936ac66fb
->>
->> Signed-off-by: Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
->> Signed-off-by: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
->> ---
->>  security/smack/smack_lsm.c | 68 ++++++++++++++++++++++++++++++++++++++++++++++
->>  1 file changed, 68 insertions(+)
->>
->> diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
->> index a143328..033b756 100644
->> --- a/security/smack/smack_lsm.c
->> +++ b/security/smack/smack_lsm.c
->> @@ -41,6 +41,7 @@
->>  #include <linux/msg.h>
->>  #include <linux/shm.h>
->>  #include <linux/binfmts.h>
->> +#include <kdbus/connection.h>
->>  #include "smack.h"
->>  
->>  #define TRANS_TRUE	"TRUE"
->> @@ -3336,6 +3337,69 @@ static int smack_setprocattr(struct task_struct *p, char *name,
->>  }
->>  
->>  /**
->> + * smack_kdbus_connect - Set the security blob for a KDBus connection
->> + * @conn: the connection
->> + * @secctx: smack label
->> + * @seclen: smack label length
->> + *
->> + * Returns 0
->> + */
->> +static int smack_kdbus_connect(struct kdbus_conn *conn,
->> +			       const char *secctx, u32 seclen)
->> +{
->> +	struct smack_known *skp;
->> +
->> +	if (secctx && seclen > 0)
->> +		skp = smk_import_entry(secctx, seclen);
->> +	else
->> +		skp = smk_of_current();
->> +	conn->security = skp;
->> +
->> +	return 0;
->> +}
->> +
->> +/**
->> + * smack_kdbus_conn_free - Clear the security blob for a KDBus connection
->> + * @conn: the connection
->> + *
->> + * Clears the blob pointer
->> + */
->> +static void smack_kdbus_conn_free(struct kdbus_conn *conn)
->> +{
->> +	conn->security = NULL;
->> +}
->> +
->> +/**
->> + * smack_kdbus_talk - Smack access on KDBus
->> + * @src: source kdbus connection
->> + * @dst: destination kdbus connection
->> + *
->> + * Return 0 if a subject with the smack of sock could access
->> + * an object with the smack of other, otherwise an error code
->> + */
->> +static int smack_kdbus_talk(const struct kdbus_conn *src,
->> +			    const struct kdbus_conn *dst)
->> +{
->> +	struct smk_audit_info ad;
->> +	struct smack_known *sskp = src->security;
->> +	struct smack_known *dskp = dst->security;
->> +	int ret;
->> +
->> +	BUG_ON(sskp == NULL);
->> +	BUG_ON(dskp == NULL);
-> I am not familiar with the smack code so far, but I see that current
-> security/smack/smack_lsm.c contains only one BUG_ON and this patch adds
-> another two.
 
-Smack does not use BUG_ON for routine error checking. If there
-is reason to expect that these values will not be set the case
-should be checked for and handled. Otherwise, I don't believe
-in cluttering the code with assertions.
+--d8Lz2Tf5e5STOWUP
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
->
->> +
->> +	if (smack_privileged(CAP_MAC_OVERRIDE))
->> +		return 0;
->> +
->> +	smk_ad_init(&ad, __func__, LSM_AUDIT_DATA_NONE);
->> +
->> +	ret = smk_access(sskp, dskp, MAY_WRITE, &ad);
->> +	if (ret)
->> +		return ret;
->> +	return 0;
-> Three redundant lines here.
->
->> +}
->> +
->> +/**
->>   * smack_unix_stream_connect - Smack access on UDS
->>   * @sock: one sock
->>   * @other: the other sock
->> @@ -4393,6 +4457,10 @@ struct security_hook_list smack_hooks[] = {
->>  	LSM_HOOK_INIT(inode_notifysecctx, smack_inode_notifysecctx),
->>  	LSM_HOOK_INIT(inode_setsecctx, smack_inode_setsecctx),
->>  	LSM_HOOK_INIT(inode_getsecctx, smack_inode_getsecctx),
->> +
->> +	LSM_HOOK_INIT(kdbus_connect, smack_kdbus_connect),
->> +	LSM_HOOK_INIT(kdbus_conn_free, smack_kdbus_conn_free),
->> +	LSM_HOOK_INIT(kdbus_talk, smack_kdbus_talk),
->>  };
->>  
->>  
->> -- 
->> 1.9.1
->>
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
->> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->> Please read the FAQ at  http://www.tux.org/lkml/
+On Wed, 08 Jul 2015, Jonathan Corbet wrote:
+
+> On Wed, 8 Jul 2015 16:34:56 -0400
+> Eric B Munson <emunson@akamai.com> wrote:
+>=20
+> > > Quick, possibly dumb question: I've been beating my head against thes=
+e for
+> > > a little bit, and I can't figure out what's supposed to happen in this
+> > > case:
+> > >=20
+> > > 	mlock2(addr, len, MLOCK_ONFAULT);
+> > > 	munlock2(addr, len, MLOCK_LOCKED);
+> > >=20
+> > > It looks to me like it will clear VM_LOCKED without actually unlockin=
+g any
+> > > pages.  Is that the intended result? =20
+> >=20
+> > This is not quite right, what happens when you call munlock2(addr, len,
+> > MLOCK_LOCKED); is we call apply_vma_flags(addr, len, VM_LOCKED, false).
+>=20
+> From your explanation, it looks like what I said *was* right...what I was
+> missing was the fact that VM_LOCKED isn't set in the first place.  So that
+> call would be a no-op, clearing a flag that's already cleared.
+
+Sorry, I misread the original.  You are correct with the addition that
+the call to munlock2(MLOCK_LOCKED) is a noop in this case.
+
+>=20
+> One other question...if I call mlock2(MLOCK_ONFAULT) on a range that
+> already has resident pages, I believe that those pages will not be locked
+> until they are reclaimed and faulted back in again, right?  I suspect that
+> could be surprising to users.
+
+That is the case.  I am looking into what it would take to find only the
+present pages in a range and lock them, if that is the behavior that is
+preferred I can include it in the updated series.
+
+>=20
+> Thanks,
+>=20
+> jon
+
+--d8Lz2Tf5e5STOWUP
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJVnsGLAAoJELbVsDOpoOa9fD4P+wfJut0yfq/Eut90zuluJASG
+y2/MKnGXk/YAwdE9jVyUs/if3S6y9E+nzr9h10jjiAzl7Ek3fbjvGQGtSJee0nxv
+xprvjrX8StCUyubIAdvuvBDAQ2uruWlWPt0/WYlTppmm3Ws7sXk6Rc9uyAaYvO8k
+cb/3b2hDUz4X3buHx7rbontLHI+PkJyOMC0wwhlgc/TnIyGAOINbxf4jYR9MTOP1
+OjpudgitD2855bIJVi9VnOkbG7tvRqJA5azlVkcwlUBqezjSKz5K+NANc4zL5xQ1
+uBN9QJXvbiGBzpKXSjmCgtQYRpUq5fN4hZOjq3lo6nill+E+F6eL415ON/5mpRvR
+8JeYOUZt/Gua6W0fxLTscnp3E5cpu4oUrzY43J9jJ5HA34s0W8mj/ssey/lDxUo/
+LzoeORqwByyNuESJHtHSYJUB24FDQeQJ1cjMLqoZmpyjlFnUoVgzFox+jdtwZ80P
+3LMoWN7h6NyQ6GtQDHF1033vsxAHBQ04x96kch9Ztx3BGoWVZoXO1Lsr6X6EHCIV
+DmQW1k8HPLsUbkXtOlGR36opxF1fbdBzAyN7V8rWXnNFiyDCl/ImUtEVKQ/VPp9k
+T2FjdgDFkTetH6KHVOztE1Ya08wHX4Yy/qxxFH1sPMfVIHFUE7ATTP+00Oc30E32
+vBEzC6L/dMQNWWAIbaEJ
+=CLFc
+-----END PGP SIGNATURE-----
+
+--d8Lz2Tf5e5STOWUP--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
