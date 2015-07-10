@@ -1,65 +1,99 @@
-From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH v7 7/9] nvmem: qfprom: Add bindings for qfprom
-Date: Fri, 10 Jul 2015 10:45:42 +0100
-Message-ID: <1436521542-10973-1-git-send-email-srinivas.kandagatla@linaro.org>
+From: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH v7 1/9] nvmem: Add a simple NVMEM framework for nvmem
+ providers
+Date: Fri, 10 Jul 2015 03:29:05 -0700
+Message-ID: <1436524145.24866.21.camel@perches.com>
 References: <1436521427-10568-1-git-send-email-srinivas.kandagatla@linaro.org>
+	 <1436521486-10682-1-git-send-email-srinivas.kandagatla@linaro.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1436521427-10568-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+In-Reply-To: <1436521486-10682-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, stefan.wahren-eS4NqCHxEME@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, stefan.wahren-eS4NqCHxEME@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds bindings for qfprom found in QCOM SOCs. QFPROM driver
-is based on simple nvmem framework.
+On Fri, 2015-07-10 at 10:44 +0100, Srinivas Kandagatla wrote:
+> This patch adds just providers part of the framework just to enable easy
+> review.
 
-Reviewed-by: Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
----
- Documentation/devicetree/bindings/nvmem/qfprom.txt | 35 ++++++++++++++++++++++
- 1 file changed, 35 insertions(+)
- create mode 100644 Documentation/devicetree/bindings/nvmem/qfprom.txt
+Trivial notes:
 
-diff --git a/Documentation/devicetree/bindings/nvmem/qfprom.txt b/Documentation/devicetree/bindings/nvmem/qfprom.txt
-new file mode 100644
-index 0000000..4ad68b7
---- /dev/null
-+++ b/Documentation/devicetree/bindings/nvmem/qfprom.txt
-@@ -0,0 +1,35 @@
-+= Qualcomm QFPROM device tree bindings =
-+
-+This binding is intended to represent QFPROM which is found in most QCOM SOCs.
-+
-+Required properties:
-+- compatible: should be "qcom,qfprom"
-+- reg: Should contain registers location and length
-+
-+= Data cells =
-+Are child nodes of qfprom, bindings of which as described in
-+bindings/nvmem/nvmem.txt
-+
-+Example:
-+
-+	qfprom: qfprom@00700000 {
-+		compatible 	= "qcom,qfprom";
-+		reg		= <0x00700000 0x8000>;
-+		...
-+		/* Data cells */
-+		tsens_calibration: calib@404 {
-+			reg = <0x4404 0x10>;
-+		};
-+	};
-+
-+
-+= Data consumers =
-+Are device nodes which consume nvmem data cells.
-+
-+For example:
-+
-+	tsens {
-+		...
-+		nvmem-cells = <&tsens_calibration>;
-+		nvmem-cell-names = "calibration";
-+	};
--- 
-1.9.1
+> diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
+
+> +struct nvmem_device {
+> +	const char		*name;
+> +	struct regmap		*regmap;
+[]
+> +struct nvmem_cell {
+> +	const char *name;
+> +	int			offset;
+> +	int			bytes;
+
+It'd be nicer to use consistent indentation for *name
+in nvmem_cell
+
+> +static ssize_t bin_attr_nvmem_read(struct file *filp, struct kobject *kobj,
+> +				    struct bin_attribute *attr,
+> +				    char *buf, loff_t pos, size_t count)
+> +{
+[]
+> +	count = count/nvmem->word_size * nvmem->word_size;
+
+maybe rounddown() ?
+
+> +static ssize_t bin_attr_nvmem_write(struct file *filp, struct kobject *kobj,
+> +				     struct bin_attribute *attr,
+> +				     char *buf, loff_t pos, size_t count)
+> +{
+
+> +	count = count/nvmem->word_size * nvmem->word_size;
+
+and rounddown() here too ?
+
+> +static struct nvmem_device *of_nvmem_find(struct device_node *nvmem_np)
+> +{
+> +	struct device *d;
+> +
+> +	if (!nvmem_np)
+> +		return NULL;
+> +
+> +	d = bus_find_device(&nvmem_bus_type, NULL, nvmem_np, of_nvmem_match);
+> +
+> +	return d ? to_nvmem_device(d) : NULL;
+> +}
+
+Perhaps more common as
+
+	d = bus_find_device(&nvmem_bus_type, NULL, nvmem_np, of_nvmem_match);
+	if (!d)
+		return NULL;
+
+	return to_nvmem_device(d);
+}
+
+> +struct nvmem_device *nvmem_register(struct nvmem_config *config)
+> +{
+[]
+> +	nvmem->read_only = nvmem->dev.of_node ?
+> +				of_property_read_bool(nvmem->dev.of_node,
+> +				"read-only") :
+> +				config->read_only;
+
+odd indentation.
+Normally, "read-only" would be aligned with nvmem->dev.of_node,
+
+> +	dev_dbg(&nvmem->dev, "Registering nvmem device %s\n",
+> +		dev_name(&nvmem->dev));
+
+Isn't this going to have duplicated dev_name prefix and postfix?
+
+> +	if (device_create_bin_file(&nvmem->dev,
+> +				nvmem->read_only ? &bin_attr_ro_nvmem :
+> +				&bin_attr_rw_nvmem))
+> +		dev_info(&nvmem->dev, "Failed to create sysfs binary file\n");
+
+Is the KERN_LEVEL correct?
+Maybe dev_err/notice/warn/dbg?
