@@ -1,76 +1,59 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [REVIEW][PATCH 1/2] vfs: Commit to never having exectuables on proc and sysfs.
-Date: Fri, 10 Jul 2015 15:00:50 -0500
-Message-ID: <87bnfjwznx.fsf@x220.int.ebiederm.org>
-References: <87381eyz26.fsf@x220.int.ebiederm.org>
-	<CA+55aFysKDXr2HEwNzm3z9QOw=E4ZeWcvYQ-xLhy5_k+rGbeRg@mail.gmail.com>
-	<87pp4eqktr.fsf@x220.int.ebiederm.org>
-	<CA+55aFw-DK-xDC-3HYa=BMX8WNyQgT9O01tihrAS9+-7PPj_jA@mail.gmail.com>
-	<20150704231118.GT17109@ZenIV.linux.org.uk>
-	<87mvz4yomp.fsf_-_@x220.int.ebiederm.org>
-	<87h9pcyokc.fsf_-_@x220.int.ebiederm.org> <55A00DE9.7060806@nod.at>
-	<20150710193052.GB19824@kroah.com> <55A01F4B.9010205@nod.at>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [PATCH 0/3] sys_membarrier (x86, generic)
+Date: Fri, 10 Jul 2015 16:58:29 -0400
+Message-ID: <1436561912-24365-1-git-send-email-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55A01F4B.9010205-/L3Ra7n9ekc@public.gmane.org> (Richard Weinberger's message of "Fri,
-	10 Jul 2015 21:38:51 +0200")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, =?utf-8?Q?St=C3=A9phane?= Graber <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Eric Windisch <ewindisch-FCduhRhOUaTQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Omar Sandoval <osandov-nWWhXC5lh1RBDgjK7y7TUQ@public.gmane.org>, Ivan Delalande <colona-nzgTgzXrdUbQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org> writes:
+Hi Andrew,
 
-> Am 10.07.2015 um 21:30 schrieb Greg Kroah-Hartman:
->> On Fri, Jul 10, 2015 at 08:24:41PM +0200, Richard Weinberger wrote:
->>> Am 10.07.2015 um 18:17 schrieb Eric W. Biederman:
->>>>
->>>> Today proc and sysfs do not contain any executable files.  Several
->>>> applications today mount proc or sysfs without noexec and nosuid and
->>>> then depend on there being no exectuables files on proc or sysfs.
->>>> Having any executable files show on proc or sysfs would cause
->>>> a user space visible regression, and most likely security problems.
->>>>
->>>> Therefore commit to never allowing executables on proc and sysfs by
->>>> adding a new flag to mark them as filesystems without executables and
->>>> enforce that flag.
->>>>
->>>> Test the flag where MNT_NOEXEC is tested today, so that the only user
->>>> visible effect will be that exectuables will be treated as if the
->>>> execute bit is cleared.
->>>>
->>>> The filesystems proc and sysfs do not currently incoporate any
->>>> executable files so this does not result in any user visible effects.
->>>>
->>>> This makes it unnecessary to vet changes to proc and sysfs tightly for
->>>> adding exectuable files or changes to chattr that would modify
->>>> existing files, as no matter what the individual file say they will
->>>> not be treated as exectuable files by the vfs.
->>>>
->>>> Not having to vet changes to closely is important as without this we
->>>> are only one proc_create call (or another goof up in the
->>>> implementation of notify_change) from having problematic executables
->>>> on proc.  Those mistakes are all too easy to make and would create
->>>> a situation where there are security issues or the assumptions of
->>>> some program having to be broken (and cause userspace regressions).
->>>
->>> Would it make sense to add SB_I_NOEXEC to more pseudo filesystems?
->>> Say pstore or devpts?
->> 
->> And configfs and cgroupfs?
->
-> Yep. Any filesystem where exectuables do not make sense. :-)
+Here is a repost of sys_membarrier, rebased on top of Linus commit
+c4b5fd3fb2058b650447372472ad24e2a989f9f6 without any change since the
+last v19 post other that proceeding to further testing. When merging
+with other system calls, system call number conflicts should be quite
+straightforward to handle, there is nothing special there.
 
-With a threat model of a developer overlooking something and allows
-executables by accident?  I certainly think it makes sense.
+Please consider pulling it into your tree in preparation for the
+following merge window.
 
-Mostly because we are solving things at the vfs level.  Which gives us
-one well tested solution instead of several filesystem specific
-solutions.
+Thanks!
 
-That isn't quite the same problem that caused me to write this code,
-so I am not going to volunteer to write the patches for the additional
-filesystems. 
+Mathieu
 
-Eric
+Mathieu Desnoyers (2):
+  sys_membarrier(): system-wide memory barrier (generic, x86)
+  selftests: enhance membarrier syscall test
+
+Pranith Kumar (1):
+  selftests: add membarrier syscall test
+
+ MAINTAINERS                                        |   8 ++
+ arch/x86/entry/syscalls/syscall_32.tbl             |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl             |   1 +
+ include/linux/syscalls.h                           |   2 +
+ include/uapi/asm-generic/unistd.h                  |   4 +-
+ include/uapi/linux/Kbuild                          |   1 +
+ include/uapi/linux/membarrier.h                    |  53 +++++++++
+ init/Kconfig                                       |  12 ++
+ kernel/Makefile                                    |   1 +
+ kernel/membarrier.c                                |  66 +++++++++++
+ kernel/sys_ni.c                                    |   3 +
+ tools/testing/selftests/Makefile                   |   1 +
+ tools/testing/selftests/membarrier/.gitignore      |   1 +
+ tools/testing/selftests/membarrier/Makefile        |  11 ++
+ .../testing/selftests/membarrier/membarrier_test.c | 121 +++++++++++++++++++++
+ 15 files changed, 285 insertions(+), 1 deletion(-)
+ create mode 100644 include/uapi/linux/membarrier.h
+ create mode 100644 kernel/membarrier.c
+ create mode 100644 tools/testing/selftests/membarrier/.gitignore
+ create mode 100644 tools/testing/selftests/membarrier/Makefile
+ create mode 100644 tools/testing/selftests/membarrier/membarrier_test.c
+
+-- 
+2.1.4
