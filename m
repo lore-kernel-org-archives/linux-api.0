@@ -1,59 +1,144 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH 0/3] sys_membarrier (x86, generic)
-Date: Fri, 10 Jul 2015 16:58:29 -0400
-Message-ID: <1436561912-24365-1-git-send-email-mathieu.desnoyers@efficios.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Subject: [PATCH 2/3] selftests: add membarrier syscall test
+Date: Fri, 10 Jul 2015 16:58:31 -0400
+Message-ID: <1436561912-24365-3-git-send-email-mathieu.desnoyers@efficios.com>
+References: <1436561912-24365-1-git-send-email-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1436561912-24365-1-git-send-email-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Pranith Kumar <bobby.prani@gmail.com>, Michael Ellerman <mpe@ellerman.id.au>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Andrew,
+From: Pranith Kumar <bobby.prani@gmail.com>
 
-Here is a repost of sys_membarrier, rebased on top of Linus commit
-c4b5fd3fb2058b650447372472ad24e2a989f9f6 without any change since the
-last v19 post other that proceeding to further testing. When merging
-with other system calls, system call number conflicts should be quite
-straightforward to handle, there is nothing special there.
+This patch adds a self test for the membarrier system call.
 
-Please consider pulling it into your tree in preparation for the
-following merge window.
-
-Thanks!
-
-Mathieu
-
-Mathieu Desnoyers (2):
-  sys_membarrier(): system-wide memory barrier (generic, x86)
-  selftests: enhance membarrier syscall test
-
-Pranith Kumar (1):
-  selftests: add membarrier syscall test
-
- MAINTAINERS                                        |   8 ++
- arch/x86/entry/syscalls/syscall_32.tbl             |   1 +
- arch/x86/entry/syscalls/syscall_64.tbl             |   1 +
- include/linux/syscalls.h                           |   2 +
- include/uapi/asm-generic/unistd.h                  |   4 +-
- include/uapi/linux/Kbuild                          |   1 +
- include/uapi/linux/membarrier.h                    |  53 +++++++++
- init/Kconfig                                       |  12 ++
- kernel/Makefile                                    |   1 +
- kernel/membarrier.c                                |  66 +++++++++++
- kernel/sys_ni.c                                    |   3 +
- tools/testing/selftests/Makefile                   |   1 +
- tools/testing/selftests/membarrier/.gitignore      |   1 +
- tools/testing/selftests/membarrier/Makefile        |  11 ++
- .../testing/selftests/membarrier/membarrier_test.c | 121 +++++++++++++++++++++
- 15 files changed, 285 insertions(+), 1 deletion(-)
- create mode 100644 include/uapi/linux/membarrier.h
- create mode 100644 kernel/membarrier.c
+CC: Michael Ellerman <mpe@ellerman.id.au>
+Signed-off-by: Pranith Kumar <bobby.prani@gmail.com>
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+---
+ tools/testing/selftests/Makefile                   |  1 +
+ tools/testing/selftests/membarrier/.gitignore      |  1 +
+ tools/testing/selftests/membarrier/Makefile        | 11 ++++
+ .../testing/selftests/membarrier/membarrier_test.c | 71 ++++++++++++++++++++++
+ 4 files changed, 84 insertions(+)
  create mode 100644 tools/testing/selftests/membarrier/.gitignore
  create mode 100644 tools/testing/selftests/membarrier/Makefile
  create mode 100644 tools/testing/selftests/membarrier/membarrier_test.c
 
+diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+index 24ae9e8..df577a4 100644
+--- a/tools/testing/selftests/Makefile
++++ b/tools/testing/selftests/Makefile
+@@ -6,6 +6,7 @@ TARGETS += firmware
+ TARGETS += ftrace
+ TARGETS += futex
+ TARGETS += kcmp
++TARGETS += membarrier
+ TARGETS += memfd
+ TARGETS += memory-hotplug
+ TARGETS += mount
+diff --git a/tools/testing/selftests/membarrier/.gitignore b/tools/testing/selftests/membarrier/.gitignore
+new file mode 100644
+index 0000000..020c44f4
+--- /dev/null
++++ b/tools/testing/selftests/membarrier/.gitignore
+@@ -0,0 +1 @@
++membarrier_test
+diff --git a/tools/testing/selftests/membarrier/Makefile b/tools/testing/selftests/membarrier/Makefile
+new file mode 100644
+index 0000000..877a503
+--- /dev/null
++++ b/tools/testing/selftests/membarrier/Makefile
+@@ -0,0 +1,11 @@
++CFLAGS += -g -I../../../../usr/include/
++
++all:
++	$(CC) $(CFLAGS) membarrier_test.c -o membarrier_test
++
++TEST_PROGS := membarrier_test
++
++include ../lib.mk
++
++clean:
++	$(RM) membarrier_test
+diff --git a/tools/testing/selftests/membarrier/membarrier_test.c b/tools/testing/selftests/membarrier/membarrier_test.c
+new file mode 100644
+index 0000000..3c9f217
+--- /dev/null
++++ b/tools/testing/selftests/membarrier/membarrier_test.c
+@@ -0,0 +1,71 @@
++#define _GNU_SOURCE
++#define __EXPORTED_HEADERS__
++
++#include <linux/membarrier.h>
++#include <asm-generic/unistd.h>
++#include <sys/syscall.h>
++#include <stdio.h>
++#include <errno.h>
++#include <string.h>
++
++#include "../kselftest.h"
++
++static int sys_membarrier(int cmd, int flags)
++{
++	return syscall(__NR_membarrier, cmd, flags);
++}
++
++static void test_membarrier_fail(void)
++{
++	int cmd = -1, flags = 0;
++
++	if (sys_membarrier(cmd, flags) != -1) {
++		printf("membarrier: Should fail but passed\n");
++		ksft_exit_fail();
++	}
++}
++
++static void test_membarrier_success(void)
++{
++	int flags = 0;
++
++	if (sys_membarrier(MEMBARRIER_CMD_SHARED, flags) != 0) {
++		printf("membarrier: Executing MEMBARRIER failed, %s\n",
++				strerror(errno));
++		ksft_exit_fail();
++	}
++
++	printf("membarrier: MEMBARRIER_CMD_SHARED success\n");
++}
++
++static void test_membarrier(void)
++{
++	test_membarrier_fail();
++	test_membarrier_success();
++}
++
++static int test_membarrier_exists(void)
++{
++	int flags = 0;
++
++	if (sys_membarrier(MEMBARRIER_CMD_QUERY, flags))
++		return 0;
++
++	return 1;
++}
++
++int main(int argc, char **argv)
++{
++	printf("membarrier: MEMBARRIER_CMD_QUERY ");
++	if (test_membarrier_exists()) {
++		printf("syscall implemented\n");
++		test_membarrier();
++	} else {
++		printf("syscall not implemented!\n");
++		return ksft_exit_fail();
++	}
++
++	printf("membarrier: tests done!\n");
++
++	return ksft_exit_pass();
++}
 -- 
 2.1.4
