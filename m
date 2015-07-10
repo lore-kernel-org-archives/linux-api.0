@@ -1,61 +1,143 @@
-From: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
-Subject: Re: [REVIEW][PATCH 1/2] vfs: Commit to never having exectuables on
-	proc and sysfs.
-Date: Fri, 10 Jul 2015 20:24:41 +0200
-Message-ID: <55A00DE9.7060806@nod.at>
-References: <87381eyz26.fsf@x220.int.ebiederm.org>	<CA+55aFysKDXr2HEwNzm3z9QOw=E4ZeWcvYQ-xLhy5_k+rGbeRg@mail.gmail.com>	<87pp4eqktr.fsf@x220.int.ebiederm.org>	<CA+55aFw-DK-xDC-3HYa=BMX8WNyQgT9O01tihrAS9+-7PPj_jA@mail.gmail.com>	<20150704231118.GT17109@ZenIV.linux.org.uk>	<87mvz4yomp.fsf_-_@x220.int.ebiederm.org>
-	<87h9pcyokc.fsf_-_@x220.int.ebiederm.org>
+From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v7 4/9] nvmem: Add bindings for simple nvmem framework
+Date: Fri, 10 Jul 2015 14:04:29 -0500
+Message-ID: <CAL_JsqKYT-+T=D=TKCb1TcydOvBTE8_yc-EEe1cwdmhr1B0dHQ@mail.gmail.com>
+References: <1436521427-10568-1-git-send-email-srinivas.kandagatla@linaro.org> <1436521513-10838-1-git-send-email-srinivas.kandagatla@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87h9pcyokc.fsf_-_-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Cc: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ivan Delalande <colona-nzgTgzXrdUbQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1436521513-10838-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Sascha Hauer <s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arm-msm <linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Am 10.07.2015 um 18:17 schrieb Eric W. Biederman:
-> 
-> Today proc and sysfs do not contain any executable files.  Several
-> applications today mount proc or sysfs without noexec and nosuid and
-> then depend on there being no exectuables files on proc or sysfs.
-> Having any executable files show on proc or sysfs would cause
-> a user space visible regression, and most likely security problems.
-> 
-> Therefore commit to never allowing executables on proc and sysfs by
-> adding a new flag to mark them as filesystems without executables and
-> enforce that flag.
-> 
-> Test the flag where MNT_NOEXEC is tested today, so that the only user
-> visible effect will be that exectuables will be treated as if the
-> execute bit is cleared.
-> 
-> The filesystems proc and sysfs do not currently incoporate any
-> executable files so this does not result in any user visible effects.
-> 
-> This makes it unnecessary to vet changes to proc and sysfs tightly for
-> adding exectuable files or changes to chattr that would modify
-> existing files, as no matter what the individual file say they will
-> not be treated as exectuable files by the vfs.
-> 
-> Not having to vet changes to closely is important as without this we
-> are only one proc_create call (or another goof up in the
-> implementation of notify_change) from having problematic executables
-> on proc.  Those mistakes are all too easy to make and would create
-> a situation where there are security issues or the assumptions of
-> some program having to be broken (and cause userspace regressions).
+On Fri, Jul 10, 2015 at 4:45 AM, Srinivas Kandagatla
+<srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
+> This patch adds bindings for simple nvmem framework which allows nvmem
+> consumers to talk to nvmem providers to get access to nvmem cell data.
+>
+> Signed-off-by: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+> [Maxime Ripard: intial version of eeprom framework]
+> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+> ---
+>  Documentation/devicetree/bindings/nvmem/nvmem.txt | 85 +++++++++++++++++++++++
+>  1 file changed, 85 insertions(+)
+>  create mode 100644 Documentation/devicetree/bindings/nvmem/nvmem.txt
+>
+> diff --git a/Documentation/devicetree/bindings/nvmem/nvmem.txt b/Documentation/devicetree/bindings/nvmem/nvmem.txt
+> new file mode 100644
+> index 0000000..849f1e1
+> --- /dev/null
+> +++ b/Documentation/devicetree/bindings/nvmem/nvmem.txt
+> @@ -0,0 +1,85 @@
+> += NVMEM(Non Volatile Memory) Data Device Tree Bindings =
+> +
+> +This binding is intended to represent the location of hardware
+> +configuration data stored in NVMEMs like eeprom, efuses and so on.
+> +
+> +On a significant proportion of boards, the manufacturer has stored
+> +some data on NVMEM, for the OS to be able to retrieve these information
+> +and act upon it. Obviously, the OS has to know about where to retrieve
+> +these data from, and where they are stored on the storage device.
+> +
+> +This document is here to document this.
+> +
+> += Data providers =
+> +Contains bindings specific to provider drivers and data cells as children
+> +of this node.
 
-Would it make sense to add SB_I_NOEXEC to more pseudo filesystems?
-Say pstore or devpts?
+#address-cells and #size-cells are required here.
 
-Thanks,
-//richard
+> +
+> +Optional properties:
+> + read-only: Mark the provider as read only.
+
+Couldn't this be per field rather than global?
+
+> +
+> += Data cells =
+> +These are the child nodes of the provider which contain data cell
+> +information like offset and size in nvmem provider.
+> +
+> +Required properties:
+> +reg:   specifies the offset in byte within that storage device, start bit
+> +       in the byte and the length in bytes of the data we care about.
+> +       There could be more than one offset-length pairs in this property.
+> +
+> +Optional properties:
+> +
+> +bit-offset: specifies the offset in bit within the address range specified
+> +       by reg property. Can take values from 0-7.
+> +nbits: specifies number of bits this cell occupies starting from bit-offset.
+
+How about just: "bits = <<offset> <size>>"
+
+Then the bit specification is more aligned with the byte location
+(i.e. reg property).
+
+You could also do this all in the reg property with 2 address cells
+for byte and bit position and then size can be in bits. reg doesn't
+have to match a memory mapped bus addressing meanings. If you wanted
+to handle ranges and address translation, then you would need custom
+functions like PCI does. I'm not sure you would need that.
+
+> +
+> +For example:
+> +
+> +       /* Provider */
+> +       qfprom: qfprom@00700000 {
+> +               ...
+> +
+> +               /* Data cells */
+> +               tsens_calibration: calib@404 {
+> +                       reg = <0x404 0x10>;
+> +               };
+> +
+> +               tsens_calibration_bckp: calib_bckp@504 {
+> +                       reg = <0x504 0x11>;
+> +                       bit-offset = 6;
+> +                       nbits = 128;
+> +               };
+> +
+> +               pvs_version: pvs-version@6 {
+> +                       reg = <0x6 0x2>
+> +                       bit-offset = 7;
+> +                       nbits = 2;
+> +               };
+> +
+> +               speed_bin: speed-bin@c{
+> +                       reg = <0xc 0x1>;
+> +                       bit-offset = 2;
+> +                       nbits   = 3;
+> +
+> +               };
+> +               ...
+> +       };
+> +
+> += Data consumers =
+> +Are device nodes which consume nvmem data cells/providers.
+> +
+> +Required-properties:
+> +nvmem-cells: list of phandle to the nvmem data cells.
+> +nvmem-cell-names: names for the each nvmem-cells specified. Required if
+> +       nvmem-cells is used.
+> +
+> +Optional-properties:
+> +nvmem  : list of phandles to nvmem providers.
+> +nvmem-names: names for the each nvmem provider. required if nvmem is used.
+> +
+> +For example:
+> +
+> +       tsens {
+> +               ...
+> +               nvmem-cells = <&tsens_calibration>;
+> +               nvmem-cell-names = "calibration";
+> +       };
+> --
+> 1.9.1
+>
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
