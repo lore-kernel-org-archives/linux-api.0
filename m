@@ -1,181 +1,157 @@
 From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: [PATCH v7 5/9] Documentation: nvmem: add nvmem api level and how-to doc
-Date: Fri, 10 Jul 2015 10:45:21 +0100
-Message-ID: <1436521521-10889-1-git-send-email-srinivas.kandagatla@linaro.org>
+Subject: [PATCH v7 6/9] nvmem: qfprom: Add Qualcomm QFPROM support.
+Date: Fri, 10 Jul 2015 10:45:29 +0100
+Message-ID: <1436521529-10931-1-git-send-email-srinivas.kandagatla@linaro.org>
 References: <1436521427-10568-1-git-send-email-srinivas.kandagatla@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
 In-Reply-To: <1436521427-10568-1-git-send-email-srinivas.kandagatla@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-arm-msm-owner@vger.kernel.org
 To: linux-arm-kernel@lists.infradead.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Cc: Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, pantelis.antoniou@konsulko.com, mporter@konsulko.com, stefan.wahren@i2se.com, wxt@rock-chips.com, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch add basic how-to and api summary documentation for simple
-NVMEM framework.
+This patch adds QFPROM support driver which is used by other drivers
+like thermal sensor and cpufreq.
+
+On MSM parts there are some efuses (called qfprom) these fuses store
+things like calibration data, speed bins.. etc. Drivers like cpufreq,
+thermal sensors would read out this data for configuring the driver.
 
 Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 ---
- Documentation/nvmem/nvmem.txt | 152 ++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 152 insertions(+)
- create mode 100644 Documentation/nvmem/nvmem.txt
+ drivers/nvmem/Kconfig  | 15 +++++++++
+ drivers/nvmem/Makefile |  4 +++
+ drivers/nvmem/qfprom.c | 87 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 106 insertions(+)
+ create mode 100644 drivers/nvmem/qfprom.c
 
-diff --git a/Documentation/nvmem/nvmem.txt b/Documentation/nvmem/nvmem.txt
+diff --git a/drivers/nvmem/Kconfig b/drivers/nvmem/Kconfig
+index de90c82..fa85805 100644
+--- a/drivers/nvmem/Kconfig
++++ b/drivers/nvmem/Kconfig
+@@ -11,3 +11,18 @@ menuconfig NVMEM
+ 	  will be called nvmem_core.
+ 
+ 	  If unsure, say no.
++
++if NVMEM
++
++config QCOM_QFPROM
++	tristate "QCOM QFPROM Support"
++	depends on ARCH_QCOM || COMPILE_TEST
++	select REGMAP_MMIO
++	help
++	  Say y here to enable QFPROM support. The QFPROM provides access
++	  functions for QFPROM data to rest of the drivers via nvmem interface.
++
++	  This driver can also be built as a module. If so, the module
++	  will be called nvmem_qfprom.
++
++endif
+diff --git a/drivers/nvmem/Makefile b/drivers/nvmem/Makefile
+index 6df2c69..ff44fe9 100644
+--- a/drivers/nvmem/Makefile
++++ b/drivers/nvmem/Makefile
+@@ -4,3 +4,7 @@
+ 
+ obj-$(CONFIG_NVMEM)		+= nvmem_core.o
+ nvmem_core-y			:= core.o
++
++# Devices
++obj-$(CONFIG_QCOM_QFPROM)	+= nvmem_qfprom.o
++nvmem_qfprom-y			:= qfprom.o
+diff --git a/drivers/nvmem/qfprom.c b/drivers/nvmem/qfprom.c
 new file mode 100644
-index 0000000..b074b71
+index 0000000..0e22a03
 --- /dev/null
-+++ b/Documentation/nvmem/nvmem.txt
-@@ -0,0 +1,152 @@
-+			    NVMEM SUBSYSTEM
-+	  Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
++++ b/drivers/nvmem/qfprom.c
+@@ -0,0 +1,87 @@
++/*
++ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 and
++ * only version 2 as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
 +
-+This document explains the Simple NVMEM Framework along with the APIs provided,
-+and how-to-use.
++#include <linux/device.h>
++#include <linux/io.h>
++#include <linux/module.h>
++#include <linux/nvmem-provider.h>
++#include <linux/platform_device.h>
++#include <linux/regmap.h>
++#include <linux/slab.h>
 +
-+1. Introduction
-+===============
-+*NVMEM* is the abbreviation for Non Volatile Memory layer. It is used to
-+retrieve configuration or SOC or Device specific data from a non volatile memories
-+like eeprom, efuses and so on.
-+
-+Up until now, NVMEM drivers like eeprom were stored in drivers/misc, where they
-+all had to duplicate pretty much the same code to register a sysfs file, allow
-+in-kernel users to access the content of the devices they were driving, etc.
-+
-+This was also a problem as far as other in-kernel users were involved, since
-+the solutions used were pretty much different from on driver to another, there
-+was a rather big abstraction leak.
-+
-+Introduction of this framework aims at solving this. It also introduces DT
-+representation for consumer devices to go get the data they require (MAC
-+Addresses, SoC/Revision ID, part numbers, and so on) from the NVMEMs.
-+This framework is based on regmap, so that most of the abstraction
-+available in regmap can be reused, across multiple types of buses.
-+
-+NVMEM Providers
-++++++++++++++++
-+
-+NVMEM provider refers to an entity that implements methods to initialize, read
-+and write the non-volatile memory.
-+
-+2. Registering/Unregistering the NVMEM provider
-+===============================================
-+
-+A NVMEM provider can register with NVMEM core by suppling relevant
-+nvmem configuration to nvmem_register(), on success core would return a valid
-+nvmem_device pointer.
-+
-+nvmem_unregister(nvmem) is used to unregister the already registered provider.
-+
-+For example for simple qfprom case:
++static struct regmap_config qfprom_regmap_config = {
++	.reg_bits = 32,
++	.val_bits = 8,
++	.reg_stride = 1,
++};
 +
 +static struct nvmem_config econfig = {
 +	.name = "qfprom",
 +	.owner = THIS_MODULE,
 +};
 +
-+static int qfprom_probe(struct platform_device *pdev)
++static int qfprom_remove(struct platform_device *pdev)
 +{
-+	...
-+	econfig.dev = &pdev->dev;
-+	nvmem = nvmem_register(&econfig);
-+	...
++	struct nvmem_device *nvmem = platform_get_drvdata(pdev);
++
++	return nvmem_unregister(nvmem);
 +}
 +
-+It is mandatory that the NVMEM provider has a regmap associated with its
-+struct device.
++static int qfprom_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct resource *res;
++	struct nvmem_device *nvmem;
++	struct regmap *regmap;
++	void __iomem *base;
 +
-+NVMEM Consumers
-++++++++++++++++
++	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	base = devm_ioremap_resource(dev, res);
++	if (IS_ERR(base))
++		return PTR_ERR(base);
 +
-+NVMEM consumers are the entities which make use of the NVMEM provider to
-+read/write into NVMEM.
++	qfprom_regmap_config.max_register = resource_size(res) - 1;
 +
-+3. NVMEM cell based consumer APIs.
-+=================================
++	regmap = devm_regmap_init_mmio(dev, base, &qfprom_regmap_config);
++	if (IS_ERR(regmap)) {
++		dev_err(dev, "regmap init failed\n");
++		return PTR_ERR(regmap);
++	}
++	econfig.dev = dev;
++	nvmem = nvmem_register(&econfig);
++	if (IS_ERR(nvmem))
++		return PTR_ERR(nvmem);
 +
-+NVMEM cells are the data entries/fields in the NVMEM.
-+The NVMEM framework provides 3 APIs to read/write NVMEM cells.
++	platform_set_drvdata(pdev, nvmem);
 +
-+struct nvmem_cell *nvmem_cell_get(struct device *dev, const char *name);
-+struct nvmem_cell *devm_nvmem_cell_get(struct device *dev, const char *name);
++	return 0;
++}
 +
-+void nvmem_cell_put(struct nvmem_cell *cell);
-+void devm_nvmem_cell_put(struct device *dev, struct nvmem_cell *cell);
++static const struct of_device_id qfprom_of_match[] = {
++	{ .compatible = "qcom,qfprom",},
++	{/* sentinel */},
++};
++MODULE_DEVICE_TABLE(of, qfprom_of_match);
 +
-+void *nvmem_cell_read(struct nvmem_cell *cell, ssize_t *len);
-+int nvmem_cell_write(struct nvmem_cell *cell, void *buf, ssize_t len);
-+
-+*nvmem_cell_get() apis will get a reference to nvmem cell for a given id,
-+and nvmem_cell_read/write() can then directly read or write to the cell.
-+Once the usage of the cell is finished the consumer should call *nvmem_cell_put()
-+to free all the allocation memory for the cell.
-+
-+4. Direct NVMEM device based consumer APIs.
-+==========================================
-+
-+In some instances it is necessary to directly read/write the NVMEM.
-+To facilitate such consumers NVMEM framework provides below apis.
-+
-+struct nvmem_device *nvmem_device_get(struct device *dev, const char *name);
-+struct nvmem_device *devm_nvmem_device_get(struct device *dev,
-+					   const char *name);
-+void nvmem_device_put(struct nvmem_device *nvmem);
-+int nvmem_device_read(struct nvmem_device *nvmem, unsigned int offset,
-+		      size_t bytes, void *buf);
-+int nvmem_device_write(struct nvmem_device *nvmem, unsigned int offset,
-+		       size_t bytes, void *buf);
-+int nvmem_device_cell_read(struct nvmem_device *nvmem,
-+			   struct nvmem_cell_info *info, void *buf);
-+int nvmem_device_cell_write(struct nvmem_device *nvmem,
-+			    struct nvmem_cell_info *info, void *buf);
-+
-+Before the consumers can read/write NVMEM directly, it should get hold
-+of nvmem_controller from one of the *nvmem_device_get() api.
-+
-+Difference between these apis and cell based apis is that these apis
-+always take nvmem_device as parameter.
-+
-+5. Releasing a reference to the NVMEM
-+=====================================
-+
-+When the consumers no longer needs the NVMEM, it has to release the reference
-+to the NVMEM it has obtained using the APIs mentioned in the above section.
-+NVMEM framework provides 2 APIs to release a reference to the NVMEM.
-+
-+void nvmem_cell_put(struct nvmem_cell *cell);
-+void devm_nvmem_cell_put(struct device *dev, struct nvmem_cell *cell);
-+void nvmem_device_put(struct nvmem_device *nvmem);
-+void devm_nvmem_device_put(struct device *dev, struct nvmem_device *nvmem);
-+
-+Both these APIs are used to release a reference to the NVMEM and
-+devm_nvmem_cell_put and devm_nvmem_device_put destroys the devres associated
-+with this NVMEM.
-+
-+Userspace
-++++++++++
-+
-+6. Userspace binary interface.
-+==============================
-+
-+Userspace can read/write the raw NVMEM file located at
-+/sys/bus/nvmem/devices/*/nvmem
-+
-+ex:
-+
-+hexdump /sys/bus/nvmem/devices/qfprom0/nvmem
-+
-+0000000 0000 0000 0000 0000 0000 0000 0000 0000
-+*
-+00000a0 db10 2240 0000 e000 0c00 0c00 0000 0c00
-+0000000 0000 0000 0000 0000 0000 0000 0000 0000
-+...
-+*
-+0001000
-+
-+7. DeviceTree Binding
-+=====================
-+
-+The documentation for NVMEM dt binding can be found @
-+Documentation/devicetree/bindings/nvmem/nvmem.txt
++static struct platform_driver qfprom_driver = {
++	.probe = qfprom_probe,
++	.remove = qfprom_remove,
++	.driver = {
++		.name = "qcom,qfprom",
++		.of_match_table = qfprom_of_match,
++	},
++};
++module_platform_driver(qfprom_driver);
++MODULE_AUTHOR("Srinivas Kandagatla <srinivas.kandagatla@linaro.org>");
++MODULE_DESCRIPTION("Qualcomm QFPROM driver");
++MODULE_LICENSE("GPL v2");
 -- 
 1.9.1
