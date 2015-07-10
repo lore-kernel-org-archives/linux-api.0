@@ -1,7 +1,7 @@
 From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: [PATCH v7 2/9] nvmem: Add a simple NVMEM framework for consumers
-Date: Fri, 10 Jul 2015 10:44:55 +0100
-Message-ID: <1436521495-10728-1-git-send-email-srinivas.kandagatla@linaro.org>
+Subject: [PATCH v7 4/9] nvmem: Add bindings for simple nvmem framework
+Date: Fri, 10 Jul 2015 10:45:13 +0100
+Message-ID: <1436521513-10838-1-git-send-email-srinivas.kandagatla@linaro.org>
 References: <1436521427-10568-1-git-send-email-srinivas.kandagatla@linaro.org>
 Return-path: <linux-arm-msm-owner@vger.kernel.org>
 In-Reply-To: <1436521427-10568-1-git-send-email-srinivas.kandagatla@linaro.org>
@@ -10,571 +10,107 @@ To: linux-arm-kernel@lists.infradead.org, Greg Kroah-Hartman <gregkh@linuxfounda
 Cc: Rob Herring <robh+dt@kernel.org>, Kumar Gala <galak@codeaurora.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, pantelis.antoniou@konsulko.com, mporter@konsulko.com, stefan.wahren@i2se.com, wxt@rock-chips.com, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, Maxime Ripard <maxime.ripard@free-electrons.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds just consumers part of the framework just to enable easy
-review.
-
-Up until now, nvmem drivers were stored in drivers/misc, where they all
-had to duplicate pretty much the same code to register a sysfs file,
-allow in-kernel users to access the content of the devices they were
-driving, etc.
-
-This was also a problem as far as other in-kernel users were involved,
-since the solutions used were pretty much different from on driver to
-another, there was a rather big abstraction leak.
-
-This introduction of this framework aims at solving this. It also
-introduces DT representation for consumer devices to go get the data they
-require (MAC Addresses, SoC/Revision ID, part numbers, and so on) from
-the nvmems.
-
-Having regmap interface to this framework would give much better
-abstraction for nvmems on different buses.
+This patch adds bindings for simple nvmem framework which allows nvmem
+consumers to talk to nvmem providers to get access to nvmem cell data.
 
 Signed-off-by: Maxime Ripard <maxime.ripard@free-electrons.com>
-[Maxime Ripard: intial version of the framework]
+[Maxime Ripard: intial version of eeprom framework]
 Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 ---
- drivers/nvmem/core.c           | 424 ++++++++++++++++++++++++++++++++++++++++-
- include/linux/nvmem-consumer.h |  76 ++++++++
- 2 files changed, 498 insertions(+), 2 deletions(-)
- create mode 100644 include/linux/nvmem-consumer.h
+ Documentation/devicetree/bindings/nvmem/nvmem.txt | 85 +++++++++++++++++++++++
+ 1 file changed, 85 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/nvmem/nvmem.txt
 
-diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
-index a779ad1..f429ad4 100644
---- a/drivers/nvmem/core.c
-+++ b/drivers/nvmem/core.c
-@@ -15,14 +15,15 @@
-  */
- 
- #include <linux/device.h>
--#include <linux/nvmem-provider.h>
- #include <linux/export.h>
- #include <linux/fs.h>
- #include <linux/idr.h>
- #include <linux/init.h>
--#include <linux/regmap.h>
- #include <linux/module.h>
-+#include <linux/nvmem-consumer.h>
-+#include <linux/nvmem-provider.h>
- #include <linux/of.h>
-+#include <linux/regmap.h>
- #include <linux/slab.h>
- 
- struct nvmem_device {
-@@ -334,6 +335,7 @@ struct nvmem_device *nvmem_register(struct nvmem_config *config)
- 	if (config->cells)
- 		nvmem_add_cells(nvmem, config);
- 
-+
- 	return nvmem;
- }
- EXPORT_SYMBOL_GPL(nvmem_register);
-@@ -361,6 +363,424 @@ int nvmem_unregister(struct nvmem_device *nvmem)
- }
- EXPORT_SYMBOL_GPL(nvmem_unregister);
- 
-+static struct nvmem_device *__nvmem_device_get(struct device_node *np,
-+					       struct nvmem_cell **cellp,
-+					       const char *cell_id)
-+{
-+	struct nvmem_device *nvmem = NULL;
-+
-+	mutex_lock(&nvmem_mutex);
-+
-+	if (np) {
-+		nvmem = of_nvmem_find(np);
-+		if (!nvmem) {
-+			mutex_unlock(&nvmem_mutex);
-+			return ERR_PTR(-EPROBE_DEFER);
-+		}
-+	} else {
-+		struct nvmem_cell *cell = nvmem_find_cell(cell_id);
-+
-+		if (cell) {
-+			nvmem = cell->nvmem;
-+			*cellp = cell;
-+		}
-+
-+		if (!nvmem) {
-+			mutex_unlock(&nvmem_mutex);
-+			return ERR_PTR(-ENOENT);
-+		}
-+	}
-+
-+	nvmem->users++;
-+	mutex_unlock(&nvmem_mutex);
-+
-+	if (!try_module_get(nvmem->owner)) {
-+		dev_err(&nvmem->dev,
-+			"could not increase module refcount for cell %s\n",
-+			nvmem->name);
-+
-+		mutex_lock(&nvmem_mutex);
-+		nvmem->users--;
-+		mutex_unlock(&nvmem_mutex);
-+
-+		return ERR_PTR(-EINVAL);
-+	}
-+
-+	return nvmem;
-+}
-+
-+static void __nvmem_device_put(struct nvmem_device *nvmem)
-+{
-+	module_put(nvmem->owner);
-+	mutex_lock(&nvmem_mutex);
-+	nvmem->users--;
-+	mutex_unlock(&nvmem_mutex);
-+}
-+
-+static struct nvmem_cell *nvmem_cell_get_from_list(const char *cell_id)
-+{
-+	struct nvmem_cell *cell = NULL;
-+	struct nvmem_device *nvmem;
-+
-+	nvmem = __nvmem_device_get(NULL, &cell, cell_id);
-+	if (IS_ERR(nvmem))
-+		return ERR_CAST(nvmem);
-+
-+
-+	return cell;
-+
-+}
-+
-+#if IS_ENABLED(CONFIG_NVMEM) && IS_ENABLED(CONFIG_OF)
-+/**
-+ * of_nvmem_cell_get() - Get a nvmem cell from given device node and cell id
-+ *
-+ * @dev node: Device tree node that uses the nvmem cell
-+ * @id: nvmem cell name from nvmem-cell-names property.
-+ *
-+ * The return value will be an ERR_PTR() on error or a valid pointer
-+ * to a struct nvmem_cell.  The nvmem_cell will be freed by the
-+ * nvmem_cell_put().
-+ */
-+struct nvmem_cell *of_nvmem_cell_get(struct device_node *np,
-+					    const char *name)
-+{
-+	struct device_node *cell_np, *nvmem_np;
-+	struct nvmem_cell *cell;
-+	struct nvmem_device *nvmem;
-+	const __be32 *addr;
-+	int rval, len, index;
-+
-+	index = of_property_match_string(np, "nvmem-cell-names", name);
-+
-+	cell_np = of_parse_phandle(np, "nvmem-cells", index);
-+	if (!cell_np)
-+		return ERR_PTR(-EINVAL);
-+
-+	nvmem_np = of_get_next_parent(cell_np);
-+	if (!nvmem_np)
-+		return ERR_PTR(-EINVAL);
-+
-+	nvmem = __nvmem_device_get(nvmem_np, NULL, NULL);
-+	if (IS_ERR(nvmem))
-+		return ERR_CAST(nvmem);
-+
-+	addr = of_get_property(cell_np, "reg", &len);
-+	if (!addr || (len < 2 * sizeof(int))) {
-+		dev_err(&nvmem->dev, "nvmem: invalid reg on %s\n",
-+			cell_np->full_name);
-+		rval  = -EINVAL;
-+		goto err_mem;
-+	}
-+
-+	cell = kzalloc(sizeof(*cell), GFP_KERNEL);
-+	if (!cell) {
-+		rval = -ENOMEM;
-+		goto err_mem;
-+	}
-+
-+	cell->nvmem = nvmem;
-+	cell->offset = be32_to_cpup(addr++);
-+	cell->bytes = be32_to_cpup(addr);
-+	cell->name = cell_np->name;
-+
-+	of_property_read_u32(cell_np, "bit-offset", &cell->bit_offset);
-+	of_property_read_u32(cell_np, "nbits", &cell->nbits);
-+
-+	if (cell->nbits)
-+		cell->bytes = DIV_ROUND_UP(cell->nbits + cell->bit_offset,
-+					   BITS_PER_BYTE);
-+
-+	if (!IS_ALIGNED(cell->offset, nvmem->stride)) {
-+			dev_err(&nvmem->dev,
-+				"cell %s unaligned to nvmem stride %d\n",
-+				cell->name, nvmem->stride);
-+		rval  = -EINVAL;
-+		goto err_sanity;
-+	}
-+
-+	nvmem_cell_add(cell);
-+
-+	return cell;
-+
-+err_sanity:
-+	kfree(cell);
-+
-+err_mem:
-+	__nvmem_device_put(nvmem);
-+
-+	return ERR_PTR(rval);
-+
-+}
-+EXPORT_SYMBOL_GPL(of_nvmem_cell_get);
-+#endif
-+
-+/**
-+ * nvmem_cell_get() - Get nvmem cell of device form a given cell name
-+ *
-+ * @dev node: Device tree node that uses the nvmem cell
-+ * @id: nvmem cell name to get.
-+ *
-+ * The return value will be an ERR_PTR() on error or a valid pointer
-+ * to a struct nvmem_cell.  The nvmem_cell will be freed by the
-+ * nvmem_cell_put().
-+ */
-+struct nvmem_cell *nvmem_cell_get(struct device *dev, const char *cell_id)
-+{
-+	struct nvmem_cell *cell;
-+
-+	if (dev->of_node) { /* try dt first */
-+		cell = of_nvmem_cell_get(dev->of_node, cell_id);
-+		if (!IS_ERR(cell) || PTR_ERR(cell) == -EPROBE_DEFER)
-+			return cell;
-+	}
-+
-+	return nvmem_cell_get_from_list(cell_id);
-+
-+}
-+EXPORT_SYMBOL_GPL(nvmem_cell_get);
-+
-+static void devm_nvmem_cell_release(struct device *dev, void *res)
-+{
-+	nvmem_cell_put(*(struct nvmem_cell **)res);
-+}
-+
-+/**
-+ * devm_nvmem_cell_get() - Get nvmem cell of device form a given id
-+ *
-+ * @dev node: Device tree node that uses the nvmem cell
-+ * @id: nvmem id in nvmem-names property.
-+ *
-+ * The return value will be an ERR_PTR() on error or a valid pointer
-+ * to a struct nvmem_cell.  The nvmem_cell will be freed by the
-+ * automatically once the device is freed.
-+ */
-+struct nvmem_cell *devm_nvmem_cell_get(struct device *dev, const char *id)
-+{
-+	struct nvmem_cell **ptr, *cell;
-+
-+	ptr = devres_alloc(devm_nvmem_cell_release, sizeof(*ptr), GFP_KERNEL);
-+	if (!ptr)
-+		return ERR_PTR(-ENOMEM);
-+
-+	cell = nvmem_cell_get(dev, id);
-+	if (!IS_ERR(cell)) {
-+		*ptr = cell;
-+		devres_add(dev, ptr);
-+	} else {
-+		devres_free(ptr);
-+	}
-+
-+	return cell;
-+}
-+EXPORT_SYMBOL_GPL(devm_nvmem_cell_get);
-+
-+static int devm_nvmem_cell_match(struct device *dev, void *res, void *data)
-+{
-+	struct nvmem_cell **c = res;
-+
-+	if (!c || !*c) {
-+		WARN_ON(!c || !*c);
-+		return 0;
-+	}
-+	return *c == data;
-+}
-+
-+/**
-+ * devm_nvmem_cell_put() - Release previously allocated nvmem cell
-+ * from devm_nvmem_cell_get.
-+ *
-+ * @cell: Previously allocated nvmem cell by devm_nvmem_cell_get()
-+ */
-+void devm_nvmem_cell_put(struct device *dev, struct nvmem_cell *cell)
-+{
-+	int ret;
-+
-+	ret = devres_release(dev, devm_nvmem_cell_release,
-+				devm_nvmem_cell_match, cell);
-+
-+	WARN_ON(ret);
-+}
-+EXPORT_SYMBOL(devm_nvmem_cell_put);
-+
-+/**
-+ * nvmem_cell_put() - Release previously allocated nvmem cell.
-+ *
-+ * @cell: Previously allocated nvmem cell by nvmem_cell_get()
-+ */
-+void nvmem_cell_put(struct nvmem_cell *cell)
-+{
-+	struct nvmem_device *nvmem = cell->nvmem;
-+
-+	__nvmem_device_put(nvmem);
-+	nvmem_cell_drop(cell);
-+}
-+EXPORT_SYMBOL_GPL(nvmem_cell_put);
-+
-+static inline void nvmem_shift_read_buffer_in_place(struct nvmem_cell *cell,
-+						    void *buf)
-+{
-+	u8 *p, *b;
-+	int i, bit_offset = cell->bit_offset;
-+
-+	p = b = buf;
-+	if (bit_offset) {
-+		/* First shift */
-+		*b++ >>= bit_offset;
-+
-+		/* setup rest of the bytes if any */
-+		for (i = 1; i < cell->bytes; i++) {
-+			/* Get bits from next byte and shift them towards msb */
-+			*p |= *b << (BITS_PER_BYTE - bit_offset);
-+
-+			p = b;
-+			*b++ >>= bit_offset;
-+		}
-+
-+		/* result fits in less bytes */
-+		if (cell->bytes != DIV_ROUND_UP(cell->nbits, BITS_PER_BYTE))
-+			*p-- = 0;
-+	}
-+	/* clear msb bits if any leftover in the last byte */
-+	*p &= GENMASK((cell->nbits%BITS_PER_BYTE) - 1, 0);
-+}
-+
-+static int __nvmem_cell_read(struct nvmem_device *nvmem,
-+		      struct nvmem_cell *cell,
-+		      void *buf, size_t *len)
-+{
-+	int rc;
-+
-+	rc = regmap_raw_read(nvmem->regmap, cell->offset, buf, cell->bytes);
-+
-+	if (IS_ERR_VALUE(rc))
-+		return rc;
-+
-+	/* shift bits in-place */
-+	if (cell->bit_offset || cell->bit_offset)
-+		nvmem_shift_read_buffer_in_place(cell, buf);
-+
-+	*len = cell->bytes;
-+
-+	return 0;
-+}
-+/**
-+ * nvmem_cell_read() - Read a given nvmem cell
-+ *
-+ * @cell: nvmem cell to be read.
-+ * @len: pointer to length of cell which will be populated on successful read.
-+ *
-+ * The return value will be an ERR_PTR() on error or a valid pointer
-+ * to a char * bufffer.  The buffer should be freed by the consumer with a
-+ * kfree().
-+ */
-+void *nvmem_cell_read(struct nvmem_cell *cell, size_t *len)
-+{
-+	struct nvmem_device *nvmem = cell->nvmem;
-+	u8 *buf;
-+	int rc;
-+
-+	if (!nvmem || !nvmem->regmap)
-+		return ERR_PTR(-EINVAL);
-+
-+	buf = kzalloc(cell->bytes, GFP_KERNEL);
-+	if (!buf)
-+		return ERR_PTR(-ENOMEM);
-+
-+	rc = __nvmem_cell_read(nvmem, cell, buf, len);
-+	if (IS_ERR_VALUE(rc)) {
-+		kfree(buf);
-+		return ERR_PTR(rc);
-+	}
-+
-+	return buf;
-+}
-+EXPORT_SYMBOL_GPL(nvmem_cell_read);
-+
-+static inline void *nvmem_cell_prepare_write_buffer(struct nvmem_cell *cell,
-+						    u8 *_buf, int len)
-+{
-+	struct nvmem_device *nvmem = cell->nvmem;
-+	int i, rc, nbits, bit_offset = cell->bit_offset;
-+	u8 v, *p, *buf, *b, pbyte, pbits;
-+
-+	nbits = cell->nbits;
-+	buf = kzalloc(cell->bytes, GFP_KERNEL);
-+	if (!buf)
-+		return ERR_PTR(-ENOMEM);
-+
-+	memcpy(buf, _buf, len);
-+	p = b = buf;
-+
-+	if (bit_offset) {
-+		pbyte = *b;
-+		*b <<= bit_offset;
-+
-+		/* setup the first byte with lsb bits from nvmem */
-+		rc = regmap_raw_read(nvmem->regmap, cell->offset, &v, 1);
-+		*b++ |= GENMASK(bit_offset - 1, 0) & v;
-+
-+		/* setup rest of the byte if any */
-+		for (i = 1; i < cell->bytes; i++) {
-+			/* Get last byte bits and shift them towards lsb */
-+			pbits = pbyte >> (BITS_PER_BYTE - 1 - bit_offset);
-+			pbyte = *b;
-+			p = b;
-+			*b <<= bit_offset;
-+			*b++ |= pbits;
-+		}
-+	}
-+
-+	/* if it's not end on byte boundary */
-+	if ((nbits + bit_offset) % BITS_PER_BYTE) {
-+		/* setup the last byte with msb bits from nvmem */
-+		rc = regmap_raw_read(nvmem->regmap,
-+				    cell->offset + cell->bytes - 1, &v, 1);
-+		*p |= GENMASK(7, (nbits + bit_offset) % BITS_PER_BYTE) & v;
-+
-+	}
-+
-+	return buf;
-+}
-+
-+/**
-+ * nvmem_cell_write() - Write to a given nvmem cell
-+ *
-+ * @cell: nvmem cell to be written.
-+ * @buf: Buffer to be written.
-+ * @len: length of buffer to be written to nvmem cell.
-+ *
-+ * The return value will be an length of bytes written or non zero on failure.
-+ */
-+int nvmem_cell_write(struct nvmem_cell *cell, void *buf, size_t len)
-+{
-+	struct nvmem_device *nvmem = cell->nvmem;
-+	int rc;
-+	void *wbuf = buf;
-+
-+	if (!nvmem || !nvmem->regmap || nvmem->read_only ||
-+	    (cell->bit_offset == 0 && len != cell->bytes))
-+		return -EINVAL;
-+
-+	if (cell->bit_offset || cell->nbits) {
-+		wbuf = nvmem_cell_prepare_write_buffer(cell, buf, len);
-+		if (IS_ERR(wbuf))
-+			return PTR_ERR(wbuf);
-+	}
-+
-+	rc = regmap_raw_write(nvmem->regmap, cell->offset, wbuf, cell->bytes);
-+
-+	/* free the tmp buffer */
-+	if (cell->bit_offset)
-+		kfree(wbuf);
-+
-+	if (IS_ERR_VALUE(rc))
-+		return rc;
-+
-+	return len;
-+}
-+EXPORT_SYMBOL_GPL(nvmem_cell_write);
-+
- static int __init nvmem_init(void)
- {
- 	return bus_register(&nvmem_bus_type);
-diff --git a/include/linux/nvmem-consumer.h b/include/linux/nvmem-consumer.h
+diff --git a/Documentation/devicetree/bindings/nvmem/nvmem.txt b/Documentation/devicetree/bindings/nvmem/nvmem.txt
 new file mode 100644
-index 0000000..90bf4c3
+index 0000000..849f1e1
 --- /dev/null
-+++ b/include/linux/nvmem-consumer.h
-@@ -0,0 +1,76 @@
-+/*
-+ * nvmem framework consumer.
-+ *
-+ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-+ * Copyright (C) 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
-+ *
-+ * This file is licensed under the terms of the GNU General Public
-+ * License version 2.  This program is licensed "as is" without any
-+ * warranty of any kind, whether express or implied.
-+ */
++++ b/Documentation/devicetree/bindings/nvmem/nvmem.txt
+@@ -0,0 +1,85 @@
++= NVMEM(Non Volatile Memory) Data Device Tree Bindings =
 +
-+#ifndef _LINUX_NVMEM_CONSUMER_H
-+#define _LINUX_NVMEM_CONSUMER_H
++This binding is intended to represent the location of hardware
++configuration data stored in NVMEMs like eeprom, efuses and so on.
 +
-+struct device;
-+struct device_node;
-+/* consumer cookie */
-+struct nvmem_cell;
++On a significant proportion of boards, the manufacturer has stored
++some data on NVMEM, for the OS to be able to retrieve these information
++and act upon it. Obviously, the OS has to know about where to retrieve
++these data from, and where they are stored on the storage device.
 +
-+#if IS_ENABLED(CONFIG_NVMEM)
++This document is here to document this.
 +
-+/* Cell based interface */
-+struct nvmem_cell *nvmem_cell_get(struct device *dev, const char *name);
-+struct nvmem_cell *devm_nvmem_cell_get(struct device *dev, const char *name);
-+void nvmem_cell_put(struct nvmem_cell *cell);
-+void devm_nvmem_cell_put(struct device *dev, struct nvmem_cell *cell);
-+void *nvmem_cell_read(struct nvmem_cell *cell, size_t *len);
-+int nvmem_cell_write(struct nvmem_cell *cell, void *buf, size_t len);
++= Data providers =
++Contains bindings specific to provider drivers and data cells as children
++of this node.
 +
-+#else
++Optional properties:
++ read-only: Mark the provider as read only.
 +
-+static inline struct nvmem_cell *nvmem_cell_get(struct device *dev,
-+						const char *name)
-+{
-+	return ERR_PTR(-ENOSYS);
-+}
++= Data cells =
++These are the child nodes of the provider which contain data cell
++information like offset and size in nvmem provider.
 +
-+static inline struct nvmem_cell *devm_nvmem_cell_get(struct device *dev,
-+				       const char *name)
-+{
-+	return ERR_PTR(-ENOSYS);
-+}
++Required properties:
++reg:	specifies the offset in byte within that storage device, start bit
++	in the byte and the length in bytes of the data we care about.
++	There could be more than one offset-length pairs in this property.
 +
-+static inline void devm_nvmem_cell_put(struct device *dev,
-+				       struct nvmem_cell *cell)
-+{
++Optional properties:
 +
-+}
-+static inline void nvmem_cell_put(struct nvmem_cell *cell)
-+{
-+}
++bit-offset: specifies the offset in bit within the address range specified
++	by reg property. Can take values from 0-7.
++nbits: specifies number of bits this cell occupies starting from bit-offset.
 +
-+static inline char *nvmem_cell_read(struct nvmem_cell *cell, size_t *len)
-+{
-+	return ERR_PTR(-ENOSYS);
-+}
++For example:
 +
-+static inline int nvmem_cell_write(struct nvmem_cell *cell,
-+				    const char *buf, size_t len)
-+{
-+	return -ENOSYS;
-+}
-+#endif /* CONFIG_NVMEM */
++	/* Provider */
++	qfprom: qfprom@00700000 {
++		...
 +
-+#if IS_ENABLED(CONFIG_NVMEM) && IS_ENABLED(CONFIG_OF)
-+struct nvmem_cell *of_nvmem_cell_get(struct device_node *np,
-+				     const char *name);
-+#else
-+static inline struct nvmem_cell *of_nvmem_cell_get(struct device_node *np,
-+				     const char *name)
-+{
-+	return ERR_PTR(-ENOSYS);
-+}
-+#endif /* CONFIG_NVMEM && CONFIG_OF */
++		/* Data cells */
++		tsens_calibration: calib@404 {
++			reg = <0x404 0x10>;
++		};
 +
-+#endif  /* ifndef _LINUX_NVMEM_CONSUMER_H */
++		tsens_calibration_bckp: calib_bckp@504 {
++			reg = <0x504 0x11>;
++			bit-offset = 6;
++			nbits = 128;
++		};
++
++		pvs_version: pvs-version@6 {
++			reg = <0x6 0x2>
++			bit-offset = 7;
++			nbits = 2;
++		};
++
++		speed_bin: speed-bin@c{
++			reg = <0xc 0x1>;
++			bit-offset = 2;
++			nbits	= 3;
++
++		};
++		...
++	};
++
++= Data consumers =
++Are device nodes which consume nvmem data cells/providers.
++
++Required-properties:
++nvmem-cells: list of phandle to the nvmem data cells.
++nvmem-cell-names: names for the each nvmem-cells specified. Required if
++	nvmem-cells is used.
++
++Optional-properties:
++nvmem	: list of phandles to nvmem providers.
++nvmem-names: names for the each nvmem provider. required if nvmem is used.
++
++For example:
++
++	tsens {
++		...
++		nvmem-cells = <&tsens_calibration>;
++		nvmem-cell-names = "calibration";
++	};
 -- 
 1.9.1
