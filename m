@@ -1,123 +1,97 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: [REVIEW][PATCH 2/2] mnt: fs_fully_visible enforce noexec and nosuid
-	if !SB_I_NOEXEC
-Date: Fri, 10 Jul 2015 11:18:17 -0500
-Message-ID: <87bnfkyoja.fsf_-_@x220.int.ebiederm.org>
-References: <87381eyz26.fsf@x220.int.ebiederm.org>
-	<CA+55aFysKDXr2HEwNzm3z9QOw=E4ZeWcvYQ-xLhy5_k+rGbeRg@mail.gmail.com>
-	<87pp4eqktr.fsf@x220.int.ebiederm.org>
-	<CA+55aFw-DK-xDC-3HYa=BMX8WNyQgT9O01tihrAS9+-7PPj_jA@mail.gmail.com>
-	<20150704231118.GT17109@ZenIV.linux.org.uk>
-	<87mvz4yomp.fsf_-_@x220.int.ebiederm.org>
+From: Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>
+Subject: Re: [RFC 5/8] kdbus: use LSM hooks in kdbus code
+Date: Fri, 10 Jul 2015 12:56:00 -0400
+Message-ID: <559FF920.2020302@tycho.nsa.gov>
+References: <1436351110-5902-1-git-send-email-p.osmialowsk@samsung.com> <1436351110-5902-6-git-send-email-p.osmialowsk@samsung.com> <559D27AB.4010402@tycho.nsa.gov>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87mvz4yomp.fsf_-_-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org> (Eric W. Biederman's
-	message of "Fri, 10 Jul 2015 11:16:14 -0500")
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Cc: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ivan Delalande <colona-nzgTgzXrdUbQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <559D27AB.4010402-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Mark Rustad <mark.d.rustad-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, David Herrmann <dh.herrmann-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Lukasz Skalski <l.skalski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On 07/08/2015 09:37 AM, Stephen Smalley wrote:
+> On 07/08/2015 06:25 AM, Paul Osmialowski wrote:
+>> Originates from:
+>>
+>> https://github.com/lmctl/kdbus.git (branch: kdbus-lsm-v4.for-systemd-v212)
+>> commit: aa0885489d19be92fa41c6f0a71df28763228a40
+>>
+>> Signed-off-by: Karol Lewandowski <k.lewandowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+>> Signed-off-by: Paul Osmialowski <p.osmialowsk-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+>> ---
+>>  ipc/kdbus/bus.c        | 12 ++++++++++-
+>>  ipc/kdbus/bus.h        |  3 +++
+>>  ipc/kdbus/connection.c | 54 ++++++++++++++++++++++++++++++++++++++++++++++++++
+>>  ipc/kdbus/connection.h |  4 ++++
+>>  ipc/kdbus/domain.c     |  9 ++++++++-
+>>  ipc/kdbus/domain.h     |  2 ++
+>>  ipc/kdbus/endpoint.c   | 11 ++++++++++
+>>  ipc/kdbus/names.c      | 11 ++++++++++
+>>  ipc/kdbus/queue.c      | 30 ++++++++++++++++++----------
+>>  9 files changed, 124 insertions(+), 12 deletions(-)
+>>
+>>
+> 
+>> diff --git a/ipc/kdbus/connection.c b/ipc/kdbus/connection.c
+>> index 9993753..b85cdc7 100644
+>> --- a/ipc/kdbus/connection.c
+>> +++ b/ipc/kdbus/connection.c
+>> @@ -31,6 +31,7 @@
+>>  #include <linux/slab.h>
+>>  #include <linux/syscalls.h>
+>>  #include <linux/uio.h>
+>> +#include <linux/security.h>
+>>  
+>>  #include "bus.h"
+>>  #include "connection.h"
+>> @@ -73,6 +74,8 @@ static struct kdbus_conn *kdbus_conn_new(struct kdbus_ep *ep, bool privileged,
+>>  	bool is_activator;
+>>  	bool is_monitor;
+>>  	struct kvec kvec;
+>> +	u32 sid, len;
+>> +	char *label;
+>>  	int ret;
+>>  
+>>  	struct {
+>> @@ -222,6 +225,14 @@ static struct kdbus_conn *kdbus_conn_new(struct kdbus_ep *ep, bool privileged,
+>>  		}
+>>  	}
+>>  
+>> +	security_task_getsecid(current, &sid);
+>> +	security_secid_to_secctx(sid, &label, &len);
+>> +	ret = security_kdbus_connect(conn, label, len);
+>> +	if (ret) {
+>> +		ret = -EPERM;
+>> +		goto exit_unref;
+>> +	}
+> 
+> This seems convoluted and expensive.  If you always want the label of
+> the current task here, then why not just have security_kdbus_connect()
+> internally extract the label of the current task?
+> 
+>> @@ -1107,6 +1119,12 @@ static int kdbus_conn_reply(struct kdbus_conn *src, struct kdbus_kmsg *kmsg)
+>>  	if (ret < 0)
+>>  		goto exit;
+>>  
+>> +	ret = security_kdbus_talk(src, dst);
+>> +	if (ret) {
+>> +		ret = -EPERM;
+>> +		goto exit;
+>> +	}
+> 
+> Where does kdbus apply its uid-based or other restrictions on
+> connections?  Why do we need to insert separate hooks into each of these
+> functions?  Is there no central chokepoint already for permission
+> checking that we can hook?
 
-The filesystems proc and sysfs do not have executable files do not
-have exectuable files today and portions of userspace break if we do
-enforce nosuid and noexec consistency of nosuid and noexec flags
-between previous mounts and new mounts of proc and sysfs.
-
-Add the code to enforce consistency of the nosuid and noexec flags,
-and use the presence of SB_I_NOEXEC to signal that there is no need to
-bother.
-
-This results in a completely userspace invisible change that makes it
-clear fs_fully_visible can only skip the enforcement of noexec and
-nosuid because it is known the filesystems in question do not support
-executables.
-
-Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
----
- fs/namespace.c | 33 +++++++++++++++++++++++++--------
- 1 file changed, 25 insertions(+), 8 deletions(-)
-
-diff --git a/fs/namespace.c b/fs/namespace.c
-index c7cb8a526c05..ce428cadd41f 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -3194,6 +3194,8 @@ static bool fs_fully_visible(struct file_system_type *type, int *new_mnt_flags)
- 	down_read(&namespace_sem);
- 	list_for_each_entry(mnt, &ns->list, mnt_list) {
- 		struct mount *child;
-+		int mnt_flags;
-+
- 		if (mnt->mnt.mnt_sb->s_type != type)
- 			continue;
- 
-@@ -3203,17 +3205,30 @@ static bool fs_fully_visible(struct file_system_type *type, int *new_mnt_flags)
- 		if (mnt->mnt.mnt_root != mnt->mnt.mnt_sb->s_root)
- 			continue;
- 
-+		/* Read the mount flags and filter out flags that
-+		 * may safely be ignored.
-+		 */
-+		mnt_flags = mnt->mnt.mnt_flags;
-+		if (mnt->mnt.mnt_sb->s_iflags & SB_I_NOEXEC)
-+			mnt_flags &= ~(MNT_LOCK_NOSUID | MNT_LOCK_NOEXEC);
-+
- 		/* Verify the mount flags are equal to or more permissive
- 		 * than the proposed new mount.
- 		 */
--		if ((mnt->mnt.mnt_flags & MNT_LOCK_READONLY) &&
-+		if ((mnt_flags & MNT_LOCK_READONLY) &&
- 		    !(new_flags & MNT_READONLY))
- 			continue;
--		if ((mnt->mnt.mnt_flags & MNT_LOCK_NODEV) &&
-+		if ((mnt_flags & MNT_LOCK_NODEV) &&
- 		    !(new_flags & MNT_NODEV))
- 			continue;
--		if ((mnt->mnt.mnt_flags & MNT_LOCK_ATIME) &&
--		    ((mnt->mnt.mnt_flags & MNT_ATIME_MASK) != (new_flags & MNT_ATIME_MASK)))
-+		if ((mnt_flags & MNT_LOCK_NOSUID) &&
-+		    !(new_flags & MNT_NOSUID))
-+			continue;
-+		if ((mnt_flags & MNT_LOCK_NOEXEC) &&
-+		    !(new_flags & MNT_NOEXEC))
-+			continue;
-+		if ((mnt_flags & MNT_LOCK_ATIME) &&
-+		    ((mnt_flags & MNT_ATIME_MASK) != (new_flags & MNT_ATIME_MASK)))
- 			continue;
- 
- 		/* This mount is not fully visible if there are any
-@@ -3223,16 +3238,18 @@ static bool fs_fully_visible(struct file_system_type *type, int *new_mnt_flags)
- 		list_for_each_entry(child, &mnt->mnt_mounts, mnt_child) {
- 			struct inode *inode = child->mnt_mountpoint->d_inode;
- 			/* Only worry about locked mounts */
--			if (!(mnt->mnt.mnt_flags & MNT_LOCKED))
-+			if (!(mnt_flags & MNT_LOCKED))
- 				continue;
- 			/* Is the directory permanetly empty? */
- 			if (!is_empty_dir_inode(inode))
- 				goto next;
- 		}
- 		/* Preserve the locked attributes */
--		*new_mnt_flags |= mnt->mnt.mnt_flags & (MNT_LOCK_READONLY | \
--							MNT_LOCK_NODEV    | \
--							MNT_LOCK_ATIME);
-+		*new_mnt_flags |= mnt_flags & (MNT_LOCK_READONLY | \
-+					       MNT_LOCK_NODEV    | \
-+					       MNT_LOCK_NOSUID   | \
-+					       MNT_LOCK_NOEXEC   | \
-+					       MNT_LOCK_ATIME);
- 		visible = true;
- 		goto found;
- 	next:	;
--- 
-2.2.1
+For example, why wouldn't you insert a single hook into
+kdbus_conn_policy_talk() where they perform their DAC checking?
+You would need to restructure it slightly to ensure that the security
+hook is only called if it passes the DAC (privileged || uid_eq) check so
+that we do not trigger MAC denials when DAC wouldn't have allowed it
+anyway.  Also, kdbus_conn_policy_talk() takes a separate conn_creds
+argument - that should be passed through to the hook as well.
