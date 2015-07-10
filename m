@@ -1,143 +1,399 @@
-From: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v7 4/9] nvmem: Add bindings for simple nvmem framework
-Date: Fri, 10 Jul 2015 14:04:29 -0500
-Message-ID: <CAL_JsqKYT-+T=D=TKCb1TcydOvBTE8_yc-EEe1cwdmhr1B0dHQ@mail.gmail.com>
-References: <1436521427-10568-1-git-send-email-srinivas.kandagatla@linaro.org> <1436521513-10838-1-git-send-email-srinivas.kandagatla@linaro.org>
+From: Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH -mm v6 5/6] proc: add kpageidle file
+Date: Fri, 10 Jul 2015 12:10:51 -0700
+Message-ID: <CAJu=L5_BX_bbOHcLFXCry=RxYxFHkwDcLSL+KEoHf8LaNSRjBQ@mail.gmail.com>
+References: <cover.1434102076.git.vdavydov@parallels.com>
+	<50b7cd0f35f651481ce32414fab5210de5dc1714.1434102076.git.vdavydov@parallels.com>
+	<CAJu=L5-fwHMEKmL1Sp7owXyBa0GCrGR=TdKZbh15CJA3WrcwqA@mail.gmail.com>
+	<20150709131900.GK2436@esperanza>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1436521513-10838-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Sascha Hauer <s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arm-msm <linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150709131900.GK2436@esperanza>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Raghavendra K T <raghavendra.kt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 10, 2015 at 4:45 AM, Srinivas Kandagatla
-<srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
-> This patch adds bindings for simple nvmem framework which allows nvmem
-> consumers to talk to nvmem providers to get access to nvmem cell data.
+Hi Vladimir,
+
+On Thu, Jul 9, 2015 at 6:19 AM, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org> wrote:
+> Hi Andres,
 >
-> Signed-off-by: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-> [Maxime Ripard: intial version of eeprom framework]
-> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-> ---
->  Documentation/devicetree/bindings/nvmem/nvmem.txt | 85 +++++++++++++++++++++++
->  1 file changed, 85 insertions(+)
->  create mode 100644 Documentation/devicetree/bindings/nvmem/nvmem.txt
+> On Wed, Jul 08, 2015 at 04:01:13PM -0700, Andres Lagar-Cavilla wrote:
+>> On Fri, Jun 12, 2015 at 2:52 AM, Vladimir Davydov
+> [...]
+>> > @@ -275,6 +276,179 @@ static const struct file_operations proc_kpagecgroup_operations = {
+>> >  };
+>> >  #endif /* CONFIG_MEMCG */
+>> >
+>> > +#ifdef CONFIG_IDLE_PAGE_TRACKING
+>> > +/*
+>> > + * Idle page tracking only considers user memory pages, for other types of
+>> > + * pages the idle flag is always unset and an attempt to set it is silently
+>> > + * ignored.
+>> > + *
+>> > + * We treat a page as a user memory page if it is on an LRU list, because it is
+>> > + * always safe to pass such a page to page_referenced(), which is essential for
+>> > + * idle page tracking. With such an indicator of user pages we can skip
+>> > + * isolated pages, but since there are not usually many of them, it will hardly
+>> > + * affect the overall result.
+>> > + *
+>> > + * This function tries to get a user memory page by pfn as described above.
+>> > + */
+>> > +static struct page *kpageidle_get_page(unsigned long pfn)
+>> > +{
+>> > +       struct page *page;
+>> > +       struct zone *zone;
+>> > +
+>> > +       if (!pfn_valid(pfn))
+>> > +               return NULL;
+>> > +
+>> > +       page = pfn_to_page(pfn);
+>> > +       if (!page || !PageLRU(page))
+>>
+>> Isolation can race in while you're processing the page, after these
+>> checks. This is ok, but worth a small comment.
 >
-> diff --git a/Documentation/devicetree/bindings/nvmem/nvmem.txt b/Documentation/devicetree/bindings/nvmem/nvmem.txt
-> new file mode 100644
-> index 0000000..849f1e1
-> --- /dev/null
-> +++ b/Documentation/devicetree/bindings/nvmem/nvmem.txt
-> @@ -0,0 +1,85 @@
-> += NVMEM(Non Volatile Memory) Data Device Tree Bindings =
-> +
-> +This binding is intended to represent the location of hardware
-> +configuration data stored in NVMEMs like eeprom, efuses and so on.
-> +
-> +On a significant proportion of boards, the manufacturer has stored
-> +some data on NVMEM, for the OS to be able to retrieve these information
-> +and act upon it. Obviously, the OS has to know about where to retrieve
-> +these data from, and where they are stored on the storage device.
-> +
-> +This document is here to document this.
-> +
-> += Data providers =
-> +Contains bindings specific to provider drivers and data cells as children
-> +of this node.
-
-#address-cells and #size-cells are required here.
-
-> +
-> +Optional properties:
-> + read-only: Mark the provider as read only.
-
-Couldn't this be per field rather than global?
-
-> +
-> += Data cells =
-> +These are the child nodes of the provider which contain data cell
-> +information like offset and size in nvmem provider.
-> +
-> +Required properties:
-> +reg:   specifies the offset in byte within that storage device, start bit
-> +       in the byte and the length in bytes of the data we care about.
-> +       There could be more than one offset-length pairs in this property.
-> +
-> +Optional properties:
-> +
-> +bit-offset: specifies the offset in bit within the address range specified
-> +       by reg property. Can take values from 0-7.
-> +nbits: specifies number of bits this cell occupies starting from bit-offset.
-
-How about just: "bits = <<offset> <size>>"
-
-Then the bit specification is more aligned with the byte location
-(i.e. reg property).
-
-You could also do this all in the reg property with 2 address cells
-for byte and bit position and then size can be in bits. reg doesn't
-have to match a memory mapped bus addressing meanings. If you wanted
-to handle ranges and address translation, then you would need custom
-functions like PCI does. I'm not sure you would need that.
-
-> +
-> +For example:
-> +
-> +       /* Provider */
-> +       qfprom: qfprom@00700000 {
-> +               ...
-> +
-> +               /* Data cells */
-> +               tsens_calibration: calib@404 {
-> +                       reg = <0x404 0x10>;
-> +               };
-> +
-> +               tsens_calibration_bckp: calib_bckp@504 {
-> +                       reg = <0x504 0x11>;
-> +                       bit-offset = 6;
-> +                       nbits = 128;
-> +               };
-> +
-> +               pvs_version: pvs-version@6 {
-> +                       reg = <0x6 0x2>
-> +                       bit-offset = 7;
-> +                       nbits = 2;
-> +               };
-> +
-> +               speed_bin: speed-bin@c{
-> +                       reg = <0xc 0x1>;
-> +                       bit-offset = 2;
-> +                       nbits   = 3;
-> +
-> +               };
-> +               ...
-> +       };
-> +
-> += Data consumers =
-> +Are device nodes which consume nvmem data cells/providers.
-> +
-> +Required-properties:
-> +nvmem-cells: list of phandle to the nvmem data cells.
-> +nvmem-cell-names: names for the each nvmem-cells specified. Required if
-> +       nvmem-cells is used.
-> +
-> +Optional-properties:
-> +nvmem  : list of phandles to nvmem providers.
-> +nvmem-names: names for the each nvmem provider. required if nvmem is used.
-> +
-> +For example:
-> +
-> +       tsens {
-> +               ...
-> +               nvmem-cells = <&tsens_calibration>;
-> +               nvmem-cell-names = "calibration";
-> +       };
-> --
-> 1.9.1
+> Agree, will add one.
 >
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>>
+>> > +               return NULL;
+>> > +       if (!get_page_unless_zero(page))
+>> > +               return NULL;
+>> > +
+>> > +       zone = page_zone(page);
+>> > +       spin_lock_irq(&zone->lru_lock);
+>> > +       if (unlikely(!PageLRU(page))) {
+>> > +               put_page(page);
+>> > +               page = NULL;
+>> > +       }
+>> > +       spin_unlock_irq(&zone->lru_lock);
+>> > +       return page;
+>> > +}
+>> > +
+>> > +/*
+>> > + * This function calls page_referenced() to clear the referenced bit for all
+>> > + * mappings to a page. Since the latter also clears the page idle flag if the
+>> > + * page was referenced, it can be used to update the idle flag of a page.
+>> > + */
+>> > +static void kpageidle_clear_pte_refs(struct page *page)
+>> > +{
+>> > +       unsigned long dummy;
+>> > +
+>> > +       if (page_referenced(page, 0, NULL, &dummy, NULL))
+>>
+>> Because of pte/pmd_clear_flush_young* called in the guts of
+>> page_referenced_one, an N byte write or read to /proc/kpageidle will
+>> cause N * 64 TLB flushes.
+>>
+>> Additionally, because of the _notify connection to mmu notifiers, this
+>> will also cause N * 64 EPT TLB flushes (in the KVM Intel case, similar
+>> for other notifier flavors, you get the point).
+>>
+>> The solution is relatively straightforward: augment
+>> page_referenced_one with a mode marker or boolean that determines
+>> whether tlb flushing is required.
+>
+> Frankly, I don't think that tlb flushes are such a big deal in the scope
+> of this feature, because one is not supposed to write to kpageidle that
+> often. However, I agree we'd better avoid overhead we can easily avoid,
+> so I'll add a new flag to differentiate between kpageidle and reclaim
+> path in page_referenced, as you suggested.
+
+Yes, it's a performance optimization, but fairly critical. Once you
+open up a user-space interface, it will take off. What prevents people
+from writing a daemon that will scan the entire host space every N
+seconds (N=10? 60? 90? 120?). That means tens or hundreds of millions
+of individual TLB flushes, which will hurt performance.
+
+The KVM issue is not minor.
+
+>
+>>
+>> For an access pattern tracker such as the one you propose, flushing is
+>> not strictly necessary: the next context switch will take care. Too
+>> bad if you missed a few accesses because the pte/pmd was loaded in the
+>> TLB. Not so easy for MMU notifiers, because each secondary MMU has its
+>> own semantics. You could arguably throw the towel in there, or try to
+>> provide a framework (i.e. propagate the flushing flag) and let each
+>> implementation fill the gaps.
+>>
+>> > +               /*
+>> > +                * We cleared the referenced bit in a mapping to this page. To
+>> > +                * avoid interference with the reclaimer, mark it young so that
+>> > +                * the next call to page_referenced() will also return > 0 (see
+>> > +                * page_referenced_one())
+>> > +                */
+>> > +               set_page_young(page);
+>> > +}
+>> > +
+>> > +static ssize_t kpageidle_read(struct file *file, char __user *buf,
+>> > +                             size_t count, loff_t *ppos)
+>> > +{
+>> > +       u64 __user *out = (u64 __user *)buf;
+>> > +       struct page *page;
+>> > +       unsigned long pfn, end_pfn;
+>> > +       ssize_t ret = 0;
+>> > +       u64 idle_bitmap = 0;
+>> > +       int bit;
+>> > +
+>> > +       if (*ppos & KPMMASK || count & KPMMASK)
+>> > +               return -EINVAL;
+>> > +
+>> > +       pfn = *ppos * BITS_PER_BYTE;
+>> > +       if (pfn >= max_pfn)
+>> > +               return 0;
+>> > +
+>> > +       end_pfn = pfn + count * BITS_PER_BYTE;
+>> > +       if (end_pfn > max_pfn)
+>> > +               end_pfn = ALIGN(max_pfn, KPMBITS);
+>> > +
+>> > +       for (; pfn < end_pfn; pfn++) {
+>> > +               bit = pfn % KPMBITS;
+>> > +               page = kpageidle_get_page(pfn);
+>> > +               if (page) {
+>> > +                       if (page_is_idle(page)) {
+>> > +                               /*
+>> > +                                * The page might have been referenced via a
+>> > +                                * pte, in which case it is not idle. Clear
+>> > +                                * refs and recheck.
+>> > +                                */
+>> > +                               kpageidle_clear_pte_refs(page);
+>> > +                               if (page_is_idle(page))
+>> > +                                       idle_bitmap |= 1ULL << bit;
+>> > +                       }
+>> > +                       put_page(page);
+>> > +               }
+>> > +               if (bit == KPMBITS - 1) {
+>> > +                       if (put_user(idle_bitmap, out)) {
+>> > +                               ret = -EFAULT;
+>> > +                               break;
+>> > +                       }
+>> > +                       idle_bitmap = 0;
+>> > +                       out++;
+>> > +               }
+>> > +       }
+>> > +
+>> > +       *ppos += (char __user *)out - buf;
+>> > +       if (!ret)
+>> > +               ret = (char __user *)out - buf;
+>> > +       return ret;
+>> > +}
+>> > +
+>> > +static ssize_t kpageidle_write(struct file *file, const char __user *buf,
+>>
+>> Your reasoning for a host wide /proc/kpageidle is well argued, but I'm
+>> still hesitant.
+>>
+>> mincore() shows how to (relatively simply) resolve unmapped file pages
+>> to their backing page cache destination. You could recycle that code
+>> and then you'd have per process idle/idling interfaces. With the
+>> advantage of a clear TLB flush demarcation.
+>
+> Hmm, I still don't see how we could handle page cache that does not
+> belong to any process in the scope of sys_mincore.
+
+You're correct.
+
+I wasn't asking to use mincore, just pointing out an extant code
+pattern that could get you beyond the concerns re unmapping (and which
+can be implemented as a proc file).
+
+My view is that the key pieces of infrastructure (the flags, the
+interactions with page_referenced_one, clear_refs, mark_page_accessed)
+your patchset brings along then can be reused in many ways. Michel
+Lespinasse's kernel thread can reuse them, or proc/smaps can be
+augmented (or a new proc entry), to get per process idle maps.
+
+So /proc/kpageidle is fine with me, but not crazy appealing.
+
+>
+> Besides, it'd be awkward to reuse sys_mincore for idle page tracking,
+> because we need two operations, set idle and check idle, while the
+> sys_mincore semantic implies only getting information from the kernel,
+> not vice versa.
+>
+> Of course, we could introduce a separate syscall, say sys_idlecore, but
+> IMO it is not a good idea to add a syscall for such a specific feature,
+> which can be compiled out. I think a proc file suits better for the
+> purpose, especially counting that we have a bunch of similar files
+> (pagemap, kpageflags, kpagecount).
+>
+> Anyway, I'm open for suggestions. If you have a different user API
+> design in mind, which in your opinion would fit better, please share.
+>
+>>
+>> > +                              size_t count, loff_t *ppos)
+>> > +{
+>> > +       const u64 __user *in = (const u64 __user *)buf;
+>> > +       struct page *page;
+>> > +       unsigned long pfn, end_pfn;
+>> > +       ssize_t ret = 0;
+>> > +       u64 idle_bitmap = 0;
+>> > +       int bit;
+>> > +
+>> > +       if (*ppos & KPMMASK || count & KPMMASK)
+>> > +               return -EINVAL;
+>> > +
+>> > +       pfn = *ppos * BITS_PER_BYTE;
+>> > +       if (pfn >= max_pfn)
+>> > +               return -ENXIO;
+>> > +
+>> > +       end_pfn = pfn + count * BITS_PER_BYTE;
+>> > +       if (end_pfn > max_pfn)
+>> > +               end_pfn = ALIGN(max_pfn, KPMBITS);
+>> > +
+>> > +       for (; pfn < end_pfn; pfn++) {
+>>
+>> Relatively straight forward to teleport forward 512 (or more
+>> correctly: 1 << compound_order(page)) pages for THP pages, once done
+>> with a THP head, and avoid 511 fruitless trips down rmap.c for each
+>> tail.
+>
+> Right, will fix.
+>
+>>
+>> > +               bit = pfn % KPMBITS;
+>> > +               if (bit == 0) {
+>> > +                       if (get_user(idle_bitmap, in)) {
+>> > +                               ret = -EFAULT;
+>> > +                               break;
+>> > +                       }
+>> > +                       in++;
+>> > +               }
+>> > +               if (idle_bitmap >> bit & 1) {
+>> > +                       page = kpageidle_get_page(pfn);
+>> > +                       if (page) {
+>> > +                               kpageidle_clear_pte_refs(page);
+>> > +                               set_page_idle(page);
+>>
+>> In the common case this will make a page both young and idle. This is
+>> fine. We will come back to it below.
+>>
+>> > +                               put_page(page);
+>> > +                       }
+>> > +               }
+>> > +       }
+>> > +
+>> > +       *ppos += (const char __user *)in - buf;
+>> > +       if (!ret)
+>> > +               ret = (const char __user *)in - buf;
+>> > +       return ret;
+>> > +}
+>> > +
+>> > +static const struct file_operations proc_kpageidle_operations = {
+>> > +       .llseek = mem_lseek,
+>> > +       .read = kpageidle_read,
+>> > +       .write = kpageidle_write,
+>> > +};
+>> > +
+>> > +#ifndef CONFIG_64BIT
+>> > +static bool need_page_idle(void)
+>> > +{
+>> > +       return true;
+>> > +}
+>> > +struct page_ext_operations page_idle_ops = {
+>> > +       .need = need_page_idle,
+>> > +};
+>> > +#endif
+>> > +#endif /* CONFIG_IDLE_PAGE_TRACKING */
+>> > +
+>> >  static int __init proc_page_init(void)
+>> >  {
+>> >         proc_create("kpagecount", S_IRUSR, NULL, &proc_kpagecount_operations);
+> [...]
+>> > @@ -798,6 +798,14 @@ static int page_referenced_one(struct page *page, struct vm_area_struct *vma,
+>> >                 pte_unmap_unlock(pte, ptl);
+>>
+>> This is not in your patch, but further up in page_referenced_one there
+>> is the pmd case.
+>>
+>> So what happens on THP split? That was a leading question: you should
+>> propagate the young and idle flags to the split-up tail pages.
+>
+> Good catch! I completely forgot about THP slit. Will fix in the next
+> iteration.
+>
+>>
+>> >         }
+>> >
+>> > +       if (referenced && page_is_idle(page))
+>> > +               clear_page_idle(page);
+>>
+>> Is it so expensive to just call clear without the test .. ?
+>
+> This function is normally called from a relatively cold path - memory
+> reclaim, where we modify page->flags anyway, so I think it won't make
+> any difference if we drop this check.
+>
+>>
+>> > +
+>> > +       if (page_is_young(page)) {
+>> > +               clear_page_young(page);
+>>
+>> referenced += test_and_clear_page_young(page) .. ?
+>
+> Yeah, that does look better.
+>
+>>
+>> > +               referenced++;
+>> > +       }
+>> > +
+>>
+>> Invert the order. A page can be both young and idle -- we noted that
+>> closer to the top of the patch.
+>>
+>> So young bumps referenced up, and then the final referenced value is
+>> used to clear idle.
+>
+> I don't think it'd work. Look, kpageidle_write clears pte references and
+> sets the idle flag. If the page was referenced it also sets the young
+> flag in order not to interfere with the reclaimer. When kpageidle_read
+> is called afterwards, it must see the idle flag set iff the page has not
+> been referenced since kpageidle_write set it. However, if
+> page_referenced was not called on the page from the reclaim path, it
+> will still be young no matter if it has been referenced or not and
+> therefore will always be identified as not idle, which is incorrect.
+
+You're right. Thanks!
+Andres
+>
+>>
+>> >         if (referenced) {
+>>
+>> At this point, if you follow my suggestion of augmenting
+>> page_referenced_one with a mode indicator (for TLB flushing), you can
+>> set page young here. There is the added benefit of holding the
+>> mmap_mutex lock or vma_lock, which prevents reclaim, try_to_unmap,
+>> migration, from exploiting a small window where page young is not set
+>> but should.
+>
+> Yeah, if we go with the page_referenced mode switcher you suggested
+> above, it's definitely worth moving set_page_young here.
+>
+> Thank you for the review!
+>
+> Vladimir
+>
+>>
+>> >                 pra->referenced++;
+>> >                 pra->vm_flags |= vma->vm_flags;
+>> > diff --git a/mm/swap.c b/mm/swap.c
+>> > index ab7c338eda87..db43c9b4891d 100644
+>> > --- a/mm/swap.c
+>> > +++ b/mm/swap.c
+>> > @@ -623,6 +623,8 @@ void mark_page_accessed(struct page *page)
+>> >         } else if (!PageReferenced(page)) {
+>> >                 SetPageReferenced(page);
+>> >         }
+>> > +       if (page_is_idle(page))
+>> > +               clear_page_idle(page);
+>> >  }
+>> >  EXPORT_SYMBOL(mark_page_accessed);
+>> >
+
+
+
+-- 
+Andres Lagar-Cavilla | Google Kernel Team | andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
