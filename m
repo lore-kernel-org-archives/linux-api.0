@@ -1,210 +1,40 @@
-From: Konstantin Khlebnikov <koct9i@gmail.com>
-Subject: Re: [RFCv3 2/5] mm/compaction: enable mobile-page migration
-Date: Fri, 10 Jul 2015 16:41:22 +0300
-Message-ID: <CALYGNiN2D8s4=6AdjoAp_R9Znd0Wm5gS0vC2zviyw+9Lu4NyGA@mail.gmail.com>
-References: <1436243785-24105-1-git-send-email-gioh.kim@lge.com>
-	<1436243785-24105-3-git-send-email-gioh.kim@lge.com>
+From: Jonathan Corbet <corbet@lwn.net>
+Subject: Re: [PATCH V3 3/5] mm: mlock: Introduce VM_LOCKONFAULT and add
+ mlock flags to enable it
+Date: Fri, 10 Jul 2015 10:11:18 -0600
+Message-ID: <20150710101118.5d04d627@lwn.net>
+References: <1436288623-13007-1-git-send-email-emunson@akamai.com>
+	<1436288623-13007-4-git-send-email-emunson@akamai.com>
+	<20150708132351.61c13db6@lwn.net>
+	<20150708203456.GC4669@akamai.com>
+	<20150708151750.75e65859@lwn.net>
+	<20150709184635.GE4669@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1436243785-24105-3-git-send-email-gioh.kim@lge.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Gioh Kim <gioh.kim@lge.com>
-Cc: Jeff Layton <jlayton@poochiereds.net>, Bruce Fields <bfields@fieldses.org>, Vlastimil Babka <vbabka@suse.cz>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Al Viro <viro@zeniv.linux.org.uk>, "Michael S. Tsirkin" <mst@redhat.com>, Minchan Kim <minchan@kernel.org>, Rafael Aquini <aquini@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, virtualization@lists.linux-foundation.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, gunho.lee@lge.com, Andrew Morton <akpm@linux-foundation.org>, Gioh Kim <gurugio@hanmail.net>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-alpha-owner@vger.kernel.org>
+In-Reply-To: <20150709184635.GE4669@akamai.com>
+Sender: linux-alpha-owner@vger.kernel.org
+To: Eric B Munson <emunson@akamai.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-One more note below.
+On Thu, 9 Jul 2015 14:46:35 -0400
+Eric B Munson <emunson@akamai.com> wrote:
 
-On Tue, Jul 7, 2015 at 7:36 AM, Gioh Kim <gioh.kim@lge.com> wrote:
-> From: Gioh Kim <gurugio@hanmail.net>
->
-> Add framework to register callback functions and check page mobility.
-> There are some modes for page isolation so that isolate interface
-> has arguments of page address and isolation mode while putback
-> interface has only page address as argument.
->
-> Signed-off-by: Gioh Kim <gioh.kim@lge.com>
-> ---
->  fs/proc/page.c                         |  3 ++
->  include/linux/compaction.h             | 76 ++++++++++++++++++++++++++++++++++
->  include/linux/fs.h                     |  2 +
->  include/linux/page-flags.h             | 19 +++++++++
->  include/uapi/linux/kernel-page-flags.h |  1 +
->  5 files changed, 101 insertions(+)
->
-> diff --git a/fs/proc/page.c b/fs/proc/page.c
-> index 7eee2d8..a4f5a00 100644
-> --- a/fs/proc/page.c
-> +++ b/fs/proc/page.c
-> @@ -146,6 +146,9 @@ u64 stable_page_flags(struct page *page)
->         if (PageBalloon(page))
->                 u |= 1 << KPF_BALLOON;
->
-> +       if (PageMobile(page))
-> +               u |= 1 << KPF_MOBILE;
-> +
->         u |= kpf_copy_bit(k, KPF_LOCKED,        PG_locked);
->
->         u |= kpf_copy_bit(k, KPF_SLAB,          PG_slab);
-> diff --git a/include/linux/compaction.h b/include/linux/compaction.h
-> index aa8f61c..c375a89 100644
-> --- a/include/linux/compaction.h
-> +++ b/include/linux/compaction.h
-> @@ -1,6 +1,9 @@
->  #ifndef _LINUX_COMPACTION_H
->  #define _LINUX_COMPACTION_H
->
-> +#include <linux/page-flags.h>
-> +#include <linux/pagemap.h>
-> +
->  /* Return values for compact_zone() and try_to_compact_pages() */
->  /* compaction didn't start as it was deferred due to past failures */
->  #define COMPACT_DEFERRED       0
-> @@ -51,6 +54,66 @@ extern void compaction_defer_reset(struct zone *zone, int order,
->                                 bool alloc_success);
->  extern bool compaction_restarting(struct zone *zone, int order);
->
-> +static inline bool mobile_page(struct page *page)
-> +{
-> +       return page->mapping && page->mapping->a_ops &&
-> +               (PageMobile(page) || PageBalloon(page));
-> +}
-> +
-> +static inline bool isolate_mobilepage(struct page *page, isolate_mode_t mode)
-> +{
-> +       bool ret;
-> +
-> +       /*
-> +        * Avoid burning cycles with pages that are yet under __free_pages(),
-> +        * or just got freed under us.
-> +        *
-> +        * In case we 'win' a race for a mobile page being freed under us and
-> +        * raise its refcount preventing __free_pages() from doing its job
-> +        * the put_page() at the end of this block will take care of
-> +        * release this page, thus avoiding a nasty leakage.
-> +        */
-> +       if (likely(get_page_unless_zero(page))) {
-> +               /*
-> +                * As mobile pages are not isolated from LRU lists, concurrent
-> +                * compaction threads can race against page migration functions
-> +                * as well as race against the releasing a page.
-> +                *
-> +                * In order to avoid having an already isolated mobile page
-> +                * being (wrongly) re-isolated while it is under migration,
-> +                * or to avoid attempting to isolate pages being released,
-> +                * lets be sure we have the page lock
-> +                * before proceeding with the mobile page isolation steps.
-> +                */
-> +               if (likely(trylock_page(page))) {
-> +                       if (mobile_page(page) &&
-> +                           page->mapping->a_ops->isolatepage) {
-> +                               ret = page->mapping->a_ops->isolatepage(page,
-> +                                                                       mode);
-> +                               unlock_page(page);
+> > One other question...if I call mlock2(MLOCK_ONFAULT) on a range that
+> > already has resident pages, I believe that those pages will not be locked
+> > until they are reclaimed and faulted back in again, right?  I suspect that
+> > could be surprising to users.  
+> 
+> That is the case.  I am looking into what it would take to find only the
+> present pages in a range and lock them, if that is the behavior that is
+> preferred I can include it in the updated series.
 
-Here you leak page reference if isolatepage() fails.
+For whatever my $0.02 is worth, I think that should be done.  Otherwise
+the mlock2() interface is essentially nondeterministic; you'll never
+really know if a specific page is locked or not.
 
-> +                               return ret;
-> +                       }
-> +                       unlock_page(page);
-> +               }
-> +               put_page(page);
-> +       }
-> +       return false;
-> +}
-> +
-> +static inline void putback_mobilepage(struct page *page)
-> +{
-> +       /*
-> +        * 'lock_page()' stabilizes the page and prevents races against
-> +        * concurrent isolation threads attempting to re-isolate it.
-> +        */
-> +       lock_page(page);
-> +       if (mobile_page(page) && page->mapping->a_ops->putbackpage) {
-> +               page->mapping->a_ops->putbackpage(page);
-> +               /* drop the extra ref count taken for mobile page isolation */
-> +               put_page(page);
-> +       }
-> +       unlock_page(page);
-> +}
->  #else
->  static inline unsigned long try_to_compact_pages(gfp_t gfp_mask,
->                         unsigned int order, int alloc_flags,
-> @@ -83,6 +146,19 @@ static inline bool compaction_deferred(struct zone *zone, int order)
->         return true;
->  }
->
-> +static inline bool mobile_page(struct page *page)
-> +{
-> +       return false;
-> +}
-> +
-> +static inline bool isolate_mobilepage(struct page *page, isolate_mode_t mode)
-> +{
-> +       return false;
-> +}
-> +
-> +static inline void putback_mobilepage(struct page *page)
-> +{
-> +}
->  #endif /* CONFIG_COMPACTION */
->
->  #if defined(CONFIG_COMPACTION) && defined(CONFIG_SYSFS) && defined(CONFIG_NUMA)
-> diff --git a/include/linux/fs.h b/include/linux/fs.h
-> index 35ec87e..33c9aa5 100644
-> --- a/include/linux/fs.h
-> +++ b/include/linux/fs.h
-> @@ -395,6 +395,8 @@ struct address_space_operations {
->          */
->         int (*migratepage) (struct address_space *,
->                         struct page *, struct page *, enum migrate_mode);
-> +       bool (*isolatepage) (struct page *, isolate_mode_t);
-> +       void (*putbackpage) (struct page *);
->         int (*launder_page) (struct page *);
->         int (*is_partially_uptodate) (struct page *, unsigned long,
->                                         unsigned long);
-> diff --git a/include/linux/page-flags.h b/include/linux/page-flags.h
-> index f34e040..abef145 100644
-> --- a/include/linux/page-flags.h
-> +++ b/include/linux/page-flags.h
-> @@ -582,6 +582,25 @@ static inline void __ClearPageBalloon(struct page *page)
->         atomic_set(&page->_mapcount, -1);
->  }
->
-> +#define PAGE_MOBILE_MAPCOUNT_VALUE (-255)
-> +
-> +static inline int PageMobile(struct page *page)
-> +{
-> +       return atomic_read(&page->_mapcount) == PAGE_MOBILE_MAPCOUNT_VALUE;
-> +}
-> +
-> +static inline void __SetPageMobile(struct page *page)
-> +{
-> +       VM_BUG_ON_PAGE(atomic_read(&page->_mapcount) != -1, page);
-> +       atomic_set(&page->_mapcount, PAGE_MOBILE_MAPCOUNT_VALUE);
-> +}
-> +
-> +static inline void __ClearPageMobile(struct page *page)
-> +{
-> +       VM_BUG_ON_PAGE(!PageMobile(page), page);
-> +       atomic_set(&page->_mapcount, -1);
-> +}
-> +
->  /*
->   * If network-based swap is enabled, sl*b must keep track of whether pages
->   * were allocated from pfmemalloc reserves.
-> diff --git a/include/uapi/linux/kernel-page-flags.h b/include/uapi/linux/kernel-page-flags.h
-> index a6c4962..d50d9e8 100644
-> --- a/include/uapi/linux/kernel-page-flags.h
-> +++ b/include/uapi/linux/kernel-page-flags.h
-> @@ -33,6 +33,7 @@
->  #define KPF_THP                        22
->  #define KPF_BALLOON            23
->  #define KPF_ZERO_PAGE          24
-> +#define KPF_MOBILE             25
->
->
->  #endif /* _UAPILINUX_KERNEL_PAGE_FLAGS_H */
-> --
-> 2.1.4
->
+Thanks,
+
+jon
