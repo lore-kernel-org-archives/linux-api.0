@@ -1,83 +1,56 @@
-From: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH V3 3/5] mm: mlock: Introduce VM_LOCKONFAULT and add mlock
- flags to enable it
-Date: Fri, 10 Jul 2015 12:19:48 -0400
-Message-ID: <20150710161948.GF4669@akamai.com>
-References: <1436288623-13007-1-git-send-email-emunson@akamai.com>
- <1436288623-13007-4-git-send-email-emunson@akamai.com>
- <20150708132351.61c13db6@lwn.net>
- <20150708203456.GC4669@akamai.com>
- <20150708151750.75e65859@lwn.net>
- <20150709184635.GE4669@akamai.com>
- <20150710101118.5d04d627@lwn.net>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: [REVIEW][PATCH 0/2] noexec on proc and sysfs
+Date: Fri, 10 Jul 2015 11:16:14 -0500
+Message-ID: <87mvz4yomp.fsf_-_@x220.int.ebiederm.org>
+References: <87381eyz26.fsf@x220.int.ebiederm.org>
+	<CA+55aFysKDXr2HEwNzm3z9QOw=E4ZeWcvYQ-xLhy5_k+rGbeRg@mail.gmail.com>
+	<87pp4eqktr.fsf@x220.int.ebiederm.org>
+	<CA+55aFw-DK-xDC-3HYa=BMX8WNyQgT9O01tihrAS9+-7PPj_jA@mail.gmail.com>
+	<20150704231118.GT17109@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="B0nZA57HJSoPbsHY"
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150710101118.5d04d627-T1hC0tSOHrs@public.gmane.org>
+In-Reply-To: <20150704231118.GT17109-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org> (Al Viro's message of
+	"Sun, 5 Jul 2015 00:11:18 +0100")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-alpha-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, linux-parisc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Kenton Varda <kenton-AuYgBwuPrUQTaNkGU808tA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, =?utf-8?Q?St=C3=A9phane?= Graber <stgraber-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Eric Windisch <ewindisch-FCduhRhOUaTQT0dZR+AlfA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Omar Sandoval <osandov-nWWhXC5lh1RBDgjK7y7TUQ@public.gmane.org>, Ivan Delalande <colona-nzgTgzXrdUbQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
---B0nZA57HJSoPbsHY
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Given the code I have seen executables especially suid root executable
+appearing on proc or sysfs will break userspace because there are
+current applications that depend on nosuid and noexec on proc and sysfs
+being meaningless.
 
-On Fri, 10 Jul 2015, Jonathan Corbet wrote:
+This patchset addes a new flag SB_I_NOEXEC to enforce that restriction,
+and to make it hard for a kernel developer to make the mistake of adding
+executables to sysfs or proc.
 
-> On Thu, 9 Jul 2015 14:46:35 -0400
-> Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org> wrote:
->=20
-> > > One other question...if I call mlock2(MLOCK_ONFAULT) on a range that
-> > > already has resident pages, I believe that those pages will not be lo=
-cked
-> > > until they are reclaimed and faulted back in again, right?  I suspect=
- that
-> > > could be surprising to users. =20
-> >=20
-> > That is the case.  I am looking into what it would take to find only the
-> > present pages in a range and lock them, if that is the behavior that is
-> > preferred I can include it in the updated series.
->=20
-> For whatever my $0.02 is worth, I think that should be done.  Otherwise
-> the mlock2() interface is essentially nondeterministic; you'll never
-> really know if a specific page is locked or not.
->=20
-> Thanks,
->=20
-> jon
+The first patch has been updated since last time to a super block  flags
+instead of a file_system type flag based on Al's suggestion.
 
-Okay, I likely won't have the new set out today then.  This change is
-more invasive.  IIUC, I need an equivalent to __get_user_page() skips
-pages which are not present instead of faulting in and the call chain to
-get to it.  Unless there is an easier way that I am missing.
+The code in fs_fully_visible to enforce nosuid and noexec when needed
+has also been added.
 
-Eric
+At a practical level this code is a no-op on a slow path, to guard
+against future mistakes and to make auditing the kernel for this class
+of problem trivial.
 
---B0nZA57HJSoPbsHY
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-testing
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
+Eric W. Biederman (2):
+      vfs: Commit to never having exectuables on proc and sysfs.
+      mnt: fs_fully_visible enforce noexec and nosuid  if !SB_I_NOEXEC
 
-iQIcBAEBAgAGBQJVn/CkAAoJELbVsDOpoOa9fc8QAIYPJoEtJnOGLcp6XvlbR0qD
-EHm5hYg6euX6IzBeU/n1N4DZEv/6AHxxj33+oWf/0SvA7JpsvIZeCsy58KoiZzkO
-1z8xIe4ErMaaA4rb8O096V176BNouwx50PXJdPazalmkeWT6KFmgcLYhVLGJAFkW
-m5em8mli28pJiSRilOCcAffiHvt8+ThcCMqLqAKlQwz2AlvIcJQR8fBp59rmRE6r
-c4fYHulmiZHSsLbmvs3XoC1ChdgjUtloN7VEeDDs2Q9V3De0Vw7AzInIbW+7zwaL
-B+FnQmRpDvTcthu64eFo0cB+GBUfXSCIt+1Nugzl+Zir6N6hGPJemoEX2XzzNDnO
-L3M0uDFGR2RXyLLTfLsTFQfCLMpxtSz8QFM9/yDzQVntENCfEAainCWjaJLxSLsV
-yBPZxXiEdLgxTCFoo5hX/RL2tmge3x3WNnqReHEP9dt0r4UvxXxGOnlQk2I8TUgg
-fINo4V8a92DG4McWbhzqKofewDYrvY+rJ3I8jW2QC4QttTO8wJwycAurfhe0pv1M
-Jk9Exv6mn9JmQ7SxYQqOqz4nu92x6WsEbSaT0Syt0IFJYj4xcVUup/npgJKB9oDn
-7RXjXvHTRAUm4D+6PPW2ECmwHMWIcs/WpHoiKt3GrP3jkh1rqpXImXOagRpv/4kf
-+6n7EoyLk21P33MtY3g6
-=Tkn9
------END PGP SIGNATURE-----
-
---B0nZA57HJSoPbsHY--
+ fs/exec.c           | 10 ++++++++--
+ fs/namespace.c      | 33 +++++++++++++++++++++++++--------
+ fs/open.c           |  2 +-
+ fs/proc/root.c      |  2 ++
+ fs/sysfs/mount.c    |  4 ++++
+ include/linux/fs.h  |  3 +++
+ kernel/sys.c        |  3 +--
+ mm/mmap.c           |  4 ++--
+ mm/nommu.c          |  2 +-
+ security/security.c |  2 +-
+ 10 files changed, 48 insertions(+), 17 deletions(-)
