@@ -1,47 +1,74 @@
-From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Subject: Re: [PATCH 2/1] ipc,mqueue: Delete bogus overflow check
-Date: Sat, 11 Jul 2015 03:03:00 +0100
-Message-ID: <20150711020300.GH17109@ZenIV.linux.org.uk>
-References: <20150622222546.GA32432@ramsey.localdomain>
- <1435211229.11852.23.camel@stgolabs.net>
- <CAKgNAkieR5zdpKm=P2dcTDJ_3X4HMRoeOQ2D8yghYVKOjDsYAg@mail.gmail.com>
- <1435256484.11852.30.camel@stgolabs.net>
- <20150706154928.GA19828@ramsey.localdomain>
- <1436575691.27924.53.camel@stgolabs.net>
+From: Vladimir Davydov <vdavydov@parallels.com>
+Subject: [PATCH -mm v7 1/6] memcg: add page_cgroup_ino helper
+Date: Sat, 11 Jul 2015 17:48:06 +0300
+Message-ID: <40a2af5afc7b70a133737226cd9e975df42936e7.1436623799.git.vdavydov@parallels.com>
+References: <cover.1436623799.git.vdavydov@parallels.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1436575691.27924.53.camel-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
-Cc: Marcus Gelderie <redmnic-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, John Duffy <jb_duffy-FhtRXb7CoQBt1OO0OYaSVA@public.gmane.org>, Arto Bendiken <arto-TQ6thHYR8Svk1uMJSBkQmQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Content-Type: text/plain
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <cover.1436623799.git.vdavydov@parallels.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Andres Lagar-Cavilla <andreslc@google.com>, Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 10, 2015 at 05:48:11PM -0700, Davidlohr Bueso wrote:
-> Mathematically, returning -EOVERFLOW in mq_attr_ok()
-> cannot occur under this condition:
-> 
->        mq_treesize = attr->mq_maxmsg * sizeof(struct msg_msg) +
-> 	       min_t(unsigned int, attr->mq_maxmsg, MQ_PRIO_MAX) *
-> 	       sizeof(struct posix_msg_tree_node);
->        total_size = attr->mq_maxmsg * attr->mq_msgsize;
->        if (total_size + mq_treesize < total_size)
-> 	       return -EOVERFLOW;
+This function returns the inode number of the closest online ancestor of
+the memory cgroup a page is charged to. It is required for exporting
+information about which page is charged to which cgroup to userspace,
+which will be introduced by a following patch.
 
-A proof would be nice.  More detailed one than "cannot occur", that is.
+Signed-off-by: Vladimir Davydov <vdavydov@parallels.com>
+---
+ include/linux/memcontrol.h |  1 +
+ mm/memcontrol.c            | 23 +++++++++++++++++++++++
+ 2 files changed, 24 insertions(+)
 
-	Condition in question is basically mq_treesize < 0 or
-total_size + mq_treesize (in natural numbers) > 2^BITS_PER_LONG.
-Now, the maximal values of ->mq_maxmsg and ->mq_msgsize are 2^16 and
-2^24 resp. and we are guaranteed that their product is below 2^BITS_PER_LONG.
-For mq_treesize we are guaranteed that it's below 2^31.  Now, on a 64bit
-box that would suffice to avoid overflow - the product is at most 2^40 and
-its sum with mq_treesize can't wrap around.
+diff --git a/include/linux/memcontrol.h b/include/linux/memcontrol.h
+index 73b02b0a8f60..50069abebc3c 100644
+--- a/include/linux/memcontrol.h
++++ b/include/linux/memcontrol.h
+@@ -116,6 +116,7 @@ static inline bool mm_match_cgroup(struct mm_struct *mm,
+ 
+ extern struct cgroup_subsys_state *mem_cgroup_css(struct mem_cgroup *memcg);
+ extern struct cgroup_subsys_state *mem_cgroup_css_from_page(struct page *page);
++extern unsigned long page_cgroup_ino(struct page *page);
+ 
+ struct mem_cgroup *mem_cgroup_iter(struct mem_cgroup *,
+ 				   struct mem_cgroup *,
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index acb93c554f6e..894dc2169979 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -631,6 +631,29 @@ struct cgroup_subsys_state *mem_cgroup_css_from_page(struct page *page)
+ 	return &memcg->css;
+ }
+ 
++/**
++ * page_cgroup_ino - return inode number of the memcg a page is charged to
++ * @page: the page
++ *
++ * Look up the closest online ancestor of the memory cgroup @page is charged to
++ * and return its inode number or 0 if @page is not charged to any cgroup. It
++ * is safe to call this function without holding a reference to @page.
++ */
++unsigned long page_cgroup_ino(struct page *page)
++{
++	struct mem_cgroup *memcg;
++	unsigned long ino = 0;
++
++	rcu_read_lock();
++	memcg = READ_ONCE(page->mem_cgroup);
++	while (memcg && !(memcg->css.flags & CSS_ONLINE))
++		memcg = parent_mem_cgroup(memcg);
++	if (memcg)
++		ino = cgroup_ino(memcg->css.cgroup);
++	rcu_read_unlock();
++	return ino;
++}
++
+ static struct mem_cgroup_per_zone *
+ mem_cgroup_page_zoneinfo(struct mem_cgroup *memcg, struct page *page)
+ {
+-- 
+2.1.4
 
-For 32bit system, though...  Suppose attr->mq_maxmsg == 65535 and
-attr->mq_msgsize == 65537.  Their product *is* below 2^BITS_PER_LONG - it's
-exactly 1 less than that.  _Any_ non-zero value for mq_tresize (and it
-will be non-zero in the above) will lead to wraparound.
-
-Looks like a counterexample to your assertion above...
