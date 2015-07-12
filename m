@@ -1,57 +1,116 @@
-From: Vladimir Davydov <vdavydov@parallels.com>
-Subject: Re: [PATCH -mm v6 5/6] proc: add kpageidle file
-Date: Sat, 11 Jul 2015 17:53:38 +0300
-Message-ID: <20150711145338.GP2436@esperanza>
-References: <cover.1434102076.git.vdavydov@parallels.com>
- <50b7cd0f35f651481ce32414fab5210de5dc1714.1434102076.git.vdavydov@parallels.com>
- <CAJu=L5-fwHMEKmL1Sp7owXyBa0GCrGR=TdKZbh15CJA3WrcwqA@mail.gmail.com>
- <20150709131900.GK2436@esperanza>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150709131900.GK2436@esperanza>
-Sender: linux-doc-owner@vger.kernel.org
-To: Andres Lagar-Cavilla <andreslc@google.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Finn Thain <fthain@telegraphics.com.au>
+Subject: [RFC v4 24/25] m68k/mac: Fix PRAM accessors
+Date: Sun, 12 Jul 2015 20:25:51 +1000
+Message-ID: <20150712102533.185899602@telegraphics.com.au>
+References: <20150712102527.356151908@telegraphics.com.au>
+Return-path: <linux-m68k-owner@vger.kernel.org>
+Content-Disposition: inline; filename=mac68k-fix-pram-accessors
+Sender: linux-m68k-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-m68k@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, Geert Uytterhoeven <geert@linux-m68k.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 09, 2015 at 04:19:00PM +0300, Vladimir Davydov wrote:
-> On Wed, Jul 08, 2015 at 04:01:13PM -0700, Andres Lagar-Cavilla wrote:
-> > On Fri, Jun 12, 2015 at 2:52 AM, Vladimir Davydov
-> > > +#ifdef CONFIG_IDLE_PAGE_TRACKING
-> > > +/*
-> > > + * Idle page tracking only considers user memory pages, for other types of
-> > > + * pages the idle flag is always unset and an attempt to set it is silently
-> > > + * ignored.
-> > > + *
-> > > + * We treat a page as a user memory page if it is on an LRU list, because it is
-> > > + * always safe to pass such a page to page_referenced(), which is essential for
-> > > + * idle page tracking. With such an indicator of user pages we can skip
-> > > + * isolated pages, but since there are not usually many of them, it will hardly
-> > > + * affect the overall result.
-> > > + *
-> > > + * This function tries to get a user memory page by pfn as described above.
-> > > + */
-> > > +static struct page *kpageidle_get_page(unsigned long pfn)
-> > > +{
-> > > +       struct page *page;
-> > > +       struct zone *zone;
-> > > +
-> > > +       if (!pfn_valid(pfn))
-> > > +               return NULL;
-> > > +
-> > > +       page = pfn_to_page(pfn);
-> > > +       if (!page || !PageLRU(page))
-> > 
-> > Isolation can race in while you're processing the page, after these
-> > checks. This is ok, but worth a small comment.
-> 
-> Agree, will add one.
+Signed-off-by: Finn Thain <fthain@telegraphics.com.au>
 
-Oh, the comment is already present - it's in the description to this
-function. Minchan asked me to add it long time ago, and so I did.
-Completely forgot about it.
+---
 
-Thanks,
-Vladimir
+Tested on a PowerBook 520 and Quadra 650.
+
+Changes since v2:
+- Make use of the RTC_* macros from the previous patch and add a few more
+besides.
+
+---
+ arch/m68k/mac/misc.c     |   39 +++++++++++++++++++++++++++++++++------
+ include/uapi/linux/pmu.h |    2 ++
+ 2 files changed, 35 insertions(+), 6 deletions(-)
+
+Index: linux/arch/m68k/mac/misc.c
+===================================================================
+--- linux.orig/arch/m68k/mac/misc.c	2015-07-12 20:25:22.000000000 +1000
++++ linux/arch/m68k/mac/misc.c	2015-07-12 20:25:23.000000000 +1000
+@@ -119,19 +119,22 @@ static void pmu_write_time(long data)
+ static unsigned char pmu_pram_read_byte(int offset)
+ {
+ 	struct adb_request req;
+-	if (pmu_request(&req, NULL, 3, PMU_READ_NVRAM,
+-			(offset >> 8) & 0xFF, offset & 0xFF) < 0)
++
++	if (pmu_request(&req, NULL, 3, PMU_READ_XPRAM,
++	                offset & 0xFF, 1) < 0)
+ 		return 0;
+ 	while (!req.complete)
+ 		pmu_poll();
+-	return req.reply[3];
++
++	return req.reply[1];
+ }
+ 
+ static void pmu_pram_write_byte(unsigned char data, int offset)
+ {
+ 	struct adb_request req;
+-	if (pmu_request(&req, NULL, 4, PMU_WRITE_NVRAM,
+-			(offset >> 8) & 0xFF, offset & 0xFF, data) < 0)
++
++	if (pmu_request(&req, NULL, 4, PMU_WRITE_XPRAM,
++	                offset & 0xFF, 1, data) < 0)
+ 		return;
+ 	while (!req.complete)
+ 		pmu_poll();
+@@ -257,6 +260,16 @@ static void via_rtc_send(__u8 data)
+ #define RTC_REG_WRITE_PROTECT   13
+ 
+ /*
++ * Inside Mac has no information about two-byte RTC commands but
++ * the MESS source code has the essentials.
++ */
++
++#define RTC_REG_XPRAM           14
++#define RTC_CMD_XPRAM_READ      (RTC_CMD_READ(RTC_REG_XPRAM) << 8)
++#define RTC_CMD_XPRAM_WRITE     (RTC_CMD_WRITE(RTC_REG_XPRAM) << 8)
++#define RTC_CMD_XPRAM_ARG(a)    (((a & 0xE0) << 3) | ((a & 0x1F) << 2))
++
++/*
+  * Execute a VIA PRAM/RTC command. For read commands
+  * data should point to a one-byte buffer for the
+  * resulting data. For write commands it should point
+@@ -303,11 +316,25 @@ static void via_rtc_command(int command,
+ 
+ static unsigned char via_pram_read_byte(int offset)
+ {
+-	return 0;
++	unsigned char temp;
++
++	via_rtc_command(RTC_CMD_XPRAM_READ | RTC_CMD_XPRAM_ARG(offset), &temp);
++
++	return temp;
+ }
+ 
+ static void via_pram_write_byte(unsigned char data, int offset)
+ {
++	unsigned char temp;
++
++	temp = 0x55;
++	via_rtc_command(RTC_CMD_WRITE(RTC_REG_WRITE_PROTECT), &temp);
++
++	temp = data;
++	via_rtc_command(RTC_CMD_XPRAM_WRITE | RTC_CMD_XPRAM_ARG(offset), &temp);
++
++	temp = 0x55 | RTC_FLG_WRITE_PROTECT;
++	via_rtc_command(RTC_CMD_WRITE(RTC_REG_WRITE_PROTECT), &temp);
+ }
+ 
+ /*
+Index: linux/include/uapi/linux/pmu.h
+===================================================================
+--- linux.orig/include/uapi/linux/pmu.h	2015-07-12 20:24:53.000000000 +1000
++++ linux/include/uapi/linux/pmu.h	2015-07-12 20:25:23.000000000 +1000
+@@ -18,7 +18,9 @@
+ #define PMU_POWER_CTRL		0x11	/* control power of some devices */
+ #define PMU_ADB_CMD		0x20	/* send ADB packet */
+ #define PMU_ADB_POLL_OFF	0x21	/* disable ADB auto-poll */
++#define PMU_WRITE_XPRAM		0x32	/* write eXtended Parameter RAM */
+ #define PMU_WRITE_NVRAM		0x33	/* write non-volatile RAM */
++#define PMU_READ_XPRAM		0x3a	/* read eXtended Parameter RAM */
+ #define PMU_READ_NVRAM		0x3b	/* read non-volatile RAM */
+ #define PMU_SET_RTC		0x30	/* set real-time clock */
+ #define PMU_READ_RTC		0x38	/* read real-time clock */
