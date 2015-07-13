@@ -1,88 +1,107 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v4 1/5] nohz_full: add support for "cpu_isolated" mode
-Date: Mon, 13 Jul 2015 14:45:19 -0700
-Message-ID: <CALCETrUMGx+ZC9rtAAErKaGg-LEtYXMOSVD1dCi7im3b1SMrVg@mail.gmail.com>
-References: <1436817481-8732-1-git-send-email-cmetcalf@ezchip.com>
- <1436817481-8732-2-git-send-email-cmetcalf@ezchip.com> <CALCETrWaBe10u1X+AqYM7TsbguL=aF-TyuN3xjqgR5Cg2=FiAA@mail.gmail.com>
- <55A4271B.9040506@ezchip.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH v4 2/5] nohz: support PR_CPU_ISOLATED_STRICT mode
+Date: Mon, 13 Jul 2015 14:47:13 -0700
+Message-ID: <CALCETrUvg+Dix=jG2_1J=mgQC+uRk4dthCYDcb4E5ooEfQjqtQ@mail.gmail.com>
+References: <1436817481-8732-1-git-send-email-cmetcalf@ezchip.com> <1436817481-8732-3-git-send-email-cmetcalf@ezchip.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <55A4271B.9040506@ezchip.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@ezchip.com>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1436817481-8732-3-git-send-email-cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 13, 2015 at 2:01 PM, Chris Metcalf <cmetcalf@ezchip.com> wrote:
-> On 07/13/2015 04:40 PM, Andy Lutomirski wrote:
->>
->> On Mon, Jul 13, 2015 at 12:57 PM, Chris Metcalf <cmetcalf@ezchip.com>
->> wrote:
->>>
->>> The existing nohz_full mode makes tradeoffs to minimize userspace
->>> interruptions while still attempting to avoid overheads in the
->>> kernel entry/exit path, to provide 100% kernel semantics, etc.
->>>
->>> However, some applications require a stronger commitment from the
->>> kernel to avoid interruptions, in particular userspace device
->>> driver style applications, such as high-speed networking code.
->>>
->>> This change introduces a framework to allow applications to elect
->>> to have the stronger semantics as needed, specifying
->>> prctl(PR_SET_CPU_ISOLATED, PR_CPU_ISOLATED_ENABLE) to do so.
->>> Subsequent commits will add additional flags and additional
->>> semantics.
->>
->> I thought the general consensus was that this should be the default
->> behavior and that any associated bugs should be fixed.
->
->
-> I think it comes down to dividing the set of use cases in two:
->
-> - "Regular" nohz_full, as used to improve performance and limit
->   interruptions, possibly for power benefits, etc.  But, stray
->   interrupts are not particularly bad, and you don't want to take
->   extreme measures to avoid them.
->
-> - What I'm calling "cpu_isolated" mode where when you return to
->   userspace, you expect that by God, the kernel doesn't interrupt you
->   again, and if it does, it's a flat-out bug.
->
-> There are a few things that cpu_isolated mode currently does to
-> accomplish its goals that are pretty heavy-weight:
->
-> Processes are held in kernel space until ticks are quiesced; this is
-> not necessarily what every nohz_full task wants.  If a task makes a
-> kernel call, there may well be arbitrary timer fallout, and having a
-> way to select whether or not you are willing to take a timer tick after
-> return to userspace is pretty important.
-
-Then shouldn't deferred work be done immediately in nohz_full mode
-regardless?  What is this delayed work that's being done?
-
->
-> Likewise, there are things that you may want to do on return to
-> userspace that are designed to prevent further interruptions in
-> cpu_isolated mode, even at a possible future performance cost if and
-> when you return to the kernel, such as flushing the per-cpu free page
-> list so that you won't be interrupted by an IPI to flush it later.
+On Mon, Jul 13, 2015 at 12:57 PM, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org> wrote:
+> With cpu_isolated mode, the task is in principle guaranteed not to be
+> interrupted by the kernel, but only if it behaves.  In particular, if it
+> enters the kernel via system call, page fault, or any of a number of other
+> synchronous traps, it may be unexpectedly exposed to long latencies.
+> Add a simple flag that puts the process into a state where any such
+> kernel entry is fatal.
 >
 
-Why not just kick the per-cpu free page over to whatever cpu is
-monitoring your RCU state, etc?  That should be very quick.
+To me, this seems like the wrong design.  If nothing else, it seems
+too much like an abusable anti-debugging mechanism.  I can imagine
+some per-task flag "I think I shouldn't be interrupted now" and a
+tracepoint that fires if the task is interrupted with that flag set.
+But the strong cpu isolation stuff requires systemwide configuration,
+and I think that monitoring that it works should work similarly.
 
-> If you're arguing that the cpu_isolated semantic is really the only
-> one that makes sense for nohz_full, my sense is that it might be
-> surprising to many of the folks who do nohz_full work.  But, I'm happy
-> to be wrong on this point, and maybe all the nohz_full community is
-> interested in making the same tradeoffs for nohz_full generally that
-> I've proposed in this patch series just for cpu_isolated?
+More comments below.
 
-nohz_full is currently dog slow for no particularly good reasons.  I
-suspect that the interrupts you're seeing are also there for no
-particularly good reasons as well.
+> Signed-off-by: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+> ---
+>  arch/arm64/kernel/ptrace.c       |  4 ++++
+>  arch/tile/kernel/ptrace.c        |  6 +++++-
+>  arch/x86/kernel/ptrace.c         |  2 ++
+>  include/linux/context_tracking.h | 11 ++++++++---
+>  include/linux/tick.h             | 16 ++++++++++++++++
+>  include/uapi/linux/prctl.h       |  1 +
+>  kernel/context_tracking.c        |  9 ++++++---
+>  kernel/time/tick-sched.c         | 38 ++++++++++++++++++++++++++++++++++++++
+>  8 files changed, 80 insertions(+), 7 deletions(-)
+>
+> diff --git a/arch/arm64/kernel/ptrace.c b/arch/arm64/kernel/ptrace.c
+> index d882b833dbdb..7315b1579cbd 100644
+> --- a/arch/arm64/kernel/ptrace.c
+> +++ b/arch/arm64/kernel/ptrace.c
+> @@ -1150,6 +1150,10 @@ static void tracehook_report_syscall(struct pt_regs *regs,
+>
+>  asmlinkage int syscall_trace_enter(struct pt_regs *regs)
+>  {
+> +       /* Ensure we report cpu_isolated violations in all circumstances. */
+> +       if (test_thread_flag(TIF_NOHZ) && tick_nohz_cpu_isolated_strict())
+> +               tick_nohz_cpu_isolated_syscall(regs->syscallno);
 
-Let's fix them instead of adding new ABIs to work around them.
+IMO this is pointless.  If a user wants a syscall to kill them, use
+seccomp.  The kernel isn't at fault if the user does a syscall when it
+didn't want to enter the kernel.
+
+
+> @@ -35,8 +36,12 @@ static inline enum ctx_state exception_enter(void)
+>                 return 0;
+>
+>         prev_ctx = this_cpu_read(context_tracking.state);
+> -       if (prev_ctx != CONTEXT_KERNEL)
+> -               context_tracking_exit(prev_ctx);
+> +       if (prev_ctx != CONTEXT_KERNEL) {
+> +               if (context_tracking_exit(prev_ctx)) {
+> +                       if (tick_nohz_cpu_isolated_strict())
+> +                               tick_nohz_cpu_isolated_exception();
+> +               }
+> +       }
+
+NACK.  I'm cautiously optimistic that an x86 kernel 4.3 or newer will
+simply never call exception_enter.  It certainly won't call it
+frequently unless something goes wrong with the patches that are
+already in -tip.
+
+> --- a/kernel/context_tracking.c
+> +++ b/kernel/context_tracking.c
+> @@ -147,15 +147,16 @@ NOKPROBE_SYMBOL(context_tracking_user_enter);
+>   * This call supports re-entrancy. This way it can be called from any exception
+>   * handler without needing to know if we came from userspace or not.
+>   */
+> -void context_tracking_exit(enum ctx_state state)
+> +bool context_tracking_exit(enum ctx_state state)
+>  {
+>         unsigned long flags;
+> +       bool from_user = false;
+>
+
+IMO the internal context tracking API (e.g. context_tracking_exit) are
+mostly of the form "hey context tracking: I don't really know what
+you're doing or what I'm doing, but let me call you and make both of
+us feel better."  You're making it somewhat worse: now it's all of the
+above plus "I don't even know whether I just entered the kernel --
+maybe you have a better idea".
+
+Starting with 4.3, x86 kernels will know *exactly* when they enter the
+kernel.  All of this context tracking what-was-my-previous-state stuff
+will remain until someone kills it, but when it goes away we'll get a
+nice performance boost.
+
+So, no, let's implement this for real if we're going to implement it.
 
 --Andy
