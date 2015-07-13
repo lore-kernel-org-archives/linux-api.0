@@ -1,70 +1,123 @@
-From: Chris Metcalf <cmetcalf@ezchip.com>
-Subject: Re: [PATCH v4 1/5] nohz_full: add support for "cpu_isolated" mode
-Date: Mon, 13 Jul 2015 17:01:15 -0400
-Message-ID: <55A4271B.9040506@ezchip.com>
-References: <1436817481-8732-1-git-send-email-cmetcalf@ezchip.com> <1436817481-8732-2-git-send-email-cmetcalf@ezchip.com> <CALCETrWaBe10u1X+AqYM7TsbguL=aF-TyuN3xjqgR5Cg2=FiAA@mail.gmail.com>
+From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v7 0/9] Add simple NVMEM Framework via regmap.
+Date: Mon, 13 Jul 2015 22:39:46 +0100
+Message-ID: <55A43022.5040000@linaro.org>
+References: <1436521427-10568-1-git-send-email-srinivas.kandagatla@linaro.org> <1984575203.163267.1436813665815.JavaMail.open-xchange@oxbsltgw06.schlund.de> <55A4131C.7040700@linaro.org> <139301016.164015.1436818270753.JavaMail.open-xchange@oxbsltgw04.schlund.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <CALCETrWaBe10u1X+AqYM7TsbguL=aF-TyuN3xjqgR5Cg2=FiAA@mail.gmail.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <139301016.164015.1436818270753.JavaMail.open-xchange-0SF9iQWekqKZU4JK52HgGMgmgJlYmuWJ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, ezequiel-30ULvvUtt6G51wMPkGsGjgyUoB5FGQPZ@public.gmane.org, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 07/13/2015 04:40 PM, Andy Lutomirski wrote:
-> On Mon, Jul 13, 2015 at 12:57 PM, Chris Metcalf <cmetcalf@ezchip.com> wrote:
->> The existing nohz_full mode makes tradeoffs to minimize userspace
->> interruptions while still attempting to avoid overheads in the
->> kernel entry/exit path, to provide 100% kernel semantics, etc.
+
+
+On 13/07/15 21:11, Stefan Wahren wrote:
+> Hi Srinivas,
+>
+>> Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> hat am 13. Juli 2015 um
+>> 21:35 geschrieben:
 >>
->> However, some applications require a stronger commitment from the
->> kernel to avoid interruptions, in particular userspace device
->> driver style applications, such as high-speed networking code.
+>> On 13/07/15 19:54, Stefan Wahren wrote:
+>>> Hi Srinivas,
+>>>
+>>>> [...]
+>>>>
+>>>> Providers APIs:
+>>>> nvmem_register/unregister();
+>>>
+>>> How do i get the cell info from the devicetree into the nvmem_config?
+>>>
+>> Not sure what is the real use-case here, But this is how it is supposed
+>> to work.
 >>
->> This change introduces a framework to allow applications to elect
->> to have the stronger semantics as needed, specifying
->> prctl(PR_SET_CPU_ISOLATED, PR_CPU_ISOLATED_ENABLE) to do so.
->> Subsequent commits will add additional flags and additional
->> semantics.
-> I thought the general consensus was that this should be the default
-> behavior and that any associated bugs should be fixed.
+>> cellinfo in nvmem_config is used to pass cell information in non-dt
+>> style to the core. The core would parse it and convert into nvmem-cells.
+>> Am not sure why would you want to do other way round. Could you explain
+>> the real use case here?
+>>
+>
+> my question comes from porting mxs_ocotp to NVMEM framework.
+>
+> Here is the devicetree part:
+>
+> ocotp: ocotp@8002c000 {
+> 	compatible = "fsl,imx28-ocotp", "fsl,ocotp";
+> 	#address-cells = <1>;
+> 	#size-cells = <1>;
+> 	reg = <0x8002c000 0x2000>;
+> 	clocks = <&clks 25>;
+> 	read-only;
+> 				
+> 	/* Data cells */
+> 	ocotp_customer: costumer@20 {
+> 		reg = <0x20 0x10>;
+> 	};
+>
+> 	ocotp_rom0: rom0@1a0 {
+> 		reg = <0x1a0 0x4>;
+> 	};
+> };
+>
+> After calling nvmem_register() in the provider driver [1] no data cell is
+> registered. So
+> i looked at the core code and i thought that retrieving the cell info and put it
+> into the nvmem_config
+> is job of the provider driver.
+>
+> Did i missed something?
+Ok,
+There are 2 possible ways to specify nvmem cells
+1> via the DT cell entries.
+2> via provider driver directly using cell_info struct.
 
-I think it comes down to dividing the set of use cases in two:
+In the ocotp case its done via dt, so you dont need pass the cell info 
+in nvmem_config.
 
-- "Regular" nohz_full, as used to improve performance and limit
-   interruptions, possibly for power benefits, etc.  But, stray
-   interrupts are not particularly bad, and you don't want to take
-   extreme measures to avoid them.
+You should also note that cell structure in DT is only created when an 
+attempt to access is made as the provider lookup is straight forward in 
+this case. In non-DT case the cell structure is created immediately and 
+added to the global cell list.
 
-- What I'm calling "cpu_isolated" mode where when you return to
-   userspace, you expect that by God, the kernel doesn't interrupt you
-   again, and if it does, it's a flat-out bug.
 
-There are a few things that cpu_isolated mode currently does to
-accomplish its goals that are pretty heavy-weight:
-
-Processes are held in kernel space until ticks are quiesced; this is
-not necessarily what every nohz_full task wants.  If a task makes a
-kernel call, there may well be arbitrary timer fallout, and having a
-way to select whether or not you are willing to take a timer tick after
-return to userspace is pretty important.
-
-Likewise, there are things that you may want to do on return to
-userspace that are designed to prevent further interruptions in
-cpu_isolated mode, even at a possible future performance cost if and
-when you return to the kernel, such as flushing the per-cpu free page
-list so that you won't be interrupted by an IPI to flush it later.
-
-If you're arguing that the cpu_isolated semantic is really the only
-one that makes sense for nohz_full, my sense is that it might be
-surprising to many of the folks who do nohz_full work.  But, I'm happy
-to be wrong on this point, and maybe all the nohz_full community is
-interested in making the same tradeoffs for nohz_full generally that
-I've proposed in this patch series just for cpu_isolated?
-
--- 
-Chris Metcalf, EZChip Semiconductor
-http://www.ezchip.com
-
+--srini
+>
+> [1] -
+> https://github.com/lategoodbye/fsl_ocotp/commit/7c98e19755b69f761885b0e1ceb2c258a7c47ade
+>
+>>
+>>
+>>>
+>> ...
+>>
+>>>> userspace interface: binary file in /sys/bus/nvmem/devices/*/nvmem
+>>>>
+>>>> ex:
+>>>> hexdump /sys/bus/nvmem/devices/qfprom0/nvmem
+>>>>
+>>>> 0000000 0000 0000 0000 0000 0000 0000 0000 0000
+>>>> *
+>>>> 00000a0 db10 2240 0000 e000 0c00 0c00 0000 0c00
+>>>> 0000000 0000 0000 0000 0000 0000 0000 0000 0000
+>>>> ...
+>>>> *
+>>>> 0001000
+>>>
+>>> Since we're entering userspace the behavior should be clear.
+>>>
+>>> How do we treat register gaps? Fill them with zero?
+>> nvmem file would read full nvmem size which is passed to it as regmap.
+>> So It would dump whatever the provider returns.
+>
+> Sure, but wouldn't it be nice if different provider behave the same?
+>
+>>
+>>
+>> --srini
+>>>
+>>> Best regards
+>>> Stefan
+>>>
