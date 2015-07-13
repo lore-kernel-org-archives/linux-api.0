@@ -1,106 +1,126 @@
-From: Rafael Aquini <aquini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 0/4] enable migration of driver pages
-Date: Mon, 13 Jul 2015 10:20:14 -0400
-Message-ID: <20150713142013.GA4025@t510.redhat.com>
-References: <1436776519-17337-1-git-send-email-gioh.kim@lge.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
+ number (x86)
+Date: Mon, 13 Jul 2015 15:09:45 +0000 (UTC)
+Message-ID: <461444441.880.1436800185822.JavaMail.zimbra@efficios.com>
+References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com> <20150712184730.GD18191@x>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1436776519-17337-1-git-send-email-gioh.kim-Hm3cg6mZ9cc@public.gmane.org>
+In-Reply-To: <20150712184730.GD18191@x>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Gioh Kim <gioh.kim-Hm3cg6mZ9cc@public.gmane.org>
-Cc: jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, vbabka-AlSwsSmVLrQ@public.gmane.org, iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Gioh Kim <gurugio-A7HHaXTFBl7R7s880joybQ@public.gmane.org>
+To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Cc: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 13, 2015 at 05:35:15PM +0900, Gioh Kim wrote:
-> From: Gioh Kim <gurugio-A7HHaXTFBl7R7s880joybQ@public.gmane.org>
+----- On Jul 12, 2015, at 2:47 PM, Josh Triplett josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org wrote:
+
+> On Sun, Jul 12, 2015 at 02:06:26PM -0400, Mathieu Desnoyers wrote:
+>> Expose a new system call allowing threads to register a userspace memory
+>> area where to store the current CPU number. Scheduler migration sets the
+>> TIF_NOTIFY_RESUME flag on the current thread. Upon return to user-space,
+>> a notify-resume handler updates the current CPU value within that
+>> user-space memory area.
+>> 
+>> This getcpu cache is an alternative to the sched_getcpu() vdso which has
+>> a few benefits:
+>> - It is faster to do a memory read that to call a vDSO,
+>> - This cache value can be read from within an inline assembly, which
+>>   makes it a useful building block for restartable sequences.
+>> 
+>> This approach is inspired by Paul Turner and Andrew Hunter's work
+>> on percpu atomics, which lets the kernel handle restart of critical
+>> sections:
+>> Ref.:
+>> * https://lkml.org/lkml/2015/6/24/665
+>> * https://lwn.net/Articles/650333/
+>> *
+>> http://www.linuxplumbersconf.org/2013/ocw/system/presentations/1695/original/LPC%20-%20PerCpu%20Atomics.pdf
+>> 
+>> Benchmarking sched_getcpu() vs tls cache approach. Getting the
+>> current CPU number:
+>> 
+>> - With Linux vdso:            12.7 ns
+>> - With TLS-cached cpu number:  0.3 ns
 > 
-> Hello,
+> Nice.  One comment below about an interesting assumption that needs
+> confirmation.
 > 
-> This series try to enable migration of non-LRU pages, such as driver's page.
+>> --- /dev/null
+>> +++ b/kernel/getcpu-cache.c
+> [...]
+>> +void getcpu_cache_handle_notify_resume(struct task_struct *t)
+>> +{
+>> +	int32_t __user *gcp = t->getcpu_cache;
+>> +
+>> +	if (gcp == NULL)
+>> +		return;
+>> +	if (unlikely(t->flags & PF_EXITING))
+>> +		return;
+>> +	/*
+>> +	 * access_ok() of gcp_user has already been checked by
+>> +	 * sys_getcpu_cache().
+>> +	 */
+>> +	if (__put_user(raw_smp_processor_id(), gcp))
+>> +		force_sig(SIGSEGV, current);
+>> +}
+>> +
+>> +/*
+>> + * If parent process has a getcpu_cache, the child inherits. Only
+>> + * applies when forking a process, not a thread.
+>> + */
+>> +void getcpu_cache_fork(struct task_struct *t)
+>> +{
+>> +	t->getcpu_cache = current->getcpu_cache;
+>> +}
+>> +
+>> +void getcpu_cache_execve(struct task_struct *t)
+>> +{
+>> +	t->getcpu_cache = NULL;
+>> +}
+>> +
+>> +/*
+>> + * sys_getcpu_cache - setup getcpu cache for caller thread
+>> + */
+>> +SYSCALL_DEFINE2(getcpu_cache, int32_t __user *, gcp, int, flags)
+>> +{
+>> +	if (flags)
+>> +		return -EINVAL;
+>> +	if (gcp != NULL && !access_ok(VERIFY_WRITE, gcp, sizeof(int32_t)))
+>> +		return -EFAULT;
+>> +	current->getcpu_cache = gcp;
 > 
-> My ARM-based platform occured severe fragmentation problem after long-term
-> (several days) test. Sometimes even order-3 page allocation failed. It has
-> memory size 512MB ~ 1024MB. 30% ~ 40% memory is consumed for graphic processing
-> and 20~30 memory is reserved for zram.
+> So, you store a userspace address, and intentionally only validate it
+> when initially set, not when used.  You clear it on exec, though not on
+> fork.  Could any cases other than exec could make this problematic?  In
+> particular, what about unusual personality flags, such as
+> ADDR_LIMIT_32BIT or ADDR_LIMIT_3GB?
+
+That's an interesting point. Looking at those personalities, I don't think
+it should be an issue, but just the fact that you raise the question makes
+me think we should user put_user() rather than __put_user() in the
+notify_resume handler, just to be on the safe side. It should not be a
+frequent code path anyway.
+
 > 
-> I found that many pages of GPU driver and zram are non-movable pages. So I
-> reported Minchan Kim, the maintainer of zram, and he made the internal 
-> compaction logic of zram. And I made the internal compaction of GPU driver.
+>> +	/* Will update *gcp on resume */
+>> +	if (gcp)
 > 
-> They reduced some fragmentation but they are not enough effective.
-> They are activated by its own interface, /sys, so they are not cooperative
-> with kernel compaction. If there is too much fragmentation and kernel starts
-> to compaction, zram and GPU driver cannot work with the kernel compaction.
+> Minor nit: you're using the pointer as a boolean here, but comparing it
+> to NULL elsewhere; you should be consistent.  I'd suggest consistently
+> using gcp and !gcp, without the comparison to NULL.
+
+Good point, fixing,
+
+Thanks for the feedback!
+
+Mathieu
+
 > 
-> So I thought there needs a interface to combine driver and kernel compaction.
-> This patch adds a generic isolate/migrate/putback callbacks for page
-> address-space and a new interface to create anon-inode to manage
-> address_space_operation. The zram and GPU, and any other modules can create
-> anon_inode and register its own migration method. The kernel compaction can
-> call the registered migration when it does compaction.
-> 
-> My GPU driver source is not in-kernel driver so that I apply the interface
-> into balloon driver. The balloon driver is already merged
-> into the kernel compaction as a corner-case. This patch have the balloon
-> driver migration be called by the generic interface.
-> 
-> 
-> This patch set combines 4 patches.
-> 
-> 1. patch 1/4: get inode from anon_inodes
-> This patch adds new interface to create inode from anon_inodes.
-> 
-> 2. patch 2/4: framework to isolate/migrate/putback page
-> Add isolatepage, putbackpage into address_space_operations
-> and wrapper function to call them.
-> 
-> 3. patch 3/4: apply the framework into balloon driver
-> The balloon driver is applied into the framework. It gets a inode
-> from anon_inodes and register operations in the inode.
-> The kernel compaction calls generic interfaces, not balloon
-> driver interfaces. 
-> Any other drivers can register operations via inode like this
-> to migrate it's pages.
-> 
-> 4. patch 4/4: remove direct calling of migration of driver pages
-> Non-lru pages are also migrated with lru pages by move_to_new_page().
-> 
-> This patch set is tested:
-> - turn on Ubuntu 14.04 with 1G memory on qemu.
-> - do kernel building
-> - after several seconds check more than 512MB is used with free command
-> - command "balloon 512" in qemu monitor
-> - check hundreds MB of pages are migrated
-> 
-> My thanks to Konstantin Khlebnikov for his reviews of the RFC patch set.
-> Most of the changes were based on his feedback.
-> 
-> This patch-set is based on v4.1
-> 
-> 
-> Gioh Kim (4):
->   fs/anon_inodes: new interface to create new inode
->   mm/compaction: enable mobile-page migration
->   mm/balloon: apply mobile page migratable into balloon
->   mm: remove direct calling of migration
-> 
->  drivers/virtio/virtio_balloon.c        |  3 ++
->  fs/anon_inodes.c                       |  6 +++
->  fs/proc/page.c                         |  3 ++
->  include/linux/anon_inodes.h            |  1 +
->  include/linux/balloon_compaction.h     | 15 +++++--
->  include/linux/compaction.h             | 80 ++++++++++++++++++++++++++++++++++
->  include/linux/fs.h                     |  2 +
->  include/linux/page-flags.h             | 19 ++++++++
->  include/uapi/linux/kernel-page-flags.h |  1 +
->  mm/balloon_compaction.c                | 72 ++++++++++--------------------
->  mm/compaction.c                        |  8 ++--
->  mm/migrate.c                           | 24 +++-------
->  12 files changed, 160 insertions(+), 74 deletions(-)
-> 
-> -- 
-> 2.1.4
-> 
-Acked-by: Rafael Aquini <aquini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> - Josh Triplett
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
