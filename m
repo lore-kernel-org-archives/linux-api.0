@@ -1,129 +1,259 @@
-From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: Re: [PATCH v7 0/9] Add simple NVMEM Framework via regmap.
-Date: Mon, 13 Jul 2015 20:35:56 +0100
-Message-ID: <55A4131C.7040700@linaro.org>
-References: <1436521427-10568-1-git-send-email-srinivas.kandagatla@linaro.org>
- <1984575203.163267.1436813665815.JavaMail.open-xchange@oxbsltgw06.schlund.de>
+From: Chris Metcalf <cmetcalf@ezchip.com>
+Subject: [PATCH v4 1/5] nohz_full: add support for "cpu_isolated" mode
+Date: Mon, 13 Jul 2015 15:57:57 -0400
+Message-ID: <1436817481-8732-2-git-send-email-cmetcalf@ezchip.com>
+References: <1436817481-8732-1-git-send-email-cmetcalf@ezchip.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <1984575203.163267.1436813665815.JavaMail.open-xchange@oxbsltgw06.schlund.de>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Stefan Wahren <stefan.wahren@i2se.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-arm-kernel@lists.infradead.org
-Cc: devicetree@vger.kernel.org, arnd@arndb.de, ezequiel@vanguardiasur.com.ar, linux-api@vger.kernel.org, s.hauer@pengutronix.de, sboyd@codeaurora.org, linux-kernel@vger.kernel.org, pantelis.antoniou@konsulko.com, Rob Herring <robh+dt@kernel.org>, Mark Brown <broonie@kernel.org>, Kumar Gala <galak@codeaurora.org>, mporter@konsulko.com, linux-arm-msm@vger.kernel.org, wxt@rock-chips.com
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1436817481-8732-1-git-send-email-cmetcalf@ezchip.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Chris Metcalf <cmetcalf@ezchip.com>
 List-Id: linux-api@vger.kernel.org
 
+The existing nohz_full mode makes tradeoffs to minimize userspace
+interruptions while still attempting to avoid overheads in the
+kernel entry/exit path, to provide 100% kernel semantics, etc.
 
+However, some applications require a stronger commitment from the
+kernel to avoid interruptions, in particular userspace device
+driver style applications, such as high-speed networking code.
 
-On 13/07/15 19:54, Stefan Wahren wrote:
-> Hi Srinivas,
->
-> [add Ezequiel Garcia to CC]
->
->> Srinivas Kandagatla <srinivas.kandagatla@linaro.org> hat am 10. Juli 2015 um
->> 11:43 geschrieben:
->>
->>
->> Hi Greg,
->>
->> This patchset adds a new simple NVMEM framework to kernel, and it is tested
->> with various drivers like "QCOM thermal sensors", "QCOM cpr driver",
->> "begal bone cape manager" and few more on the way.
->>
->> Thankyou all for providing inputs and comments on previous versions of this
->> patchset. Here is the v7 of the patchset addressing all the issues raised as
->> part of previous versions review.
->>
->> Up until now, NVMEM drivers like eeprom were stored in drivers/misc, where
->> they
->> all had to duplicate pretty much the same code to register a sysfs file, allow
->> in-kernel users to access the content of the devices they were driving, etc.
->> This was also a problem as far as other in-kernel users were involved, since
->> the solutions used were pretty much different from on driver to another, there
->> was a rather big abstraction leak.
->
-> i only want to mention that there are more places of NVMEM drivers like:
->
-> drivers/mfd/ab3100-otp.c
-> drivers/soc/tegra/fuse/*.c
+This change introduces a framework to allow applications to elect
+to have the stronger semantics as needed, specifying
+prctl(PR_SET_CPU_ISOLATED, PR_CPU_ISOLATED_ENABLE) to do so.
+Subsequent commits will add additional flags and additional
+semantics.
 
-Thanks for mentioning.
+The "cpu_isolated" state is indicated by setting a new task struct
+field, cpu_isolated_flags, to the value passed by prctl().  When the
+_ENABLE bit is set for a task, and it is returning to userspace
+on a nohz_full core, it calls the new tick_nohz_cpu_isolated_enter()
+routine to take additional actions to help the task avoid being
+interrupted in the future.
 
->
->>
->> Introduction of this framework aims at solving this. It also introduces DT
->> representation for consumer devices to go get the data they require (MAC
->> Addresses, SoC/Revision ID, part numbers, and so on) from the NVMEMs.
->>
->> After learning few things about QCOM qfprom and other eeprom/efuses, which
->> has packed fields at bit level. Which makes it important to add support to
->> such memories. This version adds support to this type of non volatile
->> memories by adding support to bit level nvmem-cells.
->>
->> Having regmap interface to this framework would give much better
->> abstraction for nvmems on different buses.
->>
->> patch 1-4 Introduces the NVMEM framework.
->> Patch 5-6 Adds Qualcomm specific qfprom driver.
->> Patch 7 migrates an existing driver to nvmem framework.
->> Patch 8 adds entry in MAINTAINERS.
->>
->> Its also possible to migrate other nvmem drivers to this framework, and I
->> think
->> some of them already posted patches based on this framework.
->>
->> Providers APIs:
->> nvmem_register/unregister();
->
-> How do i get the cell info from the devicetree into the nvmem_config?
->
-Not sure what is the real use-case here, But this is how it is supposed 
-to work.
+Initially, there are only two actions taken.  First, the task
+calls lru_add_drain() to prevent being interrupted by a subsequent
+lru_add_drain_all() call on another core.  Then, the code checks for
+pending timer interrupts and quiesces until they are no longer pending.
+As a result, sys calls (and page faults, etc.) can be inordinately slow.
+However, this quiescing guarantees that no unexpected interrupts will
+occur, even if the application intentionally calls into the kernel.
 
-cellinfo in nvmem_config is used to pass cell information in non-dt 
-style to the core. The core would parse it and convert into nvmem-cells. 
-Am not sure why would you want to do other way round. Could you explain 
-the real use case here?
+Signed-off-by: Chris Metcalf <cmetcalf@ezchip.com>
+---
+ arch/tile/kernel/process.c |  9 ++++++++
+ include/linux/sched.h      |  3 +++
+ include/linux/tick.h       | 10 ++++++++
+ include/uapi/linux/prctl.h |  5 ++++
+ kernel/context_tracking.c  |  3 +++
+ kernel/sys.c               |  8 +++++++
+ kernel/time/tick-sched.c   | 57 ++++++++++++++++++++++++++++++++++++++++++++++
+ 7 files changed, 95 insertions(+)
 
-
-> I expected a function something like of_nvmem_cell_info_get() in the Providers
-> API.
-
-
->
-...
-
->> userspace interface: binary file in /sys/bus/nvmem/devices/*/nvmem
->>
->> ex:
->> hexdump /sys/bus/nvmem/devices/qfprom0/nvmem
->>
->> 0000000 0000 0000 0000 0000 0000 0000 0000 0000
->> *
->> 00000a0 db10 2240 0000 e000 0c00 0c00 0000 0c00
->> 0000000 0000 0000 0000 0000 0000 0000 0000 0000
->> ...
->> *
->> 0001000
->
-> Since we're entering userspace the behavior should be clear.
->
-> How do we treat register gaps? Fill them with zero?
-nvmem file would read full nvmem size which is passed to it as regmap. 
-So It would dump whatever the provider returns.
-
-
---srini
->
-> Best regards
-> Stefan
->
+diff --git a/arch/tile/kernel/process.c b/arch/tile/kernel/process.c
+index e036c0aa9792..3625e839ad62 100644
+--- a/arch/tile/kernel/process.c
++++ b/arch/tile/kernel/process.c
+@@ -70,6 +70,15 @@ void arch_cpu_idle(void)
+ 	_cpu_idle();
+ }
+ 
++#ifdef CONFIG_NO_HZ_FULL
++void tick_nohz_cpu_isolated_wait(void)
++{
++	set_current_state(TASK_INTERRUPTIBLE);
++	_cpu_idle();
++	set_current_state(TASK_RUNNING);
++}
++#endif
++
+ /*
+  * Release a thread_info structure
+  */
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index ae21f1591615..f350b0c20bbc 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1778,6 +1778,9 @@ struct task_struct {
+ 	unsigned long	task_state_change;
+ #endif
+ 	int pagefault_disabled;
++#ifdef CONFIG_NO_HZ_FULL
++	unsigned int	cpu_isolated_flags;
++#endif
+ };
+ 
+ /* Future-safe accessor for struct task_struct's cpus_allowed. */
+diff --git a/include/linux/tick.h b/include/linux/tick.h
+index 3741ba1a652c..cb5569181359 100644
+--- a/include/linux/tick.h
++++ b/include/linux/tick.h
+@@ -10,6 +10,7 @@
+ #include <linux/context_tracking_state.h>
+ #include <linux/cpumask.h>
+ #include <linux/sched.h>
++#include <linux/prctl.h>
+ 
+ #ifdef CONFIG_GENERIC_CLOCKEVENTS
+ extern void __init tick_init(void);
+@@ -144,11 +145,18 @@ static inline void tick_nohz_full_add_cpus_to(struct cpumask *mask)
+ 		cpumask_or(mask, mask, tick_nohz_full_mask);
+ }
+ 
++static inline bool tick_nohz_is_cpu_isolated(void)
++{
++	return tick_nohz_full_cpu(smp_processor_id()) &&
++		(current->cpu_isolated_flags & PR_CPU_ISOLATED_ENABLE);
++}
++
+ extern void __tick_nohz_full_check(void);
+ extern void tick_nohz_full_kick(void);
+ extern void tick_nohz_full_kick_cpu(int cpu);
+ extern void tick_nohz_full_kick_all(void);
+ extern void __tick_nohz_task_switch(struct task_struct *tsk);
++extern void tick_nohz_cpu_isolated_enter(void);
+ #else
+ static inline bool tick_nohz_full_enabled(void) { return false; }
+ static inline bool tick_nohz_full_cpu(int cpu) { return false; }
+@@ -158,6 +166,8 @@ static inline void tick_nohz_full_kick_cpu(int cpu) { }
+ static inline void tick_nohz_full_kick(void) { }
+ static inline void tick_nohz_full_kick_all(void) { }
+ static inline void __tick_nohz_task_switch(struct task_struct *tsk) { }
++static inline bool tick_nohz_is_cpu_isolated(void) { return false; }
++static inline void tick_nohz_cpu_isolated_enter(void) { }
+ #endif
+ 
+ static inline bool is_housekeeping_cpu(int cpu)
+diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
+index 31891d9535e2..edb40b6b84db 100644
+--- a/include/uapi/linux/prctl.h
++++ b/include/uapi/linux/prctl.h
+@@ -190,4 +190,9 @@ struct prctl_mm_map {
+ # define PR_FP_MODE_FR		(1 << 0)	/* 64b FP registers */
+ # define PR_FP_MODE_FRE		(1 << 1)	/* 32b compatibility */
+ 
++/* Enable/disable or query cpu_isolated mode for NO_HZ_FULL kernels. */
++#define PR_SET_CPU_ISOLATED	47
++#define PR_GET_CPU_ISOLATED	48
++# define PR_CPU_ISOLATED_ENABLE	(1 << 0)
++
+ #endif /* _LINUX_PRCTL_H */
+diff --git a/kernel/context_tracking.c b/kernel/context_tracking.c
+index 0a495ab35bc7..f9de3ee12723 100644
+--- a/kernel/context_tracking.c
++++ b/kernel/context_tracking.c
+@@ -20,6 +20,7 @@
+ #include <linux/hardirq.h>
+ #include <linux/export.h>
+ #include <linux/kprobes.h>
++#include <linux/tick.h>
+ 
+ #define CREATE_TRACE_POINTS
+ #include <trace/events/context_tracking.h>
+@@ -99,6 +100,8 @@ void context_tracking_enter(enum ctx_state state)
+ 			 * on the tick.
+ 			 */
+ 			if (state == CONTEXT_USER) {
++				if (tick_nohz_is_cpu_isolated())
++					tick_nohz_cpu_isolated_enter();
+ 				trace_user_enter(0);
+ 				vtime_user_enter(current);
+ 			}
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 259fda25eb6b..36eb9a839f1f 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2267,6 +2267,14 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 	case PR_GET_FP_MODE:
+ 		error = GET_FP_MODE(me);
+ 		break;
++#ifdef CONFIG_NO_HZ_FULL
++	case PR_SET_CPU_ISOLATED:
++		me->cpu_isolated_flags = arg2;
++		break;
++	case PR_GET_CPU_ISOLATED:
++		error = me->cpu_isolated_flags;
++		break;
++#endif
+ 	default:
+ 		error = -EINVAL;
+ 		break;
+diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
+index c792429e98c6..4cf093c012d1 100644
+--- a/kernel/time/tick-sched.c
++++ b/kernel/time/tick-sched.c
+@@ -24,6 +24,7 @@
+ #include <linux/posix-timers.h>
+ #include <linux/perf_event.h>
+ #include <linux/context_tracking.h>
++#include <linux/swap.h>
+ 
+ #include <asm/irq_regs.h>
+ 
+@@ -389,6 +390,62 @@ void __init tick_nohz_init(void)
+ 	pr_info("NO_HZ: Full dynticks CPUs: %*pbl.\n",
+ 		cpumask_pr_args(tick_nohz_full_mask));
+ }
++
++/*
++ * Rather than continuously polling for the next_event in the
++ * tick_cpu_device, architectures can provide a method to save power
++ * by sleeping until an interrupt arrives.
++ */
++void __weak tick_nohz_cpu_isolated_wait(void)
++{
++	cpu_relax();
++}
++
++/*
++ * We normally return immediately to userspace.
++ *
++ * In "cpu_isolated" mode we wait until no more interrupts are
++ * pending.  Otherwise we nap with interrupts enabled and wait for the
++ * next interrupt to fire, then loop back and retry.
++ *
++ * Note that if you schedule two "cpu_isolated" processes on the same
++ * core, neither will ever leave the kernel, and one will have to be
++ * killed manually.  Otherwise in situations where another process is
++ * in the runqueue on this cpu, this task will just wait for that
++ * other task to go idle before returning to user space.
++ */
++void tick_nohz_cpu_isolated_enter(void)
++{
++	struct clock_event_device *dev =
++		__this_cpu_read(tick_cpu_device.evtdev);
++	struct task_struct *task = current;
++	unsigned long start = jiffies;
++	bool warned = false;
++
++	/* Drain the pagevecs to avoid unnecessary IPI flushes later. */
++	lru_add_drain();
++
++	while (READ_ONCE(dev->next_event.tv64) != KTIME_MAX) {
++		if (!warned && (jiffies - start) >= (5 * HZ)) {
++			pr_warn("%s/%d: cpu %d: cpu_isolated task blocked for %ld seconds\n",
++				task->comm, task->pid, smp_processor_id(),
++				(jiffies - start) / HZ);
++			warned = true;
++		}
++		if (should_resched())
++			schedule();
++		if (test_thread_flag(TIF_SIGPENDING))
++			break;
++		tick_nohz_cpu_isolated_wait();
++	}
++	if (warned) {
++		pr_warn("%s/%d: cpu %d: cpu_isolated task unblocked after %ld seconds\n",
++			task->comm, task->pid, smp_processor_id(),
++			(jiffies - start) / HZ);
++		dump_stack();
++	}
++}
++
+ #endif
+ 
+ /*
+-- 
+2.1.2
