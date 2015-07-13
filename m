@@ -1,95 +1,99 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: [PATCH v3 08/10] hugetlbfs: New huge_add_to_page_cache helper routine
-Date: Sun, 12 Jul 2015 21:21:06 -0700
-Message-ID: <1436761268-6397-9-git-send-email-mike.kravetz@oracle.com>
-References: <1436761268-6397-1-git-send-email-mike.kravetz@oracle.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1436761268-6397-1-git-send-email-mike.kravetz@oracle.com>
-Sender: owner-linux-mm@kvack.org
-To: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Dave Hansen <dave.hansen@linux.intel.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Davidlohr Bueso <dave@stgolabs.net>, Aneesh Kumar <aneesh.kumar@linux.vnet.ibm.com>, Hillf Danton <hillf.zj@alibaba-inc.com>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Mike Kravetz <mike.kravetz@oracle.com>
+From: Gioh Kim <gioh.kim@lge.com>
+Subject: [PATCH 0/4] enable migration of driver pages
+Date: Mon, 13 Jul 2015 17:35:15 +0900
+Message-ID: <1436776519-17337-1-git-send-email-gioh.kim@lge.com>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: jlayton@poochiereds.net, bfields@fieldses.org, vbabka@suse.cz, iamjoonsoo.kim@lge.com, viro@zeniv.linux.org.uk, mst@redhat.com, koct9i@gmail.com, minchan@kernel.org, aquini@redhat.com, linux-fsdevel@vger.kernel.org, virtualization@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org
+Cc: dri-devel@lists.freedesktop.org, akpm@linux-foundation.org, Gioh Kim <gurugio@hanmail.net>
 List-Id: linux-api@vger.kernel.org
 
-Currently, there is  only a single place where hugetlbfs pages are
-added to the page cache.  The new fallocate code be adding a second
-one, so break the functionality out into its own helper.
+From: Gioh Kim <gurugio@hanmail.net>
 
-Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
-Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
----
- include/linux/hugetlb.h |  2 ++
- mm/hugetlb.c            | 27 ++++++++++++++++++---------
- 2 files changed, 20 insertions(+), 9 deletions(-)
+Hello,
 
-diff --git a/include/linux/hugetlb.h b/include/linux/hugetlb.h
-index e7825c9..657ef26 100644
---- a/include/linux/hugetlb.h
-+++ b/include/linux/hugetlb.h
-@@ -333,6 +333,8 @@ struct huge_bootmem_page {
- struct page *alloc_huge_page_node(struct hstate *h, int nid);
- struct page *alloc_huge_page_noerr(struct vm_area_struct *vma,
- 				unsigned long addr, int avoid_reserve);
-+int huge_add_to_page_cache(struct page *page, struct address_space *mapping,
-+			pgoff_t idx);
- 
- /* arch callback */
- int __init alloc_bootmem_huge_page(struct hstate *h);
-diff --git a/mm/hugetlb.c b/mm/hugetlb.c
-index 5a2ee06..aedc5e7 100644
---- a/mm/hugetlb.c
-+++ b/mm/hugetlb.c
-@@ -3374,6 +3374,23 @@ static bool hugetlbfs_pagecache_present(struct hstate *h,
- 	return page != NULL;
- }
- 
-+int huge_add_to_page_cache(struct page *page, struct address_space *mapping,
-+			   pgoff_t idx)
-+{
-+	struct inode *inode = mapping->host;
-+	struct hstate *h = hstate_inode(inode);
-+	int err = add_to_page_cache(page, mapping, idx, GFP_KERNEL);
-+
-+	if (err)
-+		return err;
-+	ClearPagePrivate(page);
-+
-+	spin_lock(&inode->i_lock);
-+	inode->i_blocks += blocks_per_huge_page(h);
-+	spin_unlock(&inode->i_lock);
-+	return 0;
-+}
-+
- static int hugetlb_no_page(struct mm_struct *mm, struct vm_area_struct *vma,
- 			   struct address_space *mapping, pgoff_t idx,
- 			   unsigned long address, pte_t *ptep, unsigned int flags)
-@@ -3421,21 +3438,13 @@ retry:
- 		set_page_huge_active(page);
- 
- 		if (vma->vm_flags & VM_MAYSHARE) {
--			int err;
--			struct inode *inode = mapping->host;
--
--			err = add_to_page_cache(page, mapping, idx, GFP_KERNEL);
-+			int err = huge_add_to_page_cache(page, mapping, idx);
- 			if (err) {
- 				put_page(page);
- 				if (err == -EEXIST)
- 					goto retry;
- 				goto out;
- 			}
--			ClearPagePrivate(page);
--
--			spin_lock(&inode->i_lock);
--			inode->i_blocks += blocks_per_huge_page(h);
--			spin_unlock(&inode->i_lock);
- 		} else {
- 			lock_page(page);
- 			if (unlikely(anon_vma_prepare(vma))) {
+This series try to enable migration of non-LRU pages, such as driver's page.
+
+My ARM-based platform occured severe fragmentation problem after long-term
+(several days) test. Sometimes even order-3 page allocation failed. It has
+memory size 512MB ~ 1024MB. 30% ~ 40% memory is consumed for graphic processing
+and 20~30 memory is reserved for zram.
+
+I found that many pages of GPU driver and zram are non-movable pages. So I
+reported Minchan Kim, the maintainer of zram, and he made the internal 
+compaction logic of zram. And I made the internal compaction of GPU driver.
+
+They reduced some fragmentation but they are not enough effective.
+They are activated by its own interface, /sys, so they are not cooperative
+with kernel compaction. If there is too much fragmentation and kernel starts
+to compaction, zram and GPU driver cannot work with the kernel compaction.
+
+So I thought there needs a interface to combine driver and kernel compaction.
+This patch adds a generic isolate/migrate/putback callbacks for page
+address-space and a new interface to create anon-inode to manage
+address_space_operation. The zram and GPU, and any other modules can create
+anon_inode and register its own migration method. The kernel compaction can
+call the registered migration when it does compaction.
+
+My GPU driver source is not in-kernel driver so that I apply the interface
+into balloon driver. The balloon driver is already merged
+into the kernel compaction as a corner-case. This patch have the balloon
+driver migration be called by the generic interface.
+
+
+This patch set combines 4 patches.
+
+1. patch 1/4: get inode from anon_inodes
+This patch adds new interface to create inode from anon_inodes.
+
+2. patch 2/4: framework to isolate/migrate/putback page
+Add isolatepage, putbackpage into address_space_operations
+and wrapper function to call them.
+
+3. patch 3/4: apply the framework into balloon driver
+The balloon driver is applied into the framework. It gets a inode
+from anon_inodes and register operations in the inode.
+The kernel compaction calls generic interfaces, not balloon
+driver interfaces. 
+Any other drivers can register operations via inode like this
+to migrate it's pages.
+
+4. patch 4/4: remove direct calling of migration of driver pages
+Non-lru pages are also migrated with lru pages by move_to_new_page().
+
+This patch set is tested:
+- turn on Ubuntu 14.04 with 1G memory on qemu.
+- do kernel building
+- after several seconds check more than 512MB is used with free command
+- command "balloon 512" in qemu monitor
+- check hundreds MB of pages are migrated
+
+My thanks to Konstantin Khlebnikov for his reviews of the RFC patch set.
+Most of the changes were based on his feedback.
+
+This patch-set is based on v4.1
+
+
+Gioh Kim (4):
+  fs/anon_inodes: new interface to create new inode
+  mm/compaction: enable mobile-page migration
+  mm/balloon: apply mobile page migratable into balloon
+  mm: remove direct calling of migration
+
+ drivers/virtio/virtio_balloon.c        |  3 ++
+ fs/anon_inodes.c                       |  6 +++
+ fs/proc/page.c                         |  3 ++
+ include/linux/anon_inodes.h            |  1 +
+ include/linux/balloon_compaction.h     | 15 +++++--
+ include/linux/compaction.h             | 80 ++++++++++++++++++++++++++++++++++
+ include/linux/fs.h                     |  2 +
+ include/linux/page-flags.h             | 19 ++++++++
+ include/uapi/linux/kernel-page-flags.h |  1 +
+ mm/balloon_compaction.c                | 72 ++++++++++--------------------
+ mm/compaction.c                        |  8 ++--
+ mm/migrate.c                           | 24 +++-------
+ 12 files changed, 160 insertions(+), 74 deletions(-)
+
 -- 
-2.1.0
+2.1.4
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
