@@ -1,7 +1,7 @@
 From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: [PATCH v3 02/10] mm/hugetlb: add region_del() to delete a specific range of entries
-Date: Sun, 12 Jul 2015 21:21:00 -0700
-Message-ID: <1436761268-6397-3-git-send-email-mike.kravetz@oracle.com>
+Subject: [PATCH v3 05/10] hugetlbfs: truncate_hugepages() takes a range of pages
+Date: Sun, 12 Jul 2015 21:21:03 -0700
+Message-ID: <1436761268-6397-6-git-send-email-mike.kravetz@oracle.com>
 References: <1436761268-6397-1-git-send-email-mike.kravetz@oracle.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1436761268-6397-1-git-send-email-mike.kravetz@oracle.com>
@@ -10,162 +10,280 @@ To: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 Cc: Dave Hansen <dave.hansen@linux.intel.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Davidlohr Bueso <dave@stgolabs.net>, Aneesh Kumar <aneesh.kumar@linux.vnet.ibm.com>, Hillf Danton <hillf.zj@alibaba-inc.com>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-fallocate hole punch will want to remove a specific range of pages.
-The existing region_truncate() routine deletes all region/reserve
-map entries after a specified offset.  region_del() will provide
-this same functionality if the end of region is specified as LONG_MAX.
-Hence, region_del() can replace region_truncate().
+Modify truncate_hugepages() to take a range of pages (start, end)
+instead of simply start. If an end value of LLONG_MAX is passed,
+the current "truncate" functionality is maintained. Existing
+callers are modified to pass LLONG_MAX as end of range. By keying
+off end == LLONG_MAX, the routine behaves differently for truncate
+and hole punch.  Page removal is now synchronized with page
+allocation via faults by using the fault mutex table. The hole
+punch case can experience the rare region_del error and must
+handle accordingly.
 
-Unlike region_truncate(), region_del() can return an error in the
-rare case where it can not allocate memory for a region descriptor.
-This ONLY happens in the case where an existing region must be split.
-Current callers passing LONG_MAX as end of range will never experience
-this error and do not need to deal with error handling.  Future
-callers of region_del() (such as fallocate hole punch) will need to
-handle this error.
+Add the routine hugetlb_fix_reserve_counts to fix up reserve counts
+in the case where region_del returns an error.
+
+Since the routine handles more than just the truncate case, it is
+renamed to remove_inode_hugepages().  To be consistent, the routine
+truncate_huge_page() is renamed remove_huge_page().
+
+Downstream of remove_inode_hugepages(), the routine
+hugetlb_unreserve_pages() is also modified to take a range of pages.
+hugetlb_unreserve_pages is modified to detect an error from
+region_del and pass it back to the caller.
 
 Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
 ---
- mm/hugetlb.c | 99 ++++++++++++++++++++++++++++++++++++++++++++----------------
- 1 file changed, 73 insertions(+), 26 deletions(-)
+ fs/hugetlbfs/inode.c    | 98 ++++++++++++++++++++++++++++++++++++++++++++-----
+ include/linux/hugetlb.h |  4 +-
+ mm/hugetlb.c            | 40 ++++++++++++++++++--
+ 3 files changed, 128 insertions(+), 14 deletions(-)
 
+diff --git a/fs/hugetlbfs/inode.c b/fs/hugetlbfs/inode.c
+index ed40f56..a974e4b 100644
+--- a/fs/hugetlbfs/inode.c
++++ b/fs/hugetlbfs/inode.c
+@@ -293,26 +293,61 @@ static int hugetlbfs_write_end(struct file *file, struct address_space *mapping,
+ 	return -EINVAL;
+ }
+ 
+-static void truncate_huge_page(struct page *page)
++static void remove_huge_page(struct page *page)
+ {
+ 	ClearPageDirty(page);
+ 	ClearPageUptodate(page);
+ 	delete_from_page_cache(page);
+ }
+ 
+-static void truncate_hugepages(struct inode *inode, loff_t lstart)
++
++/*
++ * remove_inode_hugepages handles two distinct cases: truncation and hole
++ * punch.  There are subtle differences in operation for each case.
++
++ * truncation is indicated by end of range being LLONG_MAX
++ *	In this case, we first scan the range and release found pages.
++ *	After releasing pages, hugetlb_unreserve_pages cleans up region/reserv
++ *	maps and global counts.
++ * hole punch is indicated if end is not LLONG_MAX
++ *	In the hole punch case we scan the range and release found pages.
++ *	Only when releasing a page is the associated region/reserv map
++ *	deleted.  The region/reserv map for ranges without associated
++ *	pages are not modified.
++ * Note: If the passed end of range value is beyond the end of file, but
++ * not LLONG_MAX this routine still performs a hole punch operation.
++ */
++static void remove_inode_hugepages(struct inode *inode, loff_t lstart,
++				   loff_t lend)
+ {
+ 	struct hstate *h = hstate_inode(inode);
+ 	struct address_space *mapping = &inode->i_data;
+ 	const pgoff_t start = lstart >> huge_page_shift(h);
++	const pgoff_t end = lend >> huge_page_shift(h);
++	struct vm_area_struct pseudo_vma;
+ 	struct pagevec pvec;
+ 	pgoff_t next;
+ 	int i, freed = 0;
++	long lookup_nr = PAGEVEC_SIZE;
++	bool truncate_op = (lend == LLONG_MAX);
+ 
++	memset(&pseudo_vma, 0, sizeof(struct vm_area_struct));
++	pseudo_vma.vm_flags = (VM_HUGETLB | VM_MAYSHARE | VM_SHARED);
+ 	pagevec_init(&pvec, 0);
+ 	next = start;
+-	while (1) {
+-		if (!pagevec_lookup(&pvec, mapping, next, PAGEVEC_SIZE)) {
++	while (next < end) {
++		/*
++		 * Make sure to never grab more pages that we
++		 * might possibly need.
++		 */
++		if (end - next < lookup_nr)
++			lookup_nr = end - next;
++
++		/*
++		 * This pagevec_lookup() may return pages past 'end',
++		 * so we must check for page->index > end.
++		 */
++		if (!pagevec_lookup(&pvec, mapping, next, lookup_nr)) {
+ 			if (next == start)
+ 				break;
+ 			next = start;
+@@ -321,26 +356,69 @@ static void truncate_hugepages(struct inode *inode, loff_t lstart)
+ 
+ 		for (i = 0; i < pagevec_count(&pvec); ++i) {
+ 			struct page *page = pvec.pages[i];
++			u32 hash;
++
++			hash = hugetlb_fault_mutex_hash(h, current->mm,
++							&pseudo_vma,
++							mapping, next, 0);
++			mutex_lock(&hugetlb_fault_mutex_table[hash]);
+ 
+ 			lock_page(page);
++			if (page->index >= end) {
++				unlock_page(page);
++				mutex_unlock(&hugetlb_fault_mutex_table[hash]);
++				next = end;	/* we are done */
++				break;
++			}
++
++			/*
++			 * If page is mapped, it was faulted in after being
++			 * unmapped.  Do nothing in this race case.  In the
++			 * normal case page is not mapped.
++			 */
++			if (!page_mapped(page)) {
++				bool rsv_on_error = !PagePrivate(page);
++				/*
++				 * We must free the huge page and remove
++				 * from page cache (remove_huge_page) BEFORE
++				 * removing the region/reserve map
++				 * (hugetlb_unreserve_pages).  In rare out
++				 * of memory conditions, removal of the
++				 * region/reserve map could fail.  Before
++				 * free'ing the page, note PagePrivate which
++				 * is used in case of error.
++				 */
++				remove_huge_page(page);
++				freed++;
++				if (!truncate_op) {
++					if (unlikely(hugetlb_unreserve_pages(
++							inode, next,
++							next + 1, 1)))
++						hugetlb_fix_reserve_counts(
++							inode, rsv_on_error);
++				}
++			}
++
+ 			if (page->index > next)
+ 				next = page->index;
++
+ 			++next;
+-			truncate_huge_page(page);
+ 			unlock_page(page);
+-			freed++;
++
++			mutex_unlock(&hugetlb_fault_mutex_table[hash]);
+ 		}
+ 		huge_pagevec_release(&pvec);
+ 	}
+-	BUG_ON(!lstart && mapping->nrpages);
+-	hugetlb_unreserve_pages(inode, start, freed);
++
++	if (truncate_op)
++		(void)hugetlb_unreserve_pages(inode, start, LONG_MAX, freed);
+ }
+ 
+ static void hugetlbfs_evict_inode(struct inode *inode)
+ {
+ 	struct resv_map *resv_map;
+ 
+-	truncate_hugepages(inode, 0);
++	remove_inode_hugepages(inode, 0, LLONG_MAX);
+ 	resv_map = (struct resv_map *)inode->i_mapping->private_data;
+ 	/* root inode doesn't have the resv_map, so we should check it */
+ 	if (resv_map)
+@@ -397,7 +475,7 @@ static int hugetlb_vmtruncate(struct inode *inode, loff_t offset)
+ 	if (!RB_EMPTY_ROOT(&mapping->i_mmap))
+ 		hugetlb_vmdelete_list(&mapping->i_mmap, pgoff, 0);
+ 	i_mmap_unlock_write(mapping);
+-	truncate_hugepages(inode, offset);
++	remove_inode_hugepages(inode, offset, LLONG_MAX);
+ 	return 0;
+ }
+ 
+diff --git a/include/linux/hugetlb.h b/include/linux/hugetlb.h
+index 933da39..e7825c9 100644
+--- a/include/linux/hugetlb.h
++++ b/include/linux/hugetlb.h
+@@ -83,11 +83,13 @@ int hugetlb_fault(struct mm_struct *mm, struct vm_area_struct *vma,
+ int hugetlb_reserve_pages(struct inode *inode, long from, long to,
+ 						struct vm_area_struct *vma,
+ 						vm_flags_t vm_flags);
+-void hugetlb_unreserve_pages(struct inode *inode, long offset, long freed);
++long hugetlb_unreserve_pages(struct inode *inode, long start, long end,
++						long freed);
+ int dequeue_hwpoisoned_huge_page(struct page *page);
+ bool isolate_huge_page(struct page *page, struct list_head *list);
+ void putback_active_hugepage(struct page *page);
+ void free_huge_page(struct page *page);
++void hugetlb_fix_reserve_counts(struct inode *inode, bool restore_reserve);
+ extern struct mutex *hugetlb_fault_mutex_table;
+ u32 hugetlb_fault_mutex_hash(struct hstate *h, struct mm_struct *mm,
+ 				struct vm_area_struct *vma,
 diff --git a/mm/hugetlb.c b/mm/hugetlb.c
-index 241d16d..a5c8b3c 100644
+index 52c2801..def39e3 100644
 --- a/mm/hugetlb.c
 +++ b/mm/hugetlb.c
-@@ -461,43 +461,90 @@ static void region_abort(struct resv_map *resv, long f, long t)
+@@ -548,6 +548,28 @@ retry:
  }
  
  /*
-- * Truncate the reserve map at index 'end'.  Modify/truncate any
-- * region which contains end.  Delete any regions past end.
-- * Return the number of huge pages removed from the map.
-+ * Delete the specified range [f, t) from the reserve map.  If the
-+ * t parameter is LONG_MAX, this indicates that ALL regions after f
-+ * should be deleted.  Locate the regions which intersect [f, t)
-+ * and either trim, delete or split the existing regions.
-+ *
-+ * Returns the number of huge pages deleted from the reserve map.
-+ * In the normal case, the return value is zero or more.  In the
-+ * case where a region must be split, a new region descriptor must
-+ * be allocated.  If the allocation fails, -ENOMEM will be returned.
-+ * NOTE: If the parameter t == LONG_MAX, then we will never split
-+ * a region and possibly return -ENOMEM.  Callers specifying
-+ * t == LONG_MAX do not need to check for -ENOMEM error.
++ * A rare out of memory error was encountered which prevented removal of
++ * the reserve map region for a page.  The huge page itself was free'ed
++ * and removed from the page cache.  This routine will adjust the subpool
++ * usage count, and the global reserve count if needed.  By incrementing
++ * these counts, the reserve map entry which could not be deleted will
++ * appear as a "reserved" entry instead of simply dangling with incorrect
++ * counts.
++ */
++void hugetlb_fix_reserve_counts(struct inode *inode, bool restore_reserve)
++{
++	struct hugepage_subpool *spool = subpool_inode(inode);
++	long rsv_adjust;
++
++	rsv_adjust = hugepage_subpool_get_pages(spool, 1);
++	if (restore_reserve && rsv_adjust) {
++		struct hstate *h = hstate_inode(inode);
++
++		hugetlb_acct_memory(h, 1);
++	}
++}
++
++/*
+  * Count and return the number of huge pages in the reserve map
+  * that intersect with the range [f, t).
   */
--static long region_truncate(struct resv_map *resv, long end)
-+static long region_del(struct resv_map *resv, long f, long t)
- {
- 	struct list_head *head = &resv->regions;
- 	struct file_region *rg, *trg;
--	long chg = 0;
-+	struct file_region *nrg = NULL;
-+	long del = 0;
- 
-+retry:
- 	spin_lock(&resv->lock);
--	/* Locate the region we are either in or before. */
--	list_for_each_entry(rg, head, link)
--		if (end <= rg->to)
-+	list_for_each_entry_safe(rg, trg, head, link) {
-+		if (rg->to <= f)
-+			continue;
-+		if (rg->from >= t)
- 			break;
--	if (&rg->link == head)
--		goto out;
- 
--	/* If we are in the middle of a region then adjust it. */
--	if (end > rg->from) {
--		chg = rg->to - end;
--		rg->to = end;
--		rg = list_entry(rg->link.next, typeof(*rg), link);
--	}
-+		if (f > rg->from && t < rg->to) { /* Must split region */
-+			/*
-+			 * Check for an entry in the cache before dropping
-+			 * lock and attempting allocation.
-+			 */
-+			if (!nrg &&
-+			    resv->rgn_cache_count > resv->adds_in_progress) {
-+				nrg = list_first_entry(&resv->rgn_cache,
-+							struct file_region,
-+							link);
-+				list_del(&nrg->link);
-+				resv->rgn_cache_count--;
-+			}
- 
--	/* Drop any remaining regions. */
--	list_for_each_entry_safe(rg, trg, rg->link.prev, link) {
--		if (&rg->link == head)
-+			if (!nrg) {
-+				spin_unlock(&resv->lock);
-+				nrg = kmalloc(sizeof(*nrg), GFP_KERNEL);
-+				if (!nrg)
-+					return -ENOMEM;
-+				goto retry;
-+			}
-+
-+			del += t - f;
-+
-+			/* New entry for end of split region */
-+			nrg->from = t;
-+			nrg->to = rg->to;
-+			INIT_LIST_HEAD(&nrg->link);
-+
-+			/* Original entry is trimmed */
-+			rg->to = f;
-+
-+			list_add(&nrg->link, &rg->link);
-+			nrg = NULL;
- 			break;
--		chg += rg->to - rg->from;
--		list_del(&rg->link);
--		kfree(rg);
-+		}
-+
-+		if (f <= rg->from && t >= rg->to) { /* Remove entire region */
-+			del += rg->to - rg->from;
-+			list_del(&rg->link);
-+			kfree(rg);
-+			continue;
-+		}
-+
-+		if (f <= rg->from) {	/* Trim beginning of region */
-+			del += t - rg->from;
-+			rg->from = t;
-+		} else {		/* Trim end of region */
-+			del += rg->to - f;
-+			rg->to = f;
-+		}
- 	}
- 
--out:
- 	spin_unlock(&resv->lock);
--	return chg;
-+	kfree(nrg);
-+	return del;
+@@ -3909,7 +3931,8 @@ out_err:
+ 	return ret;
  }
  
- /*
-@@ -648,7 +695,7 @@ void resv_map_release(struct kref *ref)
- 	struct file_region *rg, *trg;
- 
- 	/* Clear out any active regions before we release the map. */
--	region_truncate(resv_map, 0);
-+	region_del(resv_map, 0, LONG_MAX);
- 
- 	/* ... and any entries left in the cache */
- 	list_for_each_entry_safe(rg, trg, head, link) {
-@@ -3871,7 +3918,7 @@ void hugetlb_unreserve_pages(struct inode *inode, long offset, long freed)
+-void hugetlb_unreserve_pages(struct inode *inode, long offset, long freed)
++long hugetlb_unreserve_pages(struct inode *inode, long start, long end,
++								long freed)
+ {
+ 	struct hstate *h = hstate_inode(inode);
+ 	struct resv_map *resv_map = inode_resv_map(inode);
+@@ -3917,8 +3940,17 @@ void hugetlb_unreserve_pages(struct inode *inode, long offset, long freed)
+ 	struct hugepage_subpool *spool = subpool_inode(inode);
  	long gbl_reserve;
  
- 	if (resv_map)
--		chg = region_truncate(resv_map, offset);
-+		chg = region_del(resv_map, offset, LONG_MAX);
+-	if (resv_map)
+-		chg = region_del(resv_map, offset, LONG_MAX);
++	if (resv_map) {
++		chg = region_del(resv_map, start, end);
++		/*
++		 * region_del() can fail in the rare case where a region
++		 * must be split and another region descriptor can not be
++		 * allocated.  If end == LONG_MAX, it will not fail.
++		 */
++		if (chg < 0)
++			return chg;
++	}
++
  	spin_lock(&inode->i_lock);
  	inode->i_blocks -= (blocks_per_huge_page(h) * freed);
  	spin_unlock(&inode->i_lock);
+@@ -3929,6 +3961,8 @@ void hugetlb_unreserve_pages(struct inode *inode, long offset, long freed)
+ 	 */
+ 	gbl_reserve = hugepage_subpool_put_pages(spool, (chg - freed));
+ 	hugetlb_acct_memory(h, -gbl_reserve);
++
++	return 0;
+ }
+ 
+ #ifdef CONFIG_ARCH_WANT_HUGE_PMD_SHARE
 -- 
 2.1.0
 
