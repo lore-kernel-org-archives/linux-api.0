@@ -1,86 +1,109 @@
-From: Gioh Kim <gioh.kim@lge.com>
-Subject: Re: [PATCH 0/4] enable migration of driver pages
-Date: Mon, 13 Jul 2015 19:02:28 +0900
-Message-ID: <55A38CB4.5050806@lge.com>
-References: <1436776519-17337-1-git-send-email-gioh.kim@lge.com>
-	<CALYGNiPZtJqcYW5Ob6TbRMGrJHP6zV7cKfbesBxprVQjqVmUSw@mail.gmail.com>
+From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v7 4/9] nvmem: Add bindings for simple nvmem framework
+Date: Mon, 13 Jul 2015 11:21:58 +0100
+Message-ID: <55A39146.4080207@linaro.org>
+References: <1436521427-10568-1-git-send-email-srinivas.kandagatla@linaro.org> <1436521513-10838-1-git-send-email-srinivas.kandagatla@linaro.org> <CAL_JsqKYT-+T=D=TKCb1TcydOvBTE8_yc-EEe1cwdmhr1B0dHQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <CALYGNiPZtJqcYW5Ob6TbRMGrJHP6zV7cKfbesBxprVQjqVmUSw@mail.gmail.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Konstantin Khlebnikov <koct9i@gmail.com>
-Cc: Rafael Aquini <aquini@redhat.com>, "Michael S. Tsirkin" <mst@redhat.com>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, dri-devel <dri-devel@lists.freedesktop.org>, virtualization@lists.linux-foundation.org, Bruce Fields <bfields@fieldses.org>, Minchan Kim <minchan@kernel.org>, Gioh Kim <gurugio@hanmail.net>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Vlastimil Babka <vbabka@suse.cz>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAL_JsqKYT-+T=D=TKCb1TcydOvBTE8_yc-EEe1cwdmhr1B0dHQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Rob Herring <robherring2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Sascha Hauer <s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arm-msm <linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Pantelis Antoniou <pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Matt Porter <mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org>, Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-CgoyMDE1LTA3LTEzIOyYpO2bhCA2OjI07JeQIEtvbnN0YW50aW4gS2hsZWJuaWtvdiDsnbQo6rCA
-KSDsk7Qg6riAOgo+IE9uIE1vbiwgSnVsIDEzLCAyMDE1IGF0IDExOjM1IEFNLCBHaW9oIEtpbSA8
-Z2lvaC5raW1AbGdlLmNvbT4gd3JvdGU6Cj4+IEZyb206IEdpb2ggS2ltIDxndXJ1Z2lvQGhhbm1h
-aWwubmV0Pgo+Pgo+PiBIZWxsbywKPj4KPj4gVGhpcyBzZXJpZXMgdHJ5IHRvIGVuYWJsZSBtaWdy
-YXRpb24gb2Ygbm9uLUxSVSBwYWdlcywgc3VjaCBhcyBkcml2ZXIncyBwYWdlLgo+Pgo+PiBNeSBB
-Uk0tYmFzZWQgcGxhdGZvcm0gb2NjdXJlZCBzZXZlcmUgZnJhZ21lbnRhdGlvbiBwcm9ibGVtIGFm
-dGVyIGxvbmctdGVybQo+PiAoc2V2ZXJhbCBkYXlzKSB0ZXN0LiBTb21ldGltZXMgZXZlbiBvcmRl
-ci0zIHBhZ2UgYWxsb2NhdGlvbiBmYWlsZWQuIEl0IGhhcwo+PiBtZW1vcnkgc2l6ZSA1MTJNQiB+
-IDEwMjRNQi4gMzAlIH4gNDAlIG1lbW9yeSBpcyBjb25zdW1lZCBmb3IgZ3JhcGhpYyBwcm9jZXNz
-aW5nCj4+IGFuZCAyMH4zMCBtZW1vcnkgaXMgcmVzZXJ2ZWQgZm9yIHpyYW0uCj4+Cj4+IEkgZm91
-bmQgdGhhdCBtYW55IHBhZ2VzIG9mIEdQVSBkcml2ZXIgYW5kIHpyYW0gYXJlIG5vbi1tb3ZhYmxl
-IHBhZ2VzLiBTbyBJCj4+IHJlcG9ydGVkIE1pbmNoYW4gS2ltLCB0aGUgbWFpbnRhaW5lciBvZiB6
-cmFtLCBhbmQgaGUgbWFkZSB0aGUgaW50ZXJuYWwKPj4gY29tcGFjdGlvbiBsb2dpYyBvZiB6cmFt
-LiBBbmQgSSBtYWRlIHRoZSBpbnRlcm5hbCBjb21wYWN0aW9uIG9mIEdQVSBkcml2ZXIuCj4+Cj4+
-IFRoZXkgcmVkdWNlZCBzb21lIGZyYWdtZW50YXRpb24gYnV0IHRoZXkgYXJlIG5vdCBlbm91Z2gg
-ZWZmZWN0aXZlLgo+PiBUaGV5IGFyZSBhY3RpdmF0ZWQgYnkgaXRzIG93biBpbnRlcmZhY2UsIC9z
-eXMsIHNvIHRoZXkgYXJlIG5vdCBjb29wZXJhdGl2ZQo+PiB3aXRoIGtlcm5lbCBjb21wYWN0aW9u
-LiBJZiB0aGVyZSBpcyB0b28gbXVjaCBmcmFnbWVudGF0aW9uIGFuZCBrZXJuZWwgc3RhcnRzCj4+
-IHRvIGNvbXBhY3Rpb24sIHpyYW0gYW5kIEdQVSBkcml2ZXIgY2Fubm90IHdvcmsgd2l0aCB0aGUg
-a2VybmVsIGNvbXBhY3Rpb24uCj4+Cj4+IFNvIEkgdGhvdWdodCB0aGVyZSBuZWVkcyBhIGludGVy
-ZmFjZSB0byBjb21iaW5lIGRyaXZlciBhbmQga2VybmVsIGNvbXBhY3Rpb24uCj4+IFRoaXMgcGF0
-Y2ggYWRkcyBhIGdlbmVyaWMgaXNvbGF0ZS9taWdyYXRlL3B1dGJhY2sgY2FsbGJhY2tzIGZvciBw
-YWdlCj4+IGFkZHJlc3Mtc3BhY2UgYW5kIGEgbmV3IGludGVyZmFjZSB0byBjcmVhdGUgYW5vbi1p
-bm9kZSB0byBtYW5hZ2UKPj4gYWRkcmVzc19zcGFjZV9vcGVyYXRpb24uIFRoZSB6cmFtIGFuZCBH
-UFUsIGFuZCBhbnkgb3RoZXIgbW9kdWxlcyBjYW4gY3JlYXRlCj4+IGFub25faW5vZGUgYW5kIHJl
-Z2lzdGVyIGl0cyBvd24gbWlncmF0aW9uIG1ldGhvZC4gVGhlIGtlcm5lbCBjb21wYWN0aW9uIGNh
-bgo+PiBjYWxsIHRoZSByZWdpc3RlcmVkIG1pZ3JhdGlvbiB3aGVuIGl0IGRvZXMgY29tcGFjdGlv
-bi4KPj4KPj4gTXkgR1BVIGRyaXZlciBzb3VyY2UgaXMgbm90IGluLWtlcm5lbCBkcml2ZXIgc28g
-dGhhdCBJIGFwcGx5IHRoZSBpbnRlcmZhY2UKPj4gaW50byBiYWxsb29uIGRyaXZlci4gVGhlIGJh
-bGxvb24gZHJpdmVyIGlzIGFscmVhZHkgbWVyZ2VkCj4+IGludG8gdGhlIGtlcm5lbCBjb21wYWN0
-aW9uIGFzIGEgY29ybmVyLWNhc2UuIFRoaXMgcGF0Y2ggaGF2ZSB0aGUgYmFsbG9vbgo+PiBkcml2
-ZXIgbWlncmF0aW9uIGJlIGNhbGxlZCBieSB0aGUgZ2VuZXJpYyBpbnRlcmZhY2UuCj4+Cj4+Cj4+
-IFRoaXMgcGF0Y2ggc2V0IGNvbWJpbmVzIDQgcGF0Y2hlcy4KPj4KPj4gMS4gcGF0Y2ggMS80OiBn
-ZXQgaW5vZGUgZnJvbSBhbm9uX2lub2Rlcwo+PiBUaGlzIHBhdGNoIGFkZHMgbmV3IGludGVyZmFj
-ZSB0byBjcmVhdGUgaW5vZGUgZnJvbSBhbm9uX2lub2Rlcy4KPj4KPj4gMi4gcGF0Y2ggMi80OiBm
-cmFtZXdvcmsgdG8gaXNvbGF0ZS9taWdyYXRlL3B1dGJhY2sgcGFnZQo+PiBBZGQgaXNvbGF0ZXBh
-Z2UsIHB1dGJhY2twYWdlIGludG8gYWRkcmVzc19zcGFjZV9vcGVyYXRpb25zCj4+IGFuZCB3cmFw
-cGVyIGZ1bmN0aW9uIHRvIGNhbGwgdGhlbS4KPj4KPj4gMy4gcGF0Y2ggMy80OiBhcHBseSB0aGUg
-ZnJhbWV3b3JrIGludG8gYmFsbG9vbiBkcml2ZXIKPj4gVGhlIGJhbGxvb24gZHJpdmVyIGlzIGFw
-cGxpZWQgaW50byB0aGUgZnJhbWV3b3JrLiBJdCBnZXRzIGEgaW5vZGUKPj4gZnJvbSBhbm9uX2lu
-b2RlcyBhbmQgcmVnaXN0ZXIgb3BlcmF0aW9ucyBpbiB0aGUgaW5vZGUuCj4+IFRoZSBrZXJuZWwg
-Y29tcGFjdGlvbiBjYWxscyBnZW5lcmljIGludGVyZmFjZXMsIG5vdCBiYWxsb29uCj4+IGRyaXZl
-ciBpbnRlcmZhY2VzLgo+PiBBbnkgb3RoZXIgZHJpdmVycyBjYW4gcmVnaXN0ZXIgb3BlcmF0aW9u
-cyB2aWEgaW5vZGUgbGlrZSB0aGlzCj4+IHRvIG1pZ3JhdGUgaXQncyBwYWdlcy4KPj4KPj4gNC4g
-cGF0Y2ggNC80OiByZW1vdmUgZGlyZWN0IGNhbGxpbmcgb2YgbWlncmF0aW9uIG9mIGRyaXZlciBw
-YWdlcwo+PiBOb24tbHJ1IHBhZ2VzIGFyZSBhbHNvIG1pZ3JhdGVkIHdpdGggbHJ1IHBhZ2VzIGJ5
-IG1vdmVfdG9fbmV3X3BhZ2UoKS4KPgo+IFRoZSB3aG9sZSBwYXRjaHNldCBsb29rcyBnb29kLgo+
-Cj4gUmV2aWV3ZWQtYnk6IEtvbnN0YW50aW4gS2hsZWJuaWtvdiA8a29jdDlpQGdtYWlsLmNvbT4K
-Pgo+Pgo+PiBUaGlzIHBhdGNoIHNldCBpcyB0ZXN0ZWQ6Cj4+IC0gdHVybiBvbiBVYnVudHUgMTQu
-MDQgd2l0aCAxRyBtZW1vcnkgb24gcWVtdS4KPj4gLSBkbyBrZXJuZWwgYnVpbGRpbmcKPj4gLSBh
-ZnRlciBzZXZlcmFsIHNlY29uZHMgY2hlY2sgbW9yZSB0aGFuIDUxMk1CIGlzIHVzZWQgd2l0aCBm
-cmVlIGNvbW1hbmQKPj4gLSBjb21tYW5kICJiYWxsb29uIDUxMiIgaW4gcWVtdSBtb25pdG9yCj4+
-IC0gY2hlY2sgaHVuZHJlZHMgTUIgb2YgcGFnZXMgYXJlIG1pZ3JhdGVkCj4KPiBBbm90aGVyIHNp
-bXBsZSB0ZXN0IGlzIHNldmVyYWwgaW5zdGFuY2VzIG9mCj4gdG9vbHMvdGVzdGluZy9zZWxmdGVz
-dHMvdm0vdHJhbnNodWdlLXN0cmVzcy5jCj4gcnVubm5nIGluIHBhcmFsbGVsIHdpdGggYmFsbG9v
-biBpbmZsYXRpbmcvZGVmbGF0aW5nLgo+ICh0cmFuc3BhcmVudCBodWdlIHBhZ2VzIG11c3QgYmUg
-ZW5hYmxlZCBvZiBjb3Vyc2UpCj4gVGhhdCBjYXRjaGVkIGEgbG90IG9mIHJhY2VzIGluIGJhbGxv
-b25pbmcgY29kZS4KPgoKR3JlYXQhCkknbGwgZG8gaXQgYW5kIGluZm9ybSB5b3UgdGhlIHJlc3Vs
-dCBpbiB0aGlzIHdlZWsuCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fClZpcnR1YWxpemF0aW9uIG1haWxpbmcgbGlzdApWaXJ0dWFsaXphdGlvbkBsaXN0cy5s
-aW51eC1mb3VuZGF0aW9uLm9yZwpodHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcvbWFp
-bG1hbi9saXN0aW5mby92aXJ0dWFsaXphdGlvbg==
+
+Thanks Rob for quick review,
+
+On 10/07/15 20:04, Rob Herring wrote:
+> On Fri, Jul 10, 2015 at 4:45 AM, Srinivas Kandagatla
+> <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
+>> This patch adds bindings for simple nvmem framework which allows nvmem
+>> consumers to talk to nvmem providers to get access to nvmem cell data.
+>>
+>> Signed-off-by: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+>> [Maxime Ripard: intial version of eeprom framework]
+>> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+>> ---
+>>   Documentation/devicetree/bindings/nvmem/nvmem.txt | 85 +++++++++++++++++++++++
+>>   1 file changed, 85 insertions(+)
+>>   create mode 100644 Documentation/devicetree/bindings/nvmem/nvmem.txt
+>>
+>> diff --git a/Documentation/devicetree/bindings/nvmem/nvmem.txt b/Documentation/devicetree/bindings/nvmem/nvmem.txt
+>> new file mode 100644
+>> index 0000000..849f1e1
+>> --- /dev/null
+>> +++ b/Documentation/devicetree/bindings/nvmem/nvmem.txt
+>> @@ -0,0 +1,85 @@
+>> += NVMEM(Non Volatile Memory) Data Device Tree Bindings =
+>> +
+>> +This binding is intended to represent the location of hardware
+>> +configuration data stored in NVMEMs like eeprom, efuses and so on.
+>> +
+>> +On a significant proportion of boards, the manufacturer has stored
+>> +some data on NVMEM, for the OS to be able to retrieve these information
+>> +and act upon it. Obviously, the OS has to know about where to retrieve
+>> +these data from, and where they are stored on the storage device.
+>> +
+>> +This document is here to document this.
+>> +
+>> += Data providers =
+>> +Contains bindings specific to provider drivers and data cells as children
+>> +of this node.
+>
+> #address-cells and #size-cells are required here.
+>
+>> +
+>> +Optional properties:
+>> + read-only: Mark the provider as read only.
+>
+> Couldn't this be per field rather than global?
+>
+Not ATM, The reason for making this property global is to mark the 
+complete nvmem to be readonly/read-write. Which most of the use-cases 
+will have. Currently this property is used for setting permissions on 
+the sysfs binary file, also it would be impossible to apply per field 
+read-only property to such file.
+
+Am also planning to send few patches on top of these to expose fields in 
+sysfs which would then allow us to use per field read-only property.
+Again not sure how the direct access to nvmem would fit in with such 
+requirements. Need to evaluate this option in more detail though. :-)
+
+>> +
+>> += Data cells =
+>> +These are the child nodes of the provider which contain data cell
+>> +information like offset and size in nvmem provider.
+>> +
+>> +Required properties:
+>> +reg:   specifies the offset in byte within that storage device, start bit
+>> +       in the byte and the length in bytes of the data we care about.
+>> +       There could be more than one offset-length pairs in this property.
+>> +
+>> +Optional properties:
+>> +
+>> +bit-offset: specifies the offset in bit within the address range specified
+>> +       by reg property. Can take values from 0-7.
+>> +nbits: specifies number of bits this cell occupies starting from bit-offset.
+>
+> How about just: "bits = <<offset> <size>>"
+>
+Thats another possible way to specify the same info, Only reason I came 
+up with bit-offset and nbits is due to the fact that similar properties 
+were seen in other device DT bindings.
+
+I will try your suggestion and see how it looks before I send new version.
+
+> Then the bit specification is more aligned with the byte location
+> (i.e. reg property).
+>
+> You could also do this all in the reg property with 2 address cells
+> for byte and bit position and then size can be in bits. reg doesn't
+> have to match a memory mapped bus addressing meanings. If you wanted
+> to handle ranges and address translation, then you would need custom
+> functions like PCI does. I'm not sure you would need that.
+I wanted to keep things simple for this first version.
+>
+
+--srini
