@@ -1,126 +1,49 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
- number (x86)
-Date: Mon, 13 Jul 2015 15:09:45 +0000 (UTC)
-Message-ID: <461444441.880.1436800185822.JavaMail.zimbra@efficios.com>
-References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com> <20150712184730.GD18191@x>
+From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] pci_regs: reintroduce PCI_MSIX_FLAGS_BIRMASK
+Date: Mon, 13 Jul 2015 18:11:38 +0300
+Message-ID: <20150713181025-mutt-send-email-mst@redhat.com>
+References: <1435745608-21217-1-git-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150712184730.GD18191@x>
+Content-Disposition: inline
+In-Reply-To: <1435745608-21217-1-git-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Cc: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Rajat Jain <rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Chen, Gong" <gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Guenter Roeck <groeck-3r7Miqu9kMnR7s880joybQ@public.gmane.org>, =?us-ascii?B?PT9VVEYtOD9xP1JhZmE9QzU9ODI9MjBNaT1DNT04MmVja2k/PQ==?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
------ On Jul 12, 2015, at 2:47 PM, Josh Triplett josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org wrote:
-
-> On Sun, Jul 12, 2015 at 02:06:26PM -0400, Mathieu Desnoyers wrote:
->> Expose a new system call allowing threads to register a userspace memory
->> area where to store the current CPU number. Scheduler migration sets the
->> TIF_NOTIFY_RESUME flag on the current thread. Upon return to user-space,
->> a notify-resume handler updates the current CPU value within that
->> user-space memory area.
->> 
->> This getcpu cache is an alternative to the sched_getcpu() vdso which has
->> a few benefits:
->> - It is faster to do a memory read that to call a vDSO,
->> - This cache value can be read from within an inline assembly, which
->>   makes it a useful building block for restartable sequences.
->> 
->> This approach is inspired by Paul Turner and Andrew Hunter's work
->> on percpu atomics, which lets the kernel handle restart of critical
->> sections:
->> Ref.:
->> * https://lkml.org/lkml/2015/6/24/665
->> * https://lwn.net/Articles/650333/
->> *
->> http://www.linuxplumbersconf.org/2013/ocw/system/presentations/1695/original/LPC%20-%20PerCpu%20Atomics.pdf
->> 
->> Benchmarking sched_getcpu() vs tls cache approach. Getting the
->> current CPU number:
->> 
->> - With Linux vdso:            12.7 ns
->> - With TLS-cached cpu number:  0.3 ns
+On Wed, Jul 01, 2015 at 12:14:10PM +0200, Michael S. Tsirkin wrote:
+> This partially reverts commit 09a2c73ddfc7f173237fc7209a65b34dd5bcb5ed.
+>     PCI: Remove unused PCI_MSIX_FLAGS_BIRMASK definition
 > 
-> Nice.  One comment below about an interesting assumption that needs
-> confirmation.
+> That commit dropped a symbol from an exported header claiming "no one
+> uses it". This isn't how Linux normally approaches userspace API though,
+> and in fact QEMU build fails if trying to use updated headers from linux
+> 3.12 and up.
 > 
->> --- /dev/null
->> +++ b/kernel/getcpu-cache.c
-> [...]
->> +void getcpu_cache_handle_notify_resume(struct task_struct *t)
->> +{
->> +	int32_t __user *gcp = t->getcpu_cache;
->> +
->> +	if (gcp == NULL)
->> +		return;
->> +	if (unlikely(t->flags & PF_EXITING))
->> +		return;
->> +	/*
->> +	 * access_ok() of gcp_user has already been checked by
->> +	 * sys_getcpu_cache().
->> +	 */
->> +	if (__put_user(raw_smp_processor_id(), gcp))
->> +		force_sig(SIGSEGV, current);
->> +}
->> +
->> +/*
->> + * If parent process has a getcpu_cache, the child inherits. Only
->> + * applies when forking a process, not a thread.
->> + */
->> +void getcpu_cache_fork(struct task_struct *t)
->> +{
->> +	t->getcpu_cache = current->getcpu_cache;
->> +}
->> +
->> +void getcpu_cache_execve(struct task_struct *t)
->> +{
->> +	t->getcpu_cache = NULL;
->> +}
->> +
->> +/*
->> + * sys_getcpu_cache - setup getcpu cache for caller thread
->> + */
->> +SYSCALL_DEFINE2(getcpu_cache, int32_t __user *, gcp, int, flags)
->> +{
->> +	if (flags)
->> +		return -EINVAL;
->> +	if (gcp != NULL && !access_ok(VERIFY_WRITE, gcp, sizeof(int32_t)))
->> +		return -EFAULT;
->> +	current->getcpu_cache = gcp;
+> Sure, userspace can be fixed to use the new symbol, but the cost
+> of keeping the old one around is fairly low, too.
 > 
-> So, you store a userspace address, and intentionally only validate it
-> when initially set, not when used.  You clear it on exec, though not on
-> fork.  Could any cases other than exec could make this problematic?  In
-> particular, what about unusual personality flags, such as
-> ADDR_LIMIT_32BIT or ADDR_LIMIT_3GB?
+> Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
-That's an interesting point. Looking at those personalities, I don't think
-it should be an issue, but just the fact that you raise the question makes
-me think we should user put_user() rather than __put_user() in the
-notify_resume handler, just to be on the safe side. It should not be a
-frequent code path anyway.
+Ping. Can this be included upstream please?
 
+> ---
+>  include/uapi/linux/pci_regs.h | 1 +
+>  1 file changed, 1 insertion(+)
 > 
->> +	/* Will update *gcp on resume */
->> +	if (gcp)
-> 
-> Minor nit: you're using the pointer as a boolean here, but comparing it
-> to NULL elsewhere; you should be consistent.  I'd suggest consistently
-> using gcp and !gcp, without the comparison to NULL.
-
-Good point, fixing,
-
-Thanks for the feedback!
-
-Mathieu
-
-> 
-> - Josh Triplett
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+> diff --git a/include/uapi/linux/pci_regs.h b/include/uapi/linux/pci_regs.h
+> index efe3443..66644ac 100644
+> --- a/include/uapi/linux/pci_regs.h
+> +++ b/include/uapi/linux/pci_regs.h
+> @@ -319,6 +319,7 @@
+>  #define PCI_MSIX_PBA		8	/* Pending Bit Array offset */
+>  #define  PCI_MSIX_PBA_BIR	0x00000007 /* BAR index */
+>  #define  PCI_MSIX_PBA_OFFSET	0xfffffff8 /* Offset into specified BAR */
+> +#define  PCI_MSIX_FLAGS_BIRMASK	PCI_MSIX_PBA_BIR /* deprecated */
+>  #define PCI_CAP_MSIX_SIZEOF	12	/* size of MSIX registers */
+>  
+>  /* MSI-X Table entry format */
+> -- 
+> MST
