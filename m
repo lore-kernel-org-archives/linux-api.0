@@ -1,151 +1,122 @@
-From: Gioh Kim <gioh.kim@lge.com>
-Subject: Re: [RFCv3 2/5] mm/compaction: enable mobile-page migration
-Date: Mon, 13 Jul 2015 17:45:46 +0900
-Message-ID: <55A37ABA.3000001@lge.com>
-References: <1436243785-24105-1-git-send-email-gioh.kim@lge.com>	<1436243785-24105-3-git-send-email-gioh.kim@lge.com> <CALYGNiPBPzA0QCXZKXKye++xVSeO_nBW4gV+ukk2jPiBOM+n=A@mail.gmail.com>
+From: Konstantin Khlebnikov <koct9i@gmail.com>
+Subject: Re: [PATCH 0/4] enable migration of driver pages
+Date: Mon, 13 Jul 2015 12:24:06 +0300
+Message-ID: <CALYGNiPZtJqcYW5Ob6TbRMGrJHP6zV7cKfbesBxprVQjqVmUSw@mail.gmail.com>
+References: <1436776519-17337-1-git-send-email-gioh.kim@lge.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <CALYGNiPBPzA0QCXZKXKye++xVSeO_nBW4gV+ukk2jPiBOM+n=A@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Konstantin Khlebnikov <koct9i@gmail.com>
-Cc: Jeff Layton <jlayton@poochiereds.net>, Bruce Fields <bfields@fieldses.org>, Vlastimil Babka <vbabka@suse.cz>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Al Viro <viro@zeniv.linux.org.uk>, "Michael S. Tsirkin" <mst@redhat.com>, Minchan Kim <minchan@kernel.org>, Rafael Aquini <aquini@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, virtualization@lists.linux-foundation.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, gunho.lee@lge.com, Andrew Morton <akpm@linux-foundation.org>, Gioh Kim <gurugio@hanmail.net>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1436776519-17337-1-git-send-email-gioh.kim@lge.com>
+Sender: owner-linux-mm@kvack.org
+To: Gioh Kim <gioh.kim@lge.com>
+Cc: Jeff Layton <jlayton@poochiereds.net>, Bruce Fields <bfields@fieldses.org>, Vlastimil Babka <vbabka@suse.cz>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Al Viro <viro@zeniv.linux.org.uk>, "Michael S. Tsirkin" <mst@redhat.com>, Minchan Kim <minchan@kernel.org>, Rafael Aquini <aquini@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, virtualization@lists.linux-foundation.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, dri-devel <dri-devel@lists.freedesktop.org>, Andrew Morton <akpm@linux-foundation.org>, Gioh Kim <gurugio@hanmail.net>
 List-Id: linux-api@vger.kernel.org
 
-
->> @@ -51,6 +54,66 @@ extern void compaction_defer_reset(struct zone *zone, int order,
->>                                  bool alloc_success);
->>   extern bool compaction_restarting(struct zone *zone, int order);
->>
->> +static inline bool mobile_page(struct page *page)
->> +{
->> +       return page->mapping && page->mapping->a_ops &&
+On Mon, Jul 13, 2015 at 11:35 AM, Gioh Kim <gioh.kim@lge.com> wrote:
+> From: Gioh Kim <gurugio@hanmail.net>
 >
-> Dereferncing mapping->a_ops isn't safe without page-lock and isn't required:
-> all mappings always have ->a_ops.
+> Hello,
 >
-
-I got it.
-
->> +static inline void putback_mobilepage(struct page *page)
->> +{
->> +       /*
->> +        * 'lock_page()' stabilizes the page and prevents races against
->> +        * concurrent isolation threads attempting to re-isolate it.
->> +        */
->> +       lock_page(page);
->> +       if (mobile_page(page) && page->mapping->a_ops->putbackpage) {
+> This series try to enable migration of non-LRU pages, such as driver's page.
 >
-> It seems "if (page->mapping && page->mapping->a_ops->putbackpage)"
-> should be enough: we already seen that page as mobile.
+> My ARM-based platform occured severe fragmentation problem after long-term
+> (several days) test. Sometimes even order-3 page allocation failed. It has
+> memory size 512MB ~ 1024MB. 30% ~ 40% memory is consumed for graphic processing
+> and 20~30 memory is reserved for zram.
+>
+> I found that many pages of GPU driver and zram are non-movable pages. So I
+> reported Minchan Kim, the maintainer of zram, and he made the internal
+> compaction logic of zram. And I made the internal compaction of GPU driver.
+>
+> They reduced some fragmentation but they are not enough effective.
+> They are activated by its own interface, /sys, so they are not cooperative
+> with kernel compaction. If there is too much fragmentation and kernel starts
+> to compaction, zram and GPU driver cannot work with the kernel compaction.
+>
+> So I thought there needs a interface to combine driver and kernel compaction.
+> This patch adds a generic isolate/migrate/putback callbacks for page
+> address-space and a new interface to create anon-inode to manage
+> address_space_operation. The zram and GPU, and any other modules can create
+> anon_inode and register its own migration method. The kernel compaction can
+> call the registered migration when it does compaction.
+>
+> My GPU driver source is not in-kernel driver so that I apply the interface
+> into balloon driver. The balloon driver is already merged
+> into the kernel compaction as a corner-case. This patch have the balloon
+> driver migration be called by the generic interface.
+>
+>
+> This patch set combines 4 patches.
+>
+> 1. patch 1/4: get inode from anon_inodes
+> This patch adds new interface to create inode from anon_inodes.
+>
+> 2. patch 2/4: framework to isolate/migrate/putback page
+> Add isolatepage, putbackpage into address_space_operations
+> and wrapper function to call them.
+>
+> 3. patch 3/4: apply the framework into balloon driver
+> The balloon driver is applied into the framework. It gets a inode
+> from anon_inodes and register operations in the inode.
+> The kernel compaction calls generic interfaces, not balloon
+> driver interfaces.
+> Any other drivers can register operations via inode like this
+> to migrate it's pages.
+>
+> 4. patch 4/4: remove direct calling of migration of driver pages
+> Non-lru pages are also migrated with lru pages by move_to_new_page().
 
-Ditto.
+The whole patchset looks good.
+
+Reviewed-by: Konstantin Khlebnikov <koct9i@gmail.com>
 
 >
->> +               page->mapping->a_ops->putbackpage(page);
->> +               /* drop the extra ref count taken for mobile page isolation */
->> +               put_page(page);
->> +       }
->> +       unlock_page(page);
->
-> call put_page() after unlock and do that always -- putback must drop
-> page reference from caller.
->
-> lock_page(page);
-> if (page->mapping && page->mapping->a_ops->putbackpage)
->       page->mapping->a_ops->putbackpage(page);
-> unlock_page();
-> put_page(page);
->
+> This patch set is tested:
+> - turn on Ubuntu 14.04 with 1G memory on qemu.
+> - do kernel building
+> - after several seconds check more than 512MB is used with free command
+> - command "balloon 512" in qemu monitor
+> - check hundreds MB of pages are migrated
 
-Ditto.
+Another simple test is several instances of
+tools/testing/selftests/vm/transhuge-stress.c
+runnng in parallel with balloon inflating/deflating.
+(transparent huge pages must be enabled of course)
+That catched a lot of races in ballooning code.
 
->> +}
->>   #else
->>   static inline unsigned long try_to_compact_pages(gfp_t gfp_mask,
->>                          unsigned int order, int alloc_flags,
->> @@ -83,6 +146,19 @@ static inline bool compaction_deferred(struct zone *zone, int order)
->>          return true;
->>   }
->>
->> +static inline bool mobile_page(struct page *page)
->> +{
->> +       return false;
->> +}
->> +
->> +static inline bool isolate_mobilepage(struct page *page, isolate_mode_t mode)
->> +{
->> +       return false;
->> +}
->> +
->> +static inline void putback_mobilepage(struct page *page)
->> +{
->> +}
->>   #endif /* CONFIG_COMPACTION */
->>
->>   #if defined(CONFIG_COMPACTION) && defined(CONFIG_SYSFS) && defined(CONFIG_NUMA)
->> diff --git a/include/linux/fs.h b/include/linux/fs.h
->> index 35ec87e..33c9aa5 100644
->> --- a/include/linux/fs.h
->> +++ b/include/linux/fs.h
->> @@ -395,6 +395,8 @@ struct address_space_operations {
->>           */
->>          int (*migratepage) (struct address_space *,
->>                          struct page *, struct page *, enum migrate_mode);
->> +       bool (*isolatepage) (struct page *, isolate_mode_t);
->> +       void (*putbackpage) (struct page *);
->>          int (*launder_page) (struct page *);
->>          int (*is_partially_uptodate) (struct page *, unsigned long,
->>                                          unsigned long);
->> diff --git a/include/linux/page-flags.h b/include/linux/page-flags.h
->> index f34e040..abef145 100644
->> --- a/include/linux/page-flags.h
->> +++ b/include/linux/page-flags.h
->> @@ -582,6 +582,25 @@ static inline void __ClearPageBalloon(struct page *page)
->>          atomic_set(&page->_mapcount, -1);
->>   }
->>
->> +#define PAGE_MOBILE_MAPCOUNT_VALUE (-255)
->> +
->> +static inline int PageMobile(struct page *page)
->> +{
->> +       return atomic_read(&page->_mapcount) == PAGE_MOBILE_MAPCOUNT_VALUE;
->> +}
->> +
->> +static inline void __SetPageMobile(struct page *page)
->> +{
->> +       VM_BUG_ON_PAGE(atomic_read(&page->_mapcount) != -1, page);
->> +       atomic_set(&page->_mapcount, PAGE_MOBILE_MAPCOUNT_VALUE);
->> +}
->> +
->> +static inline void __ClearPageMobile(struct page *page)
->> +{
->> +       VM_BUG_ON_PAGE(!PageMobile(page), page);
->> +       atomic_set(&page->_mapcount, -1);
->> +}
->> +
->>   /*
->>    * If network-based swap is enabled, sl*b must keep track of whether pages
->>    * were allocated from pfmemalloc reserves.
->> diff --git a/include/uapi/linux/kernel-page-flags.h b/include/uapi/linux/kernel-page-flags.h
->> index a6c4962..d50d9e8 100644
->> --- a/include/uapi/linux/kernel-page-flags.h
->> +++ b/include/uapi/linux/kernel-page-flags.h
->> @@ -33,6 +33,7 @@
->>   #define KPF_THP                        22
->>   #define KPF_BALLOON            23
->>   #define KPF_ZERO_PAGE          24
->> +#define KPF_MOBILE             25
->>
->>
->>   #endif /* _UAPILINUX_KERNEL_PAGE_FLAGS_H */
->> --
->> 2.1.4
->>
+>
+> My thanks to Konstantin Khlebnikov for his reviews of the RFC patch set.
+> Most of the changes were based on his feedback.
+>
+> This patch-set is based on v4.1
+>
+>
+> Gioh Kim (4):
+>   fs/anon_inodes: new interface to create new inode
+>   mm/compaction: enable mobile-page migration
+>   mm/balloon: apply mobile page migratable into balloon
+>   mm: remove direct calling of migration
+>
+>  drivers/virtio/virtio_balloon.c        |  3 ++
+>  fs/anon_inodes.c                       |  6 +++
+>  fs/proc/page.c                         |  3 ++
+>  include/linux/anon_inodes.h            |  1 +
+>  include/linux/balloon_compaction.h     | 15 +++++--
+>  include/linux/compaction.h             | 80 ++++++++++++++++++++++++++++++++++
+>  include/linux/fs.h                     |  2 +
+>  include/linux/page-flags.h             | 19 ++++++++
+>  include/uapi/linux/kernel-page-flags.h |  1 +
+>  mm/balloon_compaction.c                | 72 ++++++++++--------------------
+>  mm/compaction.c                        |  8 ++--
+>  mm/migrate.c                           | 24 +++-------
+>  12 files changed, 160 insertions(+), 74 deletions(-)
+>
+> --
+> 2.1.4
 >
 
-I fixed the code as your comments and I found patch 3/5 and 4/5 could not be applied separately.
-So I merge them and report new [PATCH].
-I appreciate your reviews.
-
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
