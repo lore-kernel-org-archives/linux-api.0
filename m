@@ -1,64 +1,78 @@
-From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] pci_regs: reintroduce PCI_MSIX_FLAGS_BIRMASK
-Date: Mon, 13 Jul 2015 19:32:29 +0300
-Message-ID: <20150713193046-mutt-send-email-mst@redhat.com>
-References: <1435745608-21217-1-git-send-email-mst@redhat.com>
- <20150713181025-mutt-send-email-mst@redhat.com>
- <CAErSpo4cbj58VheRbQOJ3XnyBn_SvmUi9ZyFhRnPWhf8ciJ7jg@mail.gmail.com>
+From: Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>
+Subject: Re: [PATCH v7 1/9] nvmem: Add a simple NVMEM framework for nvmem
+ providers
+Date: Mon, 13 Jul 2015 18:50:29 +0200
+Message-ID: <1436806229.11945.5.camel@pengutronix.de>
+References: <1436521427-10568-1-git-send-email-srinivas.kandagatla@linaro.org>
+	 <1436521486-10682-1-git-send-email-srinivas.kandagatla@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAErSpo4cbj58VheRbQOJ3XnyBn_SvmUi9ZyFhRnPWhf8ciJ7jg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1436521486-10682-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Rajat Jain <rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Chen, Gong" <gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Guenter Roeck <groeck-3r7Miqu9kMnR7s880joybQ@public.gmane.org>, =?utf-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, stefan.wahren-eS4NqCHxEME@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 13, 2015 at 10:49:02AM -0500, Bjorn Helgaas wrote:
-> On Mon, Jul 13, 2015 at 10:11 AM, Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> > On Wed, Jul 01, 2015 at 12:14:10PM +0200, Michael S. Tsirkin wrote:
-> >> This partially reverts commit 09a2c73ddfc7f173237fc7209a65b34dd5bcb5ed.
-> >>     PCI: Remove unused PCI_MSIX_FLAGS_BIRMASK definition
-> >>
-> >> That commit dropped a symbol from an exported header claiming "no one
-> >> uses it". This isn't how Linux normally approaches userspace API though,
-> >> and in fact QEMU build fails if trying to use updated headers from linux
-> >> 3.12 and up.
-> >>
-> >> Sure, userspace can be fixed to use the new symbol, but the cost
-> >> of keeping the old one around is fairly low, too.
-> >>
-> >> Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> >
-> > Ping. Can this be included upstream please?
-> 
-> Yes, I plan to merge it, and I'll mark it for stable.  This looks like
-> a complete revert of 09a2c73ddfc7, not a partial revert.  Am I missing
-> something?
+Hi Srinivas,
 
-Only that I redefine PCI_MSIX_FLAGS_BIRMASK in terms of PCI_MSIX_PBA_BIR
-so that there's no duplication.
+Am Freitag, den 10.07.2015, 10:44 +0100 schrieb Srinivas Kandagatla:
+> This patch adds just providers part of the framework just to enable easy
+> review.
+[...]
+> +/**
+> + * nvmem_register() - Register a nvmem device for given nvmem_config.
+> + * Also creates an binary entry in /sys/bus/nvmem/devices/dev-name/nvmem
+> + *
+> + * @config: nvmem device configuration with which nvmem device is created.
+> + *
+> + * The return value will be an ERR_PTR() on error or a valid pointer
+> + * to nvmem_device.
+> + */
+> +
+> +struct nvmem_device *nvmem_register(struct nvmem_config *config)
+> +{
+[...]
+> +	nvmem->read_only = nvmem->dev.of_node ?
+> +				of_property_read_bool(nvmem->dev.of_node,
+> +				"read-only") :
+> +				config->read_only;
 
-> 09a2c73ddfc7 appeared in v3.13 (not v3.12), so it wouldn't ordinarily
-> be post-merge window material.  But it seems pretty safe, so I might
-> put it in for v4.2 instead of waiting for v4.3.
-> 
-> >> ---
-> >>  include/uapi/linux/pci_regs.h | 1 +
-> >>  1 file changed, 1 insertion(+)
-> >>
-> >> diff --git a/include/uapi/linux/pci_regs.h b/include/uapi/linux/pci_regs.h
-> >> index efe3443..66644ac 100644
-> >> --- a/include/uapi/linux/pci_regs.h
-> >> +++ b/include/uapi/linux/pci_regs.h
-> >> @@ -319,6 +319,7 @@
-> >>  #define PCI_MSIX_PBA         8       /* Pending Bit Array offset */
-> >>  #define  PCI_MSIX_PBA_BIR    0x00000007 /* BAR index */
-> >>  #define  PCI_MSIX_PBA_OFFSET 0xfffffff8 /* Offset into specified BAR */
-> >> +#define  PCI_MSIX_FLAGS_BIRMASK      PCI_MSIX_PBA_BIR /* deprecated */
-> >>  #define PCI_CAP_MSIX_SIZEOF  12      /* size of MSIX registers */
-> >>
-> >>  /* MSI-X Table entry format */
-> >> --
-> >> MST
+I think read_only should be set if any of the device node property or
+nvmem_config->read_only request it. That way, even if the nvmem is
+theoretically writeable (no read-only property in DT), the driver still
+can make it read-only if writing isn't implemented:
+
++	nvmem->read_only = nvmem->dev.of_node ?
++				of_property_read_bool(nvmem->dev.of_node,
++				"read-only") : 0;
++	nvmem->read_only |= config->read_only;
+
+[...]
+> new file mode 100644
+> index 0000000..f589d3b
+> --- /dev/null
+> +++ b/include/linux/nvmem-provider.h
+[...]
+> +struct nvmem_config {
+> +	struct device		*dev;
+> +	const char		*name;
+> +	int			id;
+> +	struct module		*owner;
+> +	struct nvmem_cell_info	*cells;
+
+Should that be const?
+
+> +	int			ncells;
+> +	bool			read_only;
+> +};
+> +
+> +#if IS_ENABLED(CONFIG_NVMEM)
+> +
+> +struct nvmem_device *nvmem_register(struct nvmem_config *cfg);
+
+Then that could be made const, too.
+
+best regards
+Philipp
