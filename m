@@ -1,122 +1,86 @@
-From: Konstantin Khlebnikov <koct9i@gmail.com>
+From: Gioh Kim <gioh.kim@lge.com>
 Subject: Re: [PATCH 0/4] enable migration of driver pages
-Date: Mon, 13 Jul 2015 12:24:06 +0300
-Message-ID: <CALYGNiPZtJqcYW5Ob6TbRMGrJHP6zV7cKfbesBxprVQjqVmUSw@mail.gmail.com>
+Date: Mon, 13 Jul 2015 19:02:28 +0900
+Message-ID: <55A38CB4.5050806@lge.com>
 References: <1436776519-17337-1-git-send-email-gioh.kim@lge.com>
+	<CALYGNiPZtJqcYW5Ob6TbRMGrJHP6zV7cKfbesBxprVQjqVmUSw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1436776519-17337-1-git-send-email-gioh.kim@lge.com>
-Sender: owner-linux-mm@kvack.org
-To: Gioh Kim <gioh.kim@lge.com>
-Cc: Jeff Layton <jlayton@poochiereds.net>, Bruce Fields <bfields@fieldses.org>, Vlastimil Babka <vbabka@suse.cz>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Al Viro <viro@zeniv.linux.org.uk>, "Michael S. Tsirkin" <mst@redhat.com>, Minchan Kim <minchan@kernel.org>, Rafael Aquini <aquini@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, virtualization@lists.linux-foundation.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, dri-devel <dri-devel@lists.freedesktop.org>, Andrew Morton <akpm@linux-foundation.org>, Gioh Kim <gurugio@hanmail.net>
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <CALYGNiPZtJqcYW5Ob6TbRMGrJHP6zV7cKfbesBxprVQjqVmUSw@mail.gmail.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Konstantin Khlebnikov <koct9i@gmail.com>
+Cc: Rafael Aquini <aquini@redhat.com>, "Michael S. Tsirkin" <mst@redhat.com>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, dri-devel <dri-devel@lists.freedesktop.org>, virtualization@lists.linux-foundation.org, Bruce Fields <bfields@fieldses.org>, Minchan Kim <minchan@kernel.org>, Gioh Kim <gurugio@hanmail.net>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 13, 2015 at 11:35 AM, Gioh Kim <gioh.kim@lge.com> wrote:
-> From: Gioh Kim <gurugio@hanmail.net>
->
-> Hello,
->
-> This series try to enable migration of non-LRU pages, such as driver's page.
->
-> My ARM-based platform occured severe fragmentation problem after long-term
-> (several days) test. Sometimes even order-3 page allocation failed. It has
-> memory size 512MB ~ 1024MB. 30% ~ 40% memory is consumed for graphic processing
-> and 20~30 memory is reserved for zram.
->
-> I found that many pages of GPU driver and zram are non-movable pages. So I
-> reported Minchan Kim, the maintainer of zram, and he made the internal
-> compaction logic of zram. And I made the internal compaction of GPU driver.
->
-> They reduced some fragmentation but they are not enough effective.
-> They are activated by its own interface, /sys, so they are not cooperative
-> with kernel compaction. If there is too much fragmentation and kernel starts
-> to compaction, zram and GPU driver cannot work with the kernel compaction.
->
-> So I thought there needs a interface to combine driver and kernel compaction.
-> This patch adds a generic isolate/migrate/putback callbacks for page
-> address-space and a new interface to create anon-inode to manage
-> address_space_operation. The zram and GPU, and any other modules can create
-> anon_inode and register its own migration method. The kernel compaction can
-> call the registered migration when it does compaction.
->
-> My GPU driver source is not in-kernel driver so that I apply the interface
-> into balloon driver. The balloon driver is already merged
-> into the kernel compaction as a corner-case. This patch have the balloon
-> driver migration be called by the generic interface.
->
->
-> This patch set combines 4 patches.
->
-> 1. patch 1/4: get inode from anon_inodes
-> This patch adds new interface to create inode from anon_inodes.
->
-> 2. patch 2/4: framework to isolate/migrate/putback page
-> Add isolatepage, putbackpage into address_space_operations
-> and wrapper function to call them.
->
-> 3. patch 3/4: apply the framework into balloon driver
-> The balloon driver is applied into the framework. It gets a inode
-> from anon_inodes and register operations in the inode.
-> The kernel compaction calls generic interfaces, not balloon
-> driver interfaces.
-> Any other drivers can register operations via inode like this
-> to migrate it's pages.
->
-> 4. patch 4/4: remove direct calling of migration of driver pages
-> Non-lru pages are also migrated with lru pages by move_to_new_page().
-
-The whole patchset looks good.
-
-Reviewed-by: Konstantin Khlebnikov <koct9i@gmail.com>
-
->
-> This patch set is tested:
-> - turn on Ubuntu 14.04 with 1G memory on qemu.
-> - do kernel building
-> - after several seconds check more than 512MB is used with free command
-> - command "balloon 512" in qemu monitor
-> - check hundreds MB of pages are migrated
-
-Another simple test is several instances of
-tools/testing/selftests/vm/transhuge-stress.c
-runnng in parallel with balloon inflating/deflating.
-(transparent huge pages must be enabled of course)
-That catched a lot of races in ballooning code.
-
->
-> My thanks to Konstantin Khlebnikov for his reviews of the RFC patch set.
-> Most of the changes were based on his feedback.
->
-> This patch-set is based on v4.1
->
->
-> Gioh Kim (4):
->   fs/anon_inodes: new interface to create new inode
->   mm/compaction: enable mobile-page migration
->   mm/balloon: apply mobile page migratable into balloon
->   mm: remove direct calling of migration
->
->  drivers/virtio/virtio_balloon.c        |  3 ++
->  fs/anon_inodes.c                       |  6 +++
->  fs/proc/page.c                         |  3 ++
->  include/linux/anon_inodes.h            |  1 +
->  include/linux/balloon_compaction.h     | 15 +++++--
->  include/linux/compaction.h             | 80 ++++++++++++++++++++++++++++++++++
->  include/linux/fs.h                     |  2 +
->  include/linux/page-flags.h             | 19 ++++++++
->  include/uapi/linux/kernel-page-flags.h |  1 +
->  mm/balloon_compaction.c                | 72 ++++++++++--------------------
->  mm/compaction.c                        |  8 ++--
->  mm/migrate.c                           | 24 +++-------
->  12 files changed, 160 insertions(+), 74 deletions(-)
->
-> --
-> 2.1.4
->
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+CgoyMDE1LTA3LTEzIOyYpO2bhCA2OjI07JeQIEtvbnN0YW50aW4gS2hsZWJuaWtvdiDsnbQo6rCA
+KSDsk7Qg6riAOgo+IE9uIE1vbiwgSnVsIDEzLCAyMDE1IGF0IDExOjM1IEFNLCBHaW9oIEtpbSA8
+Z2lvaC5raW1AbGdlLmNvbT4gd3JvdGU6Cj4+IEZyb206IEdpb2ggS2ltIDxndXJ1Z2lvQGhhbm1h
+aWwubmV0Pgo+Pgo+PiBIZWxsbywKPj4KPj4gVGhpcyBzZXJpZXMgdHJ5IHRvIGVuYWJsZSBtaWdy
+YXRpb24gb2Ygbm9uLUxSVSBwYWdlcywgc3VjaCBhcyBkcml2ZXIncyBwYWdlLgo+Pgo+PiBNeSBB
+Uk0tYmFzZWQgcGxhdGZvcm0gb2NjdXJlZCBzZXZlcmUgZnJhZ21lbnRhdGlvbiBwcm9ibGVtIGFm
+dGVyIGxvbmctdGVybQo+PiAoc2V2ZXJhbCBkYXlzKSB0ZXN0LiBTb21ldGltZXMgZXZlbiBvcmRl
+ci0zIHBhZ2UgYWxsb2NhdGlvbiBmYWlsZWQuIEl0IGhhcwo+PiBtZW1vcnkgc2l6ZSA1MTJNQiB+
+IDEwMjRNQi4gMzAlIH4gNDAlIG1lbW9yeSBpcyBjb25zdW1lZCBmb3IgZ3JhcGhpYyBwcm9jZXNz
+aW5nCj4+IGFuZCAyMH4zMCBtZW1vcnkgaXMgcmVzZXJ2ZWQgZm9yIHpyYW0uCj4+Cj4+IEkgZm91
+bmQgdGhhdCBtYW55IHBhZ2VzIG9mIEdQVSBkcml2ZXIgYW5kIHpyYW0gYXJlIG5vbi1tb3ZhYmxl
+IHBhZ2VzLiBTbyBJCj4+IHJlcG9ydGVkIE1pbmNoYW4gS2ltLCB0aGUgbWFpbnRhaW5lciBvZiB6
+cmFtLCBhbmQgaGUgbWFkZSB0aGUgaW50ZXJuYWwKPj4gY29tcGFjdGlvbiBsb2dpYyBvZiB6cmFt
+LiBBbmQgSSBtYWRlIHRoZSBpbnRlcm5hbCBjb21wYWN0aW9uIG9mIEdQVSBkcml2ZXIuCj4+Cj4+
+IFRoZXkgcmVkdWNlZCBzb21lIGZyYWdtZW50YXRpb24gYnV0IHRoZXkgYXJlIG5vdCBlbm91Z2gg
+ZWZmZWN0aXZlLgo+PiBUaGV5IGFyZSBhY3RpdmF0ZWQgYnkgaXRzIG93biBpbnRlcmZhY2UsIC9z
+eXMsIHNvIHRoZXkgYXJlIG5vdCBjb29wZXJhdGl2ZQo+PiB3aXRoIGtlcm5lbCBjb21wYWN0aW9u
+LiBJZiB0aGVyZSBpcyB0b28gbXVjaCBmcmFnbWVudGF0aW9uIGFuZCBrZXJuZWwgc3RhcnRzCj4+
+IHRvIGNvbXBhY3Rpb24sIHpyYW0gYW5kIEdQVSBkcml2ZXIgY2Fubm90IHdvcmsgd2l0aCB0aGUg
+a2VybmVsIGNvbXBhY3Rpb24uCj4+Cj4+IFNvIEkgdGhvdWdodCB0aGVyZSBuZWVkcyBhIGludGVy
+ZmFjZSB0byBjb21iaW5lIGRyaXZlciBhbmQga2VybmVsIGNvbXBhY3Rpb24uCj4+IFRoaXMgcGF0
+Y2ggYWRkcyBhIGdlbmVyaWMgaXNvbGF0ZS9taWdyYXRlL3B1dGJhY2sgY2FsbGJhY2tzIGZvciBw
+YWdlCj4+IGFkZHJlc3Mtc3BhY2UgYW5kIGEgbmV3IGludGVyZmFjZSB0byBjcmVhdGUgYW5vbi1p
+bm9kZSB0byBtYW5hZ2UKPj4gYWRkcmVzc19zcGFjZV9vcGVyYXRpb24uIFRoZSB6cmFtIGFuZCBH
+UFUsIGFuZCBhbnkgb3RoZXIgbW9kdWxlcyBjYW4gY3JlYXRlCj4+IGFub25faW5vZGUgYW5kIHJl
+Z2lzdGVyIGl0cyBvd24gbWlncmF0aW9uIG1ldGhvZC4gVGhlIGtlcm5lbCBjb21wYWN0aW9uIGNh
+bgo+PiBjYWxsIHRoZSByZWdpc3RlcmVkIG1pZ3JhdGlvbiB3aGVuIGl0IGRvZXMgY29tcGFjdGlv
+bi4KPj4KPj4gTXkgR1BVIGRyaXZlciBzb3VyY2UgaXMgbm90IGluLWtlcm5lbCBkcml2ZXIgc28g
+dGhhdCBJIGFwcGx5IHRoZSBpbnRlcmZhY2UKPj4gaW50byBiYWxsb29uIGRyaXZlci4gVGhlIGJh
+bGxvb24gZHJpdmVyIGlzIGFscmVhZHkgbWVyZ2VkCj4+IGludG8gdGhlIGtlcm5lbCBjb21wYWN0
+aW9uIGFzIGEgY29ybmVyLWNhc2UuIFRoaXMgcGF0Y2ggaGF2ZSB0aGUgYmFsbG9vbgo+PiBkcml2
+ZXIgbWlncmF0aW9uIGJlIGNhbGxlZCBieSB0aGUgZ2VuZXJpYyBpbnRlcmZhY2UuCj4+Cj4+Cj4+
+IFRoaXMgcGF0Y2ggc2V0IGNvbWJpbmVzIDQgcGF0Y2hlcy4KPj4KPj4gMS4gcGF0Y2ggMS80OiBn
+ZXQgaW5vZGUgZnJvbSBhbm9uX2lub2Rlcwo+PiBUaGlzIHBhdGNoIGFkZHMgbmV3IGludGVyZmFj
+ZSB0byBjcmVhdGUgaW5vZGUgZnJvbSBhbm9uX2lub2Rlcy4KPj4KPj4gMi4gcGF0Y2ggMi80OiBm
+cmFtZXdvcmsgdG8gaXNvbGF0ZS9taWdyYXRlL3B1dGJhY2sgcGFnZQo+PiBBZGQgaXNvbGF0ZXBh
+Z2UsIHB1dGJhY2twYWdlIGludG8gYWRkcmVzc19zcGFjZV9vcGVyYXRpb25zCj4+IGFuZCB3cmFw
+cGVyIGZ1bmN0aW9uIHRvIGNhbGwgdGhlbS4KPj4KPj4gMy4gcGF0Y2ggMy80OiBhcHBseSB0aGUg
+ZnJhbWV3b3JrIGludG8gYmFsbG9vbiBkcml2ZXIKPj4gVGhlIGJhbGxvb24gZHJpdmVyIGlzIGFw
+cGxpZWQgaW50byB0aGUgZnJhbWV3b3JrLiBJdCBnZXRzIGEgaW5vZGUKPj4gZnJvbSBhbm9uX2lu
+b2RlcyBhbmQgcmVnaXN0ZXIgb3BlcmF0aW9ucyBpbiB0aGUgaW5vZGUuCj4+IFRoZSBrZXJuZWwg
+Y29tcGFjdGlvbiBjYWxscyBnZW5lcmljIGludGVyZmFjZXMsIG5vdCBiYWxsb29uCj4+IGRyaXZl
+ciBpbnRlcmZhY2VzLgo+PiBBbnkgb3RoZXIgZHJpdmVycyBjYW4gcmVnaXN0ZXIgb3BlcmF0aW9u
+cyB2aWEgaW5vZGUgbGlrZSB0aGlzCj4+IHRvIG1pZ3JhdGUgaXQncyBwYWdlcy4KPj4KPj4gNC4g
+cGF0Y2ggNC80OiByZW1vdmUgZGlyZWN0IGNhbGxpbmcgb2YgbWlncmF0aW9uIG9mIGRyaXZlciBw
+YWdlcwo+PiBOb24tbHJ1IHBhZ2VzIGFyZSBhbHNvIG1pZ3JhdGVkIHdpdGggbHJ1IHBhZ2VzIGJ5
+IG1vdmVfdG9fbmV3X3BhZ2UoKS4KPgo+IFRoZSB3aG9sZSBwYXRjaHNldCBsb29rcyBnb29kLgo+
+Cj4gUmV2aWV3ZWQtYnk6IEtvbnN0YW50aW4gS2hsZWJuaWtvdiA8a29jdDlpQGdtYWlsLmNvbT4K
+Pgo+Pgo+PiBUaGlzIHBhdGNoIHNldCBpcyB0ZXN0ZWQ6Cj4+IC0gdHVybiBvbiBVYnVudHUgMTQu
+MDQgd2l0aCAxRyBtZW1vcnkgb24gcWVtdS4KPj4gLSBkbyBrZXJuZWwgYnVpbGRpbmcKPj4gLSBh
+ZnRlciBzZXZlcmFsIHNlY29uZHMgY2hlY2sgbW9yZSB0aGFuIDUxMk1CIGlzIHVzZWQgd2l0aCBm
+cmVlIGNvbW1hbmQKPj4gLSBjb21tYW5kICJiYWxsb29uIDUxMiIgaW4gcWVtdSBtb25pdG9yCj4+
+IC0gY2hlY2sgaHVuZHJlZHMgTUIgb2YgcGFnZXMgYXJlIG1pZ3JhdGVkCj4KPiBBbm90aGVyIHNp
+bXBsZSB0ZXN0IGlzIHNldmVyYWwgaW5zdGFuY2VzIG9mCj4gdG9vbHMvdGVzdGluZy9zZWxmdGVz
+dHMvdm0vdHJhbnNodWdlLXN0cmVzcy5jCj4gcnVubm5nIGluIHBhcmFsbGVsIHdpdGggYmFsbG9v
+biBpbmZsYXRpbmcvZGVmbGF0aW5nLgo+ICh0cmFuc3BhcmVudCBodWdlIHBhZ2VzIG11c3QgYmUg
+ZW5hYmxlZCBvZiBjb3Vyc2UpCj4gVGhhdCBjYXRjaGVkIGEgbG90IG9mIHJhY2VzIGluIGJhbGxv
+b25pbmcgY29kZS4KPgoKR3JlYXQhCkknbGwgZG8gaXQgYW5kIGluZm9ybSB5b3UgdGhlIHJlc3Vs
+dCBpbiB0aGlzIHdlZWsuCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fClZpcnR1YWxpemF0aW9uIG1haWxpbmcgbGlzdApWaXJ0dWFsaXphdGlvbkBsaXN0cy5s
+aW51eC1mb3VuZGF0aW9uLm9yZwpodHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcvbWFp
+bG1hbi9saXN0aW5mby92aXJ0dWFsaXphdGlvbg==
