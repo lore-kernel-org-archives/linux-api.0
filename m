@@ -1,78 +1,44 @@
-From: Michal Kubecek <mkubecek@suse.cz>
-Subject: Re: [PATCH nf-next] netfilter: nf_ct_sctp: minimal multihoming
- support
-Date: Tue, 14 Jul 2015 18:42:25 +0200
-Message-ID: <20150714164225.GB8478@unicorn.suse.cz>
-References: <20150714122311.8DA8EA0C9A@unicorn.suse.cz>
- <20150714134203.GG25674@breakpoint.cc>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 20/24] task_diag: Only add VMAs for thread_group leader
+Date: Tue, 14 Jul 2015 19:47:03 +0200
+Message-ID: <20150714174703.GA8088@redhat.com>
+References: <1436172445-6979-1-git-send-email-avagin@openvz.org> <1436172445-6979-21-git-send-email-avagin@openvz.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <netfilter-devel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150714134203.GG25674@breakpoint.cc>
-Sender: netfilter-devel-owner@vger.kernel.org
-To: Florian Westphal <fw@strlen.de>
-Cc: netfilter-devel@vger.kernel.org, coreteam@netfilter.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, Pablo Neira Ayuso <pablo@netfilter.org>, Patrick McHardy <kaber@trash.net>, Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>, "David S. Miller" <davem@davemloft.net>
+In-Reply-To: <1436172445-6979-21-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Odintsov <pavel.odintsov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 14, 2015 at 03:42:03PM +0200, Florian Westphal wrote:
-> Michal Kubecek <mkubecek@suse.cz> wrote:
-> > +	case SCTP_CID_HEARTBEAT:
-> > +		pr_debug("SCTP_CID_HEARTBEAT");
-> > +		i = 9;
-> > +		break;
-> > +	case SCTP_CID_HEARTBEAT_ACK:
-> > +		pr_debug("SCTP_CID_HEARTBEAT_ACK");
-> > +		i = 10;
-> > +		break;
-> >  	default:
-> >  		/* Other chunks like DATA, SACK, HEARTBEAT and
-> >  		its ACK do not cause a change in state */
-> > @@ -329,6 +351,8 @@ static int sctp_packet(struct nf_conn *ct,
-> >  	    !test_bit(SCTP_CID_COOKIE_ECHO, map) &&
-> >  	    !test_bit(SCTP_CID_ABORT, map) &&
-> >  	    !test_bit(SCTP_CID_SHUTDOWN_ACK, map) &&
-> > +	    !test_bit(SCTP_CID_HEARTBEAT, map) &&
-> > +	    !test_bit(SCTP_CID_HEARTBEAT_ACK, map) &&
-> >  	    sh->vtag != ct->proto.sctp.vtag[dir]) {
-> >  		pr_debug("Verification tag check failed\n");
-> >  		goto out;
-> > @@ -357,6 +381,16 @@ static int sctp_packet(struct nf_conn *ct,
-> >  			/* Sec 8.5.1 (D) */
-> >  			if (sh->vtag != ct->proto.sctp.vtag[dir])
-> >  				goto out_unlock;
-> > +		} else if (sch->type == SCTP_CID_HEARTBEAT ||
-> > +			   sch->type == SCTP_CID_HEARTBEAT_ACK) {
-> > +			if (ct->proto.sctp.vtag[dir] == 0) {
-> > +				pr_debug("Setting vtag %x for dir %d\n",
-> > +					 sh->vtag, dir);
-> > +				ct->proto.sctp.vtag[dir] = sh->vtag;
-> 
-> Could you please elaborate on the [dir] == 0 test?
-> 
-> I see this might happen for SCTP_CID_HEARTBEAT_ACK, but why is this
-> needed for SCTP_CID_HEARTBEAT ?
-> 
-> We found a conntrack entry so shouldn't the vtag[dir] already be > 0?
+On 07/06, Andrey Vagin wrote:
+>
+> From: David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>
+> threads of a process share the same VMAs, so when dumping all threads
+> for all processes only push vma data for group leader.
 
-Yes, you are right. This was originally intended to handle the case when
-a HEARTBEAT in the reply direction is seen before the HEARTBEAT-ACK but
-such HEARTBEAT would be dropped anyway in current version.
+...
 
-On the other hand, an alternative would be
+> @@ -492,6 +493,13 @@ static int task_diag_fill(struct task_struct *tsk, struct sk_buff *skb,
+>  	}
+>  
+>  	if (show_flags & TASK_DIAG_SHOW_VMA) {
+> +		/* if the request is to dump all threads of all processes
+> +		 * only show VMAs for group leader.
+> +		 */
+> +		if (req->dump_strategy == TASK_DIAG_DUMP_ALL_THREAD &&
+> +		    !thread_group_leader(tsk))
+> +			goto done;
+> +
 
-		} else if (sch->type == SCTP_CID_HEARTBEAT_ACK &&
-			   ct->proto.sctp.vtag[dir] == 0) {
-			pr_debug("Setting vtag %x for dir %d\n",
-				 sh->vtag, dir);
-			ct->proto.sctp.vtag[dir] = sh->vtag;
-		} else if ((sch->type == SCTP_CID_HEARTBEAT ||
-			    sch->type == SCTP_CID_HEARTBEAT_ACK) &&
-			   sh->vtag != ct->proto.sctp.vtag[dir]) {
-			pr_debug("Verification tag check failed\n");
-			goto out_unlock;
-		}
+This doesn't look right, group leader can be a zombie with ->mm == NULL,
 
-I'm not sure it looks better.
+>  		if (i >= n)
+>  			err = fill_vma(tsk, skb, cb, &progress, show_flags);
 
-Michal Kubecek
+so this probably needs something like find_lock_task_mm().
+
+Oleg.
