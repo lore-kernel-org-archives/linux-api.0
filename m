@@ -1,66 +1,36 @@
-From: Ulf Magnusson <ulfalizer.lkml@gmail.com>
-Subject: Re: KDBUS breaks 'make installmandocs'
-Date: Tue, 14 Jul 2015 04:00:40 +0200
-Message-ID: <20150714020040.GA17955@huvuddator>
-References: <20150712180846.GA32176@huvuddator>
- <20150714003925.GA23746@kroah.com>
+From: Ben Maurer <bmaurer@fb.com>
+Subject: RE: [RFC PATCH] getcpu_cache system call: caching current CPU
+ number (x86)
+Date: Tue, 14 Jul 2015 09:34:17 +0000
+Message-ID: <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F5DA0@PRN-MBX02-1.TheFacebook.com>
+References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F39C6@PRN-MBX02-1.TheFacebook.com>,<587954201.31.1436808992876.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150714003925.GA23746@kroah.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Greg KH <gregkh@linuxfoundation.org>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, daniel@zonque.org, dh.herrmann@googlemail.com, tixxdz@opendz.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <libc-alpha-return-60921-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <587954201.31.1436808992876.JavaMail.zimbra@efficios.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter
+ Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Lai Jiangshan <laijs@cn.fujitsu.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, linux-api <linux-api@vger.kernel.org>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 13, 2015 at 05:39:25PM -0700, Greg KH wrote:
-> On Sun, Jul 12, 2015 at 08:08:46PM +0200, Ulf Magnusson wrote:
-> > Hello,
-> > 
-> > Tested with next-20150709.
-> > 
-> > Documentation/kdbus/Makefile lacks an 'installmandocs' target, causing
-> > problems for
-> > 
-> > %docs: scripts_basic FORCE
-> > 	$(Q)$(MAKE) $(build)=scripts build_docproc
-> > 	$(Q)$(MAKE) $(build)=Documentation/DocBook $@
-> > 	$(Q)$(MAKE) $(build)=Documentation/kdbus $@
-> > 
-> > from the top-level Makefile. It still works, but no KDBUS-related man
-> > pages are installed, and the final error isn't reassuring.
-> 
-> What's the final error?
-> 
-
-$ sudo make installmandocs
-  GEN     Documentation/DocBook//v4l2.xml
-find Documentation/DocBook/man -name '*.9' | xargs gzip -f
-mkdir -p /usr/local/man/man9/
-install Documentation/DocBook/man/*.9.gz /usr/local/man/man9/
-make[1]: *** No rule to make target 'installmandocs'.  Stop.
-Makefile:1359: recipe for target 'installmandocs' failed
-make: *** [installmandocs] Error 2
-
-
-The "*** No rule to make target 'installmandocs'. Stop." error is
-generated for Documentation/kdbus/Makefile. The other man pages still
-install fine.
-
-(That "GEN     Documentation/DocBook//v4l2.xml" line might be an
-unrelated issue. It's from the 'mandocs' prerequisite and shows up even
-when the pages are already built.)
-
-> > Documentation/DocBook/Makefile installs man pages into section 9, while
-> > KDBUS uses 7. I'm not familiar enough with KDBUS to know what the right
-> > thing to do here is.
-> 
-> I don't know either, perhaps someone on linux-api knows?
-> 
-> thanks,
-> 
-> greg k-h
-
-Cheers,
-Ulf
+Mathieu Desnoyers wrote:=0A=
+> If we invoke this per-thread registration directly in the glibc NPTL impl=
+ementation,=0A=
+> in start_thread, do you think it would fit your requirements ?=0A=
+=0A=
+I guess this would basically be transparent to the user -- we'd just need t=
+o make sure that the registration happens very early, before any chance of =
+calling malloc.=0A=
+=0A=
+That said, having the ability for the kernel to understand that TLS impleme=
+ntation are laid out using the same offset on each thread seems like someth=
+ing that could be valuable long term. Doing so makes it possible to build o=
+ther TLS-based features without forcing each thread to be registered. =
