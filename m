@@ -1,101 +1,55 @@
-From: Vladimir Davydov <vdavydov@parallels.com>
-Subject: Re: [PATCH -mm v7 5/6] proc: add kpageidle file
-Date: Tue, 14 Jul 2015 14:05:28 +0300
-Message-ID: <20150714110527.GA1015@esperanza>
-References: <cover.1436623799.git.vdavydov@parallels.com>
- <25f235220bef9d799f48a060d7638a5de31fc994.1436623799.git.vdavydov@parallels.com>
- <CAJu=L59+7d_16zXZAFfJkr5HSwHsfYXi9EBu_9Sx1tAcJv2LOA@mail.gmail.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
+Date: Tue, 14 Jul 2015 13:44:49 +0200
+Message-ID: <20150714114448.GA31973@amd>
+References: <1430949612-21356-1-git-send-email-zab@redhat.com>
+ <20150507002617.GJ4327@dastard>
+ <20150507172053.GA659@lenny.home.zabbo.net>
+ <CAFLxGvw8ESrM6vZ4iB70JFQN-qR-Trs3j1O_+y36tSOn0GVH4A@mail.gmail.com>
+ <CALCETrWNDMq0nK3ac-uZweV5BKK_yWTQHH5D0YkyEu7bcONo9g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAJu=L59+7d_16zXZAFfJkr5HSwHsfYXi9EBu_9Sx1tAcJv2LOA@mail.gmail.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Andres Lagar-Cavilla <andreslc@google.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <CALCETrWNDMq0nK3ac-uZweV5BKK_yWTQHH5D0YkyEu7bcONo9g@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Richard Weinberger <richard.weinberger@gmail.com>, Zach Brown <zab@redhat.com>, Dave Chinner <david@fromorbit.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Sage Weil <sweil@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 13, 2015 at 12:02:57PM -0700, Andres Lagar-Cavilla wrote:
-> On Sat, Jul 11, 2015 at 7:48 AM, Vladimir Davydov
-> <vdavydov@parallels.com> wrote:
-[...]
-> > +static struct page *kpageidle_get_page(unsigned long pfn)
-> > +{
-> > +       struct page *page;
-> > +       struct zone *zone;
-> > +
-> > +       if (!pfn_valid(pfn))
-> > +               return NULL;
-> > +
-> > +       page = pfn_to_page(pfn);
-> > +       if (!page || PageTail(page) || !PageLRU(page) ||
-> > +           !get_page_unless_zero(page))
+On Thu 2015-05-07 12:53:46, Andy Lutomirski wrote:
+> On Thu, May 7, 2015 at 12:09 PM, Richard Weinberger
+> <richard.weinberger@gmail.com> wrote:
+> > On Thu, May 7, 2015 at 7:20 PM, Zach Brown <zab@redhat.com> wrote:
+> >> On Thu, May 07, 2015 at 10:26:17AM +1000, Dave Chinner wrote:
+> >>> On Wed, May 06, 2015 at 03:00:12PM -0700, Zach Brown wrote:
+> >>> > Add the O_NOMTIME flag which prevents mtime from being updated which can
+> >>> > greatly reduce the IO overhead of writes to allocated and initialized
+> >>> > regions of files.
+> >>>
+> >>> Hmmm. How do backup programs now work out if the file has changed
+> >>> and hence needs copying again? ie. applications using this will
+> >>> break other critical infrastructure in subtle ways.
+> >>
+> >> By using backup infrastructure that doesn't use cmtime.  Like btrfs
+> >> send/recv.  Or application level backups that know how to do
+> >> incrementals from metadata in giant database files, say, without
+> >> walking, comparing, and copying the entire thing.
+> >
+> > But how can Joey random user know that some of his
+> > applications are using O_NOMTIME and his KISS backup
+> > program does no longer function as expected?
+> >
 > 
-> get_page_unless_zero does not succeed for Tail pages.
+> Joey random user can't have a working KISS backup anyway, though,
+> because we screw up mtime updates on mmap writes.  I have patches
+> gathering dust that fix that, though.
 
-True. So we don't seem to need the PageTail checks here at all, because
-if kpageidle_get_page succeeds, the page must be a head, so that we
-won't dive into expensive rmap_walk for tail pages. Will remove it then.
+I'm using unison, and yes, I believe I already seen failures from
+mmap(). I'd like to see that fixed, and I can test the patches.
 
-> 
-> > +               return NULL;
-> > +
-> > +       if (unlikely(PageTail(page))) {
-> > +               put_page(page);
-> > +               return NULL;
-> > +       }
-> > +
-> > +       zone = page_zone(page);
-> > +       spin_lock_irq(&zone->lru_lock);
-> > +       if (unlikely(!PageLRU(page))) {
-> > +               put_page(page);
-> > +               page = NULL;
-> > +       }
-> > +       spin_unlock_irq(&zone->lru_lock);
-> > +       return page;
-> > +}
-> > +
-> > +static int kpageidle_clear_pte_refs_one(struct page *page,
-> > +                                       struct vm_area_struct *vma,
-> > +                                       unsigned long addr, void *arg)
-> > +{
-> > +       struct mm_struct *mm = vma->vm_mm;
-> > +       spinlock_t *ptl;
-> > +       pmd_t *pmd;
-> > +       pte_t *pte;
-> > +       bool referenced = false;
-> > +
-> > +       if (unlikely(PageTransHuge(page))) {
-> 
-> VM_BUG_ON(!PageHead)?
-
-Don't think it's necessary, because PageTransHuge already does this sort
-of check:
-
-: static inline int PageTransHuge(struct page *page)
-: {
-: 	VM_BUG_ON_PAGE(PageTail(page), page);
-: 	return PageHead(page);
-: }
-
-> 
-> > +               pmd = page_check_address_pmd(page, mm, addr,
-> > +                                            PAGE_CHECK_ADDRESS_PMD_FLAG, &ptl);
-> > +               if (pmd) {
-> > +                       referenced = pmdp_test_and_clear_young(vma, addr, pmd);
-> 
-> For any workload using MMU notifiers, this will lose significant
-> information by not querying the secondary PTE. The most
-> straightforward case is KVM. Once mappings are setup, all access
-> activity is recorded through shadow PTEs. This interface will say
-> "idle" even though the VM is blasting memory.
-
-Hmm, interesting. It seems we have to introduce
-mmu_notifier_ops.clear_young then, which, in contrast to
-clear_flush_young, won't flush TLB. Looking back at your comment to v6,
-now I see that you already mentioned it, but I missed your point :-(
-OK, will do it in the next iteration.
-
-Thanks a lot for the review!
-
-Vladimir
+Thanks,
+									Pavel
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
