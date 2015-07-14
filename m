@@ -1,35 +1,47 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCHSET v4 0/5] pagemap: make useable for non-privilege users
-Date: Tue, 14 Jul 2015 11:52:52 -0700
-Message-ID: <20150714115252.8f21cfa864935a4b403c3d8d@linux-foundation.org>
-References: <20150714152516.29844.69929.stgit@buzz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150714152516.29844.69929.stgit@buzz>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Andy Lutomirski <luto@kernel.org>
+Subject: [PATCH v4 0/2] capabilities: Ambient capability patchset
+Date: Tue, 14 Jul 2015 12:46:14 -0700
+Message-ID: <cover.1436903028.git.luto@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linuxfoundation.org>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, James Morris <james.l.morris@oracle.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>, Christoph Lameter <cl@linux.com>, Andy Lutomirski <luto@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 14 Jul 2015 18:37:34 +0300 Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org> wrote:
+This adds ambient capabilities.  See the individual patch changelogs
+for details.
 
-> This patchset makes pagemap useable again in the safe way (after row hammer
-> bug it was made CAP_SYS_ADMIN-only). This patchset restores access for
-> non-privileged users but hides PFNs from them.
+Preliminary userspace code is here, but it needs updating:
 
-Documentation/vm/pagemap.txt hasn't been updated to describe these
-privilege issues?
+https://git.kernel.org/cgit/linux/kernel/git/luto/util-linux-playground.git/commit/?h=cap_ambient&id=7f5afbd175d2
 
-> Also it adds bit 'map-exlusive' which is set if page is mapped only here:
-> it helps in estimation of working set without exposing pfns and allows to
-> distinguish CoWed and non-CoWed private anonymous pages.
-> 
-> Second patch removes page-shift bits and completes migration to the new
-> pagemap format: flags soft-dirty and mmap-exlusive are available only
-> in the new format.
+Changes from v3:
+ - Rename PR_CAP_AMBIENT_READ to PR_CAP_AMBIENT_IS_SET (Michael Kerrisk)
+ - Add PR_CAP_AMBIENT_CLEAR_ALL (Michael Kerrisk)
+ - Add acks from v2
 
-I'm not really seeing a description of the new format in these
-changelogs.  Precisely what got removed, what got added and which
-capabilities change the output in what manner?
+Changes from v2:
+ - Improve the patch 1 changelog a bit.
+ - Add acks.
+ - Add comment clarifying the pE' rule.
+ - s/except/expect
+
+Changes from v1:
+ - Lots of cleanups to the ambient cap code.
+ - The securebit is new.
+ 
+Andy Lutomirski (2):
+  capabilities: Ambient capabilities
+  capabilities: Add a securebit to disable PR_CAP_AMBIENT_RAISE
+
+ fs/proc/array.c                 |   5 +-
+ include/linux/cred.h            |   8 ++++
+ include/uapi/linux/prctl.h      |   7 +++
+ include/uapi/linux/securebits.h |  11 ++++-
+ kernel/user_namespace.c         |   1 +
+ security/commoncap.c            | 103 ++++++++++++++++++++++++++++++++++++----
+ security/keys/process_keys.c    |   1 +
+ 7 files changed, 124 insertions(+), 12 deletions(-)
+
+-- 
+2.4.3
