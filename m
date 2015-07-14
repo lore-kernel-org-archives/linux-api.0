@@ -1,117 +1,81 @@
-From: Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH -mm v7 5/6] proc: add kpageidle file
-Date: Tue, 14 Jul 2015 13:27:22 -0700
-Message-ID: <CAJu=L59r4ohz+cUmhUAzdvXs=Qf+xEkWUcqtyn-yRLHRuKXoCA@mail.gmail.com>
-References: <cover.1436623799.git.vdavydov@parallels.com>
-	<25f235220bef9d799f48a060d7638a5de31fc994.1436623799.git.vdavydov@parallels.com>
-	<CAJu=L59+7d_16zXZAFfJkr5HSwHsfYXi9EBu_9Sx1tAcJv2LOA@mail.gmail.com>
-	<20150714110527.GA1015@esperanza>
+From: Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Subject: Re: [PATCH v7 6/9] nvmem: qfprom: Add Qualcomm QFPROM support.
+Date: Tue, 14 Jul 2015 14:18:31 -0700
+Message-ID: <20150714211831.GN30412@codeaurora.org>
+References: <1436521427-10568-1-git-send-email-srinivas.kandagatla@linaro.org>
+ <1436521529-10931-1-git-send-email-srinivas.kandagatla@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150714110527.GA1015@esperanza>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Raghavendra K T <raghavendra.kt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1436521529-10931-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, stefan.wahren-eS4NqCHxEME@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 14, 2015 at 4:05 AM, Vladimir Davydov
-<vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org> wrote:
-> On Mon, Jul 13, 2015 at 12:02:57PM -0700, Andres Lagar-Cavilla wrote:
->> On Sat, Jul 11, 2015 at 7:48 AM, Vladimir Davydov
->> <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org> wrote:
-> [...]
->> > +static struct page *kpageidle_get_page(unsigned long pfn)
->> > +{
->> > +       struct page *page;
->> > +       struct zone *zone;
->> > +
->> > +       if (!pfn_valid(pfn))
->> > +               return NULL;
->> > +
->> > +       page = pfn_to_page(pfn);
->> > +       if (!page || PageTail(page) || !PageLRU(page) ||
->> > +           !get_page_unless_zero(page))
->>
->> get_page_unless_zero does not succeed for Tail pages.
->
-> True. So we don't seem to need the PageTail checks here at all, because
-> if kpageidle_get_page succeeds, the page must be a head, so that we
-> won't dive into expensive rmap_walk for tail pages. Will remove it then.
->
->>
->> > +               return NULL;
->> > +
->> > +       if (unlikely(PageTail(page))) {
->> > +               put_page(page);
->> > +               return NULL;
->> > +       }
->> > +
->> > +       zone = page_zone(page);
->> > +       spin_lock_irq(&zone->lru_lock);
->> > +       if (unlikely(!PageLRU(page))) {
->> > +               put_page(page);
->> > +               page = NULL;
->> > +       }
->> > +       spin_unlock_irq(&zone->lru_lock);
->> > +       return page;
->> > +}
->> > +
->> > +static int kpageidle_clear_pte_refs_one(struct page *page,
->> > +                                       struct vm_area_struct *vma,
->> > +                                       unsigned long addr, void *arg)
->> > +{
->> > +       struct mm_struct *mm = vma->vm_mm;
->> > +       spinlock_t *ptl;
->> > +       pmd_t *pmd;
->> > +       pte_t *pte;
->> > +       bool referenced = false;
->> > +
->> > +       if (unlikely(PageTransHuge(page))) {
->>
->> VM_BUG_ON(!PageHead)?
->
-> Don't think it's necessary, because PageTransHuge already does this sort
-> of check:
->
-> : static inline int PageTransHuge(struct page *page)
-> : {
-> :       VM_BUG_ON_PAGE(PageTail(page), page);
-> :       return PageHead(page);
-> : }
->
->>
->> > +               pmd = page_check_address_pmd(page, mm, addr,
->> > +                                            PAGE_CHECK_ADDRESS_PMD_FLAG, &ptl);
->> > +               if (pmd) {
->> > +                       referenced = pmdp_test_and_clear_young(vma, addr, pmd);
->>
->> For any workload using MMU notifiers, this will lose significant
->> information by not querying the secondary PTE. The most
->> straightforward case is KVM. Once mappings are setup, all access
->> activity is recorded through shadow PTEs. This interface will say
->> "idle" even though the VM is blasting memory.
->
-> Hmm, interesting. It seems we have to introduce
-> mmu_notifier_ops.clear_young then, which, in contrast to
-> clear_flush_young, won't flush TLB. Looking back at your comment to v6,
-> now I see that you already mentioned it, but I missed your point :-(
-> OK, will do it in the next iteration.
+On 07/10, Srinivas Kandagatla wrote:
+> This patch adds QFPROM support driver which is used by other drivers
+> like thermal sensor and cpufreq.
+> 
+> On MSM parts there are some efuses (called qfprom) these fuses store
+> things like calibration data, speed bins.. etc. Drivers like cpufreq,
+> thermal sensors would read out this data for configuring the driver.
+> 
+> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+> ---
 
-There's clearly value in fixing things for KVM, but I don't have
-knowledge of the other MMU notifiers. I like clear_young, maybe other
-mmu notifiers will turn this into a no-op().
+I didn't see any reply on v6, but at least delay.h was removed.
+Same comments from v6 below.
 
-mmmmhh. What about TLB flushing in the mmu notifier? I guess that can
-be internal to each implementation.
+> diff --git a/drivers/nvmem/qfprom.c b/drivers/nvmem/qfprom.c
+> new file mode 100644
+> index 0000000..0e22a03
+> --- /dev/null
+> +++ b/drivers/nvmem/qfprom.c
+> @@ -0,0 +1,87 @@
+> +/*
+> + * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+> + *
+> + * This program is free software; you can redistribute it and/or modify
+> + * it under the terms of the GNU General Public License version 2 and
+> + * only version 2 as published by the Free Software Foundation.
+> + *
+> + * This program is distributed in the hope that it will be useful,
+> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + * GNU General Public License for more details.
+> + */
+> +
+> +#include <linux/device.h>
+> +#include <linux/io.h>
 
-Andres
->
-> Thanks a lot for the review!
->
-> Vladimir
+Is this include used?
 
+> +#include <linux/module.h>
+> +#include <linux/nvmem-provider.h>
+> +#include <linux/platform_device.h>
+> +#include <linux/regmap.h>
+> +#include <linux/slab.h>
+> +
+> +static struct regmap_config qfprom_regmap_config = {
 
+Can this be const?
+
+> +	.reg_bits = 32,
+> +	.val_bits = 8,
+> +	.reg_stride = 1,
+> +};
+> +
+> +static struct nvmem_config econfig = {
+
+Can this be const?
+
+> +	.name = "qfprom",
+> +	.owner = THIS_MODULE,
+> +};
+> +
 
 -- 
-Andres Lagar-Cavilla | Google Kernel Team | andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
+Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum,
+a Linux Foundation Collaborative Project
