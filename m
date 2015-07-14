@@ -1,86 +1,58 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: [PATCH v4 2/2] capabilities: Add a securebit to disable PR_CAP_AMBIENT_RAISE
-Date: Tue, 14 Jul 2015 12:46:16 -0700
-Message-ID: <880e650ee1f52742f20c6a7370c0de22876ebf85.1436903028.git.luto@kernel.org>
-References: <cover.1436903028.git.luto@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1436903028.git.luto@kernel.org>
-In-Reply-To: <cover.1436903028.git.luto@kernel.org>
-References: <cover.1436903028.git.luto@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linuxfoundation.org>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, James Morris <james.l.morris@oracle.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Kees Cook <keescook@chromium.org>, Jonathan Corbet <corbet@lwn.net>, Christoph Lameter <cl@linux.com>, Andy Lutomirski <luto@kernel.org>, Andy Lutomirski <luto@amacapital.net>
+From: Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCHSET v4 0/5] pagemap: make useable for non-privilege users
+Date: Tue, 14 Jul 2015 23:15:41 +0300
+Message-ID: <CALYGNiPidOy47E5ArW28ny4m+nTN5P8gAjYZtdC2_C1nV-yomQ@mail.gmail.com>
+References: <20150714152516.29844.69929.stgit@buzz>
+	<20150714115252.8f21cfa864935a4b403c3d8d@linux-foundation.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150714115252.8f21cfa864935a4b403c3d8d-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Per Andrew Morgan's request, add a securebit to allow admins to
-disable PR_CAP_AMBIENT_RAISE.  This securebit will prevent processes
-from adding capabilities to their ambient set.
+On Tue, Jul 14, 2015 at 9:52 PM, Andrew Morton
+<akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
+> On Tue, 14 Jul 2015 18:37:34 +0300 Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org> wrote:
+>
+>> This patchset makes pagemap useable again in the safe way (after row hammer
+>> bug it was made CAP_SYS_ADMIN-only). This patchset restores access for
+>> non-privileged users but hides PFNs from them.
+>
+> Documentation/vm/pagemap.txt hasn't been updated to describe these
+> privilege issues?
 
-For simplicity, this disables PR_CAP_AMBIENT_RAISE entirely rather
-than just disabling setting previously cleared bits.
+Will do. Too much time passed between versions, I planned but forgot about that.
 
-Acked-By: Andrew G. Morgan <morgan@kernel.org>
-Acked-by: Serge Hallyn <serge.hallyn@canonical.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Christoph Lameter <cl@linux.com>
-Cc: Serge Hallyn <serge.hallyn@canonical.com>
-Cc: Andy Lutomirski <luto@amacapital.net>
-Cc: Jonathan Corbet <corbet@lwn.net>
-Cc: Aaron Jones <aaronmdjones@gmail.com>
-CC: Ted Ts'o <tytso@mit.edu>
-Cc: linux-security-module@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org
-Cc: akpm@linuxfoundation.org
-Cc: Andrew G. Morgan <morgan@kernel.org>
-Cc: Mimi Zohar <zohar@linux.vnet.ibm.com>
-Cc: Austin S Hemmelgarn <ahferroin7@gmail.com>
-Cc: Markku Savela <msa@moth.iki.fi>
-Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-Signed-off-by: Andy Lutomirski <luto@kernel.org>
----
- include/uapi/linux/securebits.h | 11 ++++++++++-
- security/commoncap.c            |  3 ++-
- 2 files changed, 12 insertions(+), 2 deletions(-)
+>
+>> Also it adds bit 'map-exlusive' which is set if page is mapped only here:
+>> it helps in estimation of working set without exposing pfns and allows to
+>> distinguish CoWed and non-CoWed private anonymous pages.
+>>
+>> Second patch removes page-shift bits and completes migration to the new
+>> pagemap format: flags soft-dirty and mmap-exlusive are available only
+>> in the new format.
+>
+> I'm not really seeing a description of the new format in these
+> changelogs.  Precisely what got removed, what got added and which
+> capabilities change the output in what manner?
 
-diff --git a/include/uapi/linux/securebits.h b/include/uapi/linux/securebits.h
-index 985aac9e6bf8..35ac35cef217 100644
---- a/include/uapi/linux/securebits.h
-+++ b/include/uapi/linux/securebits.h
-@@ -43,9 +43,18 @@
- #define SECBIT_KEEP_CAPS	(issecure_mask(SECURE_KEEP_CAPS))
- #define SECBIT_KEEP_CAPS_LOCKED (issecure_mask(SECURE_KEEP_CAPS_LOCKED))
- 
-+/* When set, a process cannot add new capabilities to its ambient set. */
-+#define SECURE_NO_CAP_AMBIENT_RAISE		6
-+#define SECURE_NO_CAP_AMBIENT_RAISE_LOCKED	7  /* make bit-6 immutable */
-+
-+#define SECBIT_NO_CAP_AMBIENT_RAISE (issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE))
-+#define SECBIT_NO_CAP_AMBIENT_RAISE_LOCKED \
-+			(issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE_LOCKED))
-+
- #define SECURE_ALL_BITS		(issecure_mask(SECURE_NOROOT) | \
- 				 issecure_mask(SECURE_NO_SETUID_FIXUP) | \
--				 issecure_mask(SECURE_KEEP_CAPS))
-+				 issecure_mask(SECURE_KEEP_CAPS) | \
-+				 issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE))
- #define SECURE_ALL_LOCKS	(SECURE_ALL_BITS << 1)
- 
- #endif /* _UAPI_LINUX_SECUREBITS_H */
-diff --git a/security/commoncap.c b/security/commoncap.c
-index 1f74dde1063e..1832cf701c3d 100644
---- a/security/commoncap.c
-+++ b/security/commoncap.c
-@@ -993,7 +993,8 @@ int cap_task_prctl(int option, unsigned long arg2, unsigned long arg3,
- 			if (arg2 == PR_CAP_AMBIENT_RAISE &&
- 			    (!cap_raised(current_cred()->cap_permitted, arg3) ||
- 			     !cap_raised(current_cred()->cap_inheritable,
--					 arg3)))
-+					 arg3) ||
-+			     issecure(SECURE_NO_CAP_AMBIENT_RAISE)))
- 				return -EPERM;
- 
- 			new = prepare_creds();
--- 
-2.4.3
+Now pfn (bits 0-54) is zero if task who opened pagemap has no
+CAP_SYS_ADMIN (system-wide).
+
+in v2 format page-shift (bits 55-60) now used for flags:
+55 - soft-dirty (added for checkpoint-restore, I guess)
+56 - mmap-exclusive (added in last patch)
+57-60 - free for use
+
+I'll document the history of these changes.
+
+>
+>
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
