@@ -1,56 +1,53 @@
-From: Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>
-Subject: Re: [PATCH nf-next] netfilter: nf_ct_sctp: minimal multihoming
- support
-Date: Tue, 14 Jul 2015 17:38:47 +0200
-Message-ID: <20150714153847.GA3507@salvia>
-References: <20150714122311.8DA8EA0C9A@unicorn.suse.cz>
+From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Subject: [PATCHSET v4 0/5] pagemap: make useable for non-privilege users
+Date: Tue, 14 Jul 2015 18:37:34 +0300
+Message-ID: <20150714152516.29844.69929.stgit@buzz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150714122311.8DA8EA0C9A-OEaqT8BN2ewCVLCxKZUutA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Kubecek <mkubecek-AlSwsSmVLrQ@public.gmane.org>
-Cc: netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>, Jozsef Kadlecsik <kadlec-K40Dz/62t/MgiyqX0sVFJYdd74u8MsAO@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, Mark Williamson <mwilliamson@undo-software.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 14, 2015 at 02:23:11PM +0200, Michal Kubecek wrote:
-> @@ -658,6 +696,18 @@ static struct ctl_table sctp_sysctl_table[] = {
->  		.mode		= 0644,
->  		.proc_handler	= proc_dointvec_jiffies,
->  	},
-> +	{
-> +		.procname	= "nf_conntrack_sctp_timeout_heartbeat_sent",
-> +		.maxlen		= sizeof(unsigned int),
-> +		.mode		= 0644,
-> +		.proc_handler	= proc_dointvec_jiffies,
-> +	},
-> +	{
-> +		.procname	= "nf_conntrack_sctp_timeout_heartbeat_acked",
-> +		.maxlen		= sizeof(unsigned int),
-> +		.mode		= 0644,
-> +		.proc_handler	= proc_dointvec_jiffies,
-> +	},
->  	{ }
->  };
->  
-> @@ -705,6 +755,18 @@ static struct ctl_table sctp_compat_sysctl_table[] = {
->  		.mode		= 0644,
->  		.proc_handler	= proc_dointvec_jiffies,
->  	},
-> +	{
-> +		.procname	= "ip_conntrack_sctp_timeout_heartbeat_sent",
-> +		.maxlen		= sizeof(unsigned int),
-> +		.mode		= 0644,
-> +		.proc_handler	= proc_dointvec_jiffies,
-> +	},
-> +	{
-> +		.procname	= "ip_conntrack_sctp_timeout_heartbeat_acked",
-> +		.maxlen		= sizeof(unsigned int),
-> +		.mode		= 0644,
-> +		.proc_handler	= proc_dointvec_jiffies,
-> +	},
->  	{ }
+This patchset makes pagemap useable again in the safe way (after row hammer
+bug it was made CAP_SYS_ADMIN-only). This patchset restores access for
+non-privileged users but hides PFNs from them.
 
-I don't see the nla_policy updates for the netlink cttimeout
-interface.
+Also it adds bit 'map-exlusive' which is set if page is mapped only here:
+it helps in estimation of working set without exposing pfns and allows to
+distinguish CoWed and non-CoWed private anonymous pages.
+
+Second patch removes page-shift bits and completes migration to the new
+pagemap format: flags soft-dirty and mmap-exlusive are available only
+in the new format.
+
+Changes since v3:
+* patches reordered: cleanup now in second patch
+* update pagemap for hugetlb, add missing 'FILE' bit
+* fix PM_PFRAME_BITS: its 55 not 54 as was in previous versions
+
+---
+
+Konstantin Khlebnikov (5):
+      pagemap: check permissions and capabilities at open time
+      pagemap: switch to the new format and do some cleanup
+      pagemap: rework hugetlb and thp report
+      pagemap: hide physical addresses from non-privileged users
+      pagemap: add mmap-exclusive bit for marking pages mapped only here
+
+
+ Documentation/vm/pagemap.txt |    3 
+ fs/proc/task_mmu.c           |  267 ++++++++++++++++++------------------------
+ tools/vm/page-types.c        |   35 +++---
+ 3 files changed, 137 insertions(+), 168 deletions(-)
+
+--
+Konstantin
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
