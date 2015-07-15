@@ -1,35 +1,52 @@
-From: James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>
-Subject: Re: [PATCH v4 1/2] capabilities: Ambient capabilities
-Date: Wed, 15 Jul 2015 21:13:51 +1000 (AEST)
-Message-ID: <alpine.LRH.2.11.1507152033420.8351@namei.org>
-References: <cover.1436903028.git.luto@kernel.org> <9f660ee708e58892bfa7012b6b9c840298e24544.1436903028.git.luto@kernel.org>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 20/24] task_diag: Only add VMAs for thread_group leader
+Date: Wed, 15 Jul 2015 15:31:07 +0200
+Message-ID: <20150715133107.GA20539@redhat.com>
+References: <1436172445-6979-1-git-send-email-avagin@openvz.org> <1436172445-6979-21-git-send-email-avagin@openvz.org> <20150714174703.GA8088@redhat.com> <55A5BF0F.7090808@gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <9f660ee708e58892bfa7012b6b9c840298e24544.1436903028.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <55A5BF0F.7090808-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+To: David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Odintsov <pavel.odintsov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 14 Jul 2015, Andy Lutomirski wrote:
+On 07/14, David Ahern wrote:
+>
+> On 7/14/15 1:47 PM, Oleg Nesterov wrote:
+>>>
+>>>   	if (show_flags & TASK_DIAG_SHOW_VMA) {
+>>> +		/* if the request is to dump all threads of all processes
+>>> +		 * only show VMAs for group leader.
+>>> +		 */
+>>> +		if (req->dump_strategy == TASK_DIAG_DUMP_ALL_THREAD &&
+>>> +		    !thread_group_leader(tsk))
+>>> +			goto done;
+>>> +
+>>
+>> This doesn't look right, group leader can be a zombie with ->mm == NULL,
+>
+> Seriously?
 
-> ===== The proposed change =====
-> 
-> This patch adds a fifth capability mask called the ambient mask
-> (pA).  pA does what most people expect pI to do.
-> 
+Yes, the main thread can do sys_exit() / pthread_exit(), although this
+is not that common.
 
-This looks good, and I think it will lead to better overall security 
-because people will find capabilities easier to use for real-world 
-scenarios.
+> I'll find some way to track whether VMAs have been dumped for
+> a pid.
 
-Has it had enough security review?  This is a significant new behavior 
-being added to a widely enabled security module.
+In case I confused you, the thread_group_leader() check and "goto done"
+above are fine, just you can't trust tsk->mm, so
 
+>>>   		if (i >= n)
+>>>   			err = fill_vma(tsk, skb, cb, &progress, show_flags);
+>>
+>> so this probably needs something like find_lock_task_mm().
+>
+> ok.
 
+Yes, you just need to (try) find a subthread with ->mm != NULL if !tsk->mm,
+find_lock_task_mm() can help.
 
-- James
--- 
-James Morris
-<jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>
+Oleg.
