@@ -1,88 +1,35 @@
-From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v7 3/9] nvmem: Add nvmem_device based consumer apis.
-Date: Wed, 15 Jul 2015 09:21:19 +0100
-Message-ID: <55A617FF.2030904@linaro.org>
-References: <1436521427-10568-1-git-send-email-srinivas.kandagatla@linaro.org> <1436521505-10779-1-git-send-email-srinivas.kandagatla@linaro.org> <20150714220607.GP30412@codeaurora.org>
+From: James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>
+Subject: Re: [PATCH v4 1/2] capabilities: Ambient capabilities
+Date: Wed, 15 Jul 2015 21:13:51 +1000 (AEST)
+Message-ID: <alpine.LRH.2.11.1507152033420.8351@namei.org>
+References: <cover.1436903028.git.luto@kernel.org> <9f660ee708e58892bfa7012b6b9c840298e24544.1436903028.git.luto@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150714220607.GP30412-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, stefan.wahren-eS4NqCHxEME@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <9f660ee708e58892bfa7012b6b9c840298e24544.1436903028.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Thanks Stephen,
+On Tue, 14 Jul 2015, Andy Lutomirski wrote:
 
-On 14/07/15 23:06, Stephen Boyd wrote:
-> On 07/10, Srinivas Kandagatla wrote:
->> +static int devm_nvmem_device_match(struct device *dev, void *res, void *data)
->> +{
->> +	struct nvmem_device **nvmem = res;
->> +
->> +	if (!nvmem || !*nvmem) {
->> +		WARN_ON(!nvmem || !*nvmem);
->
-> This could be
->
-> 	if (WARN_ON(!nvmem || !*nvmem))
->
-Yep, will fix it.
->> +		return 0;
->> +	}
->> +	return *nvmem == data;
->> +}
->> +
->> [..]
->> +
->> +/**
->> + * nvmem_device_write() - Write cell to a given nvmem device
->> + *
->> + * @nvmem: nvmem device to be written to.
->> + * @offset: offset in nvmem device.
->> + * @bytes: number of bytes to write.
->> + * @buf: buffer to be written.
->> + *
->> + * The return value will be an length of bytes written or non zero on failure.
->
-> Should say negative value instead of non-zero? Length is
-> non-zero already.
->
-> General nitpick comment: Kernel-doc allows for a standard return
-> syntax.
-Ok, I will fix such instances.
->
-> 	Return: length of bytes written or negative value on failure.
->
->> diff --git a/include/linux/nvmem-provider.h b/include/linux/nvmem-provider.h
->> index f589d3b..74eed42 100644
->> --- a/include/linux/nvmem-provider.h
->> +++ b/include/linux/nvmem-provider.h
->> @@ -12,15 +12,9 @@
->>   #ifndef _LINUX_NVMEM_PROVIDER_H
->>   #define _LINUX_NVMEM_PROVIDER_H
->>
->> -struct nvmem_device;
->> +#include <linux/nvmem-consumer.h>
->>
->> -struct nvmem_cell_info {
->> -	const char		*name;
->> -	int			offset;
->> -	int			bytes;
->> -	int			bit_offset;
->> -	int			nbits;
->> -};
->
-> Why does this move from provider to consumer? Can't we do put
-> this struct in the right place from the beginning?
->
-  I will take care of it in next version.
+> ===== The proposed change =====
+> 
+> This patch adds a fifth capability mask called the ambient mask
+> (pA).  pA does what most people expect pI to do.
+> 
 
---srini
->> +struct nvmem_device;
->
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+This looks good, and I think it will lead to better overall security 
+because people will find capabilities easier to use for real-world 
+scenarios.
+
+Has it had enough security review?  This is a significant new behavior 
+being added to a widely enabled security module.
+
+
+
+- James
+-- 
+James Morris
+<jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>
