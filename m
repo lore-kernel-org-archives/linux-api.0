@@ -1,47 +1,58 @@
-From: David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 12/24] task_diag: add a new group to get tasks memory
- mappings (v2)
-Date: Tue, 14 Jul 2015 22:02:19 -0400
-Message-ID: <55A5BF2B.1040504@gmail.com>
-References: <1436172445-6979-1-git-send-email-avagin@openvz.org> <1436172445-6979-13-git-send-email-avagin@openvz.org> <20150714180857.GC8088@redhat.com>
+From: NeilBrown <neilb-IBi9RG/b67k@public.gmane.org>
+Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
+Date: Wed, 15 Jul 2015 14:54:56 +1000
+Message-ID: <20150715145456.0376796b@noble>
+References: <alpine.DEB.2.00.1505081517470.28239@cobra.newdream.net>
+	<CAHQdGtTFTN2XuvmarFZ9HPQV=cuhh7FosdHSrJME_U4htr=i8w@mail.gmail.com>
+	<20150511144719.GA14088@thunk.org>
+	<alpine.DEB.2.00.1505110920520.28239@cobra.newdream.net>
+	<20150511231021.GC14088@thunk.org>
+	<20150512050821.GA9404@chicago.guarana.org>
+	<5551E7EB.8040301@gmail.com>
+	<21842.1555.38099.868100@quad.stoffel.home>
+	<20150512143637.GA6370@fieldses.org>
+	<20150513083951.5eb63bc0@notabene.brown>
+	<20150714131300.GA6804@amd>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150714180857.GC8088-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20150714131300.GA6804@amd>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Odintsov <pavel.odintsov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+Cc: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, John Stoffel <john-HgN6juyGXH5AfugRpC6u6w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kevin Easton <kevin-RFfraI6bZkdAfugRpC6u6w@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 7/14/15 2:08 PM, Oleg Nesterov wrote:
-> On 07/06, Andrey Vagin wrote:
->>
->> +static int task_vma_num(struct mm_struct *mm)
->> +{
->> +	struct vm_area_struct *vma;
->> +	int n_vma = 0;
->> +
->> +	if (!mm || !atomic_inc_not_zero(&mm->mm_users))
->> +		return 0;
->> +
->> +	down_read(&mm->mmap_sem);
->> +	for (vma = mm->mmap; vma; vma = vma->vm_next, n_vma++)
->> +		;
->> +
->> +	up_read(&mm->mmap_sem);
->> +	mmput(mm);
->> +
->> +	return n_vma;
->> +}
->
-> Hmm. How about
->
-> 	int task_vma_num(struct mm_struct *mm)
-> 	{
-> 		return mm->map_count;
-> 	}
->
-> ?
+On Tue, 14 Jul 2015 15:13:00 +0200 Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org> wrote:
 
-makes sense. Thanks for the pointer.
+> Hi!
+> 
+> > BTW When you "swap" to a file the mtime doesn't get updated.  No one seems to
+> > complain about that.  I guess it is a rather narrow use-case though.
+> 
+> Actually yes, I'd like to complain.
+> 
+> It was not swap, it was mount -o loop, but I guess that's the same
+> case. Then rsync refused to work on that file... and being on slow ARM
+> system it took me a while to figure out WTF is going on.
+> 
+> So yes, we have problems with mtime, and yes, they matter.
+> 									Pavel
+
+Odd...
+I assume you mean
+  mount -o loop /some/file  /mountpoint
+
+and then when you write to the filesystem on /mountpoint the mtime
+of /some/file doesn't get updated?
+I think it should.
+ drivers/block/loop.c uses vfs_iter_write() to write to a file.
+ That calls f_op->write_iter which will typically call
+ generic_file_write_iter() which will call file_update_time() to update
+ the time stamps.
+
+What filesystem was /some/file on?
+I just did some testing on ext4 and it seems to do the right thing
+mtime gets updated.
+
+NeilBrown
