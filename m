@@ -1,58 +1,88 @@
-From: NeilBrown <neilb-IBi9RG/b67k@public.gmane.org>
-Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
-Date: Wed, 15 Jul 2015 14:54:56 +1000
-Message-ID: <20150715145456.0376796b@noble>
-References: <alpine.DEB.2.00.1505081517470.28239@cobra.newdream.net>
-	<CAHQdGtTFTN2XuvmarFZ9HPQV=cuhh7FosdHSrJME_U4htr=i8w@mail.gmail.com>
-	<20150511144719.GA14088@thunk.org>
-	<alpine.DEB.2.00.1505110920520.28239@cobra.newdream.net>
-	<20150511231021.GC14088@thunk.org>
-	<20150512050821.GA9404@chicago.guarana.org>
-	<5551E7EB.8040301@gmail.com>
-	<21842.1555.38099.868100@quad.stoffel.home>
-	<20150512143637.GA6370@fieldses.org>
-	<20150513083951.5eb63bc0@notabene.brown>
-	<20150714131300.GA6804@amd>
+From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v7 3/9] nvmem: Add nvmem_device based consumer apis.
+Date: Wed, 15 Jul 2015 09:21:19 +0100
+Message-ID: <55A617FF.2030904@linaro.org>
+References: <1436521427-10568-1-git-send-email-srinivas.kandagatla@linaro.org> <1436521505-10779-1-git-send-email-srinivas.kandagatla@linaro.org> <20150714220607.GP30412@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150714131300.GA6804@amd>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
-Cc: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, John Stoffel <john-HgN6juyGXH5AfugRpC6u6w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kevin Easton <kevin-RFfraI6bZkdAfugRpC6u6w@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150714220607.GP30412-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kumar Gala <galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, stefan.wahren-eS4NqCHxEME@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 14 Jul 2015 15:13:00 +0200 Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org> wrote:
+Thanks Stephen,
 
-> Hi!
-> 
-> > BTW When you "swap" to a file the mtime doesn't get updated.  No one seems to
-> > complain about that.  I guess it is a rather narrow use-case though.
-> 
-> Actually yes, I'd like to complain.
-> 
-> It was not swap, it was mount -o loop, but I guess that's the same
-> case. Then rsync refused to work on that file... and being on slow ARM
-> system it took me a while to figure out WTF is going on.
-> 
-> So yes, we have problems with mtime, and yes, they matter.
-> 									Pavel
+On 14/07/15 23:06, Stephen Boyd wrote:
+> On 07/10, Srinivas Kandagatla wrote:
+>> +static int devm_nvmem_device_match(struct device *dev, void *res, void *data)
+>> +{
+>> +	struct nvmem_device **nvmem = res;
+>> +
+>> +	if (!nvmem || !*nvmem) {
+>> +		WARN_ON(!nvmem || !*nvmem);
+>
+> This could be
+>
+> 	if (WARN_ON(!nvmem || !*nvmem))
+>
+Yep, will fix it.
+>> +		return 0;
+>> +	}
+>> +	return *nvmem == data;
+>> +}
+>> +
+>> [..]
+>> +
+>> +/**
+>> + * nvmem_device_write() - Write cell to a given nvmem device
+>> + *
+>> + * @nvmem: nvmem device to be written to.
+>> + * @offset: offset in nvmem device.
+>> + * @bytes: number of bytes to write.
+>> + * @buf: buffer to be written.
+>> + *
+>> + * The return value will be an length of bytes written or non zero on failure.
+>
+> Should say negative value instead of non-zero? Length is
+> non-zero already.
+>
+> General nitpick comment: Kernel-doc allows for a standard return
+> syntax.
+Ok, I will fix such instances.
+>
+> 	Return: length of bytes written or negative value on failure.
+>
+>> diff --git a/include/linux/nvmem-provider.h b/include/linux/nvmem-provider.h
+>> index f589d3b..74eed42 100644
+>> --- a/include/linux/nvmem-provider.h
+>> +++ b/include/linux/nvmem-provider.h
+>> @@ -12,15 +12,9 @@
+>>   #ifndef _LINUX_NVMEM_PROVIDER_H
+>>   #define _LINUX_NVMEM_PROVIDER_H
+>>
+>> -struct nvmem_device;
+>> +#include <linux/nvmem-consumer.h>
+>>
+>> -struct nvmem_cell_info {
+>> -	const char		*name;
+>> -	int			offset;
+>> -	int			bytes;
+>> -	int			bit_offset;
+>> -	int			nbits;
+>> -};
+>
+> Why does this move from provider to consumer? Can't we do put
+> this struct in the right place from the beginning?
+>
+  I will take care of it in next version.
 
-Odd...
-I assume you mean
-  mount -o loop /some/file  /mountpoint
-
-and then when you write to the filesystem on /mountpoint the mtime
-of /some/file doesn't get updated?
-I think it should.
- drivers/block/loop.c uses vfs_iter_write() to write to a file.
- That calls f_op->write_iter which will typically call
- generic_file_write_iter() which will call file_update_time() to update
- the time stamps.
-
-What filesystem was /some/file on?
-I just did some testing on ext4 and it seems to do the right thing
-mtime gets updated.
-
-NeilBrown
+--srini
+>> +struct nvmem_device;
+>
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
