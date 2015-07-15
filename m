@@ -1,89 +1,85 @@
-From: Vladimir Davydov <vdavydov@parallels.com>
-Subject: [PATCH -mm v8 7/7] proc: export idle flag via kpageflags
-Date: Wed, 15 Jul 2015 16:54:11 +0300
-Message-ID: <024b60a19e5ef246c9af3c5ff7652e71576e0bcc.1436967694.git.vdavydov@parallels.com>
-References: <cover.1436967694.git.vdavydov@parallels.com>
+From: David Herrmann <dh.herrmann@gmail.com>
+Subject: Re: KDBUS breaks 'make installmandocs'
+Date: Wed, 15 Jul 2015 16:19:28 +0200
+Message-ID: <CANq1E4QgzTFijvkfqa-sEYfVktJLEA3+oFh6Sm8NekLie6B9Ww@mail.gmail.com>
+References: <20150712180846.GA32176@huvuddator>
+	<20150714003925.GA23746@kroah.com>
+	<20150714020040.GA17955@huvuddator>
+	<CA+r1ZhjcOvHUcAMbhG4pqrxGMqAXV38Nf8jC_OS-ZxbsFrEj3g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <cover.1436967694.git.vdavydov@parallels.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Andres Lagar-Cavilla <andreslc@google.com>, Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CA+r1ZhjcOvHUcAMbhG4pqrxGMqAXV38Nf8jC_OS-ZxbsFrEj3g@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jim Davis <jim.epost@gmail.com>
+Cc: Ulf Magnusson <ulfalizer.lkml@gmail.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Daniel Mack <daniel@zonque.org>, David Herrmann <dh.herrmann@googlemail.com>, Djalal Harouni <tixxdz@opendz.org>
 List-Id: linux-api@vger.kernel.org
 
-As noted by Minchan, a benefit of reading idle flag from
-/proc/kpageflags is that one can easily filter dirty and/or unevictable
-pages while estimating the size of unused memory.
+Hi
 
-Note that idle flag read from /proc/kpageflags may be stale in case the
-page was accessed via a PTE, because it would be too costly to iterate
-over all page mappings on each /proc/kpageflags read to provide an
-up-to-date value. To make sure the flag is up-to-date one has to read
-/proc/kpageidle first.
+On Tue, Jul 14, 2015 at 8:24 PM, Jim Davis <jim.epost@gmail.com> wrote:
+> On Mon, Jul 13, 2015 at 7:00 PM, Ulf Magnusson <ulfalizer.lkml@gmail.com> wrote:
+>> On Mon, Jul 13, 2015 at 05:39:25PM -0700, Greg KH wrote:
+>>> On Sun, Jul 12, 2015 at 08:08:46PM +0200, Ulf Magnusson wrote:
+>>> > Hello,
+>>> >
+>>> > Tested with next-20150709.
+>>> >
+>>> > Documentation/kdbus/Makefile lacks an 'installmandocs' target, causing
+>>> > problems for
+>>> >
+>>> > %docs: scripts_basic FORCE
+>>> >     $(Q)$(MAKE) $(build)=scripts build_docproc
+>>> >     $(Q)$(MAKE) $(build)=Documentation/DocBook $@
+>>> >     $(Q)$(MAKE) $(build)=Documentation/kdbus $@
+>>> >
+>>> > from the top-level Makefile. It still works, but no KDBUS-related man
+>>> > pages are installed, and the final error isn't reassuring.
+>>>
+>>> What's the final error?
+>>>
+>>
+>> $ sudo make installmandocs
+>>   GEN     Documentation/DocBook//v4l2.xml
+>> find Documentation/DocBook/man -name '*.9' | xargs gzip -f
+>> mkdir -p /usr/local/man/man9/
+>> install Documentation/DocBook/man/*.9.gz /usr/local/man/man9/
+>> make[1]: *** No rule to make target 'installmandocs'.  Stop.
+>> Makefile:1359: recipe for target 'installmandocs' failed
+>> make: *** [installmandocs] Error 2
+>>
+>>
+>> The "*** No rule to make target 'installmandocs'. Stop." error is
+>> generated for Documentation/kdbus/Makefile. The other man pages still
+>> install fine.
+>
+> There's a similar problem with 'make cleandocs'.  Adding noop rules
+> for installdocs and cleandocs to Documentation/kdbus/Makefile at least
+> gets rid of the error messages.
 
-Signed-off-by: Vladimir Davydov <vdavydov@parallels.com>
----
- Documentation/vm/pagemap.txt           | 6 ++++++
- fs/proc/page.c                         | 3 +++
- include/uapi/linux/kernel-page-flags.h | 1 +
- 3 files changed, 10 insertions(+)
+So the Docbook targets support much more %docs targets than just
+cleandocs and installdocs. I don't think it's reasonable to guarantee
+that all those targets are supported for all documentation subdirs.
+Hence, I'd propose the attached patch. This should at least make sure
+the targets won't fail.
 
-diff --git a/Documentation/vm/pagemap.txt b/Documentation/vm/pagemap.txt
-index c9266340852c..5896b7d7fd74 100644
---- a/Documentation/vm/pagemap.txt
-+++ b/Documentation/vm/pagemap.txt
-@@ -64,6 +64,7 @@ There are five components to pagemap:
-     22. THP
-     23. BALLOON
-     24. ZERO_PAGE
-+    25. IDLE
- 
-  * /proc/kpagecgroup.  This file contains a 64-bit inode number of the
-    memory cgroup each page is charged to, indexed by PFN. Only available when
-@@ -124,6 +125,11 @@ Short descriptions to the page flags:
- 24. ZERO_PAGE
-     zero page for pfn_zero or huge_zero page
- 
-+25. IDLE
-+    page has not been accessed since it was marked idle (see /proc/kpageidle)
-+    Note that this flag may be stale in case the page was accessed via a PTE.
-+    To make sure the flag is up-to-date one has to read /proc/kpageidle first.
+But I think we should look into cleandocs and installmandocs. I'll
+have a look into that later. This patch should just fix all the other
+targets right now.
+
+Thanks
+David
+
+
+diff --git a/Documentation/kdbus/Makefile b/Documentation/kdbus/Makefile
+index af87641..8caffe5 100644
+--- a/Documentation/kdbus/Makefile
++++ b/Documentation/kdbus/Makefile
+@@ -38,3 +38,7 @@ mandocs: $(MANFILES)
+ htmldocs: $(HTMLFILES)
+
+ clean-files := $(MANFILES) $(HTMLFILES)
 +
-     [IO related page flags]
-  1. ERROR     IO error occurred
-  3. UPTODATE  page has up-to-date data
-diff --git a/fs/proc/page.c b/fs/proc/page.c
-index 273537885ab4..13dcb823fe4e 100644
---- a/fs/proc/page.c
-+++ b/fs/proc/page.c
-@@ -150,6 +150,9 @@ u64 stable_page_flags(struct page *page)
- 	if (PageBalloon(page))
- 		u |= 1 << KPF_BALLOON;
- 
-+	if (page_is_idle(page))
-+		u |= 1 << KPF_IDLE;
-+
- 	u |= kpf_copy_bit(k, KPF_LOCKED,	PG_locked);
- 
- 	u |= kpf_copy_bit(k, KPF_SLAB,		PG_slab);
-diff --git a/include/uapi/linux/kernel-page-flags.h b/include/uapi/linux/kernel-page-flags.h
-index a6c4962e5d46..5da5f8751ce7 100644
---- a/include/uapi/linux/kernel-page-flags.h
-+++ b/include/uapi/linux/kernel-page-flags.h
-@@ -33,6 +33,7 @@
- #define KPF_THP			22
- #define KPF_BALLOON		23
- #define KPF_ZERO_PAGE		24
-+#define KPF_IDLE		25
- 
- 
- #endif /* _UAPILINUX_KERNEL_PAGE_FLAGS_H */
--- 
-2.1.4
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
++# we don't support other %docs targets right now
++%docs:
++       @true
