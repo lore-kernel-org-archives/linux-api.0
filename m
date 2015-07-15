@@ -1,36 +1,85 @@
-From: Jim Davis <jim.epost-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: KDBUS breaks 'make installmandocs'
-Date: Wed, 15 Jul 2015 11:04:20 -0700
-Message-ID: <CA+r1Zhg3brrVjP3_-YhRxG0sjJY9tzK12BvWZ49G+qiQ-W9mkg@mail.gmail.com>
-References: <20150712180846.GA32176@huvuddator>
-	<20150714003925.GA23746@kroah.com>
-	<20150714020040.GA17955@huvuddator>
-	<CA+r1ZhjcOvHUcAMbhG4pqrxGMqAXV38Nf8jC_OS-ZxbsFrEj3g@mail.gmail.com>
-	<CANq1E4QgzTFijvkfqa-sEYfVktJLEA3+oFh6Sm8NekLie6B9Ww@mail.gmail.com>
+From: Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH -mm v8 1/7] memcg: add page_cgroup_ino helper
+Date: Wed, 15 Jul 2015 11:59:22 -0700
+Message-ID: <CAJu=L5_Hc-p7n79S-qoSepFR4nVhjR8QkFysKvWPvzb5tqhZOw@mail.gmail.com>
+References: <cover.1436967694.git.vdavydov@parallels.com>
+	<40a2af5afc7b70a133737226cd9e975df42936e7.1436967694.git.vdavydov@parallels.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CANq1E4QgzTFijvkfqa-sEYfVktJLEA3+oFh6Sm8NekLie6B9Ww-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <40a2af5afc7b70a133737226cd9e975df42936e7.1436967694.git.vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Ulf Magnusson <ulfalizer.lkml-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, David Herrmann <dh.herrmann-gM/Ye1E23mwN+BqQ9rBEUg@public.gmane.org>, Djalal Harouni <tixxdz-Umm1ozX2/EEdnm+yROfE0A@public.gmane.org>
+To: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Raghavendra K T <raghavendra.kt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 15, 2015 at 7:19 AM, David Herrmann <dh.herrmann-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-
-> diff --git a/Documentation/kdbus/Makefile b/Documentation/kdbus/Makefile
-> index af87641..8caffe5 100644
-> --- a/Documentation/kdbus/Makefile
-> +++ b/Documentation/kdbus/Makefile
-> @@ -38,3 +38,7 @@ mandocs: $(MANFILES)
->  htmldocs: $(HTMLFILES)
+On Wed, Jul 15, 2015 at 6:54 AM, Vladimir Davydov
+<vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org> wrote:
+> This function returns the inode number of the closest online ancestor of
+> the memory cgroup a page is charged to. It is required for exporting
+> information about which page is charged to which cgroup to userspace,
+> which will be introduced by a following patch.
 >
->  clean-files := $(MANFILES) $(HTMLFILES)
+> Signed-off-by: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+
+Reviewed-by: Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+
+> ---
+>  include/linux/memcontrol.h |  1 +
+>  mm/memcontrol.c            | 23 +++++++++++++++++++++++
+>  2 files changed, 24 insertions(+)
+>
+> diff --git a/include/linux/memcontrol.h b/include/linux/memcontrol.h
+> index 73b02b0a8f60..50069abebc3c 100644
+> --- a/include/linux/memcontrol.h
+> +++ b/include/linux/memcontrol.h
+> @@ -116,6 +116,7 @@ static inline bool mm_match_cgroup(struct mm_struct *mm,
+>
+>  extern struct cgroup_subsys_state *mem_cgroup_css(struct mem_cgroup *memcg);
+>  extern struct cgroup_subsys_state *mem_cgroup_css_from_page(struct page *page);
+> +extern unsigned long page_cgroup_ino(struct page *page);
+>
+>  struct mem_cgroup *mem_cgroup_iter(struct mem_cgroup *,
+>                                    struct mem_cgroup *,
+> diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+> index acb93c554f6e..894dc2169979 100644
+> --- a/mm/memcontrol.c
+> +++ b/mm/memcontrol.c
+> @@ -631,6 +631,29 @@ struct cgroup_subsys_state *mem_cgroup_css_from_page(struct page *page)
+>         return &memcg->css;
+>  }
+>
+> +/**
+> + * page_cgroup_ino - return inode number of the memcg a page is charged to
+> + * @page: the page
+> + *
+> + * Look up the closest online ancestor of the memory cgroup @page is charged to
+> + * and return its inode number or 0 if @page is not charged to any cgroup. It
+> + * is safe to call this function without holding a reference to @page.
+> + */
+> +unsigned long page_cgroup_ino(struct page *page)
+> +{
+> +       struct mem_cgroup *memcg;
+> +       unsigned long ino = 0;
 > +
-> +# we don't support other %docs targets right now
-> +%docs:
-> +       @true
+> +       rcu_read_lock();
+> +       memcg = READ_ONCE(page->mem_cgroup);
+> +       while (memcg && !(memcg->css.flags & CSS_ONLINE))
+> +               memcg = parent_mem_cgroup(memcg);
+> +       if (memcg)
+> +               ino = cgroup_ino(memcg->css.cgroup);
+> +       rcu_read_unlock();
+> +       return ino;
+> +}
+> +
+>  static struct mem_cgroup_per_zone *
+>  mem_cgroup_page_zoneinfo(struct mem_cgroup *memcg, struct page *page)
+>  {
+> --
+> 2.1.4
+>
 
-Looks good, no errors with next-20150715. Thanks!
 
-Jim
+
+-- 
+Andres Lagar-Cavilla | Google Kernel Team | andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
