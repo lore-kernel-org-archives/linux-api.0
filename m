@@ -1,211 +1,90 @@
-From: Andres Lagar-Cavilla <andreslc@google.com>
-Subject: Re: [PATCH -mm v8 5/7] mmu-notifier: add clear_young callback
-Date: Wed, 15 Jul 2015 12:16:33 -0700
-Message-ID: <CAJu=L58yzBr8+XaV90x+S60YnJzd7Yr2fDEgaQ0bcCKpwzSAhw@mail.gmail.com>
+From: Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH -mm v8 7/7] proc: export idle flag via kpageflags
+Date: Wed, 15 Jul 2015 12:17:02 -0700
+Message-ID: <CAJu=L58+L9nQDeW0VeaX3fmKy0EWG7js_rg3eWSVTg1D3WWHkg@mail.gmail.com>
 References: <cover.1436967694.git.vdavydov@parallels.com>
-	<82693bd5b5dbf4e65657fa22288942650aa04a0a.1436967694.git.vdavydov@parallels.com>
+	<024b60a19e5ef246c9af3c5ff7652e71576e0bcc.1436967694.git.vdavydov@parallels.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <82693bd5b5dbf4e65657fa22288942650aa04a0a.1436967694.git.vdavydov@parallels.com>
-Sender: owner-linux-mm@kvack.org
-To: Vladimir Davydov <vdavydov@parallels.com>, Paolo Bonzini <pbonzini@redhat.com>, kvm@vger.kernel.org, Eric Northup <digitaleric@google.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <024b60a19e5ef246c9af3c5ff7652e71576e0bcc.1436967694.git.vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Raghavendra K T <raghavendra.kt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 On Wed, Jul 15, 2015 at 6:54 AM, Vladimir Davydov
-<vdavydov@parallels.com> wrote:
-> In the scope of the idle memory tracking feature, which is introduced by
-> the following patch, we need to clear the referenced/accessed bit not
-> only in primary, but also in secondary ptes. The latter is required in
-> order to estimate wss of KVM VMs. At the same time we want to avoid
-> flushing tlb, because it is quite expensive and it won't really affect
-> the final result.
+<vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org> wrote:
+> As noted by Minchan, a benefit of reading idle flag from
+> /proc/kpageflags is that one can easily filter dirty and/or unevictable
+> pages while estimating the size of unused memory.
 >
-> Currently, there is no function for clearing pte young bit that would
-> meet our requirements, so this patch introduces one. To achieve that we
-> have to add a new mmu-notifier callback, clear_young, since there is no
-> method for testing-and-clearing a secondary pte w/o flushing tlb. The
-> new method is not mandatory and currently only implemented by KVM.
+> Note that idle flag read from /proc/kpageflags may be stale in case the
+> page was accessed via a PTE, because it would be too costly to iterate
+> over all page mappings on each /proc/kpageflags read to provide an
+> up-to-date value. To make sure the flag is up-to-date one has to read
+> /proc/kpageidle first.
 >
-> Signed-off-by: Vladimir Davydov <vdavydov@parallels.com>
+> Signed-off-by: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 
-Reviewed-by: Andres Lagar-Cavilla <andreslc@google.com>
-
-Added Paolo Bonzini, kvm list, Eric Northup.
+Reviewed-by: Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
 > ---
->  include/linux/mmu_notifier.h | 44 ++++++++++++++++++++++++++++++++++++++++++++
->  mm/mmu_notifier.c            | 17 +++++++++++++++++
->  virt/kvm/kvm_main.c          | 18 ++++++++++++++++++
->  3 files changed, 79 insertions(+)
+>  Documentation/vm/pagemap.txt           | 6 ++++++
+>  fs/proc/page.c                         | 3 +++
+>  include/uapi/linux/kernel-page-flags.h | 1 +
+>  3 files changed, 10 insertions(+)
 >
-> diff --git a/include/linux/mmu_notifier.h b/include/linux/mmu_notifier.h
-> index 61cd67f4d788..a5b17137c683 100644
-> --- a/include/linux/mmu_notifier.h
-> +++ b/include/linux/mmu_notifier.h
-> @@ -66,6 +66,16 @@ struct mmu_notifier_ops {
->                                  unsigned long end);
+> diff --git a/Documentation/vm/pagemap.txt b/Documentation/vm/pagemap.txt
+> index c9266340852c..5896b7d7fd74 100644
+> --- a/Documentation/vm/pagemap.txt
+> +++ b/Documentation/vm/pagemap.txt
+> @@ -64,6 +64,7 @@ There are five components to pagemap:
+>      22. THP
+>      23. BALLOON
+>      24. ZERO_PAGE
+> +    25. IDLE
 >
->         /*
-> +        * clear_young is a lightweight version of clear_flush_young. Like the
-> +        * latter, it is supposed to test-and-clear the young/accessed bitflag
-> +        * in the secondary pte, but it may omit flushing the secondary tlb.
-> +        */
-> +       int (*clear_young)(struct mmu_notifier *mn,
-> +                          struct mm_struct *mm,
-> +                          unsigned long start,
-> +                          unsigned long end);
-> +
-> +       /*
->          * test_young is called to check the young/accessed bitflag in
->          * the secondary pte. This is used to know if the page is
->          * frequently used without actually clearing the flag or tearing
-> @@ -203,6 +213,9 @@ extern void __mmu_notifier_release(struct mm_struct *mm);
->  extern int __mmu_notifier_clear_flush_young(struct mm_struct *mm,
->                                           unsigned long start,
->                                           unsigned long end);
-> +extern int __mmu_notifier_clear_young(struct mm_struct *mm,
-> +                                     unsigned long start,
-> +                                     unsigned long end);
->  extern int __mmu_notifier_test_young(struct mm_struct *mm,
->                                      unsigned long address);
->  extern void __mmu_notifier_change_pte(struct mm_struct *mm,
-> @@ -231,6 +244,15 @@ static inline int mmu_notifier_clear_flush_young(struct mm_struct *mm,
->         return 0;
->  }
+>   * /proc/kpagecgroup.  This file contains a 64-bit inode number of the
+>     memory cgroup each page is charged to, indexed by PFN. Only available when
+> @@ -124,6 +125,11 @@ Short descriptions to the page flags:
+>  24. ZERO_PAGE
+>      zero page for pfn_zero or huge_zero page
 >
-> +static inline int mmu_notifier_clear_young(struct mm_struct *mm,
-> +                                          unsigned long start,
-> +                                          unsigned long end)
-> +{
-> +       if (mm_has_notifiers(mm))
-> +               return __mmu_notifier_clear_young(mm, start, end);
-> +       return 0;
-> +}
+> +25. IDLE
+> +    page has not been accessed since it was marked idle (see /proc/kpageidle)
+> +    Note that this flag may be stale in case the page was accessed via a PTE.
+> +    To make sure the flag is up-to-date one has to read /proc/kpageidle first.
 > +
->  static inline int mmu_notifier_test_young(struct mm_struct *mm,
->                                           unsigned long address)
->  {
-> @@ -311,6 +333,28 @@ static inline void mmu_notifier_mm_destroy(struct mm_struct *mm)
->         __young;                                                        \
->  })
+>      [IO related page flags]
+>   1. ERROR     IO error occurred
+>   3. UPTODATE  page has up-to-date data
+> diff --git a/fs/proc/page.c b/fs/proc/page.c
+> index 273537885ab4..13dcb823fe4e 100644
+> --- a/fs/proc/page.c
+> +++ b/fs/proc/page.c
+> @@ -150,6 +150,9 @@ u64 stable_page_flags(struct page *page)
+>         if (PageBalloon(page))
+>                 u |= 1 << KPF_BALLOON;
 >
-> +#define ptep_clear_young_notify(__vma, __address, __ptep)              \
-> +({                                                                     \
-> +       int __young;                                                    \
-> +       struct vm_area_struct *___vma = __vma;                          \
-> +       unsigned long ___address = __address;                           \
-> +       __young = ptep_test_and_clear_young(___vma, ___address, __ptep);\
-> +       __young |= mmu_notifier_clear_young(___vma->vm_mm, ___address,  \
-> +                                           ___address + PAGE_SIZE);    \
-> +       __young;                                                        \
-> +})
+> +       if (page_is_idle(page))
+> +               u |= 1 << KPF_IDLE;
 > +
-> +#define pmdp_clear_young_notify(__vma, __address, __pmdp)              \
-> +({                                                                     \
-> +       int __young;                                                    \
-> +       struct vm_area_struct *___vma = __vma;                          \
-> +       unsigned long ___address = __address;                           \
-> +       __young = pmdp_test_and_clear_young(___vma, ___address, __pmdp);\
-> +       __young |= mmu_notifier_clear_young(___vma->vm_mm, ___address,  \
-> +                                           ___address + PMD_SIZE);     \
-> +       __young;                                                        \
-> +})
-> +
->  #define        ptep_clear_flush_notify(__vma, __address, __ptep)               \
->  ({                                                                     \
->         unsigned long ___addr = __address & PAGE_MASK;                  \
-> diff --git a/mm/mmu_notifier.c b/mm/mmu_notifier.c
-> index 3b9b3d0741b2..5fbdd367bbed 100644
-> --- a/mm/mmu_notifier.c
-> +++ b/mm/mmu_notifier.c
-> @@ -123,6 +123,23 @@ int __mmu_notifier_clear_flush_young(struct mm_struct *mm,
->         return young;
->  }
+>         u |= kpf_copy_bit(k, KPF_LOCKED,        PG_locked);
 >
-> +int __mmu_notifier_clear_young(struct mm_struct *mm,
-> +                              unsigned long start,
-> +                              unsigned long end)
-> +{
-> +       struct mmu_notifier *mn;
-> +       int young = 0, id;
-> +
-> +       id = srcu_read_lock(&srcu);
-> +       hlist_for_each_entry_rcu(mn, &mm->mmu_notifier_mm->list, hlist) {
-> +               if (mn->ops->clear_young)
-> +                       young |= mn->ops->clear_young(mn, mm, start, end);
-> +       }
-> +       srcu_read_unlock(&srcu, id);
-> +
-> +       return young;
-> +}
-> +
->  int __mmu_notifier_test_young(struct mm_struct *mm,
->                               unsigned long address)
->  {
-> diff --git a/virt/kvm/kvm_main.c b/virt/kvm/kvm_main.c
-> index 05148a43ef9c..61500cb028a3 100644
-> --- a/virt/kvm/kvm_main.c
-> +++ b/virt/kvm/kvm_main.c
-> @@ -388,6 +388,23 @@ static int kvm_mmu_notifier_clear_flush_young(struct mmu_notifier *mn,
->         return young;
->  }
+>         u |= kpf_copy_bit(k, KPF_SLAB,          PG_slab);
+> diff --git a/include/uapi/linux/kernel-page-flags.h b/include/uapi/linux/kernel-page-flags.h
+> index a6c4962e5d46..5da5f8751ce7 100644
+> --- a/include/uapi/linux/kernel-page-flags.h
+> +++ b/include/uapi/linux/kernel-page-flags.h
+> @@ -33,6 +33,7 @@
+>  #define KPF_THP                        22
+>  #define KPF_BALLOON            23
+>  #define KPF_ZERO_PAGE          24
+> +#define KPF_IDLE               25
 >
-> +static int kvm_mmu_notifier_clear_young(struct mmu_notifier *mn,
-> +                                       struct mm_struct *mm,
-> +                                       unsigned long start,
-> +                                       unsigned long end)
-> +{
-> +       struct kvm *kvm = mmu_notifier_to_kvm(mn);
-> +       int young, idx;
-
-For reclaim, the clear_flush_young notifier may blow up the secondary
-pte to estimate the access pattern, depending on hardware support (EPT
-access bits available in Haswell onwards, not sure about AMD, PPC,
-etc).
-
-This is ok, because it's reclaim, we need to know the access pattern,
-chances are the page is a goner anyway.
-
-However, not so sure about that cost in this context. Depending on
-user-space, this will periodically tear down all EPT tables in the
-system. That's tricky.
-
-So please add a note to that effect, so in the fullness of time kvm
-may be able to refuse enacting this notifier based on performance/VM
-priority/foo concerns.
-
-> +
-> +       idx = srcu_read_lock(&kvm->srcu);
-> +       spin_lock(&kvm->mmu_lock);
-> +       young = kvm_age_hva(kvm, start, end);
-
-Also please add a comment along the lines of no one really knowing
-when and if to flush the secondary tlb.
-
-We might come up with a heuristic later, or leave up to the regular
-system cadence. We just don't know at the moment.
-
-Andres
-
-> +       spin_unlock(&kvm->mmu_lock);
-> +       srcu_read_unlock(&kvm->srcu, idx);
-> +
-> +       return young;
-> +}
-> +
->  static int kvm_mmu_notifier_test_young(struct mmu_notifier *mn,
->                                        struct mm_struct *mm,
->                                        unsigned long address)
-> @@ -420,6 +437,7 @@ static const struct mmu_notifier_ops kvm_mmu_notifier_ops = {
->         .invalidate_range_start = kvm_mmu_notifier_invalidate_range_start,
->         .invalidate_range_end   = kvm_mmu_notifier_invalidate_range_end,
->         .clear_flush_young      = kvm_mmu_notifier_clear_flush_young,
-> +       .clear_young            = kvm_mmu_notifier_clear_young,
->         .test_young             = kvm_mmu_notifier_test_young,
->         .change_pte             = kvm_mmu_notifier_change_pte,
->         .release                = kvm_mmu_notifier_release,
+>
+>  #endif /* _UAPILINUX_KERNEL_PAGE_FLAGS_H */
 > --
 > 2.1.4
 >
@@ -213,10 +92,4 @@ Andres
 
 
 -- 
-Andres Lagar-Cavilla | Google Kernel Team | andreslc@google.com
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Andres Lagar-Cavilla | Google Kernel Team | andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
