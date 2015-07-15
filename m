@@ -1,85 +1,61 @@
-From: David Herrmann <dh.herrmann@gmail.com>
-Subject: Re: KDBUS breaks 'make installmandocs'
-Date: Wed, 15 Jul 2015 16:19:28 +0200
-Message-ID: <CANq1E4QgzTFijvkfqa-sEYfVktJLEA3+oFh6Sm8NekLie6B9Ww@mail.gmail.com>
-References: <20150712180846.GA32176@huvuddator>
-	<20150714003925.GA23746@kroah.com>
-	<20150714020040.GA17955@huvuddator>
-	<CA+r1ZhjcOvHUcAMbhG4pqrxGMqAXV38Nf8jC_OS-ZxbsFrEj3g@mail.gmail.com>
+From: Manfred Schlaegl <manfred.schlaegl-RbZlAiThDcE@public.gmane.org>
+Subject: [RFC PATCH 0/2] drm: add support for for clk and de polarity & gpu:
+ ipu-v3: use clock and de polarity
+Date: Wed, 15 Jul 2015 17:44:27 +0200
+Message-ID: <55A67FDB.8010602@gmx.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+r1ZhjcOvHUcAMbhG4pqrxGMqAXV38Nf8jC_OS-ZxbsFrEj3g@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jim Davis <jim.epost@gmail.com>
-Cc: Ulf Magnusson <ulfalizer.lkml@gmail.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Daniel Mack <daniel@zonque.org>, David Herrmann <dh.herrmann@googlemail.com>, Djalal Harouni <tixxdz@opendz.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Philipp Zabel <p.zabel-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Tomi Valkeinen <tomi.valkeinen-l0cyMroinI0@public.gmane.org>
+Cc: dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Manfred Schlaegl <manfred.schlaegl-hfTNJOUbDMh54TAoqtyWWQ@public.gmane.org>, Steve Longerbeam <slongerbeam-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Deepak Das <deepak_das-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>, Jiada Wang <jiada_wang-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi
+Hello!
 
-On Tue, Jul 14, 2015 at 8:24 PM, Jim Davis <jim.epost@gmail.com> wrote:
-> On Mon, Jul 13, 2015 at 7:00 PM, Ulf Magnusson <ulfalizer.lkml@gmail.com> wrote:
->> On Mon, Jul 13, 2015 at 05:39:25PM -0700, Greg KH wrote:
->>> On Sun, Jul 12, 2015 at 08:08:46PM +0200, Ulf Magnusson wrote:
->>> > Hello,
->>> >
->>> > Tested with next-20150709.
->>> >
->>> > Documentation/kdbus/Makefile lacks an 'installmandocs' target, causing
->>> > problems for
->>> >
->>> > %docs: scripts_basic FORCE
->>> >     $(Q)$(MAKE) $(build)=scripts build_docproc
->>> >     $(Q)$(MAKE) $(build)=Documentation/DocBook $@
->>> >     $(Q)$(MAKE) $(build)=Documentation/kdbus $@
->>> >
->>> > from the top-level Makefile. It still works, but no KDBUS-related man
->>> > pages are installed, and the final error isn't reassuring.
->>>
->>> What's the final error?
->>>
->>
->> $ sudo make installmandocs
->>   GEN     Documentation/DocBook//v4l2.xml
->> find Documentation/DocBook/man -name '*.9' | xargs gzip -f
->> mkdir -p /usr/local/man/man9/
->> install Documentation/DocBook/man/*.9.gz /usr/local/man/man9/
->> make[1]: *** No rule to make target 'installmandocs'.  Stop.
->> Makefile:1359: recipe for target 'installmandocs' failed
->> make: *** [installmandocs] Error 2
->>
->>
->> The "*** No rule to make target 'installmandocs'. Stop." error is
->> generated for Documentation/kdbus/Makefile. The other man pages still
->> install fine.
->
-> There's a similar problem with 'make cleandocs'.  Adding noop rules
-> for installdocs and cleandocs to Documentation/kdbus/Makefile at least
-> gets rid of the error messages.
+These patches address a problem we ran into using parallel displays
+with Freescale i.MX53 and i.MX6 SoC's.
+In short: We wanted to change the clock signal polarity by using
+display-timing in the devicetree description, but the output signal stayed
+unchanged.
 
-So the Docbook targets support much more %docs targets than just
-cleandocs and installdocs. I don't think it's reasonable to guarantee
-that all those targets are supported for all documentation subdirs.
-Hence, I'd propose the attached patch. This should at least make sure
-the targets won't fail.
+Parallel displays may have different polarities for clock and data enable
+signals. (Clock polarity is also a topic on LVDS displays). This is the
+reason why there are some properties in devicetree display-timing [1]
+called
+ * pixelclk-active .. pixel clock polarity
+ * de-active .. data enable pulse polarity
 
-But I think we should look into cleandocs and installmandocs. I'll
-have a look into that later. This patch should just fix all the other
-targets right now.
+This properties are correctly represented in struct display_timings [2]
+and struct videomode [3] by using enum display_flags [3].
+But when it comes to struct drm_display_mode [4] there are no
+representations for this.
+The properties are "lost in conversion" and never reach imx drm. (or 
+other drm drivers).
 
-Thanks
-David
+Changing this would be especially important for embedded devices where
+parallel(RGB) and LVDS displays are still widely used and drm already
+plays an important role.
+
+Following two patches will
+ 1. Introduce representation of clock and data enable polarities
+     in struct drm_display_mode analog to hsync/vsync signals.
+   * "drm: add support for for clk and de polarity"
+ 2. Implicitly enable usage of the newly introduced flags in 
+     imx drm (with respect to devicetree compatibility.)
+   * "gpu: ipu-v3: use clock and de polarity from videomode"
+
+I'm aware that introducing new flags in struct drm_display_mode affects
+user space too and therefore has to be considered carefully.
+As I'm not really deep in drm user space your suggestions are very
+welcome.
+
+best regards,
+manfred
 
 
-diff --git a/Documentation/kdbus/Makefile b/Documentation/kdbus/Makefile
-index af87641..8caffe5 100644
---- a/Documentation/kdbus/Makefile
-+++ b/Documentation/kdbus/Makefile
-@@ -38,3 +38,7 @@ mandocs: $(MANFILES)
- htmldocs: $(HTMLFILES)
-
- clean-files := $(MANFILES) $(HTMLFILES)
-+
-+# we don't support other %docs targets right now
-+%docs:
-+       @true
+[1] Documentation/devicetree/bindings/video/display-timing.txt
+[2] include/video/display_timing.h
+[3] include/video/videomode.h
+[4] include/drm/drm_modes.h
