@@ -1,65 +1,54 @@
-From: Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>
-Subject: Re: [PATCH nf-next] netfilter: nf_ct_sctp: minimal multihoming
- support
-Date: Wed, 15 Jul 2015 18:45:40 +0200
-Message-ID: <20150715164540.GA4047@salvia>
-References: <20150714122311.8DA8EA0C9A@unicorn.suse.cz>
- <20150714153847.GA3507@salvia>
- <20150714162850.GA8478@unicorn.suse.cz>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH v4 1/2] capabilities: Ambient capabilities
+Date: Wed, 15 Jul 2015 10:09:49 -0700
+Message-ID: <CALCETrWMBZ0p7P1FvtrYp5ChJXvvRzy0JpjS8KwUUa5m9gqgQA@mail.gmail.com>
+References: <cover.1436903028.git.luto@kernel.org> <9f660ee708e58892bfa7012b6b9c840298e24544.1436903028.git.luto@kernel.org>
+ <alpine.LRH.2.11.1507152033420.8351@namei.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150714162850.GA8478-OEaqT8BN2ewCVLCxKZUutA@public.gmane.org>
+In-Reply-To: <alpine.LRH.2.11.1507152033420.8351-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Kubecek <mkubecek-AlSwsSmVLrQ@public.gmane.org>
-Cc: netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>, Jozsef Kadlecsik <kadlec-K40Dz/62t/MgiyqX0sVFJYdd74u8MsAO@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+To: James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>
+Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 14, 2015 at 06:28:50PM +0200, Michal Kubecek wrote:
-> On Tue, Jul 14, 2015 at 05:38:47PM +0200, Pablo Neira Ayuso wrote:
-> > On Tue, Jul 14, 2015 at 02:23:11PM +0200, Michal Kubecek wrote:
-> > > @@ -658,6 +696,18 @@ static struct ctl_table sctp_sysctl_table[] = {
-> > >  		.mode		= 0644,
-> > >  		.proc_handler	= proc_dointvec_jiffies,
-> > >  	},
-> > > +	{
-> > > +		.procname	= "nf_conntrack_sctp_timeout_heartbeat_sent",
-> > > +		.maxlen		= sizeof(unsigned int),
-> > > +		.mode		= 0644,
-> > > +		.proc_handler	= proc_dointvec_jiffies,
-> > > +	},
-> > > +	{
-> > > +		.procname	= "nf_conntrack_sctp_timeout_heartbeat_acked",
-> > > +		.maxlen		= sizeof(unsigned int),
-> > > +		.mode		= 0644,
-> > > +		.proc_handler	= proc_dointvec_jiffies,
-> > > +	},
-> > >  	{ }
-> > >  };
-> > >  
-> > > @@ -705,6 +755,18 @@ static struct ctl_table sctp_compat_sysctl_table[] = {
-> > >  		.mode		= 0644,
-> > >  		.proc_handler	= proc_dointvec_jiffies,
-> > >  	},
-> > > +	{
-> > > +		.procname	= "ip_conntrack_sctp_timeout_heartbeat_sent",
-> > > +		.maxlen		= sizeof(unsigned int),
-> > > +		.mode		= 0644,
-> > > +		.proc_handler	= proc_dointvec_jiffies,
-> > > +	},
-> > > +	{
-> > > +		.procname	= "ip_conntrack_sctp_timeout_heartbeat_acked",
-> > > +		.maxlen		= sizeof(unsigned int),
-> > > +		.mode		= 0644,
-> > > +		.proc_handler	= proc_dointvec_jiffies,
-> > > +	},
-> > >  	{ }
-> > 
-> > I don't see the nla_policy updates for the netlink cttimeout
-> > interface.
-> 
-> I didn't realize those were needed. It means adding two entries to
-> sctp_timeout_nla_policy and two values to enum ctattr_timeout_sctp?
+On Wed, Jul 15, 2015 at 4:13 AM, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org> wrote:
+> On Tue, 14 Jul 2015, Andy Lutomirski wrote:
+>
+>> ===== The proposed change =====
+>>
+>> This patch adds a fifth capability mask called the ambient mask
+>> (pA).  pA does what most people expect pI to do.
+>>
+>
+> This looks good, and I think it will lead to better overall security
+> because people will find capabilities easier to use for real-world
+> scenarios.
+>
+> Has it had enough security review?  This is a significant new behavior
+> being added to a widely enabled security module.
+>
 
-Exactly.
+I've reviewed it, as have Kees and Serge.  Of course, I wrote it, so
+my review should be taken with many grains of salt.
+
+I'll review it again between now and 4.3.  All of my security thought
+cycles are currently taken up by a really nasty bug that dwarfs and
+problems this code could possibly introduce :)
+
+--Andy
+
+>
+>
+> - James
+> --
+> James Morris
+> <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>
+>
+
+
+
+-- 
+Andy Lutomirski
+AMA Capital Management, LLC
