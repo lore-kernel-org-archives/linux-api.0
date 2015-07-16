@@ -1,202 +1,183 @@
-From: Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
-Subject: Re: [PATCH nf-next] netfilter: nf_ct_sctp: minimal multihoming
- support
-Date: Thu, 16 Jul 2015 10:50:59 -0300
-Message-ID: <20150716135059.GB14704@localhost.localdomain>
-References: <20150714122311.8DA8EA0C9A@unicorn.suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <netfilter-devel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150714122311.8DA8EA0C9A@unicorn.suse.cz>
-Sender: netfilter-devel-owner@vger.kernel.org
-To: Michal Kubecek <mkubecek@suse.cz>
-Cc: netfilter-devel@vger.kernel.org, coreteam@netfilter.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, Pablo Neira Ayuso <pablo@netfilter.org>, Patrick McHardy <kaber@trash.net>, Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>, "David S. Miller" <davem@davemloft.net>
+From: Ming Lei <ming.lei@canonical.com>
+Subject: [PATCH v7 4/6] block: loop: prepare for supporing direct IO
+Date: Thu, 16 Jul 2015 23:37:46 +0800
+Message-ID: <1437061068-26118-5-git-send-email-ming.lei@canonical.com>
+References: <1437061068-26118-1-git-send-email-ming.lei@canonical.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1437061068-26118-1-git-send-email-ming.lei@canonical.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org
+Cc: "Justin M. Forbes" <jforbes@fedoraproject.org>, Jeff Moyer <jmoyer@redhat.com>, Tejun Heo <tj@kernel.org>, Christoph Hellwig <hch@infradead.org>, Ming Lei <ming.lei@canonical.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 14, 2015 at 02:23:11PM +0200, Michal Kubecek wrote:
-> Currently nf_conntrack_proto_sctp module handles only packets between
-> primary addresses used to establish the connection. Any packets between
-> secondary addresses are classified as invalid so that usual firewall
-> configurations drop them. Allowing HEARTBEAT and HEARTBEAT-ACK chunks to
-> establish a new conntrack would allow traffic between secondary
-> addresses to pass through. A more sophisticated solution based on the
-> addresses advertised in the initial handshake (and possibly also later
-> dynamic address addition and removal) would be much harder to implement.
-> Moreover, in general we cannot assume to always see the initial
-> handshake as it can be routed through a different path.
-> 
-> The patch adds two new conntrack states:
-> 
->   SCTP_CONNTRACK_HB_SENT  - a HEARTBEAT chunk seen but not acked
->   SCTP_CONNTRACK_HB_ACKED - a HEARTBEAT acked by HEARTBEAT-ACK
-> 
-> State transition rules:
-> 
-> - HB_SENT responds to usual chunks the same way as NONE (so that the
->   behaviour changes as little as possible)
-> - HB_ACKED responds to usual chunks the same way as ESTABLISHED does,
->   except the resulting state is HB_ACKED rather than ESTABLISHED
-> - previously existing states except NONE are preserved when HEARTBEAT or
->   HEARTBEAT-ACK is seen
-> - NONE (in the initial direction) changes to HB_SENT on HEARTBEAT
->   and to CLOSED on HEARTBEAT-ACK
-> - HB_SENT changes to HB_ACKED on HEARTBEAT-ACK in the reply direction
-> - HB_SENT and HB_ACKED are preserved on HEARTBEAT/HEARTBEAT-ACK
->   otherwise
-> 
-> Default timeout values for new states are
-> 
->   HB_SENT: 30 seconds (default hb_interval)
->   HB_ACKED: 210 seconds (hb_interval * path_max_retry + max_rto)
-> 
-> (We cannot expect to see the shutdown sequence so that the HB_ACKED
-> timeout shouldn't be too long.)
-> 
-> Signed-off-by: Michal Kubecek <mkubecek@suse.cz>
-> ---
->  include/uapi/linux/netfilter/nf_conntrack_sctp.h |   2 +
->  net/netfilter/nf_conntrack_proto_sctp.c          | 110 ++++++++++++++++++-----
->  2 files changed, 90 insertions(+), 22 deletions(-)
-> 
-> diff --git a/include/uapi/linux/netfilter/nf_conntrack_sctp.h b/include/uapi/linux/netfilter/nf_conntrack_sctp.h
-> index ceeefe6681b5..3ec7a6082457 100644
-> --- a/include/uapi/linux/netfilter/nf_conntrack_sctp.h
-> +++ b/include/uapi/linux/netfilter/nf_conntrack_sctp.h
-> @@ -13,6 +13,8 @@ enum sctp_conntrack {
->  	SCTP_CONNTRACK_SHUTDOWN_SENT,
->  	SCTP_CONNTRACK_SHUTDOWN_RECD,
->  	SCTP_CONNTRACK_SHUTDOWN_ACK_SENT,
-> +	SCTP_CONNTRACK_HB_SENT,
-> +	SCTP_CONNTRACK_HB_ACKED,
->  	SCTP_CONNTRACK_MAX
->  };
->  
-> diff --git a/net/netfilter/nf_conntrack_proto_sctp.c b/net/netfilter/nf_conntrack_proto_sctp.c
-> index b45da90fad32..efb6d5b16393 100644
-> --- a/net/netfilter/nf_conntrack_proto_sctp.c
-> +++ b/net/netfilter/nf_conntrack_proto_sctp.c
-> @@ -42,6 +42,8 @@ static const char *const sctp_conntrack_names[] = {
->  	"SHUTDOWN_SENT",
->  	"SHUTDOWN_RECD",
->  	"SHUTDOWN_ACK_SENT",
-> +	"HEARTBEAT_SENT",
-> +	"HEARTBEAT_ACKED",
->  };
->  
->  #define SECS  * HZ
-> @@ -57,6 +59,8 @@ static unsigned int sctp_timeouts[SCTP_CONNTRACK_MAX] __read_mostly = {
->  	[SCTP_CONNTRACK_SHUTDOWN_SENT]		= 300 SECS / 1000,
->  	[SCTP_CONNTRACK_SHUTDOWN_RECD]		= 300 SECS / 1000,
->  	[SCTP_CONNTRACK_SHUTDOWN_ACK_SENT]	= 3 SECS,
-> +	[SCTP_CONNTRACK_HB_SENT]		= 30 SECS,
-> +	[SCTP_CONNTRACK_HB_ACKED]		= 210 SECS,
->  };
->  
->  #define sNO SCTP_CONNTRACK_NONE
-> @@ -67,6 +71,8 @@ static unsigned int sctp_timeouts[SCTP_CONNTRACK_MAX] __read_mostly = {
->  #define	sSS SCTP_CONNTRACK_SHUTDOWN_SENT
->  #define	sSR SCTP_CONNTRACK_SHUTDOWN_RECD
->  #define	sSA SCTP_CONNTRACK_SHUTDOWN_ACK_SENT
-> +#define	sHS SCTP_CONNTRACK_HB_SENT
-> +#define	sHA SCTP_CONNTRACK_HB_ACKED
->  #define	sIV SCTP_CONNTRACK_MAX
->  
->  /*
-> @@ -88,6 +94,10 @@ SHUTDOWN_ACK_SENT - We have seen a SHUTDOWN_ACK chunk in the direction opposite
->  		    to that of the SHUTDOWN chunk.
->  CLOSED            - We have seen a SHUTDOWN_COMPLETE chunk in the direction of
->  		    the SHUTDOWN chunk. Connection is closed.
-> +HEARTBEAT_SENT    - We have seen a HEARTBEAT in a new flow.
-> +HEARTBEAT_ACKED   - We have seen a HEARTBEAT-ACK in the direction opposite to
-> +		    that of the HEARTBEAT chunk. Secondary connection is
-> +		    established.
->  */
->  
->  /* TODO
-> @@ -97,36 +107,40 @@ CLOSED            - We have seen a SHUTDOWN_COMPLETE chunk in the direction of
->   - Check the error type in the reply dir before transitioning from
->  cookie echoed to closed.
->   - Sec 5.2.4 of RFC 2960
-> - - Multi Homing support.
-> + - Full Multi Homing support.
->  */
->  
->  /* SCTP conntrack state transitions */
-> -static const u8 sctp_conntracks[2][9][SCTP_CONNTRACK_MAX] = {
-> +static const u8 sctp_conntracks[2][11][SCTP_CONNTRACK_MAX] = {
->  	{
->  /*	ORIGINAL	*/
-> -/*                  sNO, sCL, sCW, sCE, sES, sSS, sSR, sSA */
-> -/* init         */ {sCW, sCW, sCW, sCE, sES, sSS, sSR, sSA},
-> -/* init_ack     */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA},
-> -/* abort        */ {sCL, sCL, sCL, sCL, sCL, sCL, sCL, sCL},
-> -/* shutdown     */ {sCL, sCL, sCW, sCE, sSS, sSS, sSR, sSA},
-> -/* shutdown_ack */ {sSA, sCL, sCW, sCE, sES, sSA, sSA, sSA},
-> -/* error        */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA},/* Can't have Stale cookie*/
-> -/* cookie_echo  */ {sCL, sCL, sCE, sCE, sES, sSS, sSR, sSA},/* 5.2.4 - Big TODO */
-> -/* cookie_ack   */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA},/* Can't come in orig dir */
-> -/* shutdown_comp*/ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sCL}
-> +/*                  sNO, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA */
-> +/* init         */ {sCW, sCW, sCW, sCE, sES, sSS, sSR, sSA, sCW, sHA},
-> +/* init_ack     */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA, sCL, sHA},
-> +/* abort        */ {sCL, sCL, sCL, sCL, sCL, sCL, sCL, sCL, sCL, sCL},
-> +/* shutdown     */ {sCL, sCL, sCW, sCE, sSS, sSS, sSR, sSA, sCL, sSS},
-> +/* shutdown_ack */ {sSA, sCL, sCW, sCE, sES, sSA, sSA, sSA, sSA, sHA},
-> +/* error        */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA, sCL, sHA},/* Can't have Stale cookie*/
-> +/* cookie_echo  */ {sCL, sCL, sCE, sCE, sES, sSS, sSR, sSA, sCL, sHA},/* 5.2.4 - Big TODO */
-> +/* cookie_ack   */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA, sCL, sHA},/* Can't come in orig dir */
-> +/* shutdown_comp*/ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sCL, sCL, sHA},
-> +/* heartbeat    */ {sHS, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA},
-> +/* heartbeat_ack*/ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA}
->  	},
->  	{
->  /*	REPLY	*/
-> -/*                  sNO, sCL, sCW, sCE, sES, sSS, sSR, sSA */
-> -/* init         */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA},/* INIT in sCL Big TODO */
-> -/* init_ack     */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA},
-> -/* abort        */ {sIV, sCL, sCL, sCL, sCL, sCL, sCL, sCL},
-> -/* shutdown     */ {sIV, sCL, sCW, sCE, sSR, sSS, sSR, sSA},
-> -/* shutdown_ack */ {sIV, sCL, sCW, sCE, sES, sSA, sSA, sSA},
-> -/* error        */ {sIV, sCL, sCW, sCL, sES, sSS, sSR, sSA},
-> -/* cookie_echo  */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA},/* Can't come in reply dir */
-> -/* cookie_ack   */ {sIV, sCL, sCW, sES, sES, sSS, sSR, sSA},
-> -/* shutdown_comp*/ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sCL}
-> +/*                  sNO, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA */
-> +/* init         */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sIV, sHA},/* INIT in sCL Big TODO */
-> +/* init_ack     */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sIV, sHA},
-> +/* abort        */ {sIV, sCL, sCL, sCL, sCL, sCL, sCL, sCL, sIV, sCL},
-> +/* shutdown     */ {sIV, sCL, sCW, sCE, sSR, sSS, sSR, sSA, sIV, sSR},
-> +/* shutdown_ack */ {sIV, sCL, sCW, sCE, sES, sSA, sSA, sSA, sIV, sHA},
-> +/* error        */ {sIV, sCL, sCW, sCL, sES, sSS, sSR, sSA, sIV, sHA},
-> +/* cookie_echo  */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sIV, sHA},/* Can't come in reply dir */
-> +/* cookie_ack   */ {sIV, sCL, sCW, sES, sES, sSS, sSR, sSA, sIV, sHA},
-> +/* shutdown_comp*/ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sCL, sIV, sHA},
-> +/* heartbeat    */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA},
-> +/* heartbeat_ack*/ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHA, sHA}
->  	}
->  };
->  
-> @@ -278,6 +292,14 @@ static int sctp_new_state(enum ip_conntrack_dir dir,
->  		pr_debug("SCTP_CID_SHUTDOWN_COMPLETE\n");
->  		i = 8;
->  		break;
-> +	case SCTP_CID_HEARTBEAT:
-> +		pr_debug("SCTP_CID_HEARTBEAT");
-> +		i = 9;
-> +		break;
-> +	case SCTP_CID_HEARTBEAT_ACK:
-> +		pr_debug("SCTP_CID_HEARTBEAT_ACK");
-> +		i = 10;
-> +		break;
->  	default:
->  		/* Other chunks like DATA, SACK, HEARTBEAT and
->  		its ACK do not cause a change in state */
+This patches provides one interface for enabling direct IO
+from user space:
 
-Would you update this comment on default case please? As with this
-patch, HB and its ACK may cause a change in state.
+	- userspace(such as losetup) can pass 'file' which is
+	opened/fcntl as O_DIRECT
 
-Other than this, sctp-wise, patch looks good to me. Thanks Michal.
+Also __loop_update_dio() is introduced to check if direct I/O
+can be used on current loop setting.
 
-  Marcelo
+The last big change is to introduce LO_FLAGS_DIRECT_IO flag
+for userspace to know if direct IO is used to access backing
+file.
 
+Cc: linux-api@vger.kernel.org
+Signed-off-by: Ming Lei <ming.lei@canonical.com>
+---
+ drivers/block/loop.c      | 65 ++++++++++++++++++++++++++++++++++++++++++++++-
+ drivers/block/loop.h      |  1 +
+ include/uapi/linux/loop.h |  1 +
+ 3 files changed, 66 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index ce94b92..35aa3dd 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -164,6 +164,49 @@ static loff_t get_loop_size(struct loop_device *lo, struct file *file)
+ 	return get_size(lo->lo_offset, lo->lo_sizelimit, file);
+ }
+ 
++static void __loop_update_dio(struct loop_device *lo, bool dio)
++{
++	struct file *file = lo->lo_backing_file;
++	struct inode *inode = file->f_mapping->host;
++	bool use_dio;
++
++	/*
++	 * loop block's logical block size is 512, now
++	 * we support direct I/O only if the backing
++	 * block devices' minimize I/O size is 512 and
++	 * the offset is aligned with 512.
++	 */
++	if (dio) {
++		if (inode->i_sb->s_bdev &&
++			bdev_io_min(inode->i_sb->s_bdev) == 512 &&
++			!(lo->lo_offset & 511))
++			use_dio = true;
++		else
++			use_dio = false;
++	} else {
++		use_dio = false;
++	}
++
++	if (lo->use_dio == use_dio)
++		return;
++
++	/* flush dirty pages before changing direct IO */
++	vfs_fsync(file, 0);
++
++	/*
++	 * The flag of LO_FLAGS_DIRECT_IO is handled similarly with
++	 * LO_FLAGS_READ_ONLY, both are set from kernel, and losetup
++	 * will get updated by ioctl(LOOP_GET_STATUS)
++	 */
++	blk_mq_freeze_queue(lo->lo_queue);
++	lo->use_dio = use_dio;
++	if (use_dio)
++		lo->lo_flags |= LO_FLAGS_DIRECT_IO;
++	else
++		lo->lo_flags &= ~LO_FLAGS_DIRECT_IO;
++	blk_mq_unfreeze_queue(lo->lo_queue);
++}
++
+ static int
+ figure_loop_size(struct loop_device *lo, loff_t offset, loff_t sizelimit)
+ {
+@@ -173,8 +216,12 @@ figure_loop_size(struct loop_device *lo, loff_t offset, loff_t sizelimit)
+ 
+ 	if (unlikely((loff_t)x != size))
+ 		return -EFBIG;
+-	if (lo->lo_offset != offset)
++	if (lo->lo_offset != offset) {
+ 		lo->lo_offset = offset;
++
++		/* update dio if lo_offset is changed*/
++		__loop_update_dio(lo, lo->use_dio);
++	}
+ 	if (lo->lo_sizelimit != sizelimit)
+ 		lo->lo_sizelimit = sizelimit;
+ 	set_capacity(lo->lo_disk, x);
+@@ -421,6 +468,11 @@ struct switch_request {
+ 	struct completion wait;
+ };
+ 
++static inline void loop_update_dio(struct loop_device *lo)
++{
++	__loop_update_dio(lo, io_is_direct(lo->lo_backing_file));
++}
++
+ /*
+  * Do the actual switch; called from the BIO completion routine
+  */
+@@ -441,6 +493,7 @@ static void do_loop_switch(struct loop_device *lo, struct switch_request *p)
+ 		mapping->host->i_bdev->bd_block_size : PAGE_SIZE;
+ 	lo->old_gfp_mask = mapping_gfp_mask(mapping);
+ 	mapping_set_gfp_mask(mapping, lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
++	loop_update_dio(lo);
+ }
+ 
+ /*
+@@ -627,11 +680,19 @@ static ssize_t loop_attr_partscan_show(struct loop_device *lo, char *buf)
+ 	return sprintf(buf, "%s\n", partscan ? "1" : "0");
+ }
+ 
++static ssize_t loop_attr_dio_show(struct loop_device *lo, char *buf)
++{
++	int dio = (lo->lo_flags & LO_FLAGS_DIRECT_IO);
++
++	return sprintf(buf, "%s\n", dio ? "1" : "0");
++}
++
+ LOOP_ATTR_RO(backing_file);
+ LOOP_ATTR_RO(offset);
+ LOOP_ATTR_RO(sizelimit);
+ LOOP_ATTR_RO(autoclear);
+ LOOP_ATTR_RO(partscan);
++LOOP_ATTR_RO(dio);
+ 
+ static struct attribute *loop_attrs[] = {
+ 	&loop_attr_backing_file.attr,
+@@ -639,6 +700,7 @@ static struct attribute *loop_attrs[] = {
+ 	&loop_attr_sizelimit.attr,
+ 	&loop_attr_autoclear.attr,
+ 	&loop_attr_partscan.attr,
++	&loop_attr_dio.attr,
+ 	NULL,
+ };
+ 
+@@ -783,6 +845,7 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
+ 	if (!(lo_flags & LO_FLAGS_READ_ONLY) && file->f_op->fsync)
+ 		blk_queue_flush(lo->lo_queue, REQ_FLUSH);
+ 
++	loop_update_dio(lo);
+ 	set_capacity(lo->lo_disk, size);
+ 	bd_set_size(bdev, size << 9);
+ 	loop_sysfs_init(lo);
+diff --git a/drivers/block/loop.h b/drivers/block/loop.h
+index b6c7d21..d1de221 100644
+--- a/drivers/block/loop.h
++++ b/drivers/block/loop.h
+@@ -58,6 +58,7 @@ struct loop_device {
+ 	struct mutex		lo_ctl_mutex;
+ 	struct kthread_worker	worker;
+ 	struct task_struct	*worker_task;
++	bool			use_dio;
+ 
+ 	struct request_queue	*lo_queue;
+ 	struct blk_mq_tag_set	tag_set;
+diff --git a/include/uapi/linux/loop.h b/include/uapi/linux/loop.h
+index e0cecd2..949851c 100644
+--- a/include/uapi/linux/loop.h
++++ b/include/uapi/linux/loop.h
+@@ -21,6 +21,7 @@ enum {
+ 	LO_FLAGS_READ_ONLY	= 1,
+ 	LO_FLAGS_AUTOCLEAR	= 4,
+ 	LO_FLAGS_PARTSCAN	= 8,
++	LO_FLAGS_DIRECT_IO	= 16,
+ };
+ 
+ #include <asm/posix_types.h>	/* for __kernel_old_dev_t */
+-- 
+1.9.1
