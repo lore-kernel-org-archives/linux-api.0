@@ -1,42 +1,62 @@
-From: Michal Kubecek <mkubecek-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH nf-next] netfilter: nf_ct_sctp: minimal multihoming
- support
-Date: Thu, 16 Jul 2015 18:13:42 +0200
-Message-ID: <20150716161342.GA17960@unicorn.suse.cz>
-References: <20150714122311.8DA8EA0C9A@unicorn.suse.cz>
- <20150716135059.GB14704@localhost.localdomain>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
+ number (x86)
+Date: Thu, 16 Jul 2015 18:08:08 +0000 (UTC)
+Message-ID: <549319255.383.1437070088597.JavaMail.zimbra@efficios.com>
+References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com> <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F39C6@PRN-MBX02-1.TheFacebook.com> <587954201.31.1436808992876.JavaMail.zimbra@efficios.com> <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F5DA0@PRN-MBX02-1.TheFacebook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150716135059.GB14704-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
+In-Reply-To: <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F5DA0-f8hGUhss0nh9TZdEUguypQ2O0Ztt9esIQQ4Iyu8u01E@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Marcelo Ricardo Leitner <marcelo.leitner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>, Jozsef Kadlecsik <kadlec-K40Dz/62t/MgiyqX0sVFJYdd74u8MsAO@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+To: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
+Cc: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 16, 2015 at 10:50:59AM -0300, Marcelo Ricardo Leitner wrote:
-> On Tue, Jul 14, 2015 at 02:23:11PM +0200, Michal Kubecek wrote:
-> > @@ -278,6 +292,14 @@ static int sctp_new_state(enum ip_conntrack_dir dir,
-> >  		pr_debug("SCTP_CID_SHUTDOWN_COMPLETE\n");
-> >  		i = 8;
-> >  		break;
-> > +	case SCTP_CID_HEARTBEAT:
-> > +		pr_debug("SCTP_CID_HEARTBEAT");
-> > +		i = 9;
-> > +		break;
-> > +	case SCTP_CID_HEARTBEAT_ACK:
-> > +		pr_debug("SCTP_CID_HEARTBEAT_ACK");
-> > +		i = 10;
-> > +		break;
-> >  	default:
-> >  		/* Other chunks like DATA, SACK, HEARTBEAT and
-> >  		its ACK do not cause a change in state */
+----- On Jul 14, 2015, at 5:34 AM, Ben Maurer bmaurer-b10kYP2dOMg@public.gmane.org wrote:
+
+> Mathieu Desnoyers wrote:
+>> If we invoke this per-thread registration directly in the glibc NPTL
+>> implementation,
+>> in start_thread, do you think it would fit your requirements ?
 > 
-> Would you update this comment on default case please? As with this
-> patch, HB and its ACK may cause a change in state.
+> I guess this would basically be transparent to the user -- we'd just need to
+> make sure that the registration happens very early, before any chance of
+> calling malloc.
 
-Thank you for catching this. I'll update the comment in v2 I'm going to
-send tomorrow after some testing.
+Yes, this is my thinking too.
 
-                                                         Michal Kubecek
+> 
+> That said, having the ability for the kernel to understand that TLS
+> implementation are laid out using the same offset on each thread seems like
+> something that could be valuable long term. Doing so makes it possible to build
+> other TLS-based features without forcing each thread to be registered.
+
+AFAIU, using a fixed hardcoded ABI between kernel and user-space might make
+transition from the pre-existing ABI (where this memory area is not
+reserved) a bit tricky without registering the area, or getting a "feature"
+flag, through a system call.
+
+The related question then becomes: should we issue this system call once
+per process, or once per thread at thread creation ? Issuing it once per
+thread is marginally more costly for thread creation, but seems to be
+easier to deal with internally within the kernel.
+
+We could however ensure that only a single system call is needed per new-coming
+thread, rather than one system call per feature. One way to do this would be
+to register an area that may contain more than just the CPU id. It could
+consist of an expandable structure with fixed offsets. When registered, we
+could pass the size of that structure as an argument to the system call, so
+the kernel knows which features are expected by user-space.
+
+Thoughts ?
+
+Thanks,
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
