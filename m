@@ -1,47 +1,113 @@
-From: Paolo Bonzini <pbonzini@redhat.com>
-Subject: Re: [PATCH -mm v8 5/7] mmu-notifier: add clear_young callback
-Date: Thu, 16 Jul 2015 13:35:02 +0200
-Message-ID: <55A796E6.3090603@redhat.com>
-References: <cover.1436967694.git.vdavydov@parallels.com>
- <82693bd5b5dbf4e65657fa22288942650aa04a0a.1436967694.git.vdavydov@parallels.com>
- <CAJu=L58yzBr8+XaV90x+S60YnJzd7Yr2fDEgaQ0bcCKpwzSAhw@mail.gmail.com>
+From: Michal Kubecek <mkubecek@suse.cz>
+Subject: Re: [PATCH nf-next] netfilter: nf_ct_sctp: minimal multihoming
+ support
+Date: Thu, 16 Jul 2015 14:05:12 +0200
+Message-ID: <20150716120512.GA7200@unicorn.suse.cz>
+References: <20150714122311.8DA8EA0C9A@unicorn.suse.cz>
+ <20150714134203.GG25674@breakpoint.cc>
+ <20150714164225.GB8478@unicorn.suse.cz>
+ <20150715203508.GA14704@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CAJu=L58yzBr8+XaV90x+S60YnJzd7Yr2fDEgaQ0bcCKpwzSAhw@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Andres Lagar-Cavilla <andreslc@google.com>, Vladimir Davydov <vdavydov@parallels.com>, kvm@vger.kernel.org, Eric Northup <digitaleric@google.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150715203508.GA14704@localhost.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
+Cc: Florian Westphal <fw@strlen.de>, netfilter-devel@vger.kernel.org, coreteam@netfilter.org, linux-api@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, Pablo Neira Ayuso <pablo@netfilter.org>, Patrick McHardy <kaber@trash.net>, Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>, "David S. Miller" <davem@davemloft.net>
 List-Id: linux-api@vger.kernel.org
 
+On Wed, Jul 15, 2015 at 05:35:08PM -0300, Marcelo Ricardo Leitner wrote:
+> Hi,
+> 
+> On Tue, Jul 14, 2015 at 06:42:25PM +0200, Michal Kubecek wrote:
+> > On Tue, Jul 14, 2015 at 03:42:03PM +0200, Florian Westphal wrote:
+> > > Michal Kubecek <mkubecek@suse.cz> wrote:
+> > > > +	case SCTP_CID_HEARTBEAT:
+> > > > +		pr_debug("SCTP_CID_HEARTBEAT");
+> > > > +		i = 9;
+> > > > +		break;
+> > > > +	case SCTP_CID_HEARTBEAT_ACK:
+> > > > +		pr_debug("SCTP_CID_HEARTBEAT_ACK");
+> > > > +		i = 10;
+> > > > +		break;
+> > > >  	default:
+> > > >  		/* Other chunks like DATA, SACK, HEARTBEAT and
+> > > >  		its ACK do not cause a change in state */
+> > > > @@ -329,6 +351,8 @@ static int sctp_packet(struct nf_conn *ct,
+> > > >  	    !test_bit(SCTP_CID_COOKIE_ECHO, map) &&
+> > > >  	    !test_bit(SCTP_CID_ABORT, map) &&
+> > > >  	    !test_bit(SCTP_CID_SHUTDOWN_ACK, map) &&
+> > > > +	    !test_bit(SCTP_CID_HEARTBEAT, map) &&
+> > > > +	    !test_bit(SCTP_CID_HEARTBEAT_ACK, map) &&
+> > > >  	    sh->vtag != ct->proto.sctp.vtag[dir]) {
+> > > >  		pr_debug("Verification tag check failed\n");
+> > > >  		goto out;
+> > > > @@ -357,6 +381,16 @@ static int sctp_packet(struct nf_conn *ct,
+> > > >  			/* Sec 8.5.1 (D) */
+> > > >  			if (sh->vtag != ct->proto.sctp.vtag[dir])
+> > > >  				goto out_unlock;
+> > > > +		} else if (sch->type == SCTP_CID_HEARTBEAT ||
+> > > > +			   sch->type == SCTP_CID_HEARTBEAT_ACK) {
+> > > > +			if (ct->proto.sctp.vtag[dir] == 0) {
+> > > > +				pr_debug("Setting vtag %x for dir %d\n",
+> > > > +					 sh->vtag, dir);
+> > > > +				ct->proto.sctp.vtag[dir] = sh->vtag;
+> > > 
+> > > Could you please elaborate on the [dir] == 0 test?
+> > > 
+> > > I see this might happen for SCTP_CID_HEARTBEAT_ACK, but why is this
+> > > needed for SCTP_CID_HEARTBEAT ?
+> > > 
+> > > We found a conntrack entry so shouldn't the vtag[dir] already be > 0?
+> > 
+> > Yes, you are right. This was originally intended to handle the case when
+> > a HEARTBEAT in the reply direction is seen before the HEARTBEAT-ACK but
+> > such HEARTBEAT would be dropped anyway in current version.
+> 
+> And we have to keep the first vtag attempted because otherwise an
+> attacker could just probe for the right one until she gets a reply.
+> 
+> IOW, if a different vtag is attempted, we should drop it as the packet
+> doesn't belong to that association/conntrack entry.
+> 
+> As vtags are always != 0 in such case, that's a way to know if we
+> already have that information or not.
+> 
+> > On the other hand, an alternative would be
+> > 
+> > 		} else if (sch->type == SCTP_CID_HEARTBEAT_ACK &&
+> > 			   ct->proto.sctp.vtag[dir] == 0) {
+> > 			pr_debug("Setting vtag %x for dir %d\n",
+> > 				 sh->vtag, dir);
+> > 			ct->proto.sctp.vtag[dir] = sh->vtag;
+> > 		} else if ((sch->type == SCTP_CID_HEARTBEAT ||
+> > 			    sch->type == SCTP_CID_HEARTBEAT_ACK) &&
+> > 			   sh->vtag != ct->proto.sctp.vtag[dir]) {
+> > 			pr_debug("Verification tag check failed\n");
+> > 			goto out_unlock;
+> > 		}
+> > 
+> > I'm not sure it looks better.
+> 
+> Now it seems swapped, we should save the tag on HB and check on
+> HB_ACK only and would have to check against !dir entry. Like:
 
+I forgot to include the explanation of vtag setting/checking logic into
+the commit message. It is supposed to work like this:
 
-On 15/07/2015 21:16, Andres Lagar-Cavilla wrote:
->> > +static int kvm_mmu_notifier_clear_young(struct mmu_notifier *mn,
->> > +                                       struct mm_struct *mm,
->> > +                                       unsigned long start,
->> > +                                       unsigned long end)
->> > +{
->> > +       struct kvm *kvm = mmu_notifier_to_kvm(mn);
->> > +       int young, idx;
-> For reclaim, the clear_flush_young notifier may blow up the secondary
-> pte to estimate the access pattern, depending on hardware support (EPT
-> access bits available in Haswell onwards, not sure about AMD, PPC,
-> etc).
+Normally, vtag is set from the INIT chunk for the reply direction and
+from the INIT-ACK chunk for the originating direction (i.e. each of
+these defines vtag value for the opposite direction). For secondary
+conntracks, we can't rely on seeing INIT/INIT-ACK and even if we have
+seen them, we would need to connect two different conntracks. Therefore
+simplified logic is applied: vtag of first packet in each direction
+(HEARTBEAT in the originating and HEARTBEAT-ACK in reply direction) is
+saved and all following packets in that direction are compared with this
+saved value. While INIT and INIT-ACK define vtag for the opposite
+direction (that's where "!dir" comes from), vtags extracted from
+HEARTBEAT and HEARTBEAT-ACK are always for their direction. And we have
+to check vtags on packets with HEARTBEAT chunks as well because their
+vtags should match vtag of the first (set in sctp_new()).
 
-It seems like this problem is limited to pre-Haswell EPT.
-
-I'm okay with the patch.  If we find problems later we can always add a
-parameter to kvm_age_hva so that it effectively doesn't do anything on
-clear_young.
-
-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
-
-Paolo
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+                                                          Michal Kubecek
