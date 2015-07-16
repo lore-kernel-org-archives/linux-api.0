@@ -1,113 +1,64 @@
-From: Andres Lagar-Cavilla <andreslc@google.com>
-Subject: Re: [PATCH -mm v8 4/7] proc: add kpagecgroup file
-Date: Thu, 16 Jul 2015 12:04:59 -0700
-Message-ID: <CAJu=L5_AUFv=Bh2WiWwOsMx41z_X0cAum_WkNikSE4Bo0r+wfQ@mail.gmail.com>
-References: <cover.1436967694.git.vdavydov@parallels.com>
-	<c6cbd44b9d5127cdaaa6f7d330e9bf715ec55534.1436967694.git.vdavydov@parallels.com>
-	<CAJu=L58kZW2WRpx8wLx=FXdS29BJ+euLRdDcTXJKwf-VLT6SCA@mail.gmail.com>
-	<20150716092841.GA2001@esperanza>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU number (x86)
+Date: Thu, 16 Jul 2015 12:27:10 -0700
+Message-ID: <CALCETrWEKE=mow3vVh7C4r8CuGy_d5VOEz7KkpijuR5cpBfFtg@mail.gmail.com>
+References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F39C6@PRN-MBX02-1.TheFacebook.com>
+ <587954201.31.1436808992876.JavaMail.zimbra@efficios.com> <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F5DA0@PRN-MBX02-1.TheFacebook.com>
+ <549319255.383.1437070088597.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: multipart/alternative; boundary=089e0118260872eeb3051b02bf64
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150716092841.GA2001@esperanza>
-Sender: owner-linux-mm@kvack.org
-To: Vladimir Davydov <vdavydov@parallels.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <549319255.383.1437070088597.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
---089e0118260872eeb3051b02bf64
-Content-Type: text/plain; charset=UTF-8
-
-On Thu, Jul 16, 2015 at 2:28 AM, Vladimir Davydov <vdavydov@parallels.com>
-wrote:
-
-> On Wed, Jul 15, 2015 at 12:03:18PM -0700, Andres Lagar-Cavilla wrote:
-> > For both /proc/kpage* interfaces you add (and more critically for the
-> > rmap-causing one, kpageidle):
-> >
-> > It's a good idea to do cond_sched(). Whether after each pfn, each Nth
-> > pfn, each put_user, I leave to you, but a reasonable cadence is
-> > needed, because user-space can call this on the entire physical
-> > address space, and that's a lot of work to do without re-scheduling.
+On Thu, Jul 16, 2015 at 11:08 AM, Mathieu Desnoyers
+<mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+> ----- On Jul 14, 2015, at 5:34 AM, Ben Maurer bmaurer-b10kYP2dOMg@public.gmane.org wrote:
 >
-> I really don't think it's necessary. These files can only be
-> read/written by the root, who has plenty ways to kill the system anyway.
-> The program that is allowed to read/write these files must be conscious
-> and do it in batches of reasonable size. AFAICS the same reasoning
-> already lays behind /proc/kpagecount and /proc/kpageflag, which also do
-> not thrust the "right" batch size on their readers.
+>> Mathieu Desnoyers wrote:
+>>> If we invoke this per-thread registration directly in the glibc NPTL
+>>> implementation,
+>>> in start_thread, do you think it would fit your requirements ?
+>>
+>> I guess this would basically be transparent to the user -- we'd just need to
+>> make sure that the registration happens very early, before any chance of
+>> calling malloc.
 >
-
-Beg to disagree. You're conflating intended use with system health. A
-cond_sched() is a one-liner.
-
-Andres
-
+> Yes, this is my thinking too.
 >
-> Thanks,
-> Vladimir
+>>
+>> That said, having the ability for the kernel to understand that TLS
+>> implementation are laid out using the same offset on each thread seems like
+>> something that could be valuable long term. Doing so makes it possible to build
+>> other TLS-based features without forcing each thread to be registered.
 >
-
-
-
--- 
-Andres Lagar-Cavilla | Google Kernel Team | andreslc@google.com
-
---089e0118260872eeb3051b02bf64
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><br><div class=3D"gmail_extra"><br><div class=3D"gmail_quo=
-te">On Thu, Jul 16, 2015 at 2:28 AM, Vladimir Davydov <span dir=3D"ltr">&lt=
-;<a href=3D"mailto:vdavydov@parallels.com" target=3D"_blank">vdavydov@paral=
-lels.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=
-=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span cl=
-ass=3D"">On Wed, Jul 15, 2015 at 12:03:18PM -0700, Andres Lagar-Cavilla wro=
-te:<br>
-&gt; For both /proc/kpage* interfaces you add (and more critically for the<=
-br>
-&gt; rmap-causing one, kpageidle):<br>
-&gt;<br>
-&gt; It&#39;s a good idea to do cond_sched(). Whether after each pfn, each =
-Nth<br>
-&gt; pfn, each put_user, I leave to you, but a reasonable cadence is<br>
-&gt; needed, because user-space can call this on the entire physical<br>
-&gt; address space, and that&#39;s a lot of work to do without re-schedulin=
-g.<br>
-<br>
-</span>I really don&#39;t think it&#39;s necessary. These files can only be=
-<br>
-read/written by the root, who has plenty ways to kill the system anyway.<br=
+> AFAIU, using a fixed hardcoded ABI between kernel and user-space might make
+> transition from the pre-existing ABI (where this memory area is not
+> reserved) a bit tricky without registering the area, or getting a "feature"
+> flag, through a system call.
 >
-The program that is allowed to read/write these files must be conscious<br>
-and do it in batches of reasonable size. AFAICS the same reasoning<br>
-already lays behind /proc/kpagecount and /proc/kpageflag, which also do<br>
-not thrust the &quot;right&quot; batch size on their readers.<br></blockquo=
-te><div><br></div><div>Beg to disagree. You&#39;re conflating intended use =
-with system health. A cond_sched() is a one-liner.</div><div><br></div><div=
->Andres=C2=A0</div><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 =
-.8ex;border-left:1px #ccc solid;padding-left:1ex">
-<br>
-Thanks,<br>
-Vladimir<br>
-</blockquote></div><br><br clear=3D"all"><div><br></div>-- <br><div class=
-=3D"gmail_signature"><div dir=3D"ltr"><span style=3D"color:rgb(85,85,85);fo=
-nt-family:sans-serif;font-size:small;line-height:19.5px;border-width:2px 0p=
-x 0px;border-style:solid;border-color:rgb(213,15,37);padding-top:2px;margin=
--top:2px">Andres Lagar-Cavilla=C2=A0|</span><span style=3D"color:rgb(85,85,=
-85);font-family:sans-serif;font-size:small;line-height:19.5px;border-width:=
-2px 0px 0px;border-style:solid;border-color:rgb(51,105,232);padding-top:2px=
-;margin-top:2px">=C2=A0Google Kernel Team |</span><span style=3D"color:rgb(=
-85,85,85);font-family:sans-serif;font-size:small;line-height:19.5px;border-=
-width:2px 0px 0px;border-style:solid;border-color:rgb(0,153,57);padding-top=
-:2px;margin-top:2px">=C2=A0<a href=3D"mailto:andreslc@google.com" target=3D=
-"_blank">andreslc@google.com</a>=C2=A0</span><br></div></div>
-</div></div>
+> The related question then becomes: should we issue this system call once
+> per process, or once per thread at thread creation ? Issuing it once per
+> thread is marginally more costly for thread creation, but seems to be
+> easier to deal with internally within the kernel.
+>
+> We could however ensure that only a single system call is needed per new-coming
+> thread, rather than one system call per feature. One way to do this would be
+> to register an area that may contain more than just the CPU id. It could
+> consist of an expandable structure with fixed offsets. When registered, we
+> could pass the size of that structure as an argument to the system call, so
+> the kernel knows which features are expected by user-space.
 
---089e0118260872eeb3051b02bf64--
+If we actually bit the bullet and implemented per-cpu mappings, we
+could have this be completely flexible because there would be no
+format at all.  Similarly, if we implemented per-cpu segments,
+userspace would need to agree with *itself* how to arbitrate it, but
+the kernel wouldn't need to be involved.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+With this kind of memory poking, it's definitely messier, which is unfortunate.
+
+--Andy
