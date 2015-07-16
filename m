@@ -1,74 +1,42 @@
-From: Ming Lei <ming.lei@canonical.com>
-Subject: [PATCH v7 5/6] block: loop: introduce ioctl command of LOOP_SET_DIRECT_IO
-Date: Thu, 16 Jul 2015 23:37:47 +0800
-Message-ID: <1437061068-26118-6-git-send-email-ming.lei@canonical.com>
-References: <1437061068-26118-1-git-send-email-ming.lei@canonical.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1437061068-26118-1-git-send-email-ming.lei@canonical.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org
-Cc: "Justin M. Forbes" <jforbes@fedoraproject.org>, Jeff Moyer <jmoyer@redhat.com>, Tejun Heo <tj@kernel.org>, Christoph Hellwig <hch@infradead.org>, Ming Lei <ming.lei@canonical.com>, linux-api@vger.kernel.org
+From: Michal Kubecek <mkubecek-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH nf-next] netfilter: nf_ct_sctp: minimal multihoming
+ support
+Date: Thu, 16 Jul 2015 18:13:42 +0200
+Message-ID: <20150716161342.GA17960@unicorn.suse.cz>
+References: <20150714122311.8DA8EA0C9A@unicorn.suse.cz>
+ <20150716135059.GB14704@localhost.localdomain>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150716135059.GB14704-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Marcelo Ricardo Leitner <marcelo.leitner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>, Jozsef Kadlecsik <kadlec-K40Dz/62t/MgiyqX0sVFJYdd74u8MsAO@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-If loop block is mounted via 'mount -o loop', it isn't easy
-to pass file descriptor opened as O_DIRECT, so this patch
-introduces a new command to support direct IO for this case.
+On Thu, Jul 16, 2015 at 10:50:59AM -0300, Marcelo Ricardo Leitner wrote:
+> On Tue, Jul 14, 2015 at 02:23:11PM +0200, Michal Kubecek wrote:
+> > @@ -278,6 +292,14 @@ static int sctp_new_state(enum ip_conntrack_dir dir,
+> >  		pr_debug("SCTP_CID_SHUTDOWN_COMPLETE\n");
+> >  		i = 8;
+> >  		break;
+> > +	case SCTP_CID_HEARTBEAT:
+> > +		pr_debug("SCTP_CID_HEARTBEAT");
+> > +		i = 9;
+> > +		break;
+> > +	case SCTP_CID_HEARTBEAT_ACK:
+> > +		pr_debug("SCTP_CID_HEARTBEAT_ACK");
+> > +		i = 10;
+> > +		break;
+> >  	default:
+> >  		/* Other chunks like DATA, SACK, HEARTBEAT and
+> >  		its ACK do not cause a change in state */
+> 
+> Would you update this comment on default case please? As with this
+> patch, HB and its ACK may cause a change in state.
 
-Cc: linux-api@vger.kernel.org
-Signed-off-by: Ming Lei <ming.lei@canonical.com>
----
- drivers/block/loop.c      | 19 +++++++++++++++++++
- include/uapi/linux/loop.h |  1 +
- 2 files changed, 20 insertions(+)
+Thank you for catching this. I'll update the comment in v2 I'm going to
+send tomorrow after some testing.
 
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index 35aa3dd..3f26a0a 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -1214,6 +1214,20 @@ static int loop_set_capacity(struct loop_device *lo, struct block_device *bdev)
- 	return figure_loop_size(lo, lo->lo_offset, lo->lo_sizelimit);
- }
- 
-+static int loop_set_dio(struct loop_device *lo, unsigned long arg)
-+{
-+	int error = -ENXIO;
-+	if (lo->lo_state != Lo_bound)
-+		goto out;
-+
-+	__loop_update_dio(lo, !!arg);
-+	if (lo->use_dio == !!arg)
-+		return 0;
-+	error = -EINVAL;
-+ out:
-+	return error;
-+}
-+
- static int lo_ioctl(struct block_device *bdev, fmode_t mode,
- 	unsigned int cmd, unsigned long arg)
- {
-@@ -1257,6 +1271,11 @@ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
- 		if ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN))
- 			err = loop_set_capacity(lo, bdev);
- 		break;
-+	case LOOP_SET_DIRECT_IO:
-+		err = -EPERM;
-+		if ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN))
-+			err = loop_set_dio(lo, arg);
-+		break;
- 	default:
- 		err = lo->ioctl ? lo->ioctl(lo, cmd, arg) : -EINVAL;
- 	}
-diff --git a/include/uapi/linux/loop.h b/include/uapi/linux/loop.h
-index 949851c..c8125ec 100644
---- a/include/uapi/linux/loop.h
-+++ b/include/uapi/linux/loop.h
-@@ -87,6 +87,7 @@ struct loop_info64 {
- #define LOOP_GET_STATUS64	0x4C05
- #define LOOP_CHANGE_FD		0x4C06
- #define LOOP_SET_CAPACITY	0x4C07
-+#define LOOP_SET_DIRECT_IO	0x4C08
- 
- /* /dev/loop-control interface */
- #define LOOP_CTL_ADD		0x4C80
--- 
-1.9.1
+                                                         Michal Kubecek
