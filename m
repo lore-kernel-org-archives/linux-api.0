@@ -1,62 +1,55 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
- number (x86)
-Date: Thu, 16 Jul 2015 18:08:08 +0000 (UTC)
-Message-ID: <549319255.383.1437070088597.JavaMail.zimbra@efficios.com>
-References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com> <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F39C6@PRN-MBX02-1.TheFacebook.com> <587954201.31.1436808992876.JavaMail.zimbra@efficios.com> <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F5DA0@PRN-MBX02-1.TheFacebook.com>
+From: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+Subject: [PATCH] pagemap: update documentation
+Date: Thu, 16 Jul 2015 21:47:42 +0300
+Message-ID: <20150716184742.8858.14639.stgit@buzz>
+References: <20150714152516.29844.69929.stgit@buzz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F5DA0-f8hGUhss0nh9TZdEUguypQ2O0Ztt9esIQQ4Iyu8u01E@public.gmane.org>
+In-Reply-To: <20150714152516.29844.69929.stgit@buzz>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
-Cc: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>
+To: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
------ On Jul 14, 2015, at 5:34 AM, Ben Maurer bmaurer-b10kYP2dOMg@public.gmane.org wrote:
+Notes about recent changes.
 
-> Mathieu Desnoyers wrote:
->> If we invoke this per-thread registration directly in the glibc NPTL
->> implementation,
->> in start_thread, do you think it would fit your requirements ?
-> 
-> I guess this would basically be transparent to the user -- we'd just need to
-> make sure that the registration happens very early, before any chance of
-> calling malloc.
+Signed-off-by: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+---
+ Documentation/vm/pagemap.txt |   14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
 
-Yes, this is my thinking too.
-
-> 
-> That said, having the ability for the kernel to understand that TLS
-> implementation are laid out using the same offset on each thread seems like
-> something that could be valuable long term. Doing so makes it possible to build
-> other TLS-based features without forcing each thread to be registered.
-
-AFAIU, using a fixed hardcoded ABI between kernel and user-space might make
-transition from the pre-existing ABI (where this memory area is not
-reserved) a bit tricky without registering the area, or getting a "feature"
-flag, through a system call.
-
-The related question then becomes: should we issue this system call once
-per process, or once per thread at thread creation ? Issuing it once per
-thread is marginally more costly for thread creation, but seems to be
-easier to deal with internally within the kernel.
-
-We could however ensure that only a single system call is needed per new-coming
-thread, rather than one system call per feature. One way to do this would be
-to register an area that may contain more than just the CPU id. It could
-consist of an expandable structure with fixed offsets. When registered, we
-could pass the size of that structure as an argument to the system call, so
-the kernel knows which features are expected by user-space.
-
-Thoughts ?
-
-Thanks,
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+diff --git a/Documentation/vm/pagemap.txt b/Documentation/vm/pagemap.txt
+index 3cfbbb333ea1..aab39aa7dd8f 100644
+--- a/Documentation/vm/pagemap.txt
++++ b/Documentation/vm/pagemap.txt
+@@ -16,12 +16,17 @@ There are three components to pagemap:
+     * Bits 0-4   swap type if swapped
+     * Bits 5-54  swap offset if swapped
+     * Bit  55    pte is soft-dirty (see Documentation/vm/soft-dirty.txt)
+-    * Bit  56    page exlusively mapped
++    * Bit  56    page exclusively mapped (since 4.2)
+     * Bits 57-60 zero
+-    * Bit  61    page is file-page or shared-anon
++    * Bit  61    page is file-page or shared-anon (since 3.5)
+     * Bit  62    page swapped
+     * Bit  63    page present
+ 
++   Since Linux 4.0 only users with the CAP_SYS_ADMIN capability can get PFNs:
++   for unprivileged users from 4.0 till 4.2 open fails with -EPERM, starting
++   from from 4.2 PFN field is zeroed if user has no CAP_SYS_ADMIN capability.
++   Reason: information about PFNs helps in exploiting Rowhammer vulnerability.
++
+    If the page is not present but in swap, then the PFN contains an
+    encoding of the swap file number and the page's offset into the
+    swap. Unmapped pages return a null PFN. This allows determining
+@@ -160,3 +165,8 @@ Other notes:
+ Reading from any of the files will return -EINVAL if you are not starting
+ the read on an 8-byte boundary (e.g., if you sought an odd number of bytes
+ into the file), or if the size of the read is not a multiple of 8 bytes.
++
++Before Linux 3.11 pagemap bits 55-60 were used for "page-shift" (which is
++always 12 at most architectures). Since Linux 3.11 their meaning changes
++after first clear of soft-dirty bits. Since Linux 4.2 they are used for
++flags unconditionally.
