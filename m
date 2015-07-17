@@ -1,329 +1,109 @@
-From: Michal Kubecek <mkubecek-AlSwsSmVLrQ@public.gmane.org>
-Subject: [PATCH nf-next v2] netfilter: nf_ct_sctp: minimal multihoming support
-Date: Fri, 17 Jul 2015 16:17:56 +0200 (CEST)
-Message-ID: <20150717141757.01EBFA0A84@unicorn.suse.cz>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU number (x86)
+Date: Fri, 17 Jul 2015 08:53:06 -0700
+Message-ID: <CALCETrWSg+gxxwxu8wG8uY8NVqKz6H3yT6YxQZWTm8mYakspgQ@mail.gmail.com>
+References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F39C6@PRN-MBX02-1.TheFacebook.com>
+ <587954201.31.1436808992876.JavaMail.zimbra@efficios.com> <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F5DA0@PRN-MBX02-1.TheFacebook.com>
+ <549319255.383.1437070088597.JavaMail.zimbra@efficios.com>
+ <CALCETrWEKE=mow3vVh7C4r8CuGy_d5VOEz7KkpijuR5cpBfFtg@mail.gmail.com> <20150717102105.GA21915@domone>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150717102105.GA21915@domone>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>, Jozsef Kadlecsik <kadlec-K40Dz/62t/MgiyqX0sVFJYdd74u8MsAO@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Florian Westphal <fw-HFFVJYpyMKqzQB+pC5nmwQ@public.gmane.org>, Marcelo Ricardo Leitner <marcelo.leitner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: =?UTF-8?B?T25kxZllaiBCw61sa2E=?= <neleai-9Vj9tDbzfuSlVyrhU4qvOw@public.gmane.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Currently nf_conntrack_proto_sctp module handles only packets between
-primary addresses used to establish the connection. Any packets between
-secondary addresses are classified as invalid so that usual firewall
-configurations drop them. Allowing HEARTBEAT and HEARTBEAT-ACK chunks to
-establish a new conntrack would allow traffic between secondary
-addresses to pass through. A more sophisticated solution based on the
-addresses advertised in the initial handshake (and possibly also later
-dynamic address addition and removal) would be much harder to implement.
-Moreover, in general we cannot assume to always see the initial
-handshake as it can be routed through a different path.
+On Fri, Jul 17, 2015 at 3:21 AM, Ond=C5=99ej B=C3=ADlka <neleai@seznam.=
+cz> wrote:
+> On Thu, Jul 16, 2015 at 12:27:10PM -0700, Andy Lutomirski wrote:
+>> On Thu, Jul 16, 2015 at 11:08 AM, Mathieu Desnoyers
+>> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+>> > ----- On Jul 14, 2015, at 5:34 AM, Ben Maurer bmaurer-b10kYP2dOMg@public.gmane.org wrote=
+:
+>> >>
+>> >> That said, having the ability for the kernel to understand that T=
+LS
+>> >> implementation are laid out using the same offset on each thread =
+seems like
+>> >> something that could be valuable long term. Doing so makes it pos=
+sible to build
+>> >> other TLS-based features without forcing each thread to be regist=
+ered.
+>> >
+>> > AFAIU, using a fixed hardcoded ABI between kernel and user-space m=
+ight make
+>> > transition from the pre-existing ABI (where this memory area is no=
+t
+>> > reserved) a bit tricky without registering the area, or getting a =
+"feature"
+>> > flag, through a system call.
+>> >
+>> > The related question then becomes: should we issue this system cal=
+l once
+>> > per process, or once per thread at thread creation ? Issuing it on=
+ce per
+>> > thread is marginally more costly for thread creation, but seems to=
+ be
+>> > easier to deal with internally within the kernel.
+>> >
+>> > We could however ensure that only a single system call is needed p=
+er new-coming
+>> > thread, rather than one system call per feature. One way to do thi=
+s would be
+>> > to register an area that may contain more than just the CPU id. It=
+ could
+>> > consist of an expandable structure with fixed offsets. When regist=
+ered, we
+>> > could pass the size of that structure as an argument to the system=
+ call, so
+>> > the kernel knows which features are expected by user-space.
+>>
+>> If we actually bit the bullet and implemented per-cpu mappings, we
+>> could have this be completely flexible because there would be no
+>> format at all.  Similarly, if we implemented per-cpu segments,
+>> userspace would need to agree with *itself* how to arbitrate it, but
+>> the kernel wouldn't need to be involved.
+>>
+>> With this kind of memory poking, it's definitely messier, which is u=
+nfortunate.
+>>
+> Could you recapitulate thread? On libc side we didn't read most of it=
+ so
+> it would be appreciated.
+>
+> If per-cpu mappings mean that there is a single virtual page that is
+> mapped to different virtual pages?
 
-The patch adds two new conntrack states:
+Single virtual page that's mapped to different physical pages on
+different cpus.  I believe that ARM has some hardware support for
+this, but I'm not that familiar with ARM.  x86 can fake it (at the
+cost of some context switch overhead).
 
-  SCTP_CONNTRACK_HEARTBEAT_SENT  - a HEARTBEAT chunk seen but not acked
-  SCTP_CONNTRACK_HEARTBEAT_ACKED - a HEARTBEAT acked by HEARTBEAT-ACK
+>
+> I had in my todo list improving tls access. This would help tls
+> implementations for older arms and in general architectures that dont
+> store tcb in register.
+>
+> My proposal is modulo small constant equivalent of userspace accessin=
+g tid
+> without syscall overhead, just use array of tcb's for first 32768 tid=
+s
+> and do syscall only when tid exceeds that.
+>
+> On userspace my proposal would be use map that to fixed virtual addre=
+ss and store tcb in first eigth bytes. Kernel would on context switch a=
+long registers also
+> save and restore these. That would make tls access cheap as it would
+> need only extra load instruction versus static variable.
+>
 
-State transition rules:
+The problem is that having the kernel access userspace memory on
+context switch, while doable, is a little bit unpleasant.  We also
+really need to get the ABI right the first time, because we don't
+really get a second chance.
 
-- HEARTBEAT_SENT responds to usual chunks the same way as NONE (so that
-  the behaviour changes as little as possible)
-- HEARTBEAT_ACKED responds to usual chunks the same way as ESTABLISHED
-  does, except the resulting state is HEARTBEAT_ACKED rather than
-  ESTABLISHED
-- previously existing states except NONE are preserved when HEARTBEAT or
-  HEARTBEAT-ACK is seen
-- NONE (in the initial direction) changes to HEARTBEAT_SENT on HEARTBEAT
-  and to CLOSED on HEARTBEAT-ACK
-- HEARTBEAT_SENT changes to HEARTBEAT_ACKED on HEARTBEAT-ACK in the
-  reply direction
-- HEARTBEAT_SENT and HEARTBEAT_ACKED are preserved on HEARTBEAT and
-  HEARTBEAT-ACK otherwise
-
-Normally, vtag is set from the INIT chunk for the reply direction and
-from the INIT-ACK chunk for the originating direction (i.e. each of
-these defines vtag value for the opposite direction). For secondary
-conntracks, we can't rely on seeing INIT/INIT-ACK and even if we have
-seen them, we would need to connect two different conntracks. Therefore
-simplified logic is applied: vtag of first packet in each direction
-(HEARTBEAT in the originating and HEARTBEAT-ACK in reply direction) is
-saved and all following packets in that direction are compared with this
-saved value. While INIT and INIT-ACK define vtag for the opposite
-direction, vtags extracted from HEARTBEAT and HEARTBEAT-ACK are always
-for their direction.
-
-Default timeout values for new states are
-
-  HEARTBEAT_SENT: 30 seconds (default hb_interval)
-  HEARTBEAT_ACKED: 210 seconds (hb_interval * path_max_retry + max_rto)
-
-(We cannot expect to see the shutdown sequence so that, unlike
-ESTABLISHED, the HEARTBEAT_ACKED timeout shouldn't be too long.)
-
-Signed-off-by: Michal Kubecek <mkubecek-AlSwsSmVLrQ@public.gmane.org>
----
-
-v2:
-- add new timeouts to nla policy interface
-- explain vtag handling in the commit message
-- for consistency, rename *_HB_* constants to *_HEARTBEAT_*
-
- include/uapi/linux/netfilter/nf_conntrack_sctp.h   |   2 +
- include/uapi/linux/netfilter/nfnetlink_cttimeout.h |   2 +
- net/netfilter/nf_conntrack_proto_sctp.c            | 115 ++++++++++++++++-----
- 3 files changed, 95 insertions(+), 24 deletions(-)
-
-diff --git a/include/uapi/linux/netfilter/nf_conntrack_sctp.h b/include/uapi/linux/netfilter/nf_conntrack_sctp.h
-index ceeefe6681b5..ed4e776e1242 100644
---- a/include/uapi/linux/netfilter/nf_conntrack_sctp.h
-+++ b/include/uapi/linux/netfilter/nf_conntrack_sctp.h
-@@ -13,6 +13,8 @@ enum sctp_conntrack {
- 	SCTP_CONNTRACK_SHUTDOWN_SENT,
- 	SCTP_CONNTRACK_SHUTDOWN_RECD,
- 	SCTP_CONNTRACK_SHUTDOWN_ACK_SENT,
-+	SCTP_CONNTRACK_HEARTBEAT_SENT,
-+	SCTP_CONNTRACK_HEARTBEAT_ACKED,
- 	SCTP_CONNTRACK_MAX
- };
- 
-diff --git a/include/uapi/linux/netfilter/nfnetlink_cttimeout.h b/include/uapi/linux/netfilter/nfnetlink_cttimeout.h
-index 1ab0b97b3a1e..f2c10dc140d6 100644
---- a/include/uapi/linux/netfilter/nfnetlink_cttimeout.h
-+++ b/include/uapi/linux/netfilter/nfnetlink_cttimeout.h
-@@ -92,6 +92,8 @@ enum ctattr_timeout_sctp {
- 	CTA_TIMEOUT_SCTP_SHUTDOWN_SENT,
- 	CTA_TIMEOUT_SCTP_SHUTDOWN_RECD,
- 	CTA_TIMEOUT_SCTP_SHUTDOWN_ACK_SENT,
-+	CTA_TIMEOUT_SCTP_HEARTBEAT_SENT,
-+	CTA_TIMEOUT_SCTP_HEARTBEAT_ACKED,
- 	__CTA_TIMEOUT_SCTP_MAX
- };
- #define CTA_TIMEOUT_SCTP_MAX (__CTA_TIMEOUT_SCTP_MAX - 1)
-diff --git a/net/netfilter/nf_conntrack_proto_sctp.c b/net/netfilter/nf_conntrack_proto_sctp.c
-index b45da90fad32..1aac57e45319 100644
---- a/net/netfilter/nf_conntrack_proto_sctp.c
-+++ b/net/netfilter/nf_conntrack_proto_sctp.c
-@@ -42,6 +42,8 @@ static const char *const sctp_conntrack_names[] = {
- 	"SHUTDOWN_SENT",
- 	"SHUTDOWN_RECD",
- 	"SHUTDOWN_ACK_SENT",
-+	"HEARTBEAT_SENT",
-+	"HEARTBEAT_ACKED",
- };
- 
- #define SECS  * HZ
-@@ -57,6 +59,8 @@ static unsigned int sctp_timeouts[SCTP_CONNTRACK_MAX] __read_mostly = {
- 	[SCTP_CONNTRACK_SHUTDOWN_SENT]		= 300 SECS / 1000,
- 	[SCTP_CONNTRACK_SHUTDOWN_RECD]		= 300 SECS / 1000,
- 	[SCTP_CONNTRACK_SHUTDOWN_ACK_SENT]	= 3 SECS,
-+	[SCTP_CONNTRACK_HEARTBEAT_SENT]		= 30 SECS,
-+	[SCTP_CONNTRACK_HEARTBEAT_ACKED]	= 210 SECS,
- };
- 
- #define sNO SCTP_CONNTRACK_NONE
-@@ -67,6 +71,8 @@ static unsigned int sctp_timeouts[SCTP_CONNTRACK_MAX] __read_mostly = {
- #define	sSS SCTP_CONNTRACK_SHUTDOWN_SENT
- #define	sSR SCTP_CONNTRACK_SHUTDOWN_RECD
- #define	sSA SCTP_CONNTRACK_SHUTDOWN_ACK_SENT
-+#define	sHS SCTP_CONNTRACK_HEARTBEAT_SENT
-+#define	sHA SCTP_CONNTRACK_HEARTBEAT_ACKED
- #define	sIV SCTP_CONNTRACK_MAX
- 
- /*
-@@ -88,6 +94,10 @@ SHUTDOWN_ACK_SENT - We have seen a SHUTDOWN_ACK chunk in the direction opposite
- 		    to that of the SHUTDOWN chunk.
- CLOSED            - We have seen a SHUTDOWN_COMPLETE chunk in the direction of
- 		    the SHUTDOWN chunk. Connection is closed.
-+HEARTBEAT_SENT    - We have seen a HEARTBEAT in a new flow.
-+HEARTBEAT_ACKED   - We have seen a HEARTBEAT-ACK in the direction opposite to
-+		    that of the HEARTBEAT chunk. Secondary connection is
-+		    established.
- */
- 
- /* TODO
-@@ -97,36 +107,40 @@ CLOSED            - We have seen a SHUTDOWN_COMPLETE chunk in the direction of
-  - Check the error type in the reply dir before transitioning from
- cookie echoed to closed.
-  - Sec 5.2.4 of RFC 2960
-- - Multi Homing support.
-+ - Full Multi Homing support.
- */
- 
- /* SCTP conntrack state transitions */
--static const u8 sctp_conntracks[2][9][SCTP_CONNTRACK_MAX] = {
-+static const u8 sctp_conntracks[2][11][SCTP_CONNTRACK_MAX] = {
- 	{
- /*	ORIGINAL	*/
--/*                  sNO, sCL, sCW, sCE, sES, sSS, sSR, sSA */
--/* init         */ {sCW, sCW, sCW, sCE, sES, sSS, sSR, sSA},
--/* init_ack     */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA},
--/* abort        */ {sCL, sCL, sCL, sCL, sCL, sCL, sCL, sCL},
--/* shutdown     */ {sCL, sCL, sCW, sCE, sSS, sSS, sSR, sSA},
--/* shutdown_ack */ {sSA, sCL, sCW, sCE, sES, sSA, sSA, sSA},
--/* error        */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA},/* Can't have Stale cookie*/
--/* cookie_echo  */ {sCL, sCL, sCE, sCE, sES, sSS, sSR, sSA},/* 5.2.4 - Big TODO */
--/* cookie_ack   */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA},/* Can't come in orig dir */
--/* shutdown_comp*/ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sCL}
-+/*                  sNO, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA */
-+/* init         */ {sCW, sCW, sCW, sCE, sES, sSS, sSR, sSA, sCW, sHA},
-+/* init_ack     */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA, sCL, sHA},
-+/* abort        */ {sCL, sCL, sCL, sCL, sCL, sCL, sCL, sCL, sCL, sCL},
-+/* shutdown     */ {sCL, sCL, sCW, sCE, sSS, sSS, sSR, sSA, sCL, sSS},
-+/* shutdown_ack */ {sSA, sCL, sCW, sCE, sES, sSA, sSA, sSA, sSA, sHA},
-+/* error        */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA, sCL, sHA},/* Can't have Stale cookie*/
-+/* cookie_echo  */ {sCL, sCL, sCE, sCE, sES, sSS, sSR, sSA, sCL, sHA},/* 5.2.4 - Big TODO */
-+/* cookie_ack   */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA, sCL, sHA},/* Can't come in orig dir */
-+/* shutdown_comp*/ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sCL, sCL, sHA},
-+/* heartbeat    */ {sHS, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA},
-+/* heartbeat_ack*/ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA}
- 	},
- 	{
- /*	REPLY	*/
--/*                  sNO, sCL, sCW, sCE, sES, sSS, sSR, sSA */
--/* init         */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA},/* INIT in sCL Big TODO */
--/* init_ack     */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA},
--/* abort        */ {sIV, sCL, sCL, sCL, sCL, sCL, sCL, sCL},
--/* shutdown     */ {sIV, sCL, sCW, sCE, sSR, sSS, sSR, sSA},
--/* shutdown_ack */ {sIV, sCL, sCW, sCE, sES, sSA, sSA, sSA},
--/* error        */ {sIV, sCL, sCW, sCL, sES, sSS, sSR, sSA},
--/* cookie_echo  */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA},/* Can't come in reply dir */
--/* cookie_ack   */ {sIV, sCL, sCW, sES, sES, sSS, sSR, sSA},
--/* shutdown_comp*/ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sCL}
-+/*                  sNO, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA */
-+/* init         */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sIV, sHA},/* INIT in sCL Big TODO */
-+/* init_ack     */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sIV, sHA},
-+/* abort        */ {sIV, sCL, sCL, sCL, sCL, sCL, sCL, sCL, sIV, sCL},
-+/* shutdown     */ {sIV, sCL, sCW, sCE, sSR, sSS, sSR, sSA, sIV, sSR},
-+/* shutdown_ack */ {sIV, sCL, sCW, sCE, sES, sSA, sSA, sSA, sIV, sHA},
-+/* error        */ {sIV, sCL, sCW, sCL, sES, sSS, sSR, sSA, sIV, sHA},
-+/* cookie_echo  */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sIV, sHA},/* Can't come in reply dir */
-+/* cookie_ack   */ {sIV, sCL, sCW, sES, sES, sSS, sSR, sSA, sIV, sHA},
-+/* shutdown_comp*/ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sCL, sIV, sHA},
-+/* heartbeat    */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA},
-+/* heartbeat_ack*/ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHA, sHA}
- 	}
- };
- 
-@@ -278,9 +292,16 @@ static int sctp_new_state(enum ip_conntrack_dir dir,
- 		pr_debug("SCTP_CID_SHUTDOWN_COMPLETE\n");
- 		i = 8;
- 		break;
-+	case SCTP_CID_HEARTBEAT:
-+		pr_debug("SCTP_CID_HEARTBEAT");
-+		i = 9;
-+		break;
-+	case SCTP_CID_HEARTBEAT_ACK:
-+		pr_debug("SCTP_CID_HEARTBEAT_ACK");
-+		i = 10;
-+		break;
- 	default:
--		/* Other chunks like DATA, SACK, HEARTBEAT and
--		its ACK do not cause a change in state */
-+		/* Other chunks like DATA or SACK do not change the state */
- 		pr_debug("Unknown chunk type, Will stay in %s\n",
- 			 sctp_conntrack_names[cur_state]);
- 		return cur_state;
-@@ -329,6 +350,8 @@ static int sctp_packet(struct nf_conn *ct,
- 	    !test_bit(SCTP_CID_COOKIE_ECHO, map) &&
- 	    !test_bit(SCTP_CID_ABORT, map) &&
- 	    !test_bit(SCTP_CID_SHUTDOWN_ACK, map) &&
-+	    !test_bit(SCTP_CID_HEARTBEAT, map) &&
-+	    !test_bit(SCTP_CID_HEARTBEAT_ACK, map) &&
- 	    sh->vtag != ct->proto.sctp.vtag[dir]) {
- 		pr_debug("Verification tag check failed\n");
- 		goto out;
-@@ -357,6 +380,16 @@ static int sctp_packet(struct nf_conn *ct,
- 			/* Sec 8.5.1 (D) */
- 			if (sh->vtag != ct->proto.sctp.vtag[dir])
- 				goto out_unlock;
-+		} else if (sch->type == SCTP_CID_HEARTBEAT ||
-+			   sch->type == SCTP_CID_HEARTBEAT_ACK) {
-+			if (ct->proto.sctp.vtag[dir] == 0) {
-+				pr_debug("Setting vtag %x for dir %d\n",
-+					 sh->vtag, dir);
-+				ct->proto.sctp.vtag[dir] = sh->vtag;
-+			} else if (sh->vtag != ct->proto.sctp.vtag[dir]) {
-+				pr_debug("Verification tag check failed\n");
-+				goto out_unlock;
-+			}
- 		}
- 
- 		old_state = ct->proto.sctp.state;
-@@ -466,6 +499,10 @@ static bool sctp_new(struct nf_conn *ct, const struct sk_buff *skb,
- 				/* Sec 8.5.1 (A) */
- 				return false;
- 			}
-+		} else if (sch->type == SCTP_CID_HEARTBEAT) {
-+			pr_debug("Setting vtag %x for secondary conntrack\n",
-+				 sh->vtag);
-+			ct->proto.sctp.vtag[IP_CT_DIR_ORIGINAL] = sh->vtag;
- 		}
- 		/* If it is a shutdown ack OOTB packet, we expect a return
- 		   shutdown complete, otherwise an ABORT Sec 8.4 (5) and (8) */
-@@ -610,6 +647,8 @@ sctp_timeout_nla_policy[CTA_TIMEOUT_SCTP_MAX+1] = {
- 	[CTA_TIMEOUT_SCTP_SHUTDOWN_SENT]	= { .type = NLA_U32 },
- 	[CTA_TIMEOUT_SCTP_SHUTDOWN_RECD]	= { .type = NLA_U32 },
- 	[CTA_TIMEOUT_SCTP_SHUTDOWN_ACK_SENT]	= { .type = NLA_U32 },
-+	[CTA_TIMEOUT_SCTP_HEARTBEAT_SENT]	= { .type = NLA_U32 },
-+	[CTA_TIMEOUT_SCTP_HEARTBEAT_ACKED]	= { .type = NLA_U32 },
- };
- #endif /* CONFIG_NF_CT_NETLINK_TIMEOUT */
- 
-@@ -658,6 +697,18 @@ static struct ctl_table sctp_sysctl_table[] = {
- 		.mode		= 0644,
- 		.proc_handler	= proc_dointvec_jiffies,
- 	},
-+	{
-+		.procname	= "nf_conntrack_sctp_timeout_heartbeat_sent",
-+		.maxlen		= sizeof(unsigned int),
-+		.mode		= 0644,
-+		.proc_handler	= proc_dointvec_jiffies,
-+	},
-+	{
-+		.procname	= "nf_conntrack_sctp_timeout_heartbeat_acked",
-+		.maxlen		= sizeof(unsigned int),
-+		.mode		= 0644,
-+		.proc_handler	= proc_dointvec_jiffies,
-+	},
- 	{ }
- };
- 
-@@ -705,6 +756,18 @@ static struct ctl_table sctp_compat_sysctl_table[] = {
- 		.mode		= 0644,
- 		.proc_handler	= proc_dointvec_jiffies,
- 	},
-+	{
-+		.procname	= "ip_conntrack_sctp_timeout_heartbeat_sent",
-+		.maxlen		= sizeof(unsigned int),
-+		.mode		= 0644,
-+		.proc_handler	= proc_dointvec_jiffies,
-+	},
-+	{
-+		.procname	= "ip_conntrack_sctp_timeout_heartbeat_acked",
-+		.maxlen		= sizeof(unsigned int),
-+		.mode		= 0644,
-+		.proc_handler	= proc_dointvec_jiffies,
-+	},
- 	{ }
- };
- #endif /* CONFIG_NF_CONNTRACK_PROC_COMPAT */
-@@ -730,6 +793,8 @@ static int sctp_kmemdup_sysctl_table(struct nf_proto_net *pn,
- 	pn->ctl_table[4].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_SENT];
- 	pn->ctl_table[5].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_RECD];
- 	pn->ctl_table[6].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_ACK_SENT];
-+	pn->ctl_table[7].data = &sn->timeouts[SCTP_CONNTRACK_HEARTBEAT_SENT];
-+	pn->ctl_table[8].data = &sn->timeouts[SCTP_CONNTRACK_HEARTBEAT_ACKED];
- #endif
- 	return 0;
- }
-@@ -752,6 +817,8 @@ static int sctp_kmemdup_compat_sysctl_table(struct nf_proto_net *pn,
- 	pn->ctl_compat_table[4].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_SENT];
- 	pn->ctl_compat_table[5].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_RECD];
- 	pn->ctl_compat_table[6].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_ACK_SENT];
-+	pn->ctl_compat_table[7].data = &sn->timeouts[SCTP_CONNTRACK_HEARTBEAT_SENT];
-+	pn->ctl_compat_table[8].data = &sn->timeouts[SCTP_CONNTRACK_HEARTBEAT_ACKED];
- #endif
- #endif
- 	return 0;
--- 
-2.4.5
+--Andy
