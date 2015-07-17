@@ -1,432 +1,329 @@
-From: Nikolay Borisov <n.borisov-/eCPMmvKun9pLGFMi4vTTA@public.gmane.org>
-Subject: Re: [RFC PATCH] thread_local_abi system call: caching current CPU
- number (x86)
-Date: Fri, 17 Jul 2015 15:48:50 +0300
-Message-ID: <55A8F9B2.2070008@siteground.com>
-References: <1437076851-14848-1-git-send-email-mathieu.desnoyers@efficios.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+From: Michal Kubecek <mkubecek-AlSwsSmVLrQ@public.gmane.org>
+Subject: [PATCH nf-next v2] netfilter: nf_ct_sctp: minimal multihoming support
+Date: Fri, 17 Jul 2015 16:17:56 +0200 (CEST)
+Message-ID: <20150717141757.01EBFA0A84@unicorn.suse.cz>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1437076851-14848-1-git-send-email-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: netfilter-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pablo Neira Ayuso <pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org>, Patrick McHardy <kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org>, Jozsef Kadlecsik <kadlec-K40Dz/62t/MgiyqX0sVFJYdd74u8MsAO@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Florian Westphal <fw-HFFVJYpyMKqzQB+pC5nmwQ@public.gmane.org>, Marcelo Ricardo Leitner <marcelo.leitner-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Currently nf_conntrack_proto_sctp module handles only packets between
+primary addresses used to establish the connection. Any packets between
+secondary addresses are classified as invalid so that usual firewall
+configurations drop them. Allowing HEARTBEAT and HEARTBEAT-ACK chunks to
+establish a new conntrack would allow traffic between secondary
+addresses to pass through. A more sophisticated solution based on the
+addresses advertised in the initial handshake (and possibly also later
+dynamic address addition and removal) would be much harder to implement.
+Moreover, in general we cannot assume to always see the initial
+handshake as it can be routed through a different path.
 
+The patch adds two new conntrack states:
 
-On 07/16/2015 11:00 PM, Mathieu Desnoyers wrote:
-> Expose a new system call allowing threads to register a userspace memory
-> area where to store the current CPU number. Scheduler migration sets the
-> TIF_NOTIFY_RESUME flag on the current thread. Upon return to user-space,
-> a notify-resume handler updates the current CPU value within that
-> user-space memory area.
-> 
-> This getcpu cache is an alternative to the sched_getcpu() vdso which has
-> a few benefits:
-> - It is faster to do a memory read that to call a vDSO,
-> - This cache value can be read from within an inline assembly, which
->   makes it a useful building block for restartable sequences.
-> 
-> This approach is inspired by Paul Turner and Andrew Hunter's work
-> on percpu atomics, which lets the kernel handle restart of critical
-> sections:
-> Ref.:
-> * https://lkml.org/lkml/2015/6/24/665
-> * https://lwn.net/Articles/650333/
-> * http://www.linuxplumbersconf.org/2013/ocw/system/presentations/1695/original/LPC%20-%20PerCpu%20Atomics.pdf
-> 
-> Benchmarking sched_getcpu() vs tls cache approach. Getting the
-> current CPU number:
-> 
-> - With Linux vdso:            12.7 ns
-> - With TLS-cached cpu number:  0.3 ns
-> 
-> The system call can be extended by registering a larger structure in
-> the future.
-> 
-> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-> CC: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> CC: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-> CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> CC: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
-> CC: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-> CC: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-> CC: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-> CC: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-> CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> ---
->  arch/x86/kernel/signal.c              |  2 +
->  arch/x86/syscalls/syscall_64.tbl      |  1 +
->  fs/exec.c                             |  1 +
->  include/linux/sched.h                 | 35 ++++++++++++++
->  include/uapi/asm-generic/unistd.h     |  4 +-
->  include/uapi/linux/Kbuild             |  1 +
->  include/uapi/linux/thread_local_abi.h | 37 ++++++++++++++
->  init/Kconfig                          |  9 ++++
->  kernel/Makefile                       |  1 +
->  kernel/fork.c                         |  2 +
->  kernel/sched/core.c                   |  4 ++
->  kernel/sched/sched.h                  |  2 +
->  kernel/sys_ni.c                       |  3 ++
->  kernel/thread_local_abi.c             | 90 +++++++++++++++++++++++++++++++++++
->  14 files changed, 191 insertions(+), 1 deletion(-)
->  create mode 100644 include/uapi/linux/thread_local_abi.h
->  create mode 100644 kernel/thread_local_abi.c
-> 
-> diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
-> index e504246..157cec0 100644
-> --- a/arch/x86/kernel/signal.c
-> +++ b/arch/x86/kernel/signal.c
-> @@ -750,6 +750,8 @@ do_notify_resume(struct pt_regs *regs, void *unused, __u32 thread_info_flags)
->  	if (thread_info_flags & _TIF_NOTIFY_RESUME) {
->  		clear_thread_flag(TIF_NOTIFY_RESUME);
->  		tracehook_notify_resume(regs);
-> +		if (getcpu_cache_active(current))
-> +			getcpu_cache_handle_notify_resume(current);
->  	}
->  	if (thread_info_flags & _TIF_USER_RETURN_NOTIFY)
->  		fire_user_return_notifiers();
-> diff --git a/arch/x86/syscalls/syscall_64.tbl b/arch/x86/syscalls/syscall_64.tbl
-> index 8d656fb..0eb2fc2 100644
-> --- a/arch/x86/syscalls/syscall_64.tbl
-> +++ b/arch/x86/syscalls/syscall_64.tbl
-> @@ -329,6 +329,7 @@
->  320	common	kexec_file_load		sys_kexec_file_load
->  321	common	bpf			sys_bpf
->  322	64	execveat		stub_execveat
-> +323	common	thread_local_abi	sys_thread_local_abi
->  
->  #
->  # x32-specific system call numbers start at 512 to avoid cache impact
-> diff --git a/fs/exec.c b/fs/exec.c
-> index c7f9b73..e5acf80 100644
-> --- a/fs/exec.c
-> +++ b/fs/exec.c
-> @@ -1555,6 +1555,7 @@ static int do_execveat_common(int fd, struct filename *filename,
->  	/* execve succeeded */
->  	current->fs->in_exec = 0;
->  	current->in_execve = 0;
-> +	thread_local_abi_execve(current);
->  	acct_update_integrals(current);
->  	task_numa_free(current);
->  	free_bprm(bprm);
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index a419b65..4a3fc52 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -2,6 +2,7 @@
->  #define _LINUX_SCHED_H
->  
->  #include <uapi/linux/sched.h>
-> +#include <uapi/linux/thread_local_abi.h>
->  
->  #include <linux/sched/prio.h>
->  
-> @@ -1710,6 +1711,10 @@ struct task_struct {
->  #ifdef CONFIG_DEBUG_ATOMIC_SLEEP
->  	unsigned long	task_state_change;
->  #endif
-> +#ifdef CONFIG_THREAD_LOCAL_ABI
-> +	size_t thread_local_abi_len;
-> +	struct thread_local_abi __user *thread_local_abi;
-> +#endif
->  };
->  
->  /* Future-safe accessor for struct task_struct's cpus_allowed. */
-> @@ -3090,4 +3095,34 @@ static inline unsigned long rlimit_max(unsigned int limit)
->  	return task_rlimit_max(current, limit);
->  }
->  
-> +#ifdef CONFIG_THREAD_LOCAL_ABI
-> +void thread_local_abi_fork(struct task_struct *t);
-> +void thread_local_abi_execve(struct task_struct *t);
-> +void getcpu_cache_handle_notify_resume(struct task_struct *t);
-> +static inline bool getcpu_cache_active(struct task_struct *t)
-> +{
-> +	struct thread_local_abi __user *tlap = t->thread_local_abi;
-> +
-> +	if (!tlap || t->thread_local_abi_len <
-> +			offsetof(struct thread_local_abi, cpu)
-> +			+ sizeof(tlap->cpu))
-> +		return false;
-> +	return true;
-> +}
-> +#else
-> +static inline void thread_local_abi_fork(struct task_struct *t)
-> +{
-> +}
-> +static inline void thread_local_abi_execve(struct task_struct *t)
-> +{
-> +}
-> +static inline void getcpu_cache_handle_notify_resume(struct task_struct *t)
-> +{
-> +}
-> +static inline bool getcpu_cache_active(struct task_struct *t)
-> +{
-> +	return false;
-> +}
-> +#endif
-> +
->  #endif
-> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-> index e016bd9..50aa984 100644
-> --- a/include/uapi/asm-generic/unistd.h
-> +++ b/include/uapi/asm-generic/unistd.h
-> @@ -709,9 +709,11 @@ __SYSCALL(__NR_memfd_create, sys_memfd_create)
->  __SYSCALL(__NR_bpf, sys_bpf)
->  #define __NR_execveat 281
->  __SC_COMP(__NR_execveat, sys_execveat, compat_sys_execveat)
-> +#define __NR_thread_local_abi 282
-> +__SYSCALL(__NR_thread_local_abi, sys_thread_local_abi)
->  
->  #undef __NR_syscalls
-> -#define __NR_syscalls 282
-> +#define __NR_syscalls 283
->  
->  /*
->   * All syscalls below here should go away really,
-> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-> index 68ceb97..dfd6a30 100644
-> --- a/include/uapi/linux/Kbuild
-> +++ b/include/uapi/linux/Kbuild
-> @@ -389,6 +389,7 @@ header-y += tcp_metrics.h
->  header-y += telephony.h
->  header-y += termios.h
->  header-y += thermal.h
-> +header-y += thread_local_abi.h
->  header-y += time.h
->  header-y += times.h
->  header-y += timex.h
-> diff --git a/include/uapi/linux/thread_local_abi.h b/include/uapi/linux/thread_local_abi.h
-> new file mode 100644
-> index 0000000..6487c92
-> --- /dev/null
-> +++ b/include/uapi/linux/thread_local_abi.h
-> @@ -0,0 +1,37 @@
-> +#ifndef _UAPI_LINUX_THREAD_LOCAL_ABI_H
-> +#define _UAPI_LINUX_THREAD_LOCAL_ABI_H
-> +
-> +/*
-> + * linux/thread_local_abi.h
-> + *
-> + * thread_local_abi system call API
-> + *
-> + * Copyright (c) 2015 Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-> + *
-> + * Permission is hereby granted, free of charge, to any person obtaining a copy
-> + * of this software and associated documentation files (the "Software"), to deal
-> + * in the Software without restriction, including without limitation the rights
-> + * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-> + * copies of the Software, and to permit persons to whom the Software is
-> + * furnished to do so, subject to the following conditions:
-> + *
-> + * The above copyright notice and this permission notice shall be included in
-> + * all copies or substantial portions of the Software.
-> + *
-> + * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-> + * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-> + * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-> + * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-> + * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-> + * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-> + * SOFTWARE.
-> + */
-> +
-> +#include <linux/types.h>
-> +
-> +/* This structure is an ABI that can only be extended. */
-> +struct thread_local_abi {
-> +	int32_t cpu;
-> +};
-> +
-> +#endif /* _UAPI_LINUX_THREAD_LOCAL_ABI_H */
-> diff --git a/init/Kconfig b/init/Kconfig
-> index f5dbc6d..c8ff5fa 100644
-> --- a/init/Kconfig
-> +++ b/init/Kconfig
-> @@ -1559,6 +1559,15 @@ config PCI_QUIRKS
->  	  bugs/quirks. Disable this only if your target machine is
->  	  unaffected by PCI quirks.
->  
-> +config THREAD_LOCAL_ABI
-> +	bool "Enable thread-local ABI" if EXPERT
-> +	default y
-> +	help
-> +	  Enable the thread-local ABI system call. It provides a user-space
-> +	  cache for the current CPU number value.
-> +
-> +	  If unsure, say Y.
-> +
->  config EMBEDDED
->  	bool "Embedded system"
->  	option allnoconfig_y
-> diff --git a/kernel/Makefile b/kernel/Makefile
-> index 1408b33..cc1f3d4 100644
-> --- a/kernel/Makefile
-> +++ b/kernel/Makefile
-> @@ -96,6 +96,7 @@ obj-$(CONFIG_CRASH_DUMP) += crash_dump.o
->  obj-$(CONFIG_JUMP_LABEL) += jump_label.o
->  obj-$(CONFIG_CONTEXT_TRACKING) += context_tracking.o
->  obj-$(CONFIG_TORTURE_TEST) += torture.o
-> +obj-$(CONFIG_THREAD_LOCAL_ABI) += thread_local_abi.o
->  
->  $(obj)/configs.o: $(obj)/config_data.h
->  
-> diff --git a/kernel/fork.c b/kernel/fork.c
-> index cf65139..e17bcb3 100644
-> --- a/kernel/fork.c
-> +++ b/kernel/fork.c
-> @@ -1549,6 +1549,8 @@ static struct task_struct *copy_process(unsigned long clone_flags,
->  	cgroup_post_fork(p);
->  	if (clone_flags & CLONE_THREAD)
->  		threadgroup_change_end(current);
-> +	if (!(clone_flags & CLONE_THREAD))
-> +		thread_local_abi_fork(p);
->  	perf_event_fork(p);
->  
->  	trace_task_newtask(p, clone_flags);
-> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-> index 62671f5..668a502 100644
-> --- a/kernel/sched/core.c
-> +++ b/kernel/sched/core.c
-> @@ -1823,6 +1823,10 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
->  
->  	p->numa_group = NULL;
->  #endif /* CONFIG_NUMA_BALANCING */
-> +#ifdef CONFIG_THREAD_LOCAL_ABI
-> +	p->thread_local_abi_len = 0;
-> +	p->thread_local_abi = NULL;
-> +#endif
->  }
->  
->  #ifdef CONFIG_NUMA_BALANCING
-> diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-> index dc0f435..bf3e346 100644
-> --- a/kernel/sched/sched.h
-> +++ b/kernel/sched/sched.h
-> @@ -921,6 +921,8 @@ static inline void __set_task_cpu(struct task_struct *p, unsigned int cpu)
->  {
->  	set_task_rq(p, cpu);
->  #ifdef CONFIG_SMP
-> +	if (getcpu_cache_active(p))
-> +		set_tsk_thread_flag(p, TIF_NOTIFY_RESUME);
->  	/*
->  	 * After ->cpu is set up to a new value, task_rq_lock(p, ...) can be
->  	 * successfuly executed on another CPU. We must ensure that updates of
-> diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-> index 5adcb0a..cadb903 100644
-> --- a/kernel/sys_ni.c
-> +++ b/kernel/sys_ni.c
-> @@ -229,3 +229,6 @@ cond_syscall(sys_bpf);
->  
->  /* execveat */
->  cond_syscall(sys_execveat);
-> +
-> +/* thread-local ABI */
-> +cond_syscall(sys_thread_local_abi);
-> diff --git a/kernel/thread_local_abi.c b/kernel/thread_local_abi.c
-> new file mode 100644
-> index 0000000..681f06e
-> --- /dev/null
-> +++ b/kernel/thread_local_abi.c
-> @@ -0,0 +1,90 @@
-> +/*
-> + * Copyright (C) 2015 Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-> + *
-> + * thread_local_abi system call
-> + *
-> + * This program is free software; you can redistribute it and/or modify
-> + * it under the terms of the GNU General Public License as published by
-> + * the Free Software Foundation; either version 2 of the License, or
-> + * (at your option) any later version.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + */
-> +
-> +#include <linux/init.h>
-> +#include <linux/sched.h>
-> +#include <linux/uaccess.h>
-> +#include <linux/syscalls.h>
-> +
-> +static int getcpu_cache_update(struct task_struct *t)
-> +{
-> +	if (put_user(raw_smp_processor_id(), &t->thread_local_abi->cpu)) {
-> +		t->thread_local_abi_len = 0;
-> +		t->thread_local_abi = NULL;
-> +		return -1;
-> +	}
-> +	return 0;
-> +}
-> +
-> +/*
-> + * This resume handler should always be executed between a migration
-> + * triggered by preemption and return to user-space.
-> + */
-> +void getcpu_cache_handle_notify_resume(struct task_struct *t)
-> +{
-> +	BUG_ON(!getcpu_cache_active(t));
-> +	if (unlikely(t->flags & PF_EXITING))
-> +		return;
-> +	if (getcpu_cache_update(t))
-> +		force_sig(SIGSEGV, t);
-> +}
-> +
-> +/*
-> + * If parent process has a thread-local ABI, the child inherits. Only applies
-> + * when forking a process, not a thread.
-> + */
-> +void thread_local_abi_fork(struct task_struct *t)
-> +{
-> +	t->thread_local_abi_len = current->thread_local_abi_len;
-> +	t->thread_local_abi = current->thread_local_abi;
-> +}
-> +
-> +void thread_local_abi_execve(struct task_struct *t)
-> +{
-> +	t->thread_local_abi_len = 0;
-> +	t->thread_local_abi = NULL;
-> +}
-> +
-> +/*
-> + * sys_thread_local_abi - setup thread-local ABI for caller thread
-> + */
-> +SYSCALL_DEFINE3(thread_local_abi, struct thread_local_abi __user *, tlap,
-> +		size_t, len, int, flags)
-> +{
-> +	size_t minlen;
-> +
-> +	if (flags)
-> +		return -EINVAL;
-> +	if (current->thread_local_abi && tlap)
-> +		return -EBUSY;
-> +	/* Agree on the intersection of userspace and kernel features */
-> +	minlen = min_t(size_t, len, sizeof(struct thread_local_abi));
-> +	current->thread_local_abi_len = minlen;
-> +	current->thread_local_abi = tlap;
-> +	if (!tlap)
-> +		return 0;
-> +	/*
-> +	 * Migration checks ->thread_local_abi to see if notify_resume
-> +	 * flag should be set. Therefore, we need to ensure that
-> +	 * the scheduler sees ->thread_local_abi before we update its content.
-> +	 */
-> +	barrier();	/* Store thread_local_abi before update content */
-> +	if (getcpu_cache_active(current)) {
+  SCTP_CONNTRACK_HEARTBEAT_SENT  - a HEARTBEAT chunk seen but not acked
+  SCTP_CONNTRACK_HEARTBEAT_ACKED - a HEARTBEAT acked by HEARTBEAT-ACK
 
-Just checking whether my understanding of the code is correct, but this
-'if' is necessary in case we have been moved to a different CPU after
-the store of the thread_local_abi?
+State transition rules:
 
-> +		if (getcpu_cache_update(current))
-> +			return -EFAULT;
-> +	}
-> +	return minlen;
-> +}
-> 
+- HEARTBEAT_SENT responds to usual chunks the same way as NONE (so that
+  the behaviour changes as little as possible)
+- HEARTBEAT_ACKED responds to usual chunks the same way as ESTABLISHED
+  does, except the resulting state is HEARTBEAT_ACKED rather than
+  ESTABLISHED
+- previously existing states except NONE are preserved when HEARTBEAT or
+  HEARTBEAT-ACK is seen
+- NONE (in the initial direction) changes to HEARTBEAT_SENT on HEARTBEAT
+  and to CLOSED on HEARTBEAT-ACK
+- HEARTBEAT_SENT changes to HEARTBEAT_ACKED on HEARTBEAT-ACK in the
+  reply direction
+- HEARTBEAT_SENT and HEARTBEAT_ACKED are preserved on HEARTBEAT and
+  HEARTBEAT-ACK otherwise
+
+Normally, vtag is set from the INIT chunk for the reply direction and
+from the INIT-ACK chunk for the originating direction (i.e. each of
+these defines vtag value for the opposite direction). For secondary
+conntracks, we can't rely on seeing INIT/INIT-ACK and even if we have
+seen them, we would need to connect two different conntracks. Therefore
+simplified logic is applied: vtag of first packet in each direction
+(HEARTBEAT in the originating and HEARTBEAT-ACK in reply direction) is
+saved and all following packets in that direction are compared with this
+saved value. While INIT and INIT-ACK define vtag for the opposite
+direction, vtags extracted from HEARTBEAT and HEARTBEAT-ACK are always
+for their direction.
+
+Default timeout values for new states are
+
+  HEARTBEAT_SENT: 30 seconds (default hb_interval)
+  HEARTBEAT_ACKED: 210 seconds (hb_interval * path_max_retry + max_rto)
+
+(We cannot expect to see the shutdown sequence so that, unlike
+ESTABLISHED, the HEARTBEAT_ACKED timeout shouldn't be too long.)
+
+Signed-off-by: Michal Kubecek <mkubecek-AlSwsSmVLrQ@public.gmane.org>
+---
+
+v2:
+- add new timeouts to nla policy interface
+- explain vtag handling in the commit message
+- for consistency, rename *_HB_* constants to *_HEARTBEAT_*
+
+ include/uapi/linux/netfilter/nf_conntrack_sctp.h   |   2 +
+ include/uapi/linux/netfilter/nfnetlink_cttimeout.h |   2 +
+ net/netfilter/nf_conntrack_proto_sctp.c            | 115 ++++++++++++++++-----
+ 3 files changed, 95 insertions(+), 24 deletions(-)
+
+diff --git a/include/uapi/linux/netfilter/nf_conntrack_sctp.h b/include/uapi/linux/netfilter/nf_conntrack_sctp.h
+index ceeefe6681b5..ed4e776e1242 100644
+--- a/include/uapi/linux/netfilter/nf_conntrack_sctp.h
++++ b/include/uapi/linux/netfilter/nf_conntrack_sctp.h
+@@ -13,6 +13,8 @@ enum sctp_conntrack {
+ 	SCTP_CONNTRACK_SHUTDOWN_SENT,
+ 	SCTP_CONNTRACK_SHUTDOWN_RECD,
+ 	SCTP_CONNTRACK_SHUTDOWN_ACK_SENT,
++	SCTP_CONNTRACK_HEARTBEAT_SENT,
++	SCTP_CONNTRACK_HEARTBEAT_ACKED,
+ 	SCTP_CONNTRACK_MAX
+ };
+ 
+diff --git a/include/uapi/linux/netfilter/nfnetlink_cttimeout.h b/include/uapi/linux/netfilter/nfnetlink_cttimeout.h
+index 1ab0b97b3a1e..f2c10dc140d6 100644
+--- a/include/uapi/linux/netfilter/nfnetlink_cttimeout.h
++++ b/include/uapi/linux/netfilter/nfnetlink_cttimeout.h
+@@ -92,6 +92,8 @@ enum ctattr_timeout_sctp {
+ 	CTA_TIMEOUT_SCTP_SHUTDOWN_SENT,
+ 	CTA_TIMEOUT_SCTP_SHUTDOWN_RECD,
+ 	CTA_TIMEOUT_SCTP_SHUTDOWN_ACK_SENT,
++	CTA_TIMEOUT_SCTP_HEARTBEAT_SENT,
++	CTA_TIMEOUT_SCTP_HEARTBEAT_ACKED,
+ 	__CTA_TIMEOUT_SCTP_MAX
+ };
+ #define CTA_TIMEOUT_SCTP_MAX (__CTA_TIMEOUT_SCTP_MAX - 1)
+diff --git a/net/netfilter/nf_conntrack_proto_sctp.c b/net/netfilter/nf_conntrack_proto_sctp.c
+index b45da90fad32..1aac57e45319 100644
+--- a/net/netfilter/nf_conntrack_proto_sctp.c
++++ b/net/netfilter/nf_conntrack_proto_sctp.c
+@@ -42,6 +42,8 @@ static const char *const sctp_conntrack_names[] = {
+ 	"SHUTDOWN_SENT",
+ 	"SHUTDOWN_RECD",
+ 	"SHUTDOWN_ACK_SENT",
++	"HEARTBEAT_SENT",
++	"HEARTBEAT_ACKED",
+ };
+ 
+ #define SECS  * HZ
+@@ -57,6 +59,8 @@ static unsigned int sctp_timeouts[SCTP_CONNTRACK_MAX] __read_mostly = {
+ 	[SCTP_CONNTRACK_SHUTDOWN_SENT]		= 300 SECS / 1000,
+ 	[SCTP_CONNTRACK_SHUTDOWN_RECD]		= 300 SECS / 1000,
+ 	[SCTP_CONNTRACK_SHUTDOWN_ACK_SENT]	= 3 SECS,
++	[SCTP_CONNTRACK_HEARTBEAT_SENT]		= 30 SECS,
++	[SCTP_CONNTRACK_HEARTBEAT_ACKED]	= 210 SECS,
+ };
+ 
+ #define sNO SCTP_CONNTRACK_NONE
+@@ -67,6 +71,8 @@ static unsigned int sctp_timeouts[SCTP_CONNTRACK_MAX] __read_mostly = {
+ #define	sSS SCTP_CONNTRACK_SHUTDOWN_SENT
+ #define	sSR SCTP_CONNTRACK_SHUTDOWN_RECD
+ #define	sSA SCTP_CONNTRACK_SHUTDOWN_ACK_SENT
++#define	sHS SCTP_CONNTRACK_HEARTBEAT_SENT
++#define	sHA SCTP_CONNTRACK_HEARTBEAT_ACKED
+ #define	sIV SCTP_CONNTRACK_MAX
+ 
+ /*
+@@ -88,6 +94,10 @@ SHUTDOWN_ACK_SENT - We have seen a SHUTDOWN_ACK chunk in the direction opposite
+ 		    to that of the SHUTDOWN chunk.
+ CLOSED            - We have seen a SHUTDOWN_COMPLETE chunk in the direction of
+ 		    the SHUTDOWN chunk. Connection is closed.
++HEARTBEAT_SENT    - We have seen a HEARTBEAT in a new flow.
++HEARTBEAT_ACKED   - We have seen a HEARTBEAT-ACK in the direction opposite to
++		    that of the HEARTBEAT chunk. Secondary connection is
++		    established.
+ */
+ 
+ /* TODO
+@@ -97,36 +107,40 @@ CLOSED            - We have seen a SHUTDOWN_COMPLETE chunk in the direction of
+  - Check the error type in the reply dir before transitioning from
+ cookie echoed to closed.
+  - Sec 5.2.4 of RFC 2960
+- - Multi Homing support.
++ - Full Multi Homing support.
+ */
+ 
+ /* SCTP conntrack state transitions */
+-static const u8 sctp_conntracks[2][9][SCTP_CONNTRACK_MAX] = {
++static const u8 sctp_conntracks[2][11][SCTP_CONNTRACK_MAX] = {
+ 	{
+ /*	ORIGINAL	*/
+-/*                  sNO, sCL, sCW, sCE, sES, sSS, sSR, sSA */
+-/* init         */ {sCW, sCW, sCW, sCE, sES, sSS, sSR, sSA},
+-/* init_ack     */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA},
+-/* abort        */ {sCL, sCL, sCL, sCL, sCL, sCL, sCL, sCL},
+-/* shutdown     */ {sCL, sCL, sCW, sCE, sSS, sSS, sSR, sSA},
+-/* shutdown_ack */ {sSA, sCL, sCW, sCE, sES, sSA, sSA, sSA},
+-/* error        */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA},/* Can't have Stale cookie*/
+-/* cookie_echo  */ {sCL, sCL, sCE, sCE, sES, sSS, sSR, sSA},/* 5.2.4 - Big TODO */
+-/* cookie_ack   */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA},/* Can't come in orig dir */
+-/* shutdown_comp*/ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sCL}
++/*                  sNO, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA */
++/* init         */ {sCW, sCW, sCW, sCE, sES, sSS, sSR, sSA, sCW, sHA},
++/* init_ack     */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA, sCL, sHA},
++/* abort        */ {sCL, sCL, sCL, sCL, sCL, sCL, sCL, sCL, sCL, sCL},
++/* shutdown     */ {sCL, sCL, sCW, sCE, sSS, sSS, sSR, sSA, sCL, sSS},
++/* shutdown_ack */ {sSA, sCL, sCW, sCE, sES, sSA, sSA, sSA, sSA, sHA},
++/* error        */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA, sCL, sHA},/* Can't have Stale cookie*/
++/* cookie_echo  */ {sCL, sCL, sCE, sCE, sES, sSS, sSR, sSA, sCL, sHA},/* 5.2.4 - Big TODO */
++/* cookie_ack   */ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA, sCL, sHA},/* Can't come in orig dir */
++/* shutdown_comp*/ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sCL, sCL, sHA},
++/* heartbeat    */ {sHS, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA},
++/* heartbeat_ack*/ {sCL, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA}
+ 	},
+ 	{
+ /*	REPLY	*/
+-/*                  sNO, sCL, sCW, sCE, sES, sSS, sSR, sSA */
+-/* init         */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA},/* INIT in sCL Big TODO */
+-/* init_ack     */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA},
+-/* abort        */ {sIV, sCL, sCL, sCL, sCL, sCL, sCL, sCL},
+-/* shutdown     */ {sIV, sCL, sCW, sCE, sSR, sSS, sSR, sSA},
+-/* shutdown_ack */ {sIV, sCL, sCW, sCE, sES, sSA, sSA, sSA},
+-/* error        */ {sIV, sCL, sCW, sCL, sES, sSS, sSR, sSA},
+-/* cookie_echo  */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA},/* Can't come in reply dir */
+-/* cookie_ack   */ {sIV, sCL, sCW, sES, sES, sSS, sSR, sSA},
+-/* shutdown_comp*/ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sCL}
++/*                  sNO, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA */
++/* init         */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sIV, sHA},/* INIT in sCL Big TODO */
++/* init_ack     */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sIV, sHA},
++/* abort        */ {sIV, sCL, sCL, sCL, sCL, sCL, sCL, sCL, sIV, sCL},
++/* shutdown     */ {sIV, sCL, sCW, sCE, sSR, sSS, sSR, sSA, sIV, sSR},
++/* shutdown_ack */ {sIV, sCL, sCW, sCE, sES, sSA, sSA, sSA, sIV, sHA},
++/* error        */ {sIV, sCL, sCW, sCL, sES, sSS, sSR, sSA, sIV, sHA},
++/* cookie_echo  */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sIV, sHA},/* Can't come in reply dir */
++/* cookie_ack   */ {sIV, sCL, sCW, sES, sES, sSS, sSR, sSA, sIV, sHA},
++/* shutdown_comp*/ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sCL, sIV, sHA},
++/* heartbeat    */ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHS, sHA},
++/* heartbeat_ack*/ {sIV, sCL, sCW, sCE, sES, sSS, sSR, sSA, sHA, sHA}
+ 	}
+ };
+ 
+@@ -278,9 +292,16 @@ static int sctp_new_state(enum ip_conntrack_dir dir,
+ 		pr_debug("SCTP_CID_SHUTDOWN_COMPLETE\n");
+ 		i = 8;
+ 		break;
++	case SCTP_CID_HEARTBEAT:
++		pr_debug("SCTP_CID_HEARTBEAT");
++		i = 9;
++		break;
++	case SCTP_CID_HEARTBEAT_ACK:
++		pr_debug("SCTP_CID_HEARTBEAT_ACK");
++		i = 10;
++		break;
+ 	default:
+-		/* Other chunks like DATA, SACK, HEARTBEAT and
+-		its ACK do not cause a change in state */
++		/* Other chunks like DATA or SACK do not change the state */
+ 		pr_debug("Unknown chunk type, Will stay in %s\n",
+ 			 sctp_conntrack_names[cur_state]);
+ 		return cur_state;
+@@ -329,6 +350,8 @@ static int sctp_packet(struct nf_conn *ct,
+ 	    !test_bit(SCTP_CID_COOKIE_ECHO, map) &&
+ 	    !test_bit(SCTP_CID_ABORT, map) &&
+ 	    !test_bit(SCTP_CID_SHUTDOWN_ACK, map) &&
++	    !test_bit(SCTP_CID_HEARTBEAT, map) &&
++	    !test_bit(SCTP_CID_HEARTBEAT_ACK, map) &&
+ 	    sh->vtag != ct->proto.sctp.vtag[dir]) {
+ 		pr_debug("Verification tag check failed\n");
+ 		goto out;
+@@ -357,6 +380,16 @@ static int sctp_packet(struct nf_conn *ct,
+ 			/* Sec 8.5.1 (D) */
+ 			if (sh->vtag != ct->proto.sctp.vtag[dir])
+ 				goto out_unlock;
++		} else if (sch->type == SCTP_CID_HEARTBEAT ||
++			   sch->type == SCTP_CID_HEARTBEAT_ACK) {
++			if (ct->proto.sctp.vtag[dir] == 0) {
++				pr_debug("Setting vtag %x for dir %d\n",
++					 sh->vtag, dir);
++				ct->proto.sctp.vtag[dir] = sh->vtag;
++			} else if (sh->vtag != ct->proto.sctp.vtag[dir]) {
++				pr_debug("Verification tag check failed\n");
++				goto out_unlock;
++			}
+ 		}
+ 
+ 		old_state = ct->proto.sctp.state;
+@@ -466,6 +499,10 @@ static bool sctp_new(struct nf_conn *ct, const struct sk_buff *skb,
+ 				/* Sec 8.5.1 (A) */
+ 				return false;
+ 			}
++		} else if (sch->type == SCTP_CID_HEARTBEAT) {
++			pr_debug("Setting vtag %x for secondary conntrack\n",
++				 sh->vtag);
++			ct->proto.sctp.vtag[IP_CT_DIR_ORIGINAL] = sh->vtag;
+ 		}
+ 		/* If it is a shutdown ack OOTB packet, we expect a return
+ 		   shutdown complete, otherwise an ABORT Sec 8.4 (5) and (8) */
+@@ -610,6 +647,8 @@ sctp_timeout_nla_policy[CTA_TIMEOUT_SCTP_MAX+1] = {
+ 	[CTA_TIMEOUT_SCTP_SHUTDOWN_SENT]	= { .type = NLA_U32 },
+ 	[CTA_TIMEOUT_SCTP_SHUTDOWN_RECD]	= { .type = NLA_U32 },
+ 	[CTA_TIMEOUT_SCTP_SHUTDOWN_ACK_SENT]	= { .type = NLA_U32 },
++	[CTA_TIMEOUT_SCTP_HEARTBEAT_SENT]	= { .type = NLA_U32 },
++	[CTA_TIMEOUT_SCTP_HEARTBEAT_ACKED]	= { .type = NLA_U32 },
+ };
+ #endif /* CONFIG_NF_CT_NETLINK_TIMEOUT */
+ 
+@@ -658,6 +697,18 @@ static struct ctl_table sctp_sysctl_table[] = {
+ 		.mode		= 0644,
+ 		.proc_handler	= proc_dointvec_jiffies,
+ 	},
++	{
++		.procname	= "nf_conntrack_sctp_timeout_heartbeat_sent",
++		.maxlen		= sizeof(unsigned int),
++		.mode		= 0644,
++		.proc_handler	= proc_dointvec_jiffies,
++	},
++	{
++		.procname	= "nf_conntrack_sctp_timeout_heartbeat_acked",
++		.maxlen		= sizeof(unsigned int),
++		.mode		= 0644,
++		.proc_handler	= proc_dointvec_jiffies,
++	},
+ 	{ }
+ };
+ 
+@@ -705,6 +756,18 @@ static struct ctl_table sctp_compat_sysctl_table[] = {
+ 		.mode		= 0644,
+ 		.proc_handler	= proc_dointvec_jiffies,
+ 	},
++	{
++		.procname	= "ip_conntrack_sctp_timeout_heartbeat_sent",
++		.maxlen		= sizeof(unsigned int),
++		.mode		= 0644,
++		.proc_handler	= proc_dointvec_jiffies,
++	},
++	{
++		.procname	= "ip_conntrack_sctp_timeout_heartbeat_acked",
++		.maxlen		= sizeof(unsigned int),
++		.mode		= 0644,
++		.proc_handler	= proc_dointvec_jiffies,
++	},
+ 	{ }
+ };
+ #endif /* CONFIG_NF_CONNTRACK_PROC_COMPAT */
+@@ -730,6 +793,8 @@ static int sctp_kmemdup_sysctl_table(struct nf_proto_net *pn,
+ 	pn->ctl_table[4].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_SENT];
+ 	pn->ctl_table[5].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_RECD];
+ 	pn->ctl_table[6].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_ACK_SENT];
++	pn->ctl_table[7].data = &sn->timeouts[SCTP_CONNTRACK_HEARTBEAT_SENT];
++	pn->ctl_table[8].data = &sn->timeouts[SCTP_CONNTRACK_HEARTBEAT_ACKED];
+ #endif
+ 	return 0;
+ }
+@@ -752,6 +817,8 @@ static int sctp_kmemdup_compat_sysctl_table(struct nf_proto_net *pn,
+ 	pn->ctl_compat_table[4].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_SENT];
+ 	pn->ctl_compat_table[5].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_RECD];
+ 	pn->ctl_compat_table[6].data = &sn->timeouts[SCTP_CONNTRACK_SHUTDOWN_ACK_SENT];
++	pn->ctl_compat_table[7].data = &sn->timeouts[SCTP_CONNTRACK_HEARTBEAT_SENT];
++	pn->ctl_compat_table[8].data = &sn->timeouts[SCTP_CONNTRACK_HEARTBEAT_ACKED];
+ #endif
+ #endif
+ 	return 0;
+-- 
+2.4.5
