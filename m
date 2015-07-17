@@ -1,38 +1,36 @@
-From: Kees Cook <keescook@chromium.org>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 Subject: Re: [PATCH v4 1/2] capabilities: Ambient capabilities
-Date: Fri, 17 Jul 2015 16:10:09 -0700
-Message-ID: <CAGXu5j+V0fMae5OOHwU5DcMrG0TCANYOTfbz5+LDZZqYKcXAaw@mail.gmail.com>
-References: <cover.1436903028.git.luto@kernel.org>
-	<9f660ee708e58892bfa7012b6b9c840298e24544.1436903028.git.luto@kernel.org>
-	<alpine.LRH.2.11.1507152033420.8351@namei.org>
-	<CALCETrWMBZ0p7P1FvtrYp5ChJXvvRzy0JpjS8KwUUa5m9gqgQA@mail.gmail.com>
-	<alpine.DEB.2.11.1507171539590.13763@east.gentwo.org>
-	<20150717135057.8e09390f1c10bc11d10a42f5@linux-foundation.org>
+Date: Fri, 17 Jul 2015 16:21:37 -0700
+Message-ID: <CALCETrXdMmmSe_ikvSGtJqjmMJDjSEbq-4Qjjm8ADp1nHMnQ9g@mail.gmail.com>
+References: <cover.1436903028.git.luto@kernel.org> <9f660ee708e58892bfa7012b6b9c840298e24544.1436903028.git.luto@kernel.org>
+ <alpine.LRH.2.11.1507152033420.8351@namei.org> <CALCETrWMBZ0p7P1FvtrYp5ChJXvvRzy0JpjS8KwUUa5m9gqgQA@mail.gmail.com>
+ <alpine.DEB.2.11.1507171539590.13763@east.gentwo.org> <20150717135057.8e09390f1c10bc11d10a42f5@linux-foundation.org>
+ <CAGXu5j+V0fMae5OOHwU5DcMrG0TCANYOTfbz5+LDZZqYKcXAaw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150717135057.8e09390f1c10bc11d10a42f5@linux-foundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Christoph Lameter <cl@linux.com>, Andy Lutomirski <luto@amacapital.net>, James Morris <jmorris@namei.org>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linuxfoundation.org>, "Serge E. Hallyn" <serge@hallyn.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, James Morris <james.l.morris@oracle.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, "Andrew G. Morgan" <morgan@kernel.org>, Linux API <linux-api@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Austin S Hemmelgarn <ahferroin7@gmail.com>, linux-security-module <linux-security-module@vger.kernel.org>, Aaron Jones <aaronmdjones@gmail.com>, Serge Hallyn <serge.hallyn@canonical.com>, LKML <linux-kernel@vger.kernel.org>, Markku Savela <msa@moth.iki.fi>, Jonathan Corbet <corbet@lwn.net>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAGXu5j+V0fMae5OOHwU5DcMrG0TCANYOTfbz5+LDZZqYKcXAaw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 17, 2015 at 1:50 PM, Andrew Morton
-<akpm@linux-foundation.org> wrote:
-> On Fri, 17 Jul 2015 15:40:57 -0500 (CDT) Christoph Lameter <cl@linux.com> wrote:
+On Fri, Jul 17, 2015 at 4:10 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
+> On Fri, Jul 17, 2015 at 1:50 PM, Andrew Morton
+> <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
+>> On Fri, 17 Jul 2015 15:40:57 -0500 (CDT) Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org> wrote:
+>>
+>>> Here is a test program that can be used to verify the functionality.
+>>
+>> I slurped that into the changelog.
+>>
+>> Adding a selftest into tools/testing/selftests/ would be appropriate.
 >
->> Here is a test program that can be used to verify the functionality.
->
-> I slurped that into the changelog.
->
-> Adding a selftest into tools/testing/selftests/ would be appropriate.
+> Yes please! I'd love to see a general privilege transition testing
+> area. But starting with just this would be fine. :)
 
-Yes please! I'd love to see a general privilege transition testing
-area. But starting with just this would be fine. :)
+I'll try to write something soonish.  Might be a little while.  Plate
+is currently full with non-Linux work and a handful of
+much-more-urgent Linux things.
 
--Kees
-
-
--- 
-Kees Cook
-Chrome OS Security
+--Andy
