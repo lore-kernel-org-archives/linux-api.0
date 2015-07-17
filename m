@@ -1,63 +1,103 @@
-From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU number (x86)
-Date: Fri, 17 Jul 2015 12:11:28 -0700
-Message-ID: <CA+55aFzvQbjryGKjMySo9X4D+tGBDmyuRqtFm2zAmt51bckhtg@mail.gmail.com>
-References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com>
-	<5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F39C6@PRN-MBX02-1.TheFacebook.com>
-	<587954201.31.1436808992876.JavaMail.zimbra@efficios.com>
-	<5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F5DA0@PRN-MBX02-1.TheFacebook.com>
-	<549319255.383.1437070088597.JavaMail.zimbra@efficios.com>
-	<CALCETrWEKE=mow3vVh7C4r8CuGy_d5VOEz7KkpijuR5cpBfFtg@mail.gmail.com>
-	<CA+55aFz-VBnEKh0SPKgu8xV5=Zb+=6odybVUDoOYOknshbcFJA@mail.gmail.com>
-	<CALCETrVNcLpZVATHOs-gZR9AMUSW_ScvXW_0oY=OnFHXXHLdaA@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 1/2] capabilities: Ambient capabilities
+Date: Fri, 17 Jul 2015 15:40:57 -0500 (CDT)
+Message-ID: <alpine.DEB.2.11.1507171539590.13763@east.gentwo.org>
+References: <cover.1436903028.git.luto@kernel.org> <9f660ee708e58892bfa7012b6b9c840298e24544.1436903028.git.luto@kernel.org> <alpine.LRH.2.11.1507152033420.8351@namei.org> <CALCETrWMBZ0p7P1FvtrYp5ChJXvvRzy0JpjS8KwUUa5m9gqgQA@mail.gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrVNcLpZVATHOs-gZR9AMUSW_ScvXW_0oY=OnFHXXHLdaA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <CALCETrWMBZ0p7P1FvtrYp5ChJXvvRzy0JpjS8KwUUa5m9gqgQA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>
+Cc: James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 17, 2015 at 11:55 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->
-> I doubt I'll succeed, too.  But I don't want anything resembling full
-> per-cpu page tables -- per-cpu pgds would be plenty.  Still kinda
-> nasty to implement.
+Here is a test program that can be used to verify the functionality.
 
-Per-cpu pgd's would have been trivial in the old 32-bit PAE
-environment. There's only four entries at the top level, and they have
-to be allocated at process startup anyway - and we wopuldn't even have
-to do a per-cpu-and-VM allocation, we'd just have done one single
-per-cpu entry, and when switching tasks we'd *copy* the VM entries to
-the per-cpu one and re-load %cr3 with the same address. I thought
-about it.
 
-But I'm really happy we never went down that road. It's non-portable,
-even on x86-32 (because it requires PAE). And even there it would be
-limited to "the top 1GB of virtual address space ends up being
-per-cpu", and then you have to get the vmalloc space right etc, so you
-have that one PGE entry for the kernel mapping that you can make be
-percpu and play tricks in. So you'd basically allocate one page per
-CPU for the magic upper PGD entry that maps the top 1GB, and edit that
-on-the-fly as you do task-switching. Very specialized, and the upside
-was very dubious.
+------ ambient_test.c -----------------------
 
-And that "simple" trick is not really doable with the x86-64 model any
-more (you can't copy 4kB efficiently the way you could copy 32 _bytes_
-efficiently). And you really don't want to pre-allocate the whole
-top-level PGD either. So all the things that made it "easy" for 32-bit
-PAE basically went away with x86-64.
 
-No, I think the only thing that would make it possible is if there is
-some architecture extension that replaces part of the page table
-mappings with a percpu MSR describing a magic mapping or two. It would
-be trivial to do such an addition in hardware (it's not even in the
-critical path, it would be just a new magic special case for the TLB
-fill code), but without hardware support it's just not a good idea.
+/*
+ * Test program for the ambient capabilities. This program spawns a shell
+ * that allows running processes with a defined set of capabilities.
+ *
+ * (C) 2015 Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+ * Released under: GPL v3 or later.
+ *
+ *
+ * Compile using:
+ *
+ *	gcc -o ambient_test ambient_test.o -lcap-ng
+ *
+ * This program must have the following capabilities to run properly:
+ * Permissions for CAP_NET_RAW, CAP_NET_ADMIN, CAP_SYS_NICE
+ *
+ * A command to equip the binary with the right caps is:
+ *
+ *	setcap cap_net_raw,cap_net_admin,cap_sys_nice+p ambient_test
+ *
+ *
+ * To get a shell with additional caps that can be inherited by other processes:
+ *
+ *	./ambient_test /bin/bash
+ *
+ *
+ * Verifying that it works:
+ *
+ * From the bash spawed by ambient_test run
+ *
+ *	cat /proc/$$/status
+ *
+ * and have a look at the capabilities.
+ */
 
-(And I'm not claiming that the hw extension for per-cpu mappigns would
-be a good idea either, although I think it would be an _interesting_
-toy to play with ;)
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <cap-ng.h>
+#include <sys/prctl.h>
+#include <linux/capability.h>
 
-                     Linus
+/*
+ * Definitions from the kernel header files. These are going to be removed
+ * when the /usr/include files have these defined.
+ */
+#define PR_CAP_AMBIENT 47
+#define PR_CAP_AMBIENT_IS_SET 1
+#define PR_CAP_AMBIENT_RAISE 2
+#define PR_CAP_AMBIENT_LOWER 3
+#define PR_CAP_AMBIENT_CLEAR_ALL 4
+
+static void set_ambient_cap(int cap)
+{
+	int rc;
+
+	capng_get_caps_process();
+	rc = capng_update(CAPNG_ADD, CAPNG_INHERITABLE, cap);
+	if (rc) {
+		printf("Cannot add inheritable cap\n");
+		exit(2);
+	}
+	capng_apply(CAPNG_SELECT_CAPS);
+
+	/* Note the two 0s at the end. Kernel checks for these */
+	if (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, cap, 0, 0)) {
+		perror("Cannot set cap");
+		exit(1);
+	}
+}
+
+int main(int argc, char **argv)
+{
+	int rc;
+
+	set_ambient_cap(CAP_NET_RAW);
+	set_ambient_cap(CAP_NET_ADMIN);
+	set_ambient_cap(CAP_SYS_NICE);
+
+	printf("Ambient_test forking shell\n");
+	if (execv(argv[1], argv + 1))
+		perror("Cannot exec");
+
+	return 0;
+}
