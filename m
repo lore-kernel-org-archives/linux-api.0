@@ -1,50 +1,78 @@
-From: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Subject: Re: [PATCH -mm v8 4/7] proc: add kpagecgroup file
-Date: Fri, 17 Jul 2015 12:27:44 +0300
-Message-ID: <20150717092744.GF2001@esperanza>
-References: <cover.1436967694.git.vdavydov@parallels.com>
- <c6cbd44b9d5127cdaaa6f7d330e9bf715ec55534.1436967694.git.vdavydov@parallels.com>
- <CAJu=L58kZW2WRpx8wLx=FXdS29BJ+euLRdDcTXJKwf-VLT6SCA@mail.gmail.com>
- <20150716092841.GA2001@esperanza>
- <CAJu=L5_AUFv=Bh2WiWwOsMx41z_X0cAum_WkNikSE4Bo0r+wfQ@mail.gmail.com>
+From: =?utf-8?B?T25kxZllaiBCw61sa2E=?= <neleai@seznam.cz>
+Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
+ number (x86)
+Date: Fri, 17 Jul 2015 12:21:05 +0200
+Message-ID: <20150717102105.GA21915@domone>
+References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F39C6@PRN-MBX02-1.TheFacebook.com>
+ <587954201.31.1436808992876.JavaMail.zimbra@efficios.com>
+ <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F5DA0@PRN-MBX02-1.TheFacebook.com>
+ <549319255.383.1437070088597.JavaMail.zimbra@efficios.com>
+ <CALCETrWEKE=mow3vVh7C4r8CuGy_d5VOEz7KkpijuR5cpBfFtg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <libc-alpha-return-61063-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 Content-Disposition: inline
-In-Reply-To: <CAJu=L5_AUFv=Bh2WiWwOsMx41z_X0cAum_WkNikSE4Bo0r+wfQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Raghavendra K T <raghavendra.kt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <CALCETrWEKE=mow3vVh7C4r8CuGy_d5VOEz7KkpijuR5cpBfFtg@mail.gmail.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Ben Maurer <bmaurer@fb.com>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Lai Jiangshan <laijs@cn.fujitsu.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, linux-api <linux-api@vger.kernel.org>, libc-alpha <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 16, 2015 at 12:04:59PM -0700, Andres Lagar-Cavilla wrote:
-> On Thu, Jul 16, 2015 at 2:28 AM, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-> wrote:
-> 
-> > On Wed, Jul 15, 2015 at 12:03:18PM -0700, Andres Lagar-Cavilla wrote:
-> > > For both /proc/kpage* interfaces you add (and more critically for the
-> > > rmap-causing one, kpageidle):
-> > >
-> > > It's a good idea to do cond_sched(). Whether after each pfn, each Nth
-> > > pfn, each put_user, I leave to you, but a reasonable cadence is
-> > > needed, because user-space can call this on the entire physical
-> > > address space, and that's a lot of work to do without re-scheduling.
+On Thu, Jul 16, 2015 at 12:27:10PM -0700, Andy Lutomirski wrote:
+> On Thu, Jul 16, 2015 at 11:08 AM, Mathieu Desnoyers
+> <mathieu.desnoyers@efficios.com> wrote:
+> > ----- On Jul 14, 2015, at 5:34 AM, Ben Maurer bmaurer@fb.com wrote:
+> >>
+> >> That said, having the ability for the kernel to understand that TLS
+> >> implementation are laid out using the same offset on each thread seems like
+> >> something that could be valuable long term. Doing so makes it possible to build
+> >> other TLS-based features without forcing each thread to be registered.
 > >
-> > I really don't think it's necessary. These files can only be
-> > read/written by the root, who has plenty ways to kill the system anyway.
-> > The program that is allowed to read/write these files must be conscious
-> > and do it in batches of reasonable size. AFAICS the same reasoning
-> > already lays behind /proc/kpagecount and /proc/kpageflag, which also do
-> > not thrust the "right" batch size on their readers.
+> > AFAIU, using a fixed hardcoded ABI between kernel and user-space might make
+> > transition from the pre-existing ABI (where this memory area is not
+> > reserved) a bit tricky without registering the area, or getting a "feature"
+> > flag, through a system call.
 > >
+> > The related question then becomes: should we issue this system call once
+> > per process, or once per thread at thread creation ? Issuing it once per
+> > thread is marginally more costly for thread creation, but seems to be
+> > easier to deal with internally within the kernel.
+> >
+> > We could however ensure that only a single system call is needed per new-coming
+> > thread, rather than one system call per feature. One way to do this would be
+> > to register an area that may contain more than just the CPU id. It could
+> > consist of an expandable structure with fixed offsets. When registered, we
+> > could pass the size of that structure as an argument to the system call, so
+> > the kernel knows which features are expected by user-space.
 > 
-> Beg to disagree. You're conflating intended use with system health. A
-> cond_sched() is a one-liner.
+> If we actually bit the bullet and implemented per-cpu mappings, we
+> could have this be completely flexible because there would be no
+> format at all.  Similarly, if we implemented per-cpu segments,
+> userspace would need to agree with *itself* how to arbitrate it, but
+> the kernel wouldn't need to be involved.
+> 
+> With this kind of memory poking, it's definitely messier, which is unfortunate.
+> 
+Could you recapitulate thread? On libc side we didn't read most of it so
+it would be appreciated.
 
-I would still prefer not to clutter the code with cond_resched's, but I
-don't think it's a matter worth arguing upon, so I'll prepare a patch
-that makes all /proc/kapge* files issue cond_resched periodically and
-leave it up to Andrew to decide if it should be applied or not.
+If per-cpu mappings mean that there is a single virtual page that is
+mapped to different virtual pages?
 
-Thanks,
-Vladimir
+I had in my todo list improving tls access. This would help tls
+implementations for older arms and in general architectures that dont
+store tcb in register.
+
+My proposal is modulo small constant equivalent of userspace accessing tid 
+without syscall overhead, just use array of tcb's for first 32768 tids
+and do syscall only when tid exceeds that.
+
+On userspace my proposal would be use map that to fixed virtual address and store tcb in first eigth bytes. Kernel would on context switch along registers also
+save and restore these. That would make tls access cheap as it would
+need only extra load instruction versus static variable.
