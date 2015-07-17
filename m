@@ -1,36 +1,72 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH v4 1/2] capabilities: Ambient capabilities
-Date: Fri, 17 Jul 2015 16:21:37 -0700
-Message-ID: <CALCETrXdMmmSe_ikvSGtJqjmMJDjSEbq-4Qjjm8ADp1nHMnQ9g@mail.gmail.com>
-References: <cover.1436903028.git.luto@kernel.org> <9f660ee708e58892bfa7012b6b9c840298e24544.1436903028.git.luto@kernel.org>
- <alpine.LRH.2.11.1507152033420.8351@namei.org> <CALCETrWMBZ0p7P1FvtrYp5ChJXvvRzy0JpjS8KwUUa5m9gqgQA@mail.gmail.com>
- <alpine.DEB.2.11.1507171539590.13763@east.gentwo.org> <20150717135057.8e09390f1c10bc11d10a42f5@linux-foundation.org>
- <CAGXu5j+V0fMae5OOHwU5DcMrG0TCANYOTfbz5+LDZZqYKcXAaw@mail.gmail.com>
+From: =?utf-8?B?T25kxZllaiBCw61sa2E=?= <neleai@seznam.cz>
+Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
+ number (x86)
+Date: Sat, 18 Jul 2015 01:28:36 +0200
+Message-ID: <20150717232836.GA13604@domone>
+References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F39C6@PRN-MBX02-1.TheFacebook.com>
+ <587954201.31.1436808992876.JavaMail.zimbra@efficios.com>
+ <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F5DA0@PRN-MBX02-1.TheFacebook.com>
+ <549319255.383.1437070088597.JavaMail.zimbra@efficios.com>
+ <CALCETrWEKE=mow3vVh7C4r8CuGy_d5VOEz7KkpijuR5cpBfFtg@mail.gmail.com>
+ <CA+55aFz-VBnEKh0SPKgu8xV5=Zb+=6odybVUDoOYOknshbcFJA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGXu5j+V0fMae5OOHwU5DcMrG0TCANYOTfbz5+LDZZqYKcXAaw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aaron Jones <aaronmdjones-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Markku Savela <msa-kXoF896ld44xHbG02/KK1g@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <libc-alpha-return-61099-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+Content-Disposition: inline
+In-Reply-To: <CA+55aFz-VBnEKh0SPKgu8xV5=Zb+=6odybVUDoOYOknshbcFJA@mail.gmail.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Ben Maurer <bmaurer@fb.com>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Lai Jiangshan <laijs@cn.fujitsu.com>, Andrew Morton <akpm@linux-foundation.org>, linux-api <linux-api@vger.kernel.org>, libc-alpha <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 17, 2015 at 4:10 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
-> On Fri, Jul 17, 2015 at 1:50 PM, Andrew Morton
-> <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
->> On Fri, 17 Jul 2015 15:40:57 -0500 (CDT) Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org> wrote:
->>
->>> Here is a test program that can be used to verify the functionality.
->>
->> I slurped that into the changelog.
->>
->> Adding a selftest into tools/testing/selftests/ would be appropriate.
+On Fri, Jul 17, 2015 at 11:48:14AM -0700, Linus Torvalds wrote:
+> On Thu, Jul 16, 2015 at 12:27 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+> >
+> > If we actually bit the bullet and implemented per-cpu mappings
+> 
+> That's not ever going to happen.
+> 
+> The Linux VM model of "one page table per VM" is the right one.
+> Anything else sucks, and makes threading a disaster.
+> 
+> So you can try to prove me wrong, but seriously, I doubt you'll succeed.
+> 
+> On x86, if you want per-cpu memory areas, you should basically plan on
+> using segment registers instead (although other odd state has been
+> used - there's been the people who use segment limits etc rather than
+> the *pointer* itself, preferring to use "lsl" to get percpu data. You
+> could also imaging hiding things in the vector state somewhere if you
+> control your environment well enough).
 >
-> Yes please! I'd love to see a general privilege transition testing
-> area. But starting with just this would be fine. :)
+Thats correct, problem is that you need some sort of hack like this on
+archs that otherwise would need syscall to get tid/access tls variable.
 
-I'll try to write something soonish.  Might be a little while.  Plate
-is currently full with non-Linux work and a handful of
-much-more-urgent Linux things.
+On x64 and archs that have register for tls this could be implemented
+relatively easily.
 
---Andy
+Kernel needs to allocate 
+
+int running_cpu_for_tid[32768];
+
+On context switch it atomically writes to this table 
+
+running_cpu_for_tid[tid] = cpu;
+
+This table is read-only accessible from userspace as mmaped file.
+
+Then userspace just needs to access it with three indirections like:
+
+__thread tid;
+
+char caches[CPU_MAX];
+#define getcpu_cache caches[tid > 32768 ? get_cpu() : running_cpu_for_tid[tid]]
+ 
+With more complicated kernel interface you could eliminate one
+indirection as we would use void * array instead and thread could do
+syscall to register what values it should use for each thread.
