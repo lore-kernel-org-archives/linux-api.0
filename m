@@ -1,157 +1,50 @@
-From: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
-Subject: Re: [PATCH v3 01/10] mm/hugetlb: add cache of descriptors to
- resv_map for region_add
-Date: Fri, 17 Jul 2015 09:02:14 +0000
-Message-ID: <20150717090213.GB32135@hori1.linux.bs1.fc.nec.co.jp>
-References: <1436761268-6397-1-git-send-email-mike.kravetz@oracle.com>
- <1436761268-6397-2-git-send-email-mike.kravetz@oracle.com>
+From: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Subject: Re: [PATCH -mm v8 4/7] proc: add kpagecgroup file
+Date: Fri, 17 Jul 2015 12:27:44 +0300
+Message-ID: <20150717092744.GF2001@esperanza>
+References: <cover.1436967694.git.vdavydov@parallels.com>
+ <c6cbd44b9d5127cdaaa6f7d330e9bf715ec55534.1436967694.git.vdavydov@parallels.com>
+ <CAJu=L58kZW2WRpx8wLx=FXdS29BJ+euLRdDcTXJKwf-VLT6SCA@mail.gmail.com>
+ <20150716092841.GA2001@esperanza>
+ <CAJu=L5_AUFv=Bh2WiWwOsMx41z_X0cAum_WkNikSE4Bo0r+wfQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-2022-jp"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1436761268-6397-2-git-send-email-mike.kravetz@oracle.com>
-Content-Language: ja-JP
-Content-ID: <BA73B62C4D15DB429B0C4EF6D7AE5134@gisp.nec.co.jp>
-Sender: owner-linux-mm@kvack.org
-To: Mike Kravetz <mike.kravetz@oracle.com>
-Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Dave Hansen <dave.hansen@linux.intel.com>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Davidlohr Bueso <dave@stgolabs.net>, Aneesh Kumar <aneesh.kumar@linux.vnet.ibm.com>, Hillf Danton <hillf.zj@alibaba-inc.com>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>
+Content-Type: text/plain; charset="us-ascii"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAJu=L5_AUFv=Bh2WiWwOsMx41z_X0cAum_WkNikSE4Bo0r+wfQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Raghavendra K T <raghavendra.kt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Jul 12, 2015 at 09:20:59PM -0700, Mike Kravetz wrote:
-> fallocate hole punch will want to remove a specific range of
-> pages.  When pages are removed, their associated entries in
-> the region/reserve map will also be removed.  This will break
-> an assumption in the region_chg/region_add calling sequence.
-> If a new region descriptor must be allocated, it is done as
-> part of the region_chg processing.  In this way, region_add
-> can not fail because it does not need to attempt an allocation.
->=20
-> To prepare for fallocate hole punch, create a "cache" of
-> descriptors that can be used by region_add if necessary.
-> region_chg will ensure there are sufficient entries in the
-> cache.  It will be necessary to track the number of in progress
-> add operations to know a sufficient number of descriptors
-> reside in the cache.  A new routine region_abort is added to
-> adjust this in progress count when add operations are aborted.
-> vma_abort_reservation is also added for callers creating
-> reservations with vma_needs_reservation/vma_commit_reservation.
->=20
-> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
-> ---
->  include/linux/hugetlb.h |   3 +
->  mm/hugetlb.c            | 169 ++++++++++++++++++++++++++++++++++++++++++=
-------
->  2 files changed, 153 insertions(+), 19 deletions(-)
->=20
-> diff --git a/include/linux/hugetlb.h b/include/linux/hugetlb.h
-> index d891f94..667cf44 100644
-> --- a/include/linux/hugetlb.h
-> +++ b/include/linux/hugetlb.h
-> @@ -35,6 +35,9 @@ struct resv_map {
->  	struct kref refs;
->  	spinlock_t lock;
->  	struct list_head regions;
-> +	long adds_in_progress;
-> +	struct list_head rgn_cache;
-> +	long rgn_cache_count;
->  };
->  extern struct resv_map *resv_map_alloc(void);
->  void resv_map_release(struct kref *ref);
-> diff --git a/mm/hugetlb.c b/mm/hugetlb.c
-> index a8c3087..241d16d 100644
-> --- a/mm/hugetlb.c
-> +++ b/mm/hugetlb.c
-> @@ -240,11 +240,14 @@ struct file_region {
-> =20
->  /*
->   * Add the huge page range represented by [f, t) to the reserve
-> - * map.  Existing regions will be expanded to accommodate the
-> - * specified range.  We know only existing regions need to be
-> - * expanded, because region_add is only called after region_chg
-> - * with the same range.  If a new file_region structure must
-> - * be allocated, it is done in region_chg.
-> + * map.  In the normal case, existing regions will be expanded
-> + * to accommodate the specified range.  Sufficient regions should
-> + * exist for expansion due to the previous call to region_chg
-> + * with the same range.  However, it is possible that region_del
-> + * could have been called after region_chg and modifed the map
-> + * in such a way that no region exists to be expanded.  In this
-> + * case, pull a region descriptor from the cache associated with
-> + * the map and use that for the new range.
->   *
->   * Return the number of new huge pages added to the map.  This
->   * number is greater than or equal to zero.
-> @@ -261,6 +264,27 @@ static long region_add(struct resv_map *resv, long f=
-, long t)
->  		if (f <=3D rg->to)
->  			break;
-> =20
-> +	if (&rg->link =3D=3D head || t < rg->from) {
-> +		/*
-> +		 * No region exists which can be expanded to include the
-> +		 * specified range.  Pull a region descriptor from the
-> +		 * cache, and use it for this range.
-> +		 */
+On Thu, Jul 16, 2015 at 12:04:59PM -0700, Andres Lagar-Cavilla wrote:
+> On Thu, Jul 16, 2015 at 2:28 AM, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+> wrote:
+> 
+> > On Wed, Jul 15, 2015 at 12:03:18PM -0700, Andres Lagar-Cavilla wrote:
+> > > For both /proc/kpage* interfaces you add (and more critically for the
+> > > rmap-causing one, kpageidle):
+> > >
+> > > It's a good idea to do cond_sched(). Whether after each pfn, each Nth
+> > > pfn, each put_user, I leave to you, but a reasonable cadence is
+> > > needed, because user-space can call this on the entire physical
+> > > address space, and that's a lot of work to do without re-scheduling.
+> >
+> > I really don't think it's necessary. These files can only be
+> > read/written by the root, who has plenty ways to kill the system anyway.
+> > The program that is allowed to read/write these files must be conscious
+> > and do it in batches of reasonable size. AFAICS the same reasoning
+> > already lays behind /proc/kpagecount and /proc/kpageflag, which also do
+> > not thrust the "right" batch size on their readers.
+> >
+> 
+> Beg to disagree. You're conflating intended use with system health. A
+> cond_sched() is a one-liner.
 
-This comment mentions this if-block, not the VM_BUG_ON below, so it had
-better be put the above if-line.
-
-> +		VM_BUG_ON(!resv->rgn_cache_count);
-
-resv->rgn_cache_count <=3D 0 might be safer.
-
-...
-> @@ -3236,11 +3360,14 @@ retry:
->  	 * any allocations necessary to record that reservation occur outside
->  	 * the spinlock.
->  	 */
-> -	if ((flags & FAULT_FLAG_WRITE) && !(vma->vm_flags & VM_SHARED))
-> +	if ((flags & FAULT_FLAG_WRITE) && !(vma->vm_flags & VM_SHARED)) {
->  		if (vma_needs_reservation(h, vma, address) < 0) {
->  			ret =3D VM_FAULT_OOM;
->  			goto backout_unlocked;
->  		}
-> +		/* Just decrements count, does not deallocate */
-> +		vma_abort_reservation(h, vma, address);
-> +	}
-
-This is not "abort reservation" operation, but you use "abort reservation"
-routine, which might confusing and makes future maintenance hard. I think
-this should be done in a simplified variant of vma_commit_reservation()
-(maybe just an alias of your vma_abort_reservation()) or fast path in
-vma_commit_reservation().
+I would still prefer not to clutter the code with cond_resched's, but I
+don't think it's a matter worth arguing upon, so I'll prepare a patch
+that makes all /proc/kapge* files issue cond_resched periodically and
+leave it up to Andrew to decide if it should be applied or not.
 
 Thanks,
-Naoya Horiguchi
-
-> =20
->  	ptl =3D huge_pte_lockptr(h, mm, ptep);
->  	spin_lock(ptl);
-> @@ -3387,6 +3514,8 @@ int hugetlb_fault(struct mm_struct *mm, struct vm_a=
-rea_struct *vma,
->  			ret =3D VM_FAULT_OOM;
->  			goto out_mutex;
->  		}
-> +		/* Just decrements count, does not deallocate */
-> +		vma_abort_reservation(h, vma, address);
-> =20
->  		if (!(vma->vm_flags & VM_MAYSHARE))
->  			pagecache_page =3D hugetlbfs_pagecache_page(h,
-> @@ -3726,6 +3855,8 @@ int hugetlb_reserve_pages(struct inode *inode,
->  	}
->  	return 0;
->  out_err:
-> +	if (!vma || vma->vm_flags & VM_MAYSHARE)
-> +		region_abort(resv_map, from, to);
->  	if (vma && is_vma_resv_set(vma, HPAGE_RESV_OWNER))
->  		kref_put(&resv_map->refs, resv_map_release);
->  	return ret;
-> --=20
-> 2.1.0
-> =
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Vladimir
