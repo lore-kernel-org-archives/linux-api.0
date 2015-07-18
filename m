@@ -1,8 +1,8 @@
-From: =?utf-8?B?T25kxZllaiBCw61sa2E=?= <neleai@seznam.cz>
+From: =?utf-8?B?T25kxZllaiBCw61sa2E=?= <neleai-9Vj9tDbzfuSlVyrhU4qvOw@public.gmane.org>
 Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
  number (x86)
-Date: Sat, 18 Jul 2015 12:35:03 +0200
-Message-ID: <20150718103503.GA30356@domone>
+Date: Sat, 18 Jul 2015 12:51:25 +0200
+Message-ID: <20150718105125.GB30356@domone>
 References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com>
  <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F39C6@PRN-MBX02-1.TheFacebook.com>
  <587954201.31.1436808992876.JavaMail.zimbra@efficios.com>
@@ -11,78 +11,89 @@ References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com>
  <CALCETrWEKE=mow3vVh7C4r8CuGy_d5VOEz7KkpijuR5cpBfFtg@mail.gmail.com>
  <CA+55aFz-VBnEKh0SPKgu8xV5=Zb+=6odybVUDoOYOknshbcFJA@mail.gmail.com>
  <20150717232836.GA13604@domone>
- <CALCETrVY=kjeA_4pazy3BL+ekfcV6WHKw8e3z-LBxx_uP1bw2Q@mail.gmail.com>
+ <20150718073433.GH1173@brightrain.aerifal.cx>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <libc-alpha-return-61110-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrVY=kjeA_4pazy3BL+ekfcV6WHKw8e3z-LBxx_uP1bw2Q@mail.gmail.com>
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Ben Maurer <bmaurer@fb.com>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Lai Jiangshan <laijs@cn.fujitsu.com>, Andrew Morton <akpm@linux-foundation.org>, linux-api <linux-api@vger.kernel.org>, libc-alpha <libc-alpha@sourceware.org>
+In-Reply-To: <20150718073433.GH1173-C3MtFaGISjmo6RMmaWD+6Sb1p8zYI1N1@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 17, 2015 at 04:33:42PM -0700, Andy Lutomirski wrote:
-> On Fri, Jul 17, 2015 at 4:28 PM, Ondřej Bílka <neleai@seznam.cz> wrote:
+On Sat, Jul 18, 2015 at 03:34:33AM -0400, Rich Felker wrote:
+> On Sat, Jul 18, 2015 at 01:28:36AM +0200, Ond=C5=99ej B=C3=ADlka wrot=
+e:
 > > On Fri, Jul 17, 2015 at 11:48:14AM -0700, Linus Torvalds wrote:
-> >>
-> >> On x86, if you want per-cpu memory areas, you should basically plan on
-> >> using segment registers instead (although other odd state has been
-> >> used - there's been the people who use segment limits etc rather than
-> >> the *pointer* itself, preferring to use "lsl" to get percpu data. You
-> >> could also imaging hiding things in the vector state somewhere if you
-> >> control your environment well enough).
-> >>
-> > Thats correct, problem is that you need some sort of hack like this on
-> > archs that otherwise would need syscall to get tid/access tls variable.
-> >
-> > On x64 and archs that have register for tls this could be implemented
+> > > On Thu, Jul 16, 2015 at 12:27 PM, Andy Lutomirski <luto@amacapita=
+l.net> wrote:
+> > > >
+> > > > If we actually bit the bullet and implemented per-cpu mappings
+> > >=20
+> > > That's not ever going to happen.
+> > >=20
+> > > The Linux VM model of "one page table per VM" is the right one.
+> > > Anything else sucks, and makes threading a disaster.
+> > >=20
+> > > So you can try to prove me wrong, but seriously, I doubt you'll s=
+ucceed.
+> > >=20
+> > > On x86, if you want per-cpu memory areas, you should basically pl=
+an on
+> > > using segment registers instead (although other odd state has bee=
+n
+> > > used - there's been the people who use segment limits etc rather =
+than
+> > > the *pointer* itself, preferring to use "lsl" to get percpu data.=
+ You
+> > > could also imaging hiding things in the vector state somewhere if=
+ you
+> > > control your environment well enough).
+> > >
+> > Thats correct, problem is that you need some sort of hack like this=
+ on
+> > archs that otherwise would need syscall to get tid/access tls varia=
+ble.
+> >=20
+> > On x64 and archs that have register for tls this could be implement=
+ed
 > > relatively easily.
-> >
-> > Kernel needs to allocate
-> >
+> >=20
+> > Kernel needs to allocate=20
+> >=20
 > > int running_cpu_for_tid[32768];
-> >
-> > On context switch it atomically writes to this table
-> >
-> > running_cpu_for_tid[tid] = cpu;
-> >
-> > This table is read-only accessible from userspace as mmaped file.
-> >
-> > Then userspace just needs to access it with three indirections like:
-> >
-> > __thread tid;
-> >
-> > char caches[CPU_MAX];
-> > #define getcpu_cache caches[tid > 32768 ? get_cpu() : running_cpu_for_tid[tid]]
-> >
-> > With more complicated kernel interface you could eliminate one
-> > indirection as we would use void * array instead and thread could do
-> > syscall to register what values it should use for each thread.
-> 
-> Or we implement per-cpu segment registers so you can point gs directly
-> at percpu data.  This is conceptually easy and has no weird ABI
-> issues.  All it needs is an implementation and some good tests.
+>=20
+> This does not scale. You're assuming the default task ("pid") number
+> limit, but this can be raised up to 512k (beyond that is impossible
+> because of PI/robust futex ABI).
 >
-That only works if you have free register on your arch. As gs there was
-rfc to teach gcc use it which could give bigger speedup. I didn't see
-how much this could help yet so I am bit skeptical.
+Doesn't matter much, you will allocate 512k instead. As scaling if you
+have simultaneously more than 32k threads running you have different
+worries than how slow its to get cpu id.
+=20
+> > On context switch it atomically writes to this table=20
+> >=20
+> > running_cpu_for_tid[tid] =3D cpu;
+> >=20
+> > This table is read-only accessible from userspace as mmaped file.
+>=20
+> There is a much simpler solution: use a per-cpu (rather than per-task=
+)
+> page that contains the right value for the cpu. I believe vdso alread=
+y
+> does something like this, no?
+>=20
+Thats exactly what I suggested before to improve tls when you don't hav=
+e
+register for that.
 
- 
-> I think the API should be "set gsbase to x + y*(cpu number)".  On
-> x86_64, userspace just allocates a big swath of virtual space and
-> populates it as needed.
-> 
-That wouldn't work well if two shared libraries want to use that. You
-would need to use something like se it to 4096*cpu_number or so.
+If thats already done its just matter of abi for kernel map per-cpu pag=
+e
+to fixed virtual page and save/restore tcb in same way as it sets cpuid=
+=2E
 
-Also we didn't considered yet overhead, as this slows down everything a
-bit due slower context switches. So will this needs to have widespread
-performance improvement to be worthwhile. What are use cases to make
-that pay itself?
+With that abi a tls access would cost just extra load more than of stat=
+ic
+variable.
