@@ -1,34 +1,74 @@
-From: Don Brace <Don.Brace@pmcs.com>
-Subject: RE: [PATCH 3/3] hpsa: Convert DEVICE_ATTR macro usage to
- DEVICE_ATTR_RO|WR|WO
-Date: Sat, 18 Jul 2015 16:21:32 +0000
-Message-ID: <07F70BBF6832E34FA1C923241E8833AB7CD2B8B7@BBYEXM02.pmc-sierra.internal>
-References: <DDB9C85B850785449757F9914A034FCB4442E19F@G9W0766.americas.hpqcorp.net>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [PATCH V3 4/5] mm: mmap: Add mmap flag to request VM_LOCKONFAULT
+Date: Sat, 18 Jul 2015 15:11:23 -0400
+Message-ID: <CAP=VYLq5=9DCfncJpQizcSbQt1O7VL2yEdzZNOFK+M3pqLpb3Q@mail.gmail.com>
+References: <1436288623-13007-1-git-send-email-emunson@akamai.com> <1436288623-13007-5-git-send-email-emunson@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <DDB9C85B850785449757F9914A034FCB4442E19F@G9W0766.americas.hpqcorp.net>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Seymour, Shane M" <shane.seymour@hp.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "James Bottomley (JBottomley@Odin.com)" <JBottomley@Odin.com>, ISS StorageDev <iss_storagedev@hp.com>
-Cc: "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "Greg KH <greg@kroah.com> (greg@kroah.com)" <greg@kroah.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-next-owner@vger.kernel.org>
+In-Reply-To: <1436288623-13007-5-git-send-email-emunson@akamai.com>
+Sender: linux-next-owner@vger.kernel.org
+To: Eric B Munson <emunson@akamai.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, linux-arch <linux-arch@vger.kernel.org>, linux-api@vger.kernel.org, cmetcalf@ezchip.com, "linux-next@vger.kernel.org" <linux-next@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-> -----Original Message-----
-> From: linux-scsi-owner@vger.kernel.org [mailto:linux-scsi-
-> owner@vger.kernel.org] On Behalf Of Seymour, Shane M
-> Sent: Tuesday, June 30, 2015 10:47 PM
-> To: linux-scsi@vger.kernel.org; James Bottomley (JBottomley@Odin.com); ISS
-> StorageDev
-> Cc: linux-api@vger.kernel.org; Greg KH <greg@kroah.com> (greg@kroah.com)
-> Subject: [PATCH 3/3] hpsa: Convert DEVICE_ATTR macro usage to
-> DEVICE_ATTR_RO|WR|WO
-> 
-> 
-> Convert DEVICE_ATTR macro usage to DEVICE_ATTR_RO|WR|WO
-> Changes forced some function names to change.
-> 
-> Signed-off-by: Shane Seymour <shane.seymour@hp.com>
+On Tue, Jul 7, 2015 at 1:03 PM, Eric B Munson <emunson@akamai.com> wrot=
+e:
+> The cost of faulting in all memory to be locked can be very high when
+> working with large mappings.  If only portions of the mapping will be
+> used this can incur a high penalty for locking.
+>
+> Now that we have the new VMA flag for the locked but not present stat=
+e,
+> expose it  as an mmap option like MAP_LOCKED -> VM_LOCKED.
 
-Signed-off-by: Don Brace <don.brace@pmcs.com>
+An automatic bisection on arch/tile leads to this commit:
+
+5a5656f2c9b61c74c15f9ef3fa2e6513b6c237bb is the first bad commit
+commit 5a5656f2c9b61c74c15f9ef3fa2e6513b6c237bb
+Author: Eric B Munson <emunson@akamai.com>
+Date:   Thu Jul 16 10:09:22 2015 +1000
+
+    mm: mmap: add mmap flag to request VM_LOCKONFAULT
+
+=46ails with:
+
+In file included from arch/tile/mm/init.c:24:
+include/linux/mman.h: In function =E2=80=98calc_vm_flag_bits=E2=80=99:
+include/linux/mman.h:90: error: =E2=80=98MAP_LOCKONFAULT=E2=80=99 undec=
+lared (first
+use in this function)
+include/linux/mman.h:90: error: (Each undeclared identifier is
+reported only once
+include/linux/mman.h:90: error: for each function it appears in.)
+In file included from arch/tile/mm/mmap.c:21:
+include/linux/mman.h: In function =E2=80=98calc_vm_flag_bits=E2=80=99:
+include/linux/mman.h:90: error: =E2=80=98MAP_LOCKONFAULT=E2=80=99 undec=
+lared (first
+use in this function)
+include/linux/mman.h:90: error: (Each undeclared identifier is
+reported only once
+include/linux/mman.h:90: error: for each function it appears in.)
+In file included from arch/tile/mm/fault.c:24:
+include/linux/mman.h: In function =E2=80=98calc_vm_flag_bits=E2=80=99:
+include/linux/mman.h:90: error: =E2=80=98MAP_LOCKONFAULT=E2=80=99 undec=
+lared (first
+use in this function)
+include/linux/mman.h:90: error: (Each undeclared identifier is
+reported only once
+include/linux/mman.h:90: error: for each function it appears in.)
+In file included from arch/tile/mm/hugetlbpage.c:27:
+include/linux/mman.h: In function =E2=80=98calc_vm_flag_bits=E2=80=99:
+include/linux/mman.h:90: error: =E2=80=98MAP_LOCKONFAULT=E2=80=99 undec=
+lared (first
+use in this function)
+include/linux/mman.h:90: error: (Each undeclared identifier is
+reported only once
+include/linux/mman.h:90: error: for each function it appears in.)
+make[1]: *** [arch/tile/mm/hugetlbpage.o] Error 1
+
+http://kisskb.ellerman.id.au/kisskb/buildresult/12465365/
+
+Paul.
+--
