@@ -1,74 +1,50 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: [PATCH V3 4/5] mm: mmap: Add mmap flag to request VM_LOCKONFAULT
-Date: Sat, 18 Jul 2015 15:11:23 -0400
-Message-ID: <CAP=VYLq5=9DCfncJpQizcSbQt1O7VL2yEdzZNOFK+M3pqLpb3Q@mail.gmail.com>
-References: <1436288623-13007-1-git-send-email-emunson@akamai.com> <1436288623-13007-5-git-send-email-emunson@akamai.com>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 08/24] proc: pick out a function to iterate task
+	children
+Date: Sat, 18 Jul 2015 23:22:23 +0200
+Message-ID: <20150718212223.GA10240@redhat.com>
+References: <1436172445-6979-1-git-send-email-avagin@openvz.org> <1436172445-6979-9-git-send-email-avagin@openvz.org> <20150714180235.GB8088@redhat.com> <20150717155728.GB6685@odin.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-next-owner@vger.kernel.org>
-In-Reply-To: <1436288623-13007-5-git-send-email-emunson@akamai.com>
-Sender: linux-next-owner@vger.kernel.org
-To: Eric B Munson <emunson@akamai.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, linux-arch <linux-arch@vger.kernel.org>, linux-api@vger.kernel.org, cmetcalf@ezchip.com, "linux-next@vger.kernel.org" <linux-next@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150717155728.GB6685-wo1vFcy6AUs@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Vagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Roger Luethi <rl-7uj+XXdSDtwfv37vnLkPlQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Pavel Odintsov <pavel.odintsov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 7, 2015 at 1:03 PM, Eric B Munson <emunson@akamai.com> wrot=
-e:
-> The cost of faulting in all memory to be locked can be very high when
-> working with large mappings.  If only portions of the mapping will be
-> used this can incur a high penalty for locking.
+On 07/17, Andrew Vagin wrote:
 >
-> Now that we have the new VMA flag for the locked but not present stat=
-e,
-> expose it  as an mmap option like MAP_LOCKED -> VM_LOCKED.
+> On Tue, Jul 14, 2015 at 08:02:35PM +0200, Oleg Nesterov wrote:
+> > On 07/06, Andrey Vagin wrote:
+> > >
+> > > -static struct pid *
+> > > -get_children_pid(struct inode *inode, struct pid *pid_prev, loff_t pos)
+> > > +static struct task_struct *
+> > > +task_next_child(struct task_struct *parent, struct task_struct *prev, unsigned int pos)
+> > >  {
+> >
+> > I won't really argue, just a question...
+> >
+> > So this patch changes it to accept/return task_struct rather pid. Why?
+> > it is better to get/put "struct pid" only, not the whole task_struct.
+> >
+> > If another caller want task_struct, the necessary conversion is simple.
+>
+> Another caller wants task_struct.
+>
+> Currently this function receives pid and converts it into task_struct, then
+> gets the next child and returns its pid.
 
-An automatic bisection on arch/tile leads to this commit:
+Exactly because we try to avoid get_task_struct() if possible.
 
-5a5656f2c9b61c74c15f9ef3fa2e6513b6c237bb is the first bad commit
-commit 5a5656f2c9b61c74c15f9ef3fa2e6513b6c237bb
-Author: Eric B Munson <emunson@akamai.com>
-Date:   Thu Jul 16 10:09:22 2015 +1000
+> So I try to avoid extra
+> conversion in task_diag code.
 
-    mm: mmap: add mmap flag to request VM_LOCKONFAULT
+Which is simple. And perhaps even iter->task can actually be iter->pid.
 
-=46ails with:
+But as I said I won't really argue. And just in case, I personally think
+this series makes sense, although I can't review the netlink interface.
 
-In file included from arch/tile/mm/init.c:24:
-include/linux/mman.h: In function =E2=80=98calc_vm_flag_bits=E2=80=99:
-include/linux/mman.h:90: error: =E2=80=98MAP_LOCKONFAULT=E2=80=99 undec=
-lared (first
-use in this function)
-include/linux/mman.h:90: error: (Each undeclared identifier is
-reported only once
-include/linux/mman.h:90: error: for each function it appears in.)
-In file included from arch/tile/mm/mmap.c:21:
-include/linux/mman.h: In function =E2=80=98calc_vm_flag_bits=E2=80=99:
-include/linux/mman.h:90: error: =E2=80=98MAP_LOCKONFAULT=E2=80=99 undec=
-lared (first
-use in this function)
-include/linux/mman.h:90: error: (Each undeclared identifier is
-reported only once
-include/linux/mman.h:90: error: for each function it appears in.)
-In file included from arch/tile/mm/fault.c:24:
-include/linux/mman.h: In function =E2=80=98calc_vm_flag_bits=E2=80=99:
-include/linux/mman.h:90: error: =E2=80=98MAP_LOCKONFAULT=E2=80=99 undec=
-lared (first
-use in this function)
-include/linux/mman.h:90: error: (Each undeclared identifier is
-reported only once
-include/linux/mman.h:90: error: for each function it appears in.)
-In file included from arch/tile/mm/hugetlbpage.c:27:
-include/linux/mman.h: In function =E2=80=98calc_vm_flag_bits=E2=80=99:
-include/linux/mman.h:90: error: =E2=80=98MAP_LOCKONFAULT=E2=80=99 undec=
-lared (first
-use in this function)
-include/linux/mman.h:90: error: (Each undeclared identifier is
-reported only once
-include/linux/mman.h:90: error: for each function it appears in.)
-make[1]: *** [arch/tile/mm/hugetlbpage.o] Error 1
-
-http://kisskb.ellerman.id.au/kisskb/buildresult/12465365/
-
-Paul.
---
+Oleg.
