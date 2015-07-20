@@ -1,44 +1,42 @@
-From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: [PATCH v8 9/9] nvmem: Add to MAINTAINERS for nvmem framework
-Date: Mon, 20 Jul 2015 15:44:33 +0100
-Message-ID: <1437403473-4474-1-git-send-email-srinivas.kandagatla@linaro.org>
-References: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org>
+From: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re:
+ [linux-4.2-rc3/tools/testing/selftests/futex/functional/futex_requeue_pi_signal_restart.c:194:
+ bad if condition ?
+Date: Mon, 20 Jul 2015 17:09:39 +0200
+Message-ID: <20150720150938.GB15916@rei.suse.de>
+References: <DUB128-W55FA5DB7B71A53D5E73E289C850@phx.gbl>
+ <55AD08C8.4030705@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=y
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-arm-kernel@lists.infradead.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Rob Herring <robh+dt@kernel.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, pantelis.antoniou@konsulko.com, mporter@konsulko.com, stefan.wahren@i2se.com, wxt@rock-chips.com, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <55AD08C8.4030705-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, David Binderman <dcb314-PkbjNfxxIARBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds MAINTAINERS to nvmem framework.
+Hi!
+> > [linux-4.2-rc3/tools/testing/selftests/futex/functional/futex_requeue_pi_signal_restart.c:194]: (style) Expression is always false because 'else if' condition matches previous condition at line 191.
+> > 
+> > Source code is
+> > 
+> >         if (res> 0) {
+> >             atomic_set(&requeued, 1);
+> >             break;
+> >         } else if (res> 0) {
+> > 
+> 
+> Hi Daren,
+> 
+> Is this something that could be fixed?
 
-Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
----
- MAINTAINERS | 9 +++++++++
- 1 file changed, 9 insertions(+)
+Looks like a typo to me. My guess is that it should have been:
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 8133cef..90e0d94 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -7263,6 +7263,15 @@ S:	Supported
- F:	drivers/block/nvme*
- F:	include/linux/nvme.h
-=20
-+NVMEM FRAMEWORK
-+M:	Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-+M:	Maxime Ripard <maxime.ripard@free-electrons.com>
-+S:	Maintained
-+F:	drivers/nvmem/
-+F:	Documentation/devicetree/bindings/nvmem/
-+F:	include/linux/nvmem-consumer.h
-+F:	include/linux/nvmem-provider.h
-+
- NXP-NCI NFC DRIVER
- M:	Cl=C3=A9ment Perrochaud <clement.perrochaud@effinnov.com>
- R:	Charles Gorand <charles.gorand@effinnov.com>
---=20
-1.9.1
+...
+} else if (res < 0) {
+...
+
+-- 
+Cyril Hrubis
+chrubis-AlSwsSmVLrQ@public.gmane.org
