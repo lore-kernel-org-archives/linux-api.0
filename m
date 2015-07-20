@@ -1,580 +1,545 @@
-From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH v8 1/9] nvmem: Add a simple NVMEM framework for nvmem providers
-Date: Mon, 20 Jul 2015 15:43:12 +0100
-Message-ID: <1437403392-4136-1-git-send-email-srinivas.kandagatla@linaro.org>
+From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Subject: [PATCH v8 2/9] nvmem: Add a simple NVMEM framework for consumers
+Date: Mon, 20 Jul 2015 15:43:23 +0100
+Message-ID: <1437403403-4180-1-git-send-email-srinivas.kandagatla@linaro.org>
 References: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org>
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1437403352-4091-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, stefan.wahren-eS4NqCHxEME@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-arm-kernel@lists.infradead.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Rob Herring <robh+dt@kernel.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, pantelis.antoniou@konsulko.com, mporter@konsulko.com, stefan.wahren@i2se.com, wxt@rock-chips.com, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, Maxime Ripard <maxime.ripard@free-electrons.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds just providers part of the framework just to enable easy
+This patch adds just consumers part of the framework just to enable easy
 review.
 
-Up until now, NVMEM drivers like eeprom were stored in drivers/misc,
-where they all had to duplicate pretty much the same code to register
-a sysfs file, allow in-kernel users to access the content of the devices
-they were driving, etc.
+Up until now, nvmem drivers were stored in drivers/misc, where they all
+had to duplicate pretty much the same code to register a sysfs file,
+allow in-kernel users to access the content of the devices they were
+driving, etc.
 
 This was also a problem as far as other in-kernel users were involved,
 since the solutions used were pretty much different from on driver to
 another, there was a rather big abstraction leak.
 
 This introduction of this framework aims at solving this. It also
-introduces DT representation for consumer devices to go get the data
-they require (MAC Addresses, SoC/Revision ID, part numbers, and so on)
-from the nvmems.
+introduces DT representation for consumer devices to go get the data they
+require (MAC Addresses, SoC/Revision ID, part numbers, and so on) from
+the nvmems.
 
 Having regmap interface to this framework would give much better
 abstraction for nvmems on different buses.
 
-Signed-off-by: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-[Maxime Ripard: intial version of eeprom framework]
-Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Signed-off-by: Maxime Ripard <maxime.ripard@free-electrons.com>
+[Maxime Ripard: intial version of the framework]
+Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 ---
- drivers/Kconfig                |   2 +
- drivers/Makefile               |   1 +
- drivers/nvmem/Kconfig          |  13 ++
- drivers/nvmem/Makefile         |   6 +
- drivers/nvmem/core.c           | 384 +++++++++++++++++++++++++++++++++++++++++
- include/linux/nvmem-consumer.h |  23 +++
- include/linux/nvmem-provider.h |  47 +++++
- 7 files changed, 476 insertions(+)
- create mode 100644 drivers/nvmem/Kconfig
- create mode 100644 drivers/nvmem/Makefile
- create mode 100644 drivers/nvmem/core.c
- create mode 100644 include/linux/nvmem-consumer.h
- create mode 100644 include/linux/nvmem-provider.h
+ drivers/nvmem/core.c           | 415 +++++++++++++++++++++++++++++++++++++++++
+ include/linux/nvmem-consumer.h |  61 ++++++
+ 2 files changed, 476 insertions(+)
 
-diff --git a/drivers/Kconfig b/drivers/Kconfig
-index 6e973b8..4e2e6aa 100644
---- a/drivers/Kconfig
-+++ b/drivers/Kconfig
-@@ -184,4 +184,6 @@ source "drivers/android/Kconfig"
- 
- source "drivers/nvdimm/Kconfig"
- 
-+source "drivers/nvmem/Kconfig"
-+
- endmenu
-diff --git a/drivers/Makefile b/drivers/Makefile
-index b64b49f..4c270f5 100644
---- a/drivers/Makefile
-+++ b/drivers/Makefile
-@@ -165,3 +165,4 @@ obj-$(CONFIG_RAS)		+= ras/
- obj-$(CONFIG_THUNDERBOLT)	+= thunderbolt/
- obj-$(CONFIG_CORESIGHT)		+= hwtracing/coresight/
- obj-$(CONFIG_ANDROID)		+= android/
-+obj-$(CONFIG_NVMEM)		+= nvmem/
-diff --git a/drivers/nvmem/Kconfig b/drivers/nvmem/Kconfig
-new file mode 100644
-index 0000000..de90c82
---- /dev/null
-+++ b/drivers/nvmem/Kconfig
-@@ -0,0 +1,13 @@
-+menuconfig NVMEM
-+	tristate "NVMEM Support"
-+	select REGMAP
-+	help
-+	  Support for NVMEM(Non Volatile Memory) devices like EEPROM, EFUSES...
-+
-+	  This framework is designed to provide a generic interface to NVMEM
-+	  from both the Linux Kernel and the userspace.
-+
-+	  This driver can also be built as a module. If so, the module
-+	  will be called nvmem_core.
-+
-+	  If unsure, say no.
-diff --git a/drivers/nvmem/Makefile b/drivers/nvmem/Makefile
-new file mode 100644
-index 0000000..6df2c69
---- /dev/null
-+++ b/drivers/nvmem/Makefile
-@@ -0,0 +1,6 @@
-+#
-+# Makefile for nvmem drivers.
-+#
-+
-+obj-$(CONFIG_NVMEM)		+= nvmem_core.o
-+nvmem_core-y			:= core.o
 diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
-new file mode 100644
-index 0000000..bde5528
---- /dev/null
+index bde5528..de14c36 100644
+--- a/drivers/nvmem/core.c
 +++ b/drivers/nvmem/core.c
-@@ -0,0 +1,384 @@
-+/*
-+ * nvmem framework core.
-+ *
-+ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+ * Copyright (C) 2013 Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License version 2 and
-+ * only version 2 as published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ */
-+
-+#include <linux/device.h>
-+#include <linux/export.h>
-+#include <linux/fs.h>
-+#include <linux/idr.h>
-+#include <linux/init.h>
-+#include <linux/module.h>
-+#include <linux/nvmem-consumer.h>
-+#include <linux/nvmem-provider.h>
-+#include <linux/of.h>
-+#include <linux/regmap.h>
-+#include <linux/slab.h>
-+
-+struct nvmem_device {
-+	const char		*name;
-+	struct regmap		*regmap;
-+	struct module		*owner;
-+	struct device		dev;
-+	int			stride;
-+	int			word_size;
-+	int			ncells;
-+	int			id;
-+	int			users;
-+	size_t			size;
-+	bool			read_only;
-+};
-+
-+struct nvmem_cell {
-+	const char		*name;
-+	int			offset;
-+	int			bytes;
-+	int			bit_offset;
-+	int			nbits;
-+	struct nvmem_device	*nvmem;
-+	struct list_head	node;
-+};
-+
-+static DEFINE_MUTEX(nvmem_mutex);
-+static DEFINE_IDA(nvmem_ida);
-+
-+static LIST_HEAD(nvmem_cells);
-+static DEFINE_MUTEX(nvmem_cells_mutex);
-+
-+#define to_nvmem_device(d) container_of(d, struct nvmem_device, dev)
-+
-+static ssize_t bin_attr_nvmem_read(struct file *filp, struct kobject *kobj,
-+				    struct bin_attribute *attr,
-+				    char *buf, loff_t pos, size_t count)
+@@ -365,6 +365,421 @@ int nvmem_unregister(struct nvmem_device *nvmem)
+ }
+ EXPORT_SYMBOL_GPL(nvmem_unregister);
+ 
++static struct nvmem_device *__nvmem_device_get(struct device_node *np,
++					       struct nvmem_cell **cellp,
++					       const char *cell_id)
 +{
-+	struct device *dev = container_of(kobj, struct device, kobj);
-+	struct nvmem_device *nvmem = to_nvmem_device(dev);
-+	int rc;
++	struct nvmem_device *nvmem = NULL;
 +
-+	/* Stop the user from reading */
-+	if (pos > nvmem->size)
-+		return 0;
++	mutex_lock(&nvmem_mutex);
 +
-+	if (pos + count > nvmem->size)
-+		count = nvmem->size - pos;
++	if (np) {
++		nvmem = of_nvmem_find(np);
++		if (!nvmem) {
++			mutex_unlock(&nvmem_mutex);
++			return ERR_PTR(-EPROBE_DEFER);
++		}
++	} else {
++		struct nvmem_cell *cell = nvmem_find_cell(cell_id);
 +
-+	count = round_down(count, nvmem->word_size);
++		if (cell) {
++			nvmem = cell->nvmem;
++			*cellp = cell;
++		}
 +
-+	rc = regmap_raw_read(nvmem->regmap, pos, buf, count);
-+
-+	if (IS_ERR_VALUE(rc))
-+		return rc;
-+
-+	return count;
-+}
-+
-+static ssize_t bin_attr_nvmem_write(struct file *filp, struct kobject *kobj,
-+				     struct bin_attribute *attr,
-+				     char *buf, loff_t pos, size_t count)
-+{
-+	struct device *dev = container_of(kobj, struct device, kobj);
-+	struct nvmem_device *nvmem = to_nvmem_device(dev);
-+	int rc;
-+
-+	/* Stop the user from writing */
-+	if (pos > nvmem->size)
-+		return 0;
-+
-+	if (pos + count > nvmem->size)
-+		count = nvmem->size - pos;
-+
-+	count = round_down(count, nvmem->word_size);
-+
-+	rc = regmap_raw_write(nvmem->regmap, pos, buf, count);
-+
-+	if (IS_ERR_VALUE(rc))
-+		return rc;
-+
-+	return count;
-+}
-+
-+/* default read/write permissions */
-+static struct bin_attribute bin_attr_rw_nvmem = {
-+	.attr	= {
-+		.name	= "nvmem",
-+		.mode	= S_IWUSR | S_IRUGO,
-+	},
-+	.read	= bin_attr_nvmem_read,
-+	.write	= bin_attr_nvmem_write,
-+};
-+
-+/* read only permission */
-+static struct bin_attribute bin_attr_ro_nvmem = {
-+	.attr	= {
-+		.name	= "nvmem",
-+		.mode	= S_IRUGO,
-+	},
-+	.read	= bin_attr_nvmem_read,
-+};
-+
-+static void nvmem_release(struct device *dev)
-+{
-+	struct nvmem_device *nvmem = to_nvmem_device(dev);
-+
-+	ida_simple_remove(&nvmem_ida, nvmem->id);
-+	kfree(nvmem);
-+}
-+
-+static const struct device_type nvmem_provider_type = {
-+	.release	= nvmem_release,
-+};
-+
-+static struct bus_type nvmem_bus_type = {
-+	.name		= "nvmem",
-+};
-+
-+static int of_nvmem_match(struct device *dev, void *nvmem_np)
-+{
-+	return dev->of_node == nvmem_np;
-+}
-+
-+static struct nvmem_device *of_nvmem_find(struct device_node *nvmem_np)
-+{
-+	struct device *d;
-+
-+	if (!nvmem_np)
-+		return NULL;
-+
-+	d = bus_find_device(&nvmem_bus_type, NULL, nvmem_np, of_nvmem_match);
-+
-+	if (!d)
-+		return NULL;
-+
-+	return to_nvmem_device(d);
-+}
-+
-+static struct nvmem_cell *nvmem_find_cell(const char *cell_id)
-+{
-+	struct nvmem_cell *p;
-+
-+	list_for_each_entry(p, &nvmem_cells, node)
-+		if (p && !strcmp(p->name, cell_id))
-+			return p;
-+
-+	return NULL;
-+}
-+
-+static void nvmem_cell_drop(struct nvmem_cell *cell)
-+{
-+	mutex_lock(&nvmem_cells_mutex);
-+	list_del(&cell->node);
-+	mutex_unlock(&nvmem_cells_mutex);
-+	kfree(cell);
-+}
-+
-+static void nvmem_device_remove_all_cells(const struct nvmem_device *nvmem)
-+{
-+	struct nvmem_cell *cell;
-+	struct list_head *p, *n;
-+
-+	list_for_each_safe(p, n, &nvmem_cells) {
-+		cell = list_entry(p, struct nvmem_cell, node);
-+		if (cell->nvmem == nvmem)
-+			nvmem_cell_drop(cell);
++		if (!nvmem) {
++			mutex_unlock(&nvmem_mutex);
++			return ERR_PTR(-ENOENT);
++		}
 +	}
++
++	nvmem->users++;
++	mutex_unlock(&nvmem_mutex);
++
++	if (!try_module_get(nvmem->owner)) {
++		dev_err(&nvmem->dev,
++			"could not increase module refcount for cell %s\n",
++			nvmem->name);
++
++		mutex_lock(&nvmem_mutex);
++		nvmem->users--;
++		mutex_unlock(&nvmem_mutex);
++
++		return ERR_PTR(-EINVAL);
++	}
++
++	return nvmem;
 +}
 +
-+static void nvmem_cell_add(struct nvmem_cell *cell)
++static void __nvmem_device_put(struct nvmem_device *nvmem)
 +{
-+	mutex_lock(&nvmem_cells_mutex);
-+	list_add_tail(&cell->node, &nvmem_cells);
-+	mutex_unlock(&nvmem_cells_mutex);
++	module_put(nvmem->owner);
++	mutex_lock(&nvmem_mutex);
++	nvmem->users--;
++	mutex_unlock(&nvmem_mutex);
 +}
 +
-+static int nvmem_cell_info_to_nvmem_cell(struct nvmem_device *nvmem,
-+				   const struct nvmem_cell_info *info,
-+				   struct nvmem_cell *cell)
++static struct nvmem_cell *nvmem_cell_get_from_list(const char *cell_id)
 +{
++	struct nvmem_cell *cell = NULL;
++	struct nvmem_device *nvmem;
++
++	nvmem = __nvmem_device_get(NULL, &cell, cell_id);
++	if (IS_ERR(nvmem))
++		return ERR_CAST(nvmem);
++
++	return cell;
++}
++
++#if IS_ENABLED(CONFIG_NVMEM) && IS_ENABLED(CONFIG_OF)
++/**
++ * of_nvmem_cell_get() - Get a nvmem cell from given device node and cell id
++ *
++ * @dev node: Device tree node that uses the nvmem cell
++ * @id: nvmem cell name from nvmem-cell-names property.
++ *
++ * Return: Will be an ERR_PTR() on error or a valid pointer
++ * to a struct nvmem_cell.  The nvmem_cell will be freed by the
++ * nvmem_cell_put().
++ */
++struct nvmem_cell *of_nvmem_cell_get(struct device_node *np,
++					    const char *name)
++{
++	struct device_node *cell_np, *nvmem_np;
++	struct nvmem_cell *cell;
++	struct nvmem_device *nvmem;
++	const __be32 *addr;
++	int rval, len, index;
++
++	index = of_property_match_string(np, "nvmem-cell-names", name);
++
++	cell_np = of_parse_phandle(np, "nvmem-cells", index);
++	if (!cell_np)
++		return ERR_PTR(-EINVAL);
++
++	nvmem_np = of_get_next_parent(cell_np);
++	if (!nvmem_np)
++		return ERR_PTR(-EINVAL);
++
++	nvmem = __nvmem_device_get(nvmem_np, NULL, NULL);
++	if (IS_ERR(nvmem))
++		return ERR_CAST(nvmem);
++
++	addr = of_get_property(cell_np, "reg", &len);
++	if (!addr || (len < 2 * sizeof(int))) {
++		dev_err(&nvmem->dev, "nvmem: invalid reg on %s\n",
++			cell_np->full_name);
++		rval  = -EINVAL;
++		goto err_mem;
++	}
++
++	cell = kzalloc(sizeof(*cell), GFP_KERNEL);
++	if (!cell) {
++		rval = -ENOMEM;
++		goto err_mem;
++	}
++
 +	cell->nvmem = nvmem;
-+	cell->offset = info->offset;
-+	cell->bytes = info->bytes;
-+	cell->name = info->name;
++	cell->offset = be32_to_cpup(addr++);
++	cell->bytes = be32_to_cpup(addr);
++	cell->name = cell_np->name;
 +
-+	cell->bit_offset = info->bit_offset;
-+	cell->nbits = info->nbits;
++	addr = of_get_property(cell_np, "bits", &len);
++	if (addr && len == (2 * sizeof(int))) {
++		cell->bit_offset = be32_to_cpup(addr++);
++		cell->nbits = be32_to_cpup(addr);
++	}
 +
 +	if (cell->nbits)
 +		cell->bytes = DIV_ROUND_UP(cell->nbits + cell->bit_offset,
 +					   BITS_PER_BYTE);
 +
 +	if (!IS_ALIGNED(cell->offset, nvmem->stride)) {
-+		dev_err(&nvmem->dev,
-+			"cell %s unaligned to nvmem stride %d\n",
-+			cell->name, nvmem->stride);
-+		return -EINVAL;
++			dev_err(&nvmem->dev,
++				"cell %s unaligned to nvmem stride %d\n",
++				cell->name, nvmem->stride);
++		rval  = -EINVAL;
++		goto err_sanity;
 +	}
 +
-+	return 0;
++	nvmem_cell_add(cell);
++
++	return cell;
++
++err_sanity:
++	kfree(cell);
++
++err_mem:
++	__nvmem_device_put(nvmem);
++
++	return ERR_PTR(rval);
 +}
++EXPORT_SYMBOL_GPL(of_nvmem_cell_get);
++#endif
 +
-+static int nvmem_add_cells(struct nvmem_device *nvmem,
-+			   const struct nvmem_config *cfg)
++/**
++ * nvmem_cell_get() - Get nvmem cell of device form a given cell name
++ *
++ * @dev node: Device tree node that uses the nvmem cell
++ * @id: nvmem cell name to get.
++ *
++ * Return: Will be an ERR_PTR() on error or a valid pointer
++ * to a struct nvmem_cell.  The nvmem_cell will be freed by the
++ * nvmem_cell_put().
++ */
++struct nvmem_cell *nvmem_cell_get(struct device *dev, const char *cell_id)
 +{
-+	struct nvmem_cell **cells;
-+	const struct nvmem_cell_info *info = cfg->cells;
-+	int i, rval;
++	struct nvmem_cell *cell;
 +
-+	cells = kzalloc(sizeof(*cells) * cfg->ncells, GFP_KERNEL);
-+	if (!cells)
-+		return -ENOMEM;
-+
-+	for (i = 0; i < cfg->ncells; i++) {
-+		cells[i] = kzalloc(sizeof(**cells), GFP_KERNEL);
-+		if (!cells[i]) {
-+			rval = -ENOMEM;
-+			goto err;
-+		}
-+
-+		rval = nvmem_cell_info_to_nvmem_cell(nvmem, &info[i], cells[i]);
-+		if (IS_ERR_VALUE(rval)) {
-+			kfree(cells[i]);
-+			goto err;
-+		}
-+
-+		nvmem_cell_add(cells[i]);
++	if (dev->of_node) { /* try dt first */
++		cell = of_nvmem_cell_get(dev->of_node, cell_id);
++		if (!IS_ERR(cell) || PTR_ERR(cell) == -EPROBE_DEFER)
++			return cell;
 +	}
 +
-+	nvmem->ncells = cfg->ncells;
-+	/* remove tmp array */
-+	kfree(cells);
++	return nvmem_cell_get_from_list(cell_id);
++}
++EXPORT_SYMBOL_GPL(nvmem_cell_get);
 +
-+	return 0;
-+err:
-+	while (--i)
-+		nvmem_cell_drop(cells[i]);
-+
-+	return rval;
++static void devm_nvmem_cell_release(struct device *dev, void *res)
++{
++	nvmem_cell_put(*(struct nvmem_cell **)res);
 +}
 +
 +/**
-+ * nvmem_register() - Register a nvmem device for given nvmem_config.
-+ * Also creates an binary entry in /sys/bus/nvmem/devices/dev-name/nvmem
++ * devm_nvmem_cell_get() - Get nvmem cell of device form a given id
 + *
-+ * @config: nvmem device configuration with which nvmem device is created.
++ * @dev node: Device tree node that uses the nvmem cell
++ * @id: nvmem id in nvmem-names property.
 + *
-+ * Return: Will be an ERR_PTR() on error or a valid pointer to nvmem_device
-+ * on success.
++ * Return: Will be an ERR_PTR() on error or a valid pointer
++ * to a struct nvmem_cell.  The nvmem_cell will be freed by the
++ * automatically once the device is freed.
 + */
-+
-+struct nvmem_device *nvmem_register(const struct nvmem_config *config)
++struct nvmem_cell *devm_nvmem_cell_get(struct device *dev, const char *id)
 +{
-+	struct nvmem_device *nvmem;
-+	struct device_node *np;
-+	struct regmap *rm;
-+	int rval;
++	struct nvmem_cell **ptr, *cell;
 +
-+	if (!config->dev)
-+		return ERR_PTR(-EINVAL);
-+
-+	rm = dev_get_regmap(config->dev, NULL);
-+	if (!rm) {
-+		dev_err(config->dev, "Regmap not found\n");
-+		return ERR_PTR(-EINVAL);
-+	}
-+
-+	nvmem = kzalloc(sizeof(*nvmem), GFP_KERNEL);
-+	if (!nvmem)
++	ptr = devres_alloc(devm_nvmem_cell_release, sizeof(*ptr), GFP_KERNEL);
++	if (!ptr)
 +		return ERR_PTR(-ENOMEM);
 +
-+	nvmem->id = ida_simple_get(&nvmem_ida, 0, 0, GFP_KERNEL);
-+	if (nvmem->id < 0) {
-+		kfree(nvmem);
-+		return ERR_PTR(nvmem->id);
++	cell = nvmem_cell_get(dev, id);
++	if (!IS_ERR(cell)) {
++		*ptr = cell;
++		devres_add(dev, ptr);
++	} else {
++		devres_free(ptr);
 +	}
 +
-+	nvmem->regmap = rm;
-+	nvmem->owner = config->owner;
-+	nvmem->stride = regmap_get_reg_stride(rm);
-+	nvmem->word_size = regmap_get_val_bytes(rm);
-+	nvmem->size = regmap_get_max_register(rm) + nvmem->stride;
-+	nvmem->dev.type = &nvmem_provider_type;
-+	nvmem->dev.bus = &nvmem_bus_type;
-+	nvmem->dev.parent = config->dev;
-+	np = config->dev->of_node;
-+	nvmem->dev.of_node = np;
-+	dev_set_name(&nvmem->dev, "%s%d",
-+		     config->name ? : "nvmem", config->id);
-+
-+	nvmem->read_only = np ? of_property_read_bool(np, "read-only") : 0;
-+
-+	nvmem->read_only |= config->read_only;
-+
-+	device_initialize(&nvmem->dev);
-+
-+	dev_dbg(&nvmem->dev, "Registering nvmem device %s\n", config->name);
-+
-+	rval = device_add(&nvmem->dev);
-+	if (rval) {
-+		ida_simple_remove(&nvmem_ida, nvmem->id);
-+		kfree(nvmem);
-+		return ERR_PTR(rval);
-+	}
-+
-+	if (device_create_bin_file(&nvmem->dev,
-+				nvmem->read_only ? &bin_attr_ro_nvmem :
-+				&bin_attr_rw_nvmem))
-+		dev_warn(&nvmem->dev, "Failed to create sysfs binary file\n");
-+
-+	if (config->cells)
-+		nvmem_add_cells(nvmem, config);
-+
-+	return nvmem;
++	return cell;
 +}
-+EXPORT_SYMBOL_GPL(nvmem_register);
++EXPORT_SYMBOL_GPL(devm_nvmem_cell_get);
++
++static int devm_nvmem_cell_match(struct device *dev, void *res, void *data)
++{
++	struct nvmem_cell **c = res;
++
++	if (WARN_ON(!c || !*c))
++		return 0;
++
++	return *c == data;
++}
 +
 +/**
-+ * nvmem_unregister() - Unregister previously registered nvmem device
++ * devm_nvmem_cell_put() - Release previously allocated nvmem cell
++ * from devm_nvmem_cell_get.
 + *
-+ * @nvmem: Pointer to previously registered nvmem device.
-+ *
-+ * Return: Will be an negative on error or a zero on success.
++ * @cell: Previously allocated nvmem cell by devm_nvmem_cell_get()
 + */
-+int nvmem_unregister(struct nvmem_device *nvmem)
++void devm_nvmem_cell_put(struct device *dev, struct nvmem_cell *cell)
 +{
-+	mutex_lock(&nvmem_mutex);
-+	if (nvmem->users) {
-+		mutex_unlock(&nvmem_mutex);
-+		return -EBUSY;
-+	}
-+	mutex_unlock(&nvmem_mutex);
++	int ret;
 +
-+	nvmem_device_remove_all_cells(nvmem);
-+	device_del(&nvmem->dev);
++	ret = devres_release(dev, devm_nvmem_cell_release,
++				devm_nvmem_cell_match, cell);
++
++	WARN_ON(ret);
++}
++EXPORT_SYMBOL(devm_nvmem_cell_put);
++
++/**
++ * nvmem_cell_put() - Release previously allocated nvmem cell.
++ *
++ * @cell: Previously allocated nvmem cell by nvmem_cell_get()
++ */
++void nvmem_cell_put(struct nvmem_cell *cell)
++{
++	struct nvmem_device *nvmem = cell->nvmem;
++
++	__nvmem_device_put(nvmem);
++	nvmem_cell_drop(cell);
++}
++EXPORT_SYMBOL_GPL(nvmem_cell_put);
++
++static inline void nvmem_shift_read_buffer_in_place(struct nvmem_cell *cell,
++						    void *buf)
++{
++	u8 *p, *b;
++	int i, bit_offset = cell->bit_offset;
++
++	p = b = buf;
++	if (bit_offset) {
++		/* First shift */
++		*b++ >>= bit_offset;
++
++		/* setup rest of the bytes if any */
++		for (i = 1; i < cell->bytes; i++) {
++			/* Get bits from next byte and shift them towards msb */
++			*p |= *b << (BITS_PER_BYTE - bit_offset);
++
++			p = b;
++			*b++ >>= bit_offset;
++		}
++
++		/* result fits in less bytes */
++		if (cell->bytes != DIV_ROUND_UP(cell->nbits, BITS_PER_BYTE))
++			*p-- = 0;
++	}
++	/* clear msb bits if any leftover in the last byte */
++	*p &= GENMASK((cell->nbits%BITS_PER_BYTE) - 1, 0);
++}
++
++static int __nvmem_cell_read(struct nvmem_device *nvmem,
++		      struct nvmem_cell *cell,
++		      void *buf, size_t *len)
++{
++	int rc;
++
++	rc = regmap_raw_read(nvmem->regmap, cell->offset, buf, cell->bytes);
++
++	if (IS_ERR_VALUE(rc))
++		return rc;
++
++	/* shift bits in-place */
++	if (cell->bit_offset || cell->bit_offset)
++		nvmem_shift_read_buffer_in_place(cell, buf);
++
++	*len = cell->bytes;
 +
 +	return 0;
 +}
-+EXPORT_SYMBOL_GPL(nvmem_unregister);
 +
-+static int __init nvmem_init(void)
++/**
++ * nvmem_cell_read() - Read a given nvmem cell
++ *
++ * @cell: nvmem cell to be read.
++ * @len: pointer to length of cell which will be populated on successful read.
++ *
++ * Return: ERR_PTR() on error or a valid pointer to a char * buffer on success.
++ * The buffer should be freed by the consumer with a kfree().
++ */
++void *nvmem_cell_read(struct nvmem_cell *cell, size_t *len)
 +{
-+	return bus_register(&nvmem_bus_type);
++	struct nvmem_device *nvmem = cell->nvmem;
++	u8 *buf;
++	int rc;
++
++	if (!nvmem || !nvmem->regmap)
++		return ERR_PTR(-EINVAL);
++
++	buf = kzalloc(cell->bytes, GFP_KERNEL);
++	if (!buf)
++		return ERR_PTR(-ENOMEM);
++
++	rc = __nvmem_cell_read(nvmem, cell, buf, len);
++	if (IS_ERR_VALUE(rc)) {
++		kfree(buf);
++		return ERR_PTR(rc);
++	}
++
++	return buf;
++}
++EXPORT_SYMBOL_GPL(nvmem_cell_read);
++
++static inline void *nvmem_cell_prepare_write_buffer(struct nvmem_cell *cell,
++						    u8 *_buf, int len)
++{
++	struct nvmem_device *nvmem = cell->nvmem;
++	int i, rc, nbits, bit_offset = cell->bit_offset;
++	u8 v, *p, *buf, *b, pbyte, pbits;
++
++	nbits = cell->nbits;
++	buf = kzalloc(cell->bytes, GFP_KERNEL);
++	if (!buf)
++		return ERR_PTR(-ENOMEM);
++
++	memcpy(buf, _buf, len);
++	p = b = buf;
++
++	if (bit_offset) {
++		pbyte = *b;
++		*b <<= bit_offset;
++
++		/* setup the first byte with lsb bits from nvmem */
++		rc = regmap_raw_read(nvmem->regmap, cell->offset, &v, 1);
++		*b++ |= GENMASK(bit_offset - 1, 0) & v;
++
++		/* setup rest of the byte if any */
++		for (i = 1; i < cell->bytes; i++) {
++			/* Get last byte bits and shift them towards lsb */
++			pbits = pbyte >> (BITS_PER_BYTE - 1 - bit_offset);
++			pbyte = *b;
++			p = b;
++			*b <<= bit_offset;
++			*b++ |= pbits;
++		}
++	}
++
++	/* if it's not end on byte boundary */
++	if ((nbits + bit_offset) % BITS_PER_BYTE) {
++		/* setup the last byte with msb bits from nvmem */
++		rc = regmap_raw_read(nvmem->regmap,
++				    cell->offset + cell->bytes - 1, &v, 1);
++		*p |= GENMASK(7, (nbits + bit_offset) % BITS_PER_BYTE) & v;
++
++	}
++
++	return buf;
 +}
 +
-+static void __exit nvmem_exit(void)
++/**
++ * nvmem_cell_write() - Write to a given nvmem cell
++ *
++ * @cell: nvmem cell to be written.
++ * @buf: Buffer to be written.
++ * @len: length of buffer to be written to nvmem cell.
++ *
++ * Return: length of bytes written or negative on failure.
++ */
++int nvmem_cell_write(struct nvmem_cell *cell, void *buf, size_t len)
 +{
-+	bus_unregister(&nvmem_bus_type);
++	struct nvmem_device *nvmem = cell->nvmem;
++	int rc;
++
++	if (!nvmem || !nvmem->regmap || nvmem->read_only ||
++	    (cell->bit_offset == 0 && len != cell->bytes))
++		return -EINVAL;
++
++	if (cell->bit_offset || cell->nbits) {
++		buf = nvmem_cell_prepare_write_buffer(cell, buf, len);
++		if (IS_ERR(buf))
++			return PTR_ERR(buf);
++	}
++
++	rc = regmap_raw_write(nvmem->regmap, cell->offset, buf, cell->bytes);
++
++	/* free the tmp buffer */
++	if (cell->bit_offset)
++		kfree(buf);
++
++	if (IS_ERR_VALUE(rc))
++		return rc;
++
++	return len;
 +}
++EXPORT_SYMBOL_GPL(nvmem_cell_write);
 +
-+subsys_initcall(nvmem_init);
-+module_exit(nvmem_exit);
-+
-+MODULE_AUTHOR("Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org");
-+MODULE_AUTHOR("Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org");
-+MODULE_DESCRIPTION("nvmem Driver Core");
-+MODULE_LICENSE("GPL v2");
+ static int __init nvmem_init(void)
+ {
+ 	return bus_register(&nvmem_bus_type);
 diff --git a/include/linux/nvmem-consumer.h b/include/linux/nvmem-consumer.h
-new file mode 100644
-index 0000000..1e9e767
---- /dev/null
+index 1e9e767..297cc67 100644
+--- a/include/linux/nvmem-consumer.h
 +++ b/include/linux/nvmem-consumer.h
-@@ -0,0 +1,23 @@
-+/*
-+ * nvmem framework consumer.
-+ *
-+ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+ * Copyright (C) 2013 Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-+ *
-+ * This file is licensed under the terms of the GNU General Public
-+ * License version 2.  This program is licensed "as is" without any
-+ * warranty of any kind, whether express or implied.
-+ */
+@@ -12,6 +12,11 @@
+ #ifndef _LINUX_NVMEM_CONSUMER_H
+ #define _LINUX_NVMEM_CONSUMER_H
+ 
++struct device;
++struct device_node;
++/* consumer cookie */
++struct nvmem_cell;
 +
-+#ifndef _LINUX_NVMEM_CONSUMER_H
-+#define _LINUX_NVMEM_CONSUMER_H
-+
-+struct nvmem_cell_info {
-+	const char		*name;
-+	unsigned int		offset;
-+	unsigned int		bytes;
-+	unsigned int		bit_offset;
-+	unsigned int		nbits;
-+};
-+
-+#endif  /* ifndef _LINUX_NVMEM_CONSUMER_H */
-diff --git a/include/linux/nvmem-provider.h b/include/linux/nvmem-provider.h
-new file mode 100644
-index 0000000..0b68caf
---- /dev/null
-+++ b/include/linux/nvmem-provider.h
-@@ -0,0 +1,47 @@
-+/*
-+ * nvmem framework provider.
-+ *
-+ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-+ * Copyright (C) 2013 Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-+ *
-+ * This file is licensed under the terms of the GNU General Public
-+ * License version 2.  This program is licensed "as is" without any
-+ * warranty of any kind, whether express or implied.
-+ */
-+
-+#ifndef _LINUX_NVMEM_PROVIDER_H
-+#define _LINUX_NVMEM_PROVIDER_H
-+
-+struct nvmem_device;
-+struct nvmem_cell_info;
-+
-+struct nvmem_config {
-+	struct device		*dev;
-+	const char		*name;
-+	int			id;
-+	struct module		*owner;
-+	const struct nvmem_cell_info	*cells;
-+	int			ncells;
-+	bool			read_only;
-+};
-+
+ struct nvmem_cell_info {
+ 	const char		*name;
+ 	unsigned int		offset;
+@@ -20,4 +25,60 @@ struct nvmem_cell_info {
+ 	unsigned int		nbits;
+ };
+ 
 +#if IS_ENABLED(CONFIG_NVMEM)
 +
-+struct nvmem_device *nvmem_register(const struct nvmem_config *cfg);
-+int nvmem_unregister(struct nvmem_device *nvmem);
++/* Cell based interface */
++struct nvmem_cell *nvmem_cell_get(struct device *dev, const char *name);
++struct nvmem_cell *devm_nvmem_cell_get(struct device *dev, const char *name);
++void nvmem_cell_put(struct nvmem_cell *cell);
++void devm_nvmem_cell_put(struct device *dev, struct nvmem_cell *cell);
++void *nvmem_cell_read(struct nvmem_cell *cell, size_t *len);
++int nvmem_cell_write(struct nvmem_cell *cell, void *buf, size_t len);
 +
 +#else
 +
-+static inline struct nvmem_device *nvmem_register(const struct nvmem_config *c)
++static inline struct nvmem_cell *nvmem_cell_get(struct device *dev,
++						const char *name)
 +{
 +	return ERR_PTR(-ENOSYS);
 +}
 +
-+static inline int nvmem_unregister(struct nvmem_device *nvmem)
++static inline struct nvmem_cell *devm_nvmem_cell_get(struct device *dev,
++				       const char *name)
++{
++	return ERR_PTR(-ENOSYS);
++}
++
++static inline void devm_nvmem_cell_put(struct device *dev,
++				       struct nvmem_cell *cell)
++{
++
++}
++static inline void nvmem_cell_put(struct nvmem_cell *cell)
++{
++}
++
++static inline char *nvmem_cell_read(struct nvmem_cell *cell, size_t *len)
++{
++	return ERR_PTR(-ENOSYS);
++}
++
++static inline int nvmem_cell_write(struct nvmem_cell *cell,
++				    const char *buf, size_t len)
 +{
 +	return -ENOSYS;
 +}
-+
 +#endif /* CONFIG_NVMEM */
 +
-+#endif  /* ifndef _LINUX_NVMEM_PROVIDER_H */
++#if IS_ENABLED(CONFIG_NVMEM) && IS_ENABLED(CONFIG_OF)
++struct nvmem_cell *of_nvmem_cell_get(struct device_node *np,
++				     const char *name);
++#else
++static inline struct nvmem_cell *of_nvmem_cell_get(struct device_node *np,
++				     const char *name)
++{
++	return ERR_PTR(-ENOSYS);
++}
++#endif /* CONFIG_NVMEM && CONFIG_OF */
++
+ #endif  /* ifndef _LINUX_NVMEM_CONSUMER_H */
 -- 
 1.9.1
-
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
