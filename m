@@ -1,92 +1,178 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU number (x86)
-Date: Mon, 20 Jul 2015 14:09:14 -0700
-Message-ID: <CALCETrUZ8vB30rdmeoV4JKPUsRnVPvoxXRJ47CEFud2aSF2=Ew@mail.gmail.com>
-References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com>
- <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F39C6@PRN-MBX02-1.TheFacebook.com>
- <587954201.31.1436808992876.JavaMail.zimbra@efficios.com> <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F5DA0@PRN-MBX02-1.TheFacebook.com>
- <549319255.383.1437070088597.JavaMail.zimbra@efficios.com>
- <CALCETrWEKE=mow3vVh7C4r8CuGy_d5VOEz7KkpijuR5cpBfFtg@mail.gmail.com>
- <CA+55aFz-VBnEKh0SPKgu8xV5=Zb+=6odybVUDoOYOknshbcFJA@mail.gmail.com>
- <20150717232836.GA13604@domone> <CALCETrVY=kjeA_4pazy3BL+ekfcV6WHKw8e3z-LBxx_uP1bw2Q@mail.gmail.com>
- <55ACB2DC.5010503@redhat.com> <CALCETrV9Vp5UUOb3e_R5tphyE-urBgTwQR2pFWUOOFnHqWXHKQ@mail.gmail.com>
- <55AD14A4.6030101@redhat.com> <CALCETrUx6wFxmz+9TyW5bNgaMN0q180G8y9YOyq_D41sdhFaRQ@mail.gmail.com>
- <CA+55aFzMJkzydXb7uVv1iSUnp=539d43ghQaonGdzMoF7QLZBA@mail.gmail.com>
+From: Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Subject: Re: [PATCH v8 1/9] nvmem: Add a simple NVMEM framework for nvmem
+ providers
+Date: Mon, 20 Jul 2015 14:11:46 -0700
+Message-ID: <55AD6412.9070205@codeaurora.org>
+References: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org> <1437403392-4136-1-git-send-email-srinivas.kandagatla@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CA+55aFzMJkzydXb7uVv1iSUnp=539d43ghQaonGdzMoF7QLZBA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1437403392-4136-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, =?UTF-8?B?T25kxZllaiBCw61sa2E=?= <neleai-9Vj9tDbzfuSlVyrhU4qvOw@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, stefan.wahren-eS4NqCHxEME@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 20, 2015 at 1:50 PM, Linus Torvalds
-<torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
+On 07/20/2015 07:43 AM, Srinivas Kandagatla wrote:
+> diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
+> new file mode 100644
+> index 0000000..bde5528
+> --- /dev/null
+> +++ b/drivers/nvmem/core.c
+> @@ -0,0 +1,384 @@
 >
-> On Jul 20, 2015 10:41 AM, "Andy Lutomirski" <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->>
->> glibc will have to expose a way to turn it off, I guess. (ELF flag?)
->
-> Ugh. That just sounds nasty.
->
-> I'm on mobile, so can't check right now, but don't we already have a per-cpu
-> gdt? We could just make a very simple rule:
->
-> - create a single gdt entry with a segment that is per-cpu and points to one
-> single read-only page in kernel space that contains the virtual address of
-> that segment in vmalloc space (and maybe we can have the CPU number there
-> somewhere, and extend it to something else later)
+> +
+> +static int nvmem_add_cells(struct nvmem_device *nvmem,
+> +			   const struct nvmem_config *cfg)
+> +{
+> +	struct nvmem_cell **cells;
+> +	const struct nvmem_cell_info *info = cfg->cells;
+> +	int i, rval;
+> +
+> +	cells = kzalloc(sizeof(*cells) * cfg->ncells, GFP_KERNEL);
 
-Annoying problem one: the segment base field is only 32 bits in the GDT.
+kcalloc?
 
->
-> - make the rule be that if you hold that segment in %fs or %gs in your user
-> space state, it gets cleared when the thread is scheduled out.
+> +	if (!cells)
+> +		return -ENOMEM;
+> +
+> +	for (i = 0; i < cfg->ncells; i++) {
+> +		cells[i] = kzalloc(sizeof(**cells), GFP_KERNEL);
+> +		if (!cells[i]) {
+> +			rval = -ENOMEM;
+> +			goto err;
+> +		}
+> +
+> +		rval = nvmem_cell_info_to_nvmem_cell(nvmem, &info[i], cells[i]);
+> +		if (IS_ERR_VALUE(rval)) {
+> +			kfree(cells[i]);
+> +			goto err;
+> +		}
+> +
+> +		nvmem_cell_add(cells[i]);
+> +	}
+> +
+> +	nvmem->ncells = cfg->ncells;
+> +	/* remove tmp array */
+> +	kfree(cells);
+> +
+> +	return 0;
+> +err:
+> +	while (--i)
+> +		nvmem_cell_drop(cells[i]);
+> +
+> +	return rval;
+> +}
+> +
+> +/**
+> + * nvmem_register() - Register a nvmem device for given nvmem_config.
+> + * Also creates an binary entry in /sys/bus/nvmem/devices/dev-name/nvmem
+> + *
+> + * @config: nvmem device configuration with which nvmem device is created.
+> + *
+> + * Return: Will be an ERR_PTR() on error or a valid pointer to nvmem_device
+> + * on success.
+> + */
+> +
 
-That sounds a bit evil, but okay.
+Why the newline?
 
->
-> What does this get you?
->
-> It basically means that:
->
-> - user space can just load the segment selector in %gs
->
+> +struct nvmem_device *nvmem_register(const struct nvmem_config *config)
+> +{
+> +	struct nvmem_device *nvmem;
+> +	struct device_node *np;
+> +	struct regmap *rm;
+> +	int rval;
+> +
+> +	if (!config->dev)
+> +		return ERR_PTR(-EINVAL);
+> +
+> +	rm = dev_get_regmap(config->dev, NULL);
+> +	if (!rm) {
+> +		dev_err(config->dev, "Regmap not found\n");
+> +		return ERR_PTR(-EINVAL);
+> +	}
+> +
+> +	nvmem = kzalloc(sizeof(*nvmem), GFP_KERNEL);
+> +	if (!nvmem)
+> +		return ERR_PTR(-ENOMEM);
+> +
+> +	nvmem->id = ida_simple_get(&nvmem_ida, 0, 0, GFP_KERNEL);
+> +	if (nvmem->id < 0) {
+> +		kfree(nvmem);
+> +		return ERR_PTR(nvmem->id);
 
-IIRC this is very expensive -- 40 cycles or so.  At this point
-userspace might as well just use a real lock cmpxchg.
+Oops, we already freed nvmem.
 
-> - user space can load the virtual address of the segment base into a bar
-> register, and use that to calculate a pointer to regular data structures.
->
-> - user space can use that "reverse offset" to access any data it wants, and
-> access that data with a gs override.
->
-> - if the user space thread is scheduled, that access will fault with a GP
-> fault, because %gs became NUL.
+> +	}
+> +
+> +	nvmem->regmap = rm;
+> +	nvmem->owner = config->owner;
+> +	nvmem->stride = regmap_get_reg_stride(rm);
+> +	nvmem->word_size = regmap_get_val_bytes(rm);
+> +	nvmem->size = regmap_get_max_register(rm) + nvmem->stride;
+> +	nvmem->dev.type = &nvmem_provider_type;
+> +	nvmem->dev.bus = &nvmem_bus_type;
+> +	nvmem->dev.parent = config->dev;
+> +	np = config->dev->of_node;
+> +	nvmem->dev.of_node = np;
+> +	dev_set_name(&nvmem->dev, "%s%d",
+> +		     config->name ? : "nvmem", config->id);
+> +
+> +	nvmem->read_only = np ? of_property_read_bool(np, "read-only") : 0;
 
-Cute.
+of_property_read_bool(NULL, ..) "does the right thing" and returns false 
+already.
 
->
-> So basically you can do any memory access you want, and you'll be guaranteed
-> that it will be done "atomically" on the same CPU you did the segment load
-> on, or it will fault because you got scheduled away.
->
-> And it's very cheap for both kernel and user space. One extra gdt entry (not
-> per process or anything like that - it's system global, although different
-> cpus all end up with different entries), and for each cpu one virtually
-> mapped page. And all user space needs to do is to do a segment load.
->
-> No system calls, no nothing.
->
-> Would that be useful?
->
+> +
+> +	nvmem->read_only |= config->read_only;
+> +
+> +	device_initialize(&nvmem->dev);
+> +
+> +	dev_dbg(&nvmem->dev, "Registering nvmem device %s\n", config->name);
+> +
+> +	rval = device_add(&nvmem->dev);
+> +	if (rval) {
+> +		ida_simple_remove(&nvmem_ida, nvmem->id);
+> +		kfree(nvmem);
+> +		return ERR_PTR(rval);
+> +	}
+> +
+> +	if (device_create_bin_file(&nvmem->dev,
+> +				nvmem->read_only ? &bin_attr_ro_nvmem :
+> +				&bin_attr_rw_nvmem))
+> +		dev_warn(&nvmem->dev, "Failed to create sysfs binary file\n");
 
-Does it solve the Wine problem?  If Wine uses gs for something and
-calls a function that does this, Wine still goes boom, right?
+Why can't we have device_add() add the binary file attribute too?
 
-Could Wine just save and restore gs on calls into and out of Windows
-code?  That would solve all the problems, right?
+> +
+> +	if (config->cells)
+> +		nvmem_add_cells(nvmem, config);
+> +
+> +	return nvmem;
+> +}
+> +EXPORT_SYMBOL_GPL(nvmem_register);
+> +
+> +/**
+> + * nvmem_unregister() - Unregister previously registered nvmem device
+> + *
+> + * @nvmem: Pointer to previously registered nvmem device.
+> + *
+> + * Return: Will be an negative on error or a zero on success.
+> + */
+> +int nvmem_unregister(struct nvmem_device *nvmem)
+> +{
+> +	mutex_lock(&nvmem_mutex);
+> +	if (nvmem->users) {
+> +		mutex_unlock(&nvmem_mutex);
+> +		return -EBUSY;
+> +	}
+> +	mutex_unlock(&nvmem_mutex);
 
---Andy
+This lock doesn't seem to be doing anything in this patch? Perhaps it 
+should be added in the second patch where consumers start making it useful?
+
+-- 
+Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum,
+a Linux Foundation Collaborative Project
