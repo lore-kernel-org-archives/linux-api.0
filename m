@@ -1,7 +1,7 @@
 From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: [PATCH v8 6/9] nvmem: qfprom: Add Qualcomm QFPROM support.
-Date: Mon, 20 Jul 2015 15:44:05 +0100
-Message-ID: <1437403445-4348-1-git-send-email-srinivas.kandagatla@linaro.org>
+Subject: [PATCH v8 3/9] nvmem: Add nvmem_device based consumer apis.
+Date: Mon, 20 Jul 2015 15:43:33 +0100
+Message-ID: <1437403413-4222-1-git-send-email-srinivas.kandagatla@linaro.org>
 References: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org>
@@ -10,147 +10,406 @@ To: linux-arm-kernel@lists.infradead.org, Greg Kroah-Hartman <gregkh@linuxfounda
 Cc: Rob Herring <robh+dt@kernel.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, pantelis.antoniou@konsulko.com, mporter@konsulko.com, stefan.wahren@i2se.com, wxt@rock-chips.com, Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds QFPROM support driver which is used by other drivers
-like thermal sensor and cpufreq.
+This patch adds read/write apis which are based on nvmem_device. It is
+common that the drivers like omap cape manager or qcom cpr driver to
+access bytes directly at particular offset in the eeprom and not from
+nvmem cell info in DT. These driver would need to get access to the nvmem
+directly, which is what these new APIS provide.
 
-On MSM parts there are some efuses (called qfprom) these fuses store
-things like calibration data, speed bins.. etc. Drivers like cpufreq,
-thermal sensors would read out this data for configuring the driver.
+These wrapper apis would help such users to avoid code duplication in
+there drivers and also avoid them reading a big eeprom blob and parsing
+it internally in there driver.
 
 Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
 ---
- drivers/nvmem/Kconfig  | 15 +++++++++
- drivers/nvmem/Makefile |  4 +++
- drivers/nvmem/qfprom.c | 86 ++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 105 insertions(+)
- create mode 100644 drivers/nvmem/qfprom.c
+ drivers/nvmem/core.c           | 258 +++++++++++++++++++++++++++++++++++++++++
+ include/linux/nvmem-consumer.h |  73 ++++++++++++
+ 2 files changed, 331 insertions(+)
 
-diff --git a/drivers/nvmem/Kconfig b/drivers/nvmem/Kconfig
-index de90c82..fa85805 100644
---- a/drivers/nvmem/Kconfig
-+++ b/drivers/nvmem/Kconfig
-@@ -11,3 +11,18 @@ menuconfig NVMEM
- 	  will be called nvmem_core.
+diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
+index de14c36..ac03119 100644
+--- a/drivers/nvmem/core.c
++++ b/drivers/nvmem/core.c
+@@ -419,6 +419,148 @@ static void __nvmem_device_put(struct nvmem_device *nvmem)
+ 	mutex_unlock(&nvmem_mutex);
+ }
  
- 	  If unsure, say no.
++static int nvmem_match(struct device *dev, void *data)
++{
++	return !strcmp(dev_name(dev), data);
++}
 +
-+if NVMEM
++static struct nvmem_device *nvmem_find(const char *name)
++{
++	struct device *d;
 +
-+config QCOM_QFPROM
-+	tristate "QCOM QFPROM Support"
-+	depends on ARCH_QCOM || COMPILE_TEST
-+	select REGMAP_MMIO
-+	help
-+	  Say y here to enable QFPROM support. The QFPROM provides access
-+	  functions for QFPROM data to rest of the drivers via nvmem interface.
++	d = bus_find_device(&nvmem_bus_type, NULL, (void *)name, nvmem_match);
 +
-+	  This driver can also be built as a module. If so, the module
-+	  will be called nvmem_qfprom.
++	if (!d)
++		return NULL;
 +
-+endif
-diff --git a/drivers/nvmem/Makefile b/drivers/nvmem/Makefile
-index 6df2c69..ff44fe9 100644
---- a/drivers/nvmem/Makefile
-+++ b/drivers/nvmem/Makefile
-@@ -4,3 +4,7 @@
- 
- obj-$(CONFIG_NVMEM)		+= nvmem_core.o
- nvmem_core-y			:= core.o
++	return to_nvmem_device(d);
++}
 +
-+# Devices
-+obj-$(CONFIG_QCOM_QFPROM)	+= nvmem_qfprom.o
-+nvmem_qfprom-y			:= qfprom.o
-diff --git a/drivers/nvmem/qfprom.c b/drivers/nvmem/qfprom.c
-new file mode 100644
-index 0000000..ba5e2b4
---- /dev/null
-+++ b/drivers/nvmem/qfprom.c
-@@ -0,0 +1,86 @@
-+/*
-+ * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
++#if IS_ENABLED(CONFIG_NVMEM) && IS_ENABLED(CONFIG_OF)
++/**
++ * of_nvmem_device_get() - Get nvmem device from a given id
 + *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License version 2 and
-+ * only version 2 as published by the Free Software Foundation.
++ * @dev node: Device tree node that uses the nvmem device
++ * @id: nvmem name from nvmem-names property.
 + *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
++ * Return: ERR_PTR() on error or a valid pointer to a struct nvmem_device
++ * on success.
 + */
-+
-+#include <linux/device.h>
-+#include <linux/module.h>
-+#include <linux/nvmem-provider.h>
-+#include <linux/platform_device.h>
-+#include <linux/regmap.h>
-+#include <linux/slab.h>
-+
-+static struct regmap_config qfprom_regmap_config = {
-+	.reg_bits = 32,
-+	.val_bits = 8,
-+	.reg_stride = 1,
-+};
-+
-+static struct nvmem_config econfig = {
-+	.name = "qfprom",
-+	.owner = THIS_MODULE,
-+};
-+
-+static int qfprom_remove(struct platform_device *pdev)
++struct nvmem_device *of_nvmem_device_get(struct device_node *np, const char *id)
 +{
-+	struct nvmem_device *nvmem = platform_get_drvdata(pdev);
 +
-+	return nvmem_unregister(nvmem);
++	struct device_node *nvmem_np;
++	int index;
++
++	index = of_property_match_string(np, "nvmem-names", id);
++
++	nvmem_np = of_parse_phandle(np, "nvmem", index);
++	if (!nvmem_np)
++		return ERR_PTR(-EINVAL);
++
++	return __nvmem_device_get(nvmem_np, NULL, NULL);
 +}
++EXPORT_SYMBOL_GPL(of_nvmem_device_get);
++#endif
 +
-+static int qfprom_probe(struct platform_device *pdev)
++/**
++ * nvmem_device_get() - Get nvmem device from a given id
++ *
++ * @dev : Device that uses the nvmem device
++ * @id: nvmem name from nvmem-names property.
++ *
++ * Return: ERR_PTR() on error or a valid pointer to a struct nvmem_device
++ * on success.
++ */
++struct nvmem_device *nvmem_device_get(struct device *dev, const char *dev_name)
 +{
-+	struct device *dev = &pdev->dev;
-+	struct resource *res;
-+	struct nvmem_device *nvmem;
-+	struct regmap *regmap;
-+	void __iomem *base;
++	if (dev->of_node) { /* try dt first */
++		struct nvmem_device *nvmem;
 +
-+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-+	base = devm_ioremap_resource(dev, res);
-+	if (IS_ERR(base))
-+		return PTR_ERR(base);
++		nvmem = of_nvmem_device_get(dev->of_node, dev_name);
 +
-+	qfprom_regmap_config.max_register = resource_size(res) - 1;
++		if (!IS_ERR(nvmem) || PTR_ERR(nvmem) == -EPROBE_DEFER)
++			return nvmem;
 +
-+	regmap = devm_regmap_init_mmio(dev, base, &qfprom_regmap_config);
-+	if (IS_ERR(regmap)) {
-+		dev_err(dev, "regmap init failed\n");
-+		return PTR_ERR(regmap);
 +	}
-+	econfig.dev = dev;
-+	nvmem = nvmem_register(&econfig);
-+	if (IS_ERR(nvmem))
-+		return PTR_ERR(nvmem);
 +
-+	platform_set_drvdata(pdev, nvmem);
++	return nvmem_find(dev_name);
++}
++EXPORT_SYMBOL_GPL(nvmem_device_get);
 +
-+	return 0;
++static int devm_nvmem_device_match(struct device *dev, void *res, void *data)
++{
++	struct nvmem_device **nvmem = res;
++
++	if (WARN_ON(!nvmem || !*nvmem))
++		return 0;
++
++	return *nvmem == data;
 +}
 +
-+static const struct of_device_id qfprom_of_match[] = {
-+	{ .compatible = "qcom,qfprom",},
-+	{/* sentinel */},
-+};
-+MODULE_DEVICE_TABLE(of, qfprom_of_match);
++static void devm_nvmem_device_release(struct device *dev, void *res)
++{
++	nvmem_device_put(*(struct nvmem_device **)res);
++}
 +
-+static struct platform_driver qfprom_driver = {
-+	.probe = qfprom_probe,
-+	.remove = qfprom_remove,
-+	.driver = {
-+		.name = "qcom,qfprom",
-+		.of_match_table = qfprom_of_match,
-+	},
-+};
-+module_platform_driver(qfprom_driver);
-+MODULE_AUTHOR("Srinivas Kandagatla <srinivas.kandagatla@linaro.org>");
-+MODULE_DESCRIPTION("Qualcomm QFPROM driver");
-+MODULE_LICENSE("GPL v2");
++/**
++ * devm_nvmem_device_put() - put alredy got nvmem device
++ *
++ * @nvmem: pointer to nvmem device allocated by devm_nvmem_cell_get(),
++ * that needs to be released.
++ */
++void devm_nvmem_device_put(struct device *dev, struct nvmem_device *nvmem)
++{
++	int ret;
++
++	ret = devres_release(dev, devm_nvmem_device_release,
++			     devm_nvmem_device_match, nvmem);
++
++	WARN_ON(ret);
++}
++EXPORT_SYMBOL_GPL(devm_nvmem_device_put);
++
++/**
++ * nvmem_device_put() - put alredy got nvmem device
++ *
++ * @nvmem: pointer to nvmem device that needs to be released.
++ */
++void nvmem_device_put(struct nvmem_device *nvmem)
++{
++	__nvmem_device_put(nvmem);
++}
++EXPORT_SYMBOL_GPL(nvmem_device_put);
++
++/**
++ * devm_nvmem_device_get() - Get nvmem cell of device form a given id
++ *
++ * @dev node: Device tree node that uses the nvmem cell
++ * @id: nvmem name in nvmems property.
++ *
++ * Return: ERR_PTR() on error or a valid pointer to a struct nvmem_cell
++ * on success.  The nvmem_cell will be freed by the automatically once the
++ * device is freed.
++ */
++struct nvmem_device *devm_nvmem_device_get(struct device *dev, const char *id)
++{
++	struct nvmem_device **ptr, *nvmem;
++
++	ptr = devres_alloc(devm_nvmem_device_release, sizeof(*ptr), GFP_KERNEL);
++	if (!ptr)
++		return ERR_PTR(-ENOMEM);
++
++	nvmem = nvmem_device_get(dev, id);
++	if (!IS_ERR(nvmem)) {
++		*ptr = nvmem;
++		devres_add(dev, ptr);
++	} else {
++		devres_free(ptr);
++	}
++
++	return nvmem;
++}
++EXPORT_SYMBOL_GPL(devm_nvmem_device_get);
++
+ static struct nvmem_cell *nvmem_cell_get_from_list(const char *cell_id)
+ {
+ 	struct nvmem_cell *cell = NULL;
+@@ -780,6 +922,122 @@ int nvmem_cell_write(struct nvmem_cell *cell, void *buf, size_t len)
+ }
+ EXPORT_SYMBOL_GPL(nvmem_cell_write);
+ 
++/**
++ * nvmem_device_cell_read() - Read a given nvmem device and cell
++ *
++ * @nvmem: nvmem device to read from.
++ * @info: nvmem cell info to be read.
++ * @buf: buffer pointer which will be populated on successful read.
++ *
++ * Return: length of successful bytes read on success and negative
++ * error code on error.
++ */
++ssize_t nvmem_device_cell_read(struct nvmem_device *nvmem,
++			   struct nvmem_cell_info *info, void *buf)
++{
++	struct nvmem_cell cell;
++	int rc;
++	ssize_t len;
++
++	if (!nvmem || !nvmem->regmap)
++		return -EINVAL;
++
++	rc = nvmem_cell_info_to_nvmem_cell(nvmem, info, &cell);
++	if (IS_ERR_VALUE(rc))
++		return rc;
++
++	rc = __nvmem_cell_read(nvmem, &cell, buf, &len);
++	if (IS_ERR_VALUE(rc))
++		return rc;
++
++	return len;
++}
++EXPORT_SYMBOL_GPL(nvmem_device_cell_read);
++
++/**
++ * nvmem_device_cell_write() - Write cell to a given nvmem device
++ *
++ * @nvmem: nvmem device to be written to.
++ * @info: nvmem cell info to be written
++ * @buf: buffer to be written to cell.
++ *
++ * Return: length of bytes written or negative error code on failure.
++ * */
++int nvmem_device_cell_write(struct nvmem_device *nvmem,
++			    struct nvmem_cell_info *info, void *buf)
++{
++	struct nvmem_cell cell;
++	int rc;
++
++	if (!nvmem || !nvmem->regmap)
++		return -EINVAL;
++
++	rc = nvmem_cell_info_to_nvmem_cell(nvmem, info, &cell);
++	if (IS_ERR_VALUE(rc))
++		return rc;
++
++	return nvmem_cell_write(&cell, buf, cell.bytes);
++}
++EXPORT_SYMBOL_GPL(nvmem_device_cell_write);
++
++/**
++ * nvmem_device_read() - Read from a given nvmem device
++ *
++ * @nvmem: nvmem device to read from.
++ * @offset: offset in nvmem device.
++ * @bytes: number of bytes to read.
++ * @buf: buffer pointer which will be populated on successful read.
++ *
++ * Return: length of successful bytes read on success and negative
++ * error code on error.
++ */
++int nvmem_device_read(struct nvmem_device *nvmem,
++		      unsigned int offset,
++		      size_t bytes, void *buf)
++{
++	int rc;
++
++	if (!nvmem || !nvmem->regmap)
++		return -EINVAL;
++
++	rc = regmap_raw_read(nvmem->regmap, offset, buf, bytes);
++
++	if (IS_ERR_VALUE(rc))
++		return rc;
++
++	return bytes;
++}
++EXPORT_SYMBOL_GPL(nvmem_device_read);
++
++/**
++ * nvmem_device_write() - Write cell to a given nvmem device
++ *
++ * @nvmem: nvmem device to be written to.
++ * @offset: offset in nvmem device.
++ * @bytes: number of bytes to write.
++ * @buf: buffer to be written.
++ *
++ * Return: length of bytes written or negative error code on failure.
++ * */
++int nvmem_device_write(struct nvmem_device *nvmem,
++		       unsigned int offset,
++		       size_t bytes, void *buf)
++{
++	int rc;
++
++	if (!nvmem || !nvmem->regmap)
++		return -EINVAL;
++
++	rc = regmap_raw_write(nvmem->regmap, offset, buf, bytes);
++
++	if (IS_ERR_VALUE(rc))
++		return rc;
++
++
++	return bytes;
++}
++EXPORT_SYMBOL_GPL(nvmem_device_write);
++
+ static int __init nvmem_init(void)
+ {
+ 	return bus_register(&nvmem_bus_type);
+diff --git a/include/linux/nvmem-consumer.h b/include/linux/nvmem-consumer.h
+index 297cc67..9bb77d3 100644
+--- a/include/linux/nvmem-consumer.h
++++ b/include/linux/nvmem-consumer.h
+@@ -16,6 +16,7 @@ struct device;
+ struct device_node;
+ /* consumer cookie */
+ struct nvmem_cell;
++struct nvmem_device;
+ 
+ struct nvmem_cell_info {
+ 	const char		*name;
+@@ -35,6 +36,21 @@ void devm_nvmem_cell_put(struct device *dev, struct nvmem_cell *cell);
+ void *nvmem_cell_read(struct nvmem_cell *cell, size_t *len);
+ int nvmem_cell_write(struct nvmem_cell *cell, void *buf, size_t len);
+ 
++/* direct nvmem device read/write interface */
++struct nvmem_device *nvmem_device_get(struct device *dev, const char *name);
++struct nvmem_device *devm_nvmem_device_get(struct device *dev,
++					   const char *name);
++void nvmem_device_put(struct nvmem_device *nvmem);
++void devm_nvmem_device_put(struct device *dev, struct nvmem_device *nvmem);
++int nvmem_device_read(struct nvmem_device *nvmem, unsigned int offset,
++		      size_t bytes, void *buf);
++int nvmem_device_write(struct nvmem_device *nvmem, unsigned int offset,
++		       size_t bytes, void *buf);
++ssize_t nvmem_device_cell_read(struct nvmem_device *nvmem,
++			   struct nvmem_cell_info *info, void *buf);
++int nvmem_device_cell_write(struct nvmem_device *nvmem,
++			    struct nvmem_cell_info *info, void *buf);
++
+ #else
+ 
+ static inline struct nvmem_cell *nvmem_cell_get(struct device *dev,
+@@ -68,17 +84,74 @@ static inline int nvmem_cell_write(struct nvmem_cell *cell,
+ {
+ 	return -ENOSYS;
+ }
++
++static inline struct nvmem_device *nvmem_device_get(struct device *dev,
++						    const char *name)
++{
++	return ERR_PTR(-ENOSYS);
++}
++
++static inline struct nvmem_device *devm_nvmem_device_get(struct device *dev,
++							 const char *name)
++{
++	return ERR_PTR(-ENOSYS);
++}
++
++static inline void nvmem_device_put(struct nvmem_device *nvmem)
++{
++}
++
++static inline void devm_nvmem_device_put(struct device *dev,
++					 struct nvmem_device *nvmem)
++{
++}
++
++static inline ssize_t nvmem_device_cell_read(struct nvmem_device *nvmem,
++					 struct nvmem_cell_info *info,
++					 void *buf)
++{
++	return -ENOSYS;
++}
++
++static inline int nvmem_device_cell_write(struct nvmem_device *nvmem,
++					  struct nvmem_cell_info *info,
++					  void *buf)
++{
++	return -ENOSYS;
++}
++
++static inline int nvmem_device_read(struct nvmem_device *nvmem,
++				    unsigned int offset, size_t bytes,
++				    void *buf)
++{
++	return -ENOSYS;
++}
++
++static inline int nvmem_device_write(struct nvmem_device *nvmem,
++				     unsigned int offset, size_t bytes,
++				     void *buf)
++{
++	return -ENOSYS;
++}
+ #endif /* CONFIG_NVMEM */
+ 
+ #if IS_ENABLED(CONFIG_NVMEM) && IS_ENABLED(CONFIG_OF)
+ struct nvmem_cell *of_nvmem_cell_get(struct device_node *np,
+ 				     const char *name);
++struct nvmem_device *of_nvmem_device_get(struct device_node *np,
++					 const char *name);
+ #else
+ static inline struct nvmem_cell *of_nvmem_cell_get(struct device_node *np,
+ 				     const char *name)
+ {
+ 	return ERR_PTR(-ENOSYS);
+ }
++
++static inline struct nvmem_device *of_nvmem_device_get(struct device_node *np,
++						       const char *name)
++{
++	return ERR_PTR(-ENOSYS);
++}
+ #endif /* CONFIG_NVMEM && CONFIG_OF */
+ 
+ #endif  /* ifndef _LINUX_NVMEM_CONSUMER_H */
 -- 
 1.9.1
