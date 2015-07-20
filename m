@@ -1,51 +1,39 @@
-From: josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org
-Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
- number (x86)
-Date: Mon, 20 Jul 2015 13:07:53 -0700
-Message-ID: <20150720200753.GA22333@cloud>
-References: <5CDDBDF2D36D9F43B9F5E99003F6A0D48D5F5DA0@PRN-MBX02-1.TheFacebook.com>
- <549319255.383.1437070088597.JavaMail.zimbra@efficios.com>
- <CALCETrWEKE=mow3vVh7C4r8CuGy_d5VOEz7KkpijuR5cpBfFtg@mail.gmail.com>
- <CA+55aFz-VBnEKh0SPKgu8xV5=Zb+=6odybVUDoOYOknshbcFJA@mail.gmail.com>
- <20150717232836.GA13604@domone>
- <CALCETrVY=kjeA_4pazy3BL+ekfcV6WHKw8e3z-LBxx_uP1bw2Q@mail.gmail.com>
- <55ACB2DC.5010503@redhat.com>
- <CALCETrV9Vp5UUOb3e_R5tphyE-urBgTwQR2pFWUOOFnHqWXHKQ@mail.gmail.com>
- <55AD14A4.6030101@redhat.com>
- <CALCETrUx6wFxmz+9TyW5bNgaMN0q180G8y9YOyq_D41sdhFaRQ@mail.gmail.com>
+From: Chris Metcalf <cmetcalf@ezchip.com>
+Subject: Re: [PATCH V3 4/5] mm: mmap: Add mmap flag to request VM_LOCKONFAULT
+Date: Mon, 20 Jul 2015 16:40:25 -0400
+Message-ID: <55AD5CB9.4090400@ezchip.com>
+References: <1436288623-13007-1-git-send-email-emunson@akamai.com>
+ <1436288623-13007-5-git-send-email-emunson@akamai.com>
+ <CAP=VYLq5=9DCfncJpQizcSbQt1O7VL2yEdzZNOFK+M3pqLpb3Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrUx6wFxmz+9TyW5bNgaMN0q180G8y9YOyq_D41sdhFaRQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, =?utf-8?B?T25kxZllaiBCw61sa2E=?= <neleai-9Vj9tDbzfuSlVyrhU4qvOw@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <CAP=VYLq5=9DCfncJpQizcSbQt1O7VL2yEdzZNOFK+M3pqLpb3Q@mail.gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Paul Gortmaker <paul.gortmaker@windriver.com>, Eric B Munson <emunson@akamai.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, linux-arch <linux-arch@vger.kernel.org>, linux-api@vger.kernel.org, "linux-next@vger.kernel.org" <linux-next@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 20, 2015 at 10:41:09AM -0700, Andy Lutomirski wrote:
-> On Mon, Jul 20, 2015 at 8:32 AM, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> > On 07/20/2015 05:31 PM, Andy Lutomirski wrote:
-> >> On Jul 20, 2015 1:35 AM, "Florian Weimer" <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> >>>
-> >>> On 07/18/2015 01:33 AM, Andy Lutomirski wrote:
-> >>>
-> >>>> I think the API should be "set gsbase to x + y*(cpu number)".  On
-> >>>> x86_64, userspace just allocates a big swath of virtual space and
-> >>>> populates it as needed.
-> >>>
-> >>> This will break WINE and similar applications which use %gs today.
-> >>
-> >> Presumably WINE could just opt not to use this facility, just like
-> >> WINE will have to opt out of whatever the enterprise people who want
-> >> WRGSBASE were thinking of doing with it.
-> >
-> > How is this possible if it's process-global attribute and glibc or some
-> > library in the process starts using it?
-> >
-> 
-> glibc will have to expose a way to turn it off, I guess. (ELF flag?)
+On 07/18/2015 03:11 PM, Paul Gortmaker wrote:
+> On Tue, Jul 7, 2015 at 1:03 PM, Eric B Munson<emunson@akamai.com>  wrote:
+>> >The cost of faulting in all memory to be locked can be very high when
+>> >working with large mappings.  If only portions of the mapping will be
+>> >used this can incur a high penalty for locking.
+>> >
+>> >Now that we have the new VMA flag for the locked but not present state,
+>> >expose it  as an mmap option like MAP_LOCKED -> VM_LOCKED.
+> An automatic bisection on arch/tile leads to this commit:
+>
+> 5a5656f2c9b61c74c15f9ef3fa2e6513b6c237bb is the first bad commit
+> commit 5a5656f2c9b61c74c15f9ef3fa2e6513b6c237bb
+> Author: Eric B Munson<emunson@akamai.com>
+> Date:   Thu Jul 16 10:09:22 2015 +1000
+>
+>      mm: mmap: add mmap flag to request VM_LOCKONFAULT
 
-Or a way to turn it on.
+Eric, I'm happy to help with figuring out the tile issues.
 
-- Josh Triplett
+-- 
+Chris Metcalf, EZChip Semiconductor
+http://www.ezchip.com
