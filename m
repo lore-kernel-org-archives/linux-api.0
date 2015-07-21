@@ -1,45 +1,84 @@
-From: Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>
-Subject: Re: [PATCH v4 5/5] pagemap: add mmap-exclusive bit for marking
- pages mapped only here
-Date: Tue, 21 Jul 2015 08:17:56 +0000
-Message-ID: <20150721081755.GD4490@hori1.linux.bs1.fc.nec.co.jp>
+From: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+Subject: Re: [PATCH] pagemap: update documentation
+Date: Tue, 21 Jul 2015 08:35:05 +0000
+Message-ID: <20150721083504.GA8170@hori1.linux.bs1.fc.nec.co.jp>
 References: <20150714152516.29844.69929.stgit@buzz>
- <20150714153749.29844.81954.stgit@buzz>
+ <20150716184742.8858.14639.stgit@buzz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-2022-jp"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150714153749.29844.81954.stgit@buzz>
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20150716184742.8858.14639.stgit@buzz>
 Content-Language: ja-JP
-Content-ID: <26C19608054104418F64BD8DB1EFF9D9-DVDfUyJTPxcTBYAz+LHnZg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Cc: "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-ID: <CB1B053981AEE04FA0D10C7DEDB4F794@gisp.nec.co.jp>
+Sender: owner-linux-mm@kvack.org
+To: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 14, 2015 at 06:37:49PM +0300, Konstantin Khlebnikov wrote:
-> This patch sets bit 56 in pagemap if this page is mapped only once.
-> It allows to detect exclusively used pages without exposing PFN:
-> 
-> present file exclusive state
-> 0       0    0         non-present
-> 1       1    0         file page mapped somewhere else
-> 1       1    1         file page mapped only here
-> 1       0    0         anon non-CoWed page (shared with parent/child)
-> 1       0    1         anon CoWed page (or never forked)
-> 
-> CoWed pages in (MAP_FILE | MAP_PRIVATE) areas are anon in this context.
-> 
-> MMap-exclusive bit doesn't reflect potential page-sharing via swapcache:
-> page could be mapped once but has several swap-ptes which point to it.
-> Application could detect that by swap bit in pagemap entry and touch
-> that pte via /proc/pid/mem to get real information.
-> 
-> Signed-off-by: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-> Requested-by: Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
-> Link: http://lkml.kernel.org/r/CAEVpBa+_RyACkhODZrRvQLs80iy0sqpdrd0AaP_-tgnX3Y9yNQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org
+On Thu, Jul 16, 2015 at 09:47:42PM +0300, Konstantin Khlebnikov wrote:
+> Notes about recent changes.
+>=20
+> Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+> ---
+>  Documentation/vm/pagemap.txt |   14 ++++++++++++--
+>  1 file changed, 12 insertions(+), 2 deletions(-)
+>=20
+> diff --git a/Documentation/vm/pagemap.txt b/Documentation/vm/pagemap.txt
+> index 3cfbbb333ea1..aab39aa7dd8f 100644
+> --- a/Documentation/vm/pagemap.txt
+> +++ b/Documentation/vm/pagemap.txt
+> @@ -16,12 +16,17 @@ There are three components to pagemap:
+>      * Bits 0-4   swap type if swapped
+>      * Bits 5-54  swap offset if swapped
+>      * Bit  55    pte is soft-dirty (see Documentation/vm/soft-dirty.txt)
+> -    * Bit  56    page exlusively mapped
+> +    * Bit  56    page exclusively mapped (since 4.2)
+>      * Bits 57-60 zero
+> -    * Bit  61    page is file-page or shared-anon
+> +    * Bit  61    page is file-page or shared-anon (since 3.5)
+>      * Bit  62    page swapped
+>      * Bit  63    page present
+> =20
+> +   Since Linux 4.0 only users with the CAP_SYS_ADMIN capability can get =
+PFNs:
+> +   for unprivileged users from 4.0 till 4.2 open fails with -EPERM, star=
+ting
 
-Reviewed-by: Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>--
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I'm expecting that this patch will be merged before 4.2 is released, so if =
+that's
+right, stating "till 4.2" might be incorrect.
+
+> +   from from 4.2 PFN field is zeroed if user has no CAP_SYS_ADMIN capabi=
+lity.
+
+"from" duplicates ...
+
+Thanks,
+Naoya Horiguchi
+
+> +   Reason: information about PFNs helps in exploiting Rowhammer vulnerab=
+ility.
+> +
+>     If the page is not present but in swap, then the PFN contains an
+>     encoding of the swap file number and the page's offset into the
+>     swap. Unmapped pages return a null PFN. This allows determining
+> @@ -160,3 +165,8 @@ Other notes:
+>  Reading from any of the files will return -EINVAL if you are not startin=
+g
+>  the read on an 8-byte boundary (e.g., if you sought an odd number of byt=
+es
+>  into the file), or if the size of the read is not a multiple of 8 bytes.
+> +
+> +Before Linux 3.11 pagemap bits 55-60 were used for "page-shift" (which i=
+s
+> +always 12 at most architectures). Since Linux 3.11 their meaning changes
+> +after first clear of soft-dirty bits. Since Linux 4.2 they are used for
+> +flags unconditionally.
+> =
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
