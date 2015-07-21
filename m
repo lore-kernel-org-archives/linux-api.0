@@ -1,70 +1,66 @@
-From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: Re: [PATCH v8 1/9] nvmem: Add a simple NVMEM framework for nvmem
- providers
-Date: Tue, 21 Jul 2015 19:51:03 +0100
-Message-ID: <55AE9497.1040101@linaro.org>
-References: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org> <1437403392-4136-1-git-send-email-srinivas.kandagatla@linaro.org> <55AD6412.9070205@codeaurora.org> <55AE13D8.6020301@linaro.org> <55AE8864.6020608@codeaurora.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-msm-owner@vger.kernel.org>
-In-Reply-To: <55AE8864.6020608@codeaurora.org>
-Sender: linux-arm-msm-owner@vger.kernel.org
-To: Stephen Boyd <sboyd@codeaurora.org>
-Cc: linux-arm-kernel@lists.infradead.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rob Herring <robh+dt@kernel.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, pantelis.antoniou@konsulko.com, mporter@konsulko.com, stefan.wahren@i2se.com, wxt@rock-chips.com, Maxime Ripard <maxime.ripard@free-electrons.com>
+From: Stephen Chandler Paul <cpaul-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [RFC] ps2emu - PS/2 emulation module
+Date: Tue, 21 Jul 2015 15:07:13 -0400
+Message-ID: <1437505634-8633-1-git-send-email-cpaul@redhat.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mauro Carvalho Chehab <mchehab-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Jiri Slaby <jslaby-IBi9RG/b67k@public.gmane.org>, Vishnu Patekar <vishnupatekar0510-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Sebastian Ott <sebott-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Benjamin Tissoires <benjamin.tissoires-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Hi! So, following this is a patch to add the ps2emu module to the kernel. This
+module basically allows for us to create virtual PS/2 devices and control them
+from userspace. With this, we can do useful things such as playing back
+recordings of PS/2 devices in a similar manner to evemu-replay and hid-replay.
+This lets us debug PS/2 devices that we may not have physical access to, such
+as laptop touchpads. This is a huge help when we receive bug reports for devices that
+we can't get access to. We've already used this module to assist with fixing
+bugs[1] where we needed to be able to replicate the device on a lower level then
+we could with evemu-replay or hid-replay. This module could also come into use
+when trying to debug the initialization process of devices, along with testing
+for regressions with various devices.
 
+The module itself creates a character device at /dev/ps2emu, which userspace
+applications can connect to and use to send/receive data straight through the
+serio driver. It doesn't need to do much more then that, so it's not a very
+large driver. There is a very basic command protocol used for this which has
+room for potentially being extended upon in the future if the situation calls
+for it.
 
-On 21/07/15 18:59, Stephen Boyd wrote:
-> On 07/21/2015 02:41 AM, Srinivas Kandagatla wrote:
->> Thanks Stephen for review,
->>
->> On 20/07/15 22:11, Stephen Boyd wrote:
->>> On 07/20/2015 07:43 AM, Srinivas Kandagatla wrote:
->>>> diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
->>>> new file mode 100644
->>>> index 0000000..bde5528
->>>> --- /dev/null
->>>> +++ b/drivers/nvmem/core.c
->>>> @@ -0,0 +1,384 @@
->>>>
->>>> +
->>>> +static int nvmem_add_cells(struct nvmem_device *nvmem,
->>>> +               const struct nvmem_config *cfg)
->>>> +{
->>>> +    struct nvmem_cell **cells;
->>>> +    const struct nvmem_cell_info *info = cfg->cells;
->>>> +    int i, rval;
->>>> +
->>>> +    cells = kzalloc(sizeof(*cells) * cfg->ncells, GFP_KERNEL);
->>>
->>> kcalloc?
->>
->> Only reason for using kzalloc is to give the code more flexibility to
->> free any pointer in the array in case of errors.
->
-> Still lost. The arrays are allocated down below in the for loop. This is
-> allocating a bunch of pointers so using kcalloc() here avoids problems
-> with overflows causing kzalloc() to allocate fewer pointers than
-> requested. I'm not suggesting we replace the for loop with a kcalloc,
-> just this single line.
+Right now we make use of this module with the ps2emu userland tools[2] that I've
+wrote recently. Recording of PS/2 devices is done by enabling the debugging
+output from i8042, triggering a rescan of the PS/2 ports, and doing some clever
+trimming of data to remove anything that goes across the i8042 chip that isn't
+relevant to the PS/2 protocol. The replay application is pretty simple, and just
+sends all of the events from the log through /dev/ps2emu. No additional
+processing of the log has to be done, making the replay process very trivial so
+long as the behavior of the driver in question is the same as it was when the
+recording was done. This also means any bugs encountered during the recording
+are easy to reproduce when we play the device back, and we don't need to be
+concerned about a virtual device potentially exhibiting different behaviors in
+the kernel than the physical one.
 
-My bad, I think I miss understood your suggestion, Yes, we can allocate 
-pointers using kzalloc.
+If you have any questions or comments, please don't hesitate.
 
---srini
->
->>
->>>
->>>> +    if (!cells)
->>>> +        return -ENOMEM;
->>>> +
->>>> +    for (i = 0; i < cfg->ncells; i++) {
->>>> +        cells[i] = kzalloc(sizeof(**cells), GFP_KERNEL);
->>>> +        if (!cells[i]) {
->>>> +            rval = -ENOMEM;
->>>> +            goto err;
->>>> +        }
->>>> +
->
+Cheers,
+	Stephen Chandler Paul
+
+[1] https://bugzilla.redhat.com/show_bug.cgi?id=1235175
+[2] https://github.com/Lyude/ps2emu/releases/tag/v0.1.2
+
+Stephen Chandler Paul (1):
+  Input: Add ps2emu module
+
+ Documentation/input/ps2emu.txt |  72 ++++++++++++
+ MAINTAINERS                    |   6 +
+ drivers/input/serio/Kconfig    |  10 ++
+ drivers/input/serio/Makefile   |   1 +
+ drivers/input/serio/ps2emu.c   | 251 +++++++++++++++++++++++++++++++++++++++++
+ include/uapi/linux/ps2emu.h    |  42 +++++++
+ 6 files changed, 382 insertions(+)
+ create mode 100644 Documentation/input/ps2emu.txt
+ create mode 100644 drivers/input/serio/ps2emu.c
+ create mode 100644 include/uapi/linux/ps2emu.h
+
+--
+2.4.3
