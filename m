@@ -1,96 +1,75 @@
-From: Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>
-Subject: Re: [PATCH v8 8/9] nvmem: sunxi: Move the SID driver to the nvmem
- framework
-Date: Tue, 21 Jul 2015 18:38:44 +0200 (CEST)
-Message-ID: <2114639619.71276.1437496724946.JavaMail.open-xchange@oxbsltgw08.schlund.de>
-References: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org> <1437403462-4432-1-git-send-email-srinivas.kandagatla@linaro.org>
-Reply-To: Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 3/3] console_codes.4: Add CSI sequence for cursor blink interval
+Date: Tue, 21 Jul 2015 18:55:11 +0200
+Message-ID: <CAKgNAkgqTckfydFTDFsoqB1b_fAEiDZGYP=7b-bhN8d4Mp-bsg@mail.gmail.com>
+References: <alpine.DEB.2.11.1501262034380.1945@localhost.localdomain>
+ <alpine.DEB.2.11.1501262040380.2052@localhost.localdomain>
+ <20150225094946.GA24627@amd> <alpine.LNX.2.11.1502252319330.276@localhost>
+ <20150226220243.GC9935@amd> <alpine.LNX.2.11.1502271905580.4212@localhost>
+ <alpine.LNX.2.11.1502271911380.4248@localhost> <20150325111949.GA24230@kroah.com>
+ <alpine.DEB.2.11.1503261341260.2164@local> <alpine.DEB.2.11.1503261356490.2411@local>
+ <alpine.DEB.2.11.1507051724240.1696@local>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1437403462-4432-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.11.1507051724240.1696@local>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
-Cc: wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
+Cc: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Srinivas,
+Hello Scot,
 
-> Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> hat am 20. Juli 2015 um
-> 16:44 geschrieben:
->
->
-> From: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
->
-> Now that we have the nvmem framework, we can consolidate the common
-> driver code. Move the driver to the framework, and hopefully, it will
-> fix the sysfs file creation race.
->
-> Signed-off-by: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-> [srinivas.kandagatla: Moved to regmap based EEPROM framework]
-> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-> ---
-> Documentation/ABI/testing/sysfs-driver-sunxi-sid | 22 ---
-> .../bindings/misc/allwinner,sunxi-sid.txt | 17 ---
-> .../bindings/nvmem/allwinner,sunxi-sid.txt | 21 +++
-> drivers/misc/eeprom/Kconfig | 13 --
-> drivers/misc/eeprom/Makefile | 1 -
-> drivers/misc/eeprom/sunxi_sid.c | 156 --------------------
-> drivers/nvmem/Kconfig | 11 ++
-> drivers/nvmem/Makefile | 2 +
-> drivers/nvmem/sunxi_sid.c | 159 +++++++++++++++++++++
-> 9 files changed, 193 insertions(+), 209 deletions(-)
-> delete mode 100644 Documentation/ABI/testing/sysfs-driver-sunxi-sid
-> delete mode 100644
-> Documentation/devicetree/bindings/misc/allwinner,sunxi-sid.txt
-> create mode 100644
-> Documentation/devicetree/bindings/nvmem/allwinner,sunxi-sid.txt
-> delete mode 100644 drivers/misc/eeprom/sunxi_sid.c
-> create mode 100644 drivers/nvmem/sunxi_sid.c
->
-> [...]
-> -static int sunxi_sid_probe(struct platform_device *pdev)
-> -{
-> - struct sunxi_sid_data *sid_data;
-> - struct resource *res;
-> - const struct of_device_id *of_dev_id;
-> - u8 *entropy;
-> - unsigned int i;
-> -
-> - sid_data = devm_kzalloc(&pdev->dev, sizeof(struct sunxi_sid_data),
-> - GFP_KERNEL);
-> - if (!sid_data)
-> - return -ENOMEM;
-> -
-> - res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-> - sid_data->reg_base = devm_ioremap_resource(&pdev->dev, res);
-> - if (IS_ERR(sid_data->reg_base))
-> - return PTR_ERR(sid_data->reg_base);
-> -
-> - of_dev_id = of_match_device(sunxi_sid_of_match, &pdev->dev);
-> - if (!of_dev_id)
-> - return -ENODEV;
-> - sid_data->keysize = (int)of_dev_id->data;
-> -
-> - platform_set_drvdata(pdev, sid_data);
-> -
-> - sid_bin_attr.size = sid_data->keysize;
-> - if (device_create_bin_file(&pdev->dev, &sid_bin_attr))
-> - return -ENODEV;
-> -
-> - entropy = kzalloc(sizeof(u8) * sid_data->keysize, GFP_KERNEL);
-> - for (i = 0; i < sid_data->keysize; i++)
-> - entropy[i] = sunxi_sid_read_byte(sid_data, i);
-> - add_device_randomness(entropy, sid_data->keysize);
-> - kfree(entropy);
-> -
+On 5 July 2015 at 19:41, Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org> wrote:
+> On Thu, 26 Mar 2015, Scot Doyle wrote:
+>> Add a Console Private CSI sequence to specify the current console's
+>> cursor blink interval. The interval is specified as a number of
+>> milliseconds until the next cursor display state toggle, from 50 to
+>> 65535.
+>>
+>> Signed-off-by: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
 
-in case of porting a driver to a new framework, i would expect the same
-features.
-The ported driver do not add the Security ID to the device randomness.
+I've applied this, adding Pavel's Acked-by.
 
-What's the reason for this difference?
+I also added some text to note that this appeared in Linux 4.2. Okay?
 
-Regards
-Stefan
+Cheers,
+
+Michael
+
+
+>> ---
+>>  man4/console_codes.4 | 1 +
+>>  1 file changed, 1 insertion(+)
+>>
+>> diff --git a/man4/console_codes.4 b/man4/console_codes.4
+>> index 34f7535..7d05076 100644
+>> --- a/man4/console_codes.4
+>> +++ b/man4/console_codes.4
+>> @@ -377,6 +377,7 @@ ESC [ 15 ]        T{
+>>  Bring the previous console to the front
+>>  (since Linux 2.6.0).
+>>  T}
+>> +ESC [ 16 ; \fIn\fP ]         Set the cursor blink interval in milliseconds.
+>>  .TE
+>>  .SS Character sets
+>>  The kernel knows about 4 translations of bytes into console-screen
+>> --
+>> 2.1.0
+>>
+>
+> Hi Michael,
+>
+> Will you apply now that Linus has pulled the rest?
+> (see bd63364caa8df38bad2b25b11b2a1b849475cce5)
+>
+> Thank you,
+> Scot
+
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
