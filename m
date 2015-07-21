@@ -1,74 +1,93 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [PATCH V3 4/5] mm: mmap: Add mmap flag to request VM_LOCKONFAULT
-Date: Tue, 21 Jul 2015 11:37:22 -0400
-Message-ID: <20150721153722.GB5411@akamai.com>
-References: <1436288623-13007-1-git-send-email-emunson@akamai.com>
- <1436288623-13007-5-git-send-email-emunson@akamai.com>
- <CAP=VYLq5=9DCfncJpQizcSbQt1O7VL2yEdzZNOFK+M3pqLpb3Q@mail.gmail.com>
- <55AD5CB9.4090400@ezchip.com>
+From: Stefan Wahren <stefan.wahren@i2se.com>
+Subject: Re: [PATCH v8 2/9] nvmem: Add a simple NVMEM framework for
+ consumers
+Date: Tue, 21 Jul 2015 18:25:42 +0200 (CEST)
+Message-ID: <1590184041.70825.1437495942088.JavaMail.open-xchange@oxbsltgw08.schlund.de>
+References: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org> <1437403403-4180-1-git-send-email-srinivas.kandagatla@linaro.org>
+Reply-To: Stefan Wahren <stefan.wahren@i2se.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="dTy3Mrz/UPE2dbVg"
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <55AD5CB9.4090400@ezchip.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@ezchip.com>
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, linux-arch <linux-arch@vger.kernel.org>, linux-api@vger.kernel.org, "linux-next@vger.kernel.org" <linux-next@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1437403403-4180-1-git-send-email-srinivas.kandagatla@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-arm-kernel@lists.infradead.org
+Cc: wxt@rock-chips.com, linux-api@vger.kernel.org, Rob Herring <robh+dt@kernel.org>, sboyd@codeaurora.org, arnd@arndb.de, s.hauer@pengutronix.de, linux-kernel@vger.kernel.org, mporter@konsulko.com, linux-arm-msm@vger.kernel.org, Maxime Ripard <maxime.ripard@free-electrons.com>, pantelis.antoniou@konsulko.com, Mark Brown <broonie@kernel.org>, devicetree@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+Hi Srinivas,
 
---dTy3Mrz/UPE2dbVg
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+> Srinivas Kandagatla <srinivas.kandagatla@linaro.org> hat am 20. Juli 2015 um
+> 16:43 geschrieben:
+>
+>
+> This patch adds just consumers part of the framework just to enable easy
+> review.
+>
+> Up until now, nvmem drivers were stored in drivers/misc, where they all
+> had to duplicate pretty much the same code to register a sysfs file,
+> allow in-kernel users to access the content of the devices they were
+> driving, etc.
+>
+> This was also a problem as far as other in-kernel users were involved,
+> since the solutions used were pretty much different from on driver to
+> another, there was a rather big abstraction leak.
+>
+> This introduction of this framework aims at solving this. It also
+> introduces DT representation for consumer devices to go get the data they
+> require (MAC Addresses, SoC/Revision ID, part numbers, and so on) from
+> the nvmems.
+>
+> Having regmap interface to this framework would give much better
+> abstraction for nvmems on different buses.
+>
+> Signed-off-by: Maxime Ripard <maxime.ripard@free-electrons.com>
+> [Maxime Ripard: intial version of the framework]
+> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+> ---
+> drivers/nvmem/core.c | 415 +++++++++++++++++++++++++++++++++++++++++
+> include/linux/nvmem-consumer.h | 61 ++++++
+> 2 files changed, 476 insertions(+)
+>
+> diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
+> index bde5528..de14c36 100644
+> --- a/drivers/nvmem/core.c
+> +++ b/drivers/nvmem/core.c
+> [...]
+> +struct nvmem_cell *of_nvmem_cell_get(struct device_node *np,
+> + const char *name)
+> +{
+> + struct device_node *cell_np, *nvmem_np;
+> + struct nvmem_cell *cell;
+> + struct nvmem_device *nvmem;
+> + const __be32 *addr;
+> + int rval, len, index;
+> +
+> + index = of_property_match_string(np, "nvmem-cell-names", name);
+> +
+> + cell_np = of_parse_phandle(np, "nvmem-cells", index);
+> + if (!cell_np)
+> + return ERR_PTR(-EINVAL);
+> +
+> + nvmem_np = of_get_next_parent(cell_np);
+> + if (!nvmem_np)
+> + return ERR_PTR(-EINVAL);
+> +
+> + nvmem = __nvmem_device_get(nvmem_np, NULL, NULL);
+> + if (IS_ERR(nvmem))
+> + return ERR_CAST(nvmem);
+> +
+> + addr = of_get_property(cell_np, "reg", &len);
+> + if (!addr || (len < 2 * sizeof(int))) {
 
-On Mon, 20 Jul 2015, Chris Metcalf wrote:
+I'm not sure, but shouldn't be sizeof(u32) more portable?
 
-> On 07/18/2015 03:11 PM, Paul Gortmaker wrote:
-> >On Tue, Jul 7, 2015 at 1:03 PM, Eric B Munson<emunson@akamai.com>  wrote:
-> >>>The cost of faulting in all memory to be locked can be very high when
-> >>>working with large mappings.  If only portions of the mapping will be
-> >>>used this can incur a high penalty for locking.
-> >>>
-> >>>Now that we have the new VMA flag for the locked but not present state,
-> >>>expose it  as an mmap option like MAP_LOCKED -> VM_LOCKED.
-> >An automatic bisection on arch/tile leads to this commit:
-> >
-> >5a5656f2c9b61c74c15f9ef3fa2e6513b6c237bb is the first bad commit
-> >commit 5a5656f2c9b61c74c15f9ef3fa2e6513b6c237bb
-> >Author: Eric B Munson<emunson@akamai.com>
-> >Date:   Thu Jul 16 10:09:22 2015 +1000
-> >
-> >     mm: mmap: add mmap flag to request VM_LOCKONFAULT
->=20
-> Eric, I'm happy to help with figuring out the tile issues.
+> [...]
+> +
+> + addr = of_get_property(cell_np, "bits", &len);
+> + if (addr && len == (2 * sizeof(int))) {
 
-Thanks for the offer, I think I have is sorted in V4 (which I am
-checking one last time before I post).
+dito
 
-Eric
-
---dTy3Mrz/UPE2dbVg
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJVrmcyAAoJELbVsDOpoOa9/LIQAKfvC7x2JgwcyjeVb/emAnku
-OEKpBeDUe7W6lglYkz0zJKjDqQsPMqsEeQUqa/3D1zJJ/j5LStZ1VcSnWQf3vOL9
-wzAE3TNSbBLN/guepYkUKLK09+/YAtrjbj0Kv4lMhcHXtHmcsdgEdrvz5guX2/jB
-y0GXHGESyx+uNlrDgiqfrJM2mor7/gXdwQ9IXwB9uNTrEMUDo1Q+rAZdNDidmjZX
-Ko+3GWUg1y5XewuU4PGOUkd49yWnlNCke55/vC9/ZD5uhpwo8LdKwMHxDlq9trAU
-3qE3smKPEwImQtO8yI6hutkYCyj9Cz+2bQrBlWbxZjK+7uhTbiOzdWZyEt1p5b2B
-1c3oi5R5h5lS1TEnNkvCmuBaA4M0vM3w5LVO1CzOlEM7h9zduOQXmmvOJqr6N0Al
-eLG4/UPMnSbfjYh0ckDxhzbJS/2Kzgaa8itR/CAvGJfYapojorGO6cZTR45qzPga
-qJDmfXhMRy7oIkdzXIU4yHmbzsGWjT3AcG3HUEWBQLXcgbI2CsdUz/ctQlJ0kv/g
-Dyle+YYk0CEoNP5H8Ikc113x0TIHEeHJhKlh1G2XzxehF0IA3+7sMqRXbyGS4I7E
-Gtw6pmAKbcFVDwDnn0moP3DYTzq2OyfhCmeQlJySlwpMK/OxjUUmq6iN3plfzpkD
-Sksvg4KZsIFEzrhsm0Ow
-=5+W3
------END PGP SIGNATURE-----
-
---dTy3Mrz/UPE2dbVg--
+Regards
+Stefan
