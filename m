@@ -1,263 +1,158 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: [PATCH V4 0/6] Allow user to request memory to be locked on page fault
-Date: Tue, 21 Jul 2015 15:59:35 -0400
-Message-ID: <1437508781-28655-1-git-send-email-emunson@akamai.com>
-Return-path: <owner-linux-mm@kvack.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Eric B Munson <emunson@akamai.com>, Shuah Khan <shuahkh@osg.samsung.com>, Michal Hocko <mhocko@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, Vlastimil Babka <vbabka@suse.cz>, Jonathan Corbet <corbet@lwn.net>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+From: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH v4 1/5] nohz_full: add support for "cpu_isolated" mode
+Date: Tue, 21 Jul 2015 13:36:23 -0700
+Message-ID: <20150721203622.GX3717@linux.vnet.ibm.com>
+References: <1436817481-8732-1-git-send-email-cmetcalf@ezchip.com>
+ <1436817481-8732-2-git-send-email-cmetcalf@ezchip.com>
+ <CALCETrWaBe10u1X+AqYM7TsbguL=aF-TyuN3xjqgR5Cg2=FiAA@mail.gmail.com>
+ <55A4271B.9040506@ezchip.com>
+ <CALCETrUMGx+ZC9rtAAErKaGg-LEtYXMOSVD1dCi7im3b1SMrVg@mail.gmail.com>
+ <55AE993E.6040501@ezchip.com>
+ <CALCETrVoHvofNHG81Q2Vb2i1qc7f2dy=qgkyb5NWNfUgYxhE8Q@mail.gmail.com>
+Reply-To: paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrVoHvofNHG81Q2Vb2i1qc7f2dy=qgkyb5NWNfUgYxhE8Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-mlock() allows a user to control page out of program memory, but this
-comes at the cost of faulting in the entire mapping when it is
-allocated.  For large mappings where the entire area is not necessary
-this is not ideal.  Instead of forcing all locked pages to be present
-when they are allocated, this set creates a middle ground.  Pages are
-marked to be placed on the unevictable LRU (locked) when they are first
-used, but they are not faulted in by the mlock call.
+On Tue, Jul 21, 2015 at 12:26:17PM -0700, Andy Lutomirski wrote:
+> On Tue, Jul 21, 2015 at 12:10 PM, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org> wrote:
+> > Sorry for the delay in responding; some other priorities came up internally.
+> >
+> > On 07/13/2015 05:45 PM, Andy Lutomirski wrote:
+> >>
+> >> On Mon, Jul 13, 2015 at 2:01 PM, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+> >> wrote:
+> >>>
+> >>> On 07/13/2015 04:40 PM, Andy Lutomirski wrote:
+> >>>>
+> >>>> On Mon, Jul 13, 2015 at 12:57 PM, Chris Metcalf <cmetcalf-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>
+> >>>>
+> >>>> wrote:
+> >>>>>
+> >>>>> The existing nohz_full mode makes tradeoffs to minimize userspace
+> >>>>> interruptions while still attempting to avoid overheads in the
+> >>>>> kernel entry/exit path, to provide 100% kernel semantics, etc.
+> >>>>>
+> >>>>> However, some applications require a stronger commitment from the
+> >>>>> kernel to avoid interruptions, in particular userspace device
+> >>>>> driver style applications, such as high-speed networking code.
+> >>>>>
+> >>>>> This change introduces a framework to allow applications to elect
+> >>>>> to have the stronger semantics as needed, specifying
+> >>>>> prctl(PR_SET_CPU_ISOLATED, PR_CPU_ISOLATED_ENABLE) to do so.
+> >>>>> Subsequent commits will add additional flags and additional
+> >>>>> semantics.
+> >>>>
+> >>>> I thought the general consensus was that this should be the default
+> >>>> behavior and that any associated bugs should be fixed.
+> >>>
+> >>>
+> >>> I think it comes down to dividing the set of use cases in two:
+> >>>
+> >>> - "Regular" nohz_full, as used to improve performance and limit
+> >>>    interruptions, possibly for power benefits, etc.  But, stray
+> >>>    interrupts are not particularly bad, and you don't want to take
+> >>>    extreme measures to avoid them.
+> >>>
+> >>> - What I'm calling "cpu_isolated" mode where when you return to
+> >>>    userspace, you expect that by God, the kernel doesn't interrupt you
+> >>>    again, and if it does, it's a flat-out bug.
+> >>>
+> >>> There are a few things that cpu_isolated mode currently does to
+> >>> accomplish its goals that are pretty heavy-weight:
+> >>>
+> >>> Processes are held in kernel space until ticks are quiesced; this is
+> >>> not necessarily what every nohz_full task wants.  If a task makes a
+> >>> kernel call, there may well be arbitrary timer fallout, and having a
+> >>> way to select whether or not you are willing to take a timer tick after
+> >>> return to userspace is pretty important.
+> >>
+> >> Then shouldn't deferred work be done immediately in nohz_full mode
+> >> regardless?  What is this delayed work that's being done?
+> >
+> > I'm thinking of things like needing to wait for an RCU quiesce
+> > period to complete.
+> 
+> rcu_nocbs does this, right?
 
-This series introduces a new mlock() system call that takes a flags
-argument along with the start address and size.  This flags argument
-gives the caller the ability to request memory be locked in the
-traditional way, or to be locked after the page is faulted in.  New
-calls are added for munlock() and munlockall() which give the called a
-way to specify which flags are supposed to be cleared.  A new MCL flag
-is added to mirror the lock on fault behavior from mlock() in
-mlockall().  Finally, a flag for mmap() is added that allows a user to
-specify that the covered are should not be paged out, but only after the
-memory has been used the first time.
+CONFIG_RCU_NOCB_CPUS offloads the RCU callbacks to a kthread, which
+allows the nohz CPU to turn off its scheduling-clock tick more frequently.
+Chris might have some other reason to wait for an RCU grace period, given
+that waiting for an RCU grace period would not guarantee no callbacks.
+Some more might have arrived in the meantime, and there can be some delay
+between the end of the grace period and the invocation of the callbacks.
 
-There are two main use cases that this set covers.  The first is the
-security focussed mlock case.  A buffer is needed that cannot be written
-to swap.  The maximum size is known, but on average the memory used is
-significantly less than this maximum.  With lock on fault, the buffer
-is guaranteed to never be paged out without consuming the maximum size
-every time such a buffer is created.
+> > In the current version, there's also the vmstat_update() that
+> > may schedule delayed work and interrupt the core again
+> > shortly before realizing that there are no more counter updates
+> > happening, at which point it quiesces.  Currently we handle
+> > this in cpu_isolated mode simply by spinning and waiting for
+> > the timer interrupts to complete.
+> 
+> Perhaps we should fix that?
 
-The second use case is focussed on performance.  Portions of a large
-file are needed and we want to keep the used portions in memory once
-accessed.  This is the case for large graphical models where the path
-through the graph is not known until run time.  The entire graph is
-unlikely to be used in a given invocation, but once a node has been
-used it needs to stay resident for further processing.  Given these
-constraints we have a number of options.  We can potentially waste a
-large amount of memory by mlocking the entire region (this can also
-cause a significant stall at startup as the entire file is read in).
-We can mlock every page as we access them without tracking if the page
-is already resident but this introduces large overhead for each access.
-The third option is mapping the entire region with PROT_NONE and using
-a signal handler for SIGSEGV to mprotect(PROT_READ) and mlock() the
-needed page.  Doing this page at a time adds a significant performance
-penalty.  Batching can be used to mitigate this overhead, but in order
-to safely avoid trying to mprotect pages outside of the mapping, the
-boundaries of each mapping to be used in this way must be tracked and
-available to the signal handler.  This is precisely what the mm system
-in the kernel should already be doing.
+Didn't Christoph Lameter fix this?  Or is this an additional problem?
 
-For mlock(MLOCK_ONFAULT) and mmap(MAP_LOCKONFAULT) the user is charged
-against RLIMIT_MEMLOCK as if mlock(MLOCK_LOCKED) or mmap(MAP_LOCKED) was
-used, so when the VMA is created not when the pages are faulted in.  For
-mlockall(MCL_ONFAULT) the user is charged as if MCL_FUTURE was used.
-This decision was made to keep the accounting checks out of the page
-fault path.
+							Thanx, Paul
 
-To illustrate the benefit of this set I wrote a test program that mmaps
-a 5 GB file filled with random data and then makes 15,000,000 accesses
-to random addresses in that mapping.  The test program was run 20 times
-for each setup.  Results are reported for two program portions, setup
-and execution.  The setup phase is calling mmap and optionally mlock on
-the entire region.  For most experiments this is trivial, but it
-highlights the cost of faulting in the entire region.  Results are
-averages across the 20 runs in milliseconds.
-
-mmap with mlock(MLOCK_LOCKED) on entire range:
-Setup avg:      8228.666
-Processing avg: 8274.257
-
-mmap with mlock(MLOCK_LOCKED) before each access:
-Setup avg:      0.113
-Processing avg: 90993.552
-
-mmap with PROT_NONE and signal handler and batch size of 1 page:
-With the default value in max_map_count, this gets ENOMEM as I attempt
-to change the permissions, after upping the sysctl significantly I get:
-Setup avg:      0.058
-Processing avg: 69488.073
-
-mmap with PROT_NONE and signal handler and batch size of 8 pages:
-Setup avg:      0.068
-Processing avg: 38204.116
-
-mmap with PROT_NONE and signal handler and batch size of 16 pages:
-Setup avg:      0.044
-Processing avg: 29671.180
-
-mmap with mlock(MLOCK_ONFAULT) on entire range:
-Setup avg:      0.189
-Processing avg: 17904.899
-
-The signal handler in the batch cases faulted in memory in two steps to
-avoid having to know the start and end of the faulting mapping.  The
-first step covers the page that caused the fault as we know that it will
-be possible to lock.  The second step speculatively tries to mlock and
-mprotect the batch size - 1 pages that follow.  There may be a clever
-way to avoid this without having the program track each mapping to be
-covered by this handeler in a globally accessible structure, but I could
-not find it.  It should be noted that with a large enough batch size
-this two step fault handler can still cause the program to crash if it
-reaches far beyond the end of the mapping.
-
-These results show that if the developer knows that a majority of the
-mapping will be used, it is better to try and fault it in at once,
-otherwise MAP_LOCKONFAULT is significantly faster.
-
-The performance cost of these patches are minimal on the two benchmarks
-I have tested (stream and kernbench).  The following are the average
-values across 20 runs of stream and 10 runs of kernbench after a warmup
-run whose results were discarded.
-
-Avg throughput in MB/s from stream using 1000000 element arrays
-Test     4.2-rc1      4.2-rc1+lock-on-fault
-Copy:    10,566.5     10,421
-Scale:   10,685       10,503.5
-Add:     12,044.1     11,814.2
-Triad:   12,064.8     11,846.3
-
-Kernbench optimal load
-                 4.2-rc1  4.2-rc1+lock-on-fault
-Elapsed Time     78.453   78.991
-User Time        64.2395  65.2355
-System Time      9.7335   9.7085
-Context Switches 22211.5  22412.1
-Sleeps           14965.3  14956.1
-
----
-Changes from V3:
-Ensure that pages present when mlock2(MLOCK_ONFAULT) is called are locked
-Ensure that VM_LOCKONFAULT is handled in cases that used to only check VM_LOCKED
-Add tests for new system calls
-Add missing syscall entries, fix NR_syscalls on multiple arch's
-Add missing MAP_LOCKONFAULT for tile
-
-Changes from V2:
-Added new system calls for mlock, munlock, and munlockall with added
-flags arguments for controlling how memory is locked or unlocked.
-
-Eric B Munson (6):
-  mm: mlock: Refactor mlock, munlock, and munlockall code
-  mm: mlock: Add new mlock, munlock, and munlockall system calls
-  mm: gup: Add mm_lock_present()
-  mm: mlock: Introduce VM_LOCKONFAULT and add mlock flags to enable it
-  mm: mmap: Add mmap flag to request VM_LOCKONFAULT
-  selftests: vm: Add tests for lock on fault
-
- arch/alpha/include/asm/unistd.h             |   2 +-
- arch/alpha/include/uapi/asm/mman.h          |   5 +
- arch/alpha/include/uapi/asm/unistd.h        |   3 +
- arch/alpha/kernel/systbls.S                 |   3 +
- arch/arm/include/asm/unistd.h               |   2 +-
- arch/arm/include/uapi/asm/unistd.h          |   3 +
- arch/arm/kernel/calls.S                     |   3 +
- arch/arm64/include/asm/unistd32.h           |   6 +
- arch/avr32/include/uapi/asm/unistd.h        |   3 +
- arch/avr32/kernel/syscall_table.S           |   3 +
- arch/blackfin/include/uapi/asm/unistd.h     |   3 +
- arch/blackfin/mach-common/entry.S           |   3 +
- arch/cris/arch-v10/kernel/entry.S           |   3 +
- arch/cris/arch-v32/kernel/entry.S           |   3 +
- arch/frv/kernel/entry.S                     |   3 +
- arch/ia64/include/asm/unistd.h              |   2 +-
- arch/ia64/include/uapi/asm/unistd.h         |   3 +
- arch/ia64/kernel/entry.S                    |   3 +
- arch/m32r/kernel/entry.S                    |   3 +
- arch/m32r/kernel/syscall_table.S            |   3 +
- arch/m68k/include/asm/unistd.h              |   2 +-
- arch/m68k/include/uapi/asm/unistd.h         |   3 +
- arch/m68k/kernel/syscalltable.S             |   3 +
- arch/microblaze/include/uapi/asm/unistd.h   |   3 +
- arch/microblaze/kernel/syscall_table.S      |   3 +
- arch/mips/include/uapi/asm/mman.h           |   8 +
- arch/mips/include/uapi/asm/unistd.h         |  21 +-
- arch/mips/kernel/scall32-o32.S              |   3 +
- arch/mips/kernel/scall64-64.S               |   3 +
- arch/mips/kernel/scall64-n32.S              |   3 +
- arch/mips/kernel/scall64-o32.S              |   3 +
- arch/mn10300/kernel/entry.S                 |   3 +
- arch/parisc/include/uapi/asm/mman.h         |   5 +
- arch/parisc/include/uapi/asm/unistd.h       |   5 +-
- arch/powerpc/include/uapi/asm/mman.h        |   5 +
- arch/powerpc/include/uapi/asm/unistd.h      |   3 +
- arch/s390/include/uapi/asm/unistd.h         |   5 +-
- arch/s390/kernel/compat_wrapper.c           |   3 +
- arch/s390/kernel/syscalls.S                 |   3 +
- arch/sh/kernel/syscalls_32.S                |   3 +
- arch/sparc/include/uapi/asm/mman.h          |   5 +
- arch/sparc/include/uapi/asm/unistd.h        |   5 +-
- arch/sparc/kernel/systbls_32.S              |   2 +-
- arch/sparc/kernel/systbls_64.S              |   4 +-
- arch/tile/include/uapi/asm/mman.h           |   9 +
- arch/x86/entry/syscalls/syscall_32.tbl      |   3 +
- arch/x86/entry/syscalls/syscall_64.tbl      |   3 +
- arch/xtensa/include/uapi/asm/mman.h         |   8 +
- arch/xtensa/include/uapi/asm/unistd.h       |  10 +-
- drivers/gpu/drm/drm_vm.c                    |   8 +-
- fs/proc/task_mmu.c                          |   3 +-
- include/linux/mm.h                          |   2 +
- include/linux/mman.h                        |   3 +-
- include/linux/syscalls.h                    |   4 +
- include/uapi/asm-generic/mman.h             |   5 +
- include/uapi/asm-generic/unistd.h           |   8 +-
- kernel/events/core.c                        |   2 +
- kernel/events/uprobes.c                     |   2 +-
- kernel/fork.c                               |   2 +-
- kernel/sys_ni.c                             |   3 +
- mm/debug.c                                  |   1 +
- mm/gup.c                                    | 175 +++++++-
- mm/huge_memory.c                            |   3 +-
- mm/hugetlb.c                                |   4 +-
- mm/internal.h                               |   5 +-
- mm/ksm.c                                    |   2 +-
- mm/madvise.c                                |   4 +-
- mm/memory.c                                 |   5 +-
- mm/mlock.c                                  | 159 +++++--
- mm/mmap.c                                   |  32 +-
- mm/mremap.c                                 |   6 +-
- mm/msync.c                                  |   2 +-
- mm/rmap.c                                   |  12 +-
- mm/shmem.c                                  |   2 +-
- mm/swap.c                                   |   3 +-
- mm/vmscan.c                                 |   2 +-
- tools/testing/selftests/vm/Makefile         |   3 +
- tools/testing/selftests/vm/lock-on-fault.c  | 344 +++++++++++++++
- tools/testing/selftests/vm/mlock2-tests.c   | 621 ++++++++++++++++++++++++++++
- tools/testing/selftests/vm/on-fault-limit.c |  47 +++
- tools/testing/selftests/vm/run_vmtests      |  33 ++
- 81 files changed, 1604 insertions(+), 104 deletions(-)
- create mode 100644 tools/testing/selftests/vm/lock-on-fault.c
- create mode 100644 tools/testing/selftests/vm/mlock2-tests.c
- create mode 100644 tools/testing/selftests/vm/on-fault-limit.c
-
-Cc: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: Michal Hocko <mhocko@suse.cz>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: Vlastimil Babka <vbabka@suse.cz>
-Cc: Jonathan Corbet <corbet@lwn.net>
-Cc: linux-alpha@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
-Cc: linux-mips@linux-mips.org
-Cc: linux-parisc@vger.kernel.org
-Cc: linuxppc-dev@lists.ozlabs.org
-Cc: sparclinux@vger.kernel.org
-Cc: linux-xtensa@linux-xtensa.org
-Cc: linux-mm@kvack.org
-Cc: linux-arch@vger.kernel.org
-Cc: linux-api@vger.kernel.org
-
--- 
-1.9.1
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> >>> Likewise, there are things that you may want to do on return to
+> >>> userspace that are designed to prevent further interruptions in
+> >>> cpu_isolated mode, even at a possible future performance cost if and
+> >>> when you return to the kernel, such as flushing the per-cpu free page
+> >>> list so that you won't be interrupted by an IPI to flush it later.
+> >>
+> >> Why not just kick the per-cpu free page over to whatever cpu is
+> >> monitoring your RCU state, etc?  That should be very quick.
+> >
+> >
+> > So just for the sake of precision, the thing I'm talking about
+> > is the lru_add_drain() call on kernel exit.  Are you proposing
+> > that we call that for every nohz_full core on kernel exit?
+> > I'm not opposed to this, but I don't know if other nohz
+> > developers feel like this is the right tradeoff.
+> 
+> I'm proposing either that we do that or that we arrange for other cpus
+> to be able to steal our LRU list while we're in RCU user/idle.
+> 
+> >> Let's fix them instead of adding new ABIs to work around them.
+> >
+> >
+> > Well, in principle if we accepted my proposed patch series
+> > and then over time came to decide that it was reasonable
+> > for nohz_full to have these complete cpu isolation
+> > semantics, the one proposed ABI simply becomes a no-op.
+> > So it's not as problematic an ABI as some.
+> 
+> What if we made it a debugfs thing instead of a prctl?  Have a mode
+> where the system tries really hard to quiesce itself even at the cost
+> of performance.
+> 
+> >
+> > My issue is this: I'm totally happy with submitting a revised
+> > patch series that does all the stuff for pure nohz_full that
+> > I'm currently proposing for cpu_isolated.  But, is it what
+> > the community wants?  Should I propose it and see?
+> >
+> > Frederic, do you have any insight here?  Thanks!
+> >
+> > --
+> > Chris Metcalf, EZChip Semiconductor
+> > http://www.ezchip.com
+> >
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+> 
+> 
+> -- 
+> Andy Lutomirski
+> AMA Capital Management, LLC
+> 
