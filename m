@@ -1,75 +1,116 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 3/3] console_codes.4: Add CSI sequence for cursor blink interval
-Date: Tue, 21 Jul 2015 18:55:11 +0200
-Message-ID: <CAKgNAkgqTckfydFTDFsoqB1b_fAEiDZGYP=7b-bhN8d4Mp-bsg@mail.gmail.com>
-References: <alpine.DEB.2.11.1501262034380.1945@localhost.localdomain>
- <alpine.DEB.2.11.1501262040380.2052@localhost.localdomain>
- <20150225094946.GA24627@amd> <alpine.LNX.2.11.1502252319330.276@localhost>
- <20150226220243.GC9935@amd> <alpine.LNX.2.11.1502271905580.4212@localhost>
- <alpine.LNX.2.11.1502271911380.4248@localhost> <20150325111949.GA24230@kroah.com>
- <alpine.DEB.2.11.1503261341260.2164@local> <alpine.DEB.2.11.1503261356490.2411@local>
- <alpine.DEB.2.11.1507051724240.1696@local>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
+ number (x86)
+Date: Tue, 21 Jul 2015 17:45:26 +0000 (UTC)
+Message-ID: <1350114812.1035.1437500726799.JavaMail.zimbra@efficios.com>
+References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com> <CA+55aFzMJkzydXb7uVv1iSUnp=539d43ghQaonGdzMoF7QLZBA@mail.gmail.com> <CALCETrUZ8vB30rdmeoV4JKPUsRnVPvoxXRJ47CEFud2aSF2=Ew@mail.gmail.com> <CA+55aFwLZLeeN7UN82dyt=emQcNBc8qZPJAw5iqtAbBwFA7FPQ@mail.gmail.com> <2010227315.699.1437438300542.JavaMail.zimbra@efficios.com> <20150721073053.GA14716@domone> <894137397.137.1437483493715.JavaMail.zimbra@efficios.com> <20150721151613.GA12856@domone>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.11.1507051724240.1696@local>
+In-Reply-To: <20150721151613.GA12856@domone>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
-Cc: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+To: =?utf-8?Q?Ond=C5=99ej_B=C3=ADlka?= <neleai-9Vj9tDbzfuSlVyrhU4qvOw@public.gmane.org>
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Scot,
+----- On Jul 21, 2015, at 11:16 AM, Ond=C5=99ej B=C3=ADlka neleai@sezna=
+m.cz wrote:
 
-On 5 July 2015 at 19:41, Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org> wrote:
-> On Thu, 26 Mar 2015, Scot Doyle wrote:
->> Add a Console Private CSI sequence to specify the current console's
->> cursor blink interval. The interval is specified as a number of
->> milliseconds until the next cursor display state toggle, from 50 to
->> 65535.
->>
->> Signed-off-by: Scot Doyle <lkml14-enLWO88E2pdl57MIdRCFDg@public.gmane.org>
+> On Tue, Jul 21, 2015 at 12:58:13PM +0000, Mathieu Desnoyers wrote:
+>> ----- On Jul 21, 2015, at 3:30 AM, Ond=C5=99ej B=C3=ADlka neleai@sez=
+nam.cz wrote:
+>>=20
+>> > On Tue, Jul 21, 2015 at 12:25:00AM +0000, Mathieu Desnoyers wrote:
+>> >> >> Does it solve the Wine problem?  If Wine uses gs for something=
+ and
+>> >> >> calls a function that does this, Wine still goes boom, right?
+>> >> >=20
+>> >> > So the advantage of just making a global segment descriptor ava=
+ilable
+>> >> > is that it's not *that* expensive to just save/restore segments=
+=2E So
+>> >> > either wine could do it, or any library users would do it.
+>> >> >=20
+>> >> > But anyway, I'm not sure this is a good idea. The advantage of =
+it is
+>> >> > that the kernel support really is _very_ minimal.
+>> >>=20
+>> >> Considering that we'd at least also want this feature on ARM and
+>> >> PowerPC 32/64, and that the gs segment selector approach clashes =
+with
+>> >> existing apps (wine), I'm not sure that implementing a gs segment
+>> >> selector based approach to cpu number caching would lead to an ov=
+erall
+>> >> decrease in complexity if it leads to performance similar to thos=
+e of
+>> >> portable approaches.
+>> >>=20
+>> >> I'm perfectly fine with architecture-specific tweaks that lead to
+>> >> fast-path speedups, but if we have to bite the bullet and impleme=
+nt
+>> >> an approach based on TLS and registering a memory area at thread =
+start
+>> >> through a system call on other architectures anyway, it might end=
+ up
+>> >> being less complex to add a new system call on x86 too, especiall=
+y if
+>> >> fast path overhead is similar.
+>> >>=20
+>> >> But I'm inclined to think that some aspect of the question eludes=
+ me,
+>> >> especially given the amount of interest generated by the gs-segme=
+nt
+>> >> selector approach. What am I missing ?
+>> >>=20
+>> > As I wrote before you don't have to bite bullet as I said before. =
+It
+>> > suffices to create 128k element array with cpu for each tid, make =
+that
+>> > mmapable file and userspace could get cpu with nearly same perform=
+ance
+>> > without hacks.
+>>=20
+>> I don't see how this would be acceptable on memory-constrained embed=
+ded
+>> systems. They have multiple cores, and performance requirements, so
+>> having a fast getcpu would be useful there (e.g. telecom industry),
+>> but they clearly cannot afford a 512kB table per process just for th=
+at.
+>>=20
+> Which just means that you need more complicated api and implementatio=
+n
+> for that but idea stays same. You would need syscalls
+> register/deregister_cpuid_idx that would give you index used instead
+> tid. A kernel would need to handle that many ids could be registered =
+for
+> each thread and resize mmaped file in syscalls.
 
-I've applied this, adding Pavel's Acked-by.
+I feel we're talking past each other here. What I propose is to impleme=
+nt
+a system call that registers a TLS area. It can be invoked at thread st=
+art.
+The kernel can then keep the current CPU number within that registered
+area up-to-date. This system call does not care how the TLS is implemen=
+ted
+underneath.
 
-I also added some text to note that this appeared in Linux 4.2. Okay?
+My understanding is that you are suggesting a way to speed up TLS acces=
+ses
+by creating a table indexed by TID. Although it might lead to interesti=
+ng
+speed ups useful when reading the TLS, I don't see how you proposal is
+useful in addressing the problem of caching the current CPU number (oth=
+er
+than possibly speeding up TLS accesses).
 
-Cheers,
+Or am I missing something fundamental to your proposal ?
 
-Michael
+Thanks,
 
+Mathieu
 
->> ---
->>  man4/console_codes.4 | 1 +
->>  1 file changed, 1 insertion(+)
->>
->> diff --git a/man4/console_codes.4 b/man4/console_codes.4
->> index 34f7535..7d05076 100644
->> --- a/man4/console_codes.4
->> +++ b/man4/console_codes.4
->> @@ -377,6 +377,7 @@ ESC [ 15 ]        T{
->>  Bring the previous console to the front
->>  (since Linux 2.6.0).
->>  T}
->> +ESC [ 16 ; \fIn\fP ]         Set the cursor blink interval in milliseconds.
->>  .TE
->>  .SS Character sets
->>  The kernel knows about 4 translations of bytes into console-screen
->> --
->> 2.1.0
->>
->
-> Hi Michael,
->
-> Will you apply now that Linus has pulled the rest?
-> (see bd63364caa8df38bad2b25b11b2a1b849475cce5)
->
-> Thank you,
-> Scot
-
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+--=20
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
