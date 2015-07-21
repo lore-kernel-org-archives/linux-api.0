@@ -1,79 +1,43 @@
-From: Yann Cantin <yann.cantin-QFKgK+z4sOrR7s880joybQ@public.gmane.org>
+From: Yann Cantin <yann.cantin@laposte.net>
 Subject: Re: [RFC ebeam PATCH 2/2] input: misc: New USB eBeam input driver
-Date: Tue, 21 Jul 2015 14:18:39 +0200
-Message-ID: <55AE389F.9060409@laposte.net>
-References: <1437426199-29866-1-git-send-email-yann.cantin@laposte.net> <1437426199-29866-3-git-send-email-yann.cantin@laposte.net> <20150720215956.GA21796@kroah.com>
+Date: Tue, 21 Jul 2015 14:38:37 +0200
+Message-ID: <55AE3D4D.2040706@laposte.net>
+References: <1437426199-29866-1-git-send-email-yann.cantin@laposte.net>	 <1437426199-29866-3-git-send-email-yann.cantin@laposte.net> <1437466763.3823.1.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252;
+Content-Type: text/plain; charset=utf-8;
 	format=flowed
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150720215956.GA21796-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1437466763.3823.1.camel@suse.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oliver Neukum <oneukum@suse.com>
+Cc: linux-input@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, dmitry.torokhov@gmail.com, jkosina@suse.cz, gregkh@linuxfoundation.org
 List-Id: linux-api@vger.kernel.org
 
 Hi,
 
-Le 20/07/2015 23:59, Greg KH a =E9crit :
-> On Mon, Jul 20, 2015 at 11:03:19PM +0200, Yann Cantin wrote:
->> diff --git a/Documentation/ABI/testing/sysfs-driver-ebeam b/Document=
-ation/ABI/testing/sysfs-driver-ebeam
->> +++ b/Documentation/ABI/testing/sysfs-driver-ebeam
->> @@ -0,0 +1,53 @@
->> +What:		/sys/class/input/inputXX/device/min_x
->> +		/sys/class/input/inputXX/device/min_y
->> +		/sys/class/input/inputXX/device/max_x
->> +		/sys/class/input/inputXX/device/max_y
->> +What:		/sys/class/input/inputXX/device/h[1..9]
->> +What:		/sys/class/input/inputXX/device/calibrated
+Le 21/07/2015 10:19, Oliver Neukum a =C3=A9crit :
+> On Mon, 2015-07-20 at 23:03 +0200, Yann Cantin wrote:
+
+>> diff --git a/drivers/input/misc/ebeam.c b/drivers/input/misc/ebeam.c
+>> new file mode 100644
+>> index 0000000..79cac51
+>> --- /dev/null
+>> +++ b/drivers/input/misc/ebeam.c
+
+>> +/* Electronics For Imaging, Inc */
+>> +#define USB_VENDOR_ID_EFI	0x2650
 >
->
-> What tool(s) use these sysfs files?  Don't we already have "normal"
-> events for these types of things such that we don't have to make up n=
-ew
-> sysfs files for these?
+> You are defining these IDs twice. That is not good.
 
-The ebeam_calibrator tool is there : http://ebeam.tuxfamily.org.
+Is it okay to do this :
 
-I agree this can be a problem : this driver is totally useless without =
-a
-userspace dedicated calibration tool.
+#if !defined(CONFIG_INPUT_EBEAM_USB)
+#define USB_VENDOR_ID_EFI	0x2650
+#...
+#endif
 
-By nature these device's coordinate system can't be mapped to screen vi=
-a
-trivial transformations, such as scaling, flipping and rotating, hence =
-the
-special calibration and mapping procedures. I choose to use an homograp=
-hy
-transformation as it is more robust and faster than linear interpolatio=
-n
-in this case. And anyway, it requires 9 calibration data and xy range
-parameters.
-
-I haven't found any existing tools performing that : xinput_calibrator
-(witch ebeam_calibrator is based on) and other touchscreen calibration
-tools can't do much more than trivial transformations.
-
-
->> +static DEVICE_ATTR(MM, S_IRUSR | S_IRGRP | S_IWUSR | S_IWGRP,		    =
-   \
->> +		   ebeam_##MM##_get,					       \
->> +		   ebeam_##MM##_set)
->
-> DEVICE_ATTR_RW()?
-
-Ok, will do.
-
-
->> +	/* sysfs setup */
->> +	err =3D sysfs_create_group(&intf->dev.kobj, &ebeam_attr_group);
->
-> Ick, you just added the sysfs files to the USB device, not your input
-> device, are you sure you tested this?
-
-Yes, "run fine since 3.3.6, both x86_32 and 64.".
+so that the driver can also be build outside the kernel tree ?
 
 thanks,
 
