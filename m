@@ -1,142 +1,99 @@
-From: =?utf-8?B?T25kxZllaiBCw61sa2E=?= <neleai-9Vj9tDbzfuSlVyrhU4qvOw@public.gmane.org>
-Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
- number (x86)
-Date: Tue, 21 Jul 2015 20:00:51 +0200
-Message-ID: <20150721180051.GA24053@domone>
-References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com>
- <CA+55aFzMJkzydXb7uVv1iSUnp=539d43ghQaonGdzMoF7QLZBA@mail.gmail.com>
- <CALCETrUZ8vB30rdmeoV4JKPUsRnVPvoxXRJ47CEFud2aSF2=Ew@mail.gmail.com>
- <CA+55aFwLZLeeN7UN82dyt=emQcNBc8qZPJAw5iqtAbBwFA7FPQ@mail.gmail.com>
- <2010227315.699.1437438300542.JavaMail.zimbra@efficios.com>
- <20150721073053.GA14716@domone>
- <894137397.137.1437483493715.JavaMail.zimbra@efficios.com>
- <20150721151613.GA12856@domone>
- <1350114812.1035.1437500726799.JavaMail.zimbra@efficios.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1350114812.1035.1437500726799.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: [PATCH v4 00/10] hugetlbfs: add fallocate support
+Date: Tue, 21 Jul 2015 11:09:34 -0700
+Message-ID: <1437502184-14269-1-git-send-email-mike.kravetz@oracle.com>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Dave Hansen <dave.hansen@linux.intel.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Davidlohr Bueso <dave@stgolabs.net>, Aneesh Kumar <aneesh.kumar@linux.vnet.ibm.com>, Hillf Danton <hillf.zj@alibaba-inc.com>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 21, 2015 at 05:45:26PM +0000, Mathieu Desnoyers wrote:
-> ----- On Jul 21, 2015, at 11:16 AM, Ond=C5=99ej B=C3=ADlka neleai@sez=
-nam.cz wrote:
->=20
-> > On Tue, Jul 21, 2015 at 12:58:13PM +0000, Mathieu Desnoyers wrote:
-> >> ----- On Jul 21, 2015, at 3:30 AM, Ond=C5=99ej B=C3=ADlka neleai@s=
-eznam.cz wrote:
-> >>=20
-> >> > On Tue, Jul 21, 2015 at 12:25:00AM +0000, Mathieu Desnoyers wrot=
-e:
-> >> >> >> Does it solve the Wine problem?  If Wine uses gs for somethi=
-ng and
-> >> >> >> calls a function that does this, Wine still goes boom, right=
-?
-> >> >> >=20
-> >> >> > So the advantage of just making a global segment descriptor a=
-vailable
-> >> >> > is that it's not *that* expensive to just save/restore segmen=
-ts. So
-> >> >> > either wine could do it, or any library users would do it.
-> >> >> >=20
-> >> >> > But anyway, I'm not sure this is a good idea. The advantage o=
-f it is
-> >> >> > that the kernel support really is _very_ minimal.
-> >> >>=20
-> >> >> Considering that we'd at least also want this feature on ARM an=
-d
-> >> >> PowerPC 32/64, and that the gs segment selector approach clashe=
-s with
-> >> >> existing apps (wine), I'm not sure that implementing a gs segme=
-nt
-> >> >> selector based approach to cpu number caching would lead to an =
-overall
-> >> >> decrease in complexity if it leads to performance similar to th=
-ose of
-> >> >> portable approaches.
-> >> >>=20
-> >> >> I'm perfectly fine with architecture-specific tweaks that lead =
-to
-> >> >> fast-path speedups, but if we have to bite the bullet and imple=
-ment
-> >> >> an approach based on TLS and registering a memory area at threa=
-d start
-> >> >> through a system call on other architectures anyway, it might e=
-nd up
-> >> >> being less complex to add a new system call on x86 too, especia=
-lly if
-> >> >> fast path overhead is similar.
-> >> >>=20
-> >> >> But I'm inclined to think that some aspect of the question elud=
-es me,
-> >> >> especially given the amount of interest generated by the gs-seg=
-ment
-> >> >> selector approach. What am I missing ?
-> >> >>=20
-> >> > As I wrote before you don't have to bite bullet as I said before=
-=2E It
-> >> > suffices to create 128k element array with cpu for each tid, mak=
-e that
-> >> > mmapable file and userspace could get cpu with nearly same perfo=
-rmance
-> >> > without hacks.
-> >>=20
-> >> I don't see how this would be acceptable on memory-constrained emb=
-edded
-> >> systems. They have multiple cores, and performance requirements, s=
-o
-> >> having a fast getcpu would be useful there (e.g. telecom industry)=
-,
-> >> but they clearly cannot afford a 512kB table per process just for =
-that.
-> >>=20
-> > Which just means that you need more complicated api and implementat=
-ion
-> > for that but idea stays same. You would need syscalls
-> > register/deregister_cpuid_idx that would give you index used instea=
-d
-> > tid. A kernel would need to handle that many ids could be registere=
-d for
-> > each thread and resize mmaped file in syscalls.
->=20
-> I feel we're talking past each other here. What I propose is to imple=
-ment
-> a system call that registers a TLS area. It can be invoked at thread =
-start.
-> The kernel can then keep the current CPU number within that registere=
-d
-> area up-to-date. This system call does not care how the TLS is implem=
-ented
-> underneath.
->=20
-> My understanding is that you are suggesting a way to speed up TLS acc=
-esses
-> by creating a table indexed by TID. Although it might lead to interes=
-ting
-> speed ups useful when reading the TLS, I don't see how you proposal i=
-s
-> useful in addressing the problem of caching the current CPU number (o=
-ther
-> than possibly speeding up TLS accesses).
->=20
-> Or am I missing something fundamental to your proposal ?
->
-No, I still talk about getting cpu number. My first proposal is that
-kernel allocates table of current cpu numbers accessed by tid. That
-could process mmap and get cpu with cpu_tid_table[tid]. As you said tha=
-t
-size is problem I replied that you need to be more careful. Instead tid
-you will use different id that you get with say register_cpucache, stor=
-e
-in tls variable and get cpu with cpu_cid_table[cid]. That decreases
-space used to only threads that use this.
+Changes in this revision address the minor comment and function name
+issues brought up by Naoya Horiguchi.  Patch set is also rebased on
+current "mmotm/since-4.1".  This revision does not introduce any
+functional changes.
 
-A tls speedup was side remark when you would implement per-cpu page the=
-n
-you could speedup tls. As tls access speed and getting tid these are
-equivalent as you could easily implement one with other.
+As suggested during the RFC process, tests have been proposed to
+libhugetlbfs as described at:
+http://librelist.com/browser//libhugetlbfs/2015/6/25/patch-tests-add-tests-for-fallocate-system-call/
+fallocate(2) man page modifications are also necessary to specify
+that fallocate for hugetlbfs only operates on whole pages.  This
+change will be submitted once the code has stabilized and been
+proposed for merging.
+
+hugetlbfs is used today by applications that want a high degree of
+control over huge page usage.  Often, large hugetlbfs files are used
+to map a large number huge pages into the application processes.
+The applications know when page ranges within these large files will
+no longer be used, and ideally would like to release them back to
+the subpool or global pools for other uses.  The fallocate() system
+call provides an interface for preallocation and hole punching within
+files.  This patch set adds fallocate functionality to hugetlbfs.
+
+v4:
+  Renamed vma_abort_reservation() to vma_end_reservation().
+v3:
+  Fixed issue with region_chg to recheck if there are sufficient
+  entries in the cache after acquiring lock.
+v2:
+  Fixed leak in resv_map_release discovered by Hillf Danton.
+  Used LONG_MAX as indicator of truncate function for region_del.
+v1:
+  Add a cache of region descriptors to the resv_map for use by
+    region_add in case hole punch deletes entries necessary for
+    a successful operation.
+RFC v4:
+  Removed alloc_huge_page/hugetlb_reserve_pages race patches as already
+    in mmotm
+  Moved hugetlb_fix_reserve_counts in series as suggested by Naoya Horiguchi
+  Inline'ed hugetlb_fault_mutex routines as suggested by Davidlohr Bueso and
+    existing code changed to use new interfaces as suggested by Naoya
+  fallocate preallocation code cleaned up and made simpler
+  Modified alloc_huge_page to handle special case where allocation is
+    for a hole punched area with spool reserves
+RFC v3:
+  Folded in patch for alloc_huge_page/hugetlb_reserve_pages race
+    in current code
+  fallocate allocation and hole punch is synchronized with page
+    faults via existing mutex table
+   hole punch uses existing hugetlb_vmtruncate_list instead of more
+    generic unmap_mapping_range for unmapping
+   Error handling for the case when region_del() fauils
+RFC v2:
+  Addressed alignment and error handling issues noticed by Hillf Danton
+  New region_del() routine for region tracking/resv_map of ranges
+  Fixed several issues found during more extensive testing
+  Error handling in region_del() when kmalloc() fails stills needs
+    to be addressed
+  madvise remove support remains
+
+v3 patch series:
+Reviewed-by: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+Acked-by: Hillf Danton <hillf.zj@alibaba-inc.com>
+
+Mike Kravetz (10):
+  mm/hugetlb: add cache of descriptors to resv_map for region_add
+  mm/hugetlb: add region_del() to delete a specific range of entries
+  mm/hugetlb: expose hugetlb fault mutex for use by fallocate
+  hugetlbfs: hugetlb_vmtruncate_list() needs to take a range to delete
+  hugetlbfs: truncate_hugepages() takes a range of pages
+  mm/hugetlb: vma_has_reserves() needs to handle fallocate hole punch
+  mm/hugetlb: alloc_huge_page handle areas hole punched by fallocate
+  hugetlbfs: New huge_add_to_page_cache helper routine
+  hugetlbfs: add hugetlbfs_fallocate()
+  mm: madvise allow remove operation for hugetlbfs
+
+ fs/hugetlbfs/inode.c    | 281 ++++++++++++++++++++++++++++++--
+ include/linux/hugetlb.h |  17 +-
+ mm/hugetlb.c            | 424 ++++++++++++++++++++++++++++++++++++++----------
+ mm/madvise.c            |   2 +-
+ 4 files changed, 621 insertions(+), 103 deletions(-)
+
+-- 
+2.1.0
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
