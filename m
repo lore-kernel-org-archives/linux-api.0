@@ -1,39 +1,83 @@
-From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v8 1/9] nvmem: Add a simple NVMEM framework for nvmem
- providers
-Date: Tue, 21 Jul 2015 11:31:11 +0100
-Message-ID: <55AE1F6F.1080109@linaro.org>
-References: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org> <1437403392-4136-1-git-send-email-srinivas.kandagatla@linaro.org> <55AD6412.9070205@codeaurora.org> <55AE13D8.6020301@linaro.org> <55AE16BB.9090201@i2se.com>
+From: Yann Cantin <yann.cantin-QFKgK+z4sOrR7s880joybQ@public.gmane.org>
+Subject: Re: [RFC ebeam PATCH 2/2] input: misc: New USB eBeam input driver
+Date: Tue, 21 Jul 2015 14:18:39 +0200
+Message-ID: <55AE389F.9060409@laposte.net>
+References: <1437426199-29866-1-git-send-email-yann.cantin@laposte.net> <1437426199-29866-3-git-send-email-yann.cantin@laposte.net> <20150720215956.GA21796@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=windows-1252;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <55AE16BB.9090201-eS4NqCHxEME@public.gmane.org>
+In-Reply-To: <20150720215956.GA21796-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
-Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, jkosina-AlSwsSmVLrQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+Hi,
 
-Hi Stefan,
-On 21/07/15 10:54, Stefan Wahren wrote:
-> Hi Srinivas,
+Le 20/07/2015 23:59, Greg KH a =E9crit :
+> On Mon, Jul 20, 2015 at 11:03:19PM +0200, Yann Cantin wrote:
+>> diff --git a/Documentation/ABI/testing/sysfs-driver-ebeam b/Document=
+ation/ABI/testing/sysfs-driver-ebeam
+>> +++ b/Documentation/ABI/testing/sysfs-driver-ebeam
+>> @@ -0,0 +1,53 @@
+>> +What:		/sys/class/input/inputXX/device/min_x
+>> +		/sys/class/input/inputXX/device/min_y
+>> +		/sys/class/input/inputXX/device/max_x
+>> +		/sys/class/input/inputXX/device/max_y
+>> +What:		/sys/class/input/inputXX/device/h[1..9]
+>> +What:		/sys/class/input/inputXX/device/calibrated
 >
-> Am 21.07.2015 um 11:41 schrieb Srinivas Kandagatla:
->> >Ok, make sense. I moved this too.
->> >I have v9 ready will send it.
->> >
->> >--srini
->> >
-> this is not a race. Please give the other (including me:-)  ) some time
-> for testing and reviewing v8.
-
-Ofcourse, I did not mean it now or today! Am actually going to wait till 
-the end of this week before I post v9.
-
---srini
-
 >
-> Thanks
-> Stefan
+> What tool(s) use these sysfs files?  Don't we already have "normal"
+> events for these types of things such that we don't have to make up n=
+ew
+> sysfs files for these?
+
+The ebeam_calibrator tool is there : http://ebeam.tuxfamily.org.
+
+I agree this can be a problem : this driver is totally useless without =
+a
+userspace dedicated calibration tool.
+
+By nature these device's coordinate system can't be mapped to screen vi=
+a
+trivial transformations, such as scaling, flipping and rotating, hence =
+the
+special calibration and mapping procedures. I choose to use an homograp=
+hy
+transformation as it is more robust and faster than linear interpolatio=
+n
+in this case. And anyway, it requires 9 calibration data and xy range
+parameters.
+
+I haven't found any existing tools performing that : xinput_calibrator
+(witch ebeam_calibrator is based on) and other touchscreen calibration
+tools can't do much more than trivial transformations.
+
+
+>> +static DEVICE_ATTR(MM, S_IRUSR | S_IRGRP | S_IWUSR | S_IWGRP,		    =
+   \
+>> +		   ebeam_##MM##_get,					       \
+>> +		   ebeam_##MM##_set)
 >
+> DEVICE_ATTR_RW()?
+
+Ok, will do.
+
+
+>> +	/* sysfs setup */
+>> +	err =3D sysfs_create_group(&intf->dev.kobj, &ebeam_attr_group);
+>
+> Ick, you just added the sysfs files to the USB device, not your input
+> device, are you sure you tested this?
+
+Yes, "run fine since 3.3.6, both x86_32 and 64.".
+
+thanks,
+
+--=20
+Yann Cantin
+A4FEB47F
+--
