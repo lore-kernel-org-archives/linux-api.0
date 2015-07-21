@@ -1,116 +1,65 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
- number (x86)
-Date: Tue, 21 Jul 2015 17:45:26 +0000 (UTC)
-Message-ID: <1350114812.1035.1437500726799.JavaMail.zimbra@efficios.com>
-References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com> <CA+55aFzMJkzydXb7uVv1iSUnp=539d43ghQaonGdzMoF7QLZBA@mail.gmail.com> <CALCETrUZ8vB30rdmeoV4JKPUsRnVPvoxXRJ47CEFud2aSF2=Ew@mail.gmail.com> <CA+55aFwLZLeeN7UN82dyt=emQcNBc8qZPJAw5iqtAbBwFA7FPQ@mail.gmail.com> <2010227315.699.1437438300542.JavaMail.zimbra@efficios.com> <20150721073053.GA14716@domone> <894137397.137.1437483493715.JavaMail.zimbra@efficios.com> <20150721151613.GA12856@domone>
+From: Stephen Boyd <sboyd@codeaurora.org>
+Subject: Re: [PATCH v8 1/9] nvmem: Add a simple NVMEM framework for nvmem
+ providers
+Date: Tue, 21 Jul 2015 10:59:00 -0700
+Message-ID: <55AE8864.6020608@codeaurora.org>
+References: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org> <1437403392-4136-1-git-send-email-srinivas.kandagatla@linaro.org> <55AD6412.9070205@codeaurora.org> <55AE13D8.6020301@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150721151613.GA12856@domone>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?utf-8?Q?Ond=C5=99ej_B=C3=ADlka?= <neleai-9Vj9tDbzfuSlVyrhU4qvOw@public.gmane.org>
-Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <55AE13D8.6020301@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+Cc: linux-arm-kernel@lists.infradead.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rob Herring <robh+dt@kernel.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, pantelis.antoniou@konsulko.com, mporter@konsulko.com, stefan.wahren@i2se.com, wxt@rock-chips.com, Maxime Ripard <maxime.ripard@free-electrons.com>
 List-Id: linux-api@vger.kernel.org
 
------ On Jul 21, 2015, at 11:16 AM, Ond=C5=99ej B=C3=ADlka neleai@sezna=
-m.cz wrote:
+On 07/21/2015 02:41 AM, Srinivas Kandagatla wrote:
+> Thanks Stephen for review,
+>
+> On 20/07/15 22:11, Stephen Boyd wrote:
+>> On 07/20/2015 07:43 AM, Srinivas Kandagatla wrote:
+>>> diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
+>>> new file mode 100644
+>>> index 0000000..bde5528
+>>> --- /dev/null
+>>> +++ b/drivers/nvmem/core.c
+>>> @@ -0,0 +1,384 @@
+>>>
+>>> +
+>>> +static int nvmem_add_cells(struct nvmem_device *nvmem,
+>>> +               const struct nvmem_config *cfg)
+>>> +{
+>>> +    struct nvmem_cell **cells;
+>>> +    const struct nvmem_cell_info *info = cfg->cells;
+>>> +    int i, rval;
+>>> +
+>>> +    cells = kzalloc(sizeof(*cells) * cfg->ncells, GFP_KERNEL);
+>>
+>> kcalloc?
+>
+> Only reason for using kzalloc is to give the code more flexibility to 
+> free any pointer in the array in case of errors.
 
-> On Tue, Jul 21, 2015 at 12:58:13PM +0000, Mathieu Desnoyers wrote:
->> ----- On Jul 21, 2015, at 3:30 AM, Ond=C5=99ej B=C3=ADlka neleai@sez=
-nam.cz wrote:
->>=20
->> > On Tue, Jul 21, 2015 at 12:25:00AM +0000, Mathieu Desnoyers wrote:
->> >> >> Does it solve the Wine problem?  If Wine uses gs for something=
- and
->> >> >> calls a function that does this, Wine still goes boom, right?
->> >> >=20
->> >> > So the advantage of just making a global segment descriptor ava=
-ilable
->> >> > is that it's not *that* expensive to just save/restore segments=
-=2E So
->> >> > either wine could do it, or any library users would do it.
->> >> >=20
->> >> > But anyway, I'm not sure this is a good idea. The advantage of =
-it is
->> >> > that the kernel support really is _very_ minimal.
->> >>=20
->> >> Considering that we'd at least also want this feature on ARM and
->> >> PowerPC 32/64, and that the gs segment selector approach clashes =
-with
->> >> existing apps (wine), I'm not sure that implementing a gs segment
->> >> selector based approach to cpu number caching would lead to an ov=
-erall
->> >> decrease in complexity if it leads to performance similar to thos=
-e of
->> >> portable approaches.
->> >>=20
->> >> I'm perfectly fine with architecture-specific tweaks that lead to
->> >> fast-path speedups, but if we have to bite the bullet and impleme=
-nt
->> >> an approach based on TLS and registering a memory area at thread =
-start
->> >> through a system call on other architectures anyway, it might end=
- up
->> >> being less complex to add a new system call on x86 too, especiall=
-y if
->> >> fast path overhead is similar.
->> >>=20
->> >> But I'm inclined to think that some aspect of the question eludes=
- me,
->> >> especially given the amount of interest generated by the gs-segme=
-nt
->> >> selector approach. What am I missing ?
->> >>=20
->> > As I wrote before you don't have to bite bullet as I said before. =
-It
->> > suffices to create 128k element array with cpu for each tid, make =
-that
->> > mmapable file and userspace could get cpu with nearly same perform=
-ance
->> > without hacks.
->>=20
->> I don't see how this would be acceptable on memory-constrained embed=
-ded
->> systems. They have multiple cores, and performance requirements, so
->> having a fast getcpu would be useful there (e.g. telecom industry),
->> but they clearly cannot afford a 512kB table per process just for th=
-at.
->>=20
-> Which just means that you need more complicated api and implementatio=
-n
-> for that but idea stays same. You would need syscalls
-> register/deregister_cpuid_idx that would give you index used instead
-> tid. A kernel would need to handle that many ids could be registered =
-for
-> each thread and resize mmaped file in syscalls.
+Still lost. The arrays are allocated down below in the for loop. This is 
+allocating a bunch of pointers so using kcalloc() here avoids problems 
+with overflows causing kzalloc() to allocate fewer pointers than 
+requested. I'm not suggesting we replace the for loop with a kcalloc, 
+just this single line.
 
-I feel we're talking past each other here. What I propose is to impleme=
-nt
-a system call that registers a TLS area. It can be invoked at thread st=
-art.
-The kernel can then keep the current CPU number within that registered
-area up-to-date. This system call does not care how the TLS is implemen=
-ted
-underneath.
+>
+>>
+>>> +    if (!cells)
+>>> +        return -ENOMEM;
+>>> +
+>>> +    for (i = 0; i < cfg->ncells; i++) {
+>>> +        cells[i] = kzalloc(sizeof(**cells), GFP_KERNEL);
+>>> +        if (!cells[i]) {
+>>> +            rval = -ENOMEM;
+>>> +            goto err;
+>>> +        }
+>>> +
 
-My understanding is that you are suggesting a way to speed up TLS acces=
-ses
-by creating a table indexed by TID. Although it might lead to interesti=
-ng
-speed ups useful when reading the TLS, I don't see how you proposal is
-useful in addressing the problem of caching the current CPU number (oth=
-er
-than possibly speeding up TLS accesses).
-
-Or am I missing something fundamental to your proposal ?
-
-Thanks,
-
-Mathieu
-
---=20
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+-- 
+Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum,
+a Linux Foundation Collaborative Project
