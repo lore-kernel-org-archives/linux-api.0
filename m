@@ -1,89 +1,55 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
- number (x86)
-Date: Tue, 21 Jul 2015 00:25:00 +0000 (UTC)
-Message-ID: <2010227315.699.1437438300542.JavaMail.zimbra@efficios.com>
-References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com> <55ACB2DC.5010503@redhat.com> <CALCETrV9Vp5UUOb3e_R5tphyE-urBgTwQR2pFWUOOFnHqWXHKQ@mail.gmail.com> <55AD14A4.6030101@redhat.com> <CALCETrUx6wFxmz+9TyW5bNgaMN0q180G8y9YOyq_D41sdhFaRQ@mail.gmail.com> <CA+55aFzMJkzydXb7uVv1iSUnp=539d43ghQaonGdzMoF7QLZBA@mail.gmail.com> <CALCETrUZ8vB30rdmeoV4JKPUsRnVPvoxXRJ47CEFud2aSF2=Ew@mail.gmail.com> <CA+55aFwLZLeeN7UN82dyt=emQcNBc8qZPJAw5iqtAbBwFA7FPQ@mail.gmail.com>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [PATCH] selftests/futex: Fix futex_cmp_requeue_pi() error handling
+Date: Mon, 20 Jul 2015 18:34:01 -0600
+Message-ID: <55AD9379.7030206@osg.samsung.com>
+References: <e45eef3361e23760f2fa8750d0468d7ec021db6d.1437432376.git.dvhart@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CA+55aFwLZLeeN7UN82dyt=emQcNBc8qZPJAw5iqtAbBwFA7FPQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, =?utf-8?Q?Ond=C5=99ej_B=C3=ADlka?= <neleai-9Vj9tDbzfuSlVyrhU4qvOw@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <e45eef3361e23760f2fa8750d0468d7ec021db6d.1437432376.git.dvhart@infradead.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Darren Hart <dvhart@infradead.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Cc: David Binderman <dcb314@hotmail.com>, Linux API Mailing List <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Jul 20, 2015, at 6:39 PM, Linus Torvalds torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org wrote:
+On 07/20/2015 04:48 PM, Darren Hart wrote:
+> An earlier (pre-kernel-integration) refactoring of this code mistakenly
+> replaced the error condition, <, with a >. Use < to detect an error as
+> opposed to a successful requeue or signal race.
+> 
+> Reported-by: David Binderman <dcb314@hotmail.com>
+> Cc: Shuah Khan <shuahkh@osg.samsung.com>
+> Signed-off-by: Darren Hart <dvhart@linux.intel.com>
+> ---
+>  .../selftests/futex/functional/futex_requeue_pi_signal_restart.c        | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/tools/testing/selftests/futex/functional/futex_requeue_pi_signal_restart.c b/tools/testing/selftests/futex/functional/futex_requeue_pi_signal_restart.c
+> index 7f0c756..3d7dc6a 100644
+> --- a/tools/testing/selftests/futex/functional/futex_requeue_pi_signal_restart.c
+> +++ b/tools/testing/selftests/futex/functional/futex_requeue_pi_signal_restart.c
+> @@ -191,7 +191,7 @@ int main(int argc, char *argv[])
+>  		if (res > 0) {
+>  			atomic_set(&requeued, 1);
+>  			break;
+> -		} else if (res > 0) {
+> +		} else if (res < 0) {
+>  			error("FUTEX_CMP_REQUEUE_PI failed\n", errno);
+>  			ret = RET_ERROR;
+>  			break;
+> 
 
-> On Mon, Jul 20, 2015 at 2:09 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->>
->> Annoying problem one: the segment base field is only 32 bits in the GDT.
-> 
-> Ok. So if we go this way, we'd make the rule be something like "the
-> segment base is the CPU number shifted up by the page size", and then
-> you'd have to add some magic offset that we'd declare as the "per-cpu
-> page offset".
-> 
->>> - user space can just load the segment selector in %gs
->>
->> IIRC this is very expensive -- 40 cycles or so.  At this point
->> userspace might as well just use a real lock cmpxchg.
-> 
-> So cmpxchg may be as many cycles, but
-> 
-> (a) you can choose to load the segment just once, and do several
-> operations with it
-> 
-> (b) often - but admittedly not always - the real cost of a
-> non-cpu-local local and cmpxchg tends to be the cacheline ping-pong,
-> not the CPU cycles.
-> 
-> so I agree, loading a segment isn't free. But it's not *that*
-> expensive, and you could always decide to keep the segment loaded and
-> just do
-> 
-> - read segment selector
-> - if NUL segment, reload it.
-> 
-> although that only works if you own the segment entirely and can keep
-> it as the percpu segment (ie obviously not the Wine case, for
-> example).
-> 
->> Does it solve the Wine problem?  If Wine uses gs for something and
->> calls a function that does this, Wine still goes boom, right?
-> 
-> So the advantage of just making a global segment descriptor available
-> is that it's not *that* expensive to just save/restore segments. So
-> either wine could do it, or any library users would do it.
-> 
-> But anyway, I'm not sure this is a good idea. The advantage of it is
-> that the kernel support really is _very_ minimal.
+Daren,
 
-Considering that we'd at least also want this feature on ARM and
-PowerPC 32/64, and that the gs segment selector approach clashes with
-existing apps (wine), I'm not sure that implementing a gs segment
-selector based approach to cpu number caching would lead to an overall
-decrease in complexity if it leads to performance similar to those of
-portable approaches.
+That is quick. Applied to linux-kselftest fixes for 4.2
 
-I'm perfectly fine with architecture-specific tweaks that lead to
-fast-path speedups, but if we have to bite the bullet and implement
-an approach based on TLS and registering a memory area at thread start
-through a system call on other architectures anyway, it might end up
-being less complex to add a new system call on x86 too, especially if
-fast path overhead is similar.
-
-But I'm inclined to think that some aspect of the question eludes me,
-especially given the amount of interest generated by the gs-segment
-selector approach. What am I missing ?
-
-Thanks,
-
-Mathieu
-
+thanks,
+-- Shuah
 
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America (Silicon Valley)
+shuahkh@osg.samsung.com | (970) 217-8978
