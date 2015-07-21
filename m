@@ -1,98 +1,86 @@
-From: "Hillf Danton" <hillf.zj@alibaba-inc.com>
-Subject: RE: [PATCH v3 00/10] hugetlbfs: add fallocate support
-Date: Tue, 21 Jul 2015 11:08:46 +0800
-Message-ID: <063901d0c362$8ff7d6e0$afe784a0$@alibaba-inc.com>
+From: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+Subject: Re: [PATCH v3 01/10] mm/hugetlb: add cache of descriptors to
+ resv_map for region_add
+Date: Tue, 21 Jul 2015 04:16:30 +0000
+Message-ID: <20150721041629.GA19982@hori1.linux.bs1.fc.nec.co.jp>
 References: <1436761268-6397-1-git-send-email-mike.kravetz@oracle.com>
-Reply-To: "Hillf Danton" <hillf.zj@alibaba-inc.com>
+ <1436761268-6397-2-git-send-email-mike.kravetz@oracle.com>
+ <20150717090213.GB32135@hori1.linux.bs1.fc.nec.co.jp>
+ <55AD34D4.2020804@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="US-ASCII"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-2022-jp"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1436761268-6397-1-git-send-email-mike.kravetz@oracle.com>
-Content-Language: zh-cn
+In-Reply-To: <55AD34D4.2020804@oracle.com>
+Content-Language: ja-JP
+Content-ID: <22AD3C911DA5AE4BAF7FA181F0F5C9B4@gisp.nec.co.jp>
 Sender: owner-linux-mm@kvack.org
-To: 'Mike Kravetz' <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: 'Dave Hansen' <dave.hansen@linux.intel.com>, 'Naoya Horiguchi' <n-horiguchi@ah.jp.nec.com>, 'David Rientjes' <rientjes@google.com>, 'Hugh Dickins' <hughd@google.com>, 'Davidlohr Bueso' <dave@stgolabs.net>, 'Aneesh Kumar' <aneesh.kumar@linux.vnet.ibm.com>, 'Christoph Hellwig' <hch@infradead.org>, 'Andrew Morton' <akpm@linux-foundation.org>, 'Michal Hocko' <mhocko@suse.cz>
+To: Mike Kravetz <mike.kravetz@oracle.com>
+Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Dave Hansen <dave.hansen@linux.intel.com>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Davidlohr Bueso <dave@stgolabs.net>, Aneesh Kumar <aneesh.kumar@linux.vnet.ibm.com>, Hillf Danton <hillf.zj@alibaba-inc.com>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-> 
-> Only change in this revision is the fix to the self-discovered
-> issue in region_chg().  Functional and stress tests passing.
-> Full changelog below.
-> 
-> As suggested during the RFC process, tests have been proposed to
-> libhugetlbfs as described at:
-> http://librelist.com/browser//libhugetlbfs/2015/6/25/patch-tests-add-tests-for-fallocate-system-call/
-> fallocate(2) man page modifications are also necessary to specify
-> that fallocate for hugetlbfs only operates on whole pages.  This
-> change will be submitted once the code has stabilized and been
-> proposed for merging.
-> 
-> hugetlbfs is used today by applications that want a high degree of
-> control over huge page usage.  Often, large hugetlbfs files are used
-> to map a large number huge pages into the application processes.
-> The applications know when page ranges within these large files will
-> no longer be used, and ideally would like to release them back to
-> the subpool or global pools for other uses.  The fallocate() system
-> call provides an interface for preallocation and hole punching within
-> files.  This patch set adds fallocate functionality to hugetlbfs.
-> 
-> v3:
->   Fixed issue with region_chg to recheck if there are sufficient
->   entries in the cache after acquiring lock.
-> v2:
->   Fixed leak in resv_map_release discovered by Hillf Danton.
->   Used LONG_MAX as indicator of truncate function for region_del.
-> v1:
->   Add a cache of region descriptors to the resv_map for use by
->     region_add in case hole punch deletes entries necessary for
->     a successful operation.
-> RFC v4:
->   Removed alloc_huge_page/hugetlb_reserve_pages race patches as already
->     in mmotm
->   Moved hugetlb_fix_reserve_counts in series as suggested by Naoya Horiguchi
->   Inline'ed hugetlb_fault_mutex routines as suggested by Davidlohr Bueso and
->     existing code changed to use new interfaces as suggested by Naoya
->   fallocate preallocation code cleaned up and made simpler
->   Modified alloc_huge_page to handle special case where allocation is
->     for a hole punched area with spool reserves
-> RFC v3:
->   Folded in patch for alloc_huge_page/hugetlb_reserve_pages race
->     in current code
->   fallocate allocation and hole punch is synchronized with page
->     faults via existing mutex table
->    hole punch uses existing hugetlb_vmtruncate_list instead of more
->     generic unmap_mapping_range for unmapping
->    Error handling for the case when region_del() fauils
-> RFC v2:
->   Addressed alignment and error handling issues noticed by Hillf Danton
->   New region_del() routine for region tracking/resv_map of ranges
->   Fixed several issues found during more extensive testing
->   Error handling in region_del() when kmalloc() fails stills needs
->     to be addressed
->   madvise remove support remains
-> 
-> Mike Kravetz (10):
->   mm/hugetlb: add cache of descriptors to resv_map for region_add
->   mm/hugetlb: add region_del() to delete a specific range of entries
->   mm/hugetlb: expose hugetlb fault mutex for use by fallocate
->   hugetlbfs: hugetlb_vmtruncate_list() needs to take a range to delete
->   hugetlbfs: truncate_hugepages() takes a range of pages
->   mm/hugetlb: vma_has_reserves() needs to handle fallocate hole punch
->   mm/hugetlb: alloc_huge_page handle areas hole punched by fallocate
->   hugetlbfs: New huge_add_to_page_cache helper routine
->   hugetlbfs: add hugetlbfs_fallocate()
->   mm: madvise allow remove operation for hugetlbfs
-> 
->  fs/hugetlbfs/inode.c    | 281 +++++++++++++++++++++++++++++---
->  include/linux/hugetlb.h |  17 +-
->  mm/hugetlb.c            | 423 ++++++++++++++++++++++++++++++++++++++----------
->  mm/madvise.c            |   2 +-
->  4 files changed, 619 insertions(+), 104 deletions(-)
-> 
-Acked-by: Hillf Danton <hillf.zj@alibaba-inc.com>
+On Mon, Jul 20, 2015 at 10:50:12AM -0700, Mike Kravetz wrote:
+...
+> > ...
+> >> @@ -3236,11 +3360,14 @@ retry:
+> >>   	 * any allocations necessary to record that reservation occur outsi=
+de
+> >>   	 * the spinlock.
+> >>   	 */
+> >> -	if ((flags & FAULT_FLAG_WRITE) && !(vma->vm_flags & VM_SHARED))
+> >> +	if ((flags & FAULT_FLAG_WRITE) && !(vma->vm_flags & VM_SHARED)) {
+> >>   		if (vma_needs_reservation(h, vma, address) < 0) {
+> >>   			ret =3D VM_FAULT_OOM;
+> >>   			goto backout_unlocked;
+> >>   		}
+> >> +		/* Just decrements count, does not deallocate */
+> >> +		vma_abort_reservation(h, vma, address);
+> >> +	}
+> >=20
+> > This is not "abort reservation" operation, but you use "abort reservati=
+on"
+> > routine, which might confusing and makes future maintenance hard. I thi=
+nk
+> > this should be done in a simplified variant of vma_commit_reservation()
+> > (maybe just an alias of your vma_abort_reservation()) or fast path in
+> > vma_commit_reservation().
+>=20
+> I am struggling a bit with the names of these routines.  The
+> routines in question are:
+>=20
+> vma_needs_reservation - This is a wrapper for region_chg(), so the
+> 	return value is the number of regions needed for the page.
+> 	Since there is only one page, the routine effectively
+> 	becomes a boolean.  Hence the name "needs".
+>=20
+> vma_commit_reservation - This is a wrapper for region_add().  It
+> 	must be called after a prior call to vma_needs_reservation
+> 	and after actual allocation of the page.
+>=20
+> We need a way to handle the case where vma_needs_reservation has
+> been called, but the page allocation is not successful.  I chose
+> the name vma_abort_reservation, but as noted (even in my comments)
+> it is not an actual abort.
+>=20
+> I am not sure if you are suggesting vma_commit_reservation() should
+> handle this as a special case.  I think a separately named routine which
+> indicates and end of the reservation/allocation process would be
+> easier to understand.
+>=20
+> What about changing the name vma_abort_reservation() to
+> vma_end_reservation()?  This would indicate that the reservation/
+> allocation process is ended.
 
+OK, vma_end_reservation() sounds nice to me.
+
+> > Thanks,
+> > Naoya Horiguchi
+>=20
+> Thank you for your reviews.
+
+You're welcome :)
+
+Naoya Horiguchi=
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
