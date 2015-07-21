@@ -1,92 +1,56 @@
-From: =?utf-8?B?T25kxZllaiBCw61sa2E=?= <neleai-9Vj9tDbzfuSlVyrhU4qvOw@public.gmane.org>
-Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
- number (x86)
-Date: Tue, 21 Jul 2015 17:16:13 +0200
-Message-ID: <20150721151613.GA12856@domone>
-References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com>
- <55AD14A4.6030101@redhat.com>
- <CALCETrUx6wFxmz+9TyW5bNgaMN0q180G8y9YOyq_D41sdhFaRQ@mail.gmail.com>
- <CA+55aFzMJkzydXb7uVv1iSUnp=539d43ghQaonGdzMoF7QLZBA@mail.gmail.com>
- <CALCETrUZ8vB30rdmeoV4JKPUsRnVPvoxXRJ47CEFud2aSF2=Ew@mail.gmail.com>
- <CA+55aFwLZLeeN7UN82dyt=emQcNBc8qZPJAw5iqtAbBwFA7FPQ@mail.gmail.com>
- <2010227315.699.1437438300542.JavaMail.zimbra@efficios.com>
- <20150721073053.GA14716@domone>
- <894137397.137.1437483493715.JavaMail.zimbra@efficios.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH V3 3/5] mm: mlock: Introduce VM_LOCKONFAULT and add mlock
+ flags to enable it
+Date: Tue, 21 Jul 2015 17:35:59 +0200
+Message-ID: <55AE66DF.1060600@suse.cz>
+References: <1436288623-13007-1-git-send-email-emunson@akamai.com> <1436288623-13007-4-git-send-email-emunson@akamai.com> <20150708132351.61c13db6@lwn.net> <20150708203456.GC4669@akamai.com> <20150708151750.75e65859@lwn.net> <20150709184635.GE4669@akamai.com> <20150710101118.5d04d627@lwn.net> <20150710161948.GF4669@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <894137397.137.1437483493715.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-parisc-owner@vger.kernel.org>
+In-Reply-To: <20150710161948.GF4669@akamai.com>
+Sender: linux-parisc-owner@vger.kernel.org
+To: Eric B Munson <emunson@akamai.com>, Jonathan Corbet <corbet@lwn.net>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 21, 2015 at 12:58:13PM +0000, Mathieu Desnoyers wrote:
-> ----- On Jul 21, 2015, at 3:30 AM, Ond=C5=99ej B=C3=ADlka neleai@sezn=
-am.cz wrote:
->=20
-> > On Tue, Jul 21, 2015 at 12:25:00AM +0000, Mathieu Desnoyers wrote:
-> >> >> Does it solve the Wine problem?  If Wine uses gs for something =
-and
-> >> >> calls a function that does this, Wine still goes boom, right?
-> >> >=20
-> >> > So the advantage of just making a global segment descriptor avai=
-lable
-> >> > is that it's not *that* expensive to just save/restore segments.=
- So
-> >> > either wine could do it, or any library users would do it.
-> >> >=20
-> >> > But anyway, I'm not sure this is a good idea. The advantage of i=
-t is
-> >> > that the kernel support really is _very_ minimal.
-> >>=20
-> >> Considering that we'd at least also want this feature on ARM and
-> >> PowerPC 32/64, and that the gs segment selector approach clashes w=
-ith
-> >> existing apps (wine), I'm not sure that implementing a gs segment
-> >> selector based approach to cpu number caching would lead to an ove=
-rall
-> >> decrease in complexity if it leads to performance similar to those=
- of
-> >> portable approaches.
-> >>=20
-> >> I'm perfectly fine with architecture-specific tweaks that lead to
-> >> fast-path speedups, but if we have to bite the bullet and implemen=
-t
-> >> an approach based on TLS and registering a memory area at thread s=
-tart
-> >> through a system call on other architectures anyway, it might end =
-up
-> >> being less complex to add a new system call on x86 too, especially=
- if
-> >> fast path overhead is similar.
-> >>=20
-> >> But I'm inclined to think that some aspect of the question eludes =
-me,
-> >> especially given the amount of interest generated by the gs-segmen=
-t
-> >> selector approach. What am I missing ?
-> >>=20
-> > As I wrote before you don't have to bite bullet as I said before. I=
-t
-> > suffices to create 128k element array with cpu for each tid, make t=
-hat
-> > mmapable file and userspace could get cpu with nearly same performa=
-nce
-> > without hacks.
->=20
-> I don't see how this would be acceptable on memory-constrained embedd=
-ed
-> systems. They have multiple cores, and performance requirements, so
-> having a fast getcpu would be useful there (e.g. telecom industry),
-> but they clearly cannot afford a 512kB table per process just for tha=
-t.
->=20
-Which just means that you need more complicated api and implementation
-for that but idea stays same. You would need syscalls
-register/deregister_cpuid_idx that would give you index used instead
-tid. A kernel would need to handle that many ids could be registered fo=
-r
-each thread and resize mmaped file in syscalls.
+On 07/10/2015 06:19 PM, Eric B Munson wrote:
+> On Fri, 10 Jul 2015, Jonathan Corbet wrote:
+>
+>> On Thu, 9 Jul 2015 14:46:35 -0400
+>> Eric B Munson <emunson@akamai.com> wrote:
+>>
+>>>> One other question...if I call mlock2(MLOCK_ONFAULT) on a range that
+>>>> already has resident pages, I believe that those pages will not be locked
+>>>> until they are reclaimed and faulted back in again, right?  I suspect that
+>>>> could be surprising to users.
+>>>
+>>> That is the case.  I am looking into what it would take to find only the
+>>> present pages in a range and lock them, if that is the behavior that is
+>>> preferred I can include it in the updated series.
+>>
+>> For whatever my $0.02 is worth, I think that should be done.  Otherwise
+>> the mlock2() interface is essentially nondeterministic; you'll never
+>> really know if a specific page is locked or not.
+>>
+>> Thanks,
+>>
+>> jon
+>
+> Okay, I likely won't have the new set out today then.  This change is
+> more invasive.  IIUC, I need an equivalent to __get_user_page() skips
+> pages which are not present instead of faulting in and the call chain to
+> get to it.  Unless there is an easier way that I am missing.
+
+IIRC having page PageMlocked and put on unevictable list isn't necessary 
+to prevent it from being reclaimed. It's just to prevent it from being 
+scanned for reclaim in the first place. When attempting to unmap the 
+page, vma flags are still checked, see the code in try_to_unmap_one(). 
+You should probably extend the checks to your new VM_ flag as it is done 
+for VM_LOCKED and then you shouldn't need to walk the pages to mlock 
+them (although it would probably still be better for the accounting 
+accuracy).
+
+> Eric
+>
+
