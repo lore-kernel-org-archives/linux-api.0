@@ -1,93 +1,96 @@
-From: Stefan Wahren <stefan.wahren@i2se.com>
-Subject: Re: [PATCH v8 2/9] nvmem: Add a simple NVMEM framework for
- consumers
-Date: Tue, 21 Jul 2015 18:25:42 +0200 (CEST)
-Message-ID: <1590184041.70825.1437495942088.JavaMail.open-xchange@oxbsltgw08.schlund.de>
-References: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org> <1437403403-4180-1-git-send-email-srinivas.kandagatla@linaro.org>
-Reply-To: Stefan Wahren <stefan.wahren@i2se.com>
+From: Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>
+Subject: Re: [PATCH v8 8/9] nvmem: sunxi: Move the SID driver to the nvmem
+ framework
+Date: Tue, 21 Jul 2015 18:38:44 +0200 (CEST)
+Message-ID: <2114639619.71276.1437496724946.JavaMail.open-xchange@oxbsltgw08.schlund.de>
+References: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org> <1437403462-4432-1-git-send-email-srinivas.kandagatla@linaro.org>
+Reply-To: Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1437403403-4180-1-git-send-email-srinivas.kandagatla@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-arm-kernel@lists.infradead.org
-Cc: wxt@rock-chips.com, linux-api@vger.kernel.org, Rob Herring <robh+dt@kernel.org>, sboyd@codeaurora.org, arnd@arndb.de, s.hauer@pengutronix.de, linux-kernel@vger.kernel.org, mporter@konsulko.com, linux-arm-msm@vger.kernel.org, Maxime Ripard <maxime.ripard@free-electrons.com>, pantelis.antoniou@konsulko.com, Mark Brown <broonie@kernel.org>, devicetree@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1437403462-4432-1-git-send-email-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 Hi Srinivas,
 
-> Srinivas Kandagatla <srinivas.kandagatla@linaro.org> hat am 20. Juli 2015 um
-> 16:43 geschrieben:
+> Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> hat am 20. Juli 2015 um
+> 16:44 geschrieben:
 >
 >
-> This patch adds just consumers part of the framework just to enable easy
-> review.
+> From: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 >
-> Up until now, nvmem drivers were stored in drivers/misc, where they all
-> had to duplicate pretty much the same code to register a sysfs file,
-> allow in-kernel users to access the content of the devices they were
-> driving, etc.
+> Now that we have the nvmem framework, we can consolidate the common
+> driver code. Move the driver to the framework, and hopefully, it will
+> fix the sysfs file creation race.
 >
-> This was also a problem as far as other in-kernel users were involved,
-> since the solutions used were pretty much different from on driver to
-> another, there was a rather big abstraction leak.
->
-> This introduction of this framework aims at solving this. It also
-> introduces DT representation for consumer devices to go get the data they
-> require (MAC Addresses, SoC/Revision ID, part numbers, and so on) from
-> the nvmems.
->
-> Having regmap interface to this framework would give much better
-> abstraction for nvmems on different buses.
->
-> Signed-off-by: Maxime Ripard <maxime.ripard@free-electrons.com>
-> [Maxime Ripard: intial version of the framework]
-> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
+> Signed-off-by: Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+> [srinivas.kandagatla: Moved to regmap based EEPROM framework]
+> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 > ---
-> drivers/nvmem/core.c | 415 +++++++++++++++++++++++++++++++++++++++++
-> include/linux/nvmem-consumer.h | 61 ++++++
-> 2 files changed, 476 insertions(+)
+> Documentation/ABI/testing/sysfs-driver-sunxi-sid | 22 ---
+> .../bindings/misc/allwinner,sunxi-sid.txt | 17 ---
+> .../bindings/nvmem/allwinner,sunxi-sid.txt | 21 +++
+> drivers/misc/eeprom/Kconfig | 13 --
+> drivers/misc/eeprom/Makefile | 1 -
+> drivers/misc/eeprom/sunxi_sid.c | 156 --------------------
+> drivers/nvmem/Kconfig | 11 ++
+> drivers/nvmem/Makefile | 2 +
+> drivers/nvmem/sunxi_sid.c | 159 +++++++++++++++++++++
+> 9 files changed, 193 insertions(+), 209 deletions(-)
+> delete mode 100644 Documentation/ABI/testing/sysfs-driver-sunxi-sid
+> delete mode 100644
+> Documentation/devicetree/bindings/misc/allwinner,sunxi-sid.txt
+> create mode 100644
+> Documentation/devicetree/bindings/nvmem/allwinner,sunxi-sid.txt
+> delete mode 100644 drivers/misc/eeprom/sunxi_sid.c
+> create mode 100644 drivers/nvmem/sunxi_sid.c
 >
-> diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
-> index bde5528..de14c36 100644
-> --- a/drivers/nvmem/core.c
-> +++ b/drivers/nvmem/core.c
 > [...]
-> +struct nvmem_cell *of_nvmem_cell_get(struct device_node *np,
-> + const char *name)
-> +{
-> + struct device_node *cell_np, *nvmem_np;
-> + struct nvmem_cell *cell;
-> + struct nvmem_device *nvmem;
-> + const __be32 *addr;
-> + int rval, len, index;
-> +
-> + index = of_property_match_string(np, "nvmem-cell-names", name);
-> +
-> + cell_np = of_parse_phandle(np, "nvmem-cells", index);
-> + if (!cell_np)
-> + return ERR_PTR(-EINVAL);
-> +
-> + nvmem_np = of_get_next_parent(cell_np);
-> + if (!nvmem_np)
-> + return ERR_PTR(-EINVAL);
-> +
-> + nvmem = __nvmem_device_get(nvmem_np, NULL, NULL);
-> + if (IS_ERR(nvmem))
-> + return ERR_CAST(nvmem);
-> +
-> + addr = of_get_property(cell_np, "reg", &len);
-> + if (!addr || (len < 2 * sizeof(int))) {
+> -static int sunxi_sid_probe(struct platform_device *pdev)
+> -{
+> - struct sunxi_sid_data *sid_data;
+> - struct resource *res;
+> - const struct of_device_id *of_dev_id;
+> - u8 *entropy;
+> - unsigned int i;
+> -
+> - sid_data = devm_kzalloc(&pdev->dev, sizeof(struct sunxi_sid_data),
+> - GFP_KERNEL);
+> - if (!sid_data)
+> - return -ENOMEM;
+> -
+> - res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+> - sid_data->reg_base = devm_ioremap_resource(&pdev->dev, res);
+> - if (IS_ERR(sid_data->reg_base))
+> - return PTR_ERR(sid_data->reg_base);
+> -
+> - of_dev_id = of_match_device(sunxi_sid_of_match, &pdev->dev);
+> - if (!of_dev_id)
+> - return -ENODEV;
+> - sid_data->keysize = (int)of_dev_id->data;
+> -
+> - platform_set_drvdata(pdev, sid_data);
+> -
+> - sid_bin_attr.size = sid_data->keysize;
+> - if (device_create_bin_file(&pdev->dev, &sid_bin_attr))
+> - return -ENODEV;
+> -
+> - entropy = kzalloc(sizeof(u8) * sid_data->keysize, GFP_KERNEL);
+> - for (i = 0; i < sid_data->keysize; i++)
+> - entropy[i] = sunxi_sid_read_byte(sid_data, i);
+> - add_device_randomness(entropy, sid_data->keysize);
+> - kfree(entropy);
+> -
 
-I'm not sure, but shouldn't be sizeof(u32) more portable?
+in case of porting a driver to a new framework, i would expect the same
+features.
+The ported driver do not add the Security ID to the device randomness.
 
-> [...]
-> +
-> + addr = of_get_property(cell_np, "bits", &len);
-> + if (addr && len == (2 * sizeof(int))) {
-
-dito
+What's the reason for this difference?
 
 Regards
 Stefan
