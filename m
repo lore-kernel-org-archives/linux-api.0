@@ -1,154 +1,71 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
- number (x86)
-Date: Tue, 21 Jul 2015 18:18:03 +0000 (UTC)
-Message-ID: <2028561497.1088.1437502683664.JavaMail.zimbra@efficios.com>
-References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com> <CA+55aFwLZLeeN7UN82dyt=emQcNBc8qZPJAw5iqtAbBwFA7FPQ@mail.gmail.com> <2010227315.699.1437438300542.JavaMail.zimbra@efficios.com> <20150721073053.GA14716@domone> <894137397.137.1437483493715.JavaMail.zimbra@efficios.com> <20150721151613.GA12856@domone> <1350114812.1035.1437500726799.JavaMail.zimbra@efficios.com> <20150721180051.GA24053@domone>
+From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v8 1/9] nvmem: Add a simple NVMEM framework for nvmem
+ providers
+Date: Tue, 21 Jul 2015 19:40:53 +0100
+Message-ID: <55AE9235.4080809@linaro.org>
+References: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org> <1437403392-4136-1-git-send-email-srinivas.kandagatla@linaro.org> <55AD6412.9070205@codeaurora.org> <55AE13D8.6020301@linaro.org> <55AE8864.6020608@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150721180051.GA24053@domone>
+In-Reply-To: <55AE8864.6020608-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?utf-8?Q?Ond=C5=99ej_B=C3=ADlka?= <neleai-9Vj9tDbzfuSlVyrhU4qvOw@public.gmane.org>
-Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+To: Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, stefan.wahren-eS4NqCHxEME@public.gmane.org, wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Jul 21, 2015, at 2:00 PM, Ond=C5=99ej B=C3=ADlka neleai@seznam=
-=2Ecz wrote:
 
-> On Tue, Jul 21, 2015 at 05:45:26PM +0000, Mathieu Desnoyers wrote:
->> ----- On Jul 21, 2015, at 11:16 AM, Ond=C5=99ej B=C3=ADlka neleai@se=
-znam.cz wrote:
->>=20
->> > On Tue, Jul 21, 2015 at 12:58:13PM +0000, Mathieu Desnoyers wrote:
->> >> ----- On Jul 21, 2015, at 3:30 AM, Ond=C5=99ej B=C3=ADlka neleai@=
-seznam.cz wrote:
->> >>=20
->> >> > On Tue, Jul 21, 2015 at 12:25:00AM +0000, Mathieu Desnoyers wro=
-te:
->> >> >> >> Does it solve the Wine problem?  If Wine uses gs for someth=
-ing and
->> >> >> >> calls a function that does this, Wine still goes boom, righ=
-t?
->> >> >> >=20
->> >> >> > So the advantage of just making a global segment descriptor =
-available
->> >> >> > is that it's not *that* expensive to just save/restore segme=
-nts. So
->> >> >> > either wine could do it, or any library users would do it.
->> >> >> >=20
->> >> >> > But anyway, I'm not sure this is a good idea. The advantage =
-of it is
->> >> >> > that the kernel support really is _very_ minimal.
->> >> >>=20
->> >> >> Considering that we'd at least also want this feature on ARM a=
-nd
->> >> >> PowerPC 32/64, and that the gs segment selector approach clash=
-es with
->> >> >> existing apps (wine), I'm not sure that implementing a gs segm=
-ent
->> >> >> selector based approach to cpu number caching would lead to an=
- overall
->> >> >> decrease in complexity if it leads to performance similar to t=
-hose of
->> >> >> portable approaches.
->> >> >>=20
->> >> >> I'm perfectly fine with architecture-specific tweaks that lead=
- to
->> >> >> fast-path speedups, but if we have to bite the bullet and impl=
-ement
->> >> >> an approach based on TLS and registering a memory area at thre=
-ad start
->> >> >> through a system call on other architectures anyway, it might =
-end up
->> >> >> being less complex to add a new system call on x86 too, especi=
-ally if
->> >> >> fast path overhead is similar.
->> >> >>=20
->> >> >> But I'm inclined to think that some aspect of the question elu=
-des me,
->> >> >> especially given the amount of interest generated by the gs-se=
-gment
->> >> >> selector approach. What am I missing ?
->> >> >>=20
->> >> > As I wrote before you don't have to bite bullet as I said befor=
-e. It
->> >> > suffices to create 128k element array with cpu for each tid, ma=
-ke that
->> >> > mmapable file and userspace could get cpu with nearly same perf=
-ormance
->> >> > without hacks.
->> >>=20
->> >> I don't see how this would be acceptable on memory-constrained em=
-bedded
->> >> systems. They have multiple cores, and performance requirements, =
-so
->> >> having a fast getcpu would be useful there (e.g. telecom industry=
-),
->> >> but they clearly cannot afford a 512kB table per process just for=
- that.
->> >>=20
->> > Which just means that you need more complicated api and implementa=
-tion
->> > for that but idea stays same. You would need syscalls
->> > register/deregister_cpuid_idx that would give you index used inste=
-ad
->> > tid. A kernel would need to handle that many ids could be register=
-ed for
->> > each thread and resize mmaped file in syscalls.
->>=20
->> I feel we're talking past each other here. What I propose is to impl=
-ement
->> a system call that registers a TLS area. It can be invoked at thread=
- start.
->> The kernel can then keep the current CPU number within that register=
-ed
->> area up-to-date. This system call does not care how the TLS is imple=
-mented
->> underneath.
->>=20
->> My understanding is that you are suggesting a way to speed up TLS ac=
-cesses
->> by creating a table indexed by TID. Although it might lead to intere=
-sting
->> speed ups useful when reading the TLS, I don't see how you proposal =
-is
->> useful in addressing the problem of caching the current CPU number (=
-other
->> than possibly speeding up TLS accesses).
->>=20
->> Or am I missing something fundamental to your proposal ?
+
+On 21/07/15 18:59, Stephen Boyd wrote:
+> On 07/21/2015 02:41 AM, Srinivas Kandagatla wrote:
+>> Thanks Stephen for review,
 >>
-> No, I still talk about getting cpu number. My first proposal is that
-> kernel allocates table of current cpu numbers accessed by tid. That
-> could process mmap and get cpu with cpu_tid_table[tid]. As you said t=
-hat
-> size is problem I replied that you need to be more careful. Instead t=
-id
-> you will use different id that you get with say register_cpucache, st=
-ore
-> in tls variable and get cpu with cpu_cid_table[cid]. That decreases
-> space used to only threads that use this.
->=20
-> A tls speedup was side remark when you would implement per-cpu page t=
-hen
-> you could speedup tls. As tls access speed and getting tid these are
-> equivalent as you could easily implement one with other.
+>> On 20/07/15 22:11, Stephen Boyd wrote:
+>>> On 07/20/2015 07:43 AM, Srinivas Kandagatla wrote:
+>>>> diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
+>>>> new file mode 100644
+>>>> index 0000000..bde5528
+>>>> --- /dev/null
+>>>> +++ b/drivers/nvmem/core.c
+>>>> @@ -0,0 +1,384 @@
+>>>>
+>>>> +
+>>>> +static int nvmem_add_cells(struct nvmem_device *nvmem,
+>>>> +               const struct nvmem_config *cfg)
+>>>> +{
+>>>> +    struct nvmem_cell **cells;
+>>>> +    const struct nvmem_cell_info *info = cfg->cells;
+>>>> +    int i, rval;
+>>>> +
+>>>> +    cells = kzalloc(sizeof(*cells) * cfg->ncells, GFP_KERNEL);
+>>>
+>>> kcalloc?
+>>
+>> Only reason for using kzalloc is to give the code more flexibility to
+>> free any pointer in the array in case of errors.
+>
+> Still lost. The arrays are allocated down below in the for loop. This is
+> allocating a bunch of pointers so using kcalloc() here avoids problems
+> with overflows causing kzalloc() to allocate fewer pointers than
+> requested. I'm not suggesting we replace the for loop with a kcalloc,
+> just this single line.
+>
+Yes we could replace the loop with kcalloc, but the problem is how can 
+we handle freeing an element from that array?
 
-Thanks for the clarification. There is then a fundamental question
-I need to ask: what is the upside of going for a dedicated array of
-current cpu number values rather than using a TLS variable ?
-The main downside I see with the array of cpu number is false sharing
-caused by having many current cpu number variables sitting on the same
-cache line. It seems like an overall performance loss there.
+AFAIK we can only free the full array rather than each element if we 
+allocate it via kcalloc, correct me if Am wrong?
 
-Thanks,
-
-Mathieu
-
-
---=20
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+>>
+>>>
+>>>> +    if (!cells)
+>>>> +        return -ENOMEM;
+>>>> +
+>>>> +    for (i = 0; i < cfg->ncells; i++) {
+>>>> +        cells[i] = kzalloc(sizeof(**cells), GFP_KERNEL);
+>>>> +        if (!cells[i]) {
+>>>> +            rval = -ENOMEM;
+>>>> +            goto err;
+>>>> +        }
+>>>> +
+>
