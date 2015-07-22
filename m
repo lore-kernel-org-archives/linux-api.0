@@ -1,168 +1,33 @@
-From: =?utf-8?B?T25kxZllaiBCw61sa2E=?= <neleai-9Vj9tDbzfuSlVyrhU4qvOw@public.gmane.org>
-Subject: Re: [RFC PATCH] getcpu_cache system call: caching current CPU
- number (x86)
-Date: Wed, 22 Jul 2015 09:53:16 +0200
-Message-ID: <20150722075316.GA17316@domone>
-References: <1436724386-30909-1-git-send-email-mathieu.desnoyers@efficios.com>
- <CA+55aFwLZLeeN7UN82dyt=emQcNBc8qZPJAw5iqtAbBwFA7FPQ@mail.gmail.com>
- <2010227315.699.1437438300542.JavaMail.zimbra@efficios.com>
- <20150721073053.GA14716@domone>
- <894137397.137.1437483493715.JavaMail.zimbra@efficios.com>
- <20150721151613.GA12856@domone>
- <1350114812.1035.1437500726799.JavaMail.zimbra@efficios.com>
- <20150721180051.GA24053@domone>
- <2028561497.1088.1437502683664.JavaMail.zimbra@efficios.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH V4 2/6] mm: mlock: Add new mlock, munlock, and munlockall
+ system calls
+Date: Wed, 22 Jul 2015 11:16:10 +0200
+Message-ID: <55AF5F5A.3000707@suse.cz>
+References: <1437508781-28655-1-git-send-email-emunson@akamai.com> <1437508781-28655-3-git-send-email-emunson@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <2028561497.1088.1437502683664.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, libc-alpha <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Lai Jiangshan <laijs-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-m68k-owner@vger.kernel.org>
+In-Reply-To: <1437508781-28655-3-git-send-email-emunson@akamai.com>
+Sender: linux-m68k-owner@vger.kernel.org
+To: Eric B Munson <emunson@akamai.com>, Andrew Morton <akpm@linux-foundation.org>
+Cc: Michal Hocko <mhocko@suse.cz>, Heiko Carstens <heiko.carstens@de.ibm.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Catalin Marinas <catalin.marinas@arm.com>, Stephen Rothwell <sfr@canb.auug.org.au>, Guenter Roeck <linux@roeck-us.net>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, adi-buildroot-devel@lists.sourceforge.net, linux-cris-kernel@axis.com, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@linux-mips.org, linux-am33-list@redhat.com, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 21, 2015 at 06:18:03PM +0000, Mathieu Desnoyers wrote:
-> ----- On Jul 21, 2015, at 2:00 PM, Ond=C5=99ej B=C3=ADlka neleai@sezn=
-am.cz wrote:
->=20
-> > On Tue, Jul 21, 2015 at 05:45:26PM +0000, Mathieu Desnoyers wrote:
-> >> ----- On Jul 21, 2015, at 11:16 AM, Ond=C5=99ej B=C3=ADlka neleai@=
-seznam.cz wrote:
-> >>=20
-> >> > On Tue, Jul 21, 2015 at 12:58:13PM +0000, Mathieu Desnoyers wrot=
-e:
-> >> >> ----- On Jul 21, 2015, at 3:30 AM, Ond=C5=99ej B=C3=ADlka nelea=
-i@seznam.cz wrote:
-> >> >>=20
-> >> >> > On Tue, Jul 21, 2015 at 12:25:00AM +0000, Mathieu Desnoyers w=
-rote:
-> >> >> >> >> Does it solve the Wine problem?  If Wine uses gs for some=
-thing and
-> >> >> >> >> calls a function that does this, Wine still goes boom, ri=
-ght?
-> >> >> >> >=20
-> >> >> >> > So the advantage of just making a global segment descripto=
-r available
-> >> >> >> > is that it's not *that* expensive to just save/restore seg=
-ments. So
-> >> >> >> > either wine could do it, or any library users would do it.
-> >> >> >> >=20
-> >> >> >> > But anyway, I'm not sure this is a good idea. The advantag=
-e of it is
-> >> >> >> > that the kernel support really is _very_ minimal.
-> >> >> >>=20
-> >> >> >> Considering that we'd at least also want this feature on ARM=
- and
-> >> >> >> PowerPC 32/64, and that the gs segment selector approach cla=
-shes with
-> >> >> >> existing apps (wine), I'm not sure that implementing a gs se=
-gment
-> >> >> >> selector based approach to cpu number caching would lead to =
-an overall
-> >> >> >> decrease in complexity if it leads to performance similar to=
- those of
-> >> >> >> portable approaches.
-> >> >> >>=20
-> >> >> >> I'm perfectly fine with architecture-specific tweaks that le=
-ad to
-> >> >> >> fast-path speedups, but if we have to bite the bullet and im=
-plement
-> >> >> >> an approach based on TLS and registering a memory area at th=
-read start
-> >> >> >> through a system call on other architectures anyway, it migh=
-t end up
-> >> >> >> being less complex to add a new system call on x86 too, espe=
-cially if
-> >> >> >> fast path overhead is similar.
-> >> >> >>=20
-> >> >> >> But I'm inclined to think that some aspect of the question e=
-ludes me,
-> >> >> >> especially given the amount of interest generated by the gs-=
-segment
-> >> >> >> selector approach. What am I missing ?
-> >> >> >>=20
-> >> >> > As I wrote before you don't have to bite bullet as I said bef=
-ore. It
-> >> >> > suffices to create 128k element array with cpu for each tid, =
-make that
-> >> >> > mmapable file and userspace could get cpu with nearly same pe=
-rformance
-> >> >> > without hacks.
-> >> >>=20
-> >> >> I don't see how this would be acceptable on memory-constrained =
-embedded
-> >> >> systems. They have multiple cores, and performance requirements=
-, so
-> >> >> having a fast getcpu would be useful there (e.g. telecom indust=
-ry),
-> >> >> but they clearly cannot afford a 512kB table per process just f=
-or that.
-> >> >>=20
-> >> > Which just means that you need more complicated api and implemen=
-tation
-> >> > for that but idea stays same. You would need syscalls
-> >> > register/deregister_cpuid_idx that would give you index used ins=
-tead
-> >> > tid. A kernel would need to handle that many ids could be regist=
-ered for
-> >> > each thread and resize mmaped file in syscalls.
-> >>=20
-> >> I feel we're talking past each other here. What I propose is to im=
-plement
-> >> a system call that registers a TLS area. It can be invoked at thre=
-ad start.
-> >> The kernel can then keep the current CPU number within that regist=
-ered
-> >> area up-to-date. This system call does not care how the TLS is imp=
-lemented
-> >> underneath.
-> >>=20
-> >> My understanding is that you are suggesting a way to speed up TLS =
-accesses
-> >> by creating a table indexed by TID. Although it might lead to inte=
-resting
-> >> speed ups useful when reading the TLS, I don't see how you proposa=
-l is
-> >> useful in addressing the problem of caching the current CPU number=
- (other
-> >> than possibly speeding up TLS accesses).
-> >>=20
-> >> Or am I missing something fundamental to your proposal ?
-> >>
-> > No, I still talk about getting cpu number. My first proposal is tha=
-t
-> > kernel allocates table of current cpu numbers accessed by tid. That
-> > could process mmap and get cpu with cpu_tid_table[tid]. As you said=
- that
-> > size is problem I replied that you need to be more careful. Instead=
- tid
-> > you will use different id that you get with say register_cpucache, =
-store
-> > in tls variable and get cpu with cpu_cid_table[cid]. That decreases
-> > space used to only threads that use this.
-> >=20
-> > A tls speedup was side remark when you would implement per-cpu page=
- then
-> > you could speedup tls. As tls access speed and getting tid these ar=
-e
-> > equivalent as you could easily implement one with other.
->=20
-> Thanks for the clarification. There is then a fundamental question
-> I need to ask: what is the upside of going for a dedicated array of
-> current cpu number values rather than using a TLS variable ?
-> The main downside I see with the array of cpu number is false sharing
-> caused by having many current cpu number variables sitting on the sam=
-e
-> cache line. It seems like an overall performance loss there.
+On 07/21/2015 09:59 PM, Eric B Munson wrote:
+> With the refactored mlock code, introduce new system calls for mlock,
+> munlock, and munlockall.  The new calls will allow the user to specify
+> what lock states are being added or cleared.  mlock2 and munlock2 are
+> trivial at the moment, but a follow on patch will add a new mlock state
+> making them useful.
 >
-Its considerably simpler to implement as you don't need to mark tls
-pages to avoid page fault in context switch, security issues where
-attacker could try to unmap tls for possible privilege escalation if it
-would write to different process etc.
+> munlock2 addresses a limitation of the current implementation.  If a
 
-And as for sharing it simply doesn't matter. Its mostly read only that
-is written only on context switch so they will be resident in cache.
-Also when you switch cpu then you get same cache miss from tls variable
-so its same. =20
+   ^ munlockall2?
+
+> user calls mlockall(MCL_CURRENT | MCL_FUTURE) and then later decides
+> that MCL_FUTURE should be removed, they would have to call munlockall()
+> followed by mlockall(MCL_CURRENT) which could potentially be very
+> expensive.  The new munlockall2 system call allows a user to simply
+> clear the MCL_FUTURE flag.
+>
