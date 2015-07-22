@@ -1,58 +1,84 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: [PATCH V3 4/5] mm: mmap: Add mmap flag to request VM_LOCKONFAULT
-Date: Wed, 22 Jul 2015 10:10:20 -0400
-Message-ID: <55AFA44C.2060906@windriver.com>
-References: <1436288623-13007-1-git-send-email-emunson@akamai.com> <1436288623-13007-5-git-send-email-emunson@akamai.com> <CAP=VYLq5=9DCfncJpQizcSbQt1O7VL2yEdzZNOFK+M3pqLpb3Q@mail.gmail.com> <55AD5CB9.4090400@ezchip.com> <20150721153722.GB5411@akamai.com>
+From: Eric B Munson <emunson@akamai.com>
+Subject: Re: [PATCH V4 2/6] mm: mlock: Add new mlock, munlock, and munlockall
+ system calls
+Date: Wed, 22 Jul 2015 10:15:01 -0400
+Message-ID: <20150722141501.GA3203@akamai.com>
+References: <1437508781-28655-1-git-send-email-emunson@akamai.com>
+ <1437508781-28655-3-git-send-email-emunson@akamai.com>
+ <20150721134441.d69e4e1099bd43e56835b3c5@linux-foundation.org>
+ <1437528316.16792.7.camel@ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20150721153722.GB5411@akamai.com>
-Sender: owner-linux-mm@kvack.org
-To: Eric B Munson <emunson@akamai.com>
-Cc: Chris Metcalf <cmetcalf@ezchip.com>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, linux-arch <linux-arch@vger.kernel.org>, linux-api@vger.kernel.org, "linux-next@vger.kernel.org" <linux-next@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="opJtzjQTFsWo+cga"
+Return-path: <linux-alpha-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1437528316.16792.7.camel@ellerman.id.au>
+Sender: linux-alpha-owner@vger.kernel.org
+To: Michael Ellerman <mpe@ellerman.id.au>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mips@linux-mips.org, linux-m68k@vger.kernel.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, sparclinux@vger.kernel.org, linux-arch@vger.kernel.org, Stephen Rothwell <sfr@canb.auug.org.au>, linux-am33-list@redhat.com, Geert Uytterhoeven <geert@linux-m68k.org>, Vlastimil Babka <vbabka@suse.cz>, Guenter Roeck <linux@roeck-us.net>, linux-xtensa@linux-xtensa.org, linux-s390@vger.kernel.org, adi-buildroot-devel@lists.sourceforge.net, linux-arm-kernel@lists.infradead.org, linux-cris-kernel@axis.com, linux-parisc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-alpha@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-On 2015-07-21 11:37 AM, Eric B Munson wrote:
-> On Mon, 20 Jul 2015, Chris Metcalf wrote:
-> 
->> On 07/18/2015 03:11 PM, Paul Gortmaker wrote:
->>> On Tue, Jul 7, 2015 at 1:03 PM, Eric B Munson<emunson@akamai.com>  wrote:
->>>>> The cost of faulting in all memory to be locked can be very high when
->>>>> working with large mappings.  If only portions of the mapping will be
->>>>> used this can incur a high penalty for locking.
->>>>>
->>>>> Now that we have the new VMA flag for the locked but not present state,
->>>>> expose it  as an mmap option like MAP_LOCKED -> VM_LOCKED.
->>> An automatic bisection on arch/tile leads to this commit:
->>>
->>> 5a5656f2c9b61c74c15f9ef3fa2e6513b6c237bb is the first bad commit
->>> commit 5a5656f2c9b61c74c15f9ef3fa2e6513b6c237bb
->>> Author: Eric B Munson<emunson@akamai.com>
->>> Date:   Thu Jul 16 10:09:22 2015 +1000
->>>
->>>     mm: mmap: add mmap flag to request VM_LOCKONFAULT
->>
->> Eric, I'm happy to help with figuring out the tile issues.
-> 
-> Thanks for the offer, I think I have is sorted in V4 (which I am
-> checking one last time before I post).
 
-Not quite sorted yet.  Seems parisc fails on v4.  It updated the
-number of syscalls but did not update syscall_table.S causing:
+--opJtzjQTFsWo+cga
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-arch/parisc/kernel/syscall_table.S:444: Error: size of syscall table does not fit value of __NR_Linux_syscalls
+On Wed, 22 Jul 2015, Michael Ellerman wrote:
 
-http://kisskb.ellerman.id.au/kisskb/buildresult/12468884/
+> On Tue, 2015-07-21 at 13:44 -0700, Andrew Morton wrote:
+> > On Tue, 21 Jul 2015 15:59:37 -0400 Eric B Munson <emunson@akamai.com> w=
+rote:
+> >=20
+> > > With the refactored mlock code, introduce new system calls for mlock,
+> > > munlock, and munlockall.  The new calls will allow the user to specify
+> > > what lock states are being added or cleared.  mlock2 and munlock2 are
+> > > trivial at the moment, but a follow on patch will add a new mlock sta=
+te
+> > > making them useful.
+> > >=20
+> > > munlock2 addresses a limitation of the current implementation.  If a
+> > > user calls mlockall(MCL_CURRENT | MCL_FUTURE) and then later decides
+> > > that MCL_FUTURE should be removed, they would have to call munlockall=
+()
+> > > followed by mlockall(MCL_CURRENT) which could potentially be very
+> > > expensive.  The new munlockall2 system call allows a user to simply
+> > > clear the MCL_FUTURE flag.
+> >=20
+> > This is hard.  Maybe we shouldn't have wired up anything other than
+> > x86.  That's what we usually do with new syscalls.
+>=20
+> Yeah I think so.
+>=20
+> You haven't wired it up properly on powerpc, but I haven't mentioned it b=
+ecause
+> I'd rather we did it.
+>=20
+> cheers
 
-Paul.
---
+It looks like I will be spinning a V5, so I will drop all but the x86
+system calls additions in that version.
 
-> Eric
-> 
+--opJtzjQTFsWo+cga
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJVr6VlAAoJELbVsDOpoOa95lcP/09wvimQwXtTG/OgMLsgEPaz
+FVL4uSMeiSaPdcdYp1Qp+ie80X/Ve92le8uJ9pcRKV3+cK2xP8OiOQQQwz57cBU8
+MIzkJPycm2gww6DRwYVjXhUJH2FMb1KK1vQALVWwh0mUAkRvpi4T7mtxSzmRUD+V
+TEw4dIBmK3dEorWA7duy9L/8juLu/j2kd3GzFnd5vp7q5HDb+tJrBD+I1jos2dlQ
+KqYzU5vCmPC11pc2TzzFkXx6hGux1Rj4y/7jUMID14Hi+Ql0dQGwMo6kcMmdxS+P
+kULToMPhnlDZIAfNOpfanHUsnzLPy4UVJ2ecYHXte7Yj4uxU9NXf6Dli47/iZK4H
+lp+MUwmXEQsoQTqwUWO36Hcpu5aKHQzbmz3qeNwLe37ZauHahT7GSYR8ZrntQo2v
+oQs9zdeLt2enFwC0QSubvRtIAEbpvnWvup0lD89fEFMubri6IFKFFMuSIr9kNBS0
+6jcxjzbH03cDgnrlAEb0k54nblsgCRoagmHpqZH+TzAKlLqUXpIeqVUnkjXrclkg
+XBlxVwh2m0LvFFWnTZ/AoXmZif91GBNQw+ZPkju+iRs8r3YtjH3Pv2aZL4tjDFzA
+/Gyv+WSvZ3NjakBejr+qzZiET/MSEmX1agUJo/2sd0QUL/z0Jk1gConPgmjaoFCO
+UoTgStn2fZdwMTcy6Lyt
+=nv7P
+-----END PGP SIGNATURE-----
+
+--opJtzjQTFsWo+cga--
