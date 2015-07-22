@@ -1,36 +1,45 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH -mm v9 7/8] proc: export idle flag via kpageflags
-Date: Tue, 21 Jul 2015 16:35:00 -0700
-Message-ID: <20150721163500.528bd39bbbc71abc3c8d429b@linux-foundation.org>
-References: <cover.1437303956.git.vdavydov@parallels.com>
-	<4c1eb396150ee14d7c3abf1a6f36ec8cc9dd9435.1437303956.git.vdavydov@parallels.com>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [PATCH V4 2/6] mm: mlock: Add new mlock, munlock, and
+ munlockall system calls
+Date: Wed, 22 Jul 2015 11:25:16 +1000
+Message-ID: <1437528316.16792.7.camel@ellerman.id.au>
+References: <1437508781-28655-1-git-send-email-emunson@akamai.com>
+	 <1437508781-28655-3-git-send-email-emunson@akamai.com>
+	 <20150721134441.d69e4e1099bd43e56835b3c5@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <4c1eb396150ee14d7c3abf1a6f36ec8cc9dd9435.1437303956.git.vdavydov@parallels.com>
-Sender: owner-linux-mm@kvack.org
-To: Vladimir Davydov <vdavydov@parallels.com>
-Cc: Andres Lagar-Cavilla <andreslc@google.com>, Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, linux-kernel@vger.kernel.org
+Return-path: <linux-sh-owner@vger.kernel.org>
+In-Reply-To: <20150721134441.d69e4e1099bd43e56835b3c5@linux-foundation.org>
+Sender: linux-sh-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Eric B Munson <emunson@akamai.com>, linux-mips@linux-mips.org, linux-m68k@vger.kernel.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, sparclinux@vger.kernel.org, linux-arch@vger.kernel.org, Stephen Rothwell <sfr@canb.auug.org.au>, linux-am33-list@redhat.com, Geert Uytterhoeven <geert@linux-m68k.org>, Vlastimil Babka <vbabka@suse.cz>, Guenter Roeck <linux@roeck-us.net>, linux-xtensa@linux-xtensa.org, linux-s390@vger.kernel.org, adi-buildroot-devel@lists.sourceforge.net, linux-arm-kernel@lists.infradead.org, linux-cris-kernel@axis.com, linux-parisc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-alpha@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, 19 Jul 2015 15:31:16 +0300 Vladimir Davydov <vdavydov@parallels.com> wrote:
-
-> As noted by Minchan, a benefit of reading idle flag from
-> /proc/kpageflags is that one can easily filter dirty and/or unevictable
-> pages while estimating the size of unused memory.
+On Tue, 2015-07-21 at 13:44 -0700, Andrew Morton wrote:
+> On Tue, 21 Jul 2015 15:59:37 -0400 Eric B Munson <emunson@akamai.com> wrote:
 > 
-> Note that idle flag read from /proc/kpageflags may be stale in case the
-> page was accessed via a PTE, because it would be too costly to iterate
-> over all page mappings on each /proc/kpageflags read to provide an
-> up-to-date value. To make sure the flag is up-to-date one has to read
-> /proc/kpageidle first.
+> > With the refactored mlock code, introduce new system calls for mlock,
+> > munlock, and munlockall.  The new calls will allow the user to specify
+> > what lock states are being added or cleared.  mlock2 and munlock2 are
+> > trivial at the moment, but a follow on patch will add a new mlock state
+> > making them useful.
+> > 
+> > munlock2 addresses a limitation of the current implementation.  If a
+> > user calls mlockall(MCL_CURRENT | MCL_FUTURE) and then later decides
+> > that MCL_FUTURE should be removed, they would have to call munlockall()
+> > followed by mlockall(MCL_CURRENT) which could potentially be very
+> > expensive.  The new munlockall2 system call allows a user to simply
+> > clear the MCL_FUTURE flag.
+> 
+> This is hard.  Maybe we shouldn't have wired up anything other than
+> x86.  That's what we usually do with new syscalls.
 
-Is there any value in teaching the regular old page scanner to update
-these flags?  If it's doing an rmap scan anyway...
+Yeah I think so.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+You haven't wired it up properly on powerpc, but I haven't mentioned it because
+I'd rather we did it.
+
+cheers
+
+
