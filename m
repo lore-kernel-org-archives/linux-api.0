@@ -1,99 +1,58 @@
-From: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Subject: Re: [RFC v3 1/1] Input: Add userio module
-Date: Wed, 22 Jul 2015 14:39:59 -0700
-Message-ID: <20150722213959.GD14875@dtor-ws>
-References: <1437594773-22274-1-git-send-email-cpaul@redhat.com>
- <1437594773-22274-2-git-send-email-cpaul@redhat.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH v4 00/10] hugetlbfs: add fallocate support
+Date: Wed, 22 Jul 2015 15:03:14 -0700
+Message-ID: <20150722150314.8c68d1715641c5533220f092@linux-foundation.org>
+References: <1437502184-14269-1-git-send-email-mike.kravetz@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1437594773-22274-2-git-send-email-cpaul@redhat.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Stephen Chandler Paul <cpaul@redhat.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Greg KH <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, Joe Perches <joe@perches.com>, Jiri Slaby <jslaby@suse.com>, Vishnu Patekar <vishnupatekar0510@gmail.com>, Sebastian Ott <sebott@linux.vnet.ibm.com>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-input@vger.kernel.org, linux-api@vger.kernel.org, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Hans de Goede <hdegoede@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1437502184-14269-1-git-send-email-mike.kravetz@oracle.com>
+Sender: owner-linux-mm@kvack.org
+To: Mike Kravetz <mike.kravetz@oracle.com>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Dave Hansen <dave.hansen@linux.intel.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Davidlohr Bueso <dave@stgolabs.net>, Aneesh Kumar <aneesh.kumar@linux.vnet.ibm.com>, Hillf Danton <hillf.zj@alibaba-inc.com>, Christoph Hellwig <hch@infradead.org>, Michal Hocko <mhocko@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-Hi Stephen,
+On Tue, 21 Jul 2015 11:09:34 -0700 Mike Kravetz <mike.kravetz@oracle.com> wrote:
 
-On Wed, Jul 22, 2015 at 03:52:53PM -0400, Stephen Chandler Paul wrote:
-> +static int userio_char_open(struct inode *inode, struct file *file)
-> +{
-> +	struct userio_device *userio;
-> +
-> +	userio = devm_kzalloc(userio_misc.this_device,
-> +			      sizeof(struct userio_device), GFP_KERNEL);
-> +	if (!userio)
-> +		return -ENOMEM;
+> Changes in this revision address the minor comment and function name
+> issues brought up by Naoya Horiguchi.  Patch set is also rebased on
+> current "mmotm/since-4.1".  This revision does not introduce any
+> functional changes.
+> 
+> As suggested during the RFC process, tests have been proposed to
+> libhugetlbfs as described at:
+> http://librelist.com/browser//libhugetlbfs/2015/6/25/patch-tests-add-tests-for-fallocate-system-call/
+> fallocate(2) man page modifications are also necessary to specify
+> that fallocate for hugetlbfs only operates on whole pages.  This
+> change will be submitted once the code has stabilized and been
+> proposed for merging.
+> 
+> hugetlbfs is used today by applications that want a high degree of
+> control over huge page usage.  Often, large hugetlbfs files are used
+> to map a large number huge pages into the application processes.
+> The applications know when page ranges within these large files will
+> no longer be used, and ideally would like to release them back to
+> the subpool or global pools for other uses.  The fallocate() system
+> call provides an interface for preallocation and hole punching within
+> files.  This patch set adds fallocate functionality to hugetlbfs.
+> 
+> v4:
+>   Renamed vma_abort_reservation() to vma_end_reservation().
+>
+> ...
+>
+> v3 patch series:
+> Reviewed-by: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+> Acked-by: Hillf Danton <hillf.zj@alibaba-inc.com>
 
-Never ever use devm_ API outside of device probe() calls because
-devm-managed resources only freed after failed probe() or after remove()
-callback on driver model device and not any other device (block, char,
-etc) in the system.
+eek.  Please don't hide the reviews and acks in [0/n] like this.  I
+don't expect to see them there, which causes me to park the patch
+series until I'm feeling awake enough to undertake the patchset's first
+ever review.
 
-> +
-> +	spin_lock_init(&userio->head_lock);
-> +	mutex_init(&userio->tail_lock);
-> +	init_waitqueue_head(&userio->waitq);
-> +
-> +	userio->serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
-> +	if (!userio->serio) {
-> +		devm_kfree(userio_misc.this_device, userio);
-
-And indeed here you have ot manually release the acquired resource. So
-the only benefit you got form devm* is wasted resousrces.
-
-> +		return -ENOMEM;
-> +	}
-> +
-> +	userio->serio->write = userio_device_write;
-> +	userio->serio->port_data = userio;
-> +
-> +	file->private_data = userio;
-> +
-> +	return 0;
-> +}
-> +
-> +static int userio_char_release(struct inode *inode, struct file *file)
-> +{
-> +	struct userio_device *userio = file->private_data;
-> +
-> +	if (userio->serio) {
-> +		userio->serio->port_data = NULL;
-
-No need to reset, it is going away.
-
-> +
-> +		if (userio->running)
-> +			serio_unregister_port(userio->serio);
-> +		else
-> +			kfree(userio->serio);
-> +	}
-> +
-> +	devm_kfree(userio_misc.this_device, userio);
-> +
-> +	return 0;
-> +}
-> +
-> +static ssize_t userio_char_read(struct file *file, char __user *buffer,
-> +				size_t count, loff_t *ppos)
-> +{
-> +	struct userio_device *userio = file->private_data;
-> +	int ret;
-> +	size_t nonwrap_len, copylen;
-> +
-> +	if (!count)
-> +		return 0;
-> +
-> +	if (file->f_flags & O_NONBLOCK && userio->head == userio->tail)
-> +		return -EAGAIN;
-> +	else {
-
-This is racy. If there was data and other thread "stole" it here then
-your O_NONBLOCK will block. See evdev_read() how you supposed to handle
-this.
-
-Thanks.
-
--- 
-Dmitry
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
