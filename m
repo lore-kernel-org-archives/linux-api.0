@@ -1,67 +1,55 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [PATCH V4 2/6] mm: mlock: Add new mlock, munlock, and munlockall
- system calls
-Date: Wed, 22 Jul 2015 10:05:02 -0400
-Message-ID: <20150722140502.GB2859@akamai.com>
-References: <1437508781-28655-1-git-send-email-emunson@akamai.com>
- <1437508781-28655-3-git-send-email-emunson@akamai.com>
- <55AF5F5A.3000707@suse.cz>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [PATCH V3 4/5] mm: mmap: Add mmap flag to request VM_LOCKONFAULT
+Date: Wed, 22 Jul 2015 10:10:20 -0400
+Message-ID: <55AFA44C.2060906@windriver.com>
+References: <1436288623-13007-1-git-send-email-emunson@akamai.com> <1436288623-13007-5-git-send-email-emunson@akamai.com> <CAP=VYLq5=9DCfncJpQizcSbQt1O7VL2yEdzZNOFK+M3pqLpb3Q@mail.gmail.com> <55AD5CB9.4090400@ezchip.com> <20150721153722.GB5411@akamai.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="NDin8bjvE/0mNLFQ"
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <55AF5F5A.3000707@suse.cz>
+In-Reply-To: <20150721153722.GB5411@akamai.com>
 Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Heiko Carstens <heiko.carstens@de.ibm.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Catalin Marinas <catalin.marinas@arm.com>, Stephen Rothwell <sfr@canb.auug.org.au>, Guenter Roeck <linux@roeck-us.net>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, adi-buildroot-devel@lists.sourceforge.net, linux-cris-kernel@axis.com, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@linux-mips.org, linux-am33-list@redhat.com, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org
+To: Eric B Munson <emunson@akamai.com>
+Cc: Chris Metcalf <cmetcalf@ezchip.com>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, linux-arch <linux-arch@vger.kernel.org>, linux-api@vger.kernel.org, "linux-next@vger.kernel.org" <linux-next@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On 2015-07-21 11:37 AM, Eric B Munson wrote:
+> On Mon, 20 Jul 2015, Chris Metcalf wrote:
+> 
+>> On 07/18/2015 03:11 PM, Paul Gortmaker wrote:
+>>> On Tue, Jul 7, 2015 at 1:03 PM, Eric B Munson<emunson@akamai.com>  wrote:
+>>>>> The cost of faulting in all memory to be locked can be very high when
+>>>>> working with large mappings.  If only portions of the mapping will be
+>>>>> used this can incur a high penalty for locking.
+>>>>>
+>>>>> Now that we have the new VMA flag for the locked but not present state,
+>>>>> expose it  as an mmap option like MAP_LOCKED -> VM_LOCKED.
+>>> An automatic bisection on arch/tile leads to this commit:
+>>>
+>>> 5a5656f2c9b61c74c15f9ef3fa2e6513b6c237bb is the first bad commit
+>>> commit 5a5656f2c9b61c74c15f9ef3fa2e6513b6c237bb
+>>> Author: Eric B Munson<emunson@akamai.com>
+>>> Date:   Thu Jul 16 10:09:22 2015 +1000
+>>>
+>>>     mm: mmap: add mmap flag to request VM_LOCKONFAULT
+>>
+>> Eric, I'm happy to help with figuring out the tile issues.
+> 
+> Thanks for the offer, I think I have is sorted in V4 (which I am
+> checking one last time before I post).
 
---NDin8bjvE/0mNLFQ
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Not quite sorted yet.  Seems parisc fails on v4.  It updated the
+number of syscalls but did not update syscall_table.S causing:
 
-On Wed, 22 Jul 2015, Vlastimil Babka wrote:
+arch/parisc/kernel/syscall_table.S:444: Error: size of syscall table does not fit value of __NR_Linux_syscalls
 
-> On 07/21/2015 09:59 PM, Eric B Munson wrote:
-> >With the refactored mlock code, introduce new system calls for mlock,
-> >munlock, and munlockall.  The new calls will allow the user to specify
-> >what lock states are being added or cleared.  mlock2 and munlock2 are
-> >trivial at the moment, but a follow on patch will add a new mlock state
-> >making them useful.
-> >
-> >munlock2 addresses a limitation of the current implementation.  If a
->=20
->   ^ munlockall2?
+http://kisskb.ellerman.id.au/kisskb/buildresult/12468884/
 
-Fixed, thanks.
+Paul.
+--
 
-
---NDin8bjvE/0mNLFQ
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJVr6MOAAoJELbVsDOpoOa9s9sP/A7izRQp4uVnMpOwD0MxlFeD
-XcaKq8V5n3o7/BMR992hOIWBEl5/HUrJR3sRtfi42uPUYK930Ofy+mckUN6D4iiH
-EyIKyjBq6DIBcChWmlXqNBh86cb1gvkx1gTNjjOSXVIFkrjvstCRomfHd7FtDmBq
-u37dhRe0VJLAVWRRn+GvV5IEJzv20RnEgdfSw8kf+M4nO9g/59z8qe+IC3g2xLD2
-q8D1rEwwnDOeYZVSkP+dt7EVkoR/hHbDdgijEocWwpKTNih4NcH0xgfcfYFbT3j+
-MNNt3EeYAjmgZNZOL/YRbxWbnol84EdQUAZ9lfkjL/n5Pd4A4/yKduK1692DAtzD
-RDPGJ5xP9g8JHM6+xvMk66ZEMFfZpnGioXfrV+2emLq8q4P+N2zJ6PREPk7r00tO
-cbFFd/RNnVLBcCjj/1aIHG2txHVB9GVkUzj7MbHID019oC2IcQU+vFfUJcs5gexr
-ntuWehXpnANwZY+kUKZWPevnUNqWsll4ITtbG7/6L20NbBADB8EXRnIyj4MzdLMN
-x/aAITZB0qq1ad9H1pH4eXp7tnzX2b3T3HZN8+PWWhhPNBFenRFiOC4VnNT6J4aS
-pZ/DMiXv5h6h17dEX3UQK4aMUurZw7Ptaj/N16MOsxTWM0jIm4De79+TfARt58Zs
-xqZ6XgkcJBiIIcnJXw4D
-=NAcA
------END PGP SIGNATURE-----
-
---NDin8bjvE/0mNLFQ--
+> Eric
+> 
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
