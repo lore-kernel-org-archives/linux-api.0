@@ -1,53 +1,67 @@
-From: Davidlohr Bueso <dave@stgolabs.net>
+From: Mike Kravetz <mike.kravetz@oracle.com>
 Subject: Re: [PATCH v4 00/10] hugetlbfs: add fallocate support
-Date: Wed, 22 Jul 2015 15:54:00 -0700
-Message-ID: <1437605640.3298.16.camel@stgolabs.net>
-References: <1437502184-14269-1-git-send-email-mike.kravetz@oracle.com>
-	 <20150722150647.2597c7e5be9ee1eecc438b6f@linux-foundation.org>
-	 <1437603594.3298.5.camel@stgolabs.net>
-	 <20150722153023.e8f15eb4e490f79cc029c8cd@linux-foundation.org>
-	 <1437604474.3298.7.camel@stgolabs.net>
-	 <20150722153753.08f0a221023706d4ed1cc575@linux-foundation.org>
-	 <1437605459.3298.14.camel@stgolabs.net>
+Date: Wed, 22 Jul 2015 16:18:30 -0700
+Message-ID: <55B024C6.8010504@oracle.com>
+References: <1437502184-14269-1-git-send-email-mike.kravetz@oracle.com>	<20150722150647.2597c7e5be9ee1eecc438b6f@linux-foundation.org>	<1437603594.3298.5.camel@stgolabs.net> <20150722153023.e8f15eb4e490f79cc029c8cd@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1437605459.3298.14.camel@stgolabs.net>
+In-Reply-To: <20150722153023.e8f15eb4e490f79cc029c8cd@linux-foundation.org>
 Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Dave Hansen <dave.hansen@linux.intel.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Aneesh Kumar <aneesh.kumar@linux.vnet.ibm.com>, Hillf Danton <hillf.zj@alibaba-inc.com>, Christoph Hellwig <hch@infradead.org>, Michal Hocko <mhocko@suse.cz>
+To: Andrew Morton <akpm@linux-foundation.org>, Davidlohr Bueso <dave@stgolabs.net>, Eric B Munson <emunson@akamai.com>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Dave Hansen <dave.hansen@linux.intel.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Aneesh Kumar <aneesh.kumar@linux.vnet.ibm.com>, Hillf Danton <hillf.zj@alibaba-inc.com>, Christoph Hellwig <hch@infradead.org>, Michal Hocko <mhocko@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2015-07-22 at 15:50 -0700, Davidlohr Bueso wrote:
-> On Wed, 2015-07-22 at 15:37 -0700, Andrew Morton wrote:
-> > On Wed, 22 Jul 2015 15:34:34 -0700 Davidlohr Bueso <dave@stgolabs.net> wrote:
-> > 
-> > > On Wed, 2015-07-22 at 15:30 -0700, Andrew Morton wrote:
-> > > > selftests is a pretty scrappy place.  It's partly a dumping ground for
-> > > > things so useful test code doesn't just get lost and bitrotted.  Partly
-> > > > a framework so people who add features can easily test them. Partly to
-> > > > provide tools to architecture maintainers when they wire up new
-> > > > syscalls and the like.
-> > > 
-> > > Yeah, ipc, for instance, also sucks _badly_ in selftests.
-> > 
-> > What testsuite should people be using for IPC?
-> 
-> The best I've found is using the ipc parts of LTP. It's caught a lot of
-> bugs in the past. Unsurprisingly, I believe Fengguang has this
-> automated.
-> 
-> Manfred also has a few for more specific purposes -- which also serve
-> for performance testing:
-> https://github.com/manfred-colorfu/ipcsemtest
-> https://github.com/manfred-colorfu/ipcscale
-> 
-> iirc Dave Hansen also had written some shm-specific tests.
+On 07/22/2015 03:30 PM, Andrew Morton wrote:
+> On Wed, 22 Jul 2015 15:19:54 -0700 Davidlohr Bueso <dave@stgolabs.net> wrote:
+>
+>>>
+>>> I didn't know that libhugetlbfs has tests.  I wonder if that makes
+>>> tools/testing/selftests/vm's hugetlbfstest harmful?
+>>
+>> Why harmful? Redundant, maybe(?).
+>
+> The presence of the in-kernel tests will cause people to add stuff to
+> them when it would be better if they were to apply that effort to
+> making libhugetlbfs better.  Or vice versa.
+>
+> Mike's work is an example.  Someone later makes a change to hugetlbfs, runs
+> the kernel selftest and says "yay, everything works", unaware that they
+> just broke fallocate support.
+>
+>> Does anyone even use selftests for
+>> hugetlbfs regression testing? Lets see, we also have these:
+>>
+>> - hugepage-{mmap,shm}.c
+>> - map_hugetlb.c
+>>
+>> There's probably a lot of room for improvement here.
+>
+> selftests is a pretty scrappy place.  It's partly a dumping ground for
+> things so useful test code doesn't just get lost and bitrotted.  Partly
+> a framework so people who add features can easily test them. Partly to
+> provide tools to architecture maintainers when they wire up new
+> syscalls and the like.
+>
+> Unless there's some good reason to retain the hugetlb part of
+> selftests, I'm thinking we should just remove it to avoid
+> distracting/misleading people.  Or possibly move the libhugetlbfs test
+> code into the kernel tree and maintain it there.
 
-I also used to rely on multiple Oracle 11g RDBMS workloads and
-benchmarks, particularly for dealing with sysv sems. Unfortunately I no
-longer have the required licenses :(
+Adding Eric as he is the libhugetlbfs maintainer.
+
+I think removing the hugetlb selftests in the kernel and pointing
+people to libhugetlbfs is the way to go.  From a very quick scan
+of the selftests, I would guess libhugetlbfs covers everything
+in those tests.
+
+I'm willing to verify the testing provided by selftests is included
+in libhugetlbfs, and remove selftests if that is the direction we
+want to take.
+
+-- 
+Mike Kravetz
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
