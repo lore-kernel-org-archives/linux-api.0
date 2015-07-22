@@ -1,251 +1,44 @@
-From: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
-Subject: Re: [PATCH -mm v9 6/8] proc: add kpageidle file
-Date: Wed, 22 Jul 2015 18:20:29 +0300
-Message-ID: <20150722152029.GL23374@esperanza>
-References: <cover.1437303956.git.vdavydov@parallels.com>
- <d7a78b72053cf529c0c9ff6cbc02ffbb3d58fe35.1437303956.git.vdavydov@parallels.com>
- <20150721163452.c1e4075a2b193bcd325fad56@linux-foundation.org>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
+Subject: Re: [PATCH V4 5/6] mm: mmap: Add mmap flag to request VM_LOCKONFAULT
+Date: Wed, 22 Jul 2015 18:45:29 +0300
+Message-ID: <20150722154529.GA9107@node.dhcp.inet.fi>
+References: <1437508781-28655-1-git-send-email-emunson@akamai.com>
+ <1437508781-28655-6-git-send-email-emunson@akamai.com>
+ <20150722112558.GC8630@node.dhcp.inet.fi>
+ <20150722143220.GB3203@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-arch-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150721163452.c1e4075a2b193bcd325fad56-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Raghavendra K T <raghavendra.kt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20150722143220.GB3203@akamai.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Eric B Munson <emunson@akamai.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, Paul Gortmaker <paul.gortmaker@windriver.com>, Chris Metcalf <cmetcalf@ezchip.com>, Guenter Roeck <linux@roeck-us.net>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 21, 2015 at 04:34:52PM -0700, Andrew Morton wrote:
-> On Sun, 19 Jul 2015 15:31:15 +0300 Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org> wrote:
+On Wed, Jul 22, 2015 at 10:32:20AM -0400, Eric B Munson wrote:
+> On Wed, 22 Jul 2015, Kirill A. Shutemov wrote:
 > 
-> > Knowing the portion of memory that is not used by a certain application
-> > or memory cgroup (idle memory) can be useful for partitioning the system
-> > efficiently, e.g. by setting memory cgroup limits appropriately.
-> > Currently, the only means to estimate the amount of idle memory provided
-> > by the kernel is /proc/PID/{clear_refs,smaps}: the user can clear the
-> > access bit for all pages mapped to a particular process by writing 1 to
-> > clear_refs, wait for some time, and then count smaps:Referenced.
-> > However, this method has two serious shortcomings:
+> > On Tue, Jul 21, 2015 at 03:59:40PM -0400, Eric B Munson wrote:
+> > > The cost of faulting in all memory to be locked can be very high when
+> > > working with large mappings.  If only portions of the mapping will be
+> > > used this can incur a high penalty for locking.
+> > > 
+> > > Now that we have the new VMA flag for the locked but not present state,
+> > > expose it as an mmap option like MAP_LOCKED -> VM_LOCKED.
 > > 
-> >  - it does not count unmapped file pages
-> >  - it affects the reclaimer logic
-> > 
-> > To overcome these drawbacks, this patch introduces two new page flags,
-> > Idle and Young, and a new proc file, /proc/kpageidle. A page's Idle flag
-> > can only be set from userspace by setting bit in /proc/kpageidle at the
-> > offset corresponding to the page, and it is cleared whenever the page is
-> > accessed either through page tables (it is cleared in page_referenced()
-> > in this case) or using the read(2) system call (mark_page_accessed()).
-> > Thus by setting the Idle flag for pages of a particular workload, which
-> > can be found e.g. by reading /proc/PID/pagemap, waiting for some time to
-> > let the workload access its working set, and then reading the kpageidle
-> > file, one can estimate the amount of pages that are not used by the
-> > workload.
-> > 
-> > The Young page flag is used to avoid interference with the memory
-> > reclaimer. A page's Young flag is set whenever the Access bit of a page
-> > table entry pointing to the page is cleared by writing to kpageidle. If
-> > page_referenced() is called on a Young page, it will add 1 to its return
-> > value, therefore concealing the fact that the Access bit was cleared.
-> > 
-> > Note, since there is no room for extra page flags on 32 bit, this
-> > feature uses extended page flags when compiled on 32 bit.
-> > 
-> > ...
-> >
-> >
-> > ...
-> >
-> > +static void kpageidle_clear_pte_refs(struct page *page)
-> > +{
-> > +	struct rmap_walk_control rwc = {
-> > +		.rmap_one = kpageidle_clear_pte_refs_one,
-> > +		.anon_lock = page_lock_anon_vma_read,
-> > +	};
+> > What is advantage over mmap() + mlock(MLOCK_ONFAULT)?
 > 
-> I think this can be static const, since `arg' is unused?  That would
-> save some cycles and stack.
+> There isn't one, it was added to maintain parity with the
+> mlock(MLOCK_LOCK) -> mmap(MAP_LOCKED) set.  I think not having will lead
+> to confusion because we have MAP_LOCKED so why don't we support
+> LOCKONFAULT from mmap as well.
 
-Good catch, thanks.
+I don't think it's ia good idea to spend bits in flags unless we have a
+reason for that.
 
-> 
-> > +	bool need_lock;
-> > +
-> > +	if (!page_mapped(page) ||
-> > +	    !page_rmapping(page))
-> > +		return;
-> > +
-> > +	need_lock = !PageAnon(page) || PageKsm(page);
-> > +	if (need_lock && !trylock_page(page))
-> 
-> Oh.  So the feature is a bit unreliable.
-> 
-> I'm not immediately seeing anything which would prevent us from using
-> plain old lock_page() here.  What's going on?
+BTW, you have typo on sparc: s/0x8000/0x80000/.
 
-A page may be locked for quite a long period of time, e.g.
-truncate_inode_pages_range() may wait until a page writeback finishes
-under the page lock. Instead of stalling kpageidle scan, we'd better
-move on to the next page. Of course, the result won't be 100% accurate.
-In fact, it isn't accurate anyway, because we skip isolated pages,
-neither can it possibly be 100% accurate, because the scan itself is not
-instant so that while we are performing it the system usage pattern
-might change. This new API is only supposed to give a good estimate of
-memory usage pattern, which could be used as a hint for adjusting the
-system configuration to improve performance.
 
-> 
-> > +		return;
-> > +
-> > +	rmap_walk(page, &rwc);
-> > +
-> > +	if (need_lock)
-> > +		unlock_page(page);
-> > +}
-> > +
-> > +static ssize_t kpageidle_read(struct file *file, char __user *buf,
-> > +			      size_t count, loff_t *ppos)
-> > +{
-> > +	u64 __user *out = (u64 __user *)buf;
-> > +	struct page *page;
-> > +	unsigned long pfn, end_pfn;
-> > +	ssize_t ret = 0;
-> > +	u64 idle_bitmap = 0;
-> > +	int bit;
-> > +
-> > +	if (*ppos & KPMMASK || count & KPMMASK)
-> > +		return -EINVAL;
-> 
-> Interface requires 8-byte aligned offset and size.
-> 
-> > +	pfn = *ppos * BITS_PER_BYTE;
-> > +	if (pfn >= max_pfn)
-> > +		return 0;
-> > +
-> > +	end_pfn = pfn + count * BITS_PER_BYTE;
-> > +	if (end_pfn > max_pfn)
-> > +		end_pfn = ALIGN(max_pfn, KPMBITS);
-> 
-> So we lose up to 63 pages.  Presumably max_pfn is well enough aligned
-> for this to not matter, dunno.
-
-ALIGN(x, a) resolves to ((x + a - 1) & ~(a - 1)), which is >= x, so we
-shouldn't loose anything.
-
-> 
-> > +	for (; pfn < end_pfn; pfn++) {
-> > +		bit = pfn % KPMBITS;
-> > +		page = kpageidle_get_page(pfn);
-> > +		if (page) {
-> > +			if (page_is_idle(page)) {
-> > +				/*
-> > +				 * The page might have been referenced via a
-> > +				 * pte, in which case it is not idle. Clear
-> > +				 * refs and recheck.
-> > +				 */
-> > +				kpageidle_clear_pte_refs(page);
-> > +				if (page_is_idle(page))
-> > +					idle_bitmap |= 1ULL << bit;
-> 
-> I don't understand what's going on here.  More details, please?
-
-The output is a bitmap, which is stored as an array of 8-byte elements,
-where byte order within each word is native, i.e. if page at pfn #i is
-idle we need to set bit #i%64 of element #i/64 of the array. I'll
-reflect this in the documentation.
-
-> 
-> > +			}
-> > +			put_page(page);
-> > +		}
-> > +		if (bit == KPMBITS - 1) {
-> > +			if (put_user(idle_bitmap, out)) {
-> > +				ret = -EFAULT;
-> > +				break;
-> > +			}
-> > +			idle_bitmap = 0;
-> > +			out++;
-> > +		}
-> > +	}
-> > +
-> > +	*ppos += (char __user *)out - buf;
-> > +	if (!ret)
-> > +		ret = (char __user *)out - buf;
-> > +	return ret;
-> > +}
-> > +
-> > +static ssize_t kpageidle_write(struct file *file, const char __user *buf,
-> > +			       size_t count, loff_t *ppos)
-> > +{
-> > +	const u64 __user *in = (const u64 __user *)buf;
-> > +	struct page *page;
-> > +	unsigned long pfn, end_pfn;
-> > +	ssize_t ret = 0;
-> > +	u64 idle_bitmap = 0;
-> > +	int bit;
-> > +
-> > +	if (*ppos & KPMMASK || count & KPMMASK)
-> > +		return -EINVAL;
-> > +
-> > +	pfn = *ppos * BITS_PER_BYTE;
-> > +	if (pfn >= max_pfn)
-> > +		return -ENXIO;
-> > +
-> > +	end_pfn = pfn + count * BITS_PER_BYTE;
-> > +	if (end_pfn > max_pfn)
-> > +		end_pfn = ALIGN(max_pfn, KPMBITS);
-> > +
-> > +	for (; pfn < end_pfn; pfn++) {
-> > +		bit = pfn % KPMBITS;
-> > +		if (bit == 0) {
-> > +			if (get_user(idle_bitmap, in)) {
-> > +				ret = -EFAULT;
-> > +				break;
-> > +			}
-> > +			in++;
-> > +		}
-> > +		if (idle_bitmap >> bit & 1) {
-> 
-> Hate it when I have to go look up a C precedence table.  This is
-> 
-> 		if ((idle_bitmap >> bit) & 1) {
-
-Fixed.
-
-Here goes the incremental patch with all the fixes:
----
-diff --git a/fs/proc/page.c b/fs/proc/page.c
-index 7ff7cba8617b..9daa6e92450f 100644
---- a/fs/proc/page.c
-+++ b/fs/proc/page.c
-@@ -362,7 +362,11 @@ static int kpageidle_clear_pte_refs_one(struct page *page,
- 
- static void kpageidle_clear_pte_refs(struct page *page)
- {
--	struct rmap_walk_control rwc = {
-+	/*
-+	 * Since rwc.arg is unused, rwc is effectively immutable, so we
-+	 * can make it static const to save some cycles and stack.
-+	 */
-+	static const struct rmap_walk_control rwc = {
- 		.rmap_one = kpageidle_clear_pte_refs_one,
- 		.anon_lock = page_lock_anon_vma_read,
- 	};
-@@ -376,7 +380,7 @@ static void kpageidle_clear_pte_refs(struct page *page)
- 	if (need_lock && !trylock_page(page))
- 		return;
- 
--	rmap_walk(page, &rwc);
-+	rmap_walk(page, (struct rmap_walk_control *)&rwc);
- 
- 	if (need_lock)
- 		unlock_page(page);
-@@ -466,7 +470,7 @@ static ssize_t kpageidle_write(struct file *file, const char __user *buf,
- 			}
- 			in++;
- 		}
--		if (idle_bitmap >> bit & 1) {
-+		if ((idle_bitmap >> bit) & 1) {
- 			page = kpageidle_get_page(pfn);
- 			if (page) {
- 				kpageidle_clear_pte_refs(page);
+-- 
+ Kirill A. Shutemov
