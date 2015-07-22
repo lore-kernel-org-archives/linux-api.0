@@ -1,45 +1,32 @@
-From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: Re: [PATCH V4 2/6] mm: mlock: Add new mlock, munlock, and
- munlockall system calls
-Date: Wed, 22 Jul 2015 11:25:16 +1000
-Message-ID: <1437528316.16792.7.camel@ellerman.id.au>
-References: <1437508781-28655-1-git-send-email-emunson@akamai.com>
-	 <1437508781-28655-3-git-send-email-emunson@akamai.com>
-	 <20150721134441.d69e4e1099bd43e56835b3c5@linux-foundation.org>
+From: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v8 2/9] nvmem: Add a simple NVMEM framework for consumers
+Date: Wed, 22 Jul 2015 08:26:36 +0100
+Message-ID: <55AF45AC.9040003@linaro.org>
+References: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org> <1437403403-4180-1-git-send-email-srinivas.kandagatla@linaro.org> <1590184041.70825.1437495942088.JavaMail.open-xchange@oxbsltgw08.schlund.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-sh-owner@vger.kernel.org>
-In-Reply-To: <20150721134441.d69e4e1099bd43e56835b3c5@linux-foundation.org>
-Sender: linux-sh-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Eric B Munson <emunson@akamai.com>, linux-mips@linux-mips.org, linux-m68k@vger.kernel.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, sparclinux@vger.kernel.org, linux-arch@vger.kernel.org, Stephen Rothwell <sfr@canb.auug.org.au>, linux-am33-list@redhat.com, Geert Uytterhoeven <geert@linux-m68k.org>, Vlastimil Babka <vbabka@suse.cz>, Guenter Roeck <linux@roeck-us.net>, linux-xtensa@linux-xtensa.org, linux-s390@vger.kernel.org, adi-buildroot-devel@lists.sourceforge.net, linux-arm-kernel@lists.infradead.org, linux-cris-kernel@axis.com, linux-parisc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-alpha@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1590184041.70825.1437495942088.JavaMail.open-xchange-0SF9iQWekqLc2Cnrm9MUdsgmgJlYmuWJ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: wxt-TNX95d0MmH7DzftRWevZcw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, s.hauer-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mporter-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, pantelis.antoniou-OWPKS81ov/FWk0Htik3J/w@public.gmane.org, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2015-07-21 at 13:44 -0700, Andrew Morton wrote:
-> On Tue, 21 Jul 2015 15:59:37 -0400 Eric B Munson <emunson@akamai.com> wrote:
-> 
-> > With the refactored mlock code, introduce new system calls for mlock,
-> > munlock, and munlockall.  The new calls will allow the user to specify
-> > what lock states are being added or cleared.  mlock2 and munlock2 are
-> > trivial at the moment, but a follow on patch will add a new mlock state
-> > making them useful.
-> > 
-> > munlock2 addresses a limitation of the current implementation.  If a
-> > user calls mlockall(MCL_CURRENT | MCL_FUTURE) and then later decides
-> > that MCL_FUTURE should be removed, they would have to call munlockall()
-> > followed by mlockall(MCL_CURRENT) which could potentially be very
-> > expensive.  The new munlockall2 system call allows a user to simply
-> > clear the MCL_FUTURE flag.
-> 
-> This is hard.  Maybe we shouldn't have wired up anything other than
-> x86.  That's what we usually do with new syscalls.
+Thanks Stefan,
 
-Yeah I think so.
+On 21/07/15 17:25, Stefan Wahren wrote:
+>> +
+>> >+ addr = of_get_property(cell_np, "reg", &len);
+>> >+ if (!addr || (len < 2 * sizeof(int))) {
+> I'm not sure, but shouldn't be sizeof(u32) more portable?
+>
+yes it makes sense, I will change it.
+>> >[...]
+>> >+
+>> >+ addr = of_get_property(cell_np, "bits", &len);
+>> >+ if (addr && len == (2 * sizeof(int))) {
+> dito
+yep.
 
-You haven't wired it up properly on powerpc, but I haven't mentioned it because
-I'd rather we did it.
-
-cheers
-
-
+--srini
