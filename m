@@ -1,7 +1,7 @@
 From: Andreas Gruenbacher <andreas.gruenbacher@gmail.com>
-Subject: [PATCH v5 13/39] richacl: Check if an acl is equivalent to a file mode
-Date: Wed, 22 Jul 2015 15:03:03 +0200
-Message-ID: <1437570209-29832-14-git-send-email-andreas.gruenbacher@gmail.com>
+Subject: [PATCH v5 14/39] richacl: Create-time inheritance
+Date: Wed, 22 Jul 2015 15:03:04 +0200
+Message-ID: <1437570209-29832-15-git-send-email-andreas.gruenbacher@gmail.com>
 References: <1437570209-29832-1-git-send-email-andreas.gruenbacher@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1437570209-29832-1-git-send-email-andreas.gruenbacher@gmail.com>
@@ -12,132 +12,183 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andreas Gruenbacher <agruenba@redhat.com>
 
-ACLs are considered equivalent to file modes if they only consist of owner@,
-group@, and everyone@ entries, the owner@ permissions do not depend on whether
-the owner is a member in the owning group, and no inheritance flags are set.
-This test is used to avoid storing richacls if the acl can be computed from the
-file permission bits.
+When a new file is created, it can inherit an acl from its parent
+directory; this is similar to how default acls work in POSIX (draft)
+ACLs.
+
+As with POSIX ACLs, if a file inherits an acl from its parent directory,
+the intersection between the create mode and the permissions granted by
+the inherited acl determines the file masks and file permission bits,
+and the umask is ignored.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- fs/richacl_base.c       | 95 +++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/richacl.h |  1 +
- 2 files changed, 96 insertions(+)
+ fs/richacl_base.c       | 69 +++++++++++++++++++++++++++++++++++++++++++++++++
+ fs/richacl_inode.c      | 62 ++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/richacl.h |  2 ++
+ 3 files changed, 133 insertions(+)
 
 diff --git a/fs/richacl_base.c b/fs/richacl_base.c
-index 3c13535..333faa9 100644
+index 333faa9..ae224b1 100644
 --- a/fs/richacl_base.c
 +++ b/fs/richacl_base.c
-@@ -374,3 +374,98 @@ richacl_chmod(struct richacl *acl, mode_t mode)
- 	return clone;
+@@ -469,3 +469,72 @@ richacl_equiv_mode(const struct richacl *acl, mode_t *mode_p)
+ 	return 0;
  }
- EXPORT_SYMBOL_GPL(richacl_chmod);
+ EXPORT_SYMBOL_GPL(richacl_equiv_mode);
 +
 +/**
-+ * richacl_equiv_mode  -  compute the mode equivalent of @acl
++ * richacl_inherit  -  compute the inherited acl of a new file
++ * @dir_acl:	acl of the containing directory
++ * @isdir:	inherit by a directory or non-directory?
 + *
-+ * An acl is considered equivalent to a file mode if it only consists of
-+ * owner@, group@, and everyone@ entries and the owner@ permissions do not
-+ * depend on whether the owner is a member in the owning group.
++ * A directory can have acl entries which files and/or directories created
++ * inside the directory will inherit.  This function computes the acl for such
++ * a new file.  If there is no inheritable acl, it will return %NULL.
 + */
-+int
-+richacl_equiv_mode(const struct richacl *acl, mode_t *mode_p)
++struct richacl *
++richacl_inherit(const struct richacl *dir_acl, int isdir)
 +{
-+	mode_t mode = *mode_p;
++	const struct richace *dir_ace;
++	struct richacl *acl = NULL;
++	struct richace *ace;
++	int count = 0;
 +
-+	/*
-+	 * The RICHACE_DELETE_CHILD flag is meaningless for non-directories, so
-+	 * we ignore it.
-+	 */
-+	unsigned int x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
-+	struct {
-+		unsigned int allowed;
-+		unsigned int defined;  /* allowed or denied */
-+	} owner = {
-+		.defined = RICHACE_POSIX_ALWAYS_ALLOWED | RICHACE_POSIX_OWNER_ALLOWED | x,
-+	}, group = {
-+		.defined = RICHACE_POSIX_ALWAYS_ALLOWED | x,
-+	}, everyone = {
-+		.defined = RICHACE_POSIX_ALWAYS_ALLOWED | x,
-+	};
-+	const struct richace *ace;
-+
-+	if (acl->a_flags & ~RICHACL_MASKED)
-+		return -1;
-+
-+	richacl_for_each_entry(ace, acl) {
-+		if (ace->e_flags & ~RICHACE_SPECIAL_WHO)
-+			return -1;
-+
-+		if (richace_is_owner(ace) || richace_is_everyone(ace)) {
-+			x = ace->e_mask & ~owner.defined;
-+			if (richace_is_allow(ace)) {
-+				unsigned int group_denied = group.defined & ~group.allowed;
-+
-+				if (x & group_denied)
-+					return -1;
-+				owner.allowed |= x;
-+			} else /* if (richace_is_deny(ace)) */ {
-+				if (x & group.allowed)
-+					return -1;
-+			}
-+			owner.defined |= x;
-+
-+			if (richace_is_everyone(ace)) {
-+				x = ace->e_mask;
-+				if (richace_is_allow(ace)) {
-+					group.allowed |= x & ~group.defined;
-+					everyone.allowed |= x & ~everyone.defined;
-+				}
-+				group.defined |= x;
-+				everyone.defined |= x;
-+			}
-+		} else if (richace_is_group(ace)) {
-+			x = ace->e_mask & ~group.defined;
-+			if (richace_is_allow(ace))
-+				group.allowed |= x;
-+			group.defined |= x;
-+		} else
-+			return -1;
++	if (isdir) {
++		richacl_for_each_entry(dir_ace, dir_acl) {
++			if (!richace_is_inheritable(dir_ace))
++				continue;
++			count++;
++		}
++		if (!count)
++			return NULL;
++		acl = richacl_alloc(count, GFP_KERNEL);
++		if (!acl)
++			return ERR_PTR(-ENOMEM);
++		ace = acl->a_entries;
++		richacl_for_each_entry(dir_ace, dir_acl) {
++			if (!richace_is_inheritable(dir_ace))
++				continue;
++			richace_copy(ace, dir_ace);
++			if (dir_ace->e_flags & RICHACE_NO_PROPAGATE_INHERIT_ACE)
++				richace_clear_inheritance_flags(ace);
++			if ((dir_ace->e_flags & RICHACE_FILE_INHERIT_ACE) &&
++			    !(dir_ace->e_flags & RICHACE_DIRECTORY_INHERIT_ACE))
++				ace->e_flags |= RICHACE_INHERIT_ONLY_ACE;
++			ace++;
++		}
++	} else {
++		richacl_for_each_entry(dir_ace, dir_acl) {
++			if (!(dir_ace->e_flags & RICHACE_FILE_INHERIT_ACE))
++				continue;
++			count++;
++		}
++		if (!count)
++			return NULL;
++		acl = richacl_alloc(count, GFP_KERNEL);
++		if (!acl)
++			return ERR_PTR(-ENOMEM);
++		ace = acl->a_entries;
++		richacl_for_each_entry(dir_ace, dir_acl) {
++			if (!(dir_ace->e_flags & RICHACE_FILE_INHERIT_ACE))
++				continue;
++			richace_copy(ace, dir_ace);
++			richace_clear_inheritance_flags(ace);
++			/*
++			 * RICHACE_DELETE_CHILD is meaningless for
++			 * non-directories, so clear it.
++			 */
++			ace->e_mask &= ~RICHACE_DELETE_CHILD;
++			ace++;
++		}
 +	}
 +
-+	if (group.allowed & ~owner.defined)
-+		return -1;
-+
-+	if (acl->a_flags & RICHACL_MASKED) {
-+		owner.allowed = acl->a_owner_mask;
-+		group.allowed &= acl->a_group_mask;
-+		everyone.allowed = acl->a_other_mask;
-+	}
-+
-+	mode = (mode & ~S_IRWXUGO) |
-+	       (richacl_mask_to_mode(owner.allowed) << 6) |
-+	       (richacl_mask_to_mode(group.allowed) << 3) |
-+		richacl_mask_to_mode(everyone.allowed);
-+
-+	/* Mask flags we can ignore */
-+	x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
-+
-+	if (((richacl_mode_to_mask(mode >> 6) ^ owner.allowed)    & ~x) ||
-+	    ((richacl_mode_to_mask(mode >> 3) ^ group.allowed)    & ~x) ||
-+	    ((richacl_mode_to_mask(mode)      ^ everyone.allowed) & ~x))
-+		return -1;
-+
-+	*mode_p = mode;
-+	return 0;
++	return acl;
 +}
-+EXPORT_SYMBOL_GPL(richacl_equiv_mode);
+diff --git a/fs/richacl_inode.c b/fs/richacl_inode.c
+index 72c461d..fd6f710 100644
+--- a/fs/richacl_inode.c
++++ b/fs/richacl_inode.c
+@@ -191,3 +191,65 @@ out:
+ 	return denied ? -EACCES : 0;
+ }
+ EXPORT_SYMBOL_GPL(richacl_permission);
++
++/**
++ * richacl_inherit_inode  -  compute inherited acl and file mode
++ * @dir_acl:	acl of the containing directory
++ * @inode:	inode of the new file (create mode in i_mode)
++ *
++ * The file permission bits in inode->i_mode must be set to the create mode by
++ * the caller.
++ *
++ * If there is an inheritable acl, the maximum permissions that the acl grants
++ * will be computed and permissions not granted by the acl will be removed from
++ * inode->i_mode.  If there is no inheritable acl, the umask will be applied
++ * instead.
++ */
++static struct richacl *
++richacl_inherit_inode(const struct richacl *dir_acl, struct inode *inode)
++{
++	struct richacl *acl;
++	mode_t mask;
++
++	acl = richacl_inherit(dir_acl, S_ISDIR(inode->i_mode));
++	if (acl) {
++		mask = inode->i_mode;
++		if (richacl_equiv_mode(acl, &mask) == 0) {
++			richacl_put(acl);
++			acl = NULL;
++		} else {
++			richacl_compute_max_masks(acl, inode->i_uid);
++			/*
++			 * Ensure that the acl will not grant any permissions
++			 * beyond the create mode.
++			 */
++			acl->a_flags |= RICHACL_MASKED;
++			acl->a_owner_mask &= richacl_mode_to_mask(inode->i_mode >> 6);
++			acl->a_group_mask &= richacl_mode_to_mask(inode->i_mode >> 3);
++			acl->a_other_mask &= richacl_mode_to_mask(inode->i_mode);
++			mask = ~S_IRWXUGO | richacl_masks_to_mode(acl);
++		}
++	} else
++		mask = ~current_umask();
++
++	inode->i_mode &= mask;
++	return acl;
++}
++
++struct richacl *richacl_create(struct inode *inode, struct inode *dir)
++{
++	struct richacl *dir_acl, *acl = NULL;
++
++	if (S_ISLNK(inode->i_mode))
++		return NULL;
++	dir_acl = get_richacl(dir);
++	if (dir_acl) {
++		if (IS_ERR(dir_acl))
++			return dir_acl;
++		acl = richacl_inherit_inode(dir_acl, inode);
++		richacl_put(dir_acl);
++	} else
++		inode->i_mode &= ~current_umask();
++	return acl;
++}
++EXPORT_SYMBOL_GPL(richacl_create);
 diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-index f59ffa73..03876cd 100644
+index 03876cd..e00bcb4 100644
 --- a/include/linux/richacl.h
 +++ b/include/linux/richacl.h
-@@ -308,6 +308,7 @@ extern unsigned int richacl_mode_to_mask(mode_t);
- extern unsigned int richacl_want_to_mask(unsigned int);
+@@ -309,8 +309,10 @@ extern unsigned int richacl_want_to_mask(unsigned int);
  extern void richacl_compute_max_masks(struct richacl *, kuid_t);
  extern struct richacl *richacl_chmod(struct richacl *, mode_t);
-+extern int richacl_equiv_mode(const struct richacl *, mode_t *);
+ extern int richacl_equiv_mode(const struct richacl *, mode_t *);
++extern struct richacl *richacl_inherit(const struct richacl *, int);
  
  /* richacl_inode.c */
  extern int richacl_permission(struct inode *, const struct richacl *, int);
++extern struct richacl *richacl_create(struct inode *, struct inode *);
+ 
+ #endif /* __RICHACL_H */
 -- 
 2.4.3
