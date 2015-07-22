@@ -1,7 +1,7 @@
 From: Andreas Gruenbacher <andreas.gruenbacher@gmail.com>
-Subject: [PATCH v5 14/39] richacl: Create-time inheritance
-Date: Wed, 22 Jul 2015 15:03:04 +0200
-Message-ID: <1437570209-29832-15-git-send-email-andreas.gruenbacher@gmail.com>
+Subject: [PATCH v5 28/39] nfsd: Keep list of acls to dispose of in compoundargs
+Date: Wed, 22 Jul 2015 15:03:18 +0200
+Message-ID: <1437570209-29832-29-git-send-email-andreas.gruenbacher@gmail.com>
 References: <1437570209-29832-1-git-send-email-andreas.gruenbacher@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1437570209-29832-1-git-send-email-andreas.gruenbacher@gmail.com>
@@ -12,183 +12,98 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andreas Gruenbacher <agruenba@redhat.com>
 
-When a new file is created, it can inherit an acl from its parent
-directory; this is similar to how default acls work in POSIX (draft)
-ACLs.
-
-As with POSIX ACLs, if a file inherits an acl from its parent directory,
-the intersection between the create mode and the permissions granted by
-the inherited acl determines the file masks and file permission bits,
-and the umask is ignored.
+We will decode acls in requests into richacls.  Even if unlikely, there can be
+more than one acl in a single request; those richacls need to be richacl_put()
+at the end of the request instead of kfree()d, so keep a list of acls in
+compoundargs for that.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- fs/richacl_base.c       | 69 +++++++++++++++++++++++++++++++++++++++++++++++++
- fs/richacl_inode.c      | 62 ++++++++++++++++++++++++++++++++++++++++++++
- include/linux/richacl.h |  2 ++
- 3 files changed, 133 insertions(+)
+ fs/nfsd/nfs4xdr.c | 26 ++++++++++++++++++++++++++
+ fs/nfsd/xdr4.h    |  6 ++++++
+ 2 files changed, 32 insertions(+)
 
-diff --git a/fs/richacl_base.c b/fs/richacl_base.c
-index 333faa9..ae224b1 100644
---- a/fs/richacl_base.c
-+++ b/fs/richacl_base.c
-@@ -469,3 +469,72 @@ richacl_equiv_mode(const struct richacl *acl, mode_t *mode_p)
- 	return 0;
+diff --git a/fs/nfsd/nfs4xdr.c b/fs/nfsd/nfs4xdr.c
+index 5463385..819a670 100644
+--- a/fs/nfsd/nfs4xdr.c
++++ b/fs/nfsd/nfs4xdr.c
+@@ -40,6 +40,7 @@
+ #include <linux/utsname.h>
+ #include <linux/pagemap.h>
+ #include <linux/sunrpc/svcauth_gss.h>
++#include <linux/richacl.h>
+ 
+ #include "idmap.h"
+ #include "acl.h"
+@@ -196,6 +197,24 @@ svcxdr_tmpalloc(struct nfsd4_compoundargs *argp, u32 len)
+ 	return tb->buf;
  }
- EXPORT_SYMBOL_GPL(richacl_equiv_mode);
-+
-+/**
-+ * richacl_inherit  -  compute the inherited acl of a new file
-+ * @dir_acl:	acl of the containing directory
-+ * @isdir:	inherit by a directory or non-directory?
-+ *
-+ * A directory can have acl entries which files and/or directories created
-+ * inside the directory will inherit.  This function computes the acl for such
-+ * a new file.  If there is no inheritable acl, it will return %NULL.
-+ */
-+struct richacl *
-+richacl_inherit(const struct richacl *dir_acl, int isdir)
-+{
-+	const struct richace *dir_ace;
-+	struct richacl *acl = NULL;
-+	struct richace *ace;
-+	int count = 0;
-+
-+	if (isdir) {
-+		richacl_for_each_entry(dir_ace, dir_acl) {
-+			if (!richace_is_inheritable(dir_ace))
-+				continue;
-+			count++;
-+		}
-+		if (!count)
-+			return NULL;
-+		acl = richacl_alloc(count, GFP_KERNEL);
-+		if (!acl)
-+			return ERR_PTR(-ENOMEM);
-+		ace = acl->a_entries;
-+		richacl_for_each_entry(dir_ace, dir_acl) {
-+			if (!richace_is_inheritable(dir_ace))
-+				continue;
-+			richace_copy(ace, dir_ace);
-+			if (dir_ace->e_flags & RICHACE_NO_PROPAGATE_INHERIT_ACE)
-+				richace_clear_inheritance_flags(ace);
-+			if ((dir_ace->e_flags & RICHACE_FILE_INHERIT_ACE) &&
-+			    !(dir_ace->e_flags & RICHACE_DIRECTORY_INHERIT_ACE))
-+				ace->e_flags |= RICHACE_INHERIT_ONLY_ACE;
-+			ace++;
-+		}
-+	} else {
-+		richacl_for_each_entry(dir_ace, dir_acl) {
-+			if (!(dir_ace->e_flags & RICHACE_FILE_INHERIT_ACE))
-+				continue;
-+			count++;
-+		}
-+		if (!count)
-+			return NULL;
-+		acl = richacl_alloc(count, GFP_KERNEL);
-+		if (!acl)
-+			return ERR_PTR(-ENOMEM);
-+		ace = acl->a_entries;
-+		richacl_for_each_entry(dir_ace, dir_acl) {
-+			if (!(dir_ace->e_flags & RICHACE_FILE_INHERIT_ACE))
-+				continue;
-+			richace_copy(ace, dir_ace);
-+			richace_clear_inheritance_flags(ace);
-+			/*
-+			 * RICHACE_DELETE_CHILD is meaningless for
-+			 * non-directories, so clear it.
-+			 */
-+			ace->e_mask &= ~RICHACE_DELETE_CHILD;
-+			ace++;
-+		}
-+	}
-+
-+	return acl;
-+}
-diff --git a/fs/richacl_inode.c b/fs/richacl_inode.c
-index 72c461d..fd6f710 100644
---- a/fs/richacl_inode.c
-+++ b/fs/richacl_inode.c
-@@ -191,3 +191,65 @@ out:
- 	return denied ? -EACCES : 0;
- }
- EXPORT_SYMBOL_GPL(richacl_permission);
-+
-+/**
-+ * richacl_inherit_inode  -  compute inherited acl and file mode
-+ * @dir_acl:	acl of the containing directory
-+ * @inode:	inode of the new file (create mode in i_mode)
-+ *
-+ * The file permission bits in inode->i_mode must be set to the create mode by
-+ * the caller.
-+ *
-+ * If there is an inheritable acl, the maximum permissions that the acl grants
-+ * will be computed and permissions not granted by the acl will be removed from
-+ * inode->i_mode.  If there is no inheritable acl, the umask will be applied
-+ * instead.
-+ */
+ 
 +static struct richacl *
-+richacl_inherit_inode(const struct richacl *dir_acl, struct inode *inode)
++svcxdr_alloc_richacl(struct nfsd4_compoundargs *argp, u32 nace)
 +{
-+	struct richacl *acl;
-+	mode_t mask;
++	struct svcxdr_richacl *acls;
 +
-+	acl = richacl_inherit(dir_acl, S_ISDIR(inode->i_mode));
-+	if (acl) {
-+		mask = inode->i_mode;
-+		if (richacl_equiv_mode(acl, &mask) == 0) {
-+			richacl_put(acl);
-+			acl = NULL;
-+		} else {
-+			richacl_compute_max_masks(acl, inode->i_uid);
-+			/*
-+			 * Ensure that the acl will not grant any permissions
-+			 * beyond the create mode.
-+			 */
-+			acl->a_flags |= RICHACL_MASKED;
-+			acl->a_owner_mask &= richacl_mode_to_mask(inode->i_mode >> 6);
-+			acl->a_group_mask &= richacl_mode_to_mask(inode->i_mode >> 3);
-+			acl->a_other_mask &= richacl_mode_to_mask(inode->i_mode);
-+			mask = ~S_IRWXUGO | richacl_masks_to_mode(acl);
-+		}
-+	} else
-+		mask = ~current_umask();
-+
-+	inode->i_mode &= mask;
-+	return acl;
-+}
-+
-+struct richacl *richacl_create(struct inode *inode, struct inode *dir)
-+{
-+	struct richacl *dir_acl, *acl = NULL;
-+
-+	if (S_ISLNK(inode->i_mode))
++	acls = kmalloc(sizeof(*acls), GFP_KERNEL);
++	if (!acls)
 +		return NULL;
-+	dir_acl = get_richacl(dir);
-+	if (dir_acl) {
-+		if (IS_ERR(dir_acl))
-+			return dir_acl;
-+		acl = richacl_inherit_inode(dir_acl, inode);
-+		richacl_put(dir_acl);
-+	} else
-+		inode->i_mode &= ~current_umask();
-+	return acl;
++	acls->acl = richacl_alloc(nace, GFP_KERNEL);
++	if (!acls->acl) {
++		kfree(acls);
++		return NULL;
++	}
++	acls->next = argp->acls;
++	argp->acls = acls;
++	return acls->acl;
 +}
-+EXPORT_SYMBOL_GPL(richacl_create);
-diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-index 03876cd..e00bcb4 100644
---- a/include/linux/richacl.h
-+++ b/include/linux/richacl.h
-@@ -309,8 +309,10 @@ extern unsigned int richacl_want_to_mask(unsigned int);
- extern void richacl_compute_max_masks(struct richacl *, kuid_t);
- extern struct richacl *richacl_chmod(struct richacl *, mode_t);
- extern int richacl_equiv_mode(const struct richacl *, mode_t *);
-+extern struct richacl *richacl_inherit(const struct richacl *, int);
++
+ /*
+  * For xdr strings that need to be passed to other kernel api's
+  * as null-terminated strings.
+@@ -4394,6 +4413,12 @@ int nfsd4_release_compoundargs(void *rq, __be32 *p, void *resp)
+ 		args->to_free = tb->next;
+ 		kfree(tb);
+ 	}
++	while (args->acls) {
++		struct svcxdr_richacl *acls = args->acls;
++		args->acls = acls->next;
++		richacl_put(acls->acl);
++		kfree(acls);
++	}
+ 	return 1;
+ }
  
- /* richacl_inode.c */
- extern int richacl_permission(struct inode *, const struct richacl *, int);
-+extern struct richacl *richacl_create(struct inode *, struct inode *);
+@@ -4412,6 +4437,7 @@ nfs4svc_decode_compoundargs(struct svc_rqst *rqstp, __be32 *p, struct nfsd4_comp
+ 	args->pagelen = rqstp->rq_arg.page_len;
+ 	args->tmpp = NULL;
+ 	args->to_free = NULL;
++	args->acls = NULL;
+ 	args->ops = args->iops;
+ 	args->rqstp = rqstp;
  
- #endif /* __RICHACL_H */
+diff --git a/fs/nfsd/xdr4.h b/fs/nfsd/xdr4.h
+index 9f99100..b698585 100644
+--- a/fs/nfsd/xdr4.h
++++ b/fs/nfsd/xdr4.h
+@@ -570,6 +570,11 @@ struct svcxdr_tmpbuf {
+ 	char buf[];
+ };
+ 
++struct svcxdr_richacl {
++	struct svcxdr_richacl *next;
++	struct richacl *acl;
++};
++
+ struct nfsd4_compoundargs {
+ 	/* scratch variables for XDR decode */
+ 	__be32 *			p;
+@@ -579,6 +584,7 @@ struct nfsd4_compoundargs {
+ 	__be32				tmp[8];
+ 	__be32 *			tmpp;
+ 	struct svcxdr_tmpbuf		*to_free;
++	struct svcxdr_richacl		*acls;
+ 
+ 	struct svc_rqst			*rqstp;
+ 
 -- 
 2.4.3
