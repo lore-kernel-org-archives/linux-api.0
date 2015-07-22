@@ -1,84 +1,65 @@
 From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [PATCH V4 2/6] mm: mlock: Add new mlock, munlock, and munlockall
- system calls
-Date: Wed, 22 Jul 2015 10:15:01 -0400
-Message-ID: <20150722141501.GA3203@akamai.com>
+Subject: Re: [PATCH V4 5/6] mm: mmap: Add mmap flag to request VM_LOCKONFAULT
+Date: Wed, 22 Jul 2015 10:32:20 -0400
+Message-ID: <20150722143220.GB3203@akamai.com>
 References: <1437508781-28655-1-git-send-email-emunson@akamai.com>
- <1437508781-28655-3-git-send-email-emunson@akamai.com>
- <20150721134441.d69e4e1099bd43e56835b3c5@linux-foundation.org>
- <1437528316.16792.7.camel@ellerman.id.au>
+ <1437508781-28655-6-git-send-email-emunson@akamai.com>
+ <20150722112558.GC8630@node.dhcp.inet.fi>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="opJtzjQTFsWo+cga"
-Return-path: <linux-alpha-owner@vger.kernel.org>
+	protocol="application/pgp-signature"; boundary="eJnRUKwClWJh1Khz"
+Return-path: <linux-parisc-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1437528316.16792.7.camel@ellerman.id.au>
-Sender: linux-alpha-owner@vger.kernel.org
-To: Michael Ellerman <mpe@ellerman.id.au>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mips@linux-mips.org, linux-m68k@vger.kernel.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, sparclinux@vger.kernel.org, linux-arch@vger.kernel.org, Stephen Rothwell <sfr@canb.auug.org.au>, linux-am33-list@redhat.com, Geert Uytterhoeven <geert@linux-m68k.org>, Vlastimil Babka <vbabka@suse.cz>, Guenter Roeck <linux@roeck-us.net>, linux-xtensa@linux-xtensa.org, linux-s390@vger.kernel.org, adi-buildroot-devel@lists.sourceforge.net, linux-arm-kernel@lists.infradead.org, linux-cris-kernel@axis.com, linux-parisc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-alpha@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
+In-Reply-To: <20150722112558.GC8630@node.dhcp.inet.fi>
+Sender: linux-parisc-owner@vger.kernel.org
+To: "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, Paul Gortmaker <paul.gortmaker@windriver.com>, Chris Metcalf <cmetcalf@ezchip.com>, Guenter Roeck <linux@roeck-us.net>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 
---opJtzjQTFsWo+cga
+--eJnRUKwClWJh1Khz
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, 22 Jul 2015, Michael Ellerman wrote:
+On Wed, 22 Jul 2015, Kirill A. Shutemov wrote:
 
-> On Tue, 2015-07-21 at 13:44 -0700, Andrew Morton wrote:
-> > On Tue, 21 Jul 2015 15:59:37 -0400 Eric B Munson <emunson@akamai.com> w=
-rote:
+> On Tue, Jul 21, 2015 at 03:59:40PM -0400, Eric B Munson wrote:
+> > The cost of faulting in all memory to be locked can be very high when
+> > working with large mappings.  If only portions of the mapping will be
+> > used this can incur a high penalty for locking.
 > >=20
-> > > With the refactored mlock code, introduce new system calls for mlock,
-> > > munlock, and munlockall.  The new calls will allow the user to specify
-> > > what lock states are being added or cleared.  mlock2 and munlock2 are
-> > > trivial at the moment, but a follow on patch will add a new mlock sta=
-te
-> > > making them useful.
-> > >=20
-> > > munlock2 addresses a limitation of the current implementation.  If a
-> > > user calls mlockall(MCL_CURRENT | MCL_FUTURE) and then later decides
-> > > that MCL_FUTURE should be removed, they would have to call munlockall=
-()
-> > > followed by mlockall(MCL_CURRENT) which could potentially be very
-> > > expensive.  The new munlockall2 system call allows a user to simply
-> > > clear the MCL_FUTURE flag.
-> >=20
-> > This is hard.  Maybe we shouldn't have wired up anything other than
-> > x86.  That's what we usually do with new syscalls.
+> > Now that we have the new VMA flag for the locked but not present state,
+> > expose it as an mmap option like MAP_LOCKED -> VM_LOCKED.
 >=20
-> Yeah I think so.
->=20
-> You haven't wired it up properly on powerpc, but I haven't mentioned it b=
-ecause
-> I'd rather we did it.
->=20
-> cheers
+> What is advantage over mmap() + mlock(MLOCK_ONFAULT)?
 
-It looks like I will be spinning a V5, so I will drop all but the x86
-system calls additions in that version.
+There isn't one, it was added to maintain parity with the
+mlock(MLOCK_LOCK) -> mmap(MAP_LOCKED) set.  I think not having will lead
+to confusion because we have MAP_LOCKED so why don't we support
+LOCKONFAULT from mmap as well.
 
---opJtzjQTFsWo+cga
+
+--eJnRUKwClWJh1Khz
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: Digital signature
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1
 
-iQIcBAEBAgAGBQJVr6VlAAoJELbVsDOpoOa95lcP/09wvimQwXtTG/OgMLsgEPaz
-FVL4uSMeiSaPdcdYp1Qp+ie80X/Ve92le8uJ9pcRKV3+cK2xP8OiOQQQwz57cBU8
-MIzkJPycm2gww6DRwYVjXhUJH2FMb1KK1vQALVWwh0mUAkRvpi4T7mtxSzmRUD+V
-TEw4dIBmK3dEorWA7duy9L/8juLu/j2kd3GzFnd5vp7q5HDb+tJrBD+I1jos2dlQ
-KqYzU5vCmPC11pc2TzzFkXx6hGux1Rj4y/7jUMID14Hi+Ql0dQGwMo6kcMmdxS+P
-kULToMPhnlDZIAfNOpfanHUsnzLPy4UVJ2ecYHXte7Yj4uxU9NXf6Dli47/iZK4H
-lp+MUwmXEQsoQTqwUWO36Hcpu5aKHQzbmz3qeNwLe37ZauHahT7GSYR8ZrntQo2v
-oQs9zdeLt2enFwC0QSubvRtIAEbpvnWvup0lD89fEFMubri6IFKFFMuSIr9kNBS0
-6jcxjzbH03cDgnrlAEb0k54nblsgCRoagmHpqZH+TzAKlLqUXpIeqVUnkjXrclkg
-XBlxVwh2m0LvFFWnTZ/AoXmZif91GBNQw+ZPkju+iRs8r3YtjH3Pv2aZL4tjDFzA
-/Gyv+WSvZ3NjakBejr+qzZiET/MSEmX1agUJo/2sd0QUL/z0Jk1gConPgmjaoFCO
-UoTgStn2fZdwMTcy6Lyt
-=nv7P
+iQIcBAEBAgAGBQJVr6l0AAoJELbVsDOpoOa98fUQANDd9dNcrulIgLSf+ajZqiUo
+50UtNRMATvsiEBAEyJ8CwGzwUBQIYwHDU9LU28NUSZCgYJpGiN+PmJ61ZaU3f63x
+Wps5ZlPg1MvY/IbHLmYTMD6UiXPa7zsAjTFNA6Fi0MwCjyLphtK6jqf8EhsoOLSo
+YFsTccyuOfqJrbk/fXi3ioNPFVIkHpwNcdL1+sYOJf3Wkf8FBBnlvEMnOSmtw7GC
+Uont1PBKFNeUNmk/sxxLDgJ0vwMx09sjfjYX+8ZOxS0E1JjeflHTSITsPeWt2/AI
+0Qm0lxu0bZ62nnt8zvBVcCAoImIjFNgNnqxQwfKfb5kYgiR0c8ZSyOOuiGxugwI/
+TKBkVU/e34Xc43UkmnseBl8SFUW1tF5eLLIvFt1apJ8ygrr4M4uIJIQV4UMSNVLG
+VEV5c08dN91BRjDesU3EJ1vtPXK6avkZokkbNWmeoIQ70wOD2KSJurs0t5dFLtBw
+t8t27CTYo/Fpg9kyLsgHzTqf4cH+L0FqVHJ4oQNU2OZvwvW5odyztgDdQV9KhEvf
+k/MNlOTNpD8idmgCBSpVeReKAWkQEwRaB5QZWP9X4axdR6r7HwGvV3lWbwBpwa5i
+LksIegF8VdBCnD8SibMXl37buy8oPlop5arIjvRHi8VMz6AhRK9OH1T/Mn0+yAIy
+yBmHM0EALawWdDffUN1r
+=GpJe
 -----END PGP SIGNATURE-----
 
---opJtzjQTFsWo+cga--
+--eJnRUKwClWJh1Khz--
