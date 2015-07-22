@@ -1,87 +1,107 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH V4 4/6] mm: mlock: Introduce VM_LOCKONFAULT and add mlock
- flags to enable it
-Date: Wed, 22 Jul 2015 12:03:31 +0200
-Message-ID: <55AF6A73.1080500@suse.cz>
-References: <1437508781-28655-1-git-send-email-emunson@akamai.com> <1437508781-28655-5-git-send-email-emunson@akamai.com>
+From: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+Subject: Re: [PATCH -mm v9 4/8] proc: add kpagecgroup file
+Date: Wed, 22 Jul 2015 13:33:06 +0300
+Message-ID: <20150722103306.GJ23374@esperanza>
+References: <cover.1437303956.git.vdavydov@parallels.com>
+ <679498f8d3f87c1ee57b7c3b58382193c9046b6a.1437303956.git.vdavydov@parallels.com>
+ <20150721163433.618855e1f61536a09dfac30b@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1437508781-28655-5-git-send-email-emunson@akamai.com>
-Sender: owner-linux-mm@kvack.org
-To: Eric B Munson <emunson@akamai.com>, Andrew Morton <akpm@linux-foundation.org>
-Cc: Michal Hocko <mhocko@suse.cz>, Jonathan Corbet <corbet@lwn.net>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, dri-devel@lists.freedesktop.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150721163433.618855e1f61536a09dfac30b-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Andres Lagar-Cavilla <andreslc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Raghavendra K T <raghavendra.kt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, Greg Thelen <gthelen-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michel Lespinasse <walken-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 07/21/2015 09:59 PM, Eric B Munson wrote:
-> The cost of faulting in all memory to be locked can be very high when
-> working with large mappings.  If only portions of the mapping will be
-> used this can incur a high penalty for locking.
->
-> For the example of a large file, this is the usage pattern for a large
-> statical language model (probably applies to other statical or graphical
-> models as well).  For the security example, any application transacting
-> in data that cannot be swapped out (credit card data, medical records,
-> etc).
->
-> This patch introduces the ability to request that pages are not
-> pre-faulted, but are placed on the unevictable LRU when they are finally
-> faulted in.  This can be done area at a time via the
-> mlock2(MLOCK_ONFAULT) or the mlockall(MCL_ONFAULT) system calls.  These
-> calls can be undone via munlock2(MLOCK_ONFAULT) or
-> munlockall2(MCL_ONFAULT).
->
-> Applying the VM_LOCKONFAULT flag to a mapping with pages that are
-> already present required the addition of a function in gup.c to pin all
-> pages which are present in an address range.  It borrows heavily from
-> __mm_populate().
->
-> To keep accounting checks out of the page fault path, users are billed
-> for the entire mapping lock as if MLOCK_LOCKED was used.
+On Tue, Jul 21, 2015 at 04:34:33PM -0700, Andrew Morton wrote:
+> On Sun, 19 Jul 2015 15:31:13 +0300 Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org> wrote:
+> 
+> > /proc/kpagecgroup contains a 64-bit inode number of the memory cgroup
+> > each page is charged to, indexed by PFN. Having this information is
+> > useful for estimating a cgroup working set size.
+> > 
+> > The file is present if CONFIG_PROC_PAGE_MONITOR && CONFIG_MEMCG.
+> >
+> > ...
+> >
+> > @@ -225,10 +226,62 @@ static const struct file_operations proc_kpageflags_operations = {
+> >  	.read = kpageflags_read,
+> >  };
+> >  
+> > +#ifdef CONFIG_MEMCG
+> > +static ssize_t kpagecgroup_read(struct file *file, char __user *buf,
+> > +				size_t count, loff_t *ppos)
+> > +{
+> > +	u64 __user *out = (u64 __user *)buf;
+> > +	struct page *ppage;
+> > +	unsigned long src = *ppos;
+> > +	unsigned long pfn;
+> > +	ssize_t ret = 0;
+> > +	u64 ino;
+> > +
+> > +	pfn = src / KPMSIZE;
+> > +	count = min_t(unsigned long, count, (max_pfn * KPMSIZE) - src);
+> > +	if (src & KPMMASK || count & KPMMASK)
+> > +		return -EINVAL;
+> 
+> The user-facing documentation should explain that reads must be
+> performed in multiple-of-8 sizes.
 
-Hi,
+It does. It's in the end of Documentation/vm/pagemap.c:
 
-I think you should include a complete description of which transitions 
-for vma states and mlock2/munlock2 flags applied on them are valid and 
-what they do. It will also help with the manpages.
-You explained some to Jon in the last thread, but I think there should 
-be a canonical description in changelog (if not also Documentation, if 
-mlock is covered there).
+: Other notes:
+: 
+: Reading from any of the files will return -EINVAL if you are not starting
+: the read on an 8-byte boundary (e.g., if you sought an odd number of bytes
+: into the file), or if the size of the read is not a multiple of 8 bytes.
 
-For example the scenario Jon asked, what happens after a 
-mlock2(MLOCK_ONFAULT) followed by mlock2(MLOCK_LOCKED), and that the 
-answer is "nothing". Your promised code comment for apply_vma_flags() 
-doesn't suffice IMHO (and I'm not sure it's there, anyway?).
+> 
+> > +	while (count > 0) {
+> > +		if (pfn_valid(pfn))
+> > +			ppage = pfn_to_page(pfn);
+> > +		else
+> > +			ppage = NULL;
+> > +
+> > +		if (ppage)
+> > +			ino = page_cgroup_ino(ppage);
+> > +		else
+> > +			ino = 0;
+> > +
+> > +		if (put_user(ino, out)) {
+> > +			ret = -EFAULT;
+> 
+> Here we do the usual procfs violation of read() behaviour.  read()
+> normally only returns an error if it read nothing.  This code will
+> transfer a megabyte then return -EFAULT so userspace doesn't know that
+> it got that megabyte.
 
-But the more I think about the scenario and your new VM_LOCKONFAULT vma 
-flag, it seems awkward to me. Why should munlocking at all care if the 
-vma was mlocked with MLOCK_LOCKED or MLOCK_ONFAULT? In either case the 
-result is that all pages currently populated are munlocked. So the flags 
-for munlock2 should be unnecessary.
+Yeah, that's how it works. I did it preliminary for /proc/kpagecgroup to
+work exactly like /proc/kpageflags and /proc/kpagecount.
 
-I also think VM_LOCKONFAULT is unnecessary. VM_LOCKED should be enough - 
-see how you had to handle the new flag in all places that had to handle 
-the old flag? I think the information whether mlock was supposed to 
-fault the whole vma is obsolete at the moment mlock returns. VM_LOCKED 
-should be enough for both modes, and the flag to mlock2 could just 
-control whether the pre-faulting is done.
+FWIW, the man page I have on my system already warns about this
+peculiarity of read(2):
 
-So what should be IMHO enough:
-- munlock can stay without flags
-- mlock2 has only one new flag MLOCK_ONFAULT. If specified, pre-faulting 
-is not done, just set VM_LOCKED and mlock pages already present.
-- same with mmap(MAP_LOCKONFAULT) (need to define what happens when both 
-MAP_LOCKED and MAP_LOCKONFAULT are specified).
+: On error, -1 is returned, and errno is set appropriately. In this
+: case, it is left unspecified whether the file position (if any)
+: changes.
 
-Now mlockall(MCL_FUTURE) muddles the situation in that it stores the 
-information for future VMA's in current->mm->def_flags, and this 
-def_flags would need to distinguish VM_LOCKED with population and 
-without. But that could be still solvable without introducing a new vma 
-flag everywhere.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> 
+> That's easy to fix, but procfs files do this all over the place anyway :(
+> 
+> > +			break;
+> > +		}
+> > +
+> > +		pfn++;
+> > +		out++;
+> > +		count -= KPMSIZE;
+> > +	}
+> > +
+> > +	*ppos += (char __user *)out - buf;
+> > +	if (!ret)
+> > +		ret = (char __user *)out - buf;
+> > +	return ret;
+> > +}
+> > +
+> 
