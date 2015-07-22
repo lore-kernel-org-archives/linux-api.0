@@ -1,136 +1,70 @@
-From: Andreas Gruenbacher <andreas.gruenbacher@gmail.com>
-Subject: [PATCH v5 01/39] vfs: Add IS_ACL() and IS_RICHACL() tests
-Date: Wed, 22 Jul 2015 15:02:51 +0200
-Message-ID: <1437570209-29832-2-git-send-email-andreas.gruenbacher@gmail.com>
-References: <1437570209-29832-1-git-send-email-andreas.gruenbacher@gmail.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1437570209-29832-1-git-send-email-andreas.gruenbacher@gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org, samba-technical@lists.samba.org, linux-security-module@vger.kernel.org, Andreas Gruenbacher <agruenba@redhat.com>
+From: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+Subject: Re: [PATCH RFC] vfs: add a O_NOMTIME flag
+Date: Wed, 22 Jul 2015 15:47:13 +0200
+Message-ID: <20150722134713.GB20106@amd>
+References: <20150511144719.GA14088@thunk.org>
+ <alpine.DEB.2.00.1505110920520.28239@cobra.newdream.net>
+ <20150511231021.GC14088@thunk.org>
+ <20150512050821.GA9404@chicago.guarana.org>
+ <5551E7EB.8040301@gmail.com>
+ <21842.1555.38099.868100@quad.stoffel.home>
+ <20150512143637.GA6370@fieldses.org>
+ <20150513083951.5eb63bc0@notabene.brown>
+ <20150714131300.GA6804@amd>
+ <20150715145456.0376796b@noble>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20150715145456.0376796b@noble>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: NeilBrown <neilb-IBi9RG/b67k@public.gmane.org>
+Cc: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, John Stoffel <john-HgN6juyGXH5AfugRpC6u6w@public.gmane.org>, Austin S Hemmelgarn <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kevin Easton <kevin-RFfraI6bZkdAfugRpC6u6w@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Sage Weil <sage-BnTBU8nroG7k1uMJSBkQmQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linux FS-devel Mailing List <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API Mailing List <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Andreas Gruenbacher <agruenba@redhat.com>
+On Wed 2015-07-15 14:54:56, NeilBrown wrote:
+> On Tue, 14 Jul 2015 15:13:00 +0200 Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org> wrote:
+> 
+> > Hi!
+> > 
+> > > BTW When you "swap" to a file the mtime doesn't get updated.  No one seems to
+> > > complain about that.  I guess it is a rather narrow use-case though.
+> > 
+> > Actually yes, I'd like to complain.
+> > 
+> > It was not swap, it was mount -o loop, but I guess that's the same
+> > case. Then rsync refused to work on that file... and being on slow ARM
+> > system it took me a while to figure out WTF is going on.
+> > 
+> > So yes, we have problems with mtime, and yes, they matter.
+> > 									Pavel
+> 
+> Odd...
+> I assume you mean
+>   mount -o loop /some/file  /mountpoint
+> 
+> and then when you write to the filesystem on /mountpoint the mtime
+> of /some/file doesn't get updated?
+> I think it should.
+>  drivers/block/loop.c uses vfs_iter_write() to write to a file.
+>  That calls f_op->write_iter which will typically call
+>  generic_file_write_iter() which will call file_update_time() to update
+>  the time stamps.
 
-The vfs does not apply the umask for file systems that support acls. The test
-used for this used to be called IS_POSIXACL(). Switch to a new IS_ACL() test to
-check for either posix acls or richacls instead. Add a new MS_RICHACL flag and
-IS_RICHACL() test for richacls alone. The IS_POSIXACL() test is still needed
-by file systems that specifically support POSIX ACLs, like nfsd.
+Yes, that. I'm pretty sure I seen it, but it was probably on 2.6.X
+kernel... Does it make sense to try to reproduce it on the old kernel?
 
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
----
- fs/Kconfig              |  3 +++
- fs/namei.c              |  8 ++++----
- include/linux/fs.h      | 12 ++++++++++++
- include/uapi/linux/fs.h |  3 ++-
- 4 files changed, 21 insertions(+), 5 deletions(-)
+> What filesystem was /some/file on?
 
-diff --git a/fs/Kconfig b/fs/Kconfig
-index 011f433..3e09c06 100644
---- a/fs/Kconfig
-+++ b/fs/Kconfig
-@@ -59,6 +59,9 @@ endif # BLOCK
- config FS_POSIX_ACL
- 	def_bool n
- 
-+config FS_RICHACL
-+	def_bool n
-+
- config EXPORTFS
- 	tristate
- 
-diff --git a/fs/namei.c b/fs/namei.c
-index ae4e4c1..23dfaae 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -2766,7 +2766,7 @@ static int atomic_open(struct nameidata *nd, struct dentry *dentry,
- 	}
- 
- 	mode = op->mode;
--	if ((open_flag & O_CREAT) && !IS_POSIXACL(dir))
-+	if ((open_flag & O_CREAT) && !IS_ACL(dir))
- 		mode &= ~current_umask();
- 
- 	excl = (open_flag & (O_EXCL | O_CREAT)) == (O_EXCL | O_CREAT);
-@@ -2950,7 +2950,7 @@ static int lookup_open(struct nameidata *nd, struct path *path,
- 	/* Negative dentry, just create the file */
- 	if (!dentry->d_inode && (op->open_flag & O_CREAT)) {
- 		umode_t mode = op->mode;
--		if (!IS_POSIXACL(dir->d_inode))
-+		if (!IS_ACL(dir->d_inode))
- 			mode &= ~current_umask();
- 		/*
- 		 * This write is needed to ensure that a
-@@ -3521,7 +3521,7 @@ retry:
- 	if (IS_ERR(dentry))
- 		return PTR_ERR(dentry);
- 
--	if (!IS_POSIXACL(path.dentry->d_inode))
-+	if (!IS_ACL(path.dentry->d_inode))
- 		mode &= ~current_umask();
- 	error = security_path_mknod(&path, dentry, mode, dev);
- 	if (error)
-@@ -3590,7 +3590,7 @@ retry:
- 	if (IS_ERR(dentry))
- 		return PTR_ERR(dentry);
- 
--	if (!IS_POSIXACL(path.dentry->d_inode))
-+	if (!IS_ACL(path.dentry->d_inode))
- 		mode &= ~current_umask();
- 	error = security_path_mkdir(&path, dentry, mode);
- 	if (!error)
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index cc008c3..44e696e 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1770,6 +1770,12 @@ struct super_operations {
- #define IS_IMMUTABLE(inode)	((inode)->i_flags & S_IMMUTABLE)
- #define IS_POSIXACL(inode)	__IS_FLG(inode, MS_POSIXACL)
- 
-+#ifdef CONFIG_FS_RICHACL
-+#define IS_RICHACL(inode)	__IS_FLG(inode, MS_RICHACL)
-+#else
-+#define IS_RICHACL(inode)	0
-+#endif
-+
- #define IS_DEADDIR(inode)	((inode)->i_flags & S_DEAD)
- #define IS_NOCMTIME(inode)	((inode)->i_flags & S_NOCMTIME)
- #define IS_SWAPFILE(inode)	((inode)->i_flags & S_SWAPFILE)
-@@ -1783,6 +1789,12 @@ struct super_operations {
- 				 (inode)->i_rdev == WHITEOUT_DEV)
- 
- /*
-+ * IS_ACL() tells the VFS to not apply the umask
-+ * and use check_acl for acl permission checks when defined.
-+ */
-+#define IS_ACL(inode)		__IS_FLG(inode, MS_POSIXACL | MS_RICHACL)
-+
-+/*
-  * Inode state bits.  Protected by inode->i_lock
-  *
-  * Three bits determine the dirty state of the inode, I_DIRTY_SYNC,
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 9b964a5..6ac6bc9 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -81,7 +81,7 @@ struct inodes_stat_t {
- #define MS_VERBOSE	32768	/* War is peace. Verbosity is silence.
- 				   MS_VERBOSE is deprecated. */
- #define MS_SILENT	32768
--#define MS_POSIXACL	(1<<16)	/* VFS does not apply the umask */
-+#define MS_POSIXACL	(1<<16)	/* Supports POSIX ACLs */
- #define MS_UNBINDABLE	(1<<17)	/* change to unbindable */
- #define MS_PRIVATE	(1<<18)	/* change to private */
- #define MS_SLAVE	(1<<19)	/* change to slave */
-@@ -91,6 +91,7 @@ struct inodes_stat_t {
- #define MS_I_VERSION	(1<<23) /* Update inode I_version field */
- #define MS_STRICTATIME	(1<<24) /* Always perform atime updates */
- #define MS_LAZYTIME	(1<<25) /* Update the on-disk [acm]times lazily */
-+#define MS_RICHACL	(1<<26) /* Supports richacls */
- 
- /* These sb flags are internal to the kernel */
- #define MS_NOSEC	(1<<28)
+Very probably VFAT.
+
+> I just did some testing on ext4 and it seems to do the right thing
+> mtime gets updated.
+
+Yes, I tried here, and it seems to be ok.
+
+Thanks,
+									Pavel
 -- 
-2.4.3
-
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
