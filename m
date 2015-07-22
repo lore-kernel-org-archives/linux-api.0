@@ -1,55 +1,107 @@
 From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH v4 00/10] hugetlbfs: add fallocate support
-Date: Wed, 22 Jul 2015 15:03:14 -0700
-Message-ID: <20150722150314.8c68d1715641c5533220f092@linux-foundation.org>
+Subject: Re: [PATCH v4 01/10] mm/hugetlb: add cache of descriptors to
+ resv_map for region_add
+Date: Wed, 22 Jul 2015 15:03:27 -0700
+Message-ID: <20150722150327.d61964bcc129ccd190514297@linux-foundation.org>
 References: <1437502184-14269-1-git-send-email-mike.kravetz@oracle.com>
+	<1437502184-14269-2-git-send-email-mike.kravetz@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1437502184-14269-1-git-send-email-mike.kravetz@oracle.com>
+In-Reply-To: <1437502184-14269-2-git-send-email-mike.kravetz@oracle.com>
 Sender: owner-linux-mm@kvack.org
 To: Mike Kravetz <mike.kravetz@oracle.com>
 Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Dave Hansen <dave.hansen@linux.intel.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Davidlohr Bueso <dave@stgolabs.net>, Aneesh Kumar <aneesh.kumar@linux.vnet.ibm.com>, Hillf Danton <hillf.zj@alibaba-inc.com>, Christoph Hellwig <hch@infradead.org>, Michal Hocko <mhocko@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 21 Jul 2015 11:09:34 -0700 Mike Kravetz <mike.kravetz@oracle.com> wrote:
+On Tue, 21 Jul 2015 11:09:35 -0700 Mike Kravetz <mike.kravetz@oracle.com> wrote:
 
-> Changes in this revision address the minor comment and function name
-> issues brought up by Naoya Horiguchi.  Patch set is also rebased on
-> current "mmotm/since-4.1".  This revision does not introduce any
-> functional changes.
+> fallocate hole punch will want to remove a specific range of
+> pages.  When pages are removed, their associated entries in
+> the region/reserve map will also be removed.  This will break
+> an assumption in the region_chg/region_add calling sequence.
+> If a new region descriptor must be allocated, it is done as
+> part of the region_chg processing.  In this way, region_add
+> can not fail because it does not need to attempt an allocation.
 > 
-> As suggested during the RFC process, tests have been proposed to
-> libhugetlbfs as described at:
-> http://librelist.com/browser//libhugetlbfs/2015/6/25/patch-tests-add-tests-for-fallocate-system-call/
-> fallocate(2) man page modifications are also necessary to specify
-> that fallocate for hugetlbfs only operates on whole pages.  This
-> change will be submitted once the code has stabilized and been
-> proposed for merging.
+> To prepare for fallocate hole punch, create a "cache" of
+> descriptors that can be used by region_add if necessary.
+> region_chg will ensure there are sufficient entries in the
+> cache.  It will be necessary to track the number of in progress
+> add operations to know a sufficient number of descriptors
+> reside in the cache.  A new routine region_abort is added to
+> adjust this in progress count when add operations are aborted.
+> vma_abort_reservation is also added for callers creating
+> reservations with vma_needs_reservation/vma_commit_reservation.
 > 
-> hugetlbfs is used today by applications that want a high degree of
-> control over huge page usage.  Often, large hugetlbfs files are used
-> to map a large number huge pages into the application processes.
-> The applications know when page ranges within these large files will
-> no longer be used, and ideally would like to release them back to
-> the subpool or global pools for other uses.  The fallocate() system
-> call provides an interface for preallocation and hole punching within
-> files.  This patch set adds fallocate functionality to hugetlbfs.
-> 
-> v4:
->   Renamed vma_abort_reservation() to vma_end_reservation().
+> ...
+>
+> --- a/include/linux/hugetlb.h
+> +++ b/include/linux/hugetlb.h
+> @@ -35,6 +35,9 @@ struct resv_map {
+>  	struct kref refs;
+>  	spinlock_t lock;
+>  	struct list_head regions;
+> +	long adds_in_progress;
+> +	struct list_head rgn_cache;
+> +	long rgn_cache_count;
+>  };
+
+Linux style is to spell words out fully: rgn->region.  One advantage of
+doing this is that we get consistency: when there's no doubt about how
+a thing is spelled we don't end up with various different terms for the
+same thing.  Note that we already have resv_map.regions and struct
+file_region.
+
+To avoid a respin I think I'll just do a s/rgn/region/g on the patches
+then take a look for 80 col overflow - shout at me if you dislike that.
+
+And yes, resv_map should have been called reservation_map.  I suck.
+
+And there's region_chg.  Who wrote this stuff.
+
+As an off-topic cleanup, resv_map and its associated stuff could be
+moved out of include/linux/hugetlb.h and made private to hugetlb.c with
+some minor changes.
+
+Finally, the data structure definition site is a great place at which
+to document the overall design.  What the fields do, how they interact,
+locking design, etc.  eg, what data structure is at
+resv_map.region_cache, how is it managed, what purpose does it serve
+etc.
+
+And adds_in_progress is interesting.  I see the comment over
+region_abort() (rgn_abort?!) but haven't quite soaked that in yet.
+
 >
 > ...
 >
-> v3 patch series:
-> Reviewed-by: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
-> Acked-by: Hillf Danton <hillf.zj@alibaba-inc.com>
+> @@ -312,11 +339,16 @@ static long region_add(struct resv_map *resv, long f, long t)
+>   * so that the subsequent region_add call will have all the
+>   * regions it needs and will not fail.
+>   *
+> + * Upon entry, region_chg will also examine the cache of
+> + * region descriptors associated with the map.  If there
 
-eek.  Please don't hide the reviews and acks in [0/n] like this.  I
-don't expect to see them there, which causes me to park the patch
-series until I'm feeling awake enough to undertake the patchset's first
-ever review.
+"are"
+
+> + * not enough descriptors cached, one will be allocated
+> + * for the in progress add operation.
+> + *
+>   * Returns the number of huge pages that need to be added
+>   * to the existing reservation map for the range [f, t).
+>   * This number is greater or equal to zero.  -ENOMEM is
+> - * returned if a new file_region structure is needed and can
+> - * not be allocated.
+> + * returned if a new file_region structure or cache entry
+> + * is needed and can not be allocated.
+>   */
+>  static long region_chg(struct resv_map *resv, long f, long t)
+>  {
+>
+> ...
+>
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
