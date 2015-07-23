@@ -1,48 +1,43 @@
-From: David Rientjes <rientjes@google.com>
-Subject: Re: [PATCH v4 00/10] hugetlbfs: add fallocate support
-Date: Wed, 22 Jul 2015 17:05:20 -0700 (PDT)
-Message-ID: <alpine.DEB.2.10.1507221701580.14953@chino.kir.corp.google.com>
-References: <1437502184-14269-1-git-send-email-mike.kravetz@oracle.com> <20150722150647.2597c7e5be9ee1eecc438b6f@linux-foundation.org> <1437603594.3298.5.camel@stgolabs.net> <20150722153023.e8f15eb4e490f79cc029c8cd@linux-foundation.org> <55B024C6.8010504@oracle.com>
- <1437609241.3298.19.camel@stgolabs.net>
+From: Ralf Baechle <ralf@linux-mips.org>
+Subject: Re: [PATCH V4 2/6] mm: mlock: Add new mlock, munlock, and munlockall
+ system calls
+Date: Thu, 23 Jul 2015 08:58:31 +0200
+Message-ID: <20150723065830.GA5919@linux-mips.org>
+References: <1437508781-28655-1-git-send-email-emunson@akamai.com>
+ <1437508781-28655-3-git-send-email-emunson@akamai.com>
+ <20150721134441.d69e4e1099bd43e56835b3c5@linux-foundation.org>
+ <1437528316.16792.7.camel@ellerman.id.au>
+ <20150722141501.GA3203@akamai.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1437609241.3298.19.camel@stgolabs.net>
+Content-Disposition: inline
+In-Reply-To: <20150722141501.GA3203@akamai.com>
 Sender: owner-linux-mm@kvack.org
-To: Davidlohr Bueso <dave@stgolabs.net>
-Cc: Mike Kravetz <mike.kravetz@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, Eric B Munson <emunson@akamai.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Dave Hansen <dave.hansen@linux.intel.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Hugh Dickins <hughd@google.com>, Aneesh Kumar <aneesh.kumar@linux.vnet.ibm.com>, Hillf Danton <hillf.zj@alibaba-inc.com>, Christoph Hellwig <hch@infradead.org>, Michal Hocko <mhocko@suse.cz>
+To: Eric B Munson <emunson@akamai.com>
+Cc: Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, linux-mips@linux-mips.org, linux-m68k@vger.kernel.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, sparclinux@vger.kernel.org, linux-arch@vger.kernel.org, Stephen Rothwell <sfr@canb.auug.org.au>, linux-am33-list@redhat.com, Geert Uytterhoeven <geert@linux-m68k.org>, Vlastimil Babka <vbabka@suse.cz>, Guenter Roeck <linux@roeck-us.net>, linux-xtensa@linux-xtensa.org, linux-s390@vger.kernel.org, adi-buildroot-devel@lists.sourceforge.net, linux-arm-kernel@lists.infradead.org, linux-cris-kernel@axis.com, linux-parisc@vger.kernel.orglin
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 22 Jul 2015, Davidlohr Bueso wrote:
+On Wed, Jul 22, 2015 at 10:15:01AM -0400, Eric B Munson wrote:
 
-> fwiw, I've been trying to push people towards this for a while. Ie:
+> > 
+> > You haven't wired it up properly on powerpc, but I haven't mentioned it because
+> > I'd rather we did it.
+> > 
+> > cheers
 > 
-> commit 15610c86fa83ff778eb80d3cfaa71d6acceb628a
-> Author: Davidlohr Bueso <davidlohr@hp.com>
-> Date:   Wed Sep 11 14:21:48 2013 -0700
-> 
->     hugepage: mention libhugetlbfs in doc
->     
->     Explicitly mention/recommend using the libhugetlbfs test cases when
->     changing related kernel code.  Developers that are unaware of the project
->     can easily miss this and introduce potential regressions that may or may
->     not be caught by community review.
->     
->     Also do some cleanups that make the document visually easier to view at a
->     first glance.
->     
->     Signed-off-by: Davidlohr Bueso <davidlohr@hp.com>
->     Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
->     Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
-> 
-> But generally speaking, I doubt this doc is read much.
-> 
+> It looks like I will be spinning a V5, so I will drop all but the x86
+> system calls additions in that version.
 
-The mmap(2) man page cites it specifically as the source of information on 
-MAP_HUGETLB and it, in turn, directs people to 
-tools/testing/selftests/vm/map_hugetlb.c.  It also mentions libhugetlbfs 
-as a result of your patch, so perhaps change the man page to point people 
-directly there?
+The MIPS bits are looking good however, so
+
+Acked-by: Ralf Baechle <ralf@linux-mips.org>
+
+With my ack, will you keep them or maybe carry them as a separate patch?
+
+Cheers,
+
+  Ralf
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
