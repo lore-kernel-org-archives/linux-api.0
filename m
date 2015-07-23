@@ -1,76 +1,110 @@
-From: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
-Subject: Re: [PATCH v8 1/9] nvmem: Add a simple NVMEM framework for nvmem
- providers
-Date: Thu, 23 Jul 2015 16:50:26 +0100
-Message-ID: <55B10D42.1020803@linaro.org>
-References: <1437403352-4091-1-git-send-email-srinivas.kandagatla@linaro.org> <1437403392-4136-1-git-send-email-srinivas.kandagatla@linaro.org> <55B107B0.5010706@i2se.com>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: Re: [PATCH v4 00/10] hugetlbfs: add fallocate support
+Date: Thu, 23 Jul 2015 10:05:51 -0700
+Message-ID: <55B11EEF.1070605@oracle.com>
+References: <1437502184-14269-1-git-send-email-mike.kravetz@oracle.com> <20150722150647.2597c7e5be9ee1eecc438b6f@linux-foundation.org> <1437603594.3298.5.camel@stgolabs.net> <20150722153023.e8f15eb4e490f79cc029c8cd@linux-foundation.org> <55B024C6.8010504@oracle.com> <20150723151707.GB7795@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15; format=flowed
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-msm-owner@vger.kernel.org>
-In-Reply-To: <55B107B0.5010706@i2se.com>
-Sender: linux-arm-msm-owner@vger.kernel.org
-To: Stefan Wahren <stefan.wahren@i2se.com>, linux-arm-kernel@lists.infradead.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Rob Herring <robh+dt@kernel.org>, Mark Brown <broonie@kernel.org>, s.hauer@pengutronix.de, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, linux-arm-msm@vger.kernel.org, arnd@arndb.de, sboyd@codeaurora.org, pantelis.antoniou@konsulko.com, mporter@konsulko.com, wxt@rock-chips.com, Maxime Ripard <maxime.ripard@free-electrons.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20150723151707.GB7795@akamai.com>
+Sender: owner-linux-mm@kvack.org
+To: Eric B Munson <emunson@akamai.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Davidlohr Bueso <dave@stgolabs.net>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Dave Hansen <dave.hansen@linux.intel.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Aneesh Kumar <aneesh.kumar@linux.vnet.ibm.com>, Hillf Danton <hillf.zj@alibaba-inc.com>, Christoph Hellwig <hch@infradead.org>, Michal Hocko <mhocko@suse.cz>, emunson@mgebm.net
 List-Id: linux-api@vger.kernel.org
 
-
-
-On 23/07/15 16:26, Stefan Wahren wrote:
-> Hi Srinivas,
+On 07/23/2015 08:17 AM, Eric B Munson wrote:
+> On Wed, 22 Jul 2015, Mike Kravetz wrote:
 >
-> Am 20.07.2015 um 16:43 schrieb Srinivas Kandagatla:
->> This patch adds just providers part of the framework just to enable easy
->> review.
+>> On 07/22/2015 03:30 PM, Andrew Morton wrote:
+>>> On Wed, 22 Jul 2015 15:19:54 -0700 Davidlohr Bueso <dave@stgolabs.net> wrote:
+>>>
+>>>>>
+>>>>> I didn't know that libhugetlbfs has tests.  I wonder if that makes
+>>>>> tools/testing/selftests/vm's hugetlbfstest harmful?
+>>>>
+>>>> Why harmful? Redundant, maybe(?).
+>>>
+>>> The presence of the in-kernel tests will cause people to add stuff to
+>>> them when it would be better if they were to apply that effort to
+>>> making libhugetlbfs better.  Or vice versa.
+>>>
+>>> Mike's work is an example.  Someone later makes a change to hugetlbfs, runs
+>>> the kernel selftest and says "yay, everything works", unaware that they
+>>> just broke fallocate support.
+>>>
+>>>> Does anyone even use selftests for
+>>>> hugetlbfs regression testing? Lets see, we also have these:
+>>>>
+>>>> - hugepage-{mmap,shm}.c
+>>>> - map_hugetlb.c
+>>>>
+>>>> There's probably a lot of room for improvement here.
+>>>
+>>> selftests is a pretty scrappy place.  It's partly a dumping ground for
+>>> things so useful test code doesn't just get lost and bitrotted.  Partly
+>>> a framework so people who add features can easily test them. Partly to
+>>> provide tools to architecture maintainers when they wire up new
+>>> syscalls and the like.
+>>>
+>>> Unless there's some good reason to retain the hugetlb part of
+>>> selftests, I'm thinking we should just remove it to avoid
+>>> distracting/misleading people.  Or possibly move the libhugetlbfs test
+>>> code into the kernel tree and maintain it there.
 >>
->> Up until now, NVMEM drivers like eeprom were stored in drivers/misc,
->> where they all had to duplicate pretty much the same code to register
->> a sysfs file, allow in-kernel users to access the content of the devices
->> they were driving, etc.
+>> Adding Eric as he is the libhugetlbfs maintainer.
 >>
->> This was also a problem as far as other in-kernel users were involved,
->> since the solutions used were pretty much different from on driver to
->> another, there was a rather big abstraction leak.
+>> I think removing the hugetlb selftests in the kernel and pointing
+>> people to libhugetlbfs is the way to go.  From a very quick scan
+>> of the selftests, I would guess libhugetlbfs covers everything
+>> in those tests.
 >>
->> This introduction of this framework aims at solving this. It also
->> introduces DT representation for consumer devices to go get the data
->> they require (MAC Addresses, SoC/Revision ID, part numbers, and so on)
->> from the nvmems.
->>
->> Having regmap interface to this framework would give much better
->> abstraction for nvmems on different buses.
->>
->> Signed-off-by: Maxime Ripard <maxime.ripard@free-electrons.com>
->> [Maxime Ripard: intial version of eeprom framework]
->> Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
->> ---
->>   drivers/Kconfig                |   2 +
->>   drivers/Makefile               |   1 +
->>   drivers/nvmem/Kconfig          |  13 ++
->>   drivers/nvmem/Makefile         |   6 +
->>   drivers/nvmem/core.c           | 384 +++++++++++++++++++++++++++++++++++++++++
->>   include/linux/nvmem-consumer.h |  23 +++
->>   include/linux/nvmem-provider.h |  47 +++++
->>   7 files changed, 476 insertions(+)
->>   create mode 100644 drivers/nvmem/Kconfig
->>   create mode 100644 drivers/nvmem/Makefile
->>   create mode 100644 drivers/nvmem/core.c
->>   create mode 100644 include/linux/nvmem-consumer.h
->>   create mode 100644 include/linux/nvmem-provider.h
+>> I'm willing to verify the testing provided by selftests is included
+>> in libhugetlbfs, and remove selftests if that is the direction we
+>> want to take.
 >
-> i've tested this patch with my mxs-ocotp driver [1].
+> I would rather see the test suite stay in the library, there are a
+> number of tests that rely on infrastructure in the library that is not
+> available in selftests.
 >
-> So you can add
->
-> Tested-by: Stefan Wahren <stefan.wahren@i2se.com>
->
-Thanks for tested-by, That helps.
+> I am happy to help with any tests that need to be added/modified in the
+> library to cover.
 
---srini
+I thought about this some more and think there are two distinct
+groups of users that should be considered.
+1) Application developers who simply want to use hugetlb
+2) Kernel developers who are modifying hugetlb related code
 
+The application developers will mostly want information in the
+man pages, hugetlbpage.txt and hugetlb selftest programs to use
+as sample code to get started.  They can also use libhugetlbfs
+man pages/library if they desire.  Because of this, I do not
+really want to remove the hugetlb selftest programs.  There are
+no equivalent simple stand alone programs in libhugetlbfs.
 
+Kernel developers would be more concerned about introducing
+regressions.  The selftest programs are of limited use for this
+purpose.  The libhugetlbfs test suite is much more suited for
+regression testing.
 
+With this in mind, I suggest:
+- Keep the mmap man page reference to Documentation/vm/hugetlbpage.txt
+- Small modification to hugetlbpage.txt saying the selftest code is
+   good for application development examples.  And, kernel developers
+   should use libhugetlbfs test suite for regression testing.  In any
+   case, the sourceforge URL for libhugetlbfs is no longer valid and
+   needs to be updated.
+- Modify the run_vmtests selftest script to print out a message saying
+   libhugetlbfs should be used for hugetlb regression testing.  This
+   would help catch people who might think the few selftests are
+   sufficient.
 
-> Regards
-> Stefan
->
+Thoughts?
+-- 
+Mike Kravetz
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
