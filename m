@@ -1,42 +1,77 @@
-From: Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
-Subject: Re: [PATCH v4 3/5] pagemap: rework hugetlb and thp report
-Date: Fri, 24 Jul 2015 19:17:49 +0100
-Message-ID: <CAEVpBaKTMs7JQrwHQVKF5ySb58QTm6Zr+GPgZevtjgStYBk8RQ@mail.gmail.com>
+From: Mark Williamson <mwilliamson@undo-software.com>
+Subject: Re: [PATCH v4 4/5] pagemap: hide physical addresses from
+ non-privileged users
+Date: Fri, 24 Jul 2015 19:18:17 +0100
+Message-ID: <CAEVpBaLHM6BAckb5ARRFsiSH-pPmPqRgiwitSFGnTdX7H4mkKQ@mail.gmail.com>
 References: <20150714152516.29844.69929.stgit@buzz>
-	<20150714153738.29844.39039.stgit@buzz>
-	<20150721080046.GC2475@hori1.linux.bs1.fc.nec.co.jp>
-	<CALYGNiO9wpmnrqbKhRKvfHgnUC854accifKc3m6Bvqsv0LHqXQ@mail.gmail.com>
+	<20150714153747.29844.13543.stgit@buzz>
+	<20150721081149.GC4490@hori1.linux.bs1.fc.nec.co.jp>
+	<CALYGNiNHooR0eqH7rYfzOj65_97H6EeF34Bfbgh50JK+k4yN7w@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALYGNiO9wpmnrqbKhRKvfHgnUC854accifKc3m6Bvqsv0LHqXQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>, Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CALYGNiNHooR0eqH7rYfzOj65_97H6EeF34Bfbgh50JK+k4yN7w@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Konstantin Khlebnikov <koct9i@gmail.com>
+Cc: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Reviewed-by: Mark Williamson <mwilliamson-/4lU09Eg6ahx67MzidHQgQC/G2K4zDHf@public.gmane.org>
+Reviewed-by: Mark Williamson <mwilliamson@undo-software.com>
 
-On Tue, Jul 21, 2015 at 9:43 AM, Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Tue, Jul 21, 2015 at 11:00 AM, Naoya Horiguchi
-> <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org> wrote:
->> On Tue, Jul 14, 2015 at 06:37:39PM +0300, Konstantin Khlebnikov wrote:
->>> This patch moves pmd dissection out of reporting loop: huge pages
->>> are reported as bunch of normal pages with contiguous PFNs.
+On Tue, Jul 21, 2015 at 9:39 AM, Konstantin Khlebnikov <koct9i@gmail.com> wrote:
+> On Tue, Jul 21, 2015 at 11:11 AM, Naoya Horiguchi
+> <n-horiguchi@ah.jp.nec.com> wrote:
+>> On Tue, Jul 14, 2015 at 06:37:47PM +0300, Konstantin Khlebnikov wrote:
+>>> This patch makes pagemap readable for normal users and hides physical
+>>> addresses from them. For some use-cases PFN isn't required at all.
 >>>
->>> Add missing "FILE" bit in hugetlb vmas.
+>>> Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+>>> Fixes: ab676b7d6fbf ("pagemap: do not leak physical addresses to non-privileged userspace")
+>>> Link: http://lkml.kernel.org/r/1425935472-17949-1-git-send-email-kirill@shutemov.name
+>>> ---
+>>>  fs/proc/task_mmu.c |   25 ++++++++++++++-----------
+>>>  1 file changed, 14 insertions(+), 11 deletions(-)
 >>>
->>> Signed-off-by: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+>>> diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+>>> index 040721fa405a..3a5d338ea219 100644
+>>> --- a/fs/proc/task_mmu.c
+>>> +++ b/fs/proc/task_mmu.c
+>>> @@ -937,6 +937,7 @@ typedef struct {
+>>>  struct pagemapread {
+>>>       int pos, len;           /* units: PM_ENTRY_BYTES, not bytes */
+>>>       pagemap_entry_t *buffer;
+>>> +     bool show_pfn;
+>>>  };
+>>>
+>>>  #define PAGEMAP_WALK_SIZE    (PMD_SIZE)
+>>> @@ -1013,7 +1014,8 @@ static pagemap_entry_t pte_to_pagemap_entry(struct pagemapread *pm,
+>>>       struct page *page = NULL;
+>>>
+>>>       if (pte_present(pte)) {
+>>> -             frame = pte_pfn(pte);
+>>> +             if (pm->show_pfn)
+>>> +                     frame = pte_pfn(pte);
+>>>               flags |= PM_PRESENT;
+>>>               page = vm_normal_page(vma, addr, pte);
+>>>               if (pte_soft_dirty(pte))
 >>
->> With reflecting Kirill's comment about #ifdef, I'm OK for this patch.
+>> Don't you need the same if (pm->show_pfn) check in is_swap_pte path, too?
+>> (although I don't think that it can be exploited by row hammer attack ...)
 >
-> That ifdef works most like documentation: "all thp magic happens here".
-> I'd like to keep it, if two redundant lines isn't a big deal.
+> Yeah, but I see no reason for that.
+> Probably except swap on ramdrive, but this too weird =)
 >
 >>
->> Reviewed-by: Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>
+>> Thanks,
+>> Naoya Horiguchi
 >> --
 >> To unsubscribe, send a message with 'unsubscribe linux-mm' in
->> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
+>> the body to majordomo@kvack.org.  For more info on Linux MM,
 >> see: http://www.linux-mm.org/ .
->> Don't email: <a hrefmailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
+>> Don't email: <a hrefmailto:"dont@kvack.org"> email@kvack.org </a>
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
