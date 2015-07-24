@@ -1,54 +1,32 @@
-From: Mark Williamson <mwilliamson@undo-software.com>
-Subject: Re: [PATCH v4 3/5] pagemap: rework hugetlb and thp report
-Date: Fri, 24 Jul 2015 19:19:06 +0100
-Message-ID: <CAEVpBaLp15oxOWQaxNZapALgbp4wj9SPoz4WGE-QxfqV4DTTwg@mail.gmail.com>
-References: <20150714152516.29844.69929.stgit@buzz>
-	<20150714153738.29844.39039.stgit@buzz>
-	<20150721080046.GC2475@hori1.linux.bs1.fc.nec.co.jp>
-	<CALYGNiO9wpmnrqbKhRKvfHgnUC854accifKc3m6Bvqsv0LHqXQ@mail.gmail.com>
-	<CAEVpBaKTMs7JQrwHQVKF5ySb58QTm6Zr+GPgZevtjgStYBk8RQ@mail.gmail.com>
+From: Chris Metcalf <cmetcalf@ezchip.com>
+Subject: Re: [PATCH v4 1/5] nohz_full: add support for "cpu_isolated" mode
+Date: Fri, 24 Jul 2015 16:19:41 -0400
+Message-ID: <55B29DDD.5070508@ezchip.com>
+References: <1436817481-8732-1-git-send-email-cmetcalf@ezchip.com>
+ <1436817481-8732-2-git-send-email-cmetcalf@ezchip.com>
+ <CALCETrWaBe10u1X+AqYM7TsbguL=aF-TyuN3xjqgR5Cg2=FiAA@mail.gmail.com>
+ <55A4271B.9040506@ezchip.com>
+ <CALCETrUMGx+ZC9rtAAErKaGg-LEtYXMOSVD1dCi7im3b1SMrVg@mail.gmail.com>
+ <55AE993E.6040501@ezchip.com> <20150724140308.GB20091@lerouge>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CAEVpBaKTMs7JQrwHQVKF5ySb58QTm6Zr+GPgZevtjgStYBk8RQ@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Konstantin Khlebnikov <koct9i@gmail.com>
-Cc: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20150724140308.GB20091@lerouge>
+Sender: linux-doc-owner@vger.kernel.org
+To: Frederic Weisbecker <fweisbec@gmail.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Mike Galbraith <umgwanakikbuti@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-(my review on this patch comes with the caveat that the specifics of
-hugetlb / thp are a bit outside my experience)
+On 07/24/2015 10:03 AM, Frederic Weisbecker wrote:
+> To summarize, lets first split nohz and isolation. Introduce
+> CONFIG_CPU_ISOLATION and stuff all the isolation policies to
+> kernel/cpu_isolation.c, lets try to implement hard isolation and see if that
+> meets soft isolation workload users as well, if not we'll split that later.
 
-On Fri, Jul 24, 2015 at 7:17 PM, Mark Williamson
-<mwilliamson@undo-software.com> wrote:
-> Reviewed-by: Mark Williamson <mwilliamson@undo-software.com>
->
-> On Tue, Jul 21, 2015 at 9:43 AM, Konstantin Khlebnikov <koct9i@gmail.com> wrote:
->> On Tue, Jul 21, 2015 at 11:00 AM, Naoya Horiguchi
->> <n-horiguchi@ah.jp.nec.com> wrote:
->>> On Tue, Jul 14, 2015 at 06:37:39PM +0300, Konstantin Khlebnikov wrote:
->>>> This patch moves pmd dissection out of reporting loop: huge pages
->>>> are reported as bunch of normal pages with contiguous PFNs.
->>>>
->>>> Add missing "FILE" bit in hugetlb vmas.
->>>>
->>>> Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
->>>
->>> With reflecting Kirill's comment about #ifdef, I'm OK for this patch.
->>
->> That ifdef works most like documentation: "all thp magic happens here".
->> I'd like to keep it, if two redundant lines isn't a big deal.
->>
->>>
->>> Reviewed-by: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
->>> --
->>> To unsubscribe, send a message with 'unsubscribe linux-mm' in
->>> the body to majordomo@kvack.org.  For more info on Linux MM,
->>> see: http://www.linux-mm.org/ .
->>> Don't email: <a hrefmailto:"dont@kvack.org"> email@kvack.org </a>
+I will do that for v5.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+Chris Metcalf, EZChip Semiconductor
+http://www.ezchip.com
+
