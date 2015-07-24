@@ -1,56 +1,50 @@
-From: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 00/14] Enhance twl4030_charger functionality. - V2
-Date: Fri, 24 Jul 2015 16:44:06 +0200
-Message-ID: <20150724144406.GD27569@earth>
-References: <20150322231635.23789.70149.stgit@notabene.brown>
+From: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
+Subject: Re: [PATCH V4 2/6] mm: mlock: Add new mlock, munlock, and munlockall
+ system calls
+Date: Fri, 24 Jul 2015 08:46:38 -0700
+Message-ID: <55B25DDE.8090107@roeck-us.net>
+References: <1437508781-28655-1-git-send-email-emunson@akamai.com> <1437508781-28655-3-git-send-email-emunson@akamai.com> <20150721134441.d69e4e1099bd43e56835b3c5@linux-foundation.org> <1437528316.16792.7.camel@ellerman.id.au> <20150722141501.GA3203@akamai.com> <20150723065830.GA5919@linux-mips.org> <20150724143936.GE9203@akamai.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="JwB53PgKC5A7+0Ej"
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20150322231635.23789.70149.stgit-wvvUuzkyo1EYVZTmpyfIwg@public.gmane.org>
+In-Reply-To: <20150724143936.GE9203-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: NeilBrown <neil-+NVA1uvv1dVBDLzU/O5InQ@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, GTA04 owners <gta04-owner-xXXSsgcRVICgSpxsJD1C4w@public.gmane.org>, inux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, linux-omap-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
+Cc: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, linux-m68k-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ia64-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-sh-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>, linux-am33-list-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-xtensa-PjhNF2WwrV/0Sa2dR60CXw@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adi-buildroot-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-cris-kernel-VrBV9hrLPhE@public.gmane.org, linux-parisc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-alpha-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On 07/24/2015 07:39 AM, Eric B Munson wrote:
+> On Thu, 23 Jul 2015, Ralf Baechle wrote:
+>
+>> On Wed, Jul 22, 2015 at 10:15:01AM -0400, Eric B Munson wrote:
+>>
+>>>>
+>>>> You haven't wired it up properly on powerpc, but I haven't mentioned it because
+>>>> I'd rather we did it.
+>>>>
+>>>> cheers
+>>>
+>>> It looks like I will be spinning a V5, so I will drop all but the x86
+>>> system calls additions in that version.
+>>
+>> The MIPS bits are looking good however, so
+>>
+>> Acked-by: Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
+>>
+>> With my ack, will you keep them or maybe carry them as a separate patch?
+>
+> I will keep the MIPS additions as a separate patch in the series, though
+> I have dropped two of the new syscalls after some discussion.  So I will
+> not include your ack on the new patch.
+>
+> Eric
+>
 
---JwB53PgKC5A7+0Ej
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Hi Eric,
 
-Hi Neil,
+next-20150724 still has some failures due to this patch set. Are those
+being looked at (I know parisc builds fail, but there may be others) ?
 
-On Mon, Mar 23, 2015 at 10:20:28AM +1100, NeilBrown wrote:
-> here is V2 of my patches to improve the twl4030 charger.
-> They include improved documentation and removal of changes
-> to the CVENAC bit which I didn't properly understand.
-
-I rebased and queued patches 1 and 2. Can you rebase the
-other patches and take care of the remaining comments?
-
--- Sebastian
-
---JwB53PgKC5A7+0Ej
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBCgAGBQJVsk82AAoJENju1/PIO/qaDwAP/2Eyx7ABCxW6wlmd1cLDb9bT
-zqdN/dHDKirTb0bcYpM5FCDvv/UydHpfoiv8iAuiTGXztKcLkXF+Q7Tne+/LXq40
-TDusJDMQSWBw2Fu6xnCdhFb5UG7gc5/v9u9HAc5/4pEABxIhgZ5vN0IV9EV8Cfcu
-NIaRArKfOsTazO3unKyvwODOQcGj6YmNIPovCCXcNlw93MQmiIlI42fL08O8+1pm
-m+Wrrm/G0YiGpj6TS+JL1wNg9Fl9RD14/KbFqwY6EPXYBNDueEHpkHjuCqTQJRa6
-U/IR1MvM9kUz8Lsjfvroio+X78UPy+R5NyVIJlnntGoJ6G/vGiW8kUFhdygV0S//
-AE3TSffaOhR+2/X3eps6AtNqmYtqLWyjho0fg+u8Z25rQVaul8/dxgqsUKxYePI9
-IJJNd4jlPW9XeMtfC+76xWPqGr0YvoT0z9xp7S/4804wBjGM3jS5oGgxcMHfBd5v
-O8PUlPpREAWqSGyn7wmcgLR1O7XXwb7lflyCYDBspa7bairccgMqqrDEVh93tRp9
-HYNf75qSXutv7yU5Lpw3vpKQjZgUP+FfMoBQnbtaGvxa7sqq7hwTbCwtTk4QDFPE
-JQafapja6F09eiVnPsFfnLO6NbsPaqcrrVFnD7s3AfgqOQ+e65eMiO1zWRUkmLQ1
-JqG1shoeO5s37NsMhanL
-=+/gr
------END PGP SIGNATURE-----
-
---JwB53PgKC5A7+0Ej--
+Thanks,
+Guenter
