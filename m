@@ -1,64 +1,83 @@
-From: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 02/14] twl4030_charger: use devres for
- power_supply_register and kzalloc.
-Date: Fri, 24 Jul 2015 16:35:20 +0200
-Message-ID: <20150724143520.GC27569@earth>
-References: <20150322231635.23789.70149.stgit@notabene.brown>
- <20150322232028.23789.38570.stgit@notabene.brown>
+From: Eric B Munson <emunson@akamai.com>
+Subject: Re: [PATCH V4 2/6] mm: mlock: Add new mlock, munlock, and munlockall
+ system calls
+Date: Fri, 24 Jul 2015 10:39:36 -0400
+Message-ID: <20150724143936.GE9203@akamai.com>
+References: <1437508781-28655-1-git-send-email-emunson@akamai.com>
+ <1437508781-28655-3-git-send-email-emunson@akamai.com>
+ <20150721134441.d69e4e1099bd43e56835b3c5@linux-foundation.org>
+ <1437528316.16792.7.camel@ellerman.id.au>
+ <20150722141501.GA3203@akamai.com>
+ <20150723065830.GA5919@linux-mips.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="KN5l+BnMqAQyZLvT"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="+JUInw4efm7IfTNU"
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20150322232028.23789.38570.stgit-wvvUuzkyo1EYVZTmpyfIwg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: NeilBrown <neil-+NVA1uvv1dVBDLzU/O5InQ@public.gmane.org>
-Cc: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, GTA04 owners <gta04-owner-xXXSsgcRVICgSpxsJD1C4w@public.gmane.org>, inux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, linux-omap-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+In-Reply-To: <20150723065830.GA5919@linux-mips.org>
+Sender: owner-linux-mm@kvack.org
+To: Ralf Baechle <ralf@linux-mips.org>
+Cc: Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, linux-mips@linux-mips.org, linux-m68k@vger.kernel.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, sparclinux@vger.kernel.org, linux-arch@vger.kernel.org, Stephen Rothwell <sfr@canb.auug.org.au>, linux-am33-list@redhat.com, Geert Uytterhoeven <geert@linux-m68k.org>, Vlastimil Babka <vbabka@suse.cz>, Guenter Roeck <linux@roeck-us.net>, linux-xtensa@linux-xtensa.org, linux-s390@vger.kernel.org, adi-buildroot-devel@lists.sourceforge.net, linux-arm-kernel@lists.infradead.org, linux-cris-kernel@axis.com, linux-parisc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-alpha@vger.kernel.org, linuxppc-dev@lists.ozlabs.or
 List-Id: linux-api@vger.kernel.org
 
 
---KN5l+BnMqAQyZLvT
+--+JUInw4efm7IfTNU
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+On Thu, 23 Jul 2015, Ralf Baechle wrote:
 
-On Mon, Mar 23, 2015 at 10:20:28AM +1100, NeilBrown wrote:
-> From: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+> On Wed, Jul 22, 2015 at 10:15:01AM -0400, Eric B Munson wrote:
 >=20
-> Final allocations/registrations are now managed by devres.
+> > >=20
+> > > You haven't wired it up properly on powerpc, but I haven't mentioned =
+it because
+> > > I'd rather we did it.
+> > >=20
+> > > cheers
+> >=20
+> > It looks like I will be spinning a V5, so I will drop all but the x86
+> > system calls additions in that version.
 >=20
-> Signed-off-by: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+> The MIPS bits are looking good however, so
+>=20
+> Acked-by: Ralf Baechle <ralf@linux-mips.org>
+>=20
+> With my ack, will you keep them or maybe carry them as a separate patch?
 
-Thanks for the patch, rebased to current master and queued with
-Pavel's ACK:
+I will keep the MIPS additions as a separate patch in the series, though
+I have dropped two of the new syscalls after some discussion.  So I will
+not include your ack on the new patch.
 
-http://git.infradead.org/battery-2.6.git/commit/325b50aa5d1c7dae57d1e44defd=
-bacd1e2bcabde
+Eric
 
--- Sebastian
-
---KN5l+BnMqAQyZLvT
+--+JUInw4efm7IfTNU
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: Digital signature
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1
 
-iQIcBAEBCgAGBQJVsk0oAAoJENju1/PIO/qazIAP/031Kw8cIY2pvDbSK2mZg63P
-SJcObnHGB2RJMqlBA3OvTfqrz5+rLJiG5XhjNZRvBKQ8mcUjH2agzdPMqfmDX+hE
-NRtfgjAo8L+MnsNhcIB5JKLmI6FT0HgdavpM6ixB0w5i3U9tgspxHyB3c/SZ9+42
-+NK+w+Pm/nHiTkoaWn8uE8Tyb+LzohL/ZK3A9RdM3J9OJGEixSSZ2hvEK2EsNquV
-4Y/7xEGRzkQSvVCpNpy/oatZKvfNc3l3bhYo/VUZG8xf+gomKLknl+tiAvRe5W1I
-WlU5H2pzLkcLWsMXuiZo6XXfO1tb4EhPuiTpVJ3rfUXUqDiEKtEaHa42hOA5kLHX
-JNfzsikqwEkdvKIuVW7ctMz9ijikh8ys85/GIouS++GpW9o2Nl4+9zNVx62MZfwe
-Qnw1xqz3Y2f92k35DG+ETIhgYLhjSGT32dT0z60tip/jxc+akQu3OJEs24x65dIv
-I31WRYI2lCT11VyEpmgur9zhh5VxZDWLIbFr3hG6b6X/Jmw9SwjRbNmtAPCdfZKr
-xSRnvsstaBnLEroU+a5st1dZ50aGMM1ybmMVhq2kxf3hl0FkBiATqmPi0WDH+3od
-ZqI80RN+u9EvQEcGqNMhkXhHyUYoIXn/Fc/S4kAvJ6yL1Q1/HKgxtg1vEnjsyo1H
-/jiPmZ7LF14mZZhC7Uaz
-=ZsA7
+iQIcBAEBAgAGBQJVsk4oAAoJELbVsDOpoOa9Eo0QAJ6eViChMf3Imw2HLUBOL+qS
+B7hozSCTuKLHaqx8QBhkjX6yqn0FIa5+TUWk76Py3JA00geQAiSWGmmZidLmdkmL
+QqZgrvi6B/hsDx4qhNk3wsTpeOtRL6JfpM0CI42Y5JO9nXvp/mpEJyHIRbrvlOtG
+GdRPYjyf1gXqwFaOJel7/GvPhRxMh0vkIr78XqNZOQovWL9cfvaUGaZmLGcLJq78
+PPYyuZ53AmNg83C8wDpgPfdgQ/L4ob+mZJIcP8purUXHpu7Xu7KbePkdoPqZ1EDT
+zRias9nrfrQQTCYaga4MM6wMa2S+iDNPq6Ae+sI6eoDyMxhjuUEi4xxHZ9HGwSIm
+Ii5cbD5//xbOHceAPuQ0lhvWH06ip6OVEXx68ACl7p46Ebi7B2jOeSyKH3UNpomS
+37NdAdUk3PlC3r3CwoPS2XXYjthQr8rVLVqoZP1wC4KxHanglXzFv+AwyLwRCQJ3
+6WevOpUmjVstR67EZBXmHMC4yVGxwF9TdC15G4coZEBw8wcLV6rC2TuK1KZw5JHR
+1yIJtZIBQmNoFkGwNWggIFsDiOasKmgUjjHY/yPPrn0MTkCy69zrnkqzoKZQEIoE
+MXYJiYfYFy7Ek7/K7u/lCjJI0X1bXk3QTmNrX5BuVzQPtV8jdzcBzl4SQhFGc7IH
+4GNpeBolyRBy2p7wt0lO
+=/Udu
 -----END PGP SIGNATURE-----
 
---KN5l+BnMqAQyZLvT--
+--+JUInw4efm7IfTNU--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
