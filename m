@@ -1,22 +1,23 @@
-From: Sebastian Reichel <sre@kernel.org>
-Subject: Re: [PATCH 01/14] twl4030_charger: use devm_request_threaded_irq
-Date: Fri, 24 Jul 2015 16:34:16 +0200
-Message-ID: <20150724143416.GB27569@earth>
+From: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 02/14] twl4030_charger: use devres for
+ power_supply_register and kzalloc.
+Date: Fri, 24 Jul 2015 16:35:20 +0200
+Message-ID: <20150724143520.GC27569@earth>
 References: <20150322231635.23789.70149.stgit@notabene.brown>
- <20150322232028.23789.97241.stgit@notabene.brown>
+ <20150322232028.23789.38570.stgit@notabene.brown>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="yNb1oOkm5a9FJOVX"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+	protocol="application/pgp-signature"; boundary="KN5l+BnMqAQyZLvT"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150322232028.23789.97241.stgit@notabene.brown>
-Sender: linux-kernel-owner@vger.kernel.org
-To: NeilBrown <neil@brown.name>
-Cc: NeilBrown <neilb@suse.de>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, GTA04 owners <gta04-owner@goldelico.com>, inux-pm@vger.kernel.org, Pavel Machek <pavel@ucw.cz>, linux-omap@vger.kernel.org, Lee Jones <lee.jones@linaro.org>
+In-Reply-To: <20150322232028.23789.38570.stgit-wvvUuzkyo1EYVZTmpyfIwg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: NeilBrown <neil-+NVA1uvv1dVBDLzU/O5InQ@public.gmane.org>
+Cc: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, GTA04 owners <gta04-owner-xXXSsgcRVICgSpxsJD1C4w@public.gmane.org>, inux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, linux-omap-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
---yNb1oOkm5a9FJOVX
+--KN5l+BnMqAQyZLvT
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
@@ -24,39 +25,40 @@ Content-Transfer-Encoding: quoted-printable
 Hi,
 
 On Mon, Mar 23, 2015 at 10:20:28AM +1100, NeilBrown wrote:
-> From: NeilBrown <neilb@suse.de>
+> From: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
 >=20
-> This simplifies the error paths.
+> Final allocations/registrations are now managed by devres.
 >=20
-> Signed-off-by: NeilBrown <neilb@suse.de>
+> Signed-off-by: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
 
-I queued this with Pavel's ACK after a rebase to current master:
+Thanks for the patch, rebased to current master and queued with
+Pavel's ACK:
 
-http://git.infradead.org/battery-2.6.git/commit/1b7cac23419e1398eac4c28368d=
-a6671c9c4ce9d
+http://git.infradead.org/battery-2.6.git/commit/325b50aa5d1c7dae57d1e44defd=
+bacd1e2bcabde
 
 -- Sebastian
 
---yNb1oOkm5a9FJOVX
+--KN5l+BnMqAQyZLvT
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: Digital signature
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1
 
-iQIcBAEBCgAGBQJVskzkAAoJENju1/PIO/qaOD4P/jR284yP1PQDWS3MCD7V4DOu
-nPhnYkAzN3qkZ3rVO09fPf0FOQVRbctNt2qG4N0D5xxks/i9Ys7znzODhgHeHVMe
-QVQEp50igMwtGQHcGPYhD5TeSq50Wtjg1Q5/YvycNY/ku4iCM5/1Z2FcefywBDXU
-hq9NEN6iaVQxXAnRROWgiUGohmCqKcBJKeyKVsjrDkJgxS4RcingY8WNfWXZ1XuT
-7mffcdL81abt1AfC69Oyd4bXrLoy0MTc78oecxv5Sw4kb+CFSktZqE7SbT/G9+4p
-F2xLcR6FOYHHwmCo+i7BM+WFt9CfStr5Jz0GyirOnbaMB8qwyHAELYSIEt3FUB5/
-+sOpuzME8/YlUsb/UMfyDCMx/sCRQADX3WIdPAOU1HwQ9hzi+BRVX/EC6c/JPZ1A
-QuM694+ftcb7kaGQHG+dypkiV1Lln3qLt3IQp/D9SWqeoAf5AiQ1hIV3lmC3Scj7
-rxoxTUWSVc2UfFP81upWfK1safrHyB7hwAF3h1pjZfDrAW3Xj74NfzFhrbXNAty2
-o6a0/VwIEbxRa5igz084up42xfOrRfPjwdUcW8Ll8V0RcebYCKFg14+7rqw9dHtD
-fdcb5ae0cRZLFHDO+gh8ubnGpDs0fUcEYPWJ6zNdR3shyxwQ1S/SDcHjtWvVtFCO
-aHvpO/k51pLwZrz42L7m
-=kOyO
+iQIcBAEBCgAGBQJVsk0oAAoJENju1/PIO/qazIAP/031Kw8cIY2pvDbSK2mZg63P
+SJcObnHGB2RJMqlBA3OvTfqrz5+rLJiG5XhjNZRvBKQ8mcUjH2agzdPMqfmDX+hE
+NRtfgjAo8L+MnsNhcIB5JKLmI6FT0HgdavpM6ixB0w5i3U9tgspxHyB3c/SZ9+42
++NK+w+Pm/nHiTkoaWn8uE8Tyb+LzohL/ZK3A9RdM3J9OJGEixSSZ2hvEK2EsNquV
+4Y/7xEGRzkQSvVCpNpy/oatZKvfNc3l3bhYo/VUZG8xf+gomKLknl+tiAvRe5W1I
+WlU5H2pzLkcLWsMXuiZo6XXfO1tb4EhPuiTpVJ3rfUXUqDiEKtEaHa42hOA5kLHX
+JNfzsikqwEkdvKIuVW7ctMz9ijikh8ys85/GIouS++GpW9o2Nl4+9zNVx62MZfwe
+Qnw1xqz3Y2f92k35DG+ETIhgYLhjSGT32dT0z60tip/jxc+akQu3OJEs24x65dIv
+I31WRYI2lCT11VyEpmgur9zhh5VxZDWLIbFr3hG6b6X/Jmw9SwjRbNmtAPCdfZKr
+xSRnvsstaBnLEroU+a5st1dZ50aGMM1ybmMVhq2kxf3hl0FkBiATqmPi0WDH+3od
+ZqI80RN+u9EvQEcGqNMhkXhHyUYoIXn/Fc/S4kAvJ6yL1Q1/HKgxtg1vEnjsyo1H
+/jiPmZ7LF14mZZhC7Uaz
+=ZsA7
 -----END PGP SIGNATURE-----
 
---yNb1oOkm5a9FJOVX--
+--KN5l+BnMqAQyZLvT--
