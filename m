@@ -1,46 +1,208 @@
 From: Eric B Munson <emunson@akamai.com>
-Subject: [PATCH V5 4/7] mm: mlock: Add mlock flags to enable VM_LOCKONFAULT usage
-Date: Fri, 24 Jul 2015 17:28:42 -0400
-Message-ID: <1437773325-8623-5-git-send-email-emunson@akamai.com>
-References: <1437773325-8623-1-git-send-email-emunson@akamai.com>
+Subject: [PATCH V5 0/7] Allow user to request memory to be locked on page fault
+Date: Fri, 24 Jul 2015 17:28:38 -0400
+Message-ID: <1437773325-8623-1-git-send-email-emunson@akamai.com>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1437773325-8623-1-git-send-email-emunson@akamai.com>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Eric B Munson <emunson@akamai.com>, Michal Hocko <mhocko@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, Jonathan Corbet <corbet@lwn.net>, "Kirill A. Shutemov" <kirill@shutemov.name>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org
+Cc: Eric B Munson <emunson@akamai.com>, Shuah Khan <shuahkh@osg.samsung.com>, Michal Hocko <mhocko@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, Vlastimil Babka <vbabka@suse.cz>, Jonathan Corbet <corbet@lwn.net>, Ralf Baechle <ralf@linux-mips.org>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The previous patch introduced a flag that specified pages in a VMA
-should be placed on the unevictable LRU, but they should not be made
-present when the area is created.  This patch adds the ability to set
-this state via the new mlock system calls.
+mlock() allows a user to control page out of program memory, but this
+comes at the cost of faulting in the entire mapping when it is
+allocated.  For large mappings where the entire area is not necessary
+this is not ideal.  Instead of forcing all locked pages to be present
+when they are allocated, this set creates a middle ground.  Pages are
+marked to be placed on the unevictable LRU (locked) when they are first
+used, but they are not faulted in by the mlock call.
 
-We add MLOCK_ONFAULT for mlock2 and MCL_ONFAULT for mlockall.
-MLOCK_ONFAULT will set the VM_LOCKONFAULT flag as well as the VM_LOCKED
-flag for the target region.  MCL_CURRENT and MCL_ONFAULT are used to
-lock current mappings.  With MCL_CURRENT all pages are made present and
-with MCL_ONFAULT they are locked when faulted in.  When specified with
-MCL_FUTURE all new mappings will be marked with VM_LOCKONFAULT.
+This series introduces a new mlock() system call that takes a flags
+argument along with the start address and size.  This flags argument
+gives the caller the ability to request memory be locked in the
+traditional way, or to be locked after the page is faulted in.  A new
+MCL flag is added to mirror the lock on fault behavior from mlock() in
+mlockall().  Finally, a flag for mmap() is added that allows a user to
+specify that the covered are should not be paged out, but only after the
+memory has been used the first time.
 
-Currently, mlockall() clears all VMA lock flags and then sets the
-requested flags.  For instance, if a process has MCL_FUTURE and
-MCL_CURRENT set, but they want to clear MCL_FUTURE this would be
-accomplished by calling mlockall(MCL_CURRENT).  This still holds with
-the introduction of MCL_ONFAULT.  Each call to mlockall() resets all
-VMA flags to the values specified in the current call.  The new mlock2
-system call behaves in the same way.  If a region is locked with
-MLOCK_ONFAULT and a user wants to force it to be populated now, a second
-call to mlock2(MLOCK_LOCKED) will accomplish this.
+There are two main use cases that this set covers.  The first is the
+security focussed mlock case.  A buffer is needed that cannot be written
+to swap.  The maximum size is known, but on average the memory used is
+significantly less than this maximum.  With lock on fault, the buffer
+is guaranteed to never be paged out without consuming the maximum size
+every time such a buffer is created.
 
-munlock() will unconditionally clear both vma flags.  munlockall()
-unconditionally clears for VMA flags on all VMAs and in the
-mm->def_flags field.
+The second use case is focussed on performance.  Portions of a large
+file are needed and we want to keep the used portions in memory once
+accessed.  This is the case for large graphical models where the path
+through the graph is not known until run time.  The entire graph is
+unlikely to be used in a given invocation, but once a node has been
+used it needs to stay resident for further processing.  Given these
+constraints we have a number of options.  We can potentially waste a
+large amount of memory by mlocking the entire region (this can also
+cause a significant stall at startup as the entire file is read in).
+We can mlock every page as we access them without tracking if the page
+is already resident but this introduces large overhead for each access.
+The third option is mapping the entire region with PROT_NONE and using
+a signal handler for SIGSEGV to mprotect(PROT_READ) and mlock() the
+needed page.  Doing this page at a time adds a significant performance
+penalty.  Batching can be used to mitigate this overhead, but in order
+to safely avoid trying to mprotect pages outside of the mapping, the
+boundaries of each mapping to be used in this way must be tracked and
+available to the signal handler.  This is precisely what the mm system
+in the kernel should already be doing.
 
-Signed-off-by: Eric B Munson <emunson@akamai.com>
+For mlock(MLOCK_ONFAULT) and mmap(MAP_LOCKONFAULT) the user is charged
+against RLIMIT_MEMLOCK as if mlock(MLOCK_LOCKED) or mmap(MAP_LOCKED) was
+used, so when the VMA is created not when the pages are faulted in.  For
+mlockall(MCL_ONFAULT) the user is charged as if MCL_FUTURE was used.
+This decision was made to keep the accounting checks out of the page
+fault path.
+
+To illustrate the benefit of this set I wrote a test program that mmaps
+a 5 GB file filled with random data and then makes 15,000,000 accesses
+to random addresses in that mapping.  The test program was run 20 times
+for each setup.  Results are reported for two program portions, setup
+and execution.  The setup phase is calling mmap and optionally mlock on
+the entire region.  For most experiments this is trivial, but it
+highlights the cost of faulting in the entire region.  Results are
+averages across the 20 runs in milliseconds.
+
+mmap with mlock(MLOCK_LOCKED) on entire range:
+Setup avg:      8228.666
+Processing avg: 8274.257
+
+mmap with mlock(MLOCK_LOCKED) before each access:
+Setup avg:      0.113
+Processing avg: 90993.552
+
+mmap with PROT_NONE and signal handler and batch size of 1 page:
+With the default value in max_map_count, this gets ENOMEM as I attempt
+to change the permissions, after upping the sysctl significantly I get:
+Setup avg:      0.058
+Processing avg: 69488.073
+mmap with PROT_NONE and signal handler and batch size of 8 pages:
+Setup avg:      0.068
+Processing avg: 38204.116
+
+mmap with PROT_NONE and signal handler and batch size of 16 pages:
+Setup avg:      0.044
+Processing avg: 29671.180
+
+mmap with mlock(MLOCK_ONFAULT) on entire range:
+Setup avg:      0.189
+Processing avg: 17904.899
+
+The signal handler in the batch cases faulted in memory in two steps to
+avoid having to know the start and end of the faulting mapping.  The
+first step covers the page that caused the fault as we know that it will
+be possible to lock.  The second step speculatively tries to mlock and
+mprotect the batch size - 1 pages that follow.  There may be a clever
+way to avoid this without having the program track each mapping to be
+covered by this handeler in a globally accessible structure, but I could
+not find it.  It should be noted that with a large enough batch size
+this two step fault handler can still cause the program to crash if it
+reaches far beyond the end of the mapping.
+
+These results show that if the developer knows that a majority of the
+mapping will be used, it is better to try and fault it in at once,
+otherwise MAP_LOCKONFAULT is significantly faster.
+
+The performance cost of these patches are minimal on the two benchmarks
+I have tested (stream and kernbench).  The following are the average
+values across 20 runs of stream and 10 runs of kernbench after a warmup
+run whose results were discarded.
+
+Avg throughput in MB/s from stream using 1000000 element arrays
+Test     4.2-rc1      4.2-rc1+lock-on-fault
+Copy:    10,566.5     10,421
+Scale:   10,685       10,503.5
+Add:     12,044.1     11,814.2
+Triad:   12,064.8     11,846.3
+
+Kernbench optimal load
+                 4.2-rc1  4.2-rc1+lock-on-fault
+Elapsed Time     78.453   78.991
+User Time        64.2395  65.2355
+System Time      9.7335   9.7085
+Context Switches 22211.5  22412.1
+Sleeps           14965.3  14956.1
+
+---
+Changes from V4:
+Drop all architectures for new sys call entries except x86[_64] and MIPS
+Drop munlock2 and munlockall2
+Make VM_LOCKONFAULT a modifier to VM_LOCKED only to simplify book keeping
+Adjust tests to match
+
+Changes from V3:
+Ensure that pages present when mlock2(MLOCK_ONFAULT) is called are locked
+Ensure that VM_LOCKONFAULT is handled in cases that used to only check VM_LOCKED
+Add tests for new system calls
+Add missing syscall entries, fix NR_syscalls on multiple arch's
+Add missing MAP_LOCKONFAULT for tile
+
+Changes from V2:
+Added new system calls for mlock, munlock, and munlockall with added
+flags arguments for controlling how memory is locked or unlocked.
+
+
+Eric B Munson (7):
+  mm: mlock: Refactor mlock, munlock, and munlockall code
+  mm: mlock: Add new mlock system call
+  mm: Introduce VM_LOCKONFAULT
+  mm: mlock: Add mlock flags to enable VM_LOCKONFAULT usage
+  mm: mmap: Add mmap flag to request VM_LOCKONFAULT
+  selftests: vm: Add tests for lock on fault
+  mips: Add entry for new mlock2 syscall
+
+ arch/alpha/include/uapi/asm/mman.h          |   5 +
+ arch/mips/include/uapi/asm/mman.h           |   8 +
+ arch/mips/include/uapi/asm/unistd.h         |  15 +-
+ arch/mips/kernel/scall32-o32.S              |   1 +
+ arch/mips/kernel/scall64-64.S               |   1 +
+ arch/mips/kernel/scall64-n32.S              |   1 +
+ arch/mips/kernel/scall64-o32.S              |   1 +
+ arch/parisc/include/uapi/asm/mman.h         |   5 +
+ arch/powerpc/include/uapi/asm/mman.h        |   5 +
+ arch/sparc/include/uapi/asm/mman.h          |   5 +
+ arch/tile/include/uapi/asm/mman.h           |   9 +
+ arch/x86/entry/syscalls/syscall_32.tbl      |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl      |   1 +
+ arch/xtensa/include/uapi/asm/mman.h         |   8 +
+ drivers/gpu/drm/drm_vm.c                    |   8 +-
+ fs/proc/task_mmu.c                          |   1 +
+ include/linux/mm.h                          |   2 +
+ include/linux/mman.h                        |   3 +-
+ include/linux/syscalls.h                    |   2 +
+ include/uapi/asm-generic/mman.h             |   5 +
+ include/uapi/asm-generic/unistd.h           |   4 +-
+ kernel/events/core.c                        |   3 +-
+ kernel/fork.c                               |   2 +-
+ kernel/sys_ni.c                             |   1 +
+ mm/debug.c                                  |   1 +
+ mm/gup.c                                    |  10 +-
+ mm/huge_memory.c                            |   2 +-
+ mm/hugetlb.c                                |   4 +-
+ mm/mlock.c                                  |  77 +++--
+ mm/mmap.c                                   |  10 +-
+ mm/rmap.c                                   |   4 +-
+ tools/testing/selftests/vm/Makefile         |   3 +
+ tools/testing/selftests/vm/lock-on-fault.c  | 344 +++++++++++++++++++
+ tools/testing/selftests/vm/mlock2-tests.c   | 507 ++++++++++++++++++++++++++++
+ tools/testing/selftests/vm/on-fault-limit.c |  47 +++
+ tools/testing/selftests/vm/run_vmtests      |  33 ++
+ 36 files changed, 1093 insertions(+), 46 deletions(-)
+ create mode 100644 tools/testing/selftests/vm/lock-on-fault.c
+ create mode 100644 tools/testing/selftests/vm/mlock2-tests.c
+ create mode 100644 tools/testing/selftests/vm/on-fault-limit.c
+
+Cc: Shuah Khan <shuahkh@osg.samsung.com>
 Cc: Michal Hocko <mhocko@suse.cz>
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>
 Cc: Vlastimil Babka <vbabka@suse.cz>
 Cc: Jonathan Corbet <corbet@lwn.net>
-Cc: "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: Ralf Baechle <ralf@linux-mips.org>
 Cc: linux-alpha@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Cc: linux-mips@linux-mips.org
@@ -48,252 +210,11 @@ Cc: linux-parisc@vger.kernel.org
 Cc: linuxppc-dev@lists.ozlabs.org
 Cc: sparclinux@vger.kernel.org
 Cc: linux-xtensa@linux-xtensa.org
+Cc: linux-mm@kvack.org
 Cc: linux-arch@vger.kernel.org
 Cc: linux-api@vger.kernel.org
-Cc: linux-mm@kvack.org
----
-Changes from V4:
-* Split addition of VMA flag
 
-Changes from V3:
-* Do extensive search for VM_LOCKED and ensure that VM_LOCKONFAULT is also handled
- where appropriate
- arch/alpha/include/uapi/asm/mman.h   |  2 ++
- arch/mips/include/uapi/asm/mman.h    |  2 ++
- arch/parisc/include/uapi/asm/mman.h  |  2 ++
- arch/powerpc/include/uapi/asm/mman.h |  2 ++
- arch/sparc/include/uapi/asm/mman.h   |  2 ++
- arch/tile/include/uapi/asm/mman.h    |  3 +++
- arch/xtensa/include/uapi/asm/mman.h  |  2 ++
- include/uapi/asm-generic/mman.h      |  2 ++
- mm/mlock.c                           | 41 ++++++++++++++++++++++++------------
- 9 files changed, 45 insertions(+), 13 deletions(-)
 
-diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
-index ec72436..77ae8db 100644
---- a/arch/alpha/include/uapi/asm/mman.h
-+++ b/arch/alpha/include/uapi/asm/mman.h
-@@ -37,8 +37,10 @@
- 
- #define MCL_CURRENT	 8192		/* lock all currently mapped pages */
- #define MCL_FUTURE	16384		/* lock all additions to address space */
-+#define MCL_ONFAULT	32768		/* lock all pages that are faulted in */
- 
- #define MLOCK_LOCKED	0x01		/* Lock and populate the specified range */
-+#define MLOCK_ONFAULT	0x02		/* Lock pages in range after they are faulted in, do not prefault */
- 
- #define MADV_NORMAL	0		/* no further special treatment */
- #define MADV_RANDOM	1		/* expect random page references */
-diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi/asm/mman.h
-index 67c1cdf..71ed81d 100644
---- a/arch/mips/include/uapi/asm/mman.h
-+++ b/arch/mips/include/uapi/asm/mman.h
-@@ -61,11 +61,13 @@
-  */
- #define MCL_CURRENT	1		/* lock all current mappings */
- #define MCL_FUTURE	2		/* lock all future mappings */
-+#define MCL_ONFAULT	4		/* lock all pages that are faulted in */
- 
- /*
-  * Flags for mlock
-  */
- #define MLOCK_LOCKED	0x01		/* Lock and populate the specified range */
-+#define MLOCK_ONFAULT	0x02		/* Lock pages in range after they are faulted in, do not prefault */
- 
- #define MADV_NORMAL	0		/* no further special treatment */
- #define MADV_RANDOM	1		/* expect random page references */
-diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/uapi/asm/mman.h
-index daab994..c0871ce 100644
---- a/arch/parisc/include/uapi/asm/mman.h
-+++ b/arch/parisc/include/uapi/asm/mman.h
-@@ -31,8 +31,10 @@
- 
- #define MCL_CURRENT	1		/* lock all current mappings */
- #define MCL_FUTURE	2		/* lock all future mappings */
-+#define MCL_ONFAULT	4		/* lock all pages that are faulted in */
- 
- #define MLOCK_LOCKED	0x01		/* Lock and populate the specified range */
-+#define MLOCK_ONFAULT	0x02		/* Lock pages in range after they are faulted in, do not prefault */
- 
- #define MADV_NORMAL     0               /* no further special treatment */
- #define MADV_RANDOM     1               /* expect random page references */
-diff --git a/arch/powerpc/include/uapi/asm/mman.h b/arch/powerpc/include/uapi/asm/mman.h
-index 189e85f..f93f7eb 100644
---- a/arch/powerpc/include/uapi/asm/mman.h
-+++ b/arch/powerpc/include/uapi/asm/mman.h
-@@ -22,8 +22,10 @@
- 
- #define MCL_CURRENT     0x2000          /* lock all currently mapped pages */
- #define MCL_FUTURE      0x4000          /* lock all additions to address space */
-+#define MCL_ONFAULT	0x8000		/* lock all pages that are faulted in */
- 
- #define MLOCK_LOCKED	0x01		/* Lock and populate the specified range */
-+#define MLOCK_ONFAULT	0x02		/* Lock pages in range after they are faulted in, do not prefault */
- 
- #define MAP_POPULATE	0x8000		/* populate (prefault) pagetables */
- #define MAP_NONBLOCK	0x10000		/* do not block on IO */
-diff --git a/arch/sparc/include/uapi/asm/mman.h b/arch/sparc/include/uapi/asm/mman.h
-index 13d51be..8cd2ebc 100644
---- a/arch/sparc/include/uapi/asm/mman.h
-+++ b/arch/sparc/include/uapi/asm/mman.h
-@@ -17,8 +17,10 @@
- 
- #define MCL_CURRENT     0x2000          /* lock all currently mapped pages */
- #define MCL_FUTURE      0x4000          /* lock all additions to address space */
-+#define MCL_ONFAULT	0x8000		/* lock all pages that are faulted in */
- 
- #define MLOCK_LOCKED	0x01		/* Lock and populate the specified range */
-+#define MLOCK_ONFAULT	0x02		/* Lock pages in range after they are faulted in, do not prefault */
- 
- #define MAP_POPULATE	0x8000		/* populate (prefault) pagetables */
- #define MAP_NONBLOCK	0x10000		/* do not block on IO */
-diff --git a/arch/tile/include/uapi/asm/mman.h b/arch/tile/include/uapi/asm/mman.h
-index f69ce48..acdd013 100644
---- a/arch/tile/include/uapi/asm/mman.h
-+++ b/arch/tile/include/uapi/asm/mman.h
-@@ -36,11 +36,14 @@
-  */
- #define MCL_CURRENT	1		/* lock all current mappings */
- #define MCL_FUTURE	2		/* lock all future mappings */
-+#define MCL_ONFAULT	4		/* lock all pages that are faulted in */
-+
- 
- /*
-  * Flags for mlock
-  */
- #define MLOCK_LOCKED	0x01		/* Lock and populate the specified range */
-+#define MLOCK_ONFAULT	0x02		/* Lock pages in range after they are faulted in, do not prefault */
- 
- 
- #endif /* _ASM_TILE_MMAN_H */
-diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/uapi/asm/mman.h
-index 11f354f..5725a15 100644
---- a/arch/xtensa/include/uapi/asm/mman.h
-+++ b/arch/xtensa/include/uapi/asm/mman.h
-@@ -74,11 +74,13 @@
-  */
- #define MCL_CURRENT	1		/* lock all current mappings */
- #define MCL_FUTURE	2		/* lock all future mappings */
-+#define MCL_ONFAULT	4		/* lock all pages that are faulted in */
- 
- /*
-  * Flags for mlock
-  */
- #define MLOCK_LOCKED	0x01		/* Lock and populate the specified range */
-+#define MLOCK_ONFAULT	0x02		/* Lock pages in range after they are faulted in, do not prefault */
- 
- #define MADV_NORMAL	0		/* no further special treatment */
- #define MADV_RANDOM	1		/* expect random page references */
-diff --git a/include/uapi/asm-generic/mman.h b/include/uapi/asm-generic/mman.h
-index 242436b..555aab0 100644
---- a/include/uapi/asm-generic/mman.h
-+++ b/include/uapi/asm-generic/mman.h
-@@ -17,7 +17,9 @@
- 
- #define MCL_CURRENT	1		/* lock all current mappings */
- #define MCL_FUTURE	2		/* lock all future mappings */
-+#define MCL_ONFAULT	4		/* lock all pages that are faulted in */
- 
- #define MLOCK_LOCKED	0x01		/* Lock and populate the specified range */
-+#define MLOCK_ONFAULT	0x02		/* Lock pages in range after they are faulted in, do not prefault */
- 
- #endif /* __ASM_GENERIC_MMAN_H */
-diff --git a/mm/mlock.c b/mm/mlock.c
-index e98bdd4..3a99c80 100644
---- a/mm/mlock.c
-+++ b/mm/mlock.c
-@@ -506,7 +506,8 @@ static int mlock_fixup(struct vm_area_struct *vma, struct vm_area_struct **prev,
- 
- 	if (newflags == vma->vm_flags || (vma->vm_flags & VM_SPECIAL) ||
- 	    is_vm_hugetlb_page(vma) || vma == get_gate_vma(current->mm))
--		goto out;	/* don't set VM_LOCKED,  don't count */
-+		/* don't set VM_LOCKED or VM_LOCKONFAULT and don't count */
-+		goto out;
- 
- 	pgoff = vma->vm_pgoff + ((start - vma->vm_start) >> PAGE_SHIFT);
- 	*prev = vma_merge(mm, *prev, start, end, newflags, vma->anon_vma,
-@@ -576,7 +577,7 @@ static int apply_vma_lock_flags(unsigned long start, size_t len,
- 		prev = vma;
- 
- 	for (nstart = start ; ; ) {
--		vm_flags_t newflags = vma->vm_flags & ~VM_LOCKED;
-+		vm_flags_t newflags = vma->vm_flags & ~(VM_LOCKED | VM_LOCKONFAULT);
- 		newflags |= flags;
- 
- 		/* Here we know that  vma->vm_start <= nstart < vma->vm_end. */
-@@ -645,9 +646,13 @@ SYSCALL_DEFINE2(mlock, unsigned long, start, size_t, len)
- SYSCALL_DEFINE3(mlock2, unsigned long, start, size_t, len, int, flags)
- {
- 	vm_flags_t vm_flags = VM_LOCKED;
--	if (!flags || (flags & ~(MLOCK_LOCKED)))
-+	if (!flags || (flags & ~(MLOCK_LOCKED | MLOCK_ONFAULT)) ||
-+	    flags == (MLOCK_LOCKED | MLOCK_ONFAULT))
- 		return -EINVAL;
- 
-+	if (flags & MLOCK_ONFAULT)
-+		vm_flags |= VM_LOCKONFAULT;
-+
- 	return do_mlock(start, len, vm_flags);
- }
- 
-@@ -668,21 +673,30 @@ SYSCALL_DEFINE2(munlock, unsigned long, start, size_t, len)
- static int apply_mlockall_flags(int flags)
- {
- 	struct vm_area_struct * vma, * prev = NULL;
-+	vm_flags_t to_add = 0;
- 
--	if (flags & MCL_FUTURE)
-+	current->mm->def_flags &= ~(VM_LOCKED | VM_LOCKONFAULT);
-+	if (flags & MCL_FUTURE) {
- 		current->mm->def_flags |= VM_LOCKED;
--	else
--		current->mm->def_flags &= ~VM_LOCKED;
- 
--	if (flags == MCL_FUTURE)
--		goto out;
-+		if (flags == MCL_FUTURE)
-+			goto out;
-+
-+		if (flags & MCL_ONFAULT)
-+			current->mm->def_flags |= VM_LOCKONFAULT;
-+	}
-+
-+	if (flags & (MCL_ONFAULT | MCL_CURRENT)) {
-+		to_add |= VM_LOCKED;
-+		if (flags & MCL_ONFAULT)
-+			to_add |= VM_LOCKONFAULT;
-+	}
- 
- 	for (vma = current->mm->mmap; vma ; vma = prev->vm_next) {
- 		vm_flags_t newflags;
- 
--		newflags = vma->vm_flags & ~VM_LOCKED;
--		if (flags & MCL_CURRENT)
--			newflags |= VM_LOCKED;
-+		newflags = vma->vm_flags & ~(VM_LOCKED | VM_LOCKONFAULT);
-+		newflags |= to_add;
- 
- 		/* Ignore errors */
- 		mlock_fixup(vma, &prev, vma->vm_start, vma->vm_end, newflags);
-@@ -697,7 +711,8 @@ SYSCALL_DEFINE1(mlockall, int, flags)
- 	unsigned long lock_limit;
- 	int ret = -EINVAL;
- 
--	if (!flags || (flags & ~(MCL_CURRENT | MCL_FUTURE)))
-+	if (!flags || (flags & ~(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT)) ||
-+	    (flags & (MCL_CURRENT | MCL_ONFAULT)) == (MCL_CURRENT | MCL_ONFAULT))
- 		goto out;
- 
- 	ret = -EPERM;
-@@ -717,7 +732,7 @@ SYSCALL_DEFINE1(mlockall, int, flags)
- 	    capable(CAP_IPC_LOCK))
- 		ret = apply_mlockall_flags(flags);
- 	up_write(&current->mm->mmap_sem);
--	if (!ret && (flags & MCL_CURRENT))
-+	if (!ret && (flags & (MCL_CURRENT | MCL_ONFAULT)))
- 		mm_populate(0, TASK_SIZE);
- out:
- 	return ret;
 -- 
 1.9.1
 
