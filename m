@@ -1,83 +1,56 @@
-From: Eric B Munson <emunson@akamai.com>
-Subject: Re: [PATCH V4 2/6] mm: mlock: Add new mlock, munlock, and munlockall
- system calls
-Date: Fri, 24 Jul 2015 10:39:36 -0400
-Message-ID: <20150724143936.GE9203@akamai.com>
-References: <1437508781-28655-1-git-send-email-emunson@akamai.com>
- <1437508781-28655-3-git-send-email-emunson@akamai.com>
- <20150721134441.d69e4e1099bd43e56835b3c5@linux-foundation.org>
- <1437528316.16792.7.camel@ellerman.id.au>
- <20150722141501.GA3203@akamai.com>
- <20150723065830.GA5919@linux-mips.org>
+From: Sebastian Reichel <sre-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 00/14] Enhance twl4030_charger functionality. - V2
+Date: Fri, 24 Jul 2015 16:44:06 +0200
+Message-ID: <20150724144406.GD27569@earth>
+References: <20150322231635.23789.70149.stgit@notabene.brown>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="+JUInw4efm7IfTNU"
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="JwB53PgKC5A7+0Ej"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20150723065830.GA5919@linux-mips.org>
-Sender: owner-linux-mm@kvack.org
-To: Ralf Baechle <ralf@linux-mips.org>
-Cc: Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, linux-mips@linux-mips.org, linux-m68k@vger.kernel.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, sparclinux@vger.kernel.org, linux-arch@vger.kernel.org, Stephen Rothwell <sfr@canb.auug.org.au>, linux-am33-list@redhat.com, Geert Uytterhoeven <geert@linux-m68k.org>, Vlastimil Babka <vbabka@suse.cz>, Guenter Roeck <linux@roeck-us.net>, linux-xtensa@linux-xtensa.org, linux-s390@vger.kernel.org, adi-buildroot-devel@lists.sourceforge.net, linux-arm-kernel@lists.infradead.org, linux-cris-kernel@axis.com, linux-parisc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-alpha@vger.kernel.org, linuxppc-dev@lists.ozlabs.or
+In-Reply-To: <20150322231635.23789.70149.stgit-wvvUuzkyo1EYVZTmpyfIwg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: NeilBrown <neil-+NVA1uvv1dVBDLzU/O5InQ@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, GTA04 owners <gta04-owner-xXXSsgcRVICgSpxsJD1C4w@public.gmane.org>, inux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, linux-omap-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Lee Jones <lee.jones-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
---+JUInw4efm7IfTNU
+--JwB53PgKC5A7+0Ej
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
 
-On Thu, 23 Jul 2015, Ralf Baechle wrote:
+Hi Neil,
 
-> On Wed, Jul 22, 2015 at 10:15:01AM -0400, Eric B Munson wrote:
->=20
-> > >=20
-> > > You haven't wired it up properly on powerpc, but I haven't mentioned =
-it because
-> > > I'd rather we did it.
-> > >=20
-> > > cheers
-> >=20
-> > It looks like I will be spinning a V5, so I will drop all but the x86
-> > system calls additions in that version.
->=20
-> The MIPS bits are looking good however, so
->=20
-> Acked-by: Ralf Baechle <ralf@linux-mips.org>
->=20
-> With my ack, will you keep them or maybe carry them as a separate patch?
+On Mon, Mar 23, 2015 at 10:20:28AM +1100, NeilBrown wrote:
+> here is V2 of my patches to improve the twl4030 charger.
+> They include improved documentation and removal of changes
+> to the CVENAC bit which I didn't properly understand.
 
-I will keep the MIPS additions as a separate patch in the series, though
-I have dropped two of the new syscalls after some discussion.  So I will
-not include your ack on the new patch.
+I rebased and queued patches 1 and 2. Can you rebase the
+other patches and take care of the remaining comments?
 
-Eric
+-- Sebastian
 
---+JUInw4efm7IfTNU
+--JwB53PgKC5A7+0Ej
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: Digital signature
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1
 
-iQIcBAEBAgAGBQJVsk4oAAoJELbVsDOpoOa9Eo0QAJ6eViChMf3Imw2HLUBOL+qS
-B7hozSCTuKLHaqx8QBhkjX6yqn0FIa5+TUWk76Py3JA00geQAiSWGmmZidLmdkmL
-QqZgrvi6B/hsDx4qhNk3wsTpeOtRL6JfpM0CI42Y5JO9nXvp/mpEJyHIRbrvlOtG
-GdRPYjyf1gXqwFaOJel7/GvPhRxMh0vkIr78XqNZOQovWL9cfvaUGaZmLGcLJq78
-PPYyuZ53AmNg83C8wDpgPfdgQ/L4ob+mZJIcP8purUXHpu7Xu7KbePkdoPqZ1EDT
-zRias9nrfrQQTCYaga4MM6wMa2S+iDNPq6Ae+sI6eoDyMxhjuUEi4xxHZ9HGwSIm
-Ii5cbD5//xbOHceAPuQ0lhvWH06ip6OVEXx68ACl7p46Ebi7B2jOeSyKH3UNpomS
-37NdAdUk3PlC3r3CwoPS2XXYjthQr8rVLVqoZP1wC4KxHanglXzFv+AwyLwRCQJ3
-6WevOpUmjVstR67EZBXmHMC4yVGxwF9TdC15G4coZEBw8wcLV6rC2TuK1KZw5JHR
-1yIJtZIBQmNoFkGwNWggIFsDiOasKmgUjjHY/yPPrn0MTkCy69zrnkqzoKZQEIoE
-MXYJiYfYFy7Ek7/K7u/lCjJI0X1bXk3QTmNrX5BuVzQPtV8jdzcBzl4SQhFGc7IH
-4GNpeBolyRBy2p7wt0lO
-=/Udu
+iQIcBAEBCgAGBQJVsk82AAoJENju1/PIO/qaDwAP/2Eyx7ABCxW6wlmd1cLDb9bT
+zqdN/dHDKirTb0bcYpM5FCDvv/UydHpfoiv8iAuiTGXztKcLkXF+Q7Tne+/LXq40
+TDusJDMQSWBw2Fu6xnCdhFb5UG7gc5/v9u9HAc5/4pEABxIhgZ5vN0IV9EV8Cfcu
+NIaRArKfOsTazO3unKyvwODOQcGj6YmNIPovCCXcNlw93MQmiIlI42fL08O8+1pm
+m+Wrrm/G0YiGpj6TS+JL1wNg9Fl9RD14/KbFqwY6EPXYBNDueEHpkHjuCqTQJRa6
+U/IR1MvM9kUz8Lsjfvroio+X78UPy+R5NyVIJlnntGoJ6G/vGiW8kUFhdygV0S//
+AE3TSffaOhR+2/X3eps6AtNqmYtqLWyjho0fg+u8Z25rQVaul8/dxgqsUKxYePI9
+IJJNd4jlPW9XeMtfC+76xWPqGr0YvoT0z9xp7S/4804wBjGM3jS5oGgxcMHfBd5v
+O8PUlPpREAWqSGyn7wmcgLR1O7XXwb7lflyCYDBspa7bairccgMqqrDEVh93tRp9
+HYNf75qSXutv7yU5Lpw3vpKQjZgUP+FfMoBQnbtaGvxa7sqq7hwTbCwtTk4QDFPE
+JQafapja6F09eiVnPsFfnLO6NbsPaqcrrVFnD7s3AfgqOQ+e65eMiO1zWRUkmLQ1
+JqG1shoeO5s37NsMhanL
+=+/gr
 -----END PGP SIGNATURE-----
 
---+JUInw4efm7IfTNU--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+--JwB53PgKC5A7+0Ej--
