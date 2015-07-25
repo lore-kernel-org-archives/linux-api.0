@@ -1,378 +1,116 @@
-From: Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
-Subject: [PATCH] kselftests/ftrace : Add event trigger testcases
-Date: Sat, 25 Jul 2015 10:13:10 +0900
-Message-ID: <20150725011310.4601.76087.stgit@localhost.localdomain>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: Tom Zanussi <tom.zanussi-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+From: Finn Thain <fthain@telegraphics.com.au>
+Subject: [RFC v5 25/26] m68k/mac: Fix PRAM accessors
+Date: Sat, 25 Jul 2015 17:46:24 +1000
+Message-ID: <20150725074605.633325233@telegraphics.com.au>
+References: <20150725074559.543547894@telegraphics.com.au>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=mac68k-fix-pram-accessors
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-m68k@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, Geert Uytterhoeven <geert@linux-m68k.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This adds simple event trigger testcases for ftracetest,
-which covers following triggers.
- - traceon-traceoff trigger
- - enable/disable_event trigger
- - snapshot trigger
- - stacktrace trigger
- - trigger filters
+Signed-off-by: Finn Thain <fthain@telegraphics.com.au>
 
-Signed-off-by: Masami Hiramatsu <masami.hiramatsu.pt-FCd8Q96Dh0JBDgjK7y7TUQ@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: Namhyung Kim <namhyung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Tom Zanussi <tom.zanussi-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 ---
- tools/testing/selftests/ftrace/test.d/functions    |    9 +++
- .../ftrace/test.d/trigger/trigger-eventonoff.tc    |   64 ++++++++++++++++++++
- .../ftrace/test.d/trigger/trigger-filter.tc        |   59 ++++++++++++++++++
- .../ftrace/test.d/trigger/trigger-snapshot.tc      |   56 ++++++++++++++++++
- .../ftrace/test.d/trigger/trigger-stacktrace.tc    |   53 +++++++++++++++++
- .../ftrace/test.d/trigger/trigger-traceonoff.tc    |   58 ++++++++++++++++++
- 6 files changed, 299 insertions(+)
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-eventonoff.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-filter.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-snapshot.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-stacktrace.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-traceonoff.tc
 
-diff --git a/tools/testing/selftests/ftrace/test.d/functions b/tools/testing/selftests/ftrace/test.d/functions
-index 5d8cd06..36ca18e 100644
---- a/tools/testing/selftests/ftrace/test.d/functions
-+++ b/tools/testing/selftests/ftrace/test.d/functions
-@@ -14,3 +14,12 @@ enable_tracing() { # start trace recording
- reset_tracer() { # reset the current tracer
-     echo nop > current_tracer
+Tested on a PowerBook 520 and Quadra 650.
+
+Changes since v2:
+- Make use of the RTC_* macros from the previous patch and add a few more
+besides.
+
+---
+ arch/m68k/mac/misc.c     |   39 +++++++++++++++++++++++++++++++++------
+ include/uapi/linux/pmu.h |    2 ++
+ 2 files changed, 35 insertions(+), 6 deletions(-)
+
+Index: linux/arch/m68k/mac/misc.c
+===================================================================
+--- linux.orig/arch/m68k/mac/misc.c	2015-07-25 17:45:54.000000000 +1000
++++ linux/arch/m68k/mac/misc.c	2015-07-25 17:45:55.000000000 +1000
+@@ -119,19 +119,22 @@ static void pmu_write_time(long data)
+ static unsigned char pmu_pram_read_byte(int offset)
+ {
+ 	struct adb_request req;
+-	if (pmu_request(&req, NULL, 3, PMU_READ_NVRAM,
+-			(offset >> 8) & 0xFF, offset & 0xFF) < 0)
++
++	if (pmu_request(&req, NULL, 3, PMU_READ_XPRAM,
++	                offset & 0xFF, 1) < 0)
+ 		return 0;
+ 	while (!req.complete)
+ 		pmu_poll();
+-	return req.reply[3];
++
++	return req.reply[1];
  }
+ 
+ static void pmu_pram_write_byte(unsigned char data, int offset)
+ {
+ 	struct adb_request req;
+-	if (pmu_request(&req, NULL, 4, PMU_WRITE_NVRAM,
+-			(offset >> 8) & 0xFF, offset & 0xFF, data) < 0)
 +
-+reset_trigger() { # reset all current setting triggers
-+    grep -v ^# events/*/*/trigger |
-+    while read line; do
-+        cmd=`echo $line | cut -f2- -d:`
-+	echo "!$cmd" > `echo $line | cut -f1 -d:`
-+    done
-+}
++	if (pmu_request(&req, NULL, 4, PMU_WRITE_XPRAM,
++	                offset & 0xFF, 1, data) < 0)
+ 		return;
+ 	while (!req.complete)
+ 		pmu_poll();
+@@ -257,6 +260,16 @@ static void via_rtc_send(__u8 data)
+ #define RTC_REG_WRITE_PROTECT   13
+ 
+ /*
++ * Inside Mac has no information about two-byte RTC commands but
++ * the MESS source code has the essentials.
++ */
 +
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-eventonoff.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-eventonoff.tc
-new file mode 100644
-index 0000000..1a94450
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-eventonoff.tc
-@@ -0,0 +1,64 @@
-+#!/bin/sh
-+# description: event trigger - test event enable/disable trigger
++#define RTC_REG_XPRAM           14
++#define RTC_CMD_XPRAM_READ      (RTC_CMD_READ(RTC_REG_XPRAM) << 8)
++#define RTC_CMD_XPRAM_WRITE     (RTC_CMD_WRITE(RTC_REG_XPRAM) << 8)
++#define RTC_CMD_XPRAM_ARG(a)    (((a & 0xE0) << 3) | ((a & 0x1F) << 2))
 +
-+do_reset() {
-+    reset_trigger
-+    echo > set_event
-+    clear_trace
-+}
++/*
+  * Execute a VIA PRAM/RTC command. For read commands
+  * data should point to a one-byte buffer for the
+  * resulting data. For write commands it should point
+@@ -303,11 +316,25 @@ static void via_rtc_command(int command,
+ 
+ static unsigned char via_pram_read_byte(int offset)
+ {
+-	return 0;
++	unsigned char temp;
 +
-+fail() { #msg
-+    do_reset
-+    echo $1
-+    exit $FAIL
-+}
++	via_rtc_command(RTC_CMD_XPRAM_READ | RTC_CMD_XPRAM_ARG(offset), &temp);
 +
-+if [ ! -f set_event -o ! -d events/sched ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
++	return temp;
+ }
+ 
+ static void via_pram_write_byte(unsigned char data, int offset)
+ {
++	unsigned char temp;
 +
-+if [ ! -f events/sched/sched_process_fork/trigger ]; then
-+    echo "event trigger is not supported"
-+    exit_unsupported
-+fi
++	temp = 0x55;
++	via_rtc_command(RTC_CMD_WRITE(RTC_REG_WRITE_PROTECT), &temp);
 +
-+reset_tracer
-+do_reset
++	temp = data;
++	via_rtc_command(RTC_CMD_XPRAM_WRITE | RTC_CMD_XPRAM_ARG(offset), &temp);
 +
-+FEATURE=`grep enable_event events/sched/sched_process_fork/trigger`
-+if [ -z "$FEATURE" ]; then
-+    echo "event enable/disable trigger is not supported"
-+    exit_unsupported
-+fi
-+
-+echo "Test enable_event trigger"
-+echo 0 > events/sched/sched_switch/enable
-+echo 'enable_event:sched:sched_switch' > events/sched/sched_process_fork/trigger
-+( echo "forked")
-+if [ `cat events/sched/sched_switch/enable` != '1*' ]; then
-+    fail "enable_event trigger on sched_process_fork did not work"
-+fi
-+
-+reset_trigger
-+
-+echo "Test disable_event trigger"
-+echo 1 > events/sched/sched_switch/enable
-+echo 'disable_event:sched:sched_switch' > events/sched/sched_process_fork/trigger
-+( echo "forked")
-+if [ `cat events/sched/sched_switch/enable` != '0*' ]; then
-+    fail "disable_event trigger on sched_process_fork did not work"
-+fi
-+
-+reset_trigger
-+
-+echo "Test semantic error for event enable/disable trigger"
-+! echo 'enable_event:nogroup:noevent' > events/sched/sched_process_fork/trigger
-+! echo 'disable_event+1' > events/sched/sched_process_fork/trigger
-+echo 'enable_event:sched:sched_switch' > events/sched/sched_process_fork/trigger
-+! echo 'enable_event:sched:sched_switch' > events/sched/sched_process_fork/trigger
-+! echo 'disable_event:sched:sched_switch' > events/sched/sched_process_fork/trigger
-+
-+do_reset
-+
-+exit 0
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-filter.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-filter.tc
-new file mode 100644
-index 0000000..514e466
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-filter.tc
-@@ -0,0 +1,59 @@
-+#!/bin/sh
-+# description: event trigger - test trigger filter
-+
-+do_reset() {
-+    reset_trigger
-+    echo > set_event
-+    clear_trace
-+}
-+
-+fail() { #msg
-+    do_reset
-+    echo $1
-+    exit $FAIL
-+}
-+
-+if [ ! -f set_event -o ! -d events/sched ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
-+
-+if [ ! -f events/sched/sched_process_fork/trigger ]; then
-+    echo "event trigger is not supported"
-+    exit_unsupported
-+fi
-+
-+reset_tracer
-+do_reset
-+
-+echo "Test trigger filter"
-+echo 1 > tracing_on
-+echo 'traceoff if child_pid == 0' > events/sched/sched_process_fork/trigger
-+( echo "forked")
-+if [ `cat tracing_on` -ne 1 ]; then
-+    fail "traceoff trigger on sched_process_fork did not work"
-+fi
-+
-+reset_trigger
-+
-+echo "Test semantic error for trigger filter"
-+! echo 'traceoff if a' > events/sched/sched_process_fork/trigger
-+! echo 'traceoff if common_pid=0' > events/sched/sched_process_fork/trigger
-+! echo 'traceoff if common_pid==b' > events/sched/sched_process_fork/trigger
-+echo 'traceoff if common_pid == 0' > events/sched/sched_process_fork/trigger
-+echo '!traceoff' > events/sched/sched_process_fork/trigger
-+! echo 'traceoff if common_pid == child_pid' > events/sched/sched_process_fork/trigger
-+echo 'traceoff if common_pid <= 0' > events/sched/sched_process_fork/trigger
-+echo '!traceoff' > events/sched/sched_process_fork/trigger
-+echo 'traceoff if common_pid >= 0' > events/sched/sched_process_fork/trigger
-+echo '!traceoff' > events/sched/sched_process_fork/trigger
-+echo 'traceoff if parent_pid >= 0 && child_pid >= 0' > events/sched/sched_process_fork/trigger
-+echo '!traceoff' > events/sched/sched_process_fork/trigger
-+echo 'traceoff if parent_pid >= 0 || child_pid >= 0' > events/sched/sched_process_fork/trigger
-+echo '!traceoff' > events/sched/sched_process_fork/trigger
-+
-+
-+
-+do_reset
-+
-+exit 0
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-snapshot.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-snapshot.tc
-new file mode 100644
-index 0000000..f84b80d
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-snapshot.tc
-@@ -0,0 +1,56 @@
-+#!/bin/sh
-+# description: event trigger - test snapshot-trigger
-+
-+do_reset() {
-+    reset_trigger
-+    echo > set_event
-+    clear_trace
-+}
-+
-+fail() { #msg
-+    do_reset
-+    echo $1
-+    exit $FAIL
-+}
-+
-+if [ ! -f set_event -o ! -d events/sched ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
-+
-+if [ ! -f events/sched/sched_process_fork/trigger ]; then
-+    echo "event trigger is not supported"
-+    exit_unsupported
-+fi
-+
-+reset_tracer
-+do_reset
-+
-+FEATURE=`grep snapshot events/sched/sched_process_fork/trigger`
-+if [ -z "$FEATURE" ]; then
-+    echo "snapshot trigger is not supported"
-+    exit_unsupported
-+fi
-+
-+echo "Test snapshot tigger"
-+echo 0 > snapshot
-+echo 1 > events/sched/sched_process_fork/enable
-+( echo "forked")
-+echo 'snapshot:1' > events/sched/sched_process_fork/trigger
-+( echo "forked")
-+grep sched_process_fork snapshot > /dev/null || \
-+    fail "snapshot trigger on sched_process_fork did not work"
-+
-+reset_trigger
-+echo 0 > snapshot
-+echo 0 > events/sched/sched_process_fork/enable
-+
-+echo "Test snapshot semantic errors"
-+
-+! echo "snapshot+1" > events/sched/sched_process_fork/trigger
-+echo "snapshot" > events/sched/sched_process_fork/trigger
-+! echo "snapshot" > events/sched/sched_process_fork/trigger
-+
-+do_reset
-+
-+exit 0
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-stacktrace.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-stacktrace.tc
-new file mode 100644
-index 0000000..9fa23b0
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-stacktrace.tc
-@@ -0,0 +1,53 @@
-+#!/bin/sh
-+# description: event trigger - test stacktrace-trigger
-+
-+do_reset() {
-+    reset_trigger
-+    echo > set_event
-+    clear_trace
-+}
-+
-+fail() { #msg
-+    do_reset
-+    echo $1
-+    exit $FAIL
-+}
-+
-+if [ ! -f set_event -o ! -d events/sched ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
-+
-+if [ ! -f events/sched/sched_process_fork/trigger ]; then
-+    echo "event trigger is not supported"
-+    exit_unsupported
-+fi
-+
-+reset_tracer
-+do_reset
-+
-+FEATURE=`grep stacktrace events/sched/sched_process_fork/trigger`
-+if [ -z "$FEATURE" ]; then
-+    echo "stacktrace trigger is not supported"
-+    exit_unsupported
-+fi
-+
-+echo "Test stacktrace tigger"
-+echo 0 > trace
-+echo 0 > options/stacktrace
-+echo 'stacktrace' > events/sched/sched_process_fork/trigger
-+( echo "forked")
-+grep "<stack trace>" trace > /dev/null || \
-+    fail "stacktrace trigger on sched_process_fork did not work"
-+
-+reset_trigger
-+
-+echo "Test stacktrace semantic errors"
-+
-+! echo "stacktrace:foo" > events/sched/sched_process_fork/trigger
-+echo "stacktrace" > events/sched/sched_process_fork/trigger
-+! echo "stacktrace" > events/sched/sched_process_fork/trigger
-+
-+do_reset
-+
-+exit 0
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-traceonoff.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-traceonoff.tc
-new file mode 100644
-index 0000000..87648e5
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-traceonoff.tc
-@@ -0,0 +1,58 @@
-+#!/bin/sh
-+# description: event trigger - test traceon/off trigger
-+
-+do_reset() {
-+    reset_trigger
-+    echo > set_event
-+    clear_trace
-+}
-+
-+fail() { #msg
-+    do_reset
-+    echo $1
-+    exit $FAIL
-+}
-+
-+if [ ! -f set_event -o ! -d events/sched ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
-+
-+if [ ! -f events/sched/sched_process_fork/trigger ]; then
-+    echo "event trigger is not supported"
-+    exit_unsupported
-+fi
-+
-+reset_tracer
-+do_reset
-+
-+echo "Test traceoff trigger"
-+echo 1 > tracing_on
-+echo 'traceoff' > events/sched/sched_process_fork/trigger
-+( echo "forked")
-+if [ `cat tracing_on` -ne 0 ]; then
-+    fail "traceoff trigger on sched_process_fork did not work"
-+fi
-+
-+reset_trigger
-+
-+echo "Test traceon trigger"
-+echo 0 > tracing_on
-+echo 'traceon' > events/sched/sched_process_fork/trigger
-+( echo "forked")
-+if [ `cat tracing_on` -ne 1 ]; then
-+    fail "traceoff trigger on sched_process_fork did not work"
-+fi
-+
-+reset_trigger
-+
-+echo "Test semantic error for traceoff/on trigger"
-+! echo 'traceoff:badparam' > events/sched/sched_process_fork/trigger
-+! echo 'traceoff+0' > events/sched/sched_process_fork/trigger
-+echo 'traceon' > events/sched/sched_process_fork/trigger
-+! echo 'traceon' > events/sched/sched_process_fork/trigger
-+! echo 'traceoff' > events/sched/sched_process_fork/trigger
-+
-+do_reset
-+
-+exit 0
++	temp = 0x55 | RTC_FLG_WRITE_PROTECT;
++	via_rtc_command(RTC_CMD_WRITE(RTC_REG_WRITE_PROTECT), &temp);
+ }
+ 
+ /*
+Index: linux/include/uapi/linux/pmu.h
+===================================================================
+--- linux.orig/include/uapi/linux/pmu.h	2015-07-25 17:42:33.000000000 +1000
++++ linux/include/uapi/linux/pmu.h	2015-07-25 17:45:55.000000000 +1000
+@@ -18,7 +18,9 @@
+ #define PMU_POWER_CTRL		0x11	/* control power of some devices */
+ #define PMU_ADB_CMD		0x20	/* send ADB packet */
+ #define PMU_ADB_POLL_OFF	0x21	/* disable ADB auto-poll */
++#define PMU_WRITE_XPRAM		0x32	/* write eXtended Parameter RAM */
+ #define PMU_WRITE_NVRAM		0x33	/* write non-volatile RAM */
++#define PMU_READ_XPRAM		0x3a	/* read eXtended Parameter RAM */
+ #define PMU_READ_NVRAM		0x3b	/* read non-volatile RAM */
+ #define PMU_SET_RTC		0x30	/* set real-time clock */
+ #define PMU_READ_RTC		0x38	/* read real-time clock */
