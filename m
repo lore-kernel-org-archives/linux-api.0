@@ -1,53 +1,79 @@
-From: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [PATCH v7 4/6] block: loop: prepare for supporing direct IO
-Date: Mon, 27 Jul 2015 05:53:33 -0400
-Message-ID: <CACVXFVMKycx768HtAJXMgEZNjsQrNm_f3UzW9kUysSHAMM5FPQ@mail.gmail.com>
-References: <1437061068-26118-1-git-send-email-ming.lei@canonical.com>
-	<1437061068-26118-5-git-send-email-ming.lei@canonical.com>
-	<20150727084020.GA28336@infradead.org>
-	<CACVXFVOvnVHNtTkt_kiNZu9BuZHZ==EF4y3qXx+Qo=LHoytODQ@mail.gmail.com>
-	<20150727094530.GA15507@infradead.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Revised futex(2) man page for review
+Date: Mon, 27 Jul 2015 13:00:50 +0200
+Message-ID: <55B60F62.6010303@gmail.com>
+References: <55166C01.7000803@gmail.com>	 <20150328114725.GJ27490@worktop.programming.kicks-ass.net>	 <20150328120337.GB32047@worktop.ger.corp.intel.com> <1427834205.20009.19.camel@stgolabs.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150727094530.GA15507-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+In-Reply-To: <1427834205.20009.19.camel-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Justin M. Forbes" <jforbes-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, bert hubert <bert.hubert-dxZxOz86jR8sYtaaK7K+xw@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Heinrich Schuchardt <xypron>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 27, 2015 at 5:45 AM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
-> On Mon, Jul 27, 2015 at 05:41:57AM -0400, Ming Lei wrote:
->> > Why the hardcoded value?  I suspect this should be more like:
->> >
->> >         if (dio && inode->i_sb->s_bdev &&
->> >             (lo->lo_offset & (bdev_io_min(inode->i_sb->s_bdev) - 1)) != 0)
->> >                 dio = false;
+Hi David,
+
+On 03/31/2015 10:36 PM, Davidlohr Bueso wrote:
+> On Sat, 2015-03-28 at 13:03 +0100, Peter Zijlstra wrote:
+>>>               If the timeout argument is non-NULL, its contents spe=
+cify a rel=E2=80=90
+>>>               ative   timeout   for   the  wait,  measured  accordi=
+ng  to  the
+>>>               CLOCK_MONOTONIC clock.  (This interval will be rounde=
+d up to the
+>>>               system clock granularity, and kernel scheduling delay=
+s mean that
+>>>               the blocking interval may overrun by a small amount.)=
+  If  time=E2=80=90
+>>>               out is NULL, the call blocks indefinitely.
 >>
->> The above can't work if the backing device has a bigger sector size
->> (such as 4K), that is why loop's direct-io requires 512 min_io_size of
->> backing device.
->
-> Why doesn't it work?  If the backing device sector size is 4k
-> and lo_offset is 0 or a multiple of 4k it should allow direct I/O,
-> and my code sniplet will allow that.
+>> Would it not be better to only state that the wait will not return
+>> before the timeout -- unless woken -- and not bother with clock
+>> granularity and scheduling delays?
+>=20
+> Yeah, similarly we also have this:
+>=20
+>      FUTEX_PRIVATE_FLAG (since Linux 2.6.22)
+>               This option bit can be employed with all futex  operati=
+ons.   It
+>               tells  the  kernel  that  the  futex  is process-privat=
+e and not
+>               shared with another process (i.e., it is  only  being  =
+used  for
+>               synchronization  between  threads  of  the  same proces=
+s).  This
+>               allows the kernel to choose the fast  path  for  valida=
+ting  the
+>               user-space address and avoids expensive VMA lookups, ta=
+king ref=E2=80=90
+>               erence counts on file backing store, and so on.
+>=20
+> This to me reads a bit too much into the kernel (fastpath, refcnt,
+> vmas). Why not just mention that it avoids overhead in the kernel or
+> something? I don't recall any manpage mentioning such details, but I
+> could be wrong.=20
 
-Because size has to be 4k aligned too.
+Thanks. Agreed. I changed this to
 
-And it can't work in the example posted by Dave Chinner:
+    This allows the kernel to make some additional performance optimiza=
+tions.
 
-> I have a 4k sector backing device and a 512 byte sector filesystem
-> image. I can't do 512 byte direct IO to the filesystem image, so I
-> can't run tools that handle fs images in files using direct Io on
-> that file. Create a loop device with the filesystem image, and now I
-> can do 512 byte direct IO to the filesystem image, because all that
-> direct IO to the filesystem image is now buffered by the loop
-> device.
->
-> If the loop device does direct io in this situation, the backing
-> filesystem rejects direct IO from the loop device because it is not
-> sector (4k) sized/aligned. User now swears, shouts and curses you
-> from afar.
+> In any case its a nit, the whole doc is pretty good and
+> I hope you can merge it soon and then just increment ;)
+
+I ran out of time and energy at a certain point. And also got a little
+disheartened that I got more people complaining about groff markup
+than actually looked looked at the FIXMEs in the page source :-).=20
+I'll try to reboot the process.
+
+Cheers,
+
+Michael
 
 
-Thanks,
+--=20
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
