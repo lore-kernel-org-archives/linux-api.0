@@ -1,53 +1,89 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: [GIT PULL] Kselftest fixes for 4.2-rc5
-Date: Mon, 27 Jul 2015 09:01:32 -0600
-Message-ID: <55B647CC.3010800@osg.samsung.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH V5 0/7] Allow user to request memory to be locked on page
+ fault
+Date: Mon, 27 Jul 2015 17:40:24 +0200
+Message-ID: <55B650E8.9030102@suse.cz>
+References: <1437773325-8623-1-git-send-email-emunson@akamai.com>
+ <55B5F4FF.9070604@suse.cz> <20150727133555.GA17133@akamai.com>
+ <55B63D37.20303@suse.cz> <20150727145409.GB21664@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "open list:KERNEL SELFTEST F..." <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Return-path: <sparclinux-owner@vger.kernel.org>
+In-Reply-To: <20150727145409.GB21664@akamai.com>
+Sender: sparclinux-owner@vger.kernel.org
+To: Eric B Munson <emunson@akamai.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Shuah Khan <shuahkh@osg.samsung.com>, Michal Hocko <mhocko@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, Jonathan Corbet <corbet@lwn.net>, Ralf Baechle <ralf@linux-mips.org>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Linus,
+On 07/27/2015 04:54 PM, Eric B Munson wrote:
+> On Mon, 27 Jul 2015, Vlastimil Babka wrote:
+>>
+>>> We do actually have an MCL_LOCKED, we just call it MCL_CURRENT.  Would
+>>> you prefer that I match the name in mlock2() (add MLOCK_CURRENT
+>>> instead)?
+>>
+>> Hm it's similar but not exactly the same, because MCL_FUTURE is not
+>> the same as MLOCK_ONFAULT :) So MLOCK_CURRENT would be even more
+>> confusing. Especially if mlockall(MCL_CURRENT | MCL_FUTURE) is OK,
+>> but mlock2(MLOCK_LOCKED | MLOCK_ONFAULT) is invalid.
+>
+> MLOCK_ONFAULT isn't meant to be the same as MCL_FUTURE, rather it is
+> meant to be the same as MCL_ONFAULT.  MCL_FUTURE only controls if the
+> locking policy will be applied to any new mappings made by this process,
+> not the locking policy itself.  The better comparison is MCL_CURRENT to
+> MLOCK_LOCK and MCL_ONFAULT to MLOCK_ONFAULT.  MCL_CURRENT and
+> MLOCK_LOCK do the same thing, only one requires a specific range of
+> addresses while the other works process wide.  This is why I suggested
+> changing MLOCK_LOCK to MLOCK_CURRENT.  It is an error to call
+> mlock2(MLOCK_LOCK | MLOCK_ONFAULT) just like it is an error to call
+> mlockall(MCL_CURRENT | MCL_ONFAULT).  The combinations do no make sense.
 
-Please pull the following Kselftest fixes for 4.2-rc5
+How is it an error to call mlockall(MCL_CURRENT | MCL_ONFAULT)? How else 
+would you apply mlock2(MCL_ONFAULT) to all current mappings? Later below 
+you use the same example and I don't think it's different by removing 
+MLOCK_LOCKED flag.
 
-thanks,
--- Shuah
+> This was all decided when VM_LOCKONFAULT was a separate state from
+> VM_LOCKED.  Now that VM_LOCKONFAULT is a modifier to VM_LOCKED and
+> cannot be specified independentally, it might make more sense to mirror
+> that relationship to userspace.  Which would lead to soemthing like the
+> following:
+>
+> To lock and populate a region:
+> mlock2(start, len, 0);
+>
+> To lock on fault a region:
+> mlock2(start, len, MLOCK_ONFAULT);
+>
+> If LOCKONFAULT is seen as a modifier to mlock, then having the flags
+> argument as 0 mean do mlock classic makes more sense to me.
 
-The following changes since commit d770e558e21961ad6cfdf0ff7df0eb5d7d4f0754:
+Yup that's what I was trying to suggest.
 
-  Linux 4.2-rc1 (2015-07-05 11:01:52 -0700)
+> To mlock current on fault only:
+> mlockall(MCL_CURRENT | MCL_ONFAULT);
+>
+> To mlock future on fault only:
+> mlockall(MCL_FUTURE | MCL_ONFAULT);
+>
+> To lock everything on fault:
+> mlockall(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT);
+>
+> I think I have talked myself into rewriting the set again :/
 
-are available in the git repository at:
+Sorry :) You could also wait a bit for more input than just from me...
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/shuah/linux-kselftest
-tags/linux-kselftest-4.2-rc5
+>>
+>>> Finally, on the question of MAP_LOCKONFAULT, do you just dislike
+>>> MAP_LOCKED and do not want to see it extended, or is this a NAK on the
+>>> set if that patch is included.  I ask because I have to spin a V6 to get
+>>> the MLOCK flag declarations right, but I would prefer not to do a V7+.
+>>> If this is a NAK with, I can drop that patch and rework the tests to
+>>> cover without the mmap flag.  Otherwise I want to keep it, I have an
+>>> internal user that would like to see it added.
+>>
+>> I don't want to NAK that patch if you think it's useful.
+>>
+>>
 
-for you to fetch changes up to fee50f3c8427aacabfb603229bf0a9056c3f2638:
-
-  selftests/futex: Fix futex_cmp_requeue_pi() error handling (2015-07-20
-18:29:38 -0600)
-
-----------------------------------------------------------------
-linux-kselftest-4.2-rc5
-
-Kselftest fixes for 4.2-rc5
-
-----------------------------------------------------------------
-Darren Hart (1):
-      selftests/futex: Fix futex_cmp_requeue_pi() error handling
-
- .../selftests/futex/functional/futex_requeue_pi_signal_restart.c
- | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
--- 
-Shuah Khan
-Sr. Linux Kernel Developer
-Open Source Innovation Group
-Samsung Research America (Silicon Valley)
-shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org | (970) 217-8978
