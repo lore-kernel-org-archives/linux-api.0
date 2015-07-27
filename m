@@ -1,34 +1,48 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH -mm v9 0/8] idle memory tracking
-Date: Mon, 27 Jul 2015 12:25:27 -0700
-Message-ID: <20150727122527.c6f7786177e9b5096e623d18@linux-foundation.org>
-References: <cover.1437303956.git.vdavydov@parallels.com>
-	<20150721163402.43ad2527d9b8caa476a1c9e1@linux-foundation.org>
-	<CAGXu5jLPT-2c_H3kjCzbVgRKQO0xMskVd7JcAMmWZSmFgzZ4ng@mail.gmail.com>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [PATCH v7 4/6] block: loop: prepare for supporing direct IO
+Date: Tue, 28 Jul 2015 08:06:22 +1000
+Message-ID: <20150727220622.GJ3902@dastard>
+References: <1437061068-26118-1-git-send-email-ming.lei@canonical.com>
+ <1437061068-26118-5-git-send-email-ming.lei@canonical.com>
+ <20150727084020.GA28336@infradead.org>
+ <CACVXFVOvnVHNtTkt_kiNZu9BuZHZ==EF4y3qXx+Qo=LHoytODQ@mail.gmail.com>
+ <20150727094530.GA15507@infradead.org>
+ <CACVXFVMKycx768HtAJXMgEZNjsQrNm_f3UzW9kUysSHAMM5FPQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5jLPT-2c_H3kjCzbVgRKQO0xMskVd7JcAMmWZSmFgzZ4ng@mail.gmail.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Vladimir Davydov <vdavydov@parallels.com>, Andres Lagar-Cavilla <andreslc@google.com>, Minchan Kim <minchan@kernel.org>, Raghavendra K T <raghavendra.kt@linux.vnet.ibm.com>, Johannes Weiner <hannes@cmpxchg.org>, Michal Hocko <mhocko@suse.cz>, Greg Thelen <gthelen@google.com>, Michel Lespinasse <walken@google.com>, David Rientjes <rientjes@google.com>, Pavel Emelyanov <xemul@parallels.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Jonathan Corbet <corbet@lwn.net>, Linux API <linux-api@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, Cgroups <cgroups@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CACVXFVMKycx768HtAJXMgEZNjsQrNm_f3UzW9kUysSHAMM5FPQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Justin M. Forbes" <jforbes-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 27 Jul 2015 12:18:57 -0700 Kees Cook <keescook@chromium.org> wrote:
-
-> > Why were these put in /proc anyway?  Rather than under /sys/fs/cgroup
-> > somewhere?  Presumably because /proc/kpageidle is useful in non-memcg
-> > setups.
+On Mon, Jul 27, 2015 at 05:53:33AM -0400, Ming Lei wrote:
+> On Mon, Jul 27, 2015 at 5:45 AM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+> > On Mon, Jul 27, 2015 at 05:41:57AM -0400, Ming Lei wrote:
+> >> > Why the hardcoded value?  I suspect this should be more like:
+> >> >
+> >> >         if (dio && inode->i_sb->s_bdev &&
+> >> >             (lo->lo_offset & (bdev_io_min(inode->i_sb->s_bdev) - 1)) != 0)
+> >> >                 dio = false;
+> >>
+> >> The above can't work if the backing device has a bigger sector size
+> >> (such as 4K), that is why loop's direct-io requires 512 min_io_size of
+> >> backing device.
+> >
+> > Why doesn't it work?  If the backing device sector size is 4k
+> > and lo_offset is 0 or a multiple of 4k it should allow direct I/O,
+> > and my code sniplet will allow that.
 > 
-> Do we need a /proc/vm/ for holding these kinds of things? We're
-> collecting a lot there. Or invent some way for this to be sensible in
-> /sys?
+> Because size has to be 4k aligned too.
 
-/proc is the traditional place for such things (/proc/kpagecount,
-/proc/kpageflags, /proc/pagetypeinfo).  But that was probably a
-mistake.
+So check that, too. Any >= 4k block size filesystem should be doing
+mostly 4k aligned and sized IO...
 
-/proc/sys/vm is rather a dumping ground of random tunables and
-statuses, but yes, I do think that moving the kpageidle stuff into there
-would be better.
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
