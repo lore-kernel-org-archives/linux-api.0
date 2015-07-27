@@ -1,89 +1,76 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH V5 0/7] Allow user to request memory to be locked on page
- fault
-Date: Mon, 27 Jul 2015 17:40:24 +0200
-Message-ID: <55B650E8.9030102@suse.cz>
-References: <1437773325-8623-1-git-send-email-emunson@akamai.com>
- <55B5F4FF.9070604@suse.cz> <20150727133555.GA17133@akamai.com>
- <55B63D37.20303@suse.cz> <20150727145409.GB21664@akamai.com>
+From: Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] pci_regs: reintroduce PCI_MSIX_FLAGS_BIRMASK
+Date: Mon, 27 Jul 2015 11:13:46 -0500
+Message-ID: <CAErSpo53wL1NURkiFUOMHDfY0MWrNE0jXwED20uiXXOiRDSB7g@mail.gmail.com>
+References: <1435745608-21217-1-git-send-email-mst@redhat.com>
+ <20150713181025-mutt-send-email-mst@redhat.com> <20150714232924.GS24416@google.com>
+ <20150727175412-mutt-send-email-mst@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <sparclinux-owner@vger.kernel.org>
-In-Reply-To: <20150727145409.GB21664@akamai.com>
-Sender: sparclinux-owner@vger.kernel.org
-To: Eric B Munson <emunson@akamai.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Shuah Khan <shuahkh@osg.samsung.com>, Michal Hocko <mhocko@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, Jonathan Corbet <corbet@lwn.net>, Ralf Baechle <ralf@linux-mips.org>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20150727175412-mutt-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Rajat Jain <rajatxjain-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Chen, Gong" <gong.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Guenter Roeck <groeck-3r7Miqu9kMnR7s880joybQ@public.gmane.org>, =?UTF-8?B?UmFmYcWCIE1pxYJlY2tp?= <zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-pci-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 07/27/2015 04:54 PM, Eric B Munson wrote:
-> On Mon, 27 Jul 2015, Vlastimil Babka wrote:
+On Mon, Jul 27, 2015 at 9:55 AM, Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> On Tue, Jul 14, 2015 at 06:29:24PM -0500, Bjorn Helgaas wrote:
+>> On Mon, Jul 13, 2015 at 06:11:38PM +0300, Michael S. Tsirkin wrote:
+>> > On Wed, Jul 01, 2015 at 12:14:10PM +0200, Michael S. Tsirkin wrote:
+>> > > This partially reverts commit 09a2c73ddfc7f173237fc7209a65b34dd5bcb5ed.
+>> > >     PCI: Remove unused PCI_MSIX_FLAGS_BIRMASK definition
+>> > >
+>> > > That commit dropped a symbol from an exported header claiming "no one
+>> > > uses it". This isn't how Linux normally approaches userspace API though,
+>> > > and in fact QEMU build fails if trying to use updated headers from linux
+>> > > 3.12 and up.
+>> > >
+>> > > Sure, userspace can be fixed to use the new symbol, but the cost
+>> > > of keeping the old one around is fairly low, too.
+>> > >
+>> > > Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 >>
->>> We do actually have an MCL_LOCKED, we just call it MCL_CURRENT.  Would
->>> you prefer that I match the name in mlock2() (add MLOCK_CURRENT
->>> instead)?
+>> Sorry, I lost the original message somehow, so I can't reply to it.  I
+>> applied this by hand to my for-linus branch for v4.2, thanks!
+>
+>
+>
+> Did you mean 4.2? time's running out on this one ...
+> Just making sure - it's still not upstream, right?
+
+It's on my for-linus branch and it's been in -next for a couple weeks.
+We're at -rc4, and I will send a pull request to Linus before v4.2
+releases.  This is a really minor fix, so I'm holding it in case there
+are other fixes that I can include in the same request.
+
+>> commit c9ddbac9c89110f77cb0fa07e634aaf1194899aa
+>> Author: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> Date:   Tue Jul 14 18:27:46 2015 -0500
 >>
->> Hm it's similar but not exactly the same, because MCL_FUTURE is not
->> the same as MLOCK_ONFAULT :) So MLOCK_CURRENT would be even more
->> confusing. Especially if mlockall(MCL_CURRENT | MCL_FUTURE) is OK,
->> but mlock2(MLOCK_LOCKED | MLOCK_ONFAULT) is invalid.
->
-> MLOCK_ONFAULT isn't meant to be the same as MCL_FUTURE, rather it is
-> meant to be the same as MCL_ONFAULT.  MCL_FUTURE only controls if the
-> locking policy will be applied to any new mappings made by this process,
-> not the locking policy itself.  The better comparison is MCL_CURRENT to
-> MLOCK_LOCK and MCL_ONFAULT to MLOCK_ONFAULT.  MCL_CURRENT and
-> MLOCK_LOCK do the same thing, only one requires a specific range of
-> addresses while the other works process wide.  This is why I suggested
-> changing MLOCK_LOCK to MLOCK_CURRENT.  It is an error to call
-> mlock2(MLOCK_LOCK | MLOCK_ONFAULT) just like it is an error to call
-> mlockall(MCL_CURRENT | MCL_ONFAULT).  The combinations do no make sense.
-
-How is it an error to call mlockall(MCL_CURRENT | MCL_ONFAULT)? How else 
-would you apply mlock2(MCL_ONFAULT) to all current mappings? Later below 
-you use the same example and I don't think it's different by removing 
-MLOCK_LOCKED flag.
-
-> This was all decided when VM_LOCKONFAULT was a separate state from
-> VM_LOCKED.  Now that VM_LOCKONFAULT is a modifier to VM_LOCKED and
-> cannot be specified independentally, it might make more sense to mirror
-> that relationship to userspace.  Which would lead to soemthing like the
-> following:
->
-> To lock and populate a region:
-> mlock2(start, len, 0);
->
-> To lock on fault a region:
-> mlock2(start, len, MLOCK_ONFAULT);
->
-> If LOCKONFAULT is seen as a modifier to mlock, then having the flags
-> argument as 0 mean do mlock classic makes more sense to me.
-
-Yup that's what I was trying to suggest.
-
-> To mlock current on fault only:
-> mlockall(MCL_CURRENT | MCL_ONFAULT);
->
-> To mlock future on fault only:
-> mlockall(MCL_FUTURE | MCL_ONFAULT);
->
-> To lock everything on fault:
-> mlockall(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT);
->
-> I think I have talked myself into rewriting the set again :/
-
-Sorry :) You could also wait a bit for more input than just from me...
-
+>>     PCI: Restore PCI_MSIX_FLAGS_BIRMASK definition
 >>
->>> Finally, on the question of MAP_LOCKONFAULT, do you just dislike
->>> MAP_LOCKED and do not want to see it extended, or is this a NAK on the
->>> set if that patch is included.  I ask because I have to spin a V6 to get
->>> the MLOCK flag declarations right, but I would prefer not to do a V7+.
->>> If this is a NAK with, I can drop that patch and rework the tests to
->>> cover without the mmap flag.  Otherwise I want to keep it, I have an
->>> internal user that would like to see it added.
+>>     09a2c73ddfc7 ("PCI: Remove unused PCI_MSIX_FLAGS_BIRMASK definition")
+>>     removed PCI_MSIX_FLAGS_BIRMASK from an exported header because it was
+>>     unused in the kernel.  But that breaks user programs that were using it
+>>     (QEMU in particular).
 >>
->> I don't want to NAK that patch if you think it's useful.
+>>     Restore the PCI_MSIX_FLAGS_BIRMASK definition.
 >>
+>>     [bhelgaas: changelog]
+>>     Signed-off-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>>     Signed-off-by: Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+>>     CC: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org        # v3.13+
 >>
-
+>> diff --git a/include/uapi/linux/pci_regs.h b/include/uapi/linux/pci_regs.h
+>> index efe3443..413417f 100644
+>> --- a/include/uapi/linux/pci_regs.h
+>> +++ b/include/uapi/linux/pci_regs.h
+>> @@ -319,6 +319,7 @@
+>>  #define PCI_MSIX_PBA         8       /* Pending Bit Array offset */
+>>  #define  PCI_MSIX_PBA_BIR    0x00000007 /* BAR index */
+>>  #define  PCI_MSIX_PBA_OFFSET 0xfffffff8 /* Offset into specified BAR */
+>> +#define PCI_MSIX_FLAGS_BIRMASK       PCI_MSIX_PBA_BIR /* deprecated */
+>>  #define PCI_CAP_MSIX_SIZEOF  12      /* size of MSIX registers */
+>>
+>>  /* MSI-X Table entry format */
