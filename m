@@ -1,93 +1,56 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: Revised futex(2) man page for review
-Date: Mon, 27 Jul 2015 13:10:55 +0200
-Message-ID: <55B611BF.8040908@gmail.com>
-References: <55166C01.7000803@gmail.com> <20150328114725.GJ27490@worktop.programming.kicks-ass.net> <20150328120337.GB32047@worktop.ger.corp.intel.com>
+Date: Mon, 27 Jul 2015 13:10:39 +0200
+Message-ID: <55B611AF.4030600@gmail.com>
+References: <55166C01.7000803@gmail.com>	 <20150328114725.GJ27490@worktop.programming.kicks-ass.net>	 <alpine.DEB.2.11.1504142323290.3845@nanos> <1429093725.2909.29.camel@triegel.csb>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150328120337.GB32047@worktop.ger.corp.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: mtk.manpages@gmail.com, Thomas Gleixner <tglx@linutronix.de>, Darren Hart <dvhart@linux.intel.com>, Carlos O'Donell <carlos@redhat.com>, Ingo Molnar <mingo@elte.hu>, Jakub Jelinek <jakub@redhat.com>, "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Davidlohr Bueso <dave@stgolabs.net>, Arnd Bergmann <arnd@arndb.de>, Steven Rostedt <rostedt@goodmis.org>, Linux API <linux-api@vger.kernel.org>, Torvald Riegel <triegel@redhat.com>, Roland McGrath <roland@hack.frob.com>, Darren Hart <dvhart@infradead.org>, Anton Blanchard <anton@samba.org>, Eric Dumazet <edumazet@google.com>, bill o gallmeister <bgallmeister@gmail.com>, Jan Kiszka <jan.kiszka@siemens.com>, Daniel Wagner <wagi@monom.org>, Rich Felker <dalias@libc.org>, Andy Lutomirski <luto@amacapital.net>, bert hubert <bert.hubert@netherlabs.nl>, Rusty Russell <rusty@rustcorp>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1429093725.2909.29.camel-I2ZjUw8blINjztcc/or7kQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Darren Hart <dvhart-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, bert hubert <bert.hubert-dxZxOz86jR8sYtaaK7K+xw@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Heinrich Schuchardt <xypro>
 List-Id: linux-api@vger.kernel.org
 
-Hi Peter,
-
-On 03/28/2015 01:03 PM, Peter Zijlstra wrote:
-> On Sat, Mar 28, 2015 at 12:47:25PM +0100, Peter Zijlstra wrote:
->>        FUTEX_WAIT (since Linux 2.6.0)
->>               This operation tests that the value at the futex word =
-pointed to
->>               by the address uaddr still contains the expected value=
- val,  and
->>               if  so,  then sleeps awaiting FUTEX_WAKE on the futex =
-word.  The
->>               load of the value of the futex word is an atomic  memo=
-ry  access
->>               (i.e.,  using  atomic  machine  instructions  of  the =
-respective
->>               architecture).  This load,  the  comparison  with  the=
-  expected
->>               value,  and  starting  to  sleep  are  performed  atom=
-ically and
->>               totally ordered with respect to other futex  operation=
-s  on  the
->>               same  futex  word.  If the thread starts to sleep, it =
-is consid=E2=80=90
->>               ered a waiter on this futex word.  If the futex value =
- does  not
->>               match  val,  then  the  call  fails  immediately  with=
- the error
->>               EAGAIN.
+On 04/15/2015 12:28 PM, Torvald Riegel wrote:
+> On Tue, 2015-04-14 at 23:40 +0200, Thomas Gleixner wrote:
+>> On Sat, 28 Mar 2015, Peter Zijlstra wrote:
+>>> On Sat, Mar 28, 2015 at 09:53:21AM +0100, Michael Kerrisk (man-pages) wrote:
+>>>> So, please take a look at the page below. At this point,
+>>>> I would most especially appreciate help with the FIXMEs.
+>>>
+>>> For people who cannot read that troff gibberish (me)..
 >>
->>               The purpose of the comparison with the expected value =
-is to pre=E2=80=90
->>               vent  lost  wake-ups: If another thread changed the va=
-lue of the
->>               futex word after the calling thread decided to  block =
- based  on
->>               the  prior  value, and if the other thread executed a =
-=46UTEX_WAKE
->>               operation (or similar wake-up) after the value change =
-and before
->>               this  FUTEX_WAIT  operation,  then  the  latter will o=
-bserve the
->>               value change and will not start to sleep.
+>> Ditto :)
+>>  
+>>> NOTES
+>>>        Glibc does not provide a wrapper for this system call;  call  it  using
+>>>        syscall(2).
 >>
->>               If the timeout argument is non-NULL, its contents spec=
-ify a rel=E2=80=90
->>               ative   timeout   for   the  wait,  measured  accordin=
-g  to  the
->>               CLOCK_MONOTONIC clock.  (This interval will be rounded=
- up to the
->>               system clock granularity, and kernel scheduling delays=
- mean that
->>               the blocking interval may overrun by a small amount.) =
- If  time=E2=80=90
->>               out is NULL, the call blocks indefinitely.
->=20
-> Would it not be better to only state that the wait will not return
-> before the timeout -- unless woken -- and not bother with clock
-> granularity and scheduling delays?
+>> You might mention that pthread_mutex, pthread_condvar interfaces are
+>> high level wrappers for the syscall and recommended to be used for
+>> normal use cases. IIRC unnamed semaphores are implemented with futexes
+>> as well.
+> 
+> If we add this, I'd rephrase it to something like that there are
+> high-level programming abstractions such as the pthread_condvar
+> interfaces or semaphores that are implemented using the syscall and that
+> are typically a better fit for normal use cases.  I'd consider only the
+> condvars as something like a wrapper, or targeting a similar use case.
 
-Many of the pages that talk about system calls that have timeouts
-carry similar language, since people often have confusions about what t=
-ime
-timeout (e.g., that it's an upper limit, not a minimum; or that it's pr=
-ecise
-to some very small granularity). Why do you think the language here is =
-a
-problem?
+I added this under NOTES:
+
+       Various higher-level programming abstractions are implemented via
+       futexes, including POSIX threads mutexes and condition variables,
+       as well as POSIX semaphores.
 
 Cheers,
 
 Michael
 
 
-
---=20
+-- 
 Michael Kerrisk
 Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
 Linux/UNIX System Programming Training: http://man7.org/training/
