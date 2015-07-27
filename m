@@ -1,67 +1,65 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH 4/4] mm: remove direct calling of migration
-Date: Mon, 27 Jul 2015 15:58:09 +0200
-Message-ID: <55B638F1.9090407@suse.cz>
-References: <1436776519-17337-1-git-send-email-gioh.kim@lge.com>
- <1436776519-17337-5-git-send-email-gioh.kim@lge.com>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
+Subject: Re: [PATCH V5 5/7] mm: mmap: Add mmap flag to request VM_LOCKONFAULT
+Date: Mon, 27 Jul 2015 17:03:55 +0300
+Message-ID: <20150727140355.GA11360@node.dhcp.inet.fi>
+References: <1437773325-8623-1-git-send-email-emunson@akamai.com>
+ <1437773325-8623-6-git-send-email-emunson@akamai.com>
+ <20150727073129.GE11657@node.dhcp.inet.fi>
+ <20150727134126.GB17133@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1436776519-17337-5-git-send-email-gioh.kim@lge.com>
-Sender: owner-linux-mm@kvack.org
-To: Gioh Kim <gioh.kim@lge.com>, jlayton@poochiereds.net, bfields@fieldses.org, iamjoonsoo.kim@lge.com, viro@zeniv.linux.org.uk, mst@redhat.com, koct9i@gmail.com, minchan@kernel.org, aquini@redhat.com, linux-fsdevel@vger.kernel.org, virtualization@lists.linux-foundation.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org
-Cc: dri-devel@lists.freedesktop.org, akpm@linux-foundation.org, Gioh Kim <gurugio@hanmail.net>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-mips-bounce@linux-mips.org>
+Content-Disposition: inline
+In-Reply-To: <20150727134126.GB17133@akamai.com>
+Sender: linux-mips-bounce@linux-mips.org
+Errors-to: linux-mips-bounce@linux-mips.org
+List-help: <mailto:ecartis@linux-mips.org?Subject=help>
+List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
+List-software: Ecartis version 1.0.0
+List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
+List-owner: <mailto:ralf@linux-mips.org>
+List-post: <mailto:linux-mips@linux-mips.org>
+List-archive: <http://www.linux-mips.org/archives/linux-mips/>
+To: Eric B Munson <emunson@akamai.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, Paul Gortmaker <paul.gortmaker@windriver.com>, Chris Metcalf <cmetcalf@ezchip.com>, Guenter Roeck <linux@roeck-us.net>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 07/13/2015 10:35 AM, Gioh Kim wrote:
-> From: Gioh Kim <gurugio@hanmail.net>
->
-> Migration is completely generalized so that migrating mobile page
-> is processed with lru-pages in move_to_new_page.
->
-> Signed-off-by: Gioh Kim <gioh.kim@lge.com>
-> Acked-by: Rafael Aquini <aquini@redhat.com>
+On Mon, Jul 27, 2015 at 09:41:26AM -0400, Eric B Munson wrote:
+> On Mon, 27 Jul 2015, Kirill A. Shutemov wrote:
+> 
+> > On Fri, Jul 24, 2015 at 05:28:43PM -0400, Eric B Munson wrote:
+> > > The cost of faulting in all memory to be locked can be very high when
+> > > working with large mappings.  If only portions of the mapping will be
+> > > used this can incur a high penalty for locking.
+> > > 
+> > > Now that we have the new VMA flag for the locked but not present state,
+> > > expose it as an mmap option like MAP_LOCKED -> VM_LOCKED.
+> > 
+> > As I mentioned before, I don't think this interface is justified.
+> > 
+> > MAP_LOCKED has known issues[1]. The MAP_LOCKED problem is not necessary
+> > affects MAP_LOCKONFAULT, but still.
+> > 
+> > Let's not add new interface unless it's demonstrably useful.
+> > 
+> > [1] http://lkml.kernel.org/g/20150114095019.GC4706@dhcp22.suse.cz
+> 
+> I understand and should have been more explicit.  This patch is still
+> included becuase I have an internal user that wants to see it added.
+> The problem discussed in the thread you point out does not affect
+> MAP_LOCKONFAULT because we do not attempt to populate the region with
+> MAP_LOCKONFAULT.
+> 
+> As I told Vlastimil, if this is a hard NAK with the patch I can work
+> with that.  Otherwise I prefer it stays.
 
-Why not just fold this to Patch 3? You already modify this hunk there, 
-and prior to patch 3, the hunk was balloon-pages specific. You made it 
-look generic only to remove it, which is unneeded code churn and I don't 
-think it adds anything wrt e.g. bisectability.
+That's not how it works.
 
-> ---
->   mm/migrate.c | 15 ---------------
->   1 file changed, 15 deletions(-)
->
-> diff --git a/mm/migrate.c b/mm/migrate.c
-> index 53f0081d..e6644ac 100644
-> --- a/mm/migrate.c
-> +++ b/mm/migrate.c
-> @@ -844,21 +844,6 @@ static int __unmap_and_move(struct page *page, struct page *newpage,
->   		}
->   	}
->
-> -	if (unlikely(mobile_page(page))) {
-> -		/*
-> -		 * A mobile page does not need any special attention from
-> -		 * physical to virtual reverse mapping procedures.
-> -		 * Skip any attempt to unmap PTEs or to remap swap cache,
-> -		 * in order to avoid burning cycles at rmap level, and perform
-> -		 * the page migration right away (proteced by page lock).
-> -		 */
-> -		lock_page(newpage);
-> -		rc = page->mapping->a_ops->migratepage(page->mapping,
-> -						       newpage, page, mode);
-> -		unlock_page(newpage);
-> -		goto out_unlock;
-> -	}
-> -
->   	/*
->   	 * Corner case handling:
->   	 * 1. When a new swap-cache page is read into, it is added to the LRU
->
+Once an ABI added to the kernel it stays there practically forever.
+Therefore it must be useful to justify maintenance cost. I don't see it
+demonstrated.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+So, NAK.
+
+-- 
+ Kirill A. Shutemov
