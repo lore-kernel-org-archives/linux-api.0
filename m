@@ -1,42 +1,59 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH v7 4/6] block: loop: prepare for supporing direct IO
-Date: Mon, 27 Jul 2015 01:40:20 -0700
-Message-ID: <20150727084020.GA28336@infradead.org>
-References: <1437061068-26118-1-git-send-email-ming.lei@canonical.com>
- <1437061068-26118-5-git-send-email-ming.lei@canonical.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH V5 0/7] Allow user to request memory to be locked on page
+ fault
+Date: Mon, 27 Jul 2015 11:08:15 +0200
+Message-ID: <55B5F4FF.9070604@suse.cz>
+References: <1437773325-8623-1-git-send-email-emunson@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1437061068-26118-5-git-send-email-ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ming Lei <ming.lei-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Justin M. Forbes" <jforbes-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1437773325-8623-1-git-send-email-emunson@akamai.com>
+Sender: owner-linux-mm@kvack.org
+To: Eric B Munson <emunson@akamai.com>, Andrew Morton <akpm@linux-foundation.org>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, Michal Hocko <mhocko@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, Jonathan Corbet <corbet@lwn.net>, Ralf Baechle <ralf@linux-mips.org>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-> +	/*
-> +	 * loop block's logical block size is 512, now
-> +	 * we support direct I/O only if the backing
-> +	 * block devices' minimize I/O size is 512 and
-> +	 * the offset is aligned with 512.
-> +	 */
-> +	if (dio) {
-> +		if (inode->i_sb->s_bdev &&
-> +			bdev_io_min(inode->i_sb->s_bdev) == 512 &&
-> +			!(lo->lo_offset & 511))
+On 07/24/2015 11:28 PM, Eric B Munson wrote:
 
-Why the hardcoded value?  I suspect this should be more like:
+...
 
-	if (dio && inode->i_sb->s_bdev &&
-	    (lo->lo_offset & (bdev_io_min(inode->i_sb->s_bdev) - 1)) != 0)
-		dio = false;
+> Changes from V4:
+> Drop all architectures for new sys call entries except x86[_64] and MIPS
+> Drop munlock2 and munlockall2
+> Make VM_LOCKONFAULT a modifier to VM_LOCKED only to simplify book keeping
+> Adjust tests to match
 
-> +	blk_mq_freeze_queue(lo->lo_queue);
-> +	lo->use_dio = use_dio;
-> +	if (use_dio)
-> +		lo->lo_flags |= LO_FLAGS_DIRECT_IO;
-> +	else
-> +		lo->lo_flags &= ~LO_FLAGS_DIRECT_IO;
-> +	blk_mq_unfreeze_queue(lo->lo_queue);
+Hi, thanks for considering my suggestions. Well, I do hope there were 
+correct as API's are hard and I'm no API expert. But since API's are 
+also impossible to change after merging, I'm sorry but I'll keep 
+pestering for one last thing. Thanks again for persisting, I do believe 
+it's for the good thing!
 
-Locking?
+The thing is that I still don't like that one has to call 
+mlock2(MLOCK_LOCKED) to get the equivalent of the old mlock(). Why is 
+that flag needed? We have two modes of locking now, and v5 no longer 
+treats them separately in vma flags. But having two flags gives us four 
+possible combinations, so two of them would serve nothing but to confuse 
+the programmer IMHO. What will mlock2() without flags do? What will 
+mlock2(MLOCK_LOCKED | MLOCK_ONFAULT) do? (Note I haven't studied the 
+code yet, as having agreed on the API should come first. But I did 
+suggest documenting these things more thoroughly too...)
+OK I checked now and both cases above seem to return EINVAL.
+
+So about the only point I see in MLOCK_LOCKED flag is parity with 
+MAP_LOCKED for mmap(). But as Kirill said (and me before as well) 
+MAP_LOCKED is broken anyway so we shouldn't twist the rest just of the 
+API to keep the poor thing happier in its misery.
+
+Also note that AFAICS you don't have MCL_LOCKED for mlockall() so 
+there's no full parity anyway. But please don't fix that by adding 
+MCL_LOCKED :)
+
+Thanks!
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
