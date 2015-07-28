@@ -1,62 +1,49 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: Next round: revised futex(2) man page for review
-Date: Tue, 28 Jul 2015 23:03:52 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1507282303290.3825@nanos>
-References: <55B61EF3.7080302@gmail.com> <alpine.DEB.2.11.1507282054370.3825@nanos> <20150728204508.GG19282@twins.programming.kicks-ass.net>
+From: "H. Peter Anvin" <hpa@zytor.com>
+Subject: Re: [PATCH 0/8] Use correctly the Xen memory terminologies in Linux
+Date: Tue, 28 Jul 2015 14:06:21 -0700
+Message-ID: <55B7EECD.8050605@zytor.com>
+References: <1438095769-2560-1-git-send-email-julien.grall@citrix.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-1673709282-1438117434=:3825"
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150728204508.GG19282-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Torvald Riegel <triegel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jakub Jelinek <jakub-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Anton Blanchard <anton-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, bill o gallmeister <bgallmeister-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kiszka <jan.kiszka-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, bert hubert <bert.hubert-dxZxOz86jR8sYtaaK7K+xw@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <1438095769-2560-1-git-send-email-julien.grall@citrix.com>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Julien Grall <julien.grall@citrix.com>, xen-devel@lists.xenproject.org
+Cc: linux-fbdev@vger.kernel.org, x86@kernel.org, netdev@vger.kernel.org, Jiri Slaby <jslaby@suse.com>, Thomas Gleixner <tglx@linutronix.de>, Russell King <linux@arm.linux.org.uk>, linux-scsi@vger.kernel.org, Tomi Valkeinen <tomi.valkeinen@ti.com>, stefano.stabellini@eu.citrix.com, Ingo Molnar <mingo@redhat.com>, linux-input@vger.kernel.org, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, ian.campbell@citrix.com, Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, "James E.J. Bottomley" <JBottomley@odin.com>, Boris Ostrovsky <boris.ostrovsky@oracle.com>, linux-arm-kernel@lists.infradead.org, Juergen Gross <jgross@suse.com>, Wei Liu <wei.liu2@citrix.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-kernel@vger.kernel.org, David Vrabel <david.vrabel@citrix.com>, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.or
 List-Id: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
-
---8323329-1673709282-1438117434=:3825
-Content-Type: TEXT/PLAIN; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-
-On Tue, 28 Jul 2015, Peter Zijlstra wrote:
-
-> On Tue, Jul 28, 2015 at 10:23:51PM +0200, Thomas Gleixner wrote:
-> 
-> > >        FUTEX_WAKE (since Linux 2.6.0)
-> > >               This  operation  wakes at most val of the waiters that are
-> > >               waiting (e.g., inside FUTEX_WAIT) on the futex word at the
-> > >               address  uaddr.  Most commonly, val is specified as either
-> > >               1 (wake up a single waiter) or INT_MAX (wake up all  wait‐
-> > >               ers).   No  guarantee  is provided about which waiters are
-> > >               awoken (e.g., a waiter with a higher  scheduling  priority
-> > >               is  not  guaranteed to be awoken in preference to a waiter
-> > >               with a lower priority).
-> > 
-> > That's only correct up to Linux 2.6.21.
-> > 
-> > Since 2.6.22 we have a priority ordered wakeup. For SCHED_OTHER
-> > threads this takes the nice level into account. Threads with the same
-> > priority are woken in FIFO order.
-> 
-> Maybe don't mention the effects of SCHED_OTHER, order by nice value is
-> 'wrong'.
-
-Indeed.
- 
-> Also, this code seems to use plist, which means it won't do the right
-> thing for SCHED_DEADLINE either.
-> 
-> Do we want to go fix that?
-
-I think so.
-
-Thanks,
-
-	tglx
-
---8323329-1673709282-1438117434=:3825--
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+T24gMDcvMjgvMjAxNSAwODowMiBBTSwgSnVsaWVuIEdyYWxsIHdyb3RlOgo+IEhpIGFsbCwKPiAK
+PiBUaGlzIHBhdGNoIHNlcmllcyBhaW1zIHRvIHVzZSB0aGUgbWVtb3J5IHRlcm1pbm9sb2dpZXMg
+ZGVzY3JpYmVkIGluCj4gaW5jbHVkZS9saW51eC9tbS5oIFsxXSBmb3IgTGludXggeGVuIGNvZGUu
+Cj4gCj4gTGludXggaXMgdXNpbmcgbWlzdGFrZW5seSBNRk4gd2hlbiBHRk4gaXMgbWVhbnQsIEkg
+c3VzcGVjdCB0aGlzIGlzIGJlY2F1c2UgdGhlCj4gZmlyc3Qgc3VwcG9ydCBvZiBYZW4gd2FzIGZv
+ciBQVi4gVGhpcyBoYXMgYnJvdWdodCBzb21lIG1pc2ltcGxlbWVudGF0aW9uCj4gb2YgbWVtb3J5
+IGhlbHBlcnMgb24gQVJNIGFuZCBtYWtlIHRoZSBkZXZlbG9wcGVyIGNvbmZ1c2VkIGFib3V0IHRo
+ZSBleHBlY3RlZAo+IGJlaGF2aW9yLgo+IAo+IEZvciBpbnN0YW5jZSwgd2l0aCBwZm5fdG9fbWZu
+LCB3ZSBleHBlY3QgdG8gZ2V0IGEgTUZOIGJhc2VkIG9uIHRoZSBuYW1lLgo+IEFsdGhvdWdoLCBp
+ZiB3ZSBsb29rIGF0IHRoZSBpbXBsZW1lbnRhdGlvbiBvbiB4ODYsIGl0J3MgcmV0dXJuaW5nIGEg
+R0ZOLgo+IE1vc3Qgb2YgdGhlIGNhbGxlcnMgYXJlIGFsc28gdXNpbmcgaXQgdGhpcyB3YXkuCj4g
+Cj4gVGhlIGZpcnN0IDIgcGF0Y2hlcyBvZiB0aGlzIHNlcmllcyBpcyBBUk0gcmVsYXRlZCBpbiBv
+cmRlciB0byByZW1vdmUKPiBQViBzcGVjaWZpYyBoZWxwZXJzIHdoaWNoIHNob3VsZCBub3QgYmUg
+dXNlZCBhbmQgZml4aW5nIHRoZSBpbXBsZW1lbnRhdGlvbiBvZgo+IHBmbl90b19tZm4uCj4gCj4g
+VGhlIHJlc3Qgb2YgdGhlIHNlcmllcyBpcyBoZXJlIHJlbmFtZSBtb3N0IG9mIHRoZSB1c2FnZSBp
+biB0aGUgY29tbW9uIGNvZGUKPiBvZiBNRk4gdG8gR0ZOLiBJIGFsc28gdG9vayB0aGUgb3Bwb3J0
+dW5pdHkgdG8gcmVwbGFjZSBtb3N0IG9mIHRoZSBjYWxsIHRvCj4gcGZuX3RvX2dmbiBpbiB0aGUg
+Y29tbW9uIGNvZGUgYnkgcGFnZV90b19nZm4gYXZvaWQgY29uc3RydWN0aW9uIHN1Y2gKPiBhcyBw
+Zm5fdG9fZ2ZuKHBhZ2VfdG9fcGZuKC4uLikuCj4gCj4gTm90ZSB0aGUgb25lIHhlbi1ibGtmcm9u
+dCB3aWxsIGJlIGRyb3BwZWQgYnkgNjRLIHNlcmllcyBbMl0sIEkgY2FuIGluY2x1ZGUgaXQKPiBp
+ZiBuZWNlc3NhcnkuCj4gCgpDYW4gd2UgYWN0dWFsbHkgZ2V0IHNvbWUgZG9jdW1lbnRhdGlvbiBm
+b3IgWGVuIGJlZm9yZSBzdGFydGluZyB0byBjaGFuZ2UKbmFtZXMgYXJvdW5kPwoKCS1ocGEKCgpf
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpMaW51eHBwYy1k
+ZXYgbWFpbGluZyBsaXN0CkxpbnV4cHBjLWRldkBsaXN0cy5vemxhYnMub3JnCmh0dHBzOi8vbGlz
+dHMub3psYWJzLm9yZy9saXN0aW5mby9saW51eHBwYy1kZXY=
