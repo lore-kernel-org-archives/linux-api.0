@@ -1,75 +1,64 @@
-From: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
-Subject: Re: [PATCH RFC 0/1] UAPI,x86: export syscall numbers for all x86 archs
-Date: Tue, 28 Jul 2015 11:52:51 -0400
-Message-ID: <CAHC9VhQJa+uiPNPA3MvxjYc_U0eoin2oVBEPikPVsQMe8kkh7w@mail.gmail.com>
-References: <1438070731-17764-1-git-send-email-drysdale@google.com>
-	<CAHC9VhRf8b7LRyG1N0t11jQdDbAa_m6-pYjnyb2EHxU0YoJmLg@mail.gmail.com>
-	<CAHse=S8dN+e6nhSrf=hVLsfGyrR191mrxj_wc_OauqNtUXxSCg@mail.gmail.com>
+From: David Drysdale <drysdale@google.com>
+Subject: Re: [PATCH RFC 0/1] Document how to add a new syscall
+Date: Tue, 28 Jul 2015 17:02:06 +0100
+Message-ID: <CAHse=S_h8c7Sg56V1UR2uW-0hqAMopqvEyvtdOx0hUH2c+8y2w@mail.gmail.com>
+References: <1438083663-24814-1-git-send-email-drysdale@google.com>
+ <55B78AB4.2010807@osg.samsung.com> <20150728141920.GC19282@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAHse=S8dN+e6nhSrf=hVLsfGyrR191mrxj_wc_OauqNtUXxSCg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20150728141920.GC19282@twins.programming.kicks-ass.net>
+Sender: linux-doc-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, Jonathan Corbet <corbet@lwn.net>, Andrea Arcangeli <aarcange@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Eric B Munson <emunson@akamai.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, Rusty Russell <rusty@rustcorp.com.au>, Vivek Goyal <vgoyal@redhat.com>, Alexei Starovoitov <ast@plumgrid.com>, David Herrmann <dh.herrmann@gmail.com>, Theodore Ts'o <tytso@mit.edu>, Kees Cook <keescook@chromium.org>, Miklos Szeredi <mszeredi@suse.cz>, Milosz
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 28, 2015 at 11:32 AM, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
-> On Tue, Jul 28, 2015 at 1:20 PM, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org> wrote:
->> On Tue, Jul 28, 2015 at 4:05 AM, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
->>> A while ago I was trying to build a seccomp-bpf filter program that would
->>> survive a change of x86 architecture.  This was complicated for all sorts of
->>> reasons, but one of the problems was that the different syscall numbers aren't
->>> all available at the same time -- hence this patch.
+On Tue, Jul 28, 2015 at 3:19 PM, Peter Zijlstra <peterz@infradead.org> wrote:
+> On Tue, Jul 28, 2015 at 07:59:16AM -0600, Shuah Khan wrote:
+>> On 07/28/2015 05:41 AM, David Drysdale wrote:
+>> > Given that I've gotten some of the details wrong in the past (and I've
+>> > seen others do likewise), I thought it might be helpful to collate the
+>> > best practices for adding a new system call to the kernel.
+>> >
+>> > Apologies for the wide circulation -- I've tried to include folk who've
+>> > recently added or proposed a system call, as they're most likely to
+>> > have opinions on:
+>> >  - whether this a useful addition to Documentation/
+>> >  - whether the details of the advice are correct and complete.
+>> >
+>> > Shuah, is there anything more that should be added for the Testing
+>> > section in particular?
+>> >
 >>
->> Or just use libseccomp and let it take care of all the different ABI
->> specific warts for you.  The library handles the undefined syscalls
->> you describe, but also multiplexed syscalls (e.g. socket related
->> syscalls on x86) and proper invalid arch/ABI filtering
+>> David,
+>>
+>> Looks good. You could add a one liner on in some cases, it might be
+>> necessary to install headers before test compiles. Other than that,
+>> the information looks good.
 >
-> Ah, I hadn't realized that libseccomp handled cross-architecture
-> stuff and the socketcall multiplexing -- very neat.  I'll look into whether
-> I can convert my stuff to use it.
-
-[Ooops, forgot to hit reply-all]
-
-It should be pretty easy; if you've been writing BPF assembly, simply
-making a few function calls should be a no-brainer.
-
-We've got man pages for each of the libseccomp APIs that should cover
-most of your questions, but there is also a collection of tests (see
-the "tests/" directory) which serve as reasonable examples too.  If
-all else fails, you can always ask for help on our mailing list:
-
- * https://groups.google.com/d/forum/libseccomp
-
-> I still think exporting all the sub-arch syscall numbers is a good idea
-> though (even if my need for it is potentially reduced by libseccomp)...
-
-No real argument against it from me.  I just worry that some
-developers accidently get the seccomp-bpf filters wrong when they do
-it by hand, e.g. ABI specific filters and not properly handling x32 on
-x86-64.
-
->> (you are filtering x32 correctly on x86-64 right?).
+> For perf we still use the syscall() wrapper and we have hardcoded
+> (fallback) syscall numbers in there in case they've not yet reached
+> unistd.h.
 >
-> Yep, I think so, but it's fiddly.  If I can leave the fiddliness
-> to libseccomp, so much the better...
+> People update their kernels far more often than their userspace headers.
 
-Annoyingly fiddly.  If we could do it over I would much prefer to see
-x32 get its own 32-bit ABI token value; sharing a value with x86-64
-makes things harder than they need to be, but sadly it is too late to
-change it now.
+How about:
 
-> Thanks for the pointer,
-> David
->
->>  * https://github.com/seccomp/libseccomp
+diff --git a/Documentation/adding-syscalls.txt
+b/Documentation/adding-syscalls.txt
+index 5f52edda8951..b274c3d01edb 100644
+--- a/Documentation/adding-syscalls.txt
++++ b/Documentation/adding-syscalls.txt
+@@ -389,6 +389,11 @@ reviewers with a demonstration of how user space
+programs will use the system
+ call.  A good way to combine these aims is to include a simple self-test
+ program in a new directory under tools/testing/selftests/.
 
-No problem, let me know if you run into any problems.
-
-Good luck!
-
--- 
-paul moore
-www.paul-moore.com
++For a new system call, there will obviously be no libc wrapper function and so
++the test will need to invoke it using syscall(); also, if the system call
++involves a new userspace-visible structure, the corresponding header will need
++to be installed to compile the test.
++
+ Make sure the selftest runs successfully on all supported architectures.  For
+ example, check that it works when compiled as an x86_64 (-m64), x86_32 (-m32)
+ and x32 (-mx32) ABI program.
